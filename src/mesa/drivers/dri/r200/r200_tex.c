@@ -421,7 +421,9 @@ r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
          return &_mesa_texformat_ycbcr_rev;
 
    default:
-      _mesa_problem(ctx, "unexpected texture format in %s", __FUNCTION__);
+      _mesa_problem(ctx,
+         "unexpected internalFormat 0x%x in r200ChooseTextureFormat",
+         (int) internalFormat);
       return NULL;
    }
 
