@@ -597,15 +597,7 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
    ctx->Viewport.Y = y;
    ctx->Viewport.Height = height;
 
-   /* Check if window/buffer has been resized and if so, reallocate the
-    * ancillary buffers.
-    */
-/*    _mesa_ResizeBuffersMESA(); */
-
-   if (ctx->Driver.Viewport) {
-      (*ctx->Driver.Viewport)( ctx, x, y, width, height );
-   }
-
+   /* XXX send transposed width/height to Driver.Viewport() below??? */
    if (ctx->_RotateMode) {
       GLint tmp, tmps;
       tmp = x; x = y; y = tmp;
