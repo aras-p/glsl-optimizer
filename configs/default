@@ -39,8 +39,8 @@ OSMESA_LIB_NAME = libOSMesa.so
 # Optional assembly language optimization files for libGL
 ASM_SOURCES = 
 
-# GLw widget sources (second file needs Motif)
-GLW_SOURCES = GLwDrawA.c GLwMDrawA.c
+# GLw widget sources (Append "GLwMDrawA.c" to build the Motif widget too)
+GLW_SOURCES = GLwDrawA.c
 
 
 # Directories
