@@ -366,12 +366,18 @@ read_rgba_pixels( GLcontext *ctx,
       case GL_UNSIGNED_INT_2_10_10_10_REV:
          /* valid pixel type */
          break;
+      case GL_HALF_FLOAT_ARB:
+         if (!ctx->Extensions.ARB_half_float_pixel) {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glReadPixels(type)" );
+            return;
+         }
+         break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glReadPixels(type)" );
          return;
    }
 
-   if (!_mesa_is_legal_format_and_type(format, type) ||
+   if (!_mesa_is_legal_format_and_type(ctx, format, type) ||
        format == GL_INTENSITY) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(format or type)");
       return;

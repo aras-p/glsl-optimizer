@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1794,6 +1794,70 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          }
          return;
 
+      /* GL_ARB_texture_float */
+      case GL_TEXTURE_RED_TYPE_ARB:
+         if (ctx->Extensions.ARB_texture_float) {
+            *params = img->TexFormat->RedBits ? img->TexFormat->DataType : GL_NONE;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetTexLevelParameter[if]v(pname)");
+         }
+         return;
+      case GL_TEXTURE_GREEN_TYPE_ARB:
+         if (ctx->Extensions.ARB_texture_float) {
+            *params = img->TexFormat->GreenBits ? img->TexFormat->DataType : GL_NONE;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetTexLevelParameter[if]v(pname)");
+         }
+         return;
+      case GL_TEXTURE_BLUE_TYPE_ARB:
+         if (ctx->Extensions.ARB_texture_float) {
+            *params = img->TexFormat->BlueBits ? img->TexFormat->DataType : GL_NONE;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetTexLevelParameter[if]v(pname)");
+         }
+         return;
+      case GL_TEXTURE_ALPHA_TYPE_ARB:
+         if (ctx->Extensions.ARB_texture_float) {
+            *params = img->TexFormat->AlphaBits ? img->TexFormat->DataType : GL_NONE;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetTexLevelParameter[if]v(pname)");
+         }
+         return;
+      case GL_TEXTURE_LUMINANCE_TYPE_ARB:
+         if (ctx->Extensions.ARB_texture_float) {
+            *params = img->TexFormat->LuminanceBits ? img->TexFormat->DataType : GL_NONE;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetTexLevelParameter[if]v(pname)");
+         }
+         return;
+      case GL_TEXTURE_INTENSITY_TYPE_ARB:
+         if (ctx->Extensions.ARB_texture_float) {
+            *params = img->TexFormat->IntensityBits ? img->TexFormat->DataType : GL_NONE;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetTexLevelParameter[if]v(pname)");
+         }
+         return;
+      case GL_TEXTURE_DEPTH_TYPE_ARB:
+         if (ctx->Extensions.ARB_texture_float) {
+            *params = img->TexFormat->DepthBits ? img->TexFormat->DataType : GL_NONE;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetTexLevelParameter[if]v(pname)");
+         }
+         return;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glGetTexLevelParameter[if]v(pname)");

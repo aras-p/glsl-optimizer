@@ -54,7 +54,7 @@ extern GLint
 _mesa_bytes_per_pixel( GLenum format, GLenum type );
 
 extern GLboolean
-_mesa_is_legal_format_and_type( GLenum format, GLenum type );
+_mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type );
 
 
 extern GLvoid *

@@ -750,7 +750,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
 
-   if (!_mesa_is_legal_format_and_type(format, type)) {
+   if (!_mesa_is_legal_format_and_type(ctx, format, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glDrawPixels(format or type)");
       return;
    }

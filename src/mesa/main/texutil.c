@@ -46,6 +46,9 @@
 #include "texutil.h"
 
 
+#if !NEWTEXSTORE
+
+
 #define DEBUG_TEXUTIL 0
 
 
@@ -1033,3 +1036,5 @@ do {									\
       _mesa_problem(NULL,"unexpected bytes/pixel in _mesa_rescale_teximage2d");
    }
 }
+
+#endif

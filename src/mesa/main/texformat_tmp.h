@@ -1,20 +1,3 @@
-/**
- * \file texformat_tmp.h
- * Texel fetch functions template.
- * 
- * This template file is used by texformat.c to generate texel fetch functions
- * for 1-D, 2-D and 3-D texture images. 
- *
- * It should be expanded by definining \p DIM as the number texture dimensions
- * (1, 2 or 3).  According to the value of \p DIM a serie of macros is defined
- * for the texel lookup in the gl_texture_image::Data.
- * 
- * \sa texformat.c and FetchTexel.
- * 
- * \author Gareth Hughes
- * \author Brian Paul
- */
-
 /*
  * Mesa 3-D graphics library
  * Version:  6.1
@@ -40,6 +23,24 @@
  */
 
 
+/**
+ * \file texformat_tmp.h
+ * Texel fetch functions template.
+ * 
+ * This template file is used by texformat.c to generate texel fetch functions
+ * for 1-D, 2-D and 3-D texture images. 
+ *
+ * It should be expanded by defining \p DIM as the number texture dimensions
+ * (1, 2 or 3).  According to the value of \p DIM a series of macros is defined
+ * for the texel lookup in the gl_texture_image::Data.
+ * 
+ * \sa texformat.c and FetchTexel.
+ * 
+ * \author Gareth Hughes
+ * \author Brian Paul
+ */
+
+
 #if DIM == 1
 
 #define CHAN_SRC( t, i, j, k, sz )					\
@@ -51,7 +52,7 @@
 #define FLOAT_SRC( t, i, j, k, sz )					\
 	((GLfloat *)(t)->Data + (i) * (sz))
 #define HALF_SRC( t, i, j, k, sz )					\
-	((GLhalfNV *)(t)->Data + (i) * (sz))
+	((GLhalfARB *)(t)->Data + (i) * (sz))
 
 #define FETCH(x) fetch_texel_1d_##x
 
@@ -66,7 +67,7 @@
 #define FLOAT_SRC( t, i, j, k, sz )					\
 	((GLfloat *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz))
 #define HALF_SRC( t, i, j, k, sz )					\
-	((GLhalfNV *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz))
+	((GLhalfARB *)(t)->Data + ((t)->RowStride * (j) + (i)) * (sz))
 
 #define FETCH(x) fetch_texel_2d_##x
 
@@ -85,7 +86,7 @@
 	((GLfloat *)(t)->Data + (((t)->Height * (k) + (j)) *		\
 				  (t)->RowStride + (i)) * (sz))
 #define HALF_SRC( t, i, j, k, sz )					\
-	((GLhalfNV *)(t)->Data + (((t)->Height * (k) + (j)) *		\
+	((GLhalfARB *)(t)->Data + (((t)->Height * (k) + (j)) *		\
 				  (t)->RowStride + (i)) * (sz))
 
 #define FETCH(x) fetch_texel_3d_##x
@@ -244,15 +245,42 @@ static void FETCH(f_color_index)( const struct gl_texture_image *texImage,
 }
 
 
-/* Fetch depth texel from 1D, 2D or 3D DEPTH texture, returning 1 GLfloat */
-/* Note: no GLchan version of this function */
-static void FETCH(f_depth_component)( const struct gl_texture_image *texImage,
+/* Fetch depth texel from 1D, 2D or 3D float32 DEPTH texture,
+ * returning 1 GLfloat.
+ * Note: no GLchan version of this function.
+ */
+static void FETCH(f_depth_component_f32)( const struct gl_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLfloat *src = FLOAT_SRC( texImage, i, j, k, 1 );
    texel[0] = src[0];
 }
 
+
+/* Fetch depth texel from 1D, 2D or 3D float32 DEPTH texture,
+ * returning 1 GLfloat.
+ * Note: no GLchan version of this function.
+ */
+static void FETCH(f_depth_component16)( const struct gl_texture_image *texImage,
+                                    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLushort *src = USHORT_SRC( texImage, i, j, k );
+   texel[0] = src[0] * (1.0F / 65535.0F);
+}
+
+
+/* Fetch color texel from 1D, 2D or 3D RGBA_FLOAT32 texture,
+ * returning 4 GLchans.
+ */
+static void FETCH(rgba_f32)( const struct gl_texture_image *texImage,
+                               GLint i, GLint j, GLint k, GLchan *texel )
+{
+   const GLfloat *src = FLOAT_SRC( texImage, i, j, k, 4 );
+   UNCLAMPED_FLOAT_TO_CHAN(texel[RCOMP], src[0]);
+   UNCLAMPED_FLOAT_TO_CHAN(texel[GCOMP], src[1]);
+   UNCLAMPED_FLOAT_TO_CHAN(texel[BCOMP], src[2]);
+   UNCLAMPED_FLOAT_TO_CHAN(texel[ACOMP], src[3]);
+}
 
 /* Fetch color texel from 1D, 2D or 3D RGBA_FLOAT32 texture,
  * returning 4 GLfloats.
@@ -268,18 +296,43 @@ static void FETCH(f_rgba_f32)( const struct gl_texture_image *texImage,
 }
 
 /* Fetch color texel from 1D, 2D or 3D RGBA_FLOAT16 texture,
+ * returning 4 GLchans.
+ */
+static void FETCH(rgba_f16)( const struct gl_texture_image *texImage,
+                               GLint i, GLint j, GLint k, GLchan *texel )
+{
+   const GLhalfARB *src = HALF_SRC( texImage, i, j, k, 4 );
+   UNCLAMPED_FLOAT_TO_CHAN(texel[RCOMP], _mesa_half_to_float(src[0]));
+   UNCLAMPED_FLOAT_TO_CHAN(texel[GCOMP], _mesa_half_to_float(src[1]));
+   UNCLAMPED_FLOAT_TO_CHAN(texel[BCOMP], _mesa_half_to_float(src[2]));
+   UNCLAMPED_FLOAT_TO_CHAN(texel[ACOMP], _mesa_half_to_float(src[3]));
+}
+
+/* Fetch color texel from 1D, 2D or 3D RGBA_FLOAT16 texture,
  * returning 4 GLfloats.
  */
 static void FETCH(f_rgba_f16)( const struct gl_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
-   const GLhalfNV *src = HALF_SRC( texImage, i, j, k, 4 );
+   const GLhalfARB *src = HALF_SRC( texImage, i, j, k, 4 );
    texel[RCOMP] = _mesa_half_to_float(src[0]);
    texel[GCOMP] = _mesa_half_to_float(src[1]);
    texel[BCOMP] = _mesa_half_to_float(src[2]);
    texel[ACOMP] = _mesa_half_to_float(src[3]);
 }
 
+/* Fetch color texel from 1D, 2D or 3D RGB_FLOAT32 texture,
+ * returning 4 GLchans.
+ */
+static void FETCH(rgb_f32)( const struct gl_texture_image *texImage,
+                            GLint i, GLint j, GLint k, GLchan *texel )
+{
+   const GLfloat *src = FLOAT_SRC( texImage, i, j, k, 3 );
+   UNCLAMPED_FLOAT_TO_CHAN(texel[RCOMP], src[0]);
+   UNCLAMPED_FLOAT_TO_CHAN(texel[GCOMP], src[1]);
+   UNCLAMPED_FLOAT_TO_CHAN(texel[BCOMP], src[2]);
+   texel[ACOMP] = CHAN_MAX;
+}
 
 /* Fetch color texel from 1D, 2D or 3D RGB_FLOAT32 texture,
  * returning 4 GLfloats.
@@ -294,17 +347,238 @@ static void FETCH(f_rgb_f32)( const struct gl_texture_image *texImage,
    texel[ACOMP] = CHAN_MAXF;
 }
 
+/* Fetch color texel from 1D, 2D or 3D RGBA_FLOAT16 texture,
+ * returning 4 GLchans.
+ */
+static void FETCH(rgb_f16)( const struct gl_texture_image *texImage,
+                            GLint i, GLint j, GLint k, GLchan *texel )
+{
+   const GLhalfARB *src = HALF_SRC( texImage, i, j, k, 3 );
+   UNCLAMPED_FLOAT_TO_CHAN(texel[RCOMP], _mesa_half_to_float(src[0]));
+   UNCLAMPED_FLOAT_TO_CHAN(texel[GCOMP], _mesa_half_to_float(src[1]));
+   UNCLAMPED_FLOAT_TO_CHAN(texel[BCOMP], _mesa_half_to_float(src[2]));
+   texel[ACOMP] = CHAN_MAX;
+}
+
 /* Fetch color texel from 1D, 2D or 3D RGB_FLOAT16 texture,
  * returning 4 GLfloats.
  */
 static void FETCH(f_rgb_f16)( const struct gl_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
-   const GLhalfNV *src = HALF_SRC( texImage, i, j, k, 3 );
+   const GLhalfARB *src = HALF_SRC( texImage, i, j, k, 3 );
    texel[RCOMP] = _mesa_half_to_float(src[0]);
    texel[GCOMP] = _mesa_half_to_float(src[1]);
    texel[BCOMP] = _mesa_half_to_float(src[2]);
    texel[ACOMP] = CHAN_MAXF;
+}
+
+/* Fetch color texel from 1D, 2D or 3D ALPHA_FLOAT32 texture,
+ * returning 4 GLchans.
+ */
+static void FETCH(alpha_f32)( const struct gl_texture_image *texImage,
+                              GLint i, GLint j, GLint k, GLchan *texel )
+{
+   const GLfloat *src = FLOAT_SRC( texImage, i, j, k, 1 );
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = 0;
+   UNCLAMPED_FLOAT_TO_CHAN(texel[ACOMP], src[0]);
+}
+
+/* Fetch color texel from 1D, 2D or 3D ALPHA_FLOAT32 texture,
+ * returning 4 GLfloats.
+ */
+static void FETCH(f_alpha_f32)( const struct gl_texture_image *texImage,
+                              GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLfloat *src = FLOAT_SRC( texImage, i, j, k, 1 );
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = 0.0F;
+   texel[ACOMP] = src[0];
+}
+
+/* Fetch color texel from 1D, 2D or 3D ALPHA_FLOAT16 texture,
+ * returning 4 GLchans.
+ */
+static void FETCH(alpha_f16)( const struct gl_texture_image *texImage,
+                              GLint i, GLint j, GLint k, GLchan *texel )
+{
+   const GLhalfARB *src = HALF_SRC( texImage, i, j, k, 1 );
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = 0;
+   UNCLAMPED_FLOAT_TO_CHAN(texel[ACOMP], _mesa_half_to_float(src[0]));
+}
+
+/* Fetch color texel from 1D, 2D or 3D ALPHA_FLOAT16 texture,
+ * returning 4 GLfloats.
+ */
+static void FETCH(f_alpha_f16)( const struct gl_texture_image *texImage,
+                              GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLhalfARB *src = HALF_SRC( texImage, i, j, k, 1 );
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = 0.0F;
+   texel[ACOMP] = _mesa_half_to_float(src[0]);
+}
+
+/* Fetch color texel from 1D, 2D or 3D LUMINANCE_FLOAT32 texture,
+ * returning 4 GLchans.
+ */
+static void FETCH(luminance_f32)( const struct gl_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, GLchan *texel )
+{
+   const GLfloat *src = FLOAT_SRC( texImage, i, j, k, 1 );
+   UNCLAMPED_FLOAT_TO_CHAN(texel[RCOMP], src[0]);
+   texel[GCOMP] =
+   texel[BCOMP] = texel[RCOMP];
+   texel[ACOMP] = CHAN_MAX;
+}
+
+/* Fetch color texel from 1D, 2D or 3D LUMINANCE_FLOAT32 texture,
+ * returning 4 GLfloats.
+ */
+static void FETCH(f_luminance_f32)( const struct gl_texture_image *texImage,
+                                    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLfloat *src = FLOAT_SRC( texImage, i, j, k, 1 );
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = src[0];
+   texel[ACOMP] = CHAN_MAXF;
+}
+
+/* Fetch color texel from 1D, 2D or 3D LUMINANCE_FLOAT16 texture,
+ * returning 4 GLchans.
+ */
+static void FETCH(luminance_f16)( const struct gl_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, GLchan *texel )
+{
+   const GLhalfARB *src = HALF_SRC( texImage, i, j, k, 1 );
+   UNCLAMPED_FLOAT_TO_CHAN(texel[RCOMP], _mesa_half_to_float(src[0]));
+   texel[GCOMP] =
+   texel[BCOMP] = texel[RCOMP];
+   texel[ACOMP] = CHAN_MAX;
+}
+
+/* Fetch color texel from 1D, 2D or 3D LUMINANCE_FLOAT16 texture,
+ * returning 4 GLfloats.
+ */
+static void FETCH(f_luminance_f16)( const struct gl_texture_image *texImage,
+                                    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLhalfARB *src = HALF_SRC( texImage, i, j, k, 1 );
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = _mesa_half_to_float(src[0]);
+   texel[ACOMP] = CHAN_MAXF;
+}
+
+/* Fetch color texel from 1D, 2D or 3D LUMINANCE_ALPHA_FLOAT32 texture,
+ * returning 4 GLchans.
+ */
+static void FETCH(luminance_alpha_f32)( const struct gl_texture_image *texImage,
+                                    GLint i, GLint j, GLint k, GLchan *texel )
+{
+   const GLfloat *src = FLOAT_SRC( texImage, i, j, k, 2 );
+   UNCLAMPED_FLOAT_TO_CHAN(texel[RCOMP], src[0]);
+   texel[GCOMP] =
+   texel[BCOMP] = texel[RCOMP];
+   UNCLAMPED_FLOAT_TO_CHAN(texel[ACOMP], src[1]);
+}
+
+/* Fetch color texel from 1D, 2D or 3D LUMINANCE_ALPHA_FLOAT32 texture,
+ * returning 4 GLfloats.
+ */
+static void FETCH(f_luminance_alpha_f32)( const struct gl_texture_image *texImage,
+                                    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLfloat *src = FLOAT_SRC( texImage, i, j, k, 2 );
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = src[0];
+   texel[ACOMP] = src[1];
+}
+
+/* Fetch color texel from 1D, 2D or 3D LUMINANCE_ALPHA_FLOAT16 texture,
+ * returning 4 GLfloats.
+ */
+static void FETCH(luminance_alpha_f16)( const struct gl_texture_image *texImage,
+                                    GLint i, GLint j, GLint k, GLchan *texel )
+{
+   const GLhalfARB *src = HALF_SRC( texImage, i, j, k, 2 );
+   UNCLAMPED_FLOAT_TO_CHAN(texel[RCOMP], _mesa_half_to_float(src[0]));
+   texel[GCOMP] =
+   texel[BCOMP] = texel[RCOMP];
+   UNCLAMPED_FLOAT_TO_CHAN(texel[ACOMP], _mesa_half_to_float(src[1]));
+}
+
+/* Fetch color texel from 1D, 2D or 3D LUMINANCE_ALPHA_FLOAT16 texture,
+ * returning 4 GLfloats.
+ */
+static void FETCH(f_luminance_alpha_f16)( const struct gl_texture_image *texImage,
+                                    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLhalfARB *src = HALF_SRC( texImage, i, j, k, 2 );
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = _mesa_half_to_float(src[0]);
+   texel[ACOMP] = _mesa_half_to_float(src[1]);
+}
+
+/* Fetch color texel from 1D, 2D or 3D INTENSITY_FLOAT32 texture,
+ * returning 4 GLchans.
+ */
+static void FETCH(intensity_f32)( const struct gl_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, GLchan *texel )
+{
+   const GLfloat *src = FLOAT_SRC( texImage, i, j, k, 1 );
+   UNCLAMPED_FLOAT_TO_CHAN(texel[RCOMP], src[0]);
+   texel[GCOMP] =
+   texel[BCOMP] =
+   texel[ACOMP] = texel[RCOMP];
+}
+
+/* Fetch color texel from 1D, 2D or 3D INTENSITY_FLOAT32 texture,
+ * returning 4 GLfloats.
+ */
+static void FETCH(f_intensity_f32)( const struct gl_texture_image *texImage,
+                                    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLfloat *src = FLOAT_SRC( texImage, i, j, k, 1 );
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] =
+   texel[ACOMP] = src[0];
+}
+
+/* Fetch color texel from 1D, 2D or 3D INTENSITY_FLOAT16 texture,
+ * returning 4 GLchans.
+ */
+static void FETCH(intensity_f16)( const struct gl_texture_image *texImage,
+                                  GLint i, GLint j, GLint k, GLchan *texel )
+{
+   const GLhalfARB *src = HALF_SRC( texImage, i, j, k, 1 );
+   UNCLAMPED_FLOAT_TO_CHAN(texel[RCOMP], _mesa_half_to_float(src[0]));
+   texel[GCOMP] =
+   texel[BCOMP] =
+   texel[ACOMP] = texel[RCOMP];
+}
+
+/* Fetch color texel from 1D, 2D or 3D INTENSITY_FLOAT16 texture,
+ * returning 4 GLfloats.
+ */
+static void FETCH(f_intensity_f16)( const struct gl_texture_image *texImage,
+                                    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLhalfARB *src = HALF_SRC( texImage, i, j, k, 1 );
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] =
+   texel[ACOMP] = _mesa_half_to_float(src[0]);
 }
 
 
@@ -510,8 +784,8 @@ static void FETCH(a8)( const struct gl_texture_image *texImage,
 		       GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLubyte *src = UBYTE_SRC( texImage, i, j, k, 1 );
-   texel[RCOMP] = 0;
-   texel[GCOMP] = 0;
+   texel[RCOMP] =
+   texel[GCOMP] =
    texel[BCOMP] = 0;
    texel[ACOMP] = UBYTE_TO_CHAN( src[0] );
 }
@@ -533,8 +807,8 @@ static void FETCH(l8)( const struct gl_texture_image *texImage,
 		       GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLubyte *src = UBYTE_SRC( texImage, i, j, k, 1 );
-   texel[RCOMP] = UBYTE_TO_CHAN( src[0] );
-   texel[GCOMP] = UBYTE_TO_CHAN( src[0] );
+   texel[RCOMP] =
+   texel[GCOMP] =
    texel[BCOMP] = UBYTE_TO_CHAN( src[0] );
    texel[ACOMP] = CHAN_MAX;
 }
@@ -556,9 +830,9 @@ static void FETCH(i8)( const struct gl_texture_image *texImage,
 		       GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLubyte *src = UBYTE_SRC( texImage, i, j, k, 1 );
-   texel[RCOMP] = UBYTE_TO_CHAN( src[0] );
-   texel[GCOMP] = UBYTE_TO_CHAN( src[0] );
-   texel[BCOMP] = UBYTE_TO_CHAN( src[0] );
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] =
    texel[ACOMP] = UBYTE_TO_CHAN( src[0] );
 }
 

@@ -414,7 +414,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
 
    assert(table);
 
-   if (!_mesa_is_legal_format_and_type(format, type) ||
+   if (!_mesa_is_legal_format_and_type(ctx, format, type) ||
        format == GL_INTENSITY) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glColorTable(format or type)");
       return;
@@ -596,7 +596,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
 
    assert(table);
 
-   if (!_mesa_is_legal_format_and_type(format, type) ||
+   if (!_mesa_is_legal_format_and_type(ctx, format, type) ||
        format == GL_INTENSITY) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glColorSubTable(format or type)");
       return;

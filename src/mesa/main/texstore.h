@@ -1,15 +1,8 @@
-/**
- * \file texstore.h
- * Texture image storage.
- *
- * \author Brian Paul
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,12 +23,55 @@
  */
 
 
+/**
+ * \file texstore.h
+ * Texture image storage routines.
+ *
+ * \author Brian Paul
+ */
+
+
 #ifndef TEXSTORE_H
 #define TEXSTORE_H
 
 
 #include "mtypes.h"
 
+/*** NEWTEXSTORE ***/
+
+/* Macro just to save some typing */
+#define STORE_PARAMS \
+	GLcontext *ctx, GLuint dims, \
+	GLenum baseInternalFormat, \
+	const struct gl_texture_format *dstFormat, \
+	GLvoid *dstAddr, \
+	GLint dstXoffset, GLint dstYoffset, GLint dstZoffset, \
+	GLint dstRowStride, GLint dstImageStride, \
+	GLint srcWidth, GLint srcHeight, GLint srcDepth, \
+	GLenum srcFormat, GLenum srcType, \
+	const GLvoid *srcAddr, \
+	const struct gl_pixelstore_attrib *srcPacking
+
+
+extern GLboolean _mesa_texstore_rgba(STORE_PARAMS);
+extern GLboolean _mesa_texstore_color_index(STORE_PARAMS);
+extern GLboolean _mesa_texstore_depth_component16(STORE_PARAMS);
+extern GLboolean _mesa_texstore_depth_component_float32(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgb565(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba8888(STORE_PARAMS);
+extern GLboolean _mesa_texstore_argb8888(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgb888(STORE_PARAMS);
+extern GLboolean _mesa_texstore_argb4444(STORE_PARAMS);
+extern GLboolean _mesa_texstore_argb1555(STORE_PARAMS);
+extern GLboolean _mesa_texstore_al88(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgb332(STORE_PARAMS);
+extern GLboolean _mesa_texstore_a8(STORE_PARAMS);
+extern GLboolean _mesa_texstore_ci8(STORE_PARAMS);
+extern GLboolean _mesa_texstore_ycbcr(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba_float32(STORE_PARAMS);
+extern GLboolean _mesa_texstore_rgba_float16(STORE_PARAMS);
+
+#if !NEWTEXSTORE
 
 extern void
 _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
@@ -48,6 +84,8 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
                         GLenum srcFormat, GLenum srcType,
                         const GLvoid *srcAddr,
                         const struct gl_pixelstore_attrib *srcPacking);
+
+#endif /* NEWTEXSTORE */
 
 
 extern void

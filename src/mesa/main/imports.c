@@ -32,9 +32,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -533,7 +533,7 @@ _mesa_bitcount(unsigned int n)
  * Based on code from:
  * http://www.opengl.org/discussion_boards/ubb/Forum3/HTML/008786.html
  */
-GLhalfNV
+GLhalfARB
 _mesa_float_to_half(float val)
 {
    const int flt = *((int *) &val);
@@ -541,7 +541,7 @@ _mesa_float_to_half(float val)
    const int flt_e = (flt >> 23) & 0xff;
    const int flt_s = (flt >> 31) & 0x1;
    int s, e, m = 0;
-   GLhalfNV result;
+   GLhalfARB result;
    
    /* sign bit */
    s = flt_s;
@@ -620,7 +620,7 @@ _mesa_float_to_half(float val)
  * http://www.opengl.org/discussion_boards/ubb/Forum3/HTML/008786.html
  */
 float
-_mesa_half_to_float(GLhalfNV val)
+_mesa_half_to_float(GLhalfARB val)
 {
    /* XXX could also use a 64K-entry lookup table */
    const int m = val & 0x3ff;

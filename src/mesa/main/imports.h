@@ -1,11 +1,3 @@
-/**
- * \file imports.h
- * Standard C library function wrappers.
- *
- * This file provides wrappers for all the standard C library functions
- * like malloc(), free(), printf(), getenv(), etc.
- */
-
 /*
  * Mesa 3-D graphics library
  * Version:  6.1
@@ -28,6 +20,15 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+
+/**
+ * \file imports.h
+ * Standard C library function wrappers.
+ *
+ * This file provides wrappers for all the standard C library functions
+ * like malloc(), free(), printf(), getenv(), etc.
  */
 
 
@@ -705,11 +706,11 @@ _mesa_log2(float x);
 extern unsigned int
 _mesa_bitcount(unsigned int n);
 
-extern GLhalfNV
+extern GLhalfARB
 _mesa_float_to_half(float f);
 
 extern float
-_mesa_half_to_float(GLhalfNV h);
+_mesa_half_to_float(GLhalfARB h);
 
 
 extern char *
