@@ -300,6 +300,8 @@ void tdfxChooseVertexState( GLcontext *ctx )
    } else if (ctx->Texture._EnabledUnits & 0x1) {
       /* unit 0 enabled */
       ind |= TDFX_W_BIT|TDFX_TEX0_BIT;
+   } else if (fxMesa->Fog.Mode != GR_FOG_DISABLE) {
+      ind |= TDFX_W_BIT;
    }
 
    if (fxMesa->Fog.Mode == GR_FOG_WITH_TABLE_ON_FOGCOORD_EXT) {
