@@ -328,11 +328,16 @@ getVisualInfoRGB(unsigned int mode)
       list[n++] = 1;
     }
   }
-#if defined(GLX_VERSION_1_1) && defined(GLX_SGIS_multisample)
+#if defined(GLX_VERSION_1_1) && (defined(GLX_SGIS_multisample) || defined(GLX_ARB_multisample))
   if (GLUT_WIND_IS_MULTISAMPLE(mode)) {
-    if (!__glutIsSupportedByGLX("GLX_SGIS_multisample"))
+    if (!__glutIsSupportedByGLX("GLX_SGIS_multisample") &&
+        !__glutIsSupportedByGLX("GLX_ARB_multisample"))
       return NULL;
+#if defined(GLX_ARB_multisample)
+    list[n++] = GLX_SAMPLES_ARB;
+#elif defined(GLX_SGIS_multisample)
     list[n++] = GLX_SAMPLES_SGIS;
+#endif
     /* XXX Is 4 a reasonable minimum acceptable number of
        samples? */
     list[n++] = 4;
