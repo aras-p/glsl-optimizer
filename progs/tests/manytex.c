@@ -1,4 +1,4 @@
-/* $Id: manytex.c,v 1.1 2000/08/02 17:57:56 brianp Exp $ */
+/* $Id: manytex.c,v 1.2 2000/10/23 23:32:22 brianp Exp $ */
 
 /*
  * test handling of many texture maps
@@ -18,6 +18,7 @@
 
 static GLint NumTextures = 20;
 static GLuint *TextureID = NULL;
+static GLint *TextureWidth = NULL, *TextureHeight = NULL;
 static GLboolean *TextureResidency = NULL;
 static GLint TexWidth = 128, TexHeight = 128;
 static GLfloat Zrot = 0;
@@ -28,7 +29,6 @@ static GLboolean LinearFilter = GL_FALSE;
 static GLboolean RandomSize = GL_FALSE;
 static GLint Rows, Columns;
 static GLuint LowPriorityCount = 0;
-
 
 
 static void Idle( void )
@@ -45,6 +45,7 @@ static void Display( void )
    GLint i;
 
    /* test residency */
+   if (0)
    {
       GLboolean b;
       GLint i, resident;
@@ -71,6 +72,11 @@ static void Display( void )
       GLfloat x = col * spacing + spacing * 0.5;
       GLfloat y = row * spacing + spacing * 0.5;
 
+      GLfloat maxDim = (TextureWidth[i] > TextureHeight[i])
+         ? TextureWidth[i] : TextureHeight[i];
+      GLfloat w = TextureWidth[i] / maxDim;
+      GLfloat h = TextureHeight[i] / maxDim;
+
       glPushMatrix();
          glTranslatef(x, y, 0.0);
          glRotatef(Zrot, 0, 0, 1);
@@ -78,10 +84,17 @@ static void Display( void )
 
          glBindTexture(GL_TEXTURE_2D, TextureID[i]);
          glBegin(GL_POLYGON);
+#if 0
          glTexCoord2f(0, 0);  glVertex2f(-1, -1);
          glTexCoord2f(1, 0);  glVertex2f( 1, -1);
          glTexCoord2f(1, 1);  glVertex2f( 1,  1);
          glTexCoord2f(0, 1);  glVertex2f(-1,  1);
+#else
+         glTexCoord2f(0, 0);  glVertex2f(-w, -h);
+         glTexCoord2f(1, 0);  glVertex2f( w, -h);
+         glTexCoord2f(1, 1);  glVertex2f( w,  h);
+         glTexCoord2f(0, 1);  glVertex2f(-w,  h);
+#endif
          glEnd();
       glPopMatrix();
    }
@@ -100,6 +113,17 @@ static void Reshape( int width, int height )
    glOrtho(0, width, 0, height, -1, 1);
    glMatrixMode( GL_MODELVIEW );
    glLoadIdentity();
+}
+
+
+/*
+ * Return a random int in [min, max].
+ */
+static int RandomInt(int min, int max)
+{
+   int i = rand();
+   int j = i % (max - min + 1);
+   return min + j;
 }
 
 
@@ -148,6 +172,15 @@ static void Init( void )
       assert(TextureResidency);
    }
 
+   if (!TextureWidth) {
+      TextureWidth = (GLint *) malloc(sizeof(GLint) * NumTextures);
+      assert(TextureWidth);
+   }
+   if (!TextureHeight) {
+      TextureHeight = (GLint *) malloc(sizeof(GLint) * NumTextures);
+      assert(TextureHeight);
+   }
+
    for (i = 0; i < NumTextures; i++) {
       GLubyte color[4];
       GLubyte *texImage;
@@ -162,10 +195,19 @@ static void Init( void )
          glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 0.5F);
 
       if (RandomSize) {
+#if 0
          int k = (glutGet(GLUT_ELAPSED_TIME) % 7) + 2;
          TexWidth  = 1 << k;
          TexHeight = 1 << k;
+#else
+         TexWidth = 1 << RandomInt(2, 7);
+         TexHeight = 1 << RandomInt(2, 7);
+         printf("Random size of %3d: %d x %d\n", i, TexWidth, TexHeight);
+#endif
       }
+
+      TextureWidth[i] = TexWidth;
+      TextureHeight[i] = TexHeight;
 
       texImage = (GLubyte*) malloc(4 * TexWidth * TexHeight * sizeof(GLubyte));
       assert(texImage);
@@ -211,6 +253,16 @@ static void Init( void )
          }
       }
       else {
+         /* Set corners to white */
+         int k = 0;
+         texImage[k+0] = texImage[k+1] = texImage[k+2] = texImage[k+3] = 255;
+         k = (TexWidth - 1) * 4;
+         texImage[k+0] = texImage[k+1] = texImage[k+2] = texImage[k+3] = 255;
+         k = (TexWidth * TexHeight - TexWidth) * 4;
+         texImage[k+0] = texImage[k+1] = texImage[k+2] = texImage[k+3] = 255;
+         k = (TexWidth * TexHeight - 1) * 4;
+         texImage[k+0] = texImage[k+1] = texImage[k+2] = texImage[k+3] = 255;
+
          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TexWidth, TexHeight, 0,
                       GL_RGBA, GL_UNSIGNED_BYTE, texImage);
          if (LinearFilter) {
@@ -242,6 +294,9 @@ static void Key( unsigned char key, int x, int y )
             glutIdleFunc(Idle);
          else
             glutIdleFunc(NULL);
+         break;
+      case 's':
+         Idle();
          break;
       case 'z':
          Zrot -= step;
