@@ -1,8 +1,8 @@
-/* $Id: shadowtex.c,v 1.4 2001/02/28 18:41:50 brianp Exp $ */
+/* $Id: shadowtex.c,v 1.5 2002/02/16 14:54:18 brianp Exp $ */
 
 /*
- * Shadow demo using the GL_SGIX_depth_texture, GL_SGIX_shadow and
- * GL_SGIX_shadow_ambient extensions.
+ * Shadow demo using the GL_ARB_depth_texture, GL_ARB_shadow and
+ * GL_ARB_shadow_ambient extensions (or the old SGIX extensions).
  *
  * Brian Paul
  * 19 Feb 2001
@@ -34,6 +34,12 @@
 #include <math.h>
 #include <GL/glut.h>
 #include "../util/showbuffer.c"
+
+#if 0 /* change to 1 if you want to use the old SGIX extensions */
+#undef GL_ARB_depth_texture
+#undef GL_ARB_shadow
+#undef GL_ARB_shadow_ambient
+#endif
 
 
 #define DEG_TO_RAD (3.14159 / 180.0)
@@ -302,7 +308,11 @@ Display(void)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       }
       if (DisplayMode == SHOW_DEPTH_MAPPING) {
+#if defined(GL_ARB_shadow)
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+#elif defined(GL_SGIX_shadow)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_SGIX, GL_FALSE);
+#endif
          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
          glEnable(GL_TEXTURE_2D);
          MakeShadowMatrix(LightPos, SpotDir, SpotAngle, ShadowNear, ShadowFar);
@@ -318,7 +328,12 @@ Display(void)
       }
       else {
          assert(DisplayMode == SHOW_NORMAL);
+#if defined(GL_ARB_shadow)
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB,
+                         GL_COMPARE_R_TO_TEXTURE_ARB);
+#elif defined(GL_SGIX_shadow)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_SGIX, GL_TRUE);
+#endif
          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
          glEnable(GL_TEXTURE_2D);
          MakeShadowMatrix(LightPos, SpotDir, SpotAngle, ShadowNear, ShadowFar);
@@ -454,11 +469,21 @@ SpecialKey(int key, int x, int y)
 static void
 Init(void)
 {
+#if defined(GL_ARB_depth_texture) && defined(GL_ARB_shadow)
+   if (!glutExtensionSupported("GL_ARB_depth_texture") ||
+       !glutExtensionSupported("GL_ARB_shadow")) {
+      printf("Sorry, this demo requires the GL_ARB_depth_texture and GL_ARB_shadow extensions\n");
+      exit(1);
+   }
+   printf("Using GL_ARB_depth_texture and GL_ARB_shadow\n");
+#elif defined(GL_SGIX_depth_texture) && defined(GL_SGIX_shadow)
    if (!glutExtensionSupported("GL_SGIX_depth_texture") ||
        !glutExtensionSupported("GL_SGIX_shadow")) {
       printf("Sorry, this demo requires the GL_SGIX_depth_texture and GL_SGIX_shadow extensions\n");
       exit(1);
    }
+   printf("Using GL_SGIX_depth_texture and GL_SGIX_shadow\n");
+#endif
 
    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -466,13 +491,25 @@ Init(void)
    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-#ifdef GL_SGIX_shadow
+#if defined(GL_ARB_shadow)
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB,
+                   GL_COMPARE_R_TO_TEXTURE_ARB);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+#elif defined(GL_SGIX_shadow)
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_OPERATOR_SGIX,
                    GL_TEXTURE_LEQUAL_R_SGIX);
 #endif
-#ifdef GL_SGIX_shadow_ambient
-   if (glutExtensionSupported("GL_SGIX_shadow_ambient"))
+
+#if defined(GL_ARB_shadow_ambient)
+   if (glutExtensionSupported("GL_ARB_shadow_ambient")) {
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 0.3);
+      printf("and GL_ARB_shadow_ambient\n");
+   }
+#elif defined(GL_SGIX_shadow_ambient)
+   if (glutExtensionSupported("GL_SGIX_shadow_ambient")) {
       glTexParameterf(GL_TEXTURE_2D, GL_SHADOW_AMBIENT_SGIX, 0.3);
+      printf("and GL_SGIX_shadow_ambient\n");
+   }
 #endif
 
    /* setup 1-D grayscale texture image for SHOW_DISTANCE mode */
