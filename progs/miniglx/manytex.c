@@ -1,4 +1,4 @@
-/* $Id: manytex.c,v 1.1 2003/08/06 17:47:15 keithw Exp $ */
+/* $Id: manytex.c,v 1.2 2003/08/23 01:28:59 jonsmirl Exp $ */
 
 /*
  * test handling of many texture maps
@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <GL/glut.h>
 

@@ -1,4 +1,4 @@
-/* $Id: sample_server2.c,v 1.1 2003/08/06 17:47:15 keithw Exp $ */
+/* $Id: sample_server2.c,v 1.2 2003/08/23 01:28:59 jonsmirl Exp $ */
 
 /*
  * Sample server that just keeps first available window mapped.
@@ -17,6 +17,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 #include <GL/gl.h>
 #include <GL/miniglx.h>
 #include <errno.h>

@@ -1,4 +1,4 @@
-/* $Id: miniglxtest.c,v 1.1 2003/08/06 17:47:15 keithw Exp $ */
+/* $Id: miniglxtest.c,v 1.2 2003/08/23 01:28:59 jonsmirl Exp $ */
 
 /*
  * Test the mini GLX interface.
@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <GL/gl.h>
 #define USE_MINI_GLX 1
 #if USE_MINI_GLX
