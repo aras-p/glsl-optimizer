@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.136 2001/05/03 14:11:18 brianp Exp $ */
+/* $Id: context.c,v 1.137 2001/05/07 16:32:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1494,7 +1494,7 @@ _mesa_initialize_context( GLcontext *ctx,
       ctx->DepthMax = 0xffffffff;
       ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
    }
-   ctx->MRD = 2.0;  /* XXX temporary value */
+   ctx->MRD = 1.0;  /* Minimum resolvable depth value, for polygon offset */
 
 
 #if defined(MESA_TRACE)
