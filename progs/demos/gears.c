@@ -1,4 +1,3 @@
-
 /*
  * 3-D gear wheels.  This program is in the public domain.
  *
@@ -27,6 +26,7 @@
 static GLint T0 = 0;
 static GLint Frames = 0;
 static GLint autoexit = 0;
+
 
 /**
 
@@ -215,7 +215,14 @@ draw(void)
 static void
 idle(void)
 {
-  angle += 2.0;
+  static double t0 = -1.;
+  double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+  if (t0 < 0.0)
+    t0 = t;
+  dt = t - t0;
+  t0 = t;
+
+  angle += 70.0 * dt;  /* 90 degrees per second */
   glutPostRedisplay();
 }
 
