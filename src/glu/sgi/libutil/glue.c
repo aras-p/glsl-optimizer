@@ -31,52 +31,52 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/09/20 21:50:53 $ $Revision: 1.2 $
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/glue.c,v 1.2 2001/09/20 21:50:53 kschultz Exp $
+** $Date: 2001/09/24 09:40:40 $ $Revision: 1.3 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libutil/glue.c,v 1.3 2001/09/24 09:40:40 joukj Exp $
 */
 
 #include <stdlib.h>
 #include "gluint.h"
 
 static unsigned char *__gluNurbsErrors[] = {
-    " ",
-    "spline order un-supported",
-    "too few knots",
-    "valid knot range is empty",
-    "decreasing knot sequence knot",
-    "knot multiplicity greater than order of spline",
-    "gluEndCurve() must follow gluBeginCurve()",
-    "gluBeginCurve() must precede gluEndCurve()",
-    "missing or extra geometric data",
-    "can't draw piecewise linear trimming curves",
-    "missing or extra domain data",
-    "missing or extra domain data",
-    "gluEndTrim() must precede gluEndSurface()",
-    "gluBeginSurface() must precede gluEndSurface()",
-    "curve of improper type passed as trim curve",
-    "gluBeginSurface() must precede gluBeginTrim()",
-    "gluEndTrim() must follow gluBeginTrim()",
-    "gluBeginTrim() must precede gluEndTrim()",
-    "invalid or missing trim curve",
-    "gluBeginTrim() must precede gluPwlCurve()",
-    "piecewise linear trimming curve referenced twice",
-    "piecewise linear trimming curve and nurbs curve mixed",
-    "improper usage of trim data type",
-    "nurbs curve referenced twice",
-    "nurbs curve and piecewise linear trimming curve mixed",
-    "nurbs surface referenced twice",
-    "invalid property",
-    "gluEndSurface() must follow gluBeginSurface()",
-    "intersecting or misoriented trim curves",
-    "intersecting trim curves",
-    "UNUSED",
-    "unconnected trim curves",
-    "unknown knot error",
-    "negative vertex count encountered",
-    "negative byte-stride encounteed",
-    "unknown type descriptor",
-    "null control point reference",
-    "duplicate point on piecewise linear trimming curve",
+    (unsigned char*) " ",
+    (unsigned char*) "spline order un-supported",
+    (unsigned char*) "too few knots",
+    (unsigned char*) "valid knot range is empty",
+    (unsigned char*) "decreasing knot sequence knot",
+    (unsigned char*) "knot multiplicity greater than order of spline",
+    (unsigned char*) "gluEndCurve() must follow gluBeginCurve()",
+    (unsigned char*) "gluBeginCurve() must precede gluEndCurve()",
+    (unsigned char*) "missing or extra geometric data",
+    (unsigned char*) "can't draw piecewise linear trimming curves",
+    (unsigned char*) "missing or extra domain data",
+    (unsigned char*) "missing or extra domain data",
+    (unsigned char*) "gluEndTrim() must precede gluEndSurface()",
+    (unsigned char*) "gluBeginSurface() must precede gluEndSurface()",
+    (unsigned char*) "curve of improper type passed as trim curve",
+    (unsigned char*) "gluBeginSurface() must precede gluBeginTrim()",
+    (unsigned char*) "gluEndTrim() must follow gluBeginTrim()",
+    (unsigned char*) "gluBeginTrim() must precede gluEndTrim()",
+    (unsigned char*) "invalid or missing trim curve",
+    (unsigned char*) "gluBeginTrim() must precede gluPwlCurve()",
+    (unsigned char*) "piecewise linear trimming curve referenced twice",
+    (unsigned char*) "piecewise linear trimming curve and nurbs curve mixed",
+    (unsigned char*) "improper usage of trim data type",
+    (unsigned char*) "nurbs curve referenced twice",
+    (unsigned char*) "nurbs curve and piecewise linear trimming curve mixed",
+    (unsigned char*) "nurbs surface referenced twice",
+    (unsigned char*) "invalid property",
+    (unsigned char*) "gluEndSurface() must follow gluBeginSurface()",
+    (unsigned char*) "intersecting or misoriented trim curves",
+    (unsigned char*) "intersecting trim curves",
+    (unsigned char*) "UNUSED",
+    (unsigned char*) "unconnected trim curves",
+    (unsigned char*) "unknown knot error",
+    (unsigned char*) "negative vertex count encountered",
+    (unsigned char*) "negative byte-stride encounteed",
+    (unsigned char*) "unknown type descriptor",
+    (unsigned char*) "null control point reference",
+    (unsigned char*) "duplicate point on piecewise linear trimming curve",
 };
 
 const unsigned char *__gluNURBSErrorString( int errnum )
@@ -85,13 +85,13 @@ const unsigned char *__gluNURBSErrorString( int errnum )
 }
 
 static unsigned char *__gluTessErrors[] = {
-    " ",
-    "gluTessBeginPolygon() must precede a gluTessEndPolygon()",
-    "gluTessBeginContour() must precede a gluTessEndContour()",
-    "gluTessEndPolygon() must follow a gluTessBeginPolygon()",
-    "gluTessEndContour() must follow a gluTessBeginContour()",
-    "a coordinate is too large",
-    "need combine callback",
+    (unsigned char*) " ",
+    (unsigned char*) "gluTessBeginPolygon() must precede a gluTessEndPolygon()",
+    (unsigned char*) "gluTessBeginContour() must precede a gluTessEndContour()",
+    (unsigned char*) "gluTessEndPolygon() must follow a gluTessBeginPolygon()",
+    (unsigned char*) "gluTessEndContour() must follow a gluTessBeginContour()",
+    (unsigned char*) "a coordinate is too large",
+    (unsigned char*) "need combine callback",
 };
 
 const unsigned char *__gluTessErrorString( int errnum )
