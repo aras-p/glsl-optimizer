@@ -1,9 +1,16 @@
 /* prototypes for the Mesa WGL functions */
 /* relocated here so that I could make GLUT get them properly */
 
-#ifndef GL_H
-#   include <gl/gl.h>
+#ifndef _mesa_wgl_h_
+#define _mesa_wgl_h_
+
+
+#include <gl/gl.h>
+
+#ifdef __cplusplus
+extern "C" {
 #endif
+
 
 #ifdef _MSC_VER
 #  pragma warning( push )
@@ -37,10 +44,17 @@ WGLAPI int   GLAPIENTRY wglUseFontOutlinesA(HDC, unsigned long, unsigned long, u
 WGLAPI int   GLAPIENTRY wglUseFontOutlinesW(HDC, unsigned long, unsigned long, unsigned long, float,float, int, LPGLYPHMETRICSFLOAT);
 WGLAPI int   GLAPIENTRY SwapBuffers(HDC);
 WGLAPI int   GLAPIENTRY ChoosePixelFormat(HDC,const PIXELFORMATDESCRIPTOR *);
-WGLAPI int   GLAPIENTRY DescribePixelFormat(HDC,int,unsigned int,PIXELFORMATDESCRIPTOR *);
+WGLAPI int   GLAPIENTRY DescribePixelFormat(HDC,int,unsigned int,LPPIXELFORMATDESCRIPTOR);
 WGLAPI int   GLAPIENTRY GetPixelFormat(HDC);
 WGLAPI int   GLAPIENTRY SetPixelFormat(HDC,int,const PIXELFORMATDESCRIPTOR *);
 
 #ifdef _MSC_VER
 #  pragma warning( pop )
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif /* _mesa_wgl_h_ */

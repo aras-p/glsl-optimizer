@@ -152,7 +152,7 @@ typedef unsigned long COLORREF;
 #		define wglUseFontOutlines  wglUseFontOutlinesA
 #	endif /* !UNICODE */
 typedef struct tagLAYERPLANEDESCRIPTOR LAYERPLANEDESCRIPTOR, *PLAYERPLANEDESCRIPTOR, *LPLAYERPLANEDESCRIPTOR;
-typedef struct _GLYPHMETRICSFLOAT GLYPHMETRICSFLOAT, *PGLYPHMETRICSFLOAT, *LPGLYPHMETRICSFLOAT
+typedef struct _GLYPHMETRICSFLOAT GLYPHMETRICSFLOAT, *PGLYPHMETRICSFLOAT, *LPGLYPHMETRICSFLOAT;
 #  pragma warning( push )
 #  pragma warning( disable : 4273 ) /* 'function' : inconsistent DLL linkage. dllexport assumed. */
 #  define WGLAPI __declspec(dllimport)
@@ -183,7 +183,7 @@ WGLAPI int   GLAPIENTRY wglUseFontOutlinesA(HDC, unsigned long, unsigned long, u
 WGLAPI int   GLAPIENTRY wglUseFontOutlinesW(HDC, unsigned long, unsigned long, unsigned long, float,float, int, LPGLYPHMETRICSFLOAT);
 WGLAPI int   GLAPIENTRY SwapBuffers(HDC);
 WGLAPI int   GLAPIENTRY ChoosePixelFormat(HDC,const PIXELFORMATDESCRIPTOR *);
-WGLAPI int   GLAPIENTRY DescribePixelFormat(HDC,int,unsigned long,LPPIXELFORMATDESCRIPTOR);
+WGLAPI int   GLAPIENTRY DescribePixelFormat(HDC,int,unsigned int,LPPIXELFORMATDESCRIPTOR);
 WGLAPI int   GLAPIENTRY GetPixelFormat(HDC);
 WGLAPI int   GLAPIENTRY SetPixelFormat(HDC,int,const PIXELFORMATDESCRIPTOR *);
 #  undef WGLAPI
@@ -739,7 +739,6 @@ GLUTAPI int GLUTAPIENTRY glutGameModeGet(GLenum mode);
 
 #ifdef __cplusplus
 }
-
 #endif
 
 #if 0
