@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.3 1999/12/15 12:52:31 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.4 1999/12/16 12:36:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2561,6 +2561,211 @@ KEYWORD1 void KEYWORD2 NAME(CopyTexSubImage3DEXT)(GLenum target, GLint level, GL
 
 
 
+/* 7. GL_SGI_texture_filter4 */
+
+KEYWORD1 void KEYWORD2 NAME(GetTexFilterFuncSGIS)(GLenum target, GLenum filter, GLsizei n, const GLfloat *weights)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetTexFilterFuncSGIS, (target, filter, n, weights));
+}
+
+KEYWORD1 void KEYWORD2 NAME(TexFilterFuncSGIS)(GLenum target, GLenum filter, GLfloat *weights)
+{
+   DISPATCH_SETUP;
+   DISPATCH(TexFilterFuncSGIS, (target, filter, weights));
+}
+
+
+
+/* 9. GL_EXT_subtexture */
+
+KEYWORD1 void KEYWORD2 NAME(CopyTexSubImage1DEXT)(GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width)
+{
+   DISPATCH_SETUP;
+   DISPATCH(CopyTexSubImage1DEXT, (target, level, xoffset, x, y, width));
+}
+
+KEYWORD1 void KEYWORD2 NAME(TexSubImage1DEXT)(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels)
+{
+   DISPATCH_SETUP;
+   DISPATCH(TexSubImage1DEXT, (target, level, xoffset, width, format, type, pixels));
+}
+
+KEYWORD1 void KEYWORD2 NAME(TexSubImage2DEXT)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels)
+{
+   DISPATCH_SETUP;
+   DISPATCH(TexSubImage2DEXT, (target, level, xoffset, yoffset, width, height, format, type, pixels));
+}
+
+
+/* 10. GL_EXT_copy_texture */
+
+KEYWORD1 void KEYWORD2 NAME(CopyTexImage1DEXT)(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border)
+{
+   DISPATCH_SETUP;
+   DISPATCH(CopyTexImage1DEXT, (target, level, internalformat, x, y, width, border));
+}
+
+KEYWORD1 void KEYWORD2 NAME(CopyTexImage2DEXT)(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border)
+{
+   DISPATCH_SETUP;
+   DISPATCH(CopyTexImage2DEXT, (target, level, internalformat, x, y, width, height, border));
+}
+
+
+KEYWORD1 void KEYWORD2 NAME(CopyTexSubImage2DEXT)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height)
+{
+   DISPATCH_SETUP;
+   DISPATCH(CopyTexSubImage2DEXT, (target, level, xoffset, yoffset, x, y, width, height));
+}
+
+
+
+/* 11. GL_EXT_histogram */
+KEYWORD1 void KEYWORD2 NAME(GetHistogramEXT)(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetHistogramEXT, (target, reset, format, type, values));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetHistogramParameterfvEXT)(GLenum target, GLenum pname, GLfloat *params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetHistogramParameterfvEXT, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetHistogramParameterivEXT)(GLenum target, GLenum pname, GLint *params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetHistogramParameterivEXT, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetMinmaxEXT)(GLenum target, GLboolean reset, GLenum format, GLenum types, GLvoid *values)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetMinmaxEXT, (target, reset, format, types, values));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetMinmaxParameterfvEXT)(GLenum target, GLenum pname, GLfloat *params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetMinmaxParameterfvEXT, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetMinmaxParameterivEXT)(GLenum target, GLenum pname, GLint *params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetMinmaxParameterivEXT, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(HistogramEXT)(GLenum target, GLsizei width, GLenum internalformat, GLboolean sink)
+{
+   DISPATCH_SETUP;
+   DISPATCH(HistogramEXT, (target, width, internalformat, sink));
+}
+
+KEYWORD1 void KEYWORD2 NAME(MinmaxEXT)(GLenum target, GLenum internalformat, GLboolean sink)
+{
+   DISPATCH_SETUP;
+   DISPATCH(MinmaxEXT, (target, internalformat, sink));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ResetHistogramEXT)(GLenum target)
+{
+   DISPATCH_SETUP;
+   DISPATCH(ResetHistogramEXT, (target));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ResetMinmaxEXT)(GLenum target)
+{
+   DISPATCH_SETUP;
+   DISPATCH(ResetMinmaxEXT, (target));
+}
+
+
+
+/* 12. GL_EXT_convolution */
+
+KEYWORD1 void KEYWORD2 NAME(ConvolutionFilter1DEXT)(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *image)
+{
+   DISPATCH_SETUP;
+   DISPATCH(ConvolutionFilter1DEXT, (target, internalformat, width, format, type, image));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ConvolutionFilter2DEXT)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image)
+{
+   DISPATCH_SETUP;
+   DISPATCH(ConvolutionFilter2DEXT, (target, internalformat, width, height, format, type, image));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ConvolutionParameterfEXT)(GLenum target, GLenum pname, GLfloat params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(ConvolutionParameterfEXT, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ConvolutionParameterfvEXT)(GLenum target, GLenum pname, const GLfloat *params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(ConvolutionParameterfvEXT, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ConvolutionParameteriEXT)(GLenum target, GLenum pname, GLint params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(ConvolutionParameteriEXT, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ConvolutionParameterivEXT)(GLenum target, GLenum pname, const GLint *params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(ConvolutionParameterivEXT, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(CopyConvolutionFilter1DEXT)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
+{
+   DISPATCH_SETUP;
+   DISPATCH(CopyConvolutionFilter1DEXT, (target, internalformat, x, y, width));
+}
+
+KEYWORD1 void KEYWORD2 NAME(CopyConvolutionFilter2DEXT)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height)
+{
+   DISPATCH_SETUP;
+   DISPATCH(CopyConvolutionFilter2DEXT, (target, internalformat, x, y, width, height));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetConvolutionFilterEXT)(GLenum target, GLenum format, GLenum type, GLvoid *image)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetConvolutionFilterEXT, (target, format, type, image));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetConvolutionParameterfvEXT)(GLenum target, GLenum pname, GLfloat *params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetConvolutionParameterfvEXT, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetConvolutionParameterivEXT)(GLenum target, GLenum pname, GLint *params)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetConvolutionParameterivEXT, (target, pname, params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(GetSeparableFilterEXT)(GLenum target, GLenum format, GLenum type, GLvoid *row, GLvoid *column, GLvoid *span)
+{
+   DISPATCH_SETUP;
+   DISPATCH(GetSeparableFilterEXT, (target, format, type, row, column, span));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SeparableFilter2DEXT)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *row, const GLvoid *column)
+{
+   DISPATCH_SETUP;
+   DISPATCH(SeparableFilter2DEXT, (target, internalformat, width, height, format, type, row, column));
+}
+
+
+
 /* 20. GL_EXT_texture_object */
 
 KEYWORD1 void KEYWORD2 NAME(GenTexturesEXT)(GLsizei n, GLuint *textures)
@@ -2615,42 +2820,36 @@ KEYWORD1 void KEYWORD2 NAME(BlendEquationEXT)(GLenum mode)
 KEYWORD1 void KEYWORD2 NAME(VertexPointerEXT)(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
    DISPATCH_SETUP;
-   (void) count;
    DISPATCH(VertexPointer, (size, type, stride, ptr));
 }
 
 KEYWORD1 void KEYWORD2 NAME(NormalPointerEXT)(GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
    DISPATCH_SETUP;
-   (void) count;
    DISPATCH(NormalPointer, (type, stride, ptr));
 }
 
 KEYWORD1 void KEYWORD2 NAME(ColorPointerEXT)(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
    DISPATCH_SETUP;
-   (void) count;
    DISPATCH(ColorPointer, (size, type, stride, ptr));
 }
 
 KEYWORD1 void KEYWORD2 NAME(IndexPointerEXT)(GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
    DISPATCH_SETUP;
-   (void) count;
    DISPATCH(IndexPointer, (type, stride, ptr));
 }
 
 KEYWORD1 void KEYWORD2 NAME(TexCoordPointerEXT)(GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid *ptr)
 {
    DISPATCH_SETUP;
-   (void) count;
    DISPATCH(ColorPointer, (size, type, stride, ptr));
 }
 
 KEYWORD1 void KEYWORD2 NAME(EdgeFlagPointerEXT)(GLsizei stride, GLsizei count, const GLboolean *ptr)
 {
    DISPATCH_SETUP;
-   (void) count;
    DISPATCH(EdgeFlagPointer, (stride, ptr));
 }
 
