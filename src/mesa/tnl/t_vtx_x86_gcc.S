@@ -66,10 +66,9 @@ GLOBL ( _x86_Vertex1fv )
 	pop	%edi
 	dec	%edx		// counter--
 	movl	%edx, SUBST(3)	// 0x3 --> counter 
-	je	.5		// if (counter != 0)
-	ret			//    return
-.5:	mov     $SUBST(4), %eax	// else notify()
-        jmp     *%eax           // jmp $0x10101014 doesn't seem to work
+	.short	0x840f		// if (counter == 0)
+	.long	SUBST(4)	//    notify()
+	ret			// return
 GLOBL ( _x86_Vertex1fv_end )
 
 
@@ -94,10 +93,9 @@ GLOBL ( _x86_Vertex2fv )
 	pop	%edi
 	dec	%edx		// counter--
 	movl	%edx, SUBST(3)	// save counter
-	je	.6		// if (counter != 0)
-	ret			//    return
-.6:	mov     $SUBST(4), %eax	// else notify()
-        jmp     *%eax           // jmp $0x10101014 doesn't seem to work
+	.short	0x840f		// if (counter == 0)
+	.long	SUBST(4)	//    notify()
+	ret			// return
 GLOBL ( _x86_Vertex2fv_end )
 
 .align 4
@@ -123,10 +121,9 @@ GLOBL ( _x86_Vertex3fv )
 	pop	%edi
 	dec	%edx		// counter--
 	movl	%edx, SUBST(3)	// save counter
-	je	.7		// if (counter != 0)
-	ret			//    return
-.7:	mov     $SUBST(4), %eax	// else notify()
-        jmp     *%eax           // jmp $0x10101014 doesn't seem to work
+	.short	0x840f		// if (counter == 0)
+	.long	SUBST(4)	//    notify()
+	ret			// return
 GLOBL ( _x86_Vertex3fv_end )
 
 			
@@ -155,10 +152,9 @@ GLOBL ( _x86_Vertex4fv )
 	pop	%edi
 	dec	%edx		// counter--
 	movl	%edx, SUBST(3)	// save counter
-	je	.6		// if (counter != 0)
-	ret			//    return
-.8:	mov     $SUBST(4), %eax	// else notify()
-        jmp     *%eax           // jmp $0x10101014 doesn't seem to work
+	.short	0x840f		// if (counter == 0)
+	.long	SUBST(4)	//    notify()
+	ret			// return
 GLOBL ( _x86_Vertex4fv_end )
 
 

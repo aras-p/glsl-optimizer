@@ -109,6 +109,25 @@ do {							\
 
 
 
+#define FIXUPREL( CODE, KNOWN_OFFSET, CHECKVAL, NEWVAL )\
+do {							\
+   GLuint subst = 0x10101010 + CHECKVAL;		\
+							\
+   if (DONT_KNOW_OFFSETS) {				\
+      while (*(int *)(CODE+offset) != subst) offset++;	\
+      *(int *)(CODE+offset) = (int)(NEWVAL) - ((int)(CODE)+offset) - 4; \
+      if (0) fprintf(stderr, "%s/%d: offset %d, new value: 0x%x\n", __FILE__, __LINE__, offset, (int)(NEWVAL) - ((int)(CODE)+offset) - 4); \
+      offset += 4;					\
+   }							\
+   else {						\
+      int *icode = (int *)(CODE+KNOWN_OFFSET);		\
+      assert (*icode == subst);				\
+      *icode = (int)(NEWVAL) - (int)(icode) - 4;	\
+   }							\
+} while (0)
+
+
+
 
 /* Build specialized versions of the immediate calls on the fly for
  * the current state.  Generic x86 versions.
@@ -125,7 +144,7 @@ static struct _tnl_dynfn *makeX86Vertex1fv( GLcontext *ctx, int vertex_size )
    FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
-   FIXUP(dfn->code, 0, 4, (int)&notify);
+   FIXUPREL(dfn->code, 0, 4, (int)&notify);
 
    return dfn;
 }
@@ -141,7 +160,7 @@ static struct _tnl_dynfn *makeX86Vertex2fv( GLcontext *ctx, int vertex_size )
    FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
-   FIXUP(dfn->code, 0, 4, (int)&notify);
+   FIXUPREL(dfn->code, 0, 4, (int)&notify);
 
    return dfn;
 }
@@ -157,7 +176,7 @@ static struct _tnl_dynfn *makeX86Vertex3fv( GLcontext *ctx, int vertex_size )
    FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
-   FIXUP(dfn->code, 0, 4, (int)&notify);
+   FIXUPREL(dfn->code, 0, 4, (int)&notify);
    return dfn;
 }
 
@@ -172,7 +191,7 @@ static struct _tnl_dynfn *makeX86Vertex4fv( GLcontext *ctx, int vertex_size )
    FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
    FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
-   FIXUP(dfn->code, 0, 4, (int)&notify);
+   FIXUPREL(dfn->code, 0, 4, (int)&notify);
 
    return dfn;
 }
