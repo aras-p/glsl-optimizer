@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.2 1999/11/11 01:22:25 brianp Exp $ */
+/* $Id: context.h,v 1.3 1999/11/19 22:26:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,39 +30,6 @@
 
 
 #include "types.h"
-
-
-#ifdef THREADS
-   /*
-    * A seperate GLcontext for each thread
-    */
-   extern GLcontext *gl_get_thread_context( void );
-
-#define GET_IMMEDIATE struct immediate *IM = (gl_get_thread_context())->input;
-#define SET_IMMEDIATE(ctx, im)		\
-do {					\
-   ctx->input = im;			\
-} while (0)
-
-
-#else
-   /*
-    * All threads use same pointer to current context.
-    */
-   extern GLcontext *_mesa_current_context;
-   extern struct immediate *CURRENT_INPUT;
-   #define GET_CURRENT_CONTEXT(C)  GLcontext *C = _mesa_current_context
-
-#define GET_IMMEDIATE struct immediate *IM = CURRENT_INPUT
-#define SET_IMMEDIATE(ctx, im)		\
-do {					\
-   ctx->input = im;			\
-   CURRENT_INPUT = im;			\
-} while (0)
-
-
-#endif
-
 
 
 /*
@@ -121,6 +88,10 @@ extern void gl_destroy_context( GLcontext *ctx );
  */
 extern void gl_context_initialize( GLcontext *ctx );
 
+
+extern void gl_copy_context(const GLcontext *src, GLcontext *dst, GLuint mask);
+
+
 /*
  * Create/destroy a GLframebuffer.  A GLframebuffer is like a GLX drawable.
  * It bundles up the depth buffer, stencil buffer and accum buffers into a
@@ -136,7 +107,40 @@ extern void gl_make_current( GLcontext *ctx, GLframebuffer *buffer );
 
 extern GLcontext *gl_get_current_context(void);
 
-extern void gl_copy_context(const GLcontext *src, GLcontext *dst, GLuint mask);
+
+#ifdef THREADS
+   /*
+    * A seperate GLcontext for each thread
+    */
+
+   #define GET_CURRENT_CONTEXT(C)  GLcontext *C = gl_get_current_context()
+
+#define GET_IMMEDIATE struct immediate *IM = (gl_get_current_context())->input;
+#define SET_IMMEDIATE(ctx, im)		\
+do {					\
+   ctx->input = im;			\
+} while (0)
+
+
+#else
+   /*
+    * All threads use same pointer to current context.
+    */
+   extern GLcontext *_mesa_current_context;
+   extern struct immediate *CURRENT_INPUT;
+   #define GET_CURRENT_CONTEXT(C)  GLcontext *C = _mesa_current_context
+
+#define GET_IMMEDIATE struct immediate *IM = CURRENT_INPUT
+#define SET_IMMEDIATE(ctx, im)		\
+do {					\
+   ctx->input = im;			\
+   CURRENT_INPUT = im;			\
+} while (0)
+
+
+#endif
+
+
 
 extern void
 _mesa_swapbuffers(GLcontext *ctx);

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.20 1999/11/15 22:21:47 brianp Exp $ */
+/* $Id: context.c,v 1.21 1999/11/19 22:26:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -93,22 +93,11 @@
 
 #ifdef THREADS
 
-#include "mthreads.h" /* Mesa platform independent threads interface */
-
+#include "mthreads.h"
 static MesaTSD mesa_ctx_tsd;
-
 static void mesa_ctx_thread_init() {
   MesaInitTSD(&mesa_ctx_tsd);
 }
-
-GLcontext *gl_get_thread_context( void ) {
-  return (GLcontext *) MesaGetTSD(&mesa_ctx_tsd);
-}
-
-static void set_thread_context( GLcontext *ctx ) {
-  MesaSetTSD(&mesa_ctx_tsd, ctx, mesa_ctx_thread_init);
-}
-
 
 #else
 
@@ -1498,19 +1487,20 @@ void gl_make_current( GLcontext *newCtx, GLframebuffer *buffer )
       ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(oldCtx, "gl_make_current");
    }
 
-#ifdef THREADS
-   /* TODO: unbind old buffer from context? */
-   set_thread_context( newCtx );
-#else
    if (oldCtx && oldCtx->Buffer) {
       /* unbind frame buffer from context */
       oldCtx->Buffer = NULL;
    }
+
+#ifdef THREADS
+   /* TODO: unbind old buffer from context? */
+   MesaSetTSD(&mesa_ctx_tsd, (void *) newCtx, mesa_ctx_thread_init);
+#else
    _mesa_current_context = newCtx;
+#endif
    if (newCtx) {
       SET_IMMEDIATE(newCtx, newCtx->input);
    }
-#endif
 
    if (newCtx)
       _glapi_set_dispatch(newCtx->CurrentDispatch);
@@ -1529,12 +1519,12 @@ void gl_make_current( GLcontext *newCtx, GLframebuffer *buffer )
 
 
 /*
- * Return current context handle.
+ * Return current context handle for the calling thread.
  */
 GLcontext *gl_get_current_context( void )
 {
 #ifdef THREADS
-   return gl_get_thread_context();
+   return (GLcontext *) MesaGetTSD(&mesa_ctx_tsd);
 #else
    return _mesa_current_context;
 #endif
