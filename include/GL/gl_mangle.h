@@ -502,6 +502,7 @@
 #define glInstrumentsBufferSGIX		MANGLE(InstrumentsBufferSGIX)
 #define glInterleavedArrays		MANGLE(InterleavedArrays)
 #define glIsAsyncMarkerSGIX		MANGLE(IsAsyncMarkerSGIX)
+#define glIsBufferARB		MANGLE(IsBufferARB)
 #define glIsEnabled		MANGLE(IsEnabled)
 #define glIsFenceNV		MANGLE(IsFenceNV)
 #define glIsList		MANGLE(IsList)
