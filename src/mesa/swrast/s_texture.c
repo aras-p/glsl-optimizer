@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.68 2002/10/04 19:10:13 brianp Exp $ */
+/* $Id: s_texture.c,v 1.69 2002/10/04 23:10:06 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2212,7 +2212,7 @@ sample_depth_texture( GLcontext *ctx, GLuint unit,
    const struct gl_texture_image *texImage = tObj->Image[baseLevel];
    const GLuint width = texImage->Width;
    const GLuint height = texImage->Height;
-   const GLchan ambient;
+   GLchan ambient;
    GLenum function;
    GLchan result;
 
