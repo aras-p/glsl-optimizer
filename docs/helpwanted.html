@@ -9,54 +9,64 @@
 <H1>Help Wanted</H1>
 
 <p>
-We can always use more help with the Mesa project.  Here are some
-specific areas.  If you think you can help out, post to the mesa3d-dev
-mailing list.
+We can always use more help with the Mesa project.
+Here are some specific ideas and areas where help would be appreciated:
 </p>
 
-<ul>
-<li>Windows 98/NT build/driver maintenance and testing (Karl Schultz has been
-    doing a great job of this lately)
-<li>DOS/DJGPP build/driver maintenance and testing
-<li>GGI driver/build maintenance and testing
-<li>GNU autoconfig/libtool maintenance (esp. on non-Linux systems)
-<li>x86, SSE, 3DNow! and SPARC assembly language programming
-<li>Implement WGL font functions in the WGL interface code
-<li>Implement off-screen bitmap rendering support in the WGL interface code
-<li>Help with writing/testing the new NV_fragment_program extension code
-<li>Implement the ARB_vertex/fragment extensions
-<li>Download/compile/test Mesa and report any bugs found
-</ul>
+<ol>
+<li><p>
+    Generate the src/mesa/main/enums.c file with a Python script which
+    uses the gl_API.xml file.
+    </p>
+<li><p>
+    Try to auto-generate the display list "save" functions seen in dlist.c
+    using a Python script and the gl_API.xml file.
+    The gl_API.xml file will probably need a new tag to indicate whether or
+    not each function gets compiled into display lists.
+    </p>
+<li><p>
+    Maintenance of assembly language files on Linux, Windows and SPARC systems.
+    </p>
+<li><p>
+    Help to incorporate the 3Dlabs' shading language compiler for OpenGL 2.0.
+    </p>
+<li><p>
+    Implement assembly language (SSE/MMX) code generation for
+    vertex/fragment programs.
+    </p>
+<li><p>
+    Windows 98/NT driver building, maintenance and testing
+    (Karl Schultz has been doing a great job of this lately).
+    </p>
+<li><p>
+    Maintenance and testing of various drivers, such as DOS/DJGPP, GGI, etc.
+    </p>
+<li><p>
+    Write new tests for Glean.
+    </p>
+</ol>
 
 
 <p>
 If you want to help with Mesa, first join the Mesa developer's
-mailing list.  Then post a message explaining what you might like
-to help with.  The Mesa web page has a list of a few work items
-which you may consider.
+mailing list.
+Then post a message to propose what you want to do, just to make sure
+there's no issues.
 </p>
 
 </p>
-Anyone is welcome to contribute code to the Mesa project, provided you
-agree to the copyright terms of the relevant code.  See the COPYRIGHT
-file.
+Anyone is welcome to contribute code to the Mesa project.
+By doing so, it's assumed that you agree to the code's licensing terms.
 </p>
 
 <p>
-Unfortunately, all the easy work in Mesa was done years ago.  Nowadays, the
-work is rather complicated and not suited to beginners.
-</p>
+Finally:
+<p>
 
-<p>
-If you're contribution code to the Mesa library itself:
-<p>
 <ol>
-<li>Try to write clean code (uniform indentation, comments, meaningful
-      identifiers, etc).  It must be readable and maintainable!
-
-<li>Test your code.  On several occations I've incorporated code from
-      users which later turned out to have bugs.  Now, I'm pretty hesitant
-      to use code which doesn't look good.
+<li>Try to write high-quality code that follows the existing style.
+<li>Use uniform indentation, write comments, use meaningful identifiers, etc.
+<li>Test your code thoroughly.  Include test programs if appropriate.
 </ol>
 
 
