@@ -408,8 +408,8 @@ test_framebuffer_completeness(GLcontext *ctx,
                               struct gl_framebuffer *fb)
 {
    GLint i;
-   GLuint numImages, width, height;
-   GLenum intFormat;
+   GLuint numImages, width = 0, height = 0;
+   GLenum intFormat = GL_NONE;
 
    /* Set to COMPLETE status, then try to find reasons for being incomplete */
    fb->Status = GL_FRAMEBUFFER_COMPLETE_EXT;
