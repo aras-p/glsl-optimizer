@@ -1,0 +1,64 @@
+REMOVE THIS FILE BEFORE MERGING WITH TRUNK
+------------------------------------------
+
+OUTSTANDING BUGS
+
+demos/reflect - reading back Z on Voodoo3, image offset to right
+	Fixed in latest Glide.
+
+Q3 - some polygons drawn as vertical strips, similar to bug that was
+	seen in demos/fire.  Voodoo3 only.  May be related to glDepthMask
+	or glColorMask.
+
+book/fog - not fogging
+	Fog in orthograph mode still not implemented.  Checking with
+	3dfx engineers for ideas.
+
+Q3 demo crashes after changing display settings
+	but the full Q3 game version seems OK.
+
+
+
+MORE OUTSTANDING BUGS
+
+private context was NULL! causing immediate failure of any glx prog. cant
+reproduce after restarting the X server. putting it down as halluc.
+
+texture object image was NULL, causing segmentation failure. happens with
+prboom. ive put a check in tdfx_texstate.c but this isn't a fix.
+
+prboom, wall textures near first chainsaw aren't bound properly. sideways
+movements causes the wall textures to move with you. prboom busted?
+
+16bpp mode, quake3, windowed, q3dm1, floor under rocketlauncher bands. it
+looks like multitexturing gone wrong. i'll disable a tmu and test.
+
+sof, polygons appear at wrong x,y,z positions, intermittent, have not yet
+found reliable way of reproducing. culling? sometimes polys disappear.
+
+descent3 is all black in 16bpp mode - FIXED (palette problems)
+
+smeared pixels in quake3 - FIXED (texture memory overlapped FB)
+
+
+
+PERFORMANCE COMPARISON  (Brian / Alan)
+
+  V3/16  is Voodoo3 in 16bpp on a P3/500
+  V5/16  is Voodoo5 in 16bpp on a P3/600
+  V5/32  is Voodoo5 in 32bpp on a P3/600
+  V5A/16 is Voodoo5 in 16bpp on an Alpha AXP/600
+  V5A/32 is Voodoo5 in 32bpp on an Alpha AXP/600
+
+                  tdfx-2-1-branch               tdfx-3-0-0-branch
+demo             V3/16 V5/16 V5/32       V3/16 V5/16 V5/32 V5A/16 V5A/32
+------------------------------------------------------------------------
+gloss             257   183   174         320    308  177   313    167
+fire               42                      39                52     41
+fire (no help)     98    80    50         106    113   73   124     80
+tunnel             61                      50                70     58
+tunnel (no help)  167   142    57         138    152  113   171    122
+gears             663   554   540         881   1232  776  1484    830
+teapot             20                      21                37     36
+teapot (no help)   22    14    14          24     30   30    43     42
+
