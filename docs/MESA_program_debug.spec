@@ -8,7 +8,7 @@ Name Strings
 
 Contact
 
-    Brian Paul (brian_e_paul 'at' yahoo.com)
+    Brian Paul (brian @ tungstengraphics.com)
 
 Status
 
@@ -18,7 +18,7 @@ Version
 
     Last Modified Date: July 20, 2003
     Author Revision: 1.0
-    $Date: 2003/07/21 04:23:32 $ $Revision: 1.1 $
+    $Date: 2003/07/23 15:45:25 $ $Revision: 1.2 $
 
 Number
 
@@ -41,21 +41,19 @@ Overview
     only provides the minimal hooks required to implement a debugger.
 
     There are facilities to do the following:
-    1. Query the current values of input, output and temporary registers.
-    2. Query the current program position during execution.
-    3. Have the GL call a user-specified function prior to executing
+    1. Have the GL call a user-specified function prior to executing
        each vertex or fragment instruction.
+    2. Query the current program string's execution position.
+    3. Query the current values of intermediate program values.
 
     The main feature is the ProgramCallbackMESA function.  It allows the
     user to register a callback function with the GL.  The callback will
     be called prior to executing each vertex or fragment program instruction.
-    The callback function can determine whether to return immediately (to
-    continue program execution) or stop and process user commands.
 
     From within the callback, the user may issue glGet* commands to
     query current GL state.  The GetProgramRegisterfvMESA function allows
-    all program register values to be queried (such as temporaries,
-    input attributes, and result registers).
+    current program values to be queried (such as temporaries, input
+    attributes, and result registers).
 
     There are flags for enabling/disabling the program callbacks.
 
@@ -88,7 +86,8 @@ Issues
        programs I don't see another way to do it.
 
     3. How do we prevent the user from doing something crazy in the
-       callback function, like trying to call glBegin?
+       callback function, like trying to call glBegin (leading to
+       recursion)?
 
        The rule is that the callback function can only issue glGet*()
        functions and no other GL commands.  It could be difficult to
@@ -98,8 +97,19 @@ Issues
 
     4. Is this extension amenable to hardware implementation?
 
-       Unresolved, but we'd hope so.  Perhaps the GL implementation
-       will have to fall back to a software path when debugging.
+       Hopefully, but if not, the GL implementation will have to fall
+       back to a software path when debugging.  This may be acceptable
+       for debugging.
+
+    5. What's the <data> parameter to ProgramCallbackMESA for?
+
+       It's a common programming practice to associate a user-supplied
+       value with callback functions.
+
+    6. Debuggers often allow one to modify intermediate program values,
+       then continue.  Does this extension support that?
+
+       No.
 
 
 New Procedures and Functions (and datatypes)
@@ -148,17 +158,73 @@ Operations and the Frame Buffer)
 
 Additions to Chapter 5 of the OpenGL 1.4 Specification (Special Functions)
 
-    XXX Document ProgramCallbackMESA here
+    In section 5.4 "Display Lists", page 202, add the following command
+    to the list of those that are not compiled into display lists:
+    ProgramCallbackMESA.
 
-    Add to the list of functions which cannot be included in display
-    lists:  ProgramCallbackMESA.
+
+    Add a new section 5.7 "Callback Functions"
+
+    The function
+
+        void ProgramCallbackMESA(enum target, programcallbackMESA callback,
+                                 void *data)
+
+    registers a user-defined callback function with the GL.  <target> may
+    be FRAGMENT_PROGRAM_ARB or VERTEX_PROGRAM_ARB.  Callbacks registered
+    with these targets will be called prior to executing each instruction
+    in the current fragment or vertex program, respectively.  The callbacks
+    are enabled and disabled by calling Enable or Disable with <cap>
+    FRAGMENT_PROGRAM_ARB or VERTEX_PROGRAM_ARB.
+
+    The callback function's signature must match the typedef
+
+        typedef void (*programcallbackMESA)(enum target, void *data)
+
+    When the callback function is called, <target> will either be
+    FRAGMENT_PROGRAM_ARB or VERTEX_PROGRAM_ARB to indicate which
+    program is currently executing and <data> will be the value
+    specified when ProgramCallbackMESA was called.
+
+    From within the callback function, only the following GL commands
+    may be called:
+
+        GetBooleanv
+        GetDoublev
+        GetFloatv
+        GetIntegerv
+        GetProgramLocalParameter
+        GetProgramEnvParameter
+        GetProgramRegisterfvMESA
+        GetProgramivARB
+        GetProgramStringARB
+        GetError
+
+    Calling any other command from within the callback results in
+    undefined behaviour.
 
 
 Additions to Chapter 6 of the OpenGL 1.4 Specification (State and
 State Requests)
 
-    XXX document GetProgramRegisterfvMESA here
+    Add a new section 6.1.3 "Program Value Queries":
 
+    The command
+
+        void GetProgramRegisterfvMESA(enum target, sizei len,
+                                      const ubyte *registerName,
+                                      float *v)
+        
+    Is used to query the value of program variables and registers
+    during program execution.  GetProgramRegisterMESA may only be
+    called from within a callback function registered with
+    ProgramCallbackMESA.
+
+    <registerName> and <len> specify the string name of a program
+    register (such as "R3"), input attribute (such as "vertex.color"),
+    an output attribute (such as "result.texcoord[0]") or a user-
+    defined identifier.  The current value of that variable is
+    returned as four floats in <v>.
 
 
 Additions to Appendix A of the OpenGL 1.4 Specification (Invariance)
@@ -191,9 +257,7 @@ Errors
 
     Note: INVALID_OPERAION IS NOT generated by GetProgramRegisterfvMESA,
     GetBooleanv, GetDoublev, GetFloatv, or GetIntegerv if called between
-    Begin and End.
-    These functions may be called from the user-provided callback function
-    which is called between Begin/End.
+    Begin and End when a vertex or fragment program is currently executing.
 
     INVALID_ENUM is generated by ProgramCallbackMESA,
     GetProgramRegisterfvMESA if <target> is not a program target supported
@@ -201,7 +265,7 @@ Errors
     NV_fragment_program).
 
     INVALID_VALUE is generated by GetProgramRegisterfvMESA if <registerName>
-    is not a recognized program register.
+    does not name a known program register or variable.
 
     INVALID_OPERATION is generated by GetProgramRegisterfvMESA when a
     register query is attempted for a program target that's not currently
@@ -239,47 +303,54 @@ Revision History
         Second draft. (Brian Paul)
     20 July 2003
         Third draft.  Lots of fundamental changes. (Brian Paul)
+    23 July 2003
+        Added chapter 5 and 6 spec language. (Brian Paul)
 
 Example Usage
 
-/* This is called by the GL when the vertex program is executing.
- * We can only make glGet* calls from within this function!
- */
-void DebugCallback(GLenum target, GLvoid *data)
-{
-   GLint pos;
-   GLuint i;
-
-   /* Get PC and current instruction string */
-   glGetIntegerv(GL_VERTEX_PROGRAM_POSITION_ARB, &pos);
-
-   printf("Current position: %d\n", pos);
-
-   printf("Current temporary registers:\n");
-   for (i = 0; i < 4; i++) {
-      GLfloat v[4];
-      char s[10];
-      sprintf(s, "R%d", i);
-      glGetProgramRegisterfvMESA(GL_VERTEX_PROGRAM_ARB, strlen(s), s, v);
-      printf("R%d = %g, %g, %g, %g\n", i, v[0], v[1], v[2], v[3]);
-   }
-}
+   The following is a very simple example of how this extension may
+   be used to print the values of R0, R1, R2 and R3 while executing
+   vertex programs.
 
 
-   /*
-    * elsewhere...
-    */
+    /* This is called by the GL when the vertex program is executing.
+     * We can only make glGet* calls from within this function!
+     */
+    void DebugCallback(GLenum target, GLvoid *data)
+    {
+       GLint pos;
+       GLuint i;
 
-   /* Register our debugger callback function */
-   glProgramCallbackMESA(GL_VERTEX_PROGRAM_ARB, DebugCallback, NULL);
-   glEnable(GL_VERTEX_PROGRAM_CALLBACK_MESA);
+       /* Get PC and current instruction string */
+       glGetIntegerv(GL_VERTEX_PROGRAM_POSITION_ARB, &pos);
 
-   /* define/bind a vertex program */
+       printf("Current position: %d\n", pos);
 
-   glEnable(GL_VERTEX_PROGRAM);
+       printf("Current temporary registers:\n");
+       for (i = 0; i < 4; i++) {
+	  GLfloat v[4];
+	  char s[10];
+	  sprintf(s, "R%d", i);
+	  glGetProgramRegisterfvMESA(GL_VERTEX_PROGRAM_ARB, strlen(s), s, v);
+	  printf("R%d = %g, %g, %g, %g\n", i, v[0], v[1], v[2], v[3]);
+       }
+    }
 
-   /* render something */
-   glBegin(GL_POINTS);
-   glVertex2f(0, 0);
-   glEnd();
+
+    /*
+     * elsewhere...
+     */
+
+    /* Register our debugger callback function */
+    glProgramCallbackMESA(GL_VERTEX_PROGRAM_ARB, DebugCallback, NULL);
+    glEnable(GL_VERTEX_PROGRAM_CALLBACK_MESA);
+
+    /* define/bind a vertex program */
+
+    glEnable(GL_VERTEX_PROGRAM);
+
+    /* render something */
+    glBegin(GL_POINTS);
+    glVertex2f(0, 0);
+    glEnd();
 
