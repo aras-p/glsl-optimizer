@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.9 2000/09/17 21:56:07 brianp Exp $ */
+/* $Id: macros.h,v 1.10 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -368,6 +368,9 @@ do {						\
 } while (0)
 
 
+#define COPY_CHAN4(DST, SRC)  COPY_4UBV(DST, SRC)
+
+
 /* Assign scalers to short vectors: */
 #define ASSIGN_2V( V, V0, V1 )	\
 do { 				\
@@ -499,5 +502,8 @@ do {						\
 /* a close approximation: */
 #define FLOAT_TO_INT(X)		( (GLint) (2147483647.0 * (X)) )
 
+
+/* XXX chan fix me */
+#define CHAN_TO_FLOAT(C)        ( (GLfloat) ((C) * (1.0 / CHAN_MAXF)) )
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: fog.h,v 1.6 2000/10/27 18:31:22 brianp Exp $ */
+/* $Id: fog.h,v 1.7 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,7 +53,7 @@ _mesa_Fogiv(GLenum pname, const GLint *params );
 extern void
 _mesa_fog_rgba_pixels( const GLcontext *ctx,
                        GLuint n, const GLfixed fog[],
-                       GLubyte rgba[][4] );
+                       GLchan rgba[][4] );
 
 extern void
 _mesa_fog_ci_pixels( const GLcontext *ctx,

@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.13 2000/10/19 20:09:47 brianp Exp $ */
+/* $Id: pixel.c,v 1.14 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -745,14 +745,14 @@ void
 _mesa_lookup_rgba(const struct gl_color_table *table,
                   GLuint n, GLfloat rgba[][4])
 {
-   ASSERT(table->TableType == GL_FLOAT);
+   ASSERT(table->FloatTable);
    if (!table->Table)
       return;
 
    switch (table->Format) {
       case GL_INTENSITY:
          /* replace RGBA with I */
-         if (table->TableType == GL_UNSIGNED_BYTE) {
+         if (!table->FloatTable) {
             const GLfloat scale = (GLfloat) (table->Size - 1);
             const GLubyte *lut = (const GLubyte *) table->Table;
             GLuint i;
@@ -778,7 +778,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          break;
       case GL_LUMINANCE:
          /* replace RGB with L */
-         if (table->TableType == GL_UNSIGNED_BYTE) {
+         if (!table->FloatTable) {
             const GLfloat scale = (GLfloat) (table->Size - 1);
             const GLubyte *lut = (const GLubyte *) table->Table;
             GLuint i;
@@ -801,7 +801,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          break;
       case GL_ALPHA:
          /* replace A with A */
-         if (table->TableType == GL_UNSIGNED_BYTE) {
+         if (!table->FloatTable) {
             const GLfloat scale = (GLfloat) (table->Size - 1);
             const GLubyte *lut = (const GLubyte *) table->Table;
             GLuint i;
@@ -822,7 +822,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          break;
       case GL_LUMINANCE_ALPHA:
          /* replace RGBA with LLLA */
-         if (table->TableType == GL_UNSIGNED_BYTE) {
+         if (!table->FloatTable) {
             const GLfloat scale = (GLfloat) (table->Size - 1);
             const GLubyte *lut = (const GLubyte *) table->Table;
             GLuint i;
@@ -851,7 +851,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          break;
       case GL_RGB:
          /* replace RGB with RGB */
-         if (table->TableType == GL_UNSIGNED_BYTE) {
+         if (!table->FloatTable) {
             const GLfloat scale = (GLfloat) (table->Size - 1);
             const GLubyte *lut = (const GLubyte *) table->Table;
             GLuint i;
@@ -880,7 +880,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          break;
       case GL_RGBA:
          /* replace RGBA with RGBA */
-         if (table->TableType == GL_UNSIGNED_BYTE) {
+         if (!table->FloatTable) {
             const GLfloat scale = (GLfloat) (table->Size - 1);
             const GLubyte *lut = (const GLubyte *) table->Table;
             GLuint i;

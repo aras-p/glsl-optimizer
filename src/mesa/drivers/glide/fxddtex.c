@@ -356,7 +356,7 @@ convertPalette(FxU32 data[256], const struct gl_color_table *table)
   FxU32 r, g, b, a;
   GLint i;
 
-  ASSERT(table->TableType == GL_UNSIGNED_BYTE);
+  ASSERT(!table->FloatTable);
 
   switch (table->Format) {
     case GL_INTENSITY:

@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.5 2000/09/05 20:28:56 brianp Exp $ */
+/* $Id: convolve.c,v 1.6 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -472,7 +472,7 @@ _mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLi
    }
 
    /* read pixels from framebuffer */
-   gl_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y, (GLubyte (*)[4]) rgba);
+   gl_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y, (GLchan (*)[4]) rgba);
 
    /* store as convolution filter */
    _mesa_ConvolutionFilter1D(target, internalFormat, width,
@@ -513,7 +513,7 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
    /* read pixels from framebuffer */
    for (i = 0; i < height; i++) {
       gl_read_rgba_span(ctx, ctx->ReadBuffer, width, x, y + i,
-                        (GLubyte (*)[4]) rgba[i]);
+                        (GLchan (*)[4]) rgba[i]);
    }
 
    /*

@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.16 2000/10/27 16:44:41 keithw Exp $ */
+/* $Id: points.c,v 1.17 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -825,8 +825,7 @@ dist_atten_general_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint y = (GLint)  VB->Win.data[i][1];
          GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
          GLfloat dsize=psize*dist[i];
-         GLubyte alpha;
-
+         GLchan alpha;
 	 GLfixed fog = FloatToFixed( VB->FogCoordPtr->data[i] );
 
          if (dsize >= ctx->Point.Threshold) {

@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.19 2000/10/26 19:26:18 brianp Exp $ */
+/* $Id: config.h,v 1.20 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -164,6 +164,16 @@
 #define CHAN_BITS 8
 #define CHAN_MAX ((1 << CHAN_BITS) - 1)
 #define CHAN_MAXF ((GLfloat) CHAN_MAX)
+#if CHAN_BITS == 8
+   typedef GLubyte GLchan;
+#elif CHAN_BITS == 16
+   typedef GLushort GLchan;
+#else
+#error  illegal number of color channel bits
+#endif
+
+
+
 
 
 /*

@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.14 2000/10/19 18:17:19 brianp Exp $ */
+/* $Id: buffers.c,v 1.15 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -72,10 +72,10 @@ _mesa_ClearColor( GLclampf red, GLclampf green,
    ctx->Color.ClearColor[3] = CLAMP( alpha, 0.0F, 1.0F );
 
    if (ctx->Visual.RGBAflag) {
-      GLubyte r = (GLint) (ctx->Color.ClearColor[0] * 255.0F);
-      GLubyte g = (GLint) (ctx->Color.ClearColor[1] * 255.0F);
-      GLubyte b = (GLint) (ctx->Color.ClearColor[2] * 255.0F);
-      GLubyte a = (GLint) (ctx->Color.ClearColor[3] * 255.0F);
+      GLchan r = (GLint) (ctx->Color.ClearColor[0] * CHAN_MAXF);
+      GLchan g = (GLint) (ctx->Color.ClearColor[1] * CHAN_MAXF);
+      GLchan b = (GLint) (ctx->Color.ClearColor[2] * CHAN_MAXF);
+      GLchan a = (GLint) (ctx->Color.ClearColor[3] * CHAN_MAXF);
       (*ctx->Driver.ClearColor)( ctx, r, g, b, a );
    }
 }
@@ -96,13 +96,13 @@ clear_color_buffer_with_masking( GLcontext *ctx )
 
    if (ctx->Visual.RGBAflag) {
       /* RGBA mode */
-      const GLubyte r = (GLint) (ctx->Color.ClearColor[0] * 255.0F);
-      const GLubyte g = (GLint) (ctx->Color.ClearColor[1] * 255.0F);
-      const GLubyte b = (GLint) (ctx->Color.ClearColor[2] * 255.0F);
-      const GLubyte a = (GLint) (ctx->Color.ClearColor[3] * 255.0F);
+      const GLchan r = (GLint) (ctx->Color.ClearColor[0] * CHAN_MAXF);
+      const GLchan g = (GLint) (ctx->Color.ClearColor[1] * CHAN_MAXF);
+      const GLchan b = (GLint) (ctx->Color.ClearColor[2] * CHAN_MAXF);
+      const GLchan a = (GLint) (ctx->Color.ClearColor[3] * CHAN_MAXF);
       GLint i;
       for (i = 0; i < height; i++) {
-         GLubyte rgba[MAX_WIDTH][4];
+         GLchan rgba[MAX_WIDTH][4];
          GLint j;
          for (j=0; j<width; j++) {
             rgba[j][RCOMP] = r;
@@ -112,7 +112,7 @@ clear_color_buffer_with_masking( GLcontext *ctx )
          }
          _mesa_mask_rgba_span( ctx, width, x, y + i, rgba );
          (*ctx->Driver.WriteRGBASpan)( ctx, width, x, y + i,
-				       (CONST GLubyte (*)[4])rgba, NULL );
+				       (CONST GLchan (*)[4]) rgba, NULL );
       }
    }
    else {
@@ -147,11 +147,11 @@ clear_color_buffer(GLcontext *ctx)
 
    if (ctx->Visual.RGBAflag) {
       /* RGBA mode */
-      const GLubyte r = (GLint) (ctx->Color.ClearColor[0] * 255.0F);
-      const GLubyte g = (GLint) (ctx->Color.ClearColor[1] * 255.0F);
-      const GLubyte b = (GLint) (ctx->Color.ClearColor[2] * 255.0F);
-      const GLubyte a = (GLint) (ctx->Color.ClearColor[3] * 255.0F);
-      GLubyte span[MAX_WIDTH][4];
+      const GLchan r = (GLint) (ctx->Color.ClearColor[0] * CHAN_MAXF);
+      const GLchan g = (GLint) (ctx->Color.ClearColor[1] * CHAN_MAXF);
+      const GLchan b = (GLint) (ctx->Color.ClearColor[2] * CHAN_MAXF);
+      const GLchan a = (GLint) (ctx->Color.ClearColor[3] * CHAN_MAXF);
+      GLchan span[MAX_WIDTH][4];
       GLint i;
 
       ASSERT(colorMask == 0xffffffff);
@@ -164,7 +164,7 @@ clear_color_buffer(GLcontext *ctx)
       }
       for (i = 0; i < height; i++) {
          (*ctx->Driver.WriteRGBASpan)( ctx, width, x, y + i,
-                                       (CONST GLubyte (*)[4]) span, NULL );
+                                       (CONST GLchan (*)[4]) span, NULL );
       }
    }
    else {
@@ -172,7 +172,7 @@ clear_color_buffer(GLcontext *ctx)
       ASSERT(ctx->Color.IndexMask == ~0);
       if (ctx->Visual.IndexBits == 8) {
          /* 8-bit clear */
-         GLubyte span[MAX_WIDTH];
+         GLchan span[MAX_WIDTH];
          GLint i;
          MEMSET(span, ctx->Color.ClearIndex, width);
          for (i = 0; i < height; i++) {

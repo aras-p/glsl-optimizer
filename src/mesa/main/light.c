@@ -1,8 +1,8 @@
-/* $Id: light.c,v 1.18 2000/10/27 16:44:40 keithw Exp $ */
+/* $Id: light.c,v 1.19 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -685,7 +685,7 @@ void gl_update_material( GLcontext *ctx,
  * set by glColorMaterial().
  */
 void gl_update_color_material( GLcontext *ctx, 
-			       const GLubyte rgba[4] )
+			       const GLchan rgba[4] )
 {
    struct gl_light *light, *list = &ctx->Light.EnabledList;
    GLuint bitmask = ctx->Light.ColorMaterialBitmask;

@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.27 2000/10/17 00:42:02 brianp Exp $ */
+/* $Id: accum.c,v 1.28 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,7 +63,9 @@
  */
 
 
+#if CHAN_BITS == 8
 #define USE_OPTIMIZED_ACCUM   /* enable the optimization */
+#endif
 
 
 
@@ -139,7 +141,7 @@ _mesa_Accum( GLenum op, GLfloat value )
    GET_CURRENT_CONTEXT(ctx);
    GLuint xpos, ypos, width, height, width4;
    GLfloat acc_scale;
-   GLubyte rgba[MAX_WIDTH][4];
+   GLchan rgba[MAX_WIDTH][4];
    const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
    const GLint iChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
    const GLfloat fChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
@@ -387,7 +389,7 @@ _mesa_Accum( GLenum op, GLfloat value )
                   _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );
                }
                (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos, 
-                                             (const GLubyte (*)[4])rgba, NULL );
+                                             (const GLchan (*)[4])rgba, NULL );
                ypos++;
             }
          }
@@ -414,7 +416,7 @@ _mesa_Accum( GLenum op, GLfloat value )
                   _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );
                }
                (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos, 
-                                             (const GLubyte (*)[4])rgba, NULL );
+                                             (const GLchan (*)[4])rgba, NULL );
                ypos++;
             }
 	 }

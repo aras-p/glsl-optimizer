@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.23 2000/10/28 11:42:12 keithw Exp $ */
+/* $Id: fog.c,v 1.24 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -261,11 +261,11 @@ void
 _mesa_fog_rgba_pixels( const GLcontext *ctx,
                        GLuint n, 
 		       const GLfixed fog[], 
-		       GLubyte rgba[][4] )
+		       GLchan rgba[][4] )
 {
-   GLfixed rFog = ctx->Fog.Color[0] * 255.0;
-   GLfixed gFog = ctx->Fog.Color[1] * 255.0;
-   GLfixed bFog = ctx->Fog.Color[2] * 255.0;
+   GLfixed rFog = ctx->Fog.Color[0] * CHAN_MAXF;
+   GLfixed gFog = ctx->Fog.Color[1] * CHAN_MAXF;
+   GLfixed bFog = ctx->Fog.Color[2] * CHAN_MAXF;
    GLuint i;
 
    for (i=0;i<n;i++) {
@@ -378,7 +378,7 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
  */
 void
 _mesa_depth_fog_rgba_pixels( const GLcontext *ctx,
-			     GLuint n, const GLdepth z[], GLubyte rgba[][4] )
+			     GLuint n, const GLdepth z[], GLchan rgba[][4] )
 {
    GLfixed fog[MAX_WIDTH];
    _mesa_win_fog_coords_from_z( ctx, n, z, fog );

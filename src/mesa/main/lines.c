@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.17 2000/10/27 16:44:40 keithw Exp $ */
+/* $Id: lines.c,v 1.18 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -149,7 +149,7 @@ static void flat_ci_z_line( GLcontext *ctx,
 static void flat_rgba_line( GLcontext *ctx,
                             GLuint vert0, GLuint vert1, GLuint pvert )
 {
-   const GLubyte *color = ctx->VB->ColorPtr->data[pvert];
+   const GLchan *color = ctx->VB->ColorPtr->data[pvert];
    PB_SET_COLOR( ctx->PB, color[0], color[1], color[2], color[3] );
 
 #define INTERP_XY 1
@@ -166,7 +166,7 @@ static void flat_rgba_line( GLcontext *ctx,
 static void flat_rgba_z_line( GLcontext *ctx,
                               GLuint vert0, GLuint vert1, GLuint pvert )
 {
-   const GLubyte *color = ctx->VB->ColorPtr->data[pvert];
+   const GLchan *color = ctx->VB->ColorPtr->data[pvert];
    PB_SET_COLOR( ctx->PB, color[0], color[1], color[2], color[3] );
 
 #define INTERP_XY 1
@@ -248,7 +248,7 @@ static void smooth_rgba_line( GLcontext *ctx,
    GLint count = ctx->PB->count;
    GLint *pbx = ctx->PB->x;
    GLint *pby = ctx->PB->y;
-   GLubyte (*pbrgba)[4] = ctx->PB->rgba;
+   GLchan (*pbrgba)[4] = ctx->PB->rgba;
    (void) pvert;
 
    ctx->PB->mono = GL_FALSE;
@@ -283,7 +283,8 @@ static void smooth_rgba_z_line( GLcontext *ctx,
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
    GLfixed *pbfog = ctx->PB->fog;
-   GLubyte (*pbrgba)[4] = ctx->PB->rgba;
+   GLchan (*pbrgba)[4] = ctx->PB->rgba;
+
    (void) pvert;
 
    ctx->PB->mono = GL_FALSE;
@@ -478,7 +479,8 @@ static void general_smooth_rgba_line( GLcontext *ctx,
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
    GLfixed *pbfog = ctx->PB->fog;
-   GLubyte (*pbrgba)[4] = ctx->PB->rgba;
+   GLchan (*pbrgba)[4] = ctx->PB->rgba;
+
    (void) pvert;
 
    ctx->PB->mono = GL_FALSE;
@@ -574,7 +576,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
 static void general_flat_rgba_line( GLcontext *ctx,
                                     GLuint vert0, GLuint vert1, GLuint pvert )
 {
-   const GLubyte *color = ctx->VB->ColorPtr->data[pvert];
+   const GLchan *color = ctx->VB->ColorPtr->data[pvert];
    PB_SET_COLOR( ctx->PB, color[0], color[1], color[2], color[3] );
 
    if (ctx->Line.StippleFlag) {
@@ -624,7 +626,7 @@ static void flat_textured_line( GLcontext *ctx,
    GLfloat *pbs = ctx->PB->s[0];
    GLfloat *pbt = ctx->PB->t[0];
    GLfloat *pbu = ctx->PB->u[0];
-   GLubyte *color = ctx->VB->ColorPtr->data[pv];
+   GLchan *color = ctx->VB->ColorPtr->data[pv];
    PB_SET_COLOR( ctx->PB, color[0], color[1], color[2], color[3] );
    count = ctx->PB->count;
 
@@ -688,7 +690,7 @@ static void smooth_textured_line( GLcontext *ctx,
    GLfloat *pbs = ctx->PB->s[0];
    GLfloat *pbt = ctx->PB->t[0];
    GLfloat *pbu = ctx->PB->u[0];
-   GLubyte (*pbrgba)[4] = ctx->PB->rgba;
+   GLchan (*pbrgba)[4] = ctx->PB->rgba;
    (void) pvert;
 
    ctx->PB->mono = GL_FALSE;
@@ -763,8 +765,9 @@ static void smooth_multitextured_line( GLcontext *ctx,
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
    GLfixed *pbfog = ctx->PB->fog;
-   GLubyte (*pbrgba)[4] = ctx->PB->rgba;
-   GLubyte (*pbspec)[3] = ctx->PB->spec;
+   GLchan (*pbrgba)[4] = ctx->PB->rgba;
+   GLchan (*pbspec)[3] = ctx->PB->spec;
+
    (void) pvert;
 
    ctx->PB->mono = GL_FALSE;
@@ -859,12 +862,12 @@ static void flat_multitextured_line( GLcontext *ctx,
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
    GLfixed *pbfog = ctx->PB->fog;
-   GLubyte (*pbrgba)[4] = ctx->PB->rgba;
-   GLubyte (*pbspec)[3] = ctx->PB->spec;
-   GLubyte *color = ctx->VB->ColorPtr->data[pvert];
-   GLubyte sRed   = ctx->VB->SecondaryColorPtr->data ? ctx->VB->SecondaryColorPtr->data[pvert][0] : 0;
-   GLubyte sGreen = ctx->VB->SecondaryColorPtr->data ? ctx->VB->SecondaryColorPtr->data[pvert][1] : 0;
-   GLubyte sBlue  = ctx->VB->SecondaryColorPtr->data ? ctx->VB->SecondaryColorPtr->data[pvert][2] : 0;
+   GLchan (*pbrgba)[4] = ctx->PB->rgba;
+   GLchan (*pbspec)[3] = ctx->PB->spec;
+   GLchan *color = ctx->VB->ColorPtr->data[pvert];
+   GLchan sRed   = ctx->VB->SecondaryColorPtr->data ? ctx->VB->SecondaryColorPtr->data[pvert][0] : 0;
+   GLchan sGreen = ctx->VB->SecondaryColorPtr->data ? ctx->VB->SecondaryColorPtr->data[pvert][1] : 0;
+   GLchan sBlue  = ctx->VB->SecondaryColorPtr->data ? ctx->VB->SecondaryColorPtr->data[pvert][2] : 0;
 
    (void) pvert;
 

@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.52 2000/10/16 23:43:12 brianp Exp $ */
+/* $Id: teximage.c,v 1.53 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -988,7 +988,7 @@ make_null_texture( struct gl_texture_image *texImage )
          GLint srcRow = 7 - i % 8;
          for (j = 0; j < texImage->Width; j++) {
             GLint srcCol = j % 32;
-            GLint texel = (message[srcRow][srcCol]=='X') ? 255 : 70;
+            GLint texel = (message[srcRow][srcCol]=='X') ? CHAN_MAX : 70;
             for (k=0;k<components;k++) {
                *imgPtr++ = (GLubyte) texel;
             }
@@ -2321,9 +2321,9 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                      case GL_ALPHA:
                         src = texImage->Data + row * width * sizeof(GLubyte);
                         for (i = 0; i < width; i++) {
-                           rgba[i][RCOMP] = 255;
-                           rgba[i][GCOMP] = 255;
-                           rgba[i][BCOMP] = 255;
+                           rgba[i][RCOMP] = CHAN_MAX;
+                           rgba[i][GCOMP] = CHAN_MAX;
+                           rgba[i][BCOMP] = CHAN_MAX;
                            rgba[i][ACOMP] = src[i];
                         }
                         break;
@@ -2333,7 +2333,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                            rgba[i][RCOMP] = src[i];
                            rgba[i][GCOMP] = src[i];
                            rgba[i][BCOMP] = src[i];
-                           rgba[i][ACOMP] = 255;
+                           rgba[i][ACOMP] = CHAN_MAX;
                          }
                         break;
                      case GL_LUMINANCE_ALPHA:
@@ -2351,7 +2351,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                            rgba[i][RCOMP] = src[i];
                            rgba[i][GCOMP] = src[i];
                            rgba[i][BCOMP] = src[i];
-                           rgba[i][ACOMP] = 255;
+                           rgba[i][ACOMP] = CHAN_MAX;
                         }
                         break;
                      case GL_RGB:
@@ -2360,7 +2360,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                            rgba[i][RCOMP] = src[i*3+0];
                            rgba[i][GCOMP] = src[i*3+1];
                            rgba[i][BCOMP] = src[i*3+2];
-                           rgba[i][ACOMP] = 255;
+                           rgba[i][ACOMP] = CHAN_MAX;
                         }
                         break;
                      case GL_COLOR_INDEX:

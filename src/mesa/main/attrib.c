@@ -1,8 +1,8 @@
-/* $Id: attrib.c,v 1.28 2000/09/28 22:44:30 brianp Exp $ */
+/* $Id: attrib.c,v 1.29 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -568,7 +568,7 @@ _mesa_PopAttrib(void)
             {
                GLenum oldDrawBuffer = ctx->Color.DrawBuffer;
                GLenum oldAlphaFunc = ctx->Color.AlphaFunc;
-               GLubyte oldAlphaRef = ctx->Color.AlphaRef;
+               GLchan oldAlphaRef = ctx->Color.AlphaRef;
                GLenum oldBlendSrc = ctx->Color.BlendSrcRGB;
                GLenum oldBlendDst = ctx->Color.BlendDstRGB;
 	       GLenum oldLogicOp = ctx->Color.LogicOp;
@@ -587,16 +587,16 @@ _mesa_PopAttrib(void)
 		  ctx->Driver.LogicOpcode( ctx, ctx->Color.LogicOp );
                }
                if (ctx->Visual.RGBAflag) {
-                  GLubyte r = (GLint) (ctx->Color.ClearColor[0] * 255.0F);
-                  GLubyte g = (GLint) (ctx->Color.ClearColor[1] * 255.0F);
-                  GLubyte b = (GLint) (ctx->Color.ClearColor[2] * 255.0F);
-                  GLubyte a = (GLint) (ctx->Color.ClearColor[3] * 255.0F);
+                  GLchan r = (GLint) (ctx->Color.ClearColor[0] * CHAN_MAXF);
+                  GLchan g = (GLint) (ctx->Color.ClearColor[1] * CHAN_MAXF);
+                  GLchan b = (GLint) (ctx->Color.ClearColor[2] * CHAN_MAXF);
+                  GLchan a = (GLint) (ctx->Color.ClearColor[3] * CHAN_MAXF);
                   (*ctx->Driver.ClearColor)( ctx, r, g, b, a );
                   if ((ctx->Color.AlphaFunc != oldAlphaFunc ||
                        ctx->Color.AlphaRef != oldAlphaRef) &&
                       ctx->Driver.AlphaFunc)
                      (*ctx->Driver.AlphaFunc)( ctx, ctx->Color.AlphaFunc,
-                                               ctx->Color.AlphaRef / 255.0F);
+                                              ctx->Color.AlphaRef / CHAN_MAXF);
                   if (ctx->Driver.ColorMask) {
                      (*ctx->Driver.ColorMask)(ctx,
                                               ctx->Color.ColorMask[0],

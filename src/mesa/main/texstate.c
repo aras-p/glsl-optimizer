@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.16 2000/08/01 17:33:53 brianp Exp $ */
+/* $Id: texstate.c,v 1.17 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -719,10 +719,10 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          }
          break;
       case GL_TEXTURE_BORDER_COLOR:
-         texObj->BorderColor[0] = (GLubyte) CLAMP((GLint)(params[0]*255.0), 0, 255);
-         texObj->BorderColor[1] = (GLubyte) CLAMP((GLint)(params[1]*255.0), 0, 255);
-         texObj->BorderColor[2] = (GLubyte) CLAMP((GLint)(params[2]*255.0), 0, 255);
-         texObj->BorderColor[3] = (GLubyte) CLAMP((GLint)(params[3]*255.0), 0, 255);
+         texObj->BorderColor[0] = (GLchan) CLAMP((GLint)(params[0]*CHAN_MAXF), 0, CHAN_MAX);
+         texObj->BorderColor[1] = (GLchan) CLAMP((GLint)(params[1]*CHAN_MAXF), 0, CHAN_MAX);
+         texObj->BorderColor[2] = (GLchan) CLAMP((GLint)(params[2]*CHAN_MAXF), 0, CHAN_MAX);
+         texObj->BorderColor[3] = (GLchan) CLAMP((GLint)(params[3]*CHAN_MAXF), 0, CHAN_MAX);
          break;
       case GL_TEXTURE_MIN_LOD:
          texObj->MinLod = params[0];
@@ -965,10 +965,10 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          *params = ENUM_TO_FLOAT(obj->WrapR);
          break;
       case GL_TEXTURE_BORDER_COLOR:
-         params[0] = obj->BorderColor[0] / 255.0F;
-         params[1] = obj->BorderColor[1] / 255.0F;
-         params[2] = obj->BorderColor[2] / 255.0F;
-         params[3] = obj->BorderColor[3] / 255.0F;
+         params[0] = obj->BorderColor[0] / CHAN_MAXF;
+         params[1] = obj->BorderColor[1] / CHAN_MAXF;
+         params[2] = obj->BorderColor[2] / CHAN_MAXF;
+         params[3] = obj->BorderColor[3] / CHAN_MAXF;
          break;
       case GL_TEXTURE_RESIDENT:
          {
@@ -1035,10 +1035,10 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
       case GL_TEXTURE_BORDER_COLOR:
          {
             GLfloat color[4];
-            color[0] = obj->BorderColor[0] / 255.0F;
-            color[1] = obj->BorderColor[1] / 255.0F;
-            color[2] = obj->BorderColor[2] / 255.0F;
-            color[3] = obj->BorderColor[3] / 255.0F;
+            color[0] = obj->BorderColor[0] / CHAN_MAXF;
+            color[1] = obj->BorderColor[1] / CHAN_MAXF;
+            color[2] = obj->BorderColor[2] / CHAN_MAXF;
+            color[3] = obj->BorderColor[3] / CHAN_MAXF;
             params[0] = FLOAT_TO_INT( color[0] );
             params[1] = FLOAT_TO_INT( color[1] );
             params[2] = FLOAT_TO_INT( color[2] );

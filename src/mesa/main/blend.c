@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.20 2000/10/23 00:16:28 gareth Exp $ */
+/* $Id: blend.c,v 1.21 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -332,7 +332,7 @@ _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
  */
 static void _BLENDAPI
 blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
-                    GLubyte rgba[][4], CONST GLubyte dest[][4] )
+                    GLchan rgba[][4], CONST GLchan dest[][4] )
 {
    GLuint i;
    ASSERT(ctx->Color.BlendEquation==GL_FUNC_ADD_EXT);
@@ -342,7 +342,7 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
 
    for (i=0;i<n;i++) {
       if (mask[i]) {
-         const GLint t = rgba[i][ACOMP];  /* t in [0,255] */
+         const GLint t = rgba[i][ACOMP];  /* t in [0, CHAN_MAX] */
          if (t == 0) {
             /* 0% alpha */
             rgba[i][RCOMP] = dest[i][RCOMP];
@@ -371,7 +371,11 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
 #else
             /* This satisfies Glean and should be reasonably fast */
             /* Contributed by Nathan Hand */
+#if CHAN_BITS == 8
 #define DIV255(X)  (((X) << 8) + (X) + 256) >> 16
+#else
+XXX todo
+#endif
             const GLint s = CHAN_MAX - t;
             const GLint r = DIV255(rgba[i][RCOMP] * t + dest[i][RCOMP] * s);
             const GLint g = DIV255(rgba[i][GCOMP] * t + dest[i][GCOMP] * s);
@@ -383,10 +387,10 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
             ASSERT(g <= CHAN_MAX);
             ASSERT(b <= CHAN_MAX);
             ASSERT(a <= CHAN_MAX);
-            rgba[i][RCOMP] = (GLubyte) r;
-            rgba[i][GCOMP] = (GLubyte) g;
-            rgba[i][BCOMP] = (GLubyte) b;
-            rgba[i][ACOMP] = (GLubyte) a;
+            rgba[i][RCOMP] = (GLchan) r;
+            rgba[i][GCOMP] = (GLchan) g;
+            rgba[i][BCOMP] = (GLchan) b;
+            rgba[i][ACOMP] = (GLchan) a;
          }
       }
    }
@@ -399,7 +403,7 @@ blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
  */
 static void _BLENDAPI
 blend_add( GLcontext *ctx, GLuint n, const GLubyte mask[],
-           GLubyte rgba[][4], CONST GLubyte dest[][4] )
+           GLchan rgba[][4], CONST GLchan dest[][4] )
 {
    GLuint i;
    ASSERT(ctx->Color.BlendEquation==GL_FUNC_ADD_EXT);
@@ -413,10 +417,10 @@ blend_add( GLcontext *ctx, GLuint n, const GLubyte mask[],
          GLint g = rgba[i][GCOMP] + dest[i][GCOMP];
          GLint b = rgba[i][BCOMP] + dest[i][BCOMP];
          GLint a = rgba[i][ACOMP] + dest[i][ACOMP];
-         rgba[i][RCOMP] = (GLubyte) MIN2( r, CHAN_MAX );
-         rgba[i][GCOMP] = (GLubyte) MIN2( g, CHAN_MAX );
-         rgba[i][BCOMP] = (GLubyte) MIN2( b, CHAN_MAX );
-         rgba[i][ACOMP] = (GLubyte) MIN2( a, CHAN_MAX );
+         rgba[i][RCOMP] = (GLchan) MIN2( r, CHAN_MAX );
+         rgba[i][GCOMP] = (GLchan) MIN2( g, CHAN_MAX );
+         rgba[i][BCOMP] = (GLchan) MIN2( b, CHAN_MAX );
+         rgba[i][ACOMP] = (GLchan) MIN2( a, CHAN_MAX );
       }
    }
 }
@@ -428,7 +432,7 @@ blend_add( GLcontext *ctx, GLuint n, const GLubyte mask[],
  */
 static void _BLENDAPI
 blend_min( GLcontext *ctx, GLuint n, const GLubyte mask[],
-           GLubyte rgba[][4], CONST GLubyte dest[][4] )
+           GLchan rgba[][4], CONST GLchan dest[][4] )
 {
    GLuint i;
    ASSERT(ctx->Color.BlendEquation==GL_MIN_EXT);
@@ -436,10 +440,10 @@ blend_min( GLcontext *ctx, GLuint n, const GLubyte mask[],
 
    for (i=0;i<n;i++) {
       if (mask[i]) {
-         rgba[i][RCOMP] = (GLubyte) MIN2( rgba[i][RCOMP], dest[i][RCOMP] );
-         rgba[i][GCOMP] = (GLubyte) MIN2( rgba[i][GCOMP], dest[i][GCOMP] );
-         rgba[i][BCOMP] = (GLubyte) MIN2( rgba[i][BCOMP], dest[i][BCOMP] );
-         rgba[i][ACOMP] = (GLubyte) MIN2( rgba[i][ACOMP], dest[i][ACOMP] );
+         rgba[i][RCOMP] = (GLchan) MIN2( rgba[i][RCOMP], dest[i][RCOMP] );
+         rgba[i][GCOMP] = (GLchan) MIN2( rgba[i][GCOMP], dest[i][GCOMP] );
+         rgba[i][BCOMP] = (GLchan) MIN2( rgba[i][BCOMP], dest[i][BCOMP] );
+         rgba[i][ACOMP] = (GLchan) MIN2( rgba[i][ACOMP], dest[i][ACOMP] );
       }
    }
 }
@@ -451,7 +455,7 @@ blend_min( GLcontext *ctx, GLuint n, const GLubyte mask[],
  */
 static void _BLENDAPI
 blend_max( GLcontext *ctx, GLuint n, const GLubyte mask[],
-           GLubyte rgba[][4], CONST GLubyte dest[][4] )
+           GLchan rgba[][4], CONST GLchan dest[][4] )
 {
    GLuint i;
    ASSERT(ctx->Color.BlendEquation==GL_MAX_EXT);
@@ -459,10 +463,10 @@ blend_max( GLcontext *ctx, GLuint n, const GLubyte mask[],
 
    for (i=0;i<n;i++) {
       if (mask[i]) {
-         rgba[i][RCOMP] = (GLubyte) MAX2( rgba[i][RCOMP], dest[i][RCOMP] );
-         rgba[i][GCOMP] = (GLubyte) MAX2( rgba[i][GCOMP], dest[i][GCOMP] );
-         rgba[i][BCOMP] = (GLubyte) MAX2( rgba[i][BCOMP], dest[i][BCOMP] );
-         rgba[i][ACOMP] = (GLubyte) MAX2( rgba[i][ACOMP], dest[i][ACOMP] );
+         rgba[i][RCOMP] = (GLchan) MAX2( rgba[i][RCOMP], dest[i][RCOMP] );
+         rgba[i][GCOMP] = (GLchan) MAX2( rgba[i][GCOMP], dest[i][GCOMP] );
+         rgba[i][BCOMP] = (GLchan) MAX2( rgba[i][BCOMP], dest[i][BCOMP] );
+         rgba[i][ACOMP] = (GLchan) MAX2( rgba[i][ACOMP], dest[i][ACOMP] );
       }
    }
 }
@@ -474,7 +478,7 @@ blend_max( GLcontext *ctx, GLuint n, const GLubyte mask[],
  */
 static void _BLENDAPI
 blend_modulate( GLcontext *ctx, GLuint n, const GLubyte mask[],
-                GLubyte rgba[][4], CONST GLubyte dest[][4] )
+                GLchan rgba[][4], CONST GLchan dest[][4] )
 {
    GLuint i;
    (void) ctx;
@@ -485,10 +489,10 @@ blend_modulate( GLcontext *ctx, GLuint n, const GLubyte mask[],
          GLint g = (rgba[i][GCOMP] * dest[i][GCOMP]) >> 8;
          GLint b = (rgba[i][BCOMP] * dest[i][BCOMP]) >> 8;
          GLint a = (rgba[i][ACOMP] * dest[i][ACOMP]) >> 8;
-         rgba[i][RCOMP] = (GLubyte) r;
-         rgba[i][GCOMP] = (GLubyte) g;
-         rgba[i][BCOMP] = (GLubyte) b;
-         rgba[i][ACOMP] = (GLubyte) a;
+         rgba[i][RCOMP] = (GLchan) r;
+         rgba[i][GCOMP] = (GLchan) g;
+         rgba[i][BCOMP] = (GLchan) b;
+         rgba[i][ACOMP] = (GLchan) a;
       }
    }
 }
@@ -504,7 +508,7 @@ blend_modulate( GLcontext *ctx, GLuint n, const GLubyte mask[],
  */
 static void _BLENDAPI
 blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
-               GLubyte rgba[][4], CONST GLubyte dest[][4] )
+               GLchan rgba[][4], CONST GLchan dest[][4] )
 {
    GLfloat rscale = 1.0F / CHAN_MAXF;
    GLfloat gscale = 1.0F / CHAN_MAXF;
@@ -814,10 +818,10 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* final clamping */
-         rgba[i][RCOMP] = (GLubyte) (GLint) CLAMP( r, 0.0F, CHAN_MAXF );
-         rgba[i][GCOMP] = (GLubyte) (GLint) CLAMP( g, 0.0F, CHAN_MAXF );
-         rgba[i][BCOMP] = (GLubyte) (GLint) CLAMP( b, 0.0F, CHAN_MAXF );
-         rgba[i][ACOMP] = (GLubyte) (GLint) CLAMP( a, 0.0F, CHAN_MAXF );
+         rgba[i][RCOMP] = (GLchan) (GLint) CLAMP( r, 0.0F, CHAN_MAXF );
+         rgba[i][GCOMP] = (GLchan) (GLint) CLAMP( g, 0.0F, CHAN_MAXF );
+         rgba[i][BCOMP] = (GLchan) (GLint) CLAMP( b, 0.0F, CHAN_MAXF );
+         rgba[i][ACOMP] = (GLchan) (GLint) CLAMP( a, 0.0F, CHAN_MAXF );
       }
    }
 }
@@ -890,9 +894,9 @@ static void set_blend_function( GLcontext *ctx )
  */
 void
 _mesa_blend_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                  GLubyte rgba[][4], const GLubyte mask[] )
+                  GLchan rgba[][4], const GLubyte mask[] )
 {
-   GLubyte dest[MAX_WIDTH][4];
+   GLchan dest[MAX_WIDTH][4];
 
    /* Check if device driver can do the work */
    if (ctx->Color.BlendEquation==GL_LOGIC_OP &&
@@ -906,7 +910,7 @@ _mesa_blend_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
    if (!ctx->Color.BlendFunc)
       set_blend_function(ctx);
 
-   (*ctx->Color.BlendFunc)( ctx, n, mask, rgba, (const GLubyte (*)[4])dest );
+   (*ctx->Color.BlendFunc)( ctx, n, mask, rgba, (const GLchan (*)[4])dest );
 }
 
 
@@ -921,9 +925,9 @@ _mesa_blend_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 void
 _mesa_blend_pixels( GLcontext *ctx,
                     GLuint n, const GLint x[], const GLint y[],
-                    GLubyte rgba[][4], const GLubyte mask[] )
+                    GLchan rgba[][4], const GLchan mask[] )
 {
-   GLubyte dest[PB_SIZE][4];
+   GLchan dest[PB_SIZE][4];
 
    /* Check if device driver can do the work */
    if (ctx->Color.BlendEquation==GL_LOGIC_OP &&
@@ -940,5 +944,5 @@ _mesa_blend_pixels( GLcontext *ctx,
    if (!ctx->Color.BlendFunc)
       set_blend_function(ctx);
 
-   (*ctx->Color.BlendFunc)( ctx, n, mask, rgba, (const GLubyte (*)[4])dest );
+   (*ctx->Color.BlendFunc)( ctx, n, mask, rgba, (const GLchan (*)[4])dest );
 }

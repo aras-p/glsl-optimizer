@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.96 2000/10/27 16:44:40 keithw Exp $ */
+/* $Id: context.c,v 1.97 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -884,7 +884,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Color.MultiDrawBuffer = GL_FALSE;
 
    /* Current group */
-   ASSIGN_4V( ctx->Current.ByteColor, 255, 255, 255, 255);
+   ASSIGN_4V( ctx->Current.ByteColor, CHAN_MAX, CHAN_MAX, CHAN_MAX, CHAN_MAX );
    ctx->Current.Index = 1;
    for (i=0; i<MAX_TEXTURE_UNITS; i++)
       ASSIGN_4V( ctx->Current.Texcoord[i], 0.0, 0.0, 0.0, 1.0 );

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.35 2000/10/27 16:44:40 keithw Exp $ */
+/* $Id: get.c,v 1.36 2000/10/28 18:34:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -138,7 +138,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ENUM_TO_BOOL(ctx->Color.AlphaFunc);
          break;
       case GL_ALPHA_TEST_REF:
-         *params = FLOAT_TO_BOOL((GLfloat) ctx->Color.AlphaRef / 255.0);
+         *params = FLOAT_TO_BOOL((GLfloat) ctx->Color.AlphaRef / CHAN_MAXF);
          break;
       case GL_ATTRIB_STACK_DEPTH:
          *params = INT_TO_BOOL(ctx->AttribStackDepth);
@@ -1329,7 +1329,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = ENUM_TO_DOUBLE(ctx->Color.AlphaFunc);
          break;
       case GL_ALPHA_TEST_REF:
-         *params = (GLdouble) ctx->Color.AlphaRef / 255.0;
+         *params = (GLdouble) ctx->Color.AlphaRef / CHAN_MAXF;
          break;
       case GL_ATTRIB_STACK_DEPTH:
          *params = (GLdouble ) (ctx->AttribStackDepth);
@@ -1418,10 +1418,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = ENUM_TO_DOUBLE(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-         params[0] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[0]);
-         params[1] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[1]);
-         params[2] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[2]);
-         params[3] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[3]);
+         params[0] = CHAN_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[0]);
+         params[1] = CHAN_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[1]);
+         params[2] = CHAN_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[2]);
+         params[3] = CHAN_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[3]);
          break;
       case GL_CURRENT_INDEX:
          *params = (GLdouble) ctx->Current.Index;
@@ -2521,7 +2521,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = ENUM_TO_FLOAT(ctx->Color.AlphaFunc);
          break;
       case GL_ALPHA_TEST_REF:
-         *params = (GLfloat) ctx->Color.AlphaRef / 255.0;
+         *params = (GLfloat) ctx->Color.AlphaRef / CHAN_MAXF;
          break;
       case GL_ATTRIB_STACK_DEPTH:
          *params = (GLfloat) (ctx->AttribStackDepth);
@@ -2610,7 +2610,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = ENUM_TO_FLOAT(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-	 UBYTE_RGBA_TO_FLOAT_RGBA(params, ctx->Current.ByteColor);
+	 CHAN_RGBA_TO_FLOAT_RGBA(params, ctx->Current.ByteColor);
          break;
       case GL_CURRENT_INDEX:
          *params = (GLfloat) ctx->Current.Index;
@@ -3682,7 +3682,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Color.AlphaEnabled;
          break;
       case GL_ALPHA_TEST_REF:
-         *params = FLOAT_TO_INT( (GLfloat) ctx->Color.AlphaRef / 255.0 );
+         *params = FLOAT_TO_INT( (GLfloat) ctx->Color.AlphaRef / CHAN_MAXF );
          break;
       case GL_ALPHA_TEST_FUNC:
          *params = (GLint) ctx->Color.AlphaFunc;
@@ -3775,10 +3775,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Polygon.CullFaceMode;
          break;
       case GL_CURRENT_COLOR:
-         params[0] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[0] ) );
-         params[1] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[1] ) );
-         params[2] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[2] ) );
-         params[3] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[3] ) );
+         params[0] = FLOAT_TO_INT( CHAN_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[0] ) );
+         params[1] = FLOAT_TO_INT( CHAN_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[1] ) );
+         params[2] = FLOAT_TO_INT( CHAN_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[2] ) );
+         params[3] = FLOAT_TO_INT( CHAN_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[3] ) );
          break;
       case GL_CURRENT_INDEX:
          *params = (GLint) ctx->Current.Index;
