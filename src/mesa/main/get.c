@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.109 2003/04/01 18:27:07 brianp Exp $ */
+/* $Id: get.c,v 1.110 2003/04/01 19:07:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1469,6 +1469,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 #endif /* FEATURE_NV_vertex_program */
 
 #if FEATURE_NV_fragment_program
+      case GL_FRAGMENT_PROGRAM_NV:
+         CHECK_EXTENSION_B(NV_fragment_program, pname);
+         *params = ctx->FragmentProgram.Enabled;
+         break;
       case GL_MAX_TEXTURE_COORDS_NV:
          CHECK_EXTENSION_B(NV_fragment_program, pname);
          *params = INT_TO_BOOL(ctx->Const.MaxTextureCoordUnits);
@@ -2876,6 +2880,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 #endif /* FEATURE_NV_vertex_program */
 
 #if FEATURE_NV_fragment_program
+      case GL_FRAGMENT_PROGRAM_NV:
+         CHECK_EXTENSION_D(NV_fragment_program, pname);
+         *params = (GLdouble) ctx->FragmentProgram.Enabled;
+         break;
       case GL_MAX_TEXTURE_COORDS_NV:
          CHECK_EXTENSION_B(NV_fragment_program, pname);
          *params = (GLdouble) ctx->Const.MaxTextureCoordUnits;
@@ -4258,6 +4266,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 #endif /* FEATURE_NV_vertex_program */
 
 #if FEATURE_NV_fragment_program
+      case GL_FRAGMENT_PROGRAM_NV:
+         CHECK_EXTENSION_F(NV_fragment_program, pname);
+         *params = (GLfloat) ctx->FragmentProgram.Enabled;
+         break;
       case GL_MAX_TEXTURE_COORDS_NV:
          CHECK_EXTENSION_F(NV_fragment_program, pname);
          *params = (GLfloat) ctx->Const.MaxTextureCoordUnits;
@@ -5678,6 +5690,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 #endif /* FEATURE_NV_vertex_program */
 
 #if FEATURE_NV_fragment_program
+      case GL_FRAGMENT_PROGRAM_NV:
+         CHECK_EXTENSION_I(NV_fragment_program, pname);
+         *params = (GLint) ctx->FragmentProgram.Enabled;
+         break;
       case GL_MAX_TEXTURE_COORDS_NV:
          CHECK_EXTENSION_I(NV_fragment_program, pname);
          *params = (GLint) ctx->Const.MaxTextureCoordUnits;
