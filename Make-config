@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.9 1999/10/27 10:09:27 brianp Exp $
+# $Id: Make-config,v 1.10 1999/11/02 10:11:44 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=1
@@ -1259,6 +1259,18 @@ linux-debug:
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-elf-debug:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -g -ansi -pedantic -Wall -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DDEBUG" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -lm" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
+
+linux-glide-debug:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
 	"GLU_LIB = libGLU.so" \
