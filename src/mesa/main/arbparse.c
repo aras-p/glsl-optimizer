@@ -53,24 +53,14 @@
  *       + overflow on atoi
  *       + not-overflowing floats (don't use parse_integer..)
  *       + test for 0 on matrix rows, or give a default value to parse_integer()
- *
- *       + fix multiple cases in switches, that might change 
- *          (these are things that are #defined to the same value, but occur 
- *           only on fp or vp's, which funkifies the switch statements)
- *          - STATE_TEX_* STATE_CLIP_PLANE, etc and PRECISION_HINT_FASTEST/
- *            PositionInvariant
- *          
+ *       
  *    - check all limits of number of various variables
  *      + parameters
- *      + modelview matrix number
  *
  *    - test! test! test!    
  *
  *    Vertex Program Stuff:
  *    -----------------------------------------------------
- *    - Add in cases for vp attribs
- *       + VERTEX_ATTRIB_MATRIXINDEX -- ??
- *
  *    - ARRAY_INDEX_RELATIVE
  *    - grep for XXX
  *    
@@ -85,14 +75,19 @@
  *
  *    Cosmetic Stuff
  *    -----------------------------------------------------
- *    - fix compiler warnings 
  * 	- remove any leftover unused grammer.c stuff (dict_ ?)
  * 	- fix grammer.c error handling so its not static
  * 	- #ifdef around stuff pertaining to extentions
  *
  *    Outstanding Questions:
  *    -----------------------------------------------------
- *    - palette matrix?  do we support this extension? what is the extention?
+ *    - ARB_matrix_palette / ARB_vertex_blend -- not supported 
+ *      what gets hacked off because of this:
+ *       + VERTEX_ATTRIB_MATRIXINDEX          
+ *       + VERTEX_ATTRIB_WEIGHT
+ *       + MATRIX_MODELVIEW
+ *       + MATRIX_PALETTE       
+ *
  *    - When can we fetch env/local params from their own register files, and
  *      when to we have to fetch them into the main state register file?
  *      (think arrays)
@@ -3120,7 +3115,13 @@ parse_matrix (GLcontext * ctx, GLubyte ** inst, struct arb_program *Program,
       case MATRIX_MODELVIEW:
          *matrix = STATE_MODELVIEW;
          *matrix_idx = parse_integer (inst, Program);
-         /* XXX: if (*matrix_idx >= ctx->Const. */
+         if (*matrix_idx > 0) {
+            _mesa_set_program_error (ctx, Program->Position,
+               "ARB_vertex_blend not supported\n");
+            _mesa_error (ctx, GL_INVALID_OPERATION,
+               "ARB_vertex_blend not supported\n");
+            return 1;
+         }
          break;
 
       case MATRIX_PROJECTION:
@@ -3143,9 +3144,14 @@ parse_matrix (GLcontext * ctx, GLubyte ** inst, struct arb_program *Program,
          }
          break;
 
-         /* XXX: How should we handle the palette matrix? */
+         /* This is not currently supported (ARB_matrix_palette) */
       case MATRIX_PALETTE:
          *matrix_idx = parse_integer (inst, Program);
+         _mesa_set_program_error (ctx, Program->Position,
+              "ARB_matrix_palette not supported\n");
+         _mesa_error (ctx, GL_INVALID_OPERATION,
+              "ARB_matrix_palette not supported\n");
+         return 1;
          break;
 
       case MATRIX_PROGRAM:
@@ -3602,6 +3608,11 @@ parse_attrib_binding (GLcontext * ctx, GLubyte ** inst,
                *binding = VERT_ATTRIB_WEIGHT;
                *binding_idx = 1;
             }
+            _mesa_set_program_error (ctx, Program->Position,
+                 "ARB_vertex_blend not supported\n");
+            _mesa_error (ctx, GL_INVALID_OPERATION,
+                 "ARB_vertex_blend not supported\n");
+            return 1;
             break;
 
          case VERTEX_ATTRIB_NORMAL:
@@ -3640,9 +3651,14 @@ parse_attrib_binding (GLcontext * ctx, GLubyte ** inst,
             }
             break;
 
-            /* XXX: It looks like we don't support this at all, atm */
+            /* It looks like we don't support this at all, atm */
          case VERTEX_ATTRIB_MATRIXINDEX:
             parse_integer (inst, Program);
+            _mesa_set_program_error (ctx, Program->Position,
+                  "ARB_palette_matrix not supported");
+            _mesa_error (ctx, GL_INVALID_OPERATION,
+                  "ARB_palette_matrix not supported");
+            return 1;
             break;
 
          case VERTEX_ATTRIB_GENERIC:
