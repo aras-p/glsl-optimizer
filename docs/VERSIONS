@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.32 2000/05/26 14:45:25 brianp Exp $
+$Id: VERSIONS,v 1.33 2000/06/05 16:33:09 brianp Exp $
 
 
 Mesa Version History
@@ -674,9 +674,25 @@ Mesa Version History
 	- glCopyPixels with pixel zooming now works
 
 
-3.2 (Stabilization of 3.1)  April ??, 2000
-    Bug Fixes:
-	(TBD)
+3.2 final  April 24, 2000
+    Bug fixes:
+	- fixed memcpy bugs in span.c
+	- fixed missing glEnd problem in demos/tessdemo.c
+	- fixed bug when clearing 24bpp Ximages
+	- fixed clipping problem found in Unreal Tournament
+	- fixed Loki's "ice bug" and "crazy triangles" seen in Heretic2
+	- fixed Loki's 3dfx RGB vs BGR bug
+	- fixed Loki's 3dfx smooth/flat shading bug in SoF
+    Changes:
+	- updated docs/README file
+	- use bcopy() optimizations on FreeBSD
+	- re-enabled the optimized persp_textured_triangle() function
+
+
+3.2.1  May ??, 2000
+    Bug fixes:
+	- gluBuild2DMipmaps() didn't accept GL_BGRA
+	- Fixed compile/makefile problems on IRIX
 
 
 3.3 (Experimental/advanced development)  Month?, ??, 2000
