@@ -232,23 +232,33 @@ static GLboolean __driAddDrawable(void *drawHash, __DRIdrawable *pdraw)
 static __DRIdrawable *__driFindDrawable(void *drawHash, __DRIid draw)
 {
     int retcode;
-    __DRIdrawable *pdraw;
+    union 
+    {
+	__DRIdrawable *pdraw;
+	void *ptr;
+    } p;
 
-    retcode = drmHashLookup(drawHash, draw, (void **)&pdraw);
+    retcode = drmHashLookup(drawHash, draw, &p.ptr);
     if (retcode)
 	return NULL;
 
-    return pdraw;
+    return p.pdraw;
 }
 
 static void __driRemoveDrawable(void *drawHash, __DRIdrawable *pdraw)
 {
     int retcode;
-    __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *)pdraw->private;
+    union 
+    {
+	__DRIdrawablePrivate *pdp;
+	void *ptr;
+    } p;
 
-    retcode = drmHashLookup(drawHash, pdp->draw, (void **)&pdraw);
+    p.pdp = (__DRIdrawablePrivate *)pdraw->private;
+
+    retcode = drmHashLookup(drawHash, p.pdp->draw, &p.ptr);
     if (!retcode) { /* Found */
-	drmHashDelete(drawHash, pdp->draw);
+	drmHashDelete(drawHash, p.pdp->draw);
     }
 }
 
@@ -306,21 +316,25 @@ static GLboolean __driWindowExists(Display *dpy, GLXDrawable draw)
 static void __driGarbageCollectDrawables(void *drawHash)
 {
     __DRIid draw;
-    __DRIdrawable *pdraw;
     __DRInativeDisplay *dpy;
+    union 
+    {
+	__DRIdrawable *pdraw;
+	void *ptr;
+    } p;
 
-    if (drmHashFirst(drawHash, &draw, (void **)&pdraw)) {
+    if (drmHashFirst(drawHash, &draw, &p.ptr)) {
 	do {
-	    __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *)pdraw->private;
+	    __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *)p.pdraw->private;
 	    dpy = pdp->driScreenPriv->display;
 	    if (! (*window_exists)(dpy, draw)) {
 		/* Destroy the local drawable data in the hash table, if the
 		   drawable no longer exists in the Xserver */
-		__driRemoveDrawable(drawHash, pdraw);
-		(*pdraw->destroyDrawable)(dpy, pdraw->private);
-		_mesa_free(pdraw);
+		__driRemoveDrawable(drawHash, p.pdraw);
+		(*p.pdraw->destroyDrawable)(dpy, p.pdraw->private);
+		_mesa_free(p.pdraw);
 	    }
-	} while (drmHashNext(drawHash, &draw, (void **)&pdraw));
+	} while (drmHashNext(drawHash, &draw, &p.ptr));
     }
 }
 
@@ -868,7 +882,7 @@ static void *driCreateNewDrawable(__DRInativeDisplay *dpy,
 	_mesa_free(pdp);
 	return NULL;
 #else
-	pdp->getInfo = XF86DRIGetDrawableInfo;
+	pdp->getInfo = (PFNGLXGETDRAWABLEINFOPROC) XF86DRIGetDrawableInfo;
 #endif /* DRI_NEW_INTERFACE_ONLY */
     }
 
@@ -1053,16 +1067,16 @@ driCreateNewContext(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
     pctx->bindContext3   = driBindContext3;
     pctx->unbindContext3 = driUnbindContext3;
 #else
-    pctx->bindContext    = driBindContext;
-    pctx->unbindContext  = driUnbindContext;
+    pctx->bindContext    = (void *)driBindContext;
+    pctx->unbindContext  = (void *)driUnbindContext;
     if ( driCompareGLXAPIVersion( 20030606 ) >= 0 ) {
-        pctx->bindContext2   = driBindContext2;
-        pctx->unbindContext2 = driUnbindContext2;
+        pctx->bindContext2   = (void *)driBindContext2;
+        pctx->unbindContext2 = (void *)driUnbindContext2;
     }
 
     if ( driCompareGLXAPIVersion( 20040415 ) >= 0 ) {
-        pctx->bindContext3   = driBindContext3;
-        pctx->unbindContext3 = driUnbindContext3;
+        pctx->bindContext3   = (void *)driBindContext3;
+        pctx->unbindContext3 = (void *)driUnbindContext3;
     }
 #endif
 
