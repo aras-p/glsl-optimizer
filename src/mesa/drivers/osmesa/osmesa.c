@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.54 2001/05/10 12:22:32 keithw Exp $ */
+/* $Id: osmesa.c,v 1.55 2001/05/14 16:23:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,6 +55,7 @@
 #include "swrast/s_depth.h"
 #include "swrast/s_lines.h"
 #include "swrast/s_triangle.h"
+#include "swrast/s_trispan.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
@@ -1600,21 +1601,24 @@ static void smooth_rgba_z_triangle( GLcontext *ctx,
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
-#define INNER_LOOP( LEFT, RIGHT, Y )				\
-{								\
-   GLint i, len = RIGHT-LEFT;					\
-   GLchan *img = PIXELADDR4(LEFT, Y); 				\
-   for (i = 0; i < len; i++, img += 4) {			\
-      GLdepth z = FixedToDepth(ffz);				\
+#define RENDER_SPAN( span )					\
+   GLuint i;							\
+   GLchan *img = PIXELADDR4(span.x, span.y); 			\
+   for (i = 0; i < span.count; i++, img += 4) {			\
+      const GLdepth z = FixedToDepth(span.z);			\
       if (z < zRow[i]) {					\
-         PACK_RGBA(img, FixedToInt(ffr), FixedToInt(ffg),	\
-		        FixedToInt(ffb), FixedToInt(ffa));	\
+         PACK_RGBA(img, FixedToInt(span.red),			\
+            FixedToInt(span.green), FixedToInt(span.blue),	\
+            FixedToInt(span.alpha));				\
          zRow[i] = z;						\
       }								\
-      ffr += fdrdx;  ffg += fdgdx;  ffb += fdbdx;  ffa += fdadx;\
-      ffz += fdzdx;						\
-   }								\
-}
+      span.red += span.redStep;					\
+      span.green += span.greenStep;				\
+      span.blue += span.blueStep;				\
+      span.alpha += span.alphaStep;				\
+      span.z += span.zStep;					\
+   }
+
 #ifdef WIN32
 #include "..\swrast\s_tritemp.h"
 #else
@@ -1641,19 +1645,18 @@ static void flat_rgba_z_triangle( GLcontext *ctx,
    PACK_RGBA((GLchan *) &pixel, v0->color[0], v0->color[1],	\
                                 v0->color[2], v0->color[3]);
 
-#define INNER_LOOP( LEFT, RIGHT, Y )			\
-{							\
-   GLint i, len = RIGHT-LEFT;				\
-   GLuint *img = (GLuint *) PIXELADDR4(LEFT, Y);   	\
-   for (i=0;i<len;i++) {				\
-      GLdepth z = FixedToDepth(ffz);			\
+#define RENDER_SPAN( span )				\
+   GLuint i;						\
+   GLuint *img = (GLuint *) PIXELADDR4(span.x, span.y);	\
+   for (i = 0; i < span.count; i++) {			\
+      const GLdepth z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {				\
          img[i] = pixel;				\
          zRow[i] = z;					\
       }							\
-      ffz += fdzdx;					\
-   }							\
-}
+      span.z += span.zStep;				\
+   }
+
 #ifdef WIN32
 #include "..\swrast\s_tritemp.h"
 #else

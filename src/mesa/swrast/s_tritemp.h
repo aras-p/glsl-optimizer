@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.15 2001/05/03 22:13:32 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.16 2001/05/14 16:23:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,9 +43,7 @@
  *    INTERP_TEX      - if defined, interpolate set 0 float STRQ texcoords
  *                         NOTE:  OpenGL STRQ = Mesa STUV (R was taken for red)
  *    INTERP_MULTITEX - if defined, interpolate N units of STRQ texcoords
- *    INTERP_LAMBDA   - if defined, the lambda value is computed at every
- *                         pixel, to apply MIPMAPPING, and min/maxification
- *    INTERP_MULTILAMBDA - like above but for multitexturing, i.e.
+ *    INTERP_LAMBDA   - if defined, compute lambda value (for mipmapping)
  *                         a lambda value for every texture unit
  *
  * When one can directly address pixels in the color buffer the following
@@ -64,19 +62,12 @@
  *    SETUP_CODE    - code which is to be executed once per triangle
  *
  * The following macro MUST be defined:
- *    INNER_LOOP(LEFT,RIGHT,Y) - code to write a span of pixels.
- *        Something like:
- *
- *                    for (x=LEFT; x<RIGHT;x++) {
- *                       put_pixel(x,Y);
- *                       // increment fixed point interpolants
- *                    }
+ *    RENDER_SPAN(span) - code to write a span of pixels.
  *
  * This code was designed for the origin to be in the lower-left corner.
  *
  * Inspired by triangle rasterizer code written by Allen Akin.  Thanks Allen!
  */
-
 
 /*void triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2 )*/
 {
@@ -103,6 +94,12 @@
    const SWvertex *vMin, *vMid, *vMax;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
    float bf = SWRAST_CONTEXT(ctx)->_backface_sign;
    GLboolean tiny;
+
+   struct triangle_span span;
+
+#ifdef INTERP_Z
+   (void) fixedToDepthShift;
+#endif
 
    /* find the order of the 3 vertices along the Y axis */
    {
@@ -253,58 +250,47 @@
    {
       GLint ltor;		/* true if scanning left-to-right */
 #ifdef INTERP_Z
-      GLfloat dzdx, dzdy;      GLfixed fdzdx;
+      GLfloat dzdx, dzdy;
 #endif
 #ifdef INTERP_FOG
-      GLfloat dfogdx, dfogdy;
+      GLfloat dfogdy;
 #endif
 #ifdef INTERP_RGB
-      GLfloat drdx, drdy;      GLfixed fdrdx;
-      GLfloat dgdx, dgdy;      GLfixed fdgdx;
-      GLfloat dbdx, dbdy;      GLfixed fdbdx;
-#endif
-#ifdef INTERP_SPEC
-      GLfloat dsrdx, dsrdy;    GLfixed fdsrdx;
-      GLfloat dsgdx, dsgdy;    GLfixed fdsgdx;
-      GLfloat dsbdx, dsbdy;    GLfixed fdsbdx;
+      GLfloat drdx, drdy;
+      GLfloat dgdx, dgdy;
+      GLfloat dbdx, dbdy;
 #endif
 #ifdef INTERP_ALPHA
-      GLfloat dadx, dady;      GLfixed fdadx;
+      GLfloat dadx, dady;
+#endif
+#ifdef INTERP_SPEC
+      GLfloat dsrdx, dsrdy;
+      GLfloat dsgdx, dsgdy;
+      GLfloat dsbdx, dsbdy;
 #endif
 #ifdef INTERP_INDEX
-      GLfloat didx, didy;      GLfixed fdidx;
+      GLfloat didx, didy;
 #endif
 #ifdef INTERP_INT_TEX
-      GLfloat dsdx, dsdy;      GLfixed fdsdx;
-      GLfloat dtdx, dtdy;      GLfixed fdtdx;
-#endif
-#ifdef INTERP_TEX
       GLfloat dsdx, dsdy;
       GLfloat dtdx, dtdy;
-      GLfloat dudx, dudy;
-      GLfloat dvdx, dvdy;
+#endif
+#ifdef INTERP_TEX
+      GLfloat dsdy;
+      GLfloat dtdy;
+      GLfloat dudy;
+      GLfloat dvdy;
 #endif
 #ifdef INTERP_MULTITEX
-      GLfloat dsdx[MAX_TEXTURE_UNITS], dsdy[MAX_TEXTURE_UNITS];
-      GLfloat dtdx[MAX_TEXTURE_UNITS], dtdy[MAX_TEXTURE_UNITS];
-      GLfloat dudx[MAX_TEXTURE_UNITS], dudy[MAX_TEXTURE_UNITS];
-      GLfloat dvdx[MAX_TEXTURE_UNITS], dvdy[MAX_TEXTURE_UNITS];
+      GLfloat dsdy[MAX_TEXTURE_UNITS];
+      GLfloat dtdy[MAX_TEXTURE_UNITS];
+      GLfloat dudy[MAX_TEXTURE_UNITS];
+      GLfloat dvdy[MAX_TEXTURE_UNITS];
 #endif
 
-#ifdef INTERP_LAMBDA
-#ifndef INTERP_TEX
+#if defined(INTERP_LAMBDA) && !defined(INTERP_TEX) && !defined(INTERP_MULTITEX)
 #error "Mipmapping without texturing doesn't make sense."
 #endif
-      GLfloat lambda_nominator;
-#endif /* INTERP_LAMBDA */
-
-#ifdef INTERP_MULTILAMBDA
-#ifndef INTERP_MULTITEX
-#error "Multi-Mipmapping without multi-texturing doesn't make sense."
-#endif
-      GLfloat lambda_nominator[MAX_TEXTURE_UNITS];
-#endif /* INTERP_MULTILAMBDA */
-
 
       /*
        * Execute user-supplied setup code
@@ -315,8 +301,11 @@
 
       ltor = (oneOverArea < 0.0F);
 
+      span.activeMask = 0;
+
       /* compute d?/dx and d?/dy derivatives */
 #ifdef INTERP_Z
+      span.activeMask |= SPAN_Z;
       {
          GLfloat eMaj_dz, eBot_dz;
          eMaj_dz = vMax->win[2] - vMin->win[2];
@@ -331,28 +320,30 @@
             dzdy = oneOverArea * (eMaj.dx * eBot_dz - eMaj_dz * eBot.dx);
          }
          if (depthBits <= 16)
-            fdzdx = SignedFloatToFixed(dzdx);
+            span.zStep = SignedFloatToFixed(dzdx);
          else
-            fdzdx = (GLint) dzdx;
+            span.zStep = (GLint) dzdx;
       }
 #endif
 #ifdef INTERP_FOG
+      span.activeMask |= SPAN_FOG;
       {
          const GLfloat eMaj_dfog = vMax->fog - vMin->fog;
          const GLfloat eBot_dfog = vMid->fog - vMin->fog;
-         dfogdx = oneOverArea * (eMaj_dfog * eBot.dy - eMaj.dy * eBot_dfog);
+         span.fogStep = oneOverArea * (eMaj_dfog * eBot.dy - eMaj.dy * eBot_dfog);
          dfogdy = oneOverArea * (eMaj.dx * eBot_dfog - eMaj_dfog * eBot.dx);
       }
 #endif
 #ifdef INTERP_RGB
+      span.activeMask |= SPAN_RGBA;
       if (tiny) {
          /* This is kind of a hack to eliminate RGB color over/underflow
           * problems when rendering very tiny triangles.  We're not doing
           * anything with alpha or specular color at this time.
           */
-         drdx = drdy = 0.0;  fdrdx = 0;
-         dgdx = dgdy = 0.0;  fdgdx = 0;
-         dbdx = dbdy = 0.0;  fdbdx = 0;
+         drdx = drdy = 0.0;  span.redStep = 0;
+         dgdx = dgdy = 0.0;  span.greenStep = 0;
+         dbdx = dbdy = 0.0;  span.blueStep = 0;
       }
       else {
          GLfloat eMaj_dr, eBot_dr;
@@ -361,44 +352,18 @@
          eMaj_dr = (GLint) vMax->color[0] - (GLint) vMin->color[0];
          eBot_dr = (GLint) vMid->color[0] - (GLint) vMin->color[0];
          drdx = oneOverArea * (eMaj_dr * eBot.dy - eMaj.dy * eBot_dr);
-         fdrdx = SignedFloatToFixed(drdx);
+         span.redStep = SignedFloatToFixed(drdx);
          drdy = oneOverArea * (eMaj.dx * eBot_dr - eMaj_dr * eBot.dx);
          eMaj_dg = (GLint) vMax->color[1] - (GLint) vMin->color[1];
 	 eBot_dg = (GLint) vMid->color[1] - (GLint) vMin->color[1];
          dgdx = oneOverArea * (eMaj_dg * eBot.dy - eMaj.dy * eBot_dg);
-         fdgdx = SignedFloatToFixed(dgdx);
+         span.greenStep = SignedFloatToFixed(dgdx);
          dgdy = oneOverArea * (eMaj.dx * eBot_dg - eMaj_dg * eBot.dx);
          eMaj_db = (GLint) vMax->color[2] - (GLint) vMin->color[2];
          eBot_db = (GLint) vMid->color[2] - (GLint) vMin->color[2];
          dbdx = oneOverArea * (eMaj_db * eBot.dy - eMaj.dy * eBot_db);
-         fdbdx = SignedFloatToFixed(dbdx);
+         span.blueStep = SignedFloatToFixed(dbdx);
 	 dbdy = oneOverArea * (eMaj.dx * eBot_db - eMaj_db * eBot.dx);
-      }
-#endif
-#ifdef INTERP_SPEC
-      {
-         GLfloat eMaj_dsr, eBot_dsr;
-         eMaj_dsr = (GLint) vMax->specular[0] - (GLint) vMin->specular[0];
-         eBot_dsr = (GLint) vMid->specular[0] - (GLint) vMin->specular[0];
-         dsrdx = oneOverArea * (eMaj_dsr * eBot.dy - eMaj.dy * eBot_dsr);
-         fdsrdx = SignedFloatToFixed(dsrdx);
-         dsrdy = oneOverArea * (eMaj.dx * eBot_dsr - eMaj_dsr * eBot.dx);
-      }
-      {
-         GLfloat eMaj_dsg, eBot_dsg;
-         eMaj_dsg = (GLint) vMax->specular[1] - (GLint) vMin->specular[1];
-	 eBot_dsg = (GLint) vMid->specular[1] - (GLint) vMin->specular[1];
-         dsgdx = oneOverArea * (eMaj_dsg * eBot.dy - eMaj.dy * eBot_dsg);
-         fdsgdx = SignedFloatToFixed(dsgdx);
-         dsgdy = oneOverArea * (eMaj.dx * eBot_dsg - eMaj_dsg * eBot.dx);
-      }
-      {
-         GLfloat eMaj_dsb, eBot_dsb;
-         eMaj_dsb = (GLint) vMax->specular[2] - (GLint) vMin->specular[2];
-         eBot_dsb = (GLint) vMid->specular[2] - (GLint) vMin->specular[2];
-         dsbdx = oneOverArea * (eMaj_dsb * eBot.dy - eMaj.dy * eBot_dsb);
-         fdsbdx = SignedFloatToFixed(dsbdx);
-	 dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
       }
 #endif
 #ifdef INTERP_ALPHA
@@ -407,27 +372,56 @@
          eMaj_da = (GLint) vMax->color[3] - (GLint) vMin->color[3];
          eBot_da = (GLint) vMid->color[3] - (GLint) vMin->color[3];
          dadx = oneOverArea * (eMaj_da * eBot.dy - eMaj.dy * eBot_da);
-         fdadx = SignedFloatToFixed(dadx);
+         span.alphaStep = SignedFloatToFixed(dadx);
          dady = oneOverArea * (eMaj.dx * eBot_da - eMaj_da * eBot.dx);
       }
 #endif
+#ifdef INTERP_SPEC
+      span.activeMask |= SPAN_SPEC;
+      {
+         GLfloat eMaj_dsr, eBot_dsr;
+         eMaj_dsr = (GLint) vMax->specular[0] - (GLint) vMin->specular[0];
+         eBot_dsr = (GLint) vMid->specular[0] - (GLint) vMin->specular[0];
+         dsrdx = oneOverArea * (eMaj_dsr * eBot.dy - eMaj.dy * eBot_dsr);
+         span.specRedStep = SignedFloatToFixed(dsrdx);
+         dsrdy = oneOverArea * (eMaj.dx * eBot_dsr - eMaj_dsr * eBot.dx);
+      }
+      {
+         GLfloat eMaj_dsg, eBot_dsg;
+         eMaj_dsg = (GLint) vMax->specular[1] - (GLint) vMin->specular[1];
+	 eBot_dsg = (GLint) vMid->specular[1] - (GLint) vMin->specular[1];
+         dsgdx = oneOverArea * (eMaj_dsg * eBot.dy - eMaj.dy * eBot_dsg);
+         span.specGreenStep = SignedFloatToFixed(dsgdx);
+         dsgdy = oneOverArea * (eMaj.dx * eBot_dsg - eMaj_dsg * eBot.dx);
+      }
+      {
+         GLfloat eMaj_dsb, eBot_dsb;
+         eMaj_dsb = (GLint) vMax->specular[2] - (GLint) vMin->specular[2];
+         eBot_dsb = (GLint) vMid->specular[2] - (GLint) vMin->specular[2];
+         dsbdx = oneOverArea * (eMaj_dsb * eBot.dy - eMaj.dy * eBot_dsb);
+         span.specBlueStep = SignedFloatToFixed(dsbdx);
+	 dsbdy = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
+      }
+#endif
 #ifdef INTERP_INDEX
+      span.activeMask |= SPAN_INDEX;
       {
          GLfloat eMaj_di, eBot_di;
          eMaj_di = (GLint) vMax->index - (GLint) vMin->index;
          eBot_di = (GLint) vMid->index - (GLint) vMin->index;
          didx = oneOverArea * (eMaj_di * eBot.dy - eMaj.dy * eBot_di);
-         fdidx = SignedFloatToFixed(didx);
+         span.indexStep = SignedFloatToFixed(didx);
          didy = oneOverArea * (eMaj.dx * eBot_di - eMaj_di * eBot.dx);
       }
 #endif
 #ifdef INTERP_INT_TEX
+      span.activeMask |= SPAN_INT_TEXTURE;
       {
          GLfloat eMaj_ds, eBot_ds;
          eMaj_ds = (vMax->texcoord[0][0] - vMin->texcoord[0][0]) * S_SCALE;
          eBot_ds = (vMid->texcoord[0][0] - vMin->texcoord[0][0]) * S_SCALE;
          dsdx = oneOverArea * (eMaj_ds * eBot.dy - eMaj.dy * eBot_ds);
-         fdsdx = SignedFloatToFixed(dsdx);
+         span.intTexStep[0] = SignedFloatToFixed(dsdx);
          dsdy = oneOverArea * (eMaj.dx * eBot_ds - eMaj_ds * eBot.dx);
       }
       {
@@ -435,12 +429,14 @@
          eMaj_dt = (vMax->texcoord[0][1] - vMin->texcoord[0][1]) * T_SCALE;
          eBot_dt = (vMid->texcoord[0][1] - vMin->texcoord[0][1]) * T_SCALE;
          dtdx = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
-         fdtdx = SignedFloatToFixed(dtdx);
+         span.intTexStep[1] = SignedFloatToFixed(dtdx);
          dtdy = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
       }
 
 #endif
+
 #ifdef INTERP_TEX
+      span.activeMask |= SPAN_TEXTURE;
       {
          GLfloat wMax = vMax->win[3];
          GLfloat wMin = vMin->win[3];
@@ -452,26 +448,47 @@
 
          eMaj_ds = vMax->texcoord[0][0] * wMax - vMin->texcoord[0][0] * wMin;
          eBot_ds = vMid->texcoord[0][0] * wMid - vMin->texcoord[0][0] * wMin;
-         dsdx = oneOverArea * (eMaj_ds * eBot.dy - eMaj.dy * eBot_ds);
+         span.texStep[0][0] = oneOverArea * (eMaj_ds * eBot.dy
+                                             - eMaj.dy * eBot_ds);
          dsdy = oneOverArea * (eMaj.dx * eBot_ds - eMaj_ds * eBot.dx);
 
 	 eMaj_dt = vMax->texcoord[0][1] * wMax - vMin->texcoord[0][1] * wMin;
 	 eBot_dt = vMid->texcoord[0][1] * wMid - vMin->texcoord[0][1] * wMin;
-	 dtdx = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
+	 span.texStep[0][1] = oneOverArea * (eMaj_dt * eBot.dy
+                                             - eMaj.dy * eBot_dt);
 	 dtdy = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
 
 	 eMaj_du = vMax->texcoord[0][2] * wMax - vMin->texcoord[0][2] * wMin;
 	 eBot_du = vMid->texcoord[0][2] * wMid - vMin->texcoord[0][2] * wMin;
-	 dudx = oneOverArea * (eMaj_du * eBot.dy - eMaj.dy * eBot_du);
+	 span.texStep[0][2] = oneOverArea * (eMaj_du * eBot.dy
+                                             - eMaj.dy * eBot_du);
 	 dudy = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
 
 	 eMaj_dv = vMax->texcoord[0][3] * wMax - vMin->texcoord[0][3] * wMin;
 	 eBot_dv = vMid->texcoord[0][3] * wMid - vMin->texcoord[0][3] * wMin;
-	 dvdx = oneOverArea * (eMaj_dv * eBot.dy - eMaj.dy * eBot_dv);
+	 span.texStep[0][3] = oneOverArea * (eMaj_dv * eBot.dy
+                                             - eMaj.dy * eBot_dv);
 	 dvdy = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
       }
+#  ifdef INTERP_LAMBDA
+      {
+         GLfloat dudx = span.texStep[0][0] * span.texWidth[0];
+         GLfloat dudy = dsdy * span.texWidth[0];
+         GLfloat dvdx = span.texStep[0][1] * span.texHeight[0];
+         GLfloat dvdy = dtdy * span.texHeight[0];
+         GLfloat r1 = dudx * dudx + dudy * dudy;
+         GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
+         span.rho[0] = r1 + r2; /* was rho2 = MAX2(r1,r2) */
+         span.activeMask |= SPAN_LAMBDA;
+      }
+#  endif
 #endif
+
 #ifdef INTERP_MULTITEX
+      span.activeMask |= SPAN_TEXTURE;
+#  ifdef INTERP_LAMBDA
+      span.activeMask |= SPAN_LAMBDA;
+#  endif
       {
          GLfloat wMax = vMax->win[3];
          GLfloat wMin = vMin->win[3];
@@ -487,29 +504,44 @@
                        - vMin->texcoord[u][0] * wMin;
                eBot_ds = vMid->texcoord[u][0] * wMid
                        - vMin->texcoord[u][0] * wMin;
-               dsdx[u] = oneOverArea * (eMaj_ds * eBot.dy - eMaj.dy * eBot_ds);
+               span.texStep[u][0] = oneOverArea * (eMaj_ds * eBot.dy
+                                                   - eMaj.dy * eBot_ds);
                dsdy[u] = oneOverArea * (eMaj.dx * eBot_ds - eMaj_ds * eBot.dx);
 
 	       eMaj_dt = vMax->texcoord[u][1] * wMax
 		       - vMin->texcoord[u][1] * wMin;
 	       eBot_dt = vMid->texcoord[u][1] * wMid
 		       - vMin->texcoord[u][1] * wMin;
-	       dtdx[u] = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
+	       span.texStep[u][1] = oneOverArea * (eMaj_dt * eBot.dy
+                                                   - eMaj.dy * eBot_dt);
 	       dtdy[u] = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
 
 	       eMaj_du = vMax->texcoord[u][2] * wMax
                        - vMin->texcoord[u][2] * wMin;
 	       eBot_du = vMid->texcoord[u][2] * wMid
                        - vMin->texcoord[u][2] * wMin;
-	       dudx[u] = oneOverArea * (eMaj_du * eBot.dy - eMaj.dy * eBot_du);
+	       span.texStep[u][2] = oneOverArea * (eMaj_du * eBot.dy
+                                                   - eMaj.dy * eBot_du);
 	       dudy[u] = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
 
 	       eMaj_dv = vMax->texcoord[u][3] * wMax
                        - vMin->texcoord[u][3] * wMin;
 	       eBot_dv = vMid->texcoord[u][3] * wMid
                        - vMin->texcoord[u][3] * wMin;
-	       dvdx[u] = oneOverArea * (eMaj_dv * eBot.dy - eMaj.dy * eBot_dv);
+	       span.texStep[u][3] = oneOverArea * (eMaj_dv * eBot.dy
+                                                   - eMaj.dy * eBot_dv);
 	       dvdy[u] = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
+#  ifdef INTERP_LAMBDA
+               {
+                  GLfloat dudx = span.texStep[u][0] * span.texWidth[u];
+                  GLfloat dudy = dsdy[u] * span.texWidth[u];
+                  GLfloat dvdx = span.texStep[u][1] * span.texHeight[u];
+                  GLfloat dvdy = dtdy[u] * span.texHeight[u];
+                  GLfloat r1 = dudx * dudx + dudy * dudy;
+                  GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
+                  span.rho[u] = r1 + r2; /* was rho2 = MAX2(r1,r2) */
+               }
+#  endif
             }
          }
       }
@@ -565,40 +597,39 @@
       {
          int subTriangle;
          GLfixed fx;
-         GLfixed fxLeftEdge=0, fxRightEdge=0, fdxLeftEdge=0, fdxRightEdge=0;
+         GLfixed fxLeftEdge, fxRightEdge, fdxLeftEdge, fdxRightEdge;
          GLfixed fdxOuter;
          int idxOuter;
          float dxOuter;
-         GLfixed fError=0, fdError=0;
+         GLfixed fError, fdError;
          float adjx, adjy;
          GLfixed fy;
-         int iy=0;
 #ifdef PIXEL_ADDRESS
-         PIXEL_TYPE *pRow=NULL;
-         int dPRowOuter=0, dPRowInner=0;  /* offset in bytes */
+         PIXEL_TYPE *pRow;
+         int dPRowOuter, dPRowInner;  /* offset in bytes */
 #endif
 #ifdef INTERP_Z
 #  ifdef DEPTH_TYPE
-         DEPTH_TYPE *zRow=NULL;
-         int dZRowOuter=0, dZRowInner=0;  /* offset in bytes */
+         DEPTH_TYPE *zRow;
+         int dZRowOuter, dZRowInner;  /* offset in bytes */
 #  endif
-         GLfixed fz=0, fdzOuter=0, fdzInner;
+         GLfixed fz, fdzOuter, fdzInner;
 #endif
 #ifdef INTERP_FOG
          GLfloat fogLeft, dfogOuter, dfogInner;
 #endif
 #ifdef INTERP_RGB
-         GLfixed fr=0, fdrOuter=0, fdrInner;
-         GLfixed fg=0, fdgOuter=0, fdgInner;
-         GLfixed fb=0, fdbOuter=0, fdbInner;
+         GLfixed fr, fdrOuter, fdrInner;
+         GLfixed fg, fdgOuter, fdgInner;
+         GLfixed fb, fdbOuter, fdbInner;
+#endif
+#ifdef INTERP_ALPHA
+         GLfixed fa=0, fdaOuter=0, fdaInner;
 #endif
 #ifdef INTERP_SPEC
          GLfixed fsr=0, fdsrOuter=0, fdsrInner;
          GLfixed fsg=0, fdsgOuter=0, fdsgInner;
          GLfixed fsb=0, fdsbOuter=0, fdsbInner;
-#endif
-#ifdef INTERP_ALPHA
-         GLfixed fa=0, fdaOuter=0, fdaInner;
 #endif
 #ifdef INTERP_INDEX
          GLfixed fi=0, fdiOuter=0, fdiInner;
@@ -680,7 +711,7 @@
                (void) dxOuter;
 
                fy = eLeft->fsy;
-               iy = FixedToInt(fy);
+               span.y = FixedToInt(fy);
 
                adjx = (float)(fx - eLeft->fx0);  /* SCALED! */
                adjy = eLeft->adjy;		 /* SCALED! */
@@ -692,7 +723,7 @@
 
 #ifdef PIXEL_ADDRESS
                {
-                  pRow = PIXEL_ADDRESS( FixedToInt(fxLeftEdge), iy );
+                  pRow = (PIXEL_TYPE *) PIXEL_ADDRESS(FixedToInt(fxLeftEdge), span.y);
                   dPRowOuter = -((int)BYTES_PER_ROW) + idxOuter * sizeof(PIXEL_TYPE);
                   /* negative because Y=0 at bottom and increases upward */
                }
@@ -722,19 +753,21 @@
                   }
                   else {
                      /* interpolate depth values exactly */
-                     fz = (GLint) (z0 + dzdx*FixedToFloat(adjx) + dzdy*FixedToFloat(adjy));
+                     fz = (GLint) (z0 + dzdx * FixedToFloat(adjx)
+                                   + dzdy * FixedToFloat(adjy));
                      fdzOuter = (GLint) (dzdy + dxOuter * dzdx);
                   }
 #  ifdef DEPTH_TYPE
-                  zRow = (DEPTH_TYPE *) _mesa_zbuffer_address(ctx, FixedToInt(fxLeftEdge), iy);
+                  zRow = (DEPTH_TYPE *)
+                    _mesa_zbuffer_address(ctx, FixedToInt(fxLeftEdge), span.y);
                   dZRowOuter = (ctx->DrawBuffer->Width + idxOuter) * sizeof(DEPTH_TYPE);
 #  endif
                }
 #endif
 #ifdef INTERP_FOG
-               fogLeft = vLower->fog + (dfogdx * adjx + dfogdy * adjy)
+               fogLeft = vLower->fog + (span.fogStep * adjx + dfogdy * adjy)
                                        * (1.0F/FIXED_SCALE);
-               dfogOuter = dfogdy + dxOuter * dfogdx;
+               dfogOuter = dfogdy + dxOuter * span.fogStep;
 #endif
 #ifdef INTERP_RGB
                fr = (GLfixed)(IntToFixed(vLower->color[0])
@@ -749,6 +782,11 @@
                               + dbdx * adjx + dbdy * adjy) + FIXED_HALF;
                fdbOuter = SignedFloatToFixed(dbdy + dxOuter * dbdx);
 #endif
+#ifdef INTERP_ALPHA
+               fa = (GLfixed)(IntToFixed(vLower->color[3])
+                              + dadx * adjx + dady * adjy) + FIXED_HALF;
+               fdaOuter = SignedFloatToFixed(dady + dxOuter * dadx);
+#endif
 #ifdef INTERP_SPEC
                fsr = (GLfixed)(IntToFixed(vLower->specular[0])
                                + dsrdx * adjx + dsrdy * adjy) + FIXED_HALF;
@@ -762,11 +800,6 @@
                                + dsbdx * adjx + dsbdy * adjy) + FIXED_HALF;
                fdsbOuter = SignedFloatToFixed(dsbdy + dxOuter * dsbdx);
 #endif
-#ifdef INTERP_ALPHA
-               fa = (GLfixed)(IntToFixed(vLower->color[3])
-                              + dadx * adjx + dady * adjy) + FIXED_HALF;
-               fdaOuter = SignedFloatToFixed(dady + dxOuter * dadx);
-#endif
 #ifdef INTERP_INDEX
                fi = (GLfixed)(vLower->index * FIXED_SCALE
                               + didx * adjx + didy * adjy) + FIXED_HALF;
@@ -776,11 +809,13 @@
                {
                   GLfloat s0, t0;
                   s0 = vLower->texcoord[0][0] * S_SCALE;
-                  fs = (GLfixed)(s0 * FIXED_SCALE + dsdx * adjx + dsdy * adjy) + FIXED_HALF;
+                  fs = (GLfixed)(s0 * FIXED_SCALE + dsdx * adjx
+                                 + dsdy * adjy) + FIXED_HALF;
                   fdsOuter = SignedFloatToFixed(dsdy + dxOuter * dsdx);
 
 		  t0 = vLower->texcoord[0][1] * T_SCALE;
-		  ft = (GLfixed)(t0 * FIXED_SCALE + dtdx * adjx + dtdy * adjy) + FIXED_HALF;
+		  ft = (GLfixed)(t0 * FIXED_SCALE + dtdx * adjx
+                                 + dtdy * adjy) + FIXED_HALF;
 		  fdtOuter = SignedFloatToFixed(dtdy + dxOuter * dtdx);
 	       }
 #endif
@@ -789,17 +824,21 @@
                   GLfloat invW = vLower->win[3];
                   GLfloat s0, t0, u0, v0;
                   s0 = vLower->texcoord[0][0] * invW;
-                  sLeft = s0 + (dsdx * adjx + dsdy * adjy) * (1.0F/FIXED_SCALE);
-                  dsOuter = dsdy + dxOuter * dsdx;
+                  sLeft = s0 + (span.texStep[0][0] * adjx + dsdy * adjy)
+                     * (1.0F/FIXED_SCALE);
+                  dsOuter = dsdy + dxOuter * span.texStep[0][0];
 		  t0 = vLower->texcoord[0][1] * invW;
-		  tLeft = t0 + (dtdx * adjx + dtdy * adjy) * (1.0F/FIXED_SCALE);
-		  dtOuter = dtdy + dxOuter * dtdx;
+		  tLeft = t0 + (span.texStep[0][1] * adjx + dtdy * adjy)
+                     * (1.0F/FIXED_SCALE);
+		  dtOuter = dtdy + dxOuter * span.texStep[0][1];
 		  u0 = vLower->texcoord[0][2] * invW;
-		  uLeft = u0 + (dudx * adjx + dudy * adjy) * (1.0F/FIXED_SCALE);
-		  duOuter = dudy + dxOuter * dudx;
+		  uLeft = u0 + (span.texStep[0][2] * adjx + dudy * adjy)
+                     * (1.0F/FIXED_SCALE);
+		  duOuter = dudy + dxOuter * span.texStep[0][2];
 		  v0 = vLower->texcoord[0][3] * invW;
-		  vLeft = v0 + (dvdx * adjx + dvdy * adjy) * (1.0F/FIXED_SCALE);
-		  dvOuter = dvdy + dxOuter * dvdx;
+		  vLeft = v0 + (span.texStep[0][3] * adjx + dvdy * adjy)
+                     * (1.0F/FIXED_SCALE);
+		  dvOuter = dvdy + dxOuter * span.texStep[0][3];
                }
 #endif
 #ifdef INTERP_MULTITEX
@@ -810,17 +849,21 @@
                         GLfloat invW = vLower->win[3];
                         GLfloat s0, t0, u0, v0;
                         s0 = vLower->texcoord[u][0] * invW;
-                        sLeft[u] = s0 + (dsdx[u] * adjx + dsdy[u] * adjy) * (1.0F/FIXED_SCALE);
-                        dsOuter[u] = dsdy[u] + dxOuter * dsdx[u];
+                        sLeft[u] = s0 + (span.texStep[u][0] * adjx + dsdy[u]
+                                         * adjy) * (1.0F/FIXED_SCALE);
+                        dsOuter[u] = dsdy[u] + dxOuter * span.texStep[u][0];
 			t0 = vLower->texcoord[u][1] * invW;
-			tLeft[u] = t0 + (dtdx[u] * adjx + dtdy[u] * adjy) * (1.0F/FIXED_SCALE);
-			dtOuter[u] = dtdy[u] + dxOuter * dtdx[u];
+			tLeft[u] = t0 + (span.texStep[u][1] * adjx + dtdy[u]
+                                         * adjy) * (1.0F/FIXED_SCALE);
+			dtOuter[u] = dtdy[u] + dxOuter * span.texStep[u][1];
 			u0 = vLower->texcoord[u][2] * invW;
-			uLeft[u] = u0 + (dudx[u] * adjx + dudy[u] * adjy) * (1.0F/FIXED_SCALE);
-			duOuter[u] = dudy[u] + dxOuter * dudx[u];
+			uLeft[u] = u0 + (span.texStep[u][2] * adjx + dudy[u]
+                                         * adjy) * (1.0F/FIXED_SCALE);
+			duOuter[u] = dudy[u] + dxOuter * span.texStep[u][2];
 			v0 = vLower->texcoord[u][3] * invW;
-                        vLeft[u] = v0 + (dvdx[u] * adjx + dvdy[u] * adjy) * (1.0F/FIXED_SCALE);
-                        dvOuter[u] = dvdy[u] + dxOuter * dvdx[u];
+                        vLeft[u] = v0 + (span.texStep[u][3] * adjx + dvdy[u]
+                                         * adjy) * (1.0F/FIXED_SCALE);
+                        dvOuter[u] = dvdy[u] + dxOuter * span.texStep[u][3];
                      }
                   }
                }
@@ -847,93 +890,104 @@
 #  ifdef DEPTH_TYPE
             dZRowInner = dZRowOuter + sizeof(DEPTH_TYPE);
 #  endif
-            fdzInner = fdzOuter + fdzdx;
+            fdzInner = fdzOuter + span.zStep;
 #endif
 #ifdef INTERP_FOG
-            dfogInner = dfogOuter + dfogdx;
+            dfogInner = dfogOuter + span.fogStep;
 #endif
 #ifdef INTERP_RGB
-            fdrInner = fdrOuter + fdrdx;
-            fdgInner = fdgOuter + fdgdx;
-            fdbInner = fdbOuter + fdbdx;
-#endif
-#ifdef INTERP_SPEC
-            fdsrInner = fdsrOuter + fdsrdx;
-            fdsgInner = fdsgOuter + fdsgdx;
-            fdsbInner = fdsbOuter + fdsbdx;
+            fdrInner = fdrOuter + span.redStep;
+            fdgInner = fdgOuter + span.greenStep;
+            fdbInner = fdbOuter + span.blueStep;
 #endif
 #ifdef INTERP_ALPHA
-            fdaInner = fdaOuter + fdadx;
+            fdaInner = fdaOuter + span.alphaStep;
+#endif
+#ifdef INTERP_SPEC
+            fdsrInner = fdsrOuter + span.specRedStep;
+            fdsgInner = fdsgOuter + span.specGreenStep;
+            fdsbInner = fdsbOuter + span.specBlueStep;
 #endif
 #ifdef INTERP_INDEX
-            fdiInner = fdiOuter + fdidx;
+            fdiInner = fdiOuter + span.indexStep;
 #endif
 #ifdef INTERP_INT_TEX
-            fdsInner = fdsOuter + fdsdx;
-            fdtInner = fdtOuter + fdtdx;
+            fdsInner = fdsOuter + span.intTexStep[0];
+            fdtInner = fdtOuter + span.intTexStep[1];
 #endif
 #ifdef INTERP_TEX
-	    dsInner = dsOuter + dsdx;
-	    dtInner = dtOuter + dtdx;
-	    duInner = duOuter + dudx;
-	    dvInner = dvOuter + dvdx;
+	    dsInner = dsOuter + span.texStep[0][0];
+	    dtInner = dtOuter + span.texStep[0][1];
+	    duInner = duOuter + span.texStep[0][2];
+	    dvInner = dvOuter + span.texStep[0][3];
 #endif
 #ifdef INTERP_MULTITEX
             {
                GLuint u;
                for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
                   if (ctx->Texture.Unit[u]._ReallyEnabled) {
-                     dsInner[u] = dsOuter[u] + dsdx[u];
-                     dtInner[u] = dtOuter[u] + dtdx[u];
-                     duInner[u] = duOuter[u] + dudx[u];
-                     dvInner[u] = dvOuter[u] + dvdx[u];
+                     dsInner[u] = dsOuter[u] + span.texStep[u][0];
+                     dtInner[u] = dtOuter[u] + span.texStep[u][1];
+                     duInner[u] = duOuter[u] + span.texStep[u][2];
+                     dvInner[u] = dvOuter[u] + span.texStep[u][3];
                   }
                }
             }
 #endif
 
-            while (lines>0) {
+            while (lines > 0) {
                /* initialize the span interpolants to the leftmost value */
                /* ff = fixed-pt fragment */
-               GLint left = FixedToInt(fxLeftEdge);
-               GLint right = FixedToInt(fxRightEdge);
+               const GLint right = FixedToInt(fxRightEdge);
+               span.x = FixedToInt(fxLeftEdge);
+               if (right <= span.x)
+                  span.count = 0;
+               else
+                  span.count = right - span.x;
+
 #ifdef INTERP_Z
-               GLfixed ffz = fz;
+               span.z = fz;
 #endif
 #ifdef INTERP_FOG
-               GLfloat ffog = fogLeft;
+               span.fog = fogLeft;
 #endif
 #ifdef INTERP_RGB
-               GLfixed ffr = fr,  ffg = fg,  ffb = fb;
-#endif
-#ifdef INTERP_SPEC
-               GLfixed ffsr = fsr,  ffsg = fsg,  ffsb = fsb;
+               span.red = fr;
+               span.green = fg;
+               span.blue = fb;
 #endif
 #ifdef INTERP_ALPHA
-               GLfixed ffa = fa;
+               span.alpha = fa;
+#endif
+#ifdef INTERP_SPEC
+               span.specRed = fsr;
+               span.specGreen = fsg;
+               span.specBlue = fsb;
 #endif
 #ifdef INTERP_INDEX
-               GLfixed ffi = fi;
+               span.index = fi;
 #endif
 #ifdef INTERP_INT_TEX
-               GLfixed ffs = fs,  fft = ft;
+               span.intTex[0] = fs;
+               span.intTex[1] = ft;
 #endif
+
 #ifdef INTERP_TEX
-               GLfloat ss = sLeft, tt = tLeft, uu = uLeft, vv = vLeft;
+               span.tex[0][0] = sLeft;
+               span.tex[0][1] = tLeft;
+               span.tex[0][2] = uLeft;
+               span.tex[0][3] = vLeft;
 #endif
+
 #ifdef INTERP_MULTITEX
-               GLfloat ss[MAX_TEXTURE_UNITS];
-               GLfloat tt[MAX_TEXTURE_UNITS];
-               GLfloat uu[MAX_TEXTURE_UNITS];
-               GLfloat vv[MAX_TEXTURE_UNITS];
                {
                   GLuint u;
                   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
                      if (ctx->Texture.Unit[u]._ReallyEnabled) {
-                        ss[u] = sLeft[u];
-                        tt[u] = tLeft[u];
-                        uu[u] = uLeft[u];
-                        vv[u] = vLeft[u];
+                        span.tex[u][0] = sLeft[u];
+                        span.tex[u][1] = tLeft[u];
+                        span.tex[u][2] = uLeft[u];
+                        span.tex[u][3] = vLeft[u];
                      }
                   }
                }
@@ -942,100 +996,70 @@
 #ifdef INTERP_RGB
                {
                   /* need this to accomodate round-off errors */
-                  GLfixed ffrend = ffr+(right-left-1)*fdrdx;
-                  GLfixed ffgend = ffg+(right-left-1)*fdgdx;
-                  GLfixed ffbend = ffb+(right-left-1)*fdbdx;
-                  if (ffrend<0) ffr -= ffrend;
-                  if (ffgend<0) ffg -= ffgend;
-                  if (ffbend<0) ffb -= ffbend;
-                  if (ffr<0) ffr = 0;
-                  if (ffg<0) ffg = 0;
-                  if (ffb<0) ffb = 0;
+                  const GLint len = right - span.x - 1;
+                  GLfixed ffrend = span.red + len * span.redStep;
+                  GLfixed ffgend = span.green + len * span.greenStep;
+                  GLfixed ffbend = span.blue + len * span.blueStep;
+                  if (ffrend < 0) {
+                     span.red -= ffrend;
+                     if (span.red < 0)
+                        span.red = 0;
+                  }
+                  if (ffgend < 0) {
+                     span.green -= ffgend;
+                     if (span.green < 0)
+                        span.green = 0;
+                  }
+                  if (ffbend < 0) {
+                     span.blue -= ffbend;
+                     if (span.blue < 0)
+                        span.blue = 0;
+                  }
+               }
+#endif
+#ifdef INTERP_ALPHA
+               {
+                  const GLint len = right - span.x - 1;
+                  GLfixed ffaend = span.alpha + len * span.alphaStep;
+                  if (ffaend < 0) {
+                     span.alpha -= ffaend;
+                     if (span.alpha < 0)
+                        span.alpha = 0;
+                  }
                }
 #endif
 #ifdef INTERP_SPEC
                {
                   /* need this to accomodate round-off errors */
-                  GLfixed ffsrend = ffsr+(right-left-1)*fdsrdx;
-                  GLfixed ffsgend = ffsg+(right-left-1)*fdsgdx;
-                  GLfixed ffsbend = ffsb+(right-left-1)*fdsbdx;
-                  if (ffsrend<0) ffsr -= ffsrend;
-                  if (ffsgend<0) ffsg -= ffsgend;
-                  if (ffsbend<0) ffsb -= ffsbend;
-                  if (ffsr<0) ffsr = 0;
-                  if (ffsg<0) ffsg = 0;
-                  if (ffsb<0) ffsb = 0;
-               }
-#endif
-#ifdef INTERP_ALPHA
-               {
-                  GLfixed ffaend = ffa+(right-left-1)*fdadx;
-                  if (ffaend<0) ffa -= ffaend;
-                  if (ffa<0) ffa = 0;
+                  const GLint len = right - span.x - 1;
+                  GLfixed ffsrend = span.specRed + len * span.specRedStep;
+                  GLfixed ffsgend = span.specGreen + len * span.specGreenStep;
+                  GLfixed ffsbend = span.specBlue + len * span.specBlueStep;
+                  if (ffsrend < 0) {
+                     span.specRed -= ffsrend;
+                     if (span.specRed < 0)
+                        span.specRed = 0;
+                  }
+                  if (ffsgend < 0) {
+                     span.specGreen -= ffsgend;
+                     if (span.specGreen < 0)
+                        span.specGreen = 0;
+                  }
+                  if (ffsbend < 0) {
+                     span.specBlue -= ffsbend;
+                     if (span.specBlue < 0)
+                        span.specBlue = 0;
+                  }
                }
 #endif
 #ifdef INTERP_INDEX
-               if (ffi<0) ffi = 0;
+               if (span.index < 0)  span.index = 0;
 #endif
 
-#ifdef INTERP_LAMBDA
-/*
- * The lambda value is:
- *        log_2(sqrt(f(n))) = 1/2*log_2(f(n)), where f(n) is a function
- *     defined by
- *        f(n):=  dudx * dudx + dudy * dudy  +  dvdx * dvdx + dvdy * dvdy;
- *     and each of this terms is resp.
- *        dudx = dsdx * invQ(n) * tex_width;
- *        dudy = dsdy * invQ(n) * tex_width;
- *        dvdx = dtdx * invQ(n) * tex_height;
- *        dvdy = dtdy * invQ(n) * tex_height;
- *     Therefore the function lambda can be represented (by factoring out) as:
- *        f(n) = lambda_nominator * invQ(n) * invQ(n),
- *     which saves some computation time.
- */
-	       {
-                  GLfloat dudx = dsdx /* * invQ*/ * twidth;
-                  GLfloat dudy = dsdy /* * invQ*/ * twidth;
-                  GLfloat dvdx = dtdx /* * invQ*/ * theight;
-                  GLfloat dvdy = dtdy /* * invQ*/ * theight;
-                  GLfloat r1 = dudx * dudx + dudy * dudy;
-                  GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
-                  GLfloat rho2 = r1 + r2; /* was:  rho2 = MAX2(r1,r2); */
-                  lambda_nominator = rho2;
-	       }
-
-	       /* set DEST to log_(base 2) of sqrt(rho) */
-               /* 1.442695 = 1/log(2) */
-#define COMPUTE_LAMBDA(DEST, X)  \
-   DEST = log( lambda_nominator * (X)*(X) ) * 1.442695F * 0.5F
-#endif
-
-#ifdef INTERP_MULTILAMBDA
-/*
- *  Read the comment for INTERP_LAMBDA, but apply to each texture unit
- */
-	       {
-                  GLuint unit;
-                  for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-                     if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-                        GLfloat dudx = dsdx[unit] /* * invQ*/ * twidth[unit];
-                        GLfloat dudy = dsdy[unit] /* * invQ*/ * twidth[unit];
-                        GLfloat dvdx = dtdx[unit] /* * invQ*/ * theight[unit];
-                        GLfloat dvdy = dtdy[unit] /* * invQ*/ * theight[unit];
-                        GLfloat r1 = dudx * dudx + dudy * dudy;
-                        GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
-                        GLfloat rho2 = r1 + r2; /* used to be:  rho2 = MAX2(r1,r2); */
-                        lambda_nominator[unit] = rho2;
-                     }
-                  }
-	       }
-	       /* set DEST to log_(base 2) of sqrt(rho) */
-#define COMPUTE_MULTILAMBDA(DEST, X, unit)  \
-   DEST = log( lambda_nominator[unit] * (X)*(X) ) * 1.442695F * 0.5F
-#endif
-
-
-               INNER_LOOP( left, right, iy );
+               /* This is where we actually generate fragments */
+               if (span.count > 0) {
+                  RENDER_SPAN( span );
+               }
 
                /*
                 * Advance to the next scan line.  Compute the
@@ -1043,7 +1067,7 @@
                 * pixel-center x coordinate so that it stays
                 * on or inside the major edge.
                 */
-               iy++;
+               span.y++;
                lines--;
 
                fxLeftEdge += fdxLeftEdge;
@@ -1054,11 +1078,11 @@
                if (fError >= 0) {
                   fError -= FIXED_ONE;
 #ifdef PIXEL_ADDRESS
-                  pRow = (PIXEL_TYPE *) ((GLubyte*)pRow + dPRowOuter);
+                  pRow = (PIXEL_TYPE *) ((GLubyte *) pRow + dPRowOuter);
 #endif
 #ifdef INTERP_Z
 #  ifdef DEPTH_TYPE
-                  zRow = (DEPTH_TYPE *) ((GLubyte*)zRow + dZRowOuter);
+                  zRow = (DEPTH_TYPE *) ((GLubyte *) zRow + dZRowOuter);
 #  endif
                   fz += fdzOuter;
 #endif
@@ -1066,19 +1090,24 @@
                   fogLeft += dfogOuter;
 #endif
 #ifdef INTERP_RGB
-                  fr += fdrOuter;   fg += fdgOuter;   fb += fdbOuter;
-#endif
-#ifdef INTERP_SPEC
-                  fsr += fdsrOuter;   fsg += fdsgOuter;   fsb += fdsbOuter;
+                  fr += fdrOuter;
+                  fg += fdgOuter;
+                  fb += fdbOuter;
 #endif
 #ifdef INTERP_ALPHA
                   fa += fdaOuter;
+#endif
+#ifdef INTERP_SPEC
+                  fsr += fdsrOuter;
+                  fsg += fdsgOuter;
+                  fsb += fdsbOuter;
 #endif
 #ifdef INTERP_INDEX
                   fi += fdiOuter;
 #endif
 #ifdef INTERP_INT_TEX
-                  fs += fdsOuter;   ft += fdtOuter;
+                  fs += fdsOuter;
+                  ft += fdtOuter;
 #endif
 #ifdef INTERP_TEX
 		  sLeft += dsOuter;
@@ -1102,11 +1131,11 @@
                }
                else {
 #ifdef PIXEL_ADDRESS
-                  pRow = (PIXEL_TYPE *) ((GLubyte*)pRow + dPRowInner);
+                  pRow = (PIXEL_TYPE *) ((GLubyte *) pRow + dPRowInner);
 #endif
 #ifdef INTERP_Z
 #  ifdef DEPTH_TYPE
-                  zRow = (DEPTH_TYPE *) ((GLubyte*)zRow + dZRowInner);
+                  zRow = (DEPTH_TYPE *) ((GLubyte *) zRow + dZRowInner);
 #  endif
                   fz += fdzInner;
 #endif
@@ -1114,19 +1143,24 @@
                   fogLeft += dfogInner;
 #endif
 #ifdef INTERP_RGB
-                  fr += fdrInner;   fg += fdgInner;   fb += fdbInner;
-#endif
-#ifdef INTERP_SPEC
-                  fsr += fdsrInner;   fsg += fdsgInner;   fsb += fdsbInner;
+                  fr += fdrInner;
+                  fg += fdgInner;
+                  fb += fdbInner;
 #endif
 #ifdef INTERP_ALPHA
                   fa += fdaInner;
+#endif
+#ifdef INTERP_SPEC
+                  fsr += fdsrInner;
+                  fsg += fdsgInner;
+                  fsb += fdsbInner;
 #endif
 #ifdef INTERP_INDEX
                   fi += fdiInner;
 #endif
 #ifdef INTERP_INT_TEX
-                  fs += fdsInner;   ft += fdtInner;
+                  fs += fdsInner;
+                  ft += fdtInner;
 #endif
 #ifdef INTERP_TEX
 		  sLeft += dsInner;
@@ -1157,7 +1191,7 @@
 }
 
 #undef SETUP_CODE
-#undef INNER_LOOP
+#undef RENDER_SPAN
 
 #undef PIXEL_TYPE
 #undef BYTES_PER_ROW
@@ -1166,16 +1200,13 @@
 #undef INTERP_Z
 #undef INTERP_FOG
 #undef INTERP_RGB
-#undef INTERP_SPEC
 #undef INTERP_ALPHA
+#undef INTERP_SPEC
 #undef INTERP_INDEX
 #undef INTERP_INT_TEX
 #undef INTERP_TEX
 #undef INTERP_MULTITEX
 #undef INTERP_LAMBDA
-#undef COMPUTE_LAMBDA
-#undef INTERP_MULTILAMBDA
-#undef COMPUTE_MULTILAMBDA
 
 #undef S_SCALE
 #undef T_SCALE
