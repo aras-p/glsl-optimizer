@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.61 2001/05/16 20:27:12 brianp Exp $ */
+/* $Id: image.c,v 1.62 2001/06/13 14:55:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1720,7 +1720,7 @@ _mesa_pack_rgba_span( GLcontext *ctx,
                       const struct gl_pixelstore_attrib *dstPacking,
                       GLuint transferOps)
 {
-   ASSERT((ctx->NewState & _NEW_PIXEL) == 0);
+   ASSERT((ctx->NewState & _NEW_PIXEL) == 0 || transferOps == 0);
 
    /* Test for optimized case first */
    if (transferOps == 0 && dstFormat == GL_RGBA && dstType == CHAN_TYPE) {
