@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.23 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.24 2001/07/23 16:07:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -720,7 +720,7 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    GLint i, j;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
-   DEFMARRAY(GLubyte, rgba, MAX_WIDTH, 4);  /* mac 32k limitation */
+   DEFMARRAY(GLchan, rgba, MAX_WIDTH, 4);  /* mac 32k limitation */
    CHECKARRAY(rgba, return);  /* mac 32k limitation */
 
    if (!ctx->Visual.depthBits) {
