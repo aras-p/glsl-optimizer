@@ -126,6 +126,7 @@ static const char * const card_extensions[] =
     "GL_ARB_texture_compression",
     "GL_ARB_texture_env_add",
     "GL_ARB_texture_env_combine",
+    "GL_ARB_texture_env_crossbar",
     "GL_ARB_texture_env_dot3",
     "GL_ARB_texture_mirrored_repeat",
     "GL_EXT_blend_logic_op",

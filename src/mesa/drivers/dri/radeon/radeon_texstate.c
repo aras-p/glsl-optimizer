@@ -383,6 +383,13 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    GLuint color_combine, alpha_combine;
+   const GLuint color_combine0 = RADEON_COLOR_ARG_A_ZERO | RADEON_COLOR_ARG_B_ZERO
+         | RADEON_COLOR_ARG_C_CURRENT_COLOR | RADEON_BLEND_CTL_ADD
+         | RADEON_SCALE_1X | RADEON_CLAMP_TX;
+   const GLuint alpha_combine0 = RADEON_ALPHA_ARG_A_ZERO | RADEON_ALPHA_ARG_B_ZERO
+         | RADEON_ALPHA_ARG_C_CURRENT_ALPHA | RADEON_BLEND_CTL_ADD
+         | RADEON_SCALE_1X | RADEON_CLAMP_TX;
+
 
    /* texUnit->_Current can be NULL if and only if the texture unit is
     * not actually enabled.
@@ -400,17 +407,14 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
     * reduces the amount of special-casing we have to do, alpha-only
     * textures being a notable exception.
     */
+    /* Don't cache these results.
+    */
+   rmesa->state.texture.unit[unit].format = 0;
+   rmesa->state.texture.unit[unit].envMode = 0;
+
    if ( !texUnit->_ReallyEnabled ) {
-      /* Don't cache these results.
-       */
-      rmesa->state.texture.unit[unit].format = 0;
-      rmesa->state.texture.unit[unit].envMode = 0;
-      color_combine = RADEON_COLOR_ARG_A_ZERO | RADEON_COLOR_ARG_B_ZERO
-         | RADEON_COLOR_ARG_C_CURRENT_COLOR | RADEON_BLEND_CTL_ADD
-         | RADEON_SCALE_1X | RADEON_CLAMP_TX;
-      alpha_combine = RADEON_ALPHA_ARG_A_ZERO | RADEON_ALPHA_ARG_B_ZERO
-         | RADEON_ALPHA_ARG_C_CURRENT_ALPHA | RADEON_BLEND_CTL_ADD
-         | RADEON_SCALE_1X | RADEON_CLAMP_TX;
+      color_combine = color_combine0;
+      alpha_combine = alpha_combine0;
    }
    else {
       GLuint color_arg[3], alpha_arg[3];
@@ -420,20 +424,16 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
       GLuint RGBshift = texUnit->_CurrentCombine->ScaleShiftRGB;
       GLuint Ashift = texUnit->_CurrentCombine->ScaleShiftA;
 
-      /* Don't cache these results.
-       */
-      rmesa->state.texture.unit[unit].format = 0;
-      rmesa->state.texture.unit[unit].envMode = 0;
-
 
       /* Step 1:
        * Extract the color and alpha combine function arguments.
        */
       for ( i = 0 ; i < numColorArgs ; i++ ) {
 	 const GLuint op = texUnit->_CurrentCombine->OperandRGB[i] - GL_SRC_COLOR;
+	 const GLuint srcRGBi = texUnit->_CurrentCombine->SourceRGB[i];
 	 assert(op >= 0);
 	 assert(op <= 3);
-	 switch ( texUnit->_CurrentCombine->SourceRGB[i] ) {
+	 switch ( srcRGBi ) {
 	 case GL_TEXTURE:
 	    color_arg[i] = radeon_texture_color[op][unit];
 	    break;
@@ -452,6 +452,17 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	 case GL_ONE:
 	    color_arg[i] = radeon_zero_color[op+1];
 	    break;
+	 case GL_TEXTURE0:
+	 case GL_TEXTURE1:
+	 case GL_TEXTURE2:
+	   if (ctx->Texture.Unit[srcRGBi - GL_TEXTURE0]._ReallyEnabled)
+	      color_arg[i] = radeon_texture_color[op][srcRGBi - GL_TEXTURE0];
+	   else {
+	      color_combine = color_combine0;
+	      alpha_combine = alpha_combine0;
+	      goto write_txblend;
+	   }
+	   break;
 	 default:
 	    return GL_FALSE;
 	 }
@@ -459,9 +470,10 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 
       for ( i = 0 ; i < numAlphaArgs ; i++ ) {
 	 const GLuint op = texUnit->_CurrentCombine->OperandA[i] - GL_SRC_ALPHA;
+	 const GLuint srcAi = texUnit->_CurrentCombine->SourceA[i];
 	 assert(op >= 0);
 	 assert(op <= 1);
-	 switch ( texUnit->_CurrentCombine->SourceA[i] ) {
+	 switch ( srcAi ) {
 	 case GL_TEXTURE:
 	    alpha_arg[i] = radeon_texture_alpha[op][unit];
 	    break;
@@ -480,6 +492,17 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
 	 case GL_ONE:
 	    alpha_arg[i] = radeon_zero_alpha[op+1];
 	    break;
+	 case GL_TEXTURE0:
+	 case GL_TEXTURE1:
+	 case GL_TEXTURE2:
+	   if (ctx->Texture.Unit[srcAi - GL_TEXTURE0]._ReallyEnabled)
+	      alpha_arg[i] = radeon_texture_alpha[op][srcAi - GL_TEXTURE0];
+	   else {
+	      color_combine = color_combine0;
+	      alpha_combine = alpha_combine0;
+	      goto write_txblend;
+	   }
+	   break;
 	 default:
 	    return GL_FALSE;
 	 }
@@ -676,6 +699,7 @@ static GLboolean radeonUpdateTextureEnv( GLcontext *ctx, int unit )
        */
    }
 
+write_txblend:
    if ( rmesa->hw.tex[unit].cmd[TEX_PP_TXCBLEND] != color_combine ||
 	rmesa->hw.tex[unit].cmd[TEX_PP_TXABLEND] != alpha_combine ) {
       RADEON_STATECHANGE( rmesa, tex[unit] );
