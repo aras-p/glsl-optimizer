@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.25 2000/03/03 17:50:09 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.26 2000/03/17 15:33:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,6 +71,7 @@
 
 
 /* Silence compiler warnings */
+extern void Fake_glXDummyFunc( void );
 void Fake_glXDummyFunc( void )
 {
    (void) kernel8;
@@ -1249,6 +1250,7 @@ Fake_glXQueryExtension( Display *dpy, int *errorb, int *event )
 }
 
 
+extern void _kw_ungrab_all( Display *dpy );
 void _kw_ungrab_all( Display *dpy )
 {
    XUngrabPointer( dpy, CurrentTime );
@@ -1767,6 +1769,7 @@ Fake_glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
 extern void Fake_glXUseXFont( Font font, int first, int count, int listbase );
 
 
+extern struct _glxapi_table *_mesa_GetGLXDispatchTable(void);
 struct _glxapi_table *_mesa_GetGLXDispatchTable(void)
 {
    static struct _glxapi_table glx;
