@@ -442,7 +442,7 @@
 #define _gloffset_MultTransposeMatrixfARB 410
 #define _gloffset_MultTransposeMatrixdARB 411
 #define _gloffset_SampleCoverageARB 412
-#define _gloffset___unused413 413
+#define _gloffset_DrawBuffersARB 413
 #define _gloffset_PolygonOffsetEXT 414
 #define _gloffset_GetTexFilterFuncSGIS 415
 #define _gloffset_TexFilterFuncSGIS 416
