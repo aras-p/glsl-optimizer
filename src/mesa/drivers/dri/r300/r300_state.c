@@ -470,6 +470,21 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 
 		r300->hw.zs.cmd[R300_ZS_CNTL_0] = newval;
 		break;
+	
+	case GL_STENCIL_TEST:
+		if (r300->state.hw_stencil) {
+			R300_STATECHANGE(r300, zs);
+			if (state) {
+				r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
+				    R300_STENCIL_ENABLE;
+			} else {
+				r300->hw.zs.cmd[R300_ZS_CNTL_0] &=
+				    ~R300_STENCIL_ENABLE;
+			}
+		} else {
+			FALLBACK(&r300->radeon, RADEON_FALLBACK_STENCIL, state);
+		}
+		break;
 
 	case GL_CULL_FACE:
 		r300UpdateCulling(ctx);
@@ -548,7 +563,6 @@ static void r300DepthFunc(GLcontext* ctx, GLenum func)
 		break;
 	}
 
-	fprintf(stderr, "ZS_CNTL_1=%08x\n", r300->hw.zs.cmd[R300_ZS_CNTL_1]);
 }
 
 
@@ -595,6 +609,122 @@ static void r300PointSize(GLcontext * ctx, GLfloat size)
 	/* This might need fixing later */
 	R300_STATECHANGE(r300, vps);
 	r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);
+}
+/* =============================================================
+ * Stencil
+ */
+
+static void r300StencilFunc(GLcontext * ctx, GLenum func,
+			    GLint ref, GLuint mask)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	GLuint refmask = ((ctx->Stencil.Ref[0] << R300_RB3D_ZS2_STENCIL_REF_SHIFT) |
+			  (ctx->Stencil.
+			   ValueMask[0] << R300_RB3D_ZS2_STENCIL_MASK_SHIFT));
+
+	R200_STATECHANGE(rmesa, zs);
+
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] &= ~(R300_ZS_MASK << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT);
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] &=  ~((R300_ZS_MASK << R300_RB3D_ZS2_STENCIL_REF_SHIFT) |
+						(R300_ZS_MASK << R300_RB3D_ZS2_STENCIL_MASK_SHIFT));
+
+	switch (ctx->Stencil.Function[0]) {
+	case GL_NEVER:
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+		    R300_ZS_NEVER << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		break;
+	case GL_LESS:
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+		    R300_ZS_LESS << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		break;
+	case GL_EQUAL:
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+		    R300_ZS_EQUAL << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		break;
+	case GL_LEQUAL:
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+		    R300_ZS_LEQUAL << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		break;
+	case GL_GREATER:
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+		    R300_ZS_GREATER << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		break;
+	case GL_NOTEQUAL:
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+		    R300_ZS_NOTEQUAL << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		break;
+	case GL_GEQUAL:
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+		    R300_ZS_GEQUAL << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		break;
+	case GL_ALWAYS:
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+		    R300_ZS_ALWAYS << R300_RB3D_ZS1_STENCIL_FUNC_SHIFT;
+		break;
+	}
+
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |= refmask;
+}
+
+static void r300StencilMask(GLcontext * ctx, GLuint mask)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+
+	R200_STATECHANGE(rmesa, zs);
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_2]  &= ~(R300_ZS_MASK << R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT);
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |= ctx->Stencil.WriteMask[0] << R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT;
+}
+
+static int translate_stencil_op(int op)
+{
+	switch (op) {
+	case GL_KEEP:
+		    return R300_ZS_KEEP;
+	case GL_ZERO:
+		    return R300_ZS_ZERO;
+	case GL_REPLACE:
+		    return R300_ZS_REPLACE;
+	case GL_INCR:
+		    return R300_ZS_INCR;
+	case GL_DECR:
+		    return R300_ZS_DECR;
+	case GL_INCR_WRAP_EXT:
+		    return R300_ZS_INCR_WRAP;
+	case GL_DECR_WRAP_EXT:
+		    return R300_ZS_DECR_WRAP;
+	case GL_INVERT:
+		    return R300_ZS_INVERT;
+	}
+}
+
+static void r300StencilOp(GLcontext * ctx, GLenum fail,
+			  GLenum zfail, GLenum zpass)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+
+	R200_STATECHANGE(rmesa, zs);
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] &= ~((R300_ZS_MASK << R300_RB3D_ZS1_STENCIL_FAIL_OP_SHIFT)
+					| (R300_ZS_MASK << R300_RB3D_ZS1_STENCIL_ZPASS_OP_SHIFT)
+					| (R300_ZS_MASK << R300_RB3D_ZS1_STENCIL_ZFAIL_OP_SHIFT)
+					);
+
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |= 
+		 (translate_stencil_op(ctx->Stencil.FailFunc[0]) << R300_RB3D_ZS1_STENCIL_FAIL_OP_SHIFT)
+		|(translate_stencil_op(ctx->Stencil.ZFailFunc[0]) << R300_RB3D_ZS1_STENCIL_ZFAIL_OP_SHIFT)
+		|(translate_stencil_op(ctx->Stencil.ZPassFunc[0]) << R300_RB3D_ZS1_STENCIL_ZPASS_OP_SHIFT);
+	
+}
+
+static void r300ClearStencil(GLcontext * ctx, GLint s)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+
+	/* Not sure whether this is correct.. */
+	R200_STATECHANGE(rmesa, zs);
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] =
+	    ((GLuint) ctx->Stencil.Clear |
+	     (0xff << R200_STENCIL_MASK_SHIFT) |
+	     (ctx->Stencil.WriteMask[0] << R200_STENCIL_WRITEMASK_SHIFT));
 }
 
 /* =============================================================
@@ -1673,6 +1803,10 @@ void r300InitState(r300ContextPtr r300)
 		exit(-1);
 	}
 	
+	/* Only have hw stencil when depth buffer is 24 bits deep */
+	r300->state.hw_stencil = (ctx->Visual.stencilBits > 0 &&
+					 ctx->Visual.depthBits == 24);
+
 	memset(&(r300->state.texture), 0, sizeof(r300->state.texture));
 
 	r300ResetHwState(r300);
@@ -1699,6 +1833,12 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	functions->CullFace = r300CullFace;
 	functions->FrontFace = r300FrontFace;
 
+	/* Stencil related */
+	functions->ClearStencil = r300ClearStencil;
+	functions->StencilFunc = r300StencilFunc;
+	functions->StencilMask = r300StencilMask;
+	functions->StencilOp = r300StencilOp;
+	
 	/* Viewport related */
 	functions->Viewport = r300Viewport;
 	functions->DepthRange = r300DepthRange;

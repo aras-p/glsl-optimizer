@@ -584,8 +584,8 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	/* I'm almost certain I forgot something here */
 	#if 0 /* This should work now.. */
 	FALLBACK_IF(ctx->Color.AlphaEnabled); // GL_ALPHA_TEST
+	FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
 	#endif
-	//FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
 	FALLBACK_IF(ctx->Fog.Enabled); // GL_FOG
 	FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH
 	FALLBACK_IF(ctx->Line.StippleFlag); // GL_LINE_STIPPLE
@@ -597,11 +597,11 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
 	FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH
 	FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
-	FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
+	//FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
 	FALLBACK_IF(ctx->Multisample.Enabled); // GL_MULTISAMPLE_ARB
 
 	/* One step at a time - let one texture pass.. */
-	for (i = 2; i < ctx->Const.MaxTextureUnits; i++)
+	for (i = 1; i < ctx->Const.MaxTextureUnits; i++)
 		FALLBACK_IF(ctx->Texture.Unit[i].Enabled);
 
 

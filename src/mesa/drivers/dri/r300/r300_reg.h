@@ -1069,6 +1069,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_RB3D_Z_TEST                  0x00000012
 #       define R300_RB3D_Z_TEST_AND_WRITE        0x00000016
 #       define R300_RB3D_Z_WRITE_ONLY        	 0x00000006
+#	define R300_STENCIL_ENABLE		 0x00000000  /* UNKNOWN yet.. */
 
 #define R300_RB3D_ZSTENCILCNTL_1                   0x4F04
 		/* functions */

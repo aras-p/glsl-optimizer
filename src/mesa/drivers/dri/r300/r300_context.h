@@ -616,6 +616,7 @@ struct r300_state {
 	struct r300_aos_rec aos[R300_MAX_AOS_ARRAYS];
 	int aos_count;
 	
+	int hw_stencil;
 };
 
 
