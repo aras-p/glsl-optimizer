@@ -257,18 +257,21 @@ do {									\
 #include "depthtmp.h"
 
 /* 24 bit depth, 8 bit stencil depthbuffer functions
+ *
+ * Careful: It looks like the R300 uses ZZZS byte order while the R200
+ * uses SZZZ for 24 bit depth, 8 bit stencil mode.
  */
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint offset = (_x + xo + (_y + yo)*pitch)*4;			\
    GLuint tmp = *(GLuint *)(buf + offset);				\
-   tmp &= 0xff000000;							\
-   tmp |= ((d) & 0x00ffffff);						\
+   tmp &= 0x000000ff;							\
+   tmp |= ((d << 8) & 0xffffff00);					\
    *(GLuint *)(buf + offset) = tmp;					\
 } while (0)
 
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLuint *)(buf + (_x + xo + (_y + yo)*pitch)*4) & 0x00ffffff;
+   d = (*(GLuint *)(buf + (_x + xo + (_y + yo)*pitch)*4) & 0xffffff00) >> 8;
 
 #define TAG(x) radeon##x##_24_8_LINEAR
 #include "depthtmp.h"

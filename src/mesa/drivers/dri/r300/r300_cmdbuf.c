@@ -376,8 +376,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.unk4E88.cmd[0] = cmducs(0x4E88, 1);
 	ALLOC_STATE( zc, always, R300_ZC_CMDSIZE, "zc", 0 );
 		r300->hw.zc.cmd[R300_ZC_CMD_0] = cmducs(R300_RB3D_ZCNTL_0, 2);
-	ALLOC_STATE( unk4F08, always, 6, "unk4F08", 0 );
-		r300->hw.unk4F08.cmd[0] = cmducs(0x4F08, 5);
+	ALLOC_STATE( unk4F08, always, 2, "unk4F08", 0 );
+		r300->hw.unk4F08.cmd[0] = cmducs(0x4F08, 1);
+	ALLOC_STATE( unk4F10, always, 5, "unk4F10", 0 );
+		r300->hw.unk4F10.cmd[0] = cmducs(0x4F10, 4);
 	ALLOC_STATE( zb, always, R300_ZB_CMDSIZE, "zb", 0 );
 		r300->hw.zb.cmd[R300_ZB_CMD_0] = cmducs(R300_RB3D_DEPTHOFFSET, 2);
 	ALLOC_STATE( unk4F28, always, 2, "unk4F28", 0 );
@@ -451,6 +453,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4E88);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.zc);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F08);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F10);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.zb);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F28);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F30);

@@ -269,6 +269,7 @@ struct r300_hw_state {
 	struct r300_state_atom unk4E88;	/* (4E88) */
 	struct r300_state_atom zc;	/* z control (4F00) */
 	struct r300_state_atom unk4F08;	/* (4F08) */
+	struct r300_state_atom unk4F10;	/* (4F10) */
 	struct r300_state_atom zb;	/* z buffer (4F20) */
 	struct r300_state_atom unk4F28;	/* (4F28) */
 	struct r300_state_atom unk4F30;	/* (4F30) */

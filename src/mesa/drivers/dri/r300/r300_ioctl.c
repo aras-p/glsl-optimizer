@@ -55,7 +55,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vblank.h"
 
 
-static void r300ClearBuffer(r300ContextPtr r300, int buffer)
+#define CLEARBUFFER_COLOR	0x1
+#define CLEARBUFFER_DEPTH	0x2
+
+static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 {
 	GLcontext* ctx = r300->radeon.glCtx;
 	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
@@ -107,7 +110,10 @@ static void r300ClearBuffer(r300ContextPtr r300, int buffer)
 	r300->hw.rr.cmd[1] = 0x00004000;
 
 	R300_STATECHANGE(r300, cmk);
-	r300->hw.cmk.cmd[R300_CMK_COLORMASK] = 0xF;
+	if (flags & CLEARBUFFER_COLOR)
+		r300->hw.cmk.cmd[R300_CMK_COLORMASK] = 0xF;
+	else
+		r300->hw.cmk.cmd[R300_CMK_COLORMASK] = 0;
 
 	R300_STATECHANGE(r300, fp);
 	r300->hw.fp.cmd[R300_FP_CNTL0] = 0; /* 1 pass, no textures */
@@ -157,6 +163,24 @@ static void r300ClearBuffer(r300ContextPtr r300, int buffer)
 	r300->hw.vpi.cmd[7] = VP_ZERO();
 	r300->hw.vpi.cmd[8] = 0;
 
+	R300_STATECHANGE(r300, zc);
+	if (flags & CLEARBUFFER_DEPTH) {
+		r300->hw.zc.cmd[R300_ZC_CNTL_0] = 0x6; // test and write
+		r300->hw.zc.cmd[R300_ZC_CNTL_1] = R300_RB3D_Z_TEST_ALWAYS;
+/*
+		R300_STATECHANGE(r300, zb);
+		r300->hw.zb.cmd[R300_ZB_OFFSET] =
+			1024*4*300 +
+			r300->radeon.radeonScreen->frontOffset +
+			r300->radeon.radeonScreen->fbLocation;
+		r300->hw.zb.cmd[R300_ZB_PITCH] =
+			r300->radeon.radeonScreen->depthPitch;
+*/
+	} else {
+		r300->hw.zc.cmd[R300_ZC_CNTL_0] = 0; // disable
+		r300->hw.zc.cmd[R300_ZC_CNTL_1] = 0;
+	}
+
 	/* Make sure we have enough space */
 	r300EnsureCmdBufSpace(r300, r300->hw.max_state_size + 9, __FUNCTION__);
 
@@ -167,7 +191,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int buffer)
 	cmd[0].packet3.packet = R300_CMD_PACKET3_CLEAR;
 	cmd[1].u = r300PackFloat32(dPriv->w / 2.0);
 	cmd[2].u = r300PackFloat32(dPriv->h / 2.0);
-	cmd[3].u = r300PackFloat32(0.0);
+	cmd[3].u = r300PackFloat32(ctx->Depth.Clear);
 	cmd[4].u = r300PackFloat32(1.0);
 	cmd[5].u = r300PackFloat32(ctx->Color.ClearColor[0]);
 	cmd[6].u = r300PackFloat32(ctx->Color.ClearColor[1]);
@@ -185,6 +209,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
 	int flags = 0;
+	int bits = 0;
 	int swapped;
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
@@ -208,6 +233,12 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 		mask &= ~DD_BACK_LEFT_BIT;
 	}
 
+	if (mask & DD_DEPTH_BIT) {
+		if (ctx->Depth.Mask)
+			bits |= CLEARBUFFER_DEPTH;
+		mask &= ~DD_DEPTH_BIT;
+	}
+
 	if (mask) {
 		if (RADEON_DEBUG & DEBUG_FALLBACKS)
 			fprintf(stderr, "%s: swrast clear, mask: %x\n",
@@ -217,11 +248,18 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 
 	swapped = r300->radeon.doPageFlip && (r300->radeon.sarea->pfCurrentPage == 1);
 
-	if (flags & DD_FRONT_LEFT_BIT)
-		r300ClearBuffer(r300, swapped);
+	if (flags & DD_FRONT_LEFT_BIT) {
+		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, swapped);
+		bits = 0;
+	}
 
-	if (flags & DD_BACK_LEFT_BIT)
-		r300ClearBuffer(r300, swapped ^ 1);
+	if (flags & DD_BACK_LEFT_BIT) {
+		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, swapped ^ 1);
+		bits = 0;
+	}
+
+	if (bits)
+		r300ClearBuffer(r300, bits, 0);
 
 	/* Recalculate the hardware state. This could be done more efficiently,
 	 * but do keep it like this for now.

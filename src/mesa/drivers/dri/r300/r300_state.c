@@ -295,10 +295,11 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.zc.cmd[R300_ZC_CNTL_1] = 0;
 
 	r300->hw.unk4F08.cmd[1] = 0x00FFFF00;
-	r300->hw.unk4F08.cmd[2] = 0x00000002;
-	r300->hw.unk4F08.cmd[3] = 0x00000000;
-	r300->hw.unk4F08.cmd[4] = 0x00000003;
-	r300->hw.unk4F08.cmd[5] = 0x00000000;
+
+	r300->hw.unk4F10.cmd[1] = 0x00000002; // depthbuffer format?
+	r300->hw.unk4F10.cmd[2] = 0x00000000;
+	r300->hw.unk4F10.cmd[3] = 0x00000003;
+	r300->hw.unk4F10.cmd[4] = 0x00000000;
 
 	r300->hw.zb.cmd[R300_ZB_OFFSET] =
 		r300->radeon.radeonScreen->depthOffset +
