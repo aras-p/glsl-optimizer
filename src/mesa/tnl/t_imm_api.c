@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.32 2002/10/03 23:27:22 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.33 2002/10/09 19:38:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -94,7 +94,7 @@ void _tnl_flush_vertices( GLcontext *ctx, GLuint flags )
    if (IM->Flag[IM->Start]) {
       if ((flags & FLUSH_UPDATE_CURRENT) || 
 	  IM->Count > IM->Start ||
-	  (IM->Flag[IM->Start] & (VERT_BEGIN|VERT_END))) {
+	  (IM->Flag[IM->Start] & (VERT_BIT_BEGIN | VERT_BIT_END))) {
 	 _tnl_flush_immediate( ctx, IM );
       }
    }
