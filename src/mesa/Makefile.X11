@@ -1,7 +1,7 @@
-# $Id: Makefile.X11,v 1.58 2001/09/23 16:11:26 brianp Exp $
+# $Id: Makefile.X11,v 1.59 2001/11/23 20:44:12 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  4.0
+# Version:  4.1
 # Copyright (C) 1995-2001  Brian Paul
 
 # Makefile for core library
@@ -167,13 +167,7 @@ DRIVER_SOURCES = \
 	SVGA/svgamesa15.c \
 	SVGA/svgamesa16.c \
 	SVGA/svgamesa24.c \
-	SVGA/svgamesa32.c \
-	Trace/tr_context.c \
-	Trace/tr_control.c \
-	Trace/tr_error.c \
-	Trace/tr_support.c \
-	Trace/tr_wrapper.c \
-	Trace/tr_write.c
+	SVGA/svgamesa32.c
 
 
 ASM_SOURCES =
@@ -279,7 +273,9 @@ X86/matypes.h: mtypes.h tnl/t_context.h X86/gen_matypes.c
 	./X86/gen_matypes > X86/matypes.h
 	rm -f X86/gen_matypes X86/*.o
 
-$(ASM_SOURCES): X86/matypes.h
+# We have X86/matypes.h depend on X86/matypes.h so that if ASM_SOURCES
+# is empty we don't get an invalid Makefile.
+$(ASM_SOURCES) X86/matypes.h: X86/matypes.h
 
 GGI/ggimesa.o: GGI/ggimesa.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
