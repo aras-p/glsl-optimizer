@@ -138,12 +138,49 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
 }
 
 
+static struct program * _mesa_init_program_struct( GLcontext *ctx, 
+						   struct program *prog,
+						   GLenum target, GLuint id)
+{
+   if (prog) {
+      prog->Id = id;
+      prog->Target = target;
+      prog->Resident = GL_TRUE;
+      prog->RefCount = 1;
+   }
+
+   fprintf(stderr, "%s %x %x\n", __FUNCTION__, target, prog);
+   return prog;
+}
+
+struct program * _mesa_init_fragment_program( GLcontext *ctx, 
+					      struct fragment_program *prog,
+					      GLenum target, GLuint id)
+{
+   if (prog) 
+      return _mesa_init_program_struct( ctx, &prog->Base, target, id );
+   else
+      return NULL;
+}
+
+struct program * _mesa_init_vertex_program( GLcontext *ctx, 
+					    struct vertex_program *prog,
+					    GLenum target, GLuint id)
+{
+   if (prog) 
+      return _mesa_init_program_struct( ctx, &prog->Base, target, id );
+   else
+      return NULL;
+}
+
 
 /**
- * Allocate and initialize a new fragment/vertex program object but don't
- * put it into the program hash table.
- * Called via ctx->Driver.NewProgram.  May be wrapped (OO deriviation)
- * by a device driver function.
+ * Allocate and initialize a new fragment/vertex program object but
+ * don't put it into the program hash table.  Called via
+ * ctx->Driver.NewProgram.  May be overridden (ie. replaced) by a
+ * device driver function to implement OO deriviation with additional
+ * types not understood by this function.
+ * 
  * \param ctx  context
  * \param id   program id/number
  * \param target  program target/type
@@ -152,33 +189,21 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
 struct program *
 _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id)
 {
-   struct program *prog;
+   fprintf(stderr, "%s\n", __FUNCTION__);
+   switch (target) {
+   case GL_VERTEX_PROGRAM_ARB: /* == GL_VERTEX_PROGRAM_NV */
+      return _mesa_init_vertex_program( ctx, CALLOC_STRUCT(vertex_program),
+					target, id );
 
-   if (target == GL_VERTEX_PROGRAM_NV
-       || target == GL_VERTEX_PROGRAM_ARB) {
-      struct vertex_program *vprog = CALLOC_STRUCT(vertex_program);
-      if (!vprog) {
-         return NULL;
-      }
-      prog = &(vprog->Base);
-   }
-   else if (target == GL_FRAGMENT_PROGRAM_NV
-            || target == GL_FRAGMENT_PROGRAM_ARB) {
-      struct fragment_program *fprog = CALLOC_STRUCT(fragment_program);
-      if (!fprog) {
-         return NULL;
-      }
-      prog = &(fprog->Base);
-   }
-   else {
+   case GL_FRAGMENT_PROGRAM_NV:
+   case GL_FRAGMENT_PROGRAM_ARB:
+      return _mesa_init_fragment_program( ctx, CALLOC_STRUCT(fragment_program),
+					  target, id );
+
+   default:
       _mesa_problem(ctx, "bad target in _mesa_new_program");
       return NULL;
    }
-   prog->Id = id;
-   prog->Target = target;
-   prog->Resident = GL_TRUE;
-   prog->RefCount = 1;
-   return prog;
 }
 
 
@@ -946,6 +971,14 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids)
                ctx->Driver.DeleteProgram(ctx, prog);
             }
          }
+	 else {
+	    /* This is necessary as we can't tell from HashLookup
+	     * whether the entry exists with data == 0, or if it
+	     * doesn't exist at all.  As GenPrograms creates the first
+	     * case below, need to call Remove() to avoid memory leak:
+	     */
+            _mesa_HashRemove(ctx->Shared->Programs, ids[i]);
+	 }
       }
    }
 }
@@ -975,16 +1008,7 @@ _mesa_GenPrograms(GLsizei n, GLuint *ids)
    first = _mesa_HashFindFreeKeyBlock(ctx->Shared->Programs, n);
 
    for (i = 0; i < (GLuint) n; i++) {
-      const int bytes = MAX2(sizeof(struct vertex_program),
-                             sizeof(struct fragment_program));
-      struct program *prog = (struct program *) _mesa_calloc(bytes);
-      if (!prog) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenPrograms");
-         return;
-      }
-      prog->RefCount = 1;
-      prog->Id = first + i;
-      _mesa_HashInsert(ctx->Shared->Programs, first + i, prog);
+      _mesa_HashInsert(ctx->Shared->Programs, first + i, 0);
    }
 
    /* Return the program names */
@@ -1004,15 +1028,13 @@ _mesa_GenPrograms(GLsizei n, GLuint *ids)
 GLboolean GLAPIENTRY
 _mesa_IsProgram(GLuint id)
 {
-   struct program *prog;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
    if (id == 0)
       return GL_FALSE;
 
-   prog = (struct program *) _mesa_HashLookup(ctx->Shared->Programs, id);
-   if (prog && prog->Target)
+   if (_mesa_HashLookup(ctx->Shared->Programs, id))
       return GL_TRUE;
    else
       return GL_FALSE;

@@ -202,6 +202,9 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
       }
       _mesa_parse_arb_vertex_program(ctx, target, (const GLubyte *) string,
                                      len, prog);
+      
+      if (ctx->Driver.ProgramStringNotify)
+	 ctx->Driver.ProgramStringNotify( ctx, target, &prog->Base );
    }
    else if (target == GL_FRAGMENT_PROGRAM_ARB
             && ctx->Extensions.ARB_fragment_program) {
@@ -212,9 +215,13 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
       }
       _mesa_parse_arb_fragment_program(ctx, target, (const GLubyte *) string,
                                        len, prog);
+
+      if (ctx->Driver.ProgramStringNotify)
+	 ctx->Driver.ProgramStringNotify( ctx, target, &prog->Base );
    }
    else {
       _mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(target)");
+      return;
    }
 }
 
@@ -618,8 +625,10 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
             *params = ctx->Const.MaxFragmentProgramEnvParams;
          break;
       case GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB:
-         /* XXX ok? */
-         *params = GL_TRUE;
+	 if (ctx->Driver.IsProgramNative) 
+	    *params = ctx->Driver.IsProgramNative( ctx, target, prog );
+	 else
+	    *params = GL_TRUE;
          break;
 
       /*

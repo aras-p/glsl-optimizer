@@ -572,7 +572,17 @@ struct dd_function_table {
    /** Allocate a new program */
    struct program * (*NewProgram)(GLcontext *ctx, GLenum target, GLuint id);
    /** Delete a program */
-   void (*DeleteProgram)(GLcontext *ctx, struct program *prog);
+   void (*DeleteProgram)(GLcontext *ctx, struct program *prog);   
+   /** Notify driver that a program string has been specified. */
+   void (*ProgramStringNotify)(GLcontext *ctx, GLenum target, 
+			       struct program *prog);
+   
+
+
+   /** Query if program can be loaded onto hardware */
+   GLboolean (*IsProgramNative)(GLcontext *ctx, GLenum target, 
+				struct program *prog);
+   
    /*@}*/
 
 

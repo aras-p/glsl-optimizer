@@ -58,6 +58,19 @@ extern const GLubyte *
 _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
                        GLint *line, GLint *col);
 
+
+extern struct program * 
+_mesa_init_vertex_program( GLcontext *ctx, 
+			   struct vertex_program *prog, 
+			   GLenum target,
+			   GLuint id );
+
+extern struct program * 
+_mesa_init_fragment_program( GLcontext *ctx, 
+			     struct fragment_program *prog,
+			     GLenum target, 
+			     GLuint id );
+
 extern struct program *
 _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id);
 
