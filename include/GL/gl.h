@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.25 2000/01/07 05:35:37 brianp Exp $ */
+/* $Id: gl.h,v 1.26 2000/01/07 07:43:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2052,6 +2052,8 @@ GLAPI void GLAPIENTRY glPointParameterfvEXT( GLenum pname, const GLfloat *params
 #define GL_WIDE_LINE_HINT_PGI		  	107042
 #define GL_BACK_NORMALS_HINT_PGI		107043
 #define GL_NATIVE_GRAPHICS_HANDLE_PGI		107010
+
+GLAPI void APIENTRY glHintPGI(GLenum target, GLint mode);
 
 #endif /* GL_PGI_misc_hints */
 

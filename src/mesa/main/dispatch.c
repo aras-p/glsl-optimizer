@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.7 2000/01/07 07:16:34 brianp Exp $ */
+/* $Id: dispatch.c,v 1.8 2000/01/07 07:42:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -508,6 +508,9 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    /* GL_EXT_point_parameters */
    exec->PointParameterfEXT = _mesa_PointParameterfEXT;
    exec->PointParameterfvEXT = _mesa_PointParameterfvEXT;
+
+   /* 77. GL_PGI_misc_hints */
+   exec->HintPGI = _mesa_HintPGI;
 
    /* GL_EXT_polygon_offset */
    exec->PolygonOffsetEXT = _mesa_PolygonOffsetEXT;

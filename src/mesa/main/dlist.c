@@ -1,10 +1,10 @@
-/* $Id: dlist.c,v 1.22 1999/12/15 12:55:54 brianp Exp $ */
+/* $Id: dlist.c,v 1.23 2000/01/07 07:42:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -175,6 +175,7 @@ typedef enum {
 	OPCODE_FRONT_FACE,
 	OPCODE_FRUSTUM,
 	OPCODE_HINT,
+	OPCODE_HINT_PGI,
 	OPCODE_INDEX_MASK,
 	OPCODE_INIT_NAMES,
 	OPCODE_LIGHT,
@@ -534,6 +535,7 @@ void gl_init_lists( void )
       InstSize[OPCODE_FRONT_FACE] = 2;
       InstSize[OPCODE_FRUSTUM] = 7;
       InstSize[OPCODE_HINT] = 3;
+      InstSize[OPCODE_HINT_PGI] = 3;
       InstSize[OPCODE_INDEX_MASK] = 2;
       InstSize[OPCODE_INIT_NAMES] = 1;
       InstSize[OPCODE_LIGHT] = 7;
@@ -1445,6 +1447,22 @@ static void save_Hint( GLenum target, GLenum mode )
    }
 }
 
+
+/* GL_PGI_misc_hints*/
+static void save_HintPGI( GLenum target, GLint mode )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   FLUSH_VB(ctx, "dlist");
+   n = alloc_instruction( ctx, OPCODE_HINT_PGI, 2 );
+   if (n) {
+      n[1].e = target;
+      n[2].i = mode;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec.HintPGI)( target, mode );
+   }
+}
 
 
 static void save_IndexMask( GLuint mask )
@@ -3424,6 +3442,9 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	 case OPCODE_HINT:
 	    (*ctx->Exec.Hint)( n[1].e, n[2].e );
 	    break;
+	 case OPCODE_HINT_PGI:
+	    (*ctx->Exec.HintPGI)( n[1].e, n[2].i );
+	    break;
 	 case OPCODE_INDEX_MASK:
 	    (*ctx->Exec.IndexMask)( n[1].ui );
 	    break;
@@ -4429,6 +4450,9 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    /* GL_EXT_point_parameters */
    table->PointParameterfEXT = save_PointParameterfEXT;
    table->PointParameterfvEXT = save_PointParameterfvEXT;
+
+   /* GL_PGI_misc_hints */
+   table->HintPGI = save_HintPGI;
 
    /* GL_EXT_polygon_offset */
    table->PolygonOffsetEXT = save_PolygonOffsetEXT;
