@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.23 2001/03/19 02:25:35 keithw Exp $ */
+/* $Id: convolve.c,v 1.24 2001/05/09 22:24:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -243,7 +243,7 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
    {
       const GLfloat *scale = ctx->Pixel.ConvolutionFilterScale[1];
       const GLfloat *bias = ctx->Pixel.ConvolutionFilterBias[1];
-      for (i = 0; i < width * height * 4; i++) {
+      for (i = 0; i < width * height; i++) {
          GLfloat r = ctx->Convolution2D.Filter[i * 4 + 0];
          GLfloat g = ctx->Convolution2D.Filter[i * 4 + 1];
          GLfloat b = ctx->Convolution2D.Filter[i * 4 + 2];
