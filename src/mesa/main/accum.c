@@ -1,10 +1,10 @@
-/* $Id: accum.c,v 1.18 2000/03/31 01:04:52 brianp Exp $ */
+/* $Id: accum.c,v 1.19 2000/04/04 00:54:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -487,7 +487,7 @@ _mesa_clear_accum_buffer( GLcontext *ctx )
 	     ctx->Accum.ClearColor[2]==0.0 &&
 	     ctx->Accum.ClearColor[3]==0.0) {
 	    /* Black */
-	    MEMSET( ctx->DrawBuffer->Accum, 0, buffersize * 4 * sizeof(GLaccum) );
+	    BZERO( ctx->DrawBuffer->Accum, buffersize * 4 * sizeof(GLaccum) );
 	 }
 	 else {
 	    /* Not black */

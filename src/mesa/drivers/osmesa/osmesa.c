@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.13 2000/03/31 01:07:13 brianp Exp $ */
+/* $Id: osmesa.c,v 1.14 2000/04/04 00:54:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -212,6 +212,7 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
                                             indexBits,
                                             8, 8, 8, alphaBits );
       if (!osmesa->gl_visual) {
+         FREE(osmesa);
          return NULL;
       }
 
@@ -655,8 +656,13 @@ static GLbitfield clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
             GLuint i, n, *ptr4;
             n = osmesa->rowlength * osmesa->height;
             ptr4 = (GLuint *) osmesa->buffer;
-            for (i=0;i<n;i++) {
-               *ptr4++ = osmesa->clearpixel;
+            if (osmesa->clearpixel) {
+               for (i=0;i<n;i++) {
+                  *ptr4++ = osmesa->clearpixel;
+               }
+            }
+            else {
+               BZERO(ptr4, n * sizeof(GLuint));
             }
          }
          else {
