@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.14 1999/11/24 21:17:32 brianp Exp $
+# $Id: Makefile.X11,v 1.15 2000/01/05 06:33:17 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -66,10 +66,10 @@ default:
 	@echo "  make irix6-64             for SGI systems with IRIX 6.x, make 64-bit libs"
 	@echo "  make irix6-64-dso         for SGI systems with IRIX 6.x, make 64-bit DSOs"
 
-	@echo "  make linux                for Linux systems, make static .a libs"
-	@echo "  make linux-elf            for Linux systems, make ELF shared libs"
-	@echo "  make linux-386            for Linux w/ Intel assembly"
-	@echo "  make linux-386-elf        for Linux w/ Intel assembly, make ELF shared libs"
+	@echo "  make linux                for Linux systems, make shared .so libs"
+	@echo "  make linux-static         for Linux systems, make static .a libs"
+	@echo "  make linux-386            for Linux on Intel, make shared .so libs"
+	@echo "  make linux-386-static     for Linux on Intel, make static .a libs"
 	@echo "  make linux-ggi            for Linux systems with libggi"
 	@echo "  make linux-386-ggi        for Linux systems with libggi w/ Intel assembly"
 	@echo "  make linux-alpha          for Linux on Alpha systems"
@@ -84,9 +84,8 @@ default:
 	@echo "  make linux-3dnow-glide    for Linux on AMD w/ 3DNow! for Glide"
 	@echo "  make linux-katmai         for Linux on PentiumIII w/ SSE"
 	@echo "  make linux-katmai-glide   for Linux on PentiumIII w/ SSE for Glide"
-	@echo "  make linux-386-pthread    for Linux w/ Intel assembly and linuxthreads"
-	@echo "  make linux-386-pthread-shared  for Linux w/ Intel assembly and linuxthreads"
-	@echo "  make linux-386-pthread-shared-glide  for Linux w/ Intel assembly, linuxthreads, and 3Dfx Glide driver"
+	@echo "  make linux-386-pthread    for Linux on Intel, thread safety"
+	@echo "  make linux-386-pthread-glide  for Linux on Intel, thread safety, Glide"
 	@echo "  make linux-sparc          for Linux on Sparc systems"
 	@echo "  make linux-sparc5-elf     for Sparc5 systems, make ELF shared libs"
 	@echo "  make linux-sparc-ultra    for UltraSparc systems, make ELF shared libs"
@@ -142,15 +141,16 @@ aix aix-sl amix bsdos bsdos4 dgux freebsd freebsd-386 gcc \
 hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
 irix4 irix5 irix5-gcc irix5-dso irix6-o32 irix6-o32-dso \
-linux linux-debug linux-prof linux-elf linux-elf-debug linux-glide-debug \
+linux-static-debug linux-elf-debug linux-prof linux-glide-debug \
+linux linux-static \
+linux-386 linux-386-static \
 linux-glide linux-386-glide linux-386-opt-glide \
 linux-386-opt-V2-glide \
-linux-386 linux-386-elf \
 linux-3dnow linux-3dnow-glide \
 linux-katmai linux-katmai-glide \
 linux-alpha linux-alpha-elf \
 linux-ppc linux-ppc-so \
-linux-386-pthread linux-386-pthread-shared linux-386-pthread-shared-glide \
+linux-386-pthread linux-386-pthread-glide \
 linux-sparc \
 linux-sparc5-elf \
 linux-sparc-ultra \

@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.14 1999/12/08 11:52:29 wertmann Exp $
+# $Id: Make-config,v 1.15 2000/01/05 06:33:17 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=3
@@ -439,12 +439,18 @@ irix6-64-dso:
 	"MAKELIB = ../bin/mklib.irix6-64" \
 	"XLIBS = -rpath ../lib64 -lX11 -lXmu -lXi -lm"
 
-# May want to try these CFLAGS for better performance under Linux and GCC:
-# -fPIC -O2 -ansi -pedantic -mieee-fp -DUSE_XSHM -funroll-loops
-# -fexpensive-optimizations -fomit-frame-pointer -ffast-math
-# and  -malign-loops=2 -malign-jumps=2 -malign-functions=2 for Pentium
-
 linux:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
+	"MAKELIB = ../bin/mklib.linux" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm"
+
+linux-static:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
 	"GLU_LIB = libGLU.a" \
@@ -455,19 +461,29 @@ linux:
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm"
 
-# One Linux user reports having to use these XLIBS:
-#    -lMrm -lXmu -lXi -lXt -lXext -lXmu -lXi -lSM -lICE -lX11
-
-linux-elf:
+linux-386:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = gcc" \
-	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
+	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
+
+linux-386-static:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O2 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -I/usr/X11R6/include" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -480,31 +496,6 @@ linux-glide:
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm"
 
-# Linux on Intel X86: assembly language optimizations
-linux-386:
-	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
-	"GL_LIB = libGL.a" \
-	"GLU_LIB = libGLU.a" \
-	"GLUT_LIB = libglut.a" \
-	"GLW_LIB = libGLw.a" \
-	"CC = gcc" \
-	"CFLAGS = -O2 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -I/usr/X11R6/include" \
-	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
-
-linux-386-elf:
-	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
-	"GL_LIB = libGL.so" \
-	"GLU_LIB = libGLU.so" \
-	"GLUT_LIB = libglut.so" \
-	"GLW_LIB = libGLw.so" \
-	"CC = gcc" \
-	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -I/usr/X11R6/include" \
-	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
-
 linux-386-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
@@ -515,18 +506,6 @@ linux-386-glide:
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_XSHM -DFX -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
-
-linux-386-glide-mits:
-	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
-	"GL_LIB = libGL.so" \
-	"GLU_LIB = libGLU.so" \
-	"GLUT_LIB = libglut.so" \
-	"GLW_LIB = libGLw.so" \
-	"CC = gcc" \
-	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -D_REENTRANT -DMITS -DUSE_X86_ASM -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
-	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-386-opt-V2-glide:
@@ -639,19 +618,6 @@ linux-katmai-glide:
 	X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
 	X86/vertex_katmai.S" 
 
-# Contributed by C. Alex. North-Keys (erlkonig@talisman.org)
-linux-386-pthread-shared-glide:
-	$(MAKE) $(MFLAGS) targets \
-	"GL_LIB = libGL.so" \
-	"GLU_LIB = libGLU.so" \
-	"GLUT_LIB = libglut.so" \
-	"CC = gcc" \
-	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS -DFX -I/usr/include/glide -I/usr/local/glide/include" \
-	"MAKELIB = ../mklib.glide" \
-	"XLIBS = -L/usr/X11/lib -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S \
-	X86/mmx_blend.S X86/vertex.S"
-
 # Contributed by Uwe_Maurer@t-online.de
 linux-ggi:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -718,7 +684,7 @@ linux-ppc:
 
 # -O5 and -fexpensive-optimizations causes a compiler crash for Linux PPC R4
 linux-ppc-so:
-	$(MAKE) targets \
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
@@ -728,20 +694,8 @@ linux-ppc-so:
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm"
 
-# Contributed by John Stone
-linux-386-pthread:
-	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
-	"GL_LIB = libGL.a" \
-	"GLU_LIB = libGLU.a" \
-	"GLUT_LIB = libglut.a" \
-	"CC = gcc" \
-	"CFLAGS = -O2 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R\6/include -DUSE_XSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS" \
-	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
-
 # Contributed by John Gotts
-linux-386-pthread-shared:
+linux-386-pthread:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
 	"GLU_LIB = libGLU.so" \
@@ -751,6 +705,19 @@ linux-386-pthread-shared:
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
+
+# Contributed by C. Alex. North-Keys (erlkonig@talisman.org)
+linux-386-pthread-glide:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS -DFX -I/usr/include/glide -I/usr/local/glide/include" \
+	"MAKELIB = ../bin/mklib.glide" \
+	"XLIBS = -L/usr/X11/lib -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread -lm" \
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S \
+	X86/mmx_blend.S X86/vertex.S"
 
 linux-sparc:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -972,7 +939,7 @@ sco5:
 	"GLW_LIB = libGLw.a" \
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2 -mieee-fp" \
-	"MAKELIB = ../mklib.ar-ruv" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"XLIBS = -lXm -lXt -lX11 -lXmu -lXext -lsocket -lx -lm"
 
 solaris-x86:
@@ -1294,7 +1261,7 @@ DEBUG:
 	"XLIBS = -lX11 -lXext -lXmu -lXi -lfpe -lm"
 
 # for debugging on Linux systems
-linux-debug:
+linux-static-debug:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
 	"GLU_LIB = libGLU.a" \
