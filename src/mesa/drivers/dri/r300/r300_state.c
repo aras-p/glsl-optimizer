@@ -1459,7 +1459,11 @@ void r300_setup_rs_unit(GLcontext *ctx)
 			| (cur_reg /* count */ << R300_RS_CNTL_TC_CNT_SHIFT)
 			| R300_RS_CNTL_0_UNKNOWN_7
 			| R300_RS_CNTL_0_UNKNOWN_18;
-	r300->hw.rc.cmd[2] = (0xC0 | (cur_reg-1) /* index of highest */ );
+	
+	if(cur_reg == 0)
+		r300->hw.rc.cmd[2] = 0x0;
+	else
+		r300->hw.rc.cmd[2] = 0xC0 | (cur_reg-1); /* index of highest */
 #else
 	for(i = 1; i <= 8; ++i)
 		r300->hw.ri.cmd[i] = 0x00d10000;
