@@ -180,10 +180,10 @@ myReshape(int w, int h)
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   if (w <= h)
-    glOrtho(0.0, 16.0, 0.0, 16.0 * (GLfloat) h / (GLfloat) w,
+    glOrtho(0.0, 16.0, 0.0, 18.0 * (GLfloat) h / (GLfloat) w,
       -10.0, 10.0);
   else
-    glOrtho(0.0, 16.0 * (GLfloat) w / (GLfloat) h, 0.0, 16.0,
+    glOrtho(0.0, 16.0 * (GLfloat) w / (GLfloat) h, 0.0, 18.0,
       -10.0, 10.0);
   glMatrixMode(GL_MODELVIEW);
 }
