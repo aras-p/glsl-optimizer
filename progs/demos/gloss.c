@@ -1,4 +1,4 @@
-/* $Id: gloss.c,v 1.4 2000/06/27 17:04:43 brianp Exp $ */
+/* $Id: gloss.c,v 1.5 2000/08/29 21:17:38 brianp Exp $ */
 
 /*
  * Specular reflection demo.  The specular highlight is modulated by
@@ -46,7 +46,7 @@ static GLfloat DXrot = 1.0, DYrot = 2.5;
 static GLfloat Black[4] = { 0, 0, 0, 0 };
 static GLfloat White[4] = { 1, 1, 1, 1 };
 static GLfloat Diffuse[4] = { .3, .3, 1.0, 1.0 };  /* blue */
-static GLfloat Shininess = 15;
+static GLfloat Shininess = 6;
 
 static GLuint BaseTexture, SpecularTexture;
 static GLboolean DoSpecTexture = GL_TRUE;
