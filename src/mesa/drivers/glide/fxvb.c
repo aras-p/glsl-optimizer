@@ -298,6 +298,11 @@ fx_validate_BuildProjVerts(GLcontext * ctx, GLuint start, GLuint count,
    else {
       GLuint setupindex = SETUP_XYZW;
 
+#if 0
+      if (is_voodoo_graphics)
+	 setupindex |= SETUP_SNAP;
+#endif
+
       fxMesa->tmu_source[0] = 0;
       fxMesa->tmu_source[1] = 1;
       fxMesa->tex_dest[0] = SETUP_TMU0;
