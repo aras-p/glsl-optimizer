@@ -1,4 +1,4 @@
-/* $Id: gears.c,v 1.4 2000/03/29 23:57:20 brianp Exp $ */
+/* $Id: gears.c,v 1.5 2000/04/05 21:36:03 brianp Exp $ */
 
 /*
  * 3-D gear wheels.  This program is in the public domain.
@@ -167,8 +167,6 @@ static GLfloat angle = 0.0;
 static void
 draw(void)
 {
-  GLboolean bRet = GL_TRUE;
-
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix();

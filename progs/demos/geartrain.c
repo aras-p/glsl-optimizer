@@ -1,4 +1,4 @@
-/* $Id: geartrain.c,v 1.4 2000/04/04 15:20:17 brianp Exp $ */
+/* $Id: geartrain.c,v 1.5 2000/04/05 21:36:03 brianp Exp $ */
 
 /*
  * GearTrain Simulator * Version:  1.00
@@ -278,10 +278,6 @@ static void
 axle (GLint j, GLfloat radius, GLfloat length) 
 {
     GLfloat angle, rad, incr = 10.0 * M_PI / 180.0;
-    GLint indexes[3] =
-    {
-       0, 0, 0
-    };
     
     /* draw main cylinder */ 
     glBegin (GL_QUADS);
@@ -334,11 +330,7 @@ gear (GLint j, char type[], GLfloat radius, GLfloat width,
     GLfloat angle, da;
     GLfloat u, v, len, fraction = 0.5;
     GLfloat n = 1.0;
-    GLint indexes[3] =
-    {
-       0, 0, 0
-    };
-    
+
     r1 = radius - tooth_depth;
     r2 = radius;
     
