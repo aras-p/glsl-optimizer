@@ -276,8 +276,8 @@ __indirect_glCallLists(GLsizei n, GLenum type, const GLvoid * lists)
             const GLint op = X_GLrop_CallLists;
             const GLuint cmdlenLarge = cmdlen + 4;
             GLubyte * const pc = __glXFlushRenderBuffer(gc, gc->pc);
-            (void) memcpy((void *)(pc + 0), (void *)(&op), 4);
-            (void) memcpy((void *)(pc + 4), (void *)(&cmdlenLarge), 4);
+            (void) memcpy((void *)(pc + 0), (void *)(&cmdlenLarge), 4);
+            (void) memcpy((void *)(pc + 4), (void *)(&op), 4);
             (void) memcpy((void *)(pc + 8), (void *)(&n), 4);
             (void) memcpy((void *)(pc + 12), (void *)(&type), 4);
             __glXSendLargeCommand(gc, pc, 16, lists, (compsize * n));
@@ -2992,8 +2992,8 @@ __indirect_glPixelMapfv(GLenum map, GLsizei mapsize, const GLfloat * values)
             const GLint op = X_GLrop_PixelMapfv;
             const GLuint cmdlenLarge = cmdlen + 4;
             GLubyte * const pc = __glXFlushRenderBuffer(gc, gc->pc);
-            (void) memcpy((void *)(pc + 0), (void *)(&op), 4);
-            (void) memcpy((void *)(pc + 4), (void *)(&cmdlenLarge), 4);
+            (void) memcpy((void *)(pc + 0), (void *)(&cmdlenLarge), 4);
+            (void) memcpy((void *)(pc + 4), (void *)(&op), 4);
             (void) memcpy((void *)(pc + 8), (void *)(&map), 4);
             (void) memcpy((void *)(pc + 12), (void *)(&mapsize), 4);
             __glXSendLargeCommand(gc, pc, 16, values, (mapsize * 4));
@@ -3023,8 +3023,8 @@ __indirect_glPixelMapuiv(GLenum map, GLsizei mapsize, const GLuint * values)
             const GLint op = X_GLrop_PixelMapuiv;
             const GLuint cmdlenLarge = cmdlen + 4;
             GLubyte * const pc = __glXFlushRenderBuffer(gc, gc->pc);
-            (void) memcpy((void *)(pc + 0), (void *)(&op), 4);
-            (void) memcpy((void *)(pc + 4), (void *)(&cmdlenLarge), 4);
+            (void) memcpy((void *)(pc + 0), (void *)(&cmdlenLarge), 4);
+            (void) memcpy((void *)(pc + 4), (void *)(&op), 4);
             (void) memcpy((void *)(pc + 8), (void *)(&map), 4);
             (void) memcpy((void *)(pc + 12), (void *)(&mapsize), 4);
             __glXSendLargeCommand(gc, pc, 16, values, (mapsize * 4));
@@ -3054,8 +3054,8 @@ __indirect_glPixelMapusv(GLenum map, GLsizei mapsize, const GLushort * values)
             const GLint op = X_GLrop_PixelMapusv;
             const GLuint cmdlenLarge = cmdlen + 4;
             GLubyte * const pc = __glXFlushRenderBuffer(gc, gc->pc);
-            (void) memcpy((void *)(pc + 0), (void *)(&op), 4);
-            (void) memcpy((void *)(pc + 4), (void *)(&cmdlenLarge), 4);
+            (void) memcpy((void *)(pc + 0), (void *)(&cmdlenLarge), 4);
+            (void) memcpy((void *)(pc + 4), (void *)(&op), 4);
             (void) memcpy((void *)(pc + 8), (void *)(&map), 4);
             (void) memcpy((void *)(pc + 12), (void *)(&mapsize), 4);
             __glXSendLargeCommand(gc, pc, 16, values, (mapsize * 2));

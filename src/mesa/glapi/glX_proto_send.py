@@ -181,6 +181,15 @@ generic_%u_byte( GLint rop, const void * ptr )
 		return offset
 
 
+	def large_emit_begin(self, indent, f):
+		print '%s    const GLint op = %s;' % (indent, f.opcode_real_name())
+		print '%s    const GLuint cmdlenLarge = cmdlen + 4;' % (indent)
+		print '%s    GLubyte * const pc = __glXFlushRenderBuffer(gc, gc->pc);' % (indent)
+		print '%s    (void) memcpy((void *)(pc + 0), (void *)(&cmdlenLarge), 4);' % (indent)
+		print '%s    (void) memcpy((void *)(pc + 4), (void *)(&op), 4);' % (indent)
+		return
+
+
 	def common_func_print_just_header(self, f):
 		print '#define %s %d' % (f.opcode_name(), f.opcode_value())
 
@@ -316,11 +325,8 @@ generic_%u_byte( GLint rop, const void * ptr )
 		if f.can_be_large:
 			print '%s}' % (indent)
 			print '%selse {' % (indent)
-			print '%s    const GLint op = %s;' % (indent, f.opcode_real_name())
-			print '%s    const GLuint cmdlenLarge = cmdlen + 4;' % (indent)
-			print '%s    GLubyte * const pc = __glXFlushRenderBuffer(gc, gc->pc);' % (indent)
-			print '%s    (void) memcpy((void *)(pc + 0), (void *)(&op), 4);' % (indent)
-			print '%s    (void) memcpy((void *)(pc + 4), (void *)(&cmdlenLarge), 4);' % (indent)
+
+			self.large_emit_begin(indent, f)
 			offset = self.common_emit_args(f, "pc", indent, 8, 1)
 			
 			p = f.variable_length_parameter()
