@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <!DOCTYPE OpenGLAPI [
 <!ELEMENT OpenGLAPI (category+)>
-<!ELEMENT category (type*, enum*, function*)>
+<!ELEMENT category (type*, enum*, function*)*>
 <!ELEMENT type EMPTY>
-<!ELEMENT enum EMPTY>
-<!ELEMENT function (param*, return?, glx?)>
+<!ELEMENT enum (size*)>
+<!ELEMENT size EMPTY>
+<!ELEMENT function (param*, return?, glx?)*>
 <!ELEMENT param EMPTY>
 <!ELEMENT return EMPTY>
 <!ELEMENT glx EMPTY>
@@ -15,10 +16,14 @@
                    size   CDATA #REQUIRED
                    glx_name CDATA #IMPLIED>
 <!ATTLIST enum     name   CDATA #REQUIRED
+                   count  CDATA #IMPLIED
                    value  CDATA #REQUIRED>
 <!ATTLIST function name   CDATA #REQUIRED
-                   offset CDATA #REQUIRED
+                   alias  CDATA #IMPLIED
+                   offset CDATA #IMPLIED
                    vectorequiv CDATA #IMPLIED>
+<!ATTLIST size     name   CDATA #REQUIRED
+                   mode   CDATA #IMPLIED>
 <!ATTLIST param    name   CDATA #REQUIRED
                    type   CDATA #REQUIRED
                    count  CDATA #IMPLIED
@@ -53,7 +58,7 @@
 
 <!--
 The various attributes for param and glx have the meanings listed below.
-When adding new functions, please annote them correct.  In most cases this
+When adding new functions, please annote them correctly.  In most cases this
 will just mean adding a '<glx ignore="true"/>' tag.
 
 param:
