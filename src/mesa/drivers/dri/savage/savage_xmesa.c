@@ -176,15 +176,17 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
 
    savageScreen->agpTextures.handle = gDRIPriv->agpTextureHandle;
    savageScreen->agpTextures.size   = gDRIPriv->agpTextureSize;
-   if (drmMap(sPriv->fd, 
-	      savageScreen->agpTextures.handle,
-	      savageScreen->agpTextures.size,
-	      (drmAddress *)&(savageScreen->agpTextures.map)) != 0) 
-   {
-      Xfree(savageScreen);
-      sPriv->private = NULL;
-      return GL_FALSE;
-   }
+   if (gDRIPriv->agpTextureSize) {
+       if (drmMap(sPriv->fd, 
+		  savageScreen->agpTextures.handle,
+		  savageScreen->agpTextures.size,
+		  (drmAddress *)&(savageScreen->agpTextures.map)) != 0) {
+	   Xfree(savageScreen);
+	   sPriv->private = NULL;
+	   return GL_FALSE;
+       }
+   } else
+       savageScreen->agpTextures.map = NULL;
 
    savageScreen->texVirtual[SAVAGE_CARD_HEAP] = 
              (drmAddress)(((unsigned int)sPriv->pFB)+gDRIPriv->textureOffset);
@@ -361,7 +363,12 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 	   break;
    }
    ctx->Const.MaxTextureLevels = maxTextureLevels;
-   assert (ctx->Const.MaxTextureLevels > 6); /*spec requires at least 64x64*/
+   if (ctx->Const.MaxTextureLevels <= 6) { /*spec requires at least 64x64*/
+       __driUtilMessage("Not enough texture memory. "
+			"Falling back to indirect rendering.");
+       Xfree(imesa);
+       return GL_FALSE;
+   }
 
 #if 0
    ctx->Const.MinLineWidth = 1.0;
@@ -401,7 +408,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    {
      int i;
      
-     for(i=0;i<SAVAGE_NR_TEX_HEAPS;i++)
+     for(i=0;i<imesa->lastTexHeap;i++)
      {
        imesa->texHeap[i] = mmInit( 0, savageScreen->textureSize[i] );
        make_empty_list(&imesa->TexObjList[i]);
@@ -503,7 +510,7 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
       /* update for multi-tex*/ 
       {
        int i;
-       for(i=0;i<SAVAGE_NR_TEX_HEAPS;i++)
+       for(i=0;i<imesa->lastTexHeap;i++)
           foreach_s (t, next_t, &(imesa->TexObjList[i]))
 	 savageDestroyTexObj(imesa, t);
       }

@@ -41,7 +41,7 @@
 #include "utils.h"
 
 
-#define DRIVER_DATE "20050101"
+#define DRIVER_DATE "20050110"
 
 /***************************************
  * Mesa's Driver Functions

@@ -760,7 +760,7 @@ int savageUploadTexImages( savageContextPtr imesa, savageTextureObjectPtr t )
 	 t->MemBlock = mmAllocMem( imesa->texHeap[heap], t->totalSize, 12, 0 ); 
 	 if (t->MemBlock)
 	    break;
-	 else
+	 else if (imesa->lastTexHeap == 2)
 	 {
 	     heap = t->heap = SAVAGE_AGP_HEAP;
 	     t->MemBlock = mmAllocMem( imesa->texHeap[heap], t->totalSize, 12, 0 ); 
