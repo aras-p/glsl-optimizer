@@ -30,7 +30,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#if !defined (__DJGPP__)
+#if !defined (__DJGPP__) && !defined (__MINGW32__)
 
 #define GLOBL( x )	\
 .globl x;		\
@@ -58,12 +58,10 @@ _##x:
 
 // [dBorca] TODO
 // Unfold functions for each vertex size?
-// Build super-specialized MMX/SSE versions?
+// Build super-specialized SSE versions?
 // STDCALL woes (HAVE_NONSTANDARD_GLAPIENTRY):
 //   need separate routine for the non "fv" case,
-//   to clean up the stack (I guess we could codegen
-//   'ret nn' insn)! Also we need to call notify, then
-//   return, instead of jump!
+//   to clean up the stack!
 
 GLOBL ( _tnl_x86_Vertex1fv )
 	movl	4(%esp), %ecx
