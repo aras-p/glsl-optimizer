@@ -24,13 +24,11 @@
 
 /*
  * File name: icd.c
- * Author:    Gregor Anich <blight@blight.eu.org>
+ * Author:    Gregor Anich
  *
  * ICD (Installable Client Driver) interface.
  * Based on the windows GDI/WGL driver.
  */
-
-#ifdef WIN32
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,8 +58,14 @@ typedef struct _icdTable {
     PROC  table[336];
 } ICDTABLE, *PICDTABLE;
 
+#ifdef USE_MGL_NAMESPACE
+# define GL_FUNC(func) mgl##func
+#else
+# define GL_FUNC(func) gl##func
+#endif
+
 static ICDTABLE icdTable = { 336, {
-#define ICD_ENTRY(func) (PROC)mgl##func,
+#define ICD_ENTRY(func) (PROC)GL_FUNC(func),
 #include "icdlist.h"
 #undef ICD_ENTRY
 } };
@@ -125,6 +129,7 @@ static unsigned curPFD = 0;
 
 WGLAPI BOOL GLAPIENTRY DrvCopyContext(HGLRC hglrcSrc,HGLRC hglrcDst,UINT mask)
 {
+    (void) hglrcSrc; (void) hglrcDst; (void) mask;
     return(FALSE);
 }
 
@@ -194,6 +199,7 @@ WGLAPI HGLRC GLAPIENTRY DrvCreateLayerContext(HDC hdc,int iLayerPlane)
 WGLAPI PICDTABLE GLAPIENTRY DrvSetContext(HDC hdc,HGLRC hglrc,void *callback)
 {
     int i;
+    (void) callback;
 
     /* new code suggested by Andy Sy */
     if (!hdc || !hglrc) {
@@ -217,12 +223,14 @@ WGLAPI PICDTABLE GLAPIENTRY DrvSetContext(HDC hdc,HGLRC hglrc,void *callback)
 
 WGLAPI void GLAPIENTRY DrvReleaseContext(HGLRC hglrc)
 {
+    (void) hglrc;
     WMesaMakeCurrent(NULL);
     ctx_current = -1;
 }
 
 WGLAPI BOOL GLAPIENTRY DrvShareLists(HGLRC hglrc1,HGLRC hglrc2)
 {
+    (void) hglrc1; (void) hglrc2;
     return(TRUE);
 }
 
@@ -230,6 +238,7 @@ WGLAPI BOOL GLAPIENTRY DrvDescribeLayerPlane(HDC hdc,int iPixelFormat,
                                     int iLayerPlane,UINT nBytes,
                                     LPLAYERPLANEDESCRIPTOR plpd)
 {
+    (void) hdc; (void) iPixelFormat; (void) iLayerPlane; (void) nBytes; (void) plpd;
     SetLastError(0);
     return(FALSE);
 }
@@ -238,6 +247,7 @@ WGLAPI int GLAPIENTRY DrvSetLayerPaletteEntries(HDC hdc,int iLayerPlane,
                                        int iStart,int cEntries,
                                        CONST COLORREF *pcr)
 {
+    (void) hdc; (void) iLayerPlane; (void) iStart; (void) cEntries; (void) pcr;
     SetLastError(0);
     return(0);
 }
@@ -246,18 +256,21 @@ WGLAPI int GLAPIENTRY DrvGetLayerPaletteEntries(HDC hdc,int iLayerPlane,
                                        int iStart,int cEntries,
                                        COLORREF *pcr)
 {
+    (void) hdc; (void) iLayerPlane; (void) iStart; (void) cEntries; (void) pcr;
     SetLastError(0);
     return(0);
 }
 
 WGLAPI BOOL GLAPIENTRY DrvRealizeLayerPalette(HDC hdc,int iLayerPlane,BOOL bRealize)
 {
+    (void) hdc; (void) iLayerPlane; (void) bRealize;
     SetLastError(0);
     return(FALSE);
 }
 
 WGLAPI BOOL GLAPIENTRY DrvSwapLayerBuffers(HDC hdc,UINT fuPlanes)
 {
+    (void) fuPlanes;
     if( !hdc )
     {
         WMesaSwapBuffers();
@@ -270,7 +283,8 @@ WGLAPI BOOL GLAPIENTRY DrvSwapLayerBuffers(HDC hdc,UINT fuPlanes)
 WGLAPI int GLAPIENTRY DrvDescribePixelFormat(HDC hdc,int iPixelFormat,UINT nBytes,
                                     LPPIXELFORMATDESCRIPTOR ppfd)
 {
-    int		qt_valid_pix;
+    int	qt_valid_pix;
+    (void) hdc;
 
     qt_valid_pix = qt_pix;
     if(ppfd == NULL)
@@ -289,7 +303,7 @@ WGLAPI int GLAPIENTRY DrvDescribePixelFormat(HDC hdc,int iPixelFormat,UINT nByte
 */
 WGLAPI PROC GLAPIENTRY DrvGetProcAddress(LPCSTR lpszProc)
 {
-   PROC p = (PROC) _glapi_get_proc_address((const char *) lpszProc);
+   PROC p = (PROC) (int) _glapi_get_proc_address((const char *) lpszProc);
    if (p)
       return p;
 
@@ -299,7 +313,8 @@ WGLAPI PROC GLAPIENTRY DrvGetProcAddress(LPCSTR lpszProc)
 
 WGLAPI BOOL GLAPIENTRY DrvSetPixelFormat(HDC hdc,int iPixelFormat)
 {
-    int		qt_valid_pix;
+    int qt_valid_pix;
+    (void) hdc;
 
     qt_valid_pix = qt_pix;
     if(iPixelFormat < 1 || iPixelFormat > qt_valid_pix)
@@ -313,20 +328,20 @@ WGLAPI BOOL GLAPIENTRY DrvSetPixelFormat(HDC hdc,int iPixelFormat)
 
 WGLAPI BOOL GLAPIENTRY DrvSwapBuffers(HDC hdc)
 {
-   if (ctx_current < 0)
-      return FALSE;
+    (void) hdc;
+    if (ctx_current < 0)
+        return FALSE;
 
-   if(wgl_ctx[ctx_current].ctx == NULL) {
-      SetLastError(0);
-      return(FALSE);
-   }
-   WMesaSwapBuffers();
-   return(TRUE);
+    if(wgl_ctx[ctx_current].ctx == NULL) {
+        SetLastError(0);
+        return(FALSE);
+    }
+    WMesaSwapBuffers();
+    return(TRUE);
 }
 
 WGLAPI BOOL GLAPIENTRY DrvValidateVersion(DWORD version)
 {
+    (void) version;
     return TRUE;
 }
-
-#endif /* WIN32 */

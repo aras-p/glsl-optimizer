@@ -51,6 +51,7 @@ EXPORTS
 	_mesa_free_context_data
 	_mesa_get_current_context
 	_mesa_init_default_imports
+	_mesa_init_driver_functions
 	_mesa_initialize_context
 	_mesa_make_current
 	_mesa_memcpy
