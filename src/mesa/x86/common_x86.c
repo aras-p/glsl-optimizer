@@ -1,4 +1,4 @@
-/* $Id: common_x86.c,v 1.7 2000/10/23 00:16:28 gareth Exp $ */
+/* $Id: common_x86.c,v 1.8 2000/12/06 14:41:47 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#if defined(USE_KATMAI_ASM) && defined(__linux__) && defined(_POSIX_SOURCE)
+#include <signal.h>
+#endif
 
+#include "context.h"
 #include "common_x86_asm.h"
 
 
@@ -49,10 +53,175 @@ extern int gl_identify_x86_cpu_features( void );
 
 static void message( const char *msg )
 {
+   GLboolean debug;
+#ifdef DEBUG
+   debug = GL_TRUE;
+#else
    if ( getenv( "MESA_DEBUG" ) ) {
-      fprintf( stderr, "%s\n", msg );
+      debug = GL_TRUE;
+   } else {
+      debug = GL_FALSE;
+   }
+#endif
+   if ( debug ) {
+      fprintf( stderr, "%s", msg );
    }
 }
+
+#if defined(USE_KATMAI_ASM)
+/*
+ * We must verify that the Streaming SIMD Extensions are truly supported
+ * on this processor before we go ahead and hook out the optimized code.
+ * Unfortunately, the CPUID bit isn't enough, as the OS must set the
+ * OSFXSR bit in CR4 if it supports the extended FPU save and restore
+ * required to use SSE.  Unfortunately, we can't just go ahead and read
+ * this register, as only the kernel can do that.  Similarly, we must
+ * verify that the OSXMMEXCPT bit in CR4 has been set by the OS,
+ * signifying that it supports unmasked SIMD FPU exceptions.  If we take
+ * an unmasked exception and the OS doesn't correctly support them, the
+ * best we'll get is a SIGILL and the worst we'll get is an infinite
+ * loop in the signal delivery from the kernel as we can't interact with
+ * the SIMD FPU state to clear the exception bits.  Either way, this is
+ * not good.
+ */
+
+extern void gl_test_os_katmai_support( void );
+extern void gl_test_os_katmai_exception_support( void );
+
+#if defined(__linux__) && defined(_POSIX_SOURCE)
+static void sigill_handler( int signal, struct sigcontext sc )
+{
+   message( "SIGILL, " );
+
+   /* Both the "xorps %%xmm0,%%xmm0" and "divps %xmm0,%%xmm1"
+    * instructions are 3 bytes long.  We must increment the instruction
+    * pointer manually to avoid repeated execution of the offending
+    * instruction.
+    *
+    * If the SIGILL is caused by a divide-by-zero when unmasked
+    * exceptions aren't supported, the SIMD FPU status and control
+    * word will be restored at the end of the test, so we don't need
+    * to worry about doing it here.  Besides, we may not be able to...
+    */
+   sc.eip += 3;
+
+   gl_x86_cpu_features &= ~(X86_FEATURE_XMM);
+}
+
+static void sigfpe_handler( int signal, struct sigcontext sc )
+{
+   message( "SIGFPE, " );
+
+   if ( sc.fpstate->magic != 0xffff ) {
+      /* Our signal context has the extended FPU state, so reset the
+       * divide-by-zero exception mask and clear the divide-by-zero
+       * exception bit.
+       */
+      sc.fpstate->mxcsr |= 0x00000200;
+      sc.fpstate->mxcsr &= 0xfffffffb;
+   } else {
+      /* If we ever get here, we're completely hosed.
+       */
+      message( "\n\n" );
+      gl_problem( NULL, "SSE enabling test failed badly!" );
+   }
+}
+#endif /* __linux__ && _POSIX_SOURCE */
+
+/* If we're running on a processor that can do SSE, let's see if we
+ * are allowed to or not.  This will catch 2.4.0 or later kernels that
+ * haven't been configured for a Pentium III but are running on one,
+ * and RedHat patched 2.2 kernels that have broken exception handling
+ * support for user space apps that do SSE.
+ *
+ * GH: Isn't this just awful?
+ */
+static void check_os_katmai_support( void )
+{
+#if defined(__linux__)
+#if defined(_POSIX_SOURCE)
+   struct sigaction saved_sigill;
+   struct sigaction saved_sigfpe;
+
+   /* Save the original signal handlers.
+    */
+   sigaction( SIGILL, NULL, &saved_sigill );
+   sigaction( SIGFPE, NULL, &saved_sigfpe );
+
+   signal( SIGILL, (void (*)(int))sigill_handler );
+   signal( SIGFPE, (void (*)(int))sigfpe_handler );
+
+   /* Emulate test for OSFXSR in CR4.  The OS will set this bit if it
+    * supports the extended FPU save and restore required for SSE.  If
+    * we execute an SSE instruction on a PIII and get a SIGILL, the OS
+    * doesn't support Streaming SIMD Exceptions, even if the processor
+    * does.
+    */
+   if ( cpu_has_xmm ) {
+      message( "Testing OS support for SSE... " );
+
+      gl_test_os_katmai_support();
+
+      if ( cpu_has_xmm ) {
+	 message( "yes.\n" );
+      } else {
+	 message( "no!\n" );
+      }
+   }
+
+   /* Emulate test for OSXMMEXCPT in CR4.  The OS will set this bit if
+    * it supports unmasked SIMD FPU exceptions.  If we unmask the
+    * exceptions, do a SIMD divide-by-zero and get a SIGILL, the OS
+    * doesn't support unmasked SIMD FPU exceptions.  If we get a SIGFPE
+    * as expected, we're okay but we need to clean up after it.
+    *
+    * Are we being too stringent in our requirement that the OS support
+    * unmasked exceptions?  Certain RedHat 2.2 kernels enable SSE by
+    * setting CR4.OSFXSR but don't support unmasked exceptions.  Win98
+    * doesn't even support them.  We at least know the user-space SSE
+    * support is good in kernels that do support unmasked exceptions,
+    * and therefore to be safe I'm going to leave this test in here.
+    */
+   if ( cpu_has_xmm ) {
+      message( "Testing OS support for SSE unmasked exceptions... " );
+
+      gl_test_os_katmai_exception_support();
+
+      if ( cpu_has_xmm ) {
+	 message( "yes.\n" );
+      } else {
+	 message( "no!\n" );
+      }
+   }
+
+   /* Restore the original signal handlers.
+    */
+   sigaction( SIGILL, &saved_sigill, NULL );
+   sigaction( SIGFPE, &saved_sigfpe, NULL );
+
+   /* If we've gotten to here and the XMM CPUID bit is still set, we're
+    * safe to go ahead and hook out the SSE code throughout Mesa.
+    */
+   if ( cpu_has_xmm ) {
+      message( "Tests of OS support for SSE passed.\n" );
+   } else {
+      message( "Tests of OS support for SSE failed!\n" );
+   }
+#else
+   /* We can't use POSIX signal handling to test the availability of
+    * SSE, so we disable it by default.
+    */
+   message( "Cannot test OS support for SSE, disabling to be safe.\n" );
+   gl_x86_cpu_features &= ~(X86_FEATURE_XMM);
+#endif /* _POSIX_SOURCE */
+#else
+   /* Do nothing on non-Linux platforms for now.
+    */
+   message( "Not testing OS support for SSE, leaving enabled.\n" );
+#endif /* __linux__ */
+}
+
+#endif /* USE_KATMAI_ASM */
 
 
 void gl_init_all_x86_transform_asm( void )
@@ -71,7 +240,7 @@ void gl_init_all_x86_transform_asm( void )
 #ifdef USE_MMX_ASM
    if ( cpu_has_mmx ) {
       if ( getenv( "MESA_NO_MMX" ) == 0 ) {
-         message( "MMX cpu detected." );
+         message( "MMX cpu detected.\n" );
       } else {
          gl_x86_cpu_features &= ~(X86_FEATURE_MMX);
       }
@@ -81,7 +250,7 @@ void gl_init_all_x86_transform_asm( void )
 #ifdef USE_3DNOW_ASM
    if ( cpu_has_3dnow ) {
       if ( getenv( "MESA_NO_3DNOW" ) == 0 ) {
-         message( "3Dnow cpu detected." );
+         message( "3DNow! cpu detected.\n" );
          gl_init_3dnow_transform_asm();
       } else {
          gl_x86_cpu_features &= ~(X86_FEATURE_3DNOW);
@@ -91,8 +260,11 @@ void gl_init_all_x86_transform_asm( void )
 
 #ifdef USE_KATMAI_ASM
    if ( cpu_has_xmm ) {
+      check_os_katmai_support();
+   }
+   if ( cpu_has_xmm ) {
       if ( getenv( "MESA_NO_KATMAI" ) == 0 ) {
-         message( "Katmai cpu detected." );
+         message( "Katmai cpu detected.\n" );
          gl_init_katmai_transform_asm();
       } else {
          gl_x86_cpu_features &= ~(X86_FEATURE_XMM);

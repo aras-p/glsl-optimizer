@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.S,v 1.2 2000/10/23 00:16:28 gareth Exp $ */
+/* $Id: common_x86_asm.S,v 1.3 2000/12/06 14:41:47 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,8 +55,11 @@
 
 /* We might want to print out some useful messages.
  */
-LLBL( found_intel ):	STRING( "Genuine Intel processor found\n\0" )
-LLBL( found_amd ):	STRING( "Authentic AMD processor found\n\0" )
+GLNAME( found_intel ):	STRING( "Genuine Intel processor found\n\0" )
+GLNAME( found_amd ):	STRING( "Authentic AMD processor found\n\0" )
+
+GLNAME( katmai_test_dummy ):
+	D_LONG 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000
 
 
 	SEG_TEXT
@@ -149,4 +152,54 @@ LLBL( cpuid_failed ):
 LLBL ( cpuid_done ):
 
 	POP_L	( EBX )
+	RET
+
+
+/* Execute an SSE instruction to see if the operating system correctly
+ * supports SSE.  A signal handler for SIGILL should have been set
+ * before calling this function, otherwise this could kill the client
+ * application.
+ */
+ALIGNTEXT4
+GLOBL GLNAME( gl_test_os_katmai_support )
+GLNAME( gl_test_os_katmai_support ):
+
+	XORPS	( XMM0, XMM0 )
+
+	RET
+
+
+/* Perform an SSE divide-by-zero to see if the operating system
+ * correctly supports unmasked SIMD FPU exceptions.  Signal handlers for
+ * SIGILL and SIGFPE should have been set before calling this function,
+ * otherwise this could kill the client application.
+ */
+ALIGNTEXT4
+GLOBL GLNAME( gl_test_os_katmai_exception_support )
+GLNAME( gl_test_os_katmai_exception_support ):
+
+	PUSH_L	( EBP )
+	MOV_L	( ESP, EBP )
+	SUB_L	( CONST( 8 ), ESP )
+
+	/* Save the original MXCSR register value.
+	 */
+	STMXCSR	( REGOFF( -4, EBP ) )
+
+	/* Unmask the divide-by-zero exception and perform one.
+	 */
+	STMXCSR	( REGOFF( -8, EBP ) )
+	AND_L	( CONST( 0xfffffdff ), REGOFF( -8, EBP ) )
+	LDMXCSR	( REGOFF( -8, EBP ) )
+
+	XORPS	( XMM0, XMM0 )
+	MOVUPS	( GLNAME( katmai_test_dummy ), XMM1 )
+
+	DIVPS	( XMM0, XMM1 )
+
+	/* Restore the original MXCSR register value.
+	 */
+	LDMXCSR	( REGOFF( -4, EBP ) )
+
+	LEAVE
 	RET
