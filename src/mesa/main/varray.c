@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.5 1999/10/19 18:37:05 keithw Exp $ */
+/* $Id: varray.c,v 1.6 1999/11/04 19:42:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -825,34 +825,49 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 /* KW: Exactly fakes the effects of calling glArrayElement multiple times.
  *     Compilation is handled via. the IM->maybe_transform_vb() callback.
  */
+#if 1
 #define DRAW_ELT(FUNC, TYPE)				\
 static void FUNC( GLcontext *ctx, GLenum mode,		\
 		  TYPE *indices, GLuint count )		\
 {							\
    GLuint i,j;						\
 							\
-   if (count) gl_Begin( ctx, mode );			\
+   gl_Begin( ctx, mode );				\
 							\
    for (j = 0 ; j < count ; ) {				\
-      GLuint nr = MIN2( VB_MAX, count - j + VB_START );	\
       struct immediate *IM = ctx->input;		\
-      GLuint sf = IM->Flag[VB_START];			\
+      GLuint start = IM->Start;				\
+      GLuint nr = MIN2( VB_MAX, count - j + start );	\
+      GLuint sf = IM->Flag[start];			\
       IM->FlushElt |= IM->ArrayEltFlush;		\
 							\
-      for (i = VB_START ; i < nr ; i++) {		\
+      for (i = start ; i < nr ; i++) {			\
 	 IM->Elt[i] = (GLuint) *indices++;		\
 	 IM->Flag[i] = VERT_ELT;			\
       }							\
 							\
-      if (j == 0) IM->Flag[IM->Start] |= sf;		\
+      if (j == 0) IM->Flag[start] |= sf;		\
 							\
       IM->Count = nr;					\
-      j += nr - VB_START;				\
+      j += nr - start;					\
 							\
       if (j == count) gl_End( ctx );			\
       IM->maybe_transform_vb( IM );			\
    }							\
 }
+#else 
+#define DRAW_ELT(FUNC, TYPE)				\
+static void FUNC( GLcontext *ctx, GLenum mode,		\
+		   TYPE *indices, GLuint count )	\
+{							\
+  int i;						\
+  glBegin(mode);					\
+  for (i = 0 ; i < count ; i++)				\
+    glArrayElement( indices[i] );			\
+  glEnd();						\
+}
+#endif
+	
 
 DRAW_ELT( draw_elt_ubyte, GLubyte )
 DRAW_ELT( draw_elt_ushort, GLushort )
