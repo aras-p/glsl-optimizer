@@ -1902,26 +1902,6 @@ fxDDInitExtensions(GLcontext * ctx)
       _mesa_enable_extension( ctx, "GL_EXT_stencil_wrap" );
    }
 
-   /* [dBorca] Hack alert:
-    * True texture compression can be done only on Napalm.
-    * We will advertise, however, generic texture compression
-    * on all Voodoo cards; the Mesa logic allows us to eventually
-    * fallback to uncompressed. This will fix those dumb applications
-    * which refuse to run w/o texture compression! We actually _can_
-    * do texture compression for pre-Napalm cores, through NCC. But
-    * NCC poses many issues:
-    * 1) NCC w/o DITHER_ERR has poor quality and NCC w/ DITHER_ERR is
-    *    damn slow!
-    * 2) NCC compression cannot be used with multitexturing, because
-    *    the decompression tables are not per TMU anymore (bear in mind
-    *    that earlier Voodoos could handle 2 NCC tables for each TMU --
-    *    just look for POINTCAST_PALETTE). As a last resort, we could
-    *    fake NCC multitexturing through multipass rendering, but...
-    *    ohwell, it's not worth the effort...
-    *    This stand true for multitexturing palletized textures.
-    * 3) since NCC is not an OpenGL standard (as opposed to FXT1/DXTC), we
-    *    can't use precompressed textures!
-    */
    if (fxMesa->type >= GR_SSTTYPE_Voodoo4) {
       _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
       _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
@@ -1929,14 +1909,27 @@ fxDDInitExtensions(GLcontext * ctx)
       _mesa_enable_extension(ctx, "GL_S3_s3tc");
       _mesa_enable_extension(ctx, "GL_NV_blend_square");
    } else {
+#if FX_TC_NCC
+      /* [dBorca] Hack alert:
+       * 1) NCC w/o DITHER_ERR has poor quality and NCC w/ DITHER_ERR is
+       *    damn slow!
+       * 2) NCC compression cannot be used with multitexturing, because
+       *    the decompression tables are not per TMU anymore (bear in mind
+       *    that earlier Voodoos could handle 2 NCC tables for each TMU --
+       *    just look for POINTCAST_PALETTE). As a last resort, we could
+       *    fake NCC multitexturing through multipass rendering, but...
+       *    ohwell, it's not worth the effort...
+       *    This stand true for multitexturing palletized textures.
+       * 3) since NCC is not an OpenGL standard (as opposed to FXT1/DXTC), we
+       *    can't use precompressed textures!
+       */
       if (fxMesa->HaveTexus2) {
          _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
       }
-#if FX_TC_NCC
-      else
-#endif
+#else
       /* doesn't like texture compression */
       _mesa_enable_extension(ctx, "GL_SGIS_generate_mipmap");
+#endif
    }
 
    if (fxMesa->HaveCmbExt) {
