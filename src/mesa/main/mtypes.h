@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.46 2001/06/13 14:56:14 brianp Exp $ */
+/* $Id: mtypes.h,v 1.47 2001/06/26 01:32:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -381,6 +381,7 @@ struct gl_enable_attrib {
    GLboolean SampleAlphaToOne;       /* GL_ARB_multisample */
    GLboolean SampleCoverage;         /* GL_ARB_multisample */
    GLboolean SampleCoverageInvert;   /* GL_ARB_multisample */
+   GLboolean RasterPositionUnclipped; /* GL_IBM_rasterpos_clip */
    GLuint Texture[MAX_TEXTURE_UNITS];
    GLuint TexGen[MAX_TEXTURE_UNITS];
 };
@@ -951,6 +952,7 @@ struct gl_transform_attrib {
    GLubyte   _AnyClip;				/* How many ClipEnabled? */
    GLboolean Normalize;				/* Normalize all normals? */
    GLboolean RescaleNormals;			/* GL_EXT_rescale_normal */
+   GLboolean RasterPositionUnclipped;           /* GL_IBM_rasterpos_clip */
 };
 
 
@@ -1226,6 +1228,7 @@ struct gl_extensions {
    GLboolean EXT_texture_lod_bias;
    GLboolean EXT_vertex_array_set;
    GLboolean HP_occlusion_test;
+   GLboolean IBM_rasterpos_clip;
    GLboolean INGR_blend_func_separate;
    GLboolean MESA_window_pos;
    GLboolean MESA_resize_buffers;

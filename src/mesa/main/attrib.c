@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.52 2001/06/18 17:26:08 brianp Exp $ */
+/* $Id: attrib.c,v 1.53 2001/06/26 01:32:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -219,6 +219,7 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->Map2Vertex3 = ctx->Eval.Map2Vertex3;
       attr->Map2Vertex4 = ctx->Eval.Map2Vertex4;
       attr->Normalize = ctx->Transform.Normalize;
+      attr->RasterPositionUnclipped = ctx->Transform.RasterPositionUnclipped;
       attr->PixelTexture = ctx->Pixel.PixelTextureEnabled;
       attr->PointSmooth = ctx->Point.SmoothFlag;
       attr->PolygonOffsetPoint = ctx->Polygon.OffsetPoint;
@@ -440,7 +441,6 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
 	}
 
    TEST_AND_UPDATE(ctx->Color.AlphaEnabled, enable->AlphaTest, GL_ALPHA_TEST);
-   TEST_AND_UPDATE(ctx->Transform.Normalize, enable->AutoNormal, GL_NORMALIZE);
    TEST_AND_UPDATE(ctx->Color.BlendEnabled, enable->Blend, GL_BLEND);
 
    for (i=0;i<MAX_CLIP_PLANES;i++) {
@@ -499,9 +499,13 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
                    GL_MAP2_VERTEX_3);
    TEST_AND_UPDATE(ctx->Eval.Map2Vertex4, enable->Map2Vertex4,
                    GL_MAP2_VERTEX_4);
+   TEST_AND_UPDATE(ctx->Eval.AutoNormal, enable->AutoNormal, GL_AUTO_NORMAL);
    TEST_AND_UPDATE(ctx->Transform.Normalize, enable->Normalize, GL_NORMALIZE);
    TEST_AND_UPDATE(ctx->Transform.RescaleNormals, enable->RescaleNormals,
                    GL_RESCALE_NORMAL_EXT);
+   TEST_AND_UPDATE(ctx->Transform.RasterPositionUnclipped,
+                   enable->RasterPositionUnclipped,
+                   GL_RASTER_POSITION_UNCLIPPED_IBM);
    TEST_AND_UPDATE(ctx->Pixel.PixelTextureEnabled, enable->PixelTexture,
                    GL_POINT_SMOOTH);
    TEST_AND_UPDATE(ctx->Point.SmoothFlag, enable->PointSmooth,

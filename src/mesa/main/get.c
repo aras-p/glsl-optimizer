@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.64 2001/06/20 18:54:43 brianp Exp $ */
+/* $Id: get.c,v 1.65 2001/06/26 01:32:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1335,6 +1335,16 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             return;
          }
 
+      /* GL_IBM_rasterpos_clip */
+      case GL_RASTER_POSITION_UNCLIPPED_IBM:
+         if (ctx->Extensions.IBM_rasterpos_clip) {
+            *params = ctx->Transform.RasterPositionUnclipped;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBoolean");
+            return;
+         }
+
       /* GL_MESA_sprite_point */
       case GL_SPRITE_POINT_MESA:
          if (ctx->Extensions.MESA_sprite_point) {
@@ -2615,6 +2625,16 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             return;
          }
 
+      /* GL_IBM_rasterpos_clip */
+      case GL_RASTER_POSITION_UNCLIPPED_IBM:
+         if (ctx->Extensions.IBM_rasterpos_clip) {
+            *params = (GLdouble) ctx->Transform.RasterPositionUnclipped;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+
       /* GL_MESA_sprite_point */
       case GL_SPRITE_POINT_MESA:
          if (ctx->Extensions.MESA_sprite_point) {
@@ -3866,6 +3886,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
+
+      /* GL_IBM_rasterpos_clip */
+      case GL_RASTER_POSITION_UNCLIPPED_IBM:
+         if (ctx->Extensions.IBM_rasterpos_clip) {
+            *params = (GLfloat) ctx->Transform.RasterPositionUnclipped;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatn");
             return;
          }
 
@@ -5166,6 +5196,16 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_SAMPLES_ARB:
          if (ctx->Extensions.ARB_multisample) {
             *params = 0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+
+      /* GL_IBM_rasterpos_clip */
+      case GL_RASTER_POSITION_UNCLIPPED_IBM:
+         if (ctx->Extensions.IBM_rasterpos_clip) {
+            *params = (GLint) ctx->Transform.RasterPositionUnclipped;
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");

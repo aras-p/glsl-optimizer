@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.49 2001/05/29 15:23:48 brianp Exp $ */
+/* $Id: enable.c,v 1.50 2001/06/26 01:32:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -743,7 +743,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          return;
       FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
       ctx->Multisample.Enabled = state;
-      ctx->NewState |= _NEW_MULTISAMPLE;
       break;
    case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
       if (!ctx->Extensions.ARB_multisample) {
@@ -754,7 +753,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          return;
       FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
       ctx->Multisample.SampleAlphaToCoverage = state;
-      ctx->NewState |= _NEW_MULTISAMPLE;
       break;
    case GL_SAMPLE_ALPHA_TO_ONE_ARB:
       if (!ctx->Extensions.ARB_multisample) {
@@ -765,7 +763,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          return;
       FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
       ctx->Multisample.SampleAlphaToOne = state;
-      ctx->NewState |= _NEW_MULTISAMPLE;
       break;
    case GL_SAMPLE_COVERAGE_ARB:
       if (!ctx->Extensions.ARB_multisample) {
@@ -776,7 +773,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          return;
       FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
       ctx->Multisample.SampleCoverage = state;
-      ctx->NewState |= _NEW_MULTISAMPLE;
       break;
    case GL_SAMPLE_COVERAGE_INVERT_ARB:
       if (!ctx->Extensions.ARB_multisample) {
@@ -787,7 +783,18 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          return;
       FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
       ctx->Multisample.SampleCoverageInvert = state;
-      ctx->NewState |= _NEW_MULTISAMPLE;
+      break;
+
+      /* GL_IBM_rasterpos_clip */
+   case GL_RASTER_POSITION_UNCLIPPED_IBM:
+      if (!ctx->Extensions.IBM_rasterpos_clip) {
+         _mesa_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
+         return;
+      }
+      if (ctx->Transform.RasterPositionUnclipped == state)
+         return;
+      FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
+      ctx->Transform.RasterPositionUnclipped = state;
       break;
 
       /* GL_MESA_sprite_point */
@@ -1086,6 +1093,16 @@ _mesa_IsEnabled( GLenum cap )
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
          if (ctx->Extensions.ARB_multisample) {
             return ctx->Multisample.SampleCoverageInvert;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");
+            return GL_FALSE;
+         }
+
+      /* GL_IBM_rasterpos_clip */
+      case GL_RASTER_POSITION_UNCLIPPED_IBM:
+         if (ctx->Extensions.IBM_rasterpos_clip) {
+            return ctx->Transform.RasterPositionUnclipped;
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled");

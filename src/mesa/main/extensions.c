@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.62 2001/06/15 14:18:46 brianp Exp $ */
+/* $Id: extensions.c,v 1.63 2001/06/26 01:32:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -98,6 +98,7 @@ static struct {
    { ON,  "GL_EXT_vertex_array",               0 },
    { OFF, "GL_EXT_vertex_array_set",           F(EXT_vertex_array_set) },
    { OFF, "GL_HP_occlusion_test",              F(HP_occlusion_test) },
+   { ON,  "GL_IBM_rasterpos_clip",             F(IBM_rasterpos_clip) },
    { OFF, "GL_INGR_blend_func_separate",       F(INGR_blend_func_separate) },
    { OFF, "GL_MESA_packed_depth_stencil",      0 },
    { OFF, "GL_MESA_resize_buffers",            F(MESA_resize_buffers) },

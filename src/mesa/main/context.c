@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.143 2001/06/13 14:56:14 brianp Exp $ */
+/* $Id: context.c,v 1.144 2001/06/26 01:32:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1141,6 +1141,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Transform.MatrixMode = GL_MODELVIEW;
    ctx->Transform.Normalize = GL_FALSE;
    ctx->Transform.RescaleNormals = GL_FALSE;
+   ctx->Transform.RasterPositionUnclipped = GL_FALSE;
    for (i=0;i<MAX_CLIP_PLANES;i++) {
       ctx->Transform.ClipEnabled[i] = GL_FALSE;
       ASSIGN_4V( ctx->Transform.EyeUserPlane[i], 0.0, 0.0, 0.0, 0.0 );

@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.26 2001/06/18 17:26:08 brianp Exp $ */
+/* $Id: rastpos.c,v 1.27 2001/06/26 01:32:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,6 +64,20 @@ viewclip_point( const GLfloat v[] )
       return 1;
    }
 }
+
+
+/* As above, but only clip test against far/near Z planes */
+static GLuint
+viewclip_point_z( const GLfloat v[] )
+{
+   if (v[2] > v[3] || v[2] < -v[3] ) {
+      return 0;
+   }
+   else {
+      return 1;
+   }
+}
+
 
 
 /*
@@ -292,7 +306,13 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    TRANSFORM_POINT( clip, ctx->ProjectionMatrix.m, eye );
 
    /* clip to view volume */
-   if (viewclip_point( clip )==0) {
+   if (ctx->Transform.RasterPositionUnclipped) {
+      /* GL_IBM_rasterpos_clip: only clip against Z */
+      if (viewclip_point_z(clip) == 0)
+         ctx->Current.RasterPosValid = GL_FALSE;
+   }
+   else if (viewclip_point(clip) == 0) {
+      /* Normal OpenGL behaviour */
       ctx->Current.RasterPosValid = GL_FALSE;
       return;
    }
