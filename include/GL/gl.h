@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.10 1999/10/16 11:27:02 brianp Exp $ */
+/* $Id: gl.h,v 1.11 1999/10/17 20:18:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -941,7 +941,6 @@ typedef enum {
 	GL_COLOR_TABLE_ALPHA_SIZE		= 0x80DD,
 	GL_COLOR_TABLE_LUMINANCE_SIZE		= 0x80DE,
 	GL_COLOR_TABLE_INTENSITY_SIZE		= 0x80DF,
-
 	/* GL_EXT_convolution and GL_HP_convolution_border_modes */
 	GL_CONVOLUTION_1D			= 0x8010,
 	GL_CONVOLUTION_2D			= 0x8011,
@@ -966,7 +965,6 @@ typedef enum {
 	GL_CONSTANT_BORDER			= 0x8151,
 	GL_REPLICATE_BORDER			= 0x8153,
 	GL_CONVOLUTION_BORDER_COLOR		= 0x8154,
-
 	/* GL_SGI_color_matrix */
 	GL_COLOR_MATRIX				= 0x80B1,
 	GL_COLOR_MATRIX_STACK_DEPTH		= 0x80B2,
@@ -979,7 +977,6 @@ typedef enum {
 	GL_POST_COLOR_MATRIX_GREEN_BIAS		= 0x80B9,
 	GL_POST_COLOR_MATRIX_BLUE_BIAS		= 0x80BA,
 	GL_POST_COLOR_MATRIX_ALPHA_BIAS		= 0x80BB,
-
 	/* GL_EXT_histogram */
 	GL_HISTOGRAM				= 0x8024,
 	GL_PROXY_HISTOGRAM			= 0x8025,
@@ -995,6 +992,14 @@ typedef enum {
 	GL_MINMAX_FORMAT			= 0x802F,
 	GL_MINMAX_SINK				= 0x8030,
 	GL_TABLE_TOO_LARGE			= 0x8031,
+	/* GL_EXT_blend_color, GL_EXT_blend_minmax */
+	GL_BLEND_EQUATION			= 0x8009,
+	GL_MIN					= 0x8007,
+	GL_MAX					= 0x8008,
+	GL_FUNC_ADD				= 0x8006,
+	GL_FUNC_SUBTRACT			= 0x800A,
+	GL_FUNC_REVERSE_SUBTRACT		= 0x800B,
+	GL_BLEND_COLOR				= 0x8005,
 
 	/* GL_NV_texgen_reflection (nVidia) */
 	GL_NORMAL_MAP_NV			= 0x8511,
@@ -2081,6 +2086,26 @@ GLAPI void GLAPIENTRY glCopyTexSubImage3D( GLenum target, GLint level,
 
 
 /* 1.2 imaging extension functions */
+
+GLAPI void GLAPIENTRY glColorTable( GLenum target, GLenum internalformat,
+                                    GLsizei width, GLenum format,
+                                    GLenum type, const GLvoid *table );
+
+GLAPI void GLAPIENTRY glColorSubTable( GLenum target,
+                                       GLsizei start, GLsizei count,
+                                       GLenum format, GLenum type,
+                                       const GLvoid *data );
+
+GLAPI void GLAPIENTRY glGetColorTable( GLenum target, GLenum format,
+                                       GLenum type, GLvoid *table );
+
+GLAPI void GLAPIENTRY glGetColorTableParameterfv( GLenum target,
+                                                  GLenum pname,
+                                                  GLfloat *params );
+
+GLAPI void GLAPIENTRY glGetColorTableParameteriv( GLenum target,
+                                                  GLenum pname,
+                                                  GLint *params );
 
 GLAPI void GLAPIENTRY glBlendEquation( GLenum mode );
 
