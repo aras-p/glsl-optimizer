@@ -689,6 +689,7 @@ _mesa_GenBuffersARB(GLsizei n, GLuint *buffer)
       GLenum target = 0;
       bufObj = (*ctx->Driver.NewBufferObject)( ctx, name, target );
       if (!bufObj) {
+         _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenBuffersARB");
          return;
       }
