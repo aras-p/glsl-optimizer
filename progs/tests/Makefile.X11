@@ -9,7 +9,9 @@ LIBDIR = $(TOP)/lib
 LIBS = -L$(LIBDIR) $(APP_LIB_DEPS)
 
 SOURCES = antialias.c \
-   arbvptest1.c \
+	arbfptest1.c \
+	arbfptexture.c \
+	arbvptest1.c \
 	arbvptest3.c \
 	arbvptorus.c \
 	arbvpwarpmesh.c \
