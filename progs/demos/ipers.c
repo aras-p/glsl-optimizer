@@ -205,6 +205,13 @@ calcposobs(void)
    dir[1] = cos(alpha * M_PI / 180.0) * sin(beta * M_PI / 180.0);
    dir[2] = cos(beta * M_PI / 180.0);
 
+   if (dir[0] < 1.0e-5 && dir[0] > -1.0e-5)
+      dir[0] = 0;
+   if (dir[1] < 1.0e-5 && dir[1] > -1.0e-5)
+      dir[1] = 0;
+   if (dir[2] < 1.0e-5 && dir[2] > -1.0e-5)
+      dir[2] = 0;
+
    obs[0] += v * dir[0];
    obs[1] += v * dir[1];
    obs[2] += v * dir[2];

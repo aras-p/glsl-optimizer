@@ -81,6 +81,13 @@ calcposobs(void)
    dir[2] = cos(alpha * M_PI / 180.0) * sin(beta * M_PI / 180.0);
    dir[1] = cos(beta * M_PI / 180.0);
 
+   if (dir[0] < 1.0e-5 && dir[0] > -1.0e-5)
+      dir[0] = 0;
+   if (dir[1] < 1.0e-5 && dir[1] > -1.0e-5)
+      dir[1] = 0;
+   if (dir[2] < 1.0e-5 && dir[2] > -1.0e-5)
+      dir[2] = 0;
+
    alpha1 = alpha + FOV / 2.0;
    v1[0] = sin(alpha1 * M_PI / 180.0);
    v1[1] = cos(alpha1 * M_PI / 180.0);
