@@ -1027,9 +1027,10 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
    for (j = 0, i = 0; i < nr; i++) {
       const GLuint format = map[i].format;
       if (format == EMIT_PAD) {
+         /*
  	 fprintf(stderr, "%d: pad %d, offset %d\n", i,  
  		 map[i].offset, offset);  
-
+         */
 	 offset += map[i].offset;
 
       }
@@ -1046,10 +1047,11 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
 	 else
 	    vtx->attr[j].vertoffset = offset;
 	 
+         /*
  	 fprintf(stderr, "%d: %s, vp %p, offset %d\n", i,  
  		 format_info[format].name, (void *)vp,
 		 vtx->attr[j].vertoffset);   
-	 
+         */
 	 offset += format_info[format].attrsize;
 	 j++;
       }
