@@ -1091,6 +1091,14 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
     err_extra = NULL;
 
     if (drmGetMagic(fd, &magic)) goto done;
+    
+    dpy->authorized = False;
+    send_char_msg( dpy, 0, _Authorize );
+    send_msg( dpy, 0, &magic, sizeof(magic));
+    
+    /* force net buffer flush */
+    while (!dpy->authorized)
+      handle_fd_events( dpy, 0 );
 
     version = drmGetVersion(fd);
     if (version) {

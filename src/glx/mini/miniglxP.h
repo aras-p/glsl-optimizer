@@ -139,6 +139,8 @@ struct MiniGLXDisplayRec {
    int clientID;
    int nrFds;		/**< \brief number of connections (usually just one for the clients) */
    struct MiniGLXConnection *fd;	/**< \brief connections */
+   int drmFd;           /**< \brief handle to drm device */
+   int authorized;      /**< \brief has server authorized this process? */
 
    struct {
       int nr, head, tail;
@@ -182,6 +184,21 @@ struct MiniGLXDisplayRec {
    const char *clientDriverName;
    /*@}*/
 };
+
+/** Character messages. */
+enum msgs {
+   _CanIHaveFocus,
+   _IDontWantFocus,
+   _YouveGotFocus,
+   _YouveLostFocus,
+   _RepaintPlease,
+   _Authorize,
+};
+extern int send_msg( Display *dpy, int i, const void *msg, size_t sz );
+extern int send_char_msg( Display *dpy, int i, char msg );
+extern int blocking_read( Display *dpy, int connection, char *msg, size_t msg_size );
+extern int handle_fd_events( Display *dpy, int nonblock );
+
 
 extern Bool __glXWindowExists(__DRInativeDisplay *dpy, GLXDrawable draw);
 

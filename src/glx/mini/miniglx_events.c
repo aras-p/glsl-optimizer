@@ -38,7 +38,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $Id: miniglx_events.c,v 1.3 2004/06/26 17:16:42 jonsmirl Exp $ */
+/* $Id: miniglx_events.c,v 1.4 2004/07/16 04:27:00 jonsmirl Exp $ */
 
 
 #include <assert.h>
@@ -62,19 +62,11 @@
 #include <linux/kd.h>
 #include <linux/vt.h>
 
+#include "xf86drm.h"
 #include "miniglxP.h"
 
 
 #define MINIGLX_FIFO_NAME "/tmp/miniglx.fifo"
-
-/** Character messages. */
-enum msgs {
-   _CanIHaveFocus,
-   _IDontWantFocus,
-   _YouveGotFocus,
-   _YouveLostFocus,
-   _RepaintPlease,
-};
 
 /**
  * \brief Allocate an XEvent structure on the event queue.
@@ -180,7 +172,7 @@ static void shut_fd( Display *dpy, int i )
  * This will be actually sent to that file descriptor from
  * __miniglx_Select().
  */
-static int send_msg( Display *dpy, int i,
+int send_msg( Display *dpy, int i,
 		     const void *msg, size_t sz )
 {
    int cnt = dpy->fd[i].writebuf_count;
@@ -204,7 +196,7 @@ static int send_msg( Display *dpy, int i,
  * \internal 
  * Use send_msg() to send a one-byte message to a socket.
  */
-static int send_char_msg( Display *dpy, int i, char msg )
+int send_char_msg( Display *dpy, int i, char msg )
 {
    return send_msg( dpy, i, &msg, sizeof(char));
 }
@@ -224,7 +216,7 @@ static int send_char_msg( Display *dpy, int i, char msg )
  *
  * Only called from welcome_message_part().
  */
-static int blocking_read( Display *dpy, int connection, 
+int blocking_read( Display *dpy, int connection, 
 			  char *msg, size_t msg_size )
 {
    int i, r;
@@ -386,6 +378,9 @@ static int handle_new_client( Display *dpy )
 static int
 handle_fifo_read( Display *dpy, int i )
 {
+   drm_magic_t magic;
+   int err;
+
    while (dpy->fd[i].readbuf_count) {
       char id = dpy->fd[i].readbuf[0];
       XEvent *er;
@@ -448,6 +443,10 @@ handle_fifo_read( Display *dpy, int i )
 	    if (dpy->driver->notifyFocus)
 	       dpy->driver->notifyFocus( 0 ); 
 	    break;
+            
+         case _Authorize:
+            dpy->authorized = True;
+            break;
 	 
 	 default:
 	    fprintf(stderr, "Client received unhandled message type %d\n", id);
@@ -487,6 +486,21 @@ handle_fifo_read( Display *dpy, int i )
 	    er->xunmap.event = (Window)i;
 	    er->xunmap.window = (Window)i;
 	    er->xunmap.from_configure = False;
+	    break;
+            
+	 case _Authorize:
+            /* is full message here yet? */
+	    if (dpy->fd[i].readbuf_count < count + sizeof(magic)) {
+               count = 0;
+               break;
+	    }
+            memcpy(&magic, dpy->fd[i].readbuf + count, sizeof(magic));
+	    fprintf(stderr, "Authorize - magic %d\n", magic);
+            
+            err = drmAuthMagic(dpy->driverContext.drmFD, magic);
+	    count += sizeof(magic);
+            
+            send_char_msg( dpy, i, _Authorize );
 	    break;
 
 	 default:
@@ -713,7 +727,7 @@ __miniglx_Select( Display *dpy, int n, fd_set *rfds, fd_set *wfds, fd_set *xfds,
  * \internal
  * This function is the select() main loop.
  */
-static int handle_fd_events( Display *dpy, int nonblock )
+int handle_fd_events( Display *dpy, int nonblock )
 {
    while (1) {
       struct timeval tv = {0, 0};
