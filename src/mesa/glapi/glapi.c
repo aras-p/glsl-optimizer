@@ -502,7 +502,7 @@ get_static_proc_offset(const char *funcName)
 #ifdef USE_X86_ASM
 extern const GLubyte gl_dispatch_functions_start[];
 
-# if defined(PTHREADS)
+# if defined(THREADS)
 #  define X86_DISPATCH_FUNCTION_SIZE  32
 # else
 #  define X86_DISPATCH_FUNCTION_SIZE  16
