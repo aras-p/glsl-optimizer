@@ -1,4 +1,4 @@
-/* $Id: nvfragparse.c,v 1.8 2003/02/23 05:25:16 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.9 2003/02/25 19:30:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -135,15 +135,17 @@ static const struct instruction_pattern Instructions[] = {
    { "UP4B",  FP_OPCODE_UP4B,  INPUT_1S, OUTPUT_V,            _C | _S },
    { "UP4UB", FP_OPCODE_UP4UB, INPUT_1S, OUTPUT_V,            _C | _S },
    { "X2D", FP_OPCODE_X2D, INPUT_3V, OUTPUT_V, _R | _H |      _C | _S },
-   { NULL, -1, 0, 0, 0 }
+   { NULL, (enum fp_opcode) -1, 0, 0, 0 }
 };
 
 
 
 struct parse_state {
-   const char *pos;                   /* current position */
+   const GLubyte *pos;                /* current position */
    struct fragment_program *program;  /* current program */
    GLuint numInst;                    /* number of instructions parsed */
+   GLuint inputsRead;                 /* bitmask of input registers used */
+   GLuint outputsWritten;             /* 2 = depth register */
 };
 
 
@@ -152,13 +154,13 @@ struct parse_state {
  * Search a list of instruction structures for a match.
  */
 static struct instruction_pattern
-MatchInstruction(const char *token)
+MatchInstruction(const GLubyte *token)
 {
    const struct instruction_pattern *inst;
    struct instruction_pattern result;
 
    for (inst = Instructions; inst->name; inst++) {
-      if (_mesa_strncmp(token, inst->name, 3) == 0) {
+      if (_mesa_strncmp((const char *) token, inst->name, 3) == 0) {
          /* matched! */
          int i = 3;
          result = *inst;
@@ -197,19 +199,19 @@ MatchInstruction(const char *token)
 /**********************************************************************/
 
 
-static GLboolean IsLetter(char b)
+static GLboolean IsLetter(GLubyte b)
 {
    return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b == '_');
 }
 
 
-static GLboolean IsDigit(char b)
+static GLboolean IsDigit(GLubyte b)
 {
    return b >= '0' && b <= '9';
 }
 
 
-static GLboolean IsWhitespace(char b)
+static GLboolean IsWhitespace(GLubyte b)
 {
    return b == ' ' || b == '\t' || b == '\n' || b == '\r';
 }
@@ -221,7 +223,7 @@ static GLboolean IsWhitespace(char b)
  * \return <= 0 we found an error, else, return number of characters parsed.
  */
 static GLint
-GetToken(const char *str, char *token)
+GetToken(const GLubyte *str, GLubyte *token)
 {
    GLint i = 0, j = 0;
 
@@ -279,7 +281,7 @@ GetToken(const char *str, char *token)
  * Get next token from input stream and increment stream pointer past token.
  */
 static GLboolean
-Parse_Token(struct parse_state *parseState, char *token)
+Parse_Token(struct parse_state *parseState, GLubyte *token)
 {
    GLint i;
    i = GetToken(parseState->pos, token);
@@ -296,7 +298,7 @@ Parse_Token(struct parse_state *parseState, char *token)
  * Get next token from input stream but don't increment stream pointer.
  */
 static GLboolean
-Peek_Token(struct parse_state *parseState, char *token)
+Peek_Token(struct parse_state *parseState, GLubyte *token)
 {
    GLint i, len;
    i = GetToken(parseState->pos, token);
@@ -304,7 +306,7 @@ Peek_Token(struct parse_state *parseState, char *token)
       parseState->pos += (-i);
       return GL_FALSE;
    }
-   len = _mesa_strlen(token);
+   len = _mesa_strlen((const char *) token);
    parseState->pos += (i - len);
    return GL_TRUE;
 }
@@ -314,10 +316,10 @@ Peek_Token(struct parse_state *parseState, char *token)
  * String equality test
  */
 static GLboolean
-StrEq(const char *a, const char *b)
+StrEq(const GLubyte *a, const char *b)
 {
    GLint i;
-   for (i = 0; a[i] && b[i] && a[i] == (char) b[i]; i++)
+   for (i = 0; a[i] && b[i] && a[i] == (GLubyte) b[i]; i++)
       ;
    if (a[i] == 0 && b[i] == 0)
       return GL_TRUE;
@@ -329,13 +331,18 @@ StrEq(const char *a, const char *b)
 
 /**********************************************************************/
 
-static const char *InputRegisters[] = {
+static const char *InputRegisters[MAX_NV_FRAGMENT_PROGRAM_INPUTS + 1] = {
    "WPOS", "COL0", "COL1", "FOGC",
    "TEX0", "TEX1", "TEX2", "TEX3", "TEX4", "TEX5", "TEX6", "TEX7", NULL
 };
 
-static const char *OutputRegisters[] = {
-   "COLR", "COLH", "TEX0", "TEX1", "TEX2", "TEX3", "DEPR", NULL
+static const char *OutputRegisters[MAX_NV_FRAGMENT_PROGRAM_OUTPUTS + 1] = {
+   "COLR", "COLH",
+   /* These are only allows for register combiners */
+   /*
+   "TEX0", "TEX1", "TEX2", "TEX3",
+   */
+   "DEPR", NULL
 };
 
 
@@ -433,7 +440,7 @@ DummyRegisterNumber(GLuint r)
 static GLboolean
 Parse_String(struct parse_state *parseState, const char *pattern)
 {
-   const char *m;
+   const GLubyte *m;
    GLint i;
 
    /* skip whitespace and comments */
@@ -452,7 +459,7 @@ Parse_String(struct parse_state *parseState, const char *pattern)
    /* Try to match the pattern */
    m = parseState->pos;
    for (i = 0; pattern[i]; i++) {
-      if (*m != pattern[i])
+      if (*m != (GLubyte) pattern[i])
          return GL_FALSE;
       m += 1;
    }
@@ -463,7 +470,7 @@ Parse_String(struct parse_state *parseState, const char *pattern)
 
 
 static GLboolean
-Parse_Identifier(struct parse_state *parseState, char *ident)
+Parse_Identifier(struct parse_state *parseState, GLubyte *ident)
 {
    if (!Parse_Token(parseState, ident))
       RETURN_ERROR;
@@ -483,20 +490,20 @@ Parse_ScalarConstant(struct parse_state *parseState, GLfloat *number)
 {
    char *end = NULL;
 
-   *number = (GLfloat) _mesa_strtod(parseState->pos, &end);
+   *number = (GLfloat) _mesa_strtod((const char *) parseState->pos, &end);
 
-   if (end && end > parseState->pos) {
+   if (end && end > (char *) parseState->pos) {
       /* got a number */
-      parseState->pos = end;
+      parseState->pos = (GLubyte *) end;
       return GL_TRUE;
    }
    else {
       /* should be an identifier */
-      char ident[100];
+      GLubyte ident[100];
       if (!Parse_Identifier(parseState, ident))
          RETURN_ERROR1("Expected an identifier");
       if (!_mesa_lookup_symbol(&(parseState->program->SymbolTable),
-                               ident, number)) {
+                               (const char *) ident, number)) {
          RETURN_ERROR1("Undefined symbol");
       }
       return GL_TRUE;
@@ -515,7 +522,7 @@ Parse_ScalarConstant(struct parse_state *parseState, GLfloat *number)
 static GLboolean
 Parse_VectorConstant(struct parse_state *parseState, GLfloat *vec)
 {
-   char token[100];
+   GLubyte token[100];
 
    if (!Parse_String(parseState, "{"))
       RETURN_ERROR1("Expected {");
@@ -579,7 +586,7 @@ Parse_VectorConstant(struct parse_state *parseState, GLfloat *vec)
 static GLuint
 Parse_VectorOrScalarConstant(struct parse_state *parseState, GLfloat *vec)
 {
-   char token[100];
+   GLubyte token[100];
    if (!Peek_Token(parseState, token))
       RETURN_ERROR;
    if (token[0] == '{') {
@@ -603,7 +610,7 @@ static GLboolean
 Parse_TextureImageId(struct parse_state *parseState,
                      GLuint *texUnit, GLuint *texTargetIndex)
 {
-   char imageSrc[100];
+   GLubyte imageSrc[100];
    GLint unit;
 
    if (!Parse_Token(parseState, imageSrc))
@@ -614,7 +621,7 @@ Parse_TextureImageId(struct parse_state *parseState,
        imageSrc[2] != 'X') {
       RETURN_ERROR1("Expected TEX# source");
    }
-   unit = _mesa_atoi(imageSrc + 3);
+   unit = _mesa_atoi((const char *) imageSrc + 3);
    if ((unit < 0 || unit > MAX_TEXTURE_IMAGE_UNITS) ||
        (unit == 0 && (imageSrc[3] != '0' || imageSrc[4] != 0))) {
       RETURN_ERROR1("Invalied TEX# source index");
@@ -655,7 +662,7 @@ Parse_TextureImageId(struct parse_state *parseState,
  * the swizzle indexes.
  */
 static GLboolean
-Parse_SwizzleSuffix(const char *token, GLuint swizzle[4])
+Parse_SwizzleSuffix(const GLubyte *token, GLuint swizzle[4])
 {
    if (token[1] == 0) {
       /* single letter swizzle (scalar) */
@@ -696,7 +703,7 @@ static GLboolean
 Parse_CondCodeMask(struct parse_state *parseState,
                    struct fp_dst_register *dstReg)
 {
-   char token[100];
+   GLubyte token[100];
 
    if (!Parse_Token(parseState, token))
       RETURN_ERROR;
@@ -743,7 +750,7 @@ Parse_CondCodeMask(struct parse_state *parseState,
 static GLboolean
 Parse_TempReg(struct parse_state *parseState, GLint *tempRegNum)
 {
-   char token[100];
+   GLubyte token[100];
 
    /* Should be 'R##' or 'H##' */
    if (!Parse_Token(parseState, token))
@@ -752,7 +759,7 @@ Parse_TempReg(struct parse_state *parseState, GLint *tempRegNum)
       RETURN_ERROR1("Expected R## or H##");
 
    if (IsDigit(token[1])) {
-      GLint reg = _mesa_atoi((token + 1));
+      GLint reg = _mesa_atoi((const char *) (token + 1));
       if (token[0] == 'H')
          reg += 32;
       if (reg >= MAX_NV_FRAGMENT_PROGRAM_TEMPS)
@@ -770,16 +777,16 @@ Parse_TempReg(struct parse_state *parseState, GLint *tempRegNum)
 static GLboolean
 Parse_DummyReg(struct parse_state *parseState, GLint *regNum)
 {
-   char token[100];
+   GLubyte token[100];
 
    /* Should be 'RC' or 'HC' */
    if (!Parse_Token(parseState, token))
       RETURN_ERROR;
 
-   if (_mesa_strcmp(token, "RC")) {
+   if (_mesa_strcmp((const char *) token, "RC")) {
        *regNum = FP_DUMMY_REG_START;
    }
-   else if (_mesa_strcmp(token, "HC")) {
+   else if (_mesa_strcmp((const char *) token, "HC")) {
        *regNum = FP_DUMMY_REG_START + 1;
    }
    else {
@@ -796,7 +803,7 @@ Parse_DummyReg(struct parse_state *parseState, GLint *regNum)
 static GLboolean
 Parse_ProgramParamReg(struct parse_state *parseState, GLint *regNum)
 {
-   char token[100];
+   GLubyte token[100];
 
    if (!Parse_String(parseState, "p"))
       RETURN_ERROR1("Expected p");
@@ -809,7 +816,7 @@ Parse_ProgramParamReg(struct parse_state *parseState, GLint *regNum)
 
    if (IsDigit(token[0])) {
       /* a numbered program parameter register */
-      GLint reg = _mesa_atoi(token);
+      GLint reg = _mesa_atoi((const char *) token);
       if (reg >= MAX_NV_FRAGMENT_PROGRAM_PARAMS)
          RETURN_ERROR1("Bad constant program number");
       *regNum = FP_PROG_REG_START + reg;
@@ -831,7 +838,7 @@ Parse_ProgramParamReg(struct parse_state *parseState, GLint *regNum)
 static GLboolean
 Parse_AttribReg(struct parse_state *parseState, GLint *tempRegNum)
 {
-   char token[100];
+   GLubyte token[100];
    GLint j;
 
    /* Match 'f' */
@@ -849,6 +856,7 @@ Parse_AttribReg(struct parse_state *parseState, GLint *tempRegNum)
    for (j = 0; InputRegisters[j]; j++) {
       if (StrEq(token, InputRegisters[j])) {
          *tempRegNum = FP_INPUT_REG_START + j;
+         parseState->inputsRead |= (1 << j);
          break;
       }
    }
@@ -868,7 +876,7 @@ Parse_AttribReg(struct parse_state *parseState, GLint *tempRegNum)
 static GLboolean
 Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
 {
-   char token[100];
+   GLubyte token[100];
    GLint j;
 
    /* Match "o[" */
@@ -883,6 +891,7 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
    for (j = 0; OutputRegisters[j]; j++) {
       if (StrEq(token, OutputRegisters[j])) {
          *outputRegNum = FP_OUTPUT_REG_START + j;
+         parseState->outputsWritten |= (1 << j);
          break;
       }
    }
@@ -901,14 +910,14 @@ static GLboolean
 Parse_MaskedDstReg(struct parse_state *parseState,
                    struct fp_dst_register *dstReg)
 {
-   char token[100];
+   GLubyte token[100];
 
    /* Dst reg can be R<n>, H<n>, o[n], RC or HC */
    if (!Peek_Token(parseState, token))
       RETURN_ERROR;
 
-   if (_mesa_strcmp(token, "RC") == 0 ||
-       _mesa_strcmp(token, "HC") == 0) {
+   if (_mesa_strcmp((const char *) token, "RC") == 0 ||
+       _mesa_strcmp((const char *) token, "HC") == 0) {
       /* a write-only register */
       if (!Parse_DummyReg(parseState, &dstReg->Register))
          RETURN_ERROR;
@@ -1007,7 +1016,7 @@ static GLboolean
 Parse_SwizzleSrcReg(struct parse_state *parseState,
                     struct fp_src_register *srcReg)
 {
-   char token[100];
+   GLubyte token[100];
 
    /* XXX need to parse absolute value and another negation ***/
    srcReg->NegateBase = GL_FALSE;
@@ -1072,7 +1081,7 @@ static GLboolean
 Parse_ScalarSrcReg(struct parse_state *parseState,
                    struct fp_src_register *srcReg)
 {
-   char token[100];
+   GLubyte token[100];
 
    /* check for '-' */
    if (!Peek_Token(parseState, token))
@@ -1133,7 +1142,7 @@ static GLboolean
 Parse_InstructionSequence(struct parse_state *parseState,
                           struct fp_instruction program[])
 {
-   char token[100];
+   GLubyte token[100];
 
    while (1) {
       struct fp_instruction *inst = program + parseState->numInst;
@@ -1155,7 +1164,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
 
       /* special instructions */
       if (StrEq(token, "DEFINE")) {
-         char id[100];
+         GLubyte id[100];
          GLfloat value[7];  /* yes, 7 to be safe */
          if (!Parse_Identifier(parseState, id))
             RETURN_ERROR;
@@ -1167,10 +1176,11 @@ Parse_InstructionSequence(struct parse_state *parseState,
             RETURN_ERROR1("Expected ;");
          printf("Parsed DEFINE %s = %f %f %f %f\n", id, value[0], value[1],
                 value[2], value[3]);
-         _mesa_add_symbol(&(parseState->program->SymbolTable), id, Definition, value);
+         _mesa_add_symbol(&(parseState->program->SymbolTable),
+                          (const char *) id, Definition, value);
       }
       else if (StrEq(token, "DECLARE")) {
-         char id[100];
+         GLubyte id[100];
          GLfloat value[7] = {0, 0, 0, 0, 0, 0, 0};  /* yes, to be safe */
          if (!Parse_Identifier(parseState, id))
             RETURN_ERROR;
@@ -1188,7 +1198,8 @@ Parse_InstructionSequence(struct parse_state *parseState,
          }
          if (!Parse_String(parseState, ";"))
             RETURN_ERROR1("Expected ;");
-         _mesa_add_symbol(&(parseState->program->SymbolTable), id, Declaration, value);
+         _mesa_add_symbol(&(parseState->program->SymbolTable),
+                          (const char *) id, Declaration, value);
       }
       else {
          /* arithmetic instruction */
@@ -1331,13 +1342,17 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
    /* Get ready to parse */
    parseState.program = program;
    parseState.numInst = 0;
-   program->InputsRead = 0;
-   program->OutputsWritten = 0;
 
    /* check the program header */
    if (_mesa_strncmp((const char *) programString, "!!FP1.0", 7) == 0) {
       target = GL_FRAGMENT_PROGRAM_NV;
-      parseState.pos = (char *) programString + 7;
+      parseState.pos = programString + 7;
+   }
+   else if (_mesa_strncmp((const char *) programString, "!!FCP1.0", 8) == 0) {
+      /* fragment / register combiner program - not supported */
+      _mesa_set_program_error(ctx, 0, "Invalid fragment program header");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glLoadProgramNV(bad header)");
+      return;
    }
    else {
       /* invalid header */
@@ -1356,6 +1371,13 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
 
    if (Parse_InstructionSequence(&parseState, instBuffer)) {
       /* success! */
+
+      if (parseState.outputsWritten == 0) {
+         /* must write at least one output! */
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "Invalid fragment program - no outputs written.");
+         return;
+      }
 
       /* copy the compiled instructions */
       assert(parseState.numInst <= MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS);
@@ -1378,6 +1400,8 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
          FREE(program->Instructions);
       }
       program->Instructions = newInst;
+      program->InputsRead = parseState.inputsRead;
+      program->OutputsWritten = parseState.outputsWritten;
 
       /* allocate registers for declared program parameters */
       _mesa_assign_program_registers(&(program->SymbolTable));
@@ -1395,11 +1419,11 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
 #ifdef DEBUG
       {
          GLint line, column;
-         const char *lineStr;
-         lineStr = _mesa_find_line_column((const char *) programString,
+         const GLubyte *lineStr;
+         lineStr = _mesa_find_line_column(programString,
                                           parseState.pos, &line, &column);
          _mesa_debug(ctx, "Parse error on line %d, column %d:%s\n",
-                     line, column, lineStr);
+                     line, column, (char *) lineStr);
          _mesa_free((void *) lineStr);
       }
 #endif

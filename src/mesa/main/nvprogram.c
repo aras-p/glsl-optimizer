@@ -1,4 +1,4 @@
-/* $Id: nvprogram.c,v 1.4 2003/02/23 05:23:53 brianp Exp $ */
+/* $Id: nvprogram.c,v 1.5 2003/02/25 19:30:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,7 +104,7 @@ _mesa_lookup_program_register(const struct symbol_table *symbolTable,
    const struct symbol *s;
    for (s = symbolTable->Head; s; s = s->Next) {
       if (_mesa_strcmp(s->Name, (const char *) name) == 0 &&
-          _mesa_strlen(s->Name) == len) {
+          _mesa_strlen(s->Name) == (size_t) len) {
          return s->Register;
       }
    }
@@ -141,19 +141,29 @@ _mesa_set_program_error(GLcontext *ctx, GLint pos, const char *string)
 }
 
 
-const char *
-_mesa_find_line_column(const char *string, const char *pos,
+/**
+ * Find the line number and column for 'pos' within 'string'.
+ * Return a copy of the line which contains 'pos'.  Free the line with
+ * _mesa_free().
+ * \param string  the program string
+ * \param pos     the position within the string
+ * \param line    returns the line number corresponding to 'pos'.
+ * \param col     returns the column number corresponding to 'pos'.
+ * \return copy of the line containing 'pos'.
+ */
+const GLubyte *
+_mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
                        GLint *line, GLint *col)
 {
-   const char *lineStart = string;
-   const char *p = string;
-   char *s;
+   const GLubyte *lineStart = string;
+   const GLubyte *p = string;
+   GLubyte *s;
    int len;
 
    *line = 1;
 
    while (p != pos) {
-      if (*p == '\n') {
+      if (*p == (GLubyte) '\n') {
          (*line)++;
          lineStart = p + 1;
       }
@@ -166,7 +176,7 @@ _mesa_find_line_column(const char *string, const char *pos,
    while (*p != 0 && *p != '\n')
       p++;
    len = p - lineStart;
-   s = (char *) _mesa_malloc(len + 1);
+   s = (GLubyte *) _mesa_malloc(len + 1);
    _mesa_memcpy(s, lineStart, len);
    s[len] = 0;
 

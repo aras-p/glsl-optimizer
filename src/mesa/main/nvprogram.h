@@ -1,4 +1,4 @@
-/* $Id: nvprogram.h,v 1.3 2003/02/23 05:23:54 brianp Exp $ */
+/* $Id: nvprogram.h,v 1.4 2003/02/25 19:30:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,8 +55,8 @@ _mesa_assign_program_registers(struct symbol_table *symbolTable);
 extern void
 _mesa_set_program_error(GLcontext *ctx, GLint pos, const char *string);
 
-extern const char *
-_mesa_find_line_column(const char *string, const char *pos,
+extern const GLubyte *
+_mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
                        GLint *line, GLint *col);
 
 extern void
