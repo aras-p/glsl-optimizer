@@ -1,4 +1,4 @@
-/* $Id: osdemo.c,v 1.8 2002/04/05 17:40:20 kschultz Exp $ */
+/* $Id: osdemo.c,v 1.9 2002/07/12 15:54:19 brianp Exp $ */
 
 /*
  * Demo of off-screen Mesa rendering
@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "GL/osmesa.h"
 #include "GL/glut.h"
 
@@ -152,6 +153,7 @@ static void render_image( void )
 }
 
 
+#ifdef SAVE_TARGA
 
 static void
 write_targa(const char *filename, const GLubyte *buffer, int width, int height)
@@ -192,6 +194,7 @@ write_targa(const char *filename, const GLubyte *buffer, int width, int height)
    }
 }
 
+#else
 
 static void
 write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
@@ -237,6 +240,8 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
       fclose(f);
    }
 }
+
+#endif
 
 
 
