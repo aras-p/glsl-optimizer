@@ -1,4 +1,4 @@
-/* $Id: xfonts.c,v 1.6 2000/04/19 01:44:02 brianp Exp $ */
+/* $Id: xfonts.c,v 1.7 2000/08/13 03:44:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -231,26 +231,23 @@ void Fake_glXUseXFont( Font font, int first, int count, int listbase )
   XGCValues values;
   unsigned long valuemask;
   XFontStruct *fs;
-
   GLint swapbytes, lsbfirst, rowlength;
   GLint skiprows, skippixels, alignment;
-
   unsigned int max_width, max_height, max_bm_width, max_bm_height;
   GLubyte *bm;
-
   int i;
 
-  CC = XMesaGetCurrentContext();
-  dpy = CC->display;
-  win = CC->xm_buffer->frontbuffer;
+  dpy = glXGetCurrentDisplay();
+  if (!dpy)
+     return;  /* I guess glXMakeCurrent wasn't called */
+  win = RootWindow(dpy, DefaultScreen(dpy));
 
   fs = XQueryFont (dpy, font);
-  if (!fs)
-    {
+  if (!fs) {
       gl_error (CC->gl_ctx, GL_INVALID_VALUE,
                 "Couldn't get font structure information");
       return;
-    }
+  }
 
   /* Allocate a bitmap that can fit all characters.  */
   max_width = fs->max_bounds.rbearing - fs->min_bounds.lbearing;
@@ -265,7 +262,7 @@ void Fake_glXUseXFont( Font font, int first, int count, int listbase )
       gl_error (CC->gl_ctx, GL_OUT_OF_MEMORY,
                 "Couldn't allocate bitmap in glXUseXFont()");
       return;
-    }
+  }
 
 #if 0
   /* get the page info */
