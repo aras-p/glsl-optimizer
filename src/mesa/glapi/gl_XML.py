@@ -175,6 +175,8 @@ class glParameter( glItem ):
 			self.p_count = 0
 			self.counter = c
 
+		self.count_scale = int(attrs.get('count_scale', "1"))
+			
 		if attrs.get('counter', "false") == "true":
 			self.is_counter = 1
 		else:
@@ -296,7 +298,7 @@ class glParameter( glItem ):
 		elif self.p_count == 0:
 			return self.p_type.size
 		else:
-			return self.p_type.size * self.p_count
+			return self.p_type.size * self.p_count * self.count_scale
 
 	def size_string(self):
 		s = self.size()
@@ -310,11 +312,17 @@ class glParameter( glItem ):
 			if b_prod == 0:	b_prod = 1
 
 			if not self.count_parameter_list and self.counter != None:
-				a_prod = self.counter
+				if self.count_scale > 1:
+					a_prod = '(%s * %u)' % (self.counter, self.count_scale)
+				else:
+					a_prod = self.counter
 			elif self.count_parameter_list and self.counter == None:
 				pass
 			elif self.count_parameter_list and self.counter != None:
-				b_prod = self.counter
+				if self.count_scale > 1:
+					b_prod = '(%s * %u)' % (self.counter, self.count_scale)
+				else:
+					b_prod = self.counter
 			elif self.width:
 				return "compsize"
 			else:
