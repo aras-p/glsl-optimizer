@@ -28,11 +28,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-/*
- * Authors:
- *   Kevin E. Martin <martin@valinux.com>
- *   Gareth Hughes <gareth@valinux.com>
+/**
+ * \file radeon_screen.c
+ * Screen initialization functions for the Radeon driver.
  *
+ * \author Kevin E. Martin <martin@valinux.com>
+ * \author  Gareth Hughes <gareth@valinux.com>
  */
 
 #include "glheader.h"
@@ -101,7 +102,145 @@ static const GLuint __driNConfigOptions = 10;
 #define PCI_CHIP_RS250_4437     0x4437
 #endif
 
+#ifdef USE_NEW_INTERFACE
+static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
+#endif /* USE_NEW_INTERFACE */
+
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
+
+#ifdef USE_NEW_INTERFACE
+static __GLcontextModes * fill_in_modes( __GLcontextModes * modes,
+					 unsigned pixel_bits,
+					 unsigned depth_bits,
+					 unsigned stencil_bits,
+					 const GLenum * db_modes,
+					 unsigned num_db_modes,
+					 int visType )
+{
+    static const uint8_t bits[2][4] = {
+	{          5,          6,          5,          0 },
+	{          8,          8,          8,          8 }
+    };
+
+    static const uint32_t masks[2][4] = {
+	{ 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 },
+	{ 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000 }
+    };
+
+    unsigned   i;
+    unsigned   j;
+    const unsigned index = ((pixel_bits + 15) / 16) - 1;
+
+    for ( i = 0 ; i < num_db_modes ; i++ ) {
+	for ( j = 0 ; j < 2 ; j++ ) {
+
+	    modes->redBits   = bits[index][0];
+	    modes->greenBits = bits[index][1];
+	    modes->blueBits  = bits[index][2];
+	    modes->alphaBits = bits[index][3];
+	    modes->redMask   = masks[index][0];
+	    modes->greenMask = masks[index][1];
+	    modes->blueMask  = masks[index][2];
+	    modes->alphaMask = masks[index][3];
+	    modes->rgbBits   = modes->redBits + modes->greenBits
+		+ modes->blueBits + modes->alphaBits;
+
+	    modes->accumRedBits   = 16 * j;
+	    modes->accumGreenBits = 16 * j;
+	    modes->accumBlueBits  = 16 * j;
+	    modes->accumAlphaBits = (masks[index][3] != 0) ? 16 * j : 0;
+	    modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
+
+	    modes->stencilBits = stencil_bits;
+	    modes->depthBits = depth_bits;
+
+	    modes->visualType = visType;
+	    modes->renderType = GLX_RGBA_BIT;
+	    modes->drawableType = GLX_WINDOW_BIT;
+	    modes->rgbMode = GL_TRUE;
+
+	    if ( db_modes[i] == GLX_NONE ) {
+		modes->doubleBufferMode = GL_FALSE;
+	    }
+	    else {
+		modes->doubleBufferMode = GL_TRUE;
+		modes->swapMethod = db_modes[i];
+	    }
+
+	    modes = modes->next;
+	}
+    }
+
+    return modes;
+}
+#endif /* USE_NEW_INTERFACE */
+
+#ifdef USE_NEW_INTERFACE
+static __GLcontextModes *
+radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
+		 unsigned stencil_bits, GLboolean have_back_buffer )
+{
+    __GLcontextModes * modes;
+    __GLcontextModes * m;
+    unsigned num_modes;
+    unsigned depth_buffer_factor;
+    unsigned back_buffer_factor;
+    unsigned i;
+
+    /* Right now GLX_SWAP_COPY_OML isn't supported, but it would be easy
+     * enough to add support.  Basically, if a context is created with an
+     * fbconfig where the swap method is GLX_SWAP_COPY_OML, pageflipping
+     * will never be used.
+     */
+    static const GLenum back_buffer_modes[] = {
+	GLX_NONE, GLX_SWAP_UNDEFINED_OML /*, GLX_SWAP_COPY_OML */
+    };
+
+    int depth_buffer_modes[2][2];
+
+
+    depth_buffer_modes[0][0] = depth_bits;
+    depth_buffer_modes[1][0] = depth_bits;
+
+    /* Just like with the accumulation buffer, always provide some modes
+     * with a stencil buffer.  It will be a sw fallback, but some apps won't
+     * care about that.
+     */
+    depth_buffer_modes[0][1] = 0;
+    depth_buffer_modes[1][1] = (stencil_bits == 0) ? 8 : stencil_bits;
+
+    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
+    back_buffer_factor  = (have_back_buffer) ? 2 : 1;
+
+    num_modes = depth_buffer_factor * back_buffer_factor * 4;
+
+    modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
+    m = modes;
+    for ( i = 0 ; i < depth_buffer_factor ; i++ ) {
+	m = fill_in_modes( m, pixel_bits,
+			   depth_buffer_modes[i][0], depth_buffer_modes[i][1],
+			   back_buffer_modes, back_buffer_factor,
+			   GLX_TRUE_COLOR );
+    }
+
+    for ( i = 0 ; i < depth_buffer_factor ; i++ ) {
+	m = fill_in_modes( m, pixel_bits,
+			   depth_buffer_modes[i][0], depth_buffer_modes[i][1],
+			   back_buffer_modes, back_buffer_factor,
+			   GLX_DIRECT_COLOR );
+    }
+
+    /* Mark the visual as slow if there are "fake" stencil bits.
+     */
+    for ( m = modes ; m != NULL ; m = m->next ) {
+	if ( (m->stencilBits != 0) && (m->stencilBits != stencil_bits) ) {
+	    m->visualRating = GLX_SLOW_CONFIG;
+	}
+    }
+
+    return modes;
+}
+#endif /* USE_NEW_INTERFACE */
 
 /* Create the device specific screen private data struct.
  */
@@ -295,6 +434,12 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 }
 
 	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+
+         if ( driCompareGLXAPIVersion( 20030915 ) >= 0 ) {
+	    (*glx_enable_extension)( psc, "GLX_SGIX_fbconfig" );
+	    (*glx_enable_extension)( psc, "GLX_OML_swap_method" );
+	 }
+
       }
    }
 #endif
@@ -343,8 +488,12 @@ radeonInitDriver( __DRIscreenPrivate *sPriv )
 
 
 
-/* Create and initialize the Mesa and driver specific pixmap buffer
+/**
+ * Create and initialize the Mesa and driver specific pixmap buffer
  * data.
+ *
+ * \todo This function (and its interface) will need to be updated to support
+ * pbuffers.
  */
 static GLboolean
 radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
@@ -381,19 +530,6 @@ radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 
 
 
-/* Fullscreen mode isn't used for much -- could be a way to shrink
- * front/back buffers & get more texture memory if the client has
- * changed the video resolution.
- * 
- * Pageflipping is now done automatically whenever there is a single
- * 3d client.
- */
-static GLboolean
-radeonOpenCloseFullScreen( __DRIcontextPrivate *driContextPriv )
-{
-   return GL_TRUE;
-}
-
 static struct __DriverAPIRec radeonAPI = {
    .InitDriver      = radeonInitDriver,
    .DestroyScreen   = radeonDestroyScreen,
@@ -404,8 +540,8 @@ static struct __DriverAPIRec radeonAPI = {
    .SwapBuffers     = radeonSwapBuffers,
    .MakeCurrent     = radeonMakeCurrent,
    .UnbindContext   = radeonUnbindContext,
-   .OpenFullScreen  = radeonOpenCloseFullScreen,
-   .CloseFullScreen = radeonOpenCloseFullScreen,
+   .OpenFullScreen  = NULL,
+   .CloseFullScreen = NULL,
    .GetSwapInfo     = getSwapInfo,
    .GetMSC          = driGetMSC32,
    .WaitForMSC      = driWaitForMSC32,
@@ -438,33 +574,49 @@ void *__driCreateScreen(struct DRIDriverRec *driver,
 }
 #endif
 
-#ifndef _SOLO
 /**
- * This function is called by libGL.so as soon as libGL.so is loaded.
- * This is where we'd register new extension functions with the dispatcher.
+ * This is the bootstrap function for the driver.  libGL supplies all of the
+ * requisite information about the system, and the driver initializes itself.
+ * This routine also fills in the linked list pointed to by \c driver_modes
+ * with the \c __GLcontextModes that the driver can support for windows or
+ * pbuffers.
  *
- * \todo This interface has been deprecated, so we should probably remove
- *       this function before the next XFree86 release.
+ * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
+ *         failure.
  */
-void
-__driRegisterExtensions( void )
+#ifdef USE_NEW_INTERFACE
+void * __driCreateNewScreen( Display *dpy, int scrn, __DRIscreen *psc,
+			     const __GLcontextModes * modes,
+			     const __DRIversion * ddx_version,
+			     const __DRIversion * dri_version,
+			     const __DRIversion * drm_version,
+			     const __DRIframebuffer * frame_buffer,
+			     drmAddress pSAREA, int fd,
+			     int internal_api_version,
+			     __GLcontextModes ** driver_modes )
+
 {
-   PFNGLXENABLEEXTENSIONPROC glx_enable_extension;
+   __DRIscreenPrivate *psp;
+
+   psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
+				  ddx_version, dri_version, drm_version,
+				  frame_buffer, pSAREA, fd,
+				  internal_api_version, &radeonAPI);
 
 
-   if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
-      glx_enable_extension = (PFNGLXENABLEEXTENSIONPROC)
-	  glXGetProcAddress( (const GLubyte *) "__glXEnableExtension" );
-
-      if ( glx_enable_extension != NULL ) {
-	 (*glx_enable_extension)( "GLX_SGI_swap_control", GL_FALSE );
-	 (*glx_enable_extension)( "GLX_SGI_video_sync", GL_FALSE );
-	 (*glx_enable_extension)( "GLX_MESA_swap_control", GL_FALSE );
-	 (*glx_enable_extension)( "GLX_MESA_swap_frame_usage", GL_FALSE );
-      }
+   create_context_modes =
+       (PFNGLXCREATECONTEXTMODES) glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
+   if ( create_context_modes != NULL ) {
+      RADEONDRIPtr dri_priv = (RADEONDRIPtr) psp->pDevPriv;
+      *driver_modes = radeonFillInModes( dri_priv->bpp,
+				       (dri_priv->bpp == 16) ? 16 : 24,
+				       (dri_priv->bpp == 16) ? 0  : 8,
+				       (dri_priv->backOffset != dri_priv->depthOffset) );
    }
+
+   return (void *) psp;
 }
-#endif
+#endif /* USE_NEW_INTERFACE */
 
 /**
  * Get information about previous buffer swaps.
