@@ -10,8 +10,8 @@
 #include <string.h>
 #ifdef _WIN32
 #include <windows.h>
-#define GL_GLEXT_PROTOTYPES
 #endif
+#define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
 
 
@@ -257,6 +257,7 @@ int main( int argc, char *argv[] )
    glutCreateWindow(argv[0]);
 
    Init();
+   (void) Init2; /* silence warning */
 
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
