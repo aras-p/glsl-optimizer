@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.19 2001/09/18 16:39:38 kschultz Exp $ */
+/* $Id: wmesa.c,v 1.20 2001/09/25 16:22:40 kschultz Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -75,7 +75,7 @@ GLint stereo_flag = 0 ;
 
 static PWMC Current = NULL;
 WMesaContext WC = NULL;
-
+#if 0
 #ifdef NDEBUG
 #define assert(ignore)  ((void) 0)
 #else
@@ -88,7 +88,7 @@ void Mesa_Assert(void *Cond,void *File,unsigned Line)
 }
 #define assert(e)   if (!e) Mesa_Assert(#e,__FILE__,__LINE__);
 #endif
-
+#endif
 //#define DD_GETDC (Current->hDC )
 #define DD_GETDC ((Current->db_flag) ? Current->dib.hDC : Current->hDC )
 //#define DD_GETDC ((Current->db_flag) ? Current->hDCPrimary : Current->hDCBack )
@@ -1311,7 +1311,7 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
         return NULL;
     }
 
-	c->gl_ctx->Driver.UpdateState = setup_DD_pointers;
+    //  c->gl_ctx->Driver.UpdateState = setup_DD_pointers;
 
     //  setup_DD_pointers(c->gl_ctx);
 
@@ -2086,7 +2086,7 @@ void WMesaMove(void)
 */
 #define PACK_8B8G8R( R, G, B )   ( ((B) << 16) | ((G) << 8) | (R) )
 
-
+#if 0
 /**********************************************************************/
 /***                   Triangle rendering                            ***/
 /**********************************************************************/
@@ -2846,7 +2846,7 @@ static void flat_DITHER8_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #endif
 }
 
-
+#endif
 
 
 static /*triangle_func*/ choose_triangle_function( GLcontext *ctx )
