@@ -36,6 +36,7 @@ VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 # MKLIB_OPTIONS  extra options to pass to the mklib script (like -arch)
 
 
+# XXX probably out of date
 aix:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
@@ -47,6 +48,7 @@ aix:
 	"CFLAGS = -O -DAIXV3" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
 
+# XXX probably out of date
 aix-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
@@ -72,8 +74,8 @@ aix-gcc:
 	"MKLIB_OPTIONS = -arch aix-gcc" \
 	"GL_LIB_DEPS = -lX11 -lXext -lm" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
-	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLUT -lGL" \
-	"APP_LIB_DEPS = -Wl,-brtl -lX11 -lXext -lXmu -lXi -lm"
+	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL" \
+	"APP_LIB_DEPS = -Wl,-brtl -lglut -lGLU -lGL -lm -lX11 -lXext -lXmu -lXi"
 
 beos-r4:
 	$(MAKE) -f Makefile.BeOS-R4 targets \
