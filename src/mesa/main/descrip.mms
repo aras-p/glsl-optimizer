@@ -15,7 +15,7 @@ INCDIR = [-.include]
 LIBDIR = [-.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(FBIND=1)
 
-CORE_SOURCES = accum.c alpha.c alphabuf.c attrib.c \
+CORE_SOURCES = aatriangle.c accum.c alpha.c alphabuf.c attrib.c \
 bitmap.c blend.c buffers.c clip.c colortab.c context.c copypix.c depth.c \
 dispatch.c \
 dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
@@ -39,7 +39,7 @@ DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]xfonts.c \
 
 ASM_SOURCES =
 
-OBJECTS =\
+OBJECTS =aatriangle.obj,\
 accum.obj,alpha.obj,alphabuf.obj,attrib.obj,\
 bitmap.obj,blend.obj,buffers.obj,clip.obj,colortab.obj,context.obj,copypix.obj,depth.obj,\
 dlist.obj,drawpix.obj,enable.obj,eval.obj,feedback.obj,fog.obj
@@ -119,6 +119,8 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
 clean :
 	purge
 	delete *.obj;*
+
+aatriangle.obj : aatriangle.c
 
 triangle.obj : triangle.c
 
