@@ -2734,7 +2734,7 @@ update_texture_state( GLcontext *ctx )
        * complete.  That's the one we'll use for texturing.  If we're using
        * a fragment program we're guaranteed that bitcount(enabledBits) <= 1.
        */
-      if (texUnit->Enabled & TEXTURE_CUBE_BIT) {
+      if (enableBits & TEXTURE_CUBE_BIT) {
          struct gl_texture_object *texObj = texUnit->CurrentCubeMap;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
@@ -2745,7 +2745,7 @@ update_texture_state( GLcontext *ctx )
          }
       }
 
-      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE_3D_BIT)) {
+      if (!texUnit->_ReallyEnabled && (enableBits & TEXTURE_3D_BIT)) {
          struct gl_texture_object *texObj = texUnit->Current3D;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
@@ -2756,7 +2756,7 @@ update_texture_state( GLcontext *ctx )
          }
       }
 
-      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE_RECT_BIT)) {
+      if (!texUnit->_ReallyEnabled && (enableBits & TEXTURE_RECT_BIT)) {
          struct gl_texture_object *texObj = texUnit->CurrentRect;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
@@ -2767,7 +2767,7 @@ update_texture_state( GLcontext *ctx )
          }
       }
 
-      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE_2D_BIT)) {
+      if (!texUnit->_ReallyEnabled && (enableBits & TEXTURE_2D_BIT)) {
          struct gl_texture_object *texObj = texUnit->Current2D;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
@@ -2778,7 +2778,7 @@ update_texture_state( GLcontext *ctx )
          }
       }
 
-      if (!texUnit->_ReallyEnabled && (texUnit->Enabled & TEXTURE_1D_BIT)) {
+      if (!texUnit->_ReallyEnabled && (enableBits & TEXTURE_1D_BIT)) {
          struct gl_texture_object *texObj = texUnit->Current1D;
          if (!texObj->Complete) {
             _mesa_test_texobj_completeness(ctx, texObj);
