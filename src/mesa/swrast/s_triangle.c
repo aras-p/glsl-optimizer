@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.6 2000/11/21 23:09:18 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.7 2000/12/12 00:31:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -679,6 +679,7 @@ static void affine_textured_triangle( GLcontext *ctx,
  * This function written by Klaus Niederkrueger <klaus@math.leidenuniv.nl>
  * Send all questions and bug reports to him.
  */
+#if 0 /* XXX disabled because of texcoord interpolation errors */
 static void near_persp_textured_triangle(GLcontext *ctx,
 					 const SWvertex *v0,
 					 const SWvertex *v1,
@@ -1408,7 +1409,7 @@ static void near_persp_textured_triangle(GLcontext *ctx,
 #undef DRAW_LINE
 #undef BIAS
 }
-
+#endif
 
 
 /*
@@ -1419,6 +1420,7 @@ static void near_persp_textured_triangle(GLcontext *ctx,
  * This function written by Klaus Niederkrueger <klaus@math.leidenuniv.nl>
  * Send all questions and bug reports to him.
  */
+#if 0 /* XXX disabled because of texcoord interpolation errors */
 static void lin_persp_textured_triangle( GLcontext *ctx,
 					 const SWvertex *v0,
 					 const SWvertex *v1,
@@ -1585,11 +1587,10 @@ static void lin_persp_textured_triangle( GLcontext *ctx,
       }							\
    }
 
-
 #include "s_tritemp.h"
 #undef SPAN
 }
-
+#endif
 
 
 /*
@@ -2342,6 +2343,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	       }
 	    }
 	    else {
+#if 00 /* XXX these function have problems with texture coord interpolation */
 	       if (filter==GL_NEAREST) {
 		 swrast->Triangle = near_persp_textured_triangle;
 		 dputs("near_persp_textured_triangle");
@@ -2350,6 +2352,8 @@ _swrast_choose_triangle( GLcontext *ctx )
 		 swrast->Triangle = lin_persp_textured_triangle;
 		 dputs("lin_persp_textured_triangle");
 	       }
+#endif
+               swrast->Triangle = general_textured_triangle;
 	    }
 	 }
          else {
