@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.16 2000/06/12 15:31:20 brianp Exp $ */
+/* $Id: state.c,v 1.17 2000/06/23 20:28:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -846,7 +846,7 @@ static void update_rasterflags( GLcontext *ctx )
       ctx->RasterMask |= MULTI_DRAW_BIT;
       ctx->TriangleCaps |= DD_MULTIDRAW;
    }
-   else if (ctx->Visual->RGBAflag && ctx->Color.ColorMask==0) {
+   else if (ctx->Visual->RGBAflag && *((GLuint *) ctx->Color.ColorMask) == 0) {
       /* all RGBA channels disabled */
       ctx->RasterMask |= MULTI_DRAW_BIT;
       ctx->TriangleCaps |= DD_MULTIDRAW;
