@@ -1,21 +1,21 @@
-/* $Id: tess.h,v 1.8 1999/09/17 06:31:02 gareth Exp $ */
+/* $Id: tess.h,v 1.9 1999/10/03 00:56:07 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.1
- * 
+ *
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.h,v $
+ * Revision 1.9  1999/10/03 00:56:07  gareth
+ * Added tessellation winding rule support.  Misc bug fixes.
+ *
  * Revision 1.8  1999/09/17 06:31:02  gareth
  * Winding rule updates.
  *
@@ -89,6 +92,8 @@ struct GLUtesselator
 #endif
     heap_t		*ears;
     hashtable_t		*cvc_lists;
+    void		*user_data;
+    GLuint		label;
     GLenum		error;
 };
 
@@ -96,7 +101,7 @@ struct GLUtesselator
 /*****************************************************************************
  * Tessellation error handler:
  *****************************************************************************/
-extern void tess_error_callback( GLUtesselator *, GLenum, void * );
+extern void tess_error_callback( GLUtesselator *, GLenum );
 
 
 /*****************************************************************************
@@ -107,7 +112,7 @@ extern	int	tess_debug_level;
 int vdebugstr( char *format_str, ... );
 
 #pragma message( "tess: using DEBUGP for debugging output" )
-#define DEBUGP(level, body)						\
+#define DEBUGP( level, body )						\
     do {								\
 	if ( tess_debug_level >= level ) {				\
 	    vdebugstr( "%11.11s:%-5d ", __FILE__, __LINE__, level );	\
@@ -115,12 +120,15 @@ int vdebugstr( char *format_str, ... );
 	    fflush( stderr );						\
 	}								\
     } while ( 0 )
-#define DEBUGIF(level)          do { if ( tess_debug_level >= level ) {
-#define DEBUGENDIF              } } while ( 0 )
+#define DEBUGIF( level )	do { if ( tess_debug_level >= level ) {
+#define DEBUGENDIF		} } while ( 0 )
+
 #else
-#define DEBUGP(level, body)
-#define DEBUGIF(level)		while(0) {
+
+#define DEBUGP( level, body )
+#define DEBUGIF( level )	while(0) {
 #define DEBUGENDIF		}
+
 #endif
 
 #ifdef __cplusplus
