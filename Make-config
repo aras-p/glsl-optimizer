@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.49 2001/09/23 16:53:28 brianp Exp $
+# $Id: Make-config,v 1.50 2001/09/24 19:18:03 brianp Exp $
 
 MESA_MAJOR=4
 MESA_MINOR=0
@@ -587,7 +587,7 @@ linux-x86-static:
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform_raw4.S \
+		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S \
 		X86/mmx_blend.S \
 		X86/3dnow_xform1.S X86/3dnow_xform2.S \
