@@ -39,6 +39,8 @@
 #include "s_texture.h"
 
 
+#ifdef USE_TCC
+
 /* UREG - a way of representing an FP source register including
  * swizzling and negation in a single GLuint.  Major flaw is the
  * limitiation to source->Index < 32.  Secondary flaw is the fact that
@@ -816,3 +818,4 @@ void _swrast_translate_program( GLcontext *ctx )
    }
 }
 
+#endif /*USE_TCC*/
