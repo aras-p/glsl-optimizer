@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.20 2000/01/07 07:30:13 brianp Exp $ */
+/* $Id: glapi.c,v 1.21 2000/01/08 11:01:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -502,12 +502,20 @@ _glapi_check_table(const struct _glapi_table *table)
 #define NAME(func)  gl##func
 #endif
 
-#define DISPATCH_SETUP						\
+#define DISPATCH(FUNC, ARGS) 					\
    const struct _glapi_table *dispatch;				\
-   dispatch = Dispatch ? Dispatch : _glapi_get_dispatch();
+   dispatch = Dispatch ? Dispatch : _glapi_get_dispatch();	\
+   (dispatch->FUNC) ARGS
 
-#define DISPATCH(FUNC, ARGS) (dispatch->FUNC) ARGS
+#define RETURN_DISPATCH(FUNC, ARGS) 				\
+   const struct _glapi_table *dispatch;				\
+   dispatch = Dispatch ? Dispatch : _glapi_get_dispatch();	\
+   return (dispatch->FUNC) ARGS
 
+
+#ifndef GLAPIENTRY
+#define GLAPIENTRY
+#endif
 
 #include "glapitemp.h"
 
@@ -517,8 +525,9 @@ _glapi_check_table(const struct _glapi_table *table)
  * we should implement a dispatch function in glapitemp.h and
  * in glapinoop.c
  */
-static void NotImplemented(void)
+static int NotImplemented(void)
 {
+   return 0;
 }
 
 
