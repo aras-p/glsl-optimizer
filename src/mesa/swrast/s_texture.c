@@ -1592,12 +1592,18 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
       switch (tObj->MinFilter) {
       case GL_NEAREST:
          if (repeatNoBorderPOT) {
-            switch (tImg->Format) {
-            case GL_RGB:
+            switch (tImg->TexFormat->MesaFormat) {
+            case MESA_FORMAT_RGB:
+            case MESA_FORMAT_RGB888:
+            /*case MESA_FORMAT_BGR888:*/
                opt_sample_rgb_2d(ctx, texUnit, tObj, m, texcoords + minStart,
                                  NULL, rgba + minStart);
                break;
-            case GL_RGBA:
+            case MESA_FORMAT_RGBA:
+            case MESA_FORMAT_RGBA8888:
+            case MESA_FORMAT_ARGB8888:
+            /*case MESA_FORMAT_ABGR8888:*/
+            /*case MESA_FORMAT_BGRA8888:*/
 	       opt_sample_rgba_2d(ctx, texUnit, tObj, m, texcoords + minStart,
                                   NULL, rgba + minStart);
                break;
@@ -1649,12 +1655,18 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
       switch (tObj->MagFilter) {
       case GL_NEAREST:
          if (repeatNoBorderPOT) {
-            switch (tImg->Format) {
-            case GL_RGB:
+            switch (tImg->TexFormat->MesaFormat) {
+            case MESA_FORMAT_RGB:
+            case MESA_FORMAT_RGB888:
+            /*case MESA_FORMAT_BGR888:*/
                opt_sample_rgb_2d(ctx, texUnit, tObj, m, texcoords + magStart,
                                  NULL, rgba + magStart);
                break;
-            case GL_RGBA:
+            case MESA_FORMAT_RGBA:
+            case MESA_FORMAT_RGBA8888:
+            case MESA_FORMAT_ARGB8888:
+            /*case MESA_FORMAT_ABGR8888:*/
+            /*case MESA_FORMAT_BGRA8888:*/
 	       opt_sample_rgba_2d(ctx, texUnit, tObj, m, texcoords + magStart,
                                   NULL, rgba + magStart);
                break;
