@@ -160,26 +160,14 @@ static void fxDDClear( GLcontext *ctx,
 	               (int) x, (int) y, (int) width, (int) height );
    }
 
-   /* Need this check to respond to glScissor and clipping updates */
-   /* should also take care of FX_NEW_COLOR_MASK, FX_NEW_STENCIL, depth? */
-   if (fxMesa->new_state & FX_NEW_SCISSOR) {
+   /* we can't clear accum buffers nor stereo */
+   mask &= ~(DD_ACCUM_BIT | DD_FRONT_RIGHT_BIT | DD_BACK_RIGHT_BIT);
+
+   /* Need this check to respond to certain HW updates */
+   if (fxMesa->new_state & (FX_NEW_SCISSOR | FX_NEW_COLOR_MASK)) {
       fxSetupScissor(ctx);
-      fxMesa->new_state &= ~FX_NEW_SCISSOR;
-   }
-
-   /* we can't clear accum buffers */
-   mask &= ~(DD_ACCUM_BIT);
-
-   /*
-    * As per GL spec, stencil masking should be obeyed when clearing
-    */
-   if (mask & DD_STENCIL_BIT) {
-      if (!fxMesa->haveHwStencil || fxMesa->unitsState.stencilWriteMask != 0xff) {
-         /* Napalm seems to have trouble with stencil write masks != 0xff */
-         /* do stencil clear in software */
-         softwareMask |= DD_STENCIL_BIT;
-         mask &= ~(DD_STENCIL_BIT);
-      }
+      fxSetupColorMask(ctx);
+      fxMesa->new_state &= ~(FX_NEW_SCISSOR | FX_NEW_COLOR_MASK);
    }
 
    /*
@@ -202,7 +190,7 @@ static void fxDDClear( GLcontext *ctx,
        */
       BEGIN_BOARD_LOCK();
       if (mask & DD_STENCIL_BIT) {
-	 fxMesa->Glide.grStencilMaskExt(0xff /*fxMesa->unitsState.stencilWriteMask*/);
+	 fxMesa->Glide.grStencilMaskExt(fxMesa->unitsState.stencilWriteMask);
 	 /* set stencil ref value = desired clear value */
 	 fxMesa->Glide.grStencilFuncExt(GR_CMP_ALWAYS, clearS, 0xff);
 	 fxMesa->Glide.grStencilOpExt(GR_STENCILOP_REPLACE,
@@ -213,6 +201,9 @@ static void fxDDClear( GLcontext *ctx,
 	 grDisable(GR_STENCIL_MODE_EXT);
       }
       END_BOARD_LOCK();
+   } else if (mask & DD_STENCIL_BIT) {
+      softwareMask |= (mask & (DD_STENCIL_BIT));
+      mask &= ~(DD_STENCIL_BIT);
    }
 
    /*
@@ -228,8 +219,7 @@ static void fxDDClear( GLcontext *ctx,
       switch (mask & ~DD_STENCIL_BIT) {
       case DD_BACK_LEFT_BIT | DD_DEPTH_BIT:
 	 /* back buffer & depth */
-	 /* FX_grColorMaskv_NoLock(ctx, true4); */ /* work around Voodoo3 bug */
-	 grDepthMask(FXTRUE);
+         grDepthMask(FXTRUE);
 	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
 	 if (stencil_size > 0) {
             fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
@@ -240,9 +230,6 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 if (!fxMesa->unitsState.depthTestEnabled) {
-            grDepthMask(FXFALSE);
-	 }
 	 break;
       case DD_FRONT_LEFT_BIT | DD_DEPTH_BIT:
 	 /* XXX it appears that the depth buffer isn't cleared when
@@ -250,9 +237,9 @@ static void fxDDClear( GLcontext *ctx,
 	  * This is a work-around/
 	  */
 	 /* clear depth */
-	 grDepthMask(FXTRUE);
-	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
+         grDepthMask(FXTRUE);
          fxDisableColor(fxMesa);
+	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
 	 if (stencil_size > 0)
             fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
                                            fxMesa->clearA,
@@ -261,8 +248,9 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 /* clear front */
 	 fxSetupColorMask(ctx);
+	 grDepthMask(FXFALSE);
+	 /* clear front */
 	 grRenderBuffer(GR_BUFFER_FRONTBUFFER);
 	 if (stencil_size > 0)
             fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
@@ -272,9 +260,6 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 if (!fxMesa->unitsState.depthTestEnabled) {
-            grDepthMask(FXFALSE);
-	 }
 	 break;
       case DD_BACK_LEFT_BIT:
 	 /* back buffer only */
@@ -288,9 +273,6 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 if (fxMesa->unitsState.depthTestEnabled) {
-            grDepthMask(FXTRUE);
-	 }
 	 break;
       case DD_FRONT_LEFT_BIT:
 	 /* front buffer only */
@@ -304,9 +286,6 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 if (fxMesa->unitsState.depthTestEnabled) {
-            grDepthMask(FXTRUE);
-	 }
 	 break;
       case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT:
 	 /* front and back */
@@ -329,11 +308,19 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 if (fxMesa->unitsState.depthTestEnabled) {
-            grDepthMask(FXTRUE);
-	 }
 	 break;
       case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT | DD_DEPTH_BIT:
+	 /* clear back and depth */
+         grDepthMask(FXTRUE);
+	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
+         if (stencil_size > 0)
+            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
+                                           fxMesa->clearA,
+                                           clearD, clearS);
+	 else
+            grBufferClear(fxMesa->clearC,
+                          fxMesa->clearA,
+                          clearD);
 	 /* clear front */
 	 grDepthMask(FXFALSE);
 	 grRenderBuffer(GR_BUFFER_FRONTBUFFER);
@@ -345,26 +332,12 @@ static void fxDDClear( GLcontext *ctx,
             grBufferClear(fxMesa->clearC,
                           fxMesa->clearA,
                           clearD);
-	 /* clear back and depth */
-	 grDepthMask(FXTRUE);
-	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
-         if (stencil_size > 0)
-            fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
-                                           fxMesa->clearA,
-                                           clearD, clearS);
-	 else
-            grBufferClear(fxMesa->clearC,
-                          fxMesa->clearA,
-                          clearD);
-	 if (!fxMesa->unitsState.depthTestEnabled) {
-            grDepthMask(FXFALSE);
-	 }
 	 break;
       case DD_DEPTH_BIT:
 	 /* just the depth buffer */
-	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
+         grDepthMask(FXTRUE);
          fxDisableColor(fxMesa);
-	 grDepthMask(FXTRUE);
+	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
 	 if (stencil_size > 0)
             fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
                                            fxMesa->clearA,
@@ -374,41 +347,29 @@ static void fxDDClear( GLcontext *ctx,
                           fxMesa->clearA,
                           clearD);
 	 fxSetupColorMask(ctx);
-	 if (ctx->Color._DrawDestMask & DD_FRONT_LEFT_BIT) {
-            grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-         }
-	 if (!fxMesa->unitsState.depthTestEnabled) {
-	    grDepthMask(FXFALSE);
-         }
 	 break;
       default:
          /* clear no color buffers or depth buffer but might clear stencil */
-	 if (stencil_size > 0 && (mask & DD_STENCIL_BIT)) {
+	 if ((stencil_size > 0) && (mask & DD_STENCIL_BIT)) {
             /* XXX need this RenderBuffer call to work around Glide bug */
-            grRenderBuffer(GR_BUFFER_BACKBUFFER);
             grDepthMask(FXFALSE);
+            grRenderBuffer(GR_BUFFER_BACKBUFFER);
             fxDisableColor(fxMesa);
             fxMesa->Glide.grBufferClearExt(fxMesa->clearC,
                                            fxMesa->clearA,
                                            clearD, clearS);
-            if (fxMesa->unitsState.depthTestEnabled) {
-               grDepthMask(FXTRUE);
-            }
             fxSetupColorMask(ctx);
-            if (ctx->Color._DrawDestMask & DD_FRONT_LEFT_BIT) {
-               grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-            }
          }
       }
    }
    END_CLIP_LOOP();
 
-   if (fxMesa->haveHwStencil && (mask & DD_STENCIL_BIT)) {
-      /* We changed the stencil state above.  Signal that we need to
-       * upload it again.
-       */
-      fxMesa->new_state |= FX_NEW_STENCIL;
+   if (fxMesa->haveHwStencil) {
+      /* We changed the stencil state above.  Restore it! */
+      fxSetupStencil(ctx);
    }
+   fxSetupDepthTest(ctx);
+   grRenderBuffer(fxMesa->currentFB);
 
    if (softwareMask)
       _swrast_Clear( ctx, softwareMask, all, x, y, width, height );
@@ -417,6 +378,7 @@ static void fxDDClear( GLcontext *ctx,
 
 /* Set the buffer used for drawing */
 /* XXX support for separate read/draw buffers hasn't been tested */
+/* XXX GL_NONE disables color, but fails to correctly maintain state */
 static void
 fxDDSetDrawBuffer(GLcontext * ctx, GLenum mode)
 {
@@ -1693,7 +1655,7 @@ fxDDGetString(GLcontext * ctx, GLenum name)
 }
 
 static const struct tnl_pipeline_stage *fx_pipeline[] = {
-   &_tnl_vertex_transform_stage,	/* TODO: Add the fastpath here */
+   &_tnl_vertex_transform_stage,	/* XXX todo - Add the fastpath here */
    &_tnl_normal_transform_stage,
    &_tnl_lighting_stage,
    &_tnl_fog_coordinate_stage,
@@ -2010,8 +1972,7 @@ fx_check_IsInHardware(GLcontext * ctx)
 #if 0
       /* [dBorca]
        * We fail the spec here, unless certain blending modes:
-       * (c1 + c2) * 1 + d * 1 = c1 * 1 + d * 1 + c2 * 1
-       * (c1 + c2) * 1 + d * 0 = c1 * 1 + d * 0 + c2 * 1
+       * RGB: (GL_ONE + GL_*) or (GL_ZERO + GL_*) or ...
        */
       if (NEED_SECONDARY_COLOR(ctx)) {
          if ((ctx->Color.BlendEquationRGB != GL_FUNC_ADD) &&
