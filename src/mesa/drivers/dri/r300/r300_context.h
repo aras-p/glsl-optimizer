@@ -519,9 +519,15 @@ struct r300_vertex_shader_state {
 	int unknown_ptr3;  /* pointer within program space */
 	};
 	
+/* r300_vertex_shader_state and r300_vertex_program should probably be merged together someday.
+ * Keeping them them seperate for now should ensure fixed pipeline keeps functioning properly.
+ */	
 struct r300_vertex_program {
 	struct vertex_program mesa_program; /* Must be first */
 	int translated;
+	
+	struct r300_vertex_shader_fragment program;
+	struct r300_vertex_shader_fragment params;
 
 };
 
@@ -660,6 +666,8 @@ struct r300_context {
 	GLuint TexGenInputs;
 	GLuint TexGenCompSel;
 	GLmatrix tmpmat;
+	
+	struct r300_vertex_program *current_vp;
 };
 
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))

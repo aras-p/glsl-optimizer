@@ -1297,6 +1297,57 @@ void r300SetupVertexShader(r300ContextPtr rmesa)
 	#endif
 }
 
+void r300SetupVertexProgram(r300ContextPtr rmesa)
+{
+	GLcontext* ctx = rmesa->radeon.glCtx;
+
+	/* Reset state, in case we don't use something */
+	((drm_r300_cmd_header_t*)rmesa->hw.vpp.cmd)->vpu.count = 0;
+	((drm_r300_cmd_header_t*)rmesa->hw.vpi.cmd)->vpu.count = 0;
+	((drm_r300_cmd_header_t*)rmesa->hw.vps.cmd)->vpu.count = 0;
+
+#if 0
+/* This needs to be replaced by vertex shader generation code */
+
+
+	/* textures enabled ? */
+	if(rmesa->state.texture.tc_count>0){
+		rmesa->state.vertex_shader=SINGLE_TEXTURE_VERTEX_SHADER;
+		} else {
+		rmesa->state.vertex_shader=FLAT_COLOR_VERTEX_SHADER;
+		}
+
+
+        rmesa->state.vertex_shader.matrix[0].length=16;
+        memcpy(rmesa->state.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
+#endif
+	
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(rmesa->current_vp->program));
+
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_MATRIX0, &(rmesa->current_vp->params));
+	
+	#if 0
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
+	#endif
+
+	R300_STATECHANGE(rmesa, pvs);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1]=(0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
+		| (rmesa->state.vertex_shader.unknown_ptr1 << R300_PVS_CNTL_1_UNKNOWN_SHIFT)
+		| (rmesa->current_vp->program.length/4 << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2]=(0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
+		| (rmesa->current_vp->params.length/4 << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3]=(0/*rmesa->state.vertex_shader.unknown_ptr2*/ << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT)
+	| (rmesa->current_vp->program.length/4/*rmesa->state.vertex_shader.unknown_ptr3*/ << 0);
+
+	/* This is done for vertex shader fragments, but also needs to be done for vap_pvs,
+	so I leave it as a reminder */
+	#if 0
+	reg_start(R300_VAP_PVS_WAITIDLE,0);
+		e32(0x00000000);
+	#endif
+}
+
 void r300SetupPixelShader(r300ContextPtr rmesa)
 {
 int i,k;
