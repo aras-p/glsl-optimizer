@@ -140,21 +140,37 @@ static GLboolean discrete_prim[0x10] = {
 
 static GLushort *r200AllocElts( r200ContextPtr rmesa, GLuint nr ) 
 {
-   if (rmesa->dma.flush)
-      rmesa->dma.flush( rmesa );
+   if (rmesa->dma.flush == r200FlushElts &&
+       rmesa->store.cmd_used + nr*2 < R200_CMD_BUF_SZ) {
 
-   r200EnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
-			  rmesa->hw.max_state_size + ELTS_BUFSZ(nr) );
-   
-   r200EmitAOS( rmesa,
-		rmesa->tcl.aos_components,
-		rmesa->tcl.nr_aos_components, 0 );
+      GLushort *dest = (GLushort *)(rmesa->store.cmd_buf +
+				    rmesa->store.cmd_used);
 
-   return r200AllocEltsOpenEnded( rmesa, rmesa->tcl.hw_primitive, nr );
+      rmesa->store.cmd_used += nr*2;
+
+      return dest;
+   }
+   else {
+      if (rmesa->dma.flush)
+	 rmesa->dma.flush( rmesa );
+
+      r200EnsureCmdBufSpace( rmesa, AOS_BUFSZ(rmesa->tcl.nr_aos_components) +
+			     rmesa->hw.max_state_size + ELTS_BUFSZ(nr) );
+
+      r200EmitAOS( rmesa,
+		   rmesa->tcl.aos_components,
+		   rmesa->tcl.nr_aos_components, 0 );
+
+      return r200AllocEltsOpenEnded( rmesa, rmesa->tcl.hw_primitive, nr );
+   }
 }
 
 
-#define CLOSE_ELTS()  R200_NEWPRIM( rmesa )
+#define CLOSE_ELTS() 				\
+do {						\
+   if (0) R200_NEWPRIM( rmesa );		\
+}						\
+while (0)
 
 
 /* TODO: Try to extend existing primitive if both are identical,
