@@ -187,9 +187,9 @@ typedef struct {
 }
 
 #if FX_USE_PARGB
-#define GOURAUD2(v, c) {																\
-  GLubyte *col = c;  																	\
-  v->argb=MESACOLOR2PARGB(col);															\
+#define GOURAUD2(v, c) {			\
+  GLubyte *col = c;  				\
+  v->argb=MESACOLOR2PARGB(col);			\
 }
 #else
 #define GOURAUD2(v, c) {			\
@@ -230,13 +230,13 @@ typedef struct {
 #define FX_UM_E0_MODULATE           0x00000002
 #define FX_UM_E0_DECAL              0x00000004
 #define FX_UM_E0_BLEND              0x00000008
-#define FX_UM_E0_ADD				0x00000010
+#define FX_UM_E0_ADD		    0x00000010
 
 #define FX_UM_E1_REPLACE            0x00000020
 #define FX_UM_E1_MODULATE           0x00000040
 #define FX_UM_E1_DECAL              0x00000080
 #define FX_UM_E1_BLEND              0x00000100
-#define FX_UM_E1_ADD				0x00000200
+#define FX_UM_E1_ADD		    0x00000200
 
 #define FX_UM_E_ENVMODE             0x000003ff
 
