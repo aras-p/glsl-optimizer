@@ -1,0 +1,28 @@
+This is a port of Mesa-3.0 to OpenStep and Rhapsody/YellowBox. Only
+the GL and GLU libraries have been ported. As OpenStep has it's own
+window handling code we simply use the offscreen rendering capability
+of Mesa to generate a bitmap which can then be drawn into a View. An
+example application using Mesa can be found in OpenStep/MesaView.
+Currently only static libraries are built. The code has been tested on the
+Intel hardware version of the following systems:
+
+	OpenStep for Mach 4.2
+	Rhapsody (DR1)
+	YellowBox for NT4 (DR1)
+
+It should, however, work on all other variants of OpenStep for other
+processors without modification. Feedback on this would be appreciated.
+
+To build on UNIX based systems simply type "make openstep".
+
+To build on Win95/WinNT based systems run the "win32-openstep.sh" script from
+the Bourne shell provided with the development environment.
+
+Thiss build the libraries, places them in the "lib" directory and also builds
+the "MesaView" example application. Older examples may be found in the
+OpenStep/Old_Demos directory. These only work on UNIX based systems. The CC
+variable is passed around by the Makefiles so fat libraries may be created
+by alreting this on the command line, e.g. for m68k and i486 support you
+can use the command "make CC='cc -arch m68k -arch i386' openstep".
+
+-Pete French. (pete@ohm.york.ac.uk) 28/5/98

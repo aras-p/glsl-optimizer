@@ -1,0 +1,6 @@
+The NeXT support has now been incorproated into the OpenStep support.
+You can build NeXT libraries simply by typing "make next", though before
+linking they will need to be ranlib'd by hand. For more information see
+the README.OpenStep file, together with the README files in OpenStep/Old_Demos.
+
+-Pete French. (pete@ohm.york.ac.uk) 28/5/98

@@ -1,0 +1,123 @@
+August 30, 1998 -- Paul Garceau (pgarceau@teleport.com)
+
+DISCLAIMER:  I make this extension to the Mesa 3-D Graphics Library as a service
+to the general public.  I can, in no way support or make any guarantee that the
+EGCS-Mingw32 build or any Gnu-Win32 build will work for your system. The
+associated packages and batch files I have included as part of the EGCS-Mingw32
+extension are provided "As-is" with out any guarantee of support or functionality
+from the author of this EGCS-Mingw32 native windows port of the Mesa 3-D Graphics
+Library.
+
+	Feel free to modify or change things as you see fit, just remember that
+I can't support any modifications you might want to make to the files which I
+have included OR the lgpl protected Mesa 3-D Graphics Library.
+
+
+	EGCS-Mingw32 Beta 3.08 Archive Manifest:
+		mingw32.bat
+		src/makefile.nt4
+		src/wmesa.c
+		src-glu/makefile.nt4
+
+###############
+
+Greetings,
+
+	In order to build the Mingw32 set of Mesa 3-D Graphics Library for Beta3.08
+it will be necessary for you to use the Dos or Command Prompt that is available
+on most of the i86 based MS Windows machines.  Also, I believe that this build
+will run on Win95, Win98, WinNT4 and WinNT5.
+
+	I haven't tested Win95/98 or WinNT5.  This build was generated under
+WinNT4 with SP3 installed.
+
+	This has not been tested under any systems outside of
+a WinNT4 Workstation with EGCS-Mingw32 toolchain, v.1.0.2 installed.
+
+	EGCS-Mingw32 uses a variation of gcc to handle its build.  The Mesa 3-D
+Graphics Library build that I have generated is based, in small part, on the
+Cygwin32 build and associated makefiles that Stephane Rehel (rehel@worldnet.fr)
+defined back in 1997.  The EGCS-Mingw32 toolchain is capable of generating
+native windows code and, as of the date of this readme, can be obtained from:
+
+	http://www.xraylith.wisc.edu/~khan/software/gnu-win32/egcs-mingw32-102.html
+
+	Much thanks to the combined efforts of Mumit Khan, Jan-Jaap Vanderhagen
+and Colin Peters for making it possible for the EGCS-Mingw32 toolchain to exist.
+
+Installing EGCS-Mingw32 Build Revisions:
+
+	To install the makefile and source revisions incorporated with this build
+of the Mesa 3-D Graphics Library, you'll have to use a version of winzip.  I am
+in the process of finding a suitable Win32 compatible tar executable so that if
+you don't have winzip, you can still decompress the files into their respective
+folders/directories.
+
+	a) Move the mingw32.zip file to the top level of the hard drive on your
+system.
+
+	b) Copy all of the Beta 3.08 src/windows files to the src/ directory.
+
+	b) Open the Winzip file
+
+	c) Verify that the files will be properly extracted.
+
+	d) Extract the files with the Winzip "Overwrite" and "Use Folder Names"
+	   options enabled.
+
+	The zip file directory structure extraction defaults to the top level of
+the hard drive where the mingw32.zip file exists unless otherwise instructed by
+you.
+
+	The version of wmesa.c included with the mingw32 archive needs to replace
+the current version of the Beta 3.08 wmesa.c file in order for the egcs-mingw32
+build to work.  This is because the original Win32 stuff assumes that the glut
+utilities are to be installed.  The Glut utilities are not part of the
+egcs-mingw32 build for Beta 3.08.
+
+
+Build Considerations:
+
+	In order to get the build to work, I needed to create a special makefile
+for each library which the Mesa 3-D Graphics Library requires since there is no
+comparable make-config/config on a native windows platform.
+
+	Since I was only creating a few of the possible libraries for 
+Mesa (gl, glu), I only created the new make files in their respective libraries
+src, src-glu).  For libMesaaux.a. you will find a makefile for it in the
+src-aux directory.  libMesatk.a and libglut.a were not ported.
+
+	The build itself is a .bat based build and uses Gnu Make,Version 3.76.1 to
+process the makefiles noted above.  The build must be run from the directory
+where the mingw32.bat file is.  You can get the binary version of Make 3.76.1
+from Jan-Jaap van der Heijden's site in Germany:
+
+	http://agnes.dida.physik.uni-essen.de/~janjaap/mingw32/download.html
+
+	It was necessary to modify some source code, specifically the source code
+in the src-glu directory.  I needed to modify nurbs.c, quadric.c and tess.c in
+order to get them to work using the EGCS-Mingw32 toolchain.
+
+	The original EGCS-Mingw32 Toolchain, is available from:
+
+	http://www.xraylith.wisc.edu/~khan/software/gnu-win32/egcs-mingw32-102.html	
+
+Running the Build:
+
+	Ok, now that we've got the basics out of the way, follows is all you need
+to do in order to build the EGCS-Mingw32 version of libMesaGL.a and libMesaGLU.a:
+
+	Open your Command Prompt/Dos prompt.
+	Go to your Mesa-3.0 beta 'root' directory.
+		This is the same directory that the Mesa mingw32.zip file was
+		originally stored in if you've installed the Mesa-3.0 beta 3-D
+		Graphics Library source as outlined in the "readme" file included
+		with the Mesa-3.0 beta distribution.
+	At the command line type: mingw32
+		mingw32 is the .bat file that actually does the build.
+
+	Enjoy!
+
+	Peace,
+
+		Paul G. (pgarceau@teleport.com)

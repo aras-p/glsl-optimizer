@@ -1,0 +1,15 @@
+
+VMS support contributed by Jouk Jansen (joukj@crys.chem.uva.nl)
+
+
+I compiled the libs on a VMSAlpha7.0 system using DECC5.3.
+But earlier versions may work as well.  The make files were tested
+use the DIGITAL make utility called MMS.  There is also a public domain
+clone available (MMK) and I  think, but it is not tested, that this
+utility will give no problem.
+
+To make everything just type MMS (or MMK) in the main directory of
+mesagl.  For MMS the deafult makefile is called descrip.mms, and
+that is what I have called it.  I included alse some config files,
+all having mms somewhere in the name which all the makefiles need
+(just as your unix makefiles).

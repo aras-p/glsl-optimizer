@@ -1,0 +1,27 @@
+                README for port of Mesa to XFree86 on OS/2
+                           (as of 19980802)
+
+
+Instructions to build Mesa for XFree86/OS2:
+
+You need a recent version of XFree86 (3.3x or above) installed including
+the supplied programming libraries and tools as well as EMX 0.9c (and above).
+
+Beginning after beta 7 there's again support for creating DLLs.
+The details are handled in "mklib-emx.cmd" a small REXX script.
+By now it does ensure compatiblity by using the function names as
+entry points instead of ordinals. This will cost performance and
+might be fixed in a future patch.
+
+We switched to the usual build method
+(based on Makefile and make-config) beginning with Mesa 3.0 beta 5.
+To use most of the standard files (including shell scripts) you should
+have a un*x shell (sh) in path.
+
+To actually build the (static) libraries and demos type
+  make os2
+
+
+Alexander Mai
+am@os-2.de
+st002279@hrzpub.tu-darmstadt.de

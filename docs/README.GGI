@@ -1,0 +1,172 @@
+                       LibGGI driver for Mesa-3.0
+		  by Uwe Maurer (uwe_maurer@t-online.de)	
+
+
+Introduction
+============
+[from libggi.txt by Steve Cheng and Hartmut Niemann]
+
+ "LibGGI, the dynamic GGI (General Graphics Interface) library is a
+  flexible drawing library.
+
+  It provides an opaque interface to the display's acceleration
+  functions. It was originally intended to allow user programs to
+  interface with KGI, the kernel side of the GGI code, but other display
+  types can be easily used by loading the appropriate "display target"
+  (e.g. X, memory).
+
+  LibGGI consists of a main library (libggi.so) and a multitude of
+  dynamic drivers. The library then loads the necessary "drivers" for
+  the requested mode, taking hints from the graphics device if
+  necessary. LibGGI can also load extension libraries, e.g. to provide
+  enhanced 2D and 3D functions.
+
+  It has been designed after having a look at several existing
+  libraries, and so far we have found porting to be quite simple from
+  and to most of them."
+
+----------------------------------------------------------------------------
+
+	More information about the GGI project and LibGGI can be 
+	obtained from the GGI website:
+
+	www.ggi-project.org
+
+----------------------------------------------------------------------------
+
+Installation
+============
+
+	- Install LibGGI
+	
+	- Unpack the Mesa archives
+	
+	- In the Mesa directory type:
+		
+		make linux-ggi
+		su
+		make linux-ggi-install
+		exit
+	
+	- Now you can try some demos.
+	  If they don't work, you can set the GGIMESA_DEBUG
+	  variable to 255 and you will see some information from the
+	  LibGGI-driver.
+		 
+	   export GGIMESA_DEBUG=255
+	
+
+GLUT
+====	
+
+	You can change these default values in ggi/ggiglut.c:
+	#define WIDTH   640
+	#define HEIGHT  400
+	#define GRAPHTYPE_RGB   GT_16BIT
+	#define GRAPHTYPE_INDEX GT_8BIT
+
+	Options:
+		-bpp x		Set graphic mode with x bits per pixel	
+		-size x y	Screen (or window) is x*y pixels 
+
+	Example:
+		demos/gears -size 320 200 -bpp 24
+
+Updates
+=======
+	
+	You can find the latest LibGGI-driver and ggiglut on my
+	homepage:
+	
+	http://home.t-online.de/home/uwe_maurer/ggimesa.htm
+	
+		
+
+Uwe Maurer  -  uwe_maurer@t-online.de
+
+                       LibGGI driver for Mesa-3.0
+		  by Uwe Maurer (uwe_maurer@t-online.de)	
+
+
+Introduction
+============
+[from libggi.txt by Steve Cheng and Hartmut Niemann]
+
+ "LibGGI, the dynamic GGI (General Graphics Interface) library is a
+  flexible drawing library.
+
+  It provides an opaque interface to the display's acceleration
+  functions. It was originally intended to allow user programs to
+  interface with KGI, the kernel side of the GGI code, but other display
+  types can be easily used by loading the appropriate "display target"
+  (e.g. X, memory).
+
+  LibGGI consists of a main library (libggi.so) and a multitude of
+  dynamic drivers. The library then loads the necessary "drivers" for
+  the requested mode, taking hints from the graphics device if
+  necessary. LibGGI can also load extension libraries, e.g. to provide
+  enhanced 2D and 3D functions.
+
+  It has been designed after having a look at several existing
+  libraries, and so far we have found porting to be quite simple from
+  and to most of them."
+
+----------------------------------------------------------------------------
+
+	More information about the GGI project and LibGGI can be 
+	obtained from the GGI website:
+
+	www.ggi-project.org
+
+----------------------------------------------------------------------------
+
+Installation
+============
+
+	- Install LibGGI
+	
+	- Unpack the Mesa archives
+	
+	- In the Mesa directory type:
+		
+		make linux-ggi
+		su
+		make linux-ggi-install
+		exit
+	
+	- Now you can try some demos.
+	  If they don't work, you can set the GGIMESA_DEBUG
+	  variable to 255 and you will see some information from the
+	  LibGGI-driver.
+		 
+	   export GGIMESA_DEBUG=255
+	
+
+GLUT
+====	
+
+	You can change these default values in ggi/ggiglut.c:
+	#define WIDTH   640
+	#define HEIGHT  400
+	#define GRAPHTYPE_RGB   GT_16BIT
+	#define GRAPHTYPE_INDEX GT_8BIT
+
+	Options:
+		-bpp x		Set graphic mode with x bits per pixel	
+		-size x y	Screen (or window) is x*y pixels 
+
+	Example:
+		demos/gears -size 320 200 -bpp 24
+
+Updates
+=======
+	
+	You can find the latest LibGGI-driver and ggiglut on my
+	homepage:
+	
+	http://home.t-online.de/home/uwe_maurer/ggimesa.htm
+	
+		
+
+Uwe Maurer  -  uwe_maurer@t-online.de
+
