@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.4 2001/01/24 00:04:59 brianp Exp $ */
+/* $Id: t_array_api.c,v 1.5 2001/02/04 00:44:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,7 +45,49 @@
 #include "t_context.h"
 #include "t_pipeline.h"
 
+static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
+				 GLsizei count )
+{
+   /* Need to produce immediate structs, either for compiling or
+    * because the array range is too large to process in a single
+    * VB.  In GL_EXECUTE mode, this introduces two redundant
+    * operations: producing the flag array and computing the orflag
+    * of the flag array.
+    */
+#if 1
+   if (_tnl_hard_begin( ctx, mode )) {
+      GLuint j;
+      for (j = 0 ; j < count ; ) {
+	 struct immediate *IM = TNL_CURRENT_IM(ctx);
+	 GLuint nr = MIN2( IMM_MAXDATA - IM->Start, count - j );
+	 GLuint sf = IM->Flag[IM->Start];
 
+	 _tnl_fill_immediate_drawarrays( ctx, IM, j, j+nr );
+
+	 if (j == 0) IM->Flag[IM->Start] |= sf;
+
+	 IM->Count = IM->Start + nr;
+	 j += nr;
+
+	 if (j == count)
+	    _tnl_end( ctx );
+
+	 _tnl_flush_immediate( IM );
+      }
+   }
+#else
+   /* Simple alternative to above code.
+    */
+   if (_tnl_hard_begin( ctx, mode )) 
+   {
+      GLuint i;
+      for (i=start;i<count;i++) {
+	 _tnl_array_element( ctx, i );
+      }
+      _tnl_end( ctx );
+   }
+#endif
+}
 
 
 
@@ -96,46 +138,26 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
       }
    } 
-   else {
-      /* Need to produce immediate structs, either for compiling or
-       * because the array range is too large to process in a single
-       * VB.  In GL_EXECUTE mode, this introduces two redundant
-       * operations: producing the flag array and computing the orflag
-       * of the flag array.
+   else if (!ctx->CompileFlag && mode == GL_TRIANGLE_STRIP) {
+      int bufsz = (ctx->Const.MaxArrayLockSize - 2) & ~1;
+      int j, nr;
+
+      FLUSH_CURRENT( ctx, 0 );
+
+      /* TODO: other non-fan primitives.
        */
-#if 1
-      if (_tnl_hard_begin( ctx, mode )) {
-	 GLuint j;
-	 for (j = 0 ; j < count ; ) {
-	    struct immediate *IM = TNL_CURRENT_IM(ctx);
-	    GLuint nr = MIN2( IMM_MAXDATA - IM->Start, count - j );
-	    GLuint sf = IM->Flag[IM->Start];
-
-	    _tnl_fill_immediate_drawarrays( ctx, IM, j, j+nr );
-
-	    if (j == 0) IM->Flag[IM->Start] |= sf;
-
-	    IM->Count = IM->Start + nr;
-	    j += nr;
-
-	    if (j == count)
-	       _tnl_end( ctx );
-
-	    _tnl_flush_immediate( IM );
-	 }
+      for (j = start ; j < count - 2; j += nr - 2 ) {
+	 nr = MIN2( bufsz, count - j );
+	 _tnl_vb_bind_arrays( ctx, j, j + nr );
+	 VB->FirstPrimitive = 0;
+	 VB->Primitive[0] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;      
+	 VB->PrimitiveLength[0] = nr;	 
+	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
+	 _tnl_run_pipeline( ctx );
+	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
       }
-#else
-      /* Simple alternative to above code.
-       */
-      if (_tnl_hard_begin( ctx, mode )) 
-      {
-	 GLuint i;
-	 for (i=start;i<count;i++) {
-	    _tnl_array_element( ctx, i );
-	 }
-	 _tnl_end( ctx );
-      }
-#endif
+   } else {
+      fallback_drawarrays( ctx, mode, start, count );
    }
 }
 
