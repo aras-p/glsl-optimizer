@@ -401,8 +401,6 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	   cmd[1].clear1.mask = depthMask;
 	   cmd[1].clear1.value = clearDepth;
        }
-
-       imesa->dirty |= SAVAGE_UPLOAD_CLIPRECTS;
    }
 
    if (mask) 
@@ -562,16 +560,25 @@ void savageFlushCmdBufLocked( savageContextPtr imesa, GLboolean discard )
 	cmdbuf.vb_stride = imesa->HwVertexSize;
 	cmdbuf.cmd_addr = start;
 	cmdbuf.size = (imesa->cmdBuf.write - start);
-	if (!imesa->inSwap && imesa->glCtx->Scissor.Enabled) {
+	if (!imesa->inSwap && imesa->scissor.enabled) {
 	    drm_clip_rect_t *box = dPriv->pClipRects, *ibox;
+	    drm_clip_rect_t scissor;
 	    GLuint nbox = dPriv->numClipRects, nibox;
+	    /* transform and clip scissor to viewport */
+	    scissor.x1 = MAX2(imesa->scissor.x, 0) + dPriv->x;
+	    scissor.y1 = MAX2(dPriv->h - imesa->scissor.y - imesa->scissor.h,
+			      0) + dPriv->y;
+	    scissor.x2 = MIN2(imesa->scissor.x + imesa->scissor.w,
+			      dPriv->w) + dPriv->x;
+	    scissor.y2 = MIN2(dPriv->h - imesa->scissor.y,
+			      dPriv->h) + dPriv->y;
+	    /* intersect cliprects with scissor */
 	    ibox = malloc(dPriv->numClipRects*sizeof(drm_clip_rect_t));
 	    if (!ibox) {
 		fprintf(stderr, "Out of memory.\n");
 		exit(1);
 	    }
-	    nibox = savageIntersectClipRects(ibox, box, nbox,
-					     &imesa->scissor_rect);
+	    nibox = savageIntersectClipRects(ibox, box, nbox, &scissor);
 	    cmdbuf.nbox = nibox;
 	    cmdbuf.box_addr = ibox;
 	} else {

@@ -28,6 +28,7 @@
 
 #include "savagecontext.h"
 
+void savageCalcViewport( GLcontext *ctx );
 void savageEmitOldState( savageContextPtr imesa );
 void savageEmitChangedState( savageContextPtr imesa );
 

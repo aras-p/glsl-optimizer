@@ -632,19 +632,18 @@ static void savageDDDepthMask_s3d(GLcontext *ctx, GLboolean flag)
 
 static void savageDDScissor( GLcontext *ctx, GLint x, GLint y, 
                              GLsizei w, GLsizei h )
-{ 
+{
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    imesa->scissor_rect.x1 = MAX2(imesa->drawX+x,imesa->draw_rect.x1);
-    imesa->scissor_rect.y1 = MAX2(imesa->drawY+imesa->driDrawable->h -(y+h),
-                                  imesa->draw_rect.y1);
-    imesa->scissor_rect.x2 = MIN2(imesa->drawX+x+w,imesa->draw_rect.x2);
-    imesa->scissor_rect.y2 = MIN2(imesa->drawY+imesa->driDrawable->h - y,
-                                  imesa->draw_rect.y2);
-    
 
-    imesa->scissorChanged=GL_TRUE;
+    /* Emit buffered commands with old scissor state. */
+    FLUSH_BATCH(imesa);
 
-    imesa->dirty |= SAVAGE_UPLOAD_CLIPRECTS;
+    /* Mirror scissors in private context. */
+    imesa->scissor.enabled = ctx->Scissor.Enabled;
+    imesa->scissor.x = x;
+    imesa->scissor.y = y;
+    imesa->scissor.w = w;
+    imesa->scissor.h = h;
 }
 
 
@@ -706,7 +705,7 @@ static void savageDDSetColor(GLcontext *ctx,
  * Window position and viewport transformation
  */
 
-static void savageCalcViewport( GLcontext *ctx )
+void savageCalcViewport( GLcontext *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
@@ -1196,8 +1195,6 @@ static void savageDDEnable_s4(GLcontext *ctx, GLenum cap, GLboolean state)
             savageDDDepthFunc_s4(ctx,ctx->Depth.Func);
             break;
         case GL_SCISSOR_TEST:
-            imesa->scissor = state;
-            imesa->dirty |= SAVAGE_UPLOAD_CLIPRECTS;
 	    savageDDScissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
 			    ctx->Scissor.Width, ctx->Scissor.Height);
             break;
@@ -1288,8 +1285,6 @@ static void savageDDEnable_s3d(GLcontext *ctx, GLenum cap, GLboolean state)
             savageDDDepthFunc_s3d(ctx,ctx->Depth.Func);
             break;
         case GL_SCISSOR_TEST:
-            imesa->scissor = state;
-            imesa->dirty |= SAVAGE_UPLOAD_CLIPRECTS;
 	    savageDDScissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
 			    ctx->Scissor.Width, ctx->Scissor.Height);
             break;
@@ -1359,64 +1354,9 @@ void savageDDUpdateHwState( GLcontext *ctx )
 }
 
 
-void savageEmitDrawingRectangle( savageContextPtr imesa )
-{
-    __DRIdrawablePrivate *dPriv = imesa->driDrawable;
-    savageScreenPrivate *savageScreen = imesa->savageScreen;
-    drm_clip_rect_t *pbox;
-    int nbox;
-   
-
-    int x0 = imesa->drawX;
-    int y0 = imesa->drawY;
-    int x1 = x0 + dPriv->w;
-    int y1 = y0 + dPriv->h;
-
-    pbox = dPriv->pClipRects;  
-    nbox = dPriv->numClipRects;
-       
-
-   
-    /* Coordinate origin of the window - may be offscreen.
-     */
-    /* imesa->BufferSetup[SAVAGE_DESTREG_DR4] = ((y0<<16) | 
-       (((unsigned)x0)&0xFFFF));*/
-  
-    /* Clip to screen.
-     */
-    if (x0 < 0) x0 = 0;
-    if (y0 < 0) y0 = 0;
-    if (x1 > savageScreen->width) x1 = savageScreen->width;
-    if (y1 > savageScreen->height) y1 = savageScreen->height;
-
-
-    if(nbox ==  1)
-    {
-        imesa->draw_rect.x1 = MAX2(x0,pbox->x1);
-        imesa->draw_rect.y1 = MAX2(y0,pbox->y1);
-        imesa->draw_rect.x2 = MIN2(x1,pbox->x2);
-        imesa->draw_rect.y2 = MIN2(y1,pbox->y2);
-    }
-    else
-    {
-        imesa->draw_rect.x1 = x0;
-        imesa->draw_rect.y1 = y0;
-        imesa->draw_rect.x2 = x1;
-        imesa->draw_rect.y2 = y1;
-    }
-   
-    imesa->scissorChanged = GL_TRUE;
-
-    /*   imesa->regs.ni.changed.ni.fDrawCtrl0Changed=GL_TRUE;
-         imesa->regs.ni.changed.ni.fDrawCtrl1Changed=GL_TRUE;*/
-
-    savageCalcViewport (imesa->glCtx);
-}
-
-
 static void savageDDPrintDirty( const char *msg, GLuint state )
 {
-    fprintf(stderr, "%s (0x%x): %s%s%s%s%s%s%s\n",	   
+    fprintf(stderr, "%s (0x%x): %s%s%s%s%s%s\n",	   
             msg,
             (unsigned int) state,
             (state & SAVAGE_UPLOAD_LOCAL)      ? "upload-local, " : "",
@@ -1424,8 +1364,7 @@ static void savageDDPrintDirty( const char *msg, GLuint state )
             (state & SAVAGE_UPLOAD_TEX1)       ? "upload-tex1, " : "",
             (state & SAVAGE_UPLOAD_FOGTBL)     ? "upload-fogtbl, " : "",
             (state & SAVAGE_UPLOAD_GLOBAL)     ? "upload-global, " : "",
-            (state & SAVAGE_UPLOAD_TEXGLOBAL)  ? "upload-texglobal, " : "",
-            (state & SAVAGE_UPLOAD_CLIPRECTS)  ? "upload-cliprects, " : ""
+            (state & SAVAGE_UPLOAD_TEXGLOBAL)  ? "upload-texglobal, " : ""
             );
 }
 
@@ -1504,28 +1443,6 @@ static void savageEmitChangedRegChunk (savageContextPtr imesa,
 }
 static void savageUpdateRegister_s4(savageContextPtr imesa)
 {
-    /*
-     * Scissors updates drawctrl0 and drawctrl 1
-     */
-    if (imesa->scissorChanged && imesa->savageScreen->driScrnPriv->drmMinor < 1)
-    {
-        if(imesa->scissor)
-        {
-            imesa->regs.s4.drawCtrl0.ni.scissorXStart = imesa->scissor_rect.x1;
-            imesa->regs.s4.drawCtrl0.ni.scissorYStart = imesa->scissor_rect.y1;
-            imesa->regs.s4.drawCtrl1.ni.scissorXEnd = imesa->scissor_rect.x2-1;
-            imesa->regs.s4.drawCtrl1.ni.scissorYEnd = imesa->scissor_rect.y2-1;
-        }
-        else
-        {
-            imesa->regs.s4.drawCtrl0.ni.scissorXStart = imesa->draw_rect.x1;
-            imesa->regs.s4.drawCtrl0.ni.scissorYStart = imesa->draw_rect.y1;
-            imesa->regs.s4.drawCtrl1.ni.scissorXEnd = imesa->draw_rect.x2-1;
-            imesa->regs.s4.drawCtrl1.ni.scissorYEnd = imesa->draw_rect.y2-1;
-        }
-	imesa->scissorChanged = GL_FALSE;
-    }
-
     /* the savage4 uses the contiguous range of BCI registers 0x1e-0x39
      * 0x1e-0x27 are local, no need to check them for global changes */
     savageEmitChangedRegs (imesa, 0x1e, 0x39);
@@ -1534,33 +1451,6 @@ static void savageUpdateRegister_s4(savageContextPtr imesa)
 }
 static void savageUpdateRegister_s3d(savageContextPtr imesa)
 {
-    if (imesa->scissorChanged && imesa->savageScreen->driScrnPriv->drmMinor < 1)
-    {
-        if(imesa->scissor)
-        {
-            imesa->regs.s3d.scissorsStart.ni.scissorXStart =
-		imesa->scissor_rect.x1;
-            imesa->regs.s3d.scissorsStart.ni.scissorYStart =
-		imesa->scissor_rect.y1;
-            imesa->regs.s3d.scissorsEnd.ni.scissorXEnd =
-		imesa->scissor_rect.x2-1;
-            imesa->regs.s3d.scissorsEnd.ni.scissorYEnd =
-		imesa->scissor_rect.y2-1;
-        }
-        else
-        {
-            imesa->regs.s3d.scissorsStart.ni.scissorXStart =
-		imesa->draw_rect.x1;
-            imesa->regs.s3d.scissorsStart.ni.scissorYStart =
-		imesa->draw_rect.y1;
-            imesa->regs.s3d.scissorsEnd.ni.scissorXEnd =
-		imesa->draw_rect.x2-1;
-            imesa->regs.s3d.scissorsEnd.ni.scissorYEnd =
-		imesa->draw_rect.y2-1;
-        }
-	imesa->scissorChanged = GL_FALSE;
-    }
-
     /* Some temporary hacks to workaround lockups. Not sure if they are
      * still needed. But they work for now. */
     imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
@@ -1597,22 +1487,17 @@ void savageEmitChangedState( savageContextPtr imesa )
     if (SAVAGE_DEBUG & DEBUG_VERBOSE_API)
         savageDDPrintDirty( "\n\n\nsavageEmitHwStateLocked", imesa->dirty );
 
-    if (imesa->dirty & ~SAVAGE_UPLOAD_CLIPRECTS)
+    if (imesa->dirty)
     {
-        if (imesa->dirty & (SAVAGE_UPLOAD_GLOBAL | SAVAGE_UPLOAD_LOCAL |
-                            SAVAGE_UPLOAD_TEX0   | SAVAGE_UPLOAD_TEX1  |
-			    SAVAGE_UPLOAD_FOGTBL | SAVAGE_UPLOAD_TEXGLOBAL))
-        {
-	    if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
-		fprintf (stderr, "... emitting state\n");
-	    if (imesa->savageScreen->chipset >= S3_SAVAGE4)
-		savageUpdateRegister_s4(imesa);
-	    else
-		savageUpdateRegister_s3d(imesa);
-        }
+	if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
+	    fprintf (stderr, "... emitting state\n");
+	if (imesa->savageScreen->chipset >= S3_SAVAGE4)
+	    savageUpdateRegister_s4(imesa);
+	else
+	    savageUpdateRegister_s3d(imesa);
+     }
 
-        imesa->dirty &= SAVAGE_UPLOAD_CLIPRECTS;
-    }
+    imesa->dirty = 0;
 }
 
 

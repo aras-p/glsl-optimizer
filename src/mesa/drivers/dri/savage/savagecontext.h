@@ -79,7 +79,6 @@ typedef struct savage_texture_object_t *savageTextureObjectPtr;
 #define SAVAGE_UPLOAD_FOGTBL	0x8  /* fog table */
 #define SAVAGE_UPLOAD_GLOBAL	0x10 /* most global regs */
 #define SAVAGE_UPLOAD_TEXGLOBAL 0x20 /* TexBlendColor (S4 only) */
-#define SAVAGE_UPLOAD_CLIPRECTS 0x1000 /* FIXME: get rid of this */
 
 /*define the max numer of vertex in vertex buf*/
 #define SAVAGE_MAX_VERTEXS 0x10000
@@ -263,10 +262,14 @@ struct savage_context_t {
     GLuint dirtyAge;
     GLuint any_contend;		/* throttle me harder */
 
-    GLuint scissor;
-    GLboolean scissorChanged;
-    drm_clip_rect_t draw_rect;
-    drm_clip_rect_t scissor_rect;
+    /* Scissor state needs to be mirrored so buffered commands can be
+     * emitted with the old scissor state when scissor state changes.
+     */
+    struct {
+	GLboolean enabled;
+	GLint x, y;
+	GLsizei w, h;
+    } scissor;
 
     drm_context_t hHWContext;
     drm_hw_lock_t *driHwLock;

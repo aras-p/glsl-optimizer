@@ -601,11 +601,10 @@ void savageXMesaSetFrontClipRects( savageContextPtr imesa )
 
    imesa->numClipRects = dPriv->numClipRects;
    imesa->pClipRects = dPriv->pClipRects;
-   imesa->dirty |= SAVAGE_UPLOAD_CLIPRECTS;
    imesa->drawX = dPriv->x;
    imesa->drawY = dPriv->y;
 
-   savageEmitDrawingRectangle( imesa );
+   savageCalcViewport( imesa->glCtx );
 }
 
 
@@ -630,10 +629,7 @@ void savageXMesaSetBackClipRects( savageContextPtr imesa )
       imesa->drawY = dPriv->backY;
    }
 
-   savageEmitDrawingRectangle( imesa );
-   imesa->dirty |= SAVAGE_UPLOAD_CLIPRECTS;
-
-
+   savageCalcViewport( imesa->glCtx );
 }
 
 
@@ -769,8 +765,7 @@ void savageGetLock( savageContextPtr imesa, GLuint flags )
 		       SAVAGE_UPLOAD_FOGTBL |
 		       SAVAGE_UPLOAD_TEX0 |
 		       SAVAGE_UPLOAD_TEX1 |
-		       SAVAGE_UPLOAD_TEXGLOBAL |
-		       SAVAGE_UPLOAD_CLIPRECTS);
+		       SAVAGE_UPLOAD_TEXGLOBAL);
       imesa->lostContext = GL_TRUE;
       sarea->ctxOwner = me;
    }
@@ -929,7 +924,7 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
    __DRIscreenPrivate *psp;
    static const __DRIversion ddx_expected = { 2, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
-   static const __DRIversion drm_expected = { 2, 0, 0 };
+   static const __DRIversion drm_expected = { 2, 1, 0 };
 
    if ( ! driCheckDriDdxDrmVersions2( "Savage",
 				      dri_version, & dri_expected,

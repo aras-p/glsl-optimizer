@@ -83,8 +83,6 @@ typedef struct {
 #include "savagecontext.h"
 
 extern void savageGetLock( savageContextPtr imesa, GLuint flags );
-extern void savageEmitScissorValues( savageContextPtr imesa, int box_nr, int emit );
-extern void savageEmitDrawingRectangle( savageContextPtr imesa );
 extern void savageXMesaSetBackClipRects( savageContextPtr imesa );
 extern void savageXMesaSetFrontClipRects( savageContextPtr imesa );
 
