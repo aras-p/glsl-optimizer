@@ -86,7 +86,7 @@ glcontextmodes.c:
 
 # Make libGL
 $(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
-	CC=$(CC) CXX=$(CXX) $(TOP)/bin/mklib -o $(GL_LIB) -major 1 -minor 2 $(MKLIB_OPTIONS) \
+	CC="$(CC)" CXX="$(CXX)" $(TOP)/bin/mklib -o $(GL_LIB) -major 1 -minor 2 $(MKLIB_OPTIONS) \
 		-install $(LIB_DIR) $(GL_LIB_DEPS) $(OBJECTS)
 
 

@@ -45,7 +45,7 @@ $(LIB_DIR):
 
 # Make the library:
 $(LIB_DIR)/$(GLU_LIB_NAME): $(OBJECTS)
-	@CC=$(CC) CXX=$(CXX) $(TOP)/bin/mklib -o $(GLU_LIB) -major $(GLU_MAJOR) \
+	@CC="$(CC)" CXX="$(CXX)" $(TOP)/bin/mklib -o $(GLU_LIB) -major $(GLU_MAJOR) \
 		-minor $(GLU_MINOR) -patch $(GLU_TINY) \
 		$(MKLIB_OPTIONS) -install $(LIB_DIR) \
 		$(GLU_LIB_DEPS) $(OBJECTS)

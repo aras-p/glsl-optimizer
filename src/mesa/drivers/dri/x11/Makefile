@@ -67,7 +67,7 @@ default: depend $(LIB_DIR)/$(LIBNAME)
 
 
 $(LIB_DIR)/$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile
-	CC=$(CC) CXX=$(CXX) $(TOP)/bin/mklib -o $(LIBNAME) -noprefix -install $(LIB_DIR) \
+	CC="$(CC)" CXX="$(CXX)" $(TOP)/bin/mklib -o $(LIBNAME) -noprefix -install $(LIB_DIR) \
 		$(OBJECTS) $(WINLIB) $(LIB_DEPS) $(WINOBJ) $(MESA_MODULES)
 
 

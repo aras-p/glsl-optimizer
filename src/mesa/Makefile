@@ -90,7 +90,7 @@ LIBGL_CORE_OBJECTS = 	\
 
 # Make libGL from core object files
 libgl-core: $(LIBGL_CORE_OBJECTS)
-	@ CC=$(CC) CXX=$(CXX) $(TOP)/bin/mklib -o $(GL_LIB) \
+	@ CC="$(CC)" CXX="$(CXX)" $(TOP)/bin/mklib -o $(GL_LIB) \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		-install $(LIB_DIR) $(MKLIB_OPTIONS) $(LIBGL_CORE_OBJECTS) $(GL_LIB_DEPS)
 
