@@ -321,10 +321,6 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
       return 0;
    }
     
-   /* Workaround for some hardware bugs */
-   if (info->ChipFamily < CHIP_FAMILY_R200)
-      OUTREG(RADEON_AGP_CNTL, INREG(RADEON_AGP_CNTL) | 0x000e0020);
-
    /* Modify the mode if the default mode is not appropriate for this
     * particular combination of graphics card and AGP chipset.
     */
@@ -344,7 +340,11 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
       drmAgpRelease(ctx->drmFD);
       return 0;
    }
-    
+
+   /* Workaround for some hardware bugs */
+   if (info->ChipFamily < CHIP_FAMILY_R200)
+      OUTREG(RADEON_AGP_CNTL, INREG(RADEON_AGP_CNTL) | 0x000e0000);
+
    info->gartOffset = 0;
 
    if ((ret = drmAgpAlloc(ctx->drmFD, info->gartSize*1024*1024, 0, NULL,
