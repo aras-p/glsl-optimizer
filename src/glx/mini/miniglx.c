@@ -1711,7 +1711,7 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
    GLint redBits = 0, greenBits = 0, blueBits = 0, alphaBits = 0;
    GLint indexBits = 0, depthBits = 0, stencilBits = 0;
    GLint numSamples = 0;
-   int i;
+   int i=0;
 
    /*
     * XXX in the future, <screen> might be interpreted as a VT
@@ -1805,6 +1805,7 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
    (void) alphaBits;
    (void) stereoFlag;
    for ( mode = dpy->driver_modes ; mode != NULL ; mode = mode->next ) {
+     i++;
       if (mode->rgbMode == rgbFlag &&
           mode->doubleBufferMode == dbFlag &&
           mode->redBits >= redBits &&
@@ -2149,7 +2150,8 @@ __glXGetDrawableInfo(__DRInativeDisplay *dpy, int scrn,
 {
     GLXDrawable drawable = (GLXDrawable) draw;
     drm_clip_rect_t * cliprect;
-
+    Display* display = (Display*)dpy;
+    __DRIcontextPrivate *pcp = (__DRIcontextPrivate *)CurrentContext->driContext.private;
     if (drawable == 0) {
         return GL_FALSE;
     }
@@ -2159,15 +2161,20 @@ __glXGetDrawableInfo(__DRInativeDisplay *dpy, int scrn,
     cliprect->y1 = drawable->y;
     cliprect->x2 = drawable->x + drawable->w;
     cliprect->y2 = drawable->y + drawable->h;
+    
+    /* the drawable index is by client id */
+    *index = display->clientID;
 
+    *stamp = pcp->driScreenPriv->pSAREA->drawableTable[display->clientID].stamp;
     *x = drawable->x;
     *y = drawable->y;
     *width = drawable->w;
     *height = drawable->h;
     *numClipRects = 1;
     *pClipRects = cliprect;
-    *backX = 0;
-    *backY = 0;
+    
+    *backX = drawable->x;
+    *backY = drawable->y;
     *numBackClipRects = 0;
     *pBackClipRects = 0;
 
