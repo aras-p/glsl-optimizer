@@ -1,4 +1,4 @@
-/* $Id: s_bitmap.c,v 1.7 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: s_bitmap.c,v 1.8 2001/05/03 22:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,7 +49,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
    struct pixel_buffer *PB = swrast->PB;
    GLint row, col;
    GLdepth fragZ;
-   GLfixed fogCoord;
+   GLfloat fogCoord;
 
    ASSERT(ctx->RenderMode == GL_RENDER);
    ASSERT(bitmap);

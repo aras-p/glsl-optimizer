@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.9 2001/03/28 21:36:31 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.10 2001/05/03 22:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,7 +56,7 @@
    GLfloat zPlane[4];                                       /* Z (depth) */
    GLdepth z[MAX_WIDTH];
    GLfloat fogPlane[4];
-   GLfixed fog[MAX_WIDTH];
+   GLfloat fog[MAX_WIDTH];
 #endif
 #ifdef DO_RGBA
    GLfloat rPlane[4], gPlane[4], bPlane[4], aPlane[4];      /* color */
@@ -270,7 +270,7 @@
          while (coverage > 0.0F) {
 #ifdef DO_Z
             z[count] = (GLdepth) solve_plane(ix, iy, zPlane);
-	    fog[count] = FloatToFixed(solve_plane(ix, iy, fogPlane));
+	    fog[count] = solve_plane(ix, iy, fogPlane);
 #endif
 #ifdef DO_RGBA
             rgba[count][RCOMP] = solve_plane_chan(ix, iy, rPlane);
@@ -386,7 +386,7 @@
          while (coverage > 0.0F) {
 #ifdef DO_Z
             z[ix] = (GLdepth) solve_plane(ix, iy, zPlane);
-            fog[ix] = FloatToFixed(solve_plane(ix, iy, fogPlane));
+            fog[ix] = solve_plane(ix, iy, fogPlane);
 #endif
 #ifdef DO_RGBA
             rgba[ix][RCOMP] = solve_plane_chan(ix, iy, rPlane);

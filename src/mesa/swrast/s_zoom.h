@@ -1,4 +1,4 @@
-/* $Id: s_zoom.h,v 1.4 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_zoom.h,v 1.5 2001/05/03 22:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,21 +35,21 @@
 extern void
 _mesa_write_zoomed_rgba_span( GLcontext *ctx,
                               GLuint n, GLint x, GLint y, const GLdepth z[],
-                              const GLfixed *fog,
+                              const GLfloat *fog,
                               CONST GLchan rgba[][4], GLint y0 );
 
 
 extern void
 _mesa_write_zoomed_rgb_span( GLcontext *ctx,
                              GLuint n, GLint x, GLint y, const GLdepth z[],
-                             const GLfixed *fog,
+                             const GLfloat *fog,
                              CONST GLchan rgb[][3], GLint y0 );
 
 
 extern void
 _mesa_write_zoomed_index_span( GLcontext *ctx,
                                GLuint n, GLint x, GLint y, const GLdepth z[],
-                               const GLfixed *fog,
+                               const GLfloat *fog,
                                const GLuint indexes[], GLint y0 );
 
 

@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.12 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: s_span.c,v 1.13 2001/05/03 22:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -180,7 +180,7 @@ static void multi_write_index_span( GLcontext *ctx, GLuint n,
  */
 void _mesa_write_index_span( GLcontext *ctx,
                           GLuint n, GLint x, GLint y, const GLdepth z[],
-			  const GLfixed fog[],
+			  const GLfloat fog[],
 			  GLuint indexIn[], GLenum primitive )
 {
    const GLuint modBits = FOG_BIT | BLEND_BIT | MASKING_BIT | LOGIC_OP_BIT;
@@ -272,7 +272,7 @@ void _mesa_write_index_span( GLcontext *ctx,
 void _mesa_write_monoindex_span( GLcontext *ctx,
                               GLuint n, GLint x, GLint y,
 			      const GLdepth z[],
-			      const GLfixed fog[],
+			      const GLfloat fog[],
 			      GLuint index, GLenum primitive )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -444,7 +444,7 @@ static void multi_write_rgba_span( GLcontext *ctx, GLuint n,
 
 void _mesa_write_rgba_span( GLcontext *ctx,
                          GLuint n, GLint x, GLint y, const GLdepth z[],
-			 const GLfixed *fog,
+			 const GLfloat *fog,
                          GLchan rgbaIn[][4],
                          GLenum primitive )
 {
@@ -580,7 +580,7 @@ void _mesa_write_rgba_span( GLcontext *ctx,
  */
 void _mesa_write_monocolor_span( GLcontext *ctx,
                               GLuint n, GLint x, GLint y, const GLdepth z[],
-			      const GLfixed fog[],
+			      const GLfloat fog[],
 			      const GLchan color[4],
                               GLenum primitive )
 {
@@ -763,7 +763,7 @@ static void add_colors(GLuint n, GLchan rgba[][4], CONST GLchan specular[][4] )
  */
 void _mesa_write_texture_span( GLcontext *ctx,
                             GLuint n, GLint x, GLint y, const GLdepth z[],
-			    const GLfixed fog[],
+			    const GLfloat fog[],
 			    const GLfloat s[], const GLfloat t[],
                             const GLfloat u[], GLfloat lambda[],
 			    GLchan rgbaIn[][4], CONST GLchan spec[][4],
@@ -906,7 +906,7 @@ void
 _mesa_write_multitexture_span( GLcontext *ctx,
                             GLuint n, GLint x, GLint y,
                             const GLdepth z[],
-			    const GLfixed fog[],
+			    const GLfloat fog[],
                             CONST GLfloat s[MAX_TEXTURE_UNITS][MAX_WIDTH],
                             CONST GLfloat t[MAX_TEXTURE_UNITS][MAX_WIDTH],
                             CONST GLfloat u[MAX_TEXTURE_UNITS][MAX_WIDTH],

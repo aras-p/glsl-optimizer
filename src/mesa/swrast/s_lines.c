@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.15 2001/03/29 16:50:32 brianp Exp $ */
+/* $Id: s_lines.c,v 1.16 2001/05/03 22:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -239,7 +239,7 @@ static void smooth_rgba_z_line( GLcontext *ctx,
    GLint *pbx = PB->x;
    GLint *pby = PB->y;
    GLdepth *pbz = PB->z;
-   GLfixed *pbfog = PB->fog;
+   GLfloat *pbfog = PB->fog;
    GLchan (*pbrgba)[4] = PB->rgba;
 
 
@@ -288,7 +288,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
    GLint *pbx = PB->x;
    GLint *pby = PB->y;
    GLdepth *pbz = PB->z;
-   GLfixed *pbfog = PB->fog;
+   GLfloat *pbfog = PB->fog;
    GLuint *pbi = PB->index;
 
    PB->mono = GL_FALSE;
@@ -371,7 +371,7 @@ static void general_flat_ci_line( GLcontext *ctx,
    GLint *pbx = PB->x;
    GLint *pby = PB->y;
    GLdepth *pbz = PB->z;
-   GLfixed *pbfog = PB->fog;
+   GLfloat *pbfog = PB->fog;
    PB_SET_INDEX( PB, vert0->index );
    count = PB->count;
 
@@ -446,7 +446,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
    GLint *pbx = PB->x;
    GLint *pby = PB->y;
    GLdepth *pbz = PB->z;
-   GLfixed *pbfog = PB->fog;
+   GLfloat *pbfog = PB->fog;
    GLchan (*pbrgba)[4] = PB->rgba;
 
    PB->mono = GL_FALSE;
@@ -598,7 +598,7 @@ static void flat_textured_line( GLcontext *ctx,
    GLint *pbx = PB->x;
    GLint *pby = PB->y;
    GLdepth *pbz = PB->z;
-   GLfixed *pbfog = PB->fog;
+   GLfloat *pbfog = PB->fog;
    GLfloat *pbs = PB->s[0];
    GLfloat *pbt = PB->t[0];
    GLfloat *pbu = PB->u[0];
@@ -666,7 +666,7 @@ static void smooth_textured_line( GLcontext *ctx,
    GLint *pbx = PB->x;
    GLint *pby = PB->y;
    GLdepth *pbz = PB->z;
-   GLfixed *pbfog = PB->fog;
+   GLfloat *pbfog = PB->fog;
    GLfloat *pbs = PB->s[0];
    GLfloat *pbt = PB->t[0];
    GLfloat *pbu = PB->u[0];
@@ -747,7 +747,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
    GLint *pbx = PB->x;
    GLint *pby = PB->y;
    GLdepth *pbz = PB->z;
-   GLfixed *pbfog = PB->fog;
+   GLfloat *pbfog = PB->fog;
    GLchan (*pbrgba)[4] = PB->rgba;
    GLchan (*pbspec)[3] = PB->spec;
 
@@ -846,7 +846,7 @@ static void flat_multitextured_line( GLcontext *ctx,
    GLint *pbx = PB->x;
    GLint *pby = PB->y;
    GLdepth *pbz = PB->z;
-   GLfixed *pbfog = PB->fog;
+   GLfloat *pbfog = PB->fog;
    GLchan (*pbrgba)[4] = PB->rgba;
    GLchan (*pbspec)[3] = PB->spec;
    GLchan *color = (GLchan*) vert1->color;

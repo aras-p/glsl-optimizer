@@ -1,4 +1,4 @@
-/* $Id: s_texstore.c,v 1.3 2001/04/13 00:13:51 brianp Exp $ */
+/* $Id: s_texstore.c,v 1.4 2001/05/03 22:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -274,6 +274,7 @@ _swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
          return;
       }
 
+#if 0
       /*
        * XXX this is a bit of a hack.  We need to be sure that the alpha
        * channel is 1.0 if the internal texture format is not supposed to
@@ -289,7 +290,7 @@ _swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
             image[i + 3] = CHAN_MAX;
          }
       }
-
+#endif
       /* now call glTexSubImage1D to do the real work */
       (*ctx->Driver.TexSubImage1D)(ctx, target, level, xoffset, width,
                                    GL_RGBA, CHAN_TYPE, image,
@@ -342,6 +343,7 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
          return;
       }
 
+#if  0
       /*
        * XXX this is a bit of a hack.  We need to be sure that the alpha
        * channel is 1.0 if the internal texture format is not supposed to
@@ -357,7 +359,7 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
             image[i + 3] = CHAN_MAX;
          }
       }
-
+#endif
       /* now call glTexSubImage2D to do the real work */
       (*ctx->Driver.TexSubImage2D)(ctx, target, level,
                                    xoffset, yoffset, width, height,
@@ -411,7 +413,7 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D" );
          return;
       }
-
+#if 0
       /*
        * XXX this is a bit of a hack.  We need to be sure that the alpha
        * channel is 1.0 if the internal texture format is not supposed to
@@ -427,7 +429,7 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
             image[i + 3] = CHAN_MAX;
          }
       }
-
+#endif
       /* now call glTexSubImage3D to do the real work */
       (*ctx->Driver.TexSubImage3D)(ctx, target, level,
                                    xoffset, yoffset, zoffset, width, height, 1,

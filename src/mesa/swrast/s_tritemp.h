@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.14 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_tritemp.h,v 1.15 2001/05/03 22:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -256,7 +256,7 @@
       GLfloat dzdx, dzdy;      GLfixed fdzdx;
 #endif
 #ifdef INTERP_FOG
-      GLfloat dfogdx, dfogdy;      GLfixed fdfogdx;
+      GLfloat dfogdx, dfogdy;
 #endif
 #ifdef INTERP_RGB
       GLfloat drdx, drdy;      GLfixed fdrdx;
@@ -338,11 +338,9 @@
 #endif
 #ifdef INTERP_FOG
       {
-         GLfloat eMaj_dfog, eBot_dfog;
-         eMaj_dfog = (vMax->fog - vMin->fog) * 256;
-         eBot_dfog = (vMid->fog - vMin->fog) * 256;
+         const GLfloat eMaj_dfog = vMax->fog - vMin->fog;
+         const GLfloat eBot_dfog = vMid->fog - vMin->fog;
          dfogdx = oneOverArea * (eMaj_dfog * eBot.dy - eMaj.dy * eBot_dfog);
-         fdfogdx = SignedFloatToFixed(dfogdx);
          dfogdy = oneOverArea * (eMaj.dx * eBot_dfog - eMaj_dfog * eBot.dx);
       }
 #endif
@@ -566,53 +564,54 @@
 
       {
          int subTriangle;
-         GLfixed fx, fxLeftEdge, fxRightEdge, fdxLeftEdge, fdxRightEdge;
+         GLfixed fx;
+         GLfixed fxLeftEdge=0, fxRightEdge=0, fdxLeftEdge=0, fdxRightEdge=0;
          GLfixed fdxOuter;
          int idxOuter;
          float dxOuter;
-         GLfixed fError, fdError;
+         GLfixed fError=0, fdError=0;
          float adjx, adjy;
          GLfixed fy;
-         int iy;
+         int iy=0;
 #ifdef PIXEL_ADDRESS
-         PIXEL_TYPE *pRow;
-         int dPRowOuter, dPRowInner;  /* offset in bytes */
+         PIXEL_TYPE *pRow=NULL;
+         int dPRowOuter=0, dPRowInner=0;  /* offset in bytes */
 #endif
 #ifdef INTERP_Z
 #  ifdef DEPTH_TYPE
-         DEPTH_TYPE *zRow;
-         int dZRowOuter, dZRowInner;  /* offset in bytes */
+         DEPTH_TYPE *zRow=NULL;
+         int dZRowOuter=0, dZRowInner=0;  /* offset in bytes */
 #  endif
-         GLfixed fz, fdzOuter, fdzInner;
+         GLfixed fz=0, fdzOuter=0, fdzInner;
 #endif
 #ifdef INTERP_FOG
-         GLfixed ffog, fdfogOuter, fdfogInner;
+         GLfloat fogLeft, dfogOuter, dfogInner;
 #endif
 #ifdef INTERP_RGB
-         GLfixed fr, fdrOuter, fdrInner;
-         GLfixed fg, fdgOuter, fdgInner;
-         GLfixed fb, fdbOuter, fdbInner;
+         GLfixed fr=0, fdrOuter=0, fdrInner;
+         GLfixed fg=0, fdgOuter=0, fdgInner;
+         GLfixed fb=0, fdbOuter=0, fdbInner;
 #endif
 #ifdef INTERP_SPEC
-         GLfixed fsr, fdsrOuter, fdsrInner;
-         GLfixed fsg, fdsgOuter, fdsgInner;
-         GLfixed fsb, fdsbOuter, fdsbInner;
+         GLfixed fsr=0, fdsrOuter=0, fdsrInner;
+         GLfixed fsg=0, fdsgOuter=0, fdsgInner;
+         GLfixed fsb=0, fdsbOuter=0, fdsbInner;
 #endif
 #ifdef INTERP_ALPHA
-         GLfixed fa, fdaOuter, fdaInner;
+         GLfixed fa=0, fdaOuter=0, fdaInner;
 #endif
 #ifdef INTERP_INDEX
-         GLfixed fi, fdiOuter, fdiInner;
+         GLfixed fi=0, fdiOuter=0, fdiInner;
 #endif
 #ifdef INTERP_INT_TEX
-         GLfixed fs, fdsOuter, fdsInner;
-         GLfixed ft, fdtOuter, fdtInner;
+         GLfixed fs=0, fdsOuter=0, fdsInner;
+         GLfixed ft=0, fdtOuter=0, fdtInner;
 #endif
 #ifdef INTERP_TEX
-         GLfloat sLeft, dsOuter, dsInner;
-         GLfloat tLeft, dtOuter, dtInner;
-         GLfloat uLeft, duOuter, duInner;
-         GLfloat vLeft, dvOuter, dvInner;
+         GLfloat sLeft=0, dsOuter=0, dsInner;
+         GLfloat tLeft=0, dtOuter=0, dtInner;
+         GLfloat uLeft=0, duOuter=0, duInner;
+         GLfloat vLeft=0, dvOuter=0, dvInner;
 #endif
 #ifdef INTERP_MULTITEX
          GLfloat sLeft[MAX_TEXTURE_UNITS];
@@ -733,9 +732,9 @@
                }
 #endif
 #ifdef INTERP_FOG
-               ffog = FloatToFixed(vLower->fog * 256 + dfogdx * adjx
-                                   + dfogdy * adjy) + FIXED_HALF;
-               fdfogOuter = SignedFloatToFixed(dfogdy + dxOuter * dfogdx);
+               fogLeft = vLower->fog + (dfogdx * adjx + dfogdy * adjy)
+                                       * (1.0F/FIXED_SCALE);
+               dfogOuter = dfogdy + dxOuter * dfogdx;
 #endif
 #ifdef INTERP_RGB
                fr = (GLfixed)(IntToFixed(vLower->color[0])
@@ -851,7 +850,7 @@
             fdzInner = fdzOuter + fdzdx;
 #endif
 #ifdef INTERP_FOG
-            fdfogInner = fdfogOuter + fdfogdx;
+            dfogInner = dfogOuter + dfogdx;
 #endif
 #ifdef INTERP_RGB
             fdrInner = fdrOuter + fdrdx;
@@ -902,7 +901,7 @@
                GLfixed ffz = fz;
 #endif
 #ifdef INTERP_FOG
-               GLfixed fffog = ffog;
+               GLfloat ffog = fogLeft;
 #endif
 #ifdef INTERP_RGB
                GLfixed ffr = fr,  ffg = fg,  ffb = fb;
@@ -1064,7 +1063,7 @@
                   fz += fdzOuter;
 #endif
 #ifdef INTERP_FOG
-                  ffog += fdfogOuter;
+                  fogLeft += dfogOuter;
 #endif
 #ifdef INTERP_RGB
                   fr += fdrOuter;   fg += fdgOuter;   fb += fdbOuter;
@@ -1112,7 +1111,7 @@
                   fz += fdzInner;
 #endif
 #ifdef INTERP_FOG
-                  ffog += fdfogInner;
+                  fogLeft += dfogInner;
 #endif
 #ifdef INTERP_RGB
                   fr += fdrInner;   fg += fdgInner;   fb += fdbInner;

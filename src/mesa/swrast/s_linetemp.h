@@ -1,4 +1,4 @@
-/* $Id: s_linetemp.h,v 1.7 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_linetemp.h,v 1.8 2001/05/03 22:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,8 +95,8 @@
 #  endif
 #endif
 #ifdef INTERP_FOG
-   GLfixed fog0 = FloatToFixed(vert0->fog);
-   GLfixed dfog = FloatToFixed(vert1->fog) - fog0;
+   GLfloat fog0 = vert0->fog;
+   GLfloat dfog = vert1->fog - fog0;
 #endif
 #ifdef INTERP_RGB
    GLfixed r0 = IntToFixed(vert0->color[0]);

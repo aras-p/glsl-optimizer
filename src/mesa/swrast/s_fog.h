@@ -1,4 +1,4 @@
-/* $Id: s_fog.h,v 1.3 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_fog.h,v 1.4 2001/05/03 22:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,22 +33,20 @@
 #include "swrast.h"
 
 
-
-
 extern void
 _mesa_fog_rgba_pixels( const GLcontext *ctx,
-                       GLuint n, const GLfixed fog[],
+                       GLuint n, const GLfloat fog[],
                        GLchan rgba[][4] );
 
 extern void
 _mesa_fog_ci_pixels( const GLcontext *ctx,
-                     GLuint n, const GLfixed fog[], GLuint indx[] );
+                     GLuint n, const GLfloat fog[], GLuint indx[] );
 
 extern void
 _mesa_win_fog_coords_from_z( const GLcontext *ctx,
 			     GLuint n,
 			     const GLdepth z[],
-			     GLfixed fogcoord[] );
+			     GLfloat fogcoord[] );
 
 extern void
 _mesa_depth_fog_rgba_pixels( const GLcontext *ctx,
@@ -57,7 +55,6 @@ _mesa_depth_fog_rgba_pixels( const GLcontext *ctx,
 extern void
 _mesa_depth_fog_ci_pixels( const GLcontext *ctx,
 			   GLuint n, const GLdepth z[], GLuint index[] );
-
 
 
 #endif

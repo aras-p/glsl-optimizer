@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.24 2001/03/29 16:50:32 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.25 2001/05/03 22:13:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -83,13 +83,13 @@ static void flat_ci_triangle( GLcontext *ctx,
 	   const GLint n = RIGHT-LEFT;				\
 	   GLint i;				                \
 	   GLdepth zspan[MAX_WIDTH];				\
-	   GLfixed fogspan[MAX_WIDTH];				\
+	   GLfloat fogspan[MAX_WIDTH];				\
 	   if (n>0) {						\
 	      for (i=0;i<n;i++) {				\
 		 zspan[i] = FixedToDepth(ffz);			\
 		 ffz += fdzdx;					\
-		 fogspan[i] = fffog / 256;			\
-		 fffog += fdfogdx;				\
+		 fogspan[i] = ffog;				\
+                 ffog += dfogdx;				\
 	      }							\
 	      _mesa_write_monoindex_span( ctx, n, LEFT, Y, zspan,	\
                          fogspan, v0->index, GL_POLYGON );	\
@@ -118,7 +118,7 @@ static void smooth_ci_triangle( GLcontext *ctx,
 	   const GLint n = RIGHT-LEFT;				\
 	   GLint i;				                \
 	   GLdepth zspan[MAX_WIDTH];				\
-           GLfixed fogspan[MAX_WIDTH];				\
+           GLfloat fogspan[MAX_WIDTH];				\
            GLuint index[MAX_WIDTH];				\
 	   if (n>0) {						\
 	      for (i=0;i<n;i++) {				\
@@ -126,8 +126,8 @@ static void smooth_ci_triangle( GLcontext *ctx,
 		 ffz += fdzdx;					\
                  index[i] = FixedToInt(ffi);			\
 		 ffi += fdidx;					\
-		 fogspan[i] = fffog / 256;			\
-		 fffog += fdfogdx;				\
+		 fogspan[i] = ffog;				\
+		 ffog += dfogdx;				\
 	      }							\
 	      _mesa_write_index_span( ctx, n, LEFT, Y, zspan, fogspan,	\
 	                           index, GL_POLYGON );		\
@@ -156,13 +156,13 @@ static void flat_rgba_triangle( GLcontext *ctx,
 	   const GLint n = RIGHT-LEFT;				\
 	   GLint i;						\
 	   GLdepth zspan[MAX_WIDTH];				\
-	   GLfixed fogspan[MAX_WIDTH];				\
+	   GLfloat fogspan[MAX_WIDTH];				\
 	   if (n>0) {						\
 	      for (i=0;i<n;i++) {				\
 		 zspan[i] = FixedToDepth(ffz);			\
 		 ffz += fdzdx;					\
-		 fogspan[i] = fffog / 256;			\
-		 fffog += fdfogdx;				\
+		 fogspan[i] = ffog;				\
+		 ffog += dfogdx;				\
 	      }							\
               _mesa_write_monocolor_span( ctx, n, LEFT, Y, zspan,	\
                                        fogspan, v2->color,	\
@@ -199,7 +199,7 @@ static void smooth_rgba_triangle( GLcontext *ctx,
 	   GLint i;				                \
 	   GLdepth zspan[MAX_WIDTH];				\
 	   GLchan rgba[MAX_WIDTH][4];				\
-	   GLfixed fogspan[MAX_WIDTH];				\
+	   GLfloat fogspan[MAX_WIDTH];				\
 	   if (n>0) {						\
 	      for (i=0;i<n;i++) {				\
 		 zspan[i] = FixedToDepth(ffz);			\
@@ -207,13 +207,13 @@ static void smooth_rgba_triangle( GLcontext *ctx,
 		 rgba[i][GCOMP] = FixedToInt(ffg);		\
 		 rgba[i][BCOMP] = FixedToInt(ffb);		\
 		 rgba[i][ACOMP] = FixedToInt(ffa);		\
-		 fogspan[i] = fffog / 256;			\
-		 fffog += fdfogdx;				\
+		 fogspan[i] = ffog;;				\
 		 ffz += fdzdx;					\
 		 ffr += fdrdx;					\
 		 ffg += fdgdx;					\
 		 ffb += fdbdx;					\
 		 ffa += fdadx;					\
+		 ffog += dfogdx;				\
 	      }							\
 	      _mesa_write_rgba_span( ctx, n, LEFT, Y,		\
                                   (CONST GLdepth *) zspan,	\
@@ -299,7 +299,6 @@ static void simple_z_textured_triangle( GLcontext *ctx,
 					const SWvertex *v2 )
 {
 #define INTERP_Z 1
-#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_INT_TEX 1
 #define S_SCALE twidth
@@ -325,7 +324,6 @@ static void simple_z_textured_triangle( GLcontext *ctx,
 	   GLint i;				                \
 	   GLchan rgb[MAX_WIDTH][3];				\
            GLubyte mask[MAX_WIDTH];				\
-           (void) fffog;                                        \
 	   if (n>0) {						\
               ffs -= FIXED_HALF; /* off-by-one error? */        \
               fft -= FIXED_HALF;                                \
@@ -505,9 +503,9 @@ static void affine_textured_triangle( GLcontext *ctx,
            GLint pos = (t << twidth_log2) + s;             \
            const GLchan *tex00 = texture + COMP * pos;     \
 	   zspan[i] = FixedToDepth(ffz);                   \
-	   fogspan[i] = fffog / 256;                       \
+	   fogspan[i] = ffog;;                             \
            DO_TEX;                                         \
-	   fffog += fdfogdx;                               \
+	   ffog += dfogdx;                                 \
 	   ffz += fdzdx;                                   \
            ffr += fdrdx;                                   \
 	   ffg += fdgdx;                                   \
@@ -540,9 +538,9 @@ static void affine_textured_triangle( GLcontext *ctx,
               tex11 -= tbytesline;                         \
            }                                               \
 	   zspan[i] = FixedToDepth(ffz);                   \
-	   fogspan[i] = fffog / 256;                       \
+	   fogspan[i] = ffog;                              \
            DO_TEX;                                         \
-	   fffog += fdfogdx;                               \
+	   ffog += dfogdx;                                 \
 	   ffz += fdzdx;                                   \
            ffr += fdrdx;                                   \
 	   ffg += fdgdx;                                   \
@@ -559,7 +557,7 @@ static void affine_textured_triangle( GLcontext *ctx,
            CONST GLint n = RIGHT-LEFT;	                   \
 	   GLint i;                                        \
 	   GLdepth zspan[MAX_WIDTH];	                   \
-	   GLfixed fogspan[MAX_WIDTH];	                   \
+	   GLfloat fogspan[MAX_WIDTH];	                   \
 	   GLchan rgba[MAX_WIDTH][4];                      \
 	   if (n>0) {                                      \
               GLchan *dest = rgba[0];                      \
@@ -740,9 +738,9 @@ static void near_persp_textured_triangle(GLcontext *ctx,
       GLint pos = COMP * ((t << twidth_log2) + s);    \
       const GLchan *tex00 = texture + pos;            \
       zspan[i] = FixedToDepth(ffz);                   \
-      fogspan[i] = fffog / 256;                       \
+      fogspan[i] = ffog;                              \
       DO_TEX;                                         \
-      fffog += fdfogdx;                               \
+      ffog += dfogdx;                                 \
       ffz += fdzdx;                                   \
       ffr += fdrdx;                                   \
       ffg += fdgdx;                                   \
@@ -910,9 +908,9 @@ static void near_persp_textured_triangle(GLcontext *ctx,
          j = n;				\
       while (i<j) {			\
          zspan[i] = FixedToDepth(ffz);	\
-         fogspan[i] = fffog / 256;      \
+         fogspan[i] = ffog;             \
          DO_TEX;			\
-         fffog += fdfogdx;              \
+         ffog += dfogdx;                \
          ffz += fdzdx;			\
          ffr += fdrdx;			\
          ffg += fdgdx;			\
@@ -928,7 +926,7 @@ static void near_persp_textured_triangle(GLcontext *ctx,
       GLint i = 0;							\
       const GLint n = RIGHT-LEFT;					\
       GLdepth zspan[MAX_WIDTH];						\
-      GLfixed fogspan[MAX_WIDTH];					\
+      GLfloat fogspan[MAX_WIDTH];					\
       GLchan rgba[MAX_WIDTH][4];					\
       (void)uu; /* please GCC */					\
       if (n > 0) {							\
@@ -1510,9 +1508,9 @@ static void lin_persp_textured_triangle( GLcontext *ctx,
               tex11 -= tbytesline;                         \
            }                                               \
 	   zspan[i] = FixedToDepth(ffz);                   \
-	   fogspan[i] = fffog / 256;                       \
+	   fogspan[i] = ffog;                              \
            DO_TEX;                                         \
-	   fffog += fdfogdx;                               \
+	   ffog += dfogdx;                                 \
 	   ffz += fdzdx;                                   \
            ffr += fdrdx;                                   \
 	   ffg += fdgdx;                                   \
@@ -1529,7 +1527,7 @@ static void lin_persp_textured_triangle( GLcontext *ctx,
       GLint i;						\
       const GLint n = RIGHT-LEFT;			\
       GLdepth zspan[MAX_WIDTH];				\
-      GLfixed fogspan[MAX_WIDTH];			\
+      GLfloat fogspan[MAX_WIDTH];			\
       GLchan rgba[MAX_WIDTH][4];			\
       (void) uu; /* please GCC */			\
       if (n > 0) {					\
@@ -1625,7 +1623,7 @@ static void general_textured_triangle( GLcontext *ctx,
 	   GLint i;                                             \
            const GLint n = RIGHT-LEFT;				\
 	   GLdepth zspan[MAX_WIDTH];				\
-	   GLfixed fogspan[MAX_WIDTH];				\
+	   GLfloat fogspan[MAX_WIDTH];				\
 	   GLchan rgba[MAX_WIDTH][4];				\
            GLfloat s[MAX_WIDTH], t[MAX_WIDTH], u[MAX_WIDTH];	\
 	   if (n>0) {						\
@@ -1633,7 +1631,7 @@ static void general_textured_triangle( GLcontext *ctx,
                  for (i=0;i<n;i++) {				\
 		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;	\
 		    zspan[i] = FixedToDepth(ffz);		\
-		    fogspan[i] = fffog / 256;          		\
+		    fogspan[i] = ffog;          		\
 		    rgba[i][RCOMP] = r;				\
 		    rgba[i][GCOMP] = g;				\
 		    rgba[i][BCOMP] = b;				\
@@ -1641,7 +1639,7 @@ static void general_textured_triangle( GLcontext *ctx,
 		    s[i] = ss*invQ;				\
 		    t[i] = tt*invQ;				\
 	 	    u[i] = uu*invQ;				\
- 		    fffog += fdfogdx;				\
+ 		    ffog += dfogdx;				\
 		    ffz += fdzdx;				\
 		    ss += dsdx;					\
 		    tt += dtdx;					\
@@ -1657,11 +1655,11 @@ static void general_textured_triangle( GLcontext *ctx,
 		    rgba[i][GCOMP] = FixedToInt(ffg);		\
 		    rgba[i][BCOMP] = FixedToInt(ffb);		\
 		    rgba[i][ACOMP] = FixedToInt(ffa);		\
-		    fogspan[i] = fffog / 256;         		\
+		    fogspan[i] = ffog;            		\
 		    s[i] = ss*invQ;				\
 		    t[i] = tt*invQ;				\
 		    u[i] = uu*invQ;				\
-		    fffog += fdfogdx;				\
+		    ffog += dfogdx;				\
 		    ffz += fdzdx;				\
 		    ffr += fdrdx;				\
 		    ffg += fdgdx;				\
@@ -1673,10 +1671,9 @@ static void general_textured_triangle( GLcontext *ctx,
 		    vv += dvdx;					\
 		 }						\
               }							\
-	      _mesa_write_texture_span( ctx, n, LEFT, Y, zspan, fogspan,	\
-                                     s, t, u, NULL, 		\
-	                             rgba, \
-                                     NULL, GL_POLYGON );	\
+	      _mesa_write_texture_span( ctx, n, LEFT, Y, zspan,	\
+                                     fogspan, s, t, u, NULL,	\
+	                             rgba, NULL, GL_POLYGON );	\
 	   }							\
 	}
 
@@ -1696,7 +1693,7 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
 					     const SWvertex *v1,
 					     const SWvertex *v2,
                                              GLdepth zspan[MAX_WIDTH],
-                                             GLfixed fogspan[MAX_WIDTH],
+                                             GLfloat fogspan[MAX_WIDTH],
                                              GLchan rgba[MAX_WIDTH][4],
                                              GLchan spec[MAX_WIDTH][4] )
 {
@@ -1729,7 +1726,7 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
                  for (i=0;i<n;i++) {				\
 		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;	\
 		    zspan[i] = FixedToDepth(ffz);		\
-		    fogspan[i] = fffog / 256;			\
+		    fogspan[i] = ffog;				\
 		    rgba[i][RCOMP] = r;				\
 		    rgba[i][GCOMP] = g;				\
 		    rgba[i][BCOMP] = b;				\
@@ -1740,7 +1737,7 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
 		    s[i] = ss*invQ;				\
 		    t[i] = tt*invQ;				\
 		    u[i] = uu*invQ;				\
-		    fffog += fdfogdx;				\
+		    ffog += dfogdx;				\
 		    ffz += fdzdx;				\
 		    ss += dsdx;					\
 		    tt += dtdx;					\
@@ -1752,7 +1749,7 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
                  for (i=0;i<n;i++) {				\
 		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;	\
 		    zspan[i] = FixedToDepth(ffz);		\
-		    fogspan[i] = fffog / 256;			\
+		    fogspan[i] = ffog;				\
 		    rgba[i][RCOMP] = FixedToInt(ffr);		\
 		    rgba[i][GCOMP] = FixedToInt(ffg);		\
 		    rgba[i][BCOMP] = FixedToInt(ffb);		\
@@ -1763,7 +1760,7 @@ static void general_textured_spec_triangle1( GLcontext *ctx,
 		    s[i] = ss*invQ;				\
 		    t[i] = tt*invQ;				\
 		    u[i] = uu*invQ;				\
-		    fffog += fdfogdx;				\
+		    ffog += dfogdx;				\
 		    ffz += fdzdx;				\
 		    ffr += fdrdx;				\
 		    ffg += fdgdx;				\
@@ -1833,7 +1830,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
 	   GLint i;                                                     \
            const GLint n = RIGHT-LEFT;					\
 	   GLdepth zspan[MAX_WIDTH];					\
-	   GLfixed fogspan[MAX_WIDTH];					\
+	   GLfloat fogspan[MAX_WIDTH];					\
 	   GLchan rgba[MAX_WIDTH][4];					\
 	   GLfloat lambda[MAX_WIDTH];					\
 	   if (n>0) {							\
@@ -1841,7 +1838,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
 		 for (i=0;i<n;i++) {					\
 		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;		\
 		    zspan[i] = FixedToDepth(ffz);			\
-		    fogspan[i] = fffog / 256;          			\
+		    fogspan[i] = ffog;          			\
 		    rgba[i][RCOMP] = r;					\
 		    rgba[i][GCOMP] = g;					\
 		    rgba[i][BCOMP] = b;					\
@@ -1851,7 +1848,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
 		    u[i] = uu*invQ;					\
                     COMPUTE_LAMBDA(lambda[i], invQ);			\
 		    ffz += fdzdx;					\
-		    fffog += fdfogdx;					\
+		    ffog += dfogdx;					\
 		    ss += dsdx;						\
 		    tt += dtdx;						\
 		    uu += dudx;						\
@@ -1862,7 +1859,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
 		 for (i=0;i<n;i++) {					\
 		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;		\
 		    zspan[i] = FixedToDepth(ffz);			\
-		    fogspan[i] = fffog / 256;          			\
+		    fogspan[i] = ffog;          			\
 		    rgba[i][RCOMP] = FixedToInt(ffr);			\
 		    rgba[i][GCOMP] = FixedToInt(ffg);			\
 		    rgba[i][BCOMP] = FixedToInt(ffb);			\
@@ -1872,7 +1869,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
 		    u[i] = uu*invQ;					\
                     COMPUTE_LAMBDA(lambda[i], invQ);			\
 		    ffz += fdzdx;					\
-		    fffog += fdfogdx;					\
+		    ffog += dfogdx;					\
 		    ffr += fdrdx;					\
 		    ffg += fdgdx;					\
 		    ffb += fdbdx;					\
@@ -1941,7 +1938,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 	   GLint i;                                                     \
            const GLint n = RIGHT-LEFT;					\
 	   GLdepth zspan[MAX_WIDTH];					\
-	   GLfixed fogspan[MAX_WIDTH];					\
+	   GLfloat fogspan[MAX_WIDTH];					\
 	   GLchan spec[MAX_WIDTH][4];					\
            GLchan rgba[MAX_WIDTH][4];					\
 	   GLfloat lambda[MAX_WIDTH];					\
@@ -1950,7 +1947,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 		 for (i=0;i<n;i++) {					\
 		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;		\
 		    zspan[i] = FixedToDepth(ffz);			\
-		    fogspan[i] = fffog / 256;				\
+		    fogspan[i] = ffog;					\
 		    rgba[i][RCOMP] = r;					\
 		    rgba[i][GCOMP] = g;					\
 		    rgba[i][BCOMP] = b;					\
@@ -1962,7 +1959,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 		    t[i] = tt*invQ;					\
 		    u[i] = uu*invQ;					\
                     COMPUTE_LAMBDA(lambda[i], invQ);			\
-		    fffog += fdfogdx;					\
+		    ffog += dfogdx;					\
 		    ffz += fdzdx;					\
 		    ss += dsdx;						\
 		    tt += dtdx;						\
@@ -1974,7 +1971,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 		 for (i=0;i<n;i++) {					\
 		    GLdouble invQ = vv ? (1.0 / vv) : 1.0;		\
 		    zspan[i] = FixedToDepth(ffz);			\
-		    fogspan[i] = fffog / 256;				\
+		    fogspan[i] = ffog;					\
 		    rgba[i][RCOMP] = FixedToInt(ffr);			\
 		    rgba[i][GCOMP] = FixedToInt(ffg);			\
 		    rgba[i][BCOMP] = FixedToInt(ffb);			\
@@ -1986,7 +1983,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 		    t[i] = tt*invQ;					\
 		    u[i] = uu*invQ;					\
                     COMPUTE_LAMBDA(lambda[i], invQ);			\
-		    fffog += fdfogdx;					\
+		    ffog += dfogdx;					\
 		    ffz += fdzdx;					\
 		    ffr += fdrdx;					\
 		    ffg += fdgdx;					\
@@ -2001,8 +1998,8 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 		    vv += dvdx;						\
 		 }							\
               }								\
-	      _mesa_write_texture_span( ctx, n, LEFT, Y, zspan, fogspan,	\
-                                     s, t, u, lambda,	 		\
+	      _mesa_write_texture_span( ctx, n, LEFT, Y, zspan,		\
+                                     fogspan, s, t, u, lambda,		\
 	                             rgba, (CONST GLchan (*)[4]) spec,	\
                                      GL_POLYGON );			\
 	   }								\
@@ -2063,15 +2060,15 @@ lambda_multitextured_triangle1( GLcontext *ctx,
       GLint i;								\
       const GLint n = RIGHT-LEFT;					\
       GLdepth zspan[MAX_WIDTH];						\
-      GLfixed fogspan[MAX_WIDTH];					\
+      GLfloat fogspan[MAX_WIDTH];					\
       GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];			\
       if (n > 0) {							\
          if (flat_shade) {						\
 	    for (i=0;i<n;i++) {						\
                GLuint unit;						\
 	       zspan[i] = FixedToDepth(ffz);				\
-	       fogspan[i] = fffog / 256;				\
-               fffog += fdfogdx;					\
+	       fogspan[i] = ffog;					\
+               ffog += dfogdx;						\
 	       ffz += fdzdx;						\
 	       rgba[i][RCOMP] = r;					\
 	       rgba[i][GCOMP] = g;					\
@@ -2096,9 +2093,9 @@ lambda_multitextured_triangle1( GLcontext *ctx,
 	    for (i=0;i<n;i++) {						\
                GLuint unit;						\
 	       zspan[i] = FixedToDepth(ffz);				\
-	       fogspan[i] = fffog / 256;				\
+	       fogspan[i] = ffog;					\
 	       ffz += fdzdx;						\
-	       fffog += fdfogdx;					\
+	       ffog += dfogdx;						\
 	       rgba[i][RCOMP] = FixedToInt(ffr);			\
 	       rgba[i][GCOMP] = FixedToInt(ffg);			\
 	       rgba[i][BCOMP] = FixedToInt(ffb);			\
@@ -2146,7 +2143,7 @@ static void general_textured_spec_triangle(GLcontext *ctx,
 					   const SWvertex *v2 )
 {
    GLdepth zspan[MAX_WIDTH];
-   GLfixed fogspan[MAX_WIDTH];
+   GLfloat fogspan[MAX_WIDTH];
    GLchan rgba[MAX_WIDTH][4], spec[MAX_WIDTH][4];
    general_textured_spec_triangle1(ctx,v0,v1,v2,zspan,fogspan,rgba,spec);
 }
@@ -2201,7 +2198,6 @@ static void occlusion_zless_triangle( GLcontext *ctx,
 
 #define DO_OCCLUSION_TEST
 #define INTERP_Z 1
-#define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INNER_LOOP( LEFT, RIGHT, Y )		\
    {						\
@@ -2209,7 +2205,6 @@ static void occlusion_zless_triangle( GLcontext *ctx,
       const GLint len = RIGHT-LEFT;		\
       for (i=0;i<len;i++) {			\
 	 GLdepth z = FixedToDepth(ffz);		\
-         (void) fffog;                          \
 	 if (z < zRow[i]) {			\
 	    ctx->OcclusionResult = GL_TRUE;	\
 	    return;				\
