@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.25 2000/01/17 19:28:31 brianp Exp $ */
+/* $Id: glapi.c,v 1.26 2000/01/17 19:45:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -498,7 +498,7 @@ _glapi_check_table(const struct _glapi_table *table)
 
 #define KEYWORD1
 #define KEYWORD2 GLAPIENTRY
-#if defined(USE_X86_ASM) && !defined(__WIN32__)
+#if defined(USE_X86_ASM) && !defined(__WIN32__) && !defined(XF86DRI)
 #define NAME(func) _glapi_fallback_##func
 #elif defined(USE_MGL_NAMESPACE)
 #define NAME(func)  mgl##func
