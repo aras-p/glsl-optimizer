@@ -1409,6 +1409,8 @@ struct gl_constants {
    GLuint MaxConvolutionHeight;
    GLuint MaxClipPlanes;
    GLuint MaxLights;
+   GLfloat MaxShininess;			/* GL_NV_light_max_exponent */
+   GLfloat MaxSpotExponent;			/* GL_NV_light_max_exponent */
    /* GL_ARB_vertex_program */
    GLuint MaxVertexProgramInstructions;
    GLuint MaxVertexProgramAttribs;
@@ -1500,6 +1502,7 @@ struct gl_extensions {
    GLboolean MESA_ycbcr_texture;
    GLboolean NV_blend_square;
    GLboolean NV_fragment_program;
+   GLboolean NV_light_max_exponent;
    GLboolean NV_point_sprite;
    GLboolean NV_texture_rectangle;
    GLboolean NV_texgen_reflection;

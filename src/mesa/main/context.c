@@ -988,6 +988,8 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Const.MaxConvolutionHeight = MAX_CONVOLUTION_HEIGHT;
    ctx->Const.MaxClipPlanes = MAX_CLIP_PLANES;
    ctx->Const.MaxLights = MAX_LIGHTS;
+   ctx->Const.MaxSpotExponent = 128.0;
+   ctx->Const.MaxShininess = 128.0;
 #if FEATURE_ARB_vertex_program
    ctx->Const.MaxVertexProgramInstructions = MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS;
    ctx->Const.MaxVertexProgramAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;

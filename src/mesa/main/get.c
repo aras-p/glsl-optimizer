@@ -1518,6 +1518,16 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ENUM_TO_BOOL(ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
 
+      /* GL_NV_light_max_exponent */
+      case GL_MAX_SHININESS_NV:
+         CHECK_EXTENSION_B(NV_light_max_exponent, pname);
+         *params = FLOAT_TO_BOOL(ctx->Const.MaxShininess);
+         break;
+      case GL_MAX_SPOT_EXPONENT_NV:
+         CHECK_EXTENSION_B(NV_light_max_exponent, pname);
+         *params = FLOAT_TO_BOOL(ctx->Const.MaxSpotExponent);
+         break;
+         
 #if FEATURE_ARB_vertex_buffer_object
       case GL_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_B(ARB_vertex_buffer_object, pname);
@@ -3016,6 +3026,16 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) (ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
          break;
 
+      /* GL_NV_light_max_exponent */
+      case GL_MAX_SHININESS_NV:
+         CHECK_EXTENSION_B(NV_light_max_exponent, pname);
+         *params = (GLdouble) ctx->Const.MaxShininess;
+         break;
+      case GL_MAX_SPOT_EXPONENT_NV:
+         CHECK_EXTENSION_B(NV_light_max_exponent, pname);
+         *params = (GLdouble) ctx->Const.MaxSpotExponent;
+         break;
+
 #if FEATURE_ARB_vertex_buffer_object
       case GL_ARRAY_BUFFER_BINDING_ARB:
          CHECK_EXTENSION_D(ARB_vertex_buffer_object, pname);
@@ -4488,6 +4508,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_ACTIVE_STENCIL_FACE_EXT:
          CHECK_EXTENSION_F(EXT_stencil_two_side, pname);
          *params = (GLfloat) (ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
+         break;
+
+      /* GL_NV_light_max_exponent */
+      case GL_MAX_SHININESS_NV:
+         CHECK_EXTENSION_B(NV_light_max_exponent, pname);
+         *params = ctx->Const.MaxShininess;
+         break;
+      case GL_MAX_SPOT_EXPONENT_NV:
+         CHECK_EXTENSION_B(NV_light_max_exponent, pname);
+         *params = ctx->Const.MaxSpotExponent;
          break;
 
 #if FEATURE_ARB_vertex_buffer_object
@@ -6000,6 +6030,16 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_ACTIVE_STENCIL_FACE_EXT:
          CHECK_EXTENSION_I(EXT_stencil_two_side, pname);
          *params = (GLint) (ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
+         break;
+
+      /* GL_NV_light_max_exponent */
+      case GL_MAX_SHININESS_NV:
+         CHECK_EXTENSION_B(NV_light_max_exponent, pname);
+         *params = (GLint) ctx->Const.MaxShininess;
+         break;
+      case GL_MAX_SPOT_EXPONENT_NV:
+         CHECK_EXTENSION_B(NV_light_max_exponent, pname);
+         *params = (GLint) ctx->Const.MaxSpotExponent;
          break;
 
 #if FEATURE_ARB_vertex_buffer_object

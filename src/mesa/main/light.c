@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.55 2003/03/01 01:50:21 brianp Exp $ */
+/* $Id: light.c,v 1.56 2003/05/30 21:37:19 idr Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -136,7 +136,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
       break;
    }
    case GL_SPOT_EXPONENT:
-      if (params[0]<0.0 || params[0]>128.0) {
+      if (params[0]<0.0 || params[0]>ctx->Const.MaxSpotExponent) {
 	 _mesa_error( ctx, GL_INVALID_VALUE, "glLight" );
 	 return;
       }

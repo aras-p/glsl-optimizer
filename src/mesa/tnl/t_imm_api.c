@@ -1319,11 +1319,11 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
       COPY_4FV( mat[1].Emission, params );
    }
    if (bitmask & FRONT_SHININESS_BIT) {
-      GLfloat shininess = CLAMP( params[0], 0.0F, 128.0F );
+      GLfloat shininess = CLAMP( params[0], 0.0F, ctx->Const.MaxShininess );
       mat[0].Shininess = shininess;
    }
    if (bitmask & BACK_SHININESS_BIT) {
-      GLfloat shininess = CLAMP( params[0], 0.0F, 128.0F );
+      GLfloat shininess = CLAMP( params[0], 0.0F, ctx->Const.MaxShininess );
       mat[1].Shininess = shininess;
    }
    if (bitmask & FRONT_INDEXES_BIT) {

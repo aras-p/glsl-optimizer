@@ -1,4 +1,4 @@
-/* $Id: api_noop.c,v 1.12 2003/03/01 01:50:20 brianp Exp $ */
+/* $Id: api_noop.c,v 1.13 2003/05/30 21:37:14 idr Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -130,11 +130,11 @@ void _mesa_noop_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
       COPY_4FV( mat[1].Emission, params );
    }
    if (bitmask & FRONT_SHININESS_BIT) {
-      GLfloat shininess = CLAMP( params[0], 0.0F, 128.0F );
+      GLfloat shininess = CLAMP( params[0], 0.0F, ctx->Const.MaxShininess );
       mat[0].Shininess = shininess;
    }
    if (bitmask & BACK_SHININESS_BIT) {
-      GLfloat shininess = CLAMP( params[0], 0.0F, 128.0F );
+      GLfloat shininess = CLAMP( params[0], 0.0F, ctx->Const.MaxShininess );
       mat[1].Shininess = shininess;
    }
    if (bitmask & FRONT_INDEXES_BIT) {
