@@ -1,8 +1,8 @@
-/* $Id: GLView.cpp,v 1.7 2002/10/17 14:25:30 brianp Exp $ */
+/* $Id: GLView.cpp,v 1.8 2002/11/13 22:22:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  * 
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  * 
@@ -38,7 +38,6 @@ extern "C" {
 #include "extensions.h"
 #include "macros.h"
 #include "matrix.h"
-#include "mem.h"
 #include "mmath.h"
 #include "mtypes.h"
 #include "texformat.h"
@@ -276,9 +275,7 @@ BGLView::BGLView(BRect rect, char *name,
                                             );
 
    // create core context
-   __GLimports imports;
-   _mesa_init_default_imports(&imports, md);
-   GLcontext * ctx = _mesa_create_context( visual, NULL, &imports);
+   GLcontext * ctx = _mesa_create_context(visual, NULL, md, GL_FALSE);
 
 
    // create core framebuffer
@@ -648,7 +645,7 @@ void MesaDriver::UnlockGL()
 
 void MesaDriver::SwapBuffers() const
 {
-	// _mesa_swap_buffers();
+        // _mesa_notifySwapBuffers(m_glcontext);
 
 	if (m_bitmap) {
 		m_bglview->LockLooper();
