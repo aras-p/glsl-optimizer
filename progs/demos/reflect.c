@@ -1,4 +1,4 @@
-/* $Id: reflect.c,v 1.3 2000/06/15 14:25:48 brianp Exp $ */
+/* $Id: reflect.c,v 1.4 2000/09/15 16:43:57 brianp Exp $ */
 
 /*
  * Demo of a reflective, texture-mapped surface with OpenGL.
@@ -54,6 +54,9 @@ static GLfloat spin;
 static GLint Width = 400, Height = 300;
 static GLenum ShowBuffer = GL_NONE;
 
+/* performance info */
+static GLint T0 = 0;
+static GLint Frames = 0;
 
 
 static void make_table( void )
@@ -295,6 +298,18 @@ static void draw_scene( void )
    }
 
    glutSwapBuffers();
+
+   {
+      GLint t = glutGet(GLUT_ELAPSED_TIME);
+      Frames++;
+      if (t - T0 >= 5000) {
+         GLfloat seconds = (t - T0) / 1000.0;
+         GLfloat fps = Frames / seconds;
+         printf("%d frames in %g seconds = %g FPS\n", Frames, seconds, fps);
+         T0 = t;
+         Frames = 0;
+      }
+   }
 }
 
 
