@@ -63,7 +63,7 @@ LIB32=link.exe -lib
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ  /c
+# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
 # ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "../../../include" /I "../" /I "../main" /I "../glapi" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /Zm500 /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
@@ -101,6 +101,10 @@ SOURCE=.\arbvertparse.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\atifragshader.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\grammar.c
 # PROP Exclude_From_Build 1
 # End Source File
@@ -128,6 +132,14 @@ SOURCE=.\nvvertparse.c
 
 SOURCE=.\program.c
 # End Source File
+# Begin Source File
+
+SOURCE=.\shaderobjects.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\shaderobjects_3dlabs.c
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -151,6 +163,10 @@ SOURCE=.\arbprogram_syn.h
 # Begin Source File
 
 SOURCE=.\arbvertparse.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\atifragshader.h
 # End Source File
 # Begin Source File
 
@@ -191,6 +207,14 @@ SOURCE=.\nvvertprog.h
 # Begin Source File
 
 SOURCE=.\program.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\shaderobjects.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\shaderobjects_3dlabs.h
 # End Source File
 # End Group
 # End Target
