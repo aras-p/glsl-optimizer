@@ -1,7 +1,8 @@
+/* $Id: texutil.c,v 1.6 2000/08/29 23:30:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.4
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -586,6 +587,7 @@ _mesa_convert_teximage(MesaIntTexFormat dstFormat,
          break;
 
       case MESA_A8_R8_G8_B8:
+      case MESA_FF_R8_G8_B8:
          /* 32-bit texels */
          if (srcFormat == GL_BGRA && srcType == GL_UNSIGNED_INT_8_8_8_8_REV){
             /* special, optimized case */
@@ -661,12 +663,62 @@ _mesa_convert_teximage(MesaIntTexFormat dstFormat,
                }
             }
          }
+         else if (srcFormat == GL_RGB && srcType == GL_UNSIGNED_BYTE) {
+            /* general case */
+            if (wScale == 1 && hScale == 1) {
+               const GLubyte *src = _mesa_image_address(packing, srcImage,
+                             srcWidth, srcHeight, srcFormat, srcType, 0, 0, 0);
+               const GLint srcStride = _mesa_image_row_stride(packing,
+                                                 srcWidth, srcFormat, srcType);
+               GLuint *dst = dstImage;
+               GLint row;
+               for (row = 0; row < dstHeight; row++) {
+                  GLint col, col3;
+                  for (col = col3 = 0; col < dstWidth; col++, col3 += 3) {
+                     GLubyte r = src[col3 + 0];
+                     GLubyte g = src[col3 + 1];
+                     GLubyte b = src[col3 + 2];
+                     GLubyte a = 255;
+                     dst[col] = (a << 24) | (r << 16) | (g << 8) | b;
+                  }
+                  src += srcStride;
+                  dst = (GLuint *) ((GLubyte *) dst + dstRowStride);
+               }
+            }
+            else {
+               /* must rescale image */
+               GLuint *dst = dstImage;
+               GLint row;
+               for (row = 0; row < dstHeight; row++) {
+                  GLint srcRow = row / hScale;
+                  const GLubyte *src = _mesa_image_address(packing, srcImage,
+                        srcWidth, srcHeight, srcFormat, srcType, 0, srcRow, 0);
+                  GLint col;
+                  for (col = 0; col < dstWidth; col++) {
+                     GLint col3 = (col / wScale) * 3;
+                     GLubyte r = src[col3 + 0];
+                     GLubyte g = src[col3 + 1];
+                     GLubyte b = src[col3 + 2];
+                     GLubyte a = 255;
+                     dst[col] = (a << 24) | (r << 16) | (g << 8) | b;
+                  }
+                  dst = (GLuint *) ((GLubyte *) dst + dstRowStride);
+               }
+            }
+         }
          else {
             /* can't handle this source format/type combination */
             return GL_FALSE;
          }
+         if (dstFormat == MESA_FF_R8_G8_B8) {
+            /* set alpha bytes to 0xff */
+            GLuint i;
+            GLubyte *dst = (GLubyte *) dstImage;
+            for (i = 0; i < dstWidth * dstHeight; i++) {
+               dst[i * 4 + 3] = 0xff;
+            }
+         }
          break;
-
 
       default:
          /* unexpected internal format! */
@@ -1140,6 +1192,7 @@ _mesa_convert_texsubimage(MesaIntTexFormat dstFormat,
          break;
 
       case MESA_A8_R8_G8_B8:
+      case MESA_FF_R8_G8_B8:
          /* 32-bit texels */
          if (srcFormat == GL_BGRA && srcType == GL_UNSIGNED_INT_8_8_8_8_REV){
             /* special, optimized case */
@@ -1222,6 +1275,18 @@ _mesa_convert_texsubimage(MesaIntTexFormat dstFormat,
          else {
             /* can't handle this source format/type combination */
             return GL_FALSE;
+         }
+         if (dstFormat == MESA_FF_R8_G8_B8) {
+            /* set alpha bytes to 0xff */
+            GLint row, col;
+            GLubyte *dst = (GLubyte *) dstImage
+                           + dstYoffset * dstRowStride + dstXoffset;
+            for (row = 0; row < height; row++) {
+               for (col = 0; col < width; col++) {
+                  dst[col * 4 + 3] = 0xff;
+               }
+               dst = dst + dstRowStride;
+            }
          }
          break;
 
@@ -1491,6 +1556,7 @@ _mesa_unconvert_teximage(MesaIntTexFormat srcFormat,
          }
          break;
       case MESA_A8_R8_G8_B8:
+      case MESA_FF_R8_G8_B8:
          ASSERT(dstFormat == GL_RGBA);
          if (wScale == 1 && hScale == 1) {
             GLint i, n = dstWidth * dstHeight;
@@ -1546,6 +1612,7 @@ _mesa_set_teximage_component_sizes(MesaIntTexFormat mesaFormat,
       { MESA_A4_R4_G4_B4,  4, 4, 4, 4, 0, 0, 0 },
       { MESA_A1_R5_G5_B5,  5, 5, 5, 1, 0, 0, 0 },
       { MESA_A8_R8_G8_B8,  8, 8, 8, 8, 0, 0, 0 },
+      { MESA_FF_R8_G8_B8,  8, 8, 8, 8, 0, 0, 0 },
       { -1,                0, 0, 0, 0, 0, 0, 0 }
    };
    GLint i;

@@ -1,7 +1,8 @@
+/* $Id: texutil.h,v 1.4 2000/08/29 23:30:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.4
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -32,6 +33,9 @@
 
 
 
+/*
+ * NOTE: "FF" means fill with byte value 0xff
+ */
                            /* msb <------ TEXEL BITS -----------> lsb */
 typedef enum {             /* ---- ---- ---- ---- ---- ---- ---- ---- */
    MESA_I8,                /*                               IIII IIII */
@@ -42,7 +46,8 @@ typedef enum {             /* ---- ---- ---- ---- ---- ---- ---- ---- */
    MESA_R5_G6_B5,          /*                     RRRR RGGG GGGB BBBB */
    MESA_A4_R4_G4_B4,       /*                     AAAA RRRR GGGG BBBB */
    MESA_A1_R5_G5_B5,       /*                     ARRR RRGG GGGB BBBB */
-   MESA_A8_R8_G8_B8        /* AAAA AAAA RRRR RRRR GGGG GGGG BBBB BBBB */
+   MESA_A8_R8_G8_B8,       /* AAAA AAAA RRRR RRRR GGGG GGGG BBBB BBBB */
+   MESA_FF_R8_G8_B8        /* FFFF FFFF RRRR RRRR GGGG GGGG BBBB BBBB */
 } MesaIntTexFormat;
 
 
