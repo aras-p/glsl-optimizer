@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.5 1999/09/15 17:02:06 brianp Exp $
+# $Id: Make-config,v 1.6 1999/10/15 22:00:07 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=1
@@ -915,8 +915,19 @@ sco:
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"XLIBS = -L/usr/X11/lib -lX11"
 
+sco5:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -pedantic -O2 -mieee-fp" \
+	"MAKELIB = ../mklib.ar-ruv" \
+	"XLIBS = -lXm -lXt -lX11 -lXmu -lXext -lsocket -lx"
+
 solaris-x86:
-	$(MAKE) targets \
+	$(MAKE) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
@@ -927,7 +938,7 @@ solaris-x86:
 	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
 
 solaris-x86-gcc:
-	$(MAKE) targets \
+	$(MAKE) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
