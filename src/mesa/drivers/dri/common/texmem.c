@@ -246,7 +246,6 @@ void driUpdateTextureLRU( driTextureObject * t )
 
 
       for (i = start ; i <= end ; i++) {
-	 list[i].in_use = 1;
 	 list[i].age = heap->local_age;
 
 	 /* remove_from_list(i)
@@ -374,7 +373,7 @@ void driDestroyTextureObject( driTextureObject * t )
  * \param heap Heap whose state is to be updated
  * \param offset Byte offset in the heap that has been stolen
  * \param size Size, in bytes, of the stolen block
- * \param in_use Non-zero if the block is in-use by another context
+ * \param in_use Non-zero if the block is pinned/reserved by the kernel
  */
 
 static void driTexturesGone( driTexHeap * heap, int offset, int size, 
@@ -396,19 +395,13 @@ static void driTexturesGone( driTexHeap * heap, int offset, int size,
 	    driSwapOutTextureObject( t );
 	 }
 	 else {
-	    if ( in_use && 
-		 offset == t->memBlock->ofs && size == t->memBlock->size ) {
-	       /* Matching placeholder already exists */
-	       return;
-	    } else {
-	       driDestroyTextureObject( t );
-	    }
+	    driDestroyTextureObject( t );
 	 }
       }
    }
 
 
-   if ( in_use ) {
+   {
       t = (driTextureObject *) CALLOC( heap->texture_object_size );
       if ( t == NULL ) return;
 
@@ -420,6 +413,8 @@ static void driTexturesGone( driTexHeap * heap, int offset, int size,
 	 return;
       }
       t->heap = heap;
+      if (in_use) 
+	 t->bound = 99;
       insert_at_head( & heap->texture_objects, t );
    }
 }
@@ -673,7 +668,7 @@ driCreateTextureHeap( unsigned heap_id, void * context, unsigned size,
 	 heap->destroy_texture_object = destroy_tex_obj;
 
 	 /* Force global heap init */
-	 if (heap->global_age == 0)
+	 if (heap->global_age[0] == 0)
 	     heap->local_age = ~0;
 	 else
 	     heap->local_age = 0;
