@@ -1,8 +1,8 @@
-/* $Id: glu.h,v 1.22 2000/07/11 14:11:44 brianp Exp $ */
+/* $Id: glu.h,v 1.23 2000/10/26 15:32:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * Copyright (C) 1995-2000  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
@@ -200,7 +200,7 @@ extern "C" {
 #define GLU_NURBS_ERROR37	100287   /* duplicate point on pwlcurve */
 
 /* GLU 1.3 and later */
-#define GLU_NURBS_MODE ?
+#define GLU_NURBS_MODE		100160
 
 
 /* Errors */
