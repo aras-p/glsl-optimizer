@@ -1,4 +1,4 @@
-/* $Id: texformat.h,v 1.2 2001/03/18 08:53:49 gareth Exp $ */
+/* $Id: texformat.h,v 1.3 2001/03/22 06:23:56 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,6 +37,31 @@
  * default value, but may be changed by drivers as required.
  */
 enum _format {
+   /* Hardware-friendly formats.  Drivers can override the default
+    * formats and convert texture images to one of these as required.
+    * These formats are all little endian, as shown below.  They will be
+    * most useful for x86-based PC graphics card drivers.
+    *
+    * NOTE: In the default case, some of these formats will be
+    * duplicates of the default formats listed above.  However, these
+    * formats guarantee their internal component sizes, while GLchan may
+    * vary betwen GLubyte, GLushort and GLfloat.
+    */
+				/* msb <------ TEXEL BITS -----------> lsb */
+				/* ---- ---- ---- ---- ---- ---- ---- ---- */
+   MESA_FORMAT_RGBA8888 = 0,	/* RRRR RRRR GGGG GGGG BBBB BBBB AAAA AAAA */
+   MESA_FORMAT_ARGB8888,	/* AAAA AAAA RRRR RRRR GGGG GGGG BBBB BBBB */
+   MESA_FORMAT_RGB888,		/*           RRRR RRRR GGGG GGGG BBBB BBBB */
+   MESA_FORMAT_RGB565,		/*                     RRRR RGGG GGGB BBBB */
+   MESA_FORMAT_ARGB4444,	/*                     AAAA RRRR GGGG BBBB */
+   MESA_FORMAT_ARGB1555,	/*                     ARRR RRGG GGGB BBBB */
+   MESA_FORMAT_AL88,		/*                     AAAA AAAA LLLL LLLL */
+   MESA_FORMAT_RGB332,		/*                               RRRG GGBB */
+   MESA_FORMAT_A8,		/*                               AAAA AAAA */
+   MESA_FORMAT_L8,		/*                               LLLL LLLL */
+   MESA_FORMAT_I8,		/*                               IIII IIII */
+   MESA_FORMAT_CI8,		/*                               CCCC CCCC */
+
    /* Generic GLchan-based formats.  These are the default formats used
     * by the software rasterizer and, unless the driver overrides the
     * texture image functions, incoming images will be converted to one
@@ -54,32 +79,7 @@ enum _format {
    MESA_FORMAT_LUMINANCE_ALPHA,
    MESA_FORMAT_INTENSITY,
    MESA_FORMAT_COLOR_INDEX,
-   MESA_FORMAT_DEPTH_COMPONENT,
-
-   /* Hardware-friendly formats.  Drivers can override the default
-    * formats and convert texture images to one of these as required.
-    * These formats are all little endian, as shown below.  They will be
-    * most useful for x86-based PC graphics card drivers.
-    *
-    * NOTE: In the default case, some of these formats will be
-    * duplicates of the default formats listed above.  However, these
-    * formats guarantee their internal component sizes, while GLchan may
-    * vary betwen GLubyte, GLushort and GLfloat.
-    */
-				/* msb <------ TEXEL BITS -----------> lsb */
-				/* ---- ---- ---- ---- ---- ---- ---- ---- */
-   MESA_FORMAT_RGBA8888,	/* RRRR RRRR GGGG GGGG BBBB BBBB AAAA AAAA */
-   MESA_FORMAT_ARGB8888,	/* AAAA AAAA RRRR RRRR GGGG GGGG BBBB BBBB */
-   MESA_FORMAT_RGB888,		/*           RRRR RRRR GGGG GGGG BBBB BBBB */
-   MESA_FORMAT_RGB565,		/*                     RRRR RGGG GGGB BBBB */
-   MESA_FORMAT_ARGB4444,	/*                     AAAA RRRR GGGG BBBB */
-   MESA_FORMAT_ARGB1555,	/*                     ARRR RRGG GGGB BBBB */
-   MESA_FORMAT_AL88,		/*                     AAAA AAAA LLLL LLLL */
-   MESA_FORMAT_RGB332,		/*                               RRRG GGBB */
-   MESA_FORMAT_A8,		/*                               AAAA AAAA */
-   MESA_FORMAT_L8,		/*                               LLLL LLLL */
-   MESA_FORMAT_I8,		/*                               IIII IIII */
-   MESA_FORMAT_CI8		/*                               CCCC CCCC */
+   MESA_FORMAT_DEPTH_COMPONENT
 };
 
 

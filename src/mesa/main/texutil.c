@@ -1,4 +1,4 @@
-/* $Id: texutil.c,v 1.17 2001/03/21 16:44:08 brianp Exp $ */
+/* $Id: texutil.c,v 1.18 2001/03/22 06:23:56 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -679,7 +679,7 @@ _mesa_convert_texsubimage1d( GLint mesaFormat,
    ASSERT( srcImage );
    ASSERT( dstImage );
 
-   ASSERT( mesaFormat >= MESA_FORMAT_RGBA );
+   ASSERT( mesaFormat >= MESA_FORMAT_RGBA8888 );
    ASSERT( mesaFormat <= MESA_FORMAT_CI8 );
 
    /* Make it easier to pass all the parameters around.
@@ -744,7 +744,7 @@ _mesa_convert_texsubimage2d( GLint mesaFormat,
    ASSERT( srcImage );
    ASSERT( dstImage );
 
-   ASSERT( mesaFormat >= MESA_FORMAT_RGBA );
+   ASSERT( mesaFormat >= MESA_FORMAT_RGBA8888 );
    ASSERT( mesaFormat <= MESA_FORMAT_CI8 );
 
    /* Make it easier to pass all the parameters around.
@@ -786,7 +786,7 @@ _mesa_convert_texsubimage3d( GLint mesaFormat,
    ASSERT( srcImage );
    ASSERT( dstImage );
 
-   ASSERT( mesaFormat >= MESA_FORMAT_RGBA );
+   ASSERT( mesaFormat >= MESA_FORMAT_RGBA8888 );
    ASSERT( mesaFormat <= MESA_FORMAT_CI8 );
 
    /* Make it easier to pass all the parameters around.
