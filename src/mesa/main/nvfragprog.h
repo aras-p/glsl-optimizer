@@ -1,4 +1,4 @@
-/* $Id: nvfragprog.h,v 1.2 2003/02/17 15:38:03 brianp Exp $ */
+/* $Id: nvfragprog.h,v 1.3 2003/02/23 04:09:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -141,7 +141,7 @@ struct fp_instruction
    GLboolean UpdateCondRegister;
    GLuint Precision;    /* SINGLE, HALF or FIXED */
    GLuint TexSrcUnit;   /* texture unit for TEX, TXD, TXP instructions */
-   GLenum TexSrcTarget; /* texture target for TEX, TXD, TXP instructions */
+   GLuint TexSrcIndex;  /* texture target for TEX, TXD, TXP instructions */
 };
 
 
