@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.3 1999/10/10 12:39:04 brianp Exp $ */
+/* $Id: macros.h,v 1.4 1999/10/11 04:22:57 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -497,7 +497,7 @@ extern void gl_free(void *ptr);
 #define GL_ALLOC(BYTES)      (void *) malloc(BYTES)
 #define GL_CALLOC(BYTES)     (void *) calloc(1, BYTES)
 #define GL_ALLOC_STRUCT(T)   (struct T *) malloc(sizeof(struct T))
-#define GL_CALLOC_STRUCT(T)  (struct T *) calloc(sizeof(struct T))
+#define GL_CALLOC_STRUCT(T)  (struct T *) calloc(1,sizeof(struct T))
 #define GL_FREE(PTR)         free(PTR)
 #endif
 
