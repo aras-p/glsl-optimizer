@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.31 2000/10/23 19:33:55 brianp Exp $
+# $Id: Make-config,v 1.32 2000/10/23 19:43:36 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
@@ -67,6 +67,7 @@ aix:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -O -DAIXV3" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -78,6 +79,7 @@ aix-sl:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -O -DAIXV3" \
 	"MAKELIB = ../bin/mklib.aix" \
@@ -96,6 +98,7 @@ amix:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS =" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -107,6 +110,7 @@ beos-r4:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = g++" \
 	"CFLAGS = -O -DNO_CONST" \
 	"MAKELIB = ../bin/mklib.beos-r4" \
@@ -118,6 +122,7 @@ bsdos:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -I/usr/X11/include -O2" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -129,6 +134,7 @@ bsdos4:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -I/usr/X11/include -O2 -fPIC" \
 	"MAKELIB = ../bin/mklib.bsdos4" \
@@ -140,6 +146,7 @@ cygnus:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"DLLTOOL = dlltool" \
 	"WING_DIR= /wing" \
@@ -157,6 +164,7 @@ cygnus-linux:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gnuwin32gcc" \
 	"DLLTOOL = gnuwin32dlltool --as gnuwin32as" \
 	"LD = gnuwin32ld" \
@@ -174,6 +182,7 @@ dgux:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -O" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -185,6 +194,7 @@ freebsd:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -O2 -fPIC -pedantic -I/usr/X11R6/include -DUSE_XSHM -DHZ=100" \
 	"MAKELIB = ../bin/mklib.freebsd" \
@@ -196,6 +206,7 @@ freebsd-386:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -ffast-math -fPIC -pedantic -I/usr/X11R6/include -DUSE_XSHM -DHZ=100 -DUSE_X86_ASM -DFREEBSD" \
 	"MAKELIB = ../bin/mklib.freebsd" \
@@ -212,6 +223,7 @@ gcc:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -223,6 +235,7 @@ hpux9:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = +O3 -Aa -D_HPUX_SOURCE -I/usr/include/X11R5 -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -234,6 +247,7 @@ hpux9-gcc:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R5 -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -245,6 +259,7 @@ hpux9-sl:
 	"GLU_LIB = libGLU.sl" \
 	"GLUT_LIB = libglut.sl" \
 	"GLW_LIB = libGLw.sl" \
+	"OSMESA_LIB = libOSMesa.sl" \
 	"CC = cc" \
 	"CFLAGS = +z +O3 +Olibcalls +ESlit -Aa +Onolimit -D_HPUX_SOURCE -I/usr/include/X11R5 -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.hpux" \
@@ -256,6 +271,7 @@ hpux9-gcc-sl:
 	"GLU_LIB = libGLU.sl" \
 	"GLUT_LIB = libglut.sl" \
 	"GLW_LIB = libGLw.sl" \
+	"OSMESA_LIB = libOSMesa.sl" \
 	"CC = gcc" \
 	"CFLAGS = -fPIC -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R5 -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.hpux" \
@@ -267,6 +283,7 @@ hpux10:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -278,6 +295,7 @@ hpux10-sl:
 	"GLU_LIB = libGLU" \
 	"GLUT_LIB = libglut" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = +z -Ae +O2 +Onolimit +Oaggressive -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.hpux" \
@@ -289,6 +307,7 @@ hpux10-gcc:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include  -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -300,6 +319,7 @@ hpux10-gcc-sl:
 	"GLU_LIB = libGLU.sl" \
 	"GLUT_LIB = libglut.sl" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -fPIC -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.hpux" \
@@ -313,6 +333,7 @@ irix4:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -O2 -ansi -prototypes -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
@@ -325,6 +346,7 @@ irix5:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -O2 -ansi -fullwarn -DUSE_XSHM -DNO_CONST" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
@@ -337,6 +359,7 @@ irix5-gcc:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -O2 -pedantic -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
@@ -349,6 +372,7 @@ irix5-dso:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = cc" \
 	"CFLAGS = -O2 -ansi -fullwarn -DUSE_XSHM -DNO_CONST" \
 	"MAKELIB = ../bin/mklib.irix5" \
@@ -360,6 +384,7 @@ irix6-o32:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -32 -mips2 -O2 -ansi -DUSE_XSHM -DNO_CONST" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
@@ -371,6 +396,7 @@ irix6-o32-dso:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = cc" \
 	"CFLAGS = -32 -mips2 -O2 -ansi -DUSE_XSHM -DNO_CONST" \
 	"MAKELIB = ../bin/mklib.irix6-32" \
@@ -384,6 +410,7 @@ irix6-n32:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"LIBDIR = ../lib32" \
 	"CC = cc" \
 	"CFLAGS = -n32 -mips3 -O3 -ansi -woff 1209,1521" \
@@ -396,6 +423,7 @@ irix6-n32-dso:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"LIBDIR = ../lib32" \
 	"CC = cc" \
 	"CFLAGS = -n32 -mips3 -O3 -ansi -DUSE_XSHM -woff 1185,1521" \
@@ -408,6 +436,7 @@ irix6-gcc-n32-sl:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"LIBDIR = ../lib32" \
 	"CC = gcc" \
 	"CFLAGS = -mabi=n32 -mips3 -O3 -DUSE_XSHM" \
@@ -428,6 +457,7 @@ irix6-64:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"LIBDIR = ../lib64" \
 	"CC = cc" \
 	"CFLAGS = -64 -O3 -ansi -woff 1068,1069,1174,1185,1209,1474,1552 -DUSE_XSHM" \
@@ -440,6 +470,7 @@ irix6-64-dso:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"LIBDIR = ../lib64" \
 	"CC = cc" \
 	"CFLAGS = -64 -O3 -ansi -woff 1068,1069,1174,1185,1209,1474,1552 -DUSE_XSHM" \
@@ -452,6 +483,7 @@ linux:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -466,6 +498,7 @@ linux-static:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -477,6 +510,7 @@ linux-trace:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -DMESA_TRACE -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -491,6 +525,7 @@ linux-x86:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
 	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -521,6 +556,7 @@ linux-x86-static:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
 	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -552,6 +588,7 @@ linux-ggi:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc"  \
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DGGI -DCDECL=" \
 	"MAKELIB = ../bin/mklib.ggi" \
@@ -564,6 +601,7 @@ linux-386-ggi:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc"  \
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -DGGI -DCDECL=" \
 	"MAKELIB = ../bin/mklib.ggi" \
@@ -580,6 +618,7 @@ linux-glide:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -594,6 +633,7 @@ linux-386-glide:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_XSHM -DFX -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -613,6 +653,7 @@ linux-386-opt-glide:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DUSE_X86_ASM -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -632,6 +673,7 @@ linux-386-opt-V2-glide:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DFX_V2 -DUSE_X86_ASM -DPTHREAD -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include"\
 	"MAKELIB = ../bin/mklib.linux" \
@@ -651,6 +693,7 @@ linux-x86-glide:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -DUSE_XSHM -DFX -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include -I/usr/src/mesa-glx/src/FX/X86" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -682,6 +725,7 @@ linux-alpha:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -fPIC -D_XOPEN_SOURCE -DSHM" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -696,6 +740,7 @@ linux-alpha-static:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -L/usr/X11R6/lib -D_XOPEN_SOURCE -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -707,6 +752,7 @@ linux-ppc:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -mcpu=603 -ansi -pedantic -fPIC -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -721,6 +767,7 @@ linux-ppc-static:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -mcpu=603 -ansi -pedantic -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -732,6 +779,7 @@ linux-sparc-static:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -pedantic -funroll-loops -O3 -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -744,6 +792,7 @@ linux-sparc5:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -mv8 -O2 -ffast-math -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -759,6 +808,7 @@ linux-sparc-ultra:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -mv8 -O2 -mtune=ultrasparc -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -777,6 +827,7 @@ lynxos:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -O2 -ansi -pedantic -funroll-loops -ffast-math -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -788,6 +839,7 @@ machten-2.2:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -DTENON -D__MACHTEN__ -fstrength-reduce -m68881 -O2" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
@@ -799,6 +851,7 @@ machten-4.0:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -DTENON -D__MACHTEN__ -fstrength-reduce -O2" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
@@ -810,6 +863,7 @@ mklinux:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -821,6 +875,7 @@ netbsd:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -O2 -fPIC -DUSE_XSHM -I/usr/X11R6/include -DHZ=100"  \
 	"MAKELIB = ../bin/mklib.netbsd" \
@@ -841,6 +896,7 @@ openbsd:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = cc" \
 	"CFLAGS = -O2 -fPIC -I/usr/X11R6/include -DUSE_XSHM -DHZ=100" \
 	"MAKELIB = ../bin/mklib.openbsd" \
@@ -851,6 +907,7 @@ openstep:
 	"DRIVER_SOURCES = OSmesa/osmesa.c" \
 	"GL_LIB = libGL.a" \
 	"GLU_LIB = libGLU.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = ${MYCC}" \
 	"CFLAGS = -traditional-cpp -DOPENSTEP -O4" \
 	"MAKELIB = ../bin/mklib.openstep"
@@ -860,6 +917,7 @@ openstep-win32:
 	"DRIVER_SOURCES = OSmesa/osmesa.c" \
 	"GL_LIB = libGL.a" \
 	"GLU_LIB = libGLU.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -DOPENSTEP -O4" \
 	"MAKELIB = ../bin/mklib.openstep"
@@ -870,6 +928,7 @@ os2-x11:
 	"GLU_LIB  = MesaGLU.a" \
 	"GLUT_LIB = glut.a" \
 	"GLW_LIB = GLw.a" \
+	"OSMESA_LIB = OSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -Zmt -O3 -m486 -funroll-loops -Wall -Wno-unused -ansi -pedantic -ffast-math -DUSE_X86_ASM -D_SVID_SOURCE -D_BSD_SOURCE -I$(X11ROOT)/XFree86/include" \
 	"MAKELIB = ..\\bin\\mklib-emx.cmd " \
@@ -886,6 +945,7 @@ osf1:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -O0 -std1 -ieee_with_no_inexact -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -897,6 +957,7 @@ osf1-sl:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = cc" \
 	"CFLAGS = -O0 -std1 -ieee_with_no_inexact -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.osf1" \
@@ -908,6 +969,7 @@ pgi-cygnus:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = pgcc" \
 	"CFLAGS = -fast -cyglibs -Munix -I. -DWIN32 -D__WIN32__ -D_WINDOWS " \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -919,6 +981,7 @@ pgi-mingw32:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = pgcc" \
 	"CFLAGS = -fast -msvcrt -Munix -I. -DWIN32 -D__WIN32__ -D_WINDOWS " \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -931,6 +994,7 @@ qnx:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -O" \
 	"MAKELIB = ../bin/mklib.qnx" \
@@ -942,6 +1006,7 @@ sco:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2 -mieee-fp" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -953,6 +1018,7 @@ sco5:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2 -mieee-fp" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -964,6 +1030,7 @@ solaris-x86:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -Xa -xO3 -xpentium -KPIC -I/usr/openwin/include -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.solaris" \
@@ -975,6 +1042,7 @@ solaris-x86-gcc:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -m486 -fPIC -I/usr/openwin/include -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.solaris" \
@@ -986,6 +1054,7 @@ sunos4:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = acc" \
 	"CFLAGS = -O -DUSE_XSHM -DSUNOS4" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -997,6 +1066,7 @@ sunos4-sl:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = acc" \
 	"CFLAGS = -Kpic -O -I/usr/include/X11R5 -DUSE_XSHM -DSUNOS4" \
 	"MAKELIB = ld -assert pure-text -o" \
@@ -1008,6 +1078,7 @@ sunos4-gcc:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -DUSE_XSHM -DSUNOS4 -I/usr/openwin/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -1019,6 +1090,7 @@ sunos4-gcc-sl:
 	"GLU_LIB = libGLU.so.$(VERSION)" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -fPIC -O3 -I/usr/openwin/include -I/usr/include/X11R5 -I/usr/include/X11R5 -DUSE_XSHM -DSUNOS4 -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.sunos4" \
@@ -1030,6 +1102,7 @@ sunos4-gcc-x11r6-sl:
 	"GLU_LIB = libGLU.so.$(VERSION)" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -fPIC -O3 -I/usr/X11R6.3/include -DUSE_XSHM -DSUNOS4 -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.sunos4" \
@@ -1041,6 +1114,7 @@ sunos5:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -Xa -fast -xO4 -native -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -1052,6 +1126,7 @@ sunos5-sl:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = cc" \
 	"CFLAGS = -KPIC -Xa -O -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.sunos5" \
@@ -1063,6 +1138,7 @@ sunos5-ultra:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -Xa -fast -xO5 -xtarget=ultra -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -1074,6 +1150,7 @@ sunos5-ultra-sl:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = cc" \
 	"CFLAGS = -KPIC -Xa -fast -xO5 -xtarget=ultra -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.sunos5" \
@@ -1085,6 +1162,7 @@ sunos5-gcc:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -O3 -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -1096,6 +1174,7 @@ sunos5-gcc-sl:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -fPIC -O3 -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.sunos5" \
@@ -1107,6 +1186,7 @@ sunos5-x11r6-gcc-sl:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -fPIC -O3 -DUSE_XSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.sunos5" \
@@ -1163,6 +1243,7 @@ sunSolaris-CC:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = CC" \
 	"CFLAGS = -O -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -1175,6 +1256,7 @@ ultrix:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -O -Dconst=/**/" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -1186,6 +1268,7 @@ ultrix-gcc:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -1198,6 +1281,7 @@ unicos:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS =" \
 	"MAKELIB = ../bin/mklib/ar-rcv" \
@@ -1209,6 +1293,7 @@ unixware:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -O -I/usr/X/include -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -1220,6 +1305,7 @@ unixware-shared:
 	"GLU_LIB = libGLU" \
 	"GLUT_LIB = libglut" \
 	"GLW_LIB = libGLw" \
+	"OSMESA_LIB = libOSMesa" \
 	"CC = cc" \
 	"CFLAGS = -O -I/usr/X/include -KPIC,inline -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.solaris" \
@@ -1241,6 +1327,7 @@ vistra:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -1259,6 +1346,7 @@ irix-debug:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"LIBDIR = ../lib32" \
 	"CC = cc" \
 	"CFLAGS = -g -n32 -ansi -fullwarn -DUSE_XSHM -DDEBUG -woff 1209,1210,1506,1521,3496" \
@@ -1271,6 +1359,7 @@ DEBUG:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CFLAGS = -g -ansi -prototypes -fullwarn -DUSE_XSHM -DDEBUG" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
@@ -1298,6 +1387,7 @@ linux-static-debug:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -DUSE_XSHM -DDEBUG -DMESA_DEBUG -DSVGA -DFX -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -1309,6 +1399,7 @@ linux-x86-debug:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
 	"CFLAGS = -O2 -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -DPTHREADS -I/usr/X11R6/include -DDEBUG -DMESA_DEBUG" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -1339,6 +1430,7 @@ linux-glide-debug:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DFX -DDEBUG -I/usr/local/glide/include -I/usr/include/glide" \
 	"MAKELIB = ../bin/mklib.linux" \
@@ -1351,6 +1443,7 @@ linux-prof:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -Wall -O2 -pg -ansi -pedantic -ffast-math -DUSE_XSHM -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
@@ -1379,6 +1472,7 @@ linux-glide-prof:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
+	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CFLAGS = -O2 -pg -ansi -pedantic -Wall -DUSE_XSHM -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_KATMAI_ASM -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \

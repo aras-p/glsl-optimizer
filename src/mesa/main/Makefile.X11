@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.24 2000/09/26 20:53:53 brianp Exp $
+# $Id: Makefile.X11,v 1.25 2000/10/23 19:43:38 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -112,7 +112,6 @@ DRIVER_SOURCES = \
 	X/xm_line.c \
 	X/xm_span.c \
 	X/xm_tri.c \
-	OSmesa/osmesa.c \
 	SVGA/svgamesa.c \
 	SVGA/svgamesa8.c \
 	SVGA/svgamesa15.c \
@@ -151,6 +150,11 @@ OBJECTS = $(ASM_SOURCES:.S=.o) \
 	$(CORE_SOURCES:.c=.o) \
 	$(DRIVER_SOURCES:.c=.o) \
 	$(ADDITIONAL_OBJ)
+
+
+OSMESA_SOURCES = OSmesa/osmesa.c
+OSMESA_OBJECTS = OSmesa/osmesa.o
+
 
 
 ##### RULES #####
@@ -267,13 +271,20 @@ clean:
 	-rm *.o *~ */*.o */*~ *.lo *.la
 	-rm -rf .libs
 
-targets: $(LIBDIR)/$(GL_LIB)
+targets: $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(OSMESA_LIB)
 
-# Make the library
+# Make the GL library
 $(LIBDIR)/$(GL_LIB): $(OBJECTS)
 	$(MAKELIB) $(GL_LIB) $(GL_MAJOR) $(GL_MINOR) $(GL_TINY) $(OBJECTS)
 	rm -f $(LIBDIR)/$(GL_LIB)*
 	mv $(GL_LIB)* $(LIBDIR)
+
+
+# Make the OSMesa library
+$(LIBDIR)/$(OSMESA_LIB): $(OSMESA_OBJECTS)
+	if [ ${OSMESA_LIB} ] ; then $(MAKELIB) $(OSMESA_LIB) $(MESA_MAJOR) $(MESA_MINOR) $(GL_TINY) $(OSMESA_OBJECTS) ; fi
+	if [ ${OSMESA_LIB} ] ; then rm -f $(LIBDIR)/$(OSMESA_LIB)* ; fi
+	if [ ${OSMESA_LIB} ] ; then mv $(OSMESA_LIB)* $(LIBDIR) ; fi
 
 
 include ../Make-config
@@ -286,8 +297,8 @@ include depend
 # Run 'make dep' to update the dependencies if you change what's included
 # by any source file.
 # 
-dep: $(CORE_SOURCES) $(DRIVER_SOURCES)
-	makedepend -fdepend -Y -I../include -DGGI -DSVGA -DFX $(CORE_SOURCES) $(DRIVER_SOURCES)
+dep: $(CORE_SOURCES) $(DRIVER_SOURCES) $(OSMESA_SOURCES)
+	makedepend -fdepend -Y -I../include -DGGI -DSVGA -DFX $(CORE_SOURCES) $(DRIVER_SOURCES) $(OSMESA_SOURCES)
 
 tags:
 	etags `find . -name \*.[ch]` `find ../include`
