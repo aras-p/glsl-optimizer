@@ -113,11 +113,12 @@ static void TAG(render_points_verts)( GLcontext *ctx,
    if (HAVE_POINTS) {
       LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
-      int currentsz = GET_CURRENT_VB_MAX_VERTS();
+      int currentsz;
       GLuint j, nr;
 
       INIT( GL_POINTS );
 
+      currentsz = GET_CURRENT_VB_MAX_VERTS();
       if (currentsz < 8)
 	 currentsz = dmasz;
 
@@ -141,7 +142,7 @@ static void TAG(render_lines_verts)( GLcontext *ctx,
    if (HAVE_LINES) {
       LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
-      int currentsz = GET_CURRENT_VB_MAX_VERTS();
+      int currentsz;
       GLuint j, nr;
 
       INIT( GL_LINES );
@@ -149,6 +150,7 @@ static void TAG(render_lines_verts)( GLcontext *ctx,
       /* Emit whole number of lines in total and in each buffer:
        */
       count -= (count-start) & 1;
+      currentsz = GET_CURRENT_VB_MAX_VERTS();
       currentsz -= currentsz & 1;
       dmasz -= dmasz & 1;
 
@@ -176,11 +178,12 @@ static void TAG(render_line_strip_verts)( GLcontext *ctx,
    if (HAVE_LINE_STRIPS) {
       LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
-      int currentsz = GET_CURRENT_VB_MAX_VERTS();
+      int currentsz;
       GLuint j, nr;
 
       INIT( GL_LINE_STRIP );
 
+      currentsz = GET_CURRENT_VB_MAX_VERTS();
       if (currentsz < 8)
 	 currentsz = dmasz;
 
@@ -207,7 +210,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
    if (HAVE_LINE_STRIPS) {
       LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
-      int currentsz = GET_CURRENT_VB_MAX_VERTS();
+      int currentsz;
       GLuint j, nr;
 
       INIT( GL_LINE_STRIP );
@@ -219,6 +222,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
 
       /* Ensure last vertex won't wrap buffers:
        */
+      currentsz = GET_CURRENT_VB_MAX_VERTS();
       currentsz--;
       dmasz--;
 
@@ -269,10 +273,12 @@ static void TAG(render_triangles_verts)( GLcontext *ctx,
 {
    LOCAL_VARS;
    int dmasz = (GET_SUBSEQUENT_VB_MAX_VERTS()/3) * 3;
-   int currentsz = (GET_CURRENT_VB_MAX_VERTS()/3) * 3;
+   int currentsz;
    GLuint j, nr;
 
    INIT(GL_TRIANGLES);
+
+   currentsz = (GET_CURRENT_VB_MAX_VERTS()/3) * 3;
 
    /* Emit whole number of tris in total.  dmasz is already a multiple
     * of 3.
@@ -338,10 +344,11 @@ static void TAG(render_tri_fan_verts)( GLcontext *ctx,
       LOCAL_VARS;
       GLuint j, nr;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
-      int currentsz = GET_CURRENT_VB_MAX_VERTS();
+      int currentsz;
 
       INIT(GL_TRIANGLE_FAN);
 
+      currentsz = GET_CURRENT_VB_MAX_VERTS();
       if (currentsz < 8) {
 	 currentsz = dmasz;
       }
@@ -376,10 +383,11 @@ static void TAG(render_poly_verts)( GLcontext *ctx,
       LOCAL_VARS;
       GLuint j, nr;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
-      int currentsz = GET_CURRENT_VB_MAX_VERTS();
+      int currentsz;
 
       INIT(GL_POLYGON);
 
+      currentsz = GET_CURRENT_VB_MAX_VERTS();
       if (currentsz < 8) {
 	 currentsz = dmasz;
       }
@@ -419,7 +427,6 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
       INIT(GL_QUAD_STRIP);
 
       currentsz = GET_CURRENT_VB_MAX_VERTS();
-
       if (currentsz < 8) {
 	 currentsz = dmasz;
       }
@@ -495,7 +502,7 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
    else if (HAVE_TRI_STRIPS) {
       LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
-      int currentsz = GET_CURRENT_VB_MAX_VERTS();
+      int currentsz;
 
       /* Emit smooth-shaded quadstrips as tristrips:
        */
@@ -505,6 +512,7 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
       /* Emit whole number of quads in total, and in each buffer.
        */
       dmasz -= dmasz & 1;
+      currentsz = GET_CURRENT_VB_MAX_VERTS();
       currentsz -= currentsz & 1;
       count -= (count-start) & 1;
 
@@ -535,7 +543,7 @@ static void TAG(render_quads_verts)( GLcontext *ctx,
    if (HAVE_QUADS) {
       LOCAL_VARS;
       int dmasz = (GET_SUBSEQUENT_VB_MAX_VERTS()/4) * 4;
-      int currentsz = (GET_CURRENT_VB_MAX_VERTS()/4) * 4;
+      int currentsz;
       GLuint j, nr;
 
       INIT(GL_QUADS);
@@ -545,6 +553,7 @@ static void TAG(render_quads_verts)( GLcontext *ctx,
        */
       count -= (count-start)%4;
 
+      currentsz = (GET_CURRENT_VB_MAX_VERTS()/4) * 4;
       if (currentsz < 8)
          currentsz = dmasz;
 
