@@ -156,7 +156,8 @@ struct gl_texture_format;
  * In GL_ARB_vertex_shader / OpenGL 2.0 the aliasing is disallowed (the
  * generic attributes are distinct/separate).
  */
-enum {
+enum
+{
    VERT_ATTRIB_POS = 0,
    VERT_ATTRIB_WEIGHT = 1,
    VERT_ATTRIB_NORMAL = 2,
@@ -214,7 +215,8 @@ enum {
 /**
  * Indexes for fragment program input attributes.
  */
-enum {
+enum
+{
    FRAG_ATTRIB_WPOS = 0,
    FRAG_ATTRIB_COL0 = 1,
    FRAG_ATTRIB_COL1 = 2,
@@ -282,7 +284,8 @@ enum {
 /**
  * Data structure for color tables
  */
-struct gl_color_table {
+struct gl_color_table
+{
    GLenum Format;         /**< GL_ALPHA, GL_RGB, GL_RGB, etc */
    GLenum IntFormat;
    GLuint Size;           /**< number of entries (rows) in table */
@@ -364,7 +367,8 @@ struct gl_color_table {
 /**
  * Material shininess lookup table.
  */
-struct gl_shine_tab {
+struct gl_shine_tab
+{
    struct gl_shine_tab *next, *prev;
    GLfloat tab[SHINE_TABLE_SIZE+1];
    GLfloat shininess;
@@ -373,9 +377,10 @@ struct gl_shine_tab {
 
 
 /**
- * Light.
+ * Light source state.
  */
-struct gl_light {
+struct gl_light
+{
    struct gl_light *next;	/**< double linked list with sentinel */
    struct gl_light *prev;
 
@@ -415,9 +420,10 @@ struct gl_light {
 
 
 /**
- * Light model.
+ * Light model state.
  */
-struct gl_lightmodel {
+struct gl_lightmodel
+{
    GLfloat Ambient[4];		/**< ambient color */
    GLboolean LocalViewer;	/**< Local (or infinite) view point? */
    GLboolean TwoSide;		/**< Two (or one) sided lighting? */
@@ -427,7 +433,7 @@ struct gl_lightmodel {
 
 
 /**
- * Material.
+ * Material state.
  */
 struct gl_material
 {
@@ -436,17 +442,19 @@ struct gl_material
 
 
 /**
- * Accumulation buffer attributes.
+ * Accumulation buffer attribute group (GL_ACCUM_BUFFER_BIT)
  */
-struct gl_accum_attrib {
+struct gl_accum_attrib
+{
    GLfloat ClearColor[4];	/**< Accumulation buffer clear color */
 };
 
 
 /**
- * Color buffer attributes.
+ * Color buffer attribute group (GL_COLOR_BUFFER_BIT).
  */
-struct gl_colorbuffer_attrib {
+struct gl_colorbuffer_attrib
+{
    GLuint ClearIndex;			/**< Index to use for glClear */
    GLclampf ClearColor[4];		/**< Color to use for glClear */
 
@@ -494,9 +502,10 @@ struct gl_colorbuffer_attrib {
 
 
 /**
- * Current attributes.
+ * Current attribute group (GL_CURRENT_BIT).
  */
-struct gl_current_attrib {
+struct gl_current_attrib
+{
    /**
     * \name Values valid only when FLUSH_VERTICES has been called.
     */
@@ -526,9 +535,10 @@ struct gl_current_attrib {
 
 
 /**
- * Depth buffer attributes.
+ * Depth buffer attribute group (GL_DEPTH_BUFFER_BIT).
  */
-struct gl_depthbuffer_attrib {
+struct gl_depthbuffer_attrib
+{
    GLenum Func;			/**< Function for depth buffer compare */
    GLclampd Clear;		/**< Value to clear depth buffer to */
    GLboolean Test;		/**< Depth buffering enabled flag */
@@ -540,9 +550,10 @@ struct gl_depthbuffer_attrib {
 
 
 /**
- * glEnable()/glDisable() attributes.
+ * glEnable()/glDisable() attribute group (GL_ENABLE_BIT).
  */
-struct gl_enable_attrib {
+struct gl_enable_attrib
+{
    GLboolean AlphaTest;
    GLboolean AutoNormal;
    GLboolean Blend;
@@ -618,9 +629,10 @@ struct gl_enable_attrib {
 
 
 /**
- * Eval attributes.
+ * Evaluator attribute group (GL_EVAL_BIT).
  */
-struct gl_eval_attrib {
+struct gl_eval_attrib
+{
    /**
     * \name Enable bits 
     */
@@ -662,9 +674,10 @@ struct gl_eval_attrib {
 
 
 /**
- * Fog attributes.
+ * Fog attribute group (GL_FOG_BIT).
  */
-struct gl_fog_attrib {
+struct gl_fog_attrib
+{
    GLboolean Enabled;		/**< Fog enabled flag */
    GLfloat Color[4];		/**< Fog color */
    GLfloat Density;		/**< Density >= 0.0 */
@@ -678,11 +691,12 @@ struct gl_fog_attrib {
 
 
 /** 
- * Hint attributes.
+ * Hint attribute group (GL_HINT_BIT).
  * 
  * Values are always one of GL_FASTEST, GL_NICEST, or GL_DONT_CARE.
  */
-struct gl_hint_attrib {
+struct gl_hint_attrib
+{
    GLenum PerspectiveCorrection;
    GLenum PointSmooth;
    GLenum LineSmooth;
@@ -697,7 +711,8 @@ struct gl_hint_attrib {
 /**
  * Histogram attributes.
  */
-struct gl_histogram_attrib {
+struct gl_histogram_attrib
+{
    GLuint Width;				/**< number of table entries */
    GLint Format;				/**< GL_ALPHA, GL_RGB, etc */
    GLuint Count[HISTOGRAM_TABLE_SIZE][4];	/**< the histogram */
@@ -713,7 +728,8 @@ struct gl_histogram_attrib {
 /**
  * Color Min/max state.
  */
-struct gl_minmax_attrib {
+struct gl_minmax_attrib
+{
    GLenum Format;
    GLboolean Sink;
    GLfloat Min[4], Max[4];   /**< RGBA */
@@ -723,7 +739,8 @@ struct gl_minmax_attrib {
 /**
  * Image convolution state.
  */
-struct gl_convolution_attrib {
+struct gl_convolution_attrib
+{
    GLenum Format;
    GLenum InternalFormat;
    GLuint Width;
@@ -744,10 +761,11 @@ struct gl_convolution_attrib {
 
 
 /**
- * Lighting attributes.
+ * Lighting attribute group (GL_LIGHT_BIT).
  */
-struct gl_light_attrib {
-   struct gl_light Light[MAX_LIGHTS];	/**< Array of lights */
+struct gl_light_attrib
+{
+   struct gl_light Light[MAX_LIGHTS];	/**< Array of light sources */
    struct gl_lightmodel Model;		/**< Lighting model */
 
    /**
@@ -767,7 +785,7 @@ struct gl_light_attrib {
    struct gl_light EnabledList;         /**< List sentinel */
 
    /** 
-    * Derived for optimizations: 
+    * Derived state for optimizations: 
     */
    /*@{*/
    GLboolean _NeedEyeCoords;		
@@ -779,9 +797,10 @@ struct gl_light_attrib {
 
 
 /**
- * Line attributes.
+ * Line attribute group (GL_LINE_BIT).
  */
-struct gl_line_attrib {
+struct gl_line_attrib
+{
    GLboolean SmoothFlag;	/**< GL_LINE_SMOOTH enabled? */
    GLboolean StippleFlag;	/**< GL_LINE_STIPPLE enabled? */
    GLushort StipplePattern;	/**< Stipple pattern */
@@ -792,14 +811,19 @@ struct gl_line_attrib {
 
 
 /**
- * Display list state.
+ * Display list attribute group (GL_LIST_BIT).
  */
-struct gl_list_attrib {
+struct gl_list_attrib
+{
    GLuint ListBase;
 };
 
 
-struct gl_list_instruction {
+/**
+ * Used by device drivers to hook new commands into display lists.
+ */
+struct gl_list_instruction
+{
    GLuint Size;
    void (*Execute)( GLcontext *ctx, void *data );
    void (*Destroy)( GLcontext *ctx, void *data );
@@ -808,16 +832,21 @@ struct gl_list_instruction {
 
 #define MAX_DLIST_EXT_OPCODES 16
 
-struct gl_list_extensions {
+/**
+ * Used by device drivers to hook new commands into display lists.
+ */
+struct gl_list_extensions
+{
    struct gl_list_instruction Opcode[MAX_DLIST_EXT_OPCODES];
    GLuint NumOpcodes;
 };
 
 
 /**
- * Multisample state
+ * Multisample attribute group (GL_MULTISAMPLE_BIT).
  */
-struct gl_multisample_attrib {
+struct gl_multisample_attrib
+{
    GLboolean Enabled;
    GLboolean SampleAlphaToCoverage;
    GLboolean SampleAlphaToOne;
@@ -828,9 +857,10 @@ struct gl_multisample_attrib {
 
 
 /**
- * Pixel attributes.
+ * Pixel attribute group (GL_PIXEL_MODE_BIT).
  */
-struct gl_pixel_attrib {
+struct gl_pixel_attrib
+{
    GLenum ReadBuffer;		/**< source buffer for glReadPixels()/glCopyPixels() */
    GLubyte _ReadSrcMask;	/**< Not really a mask, but like _DrawDestMask
 				  *
@@ -907,9 +937,10 @@ struct gl_pixel_attrib {
 
 
 /**
- * Point attributes.
+ * Point attribute group (GL_POINT_BIT).
  */
-struct gl_point_attrib {
+struct gl_point_attrib
+{
    GLboolean SmoothFlag;	/**< True if GL_POINT_SMOOTH is enabled */
    GLfloat Size;		/**< User-specified point size */
    GLfloat _Size;		/**< Size clamped to Const.Min/MaxPointSize */
@@ -925,9 +956,10 @@ struct gl_point_attrib {
 
 
 /**
- * Polygon attributes.
+ * Polygon attribute group (GL_POLYGON_BIT).
  */
-struct gl_polygon_attrib {
+struct gl_polygon_attrib
+{
    GLenum FrontFace;		/**< Either GL_CW or GL_CCW */
    GLenum FrontMode;		/**< Either GL_POINT, GL_LINE or GL_FILL */
    GLenum BackMode;		/**< Either GL_POINT, GL_LINE or GL_FILL */
@@ -945,9 +977,10 @@ struct gl_polygon_attrib {
 
 
 /**
- * Scissor attributes.
+ * Scissor attributes (GL_SCISSOR_BIT).
  */
-struct gl_scissor_attrib {
+struct gl_scissor_attrib
+{
    GLboolean Enabled;		/**< Scissor test enabled? */
    GLint X, Y;			/**< Lower left corner of box */
    GLsizei Width, Height;	/**< Size of box */
@@ -955,9 +988,10 @@ struct gl_scissor_attrib {
 
 
 /**
- * Stencil attributes.
+ * Stencil attribute group (GL_STENCIL_BUFFER_BIT).
  */
-struct gl_stencil_attrib {
+struct gl_stencil_attrib
+{
    GLboolean Enabled;		/**< Enabled flag */
    GLboolean TestTwoSide;	/**< GL_EXT_stencil_two_side */
    GLubyte ActiveFace;		/**< GL_EXT_stencil_two_side (0 or 1) */
@@ -1099,7 +1133,8 @@ typedef GLboolean (*StoreTexImageFunc)(GLcontext *ctx, GLuint dims,
 /**
  * Texture format record 
  */
-struct gl_texture_format {
+struct gl_texture_format
+{
    GLint MesaFormat;		/**< One of the MESA_FORMAT_* values */
 
    GLenum BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
@@ -1136,9 +1171,11 @@ struct gl_texture_format {
 
 
 /**
- * Texture image record 
+ * Texture image state.  Describes the dimensions of a texture image,
+ * the texel format and pointers to Texel Fetch functions.
  */
-struct gl_texture_image {
+struct gl_texture_image
+{
    GLenum Format;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
 				 *   GL_LUMINANCE, GL_LUMINANCE_ALPHA,
 				 *   GL_INTENSITY, GL_COLOR_INDEX or
@@ -1199,9 +1236,12 @@ struct gl_texture_image {
 
 
 /**
- * Texture object record
+ * Texture object state.  Contains the array of mipmap images, border color,
+ * wrap modes, filter modes, shadow/texcompare state, and the per-texture
+ * color palette.
  */
-struct gl_texture_object {
+struct gl_texture_object
+{
    _glthread_Mutex Mutex;	/**< for thread safety */
    GLint RefCount;		/**< reference count */
    GLboolean DeletePending;	/**< Has glDeleteTexture been called? */
@@ -1260,7 +1300,8 @@ struct gl_texture_object {
  * If GL_NV_texture_env_combine4 is ever supported, the arrays in this
  * structure will need to be expanded for 4 elements.
  */
-struct gl_tex_env_combine_state {
+struct gl_tex_env_combine_state
+{
    GLenum ModeRGB;       /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
    GLenum ModeA;         /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
    GLenum SourceRGB[3];  /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
@@ -1275,9 +1316,12 @@ struct gl_tex_env_combine_state {
 
 
 /**
- * Texture unit record 
+ * Texture unit state.  Contains enable flags, texture environment/function/
+ * combiners, texgen state, pointers to current texture objects and
+ * post-filter color tables.
  */
-struct gl_texture_unit {
+struct gl_texture_unit
+{
    GLuint Enabled;              /**< bitmask of TEXTURE_*_BIT flags */
    GLuint _ReallyEnabled;       /**< 0 or exactly one of TEXTURE_*_BIT flags */
 
@@ -1346,9 +1390,10 @@ struct gl_texture_unit {
 
 
 /**
- * Texture attributes
+ * Texture attribute group (GL_TEXTURE_BIT).
  */
-struct gl_texture_attrib {
+struct gl_texture_attrib
+{
    /**
     * name multitexture 
     */
@@ -1376,9 +1421,10 @@ struct gl_texture_attrib {
 
 
 /**
- * Transformation attributes.
+ * Transformation attribute group (GL_TRANSFORM_BIT).
  */
-struct gl_transform_attrib {
+struct gl_transform_attrib
+{
    GLenum MatrixMode;				/**< Matrix mode */
    GLfloat EyeUserPlane[MAX_CLIP_PLANES][4];	/**< User clip planes */
    GLfloat _ClipUserPlane[MAX_CLIP_PLANES][4];	/**< derived */
@@ -1394,9 +1440,10 @@ struct gl_transform_attrib {
 
 
 /**
- * Viewport attributes.
+ * Viewport attribute group (GL_VIEWPORT_BIT).
  */
-struct gl_viewport_attrib {
+struct gl_viewport_attrib
+{
    GLint X, Y;			/**< position */
    GLsizei Width, Height;	/**< size */
    GLfloat Near, Far;		/**< Depth buffer range */
@@ -1405,9 +1452,10 @@ struct gl_viewport_attrib {
 
 
 /**
- * Node for the attribute stack
+ * Node for the attribute stack.
  */
-struct gl_attrib_node {
+struct gl_attrib_node
+{
    GLbitfield kind;
    void *data;
    struct gl_attrib_node *next;
@@ -1417,7 +1465,8 @@ struct gl_attrib_node {
 /**
  * GL_ARB_vertex/pixel_buffer_object buffer object
  */
-struct gl_buffer_object {
+struct gl_buffer_object
+{
    GLint RefCount;
    GLuint Name;
    GLenum Usage;
@@ -1434,7 +1483,8 @@ struct gl_buffer_object {
 /**
  * Client pixel packing/unpacking attributes
  */
-struct gl_pixelstore_attrib {
+struct gl_pixelstore_attrib
+{
    GLint Alignment;
    GLint RowLength;
    GLint SkipPixels;
@@ -1455,7 +1505,8 @@ struct gl_pixelstore_attrib {
 /**
  * Client vertex array attributes
  */
-struct gl_client_array {
+struct gl_client_array
+{
    GLint Size;                  /**< components per element (1,2,3,4) */
    GLenum Type;                 /**< datatype: GL_FLOAT, GL_INT, etc */
    GLsizei Stride;		/**< user-specified stride */
@@ -1475,7 +1526,8 @@ struct gl_client_array {
 /**
  * Vertex array state
  */
-struct gl_array_attrib {
+struct gl_array_attrib
+{
    struct gl_client_array Vertex;	     /**< client data descriptors */
    struct gl_client_array Normal;
    struct gl_client_array Color;
@@ -1506,7 +1558,8 @@ struct gl_array_attrib {
 /**
  * Feedback buffer state
  */
-struct gl_feedback {
+struct gl_feedback
+{
    GLenum Type;
    GLuint _Mask;		/* FB_* bits */
    GLfloat *Buffer;
@@ -1518,7 +1571,8 @@ struct gl_feedback {
 /**
  * Selection buffer state
  */
-struct gl_selection {
+struct gl_selection
+{
    GLuint *Buffer;	/**< selection buffer */
    GLuint BufferSize;	/**< size of the selection buffer */
    GLuint BufferCount;	/**< number of values in the selection buffer */
@@ -1688,7 +1742,8 @@ struct fragment_program
 /**
  * State common to vertex and fragment programs.
  */
-struct program_state {
+struct gl_program_state
+{
    GLint ErrorPos;                       /* GL_PROGRAM_ERROR_POSITION_NV */
    const char *ErrorString;              /* GL_PROGRAM_ERROR_STRING_NV */
 };
@@ -1697,7 +1752,7 @@ struct program_state {
 /**
  * State vars for GL_ARB/GL_NV_vertex_program
  */
-struct vertex_program_state
+struct gl_vertex_program_state
 {
    GLboolean Enabled;                  /**< GL_VERTEX_PROGRAM_NV */
    GLboolean _Enabled;                 /**< Really enabled? */
@@ -1728,7 +1783,7 @@ struct vertex_program_state
 /*
  * State for GL_ARB/NV_fragment_program
  */
-struct fragment_program_state
+struct gl_fragment_program_state
 {
    GLboolean Enabled;                    /* GL_VERTEX_PROGRAM_NV */
    GLboolean _Enabled;                   /* Really enabled? */
@@ -1748,7 +1803,7 @@ struct fragment_program_state
 /*
  * State for GL_ARB_occlusion_query
  */
-struct occlusion_state
+struct gl_occlusion_state
 {
    GLboolean Active;
    GLuint CurrentQueryObject;
@@ -1921,7 +1976,8 @@ struct gl_constants
 
 
 /**
- * List of extensions.
+ * Enable flag for each OpenGL extension.  Different device drivers will
+ * enable different extensions at runtime.
  */
 struct gl_extensions
 {
@@ -2075,13 +2131,13 @@ struct matrix_stack
 #define IMAGE_CLAMP_BIT                           0x800 /* extra */
 
 
-/** Transfer ops up to convolution */
+/** Pixel Transfer ops up to convolution */
 #define IMAGE_PRE_CONVOLUTION_BITS (IMAGE_SCALE_BIAS_BIT |     \
                                     IMAGE_SHIFT_OFFSET_BIT |   \
                                     IMAGE_MAP_COLOR_BIT |      \
                                     IMAGE_COLOR_TABLE_BIT)
 
-/** Transfer ops after convolution */
+/** Pixel transfer ops after convolution */
 #define IMAGE_POST_CONVOLUTION_BITS (IMAGE_POST_CONVOLUTION_SCALE_BIAS |      \
                                      IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT | \
                                      IMAGE_COLOR_MATRIX_BIT |                 \
@@ -2234,7 +2290,8 @@ typedef union node Node;
 /**
  * Core Mesa's support for tnl modules:
  */
-struct gl_tnl_module {
+struct gl_tnl_module
+{
    /**
     * Vertex format to be lazily swapped into current dispatch.
     */
@@ -2250,7 +2307,12 @@ struct gl_tnl_module {
    /*@}*/
 };
 
-struct mesa_list_state {
+
+/**
+ * State used during display list compilation and execution.
+ */
+struct mesa_list_state
+{
    GLuint CallDepth;		/**< Current recursion calling depth */
    Node *CurrentListPtr;	/**< Head of list being compiled */
    GLuint CurrentListNum;	/**< Number of the list being compiled */
@@ -2273,14 +2335,17 @@ struct mesa_list_state {
 
 
 /**
- * Mesa context
+ * Mesa rendering context.
  *
  * This is the central context data structure for Mesa.  Almost all
  * OpenGL state is contained in this structure.
  * Think of this as a base class from which device drivers will derive
  * sub classes.
+ *
+ * The GLcontext typedef names this structure.
  */
-struct __GLcontextRec {
+struct __GLcontextRec
+{
    /**
     * \name OS related interfaces. 
     *
@@ -2373,15 +2438,6 @@ struct __GLcontextRec {
    struct gl_viewport_attrib	Viewport;	/**< Viewport attributes */
    /*@}*/
 
-   /** \name Other attribute groups */
-   /*@{*/
-   struct gl_histogram_attrib	Histogram;
-   struct gl_minmax_attrib	MinMax;
-   struct gl_convolution_attrib Convolution1D;
-   struct gl_convolution_attrib Convolution2D;
-   struct gl_convolution_attrib Separable2D;
-   /*@}*/
-
    /** \name Client attribute stack */
    /*@{*/
    GLuint ClientAttribStackDepth;
@@ -2394,6 +2450,15 @@ struct __GLcontextRec {
    struct gl_pixelstore_attrib	Pack;	/**< Pixel packing */
    struct gl_pixelstore_attrib	Unpack;	/**< Pixel unpacking */
    struct gl_pixelstore_attrib	DefaultPacking;	/**< Default params */
+   /*@}*/
+
+   /** \name Other assorted state (not pushed/popped on attribute stack) */
+   /*@{*/
+   struct gl_histogram_attrib	Histogram;
+   struct gl_minmax_attrib	MinMax;
+   struct gl_convolution_attrib Convolution1D;
+   struct gl_convolution_attrib Convolution2D;
+   struct gl_convolution_attrib Separable2D;
 
    struct gl_evaluators EvalMap;   /**< All evaluators */
    struct gl_feedback   Feedback;  /**< Feedback */
@@ -2406,18 +2471,18 @@ struct __GLcontextRec {
    struct gl_color_table PostColorMatrixColorTable;
    struct gl_color_table ProxyPostColorMatrixColorTable;
 
-   struct program_state Program;             /**< for vertex or fragment progs */
-   struct vertex_program_state VertexProgram;      /**< GL_NV_vertex_program */
-   struct fragment_program_state FragmentProgram;  /**< GL_NV_fragment_program */
+   struct gl_program_state Program;        /**< for vertex or fragment progs */
+   struct gl_vertex_program_state VertexProgram;   /**< GL_NV_vertex_program */
+   struct gl_fragment_program_state FragmentProgram;  /**< GL_NV_fragment_program */
 
-   struct occlusion_state Occlusion;  /**< GL_ARB_occlusion_query */
+   struct gl_occlusion_state Occlusion;  /**< GL_ARB_occlusion_query */
+   /*@}*/
 
    GLenum ErrorValue;        /**< Last error code */
    GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */
    GLuint NewState;          /**< bitwise-or of _NEW_* flags */
-   /*@}*/
 
-   /** \name Derived */
+   /** \name Derived state */
    /*@{*/
    GLuint _TriangleCaps;      /**< bitwise-or of DD_* flags */
    GLuint _ImageTransferState;/**< bitwise-or of IMAGE_*_BIT flags */
@@ -2504,7 +2569,8 @@ extern int MESA_DEBUG_FLAGS;
 #endif
 
 
-enum _verbose {
+enum _verbose
+{
    VERBOSE_VARRAY		= 0x0001,
    VERBOSE_TEXTURE		= 0x0002,
    VERBOSE_IMMEDIATE		= 0x0004,
@@ -2519,7 +2585,8 @@ enum _verbose {
 };
 
 
-enum _debug {
+enum _debug
+{
    DEBUG_ALWAYS_FLUSH		= 0x1
 };
 
