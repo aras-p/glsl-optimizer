@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.95 2002/09/06 03:20:21 brianp Exp $ */
+/* $Id: dlist.c,v 1.96 2002/09/06 03:25:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -251,7 +251,6 @@ typedef enum {
         OPCODE_REQUEST_PROGRAMS_RESIDENT_NV,
         OPCODE_LOAD_PROGRAM_NV,
         OPCODE_PROGRAM_PARAMETER4F_NV,
-        OPCODE_PROGRAM_PARAMETERS4FV_NV,
         OPCODE_TRACK_MATRIX_NV,
         /* GL_EXT_stencil_two_side */
         OPCODE_ACTIVE_STENCIL_FACE_EXT,
@@ -648,7 +647,6 @@ void _mesa_init_lists( void )
       InstSize[OPCODE_REQUEST_PROGRAMS_RESIDENT_NV] = 2;
       InstSize[OPCODE_LOAD_PROGRAM_NV] = 4;
       InstSize[OPCODE_PROGRAM_PARAMETER4F_NV] = 7;
-      InstSize[OPCODE_PROGRAM_PARAMETERS4FV_NV] = 4;
       InstSize[OPCODE_TRACK_MATRIX_NV] = 5;
       /* GL_EXT_stencil_two_side */
       InstSize[OPCODE_ACTIVE_STENCIL_FACE_EXT] = 2;
@@ -4079,6 +4077,29 @@ save_ProgramParameter4dvNV(GLenum target, GLuint index,
 
 
 static void
+save_ProgramParameters4dvNV(GLenum target, GLuint index,
+                            GLuint num, const GLdouble *params)
+{
+   GLuint i;
+   for (i = 0; i < num; i++) {
+      save_ProgramParameter4dvNV(target, index + i, params + 4 * i);
+   }
+}
+
+
+static void
+save_ProgramParameters4fvNV(GLenum target, GLuint index,
+                            GLuint num, const GLfloat *params)
+{
+   GLuint i;
+   for (i = 0; i < num; i++) {
+      save_ProgramParameter4fvNV(target, index + i, params + 4 * i);
+   }
+}
+
+
+
+static void
 save_TrackMatrixNV(GLenum target, GLuint address,
                    GLenum matrix, GLenum transform)
 {
@@ -4841,11 +4862,6 @@ execute_list( GLcontext *ctx, GLuint list )
          case OPCODE_PROGRAM_PARAMETER4F_NV:
             (*ctx->Exec->ProgramParameter4fNV)(n[1].e, n[2].ui, n[3].f,
                                                n[4].f, n[5].f, n[6].f);
-            break;
-         case OPCODE_PROGRAM_PARAMETERS4FV_NV:
-            /*
-            (*ctx->Exec->ProgramParameters4fvNV)();
-            */
             break;
          case OPCODE_TRACK_MATRIX_NV:
             (*ctx->Exec->TrackMatrixNV)(n[1].e, n[2].ui, n[3].e, n[4].e);
@@ -6192,8 +6208,8 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->ProgramParameter4dvNV = save_ProgramParameter4dvNV;
    table->ProgramParameter4fNV = save_ProgramParameter4fNV;
    table->ProgramParameter4fvNV = save_ProgramParameter4fvNV;
-   table->ProgramParameters4dvNV = _mesa_ProgramParameters4dvNV;
-   table->ProgramParameters4fvNV = _mesa_ProgramParameters4fvNV;
+   table->ProgramParameters4dvNV = save_ProgramParameters4dvNV;
+   table->ProgramParameters4fvNV = save_ProgramParameters4fvNV;
    table->TrackMatrixNV = save_TrackMatrixNV;
    table->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
 
