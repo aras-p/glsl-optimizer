@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.71 2002/09/21 16:47:09 brianp Exp $ */
+/* $Id: gl.h,v 1.72 2002/10/17 19:39:31 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -65,6 +65,19 @@
 
 #if (defined(__BEOS__) && defined(__POWERPC__)) || defined(__QUICKDRAW__)
 #  define PRAGMA_EXPORT_SUPPORTED		1
+#endif
+
+/*
+ * WINDOWS: Include windows.h here to define APIENTRY.
+ * It is also useful when applications include this file by
+ * including only glut.h, since glut.h depends on windows.h.
+ * Applications needing to include windows.h with parms other
+ * than "WIN32_LEAN_AND_MEAN" may include windows.h before
+ * glut.h or gl.h.
+ */
+#if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__)
+#define WIN32_LEAN_AND_MEAN 1
+#include <windows.h>
 #endif
 
 #if defined(_WIN32) && !defined(_WINGDI_) && !defined(_GNU_H_WINDOWS32_DEFINES) && !defined(OPENSTEP) && !defined(__CYGWIN__)
