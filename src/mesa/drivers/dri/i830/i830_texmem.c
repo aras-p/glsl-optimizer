@@ -111,6 +111,12 @@ static void i830UploadTexLevel( i830ContextPtr imesa,
 	 
 	 memcpy( dst, src, t->Pitch * image->Height );
    }
+   else if (image->IsCompressed) {
+         GLubyte *dst = (GLubyte *)(t->BufAddr + t->image[0][hwlevel].offset);
+	 GLubyte *src = (GLubyte *)image->Data;
+	 
+	 memcpy( dst, src, image->CompressedSize );
+   }
    else switch (image->TexFormat->TexelBytes) {
    case 1:
       {

@@ -418,6 +418,101 @@ static void i830TexSubImage2D( GLcontext *ctx,
 }
 
 
+
+static void i830CompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+                              GLint internalFormat,
+                              GLint width, GLint height, GLint border,
+                              GLsizei imageSize, const GLvoid *data,
+                              struct gl_texture_object *texObj,
+                              struct gl_texture_image *texImage )
+{
+   driTextureObject * t = (driTextureObject *) texObj->DriverData;
+   GLuint face;
+
+   /* which cube face or ordinary 2D image */
+   switch (target) {
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+      face = (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+      ASSERT(face < 6);
+      break;
+   default:
+      face = 0;
+   }
+
+   if ( t != NULL ) {
+      driSwapOutTextureObject( t );
+   }
+   else {
+      t = (driTextureObject *) i830AllocTexObj( texObj );
+      if (!t) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
+         return;
+      }
+   }
+
+   texImage->IsClientData = GL_FALSE;
+   
+   if (I830_DEBUG & DEBUG_TEXTURE)
+     fprintf(stderr, "%s: Using normal storage\n", __FUNCTION__);
+   
+   _mesa_store_compressed_teximage2d(ctx, target, level, internalFormat, width,
+				     height, border, imageSize, data, texObj, texImage);
+   
+   t->dirty_images[face] |= (1 << level);
+}
+
+
+static void i830CompressedTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
+                                 GLint xoffset, GLint yoffset,
+                                 GLsizei width, GLsizei height,
+                                 GLenum format,
+                                 GLsizei imageSize, const GLvoid *data,
+                                 struct gl_texture_object *texObj,
+                                 struct gl_texture_image *texImage )
+{
+   driTextureObject * t = (driTextureObject *) texObj->DriverData;
+   GLuint face;
+
+
+   /* which cube face or ordinary 2D image */
+   switch (target) {
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+      face = (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+      ASSERT(face < 6);
+      break;
+   default:
+      face = 0;
+   }
+
+   assert( t ); /* this _should_ be true */
+   if ( t ) {
+      driSwapOutTextureObject( t );
+   }
+   else {
+      t = (driTextureObject *) i830AllocTexObj( texObj );
+      if (!t) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage2D");
+         return;
+      }
+   }
+
+   _mesa_store_compressed_texsubimage2d(ctx, target, level, xoffset, yoffset, width,
+                            height, format, imageSize, data, texObj, texImage);
+
+   t->dirty_images[face] |= (1 << level);
+}
+
+
 static void i830BindTexture( GLcontext *ctx, GLenum target,
 			     struct gl_texture_object *tObj )
 {
@@ -543,6 +638,11 @@ i830ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       else
          return &_mesa_texformat_ycbcr_rev;
 
+   case GL_COMPRESSED_RGB_FXT1_3DFX:
+     return &_mesa_texformat_rgb_fxt1;
+   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+     return &_mesa_texformat_rgba_fxt1;
+
    default:
       fprintf(stderr, "unexpected texture format in %s\n", __FUNCTION__);
       return NULL;
@@ -579,4 +679,6 @@ void i830InitTextureFuncs( struct dd_function_table *functions )
    functions->TexParameter              = i830TexParameter;
    functions->TexEnv                    = i830TexEnv;
    functions->IsTextureResident         = driIsTextureResident;
+   functions->CompressedTexImage2D      = i830CompressedTexImage2D;
+   functions->CompressedTexSubImage2D   = i830CompressedTexSubImage2D;
 }

@@ -111,6 +111,12 @@ static void i830SetTexImages( i830ContextPtr imesa,
       textureFormat = (MAPSURF_422 | MT_422_YCRCB_SWAPY | /* ??? */
 		       TM0S1_COLORSPACE_CONVERSION);
       break;
+      
+   case MESA_FORMAT_RGB_FXT1:
+   case MESA_FORMAT_RGBA_FXT1:
+     t->texelBytes = 2;
+     textureFormat = (MAPSURF_COMPRESSED | MT_COMPRESS_FXT1);
+     break;
 
    default:
       fprintf(stderr, "%s: bad image format\n", __FUNCTION__);

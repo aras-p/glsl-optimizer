@@ -371,6 +371,9 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    _math_matrix_ctr (&imesa->ViewportMatrix);
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
+
+   _mesa_enable_extension( ctx, "GL_3DFX_texture_compression_FXT1" );
+
    /* XXX these should really go right after _mesa_init_driver_functions() */
    i830DDInitStateFuncs( ctx );
    i830InitTriFuncs (ctx);
