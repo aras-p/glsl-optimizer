@@ -1,4 +1,4 @@
-/* $Id: ac_context.c,v 1.4 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: ac_context.c,v 1.5 2001/07/19 15:54:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -263,6 +263,10 @@ void _ac_DestroyContext( GLcontext *ctx )
    }
 
    if (ac->Elts) FREE( ac->Elts );
+
+   /* Free the context structure itself */
+   FREE(ac);
+   ctx->acache_context = NULL;
 }
 
 void _ac_InvalidateState( GLcontext *ctx, GLuint new_state )

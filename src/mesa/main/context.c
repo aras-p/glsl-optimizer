@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.144 2001/06/26 01:32:48 brianp Exp $ */
+/* $Id: context.c,v 1.145 2001/07/19 15:54:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1607,6 +1607,13 @@ _mesa_free_context_data( GLcontext *ctx )
       }
    }
 
+   _math_matrix_dtr( &ctx->_ModelProjectMatrix );
+
+   _math_matrix_dtr(&ctx->ColorMatrix);
+   for (j = 0; j < MAX_COLOR_STACK_DEPTH - 1; j++) {
+      _math_matrix_dtr(&ctx->ColorStack[j]);
+   }
+
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
    ctx->Shared->RefCount--;
    assert(ctx->Shared->RefCount >= 0);
@@ -1625,6 +1632,7 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_texture_object( NULL, ctx->Texture.Proxy1D );
    _mesa_free_texture_object( NULL, ctx->Texture.Proxy2D );
    _mesa_free_texture_object( NULL, ctx->Texture.Proxy3D );
+   _mesa_free_texture_object( NULL, ctx->Texture.ProxyCubeMap );
 
    /* Free evaluator data */
    if (ctx->EvalMap.Map1Vertex3.Points)
@@ -1669,6 +1677,8 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_colortable_data( &ctx->PostConvolutionColorTable );
    _mesa_free_colortable_data( &ctx->PostColorMatrixColorTable );
    _mesa_free_colortable_data( &ctx->Texture.Palette );
+
+   _math_matrix_dtr(&ctx->Viewport._WindowMap);
 
    _mesa_extensions_dtr(ctx);
 
