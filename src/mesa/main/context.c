@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.178 2002/10/02 22:05:56 brianp Exp $ */
+/* $Id: context.c,v 1.179 2002/10/04 17:37:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1478,6 +1478,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->CatchSignals = GL_TRUE;
    ctx->OcclusionResult = GL_FALSE;
    ctx->OcclusionResultSaved = GL_FALSE;
+   ctx->_Facing = 0;
 
    /* For debug/development only */
    ctx->NoRaster = ctx->imports.getenv(ctx, "MESA_NO_RASTER") ? GL_TRUE : GL_FALSE;

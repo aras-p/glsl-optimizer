@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.28 2002/10/02 23:24:04 brianp Exp $ */
+/* $Id: swrast.h,v 1.29 2002/10/04 17:37:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -205,7 +205,7 @@ do {								\
    (S).start = 0;						\
    (S).end = (END);						\
    (S).facing = 0;						\
-   (S).array = SWRAST_CONTEXT(ctx)->span_data;			\
+   (S).array = SWRAST_CONTEXT(ctx)->SpanArrays;			\
 } while (0)
 
 
@@ -305,6 +305,9 @@ _swrast_Quad( GLcontext *ctx,
 
 extern void
 _swrast_flush( GLcontext *ctx );
+
+extern void
+_swrast_render_primitive( GLcontext *ctx, GLenum mode );
 
 extern void
 _swrast_render_start( GLcontext *ctx );

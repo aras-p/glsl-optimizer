@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.18 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.19 2002/10/04 17:37:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,23 +61,32 @@
 static void
 NAME ( GLcontext *ctx, const SWvertex *vert )
 {
-#if FLAGS & TEXTURE
-   GLuint u;
-#endif
 #if FLAGS & (ATTENUATE | LARGE | SMOOTH | SPRITE)
    GLfloat size;
 #endif
 #if FLAGS & ATTENUATE
    GLfloat alphaAtten;
 #endif
-#if (FLAGS & RGBA) && (FLAGS & SMOOTH)
+#if FLAGS & RGBA
    const GLchan red   = vert->color[0];
    const GLchan green = vert->color[1];
    const GLchan blue  = vert->color[2];
    const GLchan alpha = vert->color[3];
 #endif
-
-   struct sw_span span;
+#if FLAGS & SPECULAR
+   const GLchan specRed   = vert->specular[0];
+   const GLchan specGreen = vert->specular[1];
+   const GLchan specBlue  = vert->specular[2];
+#endif
+#if FLAGS & INDEX
+   const GLuint colorIndex = vert->index;
+#endif
+#if FLAGS & TEXTURE
+   GLfloat texcoord[MAX_TEXTURE_UNITS][4];
+   GLuint u;
+#endif
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   struct sw_span *span = &(swrast->PointSpan);
 
    /* Cull primitives with malformed coordinates.
     */
@@ -87,59 +96,40 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 	 return;
    }
 
-   INIT_SPAN(span, GL_POINT, 0, SPAN_FOG, SPAN_XY | SPAN_Z);
-   span.fog = vert->fog;
-   span.fogStep = 0.0;
-
-#if (FLAGS & RGBA)
-#if (FLAGS & SMOOTH)
-   /* because we need per-fragment alpha values */
-   span.arrayMask |= SPAN_RGBA;
-#else
-   /* same RGBA for all fragments */
-   span.interpMask |= SPAN_RGBA;
-   span.red = ChanToFixed(vert->color[0]);
-   span.green = ChanToFixed(vert->color[1]);
-   span.blue = ChanToFixed(vert->color[2]);
-   span.alpha = ChanToFixed(vert->color[3]);
-   span.redStep = span.greenStep = span.blueStep = span.alphaStep = 0;
-#endif /*SMOOTH*/
-#endif /*RGBA*/
+   /*
+    * Span init
+    */
+   span->interpMask = SPAN_FOG;
+   span->arrayMask = SPAN_XY | SPAN_Z;
+   span->fog = vert->fog;
+   span->fogStep = 0.0;
+#if FLAGS & RGBA
+   span->arrayMask |= SPAN_RGBA;
+#endif
 #if FLAGS & SPECULAR
-   span.interpMask |= SPAN_SPEC;
-   span.specRed = ChanToFixed(vert->specular[0]);
-   span.specGreen = ChanToFixed(vert->specular[1]);
-   span.specBlue = ChanToFixed(vert->specular[2]);
-   span.specRedStep = span.specGreenStep = span.specBlueStep = 0;
+   span->arrayMask |= SPAN_SPEC;
 #endif
 #if FLAGS & INDEX
-   span.interpMask |= SPAN_INDEX;
-   span.index = IntToFixed(vert->index);
-   span.indexStep = 0;
+   span->arrayMask |= SPAN_INDEX;
 #endif
 #if FLAGS & TEXTURE
-   /* but not used for sprite mode */
-   span.interpMask |= SPAN_TEXTURE;
+   span->arrayMask |= SPAN_TEXTURE;
    for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
       if (ctx->Texture.Unit[u]._ReallyEnabled) {
          const GLfloat q = vert->texcoord[u][3];
          const GLfloat invQ = (q == 0.0 || q == 1.0) ? 1.0 : (1.0 / q);
-         span.tex[u][0] = vert->texcoord[u][0] * invQ;
-         span.tex[u][1] = vert->texcoord[u][1] * invQ;
-         span.tex[u][2] = vert->texcoord[u][2] * invQ;
-         span.tex[u][3] = q;
-         span.texStepX[u][0] = span.texStepY[u][0] = 0.0;
-         span.texStepX[u][1] = span.texStepY[u][1] = 0.0;
-         span.texStepX[u][2] = span.texStepY[u][2] = 0.0;
-         span.texStepX[u][3] = span.texStepY[u][3] = 0.0;
+         texcoord[u][0] = vert->texcoord[u][0] * invQ;
+         texcoord[u][1] = vert->texcoord[u][1] * invQ;
+         texcoord[u][2] = vert->texcoord[u][2] * invQ;
+         texcoord[u][3] = q;
       }
    }
 #endif
 #if FLAGS & SMOOTH
-   span.arrayMask |= SPAN_COVERAGE;
+   span->arrayMask |= SPAN_COVERAGE;
 #endif
 #if FLAGS & SPRITE
-   span.arrayMask |= SPAN_TEXTURE;
+   span->arrayMask |= SPAN_TEXTURE;
 #endif
 
 #if FLAGS & ATTENUATE
@@ -156,12 +146,15 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    size = ctx->Point._Size;
 #endif
 
-#if FLAGS & (LARGE | ATTENUATE | SMOOTH | SPRITE)
-   {
+#if FLAGS & (ATTENUATE | LARGE | SMOOTH | SPRITE)
+   /*
+    * Multi-pixel points
+    */
+   {{
       GLint x, y;
       const GLfloat radius = 0.5F * size;
       const GLint z = (GLint) (vert->win[2]);
-      GLuint count = 0;
+      GLuint count;
 #if FLAGS & SMOOTH
       const GLfloat rmin = radius - 0.7071F;  /* 0.7071 = sqrt(2)/2 */
       const GLfloat rmax = radius + 0.7071F;
@@ -195,104 +188,184 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       }
 #endif /*SMOOTH*/
 
+      /* check if we need to flush */
+      if (span->end + (xmax-xmin+1) * (ymax-ymin+1) >= MAX_WIDTH ||
+          (swrast->_RasterMask & (BLEND_BIT | LOGIC_OP_BIT | MASKING_BIT))) {
+#if FLAGS & (TEXTURE | SPRITE)
+         if (ctx->Texture._EnabledUnits)
+            _mesa_write_texture_span(ctx, span);
+         else
+            _mesa_write_rgba_span(ctx, span);
+#elif FLAGS & RGBA
+         _mesa_write_rgba_span(ctx, span);
+#else
+         _mesa_write_index_span(ctx, span);
+#endif
+         span->end = 0;
+      }
+
+      /*
+       * OK, generate fragments
+       */
+      count = span->end;
       (void) radius;
       for (y = ymin; y <= ymax; y++) {
          for (x = xmin; x <= xmax; x++) {
-#if FLAGS & SPRITE
+#if FLAGS & (SPRITE | TEXTURE)
             GLuint u;
 #endif
-#if FLAGS & SMOOTH
-            /* compute coverage */
-            const GLfloat dx = x - vert->win[0] + 0.5F;
-            const GLfloat dy = y - vert->win[1] + 0.5F;
-            const GLfloat dist2 = dx * dx + dy * dy;
-            if (dist2 < rmax2) {
-               if (dist2 >= rmin2) {
-                  /* compute partial coverage */
-                  span.array->coverage[count] = 1.0F - (dist2 - rmin2) * cscale;
-#if FLAGS & INDEX
-                  span.array->coverage[count] *= 15.0; /* coverage in [0,15] */
-#endif
-               }
-               else {
-                  /* full coverage */
-                  span.array->coverage[count] = 1.0F;
-               }
-
-               span.array->x[count] = x;
-               span.array->y[count] = y;
-               span.array->z[count] = z;
 
 #if FLAGS & RGBA
-               span.array->rgba[count][RCOMP] = red;
-               span.array->rgba[count][GCOMP] = green;
-               span.array->rgba[count][BCOMP] = blue;
-#if FLAGS & ATTENUATE
-               span.array->rgba[count][ACOMP] = (GLchan) (alpha * alphaAtten);
-#else
-               span.array->rgba[count][ACOMP] = alpha;
+            span->array->rgba[count][RCOMP] = red;
+            span->array->rgba[count][GCOMP] = green;
+            span->array->rgba[count][BCOMP] = blue;
+            span->array->rgba[count][ACOMP] = alpha;
+#endif
+#if FLAGS & SPECULAR
+            span->array->spec[count][RCOMP] = specRed;
+            span->array->spec[count][GCOMP] = specGreen;
+            span->array->spec[count][BCOMP] = specBlue;
+#endif
+#if FLAGS & INDEX
+            span->array->index[count] = colorIndex;
+#endif
+#if FLAGS & TEXTURE
+            for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+               if (ctx->Texture.Unit[u]._ReallyEnabled) {
+                  COPY_4V(span->array->texcoords[u][count], texcoord[u]);
+               }
+            }
+#endif
+
+#if FLAGS & SMOOTH
+            /* compute coverage */
+            {
+               const GLfloat dx = x - vert->win[0] + 0.5F;
+               const GLfloat dy = y - vert->win[1] + 0.5F;
+               const GLfloat dist2 = dx * dx + dy * dy;
+               if (dist2 < rmax2) {
+                  if (dist2 >= rmin2) {
+                     /* compute partial coverage */
+                     span->array->coverage[count] = 1.0F - (dist2 - rmin2) * cscale;
+#if FLAGS & INDEX
+                     /* coverage in [0,15] */
+                     span->array->coverage[count] *= 15.0;
+#endif
+                  }
+                  else {
+                     /* full coverage */
+                     span->array->coverage[count] = 1.0F;
+                  }
+
+                  span->array->x[count] = x;
+                  span->array->y[count] = y;
+                  span->array->z[count] = z;
+
+#if (FLAGS & ATTENUATE) && (FLAGS & RGBA)
+                  span->array->rgba[count][ACOMP] = (GLchan) (alpha * alphaAtten);
+#elif FLAGS & RGBA
+                  span->array->rgba[count][ACOMP] = alpha;
 #endif /*ATTENUATE*/
-#endif /*RGBA*/
-               count++;
-            } /*if*/
+                  count++;
+               } /*if*/
+            }
+
 #else /*SMOOTH*/
+
             /* not smooth (square points) */
-            span.array->x[count] = x;
-            span.array->y[count] = y;
-            span.array->z[count] = z;
+            span->array->x[count] = x;
+            span->array->y[count] = y;
+            span->array->z[count] = z;
+
 #if FLAGS & SPRITE
             for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
                if (ctx->Texture.Unit[u]._ReallyEnabled) {
                   if (ctx->Point.CoordReplace[u]) {
                      GLfloat s = 0.5F + (x + 0.5F - vert->win[0]) / size;
                      GLfloat t = 0.5F - (y + 0.5F - vert->win[1]) / size;
-                     span.array->texcoords[u][count][0] = s;
-                     span.array->texcoords[u][count][1] = t;
-                     span.array->texcoords[u][count][3] = 1.0F;
+                     span->array->texcoords[u][count][0] = s;
+                     span->array->texcoords[u][count][1] = t;
+                     span->array->texcoords[u][count][3] = 1.0F;
                      if (ctx->Point.SpriteRMode == GL_ZERO)
-                        span.array->texcoords[u][count][2] = 0.0F;
+                        span->array->texcoords[u][count][2] = 0.0F;
                      else if (ctx->Point.SpriteRMode == GL_S)
-                        span.array->texcoords[u][count][2] = vert->texcoord[u][0];
+                        span->array->texcoords[u][count][2] = vert->texcoord[u][0];
                      else /* GL_R */
-                        span.array->texcoords[u][count][2] = vert->texcoord[u][2];
+                        span->array->texcoords[u][count][2] = vert->texcoord[u][2];
                   }
                   else {
-                     COPY_4V(span.array->texcoords[u][count], vert->texcoord[u]);
+                     COPY_4V(span->array->texcoords[u][count], vert->texcoord[u]);
                   }
                }
             }
 #endif /*SPRITE*/
-            count++;
+
+            count++;  /* square point */
+
 #endif /*SMOOTH*/
+
 	 } /*for x*/
       } /*for y*/
-      span.end = count;
-   }
+      span->end = count;
+   }}
 
 #else /* LARGE | ATTENUATE | SMOOTH | SPRITE */
 
-   {
-      /* size == 1 */
-      span.array->x[0] = (GLint) vert->win[0];
-      span.array->y[0] = (GLint) vert->win[1];
-      span.array->z[0] = (GLint) vert->win[2];
-      span.end = 1;
-   }
+   /*
+    * Single-pixel points
+    */
+   {{
+      GLuint count;
+
+      /* check if we need to flush */
+      if (span->end >= MAX_WIDTH ||
+          (swrast->_RasterMask & (BLEND_BIT | LOGIC_OP_BIT | MASKING_BIT))) {
+#if FLAGS & (TEXTURE | SPRITE)
+         if (ctx->Texture._EnabledUnits)
+            _mesa_write_texture_span(ctx, span);
+         else
+            _mesa_write_rgba_span(ctx, span);
+#elif FLAGS & RGBA
+         _mesa_write_rgba_span(ctx, span);
+#else
+         _mesa_write_index_span(ctx, span);
+#endif
+         span->end = 0;
+      }
+
+      count = span->end;
+
+#if FLAGS & RGBA
+      span->array->rgba[count][RCOMP] = red;
+      span->array->rgba[count][GCOMP] = green;
+      span->array->rgba[count][BCOMP] = blue;
+      span->array->rgba[count][ACOMP] = alpha;
+#endif
+#if FLAGS & SPECULAR
+      span->array->spec[count][RCOMP] = specRed;
+      span->array->spec[count][GCOMP] = specGreen;
+      span->array->spec[count][BCOMP] = specBlue;
+#endif
+#if FLAGS & INDEX
+      span->array->index[count] = colorIndex;
+#endif
+#if FLAGS & TEXTURE
+      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+         if (ctx->Texture.Unit[u]._ReallyEnabled) {
+            COPY_4V(span->array->texcoords[u][count], texcoord[u]);
+         }
+      }
+#endif
+
+      span->array->x[count] = (GLint) vert->win[0];
+      span->array->y[count] = (GLint) vert->win[1];
+      span->array->z[count] = (GLint) vert->win[2];
+      span->end = count + 1;
+   }}
 
 #endif /* LARGE || ATTENUATE || SMOOTH */
 
-   ASSERT(span.end > 0);
-
-#if FLAGS & (TEXTURE | SPRITE)
-   if (ctx->Texture._EnabledUnits)
-      _mesa_write_texture_span(ctx, &span);
-   else
-      _mesa_write_rgba_span(ctx, &span);
-#elif FLAGS & RGBA
-   _mesa_write_rgba_span(ctx, &span);
-#else
-   _mesa_write_index_span(ctx, &span);
-#endif
+   ASSERT(span->end <= MAX_WIDTH);
 }
 
 

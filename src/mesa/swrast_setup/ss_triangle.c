@@ -1,4 +1,4 @@
-/* $Id: ss_triangle.c,v 1.17 2002/10/02 23:24:04 brianp Exp $ */
+/* $Id: ss_triangle.c,v 1.18 2002/10/04 17:37:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -139,6 +139,7 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
       v0->index = i[0];
       v1->index = i[1];
    }
+   _swrast_flush(ctx);
 }
 
 #define SS_COLOR(a,b) COPY_CHAN4(a,b)
@@ -280,8 +281,6 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
        (ctx->Stencil.Enabled && ctx->Stencil.TestTwoSide))
       ind |= SS_UNFILLED_BIT;
 
-   ctx->_Facing = 0;
-
    if (ctx->Visual.rgbMode)
       ind |= SS_RGBA_BIT;
 
@@ -289,4 +288,6 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
    tnl->Driver.Render.Quad = quad_tab[ind];
    tnl->Driver.Render.Line = swsetup_line;
    tnl->Driver.Render.Points = swsetup_points;
+
+   ctx->_Facing = 0;
 }

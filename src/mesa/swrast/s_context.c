@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.38 2002/09/17 15:46:34 brianp Exp $ */
+/* $Id: s_context.c,v 1.39 2002/10/04 17:37:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,11 +33,12 @@
 #include "mem.h"
 
 #include "swrast.h"
-#include "s_points.h"
-#include "s_lines.h"
-#include "s_triangle.h"
 #include "s_blend.h"
 #include "s_context.h"
+#include "s_lines.h"
+#include "s_points.h"
+#include "s_span.h"
+#include "s_triangle.h"
 #include "s_texture.h"
 
 
@@ -513,11 +514,18 @@ _swrast_CreateContext( GLcontext *ctx )
    for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
       swrast->TextureSample[i] = _swrast_validate_texture_sample;
 
-   swrast->span_data = MALLOC_STRUCT(span_arrays);
-   if (!swrast->span_data) {
+   swrast->SpanArrays = MALLOC_STRUCT(span_arrays);
+   if (!swrast->SpanArrays) {
       FREE(swrast);
       return GL_FALSE;
    }
+
+   /* init point span buffer */
+   swrast->PointSpan.primitive = GL_POINT;
+   swrast->PointSpan.start = 0;
+   swrast->PointSpan.end = 0;
+   swrast->PointSpan.facing = 0;
+   swrast->PointSpan.array = swrast->SpanArrays;
 
    assert(ctx->Const.MaxTextureUnits > 0);
    assert(ctx->Const.MaxTextureUnits <= MAX_TEXTURE_UNITS);
@@ -525,7 +533,7 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->TexelBuffer = (GLchan *) MALLOC(ctx->Const.MaxTextureUnits *
                                            MAX_WIDTH * 4 * sizeof(GLchan));
    if (!swrast->TexelBuffer) {
-      FREE(swrast->span_data);
+      FREE(swrast->SpanArrays);
       FREE(swrast);
       return GL_FALSE;
    }
@@ -544,7 +552,7 @@ _swrast_DestroyContext( GLcontext *ctx )
       _mesa_debug(ctx, "_swrast_DestroyContext\n");
    }
 
-   FREE( swrast->span_data );
+   FREE( swrast->SpanArrays );
    FREE( swrast->TexelBuffer );
    FREE( swrast );
 
@@ -559,6 +567,35 @@ _swrast_GetDeviceDriverReference( GLcontext *ctx )
    return &swrast->Driver;
 }
 
+void
+_swrast_flush( GLcontext *ctx )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   /* flush any pending fragments from rendering points */
+   if (swrast->PointSpan.end > 0) {
+      if (ctx->Visual.rgbMode) {
+         if (ctx->Texture._EnabledUnits)
+            _mesa_write_texture_span(ctx, &(swrast->PointSpan));
+         else
+            _mesa_write_rgba_span(ctx, &(swrast->PointSpan));
+      }
+      else {
+         _mesa_write_index_span(ctx, &(swrast->PointSpan));
+      }
+      swrast->PointSpan.end = 0;
+   }
+}
+
+void
+_swrast_render_primitive( GLcontext *ctx, GLenum prim )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   if (swrast->Primitive == GL_POINTS && prim != GL_POINTS) {
+      _swrast_flush(ctx);
+   }
+   swrast->Primitive = prim;
+}
+
 
 void
 _swrast_render_start( GLcontext *ctx )
@@ -566,6 +603,7 @@ _swrast_render_start( GLcontext *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    if (swrast->Driver.SpanRenderStart)
       swrast->Driver.SpanRenderStart( ctx );
+   swrast->PointSpan.end = 0;
 }
  
 void
@@ -574,6 +612,8 @@ _swrast_render_finish( GLcontext *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    if (swrast->Driver.SpanRenderFinish)
       swrast->Driver.SpanRenderFinish( ctx );
+
+   _swrast_flush(ctx);
 }
 
 
@@ -612,11 +652,4 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
       _mesa_debug(ctx, "pointsize %f\n", v->pointSize);
       _mesa_debug(ctx, "\n");
    }
-}
-
-
-void
-_swrast_flush( GLcontext *ctx )
-{
-   /* no-op */
 }

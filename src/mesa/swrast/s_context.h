@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.19 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_context.h,v 1.20 2002/10/04 17:37:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -137,6 +137,7 @@ typedef struct
    GLuint StippleCounter;    /**< Line stipple counter */
    GLuint NewState;
    GLuint StateChanges;
+   GLenum Primitive;    /* current primitive being drawn (ala glBegin) */
 
    /** Mechanism to allow driver (like X11) to register further
     * software rasterization routines.
@@ -176,7 +177,12 @@ typedef struct
     * this object is big and causes problems when allocated on the stack
     * on some systems.
     */
-   struct span_arrays *span_data;
+   struct span_arrays *SpanArrays;
+
+   /**
+    * Used to buffer N GL_POINTS, instead of rendering one by one.
+    */
+   struct sw_span PointSpan;
 
    /** Internal hooks, kept uptodate by the same mechanism as above.
     */
