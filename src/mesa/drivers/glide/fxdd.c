@@ -31,6 +31,7 @@
 
 #include "fxdrv.h"
 #include "enums.h"
+#include "extensions.h"
 
 /**********************************************************************/
 /*****                 Miscellaneous functions                    *****/
