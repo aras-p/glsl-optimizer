@@ -91,16 +91,8 @@ class PrintGlProcs(gl_XML.FilterGLAPISpecBase):
 		else:
 			print 'static const char gl_string_table[] = {'
 
-		keys = self.functions.keys()
-		keys.sort()
-		for k in keys:
-			if k < 0: continue
-			self.printFunctionString(self.functions[k])
-
-		keys.reverse()
-		for k in keys:
-			if k >= -1: continue
-			self.printFunctionString(self.functions[k])
+		for f in self.functionIterator():
+			self.printFunctionString(f)
 
 		if self.long_strings:
 			print '    ;'
@@ -110,27 +102,15 @@ class PrintGlProcs(gl_XML.FilterGLAPISpecBase):
 		print ''
 		print 'static const glprocs_table_t static_functions[] = {'
 
-		keys = self.functions.keys()
-		keys.sort()
 		base_offset = 0
-		for k in keys:
-			if k < 0: continue
-			self.printFunctionOffset(self.functions[k], base_offset)
+
+		for f in self.functionIterator():
+			self.printFunctionOffset(f, base_offset)
 
 			# The length of the function's name, plus 2 for "gl",
 			# plus 1 for the NUL.
 
-			base_offset += len(self.functions[k].name) + 3
-
-		keys.reverse()
-		for k in keys:
-			if k >= -1: continue
-			self.printFunctionOffset(self.functions[k], base_offset)
-
-			# The length of the function's name, plus 2 for "gl",
-			# plus 1 for the NUL.
-
-			base_offset += len(self.functions[k].name) + 3
+			base_offset += len(f.name) + 3
 
 		print '    NAME_FUNC_OFFSET( -1, NULL, 0 )'
 		print '};'

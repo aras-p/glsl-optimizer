@@ -149,12 +149,10 @@ class PrintGlOffsets(gl_XML.FilterGLAPISpecBase):
 #endif
 
 static _glapi_proc DISPATCH_TABLE_NAME[] = {"""
-		keys = self.functions.keys()
-		keys.sort()
-		for k in keys:
-			if k < 0: continue
+		for f in self.functionIterator():
+			if f.fn_offset < 0: continue
 
-			print '   TABLE_ENTRY(%s),' % (self.functions[k].name)
+			print '   TABLE_ENTRY(%s),' % (f.name)
 
 		print '   /* A whole bunch of no-op functions.  These might be called'
 		print '    * when someone tries to call a dynamically-registered'
@@ -177,11 +175,7 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {"""
 #ifdef UNUSED_TABLE_NAME
 static _glapi_proc UNUSED_TABLE_NAME[] = {"""
 
-		keys = self.functions.keys()
-		keys.sort()
-		keys.reverse();
-		for k in keys:
-			f = self.functions[k]
+		for f in self.functionIterator():
 			if f.fn_offset < 0:
 				print '   TABLE_ENTRY(%s),' % (f.name)
 

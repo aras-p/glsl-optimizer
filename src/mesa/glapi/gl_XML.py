@@ -425,6 +425,58 @@ class glItemFactory:
 			return None
 
 
+class glFunctionIterator:
+	"""Class to iterate over a list of glFunctions
+
+	Objects of this classare returned by
+	FilterGLAPISpecBase::functionIterator.  This default version
+	iterates over the functions in order of dispatch table offset.  All
+	of the "true" functions are iterated first, followed by the alias
+	functions."""
+
+	def __init__(self, context):
+		self.context = context
+		self.keys = context.functions.keys()
+		self.keys.sort()
+
+		self.prevk = -1
+		self.direction = 1
+
+		for self.index in range(0, len(self.keys)):
+			if self.keys[ self.index ] >= 0: break
+
+		if self.index == len(self.keys):
+			self.direction = -1
+			self.index -= 1
+
+		self.split = self.index - 1
+		return
+
+
+	def __iter__(self):
+		return self
+
+
+	def next(self):
+		if self.index < 0:
+			raise StopIteration
+
+		k = self.keys[ self.index ]
+
+		#if self.context.functions[k].fn_alias == None:
+		#	if k != self.prevk + 1:
+		#		print 'Missing offset %d' % (prevk)
+		#	self.prevk = int(k)
+
+		self.index += self.direction
+
+		if self.index == len(self.keys):
+			self.index = self.split
+			self.direction = -1
+
+		return self.context.functions[k]
+
+
 class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 	name = "a"
 	license = "The license for this file is unspecified."
@@ -457,25 +509,13 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 		return self.functions[index]
 
 
+	def functionIterator(self):
+		return glFunctionIterator(self)
+
+
 	def printFunctions(self):
-		keys = self.functions.keys()
-		keys.sort()
-		prevk = -1
-		for k in keys:
-			if k < 0: continue
-
-			if self.functions[k].fn_alias == None:
-				if k != prevk + 1:
-					#print 'Missing offset %d' % (prevk)
-					pass
-			prevk = int(k)
-			self.printFunction(self.functions[k])
-
-		keys.reverse()
-		for k in keys:
-			if self.functions[k].fn_alias != None:
-				self.printFunction(self.functions[k])
-
+		for f in self.functionIterator():
+			self.printFunction(f)
 		return
 
 
