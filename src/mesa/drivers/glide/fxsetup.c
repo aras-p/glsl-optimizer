@@ -109,7 +109,7 @@ static void fxTexValidate(GLcontext *ctx, struct gl_texture_object *tObj)
   else
     FX_smallLodLog2(ti->info)=FX_largeLodLog2(ti->info);
 
-  fxTexGetFormat(tObj->Image[minl]->Format,&(ti->info.format),&(ti->baseLevelInternalFormat));
+  fxTexGetFormat(tObj->Image[minl]->IntFormat,&(ti->info.format),&(ti->baseLevelInternalFormat));
 
   switch (tObj->WrapS) {
   case GL_CLAMP_TO_EDGE:
