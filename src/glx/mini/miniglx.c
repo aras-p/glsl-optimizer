@@ -31,7 +31,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $Id: miniglx.c,v 1.3 2003/12/06 17:18:09 brianp Exp $ */
 
 /**
  * \mainpage Mini GLX
