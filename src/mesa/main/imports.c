@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.29 2003/01/14 03:05:38 brianp Exp $ */
+/* $Id: imports.c,v 1.30 2003/01/19 15:27:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -360,7 +360,7 @@ char *
 _mesa_strdup( const char *s )
 {
    int l = _mesa_strlen(s);
-   char *s2 = _mesa_malloc(l + 1);
+   char *s2 = (char *) _mesa_malloc(l + 1);
    if (s2)
       _mesa_strcpy(s2, s);
    return s2;

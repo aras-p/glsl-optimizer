@@ -1,4 +1,4 @@
-/* $Id: nvfragparse.c,v 1.1 2003/01/14 04:55:46 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.2 2003/01/19 15:27:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -191,7 +191,7 @@ MatchInstruction(const char *token)
          return result;
       }
    }
-   result.opcode = -1;
+   result.opcode = (enum fp_opcode) -1;
    return result;
 }
 
