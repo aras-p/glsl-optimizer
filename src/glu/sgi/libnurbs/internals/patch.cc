@@ -35,8 +35,8 @@
 /*
  * patch.c++
  *
- * $Date: 2001/08/13 16:52:18 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/patch.cc,v 1.2 2001/08/13 16:52:18 brianp Exp $
+ * $Date: 2002/11/01 23:35:07 $ $Revision: 1.3 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/patch.cc,v 1.3 2002/11/01 23:35:07 brianp Exp $
  */
 
 #include <stdio.h>
@@ -49,7 +49,7 @@
 #include "mapdesc.h"
 #include "quilt.h"
 #include "nurbsconsts.h"
-#include "simplemath.h" //for abs function in ::singleStep();
+#include "simplemath.h" //for glu_abs function in ::singleStep();
 
 
 /*--------------------------------------------------------------------------
@@ -464,7 +464,7 @@ Patch::getstepsize( void )
 void
 Patchspec::singleStep()
 {
-    stepsize =  sidestep[0] =  sidestep[1] = abs(range[2]);
+    stepsize =  sidestep[0] =  sidestep[1] = glu_abs(range[2]);
 }
 
 void 

@@ -35,8 +35,8 @@
 /*
  * quilt.c++
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/quilt.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2002/11/01 23:35:07 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/quilt.cc,v 1.2 2002/11/01 23:35:07 brianp Exp $
  */
 
 #include "glimports.h"
@@ -48,7 +48,7 @@
 #include "flist.h"
 #include "knotvector.h"
 #include "patchlist.h"
-#include "math.h"     //fabs()
+#include "math.h"     //fglu_abs()
 #include "simplemath.h" //min()
 
 /* local preprocessor definitions */
@@ -265,8 +265,8 @@ Quilt::findSampleRates( Flist& slist, Flist& tlist )
 	    patchlist.getstepsize();
 	    
 	    {
-	    float edge_len_s = min(fabs(ptb[0]-pta[0]),1.0);
-	    float edge_len_t = min(fabs(ptb[1]-pta[1]),1.0);
+	    float edge_len_s = min(glu_abs(ptb[0]-pta[0]),1.0);
+	    float edge_len_t = min(glu_abs(ptb[1]-pta[1]),1.0);
 
 	    if( patchlist.getStepsize(0)/edge_len_s < qspec[0].step_size ) 
 	       qspec[0].step_size = patchlist.getStepsize(0)/edge_len_s;

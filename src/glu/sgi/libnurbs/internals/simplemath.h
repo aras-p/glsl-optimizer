@@ -35,8 +35,8 @@
 /*
  * simplemath.h
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/simplemath.h,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2002/11/01 23:35:07 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/simplemath.h,v 1.2 2002/11/01 23:35:07 brianp Exp $
  */
 
 #ifndef __glusimplemath_h_
@@ -51,6 +51,6 @@ inline REAL
 min( REAL x, REAL y ) { return ( x > y ) ? y : x; }
 
 inline REAL 
-abs( REAL x ) { return ( x < 0.0 ) ? -x : x; }
+glu_abs( REAL x ) { return ( x < 0.0 ) ? -x : x; }
 
 #endif /* __glusimplemath_h_ */

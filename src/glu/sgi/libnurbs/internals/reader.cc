@@ -35,8 +35,8 @@
 /*
  *  reader.c++
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/reader.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2002/11/01 23:35:07 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/reader.cc,v 1.2 2002/11/01 23:35:07 brianp Exp $
  */
 
 #include <stdio.h>
@@ -55,7 +55,7 @@
 #define ELIMINATE_REDUNDANT_POINTS 
 
 #ifdef  ELIMINATE_REDUNDANT_POINTS 
-#define equal(x,y) ( abs(x-y) <= 0.00001)
+#define equal(x,y) ( glu_abs(x-y) <= 0.00001)
 #endif
 
 #ifdef ELIMINATE_REDUNDANT_POINTS 

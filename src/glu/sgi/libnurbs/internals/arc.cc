@@ -35,8 +35,8 @@
 /*
  * arc.c++
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/arc.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2002/11/01 23:35:07 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/arc.cc,v 1.2 2002/11/01 23:35:07 brianp Exp $
  */
 
 #include <stdio.h>
@@ -332,7 +332,7 @@ Arc::check( void )
 
 inline long tooclose( REAL x, REAL y )
 {
-    return (abs(x-y) < TOL) ?  1 : 0;
+    return (glu_abs(x-y) < TOL) ?  1 : 0;
 }
 
 

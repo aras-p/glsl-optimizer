@@ -35,8 +35,8 @@
 /*
  * arctessellator.c++
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/arctess.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2002/11/01 23:35:07 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/arctess.cc,v 1.2 2002/11/01 23:35:07 brianp Exp $
  */
 
 #include "glimports.h"
@@ -247,8 +247,8 @@ ArcTessellator::pwl( Arc *arc, REAL s1, REAL s2, REAL t1, REAL t2, REAL rate )
 
 /*    if(rate <= 0.06) rate = 0.06;*/
 
-    int snsteps = 1 + (int) (abs(s2 - s1) / rate );
-    int tnsteps = 1 + (int) (abs(t2 - t1) / rate );
+    int snsteps = 1 + (int) (glu_abs(s2 - s1) / rate );
+    int tnsteps = 1 + (int) (glu_abs(t2 - t1) / rate );
     int nsteps = max(1,max( snsteps, tnsteps ));
 
     REAL sstepsize = (s2 - s1) / (REAL) nsteps;
@@ -395,8 +395,8 @@ ArcTessellator::tessellateNonlinear( Arc *arc, REAL geo_stepsize, REAL arc_steps
             vert->param[0] = u/w;
     	    vert->param[1] = v/w;
 #ifndef NOELIMINATION
-	    REAL ds = abs(vert[0].param[0] - vert[-1].param[0]);
-	    REAL dt = abs(vert[0].param[1] - vert[-1].param[1]);
+	    REAL ds = glu_abs(vert[0].param[0] - vert[-1].param[0]);
+	    REAL dt = glu_abs(vert[0].param[1] - vert[-1].param[1]);
 	    int canremove = (ds<geo_stepsize && dt<geo_stepsize) ? 1 : 0;
 	    REAL ods=0.0, odt=0.0;
 
@@ -454,8 +454,8 @@ ArcTessellator::tessellateNonlinear( Arc *arc, REAL geo_stepsize, REAL arc_steps
             vert->param[0] = u;
 	    vert->param[1] = v;
 #ifndef NOELIMINATION
-	    REAL ds = abs(vert[0].param[0] - vert[-1].param[0]);
-	    REAL dt = abs(vert[0].param[1] - vert[-1].param[1]);
+	    REAL ds = glu_abs(vert[0].param[0] - vert[-1].param[0]);
+	    REAL dt = glu_abs(vert[0].param[1] - vert[-1].param[1]);
 	    int canremove = (ds<geo_stepsize && dt<geo_stepsize) ? 1 : 0;
 	    REAL ods=0.0, odt=0.0;
 

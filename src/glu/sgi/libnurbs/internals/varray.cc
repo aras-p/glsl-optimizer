@@ -35,8 +35,8 @@
 /*
  * varray.c++
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/varray.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2002/11/01 23:35:07 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/varray.cc,v 1.2 2002/11/01 23:35:07 brianp Exp $
  */
 
 #include "glimports.h"
@@ -44,7 +44,7 @@
 #include "mystdio.h"
 #include "varray.h"
 #include "arc.h"
-#include "math.h"         // fabs()
+#include "simplemath.h"         // glu_abs()
 
 #define TINY 0.0001
 inline long sgn( REAL x ) 
@@ -114,9 +114,9 @@ Varray::init( REAL delta, Arc_ptr toparc, Arc_ptr botarc )
 	    update( right, rdir, right->tail()[1] );
 	    break;
 	case 0:
-	    if( fabs(left->tail()[1] - botarc->tail()[1]) < TINY) goto end;
-            if( fabs(left->tail()[0]-right->prev->tail()[0]) < TINY &&
-                fabs(left->tail()[1]-right->prev->tail()[1]) < TINY) goto end;
+	    if( glu_abs(left->tail()[1] - botarc->tail()[1]) < TINY) goto end;
+            if( glu_abs(left->tail()[0]-right->prev->tail()[0]) < TINY &&
+                glu_abs(left->tail()[1]-right->prev->tail()[1]) < TINY) goto end;
 	    left = left->next;
 	    break;
  	}

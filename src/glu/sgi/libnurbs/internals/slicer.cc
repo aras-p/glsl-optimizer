@@ -35,8 +35,8 @@
 /*
  * slicer.c++
  *
- * $Date: 2002/06/30 16:58:11 $ $Revision: 1.3 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/slicer.cc,v 1.3 2002/06/30 16:58:11 brianp Exp $
+ * $Date: 2002/11/01 23:35:07 $ $Revision: 1.4 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/slicer.cc,v 1.4 2002/11/01 23:35:07 brianp Exp $
  */
 
 #include <stdlib.h>
@@ -50,6 +50,7 @@
 #include "backend.h"
 #include "arc.h"
 #include "gridtrimvertex.h"
+#include "simplemath.h"
 #include "trimvertex.h"
 #include "varray.h"
 
@@ -81,7 +82,7 @@ Int num_quads = 0;
 
 #define max(a,b) ((a>b)? a:b)
 #define ZERO 0.00001 /*determing whether a loop is a rectngle or not*/
-#define equalRect(a,b) ((fabs(a-b) <= ZERO)? 1:0) //only used in tessellating a rectangle
+#define equalRect(a,b) ((glu_abs(a-b) <= ZERO)? 1:0) //only used in tessellating a rectangle
 
 static Int is_Convex(Arc_ptr loop)
 {
@@ -233,23 +234,23 @@ printf("loop->tail=(%f,%f)\n", loop->tail()[0], loop->tail()[1]);
 printf("loop->head=(%f,%f)\n", loop->head()[0], loop->head()[1]);
 printf("loop->next->tail=(%f,%f)\n", loop->next->tail()[0], loop->next->tail()[1]);
 printf("loop->next->head=(%f,%f)\n", loop->next->head()[0], loop->next->head()[1]);
-if(fabs(loop->tail()[0] - loop->head()[0])<0.000001)
+if(fglu_abs(loop->tail()[0] - loop->head()[0])<0.000001)
 	printf("equal 1\n");
 if(loop->next->tail()[1] == loop->next->head()[1])
 	printf("equal 2\n");
 */
 
-  if( (fabs(loop->tail()[0] - loop->head()[0])<=ZERO) && 
-      (fabs(loop->next->tail()[1] - loop->next->head()[1])<=ZERO) &&
-      (fabs(loop->prev->tail()[1] - loop->prev->head()[1])<=ZERO) &&
-      (fabs(loop->prev->prev->tail()[0] - loop->prev->prev->head()[0])<=ZERO)
+  if( (glu_abs(loop->tail()[0] - loop->head()[0])<=ZERO) && 
+      (glu_abs(loop->next->tail()[1] - loop->next->head()[1])<=ZERO) &&
+      (glu_abs(loop->prev->tail()[1] - loop->prev->head()[1])<=ZERO) &&
+      (glu_abs(loop->prev->prev->tail()[0] - loop->prev->prev->head()[0])<=ZERO)
      )
     return 1;
   else if
-    ( (fabs(loop->tail()[1] - loop->head()[1]) <= ZERO) && 
-      (fabs(loop->next->tail()[0] - loop->next->head()[0]) <= ZERO) &&
-      (fabs(loop->prev->tail()[0] - loop->prev->head()[0]) <= ZERO) &&
-      (fabs(loop->prev->prev->tail()[1] - loop->prev->prev->head()[1]) <= ZERO)
+    ( (glu_abs(loop->tail()[1] - loop->head()[1]) <= ZERO) && 
+      (glu_abs(loop->next->tail()[0] - loop->next->head()[0]) <= ZERO) &&
+      (glu_abs(loop->prev->tail()[0] - loop->prev->head()[0]) <= ZERO) &&
+      (glu_abs(loop->prev->prev->tail()[1] - loop->prev->prev->head()[1]) <= ZERO)
      )
       return 1;
   else

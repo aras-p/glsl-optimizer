@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
+** $Date: 2002/11/01 23:35:08 $ $Revision: 1.2 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/sampleMonoPoly.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/sampleMonoPoly.cc,v 1.2 2002/11/01 23:35:08 brianp Exp $
 */
 
 #include "gluos.h"
@@ -520,13 +520,13 @@ rightChain->print();
       Real tempI;
       //skip those points which are equal to v. (avoid degeneratcy)
       for(tempI = index1; tempI <= leftChainEndIndex; tempI++)
-	if(leftChain->getVertex(tempI)[1] < v) 
+	if(leftChain->getVertex((Int) tempI)[1] < v) 
 	  break;
       if(tempI > leftChainEndIndex)
 	ret_rightCornerWhere = 1;
       else
 	{
-	  Real tempMax = leftChain->getVertex(tempI)[0];
+	  Real tempMax = leftChain->getVertex((Int) tempI)[0];
 	  for(i=(int)tempI; i<= leftChainEndIndex; i++)
 	    if(leftChain->getVertex(i)[0] > tempMax)
 	      {

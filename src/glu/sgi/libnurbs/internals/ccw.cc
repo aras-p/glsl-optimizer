@@ -35,8 +35,8 @@
 /*
  * ccw.c++
  *
- * $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/ccw.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+ * $Date: 2002/11/01 23:35:07 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/ccw.cc,v 1.2 2002/11/01 23:35:07 brianp Exp $
  */
 
 #include "glimports.h"
@@ -562,6 +562,6 @@ int
 Subdivider::ccw( TrimVertex *a, TrimVertex *b, TrimVertex *c )
 {
     REAL d = det3( a, b, c );
-    if( abs(d) < 0.0001 ) return -1;
+    if( glu_abs(d) < 0.0001 ) return -1;
     return (d < 0.0) ? 0 : 1;
 }
