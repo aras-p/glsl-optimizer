@@ -31,7 +31,7 @@ from xml.sax.handler import feature_namespaces
 
 import gl_XML
 import license
-import sys, getopt
+import sys, getopt, string
 
 
 class glXItemFactory(gl_XML.glItemFactory):
@@ -300,7 +300,6 @@ class glXFunction(gl_XML.glFunction):
 
 	def __init__(self, context, name, attrs):
 		self.vectorequiv = attrs.get('vectorequiv', None)
-		self.count_parameters = None
 		self.counter = None
 		self.output = None
 		self.can_be_large = 0
@@ -400,9 +399,6 @@ class glXFunction(gl_XML.glFunction):
 		elif not self.glx_doubles_in_order and p.p_type.size == 8:
 			p.order = 0;
 
-		if p.p_count_parameters != None:
-			self.count_parameters = p.p_count_parameters
-		
 		if p.is_counter:
 			self.counter = p.name
 			
@@ -547,7 +543,8 @@ class glXFunction(gl_XML.glFunction):
 		elif self.glx_vendorpriv != 0:
 			return "X_GLvop_%s" % (self.name)
 		else:
-			return "ERROR"
+			raise RuntimeError('Function "%s" has no opcode.' % (self.name))
+
 
 	def opcode_real_name(self):
 		"""Get the true protocol enum name for the GLX opcode
@@ -632,7 +629,34 @@ class glXFunction(gl_XML.glFunction):
 					return "woffset"
 		return None
 
-		
+
+class glXFunctionIterator(gl_XML.glFunctionIterator):
+	"""Class to iterate over a list of glXFunctions"""
+
+	def __init__(self, context):
+		self.context = context
+		self.keys = context.functions.keys()
+		self.keys.sort()
+
+		for self.index in range(0, len(self.keys)):
+			if self.keys[ self.index ] >= 0: break
+
+		return
+
+
+	def next(self):
+		if self.index == len(self.keys):
+			raise StopIteration
+
+		f = self.context.functions[ self.keys[ self.index ] ]
+		self.index += 1
+
+		if f.ignore:
+			return self.next()
+		else:
+			return f
+
+
 class GlxProto(gl_XML.FilterGLAPISpecBase):
 	name = "glX_proto_send.py (from Mesa)"
 
@@ -664,3 +688,30 @@ class GlxProto(gl_XML.FilterGLAPISpecBase):
 
 	def createEnumFunction(self, n):
 		return glXEnumFunction(n, self)
+
+
+	def functionIterator(self):
+		return glXFunctionIterator(self)
+
+	
+	def size_call(self, func):
+		"""Create C code to calculate 'compsize'.
+
+		Creates code to calculate 'compsize'.  If the function does
+		not need 'compsize' to be calculated, None will be
+		returned."""
+
+		if not func.image and not func.count_parameter_list:
+			return None
+
+		if not func.image:
+			parameters = string.join( func.count_parameter_list, "," )
+			compsize = "__gl%s_size(%s)" % (func.name, parameters)
+		else:
+			[dim, w, h, d, junk] = func.dimensions()
+
+			compsize = '__glImageSize(%s, %s, %s, %s, %s, %s)' % (w, h, d, func.image.img_format, func.image.img_type, func.image.img_target)
+			if not func.image.img_send_null:
+				compsize = '(%s != NULL) ? %s : 0' % (func.image.name, compsize)
+
+		return compsize

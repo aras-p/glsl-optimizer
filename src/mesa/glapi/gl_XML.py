@@ -142,7 +142,6 @@ class glParameter( glItem ):
 	p_type = None
 	p_type_string = ""
 	p_count = 0
-	p_count_parameters = None
 	counter = None
 	is_output = 0
 	is_counter = 0
@@ -151,11 +150,10 @@ class glParameter( glItem ):
 	def __init__(self, context, name, attrs):
 		p_name = attrs.get('name', None)
 		self.p_type_string = attrs.get('type', None)
-		self.p_count_parameters = attrs.get('variable_param', None)
 
-		if self.p_count_parameters:
-			temp = self.p_count_parameters.replace( ' ', '' )
-			self.count_parameter_list = temp.split( ',' )
+		temp = attrs.get('variable_param', None)
+		if temp:
+			self.count_parameter_list = temp.replace( ' ', '' ).split( ',' )
 		else:
 			self.count_parameter_list = []
 
@@ -225,7 +223,7 @@ class glParameter( glItem ):
 
 
 
-		if self.p_count > 0 or self.counter or self.p_count_parameters:
+		if self.p_count > 0 or self.counter or self.count_parameter_list:
 			has_count = 1
 		else:
 			has_count = 0
@@ -264,7 +262,7 @@ class glParameter( glItem ):
 		to glCallLists, are not variable length arrays in this
 		sense."""
 
-		return self.p_count_parameters or self.counter or self.width
+		return self.count_parameter_list or self.counter or self.width
 
 
 	def is_array(self):
@@ -282,7 +280,7 @@ class glParameter( glItem ):
 		glDeleteTextures), or a general variable length vector."""
 
 		if self.is_array():
-			if self.p_count_parameters != None:
+			if self.count_parameter_list:
 				return "compsize"
 			elif self.counter != None:
 				return self.counter
@@ -293,7 +291,7 @@ class glParameter( glItem ):
 
 
 	def size(self):
-		if self.p_count_parameters or self.counter or self.width or self.is_output:
+		if self.count_parameter_list or self.counter or self.width or self.is_output:
 			return 0
 		elif self.p_count == 0:
 			return self.p_type.size
@@ -311,11 +309,11 @@ class glParameter( glItem ):
 
 			if b_prod == 0:	b_prod = 1
 
-			if self.p_count_parameters == None and self.counter != None:
+			if not self.count_parameter_list and self.counter != None:
 				a_prod = self.counter
-			elif self.p_count_parameters != None and self.counter == None:
+			elif self.count_parameter_list and self.counter == None:
 				pass
-			elif self.p_count_parameters != None and self.counter != None:
+			elif self.count_parameter_list and self.counter != None:
 				b_prod = self.counter
 			elif self.width:
 				return "compsize"
@@ -350,17 +348,12 @@ class glParameterIterator:
 
 
 class glFunction( glItem ):
-	real_name = ""
-	fn_alias = None
-	fn_offset = -1
-	fn_return_type = "void"
-	fn_parameters = []
-
 	def __init__(self, context, name, attrs):
 		self.fn_alias = attrs.get('alias', None)
 		self.fn_parameters = []
 		self.image = None
 		self.count_parameter_list = []
+		self.fn_return_type = "void"
 
 		temp = attrs.get('offset', None)
 		if temp == None or temp == "?":

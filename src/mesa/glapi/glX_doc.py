@@ -75,11 +75,11 @@ class glXDocParameter(gl_XML.glParameter):
 			a_prod = "n"
 			b_prod = self.p_type.size
 
-			if self.p_count_parameters == None and self.counter != None:
+			if not self.count_parameter_list and self.counter:
 				a_prod = self.counter
-			elif (self.p_count_parameters != None and self.counter == None) or (self.is_output):
+			elif self.count_parameter_list and not self.counter or self.is_output:
 				pass
-			elif self.p_count_parameters != None and self.counter != None:
+			elif self.count_parameter_list and self.counter:
 				b_prod = self.counter
 			else:
 				raise RuntimeError("Parameter '%s' to function '%s' has size 0." % (self.name, self.context.name))
@@ -234,7 +234,7 @@ class PrintGlxProtoText(glX_XML.GlxProto):
 		# At some point this should be expanded to support pixel
 		# functions, but I'm not going to lose any sleep over it now.
 
-		if f.fn_offset < 0 or f.client_handcode or f.server_handcode or f.ignore or f.vectorequiv or f.image:
+		if f.client_handcode or f.server_handcode or f.vectorequiv or f.image:
 			return
 
 		print '        %s' % (f.name)

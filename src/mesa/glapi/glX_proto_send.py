@@ -101,7 +101,7 @@ class glXPixelFunctionUtility(glX_XML.glXFunction):
 		self.set_return_type( func.fn_return_type )
 		self.glx_rop = ~0
 		self.can_be_large = func.can_be_large
-		self.count_parameters = func.count_parameters
+		self.count_parameter_list = func.count_parameter_list
 		self.counter = func.counter
 		return
 
@@ -218,7 +218,7 @@ const GLuint __glXDefaultPixelStore[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 1 };
 		return
 
 	def printFunction(self, f):
-		if f.fn_offset < 0 or f.client_handcode or f.ignore: return
+		if f.client_handcode: return
 
 		if f.glx_rop != 0 or f.vectorequiv != None:
 			if f.image:
@@ -339,17 +339,10 @@ generic_%u_byte( GLint rop, const void * ptr )
 		if f.fn_return_type != 'void':
 			print '    %s retval = (%s) 0;' % (f.fn_return_type, f.fn_return_type)
 
-		if f.count_parameters and not f.output_parameter():
-			print '    const GLuint compsize = __gl%s_size(%s);' % (f.name, f.count_parameters)
-		elif f.image:
-			[dim, w, h, d, junk] = f.dimensions()
-			
-			compsize = '__glImageSize(%s, %s, %s, %s, %s, %s)' % (w, h, d, f.image.img_format, f.image.img_type, f.image.img_target)
-			if not f.image.img_send_null:
-				compsize = '(%s != NULL) ? %s : 0' % (f.image.name, compsize)
-
-			print '    const GLuint compsize = %s;' % (compsize)
-
+		if not f.output_parameter():
+			compsize = self.size_call( f )
+			if compsize:
+				print '    const GLuint compsize = %s;' % (compsize)
 
 		print '    const GLuint cmdlen = %s;' % (f.command_length())
 
@@ -740,8 +733,6 @@ __GLapi * __glXNewIndirectAPI( void )
 """
 
 	def printFunction(self, f):
-		if f.fn_offset < 0 or f.ignore: return
-		
 		if f.category != self.last_category:
 			self.last_category = f.category
 			print ''
@@ -773,7 +764,6 @@ class PrintGlxProtoInit_h(glX_XML.GlxProto):
 
 
 	def printFunction(self, f):
-		if f.fn_offset < 0 or f.ignore: return
 		print 'extern HIDDEN %s __indirect_gl%s(%s);' % (f.fn_return_type, f.name, f.get_parameter_string())
 
 

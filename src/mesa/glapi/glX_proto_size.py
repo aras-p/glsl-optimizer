@@ -35,9 +35,9 @@ import license
 import sys, getopt, copy
 
 
-class SizeStubFunctionIterator:
+class SizeStubFunctionIterator(glX_XML.glXFunctionIterator):
 	"""Iterate over functions that need "size" information.
-	
+
 	Iterate over the functions that have variable sized data.  First the
 	"set"-type functions are iterated followed by the "get"-type
 	functions.
@@ -52,8 +52,6 @@ class SizeStubFunctionIterator:
 		extra_data = []
 
 		for f in gl_XML.glFunctionIterator(context):
-			if f.fn_offset < 0: break
-
 			if context.glx_enum_functions.has_key(f.name):
 				ef = context.glx_enum_functions[f.name]
 				if ef.is_set():
@@ -78,10 +76,6 @@ class SizeStubFunctionIterator:
 				context.glx_enum_sigs[sig] = f.name;
 
 		return
-
-
-	def __iter__(self):
-		return self
 
 
 	def next(self):
@@ -132,7 +126,7 @@ class glXServerEnumFunction(glX_XML.glXEnumFunction):
 		self.context.common_emit_fixups(fixup)
 
 		print ''
-		print '    compsize = __gl%s_size(%s);' % (self.name, f.count_parameters)
+		print '    compsize = %s;' % (context.size_call(context, f))
 		p = f.variable_length_parameter()
 		print '    return __GLX_PAD(%s);' % (p.size_string())
 
@@ -251,7 +245,7 @@ class PrintGlxReqSize_h(glX_XML.GlxProto):
 
 
 	def printFunction(self, f):
-		if f.glx_rop == 0 or f.ignore: return
+		if f.glx_rop == 0: return
 
 		has_counter = 0
 		for p in f.parameterIterator(1,2):
@@ -310,7 +304,7 @@ class PrintGlxReqSize_c(glX_XML.GlxProto):
 
 
 	def printFunction(self, f):
-		if f.glx_rop == 0 or f.server_handcode or f.ignore: return
+		if f.glx_rop == 0 or f.server_handcode: return
 
 		if self.glx_enum_functions.has_key(f.name):
 			ef = self.glx_enum_functions[f.name]
