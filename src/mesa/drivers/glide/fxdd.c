@@ -1347,14 +1347,16 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
     do {
         textureLevels++;
     } while ((textureSize >>= 0x1) & 0x7ff);
-    fxMesa->textureMaxLod = textureLevels - 1;
     ctx->Const.MaxTextureLevels = textureLevels;
+#if 1||FX_RESCALE_BIG_TEXURES
+    fxMesa->textureMaxLod = textureLevels - 1;
     if ((env = getenv("MESA_FX_MAXLOD")) != NULL) {
        int maxLevels = atoi(env) + 1;
        if ((maxLevels <= MAX_TEXTURE_LEVELS) && (maxLevels > textureLevels)) {
           ctx->Const.MaxTextureLevels = maxLevels;
        }
     }
+#endif
    }
    ctx->Const.MaxTextureCoordUnits =
    ctx->Const.MaxTextureImageUnits = fxMesa->haveTwoTMUs ? 2 : 1;

@@ -197,7 +197,6 @@ fxTMFindStartAddr(fxMesaContext fxMesa, GLint tmu, int size)
    int result;
    struct gl_texture_object *obj;
 
-   int real_tmu = tmu;
    if (fxMesa->HaveTexUma) {
       tmu = FX_TMU0;
    }
@@ -228,7 +227,7 @@ fxTMFindStartAddr(fxMesaContext fxMesa, GLint tmu, int size)
       if (TDFX_DEBUG & VERBOSE_TEXTURE) {
 	 fprintf(stderr, "fxTMFindStartAddr: No free space. Discard oldest\n");
       }
-      obj = fxTMFindOldestObject(fxMesa, real_tmu);
+      obj = fxTMFindOldestObject(fxMesa, tmu);
       if (!obj) {
 	 fprintf(stderr, "fxTMFindStartAddr: ERROR: No space for texture\n");
 	 return -1;
@@ -336,8 +335,12 @@ fxTMFindOldestObject(fxMesaContext fxMesa, int tmu)
       info = fxTMGetTexInfo(tmp);
 
       if (info && info->isInTM &&
-	  ((info->whichTMU == tmu) || (info->whichTMU == FX_TMU_BOTH) ||
-	   (info->whichTMU == FX_TMU_SPLIT))) {
+	  ((info->whichTMU == tmu) ||
+	   (info->whichTMU == FX_TMU_BOTH) ||
+	   (info->whichTMU == FX_TMU_SPLIT) ||
+	   fxMesa->HaveTexUma
+	  )
+	 ) {
 	 lasttime = info->lastTimeUsed;
 
 	 if (lasttime > bindnumber)
@@ -367,7 +370,9 @@ fxTMFindOldestObject(fxMesaContext fxMesa, int tmu)
    }
    else {
        if (TDFX_DEBUG & VERBOSE_TEXTURE) {
-          fprintf(stderr, "fxTMFindOldestObject: %d age=%d\n", obj->Name, old);
+          if (obj != NULL) {
+             fprintf(stderr, "fxTMFindOldestObject: %d age=%d\n", obj->Name, old);
+          }
        }
        return obj;
    }
