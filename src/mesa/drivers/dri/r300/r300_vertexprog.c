@@ -474,7 +474,7 @@ static void translate_program(struct r300_vertex_program *vp)
 		for(i=0; i < operands; i++)
 			src[i]=vpi->SrcReg[i];
 		
-		if(operands == 3){
+		if(operands == 3){ /* TODO: scalars */
 			if( CMP_SRCS(src[1], src[2]) || CMP_SRCS(src[0], src[2]) ){
 				o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, u_temp_i,
 						VSF_FLAG_ALL, VSF_OUT_CLASS_TMP);
@@ -583,6 +583,7 @@ static void translate_program(struct r300_vertex_program *vp)
 			vpi->Opcode=VP_OPCODE_MAX;
 			src[1]=src[0];
 			src[1].Negate=GL_TRUE;
+			break;
 #else
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_MAX, vpi->DstReg.Index,
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
