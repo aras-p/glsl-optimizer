@@ -81,13 +81,16 @@ DRI_CONF_BEGIN
         DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_QUALITY
-        DRI_CONF_PREFERRED_BPT(0,"0,16,32")
+        DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
+        DRI_CONF_COLOR_REDUCTION(DRI_CONF_COLOR_REDUCTION_DITHER)
+        DRI_CONF_ROUND_MODE(DRI_CONF_ROUND_TRUNC)
+        DRI_CONF_DITHER_MODE(DRI_CONF_DITHER_XERRORDIFF)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_DEBUG
         DRI_CONF_NO_RAST(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-const GLuint __driNConfigOptions = 5;
+const GLuint __driNConfigOptions = 8;
 
 /* Return the width and height of the given buffer.
  */
@@ -308,9 +311,11 @@ radeonCreateContext( const __GLcontextModes *glVisual,
       driSetTextureSwapCounterLocation( rmesa->texture_heaps[i],
 					& rmesa->c_textureSwaps );
    }
-   preferred_bpt = driQueryOptioni (&rmesa->optionCache, "preferred_bpt");
-   rmesa->default32BitTextures =
-       ( ( preferred_bpt == 0 && screen->cpp == 4 ) || preferred_bpt == 32 );
+   rmesa->texture_depth = driQueryOptioni (&rmesa->optionCache,
+					   "texture_depth");
+   if (rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
+      rmesa->texture_depth = ( screen->cpp == 4 ) ?
+	 DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
    rmesa->swtcl.RenderIndex = ~0;
    rmesa->lost_context = 1;

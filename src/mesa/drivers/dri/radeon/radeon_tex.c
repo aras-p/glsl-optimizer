@@ -50,6 +50,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_swtcl.h"
 #include "radeon_tex.h"
 
+#include "xmlpool.h"
+
 
 
 /**
@@ -262,38 +264,53 @@ radeonChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
                            GLenum format, GLenum type )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   const GLboolean do32bpt = ( rmesa->radeonScreen->cpp == 4 );
+   const GLboolean do32bpt =
+       ( rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_32 );
+   const GLboolean force16bpt =
+       ( rmesa->texture_depth == DRI_CONF_TEXTURE_DEPTH_FORCE_16 );
+   (void) format;
 
    switch ( internalFormat ) {
    case 4:
    case GL_RGBA:
    case GL_COMPRESSED_RGBA:
-      if ( format == GL_BGRA ) {
-	 if ( type == GL_UNSIGNED_INT_8_8_8_8_REV ) {
-	    return &_mesa_texformat_argb8888;
-	 }
-         else if ( type == GL_UNSIGNED_SHORT_4_4_4_4_REV ) {
-            return &_mesa_texformat_argb4444;
-	 }
-         else if ( type == GL_UNSIGNED_SHORT_1_5_5_5_REV ) {
-	    return &_mesa_texformat_argb1555;
-	 }
+      switch ( type ) {
+      case GL_UNSIGNED_INT_10_10_10_2:
+      case GL_UNSIGNED_INT_2_10_10_10_REV:
+	 return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb1555;
+      case GL_UNSIGNED_SHORT_4_4_4_4:
+      case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+	 return &_mesa_texformat_argb4444;
+      case GL_UNSIGNED_SHORT_5_5_5_1:
+      case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+	 return &_mesa_texformat_argb1555;
+      default:
+         return do32bpt ? &_mesa_texformat_rgba8888 : &_mesa_texformat_argb4444;
       }
-      return do32bpt ? &_mesa_texformat_rgba8888 : &_mesa_texformat_argb4444;
 
    case 3:
    case GL_RGB:
    case GL_COMPRESSED_RGB:
-      if ( format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5 ) {
+      switch ( type ) {
+      case GL_UNSIGNED_SHORT_4_4_4_4:
+      case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+	 return &_mesa_texformat_argb4444;
+      case GL_UNSIGNED_SHORT_5_5_5_1:
+      case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+	 return &_mesa_texformat_argb1555;
+      case GL_UNSIGNED_SHORT_5_6_5:
+      case GL_UNSIGNED_SHORT_5_6_5_REV:
 	 return &_mesa_texformat_rgb565;
+      default:
+         return do32bpt ? &_mesa_texformat_rgba8888 : &_mesa_texformat_rgb565;
       }
-      return do32bpt ? &_mesa_texformat_rgba8888 : &_mesa_texformat_rgb565;
 
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-      return do32bpt ? &_mesa_texformat_rgba8888 : &_mesa_texformat_argb4444;
+      return !force16bpt ?
+	  &_mesa_texformat_rgba8888 : &_mesa_texformat_argb4444;
 
    case GL_RGBA4:
    case GL_RGBA2:
@@ -306,7 +323,7 @@ radeonChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return do32bpt ? &_mesa_texformat_rgba8888 : &_mesa_texformat_rgb565;
+      return !force16bpt ? &_mesa_texformat_rgba8888 : &_mesa_texformat_rgb565;
 
    case GL_RGB5:
    case GL_RGB4:

@@ -778,7 +778,7 @@ struct r200_context {
    unsigned              nr_heaps;
    driTexHeap          * texture_heaps[ R200_NR_TEX_HEAPS ];
    driTextureObject      swapped;
-   GLboolean             default32BitTextures;
+   int                   texture_depth;
 
 
    /* Rasterization and vertex state:
