@@ -1,8 +1,8 @@
-/* $Id: s_drawpix.c,v 1.39 2002/10/30 20:18:38 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.40 2002/11/25 20:26:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -114,6 +114,8 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
       _mesa_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
       _mesa_span_default_fog(ctx, &span);
+   if (ctx->Texture._EnabledUnits)
+      _mesa_span_default_texcoords(ctx, &span);
 
    if ((SWRAST_CONTEXT(ctx)->_RasterMask & ~CLIP_BIT) == 0
        && ctx->Texture._EnabledUnits == 0

@@ -1,8 +1,8 @@
-/* $Id: s_bitmap.c,v 1.19 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_bitmap.c,v 1.20 2002/11/25 20:26:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -83,6 +83,8 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
       _mesa_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
       _mesa_span_default_fog(ctx, &span);
+   if (ctx->Texture._EnabledUnits)
+      _mesa_span_default_texcoords(ctx, &span);
 
    for (row = 0; row < height; row++, span.y++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address( unpack,
@@ -197,6 +199,8 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
       _mesa_span_default_z(ctx, &span);
    if (ctx->Fog.Enabled)
       _mesa_span_default_fog(ctx, &span);
+   if (ctx->Texture._EnabledUnits)
+      _mesa_span_default_texcoords(ctx, &span);
 
    for (row=0; row<height; row++, span.y++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address( unpack,
