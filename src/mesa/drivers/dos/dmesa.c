@@ -1157,6 +1157,7 @@ DMesaContext DMesaCreateContext (DMesaVisual visual,
     _mesa_enable_1_3_extensions(c);
     _mesa_enable_1_4_extensions(c);
     _mesa_enable_1_5_extensions(c);
+    _mesa_enable_2_0_extensions(c);
 
     /* you probably have to do a bunch of other initializations here. */
     ((DMesaContext)c)->visual = visual;
