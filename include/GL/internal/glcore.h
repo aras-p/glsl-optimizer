@@ -1,31 +1,51 @@
 #ifndef __gl_core_h_
 #define __gl_core_h_
 
-/* $XFree86: xc/lib/GL/include/GL/internal/glcore.h,v 1.5 1999/06/14 07:23:42 dawes Exp $ */
 /*
-** The contents of this file are subject to the GLX Public License Version 1.0
-** (the "License"). You may not use this file except in compliance with the
-** License. You may obtain a copy of the License at Silicon Graphics, Inc.,
-** attn: Legal Services, 2011 N. Shoreline Blvd., Mountain View, CA 94043
-** or at http://www.sgi.com/software/opensource/glx/license.html.
+** License Applicability. Except to the extent portions of this file are
+** made subject to an alternative license as permitted in the SGI Free
+** Software License B, Version 1.1 (the "License"), the contents of this
+** file are subject only to the provisions of the License. You may not use
+** this file except in compliance with the License. You may obtain a copy
+** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
+** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
+** 
+** http://oss.sgi.com/projects/FreeB
+** 
+** Note that, as provided in the License, the Software is distributed on an
+** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
+** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
+** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
+** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+** 
+** Original Code. The Original Code is: OpenGL Sample Implementation,
+** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
+** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
+** Copyright in any portions created by third parties is as indicated
+** elsewhere herein. All Rights Reserved.
+** 
+** Additional Notice Provisions: The application programming interfaces
+** established by SGI in conjunction with the Original Code are The
+** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
+** April 1, 1999; The OpenGL(R) Graphics System Utility Library (Version
+** 1.3), released November 4, 1998; and OpenGL(R) Graphics with the X
+** Window System(R) (Version 1.3), released October 19, 1998. This software
+** was created using the OpenGL(R) version 1.2.1 Sample Implementation
+** published by SGI, but has not been independently verified as being
+** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** Software distributed under the License is distributed on an "AS IS"
-** basis. ALL WARRANTIES ARE DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY
-** IMPLIED WARRANTIES OF MERCHANTABILITY, OF FITNESS FOR A PARTICULAR
-** PURPOSE OR OF NON- INFRINGEMENT. See the License for the specific
-** language governing rights and limitations under the License.
-**
-** The Original Software is GLX version 1.2 source code, released February,
-** 1999. The developer of the Original Software is Silicon Graphics, Inc.
-** Those portions of the Subject Software created by Silicon Graphics, Inc.
-** are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
-**
-** $SGI$
+** $Date: 2001/01/13 05:47:06 $ $Revision: 1.2 $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/include/GL/internal/glcore.h,v 1.2 2001/01/13 05:47:06 keithw Exp $
 */
 
 #ifndef XFree86LOADER
 #include <sys/types.h>
 #endif
+
+#ifdef CAPI
+#undef CAPI
+#endif
+#define CAPI
 
 #define GL_CORE_SGI  1
 #define GL_CORE_MESA 2
@@ -202,13 +222,13 @@ struct __GLdrawableBufferRec {
     void (*fill)(__GLdrawableBuffer *buf, __GLdrawablePrivate *glPriv,
     		GLuint val, GLint x, GLint y, GLint w, GLint h);
     void (*free)(__GLdrawableBuffer *buf, __GLdrawablePrivate *glPriv);
-    void *other;
 
     /* exported */
     void (*freePrivate)(__GLdrawableBuffer *buf, __GLdrawablePrivate *glPriv);
     void *private;
 
     /* private */
+    void *other;	/* implementation private data */
     __GLbufMainInitFn mainInit;
     __GLbufFallbackInitFn fallbackInit;
 };
@@ -260,7 +280,7 @@ struct __GLdrawablePrivateRec {
     __GLdrawableBuffer accumBuffer;
     __GLdrawableBuffer depthBuffer;
     __GLdrawableBuffer stencilBuffer;
-#if defined(__GL_NUMBER_OF_AUX_BUFFERS) && (__GL_NUMBER_OF_AUX_BUFFERS > 0)
+#if __GL_NUMBER_OF_AUX_BUFFERS > 0
     __GLdrawableBuffer *auxBuffer;
 #endif
 
@@ -295,12 +315,12 @@ struct __GLdrawablePrivateRec {
     void (*lockDP)(__GLdrawablePrivate *glPriv, __GLcontext *gc);
     void (*unlockDP)(__GLdrawablePrivate *glPriv);
 
-
-    void *other;
-
     /* exported */
-    void (*freePrivate)(__GLdrawablePrivate *);
     void *private;
+    void (*freePrivate)(__GLdrawablePrivate *);
+
+    /* client data */
+    void *other;
 };
 
 /*
@@ -330,7 +350,7 @@ struct __GLdrawablePrivateRec {
 */
 typedef struct __GLimportsRec {
     /* Memory management */
-    void *(*malloc)(__GLcontext *gc, size_t size);
+    void * (*malloc)(__GLcontext *gc, size_t size);
     void *(*calloc)(__GLcontext *gc, size_t numElem, size_t elemSize);
     void *(*realloc)(__GLcontext *gc, void *oldAddr, size_t newSize);
     void (*free)(__GLcontext *gc, void *addr);
@@ -340,11 +360,12 @@ typedef struct __GLimportsRec {
     void (*fatal)(__GLcontext *gc, char *fmt);
 
     /* other system calls */
-    char *(*getenv)(__GLcontext *gc, const char *var);
-    int (*sprintf)(__GLcontext *gc, char *str, const char *fmt, ...);
-    void *(*fopen)(__GLcontext *gc, const char *path, const char *mode);
-    int (*fclose)(__GLcontext *gc, void *stream);
-    int (*fprintf)(__GLcontext *gc, void *stream, const char *fmt, ...);
+    char *(CAPI *getenv)(__GLcontext *gc, const char *var);
+    int (CAPI *atoi)(__GLcontext *gc, const char *str);
+    int (CAPI *sprintf)(__GLcontext *gc, char *str, const char *fmt, ...);
+    void *(CAPI *fopen)(__GLcontext *gc, const char *path, const char *mode);
+    int (CAPI *fclose)(__GLcontext *gc, void *stream);
+    int (CAPI *fprintf)(__GLcontext *gc, void *stream, const char *fmt, ...);
 
     /* Drawing surface management */
     __GLdrawablePrivate *(*getDrawablePrivate)(__GLcontext *gc);
