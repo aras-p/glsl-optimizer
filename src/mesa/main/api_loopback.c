@@ -1,10 +1,10 @@
-/* $Id: api_loopback.c,v 1.14 2001/12/21 15:48:23 keithw Exp $ */
+/* $Id: api_loopback.c,v 1.15 2002/01/14 16:06:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,10 +29,10 @@
 
 
 #include "glheader.h"
+#include "glapi.h"
 #include "glapitable.h"
 #include "macros.h"
 #include "colormac.h"
-#include "api_compat.h"
 #include "api_loopback.h"
 
 /* KW: A set of functions to convert unusual Color/Normal/Vertex/etc
@@ -64,12 +64,12 @@
 #define MATERIALFV(a,b,c)           glMaterialfv(a,b,c)
 #define RECTF(a,b,c,d)              glRectf(a,b,c,d)
 
-#define ATTRIB(index, x, y, z, w)   _compat_VertexAttrib4fNV(index, x, y, z, w)
+#define ATTRIB(index, x, y, z, w)   _glapi_Dispatch->VertexAttrib4fNV(index, x, y, z, w)
 
 
-#define FOGCOORDF(x)                _compat_FogCoordfEXT(x)
-#define SECONDARYCOLORUB(a,b,c)     _compat_SecondaryColor3ubEXT(a,b,c)
-#define SECONDARYCOLORF(a,b,c)      _compat_SecondaryColor3fEXT(a,b,c)
+#define FOGCOORDF(x)                _glapi_Dispatch->FogCoordfEXT(x)
+#define SECONDARYCOLORUB(a,b,c)     _glapi_Dispatch->SecondaryColor3ubEXT(a,b,c)
+#define SECONDARYCOLORF(a,b,c)      _glapi_Dispatch->SecondaryColor3fEXT(a,b,c)
 
 
 static void
@@ -1633,6 +1633,7 @@ loopback_VertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte *v)
 }
 
 
+
 void
 _mesa_loopback_prefer_float( struct _glapi_table *dest,
 			     GLboolean prefer_float_colors )
@@ -1870,4 +1871,5 @@ _mesa_loopback_init_api_table( struct _glapi_table *dest,
    dest->VertexAttribs4fvNV = loopback_VertexAttribs4fvNV;
    dest->VertexAttribs4dvNV = loopback_VertexAttribs4dvNV;
    dest->VertexAttribs4ubvNV = loopback_VertexAttribs4ubvNV;
+
 }

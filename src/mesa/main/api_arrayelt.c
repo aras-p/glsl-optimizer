@@ -1,10 +1,10 @@
-/* $Id: api_arrayelt.c,v 1.5 2001/12/28 06:28:10 gareth Exp $ */
+/* $Id: api_arrayelt.c,v 1.6 2002/01/14 16:06:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -172,37 +172,89 @@ static void (*normalfuncs[8])( const void * ) = {
    (array_func)glNormal3dv,
 };
 
-static void (*fogcoordfuncs[8])( const void * );
-static void (*secondarycolorfuncs[8])( const void * );
+
+/* Wrapper functions in case glSecondaryColor*EXT doesn't exist */
+static void SecondaryColor3bvEXT(const GLbyte *c)
+{
+   _glapi_Dispatch->SecondaryColor3bvEXT(c);
+}
+
+static void SecondaryColor3ubvEXT(const GLubyte *c)
+{
+   _glapi_Dispatch->SecondaryColor3ubvEXT(c);
+}
+
+static void SecondaryColor3svEXT(const GLshort *c)
+{
+   _glapi_Dispatch->SecondaryColor3svEXT(c);
+}
+
+static void SecondaryColor3usvEXT(const GLushort *c)
+{
+   _glapi_Dispatch->SecondaryColor3usvEXT(c);
+}
+
+static void SecondaryColor3ivEXT(const GLint *c)
+{
+   _glapi_Dispatch->SecondaryColor3ivEXT(c);
+}
+
+static void SecondaryColor3uivEXT(const GLuint *c)
+{
+   _glapi_Dispatch->SecondaryColor3uivEXT(c);
+}
+
+static void SecondaryColor3fvEXT(const GLfloat *c)
+{
+   _glapi_Dispatch->SecondaryColor3fvEXT(c);
+}
+
+static void SecondaryColor3dvEXT(const GLdouble *c)
+{
+   _glapi_Dispatch->SecondaryColor3dvEXT(c);
+}
+
+static void (*secondarycolorfuncs[8])( const void * ) = {
+   (array_func) SecondaryColor3bvEXT,
+   (array_func) SecondaryColor3ubvEXT,
+   (array_func) SecondaryColor3svEXT,
+   (array_func) SecondaryColor3usvEXT,
+   (array_func) SecondaryColor3ivEXT,
+   (array_func) SecondaryColor3uivEXT,
+   (array_func) SecondaryColor3fvEXT,
+   (array_func) SecondaryColor3dvEXT,
+};
+
+
+/* Again, wrapper functions in case glSecondaryColor*EXT doesn't exist */
+static void FogCoordfvEXT(const GLfloat *f)
+{
+   _glapi_Dispatch->FogCoordfvEXT(f);
+}
+
+static void FogCoorddvEXT(const GLdouble *f)
+{
+   _glapi_Dispatch->FogCoorddvEXT(f);
+}
+
+static void (*fogcoordfuncs[8])( const void * ) = {
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   (array_func) FogCoordfvEXT,
+   (array_func) FogCoorddvEXT
+};
+
+
 
 GLboolean _ae_create_context( GLcontext *ctx )
 {
-   static int firsttime = 1;
-
    ctx->aelt_context = MALLOC( sizeof(AEcontext) );
    if (!ctx->aelt_context)
       return GL_FALSE;
-
-
-   if (firsttime)
-   {
-      firsttime = 0;
-
-      /* Don't really want to use api_compat.h for this, but the
-       * rational for using _glapi_get_proc_address is the same.
-       */
-      fogcoordfuncs[0] = (array_func) _glapi_get_proc_address("glSecondaryColor3bvEXT");
-      fogcoordfuncs[1] = (array_func) _glapi_get_proc_address("glSecondaryColor3ubvEXT");
-      fogcoordfuncs[2] = (array_func) _glapi_get_proc_address("glSecondaryColor3svEXT");
-      fogcoordfuncs[3] = (array_func) _glapi_get_proc_address("glSecondaryColor3usvEXT");
-      fogcoordfuncs[4] = (array_func) _glapi_get_proc_address("glSecondaryColor3ivEXT");
-      fogcoordfuncs[5] = (array_func) _glapi_get_proc_address("glSecondaryColor3uivEXT");
-      fogcoordfuncs[6] = (array_func) _glapi_get_proc_address("glSecondaryColor3fvEXT");
-      fogcoordfuncs[7] = (array_func) _glapi_get_proc_address("glSecondaryColor3dvEXT");
-
-      secondarycolorfuncs[6] = (array_func) _glapi_get_proc_address("glFogCoordfvEXT");
-      secondarycolorfuncs[7] = (array_func) _glapi_get_proc_address("glFogCoorddvEXT");
-   }
 
    AE_CONTEXT(ctx)->NewState = ~0;
    return GL_TRUE;
