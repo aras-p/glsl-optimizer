@@ -325,31 +325,31 @@ void fxDDTexParam(GLcontext *ctx, GLenum target, struct gl_texture_object *tObj,
 
 void fxDDTexDel(GLcontext *ctx, struct gl_texture_object *tObj)
 {
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
-  tfxTexInfo *ti=fxTMGetTexInfo(tObj);
+  fxMesaContext fxMesa = FX_CONTEXT(ctx);
+  tfxTexInfo *ti = fxTMGetTexInfo(tObj);
 
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
-     fprintf(stderr,"fxmesa: fxDDTexDel(%d,%x)\n",tObj->Name,(GLuint)ti);
+  if (MESA_VERBOSE & VERBOSE_DRIVER) {
+     fprintf(stderr, "fxmesa: fxDDTexDel(%d,%p)\n", tObj->Name, ti);
   }
 
   if (!ti)
     return;
 
-  fxTMFreeTexture(fxMesa,tObj);
+  fxTMFreeTexture(fxMesa, tObj);
 
   FREE(ti);
-  tObj->DriverData=NULL;
+  tObj->DriverData = NULL;
 
-  ctx->NewState|=NEW_TEXTURING;
+  ctx->NewState |= NEW_TEXTURING;
 }
 
 
 
 /*
- * Convert gl_color_table table to Glide's format.
+ * Convert a gl_color_table texture palette to Glide's format.
  */
-
-static void convertPalette(FxU32 data[256], const struct gl_color_table *table)
+static void
+convertPalette(FxU32 data[256], const struct gl_color_table *table)
 {
   const GLubyte *tableUB = (const GLubyte *) table->Table;
   GLint width = table->Size;
@@ -415,28 +415,28 @@ static void convertPalette(FxU32 data[256], const struct gl_color_table *table)
 
 void fxDDTexPalette(GLcontext *ctx, struct gl_texture_object *tObj)
 {
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+  fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
   if (tObj) {
     /* per-texture palette */
     tfxTexInfo *ti;
-    if (MESA_VERBOSE&VERBOSE_DRIVER) {
-      fprintf(stderr,"fxmesa: fxDDTexPalette(%d,%x)\n",
-              tObj->Name,(GLuint)tObj->DriverData);
+    if (MESA_VERBOSE & VERBOSE_DRIVER) {
+      fprintf(stderr, "fxmesa: fxDDTexPalette(%d,%x)\n",
+              tObj->Name, (GLuint) tObj->DriverData);
     }
     if (!tObj->DriverData)
-      tObj->DriverData=fxAllocTexObjData(fxMesa);
-    ti=fxTMGetTexInfo(tObj);
+      tObj->DriverData = fxAllocTexObjData(fxMesa);
+    ti = fxTMGetTexInfo(tObj);
     convertPalette(ti->palette.data, &tObj->Palette);
-    fxTexInvalidate(ctx,tObj);
+    fxTexInvalidate(ctx, tObj);
   }
   else {
     /* global texture palette */
-    if (MESA_VERBOSE&VERBOSE_DRIVER) {
-      fprintf(stderr,"fxmesa: fxDDTexPalette(global)\n");
+    if (MESA_VERBOSE & VERBOSE_DRIVER) {
+      fprintf(stderr, "fxmesa: fxDDTexPalette(global)\n");
     }
     convertPalette(fxMesa->glbPalette.data, &ctx->Texture.Palette);
-    fxMesa->new_state|=FX_NEW_TEXTURING;
+    fxMesa->new_state |= FX_NEW_TEXTURING;
     ctx->Driver.RenderStart = fxSetupFXUnits;
   }
 }
@@ -444,32 +444,34 @@ void fxDDTexPalette(GLcontext *ctx, struct gl_texture_object *tObj)
 
 void fxDDTexUseGlbPalette(GLcontext *ctx, GLboolean state)
 {
-  fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+  fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
      fprintf(stderr,"fxmesa: fxDDTexUseGlbPalette(%d)\n",state);
   }
 
-  if(state) {
-    fxMesa->haveGlobalPaletteTexture=1;
+  if (state) {
+    fxMesa->haveGlobalPaletteTexture = 1;
 
-    FX_grTexDownloadTable(GR_TMU0,GR_TEXTABLE_PALETTE,&(fxMesa->glbPalette));
+    FX_grTexDownloadTable(GR_TMU0,GR_TEXTABLE_PALETTE, &(fxMesa->glbPalette));
     if (fxMesa->haveTwoTMUs)
-       FX_grTexDownloadTable(GR_TMU1,GR_TEXTABLE_PALETTE,&(fxMesa->glbPalette));
-  } else {
-    fxMesa->haveGlobalPaletteTexture=0;
+       FX_grTexDownloadTable(GR_TMU1, GR_TEXTABLE_PALETTE, &(fxMesa->glbPalette));
+  }
+  else {
+    fxMesa->haveGlobalPaletteTexture = 0;
 
-    if((ctx->Texture.Unit[0].Current==ctx->Texture.Unit[0].CurrentD[2]) &&
-       (ctx->Texture.Unit[0].Current!=NULL)) {
-      struct gl_texture_object *tObj=ctx->Texture.Unit[0].Current;
+    if ((ctx->Texture.Unit[0].Current == ctx->Texture.Unit[0].CurrentD[2]) &&
+        (ctx->Texture.Unit[0].Current != NULL)) {
+      struct gl_texture_object *tObj = ctx->Texture.Unit[0].Current;
 
       if (!tObj->DriverData)
-        tObj->DriverData=fxAllocTexObjData(fxMesa);
+        tObj->DriverData = fxAllocTexObjData(fxMesa);
   
-      fxTexInvalidate(ctx,tObj);
+      fxTexInvalidate(ctx, tObj);
     }
   }
 }
+
 
 static int logbase2(int n)
 {

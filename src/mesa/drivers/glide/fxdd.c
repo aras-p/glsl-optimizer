@@ -700,7 +700,7 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
           }
         }
         /* now make the GL_RENDERER string */
-        sprintf(buffer, "Mesa DRI %s 20000420", hardware);
+        sprintf(buffer, "Mesa DRI %s 20000510", hardware);
         return buffer;
       }
     case GL_VENDOR:
@@ -900,7 +900,6 @@ void fxDDInitExtensions( GLcontext *ctx )
    gl_extensions_disable(ctx, "GL_EXT_blend_minmax");
    gl_extensions_disable(ctx, "GL_EXT_blend_subtract");
    gl_extensions_disable(ctx, "GL_EXT_blend_color");
-   gl_extensions_disable(ctx, "GL_EXT_paletted_texture");
 
    gl_extensions_add(ctx, DEFAULT_ON, "3DFX_set_global_palette", 0);
    
