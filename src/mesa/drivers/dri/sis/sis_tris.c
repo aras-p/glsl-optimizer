@@ -905,7 +905,7 @@ sisFlushPrimsLocked(sisContextPtr smesa)
       mEndPrimitive();
    } else {
       int mmio_index = 0, incr = 0;
-      void (*emit_func)(sisContextPtr smesa, char *verts) = NULL;
+      void (*sis_emit_func)(sisContextPtr smesa, char *verts) = NULL;
 
       if (smesa->AGPParseSet & MASK_PsShadingSmooth)
 	 mmio_index |= VERT_SMOOTH;
@@ -921,22 +921,22 @@ sisFlushPrimsLocked(sisContextPtr smesa)
       switch (smesa->AGPParseSet & MASK_PsDataType) {
       case MASK_PsPointList:
          incr = smesa->vertex_size * 4;
-	 emit_func = sis_point_func_mmio[mmio_index];
+	 sis_emit_func = sis_point_func_mmio[mmio_index];
 	 break;
       case MASK_PsLineList:
          incr = smesa->vertex_size * 4 * 2;
-	 emit_func = sis_line_func_mmio[mmio_index];
+	 sis_emit_func = sis_line_func_mmio[mmio_index];
 	 break;
       case MASK_PsTriangleList:
          incr = smesa->vertex_size * 4 * 3;
-	 emit_func = sis_tri_func_mmio[mmio_index];
+	 sis_emit_func = sis_tri_func_mmio[mmio_index];
 	 break;
       }
       
       mWait3DCmdQueue(1);
       MMIO(REG_3D_PrimitiveSet, smesa->dwPrimitiveSet);
       while (smesa->vb_last < smesa->vb_cur) {
-	 emit_func(smesa, smesa->vb_last);
+	 sis_emit_func(smesa, smesa->vb_last);
 	 smesa->vb_last += incr;
       }
       mWait3DCmdQueue(1);

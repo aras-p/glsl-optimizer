@@ -59,10 +59,10 @@ static void copy_pv_rgba3( GLcontext *ctx, GLuint edst, GLuint esrc )
    dst->ui[3] = src->ui[3];
 }
 
-typedef void (*emit_func)( GLcontext *, GLuint, GLuint, void *, GLuint );
+typedef void (*tdfx_emit_func)( GLcontext *, GLuint, GLuint, void *, GLuint );
 
 static struct {
-   emit_func	        emit;
+   tdfx_emit_func	        emit;
    interp_func		interp;
    copy_pv_func	        copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
