@@ -1,8 +1,8 @@
-/* $Id: t_vb_lighttmp.h,v 1.21 2001/12/19 01:07:50 brianp Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.22 2002/01/05 14:03:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -80,7 +80,15 @@
 #endif
 
 
+/* define TRACE if to trace lighting code */
 
+
+/*
+ * ctx is the current context
+ * VB is the vertex buffer
+ * stage is the lighting stage-private data
+ * input is the vector of eye or object-space vertex coordinates
+ */
 static void TAG(light_rgba_spec)( GLcontext *ctx,
 				  struct vertex_buffer *VB,
 				  struct gl_pipeline_stage *stage,
@@ -91,9 +99,9 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
    GLchan sumA[2];
    GLuint j;
 
-   GLuint  vstride = input->stride;
+   const GLuint vstride = input->stride;
    const GLfloat *vertex = (GLfloat *)input->data;
-   GLuint  nstride = VB->NormalPtr->stride;
+   const GLuint nstride = VB->NormalPtr->stride;
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
 
    GLfloat *CMcolor;
@@ -104,16 +112,18 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
    GLchan (*Fspec)[4] = (GLchan (*)[4]) store->LitSecondary[0].Ptr;
    GLchan (*Bspec)[4] = (GLchan (*)[4]) store->LitSecondary[1].Ptr;
 
-   GLuint nr = VB->Count;
-   GLuint *flags = VB->Flag;
+   const GLuint nr = VB->Count;
+   const GLuint *flags = VB->Flag;
    struct gl_material (*new_material)[2] = VB->Material;
-   GLuint *new_material_mask = VB->MaterialMask;
+   const GLuint *new_material_mask = VB->MaterialMask;
 
    (void) flags;
    (void) nstride;
    (void) vstride;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__ );   */
+#ifdef TRACE
+   fprintf(stderr, "%s\n", __FUNCTION__ );
+#endif
 
    if (IDX & LIGHT_COLORMATERIAL) {
       if (VB->ColorPtr[0]->Type != GL_FLOAT || 
@@ -303,9 +313,9 @@ static void TAG(light_rgba)( GLcontext *ctx,
    GLfloat (*base)[3] = ctx->Light._BaseColor;
    GLchan sumA[2];
 
-   GLuint  vstride = input->stride;
+   const GLuint vstride = input->stride;
    const GLfloat *vertex = (GLfloat *) input->data;
-   GLuint  nstride = VB->NormalPtr->stride;
+   const GLuint nstride = VB->NormalPtr->stride;
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
 
    GLfloat *CMcolor;
@@ -314,13 +324,16 @@ static void TAG(light_rgba)( GLcontext *ctx,
    GLchan (*Fcolor)[4] = (GLchan (*)[4]) store->LitColor[0].Ptr;
    GLchan (*Bcolor)[4] = (GLchan (*)[4]) store->LitColor[1].Ptr;
    GLchan (*color[2])[4];
-   GLuint *flags = VB->Flag;
+   const GLuint *flags = VB->Flag;
 
    struct gl_material (*new_material)[2] = VB->Material;
-   GLuint *new_material_mask = VB->MaterialMask;
-   GLuint nr = VB->Count;
+   const GLuint *new_material_mask = VB->MaterialMask;
+   const GLuint nr = VB->Count;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__ );  */
+#ifdef TRACE
+   fprintf(stderr, "%s\n", __FUNCTION__ );
+#endif
+
    (void) flags;
    (void) nstride;
    (void) vstride;
@@ -513,22 +526,25 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 
 {
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
-   GLuint  nstride = VB->NormalPtr->stride;
+   const GLuint nstride = VB->NormalPtr->stride;
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
    GLfloat *CMcolor;
    GLuint CMstride;
    GLchan (*Fcolor)[4] = (GLchan (*)[4]) store->LitColor[0].Ptr;
    GLchan (*Bcolor)[4] = (GLchan (*)[4]) store->LitColor[1].Ptr;
-   struct gl_light *light = ctx->Light.EnabledList.next;
-   GLuint *flags = VB->Flag;
+   const struct gl_light *light = ctx->Light.EnabledList.next;
+   const GLuint *flags = VB->Flag;
    GLchan basechan[2][4];
    GLuint j = 0;
    struct gl_material (*new_material)[2] = VB->Material;
-   GLuint *new_material_mask = VB->MaterialMask;
+   const GLuint *new_material_mask = VB->MaterialMask;
    GLfloat base[2][3];
-   GLuint nr = VB->Count;
+   const GLuint nr = VB->Count;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__ );  */
+#ifdef TRACE
+   fprintf(stderr, "%s\n", __FUNCTION__ );
+#endif
+
    (void) input;		/* doesn't refer to Eye or Obj */
    (void) flags;
    (void) nr;
@@ -553,7 +569,6 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
    do {
       
       if ( CHECK_COLOR_MATERIAL(j) ) {
-/*  	 fprintf(stderr, "colormaterial at %d (%p)\n", j, CMcolor); */
 	 _mesa_update_color_material( ctx, CMcolor );
       }
 
@@ -583,13 +598,6 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
       do {
 	 GLfloat n_dot_VP = DOT3(normal, light->_VP_inf_norm);
 
-/*  	 if (j < 5) */
-/*  	    fprintf(stderr, "light normal %d: %f %f %f\n",  */
-/*  		    j,  */
-/*  		    normal[0], */
-/*  		    normal[1], */
-/*  		    normal[2]); */
-
 	 if (n_dot_VP < 0.0F) {
 	    if (IDX & LIGHT_TWOSIDE) {
 	       GLfloat n_dot_h = -DOT3(normal, light->_h_inf_norm);
@@ -605,7 +613,8 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 	       Bcolor[j][3] = basechan[1][3];
 	    }
 	    COPY_CHAN4(Fcolor[j], basechan[0]);
-	 } else {
+	 }
+         else {
 	    GLfloat n_dot_h = DOT3(normal, light->_h_inf_norm);
 	    GLfloat sum[3];
 	    COPY_3V(sum, base[0]);
@@ -632,14 +641,6 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 	 COPY_CHAN4(Fcolor[j], Fcolor[j-1]);
 	 if (IDX & LIGHT_TWOSIDE)
 	    COPY_CHAN4(Bcolor[j], Bcolor[j-1]);
-
-/*  	 if (j < 5) */
-/*  	    fprintf(stderr, "skip normal %d: %f %f %f\n",  */
-/*  		    j,  */
-/*  		    normal[0], */
-/*  		    normal[1], */
-/*  		    normal[2]); */
-
       }
 
    } while (!CHECK_END_VB(j));
@@ -655,20 +656,23 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 {
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
    GLchan sumA[2];
-   GLuint  nstride = VB->NormalPtr->stride;
+   const GLuint nstride = VB->NormalPtr->stride;
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
    GLfloat *CMcolor;
    GLuint CMstride;
    GLchan (*Fcolor)[4] = (GLchan (*)[4]) store->LitColor[0].Ptr;
    GLchan (*Bcolor)[4] = (GLchan (*)[4]) store->LitColor[1].Ptr;
-   GLuint *flags = VB->Flag;
+   const GLuint *flags = VB->Flag;
    GLuint j = 0;
    struct gl_material (*new_material)[2] = VB->Material;
    GLuint *new_material_mask = VB->MaterialMask;
-   GLuint nr = VB->Count;
-   struct gl_light *light;
+   const GLuint nr = VB->Count;
+   const struct gl_light *light;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__ );  */
+#ifdef TRACE
+   fprintf(stderr, "%s\n", __FUNCTION__ );
+#endif
+
    (void) flags;
    (void) input;
    (void) nr;
@@ -793,19 +797,22 @@ static void TAG(light_ci)( GLcontext *ctx,
 {
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
    GLuint j;
-   GLuint vstride = input->stride;
+   const GLuint vstride = input->stride;
    const GLfloat *vertex = (GLfloat *) input->data;
-   GLuint nstride = VB->NormalPtr->stride;
+   const GLuint nstride = VB->NormalPtr->stride;
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
    GLfloat *CMcolor;
    GLuint CMstride;
-   GLuint *flags = VB->Flag;
+   const GLuint *flags = VB->Flag;
    GLuint *indexResult[2];
    struct gl_material (*new_material)[2] = VB->Material;
    GLuint *new_material_mask = VB->MaterialMask;
-   GLuint nr = VB->Count;
+   const GLuint nr = VB->Count;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__ );  */
+#ifdef TRACE
+   fprintf(stderr, "%s\n", __FUNCTION__ );
+#endif
+
    (void) flags;
    (void) nstride;
    (void) vstride;
