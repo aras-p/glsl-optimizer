@@ -1,14 +1,21 @@
 
     Mesa/Readme.win32
 
-    Last Updated: Friday, July 9th, 1999 - tjump@tertius.com
+    Last Updated: Thursday, September 16th, 1999 - tjump@tertius.com
 
 *** What's New
 
-- Updated for Mesa 3.1beta2/CVS.
+- Updated for Mesa 3.1beta3/CVS. Debug and Release command-line builds of
+  Mesa, fxMesa, GLU, GLUT and all sample programs DLL-based. Manual
+  executions tests with minimum requisite results (aka: things looked like
+  I expected them to).
+
+  What did you expect, complete regression testing maybe?
 
 - DevStudio projects suspended for compatability reasons: projects modified
   by DevStudio 6 are not compatible with DevStudio 5.
+
+  These will slowly be rebuilt and put into CVS as I can.
 
 - Build environment change: The Glide SDK is no longer assumed to be in
   the global INCLUDE/LIB environment vars, it is required that you set the
