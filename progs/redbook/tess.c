@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 1993-1997, Silicon Graphics, Inc.
- * ALL RIGHTS RESERVED 
- * Permission to use, copy, modify, and distribute this software for 
+ * ALL RIGHTS RESERVED
+ * Permission to use, copy, modify, and distribute this software for
  * any purpose and without fee is hereby granted, provided that the above
  * copyright notice appear in all copies and that both the copyright notice
- * and this permission notice appear in supporting documentation, and that 
+ * and this permission notice appear in supporting documentation, and that
  * the name of Silicon Graphics, Inc. not be used in advertising
  * or publicity pertaining to distribution of the software without specific,
- * written prior permission. 
+ * written prior permission.
  *
  * THE MATERIAL EMBODIED ON THIS SOFTWARE IS PROVIDED TO YOU "AS-IS"
  * AND WITHOUT WARRANTY OF ANY KIND, EXPRESS, IMPLIED OR OTHERWISE,
@@ -21,8 +21,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH LOSS, HOWEVER CAUSED AND ON
  * ANY THEORY OF LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE
  * POSSESSION, USE OR PERFORMANCE OF THIS SOFTWARE.
- * 
- * US Government Users Restricted Rights 
+ *
+ * US Government Users Restricted Rights
  * Use, duplication, or disclosure by the Government is subject to
  * restrictions set forth in FAR 52.227.19(c)(2) or subparagraph
  * (c)(1)(ii) of the Rights in Technical Data and Computer Software
@@ -45,7 +45,7 @@
  *  Note the exterior rectangle is drawn with its vertices
  *  in counter-clockwise order, but its interior clockwise.
  *  Note the combineCallback is needed for the self-intersecting
- *  star.  Also note that removing the TessProperty for the 
+ *  star.  Also note that removing the TessProperty for the
  *  star will make the interior unshaded (WINDING_ODD).
  */
 #include <GL/glut.h>
@@ -102,7 +102,7 @@ void CALLBACK vertexCallback(GLvoid *vertex)
  *  but weight[4] may be used to average color, normal, or texture
  *  coordinate data.  In this program, color is weighted.
  */
-void CALLBACK combineCallback(GLdouble coords[3], 
+void CALLBACK combineCallback(GLdouble coords[3],
                      GLdouble *vertex_data[4],
                      GLfloat weight[4], GLdouble **dataOut )
 {
@@ -114,15 +114,15 @@ void CALLBACK combineCallback(GLdouble coords[3],
    vertex[0] = coords[0];
    vertex[1] = coords[1];
    vertex[2] = coords[2];
-   for (i = 3; i < 7; i++)
-      vertex[i] = weight[0] * vertex_data[0][i] 
+   for (i = 3; i < 6; i++)
+      vertex[i] = weight[0] * vertex_data[0][i]
                   + weight[1] * vertex_data[1][i]
-                  + weight[2] * vertex_data[2][i] 
+                  + weight[2] * vertex_data[2][i]
                   + weight[3] * vertex_data[3][i];
    *dataOut = vertex;
 }
 
-void init (void) 
+void init (void)
 {
    GLUtesselator *tobj;
    GLdouble rect[4][3] = {50.0, 50.0, 0.0,
@@ -143,18 +143,18 @@ void init (void)
    startList = glGenLists(2);
 
    tobj = gluNewTess();
-   gluTessCallback(tobj, GLU_TESS_VERTEX, 
+   gluTessCallback(tobj, GLU_TESS_VERTEX,
                    (GLvoid (CALLBACK*) ()) &glVertex3dv);
-   gluTessCallback(tobj, GLU_TESS_BEGIN, 
+   gluTessCallback(tobj, GLU_TESS_BEGIN,
                    (GLvoid (CALLBACK*) ()) &beginCallback);
-   gluTessCallback(tobj, GLU_TESS_END, 
+   gluTessCallback(tobj, GLU_TESS_END,
                    (GLvoid (CALLBACK*) ()) &endCallback);
-   gluTessCallback(tobj, GLU_TESS_ERROR, 
+   gluTessCallback(tobj, GLU_TESS_ERROR,
                    (GLvoid (CALLBACK*) ()) &errorCallback);
 
    /*  rectangle with triangular hole inside  */
    glNewList(startList, GL_COMPILE);
-   glShadeModel(GL_FLAT);    
+   glShadeModel(GL_FLAT);
    gluTessBeginPolygon(tobj, NULL);
       gluTessBeginContour(tobj);
          gluTessVertex(tobj, rect[0], rect[0]);
@@ -170,20 +170,20 @@ void init (void)
    gluTessEndPolygon(tobj);
    glEndList();
 
-   gluTessCallback(tobj, GLU_TESS_VERTEX, 
+   gluTessCallback(tobj, GLU_TESS_VERTEX,
                    (GLvoid (CALLBACK*) ()) &vertexCallback);
-   gluTessCallback(tobj, GLU_TESS_BEGIN, 
+   gluTessCallback(tobj, GLU_TESS_BEGIN,
                    (GLvoid (CALLBACK*) ()) &beginCallback);
-   gluTessCallback(tobj, GLU_TESS_END, 
+   gluTessCallback(tobj, GLU_TESS_END,
                    (GLvoid (CALLBACK*) ()) &endCallback);
-   gluTessCallback(tobj, GLU_TESS_ERROR, 
+   gluTessCallback(tobj, GLU_TESS_ERROR,
                    (GLvoid (CALLBACK*) ()) &errorCallback);
-   gluTessCallback(tobj, GLU_TESS_COMBINE, 
+   gluTessCallback(tobj, GLU_TESS_COMBINE,
                    (GLvoid (CALLBACK*) ()) &combineCallback);
 
    /*  smooth shaded, self-intersecting star  */
    glNewList(startList + 1, GL_COMPILE);
-   glShadeModel(GL_SMOOTH);    
+   glShadeModel(GL_SMOOTH);
    gluTessProperty(tobj, GLU_TESS_WINDING_RULE,
                    GLU_TESS_WINDING_POSITIVE);
    gluTessBeginPolygon(tobj, NULL);
@@ -228,7 +228,7 @@ int main(int argc, char** argv)
    glutReshapeFunc(reshape);
    glutKeyboardFunc(keyboard);
    glutMainLoop();
-   return 0;  
+   return 0;
 }
 
 #else
