@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.6 2000/11/28 08:03:22 joukj Exp $ */
+/* $Id: s_copypix.c,v 1.7 2000/11/28 22:34:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -650,7 +650,7 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
 
-   if (!ctx->ReadBuffer->DepthBuffer || !ctx->DrawBuffer->DepthBuffer) {
+   if (!ctx->Visual.DepthBits) {
       gl_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
       return;
    }
@@ -758,7 +758,7 @@ static void copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    const GLboolean shift_or_offset = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    GLint overlapping;
 
-   if (!ctx->DrawBuffer->Stencil || !ctx->ReadBuffer->Stencil) {
+   if (!ctx->Visual.StencilBits) {
       gl_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
       return;
    }
