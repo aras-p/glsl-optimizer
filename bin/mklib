@@ -290,14 +290,14 @@ case $ARCH in
     'HP-UX')
         if [ $STATIC = 1 ] ; then
 	    LIBNAME="lib${LIBNAME}.a"
-	    echo "mklib: Making HPUX static library: " ${LIBNAME}
+	    echo "mklib: Making HP-UX static library: " ${LIBNAME}
 	    rm -f ${LIBNAME}
 	    ar -ruv ${LIBNAME} ${OBJECTS}
 	    FINAL_LIBS=${LIBNAME}
 	else
 	    RUNLIB="lib${LIBNAME}.${MAJOR}"
 	    DEVLIB="lib${LIBNAME}.sl"
-	    echo "mklib: Making HPUX stared library: " ${RUNLIB} ${DEVLIB}
+	    echo "mklib: Making HP-UX shared library: " ${RUNLIB} ${DEVLIB}
 	    ld -b -o ${RUNLIB} +b ${RUNLIB} ${OBJECTS} ${DEPS}
 	    ln -s ${RUNLIB} ${DEVLIB}
 	    FINAL_LIBS="{RUNLIB} ${DEVLIB}"

@@ -340,6 +340,7 @@ hpux10:
 	"CXX = aCC" \
 	"CFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
 	"CXXFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE" \
+	"MKLIB_OPTIONS = -static" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm -L/usr/lib -lCsup"
 
 hpux10-sl:
