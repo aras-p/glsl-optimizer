@@ -1,4 +1,4 @@
-/* $Id: isosurf.c,v 1.8 2001/01/06 20:38:03 gareth Exp $ */
+/* $Id: isosurf.c,v 1.9 2001/04/19 13:12:40 keithw Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.
@@ -80,6 +80,7 @@
 #define STIPPLE_MASK		(STIPPLE|NO_STIPPLE)
 
 #define MAXVERTS 10000
+static GLuint maxverts = MAXVERTS;
 static float data[MAXVERTS][6];
 static float compressed_data[MAXVERTS][6];
 static GLuint indices[MAXVERTS];
@@ -93,7 +94,7 @@ static GLfloat dist = -6;
 static GLint state, allowed = ~0;
 static GLboolean doubleBuffer = GL_TRUE;
 static GLdouble plane[4] = {1.0, 0.0, -1.0, 0.0};
-static GLuint surf1;
+static GLuint surf1, surf2, surf3;
 
 static GLboolean PrintInfo = GL_FALSE;
 
@@ -112,7 +113,9 @@ static GLubyte halftone[] = {
    0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55};
 
 /* forward decl */
-int BuildList( int mode );
+int BuildVertexList( int mode );
+int BuildArrayEltList( int mode );
+int BuildDrawArraysList( int mode );
 
 
 static void read_surface( char *filename )
@@ -126,7 +129,7 @@ static void read_surface( char *filename )
    }
 
    numverts = 0;
-   while (!feof(f) && numverts<MAXVERTS) {
+   while (!feof(f) && numverts<maxverts) {
       fscanf( f, "%f %f %f  %f %f %f",
 	      &data[numverts][0], &data[numverts][1], &data[numverts][2],
 	      &data[numverts][3], &data[numverts][4], &data[numverts][5] );
@@ -391,10 +394,13 @@ static void draw_surface( int with_state )
       break;
 
    case (DISPLAYLIST|GLVERTEX|STRIPS):
-      if (!surf1)
-	 surf1 = BuildList( GL_COMPILE_AND_EXECUTE );
-      else
-	 glCallList(surf1);
+      glCallList(surf1);
+      break;
+   case (DISPLAYLIST|ARRAY_ELT|STRIPS):
+      glCallList(surf2);
+      break;
+   case (DISPLAYLIST|DRAW_ARRAYS|STRIPS):
+      glCallList(surf3);
       break;
 
 
@@ -468,11 +474,29 @@ static void Display(void)
     if (doubleBuffer) glutSwapBuffers();
 }
 
-int BuildList( int mode )
+int BuildVertexList( int mode )
 {
    int rv = glGenLists(1);
    glNewList(rv, mode );
    draw_surface( IMMEDIATE|GLVERTEX|STRIPS );
+   glEndList();
+   return rv;
+}
+
+int BuildArrayEltList( int mode )
+{
+   int rv = glGenLists(1);
+   glNewList(rv, mode );
+   draw_surface( IMMEDIATE|ARRAY_ELT|STRIPS );
+   glEndList();
+   return rv;
+}
+
+int BuildDrawArraysList( int mode )
+{
+   int rv = glGenLists(1);
+   glNewList(rv, mode );
+   draw_surface( IMMEDIATE|DRAW_ARRAYS|STRIPS );
    glEndList();
    return rv;
 }
@@ -733,8 +757,6 @@ static void Init(int argc, char *argv[])
    compactify_arrays();
    make_tri_indices();
 
-   surf1 = BuildList( GL_COMPILE );
-
    ModeMenu(SHADE_SMOOTH|
 	    LIT|
 	    NO_TEXTURE|
@@ -746,6 +768,10 @@ static void Init(int argc, char *argv[])
 	    NO_FOG|
 	    NO_STIPPLE|
 	    GLVERTEX);
+
+   surf1 = BuildVertexList( GL_COMPILE );
+   surf2 = BuildArrayEltList( GL_COMPILE );
+   surf3 = BuildDrawArraysList( GL_COMPILE );
 
    if (PrintInfo) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
@@ -876,6 +902,15 @@ static GLint Args(int argc, char **argv)
       else if (strcmp(argv[i], "-info") == 0) {
          PrintInfo = GL_TRUE;
       }
+      else if (strcmp(argv[i], "-10") == 0) {
+         maxverts = 10;
+      }
+      else if (strcmp(argv[i], "-100") == 0) {
+	 maxverts = 100;
+      }
+      else if (strcmp(argv[i], "-1000") == 0) {
+	 maxverts = 1000;
+      }
       else {
          printf("%s (Bad option).\n", argv[i]);
 	 return QUIT;
@@ -951,6 +986,10 @@ int main(int argc, char **argv)
    glutAddMenuEntry("glVertex (POINTS)",     IMMEDIATE|GLVERTEX|POINTS);
    glutAddMenuEntry("", 0);
    glutAddMenuEntry("glVertex display list (STRIPS)",
+		    DISPLAYLIST|GLVERTEX|STRIPS);
+   glutAddMenuEntry("glArrayElement display list (STRIPS)",
+		    DISPLAYLIST|GLVERTEX|STRIPS);
+   glutAddMenuEntry("glDrawArrays display list (STRIPS)",
 		    DISPLAYLIST|GLVERTEX|STRIPS);
    glutAddMenuEntry("", 0);
    if (allowed & DRAW_ARRAYS) {
