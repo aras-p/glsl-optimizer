@@ -1,15 +1,31 @@
-/* $Id: isosurf.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: isosurf.c,v 1.2 1999/09/03 14:56:40 keithw Exp $ */
 
 /*
- * Display an isosurface of 3-D wind speed volume.  Use arrow keys to
- * rotate, S toggles smooth shading, L toggles lighting
+ * Display an isosurface of 3-D wind speed volume.  
+ *
  * Brian Paul  This file in public domain.
+ */
+
+
+/* Keys:
+ * =====
+ *
+ *   - Arrow keys to rotate
+ *   - 's' toggles smooth shading
+ *   - 'l' toggles lighting
+ *   - 'f' toggles fog
+ *   - 'I' and 'i' zoom in and out
+ *   - 'c' toggles a user clip plane
+ *   - 'm' toggles colorful materials in GL_TRIANGLES modes.
+ *   - '+' and '-' move the user clip plane
+ *
+ * Other options are available via the popup menu.
  */
 
 /*
  * $Log: isosurf.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  1999/09/03 14:56:40  keithw
+ * Fog, displaylist and zoom operations
  *
  * Revision 3.4  1999/04/24 01:10:47  keithw
  * clip planes, materials
@@ -44,11 +60,11 @@
 #define NO_REFLECT          0x20
 #define POINT_FILTER        0x40
 #define LINEAR_FILTER       0x80
-#define IMMEDIATE           0x100
+#define GLVERTEX           0x100
 #define DRAW_ARRAYS         0x200 /* or draw_elts, if compiled */
 #define ARRAY_ELT           0x400
 #define COMPILED            0x800
-#define NOT_COMPILED        0x1000
+#define IMMEDIATE           0x1000
 #define SHADE_SMOOTH        0x2000
 #define SHADE_FLAT          0x4000
 #define TRIANGLES           0x8000
@@ -57,18 +73,22 @@
 #define NO_USER_CLIP        0x40000
 #define MATERIALS           0x80000
 #define NO_MATERIALS        0x100000
+#define FOG                 0x200000
+#define NO_FOG              0x400000
 #define QUIT                0x800000
+#define DISPLAYLIST         0x1000000
 
 #define LIGHT_MASK  (LIT|UNLIT)
 #define TEXTURE_MASK (TEXTURE|NO_TEXTURE)
 #define REFLECT_MASK (REFLECT|NO_REFLECT)
 #define FILTER_MASK (POINT_FILTER|LINEAR_FILTER)
-#define RENDER_STYLE_MASK (IMMEDIATE|DRAW_ARRAYS|ARRAY_ELT)
-#define COMPILED_MASK (COMPILED|NOT_COMPILED)
+#define RENDER_STYLE_MASK (GLVERTEX|DRAW_ARRAYS|ARRAY_ELT)
+#define COMPILED_MASK (COMPILED|IMMEDIATE|DISPLAYLIST)
 #define MATERIAL_MASK (MATERIALS|NO_MATERIALS)
 #define PRIMITIVE_MASK (TRIANGLES|STRIPS)
 #define CLIP_MASK (USER_CLIP|NO_USER_CLIP)
 #define SHADE_MASK (SHADE_SMOOTH|SHADE_FLAT)
+#define FOG_MASK (FOG|NO_FOG)
 
 #define MAXVERTS 10000
 static float data[MAXVERTS][6];
@@ -80,10 +100,11 @@ static GLint numverts, num_tri_verts, numuniq;
 
 static GLfloat xrot;
 static GLfloat yrot;
+static GLfloat dist = -6;
 static GLint state, allowed = ~0;
 static GLboolean doubleBuffer = GL_TRUE;
 static GLdouble plane[4] = {1.0, 0.0, -1.0, 0.0};
-
+static GLuint surf1;
 
 static void read_surface( char *filename )
 {
@@ -290,11 +311,11 @@ static void make_tri_indices( void )
 
 #define MIN(x,y) (x < y) ? x : y
 
-static void draw_surface( void )
+static void draw_surface( int with_state )
 {
    GLuint i, j;
 
-   switch (state & (COMPILED_MASK|RENDER_STYLE_MASK|PRIMITIVE_MASK)) {
+   switch (with_state & (COMPILED_MASK|RENDER_STYLE_MASK|PRIMITIVE_MASK)) {
 #ifdef GL_EXT_vertex_array
 
    case (COMPILED|DRAW_ARRAYS|STRIPS):
@@ -310,8 +331,8 @@ static void draw_surface( void )
       break;
 
    case (COMPILED|DRAW_ARRAYS|TRIANGLES):
-   case (NOT_COMPILED|DRAW_ARRAYS|TRIANGLES):
-      if (state & MATERIALS) {
+   case (IMMEDIATE|DRAW_ARRAYS|TRIANGLES):
+      if (with_state & MATERIALS) {
 	 for (j = i = 0 ; i < num_tri_verts ; i += 600, j++) {
 	    GLuint nr = MIN(num_tri_verts-i, 600);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, col[j]);
@@ -327,22 +348,22 @@ static void draw_surface( void )
 
       /* Uses the original arrays (including duplicate elements):
        */
-   case (NOT_COMPILED|DRAW_ARRAYS|STRIPS):
+   case (IMMEDIATE|DRAW_ARRAYS|STRIPS):
       glDrawArraysEXT( GL_TRIANGLE_STRIP, 0, numverts );
       break;
 
       /* Uses the original arrays (including duplicate elements):
        */
-   case (NOT_COMPILED|ARRAY_ELT|STRIPS):
+   case (IMMEDIATE|ARRAY_ELT|STRIPS):
       glBegin( GL_TRIANGLE_STRIP );
       for (i = 0 ; i < numverts ; i++)
 	 glArrayElement( i );
       glEnd();
       break;
 
-   case (NOT_COMPILED|ARRAY_ELT|TRIANGLES):
+   case (IMMEDIATE|ARRAY_ELT|TRIANGLES):
    case (COMPILED|ARRAY_ELT|TRIANGLES):
-      if (state & MATERIALS) {
+      if (with_state & MATERIALS) {
 	 for (j = i = 0 ; i < num_tri_verts ; i += 600, j++) {
 	    GLuint nr = MIN(num_tri_verts-i, 600);
 	    GLuint k;
@@ -357,12 +378,13 @@ static void draw_surface( void )
 	 glBegin( GL_TRIANGLES );
 	 for (i = 0 ; i < num_tri_verts ; i++)
 	    glArrayElement( tri_indices[i] );
+	       
 	 glEnd();
       }	 
       break;
 
-   case (NOT_COMPILED|IMMEDIATE|TRIANGLES):
-      if (state & MATERIALS) {
+   case (IMMEDIATE|GLVERTEX|TRIANGLES):
+      if (with_state & MATERIALS) {
 	 for (j = i = 0 ; i < num_tri_verts ; i += 600, j++) {
 	    GLuint nr = MIN(num_tri_verts-i, 600);
 	    GLuint k;
@@ -385,6 +407,13 @@ static void draw_surface( void )
       }	 
       break;
 
+   case (DISPLAYLIST|GLVERTEX|STRIPS):
+      if (!surf1)
+	 surf1 = BuildList( GL_COMPILE_AND_EXECUTE );
+      else
+	 glCallList(surf1);
+      break;
+
 #endif
 
       /* Uses the original arrays (including duplicate elements):
@@ -404,9 +433,18 @@ static void draw_surface( void )
 static void Display(void)
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-    draw_surface();
+    draw_surface( state );
     glFlush();
     if (doubleBuffer) glutSwapBuffers();    
+}
+
+int BuildList( int mode )
+{
+   int rv = glGenLists(1);
+   glNewList(rv, mode );
+   draw_surface( IMMEDIATE|GLVERTEX|STRIPS );
+   glEndList();
+   return rv;
 }
 
 /* KW: only do this when necessary, so CVA can re-use results.
@@ -415,7 +453,7 @@ static void set_matrix( void )
 {
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
-   glTranslatef( 0.0, 0.0, -6.0 );
+   glTranslatef( 0.0, 0.0, dist );
    glRotatef( yrot, 0.0, 1.0, 0.0 );
    glRotatef( xrot, 1.0, 0.0, 0.0 );
 }
@@ -548,10 +586,23 @@ static void ModeMenu(int m)
       }
    }
 
+   if (CHANGED(state, m, FOG_MASK)) {
+      if (m & FOG) 
+      {
+	 glEnable(GL_FOG);
+	 printf("FOG enable\n");
+      } 
+      else 
+      {
+	 glDisable(GL_FOG);
+	 printf("FOG disable\n");
+      }
+   }
+
 #ifdef GL_EXT_vertex_array
    if (CHANGED(state, m, (COMPILED_MASK|RENDER_STYLE_MASK|PRIMITIVE_MASK))) 
    {
-      if ((m & (COMPILED_MASK|PRIMITIVE_MASK)) == (NOT_COMPILED|STRIPS))
+      if ((m & (COMPILED_MASK|PRIMITIVE_MASK)) == (IMMEDIATE|STRIPS))
       {
 	 glVertexPointerEXT( 3, GL_FLOAT, sizeof(data[0]), numverts, data );
 	 glNormalPointerEXT( GL_FLOAT, sizeof(data[0]), numverts, &data[0][3]);
@@ -588,6 +639,8 @@ static void ModeMenu(int m)
 
 static void Init(void)
 {
+   GLfloat fogColor[4] = {0.5,1.0,0.5,1.0};
+
    glClearColor(0.0, 0.0, 0.0, 0.0);
    glEnable( GL_DEPTH_TEST );
    glEnable( GL_VERTEX_ARRAY_EXT );
@@ -616,20 +669,30 @@ static void Init(void)
       exit(1);
    }
 
+   /* Green fog is easy to see */
+   glFogi(GL_FOG_MODE,GL_EXP2);
+   glFogfv(GL_FOG_COLOR,fogColor);
+   glFogf(GL_FOG_DENSITY,0.15);
+   glHint(GL_FOG_HINT,GL_DONT_CARE);
+
+
    if (allowed & COMPILED) {
       compactify_arrays();
       make_tri_indices();
    }
+
+   surf1 = BuildList( GL_COMPILE );
 
    ModeMenu(SHADE_SMOOTH|
 	    LIT|
 	    NO_TEXTURE|
 	    NO_REFLECT|
 	    POINT_FILTER|
-	    NOT_COMPILED|
+	    IMMEDIATE|
 	    NO_USER_CLIP|
 	    NO_MATERIALS|
-	    IMMEDIATE);
+	    NO_FOG|
+	    GLVERTEX);
 }
 
 
@@ -644,44 +707,57 @@ static void Reshape(int width, int height)
 static void Key( unsigned char key, int x, int y )
 {
    switch (key) {
-      case 27:
-         exit(0);
-      case 's':
-	 ModeMenu((state ^ SHADE_MASK) & SHADE_MASK);
-         break;
-      case 'l':
-	 ModeMenu((state ^ LIGHT_MASK) & LIGHT_MASK);
-         break;
-      case 'm':
-	 ModeMenu((state ^ MATERIAL_MASK) & MATERIAL_MASK);
-         break;
-      case 'c':
-	 ModeMenu((state ^ CLIP_MASK) & CLIP_MASK);
-         break;
-      case 'b':
-         Benchmark(5.0, 0);
-         break;
-      case 'B':
-         Benchmark(0, 5.0);
-         break;
-      case '-':
-      case '_':
-	plane[3] += 2.0;
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glClipPlane(GL_CLIP_PLANE0, plane);
-	set_matrix();
-	glutPostRedisplay();
-	break;
-      case '+':
-      case '=':
-	plane[3] -= 2.0;
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glClipPlane(GL_CLIP_PLANE0, plane);
-	set_matrix();
-	glutPostRedisplay();
-	break;
+   case 27:
+      exit(0);
+   case 'f':
+      ModeMenu((state ^ FOG_MASK) & FOG_MASK);
+      break;
+   case 's':
+      ModeMenu((state ^ SHADE_MASK) & SHADE_MASK);
+      break;
+   case 'l':
+      ModeMenu((state ^ LIGHT_MASK) & LIGHT_MASK);
+      break;
+   case 'm':
+      ModeMenu((state ^ MATERIAL_MASK) & MATERIAL_MASK);
+      break;
+   case 'c':
+      ModeMenu((state ^ CLIP_MASK) & CLIP_MASK);
+      break;
+   case 'b':
+      Benchmark(5.0, 0);
+      break;
+   case 'B':
+      Benchmark(0, 5.0);
+      break;
+   case 'i':
+      dist += .25;
+      set_matrix();
+      glutPostRedisplay();
+      break;
+   case 'I':
+      dist -= .25;
+      set_matrix();
+      glutPostRedisplay();
+      break;
+   case '-':
+   case '_':
+      plane[3] += 2.0;
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      glClipPlane(GL_CLIP_PLANE0, plane);
+      set_matrix();
+      glutPostRedisplay();
+      break;
+   case '+':
+   case '=':
+      plane[3] -= 2.0;
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      glClipPlane(GL_CLIP_PLANE0, plane);
+      set_matrix();
+      glutPostRedisplay();
+      break;
 
    }
 }
@@ -782,21 +858,27 @@ int main(int argc, char **argv)
    glutAddMenuEntry("Smooth",                SHADE_SMOOTH);
    glutAddMenuEntry("Flat",                  SHADE_FLAT);
    glutAddMenuEntry("", 0);   
+   glutAddMenuEntry("Fog",                   FOG);
+   glutAddMenuEntry("No Fog",                NO_FOG);
+   glutAddMenuEntry("", 0);   
    glutAddMenuEntry("Point Filtered",        POINT_FILTER);
    glutAddMenuEntry("Linear Filtered",       LINEAR_FILTER);
    glutAddMenuEntry("", 0);   
-   glutAddMenuEntry("Immediate (STRIPS)",    NOT_COMPILED|IMMEDIATE|STRIPS);
-   glutAddMenuEntry("Immediate (TRIANGLES)", NOT_COMPILED|IMMEDIATE|TRIANGLES);
+   glutAddMenuEntry("glVertex (STRIPS)",    IMMEDIATE|GLVERTEX|STRIPS);
+   glutAddMenuEntry("glVertex (TRIANGLES)", IMMEDIATE|GLVERTEX|TRIANGLES);
+   glutAddMenuEntry("", 0);   
+   glutAddMenuEntry("glVertex display list (STRIPS)", 
+		    DISPLAYLIST|GLVERTEX|STRIPS);
    glutAddMenuEntry("", 0);   
    if (allowed & DRAW_ARRAYS) {
       glutAddMenuEntry("DrawArrays (STRIPS)",
-		       NOT_COMPILED|DRAW_ARRAYS|STRIPS);
+		       IMMEDIATE|DRAW_ARRAYS|STRIPS);
       glutAddMenuEntry("ArrayElement (STRIPS)",  
-		       NOT_COMPILED|ARRAY_ELT|STRIPS);
+		       IMMEDIATE|ARRAY_ELT|STRIPS);
       glutAddMenuEntry("DrawElements (TRIANGLES)", 
-		       NOT_COMPILED|DRAW_ARRAYS|TRIANGLES);
+		       IMMEDIATE|DRAW_ARRAYS|TRIANGLES);
       glutAddMenuEntry("ArrayElement (TRIANGLES)", 
-		       NOT_COMPILED|ARRAY_ELT|TRIANGLES);
+		       IMMEDIATE|ARRAY_ELT|TRIANGLES);
       glutAddMenuEntry("", 0);   
 
    }
@@ -805,7 +887,9 @@ int main(int argc, char **argv)
 		       COMPILED|DRAW_ARRAYS|TRIANGLES);
       glutAddMenuEntry("Compiled DrawElements (STRIPS)", 
 		       COMPILED|DRAW_ARRAYS|STRIPS);
-      glutAddMenuEntry("Compiled ArrayElement", 
+      glutAddMenuEntry("Compiled ArrayElement (TRIANGLES)", 
+		       COMPILED|ARRAY_ELT|TRIANGLES);   
+      glutAddMenuEntry("Compiled ArrayElement (STRIPS)", 
 		       COMPILED|ARRAY_ELT|STRIPS);   
       glutAddMenuEntry("", 0);   
    }
