@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.14 2001/02/16 18:56:46 keithw Exp $ */
+/* $Id: s_context.c,v 1.15 2001/02/24 18:25:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -100,13 +100,6 @@ _swrast_update_rasterflags( GLcontext *ctx )
    }
    else if (!ctx->Visual.rgbMode && ctx->Color.IndexMask==0) {
       RasterMask |= MULTI_DRAW_BIT; /* all color index bits disabled */
-   }
-
-   if (   ctx->Viewport.X<0
-       || ctx->Viewport.X + ctx->Viewport.Width > ctx->DrawBuffer->Width
-       || ctx->Viewport.Y<0
-       || ctx->Viewport.Y + ctx->Viewport.Height > ctx->DrawBuffer->Height) {
-      RasterMask |= WINCLIP_BIT;
    }
 
    SWRAST_CONTEXT(ctx)->_RasterMask = RasterMask;

@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.53 2001/02/19 20:02:37 brianp Exp $ */
+/* $Id: dd.h,v 1.54 2001/02/24 18:25:52 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -70,17 +70,13 @@ struct gl_pixelstore_attrib;
  * the driver-specific context struct.  See the X/Mesa or OS/Mesa interface
  * for an example.
  *
- * For more information about writing a device driver see the ddsample.c
- * file and other device drivers (X/xmesa[1234].c, OSMesa/osmesa.c, etc)
- * for examples.
- *
+ * For more information about writing a device driver see the drivers
+ * in OSmesa/ and X/ for examples.
  *
  * Look below in the dd_function_table struct definition for descriptions
  * of each device driver function.
  * 
- *
- * In the future more function pointers may be added for glReadPixels
- * glCopyPixels, etc.
+ * More function pointers may be added as required.
  *
  *
  * Notes:
@@ -852,7 +848,9 @@ struct dd_function_table {
 
    render_func          *RenderTabVerts;
    render_func          *RenderTabElts;
-   /* XXX Description???
+   /* Render whole unclipped primitives (points, lines, linestrips,
+    * lineloops, etc).  The tables are indexed by the GL enum of the
+    * primitive to be rendered.
     */
 
    void (*ResetLineStipple)( GLcontext *ctx );
@@ -1053,13 +1051,11 @@ typedef struct {
     *
     * Mesa will provide a set of helper functions to do eval within
     * accelerated vertex formats, eventually...  
-    * 
-    * Update: There seem to be issues re. maintaining correct values
-    * for 'ctx->Current' in the face of Eval and T&L fallbacks...  
     */
 
    GLboolean prefer_float_colors;
-   /* Should core send non-standard colors to glColor4f or glColor4ub
+   /* Should core try to send colors to glColor4f or glColor4chan,
+    * where it has a choice?  
     */
 
 

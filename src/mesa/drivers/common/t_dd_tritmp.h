@@ -43,9 +43,40 @@
  * DO_UNFILLED:  Decompose triangles to lines and points where appropriate.
  *
  * HAVE_RGBA: Vertices have rgba values (otherwise index values).
+ * HAVE_SPEC: Vertices have secondary rgba values.
+ *
+ * VERT_X(v): Alias for vertex x value.
+ * VERT_Y(v): Alias for vertex x value.
+ * VERT_Z(v): Alias for vertex x value.
+ * DEPTH_SCALE: Scale for offset.
+ *
+ * VERTEX: Hardware vertex type.
+ * GET_VERTEX(n): Retreive vertex with index n.
+ * AREA_IS_CCW(a): Return true if triangle with signed area a is ccw.
+ *
+ * VERT_SET_RGBA: Assign vertex rgba from VB color.
+ * VERT_COPY_RGBA: Copy vertex rgba another vertex.
+ * VERT_SAVE_RGBA: Save vertex rgba to a local variable.
+ * VERT_RESTORE_RGBA: Restore vertex rgba from a local variable.
+ *   --> Similar for IND and SPEC.
+ *
+ * LOCAL_VARS(n): (At least) define local vars for save/restore rgba.
+ *
  */
 
+#if HAVE_RGBA
+#define VERT_SET_IND( v, c ) (void) c
+#define VERT_COPY_IND( v0, v1 )
+#define VERT_SAVE_IND( idx ) 
+#define VERT_RESTORE_IND( idx ) 
+#endif
 
+#if !HAVE_SPEC
+#define VERT_SET_SPEC( v, c ) (void) c
+#define VERT_COPY_SPEC( v0, v1 )
+#define VERT_SAVE_SPEC( idx ) 
+#define VERT_RESTORE_SPEC( idx ) 
+#endif
 
 static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 {
@@ -57,9 +88,9 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    GLuint facing;
    LOCAL_VARS(3);
 
-   v[0] = GET_VERTEX(e0);
-   v[1] = GET_VERTEX(e1);
-   v[2] = GET_VERTEX(e2);
+   v[0] = (VERTEX *)GET_VERTEX(e0);
+   v[1] = (VERTEX *)GET_VERTEX(e1);
+   v[2] = (VERTEX *)GET_VERTEX(e2);
 
    if (DO_TWOSIDE || DO_OFFSET || DO_UNFILLED)
    {
@@ -92,18 +123,18 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	 if (DO_TWOSIDE && facing == 1)
 	 {
 	    if (HAVE_RGBA) {
-	       GLubyte (*vbcolor)[4] = VB->ColorPtr[1]->data;
-	       ASSERT(VB->ColorPtr[1]->stride == 4*sizeof(GLubyte));
+	       GLchan (*vbcolor)[4] = VB->ColorPtr[1]->data;
+	       ASSERT(VB->ColorPtr[1]->stride == 4*sizeof(GLchan));
 
 	       if (!DO_FLAT) {
-		  VERT_SET_COLOR( v[0], vbcolor[e0] );
-		  VERT_SET_COLOR( v[1], vbcolor[e1] );
+		  VERT_SET_RGBA( v[0], vbcolor[e0] );
+		  VERT_SET_RGBA( v[1], vbcolor[e1] );
 	       }
-	       VERT_SET_COLOR( v[2], vbcolor[e2] );
+	       VERT_SET_RGBA( v[2], vbcolor[e2] );
 
-	       if (VB->SecondaryColorPtr[1]) {
-		  GLubyte (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
-		  ASSERT(VB->SecondaryColorPtr[1]->stride == 4*sizeof(GLubyte));
+	       if (HAVE_SPEC && VB->SecondaryColorPtr[1]) {
+		  GLchan (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
+		  ASSERT(VB->SecondaryColorPtr[1]->stride == 4*sizeof(GLchan));
 		
 		  if (!DO_FLAT) {
 		     VERT_SET_SPEC( v[0], vbspec[e0] );
@@ -148,22 +179,22 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 
    if (DO_FLAT) {
       if (HAVE_RGBA) {
-	 VERT_SAVE_VERT_RGBA( 0 );
-	 VERT_SAVE_VERT_RGBA( 1 );
-	 VERT_COPY_VERT_RGBA( v[0], v[2] );
-	 VERT_COPY_VERT_RGBA( v[1], v[2] );
-	 if (VB->SecondaryColorPtr[0]) {
-	    VERT_SAVE_VERT_SPEC( 0 );
-	    VERT_SAVE_VERT_SPEC( 1 );
-	    VERT_COPY_VERT_SPEC( v[0], v[2] );
-	    VERT_COPY_VERT_SPEC( v[1], v[2] );
+	 VERT_SAVE_RGBA( 0 );
+	 VERT_SAVE_RGBA( 1 );
+	 VERT_COPY_RGBA( v[0], v[2] );
+	 VERT_COPY_RGBA( v[1], v[2] );
+	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	    VERT_SAVE_SPEC( 0 );
+	    VERT_SAVE_SPEC( 1 );
+	    VERT_COPY_SPEC( v[0], v[2] );
+	    VERT_COPY_SPEC( v[1], v[2] );
 	 }
       } 
       else {
-	 VERT_SAVE_VERT_IND( 0 );
-	 VERT_SAVE_VERT_IND( 1 );
-	 VERT_COPY_VERT_IND( v[0], v[2] );
-	 VERT_COPY_VERT_IND( v[1], v[2] );
+	 VERT_SAVE_IND( 0 );
+	 VERT_SAVE_IND( 1 );
+	 VERT_COPY_IND( v[0], v[2] );
+	 VERT_COPY_IND( v[1], v[2] );
       }
    }
 
@@ -173,14 +204,14 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	 VERT_Z(v[1]) += offset;
 	 VERT_Z(v[2]) += offset;
       }
-      UNFILLED_POINT_TRI( ctx, e0, e1, e2 );
+      UNFILLED_TRI( ctx, GL_POINT, e0, e1, e2 );
    } else if (mode == GL_LINE) {
       if (DO_OFFSET && ctx->Polygon.OffsetLine) {
 	 VERT_Z(v[0]) += offset;
 	 VERT_Z(v[1]) += offset;
 	 VERT_Z(v[2]) += offset;
       }
-      UNFILLED_LINE_TRI( ctx, e0, e1, e2 );
+      UNFILLED_TRI( ctx, GL_LINE, e0, e1, e2 );
    } else {
       if (DO_OFFSET && ctx->Polygon.OffsetFill) {
 	 VERT_Z(v[0]) += offset;
@@ -188,8 +219,8 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	 VERT_Z(v[2]) += offset;
       }
       if (DO_UNFILLED)
-	 SET_REDUCED_PRIM( GL_TRIANGLES, GL_TRIANGLES );
-      TRI( ctx, v[0], v[1], v[2] ); 
+	 RASTERIZE( GL_TRIANGLES );
+      TRI( v[0], v[1], v[2] ); 
    }
 
    if (DO_OFFSET)
@@ -199,26 +230,21 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
       VERT_Z(v[2]) = z[2];
    }
 
-   /* ==> Need to import Color, SecondaryColor, Index to meet assertions
-    *     in DO_FLAT case.
-    *
-    * ==> Copy/Restore vertex data instead?
-    */
    if (DO_TWOSIDE && facing == 1)
    {
       if (HAVE_RGBA) {
-	 GLubyte (*vbcolor)[4] = VB->ColorPtr[0]->data;
-	 ASSERT(VB->ColorPtr[0]->stride == 4*sizeof(GLubyte));
+	 GLchan (*vbcolor)[4] = VB->ColorPtr[0]->data;
+	 ASSERT(VB->ColorPtr[0]->stride == 4*sizeof(GLchan));
 	 
 	 if (!DO_FLAT) {
-	    VERT_SET_COLOR( v[0], vbcolor[e0] );
-	    VERT_SET_COLOR( v[1], vbcolor[e1] );
+	    VERT_SET_RGBA( v[0], vbcolor[e0] );
+	    VERT_SET_RGBA( v[1], vbcolor[e1] );
 	 }
-	 VERT_SET_COLOR( v[2], vbcolor[e2] );
+	 VERT_SET_RGBA( v[2], vbcolor[e2] );
 	 
-	 if (VB->SecondaryColorPtr[0]) {
-	    GLubyte (*vbspec)[4] = VB->SecondaryColorPtr[0]->data;
-	    ASSERT(VB->SecondaryColorPtr[0]->stride == 4*sizeof(GLubyte));
+	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	    GLchan (*vbspec)[4] = VB->SecondaryColorPtr[0]->data;
+	    ASSERT(VB->SecondaryColorPtr[0]->stride == 4*sizeof(GLchan));
 	  
 	    if (!DO_FLAT) {
 	       VERT_SET_SPEC( v[0], vbspec[e0] );
@@ -240,16 +266,16 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 
    if (DO_FLAT) {
       if (HAVE_RGBA) {
-	 VERT_RESTORE_VERT_RGBA( 0 );
-	 VERT_RESTORE_VERT_RGBA( 1 );
-	 if (VB->SecondaryColorPtr[0]) {
-	    VERT_RESTORE_VERT_SPEC( 0 );
-	    VERT_RESTORE_VERT_SPEC( 1 );
+	 VERT_RESTORE_RGBA( 0 );
+	 VERT_RESTORE_RGBA( 1 );
+	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	    VERT_RESTORE_SPEC( 0 );
+	    VERT_RESTORE_SPEC( 1 );
 	 }
       } 
       else {
-	 VERT_RESTORE_VERT_IND( 0 );
-	 VERT_RESTORE_VERT_IND( 1 );
+	 VERT_RESTORE_IND( 0 );
+	 VERT_RESTORE_IND( 1 );
       }
    }
 
@@ -268,10 +294,10 @@ static void TAG(quad)( GLcontext *ctx,
    GLuint facing;
    LOCAL_VARS(4);
 
-   v[0] = GET_VERTEX(e0);
-   v[1] = GET_VERTEX(e1);
-   v[2] = GET_VERTEX(e2);
-   v[3] = GET_VERTEX(e3);
+   v[0] = (VERTEX *)GET_VERTEX(e0);
+   v[1] = (VERTEX *)GET_VERTEX(e1);
+   v[2] = (VERTEX *)GET_VERTEX(e2);
+   v[3] = (VERTEX *)GET_VERTEX(e3);
 
    if (DO_TWOSIDE || DO_OFFSET || DO_UNFILLED)
    {
@@ -304,18 +330,18 @@ static void TAG(quad)( GLcontext *ctx,
 	 if (DO_TWOSIDE && facing == 1)
 	 {
 	    if (HAVE_RGBA) {
-	       GLubyte (*vbcolor)[4] = VB->ColorPtr[1]->data;
+	       GLchan (*vbcolor)[4] = VB->ColorPtr[1]->data;
 	       
 	       if (!DO_FLAT) {
-		  VERT_SET_COLOR( v[0], vbcolor[e0] );
-		  VERT_SET_COLOR( v[1], vbcolor[e1] );
-		  VERT_SET_COLOR( v[2], vbcolor[e2] );
+		  VERT_SET_RGBA( v[0], vbcolor[e0] );
+		  VERT_SET_RGBA( v[1], vbcolor[e1] );
+		  VERT_SET_RGBA( v[2], vbcolor[e2] );
 	       }
-	       VERT_SET_COLOR( v[3], vbcolor[e3] );
+	       VERT_SET_RGBA( v[3], vbcolor[e3] );
 
-	       if (VB->SecondaryColorPtr[facing]) {
-		  GLubyte (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
-		  ASSERT(VB->SecondaryColorPtr[1]->stride == 4*sizeof(GLubyte));
+	       if (HAVE_SPEC && VB->SecondaryColorPtr[facing]) {
+		  GLchan (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
+		  ASSERT(VB->SecondaryColorPtr[1]->stride == 4*sizeof(GLchan));
 
 		  if (!DO_FLAT) {
 		     VERT_SET_SPEC( v[0], vbspec[e0] );
@@ -363,28 +389,28 @@ static void TAG(quad)( GLcontext *ctx,
 
    if (DO_FLAT) {
       if (HAVE_RGBA) {
-	 VERT_SAVE_VERT_RGBA( 0 );
-	 VERT_SAVE_VERT_RGBA( 1 );
-	 VERT_SAVE_VERT_RGBA( 2 );
-	 VERT_COPY_VERT_RGBA( v[0], v[3] );
-	 VERT_COPY_VERT_RGBA( v[1], v[3] );
-	 VERT_COPY_VERT_RGBA( v[2], v[3] );
-	 if (VB->SecondaryColorPtr[0]) {
-	    VERT_SAVE_VERT_SPEC( 0 );
-	    VERT_SAVE_VERT_SPEC( 1 );
-	    VERT_SAVE_VERT_SPEC( 2 );
-	    VERT_COPY_VERT_SPEC( v[0], v[3] );
-	    VERT_COPY_VERT_SPEC( v[1], v[3] );
-	    VERT_COPY_VERT_SPEC( v[2], v[3] );
+	 VERT_SAVE_RGBA( 0 );
+	 VERT_SAVE_RGBA( 1 );
+	 VERT_SAVE_RGBA( 2 );
+	 VERT_COPY_RGBA( v[0], v[3] );
+	 VERT_COPY_RGBA( v[1], v[3] );
+	 VERT_COPY_RGBA( v[2], v[3] );
+	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	    VERT_SAVE_SPEC( 0 );
+	    VERT_SAVE_SPEC( 1 );
+	    VERT_SAVE_SPEC( 2 );
+	    VERT_COPY_SPEC( v[0], v[3] );
+	    VERT_COPY_SPEC( v[1], v[3] );
+	    VERT_COPY_SPEC( v[2], v[3] );
 	 }
       } 
       else {
-	 VERT_SAVE_VERT_IND( 0 );
-	 VERT_SAVE_VERT_IND( 1 );
-	 VERT_SAVE_VERT_IND( 2 );
-	 VERT_COPY_VERT_IND( v[0], v[3] );
-	 VERT_COPY_VERT_IND( v[1], v[3] );
-	 VERT_COPY_VERT_IND( v[2], v[3] );
+	 VERT_SAVE_IND( 0 );
+	 VERT_SAVE_IND( 1 );
+	 VERT_SAVE_IND( 2 );
+	 VERT_COPY_IND( v[0], v[3] );
+	 VERT_COPY_IND( v[1], v[3] );
+	 VERT_COPY_IND( v[2], v[3] );
       }
    }
 
@@ -395,7 +421,7 @@ static void TAG(quad)( GLcontext *ctx,
 	 VERT_Z(v[2]) += offset;
 	 VERT_Z(v[3]) += offset;
       }
-      UNFILLED_POINT_QUAD( ctx, e0, e1, e2, e3 );
+      UNFILLED_QUAD( ctx, GL_POINT, e0, e1, e2, e3 );
    } else if (mode == GL_LINE) {
       if (DO_OFFSET && ctx->Polygon.OffsetLine) {
 	 VERT_Z(v[0]) += offset;
@@ -403,7 +429,7 @@ static void TAG(quad)( GLcontext *ctx,
 	 VERT_Z(v[2]) += offset;
 	 VERT_Z(v[3]) += offset;
       }
-      UNFILLED_LINE_QUAD( ctx, e0, e1, e2, e3 );
+      UNFILLED_QUAD( ctx, GL_LINE, e0, e1, e2, e3 );
    } else {
       if (DO_OFFSET && ctx->Polygon.OffsetFill) {
 	 VERT_Z(v[0]) += offset;
@@ -411,8 +437,7 @@ static void TAG(quad)( GLcontext *ctx,
 	 VERT_Z(v[2]) += offset;
 	 VERT_Z(v[3]) += offset;
       }
-      if (DO_UNFILLED)
-	 SET_REDUCED_PRIM( GL_QUADS, GL_TRIANGLES );
+      RASTERIZE( GL_TRIANGLES );
       QUAD( (v[0]), (v[1]), (v[2]), (v[3]) ); 
    }
 
@@ -427,19 +452,19 @@ static void TAG(quad)( GLcontext *ctx,
    if (DO_TWOSIDE && facing == 1)
    {
       if (HAVE_RGBA) {
-	 GLubyte (*vbcolor)[4] = VB->ColorPtr[0]->data;
-	 ASSERT(VB->ColorPtr[0]->stride == 4*sizeof(GLubyte));
+	 GLchan (*vbcolor)[4] = VB->ColorPtr[0]->data;
+	 ASSERT(VB->ColorPtr[0]->stride == 4*sizeof(GLchan));
 	 
 	 if (!DO_FLAT) {
-	    VERT_SET_COLOR( v[0], vbcolor[e0] );
-	    VERT_SET_COLOR( v[1], vbcolor[e1] );
-	    VERT_SET_COLOR( v[2], vbcolor[e2] );
+	    VERT_SET_RGBA( v[0], vbcolor[e0] );
+	    VERT_SET_RGBA( v[1], vbcolor[e1] );
+	    VERT_SET_RGBA( v[2], vbcolor[e2] );
 	 }
-	 VERT_SET_COLOR( v[3], vbcolor[e3] );
+	 VERT_SET_RGBA( v[3], vbcolor[e3] );
 	 
-	 if (VB->SecondaryColorPtr[0]) {
-	    GLubyte (*vbspec)[4] = VB->SecondaryColorPtr[0]->data;
-	    ASSERT(VB->SecondaryColorPtr[0]->stride == 4*sizeof(GLubyte));
+	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	    GLchan (*vbspec)[4] = VB->SecondaryColorPtr[0]->data;
+	    ASSERT(VB->SecondaryColorPtr[0]->stride == 4*sizeof(GLchan));
 	  
 	    if (!DO_FLAT) {
 	       VERT_SET_SPEC( v[0], vbspec[e0] );
@@ -463,19 +488,19 @@ static void TAG(quad)( GLcontext *ctx,
 
    if (DO_FLAT) {
       if (HAVE_RGBA) {
-	 VERT_RESTORE_VERT_RGBA( 0 );
-	 VERT_RESTORE_VERT_RGBA( 1 );
-	 VERT_RESTORE_VERT_RGBA( 2 );
-	 if (VB->SecondaryColorPtr[0]) {
-	    VERT_RESTORE_VERT_SPEC( 0 );
-	    VERT_RESTORE_VERT_SPEC( 1 );
-	    VERT_RESTORE_VERT_SPEC( 2 );
+	 VERT_RESTORE_RGBA( 0 );
+	 VERT_RESTORE_RGBA( 1 );
+	 VERT_RESTORE_RGBA( 2 );
+	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	    VERT_RESTORE_SPEC( 0 );
+	    VERT_RESTORE_SPEC( 1 );
+	    VERT_RESTORE_SPEC( 2 );
 	 }
       } 
       else {
-	 VERT_RESTORE_VERT_IND( 0 );
-	 VERT_RESTORE_VERT_IND( 1 );
-	 VERT_RESTORE_VERT_IND( 2 );
+	 VERT_RESTORE_IND( 0 );
+	 VERT_RESTORE_IND( 1 );
+	 VERT_RESTORE_IND( 2 );
       }
    }
 }
@@ -483,7 +508,7 @@ static void TAG(quad)( GLcontext *ctx,
 static void TAG(quad)( GLcontext *ctx, GLuint e0,
 		       GLuint e1, GLuint e2, GLuint e3 )
 {
-   if (IND & SS_UNFILLED_BIT) {
+   if (DO_UNFILLED) {
       struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
       GLubyte ef1 = VB->EdgeFlag[e1];
       GLubyte ef3 = VB->EdgeFlag[e3];
@@ -503,24 +528,25 @@ static void TAG(quad)( GLcontext *ctx, GLuint e0,
 
 static void TAG(line)( GLcontext *ctx, GLuint e0, GLuint e1 )
 {
+   TNLvertexbuffer *VB = &TNL_CONTEXT(ctx)->vb;
    VERTEX *v[2];
    LOCAL_VARS(2);
 
-   v[0] = GET_VERTEX(e0);
-   v[1] = GET_VERTEX(e1);
+   v[0] = (VERTEX *)GET_VERTEX(e0);
+   v[1] = (VERTEX *)GET_VERTEX(e1);
 
    if (DO_FLAT) {
       if (HAVE_RGBA) {
-	 VERT_SAVE_VERT_RGBA( 0 );
-	 VERT_COPY_VERT_RGBA( v[0], v[1] );
-	 if (VB->SecondaryColorPtr[0]) {
-	    VERT_SAVE_VERT_SPEC( 0 );
-	    VERT_COPY_VERT_SPEC( v[0], v[1] );
+	 VERT_SAVE_RGBA( 0 );
+	 VERT_COPY_RGBA( v[0], v[1] );
+	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	    VERT_SAVE_SPEC( 0 );
+	    VERT_COPY_SPEC( v[0], v[1] );
 	 }
       } 
       else {
-	 VERT_SAVE_VERT_IND( 0 );
-	 VERT_COPY_VERT_IND( v[0], v[1] );
+	 VERT_SAVE_IND( 0 );
+	 VERT_COPY_IND( v[0], v[1] );
       }
    }
 
@@ -528,14 +554,14 @@ static void TAG(line)( GLcontext *ctx, GLuint e0, GLuint e1 )
 
    if (DO_FLAT) {
       if (HAVE_RGBA) {
-	 VERT_RESTORE_VERT_RGBA( 0 );
+	 VERT_RESTORE_RGBA( 0 );
 
-	 if (VB->SecondaryColorPtr[0]) {
-	    VERT_RESTORE_VERT_SPEC( 0 );
+	 if (HAVE_SPEC && VB->SecondaryColorPtr[0]) {
+	    VERT_RESTORE_SPEC( 0 );
 	 }
       } 
       else {
-	 VERT_RESTORE_VERT_IND( 0 );
+	 VERT_RESTORE_IND( 0 );
       }
    }
 }
@@ -550,7 +576,7 @@ static void TAG(points)( GLcontext *ctx, GLuint first, GLuint last )
    if (VB->Elts == 0) {
       for ( i = first ; i < last ; i++ ) {
 	 if ( VB->ClipMask[i] == 0 ) {
-	    VERTEX *v = GET_VERTEX(i);
+	    VERTEX *v = (VERTEX *)GET_VERTEX(i);
 	    POINT( v );
 	 }
       }
@@ -558,12 +584,34 @@ static void TAG(points)( GLcontext *ctx, GLuint first, GLuint last )
       for ( i = first ; i < last ; i++ ) {
 	 GLuint e = VB->Elts[i];
 	 if ( VB->ClipMask[e] == 0 ) {
-	    VERTEX *v = GET_VERTEX(e);
+	    VERTEX *v = (VERTEX *)GET_VERTEX(e);
 	    POINT( v );
 	 }
       }
    }
 }
 
+static void TAG(init)( void )
+{
+   TAB[IND].quad = TAG(quad);
+   TAB[IND].triangle = TAG(triangle);
+   TAB[IND].line = TAG(line);
+   TAB[IND].points = TAG(points);
+}
+
 #undef IND
 #undef TAG
+
+#if HAVE_RGBA
+#undef VERT_SET_IND
+#undef VERT_COPY_IND
+#undef VERT_SAVE_IND
+#undef VERT_RESTORE_IND
+#endif
+
+#if !HAVE_SPEC
+#undef VERT_SET_SPEC
+#undef VERT_COPY_SPEC
+#undef VERT_SAVE_SPEC
+#undef VERT_RESTORE_SPEC
+#endif
