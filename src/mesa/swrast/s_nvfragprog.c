@@ -1,4 +1,4 @@
-/* $Id: s_nvfragprog.c,v 1.9 2003/03/16 22:02:37 brianp Exp $ */
+/* $Id: s_nvfragprog.c,v 1.10 2003/03/19 05:34:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1041,39 +1041,45 @@ execute_program( GLcontext *ctx,
 static void
 init_machine( GLcontext *ctx, struct fp_machine *machine,
               const struct fragment_program *program,
-              const struct sw_span *span, GLuint i )
+              const struct sw_span *span, GLuint col )
 {
-   GLuint u;
+   GLuint j, u;
 
    /* Clear temporary registers */
    _mesa_bzero(machine->Registers + FP_TEMP_REG_START,
                MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
 
+   /* Load program local parameters */
+   for (j = 0; j < MAX_NV_FRAGMENT_PROGRAM_PARAMS; j++) {
+      COPY_4V(machine->Registers[FP_PROG_REG_START + j],
+              program->LocalParams[j]);
+   }
+
    /* Load input registers */
    if (program->InputsRead & (1 << FRAG_ATTRIB_WPOS)) {
       GLfloat *wpos = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_WPOS];
-      wpos[0] = span->x + i;
-      wpos[1] = span->y + i;
-      wpos[2] = (GLfloat) span->array->z[i] / ctx->DepthMaxF;
-      wpos[3] = span->w + i * span->dwdx;
+      wpos[0] = span->x + col;
+      wpos[1] = span->y;
+      wpos[2] = (GLfloat) span->array->z[col] / ctx->DepthMaxF;
+      wpos[3] = span->w + col * span->dwdx;
    }
    if (program->InputsRead & (1 << FRAG_ATTRIB_COL0)) {
       GLfloat *col0 = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_COL0];
-      col0[0] = CHAN_TO_FLOAT(span->array->rgba[i][RCOMP]);
-      col0[1] = CHAN_TO_FLOAT(span->array->rgba[i][GCOMP]);
-      col0[2] = CHAN_TO_FLOAT(span->array->rgba[i][BCOMP]);
-      col0[3] = CHAN_TO_FLOAT(span->array->rgba[i][ACOMP]);
+      col0[0] = CHAN_TO_FLOAT(span->array->rgba[col][RCOMP]);
+      col0[1] = CHAN_TO_FLOAT(span->array->rgba[col][GCOMP]);
+      col0[2] = CHAN_TO_FLOAT(span->array->rgba[col][BCOMP]);
+      col0[3] = CHAN_TO_FLOAT(span->array->rgba[col][ACOMP]);
    }
    if (program->InputsRead & (1 << FRAG_ATTRIB_COL1)) {
       GLfloat *col1 = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_COL1];
-      col1[0] = CHAN_TO_FLOAT(span->array->spec[i][RCOMP]);
-      col1[1] = CHAN_TO_FLOAT(span->array->spec[i][GCOMP]);
-      col1[2] = CHAN_TO_FLOAT(span->array->spec[i][BCOMP]);
-      col1[3] = CHAN_TO_FLOAT(span->array->spec[i][ACOMP]);
+      col1[0] = CHAN_TO_FLOAT(span->array->spec[col][RCOMP]);
+      col1[1] = CHAN_TO_FLOAT(span->array->spec[col][GCOMP]);
+      col1[2] = CHAN_TO_FLOAT(span->array->spec[col][BCOMP]);
+      col1[3] = CHAN_TO_FLOAT(span->array->spec[col][ACOMP]);
    }
    if (program->InputsRead & (1 << FRAG_ATTRIB_FOGC)) {
       GLfloat *fogc = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_FOGC];
-      fogc[0] = span->array->fog[i];
+      fogc[0] = span->array->fog[col];
       fogc[1] = 0.0F;
       fogc[2] = 0.0F;
       fogc[3] = 0.0F;
@@ -1082,7 +1088,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
       if (program->InputsRead & (1 << (FRAG_ATTRIB_TEX0 + u))) {
          GLfloat *tex = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_TEX0+u];
          if (ctx->Texture.Unit[u]._ReallyEnabled) {
-            COPY_4V(tex, span->array->texcoords[u][i]);
+            COPY_4V(tex, span->array->texcoords[u][col]);
          }
          else {
             COPY_4V(tex, ctx->Current.Attrib[VERT_ATTRIB_TEX0 + u]);

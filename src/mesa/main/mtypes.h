@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.106 2003/03/02 19:31:15 brianp Exp $ */
+/* $Id: mtypes.h,v 1.107 2003/03/19 05:34:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1208,9 +1208,11 @@ struct fp_machine
 struct vp_instruction;
 struct fp_instruction;
 
-struct symbol_table
+/* Program parameters */
+struct program_parameter
 {
-   struct symbol *Head;
+   const char *Name;
+   GLfloat Values[4];
 };
 
 
@@ -1245,7 +1247,8 @@ struct fragment_program
    GLuint OutputsWritten; /* Bitmask of which output regs are written to */
    GLuint TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /* TEXTURE_x_INDEX bitmask */
    GLfloat LocalParams[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4];
-   struct symbol_table SymbolTable;
+   GLuint NumParameters;
+   struct program_parameter *Parameters; /* array [NumParameters] */
 };
 
 

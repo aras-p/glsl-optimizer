@@ -1,4 +1,4 @@
-/* $Id: nvprogram.h,v 1.4 2003/02/25 19:30:29 brianp Exp $ */
+/* $Id: nvprogram.h,v 1.5 2003/03/19 05:34:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,26 +30,6 @@
 
 #ifndef NVPROGRAM_H
 #define NVPROGRAM_H
-
-
-enum symbol_type
-{
-   Definition,
-   Declaration
-};
-
-
-extern void
-_mesa_add_symbol(struct symbol_table *symbolTable,
-                 const char *name, enum symbol_type type,
-                 const GLfloat *value);
-
-extern GLboolean
-_mesa_lookup_symbol(const struct symbol_table *symbolTable,
-                    const char *name, GLfloat *value);
-
-extern void
-_mesa_assign_program_registers(struct symbol_table *symbolTable);
 
 
 extern void

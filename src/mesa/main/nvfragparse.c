@@ -1,4 +1,4 @@
-/* $Id: nvfragparse.c,v 1.14 2003/03/15 17:33:26 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.15 2003/03/19 05:34:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,6 +40,20 @@
 #include "nvfragprog.h"
 #include "nvfragparse.h"
 #include "nvprogram.h"
+
+
+/* XXX move */
+static void *
+_mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
+{
+   void *newBuffer = _mesa_malloc(newSize);
+   size_t bytes = MIN2(oldSize, newSize);
+   if (newBuffer && bytes > 0) {
+      _mesa_memcpy(newBuffer, oldBuffer, bytes);
+   }
+   _mesa_free(oldBuffer);
+   return newBuffer;
+}
 
 
 #define INPUT_1V     1
@@ -130,11 +144,72 @@ struct parse_state {
    const GLubyte *start;              /* start of program string */
    const GLubyte *pos;                /* current position */
    struct fragment_program *program;  /* current program */
+
+   GLuint numParameters;
+   struct program_parameter *parameters; /* DECLARE */
+
+   GLuint numConstants;
+   struct program_parameter *constants; /* DEFINE */
+
    GLuint numInst;                    /* number of instructions parsed */
    GLuint inputsRead;                 /* bitmask of input registers used */
    GLuint outputsWritten;             /* 2 = depth register */
    GLuint texturesUsed[MAX_TEXTURE_IMAGE_UNITS];
 };
+
+
+static void
+add_parameter(struct parse_state *parseState,
+              const char *name, const GLfloat values[4])
+{
+   const GLuint n = parseState->numParameters;
+
+   parseState->parameters = _mesa_realloc(parseState->parameters,
+                                   n * sizeof(struct program_parameter),
+                                   (n + 1) * sizeof(struct program_parameter));
+   parseState->numParameters = n + 1;
+   parseState->parameters[n].Name = _mesa_strdup(name);
+   COPY_4V(parseState->parameters[n].Values, values);
+}
+
+
+static const GLfloat *
+lookup_parameter(struct parse_state *parseState, const char *name)
+{
+   GLuint i;
+   for (i = 0; i < parseState->numParameters; i++) {
+      if (_mesa_strcmp(parseState->parameters[i].Name, name) == 0)
+         return parseState->parameters[i].Values;
+   }
+   return NULL;
+}
+
+
+static void
+add_constant(struct parse_state *parseState,
+             const char *name, const GLfloat values[4])
+{
+   const GLuint n = parseState->numConstants;
+
+   parseState->constants = _mesa_realloc(parseState->constants,
+                                   n * sizeof(struct program_parameter),
+                                   (n + 1) * sizeof(struct program_parameter));
+   parseState->numConstants = n + 1;
+   parseState->constants[n].Name = _mesa_strdup(name);
+   COPY_4V(parseState->constants[n].Values, values);
+}
+
+
+static const GLfloat *
+lookup_constant(struct parse_state *parseState, const char *name)
+{
+   GLuint i;
+   for (i = 0; i < parseState->numConstants; i++) {
+      if (_mesa_strcmp(parseState->constants[i].Name, name) == 0)
+         return parseState->constants[i].Values;
+   }
+   return NULL;
+}
 
 
 /*
@@ -493,13 +568,17 @@ Parse_ScalarConstant(struct parse_state *parseState, GLfloat *number)
    else {
       /* should be an identifier */
       GLubyte ident[100];
+      const GLfloat *constant;
       if (!Parse_Identifier(parseState, ident))
          RETURN_ERROR1("Expected an identifier");
-      if (!_mesa_lookup_symbol(&(parseState->program->SymbolTable),
-                               (const char *) ident, number)) {
+      constant = lookup_constant(parseState, (const char *) ident);
+      if (!constant) {
          RETURN_ERROR1("Undefined symbol");
       }
-      return GL_TRUE;
+      else {
+         COPY_4V(number, constant);
+         return GL_TRUE;
+      }
    }
 }
 
@@ -1165,8 +1244,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
             RETURN_ERROR1("Expected ;");
          printf("Parsed DEFINE %s = %f %f %f %f\n", id, value[0], value[1],
                 value[2], value[3]);
-         _mesa_add_symbol(&(parseState->program->SymbolTable),
-                          (const char *) id, Definition, value);
+         if (lookup_parameter(parseState, (const char *) id)) {
+            RETURN_ERROR2(id, "already defined");
+         }
+         add_parameter(parseState, (const char *) id, value);
       }
       else if (Parse_String(parseState, "DECLARE")) {
          GLubyte id[100];
@@ -1185,8 +1266,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
          }
          if (!Parse_String(parseState, ";"))
             RETURN_ERROR1("Expected ;");
-         _mesa_add_symbol(&(parseState->program->SymbolTable),
-                          (const char *) id, Declaration, value);
+         if (lookup_constant(parseState, (const char *) id)) {
+            RETURN_ERROR2(id, "already declared");
+         }
+         add_constant(parseState, (const char *) id, value);
       }
       else if (Parse_String(parseState, "END")) {
          inst->Opcode = FP_OPCODE_END;
@@ -1411,8 +1494,29 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
       for (u = 0; u < ctx->Const.MaxTextureImageUnits; u++)
          program->TexturesUsed[u] = parseState.texturesUsed[u];
 
+      /* save program parameters */
+      if (program->Parameters) {
+         GLuint i;
+         for (i = 0; i < program->NumParameters; i++)
+            _mesa_free((void *) program->Parameters[i].Name);
+         _mesa_free(program->Parameters);
+      }
+      program->NumParameters = parseState.numParameters;
+      program->Parameters = parseState.parameters;
+
+      /* free program constants */
+      if (parseState.constants) {
+         GLuint i;
+         for (i = 0; i < parseState.numConstants; i++)
+            _mesa_free((void *) parseState.constants[i].Name);
+         _mesa_free(parseState.constants);
+      }
+         
+
       /* allocate registers for declared program parameters */
+#if 00
       _mesa_assign_program_registers(&(program->SymbolTable));
+#endif
 
 #ifdef DEBUG
       _mesa_printf("--- glLoadProgramNV(%d) result ---\n", program->Base.Id);

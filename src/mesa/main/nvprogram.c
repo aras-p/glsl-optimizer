@@ -1,4 +1,4 @@
-/* $Id: nvprogram.c,v 1.8 2003/03/14 15:40:59 brianp Exp $ */
+/* $Id: nvprogram.c,v 1.9 2003/03/19 05:34:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,87 +43,6 @@
 #include "nvvertparse.h"
 #include "nvvertprog.h"
 #include "nvprogram.h"
-
-
-/**
- * Symbol table entry.
- * Used for named program parameters.
- */
-struct symbol
-{
-   const char *Name;
-   enum symbol_type Type;
-   GLfloat Value[4];
-   GLuint Register;
-   struct symbol *Next;
-};
-
-
-
-void
-_mesa_add_symbol(struct symbol_table *symbolTable,
-                 const char *name, enum symbol_type type, const GLfloat *value)
-{
-   struct symbol *s = MALLOC_STRUCT(symbol);
-   if (s) {
-      s->Name = _mesa_strdup(name);
-      s->Type = type;
-      s->Value[0] = value[0];
-      s->Value[1] = value[1];
-      s->Value[2] = value[2];
-      s->Value[3] = value[3];
-      s->Next = symbolTable->Head;
-      symbolTable->Head = s;
-   }
-}
-
-
-GLboolean
-_mesa_lookup_symbol(const struct symbol_table *symbolTable,
-                    const char *name, GLfloat *value)
-{
-   const struct symbol *s;
-   for (s = symbolTable->Head; s; s = s->Next) {
-      if (_mesa_strcmp(s->Name, name) == 0) {
-         value[0] = s->Value[0];
-         value[1] = s->Value[1];
-         value[2] = s->Value[2];
-         value[3] = s->Value[3];
-         return GL_TRUE;
-      }
-   }
-   printf("lookup %s failed\n", name);
-   return GL_FALSE;
-}
-
-
-static GLint
-_mesa_lookup_program_register(const struct symbol_table *symbolTable,
-                              GLsizei len, const GLubyte *name)
-{
-   const struct symbol *s;
-   for (s = symbolTable->Head; s; s = s->Next) {
-      if (_mesa_strcmp(s->Name, (const char *) name) == 0 &&
-          _mesa_strlen(s->Name) == (size_t) len) {
-         return s->Register;
-      }
-   }
-   return -1;
-}
-
-
-void
-_mesa_assign_program_registers(struct symbol_table *symbolTable)
-{
-   struct symbol *s;
-   GLuint reg = 0;
-   for (s = symbolTable->Head; s; s = s->Next) {
-      if (s->Type == Declaration) {
-         s->Register = reg++;
-      }
-   }
-}
-
 
 
 /**
@@ -199,20 +118,27 @@ _mesa_delete_program(GLcontext *ctx, GLuint id)
 
    if (prog) {
       if (prog->String)
-         FREE(prog->String);
+         _mesa_free(prog->String);
       if (prog->Target == GL_VERTEX_PROGRAM_NV ||
           prog->Target == GL_VERTEX_STATE_PROGRAM_NV) {
          struct vertex_program *vprog = (struct vertex_program *) prog;
          if (vprog->Instructions)
-            FREE(vprog->Instructions);
+            _mesa_free(vprog->Instructions);
       }
       else if (prog->Target == GL_FRAGMENT_PROGRAM_NV) {
          struct fragment_program *fprog = (struct fragment_program *) prog;
          if (fprog->Instructions)
-            FREE(fprog->Instructions);
+            _mesa_free(fprog->Instructions);
+         if (fprog->Parameters) {
+            GLuint i;
+            for (i = 0; i < fprog->NumParameters; i++) {
+               _mesa_free((void *) fprog->Parameters[i].Name);
+            }
+            _mesa_free(fprog->Parameters);
+         }
       }
       _mesa_HashRemove(ctx->Shared->Programs, id);
-      FREE(prog);
+      _mesa_free(prog);
    }
 }
 
@@ -418,7 +344,7 @@ _mesa_GenProgramsNV(GLsizei n, GLuint *ids)
    for (i = 0; i < (GLuint) n; i++) {
       const int bytes = MAX2(sizeof(struct vertex_program),
                              sizeof(struct fragment_program));
-      struct program *prog = (struct program *) CALLOC(bytes);
+      struct program *prog = (struct program *) _mesa_calloc(bytes);
       if (!prog) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenProgramsNV");
          return;
@@ -962,12 +888,12 @@ _mesa_ProgramParameter4fNV(GLenum target, GLuint index,
          ASSIGN_4V(ctx->VertexProgram.Machine.Registers[index], x, y, z, w);
       }
       else {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramParameterrNV(index)");
+         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramParameterNV(index)");
          return;
       }
    }
    else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameterrNV");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramParameterNV");
       return;
    }
 }
@@ -1133,16 +1059,17 @@ glProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
    }
 
    fragProg = (struct fragment_program *) prog;
-   reg = _mesa_lookup_program_register(&(fragProg->SymbolTable), len, name);
-   if (reg < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glProgramNamedParameterNV");
-      return;
+   for (reg = 0; reg < fragProg->NumParameters; reg++) {
+      if (!_mesa_strcmp(fragProg->Parameters[reg].Name, (const char *) name)) {
+         fragProg->Parameters[reg].Values[0] = x;
+         fragProg->Parameters[reg].Values[1] = y;
+         fragProg->Parameters[reg].Values[2] = z;
+         fragProg->Parameters[reg].Values[3] = w;
+         return;
+      }
    }
 
-   fragProg->LocalParams[reg][0] = x;
-   fragProg->LocalParams[reg][1] = y;
-   fragProg->LocalParams[reg][2] = z;
-   fragProg->LocalParams[reg][3] = w;
+   _mesa_error(ctx, GL_INVALID_VALUE, "glProgramNamedParameterNV");
 }
 
 
@@ -1194,16 +1121,17 @@ glGetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
    }
 
    fragProg = (struct fragment_program *) prog;
-   reg = _mesa_lookup_program_register(&(fragProg->SymbolTable), len, name);
-   if (reg < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramNamedParameterNV");
-      return;
+   for (reg = 0; reg < fragProg->NumParameters; reg++) {
+      if (!_mesa_strcmp(fragProg->Parameters[reg].Name, (const char *) name)) {
+         params[0] = fragProg->Parameters[reg].Values[0];
+         params[1] = fragProg->Parameters[reg].Values[1];
+         params[2] = fragProg->Parameters[reg].Values[2];
+         params[3] = fragProg->Parameters[reg].Values[3];
+         return;
+      }
    }
 
-   params[0] = fragProg->LocalParams[reg][0];
-   params[1] = fragProg->LocalParams[reg][1];
-   params[2] = fragProg->LocalParams[reg][2];
-   params[3] = fragProg->LocalParams[reg][3];
+   _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramNamedParameterNV");
 }
 
 
