@@ -277,6 +277,8 @@ DEMO_FILES =	\
 	$(DIRECTORY)/src/glut/dos/*.[ch]		\
 	$(DIRECTORY)/src/glut/dos/Makefile.DJ		\
 	$(DIRECTORY)/src/glut/dos/PC_HW/*.[chS]		\
+	$(DIRECTORY)/src/glut/ggi/*.[ch]		\
+	$(DIRECTORY)/src/glut/ggi/Makefile		\
 	$(DIRECTORY)/progs/beos/*.cpp			\
 	$(DIRECTORY)/progs/beos/Makefile		\
 	$(DIRECTORY)/progs/images/*.rgb			\
