@@ -180,7 +180,7 @@ static void Init( void )
       "MUL R1, f[TEX0], R1.y;\n"
 
       "# Compute dot product of light direction and normal vector\n"
-      "DP3 R2, R0, R1;"
+      "DP3_SAT R2, R0, R1;"
 
       "MUL R3, Diffuse, R2;    # diffuse attenuation\n"
 

@@ -217,7 +217,7 @@ static void Init( void )
       "MUL normal, fragment.texcoord[0], len.y; \n"
 
       "# Compute dot product of light direction and normal vector\n"
-      "DP3 dotProd, lightDir, normal; \n"
+      "DP3_SAT dotProd, lightDir, normal;             # limited to [0,1]\n"
 
       "MUL diffuseColor, Diffuse, dotProd;            # diffuse attenuation\n"
 
