@@ -912,15 +912,15 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_FOG
             dfogInner = dfogOuter + span.dfogdx;
 #endif
-#if defined(INTERP_RGB)
+#ifdef INTERP_RGB
             fdrInner = fdrOuter + span.redStep;
             fdgInner = fdgOuter + span.greenStep;
             fdbInner = fdbOuter + span.blueStep;
 #endif
-#if defined(INTERP_ALPHA)
+#ifdef INTERP_ALPHA
             fdaInner = fdaOuter + span.alphaStep;
 #endif
-#if defined(INTERP_SPEC)
+#ifdef INTERP_SPEC
             dsrInner = dsrOuter + span.specRedStep;
             dsgInner = dsgOuter + span.specGreenStep;
             dsbInner = dsbOuter + span.specBlueStep;
@@ -962,15 +962,15 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_FOG
                span.fog = fogLeft;
 #endif
-#if defined(INTERP_RGB)
+#ifdef INTERP_RGB
                span.red = rLeft;
                span.green = gLeft;
                span.blue = bLeft;
 #endif
-#if defined(INTERP_ALPHA)
+#ifdef INTERP_ALPHA
                span.alpha = aLeft;
 #endif
-#if defined(INTERP_SPEC)
+#ifdef INTERP_SPEC
                span.specRed = srLeft;
                span.specGreen = sgLeft;
                span.specBlue = sbLeft;
@@ -992,68 +992,71 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                )
 #endif
 
+               if (span.end > 1) {
+                  /* Under rare circumstances, we might have to fudge the
+                   * colors. XXX does this really happen anymore???
+                   */
+                  const GLint len = span.end - 1;
+                  (void) len;
 #ifdef INTERP_RGB
-               {
-                  /* need this to accomodate round-off errors */
-                  const GLint len = right - span.x - 1;
-                  GLfixed ffrend = span.red + len * span.redStep;
-                  GLfixed ffgend = span.green + len * span.greenStep;
-                  GLfixed ffbend = span.blue + len * span.blueStep;
-                  if (ffrend < 0) {
-                     span.red -= ffrend;
-                     if (span.red < 0)
-                        span.red = 0;
+                  {
+                     GLfixed ffrend = span.red + len * span.redStep;
+                     GLfixed ffgend = span.green + len * span.greenStep;
+                     GLfixed ffbend = span.blue + len * span.blueStep;
+                     if (ffrend < 0) {
+                        span.red -= ffrend;
+                        if (span.red < 0)
+                           span.red = 0;
+                     }
+                     if (ffgend < 0) {
+                        span.green -= ffgend;
+                        if (span.green < 0)
+                           span.green = 0;
+                     }
+                     if (ffbend < 0) {
+                        span.blue -= ffbend;
+                        if (span.blue < 0)
+                           span.blue = 0;
+                     }
                   }
-                  if (ffgend < 0) {
-                     span.green -= ffgend;
-                     if (span.green < 0)
-                        span.green = 0;
-                  }
-                  if (ffbend < 0) {
-                     span.blue -= ffbend;
-                     if (span.blue < 0)
-                        span.blue = 0;
-                  }
-               }
 #endif
 #ifdef INTERP_ALPHA
-               {
-                  const GLint len = right - span.x - 1;
-                  GLfixed ffaend = span.alpha + len * span.alphaStep;
-                  if (ffaend < 0) {
-                     span.alpha -= ffaend;
-                     if (span.alpha < 0)
-                        span.alpha = 0;
+                  {
+                     GLfixed ffaend = span.alpha + len * span.alphaStep;
+                     if (ffaend < 0) {
+                        span.alpha -= ffaend;
+                        if (span.alpha < 0)
+                           span.alpha = 0;
+                     }
                   }
-               }
 #endif
 #ifdef INTERP_SPEC
-               {
-                  /* need this to accomodate round-off errors */
-                  const GLint len = right - span.x - 1;
-                  GLfixed ffsrend = span.specRed + len * span.specRedStep;
-                  GLfixed ffsgend = span.specGreen + len * span.specGreenStep;
-                  GLfixed ffsbend = span.specBlue + len * span.specBlueStep;
-                  if (ffsrend < 0) {
-                     span.specRed -= ffsrend;
-                     if (span.specRed < 0)
-                        span.specRed = 0;
+                  {
+                     GLfixed ffsrend = span.specRed + len * span.specRedStep;
+                     GLfixed ffsgend = span.specGreen + len * span.specGreenStep;
+                     GLfixed ffsbend = span.specBlue + len * span.specBlueStep;
+                     if (ffsrend < 0) {
+                        span.specRed -= ffsrend;
+                        if (span.specRed < 0)
+                           span.specRed = 0;
+                     }
+                     if (ffsgend < 0) {
+                        span.specGreen -= ffsgend;
+                        if (span.specGreen < 0)
+                           span.specGreen = 0;
+                     }
+                     if (ffsbend < 0) {
+                        span.specBlue -= ffsbend;
+                        if (span.specBlue < 0)
+                           span.specBlue = 0;
+                     }
                   }
-                  if (ffsgend < 0) {
-                     span.specGreen -= ffsgend;
-                     if (span.specGreen < 0)
-                        span.specGreen = 0;
-                  }
-                  if (ffsbend < 0) {
-                     span.specBlue -= ffsbend;
-                     if (span.specBlue < 0)
-                        span.specBlue = 0;
-                  }
-               }
 #endif
 #ifdef INTERP_INDEX
-               if (span.index < 0)  span.index = 0;
+                  if (span.index < 0)
+                     span.index = 0;
 #endif
+               } /* span.end > 1 */
 
                /* This is where we actually generate fragments */
                if (span.end > 0) {
@@ -1066,7 +1069,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                 * pixel-center x coordinate so that it stays
                 * on or inside the major edge.
                 */
-               (span.y)++;
+               span.y++;
                lines--;
 
                fxLeftEdge += fdxLeftEdge;
@@ -1091,15 +1094,15 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_FOG
                   fogLeft += dfogOuter;
 #endif
-#if defined(INTERP_RGB)
+#ifdef INTERP_RGB
                   rLeft += fdrOuter;
                   gLeft += fdgOuter;
                   bLeft += fdbOuter;
 #endif
-#if defined(INTERP_ALPHA)
+#ifdef INTERP_ALPHA
                   aLeft += fdaOuter;
 #endif
-#if defined(INTERP_SPEC)
+#ifdef INTERP_SPEC
                   srLeft += dsrOuter;
                   sgLeft += dsgOuter;
                   sbLeft += dsbOuter;
@@ -1136,15 +1139,15 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_FOG
                   fogLeft += dfogInner;
 #endif
-#if defined(INTERP_RGB)
+#ifdef INTERP_RGB
                   rLeft += fdrInner;
                   gLeft += fdgInner;
                   bLeft += fdbInner;
 #endif
-#if defined(INTERP_ALPHA)
+#ifdef INTERP_ALPHA
                   aLeft += fdaInner;
 #endif
-#if defined(INTERP_SPEC)
+#ifdef INTERP_SPEC
                   srLeft += dsrInner;
                   sgLeft += dsgInner;
                   sbLeft += dsbInner;
