@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.4 1999/10/11 04:22:57 joukj Exp $ */
+/* $Id: macros.h,v 1.5 1999/10/13 18:42:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -485,20 +485,20 @@ do {						\
  * XXX these should probably go into a new glmemory.h file.
  */
 #ifdef DEBUG
-extern void *gl_alloc(size_t bytes);
+extern void *gl_malloc(size_t bytes);
 extern void *gl_calloc(size_t bytes);
 extern void gl_free(void *ptr);
-#define GL_ALLOC(BYTES)      gl_alloc(BYTES)
-#define GL_CALLOC(BYTES)     gl_calloc(BYTES)
-#define GL_ALLOC_STRUCT(T)   (struct T *) GL_ALLOC(sizeof(struct T))
-#define GL_CALLOC_STRUCT(T)  (struct T *) GL_CALLOC(sizeof(struct T))
-#define GL_FREE(PTR)         gl_free(PTR)
+#define MALLOC(BYTES)      gl_malloc(BYTES)
+#define CALLOC(BYTES)      gl_calloc(BYTES)
+#define MALLOC_STRUCT(T)   (struct T *) gl_malloc(sizeof(struct T))
+#define CALLOC_STRUCT(T)   (struct T *) gl_calloc(sizeof(struct T))
+#define FREE(PTR)          gl_free(PTR)
 #else
-#define GL_ALLOC(BYTES)      (void *) malloc(BYTES)
-#define GL_CALLOC(BYTES)     (void *) calloc(1, BYTES)
-#define GL_ALLOC_STRUCT(T)   (struct T *) malloc(sizeof(struct T))
-#define GL_CALLOC_STRUCT(T)  (struct T *) calloc(1,sizeof(struct T))
-#define GL_FREE(PTR)         free(PTR)
+#define MALLOC(BYTES)      (void *) malloc(BYTES)
+#define CALLOC(BYTES)      (void *) calloc(1, BYTES)
+#define MALLOC_STRUCT(T)   (struct T *) malloc(sizeof(struct T))
+#define CALLOC_STRUCT(T)   (struct T *) calloc(1,sizeof(struct T))
+#define FREE(PTR)          free(PTR)
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $Id: hash.c,v 1.2 1999/10/08 09:27:10 keithw Exp $ */
+/* $Id: hash.c,v 1.3 1999/10/13 18:42:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,8 +26,6 @@
 
 
 
-
-
 #ifdef PC_HEADER
 #include "all.h"
 #else
@@ -39,6 +37,7 @@
 #include "GL/xf86glx.h"
 #endif
 #include "hash.h"
+#include "macros.h"
 #endif
 
 
@@ -70,7 +69,7 @@ struct HashTable {
  */
 struct HashTable *NewHashTable(void)
 {
-   return (struct HashTable *) calloc(sizeof (struct HashTable), 1);
+   return CALLOC_STRUCT(HashTable);
 }
 
 
@@ -86,11 +85,11 @@ void DeleteHashTable(struct HashTable *table)
       struct HashEntry *entry = table->Table[i];
       while (entry) {
 	 struct HashEntry *next = entry->Next;
-	 free(entry);
+	 FREE(entry);
 	 entry = next;
       }
    }
-   free(table);
+   FREE(table);
 }
 
 
@@ -153,7 +152,7 @@ void HashInsert(struct HashTable *table, GLuint key, void *data)
    }
 
    /* alloc and insert new table entry */
-   entry = (struct HashEntry *) calloc(sizeof(struct HashEntry), 1);
+   entry = MALLOC_STRUCT(HashEntry);
    entry->Key = key;
    entry->Data = data;
    entry->Next = table->Table[pos];
@@ -187,7 +186,7 @@ void HashRemove(struct HashTable *table, GLuint key)
          else {
             table->Table[pos] = entry->Next;
          }
-         free(entry);
+         FREE(entry);
 	 return;
       }
       prev = entry;

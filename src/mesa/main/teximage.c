@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.3 1999/10/10 12:56:45 brianp Exp $ */
+/* $Id: teximage.c,v 1.4 1999/10/13 18:42:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -236,7 +236,7 @@ static GLint components_in_intformat( GLint format )
 
 struct gl_texture_image *gl_alloc_texture_image( void )
 {
-   return GL_CALLOC_STRUCT(gl_texture_image);
+   return CALLOC_STRUCT(gl_texture_image);
 }
 
 
@@ -244,9 +244,9 @@ struct gl_texture_image *gl_alloc_texture_image( void )
 void gl_free_texture_image( struct gl_texture_image *teximage )
 {
    if (teximage->Data) {
-      GL_FREE( teximage->Data );
+      FREE( teximage->Data );
    }
-   GL_FREE( teximage );
+   FREE( teximage );
 }
 
 
@@ -389,7 +389,7 @@ image_to_texture( GLcontext *ctx, const struct gl_image *image,
    texImage->Height2 = 1 << texImage->HeightLog2;
    texImage->Depth2 = 1 << texImage->DepthLog2;
    texImage->MaxLog2 = MAX2( texImage->WidthLog2, texImage->HeightLog2 );
-   texImage->Data = (GLubyte *) GL_ALLOC( numPixels * components + EXTRA_BYTE );
+   texImage->Data = (GLubyte *) MALLOC( numPixels * components + EXTRA_BYTE );
 
    if (!texImage->Data) {
       /* out of memory */
@@ -872,7 +872,7 @@ make_null_texture( GLcontext *ctx, GLenum internalFormat,
    /* XXX should we really allocate memory for the image or let it be NULL? */
    /*texImage->Data = NULL;*/
 
-   texImage->Data = (GLubyte *) GL_ALLOC( numPixels * components + EXTRA_BYTE );
+   texImage->Data = (GLubyte *) MALLOC( numPixels * components + EXTRA_BYTE );
 
    /*
     * Let's see if anyone finds this.  If glTexImage2D() is called with
@@ -1882,7 +1882,7 @@ static struct gl_image *read_color_image( GLcontext *ctx, GLint x, GLint y,
    /*
     * Allocate image struct and image data buffer
     */
-   image = GL_ALLOC_STRUCT( gl_image );
+   image = MALLOC_STRUCT( gl_image );
    if (image) {
       image->Width = width;
       image->Height = height;
@@ -1891,9 +1891,9 @@ static struct gl_image *read_color_image( GLcontext *ctx, GLint x, GLint y,
       image->Format = format;
       image->Type = GL_UNSIGNED_BYTE;
       image->RefCount = 0;
-      image->Data = (GLubyte *) GL_ALLOC( width * height * components );
+      image->Data = (GLubyte *) MALLOC( width * height * components );
       if (!image->Data) {
-         GL_FREE(image);
+         FREE(image);
          return NULL;
       }
    }

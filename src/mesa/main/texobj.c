@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.5 1999/10/10 13:04:17 brianp Exp $ */
+/* $Id: texobj.c,v 1.6 1999/10/13 18:42:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -159,7 +159,7 @@ void gl_free_texture_object( struct gl_shared_state *shared,
       }
    }
    /* free this object */
-   GL_FREE( t );
+   FREE( t );
 }
 
 

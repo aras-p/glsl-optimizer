@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.5 1999/10/11 04:20:25 joukj Exp $ */
+/* $Id: accum.c,v 1.6 1999/10/13 18:42:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -80,13 +80,13 @@ void gl_alloc_accum_buffer( GLcontext *ctx )
    GLint n;
 
    if (ctx->Buffer->Accum) {
-      GL_FREE( ctx->Buffer->Accum );
+      FREE( ctx->Buffer->Accum );
       ctx->Buffer->Accum = NULL;
    }
 
    /* allocate accumulation buffer if not already present */
    n = ctx->Buffer->Width * ctx->Buffer->Height * 4 * sizeof(GLaccum);
-   ctx->Buffer->Accum = (GLaccum *) GL_ALLOC( n );
+   ctx->Buffer->Accum = (GLaccum *) MALLOC( n );
    if (!ctx->Buffer->Accum) {
       /* unable to setup accumulation buffer */
       gl_error( ctx, GL_OUT_OF_MEMORY, "glAccum" );
@@ -429,7 +429,7 @@ void gl_clear_accum_buffer( GLcontext *ctx )
    if (!ctx->Buffer->Accum) {
       /* try to alloc accumulation buffer */
       ctx->Buffer->Accum = (GLaccum *)
-	                   GL_ALLOC( buffersize * 4 * sizeof(GLaccum) );
+	                   MALLOC( buffersize * 4 * sizeof(GLaccum) );
    }
 
    if (ctx->Buffer->Accum) {

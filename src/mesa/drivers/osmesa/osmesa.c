@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: osmesa.c,v 1.2 1999/10/13 18:43:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -212,7 +212,7 @@ OSMesaContext GLAPIENTRY OSMesaCreateContext( GLenum format, OSMesaContext share
    }
 
 
-   osmesa = (OSMesaContext) calloc( 1, sizeof(struct osmesa_context) );
+   osmesa = (OSMesaContext) CALLOC_STRUCT(osmesa_context);
    if (osmesa) {
       osmesa->gl_visual = gl_create_visual( rgbmode,
                                             swalpha,    /* software alpha */
@@ -232,14 +232,14 @@ OSMesaContext GLAPIENTRY OSMesaCreateContext( GLenum format, OSMesaContext share
                             (void *) osmesa, GL_TRUE );
       if (!osmesa->gl_ctx) {
          gl_destroy_visual( osmesa->gl_visual );
-         free(osmesa);
+         FREE(osmesa);
          return NULL;
       }
       osmesa->gl_buffer = gl_create_framebuffer( osmesa->gl_visual );
       if (!osmesa->gl_buffer) {
          gl_destroy_visual( osmesa->gl_visual );
          gl_destroy_context( osmesa->gl_ctx );
-         free(osmesa);
+         FREE(osmesa);
          return NULL;
       }
       osmesa->format = format;
@@ -275,7 +275,7 @@ void GLAPIENTRY OSMesaDestroyContext( OSMesaContext ctx )
       gl_destroy_visual( ctx->gl_visual );
       gl_destroy_framebuffer( ctx->gl_buffer );
       gl_destroy_context( ctx->gl_ctx );
-      free( ctx );
+      FREE( ctx );
    }
 }
 

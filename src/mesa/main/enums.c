@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.2 1999/10/10 12:51:29 brianp Exp $ */
+/* $Id: enums.c,v 1.3 1999/10/13 18:42:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -825,7 +825,7 @@ static int compar_nr( const enum_elt **a, const enum_elt **b )
 static void sort_enums( void )
 {
    int i;
-   index1 = (enum_elt **)GL_ALLOC( Elements(all_enums) * sizeof(enum_elt *) );
+   index1 = (enum_elt **)MALLOC( Elements(all_enums) * sizeof(enum_elt *) );
    sorted = 1;
 
    qsort( all_enums, Elements(all_enums), sizeof(*all_enums), 
