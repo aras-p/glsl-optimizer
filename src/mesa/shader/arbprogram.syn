@@ -1,3 +1,33 @@
+/*
+ * Mesa 3-D graphics library
+ * Version:  6.2
+ *
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+ 
+ /**
+ * \file arbprogram.syn
+ * ARB_fragment/vertex_program syntax
+ * \author Michal Krol
+ */
+ 
 .syntax program;
 
 /*
@@ -18,29 +48,21 @@
 .emtcode DECLARATION                                0x03
 .emtcode END                                        0x04
 
-/* GL_ARB_fragment_program option flags */
-.emtcode ARB_PRECISION_HINT_FASTEST                 0x01
-.emtcode ARB_PRECISION_HINT_NICEST                  0x02
-.emtcode ARB_FOG_EXP                                0x04
-.emtcode ARB_FOG_EXP2                               0x08
-.emtcode ARB_FOG_LINEAR                             0x10
+/* GL_ARB_fragment_program option */
+.emtcode ARB_PRECISION_HINT_FASTEST                 0x00
+.emtcode ARB_PRECISION_HINT_NICEST                  0x01
+.emtcode ARB_FOG_EXP                                0x02
+.emtcode ARB_FOG_EXP2                               0x03
+.emtcode ARB_FOG_LINEAR                             0x04
 
-/* GL_ARB_vertex_program option flags */
-.emtcode ARB_POSITION_INVARIANT                     0x20
+/* GL_ARB_vertex_program option */
+.emtcode ARB_POSITION_INVARIANT                     0x05
 
-/* GL_ARB_fragment_program_shadow option flags */
-.emtcode ARB_FRAGMENT_PROGRAM_SHADOW                0x40
+/* GL_ARB_fragment_program_shadow option */
+.emtcode ARB_FRAGMENT_PROGRAM_SHADOW                0x06
 
-/* GL_ARB_draw_buffers option flags */
-.emtcode ARB_DRAW_BUFFERS                           0x80
-
-/* if we need more flags, we have three options:
-   1) change the existing flags to indicate an option to a shift, so 0x01 becomes 0 (because
-      1 << 0 is 0x01), 0x02 becomes 1 (1 << 1 == 0x02), and so on - this would give us
-      256 flags,
-   2) mark special value of 0 to say "the following byte will hold the upper 8 bit flags",
-   3) expand all the existing flags to be 2 bytes long
-*/
+/* GL_ARB_draw_buffers option */
+.emtcode ARB_DRAW_BUFFERS                           0x07
 
 /* GL_ARB_fragment_program instruction class */
 .emtcode OP_ALU_INST                                0x00
