@@ -1,4 +1,4 @@
-/* $Id: m_xform.c,v 1.16 2002/06/15 02:38:17 brianp Exp $ */
+/* $Id: m_xform.c,v 1.17 2002/07/10 01:25:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -207,7 +207,7 @@ _math_init_transformation( void )
    _math_test_all_cliptest_functions( "default" );
 #endif
 
-#ifdef USE_X86_ASM_foo
+#ifdef USE_X86_ASM
    _mesa_init_all_x86_transform_asm();
 #endif
 #ifdef USE_SPARC_ASM
