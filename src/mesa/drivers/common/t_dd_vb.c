@@ -125,7 +125,7 @@ void TAG(translate_vertex)(GLcontext *ctx,
       dst->fog = src->v.color.alpha/255.0;
 
       if (HAVE_PTEX_VERTICES && 
-	  ((HAVE_TEX2_VERTICES && fbormat == PROJ_TEX3_VERTEX_FORMAT) ||
+	  ((HAVE_TEX2_VERTICES && format == PROJ_TEX3_VERTEX_FORMAT) ||
 	   (format == PROJ_TEX1_VERTEX_FORMAT))) {
 
 	 dst->texcoord[0][0] = src->pv.u0;
