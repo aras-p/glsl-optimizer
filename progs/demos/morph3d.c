@@ -1,7 +1,10 @@
-/* $Id: morph3d.c,v 1.2 1999/09/17 12:27:01 brianp Exp $ */
+/* $Id: morph3d.c,v 1.3 1999/12/15 13:00:45 brianp Exp $ */
 
 /*
  * $Log: morph3d.c,v $
+ * Revision 1.3  1999/12/15 13:00:45  brianp
+ * moved #define to column 0
+ *
  * Revision 1.2  1999/09/17 12:27:01  brianp
  * silenced some warnings
  *
@@ -498,7 +501,7 @@ static void draw_dodeca( void )
 {
   GLuint list;
 
-  #define TAU ((SQRT5+1)/2)
+#define TAU ((SQRT5+1)/2)
 
   list = glGenLists( 1 );
   glNewList( list, GL_COMPILE );
