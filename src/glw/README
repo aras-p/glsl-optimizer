@@ -1,5 +1,4 @@
 
-
                            widgets README file
 
 
@@ -8,8 +7,8 @@ slightly modified by Jeroen van der Zijp to work better with Mesa.
 
 To compile the widget code (producing lib/libGLw.a) cd to the widgets/
 directory and type 'make <config>' where <config> is the system configuration
-you used to compile Mesa.  This hasn't been tested on many systems so
-let us know if you have trouble.
+you used to compile Mesa (like 'make linux').  This hasn't been tested on
+many systems so let us know if you have trouble.
 
 If you want to make a Linux ELF shared lib instead of the non-shared .a
 file see the notes in the Makefile.
