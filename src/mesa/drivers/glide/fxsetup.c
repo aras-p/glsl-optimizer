@@ -1207,7 +1207,7 @@ fxSetupTexture_NoLock(GLcontext * ctx)
    }
 }
 
-static void
+void
 fxSetupTexture(GLcontext * ctx)
 {
    BEGIN_BOARD_LOCK();
@@ -1464,7 +1464,7 @@ fxDDBlendEquation(GLcontext * ctx, GLenum mode)
  }
 }
 
-static void
+void
 fxSetupBlend(GLcontext * ctx)
 {
  fxMesaContext fxMesa = FX_CONTEXT(ctx);
@@ -1557,7 +1557,7 @@ fxDDDepthMask(GLcontext * ctx, GLboolean flag)
    }
 }
 
-static void
+void
 fxSetupDepthTest(GLcontext * ctx)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);

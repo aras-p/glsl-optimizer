@@ -58,10 +58,21 @@ static void copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
    *(GLuint *)&dst->pargb = *(GLuint *)&src->pargb;
 }
 
+static void copy_pv2( GLcontext *ctx, GLuint edst, GLuint esrc )
+{
+   fxMesaContext fxMesa = FX_CONTEXT( ctx );
+   GrVertex *dst = fxMesa->verts + edst;
+   GrVertex *src = fxMesa->verts + esrc;
+
+   *(GLuint *)&dst->pargb = *(GLuint *)&src->pargb;
+   *(GLuint *)&dst->pspec = *(GLuint *)&src->pspec;
+}
+
 typedef void (*emit_func)( GLcontext *, GLuint, GLuint, void * );
 
 static struct {
    emit_func	        emit;
+   copy_pv_func		copy_pv;
    interp_func		interp;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_format;
@@ -85,14 +96,13 @@ static void interp_extras( GLcontext *ctx,
 		 GET_COLOR(VB->ColorPtr[1], dst),
 		 GET_COLOR(VB->ColorPtr[1], out),
 		 GET_COLOR(VB->ColorPtr[1], in) );
-#if 1 /* [dBorca] GL_EXT_separate_specular_color */
+
       if (VB->SecondaryColorPtr[1]) {
 	 INTERP_3F( t,
 		    GET_COLOR(VB->SecondaryColorPtr[1], dst),
 		    GET_COLOR(VB->SecondaryColorPtr[1], out),
 		    GET_COLOR(VB->SecondaryColorPtr[1], in) );
       }
-#endif
    }
 
    if (VB->EdgeFlag) {
@@ -110,15 +120,14 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
    if (VB->ColorPtr[1]) {
 	 COPY_4FV( GET_COLOR(VB->ColorPtr[1], dst),
 		   GET_COLOR(VB->ColorPtr[1], src) );
-#if 1 /* [dBorca] GL_EXT_separate_specular_color */
+
 	 if (VB->SecondaryColorPtr[1]) {
 	    COPY_3FV( GET_COLOR(VB->SecondaryColorPtr[1], dst),
 		      GET_COLOR(VB->SecondaryColorPtr[1], src) );
 	 }
-#endif
    }
 
-   copy_pv(ctx, dst, src);
+   setup_tab[FX_CONTEXT(ctx)->SetupIndex].copy_pv(ctx, dst, src);
 }
 
 
@@ -162,6 +171,49 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 #define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_TMU1|\
              SETUP_PTEX|SETUP_PSIZ)
 #define TAG(x) x##_wgpt0t1a
+#include "fxvbtmp.h"
+
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC)
+#define TAG(x) x##_2wg
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0)
+#define TAG(x) x##_2wgt0
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_TMU1)
+#define TAG(x) x##_2wgt0t1
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_PTEX)
+#define TAG(x) x##_2wgpt0
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_TMU1|\
+             SETUP_PTEX)
+#define TAG(x) x##_2wgpt0t1
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_PSIZ)
+#define TAG(x) x##_2wga
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_PSIZ)
+#define TAG(x) x##_2wgt0a
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_TMU1|SETUP_PSIZ)
+#define TAG(x) x##_2wgt0t1a
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_PTEX|SETUP_PSIZ)
+#define TAG(x) x##_2wgpt0a
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_TMU1|\
+             SETUP_PTEX|SETUP_PSIZ)
+#define TAG(x) x##_2wgpt0t1a
 #include "fxvbtmp.h"
 
 
@@ -214,6 +266,53 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 #include "fxvbtmp.h"
 
 
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC)
+#define TAG(x) x##_2wsg
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0)
+#define TAG(x) x##_2wsgt0
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|\
+             SETUP_TMU1)
+#define TAG(x) x##_2wsgt0t1
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|\
+             SETUP_PTEX)
+#define TAG(x) x##_2wsgpt0
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|\
+	     SETUP_TMU1|SETUP_PTEX)
+#define TAG(x) x##_2wsgpt0t1
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_PSIZ)
+#define TAG(x) x##_2wsga
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_PSIZ)
+#define TAG(x) x##_2wsgt0a
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|\
+             SETUP_TMU1|SETUP_PSIZ)
+#define TAG(x) x##_2wsgt0t1a
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|\
+             SETUP_PTEX|SETUP_PSIZ)
+#define TAG(x) x##_2wsgpt0a
+#include "fxvbtmp.h"
+
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|\
+	     SETUP_TMU1|SETUP_PTEX|SETUP_PSIZ)
+#define TAG(x) x##_2wsgpt0t1a
+#include "fxvbtmp.h"
+
+
 /* Vertex repair (multipass rendering)
  */
 #define IND (SETUP_RGBA)
@@ -237,6 +336,27 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 #include "fxvbtmp.h"
 
 
+#define IND (SETUP_RGBA|SETUP_SPEC)
+#define TAG(x) x##_2g
+#include "fxvbtmp.h"
+
+#define IND (SETUP_TMU0|SETUP_SPEC)
+#define TAG(x) x##_2t0
+#include "fxvbtmp.h"
+
+#define IND (SETUP_TMU0|SETUP_SPEC|SETUP_TMU1)
+#define TAG(x) x##_2t0t1
+#include "fxvbtmp.h"
+
+#define IND (SETUP_RGBA|SETUP_SPEC|SETUP_TMU0)
+#define TAG(x) x##_2gt0
+#include "fxvbtmp.h"
+
+#define IND (SETUP_RGBA|SETUP_SPEC|SETUP_TMU0|SETUP_TMU1)
+#define TAG(x) x##_2gt0t1
+#include "fxvbtmp.h"
+
+
 
 static void init_setup_tab( void )
 {
@@ -250,6 +370,16 @@ static void init_setup_tab( void )
    init_wgt0t1a();
    init_wgpt0a();
    init_wgpt0t1a();
+    init_2wg();
+    init_2wgt0();
+    init_2wgt0t1();
+    init_2wgpt0();
+    init_2wgpt0t1();
+    init_2wga();
+    init_2wgt0a();
+    init_2wgt0t1a();
+    init_2wgpt0a();
+    init_2wgpt0t1a();
 
    init_wsg();
    init_wsgt0();
@@ -261,25 +391,42 @@ static void init_setup_tab( void )
    init_wsgt0t1a();
    init_wsgpt0a();
    init_wsgpt0t1a();
+    init_2wsg();
+    init_2wsgt0();
+    init_2wsgt0t1();
+    init_2wsgpt0();
+    init_2wsgpt0t1();
+    init_2wsga();
+    init_2wsgt0a();
+    init_2wsgt0t1a();
+    init_2wsgpt0a();
+    init_2wsgpt0t1a();
 
    init_g();
    init_t0();
    init_t0t1();
    init_gt0();
    init_gt0t1();
+    init_2g();
+    init_2t0();
+    init_2t0t1();
+    init_2gt0();
+    init_2gt0t1();
 }
 
 
 void fxPrintSetupFlags(char *msg, GLuint flags )
 {
-   fprintf(stderr, "%s(%x): %s%s%s%s%s\n",
+   fprintf(stderr, "%s(%x): %s%s%s%s%s%s%s\n",
 	   msg,
 	   (int)flags,
 	   (flags & SETUP_XYZW)     ? " xyzw," : "", 
 	   (flags & SETUP_SNAP)     ? " snap," : "", 
 	   (flags & SETUP_RGBA)     ? " rgba," : "",
 	   (flags & SETUP_TMU0)     ? " tex-0," : "",
-	   (flags & SETUP_TMU1)     ? " tex-1," : "");
+	   (flags & SETUP_TMU1)     ? " tex-1," : "",
+	   (flags & SETUP_PSIZ)     ? " psiz," : "",
+	   (flags & SETUP_SPEC)     ? " spec," : "");
 }
 
 
@@ -334,6 +481,10 @@ void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
       if (newinputs & VERT_BIT_COLOR0)
 	 ind |= SETUP_RGBA;
       
+      if (newinputs & VERT_BIT_COLOR1) {
+	 ind |= SETUP_SPEC;
+      }
+
       if (newinputs & VERT_BIT_TEX0) 
 	 ind |= SETUP_TMU0;
 
@@ -382,6 +533,10 @@ void fxChooseVertexState( GLcontext *ctx )
       ind |= SETUP_PSIZ;
    }
 
+   if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
+      ind |= SETUP_SPEC;
+   }
+
    fxMesa->SetupIndex = ind;
 
    if (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED)) {
@@ -389,7 +544,7 @@ void fxChooseVertexState( GLcontext *ctx )
       tnl->Driver.Render.CopyPV = copy_pv_extras;
    } else {
       tnl->Driver.Render.Interp = setup_tab[ind].interp;
-      tnl->Driver.Render.CopyPV = copy_pv;
+      tnl->Driver.Render.CopyPV = setup_tab[ind].copy_pv;
    }
 
    if (setup_tab[ind].vertex_format != fxMesa->stw_hint_state) {
@@ -421,11 +576,6 @@ void fxFreeVB( GLcontext *ctx )
    if (fxMesa->verts) {
       ALIGN_FREE(fxMesa->verts);
       fxMesa->verts = 0;
-   }
-
-   if (fxMesa->UbyteColor.Ptr) {
-      ALIGN_FREE((void *)fxMesa->UbyteColor.Ptr);
-      fxMesa->UbyteColor.Ptr = 0;
    }
 }
 #else

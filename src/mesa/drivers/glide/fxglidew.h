@@ -119,8 +119,9 @@ typedef struct {
         unsigned char pargb[4];	/* B, G, R, A [0..255] */
         GrTmuVertex tmuvtx[GLIDE_NUM_TMU];
         float fog;		/* fog coordinate */
+        unsigned char pspec[4];	/* B, G, R, A [0..255] */
         float psize;		/* point size */
-        long pad[16 - 13];	/* ensure 64b structure */
+        long pad[16 - 14];	/* ensure 64b structure */
 } GrVertex;
 
 #define GR_VERTEX_X_OFFSET              0
@@ -135,6 +136,7 @@ typedef struct {
 #define GR_VERTEX_TOW_TMU1_OFFSET       9
 #define GR_VERTEX_OOW_TMU1_OFFSET       10
 #define GR_VERTEX_FOG_OFFSET            11
+#define GR_VERTEX_PSPEC_OFFSET          12
 
 
 
@@ -152,36 +154,10 @@ typedef struct {
 
 
 /*
- * Write region: ToDo possible exploit the PixelPipe parameter.
- */
-#define FX_grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)	\
-        do { \
-            BEGIN_BOARD_LOCK(); \
-            grLfbWriteRegion(dst_buffer,\
-                             dst_x,     \
-                             dst_y,     \
-                             src_format,\
-                             src_width, \
-                             src_height,\
-                             FXFALSE,   \
-                             src_stride,\
-                             src_data);	\
-            END_BOARD_LOCK(); \
-        } while(0)
-
-
-
-/*
- * ScreenWidth/Height stuff.
+ * Query
  */
 extern int FX_grSstScreenWidth(void);
 extern int FX_grSstScreenHeight(void);
-
-
-
-/*
- * Query
- */
 extern void FX_grSstPerfStats(GrSstPerfStats_t *st);
 extern int FX_grSstQueryHardware(GrHwConfiguration *config);
 #define FX_grGetInteger FX_grGetInteger_NoLock

@@ -103,7 +103,8 @@
 #define SETUP_XYZW 0x10
 #define SETUP_PTEX 0x20
 #define SETUP_PSIZ 0x40
-#define MAX_SETUP  0x80
+#define SETUP_SPEC 0x80
+#define MAX_SETUP  0x100
 
 
 #define FX_NUM_TMU 2
@@ -469,7 +470,6 @@ struct tfxMesaContext
    GLuint stw_hint_state;	/* for grHints */
    GrVertex *verts;
    GLboolean snapVertices;      /* needed for older Voodoo hardware */
-   struct gl_client_array UbyteColor;
 
    /* Rasterization:
     */
@@ -691,6 +691,9 @@ extern void fxCheckIsInHardware(GLcontext *ctx);
 void fxSetupCull (GLcontext * ctx);
 void fxSetupScissor (GLcontext * ctx);
 void fxSetupColorMask (GLcontext * ctx);
+void fxSetupBlend (GLcontext *ctx);
+void fxSetupDepthTest (GLcontext *ctx);
+void fxSetupTexture (GLcontext *ctx);
 
 /* Flags for software fallback cases */
 #define FX_FALLBACK_TEXTURE_1D_3D	0x0001

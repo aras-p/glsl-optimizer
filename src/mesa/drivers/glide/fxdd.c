@@ -1421,6 +1421,10 @@ fxDDInitExtensions(GLcontext * ctx)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
+#if 1 /* multipass ColorSum stage */
+   _mesa_enable_extension(ctx, "GL_EXT_secondary_color");
+#endif
+
    _mesa_enable_extension(ctx, "GL_EXT_point_parameters");
    _mesa_enable_extension(ctx, "GL_EXT_paletted_texture");
    _mesa_enable_extension(ctx, "GL_EXT_texture_lod_bias");
@@ -1523,9 +1527,11 @@ fx_check_IsInHardware(GLcontext * ctx)
       return FX_FALLBACK_LOGICOP;
    }
 
+#if 0 /* multipass ColorSum stage */
    if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR) {
       return FX_FALLBACK_SPECULAR;
    }
+#endif
 
    if ((fxMesa->colDepth == 16) &&
        ((ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP]) ||

@@ -41,8 +41,8 @@ static void TAG(emit)( GLcontext *ctx,
    GLuint tmu0_source = fxMesa->tmu_source[0];
    GLuint tmu1_source = fxMesa->tmu_source[1];
    GLfloat (*tc0)[4], (*tc1)[4];
-   GLfloat (*col)[4];
-   GLuint tc0_stride, tc1_stride, col_stride;
+   GLfloat (*col)[4], (*spec)[4];
+   GLuint tc0_stride, tc1_stride, col_stride, spec_stride;
    GLuint tc0_size, tc1_size;
    GLfloat (*proj)[4] = VB->NdcPtr->data; 
    GLuint proj_stride = VB->NdcPtr->stride;
@@ -82,6 +82,11 @@ static void TAG(emit)( GLcontext *ctx,
       col_stride = VB->ColorPtr[0]->stride;
    }
 
+   if (IND & SETUP_SPEC) {
+      spec = VB->SecondaryColorPtr[0]->data;
+      spec_stride = VB->SecondaryColorPtr[0]->stride;
+   }
+
    if (start) {
       proj =  (GLfloat (*)[4])((GLubyte *)proj + start * proj_stride);
       if (IND & SETUP_PSIZ) {
@@ -93,6 +98,8 @@ static void TAG(emit)( GLcontext *ctx,
 	 tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 + start * tc1_stride);
       if (IND & SETUP_RGBA) 
 	 STRIDE_4F(col, start * col_stride);
+      if (IND & SETUP_SPEC)
+	 STRIDE_4F(spec, start * spec_stride);
    }
 
    for (i=start; i < end; i++, v++) {
@@ -134,6 +141,12 @@ static void TAG(emit)( GLcontext *ctx,
          UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[0], col[0][2]);
          UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[3], col[0][3]);
 	 STRIDE_4F(col, col_stride);
+      }
+      if (IND & SETUP_SPEC) {
+	 UNCLAMPED_FLOAT_TO_UBYTE(v->pspec[2], spec[0][0]);
+	 UNCLAMPED_FLOAT_TO_UBYTE(v->pspec[1], spec[0][1]);
+	 UNCLAMPED_FLOAT_TO_UBYTE(v->pspec[0], spec[0][2]);
+	 STRIDE_4F(spec, spec_stride);
       }
       if (IND & SETUP_TMU0) {
 	 GLfloat w = v->oow;
@@ -228,6 +241,12 @@ static void TAG(interp)( GLcontext *ctx,
    INTERP_UB( t, dst->pargb[2], out->pargb[2], in->pargb[2] );
    INTERP_UB( t, dst->pargb[3], out->pargb[3], in->pargb[3] );
 
+   if (IND & SETUP_SPEC) {
+      INTERP_UB( t, dst->pspec[0], out->pspec[0], in->pspec[0] );
+      INTERP_UB( t, dst->pspec[1], out->pspec[1], in->pspec[1] );
+      INTERP_UB( t, dst->pspec[2], out->pspec[2], in->pspec[2] );
+   }
+
    if (IND & SETUP_TMU0) {
       if (IND & SETUP_PTEX) {
 	 INTERP_F( t, 
@@ -301,6 +320,12 @@ static void TAG(init)( void )
 {
    setup_tab[IND].emit = TAG(emit);
    
+   if (IND & SETUP_SPEC) {
+      setup_tab[IND].copy_pv = copy_pv2;
+   } else {
+      setup_tab[IND].copy_pv = copy_pv;
+   }
+
 #if ((IND & SETUP_XYZW) && (IND & SETUP_RGBA))
    setup_tab[IND].check_tex_sizes = TAG(check_tex_sizes);
    setup_tab[IND].interp = TAG(interp);

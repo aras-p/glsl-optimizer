@@ -35,6 +35,7 @@
 #include "mtypes.h"
 #include "macros.h"
 #include "colormac.h"
+#include "nvfragprog.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -42,6 +43,9 @@
 #include "tnl/t_pipeline.h"
 
 #include "fxdrv.h"
+
+
+GLboolean fxMultipass_ColorSum (GLcontext *ctx, GLuint pass);
 
 
 /*
@@ -146,6 +150,10 @@ fx_translate_vertex( GLcontext *ctx, const GrVertex *src, SWvertex *dst)
    dst->color[1] = src->pargb[1];
    dst->color[2] = src->pargb[0];
    dst->color[3] = src->pargb[3];
+
+   dst->specular[0] = src->pspec[2];
+   dst->specular[1] = src->pspec[1];
+   dst->specular[2] = src->pspec[0];
 
    dst->texcoord[ts0][0] = fxMesa->inv_s0scale * src->tmuvtx[0].sow * w;
    dst->texcoord[ts0][1] = fxMesa->inv_t0scale * src->tmuvtx[0].tow * w;
@@ -377,7 +385,7 @@ static struct {
 #define DO_FULL_QUAD 1
 
 #define HAVE_RGBA   1
-#define HAVE_SPEC   0
+#define HAVE_SPEC   1 /* [dBorca] investigate overhead !!! */
 #define HAVE_HW_FLATSHADE 0
 #define HAVE_BACK_COLORS  0
 #define VERTEX GrVertex
@@ -400,6 +408,7 @@ typedef union { GLfloat f; GLuint u; } fu_type;
 #define AREA_IS_CCW( a ) (a < 0)
 #endif
 
+
 #define VERT_SET_RGBA( dst, f )			\
 do {						\
    UNCLAMPED_FLOAT_TO_UBYTE(dst->pargb[2], f[0]);\
@@ -414,15 +423,31 @@ do {						\
 #define VERT_SAVE_RGBA( idx )  			\
    *(GLuint *)&color[idx] = *(GLuint *)&v[idx]->pargb
 
-
 #define VERT_RESTORE_RGBA( idx )		\
    *(GLuint *)&v[idx]->pargb = *(GLuint *)&color[idx]
 
 
+#define VERT_SET_SPEC( dst, f )			\
+do {						\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst->pspec[2], f[0]);\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst->pspec[1], f[1]);\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst->pspec[0], f[2]);\
+} while (0)
+
+#define VERT_COPY_SPEC( v0, v1 ) 		\
+   *(GLuint *)&v0->pspec = *(GLuint *)&v1->pspec
+
+#define VERT_SAVE_SPEC( idx )  			\
+   *(GLuint *)&spec[idx] = *(GLuint *)&v[idx]->pspec
+
+#define VERT_RESTORE_SPEC( idx )		\
+   *(GLuint *)&v[idx]->pspec = *(GLuint *)&spec[idx]
+
+
 #define LOCAL_VARS(n)				\
    fxMesaContext fxMesa = FX_CONTEXT(ctx);	\
-   GLubyte color[n][4];				\
-   (void) color;
+   GLubyte color[n][4], spec[n][4];		\
+   (void) color; (void) spec;
 
 
 
@@ -1318,13 +1343,13 @@ void fxCheckIsInHardware( GLcontext *ctx )
 	 tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
 	 tnl->Driver.Render.ResetLineStipple = _swrast_ResetLineStipple;
 	 tnl->Driver.Render.BuildVertices = fxBuildVertices;
-	 tnl->Driver.Render.Multipass = 0;
 	 fxChooseVertexState(ctx);
 	 fxDDChooseRenderState(ctx);
          if (fxMesa->verbose) {
             fprintf(stderr, "Voodoo ! leave SW 0x%08x %s\n", oldfallback, getFallbackString(oldfallback));
          }
       }
+      tnl->Driver.Render.Multipass = (HAVE_SPEC && NEED_SECONDARY_COLOR(ctx)) ? fxMultipass_ColorSum : NULL;
    }
 }
 
@@ -1348,9 +1373,71 @@ void fxDDInitTriFuncs( GLcontext *ctx )
    tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
    tnl->Driver.Render.ResetLineStipple = _swrast_ResetLineStipple;
    tnl->Driver.Render.BuildVertices = fxBuildVertices;
-   tnl->Driver.Render.Multipass = 0;
+   tnl->Driver.Render.Multipass = NULL;
    
    (void) fx_print_vertex;
+}
+
+
+/* [dBorca] Hack alert:
+ * does this approach work with multitex?
+ */
+GLboolean fxMultipass_ColorSum (GLcontext *ctx, GLuint pass)
+{
+ fxMesaContext fxMesa = FX_CONTEXT(ctx);
+
+ static int t0 = 0;
+ static int t1 = 0;
+
+ switch (pass) {
+        case 1: /* first pass: the TEXTURED triangles are drawn */
+             /* save per-pass data */
+             fxMesa->restoreUnitsState = fxMesa->unitsState;
+             /* turn off texturing */
+             t0 = ctx->Texture.Unit[0]._ReallyEnabled;
+             t1 = ctx->Texture.Unit[1]._ReallyEnabled;
+             ctx->Texture.Unit[0]._ReallyEnabled = 0;
+             ctx->Texture.Unit[1]._ReallyEnabled = 0;
+             /* SUM the colors */
+             fxDDBlendEquation(ctx, GL_FUNC_ADD_EXT);
+             fxDDBlendFuncSeparate(ctx, GL_ONE, GL_ONE, GL_ZERO, GL_ONE);
+             fxDDEnable(ctx, GL_BLEND, GL_TRUE);
+             /* make sure we draw only where we want to */
+             if (ctx->Depth.Mask) {
+                switch (ctx->Depth.Func) {
+                       case GL_NEVER:
+                       case GL_ALWAYS:
+                       break;
+                default:
+                       fxDDDepthFunc( ctx, GL_EQUAL );
+                       break;
+                }
+                fxDDDepthMask( ctx, GL_FALSE );
+             }
+             /* switch to secondary colors */
+             grVertexLayout(GR_PARAM_PARGB, GR_VERTEX_PSPEC_OFFSET << 2, GR_PARAM_ENABLE);
+             /* don't advertise new state */
+             fxMesa->new_state = 0;
+             break;
+        case 2: /* 2nd pass (last): the secondary color is summed over texture */
+             /* restore original state */
+             fxMesa->unitsState = fxMesa->restoreUnitsState;
+             /* restore texturing */
+             ctx->Texture.Unit[0]._ReallyEnabled = t0;
+             ctx->Texture.Unit[1]._ReallyEnabled = t1;
+             /* revert to primary colors */
+             grVertexLayout(GR_PARAM_PARGB, GR_VERTEX_PARGB_OFFSET << 2, GR_PARAM_ENABLE);
+             break;
+        default:
+             assert(0); /* NOTREACHED */
+ }
+
+ /* update HW state */
+ fxSetupBlend(ctx);
+ fxSetupDepthTest(ctx);
+ fxSetupTexture(ctx);
+
+ return (pass == 1);
 }
 
 

@@ -219,6 +219,11 @@ fxDDTexParam(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj,
 	 ti->LODblend = FXFALSE;
 	 break;
       case GL_NEAREST_MIPMAP_LINEAR:
+        /* ZZZ: HACK ALERT! disable LODBlend, because we can't implement
+                on Napalm. Ohwell, until at least I decide what to do...
+                trilinear is bugged! mipmap blending produce
+                incorrect filtered colors for the smallest mipmap levels. */
+#if 0
 	 if (fxMesa->haveTwoTMUs) {
 	    ti->mmMode = GR_MIPMAP_NEAREST;
 	    ti->LODblend = FXTRUE;
@@ -229,6 +234,7 @@ fxDDTexParam(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj,
 	 }
 	 ti->minFilt = GR_TEXTUREFILTER_POINT_SAMPLED;
 	 break; /* ZZZ: we may have to fall through here for V3 */
+#endif
       case GL_NEAREST_MIPMAP_NEAREST:
 	 ti->mmMode = GR_MIPMAP_NEAREST;
 	 ti->minFilt = GR_TEXTUREFILTER_POINT_SAMPLED;
