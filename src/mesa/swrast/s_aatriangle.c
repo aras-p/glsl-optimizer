@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.28 2003/01/22 15:03:09 brianp Exp $ */
+/* $Id: s_aatriangle.c,v 1.29 2003/01/25 18:57:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -213,29 +213,39 @@ compute_coveragef(const GLfloat v0[3], const GLfloat v1[3],
    for (i = 0; i < stop; i++) {
       const GLfloat sx = x + samples[i][0];
       const GLfloat sy = y + samples[i][1];
-      const GLfloat fx0 = sx - v0[0];
-      const GLfloat fy0 = sy - v0[1];
-      const GLfloat fx1 = sx - v1[0];
-      const GLfloat fy1 = sy - v1[1];
-      const GLfloat fx2 = sx - v2[0];
-      const GLfloat fy2 = sy - v2[1];
       /* cross product determines if sample is inside or outside each edge */
-      GLfloat cross0 = (dx0 * fy0 - dy0 * fx0);
-      GLfloat cross1 = (dx1 * fy1 - dy1 * fx1);
-      GLfloat cross2 = (dx2 * fy2 - dy2 * fx2);
+      GLfloat cross = (dx0 * (sy - v0[1]) - dy0 * (sx - v0[0]));
       /* Check if the sample is exactly on an edge.  If so, let cross be a
        * positive or negative value depending on the direction of the edge.
        */
-      if (cross0 == 0.0F)
-         cross0 = dx0 + dy0;
-      if (cross1 == 0.0F)
-         cross1 = dx1 + dy1;
-      if (cross2 == 0.0F)
-         cross2 = dx2 + dy2;
-      if (cross0 < 0.0F || cross1 < 0.0F || cross2 < 0.0F) {
-         /* point is outside triangle */
+      if (cross == 0.0F)
+         cross = dx0 + dy0;
+      if (cross < 0.0F) {
+         /* sample point is outside first edge */
          insideCount -= 1.0F;
          stop = 16;
+      }
+      else {
+         /* sample point is inside first edge */
+         cross = (dx1 * (sy - v1[1]) - dy1 * (sx - v1[0]));
+         if (cross == 0.0F)
+            cross = dx1 + dy1;
+         if (cross < 0.0F) {
+            /* sample point is outside second edge */
+            insideCount -= 1.0F;
+            stop = 16;
+         }
+         else {
+            /* sample point is inside first and second edges */
+            cross = (dx2 * (sy - v2[1]) -  dy2 * (sx - v2[0]));
+            if (cross == 0.0F)
+               cross = dx2 + dy2;
+            if (cross < 0.0F) {
+               /* sample point is outside third edge */
+               insideCount -= 1.0F;
+               stop = 16;
+            }
+         }
       }
    }
    if (stop == 4)
