@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.2
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -988,7 +988,7 @@ _mesa_apply_rgba_transfer_ops(GLcontext *ctx, GLuint transferOps,
 
 
 /*
- * Used to pack an array [][4] of RGBA GLchan colors as specified
+ * Used to pack an array [][4] of RGBA float colors as specified
  * by the dstFormat, dstType and dstPacking.  Used by glReadPixels,
  * glGetConvolutionFilter(), etc.
  */
