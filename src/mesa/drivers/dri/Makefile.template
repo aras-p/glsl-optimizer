@@ -67,8 +67,8 @@ default: depend $(LIB_DIR)/$(LIBNAME)
 #		$(WINLIB) $(LIB_DEPS) $(WINOBJ) $(MESA_MODULES) $(OBJECTS)
 
 
-$(LIB_DIR)/$(LIBNAME):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile
-	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) -lGL -lc -lm
+$(LIB_DIR)/$(LIBNAME):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile ../Makefile.template
+	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(GL_LIB_DEPS)
 
 
 
