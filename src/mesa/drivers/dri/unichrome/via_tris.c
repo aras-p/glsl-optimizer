@@ -855,116 +855,118 @@ void viaRasterPrimitive(GLcontext *ctx,
 			GLenum glprim,
 			GLenum hwprim)
 {
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    GLuint regCmdB;
-    RING_VARS;
+   viaContextPtr vmesa = VIA_CONTEXT(ctx);
+   GLuint regCmdB;
+   RING_VARS;
 
-    if (VIA_DEBUG) 
-       fprintf(stderr, "%s: %s/%s\n", __FUNCTION__, _mesa_lookup_enum_by_nr(glprim),
-	       _mesa_lookup_enum_by_nr(hwprim));
+   if (VIA_DEBUG) 
+      fprintf(stderr, "%s: %s/%s\n", __FUNCTION__, _mesa_lookup_enum_by_nr(glprim),
+	      _mesa_lookup_enum_by_nr(hwprim));
 
-    VIA_FINISH_PRIM(vmesa);
+   vmesa->renderPrimitive = glprim;
+
+   if (hwprim != vmesa->hwPrimitive) {
+      VIA_FINISH_PRIM(vmesa);
     
-    viaCheckDma( vmesa, 1024 );	/* Ensure no wrapping inside this function  */
+      viaCheckDma( vmesa, 1024 );	/* Ensure no wrapping inside this function  */
 
-    if (vmesa->newEmitState) {
-       viaEmitState(vmesa);
-    }
+      if (vmesa->newEmitState) {
+	 viaEmitState(vmesa);
+      }
        
 
-    regCmdB = vmesa->regCmdB;
+      regCmdB = vmesa->regCmdB;
 
-    switch (hwprim) {
-    case GL_POINTS:
-        vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Point | HC_HVCycle_Full;
-        if (ctx->Light.ShadeModel == GL_FLAT)
+      switch (hwprim) {
+      case GL_POINTS:
+	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Point | HC_HVCycle_Full;
+	 if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatA;
-        break;
-    case GL_LINES:
-        vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Line | HC_HVCycle_Full;
-        if (ctx->Light.ShadeModel == GL_FLAT)
+	 break;
+      case GL_LINES:
+	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Line | HC_HVCycle_Full;
+	 if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatB; 
-        break;
-    case GL_LINE_LOOP:
-    case GL_LINE_STRIP:
-        vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Line | HC_HVCycle_AFP |
-                             HC_HVCycle_AB | HC_HVCycle_NewB;
-        regCmdB |= HC_HVCycle_AB | HC_HVCycle_NewB | HC_HLPrst_MASK;
-        if (ctx->Light.ShadeModel == GL_FLAT)
+	 break;
+      case GL_LINE_LOOP:
+      case GL_LINE_STRIP:
+	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Line | HC_HVCycle_AFP |
+	    HC_HVCycle_AB | HC_HVCycle_NewB;
+	 regCmdB |= HC_HVCycle_AB | HC_HVCycle_NewB | HC_HLPrst_MASK;
+	 if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatB; 
-        break;
-    case GL_TRIANGLES:
-        vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_Full;
-        if (ctx->Light.ShadeModel == GL_FLAT)
+	 break;
+      case GL_TRIANGLES:
+	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_Full;
+	 if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatC; 
-        break;
-    case GL_TRIANGLE_STRIP:
-        vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_AFP |
-                             HC_HVCycle_AC | HC_HVCycle_BB | HC_HVCycle_NewC;
-        regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
-        if (ctx->Light.ShadeModel == GL_FLAT)
+	 break;
+      case GL_TRIANGLE_STRIP:
+	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_AFP |
+	    HC_HVCycle_AC | HC_HVCycle_BB | HC_HVCycle_NewC;
+	 regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
+	 if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatB; 
-        break;
-    case GL_TRIANGLE_FAN:
-        vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_AFP |
-                             HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
-        regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
-        if (ctx->Light.ShadeModel == GL_FLAT)
+	 break;
+      case GL_TRIANGLE_FAN:
+	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_AFP |
+	    HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
+	 regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
+	 if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatC; 
-        break;
-    case GL_QUADS:
-	abort();
-        return;
-    case GL_QUAD_STRIP:
-	abort();
-        return;
-    case GL_POLYGON:
-        vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_AFP |
-                             HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
-        regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
-        if (ctx->Light.ShadeModel == GL_FLAT)
+	 break;
+      case GL_QUADS:
+	 abort();
+	 return;
+      case GL_QUAD_STRIP:
+	 abort();
+	 return;
+      case GL_POLYGON:
+	 vmesa->regCmdA_End = vmesa->regCmdA | HC_HPMType_Tri | HC_HVCycle_AFP |
+	    HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
+	 regCmdB |= HC_HVCycle_AA | HC_HVCycle_BC | HC_HVCycle_NewC;
+	 if (ctx->Light.ShadeModel == GL_FLAT)
             vmesa->regCmdA_End |= HC_HShading_FlatC; 
-        break;                          
-    default:
-	abort();
-        return;
-    }
+	 break;                          
+      default:
+	 abort();
+	 return;
+      }
     
 /*     assert((vmesa->dmaLow & 0x4) == 0); */
 
-    if (vmesa->dmaCliprectAddr == ~0) {
-       if (VIA_DEBUG) fprintf(stderr, "reserve cliprect space at %x\n", vmesa->dmaLow);
-       vmesa->dmaCliprectAddr = vmesa->dmaLow;
-       BEGIN_RING(8);
-       OUT_RING( HC_HEADER2 );    
-       OUT_RING( (HC_ParaType_NotTex << 16) );
-       OUT_RING( 0xCCCCCCCC );
-       OUT_RING( 0xCCCCCCCC );
-       OUT_RING( 0xCCCCCCCC );
-       OUT_RING( 0xCCCCCCCC );
-       OUT_RING( 0xCCCCCCCC );
-       OUT_RING( 0xCCCCCCCC );
-       ADVANCE_RING();
-    }
+      if (vmesa->dmaCliprectAddr == ~0) {
+	 if (VIA_DEBUG) fprintf(stderr, "reserve cliprect space at %x\n", vmesa->dmaLow);
+	 vmesa->dmaCliprectAddr = vmesa->dmaLow;
+	 BEGIN_RING(8);
+	 OUT_RING( HC_HEADER2 );    
+	 OUT_RING( (HC_ParaType_NotTex << 16) );
+	 OUT_RING( 0xCCCCCCCC );
+	 OUT_RING( 0xCCCCCCCC );
+	 OUT_RING( 0xCCCCCCCC );
+	 OUT_RING( 0xCCCCCCCC );
+	 OUT_RING( 0xCCCCCCCC );
+	 OUT_RING( 0xCCCCCCCC );
+	 ADVANCE_RING();
+      }
 
-    assert(vmesa->dmaLastPrim == 0);
+      assert(vmesa->dmaLastPrim == 0);
 
-    BEGIN_RING(8);
-    OUT_RING( HC_HEADER2 );    
-    OUT_RING( (HC_ParaType_NotTex << 16) );
-    OUT_RING( 0xCCCCCCCC );
-    OUT_RING( 0xDDDDDDDD );
+      BEGIN_RING(8);
+      OUT_RING( HC_HEADER2 );    
+      OUT_RING( (HC_ParaType_NotTex << 16) );
+      OUT_RING( 0xCCCCCCCC );
+      OUT_RING( 0xDDDDDDDD );
 
-    OUT_RING( HC_HEADER2 );    
-    OUT_RING( (HC_ParaType_CmdVdata << 16) );
-    OUT_RING( regCmdB );
-    OUT_RING( vmesa->regCmdA_End );
-    ADVANCE_RING();
+      OUT_RING( HC_HEADER2 );    
+      OUT_RING( (HC_ParaType_CmdVdata << 16) );
+      OUT_RING( regCmdB );
+      OUT_RING( vmesa->regCmdA_End );
+      ADVANCE_RING();
 
-
-    vmesa->renderPrimitive = glprim;
-    vmesa->hwPrimitive = hwprim;        
-    vmesa->dmaLastPrim = vmesa->dmaLow;
+      vmesa->hwPrimitive = hwprim;        
+      vmesa->dmaLastPrim = vmesa->dmaLow;
+   }
 }
 
 /* Callback for mesa:
