@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.100 2002/10/21 15:53:06 brianp Exp $
+$Id: VERSIONS,v 1.101 2002/10/22 15:17:34 brianp Exp $
 
 
 Mesa Version History
@@ -1051,6 +1051,7 @@ Mesa Version History
 	- 3dfx/glide driver render-to-window feature was broken
 	- added missing GLX_TRANSPARENT_RGB token to glx.h
 	- fixed error checking related to paletted textures
+	- fixed reference count error in glDeleteTextures (Randy Fayan)
     Changes:
 	- New spec file and Python code to generate some GL dispatch files
 	- Glide driver defaults to "no" with autoconf/automake
