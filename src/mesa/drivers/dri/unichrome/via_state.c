@@ -188,7 +188,6 @@ void viaEmitState(viaContextPtr vmesa)
       struct gl_texture_unit *texUnit1 = &ctx->Texture.Unit[1];
 
       {
-	 viaTextureObjectPtr t = (viaTextureObjectPtr)texUnit0->_Current->DriverData;
 	 GLuint nDummyValue = 0;
 
 	 BEGIN_RING( 8 );
@@ -199,7 +198,9 @@ void viaEmitState(viaContextPtr vmesa)
 	    if (VIA_DEBUG) fprintf(stderr, "multi texture\n");
 	    nDummyValue = (HC_SubA_HTXSMD << 24) | (1 << 3);
                 
-	    if (t && t->needClearCache) {
+	    /* Clear cache flag never set:
+	     */
+	    if (0) {
 	       OUT_RING( nDummyValue | HC_HTXCHCLR_MASK );
 	       OUT_RING( nDummyValue );
 	    }
@@ -212,7 +213,7 @@ void viaEmitState(viaContextPtr vmesa)
 	    if (VIA_DEBUG) fprintf(stderr, "single texture\n");
 	    nDummyValue = (HC_SubA_HTXSMD << 24) | 0;
                 
-	    if (t && t->needClearCache) {
+	    if (0) {
 	       OUT_RING( nDummyValue | HC_HTXCHCLR_MASK );
 	       OUT_RING( nDummyValue );
 	    }
