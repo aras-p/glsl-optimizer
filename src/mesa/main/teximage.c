@@ -1015,6 +1015,14 @@ texture_error_check( GLcontext *ctx, GLenum target,
       return GL_TRUE;
    }
 
+   if (width < 1 || height < 1 || depth < 1) {
+      if (!isProxy) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glTexImage%dD(width, height or depth < 1)", dimensions);
+      }
+      return GL_TRUE;
+   }
+
    /* Check target and call ctx->Driver.TestProxyTexImage() to check the
     * level, width, height and depth.
     */
