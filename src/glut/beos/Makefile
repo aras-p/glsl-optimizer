@@ -1,33 +1,27 @@
-## BeOS Generic Makefile v2.0 ##
+# Makefile for GLUT
+#
+# NOTICE:  The OpenGL Utility Toolkit (GLUT) distribution contains source
+# code published in a book titled "Programming OpenGL for the X Window
+# System" (ISBN: 0-201-48359-9) published by Addison-Wesley.  The
+# programs and associated files contained in the distribution were
+# developed by Mark J. Kilgard and are Copyright 1994, 1995, 1996 by Mark
+# J. Kilgard (unless otherwise noted).  The programs are not in the
+# public domain, but they are freely distributable without licensing
+# fees.  These programs are provided without guarantee or warrantee
+# expressed or implied.
+#
+# GLUT source included with Mesa with permission from Mark Kilgard.
 
+# src/glut/beos/Makefile
 
+TOP = ../../..
+include $(TOP)/configs/current
 
-## Fill in this file to specify the project being created, and the referenced
-## makefile-engine will do all of the hard work for you.  This handles both
-## Intel and PowerPC builds of the BeOS.
+GLUT_MAJOR = 3
+GLUT_MINOR = 7
+GLUT_TINY = 1
 
-## Application Specific Settings ---------------------------------------------
-
-# specify the name of the binary
-NAME= libglut.so
-
-# specify the type of binary
-#	APP:	Application
-#	SHARED:	Shared library or add-on
-#	STATIC:	Static library archive
-#	DRIVER: Kernel Driver
-TYPE= SHARED
-
-#	specify the source files to use
-#	full paths or paths relative to the makefile can be included
-# 	all files, regardless of directory, will have their object
-#	files created in the common object directory.
-#	Note that this means this makefile will not work correctly
-#	if two source files with the same name (source.c or source.cpp)
-#	are included from different directories.  Also note that spaces
-#	in folder names do not work well with this makefile.
-SRCS= \
-	glut_util.cpp \
+CPP_SOURCES = \
 	glutBlocker.cpp \
 	glutInit.cpp \
 	glutWindow.cpp \
@@ -39,89 +33,66 @@ SRCS= \
 	glutCursor.cpp \
 	glutMenu.cpp \
 	glutDstr.cpp \
-	glut_bitmap.cpp \
-	glut_bwidth.cpp \
-	glut_8x13.cpp \
-	glut_9x15.cpp \
-	glut_hel10.cpp \
-	glut_hel12.cpp \
-	glut_hel18.cpp \
-	glut_tr10.cpp \
-	glut_tr24.cpp \
-	glut_mroman.cpp \
-	glut_roman.cpp \
-	glut_stroke.cpp \
-	glut_swidth.cpp \
-	glut_shapes.cpp \
-	glut_teapot.cpp \
 	beos_x11.cpp
 
-#	specify the resource files to use
-#	full path or a relative path to the resource file can be used.
-RSRCS= 
+C_SOURCES = \
+	glut_8x13.c \
+	glut_9x15.c \
+	glut_bitmap.c \
+	glut_bwidth.c \
+	glut_hel10.c \
+	glut_hel12.c \
+	glut_hel18.c \
+	glut_tr10.c \
+	glut_tr24.c \
+	glut_mroman.c \
+	glut_roman.c \
+	glut_stroke.c \
+	glut_swidth.c \
+	glut_shapes.c \
+	glut_teapot.c \
+	glut_vidresize.c \
+	glut_util.c 
 
-#	specify additional libraries to link against
-#	there are two acceptable forms of library specifications
-#	-	if your library follows the naming pattern of:
-#		libXXX.so or libXXX.a you can simply specify XXX
-#		library: libbe.so entry: be
-#		
-#	- 	if your library does not follow the standard library
-#		naming scheme you need to specify the path to the library
-#		and it's name
-#		library: my_lib.a entry: my_lib.a or path/my_lib.a
-LIBS= GL GLU be
+OBJECTS = \
+	$(CPP_SOURCES:.cpp=.o) \
+	$(C_SOURCES:.c=.o)
 
-#	specify additional paths to directories following the standard
-#	libXXX.so or libXXX.a naming scheme.  You can specify full paths
-#	or paths relative to the makefile.  The paths included may not
-#	be recursive, so include all of the paths where libraries can
-#	be found.  Directories where source files are found are
-#	automatically included.
-LIBPATHS= ../lib
+INCLUDES = \
+	-I. \
+	-I- \
+	-I$(TOP)/include
 
-#	additional paths to look for system headers
-#	thes use the form: #include <header>
-#	source file directories are NOT auto-included here
-SYSTEM_INCLUDE_PATHS = ../../../include /boot/develop/headers/be/opengl
+DEFINES += -DGLUT_API_VERSION=4
 
-#	additional paths to look for local headers
-#	thes use the form: #include "header"
-#	source file directories are automatically included
-LOCAL_INCLUDE_PATHS = 
+# Rules
 
-#	specify the level of optimization that you desire
-#	NONE, SOME, FULL
-OPTIMIZE= FULL
+.cpp.o:
+	$(CC) -c $< $(INCLUDES) $(CFLAGS) $(GLUT_CFLAGS) -o $@
 
-#	specify any preprocessor symbols to be defined.  The symbols
-#	will be set to a value of 1.  For example specify DEBUG if you want
-#	DEBUG=1 to be set when compiling.
-DEFINES= 
-
-#	specify special warning levels
-#	if unspecified default warnings will be used
-#	NONE = supress all warnings
-#	ALL = enable all warnings
-WARNINGS = ALL
-
-#	specify whether image symbols will be created
-#	so that stack crawls in the debugger are meaningful
-#	if TRUE symbols will be created
-SYMBOLS = 
-
-#	specify debug settings
-#	if TRUE will allow application to be run from
-#	a source-level debugger
-DEBUGGER = 
-
-#	specify additional compiler flags for all files
-COMPILER_FLAGS =
-
-#	specify additional linker flags
-LINKER_FLAGS =
+.c.o:
+	$(CC) -c $< $(INCLUDES) $(CFLAGS) $(GLUT_CFLAGS) -o $@
 
 
-## include the makefile-engine
-include /boot/develop/etc/makefile-engine
+# ---- TARGETS
 
+default: $(LIB_DIR) $(LIB_DIR)/$(GLUT_LIB_NAME)
+
+# Create the lib directory if missing
+$(LIB_DIR):
+	mkdir $(LIB_DIR)
+
+# Make the library
+$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
+	$(TOP)/bin/mklib -o $(GLUT_LIB) -major $(GLUT_MAJOR) -minor $(GLUT_MINOR) -patch $(GLUT_TINY) \
+		-install $(LIB_DIR) $(MKLIB_OPTIONS) $(GLUT_LIB_DEPS) \
+		$(OBJECTS)
+
+clean:
+	-rm -f *.o
+
+depend: $(SOURCES)
+	touch depend
+	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(SOURCES) > /dev/null 2>&1
+
+include depend
