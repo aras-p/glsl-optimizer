@@ -1,4 +1,4 @@
-/* $Id: tess.h,v 1.2 1999/09/10 02:03:31 gareth Exp $ */
+/* $Id: tess.h,v 1.3 1999/09/10 03:05:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -105,4 +105,4 @@ int vdebugstr( char *format_str, ... );
 }
 #endif
 
-#endif // __GLU_TESS_H__
+#endif /* __GLU_TESS_H__ */
