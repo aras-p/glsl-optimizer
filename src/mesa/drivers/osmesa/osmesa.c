@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.100 2003/03/01 01:50:23 brianp Exp $ */
+/* $Id: osmesa.c,v 1.101 2003/03/04 19:16:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -225,14 +225,14 @@ clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 #define INC_PIXEL_PTR(P) P += 4
 #if CHAN_TYPE == GL_FLOAT
 #define STORE_RGB_PIXEL(P, R, G, B) \
-   P[0] = MAX2((R), 0.0F);
-   P[1] = MAX2((G), 0.0F);
-   P[2] = MAX2((B), 0.0F);
+   P[0] = MAX2((R), 0.0F); \
+   P[1] = MAX2((G), 0.0F); \
+   P[2] = MAX2((B), 0.0F); \
    P[3] = CHAN_MAXF
 #define STORE_RGBA_PIXEL(P, R, G, B, A) \
-   P[0] = MAX2((R), 0.0F);
-   P[1] = MAX2((G), 0.0F);
-   P[2] = MAX2((B), 0.0F);
+   P[0] = MAX2((R), 0.0F); \
+   P[1] = MAX2((G), 0.0F); \
+   P[2] = MAX2((B), 0.0F); \
    P[3] = CLAMP((A), 0.0F, CHAN_MAXF)
 #else
 #define STORE_RGB_PIXEL(P, R, G, B) \
@@ -305,6 +305,7 @@ clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 #include "swrast/s_spantemp.h"
 
 /* 16-bit BGR */
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
 #define NAME(PREFIX) PREFIX##_RGB_565
 #define SPAN_VARS \
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
@@ -321,6 +322,7 @@ clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    B = ( (((*P) << 3) & 0xf8) | (((*P)      ) & 0x7) ); \
    A = CHAN_MAX
 #include "swrast/s_spantemp.h"
+#endif
 
 /* color index */
 #define NAME(PREFIX) PREFIX##_CI
@@ -699,6 +701,7 @@ hook_in_driver_functions( GLcontext *ctx )
       swdd->ReadRGBASpan = read_rgba_span_BGR;
       swdd->ReadRGBAPixels = read_rgba_pixels_BGR;
    }
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
    else if (osmesa->format == OSMESA_RGB_565) {
       swdd->WriteRGBASpan = write_rgba_span_RGB_565;
       swdd->WriteRGBSpan = write_rgb_span_RGB_565;
@@ -708,6 +711,7 @@ hook_in_driver_functions( GLcontext *ctx )
       swdd->ReadRGBASpan = read_rgba_span_RGB_565;
       swdd->ReadRGBAPixels = read_rgba_pixels_RGB_565;
    }
+#endif
    else if (osmesa->format == OSMESA_RGBA) {
       swdd->WriteRGBASpan = write_rgba_span_RGBA;
       swdd->WriteRGBSpan = write_rgb_span_RGBA;
@@ -909,6 +913,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       bind = 0;
       rgbmode = GL_TRUE;
    }
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
    else if (format==OSMESA_RGB_565) {
       indexBits = 0;
       redBits = 5;
@@ -924,6 +929,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       bind = 0;
       rgbmode = GL_TRUE;
    }
+#endif
    else {
       return NULL;
    }

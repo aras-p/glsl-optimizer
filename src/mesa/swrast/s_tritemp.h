@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.43 2003/01/20 00:24:22 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.44 2003/03/04 19:17:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -737,10 +737,10 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
          GLfixed fa = 0, fdaOuter = 0, fdaInner;
 #endif
 #ifdef INTERP_FLOAT_RGBA
-         GLfloat fr, fdrOuter, fdrInner;
-         GLfloat fg, fdgOuter, fdgInner;
-         GLfloat fb, fdbOuter, fdbInner;
-         GLfloat fa, fdaOuter, fdaInner;
+         GLfloat fr = 0.0F, fdrOuter = 0.0F, fdrInner;
+         GLfloat fg = 0.0F, fdgOuter = 0.0F, fdgInner;
+         GLfloat fb = 0.0F, fdbOuter = 0.0F, fdbInner;
+         GLfloat fa = 0.0F, fdaOuter = 0.0F, fdaInner;
 #endif
 #ifdef INTERP_SPEC
          GLfixed fsr=0, fdsrOuter=0, fdsrInner;

@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.82 2003/03/01 01:50:26 brianp Exp $ */
+/* $Id: s_texture.c,v 1.83 2003/03/04 19:17:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -321,7 +321,8 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
             }
          }
          else {
-            if (CHAN_TYPE == GL_UNSIGNED_BYTE && table->Size == 256) {
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+            if (table->Size == 256) {
                /* common case */
                const GLchan *lut = (const GLchan *) table->Table;
                GLuint i;
@@ -331,7 +332,9 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
                      rgba[i][BCOMP] = rgba[i][ACOMP] = c;
                }
             }
-            else {
+            else
+#endif
+            {
                const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
                const GLchan *lut = (const GLchan *) table->Table;
                GLuint i;
@@ -357,7 +360,8 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
             }
          }
          else {
-            if (CHAN_TYPE == GL_UNSIGNED_BYTE && table->Size == 256) {
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+            if (table->Size == 256) {
                /* common case */
                const GLchan *lut = (const GLchan *) table->Table;
                GLuint i;
@@ -366,7 +370,9 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
                   rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = c;
                }
             }
-            else {
+            else
+#endif
+            {
                const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
                const GLchan *lut = (const GLchan *) table->Table;
                GLuint i;
@@ -391,7 +397,8 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
             }
          }
          else {
-            if (CHAN_TYPE == GL_UNSIGNED_BYTE && table->Size == 256) {
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+            if (table->Size == 256) {
                /* common case */
                const GLchan *lut = (const GLchan *) table->Table;
                GLuint i;
@@ -399,7 +406,9 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
                   rgba[i][ACOMP] = lut[rgba[i][ACOMP]];
                }
             }
-            else {
+            else
+#endif
+            {
                const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
                const GLchan *lut = (const GLchan *) table->Table;
                GLuint i;
@@ -427,7 +436,8 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
             }
          }
          else {
-            if (CHAN_TYPE == GL_UNSIGNED_BYTE && table->Size == 256) {
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+            if (table->Size == 256) {
                /* common case */
                const GLchan *lut = (const GLchan *) table->Table;
                GLuint i;
@@ -438,7 +448,9 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
                   rgba[i][ACOMP] = a;
                }
             }
-            else {
+            else
+#endif
+            {
                const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
                const GLchan *lut = (const GLchan *) table->Table;
                GLuint i;
@@ -469,7 +481,8 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
             }
          }
          else {
-            if (CHAN_TYPE == GL_UNSIGNED_BYTE && table->Size == 256) {
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+            if (table->Size == 256) {
                /* common case */
                const GLchan *lut = (const GLchan *) table->Table;
                GLuint i;
@@ -479,7 +492,9 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
                   rgba[i][BCOMP] = lut[rgba[i][BCOMP] * 3 + 2];
                }
             }
-            else {
+            else
+#endif
+            {
                const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
                const GLchan *lut = (const GLchan *) table->Table;
                GLuint i;
@@ -512,7 +527,8 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
             }
          }
          else {
-            if (CHAN_TYPE == GL_UNSIGNED_BYTE && table->Size == 256) {
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+            if (table->Size == 256) {
                /* common case */
                const GLchan *lut = (const GLchan *) table->Table;
                GLuint i;
@@ -523,7 +539,9 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
                   rgba[i][ACOMP] = lut[rgba[i][ACOMP] * 4 + 3];
                }
             }
-            else {
+            else
+#endif
+            {
                const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
                const GLfloat *lut = (const GLfloat *) table->Table;
                GLuint i;
