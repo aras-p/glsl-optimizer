@@ -1,4 +1,4 @@
-/* $Id: antialias.c,v 1.1 2002/11/08 18:30:26 brianp Exp $ */
+/* $Id: antialias.c,v 1.2 2003/03/29 16:42:57 brianp Exp $ */
 
 /*
  * Test multisampling and polygon smoothing.
@@ -203,6 +203,9 @@ Init( void )
    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
    glBlendFunc(GL_SRC_ALPHA_SATURATE, GL_ONE);
+
+   glGetIntegerv(GL_MULTISAMPLE_ARB, &s);
+   printf("GL_MULTISAMPLE_ARB = %d\n", s);
 }
 
 
