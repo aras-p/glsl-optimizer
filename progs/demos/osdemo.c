@@ -1,4 +1,4 @@
-/* $Id: osdemo.c,v 1.9 2002/07/12 15:54:19 brianp Exp $ */
+/* $Id: osdemo.c,v 1.10 2003/03/03 03:14:25 brianp Exp $ */
 
 /*
  * Demo of off-screen Mesa rendering
@@ -138,6 +138,11 @@ static void render_image( void )
 #endif
 
    glPopMatrix();
+
+   /* This is very important!!!
+    * Make sure buffered commands are finished!!!
+    */
+   glFinish();
 
    Frames++;
    if (perf) {
