@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.4 2000/08/23 14:31:25 brianp Exp $ */
+/* $Id: convolve.c,v 1.5 2000/09/05 20:28:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -540,13 +540,10 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
 void
 _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *image)
 {
+   const struct gl_convolution_attrib *filter;
+   GLint row;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetConvolutionFilter");
-
-   if (target != GL_CONVOLUTION_1D && target != GL_CONVOLUTION_2D) {
-      gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionFilter(target)");
-      return;
-   }
 
    if (!_mesa_is_legal_format_and_type(format, type) ||
        format == GL_COLOR_INDEX ||
@@ -558,8 +555,28 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *im
       return;
    }
 
-   (void) image;
-   /* XXX store image */
+   switch (target) {
+      case GL_CONVOLUTION_1D:
+         filter = &(ctx->Convolution1D);
+         break;
+      case GL_CONVOLUTION_2D:
+         filter = &(ctx->Convolution2D);
+         break;
+      default:
+         gl_error(ctx, GL_INVALID_ENUM, "glGetConvolutionFilter(target)");
+         return;
+   }
+
+   for (row = 0; row < filter->Height; row++) {
+      GLvoid *dst = _mesa_image_address( &ctx->Pack, image, filter->Width,
+                                         filter->Height, format, type,
+                                         0, row, 0);
+      const GLfloat *src = filter->Filter + row * filter->Width * 4;
+      /* XXX apply transfer ops or not? */
+      _mesa_pack_float_rgba_span(ctx, filter->Width,
+                                 (const GLfloat (*)[4]) src,
+                                 format, type, dst, &ctx->Pack, 0);
+   }
 }
 
 
@@ -699,6 +716,8 @@ _mesa_GetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
 void
 _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row, GLvoid *column, GLvoid *span)
 {
+   const GLint colStart = MAX_CONVOLUTION_WIDTH * 4;
+   const struct gl_convolution_attrib *filter;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetSeparableFilter");
 
@@ -717,10 +736,30 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row,
       return;
    }
 
-   /* XXX to do */
-   (void) row;
-   (void) column;
-   (void) span;
+   filter = &ctx->Separable2D;
+
+   /* Row filter */
+   {
+      GLvoid *dst = _mesa_image_address( &ctx->Pack, row, filter->Width,
+                                         filter->Height, format, type,
+                                         0, 0, 0);
+      _mesa_pack_float_rgba_span(ctx, filter->Width,
+                                 (const GLfloat (*)[4]) filter->Filter,
+                                 format, type, dst, &ctx->Pack, 0);
+   }
+
+   /* Column filter */
+   {
+      GLvoid *dst = _mesa_image_address( &ctx->Pack, column, filter->Width,
+                                         1, format, type,
+                                         0, 0, 0);
+      const GLfloat *src = filter->Filter + colStart;
+      _mesa_pack_float_rgba_span(ctx, filter->Height,
+                                 (const GLfloat (*)[4]) src,
+                                 format, type, dst, &ctx->Pack, 0);
+   }
+
+   (void) span;  /* unused at this time */
 }
 
 
