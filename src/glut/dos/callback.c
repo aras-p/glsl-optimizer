@@ -129,7 +129,7 @@ void APIENTRY glutIdleFunc (GLUTidleCB func)
 void APIENTRY glutTimerFunc (unsigned int millis, GLUTtimerCB func, int value)
 {
  static GLUTSShotCB g_sscb[MAX_SSHOT_CB];
- static int virgin = GL_TRUE;
+ static GLboolean virgin = GL_TRUE;
 
  int i;
  int ttl;

@@ -128,8 +128,8 @@ FAQ:
 
    Q) What is NUL driver good for, if I don't get any output at all?
    A) For debugging. The NUL driver is very much like OSMesa. Everything is
-      done just the same as VESA/VGA drivers, only it doesn't touches your
-      video hardware. You can query the actual buffer by issuing:
+      done just the same as VESA/VGA drivers, only it doesn't touch your video
+      hardware. You can query the actual buffer by issuing:
 	DMesaGetIntegerv(DMESA_GET_BUFFER_ADDR, &buffer);
       and dump it to a file.
 

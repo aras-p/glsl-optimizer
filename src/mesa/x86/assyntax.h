@@ -1216,7 +1216,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define LES(a, b)		les b, a
 #define LFS(a, b)		lfs b, a
 #define LGS(a, b)		lgs b, a
-#define LSS(a, b)		lss b, a
+#define LSS(a, b)		lss b, P_(a)
 #define LLDT(a)			lldt a
 #define LMSW(a)			lmsw a
 #define LOCK			lock
