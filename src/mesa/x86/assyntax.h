@@ -1575,6 +1575,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 
 #define FEMMS	femms
 #define PREFETCH(a) 	prefetch P_ARG1(a)
+#define PREFETCHW(a)    prefetchw P_ARG1(a)
 
 /* Intel SSE */
 #define ADDPS(a, b)	addps P_ARG2(a, b)
