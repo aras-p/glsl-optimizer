@@ -8,9 +8,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -914,10 +914,10 @@ void _mesa_update_state( GLcontext *ctx )
       _mesa_update_tnl_spaces( ctx, new_state );
 
    /*
-    * Here the driver sets up all the ctx->Driver function pointers
-    * to it's specific, private functions, and performs any
-    * internal state management necessary, including invalidating
-    * state of active modules.
+    * Give the driver a chance to act upon the new_state flags.
+    * The driver might plug in different span functions, for example.
+    * Also, this is where the driver can invalidate the state of any
+    * active modules (such as swrast_setup, swrast, tnl, etc).
     *
     * Set ctx->NewState to zero to avoid recursion if
     * Driver.UpdateState() has to call FLUSH_VERTICES().  (fixed?)
@@ -925,11 +925,6 @@ void _mesa_update_state( GLcontext *ctx )
    ctx->NewState = 0;
    ctx->Driver.UpdateState(ctx, new_state);
    ctx->Array.NewState = 0;
-
-   /* At this point we can do some assertions to be sure the required
-    * device driver function pointers are all initialized.
-    */
-   _mesa_check_driver_hooks( ctx );
 }
 
 /*@}*/
