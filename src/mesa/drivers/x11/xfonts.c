@@ -1,4 +1,4 @@
-/* $Id: xfonts.c,v 1.4 1999/11/28 20:11:56 brianp Exp $ */
+/* $Id: xfonts.c,v 1.5 1999/12/12 17:04:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -337,7 +337,8 @@ void Fake_glXUseXFont( Font font, int first, int count, int listbase )
       width = ch->rbearing - ch->lbearing;
       height = ch->ascent + ch->descent;
       x0 = - ch->lbearing;
-      y0 = ch->descent - 1;
+      y0 = ch->descent - 0;  /* XXX used to subtract 1 here */
+                             /* but that caused a conformace failure */
       dx = ch->width;
       dy = 0;
 
