@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.10 2002/04/23 18:23:33 kschultz Exp $ */
+/* $Id: wgl.c,v 1.11 2002/09/04 14:14:36 brianp Exp $ */
 
 /*
 * This library is free software; you can redistribute it and/or
@@ -44,59 +44,15 @@ extern "C" {
 #include "wmesadef.h"
 #include "GL/wmesa.h"
 #include "mtypes.h"
+#include "glapi.h"
 
 #define MAX_MESA_ATTRS	20
-
-struct __extensions__
-{
-    PROC	proc;
-    char	*name;
-};
 
 struct __pixelformat__
 {
     PIXELFORMATDESCRIPTOR	pfd;
     GLboolean doubleBuffered;
 };
-
-struct __extensions__	ext[] = {
-
-#ifdef GL_EXT_polygon_offset
-   { (PROC)glPolygonOffsetEXT,			"glPolygonOffsetEXT"		},
-#endif
-   { (PROC)glBlendEquationEXT,			"glBlendEquationEXT"		},
-   { (PROC)glBlendColorEXT,			"glBlendColorExt"		},
-   { (PROC)glVertexPointerEXT,			"glVertexPointerEXT"		},
-   { (PROC)glNormalPointerEXT,			"glNormalPointerEXT"		},
-   { (PROC)glColorPointerEXT,			"glColorPointerEXT"		},
-   { (PROC)glIndexPointerEXT,			"glIndexPointerEXT"		},
-   { (PROC)glTexCoordPointerEXT,		"glTexCoordPointer"		},
-   { (PROC)glEdgeFlagPointerEXT,		"glEdgeFlagPointerEXT"		},
-   { (PROC)glGetPointervEXT,			"glGetPointervEXT"		},
-   { (PROC)glArrayElementEXT,			"glArrayElementEXT"		},
-   { (PROC)glDrawArraysEXT,			"glDrawArrayEXT"		},
-   { (PROC)glAreTexturesResidentEXT,		"glAreTexturesResidentEXT"	},
-   { (PROC)glBindTextureEXT,			"glBindTextureEXT"		},
-   { (PROC)glDeleteTexturesEXT,			"glDeleteTexturesEXT"		},
-   { (PROC)glGenTexturesEXT,			"glGenTexturesEXT"		},
-   { (PROC)glIsTextureEXT,			"glIsTextureEXT"		},
-   { (PROC)glPrioritizeTexturesEXT,		"glPrioritizeTexturesEXT"	},
-   { (PROC)glCopyTexSubImage3DEXT,		"glCopyTexSubImage3DEXT"	},
-   { (PROC)glTexImage3DEXT,			"glTexImage3DEXT"		},
-   { (PROC)glTexSubImage3DEXT,			"glTexSubImage3DEXT"		},
-   { (PROC)glColorTableEXT,			"glColorTableEXT"		},
-   { (PROC)glColorSubTableEXT,			"glColorSubTableEXT"		},
-   { (PROC)glGetColorTableEXT,			"glGetColorTableEXT"		},
-   { (PROC)glGetColorTableParameterfvEXT,	"glGetColorTableParameterfvEXT"	},
-   { (PROC)glGetColorTableParameterivEXT,	"glGetColorTableParameterivEXT"	},
-   { (PROC)glPointParameterfEXT,		"glPointParameterfEXT"		},
-   { (PROC)glPointParameterfvEXT,		"glPointParameterfvEXT"		},
-   { (PROC)glBlendFuncSeparateEXT,		"glBlendFuncSeparateEXT"	},
-   { (PROC)glLockArraysEXT,			"glLockArraysEXT"		},
-   { (PROC)glUnlockArraysEXT,			"glUnlockArraysEXT"		}
-};
-
-int qt_ext = sizeof(ext) / sizeof(ext[0]);
 
 struct __pixelformat__	pix[] =
 {
@@ -134,7 +90,7 @@ struct __pixelformat__	pix[] =
     },
 };
 
-int				qt_pix = sizeof(pix) / sizeof(pix[0]);
+int qt_pix = sizeof(pix) / sizeof(pix[0]);
 
 typedef struct {
     WMesaContext ctx;
@@ -616,13 +572,12 @@ WGLAPI int GLAPIENTRY wglDescribePixelFormat(HDC hdc,int iPixelFormat,UINT nByte
 */
 WGLAPI PROC GLAPIENTRY wglGetProcAddress(LPCSTR lpszProc)
 {
-    int		i;
-    for(i = 0;i < qt_ext;i++)
-        if(!strcmp(lpszProc,ext[i].name))
-            return(ext[i].proc);
+   PROC p = (PROC) _glapi_get_proc_address((const char *) lpszProc);
+   if (p)
+      return p;
 
-        SetLastError(0);
-        return(NULL);
+   SetLastError(0);
+   return(NULL);
 }
 
 WGLAPI int GLAPIENTRY wglGetPixelFormat(HDC hdc)

@@ -1,4 +1,4 @@
-/* $Id: fxwgl.c,v 1.14 2001/09/23 16:50:01 brianp Exp $ */
+/* $Id: fxwgl.c,v 1.15 2002/09/04 14:14:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,6 +45,7 @@ extern "C"
 #include "fxdrv.h"
 #include <windows.h>
 #include "GL/gl.h"
+#include "glapi.h"
 
 #ifdef __cplusplus
 }
@@ -68,80 +69,6 @@ struct __pixelformat__
 };
 
 WINGDIAPI void GLAPIENTRY gl3DfxSetPaletteEXT(GLuint *);
-
-static struct __extensions__ ext[] = {
-
-#ifdef GL_EXT_polygon_offset
-   {(PROC) glPolygonOffsetEXT, "glPolygonOffsetEXT"},
-#endif
-   {(PROC) glBlendEquationEXT, "glBlendEquationEXT"},
-   {(PROC) glBlendColorEXT, "glBlendColorExt"},
-   {(PROC) glVertexPointerEXT, "glVertexPointerEXT"},
-   {(PROC) glNormalPointerEXT, "glNormalPointerEXT"},
-   {(PROC) glColorPointerEXT, "glColorPointerEXT"},
-   {(PROC) glIndexPointerEXT, "glIndexPointerEXT"},
-   {(PROC) glTexCoordPointerEXT, "glTexCoordPointer"},
-   {(PROC) glEdgeFlagPointerEXT, "glEdgeFlagPointerEXT"},
-   {(PROC) glGetPointervEXT, "glGetPointervEXT"},
-   {(PROC) glArrayElementEXT, "glArrayElementEXT"},
-   {(PROC) glDrawArraysEXT, "glDrawArrayEXT"},
-   {(PROC) glAreTexturesResidentEXT, "glAreTexturesResidentEXT"},
-   {(PROC) glBindTextureEXT, "glBindTextureEXT"},
-   {(PROC) glDeleteTexturesEXT, "glDeleteTexturesEXT"},
-   {(PROC) glGenTexturesEXT, "glGenTexturesEXT"},
-   {(PROC) glIsTextureEXT, "glIsTextureEXT"},
-   {(PROC) glPrioritizeTexturesEXT, "glPrioritizeTexturesEXT"},
-   {(PROC) glCopyTexSubImage3DEXT, "glCopyTexSubImage3DEXT"},
-   {(PROC) glTexImage3DEXT, "glTexImage3DEXT"},
-   {(PROC) glTexSubImage3DEXT, "glTexSubImage3DEXT"},
-   {(PROC) gl3DfxSetPaletteEXT, "3DFX_set_global_palette"},
-   {(PROC) glColorTableEXT, "glColorTableEXT"},
-   {(PROC) glColorSubTableEXT, "glColorSubTableEXT"},
-   {(PROC) glGetColorTableEXT, "glGetColorTableEXT"},
-   {(PROC) glGetColorTableParameterfvEXT, "glGetColorTableParameterfvEXT"},
-   {(PROC) glGetColorTableParameterivEXT, "glGetColorTableParameterivEXT"},
-   {(PROC) glPointParameterfEXT, "glPointParameterfEXT"},
-   {(PROC) glPointParameterfvEXT, "glPointParameterfvEXT"},
-   {(PROC) glBlendFuncSeparateINGR, "glBlendFuncSeparateINGR"},
-   {(PROC) glActiveTextureARB, "glActiveTextureARB"},
-   {(PROC) glClientActiveTextureARB, "glClientActiveTextureARB"},
-   {(PROC) glMultiTexCoord1dARB, "glMultiTexCoord1dARB"},
-   {(PROC) glMultiTexCoord1dvARB, "glMultiTexCoord1dvARB"},
-   {(PROC) glMultiTexCoord1fARB, "glMultiTexCoord1fARB"},
-   {(PROC) glMultiTexCoord1fvARB, "glMultiTexCoord1fvARB"},
-   {(PROC) glMultiTexCoord1iARB, "glMultiTexCoord1iARB"},
-   {(PROC) glMultiTexCoord1ivARB, "glMultiTexCoord1ivARB"},
-   {(PROC) glMultiTexCoord1sARB, "glMultiTexCoord1sARB"},
-   {(PROC) glMultiTexCoord1svARB, "glMultiTexCoord1svARB"},
-   {(PROC) glMultiTexCoord2dARB, "glMultiTexCoord2dARB"},
-   {(PROC) glMultiTexCoord2dvARB, "glMultiTexCoord2dvARB"},
-   {(PROC) glMultiTexCoord2fARB, "glMultiTexCoord2fARB"},
-   {(PROC) glMultiTexCoord2fvARB, "glMultiTexCoord2fvARB"},
-   {(PROC) glMultiTexCoord2iARB, "glMultiTexCoord2iARB"},
-   {(PROC) glMultiTexCoord2ivARB, "glMultiTexCoord2ivARB"},
-   {(PROC) glMultiTexCoord2sARB, "glMultiTexCoord2sARB"},
-   {(PROC) glMultiTexCoord2svARB, "glMultiTexCoord2svARB"},
-   {(PROC) glMultiTexCoord3dARB, "glMultiTexCoord3dARB"},
-   {(PROC) glMultiTexCoord3dvARB, "glMultiTexCoord3dvARB"},
-   {(PROC) glMultiTexCoord3fARB, "glMultiTexCoord3fARB"},
-   {(PROC) glMultiTexCoord3fvARB, "glMultiTexCoord3fvARB"},
-   {(PROC) glMultiTexCoord3iARB, "glMultiTexCoord3iARB"},
-   {(PROC) glMultiTexCoord3ivARB, "glMultiTexCoord3ivARB"},
-   {(PROC) glMultiTexCoord3sARB, "glMultiTexCoord3sARB"},
-   {(PROC) glMultiTexCoord3svARB, "glMultiTexCoord3svARB"},
-   {(PROC) glMultiTexCoord4dARB, "glMultiTexCoord4dARB"},
-   {(PROC) glMultiTexCoord4dvARB, "glMultiTexCoord4dvARB"},
-   {(PROC) glMultiTexCoord4fARB, "glMultiTexCoord4fARB"},
-   {(PROC) glMultiTexCoord4fvARB, "glMultiTexCoord4fvARB"},
-   {(PROC) glMultiTexCoord4iARB, "glMultiTexCoord4iARB"},
-   {(PROC) glMultiTexCoord4ivARB, "glMultiTexCoord4ivARB"},
-   {(PROC) glMultiTexCoord4sARB, "glMultiTexCoord4sARB"},
-   {(PROC) glMultiTexCoord4svARB, "glMultiTexCoord4svARB"},
-   {(PROC) glLockArraysEXT, "glLockArraysEXT"},
-   {(PROC) glUnlockArraysEXT, "glUnlockArraysEXT"}
-};
-
-static int qt_ext = sizeof(ext) / sizeof(ext[0]);
 
 struct __pixelformat__ pix[] = {
    /* None */
@@ -509,18 +436,10 @@ wglGetCurrentDC(VOID)
 PROC GLAPIENTRY
 wglGetProcAddress(LPCSTR lpszProc)
 {
-   int i;
+   PROC p = (PROC) _glapi_get_proc_address((const char *) lpszProc);
+   if (p)
+      return p;
 
-   /*fprintf(stderr,"fxMesa: looking for extension %s\n",lpszProc);
-      fflush(stderr); */
-
-   for (i = 0; i < qt_ext; i++)
-      if (!strcmp(lpszProc, ext[i].name)) {
-	 /*fprintf(stderr,"fxMesa: found extension %s\n",lpszProc);
-	    fflush(stderr); */
-
-	 return (ext[i].proc);
-      }
    SetLastError(0);
    return (NULL);
 }
