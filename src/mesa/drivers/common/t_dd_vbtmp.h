@@ -1,10 +1,10 @@
-/* $Id: t_dd_vbtmp.h,v 1.23 2002/10/29 20:29:05 brianp Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.24 2003/01/13 15:47:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -216,7 +216,7 @@ static void TAG(emit)( GLcontext *ctx,
       }
    }
 
-   if (VB->importable_data) {
+   if (VB->importable_data || (DO_SPEC && !spec_stride) || (DO_FOG && !fog_stride)) {
       /* May have nonstandard strides:
        */
       if (start) {
@@ -235,7 +235,7 @@ static void TAG(emit)( GLcontext *ctx,
 	    STRIDE_4UB(spec, start * spec_stride);
 	 if (DO_FOG)
 	    /*STRIDE_F(fog, start * fog_stride);*/
-	    fog =  (GLfloat (*)[4])((GLfloat *)fog + start * fog_stride);
+	    fog =  (GLfloat (*)[4])((GLubyte *)fog + start * fog_stride);
       }
 
       for (i=start; i < end; i++, v = (VERTEX *)((GLubyte *)v + stride)) {
@@ -271,7 +271,7 @@ static void TAG(emit)( GLcontext *ctx,
 	 if (DO_FOG) {
 	    v->v.specular.alpha = fog[0][0] * 255.0;
 	    /*STRIDE_F(fog, fog_stride);*/
-	    fog =  (GLfloat (*)[4])((GLfloat *)fog +  fog_stride);
+	    fog =  (GLfloat (*)[4])((GLubyte *)fog + fog_stride);
 	 }
 	 if (DO_TEX0) {
 	    v->v.u0 = tc0[0][0];
