@@ -71,7 +71,7 @@ else
 LDLIBS = -lglut -lglu -lgl
 ifeq ($(FX),1)
 LDFLAGS += -L$(GLIDE)/lib
-LDLIBS += -lglid3
+LDLIBS += -lgld3x
 endif
 endif
 

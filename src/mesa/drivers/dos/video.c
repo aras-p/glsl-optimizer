@@ -23,10 +23,10 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa
+ * DOS/DJGPP device driver v1.4 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
- *  Email : dborca@yahoo.com
+ *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  *
  * Thanks to CrazyPyro (Neil Funk) for FakeColor
@@ -163,7 +163,11 @@ static int vl_mixfix32 (fixed r, fixed g, fixed b)
 #define vl_mixrgba24 vl_mixrgb24
 static int vl_mixrgba32 (const unsigned char rgba[])
 {
- return (rgba[3]<<24)|(rgba[0]<<16)|(rgba[1]<<8)|(rgba[2]);
+ /* Hack alert:
+  * currently, DMesa uses Mesa's alpha buffer;
+  * so we don't really care about alpha value here...
+  */
+ return /*(rgba[3]<<24)|*/(rgba[0]<<16)|(rgba[1]<<8)|(rgba[2]);
 }
 
 
@@ -175,11 +179,11 @@ static int vl_mixrgba32 (const unsigned char rgba[])
  *
  * Note: -
  */
-static int vl_mixrgb8fake (const unsigned char rgba[])
+static int vl_mixrgb8fake (const unsigned char rgb[])
 {
- return array_b[rgba[2]]*G_CNT*R_CNT
-      + array_g[rgba[1]]*R_CNT
-      + array_r[rgba[0]];
+ return array_b[rgb[2]]*G_CNT*R_CNT
+      + array_g[rgb[1]]*R_CNT
+      + array_r[rgb[0]];
 }
 #define vl_mixrgb8 vl_mixrgb8fake
 static int vl_mixrgb15 (const unsigned char rgb[])
@@ -205,21 +209,21 @@ static int vl_mixrgb32 (const unsigned char rgb[])
  *
  * Note: uses current read buffer
  */
-static void v_getrgba8fake6 (unsigned int offset, unsigned char rgba[])
+static void v_getrgba8fake6 (unsigned int offset, unsigned char rgba[4])
 {
  word32 c = VGAPalette[((word8 *)vl_current_read_buffer)[offset]];
  rgba[0] = _rgb_scale_6[(c >> 16) & 0x3F];
  rgba[1] = _rgb_scale_6[(c >> 8) & 0x3F];
  rgba[2] = _rgb_scale_6[c & 0x3F];
- rgba[3] = c >> 24;
+ /*rgba[3] = c >> 24;*/ /* dummy alpha; we have separate SW alpha, so ignore */
 }
-static void v_getrgba8fake8 (unsigned int offset, unsigned char rgba[])
+static void v_getrgba8fake8 (unsigned int offset, unsigned char rgba[4])
 {
  word32 c = VGAPalette[((word8 *)vl_current_read_buffer)[offset]];
  rgba[0] = c >> 16;
  rgba[1] = c >> 8;
  rgba[2] = c;
- rgba[3] = c >> 24;
+ /*rgba[3] = c >> 24;*/ /* dummy alpha; we have separate SW alpha, so ignore */
 }
 #define v_getrgba8 v_getrgba8fake6
 static void v_getrgba15 (unsigned int offset, unsigned char rgba[4])
@@ -235,7 +239,7 @@ static void v_getrgba15 (unsigned int offset, unsigned char rgba[4])
  rgba[1] = _rgb_scale_5[(c >> 5) & 0x1F];
  rgba[2] = _rgb_scale_5[c & 0x1F];
 #endif
- rgba[3] = 255;
+ /*rgba[3] = 255;*/ /* dummy alpha; we have separate SW alpha, so ignore */
 }
 static void v_getrgba16 (unsigned int offset, unsigned char rgba[4])
 {
@@ -249,7 +253,7 @@ static void v_getrgba16 (unsigned int offset, unsigned char rgba[4])
  rgba[1] = _rgb_scale_6[(c >> 5) & 0x3F];
  rgba[2] = _rgb_scale_5[c & 0x1F];
 #endif
- rgba[3] = 255;
+ /*rgba[3] = 255;*/ /* dummy alpha; we have separate SW alpha, so ignore */
 }
 static void v_getrgba24 (unsigned int offset, unsigned char rgba[4])
 {
@@ -257,7 +261,7 @@ static void v_getrgba24 (unsigned int offset, unsigned char rgba[4])
  rgba[0] = c >> 16;
  rgba[1] = c >> 8;
  rgba[2] = c;
- rgba[3] = 255;
+ /*rgba[3] = 255;*/ /* dummy alpha; we have separate SW alpha, so ignore */
 }
 static void v_getrgba32 (unsigned int offset, unsigned char rgba[4])
 {
@@ -265,7 +269,7 @@ static void v_getrgba32 (unsigned int offset, unsigned char rgba[4])
  rgba[0] = c >> 16;
  rgba[1] = c >> 8;
  rgba[2] = c; 
- rgba[3] = c >> 24;
+ /*rgba[3] = c >> 24;*/ /* dummy alpha; we have separate SW alpha, so ignore */
 }
 
 

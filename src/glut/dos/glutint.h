@@ -103,6 +103,7 @@ extern GLUTidleCB g_idle_func;
 extern GLUTmenuStatusCB g_menu_status_func;
 
 extern GLuint g_bpp;                  /* HW: bits per pixel */
+extern GLuint g_alpha;                /* HW: alpha bits */
 extern GLuint g_depth;                /* HW: depth bits */
 extern GLuint g_stencil;              /* HW: stencil bits */
 extern GLuint g_accum;                /* HW: accum bits */

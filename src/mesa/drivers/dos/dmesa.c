@@ -73,6 +73,7 @@ struct dmesa_visual {
    GLvisual gl_visual;
    GLboolean db_flag;           /* double buffered? */
    GLboolean rgb_flag;          /* RGB mode? */
+   GLboolean sw_alpha;          /* use Mesa's alpha buffer? */
    GLuint depth;                /* bits per pixel (1, 8, 24, etc) */
 #ifdef MATROX
    int stride_in_pixels;
@@ -1335,7 +1336,7 @@ DMesaVisual DMesaCreateVisual (GLint width,
                                GLint refresh,
                                GLboolean dbFlag,
                                GLboolean rgbFlag,
-                               GLboolean alphaFlag,
+                               GLint alphaSize,
                                GLint depthSize,
                                GLint stencilSize,
                                GLint accumSize)
@@ -1343,6 +1344,7 @@ DMesaVisual DMesaCreateVisual (GLint width,
 #ifndef FX
  DMesaVisual v;
  GLint redBits, greenBits, blueBits, alphaBits, indexBits;
+ GLboolean sw_alpha;
 
 #ifndef MATROX
  if (!dbFlag) {
@@ -1370,6 +1372,7 @@ DMesaVisual DMesaCreateVisual (GLint width,
                 blueBits = 8;
                 break;
            case 15:
+                alphaBits = 1;
                 redBits = 5;
                 greenBits = 5;
                 blueBits = 5;
@@ -1391,6 +1394,23 @@ DMesaVisual DMesaCreateVisual (GLint width,
     }
  }
 
+ /* Okay,
+  * `alphaBits' is what we can provide
+  * `alphaSize' is what app requests
+  *
+  * Note that alpha buffering is required only if destination alpha is used
+  * in alpha blending; alpha blending modes that do not use destination alpha
+  * can be used w/o alpha buffer.
+  *
+  * We will use whatever ALPHA app requests. Later, in `CreateBuffer' we'll
+  * instruct Mesa to use its own ALPHA buffer, by passing a non-FALSE value
+  * for ALPHA to `_mesa_initialize_framebuffer'.
+  *
+  * Basically, 32bit modes provide ALPHA storage, but can we rely on this?
+  */
+ alphaBits = alphaSize;
+ sw_alpha = (alphaBits > 0);
+
 #ifndef MATROX
  if ((colDepth=vl_video_init(width, height, colDepth, rgbFlag, refresh)) <= 0) {
     return NULL;
@@ -1400,10 +1420,6 @@ DMesaVisual DMesaCreateVisual (GLint width,
     return NULL;
  }
 #endif
-
- if (alphaFlag && (alphaBits==0)) {
-    alphaBits = 8;
- }
 
  if ((v=(DMesaVisual)CALLOC_STRUCT(dmesa_visual)) != NULL) {
     /* Create core visual */
@@ -1421,12 +1437,13 @@ DMesaVisual DMesaCreateVisual (GLint width,
                             accumSize,		/* accumRed */
                             accumSize,		/* accumGreen */
                             accumSize,		/* accumBlue */
-                            alphaFlag?accumSize:0,	/* accumAlpha */
+                            alphaBits?accumSize:0,	/* accumAlpha */
                             1);			/* numSamples */
 
     v->depth = colDepth;
     v->db_flag = dbFlag;
     v->rgb_flag = rgbFlag;
+    v->sw_alpha = sw_alpha;
 
     v->zbuffer = (depthSize > 0) ? 1 : 0;
 #ifdef MATROX
@@ -1451,7 +1468,7 @@ DMesaVisual DMesaCreateVisual (GLint width,
  if (depthSize > 0) { fx_attrib[i++] = FXMESA_DEPTH_SIZE; fx_attrib[i++] = depthSize; }
  if (stencilSize > 0) { fx_attrib[i++] = FXMESA_STENCIL_SIZE; fx_attrib[i++] = stencilSize; }
  if (accumSize > 0) { fx_attrib[i++] = FXMESA_ACCUM_SIZE; fx_attrib[i++] = accumSize; }
- if (alphaFlag) { fx_attrib[i++] = FXMESA_ALPHA_SIZE; fx_attrib[i++] = 1; }
+ if (alphaSize) { fx_attrib[i++] = FXMESA_ALPHA_SIZE; fx_attrib[i++] = alphaSize; }
  fx_attrib[i++] = FXMESA_COLORDEPTH;
  fx_attrib[i++] = colDepth;
  fx_attrib[i] = FXMESA_NONE;
@@ -1493,7 +1510,7 @@ DMesaBuffer DMesaCreateBuffer (DMesaVisual visual,
                                  visual->zbuffer == 1,
                                  ((GLvisual *)visual)->stencilBits > 0,
                                  ((GLvisual *)visual)->accumRedBits > 0,
-                                 ((GLvisual *)visual)->alphaBits > 0);
+                                 visual->sw_alpha);
     b->xpos = xpos;
     b->ypos = ypos;
     b->width = width;

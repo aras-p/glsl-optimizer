@@ -65,7 +65,7 @@ DMesaVisual DMesaCreateVisual (GLint width,        /* X res */
                                GLint refresh,      /* refresh rate: 0=default */
                                GLboolean dbFlag,   /* double-buffered */
                                GLboolean rgbFlag,  /* RGB mode */
-                               GLboolean alphaFlag,/* alpha buffer requested */
+                               GLint alphaSize,    /* requested bits/alpha */
                                GLint depthSize,    /* requested bits/depth */
                                GLint stencilSize,  /* requested bits/stencil */
                                GLint accumSize);   /* requested bits/accum */

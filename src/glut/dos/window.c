@@ -71,10 +71,10 @@ int APIENTRY glutCreateWindow (const char *title)
     if ((visual=DMesaCreateVisual(g_init_x + m8width, g_init_y + g_init_h, g_bpp, g_refresh,
                                   g_display_mode & GLUT_DOUBLE,
                                   !(g_display_mode & GLUT_INDEX),
-                                  g_display_mode & GLUT_ALPHA,
-                                  g_display_mode & GLUT_DEPTH   ? g_depth  :0,
-                                  g_display_mode & GLUT_STENCIL ? g_stencil:0,
-                                  g_display_mode & GLUT_ACCUM   ? g_accum  :0))==NULL) {
+                                  (g_display_mode & GLUT_ALPHA  ) ? g_alpha   : 0,
+                                  (g_display_mode & GLUT_DEPTH  ) ? g_depth   : 0,
+                                  (g_display_mode & GLUT_STENCIL) ? g_stencil : 0,
+                                  (g_display_mode & GLUT_ACCUM  ) ? g_accum   : 0))==NULL) {
        return 0;
     }
 

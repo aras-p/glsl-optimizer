@@ -97,7 +97,7 @@ FAQ:
    A) DXE3 refers to the DJGPP dynamic modules. You'll need either the latest
       DJGPP distro, or download the separate package from my web page. Read the
       DXE3 documentation on how to use them.
-   A) When compiling for Glide (FX=1), make sure `glid3.dxe' can be found in
+   A) When compiling for Glide (FX=1), make sure `glide3x.dxe' can be found in
       LD_LIBRARY_PATH (or top `lib' directory).
 
 2. Using Mesa for DJGPP
@@ -160,19 +160,19 @@ means that `printf' can be safely called during graphics. A bit of a hack, I
 know, because all messages come in bulk, but I think it's better than nothing.
 "Borrowed" from LIBRHUTI (Robert Hoehne).
 
-Window creating defaults: 300x300x16 at (0,0), 16-bit depth, 16-bit accum,
-8-bit stencil. However, the video mode is chosen in such a way that first
-window will fit. If you need high resolution with small windows, set initial
-position far to the right (or way down); then you can move them back to any
-position right before the main loop.
+Window creating defaults: (0, 0, 300, 300), 16bpp. However, the video mode is
+chosen in such a way that first window will fit. If you need high resolution
+with small windows, set initial position far to the right (or way down); then
+you can move them back to any position right before the main loop.
 
 The following environment variables can customize GLUT behaviour:
 	GLUT_FPS		- print frames/second statistics to stderr
 	DMESA_GLUT_REFRESH	- set vertical screen refresh rate (VESA3)
 	DMESA_GLUT_BPP		- set default bits per pixel (VGA needs 8)
-	DMESA_GLUT_DEPTH	- set default depth bits
-	DMESA_GLUT_STENCIL	- set default stencil bits
-	DMESA_GLUT_ACCUM	- set default accum bits
+	DMESA_GLUT_ALPHA	- set default alpha bits (8)
+	DMESA_GLUT_DEPTH	- set default depth bits (16)
+	DMESA_GLUT_STENCIL	- set default stencil bits (8)
+	DMESA_GLUT_ACCUM	- set default accum bits (16)
 
 
 
@@ -211,9 +211,10 @@ v1.3 (mar-2003)
 
 v1.4 (aug-2003)
 	+ enabled GLUT fonts with DXE
-	+ truly added multi-window support in GLUT
+	+ truly added multi-window support in GLUT (for Adrian Woodward)
 	* accomodated makefiles with the new sourcetree
-	* hacked and slashed the 3dfx driver (w/ help from Hiroshi Morii)
+	* fixed some ALPHA issues
+	x hacked and slashed the 3dfx driver (w/ help from Hiroshi Morii)
 
 
 

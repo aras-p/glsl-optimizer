@@ -35,6 +35,7 @@
 #define DEFAULT_HEIGHT 300
 #define DEFAULT_BPP    16
 
+#define ALPHA_SIZE   8
 #define DEPTH_SIZE   16
 #define STENCIL_SIZE 8
 #define ACCUM_SIZE   16
@@ -42,6 +43,7 @@
 
 
 GLuint g_bpp = DEFAULT_BPP;
+GLuint g_alpha = ALPHA_SIZE;
 GLuint g_depth = DEPTH_SIZE;
 GLuint g_stencil = STENCIL_SIZE;
 GLuint g_accum = ACCUM_SIZE;
@@ -66,6 +68,9 @@ void APIENTRY glutInit (int *argc, char **argv)
 
  if ((env = getenv("DMESA_GLUT_BPP")) != NULL) {
     g_bpp = atoi(env);
+ }
+ if ((env = getenv("DMESA_GLUT_ALPHA")) != NULL) {
+    g_alpha = atoi(env);
  }
  if ((env = getenv("DMESA_GLUT_DEPTH")) != NULL) {
     g_depth = atoi(env);

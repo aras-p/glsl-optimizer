@@ -78,13 +78,13 @@ CFLAGS += -I$(TOP)/include -I. -Imain -Iglapi
 ifeq ($(FX),1)
 CFLAGS += -D__DOS__ -DH3
 CFLAGS += -I$(GLIDE)/include -DFX
-LIBNAME = "MesaGL/FX DJGPP"
+LIBNAME = "Mesa/FX DJGPP"
 else
 ifeq ($(MATROX),1)
 CFLAGS += -DMATROX
-LIBNAME = "MesaGL/MGA DJGPP"
+LIBNAME = "Mesa/MGA DJGPP"
 else
-LIBNAME = "MesaGL DJGPP"
+LIBNAME = "Mesa DJGPP"
 endif
 endif
 
