@@ -60,9 +60,10 @@ selectFog(int mode)
         glFogf(GL_FOG_START, 1.0);
         glFogf(GL_FOG_END, 5.0);
 	/* falls through */
+        mode = 0xfff;
     case GL_EXP2:
     case GL_EXP:
-        glFogi(GL_FOG_MODE, mode);
+       glFogiv(0xf/*GL_FOG_MODE*/, (int *) &mode);
 	glutPostRedisplay();
 	break;
     case 0:
@@ -190,7 +191,7 @@ main(int argc, char **argv)
     glutDisplayFunc(display);
     glutCreateMenu(selectFog);
     glutAddMenuEntry("Fog EXP", GL_EXP);
-    glutAddMenuEntry("Fog EXP2", GL_EXP2);
+    glutAddMenuEntry("Fog EXP2", /*GL_EXP2*/ 0xffff);
     glutAddMenuEntry("Fog LINEAR", GL_LINEAR);
     glutAddMenuEntry("Quit", 0);
     glutAttachMenu(GLUT_RIGHT_BUTTON);

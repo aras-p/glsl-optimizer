@@ -42,6 +42,7 @@
  *  two rectangles.  This program clamps the texture, if
  *  the texture coordinates fall outside 0.0 and 1.0.
  */
+#include <stdlib.h>
 #include <GL/glut.h>
 
 /*	Create checkerboard texture	*/

@@ -174,7 +174,7 @@ static void DeleteTri(GLint h)
 static void GrowTri(GLint h)
 {
     float v[2];
-    float *oldV;
+    float *oldV = NULL;
     GLint i;
 
     v[0] = objects[h].v1[0] + objects[h].v2[0] + objects[h].v3[0];

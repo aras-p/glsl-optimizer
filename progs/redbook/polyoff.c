@@ -44,6 +44,7 @@
 #include <GL/glut.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef GL_VERSION_1_1
 GLuint list;
@@ -149,7 +150,7 @@ static void Benchmark( float xdiff, float ydiff )
 {
    int startTime, endTime;
    int draws;
-   double seconds, fps, triPerSecond;
+   double seconds, fps;
 
    printf("Benchmarking...\n");
 

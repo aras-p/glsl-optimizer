@@ -41,6 +41,7 @@
  *  This program draws a NURBS surface in the shape of a
  *  symmetrical hill.
  */
+#include <stdlib.h>
 #include <GL/glut.h>
 
 GLfloat ctlpoints[4][4][3];

@@ -39,6 +39,7 @@
  * hello.c
  * This is a simple, introductory OpenGL program.
  */
+#include <stdlib.h>
 #include <GL/glut.h>
 
 void display(void)
