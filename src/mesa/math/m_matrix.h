@@ -1,10 +1,10 @@
-/* $Id: m_matrix.h,v 1.2 2000/11/24 10:25:11 keithw Exp $ */
+/* $Id: m_matrix.h,v 1.3 2001/02/05 18:48:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -139,10 +139,10 @@ _math_matrix_ortho( GLmatrix *mat,
 		    GLfloat nearval, GLfloat farval );
 
 extern void
-_math_matrix_frustrum( GLmatrix *mat, 
-		       GLfloat left, GLfloat right,
-		       GLfloat bottom, GLfloat top, 
-		       GLfloat nearval, GLfloat farval );
+_math_matrix_frustum( GLmatrix *mat, 
+		      GLfloat left, GLfloat right,
+		      GLfloat bottom, GLfloat top, 
+		      GLfloat nearval, GLfloat farval );
 
 extern void
 _math_matrix_set_identity( GLmatrix *dest );
