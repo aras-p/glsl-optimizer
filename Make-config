@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.57 2001/12/14 17:48:19 kschultz Exp $
+# $Id: Make-config,v 1.58 2002/03/23 02:30:18 brianp Exp $
 
 MESA_MAJOR=4
 MESA_MINOR=1
@@ -867,7 +867,7 @@ linux-osmesa16:
 	"OSMESA16_LIB = libOSMesa16.so" \
 	"CC = gcc" \
 	"CPLUSPLUS = g++" \
-	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DCHAN_BITS=16 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
+	"CFLAGS = -O3 -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DCHAN_BITS=16 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -lm -lpthread" \
@@ -879,7 +879,7 @@ linux-osmesa32:
 	"OSMESA16_LIB = libOSMesa32.so" \
 	"CC = gcc" \
 	"CPLUSPLUS = g++" \
-	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DCHAN_BITS=32 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
+	"CFLAGS = -O3 -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DCHAN_BITS=32 -DDEFAULT_SOFTWARE_DEPTH_BITS=31" \
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -lm -lpthread" \
