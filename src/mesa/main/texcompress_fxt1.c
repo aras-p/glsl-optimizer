@@ -178,7 +178,7 @@ fetch_texel_2d_rgba_fxt1( const struct gl_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLchan *texel )
 {
    (void) k;
-   fxt1_decode_1(texImage->Data, texImage->Width, i, j, texel);
+   fxt1_decode_1(texImage->Data, texImage->RowStride, i, j, texel);
 }
 
 
@@ -189,7 +189,7 @@ fetch_texel_2d_f_rgba_fxt1( const struct gl_texture_image *texImage,
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
    (void) k;
-   fxt1_decode_1(texImage->Data, texImage->Width, i, j, rgba);
+   fxt1_decode_1(texImage->Data, texImage->RowStride, i, j, rgba);
    texel[RCOMP] = CHAN_TO_FLOAT(rgba[RCOMP]);
    texel[GCOMP] = CHAN_TO_FLOAT(rgba[GCOMP]);
    texel[BCOMP] = CHAN_TO_FLOAT(rgba[BCOMP]);
@@ -202,7 +202,7 @@ fetch_texel_2d_rgb_fxt1( const struct gl_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLchan *texel )
 {
    (void) k;
-   fxt1_decode_1(texImage->Data, texImage->Width, i, j, texel);
+   fxt1_decode_1(texImage->Data, texImage->RowStride, i, j, texel);
    texel[ACOMP] = 255;
 }
 
@@ -214,7 +214,7 @@ fetch_texel_2d_f_rgb_fxt1( const struct gl_texture_image *texImage,
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
    (void) k;
-   fxt1_decode_1(texImage->Data, texImage->Width, i, j, rgba);
+   fxt1_decode_1(texImage->Data, texImage->RowStride, i, j, rgba);
    texel[RCOMP] = CHAN_TO_FLOAT(rgba[RCOMP]);
    texel[GCOMP] = CHAN_TO_FLOAT(rgba[GCOMP]);
    texel[BCOMP] = CHAN_TO_FLOAT(rgba[BCOMP]);
@@ -1548,7 +1548,7 @@ static unsigned char _rgb_scale_6[] = {
 
 
 static void
-fxt1_decode_1HI (unsigned long code, int t, unsigned char *rgba)
+fxt1_decode_1HI (unsigned char *code, int t, unsigned char *rgba)
 {
    const unsigned long *cc;
 
@@ -1579,7 +1579,7 @@ fxt1_decode_1HI (unsigned long code, int t, unsigned char *rgba)
 
 
 static void
-fxt1_decode_1CHROMA (unsigned long code, int t, unsigned char *rgba)
+fxt1_decode_1CHROMA (unsigned char *code, int t, unsigned char *rgba)
 {
    const unsigned long *cc;
    unsigned long kk;
@@ -1602,7 +1602,7 @@ fxt1_decode_1CHROMA (unsigned long code, int t, unsigned char *rgba)
 
 
 static void
-fxt1_decode_1MIXED (unsigned long code, int t, unsigned char *rgba)
+fxt1_decode_1MIXED (unsigned char *code, int t, unsigned char *rgba)
 {
    const unsigned long *cc;
    unsigned int col[2][3];
@@ -1680,7 +1680,7 @@ fxt1_decode_1MIXED (unsigned long code, int t, unsigned char *rgba)
 
 
 static void
-fxt1_decode_1ALPHA (unsigned long code, int t, unsigned char *rgba)
+fxt1_decode_1ALPHA (unsigned char *code, int t, unsigned char *rgba)
 {
    const unsigned long *cc;
 
@@ -1752,7 +1752,7 @@ void
 fxt1_decode_1 (const void *texture, int width,
                int i, int j, unsigned char *rgba)
 {
-   static void (*decode_1[]) (unsigned long, int, unsigned char *) = {
+   static void (*decode_1[]) (unsigned char *, int, unsigned char *) = {
       fxt1_decode_1HI,     /* cc-high   = "00?" */
       fxt1_decode_1HI,     /* cc-high   = "00?" */
       fxt1_decode_1CHROMA, /* cc-chroma = "010" */
@@ -1763,8 +1763,8 @@ fxt1_decode_1 (const void *texture, int width,
       fxt1_decode_1MIXED   /* mixed     = "1??" */
    };
 
-   unsigned long code = (unsigned long)texture +
-                        ((j / 4) * (width / 8) + (i / 8)) * 16;
+   unsigned char *code = (unsigned char *)texture +
+                         ((j / 4) * (width / 8) + (i / 8)) * 16;
    int mode = CC_SEL((unsigned long *)code, 125);
    int t = i & 7;
 
