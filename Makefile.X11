@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.24 2000/05/03 15:01:08 brianp Exp $
+# $Id: Makefile.X11,v 1.25 2000/05/20 23:16:14 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -566,6 +566,7 @@ GLU_FILES = \
 	$(DIRECTORY)/bin/mklib*			\
 	$(DIRECTORY)/include/GL/gl.h		\
 	$(DIRECTORY)/include/GL/gl_mangle.h	\
+	$(DIRECTORY)/include/GL/glext.h		\
 	$(DIRECTORY)/include/GL/glu.h		\
 	$(DIRECTORY)/include/GL/glu_mangle.h	\
 	$(DIRECTORY)/src-glu/README[12]		\
@@ -583,6 +584,7 @@ GLUT_FILES = \
 	$(DIRECTORY)/bin/mklib*			\
 	$(DIRECTORY)/include/GL/gl.h		\
 	$(DIRECTORY)/include/GL/gl_mangle.h	\
+	$(DIRECTORY)/include/GL/glext.h		\
 	$(DIRECTORY)/include/GL/glu.h		\
 	$(DIRECTORY)/include/GL/glu_mangle.h	\
 	$(DIRECTORY)/include/GL/glut.h		\
