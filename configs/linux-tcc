@@ -21,5 +21,5 @@ GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -L$(TCC_DIR) -ltcc -ld
 OSMESA_LIB_DEPS = -L$(LIB_DIR) -lGL
 GLU_LIB_DEPS = -L$(LIB_DIR) -lGL -lm
 GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
-GLW_LIB_DEPS = -L$(LIB_DIR) -lGL -lXt -L/usr/X11R6/lib -lXm -lX11
+GLW_LIB_DEPS = -L$(LIB_DIR) -lGL -lXt -L/usr/X11R6/lib -lX11
 APP_LIB_DEPS = -L$(LIB_DIR) -lglut -lGLU -lGL -lm
