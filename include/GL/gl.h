@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.8 1999/09/19 02:03:18 tjump Exp $ */
+/* $Id: gl.h,v 1.9 1999/10/15 21:59:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2107,7 +2107,7 @@ GLAPI void GLAPIENTRY glMinmax( GLenum target, GLenum internalformat,
 
 GLAPI void GLAPIENTRY glResetMinmax( GLenum target );
 
-GLAPI void GLAPIENTRY glGetMinMax( GLenum target, GLboolean reset,
+GLAPI void GLAPIENTRY glGetMinmax( GLenum target, GLboolean reset,
                                    GLenum format, GLenum types,
                                    GLvoid *values );
 
