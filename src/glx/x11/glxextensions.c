@@ -112,12 +112,13 @@ static const struct extension_info known_glx_extensions[] = {
 
 static const struct extension_info known_gl_extensions[] = {
    { GL(ARB_depth_texture),              VER(1,4), Y, N, N, N },
+   { GL(ARB_draw_buffers),               VER(0,0), Y, N, N, N },
    { GL(ARB_fragment_program),           VER(0,0), Y, N, N, N },
    { GL(ARB_fragment_program_shadow),    VER(0,0), Y, N, N, N },
    { GL(ARB_imaging),                    VER(0,0), Y, N, N, N },
    { GL(ARB_multisample),                VER(1,3), Y, N, N, N },
    { GL(ARB_multitexture),               VER(1,3), Y, N, N, N },
-   { GL(ARB_occlusion_query),            VER(1,5), N, N, N, N },
+   { GL(ARB_occlusion_query),            VER(1,5), Y, N, N, N },
    { GL(ARB_point_parameters),           VER(1,4), Y, N, N, N },
    { GL(ARB_point_sprite),               VER(0,0), Y, N, N, N },
    { GL(ARB_shadow),                     VER(1,4), Y, N, N, N },
@@ -184,6 +185,7 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(3DFX_texture_compression_FXT1),  VER(0,0), Y, N, N, N },
    { GL(APPLE_packed_pixels),            VER(1,2), Y, N, N, N },
    { GL(APPLE_ycbcr_422),                VER(0,0), Y, N, N, N },
+   { GL(ATI_draw_buffers),               VER(0,0), Y, N, N, N },
    { GL(ATI_text_fragment_shader),       VER(0,0), Y, N, N, N },
    { GL(ATI_texture_env_combine3),       VER(0,0), Y, N, N, N },
    { GL(ATI_texture_float),              VER(0,0), Y, N, N, N },

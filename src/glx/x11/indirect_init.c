@@ -503,6 +503,10 @@ __GLapi * __glXNewIndirectAPI( void )
 
     glAPI->SampleCoverageARB = __indirect_glSampleCoverageARB;
 
+    /* GL_ARB_draw_buffers */
+
+    glAPI->DrawBuffersARB = __indirect_glDrawBuffersARB;
+
     /* GL_EXT_texture_object */
 
     glAPI->AreTexturesResidentEXT = __indirect_glAreTexturesResidentEXT;
@@ -720,6 +724,17 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->ProgramNamedParameter4dvNV = __indirect_glProgramNamedParameter4dvNV;
     glAPI->GetProgramNamedParameterfvNV = __indirect_glGetProgramNamedParameterfvNV;
     glAPI->GetProgramNamedParameterdvNV = __indirect_glGetProgramNamedParameterdvNV;
+
+    /* GL_ARB_occlusion_query */
+
+    glAPI->GenQueriesARB = __indirect_glGenQueriesARB;
+    glAPI->DeleteQueriesARB = __indirect_glDeleteQueriesARB;
+    glAPI->IsQueryARB = __indirect_glIsQueryARB;
+    glAPI->BeginQueryARB = __indirect_glBeginQueryARB;
+    glAPI->EndQueryARB = __indirect_glEndQueryARB;
+    glAPI->GetQueryivARB = __indirect_glGetQueryivARB;
+    glAPI->GetQueryObjectivARB = __indirect_glGetQueryObjectivARB;
+    glAPI->GetQueryObjectuivARB = __indirect_glGetQueryObjectuivARB;
 
     /* GL_NV_vertex_program */
 

@@ -4979,11 +4979,11 @@ glx:
         <param name="level" type="GLint"/>
         <param name="img" type="GLvoid *" output="true"/>
 
-	<!-- This has to be hand coded because the image size is in the
-	     "wrong" place.  Technically, this should be a
-	     'always_array="true"' case.  The size field in the reply would
-	     be at offset 12.  However, the size is actually at offset 16.
-	     This is where the 'width' is in a GetTexImage reply. -->
+        <!-- This has to be hand coded because the image size is in the
+             "wrong" place.  Technically, this should be a
+             'always_array="true"' case.  The size field in the reply would
+             be at offset 12.  However, the size is actually at offset 16.
+             This is where the 'width' is in a GetTexImage reply. -->
         <glx sop="160" handcode="true"/>
     </function>
 </category>
@@ -5130,21 +5130,25 @@ glx:
 
     <function name="CurrentPaletteMatrixARB" offset="?">
         <param name="index" type="GLint"/>
+        <glx ignore="true" rop="4329"/>
     </function>
 
     <function name="MatrixIndexubvARB" offset="?">
-        <param name="size" type="GLint"/>
-        <param name="indices" type="const GLubyte *"/>
+        <param name="size" type="GLint" counter="true"/>
+        <param name="indices" type="const GLubyte *" count="size"/>
+        <glx ignore="true" rop="4326"/>
     </function>
 
     <function name="MatrixIndexusvARB" offset="?">
-        <param name="size" type="GLint"/>
-        <param name="indices" type="const GLushort *"/>
+        <param name="size" type="GLint" counter="true"/>
+        <param name="indices" type="const GLushort *" count="size"/>
+        <glx ignore="true" rop="4327"/>
     </function>
 
     <function name="MatrixIndexuivARB" offset="?">
-        <param name="size" type="GLint"/>
-        <param name="indices" type="const GLuint *"/>
+        <param name="size" type="GLint" counter="true"/>
+        <param name="indices" type="const GLuint *" count="size"/>
+        <glx ignore="true" rop="4328"/>
     </function>
 
     <function name="MatrixIndexPointerARB" offset="?">
@@ -6022,60 +6026,70 @@ glx:
 </category>
 
 <category name="GL_ARB_occlusion_query" number="29">
-    <enum name="QUERY_COUNTER_BITS_ARB"                   value="0x8864"/>
-    <enum name="CURRENT_QUERY_ARB"                        value="0x8865"/>
-    <enum name="QUERY_RESULT_ARB"                         value="0x8866"/>
-    <enum name="QUERY_RESULT_AVAILABLE_ARB"               value="0x8867"/>
+    <enum name="QUERY_COUNTER_BITS_ARB"        count="1"  value="0x8864">
+        <size name="GetQueryivARB" mode="get"/>
+    </enum>
+    <enum name="CURRENT_QUERY_ARB"             count="1"  value="0x8865">
+        <size name="GetQueryivARB" mode="get"/>
+    </enum>
+    <enum name="QUERY_RESULT_ARB"              count="1"  value="0x8866">
+        <size name="GetQueryObjectivARB" mode="get"/>
+        <size name="GetQueryObjectuivARB" mode="get"/>
+    </enum>
+    <enum name="QUERY_RESULT_AVAILABLE_ARB"    count="1"  value="0x8867">
+        <size name="GetQueryObjectivARB" mode="get"/>
+        <size name="GetQueryObjectuivARB" mode="get"/>
+    </enum>
     <enum name="SAMPLES_PASSED_ARB"                       value="0x8914"/>
 
     <function name="GenQueriesARB" offset="700">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="ids" type="GLuint *" output="true" count="n"/>
-        <glx ignore="true"/>
+        <glx sop="162"/>
     </function>
 
     <function name="DeleteQueriesARB" offset="701">
-        <param name="n" type="GLsizei"/>
-        <param name="ids" type="const GLuint *"/>
-        <glx ignore="true"/>
+        <param name="n" type="GLsizei" counter="true"/>
+        <param name="ids" type="const GLuint *" count="n"/>
+        <glx sop="161"/>
     </function>
 
     <function name="IsQueryARB" offset="702">
         <param name="id" type="GLuint"/>
         <return type="GLboolean"/>
-        <glx ignore="true"/>
+        <glx sop="163"/>
     </function>
 
     <function name="BeginQueryARB" offset="703">
         <param name="target" type="GLenum"/>
         <param name="id" type="GLuint"/>
-        <glx ignore="true"/>
+        <glx rop="231"/>
     </function>
 
     <function name="EndQueryARB" offset="704">
         <param name="target" type="GLenum"/>
-        <glx ignore="true"/>
+        <glx rop="232"/>
     </function>
 
     <function name="GetQueryivARB" offset="705">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
-        <glx ignore="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx sop="164"/>
     </function>
 
     <function name="GetQueryObjectivARB" offset="706">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *" output="true"/>
-        <glx ignore="true"/>
+        <param name="params" type="GLint *" output="true" variable_param="pname"/>
+        <glx sop="165"/>
     </function>
 
     <function name="GetQueryObjectuivARB" offset="707">
         <param name="id" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLuint *" output="true"/>
-        <glx ignore="true"/>
+        <param name="params" type="GLuint *" output="true" variable_param="pname"/>
+        <glx sop="166"/>
     </function>
 </category>
 
@@ -6467,7 +6481,7 @@ glx:
     <function name="DrawBuffersARB" offset="413">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="bufs" type="const GLenum *" count="n"/>
-        <glx ignore="true"/>
+        <glx rop="233" large="true"/>
     </function>
 </category>
 

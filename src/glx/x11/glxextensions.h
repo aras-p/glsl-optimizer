@@ -74,6 +74,7 @@ enum {
 
 enum {
    GL_ARB_depth_texture_bit = 0,
+   GL_ARB_draw_buffers_bit,
    GL_ARB_fragment_program_bit,
    GL_ARB_fragment_program_shadow_bit,
    GL_ARB_imaging_bit,
@@ -212,6 +213,7 @@ enum {
     */
 
    GL_ATI_blend_equation_separate_bit = GL_EXT_blend_equation_separate_bit,
+   GL_ATI_draw_buffers_bit = GL_ARB_draw_buffers_bit,
    GL_ATIX_texture_env_combine3_bit = GL_ATI_texture_env_combine3_bit,
    GL_EXT_point_parameters_bit = GL_ARB_point_parameters_bit,
    GL_EXT_texture_env_add_bit = GL_ARB_texture_env_add_bit,
