@@ -152,17 +152,20 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
       GLdouble dy;	/* Y(v1) - Y(v0) */
       GLdouble dxdy;	/* dx/dy */
       GLdouble adjy;	/* adjust from v[0]->fy to fsy, scaled */
+      GLdouble fsx;	/* first sample point x coord */
+      GLdouble fsy;
+      GLdouble fx0;	/*X of lower endpoint */
 #else
       GLfloat dx;	/* X(v1) - X(v0) */
       GLfloat dy;	/* Y(v1) - Y(v0) */
       GLfloat dxdy;	/* dx/dy */
       GLfixed fdxdy;	/* dx/dy in fixed-point */
       GLfloat adjy;	/* adjust from v[0]->fy to fsy, scaled */
-#endif
       GLfixed fsx;	/* first sample point x coord */
       GLfixed fsy;
-      GLint lines;	/* number of lines to be sampled on this edge */
       GLfixed fx0;	/* fixed pt X of lower endpoint */
+#endif
+      GLint lines;	/* number of lines to be sampled on this edge */
    } EdgeT;
 
 #ifdef INTERP_Z
@@ -175,8 +178,10 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
    GLfloat oneOverArea;
    const SWvertex *vMin, *vMid, *vMax;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
    GLfloat bf = SWRAST_CONTEXT(ctx)->_BackfaceSign;
+#if !TRIANGLE_WALK_DOUBLE
    const GLint snapMask = ~((FIXED_ONE / (1 << SUB_PIXEL_BITS)) - 1); /* for x/y coord snapping */
-   GLfixed vMin_fx, vMin_fy, vMid_fx, vMid_fy, vMax_fx, vMax_fy;
+#endif
+   GLinterp vMin_fx, vMin_fy, vMid_fx, vMid_fy, vMax_fx, vMax_fy;
 
    struct sw_span span;
 
@@ -192,18 +197,24 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
    printf("  %g, %g, %g\n", v1->win[0], v1->win[1], v1->win[2]);
    printf("  %g, %g, %g\n", v2->win[0], v2->win[1], v2->win[2]);
    */
+   /*
    ASSERT(v0->win[2] >= 0.0);
    ASSERT(v1->win[2] >= 0.0);
    ASSERT(v2->win[2] >= 0.0);
-
+   */
    /* Compute fixed point x,y coords w/ half-pixel offsets and snapping.
     * And find the order of the 3 vertices along the Y axis.
     */
    {
+#if TRIANGLE_WALK_DOUBLE
+      const GLdouble fy0 = v0->win[1] - 0.5;
+      const GLdouble fy1 = v1->win[1] - 0.5;
+      const GLdouble fy2 = v2->win[1] - 0.5;
+#else
       const GLfixed fy0 = FloatToFixed(v0->win[1] - 0.5F) & snapMask;
       const GLfixed fy1 = FloatToFixed(v1->win[1] - 0.5F) & snapMask;
       const GLfixed fy2 = FloatToFixed(v2->win[1] - 0.5F) & snapMask;
-
+#endif
       if (fy0 <= fy1) {
          if (fy1 <= fy2) {
             /* y0 <= y1 <= y2 */
@@ -243,9 +254,15 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
       }
 
       /* fixed point X coords */
+#if TRIANGLE_WALK_DOUBLE
+      vMin_fx = vMin->win[0] + 0.5;
+      vMid_fx = vMid->win[0] + 0.5;
+      vMax_fx = vMax->win[0] + 0.5;
+#else
       vMin_fx = FloatToFixed(vMin->win[0] + 0.5F) & snapMask;
       vMid_fx = FloatToFixed(vMid->win[0] + 0.5F) & snapMask;
       vMax_fx = FloatToFixed(vMax->win[0] + 0.5F) & snapMask;
+#endif
    }
 
    /* vertex/edge relationship */
@@ -255,12 +272,12 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 
    /* compute deltas for each edge:  vertex[upper] - vertex[lower] */
 #if TRIANGLE_WALK_DOUBLE
-   eMaj.dx = FixedToDouble(vMax_fx - vMin_fx);
-   eMaj.dy = FixedToDouble(vMax_fy - vMin_fy);
-   eTop.dx = FixedToDouble(vMax_fx - vMid_fx);
-   eTop.dy = FixedToDouble(vMax_fy - vMid_fy);
-   eBot.dx = FixedToDouble(vMid_fx - vMin_fx);
-   eBot.dy = FixedToDouble(vMid_fy - vMin_fy);
+   eMaj.dx = vMax_fx - vMin_fx;
+   eMaj.dy = vMax_fy - vMin_fy;
+   eTop.dx = vMax_fx - vMid_fx;
+   eTop.dy = vMax_fy - vMid_fy;
+   eBot.dx = vMid_fx - vMin_fx;
+   eBot.dy = vMid_fy - vMin_fy;
 #else
    eMaj.dx = FixedToFloat(vMax_fx - vMin_fx);
    eMaj.dy = FixedToFloat(vMax_fy - vMin_fy);
@@ -272,8 +289,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 
    /* compute area, oneOverArea and perform backface culling */
    {
+#if TRIANGLE_WALK_DOUBLE
+      const GLdouble area = eMaj.dx * eBot.dy - eBot.dx * eMaj.dy;
+#else
       const GLfloat area = eMaj.dx * eBot.dy - eBot.dx * eMaj.dy;
-
+#endif
       /* Do backface culling */
       if (area * bf < 0.0)
          return;
@@ -291,43 +311,70 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 
    /* Edge setup.  For a triangle strip these could be reused... */
    {
+#if TRIANGLE_WALK_DOUBLE
+      eMaj.fsy = CEILF(vMin_fy);
+      eMaj.lines = (GLint) CEILF(vMax_fy - eMaj.fsy);
+#else
       eMaj.fsy = FixedCeil(vMin_fy);
       eMaj.lines = FixedToInt(FixedCeil(vMax_fy - eMaj.fsy));
+#endif
       if (eMaj.lines > 0) {
          eMaj.dxdy = eMaj.dx / eMaj.dy;
-#ifndef INTERP_DOUBLE
+#if TRIANGLE_WALK_DOUBLE
+         eMaj.adjy = (eMaj.fsy - vMin_fy) * FIXED_SCALE;  /* SCALED! */
+         eMaj.fx0 = vMin_fx;
+         eMaj.fsx = eMaj.fx0 + (eMaj.adjy * eMaj.dxdy) / (GLdouble) FIXED_SCALE;
+#else
          eMaj.fdxdy = SignedFloatToFixed(eMaj.dxdy);
-#endif
          eMaj.adjy = (GLfloat) (eMaj.fsy - vMin_fy);  /* SCALED! */
          eMaj.fx0 = vMin_fx;
          eMaj.fsx = eMaj.fx0 + (GLfixed) (eMaj.adjy * eMaj.dxdy);
+#endif
       }
       else {
          return;  /*CULLED*/
       }
 
+#if TRIANGLE_WALK_DOUBLE
+      eTop.fsy = CEILF(vMid_fy);
+      eTop.lines = (GLint) CEILF(vMax_fy - eTop.fsy);
+#else
       eTop.fsy = FixedCeil(vMid_fy);
       eTop.lines = FixedToInt(FixedCeil(vMax_fy - eTop.fsy));
+#endif
       if (eTop.lines > 0) {
          eTop.dxdy = eTop.dx / eTop.dy;
-#ifndef INTERP_DOUBLE
+#if TRIANGLE_WALK_DOUBLE
+         eTop.adjy = (eTop.fsy - vMid_fy) * FIXED_SCALE; /* SCALED! */
+         eTop.fx0 = vMid_fx;
+         eTop.fsx = eTop.fx0 + (eTop.adjy * eTop.dxdy) / (GLdouble) FIXED_SCALE;
+#else
          eTop.fdxdy = SignedFloatToFixed(eTop.dxdy);
-#endif
          eTop.adjy = (GLfloat) (eTop.fsy - vMid_fy); /* SCALED! */
          eTop.fx0 = vMid_fx;
          eTop.fsx = eTop.fx0 + (GLfixed) (eTop.adjy * eTop.dxdy);
+#endif
       }
 
+#if TRIANGLE_WALK_DOUBLE
+      eBot.fsy = CEILF(vMin_fy);
+      eBot.lines = (GLint) CEILF(vMid_fy - eBot.fsy);
+#else
       eBot.fsy = FixedCeil(vMin_fy);
       eBot.lines = FixedToInt(FixedCeil(vMid_fy - eBot.fsy));
+#endif
       if (eBot.lines > 0) {
          eBot.dxdy = eBot.dx / eBot.dy;
-#ifndef INTERP_DOUBLE
+#if TRIANGLE_WALK_DOUBLE
+         eBot.adjy = (eBot.fsy - vMin_fy) * FIXED_SCALE;  /* SCALED! */
+         eBot.fx0 = vMin_fx;
+         eBot.fsx = eBot.fx0 + (eBot.adjy * eBot.dxdy) / (GLdouble) FIXED_SCALE;
+#else
          eBot.fdxdy = SignedFloatToFixed(eBot.dxdy);
-#endif
          eBot.adjy = (GLfloat) (eBot.fsy - vMin_fy);  /* SCALED! */
          eBot.fx0 = vMin_fx;
          eBot.fsx = eBot.fx0 + (GLfixed) (eBot.adjy * eBot.dxdy);
+#endif
       }
    }
 
@@ -730,21 +777,29 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 
             if (setupLeft && eLeft->lines > 0) {
                const SWvertex *vLower = eLeft->v0;
-               const GLfixed fsx = eLeft->fsx;  /* no fractional part */
+#if TRIANGLE_WALK_DOUBLE
+               const GLdouble fsy = eLeft->fsy;
+               const GLdouble fsx = eLeft->fsx;
+               const GLdouble fx = CEILF(fsx);
+               const GLdouble adjx = (fx - eLeft->fx0) * FIXED_SCALE;  /* SCALED! */
+#else
                const GLfixed fsy = eLeft->fsy;
+               const GLfixed fsx = eLeft->fsx;  /* no fractional part */
                const GLfixed fx = FixedCeil(fsx);  /* no fractional part */
-               const GLinterp adjx = (GLinterp) (fx - eLeft->fx0); /* SCALED! */
+               const GLfixed adjx = (GLinterp) (fx - eLeft->fx0); /* SCALED! */
+#endif
                const GLinterp adjy = eLeft->adjy;                 /* SCALED! */
                GLint idxOuter;
 #if TRIANGLE_WALK_DOUBLE
                GLdouble dxOuter;
 
-               fError = FixedToFloat(fx - fsx - FIXED_ONE);
-               fxLeftEdge = FixedToFloat(fsx);
+               fError = fx - fsx - 1.0;
+               fxLeftEdge = fsx;
                fdxLeftEdge = eLeft->dxdy;
-               dxOuter = floor(fdxLeftEdge);
+               dxOuter = FLOORF(fdxLeftEdge);
                fdError = dxOuter - fdxLeftEdge + 1.0;
                idxOuter = (GLint) dxOuter;
+               span.y = (GLint) fsy;
 #else
                GLfloat dxOuter;
                GLfixed fdxOuter;
@@ -756,8 +811,8 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                fdError = fdxOuter - fdxLeftEdge + FIXED_ONE;
                idxOuter = FixedToInt(fdxOuter);
                dxOuter = (GLfloat) idxOuter;
-#endif
                span.y = FixedToInt(fsy);
+#endif
 
                /* silence warnings on some compilers */
                (void) dxOuter;
@@ -950,7 +1005,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 
             if (setupRight && eRight->lines>0) {
 #if TRIANGLE_WALK_DOUBLE
-               fxRightEdge = FixedToDouble(eRight->fsx);
+               fxRightEdge = eRight->fsx;
                fdxRightEdge = eRight->dxdy;
 #else
                fxRightEdge = eRight->fsx - FIXED_EPSILON;
