@@ -152,7 +152,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	if (VALID_FORMAT(baseImage->TexFormat->MesaFormat)) {
 		t->format =
 		    tx_table[baseImage->TexFormat->MesaFormat].format;
-#if 1	
+#if 1
 		t->filter |=
 		    tx_table[baseImage->TexFormat->MesaFormat].filter;
 #endif		
@@ -270,7 +270,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 
 	/* Hardware state:
 	 */
-#if 1	
+#if 0
 	t->filter &= ~R200_MAX_MIP_LEVEL_MASK;
 	t->filter |= (numLevels - 1) << R200_MAX_MIP_LEVEL_SHIFT;
 #endif
