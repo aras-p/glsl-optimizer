@@ -57,6 +57,11 @@ extern "C"
 
 #define MAX_MESA_ATTRS  20
 
+#if (_MSC_VER >= 1200)
+#pragma warning( push )
+#pragma warning( disable : 4273 )
+#endif
+
 struct __extensions__
 {
    PROC proc;
@@ -69,7 +74,7 @@ struct __pixelformat__
    GLint mesaAttr[MAX_MESA_ATTRS];
 };
 
-//WINGDIAPI void GLAPIENTRY gl3DfxSetPaletteEXT(GLuint *);
+WINGDIAPI void GLAPIENTRY gl3DfxSetPaletteEXT(GLuint *);
 
 struct __pixelformat__ pix[] = {
    /* 16bit RGB565 single buffer with depth */
@@ -866,7 +871,7 @@ wglDescribeLayerPlane(HDC hdc, int iPixelFormat, int iLayerPlane,
 
 GLAPI int GLAPIENTRY
 wglGetLayerPaletteEntries(HDC hdc, int iLayerPlane, int iStart,
-                          int cEntries, CONST COLORREF *pcr)
+                          int cEntries, COLORREF *pcr)
 {
   SetLastError(0);
   return (FALSE);
@@ -886,5 +891,9 @@ wglSetLayerPaletteEntries(HDC hdc,int iLayerPlane, int iStart,
   SetLastError(0);
   return(FALSE);
 }
+
+#if (_MSC_VER >= 1200)
+#pragma warning( pop )
+#endif
 
 #endif /* FX */

@@ -539,6 +539,7 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
 
    l = MAX2(logw, logh);
    aspectratio = logw - logh;
+   ws = hs = 1;
 
    /* hardware only allows a maximum aspect ratio of 8x1, so handle
     * |aspectratio| > 3 by scaling the image and using an 8x1 aspect
@@ -548,44 +549,30 @@ fxTexGetInfo(int w, int h, GrLOD_t * lodlevel, GrAspectRatio_t * ar,
    case 0:
       s = 256.0f;
       t = 256.0f;
-      ws = 1;
-      hs = 1;
       break;
    case 1:
       s = 256.0f;
       t = 128.0f;
-      ws = 1;
-      hs = 1;
       break;
    case 2:
       s = 256.0f;
       t = 64.0f;
-      ws = 1;
-      hs = 1;
       break;
    case 3:
       s = 256.0f;
       t = 32.0f;
-      ws = 1;
-      hs = 1;
       break;
    case -1:
       s = 128.0f;
       t = 256.0f;
-      ws = 1;
-      hs = 1;
       break;
    case -2:
       s = 64.0f;
       t = 256.0f;
-      ws = 1;
-      hs = 1;
       break;
    case -3:
       s = 32.0f;
       t = 256.0f;
-      ws = 1;
-      hs = 1;
       break;
    default:
       if (aspectratio > 3) {
@@ -1129,30 +1116,30 @@ fxFetchFunction(GLint mesaFormat)
 {
    switch (mesaFormat) {
    case MESA_FORMAT_I8:
-      return fetch_intensity8;
+      return &fetch_intensity8;
    case MESA_FORMAT_A8:
-      return fetch_alpha8;
+      return &fetch_alpha8;
    case MESA_FORMAT_L8:
-      return fetch_luminance8;
+      return &fetch_luminance8;
    case MESA_FORMAT_CI8:
-      return fetch_index8;
+      return &fetch_index8;
    case MESA_FORMAT_AL88:
-      return fetch_luminance8_alpha8;
+      return &fetch_luminance8_alpha8;
    case MESA_FORMAT_RGB565:
-      return fetch_r5g6b5;
+      return &fetch_r5g6b5;
    case MESA_FORMAT_ARGB4444:
-      return fetch_r4g4b4a4;
+      return &fetch_r4g4b4a4;
    case MESA_FORMAT_ARGB1555:
-      return fetch_r5g5b5a1;
+      return &fetch_r5g5b5a1;
    case MESA_FORMAT_ARGB8888:
-      return fetch_a8r8g8b8;
+      return &fetch_a8r8g8b8;
    case MESA_FORMAT_RGB_FXT1:
    case MESA_FORMAT_RGBA_FXT1:
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
-     return fetch_r4g4b4a4;
+     return &fetch_r4g4b4a4;
    default:
       _mesa_problem(NULL, "Unexpected format in fxFetchFunction");
       return NULL;

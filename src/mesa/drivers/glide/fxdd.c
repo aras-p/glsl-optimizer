@@ -1220,26 +1220,22 @@ fxDDGetString(GLcontext * ctx, GLenum name)
              return (GLubyte *)fxMesa->rendererString;
 #if 0 /* hack to advertise vanilla extension names */
         case GL_EXTENSIONS:
-             {
-              static const GLubyte *ext = NULL;
-              if (ext == NULL) {
-                 GLubyte *x = _mesa_make_extension_string(ctx);
-                 if (x != NULL) {
-                    ext = _mesa_malloc(strlen((char *)x) + 1024);
-                    if (ext != NULL) {
-                       strcpy((char *)ext, (char *)x);
+             if (ctx->Extensions.String == NULL) {
+                GLubyte *ext = _mesa_make_extension_string(ctx);
+                if (ext != NULL) {
+                   ctx->Extensions.String = _mesa_malloc(strlen((char *)ext) + 256);
+                   if (ctx->Extensions.String != NULL) {
+                      strcpy((char *)ctx->Extensions.String, (char *)ext);
 #if 0 /* put any additional extension names here */
-                       strcat((char *)ext, " 3DFX_set_global_palette");
+                      strcat((char *)ctx->Extensions.String, " 3DFX_set_global_palette");
 #endif
-                       _mesa_free(x);
-                    } else {
-                       ext = x;
-                    }
-                    ctx->Extensions.String = ext;
-                 }
-              }
-              return ext;
+                      _mesa_free(ext);
+                   } else {
+                      ctx->Extensions.String = ext;
+                   }
+                }
              }
+             return ctx->Extensions.String;
 #endif
         default:
              return NULL;

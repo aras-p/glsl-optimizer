@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v1.3 for DOS/DJGPP
+ * PC/HW routine collection v1.4 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -18,6 +18,8 @@
  */
 #define FALSE 0
 #define TRUE !FALSE
+
+#define SQR(x)       ((x) * (x))
 
 #define MIN(x,y)     (((x) < (y)) ? (x) : (y))
 #define MAX(x,y)     (((x) > (y)) ? (x) : (y))
@@ -201,6 +203,8 @@ int pc_keyshifts (void);
  * timer
  */
 int pc_install_int (PFUNC func, void *parm, unsigned int freq);
+int pc_remove_int (int fid);
+int pc_adjust_int (int fid, unsigned int freq);
 void pc_remove_timer (void);
 
 /*

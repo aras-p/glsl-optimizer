@@ -209,11 +209,12 @@ v1.3 (mar-2003)
 	* revamped GLUT
 	* switched to DXE3
 
-v1.4 (oct-2003)
+v1.4 (nov-2003)
 	+ enabled GLUT fonts with DXE
 	+ truly added multi-window support in GLUT (for Adrian Woodward)
 	* accomodated makefiles with the new sourcetree
 	* fixed some ALPHA issues
+	* minor changes to PC_HW/timer interface
 	x hacked and slashed the 3dfx driver (w/ help from Hiroshi Morii)
 
 
