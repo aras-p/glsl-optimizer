@@ -171,6 +171,12 @@ GLNAME( _mesa_mmx_blend_transparency ):
     PSRLW      ( CONST(8), MM3 )		/*                    t1 >> 8                    */
 
     PADDW      ( MM3, MM2 )			/*        t1 + (t1 >> 8) ~= (t1/255) << 8        */
+
+#if GMBT_GEOMETRIC_CORRECTION 
+    PSRLW      ( CONST(7), MM3 )		/*                    t1 >> 15                   */
+
+    PADDW      ( MM3, MM2 )			/*  t1 + (t1 >> 8) + (t1 >>15) ~= (t1/255) << 8  */
+#endif
 #endif
 
 #if GMBT_SIGNED_ARITHMETIC
@@ -393,6 +399,12 @@ LLBL (GMBT_loop_end):
     PSRLW      ( CONST(8), MM3 )		/*                    t1 >> 8                    */
 
     PADDW      ( MM3, MM2 )			/*        t1 + (t1 >> 8) ~= (t1/255) << 8        */
+
+#if GMBT_GEOMETRIC_CORRECTION 
+    PSRLW      ( CONST(7), MM3 )		/*                    t1 >> 15                   */
+
+    PADDW      ( MM3, MM2 )			/*  t1 + (t1 >> 8) + (t1 >>15) ~= (t1/255) << 8  */
+#endif
 #endif
 
 #if GMBT_SIGNED_ARITHMETIC
