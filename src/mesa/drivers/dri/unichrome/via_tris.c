@@ -74,7 +74,7 @@ static void __inline__ via_draw_triangle(viaContextPtr vmesa,
                                          viaVertexPtr v1,
                                          viaVertexPtr v2)
 {
-    GLuint vertsize = vmesa->vertex_size;
+    GLuint vertsize = vmesa->vertexSize;
     GLuint *vb = viaCheckDma(vmesa, 3 * 4 * vertsize);
     int j;
     
@@ -101,7 +101,7 @@ static void __inline__ via_draw_quad(viaContextPtr vmesa,
                                      viaVertexPtr v2,
                                      viaVertexPtr v3)
 {
-    GLuint vertsize = vmesa->vertex_size;
+    GLuint vertsize = vmesa->vertexSize;
     GLuint *vb = viaCheckDma(vmesa, 6 * 4 * vertsize);
     int j;
 #ifdef DEBUG    
@@ -128,7 +128,7 @@ static __inline__ void via_draw_point(viaContextPtr vmesa,
                                       viaVertexPtr v0)
 {
     /*GLfloat sz = vmesa->glCtx->Point._Size * .5;*/
-    int vertsize = vmesa->vertex_size;
+    int vertsize = vmesa->vertexSize;
     /*GLuint *vb = viaCheckDma(vmesa, 2 * 4 * vertsize);*/
     GLuint *vb = viaCheckDma(vmesa, 4 * vertsize);
     int j;
@@ -155,7 +155,7 @@ static __inline__ void via_draw_line(viaContextPtr vmesa,
                                      viaVertexPtr v0,
                                      viaVertexPtr v1)
 {
-    GLuint vertsize = vmesa->vertex_size;
+    GLuint vertsize = vmesa->vertexSize;
     GLuint *vb = viaCheckDma(vmesa, 2 * 4 * vertsize);
     int j;
 #ifdef DEBUG    
@@ -200,7 +200,7 @@ static __inline__ void via_draw_line(viaContextPtr vmesa,
 
 #define LINE(v0, v1)                                \
     do {                                            \
-        if( VIA_DEBUG) fprintf(stderr, "hw LINE\n");\
+        if(VIA_DEBUG) fprintf(stderr, "hw LINE\n");\
         if (DO_FALLBACK)                            \
             vmesa->drawLine(vmesa, v0, v1);         \
         else                                        \
@@ -280,7 +280,7 @@ static struct {
 #define VERT_Y(_v) _v->v.y
 #define VERT_Z(_v) _v->v.z
 #define AREA_IS_CCW(a) (a > 0)
-#define GET_VERTEX(e) (vmesa->verts + (e<<vmesa->vertex_stride_shift))
+#define GET_VERTEX(e) (vmesa->verts + (e<<vmesa->vertexStrideShift))
 
 #define VERT_SET_RGBA(v, c)    VIA_COLOR(v->ub4[coloroffset], c)
 #define VERT_COPY_RGBA(v0, v1) v0->ui[coloroffset] = v1->ui[coloroffset]
@@ -296,8 +296,8 @@ static struct {
 #define LOCAL_VARS(n)                                                   \
     viaContextPtr vmesa = VIA_CONTEXT(ctx);                             \
     GLuint color[n], spec[n];                                           \
-    GLuint coloroffset = (vmesa->vertex_size == 4 ? 3 : 4);              \
-    GLboolean havespec = (vmesa->vertex_size > 4);                       \
+    GLuint coloroffset = (vmesa->vertexSize == 4 ? 3 : 4);              \
+    GLboolean havespec = (vmesa->vertexSize > 4);                       \
     (void)color; (void)spec; (void)coloroffset; (void)havespec;
 
 
@@ -502,7 +502,7 @@ via_fallback_point(viaContextPtr vmesa,
 #define LOCAL_VARS                                              \
     viaContextPtr vmesa = VIA_CONTEXT(ctx);                     \
     GLubyte *vertptr = (GLubyte *)vmesa->verts;                 \
-    const GLuint vertshift = vmesa->vertex_stride_shift;          \
+    const GLuint vertshift = vmesa->vertexStrideShift;          \
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;       \
     (void)elt;
 #define POSTFIX							\
@@ -627,10 +627,10 @@ static void viaFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
                                      GLuint n)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    GLuint vertsize = vmesa->vertex_size;
+    GLuint vertsize = vmesa->vertexSize;
     GLuint *vb = viaCheckDma(vmesa, (n - 2) * 3 * 4 * vertsize);
     GLubyte *vertptr = (GLubyte *)vmesa->verts;
-    const GLuint vertshift = vmesa->vertex_stride_shift;
+    const GLuint vertshift = vmesa->vertexStrideShift;
     const GLuint *start = (const GLuint *)V(elts[0]);
     GLuint *temp1;
     GLuint *temp2;
@@ -911,7 +911,7 @@ static void emit_all_state(viaContextPtr vmesa)
         i++;    
     }    
     
-    if (ctx->Texture.Unit[0]._ReallyEnabled) {
+    if (ctx->Texture._EnabledUnits) {
     
 	struct gl_texture_unit *texUnit0 = &ctx->Texture.Unit[0];
 	struct gl_texture_unit *texUnit1 = &ctx->Texture.Unit[1];
@@ -923,7 +923,7 @@ static void emit_all_state(viaContextPtr vmesa)
 	    *vb++ = HC_HEADER2;
             *vb++ = (HC_ParaType_Tex << 16) | (HC_SubType_TexGeneral << 24);
 
-	    if (ctx->Texture.Unit[1]._ReallyEnabled) {
+	    if (ctx->Texture._EnabledUnits > 1) {
 #ifdef DEBUG
 		if (VIA_DEBUG) fprintf(stderr, "multi texture\n");
 #endif                
@@ -1612,7 +1612,9 @@ void viaRasterPrimitiveFinish(GLcontext *ctx)
         GLuint *vb = viaCheckDma(vmesa, 0);
 	GLuint cmdA = vmesa->regCmdA_End | HC_HPLEND_MASK | HC_HPMValidN_MASK | HC_HE3Fire_MASK;    
 	
-        if ((vmesa->dmaLow & 0x1) || !vmesa->useAgp) {
+	/*=* John Sheng [2003.6.20] fix pci *=*/
+        /*if (vmesa->dmaLow & 0x1) {*/
+	if (vmesa->dmaLow & 0x1 || !vmesa->useAgp) {
             *vb++ = cmdA ;
             vmesa->dmaLow += 4;
 	}   

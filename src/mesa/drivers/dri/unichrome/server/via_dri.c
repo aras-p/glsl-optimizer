@@ -44,6 +44,7 @@
  
 #include "driver.h"
 #include "drm.h"
+#include "imports.h"
 #endif
 
 #include "dri_util.h"
@@ -66,15 +67,11 @@ static int VIADRIScreenInit(DRIDriverContext * ctx);
 static void VIADRICloseScreen(DRIDriverContext * ctx);
 static int VIADRIFinishScreenInit(DRIDriverContext * ctx);
 
-/* TODO XXX _SOLO temp macros */
-typedef unsigned char CARD8;
-typedef unsigned short CARD16;
+/* _SOLO : missing macros normally defined by X code */
 #define xf86DrvMsg(a, b, ...) fprintf(stderr, __VA_ARGS__)
 #define MMIO_IN8(base, addr) ((*(((volatile CARD8*)base)+(addr)))+0)
 #define MMIO_OUT8(base, addr, val) ((*(((volatile CARD8*)base)+(addr)))=((CARD8)val))
 #define MMIO_OUT16(base, addr, val) ((*(volatile CARD16*)(((CARD8*)base)+(addr)))=((CARD16)val))
-#define VGA_MISC_OUT_R  0x3cc
-#define VGA_MISC_OUT_W  0x3c2
 
 #define VIDEO	0 
 #define AGP		1
@@ -149,25 +146,18 @@ static int VIADRIAgpInit(const DRIDriverContext *ctx, VIAPtr pVia)
 
 #if 0
     xf86DrvMsg(pScreen->myNum, X_INFO, 
-                "[drm] agpBase = %p\n", pVia->agpBase);
+                "[drm] agpBase = 0x%08lx\n", pVia->agpBase);
     xf86DrvMsg(pScreen->myNum, X_INFO, 
                 "[drm] agpAddr = 0x%08lx\n", pVia->agpAddr);
 #endif
     xf86DrvMsg(pScreen->myNum, X_INFO, 
-                "[drm] agpSize = 0x%08x\n", pVia->agpSize);
+                "[drm] agpSize = 0x%08lx\n", pVia->agpSize);
     xf86DrvMsg(pScreen->myNum, X_INFO, 
                 "[drm] agp physical addr = 0x%08lx\n", agp_phys);
 
-    {
-	drm_via_agp_t agp;
-	agp.offset = 0;
-	agp.size = AGP_SIZE;
-	if (drmCommandWrite(pVia->drmFD, DRM_VIA_AGP_INIT, &agp,
-			    sizeof(drm_via_agp_t)) < 0)
-	    return FALSE;
-    }
-
+    drmVIAAgpInit(pVia->drmFD, 0, AGP_SIZE);
     return TRUE;
+
 }
 
 static int VIADRIFBInit(DRIDriverContext * ctx, VIAPtr pVia)
@@ -177,24 +167,14 @@ static int VIADRIFBInit(DRIDriverContext * ctx, VIAPtr pVia)
     VIADRIPtr pVIADRI = pVia->devPrivate;
     pVIADRI->fbOffset = FBOffset;
     pVIADRI->fbSize = pVia->videoRambytes;
-    
-    {
-	drm_via_fb_t fb;
-	fb.offset = FBOffset;
-	fb.size = FBSize;
-	
-	if (drmCommandWrite(pVia->drmFD, DRM_VIA_FB_INIT, &fb,
-			    sizeof(drm_via_fb_t)) < 0) {
-	    xf86DrvMsg(pScreen->myNum, X_ERROR,
-		       "[drm] failed to init frame buffer area\n");
-	    return FALSE;
-	} else {
-	    xf86DrvMsg(pScreen->myNum, X_INFO,
-		       "[drm] FBFreeStart= 0x%08x FBFreeEnd= 0x%08x "
-		       "FBSize= 0x%08x\n",
-		       pVia->FBFreeStart, pVia->FBFreeEnd, FBSize);
-	    return TRUE;	
-	}   
+
+    if (drmVIAFBInit(pVia->drmFD, FBOffset, FBSize) < 0) {
+	xf86DrvMsg(pScreen->myNum, X_ERROR,"[drm] failed to init frame buffer area\n");
+	return FALSE;
+    }
+    else {
+	xf86DrvMsg(pScreen->myNum, X_INFO,"[drm] FBFreeStart= 0x%08lx FBFreeEnd= 0x%08lx FBSize= 0x%08lx\n", pVia->FBFreeStart, pVia->FBFreeEnd, FBSize);
+	return TRUE;
     }
 }
 
@@ -275,7 +255,7 @@ static int VIADRIScreenInit(DRIDriverContext * ctx)
     fprintf(stderr, "[drm] framebuffer handle = 0x%08lx\n",
             ctx->shared.hFrameBuffer);
 
-    pVIADRI = (VIADRIPtr) calloc(1, sizeof(VIADRIRec));
+    pVIADRI = (VIADRIPtr) CALLOC(sizeof(VIADRIRec));
     if (!pVIADRI) {
         drmClose(ctx->drmFD);
         return FALSE;
@@ -309,8 +289,12 @@ static int VIADRIScreenInit(DRIDriverContext * ctx)
     pVIADRI->regs.size = VIA_MMIO_REGSIZE;
     pVIADRI->regs.map = 0;
     pVIADRI->regs.handle = pVia->registerHandle;
-    xf86DrvMsg(ctx->myNum, X_INFO, "[drm] mmio Registers = 0x%08lx\n",
+    xf86DrvMsg(pScreen->myNum, X_INFO, "[drm] mmio Registers = 0x%08lx\n",
 	pVIADRI->regs.handle);
+    
+    /*pVIADRI->drixinerama = pVia->drixinerama;*/
+    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
+    pVIADRI->VQEnable = pVia->VQEnable;
 
     if (drmMap(pVia->drmFD,
                pVIADRI->regs.handle,
@@ -394,9 +378,8 @@ VIADRIFinishScreenInit(DRIDriverContext * ctx)
 /* Initialize the kernel data structures. */
 static int VIADRIKernelInit(DRIDriverContext * ctx, VIAPtr pVia)
 {
-    drm_via_init_t drmInfo;
-    memset(&drmInfo, 0, sizeof(drm_via_init_t));
-    drmInfo.func = VIA_INIT_MAP;
+    drmVIAInit drmInfo;
+    memset(&drmInfo, 0, sizeof(drmVIAInit));
     drmInfo.sarea_priv_offset   = sizeof(XF86DRISAREARec);
     drmInfo.fb_offset           = pVia->FrameBufferBase;
     drmInfo.mmio_offset         = pVia->registerHandle;
@@ -405,9 +388,7 @@ static int VIADRIKernelInit(DRIDriverContext * ctx, VIAPtr pVia)
     else
 	drmInfo.agpAddr = (CARD32)pVia->agpAddr;
 
-	if ((drmCommandWrite(pVia->drmFD, DRM_VIA_MAP_INIT,&drmInfo,
-			     sizeof(drm_via_init_t))) < 0)
-	    return FALSE;
+    if (drmVIAInitMAP(pVia->drmFD, &drmInfo) < 0) return FALSE;
 
     return TRUE;
 }
@@ -429,7 +410,7 @@ static int VIADRIMapInit(DRIDriverContext * ctx, VIAPtr pVia)
 
 const __GLcontextModes __glModes[] =
 {
-    /* 32 bit, RGBA Depth=24 Stencil=8 */
+    /* 32 bit, RGBA Depth=16 Stencil=8 */
     {.rgbMode = GL_TRUE, .colorIndexMode = GL_FALSE, .doubleBufferMode = GL_TRUE, .stereoMode = GL_FALSE,
      .haveAccumBuffer = GL_FALSE, .haveDepthBuffer = GL_TRUE, .haveStencilBuffer = GL_TRUE,
      .redBits = 8, .greenBits = 8, .blueBits = 8, .alphaBits = 8,
@@ -437,8 +418,9 @@ const __GLcontextModes __glModes[] =
      .rgbBits = 32, .indexBits = 0,
      .accumRedBits = 0, .accumGreenBits = 0, .accumBlueBits = 0, .accumAlphaBits = 0,
      .depthBits = 16, .stencilBits = 8,
-     .numAuxBuffers= 0, .level = 0, .pixmapMode = GL_FALSE, },
+     .numAuxBuffers= 0, .level = 0, .pixmapMode = GL_TRUE, },
 
+#if 0
     /* 16 bit, RGB Depth=16 */
     {.rgbMode = GL_TRUE, .colorIndexMode = GL_FALSE, .doubleBufferMode = GL_TRUE, .stereoMode = GL_FALSE,
      .haveAccumBuffer = GL_FALSE, .haveDepthBuffer = GL_TRUE, .haveStencilBuffer = GL_FALSE,
@@ -447,7 +429,8 @@ const __GLcontextModes __glModes[] =
      .rgbBits = 16, .indexBits = 0,
      .accumRedBits = 0, .accumGreenBits = 0, .accumBlueBits = 0, .accumAlphaBits = 0,
      .depthBits = 16, .stencilBits = 0,
-     .numAuxBuffers= 0, .level = 0, .pixmapMode = GL_FALSE, },
+     .numAuxBuffers= 0, .level = 0, .pixmapMode = GL_TRUE, },
+#endif
 };
 
 static int viaInitContextModes(const DRIDriverContext *ctx,
@@ -493,8 +476,8 @@ static void VIAEnableMMIO(DRIDriverContext * ctx)
 
     val = VGAIN8(0x3c3);
     VGAOUT8(0x3c3, val | 0x01);
-    val = VGAIN8(VGA_MISC_OUT_R);
-    VGAOUT8(VGA_MISC_OUT_W, val | 0x01);
+    val = VGAIN8(0x3cc);
+    VGAOUT8(0x3c2, val | 0x01);
 
     /* Unlock Extended IO Space */
     VGAOUT8(0x3c4, 0x10);
@@ -518,6 +501,10 @@ static void VIAEnableMMIO(DRIDriverContext * ctx)
 	VGAOUT8(0x3c5, val | 0x38);
     }
 
+    /* Unlock CRTC registers */
+    VGAOUT8(0x3d4, 0x47);
+    VGAOUT8(0x3d5, 0x00);
+
     return;
 }
 
@@ -536,57 +523,293 @@ static void VIADisableMMIO(DRIDriverContext * ctx)
 static void VIADisableExtendedFIFO(DRIDriverContext *ctx)
 {
     VIAPtr  pVia = VIAPTR(ctx);
-    CARD32          dwTemp;
+    CARD32  dwGE230, dwGE298;
 
-    dwTemp = (CARD32)VIAGETREG(0x298);
-    dwTemp |= 0x20000000;
-    VIASETREG(0x298, dwTemp);
-
-    dwTemp = (CARD32)VIAGETREG(0x230);
-    dwTemp &= ~0x00200000;
-    VIASETREG(0x230, dwTemp);
-
-    dwTemp = (CARD32)VIAGETREG(0x298);
-    dwTemp &= ~0x20000000;
-    VIASETREG(0x298, dwTemp);
+    /* Cause of exit XWindow will dump back register value, others chipset no
+     * need to set extended fifo value */
+    if (pVia->Chipset == VIA_CLE266 && pVia->ChipRev < 15 &&
+        (ctx->shared.virtualWidth > 1024 || pVia->HasSecondary)) {
+        /* Turn off Extend FIFO */
+        /* 0x298[29] */
+        dwGE298 = VIAGETREG(0x298);
+        VIASETREG(0x298, dwGE298 | 0x20000000);
+        /* 0x230[21] */
+        dwGE230 = VIAGETREG(0x230);
+        VIASETREG(0x230, dwGE230 & ~0x00200000);
+        /* 0x298[29] */
+        dwGE298 = VIAGETREG(0x298);
+        VIASETREG(0x298, dwGE298 & ~0x20000000);
+    }
 }
 
 static void VIAEnableExtendedFIFO(DRIDriverContext *ctx)
 {
     VIAPtr  pVia = VIAPTR(ctx);
-    CARD32          dwTemp;
-    CARD8           bTemp;
+    CARD8   bRegTemp;
+    CARD32  dwGE230, dwGE298;
 
-    dwTemp = (CARD32)VIAGETREG(0x298);
-    dwTemp |= 0x20000000;
-    VIASETREG(0x298, dwTemp);
+    switch (pVia->Chipset) {
+    case VIA_CLE266:
+        if (pVia->ChipRev > 14) {  /* For 3123Cx */
+            if (pVia->HasSecondary) {  /* SAMM or DuoView case */
+                if (ctx->shared.virtualWidth >= 1024)
+    	        {
+    	            /* 3c5.16[0:5] */
+        	        VGAOUT8(0x3C4, 0x16);
+            	    bRegTemp = VGAIN8(0x3C5);
+    	            bRegTemp &= ~0x3F;
+        	        bRegTemp |= 0x1C;
+            	    VGAOUT8(0x3C5, bRegTemp);
+        	        /* 3c5.17[0:6] */
+            	    VGAOUT8(0x3C4, 0x17);
+                	bRegTemp = VGAIN8(0x3C5);
+    	            bRegTemp &= ~0x7F;
+        	        bRegTemp |= 0x3F;
+            	    VGAOUT8(0x3C5, bRegTemp);
+            	    pVia->EnableExtendedFIFO = TRUE;
+    	        }
+            }
+            else   /* Single view or Simultaneoue case */
+            {
+                if (ctx->shared.virtualWidth > 1024)
+    	        {
+    	            /* 3c5.16[0:5] */
+        	        VGAOUT8(0x3C4, 0x16);
+            	    bRegTemp = VGAIN8(0x3C5);
+    	            bRegTemp &= ~0x3F;
+        	        bRegTemp |= 0x17;
+            	    VGAOUT8(0x3C5, bRegTemp);
+        	        /* 3c5.17[0:6] */
+            	    VGAOUT8(0x3C4, 0x17);
+                	bRegTemp = VGAIN8(0x3C5);
+    	            bRegTemp &= ~0x7F;
+        	        bRegTemp |= 0x2F;
+            	    VGAOUT8(0x3C5, bRegTemp);
+            	    pVia->EnableExtendedFIFO = TRUE;
+    	        }
+            }
+            /* 3c5.18[0:5] */
+            VGAOUT8(0x3C4, 0x18);
+            bRegTemp = VGAIN8(0x3C5);
+            bRegTemp &= ~0x3F;
+            bRegTemp |= 0x17;
+            bRegTemp |= 0x40;  /* force the preq always higher than treq */
+            VGAOUT8(0x3C5, bRegTemp);
+        }
+        else {      /* for 3123Ax */
+            if (ctx->shared.virtualWidth > 1024 || pVia->HasSecondary) {
+                /* Turn on Extend FIFO */
+                /* 0x298[29] */
+                dwGE298 = VIAGETREG(0x298);
+                VIASETREG(0x298, dwGE298 | 0x20000000);
+                /* 0x230[21] */
+                dwGE230 = VIAGETREG(0x230);
+                VIASETREG(0x230, dwGE230 | 0x00200000);
+                /* 0x298[29] */
+                dwGE298 = VIAGETREG(0x298);
+                VIASETREG(0x298, dwGE298 & ~0x20000000);
 
-    dwTemp = (CARD32)VIAGETREG(0x230);
-    dwTemp |= 0x00200000;
-    VIASETREG(0x230, dwTemp);
+                /* 3c5.16[0:5] */
+                VGAOUT8(0x3C4, 0x16);
+                bRegTemp = VGAIN8(0x3C5);
+                bRegTemp &= ~0x3F;
+                bRegTemp |= 0x17;
+                /* bRegTemp |= 0x10; */
+                VGAOUT8(0x3C5, bRegTemp);
+                /* 3c5.17[0:6] */
+                VGAOUT8(0x3C4, 0x17);
+                bRegTemp = VGAIN8(0x3C5);
+                bRegTemp &= ~0x7F;
+                bRegTemp |= 0x2F;
+                /*bRegTemp |= 0x1F;*/
+                VGAOUT8(0x3C5, bRegTemp);
+                /* 3c5.18[0:5] */
+                VGAOUT8(0x3C4, 0x18);
+                bRegTemp = VGAIN8(0x3C5);
+                bRegTemp &= ~0x3F;
+                bRegTemp |= 0x17;
+                bRegTemp |= 0x40;  /* force the preq always higher than treq */
+                VGAOUT8(0x3C5, bRegTemp);
+          	    pVia->EnableExtendedFIFO = TRUE;
+            }
+        }
+        break;
+    case VIA_KM400:
+        if (pVia->HasSecondary) {  /* SAMM or DuoView case */
+            if ((ctx->shared.virtualWidth >= 1600) &&
+                (pVia->MemClk <= VIA_MEM_DDR200)) {
+        	    /* enable CRT extendded FIFO */
+            	VGAOUT8(0x3C4, 0x17);
+                VGAOUT8(0x3C5, 0x1C);
+    	        /* revise second display queue depth and read threshold */
+        	    VGAOUT8(0x3C4, 0x16);
+            	bRegTemp = VGAIN8(0x3C5);
+    	        bRegTemp &= ~0x3F;
+    	        bRegTemp = (bRegTemp) | (0x09);
+                VGAOUT8(0x3C5, bRegTemp);
+            }
+            else {
+                /* enable CRT extendded FIFO */
+                VGAOUT8(0x3C4, 0x17);
+                VGAOUT8(0x3C5,0x3F);
+                /* revise second display queue depth and read threshold */
+                VGAOUT8(0x3C4, 0x16);
+                bRegTemp = VGAIN8(0x3C5);
+                bRegTemp &= ~0x3F;
+                bRegTemp = (bRegTemp) | (0x1C);
+                VGAOUT8(0x3C5, bRegTemp);
+            }
+            /* 3c5.18[0:5] */
+            VGAOUT8(0x3C4, 0x18);
+            bRegTemp = VGAIN8(0x3C5);
+            bRegTemp &= ~0x3F;
+            bRegTemp |= 0x17;
+            bRegTemp |= 0x40;  /* force the preq always higher than treq */
+            VGAOUT8(0x3C5, bRegTemp);
+       	    pVia->EnableExtendedFIFO = TRUE;
+        }
+        else {
+            if ( (ctx->shared.virtualWidth > 1024) && (ctx->shared.virtualWidth <= 1280) )
+            {
+                /* enable CRT extendded FIFO */
+                VGAOUT8(0x3C4, 0x17);
+                VGAOUT8(0x3C5, 0x3F);
+                /* revise second display queue depth and read threshold */
+                VGAOUT8(0x3C4, 0x16);
+                bRegTemp = VGAIN8(0x3C5);
+                bRegTemp &= ~0x3F;
+                bRegTemp = (bRegTemp) | (0x17);
+                VGAOUT8(0x3C5, bRegTemp);
+           	    pVia->EnableExtendedFIFO = TRUE;
+            }
+            else if ((ctx->shared.virtualWidth > 1280))
+            {
+                /* enable CRT extendded FIFO */
+                VGAOUT8(0x3C4, 0x17);
+                VGAOUT8(0x3C5, 0x3F);
+                /* revise second display queue depth and read threshold */
+                VGAOUT8(0x3C4, 0x16);
+                bRegTemp = VGAIN8(0x3C5);
+                bRegTemp &= ~0x3F;
+                bRegTemp = (bRegTemp) | (0x1C);
+                VGAOUT8(0x3C5, bRegTemp);
+           	    pVia->EnableExtendedFIFO = TRUE;
+            }
+            else
+            {
+                /* enable CRT extendded FIFO */
+                VGAOUT8(0x3C4, 0x17);
+                VGAOUT8(0x3C5, 0x3F);
+                /* revise second display queue depth and read threshold */
+                VGAOUT8(0x3C4, 0x16);
+                bRegTemp = VGAIN8(0x3C5);
+                bRegTemp &= ~0x3F;
+                bRegTemp = (bRegTemp) | (0x10);
+                VGAOUT8(0x3C5, bRegTemp);
+            }
+            /* 3c5.18[0:5] */
+            VGAOUT8(0x3C4, 0x18);
+            bRegTemp = VGAIN8(0x3C5);
+            bRegTemp &= ~0x3F;
+            bRegTemp |= 0x17;
+            bRegTemp |= 0x40;  /* force the preq always higher than treq */
+            VGAOUT8(0x3C5, bRegTemp);
+        }
+        break;
+    case VIA_K8M800:
+        /*=* R1 Display FIFO depth (384 /8 -1 -> 0xbf) SR17[7:0] (8bits) *=*/
+        VGAOUT8(0x3c4, 0x17);
+        VGAOUT8(0x3c5, 0xbf);
 
-    dwTemp = (CARD32)VIAGETREG(0x298);
-    dwTemp &= ~0x20000000;
-    VIASETREG(0x298, dwTemp);
+        /*=* R2 Display fetch datum threshold value (328/4 -> 0x52)
+             SR16[5:0], SR16[7] (7bits) *=*/
+        VGAOUT8(0x3c4, 0x16);
+        bRegTemp = VGAIN8(0x3c5) & ~0xBF;
+        bRegTemp |= (0x52 & 0x3F);
+        bRegTemp |= ((0x52 & 0x40) << 1);
+        VGAOUT8(0x3c5, bRegTemp);
 
-    VGAOUT8(0x3C4, 0x17);
-    bTemp = VGAIN8(0x3C5);
-    bTemp &= ~0x7F;
-    bTemp |= 0x2F;
-    VGAOUT8(0x3C5, bTemp);
+        /*=* R3 Switch to the highest agent threshold value (74 -> 0x4a)
+             SR18[5:0], SR18[7] (7bits) *=*/
+        VGAOUT8(0x3c4, 0x18);
+        bRegTemp = VGAIN8(0x3c5) & ~0xBF;
+        bRegTemp |= (0x4a & 0x3F);
+        bRegTemp |= ((0x4a & 0x40) << 1);
+        VGAOUT8(0x3c5, bRegTemp);
+#if 0
+        /*=* R4 Fetch Number for a scan line (unit: 8 bytes)
+             SR1C[7:0], SR1D[1:0] (10bits) *=*/
+        wRegTemp = (pBIOSInfo->offsetWidthByQWord >> 1) + 4;
+        VGAOUT8(0x3c4, 0x1c);
+        VGAOUT8(0x3c5, (CARD8)(wRegTemp & 0xFF));
+        VGAOUT8(0x3c4, 0x1d);
+        bRegTemp = VGAIN8(0x3c5) & ~0x03;
+        VGAOUT8(0x3c5, bRegTemp | ((wRegTemp & 0x300) >> 8));
+#endif
+        if (ctx->shared.virtualWidth >= 1400 && ctx->bpp == 32)
+        {
+            /*=* Max. length for a request SR22[4:0] (64/4 -> 0x10) *=*/
+            VGAOUT8(0x3c4, 0x22);
+            bRegTemp = VGAIN8(0x3c5) & ~0x1F;
+            VGAOUT8(0x3c5, bRegTemp | 0x10);
+        }
+        else
+        {
+            /*=* Max. length for a request SR22[4:0]
+                 (128/4 -> over flow 0x0) *=*/
+            VGAOUT8(0x3c4, 0x22);
+            bRegTemp = VGAIN8(0x3c5) & ~0x1F;
+            VGAOUT8(0x3c5, bRegTemp);
+        }
+        break;
+    case VIA_PM800:
+        /*=* R1 Display FIFO depth (96-1 -> 0x5f) SR17[7:0] (8bits) *=*/
+        VGAOUT8(0x3c4, 0x17);
+        VGAOUT8(0x3c5, 0x5f);
 
-    VGAOUT8(0x3C4, 0x16);
-    bTemp = VGAIN8(0x3C5);
-    bTemp &= ~0x3F;
-    bTemp |= 0x17;
-    VGAOUT8(0x3C5, bTemp);
+        /*=* R2 Display fetch datum threshold value (32 -> 0x20)
+             SR16[5:0], SR16[7] (7bits) *=*/
+        VGAOUT8(0x3c4, 0x16);
+        bRegTemp = VGAIN8(0x3c5) & ~0xBF;
+        bRegTemp |= (0x20 & 0x3F);
+        bRegTemp |= ((0x20 & 0x40) << 1);
+        VGAOUT8(0x3c5, bRegTemp);
 
-    VGAOUT8(0x3C4, 0x18);
-    bTemp = VGAIN8(0x3C5);
-    bTemp &= ~0x3F;
-    bTemp |= 0x17;
-    bTemp |= 0x40; /* force the preq always higher than treq */
-    VGAOUT8(0x3C5, bTemp);
+        /*=* R3 Switch to the highest agent threshold value (16 -> 0x10)
+             SR18[5:0], SR18[7] (7bits) *=*/
+        VGAOUT8(0x3c4, 0x18);
+        bRegTemp = VGAIN8(0x3c5) & ~0xBF;
+        bRegTemp |= (0x10 & 0x3F);
+        bRegTemp |= ((0x10 & 0x40) << 1);
+        VGAOUT8(0x3c5, bRegTemp);
+#if 0
+        /*=* R4 Fetch Number for a scan line (unit: 8 bytes)
+             SR1C[7:0], SR1D[1:0] (10bits) *=*/
+        wRegTemp = (pBIOSInfo->offsetWidthByQWord >> 1) + 4;
+        VGAOUT8(0x3c4, 0x1c);
+        VGAOUT8(0x3c5, (CARD8)(wRegTemp & 0xFF));
+        VGAOUT8(0x3c4, 0x1d);
+        bRegTemp = VGAIN8(0x3c5) & ~0x03;
+        VGAOUT8(0x3c5, bRegTemp | ((wRegTemp & 0x300) >> 8));
+#endif
+        if (ctx->shared.virtualWidth >= 1400 && ctx->bpp == 32)
+        {
+            /*=* Max. length for a request SR22[4:0] (64/4 -> 0x10) *=*/
+            VGAOUT8(0x3c4, 0x22);
+            bRegTemp = VGAIN8(0x3c5) & ~0x1F;
+            VGAOUT8(0x3c5, bRegTemp | 0x10);
+        }
+        else
+        {
+            /*=* Max. length for a request SR22[4:0] (0x1F) *=*/
+            VGAOUT8(0x3c4, 0x22);
+            bRegTemp = VGAIN8(0x3c5) & ~0x1F;
+            VGAOUT8(0x3c5, bRegTemp | 0x1F);
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 static void VIAInitialize2DEngine(DRIDriverContext *ctx)
@@ -613,6 +836,8 @@ static void VIAInitialize2DEngine(DRIDriverContext *ctx)
     VIASETREG(0x38, 0x0);
     VIASETREG(0x3c, 0x0);
     VIASETREG(0x40, 0x0);
+
+    VIADisableMMIO(ctx);
 
     /* Init AGP and VQ regs */
     VIASETREG(0x43c, 0x00100000);
@@ -706,6 +931,8 @@ static void VIAInitialize2DEngine(DRIDriverContext *ctx)
         break;
     }
 #endif
+    
+    VIAEnableMMIO(ctx);
 
     /* Set BPP and Pitch */
     VIASETREG(VIA_REG_GEMODE, dwGEMode);
@@ -718,12 +945,14 @@ static void VIAInitialize2DEngine(DRIDriverContext *ctx)
               (((ctx->shared.virtualWidth * ctx->bpp >> 3) >> 3) << 16));
 }
 
+static int b3DRegsInitialized = 0;
+
 static void VIAInitialize3DEngine(DRIDriverContext *ctx)
 {
     VIAPtr  pVia = VIAPTR(ctx);
     int i;
 
-    if (!pVia->sharedData->b3DRegsInitialized)
+    if (!b3DRegsInitialized)
     {
 
         VIASETREG(0x43C, 0x00010000);
@@ -788,7 +1017,7 @@ static void VIAInitialize3DEngine(DRIDriverContext *ctx)
         VIASETREG(0x440,0x52000000);
         VIASETREG(0x440,0x53000000);
 
-        pVia->sharedData->b3DRegsInitialized = 1;
+        b3DRegsInitialized = 1;
         xf86DrvMsg(pScrn->scrnIndex, X_INFO,
                    "3D Engine has been initialized.\n");
     }
@@ -806,13 +1035,51 @@ static void VIAInitialize3DEngine(DRIDriverContext *ctx)
     VIASETREG(0x440,0x20000000);
 }
 
+static int
+WaitIdleCLE266(VIAPtr pVia)
+{
+    int loop = 0;
+
+    /*mem_barrier();*/
+
+    while (!(VIAGETREG(VIA_REG_STATUS) & VIA_VR_QUEUE_BUSY) && (loop++ < MAXLOOP))
+        ;
+
+    while ((VIAGETREG(VIA_REG_STATUS) &
+          (VIA_CMD_RGTR_BUSY | VIA_2D_ENG_BUSY | VIA_3D_ENG_BUSY)) &&
+          (loop++ < MAXLOOP))
+        ;
+
+    return loop >= MAXLOOP;
+}
+
 static int viaInitFBDev(DRIDriverContext *ctx)
 {
-    VIAPtr pVia = calloc(1, sizeof(*pVia));
+    VIAPtr pVia = CALLOC(sizeof(*pVia));
 
     ctx->driverPrivate = (void *)pVia;
 
-    pVia->Chipset = ctx->chipset;
+    switch (ctx->chipset) {
+    case PCI_CHIP_CLE3122:
+    case PCI_CHIP_CLE3022:
+        pVia->Chipset = VIA_CLE266;
+        break;
+    case PCI_CHIP_VT7205:
+    case PCI_CHIP_VT3205:
+        pVia->Chipset = VIA_KM400;
+        break;
+    case PCI_CHIP_VT3204:
+        pVia->Chipset = VIA_K8M800;
+        break;
+    case PCI_CHIP_VT3259:
+        pVia->Chipset = VIA_PM800;
+        break;
+    default:
+        xf86DrvMsg(0, X_ERROR, "VIA: Unknown device ID (0x%x)\n", ctx->chipset);
+    }
+
+    /* _SOLO TODO XXX need to read ChipRev too */
+    pVia->ChipRev = 0;
 
     pVia->videoRambytes = ctx->shared.fbSize;
     pVia->MmioBase = ctx->MMIOStart;
@@ -822,21 +1089,25 @@ static int viaInitFBDev(DRIDriverContext *ctx)
         ctx->shared.virtualHeight;
     pVia->FBFreeEnd = pVia->videoRambytes;
 
-    pVia->sharedData = (ViaSharedPtr) calloc(1, sizeof(ViaSharedRec));
-
     if (!VIADRIScreenInit(ctx))
         return 0;
 
     VIAEnableMMIO(ctx);
 
+    /* Get video memory clock. */
+    VGAOUT8(0x3D4, 0x3D);
+    pVia->MemClk = (VGAIN8(0x3D5) & 0xF0) >> 4;
+    xf86DrvMsg(0, X_INFO, "[dri] MemClk (0x%x)\n", pVia->MemClk);
+
     /* 3D rendering has noise if not enabled. */
     VIAEnableExtendedFIFO(ctx);
 
     VIAInitialize2DEngine(ctx);
-    VIAInitialize3DEngine(ctx);
 
     /* Must disable MMIO or 3D won't work. */
     VIADisableMMIO(ctx);
+
+    VIAInitialize3DEngine(ctx);
 
     return 1;
 }

@@ -32,9 +32,7 @@
 #include "swrast/swrast.h"
 
 #define DBG 0
-#if 0
 #define LOCAL_VARS                                      \
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);             \
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
     viaScreenPrivate *viaScreen = vmesa->viaScreen;     \
     GLuint pitch = vmesa->drawPitch;                    \
@@ -47,10 +45,8 @@
         dPriv->x * viaScreen->bytesPerPixel +           \
                               dPriv->y * pitch);        \
     (void)read_buf; (void)buf; (void)p
-#endif
 
 #define LOCAL_DEPTH_VARS                                \
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);             \
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
     viaScreenPrivate *viaScreen = vmesa->viaScreen;     \
     GLuint pitch = viaScreen->backPitch;                \
@@ -158,7 +154,8 @@
                               dPriv->x * 2 +            \
                               dPriv->y * pitch);        \
     (void)read_buf; (void)buf; (void)p*/
-    
+
+#undef LOCAL_VARS
 #define LOCAL_VARS                                                   	\
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;                	\
     GLuint pitch = vmesa->drawPitch;                                 	\
@@ -166,7 +163,7 @@
     GLushort p;                                                      	\
     char *buf, *read_buf;                                            	\
     p = 0;							     	\
-    if (vmesa->glCtx->Color._DrawDestMask & BACK_LEFT_BIT) {	\
+    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {	\
 	buf = (char *)(vmesa->drawMap);                              	\
 	read_buf = (char *)(vmesa->readMap);                         	\
     }                                                                	\
@@ -209,7 +206,6 @@
  
 /*=* [DBG] csmash : fix options worng position *=*/
 /*#define LOCAL_VARS                                    \
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);		\
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
     GLuint pitch = vmesa->drawPitch;                    \
     GLuint height = dPriv->h;                           \
@@ -222,14 +218,13 @@
                               dPriv->y * pitch);        \
     (void)read_buf; (void)buf; (void)p*/
 #define LOCAL_VARS                                                   	\
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);				\
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;                	\
     GLuint pitch = vmesa->drawPitch;                                 	\
     GLuint height = dPriv->h;                                        	\
     GLuint p;                                                        	\
     char *buf, *read_buf;                                            	\
     p = 0;	                                                        \
-    if (vmesa->glCtx->Color._DrawDestMask & BACK_LEFT_BIT) {	\
+    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {	\
 	buf = (char *)(vmesa->drawMap);                              	\
 	read_buf = (char *)(vmesa->readMap);                         	\
     }                                                                	\
@@ -281,7 +276,6 @@
                          dPriv->x * 2 +                 \
                          dPriv->y * pitch)   */
 #define LOCAL_DEPTH_VARS                                \
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);		\
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
     /*viaScreenPrivate *viaScreen = vmesa->viaScreen;*/ \
     GLuint pitch = vmesa->depth.pitch;                  \
@@ -326,7 +320,7 @@
 */
 
 
-void viaSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
+static void viaSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
                       GLuint bufferBit)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);

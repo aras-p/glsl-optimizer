@@ -27,7 +27,6 @@
 #include <stdio.h>
 
 #include "glheader.h"
-/*#include "mem.h" _SOLO */
 #include "mtypes.h"
 #include "simple_list.h"
 #include "enums.h"

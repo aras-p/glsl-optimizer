@@ -32,7 +32,6 @@
 #include "context.h"
 #include "macros.h"
 #include "mtypes.h"
-/*#include "mmath.h" _SOLO */
 
 #include "tnl/t_context.h"
 
@@ -90,7 +89,7 @@ static void VERT_FALLBACK(GLcontext *ctx,
     tnl->Driver.Render.BuildVertices(ctx, start, count, ~0);
     tnl->Driver.Render.PrimTabVerts[flags & PRIM_MODE_MASK](ctx, start,
                                                             count, flags);
-    VIA_CONTEXT(ctx)->setupNewInputs = VERT_CLIP;
+    VIA_CONTEXT(ctx)->setupNewInputs = VERT_BIT_CLIP;
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
 #endif
@@ -112,9 +111,9 @@ static void VERT_FALLBACK(GLcontext *ctx,
 #define NEW_PRIMITIVE()  VIA_STATECHANGE(vmesa, 0)
 #define NEW_BUFFER()  VIA_FIREVERTICES(vmesa)
 #define GET_CURRENT_VB_MAX_VERTS() \
-    (((int)vmesa->dmaHigh - (int)vmesa->dmaLow) / (vmesa->vertex_size * 4))
+    (((int)vmesa->dmaHigh - (int)vmesa->dmaLow) / (vmesa->vertexSize * 4))
 #define GET_SUBSEQUENT_VB_MAX_VERTS() \
-    (VIA_DMA_BUF_SZ - 4) / (vmesa->vertex_size * 4)
+    (VIA_DMA_BUF_SZ - 4) / (vmesa->vertexSize * 4)
 
 
 #define EMIT_VERTS(ctx, j, nr) \
@@ -164,7 +163,7 @@ static GLboolean via_run_fastrender(GLcontext *ctx,
 #ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
 #endif    
-    vmesa->setupNewInputs = VERT_CLIP;
+    vmesa->setupNewInputs = VERT_BIT_CLIP;
     vmesa->primitiveRendered = GL_TRUE;
 
     tnl->Driver.Render.Start(ctx);
@@ -191,17 +190,17 @@ static GLboolean via_run_fastrender(GLcontext *ctx,
 
 static void via_check_fastrender(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
-    GLuint inputs = VERT_CLIP | VERT_RGBA;
+    GLuint inputs = VERT_BIT_CLIP | VERT_BIT_COLOR0;
     
     if (ctx->RenderMode == GL_RENDER) {
         if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
             inputs |= VERT_BIT_COLOR1;
 
         if (ctx->Texture.Unit[0]._ReallyEnabled)
-            inputs |= VERT_TEX(0);
+            inputs |= VERT_BIT_TEX0;
 
         if (ctx->Texture.Unit[1]._ReallyEnabled)
-            inputs |= VERT_TEX(1);
+            inputs |= VERT_BIT_TEX1;
 
         if (ctx->Fog.Enabled)
             inputs |= VERT_BIT_FOG;
@@ -249,6 +248,7 @@ const struct tnl_pipeline_stage _via_fastrender_stage =
 /**********************************************************************/
 /*                        Clip single primitives                      */
 /**********************************************************************/
+#undef DIFFERENT_SIGNS
 #if defined(USE_IEEE)
 #define NEGATIVE(x) (GET_FLOAT_BITS(x) & (1 << 31))
 #define DIFFERENT_SIGNS(x, y) ((GET_FLOAT_BITS(x) ^ GET_FLOAT_BITS(y)) & (1 << 31))
@@ -266,7 +266,7 @@ const struct tnl_pipeline_stage _via_fastrender_stage =
 #define X(i) coord[i][0]
 #define SIZE 4
 #define TAG(x) x##_4
-#include "tnl/t_vb_cliptmp.h" /* tnl_ */
+#include "via_vb_cliptmp.h"
 
 
 /**********************************************************************/
@@ -293,6 +293,7 @@ const struct tnl_pipeline_stage _via_fastrender_stage =
     } while (0)
 
 #define RENDER_TRI(v1, v2, v3)					\
+    if (VIA_DEBUG) fprintf(stderr, "RENDER_TRI - clip\n");      \
     do {							\
 	GLubyte c1 = mask[v1], c2 = mask[v2], c3 = mask[v3];	\
 	GLubyte ormask = c1 | c2 | c3;				\
@@ -335,7 +336,7 @@ const struct tnl_pipeline_stage _via_fastrender_stage =
 #define RESET_STIPPLE if (stipple) tnl->Driver.Render.ResetLineStipple(ctx)
 #define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE
 #define PRESERVE_VB_DEFS
-#include "tnl/t_vb_rendertmp.h"
+#include "via_vb_rendertmp.h"
 
 
 /* Elts, with the possibility of clipping.
@@ -344,7 +345,7 @@ const struct tnl_pipeline_stage _via_fastrender_stage =
 #undef TAG
 #define ELT(x) elt[x]
 #define TAG(x) clip_##x##_elts
-#include "tnl/t_vb_rendertmp.h"
+#include "via_vb_rendertmp.h"
 
 /* TODO: do this for all primitives, verts and elts:
  */
@@ -448,7 +449,7 @@ static GLboolean via_run_render(GLcontext *ctx,
             GLuint flags = VB->Primitive[i].mode;
             GLuint start = VB->Primitive[i].start;
 	    GLuint length= VB->Primitive[i].count;
-	    ASSERT(length || (flags & PRIM_LAST));
+	    ASSERT(length || (flags & PRIM_END));
 	    ASSERT((flags & PRIM_MODE_MASK) <= GL_POLYGON + 1);
     	    if (length)
         	tab[flags & PRIM_MODE_MASK](ctx, start, start + length,flags);
@@ -458,13 +459,13 @@ static GLboolean via_run_render(GLcontext *ctx,
     tnl->Driver.Render.Finish(ctx);
     
     /*=* DBG - flush : if hw idel *=*/
-    {
+    /*{
         GLuint volatile *pnEnginStatus = vmesa->regEngineStatus;
 	GLuint nStatus;
         nStatus = *pnEnginStatus;
 	if ((nStatus & 0xFFFEFFFF) == 0x00020000)
 	    viaFlushPrims(vmesa);
-    }
+    }*/
     
     /*=* DBG viewperf7.0 : fix command buffer overflow *=*/
     if (vmesa->dmaLow > (vmesa->dma[0].size / 2))
@@ -481,24 +482,24 @@ static GLboolean via_run_render(GLcontext *ctx,
 
 static void via_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
-    GLuint inputs = VERT_CLIP;
+    GLuint inputs = VERT_BIT_CLIP;
     
     if (ctx->Visual.rgbMode) {
-	inputs |= VERT_RGBA;
+	inputs |= VERT_BIT_COLOR0;
 	
         if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
  	    inputs |= VERT_BIT_COLOR1;
 	    
         if (ctx->Texture.Unit[0]._ReallyEnabled) {
-	 	    inputs |= VERT_TEX(0);	    
+	 	    inputs |= VERT_BIT_TEX0;
 	}
 	
 	if (ctx->Texture.Unit[1]._ReallyEnabled) {
-	 	    inputs |= VERT_TEX(1);	    
+	 	    inputs |= VERT_BIT_TEX1;
 	}
     }
     else {
-        /*inputs |= VERT_INDEX; _SOLO*/
+        /*inputs |= VERT_BIT_INDEX;*/
     }	
 	    
     /*if (ctx->Point._Attenuated)

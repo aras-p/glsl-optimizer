@@ -66,6 +66,8 @@ typedef struct {
     __DRIscreenPrivate *driScrnPriv;
     drmBufMapPtr bufs;
     unsigned int sareaPrivOffset;
+    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
+    int VQEnable;
 } viaScreenPrivate;
 
 extern GLboolean

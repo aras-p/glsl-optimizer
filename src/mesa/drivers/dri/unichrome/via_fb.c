@@ -53,8 +53,8 @@ via_alloc_back_buffer(viaContextPtr vmesa)
     vmesa->back.index = fb.index;
 #ifdef DEBUG    
     if (VIA_DEBUG) {
-	fprintf(stderr, "offset = %08x\n", vmesa->back.offset);
-	fprintf(stderr, "index = %d\n", vmesa->back.index);
+	fprintf(stderr, "back offset = %08x\n", vmesa->back.offset);
+	fprintf(stderr, "back index = %d\n", vmesa->back.index);
     }
 
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
@@ -86,8 +86,8 @@ via_alloc_front_buffer(viaContextPtr vmesa)
     vmesa->front.index = fb.index;
 #ifdef DEBUG    
     if (VIA_DEBUG) {
-	fprintf(stderr, "offset = %08x\n", vmesa->front.offset);
-	fprintf(stderr, "index = %d\n", vmesa->front.index);
+	fprintf(stderr, "front offset = %08x\n", vmesa->front.offset);
+	fprintf(stderr, "front index = %d\n", vmesa->front.index);
     }
 
 
@@ -145,8 +145,8 @@ via_alloc_depth_buffer(viaContextPtr vmesa)
     vmesa->depth.index = fb.index;
 #ifdef DEBUG    
     if (VIA_DEBUG) {
-	fprintf(stderr, "offset = %08x\n", vmesa->depth.offset);
-	fprintf(stderr, "index = %d\n", vmesa->depth.index);    
+	fprintf(stderr, "depth offset = %08x\n", vmesa->depth.offset);
+	fprintf(stderr, "depth index = %d\n", vmesa->depth.index);    
     }	
 
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
@@ -247,16 +247,21 @@ via_free_dma_buffer(viaContextPtr vmesa)
     }
     /* Release System command buffer */
     else {
-	
+	/*=* John Sheng [2003.7.18] viewperf frames/sec *=*/
+	/*dma.address = (unsigned long *)vmesa->dma[0].offset;*/
 	dma.address = (unsigned long *)vmesa->dma[0].map;
 	/*=* John Sheng [2003.6.16] fix pci path *=*/
 	dma.size = (unsigned int)vmesa->dma[0].size;
 	drmVIAReleaseDMA(vmesa->driFd, &dma);
-	
+	/*=* John Sheng [2003.7.18] viewperf frames/sec *=*/
+	/*dma.address = (unsigned long *)vmesa->dma[1].offset;*/
 	dma.address = (unsigned long *)vmesa->dma[1].map;
 	/*=* John Sheng [2003.6.16] fix pci path *=*/
 	dma.size = (unsigned int)vmesa->dma[1].size;
 	drmVIAReleaseDMA(vmesa->driFd, &dma);
+	/*=* John Sheng [2003.7.18] viewperf frames/sec *=*/
+	/*vmesa->dma[0].offset = 0;
+	vmesa->dma[1].offset = 0;*/
 	vmesa->dma[0].map = 0;
 	vmesa->dma[1].map = 0;
     }

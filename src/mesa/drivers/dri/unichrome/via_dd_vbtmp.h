@@ -352,7 +352,7 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
 
     (void) s;
 
-    //ASSERT(stride == 4);
+    /*ASSERT(stride == 4);*/
 #ifdef DEBUG    
     if (VIA_DEBUG) {
 	fprintf(stderr, "TAG-emit for DO_XYZW\n");
@@ -649,82 +649,82 @@ static void TAG(init)(void)
 #endif
 
     if (DO_SPEC)
-        setup_tab[IND].copy_pv = copy_pv_rgba4_spec5;
+        setup_tab[IND].copyPv = copy_pv_rgba4_spec5;
      else if (HAVE_HW_DIVIDE || DO_SPEC || DO_FOG || DO_TEX0 || DO_TEX1 ||
 	      DO_TEX2 || DO_TEX3 || !HAVE_TINY_VERTICES)
-        setup_tab[IND].copy_pv = copy_pv_rgba4;
+        setup_tab[IND].copyPv = copy_pv_rgba4;
     else
-        setup_tab[IND].copy_pv = copy_pv_rgba3;
+        setup_tab[IND].copyPv = copy_pv_rgba3;
 
     if (DO_TEX3) {
         if (DO_PTEX && HAVE_PTEX_VERTICES) {
 	    ASSERT(HAVE_PTEX_VERTICES);
-	    setup_tab[IND].vertex_format = PROJ_TEX3_VERTEX_FORMAT;
-	    setup_tab[IND].vertex_size = 18;
-	    setup_tab[IND].vertex_stride_shift = 7;
+	    setup_tab[IND].vertexFormat = PROJ_TEX3_VERTEX_FORMAT;
+	    setup_tab[IND].vertexSize = 18;
+	    setup_tab[IND].vertexStrideShift = 7;
         }
         else {
-	    setup_tab[IND].vertex_format = TEX3_VERTEX_FORMAT;
-	    setup_tab[IND].vertex_size = 14;
-	    setup_tab[IND].vertex_stride_shift = 6;
+	    setup_tab[IND].vertexFormat = TEX3_VERTEX_FORMAT;
+	    setup_tab[IND].vertexSize = 14;
+	    setup_tab[IND].vertexStrideShift = 6;
         }
     }
     else if (DO_TEX2) {
         if (DO_PTEX && HAVE_PTEX_VERTICES) {
 	    ASSERT(HAVE_PTEX_VERTICES);
-	    setup_tab[IND].vertex_format = PROJ_TEX3_VERTEX_FORMAT;
-	    setup_tab[IND].vertex_size = 18;
-	    setup_tab[IND].vertex_stride_shift = 7;
+	    setup_tab[IND].vertexFormat = PROJ_TEX3_VERTEX_FORMAT;
+	    setup_tab[IND].vertexSize = 18;
+	    setup_tab[IND].vertexStrideShift = 7;
         }
         else {
-	    setup_tab[IND].vertex_format = TEX2_VERTEX_FORMAT;
-	    setup_tab[IND].vertex_size = 12;
-	    setup_tab[IND].vertex_stride_shift = 6;
+	    setup_tab[IND].vertexFormat = TEX2_VERTEX_FORMAT;
+	    setup_tab[IND].vertexSize = 12;
+	    setup_tab[IND].vertexStrideShift = 6;
         }
     }
     else if (DO_TEX1) {
         if (DO_PTEX && HAVE_PTEX_VERTICES) {
 	    ASSERT(HAVE_PTEX_VERTICES);
-	    setup_tab[IND].vertex_format = PROJ_TEX1_VERTEX_FORMAT;
-	    setup_tab[IND].vertex_size = 12;
-	    setup_tab[IND].vertex_stride_shift = 6;
+	    setup_tab[IND].vertexFormat = PROJ_TEX1_VERTEX_FORMAT;
+	    setup_tab[IND].vertexSize = 12;
+	    setup_tab[IND].vertexStrideShift = 6;
         }
         else {
-	    setup_tab[IND].vertex_format = TEX1_VERTEX_FORMAT;
-	    setup_tab[IND].vertex_size = 10;
-	    setup_tab[IND].vertex_stride_shift = 6;
+	    setup_tab[IND].vertexFormat = TEX1_VERTEX_FORMAT;
+	    setup_tab[IND].vertexSize = 10;
+	    setup_tab[IND].vertexStrideShift = 6;
         }
     }
     else if (DO_TEX0) {
         if (DO_PTEX && HAVE_PTEX_VERTICES) {
-	    setup_tab[IND].vertex_format = PROJ_TEX1_VERTEX_FORMAT;
-	    setup_tab[IND].vertex_size = 12;
-	    setup_tab[IND].vertex_stride_shift = 6;
+	    setup_tab[IND].vertexFormat = PROJ_TEX1_VERTEX_FORMAT;
+	    setup_tab[IND].vertexSize = 12;
+	    setup_tab[IND].vertexStrideShift = 6;
         } 
 	else {
-	    setup_tab[IND].vertex_format = TEX0_VERTEX_FORMAT;
-	    setup_tab[IND].vertex_size = 8;
-	    setup_tab[IND].vertex_stride_shift = 5;
+	    setup_tab[IND].vertexFormat = TEX0_VERTEX_FORMAT;
+	    setup_tab[IND].vertexSize = 8;
+	    setup_tab[IND].vertexStrideShift = 5;
         }
     }
     else if (!HAVE_HW_DIVIDE && !DO_SPEC && !DO_FOG && HAVE_TINY_VERTICES) {
-        setup_tab[IND].vertex_format = TINY_VERTEX_FORMAT;
-        setup_tab[IND].vertex_size = 4;
-        setup_tab[IND].vertex_stride_shift = 4;
+        setup_tab[IND].vertexFormat = TINY_VERTEX_FORMAT;
+        setup_tab[IND].vertexSize = 4;
+        setup_tab[IND].vertexStrideShift = 4;
     } 
     else if (HAVE_NOTEX_VERTICES) {
-        setup_tab[IND].vertex_format = NOTEX_VERTEX_FORMAT;
-        setup_tab[IND].vertex_size = 6;
-        setup_tab[IND].vertex_stride_shift = 5;
+        setup_tab[IND].vertexFormat = NOTEX_VERTEX_FORMAT;
+        setup_tab[IND].vertexSize = 6;
+        setup_tab[IND].vertexStrideShift = 5;
     } 
     else {
-        setup_tab[IND].vertex_format = TEX0_VERTEX_FORMAT;
-        setup_tab[IND].vertex_size = 8;
-        setup_tab[IND].vertex_stride_shift = 5;
+        setup_tab[IND].vertexFormat = TEX0_VERTEX_FORMAT;
+        setup_tab[IND].vertexSize = 8;
+        setup_tab[IND].vertexStrideShift = 5;
     }
 
-    assert(setup_tab[IND].vertex_size * 4 <=
-           1 << setup_tab[IND].vertex_stride_shift);
+    assert(setup_tab[IND].vertexSize * 4 <=
+           1 << setup_tab[IND].vertexStrideShift);
 }
 
 #undef IND

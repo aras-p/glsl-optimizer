@@ -251,7 +251,7 @@ static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
 #endif
-    if (mode == GL_FRONT_LEFT) {
+    if (mode == GL_FRONT) {
         VIA_FIREVERTICES(vmesa);
         VIA_STATECHANGE(vmesa, VIA_UPLOAD_BUFFERS);
         vmesa->drawMap = (char *)vmesa->driScreen->pFB;
@@ -262,7 +262,7 @@ static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
         FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_FALSE);
         return;
     }
-    else if (mode == GL_BACK_LEFT) {
+    else if (mode == GL_BACK) {
         VIA_FIREVERTICES(vmesa);
         VIA_STATECHANGE(vmesa, VIA_UPLOAD_BUFFERS);
         vmesa->drawMap = vmesa->back.map;
@@ -335,11 +335,11 @@ static void viaBitmap( GLcontext *ctx, GLint px, GLint py,
     /*=* John Sheng [2003.7.18] texenv *=*/
     /*if (!vmesa->drawMap && !vmesa->readMap) {*/
     if (1) {
-	if (vmesa->glCtx->Color._DrawDestMask & BACK_LEFT_BIT) {
-	    viaDrawBuffer(ctx, GL_BACK_LEFT);
+	if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+	    viaDrawBuffer(ctx, GL_BACK);
 	}
 	else {
-	    viaDrawBuffer(ctx, GL_FRONT_LEFT);
+	    viaDrawBuffer(ctx, GL_FRONT);
 	}
     }
     /*=* [DBG] csmash : white option words become brown *=*/
@@ -496,7 +496,7 @@ void viaInitState(GLcontext *ctx)
     vmesa->regCmdB = HC_ACMD_HCmdB | HC_HVPMSK_X | HC_HVPMSK_Y | HC_HVPMSK_Z;
     vmesa->regEnable = HC_HenCW_MASK;
 
-    if (vmesa->glCtx->Color._DrawDestMask & BACK_LEFT_BIT) {
+    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
         vmesa->drawMap = vmesa->back.map;
         vmesa->readMap = vmesa->back.map;
     }
@@ -1681,11 +1681,11 @@ void viaChooseTextureState(GLcontext *ctx)
                 break;
 	    /*=* John Sheng [2003.7.18] texture combine *=*/
 	    case GL_COMBINE:
-		switch (texUnit0->CombineModeRGB) {
+		switch (texUnit0->Combine.ModeRGB) {
         	case GL_REPLACE:
-            	    switch (texUnit0->CombineSourceRGB[0]) {
+            	    switch (texUnit0->Combine.SourceRGB[0]) {
             	    case GL_TEXTURE:
-                	switch (texUnit0->CombineOperandRGB[0]) {
+                	switch (texUnit0->Combine.OperandRGB[0]) {
                 	case GL_SRC_COLOR:  
                     	    vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCsat_MASK |
                     	    HC_HTXnTBLCa_TOPC | HC_HTXnTBLCa_0 |
@@ -1729,7 +1729,7 @@ void viaChooseTextureState(GLcontext *ctx)
                 	CLAMPED_FLOAT_TO_UBYTE(texUnit0->EnvColor[1], g);
                 	CLAMPED_FLOAT_TO_UBYTE(texUnit0->EnvColor[2], b);
                 	CLAMPED_FLOAT_TO_UBYTE(texUnit0->EnvColor[3], a);
-                	switch (texUnit0->CombineOperandRGB[0]) {
+                	switch (texUnit0->Combine.OperandRGB[0]) {
                 	case GL_SRC_COLOR:  
                     	    vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCsat_MASK |
                     	    HC_HTXnTBLCa_TOPC | HC_HTXnTBLCa_0 |
@@ -1774,7 +1774,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     case GL_PRIMARY_COLOR :
-	                switch (texUnit0->CombineOperandRGB[0]) {
+	                switch (texUnit0->Combine.OperandRGB[0]) {
                         case GL_SRC_COLOR:  
                             vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCsat_MASK |
                             HC_HTXnTBLCa_TOPC | HC_HTXnTBLCa_0 |
@@ -1814,7 +1814,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     case GL_PREVIOUS :
-                        switch (texUnit0->CombineOperandRGB[0]) {
+                        switch (texUnit0->Combine.OperandRGB[0]) {
                         case GL_SRC_COLOR:  
                             vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCsat_MASK |
                             HC_HTXnTBLCa_TOPC | HC_HTXnTBLCa_0 |
@@ -1854,7 +1854,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     }
-                    switch ((GLint)(texUnit0->CombineScaleShiftRGB)) {
+                    switch ((GLint)(texUnit0->Combine.ScaleShiftRGB)) {
                     case 1:
 	                vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCshift_No;
     	                break;
@@ -1872,7 +1872,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     HC_HTXnTBLCbias_Cbias | HC_HTXnTBLCbias_0;
                     vmesa->regHTXnTBLMPfog_0 = HC_HTXnTBLMPfog_Fog;
                     vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCsat_MASK | HC_HTXnTBLCc_TOPC | HC_HTXnTBLCc_0;
-                    switch (texUnit0->CombineOperandRGB[0]) {
+                    switch (texUnit0->Combine.OperandRGB[0]) {
                     case GL_SRC_COLOR:
 	                vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_TOPC; 
                         AlphaCombine[0]=0;
@@ -1890,7 +1890,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[0]=1;
                         break;
                     }
-                    switch (texUnit0->CombineOperandRGB[1]) {
+                    switch (texUnit0->Combine.OperandRGB[1]) {
                     case GL_SRC_COLOR:
                         vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_TOPC; 
                         AlphaCombine[1]=0;
@@ -1908,7 +1908,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[1]=1;
                         break;
                     }
-                    switch (texUnit0->CombineSourceRGB[0]) {
+                    switch (texUnit0->Combine.SourceRGB[0]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[0]==0) {
                             vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_Tex; 
@@ -1947,7 +1947,7 @@ void viaChooseTextureState(GLcontext *ctx)
 	                }
     	                break;
                     }
-	            switch (texUnit0->CombineSourceRGB[1]) {
+	            switch (texUnit0->Combine.SourceRGB[1]) {
                     case GL_TEXTURE:
 	                if (AlphaCombine[1]==0) {
                     	    vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_Tex; 
@@ -1986,7 +1986,7 @@ void viaChooseTextureState(GLcontext *ctx)
 	                }
     	                break;
         	    }
-            	    switch ((GLint)(texUnit0->CombineScaleShiftRGB)) {
+            	    switch ((GLint)(texUnit0->Combine.ScaleShiftRGB)) {
                     case 1:
 	                vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCshift_No;
     	                break;
@@ -2000,7 +2000,7 @@ void viaChooseTextureState(GLcontext *ctx)
             	    break;
 	        case GL_ADD:
                 case GL_SUBTRACT :
-	            if (texUnit0->CombineModeRGB==GL_ADD) {
+	            if (texUnit0->Combine.ModeRGB==GL_ADD) {
                         vmesa->regHTXnTBLCop_0 = HC_HTXnTBLCop_Add |
                         HC_HTXnTBLCbias_Cbias | HC_HTXnTBLCbias_0;
                     }
@@ -2011,7 +2011,7 @@ void viaChooseTextureState(GLcontext *ctx)
     	            vmesa->regHTXnTBLMPfog_0 = HC_HTXnTBLMPfog_Fog;
         	    vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCsat_MASK | HC_HTXnTBLCa_TOPC | HC_HTXnTBLCa_HTXnTBLRC;
                     vmesa->regHTXnTBLRCa_0 = ( 255<<16 | 255<<8 |255 );
-                    switch (texUnit0->CombineOperandRGB[0]) {
+                    switch (texUnit0->Combine.OperandRGB[0]) {
                     case GL_SRC_COLOR:
 	                vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_TOPC; 
     	                AlphaCombine[0]=0;
@@ -2029,7 +2029,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[0]=1;
                         break;
                     }
-                    switch (texUnit0->CombineOperandRGB[1]) {
+                    switch (texUnit0->Combine.OperandRGB[1]) {
                     case GL_SRC_COLOR:
 	                vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCc_TOPC; 
     	                AlphaCombine[1]=0;
@@ -2047,7 +2047,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[1]=1;
                         break;
 	            }
-                    switch (texUnit0->CombineSourceRGB[0]) {
+                    switch (texUnit0->Combine.SourceRGB[0]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[0]==0) {
                             vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_Tex; 
@@ -2079,7 +2079,7 @@ void viaChooseTextureState(GLcontext *ctx)
 	                }
     	                break;
                     }
-                    switch (texUnit0->CombineSourceRGB[1]) {
+                    switch (texUnit0->Combine.SourceRGB[1]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[1]==0) {
                             vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCc_Tex; 
@@ -2111,7 +2111,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
 	                break;
     	            }
-        	    switch ((GLint)(texUnit0->CombineScaleShiftRGB)) {
+        	    switch ((GLint)(texUnit0->Combine.ScaleShiftRGB)) {
                     case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCshift_No;
                         break;
@@ -2131,7 +2131,7 @@ void viaChooseTextureState(GLcontext *ctx)
             	        HC_HTXnTBLCc_TOPC | HC_HTXnTBLCc_HTXnTBLRC;
             	    vmesa->regHTXnTBLRCa_0 = ( 255<<16 | 255<<8 |255 );
                     vmesa->regHTXnTBLRCc_0 = ( 128<<16 | 128<<8 |128 );
-                    switch (texUnit0->CombineOperandRGB[0]) {
+                    switch (texUnit0->Combine.OperandRGB[0]) {
                     case GL_SRC_COLOR:
                         vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_TOPC; 
                         AlphaCombine[0]=0;
@@ -2149,7 +2149,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[0]=1;
                         break;
                     }
-                    switch (texUnit0->CombineOperandRGB[1]) {
+                    switch (texUnit0->Combine.OperandRGB[1]) {
                     case GL_SRC_COLOR:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCbias_Cbias;
                         AlphaCombine[1]=0;
@@ -2167,7 +2167,7 @@ void viaChooseTextureState(GLcontext *ctx)
     	                AlphaCombine[1]=1;
                         break;
                     }
-                    switch (texUnit0->CombineSourceRGB[0]) {
+                    switch (texUnit0->Combine.SourceRGB[0]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[0]==0) {
                             vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_Tex; 
@@ -2199,7 +2199,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     }
-            	    switch (texUnit0->CombineSourceRGB[1]) {
+            	    switch (texUnit0->Combine.SourceRGB[1]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[1]==0) {
                             vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCbias_Tex; 
@@ -2231,7 +2231,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     }
-                    switch ((GLint)(texUnit0->CombineScaleShiftRGB)) {
+                    switch ((GLint)(texUnit0->Combine.ScaleShiftRGB)) {
                     case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCshift_No;
                         break;
@@ -2246,7 +2246,7 @@ void viaChooseTextureState(GLcontext *ctx)
                 case GL_INTERPOLATE :
                     vmesa->regHTXnTBLCop_0 = HC_HTXnTBLCop_Sub;
 	            vmesa->regHTXnTBLMPfog_0 = HC_HTXnTBLMPfog_Fog;
-    	            switch (texUnit0->CombineOperandRGB[0]) {
+    	            switch (texUnit0->Combine.OperandRGB[0]) {
                     case GL_SRC_COLOR:
 	                vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCb_TOPC; 
     	                AlphaCombine[0]=0;
@@ -2264,7 +2264,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[0]=1;
                         break;
                     }
-                    switch (texUnit0->CombineOperandRGB[1]) {
+                    switch (texUnit0->Combine.OperandRGB[1]) {
                     case GL_SRC_COLOR:
                         vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCc_TOPC;
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCbias_Cbias;
@@ -2286,7 +2286,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[1]=1;
                         break;
                     }
-                    switch (texUnit0->CombineOperandRGB[2]) {
+                    switch (texUnit0->Combine.OperandRGB[2]) {
                     case GL_SRC_COLOR:
                         vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCa_TOPC; 
                         AlphaCombine[2]=0;
@@ -2304,7 +2304,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[2]=1;
                         break;
                     }
-                    switch (texUnit0->CombineSourceRGB[0]) {
+                    switch (texUnit0->Combine.SourceRGB[0]) {
                     case GL_TEXTURE:
 	                if (AlphaCombine[0]==0) {
                     	    vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_Tex; 
@@ -2336,7 +2336,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     }
-                    switch (texUnit0->CombineSourceRGB[1]) {
+                    switch (texUnit0->Combine.SourceRGB[1]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[0]==0) {
                             vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCc_Tex; 
@@ -2375,7 +2375,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     }
-                    switch (texUnit0->CombineSourceRGB[2]) {
+                    switch (texUnit0->Combine.SourceRGB[2]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[0]==0) {
                             vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_Tex; 
@@ -2407,7 +2407,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     }
-                    switch ((GLint)(texUnit0->CombineScaleShiftRGB)) {
+                    switch ((GLint)(texUnit0->Combine.ScaleShiftRGB)) {
                     case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCshift_No;
                         break;
@@ -2420,11 +2420,11 @@ void viaChooseTextureState(GLcontext *ctx)
                     }
                     break;
                 }
-	        switch (texUnit0->CombineModeA) {
+	        switch (texUnit0->Combine.ModeA) {
                 case GL_REPLACE:
-                    switch (texUnit0->CombineSourceA[0]) {
+                    switch (texUnit0->Combine.SourceA[0]) {
                     case GL_TEXTURE:
-                        switch (texUnit0->CombineOperandA[0]) {
+                        switch (texUnit0->Combine.OperandA[0]) {
                 	case GL_SRC_ALPHA:  
                             vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAsat_MASK |
                             HC_HTXnTBLAa_TOPA | HC_HTXnTBLAa_HTXnTBLRA |
@@ -2447,7 +2447,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         break;
                     case GL_CONSTANT :
                 	CLAMPED_FLOAT_TO_UBYTE(texUnit0->EnvColor[3], a);
-                        switch (texUnit0->CombineOperandA[0]) {
+                        switch (texUnit0->Combine.OperandA[0]) {
                         case GL_SRC_ALPHA:  
                             vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAsat_MASK |
                             HC_HTXnTBLAa_TOPA | HC_HTXnTBLAa_HTXnTBLRA |
@@ -2472,7 +2472,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         break;
                     case GL_PRIMARY_COLOR :
                     case GL_PREVIOUS :
-                        switch (texUnit0->CombineOperandA[0]) {
+                        switch (texUnit0->Combine.OperandA[0]) {
                         case GL_SRC_ALPHA:  
                             vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAsat_MASK |
                             HC_HTXnTBLAa_TOPA | HC_HTXnTBLAa_HTXnTBLRA |
@@ -2494,7 +2494,7 @@ void viaChooseTextureState(GLcontext *ctx)
     	                }
         	    break;
                     }
-                    switch ((GLint)(texUnit0->CombineScaleShiftA)) {
+                    switch ((GLint)(texUnit0->Combine.ScaleShiftA)) {
                     case 1:
 	                vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAshift_No;
                         break;
@@ -2512,7 +2512,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     vmesa->regHTXnTBLRFog_0 = 0x0;
                     vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAsat_MASK | HC_HTXnTBLAc_TOPA | HC_HTXnTBLAc_HTXnTBLRA;
 	            vmesa->regHTXnTBLRAa_0= 0x0;
-                    switch (texUnit0->CombineOperandA[0]) {
+                    switch (texUnit0->Combine.OperandA[0]) {
                     case GL_SRC_ALPHA:
 	                vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAa_TOPA; 
     	                break;
@@ -2520,7 +2520,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAa_InvTOPA; 
                         break;
                     }
-                    switch (texUnit0->CombineOperandA[1]) {
+                    switch (texUnit0->Combine.OperandA[1]) {
                     case GL_SRC_ALPHA:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_TOPA; 
                         break;
@@ -2528,7 +2528,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_InvTOPA; 
                         break;
                     }
-                    switch (texUnit0->CombineSourceA[0]) {
+                    switch (texUnit0->Combine.SourceA[0]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAa_Atex; 
                         break;
@@ -2542,7 +2542,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAa_Adif; 
                         break;
                     }
-                    switch (texUnit0->CombineSourceA[1]) {
+                    switch (texUnit0->Combine.SourceA[1]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Atex;
                         break;
@@ -2556,7 +2556,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Adif;
                         break;
                     }
-                    switch ((GLint)(texUnit0->CombineScaleShiftA)) {
+                    switch ((GLint)(texUnit0->Combine.ScaleShiftA)) {
 	            case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAshift_No;
                         break;
@@ -2570,7 +2570,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     break;
                 case GL_ADD:
                 case GL_SUBTRACT :
-                    if(texUnit0->CombineModeA==GL_ADD) {
+                    if(texUnit0->Combine.ModeA==GL_ADD) {
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAop_Add | HC_HTXnTBLAbias_HTXnTBLRAbias;
 	            }
     	            else {
@@ -2579,7 +2579,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     vmesa->regHTXnTBLRFog_0 = 0;
                     vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAsat_MASK | HC_HTXnTBLAa_TOPA | HC_HTXnTBLAa_HTXnTBLRA;
                     vmesa->regHTXnTBLRAa_0 = 0x0 |  ( 255<<16 );
-                    switch (texUnit0->CombineOperandA[0]) {
+                    switch (texUnit0->Combine.OperandA[0]) {
                     case GL_SRC_ALPHA:
 	                vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_TOPA; 
     	                break;
@@ -2587,7 +2587,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_InvTOPA; 
                         break;
                     }
-	            switch (texUnit0->CombineOperandA[1]) {
+	            switch (texUnit0->Combine.OperandA[1]) {
                     case GL_SRC_ALPHA:
                 	vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAc_TOPA;
                         break;
@@ -2595,7 +2595,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAc_InvTOPA;
                         break;
                     }
-                    switch (texUnit0->CombineSourceA[0]) {
+                    switch (texUnit0->Combine.SourceA[0]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Atex;
                         break;
@@ -2609,7 +2609,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Adif;
                         break;
                     }
-                    switch (texUnit0->CombineSourceA[1]) {
+                    switch (texUnit0->Combine.SourceA[1]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAc_Atex;
                         break;
@@ -2623,7 +2623,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAc_Adif;
                         break;
                     }
-                    switch ((GLint)(texUnit0->CombineScaleShiftA)) {
+                    switch ((GLint)(texUnit0->Combine.ScaleShiftA)) {
                     case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAshift_No;
                         break;
@@ -2642,7 +2642,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         HC_HTXnTBLAa_TOPA | HC_HTXnTBLAa_HTXnTBLRA|
                         HC_HTXnTBLAc_TOPA | HC_HTXnTBLAc_HTXnTBLRA;
                     vmesa->regHTXnTBLRAa_0 = ( 255<<16 | 0<<8 |128 );
-                    switch (texUnit0->CombineOperandA[0]) {
+                    switch (texUnit0->Combine.OperandA[0]) {
                     case GL_SRC_ALPHA:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_TOPA; 
                         break;
@@ -2650,14 +2650,14 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_InvTOPA; 
                         break;
                     }
-                    switch (texUnit0->CombineOperandA[1]) {
+                    switch (texUnit0->Combine.OperandA[1]) {
                     case GL_SRC_ALPHA:
                         break;
                     case GL_ONE_MINUS_SRC_ALPHA:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAbias_Inv;
                         break;
                     }
-                    switch (texUnit0->CombineSourceA[0]) {
+                    switch (texUnit0->Combine.SourceA[0]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Atex;
                         break;
@@ -2671,7 +2671,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Adif;
                         break;
                     }
-                    switch (texUnit0->CombineSourceA[1]) {
+                    switch (texUnit0->Combine.SourceA[1]) {
             	    case GL_TEXTURE:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAbias_Atex; 
                         break;
@@ -2685,7 +2685,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAbias_Adif;
                         break;
                     }
-                    switch ((GLint)(texUnit0->CombineScaleShiftA)) {
+                    switch ((GLint)(texUnit0->Combine.ScaleShiftA)) {
                     case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAshift_No;
                         break;
@@ -2701,7 +2701,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAop_Sub;
                     vmesa->regHTXnTBLRAa_0 = 0x0;
                     vmesa->regHTXnTBLRFog_0 =  0x0;
-                    switch (texUnit0->CombineOperandA[0]) {
+                    switch (texUnit0->Combine.OperandA[0]) {
                     case GL_SRC_ALPHA:
                         vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAb_TOPA; 
                         break;
@@ -2709,7 +2709,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAb_InvTOPA; 
                         break;
                     }
-                    switch (texUnit0->CombineOperandA[1]) {
+                    switch (texUnit0->Combine.OperandA[1]) {
                     case GL_SRC_ALPHA:
                         vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAc_TOPA;
                         break;
@@ -2718,7 +2718,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAbias_Inv;
                         break;
                     }
-                    switch (texUnit0->CombineOperandA[2]) {
+                    switch (texUnit0->Combine.OperandA[2]) {
                     case GL_SRC_ALPHA:
                         vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAa_TOPA;
                         break;
@@ -2726,7 +2726,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAa_InvTOPA;
                         break;
                     }
-                    switch (texUnit0->CombineSourceA[0]) {
+                    switch (texUnit0->Combine.SourceA[0]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Atex;
                         break;
@@ -2740,7 +2740,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Adif;
                         break;
                     }
-                    switch (texUnit0->CombineSourceA[1]) {
+                    switch (texUnit0->Combine.SourceA[1]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAc_Atex;
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAbias_Atex;
@@ -2758,7 +2758,7 @@ void viaChooseTextureState(GLcontext *ctx)
 	                vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAbias_Adif;
                         break;
 	            }
-                    switch (texUnit0->CombineSourceA[2]) {
+                    switch (texUnit0->Combine.SourceA[2]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAa_Atex;
                         break;
@@ -2772,7 +2772,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAa_Adif;
                         break;
 	            }
-                    switch (texUnit0->CombineScaleShiftA) {
+                    switch (texUnit0->Combine.ScaleShiftA) {
                     case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAshift_No;
                         break;
@@ -3024,7 +3024,7 @@ void viaChooseTextureState(GLcontext *ctx)
                                        HC_HTXnTBLAb_TOPA | HC_HTXnTBLAb_HTXnTBLRA |
                                        HC_HTXnTBLAc_TOPA | HC_HTXnTBLAc_HTXnTBLRA;
                 vmesa->regHTXnTBLRAa_0 = 0x0;
-                switch (texUnit0->CombineOperandRGB[0]) {
+                switch (texUnit0->Combine.OperandRGB[0]) {
                 case GL_SRC_COLOR:
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_TOPC; 
 	            break;
@@ -3032,7 +3032,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_InvTOPC; 
                     break;
                 }
-                switch (texUnit0->CombineOperandRGB[1]) {
+                switch (texUnit0->Combine.OperandRGB[1]) {
                 case GL_SRC_COLOR:
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_TOPC; 
                     break;
@@ -3040,7 +3040,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_InvTOPC; 
                     break;
                 }
-                switch (texUnit0->CombineSourceRGB[0]) {
+                switch (texUnit0->Combine.SourceRGB[0]) {
                 case GL_TEXTURE:
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_Tex; 
                     break;
@@ -3056,7 +3056,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_Dif; 
                     break;
                 }
-                switch (texUnit0->CombineSourceRGB[1]) {
+                switch (texUnit0->Combine.SourceRGB[1]) {
                 case GL_TEXTURE:
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_Tex; 
                     break;
@@ -4204,11 +4204,11 @@ void viaChooseTextureState(GLcontext *ctx)
                 break;
 	    /*=* John Sheng [2003.7.18] texture combine *=*/
 	    case GL_COMBINE:
-		switch (texUnit1->CombineModeRGB) {
+		switch (texUnit1->Combine.ModeRGB) {
         	case GL_REPLACE:
-            	    switch (texUnit1->CombineSourceRGB[0]) {
+            	    switch (texUnit1->Combine.SourceRGB[0]) {
             	    case GL_TEXTURE:
-                	switch (texUnit1->CombineOperandRGB[0]) {
+                	switch (texUnit1->Combine.OperandRGB[0]) {
                 	case GL_SRC_COLOR:  
                     	    vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCsat_MASK |
                     	    HC_HTXnTBLCa_TOPC | HC_HTXnTBLCa_0 |
@@ -4252,7 +4252,7 @@ void viaChooseTextureState(GLcontext *ctx)
                 	CLAMPED_FLOAT_TO_UBYTE(texUnit1->EnvColor[1], g);
                 	CLAMPED_FLOAT_TO_UBYTE(texUnit1->EnvColor[2], b);
                 	CLAMPED_FLOAT_TO_UBYTE(texUnit1->EnvColor[3], a);
-                	switch (texUnit1->CombineOperandRGB[0]) {
+                	switch (texUnit1->Combine.OperandRGB[0]) {
                 	case GL_SRC_COLOR:  
                     	    vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCsat_MASK |
                     	    HC_HTXnTBLCa_TOPC | HC_HTXnTBLCa_0 |
@@ -4297,7 +4297,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     case GL_PRIMARY_COLOR :
-	                switch (texUnit1->CombineOperandRGB[0]) {
+	                switch (texUnit1->Combine.OperandRGB[0]) {
                         case GL_SRC_COLOR:  
                             vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCsat_MASK |
                             HC_HTXnTBLCa_TOPC | HC_HTXnTBLCa_0 |
@@ -4337,7 +4337,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     case GL_PREVIOUS :
-                        switch (texUnit1->CombineOperandRGB[0]) {
+                        switch (texUnit1->Combine.OperandRGB[0]) {
                         case GL_SRC_COLOR:  
                             vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCsat_MASK |
                             HC_HTXnTBLCa_TOPC | HC_HTXnTBLCa_0 |
@@ -4377,7 +4377,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     }
-                    switch ((GLint)(texUnit1->CombineScaleShiftRGB)) {
+                    switch ((GLint)(texUnit1->Combine.ScaleShiftRGB)) {
                     case 1:
 	                vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCshift_No;
     	                break;
@@ -4395,7 +4395,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     HC_HTXnTBLCbias_Cbias | HC_HTXnTBLCbias_0;
                     vmesa->regHTXnTBLMPfog_0 = HC_HTXnTBLMPfog_Fog;
                     vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCsat_MASK | HC_HTXnTBLCc_TOPC | HC_HTXnTBLCc_0;
-                    switch (texUnit1->CombineOperandRGB[0]) {
+                    switch (texUnit1->Combine.OperandRGB[0]) {
                     case GL_SRC_COLOR:
 	                vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_TOPC; 
                         AlphaCombine[0]=0;
@@ -4413,7 +4413,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[0]=1;
                         break;
                     }
-                    switch (texUnit1->CombineOperandRGB[1]) {
+                    switch (texUnit1->Combine.OperandRGB[1]) {
                     case GL_SRC_COLOR:
                         vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_TOPC; 
                         AlphaCombine[1]=0;
@@ -4431,7 +4431,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[1]=1;
                         break;
                     }
-                    switch (texUnit1->CombineSourceRGB[0]) {
+                    switch (texUnit1->Combine.SourceRGB[0]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[0]==0) {
                             vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_Tex; 
@@ -4470,7 +4470,7 @@ void viaChooseTextureState(GLcontext *ctx)
 	                }
     	                break;
                     }
-	            switch (texUnit1->CombineSourceRGB[1]) {
+	            switch (texUnit1->Combine.SourceRGB[1]) {
                     case GL_TEXTURE:
 	                if (AlphaCombine[1]==0) {
                     	    vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_Tex; 
@@ -4509,7 +4509,7 @@ void viaChooseTextureState(GLcontext *ctx)
 	                }
     	                break;
         	    }
-            	    switch ((GLint)(texUnit1->CombineScaleShiftRGB)) {
+            	    switch ((GLint)(texUnit1->Combine.ScaleShiftRGB)) {
                     case 1:
 	                vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCshift_No;
     	                break;
@@ -4523,7 +4523,7 @@ void viaChooseTextureState(GLcontext *ctx)
             	    break;
 	        case GL_ADD:
                 case GL_SUBTRACT :
-	            if (texUnit1->CombineModeRGB==GL_ADD) {
+	            if (texUnit1->Combine.ModeRGB==GL_ADD) {
                         vmesa->regHTXnTBLCop_0 = HC_HTXnTBLCop_Add |
                         HC_HTXnTBLCbias_Cbias | HC_HTXnTBLCbias_0;
                     }
@@ -4534,7 +4534,7 @@ void viaChooseTextureState(GLcontext *ctx)
     	            vmesa->regHTXnTBLMPfog_0 = HC_HTXnTBLMPfog_Fog;
         	    vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCsat_MASK | HC_HTXnTBLCa_TOPC | HC_HTXnTBLCa_HTXnTBLRC;
                     vmesa->regHTXnTBLRCa_0 = ( 255<<16 | 255<<8 |255 );
-                    switch (texUnit1->CombineOperandRGB[0]) {
+                    switch (texUnit1->Combine.OperandRGB[0]) {
                     case GL_SRC_COLOR:
 	                vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_TOPC; 
     	                AlphaCombine[0]=0;
@@ -4552,7 +4552,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[0]=1;
                         break;
                     }
-                    switch (texUnit1->CombineOperandRGB[1]) {
+                    switch (texUnit1->Combine.OperandRGB[1]) {
                     case GL_SRC_COLOR:
 	                vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCc_TOPC; 
     	                AlphaCombine[1]=0;
@@ -4570,7 +4570,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[1]=1;
                         break;
 	            }
-                    switch (texUnit1->CombineSourceRGB[0]) {
+                    switch (texUnit1->Combine.SourceRGB[0]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[0]==0) {
                             vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_Tex; 
@@ -4602,7 +4602,7 @@ void viaChooseTextureState(GLcontext *ctx)
 	                }
     	                break;
                     }
-                    switch (texUnit1->CombineSourceRGB[1]) {
+                    switch (texUnit1->Combine.SourceRGB[1]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[1]==0) {
                             vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCc_Tex; 
@@ -4634,7 +4634,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
 	                break;
     	            }
-        	    switch ((GLint)(texUnit1->CombineScaleShiftRGB)) {
+        	    switch ((GLint)(texUnit1->Combine.ScaleShiftRGB)) {
                     case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCshift_No;
                         break;
@@ -4654,7 +4654,7 @@ void viaChooseTextureState(GLcontext *ctx)
             	        HC_HTXnTBLCc_TOPC | HC_HTXnTBLCc_HTXnTBLRC;
             	    vmesa->regHTXnTBLRCa_0 = ( 255<<16 | 255<<8 |255 );
                     vmesa->regHTXnTBLRCc_0 = ( 128<<16 | 128<<8 |128 );
-                    switch (texUnit1->CombineOperandRGB[0]) {
+                    switch (texUnit1->Combine.OperandRGB[0]) {
                     case GL_SRC_COLOR:
                         vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_TOPC; 
                         AlphaCombine[0]=0;
@@ -4672,7 +4672,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[0]=1;
                         break;
                     }
-                    switch (texUnit1->CombineOperandRGB[1]) {
+                    switch (texUnit1->Combine.OperandRGB[1]) {
                     case GL_SRC_COLOR:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCbias_Cbias;
                         AlphaCombine[1]=0;
@@ -4690,7 +4690,7 @@ void viaChooseTextureState(GLcontext *ctx)
     	                AlphaCombine[1]=1;
                         break;
                     }
-                    switch (texUnit1->CombineSourceRGB[0]) {
+                    switch (texUnit1->Combine.SourceRGB[0]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[0]==0) {
                             vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_Tex; 
@@ -4722,7 +4722,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     }
-            	    switch (texUnit1->CombineSourceRGB[1]) {
+            	    switch (texUnit1->Combine.SourceRGB[1]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[1]==0) {
                             vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCbias_Tex; 
@@ -4754,7 +4754,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     }
-                    switch ((GLint)(texUnit1->CombineScaleShiftRGB)) {
+                    switch ((GLint)(texUnit1->Combine.ScaleShiftRGB)) {
                     case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCshift_No;
                         break;
@@ -4769,7 +4769,7 @@ void viaChooseTextureState(GLcontext *ctx)
                 case GL_INTERPOLATE :
                     vmesa->regHTXnTBLCop_0 = HC_HTXnTBLCop_Sub;
 	            vmesa->regHTXnTBLMPfog_0 = HC_HTXnTBLMPfog_Fog;
-    	            switch (texUnit1->CombineOperandRGB[0]) {
+    	            switch (texUnit1->Combine.OperandRGB[0]) {
                     case GL_SRC_COLOR:
 	                vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCb_TOPC; 
     	                AlphaCombine[0]=0;
@@ -4787,7 +4787,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[0]=1;
                         break;
                     }
-                    switch (texUnit1->CombineOperandRGB[1]) {
+                    switch (texUnit1->Combine.OperandRGB[1]) {
                     case GL_SRC_COLOR:
                         vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCc_TOPC;
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCbias_Cbias;
@@ -4809,7 +4809,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[1]=1;
                         break;
                     }
-                    switch (texUnit1->CombineOperandRGB[2]) {
+                    switch (texUnit1->Combine.OperandRGB[2]) {
                     case GL_SRC_COLOR:
                         vmesa->regHTXnTBLCsat_0 = HC_HTXnTBLCa_TOPC; 
                         AlphaCombine[2]=0;
@@ -4827,7 +4827,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         AlphaCombine[2]=1;
                         break;
                     }
-                    switch (texUnit1->CombineSourceRGB[0]) {
+                    switch (texUnit1->Combine.SourceRGB[0]) {
                     case GL_TEXTURE:
 	                if (AlphaCombine[0]==0) {
                     	    vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_Tex; 
@@ -4859,7 +4859,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     }
-                    switch (texUnit1->CombineSourceRGB[1]) {
+                    switch (texUnit1->Combine.SourceRGB[1]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[0]==0) {
                             vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCc_Tex; 
@@ -4898,7 +4898,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     }
-                    switch (texUnit1->CombineSourceRGB[2]) {
+                    switch (texUnit1->Combine.SourceRGB[2]) {
                     case GL_TEXTURE:
                         if (AlphaCombine[0]==0) {
                             vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_Tex; 
@@ -4930,7 +4930,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         }
                         break;
                     }
-                    switch ((GLint)(texUnit1->CombineScaleShiftRGB)) {
+                    switch ((GLint)(texUnit1->Combine.ScaleShiftRGB)) {
                     case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLCshift_No;
                         break;
@@ -4958,7 +4958,7 @@ void viaChooseTextureState(GLcontext *ctx)
                                            HC_HTXnTBLAb_TOPA | HC_HTXnTBLAb_HTXnTBLRA |
                                            HC_HTXnTBLAc_TOPA | HC_HTXnTBLAc_HTXnTBLRA;
                     vmesa->regHTXnTBLRAa_0 = 0x0;
-                    switch (texUnit1->CombineOperandRGB[0]) {
+                    switch (texUnit1->Combine.OperandRGB[0]) {
                     case GL_SRC_COLOR:
                         vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_TOPC; 
 	                break;
@@ -4966,7 +4966,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_InvTOPC; 
                         break;
                     }
-                    switch (texUnit1->CombineOperandRGB[1]) {
+                    switch (texUnit1->Combine.OperandRGB[1]) {
                     case GL_SRC_COLOR:
                         vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_TOPC; 
                         break;
@@ -4974,7 +4974,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_InvTOPC; 
                         break;
                     }
-                    switch (texUnit1->CombineSourceRGB[0]) {
+                    switch (texUnit1->Combine.SourceRGB[0]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_Tex; 
                         break;
@@ -4990,7 +4990,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_Dif; 
                         break;
                     }
-                    switch (texUnit1->CombineSourceRGB[1]) {
+                    switch (texUnit1->Combine.SourceRGB[1]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_Tex; 
                         break;
@@ -5009,11 +5009,11 @@ void viaChooseTextureState(GLcontext *ctx)
 	            break;
 		    
                 }
-	        switch (texUnit1->CombineModeA) {
+	        switch (texUnit1->Combine.ModeA) {
                 case GL_REPLACE:
-                    switch (texUnit1->CombineSourceA[0]) {
+                    switch (texUnit1->Combine.SourceA[0]) {
                     case GL_TEXTURE:
-                        switch (texUnit1->CombineOperandA[0]) {
+                        switch (texUnit1->Combine.OperandA[0]) {
                 	case GL_SRC_ALPHA:  
                             vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAsat_MASK |
                             HC_HTXnTBLAa_TOPA | HC_HTXnTBLAa_HTXnTBLRA |
@@ -5036,7 +5036,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         break;
                     case GL_CONSTANT :
                 	CLAMPED_FLOAT_TO_UBYTE(texUnit1->EnvColor[3], a);
-                        switch (texUnit1->CombineOperandA[0]) {
+                        switch (texUnit1->Combine.OperandA[0]) {
                         case GL_SRC_ALPHA:  
                             vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAsat_MASK |
                             HC_HTXnTBLAa_TOPA | HC_HTXnTBLAa_HTXnTBLRA |
@@ -5061,7 +5061,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         break;
                     case GL_PRIMARY_COLOR :
                     case GL_PREVIOUS :
-                        switch (texUnit1->CombineOperandA[0]) {
+                        switch (texUnit1->Combine.OperandA[0]) {
                         case GL_SRC_ALPHA:  
                             vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAsat_MASK |
                             HC_HTXnTBLAa_TOPA | HC_HTXnTBLAa_HTXnTBLRA |
@@ -5083,7 +5083,7 @@ void viaChooseTextureState(GLcontext *ctx)
     	                }
         	    break;
                     }
-                    switch ((GLint)(texUnit1->CombineScaleShiftA)) {
+                    switch ((GLint)(texUnit1->Combine.ScaleShiftA)) {
                     case 1:
 	                vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAshift_No;
                         break;
@@ -5101,7 +5101,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     vmesa->regHTXnTBLRFog_0 = 0x0;
                     vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAsat_MASK | HC_HTXnTBLAc_TOPA | HC_HTXnTBLAc_HTXnTBLRA;
 	            vmesa->regHTXnTBLRAa_0= 0x0;
-                    switch (texUnit1->CombineOperandA[0]) {
+                    switch (texUnit1->Combine.OperandA[0]) {
                     case GL_SRC_ALPHA:
 	                vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAa_TOPA; 
     	                break;
@@ -5109,7 +5109,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAa_InvTOPA; 
                         break;
                     }
-                    switch (texUnit1->CombineOperandA[1]) {
+                    switch (texUnit1->Combine.OperandA[1]) {
                     case GL_SRC_ALPHA:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_TOPA; 
                         break;
@@ -5117,7 +5117,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_InvTOPA; 
                         break;
                     }
-                    switch (texUnit1->CombineSourceA[0]) {
+                    switch (texUnit1->Combine.SourceA[0]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAa_Atex; 
                         break;
@@ -5131,7 +5131,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAa_Adif; 
                         break;
                     }
-                    switch (texUnit1->CombineSourceA[1]) {
+                    switch (texUnit1->Combine.SourceA[1]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Atex;
                         break;
@@ -5145,7 +5145,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Adif;
                         break;
                     }
-                    switch ((GLint)(texUnit1->CombineScaleShiftA)) {
+                    switch ((GLint)(texUnit1->Combine.ScaleShiftA)) {
 	            case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAshift_No;
                         break;
@@ -5159,7 +5159,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     break;
                 case GL_ADD:
                 case GL_SUBTRACT :
-                    if(texUnit1->CombineModeA==GL_ADD) {
+                    if(texUnit1->Combine.ModeA==GL_ADD) {
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAop_Add | HC_HTXnTBLAbias_HTXnTBLRAbias;
 	            }
     	            else {
@@ -5168,7 +5168,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     vmesa->regHTXnTBLRFog_0 = 0;
                     vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAsat_MASK | HC_HTXnTBLAa_TOPA | HC_HTXnTBLAa_HTXnTBLRA;
                     vmesa->regHTXnTBLRAa_0 = 0x0 |  ( 255<<16 );
-                    switch (texUnit1->CombineOperandA[0]) {
+                    switch (texUnit1->Combine.OperandA[0]) {
                     case GL_SRC_ALPHA:
 	                vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_TOPA; 
     	                break;
@@ -5176,7 +5176,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_InvTOPA; 
                         break;
                     }
-	            switch (texUnit1->CombineOperandA[1]) {
+	            switch (texUnit1->Combine.OperandA[1]) {
                     case GL_SRC_ALPHA:
                 	vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAc_TOPA;
                         break;
@@ -5184,7 +5184,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAc_InvTOPA;
                         break;
                     }
-                    switch (texUnit1->CombineSourceA[0]) {
+                    switch (texUnit1->Combine.SourceA[0]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Atex;
                         break;
@@ -5198,7 +5198,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Adif;
                         break;
                     }
-                    switch (texUnit1->CombineSourceA[1]) {
+                    switch (texUnit1->Combine.SourceA[1]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAc_Atex;
                         break;
@@ -5212,7 +5212,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAc_Adif;
                         break;
                     }
-                    switch ((GLint)(texUnit1->CombineScaleShiftA)) {
+                    switch ((GLint)(texUnit1->Combine.ScaleShiftA)) {
                     case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAshift_No;
                         break;
@@ -5231,7 +5231,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         HC_HTXnTBLAa_TOPA | HC_HTXnTBLAa_HTXnTBLRA|
                         HC_HTXnTBLAc_TOPA | HC_HTXnTBLAc_HTXnTBLRA;
                     vmesa->regHTXnTBLRAa_0 = ( 255<<16 | 0<<8 |128 );
-                    switch (texUnit1->CombineOperandA[0]) {
+                    switch (texUnit1->Combine.OperandA[0]) {
                     case GL_SRC_ALPHA:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_TOPA; 
                         break;
@@ -5239,14 +5239,14 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_InvTOPA; 
                         break;
                     }
-                    switch (texUnit1->CombineOperandA[1]) {
+                    switch (texUnit1->Combine.OperandA[1]) {
                     case GL_SRC_ALPHA:
                         break;
                     case GL_ONE_MINUS_SRC_ALPHA:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAbias_Inv;
                         break;
                     }
-                    switch (texUnit1->CombineSourceA[0]) {
+                    switch (texUnit1->Combine.SourceA[0]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Atex;
                         break;
@@ -5260,7 +5260,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Adif;
                         break;
                     }
-                    switch (texUnit1->CombineSourceA[1]) {
+                    switch (texUnit1->Combine.SourceA[1]) {
             	    case GL_TEXTURE:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAbias_Atex; 
                         break;
@@ -5274,7 +5274,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAbias_Adif;
                         break;
                     }
-                    switch ((GLint)(texUnit1->CombineScaleShiftA)) {
+                    switch ((GLint)(texUnit1->Combine.ScaleShiftA)) {
                     case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAshift_No;
                         break;
@@ -5290,7 +5290,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAop_Sub;
                     vmesa->regHTXnTBLRAa_0 = 0x0;
                     vmesa->regHTXnTBLRFog_0 =  0x0;
-                    switch (texUnit1->CombineOperandA[0]) {
+                    switch (texUnit1->Combine.OperandA[0]) {
                     case GL_SRC_ALPHA:
                         vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAb_TOPA; 
                         break;
@@ -5298,7 +5298,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAb_InvTOPA; 
                         break;
                     }
-                    switch (texUnit1->CombineOperandA[1]) {
+                    switch (texUnit1->Combine.OperandA[1]) {
                     case GL_SRC_ALPHA:
                         vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAc_TOPA;
                         break;
@@ -5307,7 +5307,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAbias_Inv;
                         break;
                     }
-                    switch (texUnit1->CombineOperandA[2]) {
+                    switch (texUnit1->Combine.OperandA[2]) {
                     case GL_SRC_ALPHA:
                         vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAa_TOPA;
                         break;
@@ -5315,7 +5315,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 = HC_HTXnTBLAa_InvTOPA;
                         break;
                     }
-                    switch (texUnit1->CombineSourceA[0]) {
+                    switch (texUnit1->Combine.SourceA[0]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Atex;
                         break;
@@ -5329,7 +5329,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAb_Adif;
                         break;
                     }
-                    switch (texUnit1->CombineSourceA[1]) {
+                    switch (texUnit1->Combine.SourceA[1]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAc_Atex;
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAbias_Atex;
@@ -5347,7 +5347,7 @@ void viaChooseTextureState(GLcontext *ctx)
 	                vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAbias_Adif;
                         break;
 	            }
-                    switch (texUnit1->CombineSourceA[2]) {
+                    switch (texUnit1->Combine.SourceA[2]) {
                     case GL_TEXTURE:
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAa_Atex;
                         break;
@@ -5361,7 +5361,7 @@ void viaChooseTextureState(GLcontext *ctx)
                         vmesa->regHTXnTBLAsat_0 |= HC_HTXnTBLAa_Adif;
                         break;
 	            }
-                    switch (texUnit1->CombineScaleShiftA) {
+                    switch (texUnit1->Combine.ScaleShiftA) {
                     case 1:
                         vmesa->regHTXnTBLCop_0 |= HC_HTXnTBLAshift_No;
                         break;
@@ -5614,7 +5614,7 @@ void viaChooseTextureState(GLcontext *ctx)
                                        HC_HTXnTBLAb_TOPA | HC_HTXnTBLAb_HTXnTBLRA |
                                        HC_HTXnTBLAc_TOPA | HC_HTXnTBLAc_HTXnTBLRA;
                 vmesa->regHTXnTBLRAa_0 = 0x0;
-                switch (texUnit1->CombineOperandRGB[0]) {
+                switch (texUnit1->Combine.OperandRGB[0]) {
                 case GL_SRC_COLOR:
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_TOPC; 
 	            break;
@@ -5622,7 +5622,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_InvTOPC; 
                     break;
                 }
-                switch (texUnit1->CombineOperandRGB[1]) {
+                switch (texUnit1->Combine.OperandRGB[1]) {
                 case GL_SRC_COLOR:
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_TOPC; 
                     break;
@@ -5630,7 +5630,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_InvTOPC; 
                     break;
                 }
-                switch (texUnit1->CombineSourceRGB[0]) {
+                switch (texUnit1->Combine.SourceRGB[0]) {
                 case GL_TEXTURE:
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_Tex; 
                     break;
@@ -5646,7 +5646,7 @@ void viaChooseTextureState(GLcontext *ctx)
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCa_Dif; 
                     break;
                 }
-                switch (texUnit1->CombineSourceRGB[1]) {
+                switch (texUnit1->Combine.SourceRGB[1]) {
                 case GL_TEXTURE:
                     vmesa->regHTXnTBLCsat_0 |= HC_HTXnTBLCb_Tex; 
                     break;
@@ -6007,8 +6007,7 @@ void viaChooseFogState(GLcontext *ctx)
         vmesa->dirty |= (VIA_UPLOAD_FOG | VIA_UPLOAD_ENABLE);
     }
     else {
-	if((!ctx->Texture.Unit[0]._ReallyEnabled) &&
-	   (!ctx->Texture.Unit[1]._ReallyEnabled)) {
+        if (!ctx->Texture._EnabledUnits) {
             vmesa->regCmdB &= ~ HC_HVPMSK_W;
     	    vmesa->regCmdB &= ~ HC_HVPMSK_Cs;
 	}	    
@@ -6339,7 +6338,6 @@ void viaInitStateFuncs(GLcontext *ctx)
      */
     ctx->Driver.AlphaFunc = viaAlphaFunc;
     ctx->Driver.BlendEquationSeparate = viaBlendEquationSeparate;
-    //ctx->Driver.BlendFunc = viaBlendFunc;
     ctx->Driver.BlendFuncSeparate = viaBlendFuncSeparate;
     ctx->Driver.ClearColor = viaClearColor;
     ctx->Driver.ColorMask = viaColorMask;

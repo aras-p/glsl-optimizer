@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_regs.h,v 1.3 2003/08/27 15:16:13 tsi Exp $ */
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -30,12 +29,12 @@
  *
  ************************************************************************/
 
-#ifndef _VIA_REGS_H_
-#define _VIA_REGS_H_ 1
+#ifndef _VIA_REGS_H
+#define _VIA_REGS_H
 
 #include "via_driver.h"
 
-#define VIA_SERIES(chip)  (chip == VIA_CLE266)
+/*#define VIA_SERIES(chip)  (chip == VIA_CLE266)*/
 
 
 /* Chip tags.  These are used to group the adapters into
@@ -47,6 +46,7 @@ enum VIACHIPTAGS {
     VIA_CLE266,
     VIA_KM400,
     VIA_K8M800,
+    VIA_PM800,
     VIA_LAST
 };
 
@@ -57,8 +57,8 @@ enum VIACHIPTAGS {
 #define PCI_CHIP_CLE3022        0x3022
 #define PCI_CHIP_VT3205         0x3205
 #define PCI_CHIP_VT7205         0x7205
-#define PCI_CHIP_VT3204         0x3204
-#define PCI_CHIP_VT7204         0x7204
+#define PCI_CHIP_VT3204         0x3108
+#define PCI_CHIP_VT3259         0x3118
 
 
 #define BIOS_BSIZE              1024
@@ -209,4 +209,4 @@ enum VIACHIPTAGS {
 #define VIAGETREG(addr)         *(volatile unsigned int *)(pVia->MapBase + (addr))
 
 
-#endif /* _VIA_REGS_H_ */
+#endif /* _VIA_REGS_H */

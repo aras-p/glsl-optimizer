@@ -304,11 +304,6 @@ static void TAG(render_tri_strip_verts)(GLcontext *ctx,
             currentsz = dmasz;
         }
 
-        if ((flags & PRIM_PARITY) && count - start > 2) {
-            EMIT_VERTS(ctx, start, 1);
-            currentsz--;
-        }
-
         /* From here on emit even numbers of tris when wrapping over buffers:
          */
         dmasz -= (dmasz & 1);

@@ -167,12 +167,12 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2)
 		else {
 	    	    GLfloat *vbindex = (GLfloat*) VB->IndexPtr[1]->data;
 	    	    if (!DO_FLAT) {
-                        //VERT_SAVE_IND( 0 );
-                        //VERT_SAVE_IND( 1 );
+                        VERT_SAVE_IND( 0 );
+                        VERT_SAVE_IND( 1 );
 			VERT_SET_IND(v[0], vbindex[e0]);
 			VERT_SET_IND(v[1], vbindex[e1]);
 	    	    }
-                    //VERT_SAVE_IND( 2 );
+                    VERT_SAVE_IND( 2 );
                     VERT_SET_IND(v[2], vbindex[e2]);
 		}
 	    }
@@ -269,20 +269,11 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2)
 	    }
         }
         else {
-#if 0   // XXX TODO _SOLO
-	    GLuint *vbindex = VB->IndexPtr[0]->data;
-	    if (!DO_FLAT) {
-		VERT_SET_IND(v[0], vbindex[e0]);
-		VERT_SET_IND(v[1], vbindex[e1]);
-	    }
-	    VERT_SET_IND(v[2], vbindex[e2]);
-#else
             if (!DO_FLAT) {
                 VERT_RESTORE_IND( 0 );
                 VERT_RESTORE_IND( 1 );
             }
             VERT_RESTORE_IND( 2 );
-#endif
         }
     }
 
@@ -419,14 +410,14 @@ static void TAG(quad)(GLcontext *ctx,
 		else {
 	    	    GLfloat *vbindex = (GLfloat*) VB->IndexPtr[1]->data;
                     if (!DO_FLAT) {
-                        //VERT_SAVE_IND( 0 );
-                        //VERT_SAVE_IND( 1 );
-                        //VERT_SAVE_IND( 2 );
+                        VERT_SAVE_IND( 0 );
+                        VERT_SAVE_IND( 1 );
+                        VERT_SAVE_IND( 2 );
 			VERT_SET_IND(v[0], vbindex[e0]);
 			VERT_SET_IND(v[1], vbindex[e1]);
 			VERT_SET_IND(v[2], vbindex[e2]);
 	    	    }
-                    //VERT_SAVE_IND( 3 );
+                    VERT_SAVE_IND( 3 );
                     VERT_SET_IND(v[3], vbindex[e3]);
 		}
 	    }
@@ -536,22 +527,12 @@ static void TAG(quad)(GLcontext *ctx,
 	    }
         }
         else {
-#if 0 // XXX TODO _SOLO
-	    GLuint *vbindex = VB->IndexPtr[0]->data;
-	    if (!DO_FLAT) {
-		VERT_SET_IND(v[0], vbindex[e0]);
-		VERT_SET_IND(v[1], vbindex[e1]);
-		VERT_SET_IND(v[2], vbindex[e2]);
-	    }
-	    VERT_SET_IND(v[3], vbindex[e3]);
-#else
             if (!DO_FLAT) {
                 VERT_RESTORE_IND( 0 );
                 VERT_RESTORE_IND( 1 );
                 VERT_RESTORE_IND( 2 );
             }
             VERT_RESTORE_IND( 3 );
-#endif
         }
     }
 

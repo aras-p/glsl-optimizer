@@ -27,8 +27,6 @@
 #include "imports.h"
 #include "macros.h"
 #include "colormac.h"
-/*#include "mmath.h" _SOLO*/
-/*#include "mem.h" _SOLO*/
 
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/t_context.h"
@@ -42,11 +40,11 @@
 static struct {
     void                (*emit)(GLcontext *, GLuint, GLuint, void *, GLuint);
     interp_func          interp;
-    copy_pv_func         copy_pv;
+    copy_pv_func         copyPv;
     GLboolean           (*check_tex_sizes)(GLcontext *ctx);
-    GLuint               vertex_size;
-    GLuint               vertex_stride_shift;
-    GLuint               vertex_format;
+    GLuint               vertexSize;
+    GLuint               vertexStrideShift;
+    GLuint               vertexFormat;
 } setup_tab[VIA_MAX_SETUP];
 
 #define TINY_VERTEX_FORMAT 	1
@@ -73,10 +71,10 @@ static struct {
 #define VERTEX_COLOR via_color_t
 #define GET_VIEWPORT_MAT() VIA_CONTEXT(ctx)->ViewportMatrix.m
 #define GET_TEXSOURCE(n)  n
-#define GET_VERTEX_FORMAT() VIA_CONTEXT(ctx)->vertex_size
-#define GET_VERTEX_SIZE() VIA_CONTEXT(ctx)->vertex_size
+#define GET_VERTEX_FORMAT() VIA_CONTEXT(ctx)->vertexSize
+#define GET_VERTEX_SIZE() VIA_CONTEXT(ctx)->vertexSize
 #define GET_VERTEX_STORE() VIA_CONTEXT(ctx)->verts
-#define GET_VERTEX_STRIDE_SHIFT() VIA_CONTEXT(ctx)->vertex_stride_shift
+#define GET_VERTEX_STRIDE_SHIFT() VIA_CONTEXT(ctx)->vertexStrideShift
 #define GET_UBYTE_COLOR_STORE() &VIA_CONTEXT(ctx)->UbyteColor
 #define GET_UBYTE_SPEC_COLOR_STORE() &VIA_CONTEXT(ctx)->UbyteSecondaryColor
 #define INVALIDATE_STORED_VERTICES()
@@ -103,7 +101,7 @@ static struct {
 #define IMPORT_FLOAT_SPEC_COLORS via_import_float_spec_colors
 
 #define INTERP_VERTEX setup_tab[VIA_CONTEXT(ctx)->setupIndex].interp
-#define COPY_PV_VERTEX setup_tab[VIA_CONTEXT(ctx)->setupIndex].copy_pv
+#define COPY_PV_VERTEX setup_tab[VIA_CONTEXT(ctx)->setupIndex].copyPv
 
 
 /***********************************************************************
@@ -263,7 +261,7 @@ void viaCheckTexSizes(GLcontext *ctx) {
         if (!vmesa->Fallback &&
             !(ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED))) {
             tnl->Driver.Render.Interp = setup_tab[vmesa->setupIndex].interp;
-            tnl->Driver.Render.CopyPV = setup_tab[vmesa->setupIndex].copy_pv;
+            tnl->Driver.Render.CopyPV = setup_tab[vmesa->setupIndex].copyPv;
         }
     }
 #ifdef DEBUG
@@ -277,8 +275,8 @@ void viaBuildVertices(GLcontext *ctx,
                       GLuint newinputs) 
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    GLubyte *v = ((GLubyte *)vmesa->verts + (start << vmesa->vertex_stride_shift));
-    GLuint stride = 1 << vmesa->vertex_stride_shift;
+    GLubyte *v = ((GLubyte *)vmesa->verts + (start << vmesa->vertexStrideShift));
+    GLuint stride = 1 << vmesa->vertexStrideShift;
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
 #endif
@@ -286,22 +284,22 @@ void viaBuildVertices(GLcontext *ctx,
     vmesa->setupNewInputs = 0;
     if (!newinputs)
         return;
-    if (newinputs & VERT_CLIP) {
+    if (newinputs & VERT_BIT_CLIP) {
         setup_tab[vmesa->setupIndex].emit(ctx, start, count, v, stride);
     }
     else {
         GLuint ind = 0;
 
-        if (newinputs & VERT_RGBA)
+        if (newinputs & VERT_BIT_COLOR0)
             ind |= VIA_RGBA_BIT;
 
         if (newinputs & VERT_BIT_COLOR1)
             ind |= VIA_SPEC_BIT;
 
-        if (newinputs & VERT_TEX(0))
+        if (newinputs & VERT_BIT_TEX0)
             ind |= VIA_TEX0_BIT;
 
-        if (newinputs & VERT_TEX(1))
+        if (newinputs & VERT_BIT_TEX1)
             ind |= VIA_TEX1_BIT;
 
         if (newinputs & VERT_BIT_FOG)
@@ -335,9 +333,9 @@ void viaChooseVertexState(GLcontext *ctx) {
     if (ctx->Fog.Enabled)
         ind |= VIA_FOG_BIT;
 
-    if (ctx->Texture.Unit[1]._ReallyEnabled)
+    if (ctx->Texture._EnabledUnits > 1)
         ind |= VIA_TEX1_BIT | VIA_TEX0_BIT;
-    else if (ctx->Texture.Unit[0]._ReallyEnabled)
+    else if (ctx->Texture._EnabledUnits == 1)
         ind |= VIA_TEX0_BIT;
 
     vmesa->setupIndex = ind;
@@ -351,11 +349,11 @@ void viaChooseVertexState(GLcontext *ctx) {
     }
     else {
         tnl->Driver.Render.Interp = setup_tab[ind].interp;
-        tnl->Driver.Render.CopyPV = setup_tab[ind].copy_pv;
+        tnl->Driver.Render.CopyPV = setup_tab[ind].copyPv;
     }
 
-        vmesa->vertex_size = setup_tab[ind].vertex_size;
-        vmesa->vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
+        vmesa->vertexSize = setup_tab[ind].vertexSize;
+        vmesa->vertexStrideShift = setup_tab[ind].vertexStrideShift;
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
 #endif
@@ -366,15 +364,15 @@ void via_emit_contiguous_verts(GLcontext *ctx,
                                GLuint start,
                                GLuint count) {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    GLuint vertex_size = vmesa->vertex_size * 4;
-    GLuint *dest = viaCheckDma(vmesa, (count - start) * vertex_size);
+    GLuint vertexSize = vmesa->vertexSize * 4;
+    GLuint *dest = viaCheckDma(vmesa, (count - start) * vertexSize);
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
     
     if (VIA_DEBUG) fprintf(stderr, "choose setup_tab[0x%x]\n", vmesa->setupIndex);    
 #endif
-    setup_tab[vmesa->setupIndex].emit(ctx, start, count, dest, vertex_size);
-    vmesa->dmaLow += (count - start) * vertex_size;
+    setup_tab[vmesa->setupIndex].emit(ctx, start, count, dest, vertexSize);
+    vmesa->dmaLow += (count - start) * vertexSize;
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
 #endif

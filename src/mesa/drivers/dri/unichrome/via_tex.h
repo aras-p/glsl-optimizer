@@ -27,7 +27,6 @@
 #define _VIATEX_H
 
 #include "mtypes.h"
-/*#include "mmath.h"*/
 #include "mm.h"
 
 #include "via_context.h"

@@ -46,7 +46,7 @@ GLuint nFirstFlip = GL_TRUE;
 #define SetReg2DAGP(nReg, nData) {              	\
     *((GLuint *)(vb)) = ((nReg) >> 2) | 0xF0000000;     \
     *((GLuint *)(vb) + 1) = (nData);          		\
-    vb += 2;		                  		\
+    vb = ((GLuint *)vb) + 2;                  		\
     vmesa->dmaLow +=8;					\
 }
 
@@ -463,20 +463,20 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     
     if(vmesa->currentPage) {
 	vmesa->currentPage = 0;
-	if (vmesa->glCtx->Color._DrawDestMask & BACK_LEFT_BIT) {
-		ctx->Driver.DrawBuffer(ctx, GL_BACK_LEFT);
+	if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+		ctx->Driver.DrawBuffer(ctx, GL_BACK);
 	}
 	else {
-		ctx->Driver.DrawBuffer(ctx, GL_FRONT_LEFT);
+		ctx->Driver.DrawBuffer(ctx, GL_FRONT);
 	}
     }
     else {
 	vmesa->currentPage = 1;
-	if (vmesa->glCtx->Color._DrawDestMask & BACK_LEFT_BIT) {
-		ctx->Driver.DrawBuffer(ctx, GL_BACK_LEFT);
+	if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
+		ctx->Driver.DrawBuffer(ctx, GL_BACK);
 	}
 	else {
-		ctx->Driver.DrawBuffer(ctx, GL_FRONT_LEFT);
+		ctx->Driver.DrawBuffer(ctx, GL_FRONT);
 	}
     }
 #ifdef DEBUG
@@ -1112,7 +1112,7 @@ void viaFillStencilDepthBuffer(viaContextPtr vmesa, GLuint pixel)
 	}
     }
 
-    if (vmesa->glCtx->Color._DrawDestMask & BACK_LEFT_BIT) {
+    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
 	viaFlushPrimsLocked(vmesa);
     }
 }
@@ -1180,7 +1180,7 @@ void viaFillStencilBuffer(viaContextPtr vmesa, GLuint pixel)
 	}
     }
 
-    if (vmesa->glCtx->Color._DrawDestMask & BACK_LEFT_BIT) {
+    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
 	viaFlushPrimsLocked(vmesa);
     }
 }
@@ -1265,7 +1265,7 @@ void viaFillDepthBuffer(viaContextPtr vmesa, GLuint pixel)
 	}
     }
     
-    if (vmesa->glCtx->Color._DrawDestMask & BACK_LEFT_BIT) {
+    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
 	viaFlushPrimsLocked(vmesa);
     }
 }
@@ -1556,9 +1556,9 @@ int flush_agp(viaContextPtr vmesa, drm_via_flush_agp_t* agpCmd)
 
     /*=* [DBG] make draw to front buffer *=*/
     if(DRAW_FRONT)
-	vmesa->glCtx->Color._DrawDestMask = FRONT_LEFT_BIT;
+	vmesa->glCtx->Color._DrawDestMask = __GL_FRONT_BUFFER_MASK;
     
-    if (vmesa->glCtx->Color._DrawDestMask & BACK_LEFT_BIT) {
+    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
 	
 	*vb++ = HC_HEADER2;
 	*vb++ = (HC_ParaType_NotTex << 16);
@@ -1712,7 +1712,7 @@ int flush_agp(viaContextPtr vmesa, drm_via_flush_agp_t* agpCmd)
     }
 
 #ifdef DEBUG
-    if (VIA_DEBUG && 0/*FIXME*/) {
+    if (VIA_DEBUG) {
         volatile GLuint *pnEngBase = (volatile GLuint *)((GLuint)pnMMIOBase + 0x400);
         int nStatus;
 	int i = 0;
@@ -1807,9 +1807,9 @@ int flush_agp_saam(viaContextPtr vmesa, drm_via_flush_agp_t* agpCmd)
 
     /*=* [DBG] make draw to front buffer *=*/
     if(DRAW_FRONT)
-	vmesa->glCtx->Color._DrawDestMask = FRONT_LEFT_BIT;
+	vmesa->glCtx->Color._DrawDestMask = __GL_FRONT_BUFFER_MASK;
     
-    if (vmesa->glCtx->Color._DrawDestMask & BACK_LEFT_BIT) {
+    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
 	
 	*vb++ = HC_HEADER2;
 	*vb++ = (HC_ParaType_NotTex << 16);
@@ -2035,7 +2035,8 @@ int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf)
     
     /*=* [DBG] make draw to front buffer *=*/
     if(DRAW_FRONT)
-	vmesa->glCtx->Color._DrawDestMask = FRONT_LEFT_BIT;
+	vmesa->glCtx->Color._DrawDestMask = __GL_FRONT_BUFFER_MASK;
+    
     
     /*=* John Sheng [2003.6.20] fix pci *=*/
     {
@@ -2049,8 +2050,21 @@ int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf)
 	    i++;
         }
     }
-
-    if (vmesa->glCtx->Color._DrawDestMask & BACK_LEFT_BIT) {
+    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
+    /*=* Disable VQ *=*/
+    if (vmesa->VQEnable)
+    {
+	WAIT_IDLE
+	*vmesa->regTranSet = 0x00fe0000;
+	*vmesa->regTranSet = 0x00fe0000;
+	*vmesa->regTranSpace = 0x00000004;
+	*vmesa->regTranSpace = 0x40008c0f;
+	*vmesa->regTranSpace = 0x44000000;
+	*vmesa->regTranSpace = 0x45080c04;
+	*vmesa->regTranSpace = 0x46800408;
+	vmesa->VQEnable = 0;
+    }
+    if (vmesa->glCtx->Color._DrawDestMask == __GL_BACK_BUFFER_MASK) {
 	*vb++ = HC_HEADER2;
 	*vb++ = (HC_ParaType_NotTex << 16);
 	
@@ -2213,5 +2227,62 @@ int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf)
 	    vb = head;
 	}
     }
+    /*=* John Sheng [2003.6.20] debug pci *=*/
+    if (VIA_DEBUG) {
+        GLuint *pnEngBase = (GLuint *)((GLuint)pnMMIOBase + 0x400);
+        int nStatus;
+	int i = 0;
+
+        while (1) {
+            nStatus = *pnEngBase;
+	    if ((nStatus & 0xFFFEFFFF) == 0x00020000) {
+		break;
+	    }
+	    else {
+		GLuint j;
+		GLuint *data;
+		data = (GLuint *)vmesa->dmaAddr;
+		/*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
+		GLuint k;
+		GLuint *ES;
+		ES = pnEngBase;
+
+		if (i == 500000) {
+		    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
+		    for (k =0 ; k < 35; k++) {
+			fprintf(stderr, "%02xh - %02xh\n", k*4 + 3, k*4);
+			fprintf(stderr, "%08x\n", *ES);
+			ES++;
+		    }
+		    fprintf(stderr, "current command buffer");
+		    fprintf(stderr, "i = %d\n", i);
+		    for (j = 0; j < vmesa->dmaLow; j += 16) {
+        	        fprintf(stderr, "%08x  ", *data++);
+			fprintf(stderr, "%08x  ", *data++);
+			fprintf(stderr, "%08x  ", *data++);
+			fprintf(stderr, "%08x\n", *data++);
+		    }
+		}
+		if (vmesa->dmaIndex) {
+		    data = (GLuint *)vmesa->dma[0].map;
+		}
+		else {
+		    data = (GLuint *)vmesa->dma[1].map;
+		}
+		if (i == 500000) {
+		    fprintf(stderr, "previous command buffer");
+		    fprintf(stderr, "i = %d\n", i);
+		    for (j = 0; j < dmaLow; j += 16) {
+        		fprintf(stderr, "%08x  ", *data++);
+			fprintf(stderr, "%08x  ", *data++);
+			fprintf(stderr, "%08x  ", *data++);
+			fprintf(stderr, "%08x\n", *data++);
+		    }
+		}
+	    }
+	    i++;
+        }
+    }
+    dmaLow = vmesa->dmaLow; 
     return 0;
 }

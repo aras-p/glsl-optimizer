@@ -114,7 +114,7 @@ tags:
 
 # Remove .o and backup files
 clean:
-	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o
+	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o server/*~
 
 
 include $(TOP)/Make-config

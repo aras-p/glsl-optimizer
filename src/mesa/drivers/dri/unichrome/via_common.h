@@ -60,12 +60,6 @@
 
 #define VIA_TEX_SETUP_SIZE 8
 
-#define DRM_VIA_ALLOCMEM    0
-#define DRM_VIA_FREEMEM     1
-#define DRM_VIA_AGP_INIT    2
-#define DRM_VIA_FB_INIT     3
-#define DRM_VIA_MAP_INIT    4
-
 #define VIA_FRONT   0x1
 #define VIA_BACK    0x2
 #define VIA_DEPTH   0x4

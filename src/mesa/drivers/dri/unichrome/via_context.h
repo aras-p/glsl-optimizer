@@ -242,8 +242,8 @@ struct via_context_t {
     /* Hardware state 
      */
     GLuint dirty;             
-    int vertex_size;
-    int vertex_stride_shift;
+    int vertexSize;
+    int vertexStrideShift;
     GLint lastStamp;
     GLboolean stippleInHw;
 
@@ -306,6 +306,8 @@ struct via_context_t {
     volatile GLuint* regTranSpace;
     GLuint* agpBase;
     GLuint drawType;
+    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
+    int VQEnable;
 };
 /*#define DMA_OFFSET 16*/
 #define DMA_OFFSET 32
@@ -460,27 +462,13 @@ extern void viaXMesaWindowMoved(viaContextPtr vmesa);
 
 /* TODO XXX _SOLO temp defines to make code compilable */
 #ifndef GLX_PBUFFER_BIT
-#define GLX_PBUFFER_BIT	0x00000004
+#define GLX_PBUFFER_BIT        0x00000004
 #endif
 #ifndef GLX_WINDOW_BIT
-#define GLX_WINDOW_BIT	0x00000001
+#define GLX_WINDOW_BIT 0x00000001
 #endif
-#ifndef VERT_CLIP
-#define VERT_CLIP       0x1000000
+#ifndef VERT_BIT_CLIP
+#define VERT_BIT_CLIP       0x1000000
 #endif
-#ifndef VERT_RGBA
-#define VERT_RGBA       0x2
-#endif
-#ifndef PRIM_PARITY
-#define PRIM_PARITY     0x400
-#endif
-#ifndef PRIM_LAST
-#define PRIM_LAST       0x800
-#endif
-#ifndef VERT_TEX
-#define VERT_TEX        _TNL_BIT_TEX
-#endif
-
-typedef enum Bool { FALSE, TRUE } Bool;
 
 #endif

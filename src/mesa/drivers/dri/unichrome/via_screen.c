@@ -22,7 +22,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/*#include <X11/Xlibint.h> _SOLO*/
 #include <stdio.h>
 
 #include "utils.h"
@@ -38,6 +37,7 @@
 #include "via_tris.h"
 #include "via_ioctl.h"
 #include "via_screen.h"
+#include "via_fb.h"
 
 #include "via_dri.h"
 extern viaContextPtr current_mesa;
@@ -91,6 +91,8 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 #ifndef _SOLO
     viaScreen->drixinerama = gDRIPriv->drixinerama;
 #endif
+    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
+    viaScreen->VQEnable = gDRIPriv->VQEnable;
 #ifdef DEBUG    
     if (VIA_DEBUG) {
 	fprintf(stderr, "deviceID = %08x\n", viaScreen->deviceID);
@@ -175,7 +177,6 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 #ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
 #endif    
-#if 0
     /*=* John Sheng [2003.7.2] for visual config & patch viewperf *=*/
     if (mesaVis->depthBits == 32 && vmesa->depthBits == 16) {
 	vmesa->depthBits = mesaVis->depthBits;
@@ -189,15 +190,10 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 	    return GL_FALSE;
 	}
 	
-	mesaVis->depthBits = 16;
+	((__GLcontextModes*)mesaVis)->depthBits = 16; /* XXX : sure you want to change read-only data? */
     }
-#endif    
     
     if (isPixmap) {
-#ifdef _SOLO
-        ASSERT(0);
-        return GL_FALSE; /* not implemented */
-#else
 	driDrawPriv->driverPrivate = (void *)
             _mesa_create_framebuffer(mesaVis,
                                      GL_FALSE,	/* software depth buffer? */
@@ -210,7 +206,6 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
         if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);				     
 #endif	
         return (driDrawPriv->driverPrivate != NULL);
-#endif
     }
     else {
         driDrawPriv->driverPrivate = (void *)

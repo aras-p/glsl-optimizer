@@ -39,6 +39,8 @@ typedef struct {
     int irqEnabled;
     unsigned int scrnX, scrnY;
     int sarea_priv_offset;
+    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
+    int VQEnable;
 } VIADRIRec, *VIADRIPtr;
 
 typedef struct {

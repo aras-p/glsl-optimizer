@@ -213,9 +213,6 @@ static void TAG(render_tri_strip)(GLcontext *ctx,
 #ifdef PERFORMANCE_MEASURE    
     if (VIA_PERFORMANCE) P_M;
 #endif    
-    if (TEST_PRIM_PARITY(flags))
-        parity = 1;
-
     INIT(GL_TRIANGLES);
     
     if (NEED_EDGEFLAG_SETUP) {

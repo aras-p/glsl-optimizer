@@ -24,7 +24,6 @@
 
 #include "glheader.h"
 #include "context.h"
-/*#include "mem.h"*/
 #include "matrix.h"
 #include "simple_list.h"
 #include "extensions.h"
@@ -585,12 +584,26 @@ void
 viaDestroyContext(__DRIcontextPrivate *driContextPriv)
 {
     viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
+    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
+    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+    viaScreenPrivate *viaScreen = (viaScreenPrivate *)sPriv->private;
 #ifdef DEBUG
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
 #endif
     assert(vmesa); /* should never be null */
     viaFlushPrimsLocked(vmesa);
     WAIT_IDLE
+    /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
+    /* Enable VQ */
+    if (viaScreen->VQEnable) {
+	*vmesa->regTranSet = 0x00fe0000;
+	*vmesa->regTranSet = 0x00fe0000;
+	*vmesa->regTranSpace = 0x00000006;
+	*vmesa->regTranSpace = 0x40008c0f;
+	*vmesa->regTranSpace = 0x44000000;
+	*vmesa->regTranSpace = 0x45080c04;
+	*vmesa->regTranSpace = 0x46800408;
+    }
     if (vmesa) {
 	/*=* John Sheng [2003.5.31] flip *=*/
 	if(vmesa->doPageFlip) {
@@ -680,11 +693,16 @@ void viaXMesaWindowMoved(viaContextPtr vmesa)
     GLuint side = 0;
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
     
-    GLuint destMask = vmesa->glCtx->Color._DrawDestMask;
-    if (destMask & FRONT_LEFT_BIT)
+    switch (vmesa->glCtx->Color._DrawDestMask) {
+    case __GL_FRONT_BUFFER_MASK: 
         viaXMesaSetFrontClipRects(vmesa);
-    if (destMask & BACK_LEFT_BIT)
+        break;
+    case __GL_BACK_BUFFER_MASK:
         viaXMesaSetBackClipRects(vmesa);
+        break;
+    default:
+        break;
+    }
 
 #ifdef _SOLO
     vmesa->viaScreen->fbOffset = 0;
@@ -1073,11 +1091,7 @@ void viaGetLock(viaContextPtr vmesa, GLuint flags)
 	    DRM_UNLOCK(psp->fd, &psp->pSAREA->lock,
 		   pdp->driContextPriv->hHWContext);
 	    DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
-#ifdef _SOLO
             __driUtilUpdateDrawableInfo(dPriv);
-#else
-	    __driUtilUpdateDrawableInfo(vmesa->display, psp->myNum, dPriv);
-#endif
 	    DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 	    DRM_LIGHT_LOCK(psp->fd, &psp->pSAREA->lock,
 	    	       pdp->driContextPriv->hHWContext);
@@ -1111,14 +1125,10 @@ void viaLock(viaContextPtr vmesa, GLuint flags)
 	
 	DRM_SPINLOCK(&sPriv->pSAREA->drawable_lock, sPriv->drawLockID);
 
-#ifdef _SOLO
-        __driUtilUpdateDrawableInfo(dPriv);
-#else
 	if (scrn == S1)
-	    __driUtilUpdateDrawableInfo(vmesa->display, scrn, dPriv);
+	    __driUtilUpdateDrawableInfo(dPriv);
 	else
-	    DRI_VALIDATE_DRAWABLE_INFO_ONCE(vmesa->display, scrn, dPriv);
-#endif
+	    DRI_VALIDATE_DRAWABLE_INFO_ONCE(dPriv);
 	    
 	viaXMesaWindowMoved(vmesa);
 	DRM_SPINUNLOCK(&sPriv->pSAREA->drawable_lock, sPriv->drawLockID);
@@ -1161,11 +1171,7 @@ viaSwapBuffers(__DRIdrawablePrivate *drawablePrivate)
         vmesa = (viaContextPtr)dPriv->driContextPriv->driverPrivate;
         ctx = vmesa->glCtx;
         if (ctx->Visual.doubleBufferMode) {
-#ifdef _SOLO
             _mesa_notifySwapBuffers(ctx);
-#else
-            _mesa_swapbuffers(ctx);
-#endif
             if (vmesa->doPageFlip) {
                 viaPageFlip(dPriv);
             }
