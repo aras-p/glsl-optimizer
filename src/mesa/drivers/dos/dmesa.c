@@ -25,7 +25,7 @@
 /*
  * DOS/DJGPP device driver v1.6 for Mesa
  *
- *  Copyright (c) 2003 - Borca Daniel
+ *  Copyright (c) 2003 - Daniel Borca
  *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
@@ -753,7 +753,7 @@ static void clear (GLcontext *ctx, GLbitfield mask, GLboolean all,
        if (all) {
           vl_clear(color);
        } else {
-          vl_rect(x, y, width, height, color);
+          vl_rect(x, c->buffer->height - y - height, width, height, color);
        }
 
        mask &= ~DD_BACK_LEFT_BIT;
@@ -806,8 +806,7 @@ static const GLubyte* get_string (GLcontext *ctx, GLenum name)
 {
  switch (name) {
         case GL_RENDERER:
-             return (const GLubyte *)"Mesa DJGPP"
-                                     "\0port (c) Borca Daniel feb-2004";
+             return (const GLubyte *)"Mesa DJGPP";
         default:
              return NULL;
  }
