@@ -43,7 +43,6 @@ CORE_SOURCES =accum.c \
 	fog.c \
 	get.c \
 	glapi.c \
-	glapinoop.c \
 	glthread.c \
 	hash.c \
 	highpc.c \
@@ -195,7 +194,6 @@ feedback.obj,\
 fog.obj,\
 get.obj,\
 glapi.obj,\
-glapinoop.obj,\
 glthread.obj,\
 hash.obj,\
 highpc.obj,\
