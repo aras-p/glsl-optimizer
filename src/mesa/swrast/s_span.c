@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.32 2002/02/06 03:22:47 brianp Exp $ */
+/* $Id: s_span.c,v 1.33 2002/02/14 00:39:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -936,7 +936,6 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
    }
    else {
       /* normal: write to exactly one buffer */
-#if 1
       if (ctx->Color.ColorLogicOpEnabled) {
          _mesa_logicop_rgba_span(ctx, span, span->color.rgba);
          monoColor = GL_FALSE;
@@ -945,7 +944,7 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
          _mesa_blend_span(ctx, span, span->color.rgba);
          monoColor = GL_FALSE;
       }
-#endif
+
       /* Color component masking */
       if (colorMask != 0xffffffff) {
          _mesa_mask_rgba_span(ctx, span, span->color.rgba);
@@ -1163,11 +1162,13 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
    /* Fog */
    /* XXX try to simplify the fog code! */
    if (ctx->Fog.Enabled) {
-      if ((span->arrayMask & SPAN_FOG) && !swrast->_PreferPixelFog)
+      if ((span->arrayMask & SPAN_FOG) && !swrast->_PreferPixelFog) {
 	 _mesa_fog_rgba_pixels_with_array( ctx, span, span->fogArray,
                                            span->color.rgba);
-      else if ((span->interpMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
+      }
+      else if ((span->interpMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog) {
 	 _mesa_fog_rgba_pixels( ctx, span, span->color.rgba );
+      }
       else {
          if ((span->interpMask & SPAN_Z) && (span->arrayMask & SPAN_Z) == 0)
             interpolate_z(ctx, span);
@@ -1192,7 +1193,7 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
       if (ctx->Color.ColorLogicOpEnabled) {
          _mesa_logicop_rgba_span(ctx, span, span->color.rgba);
       }
-      else  if (ctx->Color.BlendEnabled) {
+      else if (ctx->Color.BlendEnabled) {
          _mesa_blend_span(ctx, span, span->color.rgba);
       }
 
