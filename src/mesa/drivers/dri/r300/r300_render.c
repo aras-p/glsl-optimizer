@@ -168,6 +168,12 @@ static void r300_render_flat_primitive(r300ContextPtr rmesa,
    LOCAL_VARS
        	
    type=r300_get_primitive_type(rmesa, ctx, start, end, prim);
+		
+		fprintf(stderr,"ObjPtr: size=%d stride=%d\n", 
+			VB->ObjPtr->size, VB->ObjPtr->stride);
+		fprintf(stderr,"ColorPtr[0]: size=%d stride=%d\n", 
+			VB->ColorPtr[0]->size, VB->ColorPtr[0]->stride);
+   
    if(type<0)return;
 
 
@@ -275,7 +281,8 @@ static GLboolean r300_run_flat_render(GLcontext *ctx,
 
 /* We use the start part of GART texture buffer for vertices */
 
-#define R300_MAX_AOS_ARRAYS		16
+/* 8 is somewhat bogus... it is probably something like 24 */
+#define R300_MAX_AOS_ARRAYS		8
 
 static void upload_vertex_buffer(r300ContextPtr rmesa, 
 	GLcontext *ctx, AOS_DATA *array, int *n_arrays)
@@ -300,7 +307,7 @@ static void upload_vertex_buffer(r300ContextPtr rmesa,
 			} else { \
 			for(i=0;i<VB->Count;i++){ \
 				/* copy one vertex at a time*/ \
-				memcpy(rsp->gartTextures.map+offset, VEC_ELT(v, GLfloat, i), v->size*4); \
+				memcpy(rsp->gartTextures.map+offset+i*v->size*4, VEC_ELT(v, GLfloat, i), v->size*4); \
 				} \
 			} \
 		/* v->flags &= ~((1<<v->size)-1);*/ \
@@ -311,26 +318,10 @@ static void upload_vertex_buffer(r300ContextPtr rmesa,
 	array[idx].ncomponents=v->size; \
 	array[idx].offset=rsp->gartTextures.handle+offset; \
 	array[idx].reg=r; \
-	offset+=v->size*4*VB->Count; \
+	offset+=v->size*4*VB->Count+16; \
 	idx++; \
-	/* Fill in the rest with the components of default_vector */\
-	/* \
-	if(v->size<4){ \
-		array[idx].element_size=4-v->size; \
-		array[idx].stride=0; \
-		array[idx].format=(f); \
-		array[idx].ncomponents=4-v->size; \
-		array[idx].offset=rsp->gartTextures.handle+v->size*4;\
-		array[idx].reg=r; \
-		idx++; \
-		} \
-	*/\
 	}
 	
-/* Put a copy of default vector */
-memcpy(rsp->gartTextures.map, default_vector, 16);
-offset+=16;
-		
 UPLOAD_VECTOR(VB->ObjPtr, REG_COORDS, AOS_FORMAT_FLOAT);
 UPLOAD_VECTOR(VB->ColorPtr[0], REG_COLOR0, AOS_FORMAT_FLOAT_COLOR);
 
@@ -406,6 +397,8 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
    FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[1]=0.0;
    FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[2]=1.0;
    FLAT_COLOR_PIPELINE.vertex_shader.unknown2.body.f[3]=0.0;
+
+   FLAT_COLOR_PIPELINE.vap_input_route_1[0]=0xf688f688;
    
    program_pipeline(PASS_PREFIX &FLAT_COLOR_PIPELINE);
       
@@ -423,7 +416,7 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
         /* copy arrays */
         memcpy(vb_arrays2, vb_arrays, sizeof(AOS_DATA)*n_arrays);
 	for(j=0;j<n_arrays;j++){
-		vb_arrays2[j].offset+=vb_arrays2[j].stride*start;
+		vb_arrays2[j].offset+=vb_arrays2[j].stride*start*4;
 		}
 		
         setup_AOS(PASS_PREFIX vb_arrays2, n_arrays);
@@ -438,6 +431,223 @@ static GLboolean r300_run_vb_flat_render(GLcontext *ctx,
    fprintf(stderr, "\n");
    return GL_FALSE;
 }
+
+/* Textures... */
+
+/* Immediate implementation - vertex data is sent via command stream */
+
+static void r300_render_tex_primitive(r300ContextPtr rmesa, 
+	GLcontext *ctx,
+	int start,
+	int end,
+	int prim)
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint i;
+   int k, type;
+   LOCAL_VARS
+       	
+   type=r300_get_primitive_type(rmesa, ctx, start, end, prim);
+		
+		fprintf(stderr,"ObjPtr: size=%d stride=%d\n", 
+			VB->ObjPtr->size, VB->ObjPtr->stride);
+		fprintf(stderr,"ColorPtr[0]: size=%d stride=%d\n", 
+			VB->ColorPtr[0]->size, VB->ColorPtr[0]->stride);
+   
+   if(type<0)return;
+
+
+   start_immediate_packet(end-start, type, 8);
+
+	for(i=start;i<end;i++){
+		#if 0
+		fprintf(stderr, "* (%f %f %f %f) (%f %f %f %f)\n", 
+			VEC_ELT(VB->ObjPtr, GLfloat, i)[0],
+			VEC_ELT(VB->ObjPtr, GLfloat, i)[1],
+			VEC_ELT(VB->ObjPtr, GLfloat, i)[2],
+			VEC_ELT(VB->ObjPtr, GLfloat, i)[3],
+			
+			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[0],
+			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[1],
+			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[2],
+			VEC_ELT(VB->ColorPtr[0], GLfloat, i)[3]
+			);
+		#endif
+		
+		
+		/* coordinates */
+		output_vector(VB->ObjPtr, i);
+		
+		/* color components */
+		output_vector(VB->TexCoordPtr[0], i);
+		}
+
+}
+
+static GLboolean r300_run_tex_render(GLcontext *ctx,
+				 struct tnl_pipeline_stage *stage)
+{
+   r300ContextPtr rmesa = R300_CONTEXT(ctx);
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint i;
+   AOS_DATA vb_arrays[2];
+   /* Only do 2d textures */
+   struct gl_texture_object *to=ctx->Texture.Unit[0].Current2D;
+   radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
+   LOCAL_VARS
+	
+   
+   fprintf(stderr, "%s Fixme ! I am broken\n", __FUNCTION__);
+   return GL_TRUE;
+   
+	if (RADEON_DEBUG == DEBUG_PRIMS)
+		fprintf(stderr, "%s\n", __FUNCTION__);
+
+   /* setup array of structures data */
+
+   /* Note: immediate vertex data includes all coordinates.
+     To save bandwidth use either VBUF or state-based vertex generation */
+    /* xyz */
+   vb_arrays[0].element_size=4;
+   vb_arrays[0].stride=4;
+   vb_arrays[0].offset=0; /* Not used */
+   vb_arrays[0].format=AOS_FORMAT_FLOAT;
+   vb_arrays[0].ncomponents=4;
+   vb_arrays[0].reg=REG_COORDS;
+
+    /* color */
+   vb_arrays[1].element_size=4;
+   vb_arrays[1].stride=4;
+   vb_arrays[1].offset=0; /* Not used */
+   vb_arrays[1].format=AOS_FORMAT_FLOAT;
+   vb_arrays[1].ncomponents=4;
+   vb_arrays[1].reg=REG_TEX0;
+
+   
+   /* needed before starting 3d operation .. */
+   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
+	e32(0x0000000a);
+   
+   reg_start(0x4f18,0);
+	e32(0x00000003);
+	
+   r300EmitState(rmesa);
+   
+   reg_start(0x20b0,0);
+	e32(0x0000043f);
+   
+   SINGLE_TEXTURE_PIPELINE.vertex_shader.matrix[0].length=16;
+   memcpy(SINGLE_TEXTURE_PIPELINE.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
+
+   SINGLE_TEXTURE_PIPELINE.vertex_shader.unknown2.length=4;
+   SINGLE_TEXTURE_PIPELINE.vertex_shader.unknown2.body.f[0]=0.0;
+   SINGLE_TEXTURE_PIPELINE.vertex_shader.unknown2.body.f[1]=0.0;
+   SINGLE_TEXTURE_PIPELINE.vertex_shader.unknown2.body.f[2]=1.0;
+   SINGLE_TEXTURE_PIPELINE.vertex_shader.unknown2.body.f[3]=0.0;
+
+   /* Put it in the beginning of texture memory */
+   SINGLE_TEXTURE_PIPELINE.texture_unit[0].offset=rsp->gartTextures.handle;
+   
+   /* Upload texture, a hack, really  we can do a lot better */
+   #if 0
+   memcpy(rsp->gartTextures.map, to->Image[0][0]->Data, to->Image[0][0]->RowStride*to->Image[0][0]->Height*4);
+   #endif
+
+reg_start(0x4e0c,0);
+	e32(0x0000000f);
+
+reg_start(0x427c,1);
+	/* XG_427c(427c) */
+	e32(0x00000000);
+	/* XG_4280(4280) */
+	e32(0x00000000);
+
+reg_start(0x4e04,1);
+	/* XG_4e04(4e04) */
+	e32(0x20220000);
+	/* XG_4e08(4e08) */
+	e32(0x00000000);
+
+reg_start(0x4f14,0);
+	e32(0x00000001);
+
+reg_start(0x4f1c,0);
+	e32(0x00000000);
+
+/* gap */
+sync_VAP(PASS_PREFIX_VOID);
+
+reg_start(R300_RS_CNTL_0,1);
+	/* R300_RS_CNTL_0(4300) */
+	e32(0x00040084);
+	/* RS_INST_COUNT(4304) */
+	e32(0x000000c0);
+
+reg_start(R300_RS_ROUTE_0,0);
+	e32(0x00024008);
+
+reg_start(R300_RS_INTERP_0,7);
+	/* X_MEM0_0(4310) */
+	e32(0x00d10000);
+	/* X_MEM0_1(4314) */
+	e32(0x00d10044);
+	/* X_MEM0_2(4318) */
+	e32(0x00d10084);
+	/* X_MEM0_3(431c) */
+	e32(0x00d100c4);
+	/* X_MEM0_4(4320) */
+	e32(0x00d10004);
+	/* X_MEM0_5(4324) */
+	e32(0x00d10004);
+	/* X_MEM0_6(4328) */
+	e32(0x00d10004);
+	/* X_MEM0_7(432c) */
+	e32(0x00d10004);
+
+reg_start(0x221c,0);
+	e32(0x00000000);
+
+reg_start(0x20b0,0);
+	e32(0x0000043f);
+
+reg_start(0x4bd8,0);
+	e32(0x00000000);
+
+reg_start(0x4e04,0);
+	e32(0x20220000);
+
+reg_start(0x20b4,0);
+	e32(0x0000000c);
+
+reg_start(0x4288,0);
+	e32(0x00000000);
+
+reg_start(0x4e0c,0);
+	e32(0x0000000f);
+  
+  reg_start(R300_RS_CNTL_0,0);
+	e32(0x00040084);
+   
+   program_pipeline(PASS_PREFIX &SINGLE_TEXTURE_PIPELINE);
+   
+   /* We need LOAD_VBPNTR to setup AOS_ATTR fields.. the offsets are irrelevant */
+   setup_AOS(PASS_PREFIX vb_arrays, 2);
+   
+   for(i=0; i < VB->PrimitiveCount; i++){
+       GLuint prim = VB->Primitive[i].mode;
+       GLuint start = VB->Primitive[i].start;
+       GLuint length = VB->Primitive[i].count;
+	r300_render_tex_primitive(rmesa, ctx, start, start + length, prim);
+   	}
+	
+   end_3d(PASS_PREFIX_VOID);
+   
+   fprintf(stderr, "\n");
+   return GL_FALSE;
+}
+
 
 /**
  * Called by the pipeline manager to render a batch of primitives.
@@ -457,7 +667,11 @@ static GLboolean r300_run_render(GLcontext *ctx,
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
    #if 1
-        return r300_run_flat_render(ctx, stage);
+   	/* Just switch between pipelines.. We could possibly do better.. (?) */
+        if(ctx->Texture.Unit[0].Enabled)
+        	return r300_run_tex_render(ctx, stage);
+		else
+        	return r300_run_vb_flat_render(ctx, stage);
    #else
 	return GL_TRUE;
    #endif
@@ -550,7 +764,8 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
 	FALLBACK_IF(ctx->Multisample.Enabled); // GL_MULTISAMPLE_ARB
 
-	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+	/* One step at a time - let one texture pass.. */
+	for (i = 1; i < ctx->Const.MaxTextureUnits; i++)
 		FALLBACK_IF(ctx->Texture.Unit[i].Enabled);
 
 
