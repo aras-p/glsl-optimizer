@@ -1,4 +1,4 @@
-/* $Id: t_dd_vbtmp.h,v 1.14 2001/05/03 16:49:28 keithw Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.15 2001/12/20 09:54:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -624,7 +624,7 @@ static void TAG(interp)( GLcontext *ctx,
 
    if ((HAVE_HW_DIVIDE && CHECK_HW_DIVIDE) || 
        DO_FOG || DO_SPEC || DO_TEX0 || DO_TEX1 ||
-       DO_TEX2 || DO_TEX3) {
+       DO_TEX2 || DO_TEX3 || !HAVE_TINY_VERTICES) {
 
       dst->v.w = w;
 
@@ -729,7 +729,7 @@ static void TAG(init)( void )
    if (DO_SPEC)
       setup_tab[IND].copy_pv = copy_pv_rgba4_spec5;
    else if (HAVE_HW_DIVIDE || DO_SPEC || DO_FOG || DO_TEX0 || DO_TEX1 ||
-	    DO_TEX2 || DO_TEX3)
+	    DO_TEX2 || DO_TEX3 || !HAVE_TINY_VERTICES)
       setup_tab[IND].copy_pv = copy_pv_rgba4;
    else
       setup_tab[IND].copy_pv = copy_pv_rgba3;
