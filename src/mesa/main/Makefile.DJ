@@ -1,4 +1,4 @@
-# $Id: Makefile.DJ,v 1.5 2000/02/21 23:24:02 brianp Exp $
+# $Id: Makefile.DJ,v 1.6 2000/03/24 20:56:50 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -98,6 +98,7 @@ CORE_SOURCES = \
 	texobj.c \
 	texstate.c \
 	texture.c \
+	texutil.c \
 	translate.c \
 	triangle.c \
 	varray.c \
