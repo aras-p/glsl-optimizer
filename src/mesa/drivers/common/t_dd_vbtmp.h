@@ -70,8 +70,7 @@
  * DO_TEX3:  Emit tex3 u,v coordinates.
  * DO_PTEX:  Emit tex0,1,2,3 q coordinates where possible.
  *
- * HAVE_RGBA_COLOR: Hardware takes color in rgba order.
- * HAVE_BGRA_COLOR: Hardware takes color in bgra order.
+ * HAVE_RGBA_COLOR: Hardware takes color in rgba order (else bgra).
  *
  * HAVE_HW_VIEWPORT:  Hardware performs viewport transform.
  * HAVE_HW_DIVIDE:  Hardware performs perspective divide.
@@ -91,16 +90,20 @@
  */
 
 #if (HAVE_HW_VIEWPORT)
-#define VIEWPORT_X(x) x
-#define VIEWPORT_Y(x) x
-#define VIEWPORT_Z(x) x
+#define VIEWPORT_X(dst,x) dst = x
+#define VIEWPORT_Y(dst,y) dst = y
+#define VIEWPORT_Z(dst,z) dst = z
 #else
-#define VIEWPORT_X(x) (s[0]  * x + s[12])
-#define VIEWPORT_Y(y) (s[5]  * y + s[13])
-#define VIEWPORT_Z(z) (s[10] * z + s[14])
+#define VIEWPORT_X(dst,x) dst = s[0]  * x + s[12]
+#define VIEWPORT_Y(dst,y) dst = s[5]  * y + s[13]
+#define VIEWPORT_Z(dst,z) dst = s[10] * z + s[14]
 #endif
 
-#if (HAVE_HW_DIVIDE || DO_RGBA || DO_XYZW || !HAVE_TINY_VERTICES)
+#if (HAVE_HW_DIVIDE && !HAVE_PTEX_VERTICES)
+#error "can't cope with this combination"
+#endif
+
+#if (HAVE_HW_DIVIDE || DO_SPEC || DO_TEX0 || DO_FOG || !HAVE_TINY_VERTICES)
 
 static void TAG(emit)( GLcontext *ctx,
 		       GLuint start, GLuint end,
@@ -109,14 +112,20 @@ static void TAG(emit)( GLcontext *ctx,
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLfloat (*tc0)[4], (*tc1)[4], *fog;
+   GLfloat (*tc2)[4], (*tc3)[4];
    GLubyte (*col)[4], (*spec)[4];
    GLuint tc0_stride, tc1_stride, col_stride, spec_stride, fog_stride;
+   GLuint tc2_stride, tc3_stride;
    GLuint tc0_size, tc1_size;
+   GLuint tc2_size, tc3_size;
    GLfloat (*coord)[4];
    GLuint coord_stride;
    VERTEX *v = (VERTEX *)dest;
    const GLfloat *s = GET_VIEWPORT_MAT();
+   const GLubyte *mask = VB->ClipMask;
    int i;
+
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    if (HAVE_HW_VIEWPORT && HAVE_HW_DIVIDE) {
       (void) s;
@@ -128,52 +137,58 @@ static void TAG(emit)( GLcontext *ctx,
       coord_stride = VB->ProjectedClipPtr->stride;
    }
 
-   if (DO_TEX0) {
-      tc0_stride = VB->TexCoordPtr[0]->stride;
-      tc0 = VB->TexCoordPtr[0]->data;
-      if (DO_PTEX) 
-	 tc0_size = VB->TexCoordPtr[0]->size;
+   if (DO_TEX3) {
+      const GLuint t3 = GET_TEXSOURCE(3);
+
+      if (VB->TexCoordPtr[2] == 0) {
+	 if (VB->TexCoordPtr[1] == 0) {
+	    if (VB->TexCoordPtr[0] == 0) 
+	       VB->TexCoordPtr[0] = VB->TexCoordPtr[t3];
+	    VB->TexCoordPtr[1] = VB->TexCoordPtr[t3];
+	 }
+	 VB->TexCoordPtr[2] = VB->TexCoordPtr[t3];
+      }
+
+      tc3 = VB->TexCoordPtr[t3]->data;
+      tc3_stride = VB->TexCoordPtr[t3]->stride;
+      if (DO_PTEX)
+	 tc3_size = VB->TexCoordPtr[t3]->size;
    }
 
+   if (DO_TEX2) {
+      const GLuint t2 = GET_TEXSOURCE(2);
+
+      if (VB->TexCoordPtr[1] == 0) {
+	 if (VB->TexCoordPtr[0] == 0)
+	    VB->TexCoordPtr[0] = VB->TexCoordPtr[t2];
+	 VB->TexCoordPtr[1] = VB->TexCoordPtr[t2];
+      }
+
+      tc2 = VB->TexCoordPtr[t2]->data;
+      tc2_stride = VB->TexCoordPtr[t2]->stride;
+      if (DO_PTEX)
+	 tc2_size = VB->TexCoordPtr[t2]->size;
+   }
+
+
    if (DO_TEX1) {
+      const GLuint t1 = GET_TEXSOURCE(1);
       if (VB->TexCoordPtr[0] == 0)
-	 VB->TexCoordPtr[0] = VB->TexCoordPtr[1];
-	 
+	 VB->TexCoordPtr[0] = VB->TexCoordPtr[t1];
       tc1 = VB->TexCoordPtr[1]->data;
       tc1_stride = VB->TexCoordPtr[1]->stride;
       if (DO_PTEX)
 	 tc1_size = VB->TexCoordPtr[1]->size;
    }
 
-   if (DO_TEX2) {
-      if (VB->TexCoordPtr[1] == 0) {
-	 if (VB->TexCoordPtr[0] == 0)
-	    VB->TexCoordPtr[0] = VB->TexCoordPtr[2];
-	 VB->TexCoordPtr[1] = VB->TexCoordPtr[2];
-      }
-
-      tc2 = VB->TexCoordPtr[2]->data;
-      tc2_stride = VB->TexCoordPtr[2]->stride;
-      if (DO_PTEX)
-	 tc2_size = VB->TexCoordPtr[2]->size;
+   if (DO_TEX0) {
+      const GLuint t0 = GET_TEXSOURCE(0);
+      tc0_stride = VB->TexCoordPtr[t0]->stride;
+      tc0 = VB->TexCoordPtr[t0]->data;
+      if (DO_PTEX) 
+	 tc0_size = VB->TexCoordPtr[t0]->size;
    }
 
-   if (DO_TEX3) {
-      if (VB->TexCoordPtr[2] == 0) {
-	 if (VB->TexCoordPtr[1] == 0) {
-	    if (VB->TexCoordPtr[0] == 0) 
-	       VB->TexCoordPtr[0] = VB->TexCoordPtr[3];
-	    VB->TexCoordPtr[1] = VB->TexCoordPtr[3];
-	 }
-	 VB->TexCoordPtr[2] = VB->TexCoordPtr[3];
-      }
-
-      tc3 = VB->TexCoordPtr[3]->data;
-      tc3_stride = VB->TexCoordPtr[3]->stride;
-      if (DO_PTEX)
-	 tc3_size = VB->TexCoordPtr[3]->size;
-   }
-   
    if (DO_RGBA) {
       col = VB->ColorPtr[0]->data;
       col_stride = VB->ColorPtr[0]->stride;
@@ -210,17 +225,16 @@ static void TAG(emit)( GLcontext *ctx,
 	    STRIDE_F(fog, start * fog_stride);
       }
 
-      for (i=start; i < end; i++, v = (ddVertex *)((GLubyte *)v + stride)) {
+      for (i=start; i < end; i++, v = (VERTEX *)((GLubyte *)v + stride)) {
 	 if (DO_XYZW) {
 	    if (HAVE_HW_VIEWPORT || mask[i] == 0) {
 	       VIEWPORT_X(v->v.x, coord[0][0]);	
 	       VIEWPORT_Y(v->v.y, coord[0][1]);	
 	       VIEWPORT_Z(v->v.z, coord[0][2]);	
-	       VIEWPORT_W(v->v.w, coord[0][3]);	
+	       v->v.w = coord[0][3];	
 	    }
 	    coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);
 	 }
-	 NOTE_W;
 	 if (DO_RGBA) {
 	    if (HAVE_RGBA_COLOR) {
 	       *(GLuint *)&v->v.color = *(GLuint *)&col[0];
@@ -244,20 +258,20 @@ static void TAG(emit)( GLcontext *ctx,
 	    STRIDE_F(fog, fog_stride);
 	 }
 	 if (DO_TEX0) {
-	    v->v.tu0 = tc0[0][0];
-	    v->v.tv0 = tc0[0][1];
+	    v->v.u0 = tc0[0][0];
+	    v->v.v0 = tc0[0][1];
 	    if (DO_PTEX) {
 	       if (HAVE_PTEX_VERTICES) {
 		  if (tc0_size == 4) 
-		     v->pv.tq0 = tc0[0][3];
+		     v->pv.q0 = tc0[0][3];
 		  else
-		     v->pv.tq0 = 1.0;
+		     v->pv.q0 = 1.0;
 	       } 
 	       else if (tc0_size == 4) {
 		  float rhw = 1.0 / tc0[0][3];
 		  v->v.w *= tc0[0][3];
-		  v->v.u0 *= w;
-		  v->v.v0 *= w;
+		  v->v.u0 *= rhw;
+		  v->v.v0 *= rhw;
 	       } 
 	    } 
 	    tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 +  tc0_stride);
@@ -313,16 +327,15 @@ static void TAG(emit)( GLcontext *ctx,
       }
    }
    else {
-      for (i=start; i < end; i++, v = (ddVertex *)((GLubyte *)v + stride)) {
+      for (i=start; i < end; i++, v = (VERTEX *)((GLubyte *)v + stride)) {
 	 if (DO_XYZW) {
 	    if (HAVE_HW_VIEWPORT || mask[i] == 0) {
 	       VIEWPORT_X(v->v.x, coord[i][0]);	
 	       VIEWPORT_Y(v->v.y, coord[i][1]);	
 	       VIEWPORT_Z(v->v.z, coord[i][2]);	
-	       VIEWPORT_W(v->v.w, coord[i][3]);	
+	       v->v.w = coord[i][3];	
 	    }
 	 }
-	 NOTE_W;
 	 if (DO_RGBA) {
 	    if (HAVE_RGBA_COLOR) {
 	       *(GLuint *)&v->v.color = *(GLuint *)&col[i];
@@ -348,9 +361,9 @@ static void TAG(emit)( GLcontext *ctx,
 	       v->pv.v0 = tc0[i][1];
 	       if (HAVE_PTEX_VERTICES) {
 		  if (tc0_size == 4) 
-		     v->pv.tq0 = tc0[i][3];
+		     v->pv.q0 = tc0[i][3];
 		  else
-		     v->pv.tq0 = 1.0;
+		     v->pv.q0 = 1.0;
 
 		  v->pv.q1 = 0;	/* radeon */
 	       } 
@@ -388,6 +401,12 @@ static void TAG(emit)( GLcontext *ctx,
    }
 }
 #else 
+#if DO_XYZW
+
+#if HAVE_HW_DIVIDE
+#error "cannot use tiny vertices with hw perspective divide"
+#endif
+
 static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 		       void *dest, GLuint stride )
 {
@@ -397,7 +416,13 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    GLfloat (*coord)[4] = VB->ProjectedClipPtr->data; 
    GLuint coord_stride = VB->ProjectedClipPtr->stride;
    GLfloat *v = (GLfloat *)dest;
+   const GLubyte *mask = VB->ClipMask;
+   const GLfloat *s = GET_VIEWPORT_MAT();
    int i;
+
+   (void) s;
+
+/*     fprintf(stderr, "%s (template 2)\n", __FUNCTION__); */
 
    ASSERT(stride == 4);
 
@@ -412,9 +437,9 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 
       for (i=start; i < end; i++, v+=4) {
 	 if (HAVE_HW_VIEWPORT || mask[i] == 0) {
-	    v[0] = VIEWPORT_X(coord[0][0]);	
-	    v[1] = VIEWPORT_Y(coord[0][1]);	
-	    v[2] = VIEWPORT_Z(coord[0][2]);	
+	    VIEWPORT_X(v[0], coord[0][0]);	
+	    VIEWPORT_Y(v[1], coord[0][1]);	
+	    VIEWPORT_Z(v[2], coord[0][2]);	
 	 }
 	 coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);
 	 if (DO_RGBA) {
@@ -435,9 +460,9 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    else {
       for (i=start; i < end; i++, v+=4) {
 	 if (HAVE_HW_VIEWPORT || mask[i] == 0) {
-	    v[0] = VIEWPORT_X(coord[i][0]);	
-	    v[1] = VIEWPORT_Y(coord[i][1]);	
-	    v[2] = VIEWPORT_Z(coord[i][2]);	
+	    VIEWPORT_X(v[0], coord[i][0]);	
+	    VIEWPORT_Y(v[1], coord[i][1]);	
+	    VIEWPORT_Z(v[2], coord[i][2]);	
 	 }
 	 if (DO_RGBA) {
 	    if (HAVE_RGBA_COLOR) {
@@ -454,7 +479,42 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
       }
    }
 }
-#endif
+#else
+static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
+		       void *dest, GLuint stride )
+{
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   GLubyte (*col)[4] = VB->ColorPtr[0]->data;
+   GLuint col_stride = VB->ColorPtr[0]->stride;
+   GLfloat *v = (GLfloat *)dest;
+   int i;
+
+   if (start)
+      STRIDE_4UB(col, col_stride * start);
+
+   /* Need to figure out where color is:
+    */
+   if (GET_VERTEX_FORMAT() == TINY_VERTEX_FORMAT)
+      v += 3;
+   else
+      v += 4;
+
+   for (i=start; i < end; i++, STRIDE_F(v, stride)) {
+      if (HAVE_RGBA_COLOR) {
+	 *(GLuint *)v = *(GLuint *)col[0];
+      }
+      else {
+	 GLubyte *b = (GLubyte *)v;
+	 b[0] = col[0][2];
+	 b[1] = col[0][1];
+	 b[2] = col[0][0];
+	 b[3] = col[0][3];
+      }
+      STRIDE_4UB( col, col_stride );
+   }
+}
+#endif /* emit */
+#endif /* emit */
 
 #if (DO_XYZW) && (DO_RGBA)
 
@@ -501,10 +561,9 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 
    return GL_TRUE;
 }
-#endif
+#endif /* ptex */
 
 
-#if (!DO_PTEX || HAVE_PTEX_VERTICES)
 static void TAG(interp)( GLcontext *ctx,
 			 GLfloat t, 
 			 GLuint edst, GLuint eout, GLuint ein,
@@ -517,14 +576,11 @@ static void TAG(interp)( GLcontext *ctx,
    GLfloat w;
    const GLfloat *s = GET_VIEWPORT_MAT();
 
-   (void)s;
-
    VERTEX *dst = (VERTEX *)(ddverts + (edst << shift));
    VERTEX *in  = (VERTEX *)(ddverts + (eout << shift));
    VERTEX *out = (VERTEX *)(ddverts + (ein << shift));
 
-   PREPARE_PROJIN;
-   PREPARE_PROJOUT;
+   (void)s;
 
 /*     fprintf(stderr, "%s\n", __FUNCTION__); */
    
@@ -561,10 +617,29 @@ static void TAG(interp)( GLcontext *ctx,
 	 INTERP_UB( t, dst->ub4[5][3], out->ub4[5][3], in->ub4[5][3] );
       }
       if (DO_TEX0) {
-	 if (DO_PTEX && HAVE_PTEX_VERTICES) {
-	    INTERP_F( t, dst->pv.u0, out->pv.u0, in->pv.u0 );
-	    INTERP_F( t, dst->pv.v0, out->pv.v0, in->pv.v0 );
-	    INTERP_F( t, dst->pv.q0, out->pv.q0, in->pv.q0 );
+	 if (DO_PTEX) {
+	    if (HAVE_PTEX_VERTICES) {
+	       INTERP_F( t, dst->pv.u0, out->pv.u0, in->pv.u0 );
+	       INTERP_F( t, dst->pv.v0, out->pv.v0, in->pv.v0 );
+	       INTERP_F( t, dst->pv.q0, out->pv.q0, in->pv.q0 );
+	    } else {
+	       GLfloat wout = VB->ProjectedClipPtr->data[eout][3];
+	       GLfloat win = VB->ProjectedClipPtr->data[ein][3];
+	       GLfloat qout = out->pv.w / wout;
+	       GLfloat qin = in->pv.w / win;
+	       GLfloat qdst, rqdst;
+
+	       ASSERT( !HAVE_HW_DIVIDE );
+	       
+	       INTERP_F( t, dst->v.u0, out->v.u0 * qout, in->v.u0 * qin );
+	       INTERP_F( t, dst->v.v0, out->v.v0 * qout, in->v.v0 * qin );
+	       INTERP_F( t, qdst, qout, qin );
+	       
+	       rqdst = 1.0 / qdst;
+	       dst->v.u0 *= rqdst;
+	       dst->v.v0 *= rqdst;
+	       dst->v.w *= rqdst;
+	    }
 	 } 
 	 else {
 	    INTERP_F( t, dst->v.u0, out->v.u0, in->v.u0 );
@@ -613,105 +688,8 @@ static void TAG(interp)( GLcontext *ctx,
       INTERP_UB( t, dst->ub4[3][3], out->ub4[3][3], in->ub4[3][3] );
    }
 }
-#endif
 
-/* Build an SWvertex from a hardware vertex. 
- *
- * This code is hit only when a mix of accelerated and unaccelerated
- * primitives are being drawn, and only for the unaccelerated
- * primitives.  
- */
-static void 
-TAG(translate_vertex)( GLcontext *ctx, const radeonVertex *src, SWvertex *dst)
-{
-   HW_CONTEXT;
-   GLfloat *s = ctx->Viewport._WindowMap.m;
-
-   if (USE_TINY_VERT) {
-      if (HAVE_HW_VIEWPORT) {
-	 dst->win[0] = s[0]  * src->v.x + s[12];
-	 dst->win[1] = s[5]  * src->v.y + s[13];
-	 dst->win[2] = s[10] * src->v.z + s[14];
-	 dst->win[3] = 1.0;
-      } else {
-	 dst->win[0] = ADJ_X(src->v.x);
-	 dst->win[1] = ADJ_Y(src->v.y);
-	 dst->win[2] = ADJ_Z(src->v.z);
-	 dst->win[3] = 1.0;
-      }
-      
-      dst->color[0] = src->tv.color.red;
-      dst->color[1] = src->tv.color.green;
-      dst->color[2] = src->tv.color.blue;
-      dst->color[3] = src->tv.color.alpha;
-   } 
-   else {
-      if (HAVE_HW_VIEWPORT) {
-	 if (HAVE_HW_DIVIDE) {
-	    GLfloat oow = 1.0 / src->v.rhw;
-	    dst->win[0] = s[0]  * src->v.x * oow + s[12];
-	    dst->win[1] = s[5]  * src->v.y * oow + s[13];
-	    dst->win[2] = s[10] * src->v.z * oow + s[14];
-	    dst->win[3] = oow;
-	 }
-	 else {
-	    dst->win[0] = s[0]  * src->v.x + s[12];
-	    dst->win[1] = s[5]  * src->v.y + s[13];
-	    dst->win[2] = s[10] * src->v.z + s[14];
-	    dst->win[3] = src->v.rhw;
-	 }
-      } else {
-	 dst->win[0] = ADJ_X(src->v.x);
-	 dst->win[1] = ADJ_Y(src->v.y);
-	 dst->win[2] = ADJ_Z(src->v.z);
-	 dst->win[3] = src->v.rhw;
-      }
-
-      dst->color[0] = src->v.color.red;
-      dst->color[1] = src->v.color.green;
-      dst->color[2] = src->v.color.blue;
-      dst->color[3] = src->v.color.alpha;
-
-      if (DO_SPEC) {
-	 dst->specular[0] = src->v.specular.red;
-	 dst->specular[1] = src->v.specular.green;
-	 dst->specular[2] = src->v.specular.blue;
-      }
-
-      if (DO_FOG) {
-	 dst->fog = src->v.color.alpha/255.0;
-      }
-
-      if (DO_PTEX) {
-	 if (DO_TEX0) {
-	    dst->texcoord[0][0] = src->pv.u0;
-	    dst->texcoord[0][1] = src->pv.v0;
-	    dst->texcoord[0][3] = src->pv.q0;
-	 }
-	 if (DO_TEX1) {
-	    dst->texcoord[1][0] = src->pv.u1;
-	    dst->texcoord[1][1] = src->pv.v1;
-	    dst->texcoord[1][3] = src->pv.q1;
-	 }
-      } else {
-	 if (DO_TEX0) {
-	    dst->texcoord[0][0] = src->v.u0;
-	    dst->texcoord[0][1] = src->v.v0;
-	    dst->texcoord[0][3] = 1.0;
-	 }
-	 if (DO_TEX1) {
-	    dst->texcoord[1][0] = src->v.u1;
-	    dst->texcoord[1][1] = src->v.v1;
-	    dst->texcoord[1][3] = 1.0;
-	 }
-      }
-   }
-
-   dst->pointSize = ctx->Point._Size;
-}
-
-#endif
-#endif
+#endif /* rgba && xyzw */
 
 
 static void TAG(init)( void )
@@ -724,12 +702,12 @@ static void TAG(init)( void )
 #endif
    
    if (DO_SPEC)
-      setup_tab[IND].copy_pv = _tnl_dd_copy_pv_rgba4_spec5;
+      setup_tab[IND].copy_pv = copy_pv_rgba4_spec5;
    else if (HAVE_HW_DIVIDE || DO_SPEC || DO_FOG || DO_TEX0 || DO_TEX1 ||
 	    DO_TEX2 || DO_TEX3)
-      setup_tab[IND].copy_pv = _tnl_dd_copy_pv_rgba4;
+      setup_tab[IND].copy_pv = copy_pv_rgba4;
    else
-      setup_tab[IND].copy_pv = _tnl_dd_copy_pv_rgba3;
+      setup_tab[IND].copy_pv = copy_pv_rgba3;
 
    if (DO_TEX3) {
       if (DO_PTEX) {
@@ -747,7 +725,6 @@ static void TAG(init)( void )
    else if (DO_TEX2) {
       if (DO_PTEX) {
 	 ASSERT(HAVE_PTEX_VERTICES);
-	 ASSERT(0);		/* issue to resolve: odd vertex size */
 	 setup_tab[IND].vertex_format = PROJ_TEX3_VERTEX_FORMAT;
 	 setup_tab[IND].vertex_size = 18;
 	 setup_tab[IND].vertex_stride_shift = 7; 

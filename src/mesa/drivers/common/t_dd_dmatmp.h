@@ -39,14 +39,21 @@
  * render the primitive natively.  
  */
 
-#if !defined(HAVE_TRI_STRIPS) || !defined(HAVE_TRIANGLES)
-#error "must have at least tristrips and triangles to use render template"
+#if !defined(HAVE_TRIANGLES)
+#error "must have at least triangles to use render template"
 #endif
 
 #if !HAVE_ELTS
 #define ALLOC_ELTS( nr )
 #define EMIT_ELT( offset, elt )
 #define INCR_ELTS( nr )
+#define ELT_INIT(prim) 
+#define GET_CURRENT_VB_MAX_ELTS() 0
+#define GET_SUBSEQUENT_VB_MAX_ELTS() 0
+#define ALLOC_ELTS_NEW_PRIMITIVE(nr)
+#define RELEASE_ELT_VERTS() 
+#define EMIT_INDEXED_VERTS( ctx, start, count ) 
+
 #endif
 
 #ifndef EMIT_TWO_ELTS
@@ -67,9 +74,12 @@ static GLboolean TAG(emit_elt_verts)( GLcontext *ctx,
 				      GLuint start, GLuint count )
 {
    if (HAVE_ELTS) {
+      LOCAL_VARS;
       GLuint nr = count - start;
 
-      if ( nr >= GET_SUBSEQUENT_VB_MAX_VERTS() )
+      if ( nr >= GET_SUBSEQUENT_VB_MAX_VERTS() ) /* assumes same packing for 
+						  * indexed and regualar verts
+						  */
 	 return GL_FALSE;
 
       NEW_PRIMITIVE(); /* finish last prim */
@@ -80,10 +90,11 @@ static GLboolean TAG(emit_elt_verts)( GLcontext *ctx,
    }
 }
 
+#if (HAVE_ELTS)
 static void TAG(emit_elts)( GLcontext *ctx, GLuint *elts, GLuint nr )
 {
-   GLushort *dest;
    GLint i;
+   LOCAL_VARS;
    ELTS_VARS;
 
    ALLOC_ELTS( nr );
@@ -93,6 +104,7 @@ static void TAG(emit_elts)( GLcontext *ctx, GLuint *elts, GLuint nr )
       INCR_ELTS( 2 );
    }
 }
+#endif
 
 
 /***********************************************************************
@@ -107,6 +119,7 @@ static void TAG(render_points_verts)( GLcontext *ctx,
 				      GLuint flags )
 {
    if (HAVE_POINTS) {
+      LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
       int currentsz = GET_CURRENT_VB_MAX_VERTS();
       GLuint j, nr;
@@ -122,7 +135,7 @@ static void TAG(render_points_verts)( GLcontext *ctx,
 	 currentsz = dmasz;
       }
    } else {
-      FALLBACK( ctx, start, count, flags );
+      VERT_FALLBACK( ctx, start, count, flags );
    }
 }
 
@@ -132,6 +145,7 @@ static void TAG(render_lines_verts)( GLcontext *ctx,
 				     GLuint flags )
 {
    if (HAVE_LINES) {
+      LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
       int currentsz = GET_CURRENT_VB_MAX_VERTS();
       GLuint j, nr;
@@ -153,7 +167,7 @@ static void TAG(render_lines_verts)( GLcontext *ctx,
 	 currentsz = dmasz;
       }
    } else {
-      FALLBACK( ctx, start, count, flags );
+      VERT_FALLBACK( ctx, start, count, flags );
    }
 }
 
@@ -164,6 +178,7 @@ static void TAG(render_line_strip_verts)( GLcontext *ctx,
 					  GLuint flags )
 {
    if (HAVE_LINE_STRIPS) {
+      LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
       int currentsz = GET_CURRENT_VB_MAX_VERTS();
       GLuint j, nr;
@@ -180,7 +195,7 @@ static void TAG(render_line_strip_verts)( GLcontext *ctx,
 	 currentsz = dmasz;
       }
    } else {
-      FALLBACK( ctx, start, count, flags );
+      VERT_FALLBACK( ctx, start, count, flags );
    }
 }
 
@@ -191,6 +206,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
 					 GLuint flags )
 {
    if (HAVE_LINE_STRIPS) {
+      LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
       int currentsz = GET_CURRENT_VB_MAX_VERTS();
       GLuint j, nr;
@@ -221,7 +237,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
 	 EMIT_VERTS( ctx, start, 1 );
 
    } else {
-      FALLBACK( ctx, start, count, flags );
+      VERT_FALLBACK( ctx, start, count, flags );
    }
 }
 
@@ -231,6 +247,7 @@ static void TAG(render_triangles_verts)( GLcontext *ctx,
 					 GLuint count,
 					 GLuint flags )
 {
+   LOCAL_VARS;
    int dmasz = (GET_SUBSEQUENT_VB_MAX_VERTS()/3) * 3;
    int currentsz = (GET_CURRENT_VB_MAX_VERTS()/3) * 3;
    GLuint j, nr;
@@ -259,37 +276,42 @@ static void TAG(render_tri_strip_verts)( GLcontext *ctx,
 					 GLuint count,
 					 GLuint flags )
 {
-   GLuint j, nr;
-   int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
-   int currentsz;
-
-   INIT(GL_TRIANGLE_STRIP);
-   NEW_PRIMITIVE();
-
-   currentsz = GET_CURRENT_VB_MAX_VERTS();
+   if (HAVE_TRI_STRIPS) {
+      LOCAL_VARS;
+      GLuint j, nr;
+      int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
+      int currentsz;
+      
+      INIT(GL_TRIANGLE_STRIP);
+      NEW_PRIMITIVE();
+      
+      currentsz = GET_CURRENT_VB_MAX_VERTS();
    
-   if (currentsz < 8) {
-      FIRE_VERTICES( ctx );
-      currentsz = dmasz;
-   }
-
-   if (flags & PRIM_PARITY) {
-      if (HAVE_TRI_STRIP_1 && 0) {
-      } else {
-	 EMIT_VERTS( ctx, start, 1 );
-	 currentsz--;
+      if (currentsz < 8) {
+	 FIRE_VERTICES();
+	 currentsz = dmasz;
       }
-   }
 
-   /* From here on emit even numbers of tris when wrapping over buffers:
-    */
-   dmasz -= (dmasz & 1);
-   currentsz -= (currentsz & 1);
+      if (flags & PRIM_PARITY) {
+	 if (HAVE_TRI_STRIP_1 && 0) {
+	 } else {
+	    EMIT_VERTS( ctx, start, 1 );
+	    currentsz--;
+	 }
+      }
 
-   for (j = start ; j < count - 2; j += nr - 2 ) {
-      nr = MIN2( currentsz, count - j );
-      EMIT_VERTS( ctx, j, nr );
-      currentsz = dmasz;
+      /* From here on emit even numbers of tris when wrapping over buffers:
+       */
+      dmasz -= (dmasz & 1);
+      currentsz -= (currentsz & 1);
+      
+      for (j = start ; j < count - 2; j += nr - 2 ) {
+	 nr = MIN2( currentsz, count - j );
+	 EMIT_VERTS( ctx, j, nr );
+	 currentsz = dmasz;
+      }
+   } else {
+      VERT_FALLBACK( ctx, start, count, flags );
    }
 }
 
@@ -298,7 +320,8 @@ static void TAG(render_tri_fan_verts)( GLcontext *ctx,
 				       GLuint count,
 				       GLuint flags )
 {
-   if (HAVE_TRI_FAN) {
+   if (HAVE_TRI_FANS) {
+      LOCAL_VARS;
       GLuint j, nr;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
       int currentsz = GET_CURRENT_VB_MAX_VERTS();
@@ -307,7 +330,7 @@ static void TAG(render_tri_fan_verts)( GLcontext *ctx,
       INIT(GL_TRIANGLE_FAN);
 
       if (currentsz < 8) {
-	 FIRE_VERTICES( ctx );
+	 FIRE_VERTICES();
 	 currentsz = dmasz;
       }
 
@@ -322,7 +345,7 @@ static void TAG(render_tri_fan_verts)( GLcontext *ctx,
       /* Could write code to emit these as indexed vertices (for the
        * g400, for instance).
        */
-      FALLBACK( ctx, start, count, flags );
+      VERT_FALLBACK( ctx, start, count, flags );
    }
 }
 
@@ -332,7 +355,8 @@ static void TAG(render_poly_verts)( GLcontext *ctx,
 				    GLuint count,
 				    GLuint flags )
 {
-   if (HAVE_POLYGON) {
+   if (HAVE_POLYGONS) {
+      LOCAL_VARS;
       GLuint j, nr;
       int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
       int currentsz = GET_CURRENT_VB_MAX_VERTS();
@@ -341,7 +365,7 @@ static void TAG(render_poly_verts)( GLcontext *ctx,
       INIT(GL_POLYGON);
 
       if (currentsz < 8) {
-	 FIRE_VERTICES( ctx );
+	 FIRE_VERTICES();
 	 currentsz = dmasz;
       }
       
@@ -352,10 +376,10 @@ static void TAG(render_poly_verts)( GLcontext *ctx,
 	 currentsz = dmasz;
       }
    } 
-   else if (HAVE_TRIFAN && !(ctx->TriangleCaps & DD_FLATSHADE)) {
+   else if (HAVE_TRI_FANS && !(ctx->_TriangleCaps & DD_FLATSHADE)) {
       TAG(render_tri_fan_verts)( ctx, start, count, flags );
    } else {
-      FALLBACK( ctx, start, count, flags );
+      VERT_FALLBACK( ctx, start, count, flags );
    }
 }
 
@@ -370,8 +394,9 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
       /* TODO.
        */
    } else if (ctx->_TriangleCaps & DD_FLATSHADE) {
-      if (emit_elt_verts( ctx, start, count )) {   
-	 int dmasz = SUBSEQUENT_VB_ELT_NR();
+      if (TAG(emit_elt_verts)( ctx, start, count )) {   
+	 LOCAL_VARS;
+	 int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
 	 int currentsz;
 	 GLuint j, nr;
 
@@ -380,7 +405,7 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
 	 NEW_PRIMITIVE();
 	 ELT_INIT( GL_TRIANGLES );
 
-	 currentsz = CURRENT_VB_ELT_NR_NEW_PRIMITIVE();
+	 currentsz = GET_CURRENT_VB_MAX_ELTS();
 
 	 /* Emit whole number of quads in total, and in each buffer.
 	  */
@@ -420,14 +445,15 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
       } 
       else {
 	 /* Vertices won't fit in a single buffer or elts not available,
-	  * fallback.
+	  * VERT_FALLBACK.
 	  */
-	 FALLBACK( ctx, start, count, flags );
+	 VERT_FALLBACK( ctx, start, count, flags );
       }
    } 
-   else {
-      int dmasz = GET_SUBSEQUENT_VB_SIZE();
-      int currentsz = GET_CURRENT_VB_SIZE();
+   else if (HAVE_TRI_STRIPS) {
+      LOCAL_VARS;
+      int dmasz = GET_SUBSEQUENT_VB_MAX_VERTS();
+      int currentsz = GET_CURRENT_VB_MAX_VERTS();
 
       /* Emit smooth-shaded quadstrips as tristrips:
        */
@@ -441,7 +467,7 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
       count -= (count-start) & 1;
       
       if (currentsz < 8) {
-	 FIRE_VERTICES( ctx );
+	 FIRE_VERTICES();
 	 currentsz = dmasz;
       }
 
@@ -450,6 +476,8 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
 	 EMIT_VERTS( ctx, j, nr );
 	 currentsz = dmasz;
       }
+   } else {
+      VERT_FALLBACK( ctx, start, count, flags );
    }
 }
 
@@ -460,18 +488,19 @@ static void TAG(render_quads_verts)( GLcontext *ctx,
 				     GLuint flags )
 {
    if (HAVE_QUADS && 0) {
-   } else if (emit_elt_verts( ctx, start, count )) {   
+   } else if (TAG(emit_elt_verts)( ctx, start, count )) {   
       /* Hardware doesn't have a quad primitive type -- try to
        * simulate it using indexed vertices and the triangle
        * primitive: 
        */
+      LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
       int currentsz;
       GLuint j, nr;
 
       NEW_PRIMITIVE();
       ELT_INIT( GL_TRIANGLES );
-      currentsz = GET_CURRENT_VB_MAX_ELTS_NEW_PRIM();
+      currentsz = GET_CURRENT_VB_MAX_ELTS();
 
       /* Emit whole number of quads in total, and in each buffer.
        */
@@ -514,7 +543,7 @@ static void TAG(render_quads_verts)( GLcontext *ctx,
    else {
       /* Vertices won't fit in a single buffer, fallback.
        */
-      FALLBACK( ctx, start, count, flags );
+      VERT_FALLBACK( ctx, start, count, flags );
    }
 }
 
@@ -528,8 +557,7 @@ static void TAG(render_noop)( GLcontext *ctx,
 
 
 
-static void (*TAG(render_tab_verts))( GLcontext *, GLuint, 
-				      GLuint, GLuint)[GL_POLYGON+2] = 
+static render_func TAG(render_tab_verts)[GL_POLYGON+2] = 
 {
    TAG(render_points_verts),
    TAG(render_lines_verts),
@@ -556,6 +584,7 @@ static void TAG(render_points_elts)( GLcontext *ctx,
 				     GLuint flags )
 {
    if (HAVE_POINTS) {
+      LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
       int currentsz;
       GLuint *elts = TNL_CONTEXT(ctx)->vb.Elts;
@@ -569,7 +598,7 @@ static void TAG(render_points_elts)( GLcontext *ctx,
 
       for (j = start; j < count; j += nr ) {
 	 nr = MIN2( currentsz, count - j );
-	 emit_elts( ctx, elts+j, nr );
+	 TAG(emit_elts)( ctx, elts+j, nr );
 	 NEW_PRIMITIVE();
 	 currentsz = dmasz;
       }
@@ -586,6 +615,7 @@ static void TAG(render_lines_elts)( GLcontext *ctx,
 				    GLuint flags )
 {
    if (HAVE_LINES) {
+      LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
       int currentsz;
       GLuint *elts = TNL_CONTEXT(ctx)->vb.Elts;
@@ -605,7 +635,7 @@ static void TAG(render_lines_elts)( GLcontext *ctx,
 
       for (j = start; j < count; j += nr ) {
 	 nr = MIN2( currentsz, count - j );
-	 emit_elts( ctx, elts+j, nr );
+	 TAG(emit_elts)( ctx, elts+j, nr );
 	 NEW_PRIMITIVE();
 	 currentsz = dmasz;
       }
@@ -621,6 +651,7 @@ static void TAG(render_line_strip_elts)( GLcontext *ctx,
 					 GLuint flags )
 {
    if (HAVE_LINE_STRIPS) {
+      LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
       int currentsz;
       GLuint *elts = TNL_CONTEXT(ctx)->vb.Elts;
@@ -629,13 +660,13 @@ static void TAG(render_line_strip_elts)( GLcontext *ctx,
       NEW_PRIMITIVE(); /* always a new primitive */
       ELT_INIT( GL_LINE_STRIP );
 
-      currentsz = GET_CURRENT_VB_MAX_ELTS_NEW_PRIM();
+      currentsz = GET_CURRENT_VB_MAX_ELTS();
       if (currentsz < 8)
 	 currentsz = dmasz;
 
       for (j = start; j < count - 1; j += nr - 1 ) {
 	 nr = MIN2( currentsz, count - j );
-	 emit_elts( ctx, elts+j, nr );
+	 TAG(emit_elts)( ctx, elts+j, nr );
 	 NEW_PRIMITIVE();
 	 currentsz = dmasz;
       }
@@ -653,6 +684,7 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
 					GLuint flags )
 {
    if (HAVE_LINE_STRIPS) {
+      LOCAL_VARS;
       int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
       int currentsz;
       GLuint *elts = TNL_CONTEXT(ctx)->vb.Elts;
@@ -666,9 +698,9 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
       else
 	 j = start + 1;
       
-      currentsz = GET_CURRENT_VB_MAX_ELTS_NEW_PRIM();
+      currentsz = GET_CURRENT_VB_MAX_ELTS();
       if (currentsz < 8) {
-	 FIRE_VERTICES( ctx );
+	 FIRE_VERTICES();
 	 currentsz = dmasz;
       }
       
@@ -680,12 +712,12 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
       for ( ; j < count - 1; j += nr - 1 ) {
 	 nr = MIN2( currentsz, count - j );
 /*  	 NEW_PRIMITIVE(); */
-	 emit_elts( ctx, elts+j, nr );
+	 TAG(emit_elts)( ctx, elts+j, nr );
 	 currentsz = dmasz;
       }
       
       if (flags & PRIM_END) 
-	 emit_elts( ctx, elts+start, 1 );
+	 TAG(emit_elts)( ctx, elts+start, 1 );
 
       NEW_PRIMITIVE();
    } else {
@@ -704,6 +736,7 @@ static void TAG(render_triangles_elts)( GLcontext *ctx,
 					GLuint count,
 					GLuint flags )
 {
+   LOCAL_VARS;
    GLuint *elts = TNL_CONTEXT(ctx)->vb.Elts;
    int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS()/3*3;
    int currentsz;
@@ -712,7 +745,7 @@ static void TAG(render_triangles_elts)( GLcontext *ctx,
    NEW_PRIMITIVE();
    ELT_INIT( GL_TRIANGLES );
    
-   currentsz = GET_CURRENT_VB_MAX_ELTS_NEW_PRIM();
+   currentsz = GET_CURRENT_VB_MAX_ELTS();
 
    /* Emit whole number of tris in total.  dmasz is already a multiple
     * of 3.
@@ -724,7 +757,7 @@ static void TAG(render_triangles_elts)( GLcontext *ctx,
 
    for (j = start; j < count; j += nr) {
       nr = MIN2( currentsz, count - j );
-      emit_elts( ctx, elts+j, nr );
+      TAG(emit_elts)( ctx, elts+j, nr );
       NEW_PRIMITIVE();
       currentsz = dmasz;
    }
@@ -737,34 +770,40 @@ static void TAG(render_tri_strip_elts)( GLcontext *ctx,
 					GLuint count,
 					GLuint flags )
 {
-   GLuint j, nr;
-   GLuint *elts = TNL_CONTEXT(ctx)->vb.Elts;
-   int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
-   int currentsz;
+   if (HAVE_TRI_STRIPS) {
+      LOCAL_VARS;
+      GLuint j, nr;
+      GLuint *elts = TNL_CONTEXT(ctx)->vb.Elts;
+      int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
+      int currentsz;
 
-   NEW_PRIMITIVE();
-   ELT_INIT( GL_TRIANGLE_STRIP );
-
-   currentsz = GET_CURRENT_VB_MAX_ELTS_NEW_PRIM();
-   if (currentsz < 8) {
-      FIRE_VERTICES( ctx );
-      currentsz = dmasz;
-   }
-
-   if (flags & PRIM_PARITY) {
-      emit_elts( ctx, elts+start, 1 );
-   }
-
-   /* Keep the same winding over multiple buffers:
-    */
-   dmasz -= (dmasz & 1);
-   currentsz -= (currentsz & 1);
-
-   for (j = start ; j < count - 2; j += nr - 2 ) {
-      nr = MIN2( currentsz, count - j );
-      emit_elts( ctx, elts+j, nr );
       NEW_PRIMITIVE();
-      currentsz = dmasz;
+      ELT_INIT( GL_TRIANGLE_STRIP );
+      
+      currentsz = GET_CURRENT_VB_MAX_ELTS();
+      if (currentsz < 8) {
+	 FIRE_VERTICES();
+	 currentsz = dmasz;
+      }
+      
+      if (flags & PRIM_PARITY) {
+	 TAG(emit_elts)( ctx, elts+start, 1 );
+      }
+      
+      /* Keep the same winding over multiple buffers:
+       */
+      dmasz -= (dmasz & 1);
+      currentsz -= (currentsz & 1);
+
+      for (j = start ; j < count - 2; j += nr - 2 ) {
+	 nr = MIN2( currentsz, count - j );
+	 TAG(emit_elts)( ctx, elts+j, nr );
+	 NEW_PRIMITIVE();
+	 currentsz = dmasz;
+      }
+   } else {
+      /* TODO: try to emit as indexed triangles */
+      ELT_FALLBACK( ctx, start, count, flags );
    }
 }
 
@@ -773,7 +812,8 @@ static void TAG(render_tri_fan_elts)( GLcontext *ctx,
 				      GLuint count,
 				      GLuint flags )
 {
-   if (HAVE_TRI_FAN) {
+   if (HAVE_TRI_FANS) {
+      LOCAL_VARS;
       GLuint *elts = TNL_CONTEXT(ctx)->vb.Elts;
       GLuint j, nr;
       int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
@@ -782,16 +822,16 @@ static void TAG(render_tri_fan_elts)( GLcontext *ctx,
       NEW_PRIMITIVE();
       ELT_INIT( GL_TRIANGLE_FAN );
 
-      currentsz = GET_CURRENT_VB_MAX_ELTS_NEW_PRIM();
+      currentsz = GET_CURRENT_VB_MAX_ELTS();
       if (currentsz < 8) {
-	 FIRE_VERTICES( ctx );
+	 FIRE_VERTICES();
 	 currentsz = dmasz;
       }
 
       for (j = start + 1 ; j < count - 1; j += nr - 1 ) {
 	 nr = MIN2( currentsz, count - j + 1 );
-	 emit_elts( ctx, elts+start, 1 );
-	 emit_elts( ctx, elts+j, nr - 1 );
+	 TAG(emit_elts)( ctx, elts+start, 1 );
+	 TAG(emit_elts)( ctx, elts+j, nr - 1 );
 	 NEW_PRIMITIVE();
 	 currentsz = dmasz;
       }
@@ -807,8 +847,9 @@ static void TAG(render_poly_elts)( GLcontext *ctx,
 				   GLuint count,
 				   GLuint flags )
 {
-   if (HAVE_POLYGON && 0) {
-   } else if (HAVE_TRI_FAN && !(ctx->_TriangleCaps & DD_FLATSHADE)) {
+   if (HAVE_POLYGONS && 0) {
+   } else if (HAVE_TRI_FANS && !(ctx->_TriangleCaps & DD_FLATSHADE)) {
+      LOCAL_VARS;
       GLuint *elts = TNL_CONTEXT(ctx)->vb.Elts;
       GLuint j, nr;
       int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
@@ -817,16 +858,16 @@ static void TAG(render_poly_elts)( GLcontext *ctx,
       NEW_PRIMITIVE();
       ELT_INIT( GL_TRIANGLE_FAN );
 
-      currentsz = GET_CURRENT_VB_MAX_ELTS_NEW_PRIM();
+      currentsz = GET_CURRENT_VB_MAX_ELTS();
       if (currentsz < 8) {
-	 FIRE_VERTICES( ctx );
+	 FIRE_VERTICES();
 	 currentsz = dmasz;
       }
 
       for (j = start + 1 ; j < count - 1 ; j += nr - 1 ) {
 	 nr = MIN2( currentsz, count - j + 1 );
-	 emit_elts( ctx, elts+start, 1 );
-	 emit_elts( ctx, elts+j, nr - 1 );
+	 TAG(emit_elts)( ctx, elts+start, 1 );
+	 TAG(emit_elts)( ctx, elts+j, nr - 1 );
 	 NEW_PRIMITIVE();
 	 currentsz = dmasz;
       }
@@ -842,13 +883,14 @@ static void TAG(render_quad_strip_elts)( GLcontext *ctx,
 {
    if (HAVE_QUAD_STRIPS && 0) {
    } else {
+      LOCAL_VARS;
       GLuint *elts = TNL_CONTEXT(ctx)->vb.Elts;
       int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
       int currentsz;
       GLuint j, nr;
 
       NEW_PRIMITIVE();
-      currentsz = GET_CURRENT_VB_MAX_ELTS_NEW_PRIM();
+      currentsz = GET_CURRENT_VB_MAX_ELTS();
 
       /* Emit whole number of quads in total, and in each buffer.
        */
@@ -896,7 +938,7 @@ static void TAG(render_quad_strip_elts)( GLcontext *ctx,
 
 	 for (j = start; j < count - 3; j += nr - 2 ) {
 	    nr = MIN2( currentsz, count - j );
-	    emit_elts( ctx, elts+j, nr );
+	    TAG(emit_elts)( ctx, elts+j, nr );
 	    NEW_PRIMITIVE();
 	    currentsz = dmasz;
 	 }
@@ -912,13 +954,14 @@ static void TAG(render_quads_elts)( GLcontext *ctx,
 {
    if (HAVE_QUADS && 0) {
    } else {
+      LOCAL_VARS;
       GLuint *elts = TNL_CONTEXT(ctx)->vb.Elts;
       int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
       int currentsz;
       GLuint j, nr;
 
       ELT_INIT( GL_TRIANGLES );
-      currentsz = GET_CURRENT_VB_MAX_ELTS_NEW_PRIM();
+      currentsz = GET_CURRENT_VB_MAX_ELTS();
 
       /* Emit whole number of quads in total, and in each buffer.
        */
@@ -961,8 +1004,7 @@ static void TAG(render_quads_elts)( GLcontext *ctx,
 
 
 
-static void (*TAG(render_tab_verts))( GLcontext *, GLuint, 
-				      GLuint, GLuint)[GL_POLYGON+2] = 
+static render_func TAG(render_tab_elts)[GL_POLYGON+2] = 
 {
    TAG(render_points_elts),
    TAG(render_lines_elts),

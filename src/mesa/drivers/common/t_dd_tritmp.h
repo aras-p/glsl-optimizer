@@ -88,6 +88,8 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    GLuint facing;
    LOCAL_VARS(3);
 
+/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+
    v[0] = (VERTEX *)GET_VERTEX(e0);
    v[1] = (VERTEX *)GET_VERTEX(e1);
    v[2] = (VERTEX *)GET_VERTEX(e2);
