@@ -5,9 +5,6 @@
 #include "matypes.h"
 
 
-/* FIXME: The pairing rules must be checked as they aren't being fully obeyed.
- */
-
 /* integer multiplication - alpha plus one
  *
  * makes the following approximation to the division (Sree)
@@ -24,9 +21,9 @@
  */
 #define GMB_MULT_AP1( MP1, MA1, MP2, MA2, MX1 ) \
     PSUBW      ( MX1, MA1 )			/*   a1 + 1  |   a1 + 1  |   a1 + 1  |   a1 + 1  */	;\
-TWO(PSUBW      ( MX1, MA2 ))			/*   a2 + 1  |   a2 + 1  |   a2 + 1  |   a2 + 1  */	;\
-													;\
     PMULLW     ( MP1, MA1 )			/*                  t1 = p1*a1                   */	;\
+													;\
+TWO(PSUBW      ( MX1, MA2 ))			/*   a2 + 1  |   a2 + 1  |   a2 + 1  |   a2 + 1  */	;\
 TWO(PMULLW     ( MP2, MA2 ))			/*                  t2 = p2*a2                   */	;\
 													;\
     PSRLW      ( CONST(8), MA1 )		/*               t1 >> 8 ~= t1/255               */	;\
@@ -51,15 +48,15 @@ TWO(PSRLW      ( CONST(8), MA2 ))		/*               t2 >> 8 ~= t2/255           
 TWO(PMULLW     ( MP2, MA2 ))			/*                  t2 = p2*a2                   */	;\
 													;\
     MOVQ       ( MA1, MP1 )										;\
-TWO(MOVQ       ( MA2, MP2 ))										;\
+    PSRLW      ( CONST(8), MA1 )		/*                    t1 >> 8                    */	;\
 													;\
-    PSRLW      ( CONST(8), MP1 )		/*                    t1 >> 8                    */	;\
-TWO(PSRLW      ( CONST(8), MP2 ))		/*                    t2 >> 8                    */	;\
+TWO(MOVQ       ( MA2, MP2 ))										;\
+TWO(PSRLW      ( CONST(8), MA2 ))		/*                    t2 >> 8                    */	;\
 													;\
     PADDW      ( MP1, MA1 )			/*        t1 + (t1 >> 8) ~= (t1/255) << 8        */	;\
-TWO(PADDW      ( MP2, MA2 ))			/*        t2 + (t2 >> 8) ~= (t2/255) << 8        */	;\
-													;\
     PSRLW      ( CONST(8), MA1 )		/*    sa1    |    sb1    |    sg1    |    sr1    */	;\
+													;\
+TWO(PADDW      ( MP2, MA2 ))			/*        t2 + (t2 >> 8) ~= (t2/255) << 8        */	;\
 TWO(PSRLW      ( CONST(8), MA2 ))		/*    sa2    |    sb2    |    sg2    |    sr2    */
 
 
@@ -76,21 +73,21 @@ TWO(PSRLW      ( CONST(8), MA2 ))		/*    sa2    |    sb2    |    sg2    |    sr2
  */
 #define GMB_MULT_GSR( MP1, MA1, MP2, MA2, M80 ) \
     PMULLW     ( MP1, MA1 )			/*                  t1 = p1*a1                   */	;\
-TWO(PMULLW     ( MP2, MA2 ))			/*                  t2 = p2*a2                   */	;\
-													;\
     PADDW      ( M80, MA1 )			/*                 t1 += 0x80                    */	;\
+													;\
+TWO(PMULLW     ( MP2, MA2 ))			/*                  t2 = p2*a2                   */	;\
 TWO(PADDW      ( M80, MA2 ))			/*                 t2 += 0x80                    */	;\
 													;\
     MOVQ       ( MA1, MP1 )										;\
-TWO(MOVQ       ( MA2, MP2 ))										;\
+    PSRLW      ( CONST(8), MA1 )		/*                    t1 >> 8                    */	;\
 													;\
-    PSRLW      ( CONST(8), MP1 )		/*                    t1 >> 8                    */	;\
-TWO(PSRLW      ( CONST(8), MP2 ))		/*                    t2 >> 8                    */	;\
+TWO(MOVQ       ( MA2, MP2 ))										;\
+TWO(PSRLW      ( CONST(8), MA2 ))		/*                    t2 >> 8                    */	;\
 													;\
     PADDW      ( MP1, MA1 )			/*        t1 + (t1 >> 8) ~= (t1/255) << 8        */	;\
-TWO(PADDW      ( MP2, MA2 ))			/*        t2 + (t2 >> 8) ~= (t2/255) << 8        */	;\
-													;\
     PSRLW      ( CONST(8), MA1 )		/*    sa1    |    sb1    |    sg1    |    sr1    */	;\
+													;\
+TWO(PADDW      ( MP2, MA2 ))			/*        t2 + (t2 >> 8) ~= (t2/255) << 8        */	;\
 TWO(PSRLW      ( CONST(8), MA2 ))		/*    sa2    |    sb2    |    sg2    |    sr2    */
 
 
@@ -98,19 +95,18 @@ TWO(PSRLW      ( CONST(8), MA2 ))		/*    sa2    |    sb2    |    sg2    |    sr2
  */
 #define GMB_LERP_GS( MP1, MQ1, MA1, MP2, MQ2, MA2) \
     PSUBW      ( MQ1, MP1 )                     /* pa1 - qa1 | pb1 - qb1 | pg1 - qg1 | pr1 - qr1 */	;\
-TWO(PSUBW      ( MQ2, MP2 ))                    /* pa2 - qa2 | pb2 - qb2 | pg2 - qg2 | pr2 - qr2 */	;\
-													;\
     PSLLW      ( CONST(8), MQ1 )		/*                    q1 << 8                    */	;\
-TWO(PSLLW      ( CONST(8), MQ2 ))		/*                    q2 << 8                    */	;\
-													;\
     PMULLW     ( MP1, MA1 )			/*              t1 = (q1 - p1)*pa1               */	;\
+													;\
+TWO(PSUBW      ( MQ2, MP2 ))                    /* pa2 - qa2 | pb2 - qb2 | pg2 - qg2 | pr2 - qr2 */	;\
+TWO(PSLLW      ( CONST(8), MQ2 ))		/*                    q2 << 8                    */	;\
 TWO(PMULLW     ( MP2, MA2 ))			/*              t2 = (q2 - p2)*pa2               */	;\
 													;\
     MOVQ       ( MA1, MP1 )										;\
-TWO(MOVQ       ( MA2, MP2 ))										;\
+    PSRLW      ( CONST(8), MA1 )		/*                    t1 >> 8                    */	;\
 													;\
-    PSRLW      ( CONST(8), MP1 )		/*                    t1 >> 8                    */	;\
-TWO(PSRLW      ( CONST(8), MP2 ))		/*                    t2 >> 8                    */	;\
+TWO(MOVQ       ( MA2, MP2 ))										;\
+TWO(PSRLW      ( CONST(8), MA2 ))		/*                    t2 >> 8                    */	;\
 													;\
     PADDW      ( MP1, MA1 )			/*        t1 + (t1 >> 8) ~= (t1/255) << 8        */	;\
 TWO(PADDW      ( MP2, MA2 ))			/*        t2 + (t2 >> 8) ~= (t2/255) << 8        */	;\
@@ -130,12 +126,11 @@ TWO(PSRLW      ( CONST(8), MA2 ))		/*    sa2    |    sb2    |    sg2    |    sr2
  */
 #define GMB_LERP_GSR( MP1, MQ1, MA1, MP2, MQ2, MA2, M80) \
     PSUBW      ( MQ1, MP1 )                     /* pa1 - qa1 | pb1 - qb1 | pg1 - qg1 | pr1 - qr1 */	;\
-TWO(PSUBW      ( MQ2, MP2 ))                    /* pa2 - qa2 | pb2 - qb2 | pg2 - qg2 | pr2 - qr2 */	;\
-													;\
     PSLLW      ( CONST(8), MQ1 )		/*                    q1 << 8                    */	;\
-TWO(PSLLW      ( CONST(8), MQ2 ))		/*                    q2 << 8                    */	;\
-													;\
     PMULLW     ( MP1, MA1 )			/*              t1 = (q1 - p1)*pa1               */	;\
+													;\
+TWO(PSUBW      ( MQ2, MP2 ))                    /* pa2 - qa2 | pb2 - qb2 | pg2 - qg2 | pr2 - qr2 */	;\
+TWO(PSLLW      ( CONST(8), MQ2 ))		/*                    q2 << 8                    */	;\
 TWO(PMULLW     ( MP2, MA2 ))			/*              t2 = (q2 - p2)*pa2               */	;\
 													;\
     PSRLW      ( CONST(15), MP1 )		/*                 q1 > p1 ? 1 : 0               */	;\
@@ -151,10 +146,10 @@ TWO(PSUBW      ( MP2, MA2 ))			/*                  t2 -=? 0x100                 
 TWO(PADDW      ( M80, MA2 ))			/*                 t2 += 0x80                    */	;\
 													;\
     MOVQ       ( MA1, MP1 )										;\
-TWO(MOVQ       ( MA2, MP2 ))										;\
+    PSRLW      ( CONST(8), MA1 )		/*                    t1 >> 8                    */	;\
 													;\
-    PSRLW      ( CONST(8), MP1 )		/*                    t1 >> 8                    */	;\
-TWO(PSRLW      ( CONST(8), MP2 ))		/*                    t2 >> 8                    */	;\
+TWO(MOVQ       ( MA2, MP2 ))										;\
+TWO(PSRLW      ( CONST(8), MA2 ))		/*                    t2 >> 8                    */	;\
 													;\
     PADDW      ( MP1, MA1 )			/*        t1 + (t1 >> 8) ~= (t1/255) << 8        */	;\
 TWO(PADDW      ( MP2, MA2 ))			/*        t2 + (t2 >> 8) ~= (t2/255) << 8        */	;\
@@ -176,25 +171,24 @@ TWO(PSRLW      ( CONST(8), MA2 ))		/*    sa2    |    sb2    |    sg2    |    sr2
  */
 #define GMB_LERP_GSC( MP1, MQ1, MA1, MP2, MQ2, MA2) \
     PSUBW      ( MQ1, MP1 )                     /* pa1 - qa1 | pb1 - qb1 | pg1 - qg1 | pr1 - qr1 */	;\
-TWO(PSUBW      ( MQ2, MP2 ))                    /* pa2 - qa2 | pb2 - qb2 | pg2 - qg2 | pr2 - qr2 */	;\
-													;\
     PSLLW      ( CONST(8), MQ1 )		/*                    q1 << 8                    */	;\
-TWO(PSLLW      ( CONST(8), MQ2 ))		/*                    q2 << 8                    */	;\
-													;\
     PMULLW     ( MP1, MA1 )			/*              t1 = (q1 - p1)*pa1               */	;\
+													;\
+TWO(PSUBW      ( MQ2, MP2 ))                    /* pa2 - qa2 | pb2 - qb2 | pg2 - qg2 | pr2 - qr2 */	;\
+TWO(PSLLW      ( CONST(8), MQ2 ))		/*                    q2 << 8                    */	;\
 TWO(PMULLW     ( MP2, MA2 ))			/*              t2 = (q2 - p2)*pa2               */	;\
 													;\
     MOVQ       ( MA1, MP1 )										;\
+    PSRLW      ( CONST(8), MA1 )		/*                    t1 >> 8                    */	;\
+													;\
 TWO(MOVQ       ( MA2, MP2 ))										;\
+TWO(PSRLW      ( CONST(8), MA2 ))		/*                    t2 >> 8                    */	;\
 													;\
-    PSRLW      ( CONST(8), MP1 )		/*                    t1 >> 8                    */	;\
-TWO(PSRLW      ( CONST(8), MP2 ))		/*                    t2 >> 8                    */	;\
+    PADDW      ( MA1, MP1 )			/*        t1 + (t1 >> 8) ~= (t1/255) << 8        */	;\
+    PSRLW      ( CONST(7), MA1 )		/*                    t1 >> 15                   */	;\
 													;\
-    PADDW      ( MP1, MA1 )			/*        t1 + (t1 >> 8) ~= (t1/255) << 8        */	;\
-TWO(PADDW      ( MP2, MA2 ))			/*        t2 + (t2 >> 8) ~= (t2/255) << 8        */	;\
-													;\
-    PSRLW      ( CONST(7), MP1 )		/*                    t1 >> 15                   */	;\
-TWO(PSRLW      ( CONST(7), MP2 ))		/*                    t2 >> 15                   */	;\
+TWO(PADDW      ( MA2, MP2 ))			/*        t2 + (t2 >> 8) ~= (t2/255) << 8        */	;\
+TWO(PSRLW      ( CONST(7), MA2 ))		/*                    t2 >> 15                   */	;\
 													;\
     PADDW      ( MP1, MA1 )			/*  t1 + (t1 >> 8) + (t1 >>15) ~= (t1/255) << 8  */	;\
 TWO(PADDW      ( MP2, MA2 ))			/*  t2 + (t2 >> 8) + (t2 >>15) ~= (t2/255) << 8  */	;\
