@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.7 2000/04/13 14:53:25 brianp Exp $ */
+/* $Id: clip.c,v 1.8 2000/04/17 18:18:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -302,10 +302,12 @@ GLuint gl_userclip_point( GLcontext* ctx, const GLfloat v[] )
 
 
 
-#if defined(__i386__)
+#if 0
 #define NEGATIVE(x) ((*(int *)&x)<0)
+#define DIFFERENT_SIGNS(a,b) ((a*b) < 0)
 #else
 #define NEGATIVE(x) (x < 0)
+#define DIFFERENT_SIGNS(a,b) ((a*b) < 0)
 #endif
 
 
