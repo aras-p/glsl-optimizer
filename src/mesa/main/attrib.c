@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.62 2002/03/29 17:27:59 brianp Exp $ */
+/* $Id: attrib.c,v 1.63 2002/04/01 17:03:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1068,9 +1068,11 @@ _mesa_PopAttrib(void)
                }
 
                /* normalize/rescale */
-               _mesa_set_enable(ctx, GL_NORMALIZE, ctx->Transform.Normalize);
-               _mesa_set_enable(ctx, GL_RESCALE_NORMAL_EXT,
-                                ctx->Transform.RescaleNormals);
+               if (xform->Normalize != ctx->Transform.Normalize)
+                  _mesa_set_enable(ctx, GL_NORMALIZE,ctx->Transform.Normalize);
+               if (xform->RescaleNormals != ctx->Transform.RescaleNormals)
+                  _mesa_set_enable(ctx, GL_RESCALE_NORMAL_EXT,
+                                   ctx->Transform.RescaleNormals);
             }
             break;
          case GL_TEXTURE_BIT:
