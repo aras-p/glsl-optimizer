@@ -1215,14 +1215,14 @@ static void fxRunPipeline( GLcontext *ctx )
          struct gl_texture_unit *t0 = &ctx->Texture.Unit[fxMesa->tmu_source[0]];
          struct gl_texture_unit *t1 = &ctx->Texture.Unit[fxMesa->tmu_source[1]];
       
-         if (t0 && t0->_Current && FX_TEXTURE_DATA(t0)) {
+         if (t0->_Current && FX_TEXTURE_DATA(t0)) {
             fxMesa->s0scale = FX_TEXTURE_DATA(t0)->sScale;
             fxMesa->t0scale = FX_TEXTURE_DATA(t0)->tScale;
             fxMesa->inv_s0scale = 1.0 / fxMesa->s0scale;
             fxMesa->inv_t0scale = 1.0 / fxMesa->t0scale;
          }
       
-         if (t1 && t1->_Current && FX_TEXTURE_DATA(t1)) {
+         if (t1->_Current && FX_TEXTURE_DATA(t1)) {
             fxMesa->s1scale = FX_TEXTURE_DATA(t1)->sScale;
             fxMesa->t1scale = FX_TEXTURE_DATA(t1)->tScale;
             fxMesa->inv_s1scale = 1.0 / fxMesa->s1scale;

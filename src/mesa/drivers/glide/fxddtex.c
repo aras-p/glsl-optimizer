@@ -148,7 +148,6 @@ fxDDTexBind(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj)
       tObj->DriverData = fxAllocTexObjData(fxMesa);
    }
    ti = fxTMGetTexInfo(tObj);
-   assert(ti);
 
    fxMesa->texBindNumber++;
    ti->lastTimeUsed = fxMesa->texBindNumber;
@@ -203,7 +202,6 @@ fxDDTexParam(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj,
    if (!tObj->DriverData)
       tObj->DriverData = fxAllocTexObjData(fxMesa);
    ti = fxTMGetTexInfo(tObj);
-   assert(ti);
 
    switch (pname) {
    case GL_TEXTURE_MIN_FILTER:
@@ -482,7 +480,6 @@ fxDDTexPalette(GLcontext * ctx, struct gl_texture_object *tObj)
       if (!tObj->DriverData)
          tObj->DriverData = fxAllocTexObjData(fxMesa);
       ti = fxTMGetTexInfo(tObj);
-      assert(ti);
       ti->paltype = convertPalette(fxMesa, ti->palette.data, &tObj->Palette);
       fxTexInvalidate(ctx, tObj);
    }
@@ -519,7 +516,6 @@ fxDDTexUseGlbPalette(GLcontext * ctx, GLboolean state)
 	 struct gl_texture_object *tObj = ctx->Texture.Unit[0]._Current;
          if (!tObj->DriverData)
            tObj->DriverData = fxAllocTexObjData(fxMesa);
-	 assert(tObj->DriverData);
 	 fxTexInvalidate(ctx, tObj);
       }
    }

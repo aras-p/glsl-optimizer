@@ -59,8 +59,6 @@
 
 #include "math/m_vector.h"
 
-#include "drivers/common/driverfuncs.h"
-
 
 /* Define some shorter names for these things.
  */

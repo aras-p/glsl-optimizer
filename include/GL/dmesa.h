@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  6.1
  * 
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.5 for Mesa
+ * DOS/DJGPP device driver v1.6 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@users.sourceforge.net
@@ -34,8 +34,8 @@
 #ifndef DMESA_H_included
 #define DMESA_H_included
 
-#define DMESA_MAJOR_VERSION 5
-#define DMESA_MINOR_VERSION 0
+#define DMESA_MAJOR_VERSION 6
+#define DMESA_MINOR_VERSION 1
 
 /* Sample Usage:
  *
@@ -129,6 +129,11 @@ GLboolean DMesaResizeBuffer (GLint width, GLint height);
  * Set palette index, using normalized values.
  */
 void DMesaSetCI (int ndx, GLfloat red, GLfloat green, GLfloat blue);
+
+/*
+ * DMesa functions
+ */
+void *DMesaGetProcAddress (const char *name);
 
 /*
  * DMesa state retrieval.

@@ -1498,6 +1498,11 @@ fxDDInitExtensions(GLcontext * ctx)
    if (fxMesa->HaveMirExt) {
       _mesa_enable_extension(ctx, "GL_ARB_texture_mirrored_repeat");
    }
+
+   /* core-level extensions */
+#if 1
+   _mesa_enable_extension(ctx, "GL_ARB_vertex_buffer_object");
+#endif
 }
 
 
@@ -1666,9 +1671,6 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.Clear = fxDDClear;
    ctx->Driver.DrawBuffer = fxDDSetDrawBuffer;
    ctx->Driver.GetBufferSize = fxDDBufferSize;
-   ctx->Driver.Accum = _swrast_Accum;
-   ctx->Driver.CopyPixels = _swrast_CopyPixels;
-   ctx->Driver.DrawPixels = _swrast_DrawPixels;
    switch (fxMesa->colDepth) {
           case 15:
                ctx->Driver.ReadPixels = fxDDReadPixels555;
@@ -1684,34 +1686,15 @@ fxSetupDDPointers(GLcontext * ctx)
                ctx->Driver.Bitmap = fxDDDrawBitmap4;
                break;
    }
-   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
    ctx->Driver.Finish = fxDDFinish;
    ctx->Driver.Flush = NULL;
    ctx->Driver.ChooseTextureFormat = fxDDChooseTextureFormat;
-   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
    ctx->Driver.TexImage2D = fxDDTexImage2D;
-   ctx->Driver.TexImage3D = _mesa_store_teximage3d;
-   ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
    ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;
-   ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-   ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
    ctx->Driver.CompressedTexImage2D = fxDDCompressedTexImage2D;
-   ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
-   ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
    ctx->Driver.CompressedTexSubImage2D = fxDDCompressedTexSubImage2D;
-   ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
    ctx->Driver.IsCompressedFormat = fxDDIsCompressedFormat;
    ctx->Driver.CompressedTextureSize = fxDDCompressedTextureSize;
-   ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-   ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
-   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
-   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
-   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
    ctx->Driver.TexEnv = fxDDTexEnv;
    ctx->Driver.TexParameter = fxDDTexParam;
    ctx->Driver.BindTexture = fxDDTexBind;

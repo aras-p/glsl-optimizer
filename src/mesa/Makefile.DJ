@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP core makefile v1.5 for Mesa
+# DOS/DJGPP core makefile v1.6 for Mesa
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@users.sourceforge.net
@@ -174,7 +174,7 @@ DRIVER_SOURCES += \
 	drivers/dos/dpmi.c
 endif
 
-SOURCES = $(CORE_SOURCES) $(X86_SOURCES) $(DRIVER_SOURCES)
+SOURCES = $(CORE_SOURCES) $(X86_SOURCES) $(COMMON_DRIVER_SOURCES) $(DRIVER_SOURCES)
 
 OBJECTS = $(addsuffix .o,$(basename $(SOURCES)))
 

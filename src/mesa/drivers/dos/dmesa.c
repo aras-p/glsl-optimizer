@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  * 
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.5 for Mesa
+ * DOS/DJGPP device driver v1.6 for Mesa
  *
  *  Copyright (c) 2003 - Borca Daniel
  *  Email : dborca@users.sourceforge.net
@@ -53,6 +53,7 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
+#include "drivers/common/driverfuncs.h"
 #include "video.h"
 #else  /* FX */
 #include "GL/fxmesa.h"
@@ -868,76 +869,45 @@ static void dmesa_register_swrast_functions (GLcontext *ctx)
 
 
 
+static void dmesa_update_state (GLcontext *ctx, GLuint new_state)
+{
+ /* Propagate statechange information to swrast and swrast_setup
+  * modules. The DMesa driver has no internal GL-dependent state.
+  */
+ _swrast_InvalidateState( ctx, new_state );
+ _ac_InvalidateState( ctx, new_state );
+ _tnl_InvalidateState( ctx, new_state );
+ _swsetup_InvalidateState( ctx, new_state );
+}
+
+
+
+/* Initialize the device driver function table with the functions
+ * we implement in this driver.
+ */
+static void dmesa_init_driver_functions (DMesaVisual visual,
+                                         struct dd_function_table *driver)
+{
+ driver->UpdateState = dmesa_update_state;
+ driver->GetString = get_string;
+ driver->GetBufferSize = get_buffer_size;
+ driver->Flush = flush;
+ driver->Finish = finish;
+ driver->Clear = clear;
+ driver->ClearColor = clear_color;
+ driver->ClearIndex = clear_index;
+}
+
+
+
 /* Setup pointers and other driver state that is constant for the life
  * of a context.
  */
 static void dmesa_init_pointers (GLcontext *ctx)
 {
- TNLcontext *tnl;
  struct swrast_device_driver *dd = _swrast_GetDeviceDriverReference(ctx);
 
- ctx->Driver.GetString = get_string;
- ctx->Driver.GetBufferSize = get_buffer_size;
- ctx->Driver.Flush = flush;
- ctx->Driver.Finish = finish;
-    
- /* Software rasterizer pixel paths:
-  */
- ctx->Driver.Accum = _swrast_Accum;
- ctx->Driver.Bitmap = _swrast_Bitmap;
- ctx->Driver.Clear = clear;
- ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
- ctx->Driver.CopyPixels = _swrast_CopyPixels;
- ctx->Driver.DrawPixels = _swrast_DrawPixels;
- ctx->Driver.ReadPixels = _swrast_ReadPixels;
- ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
-
- /* Software texture functions:
-  */
- ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
- ctx->Driver.TexImage1D = _mesa_store_teximage1d;
- ctx->Driver.TexImage2D = _mesa_store_teximage2d;
- ctx->Driver.TexImage3D = _mesa_store_teximage3d;
- ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
- ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
- ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
- ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
-
- ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
- ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
- ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
- ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
- ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-
- ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
- ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
- ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
- ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
- ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
- ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
-
- /* Swrast hooks for imaging extensions:
-  */
- ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
- ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
- ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
- ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
-
- /* Statechange callbacks:
-  */
- ctx->Driver.ClearColor = clear_color;
- ctx->Driver.ClearIndex = clear_index;
-
- /* Initialize the TNL driver interface:
-  */
- tnl = TNL_CONTEXT(ctx);
- tnl->Driver.RunPipeline = _tnl_run_pipeline;
-
  dd->SetBuffer = set_buffer;
-   
- /* Install swsetup for tnl->Driver.Render.*:
-  */
- _swsetup_Wakeup(ctx);
 
  /* The span functions should be in `dmesa_update_state', but I'm
   * pretty sure they will never change during the life of the Visual
@@ -960,19 +930,6 @@ static void dmesa_init_pointers (GLcontext *ctx)
  dd->WriteMonoRGBAPixels = write_mono_rgba_pixels;
  dd->ReadRGBASpan = read_rgba_span;
  dd->ReadRGBAPixels = read_rgba_pixels;
-}
-
-
-
-static void dmesa_update_state (GLcontext *ctx, GLuint new_state)
-{
- /* Propagate statechange information to swrast and swrast_setup
-  * modules. The DMesa driver has no internal GL-dependent state.
-  */
- _swrast_InvalidateState( ctx, new_state );
- _ac_InvalidateState( ctx, new_state );
- _tnl_InvalidateState( ctx, new_state );
- _swsetup_InvalidateState( ctx, new_state );
 }
 #endif /* FX */
 
@@ -1188,36 +1145,46 @@ DMesaContext DMesaCreateContext (DMesaVisual visual,
                                  DMesaContext share)
 {
 #ifndef FX
- DMesaContext c;
- GLboolean direct = GL_FALSE;
+ GLcontext *c;
+ TNLcontext *tnl;
+ struct dd_function_table functions;
 
- if ((c=(DMesaContext)CALLOC_STRUCT(dmesa_context)) != NULL) {
-    _mesa_initialize_context((GLcontext *)c,
+ if ((c=(GLcontext *)CALLOC_STRUCT(dmesa_context)) != NULL) {
+    /* Initialize device driver function table */
+    _mesa_init_driver_functions(&functions);
+    /* override with our functions */
+    dmesa_init_driver_functions(visual, &functions);
+
+    _mesa_initialize_context(c,
                              (GLvisual *)visual,
                              (GLcontext *)share,
-                             (void *)c, direct);
-
-    _mesa_enable_sw_extensions((GLcontext *)c);
-    _mesa_enable_1_3_extensions((GLcontext *)c);
-    _mesa_enable_1_4_extensions((GLcontext *)c);
-    _mesa_enable_1_5_extensions((GLcontext *)c);
+                             &functions,
+                             (void *)c);
+ 
+    _mesa_enable_sw_extensions(c);
+    _mesa_enable_1_3_extensions(c);
+    _mesa_enable_1_4_extensions(c);
+    _mesa_enable_1_5_extensions(c);
 
     /* you probably have to do a bunch of other initializations here. */
-    c->visual = visual;
-
-    ((GLcontext *)c)->Driver.UpdateState = dmesa_update_state;
+    ((DMesaContext)c)->visual = visual;
 
     /* Initialize the software rasterizer and helper modules.
      */
-    _swrast_CreateContext((GLcontext *)c);
-    _ac_CreateContext((GLcontext *)c);
-    _tnl_CreateContext((GLcontext *)c);
-    _swsetup_CreateContext((GLcontext *)c);
-    if (visual->rgb_flag) dmesa_register_swrast_functions((GLcontext *)c);
-    dmesa_init_pointers((GLcontext *)c);
+    _swrast_CreateContext(c);
+    _ac_CreateContext(c);
+    _tnl_CreateContext(c);
+    _swsetup_CreateContext(c);
+    /* tnl setup */
+    tnl = TNL_CONTEXT(c);
+    tnl->Driver.RunPipeline = _tnl_run_pipeline;
+    /* swrast setup */
+    if (visual->rgb_flag) dmesa_register_swrast_functions(c);
+    dmesa_init_pointers(c);
+    _swsetup_Wakeup(c);
  }
 
- return c;
+ return (DMesaContext)c;
 
 #else  /* FX */
  return (DMesaContext)visual;
@@ -1346,6 +1313,20 @@ void *DMesaGetCurrentContext (void)
 #else
  return fxMesaGetCurrentContext();
 #endif
+}
+
+
+
+void *DMesaGetProcAddress (const char *name)
+{
+ void *p = (void *)_glapi_get_proc_address(name);
+
+/* TODO: handle DMesa* namespace
+ if (p == NULL) {
+ }
+*/
+
+ return p;
 }
 
 

@@ -116,6 +116,16 @@ FAQ:
       lazy programmer and I found that the easiest way to keep buffer handling
       at peak performance ;-).
 
+   Q) I'm getting a "bad font!" fatal error.
+   A) By default, DOS GLUT compiles with GLUT_IMPORT_LIB, to cope with variable
+      access inside dynamic modules (same mechanism used for Win32 _DLL). Since
+      -DGLUT_IMPORT_LIB affects Mesa's `glut.h', your apps must be compiled the
+      same way GLUT was compiled (either with or without defining it). If you
+      want to use another `glut.h' when building your own demos, or just don't
+      feel happy about this, make sure you remove the line with GLUT_IMPORT_LIB
+      from `Mesa/src/glut/dos/Makefile.DJ' before (re)making GLUT. Beware, this
+      means you will never EVER be able to safely use `glut.dxe'!
+
    Q) How do I query for a list of available video modes to choose as a visual?
    A) This is an ugly hack, for which I'm sure I'll burn in hell.
       First, query for a list of modes:
@@ -238,7 +248,8 @@ v1.5 (jan-2004)
 	x more changes to the 3dfx driver
 
 v1.6 (???-2004)
-	* fixed a horrible bug in VGA initialization routine
+	+ added DMesaGetProcAddress
+	! fixed a horrible bug in VGA initialization routine
 
 
 

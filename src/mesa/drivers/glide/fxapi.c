@@ -42,6 +42,8 @@
 #if defined(FX)
 #include "fxdrv.h"
 
+#include "drivers/common/driverfuncs.h"
+
 #ifndef TDFX_DEBUG
 int TDFX_DEBUG = (0 
 /*		  | VERBOSE_VARRAY */
@@ -653,7 +655,6 @@ fxMesaCreateContext(GLuint win,
    }
 
    _mesa_init_driver_functions(&functions);
-   ctx->Driver.
    ctx = fxMesa->glCtx = _mesa_create_context(fxMesa->glVis, shareCtx,
 					      &functions, (void *) fxMesa);
    if (!ctx) {

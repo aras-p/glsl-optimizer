@@ -218,7 +218,6 @@ struct __pixelformat__ pix[] = {
      FXMESA_NONE}
    }
 };
-static int qt_pix = sizeof(pix) / sizeof(pix[0]);
 
 static fxMesaContext ctx = NULL;
 static WNDPROC hWNDOldProc;
@@ -676,6 +675,14 @@ wglSwapLayerBuffers(HDC hdc, UINT fuPlanes)
    return (FALSE);
 }
 
+static int pfd_tablen (void)
+{
+ /* we should take an envvar for `fxMesaSelectCurrentBoard' */
+ return (fxMesaSelectCurrentBoard(0) < GR_SSTTYPE_Voodoo4)
+        ? 2                               /* only 16bit entries */
+        : sizeof(pix) / sizeof(pix[0]);   /* full table */
+}
+
 GLAPI int GLAPIENTRY
 wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
 {
@@ -723,7 +730,7 @@ wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR * ppfd)
   }
 #endif
 
-   qt_valid_pix = qt_pix;
+   qt_valid_pix = pfd_tablen();
 
    if (ppfd->nSize != sizeof(PIXELFORMATDESCRIPTOR) || ppfd->nVersion != 1) {
       SetLastError(0);
@@ -787,7 +794,7 @@ wglDescribePixelFormat(HDC hdc, int iPixelFormat, UINT nBytes,
 {
    int qt_valid_pix;
 
-   qt_valid_pix = qt_pix;
+   qt_valid_pix = pfd_tablen();
 
    if (iPixelFormat < 1 || iPixelFormat > qt_valid_pix ||
        ((nBytes != sizeof(PIXELFORMATDESCRIPTOR)) && (nBytes != 0))) {
@@ -830,7 +837,7 @@ wglSetPixelFormat(HDC hdc, int iPixelFormat, const PIXELFORMATDESCRIPTOR * ppfd)
 {
    int qt_valid_pix;
 
-   qt_valid_pix = qt_pix;
+   qt_valid_pix = pfd_tablen();
 
    if (iPixelFormat < 1 || iPixelFormat > qt_valid_pix) {
       if (ppfd == NULL) {
