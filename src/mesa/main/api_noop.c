@@ -1,4 +1,4 @@
-/* $Id: api_noop.c,v 1.6 2001/03/07 18:16:40 gareth Exp $ */
+/* $Id: api_noop.c,v 1.7 2001/03/20 18:35:23 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,11 +35,6 @@
 #include "mmath.h"
 #include "mtypes.h"
 
-#ifdef __i386__
-#define COPY_FLOAT(a,b) *(int*)&(a) = *(int*)&(b)
-#else
-#define COPY_FLOAT(a,b) (a) = (b)
-#endif
 
 /* In states where certain vertex components are required for t&l or
  * rasterization, we still need to keep track of the current values.
