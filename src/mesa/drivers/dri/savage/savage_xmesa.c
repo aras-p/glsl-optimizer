@@ -394,6 +394,9 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxLineWidthAA = 3.0;
    ctx->Const.LineWidthGranularity = 1.0;
 #endif
+   /* This is needed to get polygon offset right with reversed depth range
+    * (see savageCalcViewport). Not sure if it has any other side effects. */
+   ctx->MRD *= -1.0;
    
    /* Dri stuff
     */
