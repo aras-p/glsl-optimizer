@@ -42,6 +42,7 @@
 
 
 
+
 #define GET_VERTEX_STATE(ctx)  &(TNL_CONTEXT(ctx)->clipspace)
 
 static void insert_4f_viewport_4( const struct tnl_clipspace_attr *a, GLubyte *v,
