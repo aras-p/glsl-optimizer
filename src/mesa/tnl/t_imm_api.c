@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.15 2001/06/04 16:09:28 keithw Exp $ */
+/* $Id: t_imm_api.c,v 1.16 2001/06/15 15:22:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -543,12 +543,14 @@ _tnl_Indexiv( const GLint *c )
 #define NORMALF( x, y, z )					\
 {								\
    GLuint count;						\
-   GLint *normal;						\
+   fi_type *normal;						\
    GET_IMMEDIATE;						\
    count = IM->Count;						\
    IM->Flag[count] |= VERT_NORM;				\
-   normal = (GLint *)IM->Normal[count];				\
-   ASSIGN_3V(normal, *(int*)&(x), *(int*)&(y), *(int*)&(z));	\
+   normal = (fi_type *)IM->Normal[count];			\
+   normal[0].i = ((fi_type *)&(x))->i;				\
+   normal[1].i = ((fi_type *)&(y))->i;				\
+   normal[2].i = ((fi_type *)&(z))->i;				\
 }
 #else
 #define NORMALF NORMAL
@@ -616,18 +618,18 @@ _tnl_Normal3fv( const GLfloat *v )
 }
 
 #if defined(USE_IEEE)
-#define TEXCOORD2F(s,t)				\
-{						\
-   GLuint count;				\
-   GLint *tc;					\
-   GET_IMMEDIATE;				\
-   count = IM->Count;				\
-   IM->Flag[count] |= VERT_TEX0;		\
-   tc = (GLint *)IM->TexCoord0[count];		\
-   tc[0] = *(GLint *)&(s);			\
-   tc[1] = *(GLint *)&(t);			\
-   tc[2] = 0;					\
-   tc[3] = IEEE_ONE;				\
+#define TEXCOORD2F(s,t)					\
+{							\
+   GLuint count;					\
+   fi_type *tc;						\
+   GET_IMMEDIATE;					\
+   count = IM->Count;					\
+   IM->Flag[count] |= VERT_TEX0;			\
+   tc = (fi_type *)IM->TexCoord0[count];		\
+   tc[0].i = ((fi_type *)&(s))->i;			\
+   tc[1].i = ((fi_type *)&(t))->i;			\
+   tc[2].i = 0;						\
+   tc[3].i = IEEE_ONE;					\
 }
 #else
 #define TEXCOORD2F TEXCOORD2
@@ -721,53 +723,53 @@ _tnl_TexCoord4fv( const GLfloat *v )
 }
 
 #if defined(USE_IEEE)
-#define VERTEX2F(IM, x, y)			\
-{						\
-   GLuint count = IM->Count++;			\
-   GLint *dest = (GLint *)IM->Obj[count];	\
-   IM->Flag[count] |= VERT_OBJ; 		\
-   dest[0] = *(GLint *)&(x);			\
-   dest[1] = *(GLint *)&(y);			\
-   dest[2] = 0;					\
-   dest[3] = IEEE_ONE;				\
+#define VERTEX2F(IM, x, y)				\
+{							\
+   GLuint count = IM->Count++;				\
+   fi_type *dest = (fi_type *)IM->Obj[count];		\
+   IM->Flag[count] |= VERT_OBJ; 			\
+   dest[0].i = ((fi_type *)&(x))->i;			\
+   dest[1].i = ((fi_type *)&(y))->i;			\
+   dest[2].i = 0;					\
+   dest[3].i = IEEE_ONE;				\
 /*     ASSERT(IM->Flag[IM->Count]==0); */		\
    if (count == IMM_MAXDATA - 1)			\
-      _tnl_flush_immediate( IM );		\
+      _tnl_flush_immediate( IM );			\
 }
 #else
 #define VERTEX2F VERTEX2
 #endif
 
 #if defined(USE_IEEE)
-#define VERTEX3F(IM, x, y, z)			\
-{						\
-   GLuint count = IM->Count++;			\
-   GLint *dest = (GLint *)IM->Obj[count];	\
-   IM->Flag[count] |= VERT_OBJ_23;		\
-   dest[0] = *(GLint *)&(x);			\
-   dest[1] = *(GLint *)&(y);			\
-   dest[2] = *(GLint *)&(z);			\
-   dest[3] = IEEE_ONE;				\
-/*     ASSERT(IM->Flag[IM->Count]==0);	 */	\
+#define VERTEX3F(IM, x, y, z)				\
+{							\
+   GLuint count = IM->Count++;				\
+   fi_type *dest = (fi_type *)IM->Obj[count];		\
+   IM->Flag[count] |= VERT_OBJ_23;			\
+   dest[0].i = ((fi_type *)&(x))->i;			\
+   dest[1].i = ((fi_type *)&(y))->i;			\
+   dest[2].i = ((fi_type *)&(z))->i;			\
+   dest[3].i = IEEE_ONE;				\
+/*     ASSERT(IM->Flag[IM->Count]==0);	 */		\
    if (count == IMM_MAXDATA - 1)			\
-      _tnl_flush_immediate( IM );		\
+      _tnl_flush_immediate( IM );			\
 }
 #else
 #define VERTEX3F VERTEX3
 #endif
 
 #if defined(USE_IEEE)
-#define VERTEX4F(IM, x, y, z, w)		\
-{						\
-   GLuint count = IM->Count++;			\
-   GLint *dest = (GLint *)IM->Obj[count];	\
-   IM->Flag[count] |= VERT_OBJ_234;		\
-   dest[0] = *(GLint *)&(x);			\
-   dest[1] = *(GLint *)&(y);			\
-   dest[2] = *(GLint *)&(z);			\
-   dest[3] = *(GLint *)&(w);			\
+#define VERTEX4F(IM, x, y, z, w)			\
+{							\
+   GLuint count = IM->Count++;				\
+   fi_type *dest = (fi_type *)IM->Obj[count];		\
+   IM->Flag[count] |= VERT_OBJ_234;			\
+   dest[0].i = ((fi_type *)&(x))->i;			\
+   dest[1].i = ((fi_type *)&(y))->i;			\
+   dest[2].i = ((fi_type *)&(z))->i;			\
+   dest[3].i = ((fi_type *)&(w))->i;			\
    if (count == IMM_MAXDATA - 1)			\
-      _tnl_flush_immediate( IM );		\
+      _tnl_flush_immediate( IM );			\
 }
 #else
 #define VERTEX4F VERTEX4
@@ -886,12 +888,12 @@ _tnl_Vertex4fv( const GLfloat *v )
    GLuint texunit = target - GL_TEXTURE0_ARB;			\
    if (texunit < IM->MaxTextureUnits) {				\
       GLuint count = IM->Count;					\
-      GLint *tc = (GLint *)IM->TexCoord[texunit][count];	\
+      fi_type *tc = (fi_type *)IM->TexCoord[texunit][count];	\
       IM->Flag[count] |= VERT_TEX(texunit);			\
-      tc[0] = *(int *)&(s);					\
-      tc[1] = *(int *)&(t);					\
-      tc[2] = 0;						\
-      tc[3] = IEEE_ONE;						\
+      tc[0].i = ((fi_type *)&(s))->i;				\
+      tc[1].i = ((fi_type *)&(t))->i;				\
+      tc[2].i = 0;						\
+      tc[3].i = IEEE_ONE;					\
    }								\
 }
 #else

@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.20 2001/05/14 23:11:12 brianp Exp $ */
+/* $Id: glheader.h,v 1.21 2001/06/15 15:22:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -240,6 +240,16 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #  define ASSERT(X)
 #endif
 
+
+/*
+ * Sometimes we treat GLfloats as GLints.  On x86 systems, moving a float
+ * as a int (thereby using integer registers instead of fp registers) is
+ * a performance win.  Typically, this can be done with ordinary casts.
+ * But with gcc's -fstrict-aliasing flag (which defaults to on in gcc 3.0)
+ * these casts generate warnings.
+ * The following union typedef is used to solve that.
+ */
+typedef union { GLfloat f; GLint i; } fi_type;
 
 
 #endif /* GLHEADER_H */

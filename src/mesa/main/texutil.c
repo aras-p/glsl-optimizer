@@ -1,4 +1,4 @@
-/* $Id: texutil.c,v 1.24 2001/05/02 21:02:38 brianp Exp $ */
+/* $Id: texutil.c,v 1.25 2001/06/15 15:22:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -415,7 +415,7 @@ CONVERT_ARGB4444( texsubimage3d )
 	  dst = (s >> 1) | ((s & 1) << 15); }
 
 #define CONVERT_TEXEL_DWORD( dst, src )					\
-	{ const GLuint s = *(GLuint *)src;				\
+	{ const GLuint s = ((fi_type *)src)->i;				\
 	  dst = (((s & 0xfffefffe) >> 1) |				\
 		 ((s & 0x00010001) << 15)); }
 

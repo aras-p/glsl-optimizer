@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.20 2001/05/11 15:53:06 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.21 2001/06/15 15:22:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,8 +69,8 @@
 
 
 #if defined(USE_IEEE)
-#define NEGATIVE(x) ((*(GLuint *)&x) & (1<<31))
-#define DIFFERENT_SIGNS(x,y) (((*(GLuint *)&x)^(*(GLuint *)&y)) & (1<<31))
+#define NEGATIVE(x) (GET_FLOAT_BITS(x) & (1<<31))
+#define DIFFERENT_SIGNS(x,y) ((GET_FLOAT_BITS(x) ^ GET_FLOAT_BITS(y)) & (1<<31))
 #else
 #define NEGATIVE(x) (x < 0)
 #define DIFFERENT_SIGNS(x,y) (x * y <= 0 && x - y != 0)
