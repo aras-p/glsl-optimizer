@@ -1212,10 +1212,10 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define LEAVE			leave
 #define LGDT(a)			lgdt a
 #define LIDT(a)			lidt a
-#define LDS(a, b)		lds b, a
-#define LES(a, b)		les b, a
-#define LFS(a, b)		lfs b, a
-#define LGS(a, b)		lgs b, a
+#define LDS(a, b)		lds b, P_(a)
+#define LES(a, b)		les b, P_(a)
+#define LFS(a, b)		lfs b, P_(a)
+#define LGS(a, b)		lgs b, P_(a)
 #define LSS(a, b)		lss b, P_(a)
 #define LLDT(a)			lldt a
 #define LMSW(a)			lmsw a
