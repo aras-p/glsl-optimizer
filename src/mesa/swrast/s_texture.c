@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.10 2001/02/07 03:55:31 brianp Exp $ */
+/* $Id: s_texture.c,v 1.11 2001/02/17 18:41:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -155,6 +155,58 @@
 
 
 
+/*
+ * Get texture palette entry.
+ */
+static void
+palette_sample(const GLcontext *ctx,
+               const struct gl_texture_object *tObj,
+               GLint index, GLchan rgba[4] )
+{
+   const GLchan *palette;
+   GLenum format;
+
+   if (ctx->Texture.SharedPalette) {
+      ASSERT(!ctx->Texture.Palette.FloatTable);
+      palette = (const GLchan *) ctx->Texture.Palette.Table;
+      format = ctx->Texture.Palette.Format;
+   }
+   else {
+      ASSERT(!tObj->Palette.FloatTable);
+      palette = (const GLchan *) tObj->Palette.Table;
+      format = tObj->Palette.Format;
+   }
+
+   switch (format) {
+      case GL_ALPHA:
+         rgba[ACOMP] = palette[index];
+         return;
+      case GL_LUMINANCE:
+      case GL_INTENSITY:
+         rgba[RCOMP] = palette[index];
+         return;
+      case GL_LUMINANCE_ALPHA:
+         rgba[RCOMP] = palette[(index << 1) + 0];
+         rgba[ACOMP] = palette[(index << 1) + 1];
+         return;
+      case GL_RGB:
+         rgba[RCOMP] = palette[index * 3 + 0];
+         rgba[GCOMP] = palette[index * 3 + 1];
+         rgba[BCOMP] = palette[index * 3 + 2];
+         return;
+      case GL_RGBA:
+         rgba[RCOMP] = palette[(index << 2) + 0];
+         rgba[GCOMP] = palette[(index << 2) + 1];
+         rgba[BCOMP] = palette[(index << 2) + 2];
+         rgba[ACOMP] = palette[(index << 2) + 3];
+         return;
+      default:
+         gl_problem(ctx, "Bad palette format in palette_sample");
+   }
+}
+
+
+
 /**********************************************************************/
 /*                    1-D Texture Sampling Functions                  */
 /**********************************************************************/
@@ -176,7 +228,10 @@ sample_1d_nearest(GLcontext *ctx,
    /* skip over the border, if any */
    i += img->Border;
 
-   (*img->FetchTexel)(ctx, tObj, img, i, 0, 0, rgba);
+   (*img->FetchTexel)(img, i, 0, 0, (GLvoid *) rgba);
+   if (img->Format == GL_COLOR_INDEX) {
+      palette_sample(ctx, tObj, rgba[0], rgba);
+   }
 }
 
 
@@ -219,13 +274,19 @@ sample_1d_linear(GLcontext *ctx,
          COPY_CHAN4(t0, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i0, 0, 0, t0);
+         (*img->FetchTexel)(img, i0, 0, 0, (GLvoid *) t0);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t0[0], t0);
+         }
       }
       if (useBorderColor & I1BIT) {
          COPY_CHAN4(t1, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i1, 0, 0, t1);
+         (*img->FetchTexel)(img, i1, 0, 0, (GLvoid *) t1);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t1[0], t1);
+         }
       }
 
       rgba[0] = (GLchan) ((w0 * t0[0] + w1 * t1[0]) >> WEIGHT_SHIFT);
@@ -451,7 +512,10 @@ sample_2d_nearest(GLcontext *ctx,
    i += img->Border;
    j += img->Border;
 
-   (*img->FetchTexel)(ctx, tObj, img, i, j, 0, rgba);
+   (*img->FetchTexel)(img, i, j, 0, (GLvoid *) rgba);
+   if (img->Format == GL_COLOR_INDEX) {
+      palette_sample(ctx, tObj, rgba[0], rgba);
+   }
 }
 
 
@@ -507,25 +571,37 @@ sample_2d_linear(GLcontext *ctx,
          COPY_CHAN4(t00, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i0, j0, 0, t00);
+         (*img->FetchTexel)(img, i0, j0, 0, (GLvoid *) t00);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t00[0], t00);
+         }
       }
       if (useBorderColor & (I1BIT | J0BIT)) {
          COPY_CHAN4(t10, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i1, j0, 0, t10);
+         (*img->FetchTexel)(img, i1, j0, 0, (GLvoid *) t10);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t10[0], t10);
+         }
       }
       if (useBorderColor & (I0BIT | J1BIT)) {
          COPY_CHAN4(t01, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i0, j1, 0, t01);
+         (*img->FetchTexel)(img, i0, j1, 0, (GLvoid *) t01);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t01[0], t01);
+         }
       }
       if (useBorderColor & (I1BIT | J1BIT)) {
          COPY_CHAN4(t11, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i1, j1, 0, t11);
+         (*img->FetchTexel)(img, i1, j1, 0, (GLvoid *) t11);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t11[0], t11);
+         }
       }
 
       rgba[0] = (GLchan) ((w00 * t00[0] + w10 * t10[0] + w01 * t01[0] + w11 * t11[0]) >> WEIGHT_SHIFT);
@@ -852,7 +928,10 @@ sample_3d_nearest(GLcontext *ctx,
    COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, t, height, j);
    COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapR, r, depth,  k);
 
-   (*img->FetchTexel)(ctx, tObj, img, i, j, k, rgba);
+   (*img->FetchTexel)(img, i, j, k, (GLvoid *) rgba);
+   if (img->Format == GL_COLOR_INDEX) {
+      palette_sample(ctx, tObj, rgba[0], rgba);
+   }
 }
 
 
@@ -918,50 +997,74 @@ sample_3d_linear(GLcontext *ctx,
          COPY_CHAN4(t000, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i0, j0, k0, t000);
+         (*img->FetchTexel)(img, i0, j0, k0, (GLvoid *) t000);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t000[0], t000);
+         }
       }
       if (useBorderColor & (I1BIT | J0BIT | K0BIT)) {
          COPY_CHAN4(t100, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i1, j0, k0, t100);
+         (*img->FetchTexel)(img, i1, j0, k0, (GLvoid *) t100);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t100[0], t100);
+         }
       }
       if (useBorderColor & (I0BIT | J1BIT | K0BIT)) {
          COPY_CHAN4(t010, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i0, j1, k0, t010);
+         (*img->FetchTexel)(img, i0, j1, k0, (GLvoid *) t010);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t010[0], t010);
+         }
       }
       if (useBorderColor & (I1BIT | J1BIT | K0BIT)) {
          COPY_CHAN4(t110, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i1, j1, k0, t110);
+         (*img->FetchTexel)(img, i1, j1, k0, (GLvoid *) t110);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t110[0], t110);
+         }
       }
 
       if (useBorderColor & (I0BIT | J0BIT | K1BIT)) {
          COPY_CHAN4(t001, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i0, j0, k1, t001);
+         (*img->FetchTexel)(img, i0, j0, k1, (GLvoid *) t001);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t001[0], t001);
+         }
       }
       if (useBorderColor & (I1BIT | J0BIT | K1BIT)) {
          COPY_CHAN4(t101, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i1, j0, k1, t101);
+         (*img->FetchTexel)(img, i1, j0, k1, (GLvoid *) t101);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t101[0], t101);
+         }
       }
       if (useBorderColor & (I0BIT | J1BIT | K1BIT)) {
          COPY_CHAN4(t011, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i0, j1, k1, t011);
+         (*img->FetchTexel)(img, i0, j1, k1, (GLvoid *) t011);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t011[0], t011);
+         }
       }
       if (useBorderColor & (I1BIT | J1BIT | K1BIT)) {
          COPY_CHAN4(t111, tObj->BorderColor);
       }
       else {
-         (*img->FetchTexel)(ctx, tObj, img, i1, j1, k1, t111);
+         (*img->FetchTexel)(img, i1, j1, k1, (GLvoid *) t111);
+         if (img->Format == GL_COLOR_INDEX) {
+            palette_sample(ctx, tObj, t111[0], t111);
+         }
       }
 
       rgba[0] = (GLchan) (

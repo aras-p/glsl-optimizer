@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.8 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.9 2001/02/17 18:41:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -653,11 +653,21 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       /* General case */
       GLint row;
       for (row = 0; row < height; row++, y++) {
+         GLfloat fspan[MAX_WIDTH];
          GLdepth zspan[MAX_WIDTH];
          const GLvoid *src = _mesa_image_address(&ctx->Unpack,
                 pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
-         _mesa_unpack_depth_span( ctx, drawWidth, zspan, type, src,
-                                  &ctx->Unpack, ctx->_ImageTransferState );
+         _mesa_unpack_depth_span( ctx, drawWidth, fspan, type, src,
+                                  &ctx->Unpack );
+         /* clamp depth values to [0,1] and convert from floats to integers */
+         {
+            const GLfloat zs = ctx->DepthMaxF;
+            GLuint i;
+            for (i = 0; i < drawWidth; i++) {
+               zspan[i] = (GLdepth) (fspan[i] * zs);
+            }
+         }
+
          if (ctx->Visual.rgbMode) {
             if (zoom) {
                gl_write_zoomed_rgba_span(ctx, width, x, y, zspan, 0,

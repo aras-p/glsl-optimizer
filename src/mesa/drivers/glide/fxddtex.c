@@ -825,11 +825,10 @@ static GLboolean fxIsTexSupported(GLenum target, GLint internalFormat,
  */
 
 static void
-fetch_intensity8(GLcontext *ctx,
-                 const struct gl_texture_object *texObj,
-                 const struct gl_texture_image *texImage,
-                 GLint i, GLint j, GLint k, GLchan rgba[4])
+fetch_intensity8(const struct gl_texture_image *texImage,
+                 GLint i, GLint j, GLint k, GLvoid *texelOut)
 {
+   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLubyte *texel;
    
@@ -845,11 +844,10 @@ fetch_intensity8(GLcontext *ctx,
 
 
 static void
-fetch_luminance8(GLcontext *ctx,
-                 const struct gl_texture_object *texObj,
-                 const struct gl_texture_image *texImage,
-                 GLint i, GLint j, GLint k, GLchan rgba[4])
+fetch_luminance8(const struct gl_texture_image *texImage,
+                 GLint i, GLint j, GLint k, GLvoid *texelOut)
 {
+   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLubyte *texel;
    
@@ -865,11 +863,10 @@ fetch_luminance8(GLcontext *ctx,
 
 
 static void
-fetch_alpha8(GLcontext *ctx,
-             const struct gl_texture_object *texObj,
-             const struct gl_texture_image *texImage,
-             GLint i, GLint j, GLint k, GLchan rgba[4])
+fetch_alpha8(const struct gl_texture_image *texImage,
+             GLint i, GLint j, GLint k, GLvoid *texelOut)
 {
+   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLubyte *texel;
    
@@ -887,21 +884,18 @@ fetch_alpha8(GLcontext *ctx,
 
 
 static void
-fetch_index8(GLcontext *ctx,
-             const struct gl_texture_object *texObj,
-             const struct gl_texture_image *texImage,
-             GLint i, GLint j, GLint k, GLchan rgba[4])
+fetch_index8(const struct gl_texture_image *texImage,
+             GLint i, GLint j, GLint k, GLvoid *texelOut)
 {
    /* XXX todo */
 }
 
 
 static void
-fetch_luminance8_alpha8(GLcontext *ctx,
-                        const struct gl_texture_object *texObj,
-                        const struct gl_texture_image *texImage,
-                        GLint i, GLint j, GLint k, GLchan rgba[4])
+fetch_luminance8_alpha8(const struct gl_texture_image *texImage,
+                        GLint i, GLint j, GLint k, GLvoid *texelOut)
 {
+   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLubyte *texel;
    
@@ -917,11 +911,10 @@ fetch_luminance8_alpha8(GLcontext *ctx,
 
 
 static void
-fetch_r5g6b5(GLcontext *ctx,
-             const struct gl_texture_object *texObj,
-             const struct gl_texture_image *texImage,
-             GLint i, GLint j, GLint k, GLchan rgba[4])
+fetch_r5g6b5(const struct gl_texture_image *texImage,
+             GLint i, GLint j, GLint k, GLvoid *texelOut)
 {
+   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLushort *texel;
    
@@ -937,11 +930,10 @@ fetch_r5g6b5(GLcontext *ctx,
 
 
 static void
-fetch_r4g4b4a4(GLcontext *ctx,
-               const struct gl_texture_object *texObj,
-               const struct gl_texture_image *texImage,
-               GLint i, GLint j, GLint k, GLchan rgba[4])
+fetch_r4g4b4a4(const struct gl_texture_image *texImage,
+               GLint i, GLint j, GLint k, GLvoid *texelOut)
 {
+   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLushort *texel;
    
@@ -957,11 +949,10 @@ fetch_r4g4b4a4(GLcontext *ctx,
 
 
 static void
-fetch_r5g5b5a1(GLcontext *ctx,
-               const struct gl_texture_object *texObj,
-               const struct gl_texture_image *texImage,
-               GLint i, GLint j, GLint k, GLchan rgba[4])
+fetch_r5g5b5a1(const struct gl_texture_image *texImage,
+               GLint i, GLint j, GLint k, GLvoid *texelOut)
 {
+   GLchan *rgba = (GLchan *) texelOut;
    const tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
    const GLushort *texel;
    

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.19 2001/02/17 00:15:39 brianp Exp $ */
+/* $Id: mtypes.h,v 1.20 2001/02/17 18:41:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,17 +132,17 @@ typedef struct gl_frame_buffer GLframebuffer;
 
 /* Data structure for color tables */
 struct gl_color_table {
-   GLvoid *Table;
-   GLboolean FloatTable;  /* entries stored as floats? (or GLchan type) */
-   GLuint Size;           /* number of entries (rows) in table */
-   GLenum Format;
+   GLenum Format;         /* GL_ALPHA, GL_RGB, GL_RGB, etc */
    GLenum IntFormat;
-   GLint RedSize;
-   GLint GreenSize;
-   GLint BlueSize;
-   GLint AlphaSize;
-   GLint LuminanceSize;
-   GLint IntensitySize;
+   GLuint Size;           /* number of entries (rows) in table */
+   GLvoid *Table;         /* either GLfloat * or GLchan * */
+   GLboolean FloatTable;  /* are entries stored as floats? */
+   GLubyte RedSize;
+   GLubyte GreenSize;
+   GLubyte BlueSize;
+   GLubyte AlphaSize;
+   GLubyte LuminanceSize;
+   GLubyte IntensitySize;
 };
 
 
@@ -218,8 +218,8 @@ struct gl_light {
    GLfloat _MatAmbient[2][3];	/* material ambient * light ambient */
    GLfloat _MatDiffuse[2][3];	/* material diffuse * light diffuse */
    GLfloat _MatSpecular[2][3];	/* material spec * light specular */
-   GLfloat _dli;			/* CI diffuse light intensity */
-   GLfloat _sli;			/* CI specular light intensity */
+   GLfloat _dli;		/* CI diffuse light intensity */
+   GLfloat _sli;		/* CI specular light intensity */
 };
 
 
@@ -446,15 +446,15 @@ struct gl_hint_attrib {
 
 
 struct gl_histogram_attrib {
-   GLuint Width;
-   GLint Format;
-   GLboolean Sink;
-   GLuint RedSize;
-   GLuint GreenSize;
-   GLuint BlueSize;
-   GLuint AlphaSize;
-   GLuint LuminanceSize;
-   GLuint Count[HISTOGRAM_TABLE_SIZE][4];
+   GLuint Width;				/* number of table entries */
+   GLint Format;				/* GL_ALPHA, GL_RGB, etc */
+   GLuint Count[HISTOGRAM_TABLE_SIZE][4];	/* the histogram */
+   GLboolean Sink;				/* terminate image transfer? */
+   GLubyte RedSize;				/* Bits per counter */
+   GLubyte GreenSize;
+   GLubyte BlueSize;
+   GLubyte AlphaSize;
+   GLubyte LuminanceSize;
 };
 
 
@@ -766,11 +766,14 @@ struct gl_stencil_attrib {
 #define ENABLE_TEXMAT(i) (ENABLE_TEXMAT0 << (i))
 
 
-typedef void (*FetchTexelFunc)( GLcontext *ctx,
-                                const struct gl_texture_object *texObject,
-                                const struct gl_texture_image *texImage,
+/*
+ * If teximage is color-index, texelOut returns GLchan[1].
+ * If teximage is depth, texelOut returns GLfloat[1].
+ * Otherwise, texelOut returns GLchan[4].
+ */
+typedef void (*FetchTexelFunc)( const struct gl_texture_image *texImage,
                                 GLint col, GLint row, GLint img,
-                                GLchan texel[] );
+                                GLvoid *texelOut );
 
 
 /* Texture image record */
@@ -817,18 +820,20 @@ struct gl_texture_object {
    _glthread_Mutex Mutex;	/* for thread safety */
    GLint RefCount;		/* reference count */
    GLuint Name;			/* an unsigned integer */
-   GLuint Dimensions;		/* 1 or 2 or 3 */
+   GLuint Dimensions;		/* 1 or 2 or 3 or 6 (cube map) */
    GLfloat Priority;		/* in [0,1] */
-   GLchan BorderColor[4];	/* as integers */
+   GLchan BorderColor[4];
    GLenum WrapS;		/* GL_CLAMP, REPEAT or CLAMP_TO_EDGE */
    GLenum WrapT;		/* GL_CLAMP, REPEAT or CLAMP_TO_EDGE */
    GLenum WrapR;		/* GL_CLAMP, REPEAT or CLAMP_TO_EDGE */
    GLenum MinFilter;		/* minification filter */
    GLenum MagFilter;		/* magnification filter */
-   GLfloat MinLod;		/* OpenGL 1.2 */
-   GLfloat MaxLod;		/* OpenGL 1.2 */
-   GLint BaseLevel;		/* user-specified, OpenGL 1.2 */
-   GLint MaxLevel;		/* user-specified, OpenGL 1.2 */
+   GLfloat MinLod;		/* min lambda, OpenGL 1.2 */
+   GLfloat MaxLod;		/* max lambda, OpenGL 1.2 */
+   GLint BaseLevel;		/* min mipmap level, OpenGL 1.2 */
+   GLint MaxLevel;		/* max mipmap level, OpenGL 1.2 */
+   GLboolean CompareFlag;	/* GL_SGIX_shadow */
+   GLenum CompareOperator;	/* GL_SGIX_shadow */
    GLint _MaxLevel;		/* actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/* = _MaxLevel - BaseLevel (q - b in spec) */
    struct gl_texture_image *Image[MAX_TEXTURE_LEVELS];
@@ -1224,6 +1229,7 @@ struct gl_extensions {
    GLboolean SGIS_texture_edge_clamp;
    GLboolean SGIX_depth_texture;
    GLboolean SGIX_pixel_texture;
+   GLboolean SGIX_shadow;
    GLboolean _3DFX_texture_compression_FXT1;
 };
 

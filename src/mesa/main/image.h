@@ -1,4 +1,4 @@
-/* $Id: image.h,v 1.15 2001/02/16 23:29:14 brianp Exp $ */
+/* $Id: image.h,v 1.16 2001/02/17 18:41:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -151,10 +151,9 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
 
 
 extern void
-_mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
+_mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
                          GLenum srcType, const GLvoid *source,
-                         const struct gl_pixelstore_attrib *srcPacking,
-                         GLuint transferOps );
+                         const struct gl_pixelstore_attrib *srcPacking );
 
 extern void
 _mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,

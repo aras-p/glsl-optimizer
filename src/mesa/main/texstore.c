@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.5 2001/02/17 00:15:39 brianp Exp $ */
+/* $Id: texstore.c,v 1.6 2001/02/17 18:41:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,6 +38,7 @@
 
 
 
+#include "colormac.h"
 #include "context.h"
 #include "convolve.h"
 #include "image.h"
@@ -47,57 +48,6 @@
 #include "texstore.h"
 
 
-/*
- * Get texture palette entry.
- */
-static void
-palette_sample(GLcontext *ctx,
-               const struct gl_texture_object *tObj,
-               GLint index, GLchan rgba[4] )
-{
-   const GLchan *palette;
-   GLenum format;
-
-   if (ctx->Texture.SharedPalette) {
-      ASSERT(!ctx->Texture.Palette.FloatTable);
-      palette = (const GLchan *) ctx->Texture.Palette.Table;
-      format = ctx->Texture.Palette.Format;
-   }
-   else {
-      ASSERT(!tObj->Palette.FloatTable);
-      palette = (const GLchan *) tObj->Palette.Table;
-      format = tObj->Palette.Format;
-   }
-
-   switch (format) {
-      case GL_ALPHA:
-         rgba[ACOMP] = palette[index];
-         return;
-      case GL_LUMINANCE:
-      case GL_INTENSITY:
-         rgba[RCOMP] = palette[index];
-         return;
-      case GL_LUMINANCE_ALPHA:
-         rgba[RCOMP] = palette[(index << 1) + 0];
-         rgba[ACOMP] = palette[(index << 1) + 1];
-         return;
-      case GL_RGB:
-         rgba[RCOMP] = palette[index * 3 + 0];
-         rgba[GCOMP] = palette[index * 3 + 1];
-         rgba[BCOMP] = palette[index * 3 + 2];
-         return;
-      case GL_RGBA:
-         rgba[RCOMP] = palette[(index << 2) + 0];
-         rgba[GCOMP] = palette[(index << 2) + 1];
-         rgba[BCOMP] = palette[(index << 2) + 2];
-         rgba[ACOMP] = palette[(index << 2) + 3];
-         return;
-      default:
-         gl_problem(NULL, "Bad palette format in palette_sample");
-   }
-}
-
-
 
 /*
  * Default 1-D texture texel fetch function.  This will typically be
@@ -105,61 +55,65 @@ palette_sample(GLcontext *ctx,
  * special ways.
  */
 static void
-fetch_1d_texel(GLcontext *ctx,
-               const struct gl_texture_object *tObj,
-               const struct gl_texture_image *img,
-               GLint i, GLint j, GLint k, GLchan rgba[4])
+fetch_1d_texel(const struct gl_texture_image *img,
+               GLint i, GLint j, GLint k, GLvoid *texel)
 {
-   const GLchan *data = (GLchan *) img->Data;
-   const GLchan *texel;
-#ifdef DEBUG
-   GLint width = img->Width;
-   assert(i >= 0);
-   assert(i < width);
-#endif
-
    switch (img->Format) {
-      case GL_COLOR_INDEX:
-         {
-            GLint index = data[i];
-            palette_sample(ctx, tObj, index, rgba);
-            return;
-         }
-      case GL_ALPHA:
-         rgba[ACOMP] = data[i];
+   case GL_RGBA:
+      {
+         const GLchan *src = (GLchan *) img->Data + i * 4;
+         GLchan *rgba = (GLchan *) texel;
+         COPY_CHAN4(rgba, src);
          return;
-      case GL_LUMINANCE:
-      case GL_INTENSITY:
-         rgba[RCOMP] = data[i];
+      }
+   case GL_RGB:
+      {
+         const GLchan *src = (GLchan *) img->Data + i * 3;
+         GLchan *rgba = (GLchan *) texel;
+         rgba[RCOMP] = src[0];
+         rgba[GCOMP] = src[1];
+         rgba[BCOMP] = src[2];
          return;
-      case GL_LUMINANCE_ALPHA:
-         texel = data + i * 2;
-         rgba[RCOMP] = texel[0];
-         rgba[ACOMP] = texel[1];
+      }
+   case GL_ALPHA:
+      {
+         const GLchan *src = (GLchan *) img->Data + i;
+         GLchan *rgba = (GLchan *) texel;
+         rgba[ACOMP] = src[0];
          return;
-      case GL_RGB:
-         texel = data + i * 3;
-         rgba[RCOMP] = texel[0];
-         rgba[GCOMP] = texel[1];
-         rgba[BCOMP] = texel[2];
+      }
+   case GL_LUMINANCE:
+   case GL_INTENSITY:
+      {
+         const GLchan *src = (GLchan *) img->Data + i;
+         GLchan *rgba = (GLchan *) texel;
+         rgba[RCOMP] = src[0];
          return;
-      case GL_RGBA:
-         texel = data + i * 4;
-         rgba[RCOMP] = texel[0];
-         rgba[GCOMP] = texel[1];
-         rgba[BCOMP] = texel[2];
-         rgba[ACOMP] = texel[3];
+      }
+   case GL_LUMINANCE_ALPHA:
+      {
+         const GLchan *src = (GLchan *) img->Data + i * 2;
+         GLchan *rgba = (GLchan *) texel;
+         rgba[RCOMP] = src[0];
+         rgba[ACOMP] = src[1];
          return;
-      case GL_DEPTH_COMPONENT:
-         {
-            const GLfloat *data = (const GLfloat *) img->Data;
-            GLfloat *texel = (GLfloat *) rgba;
-            *texel = data[i];
-            return;
-         }
-      default:
-         gl_problem(NULL, "Bad format in fetch_1d_texel");
+      }
+   case GL_COLOR_INDEX:
+      {
+         const GLchan *src = (GLchan *) img->Data + i;
+         GLchan *index = (GLchan *) texel;
+         *index = *src;
          return;
+      }
+   case GL_DEPTH_COMPONENT:
+      {
+         const GLfloat *src = (GLfloat *) img->Data + i;
+         GLfloat *depth = (GLfloat *) texel;
+         *depth = *src;
+         return;
+      }
+   default:
+      gl_problem(NULL, "Bad format in fetch_1d_texel");
    }
 }
 
@@ -168,64 +122,65 @@ fetch_1d_texel(GLcontext *ctx,
  * Default 2-D texture texel fetch function.
  */
 static void
-fetch_2d_texel(GLcontext *ctx,
-               const struct gl_texture_object *tObj,
-               const struct gl_texture_image *img,
-               GLint i, GLint j, GLint k, GLchan rgba[4])
+fetch_2d_texel(const struct gl_texture_image *img,
+               GLint i, GLint j, GLint k, GLvoid *texel)
 {
-   const GLint width = img->Width;    /* includes border */
-   const GLchan *data = (GLchan *) img->Data;
-   const GLchan *texel;
-
-#ifdef DEBUG
-   const GLint height = img->Height;  /* includes border */
-   assert(i >= 0);
-   assert(i < width);
-   assert(j >= 0);
-   assert(j < height);
-#endif
-
    switch (img->Format) {
-      case GL_COLOR_INDEX:
-         {
-            GLint index = data[width *j + i];
-            palette_sample(ctx, tObj, index, rgba );
-            return;
-         }
-      case GL_ALPHA:
-         rgba[ACOMP] = data[width * j + i];
+   case GL_RGBA:
+      {
+         const GLchan *src = (GLchan *) img->Data + (img->Width * j + i) * 4;
+         GLchan *rgba = (GLchan *) texel;
+         COPY_CHAN4(rgba, src);
          return;
-      case GL_LUMINANCE:
-      case GL_INTENSITY:
-         rgba[RCOMP] = data[ width * j + i];
+      }
+   case GL_RGB:
+      {
+         const GLchan *src = (GLchan *) img->Data + (img->Width * j + i) * 3;
+         GLchan *rgba = (GLchan *) texel;
+         rgba[RCOMP] = src[0];
+         rgba[GCOMP] = src[1];
+         rgba[BCOMP] = src[2];
          return;
-      case GL_LUMINANCE_ALPHA:
-         texel = data + (width * j + i) * 2;
-         rgba[RCOMP] = texel[0];
-         rgba[ACOMP] = texel[1];
+      }
+   case GL_ALPHA:
+      {
+         const GLchan *src = (GLchan *) img->Data + (img->Width * j + i);
+         GLchan *rgba = (GLchan *) texel;
+         rgba[ACOMP] = src[0];
          return;
-      case GL_RGB:
-         texel = data + (width * j + i) * 3;
-         rgba[RCOMP] = texel[0];
-         rgba[GCOMP] = texel[1];
-         rgba[BCOMP] = texel[2];
+      }
+   case GL_LUMINANCE:
+   case GL_INTENSITY:
+      {
+         const GLchan *src = (GLchan *) img->Data + (img->Width * j + i);
+         GLchan *rgba = (GLchan *) texel;
+         rgba[RCOMP] = src[0];
          return;
-      case GL_RGBA:
-         texel = data + (width * j + i) * 4;
-         rgba[RCOMP] = texel[0];
-         rgba[GCOMP] = texel[1];
-         rgba[BCOMP] = texel[2];
-         rgba[ACOMP] = texel[3];
+      }
+   case GL_LUMINANCE_ALPHA:
+      {
+         const GLchan *src = (GLchan *) img->Data + (img->Width * j + i) * 2;
+         GLchan *rgba = (GLchan *) texel;
+         rgba[RCOMP] = src[0];
+         rgba[ACOMP] = src[1];
          return;
-      case GL_DEPTH_COMPONENT:
-         {
-            const GLfloat *data = (const GLfloat *) img->Data;
-            GLfloat *texel = (GLfloat *) rgba;
-            *texel = data[width * j + i];
-            return;
-         }
-      default:
-         gl_problem(NULL, "Bad format in fetch_2d_texel");
+      }
+   case GL_COLOR_INDEX:
+      {
+         const GLchan *src = (GLchan *) img->Data + (img->Width * j + i);
+         GLchan *index = (GLchan *) texel;
+         *index = *src;
+         return;
+      }
+   case GL_DEPTH_COMPONENT:
+      {
+         const GLfloat *src = (GLfloat *) img->Data + (img->Width * j + i);
+         GLfloat *depth = (GLfloat *) texel;
+         *depth = *src;
+         return;
+      }
+   default:
+      gl_problem(NULL, "Bad format in fetch_2d_texel");
    }
 }
 
@@ -234,68 +189,75 @@ fetch_2d_texel(GLcontext *ctx,
  * Default 2-D texture texel fetch function.
  */
 static void
-fetch_3d_texel(GLcontext *ctx,
-               const struct gl_texture_object *tObj,
-               const struct gl_texture_image *img,
-               GLint i, GLint j, GLint k, GLchan rgba[4])
+fetch_3d_texel(const struct gl_texture_image *img,
+               GLint i, GLint j, GLint k, GLvoid *texel)
 {
-   const GLint width = img->Width;    /* includes border */
-   const GLint height = img->Height;  /* includes border */
-   const GLint rectarea = width * height;
-   const GLchan *data = (GLchan *) img->Data;
-   const GLchan *texel;
-
-#ifdef DEBUG
-   const GLint depth = img->Depth;    /* includes border */
-   assert(i >= 0);
-   assert(i < width);
-   assert(j >= 0);
-   assert(j < height);
-   assert(k >= 0);
-   assert(k < depth);
-#endif
+   const GLint width = img->Width;
+   const GLint rectArea = width * img->Height;
 
    switch (img->Format) {
-      case GL_COLOR_INDEX:
-         {
-            GLint index = data[ rectarea * k +  width * j + i ];
-            palette_sample(ctx, tObj, index, rgba );
-            return;
-         }
-      case GL_ALPHA:
-         rgba[ACOMP] = data[ rectarea * k +  width * j + i ];
+   case GL_RGBA:
+      {
+         const GLchan *src = (GLchan *) img->Data
+                           + (rectArea * k + width * j + i) * 4;
+         GLchan *rgba = (GLchan *) texel;
+         COPY_CHAN4(rgba, src);
          return;
-      case GL_LUMINANCE:
-      case GL_INTENSITY:
-         rgba[RCOMP] = data[ rectarea * k +  width * j + i ];
+      }
+   case GL_RGB:
+      {
+         const GLchan *src = (GLchan *) img->Data
+                           + (rectArea * k + width * j + i) * 3;
+         GLchan *rgba = (GLchan *) texel;
+         rgba[RCOMP] = src[0];
+         rgba[GCOMP] = src[1];
+         rgba[BCOMP] = src[2];
          return;
-      case GL_LUMINANCE_ALPHA:
-         texel = data + ( rectarea * k + width * j + i) * 2;
-         rgba[RCOMP] = texel[0];
-         rgba[ACOMP] = texel[1];
+      }
+   case GL_ALPHA:
+      {
+         const GLchan *src = (GLchan *) img->Data
+                           + (rectArea * k + width * j + i);
+         GLchan *rgba = (GLchan *) texel;
+         rgba[ACOMP] = src[0];
          return;
-      case GL_RGB:
-         texel = data + (rectarea * k + width * j + i) * 3;
-         rgba[RCOMP] = texel[0];
-         rgba[GCOMP] = texel[1];
-         rgba[BCOMP] = texel[2];
+      }
+   case GL_LUMINANCE:
+   case GL_INTENSITY:
+      {
+         const GLchan *src = (GLchan *) img->Data
+                           + (rectArea * k + width * j + i);
+         GLchan *rgba = (GLchan *) texel;
+         rgba[RCOMP] = src[0];
          return;
-      case GL_RGBA:
-         texel = data + (rectarea * k + width * j + i) * 4;
-         rgba[RCOMP] = texel[0];
-         rgba[GCOMP] = texel[1];
-         rgba[BCOMP] = texel[2];
-         rgba[ACOMP] = texel[3];
+      }
+   case GL_LUMINANCE_ALPHA:
+      {
+         const GLchan *src = (GLchan *) img->Data
+                           + (rectArea * k + width * j + i) * 2;
+         GLchan *rgba = (GLchan *) texel;
+         rgba[RCOMP] = src[0];
+         rgba[ACOMP] = src[1];
          return;
-      case GL_DEPTH_COMPONENT:
-         {
-            const GLfloat *data = (const GLfloat *) img->Data;
-            GLfloat *texel = (GLfloat *) rgba;
-            *texel = data[rectarea * k + width * j + i];
-            return;
-         }
-      default:
-         gl_problem(NULL, "Bad format in fetch_3d_texel");
+      }
+   case GL_COLOR_INDEX:
+      {
+         const GLchan *src = (GLchan *) img->Data
+                           + (rectArea * k + width * j + i);
+         GLchan *index = (GLchan *) texel;
+         *index = *src;
+         return;
+      }
+   case GL_DEPTH_COMPONENT:
+      {
+         const GLfloat *src = (GLfloat *) img->Data
+                            + (rectArea * k + width * j + i);
+         GLfloat *depth = (GLfloat *) texel;
+         *depth = *src;
+         return;
+      }
+   default:
+      gl_problem(NULL, "Bad format in fetch_3d_texel");
    }
 }
 
@@ -640,7 +602,6 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
    }
    else if (texFormat == GL_DEPTH_COMPONENT) {
       /* Depth texture (shadow maps) */
-      const GLenum texType = GL_FLOAT;
       GLint img, row;
       GLfloat *dest = (GLfloat *) texAddr + dstZoffset * dstImageStride
                     + dstYoffset * dstRowStride
@@ -650,14 +611,8 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
          for (row = 0; row < srcHeight; row++) {
             const GLvoid *src = _mesa_image_address(srcPacking,
                 srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
-            (void) src;
-            (void) texType;
-            /* XXX destRow: GLfloat vs. GLdepth? */
-            /*
-            _mesa_unpack_depth_span(ctx, srcWidth, texType, destRow,
-                                    srcType, src, srcPacking,
-                                    ctx->_ImageTransferState);
-            */
+            _mesa_unpack_depth_span(ctx, srcWidth, destRow,
+                                    srcType, src, srcPacking);
             destRow += dstRowStride;
          }
          dest += dstImageStride;

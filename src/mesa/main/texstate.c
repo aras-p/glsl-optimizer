@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.31 2001/02/17 00:15:39 brianp Exp $ */
+/* $Id: texstate.c,v 1.32 2001/02/17 18:41:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -770,6 +770,31 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          /* (keithh@netcomuk.co.uk) */
          texObj->Priority = CLAMP( params[0], 0.0F, 1.0F );
          break;
+      case GL_TEXTURE_COMPARE_SGIX:
+         if (ctx->Extensions.SGIX_shadow) {
+            texObj->CompareFlag = params[0] ? GL_TRUE : GL_FALSE;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname)");
+            return;
+         }
+         break;
+      case GL_TEXTURE_COMPARE_OPERATOR_SGIX:
+         if (ctx->Extensions.SGIX_shadow) {
+            GLenum op = (GLenum) params[0];
+            if (op == GL_TEXTURE_LEQUAL_R_SGIX ||
+                op == GL_TEXTURE_GEQUAL_R_SGIX) {
+               texObj->CompareFlag = (GLenum) op;
+            }
+            else {
+               gl_error(ctx, GL_INVALID_ENUM, "glTexParameter(param)");
+            }
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname)");
+            return;
+         }
+         break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glTexParameter(pname)" );
          return;
@@ -1021,6 +1046,24 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
       case GL_TEXTURE_MAX_LEVEL:
          *params = (GLfloat) obj->MaxLevel;
          break;
+      case GL_TEXTURE_COMPARE_SGIX:
+         if (ctx->Extensions.SGIX_shadow) {
+            *params = (GLfloat) obj->CompareFlag;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname)" );
+            return;
+         }
+         break;
+      case GL_TEXTURE_COMPARE_OPERATOR_SGIX:
+         if (ctx->Extensions.SGIX_shadow) {
+            *params = (GLfloat) obj->CompareOperator;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname)" );
+            return;
+         }
+         break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname)" );
    }
@@ -1094,6 +1137,24 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          break;
       case GL_TEXTURE_MAX_LEVEL:
          *params = obj->MaxLevel;
+         break;
+      case GL_TEXTURE_COMPARE_SGIX:
+         if (ctx->Extensions.SGIX_shadow) {
+            *params = (GLint) obj->CompareFlag;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname)" );
+            return;
+         }
+         break;
+      case GL_TEXTURE_COMPARE_OPERATOR_SGIX:
+         if (ctx->Extensions.SGIX_shadow) {
+            *params = (GLint) obj->CompareOperator;
+         }
+         else {
+            gl_error( ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname)" );
+            return;
+         }
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname)" );

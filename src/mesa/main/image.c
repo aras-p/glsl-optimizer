@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.55 2001/02/16 23:29:14 brianp Exp $ */
+/* $Id: image.c,v 1.56 2001/02/17 18:41:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3507,22 +3507,17 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
 
 
 void
-_mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
+_mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
                          GLenum srcType, const GLvoid *source,
-                         const struct gl_pixelstore_attrib *srcPacking,
-                         GLuint transferOps )
+                         const struct gl_pixelstore_attrib *srcPacking )
 {
-   GLfloat *depth = MALLOC(n * sizeof(GLfloat));
-   if (!depth)
-      return;
-
    switch (srcType) {
       case GL_BYTE:
          {
             GLuint i;
             const GLubyte *src = (const GLubyte *) source;
             for (i = 0; i < n; i++) {
-               depth[i] = BYTE_TO_FLOAT(src[i]);
+               dest[i] = BYTE_TO_FLOAT(src[i]);
             }
          }
          break;
@@ -3531,7 +3526,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
             GLuint i;
             const GLubyte *src = (const GLubyte *) source;
             for (i = 0; i < n; i++) {
-               depth[i] = UBYTE_TO_FLOAT(src[i]);
+               dest[i] = UBYTE_TO_FLOAT(src[i]);
             }
          }
          break;
@@ -3540,7 +3535,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
             GLuint i;
             const GLshort *src = (const GLshort *) source;
             for (i = 0; i < n; i++) {
-               depth[i] = SHORT_TO_FLOAT(src[i]);
+               dest[i] = SHORT_TO_FLOAT(src[i]);
             }
          }
          break;
@@ -3549,7 +3544,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
             GLuint i;
             const GLushort *src = (const GLushort *) source;
             for (i = 0; i < n; i++) {
-               depth[i] = USHORT_TO_FLOAT(src[i]);
+               dest[i] = USHORT_TO_FLOAT(src[i]);
             }
          }
          break;
@@ -3558,7 +3553,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
             GLuint i;
             const GLint *src = (const GLint *) source;
             for (i = 0; i < n; i++) {
-               depth[i] = INT_TO_FLOAT(src[i]);
+               dest[i] = INT_TO_FLOAT(src[i]);
             }
          }
          break;
@@ -3567,38 +3562,27 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
             GLuint i;
             const GLuint *src = (const GLuint *) source;
             for (i = 0; i < n; i++) {
-               depth[i] = UINT_TO_FLOAT(src[i]);
+               dest[i] = UINT_TO_FLOAT(src[i]);
             }
          }
          break;
       case GL_FLOAT:
-         MEMCPY(depth, source, n * sizeof(GLfloat));
+         MEMCPY(dest, source, n * sizeof(GLfloat));
          break;
       default:
          gl_problem(NULL, "bad type in _mesa_unpack_depth_span()");
-         FREE(depth);
          return;
    }
 
 
-   /* apply depth scale and bias */
+   /* apply depth scale and bias and clamp to [0,1] */
    if (ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0) {
       GLuint i;
       for (i = 0; i < n; i++) {
-         depth[i] = depth[i] * ctx->Pixel.DepthScale + ctx->Pixel.DepthBias;
+         GLfloat d = dest[i] * ctx->Pixel.DepthScale + ctx->Pixel.DepthBias;
+         dest[i] = CLAMP(d, 0.0F, 1.0F);
       }
    }
-
-   /* clamp depth values to [0,1] and convert from floats to integers */
-   {
-      const GLfloat zs = ctx->DepthMaxF;
-      GLuint i;
-      for (i = 0; i < n; i++) {
-         dest[i] = (GLdepth) (CLAMP(depth[i], 0.0F, 1.0F) * zs);
-      }
-   }
-
-   FREE(depth);
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.120 2001/02/06 21:42:48 brianp Exp $ */
+/* $Id: context.c,v 1.121 2001/02/17 18:41:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -916,11 +916,11 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Histogram.Width = 0;
    ctx->Histogram.Format = GL_RGBA;
    ctx->Histogram.Sink = GL_FALSE;
-   ctx->Histogram.RedSize       = 0xffffffff;
-   ctx->Histogram.GreenSize     = 0xffffffff;
-   ctx->Histogram.BlueSize      = 0xffffffff;
-   ctx->Histogram.AlphaSize     = 0xffffffff;
-   ctx->Histogram.LuminanceSize = 0xffffffff;
+   ctx->Histogram.RedSize       = 0;
+   ctx->Histogram.GreenSize     = 0;
+   ctx->Histogram.BlueSize      = 0;
+   ctx->Histogram.AlphaSize     = 0;
+   ctx->Histogram.LuminanceSize = 0;
    for (i = 0; i < HISTOGRAM_TABLE_SIZE; i++) {
       ctx->Histogram.Count[i][0] = 0;
       ctx->Histogram.Count[i][1] = 0;

@@ -1,4 +1,4 @@
-/* $Id: histogram.c,v 1.6 2001/01/30 17:46:34 brianp Exp $ */
+/* $Id: histogram.c,v 1.7 2001/02/17 18:41:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -944,11 +944,11 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
       ctx->Histogram.Width = width;
       ctx->Histogram.Format = internalFormat;
       ctx->Histogram.Sink = sink;
-      ctx->Histogram.RedSize       = 0xffffffff;
-      ctx->Histogram.GreenSize     = 0xffffffff;
-      ctx->Histogram.BlueSize      = 0xffffffff;
-      ctx->Histogram.AlphaSize     = 0xffffffff;
-      ctx->Histogram.LuminanceSize = 0xffffffff;
+      ctx->Histogram.RedSize       = 8 * sizeof(GLuint);
+      ctx->Histogram.GreenSize     = 8 * sizeof(GLuint);
+      ctx->Histogram.BlueSize      = 8 * sizeof(GLuint);
+      ctx->Histogram.AlphaSize     = 8 * sizeof(GLuint);
+      ctx->Histogram.LuminanceSize = 8 * sizeof(GLuint);
    }
    
    ctx->NewState |= _NEW_PIXEL;

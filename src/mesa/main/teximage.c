@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.76 2001/02/17 00:15:39 brianp Exp $ */
+/* $Id: teximage.c,v 1.77 2001/02/17 18:41:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1180,7 +1180,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
             GLint col;
             GLfloat *dst = tmpImage + row * width * 4;
             for (col = 0; col < width; col++) {
-               (*texImage->FetchTexel)(ctx, texObj, texImage, col, row, img,
+               (*texImage->FetchTexel)(texImage, col, row, img,
                                        texels[col]);
             }
             _mesa_unpack_float_color_span(ctx, width, GL_RGBA, dst,
@@ -1244,28 +1244,19 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                GLuint indexRow[MAX_WIDTH];
                GLint col;
                for (col = 0; col < width; col++) {
-                  GLchan rgba[1];
-                  /* XXX this won't really work yet */
-                  /*need (*texImage->FetchRawTexel)() */
-                  (*texImage->FetchTexel)(ctx, texObj, texImage,
-                                           col, row, img, rgba);
-                  indexRow[col] = rgba[0];
+                  (*texImage->FetchTexel)(texImage, col, row, img,
+                                          (GLvoid *) &indexRow[col]);
                }
                _mesa_pack_index_span(ctx, width, type, dest,
                                      indexRow, &ctx->Pack,
                                      ctx->_ImageTransferState);
             }
             else if (format == GL_DEPTH_COMPONENT) {
-               /* XXX finish this */
                GLfloat depthRow[MAX_WIDTH];
                GLint col;
                for (col = 0; col < width; col++) {
-                  GLchan rgba[1];
-                  /* XXX this won't really work yet */
-                  /*need (*texImage->FetchRawTexel)() */
-                  (*texImage->FetchTexel)(ctx, texObj, texImage,
-                                           col, row, img, rgba);
-                  depthRow[col] = (GLfloat) rgba[0];
+                  (*texImage->FetchTexel)(texImage, col, row, img,
+                                          (GLvoid *) &depthRow[col]);
                }
                _mesa_pack_depth_span(ctx, width, dest, type,
                                      depthRow, &ctx->Pack);
@@ -1275,12 +1266,12 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                GLchan rgba[MAX_WIDTH][4];
                GLint col;
                for (col = 0; col < width; col++) {
-                  (*texImage->FetchTexel)(ctx, texObj, texImage,
-                                          col, row, img, rgba[col]);
+                  (*texImage->FetchTexel)(texImage, col, row, img,
+                                          (GLvoid *) rgba[col]);
                }
-               _mesa_pack_rgba_span( ctx, width, (const GLchan (*)[4])rgba,
-                                     format, type, dest, &ctx->Pack,
-                                     ctx->_ImageTransferState );
+               _mesa_pack_rgba_span(ctx, width, (const GLchan (*)[4])rgba,
+                                    format, type, dest, &ctx->Pack,
+                                    ctx->_ImageTransferState);
             } /* format */
          } /* row */
       } /* img */
