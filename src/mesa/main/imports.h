@@ -615,7 +615,7 @@ void _watcom_start_fast_math(unsigned short *x,unsigned short *mask);
 #pragma aux _watcom_start_fast_math =                                   \
    "fnstcw  word ptr [eax]"                                             \
    "fldcw   word ptr [ecx]"                                             \
-   parm [eax ecx]                                                       \
+   parm [eax] [ecx]                                                     \
    modify exact [];
 void _watcom_end_fast_math(unsigned short *x);
 #pragma aux _watcom_end_fast_math =                                     \
@@ -626,7 +626,7 @@ void _watcom_end_fast_math(unsigned short *x);
 #if defined(NO_FAST_MATH)
 #define START_FAST_MATH(x)                                              \
 do {                                                                    \
-   static GLushort mask = DEFAULT_X86_FPU;	                        \
+   static GLushort mask = DEFAULT_X86_FPU;	                            \
    _watcom_start_fast_math(&x,&mask);                                   \
 } while (0)
 #else
