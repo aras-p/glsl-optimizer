@@ -1,4 +1,4 @@
-/* $Id: reflect.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: reflect.c,v 1.2 2000/04/12 01:08:30 brianp Exp $ */
 
 /*
  * Demo of a reflective, texture-mapped surface with OpenGL.
@@ -20,69 +20,39 @@
  */
  
 /*
- * Dirk Reiners (reiners@igd.fhg.de) made some modifications to this code.
- *
- * August 1996 - A few optimizations by Brian
+ * Authors:
+ *   Brian Paul
+ *   Dirk Reiners (reiners@igd.fhg.de) made some modifications to this code.
+ *   Mark Kilgard (April 1997)
+ *   Brian Paul (April 2000 - added keyboard d/s options)
  */
 
-/*
- * April, 1997 - Added Mark Kilgard's changes.
- */
-
-/*
- * $Log: reflect.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
- *
- * Revision 3.4  1999/03/28 18:22:05  brianp
- * minor clean-up
- *
- * Revision 3.3  1998/11/22 02:54:29  brianp
- * only draw one stack for gluCylinders
- *
- * Revision 3.2  1998/11/19 02:53:48  brianp
- * changed texture image and background color
- *
- * Revision 3.1  1998/11/05 04:34:04  brianp
- * moved image files to ../images/ directory
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
-
-
-#define USE_ZBUFFER
-
-
-/* OK, without hardware support this is overkill. */
-#define USE_TEXTURE
 
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "GL/glut.h"
-
-#include "../util/readtex.c"  /* a hack, I know */
+#include "../util/showbuffer.c"
+#include "../util/readtex.c"
 
 
 #define DEG2RAD (3.14159/180.0)
 
-
 #define TABLE_TEXTURE "../images/tile.rgb"
 
-static int ImgWidth, ImgHeight;
+static GLint ImgWidth, ImgHeight;
 static GLenum ImgFormat;
 static GLubyte *Image = NULL;
 
 #define MAX_OBJECTS 2
-
 static GLint table_list;
 static GLint objects_list[MAX_OBJECTS];
 
-
 static GLfloat xrot, yrot;
 static GLfloat spin;
+
+static GLint Width = 400, Height = 300;
+static GLenum ShowBuffer = GL_NONE;
 
 
 
@@ -146,15 +116,10 @@ static void make_objects( void )
 }
 
 
-static GLfloat light_pos[] = { 0.0, 20.0, 0.0, 1.0 };
-
 static void init( void )
 {
    make_table();
    make_objects();
-
-   /* Setup texture */
-#ifdef USE_TEXTURE
 
    Image = LoadRGBImage( TABLE_TEXTURE, &ImgWidth, &ImgHeight, &ImgFormat );
    if (!Image) {
@@ -169,16 +134,10 @@ static void init( void )
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-#endif
-
 
    xrot = 30.0;
    yrot = 50.0;
    spin = 0.0;
-
-#ifndef USE_ZBUFFER
-   glEnable( GL_CULL_FACE );
-#endif
 
    glShadeModel( GL_FLAT );
    
@@ -194,12 +153,14 @@ static void init( void )
 
 static void reshape(int w, int h)
 {
-   GLfloat aspect = (float) w / (float) h;
-
+   GLfloat yAspect = 2.5;
+   GLfloat xAspect = yAspect * (float) w / (float) h;
+   Width = w;
+   Height = h;
    glViewport(0, 0, w, h);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glFrustum( -aspect, aspect, -1.0, 1.0, 4.0, 300.0 );
+   glFrustum( -xAspect, xAspect, -yAspect, yAspect, 10.0, 30.0 );
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 }
@@ -212,8 +173,7 @@ static void draw_objects( GLfloat eyex, GLfloat eyey, GLfloat eyez )
    (void) eyey;
    (void) eyez;
 #ifndef USE_ZBUFFER
-	if (eyex<0.5)
-	{
+   if (eyex<0.5) {
 #endif
 	   glPushMatrix();
 	   glTranslatef( 1.0, 1.5, 0.0 );
@@ -230,9 +190,8 @@ static void draw_objects( GLfloat eyex, GLfloat eyey, GLfloat eyez )
 	   glCallList( objects_list[1] );
 	   glPopMatrix();
 #ifndef USE_ZBUFFER
-	}
-	else
-	{	
+   }
+   else {	
 	   glPushMatrix();
 	   glTranslatef( -1.0, 0.85+3.0*fabs( cos(0.01*spin) ), 0.0 );
 	   glRotatef( 0.5*spin, 0.0, 0.5, 1.0 );
@@ -247,7 +206,7 @@ static void draw_objects( GLfloat eyex, GLfloat eyey, GLfloat eyez )
 	   glRotatef( 0.5*spin, 0.0, 0.5, 1.0 );
 	   glCallList( objects_list[0] );
 	   glPopMatrix();
-	}
+   }
 #endif
 }
 
@@ -262,6 +221,7 @@ static void draw_table( void )
 
 static void draw_scene( void )
 {
+   static GLfloat light_pos[] = { 0.0, 20.0, 0.0, 1.0 };
    GLfloat dist = 20.0;
    GLfloat eyex, eyey, eyez;
 
@@ -279,20 +239,15 @@ static void draw_scene( void )
    glLightfv( GL_LIGHT0, GL_POSITION, light_pos );
  
    /* draw table into stencil planes */
-   glEnable( GL_STENCIL_TEST );
-#ifdef USE_ZBUFFER
    glDisable( GL_DEPTH_TEST );
-#endif
+   glEnable( GL_STENCIL_TEST );
    glStencilFunc( GL_ALWAYS, 1, 0xffffffff );
    glStencilOp( GL_REPLACE, GL_REPLACE, GL_REPLACE );
    glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
    draw_table();
    glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 
-#ifdef USE_ZBUFFER
    glEnable( GL_DEPTH_TEST );
-#endif
-
 
    /* render view from below (reflected viewport) */
    /* only draw where stencil==1 */
@@ -318,9 +273,7 @@ static void draw_scene( void )
    glEnable( GL_BLEND );
    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
-#ifdef USE_TEXTURE
    glEnable( GL_TEXTURE_2D );
-#endif
    draw_table();
    glDisable( GL_TEXTURE_2D );
    glDisable( GL_BLEND );
@@ -334,43 +287,34 @@ static void draw_scene( void )
 
    glPopMatrix();
 
-   glutSwapBuffers();
-}
-
-
-
-#if 0
-void draw_scene(void)
-{
-   GLfloat dist = 20.0;
-   GLfloat eyex, eyey, eyez;
-
-   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-
-   eyex = dist * cos(yrot*DEG2RAD) * cos(xrot*DEG2RAD);
-   eyez = dist * sin(yrot*DEG2RAD) * cos(xrot*DEG2RAD);
-   eyey = dist * sin(xrot*DEG2RAD);
-
-   /* view from top */
-   glPushMatrix();
-   gluLookAt( eyex, eyey, eyez, 0.0, 0.0, 0.0,  0.0, 1.0, 0.0 );
-
-   draw_table();
-
-   glPopMatrix();
+   if (ShowBuffer == GL_DEPTH) {
+      ShowDepthBuffer(Width, Height, 1.0, 0.0);
+   }
+   else if (ShowBuffer == GL_STENCIL) {
+      ShowStencilBuffer(Width, Height, 255.0, 0.0);
+   }
 
    glutSwapBuffers();
 }
-#endif
 
 
 static void Key( unsigned char key, int x, int y )
 {
    (void) x;
    (void) y;
-   if (key==27)
+   if (key == 'd') {
+      ShowBuffer = GL_DEPTH;
+   }
+   else if (key == 's') {
+      ShowBuffer = GL_STENCIL;
+   }
+   else if (key==27) {
       exit(0);
+   }
+   else {
+      ShowBuffer = GL_NONE;
+   }
+   glutPostRedisplay();
 }
 
 
@@ -381,15 +325,13 @@ static void SpecialKey( int key, int x, int y )
    switch (key) {
       case GLUT_KEY_UP:
          xrot += 3.0;
-#ifndef USE_ZBUFFER
-		 if ( xrot > 180 )	xrot = 180;
-#endif
+         if ( xrot > 85 )
+            xrot = 85;
          break;
       case GLUT_KEY_DOWN:
          xrot -= 3.0;
-#ifndef USE_ZBUFFER
-		 if ( xrot < 0 )	xrot = 0;
-#endif
+         if ( xrot < 5 )
+            xrot = 5;
          break;
       case GLUT_KEY_LEFT:
          yrot += 3.0;
@@ -414,22 +356,16 @@ static void idle( void )
 
 int main( int argc, char *argv[] )
 {
-   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB 
-#ifdef USE_ZBUFFER
-		| GLUT_DEPTH 
-#endif
-		| GLUT_STENCIL);
+   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
    glutInitWindowPosition( 0, 0 );
-   glutInitWindowSize(400, 300 );
+   glutInitWindowSize( Width, Height );
    glutCreateWindow(argv[0]);
    glutReshapeFunc(reshape);
    glutDisplayFunc(draw_scene);
    glutKeyboardFunc(Key);
    glutSpecialFunc(SpecialKey);
    glutIdleFunc(idle);
-
    init();
-
    glutMainLoop();
    return 0;
 }
