@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.54 2001/03/26 20:02:38 brianp Exp $ */
+/* $Id: gl.h,v 1.55 2001/04/24 16:12:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -325,12 +325,12 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_ONE					0x1
 #define GL_SRC_COLOR				0x0300
 #define GL_ONE_MINUS_SRC_COLOR			0x0301
-#define GL_DST_COLOR				0x0306
-#define GL_ONE_MINUS_DST_COLOR			0x0307
 #define GL_SRC_ALPHA				0x0302
 #define GL_ONE_MINUS_SRC_ALPHA			0x0303
 #define GL_DST_ALPHA				0x0304
 #define GL_ONE_MINUS_DST_ALPHA			0x0305
+#define GL_DST_COLOR				0x0306
+#define GL_ONE_MINUS_DST_COLOR			0x0307
 #define GL_SRC_ALPHA_SATURATE			0x0308
 #define GL_CONSTANT_COLOR			0x8001
 #define GL_ONE_MINUS_CONSTANT_COLOR		0x8002
