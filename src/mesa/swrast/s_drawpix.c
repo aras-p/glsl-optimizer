@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.29 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.30 2002/02/15 03:38:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -635,21 +635,20 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    if (ctx->Fog.Enabled)
       _mesa_span_default_fog(ctx, &span);
 
-   if (type==GL_UNSIGNED_SHORT && sizeof(GLdepth)==sizeof(GLushort)
+   if (type==GL_UNSIGNED_SHORT && ctx->Visual.depthBits == 16
        && !bias_or_scale && !zoom && ctx->Visual.rgbMode) {
       /* Special case: directly write 16-bit depth values */
       GLint row;
-      for (row = 0; row < height; row++, y++) {
+      span.x = x;
+      span.y = y;
+      span.end = drawWidth;
+      for (row = 0; row < height; row++, span.y++) {
          const GLushort *zptr = (const GLushort *)
             _mesa_image_address(&ctx->Unpack, pixels, width, height,
                                 GL_DEPTH_COMPONENT, type, 0, row, 0);
          GLint i;
          for (i = 0; i < drawWidth; i++)
             span.zArray[i] = zptr[i];
-
-         span.x = x;
-         span.y = y;
-         span.end = drawWidth;
          _mesa_write_rgba_span(ctx, &span, GL_BITMAP);
       }
    }
@@ -657,25 +656,24 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
        && !bias_or_scale && !zoom && ctx->Visual.rgbMode) {
       /* Special case: directly write 32-bit depth values */
       GLint row;
-      for (row = 0; row < height; row++, y++) {
+      span.x = x;
+      span.y = y;
+      span.end = drawWidth;
+      for (row = 0; row < height; row++, span.y++) {
          const GLuint *zptr = (const GLuint *)
             _mesa_image_address(&ctx->Unpack, pixels, width, height,
                                 GL_DEPTH_COMPONENT, type, 0, row, 0);
-
-         /* XXX get rid of this loop.  use zArray pointer in span */
-         GLint i;
-         for (i = 0; i < drawWidth; i++)
-            span.zArray[i] = zptr[i];
-         span.x = x;
-         span.y = y;
-         span.end = drawWidth;
+         MEMCPY(span.zArray, zptr, drawWidth * sizeof(GLdepth));
          _mesa_write_rgba_span(ctx, &span, GL_BITMAP);
       }
    }
    else {
       /* General case */
       GLint row;
-      for (row = 0; row < height; row++, y++) {
+      span.x = x;
+      span.y = y;
+      span.end = drawWidth;
+      for (row = 0; row < height; row++, span.y++) {
          GLfloat fspan[MAX_WIDTH];
          const GLvoid *src = _mesa_image_address(&ctx->Unpack,
                 pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
@@ -686,13 +684,9 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             const GLfloat zs = ctx->DepthMaxF;
             GLint i;
             for (i = 0; i < drawWidth; i++) {
-               span.zArray[i] = (GLdepth) (fspan[i] * zs);
+               span.zArray[i] = (GLdepth) (fspan[i] * zs + 0.5F);
             }
          }
-
-         span.x = x;
-         span.y = y;
-         span.end = drawWidth;
          if (ctx->Visual.rgbMode) {
             if (zoom)
                _mesa_write_zoomed_rgba_span(ctx, &span,
