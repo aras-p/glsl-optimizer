@@ -530,6 +530,10 @@ driAllocateTexture( driTexHeap * const * heap_array, unsigned nr_heaps,
    if ( t->memBlock == NULL ) {
       for ( id = 0 ; (t->memBlock == NULL) && (id < nr_heaps) ; id++ ) {
 	 heap = heap_array[ id ];
+
+	 if ( heap == NULL )
+	    continue;
+
 	 if ( t->totalSize <= heap->size ) { 
 
 	    for ( cursor = heap->texture_objects.prev, temp = cursor->prev;
