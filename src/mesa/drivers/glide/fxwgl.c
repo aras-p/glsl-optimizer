@@ -827,10 +827,17 @@ wglSetPixelFormat(HDC hdc, int iPixelFormat, const PIXELFORMATDESCRIPTOR * ppfd)
 
    qt_valid_pix = qt_pix;
 
-   if (iPixelFormat < 1 || iPixelFormat > qt_valid_pix
-       || ppfd->nSize != sizeof(PIXELFORMATDESCRIPTOR)) {
-      SetLastError(0);
-      return (FALSE);
+   if (iPixelFormat < 1 || iPixelFormat > qt_valid_pix) {
+      if (ppfd == NULL) {
+         PIXELFORMATDESCRIPTOR my_pfd;
+         if (!wglDescribePixelFormat(hdc, iPixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &my_pfd)) {
+            SetLastError(0);
+            return (FALSE);
+         }
+      } else if (ppfd->nSize != sizeof(PIXELFORMATDESCRIPTOR)) {
+         SetLastError(0);
+         return (FALSE);
+      }
    }
    curPFD = iPixelFormat;
 
