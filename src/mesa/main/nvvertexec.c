@@ -1,4 +1,4 @@
-/* $Id: nvvertexec.c,v 1.3 2003/03/04 16:33:55 brianp Exp $ */
+/* $Id: nvvertexec.c,v 1.4 2003/03/25 00:00:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -415,7 +415,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                   q[2] = (GLfloat) (q[0] * LOG2(q[1]));
                   q[3] = 1.0F;
                }
-               store_vector4( &inst->DstReg, machine, t );
+               store_vector4( &inst->DstReg, machine, q );
             }
             break;
          case VP_OPCODE_LOG:
