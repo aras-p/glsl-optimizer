@@ -1,4 +1,4 @@
-/* $Id: common_x86.c,v 1.8 2000/12/06 14:41:47 gareth Exp $ */
+/* $Id: common_x86.c,v 1.9 2000/12/07 02:36:38 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -259,7 +259,7 @@ void gl_init_all_x86_transform_asm( void )
 #endif
 
 #ifdef USE_KATMAI_ASM
-   if ( cpu_has_xmm ) {
+   if ( cpu_has_xmm && getenv( "MESA_FORCE_KATMAI" ) == 0 ) {
       check_os_katmai_support();
    }
    if ( cpu_has_xmm ) {
