@@ -1,8 +1,8 @@
-/* $Id: osmesa.h,v 1.5 2000/03/28 16:59:39 rjfrank Exp $ */
+/* $Id: osmesa.h,v 1.6 2000/09/08 16:41:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -59,11 +59,11 @@ extern "C" {
 #endif
 
 
-#include "GL/gl.h"
+#include <GL/gl.h>
 
 
 #define OSMESA_MAJOR_VERSION 3
-#define OSMESA_MINOR_VERSION 3
+#define OSMESA_MINOR_VERSION 5
 
 
 
@@ -114,10 +114,22 @@ typedef struct osmesa_context *OSMesaContext;
  *                     display lists.  NULL indicates no sharing.
  * Return:  an OSMesaContext or 0 if error
  */
-GLAPI OSMesaContext GLAPIENTRY OSMesaCreateContext( GLenum format,
-                                                    OSMesaContext sharelist );
+GLAPI OSMesaContext GLAPIENTRY
+OSMesaCreateContext( GLenum format, OSMesaContext sharelist );
 
 
+
+/*
+ * Create an Off-Screen Mesa rendering context and specify desired
+ * size of depth buffer, stencil buffer and accumulation buffer.
+ * If you specify zero for depthBits, stencilBits, accumBits you
+ * can save some memory.
+ *
+ * New in Mesa 3.5
+ */
+GLAPI OSMesaContext GLAPIENTRY
+OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
+                        GLint accumBits, OSMesaContext sharelist);
 
 
 /*
@@ -125,7 +137,8 @@ GLAPI OSMesaContext GLAPIENTRY OSMesaCreateContext( GLenum format,
  *
  * Input:  ctx - the context to destroy
  */
-GLAPI void GLAPIENTRY OSMesaDestroyContext( OSMesaContext ctx );
+GLAPI void GLAPIENTRY
+OSMesaDestroyContext( OSMesaContext ctx );
 
 
 
@@ -156,9 +169,9 @@ GLAPI void GLAPIENTRY OSMesaDestroyContext( OSMesaContext ctx );
  *          invalid buffer address, type!=GL_UNSIGNED_BYTE, width<1, height<1,
  *          width>internal limit or height>internal limit.
  */
-GLAPI GLboolean GLAPIENTRY OSMesaMakeCurrent( OSMesaContext ctx,
-                                              void *buffer, GLenum type,
-                                              GLsizei width, GLsizei height );
+GLAPI GLboolean GLAPIENTRY
+OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
+                   GLsizei width, GLsizei height );
 
 
 
@@ -166,7 +179,8 @@ GLAPI GLboolean GLAPIENTRY OSMesaMakeCurrent( OSMesaContext ctx,
 /*
  * Return the current Off-Screen Mesa rendering context handle.
  */
-GLAPI OSMesaContext GLAPIENTRY OSMesaGetCurrentContext( void );
+GLAPI OSMesaContext GLAPIENTRY
+OSMesaGetCurrentContext( void );
 
 
 
@@ -183,7 +197,8 @@ GLAPI OSMesaContext GLAPIENTRY OSMesaGetCurrentContext( void );
  *
  * New in version 2.0.
  */
-GLAPI void GLAPIENTRY OSMesaPixelStore( GLint pname, GLint value );
+GLAPI void GLAPIENTRY
+OSMesaPixelStore( GLint pname, GLint value );
 
 
 
@@ -198,7 +213,8 @@ GLAPI void GLAPIENTRY OSMesaPixelStore( GLint pname, GLint value );
  *                 OSMESA_Y_UP returns 1 or 0 to indicate Y axis direction
  *         value - pointer to integer in which to return result.
  */
-GLAPI void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value );
+GLAPI void GLAPIENTRY
+OSMesaGetIntegerv( GLint pname, GLint *value );
 
 
 
@@ -212,10 +228,10 @@ GLAPI void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value );
  *
  * New in Mesa 2.4.
  */
-GLAPI GLboolean GLAPIENTRY OSMesaGetDepthBuffer( OSMesaContext c,
-                                                 GLint *width, GLint *height,
-                                                 GLint *bytesPerValue,
-                                                 void **buffer );
+GLAPI GLboolean GLAPIENTRY
+OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
+                      GLint *bytesPerValue, void **buffer );
+
 
 
 /*
@@ -228,10 +244,10 @@ GLAPI GLboolean GLAPIENTRY OSMesaGetDepthBuffer( OSMesaContext c,
  *
  * New in Mesa 3.3.
  */
-GLAPI GLboolean GLAPIENTRY OSMesaGetColorBuffer( OSMesaContext c,
-                                                 GLint *width, GLint *height,
-                                                 GLint *format,
-                                                 void **buffer );
+GLAPI GLboolean GLAPIENTRY
+OSMesaGetColorBuffer( OSMesaContext c, GLint *width, GLint *height,
+                      GLint *format, void **buffer );
+
 
 
 #if defined(__BEOS__) || defined(__QUICKDRAW__)

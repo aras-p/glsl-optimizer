@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.19 2000/06/27 21:42:14 brianp Exp $ */
+/* $Id: osmesa.c,v 1.20 2000/09/08 16:41:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -100,10 +100,25 @@ static void osmesa_update_state( GLcontext *ctx );
 OSMesaContext GLAPIENTRY
 OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
 {
+   return OSMesaCreateContextExt(format, DEFAULT_SOFTWARE_DEPTH_BITS,
+                                 8, 16, sharelist);
+}
+
+
+
+/*
+ * New in Mesa 3.5
+ *
+ * Create context and specify size of ancillary buffers.
+ */
+OSMesaContext GLAPIENTRY
+OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
+                        GLint accumBits, OSMesaContext sharelist )
+{
    OSMesaContext osmesa;
    GLint rshift, gshift, bshift, ashift;
    GLint rind, gind, bind;
-   GLint indexBits, alphaBits;
+   GLint indexBits, redBits, greenBits, blueBits, alphaBits;
    GLboolean rgbmode;
    GLboolean swalpha;
    GLuint i4 = 1;
@@ -119,6 +134,9 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
    }
    else if (format==OSMESA_RGBA) {
       indexBits = 0;
+      redBits = 8;
+      greenBits = 8;
+      blueBits = 8;
       alphaBits = 8;
       if (little_endian) {
          rshift = 0;
@@ -136,6 +154,9 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
    }
    else if (format==OSMESA_BGRA) {
       indexBits = 0;
+      redBits = 8;
+      greenBits = 8;
+      blueBits = 8;
       alphaBits = 8;
       if (little_endian) {
          ashift = 0;
@@ -153,6 +174,9 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
    }
    else if (format==OSMESA_ARGB) {
       indexBits = 0;
+      redBits = 8;
+      greenBits = 8;
+      blueBits = 8;
       alphaBits = 8;
       if (little_endian) {
          bshift = 0;
@@ -170,6 +194,9 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
    }
    else if (format==OSMESA_RGB) {
       indexBits = 0;
+      redBits = 8;
+      greenBits = 8;
+      blueBits = 8;
       alphaBits = 0;
       bshift = 0;
       gshift = 8;
@@ -183,6 +210,9 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
    }
    else if (format==OSMESA_BGR) {
       indexBits = 0;
+      redBits = 8;
+      greenBits = 8;
+      blueBits = 8;
       alphaBits = 0;
       bshift = 0;
       gshift = 8;
@@ -201,15 +231,22 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
 
    osmesa = (OSMesaContext) CALLOC_STRUCT(osmesa_context);
    if (osmesa) {
-      osmesa->gl_visual = gl_create_visual( rgbmode,
-                                            swalpha,    /* software alpha */
-                                            GL_FALSE,	/* double buffer */
-                                            GL_FALSE,	/* stereo */
-                                            DEFAULT_SOFTWARE_DEPTH_BITS,
-                                            STENCIL_BITS,
-                                            rgbmode ? ACCUM_BITS : 0,
-                                            indexBits,
-                                            8, 8, 8, alphaBits );
+      osmesa->gl_visual = _mesa_create_visual( rgbmode,
+                                               GL_FALSE,    /* double buffer */
+                                               GL_FALSE,    /* stereo */
+                                               redBits,
+                                               greenBits,
+                                               blueBits,
+                                               alphaBits,
+                                               indexBits,
+                                               depthBits,
+                                               stencilBits,
+                                               accumBits,
+                                               accumBits,
+                                               accumBits,
+                                               alphaBits ? accumBits : 0,
+                                               1            /* num samples */
+                                               );
       if (!osmesa->gl_visual) {
          FREE(osmesa);
          return NULL;
@@ -259,6 +296,7 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
    }
    return osmesa;
 }
+
 
 
 
