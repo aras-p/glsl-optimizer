@@ -57,6 +57,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define TEX_1	2
 
 
+/**
+ * Set the texture wrap modes.  Currently \c GL_REPEAT, \c GL_CLAMP,
+ * \c GL_CLAMP_TO_EDGE, and \c GL_MIRRORED_REPEAT are supported.
+ * 
+ * \param t Texture object whose wrap modes are to be set
+ * \param swrap Wrap mode for the \a s texture coordinate
+ * \param twrap Wrap mode for the \a t texture coordinate
+ */
 static void r128SetTexWrap( r128TexObjPtr t, GLenum swrap, GLenum twrap )
 {
    t->setup.tex_cntl &= ~(R128_TEX_CLAMP_S_MASK | R128_TEX_CLAMP_T_MASK);
@@ -70,9 +78,6 @@ static void r128SetTexWrap( r128TexObjPtr t, GLenum swrap, GLenum twrap )
       break;
    case GL_REPEAT:
       t->setup.tex_cntl |= R128_TEX_CLAMP_S_WRAP;
-      break;
-   case GL_CLAMP_TO_BORDER:
-      t->setup.tex_cntl |= R128_TEX_CLAMP_S_BORDER_COLOR;
       break;
    case GL_MIRRORED_REPEAT:
       t->setup.tex_cntl |= R128_TEX_CLAMP_S_MIRROR;
@@ -88,9 +93,6 @@ static void r128SetTexWrap( r128TexObjPtr t, GLenum swrap, GLenum twrap )
       break;
    case GL_REPEAT:
       t->setup.tex_cntl |= R128_TEX_CLAMP_T_WRAP;
-      break;
-   case GL_CLAMP_TO_BORDER:
-      t->setup.tex_cntl |= R128_TEX_CLAMP_T_BORDER_COLOR;
       break;
    case GL_MIRRORED_REPEAT:
       t->setup.tex_cntl |= R128_TEX_CLAMP_T_MIRROR;
@@ -457,8 +459,8 @@ static void r128DDTexEnv( GLcontext *ctx, GLenum target,
       }
       break;
 
-   case GL_TEXTURE_LOD_BIAS_EXT:
-      do {
+   case GL_TEXTURE_LOD_BIAS:
+      {
 	 CARD32 t = rmesa->setup.tex_cntl_c;
 	 GLint bias;
 	 CARD32 b;
@@ -490,7 +492,7 @@ static void r128DDTexEnv( GLcontext *ctx, GLenum target,
 	    rmesa->setup.tex_cntl_c = t;
 	    rmesa->dirty |= R128_UPLOAD_CONTEXT;
 	 }
-      } while (0);
+      }
       break;
 
    default:
