@@ -815,14 +815,31 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 		format
 		)){
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00088047):
+		/* tested with:
+			kfiresaver.kss 
+			*/
 		return 0x1a0c;
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00077047):
+		/* tested with:
+			kfiresaver.kss 
+			*/
 		return 0x4ba0c;
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00055047):
-		return 0x53a0c;	
+		/* tested with:
+			kfiresaver.kss
+			kfountain.kss
+			*/
+		return 0x51a0c;	
 	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00088047):
+		/* tested with
+			lesson 06
+			lesson 07
+			*/
 		return 0x53a0c;
 	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00055047):
+		/* Can't remember what I tested this with.. 
+		   try putting return 0 of you see broken textures which 
+		   are not being complained about */
 		return 0x53a0c;	
 	default:
 		{
@@ -899,12 +916,12 @@ void r300_setup_textures(GLcontext *ctx)
 			   repeatedly  */
 			      #if 1
 				if(r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]==0){ 
-					static int fmt=0;
+					static int fmt=1;
 					static int k=0;
 					k++;
 					if(k>200){
 						k=0;
-						fmt++;
+						fmt+=2;
 						texUnit = &ctx->Texture.Unit[i];
 						fprintf(stderr, "Want to set FORMAT_HASH(%d, %d, 0x%04x, %d, %d, 0x%04x, 0x%08x)\n",
 							texUnit->_CurrentCombine->OperandRGB[0] -GL_SRC_COLOR,
@@ -922,6 +939,7 @@ void r300_setup_textures(GLcontext *ctx)
 						//sleep(1);
 						fprintf(stderr, "Now trying format %08x\n", 
 							0x00a0c | (fmt<<12));
+						fprintf(stderr, "size=%08x\n", t->size);
 						}
 					r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x00a0c | (fmt<<12);
 					}
