@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.69 2002/10/04 23:10:06 kschultz Exp $ */
+/* $Id: s_texture.c,v 1.70 2002/10/18 13:40:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -97,6 +97,7 @@
          U = 1.0F - (S - (GLfloat) flr);	/* flr is odd */	\
       else								\
          U = S - (GLfloat) flr;		/* flr is even */		\
+      U = (U * SIZE) - 0.5;						\
       I0 = IFLOOR(U);							\
       I1 = I0 + 1;							\
       if (I0 < 0)							\
