@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.99 2003/12/12 15:39:30 brianp Exp $
+# $Id: Makefile.X11,v 1.100 2003/12/13 01:33:36 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -517,6 +517,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/include/GL/xmesa_x.h				\
 	$(DIRECTORY)/include/GL/xmesa_xf86.h				\
 	$(DIRECTORY)/src/mesa/Makefile*					\
+	$(DIRECTORY)/src/mesa/sources					\
 	$(DIRECTORY)/src/mesa/descrip.mms				\
 	$(DIRECTORY)/src/mesa/depend					\
 	$(DIRECTORY)/src/mesa/main/*.[chS]				\
@@ -537,6 +538,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/NOTES.imm			\
 	$(DIRECTORY)/src/mesa/drivers/beos/*.cpp			\
+	$(DIRECTORY)/src/mesa/drivers/beos/*.h				\
 	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/dos/mga/*.[ch]			\
@@ -611,6 +613,10 @@ DEMO_FILES =	\
 	$(DIRECTORY)/src/glut/glx/mms_depend		\
 	$(DIRECTORY)/src/glut/glx/glut.dsp		\
 	$(DIRECTORY)/src/glut/glx/*.[ch]		\
+	$(DIRECTORY)/src/glut/beos/*.h			\
+	$(DIRECTORY)/src/glut/beos/*.cpp		\
+	$(DIRECTORY)/src/glut/beos/libglut.def		\
+	$(DIRECTORY)/src/glut/beos/Makefile*		\
 	$(DIRECTORY)/src/glut/dos/*.[ch]		\
 	$(DIRECTORY)/src/glut/dos/Makefile.DJ		\
 	$(DIRECTORY)/src/glut/dos/PC_HW/*.[chS]		\
