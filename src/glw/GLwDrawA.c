@@ -415,7 +415,6 @@ static void createAttribList(GLwDrawingAreaWidget w){
 
 /* Initialize the visualInfo based on the attribute list */
 static void createVisualInfo(GLwDrawingAreaWidget w){
-  static XVisualInfo *visualInfo;
   assert(w->glwDrawingArea.attribList);
   w->glwDrawingArea.visualInfo=glXChooseVisual(XtDisplay(w),XScreenNumberOfScreen(XtScreen(w)),w->glwDrawingArea.attribList);
   if(!w->glwDrawingArea.visualInfo) error((Widget)w,"requested visual not supported");
@@ -578,7 +577,6 @@ static void Realize(Widget w,Mask *valueMask,XSetWindowAttributes *attributes){
 
 static void Redraw(GLwDrawingAreaWidget w,XEvent *event,Region region){
   GLwDrawingAreaCallbackStruct cb;
-  XtCallbackList cblist;
   if(!XtIsRealized((Widget)w)) return;
   cb.reason=GLwCR_EXPOSE;
   cb.event=event;
