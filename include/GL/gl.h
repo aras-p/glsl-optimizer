@@ -2254,6 +2254,14 @@ typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEATIPROC) (GLenum modeRGB, GLen
  * XXX temporary - remove when glext.h is updated
  */
 #ifndef GL_VERSION_2_0
+#define GL_STENCIL_BACK_FUNC              0x8800
+#define GL_STENCIL_BACK_FAIL              0x8801
+#define GL_STENCIL_BACK_PASS_DEPTH_FAIL   0x8802
+#define GL_STENCIL_BACK_PASS_DEPTH_PASS   0x8803
+#define GL_STENCIL_BACK_REF               0x8CA3
+#define GL_STENCIL_BACK_VALUE_MASK        0x8CA4
+#define GL_STENCIL_BACK_WRITEMASK         0x8CA5
+
 GLAPI void GLAPIENTRY glStencilOpSeparate (GLenum, GLenum, GLenum, GLenum);
 GLAPI void GLAPIENTRY glStencilFuncSeparate (GLenum, GLenum, GLint, GLuint);
 GLAPI void GLAPIENTRY glStencilMaskSeparate (GLenum, GLuint);
