@@ -9,7 +9,7 @@ TINY = 0
 
 VPATH = RCS
 
-INCDIRS = -I../include -I/usr/include/Motif1.2 -I/usr/X11R6/include
+INCDIRS = -I../include -I/usr/include/Motif1.2 -I/usr/contrib/X11R6/include -I/usr/X11R6/include
 LIBDIR = ../lib
 
 # Use these sources for Motif (and Xt) support.  Requires Motif header files.
