@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.13 2000/02/27 18:26:54 brianp Exp $ */
+/* $Id: glx.h,v 1.14 2000/03/03 15:35:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,7 +50,6 @@ extern "C" {
 
 #define GLX_VERSION_1_1		1
 #define GLX_VERSION_1_2		1
-#define GLX_VERSION_1_3		1
 
 #define GLX_EXTENSION_NAME   "GLX"
 
