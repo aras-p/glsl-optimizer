@@ -421,15 +421,20 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk42C0.cmd[1] = 0x4B7FFFFF;
 	r300->hw.unk42C0.cmd[2] = 0x00000000;
 
-	r300->hw.rc.cmd[1] = R300_RS_CNTL_0_UNKNOWN_7;
+	/* The second constant is needed to get glxgears display anything .. */
+	r300->hw.rc.cmd[1] = R300_RS_CNTL_0_UNKNOWN_7 | R300_RS_CNTL_0_UNKNOWN_18;
 	r300->hw.rc.cmd[2] = 0;
 
 	for(i = 1; i <= 8; ++i)
-		r300->hw.ri.cmd[i] = 0;
+		r300->hw.ri.cmd[i] = 0x00d10000;
+	r300->hw.ri.cmd[R300_RI_INTERP_1] |= R300_RS_INTERP_1_UNKNOWN;
+	r300->hw.ri.cmd[R300_RI_INTERP_2] |= R300_RS_INTERP_2_UNKNOWN;
+	r300->hw.ri.cmd[R300_RI_INTERP_3] |= R300_RS_INTERP_3_UNKNOWN;
 
 	((drm_r300_cmd_header_t*)r300->hw.rr.cmd)->unchecked_state.count = 1;
 	for(i = 1; i <= 8; ++i)
-		r300->hw.rr.cmd[1] = 0;
+		r300->hw.rr.cmd[i] = 0;
+	r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0x4000;
 
 	r300->hw.unk43A4.cmd[1] = 0x0000001C;
 	r300->hw.unk43A4.cmd[2] = 0x2DA49525;
@@ -494,6 +499,9 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4E50.cmd[9] = 0;
 
 	r300->hw.unk4E88.cmd[1] = 0;
+
+	r300->hw.unk4EA0.cmd[1] = 0x00000000;
+	r300->hw.unk4EA0.cmd[2] = 0xffffffff;
 
 	r300->hw.unk4F08.cmd[1] = 0x00FFFF00;
 

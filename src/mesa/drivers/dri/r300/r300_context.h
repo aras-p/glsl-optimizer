@@ -290,6 +290,7 @@ struct r300_hw_state {
 	struct r300_state_atom cb;	/* colorbuffer (4E28) */
 	struct r300_state_atom unk4E50;	/* (4E50) */
 	struct r300_state_atom unk4E88;	/* (4E88) */
+	struct r300_state_atom unk4EA0;	/* (4E88) I saw it only written on RV350 hardware..  */
 	struct r300_state_atom zc;	/* z control (4F00) */
 	struct r300_state_atom unk4F08;	/* (4F08) */
 	struct r300_state_atom unk4F10;	/* (4F10) */
