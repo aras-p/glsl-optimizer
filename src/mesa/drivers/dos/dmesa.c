@@ -1115,9 +1115,11 @@ DMesaVisual DMesaCreateVisual (GLint width,
     freopen("MESA.LOG", "w", stderr);
  }
 
- if (((env = getenv("FX_GLIDE_REFRESH")) == NULL) || !atoi(env)) {
-    /* FX_GLIDE_REFRESH=0 has a special meaning for DJGPP Glide3x
-     * (switch via VESA, using default refresh) and we'll not override that.
+ if (refresh && (((env = getenv("FX_GLIDE_REFRESH")) == NULL) || !atoi(env))) {
+    /* if we are passed non-zero value for refresh, we need to override
+     * default refresh rate. However, if FX_GLIDE_REFRESH is already set
+     * to 0, we won't override it, because it has a special meaning for
+     * DJGPP Glide3x (switch via VESA, using BIOS default refresh).
      */
     char tmp[256];
     sprintf(tmp, "FX_GLIDE_REFRESH=%u", refresh);
