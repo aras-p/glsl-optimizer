@@ -1,4 +1,4 @@
-/* $Id: nvprogram.c,v 1.10 2003/03/29 16:37:08 brianp Exp $ */
+/* $Id: nvprogram.c,v 1.11 2003/04/05 00:38:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1043,7 +1043,7 @@ _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
 {
    struct program *prog;
    struct fragment_program *fragProg;
-   GLint reg;
+   GLint i;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -1059,12 +1059,14 @@ _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
    }
 
    fragProg = (struct fragment_program *) prog;
-   for (reg = 0; reg < fragProg->NumParameters; reg++) {
-      if (!_mesa_strcmp(fragProg->Parameters[reg].Name, (const char *) name)) {
-         fragProg->Parameters[reg].Values[0] = x;
-         fragProg->Parameters[reg].Values[1] = y;
-         fragProg->Parameters[reg].Values[2] = z;
-         fragProg->Parameters[reg].Values[3] = w;
+   for (i = 0; i < fragProg->NumParameters; i++) {
+      printf("test %d %s\n", i, fragProg->Parameters[i].Name);
+      if (!_mesa_strcmp(fragProg->Parameters[i].Name, (const char *) name)) {
+         ASSERT(!fragProg->Parameters[i].Constant);
+         fragProg->Parameters[i].Values[0] = x;
+         fragProg->Parameters[i].Values[1] = y;
+         fragProg->Parameters[i].Values[2] = z;
+         fragProg->Parameters[i].Values[3] = w;
          return;
       }
    }
@@ -1105,7 +1107,7 @@ _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
 {
    struct program *prog;
    struct fragment_program *fragProg;
-   GLint reg;
+   GLint i;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -1121,12 +1123,13 @@ _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
    }
 
    fragProg = (struct fragment_program *) prog;
-   for (reg = 0; reg < fragProg->NumParameters; reg++) {
-      if (!_mesa_strcmp(fragProg->Parameters[reg].Name, (const char *) name)) {
-         params[0] = fragProg->Parameters[reg].Values[0];
-         params[1] = fragProg->Parameters[reg].Values[1];
-         params[2] = fragProg->Parameters[reg].Values[2];
-         params[3] = fragProg->Parameters[reg].Values[3];
+   for (i = 0; i < fragProg->NumParameters; i++) {
+      if (!_mesa_strcmp(fragProg->Parameters[i].Name, (const char *) name)) {
+         ASSERT(!fragProg->Parameters[i].Constant);
+         params[0] = fragProg->Parameters[i].Values[0];
+         params[1] = fragProg->Parameters[i].Values[1];
+         params[2] = fragProg->Parameters[i].Values[2];
+         params[3] = fragProg->Parameters[i].Values[3];
          return;
       }
    }

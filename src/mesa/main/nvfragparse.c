@@ -1,4 +1,4 @@
-/* $Id: nvfragparse.c,v 1.16 2003/04/01 16:17:03 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.17 2003/04/05 00:38:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -158,9 +158,13 @@ struct parse_state {
 };
 
 
-static void
+/**
+ * Add a new program parameter (via DEFINE statement)
+ * \return index of the new entry in the parameter list
+ */
+static GLuint
 add_parameter(struct parse_state *parseState,
-              const char *name, const GLfloat values[4])
+              const char *name, const GLfloat values[4], GLboolean constant)
 {
    const GLuint n = parseState->numParameters;
 
@@ -170,6 +174,27 @@ add_parameter(struct parse_state *parseState,
    parseState->numParameters = n + 1;
    parseState->parameters[n].Name = _mesa_strdup(name);
    COPY_4V(parseState->parameters[n].Values, values);
+   parseState->parameters[n].Constant = constant;
+   return n;
+}
+
+
+/**
+ * Add a new unnamed constant to the parameter lists.
+ * \param parseState  parsing state
+ * \param values  four float values
+ * \return index of the new parameter.
+ */
+static GLuint
+add_unnamed_constant(struct parse_state *parseState, const GLfloat values[4])
+{
+   /* generate a new dummy name */
+   static GLuint n = 0;
+   char name[20];
+   _mesa_sprintf(name, "constant%d", n);
+   n++;
+   /* store it */
+   return add_parameter(parseState, name, values, GL_TRUE);
 }
 
 
@@ -185,30 +210,15 @@ lookup_parameter(struct parse_state *parseState, const char *name)
 }
 
 
-static void
-add_constant(struct parse_state *parseState,
-             const char *name, const GLfloat values[4])
+static const GLint
+lookup_parameter_index(struct parse_state *parseState, const char *name)
 {
-   const GLuint n = parseState->numConstants;
-
-   parseState->constants = _mesa_realloc(parseState->constants,
-                                   n * sizeof(struct program_parameter),
-                                   (n + 1) * sizeof(struct program_parameter));
-   parseState->numConstants = n + 1;
-   parseState->constants[n].Name = _mesa_strdup(name);
-   COPY_4V(parseState->constants[n].Values, values);
-}
-
-
-static const GLfloat *
-lookup_constant(struct parse_state *parseState, const char *name)
-{
-   GLuint i;
-   for (i = 0; i < parseState->numConstants; i++) {
-      if (_mesa_strcmp(parseState->constants[i].Name, name) == 0)
-         return parseState->constants[i].Values;
+   GLint i;
+   for (i = 0; i < parseState->numParameters; i++) {
+      if (_mesa_strcmp(parseState->parameters[i].Name, name) == 0)
+         return i;
    }
-   return NULL;
+   return -1;
 }
 
 
@@ -571,7 +581,8 @@ Parse_ScalarConstant(struct parse_state *parseState, GLfloat *number)
       const GLfloat *constant;
       if (!Parse_Identifier(parseState, ident))
          RETURN_ERROR1("Expected an identifier");
-      constant = lookup_constant(parseState, (const char *) ident);
+      constant = lookup_parameter(parseState, (const char *) ident);
+      /* XXX Check that it's a constant and not a parameter */
       if (!constant) {
          RETURN_ERROR1("Undefined symbol");
       }
@@ -1106,11 +1117,16 @@ Parse_VectorSrc(struct parse_state *parseState,
          RETURN_ERROR;
    }
    else if (IsLetter(token[0])){
-      /* XXX named constant */
       GLubyte ident[100];
+      GLint paramIndex;
       if (!Parse_Identifier(parseState, ident))
          RETURN_ERROR;
-      srcReg->Register = 0; /* XXX fix */
+      paramIndex = lookup_parameter_index(parseState, (const char *) ident);
+      if (paramIndex < 0) {
+         RETURN_ERROR2("Undefined constant or parameter: ", ident);
+      }
+      srcReg->IsParameter = GL_TRUE;
+      srcReg->Register = paramIndex;      
    }
    else if (IsDigit(token[0]) || token[0] == '-' || token[0] == '+'){
       /* XXX literal scalar constant */
@@ -1122,10 +1138,13 @@ Parse_VectorSrc(struct parse_state *parseState,
    else if (token[0] == '{'){
       /* XXX literal vector constant */
       GLfloat values[4];
+      GLuint paramIndex;
       (void) Parse_String(parseState, "{");
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
-      srcReg->Register = 0; /* XXX fix */
+      paramIndex = add_unnamed_constant(parseState, values);
+      srcReg->IsParameter = GL_TRUE;
+      srcReg->Register = paramIndex;      
    }
    else {
       RETURN_ERROR2("Invalid source register name", token);
@@ -1247,7 +1266,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
          if (lookup_parameter(parseState, (const char *) id)) {
             RETURN_ERROR2(id, "already defined");
          }
-         add_parameter(parseState, (const char *) id, value);
+         add_parameter(parseState, (const char *) id, value, GL_TRUE);
       }
       else if (Parse_String(parseState, "DECLARE")) {
          GLubyte id[100];
@@ -1266,10 +1285,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
          }
          if (!Parse_String(parseState, ";"))
             RETURN_ERROR1("Expected ;");
-         if (lookup_constant(parseState, (const char *) id)) {
+         if (lookup_parameter(parseState, (const char *) id)) {
             RETURN_ERROR2(id, "already declared");
          }
-         add_constant(parseState, (const char *) id, value);
+         add_parameter(parseState, (const char *) id, value, GL_FALSE);
       }
       else if (Parse_String(parseState, "END")) {
          inst->Opcode = FP_OPCODE_END;

@@ -1,4 +1,4 @@
-/* $Id: nvfragprog.h,v 1.5 2003/03/15 17:33:26 brianp Exp $ */
+/* $Id: nvfragprog.h,v 1.6 2003/04/05 00:38:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -134,8 +134,8 @@ enum fp_opcode {
 
 struct fp_src_register
 {
-   GLint RegType;  /* constant, param, temp or attribute register */
    GLint Register;    /* or the offset from the address register */
+   GLboolean IsParameter; /* true if register refers to a param or constant */
    GLuint Swizzle[4];
    GLboolean NegateBase; /* negate before absolute value? */
    GLboolean Abs;        /* take absolute value? */

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.108 2003/03/29 17:01:00 brianp Exp $ */
+/* $Id: mtypes.h,v 1.109 2003/04/05 00:38:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1213,6 +1213,7 @@ struct program_parameter
 {
    const char *Name;
    GLfloat Values[4];
+   GLboolean Constant;
 };
 
 
