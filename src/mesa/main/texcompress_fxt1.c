@@ -326,7 +326,6 @@ typedef struct {
 #endif /* !__GNUC__ */
 
 
-
 #define F(i) (GLfloat)1 /* can be used to obtain an oblong metric: 0.30 / 0.59 / 0.11 */
 #define SAFECDOT 1 /* for paranoids */
 
@@ -800,15 +799,15 @@ fxt1_quantize_ALPHA1 (GLuint *cc,
       }
       for (j1 = 0; j1 < 2; j1++) {
          for (j2 = 2; j2 < 4; j2++) {
-             GLfloat e = 0.0F;
-             for (i = 0; i < n_comp; i++) {
-                e += (tv[j1][i] - tv[j2][i]) * (tv[j1][i] - tv[j2][i]);
-             }
-             if (e < err) {
-                err = e;
-                v1 = j1;
-                v2 = j2;
-             }
+            GLfloat e = 0.0F;
+            for (i = 0; i < n_comp; i++) {
+               e += (tv[j1][i] - tv[j2][i]) * (tv[j1][i] - tv[j2][i]);
+            }
+            if (e < err) {
+               err = e;
+               v1 = j1;
+               v2 = j2;
+            }
          }
       }
       for (i = 0; i < n_comp; i++) {
@@ -1354,7 +1353,7 @@ fxt1_encode (GLuint width, GLuint height, GLint comps,
 {
    GLuint x, y;
    const GLubyte *data;
-   GLuint *encoded = (GLuint *) dest;
+   GLuint *encoded = (GLuint *)dest;
    GLubyte *newSource = NULL;
 
    /* Replicate image if width is not M8 or height is not M4 */
@@ -1407,7 +1406,7 @@ fxt1_encode (GLuint width, GLuint height, GLint comps,
 
 
 /* lookup table for scaling 5 bit colors up to 8 bits */
-static GLubyte _rgb_scale_5[] = {
+static const GLubyte _rgb_scale_5[] = {
    0,   8,   16,  25,  33,  41,  49,  58,
    66,  74,  82,  90,  99,  107, 115, 123,
    132, 140, 148, 156, 165, 173, 181, 189,
@@ -1415,7 +1414,7 @@ static GLubyte _rgb_scale_5[] = {
 };
 
 /* lookup table for scaling 6 bit colors up to 8 bits */
-static GLubyte _rgb_scale_6[] = {
+static const GLubyte _rgb_scale_6[] = {
    0,   4,   8,   12,  16,  20,  24,  28,
    32,  36,  40,  45,  49,  53,  57,  61,
    65,  69,  73,  77,  81,  85,  89,  93,
@@ -1435,18 +1434,18 @@ static GLubyte _rgb_scale_6[] = {
 
 
 static void
-fxt1_decode_1HI (GLubyte *code, GLint t, GLubyte *rgba)
+fxt1_decode_1HI (const GLubyte *code, GLint t, GLubyte *rgba)
 {
    const GLuint *cc;
 
    t *= 3;
-   cc = (GLuint *)(code + t / 8);
+   cc = (const GLuint *)(code + t / 8);
    t = (cc[0] >> (t & 7)) & 7;
 
    if (t == 7) {
       ZERO_4UBV(rgba);
    } else {
-      cc = (GLuint *)(code + 12);
+      cc = (const GLuint *)(code + 12);
       if (t == 0) {
          rgba[BCOMP] = UP5(CC_SEL(cc, 0));
          rgba[GCOMP] = UP5(CC_SEL(cc, 5));
@@ -1466,12 +1465,12 @@ fxt1_decode_1HI (GLubyte *code, GLint t, GLubyte *rgba)
 
 
 static void
-fxt1_decode_1CHROMA (GLubyte *code, GLint t, GLubyte *rgba)
+fxt1_decode_1CHROMA (const GLubyte *code, GLint t, GLubyte *rgba)
 {
    const GLuint *cc;
    GLuint kk;
 
-   cc = (GLuint *)code;
+   cc = (const GLuint *)code;
    if (t & 16) {
       cc++;
       t &= 15;
@@ -1479,7 +1478,7 @@ fxt1_decode_1CHROMA (GLubyte *code, GLint t, GLubyte *rgba)
    t = (cc[0] >> (t * 2)) & 3;
 
    t *= 15;
-   cc = (GLuint *)(code + 8 + t / 8);
+   cc = (const GLuint *)(code + 8 + t / 8);
    kk = cc[0] >> (t & 7);
    rgba[BCOMP] = UP5(kk);
    rgba[GCOMP] = UP5(kk >> 5);
@@ -1489,18 +1488,18 @@ fxt1_decode_1CHROMA (GLubyte *code, GLint t, GLubyte *rgba)
 
 
 static void
-fxt1_decode_1MIXED (GLubyte *code, GLint t, GLubyte *rgba)
+fxt1_decode_1MIXED (const GLubyte *code, GLint t, GLubyte *rgba)
 {
    const GLuint *cc;
    GLuint col[2][3];
    GLint glsb, selb;
 
-   cc = (GLuint *)code;
+   cc = (const GLuint *)code;
    if (t & 16) {
       t &= 15;
       t = (cc[1] >> (t * 2)) & 3;
       /* col 2 */
-      col[0][BCOMP] = (*(GLuint *)(code + 11)) >> 6;
+      col[0][BCOMP] = (*(const GLuint *)(code + 11)) >> 6;
       col[0][GCOMP] = CC_SEL(cc, 99);
       col[0][RCOMP] = CC_SEL(cc, 104);
       /* col 3 */
@@ -1567,11 +1566,11 @@ fxt1_decode_1MIXED (GLubyte *code, GLint t, GLubyte *rgba)
 
 
 static void
-fxt1_decode_1ALPHA (GLubyte *code, GLint t, GLubyte *rgba)
+fxt1_decode_1ALPHA (const GLubyte *code, GLint t, GLubyte *rgba)
 {
    const GLuint *cc;
 
-   cc = (GLuint *)code;
+   cc = (const GLuint *)code;
    if (CC_SEL(cc, 124) & 1) {
       /* lerp == 1 */
       GLuint col0[4];
@@ -1580,7 +1579,7 @@ fxt1_decode_1ALPHA (GLubyte *code, GLint t, GLubyte *rgba)
          t &= 15;
          t = (cc[1] >> (t * 2)) & 3;
          /* col 2 */
-         col0[BCOMP] = (*(GLuint *)(code + 11)) >> 6;
+         col0[BCOMP] = (*(const GLuint *)(code + 11)) >> 6;
          col0[GCOMP] = CC_SEL(cc, 99);
          col0[RCOMP] = CC_SEL(cc, 104);
          col0[ACOMP] = CC_SEL(cc, 119);
@@ -1622,10 +1621,10 @@ fxt1_decode_1ALPHA (GLubyte *code, GLint t, GLubyte *rgba)
          ZERO_4UBV(rgba);
       } else {
          GLuint kk;
-         cc = (GLuint *)code;
+         cc = (const GLuint *)code;
          rgba[ACOMP] = UP5(cc[3] >> (t * 5 + 13));
          t *= 15;
-         cc = (GLuint *)(code + 8 + t / 8);
+         cc = (const GLuint *)(code + 8 + t / 8);
          kk = cc[0] >> (t & 7);
          rgba[BCOMP] = UP5(kk);
          rgba[GCOMP] = UP5(kk >> 5);
@@ -1639,7 +1638,7 @@ void
 fxt1_decode_1 (const void *texture, GLint stride, /* in pixels */
                GLint i, GLint j, GLubyte *rgba)
 {
-   static void (*decode_1[]) (GLubyte *, GLint, GLubyte *) = {
+   static void (*decode_1[]) (const GLubyte *, GLint, GLubyte *) = {
       fxt1_decode_1HI,     /* cc-high   = "00?" */
       fxt1_decode_1HI,     /* cc-high   = "00?" */
       fxt1_decode_1CHROMA, /* cc-chroma = "010" */
@@ -1650,9 +1649,9 @@ fxt1_decode_1 (const void *texture, GLint stride, /* in pixels */
       fxt1_decode_1MIXED   /* mixed     = "1??" */
    };
 
-   GLubyte *code = (GLubyte *)texture +
+   const GLubyte *code = (const GLubyte *)texture +
                          ((j / 4) * (stride / 8) + (i / 8)) * 16;
-   GLint mode = CC_SEL((GLuint *)code, 125);
+   GLint mode = CC_SEL(code, 125);
    GLint t = i & 7;
 
    if (t & 4) {
