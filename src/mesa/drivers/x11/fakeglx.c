@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.10 1999/10/14 18:47:37 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.11 1999/10/16 11:32:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1538,6 +1538,11 @@ void (*Fake_glXGetProcAddress( const GLubyte *procName ))()
    GLuint i;
 
    /* First, look for core library functions */
+   GLfunction f = (GLfunction) gl_get_proc_address(procName);
+   if (f)
+      return f;
+
+   /* Second, look for GLX funtion */
    for (i = 0; procTable[i].address; i++) {
       if (strcmp((const char *) procName, procTable[i].name) == 0)
 	  return (GLfunction) procTable[i].address;
