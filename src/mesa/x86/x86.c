@@ -1,4 +1,4 @@
-/* $Id: x86.c,v 1.4 2000/03/27 21:13:58 rjfrank Exp $ */
+/* $Id: x86.c,v 1.5 2000/04/15 23:19:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -112,6 +112,7 @@ void gl_init_x86_asm_transforms( void )
    ASSIGN_XFORM_GROUP( x86, CULL_MASK_ACTIVE, 3, masked )
    ASSIGN_XFORM_GROUP( x86, CULL_MASK_ACTIVE, 4, masked )
 
+   /* XXX this function has been found to cause FP overflow exceptions */
    gl_clip_tab[4] = gl_x86_cliptest_points4;
 
 #ifdef DEBUG
