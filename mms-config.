@@ -1,0 +1,23 @@
+# Makefile for VMS
+# contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
+
+
+#vms
+.ifdef SHARE
+GL_SHAR = libMesaGL.exe
+GLU_SHAR = libMesaGLU.exe
+GLUT_SHAR = libglut.exe
+.endif
+GL_LIB = libMesaGL.olb
+GLU_LIB = libMesaGLU.olb
+GLUT_LIB = libglut.olb
+CC = cc
+CXX = cxx/define=(LIBRARYBUILD=1)/assume=(nostdnew,noglobal_array_new)
+CFLAGS1 =
+MAKELIB = library/create
+RANLIB = true
+.ifdef SHARE
+XLIBS = [--.vms]xlib_share/opt
+.else
+XLIBS = [--.vms]xlib/opt
+.endif

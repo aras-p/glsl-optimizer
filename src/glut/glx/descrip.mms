@@ -1,10 +1,10 @@
 # Makefile for GLUT for VMS
-# contributed by Jouk Jansen  joukj@crys.chem.uva.nl
+# contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
 
 .first
-	define gl [-.include.gl]
+	define gl [---.include.gl]
 
-.include [-]mms-config.
+.include [---]mms-config.
 
 ##### MACROS #####
 GLUT_MAJOR = 3
@@ -12,8 +12,8 @@ GLUT_MINOR = 7
 
 VPATH = RCS
 
-INCDIR = [-.include]
-LIBDIR = [-.lib]
+INCDIR = [---.include]
+LIBDIR = [---.lib]
 CFLAGS = /nowarn/include=$(INCDIR)/prefix=all/name=(as_is,short)
 
 SOURCES = \
@@ -64,8 +64,7 @@ glut_win.c \
 glut_winmisc.c \
 layerutil.c
 
-OBJECTS = \
-glut_8x13.obj,\
+OBJECTS0=glut_8x13.obj,\
 glut_9x15.obj,\
 glut_bitmap.obj,\
 glut_bwidth.obj,\
@@ -121,8 +120,13 @@ VERSION=Glut V3.7
 
 ##### TARGETS #####
 
-# Make the library:
-$(LIBDIR)$(GLUT_LIB) : $(OBJECTS) $(OBJECTS1) $(OBJECTS2) $(OBJECTS3)
+# Make the library
+$(LIBDIR)$(GLUT_LIB) : $(OBJECTS0) $(OBJECTS1) $(OBJECTS2) $(OBJECTS3)
+  @ $(MAKELIB) $(GLUT_LIB) $(OBJECTS)
+  @ library $(GLUT_LIB) $(OBJECTS1)
+  @ library $(GLUT_LIB) $(OBJECTS2)
+  @ library $(GLUT_LIB) $(OBJECTS3)
+  @ rename $(GLUT_LIB)* $(LIBDIR)
 .ifdef SHARE
   @ WRITE_ SYS$OUTPUT "  generating mesagl1.opt"
   @ OPEN_/WRITE FILE  mesagl1.opt
@@ -131,12 +135,12 @@ $(LIBDIR)$(GLUT_LIB) : $(OBJECTS) $(OBJECTS1) $(OBJECTS2) $(OBJECTS3)
   @ WRITE_ FILE "!"
   @ WRITE_ FILE "IDENTIFICATION=""$(VERSION)"""
   @ WRITE_ FILE "GSMATCH=LEQUAL,3,7
-  @ WRITE_ FILE "$(OBJECTS)"
+  @ WRITE_ FILE "$(OBJECTS0)"
   @ WRITE_ FILE "$(OBJECTS1)"
   @ WRITE_ FILE "$(OBJECTS2)"
   @ WRITE_ FILE "$(OBJECTS3)"
-  @ WRITE_ FILE "[-.lib]libmesaglu.exe/SHARE"
-  @ WRITE_ FILE "[-.lib]libmesagl.exe/SHARE"
+  @ WRITE_ FILE "[---.lib]libmesaglu.exe/SHARE"
+  @ WRITE_ FILE "[---.lib]libmesagl.exe/SHARE"
   @ write file "sys$library:decw$xmulibshr.exe/share"
   @ WRITE_ FILE "SYS$SHARE:DECW$XEXTLIBSHR/SHARE"
   @ WRITE_ FILE "SYS$SHARE:DECW$XLIBSHR/SHARE"
@@ -144,16 +148,11 @@ $(LIBDIR)$(GLUT_LIB) : $(OBJECTS) $(OBJECTS1) $(OBJECTS2) $(OBJECTS3)
   @ WRITE_ SYS$OUTPUT "  generating mesagl.map ..."
   @ CXXLINK_/NODEB/NOSHARE/NOEXE/MAP=mesagl.map/FULL mesagl1.opt/OPT
   @ WRITE_ SYS$OUTPUT "  analyzing mesagl.map ..."
-  @ @[-.vms]ANALYZE_MAP.COM mesagl.map mesagl.opt
-  @ WRITE_ SYS$OUTPUT "  linking $(GLUT_LIB) ..."
-  @ CXXLINK_/NODEB/SHARE=$(GLUT_LIB)/MAP=mesagl.map/FULL mesagl1.opt/opt,mesagl.opt/opt
-.else
-  @ $(MAKELIB) $(GLUT_LIB) $(OBJECTS)
-  @ library $(GLUT_LIB) $(OBJECTS1)
-  @ library $(GLUT_LIB) $(OBJECTS2)
-  @ library $(GLUT_LIB) $(OBJECTS3)
+  @ @[---.vms]ANALYZE_MAP.COM mesagl.map mesagl.opt
+  @ WRITE_ SYS$OUTPUT "  linking $(GLUT_SHAR) ..."
+  @ CXXLINK_/NODEB/SHARE=$(GLUT_SHAR)/MAP=mesagl.map/FULL mesagl1.opt/opt,mesagl.opt/opt
+  @ rename $(GLUT_SHAR)* $(LIBDIR)
 .endif
-  @ rename $(GLUT_LIB)* $(LIBDIR)
 
 clean :
 	delete *.obj;*

@@ -1,24 +1,24 @@
 # Makefile for GLUT-based demo programs for VMS
-# contributed by Jouk Jansen  joukj@crys.chem.uva.nl
+# contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
 
 
 .first
-	define gl [-.include.gl]
+	define gl [--.include.gl]
 
-.include [-]mms-config.
+.include [--]mms-config.
 
 ##### MACROS #####
 
-INCDIR = ([-.include],[-.util])
+INCDIR = ([--.include],[-.util])
 CFLAGS = /include=$(INCDIR)/prefix=all/name=(as_is,short)/nowarn
 
 .ifdef SHARE
 GL_LIBS = $(XLIBS)
 .else
-GL_LIBS = [-.lib]libGLUT/l,libMesaGLU/l,libMesaGL/l,$(XLIBS)
+GL_LIBS = [--.lib]libGLUT/l,libMesaGLU/l,libMesaGL/l,$(XLIBS)
 .endif
 
-LIB_DEP = [-.lib]$(GL_LIB) [-.lib]$(GLU_LIB) [-.lib]$(GLUT_LIB)
+LIB_DEP = [--.lib]$(GL_LIB) [--.lib]$(GLU_LIB) [--.lib]$(GLUT_LIB)
 
 PROGS =glthreads.exe,\
 	glxdemo.exe,\

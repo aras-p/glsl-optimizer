@@ -2,9 +2,9 @@
 # contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
 
 .first
-	define gl [-.include.gl]
+	define gl [---.include.gl]
 
-.include [-]mms-config.
+.include [---]mms-config.
 
 ##### MACROS #####
 
@@ -12,7 +12,7 @@ VPATH = RCS
 
 INCDIR =([-.include],[.include],[.internals],[.libnurbs.internals],\
        [.libnurbs.interface],[.libnurbs.nurbtess])
-LIBDIR = [-.lib]
+LIBDIR = [---.lib]
 CFLAGS = /include=$(INCDIR)/name=(as_is,short)
 
 LU_OBJECTS=\
@@ -136,6 +136,9 @@ $(LIBDIR)$(GLU_LIB) : $(LU_OBJECTS) $(LT_OBJECTS) $(LI_OBJECTS) $(LI_OBJECTS1)\
 		    $(LI2_OBJECTS6) $(LI2_OBJECTS7) $(LI2_OBJECTS8)\
 		    $(LN_OBJECTS) $(LN_OBJECTS1) $(LN_OBJECTS2)\
 		    $(LN_OBJECTS3) $(LN_OBJECTS4)
+  @ $(MAKELIB) $(GLU_LIB)  $(LU_OBJECTS),$(LT_OBJECTS),$(LI_OBJECTS),\
+	$(LI2_OBJECTS),$(LN_OBJECTS)
+  @ rename $(GLU_LIB)* $(LIBDIR)
 .ifdef SHARE
   @ WRITE_ SYS$OUTPUT "  generating mesagl1.opt"
   @ OPEN_/WRITE FILE  mesagl1.opt
@@ -162,7 +165,7 @@ $(LIBDIR)$(GLU_LIB) : $(LU_OBJECTS) $(LT_OBJECTS) $(LI_OBJECTS) $(LI_OBJECTS1)\
   @ WRITE_ FILE "$(LN_OBJECTS2)"
   @ WRITE_ FILE "$(LN_OBJECTS3)"
   @ WRITE_ FILE "$(LN_OBJECTS4)"
-  @ WRITE_ FILE "[-.lib]libmesagl.exe/SHARE"
+  @ WRITE_ FILE "[---.lib]libmesagl.exe/SHARE"
   @ WRITE_ FILE "SYS$SHARE:DECW$XEXTLIBSHR/SHARE"
   @ WRITE_ FILE "SYS$SHARE:DECW$XLIBSHR/SHARE"
   @ CLOSE_ FILE
@@ -170,14 +173,11 @@ $(LIBDIR)$(GLU_LIB) : $(LU_OBJECTS) $(LT_OBJECTS) $(LI_OBJECTS) $(LI_OBJECTS1)\
 #  @ CXXLINK_/NODEB/NOSHARE/NOEXE/MAP=mesagl.map/FULL mesagl1.opt/OPT
 #  @ WRITE_ SYS$OUTPUT "  analyzing mesagl.map ..."
 #  @ @[-.vms]ANALYZE_MAP.COM mesagl.map mesagl.opt
-  @ WRITE_ SYS$OUTPUT "  linking $(GLU_LIB) ..."
-#  @ CXXLINK_/noinform/NODEB/SHARE=$(GLU_LIB)/MAP=mesagl.map/FULL mesagl1.opt/opt,mesagl.opt/opt
-  @ CXXLINK_/noinform/NODEB/SHARE=$(GLU_LIB)/MAP=mesagl.map/FULL mesagl1.opt/opt,mesaglu.opt/opt
-.else
-  @ $(MAKELIB) $(GLU_LIB)  $(LU_OBJECTS),$(LT_OBJECTS),$(LI_OBJECTS),\
-	$(LI2_OBJECTS),$(LN_OBJECTS)
+  @ WRITE_ SYS$OUTPUT "  linking $(GLU_SHAR) ..."
+#  @ CXXLINK_/noinform/NODEB/SHARE=$(GLU_SHAR)/MAP=mesagl.map/FULL mesagl1.opt/opt,mesagl.opt/opt
+  @ CXXLINK_/noinform/NODEB/SHARE=$(GLU_SHAR)/MAP=mesagl.map/FULL mesagl1.opt/opt,mesaglu.opt/opt
+  @ rename $(GLU_SHAR)* $(LIBDIR)
 .endif
-  @ rename $(GLU_LIB)* $(LIBDIR)
 
 clean :
 	delete [...]*.obj;*

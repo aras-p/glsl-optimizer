@@ -3,22 +3,23 @@
 
 
 .first
-	define gl [-.include.gl]
+	define gl [--.include.gl]
 
-.include [-]mms-config.
+.include [--]mms-config.
 
 ##### MACROS #####
 
-INCDIR = ([-.include],[-.util])
+INCDIR = ([--.include],[-.util])
 CFLAGS = /include=$(INCDIR)/prefix=all/name=(as_is,short)
 
 .ifdef SHARE
 GL_LIBS = $(XLIBS)
+LIB_DEP = [--.lib]$(GL_SHAR) [--.lib]$(GLU_SHAR) [--.lib]$(GLUT_SHAR)
 .else
-GL_LIBS = [-.lib]libGLUT/l,libMesaGLU/l,libMesaGL/l,$(XLIBS)
+GL_LIBS = [--.lib]libGLUT/l,libMesaGLU/l,libMesaGL/l,$(XLIBS)
+LIB_DEP = [--.lib]$(GL_LIB) [--.lib]$(GLU_LIB) [--.lib]$(GLUT_LIB)
 .endif
 
-LIB_DEP = [-.lib]$(GL_LIB) [-.lib]$(GLU_LIB) [-.lib]$(GLUT_LIB)
 
 PROGS = bounce.exe;,clearspd.exe;,drawpix.exe;,gamma.exe;,gears.exe;,\
 	glinfo.exe;,glutfx.exe;,isosurf.exe;,morph3d.exe;,osdemo.exe;,\
