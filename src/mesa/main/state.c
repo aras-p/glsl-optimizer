@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.9 2000/04/09 17:08:09 brianp Exp $ */
+/* $Id: state.c,v 1.10 2000/05/04 13:48:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -473,7 +473,6 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->TexImage3D = _mesa_TexImage3D;
    exec->TexSubImage3D = _mesa_TexSubImage3D;
 
-
    /* OpenGL 1.2  GL_ARB_imaging */
    exec->BlendColor = _mesa_BlendColor;
    exec->BlendEquation = _mesa_BlendEquation;
@@ -510,14 +509,53 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->ResetMinmax = _mesa_ResetMinmax;
    exec->SeparableFilter2D = _mesa_SeparableFilter2D;
 
-   /* GL_EXT_texture3d */
+   /* 2. GL_EXT_blend_color */
+#if 0
+   exec->BlendColorEXT = _mesa_BlendColorEXT;
+#endif
+
+   /* 3. GL_EXT_polygon_offset */
+   exec->PolygonOffsetEXT = _mesa_PolygonOffsetEXT;
+
+   /* 6. GL_EXT_texture3d */
 #if 0
    exec->CopyTexSubImage3DEXT = _mesa_CopyTexSubImage3D;
    exec->TexImage3DEXT = _mesa_TexImage3DEXT;
    exec->TexSubImage3DEXT = _mesa_TexSubImage3D;
 #endif
 
-   /* GL_EXT_paletted_texture */
+   /* 11. GL_EXT_histogram */
+   exec->GetHistogramEXT = _mesa_GetHistogram;
+   exec->GetHistogramParameterfvEXT = _mesa_GetHistogramParameterfv;
+   exec->GetHistogramParameterivEXT = _mesa_GetHistogramParameteriv;
+   exec->GetMinmaxEXT = _mesa_GetMinmax;
+   exec->GetMinmaxParameterfvEXT = _mesa_GetMinmaxParameterfv;
+   exec->GetMinmaxParameterivEXT = _mesa_GetMinmaxParameteriv;
+
+   /* ?. GL_SGIX_pixel_texture */
+   exec->PixelTexGenSGIX = _mesa_PixelTexGenSGIX;
+
+   /* 15. GL_SGIS_pixel_texture */
+   exec->PixelTexGenParameteriSGIS = _mesa_PixelTexGenParameteriSGIS;
+   exec->PixelTexGenParameterivSGIS = _mesa_PixelTexGenParameterivSGIS;
+   exec->PixelTexGenParameterfSGIS = _mesa_PixelTexGenParameterfSGIS;
+   exec->PixelTexGenParameterfvSGIS = _mesa_PixelTexGenParameterfvSGIS;
+   exec->GetPixelTexGenParameterivSGIS = _mesa_GetPixelTexGenParameterivSGIS;
+   exec->GetPixelTexGenParameterfvSGIS = _mesa_GetPixelTexGenParameterfvSGIS;
+
+   /* 37. GL_EXT_blend_minmax */
+#if 0
+   exec->BlendEquationEXT = _mesa_BlendEquationEXT;
+#endif
+
+   /* 54. GL_EXT_point_parameters */
+   exec->PointParameterfEXT = _mesa_PointParameterfEXT;
+   exec->PointParameterfvEXT = _mesa_PointParameterfvEXT;
+
+   /* 77. GL_PGI_misc_hints */
+   exec->HintPGI = _mesa_HintPGI;
+
+   /* 78. GL_EXT_paletted_texture */
 #if 0
    exec->ColorTableEXT = _mesa_ColorTableEXT;
    exec->ColorSubTableEXT = _mesa_ColorSubTableEXT;
@@ -526,42 +564,43 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfv;
    exec->GetColorTableParameterivEXT = _mesa_GetColorTableParameteriv;
 
-   /* GL_SGIX_pixel_texture */
-   exec->PixelTexGenSGIX = _mesa_PixelTexGenSGIX;
-
-   /* GL_SGIS_pixel_texture */
-   exec->PixelTexGenParameteriSGIS = _mesa_PixelTexGenParameteriSGIS;
-   exec->PixelTexGenParameterivSGIS = _mesa_PixelTexGenParameterivSGIS;
-   exec->PixelTexGenParameterfSGIS = _mesa_PixelTexGenParameterfSGIS;
-   exec->PixelTexGenParameterfvSGIS = _mesa_PixelTexGenParameterfvSGIS;
-   exec->GetPixelTexGenParameterivSGIS = _mesa_GetPixelTexGenParameterivSGIS;
-   exec->GetPixelTexGenParameterfvSGIS = _mesa_GetPixelTexGenParameterfvSGIS;
-
-   /* GL_EXT_compiled_vertex_array */
+   /* 97. GL_EXT_compiled_vertex_array */
    exec->LockArraysEXT = _mesa_LockArraysEXT;
    exec->UnlockArraysEXT = _mesa_UnlockArraysEXT;
 
-   /* GL_EXT_point_parameters */
-   exec->PointParameterfEXT = _mesa_PointParameterfEXT;
-   exec->PointParameterfvEXT = _mesa_PointParameterfvEXT;
+   /* 173. GL_INGR_blend_func_separate */
+   exec->BlendFuncSeparateEXT = _mesa_BlendFuncSeparateEXT;
 
-   /* GL_PGI_misc_hints */
-   exec->HintPGI = _mesa_HintPGI;
+   /* 196. GL_MESA_resize_buffers */
+   exec->ResizeBuffersMESA = _mesa_ResizeBuffersMESA;
 
-   /* GL_EXT_polygon_offset */
-   exec->PolygonOffsetEXT = _mesa_PolygonOffsetEXT;
+   /* 197. GL_MESA_window_pos */
+   exec->WindowPos2dMESA = _mesa_WindowPos2dMESA;
+   exec->WindowPos2dvMESA = _mesa_WindowPos2dvMESA;
+   exec->WindowPos2fMESA = _mesa_WindowPos2fMESA;
+   exec->WindowPos2fvMESA = _mesa_WindowPos2fvMESA;
+   exec->WindowPos2iMESA = _mesa_WindowPos2iMESA;
+   exec->WindowPos2ivMESA = _mesa_WindowPos2ivMESA;
+   exec->WindowPos2sMESA = _mesa_WindowPos2sMESA;
+   exec->WindowPos2svMESA = _mesa_WindowPos2svMESA;
+   exec->WindowPos3dMESA = _mesa_WindowPos3dMESA;
+   exec->WindowPos3dvMESA = _mesa_WindowPos3dvMESA;
+   exec->WindowPos3fMESA = _mesa_WindowPos3fMESA;
+   exec->WindowPos3fvMESA = _mesa_WindowPos3fvMESA;
+   exec->WindowPos3iMESA = _mesa_WindowPos3iMESA;
+   exec->WindowPos3ivMESA = _mesa_WindowPos3ivMESA;
+   exec->WindowPos3sMESA = _mesa_WindowPos3sMESA;
+   exec->WindowPos3svMESA = _mesa_WindowPos3svMESA;
+   exec->WindowPos4dMESA = _mesa_WindowPos4dMESA;
+   exec->WindowPos4dvMESA = _mesa_WindowPos4dvMESA;
+   exec->WindowPos4fMESA = _mesa_WindowPos4fMESA;
+   exec->WindowPos4fvMESA = _mesa_WindowPos4fvMESA;
+   exec->WindowPos4iMESA = _mesa_WindowPos4iMESA;
+   exec->WindowPos4ivMESA = _mesa_WindowPos4ivMESA;
+   exec->WindowPos4sMESA = _mesa_WindowPos4sMESA;
+   exec->WindowPos4svMESA = _mesa_WindowPos4svMESA;
 
-   /* GL_EXT_blend_minmax */
-#if 0
-   exec->BlendEquationEXT = _mesa_BlendEquationEXT;
-#endif
-
-   /* GL_EXT_blend_color */
-#if 0
-   exec->BlendColorEXT = _mesa_BlendColorEXT;
-#endif
-
-   /* GL_ARB_multitexture */
+   /* ARB 1. GL_ARB_multitexture */
    exec->ActiveTextureARB = _mesa_ActiveTextureARB;
    exec->ClientActiveTextureARB = _mesa_ClientActiveTextureARB;
    exec->MultiTexCoord1dARB = _mesa_MultiTexCoord1dARB;
@@ -597,39 +636,7 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->MultiTexCoord4sARB = _mesa_MultiTexCoord4sARB;
    exec->MultiTexCoord4svARB = _mesa_MultiTexCoord4svARB;
 
-   /* GL_INGR_blend_func_separate */
-   exec->BlendFuncSeparateEXT = _mesa_BlendFuncSeparateEXT;
-
-   /* GL_MESA_window_pos */
-   exec->WindowPos2dMESA = _mesa_WindowPos2dMESA;
-   exec->WindowPos2dvMESA = _mesa_WindowPos2dvMESA;
-   exec->WindowPos2fMESA = _mesa_WindowPos2fMESA;
-   exec->WindowPos2fvMESA = _mesa_WindowPos2fvMESA;
-   exec->WindowPos2iMESA = _mesa_WindowPos2iMESA;
-   exec->WindowPos2ivMESA = _mesa_WindowPos2ivMESA;
-   exec->WindowPos2sMESA = _mesa_WindowPos2sMESA;
-   exec->WindowPos2svMESA = _mesa_WindowPos2svMESA;
-   exec->WindowPos3dMESA = _mesa_WindowPos3dMESA;
-   exec->WindowPos3dvMESA = _mesa_WindowPos3dvMESA;
-   exec->WindowPos3fMESA = _mesa_WindowPos3fMESA;
-   exec->WindowPos3fvMESA = _mesa_WindowPos3fvMESA;
-   exec->WindowPos3iMESA = _mesa_WindowPos3iMESA;
-   exec->WindowPos3ivMESA = _mesa_WindowPos3ivMESA;
-   exec->WindowPos3sMESA = _mesa_WindowPos3sMESA;
-   exec->WindowPos3svMESA = _mesa_WindowPos3svMESA;
-   exec->WindowPos4dMESA = _mesa_WindowPos4dMESA;
-   exec->WindowPos4dvMESA = _mesa_WindowPos4dvMESA;
-   exec->WindowPos4fMESA = _mesa_WindowPos4fMESA;
-   exec->WindowPos4fvMESA = _mesa_WindowPos4fvMESA;
-   exec->WindowPos4iMESA = _mesa_WindowPos4iMESA;
-   exec->WindowPos4ivMESA = _mesa_WindowPos4ivMESA;
-   exec->WindowPos4sMESA = _mesa_WindowPos4sMESA;
-   exec->WindowPos4svMESA = _mesa_WindowPos4svMESA;
-
-   /* GL_MESA_resize_buffers */
-   exec->ResizeBuffersMESA = _mesa_ResizeBuffersMESA;
-
-   /* GL_ARB_transpose_matrix */
+   /* ARB 3. GL_ARB_transpose_matrix */
    exec->LoadTransposeMatrixdARB = _mesa_LoadTransposeMatrixdARB;
    exec->LoadTransposeMatrixfARB = _mesa_LoadTransposeMatrixfARB;
    exec->MultTransposeMatrixdARB = _mesa_MultTransposeMatrixdARB;

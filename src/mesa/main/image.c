@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.29 2000/04/18 14:32:10 brianp Exp $ */
+/* $Id: image.c,v 1.30 2000/05/04 13:48:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -615,7 +615,8 @@ _mesa_pack_rgba_span( GLcontext *ctx,
                         ctx->Pixel.ScaleOrBiasRGBApcm ||
                         ctx->Pixel.ColorTableEnabled ||
                         ctx->Pixel.PostColorMatrixColorTableEnabled ||
-                        ctx->Pixel.MinMaxEnabled);
+                        ctx->Pixel.MinMaxEnabled ||
+                        ctx->Pixel.HistogramEnabled);
 
    /* Test for optimized case first */
    if (!applyTransferOps && format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
@@ -680,10 +681,13 @@ _mesa_pack_rgba_span( GLcontext *ctx,
          if (ctx->Pixel.PostColorMatrixColorTableEnabled) {
             _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, n, rgba);
          }
-         /* XXX histogram here */
+         /* update histogram count */
+         if (ctx->Pixel.HistogramEnabled) {
+            _mesa_update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba);
+         }
          /* XXX min/max here */
          if (ctx->Pixel.MinMaxEnabled) {
-            _mesa_update_minmax(ctx, n, (const GLfloat (*)[4]) rgba);
+            _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
             if (ctx->MinMax.Sink)
                return;
          }
@@ -2194,7 +2198,8 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
                         ctx->Pixel.ScaleOrBiasRGBApcm ||
                         ctx->Pixel.ColorTableEnabled ||
                         ctx->Pixel.PostColorMatrixColorTableEnabled ||
-                        ctx->Pixel.MinMaxEnabled);
+                        ctx->Pixel.MinMaxEnabled ||
+                        ctx->Pixel.HistogramEnabled);
 
    /* Try simple cases first */
    if (!applyTransferOps && srcType == GL_UNSIGNED_BYTE) {
@@ -2320,10 +2325,13 @@ _mesa_unpack_ubyte_color_span( GLcontext *ctx,
          if (ctx->Pixel.PostColorMatrixColorTableEnabled) {
             _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, n, rgba);
          }
-         /* XXX histogram here */
+         /* update histogram count */
+         if (ctx->Pixel.HistogramEnabled) {
+            _mesa_update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba);
+         }
          /* XXX min/max here */
          if (ctx->Pixel.MinMaxEnabled) {
-            _mesa_update_minmax(ctx, n, (const GLfloat (*)[4]) rgba);
+            _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
          }
       }
 
@@ -2505,7 +2513,8 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
                         ctx->Pixel.ScaleOrBiasRGBApcm ||
                         ctx->Pixel.ColorTableEnabled ||
                         ctx->Pixel.PostColorMatrixColorTableEnabled ||
-                        ctx->Pixel.MinMaxEnabled);
+                        ctx->Pixel.MinMaxEnabled ||
+                        ctx->Pixel.HistogramEnabled);
 
    /* general solution, no special cases, yet */
    {
@@ -2581,10 +2590,13 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
          if (ctx->Pixel.PostColorMatrixColorTableEnabled) {
             _mesa_lookup_rgba(&ctx->PostColorMatrixColorTable, n, rgba);
          }
-         /* XXX histogram here */
+         /* update histogram count */
+         if (ctx->Pixel.HistogramEnabled) {
+            _mesa_update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba);
+         }
          /* XXX min/max here */
          if (ctx->Pixel.MinMaxEnabled) {
-            _mesa_update_minmax(ctx, n, (const GLfloat (*)[4]) rgba);
+            _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
          }
       }
 

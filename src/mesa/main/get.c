@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.21 2000/04/12 00:27:37 brianp Exp $ */
+/* $Id: get.c,v 1.22 2000/05/04 13:48:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -347,6 +347,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_GREEN_SCALE:
          *params = FLOAT_TO_BOOL(ctx->Pixel.GreenScale);
 	 break;
+      case GL_HISTOGRAM:
+         *params = ctx->Pixel.HistogramEnabled;
+	 break;
       case GL_INDEX_BITS:
          *params = INT_TO_BOOL( ctx->Visual->IndexBits );
 	 break;
@@ -568,6 +571,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 params[0] = INT_TO_BOOL(MAX_WIDTH);
 	 params[1] = INT_TO_BOOL(MAX_HEIGHT);
 	 break;
+      case GL_MINMAX:
+         *params = ctx->Pixel.MinMaxEnabled;
+         break;
       case GL_MODELVIEW_MATRIX:
 	 for (i=0;i<16;i++) {
 	    params[i] = FLOAT_TO_BOOL(ctx->ModelView.m[i]);
@@ -1399,6 +1405,9 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       case GL_GREEN_SCALE:
          *params = (GLdouble) ctx->Pixel.GreenScale;
          break;
+      case GL_HISTOGRAM:
+         *params = (GLdouble) ctx->Pixel.HistogramEnabled;
+	 break;
       case GL_INDEX_BITS:
          *params = (GLdouble) ctx->Visual->IndexBits;
 	 break;
@@ -1619,6 +1628,9 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       case GL_MAX_VIEWPORT_DIMS:
          params[0] = (GLdouble) MAX_WIDTH;
          params[1] = (GLdouble) MAX_HEIGHT;
+         break;
+      case GL_MINMAX:
+         *params = (GLdouble) ctx->Pixel.MinMaxEnabled;
          break;
       case GL_MODELVIEW_MATRIX:
 	 for (i=0;i<16;i++) {
@@ -2449,6 +2461,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_GREEN_SCALE:
          *params = (GLfloat) ctx->Pixel.GreenScale;
          break;
+      case GL_HISTOGRAM:
+         *params = (GLfloat) ctx->Pixel.HistogramEnabled;
+	 break;
       case GL_INDEX_BITS:
          *params = (GLfloat) ctx->Visual->IndexBits;
 	 break;
@@ -2669,6 +2684,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_MAX_VIEWPORT_DIMS:
          params[0] = (GLfloat) MAX_WIDTH;
          params[1] = (GLfloat) MAX_HEIGHT;
+         break;
+      case GL_MINMAX:
+         *params = (GLfloat) ctx->Pixel.MinMaxEnabled;
          break;
       case GL_MODELVIEW_MATRIX:
 	 for (i=0;i<16;i++) {
@@ -3483,6 +3501,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_GREEN_SCALE:
          *params = (GLint) ctx->Pixel.GreenScale;
          break;
+      case GL_HISTOGRAM:
+         *params = (GLint) ctx->Pixel.HistogramEnabled;
+	 break;
       case GL_INDEX_BITS:
          *params = (GLint) ctx->Visual->IndexBits;
          break;
@@ -3703,6 +3724,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_MAX_VIEWPORT_DIMS:
          params[0] = (GLint) MAX_WIDTH;
          params[1] = (GLint) MAX_HEIGHT;
+         break;
+      case GL_MINMAX:
+         *params = (GLint) ctx->Pixel.MinMaxEnabled;
          break;
       case GL_MODELVIEW_MATRIX:
 	 for (i=0;i<16;i++) {

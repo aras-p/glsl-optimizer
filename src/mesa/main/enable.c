@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.15 2000/04/12 00:27:37 brianp Exp $ */
+/* $Id: enable.c,v 1.16 2000/05/04 13:48:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -154,6 +154,9 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
             ctx->NewState |= NEW_FOG|NEW_RASTER_OPS;
          }
 	 break;
+      case GL_HISTOGRAM:
+         ctx->Pixel.HistogramEnabled = state;
+         break;
       case GL_LIGHT0:
       case GL_LIGHT1:
       case GL_LIGHT2:
@@ -268,6 +271,9 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_MAP2_VERTEX_4:
 	 ctx->Eval.Map2Vertex4 = state;
 	 break;
+      case GL_MINMAX:
+         ctx->Pixel.MinMaxEnabled = state;
+         break;
       case GL_NORMALIZE:
 	 if (ctx->Transform.Normalize != state) {
 	    ctx->Transform.Normalize = state;
@@ -552,6 +558,8 @@ _mesa_IsEnabled( GLenum cap )
 	 return ctx->Color.DitherFlag;
       case GL_FOG:
 	 return ctx->Fog.Enabled;
+      case GL_HISTOGRAM:
+         return ctx->Pixel.HistogramEnabled;
       case GL_LIGHTING:
          return ctx->Light.Enabled;
       case GL_LIGHT0:
@@ -607,6 +615,8 @@ _mesa_IsEnabled( GLenum cap )
 	 return ctx->Eval.Map2Vertex3;
       case GL_MAP2_VERTEX_4:
 	 return ctx->Eval.Map2Vertex4;
+      case GL_MINMAX:
+         return ctx->Pixel.MinMaxEnabled;
       case GL_NORMALIZE:
 	 return ctx->Transform.Normalize;
       case GL_POINT_SMOOTH:
