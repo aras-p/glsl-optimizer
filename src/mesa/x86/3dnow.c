@@ -1,10 +1,10 @@
-/* $Id: 3dnow.c,v 1.21 2002/04/09 14:58:03 keithw Exp $ */
+/* $Id: 3dnow.c,v 1.22 2002/08/21 13:07:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -79,9 +79,7 @@ void _mesa_init_3dnow_transform_asm( void )
    ASSIGN_XFORM_GROUP( 3dnow, 3 );
    ASSIGN_XFORM_GROUP( 3dnow, 4 );
 
-/* Normalize_normals is broken - disable
- */
-/*     ASSIGN_NORM_GROUP( 3dnow ); */
+   ASSIGN_NORM_GROUP( 3dnow );
 
 #ifdef DEBUG
    _math_test_all_transform_functions( "3DNow!" );
@@ -89,5 +87,3 @@ void _mesa_init_3dnow_transform_asm( void )
 #endif
 #endif
 }
-
-
