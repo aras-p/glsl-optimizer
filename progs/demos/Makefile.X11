@@ -1,8 +1,8 @@
-# $Id: Makefile.X11,v 1.3 1999/10/27 10:09:53 brianp Exp $
+# $Id: Makefile.X11,v 1.4 2000/01/28 16:27:27 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.1
-# Copyright (C) 1995-1998  Brian Paul
+# Version:  3.3
+# Copyright (C) 1995-2000  Brian Paul
 
 
 # Makefile for GLUT-based demo programs for Unix/X11
@@ -19,7 +19,7 @@ LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 
 PROGS = bounce clearspd drawpix gamma gears glinfo gloss glutfx isosurf \
 	morph3d multiarb osdemo paltex pointblast reflect \
-	renormal spectex stex3d tessdemo texcyl texobj trispd winpos \
+	renormal spectex stex3d tessdemo texcyl texdown texobj trispd winpos \
 
 
 ##### RULES #####

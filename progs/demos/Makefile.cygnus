@@ -1,8 +1,8 @@
-# $Id: Makefile.cygnus,v 1.2 1999/10/22 20:37:23 brianp Exp $
+# $Id: Makefile.cygnus,v 1.3 2000/01/28 16:27:27 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.1
-# Copyright (C) 1995-1999  Brian Paul
+# Version:  3.3
+# Copyright (C) 1995-2000  Brian Paul
 
 
 # Makefile for demo programs for cygnus
@@ -21,7 +21,7 @@ LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 
 PROGS = clearspd drawpix gamma gears glinfo glutfx gloss isosurf \
 	morph3d multiext osdemo paltex pointblast reflect \
-	renormal spectex stex3d tessdemo texcyl texobj trispd winpos
+	renormal spectex stex3d tessdemo texcyl texdown texobj trispd winpos
 
 
 ##### RULES #####
