@@ -157,19 +157,20 @@ static void emit( struct fragment_program *p,
    va_list ap;
    va_start( ap, fmt );  
 
-   p->c_strlen += vsnprintf( p->c_str + p->c_strlen, 
-			     sizeof(p->c_str) - p->c_strlen,
-			     fmt, ap );
+   if (p->c_strlen < sizeof(p->c_str))
+      p->c_strlen += vsnprintf( p->c_str + p->c_strlen, 
+				sizeof(p->c_str) - p->c_strlen,
+				fmt, ap );
    
    va_end( ap );
 }
 
 static INLINE void emit_char( struct fragment_program *p, char c )
 {
-   if (p->c_strlen < sizeof(p->c_str))
+   if (p->c_strlen < sizeof(p->c_str)) {
        p->c_str[p->c_strlen] = c;
-   
-   p->c_strlen++;
+       p->c_strlen++;
+   }
 }
 
 
@@ -202,6 +203,18 @@ static void print_header( struct fragment_program *p )
 {
    emit(p, "\n\n\n");
 
+   /* Mesa's program_parameter struct:
+    */
+   emit(p, 
+	"struct program_parameter\n"
+	"{\n"
+	"   const char *Name;\n"
+	"   int Type;\n"
+	"   int StateIndexes[6];\n"
+	"   float Values[4];\n"
+	"};\n");
+
+
    /* Texture samplers, not written yet:
     */
    emit(p, "extern void TEX( void *ctx, const float *txc, int unit, float *rslt );\n"
@@ -229,10 +242,10 @@ static void print_header( struct fragment_program *p )
 
    /* Our function!
     */
-   emit(p, "void run_program( void *ctx, \n"
+   emit(p, "int run_program( void *ctx, \n"
 	  "                  const float (*local_param)[4], \n"
 	  "                  const float (*env_param)[4], \n"
-	  "                  const float (*state_param)[4], \n"
+	  "                  const struct program_parameter *state_param, \n"
 	  "                  const float (*interp)[4], \n"
 	  "                  float (*outputs)[4])\n"
 	  "{\n"
@@ -242,6 +255,7 @@ static void print_header( struct fragment_program *p )
 
 static void print_footer( struct fragment_program *p )
 {
+   emit(p, "   return 1;");
    emit(p, "}\n");
 }
 
@@ -279,11 +293,15 @@ static void print_reg( struct fragment_program *p,
    case UREG_TYPE_INTERP: emit(p, "interp"); break;
    case UREG_TYPE_LOCAL_CONST: emit(p, "local_const"); break;
    case UREG_TYPE_ENV_CONST: emit(p, "env_const"); break;
-   case UREG_TYPE_STATE_CONST: emit(p, "state_const"); break;
+   case UREG_TYPE_STATE_CONST: emit(p, "state_param"); break;
    case UREG_TYPE_PARAM: emit(p, "param"); break;
    };
    
    emit(p, "[%d]", GET_UREG_NR(arg));
+
+   if (GET_UREG_TYPE(arg) == UREG_TYPE_STATE_CONST) {
+      emit(p, ".Values");
+   }
 }
 
 
@@ -305,7 +323,8 @@ static void print_arg( struct fragment_program *p,
       return;
    }
 
-   if (GET_UREG_TYPE(arg) == UREG_TYPE_STATE_CONST) {
+   if (GET_UREG_TYPE(arg) == UREG_TYPE_STATE_CONST &&
+       p->Parameters->Parameters[GET_UREG_NR(arg)].Type == CONSTANT) {
       emit(p, "%g", p->Parameters->Parameters[GET_UREG_NR(arg)].Values[src]);
       return;
    }
@@ -345,6 +364,26 @@ static void print_expression( struct fragment_program *p,
    }
 
    emit(p, ";\n");
+}
+
+static void do_tex_kill( struct fragment_program *p,
+			 const struct fp_instruction *inst,
+			 GLuint arg )
+{
+   GLuint i;
+
+   emit(p, "if (");
+
+   for (i = 0; i < 4; i++) {
+      print_arg( p, deref(arg, i) );
+      emit(p, " < 0 ");
+      if (i + 1 < 4)
+	 emit(p, "|| ");
+   }
+
+   emit(p, ")\n");
+   emit(p, "           return 0;\n");
+
 }
 
 static void do_tex_simple( struct fragment_program *p,
@@ -641,7 +680,7 @@ static void translate_program( struct fragment_program *p )
 	 break;
 
       case FP_OPCODE_KIL:
-	 /* TODO */
+	 do_tex_kill(p, inst, src[0]);
 	 break;
 
       case FP_OPCODE_LG2: 
@@ -774,10 +813,6 @@ void _swrast_translate_program( GLcontext *ctx )
       print_header( p );
       translate_program( p );
       print_footer( p );
-      emit_char(p, 0);
-      
-      printf("C program length: %d/%d chars\n", p->c_strlen, strlen(p->c_str));
-      printf(p->c_str);
    }
 }
 

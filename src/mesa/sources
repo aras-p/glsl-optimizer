@@ -70,6 +70,7 @@ ARRAY_CACHE_SOURCES = \
 	array_cache/ac_import.c
 
 SWRAST_SOURCES = \
+	swrast/s_fragprog_to_c.c \
 	swrast/s_aaline.c \
 	swrast/s_aatriangle.c \
 	swrast/s_accum.c \
@@ -95,6 +96,7 @@ SWRAST_SOURCES = \
 	swrast/s_readpix.c \
 	swrast/s_span.c \
 	swrast/s_stencil.c \
+	swrast/s_tcc.c \
 	swrast/s_texture.c \
 	swrast/s_texstore.c \
 	swrast/s_triangle.c \

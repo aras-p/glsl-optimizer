@@ -1579,6 +1579,11 @@ struct fragment_program
    GLuint NumTexIndirections;
    GLenum FogOption;
    struct program_parameter_list *Parameters; /**< array [NumParameters] */
+
+#ifdef USE_TCC
+   char c_str[4096];		/* experimental... */
+   int c_strlen;
+#endif
 };
 
 

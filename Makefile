@@ -7,7 +7,7 @@ SUBDIRS = src progs
 
 default: $(TOP)/configs/current
 	@for dir in $(SUBDIRS) ; do \
-		(cd $$dir ; make) ; \
+		(cd $$dir ; make) || exit 1 ; \
 	done
 
 
@@ -78,6 +78,7 @@ linux-sparc \
 linux-sparc5 \
 linux-static \
 linux-ultrasparc \
+linux-tcc \
 linux-x86 \
 linux-x86-debug \
 linux-x86-64 \

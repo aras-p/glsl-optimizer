@@ -15,6 +15,7 @@ SOURCES = antialias.c \
 	arbfptest1.c \
 	arbfptexture.c \
 	arbfptrig.c \
+	arbfpwpos.c \
 	arbvptest1.c \
 	arbvptest3.c \
 	arbvptorus.c \
