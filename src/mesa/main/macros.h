@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.17 2001/01/08 04:09:41 keithw Exp $ */
+/* $Id: macros.h,v 1.18 2001/01/24 00:04:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,6 +73,7 @@
 #define STRIDE_F(p, i)  (p = (GLfloat *)((GLubyte *)p + i))
 #define STRIDE_UI(p, i)  (p = (GLuint *)((GLubyte *)p + i))
 #define STRIDE_4UB(p, i)  (p = (GLubyte (*)[4])((GLubyte *)p + i))
+#define STRIDE_4CHAN(p, i)  (p = (GLchan (*)[4])((GLchan *)p + i))
 #define STRIDE_T(p, t, i)  (p = (t)((GLubyte *)p + i))
 
 

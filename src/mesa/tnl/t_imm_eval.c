@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.3 2001/01/03 15:59:30 brianp Exp $ */
+/* $Id: t_imm_eval.c,v 1.4 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -144,14 +144,21 @@ static void eval1_norm( GLvector3f *dest,
       }
 }
 
-static void eval1_color( GLvector4ub *dest,
+static void eval1_color(
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+                         GLvector4ub *dest,
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+                         GLvector4us *dest,
+#elif CHAN_TYPE == GL_FLOAT
+                         GLvector4f *dest,
+#endif
 			 GLfloat coord[][4],
 			 const GLuint *flags,
 			 struct gl_1d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
-   GLubyte (*to)[4] = dest->data;
+   GLchan (*to)[4] = dest->data;
    GLuint i;
 
    for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++) {
@@ -276,7 +283,14 @@ static void eval2_1ui( GLvector1ui *dest,
 
 
 
-static void eval2_color( GLvector4ub *dest,
+static void eval2_color(
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
+                         GLvector4ub *dest,
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+                         GLvector4us *dest,
+#elif CHAN_TYPE == GL_FLOAT
+                         GLvector4f *dest,
+#endif
 			 GLfloat coord[][4],
 			 GLuint *flags,
 			 struct gl_2d_map *map )
@@ -285,7 +299,7 @@ static void eval2_color( GLvector4ub *dest,
    const GLfloat du = map->du;
    const GLfloat v1 = map->v1;
    const GLfloat dv = map->dv;
-   GLubyte (*to)[4] = dest->data;
+   GLchan (*to)[4] = dest->data;
    GLuint i;
 
    for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++) {
@@ -312,7 +326,7 @@ static void copy_3f( GLfloat to[][3], GLfloat from[][3], GLuint count )
    MEMCPY( to, from, (count) * sizeof(to[0])); 
 }
 
-static void copy_4ub( GLubyte to[][4], GLubyte from[][4], GLuint count )
+static void copy_4chan( GLchan to[][4], GLchan from[][4], GLuint count )
 {
    MEMCPY( to, from, (count) * sizeof(to[0])); 
 }
@@ -472,10 +486,10 @@ void _tnl_eval_vb( GLcontext *ctx,
    if (req & VERT_RGBA)
    {
       if (!all_eval)
-	 copy_4ub( store->Color, tmp->Color.data, count );
+	 copy_4chan( store->Color, tmp->Color.data, count );
 
       tmp->Color.data = store->Color;
-      tmp->Color.start = (GLubyte *)store->Color;
+      tmp->Color.start = (GLchan *) store->Color;
 
       if (ctx->Eval.Map1Color4 && any_eval1)
 	 eval1_color( &tmp->Color, coord, flags, &ctx->EvalMap.Map1Color4 );

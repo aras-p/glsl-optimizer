@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.11 2001/01/14 06:14:21 keithw Exp $ */
+/* $Id: t_context.h,v 1.12 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -205,7 +205,7 @@ struct immediate
    GLuint  Elt[IMM_SIZE];
    GLubyte EdgeFlag[IMM_SIZE];
    GLuint  Index[IMM_SIZE];
-   GLubyte SecondaryColor[IMM_SIZE][4];
+   GLchan  SecondaryColor[IMM_SIZE][4];
    GLfloat FogCoord[IMM_SIZE];
 };
 
@@ -214,12 +214,20 @@ struct vertex_arrays
 {
    GLvector4f  Obj;
    GLvector3f  Normal;
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
    GLvector4ub Color;
+   GLvector4ub SecondaryColor;
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+   GLvector4us Color;
+   GLvector4us SecondaryColor;
+#elif CHAN_TYPE == GL_FLOAT
+   GLvector4f Color;
+   GLvector4f SecondaryColor;
+#endif
    GLvector1ui Index;
    GLvector1ub EdgeFlag;
    GLvector4f  TexCoord[MAX_TEXTURE_UNITS];
    GLvector1ui Elt;
-   GLvector4ub SecondaryColor;
    GLvector1f  FogCoord;
 };
 
@@ -260,8 +268,17 @@ typedef struct vertex_buffer
    GLboolean   *EdgeFlag;	                /* VERT_EDGE */
    GLvector4f  *TexCoordPtr[MAX_TEXTURE_UNITS];	/* VERT_TEX_0..n */
    GLvector1ui *IndexPtr[2];	                /* VERT_INDEX */
+
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
    GLvector4ub *ColorPtr[2];	                /* VERT_RGBA */
-   GLvector4ub *SecondaryColorPtr[2];           /* VERT_SPEC_RGB */
+   GLvector4ub *SecondaryColorPtr[2];         /* VERT_SPEC_RGB */
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+   GLvector4us *ColorPtr[2];	                /* VERT_RGBA */
+   GLvector4us *SecondaryColorPtr[2];         /* VERT_SPEC_RGB */
+#elif CHAN_TYPE == GL_FLOAT
+   GLvector4f *ColorPtr[2];	                /* VERT_RGBA */
+   GLvector4f *SecondaryColorPtr[2];         /* VERT_SPEC_RGB */
+#endif
    GLvector1f  *FogCoordPtr;	                /* VERT_FOG_COORD */
    GLvector1f  *PointSizePtr;	                /* VERT_POINT_SIZE */
    GLmaterial (*Material)[2];                   /* VERT_MATERIAL, optional */

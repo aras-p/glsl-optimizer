@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.27 2001/01/06 22:46:13 gareth Exp $ */
+/* $Id: texstate.c,v 1.28 2001/01/24 00:04:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -743,10 +743,10 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          }
          break;
       case GL_TEXTURE_BORDER_COLOR:
-         texObj->BorderColor[0] = (GLchan) CLAMP((GLint)(params[0]*CHAN_MAXF), 0, CHAN_MAX);
-         texObj->BorderColor[1] = (GLchan) CLAMP((GLint)(params[1]*CHAN_MAXF), 0, CHAN_MAX);
-         texObj->BorderColor[2] = (GLchan) CLAMP((GLint)(params[2]*CHAN_MAXF), 0, CHAN_MAX);
-         texObj->BorderColor[3] = (GLchan) CLAMP((GLint)(params[3]*CHAN_MAXF), 0, CHAN_MAX);
+         UNCLAMPED_FLOAT_TO_CHAN(texObj->BorderColor[0], params[0]);
+         UNCLAMPED_FLOAT_TO_CHAN(texObj->BorderColor[1], params[1]);
+         UNCLAMPED_FLOAT_TO_CHAN(texObj->BorderColor[2], params[2]);
+         UNCLAMPED_FLOAT_TO_CHAN(texObj->BorderColor[3], params[3]);
          break;
       case GL_TEXTURE_MIN_LOD:
          texObj->MinLod = params[0];

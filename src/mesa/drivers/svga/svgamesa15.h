@@ -1,4 +1,4 @@
-/* $Id: svgamesa15.h,v 1.4 2000/11/14 17:40:14 brianp Exp $ */
+/* $Id: svgamesa15.h,v 1.5 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,7 @@
 #ifndef SVGA_MESA_15_H
 #define SVGA_MESA_15_H
 
-extern void __clear_color15( GLcontext *ctx, GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha );
+extern void __clear_color15( GLcontext *ctx, const GLchan color[4] );
 extern GLbitfield __clear15( GLcontext *ctx, GLbitfield mask, GLboolean all, GLint x, GLint y, GLint width, GLint height );
 extern void __write_rgba_span15( const GLcontext *ctx, GLuint n, GLint x, GLint y, const GLubyte rgba[][4], const GLubyte mask[] );
 extern void __write_mono_rgba_span15( const GLcontext *ctx, GLuint n, GLint x, GLint y, const GLchan color[4], const GLubyte mask[]);

@@ -1,4 +1,4 @@
-/* $Id: s_alphabuf.c,v 1.3 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_alphabuf.c,v 1.4 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -136,7 +136,7 @@ _mesa_alloc_alpha_buffers( GLcontext *ctx )
 void
 _mesa_clear_alpha_buffers( GLcontext *ctx )
 {
-   const GLchan aclear = (GLint) (ctx->Color.ClearColor[3] * CHAN_MAXF);
+   const GLchan aclear = ctx->Color.ClearColor[3];
    GLuint bufferBit;
 
    ASSERT(ctx->DrawBuffer->UseSoftwareAlphaBuffers);

@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.40 2001/01/23 23:39:36 brianp Exp $ */
+/* $Id: attrib.c,v 1.41 2001/01/24 00:04:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -589,11 +589,7 @@ _mesa_PopAttrib(void)
 		  ctx->Driver.LogicOpcode( ctx, ctx->Color.LogicOp );
                }
                if (ctx->Visual.rgbMode) {
-                  GLchan r = (GLint) (ctx->Color.ClearColor[0] * CHAN_MAXF);
-                  GLchan g = (GLint) (ctx->Color.ClearColor[1] * CHAN_MAXF);
-                  GLchan b = (GLint) (ctx->Color.ClearColor[2] * CHAN_MAXF);
-                  GLchan a = (GLint) (ctx->Color.ClearColor[3] * CHAN_MAXF);
-                  (*ctx->Driver.ClearColor)( ctx, r, g, b, a );
+                  (*ctx->Driver.ClearColor)(ctx, ctx->Color.ClearColor);
                   if ((ctx->Color.AlphaFunc != oldAlphaFunc ||
                        ctx->Color.AlphaRef != oldAlphaRef) &&
                       ctx->Driver.AlphaFunc)

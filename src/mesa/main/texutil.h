@@ -1,4 +1,4 @@
-/* $Id: texutil.h,v 1.6 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: texutil.h,v 1.7 2001/01/24 00:04:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -81,7 +81,7 @@ _mesa_unconvert_teximage(MesaIntTexFormat srcFormat,
                          GLint srcWidth, GLint srcHeight,
                          const GLvoid *srcImage, GLint srcRowStride,
                          GLint dstWidth, GLint dstHeight,
-                         GLenum dstFormat, GLchan *dstImage);
+                         GLenum dstFormat, GLubyte *dstImage);
 
 
 extern void

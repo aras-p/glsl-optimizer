@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.14 2001/01/23 23:39:36 brianp Exp $ */
+/* $Id: mtypes.h,v 1.15 2001/01/24 00:04:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -265,7 +265,7 @@ struct gl_accum_attrib {
 
 struct gl_colorbuffer_attrib {
    GLuint ClearIndex;			/* Index to use for glClear */
-   GLfloat ClearColor[4];		/* Color to use for glClear */
+   GLchan ClearColor[4];		/* Color to use for glClear */
 
    GLuint IndexMask;			/* Color index write mask */
    GLubyte ColorMask[4];		/* Each flag is 0xff or 0x0 */

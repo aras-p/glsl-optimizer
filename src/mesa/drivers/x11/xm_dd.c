@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.10 2001/01/16 05:29:43 keithw Exp $ */
+/* $Id: xm_dd.c,v 1.11 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -229,14 +229,15 @@ clear_index( GLcontext *ctx, GLuint index )
 
 
 static void
-clear_color( GLcontext *ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte a )
+clear_color( GLcontext *ctx, const GLchan color[4] )
 {
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   xmesa->clearcolor[0] = r;
-   xmesa->clearcolor[1] = g;
-   xmesa->clearcolor[2] = b;
-   xmesa->clearcolor[3] = a;
-   xmesa->clearpixel = xmesa_color_to_pixel( xmesa, r, g, b, a,
+   xmesa->clearcolor[0] = color[0];
+   xmesa->clearcolor[1] = color[1];
+   xmesa->clearcolor[2] = color[2];
+   xmesa->clearcolor[3] = color[3];
+   xmesa->clearpixel = xmesa_color_to_pixel( xmesa, color[0], color[1],
+                                             color[2], color[3],
                                              xmesa->xm_visual->undithered_pf );
    _glthread_LOCK_MUTEX(_xmesa_lock);
    XMesaSetForeground( xmesa->display, xmesa->xm_buffer->cleargc,

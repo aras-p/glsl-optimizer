@@ -33,8 +33,8 @@ static void TAG(rs)(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
    SWvertex *v;
    GLfloat (*proj)[4];		/* projected clip coordinates */
    GLfloat (*tc[MAX_TEXTURE_UNITS])[4];
-   GLubyte (*color)[4];
-   GLubyte (*spec)[4];
+   GLchan (*color)[4];
+   GLchan (*spec)[4];
    GLuint *index;
    GLfloat *fog;
    GLfloat *pointSize;

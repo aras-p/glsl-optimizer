@@ -59,8 +59,8 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	 if (facing == 1) {
 	    if (IND & SS_TWOSIDE_BIT) {
 	       if (IND & SS_RGBA_BIT) {
-		  GLubyte (*vbcolor)[4] = VB->ColorPtr[1]->data;
-		  GLubyte (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
+		  GLchan (*vbcolor)[4] = VB->ColorPtr[1]->data;
+		  GLchan (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
 		  SS_COLOR(v[0]->color, vbcolor[e0]);
 		  SS_COLOR(v[1]->color, vbcolor[e1]);
 		  SS_COLOR(v[2]->color, vbcolor[e2]);
@@ -132,8 +132,8 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    if (IND & SS_TWOSIDE_BIT) { 
       if (facing == 1) {
 	 if (IND & SS_RGBA_BIT) {
-	    GLubyte (*vbcolor)[4] = VB->ColorPtr[0]->data;
-	    GLubyte (*vbspec)[4] = VB->SecondaryColorPtr[0]->data;
+	    GLchan (*vbcolor)[4] = VB->ColorPtr[0]->data;
+	    GLchan (*vbspec)[4] = VB->SecondaryColorPtr[0]->data;
 	    SS_COLOR(v[0]->color, vbcolor[e0]);
 	    SS_COLOR(v[1]->color, vbcolor[e1]);
 	    SS_COLOR(v[2]->color, vbcolor[e2]);

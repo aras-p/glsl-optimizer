@@ -1,10 +1,10 @@
-/* $Id: m_vector.h,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
+/* $Id: m_vector.h,v 1.3 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -130,6 +130,25 @@ extern void gl_vector4ub_init( GLvector4ub *v, GLuint flags,
 extern void gl_vector4ub_alloc( GLvector4ub *v, GLuint flags, GLuint count,
 				GLuint alignment );
 extern void gl_vector4ub_free( GLvector4ub * );
+
+
+
+/* For 4 * GLushort rgba values.
+ */
+typedef struct {
+   GLushort (*data)[4];
+   GLushort *start;
+   GLuint count;
+   GLuint stride;		 
+   GLuint flags; 
+   void *storage;
+} GLvector4us;
+
+extern void gl_vector4us_init( GLvector4us *v, GLuint flags, 
+                               GLushort (*storage)[4] );
+extern void gl_vector4us_alloc( GLvector4us *v, GLuint flags, GLuint count,
+                                GLuint alignment );
+extern void gl_vector4us_free( GLvector4us * );
 
 
 

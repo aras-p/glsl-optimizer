@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.47 2001/01/09 00:02:55 brianp Exp $ */
+/* $Id: dd.h,v 1.48 2001/01/24 00:04:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -159,19 +159,6 @@ struct dd_function_table {
     * UpdateState() is called whenver Mesa thinks the device driver should
     * update its state and/or the other pointers (such as PointsFunc,
     * LineFunc, or TriangleFunc).
-    */
-
-   void (*ClearIndex)( GLcontext *ctx, GLuint index );
-   /*
-    * Called whenever glClearIndex() is called.  Set the index for clearing
-    * the color buffer when in color index mode.
-    */
-
-   void (*ClearColor)( GLcontext *ctx, GLchan red, GLchan green,
-                                        GLchan blue, GLchan alpha );
-   /*
-    * Called whenever glClearColor() is called.  Set the color for clearing
-    * the color buffer when in RGBA mode.
     */
 
    GLbitfield (*Clear)( GLcontext *ctx, GLbitfield mask, GLboolean all,
@@ -754,7 +741,9 @@ struct dd_function_table {
    void (*BlendFuncSeparate)(GLcontext *ctx,
                              GLenum sfactorRGB, GLenum dfactorRGB,
                              GLenum sfactorA, GLenum dfactorA);
+   void (*ClearColor)(GLcontext *ctx, const GLchan color[4]);
    void (*ClearDepth)(GLcontext *ctx, GLclampd d);
+   void (*ClearIndex)(GLcontext *ctx, GLuint index);
    void (*ClearStencil)(GLcontext *ctx, GLint s);
    void (*ColorMask)(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
                      GLboolean bmask, GLboolean amask );

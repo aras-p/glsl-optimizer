@@ -1,10 +1,10 @@
-/* $Id: m_translate.h,v 1.3 2000/12/26 05:09:31 keithw Exp $ */
+/* $Id: m_translate.h,v 1.4 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.5
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,6 +54,14 @@ extern void _math_trans_1ub(GLubyte *to,
 			    GLuint n );
 
 extern void _math_trans_4ub(GLubyte (*to)[4],
+			    CONST void *ptr,
+			    GLuint stride,
+			    GLenum type,
+			    GLuint size,
+			    GLuint start,
+			    GLuint n );
+
+extern void _math_trans_4us(GLushort (*to)[4],
 			    CONST void *ptr,
 			    GLuint stride,
 			    GLenum type,

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.50 2001/01/23 23:39:36 brianp Exp $ */
+/* $Id: get.c,v 1.51 2001/01/24 00:04:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -200,10 +200,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ctx->Transform.ClipEnabled[pname-GL_CLIP_PLANE0];
          break;
       case GL_COLOR_CLEAR_VALUE:
-         params[0] = FLOAT_TO_BOOL(ctx->Color.ClearColor[0]);
-         params[1] = FLOAT_TO_BOOL(ctx->Color.ClearColor[1]);
-         params[2] = FLOAT_TO_BOOL(ctx->Color.ClearColor[2]);
-         params[3] = FLOAT_TO_BOOL(ctx->Color.ClearColor[3]);
+         params[0] = ctx->Color.ClearColor[0] ? GL_TRUE : GL_FALSE;
+         params[1] = ctx->Color.ClearColor[1] ? GL_TRUE : GL_FALSE;
+         params[2] = ctx->Color.ClearColor[2] ? GL_TRUE : GL_FALSE;
+         params[3] = ctx->Color.ClearColor[3] ? GL_TRUE : GL_FALSE;
          break;
       case GL_COLOR_MATERIAL:
          *params = ctx->Light.ColorMaterialEnabled;
@@ -1438,10 +1438,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Transform.ClipEnabled[pname-GL_CLIP_PLANE0];
          break;
       case GL_COLOR_CLEAR_VALUE:
-         params[0] = (GLdouble) ctx->Color.ClearColor[0];
-         params[1] = (GLdouble) ctx->Color.ClearColor[1];
-         params[2] = (GLdouble) ctx->Color.ClearColor[2];
-         params[3] = (GLdouble) ctx->Color.ClearColor[3];
+         params[0] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[0]);
+         params[1] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[1]);
+         params[2] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[2]);
+         params[3] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[3]);
          break;
       case GL_COLOR_MATERIAL:
          *params = (GLdouble) ctx->Light.ColorMaterialEnabled;
@@ -2676,10 +2676,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) ctx->Transform.ClipEnabled[pname-GL_CLIP_PLANE0];
          break;
       case GL_COLOR_CLEAR_VALUE:
-         params[0] = (GLfloat) ctx->Color.ClearColor[0];
-         params[1] = (GLfloat) ctx->Color.ClearColor[1];
-         params[2] = (GLfloat) ctx->Color.ClearColor[2];
-         params[3] = (GLfloat) ctx->Color.ClearColor[3];
+         params[0] = CHAN_TO_FLOAT(ctx->Color.ClearColor[0]);
+         params[1] = CHAN_TO_FLOAT(ctx->Color.ClearColor[1]);
+         params[2] = CHAN_TO_FLOAT(ctx->Color.ClearColor[2]);
+         params[3] = CHAN_TO_FLOAT(ctx->Color.ClearColor[3]);
          break;
       case GL_COLOR_MATERIAL:
          *params = (GLfloat) ctx->Light.ColorMaterialEnabled;
@@ -3890,10 +3890,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Transform.ClipEnabled[i];
          break;
       case GL_COLOR_CLEAR_VALUE:
-         params[0] = FLOAT_TO_INT( ctx->Color.ClearColor[0] );
-         params[1] = FLOAT_TO_INT( ctx->Color.ClearColor[1] );
-         params[2] = FLOAT_TO_INT( ctx->Color.ClearColor[2] );
-         params[3] = FLOAT_TO_INT( ctx->Color.ClearColor[3] );
+         params[0] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Color.ClearColor[0]) );
+         params[1] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Color.ClearColor[1]) );
+         params[2] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Color.ClearColor[2]) );
+         params[3] = FLOAT_TO_INT( CHAN_TO_FLOAT(ctx->Color.ClearColor[3]) );
          break;
       case GL_COLOR_MATERIAL:
          *params = (GLint) ctx->Light.ColorMaterialEnabled;

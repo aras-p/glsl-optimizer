@@ -1,10 +1,10 @@
-/* $Id: m_vector.c,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
+/* $Id: m_vector.c,v 1.3 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -115,6 +115,15 @@ void gl_vector4ub_init( GLvector4ub *v, GLuint flags, GLubyte (*storage)[4] )
    v->flags = flags ;
 }
 
+void gl_vector4us_init( GLvector4us *v, GLuint flags, GLushort (*storage)[4] )
+{
+   v->stride = 4 * sizeof(GLushort);
+   v->data = storage;
+   v->start = (GLushort *) storage;
+   v->count = 0;
+   v->flags = flags ;
+}
+
 void gl_vector1ub_init( GLvector1ub *v, GLuint flags, GLubyte *storage )
 {
    v->stride = 1 * sizeof(GLubyte);
@@ -189,6 +198,17 @@ void gl_vector4ub_alloc( GLvector4ub *v, GLuint flags, GLuint count,
    v->flags = flags | VEC_MALLOC ;
 }
 
+void gl_vector4us_alloc( GLvector4us *v, GLuint flags, GLuint count,
+                         GLuint alignment )
+{
+   v->stride = 4 * sizeof(GLushort);
+   v->storage = ALIGN_MALLOC( count * 4 * sizeof(GLushort), alignment );
+   v->start = (GLushort *) v->storage;
+   v->data = (GLushort (*)[4]) v->storage;
+   v->count = 0;
+   v->flags = flags | VEC_MALLOC ;
+}
+
 void gl_vector1ub_alloc( GLvector1ub *v, GLuint flags, GLuint count,
 			 GLuint alignment )
 {
@@ -254,6 +274,17 @@ void gl_vector1f_free( GLvector1f *v )
 }
 
 void gl_vector4ub_free( GLvector4ub *v )
+{
+   if (v->flags & VEC_MALLOC) {
+      ALIGN_FREE( v->storage );
+      v->data = NULL;
+      v->start = NULL;
+      v->storage = NULL;
+      v->flags &= ~VEC_MALLOC;
+   }
+}
+
+void gl_vector4us_free( GLvector4us *v )
 {
    if (v->flags & VEC_MALLOC) {
       ALIGN_FREE( v->storage );

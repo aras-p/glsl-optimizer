@@ -1,4 +1,4 @@
-/* $Id: xm_span.c,v 1.5 2001/01/08 04:06:20 keithw Exp $ */
+/* $Id: xm_span.c,v 1.6 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4152,17 +4152,14 @@ static void read_color_pixels( const GLcontext *ctx,
 
 
 static void
-clear_color_HPCR_ximage( GLcontext *ctx,
-                         GLubyte r, GLubyte g, GLubyte b, GLubyte a )
+clear_color_HPCR_ximage( GLcontext *ctx, const GLchan color[4] )
 {
    int i;
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   xmesa->clearcolor[0] = r;
-   xmesa->clearcolor[1] = g;
-   xmesa->clearcolor[2] = b;
-   xmesa->clearcolor[3] = a;
 
-   if (r == 0 && g == 0 && b == 0) {
+   COPY_4V(xmesa->clearcolor, color);
+
+   if (color[0] == 0 && color[1] == 0 && color[2] == 0) {
       /* black is black */
       MEMSET( xmesa->xm_visual->hpcr_clear_ximage_pattern, 0x0 ,
               sizeof(xmesa->xm_visual->hpcr_clear_ximage_pattern));
@@ -4171,27 +4168,23 @@ clear_color_HPCR_ximage( GLcontext *ctx,
       /* build clear pattern */
       for (i=0; i<16; i++) {
          xmesa->xm_visual->hpcr_clear_ximage_pattern[0][i]    =
-            DITHER_HPCR(i, 0, r, g, b);
+            DITHER_HPCR(i, 0, color[0], color[1], color[2]);
          xmesa->xm_visual->hpcr_clear_ximage_pattern[1][i]    =
-            DITHER_HPCR(i, 1, r, g, b);
+            DITHER_HPCR(i, 1, color[0], color[1], color[2]);
       }
    }
 }
 
 
 static void
-clear_color_HPCR_pixmap( GLcontext *ctx,
-                         GLubyte r, GLubyte g, GLubyte b, GLubyte a )
+clear_color_HPCR_pixmap( GLcontext *ctx, const GLchan color[4] )
 {
    int i;
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   xmesa->clearcolor[0] = r;
-   xmesa->clearcolor[1] = g;
-   xmesa->clearcolor[2] = b;
-   xmesa->clearcolor[3] = a;
 
+   COPY_4V(xmesa->clearcolor, color);
 
-   if (0x0==r && 0x0==g && 0x0==b) {
+   if (color[0] == 0 && color[1] == 0 && color[2] == 0) {
       /* black is black */
       for (i=0; i<16; i++) {
          XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 0, 0);
@@ -4200,8 +4193,10 @@ clear_color_HPCR_pixmap( GLcontext *ctx,
    }
    else {
       for (i=0; i<16; i++) {
-         XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 0, DITHER_HPCR(i, 0, r, g, b));
-         XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 1, DITHER_HPCR(i, 1, r, g, b));
+         XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 0,
+                       DITHER_HPCR(i, 0, color[0], color[1], color[2]));
+         XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 1,
+                       DITHER_HPCR(i, 1, color[0], color[1], color[2]));
       }
    }
    /* change tile pixmap content */

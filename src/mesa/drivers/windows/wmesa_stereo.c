@@ -152,10 +152,10 @@ static void clear_index(GLcontext* ctx, GLuint index)
 /*
  * Set the color used to clear the color buffer.
  */
-static void clear_color( GLcontext* ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte a )
+static void clear_color( GLcontext* ctx, const GLchan color[4] )
 {
   STARTPROFILE
-  Current->clearpixel=RGB(r, g, b );
+  Current->clearpixel = RGB(color[0], color[1], color[2]);
   ENDPROFILE(clear_color)
 }
 

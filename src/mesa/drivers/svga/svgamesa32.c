@@ -1,4 +1,4 @@
-/* $Id: svgamesa32.c,v 1.8 2000/11/14 17:40:14 brianp Exp $ */
+/* $Id: svgamesa32.c,v 1.9 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,11 +74,9 @@ static unsigned long __svga_getpixel32(int x, int y)
     return intBuffer[offset];
 }
 
-void __clear_color32( GLcontext *ctx,
-                      GLubyte red, GLubyte green,
-                      GLubyte blue, GLubyte alpha )
+void __clear_color32( GLcontext *ctx, const GLchan color[4] )
 {
-   SVGAMesa->clear_truecolor = red<<16 | green<<8 | blue;
+   SVGAMesa->clear_truecolor = (color[0] << 16) | (color[1] << 8) | color[2];
 }
 
 GLbitfield __clear32( GLcontext *ctx, GLbitfield mask, GLboolean all,

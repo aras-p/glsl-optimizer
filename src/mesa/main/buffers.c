@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.23 2001/01/23 23:39:36 brianp Exp $ */
+/* $Id: buffers.c,v 1.24 2001/01/24 00:04:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
 #include "glheader.h"
 #include "accum.h"
 #include "buffers.h"
+#include "colormac.h"
 #include "context.h"
 #include "depth.h"
 #include "enums.h"
@@ -51,14 +52,13 @@ _mesa_ClearIndex( GLfloat c )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (ctx->Color.ClearIndex == (GLuint)c)
+   if (ctx->Color.ClearIndex == (GLuint) c)
       return;
    
-
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    ctx->Color.ClearIndex = (GLuint) c;
 
-   if (!ctx->Visual.rgbMode) {
+   if (!ctx->Visual.rgbMode && ctx->Driver.ClearIndex) {
       /* it's OK to call glClearIndex in RGBA mode but it should be a NOP */
       (*ctx->Driver.ClearIndex)( ctx, ctx->Color.ClearIndex );
    }
@@ -67,35 +67,28 @@ _mesa_ClearIndex( GLfloat c )
 
 
 void
-_mesa_ClearColor( GLclampf red, GLclampf green,
-                  GLclampf blue, GLclampf alpha )
+_mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 {
-   GLfloat tmp[4];
+   GLchan tmp[4];
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   tmp[0] = CLAMP( red,   0.0, 1.0 );
-   tmp[1] = CLAMP( green, 0.0, 1.0 );
-   tmp[2] = CLAMP( blue,  0.0, 1.0 );
-   tmp[3] = CLAMP( alpha, 0.0, 1.0 );
+   UNCLAMPED_FLOAT_TO_CHAN(tmp[0], red);
+   UNCLAMPED_FLOAT_TO_CHAN(tmp[1], green);
+   UNCLAMPED_FLOAT_TO_CHAN(tmp[2], blue);
+   UNCLAMPED_FLOAT_TO_CHAN(tmp[3], alpha);
 
    if (TEST_EQ_4V(tmp, ctx->Color.ClearColor))
       return;
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
-   COPY_4FV( ctx->Color.ClearColor, tmp );
+   COPY_CHAN4(ctx->Color.ClearColor, tmp);
 
-   if (ctx->Visual.rgbMode) {
-      GLchan r = (GLint) (ctx->Color.ClearColor[0] * CHAN_MAXF);
-      GLchan g = (GLint) (ctx->Color.ClearColor[1] * CHAN_MAXF);
-      GLchan b = (GLint) (ctx->Color.ClearColor[2] * CHAN_MAXF);
-      GLchan a = (GLint) (ctx->Color.ClearColor[3] * CHAN_MAXF);
-      (*ctx->Driver.ClearColor)( ctx, r, g, b, a );
+   if (ctx->Visual.rgbMode && ctx->Driver.ClearColor) {
+      /* it's OK to call glClearColor in CI mode but it should be a NOP */
+      (*ctx->Driver.ClearColor)(ctx, ctx->Color.ClearColor);
    }
 }
-
-
-
 
 
 

@@ -1,4 +1,4 @@
-/* $Id: svgamesa24.c,v 1.8 2000/11/14 17:40:14 brianp Exp $ */
+/* $Id: svgamesa24.c,v 1.9 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,13 +78,11 @@ static unsigned long __svga_getpixel24(int x, int y)
     return rgbBuffer[offset].r<<16 | rgbBuffer[offset].g<<8 | rgbBuffer[offset].b;
 }
 
-void __clear_color24( GLcontext *ctx,
-                      GLubyte red, GLubyte green,
-                      GLubyte blue, GLubyte alpha )
+void __clear_color24( GLcontext *ctx, const GLchan color[4] )
 {
-   SVGAMesa->clear_red = red;
-   SVGAMesa->clear_green = green;
-   SVGAMesa->clear_blue = blue;
+   SVGAMesa->clear_red = color[0];
+   SVGAMesa->clear_green = color[1];
+   SVGAMesa->clear_blue = color[2];
 /*   SVGAMesa->clear_truecolor = red<<16 | green<<8 | blue; */
 }
 

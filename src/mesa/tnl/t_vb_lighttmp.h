@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.3 2001/01/17 02:49:39 keithw Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.4 2001/01/24 00:05:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,7 @@
 #  define CHECK_MATERIAL(x)  (flags[x] & VERT_MATERIAL)
 #  define CHECK_END_VB(x)    (flags[x] & VERT_END_VB)
 #  if (IDX & LIGHT_COLORMATERIAL)
-#    define CMSTRIDE STRIDE_4UB(CMcolor, (4 * sizeof(GLubyte)))
+#    define CMSTRIDE STRIDE_4CHAN(CMcolor, (4 * sizeof(GLchan)))
 #    define CHECK_COLOR_MATERIAL(x) (flags[x] & VERT_RGBA)
 #    define CHECK_VALIDATE(x) (flags[x] & (VERT_RGBA|VERT_MATERIAL))
 #    define DO_ANOTHER_NORMAL(x) \
@@ -58,7 +58,7 @@
 #  define CHECK_MATERIAL(x)   0	           /* no materials on array paths */
 #  define CHECK_END_VB(XX)     (XX >= nr)        
 #  if (IDX & LIGHT_COLORMATERIAL)
-#     define CMSTRIDE STRIDE_4UB(CMcolor, CMstride)
+#     define CMSTRIDE STRIDE_4CHAN(CMcolor, CMstride)
 #     define CHECK_COLOR_MATERIAL(x) (x < nr) /* always have colormaterial */
 #     define CHECK_VALIDATE(x) (x < nr)
 #     define DO_ANOTHER_NORMAL(x) 0        /* always stop to recalc colormat */
@@ -307,7 +307,7 @@ static void TAG(light_rgba)( GLcontext *ctx,
    GLuint  nstride = VB->NormalPtr->stride; 
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
 
-   GLubyte (*CMcolor)[4];
+   GLchan (*CMcolor)[4];
    GLuint CMstride;
 
    GLchan (*Fcolor)[4] = (GLchan (*)[4]) store->LitColor[0].data;
@@ -508,7 +508,7 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
    GLuint  nstride = VB->NormalPtr->stride; 
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
-   GLubyte (*CMcolor)[4];
+   GLchan (*CMcolor)[4];
    GLuint CMstride;
    GLchan (*Fcolor)[4] = (GLchan (*)[4]) store->LitColor[0].data;
    GLchan (*Bcolor)[4] = (GLchan (*)[4]) store->LitColor[1].data;
@@ -636,7 +636,7 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
    const GLchan *sumA = ctx->Light._BaseAlpha;
    GLuint  nstride = VB->NormalPtr->stride; 
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
-   GLubyte (*CMcolor)[4];
+   GLchan (*CMcolor)[4];
    GLuint CMstride;
    GLchan (*Fcolor)[4] = (GLchan (*)[4]) store->LitColor[0].data;
    GLchan (*Bcolor)[4] = (GLchan (*)[4]) store->LitColor[1].data;
@@ -770,7 +770,7 @@ static void TAG(light_ci)( GLcontext *ctx,
    const GLfloat *vertex = (GLfloat *) input->data;
    GLuint  nstride = VB->NormalPtr->stride; 
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
-   GLubyte (*CMcolor)[4];
+   GLchan (*CMcolor)[4];
    GLuint CMstride;
    GLuint *flags = VB->Flag;
    GLuint  *indexResult[2];

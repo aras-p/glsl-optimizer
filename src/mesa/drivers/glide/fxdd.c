@@ -128,22 +128,19 @@ static void fxDDBufferSize(GLcontext *ctx, GLuint *width, GLuint *height)
 
 
 /* Implements glClearColor() */
-static void fxDDClearColor(GLcontext *ctx, GLubyte red, GLubyte green,
-                           GLubyte blue, GLubyte alpha )
+static void fxDDClearColor(GLcontext *ctx, const GLchan color[4])
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   GLubyte col[4];
 
-
-
-  ASSIGN_4V( col, red, green, blue, 255 );
-
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
-    fprintf(stderr,"fxmesa: fxDDClearColor(%d,%d,%d,%d)\n",red,green,blue,alpha);
+    fprintf(stderr,"fxmesa: fxDDClearColor(%d,%d,%d,%d)\n",
+            color[0], color[1], color[2], color[3]);
   }
 
-  fxMesa->clearC=FXCOLOR4( col );
-  fxMesa->clearA=alpha;
+  ASSIGN_4V( col, color[0], color[1], color[2], 255 );
+  fxMesa->clearC = FXCOLOR4( col );
+  fxMesa->clearA = color[3];
 }
 
 

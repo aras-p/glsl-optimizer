@@ -1,4 +1,4 @@
-/* $Id: svgamesa16.c,v 1.7 2000/11/14 17:40:14 brianp Exp $ */
+/* $Id: svgamesa16.c,v 1.8 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,11 +56,11 @@ static unsigned long __svga_getpixel16(int x, int y)
     return shortBuffer[offset];
 }
 
-void __clear_color16( GLcontext *ctx,
-                      GLubyte red, GLubyte green,
-                      GLubyte blue, GLubyte alpha )
+void __clear_color16( GLcontext *ctx, const GLchan color[4] )
 {
-    SVGAMesa->clear_hicolor=(red>>3)<<11 | (green>>2)<<5 | (blue>>3); 
+    SVGAMesa->clear_hicolor = (color[0] >> 3) << 11 |
+                              (color[1] >> 2) << 5 |
+                              (color[2] >> 3); 
 /*    SVGAMesa->clear_hicolor=(red)<<11 | (green)<<5 | (blue); */
 }   
 

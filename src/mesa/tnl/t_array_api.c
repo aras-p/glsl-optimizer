@@ -1,10 +1,10 @@
-/* $Id: t_array_api.c,v 1.3 2001/01/14 06:14:21 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.4 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -336,8 +336,16 @@ void _tnl_array_init( GLcontext *ctx )
     */
    gl_vector4f_init( &tmp->Obj, 0, 0 );
    gl_vector3f_init( &tmp->Normal, 0, 0 );
+#if CHAN_TYPE == GL_UNSIGNED_BYTE
    gl_vector4ub_init( &tmp->Color, 0, 0 );
    gl_vector4ub_init( &tmp->SecondaryColor, 0, 0 );
+#elif CHAN_TYPE == GL_UNSIGNED_SHORT
+   gl_vector4us_init( &tmp->Color, 0, 0 );
+   gl_vector4us_init( &tmp->SecondaryColor, 0, 0 );
+#elif CHAN_TYPE == GL_FLOAT
+   gl_vector4f_init( &tmp->Color, 0, 0 );
+   gl_vector4f_init( &tmp->SecondaryColor, 0, 0 );
+#endif
    gl_vector1f_init( &tmp->FogCoord, 0, 0 );
    gl_vector1ui_init( &tmp->Index, 0, 0 );
    gl_vector1ub_init( &tmp->EdgeFlag, 0, 0 );

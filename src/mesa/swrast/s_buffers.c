@@ -1,4 +1,4 @@
-/* $Id: s_buffers.c,v 1.3 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_buffers.c,v 1.4 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,15 +51,15 @@ clear_color_buffer_with_masking( GLcontext *ctx )
 
    if (ctx->Visual.rgbMode) {
       /* RGBA mode */
-      const GLchan r = (GLint) (ctx->Color.ClearColor[0] * CHAN_MAXF);
-      const GLchan g = (GLint) (ctx->Color.ClearColor[1] * CHAN_MAXF);
-      const GLchan b = (GLint) (ctx->Color.ClearColor[2] * CHAN_MAXF);
-      const GLchan a = (GLint) (ctx->Color.ClearColor[3] * CHAN_MAXF);
+      const GLchan r = ctx->Color.ClearColor[0];
+      const GLchan g = ctx->Color.ClearColor[1];
+      const GLchan b = ctx->Color.ClearColor[2];
+      const GLchan a = ctx->Color.ClearColor[3];
       GLint i;
       for (i = 0; i < height; i++) {
          GLchan rgba[MAX_WIDTH][4];
          GLint j;
-         for (j=0; j<width; j++) {
+         for (j = 0; j < width; j++) {
             rgba[j][RCOMP] = r;
             rgba[j][GCOMP] = g;
             rgba[j][BCOMP] = b;
@@ -101,10 +101,10 @@ clear_color_buffer(GLcontext *ctx)
 
    if (ctx->Visual.rgbMode) {
       /* RGBA mode */
-      const GLchan r = (GLint) (ctx->Color.ClearColor[0] * CHAN_MAXF);
-      const GLchan g = (GLint) (ctx->Color.ClearColor[1] * CHAN_MAXF);
-      const GLchan b = (GLint) (ctx->Color.ClearColor[2] * CHAN_MAXF);
-      const GLchan a = (GLint) (ctx->Color.ClearColor[3] * CHAN_MAXF);
+      const GLchan r = ctx->Color.ClearColor[0];
+      const GLchan g = ctx->Color.ClearColor[1];
+      const GLchan b = ctx->Color.ClearColor[2];
+      const GLchan a = ctx->Color.ClearColor[3];
       GLchan span[MAX_WIDTH][4];
       GLint i;
 

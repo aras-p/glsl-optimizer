@@ -97,17 +97,16 @@ static void gl_ggiSetColor(GLcontext *ctx, GLubyte red, GLubyte green,
 	GGICTX->color = col;
 }
 
-static void gl_ggiSetClearColor(GLcontext *ctx, GLubyte red, GLubyte green,
-				GLubyte blue, GLubyte alpha)
+static void gl_ggiSetClearColor(GLcontext *ctx, const GLchan color[4])
 {
 	ggi_color rgb;
 	ggi_pixel col;
 	
 	GGIMESADPRINT_CORE("gl_ggiSetClearColor() called\n");
 	
-	rgb.r = (uint16)red << SHIFT;
-	rgb.g = (uint16)green << SHIFT;
-	rgb.b = (uint16)blue << SHIFT;
+	rgb.r = (uint16)color[0] << SHIFT;
+	rgb.g = (uint16)color[1] << SHIFT;
+	rgb.b = (uint16)color[2] << SHIFT;
 	col = ggiMapColor(VIS, &rgb);
 	ggiSetGCForeground(VIS, col);
 	GGICTX->clearcolor = col;

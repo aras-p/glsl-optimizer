@@ -1,10 +1,10 @@
-/* $Id: m_trans_tmp.h,v 1.2 2001/01/02 22:02:52 brianp Exp $ */
+/* $Id: m_trans_tmp.h,v 1.3 2001/01/24 00:04:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -104,9 +104,9 @@ static void DEST_1F( GLfloat *t,
 
 #ifdef DEST_4UB
 static void DEST_4UB( GLubyte (*t)[4],
-		      CONST void *ptr,
-		      GLuint stride,
-		      ARGS)
+                      CONST void *ptr,
+                      GLuint stride,
+                      ARGS)
 {
    const GLubyte *f = (GLubyte *) ptr + SRC_START * stride;
    const GLubyte *first = f;
@@ -120,6 +120,30 @@ static void DEST_4UB( GLubyte (*t)[4],
 	 if (SZ >= 2) TRX_UB(t[i][1], f, 1);
 	 if (SZ >= 3) TRX_UB(t[i][2], f, 2); 
 	 if (SZ == 4) TRX_UB(t[i][3], f, 3); else t[i][3] = 255;
+      }
+   }
+}
+#endif
+
+
+#ifdef DEST_4US
+static void DEST_4US( GLushort (*t)[4],
+                      CONST void *ptr,
+                      GLuint stride,
+                      ARGS)
+{
+   const GLushort *f = (GLushort *) ptr + SRC_START * stride;
+   const GLushort *first = f;
+   GLuint i;
+   (void) start;
+   (void) first;
+   for (i = DST_START ; i < n ; i++, NEXT_F) {
+      CHECK {
+         NEXT_F2;
+	 if (SZ >= 1) TRX_US(t[i][0], f, 0);
+	 if (SZ >= 2) TRX_US(t[i][1], f, 1);
+	 if (SZ >= 3) TRX_US(t[i][2], f, 2); 
+	 if (SZ == 4) TRX_US(t[i][3], f, 3); else t[i][3] = 65535;
       }
    }
 }
@@ -190,6 +214,9 @@ static void INIT(void)
 #ifdef DEST_4UB
    TAB(_4ub)[SZ][SRC_IDX] = DEST_4UB;
 #endif
+#ifdef DEST_4US
+   TAB(_4us)[SZ][SRC_IDX] = DEST_4US;
+#endif
 #ifdef DEST_4F
    TAB(_4f)[SZ][SRC_IDX] = DEST_4F;
 #endif
@@ -201,6 +228,7 @@ static void INIT(void)
 #undef DEST_1UI
 #undef DEST_1UB
 #undef DEST_4UB
+#undef DEST_4US
 #undef DEST_3F
 #undef DEST_4F
 #undef DEST_1F
