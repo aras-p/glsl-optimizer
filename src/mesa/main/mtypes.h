@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.29 2001/03/23 06:01:03 gareth Exp $ */
+/* $Id: mtypes.h,v 1.30 2001/03/23 06:07:31 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1640,20 +1640,20 @@ extern int MESA_DEBUG_FLAGS;
 
 
 enum _verbose {
-   VERBOSE_VARRAY          = 0x1,
-   VERBOSE_TEXTURE         = 0x2,
-   VERBOSE_IMMEDIATE       = 0x4,
-   VERBOSE_PIPELINE        = 0x8,
-   VERBOSE_DRIVER          = 0x10,
-   VERBOSE_STATE           = 0x20,
-   VERBOSE_API             = 0x40,
-   VERBOSE_DISPLAY_LIST    = 0x200,
-   VERBOSE_LIGHTING        = 0x400
+   VERBOSE_VARRAY		= 0x0001,
+   VERBOSE_TEXTURE		= 0x0002,
+   VERBOSE_IMMEDIATE		= 0x0004,
+   VERBOSE_PIPELINE		= 0x0008,
+   VERBOSE_DRIVER		= 0x0010,
+   VERBOSE_STATE		= 0x0020,
+   VERBOSE_API			= 0x0040,
+   VERBOSE_DISPLAY_LIST		= 0x0200,
+   VERBOSE_LIGHTING		= 0x0400
 };
 
 
 enum _debug {
-   DEBUG_ALWAYS_FLUSH          = 0x1
+   DEBUG_ALWAYS_FLUSH		= 0x1
 };
 
 
@@ -1664,40 +1664,40 @@ enum _debug {
 
 /* Eventually let the driver specify what statechanges require a flush:
  */
-#define FLUSH_VERTICES(ctx, newstate)			\
-do {							\
-   if (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES)	\
-      ctx->Driver.FlushVertices(ctx, FLUSH_STORED_VERTICES);	\
-   ctx->NewState |= newstate;				\
+#define FLUSH_VERTICES(ctx, newstate)					\
+do {									\
+   if (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES)			\
+      ctx->Driver.FlushVertices(ctx, FLUSH_STORED_VERTICES);		\
+   ctx->NewState |= newstate;						\
 } while (0)
 
-#define FLUSH_CURRENT(ctx, newstate)			\
-do {							\
-   if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)	\
-      ctx->Driver.FlushVertices(ctx, FLUSH_UPDATE_CURRENT);	\
-   ctx->NewState |= newstate;				\
+#define FLUSH_CURRENT(ctx, newstate)					\
+do {									\
+   if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)			\
+      ctx->Driver.FlushVertices(ctx, FLUSH_UPDATE_CURRENT);		\
+   ctx->NewState |= newstate;						\
 } while (0)
 
-#define ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, retval)	\
-do {								\
-   if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {	\
-      _mesa_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
-      return retval;						\
-   }								\
+#define ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, retval)		\
+do {									\
+   if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {		\
+      _mesa_error( ctx, GL_INVALID_OPERATION, "begin/end" );		\
+      return retval;							\
+   }									\
 } while (0)
 
-#define ASSERT_OUTSIDE_BEGIN_END(ctx)				\
-do {								\
-   if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {	\
-      _mesa_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
-      return;							\
-   }								\
+#define ASSERT_OUTSIDE_BEGIN_END(ctx)					\
+do {									\
+   if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {		\
+      _mesa_error( ctx, GL_INVALID_OPERATION, "begin/end" );		\
+      return;								\
+   }									\
 } while (0)
 
-#define ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx)	\
-do {						\
-   ASSERT_OUTSIDE_BEGIN_END(ctx);		\
-   FLUSH_VERTICES(ctx, 0);			\
+#define ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx)				\
+do {									\
+   ASSERT_OUTSIDE_BEGIN_END(ctx);					\
+   FLUSH_VERTICES(ctx, 0);						\
 } while (0)
 
 #define ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, retval)	\
