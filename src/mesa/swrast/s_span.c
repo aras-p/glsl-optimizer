@@ -560,9 +560,6 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          }
          else {
             /* tex.c */
-            GLfloat w = span->w;
-            GLfloat dwdx = span->dwdx;
-            assert(span->interpMask & SPAN_W);
             for (i = 0; i < span->end; i++) {
                const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
                lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
@@ -576,7 +573,6 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                t += dtdx;
                r += drdx;
                q += dqdx;
-               w += dwdx;
             }
          }
          span->arrayMask |= SPAN_LAMBDA;
