@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.37 2001/03/17 00:27:04 brianp Exp $
+# $Id: Make-config,v 1.38 2001/03/28 20:44:43 gareth Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
@@ -220,9 +220,9 @@ freebsd-386:
 	"MAKELIB = ../bin/mklib.freebsd" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
+		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S"
 
 gcc:
@@ -561,18 +561,17 @@ linux-x86:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
+	"GEN_SOURCES = X86/matypes.h" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
+		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S \
 		X86/mmx_blend.S \
-		X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
-		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
-		X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
-		X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+		X86/3dnow_xform_raw2.S X86/3dnow_xform_masked2.S \
+		X86/3dnow_xform_raw3.S X86/3dnow_xform_masked3.S \
+		X86/3dnow_xform_raw4.S X86/3dnow_xform_masked4.S \
 		X86/3dnow_norm_raw.S X86/3dnow_vertex.S \
-		X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
 		X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
 		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
 		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
@@ -593,17 +592,15 @@ linux-x86-static:
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
+		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S \
 		X86/mmx_blend.S \
-		X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
-		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
-		X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
-		X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+		X86/3dnow_xform_raw2.S X86/3dnow_xform_masked2.S \
+		X86/3dnow_xform_raw3.S X86/3dnow_xform_masked3.S \
+		X86/3dnow_xform_raw4.S X86/3dnow_xform_masked4.S \
 		X86/3dnow_norm_raw.S X86/3dnow_vertex.S \
-		X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
 		X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
 		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
 		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
@@ -639,9 +636,9 @@ linux-386-ggi:
 	"MAKELIB = ../bin/mklib.ggi" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lggi -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked3.S \
+		X86/x86_xform_raw3.S X86/x86_xform_masked2.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S"
 
 linux-glide:
@@ -678,9 +675,9 @@ linux-386-glide:
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
+		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S"
 
 linux-386-opt-glide:
@@ -700,9 +697,9 @@ linux-386-opt-glide:
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
+		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S"
 
 linux-386-opt-V2-glide:
@@ -722,9 +719,9 @@ linux-386-opt-V2-glide:
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
+		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S"
 
 linux-x86-glide:
@@ -742,18 +739,16 @@ linux-x86-glide:
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
+		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S \
 		X86/mmx_blend.S \
-		X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
-		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
-		X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
-		X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+		X86/3dnow_xform_raw2.S X86/3dnow_xform_raw2.S \
+		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw3.S \
+		X86/3dnow_xform_raw4.S X86/3dnow_xform_raw4.S \
 		X86/3dnow_norm_raw.S X86/3dnow_vertex.S \
 		FX/X86/fx_3dnow_fastpath.S \
-		X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
 		X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
 		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
 		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
@@ -1002,9 +997,9 @@ os2-x11:
 	"MAKELIB = ..\\bin\\mklib-emx.cmd " \
 	"APP_LIB_DEPS = -Zmt -Zcrtdll -Zexe -L$(X11ROOT)/XFree86/lib -lXt -lX11 -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
+		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S"
 
 osf1:
@@ -1478,7 +1473,7 @@ linux-debug:
 	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DSVGA -I/usr/include/glide -DFX -DMESA_TRACE" \
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -lvga -L/usr/local/glide/lib -lglide2x" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lglut -lGLU -lGL"
@@ -1512,17 +1507,15 @@ linux-x86-debug:
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
+		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S \
 		X86/mmx_blend.S \
-		X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
-		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
-		X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
-		X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+		X86/3dnow_xform_raw2.S X86/3dnow_xform_masked2.S \
+		X86/3dnow_xform_raw3.S X86/3dnow_xform_masked3.S \
+		X86/3dnow_xform_raw4.S X86/3dnow_xform_masked4.S \
 		X86/3dnow_norm_raw.S X86/3dnow_vertex.S \
-		X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
 		X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
 		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
 		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
@@ -1557,18 +1550,16 @@ linux-prof:
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S \
 		X86/mmx_blend.S \
-		X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
-		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
-		X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
-		X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+		X86/3dnow_xform_raw2.S X86/3dnow_xform_masked2.S \
+		X86/3dnow_xform_raw3.S X86/3dnow_xform_masked3.S \
+		X86/3dnow_xform_raw4.S X86/3dnow_xform_masked4.S \
 		X86/3dnow_norm_raw.S X86/3dnow_vertex.S \
 		FX/X86/fx_3dnow_fastpath.S \
-		X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
 		X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
 		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
 		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
@@ -1588,18 +1579,16 @@ linux-glide-prof:
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_xform_raw2.S X86/x86_xform_masked2.S \
+		X86/x86_xform_raw3.S X86/x86_xform_masked3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S \
 		X86/mmx_blend.S \
-		X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
-		X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
-		X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
-		X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
+		X86/3dnow_xform_raw2.S X86/3dnow_xform_masked2.S \
+		X86/3dnow_xform_raw3.S X86/3dnow_xform_masked3.S \
+		X86/3dnow_xform_raw4.S X86/3dnow_xform_masked4.S \
 		X86/3dnow_norm_raw.S X86/3dnow_vertex.S \
 		FX/X86/fx_3dnow_fastpath.S \
-		X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
 		X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
 		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
 		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \

@@ -1,10 +1,10 @@
-/* $Id: common_x86.c,v 1.13 2001/03/12 02:13:40 gareth Exp $ */
+/* $Id: common_x86.c,v 1.14 2001/03/28 20:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 
 /*
  * Check CPU capabilities & initialize optimized funtions for this particular

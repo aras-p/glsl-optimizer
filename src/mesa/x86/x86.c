@@ -1,10 +1,10 @@
-/* $Id: x86.c,v 1.18 2001/03/03 20:56:59 brianp Exp $ */
+/* $Id: x86.c,v 1.19 2001/03/28 20:44:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -51,24 +51,24 @@
 
 
 #define DECLARE_XFORM_GROUP( pfx, sz, masked ) \
- extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_general_##masked( XFORM_ARGS );	    \
- extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_identity_##masked( XFORM_ARGS );	    \
- extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d_no_rot_##masked( XFORM_ARGS );    \
- extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_perspective_##masked( XFORM_ARGS );  \
- extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_2d_##masked( XFORM_ARGS );	    \
- extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_2d_no_rot_##masked( XFORM_ARGS );    \
- extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d_##masked( XFORM_ARGS );
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_general_##masked( XFORM_ARGS );	\
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_identity_##masked( XFORM_ARGS );	\
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d_no_rot_##masked( XFORM_ARGS );	\
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_perspective_##masked( XFORM_ARGS );	\
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_2d_##masked( XFORM_ARGS );		\
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_2d_no_rot_##masked( XFORM_ARGS );	\
+extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d_##masked( XFORM_ARGS );
 
 
 #define ASSIGN_XFORM_GROUP( pfx, cma, sz, masked )			\
-   _mesa_transform_tab[cma][sz][MATRIX_GENERAL] =				\
+   _mesa_transform_tab[cma][sz][MATRIX_GENERAL] =			\
       _mesa_##pfx##_transform_points##sz##_general_##masked;		\
-   _mesa_transform_tab[cma][sz][MATRIX_IDENTITY] =				\
+   _mesa_transform_tab[cma][sz][MATRIX_IDENTITY] =			\
       _mesa_##pfx##_transform_points##sz##_identity_##masked;		\
    _mesa_transform_tab[cma][sz][MATRIX_3D_NO_ROT] =			\
       _mesa_##pfx##_transform_points##sz##_3d_no_rot_##masked;		\
    _mesa_transform_tab[cma][sz][MATRIX_PERSPECTIVE] =			\
-      _mesa_##pfx##_transform_points##sz##_perspective_##masked;		\
+      _mesa_##pfx##_transform_points##sz##_perspective_##masked;	\
    _mesa_transform_tab[cma][sz][MATRIX_2D] =				\
       _mesa_##pfx##_transform_points##sz##_2d_##masked;			\
    _mesa_transform_tab[cma][sz][MATRIX_2D_NO_ROT] =			\
@@ -86,32 +86,33 @@ DECLARE_XFORM_GROUP( x86, 3, masked )
 DECLARE_XFORM_GROUP( x86, 4, masked )
 
 
-extern GLvector4f * _ASMAPI _mesa_x86_cliptest_points4( GLvector4f *clip_vec,
-						     GLvector4f *proj_vec,
-						     GLubyte clipMask[],
-						     GLubyte *orMask,
-						     GLubyte *andMask );
+extern GLvector4f * _ASMAPI
+_mesa_x86_cliptest_points4( GLvector4f *clip_vec,
+			    GLvector4f *proj_vec,
+			    GLubyte clipMask[],
+			    GLubyte *orMask,
+			    GLubyte *andMask );
 
+extern GLvector4f * _ASMAPI
+_mesa_x86_cliptest_points4_np( GLvector4f *clip_vec,
+			       GLvector4f *proj_vec,
+			       GLubyte clipMask[],
+			       GLubyte *orMask,
+			       GLubyte *andMask );
 
-extern GLvector4f * _ASMAPI _mesa_x86_cliptest_points4_np( GLvector4f *clip_vec,
-							GLvector4f *proj_vec,
-							GLubyte clipMask[],
-							GLubyte *orMask,
-							GLubyte *andMask );
+extern void _ASMAPI
+_mesa_v16_x86_cliptest_points4( GLfloat *first_vert,
+				GLfloat *last_vert,
+				GLubyte *or_mask,
+				GLubyte *and_mask,
+				GLubyte *clip_mask );
 
-
-extern void _ASMAPI _mesa_v16_x86_cliptest_points4( GLfloat *first_vert,
-						 GLfloat *last_vert,
-						 GLubyte *or_mask,
-						 GLubyte *and_mask,
-						 GLubyte *clip_mask );
-
-
-extern void _ASMAPI _mesa_v16_x86_general_xform( GLfloat *dest,
-					      const GLfloat *m,
-					      const GLfloat *src,
-					      GLuint src_stride,
-					      GLuint count );
+extern void _ASMAPI
+_mesa_v16_x86_general_xform( GLfloat *dest,
+			     const GLfloat *m,
+			     const GLfloat *src,
+			     GLuint src_stride,
+			     GLuint count );
 #endif
 
 
@@ -139,8 +140,8 @@ void _mesa_init_x86_transform_asm( void )
 void _mesa_init_x86_vertex_asm( void )
 {
 #ifdef USE_X86_ASM
-   _mesa_xform_points3_v16_general	= _mesa_v16_x86_general_xform;
-   _mesa_cliptest_points4_v16	= _mesa_v16_x86_cliptest_points4;
+   _mesa_xform_points3_v16_general = _mesa_v16_x86_general_xform;
+   _mesa_cliptest_points4_v16 = _mesa_v16_x86_cliptest_points4;
 
 #ifdef DEBUG
    _math_test_all_vertex_functions( "x86" );

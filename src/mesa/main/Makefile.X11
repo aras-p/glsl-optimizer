@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.48 2001/03/28 17:19:58 brianp Exp $
+# $Id: Makefile.X11,v 1.49 2001/03/28 20:44:43 gareth Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -76,7 +76,6 @@ CORE_SOURCES = \
 	glapi.c \
 	glthread.c \
 	hash.c \
-	highpc.c \
 	hint.c \
 	histogram.c \
 	image.c \
@@ -84,7 +83,6 @@ CORE_SOURCES = \
 	light.c \
 	lines.c \
 	logic.c \
-	lowpc.c \
 	masking.c \
 	matrix.c \
 	mem.c \
@@ -190,7 +188,8 @@ ASM_SOURCES =
 
 ADDITIONAL_OBJ =
 
-OBJECTS = $(ASM_SOURCES:.S=.o) \
+OBJECTS = $(GEN_SOURCES) \
+	$(ASM_SOURCES:.S=.o) \
 	$(CORE_SOURCES:.c=.o) \
 	$(DRIVER_SOURCES:.c=.o) \
 	$(ADDITIONAL_OBJ)
@@ -283,6 +282,10 @@ X86/3dnow.o: X86/3dnow.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
 X86/katmai.o: X86/katmai.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+X86/matypes.h: mtypes.h tnl/t_context.h X86/gen_matypes.c
+	$(CC) -I. -I$(INCDIR) $(CFLAGS) X86/gen_matypes.c -o X86/gen_matypes
+	./X86/gen_matypes > X86/matypes.h
+	rm -f X86/gen_matypes
 
 GGI/ggimesa.o: GGI/ggimesa.c
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@

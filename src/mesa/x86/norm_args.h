@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.h,v 1.7 2001/03/28 20:44:44 gareth Exp $ */
+/* $Id: norm_args.h,v 1.1 2001/03/28 20:44:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,41 +25,37 @@
  */
 
 /*
- * Check CPU capabilities & initialize optimized funtions for this particular
- * processor.
+ * Normal transform function interface for assembly code.  Simply define
+ * FRAME_OFFSET to the number of bytes pushed onto the stack before
+ * using the ARG_* argument macros.
  *
- * Written by Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
- * Changed by Andre Werthmann <wertmann@cs.uni-potsdam.de> for using the
- * new Katmai functions
- *
- * Reimplemented by Gareth Hughes <gareth@valinux.com> in a more
- * future-proof manner, based on code in the Linux kernel.
+ * Gareth Hughes <gareth@valinux.com>
  */
 
-#ifndef __COMMON_X86_ASM_H__
-#define __COMMON_X86_ASM_H__
+#ifndef __NORM_ARGS_H__
+#define __NORM_ARGS_H__
 
-/* Do not reference mtypes.h from this file.
+/* Offsets for normal_func arguments
+ *
+ * typedef void (*normal_func)( CONST GLmatrix *mat,
+ *                              GLfloat scale,
+ *                              CONST GLvector3f *in,
+ *                              CONST GLfloat lengths[],
+ *                              CONST GLubyte mask[],
+ *                              GLvector3f *dest );
  */
-#include "common_x86_features.h"
+#define OFFSET_MAT	4
+#define OFFSET_SCALE	8
+#define OFFSET_IN	12
+#define OFFSET_LENGTHS	16
+#define OFFSET_MASK	20
+#define OFFSET_DEST	24
 
-#ifdef HAVE_CONFIG_H
-#include "conf.h"
-#endif
-
-#ifdef USE_X86_ASM
-#include "x86.h"
-#ifdef USE_3DNOW_ASM
-#include "3dnow.h"
-#endif
-#ifdef USE_KATMAI_ASM
-#include "katmai.h"
-#endif
-#endif
-
-extern int _mesa_x86_cpu_features;
-
-extern void _mesa_init_all_x86_transform_asm( void );
-extern void _mesa_init_all_x86_vertex_asm( void );
+#define ARG_MAT         REGOFF(FRAME_OFFSET+OFFSET_MAT, ESP)
+#define ARG_SCALE       REGOFF(FRAME_OFFSET+OFFSET_SCALE, ESP)
+#define ARG_IN          REGOFF(FRAME_OFFSET+OFFSET_IN, ESP)
+#define ARG_LENGTHS     REGOFF(FRAME_OFFSET+OFFSET_LENGTHS, ESP)
+#define ARG_MASK        REGOFF(FRAME_OFFSET+OFFSET_MASK, ESP)
+#define ARG_DEST        REGOFF(FRAME_OFFSET+OFFSET_DEST, ESP)
 
 #endif

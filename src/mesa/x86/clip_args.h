@@ -1,10 +1,10 @@
-/* $Id: clip_args.h,v 1.2 2000/10/23 00:16:28 gareth Exp $ */
+/* $Id: clip_args.h,v 1.3 2001/03/28 20:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,22 +34,6 @@
 
 #ifndef __CLIP_ARGS_H__
 #define __CLIP_ARGS_H__
-
-/* Offsets into GLvector4f
- */
-#define V4F_DATA	0
-#define V4F_START	4
-#define V4F_COUNT	8
-#define V4F_STRIDE	12
-#define V4F_SIZE	16
-#define V4F_FLAGS	20
-
-/* GLvector4f flags
- */
-#define VEC_SIZE_1	1
-#define VEC_SIZE_2	3
-#define VEC_SIZE_3	7
-#define VEC_SIZE_4	15
 
 /*
  * Offsets for clip_func arguments

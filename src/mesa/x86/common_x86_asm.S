@@ -1,10 +1,10 @@
-/* $Id: common_x86_asm.S,v 1.5 2001/03/03 21:11:32 brianp Exp $ */
+/* $Id: common_x86_asm.S,v 1.6 2001/03/28 20:44:43 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,9 +33,8 @@
  *
  * Cleaned up and simplified by Gareth Hughes <gareth@valinux.com>
  */
-/* $XFree86: xc/extras/Mesa/src/X86/common_x86_asm.S,v 1.5 2000/12/12 23:52:37 dawes Exp $ */
 
-#include "assyntax.h"
+#include "matypes.h"
 #include "common_x86_features.h"
 
 
