@@ -1148,37 +1148,17 @@ static GLboolean run_texnorm_stage( GLcontext *ctx,
       GLint j;
 
       if (normalizeS && normalizeT) {
-	 /* determine extreme values in S and T */
-	 GLfloat minS = in[0], maxS = in[0], minT = in[1], maxT = in[1];
-	 GLfloat correctionS, correctionT;
-	 in = (GLfloat *)((GLubyte *)in + instride);
-	 for (j = 1; j < VB->Count; ++j) {
-	    if (in[0] < minS)      minS = in[0];
-	    else if (in[0] > maxS) maxS = in[0];
-	    if (in[1] < minT)      minT = in[1];
-	    else if (in[1] > maxT) maxT = in[1];
-	    in = (GLfloat *)((GLubyte *)in + instride);
-	 }
-	 correctionS = -floor((minS + maxS) * 0.5 + 0.5);
-	 correctionT = -floor((minT + maxT) * 0.5 + 0.5);
-	 in = (GLfloat *)VB->TexCoordPtr[i]->data;
+	 /* take first texcoords as rough estimate of mean value */
+	 GLfloat correctionS = -floor(in[0]+0.5);
+	 GLfloat correctionT = -floor(in[1]+0.5);
 	 for (j = 0; j < VB->Count; ++j) {
 	    out[j][0] = in[0] + correctionS;
 	    out[j][1] = in[1] + correctionT;
 	    in = (GLfloat *)((GLubyte *)in + instride);
 	 }
       } else if (normalizeS) {
-	 /* determine extreme values in S */
-	 GLfloat minS = in[0], maxS = in[0];
-	 GLfloat correctionS;
-	 in = (GLfloat *)((GLubyte *)in + instride);
-	 for (j = 1; j < VB->Count; ++j) {
-	    if (in[0] < minS)      minS = in[0];
-	    else if (in[0] > maxS) maxS = in[0];
-	    in = (GLfloat *)((GLubyte *)in + instride);
-	 }
-	 correctionS = -floor((minS + maxS) * 0.5 + 0.5);
-	 in = (GLfloat *)VB->TexCoordPtr[i]->data;
+	 /* take first texcoords as rough estimate of mean value */
+	 GLfloat correctionS = -floor(in[0]+0.5);
 	 if (reallyEnabled & TEXTURE_2D_BIT) {
 	    for (j = 0; j < VB->Count; ++j) {
 	       out[j][0] = in[0] + correctionS;
@@ -1192,17 +1172,8 @@ static GLboolean run_texnorm_stage( GLcontext *ctx,
 	    }
 	 }
       } else if (normalizeT) {
-	 /* determine extreme values in T */
-	 GLfloat minT = in[1], maxT = in[1];
-	 GLfloat correctionT;
-	 in = (GLfloat *)((GLubyte *)in + instride);
-	 for (j = 1; j < VB->Count; ++j) {
-	    if (in[1] < minT)      minT = in[1];
-	    else if (in[1] > maxT) maxT = in[1];
-	    in = (GLfloat *)((GLubyte *)in + instride);
-	 }
-	 correctionT = -floor((minT + maxT) * 0.5 + 0.5);
-	 in = (GLfloat *)VB->TexCoordPtr[i]->data;
+	 /* take first texcoords as rough estimate of mean value */
+	 GLfloat correctionT = -floor(in[1]+0.5);
 	 for (j = 0; j < VB->Count; ++j) {
 	    out[j][0] = in[0];
 	    out[j][1] = in[1] + correctionT;
