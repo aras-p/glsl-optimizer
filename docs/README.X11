@@ -1,5 +1,5 @@
 
-                       Mesa 4.0 Unix/X11 Information
+                          Mesa Unix/X11 Information
 
 
 
@@ -18,21 +18,15 @@ There are two ways to compile Mesa on Unix/X11 systems:
     the top-level Makefile and Make-config files.  There are instructions in
     each file.
 
+    When finished, the Mesa libraries will be in the Mesa-x.y/lib/ directory.
+
 
 2. The new way:
     Type './configure' and then 'make'.  This uses GNU autoconfig.
+    Run 'make check' to build the demos.
     See docs/INSTALL for more details.
-
-
-The top-level makefile will execute the makefiles in a number of sub-
-directories.  When finished, the Mesa libraries will be in the Mesa-4.0/lib/
-directory.  A few GLUT demos in the demos/ directory should be ready to run.
-
-If you also downloaded and unpacked the demos there should be executables
-in the "xdemos/", "samples/", and "book/" directories for you to try out.
-
-If you have compilation problems you should try to fix them and return the
-patches to the author.
+    When finished, the Mesa libraries will be in the Mesa-x.y/src/.libs/,
+    Mesa-x.y/si-glu/.libs, etc directories.
 
 
 Notes on assembly language optimizations:
@@ -323,4 +317,4 @@ Summary of X-related environment variables:
 
 
 ----------------------------------------------------------------------
-$Id: README.X11,v 3.8 2001/09/23 16:10:02 brianp Exp $
+$Id: README.X11,v 3.9 2002/10/29 23:42:48 brianp Exp $
