@@ -723,8 +723,7 @@ probably work also. --aet
 #       define R300_TXO_OFFSET_SHIFT             5
 /* END */
 #define R300_TX_UNK4_0                      0x4580
-#define R300_TX_UNK5_0                      0x45C0
-#define R300_TX_BORDER_COLOR_0              0x45F0 //ff00ff00 == { 0, 1.0, 0, 1.0 }
+#define R300_TX_BORDER_COLOR_0              0x45C0 //ff00ff00 == { 0, 1.0, 0, 1.0 }
 
 /* END */
 

@@ -1213,8 +1213,7 @@ void r300_setup_textures(GLcontext *ctx)
 	R300_STATECHANGE(r300, tex.format);
 	R300_STATECHANGE(r300, tex.offset);
 	R300_STATECHANGE(r300, tex.unknown4);
-	R300_STATECHANGE(r300, tex.unknown5);
-	//R300_STATECHANGE(r300, tex.border_color);
+	R300_STATECHANGE(r300, tex.border_color);
 
 	r300->state.texture.tc_count=0;
 
@@ -1260,8 +1259,7 @@ void r300_setup_textures(GLcontext *ctx)
 			//fprintf(stderr, "t->format=%08x\n", t->format);
 			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=r300->radeon.radeonScreen->fbLocation+t->offset;
 			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
-			r300->hw.tex.unknown5.cmd[R300_TEX_VALUE_0+i]=0x0;
-			//r300->hw.tex.border_color.cmd[R300_TEX_VALUE_0+i]=t->pp_border_color;
+			r300->hw.tex.border_color.cmd[R300_TEX_VALUE_0+i]=t->pp_border_color;
 			}
 		}
 	((drm_r300_cmd_header_t*)r300->hw.tex.filter.cmd)->unchecked_state.count = max_texture_unit+1;
@@ -1270,8 +1268,7 @@ void r300_setup_textures(GLcontext *ctx)
 	((drm_r300_cmd_header_t*)r300->hw.tex.format.cmd)->unchecked_state.count = max_texture_unit+1;
 	((drm_r300_cmd_header_t*)r300->hw.tex.offset.cmd)->unchecked_state.count = max_texture_unit+1;
 	((drm_r300_cmd_header_t*)r300->hw.tex.unknown4.cmd)->unchecked_state.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.unknown5.cmd)->unchecked_state.count = max_texture_unit+1;
-	//((drm_r300_cmd_header_t*)r300->hw.tex.border_color.cmd)->unchecked_state.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.border_color.cmd)->unchecked_state.count = max_texture_unit+1;
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "TX_ENABLE: %08x  max_texture_unit=%d\n", r300->hw.txe.cmd[R300_TXE_ENABLE], max_texture_unit);
