@@ -87,34 +87,12 @@ typedef struct mach64_context *mach64ContextPtr;
 #define MACH64_FALLBACK_BLEND_EQ	0x0100
 #define MACH64_FALLBACK_BLEND_FUNC	0x0200
 
+#define CARD32 GLuint		/* KW: For building in mesa tree */
+
 #if MACH64_NATIVE_VTXFMT
 
 /* The vertex structures.
  */
-
-#if 0
-/* This isn't actually necessary since all accesses to the vertex
- * structure must be made through the LE32_* macros.
- */
-
-typedef struct {
-   GLubyte	blue;
-   GLubyte	green;
-   GLubyte	red;
-   GLubyte	alpha;
-} mach64_color_t;
-
-typedef struct {
-   GLfloat u1, v1, w1;			/* Texture 1 coordinates */
-   GLfloat u0, v0, w0;			/* Texture 0 coordinates */
-   mach64_color_t specular;		/* Specular color */
-   GLuint z;				/* Depth coordinate */
-   mach64_color_t color;		/* Diffuse color */
-   GLushort y, x;			/* Coordinates in screen space */
-} mach64_vertex;
-#endif
-
-#define CARD32 GLuint		/* KW: For building in mesa tree */
 
 /* The size of this union is not of relevence:
  */
