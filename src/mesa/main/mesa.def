@@ -399,6 +399,7 @@ EXPORTS
 	_mesa_free_context_data
 	_mesa_create_framebuffer
 	_mesa_enable_1_3_extensions
+	_mesa_enable_1_4_extensions
 	_mesa_enable_sw_extensions
 	_mesa_destroy_visual
 	_mesa_initialize_context
@@ -465,6 +466,7 @@ EXPORTS
 	_mesa_bzero
 	_mesa_memset
 	_mesa_memcpy
+	_mesa_problem
 	wglCopyContext
 	wglCreateContext
 	wglDeleteContext
