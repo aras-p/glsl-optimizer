@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.4 1999/09/11 11:31:34 brianp Exp $ */
+/* $Id: dlist.c,v 1.5 1999/09/20 14:30:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2457,6 +2457,11 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	    }
 	    if (!ctx->CVA.elt.pipeline_valid)
 	       gl_build_immediate_pipeline( ctx );
+
+	    if ((MESA_VERBOSE & VERBOSE_DISPLAY_LIST) &&
+		(MESA_VERBOSE & VERBOSE_IMMEDIATE))
+	       gl_print_cassette( (struct immediate *) n[1].data, 0, ~0 );
+
 	    gl_fixup_cassette( ctx, (struct immediate *) n[1].data ); 
 	    gl_execute_cassette( ctx, (struct immediate *) n[1].data ); 
             break;
@@ -3096,26 +3101,21 @@ void gl_CallList( GLcontext *ctx, GLuint list )
    /* execute the display list, and restore the CompileFlag. */
    GLboolean save_compile_flag;
 
-   if (MESA_VERBOSE&VERBOSE_API)
+   if (MESA_VERBOSE&VERBOSE_API) {
       fprintf(stderr, "glCallList %u\n", list);
-
+      mesa_print_display_list( list ); 
+   }
 
    save_compile_flag = ctx->CompileFlag;   
    ctx->CompileFlag = GL_FALSE;
    
    FLUSH_VB( ctx, "call list" );
-
-/*    mesa_print_display_list( list ); */
-
    execute_list( ctx, list );
    ctx->CompileFlag = save_compile_flag;
 
    /* also restore API function pointers to point to "save" versions */
    if (save_compile_flag)
-           ctx->API = ctx->Save;
-
-
-/*    RESET_IMMEDIATE( ctx );       */
+      ctx->API = ctx->Save;
 }
 
 
