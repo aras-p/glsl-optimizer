@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.h,v 1.2 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_imm_alloc.h,v 1.3 2002/04/19 12:32:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,7 +34,7 @@
 
 extern struct immediate *_tnl_alloc_immediate( GLcontext *ctx );
 
-extern void _tnl_free_immediate( struct immediate *im );
+extern void _tnl_free_immediate( GLcontext *ctx, struct immediate *im );
 
 
 #endif

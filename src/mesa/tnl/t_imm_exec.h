@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.h,v 1.7 2001/08/02 22:39:51 keithw Exp $ */
+/* $Id: t_imm_exec.h,v 1.8 2002/04/19 12:32:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,7 +38,7 @@ extern void _tnl_flush_vertices( GLcontext *ctx, GLuint flush_flags );
 
 /* Called from imm_api.c and _tnl_flush_vertices:
  */
-extern void _tnl_flush_immediate( struct immediate *IM );
+extern void _tnl_flush_immediate( GLcontext *ctx, struct immediate *IM );
 
 /* Called from imm_dlist.c and _tnl_flush_immediate:
  */

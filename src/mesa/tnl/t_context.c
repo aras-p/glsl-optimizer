@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.25 2002/04/09 16:56:52 keithw Exp $ */
+/* $Id: t_context.c,v 1.26 2002/04/19 12:32:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -145,7 +145,7 @@ _tnl_DestroyContext( GLcontext *ctx )
    _tnl_array_destroy( ctx );
    _tnl_imm_destroy( ctx );
    _tnl_destroy_pipeline( ctx );
-   _tnl_free_immediate( tnl->freed_immediate );
+   _tnl_free_immediate( ctx, tnl->freed_immediate );
 
    FREE(tnl);
    ctx->swtnl_context = 0;

@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.38 2002/04/09 16:56:52 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.39 2002/04/19 12:32:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,7 +25,7 @@
  */
 
 /**
- * \file vpexec.c
+ * \file tnl/t_imm_exec.c
  * \brief Setup to execute immediate-mode vertex data.
  * \author Keith Whitwell
  */
@@ -592,7 +592,7 @@ void _tnl_imm_destroy( GLcontext *ctx )
    if (TNL_CURRENT_IM(ctx)) {
       TNL_CURRENT_IM(ctx)->ref_count--;
       if (TNL_CURRENT_IM(ctx)->ref_count == 0)
-	 _tnl_free_immediate( TNL_CURRENT_IM(ctx) );
+	 _tnl_free_immediate( ctx, TNL_CURRENT_IM(ctx) );
       /* 
        * Don't use SET_IMMEDIATE here, or else we'll whack the
        * _tnl_CurrentInput pointer - not good when another 

@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.14 2002/01/10 15:50:12 brianp Exp $ */
+/* $Id: t_imm_alloc.c,v 1.15 2002/04/19 12:32:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,7 +47,6 @@ static struct immediate *real_alloc_immediate( GLcontext *ctx )
 
    IM->id = id++;
    IM->ref_count = 0;
-   IM->backref = ctx;
    IM->FlushElt = 0;
    IM->LastPrimitive = IMM_MAX_COPIED_VERTS;
    IM->Count = IMM_MAX_COPIED_VERTS;
@@ -102,9 +101,9 @@ struct immediate *_tnl_alloc_immediate( GLcontext *ctx )
 
 /* May be called after tnl is destroyed.
  */
-void _tnl_free_immediate( struct immediate *IM )
+void _tnl_free_immediate( GLcontext *ctx, struct immediate *IM )
 {
-   TNLcontext *tnl = TNL_CONTEXT(IM->backref);
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    ASSERT(IM->ref_count == 0);
 

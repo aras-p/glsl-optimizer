@@ -1,4 +1,4 @@
-/* $Id: t_eval_api.c,v 1.9 2002/04/09 16:56:52 keithw Exp $ */
+/* $Id: t_eval_api.c,v 1.10 2002/04/19 12:32:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -129,7 +129,7 @@ _tnl_exec_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
       if (compiling) {
 	 TNL_CURRENT_IM(ctx)->ref_count--;
 	 ASSERT( TNL_CURRENT_IM(ctx)->ref_count == 0 );
-	 _tnl_free_immediate( TNL_CURRENT_IM(ctx) );
+	 _tnl_free_immediate( ctx, TNL_CURRENT_IM(ctx) );
 	 SET_IMMEDIATE( ctx, im );
 	 ctx->CompileFlag = GL_TRUE;
       }
@@ -228,7 +228,7 @@ _tnl_exec_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 	 
       if (compiling) {
 	 TNL_CURRENT_IM(ctx)->ref_count--;
-	 _tnl_free_immediate( TNL_CURRENT_IM( ctx ) );
+	 _tnl_free_immediate( ctx, TNL_CURRENT_IM( ctx ) );
 	 SET_IMMEDIATE( ctx, im );
 	 ctx->CompileFlag = GL_TRUE;
       }
