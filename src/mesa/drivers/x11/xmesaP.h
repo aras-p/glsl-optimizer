@@ -1,8 +1,8 @@
-/* $Id: xmesaP.h,v 1.31 2002/10/05 18:27:41 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.32 2002/11/10 17:07:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.2
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -71,9 +71,9 @@ struct xmesa_visual {
 #ifdef XFree86Server
    GLint screen_depth;		/* The depth of the screen */
 #else
-   XVisualInfo *vishandle;	/* The pointer returned by glXChooseVisual */
+   XVisualInfo *vishandle;	/* Only used in fakeglx.c */
 #endif
-   XMesaVisualInfo visinfo;	/* X's visual info */
+   XMesaVisualInfo visinfo;	/* X's visual info (pointer to private copy) */
    GLint BitsPerPixel;		/* True bits per pixel for XImages */
 
    GLint level;			/* 0=normal, 1=overlay, etc */

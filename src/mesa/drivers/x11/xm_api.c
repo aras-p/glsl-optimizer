@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.50 2002/10/30 20:24:46 brianp Exp $ */
+/* $Id: xm_api.c,v 1.51 2002/11/10 17:07:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1494,11 +1494,6 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
       return NULL;
    }
    MEMCPY(v->visinfo, visinfo, sizeof(*visinfo));
-
-   /* Save a copy of the pointer now so we can find this visual again
-    * if we need to search for it in find_glx_visual().
-    */
-   v->vishandle = visinfo;
 #endif
 
 #ifdef XFree86Server
