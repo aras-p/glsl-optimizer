@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: wmesa.c,v 1.2 2000/02/17 20:52:02 brianp Exp $ */
 
 /*
 *   File name   :   wmesa.c
@@ -22,8 +22,11 @@
 
 /*
  * $Log: wmesa.c,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
+ * Revision 1.2  2000/02/17 20:52:02  brianp
+ * replaced renderer_string() with get_string() func
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
+ * Imported sources
  *
  * Revision 3.10  1999/06/15 01:35:06  brianp
  * small change to wmSetPixel() from TWILMOT@cpr.fr
@@ -1151,16 +1154,21 @@ static void read_rgba_pixels( const GLcontext* ctx,
 /**********************************************************************/
 
 
-static const char *renderer_string(void)
+static const GLubyte *get_string(GLcontext *ctx, GLenum name)
 {
-   return "Windows";
+   if (name == GL_RENDERER) {
+      return (GLubyte *) "Mesa Windows";
+   }
+   else {
+      return NULL;
+   }
 }
 
 
 
 void setup_DD_pointers( GLcontext* ctx )
 {
-    ctx->Driver.RendererString = renderer_string;
+    ctx->Driver.GetString = get_string;
     ctx->Driver.UpdateState = setup_DD_pointers;
     ctx->Driver.GetBufferSize = buffer_size;
     ctx->Driver.Finish = finish;
