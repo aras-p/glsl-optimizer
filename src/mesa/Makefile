@@ -112,19 +112,22 @@ subdirs:
 
 # Make the GL library
 $(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS)
-	CC=$(CC) CXX=$(CXX) $(TOP)/bin/mklib -o $(GL_LIB) -major $(GL_MAJOR) \
-		-minor $(GL_MINOR) -patch $(GL_TINY) -install $(LIB_DIR) \
+	@ CC=$(CC) CXX=$(CXX) $(TOP)/bin/mklib -o $(GL_LIB) \
+		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
+		-install $(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(STAND_ALONE_OBJECTS)
 
 # Make the OSMesa library
 $(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) $(OSMESA16_OBJECTS)
-	if [ "${DRIVER_DIRS}" = "osmesa" ] ; then \
-		CC=$(CC) CXX=$(CXX) $(TOP)/bin/mklib -o $(OSMESA_LIB) -major $(MESA_MAJOR) \
+	@ if [ "${DRIVER_DIRS}" = "osmesa" ] ; then \
+		CC=$(CC) CXX=$(CXX) $(TOP)/bin/mklib -o $(OSMESA_LIB) \
+			-major $(MESA_MAJOR) \
 			-minor $(MESA_MINOR) -patch $(MESA_TINY) \
 			-install $(LIB_DIR) $(MKLIB_OPTIONS) \
 			$(OSMESA_LIB_DEPS) $(OSMESA16_OBJECTS) ; \
 	else \
-		CC=$(CC) CXX=$(CXX) $(TOP)/bin/mklib -o $(OSMESA_LIB) -major $(MESA_MAJOR) \
+		CC=$(CC) CXX=$(CXX) $(TOP)/bin/mklib -o $(OSMESA_LIB) \
+			-major $(MESA_MAJOR) \
 			-minor $(MESA_MINOR) -patch $(GL_TINY) \
 			-install $(LIB_DIR) $(MKLIB_OPTIONS) \
 			$(OSMESA_LIB_DEPS) $(OSMESA_DRIVER_OBJECTS) ; \
@@ -167,8 +170,9 @@ SUBDIRS = array_cache drivers/dri glapi main math sparc swrast swrast_setup \
 
 # Update dependencies
 depend: $(ALL_SOURCES)
-	touch depend
-	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDE_DIRS) $(ALL_SOURCES) \
+	@ echo "running $(MKDEP)"
+	@ touch depend
+	@ $(MKDEP) $(MKDEP_OPTIONS) $(INCLUDE_DIRS) $(ALL_SOURCES) \
 		> /dev/null 2>&1
 
 
