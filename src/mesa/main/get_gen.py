@@ -807,7 +807,7 @@ StateVars = [
 	( "GL_MAX_TEXTURE_IMAGE_UNITS_NV", GLint,
 	  ["ctx->Const.MaxTextureImageUnits"], "", "NV_fragment_program" ),
 	( "GL_FRAGMENT_PROGRAM_BINDING_NV", GLint,
-	  ["ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0"],
+	  ["ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0"],
 	  "", "NV_fragment_program" ),
 	( "GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV", GLint,
 	  ["MAX_NV_FRAGMENT_PROGRAM_PARAMS"], "", "NV_fragment_program" ),

@@ -1635,7 +1635,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_FRAGMENT_PROGRAM_BINDING_NV:
          CHECK_EXTENSION_B(NV_fragment_program, pname);
-         params[0] = INT_TO_BOOLEAN(ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0);
+         params[0] = INT_TO_BOOLEAN(ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0);
          break;
       case GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV:
          CHECK_EXTENSION_B(NV_fragment_program, pname);
@@ -3454,7 +3454,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_FRAGMENT_PROGRAM_BINDING_NV:
          CHECK_EXTENSION_F(NV_fragment_program, pname);
-         params[0] = (GLfloat)(ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0);
+         params[0] = (GLfloat)(ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0);
          break;
       case GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV:
          CHECK_EXTENSION_F(NV_fragment_program, pname);
@@ -5273,7 +5273,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_FRAGMENT_PROGRAM_BINDING_NV:
          CHECK_EXTENSION_I(NV_fragment_program, pname);
-         params[0] = ctx->VertexProgram.Current ? ctx->VertexProgram.Current->Base.Id : 0;
+         params[0] = ctx->FragmentProgram.Current ? ctx->FragmentProgram.Current->Base.Id : 0;
          break;
       case GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV:
          CHECK_EXTENSION_I(NV_fragment_program, pname);
