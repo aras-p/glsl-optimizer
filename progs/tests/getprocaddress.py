@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: getprocaddress.py,v 1.4 2004/10/29 19:12:08 brianp Exp $
+# $Id: getprocaddress.py,v 1.5 2004/10/29 19:31:52 brianp Exp $
 
 # Helper for the getprocaddress.c test.
 
@@ -65,7 +65,7 @@ static struct name_test_pair functions[] = {"""
 			test = "test_%s" % f.name
 		else:
 			test = "NULL"
-		print '   { "gl%s", %s }, /* %s */' % (f.name, test, f.category)
+		print '   { "gl%s", %s },' % (f.name, test)
 		return
 
 
