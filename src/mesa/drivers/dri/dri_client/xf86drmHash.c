@@ -86,8 +86,6 @@
 # endif
 #endif
 
-#define N(x)  drm##x
-
 #define HASH_MAGIC 0xdeadbeef
 #define HASH_DEBUG 0
 #define HASH_SIZE  512		/* Good for about 100 entries */
@@ -128,11 +126,11 @@ typedef struct HashTable {
 } HashTable, *HashTablePtr;
 
 #if HASH_MAIN
-extern void *N(HashCreate)(void);
-extern int  N(HashDestroy)(void *t);
-extern int  N(HashLookup)(void *t, unsigned long key, unsigned long *value);
-extern int  N(HashInsert)(void *t, unsigned long key, unsigned long value);
-extern int  N(HashDelete)(void *t, unsigned long key);
+extern void *drmHashCreate(void);
+extern int  drmHashDestroy(void *t);
+extern int  drmHashLookup(void *t, unsigned long key, unsigned long *value);
+extern int  drmHashInsert(void *t, unsigned long key, unsigned long value);
+extern int  drmHashDelete(void *t, unsigned long key);
 #endif
 
 static unsigned long HashHash(unsigned long key)
@@ -162,7 +160,7 @@ static unsigned long HashHash(unsigned long key)
     return hash;
 }
 
-void *N(HashCreate)(void)
+void *drmHashCreate(void)
 {
     HashTablePtr table;
     int          i;
@@ -179,7 +177,7 @@ void *N(HashCreate)(void)
     return table;
 }
 
-int N(HashDestroy)(void *t)
+int drmHashDestroy(void *t)
 {
     HashTablePtr  table = (HashTablePtr)t;
     HashBucketPtr bucket;
@@ -230,7 +228,7 @@ static HashBucketPtr HashFind(HashTablePtr table,
     return NULL;
 }
 
-int N(HashLookup)(void *t, unsigned long key, void **value)
+int drmHashLookup(void *t, unsigned long key, void **value)
 {
     HashTablePtr  table = (HashTablePtr)t;
     HashBucketPtr bucket;
@@ -243,7 +241,7 @@ int N(HashLookup)(void *t, unsigned long key, void **value)
     return 0;			/* Found */
 }
 
-int N(HashInsert)(void *t, unsigned long key, void *value)
+int drmHashInsert(void *t, unsigned long key, void *value)
 {
     HashTablePtr  table = (HashTablePtr)t;
     HashBucketPtr bucket;
@@ -265,7 +263,7 @@ int N(HashInsert)(void *t, unsigned long key, void *value)
     return 0;			/* Added to table */
 }
 
-int N(HashDelete)(void *t, unsigned long key)
+int drmHashDelete(void *t, unsigned long key)
 {
     HashTablePtr  table = (HashTablePtr)t;
     unsigned long hash;
@@ -282,7 +280,7 @@ int N(HashDelete)(void *t, unsigned long key)
     return 0;
 }
 
-int N(HashNext)(void *t, unsigned long *key, void **value)
+int drmHashNext(void *t, unsigned long *key, void **value)
 {
     HashTablePtr  table = (HashTablePtr)t;
 
@@ -298,7 +296,7 @@ int N(HashNext)(void *t, unsigned long *key, void **value)
     return 0;
 }
 
-int N(HashFirst)(void *t, unsigned long *key, void **value)
+int drmHashFirst(void *t, unsigned long *key, void **value)
 {
     HashTablePtr  table = (HashTablePtr)t;
 
@@ -306,7 +304,7 @@ int N(HashFirst)(void *t, unsigned long *key, void **value)
 
     table->p0 = 0;
     table->p1 = table->buckets[0];
-    return N(HashNext)(table, key, value);
+    return drmHashNext(table, key, value);
 }
 
 #if HASH_MAIN
@@ -355,7 +353,7 @@ static void check_table(HashTablePtr table,
 			unsigned long key, unsigned long value)
 {
     unsigned long retval  = 0;
-    int           retcode = N(HashLookup)(table, key, &retval);
+    int           retcode = drmHashLookup(table, key, &retval);
 
     switch (retcode) {
     case -1:
@@ -385,50 +383,50 @@ int main(void)
     int          i;
 
     printf("\n***** 256 consecutive integers ****\n");
-    table = N(HashCreate)();
-    for (i = 0; i < 256; i++) N(HashInsert)(table, i, i);
+    table = drmHashCreate();
+    for (i = 0; i < 256; i++) drmHashInsert(table, i, i);
     for (i = 0; i < 256; i++) check_table(table, i, i);
     for (i = 256; i >= 0; i--) check_table(table, i, i);
     compute_dist(table);
-    N(HashDestroy)(table);
+    drmHashDestroy(table);
 
     printf("\n***** 1024 consecutive integers ****\n");
-    table = N(HashCreate)();
-    for (i = 0; i < 1024; i++) N(HashInsert)(table, i, i);
+    table = drmHashCreate();
+    for (i = 0; i < 1024; i++) drmHashInsert(table, i, i);
     for (i = 0; i < 1024; i++) check_table(table, i, i);
     for (i = 1024; i >= 0; i--) check_table(table, i, i);
     compute_dist(table);
-    N(HashDestroy)(table);
+    drmHashDestroy(table);
 
     printf("\n***** 1024 consecutive page addresses (4k pages) ****\n");
-    table = N(HashCreate)();
-    for (i = 0; i < 1024; i++) N(HashInsert)(table, i*4096, i);
+    table = drmHashCreate();
+    for (i = 0; i < 1024; i++) drmHashInsert(table, i*4096, i);
     for (i = 0; i < 1024; i++) check_table(table, i*4096, i);
     for (i = 1024; i >= 0; i--) check_table(table, i*4096, i);
     compute_dist(table);
-    N(HashDestroy)(table);
+    drmHashDestroy(table);
 
     printf("\n***** 1024 random integers ****\n");
-    table = N(HashCreate)();
+    table = drmHashCreate();
     srandom(0xbeefbeef);
-    for (i = 0; i < 1024; i++) N(HashInsert)(table, random(), i);
+    for (i = 0; i < 1024; i++) drmHashInsert(table, random(), i);
     srandom(0xbeefbeef);
     for (i = 0; i < 1024; i++) check_table(table, random(), i);
     srandom(0xbeefbeef);
     for (i = 0; i < 1024; i++) check_table(table, random(), i);
     compute_dist(table);
-    N(HashDestroy)(table);
+    drmHashDestroy(table);
 
     printf("\n***** 5000 random integers ****\n");
-    table = N(HashCreate)();
+    table = drmHashCreate();
     srandom(0xbeefbeef);
-    for (i = 0; i < 5000; i++) N(HashInsert)(table, random(), i);
+    for (i = 0; i < 5000; i++) drmHashInsert(table, random(), i);
     srandom(0xbeefbeef);
     for (i = 0; i < 5000; i++) check_table(table, random(), i);
     srandom(0xbeefbeef);
     for (i = 0; i < 5000; i++) check_table(table, random(), i);
     compute_dist(table);
-    N(HashDestroy)(table);
+    drmHashDestroy(table);
 
     return 0;
 }
