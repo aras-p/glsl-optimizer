@@ -30,6 +30,7 @@
 extern void viaInitState(GLcontext *ctx);
 extern void viaInitStateFuncs(GLcontext *ctx);
 extern void viaCalcViewport(GLcontext *ctx);
+extern void viaValidateState(GLcontext *ctx);
 
 extern void viaFallback(viaContextPtr vmesa, GLuint bit, GLboolean mode);
 #define FALLBACK(vmesa, bit, mode) viaFallback(vmesa, bit, mode)

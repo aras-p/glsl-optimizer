@@ -650,7 +650,7 @@ static void viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
         /* Upload teximages (not pipelined)
          */
         if (t->dirtyImages) {
-            VIA_FIREVERTICES(vmesa);
+            VIA_FLUSH_DMA(vmesa);
             viaSetTexImages(vmesa, tObj);
             if (!t->bufAddr) {
                 FALLBACK(vmesa, VIA_FALLBACK_TEXTURE, GL_TRUE);
@@ -667,7 +667,7 @@ static void viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
          * time.
          */
         if (vmesa->CurrentTexObj[unit] != t) {
-            VIA_FIREVERTICES(vmesa);
+            VIA_FLUSH_DMA(vmesa);
             vmesa->CurrentTexObj[unit] = t;
             viaUpdateTexLRU(vmesa, t); /* done too often */
         }
@@ -683,7 +683,7 @@ static void viaUpdateTexUnit(GLcontext *ctx, GLuint unit)
     else {
         vmesa->CurrentTexObj[unit] = 0;
         vmesa->TexEnvImageFmt[unit] = 0;
-        VIA_FIREVERTICES(vmesa);
+        VIA_FLUSH_DMA(vmesa);
     }
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
 }

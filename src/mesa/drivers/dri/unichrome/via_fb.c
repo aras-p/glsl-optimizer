@@ -155,26 +155,25 @@ via_free_depth_buffer(viaContextPtr vmesa)
 GLboolean
 via_alloc_dma_buffer(viaContextPtr vmesa)
 {
-  drmVIADMAInit init;
+   drmVIADMAInit init;
 
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-    vmesa->dma = (GLuint *) malloc(VIA_DMA_BUFSIZ);
+   if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
+   vmesa->dma = (GLuint *) malloc(VIA_DMA_BUFSIZ);
     
-    /*
-     * Check whether AGP DMA has been initialized.
-     */
-
-    init.func = VIA_DMA_INITIALIZED;
-    vmesa->useAgp = 
+   /*
+    * Check whether AGP DMA has been initialized.
+    */
+   init.func = VIA_DMA_INITIALIZED;
+   vmesa->useAgp = 
       ( 0 == drmCommandWrite(vmesa->driFd, DRM_VIA_DMA_INIT, 
 			     &init, sizeof(init)));
-    if (vmesa->useAgp) 
-        printf("unichrome_dri.so: Using AGP.\n");
-    else
-        printf("unichrome_dri.so: Using PCI.\n");
+   if (vmesa->useAgp) 
+      printf("unichrome_dri.so: Using AGP.\n");
+   else
+      printf("unichrome_dri.so: Using PCI.\n");
       
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-    return ((vmesa->dma) ? GL_TRUE : GL_FALSE);
+   if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
+   return ((vmesa->dma) ? GL_TRUE : GL_FALSE);
 }
 
 void

@@ -254,6 +254,7 @@ static void viaSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 static void viaSpanRenderStart( GLcontext *ctx )
 {
    viaContextPtr vmesa = VIA_CONTEXT(ctx);     
+   VIA_FINISH_PRIM(vmesa);
    LOCK_HARDWARE(vmesa);
    viaFlushPrimsLocked(vmesa);
    WAIT_IDLE(vmesa);

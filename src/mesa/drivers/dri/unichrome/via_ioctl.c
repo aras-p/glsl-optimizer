@@ -71,21 +71,19 @@ v * copy of this software and associated documentation files (the "Software"),
 #define VIA_BLIT_COPY 0xCC
 #define VIA_BLIT_FILL 0xF0
 #define VIA_BLIT_SET 0xFF
-#define VIA_BLITSIZE 96
 
+ 
+#define DEPTH_SCALE ((1 << 16) - 1)
 
-typedef enum {VIABLIT_TRANSCOPY, VIABLIT_COPY, VIABLIT_FILL} ViaBlitOps;
-
-
-/*=* John Sheng [2003.5.31] flip *=*/
-#define SetReg2DAGP(nReg, nData) {              	\
-    *((GLuint *)(vb)) = ((nReg) >> 2) | 0xF0000000;     \
-    *((GLuint *)(vb) + 1) = (nData);          		\
-    vb = ((GLuint *)vb) + 2;                  		\
-    vmesa->dmaLow +=8;					\
+void viaCheckDma(viaContextPtr vmesa, GLuint bytes)
+{
+    VIA_FINISH_PRIM( vmesa );
+    if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
+	viaFlushPrims(vmesa);
+    }
 }
 
-#define DEPTH_SCALE ((1 << 16) - 1)
+
 
 static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
                      GLint cx, GLint cy, GLint cw, GLint ch)
@@ -98,7 +96,7 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
    GLuint clear_depth_mask = 0xf << 28;
    GLuint clear_depth = 0;
 
-   VIA_FIREVERTICES(vmesa);
+   VIA_FLUSH_DMA(vmesa);
 
    if ((mask & DD_FRONT_LEFT_BIT) && colorMask == ~0) {
       flag |= VIA_FRONT;
@@ -220,7 +218,7 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
 
    vmesa = (viaContextPtr)dPriv->driContextPriv->driverPrivate;
     
-   VIA_FIREVERTICES(vmesa);
+   VIA_FLUSH_DMA(vmesa);
 
    driWaitForVBlank( dPriv, & vmesa->vbl_seq, vmesa->vblank_flags, & missed_target );
    LOCK_HARDWARE(vmesa);
@@ -270,10 +268,9 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
 {
     /*=* John Sheng [2003.5.31] flip *=*/
     viaContextPtr vmesa = (viaContextPtr)dPriv->driContextPriv->driverPrivate;
-    GLuint *vb = viaCheckDma(vmesa, vmesa->sarea->nbox*56);
+    GLcontext *ctx = vmesa->glCtx;
     GLuint nBackBase;
     viaBuffer buffer_tmp;
-    GLcontext *ctx;
     GLboolean missed_target;
     int retcode;
 
@@ -282,9 +279,8 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     assert(dPriv->driContextPriv);
     assert(dPriv->driContextPriv->driverPrivate);
 
-    ctx = vmesa->glCtx;
-    
-    VIA_FIREVERTICES(vmesa);
+
+    VIA_FLUSH_DMA(vmesa);
 
     /* Now wait for the vblank:
      */
@@ -297,52 +293,28 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
 
     LOCK_HARDWARE(vmesa);
 
-    /* Page Flip*/
-    if(GL_FALSE) {
-	viaFlushPrimsLocked(vmesa);
-	while ((*(volatile GLuint *)((GLuint)vmesa->regMMIOBase + 0x200) & 0x2) != 0x2);
-	while (*(volatile GLuint *)((GLuint)vmesa->regMMIOBase + 0x200) & 0x2);
-	nBackBase = vmesa->back.offset >> 1;
-	
-	/*if (nFirstFlip) {
-    	    *vb++ = HALCYON_HEADER2;
-    	    *vb++ = 0x00fe0000;
-    	    *vb++ = 0x00001004;
-    	    *vb++ = 0x00001004;
-	    vmesa->dmaLow += 16;
+    {
+        RING_VARS;
 
-    	    nFirstFlip = GL_FALSE;
-	}
-	SetReg2DAGP(0x214, nBackBase);
-	viaFlushPrimsLocked(vmesa);*/
-    	if (!vmesa->nDoneFirstFlip) {
-	    *((volatile GLuint *)((GLuint)vmesa->regMMIOBase + 0x43c)) = 0x00fe0000;
-	    *((volatile GLuint *)((GLuint)vmesa->regMMIOBase + 0x440)) = 0x00001004;
-	    vmesa->nDoneFirstFlip = GL_TRUE;
-	}
-	*((GLuint *)((GLuint)vmesa->regMMIOBase + 0x214)) = nBackBase;
-    }
-    /* Auto Swap */
-    else {
-	viaFlushPrimsLocked(vmesa);
-	vb = viaCheckDma(vmesa, 8 * 4);
 	if (!vmesa->nDoneFirstFlip) {
-    	    *vb++ = HALCYON_HEADER2;
-    	    *vb++ = 0x00fe0000;
-    	    *vb++ = 0x0000000e;
-    	    *vb++ = 0x0000000e;
-	    vmesa->dmaLow += 16;
-
-    	    vmesa->nDoneFirstFlip = GL_FALSE;
+    	    vmesa->nDoneFirstFlip = GL_FALSE; /* XXX: FIXME LATER!!! */
+	    BEGIN_RING(4);
+    	    OUT_RING(HALCYON_HEADER2);
+    	    OUT_RING(0x00fe0000);
+    	    OUT_RING(0x0000000e);
+    	    OUT_RING(0x0000000e);
+	    ADVANCE_RING();
 	}
 	nBackBase = (vmesa->back.offset );
 
-	*vb++ = HALCYON_HEADER2;
-	*vb++ = 0x00fe0000;
-	*vb++ = (HC_SubA_HFBBasL << 24) | (nBackBase & 0xFFFFF8) | 0x2;
-	*vb++ = (HC_SubA_HFBDrawFirst << 24) |
-                          ((nBackBase & 0xFF000000) >> 24) | 0x0100;
-	vmesa->dmaLow += 16;
+	BEGIN_RING(4);
+	OUT_RING( HALCYON_HEADER2 );
+	OUT_RING( 0x00fe0000 );
+	OUT_RING((HC_SubA_HFBBasL << 24) | (nBackBase & 0xFFFFF8) | 0x2);
+	OUT_RING((HC_SubA_HFBDrawFirst << 24) |
+		 ((nBackBase & 0xFF000000) >> 24) | 0x0100);
+	ADVANCE_RING();
+
 	viaFlushPrimsLocked(vmesa);
     }
     
@@ -355,6 +327,9 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     memcpy(&vmesa->back, &vmesa->front, sizeof(viaBuffer));
     memcpy(&vmesa->front, &buffer_tmp, sizeof(viaBuffer));
     
+    /* KW: BOGUS BOGUS BOGUS: The first time an app calls glDrawBuffer
+     * while pageflipping, this will blow up:  FIXME
+     */
     if(vmesa->currentPage) {
 	vmesa->currentPage = 0;
 	if (vmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {
@@ -374,8 +349,144 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
 	}
     }
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);        
-
 }
+
+
+
+
+#define VIA_CMDBUF_MAX_LAG 50000
+
+static int fire_buffer(viaContextPtr vmesa, drm_via_flush_sys_t *buf)
+{
+   drmVIACommandBuffer bufI;
+   int ret;
+
+   bufI.buf = (char *) (buf->index + buf->offset);
+   bufI.size = buf->size;
+
+   if (vmesa->useAgp) {
+      drmVIACmdBufSize bSiz;
+
+      /* Do the CMDBUF_SIZE ioctl:
+       */
+      bSiz.func = VIA_CMDBUF_LAG;
+      bSiz.wait = 1;
+      bSiz.size = VIA_CMDBUF_MAX_LAG;
+      do {
+	 ret = drmCommandWriteRead(vmesa->driFd, DRM_VIA_CMDBUF_SIZE, 
+				   &bSiz, sizeof(bSiz));
+      } while (ret == -EAGAIN);
+      if (ret) {
+	 fprintf(stderr, "%s: DRM_VIA_CMDBUF_SIZE returned %d\n", __FUNCTION__, ret);
+	 abort();
+	 return ret;
+      }
+
+      /* Acutally fire the buffer:
+       */
+      do {
+	 ret = drmCommandWrite(vmesa->driFd, DRM_VIA_CMDBUFFER, 
+			       &bufI, sizeof(bufI));
+      } while (ret == -EAGAIN);
+      if (ret) {
+	 fprintf(stderr, "%s: DRM_VIA_CMDBUFFER returned %d\n", __FUNCTION__, ret);
+	 abort();
+	 /* If this fails, the original code fell back to the PCI path. 
+	  */
+      }
+      else 
+	 return 0;
+
+      /* Fall through to PCI handling?!?
+       */
+      WAIT_IDLE(vmesa);
+   }
+	    
+   ret = drmCommandWrite(vmesa->driFd, DRM_VIA_PCICMD, &bufI, sizeof(bufI));
+   if (ret) {
+      fprintf(stderr, "%s: DRM_VIA_PCICMD returned %d\n", __FUNCTION__, ret);
+      abort();
+   }
+
+   return ret;
+}
+
+
+/* Inserts the surface addresss and active cliprects one at a time
+ * into the head of the DMA buffer being flushed.  Fires the buffer
+ * for each cliprect.
+ */
+static int via_flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf) 
+{
+   GLuint *vb = (GLuint *)vmesa->dmaAddr;
+   GLuint format = (vmesa->viaScreen->bitsPerPixel == 0x20 
+		    ? HC_HDBFM_ARGB8888 
+		    : HC_HDBFM_RGB565);
+
+   if (vmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {
+      GLuint offset = vmesa->back.offset;
+      GLuint pitch = vmesa->back.pitch;
+
+      vb[0] = HC_HEADER2;
+      vb[1] = HC_ParaType_NotTex << 16;
+	  
+      if (vmesa->driDrawable->w == 0 || vmesa->driDrawable->h == 0) {
+	 vb[2] = (HC_SubA_HClipTB << 24) | 0x0;
+	 vb[3] = (HC_SubA_HClipLR << 24) | 0x0;
+      }
+      else {
+	 vb[2] = (HC_SubA_HClipTB << 24) | vmesa->driDrawable->h;
+	 vb[3] = (HC_SubA_HClipLR << 24) | vmesa->driDrawable->w; 
+      }
+	
+      vb[4] = ((HC_SubA_HDBBasL << 24) | (offset & 0xFFFFFF));
+      vb[5] = ((HC_SubA_HDBBasH << 24) | ((offset & 0xFF000000)) >> 24); 
+      vb[6] = ((HC_SubA_HDBFM << 24) | HC_HDBLoc_Local | format | pitch); 
+      vb[7] = 0xcccccccc;
+
+      return fire_buffer( vmesa, buf );
+   }
+   else {
+      GLuint i, ret;
+      drm_clip_rect_t *b = vmesa->sarea->boxes;
+		
+      for (i = 0; i < vmesa->sarea->nbox; i++, b++) {        
+	 GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
+	 GLuint pitch = vmesa->front.pitch;
+	 GLuint offset = (vmesa->viaScreen->fbOffset + (vmesa->drawY * pitch + vmesa->drawX * bytePerPixel)) & ~0x1f;
+
+	 GLuint clipL = b->x1 + vmesa->drawXoff;
+	 GLuint clipR = b->x2 + vmesa->drawXoff;
+	 GLuint clipT = b->y1;
+	 GLuint clipB = b->y2;
+	    
+	 vb[0] = HC_HEADER2;
+	 vb[1] = (HC_ParaType_NotTex << 16);
+
+	 if (vmesa->driDrawable->w == 0 || vmesa->driDrawable->h == 0) {
+	    vb[2] = (HC_SubA_HClipTB << 24) | 0x0;
+	    vb[3] = (HC_SubA_HClipLR << 24) | 0x0;
+	 }
+	 else {
+	    vb[2] = (HC_SubA_HClipTB << 24) | (clipT << 12) | clipB;
+	    vb[3] = (HC_SubA_HClipLR << 24) | (clipL << 12) | clipR;
+	 }
+	    
+	 vb[4] = ((HC_SubA_HDBBasL << 24) | (offset & 0xFFFFFF));
+	 vb[5] = ((HC_SubA_HDBBasH << 24) | ((offset & 0xFF000000)) >> 24); 
+	 vb[6] = ((HC_SubA_HDBFM << 24) | HC_HDBLoc_Local | format | pitch);            
+	 vb[7] = 0xcccccccc;
+
+	 ret = fire_buffer( vmesa, buf );
+	 if (ret)
+	    return ret;
+      }
+   }
+
+   return 0;
+}
+
+
 
 static int intersect_rect(drm_clip_rect_t *out,
                           drm_clip_rect_t *a,
@@ -400,73 +511,83 @@ void viaFlushPrimsLocked(viaContextPtr vmesa)
    int nbox = vmesa->numClipRects;
    drm_via_sarea_t *sarea = vmesa->sarea;
    drm_via_flush_sys_t sysCmd;
-   GLuint *vb = viaCheckDma(vmesa, 0);
    int i;
+   RING_VARS;
 
    if (*(GLuint *)vmesa->driHwLock != (DRM_LOCK_HELD|vmesa->hHWContext) &&
-       *(GLuint *)vmesa->driHwLock != (DRM_LOCK_HELD|DRM_LOCK_CONT|vmesa->hHWContext))
+       *(GLuint *)vmesa->driHwLock != (DRM_LOCK_HELD|DRM_LOCK_CONT|vmesa->hHWContext)) {
       fprintf(stderr, "%s called without lock held\n", __FUNCTION__);
+      abort();
+   }
 
    if (vmesa->dmaLow == DMA_OFFSET) {
       return;
    }
-   if (vmesa->dmaLow > (VIA_DMA_BUFSIZ - 256))
+
+   assert(vmesa->dmaLastPrim == 0);
+
+   /* viaFinishPrimitive can add up to 8 bytes beyond VIA_DMA_HIGHWATER:
+    */
+   if (vmesa->dmaLow > VIA_DMA_HIGHWATER + 8) {
       fprintf(stderr, "buffer overflow in Flush Prims = %d\n",vmesa->dmaLow);
-    
+      abort();
+   }
+
    switch (vmesa->dmaLow & 0x1F) {	
    case 8:
-      *vb++ = HC_HEADER2;
-      *vb++ = (HC_ParaType_NotTex << 16);
-      *vb++ = HC_DUMMY;
-      *vb++ = HC_DUMMY;
-      *vb++ = HC_DUMMY;
-      *vb++ = HC_DUMMY;
-      vmesa->dmaLow += 24;
+      BEGIN_RING_NOCHECK( 6 );
+      OUT_RING( HC_HEADER2 );
+      OUT_RING( (HC_ParaType_NotTex << 16) );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      ADVANCE_RING();
       break;
    case 16:
-      *vb++ = HC_HEADER2;
-      *vb++ = (HC_ParaType_NotTex << 16);
-      *vb++ = HC_DUMMY;
-      *vb++ = HC_DUMMY;
-      vmesa->dmaLow += 16;
+      BEGIN_RING_NOCHECK( 4 );
+      OUT_RING( HC_HEADER2 );
+      OUT_RING( (HC_ParaType_NotTex << 16) );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      ADVANCE_RING();
       break;    
    case 24:
-      *vb++ = HC_HEADER2;
-      *vb++ = (HC_ParaType_NotTex << 16);
-      *vb++ = HC_DUMMY;
-      *vb++ = HC_DUMMY;
-      *vb++ = HC_DUMMY;
-      *vb++ = HC_DUMMY;
-      *vb++ = HC_DUMMY;
-      *vb++ = HC_DUMMY;
-      *vb++ = HC_DUMMY;
-      *vb++ = HC_DUMMY;	
-      vmesa->dmaLow += 40;
+      BEGIN_RING_NOCHECK( 10 );
+      OUT_RING( HC_HEADER2 );
+      OUT_RING( (HC_ParaType_NotTex << 16) );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );	
+      ADVANCE_RING();
       break;    
    case 0:
       break;
    default:
-      break;
+      if (VIA_DEBUG)
+	 fprintf(stderr, "%s: unaligned value for vmesa->dmaLow: %x\n",
+		 __FUNCTION__, vmesa->dmaLow);
+/*       abort(); */
+/*       goto done; */
    }
-    
+
+/*    assert((vmesa->dmaLow & 0x1f) == 0); */
+
    sysCmd.offset = 0x0;
    sysCmd.size = vmesa->dmaLow;
    sysCmd.index = (GLuint)vmesa->dma;
    sysCmd.discard = 0;
     
-   sarea->vertexPrim = vmesa->hwPrimitive;
-
    if (!nbox) {
-      sysCmd.size = 0;
-   }
-   else if (nbox > VIA_NR_SAREA_CLIPRECTS) {
-      /* XXX: not handled ? */
-   }
-
-   if (!nbox) {
+      sysCmd.size = 0;		/* KW: FIXME bogus if we ever start emitting partial state */
       sarea->nbox = 0;
       sysCmd.discard = 1;
-      flush_sys(vmesa, &sysCmd);
+      via_flush_sys(vmesa, &sysCmd);
    }
    else {
       for (i = 0; i < nbox; ) {
@@ -503,14 +624,17 @@ void viaFlushPrimsLocked(viaContextPtr vmesa)
 
 	 if (nr == nbox) {
 	    sysCmd.discard = 1;
-	    flush_sys(vmesa, &sysCmd);
 	 }
+
+	 via_flush_sys(vmesa, &sysCmd);
       }
    }
+
    if (VIA_DEBUG) {
       GLuint i;
       GLuint *data = (GLuint *)vmesa->dmaAddr;
       for (i = 0; i < vmesa->dmaLow; i += 16) {
+	 fprintf(stderr, "%04x:   ", i);
 	 fprintf(stderr, "%08x  ", *data++);
 	 fprintf(stderr, "%08x  ", *data++);
 	 fprintf(stderr, "%08x  ", *data++);
@@ -518,18 +642,19 @@ void viaFlushPrimsLocked(viaContextPtr vmesa)
       }
       fprintf(stderr, "******************************************\n");
    }  
+
+ done:
    /* Reset vmesa vars:
     */
    vmesa->dmaLow = DMA_OFFSET;
    vmesa->dmaAddr = (unsigned char *)vmesa->dma;
-   vmesa->dmaHigh = VIA_DMA_BUFSIZ;
 }
 
 void viaFlushPrims(viaContextPtr vmesa)
 {
    if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
 
-   if (vmesa->dmaLow) {
+   if (vmesa->dmaLow != DMA_OFFSET) {
       LOCK_HARDWARE(vmesa); 
       viaFlushPrimsLocked(vmesa);
       UNLOCK_HARDWARE(vmesa);
@@ -540,13 +665,13 @@ void viaFlushPrims(viaContextPtr vmesa)
 static void viaFlush(GLcontext *ctx)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    VIA_FIREVERTICES(vmesa);
+    VIA_FLUSH_DMA(vmesa);
 }
 
 static void viaFinish(GLcontext *ctx)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    VIA_FIREVERTICES(vmesa);
+    VIA_FLUSH_DMA(vmesa);
     WAIT_IDLE(vmesa);
 }
 
@@ -564,15 +689,21 @@ void viaInitIoctlFuncs(GLcontext *ctx)
 }
 
 
+#define SetReg2DAGP(nReg, nData) do {		\
+    OUT_RING( ((nReg) >> 2) | 0xF0000000 );	\
+    OUT_RING( nData );				\
+} while (0)
 
-GLuint *viaBlit(viaContextPtr vmesa, GLuint bpp,GLuint srcBase,
-		GLuint srcPitch,GLuint dstBase,GLuint dstPitch,
-		GLuint w,GLuint h,int xdir,int ydir, GLuint blitMode, 
-		GLuint color, GLuint nMask, GLuint *vb) 
+
+static void viaBlit(viaContextPtr vmesa, GLuint bpp,GLuint srcBase,
+		    GLuint srcPitch,GLuint dstBase,GLuint dstPitch,
+		    GLuint w,GLuint h,int xdir,int ydir, GLuint blitMode, 
+		    GLuint color, GLuint nMask ) 
 {
 
     GLuint dwGEMode = 0, srcY=0, srcX, dstY=0, dstX;
     GLuint cmd;
+    RING_VARS;
 
     if (VIA_DEBUG)
        fprintf(stderr, "%s bpp %d src %x/%x dst %x/%x w %d h %d dir %d,%d mode: %x color: 0x%08x mask 0x%08x\n",
@@ -580,7 +711,7 @@ GLuint *viaBlit(viaContextPtr vmesa, GLuint bpp,GLuint srcBase,
 
 
     if (!w || !h)
-        return vb;
+        return;
 
     srcX = srcBase & 31;
     dstX = dstBase & 31;
@@ -599,7 +730,7 @@ GLuint *viaBlit(viaContextPtr vmesa, GLuint bpp,GLuint srcBase,
         dwGEMode |= VIA_GEM_8bpp;
         break;
     }
-    SetReg2DAGP(VIA_REG_GEMODE, dwGEMode);
+
 
     cmd = 0; 
 
@@ -615,16 +746,15 @@ GLuint *viaBlit(viaContextPtr vmesa, GLuint bpp,GLuint srcBase,
     }
 
     switch(blitMode) {
-    case VIABLIT_TRANSCOPY:
-	SetReg2DAGP( VIA_REG_SRCCOLORKEY, color);
-	SetReg2DAGP( VIA_REG_KEYCONTROL, 0x4000);
-	cmd |= VIA_GEC_BLT | (VIA_BLIT_COPY << 24);
-	break;
-    case VIABLIT_FILL:
+    case VIA_BLIT_FILL:
+        BEGIN_RING((2 + 9) * 2);
+	SetReg2DAGP(VIA_REG_GEMODE, dwGEMode);
 	SetReg2DAGP( VIA_REG_FGCOLOR, color);
 	cmd |= VIA_GEC_BLT | VIA_GEC_FIXCOLOR_PAT | (VIA_BLIT_FILL << 24);
 	break;
-    default:
+    case VIA_BLIT_COPY:
+        BEGIN_RING((2 + 9) * 2);
+	SetReg2DAGP(VIA_REG_GEMODE, dwGEMode);
 	SetReg2DAGP( VIA_REG_KEYCONTROL, 0x0);
 	cmd |= VIA_GEC_BLT | (VIA_BLIT_COPY << 24);
     }	
@@ -639,14 +769,13 @@ GLuint *viaBlit(viaContextPtr vmesa, GLuint bpp,GLuint srcBase,
     SetReg2DAGP( VIA_REG_DIMENSION, (((h - 1) << 16) | (w - 1)));
     SetReg2DAGP( VIA_REG_GECMD, cmd);
     SetReg2DAGP( 0x2C, 0x00000000);
-    return vb;
+    ADVANCE_RING();
 }
 
 void viaFillFrontBuffer(viaContextPtr vmesa)
 {
     GLuint nDestBase, nDestPitch, nDestWidth, nDestHeight,i; 
     drm_clip_rect_t *b = vmesa->sarea->boxes;
-    GLuint *vb = viaCheckDma(vmesa, vmesa->sarea->nbox*VIA_BLITSIZE);
     GLuint pixel = (GLuint)vmesa->ClearColor;
     GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
     nDestPitch = vmesa->front.pitch;
@@ -656,9 +785,9 @@ void viaFillFrontBuffer(viaContextPtr vmesa)
 	nDestHeight = b->y2 - b->y1;
 	nDestBase = vmesa->viaScreen->fbOffset + 
 	    (b->y1* nDestPitch + b->x1 * bytePerPixel);
-	vb = viaBlit(vmesa,vmesa->viaScreen->bitsPerPixel, nDestBase, nDestPitch,
-		     nDestBase , nDestPitch, nDestWidth, nDestHeight,
-		     0,0,VIABLIT_FILL, pixel, 0x0, vb); 
+	viaBlit(vmesa,vmesa->viaScreen->bitsPerPixel, nDestBase, nDestPitch,
+		nDestBase , nDestPitch, nDestWidth, nDestHeight,
+		0,0,VIA_BLIT_FILL, pixel, 0x0); 
 	b++;
     }
 
@@ -668,7 +797,6 @@ void viaFillFrontBuffer(viaContextPtr vmesa)
 void viaFillFrontPBuffer(viaContextPtr vmesa)
 {
     GLuint nDestBase, nDestPitch, nDestWidth, nDestHeight, offset; 
-    GLuint *vb = viaCheckDma(vmesa, VIA_BLITSIZE);
     GLuint pixel = (GLuint)vmesa->ClearColor;
 
     offset = vmesa->front.offset;
@@ -681,7 +809,7 @@ void viaFillFrontPBuffer(viaContextPtr vmesa)
 
     viaBlit(vmesa,vmesa->viaScreen->bitsPerPixel, nDestBase, nDestPitch,
 	    nDestBase , nDestPitch, nDestWidth, nDestHeight,
-	    0,0,VIABLIT_FILL, pixel, 0x0, vb); 
+	    0,0,VIA_BLIT_FILL, pixel, 0x0); 
 	
     viaFlushPrimsLocked(vmesa);
 }
@@ -690,7 +818,6 @@ void viaFillBackBuffer(viaContextPtr vmesa)
 {
     GLuint nDestBase, nDestPitch, nDestWidth, nDestHeight, offset; 
     GLcontext *ctx = vmesa->glCtx;
-    GLuint *vb = viaCheckDma(vmesa, vmesa->sarea->nbox*VIA_BLITSIZE);
     GLuint pixel = (GLuint)vmesa->ClearColor;
     GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
 
@@ -704,7 +831,7 @@ void viaFillBackBuffer(viaContextPtr vmesa)
 	nDestHeight = vmesa->driDrawable->h;
 	viaBlit(vmesa,vmesa->viaScreen->bitsPerPixel, nDestBase, nDestPitch,
 		nDestBase , nDestPitch, nDestWidth, nDestHeight,
-		0,0,VIABLIT_FILL, pixel, 0x0, vb); 
+		0,0,VIA_BLIT_FILL, pixel, 0x0); 
 	
     }
     /*=* John Sheng [2003.7.18] texenv *=*/
@@ -716,9 +843,9 @@ void viaFillBackBuffer(viaContextPtr vmesa)
 	    nDestHeight = b->y2 - b->y1;
 	    nDestBase = offset + ((b->y1 - vmesa->drawY) * nDestPitch) + 
 		(b->x1 - vmesa->drawX + vmesa->drawXoff) * bytePerPixel;
-	    vb = viaBlit(vmesa,vmesa->viaScreen->bitsPerPixel, nDestBase, nDestPitch,
-			 nDestBase , nDestPitch, nDestWidth, nDestHeight,
-			 0,0,VIABLIT_FILL, pixel, 0x0, vb); 
+	    viaBlit(vmesa,vmesa->viaScreen->bitsPerPixel, nDestBase, nDestPitch,
+		    nDestBase , nDestPitch, nDestWidth, nDestHeight,
+		    0,0,VIA_BLIT_FILL, pixel, 0x0); 
 	    b++;
 	}
     }
@@ -732,7 +859,6 @@ void viaFillBackBuffer(viaContextPtr vmesa)
 void viaFillDepthBuffer(viaContextPtr vmesa, GLuint pixel, GLuint mask)
 {
     GLuint nDestBase, nDestPitch, nDestWidth, nDestHeight, offsetX, offset;
-    GLuint *vb = viaCheckDma(vmesa, VIA_BLITSIZE);
 
     offset = vmesa->depth.offset;
     if (VIA_DEBUG)
@@ -740,16 +866,13 @@ void viaFillDepthBuffer(viaContextPtr vmesa, GLuint pixel, GLuint mask)
     nDestBase = offset;
     nDestPitch = vmesa->depth.pitch;
     
-    /* KW: bogus offset? */
-/*     offsetX = vmesa->drawXoff; */
-    offsetX = 0;
-
+    offsetX = vmesa->drawXoff;
     nDestWidth = (vmesa->depth.pitch / vmesa->depth.bpp * 8) - offsetX;
     nDestHeight = vmesa->driDrawable->h;
 
     viaBlit(vmesa, vmesa->depth.bpp , nDestBase, nDestPitch,
 	    nDestBase , nDestPitch, nDestWidth, nDestHeight,
-	    0,0,VIABLIT_FILL, pixel, mask, vb); 
+	    0,0,VIA_BLIT_FILL, pixel, mask); 
 
     
     if (vmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {
@@ -759,7 +882,6 @@ void viaFillDepthBuffer(viaContextPtr vmesa, GLuint pixel, GLuint mask)
 
 void viaDoSwapBuffers(viaContextPtr vmesa)
 {    
-    GLuint *vb = viaCheckDma(vmesa, vmesa->sarea->nbox*VIA_BLITSIZE );
     GLuint nFrontPitch;
     GLuint nBackPitch;
     GLuint nFrontWidth, nFrontHeight;
@@ -782,9 +904,9 @@ void viaDoSwapBuffers(viaContextPtr vmesa)
 	nBackBase = vmesa->back.offset + ((b->y1 - vmesa->drawY) * nBackPitch) + 
 	    (b->x1 - vmesa->drawX + vmesa->drawXoff) * bytePerPixel;
 	
-	vb = viaBlit(vmesa, bytePerPixel << 3 , nBackBase, nBackPitch,
-		     nFrontBase , nFrontPitch, nFrontWidth, nFrontHeight,
-		     0,0,VIABLIT_COPY, 0, 0, vb); 
+	viaBlit(vmesa, bytePerPixel << 3 , nBackBase, nBackPitch,
+		nFrontBase , nFrontPitch, nFrontWidth, nFrontHeight,
+		0,0,VIA_BLIT_COPY, 0, 0); 
 	b++;
     }
 
@@ -795,7 +917,6 @@ void viaDoSwapBuffers(viaContextPtr vmesa)
 
 void viaDoSwapPBuffers(viaContextPtr vmesa)
 {    
-    GLuint *vb = viaCheckDma(vmesa, 64 );
     GLuint nFrontPitch;
     GLuint nBackPitch;
     GLuint nFrontWidth, nFrontHeight;
@@ -804,6 +925,7 @@ void viaDoSwapPBuffers(viaContextPtr vmesa)
     GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
     GLuint EngStatus = *(vmesa->pnGEMode);
     GLuint blitMode; 
+    RING_VARS;
 
     switch(bytePerPixel) {
     case 4:
@@ -816,10 +938,6 @@ void viaDoSwapPBuffers(viaContextPtr vmesa)
 	blitMode = 0x000;
 	break;
     }
-
-    /* Restore mode */
-    SetReg2DAGP(0x04, (EngStatus & 0xFFFFFCFF) | blitMode);
-
 
     nFrontPitch = vmesa->front.pitch;
     nBackPitch = vmesa->back.pitch;
@@ -837,6 +955,10 @@ void viaDoSwapPBuffers(viaContextPtr vmesa)
     nFrontOffsetY = 0;
     nBackOffsetX = nFrontOffsetX;
     nBackOffsetY = nFrontOffsetY;
+
+    BEGIN_RING(8 * 2);
+    /* Restore mode */
+    SetReg2DAGP(0x04, (EngStatus & 0xFFFFFCFF) | blitMode);
     /* GEWD */
     SetReg2DAGP(0x10, nFrontWidth | (nFrontHeight << 16));
     /* GEDST */
@@ -852,203 +974,30 @@ void viaDoSwapPBuffers(viaContextPtr vmesa)
                       ((nBackPitch >> 3) & 0x7FF));
     /* BITBLT */
     SetReg2DAGP(0x0, 0x1 | 0xCC000000);
+    ADVANCE_RING();
 
     viaFlushPrimsLocked(vmesa);
     if (VIA_DEBUG) fprintf(stderr, "Do Swap PBuffer\n");
 }
 
 
-#define VIA_CMDBUF_MAX_LAG 50000
 
-int flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf) 
+
+GLuint *viaAllocDmaFunc(viaContextPtr vmesa, int bytes, const char *func, int line)
 {
-    GLuint *pnBuf;
-    GLuint *pnEnd;
-    volatile GLuint *pnMMIOBase;
-    GLuint *vb = (GLuint *)vmesa->dmaAddr; 
-    GLuint i = 0;
-    drmVIACommandBuffer bufI;
-    drmVIACmdBufSize bSiz;
-    int ret;
-
-    pnMMIOBase = vmesa->regMMIOBase;
-    
-    pnBuf = (GLuint *)(buf->index + buf->offset);
-    pnEnd = (GLuint *)((GLuint)pnBuf + buf->size);	
-    
-    if (vmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {
-	*vb++ = HC_HEADER2;
-	*vb++ = (HC_ParaType_NotTex << 16);
-	  
-	if (vmesa->driDrawable->w == 0 || vmesa->driDrawable->h == 0) {
-	    *vb++ = (HC_SubA_HClipTB << 24) | 0x0;
-	    *vb++ = (HC_SubA_HClipLR << 24) | 0x0;
-	}
-	else {
-	    *vb++ = ((HC_SubA_HClipTB << 24) | (0x0 << 12) | vmesa->driDrawable->h);
-	    /* KW: drawXoff known zero */
-/* 	    *vb++ = ((HC_SubA_HClipLR << 24) | (vmesa->drawXoff << 12) | (vmesa->driDrawable->w + vmesa->drawXoff)); */
- 	    *vb++ = ((HC_SubA_HClipLR << 24) | vmesa->driDrawable->w); 
-	}
-	
-	/*=* John Sheng [2003.6.16] fix pci path *=*/
-	{    
-    	    GLuint pitch, format, offset;
-        
-    	    if (vmesa->viaScreen->bitsPerPixel == 0x20) {
-        	format = HC_HDBFM_ARGB8888;
-    	    }           
-    	    else if (vmesa->viaScreen->bitsPerPixel == 0x10) {
-        	format = HC_HDBFM_RGB565;
-    	    }           
-    	    else
-    	    	return -1;
-
-	    offset = vmesa->back.offset;
-	    pitch = vmesa->back.pitch;
-	    
-    	    *vb++ = ((HC_SubA_HDBBasL << 24) | (offset & 0xFFFFFF));
-	    *vb++ = ((HC_SubA_HDBBasH << 24) | ((offset & 0xFF000000)) >> 24);      
-    	    *vb++ = ((HC_SubA_HDBFM << 24) | HC_HDBLoc_Local | format | pitch);            
-    	    *vb++ = 0xcccccccc;
-	}
-	
-	bufI.buf = (char *) pnBuf;
-	bufI.size = buf->size;
-
-	/*
-	 * If AGP is enabled, try it. Otherwise or if it fails, use PCI MMIO.
-	 */
-	
-	ret = 1;
-	if (vmesa->useAgp) {
-
-	    /*
-	     * Prevent command regulator from lagging to far behind by waiting.
-	     * Otherwise some applications become unresponsive and jumpy.
-	     * The VIA_CMDBUF_MAX_LAG size may be tuned. We could also wait for idle
-	     * but that would severely lower performance of some very important
-	     * applications. (for example glxgears :).
-	     */
-
-	    bSiz.func = VIA_CMDBUF_LAG;
-	    bSiz.wait = 1;
-	    bSiz.size = VIA_CMDBUF_MAX_LAG;
-	    while ( -EAGAIN == (ret = drmCommandWriteRead(vmesa->driFd, DRM_VIA_CMDBUF_SIZE, 
-							  &bSiz, sizeof(bSiz))));
-	    if (ret) {
-		_mesa_error(vmesa->glCtx, GL_INVALID_OPERATION, __FUNCTION__); 
-		abort();
-	    }
-	    while ( -EAGAIN == (ret = drmCommandWrite(vmesa->driFd, DRM_VIA_CMDBUFFER, 
-						      &bufI, sizeof(bufI))));
-	    if (ret) {
-	       abort();
-	    }
-	}
-	if (ret) {
-	    if (vmesa->useAgp) WAIT_IDLE(vmesa);
-	    
-/* 	    for (i = 0; */
-
-	    if (drmCommandWrite(vmesa->driFd, DRM_VIA_PCICMD, &bufI, sizeof(bufI))) {
-		_mesa_error(vmesa->glCtx, GL_INVALID_OPERATION, __FUNCTION__);
-		abort();
-	    }
-	}
-    }
-    else {
-	GLuint *head;
-	GLuint clipL, clipR, clipT, clipB;
-	drm_clip_rect_t *b = vmesa->sarea->boxes;
-	GLuint *pnTmp;
-	
-	*vb++ = HC_HEADER2;
-	*vb++ = (HC_ParaType_NotTex << 16);
-	
-	head = vb;
-	pnTmp = pnBuf;
-		
-	for (i = 0; i < vmesa->sarea->nbox; i++) {        
-	    clipL = b->x1 + vmesa->drawXoff;
-	    clipR = b->x2 + vmesa->drawXoff; /* FIXME: is this correct? */
-	    clipT = b->y1;
-	    clipB = b->y2;
-	    
-	    if (vmesa->driDrawable->w == 0 || vmesa->driDrawable->h == 0) {
-		*vb = (HC_SubA_HClipTB << 24) | 0x0;
-		vb++;
-		*vb = (HC_SubA_HClipLR << 24) | 0x0;
-		vb++;
-	    }
-	    else {
-		*vb = (HC_SubA_HClipTB << 24) | (clipT << 12) | clipB;
-		vb++;
-		*vb = (HC_SubA_HClipLR << 24) | (clipL << 12) | clipR;
-		vb++;
-	    }
-	    
-	    /*=* John Sheng [2003.6.16] fix pci path *=*/
-	    {    
-    		GLuint pitch, format, offset;
-    		GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
-        
-    		if (vmesa->viaScreen->bitsPerPixel == 0x20) {
-        	    format = HC_HDBFM_ARGB8888;
-    		}           
-    		else if (vmesa->viaScreen->bitsPerPixel == 0x10) {
-    	    	    format = HC_HDBFM_RGB565;
-    		}           
-    		else
-		    return -1;
-        
-		pitch = vmesa->front.pitch;
-		offset = vmesa->viaScreen->fbOffset + (vmesa->drawY * pitch + vmesa->drawX * bytePerPixel);
-		offset = offset & 0xffffffe0;
-            
-    		*vb++ = ((HC_SubA_HDBBasL << 24) | (offset & 0xFFFFFF));
-		*vb++ = ((HC_SubA_HDBBasH << 24) | ((offset & 0xFF000000)) >> 24);      
-    		*vb++ = ((HC_SubA_HDBFM << 24) | HC_HDBLoc_Local | format | pitch);            
-    		*vb++ = 0xcccccccc;
-	    }
-	    
-	    pnBuf = pnTmp;
-	    
-	    bufI.buf = (char *) pnBuf;
-	    bufI.size = buf->size;
-	    ret = 1;
-	    if (vmesa->useAgp) {
-		bSiz.func = VIA_CMDBUF_LAG;
-		bSiz.wait = 1;
-		bSiz.size = VIA_CMDBUF_MAX_LAG;
-		while ( -EAGAIN == (ret = drmCommandWriteRead(vmesa->driFd, DRM_VIA_CMDBUF_SIZE, 
-							      &bSiz, sizeof(bSiz))));
-		if (ret) {
-		    _mesa_error(vmesa->glCtx, GL_INVALID_OPERATION, __FUNCTION__); 
-		    abort();
-		}
-		while ( -EAGAIN == (ret = drmCommandWrite(vmesa->driFd, DRM_VIA_CMDBUFFER, 
-							      &bufI, sizeof(bufI))));
-		if (ret) {
-		   abort();
-		}
-	    }
-	    
-	    if (ret) {
-		if (vmesa->useAgp) 
-		   WAIT_IDLE(vmesa);
-
-	        if (drmCommandWrite(vmesa->driFd, DRM_VIA_PCICMD, &bufI, sizeof(bufI))) {
-		    _mesa_error(vmesa->glCtx, GL_INVALID_OPERATION, __FUNCTION__);
-		    abort();
-		}
-	    }
-
-	    b++;	
-	    vb = head;
-	}
-
+    if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
+	if (VIA_DEBUG) fprintf(stderr, "buffer overflow in check dma = %d + %d = %d\n", 
+			       vmesa->dmaLow, bytes, vmesa->dmaLow + bytes);
+	viaFlushPrims(vmesa);
     }
 
-    return 0;
+    {
+        GLuint *start = (GLuint *)(vmesa->dmaAddr + vmesa->dmaLow);
+	vmesa->dmaLow += bytes;
+	if (VIA_DEBUG && (vmesa->dmaLow & 0x4))
+	   fprintf(stderr, "%s/%d: alloc 0x%x --> dmaLow 0x%x\n", func, line, bytes, vmesa->dmaLow);
+        return start;
+    }
 }
+
+

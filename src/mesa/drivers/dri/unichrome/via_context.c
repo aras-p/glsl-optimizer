@@ -303,9 +303,8 @@ static const struct tnl_pipeline_stage *via_pipeline[] = {
     &_tnl_texgen_stage,
     &_tnl_texture_transform_stage,
     /* REMOVE: point attenuation stage */
-#if 1
+#if 0
     &_via_fastrender_stage,     /* ADD: unclipped rastersetup-to-dma */
-    &_via_render_stage,         /* ADD: modification from _tnl_render_stage */
 #endif
     &_tnl_render_stage,
     0,
@@ -315,6 +314,8 @@ static const struct tnl_pipeline_stage *via_pipeline[] = {
 static GLboolean
 AllocateDmaBuffer(const GLvisual *visual, viaContextPtr vmesa)
 {
+    GLuint *addr;
+
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
     if (vmesa->dma)
         via_free_dma_buffer(vmesa);
@@ -329,24 +330,24 @@ AllocateDmaBuffer(const GLvisual *visual, viaContextPtr vmesa)
 	    
         return GL_FALSE;
     }   
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-    return GL_TRUE;
-}
 
-static void
-InitVertexBuffer(viaContextPtr vmesa)
-{
-    GLuint *addr;
-
+    /* Insert placeholder for a cliprect:
+     */
     addr = (GLuint *)vmesa->dma;
-    *addr = 0xF210F110;
-    *addr = (HC_ParaType_NotTex << 16);
-    *addr = 0xcccccccc;
-    *addr = 0xdddddddd;
+    addr[0] = HC_HEADER2;
+    addr[1] = (HC_ParaType_NotTex << 16);
+    addr[2] = HC_DUMMY;
+    addr[3] = HC_DUMMY;
+    addr[4] = HC_DUMMY;
+    addr[5] = HC_DUMMY;
+    addr[6] = HC_DUMMY;
+    addr[7] = HC_DUMMY;
 
     vmesa->dmaLow = DMA_OFFSET;
-    vmesa->dmaHigh = VIA_DMA_BUFSIZ;
     vmesa->dmaAddr = (unsigned char *)vmesa->dma;
+
+    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
+    return GL_TRUE;
 }
 
 static void
@@ -404,6 +405,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     case 0:			
        vmesa->hasDepth = GL_FALSE;
        vmesa->depthBits = 0; 
+       vmesa->depth_max = 1.0;
        break;
     case 16:
        vmesa->hasDepth = GL_TRUE;
@@ -522,7 +524,6 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     vmesa->texHeap = mmInit(0, viaScreen->textureSize);
     vmesa->stippleInHw = 1;
     vmesa->renderIndex = ~0;
-    vmesa->needUploadAllState = 1;
 
     make_empty_list(&vmesa->TexObjList);
     make_empty_list(&vmesa->SwappedOut);
@@ -532,7 +533,15 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     
     _math_matrix_ctr(&vmesa->ViewportMatrix);
 
-   driInitExtensions( ctx, card_extensions, GL_TRUE );
+    /* Do this early, before VIA_FLUSH_DMA can be called:
+     */
+    if (!AllocateDmaBuffer(mesaVis, vmesa)) {
+	fprintf(stderr ,"AllocateDmaBuffer fail\n");
+        FREE(vmesa);
+        return GL_FALSE;
+    }
+
+    driInitExtensions( ctx, card_extensions, GL_TRUE );
     viaInitStateFuncs(ctx);
     viaInitTextures(ctx);
     viaInitTriFuncs(ctx);
@@ -571,14 +580,6 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     (*vmesa->get_ust)( & vmesa->swap_ust );
 
 
-    if (!AllocateDmaBuffer(mesaVis, vmesa)) {
-	fprintf(stderr ,"AllocateDmaBuffer fail\n");
-        FREE(vmesa);
-        return GL_FALSE;
-    }
-
-    InitVertexBuffer(vmesa);
-    
     vmesa->regMMIOBase = (GLuint *)((GLuint)viaScreen->reg);
     vmesa->pnGEMode = (GLuint *)((GLuint)viaScreen->reg + 0x4);
     vmesa->regEngineStatus = (GLuint *)((GLuint)viaScreen->reg + 0x400);
@@ -599,7 +600,6 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
     viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
     assert(vmesa); /* should never be null */
-/*     viaFlushPrimsLocked(vmesa); */
 
     if (vmesa) {
 	/*=* John Sheng [2003.5.31]  agp tex *=*/
@@ -756,7 +756,7 @@ void viaGetLock(viaContextPtr vmesa, GLuint flags)
 
     if (sarea->ctxOwner != me) {
         sarea->ctxOwner = me;
-	vmesa->needUploadAllState = 1;
+	vmesa->newState = ~0;
     }
 
     viaXMesaWindowMoved(vmesa);
@@ -785,7 +785,7 @@ viaSwapBuffers(__DRIdrawablePrivate *drawablePrivate)
             }
         }
 	else
-	    VIA_FIREVERTICES(vmesa);
+	    VIA_FLUSH_DMA(vmesa);
     }
     else {
         _mesa_problem(NULL, "viaSwapBuffers: drawable has no context!\n");

@@ -53,6 +53,7 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 #define VIA_FALLBACK_USER_DISABLE      	0x800
 
 #define VIA_DMA_BUFSIZ                  500000
+#define VIA_DMA_HIGHWATER               (VIA_DMA_BUFSIZ - 256)
 
 /* Use the templated vertex formats:
  */
@@ -60,14 +61,6 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 #include "tnl_dd/t_dd_vertex.h"
 #undef TAG
 
-#define RightOf 1
-#define LeftOf 2
-#define Down 4
-#define Up 8
-#define S0 16
-#define S1 32
-#define P_MASK 0x0f;
-#define S_MASK 0x30;
 typedef void (*via_tri_func)(viaContextPtr, viaVertex *, viaVertex *,
                              viaVertex *);
 typedef void (*via_line_func)(viaContextPtr, viaVertex *, viaVertex *);
@@ -121,11 +114,6 @@ struct via_context_t {
      */
     GLuint Fallback;
 
-    /* Temporaries for translating away float colors:
-     */
-    struct gl_client_array UbyteColor;
-    struct gl_client_array UbyteSecondaryColor;
-
     /* State for via_vb.c and via_tris.c.
      */
     GLuint newState;            /* _NEW_* flags */
@@ -134,21 +122,16 @@ struct via_context_t {
     GLuint renderIndex;
     GLmatrix ViewportMatrix;
     GLenum renderPrimitive;
-    GLenum reducedPrimitive;
-    GLuint hwPrimitive;
+    GLenum hwPrimitive;
     unsigned char *verts;
 
     /* drmBufPtr dma_buffer;
     */
     unsigned char* dmaAddr;
     GLuint dmaLow;
-    GLuint dmaHigh;
     GLuint dmaLastPrim;
     GLboolean useAgp;
    
-    GLuint needUploadAllState;
-    GLuint primitiveRendered;
-    
 
     /* Fallback rasterization functions 
      */
@@ -217,7 +200,7 @@ struct via_context_t {
      */
     GLuint dirty;             
     int vertexSize;
-    int vertexStrideShift;
+    int vertexFormat;
     GLint lastStamp;
     GLboolean stippleInHw;
 
@@ -289,8 +272,7 @@ struct via_context_t {
    PFNGLXGETUSTPROC get_ust;
 
 };
-/*#define DMA_OFFSET 16*/
-#define DMA_OFFSET 32
+
 
 
 #define VIA_CONTEXT(ctx)   ((viaContextPtr)(ctx->DriverCtx))

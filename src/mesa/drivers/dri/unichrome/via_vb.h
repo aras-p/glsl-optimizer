@@ -52,9 +52,10 @@ extern void viaBuildVertices(GLcontext *ctx,
                              GLuint newinputs);
 
 
-extern void via_emit_contiguous_verts(GLcontext *ctx,
-                                      GLuint start,
-                                      GLuint count);
+extern void *via_emit_contiguous_verts(GLcontext *ctx,
+				       GLuint start,
+				       GLuint count,
+				       void *dest);
 
 extern void via_translate_vertex(GLcontext *ctx,
                                  const viaVertex *src,

@@ -429,10 +429,10 @@ void viaUploadTexImages(viaContextPtr vmesa, viaTextureObjectPtr t)
         /*t->bufAddr = (char *)((GLuint)vmesa->driScreen->pFB + t->texMem.offset);*/
 
         if (t == vmesa->CurrentTexObj[0])
-            VIA_FIREVERTICES(vmesa);
+            VIA_FLUSH_DMA(vmesa);
 
         if (t == vmesa->CurrentTexObj[1])
-            VIA_FIREVERTICES(vmesa);
+            VIA_FLUSH_DMA(vmesa);
 
         viaUpdateTexLRU(vmesa, t);
 	
