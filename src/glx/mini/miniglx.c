@@ -2256,6 +2256,7 @@ void (*glXGetProcAddress(const GLubyte *procname))( void )
       { "__glXGetDrawableInfo", (void *) __glXGetDrawableInfo },
       { "__glXWindowExists", (void *) __glXWindowExists },
       { "__glXCreateContextModes", (void *) _gl_context_modes_create },
+      { "__glXFindDRIScreen", (void *)__glXFindDRIScreen },
       { NULL, NULL }
    };
    const struct name_address *entry;
