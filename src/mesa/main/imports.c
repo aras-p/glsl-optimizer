@@ -1,10 +1,10 @@
-/* $Id: imports.c,v 1.5 2001/02/06 04:06:35 keithw Exp $ */
+/* $Id: imports.c,v 1.6 2001/03/02 16:01:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -104,7 +104,7 @@ static char *
 _mesa_getenv(__GLcontext *gc, const char *var)
 {
    (void) gc;
-   return gc->imports.getenv(gc, var);
+   return getenv(var);
 }
 
 static int
