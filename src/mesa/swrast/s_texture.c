@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.31 2001/05/30 17:47:43 brianp Exp $ */
+/* $Id: s_texture.c,v 1.32 2001/06/01 13:23:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -323,9 +323,15 @@ sample_1d_linear(GLcontext *ctx,
 
    {
       const GLfloat a = FRAC(u);
+
+#if CHAN_BITS == 32
+      const GLfloat w0 = (1.0F-a);
+      const GLfloat w1 =       a ;
+#else /* CHAN_BITS == 8 || CHAN_BITS == 16 */
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
-      const GLint w0 = IROUND_POS((1.0F-a) * WEIGHT_SCALE);
-      const GLint w1 = IROUND_POS(      a  * WEIGHT_SCALE);
+      const GLint w0 = IROUND_POS((1.0F - a) * WEIGHT_SCALE);
+      const GLint w1 = IROUND_POS(        a  * WEIGHT_SCALE);
+#endif
 
       GLchan t0[4], t1[4];  /* texels */
 
@@ -348,10 +354,18 @@ sample_1d_linear(GLcontext *ctx,
          }
       }
 
+#if CHAN_BITS == 32
+      rgba[0] = w0 * t0[0] + w1 * t1[0];
+      rgba[1] = w0 * t0[1] + w1 * t1[1];
+      rgba[2] = w0 * t0[2] + w1 * t1[2];
+      rgba[3] = w0 * t0[3] + w1 * t1[3];
+#else /* CHAN_BITS == 8 || CHAN_BITS == 16 */
       rgba[0] = (GLchan) ((w0 * t0[0] + w1 * t1[0]) >> WEIGHT_SHIFT);
       rgba[1] = (GLchan) ((w0 * t0[1] + w1 * t1[1]) >> WEIGHT_SHIFT);
       rgba[2] = (GLchan) ((w0 * t0[2] + w1 * t1[2]) >> WEIGHT_SHIFT);
       rgba[3] = (GLchan) ((w0 * t0[3] + w1 * t1[3]) >> WEIGHT_SHIFT);
+#endif
+
    }
 }
 
@@ -622,11 +636,20 @@ sample_2d_linear(GLcontext *ctx,
    {
       const GLfloat a = FRAC(u);
       const GLfloat b = FRAC(v);
+
+#if CHAN_BITS == 32
+      const GLfloat w00 = (1.0F-a) * (1.0F-b);
+      const GLfloat w10 =       a  * (1.0F-b);
+      const GLfloat w01 = (1.0F-a) *       b ;
+      const GLfloat w11 =       a  *       b ;
+#else /* CHAN_BITS == 8 || CHAN_BITS == 16 */
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
       const GLint w00 = IROUND_POS((1.0F-a) * (1.0F-b) * WEIGHT_SCALE);
       const GLint w10 = IROUND_POS(      a  * (1.0F-b) * WEIGHT_SCALE);
       const GLint w01 = IROUND_POS((1.0F-a) *       b  * WEIGHT_SCALE);
       const GLint w11 = IROUND_POS(      a  *       b  * WEIGHT_SCALE);
+#endif
+
       GLchan t00[4];
       GLchan t10[4];
       GLchan t01[4];
@@ -668,11 +691,18 @@ sample_2d_linear(GLcontext *ctx,
             palette_sample(ctx, tObj, t11[0], t11);
          }
       }
-
+#if CHAN_BITS == 32
+      rgba[0] = w00 * t00[0] + w10 * t10[0] + w01 * t01[0] + w11 * t11[0];
+      rgba[1] = w00 * t00[1] + w10 * t10[1] + w01 * t01[1] + w11 * t11[1];
+      rgba[2] = w00 * t00[2] + w10 * t10[2] + w01 * t01[2] + w11 * t11[2];
+      rgba[3] = w00 * t00[3] + w10 * t10[3] + w01 * t01[3] + w11 * t11[3];
+#else /* CHAN_BITS == 8 || CHAN_BITS == 16 */
       rgba[0] = (GLchan) ((w00 * t00[0] + w10 * t10[0] + w01 * t01[0] + w11 * t11[0]) >> WEIGHT_SHIFT);
       rgba[1] = (GLchan) ((w00 * t00[1] + w10 * t10[1] + w01 * t01[1] + w11 * t11[1]) >> WEIGHT_SHIFT);
       rgba[2] = (GLchan) ((w00 * t00[2] + w10 * t10[2] + w01 * t01[2] + w11 * t11[2]) >> WEIGHT_SHIFT);
       rgba[3] = (GLchan) ((w00 * t00[3] + w10 * t10[3] + w01 * t01[3] + w11 * t11[3]) >> WEIGHT_SHIFT);
+#endif
+
    }
 
 }
@@ -1051,6 +1081,18 @@ sample_3d_linear(GLcontext *ctx,
       const GLfloat a = FRAC(u);
       const GLfloat b = FRAC(v);
       const GLfloat c = FRAC(w);
+
+#if CHAN_BITS == 32
+      /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
+      GLfloat w000 = (1.0F-a) * (1.0F-b) * (1.0F-c);
+      GLfloat w100 =       a  * (1.0F-b) * (1.0F-c);
+      GLfloat w010 = (1.0F-a) *       b  * (1.0F-c);
+      GLfloat w110 =       a  *       b  * (1.0F-c);
+      GLfloat w001 = (1.0F-a) * (1.0F-b) *       c ;
+      GLfloat w101 =       a  * (1.0F-b) *       c ;
+      GLfloat w011 = (1.0F-a) *       b  *       c ;
+      GLfloat w111 =       a  *       b  *       c ;
+#else /* CHAN_BITS == 8 || CHAN_BITS == 16 */
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
       GLint w000 = IROUND_POS((1.0F-a) * (1.0F-b) * (1.0F-c) * WEIGHT_SCALE);
       GLint w100 = IROUND_POS(      a  * (1.0F-b) * (1.0F-c) * WEIGHT_SCALE);
@@ -1060,6 +1102,7 @@ sample_3d_linear(GLcontext *ctx,
       GLint w101 = IROUND_POS(      a  * (1.0F-b) *       c  * WEIGHT_SCALE);
       GLint w011 = IROUND_POS((1.0F-a) *       b  *       c  * WEIGHT_SCALE);
       GLint w111 = IROUND_POS(      a  *       b  *       c  * WEIGHT_SCALE);
+#endif
 
       GLchan t000[4], t010[4], t001[4], t011[4];
       GLchan t100[4], t110[4], t101[4], t111[4];
@@ -1138,9 +1181,19 @@ sample_3d_linear(GLcontext *ctx,
          }
       }
 
+#if CHAN_BITS == 32
+      rgba[0] = w000*t000[0] + w010*t010[0] + w001*t001[0] + w011*t011[0] +
+                w100*t100[0] + w110*t110[0] + w101*t101[0] + w111*t111[0];
+      rgba[1] = w000*t000[1] + w010*t010[1] + w001*t001[1] + w011*t011[1] +
+                w100*t100[1] + w110*t110[1] + w101*t101[1] + w111*t111[1];
+      rgba[2] = w000*t000[2] + w010*t010[2] + w001*t001[2] + w011*t011[2] +
+                w100*t100[2] + w110*t110[2] + w101*t101[2] + w111*t111[2];
+      rgba[3] = w000*t000[3] + w010*t010[3] + w001*t001[3] + w011*t011[3] +
+                w100*t100[3] + w110*t110[3] + w101*t101[3] + w111*t111[3];
+#else /* CHAN_BITS == 8 || CHAN_BITS == 16 */
       rgba[0] = (GLchan) (
                  (w000*t000[0] + w010*t010[0] + w001*t001[0] + w011*t011[0] +
-                  w100*t100[0] + w110*t110[0] + w101*t101[0] + w111*t111[0]  )
+                  w100*t100[0] + w110*t110[0] + w101*t101[0] + w111*t111[0] )
                  >> WEIGHT_SHIFT);
       rgba[1] = (GLchan) (
                  (w000*t000[1] + w010*t010[1] + w001*t001[1] + w011*t011[1] +
@@ -1154,6 +1207,8 @@ sample_3d_linear(GLcontext *ctx,
                  (w000*t000[3] + w010*t010[3] + w001*t001[3] + w011*t011[3] +
                   w100*t100[3] + w110*t110[3] + w101*t101[3] + w111*t111[3] )
                  >> WEIGHT_SHIFT);
+#endif
+
    }
 }
 
