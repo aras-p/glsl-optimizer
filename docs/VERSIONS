@@ -1281,6 +1281,7 @@ Mesa Version History
 	- enabled GL_ARB_texture_rectangle (same as GL_NV_texture_rectangle)
 	- updated Doxygen support (Jose Fonseca)
     Changes:
+	- some GGI driver updates (Christoph Egger, bug 1025977)
     Bug fixes:
 	- Omit GL_ARB_texture_non_power_of_two from list of OpenGL 1.5 features
 	- fixed a few compilation issues on IRIX
