@@ -42,6 +42,8 @@
 #include "enums.h"
 #include "texstore.h"
 #include "texformat.h"
+#include "teximage.h"
+#include "texobj.h"
 #include "imports.h"
 
 
@@ -568,6 +570,9 @@ static void mach64DDDeleteTexture( GLcontext *ctx,
 
       mach64DestroyTexObj( mmesa, t );
       tObj->DriverData = NULL;
+      /* Free mipmap images and the texture object itself */
+      _mesa_delete_texture_object(ctx, tObj);
+
    }
 }
 
