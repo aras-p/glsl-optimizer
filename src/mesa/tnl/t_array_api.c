@@ -309,7 +309,10 @@ _tnl_DrawRangeElements(GLenum mode,
                        "DrawRangeElements with empty vertex elements buffer!");
          return;
       }
-      indices = (GLvoid *) ctx->Array.ElementArrayBufferObj->Data;
+      /* actual address is the sum of pointers */
+      indices = (const GLvoid *)
+         ADD_POINTERS(ctx->Array.ElementArrayBufferObj->Data,
+                      (const GLubyte *) indices);
    }
 
    /* Check arguments, etc.
@@ -376,19 +379,16 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(NULL, "_tnl_DrawElements %d\n", count); 
 
-   if (ctx->Array.ElementArrayBufferObj->Name) {
-      /* use indices in the buffer object */
-      if (!ctx->Array.ElementArrayBufferObj->Data) {
-         _mesa_warning(ctx, "DrawElements with empty vertex elements buffer!");
-         return;
-      }
-      indices = (const GLvoid *) ctx->Array.ElementArrayBufferObj->Data;
-   }
-
-   /* Check arguments, etc.
-    */
+   /* Check arguments, etc. */
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices ))
       return;
+
+   if (ctx->Array.ElementArrayBufferObj->Name) {
+      /* actual address is the sum of pointers */
+      indices = (const GLvoid *)
+         ADD_POINTERS(ctx->Array.ElementArrayBufferObj->Data,
+                      (const GLubyte *) indices);
+   }
 
    ui_indices = (GLuint *)_ac_import_elements( ctx, GL_UNSIGNED_INT,
 					       count, type, indices );

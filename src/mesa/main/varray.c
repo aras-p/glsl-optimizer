@@ -879,12 +879,6 @@ _mesa_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->Array.ElementArrayBufferObj->Name) {
-      /* use indices in the buffer object */
-      ASSERT(ctx->Array.ElementArrayBufferObj->Data);
-      indices = (const GLvoid **) ctx->Array.ElementArrayBufferObj->Data;
-   }
-
    for (i = 0; i < primcount; i++) {
       if (count[i] > 0) {
          (ctx->Exec->DrawElements)(mode, count[i], type, indices[i]);
@@ -906,8 +900,8 @@ _mesa_MultiModeDrawArraysIBM( const GLenum * mode, const GLint * first,
 
    for ( i = 0 ; i < primcount ; i++ ) {
       if ( count[i] > 0 ) {
-	 (ctx->Exec->DrawArrays)( *(GLenum *) ((char *) mode + (i * modestride)),
-				  first[i], count[i] );
+         GLenum m = *((GLenum *) ((GLubyte *) mode + i * modestride));
+	 (ctx->Exec->DrawArrays)( m, first[i], count[i] );
       }
    }
 }
@@ -928,8 +922,8 @@ _mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
 
    for ( i = 0 ; i < primcount ; i++ ) {
       if ( count[i] > 0 ) {
-	 (ctx->Exec->DrawElements)( *(GLenum *) ((char *) mode + (i * modestride)),
-				    count[i], type, indices[i] );
+         GLenum m = *((GLenum *) ((GLubyte *) mode + i * modestride));
+	 (ctx->Exec->DrawElements)( m, count[i], type, indices[i] );
       }
    }
 }

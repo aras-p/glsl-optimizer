@@ -65,6 +65,43 @@ _mesa_validate_DrawElements(GLcontext *ctx,
        && !(ctx->VertexProgram.Enabled && ctx->Array.VertexAttrib[0].Enabled))
       return GL_FALSE;
 
+   /* Vertex buffer object tests */
+   if (ctx->Array.ElementArrayBufferObj->Name) {
+      GLuint indexBytes;
+
+      /* use indices in the buffer object */
+      if (!ctx->Array.ElementArrayBufferObj->Data) {
+         _mesa_warning(ctx, "DrawElements with empty vertex elements buffer!");
+         return GL_FALSE;
+      }
+
+      /* make sure count doesn't go outside buffer bounds */
+      if (type == GL_UNSIGNED_INT) {
+         indexBytes = count * sizeof(GLuint);
+      }
+      else if (type == GL_UNSIGNED_BYTE) {
+         indexBytes = count * sizeof(GLubyte);
+      }
+      else {
+         ASSERT(type == GL_UNSIGNED_SHORT);
+         indexBytes = count * sizeof(GLushort);
+      }
+
+      if ((GLubyte *) indices + indexBytes >
+          ctx->Array.ElementArrayBufferObj->Data +
+          ctx->Array.ElementArrayBufferObj->Size) {
+         _mesa_warning(ctx, "glDrawElements index out of buffer bounds");
+         return GL_FALSE;
+      }
+
+      /* Actual address is the sum of pointers.  Indices may be used below. */
+      if (ctx->Const.CheckArrayBounds) {
+         indices = (const GLvoid *)
+            ADD_POINTERS(ctx->Array.ElementArrayBufferObj->Data,
+                         (const GLubyte *) indices);
+      }
+   }
+
    if (ctx->Const.CheckArrayBounds) {
       /* find max array index */
       GLuint max = 0;
