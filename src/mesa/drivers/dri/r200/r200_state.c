@@ -137,7 +137,7 @@ static void r200BlendEquation( GLcontext *ctx, GLenum mode )
 
    R200_STATECHANGE( rmesa, ctx );
    rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = b;
-   if ( ctx->Color.ColorLogicOpEnabled ) {
+   if ( ctx->Color._LogicOpEnabled ) {
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  R200_ROP_ENABLE;
    } else {
       rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~R200_ROP_ENABLE;
@@ -1706,7 +1706,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
       } else {
 	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~R200_ALPHA_BLEND_ENABLE;
       }
-      if ( ctx->Color.ColorLogicOpEnabled ) {
+      if ( ctx->Color._LogicOpEnabled ) {
 	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  R200_ROP_ENABLE;
       } else {
 	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~R200_ROP_ENABLE;
@@ -1829,7 +1829,7 @@ static void r200Enable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    case GL_COLOR_LOGIC_OP:
       R200_STATECHANGE( rmesa, ctx );
-      if ( state ) {
+      if ( ctx->Color._LogicOpEnabled ) {
 	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] |=  R200_ROP_ENABLE;
       } else {
 	 rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &= ~R200_ROP_ENABLE;
