@@ -1327,6 +1327,8 @@ void savageDDUpdateHwState( GLcontext *ctx )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    
+    /*FLUSH_BATCH(imesa);*/
+
     if(imesa->driDrawable)
     {
         LOCK_HARDWARE(imesa);
@@ -1837,7 +1839,6 @@ void savageDDRenderStart(GLcontext *ctx)
     {
         /*ctx->VB->CopyStart = ctx->VB->Count;*/
     }
-    LOCK_HARDWARE(SAVAGE_CONTEXT(ctx));
 }
 
 
@@ -1845,7 +1846,6 @@ void savageDDRenderEnd(GLcontext *ctx)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
        
-    UNLOCK_HARDWARE(SAVAGE_CONTEXT(ctx));
     if(!imesa->IsDouble)
     {
         savageSwapBuffers(imesa->driDrawable);
@@ -1855,6 +1855,8 @@ void savageDDRenderEnd(GLcontext *ctx)
 
 static void savageDDInvalidateState( GLcontext *ctx, GLuint new_state )
 {
+   FLUSH_BATCH(SAVAGE_CONTEXT(ctx));
+
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
    _ac_InvalidateState( ctx, new_state );

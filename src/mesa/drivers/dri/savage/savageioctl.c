@@ -244,9 +244,9 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
        clear.clear_depth = (GLuint) (ctx->Depth.Clear * DEPTH_SCALE_16);
    else
        clear.clear_depth = (GLuint) (ctx->Depth.Clear * DEPTH_SCALE_24);
-#if 0
+
    FLUSH_BATCH( imesa );
-#endif	
+
    if ((mask & DD_FRONT_LEFT_BIT) && ((colorMask&0xffffffUL)==0xffffffUL) ){
       clear.flags |= SAVAGE_FRONT;
       mask &= ~DD_FRONT_LEFT_BIT;
@@ -346,6 +346,8 @@ void savageSwapBuffers( __DRIdrawablePrivate *dPriv )
    if (imesa->IsDouble)
        _mesa_notifySwapBuffers( imesa->glCtx );
 
+   FLUSH_BATCH(imesa);
+
    LOCK_HARDWARE( imesa );
    PAGE_PENDING(pending);
 
@@ -397,15 +399,29 @@ void savageWaitAge( savageContextPtr imesa, int age  )
 
 
 
-void savageFlushVertices( savageContextPtr imesa ) 
+void savageFlushVerticesLocked( savageContextPtr imesa )
 {
+    drmBufPtr buffer = imesa->vertex_dma_buffer;
 
+    if (!buffer)
+	return;
+
+    imesa->vertex_dma_buffer = NULL;
+
+    /* Lot's of stuff to do here. For now there is a fake DMA implementation
+     * in savagedma.c that emits drawing commands. Cliprects are not handled
+     * yet. */
+    if (buffer->used) {
+	savageFakeVertices (imesa, buffer);
+    }
 }
 
 
-void savageFlushVerticesLocked( savageContextPtr imesa )
+void savageFlushVertices( savageContextPtr imesa ) 
 {
-
+    LOCK_HARDWARE(imesa);
+    savageFlushVerticesLocked (imesa);
+    UNLOCK_HARDWARE(imesa);
 }
 
 
@@ -416,11 +432,20 @@ int savage_check_copy(int fd)
 
 static void savageDDFlush( GLcontext *ctx )
 {
-
+    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
+    LOCK_HARDWARE(imesa);
+    savageFlushVerticesLocked (imesa);
+    savageDMAFlush (imesa);
+    UNLOCK_HARDWARE(imesa);
 }
 
 static void savageDDFinish( GLcontext *ctx  ) 
 {
+    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
+    LOCK_HARDWARE(imesa);
+    savageFlushVerticesLocked (imesa);
+    savageDmaFinish (imesa);
+    UNLOCK_HARDWARE(imesa);
 }
 
 #define ALT_STATUS_WORD0 (* (volatile GLuint *)(imesa->MMIO_BASE+0x48c60))

@@ -61,109 +61,97 @@ static void savageRenderPrimitive( GLcontext *ctx, GLenum prim );
  *                    Emit primitives                                  *
  ***********************************************************************/
 
-static  __inline__ GLuint * savage_send_one_vertex(savageContextPtr imesa, savageVertexPtr v, uint32_t * vb, GLuint start, GLuint size)
-{ 
-    GLuint j; 
-    for (j = start ; j < size ; j++) 
-    { 
-        WRITE_CMD(vb, v->ui[j],uint32_t);
-    }
-    return vb; 
-} 
- 
-static void __inline__ savage_draw_triangle( savageContextPtr imesa, 
-					   savageVertexPtr v0, 
-					   savageVertexPtr v1, 
-					   savageVertexPtr v2 ) 
-{ 
-   GLuint vertsize = imesa->vertex_size; 
-#if SAVAGEDEBUG
-   uint32_t *vb = savageDMAAlloc (imesa, 3 * vertsize + 1 + 8); 
+#if defined (USE_X86_ASM)
+#define EMIT_VERT( j, vb, vertex_size, start, v )	\
+do {	int __tmp;					\
+        vb += start;					\
+	__asm__ __volatile__( "rep ; movsl"		\
+			 : "=%c" (j), "=D" (vb), "=S" (__tmp)		\
+			 : "0" (vertex_size-start),	\
+			   "D" ((long)vb), 		\
+			   "S" ((long)&v->ui[start]));	\
+} while (0)
 #else
-   uint32_t *vb = savageDMAAlloc (imesa, 4 * vertsize + 1); 
+#define EMIT_VERT( j, vb, vertex_size, start, v )	\
+do {						\
+   for ( j = start ; j < vertex_size ; j++ )	\
+      vb[j] = (v)->ui[j];			\
+   vb += vertex_size;				\
+} while (0)
 #endif
 
-   imesa->DrawPrimitiveCmd &=
-       ~(SAVAGE_HW_TRIANGLE_TYPE| SAVAGE_HW_TRIANGLE_CONT);
-   WRITE_CMD(vb,SAVAGE_DRAW_PRIMITIVE(3, imesa->DrawPrimitiveCmd, 0),uint32_t);
+static void __inline__ savage_draw_triangle (savageContextPtr imesa,
+					     savageVertexPtr v0,
+					     savageVertexPtr v1,
+					     savageVertexPtr v2) {
+   GLuint vertsize = imesa->vertex_size;
+   uint32_t *vb = savageAllocDmaLow (imesa, 3*4*vertsize);
+   GLuint j;
 
-   vb = savage_send_one_vertex(imesa, v0, vb, 0, vertsize);
-   vb = savage_send_one_vertex(imesa, v1, vb, 0, vertsize);
-   vb = savage_send_one_vertex(imesa, v2, vb, 0, vertsize);
- 
-#if SAVAGEDEBUG
-   {
-        GLuint x0,y0,w,h;
-        x0 = (GLuint)imesa->drawX;
-        y0 = (GLuint)imesa->drawY;
-        w  = (GLuint)imesa->driDrawable->w;
-        h  = (GLuint)imesa->driDrawable->h;
+   EMIT_VERT (j, vb, vertsize, 0, v0);
+   EMIT_VERT (j, vb, vertsize, 0, v1);
+   EMIT_VERT (j, vb, vertsize, 0, v2);
+}
 
-   	(*vb) = 0x4BCC00C0;
-   	vb++;
-   	(*vb) = imesa->savageScreen->backOffset;
-   	vb++;
-   	(*vb) = imesa->savageScreen->backBitmapDesc;
-   	vb++;
-   	(*vb) = (y0<<16)|x0;
-   	vb++;
-   	(*vb) = 0x0;
-   	vb++;
-   	(*vb) = (h<<16)|w;
-   	vb++;
-   }
-#endif
-   savageDMACommit (imesa, vb);
-} 
- 
-static __inline__ void savage_draw_point( savageContextPtr imesa, 
-					  savageVertexPtr tmp ) 
-{ 
-   GLfloat sz = imesa->glCtx->Point._Size * .5;
-   GLuint vertsize = imesa->vertex_size; 
-   uint32_t *vb = savageDMAAlloc (imesa, 4 * vertsize + 1); 
-   const GLfloat x = tmp->v.x; 
-   const GLfloat y = tmp->v.y; 
-   
-   imesa->DrawPrimitiveCmd &=
-       ~(SAVAGE_HW_TRIANGLE_TYPE | SAVAGE_HW_TRIANGLE_CONT);   
-   imesa->DrawPrimitiveCmd |= SAVAGE_HW_TRIANGLE_FAN; 
-     
-   WRITE_CMD(vb, SAVAGE_DRAW_PRIMITIVE(4, imesa->DrawPrimitiveCmd, 0),uint32_t);
+static void __inline__ savage_draw_quad (savageContextPtr imesa,
+					 savageVertexPtr v0,
+					 savageVertexPtr v1,
+					 savageVertexPtr v2,
+					 savageVertexPtr v3) {
+   GLuint vertsize = imesa->vertex_size;
+   uint32_t *vb = savageAllocDmaLow (imesa, 6*4*vertsize);
+   GLuint j;
 
-   WRITE_CMD(vb, x - sz, GLfloat);
-   WRITE_CMD(vb, y - sz, GLfloat);
-   vb = savage_send_one_vertex(imesa, tmp, vb, 2, vertsize);
+   EMIT_VERT (j, vb, vertsize, 0, v0);
+   EMIT_VERT (j, vb, vertsize, 0, v1);
+   EMIT_VERT (j, vb, vertsize, 0, v3);
+   EMIT_VERT (j, vb, vertsize, 0, v1);
+   EMIT_VERT (j, vb, vertsize, 0, v2);
+   EMIT_VERT (j, vb, vertsize, 0, v3);
+}
 
-   WRITE_CMD(vb, x + sz, GLfloat);
-   WRITE_CMD(vb, y - sz, GLfloat);
-   vb = savage_send_one_vertex(imesa, tmp, vb, 2, vertsize);
+static __inline__ void savage_draw_point (savageContextPtr imesa,
+					  savageVertexPtr tmp) {
+   GLuint vertsize = imesa->vertex_size;
+   uint32_t *vb = savageAllocDmaLow (imesa, 6*4*vertsize);
+   const GLfloat x = tmp->v.x;
+   const GLfloat y = tmp->v.y;
+   const GLfloat sz = imesa->glCtx->Point._Size * .5;
+   GLuint j;
 
-   WRITE_CMD(vb, x + sz, GLfloat);
-   WRITE_CMD(vb, y + sz, GLfloat);
-   vb = savage_send_one_vertex(imesa, tmp, vb, 2, vertsize);
- 
-   WRITE_CMD(vb, x - sz, GLfloat);
-   WRITE_CMD(vb, y + sz, GLfloat);
-   vb = savage_send_one_vertex(imesa, tmp, vb, 2, vertsize);
+   *(float *)&vb[0] = x - sz;
+   *(float *)&vb[1] = y - sz;
+   EMIT_VERT (j, vb, vertsize, 2, tmp);
 
-   savageDMACommit (imesa, vb);
-} 
- 
- 
-static __inline__ void savage_draw_line( savageContextPtr imesa, 
-				       savageVertexPtr v0, 
-				       savageVertexPtr v1 ) 
-{  
-   GLuint vertsize = imesa->vertex_size; 
-   uint32_t *vb = savageDMAAlloc (imesa, 4 * vertsize + 1); 
-   GLfloat dx, dy, ix, iy; 
+   *(float *)&vb[0] = x + sz;
+   *(float *)&vb[1] = y - sz;
+   EMIT_VERT (j, vb, vertsize, 2, tmp);
+
+   *(float *)&vb[0] = x + sz;
+   *(float *)&vb[1] = y + sz;
+   EMIT_VERT (j, vb, vertsize, 2, tmp);
+
+   *(float *)&vb[0] = x + sz;
+   *(float *)&vb[1] = y + sz;
+   EMIT_VERT (j, vb, vertsize, 2, tmp);
+
+   *(float *)&vb[0] = x - sz;
+   *(float *)&vb[1] = y + sz;
+   EMIT_VERT (j, vb, vertsize, 2, tmp);
+
+   *(float *)&vb[0] = x - sz;
+   *(float *)&vb[1] = y - sz;
+   EMIT_VERT (j, vb, vertsize, 2, tmp);
+}
+
+static __inline__ void savage_draw_line (savageContextPtr imesa,
+					 savageVertexPtr v0,
+					 savageVertexPtr v1 ) {
+   GLuint vertsize = imesa->vertex_size;
+   uint32_t *vb = savageAllocDmaLow (imesa, 6*4*vertsize);
    GLfloat width = imesa->glCtx->Line._Width;
-
-   imesa->DrawPrimitiveCmd &=
-       ~(SAVAGE_HW_TRIANGLE_TYPE | SAVAGE_HW_TRIANGLE_CONT);
-   imesa->DrawPrimitiveCmd |= SAVAGE_HW_TRIANGLE_FAN; 
-   WRITE_CMD(vb, SAVAGE_DRAW_PRIMITIVE(4, imesa->DrawPrimitiveCmd, 0),uint32_t);
+   GLfloat dx, dy, ix, iy;
+   GLuint j;
 
    dx = v0->v.x - v1->v.x;
    dy = v0->v.y - v1->v.y;
@@ -173,48 +161,31 @@ static __inline__ void savage_draw_line( savageContextPtr imesa,
       iy = ix; ix = 0;
    }
 
-   WRITE_CMD(vb, (v0->v.x - ix), GLfloat);
-   WRITE_CMD(vb, (v0->v.y - iy), GLfloat);
-   vb = savage_send_one_vertex(imesa, v0, vb, 2, vertsize);
+   *(float *)&vb[0] = v0->v.x - ix;
+   *(float *)&vb[1] = v0->v.y - iy;
+   EMIT_VERT (j, vb, vertsize, 2, v0);
 
-   WRITE_CMD(vb, (v1->v.x - ix), GLfloat);
-   WRITE_CMD(vb, (v1->v.y - iy), GLfloat);     
-   vb = savage_send_one_vertex(imesa, v1, vb, 2, vertsize);
+   *(float *)&vb[0] = v1->v.x + ix;
+   *(float *)&vb[1] = v1->v.y + iy;
+   EMIT_VERT (j, vb, vertsize, 2, v1);
 
-   WRITE_CMD(vb, (v1->v.x + ix), GLfloat);
-   WRITE_CMD(vb, (v1->v.y + iy), GLfloat);
-   vb = savage_send_one_vertex(imesa, v1, vb, 2, vertsize);
+   *(float *)&vb[0] = v0->v.x + ix;
+   *(float *)&vb[1] = v0->v.y + iy;
+   EMIT_VERT (j, vb, vertsize, 2, v0);
 
-   WRITE_CMD(vb, (v0->v.x + ix), GLfloat);
-   WRITE_CMD(vb, (v0->v.y + iy), GLfloat);
-   vb = savage_send_one_vertex(imesa, v0, vb, 2, vertsize);
+   *(float *)&vb[0] = v0->v.x - ix;
+   *(float *)&vb[1] = v0->v.y - iy;
+   EMIT_VERT (j, vb, vertsize, 2, v0);
 
-   savageDMACommit (imesa, vb);
+   *(float *)&vb[0] = v1->v.x - ix;
+   *(float *)&vb[1] = v1->v.y - iy;
+   EMIT_VERT (j, vb, vertsize, 2, v1);
+
+   *(float *)&vb[0] = v1->v.x + ix;
+   *(float *)&vb[1] = v1->v.y + iy;
+   EMIT_VERT (j, vb, vertsize, 2, v1);
 } 
  
-static void __inline__ savage_draw_quad( savageContextPtr imesa, 
-					 savageVertexPtr v0, 
-					 savageVertexPtr v1, 
-					 savageVertexPtr v2, 
-					 savageVertexPtr v3 ) 
-{ 
-   GLuint vertsize = imesa->vertex_size; 
-   uint32_t *vb = savageDMAAlloc (imesa, 6 * vertsize + 1); 
-
-   imesa->DrawPrimitiveCmd &=
-       ~(SAVAGE_HW_TRIANGLE_TYPE | SAVAGE_HW_TRIANGLE_CONT);
-   WRITE_CMD(vb, SAVAGE_DRAW_PRIMITIVE(6, imesa->DrawPrimitiveCmd, 0),uint32_t);
- 
-   vb = savage_send_one_vertex(imesa, v0, vb, 0, vertsize);
-   vb = savage_send_one_vertex(imesa, v1, vb, 0, vertsize);
-   vb = savage_send_one_vertex(imesa, v3, vb, 0, vertsize);
-   vb = savage_send_one_vertex(imesa, v1, vb, 0, vertsize);
-   vb = savage_send_one_vertex(imesa, v2, vb, 0, vertsize);
-   vb = savage_send_one_vertex(imesa, v3, vb, 0, vertsize);
-
-   savageDMACommit (imesa, vb);
-} 
-
 /***********************************************************************
  *          Macros for t_dd_tritmp.h to draw basic primitives          *
  ***********************************************************************/
@@ -699,8 +670,6 @@ static void savageRasterPrimitive( GLcontext *ctx, GLuint prim )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
 
-   FLUSH_BATCH( imesa );
-
    /* Update culling */
    if (imesa->raster_primitive != prim)
       imesa->dirty |= SAVAGE_UPLOAD_CTX;
@@ -845,9 +814,7 @@ void savageFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
       imesa->Fallback |= bit;
       if (oldfallback == 0) {
 	 /* the first fallback */
-	 LOCK_HARDWARE(SAVAGE_CONTEXT(ctx));
 	 FLUSH_BATCH( imesa );
-	 UNLOCK_HARDWARE(SAVAGE_CONTEXT(ctx));
 	 _swsetup_Wakeup( ctx );
 	 imesa->RenderIndex = ~0;
       }

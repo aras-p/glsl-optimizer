@@ -296,3 +296,62 @@ int savageDMAClose (savageContextPtr imesa) {
 }
 
 #endif
+
+/* Faked vertex buffers
+ *
+ * This is a dirty hack, knowing that it will go away soon when real
+ * vertex DMA is implemented and eventually moved to the DRM.
+ */
+
+static uint32_t vertex_data[16384]; /* 64KB */
+static drmBuf vertex_buffer = {
+    0,                       /* idx */
+    65536,                   /* total = 64KB */
+    0,                       /* used */
+    (drmAddress)vertex_data  /* address */
+};
+
+void savageFakeVertices (savageContextPtr imesa, drmBufPtr buffer) {
+    GLuint vertexStride = imesa->vertex_size; /* stride in dwords */
+    GLuint vertexSize = imesa->vertex_size; /* the real vertex size in dwords */
+    GLuint nVertices = buffer->used / (vertexStride*4);
+    uint32_t *data = (uint32_t*)buffer->address;
+    uint32_t vertexFormat = imesa->DrawPrimitiveCmd & SAVAGE_HW_SKIPFLAGS;
+    GLuint i, j, left;
+
+    /* we have the monopoly on vertex buffers ;-) */
+    assert (buffer == &vertex_buffer);
+    assert (buffer->used % (vertexStride*4) == 0); /* whole vertices */
+    assert (nVertices % 3 == 0);                   /* triangle lists */
+
+    /* Flush (pseodo) DMA before accessing the BCI directly. */
+    savageDMAFlush(imesa);
+
+    left = nVertices;
+    while (left != 0) {
+	/* Can emit up to 255 vertices (85 triangles) with one command. */
+	GLuint count = left > 255 ? 255 : left;
+	/* Don't go through another buffering mechanism, copy to BCI
+	 * directly. */
+	volatile uint32_t *vb = SAVAGE_GET_BCI_POINTER(imesa,
+						       count*vertexSize + 1);
+
+	WRITE_CMD (vb, SAVAGE_DRAW_PRIMITIVE(
+		       count, SAVAGE_HW_TRIANGLE_LIST | vertexFormat, 0),
+		   uint32_t);
+	for (i = 0; i < count; ++i) {
+	    for (j = 0; j < vertexSize; ++j)
+		WRITE_CMD (vb, data[j], uint32_t);
+	    data += vertexStride;
+	}
+	left -= count;
+    }
+
+    /* clear the vertex buffer for the next set of vertices */
+    vertex_buffer.used = 0;
+}
+
+drmBufPtr savageFakeGetBuffer (savageContextPtr imesa) {
+    assert (vertex_buffer.used == 0); /* has been flushed */
+    return &vertex_buffer;
+}

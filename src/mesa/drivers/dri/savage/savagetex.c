@@ -791,8 +791,8 @@ int savageUploadTexImages( savageContextPtr imesa, savageTextureObjectPtr t )
    savageUpdateTexLRU( imesa, t );
 
    if (t->dirty_images) {
-      FLUSH_BATCH( imesa );
-      WAIT_IDLE_EMPTY;
+      savageFlushVerticesLocked (imesa);
+      savageDmaFinish (imesa);
       if (SAVAGE_DEBUG & DEBUG_VERBOSE_LRU)
 	 fprintf(stderr, "*");
 

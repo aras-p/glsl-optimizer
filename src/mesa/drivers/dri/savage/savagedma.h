@@ -47,4 +47,9 @@ void savageDMACommit (savageContextPtr imesa, void *end);
 void savageDMAFlush (savageContextPtr imesa);
 int savageDMAInit (savageContextPtr imesa);
 int savageDMAClose (savageContextPtr);
+
+/* faked implementation of vertex buffers */
+void savageFakeVertices (savageContextPtr imesa, drmBufPtr buffer);
+drmBufPtr savageFakeGetBuffer (savageContextPtr imesa);
+
 #endif

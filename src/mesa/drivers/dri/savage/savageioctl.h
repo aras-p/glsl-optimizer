@@ -68,5 +68,32 @@ GLuint savageGetPhyAddress(savageContextPtr imesa,void * pointer);
 int  savageFreeDMABuffer(savageContextPtr, drm_savage_alloc_cont_mem_t*);
 #endif
 
-#define FLUSH_BATCH(imesa) savageDMAFlush(imesa)
+#define FLUSH_BATCH(imesa) do { \
+    if (imesa->vertex_dma_buffer) savageFlushVertices(imesa); \
+} while (0)
+
+static __inline
+uint32_t *savageAllocDmaLow( savageContextPtr imesa, GLuint bytes )
+{
+   uint32_t *head;
+
+   if (!imesa->vertex_dma_buffer) {
+      LOCK_HARDWARE(imesa);
+      imesa->vertex_dma_buffer = savageFakeGetBuffer (imesa);
+      UNLOCK_HARDWARE(imesa);
+   } else if (imesa->vertex_dma_buffer->used + bytes >
+	      imesa->vertex_dma_buffer->total) {
+      LOCK_HARDWARE(imesa);
+      savageFlushVerticesLocked( imesa );
+      imesa->vertex_dma_buffer = savageFakeGetBuffer (imesa);
+      UNLOCK_HARDWARE(imesa);
+   }
+
+   head = (uint32_t *)((uint8_t *)imesa->vertex_dma_buffer->address +
+		       imesa->vertex_dma_buffer->used);
+
+   imesa->vertex_dma_buffer->used += bytes;
+   return head;
+}
+
 #endif
