@@ -188,7 +188,7 @@ static void Init( void )
       "END";
 
    if (!glutExtensionSupported("GL_NV_vertex_program")) {
-      printf("Sorry, this program requires GL_NV_vertex_program");
+      printf("Sorry, this program requires GL_NV_vertex_program\n");
       exit(1);
    }
 

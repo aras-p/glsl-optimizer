@@ -1,4 +1,4 @@
-/* $Id: getprocaddress.c,v 1.2 2001/11/21 17:21:41 brianp Exp $ */
+/* $Id: getprocaddress.c,v 1.3 2002/10/15 14:43:55 brianp Exp $ */
 
 /*
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
@@ -1024,10 +1024,12 @@ static const char *functions[] = {
    "glWindowPos3dvARB",
    "glWindowPos3fvARB",
    "glWindowPos3ivARB",
+   "glWindowPos3svARB",
+   "-EXT_stencil_two_side",
+   "glActiveStencilFaceEXT",
 
    NULL
 };
-
 
 
 static int

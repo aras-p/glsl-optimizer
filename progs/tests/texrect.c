@@ -1,4 +1,4 @@
-/* $Id: texrect.c,v 1.1 2002/06/15 03:08:19 brianp Exp $ */
+/* $Id: texrect.c,v 1.2 2002/10/15 14:43:55 brianp Exp $ */
 
 /* GL_NV_texture_rectangle test
  *
@@ -7,6 +7,7 @@
  */
 
 
+#define GL_GLEXT_PROTOTYPES
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
