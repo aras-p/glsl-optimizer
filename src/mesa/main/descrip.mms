@@ -13,7 +13,8 @@ VPATH = RCS
 
 INCDIR = [-.include]
 LIBDIR = [-.lib]
-CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
+CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)\
+	/define=("__FUNCTION__=""<has no meaning on OpenVMS>""")
 
 CORE_SOURCES =accum.c \
 	api_loopback.c \
@@ -146,12 +147,10 @@ TNLDD_SOURCES=[.tnl_dd]t_dd.c \
 
 MATH_SOURCES=[.math]m_debug_xform.c \
 [.math]m_debug_norm.c \
-[.math]m_debug_vertex.c \
 [.math]m_eval.c \
 [.math]m_matrix.c \
 [.math]m_translate.c \
 [.math]m_vector.c \
-[.math]m_vertices.c \
 [.math]m_xform.c  
 
 CACHE_SOURCES=[.array_cache]ac_context.c \
@@ -291,12 +290,10 @@ OBJECTS12=[.tnl]t_imm_fixup.obj,\
 
 OBJECTS13=[.math]m_debug_xform.obj,\
 [.math]m_debug_norm.obj,\
-[.math]m_debug_vertex.obj,\
 [.math]m_eval.obj,\
 [.math]m_matrix.obj,\
 [.math]m_translate.obj,\
 [.math]m_vector.obj,\
-[.math]m_vertices.obj,\
 [.math]m_xform.obj 
 
 OBJECTS14=[.array_cache]ac_context.obj,\
@@ -519,8 +516,6 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.math]m_debug_xform.obj [.math]m_debug_xform.c
 [.math]m_debug_norm.obj : [.math]m_debug_norm.c
 	$(CC) $(CFLAGS) /obj=[.math]m_debug_norm.obj [.math]m_debug_norm.c
-[.math]m_debug_vertex.obj : [.math]m_debug_vertex.c
-	$(CC) $(CFLAGS) /obj=[.math]m_debug_vertex.obj [.math]m_debug_vertex.c
 [.math]m_eval.obj : [.math]m_eval.c
 	$(CC) $(CFLAGS) /obj=[.math]m_eval.obj [.math]m_eval.c
 [.math]m_matrix.obj : [.math]m_matrix.c
@@ -529,8 +524,6 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.math]m_translate.obj [.math]m_translate.c
 [.math]m_vector.obj : [.math]m_vector.c
 	$(CC) $(CFLAGS) /obj=[.math]m_vector.obj [.math]m_vector.c
-[.math]m_vertices.obj : [.math]m_vertices.c
-	$(CC) $(CFLAGS) /obj=[.math]m_vertices.obj [.math]m_vertices.c
 [.math]m_xform.obj : [.math]m_xform.c
 	$(CC) $(CFLAGS) /obj=[.math]m_xform.obj [.math]m_xform.c
 [.array_cache]ac_context.obj : [.array_cache]ac_context.c
