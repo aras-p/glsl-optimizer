@@ -11,6 +11,7 @@ INCLUDE_DIRS = \
 	-I$(TOP)/include \
 	-I.. \
 	-I../main \
+	-I../math \
 	-I../glapi \
 	-I../tnl
 

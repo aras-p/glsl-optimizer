@@ -47,6 +47,7 @@
  *   FETCH_CI_PIXEL(CI, P)  to fetch a pixel index from pixel P
  */
 
+#include "macros.h"
 
 #ifdef STORE_RGBA_PIXEL
 
