@@ -16,7 +16,7 @@ default: $(TOP)/configs/current
 
 
 clean:
-	@for dir in $(SUBDIRS) ; do \
+	@for dir in $(SUBDIRS) tests ; do \
 		if [ -d $$dir ] ; then \
 			(cd $$dir ; make clean) ; \
 		fi \
