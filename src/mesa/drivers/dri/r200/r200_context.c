@@ -129,7 +129,6 @@ static const char * const card_extensions[] =
     "GL_ARB_texture_env_dot3",
     "GL_ARB_texture_mirrored_repeat",
     "GL_ARB_vertex_buffer_object",
-    "GL_EXT_blend_logic_op",
     "GL_EXT_blend_minmax",
     "GL_EXT_blend_subtract",
     "GL_EXT_secondary_color",
@@ -402,6 +401,10 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    driInitExtensions( ctx, card_extensions, GL_TRUE );
    if (rmesa->r200Screen->drmSupportsCubeMaps)
       _mesa_enable_extension( ctx, "GL_ARB_texture_cube_map" );
+   if (rmesa->r200Screen->drmSupportsBlendColor) {
+      _mesa_enable_extension( ctx, "GL_EXT_blend_equation_separate" );
+      _mesa_enable_extension( ctx, "GL_EXT_blend_func_separate" );
+   }
 
 #if 0
    r200InitDriverFuncs( ctx );

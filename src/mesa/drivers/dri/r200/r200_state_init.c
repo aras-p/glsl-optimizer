@@ -218,7 +218,10 @@ void r200InitState( r200ContextPtr rmesa )
       
    /* Allocate state buffers:
     */
-   ALLOC_STATE( ctx, always, CTX_STATE_SIZE, "CTX/context", 0 );
+   if (rmesa->r200Screen->drmSupportsBlendColor)
+      ALLOC_STATE( ctx, always, CTX_STATE_SIZE_NEWDRM, "CTX/context", 0 );
+   else
+      ALLOC_STATE( ctx, always, CTX_STATE_SIZE_OLDDRM, "CTX/context", 0 );
    ALLOC_STATE( set, always, SET_STATE_SIZE, "SET/setup", 0 );
    ALLOC_STATE( lin, always, LIN_STATE_SIZE, "LIN/line", 0 );
    ALLOC_STATE( msk, always, MSK_STATE_SIZE, "MSK/mask", 0 );
@@ -280,6 +283,8 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.ctx.cmd[CTX_CMD_0] = cmdpkt(RADEON_EMIT_PP_MISC);
    rmesa->hw.ctx.cmd[CTX_CMD_1] = cmdpkt(RADEON_EMIT_PP_CNTL);
    rmesa->hw.ctx.cmd[CTX_CMD_2] = cmdpkt(RADEON_EMIT_RB3D_COLORPITCH);
+   if (rmesa->r200Screen->drmSupportsBlendColor)
+      rmesa->hw.ctx.cmd[CTX_CMD_3] = cmdpkt(R200_EMIT_RB3D_BLENDCOLOR);
    rmesa->hw.lin.cmd[LIN_CMD_0] = cmdpkt(RADEON_EMIT_RE_LINE_PATTERN);
    rmesa->hw.lin.cmd[LIN_CMD_1] = cmdpkt(RADEON_EMIT_SE_LINE_WIDTH);
    rmesa->hw.msk.cmd[MSK_CMD_0] = cmdpkt(RADEON_EMIT_RB3D_STENCILREFMASK);
@@ -367,8 +372,18 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.ctx.cmd[CTX_RE_SOLID_COLOR] = 0x00000000;
 
    rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = (R200_COMB_FCN_ADD_CLAMP |
-					    (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
-					    (R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT));
+				(R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+				(R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT));
+
+   if (rmesa->r200Screen->drmSupportsBlendColor) {
+      rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] = 0x00000000;
+      rmesa->hw.ctx.cmd[CTX_RB3D_ABLENDCNTL] = (R200_COMB_FCN_ADD_CLAMP |
+				(R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+				(R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT));
+      rmesa->hw.ctx.cmd[CTX_RB3D_CBLENDCNTL] = (R200_COMB_FCN_ADD_CLAMP |
+				(R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
+				(R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT));
+   }
 
    rmesa->hw.ctx.cmd[CTX_RB3D_DEPTHOFFSET] =
       rmesa->r200Screen->depthOffset + rmesa->r200Screen->fbLocation;

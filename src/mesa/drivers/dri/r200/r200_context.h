@@ -213,7 +213,12 @@ struct r200_state_atom {
 #define CTX_RB3D_COLOROFFSET  11
 #define CTX_CMD_2             12 /* why */
 #define CTX_RB3D_COLORPITCH   13 /* why */
-#define CTX_STATE_SIZE        14
+#define CTX_STATE_SIZE_OLDDRM 14
+#define CTX_CMD_3             14
+#define CTX_RB3D_BLENDCOLOR   15
+#define CTX_RB3D_ABLENDCNTL   16
+#define CTX_RB3D_CBLENDCNTL   17
+#define CTX_STATE_SIZE_NEWDRM 18
 
 #define SET_CMD_0               0
 #define SET_SE_CNTL             1
