@@ -337,6 +337,7 @@ static GLint fxDDGetParameteri(const GLcontext *ctx, GLint param)
     fprintf(stderr,"fx Driver: internal error in fxDDGetParameteri(): %x\n",param);
     fxCloseHardware();
     exit(-1);
+    return 0;
   }
 }
 
@@ -408,6 +409,9 @@ void fxDDInitExtensions( GLcontext *ctx )
 
    gl_extensions_add( ctx, DEFAULT_ON, "3DFX_set_global_palette", 0 );
    gl_extensions_add( ctx, DEFAULT_ON, "GL_FXMESA_global_texture_lod_bias", 0);
+   
+   if(fxMesa->haveTwoTMUs)
+      gl_extensions_add( ctx, DEFAULT_ON, "GL_EXT_texture_env_add", 0);
    
    if (!fxMesa->emulateTwoTMUs) 
       gl_extensions_disable( ctx, "GL_ARB_multitexture" );
