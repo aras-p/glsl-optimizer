@@ -1,8 +1,8 @@
-/* $Id: svgamesa.c,v 1.3 2000/01/23 17:49:54 brianp Exp $ */
+/* $Id: svgamesa.c,v 1.4 2000/01/25 00:03:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.2
+ * Version:  3.3
  * Copyright (C) 1995-2000  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
@@ -162,28 +162,33 @@ int SVGAMesaInit( int GraphMode )
    SVGAlog(cbuf);
    sprintf(cbuf,"SVGAMesaInit: done. (Mode %d)",GraphMode);
    SVGAlog(cbuf);
-#endif    
+#endif
+
+   SVGABuffer.DrawBuffer = SVGABuffer.BackBuffer;
+   SVGABuffer.ReadBuffer = SVGABuffer.BackBuffer;
+
    return 0;
 }   
 
 int SVGAMesaClose( void )
 {  
- vga_setmode(TEXT); 
- free(SVGABuffer.FrontBuffer);
- free(SVGABuffer.BackBuffer);
- return 0;
+   vga_setmode(TEXT); 
+   free(SVGABuffer.FrontBuffer);
+   free(SVGABuffer.BackBuffer);
+   return 0;
 }
 
 void SVGAMesaSetCI(int ndx, GLubyte red, GLubyte green, GLubyte blue)
 {
- if (ndx<256) vga_setpalette(ndx, red>>2, green>>2, blue>>2);
+   if (ndx<256)
+      vga_setpalette(ndx, red>>2, green>>2, blue>>2);
 }
 
 /**********************************************************************/
 /*****                 Miscellaneous functions                    *****/
 /**********************************************************************/
 
-static void copy_buffer( GLubyte * buffer) {
+static void copy_buffer( const GLubyte * buffer) {
  int size = SVGABuffer.BufferSize, page = 0;
 
 #ifdef SVGA_DEBUG
@@ -209,27 +214,59 @@ static void get_buffer_size( GLcontext *ctx, GLuint *width, GLuint *height )
    *height = SVGAMesa->height = vga_getydim();
 }
 
-static GLboolean set_buffer( GLcontext *ctx, GLenum buffer )
+static GLboolean set_draw_buffer( GLcontext *ctx, GLenum buffer )
 {
- void * tmpptr;
- 
-   if (buffer == GL_FRONT_LEFT)
-   {
-/*    vga_waitretrace(); */
-    copy_buffer(SVGABuffer.FrontBuffer);
-    tmpptr=SVGABuffer.BackBuffer;
-    SVGABuffer.BackBuffer=SVGABuffer.FrontBuffer;
-    SVGABuffer.FrontBuffer=tmpptr;
-    return GL_TRUE;
+   if (buffer == GL_FRONT_LEFT) {
+      SVGABuffer.DrawBuffer = SVGABuffer.FrontBuffer;
+#if 0
+      /*    vga_waitretrace(); */
+      void * tmpptr;
+      copy_buffer(SVGABuffer.FrontBuffer);
+      tmpptr=SVGABuffer.BackBuffer;
+      SVGABuffer.BackBuffer=SVGABuffer.FrontBuffer;
+      SVGABuffer.FrontBuffer=tmpptr;
+#endif
+      return GL_TRUE;
    }    
-   else if (buffer == GL_BACK_LEFT)
-   {
-/*    vga_waitretrace(); */
-    copy_buffer(SVGABuffer.BackBuffer);
-    return GL_TRUE;
-   }    
+   else if (buffer == GL_BACK_LEFT) {
+      SVGABuffer.DrawBuffer = SVGABuffer.BackBuffer;
+#if 0
+      /*    vga_waitretrace(); */
+      copy_buffer(SVGABuffer.BackBuffer);
+#endif
+      return GL_TRUE;
+   }
    else
       return GL_FALSE;
+}
+
+
+static void set_read_buffer( GLcontext *ctx, GLframebuffer *colorBuffer,
+                             GLenum buffer )
+{
+   /* We can ignore colorBuffer since we don't support a MakeCurrentRead()
+    * function.
+    */
+   (void) colorBuffer;
+
+   if (buffer == GL_FRONT_LEFT) {
+      SVGABuffer.ReadBuffer = SVGABuffer.FrontBuffer;
+#if 0
+      void * tmpptr;
+      /*    vga_waitretrace(); */
+      copy_buffer(SVGABuffer.FrontBuffer);
+      tmpptr=SVGABuffer.BackBuffer;
+      SVGABuffer.BackBuffer=SVGABuffer.FrontBuffer;
+      SVGABuffer.FrontBuffer=tmpptr;
+#endif
+   }
+   else if (buffer == GL_BACK_LEFT) {
+      SVGABuffer.ReadBuffer = SVGABuffer.BackBuffer;
+#if 0
+      /*    vga_waitretrace(); */
+      copy_buffer(SVGABuffer.BackBuffer);
+#endif
+   }
 }
 
 /**********************************************************************/
@@ -243,8 +280,9 @@ static void svgamesa_update_state( GLcontext *ctx )
 
    ctx->Driver.UpdateState = svgamesa_update_state;
 
-   ctx->Driver.SetBuffer = set_buffer;
    ctx->Driver.GetBufferSize = get_buffer_size;
+   ctx->Driver.SetDrawBuffer = set_draw_buffer;
+   ctx->Driver.SetReadBuffer = set_read_buffer;
 
    ctx->Driver.PointsFunc = NULL;
    ctx->Driver.LineFunc = NULL;
@@ -385,7 +423,11 @@ SVGAMesaContext SVGAMesaCreateContext( GLboolean doubleBuffer )
                                     NULL,  /* share list context */
                                     (void *) ctx, GL_TRUE );
 
-   ctx->gl_buffer = gl_create_framebuffer( ctx->gl_vis );
+   ctx->gl_buffer = gl_create_framebuffer( ctx->gl_vis,
+                                           ctx->gl_vis->DepthBits > 0,
+                                           ctx->gl_vis->StencilBits > 0,
+                                           ctx->gl_vis->AccumBits > 0,
+                                           ctx->gl_vis->AlphaBits > 0 );
 
    ctx->index = 1;
    ctx->red = ctx->green = ctx->blue = 255;
@@ -445,10 +487,12 @@ SVGAMesaContext SVGAMesaGetCurrentContext( void )
  */
 void SVGAMesaSwapBuffers( void )
 {
- void * tmpptr;
- 
-/* vga_waitretrace(); */
- copy_buffer(SVGABuffer.BackBuffer);
+#if 000
+   void * tmpptr;
+#endif
+
+   /* vga_waitretrace(); */
+   copy_buffer(SVGABuffer.BackBuffer);
 
 #ifndef DEV
    FLUSH_VB( SVGAMesa->gl_ctx, "swap buffers" );
@@ -456,19 +500,21 @@ void SVGAMesaSwapBuffers( void )
 #endif /* DEV */   
    {
 #ifdef SVGA_DEBUG
-   sprintf(cbuf,"SVGAMesaSwapBuffers : Swapping...");
-   SVGAlog(cbuf);
+      sprintf(cbuf,"SVGAMesaSwapBuffers : Swapping...");
+      SVGAlog(cbuf);
 #endif /* SVGA_DEBUG */
-   tmpptr=SVGABuffer.BackBuffer;
-   SVGABuffer.BackBuffer=SVGABuffer.FrontBuffer;
-   SVGABuffer.FrontBuffer=tmpptr;
+#if 000
+      tmpptr=SVGABuffer.BackBuffer;
+      SVGABuffer.BackBuffer=SVGABuffer.FrontBuffer;
+      SVGABuffer.FrontBuffer=tmpptr;
+#endif
 #ifdef SVGA_DEBUG
-   sprintf(cbuf,"SVGAMesaSwapBuffers : WriteBuffer : %p\n"
-                "                      Readbuffer  : %p", \
-		SVGABuffer.BackBuffer, SVGABuffer.FrontBuffer );
-   SVGAlog(cbuf);
+      sprintf(cbuf,"SVGAMesaSwapBuffers : WriteBuffer : %p\n"
+              "                      Readbuffer  : %p", \
+              SVGABuffer.BackBuffer, SVGABuffer.FrontBuffer );
+      SVGAlog(cbuf);
 #endif /* SVGA_DEBUG */
-   }       
+   }
 }
 
 #else /*SVGA*/

@@ -1,8 +1,8 @@
-/* $Id: svgamesa15.h,v 1.2 2000/01/22 20:08:36 brianp Exp $ */
+/* $Id: svgamesa15.h,v 1.3 2000/01/25 00:03:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.2
+ * Version:  3.3
  * Copyright (C) 1995-2000  Brian Paul
  *
  * This library is free software; you can redistribute it and/or

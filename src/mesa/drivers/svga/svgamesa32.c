@@ -1,8 +1,8 @@
-/* $Id: svgamesa32.c,v 1.3 2000/01/23 17:49:54 brianp Exp $ */
+/* $Id: svgamesa32.c,v 1.4 2000/01/25 00:03:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.2
+ * Version:  3.3
  * Copyright (C) 1995-2000  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
@@ -30,11 +30,10 @@
 #ifdef SVGA
 
 #include "svgapix.h"
-
-GLint * intBuffer;
+#include "svgamesa32.h"
 
 #if 0
-inline int RGB2BGR32(int c)
+static inline int RGB2BGR32(int c)
 {
 	asm("rorw  $8, %0\n"	 
 	    "rorl $16, %0\n"	 
@@ -44,29 +43,28 @@ inline int RGB2BGR32(int c)
     return c;
 }
 #else
-int RGB2BGR32(int c)
+static int RGB2BGR32(int c)
 {
    /* XXX this isn't right */
    return c;
 }
 #endif
 
-int __svga_drawpixel32(int x, int y, unsigned long c)
+static void __svga_drawpixel32(int x, int y, unsigned long c)
 {
     unsigned long offset;
 
-    intBuffer=(void *)SVGABuffer.BackBuffer;
+    GLint *intBuffer=(void *)SVGABuffer.DrawBuffer;
     y = SVGAInfo->height-y-1;
     offset = y * SVGAInfo->width + x;
     intBuffer[offset]=c;
-    return 0;
 }
 
-unsigned long __svga_getpixel32(int x, int y)
+static unsigned long __svga_getpixel32(int x, int y)
 {
     unsigned long offset;
 
-    intBuffer=(void *)SVGABuffer.BackBuffer;
+    const GLint *intBuffer=(void *)SVGABuffer.ReadBuffer;
     y = SVGAInfo->height-y-1;
     offset = y * SVGAInfo->width + x;
     return intBuffer[offset];
@@ -94,17 +92,37 @@ GLbitfield __clear32( GLcontext *ctx, GLbitfield mask, GLboolean all,
 {
    int i,j;
    
-   if (mask & GL_COLOR_BUFFER_BIT) {
-    if (all) {
-     intBuffer=(void *)SVGABuffer.BackBuffer;
-     for (i=0;i<SVGABuffer.BufferSize / 4;i++) intBuffer[i]=SVGAMesa->clear_truecolor;
-    } else {
-    for (i=x;i<width;i++)    
-     for (j=y;j<height;j++)    
-      __svga_drawpixel32(i,j,SVGAMesa->clear_truecolor);
-    }	
+   if (mask & DD_FRONT_LEFT_BIT) {
+      if (all) {
+         GLint *intBuffer=(void *)SVGABuffer.FrontBuffer;
+         for (i=0;i<SVGABuffer.BufferSize / 4;i++)
+            intBuffer[i]=SVGAMesa->clear_truecolor;
+      }
+      else {
+         GLubyte *tmp = SVGABuffer.DrawBuffer;
+         SVGABuffer.DrawBuffer = SVGABuffer.FrontBuffer;
+         for (i=x;i<width;i++)    
+            for (j=y;j<height;j++)    
+               __svga_drawpixel32(i,j,SVGAMesa->clear_truecolor);
+         SVGABuffer.DrawBuffer = tmp;
+      }
    }
-   return mask & (~GL_COLOR_BUFFER_BIT);
+   if (mask & DD_BACK_LEFT_BIT) {
+      if (all) {
+         GLint *intBuffer=(void *)SVGABuffer.BackBuffer;
+         for (i=0;i<SVGABuffer.BufferSize / 4;i++)
+            intBuffer[i]=SVGAMesa->clear_truecolor;
+      }
+      else {
+         GLubyte *tmp = SVGABuffer.DrawBuffer;
+         SVGABuffer.DrawBuffer = SVGABuffer.BackBuffer;
+         for (i=x;i<width;i++)    
+            for (j=y;j<height;j++)    
+               __svga_drawpixel32(i,j,SVGAMesa->clear_truecolor);
+         SVGABuffer.DrawBuffer = tmp;
+      }
+   }
+   return mask & (~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
 }
 
 void __write_rgba_span32( const GLcontext *ctx, GLuint n, GLint x, GLint y,

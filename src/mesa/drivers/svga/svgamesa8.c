@@ -1,8 +1,8 @@
-/* $Id: svgamesa8.c,v 1.3 2000/01/23 17:49:54 brianp Exp $ */
+/* $Id: svgamesa8.c,v 1.4 2000/01/25 00:03:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.2
+ * Version:  3.3
  * Copyright (C) 1995-2000  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
@@ -31,25 +31,22 @@
 
 
 #include "svgapix.h"
+#include "svgamesa8.h"
 
-int __svga_drawpixel8(int x, int y, unsigned long c)
+static void __svga_drawpixel8(int x, int y, unsigned long c)
 {
     unsigned long offset;
-
     y = SVGAInfo->height-y-1;
     offset = y * SVGAInfo->linewidth + x;
-    SVGABuffer.BackBuffer[offset]=c;
-    
-    return 0;
+    SVGABuffer.DrawBuffer[offset]=c;
 }
 
-unsigned long __svga_getpixel8(int x, int y)
+static unsigned long __svga_getpixel8(int x, int y)
 {
     unsigned long offset;
-
     y = SVGAInfo->height-y-1;
     offset = y * SVGAInfo->linewidth + x;
-    return SVGABuffer.BackBuffer[offset];
+    return SVGABuffer.ReadBuffer[offset];
 }
 
 void __set_index8( GLcontext *ctx, GLuint index )
@@ -67,18 +64,33 @@ GLbitfield __clear8( GLcontext *ctx, GLbitfield mask, GLboolean all,
 {
    int i,j;
    
-   if (mask & GL_COLOR_BUFFER_BIT) {
-   
-    if (all) 
-    { 
-     memset(SVGABuffer.BackBuffer,SVGAMesa->clear_index,SVGABuffer.BufferSize);
-    } else {
-    for (i=x;i<width;i++)    
-     for (j=y;j<height;j++)    
-      __svga_drawpixel8(i,j,SVGAMesa->clear_index);
-    }
-   }    
-   return mask & (~GL_COLOR_BUFFER_BIT);
+   if (mask & DD_FRONT_LEFT_BIT) {
+      if (all) { 
+         memset(SVGABuffer.FrontBuffer, SVGAMesa->clear_index, SVGABuffer.BufferSize);
+      }
+      else {
+         GLubyte *tmp = SVGABuffer.DrawBuffer;
+         SVGABuffer.DrawBuffer = SVGABuffer.FrontBuffer;
+         for (i=x;i<width;i++)
+            for (j=y;j<height;j++)
+               __svga_drawpixel8(i,j,SVGAMesa->clear_index);
+         SVGABuffer.DrawBuffer = tmp;
+      }
+   }
+   if (mask & DD_BACK_LEFT_BIT) {
+      if (all) { 
+         memset(SVGABuffer.BackBuffer, SVGAMesa->clear_index, SVGABuffer.BufferSize);
+      }
+      else {
+         GLubyte *tmp = SVGABuffer.DrawBuffer;
+         SVGABuffer.DrawBuffer = SVGABuffer.BackBuffer;
+         for (i=x;i<width;i++)
+            for (j=y;j<height;j++)
+               __svga_drawpixel8(i,j,SVGAMesa->clear_index);
+         SVGABuffer.DrawBuffer = tmp;
+      }
+   }
+   return mask & (~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
 }
 
 void __write_ci32_span8( const GLcontext *ctx, GLuint n, GLint x, GLint y,
