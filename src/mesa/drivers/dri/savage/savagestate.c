@@ -1556,6 +1556,17 @@ static void savageDDInitState_s4( savageContextPtr imesa )
     imesa->regs.s4.texCtrl[1].ni.texXprEn              = GL_TRUE;
     imesa->regs.s4.texCtrl[0].ni.dMax                  = 0x0f;
     imesa->regs.s4.texCtrl[1].ni.dMax                  = 0x0f;
+    /* programm a valid tex address, in case texture state is emitted
+     * in wrong order. */
+    if (imesa->lastTexHeap == 2 && imesa->savageScreen->textureSize[1]) {
+	/* AGP textures available */
+	imesa->regs.s4.texAddr[0].ui = imesa->savageScreen->textureOffset[1]|3;
+	imesa->regs.s4.texAddr[1].ui = imesa->savageScreen->textureOffset[1]|3;
+    } else {
+	/* no AGP textures available, use local */
+	imesa->regs.s4.texAddr[0].ui = imesa->savageScreen->textureOffset[0]|2;
+	imesa->regs.s4.texAddr[1].ui = imesa->savageScreen->textureOffset[0]|2;
+    }
     imesa->regs.s4.drawLocalCtrl.ni.drawUpdateEn     = GL_TRUE;
     imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode    = SAM_One;
     imesa->regs.s4.drawLocalCtrl.ni.wrZafterAlphaTst = GL_FALSE;
@@ -1621,6 +1632,15 @@ static void savageDDInitState_s3d( savageContextPtr imesa )
 
     imesa->regs.s3d.texCtrl.ni.dBias          = 0x08;
     imesa->regs.s3d.texCtrl.ni.texXprEn       = GL_TRUE;
+    /* programm a valid tex address, in case texture state is emitted
+     * in wrong order. */
+    if (imesa->lastTexHeap == 2 && imesa->savageScreen->textureSize[1]) {
+	/* AGP textures available */
+	imesa->regs.s3d.texAddr.ui = imesa->savageScreen->textureOffset[1]|3;
+    } else {
+	/* no AGP textures available, use local */
+	imesa->regs.s3d.texAddr.ui = imesa->savageScreen->textureOffset[0]|2;
+    }
 
     imesa->regs.s3d.zBufCtrl.ni.drawUpdateEn     = GL_TRUE;
     imesa->regs.s3d.zBufCtrl.ni.wrZafterAlphaTst = GL_FALSE;
