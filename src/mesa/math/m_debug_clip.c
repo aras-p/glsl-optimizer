@@ -1,8 +1,8 @@
-/* $Id: m_debug_clip.c,v 1.4 2002/10/29 20:28:59 brianp Exp $ */
+/* $Id: m_debug_clip.c,v 1.5 2002/10/30 20:25:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.0
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -313,7 +313,7 @@ void _math_test_all_cliptest_functions( char *description )
 
    if ( first_time ) {
       first_time = 0;
-      mesa_profile = getenv( "MESA_PROFILE" );
+      mesa_profile = _mesa_getenv( "MESA_PROFILE" );
    }
 
 #ifdef RUN_DEBUG_BENCHMARK
