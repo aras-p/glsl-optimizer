@@ -59,7 +59,7 @@ extern "C" {
 }	// extern "C"
 
 #include <interface/Screen.h>
-#include "GLView.h"
+#include <GLView.h>
 
 // BeOS component ordering for B_RGBA32 bitmap format
 #if B_HOST_IS_LENDIAN
