@@ -53,8 +53,12 @@ static int
 current_time(void)
 {
    struct timeval tv;
+#ifdef __VMS
+   (void) gettimeofday(&tv, NULL );
+#else
    struct timezone tz;
    (void) gettimeofday(&tv, &tz);
+#endif
    return (int) tv.tv_sec;
 }
 
