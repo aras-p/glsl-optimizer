@@ -702,7 +702,6 @@ static void savageSetTexImages( savageContextPtr imesa,
       log_pitch++;
    
    t->dirty_images = 0;
-   t->bound = 0;
 
    offset = 0;
    for ( i = 0 ; i < SAVAGE_TEX_MAXLEVELS && tObj->Image[0][i] ; i++ ) {
@@ -736,9 +735,6 @@ void savageDestroyTexObj(savageContextPtr imesa, savageTextureObjectPtr t)
 
    if (t->globj)
       t->globj->DriverData = 0;
-
-   if (t->bound)
-      imesa->CurrentTexObj[t->bound - 1] = 0; 
 
    remove_from_list(t);
    free(t);
@@ -1057,7 +1053,7 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
       savageTexSetUnit( t, 0 );
     
    imesa->CurrentTexObj[0] = t;
-   t->bound = 1;
+   t->bound |= 1;
 
    if (t->dirty_images) {
        savageSetTexImages(imesa, tObj);
@@ -1349,7 +1345,7 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
 
    imesa->CurrentTexObj[1] = t;
 
-   t->bound = 2;
+   t->bound |= 2;
 
    if (t->dirty_images) {
        savageSetTexImages(imesa, tObj);
@@ -1561,7 +1557,7 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
 	savageTexSetUnit( t, 0 );
 
     imesa->CurrentTexObj[0] = t;
-    t->bound = 1;
+    t->bound |= 1;
 
     if (t->dirty_images) {
 	savageSetTexImages(imesa, tObj);
@@ -1668,8 +1664,8 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
 static void savageUpdateTextureState_s4( GLcontext *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-   if (imesa->CurrentTexObj[0]) imesa->CurrentTexObj[0]->bound = 0;
-   if (imesa->CurrentTexObj[1]) imesa->CurrentTexObj[1]->bound = 0;
+   if (imesa->CurrentTexObj[0]) imesa->CurrentTexObj[0]->bound &= ~1;
+   if (imesa->CurrentTexObj[1]) imesa->CurrentTexObj[1]->bound &= ~2;
    imesa->CurrentTexObj[0] = 0;
    imesa->CurrentTexObj[1] = 0;   
    FALLBACK (ctx, SAVAGE_FALLBACK_TEXTURE, GL_FALSE);
@@ -1682,7 +1678,7 @@ static void savageUpdateTextureState_s4( GLcontext *ctx )
 static void savageUpdateTextureState_s3d( GLcontext *ctx )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    if (imesa->CurrentTexObj[0]) imesa->CurrentTexObj[0]->bound = 0;
+    if (imesa->CurrentTexObj[0]) imesa->CurrentTexObj[0]->bound &= ~1;
     imesa->CurrentTexObj[0] = 0;
     if (ctx->Texture.Unit[1]._ReallyEnabled) {
 	FALLBACK (ctx, SAVAGE_FALLBACK_TEXTURE, GL_TRUE);
@@ -1838,12 +1834,6 @@ static void savageBindTexture( GLcontext *ctx, GLenum target,
 {
    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
    
-
-   if (imesa->CurrentTexObj[ctx->Texture.CurrentUnit]) {
-      imesa->CurrentTexObj[ctx->Texture.CurrentUnit]->bound = 0;
-      imesa->CurrentTexObj[ctx->Texture.CurrentUnit] = 0;  
-   }
-
    assert( (target != GL_TEXTURE_2D) || (tObj->DriverData != NULL) );
 
    imesa->new_state |= SAVAGE_NEW_TEXTURE;
