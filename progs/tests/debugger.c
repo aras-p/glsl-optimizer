@@ -4,6 +4,7 @@
 
 
 #include <assert.h>
+#include <ctype.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,18 +81,33 @@ find_line_column(const GLubyte *string, const GLubyte *pos,
 #define NV_FRAGMENT_PROGRAM   4
 
 
+struct breakpoint {
+   enum {PIXEL, LINE} type;
+   int x, y;
+   int line;
+   GLboolean enabled;
+};
+
+#define MAX_BREAKPOINTS 100
+static struct breakpoint Breakpoints[MAX_BREAKPOINTS];
+static int NumBreakpoints = 0;
+
+
+
 /*
  * Interactive debugger
  */
 static void Debugger2(GLenum target, GLvoid *data)
 {
-   static GLboolean continueFlag = GL_FALSE;
+   static GLuint skipCount = 0;
    const GLubyte *ln;
    GLint pos, line, column;
    GLint id;
    int progType;
    GLint len;
    GLubyte *program;
+   GLboolean stop;
+   int i;
 
    /* Sigh, GL_VERTEX_PROGRAM_ARB == GL_VERTEX_PROGRAM_NV so it's a bit
     * hard to distinguish between them.
@@ -103,9 +119,11 @@ static void Debugger2(GLenum target, GLvoid *data)
    else
       progType = NV_VERTEX_PROGRAM;         
 
-
-   if (continueFlag)
+   /* Until we hit zero, continue rendering */
+   if (skipCount > 0) {
+      skipCount--;
       return;
+   }
 
    /* Get id of the program and current position */
    switch (progType) {
@@ -146,6 +164,48 @@ static void Debugger2(GLenum target, GLvoid *data)
    /* Get current line number, column, line string */
    ln = find_line_column(program, program + pos, &line, &column);
 
+   /* test breakpoints */   
+   if (NumBreakpoints > 0)
+      stop = GL_FALSE;
+   else
+      stop = GL_TRUE;
+   for (i = 0; i < NumBreakpoints; i++) {
+      if (Breakpoints[i].enabled) {
+         switch (Breakpoints[i].type) {
+            case PIXEL:
+               if (progType == ARB_FRAGMENT_PROGRAM) {
+
+               }
+               else if (progType == NV_FRAGMENT_PROGRAM) {
+                  GLfloat pos[4];
+                  int px, py;
+                  glGetProgramRegisterfvMESA(GL_FRAGMENT_PROGRAM_NV,
+                                             6, (GLubyte *) "f[WPOS]", pos);
+                  px = (int) pos[0];
+                  py = (int) pos[1];
+                  printf("%d, %d\n", px, py);
+                  if (px == Breakpoints[i].x &&
+                      py == Breakpoints[i].y) {
+                     printf("Break at pixel (%d, %d)\n", px, py);
+                     stop = GL_TRUE;
+                  }
+               }
+               break;
+            case LINE:
+               if (line == Breakpoints[i].line) {
+                  /* hit a breakpoint! */
+                  printf("Break at line %d\n", line);
+                  stop = GL_TRUE;
+               }
+               break;
+         }
+      }
+   }
+   if (!stop) {
+      free(program);
+      return;
+   }
+
    printf("%d: %s\n", line, ln);
 
    /* get commands from stdin */
@@ -167,11 +227,15 @@ static void Debugger2(GLenum target, GLvoid *data)
 
       switch (cmd[0]) {
          case 's':
+            /* skip N instructions */
+            i = atoi(cmd + 2);
+            skipCount = i;
+            printf("Skipping %d instructions\n", i);
+            return;
          case 'n':
-            /* step / next */
+            /* next */
             return;
          case 'c':
-            continueFlag = GL_TRUE;
             return;
          case 'd':
             /* dump machine state */
@@ -286,18 +350,65 @@ static void Debugger2(GLenum target, GLvoid *data)
             }
             break;
          case 'b':
-            /* break */
-            /* break at line number */
-            /* break at screen pixel (x,y) */
-            /* break if condition is true */
-            printf("Breakpoints not implemented yet.\n");
+            if (cmd[1] == ' ' && isdigit(cmd[2])) {
+               char *comma = strchr(cmd, ',');
+               if (comma) {
+                  /* break at pixel */
+                  int x = atoi(cmd + 2);
+                  int y = atoi(comma + 1);
+                  if (NumBreakpoints < MAX_BREAKPOINTS) {
+                     Breakpoints[NumBreakpoints].type = PIXEL;
+                     Breakpoints[NumBreakpoints].x = x;
+                     Breakpoints[NumBreakpoints].y = y;
+                     Breakpoints[NumBreakpoints].enabled = GL_TRUE;
+                     NumBreakpoints++;
+                     printf("Breakpoint %d: break at pixel (%d, %d)\n",
+                            NumBreakpoints, x, y);
+                  }
+               }
+               else {
+                  /* break at line */
+                  int l = atoi(cmd + 2);
+                  if (l && NumBreakpoints < MAX_BREAKPOINTS) {
+                     Breakpoints[NumBreakpoints].type = LINE;
+                     Breakpoints[NumBreakpoints].line = l;
+                     Breakpoints[NumBreakpoints].enabled = GL_TRUE;
+                     NumBreakpoints++;
+                     printf("Breakpoint %d: break at line %d\n",
+                            NumBreakpoints, l);
+                  }
+               }
+            }
+            else {
+               /* list breakpoints */
+               printf("Breakpoints:\n");
+               for (i = 0; i < NumBreakpoints; i++) {
+                  switch (Breakpoints[i].type) {
+                  case LINE:
+                     printf("  %d: break at line %d\n",
+                            i + 1, Breakpoints[i].line);
+                     break;
+                  case PIXEL:
+                     printf("  %d: break at pixel (%d, %d)\n",
+                            i + 1, Breakpoints[i].x, Breakpoints[i].y);
+                     break;
+                  }
+               }
+            }
             break;
          case 'h':
             /* help */
             printf("Debugger commands:\n");
-            printf("  s  step         n  next       c continue\n");
-            printf("  d  dump regs    h  help       l list\n");
-            printf("  b  break        p  print\n");
+            printf("  b      list breakpoints\n");
+            printf("  b N    break at line N\n");
+            printf("  b x,y  break at pixel x,y\n");
+            printf("  c      continue execution\n");
+            printf("  d      display register values\n");
+            printf("  h      help\n");
+            printf("  l      list program\n");
+            printf("  n      next instruction\n");
+            printf("  p V    print value V\n");
+            printf("  s N    skip N instructions\n");
             break;
          default:
             printf("Unknown command: %c\n", cmd[0]);
