@@ -840,6 +840,8 @@ alloc_shared_state( GLcontext *ctx )
       goto cleanup;
 #endif
 
+   ss->BufferObjects = _mesa_NewHashTable();
+
    ss->Default1D = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_1D);
    if (!ss->Default1D)
       goto cleanup;
@@ -895,6 +897,9 @@ alloc_shared_state( GLcontext *ctx )
    if (ss->DefaultFragmentProgram)
       _mesa_delete_program(ctx, ss->DefaultFragmentProgram);
 #endif
+   if (ss->BufferObjects)
+      _mesa_DeleteHashTable(ss->BufferObjects);
+
    if (ss->Default1D)
       (*ctx->Driver.DeleteTexture)(ctx, ss->Default1D);
    if (ss->Default2D)
@@ -971,6 +976,8 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    }
    _mesa_DeleteHashTable(ss->Programs);
 #endif
+
+   _mesa_DeleteHashTable(ss->BufferObjects);
 
    _glthread_DESTROY_MUTEX(ss->Mutex);
 

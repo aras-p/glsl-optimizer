@@ -1598,6 +1598,9 @@ struct gl_shared_state
 #endif
    /*@}*/
 
+   /** GL_ARB_vertex_buffer_objects */
+   struct _mesa_HashTable *BufferObjects;
+
    void *DriverData;  /**< Device driver shared state */
 };
 
@@ -1985,6 +1988,7 @@ typedef union node Node;
 
 
 /* This has to be included here. */
+struct gl_buffer_object;
 #include "dd.h"
 
 
@@ -2219,6 +2223,18 @@ struct __GLcontextRec {
 
    /** Core tnl module support */
    struct gl_tnl_module TnlModule;
+
+   /**
+    * \name GL_ARB_vertex_buffer_object state
+    * 
+    * These pointers track the buffer objects last bound via
+    * \c glBindBufferObjectARB.  If it the last bound object ID was 0 for a
+    * given target, the pointer will be \c NULL.
+    */
+   /*@{*/
+   struct gl_buffer_object * ArrayBuffer;
+   struct gl_buffer_object * ElementArrayBuffer;
+   /*@}*/
 
    /**
     * \name Hooks for module contexts.  

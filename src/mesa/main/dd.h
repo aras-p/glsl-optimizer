@@ -829,6 +829,39 @@ struct dd_function_table {
     */
    void (*UnlockArraysEXT)( GLcontext *ctx );
    /*@}*/
+
+
+   /**
+    * \name Vertex buffer object functions
+    */
+   /*@{*/
+
+   void (*BindBuffer)( GLcontext *ctx, GLenum target,
+		       struct gl_buffer_object *obj );
+
+   struct gl_buffer_object * (*NewBufferObject)( GLcontext *ctx, int buffer,
+						 GLenum target );
+   
+   void (*DeleteBuffer)( GLcontext *ctx, struct gl_buffer_object *obj );
+
+   void (*BufferData)( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
+		       const GLvoid *data, GLenum usage,
+		       struct gl_buffer_object *obj );
+
+   void (*BufferSubData)( GLcontext *ctx, GLenum target, GLintptrARB offset,
+			  GLsizeiptrARB size, const GLvoid *data,
+			  struct gl_buffer_object *obj );
+
+   void (*GetBufferSubData)( GLcontext *ctx, GLenum target,
+			     GLintptrARB offset, GLsizeiptrARB size,
+			     GLvoid *data, struct gl_buffer_object *obj );
+
+   void * (*MapBuffer)( GLcontext *ctx, GLenum target, GLenum access,
+			struct gl_buffer_object *obj );
+
+   GLboolean (*UnmapBuffer)( GLcontext *ctx, GLenum target,
+			     struct gl_buffer_object *obj );
+   /*@}*/
 };
 
 
