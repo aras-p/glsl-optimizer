@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.68 2002/11/14 16:14:52 brianp Exp $
+# $Id: Make-config,v 1.69 2003/04/07 14:45:53 brianp Exp $
 
 MESA_MAJOR=5
 MESA_MINOR=1
@@ -255,6 +255,28 @@ gcc:
 	"CCFLAGS = $(CFLAGS)" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lX11 -lm"
+
+gcc-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
+	"CC = gcc" \
+	"CPLUSPLUS = g++" \
+	"CFLAGS = -fPIC -O3" \
+	"CCFLAGS = $(CFLAGS)" \
+	"MAKELIB = ../bin/mklib.gcc-sl" \
+	"APP_LIB_DEPS = -lX11 -lm"
+
+#special hidden target, to make a shared lib for ONLY Mesa "core"
+gcc-mesa-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 libmesa \
+	"MESA_LIB = libMesa.so" \
+	"CC = gcc" \
+	"CFLAGS = -fPIC -O3" \
+	"MAKELIB = ../bin/mklib.gcc-sl" \
 
 hpux9:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \

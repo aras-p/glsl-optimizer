@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.75 2003/03/11 15:42:48 brianp Exp $
+# $Id: Makefile.X11,v 1.76 2003/04/07 14:45:52 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -47,6 +47,7 @@ default:
 	@echo "  make freebsd              for FreeBSD systems with GCC"
 	@echo "  make freebsd-386          for FreeBSD systems with GCC, w/ Intel assembly"
 	@echo "  make gcc                  for a generic system with GCC"
+	@echo "  make gcc-sl               for a generic system with GCC for shared libs"
 	@echo "  make hpux9                for HP systems with HPUX 9.x"
 	@echo "  make hpux9-sl             for HP systems with HPUX 9.x, make shared libs"
 	@echo "  make hpux9-gcc            for HP systems with HPUX 9.x using GCC"
@@ -138,7 +139,7 @@ default:
 # XXX we may have to split up this group of targets into those that
 # have a C++ compiler and those that don't for the SI-GLU library.
 
-aix aix-sl amix bsdos bsdos4 darwin dgux freebsd freebsd-386 gcc \
+aix aix-sl amix bsdos bsdos4 darwin dgux freebsd freebsd-386 gcc gcc-sl \
 hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
 irix4 irix5 irix5-gcc irix5-dso \
@@ -172,6 +173,9 @@ sunos5-x11r6-gcc-sl ultrix-gcc unicos unixware uwin vistra:
 	if [ -d book     ] ; then cd book     ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
 
+gcc-mesa-sl:
+	if [ -d src      ] ; then cd src      ; $(MAKE) -f Makefile.X11 $@ ; fi
+
 irix6-o32 irix6-o32-dso irix6-n32 irix6-n32-dso irix6-gcc-n32-sl irix-debug:
 	-mkdir lib32
 	if [ -d src      ] ; then touch src/depend      ; fi
@@ -187,6 +191,7 @@ irix6-o32 irix6-o32-dso irix6-n32 irix6-n32-dso irix6-gcc-n32-sl irix-debug:
 	if [ -d book     ] ; then cd book     ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
 
+CORE_OBJECTS = $(CORE_SOURCES:.c=.o)
 
 irix6-64 irix6-64-dso:
 	-mkdir lib64
@@ -203,10 +208,18 @@ irix6-64 irix6-64-dso:
 	if [ -d book     ] ; then cd book     ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d widgets-sgi ] ; then cd widgets-sgi; $(MAKE) -f Makefile.X11 $@ ; fi
 
+CORE_OBJECTS = $(CORE_SOURCES:.c=.o)
 
 amiwin:
 	bin/mklib.amiwin
 
+# Make an optional library with _just_ core objects
+libmesa:	$(LIBDIR)/$(MESA_LIB)
+	if [ ${MESA_LIB} ] ; then $(MAKELIB) $(MESA_LIB) $(MESA_MAJOR) $(MESA_MINOR) $(GL_TINY) $(CORE_OBJECTS) ; fi
+	if [ ${MESA_LIB} ] ; then rm -f $(LIBDIR)/$(MESA_LIB)* ; fi
+	if [ ${MESA_LIB} ] ; then mv $(MESA_LIB)* $(LIBDIR) ; fi
+
+$(LIBDIR)/$(MESA_LIB):	$(CORE_OBJECTS)
 
 beos-r4:
 	-mkdir lib
@@ -342,6 +355,13 @@ DEMO_NAME = MesaDemos-5.1
 GLU_NAME = MesaGLU-5.1
 GLUT_NAME = GLUT-3.7
 
+# Make an optional library with _just_ core objects
+libmesa:	$(LIBDIR)/$(MESA_LIB)
+	if [ ${MESA_LIB} ] ; then $(MAKELIB) $(MESA_LIB) $(MESA_MAJOR) $(MESA_MINOR) $(GL_TINY) $(CORE_OBJECTS) ; fi
+	if [ ${MESA_LIB} ] ; then rm -f $(LIBDIR)/$(MESA_LIB)* ; fi
+	if [ ${MESA_LIB} ] ; then mv $(MESA_LIB)* $(LIBDIR) ; fi
+
+$(LIBDIR)/$(MESA_LIB):	$(CORE_OBJECTS)
 
 LIB_FILES =	\
 	$(DIRECTORY)/Makefile*						\

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.77 2003/03/29 17:07:03 brianp Exp $
+# $Id: Makefile.X11,v 1.78 2003/04/07 14:45:55 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -179,6 +179,7 @@ OBJECTS = $(ASM_SOURCES:.S=.o) \
 	$(DRIVER_SOURCES:.c=.o) \
 	$(ADDITIONAL_OBJ)
 
+CORE_OBJECTS = $(CORE_SOURCES:.c=.o)
 
 OSMESA_SOURCES = OSmesa/osmesa.c
 OSMESA_OBJECTS = OSmesa/osmesa.o
@@ -237,6 +238,13 @@ $(LIBDIR)/$(OSMESA_LIB): $(OSMESA_OBJECTS)
 	if [ ${OSMESA_LIB} ] ; then rm -f $(LIBDIR)/$(OSMESA_LIB)* ; fi
 	if [ ${OSMESA_LIB} ] ; then mv $(OSMESA_LIB)* $(LIBDIR) ; fi
 
+# Make an optional library with _just_ core objects
+libmesa:	$(LIBDIR)/$(MESA_LIB)
+	if [ ${MESA_LIB} ] ; then $(MAKELIB) $(MESA_LIB) $(MESA_MAJOR) $(MESA_MINOR) $(GL_TINY) $(CORE_OBJECTS) ; fi
+	if [ ${MESA_LIB} ] ; then rm -f $(LIBDIR)/$(MESA_LIB)* ; fi
+	if [ ${MESA_LIB} ] ; then mv $(MESA_LIB)* $(LIBDIR) ; fi
+
+$(LIBDIR)/$(MESA_LIB):	$(CORE_OBJECTS)
 
 include ../Make-config
 
