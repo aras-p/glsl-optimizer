@@ -161,7 +161,7 @@ static GLuint r200_mba_z32( r200ContextPtr rmesa,
 				       GLint x, GLint y )
 {
    GLuint pitch = rmesa->r200Screen->frontPitch;
-   GLuint b = ((y & 0x3FF) >> 4) * ((pitch & 0xFFF) >> 5) + ((x & 0x3FF) >> 5);
+   GLuint b = ((y & 0x7FF) >> 4) * ((pitch & 0xFFF) >> 5) + ((x & 0x7FF) >> 5);
    GLuint a = 
       (BIT(x,0) << 2) |
       (BIT(y,0) << 3) |
@@ -180,7 +180,7 @@ static GLuint r200_mba_z32( r200ContextPtr rmesa,
 static GLuint r200_mba_z16( r200ContextPtr rmesa, GLint x, GLint y )
 {
    GLuint pitch = rmesa->r200Screen->frontPitch;
-   GLuint b = ((y & 0x3FF) >> 4) * ((pitch & 0xFFF) >> 6) + ((x & 0x3FF) >> 6);
+   GLuint b = ((y & 0x7FF) >> 4) * ((pitch & 0xFFF) >> 6) + ((x & 0x7FF) >> 6);
    GLuint a = 
       (BIT(x,0) << 1) |
       (BIT(y,0) << 2) |
