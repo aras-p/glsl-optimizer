@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.61 2000/11/10 15:32:07 brianp Exp $ */
+/* $Id: teximage.c,v 1.62 2000/11/13 15:25:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2189,7 +2189,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
 
    texUnit = &(ctx->Texture.Unit[ctx->Texture.CurrentUnit]);
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   if (!texObj || !texImage ||
+   if (!texObj ||
        target == GL_PROXY_TEXTURE_1D ||
        target == GL_PROXY_TEXTURE_2D ||
        target == GL_PROXY_TEXTURE_3D) {
