@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.6 2000/03/31 18:17:51 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.7 2000/04/03 15:45:34 brianp Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
@@ -268,6 +268,8 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
 {
    const char *ext = glXQueryExtensionsString(dpy, vInfo->screen);
 
+   memset(attribs, 0, sizeof(struct visual_attribs));
+
    attribs->id = vInfo->visualid;
 #if defined(__cplusplus) || defined(c_plusplus)
    attribs->klass = vInfo->c_class;
@@ -281,7 +283,8 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
    attribs->colormapSize = vInfo->colormap_size;
    attribs->bitsPerRGB = vInfo->bits_per_rgb;
 
-   glXGetConfig(dpy, vInfo, GLX_USE_GL, &attribs->supportsGL);
+   if (glXGetConfig(dpy, vInfo, GLX_USE_GL, &attribs->supportsGL) != 0)
+      return;
    glXGetConfig(dpy, vInfo, GLX_BUFFER_SIZE, &attribs->bufferSize);
    glXGetConfig(dpy, vInfo, GLX_LEVEL, &attribs->level);
    glXGetConfig(dpy, vInfo, GLX_RGBA, &attribs->rgba);
@@ -337,23 +340,23 @@ print_visual_attribs_verbose(const struct visual_attribs *attribs)
           attribs->accumBlueSize, attribs->accumAlphaSize);
    printf("    multiSample=%d  multiSampleBuffers=%d\n",
           attribs->numSamples, attribs->numMultisample);
-   printf("    %s\n", attribs->transparent ? "Transparent." : "Opaque.");
 #ifdef GLX_EXT_visual_rating
    if (attribs->visualCaveat == GLX_NONE_EXT || attribs->visualCaveat == 0)
-      printf("    visualCaveat: None\n");
+      printf("    visualCaveat=None\n");
    else if (attribs->visualCaveat == GLX_SLOW_VISUAL_EXT)
-      printf("    visualCaveat: Slow\n");
+      printf("    visualCaveat=Slow\n");
    else if (attribs->visualCaveat == GLX_NON_CONFORMANT_VISUAL_EXT)
-      printf("    visualCaveat: Nonconformant\n");
+      printf("    visualCaveat=Nonconformant\n");
 #endif
+   printf("    %s\n", attribs->transparent ? "Transparent." : "Opaque.");
 }
 
 
 static void
 print_visual_attribs_short_header(void)
 {
- printf("   visual  x  bf lv rg d st  r  g  b  a ax dp st accum buffs  ms  cav\n");
- printf(" id dep cl sp sz l  ci b ro sz sz sz sz bf th cl  r  g  b  a ns b eat\n");
+ printf("   visual  x  bf lv rg d st colorbuffer ax dp st accumbuffer  ms  cav\n");
+ printf(" id dep cl sp sz l  ci b ro  r  g  b  a bf th cl  r  g  b  a ns b eat\n");
  printf("----------------------------------------------------------------------\n");
 }
 
