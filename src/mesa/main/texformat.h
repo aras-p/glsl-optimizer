@@ -63,19 +63,19 @@ enum _format {
 				/* msb <------ TEXEL BITS -----------> lsb */
 				/* ---- ---- ---- ---- ---- ---- ---- ---- */
    MESA_FORMAT_RGBA8888,	/* RRRR RRRR GGGG GGGG BBBB BBBB AAAA AAAA */
-   MESA_FORMAT_ABGR8888,	/* AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR */
+   MESA_FORMAT_RGBA8888_REV,	/* AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR */
    MESA_FORMAT_ARGB8888,	/* AAAA AAAA RRRR RRRR GGGG GGGG BBBB BBBB */
-   MESA_FORMAT_BGRA8888,	/* BBBB BBBB GGGG GGGG RRRR RRRR AAAA AAAA */
+   MESA_FORMAT_ARGB8888_REV,	/* BBBB BBBB GGGG GGGG RRRR RRRR AAAA AAAA */
    MESA_FORMAT_RGB888,		/*           RRRR RRRR GGGG GGGG BBBB BBBB */
    MESA_FORMAT_BGR888,		/*           BBBB BBBB GGGG GGGG RRRR RRRR */
    MESA_FORMAT_RGB565,		/*                     RRRR RGGG GGGB BBBB */
-   MESA_FORMAT_BGR565,		/*                     BBBB BGGG GGGR RRRR */
+   MESA_FORMAT_RGB565_REV,	/*                     GGGB BBBB RRRR RGGG */
    MESA_FORMAT_ARGB4444,	/*                     AAAA RRRR GGGG BBBB */
-   MESA_FORMAT_BGRA4444,	/*                     AAAA RRRR GGGG BBBB */
+   MESA_FORMAT_ARGB4444_REV,	/*                     GGGG BBBB AAAA RRRR */
    MESA_FORMAT_ARGB1555,	/*                     ARRR RRGG GGGB BBBB */
-   MESA_FORMAT_BGRA5551,	/*                     BBBB BGGG GGRR RRRA */
+   MESA_FORMAT_ARGB1555_REV,	/*                     GGGB BBBB ARRR RRGG */
    MESA_FORMAT_AL88,		/*                     AAAA AAAA LLLL LLLL */
-   MESA_FORMAT_LA88,		/*                     LLLL LLLL AAAA AAAA */
+   MESA_FORMAT_AL88_REV,	/*                     LLLL LLLL AAAA AAAA */
    MESA_FORMAT_RGB332,		/*                               RRRG GGBB */
    MESA_FORMAT_A8,		/*                               AAAA AAAA */
    MESA_FORMAT_L8,		/*                               LLLL LLLL */
@@ -179,19 +179,19 @@ extern const struct gl_texture_format _mesa_texformat_intensity_float16;
 /** \name Assorted hardware-friendly formats */
 /*@{*/
 extern const struct gl_texture_format _mesa_texformat_rgba8888;
-extern const struct gl_texture_format _mesa_texformat_abgr8888;
+extern const struct gl_texture_format _mesa_texformat_rgba8888_rev;
 extern const struct gl_texture_format _mesa_texformat_argb8888;
-extern const struct gl_texture_format _mesa_texformat_bgra8888;
+extern const struct gl_texture_format _mesa_texformat_argb8888_rev;
 extern const struct gl_texture_format _mesa_texformat_rgb888;
 extern const struct gl_texture_format _mesa_texformat_bgr888;
 extern const struct gl_texture_format _mesa_texformat_rgb565;
-extern const struct gl_texture_format _mesa_texformat_bgr565;
+extern const struct gl_texture_format _mesa_texformat_rgb565_rev;
 extern const struct gl_texture_format _mesa_texformat_argb4444;
-extern const struct gl_texture_format _mesa_texformat_bgra4444;
+extern const struct gl_texture_format _mesa_texformat_argb4444_rev;
 extern const struct gl_texture_format _mesa_texformat_argb1555;
-extern const struct gl_texture_format _mesa_texformat_bgra5551;
+extern const struct gl_texture_format _mesa_texformat_argb1555_rev;
 extern const struct gl_texture_format _mesa_texformat_al88;
-extern const struct gl_texture_format _mesa_texformat_la88;
+extern const struct gl_texture_format _mesa_texformat_al88_rev;
 extern const struct gl_texture_format _mesa_texformat_rgb332;
 extern const struct gl_texture_format _mesa_texformat_a8;
 extern const struct gl_texture_format _mesa_texformat_l8;
