@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.23 2002/10/16 17:57:52 brianp Exp $ */
+/* $Id: t_pipeline.c,v 1.24 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,7 +29,7 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "mem.h"
+#include "imports.h"
 #include "mmath.h"
 #include "state.h"
 #include "mtypes.h"

@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.27 2002/06/29 19:48:17 brianp Exp $ */
+/* $Id: t_array_api.c,v 1.28 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,11 +33,11 @@
 #include "glheader.h"
 #include "api_validate.h"
 #include "context.h"
+#include "imports.h"
 #include "macros.h"
 #include "mmath.h"
-#include "mem.h"
-#include "state.h"
 #include "mtypes.h"
+#include "state.h"
 
 #include "array_cache/acache.h"
 

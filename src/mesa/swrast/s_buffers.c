@@ -1,4 +1,4 @@
-/* $Id: s_buffers.c,v 1.14 2002/10/11 17:41:06 brianp Exp $ */
+/* $Id: s_buffers.c,v 1.15 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,7 +28,7 @@
 #include "glheader.h"
 #include "colormac.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 
 #include "s_accum.h"
 #include "s_alphabuf.h"

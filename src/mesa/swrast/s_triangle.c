@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.62 2002/09/23 16:37:15 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.63 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,8 +34,8 @@
 #include "glheader.h"
 #include "context.h"
 #include "colormac.h"
+#include "imports.h"
 #include "macros.h"
-#include "mem.h"
 #include "mmath.h"
 #include "texformat.h"
 #include "teximage.h"

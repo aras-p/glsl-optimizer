@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.39 2002/10/14 17:08:38 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.40 2002/10/24 23:57:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 #include "drawpix.h"
 #include "extensions.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "mtypes.h"
 #include "state.h"
 #include "texstore.h"

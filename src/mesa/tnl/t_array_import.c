@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.25 2002/06/29 19:48:17 brianp Exp $ */
+/* $Id: t_array_import.c,v 1.26 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "mmath.h"
 #include "state.h"
 #include "mtypes.h"

@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.33 2002/05/27 17:04:53 brianp Exp $ */
+/* $Id: points.c,v 1.34 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "context.h"
 #include "macros.h"
@@ -35,7 +32,6 @@
 #include "points.h"
 #include "texstate.h"
 #include "mtypes.h"
-#endif
 
 
 

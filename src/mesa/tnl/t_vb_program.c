@@ -1,4 +1,4 @@
-/* $Id: t_vb_program.c,v 1.14 2002/08/08 16:55:56 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.15 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,7 +85,7 @@
 #include "hash.h"
 #include "light.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "mmath.h"
 #include "simple_list.h"
 #include "mtypes.h"

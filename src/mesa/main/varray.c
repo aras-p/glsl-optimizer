@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.46 2002/06/30 15:47:01 brianp Exp $ */
+/* $Id: varray.c,v 1.47 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,9 +24,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "context.h"
 #include "enable.h"
@@ -40,7 +37,6 @@
 #include "mtypes.h"
 #include "varray.h"
 #include "math/m_translate.h"
-#endif
 
 
 

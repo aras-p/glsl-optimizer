@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.96 2002/10/16 17:57:52 brianp Exp $ */
+/* $Id: get.c,v 1.97 2002/10/24 23:57:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "colormac.h"
 #include "context.h"
@@ -40,7 +37,6 @@
 #include "mtypes.h"
 #include "texcompress.h"
 #include "math/m_matrix.h"
-#endif
 
 
 

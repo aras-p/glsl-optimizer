@@ -1,4 +1,4 @@
-/* $Id: polygon.c,v 1.24 2002/10/02 22:05:58 brianp Exp $ */
+/* $Id: polygon.c,v 1.25 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,19 +25,14 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
+#include "imports.h"
 #include "context.h"
 #include "image.h"
 #include "enums.h"
 #include "macros.h"
-#include "mem.h"
 #include "polygon.h"
 #include "mtypes.h"
-#endif
-
 
 
 void

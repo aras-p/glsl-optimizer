@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.72 2002/10/21 15:52:35 brianp Exp $ */
+/* $Id: s_texture.c,v 1.73 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,7 @@
 #include "colormac.h"
 #include "macros.h"
 #include "mmath.h"
-#include "mem.h"
+#include "imports.h"
 #include "texformat.h"
 #include "teximage.h"
 

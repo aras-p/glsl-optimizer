@@ -457,7 +457,6 @@ ggi_mesa_context_t ggiMesaCreateContext(ggi_visual_t vis)
 	int err;
 	ggi_color pal[256];
 	int i;
-	__GLimports imports;
 
 	GGIMESADPRINT_CORE("ggiMesaCreateContext() called\n");
 	
@@ -468,10 +467,9 @@ ggi_mesa_context_t ggiMesaCreateContext(ggi_visual_t vis)
 	ctx->ggi_visual = vis;
 	ctx->color = 0;
 
-	_mesa_init_default_imports( &imports, (void *) ctx);
 	ctx->gl_ctx =
 	  _mesa_create_context(&(LIBGGI_MESAEXT(vis)->mesa_visual.gl_visual),
-			       NULL, &imports);
+			       NULL, (void *) ctx, GL_FALSE);
 	if (!ctx->gl_ctx)
 		goto free_context;
 	

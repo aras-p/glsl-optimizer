@@ -1,4 +1,4 @@
-/* $Id: t_eval_api.c,v 1.11 2002/06/23 02:36:27 brianp Exp $ */
+/* $Id: t_eval_api.c,v 1.12 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "mmath.h"
 #include "mtypes.h"
 #include "math/m_eval.h"

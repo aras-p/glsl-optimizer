@@ -1,4 +1,4 @@
-/* $Id: fxvb.c,v 1.14 2002/06/15 03:03:10 brianp Exp $ */
+/* $Id: fxvb.c,v 1.15 2002/10/24 23:57:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,7 +37,7 @@
 
 #include "glheader.h"
 #include "mtypes.h"
-#include "mem.h"
+#include "imports.h"
 #include "macros.h"
 #include "colormac.h"
 #include "mmath.h"

@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.49 2002/10/11 17:41:06 brianp Exp $ */
+/* $Id: s_span.c,v 1.50 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,7 +37,7 @@
 #include "context.h"
 #include "macros.h"
 #include "mmath.h"
-#include "mem.h"
+#include "imports.h"
 
 #include "s_alpha.h"
 #include "s_alphabuf.h"

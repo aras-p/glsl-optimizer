@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.70 2002/10/16 17:57:03 brianp Exp $
+# $Id: Makefile.X11,v 1.71 2002/10/24 23:57:19 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -55,7 +55,6 @@ CORE_SOURCES = \
 	light.c \
 	lines.c \
 	matrix.c \
-	mem.c \
 	mmath.c \
 	pixel.c \
 	points.c \

@@ -1,10 +1,10 @@
-/* $Id: gen_matypes.c,v 1.8 2002/09/19 16:19:45 brianp Exp $ */
+/* $Id: gen_matypes.c,v 1.9 2002/10/24 23:57:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,13 +34,10 @@
  * Mesa, including lighting, clipping, texture image conversion etc.
  */
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "mtypes.h"
 #include "tnl/t_context.h"
-#endif
+
 
 #undef offsetof
 #define offsetof( type, member ) ((size_t) &((type *)0)->member)

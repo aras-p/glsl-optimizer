@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.92 2002/10/17 15:26:38 brianp Exp $ */
+/* $Id: osmesa.c,v 1.93 2002/10/24 23:57:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,7 +45,6 @@
 #include "imports.h"
 #include "macros.h"
 #include "matrix.h"
-#include "mem.h"
 #include "mmath.h"
 #include "mtypes.h"
 #include "texformat.h"
@@ -139,7 +138,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
    const GLuint i4 = 1;
    const GLubyte *i1 = (GLubyte *) &i4;
    const GLint little_endian = *i1;
-   __GLimports imports;
 
    rind = gind = bind = aind = 0;
    if (format==OSMESA_COLOR_INDEX) {
@@ -292,12 +290,12 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
          return NULL;
       }
 
-      _mesa_init_default_imports( &imports, (void *) osmesa );
       if (!_mesa_initialize_context(&osmesa->gl_ctx,
                                     osmesa->gl_visual,
                                     sharelist ? &sharelist->gl_ctx
                                               : (GLcontext *) NULL,
-                                    &imports)) {
+                                    (void *) osmesa,
+                                    GL_FALSE)) {
          _mesa_destroy_visual( osmesa->gl_visual );
          FREE(osmesa);
          return NULL;

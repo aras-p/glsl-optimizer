@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.122 2002/10/18 18:03:04 brianp Exp $ */
+/* $Id: teximage.c,v 1.123 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,16 +24,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "context.h"
 #include "convolve.h"
 #include "image.h"
+#include "imports.h"
 #include "macros.h"
-#include "mem.h"
 #include "mmath.h"
 #include "state.h"
 #include "texcompress.h"
@@ -42,7 +38,6 @@
 #include "texstate.h"
 #include "texstore.h"
 #include "mtypes.h"
-#endif
 
 
 /*
@@ -65,7 +60,7 @@ static void PrintTexture(GLcontext *ctx, const struct gl_texture_image *img)
    const GLchan *data = (const GLchan *) img->Data;
 
    if (!data) {
-      _mesa_printf(ctx, "No texture data\n");
+      _mesa_printf("No texture data\n");
       return;
    }
 
@@ -93,16 +88,16 @@ static void PrintTexture(GLcontext *ctx, const struct gl_texture_image *img)
    for (i = 0; i < img->Height; i++) {
       for (j = 0; j < img->Width; j++) {
          if (c==1)
-            _mesa_printf(ctx, "%02x  ", data[0]);
+            _mesa_printf("%02x  ", data[0]);
          else if (c==2)
-            _mesa_printf(ctx, "%02x%02x  ", data[0], data[1]);
+            _mesa_printf("%02x%02x  ", data[0], data[1]);
          else if (c==3)
-            _mesa_printf(ctx, "%02x%02x%02x  ", data[0], data[1], data[2]);
+            _mesa_printf("%02x%02x%02x  ", data[0], data[1], data[2]);
          else if (c==4)
-            _mesa_printf(ctx, "%02x%02x%02x%02x  ", data[0], data[1], data[2], data[3]);
+            _mesa_printf("%02x%02x%02x%02x  ", data[0], data[1], data[2], data[3]);
          data += (img->RowStride - img->Width) * c;
       }
-      _mesa_printf(ctx, "\n");
+      _mesa_printf("\n");
    }
 #endif
 }

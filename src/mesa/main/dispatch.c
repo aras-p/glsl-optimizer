@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.27 2002/06/29 19:48:15 brianp Exp $ */
+/* $Id: dispatch.c,v 1.28 2002/10/24 23:57:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,14 +36,11 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "glapi.h"
 #include "glapitable.h"
 #include "glthread.h"
-#endif
+
 
 #if !(defined(USE_X86_ASM) || defined(USE_SPARC_ASM))
 

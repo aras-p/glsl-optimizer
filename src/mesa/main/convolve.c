@@ -1,8 +1,8 @@
-/* $Id: convolve.c,v 1.27 2002/07/09 01:22:50 brianp Exp $ */
+/* $Id: convolve.c,v 1.28 2002/10/24 23:57:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.2
+ * Version:  4.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -33,9 +33,6 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "colormac.h"
 #include "convolve.h"
@@ -43,7 +40,6 @@
 #include "image.h"
 #include "mtypes.h"
 #include "state.h"
-#endif
 
 
 /*

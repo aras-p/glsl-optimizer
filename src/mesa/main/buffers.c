@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.41 2002/10/11 17:41:03 brianp Exp $ */
+/* $Id: buffers.c,v 1.42 2002/10/24 23:57:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,10 +25,8 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
+#include "imports.h"
 #include "accum.h"
 #include "buffers.h"
 #include "colormac.h"
@@ -36,11 +34,9 @@
 #include "depth.h"
 #include "enums.h"
 #include "macros.h"
-#include "mem.h"
 #include "stencil.h"
 #include "state.h"
 #include "mtypes.h"
-#endif
 
 
 

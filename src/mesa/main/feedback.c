@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.26 2002/06/15 02:54:01 brianp Exp $ */
+/* $Id: feedback.c,v 1.27 2002/10/24 23:57:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "colormac.h"
 #include "context.h"
@@ -36,7 +33,6 @@
 #include "macros.h"
 #include "mmath.h"
 #include "mtypes.h"
-#endif
 
 
 

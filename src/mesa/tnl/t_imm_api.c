@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.33 2002/10/09 19:38:32 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.34 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,7 +34,7 @@
 #include "dlist.h"
 #include "enums.h"
 #include "light.h"
-#include "mem.h"
+#include "imports.h"
 #include "state.h"
 #include "colormac.h"
 #include "macros.h"

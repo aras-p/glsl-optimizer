@@ -1,4 +1,4 @@
-/* $Id: api_arrayelt.c,v 1.9 2002/06/15 02:38:15 brianp Exp $ */
+/* $Id: api_arrayelt.c,v 1.10 2002/10/24 23:57:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 #include "api_arrayelt.h"
 #include "context.h"
 #include "glapi.h"
-#include "mem.h"
+#include "imports.h"
 #include "macros.h"
 #include "mtypes.h"
 

@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.18 2002/06/15 02:38:18 brianp Exp $ */
+/* $Id: t_imm_elt.c,v 1.19 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,7 @@
 #include "glheader.h"
 #include "colormac.h"
 #include "context.h"
-#include "mem.h"
+#include "imports.h"
 #include "mmath.h"
 #include "mtypes.h"
 

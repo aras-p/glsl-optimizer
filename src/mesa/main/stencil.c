@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.28 2002/09/06 02:56:09 brianp Exp $ */
+/* $Id: stencil.c,v 1.29 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,20 +25,14 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
+#include "imports.h"
 #include "context.h"
 #include "depth.h"
 #include "macros.h"
-#include "mem.h"
 #include "stencil.h"
 #include "mtypes.h"
 #include "enable.h"
-#endif
-
-
 
 
 void

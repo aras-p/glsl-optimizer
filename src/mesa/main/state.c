@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.95 2002/10/16 17:57:52 brianp Exp $ */
+/* $Id: state.c,v 1.96 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,9 +31,6 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "accum.h"
 #include "api_loopback.h"
@@ -75,7 +72,6 @@
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
-#endif
 
 
 static int

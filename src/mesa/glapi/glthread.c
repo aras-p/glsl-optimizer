@@ -1,10 +1,10 @@
-/* $Id: glthread.c,v 1.9 2001/11/12 23:50:12 brianp Exp $ */
+/* $Id: glthread.c,v 1.10 2002/10/24 23:57:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,12 +31,8 @@
  */
 
 
-#ifdef PC_ALL
-#include "all.h"
-#else
 #include "glheader.h"
 #include "glthread.h"
-#endif
 
 
 /*

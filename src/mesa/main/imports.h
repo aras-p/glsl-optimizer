@@ -1,4 +1,4 @@
-/* $Id: imports.h,v 1.5 2002/10/15 15:36:26 brianp Exp $ */
+/* $Id: imports.h,v 1.6 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,21 +25,126 @@
  */
 
 
+/*
+ * This file provides wrappers for all the standard C library functions
+ * like malloc, free, printf, getenv, etc.
+ */
+
+
 #ifndef IMPORTS_H
 #define IMPORTS_H
 
 
-#include "glheader.h"
+#define MALLOC(BYTES)      _mesa_malloc(BYTES)
+#define CALLOC(BYTES)      _mesa_calloc(BYTES)
+#define MALLOC_STRUCT(T)   (struct T *) _mesa_malloc(sizeof(struct T))
+#define CALLOC_STRUCT(T)   (struct T *) _mesa_calloc(sizeof(struct T))
+#define FREE(PTR)          _mesa_free(PTR)
+
+#define ALIGN_MALLOC(BYTES, N)     _mesa_align_malloc(BYTES, N)
+#define ALIGN_CALLOC(BYTES, N)     _mesa_align_calloc(BYTES, N)
+#define ALIGN_MALLOC_STRUCT(T, N)  (struct T *) _mesa_align_malloc(sizeof(struct T), N)
+#define ALIGN_CALLOC_STRUCT(T, N)  (struct T *) _mesa_align_calloc(sizeof(struct T), N)
+#define ALIGN_FREE(PTR)            _mesa_align_free(PTR)
+
+#define MEMCPY( DST, SRC, BYTES)   _mesa_memcpy(DST, SRC, BYTES)
+#define MEMSET( DST, VAL, N )      _mesa_memset(DST, VAL, N)
+#define BZERO( ADDR, N )           _mesa_bzero(ADDR, N)
 
 
-extern int CAPI
-_mesa_sprintf(__GLcontext *gc, char *str, const char *fmt, ...);
+/* MACs and BeOS don't support static larger than 32kb, so... */
+#if defined(macintosh) && !defined(__MRC__)
+/*extern char *AGLAlloc(int size);*/
+/*extern void AGLFree(char* ptr);*/
+#  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE *NAME = (TYPE*)_mesa_alloc(sizeof(TYPE)*(SIZE))
+#  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)		TYPE (*NAME)[SIZE2] = (TYPE(*)[SIZE2])_mesa_alloc(sizeof(TYPE)*(SIZE1)*(SIZE2))
+#  define DEFMNARRAY(TYPE,NAME,SIZE1,SIZE2,SIZE3)	TYPE (*NAME)[SIZE2][SIZE3] = (TYPE(*)[SIZE2][SIZE3])_mesa_alloc(sizeof(TYPE)*(SIZE1)*(SIZE2)*(SIZE3))
+
+#  define CHECKARRAY(NAME,CMD)				do {if (!(NAME)) {CMD;}} while (0)
+#  define UNDEFARRAY(NAME)          			do {if ((NAME)) {_mesa_free((char*)NAME);}  }while (0)
+#elif defined(__BEOS__)
+#  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE *NAME = (TYPE*)_mesa_malloc(sizeof(TYPE)*(SIZE))
+#  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)  		TYPE (*NAME)[SIZE2] = (TYPE(*)[SIZE2])_mesa_malloc(sizeof(TYPE)*(SIZE1)*(SIZE2))
+#  define DEFMNARRAY(TYPE,NAME,SIZE1,SIZE2,SIZE3)	TYPE (*NAME)[SIZE2][SIZE3] = (TYPE(*)[SIZE2][SIZE3])_mesa_malloc(sizeof(TYPE)*(SIZE1)*(SIZE2)*(SIZE3))
+#  define CHECKARRAY(NAME,CMD)				do {if (!(NAME)) {CMD;}} while (0)
+#  define UNDEFARRAY(NAME)          			do {if ((NAME)) {_mesa_free((char*)NAME);}  }while (0)
+#else
+#  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE NAME[SIZE]
+#  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)		TYPE NAME[SIZE1][SIZE2]
+#  define DEFMNARRAY(TYPE,NAME,SIZE1,SIZE2,SIZE3)	TYPE NAME[SIZE1][SIZE2][SIZE3]
+#  define CHECKARRAY(NAME,CMD)				do {} while(0)
+#  define UNDEFARRAY(NAME)
+#endif
+
+
+#ifdef MESA_EXTERNAL_BUFFERALLOC
+/*
+ * If you want Mesa's depth/stencil/accum/etc buffers to be allocated
+ * with a specialized allocator you can define MESA_EXTERNAL_BUFFERALLOC
+ * and implement _ext_mesa_alloc/free_pixelbuffer() in your app.
+ * Contributed by Gerk Huisma (gerk@five-d.demon.nl).
+ */
+extern void *_ext_mesa_alloc_pixelbuffer( unsigned int size );
+extern void _ext_mesa_free_pixelbuffer( void *pb );
+
+#define MESA_PBUFFER_ALLOC(BYTES)  (void *) _ext_mesa_alloc_pixelbuffer(BYTES)
+#define MESA_PBUFFER_FREE(PTR)     _ext_mesa_free_pixelbuffer(PTR)
+#else
+/* Default buffer allocation uses the aligned allocation routines: */
+#define MESA_PBUFFER_ALLOC(BYTES)  (void *) _mesa_align_malloc(BYTES, 512)
+#define MESA_PBUFFER_FREE(PTR)     _mesa_align_free(PTR)
+#endif
+
+
+extern void *
+_mesa_malloc( size_t bytes );
+
+extern void *
+_mesa_calloc( size_t bytes );
 
 extern void
-_mesa_warning(__GLcontext *gc, const char *fmtString, ...);
+_mesa_free( void *ptr );
+
+extern void *
+_mesa_align_malloc( size_t bytes, unsigned long alignment );
+
+extern void *
+_mesa_align_calloc( size_t bytes, unsigned long alignment );
 
 extern void
-_mesa_fatal(__GLcontext *gc, char *str);
+_mesa_align_free( void *ptr );
+
+extern void *
+_mesa_memcpy( void *dest, const void *src, size_t n );
+
+extern void
+_mesa_memset( void *dst, int val, size_t n );
+
+extern void
+_mesa_memset16( unsigned short *dst, unsigned short val, size_t n );
+
+extern void
+_mesa_bzero( void *dst, size_t n );
+
+
+extern char *
+_mesa_getenv( const char *var );
+
+extern char *
+_mesa_strstr( const char *haystack, const char *needle );
+
+extern int
+_mesa_atoi( const char *s );
+
+extern int
+_mesa_sprintf( char *str, const char *fmt, ... );
+
+extern void
+_mesa_printf( const char *fmtString, ... );
+
+
+extern void
+_mesa_warning( __GLcontext *gc, const char *fmtString, ... );
 
 extern void
 _mesa_problem( const __GLcontext *ctx, const char *s );
@@ -50,23 +155,10 @@ _mesa_error( __GLcontext *ctx, GLenum error, const char *fmtString, ... );
 extern void
 _mesa_debug( const __GLcontext *ctx, const char *fmtString, ... );
 
-extern void
-_mesa_printf( const __GLcontext *ctx, const char *fmtString, ... );
-
-extern int CAPI
-_mesa_fprintf(__GLcontext *gc, void *stream, const char *fmt, ...);
-
-extern void * CAPI
-_mesa_fopen(__GLcontext *gc, const char *path, const char *mode);
-
-extern int CAPI
-_mesa_fclose(__GLcontext *gc, void *stream);
-
-extern char * CAPI
-_mesa_getenv(__GLcontext *gc, const char *var);
 
 extern void
-_mesa_init_default_imports(__GLimports *imports, void *driverCtx);
+_mesa_init_default_imports( __GLimports *imports, void *driverCtx );
 
 
-#endif
+#endif /* IMPORTS_H */
+

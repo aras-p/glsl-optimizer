@@ -1,4 +1,4 @@
-/* $Id: hash.c,v 1.13 2002/09/16 17:55:36 brianp Exp $ */
+/* $Id: hash.c,v 1.14 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,16 +24,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
+#include "imports.h"
 #include "glthread.h"
 #include "hash.h"
 #include "context.h"
-#include "mem.h"
-#endif
 
 
 /**

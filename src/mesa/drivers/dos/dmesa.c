@@ -31,9 +31,6 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "context.h"
 #include "GL/dmesa.h"
@@ -54,7 +51,6 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
-#endif
 
 #include "video.h"
 

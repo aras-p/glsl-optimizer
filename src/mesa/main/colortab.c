@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.45 2002/07/09 01:22:50 brianp Exp $ */
+/* $Id: colortab.c,v 1.46 2002/10/24 23:57:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,19 +25,14 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
+#include "imports.h"
 #include "colortab.h"
 #include "context.h"
 #include "image.h"
 #include "macros.h"
-#include "mem.h"
 #include "mmath.h"
 #include "state.h"
-#endif
-
 
 
 /*

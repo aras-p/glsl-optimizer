@@ -1,4 +1,4 @@
-/* $Id: texcompress.c,v 1.2 2002/10/18 17:41:45 brianp Exp $ */
+/* $Id: texcompress.c,v 1.3 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,9 +26,9 @@
 
 
 #include "glheader.h"
+#include "imports.h"
 #include "context.h"
 #include "image.h"
-#include "mem.h"
 #include "texcompress.h"
 #include "texformat.h"
 

@@ -1,4 +1,4 @@
-/* $Id: t_vb_vertex.c,v 1.14 2002/04/09 16:56:52 keithw Exp $ */
+/* $Id: t_vb_vertex.c,v 1.15 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "mmath.h"
 #include "mtypes.h"
 

@@ -1,4 +1,4 @@
-/* $Id: texutil.c,v 1.32 2002/09/27 02:45:38 brianp Exp $ */
+/* $Id: texutil.c,v 1.33 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,19 +35,16 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "context.h"
 #include "enums.h"
 #include "image.h"
+#include "imports.h"
 #include "macros.h"
-#include "mem.h"
 #include "mtypes.h"
 #include "texformat.h"
 #include "texutil.h"
-#endif
+
 
 #define DEBUG_TEXUTIL 0
 

@@ -1,4 +1,4 @@
-/* $Id: histogram.c,v 1.10 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: histogram.c,v 1.11 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,16 +25,12 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "colormac.h"
 #include "context.h"
 #include "image.h"
 #include "histogram.h"
 #include "mmath.h"
-#endif
 
 
 /*

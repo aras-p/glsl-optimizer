@@ -1,4 +1,4 @@
-/* $Id: s_readpix.c,v 1.16 2002/09/21 17:34:56 brianp Exp $ */
+/* $Id: s_readpix.c,v 1.17 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 #include "feedback.h"
 #include "image.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "pixel.h"
 
 #include "s_alphabuf.h"

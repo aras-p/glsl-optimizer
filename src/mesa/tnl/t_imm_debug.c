@@ -1,4 +1,4 @@
-/* $Id: t_imm_debug.c,v 1.8 2002/06/29 19:48:17 brianp Exp $ */
+/* $Id: t_imm_debug.c,v 1.9 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,8 +26,10 @@
 
 #include "mtypes.h"
 #include "context.h"
+#include "imports.h"
 #include "t_context.h"
 #include "t_imm_debug.h"
+
 
 void _tnl_print_vert_flags( const char *name, GLuint flags )
 {

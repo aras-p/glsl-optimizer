@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.185 2002/10/16 17:57:51 brianp Exp $ */
+/* $Id: context.c,v 1.186 2002/10/24 23:57:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,10 +25,8 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
+#include "imports.h"
 #include "buffers.h"
 #include "clip.h"
 #include "colortab.h"
@@ -43,7 +41,6 @@
 #include "hash.h"
 #include "light.h"
 #include "macros.h"
-#include "mem.h"
 #include "mmath.h"
 #include "simple_list.h"
 #include "state.h"
@@ -58,7 +55,7 @@
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
 #include "math/mathmod.h"
-#endif
+
 
 #if defined(MESA_TRACE)
 #include "Trace/tr_context.h"
@@ -94,7 +91,7 @@ _mesa_destroyContext(__GLcontext *gc)
 {
    if (gc) {
       _mesa_free_context_data(gc);
-      (*gc->imports.free)(gc, gc);
+      _mesa_free(gc);
    }
    return GL_TRUE;
 }
@@ -240,9 +237,8 @@ __glCoreCreateContext(__GLimports *imports, __GLcontextModes *modes)
 	return NULL;
     }
 
+    _mesa_initialize_context(ctx, modes, NULL, imports, GL_FALSE);
     ctx->imports = *imports;
-    _mesa_init_default_exports(&(ctx->exports));
-    _mesa_initialize_context(ctx, modes, NULL, imports);
 
     return ctx;
 }
@@ -561,7 +557,7 @@ one_time_init( GLcontext *ctx )
 #ifdef USE_SPARC_ASM
       _mesa_init_sparc_glapi_relocs();
 #endif
-      if ((*ctx->imports.getenv)(ctx, "MESA_DEBUG")) {
+      if (_mesa_getenv("MESA_DEBUG")) {
          _glapi_noop_enable_warnings(GL_TRUE);
 #ifndef GLX_DIRECT_RENDERING
          /* libGL from before 2002/06/28 don't have this function.  Someday,
@@ -1477,13 +1473,13 @@ init_attrib_groups( GLcontext *ctx )
    ctx->_Facing = 0;
 
    /* For debug/development only */
-   ctx->NoRaster = (*ctx->imports.getenv)(ctx, "MESA_NO_RASTER") ? GL_TRUE : GL_FALSE;
+   ctx->NoRaster = _mesa_getenv("MESA_NO_RASTER") ? GL_TRUE : GL_FALSE;
    ctx->FirstTimeCurrent = GL_TRUE;
 
    /* Dither disable */
-   ctx->NoDither = (*ctx->imports.getenv)(ctx, "MESA_NO_DITHER") ? GL_TRUE : GL_FALSE;
+   ctx->NoDither = _mesa_getenv("MESA_NO_DITHER") ? GL_TRUE : GL_FALSE;
    if (ctx->NoDither) {
-      if ((*ctx->imports.getenv)(ctx, "MESA_DEBUG")) {
+      if (_mesa_getenv("MESA_DEBUG")) {
          _mesa_debug(ctx, "MESA_NO_DITHER set - dithering disabled\n");
       }
       ctx->Color.DitherFlag = GL_FALSE;
@@ -1592,36 +1588,36 @@ alloc_proxy_textures( GLcontext *ctx )
 static void add_debug_flags( const char *debug )
 {
 #ifdef MESA_DEBUG
-   if (strstr(debug, "varray")) 
+   if (_mesa_strstr(debug, "varray")) 
       MESA_VERBOSE |= VERBOSE_VARRAY;
 
-   if (strstr(debug, "tex")) 
+   if (_mesa_strstr(debug, "tex")) 
       MESA_VERBOSE |= VERBOSE_TEXTURE;
 
-   if (strstr(debug, "imm")) 
+   if (_mesa_strstr(debug, "imm")) 
       MESA_VERBOSE |= VERBOSE_IMMEDIATE;
 
-   if (strstr(debug, "pipe")) 
+   if (_mesa_strstr(debug, "pipe")) 
       MESA_VERBOSE |= VERBOSE_PIPELINE;
 
-   if (strstr(debug, "driver")) 
+   if (_mesa_strstr(debug, "driver")) 
       MESA_VERBOSE |= VERBOSE_DRIVER;
 
-   if (strstr(debug, "state")) 
+   if (_mesa_strstr(debug, "state")) 
       MESA_VERBOSE |= VERBOSE_STATE;
 
-   if (strstr(debug, "api")) 
+   if (_mesa_strstr(debug, "api")) 
       MESA_VERBOSE |= VERBOSE_API;
 
-   if (strstr(debug, "list")) 
+   if (_mesa_strstr(debug, "list")) 
       MESA_VERBOSE |= VERBOSE_DISPLAY_LIST;
 
-   if (strstr(debug, "lighting")) 
+   if (_mesa_strstr(debug, "lighting")) 
       MESA_VERBOSE |= VERBOSE_LIGHTING;
    
    /* Debug flag:
     */
-   if (strstr(debug, "flush")) 
+   if (_mesa_strstr(debug, "flush")) 
       MESA_DEBUG_FLAGS |= DEBUG_ALWAYS_FLUSH;
 #endif
 }
@@ -1635,16 +1631,18 @@ GLboolean
 _mesa_initialize_context( GLcontext *ctx,
                           const GLvisual *visual,
                           GLcontext *share_list,
-                          const __GLimports *imports )
+                          void *driver_ctx,
+                          GLboolean direct )
 {
    GLuint dispatchSize;
    const char *c;
 
-   ASSERT(imports);
-   ASSERT(imports->other); /* other points to the device driver's context */
+   ASSERT(driver_ctx);
 
-   /* assing imports */
-   ctx->imports = *imports;
+   /* If the driver wants core Mesa to use special imports, it'll have to
+    * override these defaults.
+    */
+   _mesa_init_default_imports( &(ctx->imports), driver_ctx );
 
    /* initialize the exports (Mesa functions called by the window system) */
    _mesa_init_default_exports( &(ctx->exports) );
@@ -1652,17 +1650,7 @@ _mesa_initialize_context( GLcontext *ctx,
    /* misc one-time initializations */
    one_time_init(ctx);
 
-#if 0
-   /**
-    ** OpenGL SI stuff
-    **/
-   if (!ctx->imports.malloc) {
-      _mesa_init_default_imports(&ctx->imports, driver_ctx);
-   }
-   /* exports are setup by the device driver */
-#endif
-
-   ctx->DriverCtx = imports->other;
+   ctx->DriverCtx = driver_ctx;
    ctx->Visual = *visual;
    ctx->DrawBuffer = NULL;
    ctx->ReadBuffer = NULL;
@@ -1860,11 +1848,11 @@ _mesa_initialize_context( GLcontext *ctx,
    }
    ctx->MRD = 1.0;  /* Minimum resolvable depth value, for polygon offset */
 
-   c = (*ctx->imports.getenv)(ctx, "MESA_DEBUG");
+   c = _mesa_getenv("MESA_DEBUG");
    if (c)
       add_debug_flags(c);
 
-   c = (*ctx->imports.getenv)(ctx, "MESA_VERBOSE");
+   c = _mesa_getenv("MESA_VERBOSE");
    if (c)
       add_debug_flags(c);
 
@@ -1877,29 +1865,31 @@ _mesa_initialize_context( GLcontext *ctx,
  * Allocate and initialize a GLcontext structure.
  * Input:  visual - a GLvisual pointer (we copy the struct contents)
  *         sharelist - another context to share display lists with or NULL
- *         imports - points to a fully-initialized __GLimports object.
+ *         driver_ctx - pointer to device driver's context state struct
+ *         direct - direct rendering?
  * Return:  pointer to a new __GLcontextRec or NULL if error.
  */
 GLcontext *
 _mesa_create_context( const GLvisual *visual,
                       GLcontext *share_list,
-                      const __GLimports *imports )
+                      void *driver_ctx,
+                      GLboolean direct )
+
 {
    GLcontext *ctx;
 
    ASSERT(visual);
-   ASSERT(imports);
-   ASSERT(imports->calloc);
+   ASSERT(driver_ctx);
 
-   ctx = (GLcontext *) (*imports->calloc)(NULL, 1, sizeof(GLcontext));
+   ctx = (GLcontext *) _mesa_calloc(sizeof(GLcontext));
    if (!ctx)
       return NULL;
 
-   if (_mesa_initialize_context(ctx, visual, share_list, imports)) {
+   if (_mesa_initialize_context(ctx, visual, share_list, driver_ctx, direct)) {
       return ctx;
    }
    else {
-      (*imports->free)(NULL, ctx);
+      _mesa_free(ctx);
       return NULL;
    }
 }
@@ -2281,7 +2271,7 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
        * information.
        */
       if (newCtx->FirstTimeCurrent) {
-	 if ((*newCtx->imports.getenv)(newCtx, "MESA_INFO")) {
+	 if (_mesa_getenv("MESA_INFO")) {
 	    print_info();
 	 }
 	 newCtx->FirstTimeCurrent = GL_FALSE;

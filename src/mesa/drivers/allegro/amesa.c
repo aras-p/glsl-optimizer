@@ -329,7 +329,6 @@ AMesaContext AMesaCreateContext(AMesaVisual visual,
 {
    	AMesaContext context;
    	GLboolean    direct = GL_FALSE;
-	__GLimports imports;
 
 	context = (AMesaContext)calloc(1, sizeof(struct amesa_context));
 	if (!context)
@@ -339,10 +338,9 @@ AMesaContext AMesaCreateContext(AMesaVisual visual,
 	context->Buffer		  = NULL;
 	context->ClearColor   = 0;
 	context->CurrentColor = 0;
-	_mesa_init_default_imports( &imports, (void *) context);
 	context->GLContext    = _mesa_create_context(visual->GLVisual,
                                               share ? share->GLContext : NULL,
-                                  		&imports );
+                                  		(void *) context, GL_FALSE );
 	if (!context->GLContext)
         {
         	free(context);

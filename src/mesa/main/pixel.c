@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.36 2002/09/21 17:34:56 brianp Exp $ */
+/* $Id: pixel.c,v 1.37 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,19 +24,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
+#include "imports.h"
 #include "colormac.h"
 #include "context.h"
 #include "macros.h"
-#include "mem.h"
 #include "pixel.h"
 #include "mtypes.h"
-#endif
-
 
 
 /**********************************************************************/

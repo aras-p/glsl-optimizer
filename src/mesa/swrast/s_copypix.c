@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.40 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.41 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,7 @@
 #include "convolve.h"
 #include "feedback.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "mmath.h"
 #include "pixel.h"
 

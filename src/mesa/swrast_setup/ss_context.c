@@ -1,4 +1,4 @@
-/* $Id: ss_context.c,v 1.18 2002/10/04 17:37:47 brianp Exp $ */
+/* $Id: ss_context.c,v 1.19 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,7 +28,7 @@
  */
 
 #include "glheader.h"
-#include "mem.h"
+#include "imports.h"
 #include "ss_context.h"
 #include "ss_triangle.h"
 #include "ss_vb.h"

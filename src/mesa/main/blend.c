@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.37 2002/10/04 19:10:07 brianp Exp $ */
+/* $Id: blend.c,v 1.38 2002/10/24 23:57:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "blend.h"
 #include "colormac.h"
@@ -35,7 +32,6 @@
 #include "enums.h"
 #include "macros.h"
 #include "mtypes.h"
-#endif
 
 
 void

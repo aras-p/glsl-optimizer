@@ -1,4 +1,4 @@
-/* $Id: s_texstore.c,v 1.8 2002/09/27 02:45:39 brianp Exp $ */
+/* $Id: s_texstore.c,v 1.9 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,8 +42,8 @@
 #include "context.h"
 #include "convolve.h"
 #include "image.h"
+#include "imports.h"
 #include "macros.h"
-#include "mem.h"
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"

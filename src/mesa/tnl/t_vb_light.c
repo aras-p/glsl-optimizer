@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.18 2002/02/13 00:53:20 keithw Exp $ */
+/* $Id: t_vb_light.c,v 1.19 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,7 @@
 #include "colormac.h"
 #include "light.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "mmath.h"
 #include "simple_list.h"
 #include "mtypes.h"

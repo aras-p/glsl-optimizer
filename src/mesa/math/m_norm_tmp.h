@@ -1,4 +1,4 @@
-/* $Id: m_norm_tmp.h,v 1.11 2002/04/09 14:58:04 keithw Exp $ */
+/* $Id: m_norm_tmp.h,v 1.12 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,9 +31,6 @@
 /* Functions to tranform a vector of normals.  This includes applying
  * the transformation matrix, rescaling and normalization.
  */
-
-#include <math.h>
-
 
 /*
  * mat - the 4x4 transformation matrix

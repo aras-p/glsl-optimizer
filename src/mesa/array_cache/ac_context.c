@@ -1,4 +1,4 @@
-/* $Id: ac_context.c,v 1.7 2002/04/21 19:39:48 brianp Exp $ */
+/* $Id: ac_context.c,v 1.8 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,7 +29,7 @@
 
 #include "glheader.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "mmath.h"
 #include "mtypes.h"
 

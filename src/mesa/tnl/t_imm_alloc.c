@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.15 2002/04/19 12:32:14 brianp Exp $ */
+/* $Id: t_imm_alloc.c,v 1.16 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,7 +28,7 @@
  */
 
 #include "glheader.h"
-#include "mem.h"
+#include "imports.h"
 #include "mtypes.h"
 
 #include "t_imm_alloc.h"

@@ -1,4 +1,4 @@
-/* $Id: ss_vb.c,v 1.20 2002/06/29 19:48:17 brianp Exp $ */
+/* $Id: ss_vb.c,v 1.21 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 
 #include "swrast/swrast.h"
 #include "tnl/t_context.h"

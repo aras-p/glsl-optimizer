@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.29 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: lines.c,v 1.30 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "context.h"
 #include "depth.h"
@@ -36,8 +33,6 @@
 #include "mmath.h"
 #include "texstate.h"
 #include "mtypes.h"
-#endif
-
 
 
 void

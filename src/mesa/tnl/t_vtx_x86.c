@@ -31,9 +31,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include <stdio.h>
-#include <assert.h>
-#include "mem.h" 
+#include "imports.h" 
 #include "mmath.h" 
 #include "simple_list.h" 
 #include "tnl_vtxfmt.h"

@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.45 2002/10/14 17:08:34 brianp Exp $ */
+/* $Id: xm_api.c,v 1.46 2002/10/24 23:57:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,12 +71,8 @@
 #include "glthread.h"
 #include "imports.h"
 #include "matrix.h"
-#include "mem.h"
 #include "mmath.h"
 #include "mtypes.h"
-#ifdef HAVE_CONFIG_H
-#include "conf.h"
-#endif
 #include "macros.h"
 #include "texformat.h"
 #include "texstore.h"
@@ -1619,7 +1615,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    static GLboolean firstTime = GL_TRUE;
    XMesaContext c;
    GLcontext *ctx;
-   __GLimports imports;
+   GLboolean direct = GL_TRUE; /* not really */
 
    if (firstTime) {
       _glthread_INIT_MUTEX(_xmesa_lock);
@@ -1631,10 +1627,9 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       return NULL;
    }
 
-   _mesa_init_default_imports( &imports, (void *) c );
    ctx = c->gl_ctx = _mesa_create_context( &v->mesa_visual,
                       share_list ? share_list->gl_ctx : (GLcontext *) NULL,
-                      &imports );
+                      (void *) c, direct);
    if (!c->gl_ctx) {
       FREE(c);
       return NULL;

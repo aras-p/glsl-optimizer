@@ -1,4 +1,4 @@
-/* $Id: s_logic.c,v 1.11 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_logic.c,v 1.12 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,7 @@
 
 #include "glheader.h"
 #include "context.h"
+#include "imports.h"
 #include "macros.h"
 
 #include "s_alphabuf.h"

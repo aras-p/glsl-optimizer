@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.23 2002/01/05 21:58:42 brianp Exp $ */
+/* $Id: eval.c,v 1.24 2002/10/24 23:57:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,18 +38,14 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
+#include "imports.h"
 #include "colormac.h"
 #include "context.h"
 #include "eval.h"
 #include "macros.h"
-#include "mem.h"
 #include "mmath.h"
 #include "mtypes.h"
-#endif
 
 
 /*

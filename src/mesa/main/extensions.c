@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.83 2002/10/21 15:52:34 brianp Exp $ */
+/* $Id: extensions.c,v 1.84 2002/10/24 23:57:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,17 +24,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
+#include "imports.h"
 #include "context.h"
 #include "extensions.h"
-#include "mem.h"
 #include "simple_list.h"
 #include "mtypes.h"
-#endif
 
 
 #define MAX_EXT_NAMELEN 80

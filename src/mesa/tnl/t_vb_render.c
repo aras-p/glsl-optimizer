@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.31 2002/06/29 19:48:17 brianp Exp $ */
+/* $Id: t_vb_render.c,v 1.32 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,7 +44,7 @@
 #include "context.h"
 #include "enums.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "mtypes.h"
 #include "mmath.h"
 

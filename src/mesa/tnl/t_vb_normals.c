@@ -1,4 +1,4 @@
-/* $Id: t_vb_normals.c,v 1.15 2002/08/08 16:54:43 brianp Exp $ */
+/* $Id: t_vb_normals.c,v 1.16 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "mmath.h"
 #include "mtypes.h"
 

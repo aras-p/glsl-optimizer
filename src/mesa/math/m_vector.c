@@ -1,4 +1,4 @@
-/* $Id: m_vector.c,v 1.7 2002/06/29 19:48:17 brianp Exp $ */
+/* $Id: m_vector.c,v 1.8 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 #include "glheader.h"
 #include "imports.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 
 #include "m_vector.h"
 

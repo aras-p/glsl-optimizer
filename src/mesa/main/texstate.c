@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.83 2002/10/23 14:53:27 brianp Exp $ */
+/* $Id: texstate.c,v 1.84 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "colormac.h"
 #include "context.h"
@@ -40,7 +37,6 @@
 #include "mtypes.h"
 #include "math/m_xform.h"
 #include "math/m_matrix.h"
-#endif
 
 
 

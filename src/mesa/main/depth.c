@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.30 2002/06/15 02:38:15 brianp Exp $ */
+/* $Id: depth.c,v 1.31 2002/10/24 23:57:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,18 +25,13 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
+#include "imports.h"
 #include "context.h"
 #include "enums.h"
 #include "depth.h"
 #include "macros.h"
-#include "mem.h"
 #include "mtypes.h"
-#endif
-
 
 
 /**********************************************************************/

@@ -1,4 +1,4 @@
-/* $Id: hint.c,v 1.13 2002/06/15 02:54:02 brianp Exp $ */
+/* $Id: hint.c,v 1.14 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,15 +25,11 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "enums.h"
 #include "context.h"
 #include "hint.h"
-#include "state.h"
-#endif
+#include "imports.h"
 
 
 

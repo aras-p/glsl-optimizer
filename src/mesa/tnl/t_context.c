@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.28 2002/08/21 13:05:37 brianp Exp $ */
+/* $Id: t_context.c,v 1.29 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,9 +29,9 @@
 
 
 #include "glheader.h"
+#include "imports.h"
 #include "macros.h"
 #include "mtypes.h"
-#include "mem.h"
 #include "dlist.h"
 #include "light.h"
 #include "vtxfmt.h"

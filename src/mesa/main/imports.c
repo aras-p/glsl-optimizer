@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.20 2002/10/15 15:36:26 brianp Exp $ */
+/* $Id: imports.c,v 1.21 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,12 +32,17 @@
  * etc.
  *
  * Some drivers will want to override/replace this file with something
- * specialized, but most Mesa drivers will be able to call
- *_mesa_init_default_imports() and go with what's here.
+ * specialized, but that'll be rare.
  *
- * Eventually, I'd like to move most of the stuff in glheader.h and mem.[ch]
- * into imports.[ch].  Then we'll really have one, single place where
- * all OS-related dependencies are isolated.
+ * Eventually, I want to move roll the glheader.h file into this.
+ *
+ * The OpenGL SI's __GLimports structure allows per-context specification of
+ * replacements for the standard C lib functions.  In practice that's probably
+ * never needed; compile-time replacements are far more likely.
+ *
+ * The _mesa_foo() functions defined here don't in general take a context
+ * parameter.  I guess we can change that someday, if need be.
+ * So for now, the __GLimports stuff really isn't used.
  */
 
 
@@ -45,7 +50,7 @@
 #include "mtypes.h"
 #include "context.h"
 #include "imports.h"
-#include "mem.h"
+
 
 #define MAXSTRING 4000  /* for vsnprintf() */
 
@@ -53,37 +58,159 @@
 #define vsnprintf _vsnprintf
 #endif
 
-static void *
-_mesa_Malloc(__GLcontext *gc, size_t size)
-{
-   return MALLOC(size);
-}
 
-static void *
-_mesa_Calloc(__GLcontext *gc, size_t numElem, size_t elemSize)
-{
-   return CALLOC(numElem * elemSize);
-}
+/**********************************************************************/
+/* Wrappers for standard C library functions                          */
+/**********************************************************************/
 
-static void *
-_mesa_Realloc(__GLcontext *gc, void *oldAddr, size_t newSize)
-{
-   return realloc(oldAddr, newSize);
-}
 
-static void
-_mesa_Free(__GLcontext *gc, void *addr)
+void *
+_mesa_malloc(size_t bytes)
 {
-   FREE(addr);
+#ifdef XFree86LOADER
+   return xf86malloc(bytes);
+#else
+   return malloc(bytes);
+#endif
 }
 
 
-/* Must be before '#undef getenv' for inclusion in XFree86.
- */
-char * CAPI
-_mesa_getenv(__GLcontext *gc, const char *var)
+void *
+_mesa_calloc(size_t bytes)
 {
-   (void) gc;
+#ifdef XFree86LOADER
+   return xf86calloc(1, bytes);
+#else
+   return calloc(1, bytes);
+#endif
+}
+
+
+void
+_mesa_free(void *ptr)
+{
+#ifdef XFree86LOADER
+   xf86free(ptr);
+#else
+   free(ptr);
+#endif
+}
+
+
+void *
+_mesa_align_malloc(size_t bytes, unsigned long alignment)
+{
+   unsigned long ptr, buf;
+
+   ASSERT( alignment > 0 );
+
+   ptr = (unsigned long) _mesa_malloc( bytes + alignment );
+
+   buf = (ptr + alignment) & ~(unsigned long)(alignment - 1);
+   *(unsigned long *)(buf - sizeof(void *)) = ptr;
+
+#ifdef DEBUG
+   /* mark the non-aligned area */
+   while ( ptr < buf - sizeof(void *) ) {
+      *(unsigned long *)ptr = 0xcdcdcdcd;
+      ptr += sizeof(unsigned long);
+   }
+#endif
+
+   return (void *)buf;
+}
+
+
+void *
+_mesa_align_calloc(size_t bytes, unsigned long alignment)
+{
+   unsigned long ptr, buf;
+
+   ASSERT( alignment > 0 );
+
+   ptr = (unsigned long) _mesa_calloc( bytes + alignment );
+
+   buf = (ptr + alignment) & ~(unsigned long)(alignment - 1);
+   *(unsigned long *)(buf - sizeof(void *)) = ptr;
+
+#ifdef DEBUG
+   /* mark the non-aligned area */
+   while ( ptr < buf - sizeof(void *) ) {
+      *(unsigned long *)ptr = 0xcdcdcdcd;
+      ptr += sizeof(unsigned long);
+   }
+#endif
+
+   return (void *)buf;
+}
+
+
+void
+_mesa_align_free(void *ptr)
+{
+#if 0
+   _mesa_free( (void *)(*(unsigned long *)((unsigned long)ptr - sizeof(void *))) );
+#else
+   /* The actuall address to free is stuffed in the word immediately
+    * before the address the client sees.
+    */
+   void **cubbyHole = (void **) ((char *) ptr - sizeof(void *));
+   void *realAddr = *cubbyHole;
+   _mesa_free(realAddr);
+#endif
+}
+
+
+void *
+_mesa_memcpy(void *dest, const void *src, size_t n)
+{
+#ifdef XFree86LOADER
+   return xf86memcpy(dest, src, n);
+#elif defined(SUNOS4)
+   return memcpy((char *) dest, (char *) src, (int) n);
+#else
+   return memcpy(dest, src, n);
+#endif
+}
+
+
+void
+_mesa_memset( void *dst, int val, size_t n )
+{
+#ifdef XFree86LOADER
+   xf86memset( dst, val, n );
+#elif defined(SUNOS4)
+   memset( (char *) dst, (int) val, (int) n );
+#else
+   memset(dst, val, n);
+#endif
+}
+
+
+void
+_mesa_memset16( unsigned short *dst, unsigned short val, size_t n )
+{
+   while (n-- > 0)
+      *dst++ = val;
+}
+
+
+void
+_mesa_bzero( void *dst, size_t n )
+{
+#ifdef XFree86LOADER
+   xf86memset( dst, 0, n );
+#elif defined(__FreeBSD__)
+   bzero( dst, n );
+#else
+   memset( dst, 0, n );
+#endif
+}
+
+
+char *
+_mesa_getenv( const char *var )
+{
 #ifdef XFree86LOADER
    return xf86getenv(var);
 #else
@@ -92,97 +219,82 @@ _mesa_getenv(__GLcontext *gc, const char *var)
 }
 
 
-static void
-warning(__GLcontext *gc, char *str)
+char *
+_mesa_strstr( const char *haystack, const char *needle )
+{
+#ifdef XFree86LOADER
+   return xf86strstr(haystack, needle);
+#else
+   return strstr(haystack, needle);
+#endif
+}
+
+
+int
+_mesa_atoi(const char *s)
+{
+#ifdef XFree86LOADER
+   return xf86atoi(s);
+#else
+   return atoi(s);
+#endif
+}
+
+
+int
+_mesa_sprintf( char *str, const char *fmt, ... )
+{
+   int r;
+   va_list args;
+   va_start( args, fmt );  
+   va_end( args );
+#ifdef XFree86LOADER
+   r = xf86vsprintf( str, fmt, args );
+#else
+   r = vsprintf( str, fmt, args );
+#endif
+   return r;
+}
+
+
+void
+_mesa_printf( const char *fmtString, ... )
+{
+   char s[MAXSTRING];
+   va_list args;
+   va_start( args, fmtString );  
+   vsnprintf(s, MAXSTRING, fmtString, args);
+   va_end( args );
+#ifdef XFree86LOADER
+   xf86printf("%s", s);
+#else
+   printf("%s", s);
+#endif
+}
+
+
+void
+_mesa_warning( GLcontext *ctx, const char *fmtString, ... )
 {
    GLboolean debug;
-#ifdef DEBUG
-   debug = GL_TRUE;
-#else
-   if (_mesa_getenv(gc , "MESA_DEBUG"))
-      debug = GL_TRUE;
-   else
-      debug = GL_FALSE;
-#endif
-   if (debug) {
-      fprintf(stderr, "Mesa warning: %s\n", str);
-   }
-}
-
-
-void
-_mesa_fatal(__GLcontext *gc, char *str)
-{
-   (void) gc;
-   fprintf(stderr, "%s\n", str);
-   abort();
-}
-
-
-static int CAPI
-_mesa_atoi(__GLcontext *gc, const char *str)
-{
-   (void) gc;
-   return atoi(str);
-}
-
-
-int CAPI
-_mesa_sprintf(__GLcontext *gc, char *str, const char *fmt, ...)
-{
-   int r;
-   va_list args;
-   va_start( args, fmt );  
-   r = vsprintf( str, fmt, args );
-   va_end( args );
-   return r;
-}
-
-
-void * CAPI
-_mesa_fopen(__GLcontext *gc, const char *path, const char *mode)
-{
-   return fopen(path, mode);
-}
-
-
-int CAPI
-_mesa_fclose(__GLcontext *gc, void *stream)
-{
-   return fclose((FILE *) stream);
-}
-
-
-int CAPI
-_mesa_fprintf(__GLcontext *gc, void *stream, const char *fmt, ...)
-{
-   int r;
-   va_list args;
-   va_start( args, fmt );  
-   r = vfprintf( (FILE *) stream, fmt, args );
-   va_end( args );
-   return r;
-}
-
-
-/* XXX this really is driver-specific and can't be here */
-static __GLdrawablePrivate *
-_mesa_GetDrawablePrivate(__GLcontext *gc)
-{
-   return NULL;
-}
-
-
-
-void
-_mesa_warning(__GLcontext *gc, const char *fmtString, ...)
-{
    char str[MAXSTRING];
    va_list args;
+   (void) ctx;
    va_start( args, fmtString );  
    (void) vsnprintf( str, MAXSTRING, fmtString, args );
    va_end( args );
-   warning(gc, str);
+#ifdef DEBUG
+   debug = GL_TRUE; /* always print warning */
+#else
+   debug = _mesa_getenv("MESA_DEBUG") ? GL_TRUE : GL_FALSE;
+#endif
+   if (debug) {
+#ifdef XFree86LOADER
+      xf86fprintf(stderr, "Mesa warning: %s\n", str);
+#else
+      fprintf(stderr, "Mesa warning: %s\n", str);
+#endif
+   }
 }
 
 
@@ -193,23 +305,14 @@ _mesa_warning(__GLcontext *gc, const char *fmtString, ...)
 void
 _mesa_problem( const GLcontext *ctx, const char *s )
 {
-   if (ctx) {
-      ctx->imports.fprintf((GLcontext *) ctx, stderr, "Mesa implementation error: %s\n", s);
-#ifdef XF86DRI
-      ctx->imports.fprintf((GLcontext *) ctx, stderr, "Please report to the DRI bug database at dri.sourceforge.net\n");
+   (void) ctx;
+#ifdef XFree86LOADER
+   xf86fprintf(stderr, "Mesa implementation error: %s\n", s);
+   xf86fprintf(stderr, "Please report to the DRI project at dri.sourceforge.net\n");
 #else
-      ctx->imports.fprintf((GLcontext *) ctx, stderr, "Please report to the Mesa bug database at www.mesa3d.org\n" );
+   fprintf(stderr, "Mesa implementation error: %s\n", s);
+   fprintf(stderr, "Please report to the Mesa bug database at www.mesa3d.org\n" );
 #endif
-   }
-   else {
-      /* what can we do if we don't have a context???? */
-      fprintf( stderr, "Mesa implementation error: %s\n", s );
-#ifdef XF86DRI
-      fprintf( stderr, "Please report to the DRI bug database at dri.sourceforge.net\n");
-#else
-      fprintf( stderr, "Please report to the Mesa bug database at www.mesa3d.org\n" );
-#endif
-   }
 }
 
 
@@ -226,10 +329,10 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *fmtString, ... )
    const char *debugEnv;
    GLboolean debug;
 
-   debugEnv = _mesa_getenv(ctx, "MESA_DEBUG");
+   debugEnv = _mesa_getenv("MESA_DEBUG");
 
 #ifdef DEBUG
-   if (debugEnv && strstr(debugEnv, "silent"))
+   if (debugEnv && _mesa_strstr(debugEnv, "silent"))
       debug = GL_FALSE;
    else
       debug = GL_TRUE;
@@ -295,30 +398,121 @@ _mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
    va_list args;
    va_start(args, fmtString);
    vsnprintf(s, MAXSTRING, fmtString, args);
-   if (ctx)
-      (void) ctx->imports.fprintf( (__GLcontext *) ctx, stderr, s );
-   else
-      fprintf( stderr, s );
    va_end(args);
+#ifdef XFree86LOADER
+   xf86fprintf(stderr, "Mesa: %s", s);
+#else
+   fprintf(stderr, "Mesa: %s", s);
+#endif
 }
 
 
-/*
- * A wrapper for printf.  Uses stdout.
- */
-void
-_mesa_printf( const GLcontext *ctx, const char *fmtString, ... )
+
+/**********************************************************************/
+/* Default Imports Wrapper                                            */
+/**********************************************************************/
+
+static void *
+default_malloc(__GLcontext *gc, size_t size)
 {
-   char s[MAXSTRING];
-   va_list args;
-   va_start( args, fmtString );  
-   vsnprintf(s, MAXSTRING, fmtString, args);
-   if (ctx)
-      (void) ctx->imports.fprintf( (__GLcontext *) ctx, stdout, s );
-   else
-      printf( s );
-   va_end( args );
+   (void) gc;
+   return _mesa_malloc(size);
 }
+
+static void *
+default_calloc(__GLcontext *gc, size_t numElem, size_t elemSize)
+{
+   (void) gc;
+   return _mesa_calloc(numElem * elemSize);
+}
+
+static void *
+default_realloc(__GLcontext *gc, void *oldAddr, size_t newSize)
+{
+   (void) gc;
+#ifdef XFree86LOADER
+   return xf86realloc(oldAddr, newSize);
+#else
+   return realloc(oldAddr, newSize);
+#endif
+}
+
+static void
+default_free(__GLcontext *gc, void *addr)
+{
+   (void) gc;
+   _mesa_free(addr);
+}
+
+static char * CAPI
+default_getenv( __GLcontext *gc, const char *var )
+{
+   (void) gc;
+   return _mesa_getenv(var);
+}
+
+static void
+default_warning(__GLcontext *gc, char *str)
+{
+   _mesa_warning(gc, str);
+}
+
+static void
+default_fatal(__GLcontext *gc, char *str)
+{
+   _mesa_problem(gc, str);
+   abort();
+}
+
+static int CAPI
+default_atoi(__GLcontext *gc, const char *str)
+{
+   (void) gc;
+   return atoi(str);
+}
+
+static int CAPI
+default_sprintf(__GLcontext *gc, char *str, const char *fmt, ...)
+{
+   int r;
+   va_list args;
+   va_start( args, fmt );  
+   r = vsprintf( str, fmt, args );
+   va_end( args );
+   return r;
+}
+
+static void * CAPI
+default_fopen(__GLcontext *gc, const char *path, const char *mode)
+{
+   return fopen(path, mode);
+}
+
+static int CAPI
+default_fclose(__GLcontext *gc, void *stream)
+{
+   return fclose((FILE *) stream);
+}
+
+static int CAPI
+default_fprintf(__GLcontext *gc, void *stream, const char *fmt, ...)
+{
+   int r;
+   va_list args;
+   va_start( args, fmt );  
+   r = vfprintf( (FILE *) stream, fmt, args );
+   va_end( args );
+   return r;
+}
+
+/* XXX this really is driver-specific and can't be here */
+static __GLdrawablePrivate *
+default_GetDrawablePrivate(__GLcontext *gc)
+{
+   return NULL;
+}
+
+
 
 
 /*
@@ -330,18 +524,18 @@ _mesa_printf( const GLcontext *ctx, const char *fmtString, ... )
 void
 _mesa_init_default_imports(__GLimports *imports, void *driverCtx)
 {
-   imports->malloc = _mesa_Malloc;
-   imports->calloc = _mesa_Calloc;
-   imports->realloc = _mesa_Realloc;
-   imports->free = _mesa_Free;
-   imports->warning = warning;
-   imports->fatal = _mesa_fatal;
-   imports->getenv = _mesa_getenv;
-   imports->atoi = _mesa_atoi;
-   imports->sprintf = _mesa_sprintf;
-   imports->fopen = _mesa_fopen;
-   imports->fclose = _mesa_fclose;
-   imports->fprintf = _mesa_fprintf;
-   imports->getDrawablePrivate = _mesa_GetDrawablePrivate;
+   imports->malloc = default_malloc;
+   imports->calloc = default_calloc;
+   imports->realloc = default_realloc;
+   imports->free = default_free;
+   imports->warning = default_warning;
+   imports->fatal = default_fatal;
+   imports->getenv = default_getenv; /* not used for now */
+   imports->atoi = default_atoi;
+   imports->sprintf = default_sprintf;
+   imports->fopen = default_fopen;
+   imports->fclose = default_fclose;
+   imports->fprintf = default_fprintf;
+   imports->getDrawablePrivate = default_GetDrawablePrivate;
    imports->other = driverCtx;
 }

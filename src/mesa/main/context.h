@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.34 2002/10/14 17:08:21 brianp Exp $ */
+/* $Id: context.h,v 1.35 2002/10/24 23:57:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,6 @@
 
 #include "glapi.h"
 #include "mtypes.h"
-#include "imports.h"
 
 
 /*
@@ -128,13 +127,15 @@ _mesa_destroy_framebuffer( GLframebuffer *buffer );
 extern GLcontext *
 _mesa_create_context( const GLvisual *visual,
                       GLcontext *share_list,
-                      const __GLimports *imports );
+                      void *driver_ctx,
+                      GLboolean direct );
 
 extern GLboolean
 _mesa_initialize_context( GLcontext *ctx,
                           const GLvisual *visual,
                           GLcontext *share_list,
-                          const __GLimports *imports );
+                          void *driver_ctx,
+                          GLboolean direct );
 
 extern void
 _mesa_free_context_data( GLcontext *ctx );

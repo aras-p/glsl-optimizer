@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.61 2002/10/22 15:15:41 brianp Exp $ */
+/* $Id: texobj.c,v 1.62 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,23 +24,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "colortab.h"
 #include "context.h"
 #include "enums.h"
 #include "hash.h"
+#include "imports.h"
 #include "macros.h"
-#include "mem.h"
 #include "teximage.h"
 #include "texstate.h"
 #include "texobj.h"
 #include "mtypes.h"
-#endif
-
 
 
 /*

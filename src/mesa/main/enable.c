@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.70 2002/10/16 17:57:51 brianp Exp $ */
+/* $Id: enable.c,v 1.71 2002/10/24 23:57:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "context.h"
 #include "enable.h"
@@ -39,7 +36,7 @@
 #include "enums.h"
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
-#endif
+
 
 
 #define CHECK_EXTENSION(EXTNAME, CAP)					\

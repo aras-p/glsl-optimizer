@@ -1,4 +1,4 @@
-/* $Id: s_alphabuf.c,v 1.14 2002/10/18 17:02:01 kschultz Exp $ */
+/* $Id: s_alphabuf.c,v 1.15 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,7 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "mem.h"
+#include "imports.h"
 
 #include "s_context.h"
 #include "s_alphabuf.h"

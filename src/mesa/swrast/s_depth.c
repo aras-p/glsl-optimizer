@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.23 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_depth.c,v 1.24 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,7 +28,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 
 #include "s_depth.h"
 #include "s_context.h"

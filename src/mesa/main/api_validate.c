@@ -1,4 +1,4 @@
-/* $Id: api_validate.c,v 1.6 2002/04/21 21:04:46 brianp Exp $ */
+/* $Id: api_validate.c,v 1.7 2002/10/24 23:57:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,7 @@
 #include "glheader.h"
 #include "api_validate.h"
 #include "context.h"
+#include "imports.h"
 #include "mtypes.h"
 #include "state.h"
 

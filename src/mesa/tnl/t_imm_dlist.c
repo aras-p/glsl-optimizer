@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.42 2002/06/15 02:38:18 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.43 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,7 +33,7 @@
 #include "dlist.h"
 #include "debug.h"
 #include "mmath.h"
-#include "mem.h"
+#include "imports.h"
 #include "state.h"
 
 #include "t_context.h"

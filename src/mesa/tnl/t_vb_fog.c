@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.17 2002/01/22 14:35:17 brianp Exp $ */
+/* $Id: t_vb_fog.c,v 1.18 2002/10/24 23:57:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "mmath.h"
 #include "mtypes.h"
 

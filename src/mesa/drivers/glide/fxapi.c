@@ -1,4 +1,4 @@
-/* $Id: fxapi.c,v 1.34 2002/10/14 17:08:25 brianp Exp $ */
+/* $Id: fxapi.c,v 1.35 2002/10/24 23:57:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -283,7 +283,6 @@ fxMesaCreateContext(GLuint win,
    char *errorstr;
    GLboolean useBGR;
    char *system = NULL;
-   __GLimports imports;
 
    if (MESA_VERBOSE & VERBOSE_DRIVER) {
       fprintf(stderr, "fxmesa: fxMesaCreateContext() Start\n");
@@ -509,10 +508,9 @@ fxMesaCreateContext(GLuint win,
       goto errorhandler;
    }
 
-   _mesa_init_default_imports( &imports, (void *) fxMesa);
    ctx = fxMesa->glCtx = _mesa_create_context(fxMesa->glVis,
                                               shareCtx,
-					      &imports);
+					      (void *) fxMesa, GL_TRUE);
    if (!ctx) {
       errorstr = "_mesa_create_context";
       goto errorhandler;

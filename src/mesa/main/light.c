@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.52 2002/09/16 17:56:02 brianp Exp $ */
+/* $Id: light.c,v 1.53 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,23 +25,18 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
+#include "imports.h"
 #include "colormac.h"
 #include "context.h"
 #include "enums.h"
 #include "light.h"
 #include "macros.h"
-#include "mem.h"
 #include "mmath.h"
 #include "simple_list.h"
 #include "mtypes.h"
-
 #include "math/m_xform.h"
 #include "math/m_matrix.h"
-#endif
 
 
 /* XXX this is a bit of a hack needed for compilation within XFree86 */

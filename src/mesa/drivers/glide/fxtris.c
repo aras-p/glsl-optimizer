@@ -1,4 +1,4 @@
-/* $Id: fxtris.c,v 1.19 2002/08/21 02:56:58 brianp Exp $ */
+/* $Id: fxtris.c,v 1.20 2002/10/24 23:57:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,16 +28,10 @@
  *    Keith Whitwell <keithw@valinux.com>
  */
 
-#ifdef HAVE_CONFIG_H
-#include "conf.h"
-#endif
+#include "glheader.h"
 
 #ifdef FX
 
-#include <stdio.h>
-#include <math.h>
-
-#include "glheader.h"
 #include "mtypes.h"
 #include "macros.h"
 #include "colormac.h"

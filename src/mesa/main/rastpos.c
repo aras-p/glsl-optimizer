@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.38 2002/05/27 17:03:08 brianp Exp $ */
+/* $Id: rastpos.c,v 1.39 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "clip.h"
 #include "colormac.h"
@@ -43,7 +40,6 @@
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
-#endif
 
 
 /*

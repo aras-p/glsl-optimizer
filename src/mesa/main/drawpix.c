@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.62 2002/08/21 16:39:39 brianp Exp $ */
+/* $Id: drawpix.c,v 1.63 2002/10/24 23:57:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,22 +24,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
+#include "imports.h"
 #include "colormac.h"
 #include "context.h"
 #include "drawpix.h"
 #include "feedback.h"
 #include "macros.h"
-#include "mem.h"
 #include "mmath.h"
 #include "state.h"
 #include "mtypes.h"
-#endif
-
 
 
 /*

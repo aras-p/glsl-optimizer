@@ -1,4 +1,4 @@
-/* $Id: fxwgl.c,v 1.15 2002/09/04 14:14:36 brianp Exp $ */
+/* $Id: fxwgl.c,v 1.16 2002/10/24 23:57:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,9 +42,9 @@ extern "C"
 {
 #endif
 
-#include "fxdrv.h"
 #include <windows.h>
-#include "GL/gl.h"
+#include "glheader.h"
+#include "fxdrv.h"
 #include "glapi.h"
 
 #ifdef __cplusplus

@@ -1,4 +1,4 @@
-/* $Id: s_pixeltex.c,v 1.10 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: s_pixeltex.c,v 1.11 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,7 @@
 
 #include "glheader.h"
 #include "colormac.h"
-#include "mem.h"
+#include "imports.h"
 
 #include "s_context.h"
 #include "s_pixeltex.h"

@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.69 2002/10/05 18:27:41 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.70 2002/10/24 23:57:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,7 +48,7 @@
 #include "context.h"
 #include "config.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 #include "mmath.h"
 #include "mtypes.h"
 #include "xfonts.h"
@@ -1823,7 +1823,7 @@ Fake_glXChooseFBConfig( Display *dpy, int screen,
 {
    XMesaVisual xmvis = choose_visual(dpy, screen, attribList);
    if (xmvis) {
-      GLXFBConfig *config = malloc(sizeof(XMesaVisual));
+      GLXFBConfig *config = _mesa_malloc(sizeof(XMesaVisual));
       if (!config) {
          *nitems = 0;
          return NULL;
@@ -1866,7 +1866,7 @@ Fake_glXGetFBConfigs( Display *dpy, int screen, int *nelements )
    visuals = XGetVisualInfo(dpy, visMask, &visTemplate, nelements);
    if (*nelements > 0) {
       XMesaVisual *results;
-      results = malloc(*nelements * sizeof(XMesaVisual));
+      results = _mesa_malloc(*nelements * sizeof(XMesaVisual));
       if (!results) {
          *nelements = 0;
          return NULL;

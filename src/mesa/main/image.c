@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.68 2002/09/21 17:34:56 brianp Exp $ */
+/* $Id: image.c,v 1.69 2002/10/24 23:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,22 +24,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "colormac.h"
 #include "context.h"
 #include "image.h"
+#include "imports.h"
 #include "histogram.h"
 #include "macros.h"
-#include "mem.h"
 #include "mmath.h"
 #include "pixel.h"
 #include "mtypes.h"
-#endif
-
 
 
 /*

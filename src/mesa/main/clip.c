@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.25 2002/03/29 17:29:12 brianp Exp $ */
+/* $Id: clip.c,v 1.26 2002/10/24 23:57:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,9 +25,6 @@
  */
 
 
-#ifdef PC_HEADER
-#include "all.h"
-#else
 #include "glheader.h"
 #include "clip.h"
 #include "context.h"
@@ -37,7 +34,6 @@
 
 #include "math/m_xform.h"
 #include "math/m_matrix.h"
-#endif
 
 
 

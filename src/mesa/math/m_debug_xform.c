@@ -1,4 +1,4 @@
-/* $Id: m_debug_xform.c,v 1.9 2002/06/29 19:48:17 brianp Exp $ */
+/* $Id: m_debug_xform.c,v 1.10 2002/10/24 23:57:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "macros.h"
-#include "mem.h"
+#include "imports.h"
 
 #include "m_matrix.h"
 #include "m_xform.h"
