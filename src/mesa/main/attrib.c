@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.49 2001/04/17 21:25:53 brianp Exp $ */
+/* $Id: attrib.c,v 1.50 2001/05/03 14:11:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -672,7 +672,7 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
          bordColor[2] = CHAN_TO_FLOAT(obj->BorderColor[2]);
          bordColor[3] = CHAN_TO_FLOAT(obj->BorderColor[3]);
 
-         _mesa_TexParameteri(target, GL_TEXTURE_PRIORITY, obj->Priority);
+         _mesa_TexParameterf(target, GL_TEXTURE_PRIORITY, obj->Priority);
          _mesa_TexParameterfv(target, GL_TEXTURE_BORDER_COLOR, bordColor);
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, obj->WrapS);
          _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, obj->WrapT);
@@ -694,7 +694,7 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
                                 obj->CompareOperator);
          }
          if (ctx->Extensions.SGIX_shadow_ambient) {
-            _mesa_TexParameteri(target, GL_SHADOW_AMBIENT_SGIX,
+            _mesa_TexParameterf(target, GL_SHADOW_AMBIENT_SGIX,
                                 CHAN_TO_FLOAT(obj->ShadowAmbient));
          }
 

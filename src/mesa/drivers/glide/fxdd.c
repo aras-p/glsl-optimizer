@@ -791,7 +791,7 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    FX_grGlideGetState((GrState *) fxMesa->state);
 
    /* Run the config file */
-   _mesa_context_initialize(fxMesa->glCtx);
+   _mesa_read_config_file(fxMesa->glCtx);
 
    return 1;
 }

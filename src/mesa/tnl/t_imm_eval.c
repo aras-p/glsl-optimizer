@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.10 2001/05/01 13:18:03 keithw Exp $ */
+/* $Id: t_imm_eval.c,v 1.11 2001/05/03 14:11:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -130,7 +130,7 @@ static void eval1_4f_ca( struct gl_client_array *dest,
 				   dimension, map->Order);
       }
 
-   dest->Size = MAX2(dest->Size, dimension);
+   dest->Size = MAX2(dest->Size, (GLint) dimension);
 }
 
 
@@ -262,7 +262,7 @@ static void eval2_4f_ca( struct gl_client_array *dest,
 				  map->Uorder, map->Vorder);
       }
 
-   dest->Size = MAX2(dest->Size, dimension);
+   dest->Size = MAX2(dest->Size, (GLint) dimension);
 }
 
 
@@ -329,7 +329,7 @@ static void copy_4f_stride( GLfloat to[][4], GLfloat *from,
    if (stride == 4 * sizeof(GLfloat))
       MEMCPY( to, from, count * sizeof(to[0]));
    else {
-      int i;
+      GLuint i;
 /*        fprintf(stderr, "%s stride %d count %d\n", __FUNCTION__, */
 /*  	      stride, count); */
       for (i = 0 ; i < count ; i++, STRIDE_F(from, stride))

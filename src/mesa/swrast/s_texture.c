@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.27 2001/04/23 18:06:09 brianp Exp $ */
+/* $Id: s_texture.c,v 1.28 2001/05/03 14:11:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -280,7 +280,7 @@ sample_1d_nearest(GLcontext *ctx,
    /* skip over the border, if any */
    i += img->Border;
 
-   if (i < 0 || i >= img->Width) {
+   if (i < 0 || i >= (GLint) img->Width) {
       /* Need this test for GL_CLAMP_TO_BORDER_ARB mode */
       COPY_CHAN4(rgba, tObj->BorderColor);
    }
@@ -570,7 +570,7 @@ sample_2d_nearest(GLcontext *ctx,
    i += img->Border;
    j += img->Border;
 
-   if (i < 0 || i >= img->Width || j < 0 || j >= img->Height) {
+   if (i < 0 || i >= (GLint) img->Width || j < 0 || j >= (GLint) img->Height) {
       /* Need this test for GL_CLAMP_TO_BORDER_ARB mode */
       COPY_CHAN4(rgba, tObj->BorderColor);
    }
@@ -990,9 +990,9 @@ sample_3d_nearest(GLcontext *ctx,
    COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, t, height, j);
    COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapR, r, depth,  k);
 
-   if (i < 0 || i >= img->Width ||
-       j < 0 || j >= img->Height ||
-       k < 0 || k >= img->Depth) {
+   if (i < 0 || i >= (GLint) img->Width ||
+       j < 0 || j >= (GLint) img->Height ||
+       k < 0 || k >= (GLint) img->Depth) {
       /* Need this test for GL_CLAMP_TO_BORDER_ARB mode */
       COPY_CHAN4(rgba, tObj->BorderColor);
    }

@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.21 2001/04/27 21:18:25 brianp Exp $ */
+/* $Id: xm_api.c,v 1.22 2001/05/03 14:11:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1669,7 +1669,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    /* Run the config file
     */
-   _mesa_context_initialize( ctx );
+   _mesa_read_config_file( ctx );
 
 
    return c;

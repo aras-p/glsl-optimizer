@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.135 2001/04/28 08:39:17 keithw Exp $ */
+/* $Id: context.c,v 1.136 2001/05/03 14:11:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1498,7 +1498,7 @@ _mesa_initialize_context( GLcontext *ctx,
 
 
 #if defined(MESA_TRACE)
-   ctx->TraceCtx = CALLOC( sizeof(trace_context_t) );
+   ctx->TraceCtx = (trace_context_t *) CALLOC( sizeof(trace_context_t) );
 #if 0
    /* Brian: do you want to have CreateContext fail here,
        or should we just trap in NewTrace (currently done)? */
@@ -1670,18 +1670,6 @@ _mesa_destroy_context( GLcontext *ctx )
       _mesa_free_context_data(ctx);
       FREE( (void *) ctx );
    }
-}
-
-
-
-/*
- * Called by the driver after both the context and driver are fully
- * initialized.  Currently just reads the config file.
- */
-void
-_mesa_context_initialize( GLcontext *ctx )
-{
-   _mesa_read_config_file( ctx );
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.26 2001/04/27 21:17:20 brianp Exp $ */
+/* $Id: context.h,v 1.27 2001/05/03 14:11:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -147,10 +147,6 @@ _mesa_free_context_data( GLcontext *ctx );
 
 extern void
 _mesa_destroy_context( GLcontext *ctx );
-
-
-extern void
-_mesa_context_initialize( GLcontext *ctx );
 
 
 extern void
