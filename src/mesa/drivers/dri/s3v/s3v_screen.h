@@ -3,7 +3,7 @@
  */
 
 typedef struct _s3vRegion {
-    drmHandle  handle;
+    drm_handle_t  handle;
     drmSize    size;
     drmAddress map;
 } s3vRegion, *s3vRegionPtr;

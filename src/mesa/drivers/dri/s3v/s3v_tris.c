@@ -33,7 +33,7 @@
 #define HAVE_BACK_COLORS	0
 #define HAVE_HW_FLATSHADE	1
 #define VERTEX			s3vVertex
-#define TAB				rast_tab
+#define TAB			rast_tab
 
 #define VERT_SET_RGBA( v, c ) \
 do { \
@@ -55,10 +55,10 @@ do { \
 
 
 static struct {
-	points_func	points;
-	line_func	line;
-	triangle_func	triangle;
-	quad_func	quad;
+	tnl_points_func		points;
+	tnl_line_func		line;
+	tnl_triangle_func	triangle;
+	tnl_quad_func		quad;
 } rast_tab[S3V_MAX_TRIFUNC];
 
 #define S3V_RAST_CULL_BIT	0x01
@@ -236,7 +236,7 @@ void s3vChooseRasterState(GLcontext *ctx)
 	if ( flags & DD_FLATSHADE )
 		ind |= S3V_RAST_FLAT_BIT;
 
-	if ( ctx->Texture._ReallyEnabled ) {
+	if ( ctx->Texture.Unit[0]._ReallyEnabled ) {
 		ind |= S3V_RAST_TEX_BIT;
 	}
 
@@ -608,7 +608,7 @@ static void s3vRasterPrimitive( GLcontext *ctx, GLuint hwprim )
 {
 	s3vContextPtr vmesa = S3V_CONTEXT(ctx);
 /*	__DRIdrawablePrivate *dPriv = vmesa->driDrawable; */
-	CARD32 cmd = vmesa->CMD;
+	GLuint cmd = vmesa->CMD;
 	
 	unsigned int _hw_prim = hwprim;
 
@@ -650,7 +650,7 @@ static void s3vRenderPrimitive( GLcontext *ctx, GLenum prim )
 {
 	s3vContextPtr vmesa = S3V_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = vmesa->driDrawable;
-	CARD32 cmd = vmesa->CMD;
+	GLuint cmd = vmesa->CMD;
 
 	unsigned int _hw_prim = hw_prim[prim];
 

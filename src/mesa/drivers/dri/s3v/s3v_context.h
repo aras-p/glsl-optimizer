@@ -11,6 +11,7 @@
 #include "s3v_regs.h"
 #include "s3v_macros.h"
 #include "s3v_screen.h"
+#include "colormac.h"
 #include "macros.h"
 #include "mtypes.h"
 #include "drm.h"
@@ -32,8 +33,7 @@
 extern void	  	s3vDDUpdateHWState(GLcontext *ctx);
 extern s3vScreenPtr	s3vCreateScreen(__DRIscreenPrivate *sPriv);
 extern void	  	s3vDestroyScreen(__DRIscreenPrivate *sPriv);
-extern GLboolean 	s3vCreateContext( Display *dpy,
-                                     const __GLcontextModes *glVisual,
+extern GLboolean 	s3vCreateContext(const __GLcontextModes *glVisual,
                                      __DRIcontextPrivate *driContextPriv,
                                      void *sharedContextPrivate);
 
@@ -129,17 +129,17 @@ struct s3v_texture_object_t {
       		int internalFormat;
    	} image[S3V_TEX_MAXLEVELS];
 
-	CARD32 TextureCMD;
+	GLuint TextureCMD;
 
-	CARD32 TextureColorMode;
-	CARD32 TextureFilterMode;
-	CARD32 TextureBorderColor;
-	CARD32 TextureWrap;
-	CARD32 TextureMipSize;
+	GLuint TextureColorMode;
+	GLuint TextureFilterMode;
+	GLuint TextureBorderColor;
+	GLuint TextureWrap;
+	GLuint TextureMipSize;
 
-	CARD32 TextureBaseAddr[S3V_TEX_MAXLEVELS];
-	CARD32 TextureFormat;
-	CARD32 TextureReadMode;
+	GLuint TextureBaseAddr[S3V_TEX_MAXLEVELS];
+	GLuint TextureFormat;
+	GLuint TextureReadMode;
 };		
 
 #define S3V_NO_PALETTE        0x0
@@ -222,17 +222,16 @@ struct s3v_context {
 
    	/* Mirrors of some DRI state
     	 */
-	Display *display;		/* X server display */
 
-	drmContext hHWContext;
+	drm_context_t hHWContext;
 	drmLock *driHwLock;
 	int driFd;
 
 	GLuint numClipRects;		/* Cliprects for the draw buffer */
-	XF86DRIClipRectPtr pClipRects;
+	drm_clip_rect_t *pClipRects;
 
-	CARD32*	buf;			/* FIXME */
-	CARD32*	_buf[2];
+	GLuint*	buf;			/* FIXME */
+	GLuint*	_buf[2];
 	int		_bufNum;
 	int		bufIndex[2];
 	int		bufSize;
@@ -281,40 +280,40 @@ struct s3v_context {
    
 	unsigned int S3V_REG[S3V_REGS_NUM];
 
-	CARD32 texMode;
-	CARD32 alphaMode;
-	CARD32 lightMode;
+	GLuint texMode;
+	GLuint alphaMode;
+	GLuint lightMode;
 
-	CARD32 SrcBase;
-	CARD32 DestBase;
-	CARD32 DestBlit;
-	CARD32 ScissorLR;
-	CARD32 ScissorTB;
-	CARD32 ScissorWH; /* SubScissorWH */ /* RectWH */
-	CARD32 FrontStride;
-	CARD32 BackStride;
-	CARD32 SrcStride;
-	CARD32 DestStride;
-	CARD32 SrcXY;
-	CARD32 DestXY;
+	GLuint SrcBase;
+	GLuint DestBase;
+	GLuint DestBlit;
+	GLuint ScissorLR;
+	GLuint ScissorTB;
+	GLuint ScissorWH; /* SubScissorWH */ /* RectWH */
+	GLuint FrontStride;
+	GLuint BackStride;
+	GLuint SrcStride;
+	GLuint DestStride;
+	GLuint SrcXY;
+	GLuint DestXY;
 
-   	CARD32 ClearColor;
-	CARD32 Color;
-	CARD32 DitherMode;
-   	CARD32 ClearDepth;
+   	GLuint ClearColor;
+	GLuint Color;
+	GLuint DitherMode;
+   	GLuint ClearDepth;
 
-	CARD32 TextureBorderColor;
-	CARD32 TexOffset;
-	CARD32 TexStride;
+	GLuint TextureBorderColor;
+	GLuint TexOffset;
+	GLuint TexStride;
 
-	CARD32 CMD;
-	CARD32 prim_cmd;
-	CARD32 _tri[2]; /* 0 = gouraud; 1 = tex (lit or unlit) */
-	CARD32 alpha_cmd; /* actual alpha cmd */
-	CARD32 _alpha[2];
-	CARD32 _alpha_tex; /* tex alpha type */
+	GLuint CMD;
+	GLuint prim_cmd;
+	GLuint _tri[2]; /* 0 = gouraud; 1 = tex (lit or unlit) */
+	GLuint alpha_cmd; /* actual alpha cmd */
+	GLuint _alpha[2];
+	GLuint _alpha_tex; /* tex alpha type */
 	/* (3d_mode) 0 = 3d line/gourad tri; 1 = 3d tex tri */
-	CARD32 _3d_mode;
+	GLuint _3d_mode;
 	
 	GLfloat backface_sign;
 	GLfloat cull_zero;
@@ -323,14 +322,14 @@ struct s3v_context {
 
 /* *** 2check *** */
 
-	CARD32		FogMode;
-	CARD32		AreaStippleMode;
-	CARD32		LBReadFormat;
-	CARD32		LBWriteFormat;
-	CARD32		LineMode;
-	CARD32		PointMode;
-	CARD32		TriangleMode;
-	CARD32		AntialiasMode;
+	GLuint		FogMode;
+	GLuint		AreaStippleMode;
+	GLuint		LBReadFormat;
+	GLuint		LBWriteFormat;
+	GLuint		LineMode;
+	GLuint		PointMode;
+	GLuint		TriangleMode;
+	GLuint		AntialiasMode;
 	GLfloat		ViewportScaleX;
 	GLfloat		ViewportScaleY;
 	GLfloat		ViewportScaleZ;

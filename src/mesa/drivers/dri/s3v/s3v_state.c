@@ -51,7 +51,7 @@ static void s3vUpdateAlphaMode( GLcontext *ctx )
 	
 }
 
-static void s3vDDAlphaFunc( GLcontext *ctx, GLenum func, GLchan ref )
+static void s3vDDAlphaFunc( GLcontext *ctx, GLenum func, GLfloat ref )
 {
    s3vContextPtr vmesa = S3V_CONTEXT(ctx);
 
@@ -492,7 +492,7 @@ static void s3vDDColorMask( GLcontext *ctx, GLboolean r, GLboolean g,
  * Miscellaneous
  */
 
-static void s3vDDClearColor( GLcontext *ctx, const GLchan color[4])
+static void s3vDDClearColor( GLcontext *ctx, const GLfloat color[4])
 {
    s3vContextPtr vmesa = S3V_CONTEXT(ctx);
 
@@ -842,14 +842,17 @@ void s3vInitStateFuncs( GLcontext *ctx )
    ctx->Driver.Clear			= s3vDDClear;
    ctx->Driver.ClearIndex		= NULL;
    ctx->Driver.ClearColor		= s3vDDClearColor;
-   ctx->Driver.SetDrawBuffer		= s3vDDSetDrawBuffer; 
+   ctx->Driver.DrawBuffer		= s3vDDSetDrawBuffer; 
+   ctx->Driver.ReadBuffer               = NULL; /* XXX */
 
    ctx->Driver.IndexMask		= NULL;
    ctx->Driver.ColorMask		= NULL; /* s3vDDColorMask; */ /* FIXME */
 
    ctx->Driver.AlphaFunc		= s3vDDAlphaFunc; /* FIXME */
+#if 0
    ctx->Driver.BlendEquation		= NULL; /* s3vDDBlendEquation; */
    ctx->Driver.BlendFunc		= s3vDDBlendFunc; /* FIXME */
+#endif
    ctx->Driver.BlendFuncSeparate	= NULL; /* s3vDDBlendFuncSeparate; */
    ctx->Driver.ClearDepth		= s3vDDClearDepth;
    ctx->Driver.CullFace			= s3vDDCullFace; 

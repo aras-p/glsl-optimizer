@@ -5,7 +5,6 @@
 #include "s3v_context.h"
 #include "s3v_vb.h"
 #include "context.h"
-#include "mmath.h"
 #include "matrix.h"
 #include "s3v_dri.h"
 
@@ -46,15 +45,14 @@ s3vDestroyContext(__DRIcontextPrivate *driContextPriv)
       vmesa->glCtx->DriverCtx = NULL;
       _mesa_destroy_context(vmesa->glCtx);
 
-      Xfree(vmesa);
+      _mesa_free(vmesa);
       driContextPriv->driverPrivate = NULL;
     }
 }
 
 
 static GLboolean
-s3vCreateBuffer( Display *dpy,
-                   __DRIscreenPrivate *driScrnPriv,
+s3vCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                    __DRIdrawablePrivate *driDrawPriv,
                    const __GLcontextModes *mesaVis,
                    GLboolean isPixmap )
@@ -82,7 +80,7 @@ s3vDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 }
 
 static void
-s3vSwapBuffers(Display *dpy, void *drawablePrivate)
+s3vSwapBuffers(__DRIdrawablePrivate *drawablePrivate)
 {
    __DRIdrawablePrivate *dPriv = (__DRIdrawablePrivate *) drawablePrivate;
    __DRIscreenPrivate *sPriv;
@@ -99,14 +97,14 @@ s3vSwapBuffers(Display *dpy, void *drawablePrivate)
 
 /* DMAFLUSH(); */
 
-   _mesa_swapbuffers( ctx );
+   _mesa_notifySwapBuffers( ctx );
 
    vmesa = (s3vContextPtr) dPriv->driContextPriv->driverPrivate;
 /*    driScrnPriv = vmesa->driScreen; */
 
 /*    if (vmesa->EnabledFlags & S3V_BACK_BUFFER) */
 
-/*	_mesa_swapbuffers( ctx );  */
+/*	_mesa_notifySwapBuffers( ctx );  */
 #if 1
 {	
 	int x0, y0, x1, y1;
@@ -275,18 +273,6 @@ s3vUnbindContext( __DRIcontextPrivate *driContextPriv )
    return GL_TRUE;
 }
 
-static GLboolean
-s3vOpenFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
-static GLboolean
-s3vCloseFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    return GL_TRUE;
-}
-
 
 static struct __DriverAPIRec s3vAPI = {
    s3vInitDriver,
@@ -298,12 +284,10 @@ static struct __DriverAPIRec s3vAPI = {
    s3vSwapBuffers,
    s3vMakeCurrent,
    s3vUnbindContext,
-   s3vOpenFullScreen,
-   s3vCloseFullScreen
 };
 
 
-
+#if 0
 /*
  * This is the bootstrap function for the driver.
  * The __driCreateScreen name is the symbol that libGL.so fetches.
@@ -319,6 +303,7 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    DEBUG(("__driCreateScreen: psp = %p\n", psp));
    return (void *) psp;
 }
+#endif
 
 void __driRegisterExtensions(void)
 {

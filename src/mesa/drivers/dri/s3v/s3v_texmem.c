@@ -12,7 +12,6 @@
 #include "enums.h"
 
 #include "mm.h"
-#include "mem.h"
 #include "s3v_context.h"
 #include "s3v_lock.h"
 #include "s3v_tex.h"
@@ -103,7 +102,7 @@ static void s3vUploadTexLevel( s3vContextPtr vmesa, s3vTextureObjectPtr t,
 	int l2d;
 	/* int offset = 0; */
 	int words;
-	CARD32* dest;
+	GLuint* dest;
 #if TEX_DEBUG_ON
 	static unsigned int times=0;
 #endif
@@ -121,9 +120,9 @@ static void s3vUploadTexLevel( s3vContextPtr vmesa, s3vTextureObjectPtr t,
 	DEBUG_TEX(("t->image[%i].offset = 0x%x\n",
 		level, t->image[level].offset));
 		
-	t->TextureBaseAddr[level] = (CARD32)(t->BufAddr + t->image[level].offset
-		+ _TEXALIGN) & (CARD32)(~_TEXALIGN);
-	dest = (CARD32*)(sPriv->pFB + t->TextureBaseAddr[level]); 
+	t->TextureBaseAddr[level] = (GLuint)(t->BufAddr + t->image[level].offset
+		+ _TEXALIGN) & (GLuint)(~_TEXALIGN);
+	dest = (GLuint*)(sPriv->pFB + t->TextureBaseAddr[level]); 
 
 	DEBUG_TEX(("sPriv->pFB = 0x%x\n", sPriv->pFB));
 	DEBUG_TEX(("dest = 0x%x\n", dest));

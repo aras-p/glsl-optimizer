@@ -21,7 +21,7 @@ static void s3vSetTexImages( s3vContextPtr vmesa,
 {
    GLuint height, width, pitch, i, /*textureFormat,*/ log_pitch;
    s3vTextureObjectPtr t = (s3vTextureObjectPtr) tObj->DriverData;
-   const struct gl_texture_image *baseImage = tObj->Image[tObj->BaseLevel];
+   const struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
    GLint firstLevel, lastLevel, numLevels;
    GLint log2Width, log2Height;
 #if TEX_DEBUG_ON
@@ -55,15 +55,15 @@ static void s3vSetTexImages( s3vContextPtr vmesa,
 
    numLevels = lastLevel - firstLevel + 1;
 
-   log2Width = tObj->Image[firstLevel]->WidthLog2;
-   log2Height = tObj->Image[firstLevel]->HeightLog2;
+   log2Width = tObj->Image[0][firstLevel]->WidthLog2;
+   log2Height = tObj->Image[0][firstLevel]->HeightLog2;
 
 
    /* Figure out the amount of memory required to hold all the mipmap
     * levels.  Choose the smallest pitch to accomodate the largest
     * mipmap:
     */
-   width = tObj->Image[firstLevel]->Width * t->texelBytes;
+   width = tObj->Image[0][firstLevel]->Width * t->texelBytes;
    for (pitch = 32, log_pitch=2 ; pitch < width ; pitch *= 2 )
       log_pitch++;
    
@@ -71,12 +71,12 @@ static void s3vSetTexImages( s3vContextPtr vmesa,
     * lines required:
     */
    for ( height = i = 0 ; i < numLevels ; i++ ) {
-      t->image[i].image = tObj->Image[firstLevel + i];
+      t->image[i].image = tObj->Image[0][firstLevel + i];
       t->image[i].offset = height * pitch;
       t->image[i].internalFormat = baseImage->Format;
       height += t->image[i].image->Height;
       t->TextureBaseAddr[i] = (t->BufAddr + t->image[i].offset +
-         _TEXALIGN) & (CARD32)(~_TEXALIGN);
+         _TEXALIGN) & (GLuint)(~_TEXALIGN);
    }
 
    t->Pitch = pitch;
@@ -96,13 +96,13 @@ static void s3vUpdateTexEnv( GLcontext *ctx, GLuint unit )
    s3vContextPtr vmesa = S3V_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    const struct gl_texture_object *tObj = texUnit->_Current;
-   const GLuint format = tObj->Image[tObj->BaseLevel]->Format;
+   const GLuint format = tObj->Image[0][tObj->BaseLevel]->Format;
 /*
    s3vTextureObjectPtr t = (s3vTextureObjectPtr)tObj->DriverData;
    GLuint tc;
 */
    GLuint alpha = 0;
-   CARD32 cmd = vmesa->CMD;
+   GLuint cmd = vmesa->CMD;
 #if TEX_DEBUG_ON
    static unsigned int times=0;
    DEBUG_TEX(("*** s3vUpdateTexEnv: %i ***\n", ++times));
@@ -205,14 +205,14 @@ static void s3vUpdateTexUnit( GLcontext *ctx, GLuint unit )
 {
    s3vContextPtr vmesa = S3V_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   CARD32 cmd = vmesa->CMD;
+   GLuint cmd = vmesa->CMD;
 #if TEX_DEBUG_ON
    static unsigned int times=0;
    DEBUG_TEX(("*** s3vUpdateTexUnit: %i ***\n", ++times));
    DEBUG_TEX(("and vmesa->CMD was 0x%x\n", vmesa->CMD));
 #endif
 
-   if (texUnit->_ReallyEnabled == TEXTURE0_2D) 
+   if (texUnit->_ReallyEnabled == TEXTURE_2D_BIT) 
    {
       struct gl_texture_object *tObj = texUnit->_Current;
       s3vTextureObjectPtr t = (s3vTextureObjectPtr)tObj->DriverData;
@@ -246,8 +246,9 @@ static void s3vUpdateTexUnit( GLcontext *ctx, GLuint unit )
       /* Update texture environment if texture object image format or 
        * texture environment state has changed.
        */
-      if (tObj->Image[tObj->BaseLevel]->Format != vmesa->TexEnvImageFmt[unit]) {
-         vmesa->TexEnvImageFmt[unit] = tObj->Image[tObj->BaseLevel]->Format;
+      if (tObj->Image[0][tObj->BaseLevel]->Format !=
+          vmesa->TexEnvImageFmt[unit]) {
+         vmesa->TexEnvImageFmt[unit] = tObj->Image[0][tObj->BaseLevel]->Format;
          s3vUpdateTexEnv( ctx, unit );
       }
 #if 1
@@ -283,15 +284,11 @@ static void s3vUpdateTexUnit( GLcontext *ctx, GLuint unit )
 void s3vUpdateTextureState( GLcontext *ctx )
 {
    s3vContextPtr vmesa = S3V_CONTEXT(ctx);
+   (void) vmesa;
 #if TEX_DEBUG_ON
    static unsigned int times=0;
    DEBUG_TEX(("*** s3vUpdateTextureState: #%i ***\n", ++times));
 #endif
-
-   if (!ctx->Texture._ReallyEnabled) {
-		DEBUG_TEX(("!ctx->Texture._ReallyEnabled\n"));
-		return;
-   }
 
 #if _TEXFALLBACK   
    FALLBACK( vmesa, S3V_FALLBACK_TEXTURE, GL_FALSE );

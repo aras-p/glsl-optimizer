@@ -17,18 +17,26 @@
         int start02, end01; \
         int ystart, y01y12; \
         int i, tmp, tmp2, tmp3; \
-        GLfloat ydiff, fy[3]
+        GLfloat ydiff, fy[3]; \
+        (void) v; (void) vvv; (void) x; (void) y; (void) z; (void) idx; \
+        (void) dx01; (void) dy01; (void) delt02; (void) deltzy; \
+        (void) zstart; (void) start02; (void) ystart; (void) y01y12; \
+        (void) i; (void) tmp; (void) tmp2; (void) tmp3; (void) ydiff; (void) fy
 
 #define LINE_FLAT_VARS \
         int arstart, gbstart; \
         int deltarx, deltgbx, deltary, deltgby; \
-        GLubyte *(col)[3]
+        GLubyte *(col)[3]; \
+        (void) arstart; (void) gbstart; (void) deltarx; (void) deltgbx; \
+        (void) deltary; (void) deltgby; (void) col
 
 #define LINE_GOURAUD_VARS \
         int arstart, gbstart; \
         int deltary, deltgby; \
         int ctmp, ctmp2, ctmp3, ctmp4; \
-        GLubyte *(col)[3]
+        GLubyte *(col)[3]; \
+        (void) arstart; (void) gbstart; (void) deltary; (void) deltgby; \
+        (void) ctmp; (void) ctmp2; (void) ctmp3; (void) ctmp4; (void) col
 
 #define SORT_LINE_VERT() \
 do { \
@@ -199,18 +207,29 @@ do { \
         int start02, end01, end12; \
         int ystart, y01y12; \
         int i, tmp, lr; \
-        GLfloat ydiff, fy[3]
+        GLfloat ydiff, fy[3]; \
+        (void) v; (void) x; (void) y; (void) z; (void) idx; (void) dx01; \
+        (void) dy01; (void) dx02; (void) dy02; (void) dx12; (void) dy12; \
+        (void) delt01; (void) delt02; (void) delt12; (void) deltzx; \
+        (void) deltzy; (void) zstart; (void) start02; (void) end01; \
+        (void) end12; (void) ystart; (void) y01y12; (void) i; (void) tmp; \
+        (void) lr; (void) ydiff; (void) fy
 
 #define GOURAUD_VARS \
         int arstart, gbstart; \
         int deltarx, deltgbx, deltary, deltgby; \
         int ctmp, ctmp2, ctmp3, ctmp4; \
-        GLubyte *(col)[3]
+        GLubyte *(col)[3]; \
+        (void) arstart; (void) gbstart; (void) deltarx; (void) deltgbx; \
+        (void) deltary; (void) deltgby; (void) ctmp; (void) ctmp2; \
+        (void) ctmp3; (void) ctmp4; (void) col
 
 #define FLAT_VARS \
         int arstart, gbstart; \
         int deltarx, deltgbx, deltary, deltgby; \
-        GLubyte *(col)[3]
+        GLubyte *(col)[3]; \
+        (void) arstart; (void) gbstart; (void) deltarx; (void) deltgbx; \
+        (void) deltary; (void) deltgby; (void) col
 
 #define TEX_VARS \
         int u0, u1, u2; \
@@ -226,7 +245,15 @@ do { \
         int rbaseu, rbasev; \
         int dstart, ustart, wstart, vstart; \
         static int stmp = 0; \
-        s3vTextureObjectPtr t
+        s3vTextureObjectPtr t; \
+        (void) u0; (void) u1; (void) u2; (void) ru0; (void) ru1; (void) ru2; \
+        (void) v0; (void) v1; (void) v2; (void) rv0; (void) rv1; (void) rv2; \
+        (void) w0; (void) w1; (void) w2; (void) rw0; (void) rw1; (void) rw2; \
+        (void) baseu; (void) basev; (void) d0; (void) d1; (void) d2; \
+        (void) deltdx; (void) deltvx; (void) deltux; (void) deltdy; \
+        (void) deltuy; (void) deltwx; (void) deltwy; (void) rbaseu; \
+        (void) rbasev; (void) dstart; (void) ustart; (void) wstart; \
+        (void) vstart; (void) stmp; (void) t
 
 #define SORT_VERT() \
 do { \
@@ -376,15 +403,15 @@ do { \
         u0 = (v[idx[0]].texcoord[0][0] \
                 * (GLfloat)(t->image[0].image->Width) * 256.0); \
         u1 = (v[idx[1]].texcoord[0][0] \
-                * (GLfloat)(t->globj->Image[0]->Width) * 256.0); \
+                * (GLfloat)(t->globj->Image[0][0]->Width) * 256.0); \
         u2 = (v[idx[2]].texcoord[0][0] \
-                * (GLfloat)(t->globj->Image[0]->Width) * 256.0); \
+                * (GLfloat)(t->globj->Image[0][0]->Width) * 256.0); \
         v0 = (v[idx[0]].texcoord[0][1] \
-                * (GLfloat)(t->globj->Image[0]->Height) * 256.0); \
+                * (GLfloat)(t->globj->Image[0][0]->Height) * 256.0); \
         v1 = (v[idx[1]].texcoord[0][1] \
-                * (GLfloat)(t->globj->Image[0]->Height) * 256.0); \
+                * (GLfloat)(t->globj->Image[0][0]->Height) * 256.0); \
         v2 = (v[idx[2]].texcoord[0][1] \
-                * (GLfloat)(t->globj->Image[0]->Height) * 256.0); \
+                * (GLfloat)(t->globj->Image[0][0]->Height) * 256.0); \
 \
         w0 = (v[idx[0]].win[3]); \
         w1 = (v[idx[1]].win[3]); \
@@ -492,8 +519,8 @@ do { \
         rv1 = (((v1 - basev) * rw1)); \
         rv2 = (((v2 - basev) * rw2)); \
 \
-        while (baseu < 0) { baseu += (t->globj->Image[0]->Width << 8); } \
-        while (basev < 0) { basev += (t->globj->Image[0]->Height << 8); } \
+        while (baseu < 0) { baseu += (t->globj->Image[0][0]->Width << 8); } \
+        while (basev < 0) { basev += (t->globj->Image[0][0]->Height << 8); } \
 \
         if (!(baseu & 0xFF)) \
                 { baseu = (baseu >> 8); } \
@@ -505,8 +532,8 @@ do { \
         else \
                 { basev = (basev >> 8) - 1; } \
 \
-        rbaseu = (baseu) << (16 - t->globj->Image[0]->WidthLog2); \
-        rbasev = (basev) << (16 - t->globj->Image[0]->WidthLog2); \
+        rbaseu = (baseu) << (16 - t->globj->Image[0][0]->WidthLog2); \
+        rbasev = (basev) << (16 - t->globj->Image[0][0]->WidthLog2); \
         deltuy = (((ru2 - ru0) / dy02)); \
         deltvy = (((rv2 - rv0) / dy02)); \
         rw0 *= (1024.0 * 512.0); \
@@ -591,6 +618,7 @@ static void TAG(s3v_line)( s3vContextPtr vmesa,
 #endif
 #if (IND & S3V_RAST_CULL_BIT)
 	GLfloat cull;
+        (void) cull;
 #endif
 
 	DEBUG(("*** s3v_line: "));

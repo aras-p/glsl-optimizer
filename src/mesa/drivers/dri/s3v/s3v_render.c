@@ -5,9 +5,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "macros.h"
-#include "mem.h"
 #include "mtypes.h"
-#include "mmath.h"
 
 #include "tnl/t_context.h"
 
@@ -29,6 +27,7 @@
 
 #define HAVE_ELTS        0
 
+#if 0
 static void VERT_FALLBACK( GLcontext *ctx,
 			   GLuint start,
 			   GLuint count,
@@ -50,8 +49,9 @@ static void VERT_FALLBACK( GLcontext *ctx,
 	_flags = flags & PRIM_MODE_MASK;
 
 	tnl->Driver.Render.PrimTabVerts[_flags]( ctx, start, count, flags );
-	S3V_CONTEXT(ctx)->SetupNewInputs = VERT_CLIP;
+	S3V_CONTEXT(ctx)->SetupNewInputs = VERT_BIT_POS;
 }
+#endif
 
 static const GLuint hw_prim[GL_POLYGON+1] = {
 	PrimType_Points,
@@ -126,12 +126,10 @@ static __inline void s3vEndPrimitive( s3vContextPtr vmesa )
 	(vmesa->bufSize - vmesa->bufCount) / 2
 #define GET_SUBSEQUENT_VB_MAX_VERTS() \
 	S3V_DMA_BUF_SZ / 2
-#define EMIT_VERTS( ctx, j, nr ) \
-do { \
-	printf("Alas, emit...\n"); \
-	/* s3v_emit(ctx, j, (j)+(nr)) */ \
-	/* we don't need emit on s3v */ \
-} while (0)
+/* XXX */
+#define ALLOC_VERTS(nr) NULL
+#define EMIT_VERTS(ctx, start, count, buf) NULL
+#define FLUSH() s3vEndPrimitive( vmesa )
 
 #define TAG(x) s3v_##x
 
@@ -143,13 +141,13 @@ do { \
 
 
 static GLboolean s3v_run_render( GLcontext *ctx,
-				  struct gl_pipeline_stage *stage )
+				  struct tnl_pipeline_stage *stage )
 {
 	s3vContextPtr vmesa = S3V_CONTEXT(ctx);
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *VB = &tnl->vb;
-	GLuint i, length, flags = 0;
-	render_func *tab;
+	GLuint i;
+	tnl_render_func *tab;
 
 	DEBUG(("s3v_run_render\n"));
 	
@@ -170,19 +168,20 @@ static GLboolean s3v_run_render( GLcontext *ctx,
 
 	tnl->Driver.Render.Start( ctx );
 
-	for (i = 0 ; !(flags & PRIM_LAST) ; i += length)
+	for (i = 0 ; i < VB->PrimitiveCount ; i++ )
 	{
-		flags = VB->Primitive[i];
-		length = VB->PrimitiveLength[i];
+                GLuint prim = VB->Primitive[i].mode;
+		GLuint start = VB->Primitive[i].start;
+		GLuint length = VB->Primitive[i].count;
 
 		DEBUG(("s3v_run_render (loop=%i) (lenght=%i)\n", i, length));
 
 		if (length) {
-			tnl->Driver.Render.BuildVertices( ctx, i, i+length,
-			~0 /*stage->inputs*/);
-			tnl->Driver.Render.PrimTabVerts[flags & PRIM_MODE_MASK]
-				( ctx, i, i + length, flags );
-			vmesa->SetupNewInputs = VERT_CLIP;
+			tnl->Driver.Render.BuildVertices( ctx, start,
+                                start+length, ~0 /*stage->inputs*/); /* XXX */
+			tnl->Driver.Render.PrimTabVerts[prim & PRIM_MODE_MASK]
+				( ctx, start, start + length, prim );
+			vmesa->SetupNewInputs = VERT_BIT_POS;
 		}
 	}
 	
@@ -193,10 +192,10 @@ static GLboolean s3v_run_render( GLcontext *ctx,
 
 
 static void s3v_check_render( GLcontext *ctx,
-				 struct gl_pipeline_stage *stage )
+				 struct tnl_pipeline_stage *stage )
 {
 	s3vContextPtr vmesa = S3V_CONTEXT(ctx);
-	GLuint inputs = VERT_CLIP | VERT_RGBA;
+	GLuint inputs = VERT_BIT_POS | VERT_BIT_COLOR0;
 
 	DEBUG(("s3v_check_render\n"));
 
@@ -204,22 +203,22 @@ static void s3v_check_render( GLcontext *ctx,
 	
 		if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
 			DEBUG(("DD_SEPARATE_SPECULAR\n"));
-			inputs |= VERT_SPEC_RGB;
+			inputs |= VERT_BIT_COLOR1;
 		}
 		
 		if (ctx->Texture.Unit[0]._ReallyEnabled) {
 			DEBUG(("ctx->Texture.Unit[0]._ReallyEnabled\n"));
-			inputs |= VERT_TEX(0);
+			inputs |= VERT_BIT_TEX(0);
 		}
 
 		if (ctx->Texture.Unit[1]._ReallyEnabled) {
 			DEBUG(("ctx->Texture.Unit[1]._ReallyEnabled\n"));
-			inputs |= VERT_TEX(1);
+			inputs |= VERT_BIT_TEX(1);
 		}
 
 		if (ctx->Fog.Enabled) {
 			DEBUG(("ctx->Fog.Enabled\n"));
-			inputs |= VERT_FOG_COORD;
+			inputs |= VERT_BIT_FOG;
 		}
 	}
 
@@ -228,13 +227,15 @@ static void s3v_check_render( GLcontext *ctx,
 }
 
 
-static void dtr( struct gl_pipeline_stage *stage )
+static void dtr( struct tnl_pipeline_stage *stage )
 {
 	(void)stage;
+        /* hack to silence a compiler warning */
+        (void) &s3v_validate_render;
 }
 
 
-const struct gl_pipeline_stage _s3v_render_stage =
+const struct tnl_pipeline_stage _s3v_render_stage =
 {
 	"s3v render",
 	(_DD_NEW_SEPARATE_SPECULAR |

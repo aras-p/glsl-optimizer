@@ -7,15 +7,14 @@
 
 #include "glheader.h"
 #include "mtypes.h"
-#include "mem.h"
 #include "simple_list.h"
 #include "enums.h"
 #include "texstore.h"
 #include "texformat.h"
+#include "teximage.h"
 #include "swrast/swrast.h"
 
 #include "mm.h"
-#include "mmath.h"
 #include "s3v_context.h"
 #include "s3v_tex.h"
 
@@ -37,8 +36,8 @@ static void s3vSetTexWrapping(s3vContextPtr vmesa,
                                s3vTextureObjectPtr t, 
 			       GLenum wraps, GLenum wrapt)
 {
-	CARD32 t0 = t->TextureCMD;
-	CARD32 cmd = vmesa->CMD;
+	GLuint t0 = t->TextureCMD;
+	GLuint cmd = vmesa->CMD;
 #if TEX_DEBUG_ON
 	static unsigned int times=0;
 	DEBUG_TEX(("*** s3vSetTexWrapping: #%i ***\n", ++times));
@@ -64,8 +63,8 @@ static void s3vSetTexFilter(s3vContextPtr vmesa,
 			     s3vTextureObjectPtr t, 
 			     GLenum minf, GLenum magf)
 {
-	CARD32 t0 = t->TextureCMD;
-	CARD32 cmd = vmesa->CMD;
+	GLuint t0 = t->TextureCMD;
+	GLuint cmd = vmesa->CMD;
 #if TEX_DEBUG_ON
 	static unsigned int times=0;
 	DEBUG_TEX(("*** s3vSetTexFilter: #%i ***\n", ++times));
@@ -183,7 +182,7 @@ static void s3vTexParameter( GLcontext *ctx, GLenum target,
 		break;
   
 	case GL_TEXTURE_BORDER_COLOR:
-		s3vSetTexBorderColor( vmesa, t, tObj->BorderColor );
+		s3vSetTexBorderColor( vmesa, t, tObj->_BorderChan );
 		break;
 
 	case GL_TEXTURE_BASE_LEVEL:
@@ -402,7 +401,7 @@ static void s3vBindTexture( GLcontext *ctx, GLenum target,
 {
 	s3vContextPtr vmesa = S3V_CONTEXT( ctx );
 	s3vTextureObjectPtr t = (s3vTextureObjectPtr) tObj->DriverData;
-	CARD32 cmd = vmesa->CMD;
+	GLuint cmd = vmesa->CMD;
 #if TEX_DEBUG_ON
 	static unsigned int times=0;
 	DEBUG_TEX(("*** s3vBindTexture: #%i ***\n", ++times));
@@ -438,11 +437,6 @@ static void s3vBindTexture( GLcontext *ctx, GLenum target,
 		s3vSetTexFilter( vmesa, t, tObj->MinFilter, tObj->MagFilter );
 		s3vSetTexBorderColor( vmesa, t, tObj->BorderColor );
 #endif
-	}
-
-	if (!ctx->Texture._ReallyEnabled) {
-		DEBUG_TEX(("!ctx->Texture._ReallyEnabled\n"));
-		return; 
 	}
 
 	cmd = vmesa->CMD & ~MIP_MASK;

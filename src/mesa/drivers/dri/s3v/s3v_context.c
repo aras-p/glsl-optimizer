@@ -13,24 +13,22 @@
 
 #include "context.h"
 #include "simple_list.h"
-#include "mem.h"
 #include "matrix.h"
 #include "extensions.h"
 #if defined(USE_X86_ASM)
 #include "X86/common_x86_asm.h"
 #endif
 #include "simple_list.h"
-#include "mem.h"
 #include "mm.h"
 
-
+#include "drivers/common/driverfuncs.h"
 #include "s3v_vb.h"
 #include "s3v_tris.h"
 
 #if 0
-extern const struct gl_pipeline_stage _s3v_render_stage;
+extern const struct tnl_pipeline_stage _s3v_render_stage;
 
-static const struct gl_pipeline_stage *s3v_pipeline[] = {
+static const struct tnl_pipeline_stage *s3v_pipeline[] = {
    &_tnl_vertex_transform_stage,
    &_tnl_normal_transform_stage,
    &_tnl_lighting_stage,
@@ -46,16 +44,17 @@ static const struct gl_pipeline_stage *s3v_pipeline[] = {
 };
 #endif
 
-GLboolean s3vCreateContext( Display *dpy, const __GLcontextModes *glVisual,
-			     __DRIcontextPrivate *driContextPriv,
-                     	     void *sharedContextPrivate)
+GLboolean s3vCreateContext(const __GLcontextModes *glVisual,
+			   __DRIcontextPrivate *driContextPriv,
+                     	   void *sharedContextPrivate)
 {
 	GLcontext *ctx, *shareCtx;
 	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
 	s3vContextPtr vmesa;
 	s3vScreenPtr s3vScrn;
-	S3VSAREAPtr saPriv=(S3VSAREAPtr)(((char*)sPriv->pSAREA)+
-						 sizeof(XF86DRISAREARec));
+	S3VSAREAPtr saPriv=(S3VSAREAPtr)(((char*)sPriv->pSAREA) + 
+                            sizeof(drm_sarea_t));
+        struct dd_function_table functions;
 
 	DEBUG_WHERE(("*** s3vCreateContext ***\n"));
 
@@ -68,20 +67,21 @@ GLboolean s3vCreateContext( Display *dpy, const __GLcontextModes *glVisual,
 	else
 		shareCtx = NULL;
 
-	vmesa->glCtx = _mesa_create_context(glVisual, shareCtx, vmesa, GL_TRUE);
+        _mesa_init_driver_functions(&functions);
+
+	vmesa->glCtx = _mesa_create_context(glVisual, shareCtx, &functions,
+                                            (void *)vmesa);
 	if (!vmesa->glCtx) {
 		FREE(vmesa);
 		return GL_FALSE;
 	}
-
-	vmesa->display = dpy;
 
 	vmesa->driContext = driContextPriv;
 	vmesa->driScreen = sPriv;
 	vmesa->driDrawable = NULL; /* Set by XMesaMakeCurrent */
 
 	vmesa->hHWContext = driContextPriv->hHWContext;
-	vmesa->driHwLock = &sPriv->pSAREA->lock;
+	vmesa->driHwLock = (drmLock *)&sPriv->pSAREA->lock;
 	vmesa->driFd = sPriv->fd;
 	vmesa->sarea = saPriv;
 

@@ -4,10 +4,8 @@
 
 #include "glheader.h"
 #include "mtypes.h"
-#include "mem.h"
 #include "macros.h"
 #include "colormac.h"
-#include "mmath.h"
 
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/t_context.h"
@@ -26,8 +24,8 @@
 
 static struct {
    void                (*emit)( GLcontext *, GLuint, GLuint, void *, GLuint );
-   interp_func		interp;
-   copy_pv_func	        copy_pv;
+   tnl_interp_func	interp;
+   tnl_copy_pv_func	copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
    GLuint               vertex_size;
    GLuint               vertex_stride_shift;
@@ -61,6 +59,7 @@ static struct {
 #define GET_VIEWPORT_MAT() 0 /* vmesa->hw_viewport */
 #define GET_TEXSOURCE(n)  n
 #define GET_VERTEX_FORMAT() 0
+#define GET_VERTEX_SIZE() S3V_CONTEXT(ctx)->vertex_size * sizeof(GLuint)
 #define GET_VERTEX_STORE() S3V_CONTEXT(ctx)->verts
 #define GET_VERTEX_STRIDE_SHIFT() S3V_CONTEXT(ctx)->vertex_stride_shift
 #define INVALIDATE_STORED_VERTICES()
@@ -71,8 +70,8 @@ static struct {
 #define HAVE_HW_DIVIDE      1
 #define HAVE_RGBA_COLOR     0 	/* we're BGRA */
 #define HAVE_TINY_VERTICES  1
-#define HAVE_NOTEX_VERTICES 1
-#define HAVE_TEX0_VERTICES  1
+#define HAVE_NOTEX_VERTICES 0
+#define HAVE_TEX0_VERTICES  0
 #define HAVE_TEX1_VERTICES  0
 #define HAVE_TEX2_VERTICES  0
 #define HAVE_TEX3_VERTICES  0
@@ -216,7 +215,6 @@ void s3vBuildVertices( GLcontext *ctx,
 	GLubyte *v = ((GLubyte *)vmesa->verts +
 		(start<<vmesa->vertex_stride_shift));
 	GLuint stride = 1<<vmesa->vertex_stride_shift;
-	GLuint ind = 0;
 
 	DEBUG(("*** s3vBuildVertices ***\n"));
 	DEBUG(("vmesa->SetupNewInputs = 0x%x\n", vmesa->SetupNewInputs));
@@ -284,7 +282,7 @@ void s3vChooseVertexState( GLcontext *ctx )
 */
 
 
-   if (ctx->Texture._ReallyEnabled) {
+   if (ctx->Texture.Unit[0]._ReallyEnabled) {
       _tnl_need_projected_coords( ctx, GL_FALSE );
       ind |= S3V_TEX0_BIT;
    } else {
@@ -330,12 +328,12 @@ void s3vFreeVB( GLcontext *ctx )
    }
 
    if (vmesa->UbyteSecondaryColor.Ptr) {
-      ALIGN_FREE(vmesa->UbyteSecondaryColor.Ptr);
+      ALIGN_FREE((void *)vmesa->UbyteSecondaryColor.Ptr);
       vmesa->UbyteSecondaryColor.Ptr = 0;
    }
 
    if (vmesa->UbyteColor.Ptr) {
-      ALIGN_FREE(vmesa->UbyteColor.Ptr);
+      ALIGN_FREE((void *)vmesa->UbyteColor.Ptr);
       vmesa->UbyteColor.Ptr = 0;
    }
 }

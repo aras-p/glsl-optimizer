@@ -226,18 +226,19 @@ do { \
 
 #endif
 
-static void s3vSetReadBuffer( GLcontext *ctx,
-				 GLframebuffer *colorBuffer,
-				 GLenum mode )
+static void s3vSetBuffer( GLcontext *ctx, GLframebuffer *colorBuffer,
+			  GLuint bufferBit )
 {
    s3vContextPtr vmesa = S3V_CONTEXT(ctx);
 
-   switch ( mode ) {
-   case GL_FRONT_LEFT:
-      vmesa->readOffset = 0;
+   switch ( bufferBit ) {
+   case DD_FRONT_LEFT_BIT:
+      vmesa->drawOffset = vmesa->readOffset = 0;
       break;
-   case GL_BACK_LEFT:
-      vmesa->readOffset = vmesa->driScreen->fbHeight * vmesa->driScreen->fbWidth * vmesa->s3vScreen->cpp; 
+   case DD_BACK_LEFT_BIT:
+      vmesa->drawOffset = vmesa->readOffset = vmesa->driScreen->fbHeight *
+                                              vmesa->driScreen->fbWidth *
+                                              vmesa->s3vScreen->cpp; 
       break;
    }
 }
@@ -248,7 +249,7 @@ void s3vInitSpanFuncs( GLcontext *ctx )
    s3vContextPtr vmesa = S3V_CONTEXT(ctx);
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
 
-   swdd->SetReadBuffer = s3vSetReadBuffer;
+   swdd->SetBuffer = s3vSetBuffer;
 
    switch ( vmesa->s3vScreen->cpp ) {
    case 2:

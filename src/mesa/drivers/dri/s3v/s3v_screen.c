@@ -6,8 +6,6 @@
 #include "s3v_vb.h"
 #include "s3v_dri.h" 
 
-#include "mem.h"
-
 s3vScreenPtr s3vCreateScreen( __DRIscreenPrivate *sPriv )
 {
    s3vScreenPtr s3vScreen;
@@ -25,7 +23,7 @@ s3vScreenPtr s3vCreateScreen( __DRIscreenPrivate *sPriv )
 
    s3vScreen->regionCount  = 4;	/* Magic number.  Can we fix this? */
     
-   s3vScreen->regions = Xmalloc(s3vScreen->regionCount * 
+   s3vScreen->regions = _mesa_malloc(s3vScreen->regionCount * 
 							sizeof(s3vRegion));
    DEBUG(("sPriv->fd = %i\nvDRIPriv->dmaBufHandle = %x\n",
       sPriv->fd, vDRIPriv->dmaBufHandle));
