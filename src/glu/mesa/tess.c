@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.3 1999/09/10 04:32:10 gareth Exp $ */
+/* $Id: tess.c,v 1.4 1999/09/13 22:20:13 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -22,6 +22,13 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/*
+ * $Log: tess.c,v $
+ * Revision 1.4  1999/09/13 22:20:13  gareth
+ * Fixed file headers.  Tracking down macro bugs.
+ *
  */
 
 /*****************************************************************************
