@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.91 2002/09/06 03:20:21 brianp Exp $ */
+/* $Id: state.c,v 1.92 2002/09/27 02:45:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1041,9 +1041,6 @@ void _mesa_update_state( GLcontext *ctx )
    ASSERT(ctx->Driver.CopyTexSubImage2D);
    ASSERT(ctx->Driver.CopyTexSubImage3D);
    if (ctx->Extensions.ARB_texture_compression) {
-      ASSERT(ctx->Driver.BaseCompressedTexFormat);
-      ASSERT(ctx->Driver.CompressedTextureSize);
-      ASSERT(ctx->Driver.GetCompressedTexImage);
 #if 0  /* HW drivers need these, but not SW rasterizers */
       ASSERT(ctx->Driver.CompressedTexImage1D);
       ASSERT(ctx->Driver.CompressedTexImage2D);

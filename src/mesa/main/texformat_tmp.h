@@ -1,4 +1,4 @@
-/* $Id: texformat_tmp.h,v 1.8 2002/09/23 16:37:14 brianp Exp $ */
+/* $Id: texformat_tmp.h,v 1.9 2002/09/27 02:45:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,9 +23,17 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * Author:
+ * Authors:
  *    Gareth Hughes <gareth@valinux.com>
+ *    Brian Paul
  */
+
+
+/*
+ * This template file generates texel fetch functions for 1-D, 2-D and 3-D
+ * texture images.
+ */
+
 
 #if DIM == 1
 
@@ -346,7 +354,6 @@ static void FETCH(ycbcr_rev)( const struct gl_texture_image *texImage,
    rgba[BCOMP] = CLAMP(b, 0, CHAN_MAX);
    rgba[ACOMP] = CHAN_MAX;
 }
-
 
 
 /* big-endian */

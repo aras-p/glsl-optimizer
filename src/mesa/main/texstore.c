@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.41 2002/09/21 16:51:25 brianp Exp $ */
+/* $Id: texstore.c,v 1.42 2002/09/27 02:45:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,12 +29,38 @@
  *   Brian Paul
  */
 
+/*
+ * The GL texture image functions in teximage.c basically just do
+ * error checking and data structure allocation.  They in turn call
+ * device driver functions which actually copy/convert/store the user's
+ * texture image data.
+ *
+ * However, most device drivers will be able to use the fallback functions
+ * in this file.  That is, most drivers will have the following bit of
+ * code:
+ *   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
+ *   ctx->Driver.TexImage2D = _mesa_store_teximage2d;
+ *   ctx->Driver.TexImage3D = _mesa_store_teximage3d;
+ *   etc...
+ *
+ * Texture image processing is actually kind of complicated.  We have to do:
+ *    Format/type conversions
+ *    pixel unpacking
+ *    pixel transfer (scale, bais, lookup, convolution!, etc)
+ *
+ * These functions can handle most everything, including processing full
+ * images and sub-images.
+ */
+
+
+
 #include "colormac.h"
 #include "context.h"
 #include "convolve.h"
 #include "image.h"
 #include "macros.h"
 #include "mem.h"
+#include "texcompress.h"
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
@@ -46,9 +72,6 @@
  * corresponding _base_ internal format:  GL_ALPHA, GL_LUMINANCE,
  * GL_LUMANCE_ALPHA, GL_INTENSITY, GL_RGB, or GL_RGBA.  Return the
  * number of components for the format.  Return -1 if invalid enum.
- *
- * GH: Do we really need this?  We have the number of bytes per texel
- * in the texture format structures, so why don't we just use that?
  */
 static GLint
 components_in_intformat( GLint format )
@@ -129,7 +152,8 @@ components_in_intformat( GLint format )
  * We also take care of all image transfer operations here, including
  * convolution, scale/bias, colortables, etc.
  *
- * The destination texel channel type is always GLchan.
+ * The destination texel type is always GLchan.
+ * The destination texel format is one of the 6 basic types.
  *
  * A hardware driver may use this as a helper routine to unpack and
  * apply pixel transfer ops into a temporary image buffer.  Then,
@@ -137,8 +161,8 @@ components_in_intformat( GLint format )
  *
  * Input:
  *   dimensions - 1, 2, or 3
- *   texFormat - GL_LUMINANCE, GL_INTENSITY, GL_LUMINANCE_ALPHA, GL_ALPHA,
- *               GL_RGB or GL_RGBA
+ *   texDestFormat - GL_LUMINANCE, GL_INTENSITY, GL_LUMINANCE_ALPHA, GL_ALPHA,
+ *                   GL_RGB or GL_RGBA (the destination format)
  *   texDestAddr - destination image address
  *   srcWidth, srcHeight, srcDepth - size (in pixels) of src and dest images
  *   dstXoffset, dstYoffset, dstZoffset - position to store the image within
@@ -164,6 +188,12 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
 
    ASSERT(ctx);
    ASSERT(dimensions >= 1 && dimensions <= 3);
+   ASSERT(texDestFormat == GL_LUMINANCE ||
+          texDestFormat == GL_INTENSITY ||
+          texDestFormat == GL_LUMINANCE_ALPHA ||
+          texDestFormat == GL_ALPHA ||
+          texDestFormat == GL_RGB ||
+          texDestFormat == GL_RGBA);
    ASSERT(texDestAddr);
    ASSERT(srcWidth >= 1);
    ASSERT(srcHeight >= 1);
@@ -445,6 +475,12 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
    GLint postConvWidth = srcWidth, postConvHeight = srcHeight;
 
    assert(baseInternalFormat > 0);
+   ASSERT(baseInternalFormat == GL_LUMINANCE ||
+          baseInternalFormat == GL_INTENSITY ||
+          baseInternalFormat == GL_LUMINANCE_ALPHA ||
+          baseInternalFormat == GL_ALPHA ||
+          baseInternalFormat == GL_RGB ||
+          baseInternalFormat == GL_RGBA);
 
    if (transferOps & IMAGE_CONVOLUTION_BIT) {
       _mesa_adjust_image_for_convolution(ctx, dimensions, &postConvWidth,
@@ -627,12 +663,83 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
 }
 
 
+
+/**
+ * Given a user's uncompressed texture image, this function takes care of
+ * pixel unpacking, pixel transfer, format conversion and compression.
+ */
+static void
+transfer_compressed_teximage(GLcontext *ctx, GLuint dimensions,
+                             GLsizei width, GLsizei height, GLsizei depth,
+                             GLenum srcFormat, GLenum srcType,
+                             const struct gl_pixelstore_attrib *unpacking,
+                             const GLvoid *source,
+                             GLenum dstFormat, GLubyte *dest,
+                             GLint dstRowStride)
+{
+   GLchan *tempImage = NULL;
+   GLint srcRowStride;
+   GLenum baseFormat;
+
+   ASSERT(dimensions == 2);
+
+   baseFormat = _mesa_base_tex_format(ctx, dstFormat);
+
+   if (srcFormat != baseFormat || srcType != CHAN_TYPE ||
+       ctx->_ImageTransferState != 0 || unpacking->SwapBytes) {
+      /* need to convert user's image to texImage->Format, GLchan */
+      GLint comps = components_in_intformat(baseFormat);
+      GLint postConvWidth = width, postConvHeight = height;
+
+      /* XXX convolution untested */
+      if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
+         _mesa_adjust_image_for_convolution(ctx, dimensions, &postConvWidth,
+                                            &postConvHeight);
+      }
+
+      tempImage = (GLchan*) MALLOC(width * height * comps * sizeof(GLchan));
+      if (!tempImage) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+         return;
+      }
+      transfer_teximage(ctx, dimensions,
+                        baseFormat,             /* dest format */
+                        tempImage,              /* dst address */
+                        width, height, depth,   /* src size */
+                        0, 0, 0,                /* x/y/zoffset */
+                        comps * width,          /* dst row stride */
+                        comps * width * height, /* dst image stride */
+                        srcFormat, srcType,     /* src format, type */
+                        source, unpacking,      /* src and src packing */
+                        ctx->_ImageTransferState);
+      source = tempImage;
+      width = postConvWidth;
+      height = postConvHeight;
+      srcRowStride = width;
+   }
+   else {
+      if (unpacking->RowLength)
+         srcRowStride = unpacking->RowLength;
+      else
+         srcRowStride = width;
+   }
+
+   _mesa_compress_teximage(ctx, width, height, baseFormat,
+                           (const GLchan *) source, srcRowStride,
+                           dstFormat, dest, dstRowStride);
+   if (tempImage) {
+      FREE(tempImage);
+   }
+}
+
+
+
 /*
- * This is the software fallback for Driver.TexImage1D().
+ * This is the software fallback for Driver.TexImage1D()
+ * and Driver.CopyTexImage2D().
  * The texture image type will be GLchan.
  * The texture image format will be GL_COLOR_INDEX, GL_INTENSITY,
  * GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_ALPHA, GL_RGB or GL_RGBA.
- *
  */
 void
 _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
@@ -659,52 +766,55 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
-   /* Compute image size, in bytes */
-   if (texImage->IsCompressed) {
-      assert(ctx->Driver.CompressedTextureSize);
-      sizeInBytes = ctx->Driver.CompressedTextureSize(ctx, texImage);
-      assert(sizeInBytes > 0);
-      texImage->CompressedSize = sizeInBytes;
-   }
-   else {
-      sizeInBytes = postConvWidth * texelBytes;
-   }
-
    /* allocate memory */
+   if (texImage->IsCompressed)
+      sizeInBytes = texImage->CompressedSize;
+   else
+      sizeInBytes = postConvWidth * texelBytes;
    texImage->Data = MESA_PBUFFER_ALLOC(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
       return;
    }
 
-   if (pixels) {
-      /* unpack image, apply transfer ops and store in texImage->Data */
+   if (!pixels)
+      return;
+
+   /* unpack image, apply transfer ops and store in texImage->Data */
+   if (texImage->IsCompressed) {
+      GLint dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+                                                       width);
+      transfer_compressed_teximage(ctx, 1, width, 1, 1,
+                                   format, type, packing,
+                                   pixels, texImage->IntFormat,
+                                   (GLubyte *) texImage->Data, dstRowStride);
+   }
+   else {
       _mesa_transfer_teximage(ctx, 1,
-                              _mesa_base_tex_format(ctx, internalFormat),
+                              texImage->Format, /* base format */
                               texImage->TexFormat, texImage->Data,
-                              width, 1, 1, 0, 0, 0,
+                              width, 1, 1,  /* src size */
+                              0, 0, 0,      /* dstX/Y/Zoffset */
                               0, /* dstRowStride */
                               0, /* dstImageStride */
                               format, type, pixels, packing);
+   }
 
-      /* GL_SGIS_generate_mipmap */
-      if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-         _mesa_generate_mipmap(ctx, target,
-                               &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                               texObj);
-      }
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, target,
+                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                            texObj);
    }
 }
 
 
 /*
- * This is the software fallback for Driver.TexImage2D().
+ * This is the software fallback for Driver.TexImage2D()
+ * and Driver.CopyTexImage2D().
  * The texture image type will be GLchan.
  * The texture image format will be GL_COLOR_INDEX, GL_INTENSITY,
  * GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_ALPHA, GL_RGB or GL_RGBA.
- *
- * NOTE: if real texture compression is supported, this whole function
- * will need to be overridden.
  */
 void
 _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
@@ -732,51 +842,56 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
-   /* Compute image size, in bytes */
-   if (texImage->IsCompressed) {
-      assert(ctx->Driver.CompressedTextureSize);
-      sizeInBytes = ctx->Driver.CompressedTextureSize(ctx, texImage);
-      assert(sizeInBytes > 0);
-      texImage->CompressedSize = sizeInBytes;
-   }
-   else {
-      sizeInBytes = postConvWidth * postConvHeight * texelBytes;
-   }
-
    /* allocate memory */
+   if (texImage->IsCompressed)
+      sizeInBytes = texImage->CompressedSize;
+   else
+      sizeInBytes = postConvWidth * postConvHeight * texelBytes;
    texImage->Data = MESA_PBUFFER_ALLOC(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
       return;
    }
 
-   if (pixels) {
-      /* unpack image, apply transfer ops and store in texImage->Data */
+   if (!pixels)
+      return;
+
+   /* unpack image, apply transfer ops and store in texImage->Data */
+   if (texImage->IsCompressed) {
+      GLint dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+                                                       width);
+      transfer_compressed_teximage(ctx, 2, width, height, 1,
+                                   format, type, packing,
+                                   pixels, texImage->IntFormat,
+                                   (GLubyte *) texImage->Data, dstRowStride);
+   }
+   else {
       _mesa_transfer_teximage(ctx, 2,
-                              _mesa_base_tex_format(ctx, internalFormat),
+                              texImage->Format,
                               texImage->TexFormat, texImage->Data,
-                              width, height, 1, 0, 0, 0,
-                              texImage->Width * texelBytes,
+                              width, height, 1,  /* src size */
+                              0, 0, 0,           /* dstX/Y/Zoffset */
+                              texImage->Width * texelBytes, /* dstRowStride */
                               0, /* dstImageStride */
                               format, type, pixels, packing);
+   }
 
-      /* GL_SGIS_generate_mipmap */
-      if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-         _mesa_generate_mipmap(ctx, target,
-                               &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                               texObj);
-      }
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, target,
+                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                            texObj);
    }
 }
 
 
 
 /*
- * This is the software fallback for Driver.TexImage3D().
+ * This is the software fallback for Driver.TexImage3D()
+ * and Driver.CopyTexImage3D().
  * The texture image type will be GLchan.
  * The texture image format will be GL_COLOR_INDEX, GL_INTENSITY,
  * GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_ALPHA, GL_RGB or GL_RGBA.
- *
  */
 void
 _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
@@ -798,65 +913,39 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
-   /* Compute image size, in bytes */
-   if (texImage->IsCompressed) {
-      assert(ctx->Driver.CompressedTextureSize);
-      sizeInBytes = ctx->Driver.CompressedTextureSize(ctx, texImage);
-      assert(sizeInBytes > 0);
-      texImage->CompressedSize = sizeInBytes;
-   }
-   else {
-      sizeInBytes = width * height * depth * texelBytes;
-   }
-
    /* allocate memory */
+   if (texImage->IsCompressed)
+      sizeInBytes = texImage->CompressedSize;
+   else
+      sizeInBytes = width * height * depth * texelBytes;
    texImage->Data = MESA_PBUFFER_ALLOC(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
       return;
    }
 
-   if (pixels) {
-      /* unpack image, apply transfer ops and store in texImage->Data */
+   if (!pixels)
+      return;
+
+   /* unpack image, apply transfer ops and store in texImage->Data */
+   if (texImage->IsCompressed) {
+      GLint dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+                                                       width);
+      transfer_compressed_teximage(ctx, 3, width, height, depth,
+                                   format, type, packing,
+                                   pixels, texImage->IntFormat,
+                                   (GLubyte *) texImage->Data, dstRowStride);
+   }
+   else {
       _mesa_transfer_teximage(ctx, 3,
-                              _mesa_base_tex_format(ctx, internalFormat),
+                              texImage->Format,
                               texImage->TexFormat, texImage->Data,
-                              width, height, depth, 0, 0, 0,
-                              texImage->Width * texelBytes,
+                              width, height, depth, /* src size */
+                              0, 0, 0,  /* dstX/Y/Zoffset */
+                              texImage->Width * texelBytes, /* dstRowStride */
                               texImage->Width * texImage->Height * texelBytes,
                               format, type, pixels, packing);
-
-      /* GL_SGIS_generate_mipmap */
-      if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-         _mesa_generate_mipmap(ctx, target,
-                               &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                               texObj);
-      }
    }
-}
-
-
-
-
-/*
- * This is the software fallback for Driver.TexSubImage1D().
- */
-void
-_mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
-                          GLint xoffset, GLint width,
-                          GLenum format, GLenum type, const void *pixels,
-                          const struct gl_pixelstore_attrib *packing,
-                          struct gl_texture_object *texObj,
-                          struct gl_texture_image *texImage)
-{
-   _mesa_transfer_teximage(ctx, 1,
-                           _mesa_base_tex_format(ctx, texImage->IntFormat),
-                           texImage->TexFormat, texImage->Data,
-                           width, 1, 1, /* src size */
-                           xoffset, 0, 0, /* dest offsets */
-                           0, /* dstRowStride */
-                           0, /* dstImageStride */
-                           format, type, pixels, packing);
 
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
@@ -867,8 +956,59 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
 }
 
 
+
+
 /*
- * This is the software fallback for Driver.TexSubImage2D().
+ * This is the software fallback for Driver.TexSubImage1D()
+ * and Driver.CopyTexSubImage1D().
+ */
+void
+_mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
+                          GLint xoffset, GLint width,
+                          GLenum format, GLenum type, const void *pixels,
+                          const struct gl_pixelstore_attrib *packing,
+                          struct gl_texture_object *texObj,
+                          struct gl_texture_image *texImage)
+{
+   if (texImage->IsCompressed) {
+      GLint dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+                                                       texImage->Width);
+      GLubyte *dest = _mesa_compressed_image_address(xoffset, 0, 0,
+                                                     texImage->IntFormat,
+                                                     texImage->Width,
+                                                     texImage->Data);
+      transfer_compressed_teximage(ctx, 1,             /* dimensions */
+                                   width, 1, 1,        /* size to replace */
+                                   format, type,       /* source format/type */
+                                   packing,            /* source packing */
+                                   pixels,             /* source data */
+                                   texImage->IntFormat,/* dest format */
+                                   dest, dstRowStride);
+   }
+   else {
+      _mesa_transfer_teximage(ctx, 1,
+                              texImage->Format,
+                              texImage->TexFormat, texImage->Data,
+                              width, 1, 1, /* src size */
+                              xoffset, 0, 0, /* dest offsets */
+                              0, /* dstRowStride */
+                              0, /* dstImageStride */
+                              format, type, pixels, packing);
+   }
+
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      _mesa_generate_mipmap(ctx, target,
+                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                            texObj);
+   }
+}
+
+
+
+/*
+ * This is the software fallback for Driver.TexSubImage2D()
+ * and Driver.CopyTexSubImage2D().
  */
 void
 _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
@@ -879,14 +1019,31 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
-   _mesa_transfer_teximage(ctx, 2,
-                           _mesa_base_tex_format(ctx, texImage->IntFormat),
-                           texImage->TexFormat, texImage->Data,
-                           width, height, 1, /* src size */
-                           xoffset, yoffset, 0, /* dest offsets */
-                           texImage->Width * texImage->TexFormat->TexelBytes,
-                           0, /* dstImageStride */
-                           format, type, pixels, packing);
+   if (texImage->IsCompressed) {
+      GLint dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+                                                       texImage->Width);
+      GLubyte *dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
+                                                     texImage->IntFormat,
+                                                     texImage->Width,
+                                                     texImage->Data);
+      transfer_compressed_teximage(ctx, 2,             /* dimensions */
+                                   width, height, 1,   /* size to replace */
+                                   format, type,       /* source format/type */
+                                   packing,            /* source packing */
+                                   pixels,             /* source data */
+                                   texImage->IntFormat,/* dest format */
+                                   dest, dstRowStride);
+   }
+   else {
+      _mesa_transfer_teximage(ctx, 2,
+                              texImage->Format,
+                              texImage->TexFormat, texImage->Data,
+                              width, height, 1, /* src size */
+                              xoffset, yoffset, 0, /* dest offsets */
+                              texImage->Width *texImage->TexFormat->TexelBytes,
+                              0, /* dstImageStride */
+                              format, type, pixels, packing);
+   }
 
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
@@ -899,6 +1056,7 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
 
 /*
  * This is the software fallback for Driver.TexSubImage3D().
+ * and Driver.CopyTexSubImage3D().
  */
 void
 _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
@@ -909,15 +1067,33 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
-   const GLint texelBytes = texImage->TexFormat->TexelBytes;
-   _mesa_transfer_teximage(ctx, 3,
-                           _mesa_base_tex_format(ctx, texImage->IntFormat),
+   if (texImage->IsCompressed) {
+      GLint dstRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+                                                       texImage->Width);
+      GLubyte *dest = _mesa_compressed_image_address(xoffset, yoffset, zoffset,
+                                                     texImage->IntFormat,
+                                                     texImage->Width,
+                                                     texImage->Data);
+      transfer_compressed_teximage(ctx, 3,              /* dimensions */
+                                   width, height, depth,/* size to replace */
+                                   format, type,       /* source format/type */
+                                   packing,            /* source packing */
+                                   pixels,             /* source data */
+                                   texImage->IntFormat,/* dest format */
+                                   dest, dstRowStride);
+   }
+   else {
+      const GLint texelBytes = texImage->TexFormat->TexelBytes;
+      _mesa_transfer_teximage(ctx, 3,
+                           texImage->Format,
                            texImage->TexFormat, texImage->Data,
                            width, height, depth, /* src size */
                            xoffset, yoffset, xoffset, /* dest offsets */
-                           texImage->Width * texelBytes,
+                           texImage->Width * texelBytes,  /* dst row stride */
                            texImage->Width * texImage->Height * texelBytes,
                            format, type, pixels, packing);
+   }
+
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
       _mesa_generate_mipmap(ctx, target,
@@ -940,9 +1116,7 @@ _mesa_store_compressed_teximage1d(GLcontext *ctx, GLenum target, GLint level,
                                   struct gl_texture_object *texObj,
                                   struct gl_texture_image *texImage)
 {
-   /* Nothing here.
-    * The device driver has to do it all.
-    */
+   /* this space intentionally left blank */
 }
 
 
@@ -958,9 +1132,33 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
                                   struct gl_texture_object *texObj,
                                   struct gl_texture_image *texImage)
 {
-   /* Nothing here.
-    * The device driver has to do it all.
+   /* This is pretty simple, basically just do a memcpy without worrying
+    * about the usual image unpacking or image transfer operations.
     */
+   ASSERT(texObj);
+   ASSERT(texImage);
+   ASSERT(texImage->Width > 0);
+   ASSERT(texImage->Height > 0);
+   ASSERT(texImage->Depth == 1);
+   ASSERT(texImage->Data == NULL); /* was freed in glCompressedTexImage2DARB */
+
+   /* choose the texture format */
+   assert(ctx->Driver.ChooseTextureFormat);
+   texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
+                                          internalFormat, 0, 0);
+   assert(texImage->TexFormat);
+   texImage->FetchTexel = texImage->TexFormat->FetchTexel2D;
+
+   /* allocate storage */
+   texImage->Data = MESA_PBUFFER_ALLOC(imageSize);
+   if (!texImage->Data) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2DARB");
+      return;
+   }
+
+   /* copy the data */
+   ASSERT(texImage->CompressedSize == imageSize);
+   MEMCPY(texImage->Data, data, imageSize);
 }
 
 
@@ -977,29 +1175,88 @@ _mesa_store_compressed_teximage3d(GLcontext *ctx, GLenum target, GLint level,
                                   struct gl_texture_object *texObj,
                                   struct gl_texture_image *texImage)
 {
-   /* Nothing here.
-    * The device driver has to do it all.
-    */
+   /* this space intentionally left blank */
 }
 
 
 
-/*
- * Fallback for Driver.GetCompressedTexImage3D()
- * This will probably work find for hardware drivers.  That is, hardware
- * drivers won't have to override this function, unless the compressed
- * texture must first be fetched from the TRAM.
+/**
+ * Fallback for Driver.CompressedTexSubImage1D()
  */
 void
-_mesa_get_compressed_teximage(GLcontext *ctx, GLenum target,
-                              GLint level, void *image,
-                              const struct gl_texture_object *texObj,
-                              struct gl_texture_image *texImage)
+_mesa_store_compressed_texsubimage1d(GLcontext *ctx, GLenum target,
+                                     GLint level,
+                                     GLint xoffset, GLsizei width,
+                                     GLenum format,
+                                     GLsizei imageSize, const GLvoid *data,
+                                     struct gl_texture_object *texObj,
+                                     struct gl_texture_image *texImage)
 {
-   assert(texImage->IsCompressed);
-   assert(texImage->CompressedSize > 0);
-   MEMCPY(image, texImage->Data, texImage->CompressedSize);
+   /* this space intentionally left blank */
 }
+
+
+/**
+ * Fallback for Driver.CompressedTexSubImage2D()
+ */
+void
+_mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
+                                     GLint level,
+                                     GLint xoffset, GLint yoffset,
+                                     GLsizei width, GLsizei height,
+                                     GLenum format,
+                                     GLsizei imageSize, const GLvoid *data,
+                                     struct gl_texture_object *texObj,
+                                     struct gl_texture_image *texImage)
+{
+   GLint bytesPerRow, destRowStride, srcRowStride;
+   GLint i, rows;
+   GLubyte *dest;
+   const GLubyte *src;
+
+   /* these should have been caught sooner */
+   ASSERT((width & 3) == 0 || width == 2 || width == 1);
+   ASSERT((height & 3) == 0 || height == 2 || height == 1);
+   ASSERT((xoffset & 3) == 0);
+   ASSERT((yoffset & 3) == 0);
+
+   srcRowStride = _mesa_compressed_row_stride(texImage->IntFormat, width);
+   src = (const GLubyte *) data;
+
+   destRowStride = _mesa_compressed_row_stride(texImage->IntFormat,
+                                               texImage->Width);
+   dest = _mesa_compressed_image_address(xoffset, yoffset, 0,
+                                         texImage->IntFormat,
+                                         texImage->Width, texImage->Data);
+
+   bytesPerRow = srcRowStride;
+   rows = height / 4;
+
+   for (i = 0; i < rows; i++) {
+      MEMCPY(dest, src, bytesPerRow);
+      dest += destRowStride;
+      src += srcRowStride;
+   }
+}
+
+
+/**
+ * Fallback for Driver.CompressedTexSubImage3D()
+ */
+void
+_mesa_store_compressed_texsubimage3d(GLcontext *ctx, GLenum target,
+                                GLint level,
+                                GLint xoffset, GLint yoffset, GLint zoffset,
+                                GLsizei width, GLsizei height, GLsizei depth,
+                                GLenum format,
+                                GLsizei imageSize, const GLvoid *data,
+                                struct gl_texture_object *texObj,
+                                struct gl_texture_image *texImage)
+{
+   /* this space intentionally left blank */
+}
+
+
 
 
 
@@ -1633,6 +1890,8 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
                       const struct gl_texture_unit *texUnit,
                       struct gl_texture_object *texObj)
 {
+   const GLubyte *srcData;
+   GLubyte *dstData;
    GLint level;
    GLint maxLevels = 0;
 
@@ -1661,6 +1920,29 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       return;
    }
 
+   /* setup for compressed textures */
+   {
+      const struct gl_texture_image *srcImage;
+      srcImage = texObj->Image[texObj->BaseLevel];
+      if (srcImage->IsCompressed) {
+         /* allocate storage for uncompressed images */
+         GLint size = _mesa_bytes_per_pixel(srcImage->Format, CHAN_TYPE)
+            * srcImage->Width * srcImage->Height * srcImage->Depth;
+         srcData = MALLOC(size);
+         if (!srcData) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
+            return;
+         }
+         dstData = MALLOC(size / 2);  /* 1/4 would probably be OK */
+         if (!dstData) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
+            FREE((void *) srcData);
+            return;
+         }
+         /* XXX decompress base image here */
+      }
+   }
+
    for (level = texObj->BaseLevel; level < texObj->MaxLevel
            && level < maxLevels - 1; level++) {
       /* generate image[level+1] from image[level] */
@@ -1670,13 +1952,13 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       GLint dstWidth, dstHeight, dstDepth;
       GLint border, bytesPerTexel;
 
+      /* get src image parameters */
       srcImage = texObj->Image[level];
       ASSERT(srcImage);
       srcWidth = srcImage->Width;
       srcHeight = srcImage->Height;
       srcDepth = srcImage->Depth;
       border = srcImage->Border;
-      bytesPerTexel = srcImage->TexFormat->TexelBytes;
 
       /* compute next (level+1) image size */
       if (srcWidth - 2 * border > 1) {
@@ -1702,6 +1984,10 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
           dstHeight == srcHeight &&
           dstDepth == srcDepth) {
          /* all done */
+         if (srcImage->IsCompressed) {
+            FREE((void *) srcData);
+            FREE(dstData);
+         }
          return;
       }
 
@@ -1722,56 +2008,82 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 
       /* initialize new image */
       _mesa_init_teximage_fields(ctx, target, dstImage, dstWidth, dstHeight,
-                                 dstDepth, border, srcImage->Format);
+                                 dstDepth, border, srcImage->IntFormat);
       dstImage->DriverData = NULL;
       dstImage->TexFormat = srcImage->TexFormat;
       dstImage->FetchTexel = srcImage->FetchTexel;
       ASSERT(dstImage->TexFormat);
       ASSERT(dstImage->FetchTexel);
 
-      ASSERT(dstWidth * dstHeight * dstDepth * bytesPerTexel > 0);
-
-      /* alloc new image buffer */
-      dstImage->Data = MESA_PBUFFER_ALLOC(dstWidth * dstHeight * dstDepth
-                                          * bytesPerTexel);
-      if (!dstImage->Data) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
-         return;
+      /* Alloc new teximage data buffer.
+       * Setup src and dest data pointers.
+       */
+      if (dstImage->IsCompressed) {
+         ASSERT(dstImage->CompressedSize > 0); /* set by init_teximage_fields*/
+         dstImage->Data = MESA_PBUFFER_ALLOC(dstImage->CompressedSize);
+         if (!dstImage->Data) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
+            return;
+         }
+         /* srcData and dstData are all set */
+         ASSERT(srcData);
+         ASSERT(dstData);
+      }
+      else {
+         bytesPerTexel = srcImage->TexFormat->TexelBytes;
+         ASSERT(dstWidth * dstHeight * dstDepth * bytesPerTexel > 0);
+         dstImage->Data = MESA_PBUFFER_ALLOC(dstWidth * dstHeight * dstDepth
+                                             * bytesPerTexel);
+         if (!dstImage->Data) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
+            return;
+         }
+         srcData = (const GLubyte *) srcImage->Data;
+         dstData = (GLubyte *) dstImage->Data;
       }
 
       /*
        * We use simple 2x2 averaging to compute the next mipmap level.
        */
       switch (target) {
-      case GL_TEXTURE_1D:
-         make_1d_mipmap(srcImage->TexFormat, border,
-                        srcWidth, (const GLubyte *) srcImage->Data,
-                        dstWidth, (GLubyte *) dstImage->Data);
-         break;
-      case GL_TEXTURE_2D:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-         make_2d_mipmap(srcImage->TexFormat, border,
-                        srcWidth, srcHeight, (const GLubyte *) srcImage->Data,
-                        dstWidth, dstHeight, (GLubyte *) dstImage->Data);
-         break;
-      case GL_TEXTURE_3D:
-         make_3d_mipmap(srcImage->TexFormat, border,
-                        srcWidth, srcHeight, srcDepth,
-                        (const GLubyte *) srcImage->Data,
-                        dstWidth, dstHeight, dstDepth,
-                        (GLubyte *) dstImage->Data);
-         break;
-      case GL_TEXTURE_RECTANGLE_NV:
-         /* no mipmaps, do nothing */
-         break;
-      default:
-         _mesa_problem(ctx, "bad dimensions in _mesa_generate_mipmaps");
-         return;
+         case GL_TEXTURE_1D:
+            make_1d_mipmap(srcImage->TexFormat, border,
+                           srcWidth, srcData,
+                           dstWidth, dstData);
+            break;
+         case GL_TEXTURE_2D:
+         case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+         case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+         case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+         case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+            make_2d_mipmap(srcImage->TexFormat, border,
+                           srcWidth, srcHeight, srcData,
+                           dstWidth, dstHeight, dstData);
+            break;
+         case GL_TEXTURE_3D:
+            make_3d_mipmap(srcImage->TexFormat, border,
+                           srcWidth, srcHeight, srcDepth, srcData,
+                           dstWidth, dstHeight, dstDepth, dstData);
+            break;
+         case GL_TEXTURE_RECTANGLE_NV:
+            /* no mipmaps, do nothing */
+            break;
+         default:
+            _mesa_problem(ctx, "bad dimensions in _mesa_generate_mipmaps");
+            return;
       }
+
+      if (dstImage->IsCompressed) {
+         GLubyte *temp;
+         /* XXX compress from dstData into dstImage->Data */
+
+         /* swap src and dest pointers */
+         temp = (GLubyte *) srcData;
+         srcData = dstData;
+         dstData = temp;
+      }
+
    } /* loop over mipmap levels */
 }

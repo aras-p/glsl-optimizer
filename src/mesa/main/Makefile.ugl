@@ -93,6 +93,7 @@ GL_SOURCES = \
 	rastpos.c \
 	state.c \
 	stencil.c \
+	texcompress.c \
 	texformat.c \
 	teximage.c \
 	texobj.c \

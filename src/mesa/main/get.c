@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.91 2002/09/21 17:34:56 brianp Exp $ */
+/* $Id: get.c,v 1.92 2002/09/27 02:45:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,7 +38,7 @@
 #include "macros.h"
 #include "mmath.h"
 #include "mtypes.h"
-
+#include "texcompress.h"
 #include "math/m_matrix.h"
 #endif
 
@@ -1034,14 +1034,16 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXTENSION_B(ARB_texture_compression, pname);
-         *params = INT_TO_BOOL(ctx->Const.NumCompressedTextureFormats);
+         *params = INT_TO_BOOL(_mesa_get_compressed_formats(ctx, NULL));
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXTENSION_B(ARB_texture_compression, pname);
          {
-            GLuint i;
-            for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
-               params[i] = INT_TO_BOOL(ctx->Const.CompressedTextureFormats[i]);
+            GLint formats[100];
+            GLuint i, n;
+            n = _mesa_get_compressed_formats(ctx, formats);
+            for (i = 0; i < n; i++)
+               params[i] = INT_TO_BOOL(formats[i]);
          }
          break;
 
@@ -2393,14 +2395,16 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXTENSION_D(ARB_texture_compression, pname);
-         *params = (GLdouble) ctx->Const.NumCompressedTextureFormats;
+         *params = (GLdouble) _mesa_get_compressed_formats(ctx, NULL);
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXTENSION_D(ARB_texture_compression, pname);
          {
-            GLuint i;
-            for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
-               params[i] = (GLdouble) ctx->Const.CompressedTextureFormats[i];
+            GLint formats[100];
+            GLuint i, n;
+            n = _mesa_get_compressed_formats(ctx, formats);
+            for (i = 0; i < n; i++)
+               params[i] = (GLdouble) formats[i];
          }
          break;
 
@@ -3754,14 +3758,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXTENSION_F(ARB_texture_compression, pname);
-         *params = (GLfloat) ctx->Const.NumCompressedTextureFormats;
+         *params = (GLfloat) _mesa_get_compressed_formats(ctx, NULL);
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXTENSION_F(ARB_texture_compression, pname);
          {
-            GLuint i;
-            for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
-               params[i] = (GLfloat) ctx->Const.CompressedTextureFormats[i];
+            GLint formats[100];
+            GLuint i, n;
+            n = _mesa_get_compressed_formats(ctx, formats);
+            for (i = 0; i < n; i++)
+               params[i] = (GLfloat) formats[i];
          }
          break;
 
@@ -5088,15 +5094,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXTENSION_I(ARB_texture_compression, pname);
-         *params = (GLint) ctx->Const.NumCompressedTextureFormats;
+         *params = (GLint) _mesa_get_compressed_formats(ctx, NULL);
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
          CHECK_EXTENSION_I(ARB_texture_compression, pname);
-         {
-            GLuint i;
-            for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
-               params[i] = (GLint) ctx->Const.CompressedTextureFormats[i];
-         }
+         (void) _mesa_get_compressed_formats(ctx, params);
          break;
 
       /* GL_EXT_compiled_vertex_array */

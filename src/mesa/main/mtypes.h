@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.88 2002/09/23 16:37:13 brianp Exp $ */
+/* $Id: mtypes.h,v 1.89 2002/09/27 02:45:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -809,18 +809,16 @@ struct gl_texture_format {
                                  * GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA,
                                  * GL_COLOR_INDEX or GL_DEPTH_COMPONENT.
                                  */
-   GLenum Type;			/* Internal type as GL enum value - UNUSED?? */
-
    GLubyte RedBits;		/* Bits per texel component */
-   GLubyte GreenBits;
-   GLubyte BlueBits;
+   GLubyte GreenBits;		/* These are just rough approximations for */
+   GLubyte BlueBits;		/* compressed texture formats. */
    GLubyte AlphaBits;
    GLubyte LuminanceBits;
    GLubyte IntensityBits;
    GLubyte IndexBits;
    GLubyte DepthBits;
 
-   GLint TexelBytes;
+   GLint TexelBytes;		/* Bytes per texel (0 for compressed formats */
 
    FetchTexelFunc FetchTexel1D;	/* Texel fetch function pointers */
    FetchTexelFunc FetchTexel2D;
@@ -833,6 +831,7 @@ struct gl_texture_image {
    GLenum Format;		/* GL_ALPHA, GL_LUMINANCE, GL_LUMINANCE_ALPHA,
 				 * GL_INTENSITY, GL_RGB, GL_RGBA,
                                  * GL_COLOR_INDEX or GL_DEPTH_COMPONENT only.
+                                 * Used for choosing TexEnv arithmetic.
 				 */
    GLint IntFormat;		/* Internal format as given by the user */
    GLuint Border;		/* 0 or 1 */
@@ -1373,8 +1372,6 @@ struct gl_constants {
    GLuint MaxColorTableSize;
    GLuint MaxConvolutionWidth;
    GLuint MaxConvolutionHeight;
-   GLuint NumCompressedTextureFormats;	/* GL_ARB_texture_compression */
-   GLenum CompressedTextureFormats[MAX_COMPRESSED_TEXTURE_FORMATS];
    GLuint MaxClipPlanes;
    GLuint MaxLights;
 };
@@ -1455,7 +1452,7 @@ struct gl_extensions {
    GLboolean SGIX_pixel_texture;
    GLboolean SGIX_shadow;
    GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
-   GLboolean _3DFX_texture_compression_FXT1;
+   GLboolean TDFX_texture_compression_FXT1;
    GLboolean APPLE_client_storage;
 };
 

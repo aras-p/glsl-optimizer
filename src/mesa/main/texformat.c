@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.15 2002/09/21 16:51:25 brianp Exp $ */
+/* $Id: texformat.c,v 1.16 2002/09/27 02:45:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,7 +74,6 @@ static void fetch_null_texel( const struct gl_texture_image *texImage,
 const struct gl_texture_format _mesa_texformat_rgba = {
    MESA_FORMAT_RGBA,			/* MesaFormat */
    GL_RGBA,				/* BaseFormat */
-   CHAN_TYPE,				/* Type */
    CHAN_BITS,				/* RedBits */
    CHAN_BITS,				/* GreenBits */
    CHAN_BITS,				/* BlueBits */
@@ -92,7 +91,6 @@ const struct gl_texture_format _mesa_texformat_rgba = {
 const struct gl_texture_format _mesa_texformat_rgb = {
    MESA_FORMAT_RGB,			/* MesaFormat */
    GL_RGB,				/* BaseFormat */
-   CHAN_TYPE,				/* Type */
    CHAN_BITS,				/* RedBits */
    CHAN_BITS,				/* GreenBits */
    CHAN_BITS,				/* BlueBits */
@@ -110,7 +108,6 @@ const struct gl_texture_format _mesa_texformat_rgb = {
 const struct gl_texture_format _mesa_texformat_alpha = {
    MESA_FORMAT_ALPHA,			/* MesaFormat */
    GL_ALPHA,				/* BaseFormat */
-   CHAN_TYPE,				/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -128,7 +125,6 @@ const struct gl_texture_format _mesa_texformat_alpha = {
 const struct gl_texture_format _mesa_texformat_luminance = {
    MESA_FORMAT_LUMINANCE,		/* MesaFormat */
    GL_LUMINANCE,			/* BaseFormat */
-   CHAN_TYPE,				/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -146,7 +142,6 @@ const struct gl_texture_format _mesa_texformat_luminance = {
 const struct gl_texture_format _mesa_texformat_luminance_alpha = {
    MESA_FORMAT_LUMINANCE_ALPHA,		/* MesaFormat */
    GL_LUMINANCE_ALPHA,			/* BaseFormat */
-   CHAN_TYPE,				/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -164,7 +159,6 @@ const struct gl_texture_format _mesa_texformat_luminance_alpha = {
 const struct gl_texture_format _mesa_texformat_intensity = {
    MESA_FORMAT_INTENSITY,		/* MesaFormat */
    GL_INTENSITY,			/* BaseFormat */
-   CHAN_TYPE,				/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -182,7 +176,6 @@ const struct gl_texture_format _mesa_texformat_intensity = {
 const struct gl_texture_format _mesa_texformat_color_index = {
    MESA_FORMAT_COLOR_INDEX,		/* MesaFormat */
    GL_COLOR_INDEX,			/* BaseFormat */
-   CHAN_TYPE,				/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -200,7 +193,6 @@ const struct gl_texture_format _mesa_texformat_color_index = {
 const struct gl_texture_format _mesa_texformat_depth_component = {
    MESA_FORMAT_DEPTH_COMPONENT,		/* MesaFormat */
    GL_DEPTH_COMPONENT,			/* BaseFormat */
-   GL_FLOAT,				/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -223,7 +215,6 @@ const struct gl_texture_format _mesa_texformat_depth_component = {
 const struct gl_texture_format _mesa_texformat_rgba8888 = {
    MESA_FORMAT_RGBA8888,		/* MesaFormat */
    GL_RGBA,				/* BaseFormat */
-   GL_UNSIGNED_INT_8_8_8_8,		/* Type */
    8,					/* RedBits */
    8,					/* GreenBits */
    8,					/* BlueBits */
@@ -241,7 +232,6 @@ const struct gl_texture_format _mesa_texformat_rgba8888 = {
 const struct gl_texture_format _mesa_texformat_argb8888 = {
    MESA_FORMAT_ARGB8888,		/* MesaFormat */
    GL_RGBA,				/* BaseFormat */
-   GL_UNSIGNED_INT_8_8_8_8_REV,		/* Type */
    8,					/* RedBits */
    8,					/* GreenBits */
    8,					/* BlueBits */
@@ -259,7 +249,6 @@ const struct gl_texture_format _mesa_texformat_argb8888 = {
 const struct gl_texture_format _mesa_texformat_rgb888 = {
    MESA_FORMAT_RGB888,			/* MesaFormat */
    GL_RGB,				/* BaseFormat */
-   GL_UNSIGNED_BYTE,			/* Type */
    8,					/* RedBits */
    8,					/* GreenBits */
    8,					/* BlueBits */
@@ -277,7 +266,6 @@ const struct gl_texture_format _mesa_texformat_rgb888 = {
 const struct gl_texture_format _mesa_texformat_rgb565 = {
    MESA_FORMAT_RGB565,			/* MesaFormat */
    GL_RGB,				/* BaseFormat */
-   GL_UNSIGNED_SHORT_5_6_5,		/* Type */
    5,					/* RedBits */
    6,					/* GreenBits */
    5,					/* BlueBits */
@@ -295,7 +283,6 @@ const struct gl_texture_format _mesa_texformat_rgb565 = {
 const struct gl_texture_format _mesa_texformat_argb4444 = {
    MESA_FORMAT_ARGB4444,		/* MesaFormat */
    GL_RGBA,				/* BaseFormat */
-   GL_UNSIGNED_SHORT_4_4_4_4_REV,	/* Type */
    4,					/* RedBits */
    4,					/* GreenBits */
    4,					/* BlueBits */
@@ -313,7 +300,6 @@ const struct gl_texture_format _mesa_texformat_argb4444 = {
 const struct gl_texture_format _mesa_texformat_argb1555 = {
    MESA_FORMAT_ARGB1555,		/* MesaFormat */
    GL_RGBA,				/* BaseFormat */
-   GL_UNSIGNED_SHORT_1_5_5_5_REV,	/* Type */
    5,					/* RedBits */
    5,					/* GreenBits */
    5,					/* BlueBits */
@@ -331,7 +317,6 @@ const struct gl_texture_format _mesa_texformat_argb1555 = {
 const struct gl_texture_format _mesa_texformat_al88 = {
    MESA_FORMAT_AL88,			/* MesaFormat */
    GL_LUMINANCE_ALPHA,			/* BaseFormat */
-   GL_UNSIGNED_BYTE,			/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -349,7 +334,6 @@ const struct gl_texture_format _mesa_texformat_al88 = {
 const struct gl_texture_format _mesa_texformat_rgb332 = {
    MESA_FORMAT_RGB332,			/* MesaFormat */
    GL_RGB,				/* BaseFormat */
-   GL_UNSIGNED_BYTE_3_3_2,		/* Type */
    3,					/* RedBits */
    3,					/* GreenBits */
    2,					/* BlueBits */
@@ -367,7 +351,6 @@ const struct gl_texture_format _mesa_texformat_rgb332 = {
 const struct gl_texture_format _mesa_texformat_a8 = {
    MESA_FORMAT_A8,			/* MesaFormat */
    GL_ALPHA,				/* BaseFormat */
-   GL_UNSIGNED_BYTE,			/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -385,7 +368,6 @@ const struct gl_texture_format _mesa_texformat_a8 = {
 const struct gl_texture_format _mesa_texformat_l8 = {
    MESA_FORMAT_L8,			/* MesaFormat */
    GL_LUMINANCE,			/* BaseFormat */
-   GL_UNSIGNED_BYTE,			/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -403,7 +385,6 @@ const struct gl_texture_format _mesa_texformat_l8 = {
 const struct gl_texture_format _mesa_texformat_i8 = {
    MESA_FORMAT_I8,			/* MesaFormat */
    GL_INTENSITY,			/* BaseFormat */
-   GL_UNSIGNED_BYTE,			/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -421,7 +402,6 @@ const struct gl_texture_format _mesa_texformat_i8 = {
 const struct gl_texture_format _mesa_texformat_ci8 = {
    MESA_FORMAT_CI8,			/* MesaFormat */
    GL_COLOR_INDEX,			/* BaseFormat */
-   GL_UNSIGNED_BYTE,			/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -436,11 +416,9 @@ const struct gl_texture_format _mesa_texformat_ci8 = {
    fetch_3d_texel_ci8,			/* FetchTexel3D */
 };
 
-
 const struct gl_texture_format _mesa_texformat_ycbcr = {
    MESA_FORMAT_YCBCR,			/* MesaFormat */
    GL_YCBCR_MESA,			/* BaseFormat */
-   GL_UNSIGNED_SHORT_8_8_MESA,		/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -459,7 +437,6 @@ const struct gl_texture_format _mesa_texformat_ycbcr = {
 const struct gl_texture_format _mesa_texformat_ycbcr_rev = {
    MESA_FORMAT_YCBCR_REV,		/* MesaFormat */
    GL_YCBCR_MESA,			/* BaseFormat */
-   GL_UNSIGNED_SHORT_8_8_REV_MESA,	/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -623,13 +600,12 @@ const struct gl_texture_format _mesa_texformat_bgr233 = {
 #endif
 
 /* =============================================================
- * Null format:
+ * Null format (useful for proxy textures):
  */
 
 const struct gl_texture_format _mesa_null_texformat = {
    -1,					/* MesaFormat */
    0,					/* BaseFormat */
-   0,					/* Type */
    0,					/* RedBits */
    0,					/* GreenBits */
    0,					/* BlueBits */
@@ -643,7 +619,6 @@ const struct gl_texture_format _mesa_null_texformat = {
    fetch_null_texel,			/* FetchTexel2D */
    fetch_null_texel,			/* FetchTexel3D */
 };
-
 
 
 GLboolean
@@ -774,6 +749,7 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
 	 _mesa_problem(ctx, "texture compression extension not enabled");
       return &_mesa_texformat_rgba;
 
+   /* GL_MESA_ycrcr_texture */
    case GL_YCBCR_MESA:
       if (type == GL_UNSIGNED_SHORT_8_8_MESA)
          return &_mesa_texformat_ycbcr;
@@ -782,7 +758,6 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
 
    default:
       _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");
-      _mesa_debug(ctx, "intformat = %d %x\n", internalFormat, internalFormat);
       return NULL;
    }
 }
@@ -816,24 +791,4 @@ _mesa_base_compressed_texformat(GLcontext *ctx, GLint intFormat)
    default:
       return -1;  /* not a recognized compressed format */
    }
-}
-
-
-/*
- * Called via ctx->Driver.CompressedTextureSize().
- * This function is only used by software rasterizers.
- * Hardware drivers will have to implement a specialized function.
- */
-GLint
-_mesa_compressed_texture_size(GLcontext *ctx,
-                              const struct gl_texture_image *texImage)
-{
-   GLint b;
-   assert(texImage);
-   assert(texImage->TexFormat);
-
-   b = texImage->Width * texImage->Height * texImage->Depth *
-      texImage->TexFormat->TexelBytes;
-   assert(b > 0);
-   return b;
 }

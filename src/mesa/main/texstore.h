@@ -1,4 +1,4 @@
-/* $Id: texstore.h,v 1.10 2002/09/16 17:57:14 brianp Exp $ */
+/* $Id: texstore.h,v 1.11 2002/09/27 02:45:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -136,10 +136,33 @@ _mesa_store_compressed_teximage3d(GLcontext *ctx, GLenum target, GLint level,
 
 
 extern void
-_mesa_get_compressed_teximage(GLcontext *ctx, GLenum target,
-                              GLint level, void *image,
-                              const struct gl_texture_object *texObj,
-                              struct gl_texture_image *texImage);
+_mesa_store_compressed_texsubimage1d(GLcontext *ctx, GLenum target,
+                                     GLint level,
+                                     GLint xoffset, GLsizei width,
+                                     GLenum format,
+                                     GLsizei imageSize, const GLvoid *data,
+                                     struct gl_texture_object *texObj,
+                                     struct gl_texture_image *texImage);
+
+extern void
+_mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
+                                     GLint level,
+                                     GLint xoffset, GLint yoffset,
+                                     GLsizei width, GLsizei height,
+                                     GLenum format,
+                                     GLsizei imageSize, const GLvoid *data,
+                                     struct gl_texture_object *texObj,
+                                     struct gl_texture_image *texImage);
+
+extern void
+_mesa_store_compressed_texsubimage3d(GLcontext *ctx, GLenum target,
+                                GLint level,
+                                GLint xoffset, GLint yoffset, GLint zoffset,
+                                GLsizei width, GLsizei height, GLsizei depth,
+                                GLenum format,
+                                GLsizei imageSize, const GLvoid *data,
+                                struct gl_texture_object *texObj,
+                                struct gl_texture_image *texImage);
 
 
 extern GLboolean

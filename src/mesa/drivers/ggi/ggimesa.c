@@ -241,15 +241,18 @@ static void gl_ggiSetupPointers(GLcontext *ctx)
 	ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
 	ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
 
+        ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
+        ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
+        ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
+        ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
+        ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
+        ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
+
 	ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
 	ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
 	ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
 	ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
 	ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-
-	ctx->Driver.BaseCompressedTexFormat = _mesa_base_compressed_texformat;
-	ctx->Driver.CompressedTextureSize = _mesa_compressed_texture_size;
-	ctx->Driver.GetCompressedTexImage = _mesa_get_compressed_teximage;
 
 	/* Imaging extensions */
 	ctx->Driver.CopyColorTable = _swrast_CopyColorTable;

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.176 2002/09/06 02:56:08 brianp Exp $ */
+/* $Id: context.c,v 1.177 2002/09/27 02:45:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -930,7 +930,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Const.MaxColorTableSize = MAX_COLOR_TABLE_SIZE;
    ctx->Const.MaxConvolutionWidth = MAX_CONVOLUTION_WIDTH;
    ctx->Const.MaxConvolutionHeight = MAX_CONVOLUTION_HEIGHT;
-   ctx->Const.NumCompressedTextureFormats = 0;
    ctx->Const.MaxClipPlanes = MAX_CLIP_PLANES;
    ctx->Const.MaxLights = MAX_LIGHTS;
 

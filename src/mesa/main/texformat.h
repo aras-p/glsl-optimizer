@@ -1,4 +1,4 @@
-/* $Id: texformat.h,v 1.11 2002/09/23 16:37:14 brianp Exp $ */
+/* $Id: texformat.h,v 1.12 2002/09/27 02:45:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -67,7 +67,6 @@ enum _format {
    MESA_FORMAT_YCBCR,		/*                     YYYY YYYY UorV UorV */
    MESA_FORMAT_YCBCR_REV,	/*                     UorV UorV YYYY YYYY */
 
-
 #if 0
    /* upcoming little-endian formats: */
 
@@ -113,10 +112,6 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
 
 extern GLint
 _mesa_base_compressed_texformat(GLcontext *ctx, GLint intFormat);
-
-extern GLint
-_mesa_compressed_texture_size(GLcontext *ctx,
-                              const struct gl_texture_image *texImage);
 
 
 /* The default formats, GLchan per component:

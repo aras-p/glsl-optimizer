@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.80 2002/09/21 17:34:56 brianp Exp $ */
+/* $Id: extensions.c,v 1.81 2002/09/27 02:45:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,9 +132,8 @@ static struct {
    { OFF, "GL_SGIX_pixel_texture",             F(SGIX_pixel_texture) },
    { OFF, "GL_SGIX_shadow",                    F(SGIX_shadow) },
    { OFF, "GL_SGIX_shadow_ambient",            F(SGIX_shadow_ambient) },
-   { OFF, "GL_3DFX_texture_compression_FXT1",  F(_3DFX_texture_compression_FXT1) },
+   { OFF, "GL_3DFX_texture_compression_FXT1",  F(TDFX_texture_compression_FXT1) },
    { OFF, "GL_APPLE_client_storage",           F(APPLE_client_storage) }
-
 };
 
 

@@ -80,6 +80,7 @@ CORE_SRCS = \
 	rastpos.c \
 	state.c \
 	stencil.c \
+	texcompress.c \
 	teximage.c \
 	texformat.c \
 	texobj.c \

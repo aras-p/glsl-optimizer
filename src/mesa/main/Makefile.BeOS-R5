@@ -98,6 +98,7 @@ MESA_CORE_SRCS = \
 	rastpos.c \
 	state.c \
 	stencil.c \
+	texcompress.c \
 	texformat.c \
 	teximage.c \
 	texobj.c \

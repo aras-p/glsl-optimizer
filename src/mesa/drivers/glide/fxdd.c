@@ -1,4 +1,4 @@
-/* $Id: fxdd.c,v 1.90 2002/08/21 02:59:31 brianp Exp $ */
+/* $Id: fxdd.c,v 1.91 2002/09/27 02:45:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1014,6 +1014,12 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
    ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;
    ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
+   ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
+   ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
+   ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
+   ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
+   ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
+   ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
    ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
    ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
    ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;

@@ -1,4 +1,4 @@
-/* $Id: s_texstore.c,v 1.7 2002/09/16 17:57:14 brianp Exp $ */
+/* $Id: s_texstore.c,v 1.8 2002/09/27 02:45:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -144,8 +144,8 @@ is_depth_format(GLenum format)
  */
 void
 _swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
-                       GLenum internalFormat,
-                       GLint x, GLint y, GLsizei width, GLint border )
+                         GLenum internalFormat,
+                         GLint x, GLint y, GLsizei width, GLint border )
 {
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
@@ -202,9 +202,9 @@ _swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
  */
 void
 _swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
-                       GLenum internalFormat,
-                       GLint x, GLint y, GLsizei width, GLsizei height,
-                       GLint border )
+                         GLenum internalFormat,
+                         GLint x, GLint y, GLsizei width, GLsizei height,
+                         GLint border )
 {
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
@@ -260,8 +260,8 @@ _swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
  * Fallback for Driver.CopyTexSubImage1D().
  */
 void
-_swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
-                         GLint xoffset, GLint x, GLint y, GLsizei width)
+_swrast_copy_texsubimage1d( GLcontext *ctx, GLenum target, GLint level,
+                            GLint xoffset, GLint x, GLint y, GLsizei width )
 {
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
@@ -275,38 +275,7 @@ _swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
 
    ASSERT(ctx->Driver.TexImage1D);
 
-   if (texImage->Format != GL_DEPTH_COMPONENT) {
-      /* read RGBA image from framebuffer */
-      GLchan *image = read_color_image(ctx, x, y, width, 1);
-      if (!image) {
-         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D" );
-         return;
-      }
-
-#if 0
-      /*
-       * XXX this is a bit of a hack.  We need to be sure that the alpha
-       * channel is 1.0 if the internal texture format is not supposed to
-       * have an alpha channel.  This is because some drivers may store
-       * RGB textures as RGBA and the texutil.c code isn't smart enough
-       * to set the alpha channel to 1.0 in this situation.
-       */
-      if (texImage->Format == GL_LUMINANCE ||
-          texImage->Format == GL_RGB) {
-         const GLuint n = width * 4;
-         GLuint i;
-         for (i = 0; i < n; i += 4) {
-            image[i + 3] = CHAN_MAX;
-         }
-      }
-#endif
-      /* now call glTexSubImage1D to do the real work */
-      (*ctx->Driver.TexSubImage1D)(ctx, target, level, xoffset, width,
-                                   GL_RGBA, CHAN_TYPE, image,
-                                   &_mesa_native_packing, texObj, texImage);
-      FREE(image);
-   }
-   else {
+   if (texImage->Format == GL_DEPTH_COMPONENT) {
       /* read depth image from framebuffer */
       GLfloat *image = read_depth_image(ctx, x, y, width, 1);
       if (!image) {
@@ -317,6 +286,20 @@ _swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
       /* call glTexSubImage1D to redefine the texture */
       (*ctx->Driver.TexSubImage1D)(ctx, target, level, xoffset, width,
                                    GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                                   &_mesa_native_packing, texObj, texImage);
+      FREE(image);
+   }
+   else {
+      /* read RGBA image from framebuffer */
+      GLchan *image = read_color_image(ctx, x, y, width, 1);
+      if (!image) {
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D" );
+         return;
+      }
+
+      /* now call glTexSubImage1D to do the real work */
+      (*ctx->Driver.TexSubImage1D)(ctx, target, level, xoffset, width,
+                                   GL_RGBA, CHAN_TYPE, image,
                                    &_mesa_native_packing, texObj, texImage);
       FREE(image);
    }
@@ -333,9 +316,9 @@ _swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
  */
 void
 _swrast_copy_texsubimage2d( GLcontext *ctx,
-                          GLenum target, GLint level,
-                          GLint xoffset, GLint yoffset,
-                          GLint x, GLint y, GLsizei width, GLsizei height )
+                            GLenum target, GLint level,
+                            GLint xoffset, GLint yoffset,
+                            GLint x, GLint y, GLsizei width, GLsizei height )
 {
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
@@ -349,39 +332,7 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
 
    ASSERT(ctx->Driver.TexImage2D);
 
-   if (texImage->Format != GL_DEPTH_COMPONENT) {
-      /* read RGBA image from framebuffer */
-      GLchan *image = read_color_image(ctx, x, y, width, height);
-      if (!image) {
-         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
-         return;
-      }
-
-#if  0
-      /*
-       * XXX this is a bit of a hack.  We need to be sure that the alpha
-       * channel is 1.0 if the internal texture format is not supposed to
-       * have an alpha channel.  This is because some drivers may store
-       * RGB textures as RGBA and the texutil.c code isn't smart enough
-       * to set the alpha channel to 1.0 in this situation.
-       */
-      if (texImage->Format == GL_LUMINANCE ||
-          texImage->Format == GL_RGB) {
-         const GLuint n = width * height * 4;
-         GLuint i;
-         for (i = 0; i < n; i += 4) {
-            image[i + 3] = CHAN_MAX;
-         }
-      }
-#endif
-      /* now call glTexSubImage2D to do the real work */
-      (*ctx->Driver.TexSubImage2D)(ctx, target, level,
-                                   xoffset, yoffset, width, height,
-                                   GL_RGBA, CHAN_TYPE, image,
-                                   &_mesa_native_packing, texObj, texImage);
-      FREE(image);
-   }
-   else {
+   if (texImage->Format == GL_DEPTH_COMPONENT) {
       /* read depth image from framebuffer */
       GLfloat *image = read_depth_image(ctx, x, y, width, height);
       if (!image) {
@@ -393,6 +344,21 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
       (*ctx->Driver.TexSubImage2D)(ctx, target, level,
                                    xoffset, yoffset, width, height,
                                    GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                                   &_mesa_native_packing, texObj, texImage);
+      FREE(image);
+   }
+   else {
+      /* read RGBA image from framebuffer */
+      GLchan *image = read_color_image(ctx, x, y, width, height);
+      if (!image) {
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
+         return;
+      }
+
+      /* now call glTexSubImage2D to do the real work */
+      (*ctx->Driver.TexSubImage2D)(ctx, target, level,
+                                   xoffset, yoffset, width, height,
+                                   GL_RGBA, CHAN_TYPE, image,
                                    &_mesa_native_packing, texObj, texImage);
       FREE(image);
    }
@@ -409,9 +375,9 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
  */
 void
 _swrast_copy_texsubimage3d( GLcontext *ctx,
-                          GLenum target, GLint level,
-                          GLint xoffset, GLint yoffset, GLint zoffset,
-                          GLint x, GLint y, GLsizei width, GLsizei height )
+                            GLenum target, GLint level,
+                            GLint xoffset, GLint yoffset, GLint zoffset,
+                            GLint x, GLint y, GLsizei width, GLsizei height )
 {
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
@@ -425,38 +391,7 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
 
    ASSERT(ctx->Driver.TexImage3D);
 
-   if (texImage->Format != GL_DEPTH_COMPONENT) {
-      /* read RGBA image from framebuffer */
-      GLchan *image = read_color_image(ctx, x, y, width, height);
-      if (!image) {
-         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D" );
-         return;
-      }
-#if 0
-      /*
-       * XXX this is a bit of a hack.  We need to be sure that the alpha
-       * channel is 1.0 if the internal texture format is not supposed to
-       * have an alpha channel.  This is because some drivers may store
-       * RGB textures as RGBA and the texutil.c code isn't smart enough
-       * to set the alpha channel to 1.0 in this situation.
-       */
-      if (texImage->Format == GL_LUMINANCE ||
-          texImage->Format == GL_RGB) {
-         const GLuint n = width * height * 4;
-         GLuint i;
-         for (i = 0; i < n; i += 4) {
-            image[i + 3] = CHAN_MAX;
-         }
-      }
-#endif
-      /* now call glTexSubImage3D to do the real work */
-      (*ctx->Driver.TexSubImage3D)(ctx, target, level,
-                                   xoffset, yoffset, zoffset, width, height, 1,
-                                   GL_RGBA, CHAN_TYPE, image,
-                                   &_mesa_native_packing, texObj, texImage);
-      FREE(image);
-   }
-   else {
+   if (texImage->Format == GL_DEPTH_COMPONENT) {
       /* read depth image from framebuffer */
       GLfloat *image = read_depth_image(ctx, x, y, width, height);
       if (!image) {
@@ -468,6 +403,21 @@ _swrast_copy_texsubimage3d( GLcontext *ctx,
       (*ctx->Driver.TexSubImage3D)(ctx, target, level,
                                    xoffset, yoffset, zoffset, width, height, 1,
                                    GL_DEPTH_COMPONENT, GL_FLOAT, image,
+                                   &_mesa_native_packing, texObj, texImage);
+      FREE(image);
+   }
+   else {
+      /* read RGBA image from framebuffer */
+      GLchan *image = read_color_image(ctx, x, y, width, height);
+      if (!image) {
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D" );
+         return;
+      }
+
+      /* now call glTexSubImage3D to do the real work */
+      (*ctx->Driver.TexSubImage3D)(ctx, target, level,
+                                   xoffset, yoffset, zoffset, width, height, 1,
+                                   GL_RGBA, CHAN_TYPE, image,
                                    &_mesa_native_packing, texObj, texImage);
       FREE(image);
    }

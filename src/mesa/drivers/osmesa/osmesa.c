@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.87 2002/08/07 00:45:07 brianp Exp $ */
+/* $Id: osmesa.c,v 1.88 2002/09/27 02:45:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2092,6 +2092,13 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
    ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
 
+   ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
+   ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
+   ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
+   ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
+   ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
+   ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
+
    ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
    ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
    ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
@@ -2101,10 +2108,6 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
    ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
-
-   ctx->Driver.BaseCompressedTexFormat = _mesa_base_compressed_texformat;
-   ctx->Driver.CompressedTextureSize = _mesa_compressed_texture_size;
-   ctx->Driver.GetCompressedTexImage = _mesa_get_compressed_teximage;
 
    swdd->SetBuffer = set_buffer;
 

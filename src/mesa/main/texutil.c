@@ -1,8 +1,8 @@
-/* $Id: texutil.c,v 1.31 2002/09/21 16:51:25 brianp Exp $ */
+/* $Id: texutil.c,v 1.32 2002/09/27 02:45:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.3
+ * Version:  4.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
