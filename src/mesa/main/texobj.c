@@ -163,24 +163,28 @@ void
 _mesa_test_texobj_completeness( const GLcontext *ctx,
                                 struct gl_texture_object *t )
 {
+   const GLint baseLevel = t->BaseLevel;
+
    t->Complete = GL_TRUE;  /* be optimistic */
 
    /* Always need level zero image */
-   if (!t->Image[0]) {
+   if (!t->Image[baseLevel]) {
       t->Complete = GL_FALSE;
       return;
    }
 
    /* Compute number of mipmap levels */
    if (t->Dimensions == 1) {
-      t->P = t->Image[0]->WidthLog2;
+      t->P = t->Image[baseLevel]->WidthLog2;
    }
    else if (t->Dimensions == 2 || t->Dimensions == 6) {
-      t->P = MAX2(t->Image[0]->WidthLog2, t->Image[0]->HeightLog2);
+      t->P = MAX2(t->Image[baseLevel]->WidthLog2,
+                  t->Image[baseLevel]->HeightLog2);
    }
    else if (t->Dimensions == 3) {
-      GLint max = MAX2(t->Image[0]->WidthLog2, t->Image[0]->HeightLog2);
-      max = MAX2(max, (GLint)(t->Image[0]->DepthLog2));
+      GLint max = MAX2(t->Image[baseLevel]->WidthLog2,
+                       t->Image[baseLevel]->HeightLog2);
+      max = MAX2(max, (GLint)(t->Image[baseLevel]->DepthLog2));
       t->P = max;
    }
 
@@ -190,13 +194,23 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
 
    if (t->Dimensions == 6) {
       /* make sure all six level 0 images are same size */
-      const GLint w = t->Image[0]->Width2;
-      const GLint h = t->Image[0]->Height2;
-      if (!t->NegX[0] || t->NegX[0]->Width2 != w || t->NegX[0]->Height2 != h ||
-          !t->PosY[0] || t->PosY[0]->Width2 != w || t->PosY[0]->Height2 != h ||
-          !t->NegY[0] || t->NegY[0]->Width2 != w || t->NegY[0]->Height2 != h ||
-          !t->PosZ[0] || t->PosZ[0]->Width2 != w || t->PosZ[0]->Height2 != h ||
-          !t->NegZ[0] || t->NegZ[0]->Width2 != w || t->NegZ[0]->Height2 != h) {
+      const GLint w = t->Image[baseLevel]->Width2;
+      const GLint h = t->Image[baseLevel]->Height2;
+      if (!t->NegX[baseLevel] ||
+          t->NegX[baseLevel]->Width2 != w ||
+          t->NegX[baseLevel]->Height2 != h ||
+          !t->PosY[baseLevel] ||
+          t->PosY[baseLevel]->Width2 != w ||
+          t->PosY[baseLevel]->Height2 != h ||
+          !t->NegY[baseLevel] ||
+          t->NegY[baseLevel]->Width2 != w ||
+          t->NegY[baseLevel]->Height2 != h ||
+          !t->PosZ[baseLevel] ||
+          t->PosZ[baseLevel]->Width2 != w ||
+          t->PosZ[baseLevel]->Height2 != h ||
+          !t->NegZ[baseLevel] ||
+          t->NegZ[baseLevel]->Width2 != w ||
+          t->NegZ[baseLevel]->Height2 != h) {
          t->Complete = GL_FALSE;
          return;
       }
@@ -207,7 +221,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
        * Mipmapping: determine if we have a complete set of mipmaps
        */
       GLint i;
-      GLint minLevel = t->BaseLevel;
+      GLint minLevel = baseLevel;
       GLint maxLevel = MIN2(t->P, ctx->Const.MaxTextureLevels-1);
       maxLevel = MIN2(maxLevel, t->MaxLevel);
 
@@ -219,11 +233,11 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       /* Test dimension-independent attributes */
       for (i = minLevel; i <= maxLevel; i++) {
          if (t->Image[i]) {
-            if (t->Image[i]->Format != t->Image[0]->Format) {
+            if (t->Image[i]->Format != t->Image[baseLevel]->Format) {
                t->Complete = GL_FALSE;
                return;
             }
-            if (t->Image[i]->Border != t->Image[0]->Border) {
+            if (t->Image[i]->Border != t->Image[baseLevel]->Border) {
                t->Complete = GL_FALSE;
                return;
             }
@@ -233,8 +247,8 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       /* Test things which depend on number of texture image dimensions */
       if (t->Dimensions == 1) {
          /* Test 1-D mipmaps */
-         GLuint width = t->Image[0]->Width2;
-         for (i = 1; i < ctx->Const.MaxTextureLevels; i++) {
+         GLuint width = t->Image[baseLevel]->Width2;
+         for (i = baseLevel + 1; i < ctx->Const.MaxTextureLevels; i++) {
             if (width > 1) {
                width /= 2;
             }
@@ -255,9 +269,9 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       }
       else if (t->Dimensions == 2) {
          /* Test 2-D mipmaps */
-         GLuint width = t->Image[0]->Width2;
-         GLuint height = t->Image[0]->Height2;
-         for (i = 1; i < ctx->Const.MaxTextureLevels; i++) {
+         GLuint width = t->Image[baseLevel]->Width2;
+         GLuint height = t->Image[baseLevel]->Height2;
+         for (i = baseLevel + 1; i < ctx->Const.MaxTextureLevels; i++) {
             if (width > 1) {
                width /= 2;
             }
@@ -285,10 +299,10 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       }
       else if (t->Dimensions == 3) {
          /* Test 3-D mipmaps */
-         GLuint width = t->Image[0]->Width2;
-         GLuint height = t->Image[0]->Height2;
-         GLuint depth = t->Image[0]->Depth2;
-	 for (i = 1; i < ctx->Const.MaxTextureLevels; i++) {
+         GLuint width = t->Image[baseLevel]->Width2;
+         GLuint height = t->Image[baseLevel]->Height2;
+         GLuint depth = t->Image[baseLevel]->Depth2;
+	 for (i = baseLevel + 1; i < ctx->Const.MaxTextureLevels; i++) {
             if (width > 1) {
                width /= 2;
             }
@@ -323,9 +337,9 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       }
       else if (t->Dimensions == 6) {
          /* make sure 6 cube faces are consistant */
-         GLuint width = t->Image[0]->Width2;
-         GLuint height = t->Image[0]->Height2;
-	 for (i = 1; i < ctx->Const.MaxTextureLevels; i++) {
+         GLuint width = t->Image[baseLevel]->Width2;
+         GLuint height = t->Image[baseLevel]->Height2;
+	 for (i = baseLevel + 1; i < ctx->Const.MaxTextureLevels; i++) {
             if (width > 1) {
                width /= 2;
             }
