@@ -338,7 +338,30 @@ case $ARCH in
             ar -ruv ${LIBNAME} ${OBJECTS}
             FINAL_LIBS=${LIBNAME}
         else
-            echo "mklib: PROBLEM: AIX shared libs not supported!!!"
+	    EXPFILE="lib${LIBNAME}.exp"
+	    OFILE=shr.o  #Want to be consistent with the IBM libGL.a
+	    LIBNAME="lib${LIBNAME}.a"  # shared objects are still stored in the .a libraries
+	    OPTS="-bE:${EXPFILE} -bM:SRE -bnoentry"
+	    rm -f ${EXPFILE} ${OFILE}
+	    NM="/bin/nm -eC"
+	    echo "#! /usr/lib/${LIBNAME}" > ${EXPFILE}
+	    ${NM} ${OBJECTS} | awk '{
+	    if ((($2 == "T") || ($2 == "D") || ($2 == "B")) \
+	    && ( substr($1,1,1) != ".")) {
+		    if (substr ($1, 1, 7) != "__sinit" &&
+			    substr ($1, 1, 7) != "__sterm") {
+			    if (substr ($1, 1, 5) == "__tf1")
+				print (substr ($1, 7))
+			    else if (substr ($1, 1, 5) == "__tf9")
+				print (substr ($1, 15))
+			    else
+				print $1
+			}
+		}
+	    }' | sort -u >> ${EXPFILE}
+	    cc ${OPTS} -o ${OFILE} ${OBJECTS} ${DEPS}
+	    ar -r ${LIBNAME} ${OFILE}
+            FINAL_LIBS="${LIBNAME}"
         fi
         ;;
 
