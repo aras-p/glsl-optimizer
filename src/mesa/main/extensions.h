@@ -1,4 +1,4 @@
-/* $Id: extensions.h,v 1.13 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: extensions.h,v 1.14 2001/06/15 14:18:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,8 @@
 extern void _mesa_enable_sw_extensions(GLcontext *ctx);
 
 extern void _mesa_enable_imaging_extensions(GLcontext *ctx);
+
+extern void _mesa_enable_1_3_extensions(GLcontext *ctx);
 
 extern void _mesa_add_extension( GLcontext *ctx, GLboolean enabled,
                                  const char *name, GLboolean *flag_ptr );

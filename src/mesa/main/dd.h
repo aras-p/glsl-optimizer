@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.61 2001/04/04 21:54:20 brianp Exp $ */
+/* $Id: dd.h,v 1.62 2001/06/15 14:18:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -346,16 +346,12 @@ struct dd_function_table {
     * should do the job.
     */
 
-   GLboolean (*IsCompressedFormat)(GLcontext *ctx, GLint internalFormat);
-   /* Called to tell if a format is a compressed format.
-    */
-
    void (*GetCompressedTexImage)( GLcontext *ctx, GLenum target,
-                                  GLint lod, void *image,
+                                  GLint level, void *image,
                                   const struct gl_texture_object *texObj,
                                   struct gl_texture_image *texImage );
    /* Called by glGetCompressedTexImageARB.
-    * <target>, <lod>, <image> are specified by user.
+    * <target>, <level>, <image> are specified by user.
     * <texObj> is the source texture object.
     * <texImage> is the source texture image.
     */
@@ -367,6 +363,9 @@ struct dd_function_table {
     * compressed format that the driver recognizes.
     * Example: if internalFormat==GL_COMPRESSED_RGB_FXT1_3DFX, return GL_RGB.
     */
+
+   GLint (*CompressedTextureSize)(GLcontext *ctx,
+                                  const struct gl_texture_image *texImage);
 
 #if 000
    /* ... Note the
@@ -394,15 +393,6 @@ struct dd_function_table {
     * do the right thing with it.
     */
 
-   GLsizei (*CompressedImageSize)(GLcontext *ctx,
-                                  GLenum internalFormat,
-                                  GLuint numDimensions,
-                                  GLuint width,
-                                  GLuint height,
-                                  GLuint depth);
-   /* Calculate the size of a compressed image, given the image's
-    * format and dimensions.
-    */
 #endif
 
    /***

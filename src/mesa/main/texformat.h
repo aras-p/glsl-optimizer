@@ -1,4 +1,4 @@
-/* $Id: texformat.h,v 1.6 2001/04/04 21:54:21 brianp Exp $ */
+/* $Id: texformat.h,v 1.7 2001/06/15 14:18:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -89,6 +89,13 @@ _mesa_is_hardware_tex_format( const struct gl_texture_format *format );
 extern const struct gl_texture_format *
 _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
                          GLenum format, GLenum type );
+
+extern GLint
+_mesa_base_compressed_texformat(GLcontext *ctx, GLint intFormat);
+
+extern GLint
+_mesa_compressed_texture_size(GLcontext *ctx,
+                              const struct gl_texture_image *texImage);
 
 
 /* The default formats, GLchan per component:

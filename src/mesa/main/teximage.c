@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.97 2001/06/13 14:56:14 brianp Exp $ */
+/* $Id: teximage.c,v 1.98 2001/06/15 14:18:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -307,10 +307,14 @@ is_index_format(GLenum format)
 static GLboolean
 is_compressed_format(GLcontext *ctx, GLenum internalFormat)
 {
-    if (ctx->Driver.IsCompressedFormat) {
-        return (*ctx->Driver.IsCompressedFormat)(ctx, internalFormat);
-    }
-    return GL_FALSE;
+   if (ctx->Driver.BaseCompressedTexFormat) {
+      GLint b = (*ctx->Driver.BaseCompressedTexFormat)(ctx, internalFormat);
+      if (b > 0)
+         return GL_TRUE;
+      else
+         return GL_FALSE;
+   }
+   return GL_FALSE;
 }
 
 
@@ -593,6 +597,7 @@ _mesa_init_teximage_fields(GLcontext *ctx,
 {
    ASSERT(img);
    img->Format = _mesa_base_tex_format( ctx, internalFormat );
+   ASSERT(img->Format > 0);
    img->IntFormat = internalFormat;
    img->Border = border;
    img->Width = width;
@@ -761,6 +766,8 @@ texture_error_check( GLcontext *ctx, GLenum target,
       return GL_TRUE;
    }
 
+   ASSERT(iformat > 0);
+
    if (!is_compressed_format( ctx, internalFormat ) &&
        !_mesa_is_legal_format_and_type( format, type )) {
       /* Yes, generate GL_INVALID_OPERATION, not GL_INVALID_ENUM, if there
@@ -796,6 +803,7 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_image *destTex;
    GLint maxLevels = 0;
+   GLboolean compressed;
 
    if (dimensions == 1) {
       if (target != GL_TEXTURE_1D) {
@@ -898,12 +906,31 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
       }
    }
 
-   if (!is_compressed_format(ctx, destTex->IntFormat) &&
-       !_mesa_is_legal_format_and_type(format, type)) {
+   compressed = is_compressed_format(ctx, destTex->IntFormat);
+
+   if (!compressed && !_mesa_is_legal_format_and_type(format, type)) {
       char message[100];
       sprintf(message, "glTexSubImage%dD(format or type)", dimensions);
       _mesa_error(ctx, GL_INVALID_ENUM, message);
       return GL_TRUE;
+   }
+
+   if (compressed) {
+      if (xoffset != -destTex->Border) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glTexSubImage1/2/3D(xoffset != -border");
+         return GL_TRUE;
+      }
+      if (dimensions > 1 && yoffset != -destTex->Border) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glTexSubImage2/3D(yoffset != -border");
+         return GL_TRUE;
+      }
+      if (dimensions > 2 && zoffset != -destTex->Border) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glTexSubImage3D(zoffset != -border");
+         return GL_TRUE;
+      }
    }
 
    return GL_FALSE;
@@ -1019,6 +1046,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_image *teximage;
    GLint maxLevels = 0;
+   GLboolean compressed;
 
    if (dimensions == 1) {
       if (target != GL_TEXTURE_1D) {
@@ -1122,6 +1150,25 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
          char message[100];
          sprintf(message, "glCopyTexSubImage%dD(zoffset+depth)", dimensions);
          _mesa_error(ctx, GL_INVALID_VALUE, message);
+         return GL_TRUE;
+      }
+   }
+
+   compressed = is_compressed_format(ctx, teximage->IntFormat);
+   if (compressed) {
+      if (xoffset != -teximage->Border) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glCopyTexSubImage1/2/3D(xoffset != -border");
+         return GL_TRUE;
+      }
+      if (dimensions > 1 && yoffset != -teximage->Border) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glCopyTexSubImage2/3D(yoffset != -border");
+         return GL_TRUE;
+      }
+      if (dimensions > 2 && zoffset != -teximage->Border) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glCopyTexSubImage3D(zoffset != -border");
          return GL_TRUE;
       }
    }
@@ -1329,6 +1376,10 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       }
       ASSERT(texImage->FetchTexel);
 
+      if (texImage->IsCompressed) {
+         ASSERT(texImage->CompressedSize > 0);
+      }
+
       /* state update */
       texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
@@ -1442,6 +1493,10 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       }
       ASSERT(texImage->FetchTexel);
 
+      if (texImage->IsCompressed) {
+         ASSERT(texImage->CompressedSize > 0);
+      }
+
       /* state update */
       texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
@@ -1550,6 +1605,10 @@ _mesa_TexImage3D( GLenum target, GLint level, GLenum internalFormat,
          texImage->FetchTexel = texImage->TexFormat->FetchTexel3D;
       }
       ASSERT(texImage->FetchTexel);
+
+      if (texImage->IsCompressed) {
+         ASSERT(texImage->CompressedSize > 0);
+      }
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -2416,7 +2475,7 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
 
    texImage = _mesa_select_tex_image(ctx, texUnit, target, level);
    if (!texImage) {
-      /* invalid mipmap level */
+      /* probably invalid mipmap level */
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetCompressedTexImageARB(level)");
       return;
    }

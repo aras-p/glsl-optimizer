@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.61 2001/05/29 15:23:49 brianp Exp $ */
+/* $Id: extensions.c,v 1.62 2001/06/15 14:18:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -201,6 +201,34 @@ _mesa_enable_imaging_extensions(GLcontext *ctx)
       _mesa_enable_extension(ctx, extensions[i]);
    }
 }
+
+
+
+/*
+ * Enable all OpenGL 1.3 features and extensions.
+ */
+void
+_mesa_enable_1_3_extensions(GLcontext *ctx)
+{
+   const char *extensions[] = {
+      "GL_ARB_multisample",
+      "GL_ARB_multitexture",
+      "GL_ARB_texture_border_clamp",
+      "GL_ARB_texture_compression",
+      "GL_ARB_texture_cube_map",
+      "GL_ARB_texture_env_add",
+      "GL_ARB_texture_env_combine",
+      "GL_ARB_texture_env_dot3",
+      "GL_ARB_transpose_matrix",
+      NULL
+   };
+   GLuint i;
+
+   for (i = 0; extensions[i]; i++) {
+      _mesa_enable_extension(ctx, extensions[i]);
+   }
+}
+
 
 
 /*

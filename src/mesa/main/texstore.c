@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.28 2001/06/13 14:56:14 brianp Exp $ */
+/* $Id: texstore.c,v 1.29 2001/06/15 14:18:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -416,6 +416,8 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
    GLboolean freeSourceData = GL_FALSE;
    GLint postConvWidth = srcWidth, postConvHeight = srcHeight;
 
+   assert(baseInternalFormat > 0);
+
    if (transferOps & IMAGE_CONVOLUTION_BIT) {
       _mesa_adjust_image_for_convolution(ctx, dimensions, &postConvWidth,
                                          &postConvHeight);
@@ -614,7 +616,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_image *texImage)
 {
    GLint postConvWidth = width;
-   GLint texelBytes;
+   GLint texelBytes, sizeInBytes;
 
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
       _mesa_adjust_image_for_convolution(ctx, 1, &postConvWidth, NULL);
@@ -629,8 +631,19 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
+   /* Compute image size, in bytes */
+   if (texImage->IsCompressed) {
+      assert(ctx->Driver.CompressedTextureSize);
+      sizeInBytes = ctx->Driver.CompressedTextureSize(ctx, texImage);
+      assert(sizeInBytes > 0);
+      texImage->CompressedSize = sizeInBytes;
+   }
+   else {
+      sizeInBytes = postConvWidth * texelBytes;
+   }
+
    /* allocate memory */
-   texImage->Data = MALLOC(postConvWidth * texelBytes);
+   texImage->Data = MALLOC(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
       return;
@@ -658,6 +671,8 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
  * The texture image format will be GL_COLOR_INDEX, GL_INTENSITY,
  * GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_ALPHA, GL_RGB or GL_RGBA.
  *
+ * NOTE: if real texture compression is supported, this whole function
+ * will need to be overridden.
  */
 void
 _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
@@ -669,7 +684,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_image *texImage)
 {
    GLint postConvWidth = width, postConvHeight = height;
-   GLint texelBytes;
+   GLint texelBytes, sizeInBytes;
 
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
       _mesa_adjust_image_for_convolution(ctx, 2, &postConvWidth,
@@ -685,8 +700,19 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
+   /* Compute image size, in bytes */
+   if (texImage->IsCompressed) {
+      assert(ctx->Driver.CompressedTextureSize);
+      sizeInBytes = ctx->Driver.CompressedTextureSize(ctx, texImage);
+      assert(sizeInBytes > 0);
+      texImage->CompressedSize = sizeInBytes;
+   }
+   else {
+      sizeInBytes = postConvWidth * postConvHeight * texelBytes;
+   }
+
    /* allocate memory */
-   texImage->Data = MALLOC(postConvWidth * postConvHeight * texelBytes);
+   texImage->Data = MALLOC(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
       return;
@@ -725,7 +751,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage)
 {
-   GLint texelBytes;
+   GLint texelBytes, sizeInBytes;
 
    /* choose the texture format */
    assert(ctx->Driver.ChooseTextureFormat);
@@ -736,8 +762,19 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
 
    texelBytes = texImage->TexFormat->TexelBytes;
 
+   /* Compute image size, in bytes */
+   if (texImage->IsCompressed) {
+      assert(ctx->Driver.CompressedTextureSize);
+      sizeInBytes = ctx->Driver.CompressedTextureSize(ctx, texImage);
+      assert(sizeInBytes > 0);
+      texImage->CompressedSize = sizeInBytes;
+   }
+   else {
+      sizeInBytes = width * height * depth * texelBytes;
+   }
+
    /* allocate memory */
-   texImage->Data = MALLOC(width * height * depth * texelBytes);
+   texImage->Data = MALLOC(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
       return;
@@ -900,6 +937,25 @@ _mesa_store_compressed_teximage3d(GLcontext *ctx, GLenum target, GLint level,
    /* Nothing here.
     * The device driver has to do it all.
     */
+}
+
+
+
+/*
+ * Fallback for Driver.GetCompressedTexImage3D()
+ * This will probably work find for hardware drivers.  That is, hardware
+ * drivers won't have to override this function, unless the compressed
+ * texture must first be fetched from the TRAM.
+ */
+void
+_mesa_get_compressed_teximage(GLcontext *ctx, GLenum target,
+                              GLint level, void *image,
+                              const struct gl_texture_object *texObj,
+                              struct gl_texture_image *texImage)
+{
+   assert(texImage->IsCompressed);
+   assert(texImage->CompressedSize > 0);
+   MEMCPY(image, texImage->Data, texImage->CompressedSize);
 }
 
 

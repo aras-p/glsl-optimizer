@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.24 2001/06/04 22:33:02 brianp Exp $ */
+/* $Id: xm_api.c,v 1.25 2001/06/15 14:18:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,6 +77,8 @@
 #include "conf.h"
 #endif
 #include "macros.h"
+#include "texformat.h"
+#include "texstore.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "array_cache/acache.h"
@@ -1634,6 +1636,10 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    }
 
    _mesa_enable_sw_extensions(ctx);
+   _mesa_enable_extension(ctx, "GL_ARB_texture_compression");
+   ctx->Driver.BaseCompressedTexFormat = _mesa_base_compressed_texformat;
+   ctx->Driver.CompressedTextureSize = _mesa_compressed_texture_size;
+   ctx->Driver.GetCompressedTexImage = _mesa_get_compressed_teximage;
 
    if (CHECK_BYTE_ORDER(v)) {
       c->swapbytes = GL_FALSE;

@@ -1,4 +1,4 @@
-/* $Id: texstore.h,v 1.8 2001/05/21 16:41:04 brianp Exp $ */
+/* $Id: texstore.h,v 1.9 2001/06/15 14:18:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -133,6 +133,13 @@ _mesa_store_compressed_teximage3d(GLcontext *ctx, GLenum target, GLint level,
                                   GLsizei imageSize, const GLvoid *data,
                                   struct gl_texture_object *texObj,
                                   struct gl_texture_image *texImage);
+
+
+extern void
+_mesa_get_compressed_teximage(GLcontext *ctx, GLenum target,
+                              GLint level, void *image,
+                              const struct gl_texture_object *texObj,
+                              struct gl_texture_image *texImage);
 
 
 extern GLboolean

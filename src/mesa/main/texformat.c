@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.10 2001/04/20 16:46:04 brianp Exp $ */
+/* $Id: texformat.c,v 1.11 2001/06/15 14:18:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -469,10 +469,11 @@ _mesa_is_hardware_tex_format( const struct gl_texture_format *format )
 }
 
 
-/* Given an internal texture format or 1, 2, 3, 4 initialize the texture
- * image structure's default format and type information.  Drivers will
- * initialize these fields accordingly if they override the default
- * storage format.
+/* Given an internal texture format (or 1, 2, 3, 4) return a pointer
+ * to a gl_texture_format which which to store the texture.
+ * This is called via ctx->Driver.ChooseTextureFormat().
+ * Hardware drivers should not use this function, but instead a 
+ * specialized function.
  */
 const struct gl_texture_format *
 _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
@@ -560,13 +561,89 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
    case GL_DEPTH_COMPONENT16_SGIX:
    case GL_DEPTH_COMPONENT24_SGIX:
    case GL_DEPTH_COMPONENT32_SGIX:
-      if ( !ctx->Extensions.SGIX_depth_texture )
-	 _mesa_problem( ctx, "depth format without GL_SGIX_depth_texture" );
+      if (!ctx->Extensions.SGIX_depth_texture)
+	 _mesa_problem(ctx, "depth format without GL_SGIX_depth_texture");
       return &_mesa_texformat_depth_component;
 
+   case GL_COMPRESSED_ALPHA_ARB:
+      if (!ctx->Extensions.ARB_texture_compression)
+	 _mesa_problem(ctx, "texture compression extension not enabled");
+      return &_mesa_texformat_alpha;
+   case GL_COMPRESSED_LUMINANCE_ARB:
+      if (!ctx->Extensions.ARB_texture_compression)
+	 _mesa_problem(ctx, "texture compression extension not enabled");
+      return &_mesa_texformat_luminance;
+   case GL_COMPRESSED_LUMINANCE_ALPHA_ARB:
+      if (!ctx->Extensions.ARB_texture_compression)
+	 _mesa_problem(ctx, "texture compression extension not enabled");
+      return &_mesa_texformat_luminance_alpha;
+   case GL_COMPRESSED_INTENSITY_ARB:
+      if (!ctx->Extensions.ARB_texture_compression)
+	 _mesa_problem(ctx, "texture compression extension not enabled");
+      return &_mesa_texformat_intensity;
+   case GL_COMPRESSED_RGB_ARB:
+      if (!ctx->Extensions.ARB_texture_compression)
+	 _mesa_problem(ctx, "texture compression extension not enabled");
+      return &_mesa_texformat_rgb;
+   case GL_COMPRESSED_RGBA_ARB:
+      if (!ctx->Extensions.ARB_texture_compression)
+	 _mesa_problem(ctx, "texture compression extension not enabled");
+      return &_mesa_texformat_rgba;
+
    default:
-      _mesa_problem( ctx, "unexpected format in _mesa_choose_tex_format()" );
-      printf("intformat = %d %x\n", internalFormat, internalFormat );
+      _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");
+      printf("intformat = %d %x\n", internalFormat, internalFormat);
       return NULL;
    }
+}
+
+
+
+
+/*
+ * Return the base texture format for the given compressed format
+ * Called via ctx->Driver.BaseCompressedTexFormat().
+ * This function is used by software rasterizers.  Hardware drivers
+ * which support texture compression should not use this function but
+ * a specialized function instead.
+ */
+GLint
+_mesa_base_compressed_texformat(GLcontext *ctx, GLint intFormat)
+{
+   switch (intFormat) {
+   case GL_COMPRESSED_ALPHA_ARB:
+      return GL_ALPHA;
+   case GL_COMPRESSED_LUMINANCE_ARB:
+      return GL_LUMINANCE;
+   case GL_COMPRESSED_LUMINANCE_ALPHA_ARB:
+      return GL_LUMINANCE_ALPHA;
+   case GL_COMPRESSED_INTENSITY_ARB:
+      return GL_INTENSITY;
+   case GL_COMPRESSED_RGB_ARB:
+      return GL_RGB;
+   case GL_COMPRESSED_RGBA_ARB:
+      return GL_RGBA;
+   default:
+      return -1;  /* not a recognized compressed format */
+   }
+}
+
+
+/*
+ * Called via ctx->Driver.CompressedTextureSize().
+ * This function is only used by software rasterizers.
+ * Hardware drivers will have to implement a specialized function.
+ */
+GLint
+_mesa_compressed_texture_size(GLcontext *ctx,
+                              const struct gl_texture_image *texImage)
+{
+   GLint b;
+   assert(texImage);
+   assert(texImage->TexFormat);
+
+   b = texImage->Width * texImage->Height * texImage->Depth *
+      texImage->TexFormat->TexelBytes;
+   assert(b > 0);
+   return b;
 }
