@@ -1,4 +1,3 @@
-/* $Id: texutil.h,v 1.2 2000/03/27 18:56:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,7 +38,7 @@ typedef enum {             /* ---- ---- ---- ---- ---- ---- ---- ---- */
    MESA_L8,                /*                               LLLL LLLL */
    MESA_A8,                /*                               AAAA AAAA */
    MESA_C8,                /*                               CCCC CCCC */
-   MESA_L8_A8,             /*                     LLLL LLLL AAAA AAAA */
+   MESA_A8_L8,             /*                     AAAA AAAA LLLL LLLL */
    MESA_R5_G6_B5,          /*                     RRRR RGGG GGGB BBBB */
    MESA_A4_R4_G4_B4,       /*                     AAAA RRRR GGGG BBBB */
    MESA_A1_R5_G5_B5,       /*                     ARRR RRGG GGGB BBBB */
@@ -52,18 +51,37 @@ typedef enum {             /* ---- ---- ---- ---- ---- ---- ---- ---- */
 extern GLboolean
 _mesa_convert_teximage(MesaIntTexFormat dstFormat,
                        GLint dstWidth, GLint dstHeight, GLvoid *dstImage,
-                       GLsizei srcWidth, GLsizei srcHeight,
+                       GLint dstRowStride,
+                       GLint srcWidth, GLint srcHeight,
                        GLenum srcFormat, GLenum srcType,
                        const GLvoid *srcImage,
                        const struct gl_pixelstore_attrib *packing);
 
 
+
+extern GLboolean
+_mesa_convert_texsubimage(MesaIntTexFormat dstFormat,
+                          GLint dstXoffset, GLint dstYoffset,
+                          GLint dstWidth, GLint dstHeight, GLvoid *dstImage,
+                          GLint dstRowStride,
+                          GLint width, GLint height,
+                          GLint srcWidth, GLint srcHeight,
+                          GLenum srcFormat, GLenum srcType,
+                          const GLvoid *srcImage,
+                          const struct gl_pixelstore_attrib *packing);
+
+
 extern void
 _mesa_unconvert_teximage(MesaIntTexFormat srcFormat,
                          GLint srcWidth, GLint srcHeight,
-                         const GLvoid *srcImage,
-                         GLsizei dstWidth, GLsizei dstHeight,
+                         const GLvoid *srcImage, GLint srcRowStride,
+                         GLint dstWidth, GLint dstHeight,
                          GLenum dstFormat, GLubyte *dstImage);
+
+
+extern void
+_mesa_set_teximage_component_sizes(MesaIntTexFormat mesaFormat,
+                                   struct gl_texture_image *texImage);
 
 
 #endif
