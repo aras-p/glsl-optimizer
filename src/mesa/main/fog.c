@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.22 2000/10/27 18:38:35 brianp Exp $ */
+/* $Id: fog.c,v 1.23 2000/10/28 11:42:12 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -271,7 +271,6 @@ _mesa_fog_rgba_pixels( const GLcontext *ctx,
    for (i=0;i<n;i++) {
       GLfixed f = CLAMP(fog[i], 0, FIXED_ONE);
       GLfixed g = FIXED_ONE - f;
-/*        fprintf(stderr, "f %d/%f g %d ONE %d\n", f, f/(float)FIXED_ONE, g, FIXED_ONE); */
       rgba[i][0] = (f*rgba[i][0] + g*rFog) >> FIXED_SHIFT;
       rgba[i][1] = (f*rgba[i][1] + g*gFog) >> FIXED_SHIFT;
       rgba[i][2] = (f*rgba[i][2] + g*bFog) >> FIXED_SHIFT;
@@ -329,12 +328,13 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
       case GL_LINEAR:
          {
             GLfloat fogEnd = ctx->Fog.End;
-            GLfloat fogScale = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
+            GLfloat fogScale = (GLfloat) FIXED_ONE / (ctx->Fog.End - 
+						      ctx->Fog.Start);
             for (i=0;i<n;i++) {
                GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
                GLfloat eyez = -d / (c+ndcz);
 	       if (eyez < 0.0)  eyez = -eyez;
-               fogcoord[i] = (fogEnd - eyez) * fogScale;
+               fogcoord[i] = (GLint)(fogEnd - eyez) * fogScale;
             }
          }
 	 break;
@@ -343,7 +343,7 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
 	    GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
 	    GLfloat eyez = d / (c+ndcz);
 	    if (eyez < 0.0) eyez = -eyez;
-	    fogcoord[i] = exp( -ctx->Fog.Density * eyez );
+	    fogcoord[i] = FloatToFixed(exp( -ctx->Fog.Density * eyez ));
 	 }
 	 break;
       case GL_EXP2:
@@ -358,7 +358,7 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
                if (tmp < FLT_MIN_10_EXP)
 		  tmp = FLT_MIN_10_EXP;
 #endif
-	       fogcoord[i] = exp( tmp );
+	       fogcoord[i] = FloatToFixed(exp( tmp ));
             }
          }
 	 break;
