@@ -494,6 +494,13 @@ drawfire(void)
 
 
 static void
+idle(void)
+{
+   glutPostRedisplay();
+}
+
+
+static void
 special(int key, int x, int y)
 {
    switch (key) {
@@ -720,7 +727,7 @@ main(int ac, char **av)
    glutKeyboardFunc(key);
    glutSpecialFunc(special);
    glutDisplayFunc(drawfire);
-   glutIdleFunc(drawfire);
+   glutIdleFunc(idle);
    glutReshapeFunc(reshape);
    glutMainLoop();
 
