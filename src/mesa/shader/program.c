@@ -1143,7 +1143,7 @@ _mesa_IsProgram(GLuint id)
 
 
 /* XXX temporary */
-void
+GLAPI void GLAPIENTRY
 glProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback,
                       GLvoid *data)
 {
@@ -1191,7 +1191,7 @@ _mesa_ProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback,
 
 
 /* XXX temporary */
-void
+GLAPI void GLAPIENTRY
 glGetProgramRegisterfvMESA(GLenum target,
                            GLsizei len, const GLubyte *registerName,
                            GLfloat *v)
