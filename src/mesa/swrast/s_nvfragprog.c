@@ -879,25 +879,28 @@ execute_program( GLcontext *ctx,
 #endif
             }
             break;
-         case FP_OPCODE_PK2H: /* pack two 16-bit floats */
-            /* XXX this is probably wrong */
+         case FP_OPCODE_PK2H: /* pack two 16-bit floats in one 32-bit float */
             {
                GLfloat a[4], result[4];
-               const GLuint *rawBits = (const GLuint *) a;
+               GLhalfNV hx, hy;
                GLuint *rawResult = (GLuint *) result;
+               GLuint twoHalves;
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
+               hx = _mesa_float_to_half(a[0]);
+               hy = _mesa_float_to_half(a[1]);
+               twoHalves = hx | (hy << 16);
                rawResult[0] = rawResult[1] = rawResult[2] = rawResult[3]
-                  = rawBits[0] | (rawBits[1] << 16);
+                  = twoHalves;
                store_vector4( inst, machine, result );
             }
             break;
-         case FP_OPCODE_PK2US: /* pack two GLushorts */
+         case FP_OPCODE_PK2US: /* pack two GLushorts into one 32-bit float */
             {
                GLfloat a[4], result[4];
                GLuint usx, usy, *rawResult = (GLuint *) result;
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
                a[0] = CLAMP(a[0], 0.0F, 1.0F);
-               a[1] = CLAMP(a[0], 0.0F, 1.0F);
+               a[1] = CLAMP(a[1], 0.0F, 1.0F);
                usx = IROUND(a[0] * 65535.0F);
                usy = IROUND(a[1] * 65535.0F);
                rawResult[0] = rawResult[1] = rawResult[2] = rawResult[3]
@@ -905,7 +908,7 @@ execute_program( GLcontext *ctx,
                store_vector4( inst, machine, result );
             }
             break;
-         case FP_OPCODE_PK4B: /* pack four GLbytes */
+         case FP_OPCODE_PK4B: /* pack four GLbytes into one 32-bit float */
             {
                GLfloat a[4], result[4];
                GLuint ubx, uby, ubz, ubw, *rawResult = (GLuint *) result;
@@ -923,7 +926,7 @@ execute_program( GLcontext *ctx,
                store_vector4( inst, machine, result );
             }
             break;
-         case FP_OPCODE_PK4UB: /* pack four GLubytes */
+         case FP_OPCODE_PK4UB: /* pack four GLubytes into one 32-bit float */
             {
                GLfloat a[4], result[4];
                GLuint ubx, uby, ubz, ubw, *rawResult = (GLuint *) result;
@@ -1186,16 +1189,15 @@ execute_program( GLcontext *ctx,
             }
             break;
          case FP_OPCODE_UP2H: /* unpack two 16-bit floats */
-            /* XXX this is probably wrong */
             {
                GLfloat a[4], result[4];
                const GLuint *rawBits = (const GLuint *) a;
-               GLuint *rawResult = (GLuint *) result;
+               GLhalfNV hx, hy;
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
-               rawResult[0] = rawBits[0] & 0xffff;
-               rawResult[1] = (rawBits[0] >> 16) & 0xffff;
-               rawResult[2] = rawBits[0] & 0xffff;
-               rawResult[3] = (rawBits[0] >> 16) & 0xffff;
+               hx = rawBits[0] & 0xffff;
+               hy = rawBits[0] >> 16;
+               result[0] = result[2] = _mesa_half_to_float(hx);
+               result[1] = result[3] = _mesa_half_to_float(hy);
                store_vector4( inst, machine, result );
             }
             break;
@@ -1203,11 +1205,12 @@ execute_program( GLcontext *ctx,
             {
                GLfloat a[4], result[4];
                const GLuint *rawBits = (const GLuint *) a;
+               GLushort usx, usy;
                fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
-               result[0] = (GLfloat) ((rawBits[0] >>  0) & 0xffff) / 65535.0F;
-               result[1] = (GLfloat) ((rawBits[0] >> 16) & 0xffff) / 65535.0F;
-               result[2] = result[0];
-               result[3] = result[1];
+               usx = rawBits[0] & 0xffff;
+               usy = rawBits[0] >> 16;
+               result[0] = result[2] = usx * (1.0f / 65535.0f);
+               result[1] = result[3] = usy * (1.0f / 65535.0f);
                store_vector4( inst, machine, result );
             }
             break;
