@@ -455,17 +455,7 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
        (void) (*vmesa->get_ust)( &vmesa->swap_missed_ust );
     }
 
-    if (missed_target)
-       fprintf(stderr, "missed target\n");
-/*     else */
-/*        fprintf(stderr, "retcode %d vbl_seq %d vblank_flags %x missed_target %d\n", */
-/* 	       retcode, vmesa->vbl_seq, vmesa->vblank_flags, missed_target); */
-
-
-
-
     LOCK_HARDWARE(vmesa);
-
 
     /* Page Flip*/
     if(GL_FALSE) {
@@ -518,7 +508,10 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     
     UNLOCK_HARDWARE(vmesa);
     vmesa->uploadCliprects = GL_TRUE;
-    
+
+    vmesa->swap_count++;
+    (void) (*vmesa->get_ust)( &vmesa->swap_ust );
+   
     memcpy(&buffer_tmp, &vmesa->back, sizeof(viaBuffer));
     memcpy(&vmesa->back, &vmesa->front, sizeof(viaBuffer));
     memcpy(&vmesa->front, &buffer_tmp, sizeof(viaBuffer));
