@@ -1218,6 +1218,29 @@ fxDDGetString(GLcontext * ctx, GLenum name)
  switch (name) {
         case GL_RENDERER:
              return (GLubyte *)fxMesa->rendererString;
+#if 1 /* hack to advertise vanilla extension names */
+        case GL_EXTENSIONS:
+             {
+              static const GLubyte *ext = NULL;
+              if (ext == NULL) {
+                 GLubyte *x = _mesa_make_extension_string(ctx);
+                 if (x != NULL) {
+                    ext = _mesa_malloc(strlen((char *)x) + 1024);
+                    if (ext != NULL) {
+                       strcpy((char *)ext, (char *)x);
+#if 0 /* put any additional extension names here */
+                       strcat((char *)ext, " GL_xxx");
+#endif
+                       _mesa_free(x);
+                    } else {
+                       ext = x;
+                    }
+                    ctx->Extensions.String = ext;
+                 }
+              }
+              return ext;
+             }
+#endif
         default:
              return NULL;
  }
