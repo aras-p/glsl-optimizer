@@ -36,7 +36,7 @@
 #define GL_GLEXT_PROTOTYPES
 #include "GL/glut.h"
 
-#include "readtex.c"   /* I know, this is a hack.  KW: me too. */
+#include "readtex.h"
 #define TEXTURE_FILE "../images/reflect.rgb"
 
 #define LIT		0x00000001

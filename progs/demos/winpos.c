@@ -14,7 +14,7 @@
 #define GL_GLEXT_PROTOTYPES
 #include "GL/glut.h"
 
-#include "readtex.c"  /* a hack, I know */
+#include "readtex.h"
 
 #define IMAGE_FILE "../images/girl.rgb"
 
