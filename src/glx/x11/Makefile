@@ -32,6 +32,7 @@ C_SOURCES = \
 	  indirect_size.c \
 	  indirect_window_pos.c \
 	  indirect_transpose_matrix.c \
+	  indirect_vertex_array.c \
 	  pixel.c \
 	  pixelstore.c \
 	  render2.c \
