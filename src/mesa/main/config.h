@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.37 2001/12/18 04:06:45 brianp Exp $ */
+/* $Id: config.h,v 1.38 2002/05/27 17:04:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,7 +92,7 @@
 
 /* Min and Max point sizes and granularity */
 #define MIN_POINT_SIZE 1.0
-#define MAX_POINT_SIZE 10.0
+#define MAX_POINT_SIZE 20.0
 #define POINT_SIZE_GRANULARITY 0.1
 
 /* Min and Max line widths and granularity */

@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.62 2002/04/21 18:49:18 brianp Exp $ */
+/* $Id: enable.c,v 1.63 2002/05/27 17:04:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -794,13 +794,13 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Transform.RasterPositionUnclipped = state;
          break;
 
-      /* GL_MESA_sprite_point */
-      case GL_SPRITE_POINT_MESA:
-         CHECK_EXTENSION(MESA_sprite_point);
-         if (ctx->Point.SpriteMode == state)
+      /* GL_NV_point_sprite */
+      case GL_POINT_SPRITE_NV:
+         CHECK_EXTENSION(NV_point_sprite);
+         if (ctx->Point.PointSprite == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_POINT);
-         ctx->Point.SpriteMode = state;
+         ctx->Point.PointSprite = state;
          break;
 
       /* GL_NV_vertex_program */
@@ -1158,9 +1158,9 @@ _mesa_IsEnabled( GLenum cap )
          CHECK_EXTENSION(IBM_rasterpos_clip);
          return ctx->Transform.RasterPositionUnclipped;
 
-      /* GL_MESA_sprite_point */
-      case GL_SPRITE_POINT_MESA:
-         return ctx->Point.SpriteMode;
+      /* GL_NV_point_sprite */
+      case GL_POINT_SPRITE_NV:
+         return ctx->Point.PointSprite;
 
       /* GL_NV_vertex_program */
       case GL_VERTEX_PROGRAM_NV:

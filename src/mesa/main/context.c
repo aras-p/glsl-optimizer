@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.162 2002/05/09 21:54:16 brianp Exp $ */
+/* $Id: context.c,v 1.163 2002/05/27 17:04:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1116,7 +1116,11 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Point.MinSize = 0.0;
    ctx->Point.MaxSize = ctx->Const.MaxPointSize;
    ctx->Point.Threshold = 1.0;
-   ctx->Point.SpriteMode = GL_FALSE; /* GL_MESA_sprite_point */
+   ctx->Point.PointSprite = GL_FALSE; /* GL_NV_point_sprite */
+   ctx->Point.SpriteRMode = GL_ZERO; /* GL_NV_point_sprite */
+   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+      ctx->Point.CoordReplace[i] = GL_FALSE; /* GL_NV_point_sprite */
+   }
 
    /* Polygon group */
    ctx->Polygon.CullFlag = GL_FALSE;

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.78 2002/05/09 21:54:16 brianp Exp $ */
+/* $Id: get.c,v 1.79 2002/05/27 17:04:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1325,10 +1325,14 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ctx->Transform.RasterPositionUnclipped;
          break;
 
-      /* GL_MESA_sprite_point */
-      case GL_SPRITE_POINT_MESA:
-         CHECK_EXTENSION_B(MESA_sprite_point);
-         *params = ctx->Point.SpriteMode;
+      /* GL_NV_point_sprite */
+      case GL_POINT_SPRITE_NV:
+         CHECK_EXTENSION_B(NV_point_sprite);
+         *params = ctx->Point.PointSprite;
+         break;
+      case GL_POINT_SPRITE_R_MODE_NV:
+         CHECK_EXTENSION_B(NV_point_sprite);
+         *params = ENUM_TO_BOOL(ctx->Point.SpriteRMode);
          break;
 
       /* GL_SGIS_generate_mipmap */
@@ -2654,10 +2658,14 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Transform.RasterPositionUnclipped;
          break;
 
-      /* GL_MESA_sprite_point */
-      case GL_SPRITE_POINT_MESA:
-         CHECK_EXTENSION_D(MESA_sprite_point);
-         *params = (GLdouble) ctx->Point.SpriteMode;
+      /* GL_NV_point_sprite */
+      case GL_POINT_SPRITE_NV:
+         CHECK_EXTENSION_B(NV_point_sprite);
+         *params = (GLdouble) ctx->Point.PointSprite;
+         break;
+      case GL_POINT_SPRITE_R_MODE_NV:
+         CHECK_EXTENSION_B(NV_point_sprite);
+         *params = (GLdouble) ctx->Point.SpriteRMode;
          break;
 
       /* GL_SGIS_generate_mipmap */
@@ -3869,10 +3877,14 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) ctx->Transform.RasterPositionUnclipped;
          break;
 
-      /* GL_MESA_sprite_point */
-      case GL_SPRITE_POINT_MESA:
-         CHECK_EXTENSION_F(MESA_sprite_point);
-         *params = (GLfloat) ctx->Point.SpriteMode;
+      /* GL_NV_point_sprite */
+      case GL_POINT_SPRITE_NV:
+         CHECK_EXTENSION_B(NV_point_sprite);
+         *params = (GLfloat) ctx->Point.PointSprite;
+         break;
+      case GL_POINT_SPRITE_R_MODE_NV:
+         CHECK_EXTENSION_B(NV_point_sprite);
+         *params = (GLfloat) ctx->Point.SpriteRMode;
          break;
 
       /* GL_SGIS_generate_mipmap */
@@ -5122,10 +5134,14 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Transform.RasterPositionUnclipped;
          break;
 
-      /* GL_MESA_sprite_point */
-      case GL_SPRITE_POINT_MESA:
-         CHECK_EXTENSION_I(MESA_sprite_point);
-         *params = (GLint) ctx->Point.SpriteMode;
+      /* GL_NV_point_sprite */
+      case GL_POINT_SPRITE_NV:
+         CHECK_EXTENSION_B(NV_point_sprite);
+         *params = (GLint) ctx->Point.PointSprite;
+         break;
+      case GL_POINT_SPRITE_R_MODE_NV:
+         CHECK_EXTENSION_B(NV_point_sprite);
+         *params = (GLint) ctx->Point.SpriteRMode;
          break;
 
       /* GL_SGIS_generate_mipmap */

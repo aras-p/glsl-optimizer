@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.15 2002/04/19 14:05:50 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.16 2002/05/27 17:04:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,7 @@
  *   SPECULAR = do separate specular color
  *   LARGE = do points with diameter > 1 pixel
  *   ATTENUATE = compute point size attenuation
- *   SPRITE = GL_MESA_sprite_point
+ *   SPRITE = GL_NV_point_sprite
  *
  * Notes: LARGE and ATTENUATE are exclusive of each other.
  *        TEXTURE requires RGBA
@@ -64,7 +64,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & TEXTURE
    GLuint u;
 #endif
-#if FLAGS & (ATTENUATE | LARGE | SMOOTH)
+#if FLAGS & (ATTENUATE | LARGE | SMOOTH | SPRITE)
    GLfloat size;
 #endif
 #if FLAGS & ATTENUATE
@@ -93,8 +93,10 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 
 #if (FLAGS & RGBA)
 #if (FLAGS & SMOOTH)
+   /* because we need per-fragment alpha values */
    span->arrayMask |= SPAN_RGBA;
 #else
+   /* same RGBA for all fragments */
    span->interpMask |= SPAN_RGBA;
    span->red = ChanToFixed(vert->color[0]);
    span->green = ChanToFixed(vert->color[1]);
@@ -116,6 +118,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    span->indexStep = 0;
 #endif
 #if FLAGS & TEXTURE
+   /* but not used for sprite mode */
    span->interpMask |= SPAN_TEXTURE;
    for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
       if (ctx->Texture.Unit[u]._ReallyEnabled) {
@@ -135,6 +138,9 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & SMOOTH
    span->arrayMask |= SPAN_COVERAGE;
 #endif
+#if FLAGS & SPRITE
+   span->arrayMask |= SPAN_TEXTURE;
+#endif
 
 #if FLAGS & ATTENUATE
    if (vert->pointSize >= ctx->Point.Threshold) {
@@ -146,68 +152,11 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       size = MAX2(ctx->Point.Threshold, ctx->Point.MinSize);
       alphaAtten = dsize * dsize;
    }
-#elif FLAGS & (LARGE | SMOOTH)
+#elif FLAGS & (LARGE | SMOOTH | SPRITE)
    size = ctx->Point._Size;
 #endif
 
-#if FLAGS & SPRITE
-   {
-      SWcontext *swctx = SWRAST_CONTEXT(ctx);
-      const GLfloat radius = 0.5F * vert->pointSize; /* XXX threshold, alpha */
-      SWvertex v0, v1, v2, v3;
-      GLuint unit;
-
-#if (FLAGS & RGBA) && (FLAGS & SMOOTH)
-      (void) red;
-      (void) green;
-      (void) blue;
-      (void) alpha;
-#endif
-
-      /* lower left corner */
-      v0 = *vert;
-      v0.win[0] -= radius;
-      v0.win[1] -= radius;
-
-      /* lower right corner */
-      v1 = *vert;
-      v1.win[0] += radius;
-      v1.win[1] -= radius;
-
-      /* upper right corner */
-      v2 = *vert;
-      v2.win[0] += radius;
-      v2.win[1] += radius;
-
-      /* upper left corner */
-      v3 = *vert;
-      v3.win[0] -= radius;
-      v3.win[1] += radius;
-
-      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-         if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-            v0.texcoord[unit][0] = 0.0;
-            v0.texcoord[unit][1] = 0.0;
-            v1.texcoord[unit][0] = 1.0;
-            v1.texcoord[unit][1] = 0.0;
-            v2.texcoord[unit][0] = 1.0;
-            v2.texcoord[unit][1] = 1.0;
-            v3.texcoord[unit][0] = 0.0;
-            v3.texcoord[unit][1] = 1.0;
-         }
-      }
-
-      /* XXX if radius < threshold, attenuate alpha? */
-
-      /* XXX need to implement clipping!!! */
-
-      /* render */
-      swctx->Triangle(ctx, &v0, &v1, &v2);
-      swctx->Triangle(ctx, &v0, &v2, &v3);
-   }
-
-#elif FLAGS & (LARGE | ATTENUATE | SMOOTH)
-
+#if FLAGS & (LARGE | ATTENUATE | SMOOTH | SPRITE)
    {
       GLint x, y;
       const GLfloat radius = 0.5F * size;
@@ -249,6 +198,9 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       (void) radius;
       for (y = ymin; y <= ymax; y++) {
          for (x = xmin; x <= xmax; x++) {
+#if FLAGS & SPRITE
+            GLuint u;
+#endif
 #if FLAGS & SMOOTH
             /* compute coverage */
             const GLfloat dx = x - vert->win[0] + 0.5F;
@@ -284,10 +236,32 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
                count++;
             } /*if*/
 #else /*SMOOTH*/
-            /* not smooth (square points */
+            /* not smooth (square points) */
             span->xArray[count] = x;
             span->yArray[count] = y;
             span->zArray[count] = z;
+#if FLAGS & SPRITE
+            for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+               if (ctx->Texture.Unit[u]._ReallyEnabled) {
+                  if (ctx->Point.CoordReplace[u]) {
+                     GLfloat s = 0.5F + (x + 0.5F - vert->win[0]) / size;
+                     GLfloat t = 0.5F - (y + 0.5F - vert->win[1]) / size;
+                     span->texcoords[u][count][0] = s;
+                     span->texcoords[u][count][1] = t;
+                     span->texcoords[u][count][3] = 1.0F;
+                     if (ctx->Point.SpriteRMode == GL_ZERO)
+                        span->texcoords[u][count][2] = 0.0F;
+                     else if (ctx->Point.SpriteRMode == GL_S)
+                        span->texcoords[u][count][2] = vert->texcoord[u][0];
+                     else /* GL_R */
+                        span->texcoords[u][count][2] = vert->texcoord[u][2];
+                  }
+                  else {
+                     COPY_4V(span->texcoords[u][count], vert->texcoord[u]);
+                  }
+               }
+            }
+#endif /*SPRITE*/
             count++;
 #endif /*SMOOTH*/
 	 } /*for x*/
@@ -295,7 +269,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       span->end = count;
    }
 
-#else /* LARGE || ATTENUATE || SMOOTH*/
+#else /* LARGE | ATTENUATE | SMOOTH | SPRITE */
 
    {
       /* size == 1 */
@@ -309,7 +283,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 
    ASSERT(span->end > 0);
 
-#if FLAGS & TEXTURE
+#if FLAGS & (TEXTURE | SPRITE)
    if (ctx->Texture._ReallyEnabled)
       _mesa_write_texture_span(ctx, span);
    else

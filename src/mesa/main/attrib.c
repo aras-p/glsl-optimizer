@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.63 2002/04/01 17:03:38 brianp Exp $ */
+/* $Id: attrib.c,v 1.64 2002/05/27 17:04:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -527,6 +527,10 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
                    GL_POINT_SMOOTH);
    TEST_AND_UPDATE(ctx->Point.SmoothFlag, enable->PointSmooth,
                    GL_POINT_SMOOTH);
+   if (ctx->Extensions.NV_point_sprite) {
+      TEST_AND_UPDATE(ctx->Point.PointSprite, enable->PointSprite,
+                      GL_POINT_SPRITE_NV);
+   }
    TEST_AND_UPDATE(ctx->Polygon.OffsetPoint, enable->PolygonOffsetPoint,
                    GL_POLYGON_OFFSET_POINT);
    TEST_AND_UPDATE(ctx->Polygon.OffsetLine, enable->PolygonOffsetLine,
@@ -991,6 +995,16 @@ _mesa_PopAttrib(void)
                _mesa_PointParameterfEXT(GL_POINT_SIZE_MAX_EXT, point->MaxSize);
                _mesa_PointParameterfEXT(GL_POINT_FADE_THRESHOLD_SIZE_EXT,
                                         point->Threshold);
+               if (ctx->Extensions.NV_point_sprite) {
+                  GLuint u;
+                  for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+                     _mesa_TexEnvi(GL_POINT_SPRITE_NV, GL_COORD_REPLACE_NV,
+                                   (GLint) point->CoordReplace[u]);
+                  }
+                  _mesa_set_enable(ctx, GL_POINT_SPRITE_NV,point->PointSprite);
+                  _mesa_PointParameteriNV(GL_POINT_SPRITE_R_MODE_NV,
+                                          ctx->Point.SpriteRMode);
+               }
             }
             break;
          case GL_POLYGON_BIT:

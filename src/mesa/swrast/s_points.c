@@ -1,4 +1,4 @@
-/* $Id: s_points.c,v 1.17 2002/02/02 17:24:11 brianp Exp $ */
+/* $Id: s_points.c,v 1.18 2002/05/27 17:04:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -147,12 +147,12 @@
 /*
  * Sprite (textured point)
  */
-#define FLAGS (RGBA | TEXTURE | SPRITE)
+#define FLAGS (RGBA | SPRITE)
 #define NAME sprite_point
 #include "s_pointtemp.h"
 
 
-#define FLAGS (RGBA | ATTENUATE | TEXTURE | SPRITE)
+#define FLAGS (RGBA | ATTENUATE | SPRITE)
 #define NAME atten_sprite_point
 #include "s_pointtemp.h"
 
@@ -201,7 +201,8 @@ _swrast_choose_point( GLcontext *ctx )
    GLboolean rgbMode = ctx->Visual.rgbMode;
 
    if (ctx->RenderMode==GL_RENDER) {
-      if (ctx->Point.SpriteMode) {
+      if (ctx->Point.PointSprite) {
+         /* GL_NV_point_sprite */
          /* XXX this might not be good enough */
          if (ctx->Point._Attenuated)
             USE(atten_sprite_point);
