@@ -28,7 +28,7 @@
 /*===========================================================================*/
 void NULLSetColor( GLcontext *ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte a );
 void NULLClearColor( GLcontext *ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte a );
-GLboolean NULLSetBuffer( GLcontext *ctx, GLenum mode );
+GLboolean NULLSetBuffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bit );
 void NULLGetBufferSize( GLcontext *ctx, GLuint *width, GLuint *height );
 GLbitfield NULLClearBuffers( GLcontext *ctx, GLbitfield m, GLboolean a, GLint x, GLint y, GLint w, GLint h );
 void NULLWrSpRGB( const GLcontext* ctx, GLuint n, GLint x, GLint y, const GLubyte r[][3], const GLubyte m[] );

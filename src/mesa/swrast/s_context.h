@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.20 2002/10/04 17:37:47 brianp Exp $ */
+/* $Id: s_context.h,v 1.21 2002/10/11 17:41:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -138,6 +138,7 @@ typedef struct
    GLuint NewState;
    GLuint StateChanges;
    GLenum Primitive;    /* current primitive being drawn (ala glBegin) */
+   GLuint CurrentBuffer; /* exactly one of FRONT_LEFT_BIT, BACK_LEFT_BIT, etc*/
 
    /** Mechanism to allow driver (like X11) to register further
     * software rasterization routines.

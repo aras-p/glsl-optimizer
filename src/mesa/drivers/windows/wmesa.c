@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.38 2002/10/04 19:10:11 brianp Exp $ */
+/* $Id: wmesa.c,v 1.39 2002/10/11 17:41:05 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -582,9 +582,9 @@ static void enable( GLcontext* ctx, GLenum pname, GLboolean enable )
 
 
 static void set_buffer(GLcontext *ctx, GLframebuffer *colorBuffer,
-                       GLenum buffer )
+                       GLuint bufferBit )
 {
-  /* XXX todo - examine buffer and set read/write pointers */
+  /* XXX todo - examine bufferBit and set read/write pointers */
   return;
 }
 

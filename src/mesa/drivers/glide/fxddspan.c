@@ -1,4 +1,4 @@
-/* $Id: fxddspan.c,v 1.20 2002/07/09 01:22:51 brianp Exp $ */
+/* $Id: fxddspan.c,v 1.21 2002/10/11 17:41:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -536,7 +536,7 @@ fxDDReadDepthPixels(GLcontext * ctx, GLuint n,
 /* Set the buffer used for reading */
 /* XXX support for separate read/draw buffers hasn't been tested */
 static void
-fxDDSetBuffer(GLcontext * ctx, GLframebuffer * buffer, GLenum mode)
+fxDDSetBuffer(GLcontext * ctx, GLframebuffer * buffer, GLuint bufferBit)
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
    (void) buffer;
@@ -545,11 +545,11 @@ fxDDSetBuffer(GLcontext * ctx, GLframebuffer * buffer, GLenum mode)
       fprintf(stderr, "fxmesa: fxDDSetBuffer(%x)\n", (int) mode);
    }
 
-   if (mode == GL_FRONT_LEFT) {
+   if (bufferBit == FRONT_LEFT_BIT) {
       fxMesa->currentFB = GR_BUFFER_FRONTBUFFER;
       FX_grRenderBuffer(fxMesa->currentFB);
    }
-   else if (mode == GL_BACK_LEFT) {
+   else if (bufferBit == BACK_LEFT_BIT) {
       fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
       FX_grRenderBuffer(fxMesa->currentFB);
    }

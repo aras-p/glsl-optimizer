@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.40 2002/10/11 15:17:12 brianp Exp $ */
+/* $Id: buffers.c,v 1.41 2002/10/11 17:41:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -151,13 +151,6 @@ _mesa_DrawBuffer( GLenum mode )
     * Do error checking and compute the _DrawDestMask bitfield.
     */
    switch (mode) {
-      case GL_AUX0:
-      case GL_AUX1:
-      case GL_AUX2:
-      case GL_AUX3:
-         /* AUX buffers not implemented in Mesa at this time */
-         _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
-         return;
       case GL_RIGHT:
          if (!ctx->Visual.stereoMode) {
             _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
@@ -175,11 +168,7 @@ _mesa_DrawBuffer( GLenum mode )
          ctx->Color._DrawDestMask = FRONT_RIGHT_BIT;
          break;
       case GL_BACK_RIGHT:
-         if (!ctx->Visual.stereoMode) {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
-            return;
-         }
-         if (!ctx->Visual.doubleBufferMode) {
+         if (!ctx->Visual.stereoMode || !ctx->Visual.doubleBufferMode) {
             _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
             return;
          }
@@ -235,6 +224,42 @@ _mesa_DrawBuffer( GLenum mode )
          /* never an error */
          ctx->Color._DrawDestMask = 0;
          break;
+      case GL_AUX0:
+         if (ctx->Const.NumAuxBuffers >= 1) {
+            ctx->Color._DrawDestMask = AUX0_BIT;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_AUX0)" );
+            return;
+         }
+         break;
+      case GL_AUX1:
+         if (ctx->Const.NumAuxBuffers >= 2) {
+            ctx->Color._DrawDestMask = AUX1_BIT;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_AUX1)" );
+            return;
+         }
+         break;
+      case GL_AUX2:
+         if (ctx->Const.NumAuxBuffers >= 3) {
+            ctx->Color._DrawDestMask = AUX2_BIT;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_AUX2)" );
+            return;
+         }
+         break;
+      case GL_AUX3:
+         if (ctx->Const.NumAuxBuffers >= 4) {
+            ctx->Color._DrawDestMask = AUX3_BIT;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer(GL_AUX3)" );
+            return;
+         }
+         break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glDrawBuffer" );
          return;
@@ -261,22 +286,15 @@ _mesa_ReadBuffer( GLenum mode )
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(mode));
 
-   if (ctx->Pixel.ReadBuffer == mode)
-      return; /* no change */
-
+   /*
+    * Do error checking and compute ctx->Pixel._ReadSrcMask.
+    */
    switch (mode) {
-      case GL_AUX0:
-      case GL_AUX1:
-      case GL_AUX2:
-      case GL_AUX3:
-         /* AUX buffers not implemented in Mesa at this time */
-         _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer" );
-         return;
       case GL_LEFT:
       case GL_FRONT:
       case GL_FRONT_LEFT:
          /* Front-Left buffer, always exists */
-         ctx->Pixel._DriverReadBuffer = GL_FRONT_LEFT;
+         ctx->Pixel._ReadSrcMask = FRONT_LEFT_BIT;
          break;
       case GL_BACK:
       case GL_BACK_LEFT:
@@ -285,7 +303,7 @@ _mesa_ReadBuffer( GLenum mode )
             _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer" );
             return;
          }
-         ctx->Pixel._DriverReadBuffer = GL_BACK_LEFT;
+         ctx->Pixel._ReadSrcMask = BACK_LEFT_BIT;
          break;
       case GL_FRONT_RIGHT:
       case GL_RIGHT:
@@ -293,14 +311,50 @@ _mesa_ReadBuffer( GLenum mode )
             _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer" );
             return;
          }
-         ctx->Pixel._DriverReadBuffer = GL_FRONT_RIGHT;
+         ctx->Pixel._ReadSrcMask = FRONT_RIGHT_BIT;
          break;
       case GL_BACK_RIGHT:
          if (!ctx->Visual.stereoMode || !ctx->Visual.doubleBufferMode) {
             _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer" );
             return;
          }
-         ctx->Pixel._DriverReadBuffer = GL_BACK_RIGHT;
+         ctx->Pixel._ReadSrcMask = BACK_RIGHT_BIT;
+         break;
+      case GL_AUX0:
+         if (ctx->Const.NumAuxBuffers >= 1) {
+            ctx->Pixel._ReadSrcMask = AUX0_BIT;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer(GL_AUX0)" );
+            return;
+         }
+         break;
+      case GL_AUX1:
+         if (ctx->Const.NumAuxBuffers >= 2) {
+            ctx->Pixel._ReadSrcMask = AUX1_BIT;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer(GL_AUX1)" );
+            return;
+         }
+         break;
+      case GL_AUX2:
+         if (ctx->Const.NumAuxBuffers >= 3) {
+            ctx->Pixel._ReadSrcMask = AUX2_BIT;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer(GL_AUX2)" );
+            return;
+         }
+         break;
+      case GL_AUX3:
+         if (ctx->Const.NumAuxBuffers >= 4) {
+            ctx->Pixel._ReadSrcMask = AUX3_BIT;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_OPERATION, "glReadBuffer(GL_AUX3)" );
+            return;
+         }
          break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glReadBuffer" );

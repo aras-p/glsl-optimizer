@@ -112,15 +112,15 @@ IMPLEMENT_READ_RGBA_PIXELS(32, unsigned long)
 /*****              Miscellaneous device driver funcs             *****/
 /**********************************************************************/
 
-static GLboolean set_buffer(GLcontext *ctx, GLenum mode)
+static GLboolean set_buffer(GLcontext *ctx, GLframebuffer *buffer, GLuint bit)
     {
     AMesaContext context = (AMesaContext)(ctx->DriverCtx);
     GLboolean    ok      = GL_TRUE;
 
-    if (mode == GL_FRONT_LEFT)
+    if (bit == FRONT_LEFT_BIT)
         context->Buffer->Active = context->Buffer->Screen;
 
-    else if (mode == GL_BACK_LEFT)
+    else if (bit == BACK_LEFT)
         {
         if (context->Buffer->Background)
             context->Buffer->Active = context->Buffer->Background;

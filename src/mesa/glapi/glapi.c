@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.64 2002/10/02 01:51:44 brianp Exp $ */
+/* $Id: glapi.c,v 1.65 2002/10/11 17:41:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -653,19 +653,16 @@ fill_in_entrypoint_offset(void *entrypoint, GLuint offset)
 GLboolean
 _glapi_add_entrypoint(const char *funcName, GLuint offset)
 {
+   /* trivial rejection test */
+   if (!funcName || funcName[0] != 'g' || funcName[1] != 'l')
+      return GL_FALSE;
+
    /* first check if the named function is already statically present */
    {
       GLint index = get_static_proc_offset(funcName);
       if (index >= 0) {
          return (GLboolean) ((GLuint) index == offset);  /* bad offset! */
       }
-   }
-
-   /* make sure this offset/name pair is legal (this isn't really needed) */
-   {
-      const char *name = _glapi_get_proc_name(offset);
-      if (name && strcmp(name, funcName) != 0)
-         return GL_FALSE;  /* bad name! */
    }
 
    /* See if this function has already been dynamically added */
@@ -691,29 +688,29 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
             }
          }
       }
-
-      /* This is a new function, try to add it.  */
-      if (NumExtEntryPoints >= MAX_EXTENSION_FUNCS ||
-          offset >= DISPATCH_TABLE_SIZE) {
-         /* No space left */
-         return GL_FALSE;
-      }
-      else {
-         void *entrypoint = generate_entrypoint(offset);
-         if (!entrypoint)
-            return GL_FALSE; /* couldn't generate assembly */
-
-         /* OK! */
-         ExtEntryTable[NumExtEntryPoints].Name = str_dup(funcName);
-         ExtEntryTable[NumExtEntryPoints].Offset = offset;
-         ExtEntryTable[NumExtEntryPoints].Address = entrypoint;
-         NumExtEntryPoints++;
-
-         return GL_TRUE;  /* success */
-      }
    }
 
-   /* should never get here, but play it safe */
+   /* This is a new function, try to add it.  */
+   if (NumExtEntryPoints >= MAX_EXTENSION_FUNCS ||
+       offset >= DISPATCH_TABLE_SIZE) {
+      /* No space left */
+      return GL_FALSE;
+   }
+   else {
+      void *entrypoint = generate_entrypoint(offset);
+      if (!entrypoint)
+         return GL_FALSE; /* couldn't generate assembly */
+
+      /* OK! */
+      ExtEntryTable[NumExtEntryPoints].Name = str_dup(funcName);
+      ExtEntryTable[NumExtEntryPoints].Offset = offset;
+      ExtEntryTable[NumExtEntryPoints].Address = entrypoint;
+      NumExtEntryPoints++;
+
+      return GL_TRUE;  /* success */
+   }
+
+   /* should never get here, silence compiler warnings */
    return GL_FALSE;
 }
 

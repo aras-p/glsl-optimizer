@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.73 2002/10/04 19:10:07 brianp Exp $ */
+/* $Id: dd.h,v 1.74 2002/10/11 17:41:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,9 +38,13 @@ struct gl_pixelstore_attrib;
 #define DD_FRONT_RIGHT_BIT FRONT_RIGHT_BIT        /* 2 */
 #define DD_BACK_LEFT_BIT   BACK_LEFT_BIT          /* 4 */
 #define DD_BACK_RIGHT_BIT  BACK_RIGHT_BIT         /* 8 */
+#define DD_AUX0            AUX0_BIT               /* future use */
+#define DD_AUX1            AUX1_BIT               /* future use */
+#define DD_AUX2            AUX2_BIT               /* future use */
+#define DD_AUX3            AUX3_BIT               /* future use */
 #define DD_DEPTH_BIT       GL_DEPTH_BUFFER_BIT    /* 0x00000100 */
-#define DD_STENCIL_BIT     GL_STENCIL_BUFFER_BIT  /* 0x00000400 */
 #define DD_ACCUM_BIT       GL_ACCUM_BUFFER_BIT    /* 0x00000200 */
+#define DD_STENCIL_BIT     GL_STENCIL_BUFFER_BIT  /* 0x00000400 */
 
 
 /*

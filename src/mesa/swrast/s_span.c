@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.48 2002/10/02 23:24:04 brianp Exp $ */
+/* $Id: s_span.c,v 1.49 2002/10/11 17:41:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -618,14 +618,9 @@ multi_write_index_span( GLcontext *ctx, struct sw_span *span )
          GLuint indexTmp[MAX_WIDTH];
          ASSERT(span->end < MAX_WIDTH);
 
-         if (bufferBit == FRONT_LEFT_BIT)
-            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_FRONT_LEFT);
-         else if (bufferBit == FRONT_RIGHT_BIT)
-            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_FRONT_RIGHT);
-         else if (bufferBit == BACK_LEFT_BIT)
-            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_BACK_LEFT);
-         else
-            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_BACK_RIGHT);
+         /* Set the current read/draw buffer */
+         swrast->CurrentBuffer = bufferBit;
+         (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, bufferBit);
 
          /* make copy of incoming indexes */
          MEMCPY( indexTmp, span->array->index, span->end * sizeof(GLuint) );
@@ -680,22 +675,9 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
          GLchan rgbaTmp[MAX_WIDTH][4];
          ASSERT(span->end < MAX_WIDTH);
 
-         if (bufferBit == FRONT_LEFT_BIT) {
-            ctx->Color._DriverDrawBuffer = GL_FRONT_LEFT;
-            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_FRONT_LEFT);
-         }
-         else if (bufferBit == FRONT_RIGHT_BIT) {
-            ctx->Color._DriverDrawBuffer = GL_FRONT_RIGHT;
-            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_FRONT_RIGHT);
-         }
-         else if (bufferBit == BACK_LEFT_BIT) {
-            ctx->Color._DriverDrawBuffer = GL_BACK_LEFT;
-            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_BACK_LEFT);
-         }
-         else {
-            ctx->Color._DriverDrawBuffer = GL_BACK_RIGHT;
-            (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, GL_BACK_RIGHT);
-         }
+         /* Set the current read/draw buffer */
+         swrast->CurrentBuffer = bufferBit;
+         (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, bufferBit);
 
          /* make copy of incoming colors */
          MEMCPY( rgbaTmp, span->array->rgba, 4 * span->end * sizeof(GLchan) );

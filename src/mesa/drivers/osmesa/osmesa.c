@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.89 2002/10/05 03:02:01 brianp Exp $ */
+/* $Id: osmesa.c,v 1.90 2002/10/11 17:41:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -721,11 +721,11 @@ do {									\
 
 
 
-static void set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLenum mode )
+static void set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
 {
    /* separate read buffer not supported */
    ASSERT(buffer == ctx->DrawBuffer);
-   ASSERT(mode == GL_FRONT_LEFT);
+   ASSERT(bufferBit == FRONT_LEFT_BIT);
 }
 
 

@@ -151,14 +151,14 @@ static void gl_ggiClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 
 /* Set the buffer used for reading */
 /* XXX support for separate read/draw buffers hasn't been tested */
-static GLboolean gl_ggiSetBuffer(GLcontext *ctx, GLframebuffer *buffer, GLenum mode)
+static GLboolean gl_ggiSetBuffer(GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit)
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	
 	printf("set read %d\n", mode);
 	GGIMESADPRINT_CORE("gl_ggiSetBuffer() called\n");
 
-	if (mode == GL_FRONT_LEFT) 
+	if (bufferBit == FRONT_LEFT_BIT) 
 	{
 		ggiSetReadFrame(ggi_ctx->ggi_visual,
 				ggiGetDisplayFrame(ggi_ctx->ggi_visual));
@@ -166,7 +166,7 @@ static GLboolean gl_ggiSetBuffer(GLcontext *ctx, GLframebuffer *buffer, GLenum m
 				 ggiGetDisplayFrame(ggi_ctx->ggi_visual));
 		return GL_TRUE;
 	}
-	else if (mode == GL_BACK_LEFT) 
+	else if (bufferBit == BACK_LEFT_BIT)
 	{
 		ggiSetReadFrame(ggi_ctx->ggi_visual,
 				ggiGetDisplayFrame(ggi_ctx->ggi_visual)?0 : 1);

@@ -1,4 +1,4 @@
-/* $Id: s_alphabuf.c,v 1.12 2002/10/04 19:10:12 brianp Exp $ */
+/* $Id: s_alphabuf.c,v 1.13 2002/10/11 17:41:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,7 @@
 #include "context.h"
 #include "mem.h"
 
+#include "s_context.h"
 #include "s_alphabuf.h"
 
 
@@ -171,22 +172,24 @@ _mesa_clear_alpha_buffers( GLcontext *ctx )
 static INLINE
 GLchan *get_alpha_buffer( GLcontext *ctx )
 {
-   switch (ctx->Color._DriverDrawBuffer) {
-   case GL_FRONT_LEFT:
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
+   switch (swrast->CurrentBuffer) {
+   case FRONT_LEFT_BIT:
       return (GLchan *) ctx->DrawBuffer->FrontLeftAlpha;
       break;
-   case GL_BACK_LEFT:
+   case BACK_LEFT_BIT:
       return (GLchan *) ctx->DrawBuffer->BackLeftAlpha;
       break;
-   case GL_FRONT_RIGHT:
+   case FRONT_RIGHT_BIT:
       return (GLchan *) ctx->DrawBuffer->FrontRightAlpha;
       break;
-   case GL_BACK_RIGHT:
+   case BACK_RIGHT_BIT:
       return (GLchan *) ctx->DrawBuffer->BackRightAlpha;
       break;
    default:
-      _mesa_problem(ctx, "Bad DriverDrawBuffer in _mesa_write_alpha_span()");
-      return (GLchan *) ctx->DrawBuffer->FrontLeftAlpha; /* aribitrary */
+      _mesa_problem(ctx, "Bad CurrentBuffer in get_alpha_buffer()");
+      return (GLchan *) ctx->DrawBuffer->FrontLeftAlpha;
    }
 }
 

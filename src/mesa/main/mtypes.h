@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.95 2002/10/09 23:56:32 brianp Exp $ */
+/* $Id: mtypes.h,v 1.96 2002/10/11 17:41:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -301,13 +301,16 @@ struct gl_accum_attrib {
 
 
 /*
- * Used in DrawDestMask below
+ * Used in _DrawDestMask and _ReadSrcMask below to identify color buffers.
  */
-#define FRONT_LEFT_BIT  1
-#define FRONT_RIGHT_BIT 2
-#define BACK_LEFT_BIT   4
-#define BACK_RIGHT_BIT  8
-
+#define FRONT_LEFT_BIT  0x1
+#define FRONT_RIGHT_BIT 0x2
+#define BACK_LEFT_BIT   0x4
+#define BACK_RIGHT_BIT  0x8
+#define AUX0_BIT        0x10
+#define AUX1_BIT        0x20
+#define AUX2_BIT        0x40
+#define AUX3_BIT        0x80
 
 struct gl_colorbuffer_attrib {
    GLuint ClearIndex;			/* Index to use for glClear */
@@ -316,9 +319,8 @@ struct gl_colorbuffer_attrib {
    GLuint IndexMask;			/* Color index write mask */
    GLubyte ColorMask[4];		/* Each flag is 0xff or 0x0 */
 
-   GLenum DrawBuffer;			/* Which buffer to draw into */
-   GLenum _DriverDrawBuffer;		/* Single src/dst buffer for drivers */
-   GLubyte _DrawDestMask;		/* bitwise-OR of bitflags above */
+   GLenum DrawBuffer;		/* Which buffer to draw into */
+   GLubyte _DrawDestMask;	/* bitwise-OR of FRONT/BACK_LEFT/RIGHT_BITs */
 
    /* alpha testing */
    GLboolean AlphaEnabled;		/* Alpha test enabled flag */
@@ -598,7 +600,9 @@ struct gl_multisample_attrib {
 
 struct gl_pixel_attrib {
    GLenum ReadBuffer;		/* src buffer for glRead/CopyPixels */
-   GLenum _DriverReadBuffer;	/* Driver's current source buffer */
+   GLubyte _ReadSrcMask;	/* Not really a mask, but like _DrawDestMask */
+				/* May be: FRONT_LEFT_BIT, BACK_LEFT_BIT, */
+				/* FRONT_RIGHT_BIT or BACK_RIGHT_BIT. */
    GLfloat RedBias, RedScale;
    GLfloat GreenBias, GreenScale;
    GLfloat BlueBias, BlueScale;

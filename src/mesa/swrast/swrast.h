@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.29 2002/10/04 17:37:47 brianp Exp $ */
+/* $Id: swrast.h,v 1.30 2002/10/11 17:41:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -390,23 +390,23 @@ _swrast_copy_texsubimage3d(GLcontext *ctx,
 
 
 
-/* The driver interface for the software rasterizer.  Unless otherwise
- * noted, all functions are mandatory.  
+/* The driver interface for the software rasterizer.
+ * Unless otherwise noted, all functions are mandatory.  
  */
 struct swrast_device_driver {
 
-   void (*SetBuffer)( GLcontext *ctx, GLframebuffer *buffer,
-                      GLenum colorBuffer );
+   void (*SetBuffer)( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit);
    /*
     * Specifies the current buffer for span/pixel writing/reading.
     * buffer indicates which window to write to / read from.  Normally,
     * this'll be the buffer currently bound to the context, but it doesn't
     * have to be!
-    * colorBuffer indicates which color buffer, one of:
-    *    GL_FRONT_LEFT - this buffer always exists
-    *    GL_BACK_LEFT - when double buffering
-    *    GL_FRONT_RIGHT - when using stereo
-    *    GL_BACK_RIGHT - when using stereo and double buffering
+    * bufferBit indicates which color buffer, one of:
+    *    FRONT_LEFT_BIT - this buffer always exists
+    *    BACK_LEFT_BIT - when double buffering
+    *    FRONT_RIGHT_BIT - when using stereo
+    *    BACK_RIGHT_BIT - when using stereo and double buffering
+    *    AUXn_BIT - if aux buffers are implemented
     */
 
 

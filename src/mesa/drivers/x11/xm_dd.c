@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.37 2002/10/04 19:10:12 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.38 2002/10/11 17:41:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,7 +123,7 @@ flush( GLcontext *ctx )
  * lines, and triangles.
  */
 static void
-set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLenum mode )
+set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
 {
    /* We can make this cast since the XMesaBuffer wraps GLframebuffer.
     * GLframebuffer is the first member in a XMesaBuffer struct.
@@ -139,10 +139,10 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLenum mode )
    /*
     * Now determine front vs back color buffer.
     */
-   if (mode == GL_FRONT_LEFT) {
+   if (bufferBit == FRONT_LEFT_BIT) {
       target->buffer = target->frontbuffer;
    }
-   else if (mode == GL_BACK_LEFT) {
+   else if (bufferBit == BACK_LEFT_BIT) {
       ASSERT(target->db_state);
       if (target->backpixmap) {
          /* back buffer is a pixmape */
@@ -158,7 +158,8 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLenum mode )
       }
    }
    else {
-      _mesa_problem(ctx, "invalid buffer in set_buffer() in xmesa2.c");
+      _mesa_problem(ctx, "invalid buffer in set_buffer() in xm_dd.c");
+      printf("bufferBit = 0x%x\n", bufferBit);
       return;
    }
    xmesa_update_span_funcs(ctx);
