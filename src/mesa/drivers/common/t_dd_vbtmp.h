@@ -1,4 +1,4 @@
-/* $Id: t_dd_vbtmp.h,v 1.8 2001/03/12 00:48:44 gareth Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.9 2001/03/17 17:31:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -105,6 +105,9 @@
 #error "can't cope with this combination"
 #endif
 
+#ifndef LOCALVARS
+#define LOCALVARS
+#endif
 
 #if (HAVE_HW_DIVIDE || DO_SPEC || DO_TEX0 || DO_FOG || !HAVE_TINY_VERTICES)
 
@@ -113,9 +116,10 @@ static void TAG(emit)( GLcontext *ctx,
 		       void *dest,
 		       GLuint stride )
 {
+   LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLfloat (*tc0)[4], (*tc1)[4], (*tc2)[4], (*tc3)[4];
-   GLfloat *fog;
+   GLfloat (*tc0)[4], (*tc1)[4], *fog;
+   GLfloat (*tc2)[4], (*tc3)[4];
    GLubyte (*col)[4], (*spec)[4];
    GLuint tc0_stride, tc1_stride, col_stride, spec_stride, fog_stride;
    GLuint tc2_stride, tc3_stride;
@@ -140,62 +144,34 @@ static void TAG(emit)( GLcontext *ctx,
 
    if (DO_TEX3) {
       const GLuint t3 = GET_TEXSOURCE(3);
-      if (VB->TexCoordPtr[t3]) {
-         tc3 = VB->TexCoordPtr[t3]->data;
-         tc3_stride = VB->TexCoordPtr[t3]->stride;
-         if (DO_PTEX)
-            tc3_size = VB->TexCoordPtr[t3]->size;
-      }
-      else {
-         tc3 = NULL;
-         tc3_stride = 0;  /* just to silence warnings */
-         tc3_size = 0;
-      }
+      tc3 = VB->TexCoordPtr[t3]->data;
+      tc3_stride = VB->TexCoordPtr[t3]->stride;
+      if (DO_PTEX)
+	 tc3_size = VB->TexCoordPtr[t3]->size;
    }
 
    if (DO_TEX2) {
       const GLuint t2 = GET_TEXSOURCE(2);
-      if (VB->TexCoordPtr[t2]) {
-         tc2 = VB->TexCoordPtr[t2]->data;
-         tc2_stride = VB->TexCoordPtr[t2]->stride;
-         if (DO_PTEX)
-            tc2_size = VB->TexCoordPtr[t2]->size;
-      }
-      else {
-         tc2 = NULL;
-         tc2_stride = 0;
-         tc2_size = 0;
-      }
+      tc2 = VB->TexCoordPtr[t2]->data;
+      tc2_stride = VB->TexCoordPtr[t2]->stride;
+      if (DO_PTEX)
+	 tc2_size = VB->TexCoordPtr[t2]->size;
    }
 
    if (DO_TEX1) {
       const GLuint t1 = GET_TEXSOURCE(1);
-      if (VB->TexCoordPtr[t1]) {
-         tc1 = VB->TexCoordPtr[t1]->data;
-         tc1_stride = VB->TexCoordPtr[t1]->stride;
-         if (DO_PTEX)
-            tc1_size = VB->TexCoordPtr[t1]->size;
-      }
-      else {
-         tc1 = NULL;
-         tc1_stride = 0;
-         tc1_size = 0;
-      }
+      tc1 = VB->TexCoordPtr[t1]->data;
+      tc1_stride = VB->TexCoordPtr[t1]->stride;
+      if (DO_PTEX)
+	 tc1_size = VB->TexCoordPtr[t1]->size;
    }
 
    if (DO_TEX0) {
       const GLuint t0 = GET_TEXSOURCE(0);
-      if (VB->TexCoordPtr[t0]) {
-         tc0_stride = VB->TexCoordPtr[t0]->stride;
-         tc0 = VB->TexCoordPtr[t0]->data;
-         if (DO_PTEX)
-            tc0_size = VB->TexCoordPtr[t0]->size;
-      }
-      else {
-         tc0 = NULL;
-         tc0_stride = 0;
-         tc0_size = 0;
-      }
+      tc0_stride = VB->TexCoordPtr[t0]->stride;
+      tc0 = VB->TexCoordPtr[t0]->data;
+      if (DO_PTEX) 
+	 tc0_size = VB->TexCoordPtr[t0]->size;
    }
 
    if (DO_RGBA) {
@@ -217,20 +193,16 @@ static void TAG(emit)( GLcontext *ctx,
       /* May have nonstandard strides:
        */
       if (start) {
-	 coord = (GLfloat (*)[4])((GLubyte *)coord + start * coord_stride);
+	 coord =  (GLfloat (*)[4])((GLubyte *)coord + start * coord_stride);
 	 if (DO_TEX0)
-            if (tc0)
-               tc0 = (GLfloat (*)[4])((GLubyte *)tc0 + start * tc0_stride);
-	 if (DO_TEX1)
-            if (tc1)
-               tc1 = (GLfloat (*)[4])((GLubyte *)tc1 + start * tc1_stride);
-	 if (DO_TEX2)
-            if (tc2)
-               tc2 = (GLfloat (*)[4])((GLubyte *)tc2 + start * tc2_stride);
-	 if (DO_TEX3)
-            if (tc3)
-               tc3 = (GLfloat (*)[4])((GLubyte *)tc3 + start * tc3_stride);
-	 if (DO_RGBA)
+	    tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 + start * tc0_stride);
+	 if (DO_TEX1) 
+	    tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 + start * tc1_stride);
+	 if (DO_TEX2) 
+	    tc2 =  (GLfloat (*)[4])((GLubyte *)tc2 + start * tc2_stride);
+	 if (DO_TEX3) 
+	    tc3 =  (GLfloat (*)[4])((GLubyte *)tc3 + start * tc3_stride);
+	 if (DO_RGBA) 
 	    STRIDE_4UB(col, start * col_stride);
 	 if (DO_SPEC)
 	    STRIDE_4UB(spec, start * spec_stride);
@@ -271,80 +243,72 @@ static void TAG(emit)( GLcontext *ctx,
 	    STRIDE_F(fog, fog_stride);
 	 }
 	 if (DO_TEX0) {
-            if (tc0) {
-               v->v.u0 = tc0[0][0];
-               v->v.v0 = tc0[0][1];
-               if (DO_PTEX) {
-                  if (HAVE_PTEX_VERTICES) {
-                     if (tc0_size == 4)
-                        v->pv.q0 = tc0[0][3];
-                     else
-                        v->pv.q0 = 1.0;
-                  }
-                  else if (tc0_size == 4) {
-                     float rhw = 1.0 / tc0[0][3];
-                     v->v.w *= tc0[0][3];
-                     v->v.u0 *= rhw;
-                     v->v.v0 *= rhw;
-                  }
-               }
-               tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 +  tc0_stride);
-            }
+	    v->v.u0 = tc0[0][0];
+	    v->v.v0 = tc0[0][1];
+	    if (DO_PTEX) {
+	       if (HAVE_PTEX_VERTICES) {
+		  if (tc0_size == 4) 
+		     v->pv.q0 = tc0[0][3];
+		  else
+		     v->pv.q0 = 1.0;
+	       } 
+	       else if (tc0_size == 4) {
+		  float rhw = 1.0 / tc0[0][3];
+		  v->v.w *= tc0[0][3];
+		  v->v.u0 *= rhw;
+		  v->v.v0 *= rhw;
+	       } 
+	    } 
+	    tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 +  tc0_stride);
 	 }
 	 if (DO_TEX1) {
-            if (tc1) {
-               if (DO_PTEX) {
-                  v->pv.u1 = tc1[0][0];
-                  v->pv.v1 = tc1[0][1];
-                  if (tc1_size == 4)
-                     v->pv.q1 = tc1[0][3];
-                  else
-                     v->pv.q1 = 1.0;
-               }
-               else {
-                  v->v.u1 = tc1[0][0];
-                  v->v.v1 = tc1[0][1];
-               }
-               tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 +  tc1_stride);
-            }
-	 }
+	    if (DO_PTEX) {
+	       v->pv.u1 = tc1[0][0];
+	       v->pv.v1 = tc1[0][1];
+	       if (tc1_size == 4) 
+		  v->pv.q1 = tc1[0][3];
+	       else
+		  v->pv.q1 = 1.0;
+	    } 
+	    else {
+	       v->v.u1 = tc1[0][0];
+	       v->v.v1 = tc1[0][1];
+	    }
+	    tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 +  tc1_stride);
+	 } 
 	 else if (DO_PTEX) {
 	    *(GLuint *)&v->pv.q1 = 0;	/* avoid culling on radeon */
 	 }
 	 if (DO_TEX2) {
-            if (tc2) {
-               if (DO_PTEX) {
-                  v->pv.u2 = tc2[0][0];
-                  v->pv.v2 = tc2[0][1];
-                  if (tc2_size == 4)
-                     v->pv.q2 = tc2[0][3];
-                  else
-                     v->pv.q2 = 1.0;
-               }
-               else {
-                  v->v.u2 = tc2[0][0];
-                  v->v.v2 = tc2[0][1];
-               }
-               tc2 =  (GLfloat (*)[4])((GLubyte *)tc2 +  tc2_stride);
-            }
-	 }
+	    if (DO_PTEX) {
+	       v->pv.u2 = tc2[0][0];
+	       v->pv.v2 = tc2[0][1];
+	       if (tc2_size == 4) 
+		  v->pv.q2 = tc2[0][3];
+	       else
+		  v->pv.q2 = 1.0;
+	    } 
+	    else {
+	       v->v.u2 = tc2[0][0];
+	       v->v.v2 = tc2[0][1];
+	    }
+	    tc2 =  (GLfloat (*)[4])((GLubyte *)tc2 +  tc2_stride);
+	 } 
 	 if (DO_TEX3) {
-            if (tc3) {
-               if (DO_PTEX) {
-                  v->pv.u3 = tc3[0][0];
-                  v->pv.v3 = tc3[0][1];
-                  if (tc3_size == 4)
-                     v->pv.q3 = tc3[0][3];
-                  else
-                     v->pv.q3 = 1.0;
-               }
-               else {
-                  v->v.u3 = tc3[0][0];
-                  v->v.v3 = tc3[0][1];
-               }
-               tc3 =  (GLfloat (*)[4])((GLubyte *)tc3 +  tc3_stride);
-            }
-	 }
+	    if (DO_PTEX) {
+	       v->pv.u3 = tc3[0][0];
+	       v->pv.v3 = tc3[0][1];
+	       if (tc3_size == 4) 
+		  v->pv.q3 = tc3[0][3];
+	       else
+		  v->pv.q3 = 1.0;
+	    } 
+	    else {
+	       v->v.u3 = tc3[0][0];
+	       v->v.v3 = tc3[0][1];
+	    }
+	    tc3 =  (GLfloat (*)[4])((GLubyte *)tc3 +  tc3_stride);
+	 } 
       }
    }
    else {
@@ -377,46 +341,42 @@ static void TAG(emit)( GLcontext *ctx,
 	    v->v.specular.alpha = fog[i] * 255.0;
 	 }
 	 if (DO_TEX0) {
-            if (tc0) {
-               if (DO_PTEX) {
-                  v->pv.u0 = tc0[i][0];
-                  v->pv.v0 = tc0[i][1];
-                  if (HAVE_PTEX_VERTICES) {
-                     if (tc0_size == 4)
-                        v->pv.q0 = tc0[i][3];
-                     else
-                        v->pv.q0 = 1.0;
+	    if (DO_PTEX) {
+	       v->pv.u0 = tc0[i][0];
+	       v->pv.v0 = tc0[i][1];
+	       if (HAVE_PTEX_VERTICES) {
+		  if (tc0_size == 4) 
+		     v->pv.q0 = tc0[i][3];
+		  else
+		     v->pv.q0 = 1.0;
 
-                     v->pv.q1 = 0;	/* radeon */
-                  }
-                  else if (tc0_size == 4) {
-                     float rhw = 1.0 / tc0[i][3];
-                     v->v.w *= tc0[i][3];
-                     v->v.u0 *= rhw;
-                     v->v.v0 *= rhw;
-                  }
-               }
-               else {
-                  v->v.u0 = tc0[i][0];
-                  v->v.v0 = tc0[i][1];
-               }
-            }
+		  v->pv.q1 = 0;	/* radeon */
+	       } 
+	       else if (tc0_size == 4) {
+		  float rhw = 1.0 / tc0[i][3];
+		  v->v.w *= tc0[i][3];
+		  v->v.u0 *= rhw;
+		  v->v.v0 *= rhw;
+	       } 
+	    } 
+	    else {
+	       v->v.u0 = tc0[i][0];
+	       v->v.v0 = tc0[i][1];
+	    }
 	 }
 	 if (DO_TEX1) {
-            if (tc1) {
-               if (DO_PTEX) {
-                  v->pv.u1 = tc1[i][0];
-                  v->pv.v1 = tc1[i][1];
-                  if (tc1_size == 4)
-                     v->pv.q1 = tc1[i][3];
-                  else
-                     v->pv.q1 = 1.0;
-               }
-               else {
-                  v->v.u1 = tc1[i][0];
-                  v->v.v1 = tc1[i][1];
-               }
-            }
+	    if (DO_PTEX) {
+	       v->pv.u1 = tc1[i][0];
+	       v->pv.v1 = tc1[i][1];
+	       if (tc1_size == 4) 
+		  v->pv.q1 = tc1[i][3];
+	       else
+		  v->pv.q1 = 1.0;
+	    } 
+	    else {
+	       v->v.u1 = tc1[i][0];
+	       v->v.v1 = tc1[i][1];
+	    }
 	 }
       }
    }
@@ -431,6 +391,7 @@ static void TAG(emit)( GLcontext *ctx,
 static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 		       void *dest, GLuint stride )
 {
+   LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLubyte (*col)[4] = VB->ColorPtr[0]->data;
    GLuint col_stride = VB->ColorPtr[0]->stride;
@@ -502,6 +463,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 		       void *dest, GLuint stride )
 {
+   LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLubyte (*col)[4] = VB->ColorPtr[0]->data;
    GLuint col_stride = VB->ColorPtr[0]->stride;
@@ -540,8 +502,11 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 #if (HAVE_PTEX_VERTICES)
 static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 {
+   LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
+   /* Force 'missing' texcoords to something valid.
+    */
    if (DO_TEX3 && VB->TexCoordPtr[2] == 0)
       VB->TexCoordPtr[2] = VB->TexCoordPtr[3];
 
@@ -553,11 +518,11 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 
    if (DO_PTEX)
       return GL_TRUE;
-
-   if ((DO_TEX3 && VB->TexCoordPtr[3]->size == 4) ||
-       (DO_TEX2 && VB->TexCoordPtr[2]->size == 4) ||
-       (DO_TEX1 && VB->TexCoordPtr[1]->size == 4) ||
-       (DO_TEX0 && VB->TexCoordPtr[0]->size == 4))
+   
+   if ((DO_TEX3 && VB->TexCoordPtr[GET_TEXSOURCE(3)]->size == 4) ||
+       (DO_TEX2 && VB->TexCoordPtr[GET_TEXSOURCE(2)]->size == 4) ||
+       (DO_TEX1 && VB->TexCoordPtr[GET_TEXSOURCE(1)]->size == 4) ||
+       (DO_TEX0 && VB->TexCoordPtr[GET_TEXSOURCE(0)]->size == 4))
       return GL_FALSE;
 
    return GL_TRUE;
@@ -565,8 +530,11 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 #else
 static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 {
+   LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
+   /* Force 'missing' texcoords to something valid.
+    */
    if (DO_TEX3 && VB->TexCoordPtr[2] == 0)
       VB->TexCoordPtr[2] = VB->TexCoordPtr[3];
 
@@ -582,14 +550,14 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
    /* No hardware support for projective texture.  Can fake it for
     * TEX0 only.
     */
-   if ((DO_TEX3 && VB->TexCoordPtr[3]->size == 4) ||
-       (DO_TEX2 && VB->TexCoordPtr[2]->size == 4) ||
-       (DO_TEX1 && VB->TexCoordPtr[1]->size == 4)) {
+   if ((DO_TEX3 && VB->TexCoordPtr[GET_TEXSOURCE(3)]->size == 4) ||
+       (DO_TEX2 && VB->TexCoordPtr[GET_TEXSOURCE(2)]->size == 4) ||
+       (DO_TEX1 && VB->TexCoordPtr[GET_TEXSOURCE(1)]->size == 4)) {
       PTEX_FALLBACK();
       return GL_FALSE;
    }
 
-   if (DO_TEX0 && VB->TexCoordPtr[0]->size == 4) {
+   if (DO_TEX0 && VB->TexCoordPtr[GET_TEXSOURCE(0)]->size == 4) {
       if (DO_TEX1 || DO_TEX2 || DO_TEX3) {
 	 PTEX_FALLBACK();
       }
@@ -606,6 +574,7 @@ static void TAG(interp)( GLcontext *ctx,
 			 GLuint edst, GLuint eout, GLuint ein,
 			 GLboolean force_boundary )
 {
+   LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLubyte *ddverts = GET_VERTEX_STORE();
    GLuint shift = GET_VERTEX_STRIDE_SHIFT();

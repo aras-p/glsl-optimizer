@@ -1,4 +1,4 @@
-/* $Id: t_dd_vb.c,v 1.6 2001/03/12 00:48:44 gareth Exp $ */
+/* $Id: t_dd_vb.c,v 1.7 2001/03/17 17:31:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,12 +34,17 @@
 #define UNVIEWPORT_Z(x) x
 #endif
 
+#ifndef LOCALVARS
+#define LOCALVARS
+#endif
+
 /* These don't need to be duplicated, but there's currently nowhere
  * really convenient to put them.  Need to build some actual .o files in
  * this directory?
  */
 static void copy_pv_rgba4_spec5( GLcontext *ctx, GLuint edst, GLuint esrc )
 {
+   LOCALVARS   
    GLubyte *verts = GET_VERTEX_STORE();
    GLuint shift = GET_VERTEX_STRIDE_SHIFT();
    GLuint *dst = (GLuint *)(verts + (edst << shift));
@@ -50,6 +55,7 @@ static void copy_pv_rgba4_spec5( GLcontext *ctx, GLuint edst, GLuint esrc )
 
 static void copy_pv_rgba4( GLcontext *ctx, GLuint edst, GLuint esrc )
 {
+   LOCALVARS
    GLubyte *verts = GET_VERTEX_STORE();
    GLuint shift = GET_VERTEX_STRIDE_SHIFT();
    GLuint *dst = (GLuint *)(verts + (edst << shift));
@@ -59,6 +65,7 @@ static void copy_pv_rgba4( GLcontext *ctx, GLuint edst, GLuint esrc )
 
 static void copy_pv_rgba3( GLcontext *ctx, GLuint edst, GLuint esrc )
 {
+   LOCALVARS
    GLubyte *verts = GET_VERTEX_STORE();
    GLuint shift = GET_VERTEX_STRIDE_SHIFT();
    GLuint *dst = (GLuint *)(verts + (edst << shift));
@@ -71,6 +78,7 @@ void TAG(translate_vertex)(GLcontext *ctx,
 			   const VERTEX *src,
 			   SWvertex *dst)
 {
+   LOCALVARS
    GLuint format = GET_VERTEX_FORMAT();
    GLfloat *s = ctx->Viewport._WindowMap.m;
    UNVIEWPORT_VARS;
@@ -176,43 +184,11 @@ void TAG(translate_vertex)(GLcontext *ctx,
    dst->pointSize = ctx->Point._Size;
 }
 
-#if 0
-static void
-mga_translate_vertex( GLcontext *ctx, const mgaVertex *src, SWvertex *dst)
-{
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-
-   dst->win[0] =   src->v.x - mmesa->drawX - SUBPIXEL_X;
-   dst->win[1] = - src->v.y + mmesa->driDrawable->h + mmesa->drawY + SUBPIXEL_Y;
-   dst->win[2] =   src->v.z / mmesa->depth_scale;
-   dst->win[3] =   src->v.oow;
-
-   dst->color[0] = src->v.color.red;
-   dst->color[1] = src->v.color.green;
-   dst->color[2] = src->v.color.blue;
-   dst->color[3] = src->v.color.alpha;
-
-   if (mmesa->tmu_source[0] == 0) {
-      dst->texcoord[0][0] = src->v.tu0;
-      dst->texcoord[0][1] = src->v.tv0;
-      dst->texcoord[0][3] = 1.0;
-   } else {
-      dst->texcoord[1][0] = src->v.tu0;
-      dst->texcoord[1][1] = src->v.tv0;
-      dst->texcoord[1][3] = 1.0;
-   }
-
-   dst->texcoord[1][0] =  src->v.tu1;
-   dst->texcoord[1][1] =  src->v.tv1;
-   dst->texcoord[1][3] = 1.0;
-
-   dst->pointSize = ctx->Point._Size;
-}
-#endif
 
 
 void TAG(print_vertex)( GLcontext *ctx, const VERTEX *v )
 {
+   LOCALVARS
    GLuint format = GET_VERTEX_FORMAT();
 
    if (format == TINY_VERTEX_FORMAT) {
