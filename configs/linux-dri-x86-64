@@ -24,7 +24,7 @@ GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib64 -lX11 -
 GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -L/usr/X11R6/lib64 -lXt -lX11
 
 # Directories
-SRC_DIRS = mesa glu glut/glx glw
+SRC_DIRS = mesa glu glut/glx glw glx/x11
 DRIVER_DIRS = dri
 PROGRAM_DIRS = 
 WINDOW_SYSTEM=dri
