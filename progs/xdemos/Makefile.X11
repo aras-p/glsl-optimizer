@@ -61,11 +61,11 @@ default:
 	@echo "Specify a target configuration (i.e. make -f Makefile.X11 linux)"
 
 clean:
-	-rm *.o *~
+	-rm -f *.o *~
 
 realclean:
-	-rm $(PROGS)
-	-rm *.o *~
+	-rm -f $(PROGS)
+	-rm -f *.o *~
 
 targets: $(PROGS)
 

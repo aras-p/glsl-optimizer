@@ -81,12 +81,12 @@ default:
 	@echo "Specify a target configuration"
 
 clean:
-	-rm *.o *~
+	-rm -f *.o *~
 
 realclean:
-	-rm $(PROGS)
-	-rm *.o *~
-	-rm readtex.[ch]
+	-rm -f $(PROGS)
+	-rm -f *.o *~
+	-rm -f readtex.[ch]
 
 targets: readtex.c readtex.h $(PROGS)
 

@@ -38,7 +38,7 @@ default:
 	@echo "Specify a target configuration"
 
 clean:
-	-rm *.o *~
+	-rm -f *.o *~
 
 targets: $(LIBDIR)/$(GLW_LIB) message
 

@@ -131,9 +131,9 @@ default:
 	@echo "Specify a target configuration"
 
 clean:
-	-rm *.o */*.o */*/*.o
-	-rm *.lo */*.lo */*/*.lo
-	-rm *.la */*.la */*/*.la
+	-rm -f *.o */*.o */*/*.o
+	-rm -f *.lo */*.lo */*/*.lo
+	-rm -f *.la */*.la */*/*.la
 
 
 targets: $(LIBDIR)/$(GLU_LIB)

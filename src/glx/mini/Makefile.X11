@@ -71,7 +71,8 @@ tags:
 # Remove .o and backup files
 clean:
 	-rm -f drmtest $(TOP)/lib/libGL.so*
-	-rm -f */*.o */*~ */*.o */*~
+	-rm -f libGL.so*
+	-rm -f *.o *~
 
 
 include $(TOP)/Make-config

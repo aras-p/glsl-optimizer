@@ -348,9 +348,9 @@ tags:
 
 # Remove .o and backup files
 clean:
-	-rm *.a
+	-rm -f *.a
 	-rm -f */*.o */*~ */*.o */*~
-	-rm -f drivers/*/*.o
+	-rm -f drivers/*/*.o drivers/*/*/*.o
 
 
 include $(TOP)/Make-config

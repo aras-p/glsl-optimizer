@@ -39,7 +39,7 @@ targets: depend libGLU.so.1.1 install
 libGLU.so.1.1: $(OBJS) Makefile.X11
 	gcc -shared -Wl,-soname,libGLU.so -Wl,-Bsymbolic $(OBJS) $(LIBS) -o $@ 
 
-install:
+install: libGLU.so.1.1
 	rm -f $(TOP)/lib/libGLU.so*
 	install -D libGLU.so.1.1 $(TOP)/lib/libGLU.so.1.1
 	ln -s libGLU.so.1.1 $(TOP)/lib/libGLU.so.1
@@ -58,7 +58,7 @@ tags:
 
 # Remove .o and backup files
 clean:
-	-rm -f *.o *~ *.o *~ *.so
+	-rm -f *.o *~ *.o *~ *.so libGLU.so.1.1
 
 include $(TOP)/Make-config
 

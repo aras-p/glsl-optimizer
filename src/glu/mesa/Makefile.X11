@@ -34,7 +34,7 @@ default:
 	@echo "Specify a target configuration"
 
 clean:
-	-rm *.o *~
+	-rm -f *.o *~
 
 targets: $(LIBDIR)/$(GLU_LIB)
 
