@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.96 2002/09/19 16:34:55 brianp Exp $
+$Id: VERSIONS,v 1.97 2002/10/05 18:32:38 brianp Exp $
 
 
 Mesa Version History
@@ -983,7 +983,36 @@ Mesa Version History
 	- mipmap LOD computation (fixed for Mesa 4.1)
 
 
-4.1  Month, ??, 2002
+4.0.4  October 3, 2002
+    New:
+	- GL_NV_texture_rectangle extension
+	- updated glext.h header (version 17)
+	- updated DOS driver (Daniel Borca)
+	- updated BeOS R5 driver (Philippe Houdoin)
+	- added GL_IBM_texture_mirror_repeat
+	- glxinfo now takes -l option to print interesting OpenGL limits info
+	- GL_MESA_ycbcr_texture extension
+	- GL_APPLE_client_storage extension (for some DRI drivers only)
+	- GL_MESA_pack_invert extension
+    Bug fixes:
+	- fixed GL_LINEAR fog bug by adding clamping
+	- fixed FP exceptions found using Alpha CPU
+	- 3dfx MESA_GLX_FX=window (render to window) didn't work
+	- fixed memory leak in wglCreateContest (Karl Schultz)
+	- define GLAPIENTRY and GLAPI if undefined in glu.h
+	- wglGetProcAddress didn't handle all API functions
+	- when testing for OpenGL 1.2 vs 1.3, check for GL_ARB_texture_cube_map
+	- removed GL_MAX_CONVOLUTION_WIDTH/HEIGHT from glGetInteger/Float/etc()
+	- error checking in compressed tex image functions had some glitches
+	- fixed AIX compile problem in src/config.c
+	- glGetTexImage was using pixel unpacking instead of packing params
+	- auto-mipmap generation for cube maps was incorrect
+    Changes:
+	- max texture units reduced to six to accomodate texture rectangles
+	- removed unfinished GL_MESA_sprite_point extension code
+
+
+4.1  October, ??, 2002
     New:
 	- GL_NV_vertex_program extension
 	- GL_NV_vertex_program1_1 extension
@@ -998,6 +1027,7 @@ Mesa Version History
 	- GL_NV_texture_rectangle extension
 	- GL_EXT_multi_draw_arrays extension
 	- GL_EXT_stencil_two_side extension
+	- GLX_SGIX_fbconfig and GLX_SGIX_pbuffer extensions
 	- massive overhaul/simplification of software rasterizer module,
 	  many contributions from Klaus Niederkrueger
 	- faster software texturing in some cases (i.e. trilinear filtering)
@@ -1005,6 +1035,7 @@ Mesa Version History
 	- more blend modes implemented with MMX code (Jose Fonseca)
 	- added glutGetProcAddress() to GLUT
 	- added GLUT_FPS env var to compute frames/second in glutSwapBuffers()
+	- pbinfo and pbdemo PBuffer programs
     Bug fixes:
 	- better mipmap LOD computation (prevents excessive blurriness)
 	- OSMesaMakeCurrent() didn't recognize buffer size changes
