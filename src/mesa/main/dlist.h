@@ -1,4 +1,4 @@
-/* $Id: dlist.h,v 1.10 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: dlist.h,v 1.11 2000/12/26 07:41:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,8 +34,9 @@
 
 #define ASSERT_OUTSIDE_SAVE_BEGIN_END_WITH_RETVAL(ctx, retval)	\
 do {								\
-   if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {	\
-      gl_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
+   if (ctx->Driver.CurrentSavePrimitive < GL_POLYGON+1 ||        \
+       ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM) {	\
+      _mesa_compile_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
       return retval;						\
    }								\
 } while (0)
