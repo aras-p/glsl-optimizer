@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.9 1999/10/22 12:49:52 brianp Exp $ */
+/* $Id: image.c,v 1.10 1999/10/26 09:21:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1692,9 +1692,9 @@ void gl_pack_rgba_span( const GLcontext *ctx,
       GLint i;
       GLubyte *dest = (GLubyte *) destination;
       for (i = 0; i < n; i++) {
-         dest[i+0] = rgba[i][RCOMP];
-         dest[i+1] = rgba[i][GCOMP];
-         dest[i+2] = rgba[i][BCOMP];
+         dest[0] = rgba[i][RCOMP];
+         dest[1] = rgba[i][GCOMP];
+         dest[2] = rgba[i][BCOMP];
          dest += 3;
       }
    }
@@ -1708,7 +1708,7 @@ void gl_pack_rgba_span( const GLcontext *ctx,
       const GLint comps = gl_components_in_format(format);
       GLuint i;
 
-      assert( n < MAX_WIDTH );
+      assert(n <= MAX_WIDTH);
 
       /* convert color components to floating point */
       for (i=0;i<n;i++) {
