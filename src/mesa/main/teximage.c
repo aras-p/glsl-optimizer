@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.118 2002/10/02 17:25:05 brianp Exp $ */
+/* $Id: teximage.c,v 1.119 2002/10/10 14:12:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -432,7 +432,7 @@ _mesa_alloc_texture_image( void )
 void
 _mesa_free_texture_image( struct gl_texture_image *teximage )
 {
-   if (teximage->Data) {
+   if (teximage->Data && !teximage->IsClientData) {
       MESA_PBUFFER_FREE( teximage->Data );
       teximage->Data = NULL;
    }
@@ -1620,11 +1620,11 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
             return;
          }
       }
-      else if (texImage->Data) {
+      else if (texImage->Data && !texImage->IsClientData) {
          /* free the old texture data */
          MESA_PBUFFER_FREE(texImage->Data);
-         texImage->Data = NULL;
       }
+      texImage->Data = NULL;
       clear_teximage_fields(texImage); /* not really needed, but helpful */
       _mesa_init_teximage_fields(ctx, target, texImage,
                                  postConvWidth, 1, 1,
@@ -1729,11 +1729,11 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
             return;
          }
       }
-      else if (texImage->Data) {
+      else if (texImage->Data && !texImage->IsClientData) {
          /* free the old texture data */
          MESA_PBUFFER_FREE(texImage->Data);
-         texImage->Data = NULL;
       }
+      texImage->Data = NULL;
       clear_teximage_fields(texImage); /* not really needed, but helpful */
       _mesa_init_teximage_fields(ctx, target, texImage,
                                  postConvWidth, postConvHeight, 1,
@@ -1835,10 +1835,10 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
             return;
          }
       }
-      else if (texImage->Data) {
+      else if (texImage->Data && !texImage->IsClientData) {
          MESA_PBUFFER_FREE(texImage->Data);
-         texImage->Data = NULL;
       }
+      texImage->Data = NULL;
       clear_teximage_fields(texImage); /* not really needed, but helpful */
       _mesa_init_teximage_fields(ctx, target, texImage,
                                  width, height, depth,
@@ -2084,11 +2084,11 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
          return;
       }
    }
-   else if (texImage->Data) {
+   else if (texImage->Data && !texImage->IsClientData) {
       /* free the old texture data */
       MESA_PBUFFER_FREE(texImage->Data);
-      texImage->Data = NULL;
    }
+   texImage->Data = NULL;
 
    clear_teximage_fields(texImage); /* not really needed, but helpful */
    _mesa_init_teximage_fields(ctx, target, texImage, postConvWidth, 1, 1,
@@ -2148,11 +2148,11 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
          return;
       }
    }
-   else if (texImage->Data) {
+   else if (texImage->Data && !texImage->IsClientData) {
       /* free the old texture data */
       MESA_PBUFFER_FREE(texImage->Data);
-      texImage->Data = NULL;
    }
+   texImage->Data = NULL;
 
    clear_teximage_fields(texImage); /* not really needed, but helpful */
    _mesa_init_teximage_fields(ctx, target, texImage,
@@ -2492,10 +2492,10 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
             return;
          }
       }
-      else if (texImage->Data) {
+      else if (texImage->Data && !texImage->IsClientData) {
          MESA_PBUFFER_FREE(texImage->Data);
-         texImage->Data = NULL;
       }
+      texImage->Data = NULL;
 
       _mesa_init_teximage_fields(ctx, target, texImage, width, 1, 1,
                                  border, internalFormat);
@@ -2578,10 +2578,10 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
             return;
          }
       }
-      else if (texImage->Data) {
+      else if (texImage->Data && !texImage->IsClientData) {
          MESA_PBUFFER_FREE(texImage->Data);
-         texImage->Data = NULL;
       }
+      texImage->Data = NULL;
 
       _mesa_init_teximage_fields(ctx, target, texImage, width, height, 1,
                                  border, internalFormat);
@@ -2665,10 +2665,10 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
             return;
          }
       }
-      else if (texImage->Data) {
+      else if (texImage->Data && !texImage->IsClientData) {
          MESA_PBUFFER_FREE(texImage->Data);
-         texImage->Data = NULL;
       }
+      texImage->Data = NULL;
 
       _mesa_init_teximage_fields(ctx, target, texImage, width, height, depth,
                                  border, internalFormat);
