@@ -334,8 +334,7 @@ static __GLcontextModes *tdfxFillInModes(unsigned pixel_bits,
 			    m->depthBits	= deep
 			    			  ? (depth ? 24 : 0)
 			    			  : (depth ? 0 : depth_bits);
-			    m->visualType	= i ? GLX_TRUE_COLOR
-			    			    : GLX_DIRECT_COLOR;
+			    m->visualType	= vis[i];
 			    m->renderType	= GLX_RGBA_BIT;
 			    m->drawableType	= GLX_WINDOW_BIT;
 			    m->rgbMode		= GL_TRUE;
