@@ -744,11 +744,7 @@ static void viaChooseVertexState( GLcontext *ctx )
    }
 
    if (index & _TNL_BIT_TEX(1)) {
-      if (!(index & _TNL_BIT_TEX(0))) {
-	 EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, VIA_EMIT_TEX1, (HC_HVPMSK_S | HC_HVPMSK_T) );
-      } else {
-         EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, VIA_EMIT_TEX1, 0 );
-      }
+      EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, VIA_EMIT_TEX1, (HC_HVPMSK_S | HC_HVPMSK_T) );
    }
 
    if (setupIndex != vmesa->setupIndex) {
