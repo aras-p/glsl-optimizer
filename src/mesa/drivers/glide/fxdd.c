@@ -535,7 +535,7 @@ static GLboolean fxDDReadPixels( GLcontext *ctx, GLint x, GLint y,
   else {
     fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
     GrLfbInfo_t info;
-    GLboolean result;
+    GLboolean result = GL_FALSE;
 
     BEGIN_BOARD_LOCK();
     if (grLfbLock(GR_LFB_READ_ONLY,
@@ -637,7 +637,6 @@ static GLboolean fxDDReadPixels( GLcontext *ctx, GLint x, GLint y,
       grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
     }
     END_BOARD_LOCK();
-
     return result;
   }
 }
