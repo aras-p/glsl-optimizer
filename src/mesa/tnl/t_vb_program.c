@@ -1,10 +1,8 @@
-/* $Id: t_vb_program.c,v 1.18 2003/03/01 01:50:27 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -136,7 +134,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       if (VB->Flag) {
          /* the traditional glBegin/glVertex/glEnd case */
          for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
-            if (attr == 0 || (VB->Flag[i] & (1 << attr))) {
+            if (attr == 0 || (program->InputsRead & (1 << attr))) {
                COPY_4V(machine->Registers[VP_INPUT_REG_START + attr],
                        VB->AttribPtr[attr]->data[i]);
             }
