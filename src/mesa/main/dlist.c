@@ -7008,6 +7008,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->Accum = save_Accum;
    table->AlphaFunc = save_AlphaFunc;
    table->Bitmap = save_Bitmap;
+   table->BlendFunc = _mesa_BlendFunc; /* loops-back to BlendFuncSeparate */
    table->CallList = _mesa_save_CallList;
    table->CallLists = _mesa_save_CallLists;
    table->Clear = save_Clear;
