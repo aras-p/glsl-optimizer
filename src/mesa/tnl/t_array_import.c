@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.11 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_array_import.c,v 1.12 2001/04/17 17:01:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -506,8 +506,8 @@ void _tnl_fill_immediate_drawarrays( GLcontext *ctx, struct immediate *IM,
 	    _math_trans_4f( IM->TexCoord[i] + IM->Start,
 			    ctx->Array.TexCoord[i].Ptr,
 			    ctx->Array.TexCoord[i].StrideB,
-			    ctx->Array.TexCoord[i].Size,
 			    ctx->Array.TexCoord[i].Type,
+			    ctx->Array.TexCoord[i].Size,
 			    start, n );
 
 	    if (ctx->Array.TexCoord[i].Size == 4)
