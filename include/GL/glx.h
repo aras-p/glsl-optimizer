@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.3 1999/09/16 15:52:51 brianp Exp $ */
+/* $Id: glx.h,v 1.4 1999/10/27 09:44:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,9 @@
 
 /*
  * $Log: glx.h,v $
+ * Revision 1.4  1999/10/27 09:44:10  brianp
+ * removed glXGetProcAddressEXT
+ *
  * Revision 1.3  1999/09/16 15:52:51  brianp
  * added GLX_MESA_set_3dfx_mode.  clean-up of glXGetProcAddress
  *
@@ -232,13 +235,6 @@ extern const char *glXQueryServerString( Display *dpy, int screen, int name );
 
 extern const char *glXGetClientString( Display *dpy, int name );
 
-
-
-/* GLX_EXT_get_proc_address */
-/* WARNING: this extension is not finalized yet!  Do not release code
- * which uses this extension yet!  It may change!
- */
-extern void (*glXGetProcAddressEXT(const GLubyte *procName))();
 
 
 /* GLX_MESA_pixmap_colormap */
