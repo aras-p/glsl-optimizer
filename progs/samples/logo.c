@@ -1,4 +1,4 @@
-/* $Id: logo.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: logo.c,v 1.2 1999/12/15 13:02:09 brianp Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993 Silicon Graphics, Inc.
@@ -108,16 +108,16 @@ GLubyte *image = checkImage;
 GLint imageHeight = CHECKIMAGEHEIGHT;
 GLint imageWidth = CHECKIMAGEWIDTH;
 
-float decal[] = {
+static float decal[] = {
     GL_DECAL,
 };
-float modulate[] = {
+static float modulate[] = {
     GL_MODULATE,
 };
-float repeat[] = {
+static float repeat[] = {
     GL_REPEAT,
 };
-float nearest[] = {
+static float nearest[] = {
     GL_NEAREST,
 };
 
