@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.7 2000/02/08 01:45:22 brianp Exp $ */
+/* $Id: texstate.c,v 1.8 2000/03/07 17:11:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -125,7 +125,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 
    /* Tell device driver about the new texture environment */
    if (ctx->Driver.TexEnv) {
-      (*ctx->Driver.TexEnv)( ctx, pname, param );
+      (*ctx->Driver.TexEnv)( ctx, target, pname, param );
    }
 }
 

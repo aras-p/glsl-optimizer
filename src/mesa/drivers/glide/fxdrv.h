@@ -567,7 +567,7 @@ extern void fxUpdateDDSpanPointers(GLcontext *);
 extern void fxSetupDDSpanPointers(GLcontext *);
 
 extern void fxPrintTextureData(tfxTexInfo *ti);
-extern void fxDDTexEnv(GLcontext *, GLenum, const GLfloat *);
+extern void fxDDTexEnv(GLcontext *, GLenum, GLenum, const GLfloat *);
 extern void fxDDTexImg(GLcontext *, GLenum, struct gl_texture_object *,
 		       GLint, GLint, const struct gl_texture_image *);
 extern void fxDDTexParam(GLcontext *, GLenum, struct gl_texture_object *,

@@ -161,7 +161,7 @@ void fxDDTexBind(GLcontext *ctx, GLenum target, struct gl_texture_object *tObj)
   ctx->Driver.RenderStart = fxSetupFXUnits;
 }
 
-void fxDDTexEnv(GLcontext *ctx, GLenum pname, const GLfloat *param)
+void fxDDTexEnv(GLcontext *ctx, GLenum target, GLenum pname, const GLfloat *param)
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
 

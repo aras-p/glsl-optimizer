@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.15 2000/03/03 18:55:45 brianp Exp $ */
+/* $Id: dd.h,v 1.16 2000/03/07 17:11:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -564,12 +564,10 @@ struct dd_function_table {
     *** Texture mapping functions:
     ***/
 
-   void (*TexEnv)( GLcontext *ctx, GLenum pname, const GLfloat *param );
+   void (*TexEnv)( GLcontext *ctx, GLenum target, GLenum pname,
+                   const GLfloat *param );
    /*
     * Called whenever glTexEnv*() is called.
-    * Pname will be one of GL_TEXTURE_ENV_MODE or GL_TEXTURE_ENV_COLOR.
-    * If pname is GL_TEXTURE_ENV_MODE then param will be one
-    * of GL_MODULATE, GL_BLEND, GL_DECAL, or GL_REPLACE.
     */
 
    void (*TexImage)( GLcontext *ctx, GLenum target,
