@@ -1,4 +1,4 @@
-/* $Id: api_noop.c,v 1.5 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: api_noop.c,v 1.6 2001/03/07 18:16:40 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -106,7 +106,7 @@ void _mesa_noop_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_material mat[2];
-   GLuint bitmask = _mesa_material_bitmask( ctx, face, pname, ~0, 
+   GLuint bitmask = _mesa_material_bitmask( ctx, face, pname, ~0,
                                             "_mesa_noop_Materialfv" );
    if (bitmask == 0)
       return;
@@ -198,6 +198,7 @@ void _mesa_noop_Color4fv( const GLfloat *v )
    UNCLAMPED_FLOAT_TO_CHAN(color[0], v[0]);
    UNCLAMPED_FLOAT_TO_CHAN(color[1], v[1]);
    UNCLAMPED_FLOAT_TO_CHAN(color[2], v[2]);
+   UNCLAMPED_FLOAT_TO_CHAN(color[3], v[3]);
 }
 
 void _mesa_noop_Color3ub( GLubyte a, GLubyte b, GLubyte c )
@@ -286,7 +287,7 @@ void _mesa_noop_MultiTexCoord2fARB( GLenum target, GLfloat a, GLfloat b )
       GLfloat *dest = ctx->Current.Texcoord[unit];
       COPY_FLOAT(dest[0], a);
       COPY_FLOAT(dest[1], b);
-      dest[2] = 0;	
+      dest[2] = 0;
       dest[3] = 1;
    }
 }
@@ -303,7 +304,7 @@ void _mesa_noop_MultiTexCoord2fvARB( GLenum target, GLfloat *v )
       GLfloat *dest = ctx->Current.Texcoord[unit];
       COPY_FLOAT(dest[0], v[0]);
       COPY_FLOAT(dest[1], v[1]);
-      dest[2] = 0;	
+      dest[2] = 0;
       dest[3] = 1;
    }
 }
@@ -423,7 +424,7 @@ void _mesa_noop_TexCoord1f( GLfloat a )
    GLfloat *dest = ctx->Current.Texcoord[0];
    COPY_FLOAT(dest[0], a);
    dest[1] = 0;
-   dest[2] = 0;	
+   dest[2] = 0;
    dest[3] = 1;
 }
 
@@ -433,7 +434,7 @@ void _mesa_noop_TexCoord1fv( GLfloat *v )
    GLfloat *dest = ctx->Current.Texcoord[0];
    COPY_FLOAT(dest[0], v[0]);
    dest[1] = 0;
-   dest[2] = 0;	
+   dest[2] = 0;
    dest[3] = 1;
 }
 
@@ -443,7 +444,7 @@ void _mesa_noop_TexCoord2f( GLfloat a, GLfloat b )
    GLfloat *dest = ctx->Current.Texcoord[0];
    COPY_FLOAT(dest[0], a);
    COPY_FLOAT(dest[1], b);
-   dest[2] = 0;	
+   dest[2] = 0;
    dest[3] = 1;
 }
 
@@ -453,7 +454,7 @@ void _mesa_noop_TexCoord2fv( GLfloat *v )
    GLfloat *dest = ctx->Current.Texcoord[0];
    COPY_FLOAT(dest[0], v[0]);
    COPY_FLOAT(dest[1], v[1]);
-   dest[2] = 0;	
+   dest[2] = 0;
    dest[3] = 1;
 }
 
@@ -500,18 +501,18 @@ void _mesa_noop_TexCoord4fv( GLfloat *v )
 /* Execute a glRectf() function.  This is not suitable for GL_COMPILE
  * modes (as the test for outside begin/end is not compiled),
  * but may be useful for drivers in circumstances which exclude
- * display list interactions. 
+ * display list interactions.
  *
- * (None of the functions in this file are suitable for GL_COMPILE 
+ * (None of the functions in this file are suitable for GL_COMPILE
  * modes).
  */
 void _mesa_noop_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
 {
    {
       GET_CURRENT_CONTEXT(ctx);
-      ASSERT_OUTSIDE_BEGIN_END(ctx); 
+      ASSERT_OUTSIDE_BEGIN_END(ctx);
    }
-   
+
    glBegin( GL_QUADS );
    glVertex2f( x1, y1 );
    glVertex2f( x2, y1 );
@@ -540,7 +541,7 @@ void _mesa_noop_DrawArrays(GLenum mode, GLint start, GLsizei count)
 }
 
 
-void _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type, 
+void _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type,
 			     const GLvoid *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -572,16 +573,15 @@ void _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type,
    glEnd();
 }
 
-void _mesa_noop_DrawRangeElements(GLenum mode, 
-				  GLuint start, GLuint end, 
-				  GLsizei count, GLenum type, 
+void _mesa_noop_DrawRangeElements(GLenum mode,
+				  GLuint start, GLuint end,
+				  GLsizei count, GLenum type,
 				  const GLvoid *indices)
 {
    GET_CURRENT_CONTEXT(ctx);
 
    if (_mesa_validate_DrawRangeElements( ctx, mode,
-					 start, end, 
+					 start, end,
 					 count, type, indices ))
       glDrawElements( mode, count, type, indices );
 }
-
