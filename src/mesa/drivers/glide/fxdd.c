@@ -748,7 +748,7 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    if (fxMesa->haveZBuffer)
       FX_grDepthBufferMode(GR_DEPTHBUFFER_ZBUFFER);
 
-#if (!FXMESA_USE_ARGB)
+#ifndef FXMESA_USE_ARGB
    FX_grLfbWriteColorFormat(GR_COLORFORMAT_ABGR);	/* Not every Glide has this */
 #endif
 

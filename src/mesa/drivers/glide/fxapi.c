@@ -388,7 +388,7 @@ fxMesaCreateContext(GLuint win,
 
 
    fxMesa->glideContext = FX_grSstWinOpen((FxU32) win, res, ref,
-#if  FXMESA_USE_ARGB
+#ifdef  FXMESA_USE_ARGB
 					  GR_COLORFORMAT_ARGB,
 #else
 					  GR_COLORFORMAT_ABGR,
@@ -403,7 +403,7 @@ fxMesaCreateContext(GLuint win,
     * Pixel tables are use during pixel read-back
     * Either initialize them for RGB or BGR order.
     */
-#if FXMESA_USE_ARGB
+#ifdef FXMESA_USE_ARGB
    useBGR = GL_FALSE;		/* Force RGB pixel order */
    system = "FXMESA_USE_ARGB";
 #else

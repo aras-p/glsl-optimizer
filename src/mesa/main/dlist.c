@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.67 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: dlist.c,v 1.68 2001/03/27 16:42:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3228,7 +3228,7 @@ static void save_TexImage2D( GLenum target,
 
 
 static void save_TexImage3D( GLenum target,
-                             GLint level, GLint internalFormat,
+                             GLint level, GLenum internalFormat,
                              GLsizei width, GLsizei height, GLsizei depth,
                              GLint border,
                              GLenum format, GLenum type,
@@ -3249,7 +3249,7 @@ static void save_TexImage3D( GLenum target,
       if (n) {
          n[1].e = target;
          n[2].i = level;
-         n[3].i = internalFormat;
+         n[3].i = (GLint) internalFormat;
          n[4].i = (GLint) width;
          n[5].i = (GLint) height;
          n[6].i = (GLint) depth;
