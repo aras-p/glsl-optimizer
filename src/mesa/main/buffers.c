@@ -1,10 +1,10 @@
-/* $Id: buffers.c,v 1.31 2001/09/14 21:36:43 brianp Exp $ */
+/* $Id: buffers.c,v 1.32 2002/02/15 16:25:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -98,6 +98,15 @@ _mesa_Clear( GLbitfield mask )
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glClear 0x%x\n", mask);
+
+   if (mask & ~(GL_COLOR_BUFFER_BIT |
+                GL_DEPTH_BUFFER_BIT |
+                GL_STENCIL_BUFFER_BIT |
+                GL_ACCUM_BUFFER_BIT)) {
+      /* invalid bit set */
+      _mesa_error( ctx, GL_INVALID_VALUE, "glClear(mask)");
+      return;
+   }
 
    if (ctx->NewState) {
       _mesa_update_state( ctx );	/* update _Xmin, etc */
