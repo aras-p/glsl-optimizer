@@ -47,5 +47,26 @@ GL_NV_blend_square
 
 
 
+Device Driver Changes
+---------------------
+
+The ctx->Driver.LogicOp() function has been removed.  It used to
+be called during state update in order to determine if the driver
+could do glLogicOp() operations, and if not, set the SWLogicOpEnabled
+flag.  Drivers should instead examine the LogicOp state themselves
+and choose specialized point, line, and triangle functions appropriately,
+or fall back to software rendering.  The Xlib driver was the only driver
+to use this function.  And since the Xlib driver no longer draws
+points, lines or triangles using Xlib, the LogicOp function isn't needed.
+
+
+The ctx->Driver.IndexMask() and ctx->Driver.ColorMask() functions
+are now just called from glIndexMask and glColorMask like the other
+GL state-changing functions.  They are no longer called from inside
+gl_update_state().  Also, they now return void.  The change was made
+mostly for sake of uniformity.
+
+
+
 ----------------------------------------------------------------------
-$Id: RELNOTES-3.5,v 1.2 2000/08/31 23:04:17 brianp Exp $
+$Id: RELNOTES-3.5,v 1.3 2000/09/07 15:46:05 brianp Exp $
