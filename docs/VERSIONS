@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.98 2002/10/15 14:41:48 brianp Exp $
+$Id: VERSIONS,v 1.99 2002/10/18 13:28:55 brianp Exp $
 
 
 Mesa Version History
@@ -1049,6 +1049,8 @@ Mesa Version History
 	- fixed FP exceptions found using Alpha CPU
 	- 3dfx/glide driver render-to-window feature was broken
 	- added missing GLX_TRANSPARENT_RGB token to glx.h
+	- fixed error checking related to paletted textures
     Changes:
 	- New spec file and Python code to generate some GL dispatch files
 	- Glide driver defaults to "no" with autoconf/automake
+	- floating point color channels now clamped to [0,inf)
