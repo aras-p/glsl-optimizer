@@ -1761,10 +1761,19 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 	    gc->currentDpy = dpy;
 	    gc->currentDrawable = draw;
 	    gc->currentReadable = read;
-#ifdef GLX_DIRECT_RENDERING
-	    if (gc->isDirect) reply.contextTag = -1;
-#endif
-	    gc->currentContextTag = reply.contextTag;
+
+	    if ( ! gc->isDirect ) {
+		__GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
+
+		gc->currentContextTag = reply.contextTag;
+		if ( state->array_state == NULL ) {
+		    (void) glGetString( GL_EXTENSIONS );
+		    __glXInitVertexArrayState(gc);
+		}
+	    }
+	    else {
+		gc->currentContextTag = -1;
+	    }
 	} else {
 	    __glXSetCurrentContext(&dummyContext);
 #ifdef GLX_DIRECT_RENDERING

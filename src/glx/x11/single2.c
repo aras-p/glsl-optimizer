@@ -138,15 +138,15 @@ GLenum __indirect_glGetError(void)
 
 
 /**
- * Get the selected attribute from the vertex array state vector.
+ * Get the selected attribute from the client state.
  * 
  * \returns
  * On success \c GL_TRUE is returned.  Otherwise, \c GL_FALSE is returned.
  */
 static GLboolean
-get_array_data( __GLXattribute * state, GLenum cap, GLintptr * data )
+get_client_data( __GLXattribute * state, GLenum cap, GLintptr * data )
 {
-    GLboolean retval = GL_FALSE;
+    GLboolean retval = GL_TRUE;
     const GLint tex_unit = __glXGetActiveTextureUnit( state );
 
 
@@ -230,9 +230,69 @@ get_array_data( __GLXattribute * state, GLenum cap, GLintptr * data )
 	retval = GL_TRUE;
 	*data = ~0UL;
 	break;
-    }
 
     
+    case GL_PACK_ROW_LENGTH:
+	*data = (GLintptr)state->storePack.rowLength;
+	break;
+    case GL_PACK_IMAGE_HEIGHT:
+	*data = (GLintptr)state->storePack.imageHeight;
+	break;
+    case GL_PACK_SKIP_ROWS:
+	*data = (GLintptr)state->storePack.skipRows;
+	break;
+    case GL_PACK_SKIP_PIXELS:
+	*data = (GLintptr)state->storePack.skipPixels;
+	break;
+    case GL_PACK_SKIP_IMAGES:
+	*data = (GLintptr)state->storePack.skipImages;
+	break;
+    case GL_PACK_ALIGNMENT:
+	*data = (GLintptr)state->storePack.alignment;
+	break;
+    case GL_PACK_SWAP_BYTES:
+	*data = (GLintptr)state->storePack.swapEndian;
+	break;
+    case GL_PACK_LSB_FIRST:
+	*data = (GLintptr)state->storePack.lsbFirst;
+	break;
+    case GL_UNPACK_ROW_LENGTH:
+	*data = (GLintptr)state->storeUnpack.rowLength;
+	break;
+    case GL_UNPACK_IMAGE_HEIGHT:
+	*data = (GLintptr)state->storeUnpack.imageHeight;
+	break;
+    case GL_UNPACK_SKIP_ROWS:
+	*data = (GLintptr)state->storeUnpack.skipRows;
+	break;
+    case GL_UNPACK_SKIP_PIXELS:
+	*data = (GLintptr)state->storeUnpack.skipPixels;
+	break;
+    case GL_UNPACK_SKIP_IMAGES:
+	*data = (GLintptr)state->storeUnpack.skipImages;
+	break;
+    case GL_UNPACK_ALIGNMENT:
+	*data = (GLintptr)state->storeUnpack.alignment;
+	break;
+    case GL_UNPACK_SWAP_BYTES:
+	*data = (GLintptr)state->storeUnpack.swapEndian;
+	break;
+    case GL_UNPACK_LSB_FIRST:
+	*data = (GLintptr)state->storeUnpack.lsbFirst;
+	break;
+    case GL_MAX_CLIENT_ATTRIB_STACK_DEPTH:
+	*data = (GLintptr)__GL_CLIENT_ATTRIB_STACK_DEPTH;
+	break;
+    case GL_CLIENT_ACTIVE_TEXTURE:
+	*data = (GLintptr)(tex_unit + GL_TEXTURE0);
+	break;
+
+    default:
+	retval = GL_FALSE;
+	break;
+    }
+
+
     return retval;
 }
 
@@ -260,84 +320,25 @@ void __indirect_glGetBooleanv(GLenum val, GLboolean *b)
 	GLintptr data;
 
 	/*
-	** For all the queries listed here, we use the locally stored
-	** values rather than the one returned by the server.  Note that
-	** we still needed to send the request to the server in order to
+	** We still needed to send the request to the server in order to
 	** find out whether it was legal to make a query (it's illegal,
 	** for example, to call a query between glBegin() and glEnd()).
 	*/
 
-	if ( get_array_data( state, val, & data ) ) {
+	if ( get_client_data( state, val, & data ) ) {
 	    *b = (GLboolean) data;
-	    return;
 	}
-
-	switch (val) {
-	  case GL_PACK_ROW_LENGTH:
-	    *b = (GLboolean)state->storePack.rowLength;
-	    break;
-	  case GL_PACK_IMAGE_HEIGHT:
-	    *b = (GLboolean)state->storePack.imageHeight;
-	    break;
-	  case GL_PACK_SKIP_ROWS:
-	    *b = (GLboolean)state->storePack.skipRows;
-	    break;
-	  case GL_PACK_SKIP_PIXELS:
-	    *b = (GLboolean)state->storePack.skipPixels;
-	    break;
-	  case GL_PACK_SKIP_IMAGES:
-	    *b = (GLboolean)state->storePack.skipImages;
-	    break;
-	  case GL_PACK_ALIGNMENT:
-	    *b = (GLboolean)state->storePack.alignment;
-	    break;
-	  case GL_PACK_SWAP_BYTES:
-	    *b = (GLboolean)state->storePack.swapEndian;
-	    break;
-	  case GL_PACK_LSB_FIRST:
-	    *b = (GLboolean)state->storePack.lsbFirst;
-	    break;
-	  case GL_UNPACK_ROW_LENGTH:
-	    *b = (GLboolean)state->storeUnpack.rowLength;
-	    break;
-	  case GL_UNPACK_IMAGE_HEIGHT:
-	    *b = (GLboolean)state->storeUnpack.imageHeight;
-	    break;
-	  case GL_UNPACK_SKIP_ROWS:
-	    *b = (GLboolean)state->storeUnpack.skipRows;
-	    break;
-	  case GL_UNPACK_SKIP_PIXELS:
-	    *b = (GLboolean)state->storeUnpack.skipPixels;
-	    break;
-	  case GL_UNPACK_SKIP_IMAGES:
-	    *b = (GLboolean)state->storeUnpack.skipImages;
-	    break;
-	  case GL_UNPACK_ALIGNMENT:
-	    *b = (GLboolean)state->storeUnpack.alignment;
-	    break;
-	  case GL_UNPACK_SWAP_BYTES:
-	    *b = (GLboolean)state->storeUnpack.swapEndian;
-	    break;
-	  case GL_UNPACK_LSB_FIRST:
-	    *b = (GLboolean)state->storeUnpack.lsbFirst;
-	    break;
-	  case GL_MAX_CLIENT_ATTRIB_STACK_DEPTH:
-	    *b = (GLboolean)__GL_CLIENT_ATTRIB_STACK_DEPTH;
-	    break;
-	  case GL_CLIENT_ACTIVE_TEXTURE:
-	    *b = (GLboolean)(__glXGetActiveTextureUnit(state) + GL_TEXTURE0);
-	    break;
-	  default:
+	else {
 	    /*
-	    ** Not a local value, so use what we got from the server.
-	    */
+	     ** Not a local value, so use what we got from the server.
+	     */
 	    if (compsize == 1) {
 		__GLX_SINGLE_GET_CHAR(b);
 	    } else {
 		__GLX_SINGLE_GET_CHAR_ARRAY(b,compsize);
-                if (val != origVal) {
-                   /* matrix transpose */
-                   TransposeMatrixb(b);
+		if (val != origVal) {
+		    /* matrix transpose */
+		    TransposeMatrixb(b);
                 }
 	    }
 	}
@@ -368,74 +369,15 @@ void __indirect_glGetDoublev(GLenum val, GLdouble *d)
 	GLintptr data;
 
 	/*
-	** For all the queries listed here, we use the locally stored
-	** values rather than the one returned by the server.  Note that
-	** we still needed to send the request to the server in order to
+	** We still needed to send the request to the server in order to
 	** find out whether it was legal to make a query (it's illegal,
 	** for example, to call a query between glBegin() and glEnd()).
 	*/
 
-	if ( get_array_data( state, val, & data ) ) {
+	if ( get_client_data( state, val, & data ) ) {
 	    *d = (GLdouble) data;
-	    return;
 	}
-
-	switch (val) {
-	  case GL_PACK_ROW_LENGTH:
-	    *d = (GLdouble)state->storePack.rowLength;
-	    break;
-	  case GL_PACK_IMAGE_HEIGHT:
-	    *d = (GLdouble)state->storePack.imageHeight;
-	    break;
-	  case GL_PACK_SKIP_ROWS:
-	    *d = (GLdouble)state->storePack.skipRows;
-	    break;
-	  case GL_PACK_SKIP_PIXELS:
-	    *d = (GLdouble)state->storePack.skipPixels;
-	    break;
-	  case GL_PACK_SKIP_IMAGES:
-	    *d = (GLdouble)state->storePack.skipImages;
-	    break;
-	  case GL_PACK_ALIGNMENT:
-	    *d = (GLdouble)state->storePack.alignment;
-	    break;
-	  case GL_PACK_SWAP_BYTES:
-	    *d = (GLdouble)state->storePack.swapEndian;
-	    break;
-	  case GL_PACK_LSB_FIRST:
-	    *d = (GLdouble)state->storePack.lsbFirst;
-	    break;
-	  case GL_UNPACK_ROW_LENGTH:
-	    *d = (GLdouble)state->storeUnpack.rowLength;
-	    break;
-	  case GL_UNPACK_IMAGE_HEIGHT:
-	    *d = (GLdouble)state->storeUnpack.imageHeight;
-	    break;
-	  case GL_UNPACK_SKIP_ROWS:
-	    *d = (GLdouble)state->storeUnpack.skipRows;
-	    break;
-	  case GL_UNPACK_SKIP_PIXELS:
-	    *d = (GLdouble)state->storeUnpack.skipPixels;
-	    break;
-	  case GL_UNPACK_SKIP_IMAGES:
-	    *d = (GLdouble)state->storeUnpack.skipImages;
-	    break;
-	  case GL_UNPACK_ALIGNMENT:
-	    *d = (GLdouble)state->storeUnpack.alignment;
-	    break;
-	  case GL_UNPACK_SWAP_BYTES:
-	    *d = (GLdouble)state->storeUnpack.swapEndian;
-	    break;
-	  case GL_UNPACK_LSB_FIRST:
-	    *d = (GLdouble)state->storeUnpack.lsbFirst;
-	    break;
-	  case GL_MAX_CLIENT_ATTRIB_STACK_DEPTH:
-	    *d = (GLdouble)__GL_CLIENT_ATTRIB_STACK_DEPTH;
-	    break;
-	  case GL_CLIENT_ACTIVE_TEXTURE:
-	    *d = (GLdouble)(__glXGetActiveTextureUnit(state) + GL_TEXTURE0);
-	    break;
-	  default:
+	else {
 	    /*
 	     ** Not a local value, so use what we got from the server.
 	     */
@@ -443,10 +385,10 @@ void __indirect_glGetDoublev(GLenum val, GLdouble *d)
 		__GLX_SINGLE_GET_DOUBLE(d);
 	    } else {
 		__GLX_SINGLE_GET_DOUBLE_ARRAY(d,compsize);
-                if (val != origVal) {
-                   /* matrix transpose */
-                   TransposeMatrixd(d);
-                }
+		if (val != origVal) {
+		    /* matrix transpose */
+		    TransposeMatrixd(d);
+		}
 	    }
 	}
     }
@@ -476,84 +418,25 @@ void __indirect_glGetFloatv(GLenum val, GLfloat *f)
 	GLintptr data;
 
 	/*
-	** For all the queries listed here, we use the locally stored
-	** values rather than the one returned by the server.  Note that
-	** we still needed to send the request to the server in order to
+	** We still needed to send the request to the server in order to
 	** find out whether it was legal to make a query (it's illegal,
 	** for example, to call a query between glBegin() and glEnd()).
 	*/
 
-	if ( get_array_data( state, val, & data ) ) {
+	if ( get_client_data( state, val, & data ) ) {
 	    *f = (GLfloat) data;
-	    return;
 	}
-
-	switch (val) {
-	  case GL_PACK_ROW_LENGTH:
-	    *f = (GLfloat)state->storePack.rowLength;
-	    break;
-	  case GL_PACK_IMAGE_HEIGHT:
-	    *f = (GLfloat)state->storePack.imageHeight;
-	    break;
-	  case GL_PACK_SKIP_ROWS:
-	    *f = (GLfloat)state->storePack.skipRows;
-	    break;
-	  case GL_PACK_SKIP_PIXELS:
-	    *f = (GLfloat)state->storePack.skipPixels;
-	    break;
-	  case GL_PACK_SKIP_IMAGES:
-	    *f = (GLfloat)state->storePack.skipImages;
-	    break;
-	  case GL_PACK_ALIGNMENT:
-	    *f = (GLfloat)state->storePack.alignment;
-	    break;
-	  case GL_PACK_SWAP_BYTES:
-	    *f = (GLfloat)state->storePack.swapEndian;
-	    break;
-	  case GL_PACK_LSB_FIRST:
-	    *f = (GLfloat)state->storePack.lsbFirst;
-	    break;
-	  case GL_UNPACK_ROW_LENGTH:
-	    *f = (GLfloat)state->storeUnpack.rowLength;
-	    break;
-	  case GL_UNPACK_IMAGE_HEIGHT:
-	    *f = (GLfloat)state->storeUnpack.imageHeight;
-	    break;
-	  case GL_UNPACK_SKIP_ROWS:
-	    *f = (GLfloat)state->storeUnpack.skipRows;
-	    break;
-	  case GL_UNPACK_SKIP_PIXELS:
-	    *f = (GLfloat)state->storeUnpack.skipPixels;
-	    break;
-	  case GL_UNPACK_SKIP_IMAGES:
-	    *f = (GLfloat)state->storeUnpack.skipImages;
-	    break;
-	  case GL_UNPACK_ALIGNMENT:
-	    *f = (GLfloat)state->storeUnpack.alignment;
-	    break;
-	  case GL_UNPACK_SWAP_BYTES:
-	    *f = (GLfloat)state->storeUnpack.swapEndian;
-	    break;
-	  case GL_UNPACK_LSB_FIRST:
-	    *f = (GLfloat)state->storeUnpack.lsbFirst;
-	    break;
-	  case GL_MAX_CLIENT_ATTRIB_STACK_DEPTH:
-	    *f = (GLfloat)__GL_CLIENT_ATTRIB_STACK_DEPTH;
-	    break;
-	  case GL_CLIENT_ACTIVE_TEXTURE:
-	    *f = (GLfloat)(__glXGetActiveTextureUnit(state) + GL_TEXTURE0);
-	    break;
-	  default:
+	else {
 	    /*
-	    ** Not a local value, so use what we got from the server.
-	    */
+	     ** Not a local value, so use what we got from the server.
+	     */
 	    if (compsize == 1) {
 		__GLX_SINGLE_GET_FLOAT(f);
 	    } else {
 		__GLX_SINGLE_GET_FLOAT_ARRAY(f,compsize);
-                if (val != origVal) {
-                   /* matrix transpose */
-                   TransposeMatrixf(f);
+		if (val != origVal) {
+		    /* matrix transpose */
+		    TransposeMatrixf(f);
                 }
 	    }
 	}
@@ -584,84 +467,25 @@ void __indirect_glGetIntegerv(GLenum val, GLint *i)
 	GLintptr data;
 
 	/*
-	** For all the queries listed here, we use the locally stored
-	** values rather than the one returned by the server.  Note that
-	** we still needed to send the request to the server in order to
+	** We still needed to send the request to the server in order to
 	** find out whether it was legal to make a query (it's illegal,
 	** for example, to call a query between glBegin() and glEnd()).
 	*/
 
-	if ( get_array_data( state, val, & data ) ) {
+	if ( get_client_data( state, val, & data ) ) {
 	    *i = (GLint) data;
-	    return;
 	}
-
-	switch (val) {
-	  case GL_PACK_ROW_LENGTH:
-	    *i = (GLint)state->storePack.rowLength;
-	    break;
-	  case GL_PACK_IMAGE_HEIGHT:
-	    *i = (GLint)state->storePack.imageHeight;
-	    break;
-	  case GL_PACK_SKIP_ROWS:
-	    *i = (GLint)state->storePack.skipRows;
-	    break;
-	  case GL_PACK_SKIP_PIXELS:
-	    *i = (GLint)state->storePack.skipPixels;
-	    break;
-	  case GL_PACK_SKIP_IMAGES:
-	    *i = (GLint)state->storePack.skipImages;
-	    break;
-	  case GL_PACK_ALIGNMENT:
-	    *i = (GLint)state->storePack.alignment;
-	    break;
-	  case GL_PACK_SWAP_BYTES:
-	    *i = (GLint)state->storePack.swapEndian;
-	    break;
-	  case GL_PACK_LSB_FIRST:
-	    *i = (GLint)state->storePack.lsbFirst;
-	    break;
-	  case GL_UNPACK_ROW_LENGTH:
-	    *i = (GLint)state->storeUnpack.rowLength;
-	    break;
-	  case GL_UNPACK_IMAGE_HEIGHT:
-	    *i = (GLint)state->storeUnpack.imageHeight;
-	    break;
-	  case GL_UNPACK_SKIP_ROWS:
-	    *i = (GLint)state->storeUnpack.skipRows;
-	    break;
-	  case GL_UNPACK_SKIP_PIXELS:
-	    *i = (GLint)state->storeUnpack.skipPixels;
-	    break;
-	  case GL_UNPACK_SKIP_IMAGES:
-	    *i = (GLint)state->storeUnpack.skipImages;
-	    break;
-	  case GL_UNPACK_ALIGNMENT:
-	    *i = (GLint)state->storeUnpack.alignment;
-	    break;
-	  case GL_UNPACK_SWAP_BYTES:
-	    *i = (GLint)state->storeUnpack.swapEndian;
-	    break;
-	  case GL_UNPACK_LSB_FIRST:
-	    *i = (GLint)state->storeUnpack.lsbFirst;
-	    break;
-	  case GL_MAX_CLIENT_ATTRIB_STACK_DEPTH:
-	    *i = (GLint)__GL_CLIENT_ATTRIB_STACK_DEPTH;
-	    break;
-	  case GL_CLIENT_ACTIVE_TEXTURE:
-	    *i = (GLint)(__glXGetActiveTextureUnit(state) + GL_TEXTURE0);
-	    break;
-	  default:
+	else {
 	    /*
-	    ** Not a local value, so use what we got from the server.
-	    */
+	     ** Not a local value, so use what we got from the server.
+	     */
 	    if (compsize == 1) {
 		__GLX_SINGLE_GET_LONG(i);
 	    } else {
 		__GLX_SINGLE_GET_LONG_ARRAY(i,compsize);
-                if (val != origVal) {
-                   /* matrix transpose */
-                   TransposeMatrixi(i);
+		if (val != origVal) {
+		    /* matrix transpose */
+		    TransposeMatrixi(i);
                 }
 	    }
 	}
