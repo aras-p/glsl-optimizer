@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.39 2000/05/22 16:21:27 brianp Exp $ */
+/* $Id: gl.h,v 1.40 2000/05/22 16:22:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1722,6 +1722,7 @@ GLAPI void GLAPIENTRY glGetSeparableFilter( GLenum target, GLenum format,
 	GLenum type, GLvoid *row, GLvoid *column, GLvoid *span );
 
 
+#if defined(GL_GLEXT_LEGACY)
 
 
 /*
@@ -2221,6 +2222,13 @@ GLAPI void GLAPIENTRY glWindowPos4dvMESA( const GLdouble *p );
 GLAPI void GLAPIENTRY glResizeBuffersMESA( void );
 
 #endif /* GL_MESA_resize_bufffers */
+
+
+#else  /* GL_GLEXT_LEGACY */
+
+#include "glext.h"
+
+#endif  /* GL_GLEXT_LEGACY */
 
 
 
