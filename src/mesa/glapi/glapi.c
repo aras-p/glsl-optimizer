@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.4 1999/11/12 00:06:07 brianp Exp $ */
+/* $Id: glapi.c,v 1.5 1999/11/12 16:46:56 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2453,7 +2453,7 @@ void GLAPIENTRY glWindowPos4dvMESA(const GLdouble *p)
 
 
 #ifdef _GLAPI_MESA_resize_buffers
-GLAPI void GLAPIENTRY glResizeBuffersMESA(void)
+void GLAPIENTRY glResizeBuffersMESA(void)
 {
    DISPATCH(ResizeBuffersMESA)();
 }

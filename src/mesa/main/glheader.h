@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.1 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: glheader.h,v 1.2 1999/11/12 16:46:56 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,6 +60,12 @@
 #endif
 
 #include <GL/gl.h>
+
+/* Disable unreachable code warnings for Watcom C++ */
+
+#ifdef	__WATCOMC__
+#pragma disable_message(201)
+#endif
 
 
 #endif
