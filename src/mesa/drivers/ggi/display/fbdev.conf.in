@@ -1,6 +1,4 @@
 # GGIMesa fbdev target configuration
 .root: @ggi_libdir@/ggi/mesa/default
 
-tgt-fbdev-kgicon-generic-mesa	kgi/genkgi.so
-
-# .include /usr/local/etc/ggi/mesa/genkgi.conf
+tgt-fbdev-kgicon-generic-mesa	genkgi.so

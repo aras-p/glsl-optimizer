@@ -1,4 +1,4 @@
-/* $Id: genkgi_visual.c,v 1.2 1999/08/21 22:36:52 jtaylor Exp $
+/* $Id: genkgi_visual.c,v 1.3 1999/08/21 22:46:13 jtaylor Exp $
 ******************************************************************************
 
    genkgi_visual.c: visual handling for the generic KGI helper
@@ -59,7 +59,7 @@
 
 //#define MAX_DEV_LEN	63
 #define DEFAULT_FBNUM	0
-#if 0
+
 static char accel_prefix[] = "tgt-fbdev-kgicon-";
 #define PREFIX_LEN	(sizeof(accel_prefix))
 
@@ -74,7 +74,7 @@ static accel_info accel_strings[] =
 };
 
 #define NUM_ACCELS	(sizeof(accel_strings)/sizeof(accel_info))
-#endif
+
 /* FIXME: These should be defined in the makefile system */
 #define CONF_FILE "/usr/local/etc/ggi/mesa/targets/genkgi.conf"
 void *_configHandle;

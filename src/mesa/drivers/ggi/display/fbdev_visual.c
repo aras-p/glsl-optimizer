@@ -1,11 +1,9 @@
-/* $Id: fbdev_visual.c,v 1.1 1999/08/21 05:57:59 jtaylor Exp $
+/* $Id: fbdev_visual.c,v 1.2 1999/08/21 22:46:13 jtaylor Exp $
 ******************************************************************************
 
    display-fbdev-mesa: visual handling
 
-   Copyright (C) 1998 Andrew Apted	[andrew@ggi-project.org]
-   Copyright (C) 1999 Marcus Sundberg	[marcus@ggi-project.org]
-   Copyright (C) 1999 Creative Labs
+   Copyright (C) 1999 Jon Taylor [taylorj@ggi-project.org]
 
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -29,7 +27,7 @@
 
 #include <ggi/internal/ggi-dl.h>
 #include <ggi/mesa/ggimesa_int.h>
-#include <ggi/mesa/display/fbdev.h>
+#include <ggi/mesa/display_fbdev.h>
 
 #include <stdio.h>
 #include <stdlib.h>
