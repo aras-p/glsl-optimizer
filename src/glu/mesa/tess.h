@@ -1,4 +1,4 @@
-/* $Id: tess.h,v 1.11 1999/10/11 17:49:22 gareth Exp $ */
+/* $Id: tess.h,v 1.12 1999/10/13 19:01:56 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.h,v $
+ * Revision 1.12  1999/10/13 19:01:56  gareth
+ * Added edge flag callback support.
+ *
  * Revision 1.11  1999/10/11 17:49:22  gareth
  * Correctly initialized GLUtesselator user data pointer.
  *
@@ -100,6 +103,7 @@ struct GLUtesselator
     heap_t		*ears;
     hashtable_t		*cvc_lists;
     void		*data;
+    GLboolean		edge_flag;
     GLuint		label;
     GLenum		error;
 };

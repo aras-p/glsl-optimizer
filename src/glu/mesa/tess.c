@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.15 1999/10/12 21:26:06 gareth Exp $ */
+/* $Id: tess.c,v 1.16 1999/10/13 19:02:20 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.c,v $
+ * Revision 1.16  1999/10/13 19:02:20  gareth
+ * Added edge flag callback support.
+ *
  * Revision 1.15  1999/10/12 21:26:06  gareth
  * Fixed delete_all_contours memory deallocation.
  *
@@ -144,6 +147,7 @@ GLUtesselator* GLAPIENTRY gluNewTess( void )
 #endif
     tobj->cvc_lists = NULL;
     tobj->data = NULL;
+    tobj->edge_flag = GL_FALSE;
     tobj->label = 0;
 
     tobj->error = GLU_NO_ERROR;
@@ -193,8 +197,10 @@ void GLAPIENTRY gluTessBeginPolygon( GLUtesselator *tobj, void *polygon_data )
 	tess_cleanup( tobj );
     }
 
-    tobj->data = polygon_data;
     tobj->vertex_count = 0;
+    tobj->data = polygon_data;
+    tobj->edge_flag = GL_FALSE;
+    tobj->label = 0;
 
     DEBUGP( 15, ( "<- gluTessBeginPolygon( tobj:%p data:%p )\n", tobj, polygon_data ) );
 }
