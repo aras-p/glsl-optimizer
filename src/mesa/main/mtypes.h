@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.39 2001/04/17 21:25:53 brianp Exp $ */
+/* $Id: mtypes.h,v 1.40 2001/04/20 16:46:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -749,7 +749,10 @@ typedef void (*FetchTexelFunc)( const struct gl_texture_image *texImage,
 struct gl_texture_format {
    GLint MesaFormat;		/* One of the MESA_FORMAT_* values */
 
-   GLenum IntFormat;		/* Internal format as GL enum value */
+   GLenum BaseFormat;		/* Either GL_ALPHA, GL_INTENSITY, GL_LUMINANCE,
+                                 * GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA,
+                                 * GL_COLOR_INDEX or GL_DEPTH_COMPONENT.
+                                 */
    GLenum Type;			/* Internal type as GL enum value */
 
    GLubyte RedBits;		/* Bits per texel component */

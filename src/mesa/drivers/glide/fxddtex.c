@@ -1234,6 +1234,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
        * simple (format = simpleFormat, type = CHAN_TYPE).
        */
       _mesa_transfer_teximage(ctx, 2,	/* dimensions */
+                              simpleFormat,     /* base int format */
 			      simpleFormat,	/* dest format */
 			      tempImage,	/* dest addr */
 			      width, height, 1,	/* src size */
@@ -1339,7 +1340,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
        * a simpler format now.
        */
 
-      GLenum simpleFormat = _mesa_base_tex_format(ctx, texImage->TexFormat->IntFormat);
+      GLenum simpleFormat = texImage->TexFormat->BaseFormat;
       GLint comps = _mesa_components_in_format(simpleFormat);
       GLubyte *tempImage;
       GLboolean success;
@@ -1350,6 +1351,7 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
        * simple (format = simpleFormat, type = CHAN_TYPE).
        */
       _mesa_transfer_teximage(ctx, 2,	/* dimensions */
+			      simpleFormat,	/* base int format */
 			      simpleFormat,	/* dest format */
 			      tempImage,	/* dest addr */
 			      width, height, 1,	/* src size */
