@@ -473,14 +473,14 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 
     ctx->Const.MinLineWidth = 1.0;
     ctx->Const.MinLineWidthAA = 1.0;
-    ctx->Const.MaxLineWidth = 3.0;
-    ctx->Const.MaxLineWidthAA = 3.0;
+    ctx->Const.MaxLineWidth = 1.0;
+    ctx->Const.MaxLineWidthAA = 1.0;
     ctx->Const.LineWidthGranularity = 1.0;
 
     ctx->Const.MinPointSize = 1.0;
     ctx->Const.MinPointSizeAA = 1.0;
-    ctx->Const.MaxPointSize = 3.0;
-    ctx->Const.MaxPointSizeAA = 3.0;
+    ctx->Const.MaxPointSize = 1.0;
+    ctx->Const.MaxPointSizeAA = 1.0;
     ctx->Const.PointSizeGranularity = 1.0;
 
     ctx->Driver.GetBufferSize = viaBufferSize;
