@@ -58,6 +58,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_FOG_USE_DIFFUSE_ALPHA (2 << 25)
 #define     R200_FOG_USE_SPEC_ALPHA    (3 << 25)
 #define     R200_FOG_USE_VTX_FOG       (4 << 25)
+#define     R200_FOG_USE_MASK          (7 << 25)
 #define R200_RE_SOLID_COLOR               0x1c1c 
 #define R200_RB3D_BLENDCNTL               0x1c20
 #define     R200_COMB_FCN_MASK                    (7  << 12)
@@ -488,6 +489,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_OUTPUT_TEX_4                   (1<<20)
 #define     R200_OUTPUT_TEX_5                   (1<<21)
 #define     R200_OUTPUT_TEX_MASK                (0x3f<<16)
+#define     R200_OUTPUT_DISCRETE_FOG            (1<<24)
 #define     R200_OUTPUT_PT_SIZE                 (1<<25)
 #define     R200_FORCE_INORDER_PROC             (1<<31)
 #define R200_SE_TCL_INPUT_VTX_VECTOR_ADDR_0  0x2254
