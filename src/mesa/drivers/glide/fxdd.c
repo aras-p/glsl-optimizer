@@ -588,6 +588,11 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
    else
       fxMesa->maxPendingSwapBuffers=2;
    
+   if(getenv("MESA_FX_INFO"))
+      fxMesa->verbose=GL_TRUE;
+   else
+      fxMesa->verbose=GL_FALSE;
+
    fxMesa->color=0xffffffff;
    fxMesa->clearC=0;
    fxMesa->clearA=0;
