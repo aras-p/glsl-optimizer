@@ -1,4 +1,4 @@
-/* $Id: dlist.h,v 1.14 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: dlist.h,v 1.15 2001/03/24 05:23:46 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,22 +32,28 @@
 #include "mtypes.h"
 
 
-#define ASSERT_OUTSIDE_SAVE_BEGIN_END_WITH_RETVAL(ctx, retval)	\
-do {								\
-   if (ctx->Driver.CurrentSavePrimitive < GL_POLYGON+1 ||        \
+#define ASSERT_OUTSIDE_SAVE_BEGIN_END_WITH_RETVAL(ctx, retval)		\
+do {									\
+   if (ctx->Driver.CurrentSavePrimitive < GL_POLYGON+1 ||		\
        ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM) {	\
       _mesa_compile_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
-      return retval;						\
-   }								\
+      return retval;							\
+   }									\
 } while (0)
 
-#define ASSERT_OUTSIDE_SAVE_BEGIN_END(ctx) \
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_WITH_RETVAL(ctx,)
+#define ASSERT_OUTSIDE_SAVE_BEGIN_END(ctx)				\
+do {									\
+   if (ctx->Driver.CurrentSavePrimitive < GL_POLYGON+1 ||		\
+       ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM) {	\
+      _mesa_compile_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
+      return;								\
+   }									\
+} while (0)
 
-#define ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx)	\
-do {							\
-   ASSERT_OUTSIDE_SAVE_BEGIN_END(ctx);			\
-   FLUSH_VERTICES(ctx, 0);				\
+#define ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx)			\
+do {									\
+   ASSERT_OUTSIDE_SAVE_BEGIN_END(ctx);					\
+   FLUSH_VERTICES(ctx, 0);						\
 } while (0)
 
 #define ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, retval)\
