@@ -451,6 +451,9 @@ extern void viaXMesaSetFrontClipRects(viaContextPtr vmesa);
 extern void viaReAllocateBuffers(GLframebuffer *drawbuffer);
 extern void viaXMesaWindowMoved(viaContextPtr vmesa);
 
+extern void viaTexCombineState(viaContextPtr vmesa,
+    const struct gl_tex_env_combine_state * combine, unsigned unit );
+
 #define SUBPIXEL_X -.5
 #define SUBPIXEL_Y -.5
 
