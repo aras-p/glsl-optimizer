@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.55 2001/10/17 14:57:16 brianp Exp $
+# $Id: Makefile.X11,v 1.56 2001/10/17 20:44:26 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.0
@@ -464,6 +464,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/KNOWN_BUGS					\
 	$(DIRECTORY)/src/OSmesa/Makefile.am				\
 	$(DIRECTORY)/src/OSmesa/Makefile.in				\
+	$(DIRECTORY)/src/OSmesa/Makefile.win				\
+	$(DIRECTORY)/src/OSmesa/osmesa.def				\
 	$(DIRECTORY)/src/OSmesa/*.[ch]					\
 	$(DIRECTORY)/src/SPARC/*.[chS]					\
 	$(DIRECTORY)/src/SPARC/Makefile.am				\
@@ -486,6 +488,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/si-glu/Makefile.am					\
 	$(DIRECTORY)/si-glu/Makefile.in					\
 	$(DIRECTORY)/si-glu/Makefile.X11				\
+	$(DIRECTORY)/si-glu/Makefile.win				\
+	$(DIRECTORY)/si-glu/glu.def					\
 	$(DIRECTORY)/si-glu/dummy.cc					\
 	$(DIRECTORY)/si-glu/descrip.mms					\
 	$(DIRECTORY)/si-glu/mesaglu.opt					\
