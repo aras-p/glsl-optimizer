@@ -17,6 +17,7 @@ static void Display( void )
    glPushMatrix();
 
    glColor4f(0, 0.5, 0, 1);
+   glColor4f(0, 1, 0, 1);
    glBegin(GL_POLYGON);
    glVertex2f(-1, -1);
    glVertex2f( 1, -1);
@@ -70,6 +71,7 @@ static void Init( void )
       "MUL   o[COLR], -H0, f[WPOS]; \n"
       "MOV   RC, H1; \n"
       "MOV   HC, H2; \n"
+      "END \n"
       ;
 
    /* masked updates, defines, declarations */
@@ -77,12 +79,11 @@ static void Init( void )
       "!!FP1.0\n"
       "DEFINE foo = {1, 2, 3, 4}; \n"
       "DEFINE foo2 = 5; \n"
-      "DECLARE foo = {5, 6, 7, 8}; \n"
+      "DECLARE foo3 = {5, 6, 7, 8}; \n"
       "DECLARE bar = 3; \n"
       "DECLARE bar2; \n"
       "DECLARE bar3 = bar; \n"
       "#DECLARE bar4 = { a, b, c, d }; \n"
-      "MOV o[COLR],      R0; \n"
       "MOV o[COLR].xy,   R0; \n"
       "MOV o[COLR] (NE), R0; \n"
       "MOV o[COLR] (NE.wzyx), R0; \n"
@@ -90,6 +91,7 @@ static void Init( void )
       "MOV RC.x (EQ), R1.x; \n"
       "KIL NE; \n"
       "KIL EQ.xyxy; \n"
+      "END \n"
       ;
 
    /* texture instructions */
@@ -101,6 +103,7 @@ static void Init( void )
       "TXP R3, f[TEX3], TEX3, RECT; \n"
       "TXD R3, R2, R1, f[TEX3], TEX3, RECT; \n"
       "MUL o[COLR], R0, f[COL0]; \n"
+      "END \n"
       ;
 
    /* test negation, absolute value */
@@ -115,13 +118,33 @@ static void Init( void )
       "MOV R0, -|-R1|; \n"
       "MOV R0, -|+R1|; \n"
       "MOV o[COLR], R0; \n"
+      "END \n"
       ;
 
-   /* double the color */
+   /* literal constant sources */
+   static const char *prog4 =
+      "!!FP1.0\n"
+      "DEFINE Pi = 3.14159; \n"
+      "MOV R0, {1, -2, +3, 4}; \n"
+      "MOV R0, 5; \n"
+      "MOV R0, -5; \n"
+      "MOV R0, +5; \n"
+      "MOV R0, Pi; \n"
+      "MOV o[COLR], R0; \n"
+      "END \n"
+      ;
+
+   /* change the fragment color in a simple way */
    static const char *prog10 =
       "!!FP1.0\n"
+      "DEFINE blue = {0, 0, 1, 0};\n"
+      "DECLARE color; \n"
       "MOV R0, f[COL0]; \n"
-      "ADD o[COLR], R0, f[COL0]; \n"
+      "#ADD o[COLR], R0, f[COL0]; \n"
+      "#ADD o[COLR], blue, f[COL0]; \n"
+      "#ADD o[COLR], {1, 0, 0, 0}, f[COL0]; \n"
+      "ADD o[COLR], color, f[COL0]; \n"
+      "END \n"
       ;
 
    GLuint progs[20];
@@ -131,10 +154,12 @@ static void Init( void )
    assert(progs[1]);
    assert(progs[0] != progs[1]);
 
+#if 0
    glLoadProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[0],
                    strlen(prog0),
                    (const GLubyte *) prog0);
    assert(glIsProgramNV(progs[0]));
+#endif
 
    glLoadProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[1],
                    strlen(prog1),
@@ -153,6 +178,12 @@ static void Init( void )
    assert(glIsProgramNV(progs[3]));
    glBindProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[3]);
 
+   glLoadProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[4],
+                   strlen(prog4),
+                   (const GLubyte *) prog4);
+   assert(glIsProgramNV(progs[4]));
+   glBindProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[4]);
+
 
    /* a real program */
    glLoadProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[10],
@@ -160,6 +191,10 @@ static void Init( void )
                    (const GLubyte *) prog10);
    assert(glIsProgramNV(progs[10]));
    glBindProgramNV(GL_FRAGMENT_PROGRAM_NV, progs[10]);
+
+   glProgramNamedParameter4fNV(progs[10],
+                               strlen("color"), (const GLubyte *) "color",
+                               1, 0, 0, 1);
 
    glEnable(GL_FRAGMENT_PROGRAM_NV);
    glEnable(GL_ALPHA_TEST);
