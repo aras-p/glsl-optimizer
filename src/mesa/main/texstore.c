@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.1 2001/02/06 21:42:48 brianp Exp $ */
+/* $Id: texstore.c,v 1.2 2001/02/07 03:27:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -434,53 +434,6 @@ is_compressed_format(GLcontext *ctx, GLenum internalFormat)
 
 
 /*
- * Initialize most fields of a gl_texture_image struct.
- */
-static void
-init_teximage_fields( GLcontext *ctx,
-                      struct gl_texture_image *img,
-                      GLsizei width, GLsizei height, GLsizei depth,
-                      GLint border, GLenum internalFormat )
-{
-   ASSERT(img);
-   ASSERT(!img->Data);
-   img->Format = (GLenum) _mesa_base_tex_format(ctx, internalFormat);
-   img->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
-   set_teximage_component_sizes( img );
-   img->IntFormat = internalFormat;
-   img->Border = border;
-   img->Width = width;
-   img->Height = height;
-   img->Depth = depth;
-   img->WidthLog2 = logbase2(width - 2 * border);
-   if (height == 1)  /* 1-D texture */
-      img->HeightLog2 = 0;
-   else
-      img->HeightLog2 = logbase2(height - 2 * border);
-   if (depth == 1)   /* 2-D texture */
-      img->DepthLog2 = 0;
-   else
-      img->DepthLog2 = logbase2(depth - 2 * border);
-   img->Width2 = 1 << img->WidthLog2;
-   img->Height2 = 1 << img->HeightLog2;
-   img->Depth2 = 1 << img->DepthLog2;
-   img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);
-   img->IsCompressed = is_compressed_format(ctx, internalFormat);
-
-   if (height == 1 && depth == 1) {
-      img->FetchTexel = fetch_1d_texel;
-   }
-   else if (depth == 1) {
-      img->FetchTexel = fetch_2d_texel;
-   }
-   else {
-      img->FetchTexel = fetch_3d_texel;
-   }
-}
-
-
-
-/*
  * Given an internal texture format enum or 1, 2, 3, 4 return the
  * corresponding _base_ internal format:  GL_ALPHA, GL_LUMINANCE,
  * GL_LUMANCE_ALPHA, GL_INTENSITY, GL_RGB, or GL_RGBA.  Return the
@@ -810,8 +763,10 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
    }
 
    /* setup the teximage struct's fields */
-   init_teximage_fields(ctx, texImage, postConvWidth, 1, 1,
-                        border, internalFormat);
+   texImage->Format = (GLenum) _mesa_base_tex_format(ctx, internalFormat);
+   texImage->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
+   texImage->FetchTexel = fetch_1d_texel;
+   set_teximage_component_sizes(texImage);
 
    /* allocate memory */
    texImage->Data = (GLchan *) MALLOC(postConvWidth
@@ -853,8 +808,10 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    }
 
    /* setup the teximage struct's fields */
-   init_teximage_fields(ctx, texImage, postConvWidth, postConvHeight, 1,
-                        border, internalFormat);
+   texImage->Format = (GLenum) _mesa_base_tex_format(ctx, internalFormat);
+   texImage->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
+   texImage->FetchTexel = fetch_2d_texel;
+   set_teximage_component_sizes(texImage);
 
    /* allocate memory */
    texImage->Data = (GLchan *) MALLOC(postConvWidth * postConvHeight
@@ -891,8 +848,10 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
    const GLint components = components_in_intformat(internalFormat);
 
    /* setup the teximage struct's fields */
-   init_teximage_fields(ctx, texImage, width, height, depth,
-                        border, internalFormat);
+   texImage->Format = (GLenum) _mesa_base_tex_format(ctx, internalFormat);
+   texImage->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
+   texImage->FetchTexel = fetch_3d_texel;
+   set_teximage_component_sizes(texImage);
 
    /* allocate memory */
    texImage->Data = (GLchan *) MALLOC(width * height * depth
@@ -1060,8 +1019,10 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
     * Drivers may have more stringent texture limits to enforce and will
     * have to override this function.
     */
-   init_teximage_fields(ctx, texImage, width, height, depth, border,
-                        internalFormat);
+   /* setup the teximage struct's fields */
+   texImage->Format = (GLenum) _mesa_base_tex_format(ctx, internalFormat);
+   texImage->Type = CHAN_TYPE; /* usually GL_UNSIGNED_BYTE */
+   set_teximage_component_sizes(texImage);
 
    return GL_TRUE;
 }

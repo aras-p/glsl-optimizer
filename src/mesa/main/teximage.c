@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.72 2001/02/06 23:35:26 brianp Exp $ */
+/* $Id: teximage.c,v 1.73 2001/02/07 03:27:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -498,6 +498,39 @@ clear_teximage_fields(struct gl_texture_image *img)
    img->IsCompressed = 0;
    img->CompressedSize = 0;
    img->FetchTexel = NULL;
+}
+
+
+/*
+ * Initialize basic fields of the gl_texture_image struct.
+ */
+static void
+init_teximage_fields(GLcontext *ctx,
+                     struct gl_texture_image *img,
+                     GLsizei width, GLsizei height, GLsizei depth,
+                     GLint border, GLenum internalFormat)
+{
+   ASSERT(img);
+
+   img->IntFormat = internalFormat;
+   img->Border = border;
+   img->Width = width;
+   img->Height = height;
+   img->Depth = depth;
+   img->WidthLog2 = logbase2(width - 2 * border);
+   if (height == 1)  /* 1-D texture */
+      img->HeightLog2 = 0;
+   else
+      img->HeightLog2 = logbase2(height - 2 * border);
+   if (depth == 1)   /* 2-D texture */
+      img->DepthLog2 = 0;
+   else
+      img->DepthLog2 = logbase2(depth - 2 * border);
+   img->Width2 = 1 << img->WidthLog2;
+   img->Height2 = 1 << img->HeightLog2;
+   img->Depth2 = 1 << img->DepthLog2;
+   img->MaxLog2 = MAX2(img->WidthLog2, img->HeightLog2);
+   img->IsCompressed = is_compressed_format(ctx, internalFormat);
 }
 
 
@@ -1173,6 +1206,8 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
          texImage->Data = NULL;
       }
       clear_teximage_fields(texImage); /* not really needed, but helpful */
+      init_teximage_fields(ctx, texImage, postConvWidth, 1, 1,
+                           border, internalFormat);
 
       if (ctx->NewState & _NEW_PIXEL)
          gl_update_state(ctx);
@@ -1273,6 +1308,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
          texImage->Data = NULL;
       }
       clear_teximage_fields(texImage); /* not really needed, but helpful */
+      init_teximage_fields(ctx, texImage, postConvWidth, postConvHeight, 1,
+                           border, internalFormat);
 
       if (ctx->NewState & _NEW_PIXEL)
          gl_update_state(ctx);
@@ -1368,6 +1405,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
          texImage->Data = NULL;
       }
       clear_teximage_fields(texImage); /* not really needed, but helpful */
+      init_teximage_fields(ctx, texImage, width, height, depth, border,
+                           internalFormat);
 
       if (ctx->NewState & _NEW_PIXEL)
          gl_update_state(ctx);
@@ -1879,6 +1918,8 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
          texImage->Data = NULL;
       }
 
+      init_teximage_fields(ctx, texImage, width, 1, 1, border, internalFormat);
+
       if (ctx->Extensions.ARB_texture_compression) {
          ASSERT(ctx->Driver.CompressedTexImage1D);
          (*ctx->Driver.CompressedTexImage1D)(ctx, target, level,
@@ -1969,6 +2010,9 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
          texImage->Data = NULL;
       }
 
+      init_teximage_fields(ctx, texImage, width, height, 1, border,
+                           internalFormat);
+
       if (ctx->Extensions.ARB_texture_compression) {
          ASSERT(ctx->Driver.CompressedTexImage2D);
          (*ctx->Driver.CompressedTexImage2D)(ctx, target, level,
@@ -2055,6 +2099,9 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
          FREE(texImage->Data);
          texImage->Data = NULL;
       }
+
+      init_teximage_fields(ctx, texImage, width, height, depth, border,
+                           internalFormat);
 
       if (ctx->Extensions.ARB_texture_compression) {
          ASSERT(ctx->Driver.CompressedTexImage3D);
