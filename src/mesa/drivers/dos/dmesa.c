@@ -1474,7 +1474,7 @@ void DMesaDestroyVisual (DMesaVisual v)
 #endif
 
 #else
- fxMesaDestroyContext((tdfxContextPtr)v);
+ fxMesaDestroyContext((fxMesaContext)v);
 #endif
 }
 
@@ -1645,7 +1645,7 @@ GLboolean DMesaMakeCurrent (DMesaContext c, DMesaBuffer b)
  }
 
 #else
- fxMesaMakeCurrent((tdfxContextPtr)c);
+ fxMesaMakeCurrent((fxMesaContext)c);
 #endif
 
  return GL_TRUE;

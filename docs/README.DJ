@@ -210,7 +210,7 @@ v1.3 (mar-2003)
 	* switched to DXE3
 
 v1.4 (aug-2003)
-	+ enabled fonts with DXE
+	+ enabled GLUT fonts with DXE
 	+ truly added multi-window support in GLUT
 	* accomodated makefiles with the new sourcetree
 	* hacked and slashed the 3dfx driver (w/ help from Hiroshi Morii)

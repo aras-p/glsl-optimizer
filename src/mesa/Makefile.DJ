@@ -106,6 +106,8 @@ MAIN_SOURCES = \
 	main/api_validate.c \
 	main/accum.c \
 	main/arbprogram.c \
+	main/arbfragparse.c \
+	main/arbvertparse.c \
 	main/attrib.c \
 	main/blend.c \
 	main/bufferobj.c \
@@ -343,7 +345,7 @@ ifeq ($(HAVEDXE3),)
 	$(warning Missing DXE3 package... Skipping $(GL_DXE))
 else
 ifeq ($(FX),1)
-	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -Y $(LIBDIR)/$(GL_IMP) -D $(LIBNAME) -E _gl -E _DMesa -P glid3.dxe -U $^
+	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -Y $(LIBDIR)/$(GL_IMP) -D $(LIBNAME) -E _gl -E _DMesa -P glide3x.dxe -U $^
 else
 	-dxe3gen -o $(LIBDIR)/$(GL_DXE) -Y $(LIBDIR)/$(GL_IMP) -D $(LIBNAME) -E _gl -E _DMesa -U $^
 endif
