@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.3
  * 
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -493,6 +493,17 @@ extern Bool glXReleaseTexImageARB(Display *dpy, GLXPbuffer pbuffer, int buffer);
 extern Bool glXDrawableAttribARB(Display *dpy, GLXDrawable draw, const int *attribList);
 
 #endif /* GLX_ARB_render_texture */
+
+
+/*
+ * Remove this when glxext.h is updated.
+ */
+#ifndef GLX_NV_float_buffer
+#define GLX_NV_float_buffer 1
+
+#define GLX_FLOAT_COMPONENTS_NV         0x20B0
+
+#endif /* GLX_NV_float_buffer */
 
 
 
