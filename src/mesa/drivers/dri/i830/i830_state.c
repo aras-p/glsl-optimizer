@@ -1248,11 +1248,14 @@ static void i830Enable(GLcontext *ctx, GLenum cap, GLboolean state)
       if (imesa->hw_stencil) {
 	 I830_STATECHANGE(imesa, I830_UPLOAD_CTX);
 	 imesa->Setup[I830_CTXREG_ENABLES_1] &= ~ENABLE_STENCIL_TEST;
+	 imesa->Setup[I830_CTXREG_ENABLES_2] &= ~ENABLE_STENCIL_WRITE;
 
 	 if (state) {
 	    imesa->Setup[I830_CTXREG_ENABLES_1] |= ENABLE_STENCIL_TEST;
+	    imesa->Setup[I830_CTXREG_ENABLES_2] |= ENABLE_STENCIL_WRITE;
 	 } else {
 	    imesa->Setup[I830_CTXREG_ENABLES_1] |= DISABLE_STENCIL_TEST;
+	    imesa->Setup[I830_CTXREG_ENABLES_2] |= DISABLE_STENCIL_WRITE;
 	 }
       } else {
 	 FALLBACK( imesa, I830_FALLBACK_STENCIL, state );
