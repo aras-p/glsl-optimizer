@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.60 2002/04/19 00:23:08 brianp Exp $ */
+/* $Id: enable.c,v 1.61 2002/04/19 08:38:23 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -120,7 +120,7 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
          return;
    }
 
-   if (*var == flag)
+   if (*var == state)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_ARRAY);
