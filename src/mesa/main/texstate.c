@@ -1,5 +1,3 @@
-/* $Id: texstate.c,v 1.95 2003/03/03 15:37:41 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -788,7 +786,7 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
             }
             break;
          default:
-            _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexEnvfv(pname)" );
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexEnvfv(pname=0x%x)", pname);
       }
    }
    else if (target == GL_TEXTURE_FILTER_CONTROL_EXT) {
@@ -1001,7 +999,8 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
             }
             break;
          default:
-            _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexEnviv(pname)" );
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexEnviv(pname=0x%x)",
+                        pname);
       }
    }
    else if (target == GL_TEXTURE_FILTER_CONTROL_EXT) {
@@ -1769,7 +1768,8 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          ; /* silence warnings */
    }
    /* If we get here, pname was an unrecognized enum */
-   _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname)" );
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname=0x%x)",
+               pname);
 }
 
 
@@ -1893,7 +1893,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          ; /* silence warnings */
    }
    /* If we get here, pname was an unrecognized enum */
-   _mesa_error( ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname)" );
+   _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname=0x%x)", pname);
 }
 
 
