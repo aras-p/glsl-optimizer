@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.43 2000/09/05 20:17:37 brianp Exp $ */
+/* $Id: glapi.c,v 1.44 2000/09/15 19:45:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,7 +49,7 @@
 #include "glapitable.h"
 #include "glthread.h"
 
-#if defined(TRACE)
+#if defined(GL_MESA_TRACE)
 #include "types.h"
 #endif
 
@@ -170,7 +170,7 @@ _glapi_get_context(void)
 void
 _glapi_set_dispatch(struct _glapi_table *dispatch)
 {
-#if defined(TRACE)
+#if defined(GL_MESA_TRACE)
    GLcontext * ctx;
 #endif
 
@@ -185,7 +185,7 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 #endif
 
 #if defined(THREADS)
-#if defined(TRACE)
+#if defined(GL_MESA_TRACE)
    ctx = (GLcontext *)_glthread_GetTSD(&ContextTSD);
    if (ctx->TraceCtx->traceEnabled == GL_TRUE) {
       _glthread_SetTSD(&DispatchTSD, (void*) ctx->TraceDispatch);
@@ -206,14 +206,14 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
       _glapi_Dispatch = NULL;
    else
       _glapi_Dispatch = dispatch;
-#endif /*TRACE*/
+#endif /*GL_MESA_TRACE*/
 #else /*THREADS*/
-#if defined(TRACE)
+#if defined(GL_MESA_TRACE)
    ctx = (GLcontext *)_glthread_GetTSD(&ContextTSD);
    _glapi_Dispatch = ctx->TraceDispatch;
 #else
    _glapi_Dispatch = dispatch;
-#endif /*TRACE*/
+#endif /*GL_MESA_TRACE*/
 #endif /*THREADS*/
 }
 
@@ -239,7 +239,7 @@ _glapi_get_dispatch(void)
 }
 
 
-#if defined(TRACE)
+#if defined(GL_MESA_TRACE)
 struct _glapi_table *
 _glapi_get_true_dispatch(void)
 {
@@ -263,7 +263,7 @@ _glapi_get_true_dispatch(void)
    return ((GLcontext *)_glapi_Context)->CurrentDispatch;
 #endif
 }
-#endif /* TRACE */
+#endif /* GL_MESA_TRACE */
 
 
 /*
