@@ -1,4 +1,4 @@
-/* $Id: glapi.h,v 1.11 1999/12/17 14:51:29 brianp Exp $ */
+/* $Id: glapi.h,v 1.12 2000/01/05 04:36:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,8 +33,6 @@
 
 struct _glapi_table;
 
-
-extern GLboolean _glapi_ThreadSafe;
 
 extern void *_glapi_CurrentContext;
 
