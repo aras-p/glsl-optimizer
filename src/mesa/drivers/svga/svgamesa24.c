@@ -1,4 +1,4 @@
-/* $Id: svgamesa24.c,v 1.6 2000/01/31 22:10:07 tanner Exp $ */
+/* $Id: svgamesa24.c,v 1.7 2000/06/14 21:59:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -232,5 +232,15 @@ void __read_rgba_pixels24( const GLcontext *ctx,
     *((GLint*)rgba[i]) = RGB2BGR24(__svga_getpixel24( x[i], y[i]));    
    }
 }
+
+#else
+
+
+/* silence compiler warning */
+extern void _mesa_svga24_dummy_function(void);
+void _mesa_svga24_dummy_function(void)
+{
+}
+
 
 #endif

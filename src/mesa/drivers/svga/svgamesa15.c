@@ -1,4 +1,4 @@
-/* $Id: svgamesa15.c,v 1.5 2000/01/31 22:10:06 tanner Exp $ */
+/* $Id: svgamesa15.c,v 1.6 2000/06/14 21:59:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -197,5 +197,15 @@ void __read_rgba_pixels15( const GLcontext *ctx,
     rgba[i][BCOMP] = ((pix    )<<3) & 0xff;
    }
 }
+
+#else
+
+
+/* silence compiler warning */
+extern void _mesa_svga15_dummy_function(void);
+void _mesa_svga15_dummy_function(void)
+{
+}
+
 
 #endif

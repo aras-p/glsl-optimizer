@@ -1,10 +1,10 @@
-/* $Id: 3dnow.c,v 1.3 1999/11/12 04:57:22 kendallb Exp $ */
+/* $Id: 3dnow.c,v 1.4 2000/06/14 21:55:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -185,5 +185,14 @@ void gl_init_3dnow_asm_transforms (void)
    gl_project_v16 = gl_3dnow_project_vertices;
    gl_project_clipped_v16 = gl_3dnow_project_clipped_vertices;
 } 
+
+#else
+
+
+/* silence compiler warning */
+extern void _mesa_3dnow_dummy_function(void);
+void _mesa_3dnow_dummy_function(void)
+{
+}
 
 #endif
