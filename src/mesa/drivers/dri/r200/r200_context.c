@@ -272,6 +272,9 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
       else
 	 rmesa->using_hyperz = GL_TRUE;
    }
+ 
+   if ( sPriv->drmMinor >= 15 )
+      rmesa->texmicrotile = GL_TRUE;
 
    /* Init default driver functions then plug in our R200-specific functions
     * (the texture functions are especially important)

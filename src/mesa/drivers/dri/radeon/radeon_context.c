@@ -255,6 +255,9 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 	 rmesa->using_hyperz = GL_TRUE;
    }
 
+   if ( sPriv->drmMinor >= 15 )
+      rmesa->texmicrotile = GL_TRUE;
+
    /* Init default driver functions then plug in our Radeon-specific functions
     * (the texture functions are especially important)
     */
@@ -445,6 +448,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    }
    (*rmesa->get_ust)( & rmesa->swap_ust );
 
+   if (rmesa->sarea->tiling_enabled != 0) fprintf(stderr, "color tiling enabled!\n");
 
 #if DO_DEBUG
    RADEON_DEBUG = driParseDebugString( getenv( "RADEON_DEBUG" ),

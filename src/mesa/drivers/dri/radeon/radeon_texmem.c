@@ -46,6 +46,8 @@ SOFTWARE.
 #include "radeon_ioctl.h"
 #include "radeon_tex.h"
 
+#include <unistd.h>  /* for usleep() */
+
 
 /**
  * Destroy any device-dependent state associated with the texture.  This may
@@ -151,12 +153,12 @@ static void radeonUploadRectSubImage( radeonContextPtr rmesa,
 
 	 /* Blit to framebuffer
 	  */
-	 radeonEmitBlit( rmesa, 
-		       blit_format, 
- 		       dstPitch, GET_START( &region ),    
- 		       dstPitch, t->bufAddr, 
-		       0, 0, 
-		       0, done, 
+	 radeonEmitBlit( rmesa,
+		       blit_format,
+		       dstPitch, GET_START( &region ),
+		       dstPitch, t->bufAddr,
+		       0, 0,
+		       0, done,
 		       width, lines );
 	 
 	 radeonEmitWait( rmesa, RADEON_WAIT_2D );
@@ -248,19 +250,43 @@ static void uploadSubImage( radeonContextPtr rmesa, radeonTexObjPtr t,
     * We used to use 1, 2 and 4-byte texels and used to use the texture
     * width to dictate the blit width - but that won't work for compressed
     * textures. (Brian)
+    * NOTE: can't do that with texture tiling. (sroland)
     */
    tex.offset = offset;
-   tex.pitch = BLIT_WIDTH_BYTES / 64;
-   tex.format = RADEON_TXFORMAT_I8; /* any 1-byte texel format */
+   tex.image = &tmp;
+   /* copy (x,y,width,height,data) */
+   memcpy( &tmp, &t->image[face][hwlevel], sizeof(drm_radeon_tex_image_t) );
+
    if (texImage->TexFormat->TexelBytes) {
-      tex.width = imageWidth * texImage->TexFormat->TexelBytes; /* in bytes */
+      /* use multi-byte upload scheme */
       tex.height = imageHeight;
+      tex.width = imageWidth;
+      tex.format = t->pp_txformat & RADEON_TXFORMAT_FORMAT_MASK;
+      tex.pitch = MAX2((texImage->Width * texImage->TexFormat->TexelBytes) / 64, 1);
+      tex.offset += tmp.x & ~1023;
+      tmp.x = tmp.x % 1024;
+      if (t->tile_bits & RADEON_TXO_MICRO_TILE_X2) {
+	 /* need something like "tiled coordinates" ? */
+	 tmp.y = tmp.x / (tex.pitch * 128) * 2;
+	 tmp.x = tmp.x % (tex.pitch * 128) / 2 / texImage->TexFormat->TexelBytes;
+	 tex.pitch |= RADEON_DST_TILE_MICRO >> 22;
+      }
+      else {
+	 tmp.x = tmp.x >> (texImage->TexFormat->TexelBytes >> 1);
+      }
+      if ((t->tile_bits & RADEON_TXO_MACRO_TILE) &&
+	 (texImage->Width * texImage->TexFormat->TexelBytes >= 256)) {
+	 /* radeon switches off macro tiling for small textures/mipmaps it seems */
+	 tex.pitch |= RADEON_DST_TILE_MACRO >> 22;
+      }
    }
    else {
       /* In case of for instance 8x8 texture (2x2 dxt blocks), padding after the first two blocks is
          needed (only with dxt1 since 2 dxt3/dxt5 blocks already use 32 Byte). */
       /* set tex.height to 1/4 since 1 "macropixel" (dxt-block) has 4 real pixels. Needed
          so the kernel module reads the right amount of data. */
+      tex.format = RADEON_TXFORMAT_I8; /* any 1-byte texel format */
+      tex.pitch = (BLIT_WIDTH_BYTES / 64);
       tex.height = (imageHeight + 3) / 4;
       tex.width = (imageWidth + 3) / 4;
       switch (t->pp_txformat & RADEON_TXFORMAT_FORMAT_MASK) {
@@ -273,10 +299,6 @@ static void uploadSubImage( radeonContextPtr rmesa, radeonTexObjPtr t,
          break;
       }
    }
-   tex.image = &tmp;
-
-   /* copy (x,y,width,height,data) */
-   memcpy( &tmp, &t->image[face][hwlevel], sizeof(drm_radeon_tex_image_t) );
 
    LOCK_HARDWARE( rmesa );
    do {
@@ -344,6 +366,10 @@ int radeonUploadTexImages( radeonContextPtr rmesa, radeonTexObjPtr t, GLuint fac
 	   + t->base.memBlock->ofs;
       t->pp_txoffset = t->bufAddr;
 
+      if (!(t->base.tObj->Image[0][0]->IsClientData)) {
+	 /* hope it's safe to add that here... */
+	 t->pp_txoffset |= t->tile_bits;
+      }
 
       /* Mark this texobj as dirty on all units:
        */

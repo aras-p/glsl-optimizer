@@ -162,6 +162,8 @@ struct radeon_tex_obj {
    GLuint pp_cubic_faces;	        /* cube face 1,2,3,4 log2 sizes */
 
    GLboolean  border_fallback;
+
+   GLuint tile_bits;			/* hw texture tile bits used on this texture */
 };
 
 
@@ -186,7 +188,7 @@ struct radeon_state_atom {
    GLboolean dirty;                      /* dirty-mark in emit_state_list */
    GLboolean (*check)( GLcontext * );    /* is this state active? */
 };
-   
+
 
 
 /* Trying to keep these relatively short as the variables are becoming
@@ -781,6 +783,7 @@ struct radeon_context {
    driOptionCache optionCache;
 
    GLboolean using_hyperz;
+   GLboolean texmicrotile;
 
    /* Performance counters
     */

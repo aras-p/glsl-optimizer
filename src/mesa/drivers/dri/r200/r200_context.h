@@ -167,6 +167,8 @@ struct r200_tex_obj {
    GLuint pp_cubic_faces;	        /* cube face 1,2,3,4 log2 sizes */
 
    GLboolean  border_fallback;
+
+   GLuint tile_bits;			/* hw texture tile bits used on this texture */
 };
 
 
@@ -931,6 +933,7 @@ struct r200_context {
    driOptionCache optionCache;
 
    GLboolean using_hyperz;
+   GLboolean texmicrotile;
 };
 
 #define R200_CONTEXT(ctx)		((r200ContextPtr)(ctx->DriverCtx))

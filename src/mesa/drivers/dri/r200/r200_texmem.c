@@ -43,12 +43,10 @@ SOFTWARE.
 #include "context.h"
 #include "colormac.h"
 #include "macros.h"
-#include "radeon_reg.h" /* gets definition for usleep */
 #include "r200_context.h"
-#include "r200_state.h"
 #include "r200_ioctl.h"
-#include "r200_swtcl.h"
 #include "r200_tex.h"
+#include "radeon_reg.h"
 
 #include <unistd.h>  /* for usleep() */
 
@@ -253,12 +251,13 @@ static void r200UploadRectSubImage( r200ContextPtr rmesa,
 
 	 /* Blit to framebuffer
 	  */
-	 r200EmitBlit( rmesa, 
-		       blit_format, 
-		       dstPitch, GET_START( &region ),   
-		       dstPitch, t->bufAddr,
-		       0, 0, 
-		       0, done, 
+	 r200EmitBlit( rmesa,
+		       blit_format,
+		       dstPitch, GET_START( &region ),
+		       dstPitch | (t->tile_bits >> 16),
+		       t->bufAddr,
+		       0, 0,
+		       0, done,
 		       width, lines );
 	 
 	 r200EmitWait( rmesa, RADEON_WAIT_2D );
@@ -339,7 +338,7 @@ static void uploadSubImage( r200ContextPtr rmesa, r200TexObjPtr t,
    imageWidth = texImage->Width;
    imageHeight = texImage->Height;
 
-   offset = t->bufAddr;
+   offset = t->bufAddr + t->base.totalSize / 6 * face;
 
    if ( R200_DEBUG & (DEBUG_TEXTURE|DEBUG_IOCTL) ) {
       GLint imageX = 0;
@@ -363,19 +362,47 @@ static void uploadSubImage( r200ContextPtr rmesa, r200TexObjPtr t,
     * We used to use 1, 2 and 4-byte texels and used to use the texture
     * width to dictate the blit width - but that won't work for compressed
     * textures. (Brian)
+    * NOTE: can't do that with texture tiling. (sroland)
     */
    tex.offset = offset;
-   tex.pitch = BLIT_WIDTH_BYTES / 64;
-   tex.format = R200_TXFORMAT_I8; /* any 1-byte texel format */
+   tex.image = &tmp;
+   /* copy (x,y,width,height,data) */
+   memcpy( &tmp, &t->image[face][hwlevel], sizeof(tmp) );
+   
    if (texImage->TexFormat->TexelBytes) {
-      tex.width = imageWidth * texImage->TexFormat->TexelBytes; /* in bytes */
+      /* use multi-byte upload scheme */
       tex.height = imageHeight;
+      tex.width = imageWidth;
+      tex.format = t->pp_txformat & R200_TXFORMAT_FORMAT_MASK;
+      tex.pitch = MAX2((texImage->Width * texImage->TexFormat->TexelBytes) / 64, 1);
+      tex.offset += tmp.x & ~1023;
+      tmp.x = tmp.x % 1024;
+      if (t->tile_bits & R200_TXO_MICRO_TILE) {
+	 /* need something like "tiled coordinates" ? */
+	 tmp.y = tmp.x / (tex.pitch * 128) * 2;
+	 tmp.x = tmp.x % (tex.pitch * 128) / 2 / texImage->TexFormat->TexelBytes;
+	 tex.pitch |= RADEON_DST_TILE_MICRO >> 22;
+      }
+      else {
+	 tmp.x = tmp.x >> (texImage->TexFormat->TexelBytes >> 1);
+      }
+      if ((t->tile_bits & R200_TXO_MACRO_TILE) &&
+	 (texImage->Width * texImage->TexFormat->TexelBytes >= 256) &&
+	 ((!(t->tile_bits & R200_TXO_MICRO_TILE) && (texImage->Height >= 8)) ||
+	    (texImage->Height >= 16))) {
+	 /* weird: R200 disables macro tiling if mip width is smaller than 256 bytes,
+	    OR if height is smaller than 8 automatically, but if micro tiling is active
+	    the limit is height 16 instead ? */
+	 tex.pitch |= RADEON_DST_TILE_MACRO >> 22;
+      }
    }
    else {
       /* In case of for instance 8x8 texture (2x2 dxt blocks), padding after the first two blocks is
          needed (only with dxt1 since 2 dxt3/dxt5 blocks already use 32 Byte). */
       /* set tex.height to 1/4 since 1 "macropixel" (dxt-block) has 4 real pixels. Needed
          so the kernel module reads the right amount of data. */
+      tex.format = R200_TXFORMAT_I8; /* any 1-byte texel format */
+      tex.pitch = (BLIT_WIDTH_BYTES / 64);
       tex.height = (imageHeight + 3) / 4;
       tex.width = (imageWidth + 3) / 4;
       switch (t->pp_txformat & R200_TXFORMAT_FORMAT_MASK) {
@@ -390,19 +417,7 @@ static void uploadSubImage( r200ContextPtr rmesa, r200TexObjPtr t,
           fprintf(stderr, "unknown compressed tex format in uploadSubImage\n");
       }
    }
-   tex.image = &tmp;
 
-   /* copy (x,y,width,height,data) */
-   memcpy( &tmp, &t->image[face][hwlevel], sizeof(tmp) );
-
-   /* Adjust the base offset to account for the Y-offset.  This is done,
-    * instead of just letting the Y-offset automatically take care of it,
-    * because it is possible, for very large textures, for the Y-offset
-    * to exceede the [-8192,+8191] range.
-    */
-   tex.offset += tmp.y * 1024;
-   tmp.y = 0;
-    
    LOCK_HARDWARE( rmesa );
    do {
       ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_TEXTURE,
@@ -473,7 +488,11 @@ int r200UploadTexImages( r200ContextPtr rmesa, r200TexObjPtr t, GLuint face )
       t->bufAddr = rmesa->r200Screen->texOffset[heap] 
 	   + t->base.memBlock->ofs;
       t->pp_txoffset = t->bufAddr;
-
+       
+      if (!(t->base.tObj->Image[0][0]->IsClientData)) {
+	 /* hope it's safe to add that here... */
+	 t->pp_txoffset |= t->tile_bits;
+      }
 
       /* Mark this texobj as dirty on all units:
        */

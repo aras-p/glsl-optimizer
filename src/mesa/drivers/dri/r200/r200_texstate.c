@@ -125,8 +125,8 @@ static void r200SetTexImages( r200ContextPtr rmesa,
 {
    r200TexObjPtr t = (r200TexObjPtr)tObj->DriverData;
    const struct gl_texture_image *baseImage = tObj->Image[0][tObj->BaseLevel];
-   GLint curOffset;
-   GLint i;
+   GLint curOffset, blitWidth;
+   GLint i, texelBytes;
    GLint numLevels;
    GLint log2Width, log2Height, log2Depth;
 
@@ -146,6 +146,7 @@ static void r200SetTexImages( r200ContextPtr rmesa,
       return;
    }
 
+   texelBytes = baseImage->TexFormat->TexelBytes;
 
    /* Compute which mipmap levels we really want to send to the hardware.
     */
@@ -164,6 +165,28 @@ static void r200SetTexImages( r200ContextPtr rmesa,
     * memory organized as a rectangle of width BLIT_WIDTH_BYTES.
     */
    curOffset = 0;
+   blitWidth = BLIT_WIDTH_BYTES;
+   t->tile_bits = 0;
+
+   /* figure out if this texture is suitable for tiling. */
+   if (texelBytes) {
+      if (rmesa->texmicrotile  && (tObj->Target != GL_TEXTURE_RECTANGLE_NV) &&
+      /* texrect might be able to use micro tiling too in theory? */
+	 (baseImage->Height > 1)) {
+	 /* allow 32 (bytes) x 1 mip (which will use two times the space
+	 the non-tiled version would use) max if base texture is large enough */
+	 if ((numLevels == 1) ||
+	   (((baseImage->Width * texelBytes / baseImage->Height) <= 32) &&
+	       (baseImage->Width * texelBytes > 64)) ||
+	    ((baseImage->Width * texelBytes / baseImage->Height) <= 16)) {
+	    t->tile_bits |= R200_TXO_MICRO_TILE;
+	 }
+      }
+      if (tObj->Target != GL_TEXTURE_RECTANGLE_NV) {
+	 /* we can set macro tiling even for small textures, they will be untiled anyway */
+	 t->tile_bits |= R200_TXO_MACRO_TILE;
+      }
+   }
 
    for (i = 0; i < numLevels; i++) {
       const struct gl_texture_image *texImage;
@@ -195,17 +218,22 @@ static void r200SetTexImages( r200ContextPtr rmesa,
             else size = texImage->CompressedSize;
       }
       else if (tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
-         size = ((texImage->Width * texImage->TexFormat->TexelBytes + 63)
-                 & ~63) * texImage->Height;
+	 size = ((texImage->Width * texelBytes + 63) & ~63) * texImage->Height;
+      }
+      else if (t->tile_bits & R200_TXO_MICRO_TILE) {
+	 /* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
+	    though the actual offset may be different (if texture is less than
+	    32 bytes width) to the untiled case */
+	 int w = (texImage->Width * texelBytes * 2 + 31) & ~31;
+	 size = (w * ((texImage->Height + 1) / 2)) * texImage->Depth;
+	 blitWidth = MAX2(texImage->Width, 64 / texelBytes);
       }
       else {
-         int w = texImage->Width * texImage->TexFormat->TexelBytes;
-         if (w < 32)
-            w = 32;
-         size = w * texImage->Height * texImage->Depth;
+	 int w = (texImage->Width * texelBytes + 31) & ~31;
+	 size = w * texImage->Height * texImage->Depth;
+	 blitWidth = MAX2(texImage->Width, 64 / texelBytes);
       }
       assert(size > 0);
-
 
       /* Align to 32-byte offset.  It is faster to do this unconditionally
        * (no branch penalty).
@@ -213,10 +241,18 @@ static void r200SetTexImages( r200ContextPtr rmesa,
 
       curOffset = (curOffset + 0x1f) & ~0x1f;
 
-      t->image[0][i].x = curOffset % BLIT_WIDTH_BYTES;
-      t->image[0][i].y = curOffset / BLIT_WIDTH_BYTES;
-      t->image[0][i].width  = MIN2(size, BLIT_WIDTH_BYTES);
-      t->image[0][i].height = size / t->image[0][i].width;
+      if (texelBytes) {
+	 t->image[0][i].x = curOffset; /* fix x and y coords up later together with offset */
+	 t->image[0][i].y = 0;
+	 t->image[0][i].width = MIN2(size / texelBytes, blitWidth);
+	 t->image[0][i].height = (size / texelBytes) / t->image[0][i].width;
+      }
+      else {
+         t->image[0][i].x = curOffset % BLIT_WIDTH_BYTES;
+         t->image[0][i].y = curOffset / BLIT_WIDTH_BYTES;
+         t->image[0][i].width  = MIN2(size, BLIT_WIDTH_BYTES);
+         t->image[0][i].height = size / t->image[0][i].width;     
+      }
 
 #if 0
       /* for debugging only and only  applicable to non-rectangle targets */
@@ -242,16 +278,13 @@ static void r200SetTexImages( r200ContextPtr rmesa,
 
    /* Setup remaining cube face blits, if needed */
    if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
-      /* Round totalSize up to multiple of BLIT_WIDTH_BYTES */
-      const GLuint faceSize = (t->base.totalSize + BLIT_WIDTH_BYTES - 1)
-                              & ~(BLIT_WIDTH_BYTES-1);
-      const GLuint lines = faceSize / BLIT_WIDTH_BYTES;
+      const GLuint faceSize = t->base.totalSize;
       GLuint face;
-      /* reuse face 0 x/y/width/height - just adjust y */
+      /* reuse face 0 x/y/width/height - just update the offset when uploading */
       for (face = 1; face < 6; face++) {
          for (i = 0; i < numLevels; i++) {
             t->image[face][i].x =  t->image[0][i].x;
-            t->image[face][i].y =  t->image[0][i].y + face * lines;
+            t->image[face][i].y =  t->image[0][i].y;
             t->image[face][i].width  = t->image[0][i].width;
             t->image[face][i].height = t->image[0][i].height;
          }
@@ -310,7 +343,7 @@ static void r200SetTexImages( r200ContextPtr rmesa,
    if (baseImage->IsCompressed)
       t->pp_txpitch = (tObj->Image[0][t->base.firstLevel]->Width + 63) & ~(63);
    else
-      t->pp_txpitch = ((tObj->Image[0][t->base.firstLevel]->Width * baseImage->TexFormat->TexelBytes) + 63) & ~(63);
+      t->pp_txpitch = ((tObj->Image[0][t->base.firstLevel]->Width * texelBytes) + 63) & ~(63);
    t->pp_txpitch -= 32;
 
    t->dirty_state = TEX_ALL;

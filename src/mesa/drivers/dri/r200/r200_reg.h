@@ -968,6 +968,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_TXO_ENDIAN_BYTE_SWAP   (1 << 0)
 #define     R200_TXO_ENDIAN_WORD_SWAP   (2 << 0)
 #define     R200_TXO_ENDIAN_HALFDW_SWAP (3 << 0)
+#define     R200_TXO_MACRO_TILE         (1 << 2)
+#define     R200_TXO_MICRO_TILE         (1 << 3)
 #define     R200_TXO_OFFSET_MASK        0xffffffe0
 #define     R200_TXO_OFFSET_SHIFT       5
 #define R200_PP_CUBIC_OFFSET_F1_0         0x2d04
