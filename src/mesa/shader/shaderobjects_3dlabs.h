@@ -33,5 +33,8 @@ _mesa_3dlabs_create_shader_object (GLenum);
 extern GLhandleARB
 _mesa_3dlabs_create_program_object (void);
 
+extern void
+_mesa_init_shaderobjects_3dlabs (GLcontext *ctx);
+
 #endif
 
