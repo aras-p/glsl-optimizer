@@ -1,4 +1,4 @@
-/* $Id: imports.h,v 1.10 2003/01/14 03:00:54 brianp Exp $ */
+/* $Id: imports.h,v 1.11 2003/01/14 03:05:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -174,7 +174,7 @@ extern int
 _mesa_atoi( const char *s );
 
 extern float
-_mesa_strtof( const char *s, const char **end );
+_mesa_strtof( const char *s, char **end );
 
 extern int
 _mesa_sprintf( char *str, const char *fmt, ... );
