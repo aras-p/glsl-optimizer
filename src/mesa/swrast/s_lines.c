@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.10 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_lines.c,v 1.11 2001/02/16 18:14:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,7 @@
 
 
 #include "glheader.h"
+#include "colormac.h"
 #include "macros.h"
 #include "mmath.h"
 #include "s_aaline.h"
@@ -909,6 +910,22 @@ static void flat_multitextured_line( GLcontext *ctx,
 }
 
 
+void _swrast_add_spec_terms_line( GLcontext *ctx, 
+				  const SWvertex *v0,
+				  const SWvertex *v1 )
+{
+   SWvertex *ncv0 = (SWvertex *)v0;
+   SWvertex *ncv1 = (SWvertex *)v1;
+   GLchan c[2][4];
+   COPY_CHAN4( c[0], ncv0->color );
+   COPY_CHAN4( c[1], ncv1->color );
+   ACC_3V( ncv0->color, ncv0->specular );
+   ACC_3V( ncv1->color, ncv1->specular );
+   SWRAST_CONTEXT(ctx)->SpecLine( ctx, ncv0, ncv1 );
+   COPY_CHAN4( ncv0->color, c[0] );
+   COPY_CHAN4( ncv1->color, c[1] );
+}
+
 
 #ifdef DEBUG
 extern void
@@ -978,9 +995,8 @@ _swrast_choose_line( GLcontext *ctx )
          ASSERT(swrast->Triangle);
       }
       else if (ctx->Texture._ReallyEnabled) {
-         if (swrast->_MultiTextureEnabled
-             || ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR
- 	     || ctx->Fog.ColorSumEnabled) {
+         if (swrast->_MultiTextureEnabled ||
+	     (ctx->_TriangleCaps & DD_SEPERATE_SPECULAR)) {
             /* multi-texture and/or separate specular color */
             if (ctx->Light.ShadeModel==GL_SMOOTH)
                swrast->Line = smooth_multitextured_line;

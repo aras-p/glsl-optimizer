@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.12 2001/01/29 21:47:13 brianp Exp $ */
+/* $Id: s_context.c,v 1.13 2001/02/16 18:14:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,6 @@
 #include "s_points.h"
 #include "s_lines.h"
 #include "s_triangle.h"
-#include "s_quads.h"
 #include "s_blend.h"
 #include "s_context.h"
 #include "s_texture.h"
@@ -153,31 +152,32 @@ _swrast_update_hint( GLcontext *ctx )
 			       swrast->AllowPixelFog));
 }
 
-#define _SWRAST_NEW_TRIANGLE (_NEW_RENDERMODE|		\
-                              _NEW_POLYGON|		\
-                              _NEW_DEPTH|		\
-                              _NEW_STENCIL|		\
-                              _NEW_COLOR|		\
-                              _NEW_TEXTURE|		\
-                              _NEW_HINT|		\
-                              _SWRAST_NEW_RASTERMASK|	\
-                              _NEW_LIGHT|		\
-                              _NEW_FOG)
+#define _SWRAST_NEW_TRIANGLE (_NEW_RENDERMODE|			\
+                              _NEW_POLYGON|			\
+                              _NEW_DEPTH|			\
+                              _NEW_STENCIL|			\
+                              _NEW_COLOR|			\
+                              _NEW_TEXTURE|			\
+                              _NEW_HINT|			\
+                              _SWRAST_NEW_RASTERMASK|		\
+                              _NEW_LIGHT|			\
+                              _NEW_FOG |			\
+			      _DD_NEW_SEPERATE_SPECULAR)
 
-#define _SWRAST_NEW_LINE (_NEW_RENDERMODE|	\
-                          _NEW_LINE|		\
-                          _NEW_TEXTURE|		\
-                          _NEW_LIGHT|		\
-                          _NEW_FOG|		\
-                          _NEW_DEPTH)
+#define _SWRAST_NEW_LINE (_NEW_RENDERMODE|		\
+                          _NEW_LINE|			\
+                          _NEW_TEXTURE|			\
+                          _NEW_LIGHT|			\
+                          _NEW_FOG|			\
+                          _NEW_DEPTH |			\
+                          _DD_NEW_SEPERATE_SPECULAR)
 
-#define _SWRAST_NEW_POINT (_NEW_RENDERMODE |	\
-			   _NEW_POINT |		\
-			   _NEW_TEXTURE |	\
-			   _NEW_LIGHT |		\
-			   _NEW_FOG)
-
-#define _SWRAST_NEW_QUAD  0
+#define _SWRAST_NEW_POINT (_NEW_RENDERMODE |		\
+			   _NEW_POINT |			\
+			   _NEW_TEXTURE |		\
+			   _NEW_LIGHT |			\
+			   _NEW_FOG |			\
+                           _DD_NEW_SEPERATE_SPECULAR)
 
 #define _SWRAST_NEW_TEXTURE_SAMPLE_FUNC _NEW_TEXTURE
 
@@ -189,19 +189,6 @@ _swrast_update_hint( GLcontext *ctx )
  * after a state change.
  */
 static void
-_swrast_validate_quad( GLcontext *ctx,
-		       const SWvertex *v0, const SWvertex *v1,
-                       const SWvertex *v2, const SWvertex *v3 )
-{
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-
-   _swrast_validate_derived( ctx );
-   swrast->choose_quad( ctx );
-
-   swrast->Quad( ctx, v0, v1, v2, v3 );
-}
-
-static void
 _swrast_validate_triangle( GLcontext *ctx,
 			   const SWvertex *v0,
                            const SWvertex *v1,
@@ -211,6 +198,12 @@ _swrast_validate_triangle( GLcontext *ctx,
 
    _swrast_validate_derived( ctx );
    swrast->choose_triangle( ctx );
+
+   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) && 
+       !ctx->Texture._ReallyEnabled) {
+      swrast->SpecTriangle = swrast->Triangle;
+      swrast->Triangle = _swrast_add_spec_terms_triangle;
+   }
 
    swrast->Triangle( ctx, v0, v1, v2 );
 }
@@ -223,6 +216,13 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
    _swrast_validate_derived( ctx );
    swrast->choose_line( ctx );
 
+   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) && 
+       !ctx->Texture._ReallyEnabled) {
+      swrast->SpecLine = swrast->Line;
+      swrast->Line = _swrast_add_spec_terms_line;
+   }
+
+
    swrast->Line( ctx, v0, v1 );
 }
 
@@ -233,6 +233,12 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
 
    _swrast_validate_derived( ctx );
    swrast->choose_point( ctx );
+
+   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) && 
+       !ctx->Texture._ReallyEnabled) {
+      swrast->SpecPoint = swrast->Point;
+      swrast->Point = _swrast_add_spec_terms_point;
+   }
 
    swrast->Point( ctx, v0 );
 }
@@ -302,9 +308,6 @@ _swrast_invalidate_state( GLcontext *ctx, GLuint new_state )
    if (new_state & swrast->invalidate_point)
       swrast->Point = _swrast_validate_point;
 
-   if (new_state & swrast->invalidate_quad)
-      swrast->Quad = _swrast_validate_quad;
-
    if (new_state & _SWRAST_NEW_BLEND_FUNC)
       swrast->BlendFunc = _swrast_validate_blend_func;
 
@@ -350,12 +353,8 @@ _swrast_Quad( GLcontext *ctx,
 	      const SWvertex *v0, const SWvertex *v1,
               const SWvertex *v2, const SWvertex *v3 )
 {
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
-/*     _swrast_print_vertex( ctx, v0 ); */
-/*     _swrast_print_vertex( ctx, v1 ); */
-/*     _swrast_print_vertex( ctx, v2 ); */
-/*     _swrast_print_vertex( ctx, v3 ); */
-   SWRAST_CONTEXT(ctx)->Quad( ctx, v0, v1, v2, v3 );
+   SWRAST_CONTEXT(ctx)->Triangle( ctx, v0, v1, v2 );
+   SWRAST_CONTEXT(ctx)->Triangle( ctx, v0, v2, v3 );
 }
 
 void
@@ -432,17 +431,14 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->choose_point = _swrast_choose_point;
    swrast->choose_line = _swrast_choose_line;
    swrast->choose_triangle = _swrast_choose_triangle;
-   swrast->choose_quad = _swrast_choose_quad;
 
    swrast->invalidate_point = _SWRAST_NEW_POINT;
    swrast->invalidate_line = _SWRAST_NEW_LINE;
    swrast->invalidate_triangle = _SWRAST_NEW_TRIANGLE;
-   swrast->invalidate_quad = _SWRAST_NEW_QUAD;
 
    swrast->Point = _swrast_validate_point;
    swrast->Line = _swrast_validate_line;
    swrast->Triangle = _swrast_validate_triangle;
-   swrast->Quad = _swrast_validate_quad;
    swrast->InvalidateState = _swrast_sleep;
    swrast->BlendFunc = _swrast_validate_blend_func;
 

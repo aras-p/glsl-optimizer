@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.7 2001/02/16 00:35:35 keithw Exp $ */
+/* $Id: t_vb_light.c,v 1.8 2001/02/16 18:14:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -174,8 +174,7 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
    
    if (ctx->Visual.rgbMode) {
       if (ctx->Light._NeedVertices) {
-	 if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR && 
-	     ctx->Texture._ReallyEnabled) 
+	 if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
 	    tab = _tnl_light_spec_tab;
 	 else
 	    tab = _tnl_light_tab;	 
@@ -271,8 +270,7 @@ static void check_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
 	 stage->inputs |= VERT_RGBA;
 
       stage->outputs = VERT_RGBA;
-      if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR &&
-          ctx->Texture._ReallyEnabled)
+      if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
 	 stage->outputs |= VERT_SPEC_RGB;
    }
 }
@@ -309,9 +307,8 @@ static void dtr( struct gl_pipeline_stage *stage )
 const struct gl_pipeline_stage _tnl_lighting_stage = 
 { 
    "lighting",
-   _NEW_LIGHT|_NEW_TEXTURE,	/* recheck; texture for seperate_specular */
-   _NEW_LIGHT|_NEW_MODELVIEW|
-   _NEW_TEXTURE,		/* recalc -- modelview dependency
+   _NEW_LIGHT,			/* recheck */
+   _NEW_LIGHT|_NEW_MODELVIEW,	/* recalc -- modelview dependency
 				 * otherwise not captured by inputs
 				 * (which may be VERT_OBJ) */
    0,0,0,			/* active, inputs, outputs */

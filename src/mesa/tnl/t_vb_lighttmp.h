@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.7 2001/02/16 00:35:35 keithw Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.8 2001/02/16 18:14:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -524,19 +524,20 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
    if (stage->changed_inputs == 0)
       return;
 
-   if ( CHECK_COLOR_MATERIAL(j) ) 
-      gl_update_color_material( ctx, (GLchan *)CMcolor[j] );
-
-   if ( CHECK_MATERIAL(j) ) 
-      gl_update_material( ctx, new_material[j], new_material_mask[j] );
-
-   if ( CHECK_VALIDATE(j) )
-      gl_validate_all_lighting_tables( ctx );
-
-   baseubyte[0][3] = ctx->Light._BaseAlpha[0];
-   baseubyte[1][3] = ctx->Light._BaseAlpha[1];
-
    do {
+
+      if ( CHECK_COLOR_MATERIAL(j) ) 
+	 gl_update_color_material( ctx, (GLchan *)CMcolor[j] );
+      
+      if ( CHECK_MATERIAL(j) ) 
+	 gl_update_material( ctx, new_material[j], new_material_mask[j] );
+
+      if ( CHECK_VALIDATE(j) )
+	 gl_validate_all_lighting_tables( ctx );
+
+      baseubyte[0][3] = ctx->Light._BaseAlpha[0];
+      baseubyte[1][3] = ctx->Light._BaseAlpha[1];
+
       /* No attenuation, so incoporate _MatAmbient into base color.
        */
       {
@@ -596,17 +597,6 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 	 STRIDE_F(normal, NSTRIDE);
       }
 
-      /* Have to recompute our base colors on material change.
-       */
-      if ( CHECK_MATERIAL(j) ) 
-	 gl_update_material( ctx, new_material[j], new_material_mask[j] );
-
-      if ( CHECK_COLOR_MATERIAL(j) ) 
-	 gl_update_color_material( ctx, (GLchan *)CMcolor[j] );
-
-      if ( CHECK_VALIDATE(j) )
-	 gl_validate_all_lighting_tables( ctx );
-
    } while (!CHECK_END_VB(j));
 } 
 
@@ -651,18 +641,19 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
    if (stage->changed_inputs == 0)
       return;
 
-   if ( CHECK_COLOR_MATERIAL(j) ) 
-      gl_update_color_material( ctx, *CMcolor );
-
-   if ( CHECK_MATERIAL(j) ) 
-      gl_update_material( ctx, new_material[j], new_material_mask[j] );
-
-   if ( CHECK_VALIDATE(j) )
-      gl_validate_all_lighting_tables( ctx );
-
    do {
       do {
 	 GLfloat sum[2][3];
+
+	 if ( CHECK_COLOR_MATERIAL(j) ) 
+	    gl_update_color_material( ctx, CMcolor[j] );
+
+	 if ( CHECK_MATERIAL(j) ) 
+	    gl_update_material( ctx, new_material[j], new_material_mask[j] );
+
+	 if ( CHECK_VALIDATE(j) )
+	    gl_validate_all_lighting_tables( ctx );
+
 
 	 COPY_3V(sum[0], ctx->Light._BaseColor[0]);
 	 if (IDX & LIGHT_TWOSIDE) 
@@ -720,15 +711,6 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 	    COPY_CHAN4(Bcolor[j], Bcolor[j-1]);
 	 STRIDE_F(normal, NSTRIDE);
       }
-
-      if ( CHECK_COLOR_MATERIAL(j) ) 
-	 gl_update_color_material( ctx, CMcolor[j] );
-
-      if ( CHECK_MATERIAL(j) ) 
-	 gl_update_material( ctx, new_material[j], new_material_mask[j] );
-
-      if ( CHECK_VALIDATE(j) )
-	 gl_validate_all_lighting_tables( ctx );
 
    } while (!CHECK_END_VB(j));
 } 

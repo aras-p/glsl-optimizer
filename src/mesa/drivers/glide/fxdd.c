@@ -654,8 +654,7 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
 }
 
 static const struct gl_pipeline_stage *fx_pipeline[] = {
-   &_tnl_update_material_stage, /* TODO: Add the fastpath here */
-   &_tnl_vertex_transform_stage, 
+   &_tnl_vertex_transform_stage, /* TODO: Add the fastpath here */
    &_tnl_normal_transform_stage, 
    &_tnl_lighting_stage,	
    &_tnl_fog_coordinate_stage,	/* TODO: Omit fog stage */

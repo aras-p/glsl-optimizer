@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.41 2001/02/13 23:51:34 brianp Exp $ */
+/* $Id: enable.c,v 1.42 2001/02/16 18:14:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -273,6 +273,14 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       ctx->Light.Enabled = state;
       ctx->_Enabled ^= ENABLE_LIGHT;
+
+      if ((ctx->Light.Enabled &&
+	   ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
+	  || ctx->Fog.ColorSumEnabled)
+	 ctx->_TriangleCaps |= DD_SEPERATE_SPECULAR; 
+      else
+	 ctx->_TriangleCaps &= ~DD_SEPERATE_SPECULAR; 
+
       break;
    case GL_LINE_SMOOTH:
       if (ctx->Line.SmoothFlag == state) 
@@ -724,7 +732,14 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 return;
       FLUSH_VERTICES(ctx, _NEW_FOG);
       ctx->Fog.ColorSumEnabled = state;
-      ctx->_TriangleCaps ^= DD_SEPERATE_SPECULAR;
+      
+      if ((ctx->Light.Enabled &&
+	   ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
+	  || ctx->Fog.ColorSumEnabled)
+	 ctx->_TriangleCaps |= DD_SEPERATE_SPECULAR; 
+      else
+	 ctx->_TriangleCaps &= ~DD_SEPERATE_SPECULAR; 
+
       break;
 
       /* GL_MESA_sprite_point */

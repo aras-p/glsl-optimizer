@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.13 2001/02/16 00:35:35 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.14 2001/02/16 18:14:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,18 +60,6 @@
 #include "math/m_xform.h"
 
 #include "t_pipeline.h"
-
-
-
-/*  typedef void (*clip_line_func)( GLcontext *ctx, */
-/*  				GLuint i, GLuint j, */
-/*  				GLubyte mask); */
-
-/*  typedef void (*clip_poly_func)( GLcontext *ctx, */
-/*  				GLuint n, GLuint vlist[], */
-/*  				GLubyte mask ); */
-
-
 
 
 
@@ -184,7 +172,7 @@ do {							\
 #define TAG(x) clip_##x##_verts
 #define INIT(x) ctx->Driver.RenderPrimitive( ctx, x )
 #define RESET_STIPPLE if (stipple) ctx->Driver.ResetLineStipple( ctx )
-#define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE;
+#define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE
 #define PRESERVE_VB_DEFS
 #include "t_vb_rendertmp.h"
 
@@ -268,7 +256,7 @@ static void clip_elt_triangles( GLcontext *ctx,
     (void) elt;
 
 #define RESET_STIPPLE ctx->Driver.ResetLineStipple( ctx )
-#define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE;
+#define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE
 #define INIT(x) ctx->Driver.RenderPrimitive( ctx, x )
 #define RENDER_TAB_QUALIFIER 
 #define PRESERVE_VB_DEFS
@@ -337,8 +325,6 @@ static GLboolean run_render( GLcontext *ctx,
 	 length= VB->PrimitiveLength[i];	
 	 ASSERT(length || (flags & PRIM_LAST));
 	 ASSERT((flags & PRIM_MODE_MASK) <= GL_POLYGON+1);
-/*  	 fprintf(stderr, "Render %s %d..%d\n", */
-/*  		 _mesa_prim_name[flags&PRIM_MODE_MASK], i, i+length); */
 	 if (length)
 	    tab[flags & PRIM_MODE_MASK]( ctx, i, i + length, flags );
       }

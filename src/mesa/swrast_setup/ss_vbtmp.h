@@ -78,6 +78,14 @@ static void TAG(rs)(GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
       }
    }
 
+   /* Tie up some dangling pointers for flat/twoside code in ss_tritmp.h
+    */
+   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) == 0) {
+      VB->SecondaryColorPtr[0] = VB->ColorPtr[0];
+      VB->SecondaryColorPtr[1] = VB->ColorPtr[1];
+   }
+     
+
    proj = VB->ProjectedClipPtr->data;
    if (IND & FOG)
       fog = VB->FogCoordPtr->data;   

@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.12 2001/02/07 18:44:55 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.13 2001/02/16 18:14:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,7 @@
 
 #include "glheader.h"
 #include "context.h"
+#include "colormac.h"
 #include "macros.h"
 #include "mem.h"
 #include "mmath.h"
@@ -2232,6 +2233,27 @@ static void occlusion_zless_triangle( GLcontext *ctx,
 
 
 
+void _swrast_add_spec_terms_triangle( GLcontext *ctx,
+				      const SWvertex *v0,
+				      const SWvertex *v1,
+				      const SWvertex *v2 )
+{
+   SWvertex *ncv0 = (SWvertex *)v0; /* drop const qualifier */
+   SWvertex *ncv1 = (SWvertex *)v1;
+   SWvertex *ncv2 = (SWvertex *)v2;
+   GLchan c[3][4];
+   COPY_CHAN4( c[0], ncv0->color );
+   COPY_CHAN4( c[1], ncv1->color );
+   COPY_CHAN4( c[2], ncv2->color );
+   ACC_3V( ncv0->color, ncv0->specular );
+   ACC_3V( ncv1->color, ncv1->specular );
+   ACC_3V( ncv2->color, ncv2->specular );
+   SWRAST_CONTEXT(ctx)->SpecTriangle( ctx, ncv0, ncv1, ncv2 );
+   COPY_CHAN4( ncv0->color, c[0] );
+   COPY_CHAN4( ncv1->color, c[1] );
+   COPY_CHAN4( ncv2->color, c[2] );   
+}
+
 
 
 #if 0
@@ -2358,9 +2380,7 @@ _swrast_choose_triangle( GLcontext *ctx )
                swrast->Triangle = lambda_multitextured_triangle;
 	       dputs("lambda_multitextured_triangle");
             }
-            else if ((ctx->Light.Enabled &&
-		      ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
-		     || ctx->Fog.ColorSumEnabled) {
+            else if (ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) {
                /* separate specular color interpolation */
                if (needLambda) {
                   swrast->Triangle = lambda_textured_spec_triangle;
@@ -2387,8 +2407,8 @@ _swrast_choose_triangle( GLcontext *ctx )
 	 if (ctx->Light.ShadeModel==GL_SMOOTH) {
 	    /* smooth shaded, no texturing, stippled or some raster ops */
             if (rgbmode) {
-               dputs("smooth_rgba_triangle");
-               swrast->Triangle = smooth_rgba_triangle;
+	       dputs("smooth_rgba_triangle");
+	       swrast->Triangle = smooth_rgba_triangle;
             }
             else {
                dputs("smooth_ci_triangle");
@@ -2398,8 +2418,8 @@ _swrast_choose_triangle( GLcontext *ctx )
 	 else {
 	    /* flat shaded, no texturing, stippled or some raster ops */
             if (rgbmode) {
-               dputs("flat_rgba_triangle");
-               swrast->Triangle = flat_rgba_triangle;
+	       dputs("flat_rgba_triangle");
+	       swrast->Triangle = flat_rgba_triangle;
             }
             else {
                dputs("flat_ci_triangle");

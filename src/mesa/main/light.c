@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.37 2001/02/15 01:33:52 keithw Exp $ */
+/* $Id: light.c,v 1.38 2001/02/16 18:14:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -421,7 +421,14 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_LIGHT);
 	 ctx->Light.Model.ColorControl = newenum;
-	 ctx->_TriangleCaps ^= DD_SEPERATE_SPECULAR;
+
+	 if ((ctx->Light.Enabled &&
+	      ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
+	     || ctx->Fog.ColorSumEnabled)
+	    ctx->_TriangleCaps |= DD_SEPERATE_SPECULAR; 
+	 else
+	    ctx->_TriangleCaps &= ~DD_SEPERATE_SPECULAR; 
+
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glLightModel" );

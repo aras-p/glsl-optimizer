@@ -1,4 +1,4 @@
-/* $Id: s_points.c,v 1.12 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_points.c,v 1.13 2001/02/16 18:14:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,7 @@
 
 
 #include "glheader.h"
+#include "colormac.h"
 #include "context.h"
 #include "macros.h"
 #include "mmath.h"
@@ -158,6 +159,18 @@
 
 
 
+void _swrast_add_spec_terms_point( GLcontext *ctx, 
+				   const SWvertex *v0 )
+{
+   SWvertex *ncv0 = (SWvertex *)v0;
+   GLchan c[1][4];
+   COPY_CHAN4( c[0], ncv0->color );
+   ACC_3V( ncv0->color, ncv0->specular );
+   SWRAST_CONTEXT(ctx)->SpecPoint( ctx, ncv0 );
+   COPY_CHAN4( ncv0->color, c[0] );
+}
+
+
 
 /* record the current point function name */
 #ifdef DEBUG
@@ -263,3 +276,4 @@ _swrast_choose_point( GLcontext *ctx )
       USE(gl_select_point);
    }
 }
+

@@ -63,10 +63,6 @@ typedef void (*swrast_line_func)( GLcontext *ctx,
 typedef void (*swrast_tri_func)( GLcontext *ctx, const SWvertex *,
                                  const SWvertex *, const SWvertex *);
 
-typedef void (*swrast_quad_func)( GLcontext *ctx,
-                                  const SWvertex *, const SWvertex *,
-                                  const SWvertex *, const SWvertex *);
-
 
 
 /*
@@ -136,12 +132,10 @@ typedef struct
    void (*choose_point)( GLcontext * );
    void (*choose_line)( GLcontext * );
    void (*choose_triangle)( GLcontext * );
-   void (*choose_quad)( GLcontext * );
 
    GLuint invalidate_point;
    GLuint invalidate_line;
    GLuint invalidate_triangle;
-   GLuint invalidate_quad;
 
 
    /* Function pointers for dispatch behind public entrypoints.
@@ -151,7 +145,14 @@ typedef struct
    swrast_point_func Point;
    swrast_line_func Line;
    swrast_tri_func Triangle;
-   swrast_quad_func Quad;
+
+   /* Placeholders for when seperate specular (or secondary color) is
+    * enabled but texturing is not.  
+    */
+   swrast_point_func SpecPoint;
+   swrast_line_func SpecLine;
+   swrast_tri_func SpecTriangle;
+
 
    /* Internal hooks, kept uptodate by the same mechanism as above.
     */
