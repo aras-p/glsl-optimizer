@@ -187,8 +187,6 @@ void _tnl_playback_vertex_list( GLcontext *ctx, void *data )
 	 /* Degenerate case: list references current data and would
 	  * require fixup.  Take the easier option & loop it back.
 	  */
-	 _mesa_debug(ctx,
-                     "tnl_playback_vertex_list: loopback dangling attr ref\n");
 	 _tnl_loopback_vertex_list( ctx, (struct tnl_vertex_list *) data );
 	 return;
       }

@@ -51,6 +51,8 @@ static void init_attrfv( TNLcontext *tnl );
 static void _tnl_wrap_buffers( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   GLuint last_prim = tnl->vtx.prim[tnl->vtx.prim_count-1].mode;
+   GLuint last_count = tnl->vtx.prim[tnl->vtx.prim_count-1].count;
 
    if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {
       GLint i = tnl->vtx.prim_count - 1;
@@ -72,6 +74,9 @@ static void _tnl_wrap_buffers( GLcontext *ctx )
       tnl->vtx.prim[0].start = 0;
       tnl->vtx.prim[0].count = 0;
       tnl->vtx.prim_count++;
+      
+      if (tnl->vtx.copied.nr == last_count)
+	 tnl->vtx.prim[0].mode |= last_prim & PRIM_BEGIN;
    }
 }
 
@@ -1008,18 +1013,16 @@ static void _tnl_End( void )
 
       ctx->Driver.CurrentExecPrimitive = GL_POLYGON+1;
 
+      /* Two choices which effect the way vertex attributes are
+       * carried over (or not) between adjacent primitives.
+       */
 #if 0
-      if (tnl->vtx.counter * 2 > tnl->vtx.initial_counter)
-	 _tnl_FlushVertices( ctx, ~0 );
-#endif
-
-      if (tnl->vtx.prim_count == TNL_MAX_PRIM) {
-#if 0
+      if (tnl->vtx.prim_count == TNL_MAX_PRIM) 
 	 _tnl_FlushVertices( ctx, ~0 );
 #else
+      if (tnl->vtx.prim_count == TNL_MAX_PRIM)
 	 _tnl_flush_vtx( ctx );	
 #endif
-      }
 
    }
    else 
