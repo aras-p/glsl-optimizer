@@ -1,10 +1,10 @@
-/* $Id: config.h,v 1.2 1999/11/11 01:22:25 brianp Exp $ */
+/* $Id: config.h,v 1.3 2000/01/13 00:34:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -197,6 +197,10 @@
 
 typedef struct gl_context GLcontext;
 
-extern void gl_read_config_file( struct gl_context *ctx );
+extern void
+gl_read_config_file( struct gl_context *ctx );
+
+extern void
+gl_register_config_var(const char *name, void (*notify)( const char *, int ));
 
 #endif
