@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.33 2003/01/20 15:20:27 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.34 2003/01/28 00:14:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -124,10 +124,10 @@
       const GLfloat botDx = vMid->win[0] - vMin->win[0];
       const GLfloat botDy = vMid->win[1] - vMin->win[1];
       const GLfloat area = majDx * botDy - botDx * majDy;
-      ltor = (GLboolean) (area < 0.0F);
       /* Do backface culling */
       if (area * bf < 0 || area == 0 || IS_INF_OR_NAN(area))
 	 return;
+      ltor = (GLboolean) (area < 0.0F);
    }
 
 #ifndef DO_OCCLUSION_TEST
