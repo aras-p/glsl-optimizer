@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: fakeglx.c,v 1.2 1999/09/03 11:53:33 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1172,49 +1172,7 @@ Bool Fake_glXIsDirect( Display *dpy, GLXContext ctx )
 void Fake_glXSwapBuffers( Display *dpy, GLXDrawable drawable )
 {
    XMesaBuffer buffer = XMesaFindBuffer( dpy, drawable );
-   static GLXDrawable last = 0;
-   static Window window = 0;
-   if (drawable != last && 0) {
-      XSetWindowAttributes cwa;
 
-      _kw_ungrab_all( dpy );
-      cwa.override_redirect = 0;
-      XChangeWindowAttributes( dpy, drawable, CWOverrideRedirect,
-			       &cwa );
-/*       printf("KW: Ungrab display %s\n", DisplayString(dpy)); */
-
-
-/*       last = drawable; */
-
-
-      if (!window) {
-	 XSetWindowAttributes cwa;
-
-	 if ((window = XCreateSimpleWindow( dpy, 
-					    RootWindow( dpy, 0 ),
-					    10,10,100,100, 0, 
-					    WhitePixel( dpy, 0 ),
-					    BlackPixel( dpy, 0 ))) == 0)
-	 {
-	    printf("Failed to open radar window\n");
-	    abort();
-	 }
-   
-	 cwa.event_mask = (PointerMotionMask |
-			   ButtonPressMask |
-			   ButtonReleaseMask |
-			   KeyPressMask |
-			   KeyReleaseMask |
-			   ExposureMask );
-
-	 XChangeWindowAttributes( dpy, window, 
-				  CWEventMask,
-				  &cwa );
-
-	 XMapWindow( dpy, window );
-	 XFlush( dpy );
-      }
-   }
    if (buffer) {
       XMesaSwapBuffers(buffer);
    }
