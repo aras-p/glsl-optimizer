@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.26 2001/03/26 20:02:38 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.27 2001/03/26 23:36:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,14 +35,12 @@
  *   DISPATCH(func, args, msg) - code to do dispatch of named function.
  *                               msg is a printf-style debug message.
  *   RETURN_DISPATCH(func, args, msg) - code to do dispatch with a return value
- *   DO_GEOMETRY - if defined, build functions valid inside Begin/End
  *   DO_INIT     - if defined, emit an init function.
  *   INIT        - Macro invoked once per api function in the init function.
  *
  * Here's an example which generates the usual OpenGL functions:
  *   #define KEYWORD1
  *   #define KEYWORD2
- *   #define DO_GEOMETRY
  *   #define NAME(func)  gl##func
  *   #define DISPATCH(func, args, msg)                           \
  *          struct _glapi_table *dispatch = CurrentDispatch;     \
@@ -2503,15 +2501,6 @@ KEYWORD1 void KEYWORD2 NAME(GetCompressedTexImageARB)(GLenum target, GLint lod, 
 
 
 
-/***
- *** Functions which are valid inside begin-end.  These are optionally
- *** generated according to 'DO_GEOMETRY'.
- ***/
-
-
-
-#ifdef DO_GEOMETRY
-
 KEYWORD1 void KEYWORD2 NAME(Begin)(GLenum mode)
 {
    DISPATCH(Begin, (mode), (F, "glBegin(0x%x);", mode));
@@ -3417,7 +3406,6 @@ KEYWORD1 void KEYWORD2 NAME(MultiTexCoord4svARB)(GLenum target, const GLshort *v
    DISPATCH(MultiTexCoord4svARB, (target, v), (F, ";"));
 }
 
-#endif
 
 
 /**
@@ -3891,7 +3879,6 @@ static void NAME(InitDispatch)( void )
    INIT(CompressedTexSubImage1DARB);
    INIT(GetCompressedTexImageARB);
 
-#ifdef DO_GEOMETRY
    INIT(Begin);
    INIT(CallList);
    INIT(CallLists);
@@ -4074,7 +4061,6 @@ static void NAME(InitDispatch)( void )
    INIT(MultiTexCoord4sARB);
    INIT(MultiTexCoord4svARB);
    INIT(ArrayElement);
-#endif
 }
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.20 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: dispatch.c,v 1.21 2001/03/26 23:36:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -115,5 +115,4 @@ trace(void)
 #define GLAPIENTRY
 #endif
 
-#define DO_GEOMETRY
 #include "glapitemp.h"
