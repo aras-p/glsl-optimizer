@@ -1,4 +1,4 @@
-/* $Id: cva.c,v 1.2 2000/11/03 00:09:31 gareth Exp $ */
+/* $Id: cva.c,v 1.3 2000/11/30 03:06:56 gareth Exp $ */
 
 /*
  * Trivial CVA test, good for testing driver fastpaths (especially
@@ -19,23 +19,30 @@ GLfloat verts[][4] = {
    { -0.5, -0.5, -2.0, 0.0 },
    {  0.5, -0.5, -2.0, 0.0 },
    { -0.5,  0.5, -2.0, 0.0 },
+   {  0.5,  0.5, -2.0, 0.0 },
 };
 
 GLubyte color[][4] = {
    { 0xff, 0x00, 0x00, 0x00 },
    { 0x00, 0xff, 0x00, 0x00 },
    { 0x00, 0x00, 0xff, 0x00 },
+   { 0xff, 0xff, 0xff, 0x00 },
 };
 
-GLuint indices[] = { 0, 1, 2 };
+GLuint indices[] = { 0, 1, 2, 3 };
 
 GLboolean compiled = GL_TRUE;
+GLboolean doubleBuffer = GL_TRUE;
 
 
 void init( void )
 {
    glClearColor( 0.0, 0.0, 0.0, 0.0 );
    glShadeModel( GL_SMOOTH );
+
+   glFrontFace( GL_CCW );
+   glCullFace( GL_BACK );
+   glEnable( GL_CULL_FACE );
 
    glEnable( GL_DEPTH_TEST );
 
@@ -53,7 +60,7 @@ void init( void )
 
 #ifdef GL_EXT_compiled_vertex_array
    if ( compiled ) {
-      glLockArraysEXT( 0, 3 );
+      glLockArraysEXT( 0, 4 );
    }
 #endif
 }
@@ -65,6 +72,9 @@ void display( void )
    glDrawElements( GL_TRIANGLES, 3, GL_UNSIGNED_INT, indices );
 
    glFlush();
+   if ( doubleBuffer ) {
+      glutSwapBuffers();
+   }
 }
 
 void keyboard( unsigned char key, int x, int y )
@@ -74,14 +84,44 @@ void keyboard( unsigned char key, int x, int y )
          exit( 0 );
          break;
    }
+
+   glutPostRedisplay();
+}
+
+GLboolean args( int argc, char **argv )
+{
+    GLint i;
+
+    doubleBuffer = GL_TRUE;
+
+    for ( i = 1 ; i < argc ; i++ ) {
+	if ( strcmp( argv[i], "-sb" ) == 0 ) {
+	    doubleBuffer = GL_FALSE;
+	} else if ( strcmp( argv[i], "-db" ) == 0 ) {
+	    doubleBuffer = GL_TRUE;
+	} else {
+	    fprintf( stderr, "%s (Bad option).\n", argv[i] );
+	    return GL_FALSE;
+	}
+    }
+    return GL_TRUE;
 }
 
 int main( int argc, char **argv )
 {
+   GLenum type;
    char *string;
 
    glutInit( &argc, argv );
-   glutInitDisplayMode( GLUT_SINGLE | GLUT_RGB | GLUT_DEPTH );
+
+   if ( args( argc, argv ) == GL_FALSE ) {
+      exit( 1 );
+   }
+
+   type = GLUT_RGB | GLUT_DEPTH;
+   type |= ( doubleBuffer ) ? GLUT_DOUBLE : GLUT_SINGLE;
+
+   glutInitDisplayMode( type );
    glutInitWindowSize( 250, 250 );
    glutInitWindowPosition( 100, 100 );
    glutCreateWindow( "CVA Test" );
