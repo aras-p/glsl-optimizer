@@ -22,6 +22,7 @@ SOURCES = antialias.c \
 	bufferobj.c \
 	cva.c \
 	dinoshade.c \
+	floattex.c \
 	fogcoord.c \
 	fptest1.c \
 	fptexture.c \
@@ -33,6 +34,7 @@ SOURCES = antialias.c \
 	seccolor.c \
 	sharedtex.c \
 	stencilwrap.c \
+	swaplock.c \
 	tex1d.c \
 	texline.c \
 	texrect.c \
