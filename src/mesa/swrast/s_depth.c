@@ -1,10 +1,8 @@
-/* $Id: s_depth.c,v 1.26 2003/03/25 02:23:45 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1361,6 +1359,103 @@ _swrast_depth_test_span( GLcontext *ctx, struct sw_span *span)
       return depth_test_pixels(ctx, span);
    else
       return depth_test_span(ctx, span);
+}
+
+
+/**
+ * GL_EXT_depth_bounds_test extension.
+ * Discard fragments depending on whether the corresponding Z-buffer
+ * values are outside the depth bounds test range.
+ * Note: we test the Z buffer values, not the fragment Z values!
+ * \return GL_TRUE if any fragments pass, GL_FALSE if no fragments pass
+ */
+GLboolean
+_swrast_depth_bounds_test( GLcontext *ctx, struct sw_span *span )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLdepth zMin = (GLdepth) (ctx->Depth.BoundsMin * ctx->DepthMaxF + 0.5F);
+   GLdepth zMax = (GLdepth) (ctx->Depth.BoundsMax * ctx->DepthMaxF + 0.5F);
+   GLubyte *mask = span->array->mask;
+   GLuint i;
+   GLboolean anyPass = GL_FALSE;
+
+   if (swrast->Driver.ReadDepthPixels) {
+      /* read depth values from hardware Z buffer */
+      GLdepth zbuffer[MAX_WIDTH];
+      ASSERT(span->end <= MAX_WIDTH);
+      if (span->arrayMask & SPAN_XY)
+         (*swrast->Driver.ReadDepthPixels)(ctx, span->end, span->array->x,
+                                           span->array->y, zbuffer);
+      else
+         (*swrast->Driver.ReadDepthSpan)(ctx, span->end, span->x, span->y,
+                                         zbuffer);
+      for (i = 0; i < span->end; i++) {
+         if (mask[i]) {
+            if (zbuffer[i] < zMin || zbuffer[i] > zMax)
+               mask[i] = GL_FALSE;
+            else
+               anyPass = GL_TRUE;
+         }
+      }
+   }
+   else {
+      /* software Z buffer */
+      if (span->arrayMask & SPAN_XY) {
+         if (ctx->Visual.depthBits <= 16) {
+            /* 16 bits / Z */
+            for (i = 0; i < span->end; i++) {
+               if (mask[i]) {
+                  const GLushort *zPtr = Z_ADDRESS16(ctx, span->array->x[i],
+                                                     span->array->y[i]);
+                  if (*zPtr < zMin || *zPtr > zMax)
+                     mask[i] = GL_FALSE;
+                  else
+                     anyPass = GL_TRUE;
+               }
+            }
+         }
+         else {
+            /* 32 bits / Z */
+            for (i = 0; i < span->end; i++) {
+               if (mask[i]) {
+                  const GLuint *zPtr = Z_ADDRESS32(ctx, span->array->x[i],
+                                                   span->array->y[i]);
+                  if (*zPtr < zMin || *zPtr > zMax)
+                     mask[i] = GL_FALSE;
+                  else
+                     anyPass = GL_TRUE;
+               }
+            }
+         }
+      }
+      else {
+         if (ctx->Visual.depthBits <= 16) {
+            /* 16 bits / Z */
+            const GLushort *zPtr = Z_ADDRESS16(ctx, span->x, span->y);
+            for (i = 0; i < span->end; i++) {
+               if (mask[i]) {
+                  if (zPtr[i] < zMin || zPtr[i] > zMax)
+                     mask[i] = GL_FALSE;
+                  else
+                     anyPass = GL_TRUE;
+               }
+            }
+         }
+         else {
+            /* 32 bits / Z */
+            const GLuint *zPtr = Z_ADDRESS32(ctx, span->x, span->y);
+            for (i = 0; i < span->end; i++) {
+               if (mask[i]) {
+                  if (zPtr[i] < zMin || zPtr[i] > zMax)
+                     mask[i] = GL_FALSE;
+                  else
+                     anyPass = GL_TRUE;
+               }
+            }
+         }
+      }
+   }
+   return anyPass;
 }
 
 

@@ -1,5 +1,3 @@
-/* $Id: state.c,v 1.105 2003/04/21 14:55:17 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -536,10 +534,8 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    /* 268. GL_EXT_stencil_two_side */
    exec->ActiveStencilFaceEXT = _mesa_ActiveStencilFaceEXT;
 
-#if 0
    /* ???. GL_EXT_depth_bounds_test */
    exec->DepthBoundsEXT = _mesa_DepthBoundsEXT;
-#endif
 
    /* ARB 1. GL_ARB_multitexture */
    exec->ActiveTextureARB = _mesa_ActiveTextureARB;

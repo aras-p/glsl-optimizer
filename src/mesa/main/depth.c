@@ -1,10 +1,8 @@
-/* $Id: depth.c,v 1.31 2002/10/24 23:57:20 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -116,3 +114,29 @@ _mesa_DepthMask( GLboolean flag )
    if (ctx->Driver.DepthMask)
       ctx->Driver.DepthMask( ctx, flag );
 }
+
+
+
+/* GL_EXT_depth_bounds_test */
+void
+_mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (zmin > zmax) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glDepthBoundsEXT(zmin > zmax)");
+      return;
+   }
+
+   zmin = CLAMP(zmin, 0.0, 1.0);
+   zmax = CLAMP(zmax, 0.0, 1.0);
+
+   if (ctx->Depth.BoundsMin == zmin && ctx->Depth.BoundsMax == zmax)
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_DEPTH);
+   ctx->Depth.BoundsMin = zmin;
+   ctx->Depth.BoundsMax = zmax;
+}
+

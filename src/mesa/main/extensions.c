@@ -81,6 +81,7 @@ static struct {
    { ON,  "GL_EXT_clip_volume_hint",           F(EXT_clip_volume_hint) },
    { OFF, "GL_EXT_convolution",                F(EXT_convolution) },
    { ON,  "GL_EXT_compiled_vertex_array",      F(EXT_compiled_vertex_array) },
+   { OFF, "GL_EXT_depth_bounds_test",          F(EXT_depth_bounds_test) },
    { OFF, "GL_EXT_fog_coord",                  F(EXT_fog_coord) },
    { OFF, "GL_EXT_histogram",                  F(EXT_histogram) },
    { OFF, "GL_EXT_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
@@ -148,6 +149,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 {
    const char *extensions[] = {
       "GL_ARB_depth_texture",
+#if FEATURE_ARB_fragment_program
+      "GL_ARB_fragment_program",
+#endif
       "GL_ARB_imaging",
       "GL_ARB_multitexture",
       "GL_ARB_point_parameters",
@@ -160,6 +164,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_ARB_texture_env_crossbar",
       "GL_ARB_texture_env_dot3",
       "GL_ARB_texture_mirrored_repeat",
+#if FEATURE_ARB_vertex_program
+      "GL_ARB_vertex_program",
+#endif
       "GL_ATI_texture_env_combine3",
       "GL_ATI_texture_mirror_once",
       "GL_EXT_blend_color",
@@ -168,6 +175,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_EXT_blend_minmax",
       "GL_EXT_blend_subtract",
       "GL_EXT_convolution",
+      "GL_EXT_depth_bounds_test",
       "GL_EXT_fog_coord",
       "GL_EXT_histogram",
       "GL_EXT_paletted_texture",

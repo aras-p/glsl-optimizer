@@ -1,10 +1,8 @@
-/* $Id: s_depth.h,v 1.8 2003/03/25 02:23:45 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,10 +35,12 @@ extern GLvoid *
 _swrast_zbuffer_address(GLcontext *ctx, GLint x, GLint y);
 
 
-
 extern GLuint
 _swrast_depth_test_span( GLcontext *ctx, struct sw_span *span);
 
+
+extern GLboolean
+_swrast_depth_bounds_test( GLcontext *ctx, struct sw_span *span );
 
 
 extern void

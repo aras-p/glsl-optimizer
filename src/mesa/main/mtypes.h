@@ -397,6 +397,8 @@ struct gl_depthbuffer_attrib {
    GLboolean Test;		/* Depth buffering enabled flag */
    GLboolean Mask;		/* Depth buffer writable? */
    GLboolean OcclusionTest;	/* GL_HP_occlusion_test */
+   GLboolean BoundsTest;        /* GL_EXT_depth_bounds_test */
+   GLfloat BoundsMin, BoundsMax;/* GL_EXT_depth_bounds_test */
 };
 
 
@@ -1466,6 +1468,7 @@ struct gl_extensions {
    GLboolean EXT_clip_volume_hint;
    GLboolean EXT_convolution;
    GLboolean EXT_compiled_vertex_array;
+   GLboolean EXT_depth_bounds_test;
    GLboolean EXT_fog_coord;
    GLboolean EXT_histogram;
    GLboolean EXT_multi_draw_arrays;

@@ -255,6 +255,8 @@ typedef enum {
         OPCODE_PROGRAM_NAMED_PARAMETER_NV,
         /* GL_EXT_stencil_two_side */
         OPCODE_ACTIVE_STENCIL_FACE_EXT,
+        /* GL_EXT_depth_bounds_test */
+        OPCODE_DEPTH_BOUNDS_EXT,
 	/* The following three are meta instructions */
 	OPCODE_ERROR,	        /* raise compiled-in error */
 	OPCODE_CONTINUE,
@@ -671,6 +673,8 @@ void _mesa_init_lists( void )
       InstSize[OPCODE_PROGRAM_NAMED_PARAMETER_NV] = 8;
       /* GL_EXT_stencil_two_side */
       InstSize[OPCODE_ACTIVE_STENCIL_FACE_EXT] = 2;
+      /* GL_EXT_depth_bounds_test */
+      InstSize[OPCODE_DEPTH_BOUNDS_EXT] = 3;
    }
    init_flag = 1;
 }
@@ -4366,6 +4370,24 @@ static void save_ActiveStencilFaceEXT( GLenum face )
 }
 
 
+/* GL_EXT_depth_bounds_test */
+static void save_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ACTIVE_STENCIL_FACE_EXT, 2 );
+   if (n) {
+      n[1].f = zmin;
+      n[2].f = zmax;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->DepthBoundsEXT)( zmin, zmax );
+   }
+}
+
+
+
 
 /* KW: Compile commands
  *
@@ -5106,6 +5128,13 @@ execute_list( GLcontext *ctx, GLuint list )
                                                n[4].f, n[5].f, n[6].f, n[7].f);
             break;
 #endif
+
+         case OPCODE_ACTIVE_STENCIL_FACE_EXT:
+            (*ctx->Exec->ActiveStencilFaceEXT)(n[1].e);
+            break;
+         case OPCODE_DEPTH_BOUNDS_EXT:
+            (*ctx->Exec->DepthBoundsEXT)(n[1].f, n[2].f);
+            break;
 
 	 case OPCODE_CONTINUE:
 	    n = (Node *) n[1].next;
@@ -6492,6 +6521,9 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
 
    /* 268. GL_EXT_stencil_two_side */
    table->ActiveStencilFaceEXT = save_ActiveStencilFaceEXT;
+
+   /* ???. GL_EXT_depth_bounds_test */
+   table->DepthBoundsEXT = save_DepthBoundsEXT;
 
    /* ARB 1. GL_ARB_multitexture */
    table->ActiveTextureARB = save_ActiveTextureARB;

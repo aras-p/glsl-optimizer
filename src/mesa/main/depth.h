@@ -1,10 +1,8 @@
-/* $Id: depth.h,v 1.11 2001/03/12 00:48:37 gareth Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,6 +46,8 @@ extern void
 _mesa_DepthMask( GLboolean flag );
 
 
+extern void
+_mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax );
 
 
 #endif

@@ -792,6 +792,13 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
       }
    }
 
+   /* Depth bounds test */
+   if (ctx->Depth.BoundsTest && ctx->Visual.depthBits > 0) {
+      if (!_swrast_depth_bounds_test(ctx, span)) {
+         return;
+      }
+   }
+
 #ifdef DEBUG
    if (span->arrayMask & SPAN_XY) {
       GLuint i;
@@ -958,6 +965,13 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
    /* Clipping */
    if ((swrast->_RasterMask & CLIP_BIT) || (span->primitive != GL_POLYGON)) {
       if (!clip_span(ctx, span)) {
+         return;
+      }
+   }
+
+   /* Depth bounds test */
+   if (ctx->Depth.BoundsTest && ctx->Visual.depthBits > 0) {
+      if (!_swrast_depth_bounds_test(ctx, span)) {
          return;
       }
    }
@@ -1168,6 +1182,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
 {
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   const GLuint origInterpMask = span->interpMask;
    const GLuint origArrayMask = span->arrayMask;
 
    ASSERT(span->primitive == GL_POINT  ||  span->primitive == GL_LINE ||
@@ -1253,6 +1268,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
 
       if (ctx->Stencil.Enabled) {
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
+            span->interpMask = origInterpMask;
             span->arrayMask = origArrayMask;
             return;
          }
@@ -1262,6 +1278,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
          ASSERT(span->arrayMask & SPAN_Z);
          /* regular depth testing */
          if (!_swrast_depth_test_span(ctx, span)) {
+            span->interpMask = origInterpMask;
             span->arrayMask = origArrayMask;
             return;
          }
@@ -1275,6 +1292,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
     * the occlusion test.
     */
    if (colorMask == 0x0) {
+      span->interpMask = origInterpMask;
       span->arrayMask = origArrayMask;
       return;
    }
@@ -1336,11 +1354,12 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
          _swrast_blend_span(ctx, span, span->array->rgba);
       }
 
+      /* Color component masking */
       if (colorMask != 0xffffffff) {
          _swrast_mask_rgba_span(ctx, span, span->array->rgba);
       }
 
- 
+      /* write pixels */
       if (span->arrayMask & SPAN_XY) {
          /* array of pixel coords */
          (*swrast->Driver.WriteRGBAPixels)(ctx, span->end, span->array->x,
@@ -1365,6 +1384,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
       }
    }
 
+   span->interpMask = origInterpMask;
    span->arrayMask = origArrayMask;
 }
 

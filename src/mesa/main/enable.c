@@ -923,6 +923,20 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          break;
 #endif /* FEATURE_ARB_fragment_program */
 
+      /* GL_EXT_depth_bounds_test */
+      case GL_DEPTH_BOUNDS_TEST_EXT:
+         CHECK_EXTENSION(EXT_depth_bounds_test, cap);
+         if (state && ctx->Visual.depthBits==0) {
+            _mesa_warning(ctx,
+                   "glEnable(GL_DEPTH_BOUNDS_TEST_EXT) but no depth buffer");
+            return;
+         }
+         if (ctx->Depth.BoundsTest == state)
+            return;
+         FLUSH_VERTICES(ctx, _NEW_DEPTH);
+         ctx->Depth.BoundsTest = state;
+         break;
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "%s(0x%x)", state ? "glEnable" : "glDisable", cap);
@@ -1318,6 +1332,11 @@ _mesa_IsEnabled( GLenum cap )
       case GL_FRAGMENT_PROGRAM_ARB:
          return ctx->FragmentProgram.Enabled;
 #endif /* FEATURE_ARB_fragment_program */
+
+      /* GL_EXT_depth_bounds_test */
+      case GL_DEPTH_BOUNDS_TEST_EXT:
+         CHECK_EXTENSION(EXT_depth_bounds_test);
+         return ctx->Depth.BoundsTest;
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(0x%x)", (int) cap);

@@ -1593,6 +1593,17 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
        */
 #endif
 
+      /* GL_EXT_depth_bounds_test */
+      case GL_DEPTH_BOUNDS_TEST_EXT:
+         CHECK_EXTENSION_B(EXT_depth_bounds_test, pname);
+         params[0] = ctx->Depth.BoundsTest;
+         break;
+      case GL_DEPTH_BOUNDS_EXT:
+         CHECK_EXTENSION_B(EXT_depth_bounds_test, pname);
+         params[0] = FLOAT_TO_BOOL(ctx->Depth.BoundsMin);
+         params[1] = FLOAT_TO_BOOL(ctx->Depth.BoundsMax);
+         break;
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -3079,6 +3090,17 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
        */
 #endif
 
+      /* GL_EXT_depth_bounds_test */
+      case GL_DEPTH_BOUNDS_TEST_EXT:
+         CHECK_EXTENSION_D(EXT_depth_bounds_test, pname);
+         params[0] = (GLdouble) ctx->Depth.BoundsTest;
+         break;
+      case GL_DEPTH_BOUNDS_EXT:
+         CHECK_EXTENSION_D(EXT_depth_bounds_test, pname);
+         params[0] = ctx->Depth.BoundsMin;
+         params[1] = ctx->Depth.BoundsMax;
+         break;
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev(pname=0x%x)", pname);
    }
@@ -4540,6 +4562,17 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
        * the GL_NV_fragment_program queries.
        */
 #endif
+
+      /* GL_EXT_depth_bounds_test */
+      case GL_DEPTH_BOUNDS_TEST_EXT:
+         CHECK_EXTENSION_F(EXT_depth_bounds_test, pname);
+         params[0] = (GLfloat) ctx->Depth.BoundsTest;
+         break;
+      case GL_DEPTH_BOUNDS_EXT:
+         CHECK_EXTENSION_F(EXT_depth_bounds_test, pname);
+         params[0] = ctx->Depth.BoundsMin;
+         params[1] = ctx->Depth.BoundsMax;
+         break;
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(0x%x)", pname);
@@ -6040,6 +6073,17 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
        * the GL_NV_fragment_program queries.
        */
 #endif
+
+      /* GL_EXT_depth_bounds_test */
+      case GL_DEPTH_BOUNDS_TEST_EXT:
+         CHECK_EXTENSION_I(EXT_depth_bounds_test, pname);
+         params[0] = ctx->Depth.BoundsTest;
+         break;
+      case GL_DEPTH_BOUNDS_EXT:
+         CHECK_EXTENSION_I(EXT_depth_bounds_test, pname);
+         params[0] = (GLint) ctx->Depth.BoundsMin;
+         params[1] = (GLint) ctx->Depth.BoundsMax;
+         break;
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
