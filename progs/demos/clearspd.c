@@ -1,4 +1,4 @@
-/* $Id: clearspd.c,v 1.2 2000/04/10 16:25:15 brianp Exp $ */
+/* $Id: clearspd.c,v 1.3 2000/12/07 21:50:39 brianp Exp $ */
 
 /*
  * Simple GLUT program to measure glClear() and glutSwapBuffers() speed.
@@ -7,6 +7,9 @@
 
 /*
  * $Log: clearspd.c,v $
+ * Revision 1.3  2000/12/07 21:50:39  brianp
+ * call glFinish() before getting t1 time
+ *
  * Revision 1.2  2000/04/10 16:25:15  brianp
  * fixed visual selection and reporting results
  *
@@ -71,14 +74,15 @@ static void Display( void )
          glClear( BufferMask );
          glutSwapBuffers();
       }
+      glFinish();
       t1 = glutGet(GLUT_ELAPSED_TIME) * 0.001;
    }
    else {
       t0 = glutGet(GLUT_ELAPSED_TIME) * 0.001;
       for (i=0;i<Loops;i++) {
          glClear( BufferMask );
-         glFlush();
       }
+      glFinish();
       t1 = glutGet(GLUT_ELAPSED_TIME) * 0.001;
       glutSwapBuffers();
    }
