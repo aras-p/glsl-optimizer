@@ -1,10 +1,10 @@
-/* $Id: glapitable.h,v 1.5 1999/12/16 12:36:54 brianp Exp $ */
+/* $Id: glapitable.h,v 1.6 2000/01/28 18:57:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -51,6 +51,12 @@
  * This struct contains pointers for all the GL API entrypoints
  * plus some reserved slots for dynamic extensions.
  *
+ * Strictly speaking, this struct isn't needed if we have assembly
+ * language entrypoint functions since no knowledge of function
+ * arguments is needed.
+ *
+ * This struct may be replaced by an automatically-generated struct
+ * using the spec files in the OpenGL SI.
  */
 struct _glapi_table
 {

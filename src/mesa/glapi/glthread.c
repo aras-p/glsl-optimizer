@@ -1,10 +1,10 @@
-/* $Id: glthread.c,v 1.2 1999/12/17 11:13:54 brianp Exp $ */
+/* $Id: glthread.c,v 1.3 2000/01/28 18:57:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,9 @@
  *
  * Revised by Keith Whitwell
  * Adapted for new gl dispatcher by Brian Paul
+ *
+ * XXX There's probably some work to do in order to make this file
+ * truly reusable outside of Mesa.  First, the glheader.h include must go.
  */
 
 
