@@ -865,7 +865,7 @@ StateVars = [
 
 	# GL_ARB_vertex_program
 	( "GL_MAX_VERTEX_ATTRIBS_ARB", GLint,
-	  ["ctx->Const.MaxVertexProgramAttribs > 0"], "", "ARB_vertex_program" ),
+	  ["ctx->Const.MaxVertexProgramAttribs"], "", "ARB_vertex_program" ),
 
 	# GL_ARB_fragment_program
 	( "GL_FRAGMENT_PROGRAM_ARB", GLboolean,
