@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.20 2001/06/04 16:09:28 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.21 2001/06/13 14:57:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -754,7 +754,9 @@ void _tnl_upgrade_current_data( GLcontext *ctx,
 
       COPY_4FV( IM->Color[start], ctx->Current.Color);   
 
+      /*
       ASSERT(IM->Flag[IM->LastData+1] & VERT_END_VB);
+      */
 
       fixup_first_4f( IM->Color, IM->Flag, VERT_END_VB, start, 
 		      IM->Color[start] );
