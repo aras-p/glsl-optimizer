@@ -38,6 +38,9 @@
 #include "math/m_matrix.h"
 
 
+static const GLfloat zeroVec[4] = { 0, 0, 0, 0 };
+
+
 /**
  * Load/initialize the vertex program registers.
  * This needs to be done per vertex.
@@ -225,13 +228,12 @@ fetch_vector4( const struct vp_src_register *source,
                const struct vp_machine *machine,
                GLfloat result[4] )
 {
-   static const GLfloat zero[4] = { 0, 0, 0, 0 };
    const GLfloat *src;
 
    if (source->RelAddr) {
       const GLint reg = source->Register + machine->AddressReg;
       if (reg < 0 || reg > MAX_NV_VERTEX_PROGRAM_PARAMS)
-         src = zero;
+         src = zeroVec;
       else
          src = machine->Registers[VP_PROG_REG_START + reg];
    }
@@ -262,13 +264,12 @@ fetch_vector1( const struct vp_src_register *source,
                const struct vp_machine *machine,
                GLfloat result[4] )
 {
-   static const GLfloat zero[4] = { 0, 0, 0, 0 };
    const GLfloat *src;
 
    if (source->RelAddr) {
       const GLint reg = source->Register + machine->AddressReg;
       if (reg < 0 || reg > MAX_NV_VERTEX_PROGRAM_PARAMS)
-         src = zero;
+         src = zeroVec;
       else
          src = machine->Registers[VP_PROG_REG_START + reg];
    }
@@ -606,7 +607,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                store_vector4( &inst->DstReg, machine, t );
             }
             break;
-         case VP_OPCODE_SUB:
+         case VP_OPCODE_SUB: /* GL_NV_vertex_program1_1 */
             {
                GLfloat t[4], u[4], sum[4];
                fetch_vector4( &inst->SrcReg[0], machine, t );
@@ -618,7 +619,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                store_vector4( &inst->DstReg, machine, sum );
             }
             break;
-         case VP_OPCODE_ABS:
+         case VP_OPCODE_ABS: /* GL_NV_vertex_program1_1 */
             {
                GLfloat t[4];
                fetch_vector4( &inst->SrcReg[0], machine, t );
@@ -627,6 +628,97 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                if (t[2] < 0.0)  t[2] = -t[2];
                if (t[3] < 0.0)  t[3] = -t[3];
                store_vector4( &inst->DstReg, machine, t );
+            }
+            break;
+         case VP_OPCODE_FLR: /* GL_ARB_vertex_program */
+            {
+               GLfloat t[4];
+               fetch_vector4( &inst->SrcReg[0], machine, t );
+               t[0] = FLOORF(t[0]);
+               t[1] = FLOORF(t[1]);
+               t[2] = FLOORF(t[2]);
+               t[3] = FLOORF(t[3]);
+               store_vector4( &inst->DstReg, machine, t );
+            }
+            break;
+         case VP_OPCODE_FRC: /* GL_ARB_vertex_program */
+            {
+               GLfloat t[4];
+               fetch_vector4( &inst->SrcReg[0], machine, t );
+               t[0] = t[0] - FLOORF(t[0]);
+               t[1] = t[1] - FLOORF(t[1]);
+               t[2] = t[2] - FLOORF(t[2]);
+               t[3] = t[3] - FLOORF(t[3]);
+               store_vector4( &inst->DstReg, machine, t );
+            }
+            break;
+         case VP_OPCODE_EX2: /* GL_ARB_vertex_program */
+            {
+               GLfloat t[4];
+               fetch_vector1( &inst->SrcReg[0], machine, t );
+               t[0] = t[1] = t[2] = t[3] = _mesa_pow(2.0, t[0]);
+               store_vector4( &inst->DstReg, machine, t );
+            }
+            break;
+         case VP_OPCODE_LG2: /* GL_ARB_vertex_program */
+            {
+               GLfloat t[4];
+               fetch_vector1( &inst->SrcReg[0], machine, t );
+               t[0] = t[1] = t[2] = t[3] = LOG2(t[0]);
+               store_vector4( &inst->DstReg, machine, t );
+            }
+            break;
+         case VP_OPCODE_POW: /* GL_ARB_vertex_program */
+            {
+               GLfloat t[4], u[4];
+               fetch_vector1( &inst->SrcReg[0], machine, t );
+               fetch_vector1( &inst->SrcReg[1], machine, u );
+               t[0] = t[1] = t[2] = t[3] = _mesa_pow(t[0], u[0]);
+               store_vector4( &inst->DstReg, machine, t );
+            }
+            break;
+         case VP_OPCODE_XPD: /* GL_ARB_vertex_program */
+            {
+               GLfloat t[4], u[4], cross[4];
+               fetch_vector4( &inst->SrcReg[0], machine, t );
+               fetch_vector4( &inst->SrcReg[1], machine, u );
+               cross[0] = t[1] * u[2] - t[2] * u[1];
+               cross[1] = t[2] * u[0] - t[0] * u[2];
+               cross[2] = t[0] * u[1] - t[1] * u[0];
+               store_vector4( &inst->DstReg, machine, cross );
+            }
+            break;
+         case VP_OPCODE_SWZ: /* GL_ARB_vertex_program */
+            {
+               const struct vp_src_register *source = &inst->SrcReg[0];
+               const GLfloat *src;
+               GLfloat result[4];
+               GLuint i;
+
+               /* Code similar to fetch_vector4() */
+               if (source->RelAddr) {
+                  const GLint reg = source->Register + machine->AddressReg;
+                  if (reg < 0 || reg > MAX_NV_VERTEX_PROGRAM_PARAMS)
+                     src = zeroVec;
+                  else
+                     src = machine->Registers[VP_PROG_REG_START + reg];
+               }
+               else {
+                  src = machine->Registers[source->Register];
+               }
+
+               /* extended swizzling here */
+               for (i = 0; i < 3; i++) {
+                  if (source->Swizzle[i] == SWIZZLE_ZERO)
+                     result[i] = 0.0;
+                  else if (source->Swizzle[i] == SWIZZLE_ONE)
+                     result[i] = -1.0;
+                  else
+                     result[i] = -src[source->Swizzle[i]];
+                  if (source->Negate)
+                     result[i] = -result[i];
+               }
+               store_vector4( &inst->DstReg, machine, result );
             }
             break;
 

@@ -48,6 +48,11 @@
 #define VP_PROG_REG_END     (VP_PROG_REG_START + VP_NUM_PROG_REGS - 1)
 
 
+/* for GL_ARB_v_p SWZ instruction */
+#define SWIZZLE_ZERO 100
+#define SWIZZLE_ONE  101
+
+
 /* Vertex program opcodes */
 enum vp_opcode
 {
@@ -72,15 +77,24 @@ enum vp_opcode
    VP_OPCODE_RCC,
    VP_OPCODE_SUB,
    VP_OPCODE_ABS,
-   VP_OPCODE_END
+   VP_OPCODE_END,
+   /* Additional opcodes for GL_ARB_vertex_program */ 
+   VP_OPCODE_FLR,
+   VP_OPCODE_FRC,
+   VP_OPCODE_EX2,
+   VP_OPCODE_LG2,
+   VP_OPCODE_POW,
+   VP_OPCODE_XPD,
+   VP_OPCODE_SWZ
 };
 
 
 /* Instruction source register */
 struct vp_src_register
 {
-   GLint Register;    /* or the offset from the address register */
-   GLuint Swizzle[4];
+   GLint Register;     /* or the offset from the address register */
+   GLubyte Swizzle[4]; /* Each value is 0,1,2,3 for x,y,z,w or */
+                       /* SWIZZLE_ZERO or SWIZZLE_ONE for VP_OPCODE_SWZ. */
    GLboolean Negate;
    GLboolean RelAddr;
 };
