@@ -1,4 +1,4 @@
-/* $Id: t_dd_vbtmp.h,v 1.20 2002/09/17 15:46:37 brianp Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.21 2002/10/08 23:57:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -125,7 +125,7 @@ static void TAG(emit)( GLcontext *ctx,
 {
    LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLfloat (*tc0)[4], (*tc1)[4], *fog;
+   GLfloat (*tc0)[4], (*tc1)[4], (*fog)[4];
    GLfloat (*tc2)[4], (*tc3)[4];
    GLubyte (*col)[4], (*spec)[4];
    GLuint tc0_stride, tc1_stride, col_stride, spec_stride, fog_stride;
@@ -210,7 +210,7 @@ static void TAG(emit)( GLcontext *ctx,
 	 fog_stride = VB->FogCoordPtr->stride;
       }
       else {
-	 GLfloat tmp = 0;
+	 static GLfloat tmp[4] = {0, 0, 0, 0};
 	 fog = &tmp;
 	 fog_stride = 0;
       }
@@ -234,7 +234,8 @@ static void TAG(emit)( GLcontext *ctx,
 	 if (DO_SPEC)
 	    STRIDE_4UB(spec, start * spec_stride);
 	 if (DO_FOG)
-	    STRIDE_F(fog, start * fog_stride);
+	    /*STRIDE_F(fog, start * fog_stride);*/
+	    fog =  (GLfloat (*)[4])((GLfloat *)fog + start * fog_stride);
       }
 
       for (i=start; i < end; i++, v = (VERTEX *)((GLubyte *)v + stride)) {
@@ -268,8 +269,9 @@ static void TAG(emit)( GLcontext *ctx,
 	    STRIDE_4UB(spec, spec_stride);
 	 }
 	 if (DO_FOG) {
-	    v->v.specular.alpha = fog[0] * 255.0;
-	    STRIDE_F(fog, fog_stride);
+	    v->v.specular.alpha = fog[0][0] * 255.0;
+	    /*STRIDE_F(fog, fog_stride);*/
+	    fog =  (GLfloat (*)[4])((GLfloat *)fog +  fog_stride);
 	 }
 	 if (DO_TEX0) {
 	    v->v.u0 = tc0[0][0];
@@ -367,7 +369,7 @@ static void TAG(emit)( GLcontext *ctx,
 	    v->v.specular.blue  = spec[i][2];
 	 }
 	 if (DO_FOG) {
-	    v->v.specular.alpha = fog[i] * 255.0;
+	    v->v.specular.alpha = fog[i][0] * 255.0;
 	 }
 	 if (DO_TEX0) {
 	    v->v.u0 = tc0[i][0];
