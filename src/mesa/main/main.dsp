@@ -185,6 +185,10 @@ SOURCE=.\get.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\getstring.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\hash.c
 # End Source File
 # Begin Source File
@@ -310,26 +314,6 @@ SOURCE=.\api_noop.h
 # Begin Source File
 
 SOURCE=.\api_validate.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\arbfragparse.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\arbparse.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\arbparse_syn.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\arbprogram.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\arbvertparse.h
 # End Source File
 # Begin Source File
 
@@ -462,30 +446,6 @@ SOURCE=.\matrix.h
 # Begin Source File
 
 SOURCE=.\mtypes.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\nvfragparse.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\nvfragprog.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\nvprogram.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\nvvertexec.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\nvvertparse.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\nvvertprog.h
 # End Source File
 # Begin Source File
 
