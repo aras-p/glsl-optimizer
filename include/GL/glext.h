@@ -52,9 +52,9 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glext.h last updated 2003/1/12 */
+/* glext.h last updated 2004/2/23 */
 /* Current version at http://oss.sgi.com/projects/ogl-sample/registry/ */
-#define GL_GLEXT_VERSION 21
+#define GL_GLEXT_VERSION 22
 
 #ifndef GL_VERSION_1_2
 #define GL_UNSIGNED_BYTE_3_3_2            0x8032
@@ -784,6 +784,9 @@ extern "C" {
 #ifndef GL_ARB_point_sprite
 #define GL_POINT_SPRITE_ARB               0x8861
 #define GL_COORD_REPLACE_ARB              0x8862
+#endif
+
+#ifndef GL_ARB_fragment_program_shadow
 #endif
 
 #ifndef GL_EXT_abgr
@@ -3310,8 +3313,8 @@ typedef void (APIENTRYP PFNGLMATRIXINDEXPOINTERARBPROC) (GLint size, GLenum type
 #define GL_ARB_texture_env_dot3 1
 #endif
 
-#ifndef GL_ARB_texture_mirror_repeat
-#define GL_ARB_texture_mirror_repeat 1
+#ifndef GL_ARB_texture_mirrored_repeat
+#define GL_ARB_texture_mirrored_repeat 1
 #endif
 
 #ifndef GL_ARB_depth_texture
@@ -3659,6 +3662,10 @@ typedef GLint (APIENTRYP PFNGLGETATTRIBLOCATIONARBPROC) (GLhandleARB programObj,
 
 #ifndef GL_ARB_point_sprite
 #define GL_ARB_point_sprite 1
+#endif
+
+#ifndef GL_ARB_fragment_program_shadow
+#define GL_ARB_fragment_program_shadow 1
 #endif
 
 #ifndef GL_EXT_abgr
