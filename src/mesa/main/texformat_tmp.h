@@ -154,7 +154,7 @@ static void FETCH(f_rgb)( const struct gl_texture_image *texImage,
    texel[RCOMP] = CHAN_TO_FLOAT(src[0]);
    texel[GCOMP] = CHAN_TO_FLOAT(src[1]);
    texel[BCOMP] = CHAN_TO_FLOAT(src[2]);
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 /* Fetch texel from 1D, 2D or 3D ALPHA texture, returning 4 GLchans */
@@ -198,7 +198,7 @@ static void FETCH(f_luminance)( const struct gl_texture_image *texImage,
    texel[RCOMP] =
    texel[GCOMP] =
    texel[BCOMP] = CHAN_TO_FLOAT(src[0]);
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 /* Fetch texel from 1D, 2D or 3D L_A texture, returning 4 GLchans */
@@ -346,7 +346,7 @@ static void FETCH(f_rgb_f32)( const struct gl_texture_image *texImage,
    texel[RCOMP] = src[0];
    texel[GCOMP] = src[1];
    texel[BCOMP] = src[2];
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 /* Fetch texel from 1D, 2D or 3D RGBA_FLOAT16 texture,
@@ -372,7 +372,7 @@ static void FETCH(f_rgb_f16)( const struct gl_texture_image *texImage,
    texel[RCOMP] = _mesa_half_to_float(src[0]);
    texel[GCOMP] = _mesa_half_to_float(src[1]);
    texel[BCOMP] = _mesa_half_to_float(src[2]);
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 /* Fetch texel from 1D, 2D or 3D ALPHA_FLOAT32 texture,
@@ -450,7 +450,7 @@ static void FETCH(f_luminance_f32)( const struct gl_texture_image *texImage,
    texel[RCOMP] =
    texel[GCOMP] =
    texel[BCOMP] = src[0];
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 /* Fetch texel from 1D, 2D or 3D LUMINANCE_FLOAT16 texture,
@@ -476,7 +476,7 @@ static void FETCH(f_luminance_f16)( const struct gl_texture_image *texImage,
    texel[RCOMP] =
    texel[GCOMP] =
    texel[BCOMP] = _mesa_half_to_float(src[0]);
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 /* Fetch texel from 1D, 2D or 3D LUMINANCE_ALPHA_FLOAT32 texture,
@@ -701,7 +701,7 @@ static void FETCH(f_rgb888)( const struct gl_texture_image *texImage,
    texel[RCOMP] = UBYTE_TO_FLOAT( src[2] );
    texel[GCOMP] = UBYTE_TO_FLOAT( src[1] );
    texel[BCOMP] = UBYTE_TO_FLOAT( src[0] );
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 
@@ -724,7 +724,7 @@ static void FETCH(f_bgr888)( const struct gl_texture_image *texImage,
    texel[RCOMP] = UBYTE_TO_FLOAT( src[0] );
    texel[GCOMP] = UBYTE_TO_FLOAT( src[1] );
    texel[BCOMP] = UBYTE_TO_FLOAT( src[2] );
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 
@@ -749,7 +749,7 @@ static void FETCH(f_rgb565)( const struct gl_texture_image *texImage,
    texel[RCOMP] = ((s >> 8) & 0xf8) * (1.0F / 248.0F);
    texel[GCOMP] = ((s >> 3) & 0xfc) * (1.0F / 252.0F);
    texel[BCOMP] = ((s << 3) & 0xf8) * (1.0F / 248.0F);
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 
@@ -774,7 +774,7 @@ static void FETCH(f_rgb565_rev)( const struct gl_texture_image *texImage,
    texel[RCOMP] = ((s >> 8) & 0xf8) * (1.0F / 248.0F);
    texel[GCOMP] = ((s >> 3) & 0xfc) * (1.0F / 252.0F);
    texel[BCOMP] = ((s << 3) & 0xf8) * (1.0F / 248.0F);
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 
@@ -943,7 +943,7 @@ static void FETCH(f_rgb332)( const struct gl_texture_image *texImage,
    texel[RCOMP] = ((s     ) & 0xe0) * (1.0F / 224.0F);
    texel[GCOMP] = ((s << 3) & 0xe0) * (1.0F / 224.0F);
    texel[BCOMP] = ((s << 6) & 0xc0) * (1.0F / 192.0F);
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 
@@ -989,7 +989,7 @@ static void FETCH(f_l8)( const struct gl_texture_image *texImage,
    texel[RCOMP] = 
    texel[GCOMP] = 
    texel[BCOMP] = UBYTE_TO_FLOAT( src[0] );
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 
@@ -1165,7 +1165,7 @@ static void FETCH(f_ycbcr)( const struct gl_texture_image *texImage,
    texel[RCOMP] = CLAMP(r, 0.0, 1.0);
    texel[GCOMP] = CLAMP(g, 0.0, 1.0);
    texel[BCOMP] = CLAMP(b, 0.0, 1.0);
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 
@@ -1232,7 +1232,7 @@ static void FETCH(f_ycbcr_rev)( const struct gl_texture_image *texImage,
    texel[RCOMP] = CLAMP(r, 0.0, 1.0);
    texel[GCOMP] = CLAMP(g, 0.0, 1.0);
    texel[BCOMP] = CLAMP(b, 0.0, 1.0);
-   texel[ACOMP] = CHAN_MAXF;
+   texel[ACOMP] = 1.0F;
 }
 
 
