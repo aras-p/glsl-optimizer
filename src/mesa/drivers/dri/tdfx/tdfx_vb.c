@@ -39,35 +39,19 @@
 #include "tdfx_state.h"
 #include "tdfx_render.h"
 
-static void copy_pv_rgba4( GLcontext *ctx, GLuint edst, GLuint esrc )
+static void copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
-   GLubyte *tdfxverts = (GLubyte *)fxMesa->verts;
-   GLuint shift = fxMesa->vertex_stride_shift;
-   tdfxVertex *dst = (tdfxVertex *)(tdfxverts + (edst << shift));
-   tdfxVertex *src = (tdfxVertex *)(tdfxverts + (esrc << shift));
-   dst->ui[4] = src->ui[4];
+   tdfxVertex *dst = fxMesa->verts + edst;
+   tdfxVertex *src = fxMesa->verts + esrc;
+   *(GLuint *)&dst->color = *(GLuint *)&src->color;
 }
-
-static void copy_pv_rgba3( GLcontext *ctx, GLuint edst, GLuint esrc )
-{
-   tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
-   GLubyte *tdfxverts = (GLubyte *)fxMesa->verts;
-   GLuint shift = fxMesa->vertex_stride_shift;
-   tdfxVertex *dst = (tdfxVertex *)(tdfxverts + (edst << shift));
-   tdfxVertex *src = (tdfxVertex *)(tdfxverts + (esrc << shift));
-   dst->ui[3] = src->ui[3];
-}
-
-typedef void (*tdfx_emit_func)( GLcontext *, GLuint, GLuint, void *, GLuint );
 
 static struct {
-   tdfx_emit_func	        emit;
+   tnl_emit_func	        emit;
    tnl_interp_func		interp;
    tnl_copy_pv_func	        copy_pv;
    GLboolean           (*check_tex_sizes)( GLcontext *ctx );
-   GLuint               vertex_size;
-   GLuint               vertex_stride_shift;
    GLuint               vertex_format;
 } setup_tab[TDFX_MAX_SETUP];
 
@@ -87,7 +71,7 @@ static void interp_extras( GLcontext *ctx,
    /*fprintf(stderr, "%s\n", __FUNCTION__);*/
 
    if (VB->ColorPtr[1]) {
-      INTERP_4CHAN( t,
+      INTERP_4F( t,
 		    GET_COLOR(VB->ColorPtr[1], dst),
 		    GET_COLOR(VB->ColorPtr[1], out),
 		    GET_COLOR(VB->ColorPtr[1], in) );
@@ -106,7 +90,7 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-	 COPY_CHAN4( GET_COLOR(VB->ColorPtr[1], dst), 
+	 COPY_4FV( GET_COLOR(VB->ColorPtr[1], dst), 
 		     GET_COLOR(VB->ColorPtr[1], src) );
    }
 
@@ -163,6 +147,29 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
 #include "tdfx_vbtmp.h"
 
 
+/* fogc { */
+#define IND (TDFX_XYZ_BIT|TDFX_RGBA_BIT|TDFX_W_BIT|TDFX_FOGC_BIT)
+#define TAG(x) x##_wgf
+#include "tdfx_vbtmp.h"
+
+#define IND (TDFX_XYZ_BIT|TDFX_RGBA_BIT|TDFX_W_BIT|TDFX_TEX0_BIT|TDFX_FOGC_BIT)
+#define TAG(x) x##_wgt0f
+#include "tdfx_vbtmp.h"
+
+#define IND (TDFX_XYZ_BIT|TDFX_RGBA_BIT|TDFX_W_BIT|TDFX_TEX0_BIT|TDFX_TEX1_BIT|TDFX_FOGC_BIT)
+#define TAG(x) x##_wgt0t1f
+#include "tdfx_vbtmp.h"
+
+#define IND (TDFX_XYZ_BIT|TDFX_RGBA_BIT|TDFX_W_BIT|TDFX_TEX0_BIT|TDFX_PTEX_BIT|TDFX_FOGC_BIT)
+#define TAG(x) x##_wgpt0f
+#include "tdfx_vbtmp.h"
+
+#define IND (TDFX_XYZ_BIT|TDFX_RGBA_BIT|TDFX_W_BIT|TDFX_TEX0_BIT|TDFX_TEX1_BIT|\
+             TDFX_PTEX_BIT|TDFX_FOGC_BIT)
+#define TAG(x) x##_wgpt0t1f
+#include "tdfx_vbtmp.h"
+/* fogc } */
+
 
 static void init_setup_tab( void )
 {
@@ -178,19 +185,27 @@ static void init_setup_tab( void )
    init_t0t1();
    init_gt0();
    init_gt0t1();
+
+   /* fogcoord */
+   init_wgf();
+   init_wgt0f();
+   init_wgt0t1f();
+   init_wgpt0f();
+   init_wgpt0t1f();
 }
 
 
 void tdfxPrintSetupFlags(char *msg, GLuint flags )
 {
-   fprintf(stderr, "%s(%x): %s%s%s%s%s\n",
+   fprintf(stderr, "%s(%x): %s%s%s%s%s%s\n",
 	   msg,
 	   (int)flags,
 	   (flags & TDFX_XYZ_BIT)     ? " xyz," : "", 
 	   (flags & TDFX_W_BIT)     ? " w," : "", 
 	   (flags & TDFX_RGBA_BIT)     ? " rgba," : "",
 	   (flags & TDFX_TEX0_BIT)     ? " tex-0," : "",
-	   (flags & TDFX_TEX1_BIT)     ? " tex-1," : "");
+	   (flags & TDFX_TEX1_BIT)     ? " tex-1," : "",
+	   (flags & TDFX_FOGC_BIT)     ? " fogc," : "");
 }
 
 
@@ -210,7 +225,6 @@ void tdfxCheckTexSizes( GLcontext *ctx )
 	 FLUSH_BATCH(fxMesa);
 	 fxMesa->dirty |= TDFX_UPLOAD_VERTEX_LAYOUT;      
 	 fxMesa->vertexFormat = setup_tab[ind].vertex_format;
-	 fxMesa->vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
 
 	 /* This is required as we have just changed the vertex
 	  * format, so the interp and copy routines must also change.
@@ -230,8 +244,7 @@ void tdfxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
 			GLuint newinputs )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
-   GLubyte *v = (fxMesa->verts + (start<<fxMesa->vertex_stride_shift));
-   GLuint stride = 1<<fxMesa->vertex_stride_shift;
+   tdfxVertex *v = fxMesa->verts + start;
 
    newinputs |= fxMesa->SetupNewInputs;
    fxMesa->SetupNewInputs = 0;
@@ -240,12 +253,15 @@ void tdfxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
       return;
 
    if (newinputs & VERT_BIT_POS) {
-      setup_tab[fxMesa->SetupIndex].emit( ctx, start, count, v, stride );   
+      setup_tab[fxMesa->SetupIndex].emit( ctx, start, count, v );
    } else {
       GLuint ind = 0;
 
       if (newinputs & VERT_BIT_COLOR0)
 	 ind |= TDFX_RGBA_BIT;
+
+      if (newinputs & VERT_BIT_FOG)
+	 ind |= TDFX_FOGC_BIT;
       
       if (newinputs & VERT_BIT_TEX0)
 	 ind |= TDFX_TEX0_BIT;
@@ -259,7 +275,7 @@ void tdfxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
       ind &= fxMesa->SetupIndex;
 
       if (ind) {
-	 setup_tab[ind].emit( ctx, start, count, v, stride );   
+	 setup_tab[ind].emit( ctx, start, count, v );
       }
    }
 }
@@ -271,15 +287,25 @@ void tdfxChooseVertexState( GLcontext *ctx )
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
    GLuint ind = TDFX_XYZ_BIT|TDFX_RGBA_BIT;
 
-   if (ctx->Texture._EnabledUnits & 0x2)
-      /* unit 1 enabled */
-      ind |= TDFX_W_BIT|TDFX_TEX1_BIT|TDFX_TEX0_BIT;
-   else if (ctx->Texture._EnabledUnits & 0x1) 
+   fxMesa->tmu_source[0] = 0;
+   fxMesa->tmu_source[1] = 1;
+
+   if (ctx->Texture._EnabledUnits & 0x2) {
+      if (ctx->Texture._EnabledUnits & 0x1) {
+         ind |= TDFX_TEX1_BIT;
+      }
+      ind |= TDFX_W_BIT|TDFX_TEX0_BIT;
+      fxMesa->tmu_source[0] = 1;
+      fxMesa->tmu_source[1] = 0;
+   } else if (ctx->Texture._EnabledUnits & 0x1) {
       /* unit 0 enabled */
       ind |= TDFX_W_BIT|TDFX_TEX0_BIT;
-   else if (ctx->Fog.Enabled)
-      ind |= TDFX_W_BIT;
-   
+   }
+
+   if (fxMesa->Fog.Mode == GR_FOG_WITH_TABLE_ON_FOGCOORD_EXT) {
+      ind |= TDFX_FOGC_BIT;
+   }
+
    fxMesa->SetupIndex = ind;
 
    if (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED)) {
@@ -294,7 +320,6 @@ void tdfxChooseVertexState( GLcontext *ctx )
       FLUSH_BATCH(fxMesa);
       fxMesa->dirty |= TDFX_UPLOAD_VERTEX_LAYOUT;      
       fxMesa->vertexFormat = setup_tab[ind].vertex_format;
-      fxMesa->vertex_stride_shift = setup_tab[ind].vertex_stride_shift;
    }
 }
 
@@ -310,10 +335,8 @@ void tdfxInitVB( GLcontext *ctx )
       firsttime = 0;
    }
 
-   fxMesa->verts = (GLubyte *)ALIGN_MALLOC(size * sizeof(tdfxVertex), 32);
-   fxMesa->vertexFormat = setup_tab[TDFX_XYZ_BIT|TDFX_RGBA_BIT].vertex_format;
-   fxMesa->vertex_stride_shift = setup_tab[(TDFX_XYZ_BIT|
-					    TDFX_RGBA_BIT)].vertex_stride_shift;
+   fxMesa->verts = ALIGN_MALLOC(size * sizeof(tdfxVertex), 32);
+   fxMesa->vertexFormat = TDFX_LAYOUT_TINY;
    fxMesa->SetupIndex = TDFX_XYZ_BIT|TDFX_RGBA_BIT;
 }
 

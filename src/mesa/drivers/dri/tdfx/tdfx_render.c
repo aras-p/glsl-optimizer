@@ -26,6 +26,9 @@
 /* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_render.c,v 1.4 2002/02/22 21:45:03 dawes Exp $ */
 
 /*
+ * New fixes:
+ *	Daniel Borca <dborca@users.sourceforge.net>, 19 Jul 2004
+ *
  * Original rewrite:
  *	Gareth Hughes <gareth@valinux.com>, 29 Sep - 1 Oct 2000
  *
@@ -95,7 +98,7 @@ static void tdfxClear( GLcontext *ctx,
 	 fxMesa->Glide.grStencilMask(/*ctx->Stencil.WriteMask*/ 0xff);
 	 /* set stencil ref value = desired clear value */
 	 fxMesa->Glide.grStencilFunc(GR_CMP_ALWAYS,
-                                     ctx->Stencil.Clear, 0xff);
+                                     fxMesa->Stencil.Clear, 0xff);
 	 fxMesa->Glide.grStencilOp(GR_STENCILOP_REPLACE,
                                    GR_STENCILOP_REPLACE, GR_STENCILOP_REPLACE);
 	 fxMesa->Glide.grEnable(GR_STENCIL_MODE_EXT);
@@ -532,8 +535,8 @@ static void uploadTextureImages( tdfxContextPtr fxMesa )
    GLcontext *ctx = fxMesa->glCtx;
    int unit;
    for (unit = 0; unit < TDFX_NUM_TMU; unit++) {
-      if (ctx->Texture.Unit[unit]._ReallyEnabled == TEXTURE_2D_BIT) {
-         struct gl_texture_object *tObj = ctx->Texture.Unit[unit].Current2D;
+      if (ctx->Texture.Unit[unit]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {
+         struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
          tdfxTexInfo *ti = TDFX_TEXTURE_DATA(tObj);
          if (ti && ti->reloadImages && ti->whichTMU != TDFX_TMU_NONE) {
             /*
@@ -653,10 +656,10 @@ void tdfxEmitHwStateLocked( tdfxContextPtr fxMesa )
       if (fxMesa->Glide.grAlphaBlendFunctionExt) {
          fxMesa->Glide.grAlphaBlendFunctionExt( fxMesa->Color.BlendSrcRGB,
                                                 fxMesa->Color.BlendDstRGB,
-                                                GR_BLEND_OP_ADD,
+                                                fxMesa->Color.BlendEqRGB,
                                                 fxMesa->Color.BlendSrcA,
                                                 fxMesa->Color.BlendDstA,
-                                                GR_BLEND_OP_ADD );
+                                                fxMesa->Color.BlendEqA );
       }
       else {
          fxMesa->Glide.grAlphaBlendFunction( fxMesa->Color.BlendSrcRGB,
@@ -727,10 +730,10 @@ void tdfxEmitHwStateLocked( tdfxContextPtr fxMesa )
       fxMesa->dirty &= ~TDFX_UPLOAD_COLOR_MASK;
    }
 
-/*     if ( fxMesa->dirty & TDFX_UPLOAD_CONSTANT_COLOR ) { */
-/*        grConstantColorValue( fxMesa->Color.MonoColor ); */
-/*        fxMesa->dirty &= ~TDFX_UPLOAD_CONSTANT_COLOR; */
-/*     } */
+   if ( fxMesa->dirty & TDFX_UPLOAD_CONSTANT_COLOR ) {
+      fxMesa->Glide.grConstantColorValue( fxMesa->Color.MonoColor );
+      fxMesa->dirty &= ~TDFX_UPLOAD_CONSTANT_COLOR;
+   }
 
    if ( fxMesa->dirty & TDFX_UPLOAD_LINE ) {
       if (fxMesa->glCtx->Line.SmoothFlag && fxMesa->glCtx->Line.Width == 1.0)
@@ -759,6 +762,9 @@ void tdfxEmitHwStateLocked( tdfxContextPtr fxMesa )
 
    if ( fxMesa->dirty & TDFX_UPLOAD_VERTEX_LAYOUT ) {
       fxMesa->Glide.grGlideSetVertexLayout( fxMesa->layout[fxMesa->vertexFormat] );
+      /* [dborca] enable fogcoord */
+      fxMesa->Glide.grVertexLayout(GR_PARAM_FOG_EXT, TDFX_FOG_OFFSET,
+	 fxMesa->Fog.Mode == GR_FOG_WITH_TABLE_ON_FOGCOORD_EXT);
       fxMesa->dirty &= ~TDFX_UPLOAD_VERTEX_LAYOUT;
    }
 

@@ -25,7 +25,10 @@
  */
 /* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_tris.c,v 1.4 2002/10/30 12:52:01 alanh Exp $ */
 
-/* Authors:
+/* New fixes:
+ *	Daniel Borca <dborca@users.sourceforge.net>, 19 Jul 2004
+ *
+ * Authors:
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
@@ -68,8 +71,14 @@ do {						\
       fxMesa->draw_triangle( fxMesa, a, b, d );	\
       fxMesa->draw_triangle( fxMesa, b, c, d );	\
    } else {					\
-      fxMesa->Glide.grDrawTriangle( a, b, d );	\
-      fxMesa->Glide.grDrawTriangle( b, c, d );	\
+      tdfxVertex *_v_[4];			\
+      _v_[0] = d;				\
+      _v_[1] = a;				\
+      _v_[2] = b;				\
+      _v_[3] = c;				\
+      fxMesa->Glide.grDrawVertexArray(GR_TRIANGLE_FAN, 4, _v_);\
+      /*fxMesa->Glide.grDrawTriangle( a, b, d );*/\
+      /*fxMesa->Glide.grDrawTriangle( b, c, d );*/\
    }						\
 } while (0)
 
@@ -78,15 +87,15 @@ do {						\
    if (DO_FALLBACK)				\
       fxMesa->draw_line( fxMesa, v0, v1 );	\
    else {					\
-      v0->v.x += LINE_X_OFFSET - TRI_X_OFFSET;	\
-      v0->v.y += LINE_Y_OFFSET - TRI_Y_OFFSET;	\
-      v1->v.x += LINE_X_OFFSET - TRI_X_OFFSET;	\
-      v1->v.y += LINE_Y_OFFSET - TRI_Y_OFFSET;	\
+      v0->x += LINE_X_OFFSET - TRI_X_OFFSET;	\
+      v0->y += LINE_Y_OFFSET - TRI_Y_OFFSET;	\
+      v1->x += LINE_X_OFFSET - TRI_X_OFFSET;	\
+      v1->y += LINE_Y_OFFSET - TRI_Y_OFFSET;	\
       fxMesa->Glide.grDrawLine( v0, v1 );	\
-      v0->v.x -= LINE_X_OFFSET - TRI_X_OFFSET;	\
-      v0->v.y -= LINE_Y_OFFSET - TRI_Y_OFFSET;	\
-      v1->v.x -= LINE_X_OFFSET - TRI_X_OFFSET;	\
-      v1->v.y -= LINE_Y_OFFSET - TRI_Y_OFFSET;	\
+      v0->x -= LINE_X_OFFSET - TRI_X_OFFSET;	\
+      v0->y -= LINE_Y_OFFSET - TRI_Y_OFFSET;	\
+      v1->x -= LINE_X_OFFSET - TRI_X_OFFSET;	\
+      v1->y -= LINE_Y_OFFSET - TRI_Y_OFFSET;	\
    }						\
 } while (0)
 
@@ -95,11 +104,11 @@ do {						\
    if (DO_FALLBACK)				\
       fxMesa->draw_point( fxMesa, v0 );		\
    else {					\
-      v0->v.x += PNT_X_OFFSET - TRI_X_OFFSET;	\
-      v0->v.y += PNT_Y_OFFSET - TRI_Y_OFFSET;	\
+      v0->x += PNT_X_OFFSET - TRI_X_OFFSET;	\
+      v0->y += PNT_Y_OFFSET - TRI_Y_OFFSET;	\
       fxMesa->Glide.grDrawPoint( v0 );		\
-      v0->v.x -= PNT_X_OFFSET - TRI_X_OFFSET;	\
-      v0->v.y -= PNT_Y_OFFSET - TRI_Y_OFFSET;	\
+      v0->x -= PNT_X_OFFSET - TRI_X_OFFSET;	\
+      v0->y -= PNT_Y_OFFSET - TRI_Y_OFFSET;	\
    }						\
 } while (0)
 
@@ -120,49 +129,45 @@ tdfx_translate_vertex( GLcontext *ctx, const tdfxVertex *src, SWvertex *dst)
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
    if (fxMesa->vertexFormat == TDFX_LAYOUT_TINY) {
-      dst->win[0] = src->tv.x - fxMesa->x_offset;
-      dst->win[1] = src->tv.y - (fxMesa->screen_height - fxMesa->height - fxMesa->y_offset);
-      dst->win[2] = src->tv.z;
+      dst->win[0] = src->x - fxMesa->x_offset;
+      dst->win[1] = src->y - (fxMesa->screen_height - fxMesa->height - fxMesa->y_offset);
+      dst->win[2] = src->z;
       dst->win[3] = 1.0;
 
-      dst->color[0] = src->tv.color.red;
-      dst->color[1] = src->tv.color.green;
-      dst->color[2] = src->tv.color.blue;
-      dst->color[3] = src->tv.color.alpha;
+      dst->color[0] = src->color[2];
+      dst->color[1] = src->color[1];
+      dst->color[2] = src->color[0];
+      dst->color[3] = src->color[3];
    } 
    else {
-      GLfloat w = 1.0 / src->v.rhw;
+      GLfloat w = 1.0 / src->rhw;
 
-      dst->win[0] = src->v.x - fxMesa->x_offset;
-      dst->win[1] = fxMesa->screen_height - fxMesa->y_offset - src->v.y;
-      dst->win[2] = src->v.z;
-      dst->win[3] = src->v.rhw;
+      dst->win[0] = src->x - fxMesa->x_offset;
+      dst->win[1] = src->y - (fxMesa->screen_height - fxMesa->height - fxMesa->y_offset);
+      dst->win[2] = src->z;
+      dst->win[3] = src->rhw;
 
-      dst->color[0] = src->v.color.red;
-      dst->color[1] = src->v.color.green;
-      dst->color[2] = src->v.color.blue;
-      dst->color[3] = src->v.color.alpha;
+      dst->color[0] = src->color[2];
+      dst->color[1] = src->color[1];
+      dst->color[2] = src->color[0];
+      dst->color[3] = src->color[3];
 
-      if (fxMesa->vertexFormat == TDFX_LAYOUT_PROJECT) {
-	 dst->texcoord[0][0] = fxMesa->sScale0 * w * src->pv.tu0;
-	 dst->texcoord[0][1] = fxMesa->tScale0 * w * src->pv.tv0;
-	 dst->texcoord[0][3] = w * src->pv.tq0;
-
-	 if (fxMesa->SetupIndex & TDFX_TEX1_BIT) {
-	    dst->texcoord[1][0] = fxMesa->sScale1 * w * src->pv.tu1;
-	    dst->texcoord[1][1] = fxMesa->tScale1 * w * src->pv.tv1;
-	    dst->texcoord[1][3] = w * src->pv.tq1;
-	 }
-      } else if (fxMesa->SetupIndex & TDFX_TEX0_BIT) {
-	 dst->texcoord[0][0] = fxMesa->sScale0 * w * src->v.tu0;
-	 dst->texcoord[0][1] = fxMesa->tScale0 * w * src->v.tv0;
+      dst->texcoord[0][0] = 1.0 / fxMesa->sScale0 * w * src->tu0;
+      dst->texcoord[0][1] = 1.0 / fxMesa->tScale0 * w * src->tv0;
+      if (fxMesa->vertexFormat == TDFX_LAYOUT_PROJ1 || fxMesa->vertexFormat == TDFX_LAYOUT_PROJ2) {
+         dst->texcoord[0][3] = w * src->tq0;
+      } else {
 	 dst->texcoord[0][3] = 1.0;
+      }
 
-	 if (fxMesa->SetupIndex & TDFX_TEX1_BIT) {
-	    dst->texcoord[1][0] = fxMesa->sScale1 * w * src->v.tu1;
-	    dst->texcoord[1][1] = fxMesa->tScale1 * w * src->v.tv1;
+      if (fxMesa->SetupIndex & TDFX_TEX1_BIT) {
+         dst->texcoord[1][0] = 1.0 / fxMesa->sScale1 * w * src->tu1;
+         dst->texcoord[1][1] = 1.0 / fxMesa->tScale1 * w * src->tv1;
+         if (fxMesa->vertexFormat == TDFX_LAYOUT_PROJ2) {
+            dst->texcoord[1][3] = w * src->tq1;
+         } else {
 	    dst->texcoord[1][3] = 1.0;
-	 }
+         }
       }
    }
 
@@ -214,27 +219,22 @@ tdfx_fallback_point( tdfxContextPtr fxMesa,
 
 static void tdfx_print_vertex( GLcontext *ctx, const tdfxVertex *v )
 {
-   tdfxContextPtr imesa = TDFX_CONTEXT( ctx );
+   tdfxContextPtr tmesa = TDFX_CONTEXT( ctx );
 
    fprintf(stderr, "vertex at %p\n", (void *)v);
 
-   if (imesa->vertexFormat == TDFX_LAYOUT_TINY) {
-      fprintf(stderr, "x %f y %f z %f\n", v->v.x, v->v.y, v->v.z);
-      fprintf(stderr, "r %d g %d b %d a %d\n", 
-	      v->tv.color.red,
-	      v->tv.color.green,
-	      v->tv.color.blue,
-	      v->tv.color.alpha);
+   if (tmesa->vertexFormat == TDFX_LAYOUT_TINY) {
+      fprintf(stderr, "x %f y %f z %f\n", v->x, v->y, v->z);
    } 
    else {
       fprintf(stderr, "x %f y %f z %f oow %f\n", 
-	      v->v.x, v->v.y, v->v.z, v->v.rhw);
-      fprintf(stderr, "r %d g %d b %d a %d\n", 
-	      v->v.color.red,
-	      v->v.color.green,
-	      v->v.color.blue,
-	      v->v.color.alpha);
+	      v->x, v->y, v->z, v->rhw);
    }
+   fprintf(stderr, "r %d g %d b %d a %d\n", 
+	      v->color[0],
+	      v->color[1],
+	      v->color[2],
+	      v->color[3]);
    
    fprintf(stderr, "\n");
 }
@@ -327,34 +327,36 @@ static struct {
 #define VERTEX tdfxVertex
 #define TAB rast_tab
 
-#define TDFX_COLOR( dst, src )				\
-do {							\
-   UNCLAMPED_FLOAT_TO_UBYTE((dst)[0], (src)[2]);	\
-   UNCLAMPED_FLOAT_TO_UBYTE((dst)[1], (src)[1]);	\
-   UNCLAMPED_FLOAT_TO_UBYTE((dst)[2], (src)[0]);	\
-   UNCLAMPED_FLOAT_TO_UBYTE((dst)[3], (src)[3]);	\
-} while (0)
-
 #define DEPTH_SCALE 1.0
 #define UNFILLED_TRI unfilled_tri
 #define UNFILLED_QUAD unfilled_quad
-#define VERT_X(_v) _v->v.x
-#define VERT_Y(_v) _v->v.y
-#define VERT_Z(_v) _v->v.z
+#define VERT_X(_v) _v->x
+#define VERT_Y(_v) _v->y
+#define VERT_Z(_v) _v->z
 #define AREA_IS_CCW( a ) (a < 0)
-#define GET_VERTEX(e) (fxMesa->verts + (e<<fxMesa->vertex_stride_shift))
+#define GET_VERTEX(e) (fxMesa->verts + (e))
 
-#define VERT_SET_RGBA( v, c )    TDFX_COLOR( v->ub4[coloroffset], c )
-#define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
-#define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
-#define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = color[idx]   
+#define VERT_SET_RGBA( dst, f )			\
+do {						\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst->color[2], f[0]);\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst->color[1], f[1]);\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst->color[0], f[2]);\
+   UNCLAMPED_FLOAT_TO_UBYTE(dst->color[3], f[3]);\
+} while (0)
+
+#define VERT_COPY_RGBA( v0, v1 ) 		\
+   *(GLuint *)&v0->color = *(GLuint *)&v1->color
+
+#define VERT_SAVE_RGBA( idx )  			\
+   *(GLuint *)&color[idx] = *(GLuint *)&v[idx]->color
+
+#define VERT_RESTORE_RGBA( idx )		\
+   *(GLuint *)&v[idx]->color = *(GLuint *)&color[idx]
 
 #define LOCAL_VARS(n)					\
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);		\
-   GLuint coloroffset = (fxMesa->vertexFormat ==	\
-			 TDFX_LAYOUT_TINY) ? 3 : 4;	\
-   GLuint color[n];					\
-   (void) color; (void)coloroffset
+   GLubyte color[n][4];					\
+   (void) color;
 
 
 
@@ -554,6 +556,7 @@ static void init_rast_tab( void )
 /* Accelerate vertex buffer rendering when renderindex == 0 and
  * there is no clipping.
  */
+#define INIT(x) tdfxRenderPrimitive( ctx, x )
 
 static void tdfx_render_vb_points( GLcontext *ctx,
 				      GLuint start,
@@ -561,25 +564,24 @@ static void tdfx_render_vb_points( GLcontext *ctx,
 				      GLuint flags )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   GLuint shift = fxMesa->vertex_stride_shift;
-   GLubyte *fxVB = fxMesa->verts + (start << shift);
-   int stride = 1<<shift;
-   GLubyte *tmp;
+   tdfxVertex *fxVB = fxMesa->verts;
    GLint i;
    (void) flags;
 
+   INIT(GL_POINTS);
+
    /* Adjust point coords */
-   for (i = start, tmp = fxVB; i < count; i++, tmp += stride) {
-      ((tdfxVertexPtr)tmp)->v.x += PNT_X_OFFSET - TRI_X_OFFSET;
-      ((tdfxVertexPtr)tmp)->v.y += PNT_Y_OFFSET - TRI_Y_OFFSET;
+   for (i = start; i < count; i++) {
+      fxVB[i].x += PNT_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y += PNT_Y_OFFSET - TRI_Y_OFFSET;
    }
 
    fxMesa->Glide.grDrawVertexArrayContiguous( GR_POINTS, count-start,
-                                              fxVB, stride);
+                                              fxVB + start, sizeof(tdfxVertex));
    /* restore point coords */
-   for (i = start, tmp = fxVB; i < count; i++, tmp += stride) {
-      ((tdfxVertexPtr)tmp)->v.x -= PNT_X_OFFSET - TRI_X_OFFSET;
-      ((tdfxVertexPtr)tmp)->v.y -= PNT_Y_OFFSET - TRI_Y_OFFSET;
+   for (i = start; i < count; i++) {
+      fxVB[i].x -= PNT_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y -= PNT_Y_OFFSET - TRI_Y_OFFSET;
    }
 }
 
@@ -589,26 +591,25 @@ static void tdfx_render_vb_line_strip( GLcontext *ctx,
 				      GLuint flags )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   GLuint shift = fxMesa->vertex_stride_shift;
-   GLubyte *fxVB = fxMesa->verts + (start << shift);
-   int stride = 1<<shift;
-   GLubyte *tmp;
+   tdfxVertex *fxVB = fxMesa->verts;
    GLint i;
    (void) flags;
 
+   INIT(GL_LINE_STRIP);
+
    /* adjust line coords */
-   for (i = start, tmp = fxVB; i < count; i++, tmp += stride) {
-      ((tdfxVertexPtr)tmp)->v.x += LINE_X_OFFSET - TRI_X_OFFSET;
-      ((tdfxVertexPtr)tmp)->v.y += LINE_Y_OFFSET - TRI_Y_OFFSET;
+   for (i = start; i < count; i++) {
+      fxVB[i].x += LINE_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y += LINE_Y_OFFSET - TRI_Y_OFFSET;
    }
 
    fxMesa->Glide.grDrawVertexArrayContiguous( GR_LINE_STRIP, count-start,
-                                              fxVB, 1<<shift);
+                                              fxVB + start, sizeof(tdfxVertex) );
 
    /* restore line coords */
-   for (i = start, tmp = fxVB; i < count; i++, tmp += stride) {
-      ((tdfxVertexPtr)tmp)->v.x -= LINE_X_OFFSET - TRI_X_OFFSET;
-      ((tdfxVertexPtr)tmp)->v.y -= LINE_Y_OFFSET - TRI_Y_OFFSET;
+   for (i = start; i < count; i++) {
+      fxVB[i].x -= LINE_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y -= LINE_Y_OFFSET - TRI_Y_OFFSET;
    }
 }
 
@@ -618,36 +619,34 @@ static void tdfx_render_vb_line_loop( GLcontext *ctx,
 				      GLuint flags )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   GLuint shift = fxMesa->vertex_stride_shift;
-   GLubyte *fxVB = fxMesa->verts + (start << shift);
-   int stride = 1<<shift;
-   GLubyte *tmp, *tmp2 = fxVB;
+   tdfxVertex *fxVB = fxMesa->verts;
    GLint i;
    GLint j = start;
    (void) flags;
 
+   INIT(GL_LINE_LOOP);
+
    if (!(flags & PRIM_BEGIN)) {
-      fxVB += (1 << shift);
       j++;
    }
 
    /* adjust line coords */
-   for (i = start, tmp = tmp2; i < count; i++, tmp += stride) {
-      ((tdfxVertexPtr)tmp)->v.x += LINE_X_OFFSET - TRI_X_OFFSET;
-      ((tdfxVertexPtr)tmp)->v.y += LINE_Y_OFFSET - TRI_Y_OFFSET;
+   for (i = start; i < count; i++) {
+      fxVB[i].x += LINE_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y += LINE_Y_OFFSET - TRI_Y_OFFSET;
    }
 
    fxMesa->Glide.grDrawVertexArrayContiguous( GR_LINE_STRIP, count-j,
-                                              fxVB, 1<<shift);
+                                              fxVB + j, sizeof(tdfxVertex));
 
    if (flags & PRIM_END) 
-      fxMesa->Glide.grDrawLine( fxMesa->verts + ((count - 1)<<shift), 
-                                fxMesa->verts + (start<<shift) );
+      fxMesa->Glide.grDrawLine( fxVB + (count - 1), 
+                                fxVB + start );
 
    /* restore line coords */
-   for (i = start, tmp = tmp2; i < count; i++, tmp += stride) {
-      ((tdfxVertexPtr)tmp)->v.x -= LINE_X_OFFSET - TRI_X_OFFSET;
-      ((tdfxVertexPtr)tmp)->v.y -= LINE_Y_OFFSET - TRI_Y_OFFSET;
+   for (i = start; i < count; i++) {
+      fxVB[i].x -= LINE_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y -= LINE_Y_OFFSET - TRI_Y_OFFSET;
    }
 }
 
@@ -657,26 +656,25 @@ static void tdfx_render_vb_lines( GLcontext *ctx,
 				      GLuint flags )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   GLuint shift = fxMesa->vertex_stride_shift;
-   GLubyte *fxVB = fxMesa->verts + (start << shift);
-   int stride = 1<<shift;
-   GLubyte *tmp;
+   tdfxVertex *fxVB = fxMesa->verts;
    GLint i;
    (void) flags;
 
+   INIT(GL_LINES);
+
    /* adjust line coords */
-   for (i = start, tmp = fxVB; i < count; i++, tmp += stride) {
-      ((tdfxVertexPtr)tmp)->v.x += LINE_X_OFFSET - TRI_X_OFFSET;
-      ((tdfxVertexPtr)tmp)->v.y += LINE_Y_OFFSET - TRI_Y_OFFSET;
+   for (i = start; i < count; i++) {
+      fxVB[i].x += LINE_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y += LINE_Y_OFFSET - TRI_Y_OFFSET;
    }
 
    fxMesa->Glide.grDrawVertexArrayContiguous( GR_LINES, count-start,
-                                              fxVB, 1<<shift);
+                                              fxVB + start, sizeof(tdfxVertex));
 
    /* restore line coords */
-   for (i = start, tmp = fxVB; i < count; i++, tmp += stride) {
-      ((tdfxVertexPtr)tmp)->v.x -= LINE_X_OFFSET - TRI_X_OFFSET;
-      ((tdfxVertexPtr)tmp)->v.y -= LINE_Y_OFFSET - TRI_Y_OFFSET;
+   for (i = start; i < count; i++) {
+      fxVB[i].x -= LINE_X_OFFSET - TRI_X_OFFSET;
+      fxVB[i].y -= LINE_Y_OFFSET - TRI_Y_OFFSET;
    }
 }
 
@@ -686,12 +684,28 @@ static void tdfx_render_vb_triangles( GLcontext *ctx,
 				      GLuint flags )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   GLuint shift = fxMesa->vertex_stride_shift;
-   GLubyte *fxVB = fxMesa->verts + (start << shift);
+   tdfxVertex *fxVB = fxMesa->verts;
    (void) flags;
 
+   INIT(GL_TRIANGLES);
+
+#if 0
+   /* [dBorca]
+    * apparently, this causes troubles with some programs (GLExcess);
+    * might be a bug in Glide... However, "grDrawVertexArrayContiguous"
+    * eventually calls "grDrawTriangle" for GR_TRIANGLES, so we're better
+    * off doing it by hand...
+    */
    fxMesa->Glide.grDrawVertexArrayContiguous( GR_TRIANGLES, count-start,
-                                              fxVB, 1<<shift);
+                                              fxVB + start, sizeof(tdfxVertex));
+#else
+   {
+    GLuint j;
+    for (j=start+2; j<count; j+=3) {
+        fxMesa->Glide.grDrawTriangle(fxVB + (j-2), fxVB + (j-1), fxVB + j);
+    }
+   }
+#endif
 }
 
 
@@ -701,10 +715,11 @@ static void tdfx_render_vb_tri_strip( GLcontext *ctx,
 				      GLuint flags )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   GLuint shift = fxMesa->vertex_stride_shift;
-   GLubyte *fxVB = fxMesa->verts + (start << shift);
+   tdfxVertex *fxVB = fxMesa->verts;
    int mode;
    (void) flags;
+
+   INIT(GL_TRIANGLE_STRIP);
 
 /*     fprintf(stderr, "%s/%d\n", __FUNCTION__, 1<<shift); */
 /*     if(!prevLockLine) abort(); */
@@ -712,7 +727,7 @@ static void tdfx_render_vb_tri_strip( GLcontext *ctx,
    mode = GR_TRIANGLE_STRIP;
 
    fxMesa->Glide.grDrawVertexArrayContiguous( mode, count-start,
-                                              fxVB, 1<<shift);
+                                              fxVB + start, sizeof(tdfxVertex));
 }
 
 
@@ -722,12 +737,13 @@ static void tdfx_render_vb_tri_fan( GLcontext *ctx,
 				    GLuint flags )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   GLuint shift = fxMesa->vertex_stride_shift;
-   GLubyte *fxVB = fxMesa->verts + (start << shift);
+   tdfxVertex *fxVB = fxMesa->verts;
    (void) flags;
 
+   INIT(GL_TRIANGLE_FAN);
+
    fxMesa->Glide.grDrawVertexArrayContiguous( GR_TRIANGLE_FAN, count-start,
-                                              fxVB, 1<<shift );
+                                              fxVB + start, sizeof(tdfxVertex) );
 }
 
 static void tdfx_render_vb_quads( GLcontext *ctx,
@@ -736,15 +752,22 @@ static void tdfx_render_vb_quads( GLcontext *ctx,
 				       GLuint flags )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   GLuint shift = fxMesa->vertex_stride_shift;
-   GLubyte *fxVB = fxMesa->verts;
+   tdfxVertex *fxVB = fxMesa->verts;
    GLuint i;
    (void) flags;
+
+   INIT(GL_QUADS);
    
-   for (i = start ; i < count-3 ; i += 4 ) {
-#define VERT(x) (fxVB + ((x)<<shift))
-      fxMesa->Glide.grDrawTriangle( VERT(i),   VERT(i+1), VERT(i+3) );
-      fxMesa->Glide.grDrawTriangle( VERT(i+1), VERT(i+2), VERT(i+3) );
+   for (i = start + 3 ; i < count ; i += 4 ) {
+#define VERT(x) (fxVB + (x))
+      tdfxVertex *_v_[4];
+      _v_[0] = VERT(i);
+      _v_[1] = VERT(i-3);
+      _v_[2] = VERT(i-2);
+      _v_[3] = VERT(i-1);
+      fxMesa->Glide.grDrawVertexArray(GR_TRIANGLE_FAN, 4, _v_);
+      /*fxMesa->Glide.grDrawTriangle( VERT(i-3), VERT(i-2), VERT(i) );*/
+      /*fxMesa->Glide.grDrawTriangle( VERT(i-2), VERT(i-1), VERT(i) );*/
 #undef VERT
    }
 }
@@ -755,14 +778,15 @@ static void tdfx_render_vb_quad_strip( GLcontext *ctx,
 				       GLuint flags )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   GLuint shift = fxMesa->vertex_stride_shift;
-   GLubyte *fxVB = fxMesa->verts + (start << shift);
+   tdfxVertex *fxVB = fxMesa->verts;
    (void) flags;
+
+   INIT(GL_QUAD_STRIP);
 
    count -= (count-start)&1;
 
    fxMesa->Glide.grDrawVertexArrayContiguous( GR_TRIANGLE_STRIP,
-                                              count-start, fxVB, 1<<shift);
+                                              count-start, fxVB + start, sizeof(tdfxVertex));
 }
 
 static void tdfx_render_vb_poly( GLcontext *ctx,
@@ -771,12 +795,13 @@ static void tdfx_render_vb_poly( GLcontext *ctx,
 				 GLuint flags )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   GLuint shift = fxMesa->vertex_stride_shift;
-   GLubyte *fxVB = fxMesa->verts + (start << shift);
+   tdfxVertex *fxVB = fxMesa->verts;
    (void) flags;
+
+   INIT(GL_POLYGON);
    
    fxMesa->Glide.grDrawVertexArrayContiguous( GR_POLYGON, count-start,
-                                              fxVB, 1<<shift);
+                                              fxVB + start, sizeof(tdfxVertex));
 }
 
 static void tdfx_render_vb_noop( GLcontext *ctx,
@@ -804,6 +829,7 @@ static void (*tdfx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
    tdfx_render_vb_poly,
    tdfx_render_vb_noop,
 };
+#undef INIT
 
 
 /**********************************************************************/
@@ -811,7 +837,7 @@ static void (*tdfx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
 /**********************************************************************/
 
 
-#define VERT(x) (tdfxVertex *)(vertptr + ((x)<<vertshift))
+#define VERT(x) (tdfxVertex *)(vertptr + (x))
 
 #define RENDER_POINTS( start, count )		\
    for ( ; start < count ; start++)		\
@@ -824,15 +850,23 @@ static void (*tdfx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
    fxMesa->Glide.grDrawTriangle( VERT(v0), VERT(v1), VERT(v2) )
 
 #define RENDER_QUAD( v0, v1, v2, v3 ) \
-   tdfx_draw_quad( fxMesa, VERT(v0), VERT(v1), VERT(v2), VERT(v3) )
+   do {					\
+      tdfxVertex *_v_[4];		\
+      _v_[0] = VERT(v3);		\
+      _v_[1] = VERT(v0);		\
+      _v_[2] = VERT(v1);		\
+      _v_[3] = VERT(v2);		\
+      fxMesa->Glide.grDrawVertexArray(GR_TRIANGLE_FAN, 4, _v_);\
+      /*fxMesa->Glide.grDrawTriangle( VERT(v0), VERT(v1), VERT(v3) );*/\
+      /*fxMesa->Glide.grDrawTriangle( VERT(v1), VERT(v2), VERT(v3) );*/\
+   } while (0)
 
 #define INIT(x) tdfxRenderPrimitive( ctx, x )
 
 #undef LOCAL_VARS
 #define LOCAL_VARS						\
     tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);			\
-    GLubyte *vertptr = (GLubyte *)fxMesa->verts;		\
-    const GLuint vertshift = fxMesa->vertex_stride_shift;	\
+    tdfxVertex *vertptr = fxMesa->verts;			\
     const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;	\
     (void) elt;
 
@@ -847,6 +881,14 @@ static void (*tdfx_render_tab_verts[GL_POLYGON+2])(GLcontext *,
 #define TAG(x) tdfx_##x##_elts
 #define ELT(x) elt[x]
 #include "tnl_dd/t_dd_rendertmp.h"
+
+/* Verts, no clipping.
+ */
+#undef ELT
+#undef TAG
+#define TAG(x) tdfx_##x##_verts
+#define ELT(x) x
+/*#include "tnl_dd/t_dd_rendertmp.h"*/
 
 
 
@@ -888,14 +930,22 @@ static void tdfxRenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
 static void tdfxFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts, 
 				       GLuint n )
 {
-   tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
-   GLubyte *vertptr = (GLubyte *)fxMesa->verts;			
-   const GLuint vertshift = fxMesa->vertex_stride_shift;       	
-   const GLuint *start = (const GLuint *)VERT(elts[0]);
    int i;
-
-   for (i = 2 ; i < n ; i++) {
-      fxMesa->Glide.grDrawTriangle( VERT(elts[i-1]), VERT(elts[i]), start );
+   tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
+   tdfxVertex *vertptr = fxMesa->verts;
+   if (n == 3) {
+      fxMesa->Glide.grDrawTriangle( VERT(elts[0]), VERT(elts[1]), VERT(elts[2]) );
+   } else if (n <= 32) {
+      tdfxVertex *newvptr[32];
+      for (i = 0 ; i < n ; i++) {
+         newvptr[i] = VERT(elts[i]);
+      }
+      fxMesa->Glide.grDrawVertexArray(GR_TRIANGLE_FAN, n, newvptr);
+   } else {
+      const tdfxVertex *start = VERT(elts[0]);
+      for (i = 2 ; i < n ; i++) {
+         fxMesa->Glide.grDrawTriangle( start, VERT(elts[i-1]), VERT(elts[i]) );
+      }
    }
 }
 
@@ -1166,7 +1216,7 @@ static void tdfxRenderFinish( GLcontext *ctx )
 /**********************************************************************/
 
 static char *fallbackStrings[] = {
-   "1D/3D Texture map",
+   "3D/Rect/Cube Texture map",
    "glDrawBuffer(GL_FRONT_AND_BACK)",
    "Separate specular color",
    "glEnable/Disable(GL_STENCIL_TEST)",

@@ -26,6 +26,9 @@
 /* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_context.h,v 1.5 2002/02/24 21:51:10 dawes Exp $ */
 
 /*
+ * New fixes:
+ *	Daniel Borca <dborca@users.sourceforge.net>, 19 Jul 2004
+ *
  * Original rewrite:
  *	Gareth Hughes <gareth@valinux.com>, 29 Sep - 1 Oct 2000
  *
@@ -108,6 +111,7 @@
 #define TDFX_UPLOAD_FOG_MODE		0x00000400
 #define TDFX_UPLOAD_FOG_COLOR		0x00000800
 #define TDFX_UPLOAD_FOG_TABLE		0x00001000
+#define TDFX_UPLOAD_CONSTANT_COLOR	0x00002000
 
 #define TDFX_UPLOAD_CLIP		0x00002000
 #define TDFX_UPLOAD_CULL		0x00004000
@@ -128,7 +132,7 @@
 
 /* Flags for software fallback cases */
 /* See correponding strings in tdfx_tris.c */
-#define TDFX_FALLBACK_TEXTURE_1D_3D	0x0001
+#define TDFX_FALLBACK_TEXTURE_MAP	0x0001
 #define TDFX_FALLBACK_DRAW_BUFFER	0x0002
 #define TDFX_FALLBACK_SPECULAR		0x0004
 #define TDFX_FALLBACK_STENCIL		0x0008
@@ -146,15 +150,15 @@
 #define TDFX_LAYOUT_NOTEX	1
 #define TDFX_LAYOUT_SINGLE	2
 #define TDFX_LAYOUT_MULTI	3
-#define TDFX_LAYOUT_PROJECT	4
-#define TDFX_NUM_LAYOUTS	5
+#define TDFX_LAYOUT_PROJ1	4
+#define TDFX_LAYOUT_PROJ2	5
+#define TDFX_NUM_LAYOUTS	6
 
 #define TDFX_XY_OFFSET		0
 #define TDFX_Z_OFFSET		8
 #define TDFX_Q_OFFSET		12
 #define TDFX_ARGB_OFFSET	16
-#define TDFX_PAD_OFFSET		20
-#define TDFX_FOG_OFFSET         20 /* experimental */
+#define TDFX_FOG_OFFSET         20
 #define TDFX_ST0_OFFSET		24
 #define TDFX_ST1_OFFSET		32
 #define TDFX_Q0_OFFSET		40
@@ -316,7 +320,10 @@ typedef struct tdfxTexInfo_t
 
    GLfloat sScale, tScale;  /* texcoord scale factor */
 
+   GrTexTable_t paltype;
    GuTexPalette palette;
+
+   GLboolean padded;
 }
 tdfxTexInfo;
 
@@ -344,49 +351,20 @@ struct tdfxSharedState {
 /* ================================================================
  * The vertex structures.
  */
-typedef struct {
-   GLubyte	blue;
-   GLubyte	green;
-   GLubyte	red;
-   GLubyte	alpha;
-} tdfx_color_t;
-
-typedef struct {
+/* The size of this union is not of relevence:
+ */
+typedef struct tdfx_vertex_t {
    GLfloat x, y, z;			/* Coordinates in screen space */
    GLfloat rhw;				/* Reciprocal homogeneous w */
-   tdfx_color_t color;		/* Diffuse color */
-   GLuint pad;			
-   GLfloat tu0, tv0;			/* Texture 0 coordinates */
-   GLfloat tu1, tv1;			/* Texture 1 coordinates */
-} tdfx_vertex;
-
-typedef struct {
-   GLfloat x, y, z;			/* Coordinates in screen space */
-   GLfloat rhw;				/* Reciprocal homogeneous w */
-   tdfx_color_t color;		/* Diffuse color */
-   GLuint pad;			
+   GLubyte color[4];		/* Diffuse color */
+   GLfloat fog;
    GLfloat tu0, tv0;		/* Texture 0 coordinates */
    GLfloat tu1, tv1;		/* Texture 1 coordinates */
    GLfloat tq0, tq1;		/* Texture 0/1 q coords */
-} tdfx_ptex_vertex;
-
-typedef struct {
-   GLfloat x, y, z;			/* Coordinates in screen space */
-   tdfx_color_t color;		/* Diffuse color */
-} tdfx_tiny_vertex;
-
-/* The size of this union is not of relevence:
- */
-union tdfx_vertex_t {
-   tdfx_vertex v;
-   tdfx_tiny_vertex tv;
-   tdfx_ptex_vertex pv;
-   GLfloat f[16];
-   GLuint ui[16];
-   GLubyte ub4[16][4];
-};
-
-typedef union tdfx_vertex_t tdfxVertex, *tdfxVertexPtr;
+   unsigned char pspec[4];	/* B, G, R, A [0..255] */
+   float psize;		/* point size */
+   long pad[16 - 14];	/* ensure 64b structure */
+} tdfxVertex, *tdfxVertexPtr;
 
 
 /* ================================================================
@@ -528,8 +506,10 @@ struct tdfx_color {
    /* Blending */
    GrAlphaBlendFnc_t BlendSrcRGB;	/* Blend source RGB factor */
    GrAlphaBlendFnc_t BlendDstRGB;	/* Blend destination RGB factor */
+   GrAlphaBlendOp_t BlendEqRGB;		/* Blend source RGB op */
    GrAlphaBlendFnc_t BlendSrcA;		/* Blend source alpha factor */
    GrAlphaBlendFnc_t BlendDstA;		/* Blend destination alpha factor */
+   GrAlphaBlendOp_t BlendEqA;		/* Blend source alpha op */
 
    GrDitherMode_t Dither;		/* Dither enable */
 };
@@ -601,6 +581,7 @@ struct tdfx_glide {
    FxBool HaveTextureBufferExt;		/* TEXTUREBUFFER */
    FxBool HaveTexFmtExt;		/* TEXFMT */
    FxBool HaveTexUMAExt;		/* TEXUMA */
+   FxBool HaveMirrorExt;		/* MIRROR */
    FxBool HaveTexus2;			/* Texus 2 - FXT1 */
 
    /* Glide library function pointers */
@@ -838,6 +819,7 @@ struct tdfx_context {
 
    /* Mirror of hardware state, Glide parameters
     */
+   GLuint tmu_source[TDFX_NUM_TMU];
    struct tdfx_texsource	TexSource[TDFX_NUM_TMU];
    struct tdfx_texparams	TexParams[TDFX_NUM_TMU];
    struct tdfx_texpalette	TexPalette;
@@ -879,10 +861,9 @@ struct tdfx_context {
 
    /* Variable-size Glide vertex formats
     */
-   GLuint vertexFormat;            /* the current format */
-   GLuint vertex_stride_shift;
+   GLuint vertexFormat;		/* the current format */
    void *layout[TDFX_NUM_LAYOUTS];
-   GLubyte *verts;			   /* tdfxVertices, arbitarily packed */
+   tdfxVertex *verts;
    
    GLfloat hw_viewport[16];
    
@@ -903,6 +884,7 @@ struct tdfx_context {
    int screen_height;
 
    GLboolean haveTwoTMUs;      /* True if we have 2 tmu's  */
+   GLboolean haveHwAlpha;
    GLboolean haveHwStencil;
    GLboolean haveHwStipple;
 
@@ -1018,6 +1000,10 @@ extern int TDFX_DEBUG;
 #define DEBUG_VERBOSE_DRI	0x10
 #define DEBUG_VERBOSE_IOCTL	0x20
 #define DEBUG_VERBOSE_2D	0x40
+
+/* conf */
+#define FX_COMPRESS_S3TC_AS_FXT1_HACK 1
+#define FX_TC_NAPALM 0
 
 #endif /* GLX_DIRECT_RENDERING */
 

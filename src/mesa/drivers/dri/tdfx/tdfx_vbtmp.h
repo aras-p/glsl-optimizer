@@ -1,19 +1,54 @@
+/*
+ * Mesa 3-D graphics library
+ * Version:  4.1
+ *
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 
-#if (IND & (TDFX_W_BIT|TDFX_TEX0_BIT|TDFX_TEX1_BIT))
+/* Authors:
+ *    Keith Whitwell <keith@tungstengraphics.com>
+ *    Daniel Borca <dborca@users.sourceforge.net>
+ */
+
+
+#define VIEWPORT_X(dst,x) dst = s[0]  * x + s[12]
+#define VIEWPORT_Y(dst,y) dst = s[5]  * y + s[13]
+#define VIEWPORT_Z(dst,z) dst = s[10] * z + s[14]
+
 
 static void TAG(emit)( GLcontext *ctx,
 		       GLuint start, GLuint end,
-		       void *dest,
-		       GLuint stride )
+		       void *dest )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   GLuint tmu0_source = fxMesa->tmu_source[0];
+   GLuint tmu1_source = fxMesa->tmu_source[1];
    GLfloat (*tc0)[4], (*tc1)[4];
    GLfloat (*col)[4];
    GLuint tc0_stride, tc1_stride, col_stride;
-   GLuint tc0_size, tc1_size;
+   GLuint tc0_size, tc1_size, col_size;
    GLfloat (*proj)[4] = VB->NdcPtr->data; 
    GLuint proj_stride = VB->NdcPtr->stride;
+   GLfloat (*fog)[4];
+   GLuint fog_stride;
    tdfxVertex *v = (tdfxVertex *)dest;
    GLfloat u0scale,v0scale,u1scale,v1scale;
    const GLubyte *mask = VB->ClipMask;
@@ -21,30 +56,34 @@ static void TAG(emit)( GLcontext *ctx,
    int i;
 
 /*     fprintf(stderr, "%s\n", __FUNCTION__); */
-   ASSERT(stride > 16);
-
 
    if (IND & TDFX_TEX0_BIT) {
-      tc0_stride = VB->TexCoordPtr[0]->stride;
-      tc0 = VB->TexCoordPtr[0]->data;
+      tc0_stride = VB->TexCoordPtr[tmu0_source]->stride;
+      tc0 = VB->TexCoordPtr[tmu0_source]->data;
       u0scale = fxMesa->sScale0;
       v0scale = fxMesa->tScale0;
       if (IND & TDFX_PTEX_BIT)
-	 tc0_size = VB->TexCoordPtr[0]->size;
+	 tc0_size = VB->TexCoordPtr[tmu0_source]->size;
    }
 
    if (IND & TDFX_TEX1_BIT) {
-      tc1 = VB->TexCoordPtr[1]->data;
-      tc1_stride = VB->TexCoordPtr[1]->stride;
+      tc1 = VB->TexCoordPtr[tmu1_source]->data;
+      tc1_stride = VB->TexCoordPtr[tmu1_source]->stride;
       u1scale = fxMesa->sScale1;
       v1scale = fxMesa->tScale1;
       if (IND & TDFX_PTEX_BIT)
-	 tc1_size = VB->TexCoordPtr[1]->size;
+	 tc1_size = VB->TexCoordPtr[tmu1_source]->size;
    }
    
    if (IND & TDFX_RGBA_BIT) {
       col = VB->ColorPtr[0]->data;
       col_stride = VB->ColorPtr[0]->stride;
+      col_size = VB->ColorPtr[0]->size;
+   }
+   
+   if (IND & TDFX_FOGC_BIT) {
+      fog = VB->FogCoordPtr->data;
+      fog_stride = VB->FogCoordPtr->stride;
    }
 
    {
@@ -58,153 +97,65 @@ static void TAG(emit)( GLcontext *ctx,
 	    tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 + start * tc1_stride);
 	 if (IND & TDFX_RGBA_BIT) 
 	    STRIDE_4F(col, start * col_stride);
+	 if (IND & TDFX_FOGC_BIT) 
+	    STRIDE_4F(fog, start * fog_stride);
       }
 
-      for (i=start; i < end; i++, v = (tdfxVertex *)((GLubyte *)v + stride)) {
+      for (i=start; i < end; i++, v++) {
 	 if (IND & TDFX_XYZ_BIT) {
 	    if (mask[i] == 0) {
                /* unclipped */
-	       v->v.x   = s[0]  * proj[0][0] + s[12];	
-	       v->v.y   = s[5]  * proj[0][1] + s[13];	
-	       v->v.z   = s[10] * proj[0][2] + s[14];	
-	       v->v.rhw = proj[0][3];	
+	       VIEWPORT_X(v->x, proj[0][0]);
+	       VIEWPORT_Y(v->y, proj[0][1]);
+	       VIEWPORT_Z(v->z, proj[0][2]);
+	       v->rhw = proj[0][3];	
 	    } else {
                /* clipped */
-               v->v.rhw = 1.0;
+               v->rhw = 1.0;
 	    }
 	    proj =  (GLfloat (*)[4])((GLubyte *)proj +  proj_stride);
 	 }
 	 if (IND & TDFX_RGBA_BIT) {
-	    GLubyte *b = (GLubyte *)((GLuint *)v + 4);
-	    UNCLAMPED_FLOAT_TO_UBYTE(b[0], col[0][2]);
-	    UNCLAMPED_FLOAT_TO_UBYTE(b[1], col[0][1]);
-	    UNCLAMPED_FLOAT_TO_UBYTE(b[2], col[0][0]);
-	    UNCLAMPED_FLOAT_TO_UBYTE(b[3], col[0][3]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(v->color[0], col[0][2]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(v->color[1], col[0][1]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(v->color[2], col[0][0]);
+	    if (col_size == 4) {
+	       UNCLAMPED_FLOAT_TO_UBYTE(v->color[3], col[0][3]);
+	    } else {
+	       v->color[3] = 255;
+	    }
 	    STRIDE_4F(col, col_stride);
 	 }
+	 if (IND & TDFX_FOGC_BIT) {
+	    v->fog = CLAMP(fog[0][0], 0.0f, 1.0f);
+	    STRIDE_4F(fog, fog_stride);
+	 }
 	 if (IND & TDFX_TEX0_BIT) {
-	    GLfloat w = v->v.rhw;
+	    GLfloat w = v->rhw;
+	    v->tu0 = tc0[0][0] * u0scale * w;
+	    v->tv0 = tc0[0][1] * v0scale * w;
 	    if (IND & TDFX_PTEX_BIT) {
-	       v->pv.tu0 = tc0[0][0] * u0scale * w;
-	       v->pv.tv0 = tc0[0][1] * v0scale * w;
-	       v->pv.tq0 = w;
+	       v->tq0 = w;
 	       if (tc0_size == 4) 
-		  v->pv.tq0 = tc0[0][3] * w;
-	    } 
-	    else {
-	       v->v.tu0 = tc0[0][0] * u0scale * w;
-	       v->v.tv0 = tc0[0][1] * v0scale * w;
+		  v->tq0 = tc0[0][3] * w;
 	    } 
 	    tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 +  tc0_stride);
 	 }
 	 if (IND & TDFX_TEX1_BIT) {
-	    GLfloat w = v->v.rhw;
+	    GLfloat w = v->rhw;
+	    v->tu1 = tc1[0][0] * u1scale * w;
+	    v->tv1 = tc1[0][1] * v1scale * w;
 	    if (IND & TDFX_PTEX_BIT) {
-	       v->pv.tu1 = tc1[0][0] * u1scale * w;
-	       v->pv.tv1 = tc1[0][1] * v1scale * w;
-	       v->pv.tq1 = w;
+	       v->tq1 = w;
 	       if (tc1_size == 4) 
-		  v->pv.tq1 = tc1[0][3] * w;
-	    } 
-	    else {
-	       v->v.tu1 = tc1[0][0] * u1scale * w;
-	       v->v.tv1 = tc1[0][1] * v1scale * w;
+		  v->tq1 = tc1[0][3] * w;
 	    }
 	    tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 +  tc1_stride);
 	 } 
       }
    }
 }
-#else 
-#if (IND & TDFX_XYZ_BIT)
-static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
-		       void *dest, GLuint stride )
-{
-   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLfloat (*col)[4];
-   GLuint col_stride;
-   GLfloat (*proj)[4] = VB->NdcPtr->data; 
-   GLuint proj_stride = VB->NdcPtr->stride;
-   GLfloat *v = (GLfloat *)dest;
-   const GLubyte *mask = VB->ClipMask;
-   const GLfloat *s = fxMesa->hw_viewport;
-   int i;
 
-/*       fprintf(stderr, "%s %d..%d dest %p stride %d\n", __FUNCTION__,  */
-/*    	   start, end, dest, stride);  */
-
-   ASSERT(fxMesa->SetupIndex == (TDFX_XYZ_BIT|TDFX_RGBA_BIT));
-   ASSERT(stride == 16);
-
-   col = VB->ColorPtr[0]->data;
-   col_stride = VB->ColorPtr[0]->stride;
-   ASSERT(VB->ColorPtr[0]->Type == GL_UNSIGNED_BYTE);
-
-   /* Pack what's left into a 4-dword vertex.  Color is in a different
-    * place, and there is no 'w' coordinate.  
-    */
-   {
-      if (start) {
-	 proj =  (GLfloat (*)[4])((GLubyte *)proj + start * proj_stride);
-	 STRIDE_4F(col, start * col_stride);
-      }
-
-      for (i=start; i < end; i++, v+=4) {
-	 if (mask[i] == 0) {
-	    v[0]   = s[0]  * proj[0][0] + s[12];	
-	    v[1]   = s[5]  * proj[0][1] + s[13];	
-	    v[2]   = s[10] * proj[0][2] + s[14];	
-	 }
-	 proj =  (GLfloat (*)[4])((GLubyte *)proj +  proj_stride);
-	 {
-	    GLubyte *b = (GLubyte *)&v[3];
-	    UNCLAMPED_FLOAT_TO_UBYTE(b[0], col[0][2]);
-	    UNCLAMPED_FLOAT_TO_UBYTE(b[1], col[0][1]);
-	    UNCLAMPED_FLOAT_TO_UBYTE(b[2], col[0][0]);
-	    UNCLAMPED_FLOAT_TO_UBYTE(b[3], col[0][3]);
-	    STRIDE_4F(col, col_stride);
-	 }
-      }
-   }
-}
-#else
-static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
-		       void *dest, GLuint stride )
-{
-   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLfloat (*col)[4];
-   GLuint col_stride;
-   GLfloat *v = (GLfloat *)dest;
-   int i;
-
-   col = VB->ColorPtr[0]->data;
-   col_stride = VB->ColorPtr[0]->stride;
-
-   if (start)
-      STRIDE_4F(col, col_stride * start);
-
-   /* Need to figure out where color is:
-    */
-   if (fxMesa->SetupIndex & TDFX_W_BIT )
-      v += 4;
-   else
-      v += 3;
-
-   for (i=start; i < end; i++, STRIDE_F(v, stride)) {
-      GLubyte *b = (GLubyte *)v;
-      UNCLAMPED_FLOAT_TO_UBYTE(b[0], col[0][2]);
-      UNCLAMPED_FLOAT_TO_UBYTE(b[1], col[0][1]);
-      UNCLAMPED_FLOAT_TO_UBYTE(b[2], col[0][0]);
-      UNCLAMPED_FLOAT_TO_UBYTE(b[3], col[0][3]);
-      STRIDE_4F(col, col_stride);
-   }
-}
-#endif
-#endif
-
-#if (IND & TDFX_XYZ_BIT) && (IND & TDFX_RGBA_BIT)
 
 static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 {
@@ -231,6 +182,7 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
    return GL_TRUE;
 }
 
+
 static void TAG(interp)( GLcontext *ctx,
 			 GLfloat t, 
 			 GLuint edst, GLuint eout, GLuint ein,
@@ -238,69 +190,44 @@ static void TAG(interp)( GLcontext *ctx,
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   const GLuint shift = fxMesa->vertex_stride_shift;
    const GLfloat *dstclip = VB->ClipPtr->data[edst];
    const GLfloat oow = (dstclip[3] == 0.0F) ? 1.0F : (1.0F / dstclip[3]);
    const GLfloat *s = fxMesa->hw_viewport;
-   GLubyte *tdfxverts = (GLubyte *)fxMesa->verts;
-   tdfxVertex *dst = (tdfxVertex *) (tdfxverts + (edst << shift));
-   const tdfxVertex *out = (const tdfxVertex *) (tdfxverts + (eout << shift));
-   const tdfxVertex *in = (const tdfxVertex *) (tdfxverts + (ein << shift));
-   const GLfloat wout = 1.0F / out->v.rhw;
-   const GLfloat win = 1.0F / in->v.rhw;
+   tdfxVertex *dst = fxMesa->verts + edst;
+   const tdfxVertex *out = fxMesa->verts + eout;
+   const tdfxVertex *in = fxMesa->verts + ein;
+   const GLfloat wout = oow / out->rhw;
+   const GLfloat win = oow / in->rhw;
 
-   dst->v.x   = s[0]  * dstclip[0] * oow + s[12];	
-   dst->v.y   = s[5]  * dstclip[1] * oow + s[13];	
-   dst->v.z   = s[10] * dstclip[2] * oow + s[14];	
+   VIEWPORT_X(dst->x, dstclip[0] * oow);
+   VIEWPORT_Y(dst->y, dstclip[1] * oow);
+   VIEWPORT_Z(dst->z, dstclip[2] * oow);
+   dst->rhw = oow;
 
-   if (IND & (TDFX_W_BIT|TDFX_TEX0_BIT|TDFX_TEX1_BIT)) {
-      dst->v.rhw = oow;	
-   
-      INTERP_UB( t, dst->ub4[4][0], out->ub4[4][0], in->ub4[4][0] );
-      INTERP_UB( t, dst->ub4[4][1], out->ub4[4][1], in->ub4[4][1] );
-      INTERP_UB( t, dst->ub4[4][2], out->ub4[4][2], in->ub4[4][2] );
-      INTERP_UB( t, dst->ub4[4][3], out->ub4[4][3], in->ub4[4][3] );
+   INTERP_UB( t, dst->color[0], out->color[0],   in->color[0] );
+   INTERP_UB( t, dst->color[1], out->color[1],   in->color[1] );
+   INTERP_UB( t, dst->color[2], out->color[2],   in->color[2] );
+   INTERP_UB( t, dst->color[3], out->color[3],   in->color[3] );
 
-      if (IND & TDFX_TEX0_BIT) {
-	 if (IND & TDFX_PTEX_BIT) {
-	    INTERP_F( t, dst->pv.tu0, out->pv.tu0 * wout, in->pv.tu0 * win );
-	    INTERP_F( t, dst->pv.tv0, out->pv.tv0 * wout, in->pv.tv0 * win );
-	    INTERP_F( t, dst->pv.tq0, out->pv.tq0 * wout, in->pv.tq0 * win );
-	    dst->pv.tu0 *= oow;
-	    dst->pv.tv0 *= oow;
-	    dst->pv.tq0 *= oow;
-	 } else {
-	    INTERP_F( t, dst->v.tu0, out->v.tu0 * wout, in->v.tu0 * win );
-	    INTERP_F( t, dst->v.tv0, out->v.tv0 * wout, in->v.tv0 * win );
-	    dst->v.tu0 *= oow;
-	    dst->v.tv0 *= oow;
-	 }
+   if (IND & TDFX_FOGC_BIT) {
+      INTERP_F( t, dst->fog, out->fog, in->fog );
+   }
+
+   if (IND & TDFX_TEX0_BIT) {
+      INTERP_F( t, dst->tu0, out->tu0 * wout, in->tu0 * win );
+      INTERP_F( t, dst->tv0, out->tv0 * wout, in->tv0 * win );
+      if (IND & TDFX_PTEX_BIT) {
+         INTERP_F( t, dst->tq0, out->tq0 * wout, in->tq0 * win );
       }
-      if (IND & TDFX_TEX1_BIT) {
-	 if (IND & TDFX_PTEX_BIT) {
-	    INTERP_F( t, dst->pv.tu1, out->pv.tu1 * wout, in->pv.tu1 * win );
-	    INTERP_F( t, dst->pv.tv1, out->pv.tv1 * wout, in->pv.tv1 * win );
-	    INTERP_F( t, dst->pv.tq1, out->pv.tq1 * wout, in->pv.tq1 * win );
-	    dst->pv.tu1 *= oow;
-	    dst->pv.tv1 *= oow;
-	    dst->pv.tq1 *= oow;
-	 } else {
-	    INTERP_F( t, dst->v.tu1, out->v.tu1 * wout, in->v.tu1 * win );
-	    INTERP_F( t, dst->v.tv1, out->v.tv1 * wout, in->v.tv1 * win );
-	    dst->v.tu1 *= oow;
-	    dst->v.tv1 *= oow;
-	 }
-      }
-   } else {
-      /* 4-dword vertex.  Color is in v[3] and there is no oow coordinate.
-       */
-      INTERP_UB( t, dst->ub4[3][0], out->ub4[3][0], in->ub4[3][0] );
-      INTERP_UB( t, dst->ub4[3][1], out->ub4[3][1], in->ub4[3][1] );
-      INTERP_UB( t, dst->ub4[3][2], out->ub4[3][2], in->ub4[3][2] );
-      INTERP_UB( t, dst->ub4[3][3], out->ub4[3][3], in->ub4[3][3] );
+   }
+   if (IND & TDFX_TEX1_BIT) {
+     INTERP_F( t, dst->tu1, out->tu1 * wout, in->tu1 * win );
+     INTERP_F( t, dst->tv1, out->tv1 * wout, in->tv1 * win );
+     if (IND & TDFX_PTEX_BIT) {
+        INTERP_F( t, dst->tq1, out->tq1 * wout, in->tq1 * win );
+     }
    }
 }
-#endif
 
 
 static void TAG(init)( void )
@@ -308,50 +235,30 @@ static void TAG(init)( void )
 /*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    setup_tab[IND].emit = TAG(emit);
-   
-#if ((IND & TDFX_XYZ_BIT) && (IND & TDFX_RGBA_BIT))
    setup_tab[IND].check_tex_sizes = TAG(check_tex_sizes);
    setup_tab[IND].interp = TAG(interp);
-   
-   if (IND & (TDFX_W_BIT|TDFX_TEX0_BIT|TDFX_TEX1_BIT))
-      setup_tab[IND].copy_pv = copy_pv_rgba4;
-   else
-      setup_tab[IND].copy_pv = copy_pv_rgba3;
-
+   setup_tab[IND].copy_pv = copy_pv;
 
    if (IND & TDFX_TEX1_BIT) {
       if (IND & TDFX_PTEX_BIT) {
-	 setup_tab[IND].vertex_format = TDFX_LAYOUT_PROJECT;
-	 setup_tab[IND].vertex_size = 12;
-	 setup_tab[IND].vertex_stride_shift = 6; 
+	 setup_tab[IND].vertex_format = TDFX_LAYOUT_PROJ2;
       }
       else {
 	 setup_tab[IND].vertex_format = TDFX_LAYOUT_MULTI;
-	 setup_tab[IND].vertex_size = 10;
-	 setup_tab[IND].vertex_stride_shift = 6; 
       }
    } 
    else if (IND & TDFX_TEX0_BIT) {
       if (IND & TDFX_PTEX_BIT) {
-	 setup_tab[IND].vertex_format = TDFX_LAYOUT_PROJECT;
-	 setup_tab[IND].vertex_size = 12;
-	 setup_tab[IND].vertex_stride_shift = 6; 
+	 setup_tab[IND].vertex_format = TDFX_LAYOUT_PROJ1;
       } else {
 	 setup_tab[IND].vertex_format = TDFX_LAYOUT_SINGLE;
-	 setup_tab[IND].vertex_size = 8;
-	 setup_tab[IND].vertex_stride_shift = 5; 
       }
    }
    else if (IND & TDFX_W_BIT) {
       setup_tab[IND].vertex_format = TDFX_LAYOUT_NOTEX;
-      setup_tab[IND].vertex_size = 6;
-      setup_tab[IND].vertex_stride_shift = 5; 
    } else {
       setup_tab[IND].vertex_format = TDFX_LAYOUT_TINY;
-      setup_tab[IND].vertex_size = 4;
-      setup_tab[IND].vertex_stride_shift = 4; 
    }
-#endif
 }
 
 

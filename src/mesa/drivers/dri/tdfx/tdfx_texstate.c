@@ -26,6 +26,9 @@
 /* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_texstate.c,v 1.2 2002/02/22 21:45:04 dawes Exp $ */
 
 /*
+ * New fixes:
+ *	Daniel Borca <dborca@users.sourceforge.net>, 19 Jul 2004
+ *
  * Original rewrite:
  *	Gareth Hughes <gareth@valinux.com>, 29 Sep - 1 Oct 2000
  *
@@ -899,11 +902,10 @@ SetupSingleTexEnvVoodoo3(GLcontext *ctx, int unit,
       }
       else if (baseFormat == GL_INTENSITY) {
          /* Av = Af * (1 - It) + Ac * It */
-         /* XXX this is wrong */
-         alphaComb.Function = GR_COMBINE_FUNCTION_LOCAL;
-         alphaComb.Factor = GR_COMBINE_FACTOR_NONE;
+         alphaComb.Function = GR_COMBINE_FUNCTION_BLEND;
+         alphaComb.Factor = GR_COMBINE_FACTOR_TEXTURE_ALPHA;
          alphaComb.Local = locala;
-         alphaComb.Other = GR_COMBINE_OTHER_NONE;
+         alphaComb.Other = GR_COMBINE_OTHER_CONSTANT;
          alphaComb.Invert = FXFALSE;
       }
       else {
@@ -922,13 +924,18 @@ SetupSingleTexEnvVoodoo3(GLcontext *ctx, int unit,
          colorComb.Invert = FXFALSE;
       }
       else {
-         colorComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
-         colorComb.Factor = GR_COMBINE_FACTOR_ONE;
+         colorComb.Function = GR_COMBINE_FUNCTION_BLEND;
+         colorComb.Factor = GR_COMBINE_FACTOR_TEXTURE_RGB;
          colorComb.Local = localc;
-         colorComb.Other = GR_COMBINE_OTHER_TEXTURE;
+         colorComb.Other = GR_COMBINE_OTHER_CONSTANT;
          colorComb.Invert = FXTRUE;
       }
-      /* XXX return GL_FALSE for modes we don't support */
+      fxMesa->Color.MonoColor = PACK_RGBA32(
+         ctx->Texture.Unit[unit].EnvColor[0] * 255.0f,
+         ctx->Texture.Unit[unit].EnvColor[1] * 255.0f,
+         ctx->Texture.Unit[unit].EnvColor[2] * 255.0f,
+         ctx->Texture.Unit[unit].EnvColor[3] * 255.0f);
+      fxMesa->dirty |= TDFX_UPLOAD_CONSTANT_COLOR;
       break;
 
    case GL_REPLACE:
@@ -1051,15 +1058,8 @@ SetupDoubleTexEnvVoodoo3(GLcontext *ctx, int tmu0,
    if (envMode0 == GL_MODULATE && envMode1 == GL_MODULATE) {
       GLboolean isalpha[TDFX_NUM_TMU];
 
-      if (baseFormat0 == GL_ALPHA)
-         isalpha[tmu0] = GL_TRUE;
-      else
-         isalpha[tmu0] = GL_FALSE;
-
-      if (baseFormat1 == GL_ALPHA)
-         isalpha[tmu1] = GL_TRUE;
-      else
-         isalpha[tmu1] = GL_FALSE;
+      isalpha[tmu0] = (baseFormat0 == GL_ALPHA);
+      isalpha[tmu1] = (baseFormat1 == GL_ALPHA);
 
       if (isalpha[TDFX_TMU1]) {
          fxMesa->TexCombine[1].FunctionRGB = GR_COMBINE_FUNCTION_ZERO;
@@ -1105,7 +1105,7 @@ SetupDoubleTexEnvVoodoo3(GLcontext *ctx, int tmu0,
       fxMesa->AlphaCombine.Invert = FXFALSE;
    }
    else if (envMode0 == GL_REPLACE && envMode1 == GL_BLEND) { /* Quake */
-      if (tmu1 == TDFX_TMU1) {
+      if (tmu0 == TDFX_TMU1) {
          fxMesa->TexCombine[1].FunctionRGB = GR_COMBINE_FUNCTION_LOCAL;
          fxMesa->TexCombine[1].FactorRGB = GR_COMBINE_FACTOR_NONE;
          fxMesa->TexCombine[1].FunctionAlpha = GR_COMBINE_FUNCTION_LOCAL;
@@ -1198,14 +1198,9 @@ SetupDoubleTexEnvVoodoo3(GLcontext *ctx, int tmu0,
    else if (envMode0 == GL_MODULATE && envMode1 == GL_ADD) {
       /* Quake 3 sky */
       GLboolean isalpha[TDFX_NUM_TMU];
-      if (baseFormat0 == GL_ALPHA)
-         isalpha[tmu0] = GL_TRUE;
-      else
-         isalpha[tmu0] = GL_FALSE;
-      if (baseFormat1 == GL_ALPHA)
-         isalpha[tmu1] = GL_TRUE;
-      else
-         isalpha[tmu1] = GL_FALSE;
+
+      isalpha[tmu0] = (baseFormat0 == GL_ALPHA);
+      isalpha[tmu1] = (baseFormat1 == GL_ALPHA);
 
       if (isalpha[TDFX_TMU1]) {
          fxMesa->TexCombine[1].FunctionRGB = GR_COMBINE_FUNCTION_ZERO;
@@ -1250,8 +1245,102 @@ SetupDoubleTexEnvVoodoo3(GLcontext *ctx, int tmu0,
       fxMesa->AlphaCombine.Other = GR_COMBINE_OTHER_TEXTURE;
       fxMesa->AlphaCombine.Invert = FXFALSE;
    }
+   else if (envMode0 == GL_REPLACE && envMode1 == GL_ADD) {
+      /* Vulpine sky */
+      GLboolean isalpha[TDFX_NUM_TMU];
+
+      isalpha[tmu0] = (baseFormat0 == GL_ALPHA);
+      isalpha[tmu1] = (baseFormat1 == GL_ALPHA);
+
+      if (isalpha[TDFX_TMU1]) {
+         fxMesa->TexCombine[1].FunctionRGB = GR_COMBINE_FUNCTION_ZERO;
+         fxMesa->TexCombine[1].FactorRGB = GR_COMBINE_FACTOR_NONE;
+         fxMesa->TexCombine[1].FunctionAlpha = GR_COMBINE_FUNCTION_LOCAL;
+         fxMesa->TexCombine[1].FactorAlpha = GR_COMBINE_FACTOR_NONE;
+         fxMesa->TexCombine[1].InvertRGB = FXTRUE;
+         fxMesa->TexCombine[1].InvertAlpha = FXFALSE;
+      } else {
+         fxMesa->TexCombine[1].FunctionRGB = GR_COMBINE_FUNCTION_LOCAL;
+         fxMesa->TexCombine[1].FactorRGB = GR_COMBINE_FACTOR_NONE;
+         fxMesa->TexCombine[1].FunctionAlpha = GR_COMBINE_FUNCTION_LOCAL;
+         fxMesa->TexCombine[1].FactorAlpha = GR_COMBINE_FACTOR_NONE;
+         fxMesa->TexCombine[1].InvertRGB = FXFALSE;
+         fxMesa->TexCombine[1].InvertAlpha = FXFALSE;
+      }
+
+      if (isalpha[TDFX_TMU0]) {
+         fxMesa->TexCombine[0].FunctionRGB = GR_COMBINE_FUNCTION_SCALE_OTHER;
+         fxMesa->TexCombine[0].FactorRGB = GR_COMBINE_FACTOR_ONE;
+         fxMesa->TexCombine[0].FunctionAlpha = GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL;
+         fxMesa->TexCombine[0].FactorAlpha = GR_COMBINE_FACTOR_ONE;
+         fxMesa->TexCombine[0].InvertRGB = FXFALSE;
+         fxMesa->TexCombine[0].InvertAlpha = FXFALSE;
+      } else {
+         fxMesa->TexCombine[0].FunctionRGB = GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL;
+         fxMesa->TexCombine[0].FactorRGB = GR_COMBINE_FACTOR_ONE;
+         fxMesa->TexCombine[0].FunctionAlpha = GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL;
+         fxMesa->TexCombine[0].FactorAlpha = GR_COMBINE_FACTOR_ONE;
+         fxMesa->TexCombine[0].InvertRGB = FXFALSE;
+         fxMesa->TexCombine[0].InvertAlpha = FXFALSE;
+      }
+
+      fxMesa->ColorCombine.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
+      fxMesa->ColorCombine.Factor = GR_COMBINE_FACTOR_ONE;
+      fxMesa->ColorCombine.Local = localc;
+      fxMesa->ColorCombine.Other = GR_COMBINE_OTHER_TEXTURE;
+      fxMesa->ColorCombine.Invert = FXFALSE;
+      fxMesa->AlphaCombine.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
+      fxMesa->AlphaCombine.Factor = GR_COMBINE_FACTOR_ONE;
+      fxMesa->AlphaCombine.Local = locala;
+      fxMesa->AlphaCombine.Other = GR_COMBINE_OTHER_TEXTURE;
+      fxMesa->AlphaCombine.Invert = FXFALSE;
+   }
+   else if (envMode1 == GL_REPLACE) {
+      /* Homeworld2 */
+
+      fxMesa->TexCombine[1].FunctionRGB = GR_COMBINE_FUNCTION_ZERO;
+      fxMesa->TexCombine[1].FactorRGB = GR_COMBINE_FACTOR_NONE;
+      fxMesa->TexCombine[1].FunctionAlpha = GR_COMBINE_FUNCTION_ZERO;
+      fxMesa->TexCombine[1].FactorAlpha = GR_COMBINE_FACTOR_NONE;
+      fxMesa->TexCombine[1].InvertRGB = FXFALSE;
+      fxMesa->TexCombine[1].InvertAlpha = FXFALSE;
+
+      fxMesa->TexCombine[0].FunctionRGB = GR_COMBINE_FUNCTION_LOCAL;
+      fxMesa->TexCombine[0].FactorRGB = GR_COMBINE_FACTOR_NONE;
+      fxMesa->TexCombine[0].FunctionAlpha = GR_COMBINE_FUNCTION_LOCAL;
+      fxMesa->TexCombine[0].FactorAlpha = GR_COMBINE_FACTOR_NONE;
+      fxMesa->TexCombine[0].InvertRGB = FXFALSE;
+      fxMesa->TexCombine[0].InvertAlpha = FXFALSE;
+
+      if ((baseFormat0 == GL_RGB) && (baseFormat0 == GL_LUMINANCE)) {
+         fxMesa->AlphaCombine.Function = GR_COMBINE_FUNCTION_LOCAL;
+         fxMesa->AlphaCombine.Factor = GR_COMBINE_FACTOR_NONE;
+         fxMesa->AlphaCombine.Local = locala;
+         fxMesa->AlphaCombine.Other = GR_COMBINE_OTHER_NONE;
+         fxMesa->AlphaCombine.Invert = FXFALSE;
+      } else {
+         fxMesa->AlphaCombine.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
+         fxMesa->AlphaCombine.Factor = GR_COMBINE_FACTOR_ONE;
+         fxMesa->AlphaCombine.Local = locala;
+         fxMesa->AlphaCombine.Other = GR_COMBINE_OTHER_TEXTURE;
+         fxMesa->AlphaCombine.Invert = FXFALSE;
+      }
+      if (baseFormat0 == GL_ALPHA) {
+         fxMesa->ColorCombine.Function = GR_COMBINE_FUNCTION_LOCAL;
+         fxMesa->ColorCombine.Factor = GR_COMBINE_FACTOR_NONE;
+         fxMesa->ColorCombine.Local = localc;
+         fxMesa->ColorCombine.Other = GR_COMBINE_OTHER_NONE;
+         fxMesa->ColorCombine.Invert = FXFALSE;
+      } else {
+         fxMesa->ColorCombine.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
+         fxMesa->ColorCombine.Factor = GR_COMBINE_FACTOR_ONE;
+         fxMesa->ColorCombine.Local = localc;
+         fxMesa->ColorCombine.Other = GR_COMBINE_OTHER_TEXTURE;
+         fxMesa->ColorCombine.Invert = FXFALSE;
+      }
+   }
    else {
-      /*_mesa_problem(ctx, "%s: Unexpected dual texture mode encountered", __FUNCTION__);*/
+      _mesa_problem(ctx, "%s: Unexpected dual texture mode encountered", __FUNCTION__);
       return GL_FALSE;
    }
 
@@ -1329,7 +1418,7 @@ setupSingleTMU(tdfxContextPtr fxMesa, struct gl_texture_object *tObj)
       GLint u;
 
       if (ti->info.format == GR_TEXFMT_P_8 && !ctx->Texture.SharedPalette) {
-         fxMesa->TexPalette.Type = GR_TEXTABLE_PALETTE_6666_EXT;
+         fxMesa->TexPalette.Type = ti->paltype;
          fxMesa->TexPalette.Data = &(ti->palette);
          fxMesa->dirty |= TDFX_UPLOAD_TEXTURE_PALETTE;
       }
@@ -1367,7 +1456,7 @@ setupSingleTMU(tdfxContextPtr fxMesa, struct gl_texture_object *tObj)
       }
 
       if (ti->info.format == GR_TEXFMT_P_8 && !ctx->Texture.SharedPalette) {
-         fxMesa->TexPalette.Type = GR_TEXTABLE_PALETTE_6666_EXT;
+         fxMesa->TexPalette.Type = ti->paltype;
          fxMesa->TexPalette.Data = &(ti->palette);
          fxMesa->dirty |= TDFX_UPLOAD_TEXTURE_PALETTE;
       }
@@ -1482,8 +1571,8 @@ selectSingleTMUSrc(tdfxContextPtr fxMesa, GLint tmu, FxBool LODblend)
 static void print_state(tdfxContextPtr fxMesa)
 {
    GLcontext *ctx = fxMesa->glCtx;
-   struct gl_texture_object *tObj0 = ctx->Texture.Unit[0].Current2D;
-   struct gl_texture_object *tObj1 = ctx->Texture.Unit[1].Current2D;
+   struct gl_texture_object *tObj0 = ctx->Texture.Unit[0]._Current;
+   struct gl_texture_object *tObj1 = ctx->Texture.Unit[1]._Current;
    GLenum base0 = tObj0->Image[0][tObj0->BaseLevel] ? tObj0->Image[0][tObj0->BaseLevel]->Format : 99;
    GLenum base1 = tObj1->Image[0][tObj1->BaseLevel] ? tObj1->Image[0][tObj1->BaseLevel]->Format : 99;
 
@@ -1517,7 +1606,7 @@ static void setupTextureSingleTMU(GLcontext * ctx, GLuint unit)
    int tmu;
    GLenum envMode, baseFormat;
 
-   tObj = ctx->Texture.Unit[unit].Current2D;
+   tObj = ctx->Texture.Unit[unit]._Current;
    if (tObj->Image[0][tObj->BaseLevel]->Border > 0) {
       FALLBACK(fxMesa, TDFX_FALLBACK_TEXTURE_BORDER, GL_TRUE);
       return;
@@ -1544,10 +1633,10 @@ static void setupTextureSingleTMU(GLcontext * ctx, GLuint unit)
 
    if (TDFX_IS_NAPALM(fxMesa)) {
       /* see if we really need to update the unit */
-      if (fxMesa->TexState.Enabled[unit] != ctx->Texture.Unit[unit]._ReallyEnabled ||
+      if (1/*fxMesa->TexState.Enabled[unit] != ctx->Texture.Unit[unit]._ReallyEnabled ||
           envMode != fxMesa->TexState.EnvMode[0] ||
           envMode == GL_COMBINE_EXT ||
-          baseFormat != fxMesa->TexState.TexFormat[0]) {
+          baseFormat != fxMesa->TexState.TexFormat[0]*/) {
          struct tdfx_texcombine_ext *otherEnv;
          if (!SetupTexEnvNapalm(ctx, GL_TRUE,
                                 &ctx->Texture.Unit[unit], baseFormat,
@@ -1578,30 +1667,34 @@ static void setupTextureSingleTMU(GLcontext * ctx, GLuint unit)
          otherEnv->Alpha.Shift = 0;
          otherEnv->Alpha.Invert = FXFALSE;
 
+#if 0/*JJJ*/
          fxMesa->TexState.Enabled[unit] = ctx->Texture.Unit[unit]._ReallyEnabled;
          fxMesa->TexState.EnvMode[0] = envMode;
          fxMesa->TexState.TexFormat[0] = baseFormat;
          fxMesa->TexState.EnvMode[1] = 0;
          fxMesa->TexState.TexFormat[1] = 0;
+#endif
       }
    }
    else {
       /* Voodoo3 */
 
       /* see if we really need to update the unit */
-      if (fxMesa->TexState.Enabled[unit] != ctx->Texture.Unit[unit]._ReallyEnabled ||
+      if (1/*fxMesa->TexState.Enabled[unit] != ctx->Texture.Unit[unit]._ReallyEnabled ||
           envMode != fxMesa->TexState.EnvMode[0] ||
           envMode == GL_COMBINE_EXT ||
-          baseFormat != fxMesa->TexState.TexFormat[0]) {
-         if (!SetupSingleTexEnvVoodoo3(ctx, tmu, envMode, baseFormat)) {
+          baseFormat != fxMesa->TexState.TexFormat[0]*/) {
+         if (!SetupSingleTexEnvVoodoo3(ctx, unit, envMode, baseFormat)) {
             /* software fallback */
             FALLBACK(fxMesa, TDFX_FALLBACK_TEXTURE_ENV, GL_TRUE);
          }
+#if 0/*JJJ*/
          fxMesa->TexState.Enabled[unit] = ctx->Texture.Unit[unit]._ReallyEnabled;
          fxMesa->TexState.EnvMode[0] = envMode;
          fxMesa->TexState.TexFormat[0] = baseFormat;
          fxMesa->TexState.EnvMode[1] = 0;
          fxMesa->TexState.TexFormat[1] = 0;
+#endif
       }
    }
 }
@@ -1731,12 +1824,12 @@ setupDoubleTMU(tdfxContextPtr fxMesa,
 
     if (!ctx->Texture.SharedPalette) {
         if (ti0->info.format == GR_TEXFMT_P_8) {
-            fxMesa->TexPalette.Type = GR_TEXTABLE_PALETTE_6666_EXT;
+            fxMesa->TexPalette.Type = ti0->paltype;
             fxMesa->TexPalette.Data = &(ti0->palette);
             fxMesa->dirty |= TDFX_UPLOAD_TEXTURE_PALETTE;
         }
         else if (ti1->info.format == GR_TEXFMT_P_8) {
-            fxMesa->TexPalette.Type = GR_TEXTABLE_PALETTE_6666_EXT;
+            fxMesa->TexPalette.Type = ti1->paltype;
             fxMesa->TexPalette.Data = &(ti1->palette);
             fxMesa->dirty |= TDFX_UPLOAD_TEXTURE_PALETTE;
         }
@@ -1823,8 +1916,8 @@ setupDoubleTMU(tdfxContextPtr fxMesa,
 static void setupTextureDoubleTMU(GLcontext * ctx)
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   struct gl_texture_object *tObj0 = ctx->Texture.Unit[0].Current2D;
-   struct gl_texture_object *tObj1 = ctx->Texture.Unit[1].Current2D;
+   struct gl_texture_object *tObj0 = ctx->Texture.Unit[1]._Current;
+   struct gl_texture_object *tObj1 = ctx->Texture.Unit[0]._Current;
    tdfxTexInfo *ti0 = TDFX_TEXTURE_DATA(tObj0);
    tdfxTexInfo *ti1 = TDFX_TEXTURE_DATA(tObj1);
    struct gl_texture_image *baseImage0 = tObj0->Image[0][tObj0->BaseLevel];
@@ -1851,29 +1944,33 @@ static void setupTextureDoubleTMU(GLcontext * ctx)
       GLboolean hw1 = GL_TRUE, hw2 = GL_TRUE;
 
       /* check if we really need to update glide unit 1 */
-      if (fxMesa->TexState.Enabled[0] != ctx->Texture.Unit[0]._ReallyEnabled ||
+      if (1/*fxMesa->TexState.Enabled[0] != ctx->Texture.Unit[0]._ReallyEnabled ||
           envMode0 != fxMesa->TexState.EnvMode[1] ||
           envMode0 == GL_COMBINE_EXT ||
           baseImage0->Format != fxMesa->TexState.TexFormat[1] ||
-          (fxMesa->Fallback & TDFX_FALLBACK_TEXTURE_ENV)) {
+          (fxMesa->Fallback & TDFX_FALLBACK_TEXTURE_ENV)*/) {
          hw1 = SetupTexEnvNapalm(ctx, GL_TRUE, &ctx->Texture.Unit[0],
                                 baseImage0->Format, &fxMesa->TexCombineExt[1]);
+#if 0/*JJJ*/
          fxMesa->TexState.EnvMode[1] = envMode0;
          fxMesa->TexState.TexFormat[1] = baseImage0->Format;
          fxMesa->TexState.Enabled[0] = ctx->Texture.Unit[0]._ReallyEnabled;
+#endif
       }
 
       /* check if we really need to update glide unit 0 */
-      if (fxMesa->TexState.Enabled[1] != ctx->Texture.Unit[1]._ReallyEnabled ||
+      if (1/*fxMesa->TexState.Enabled[1] != ctx->Texture.Unit[1]._ReallyEnabled ||
           envMode1 != fxMesa->TexState.EnvMode[0] ||
           envMode1 == GL_COMBINE_EXT ||
           baseImage1->Format != fxMesa->TexState.TexFormat[0] ||
-          (fxMesa->Fallback & TDFX_FALLBACK_TEXTURE_ENV)) {
+          (fxMesa->Fallback & TDFX_FALLBACK_TEXTURE_ENV)*/) {
          hw2 = SetupTexEnvNapalm(ctx, GL_FALSE, &ctx->Texture.Unit[1],
                                 baseImage1->Format, &fxMesa->TexCombineExt[0]);
+#if 0/*JJJ*/
          fxMesa->TexState.EnvMode[0] = envMode1;
          fxMesa->TexState.TexFormat[0] = baseImage1->Format;
          fxMesa->TexState.Enabled[1] = ctx->Texture.Unit[1]._ReallyEnabled;
+#endif
       }
 
 
@@ -1889,7 +1986,7 @@ static void setupTextureDoubleTMU(GLcontext * ctx)
          unit0 = 0;
       unit1 = 1 - unit0;
 
-      if (fxMesa->TexState.Enabled[0] != ctx->Texture.Unit[0]._ReallyEnabled ||
+      if (1/*fxMesa->TexState.Enabled[0] != ctx->Texture.Unit[0]._ReallyEnabled ||
           fxMesa->TexState.Enabled[1] != ctx->Texture.Unit[1]._ReallyEnabled ||
           envMode0 != fxMesa->TexState.EnvMode[unit0] ||
           envMode0 == GL_COMBINE_EXT ||
@@ -1897,7 +1994,7 @@ static void setupTextureDoubleTMU(GLcontext * ctx)
           envMode1 == GL_COMBINE_EXT ||
           baseImage0->Format != fxMesa->TexState.TexFormat[unit0] ||
           baseImage1->Format != fxMesa->TexState.TexFormat[unit1] ||
-          (fxMesa->Fallback & TDFX_FALLBACK_TEXTURE_ENV)) {
+          (fxMesa->Fallback & TDFX_FALLBACK_TEXTURE_ENV)*/) {
 
          if (!SetupDoubleTexEnvVoodoo3(ctx, unit0,
                          ctx->Texture.Unit[0].EnvMode, baseImage0->Format,
@@ -1905,12 +2002,14 @@ static void setupTextureDoubleTMU(GLcontext * ctx)
             FALLBACK(fxMesa, TDFX_FALLBACK_TEXTURE_ENV, GL_TRUE);
          }
 
+#if 0/*JJJ*/
          fxMesa->TexState.EnvMode[unit0] = envMode0;
          fxMesa->TexState.TexFormat[unit0] = baseImage0->Format;
          fxMesa->TexState.EnvMode[unit1] = envMode1;
          fxMesa->TexState.TexFormat[unit1] = baseImage1->Format;
          fxMesa->TexState.Enabled[0] = ctx->Texture.Unit[0]._ReallyEnabled;
          fxMesa->TexState.Enabled[1] = ctx->Texture.Unit[1]._ReallyEnabled;
+#endif
       }
    }
 }
@@ -1924,20 +2023,20 @@ tdfxUpdateTextureState( GLcontext *ctx )
    FALLBACK(fxMesa, TDFX_FALLBACK_TEXTURE_BORDER, GL_FALSE);
    FALLBACK(fxMesa, TDFX_FALLBACK_TEXTURE_ENV, GL_FALSE);
 
-   if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT &&
+   if (ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT) &&
        ctx->Texture.Unit[1]._ReallyEnabled == 0) {
       LOCK_HARDWARE( fxMesa );  /* XXX remove locking eventually */
       setupTextureSingleTMU(ctx, 0);
       UNLOCK_HARDWARE( fxMesa );
    }
    else if (ctx->Texture.Unit[0]._ReallyEnabled == 0 && 
-            ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT) {
+            ctx->Texture.Unit[1]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {
       LOCK_HARDWARE( fxMesa );
       setupTextureSingleTMU(ctx, 1);
       UNLOCK_HARDWARE( fxMesa );
    }
-   else if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT &&
-            ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT) {
+   else if (ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT) &&
+            ctx->Texture.Unit[1]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {
       LOCK_HARDWARE( fxMesa );
       setupTextureDoubleTMU(ctx);
       UNLOCK_HARDWARE( fxMesa );
@@ -2009,8 +2108,8 @@ void
 tdfxUpdateTextureBinding( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   struct gl_texture_object *tObj0 = ctx->Texture.Unit[0].Current2D;
-   struct gl_texture_object *tObj1 = ctx->Texture.Unit[1].Current2D;
+   struct gl_texture_object *tObj0 = ctx->Texture.Unit[0]._Current;
+   struct gl_texture_object *tObj1 = ctx->Texture.Unit[1]._Current;
    tdfxTexInfo *ti0 = TDFX_TEXTURE_DATA(tObj0);
    tdfxTexInfo *ti1 = TDFX_TEXTURE_DATA(tObj1);
 
@@ -2021,12 +2120,12 @@ tdfxUpdateTextureBinding( GLcontext *ctx )
       fxMesa->sScale0 = ti0->sScale;
       fxMesa->tScale0 = ti0->tScale;
       if (ti0->info.format == GR_TEXFMT_P_8) {
-         fxMesa->TexPalette.Type = GR_TEXTABLE_PALETTE_6666_EXT;
+         fxMesa->TexPalette.Type = ti0->paltype;
          fxMesa->TexPalette.Data = &(ti0->palette);
          fxMesa->dirty |= TDFX_UPLOAD_TEXTURE_PALETTE;
       }
       else if (ti1 && ti1->info.format == GR_TEXFMT_P_8) {
-         fxMesa->TexPalette.Type = GR_TEXTABLE_PALETTE_6666_EXT;
+         fxMesa->TexPalette.Type = ti1->paltype;
          fxMesa->TexPalette.Data = &(ti1->palette);
          fxMesa->dirty |= TDFX_UPLOAD_TEXTURE_PALETTE;
       }
@@ -2036,7 +2135,7 @@ tdfxUpdateTextureBinding( GLcontext *ctx )
       fxMesa->tScale1 = ti1->tScale;
    }
 
-   if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT &&
+   if (ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT) &&
        ctx->Texture.Unit[0]._ReallyEnabled == 0) {
       /* Only unit 0 2D enabled */
       if (shared->umaTexMemory) {
@@ -2070,7 +2169,7 @@ tdfxUpdateTextureBinding( GLcontext *ctx )
       }
    }
    else if (ctx->Texture.Unit[0]._ReallyEnabled == 0 && 
-            ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT) {
+            ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {
       /* Only unit 1 2D enabled */
       if (shared->umaTexMemory) {
          fxMesa->TexSource[0].StartAddress = ti1->tm[0]->startAddr;
@@ -2078,8 +2177,8 @@ tdfxUpdateTextureBinding( GLcontext *ctx )
          fxMesa->TexSource[0].Info = &(ti1->info);
       }
    }
-   else if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT && 
-            ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT) {
+   else if (ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT) && 
+            ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) {
       /* Both 2D enabled */
       if (shared->umaTexMemory) {
          const FxU32 tmu0 = 0, tmu1 = 1;

@@ -39,7 +39,8 @@
 #define TDFX_TEX1_BIT       0x8
 #define TDFX_TEX0_BIT       0x10	
 #define TDFX_PTEX_BIT       0x20
-#define TDFX_MAX_SETUP      0x40
+#define TDFX_FOGC_BIT       0x40
+#define TDFX_MAX_SETUP      0x80
 
 #define _TDFX_NEW_RASTERSETUP (_NEW_TEXTURE |			\
 			       _DD_NEW_SEPARATE_SPECULAR |	\

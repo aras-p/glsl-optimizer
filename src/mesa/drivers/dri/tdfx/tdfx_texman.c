@@ -852,8 +852,8 @@ tdfxTMMoveInTM_NoLock( tdfxContextPtr fxMesa, struct gl_texture_object *tObj,
         if (ti->tm[TDFX_TMU0])
            fxMesa->stats.memTexUpload += texmemsize;
 
-        texmemsize = fxMesa->Glide.grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,
-                                                       &(ti->info));
+        /*texmemsize = fxMesa->Glide.grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,
+                                                       &(ti->info));*/
         ti->tm[TDFX_TMU1] = AllocTexMem(fxMesa, TDFX_TMU1, texmemsize);
         break;
     default:

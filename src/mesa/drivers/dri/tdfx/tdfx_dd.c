@@ -49,7 +49,7 @@
 #endif
 
 
-#define TDFX_DATE	"20021125"
+#define TDFX_DATE	"20040719"
 
 
 /* These are used in calls to FX_grColorMaskv() */
