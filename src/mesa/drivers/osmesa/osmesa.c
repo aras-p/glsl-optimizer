@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.75 2002/03/16 00:53:15 brianp Exp $ */
+/* $Id: osmesa.c,v 1.76 2002/03/29 17:20:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -877,7 +877,8 @@ static void clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
 static void buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 {
-   GET_CURRENT_CONTEXT(ctx);
+   /* don't use GET_CURRENT_CONTEXT(ctx) here - it's a problem on Windows */
+   GLcontext *ctx = (GLcontext *) _glapi_get_context();
    (void) buffer;
    if (ctx) {
       OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
