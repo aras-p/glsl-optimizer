@@ -1,4 +1,4 @@
-/* $Id: sse_normal.S,v 1.1 2001/03/29 06:46:16 gareth Exp $ */
+/* $Id: sse_normal.S,v 1.2 2002/08/07 16:40:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,7 +64,7 @@ GLNAME(_mesa_sse_transform_rescale_normals_no_rot):
 	MOV_L	( STRIDE, EAX )				/* stride */
 	MOV_L	( ECX, REGOFF(V3F_COUNT, EDI) )		/* set dest-count */
 
-	IMUL_L( CONST(12), ECX )			/* count *= 12 */
+	IMUL_L( CONST(16), ECX )			/* count *= 16 */
 	MOV_L( REGOFF(V3F_START, ESI), ESI )		/* ptr to first source vertex */
 
 	MOV_L( REGOFF(V3F_START, EDI), EDI )		/* ptr to first dest vertex */
@@ -90,7 +90,7 @@ LLBL(K_G3TRNNRR_top):
 	MOVSS	( XMM2, D(2) )				/* ->D(2) */
 
 LLBL(K_G3TRNNRR_skip):
-	ADD_L	( CONST(12), EDI )
+	ADD_L	( CONST(16), EDI )
 	ADD_L	( EAX, ESI )
 	CMP_L	( ECX, EDI )
 	JNE	( LLBL(K_G3TRNNRR_top) )
@@ -125,7 +125,7 @@ GLNAME(_mesa_sse_transform_rescale_normals):
 	MOV_L	( STRIDE, EAX )				/* stride */
 	MOV_L	( ECX, REGOFF(V3F_COUNT, EDI) )		/* set dest-count */
 
-	IMUL_L( CONST(12), ECX )			/* count *= 12 */
+	IMUL_L( CONST(16), ECX )			/* count *= 16 */
 	MOV_L( REGOFF(V3F_START, ESI), ESI )		/* ptr to first source vertex */
 
 	MOV_L( REGOFF(V3F_START, EDI), EDI )		/* ptr to first dest vertex */
@@ -183,7 +183,7 @@ LLBL(K_G3TRNR_top):
 	MOVSS	( XMM3, D(2) )
 
 LLBL(K_G3TRNR_skip):
-	ADD_L	( CONST(12), EDI )
+	ADD_L	( CONST(16), EDI )
 	ADD_L	( EAX, ESI )
 	CMP_L	( ECX, EDI )
 	JNE	( LLBL(K_G3TRNR_top) )
@@ -217,7 +217,7 @@ GLNAME(_mesa_sse_transform_normals_no_rot):
 	MOV_L	( STRIDE, EAX )				/* stride */
 	MOV_L	( ECX, REGOFF(V3F_COUNT, EDI) )		/* set dest-count */
 
-	IMUL_L( CONST(12), ECX )			/* count *= 12 */
+	IMUL_L( CONST(16), ECX )			/* count *= 16 */
 	MOV_L( REGOFF(V3F_START, ESI), ESI )		/* ptr to first source vertex */
 
 	MOV_L( REGOFF(V3F_START, EDI), EDI )		/* ptr to first dest vertex */
@@ -240,7 +240,7 @@ LLBL(K_G3TNNRR_top):
 	MOVSS( XMM2, D(2) )
 
 LLBL(K_G3TNNRR_skip):
-	ADD_L	( CONST(12), EDI )
+	ADD_L	( CONST(16), EDI )
 	ADD_L	( EAX, ESI )
 	CMP_L	( ECX, EDI )
 	JNE	( LLBL(K_G3TNNRR_top) )
