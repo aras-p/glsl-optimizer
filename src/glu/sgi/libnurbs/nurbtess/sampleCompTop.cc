@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
+** $Date: 2001/11/29 16:16:55 $ $Revision: 1.2 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/sampleCompTop.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/sampleCompTop.cc,v 1.2 2001/11/29 16:16:55 kschultz Exp $
 */
 
 #include <stdlib.h>
@@ -343,7 +343,7 @@ Int findTopSeparator(vertexArray* leftChain,
     {
       oldLeftI = leftEndIndex+1;
       oldRightI = rightEndIndex;
-      leftMax =  leftChain->getVertex(leftEndIndex)[0] - 1.0; //initilza to left of leftU
+      leftMax =  leftChain->getVertex(leftEndIndex)[0] - Real(1.0); //initilza to left of leftU
       rightMin = rightChain->getVertex(rightEndIndex)[0];
     }
   else
@@ -351,7 +351,7 @@ Int findTopSeparator(vertexArray* leftChain,
       oldLeftI = leftEndIndex;
       oldRightI = rightEndIndex+1;
       leftMax =  leftChain->getVertex(leftEndIndex)[0]; 
-      rightMin = rightChain->getVertex(rightEndIndex)[0] + 1.0;      
+      rightMin = rightChain->getVertex(rightEndIndex)[0] + Real(1.0);      
     }
   
   //i: the current working leftChain index, 
@@ -826,19 +826,19 @@ static void sampleCompTopSimpleOpt(gridWrap* grid,
          //find l in [j, k-1] so that dec_chain[l][0] 0 is closest to
          // inc_chain[i]
          int l;
-         Real tempI = j;
-         Real tempMin = fabs(inc_chain->getVertex(i)[0] - dec_chain->getVertex(j)[0]);
+         Real tempI = Real(j);
+         Real tempMin = (Real)fabs(inc_chain->getVertex(i)[0] - dec_chain->getVertex(j)[0]);
          for(l=j+1; l<= k-1; l++)
 	   {
 	     if(fabs(inc_chain->getVertex(i)[0] - dec_chain->getVertex(l)[0])
 		<= tempMin)
 	       {
-		 tempMin = fabs(inc_chain->getVertex(i)[0] - dec_chain->getVertex(l)[0]);
-		 tempI = l;
+		 tempMin = (Real)fabs(inc_chain->getVertex(i)[0] - dec_chain->getVertex(l)[0]);
+		 tempI = (Real)l;
 	       }
 	   }
 	 //inc_chain[i] and dec_chain[tempI] are connected.
-	 monoTriangulationRecGenOpt(dec_chain->getVertex(tempI),
+	 monoTriangulationRecGenOpt(dec_chain->getVertex((int)tempI),
 				    botVertex,
 				    inc_chain, i, inc_end,
 				    dec_chain, (int)(tempI+1), dec_end,
@@ -866,12 +866,12 @@ static void sampleCompTopSimpleOpt(gridWrap* grid,
 	  //inc_chain[l][0] is the closet to dec_chain[j][0]
 	  int tempI = i;
 	  int l;
-	  Real tempMin = fabs(inc_chain->getVertex(i)[0] - dec_chain->getVertex(j)[0]);
+	  Real tempMin = (Real)fabs(inc_chain->getVertex(i)[0] - dec_chain->getVertex(j)[0]);
 	  for(l=i+1; l<=k-1; l++)
 	    {
 	      if(fabs(inc_chain->getVertex(l)[0] - dec_chain->getVertex(j)[0]) <= tempMin)
 		{
-		  tempMin = fabs(inc_chain->getVertex(l)[0] - dec_chain->getVertex(j)[0]);
+		  tempMin = (Real)fabs(inc_chain->getVertex(l)[0] - dec_chain->getVertex(j)[0]);
 		  tempI = l;
 		}
 	    }				 	      

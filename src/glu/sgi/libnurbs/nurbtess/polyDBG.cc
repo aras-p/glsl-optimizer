@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
+** $Date: 2001/11/29 16:16:55 $ $Revision: 1.2 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/polyDBG.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/polyDBG.cc,v 1.2 2001/11/29 16:16:55 kschultz Exp $
 */
 
 #include <stdlib.h>
@@ -395,7 +395,7 @@ poly->printList();
 */
   /*for debug purpose*/
   assert( (DBG_rayIntersectPoly(v,1,0,poly) % 2 )
-	 == (DBG_rayIntersectPoly(v,1,0.1234, poly) % 2 )
+	 == (DBG_rayIntersectPoly(v,1,Real(0.1234), poly) % 2 )
 	 );
   if(DBG_rayIntersectPoly(v, 1, 0, poly) % 2 == 1)
     return 1; 

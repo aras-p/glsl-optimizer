@@ -35,8 +35,8 @@
 /*
  * mapdesc.c++
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/mapdesc.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2001/11/29 16:16:55 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/mapdesc.cc,v 1.2 2001/11/29 16:16:55 kschultz Exp $
  */
 
 #include <stdio.h>
@@ -372,13 +372,13 @@ Mapdesc::xformAndCullCheck(
 	    unsigned int bits = clipbits( cpts );
 	    outbits |= bits;
 	    inbits &= bits;
-	    if( ( outbits == mask ) && ( inbits != mask ) ) return CULL_ACCEPT;
+	    if( ( outbits == (unsigned int)mask ) && ( inbits != (unsigned int)mask ) ) return CULL_ACCEPT;
 	} 
     }
 
-    if( outbits != mask ) {
+    if( outbits != (unsigned int)mask ) {
 	return CULL_TRIVIAL_REJECT;
-    } else if( inbits == mask ) {
+    } else if( inbits == (unsigned int)mask ) {
 	return CULL_TRIVIAL_ACCEPT;
     } else {
 	return CULL_ACCEPT;
@@ -404,13 +404,13 @@ Mapdesc::cullCheck( REAL *pts, int uorder, int ustride, int vorder, int vstride 
 	    unsigned int bits = clipbits( q );
 	    outbits |= bits;
 	    inbits &= bits;
-	    if( ( outbits == mask ) && ( inbits != mask ) ) return CULL_ACCEPT;
+	    if( ( outbits == (unsigned int)mask ) && ( inbits != (unsigned int)mask ) ) return CULL_ACCEPT;
 	} 
     }
 
-    if( outbits != mask ) {
+    if( outbits != (unsigned int)mask ) {
 	return CULL_TRIVIAL_REJECT;
-    } else if( inbits == mask ) {
+    } else if( inbits == (unsigned int)mask ) {
 	return CULL_TRIVIAL_ACCEPT;
     } else {
 	return CULL_ACCEPT;
@@ -434,12 +434,12 @@ Mapdesc::cullCheck( REAL *pts, int order, int stride )
 	unsigned int bits = clipbits( p );
 	outbits |= bits;
 	inbits &= bits;
-	if( ( outbits == mask ) && ( inbits != mask ) ) return CULL_ACCEPT;
+	if( ( outbits == (unsigned int)mask ) && ( inbits != (unsigned int)mask ) ) return CULL_ACCEPT;
     }
 
-    if( outbits != mask ) {
+    if( outbits != (unsigned int)mask ) {
 	return CULL_TRIVIAL_REJECT;
-    } else if( inbits == mask ) {
+    } else if( inbits == (unsigned int)mask ) {
 	return CULL_TRIVIAL_ACCEPT;
     } else {
 	return CULL_ACCEPT;

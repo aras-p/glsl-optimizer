@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
+** $Date: 2001/11/29 16:16:55 $ $Revision: 1.2 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/directedLine.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/nurbtess/directedLine.cc,v 1.2 2001/11/29 16:16:55 kschultz Exp $
 */
 
 #include <stdlib.h>
@@ -596,7 +596,7 @@ Real directedLine::polyArea()
       y2 = temp->next->head()[1];
       ret += -( x2*y1-x1*y2);
     }
-  return 0.5*ret;
+  return Real(0.5)*ret;
 }
 
 /*******************split or combine polygons begin********************/

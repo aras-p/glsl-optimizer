@@ -35,8 +35,8 @@
 /*
  * sorter.c++
  *
- * $Date: 2001/03/17 00:25:41 $ $Revision: 1.1 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/sorter.cc,v 1.1 2001/03/17 00:25:41 brianp Exp $
+ * $Date: 2001/11/29 16:16:55 $ $Revision: 1.2 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/sorter.cc,v 1.2 2001/11/29 16:16:55 kschultz Exp $
  */
 
 #include "glimports.h"
@@ -84,7 +84,7 @@ Sorter::qs1( char *a,  char *l )
     unsigned int n;
 
 start:
-    if((n=l-a) <= es)
+    if((n=l-a) <= (unsigned int)es)
 	    return;
     n = es * (n / (2*es));
     hp = lp = a+n;

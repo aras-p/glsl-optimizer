@@ -1,14 +1,5 @@
 # Makefile for Win32
 
-#
-# Sept 12, 2001
-# Note: The nurbs code is not being built at this time.
-# If you want to work on it, uncomment the definitions
-# noted below to try to compile the sources.
-# There are numerous problems, some of which may be solved
-# by setting some #defines.
-#
-
 !include <win32.mak>
 
 .SUFFIXES : .cc
@@ -116,16 +107,14 @@ all	: gludll
 
 gludll	: $(GLUDLL)
 
-CFLAGS	= $(cvarsdll) $(CFLAGS) -D_OPENGL32_ -Iinclude -DBUILD_GL32
+CFLAGS	= $(cvarsdll) $(CFLAGS) -D_OPENGL32_ -Iinclude -DBUILD_GL32 -DLIBRARYBUILD
 LFLAGS	= $(dlllflags) $(lcommon) $(LFLAGS)
 
-OBJS	= $(GLU_SRCS:.c=.obj)
 LIBS	= ../lib/$(MESALIB) winmm.lib $(guilibsdll)
 
-# Uncomment these definitions to try to compile the NURBS code.
-#OBJS	= $(GLU_SRCS_CC:.cc=.obj) $(GLU_SRCS:.c=.obj)
-#NURBSINC = -Ilibnurbs\interface -Ilibnurbs\internals -Ilibnurbs\nurbtess 
-#CFLAGS  = $(CFLAGS) $(NURBSINC)
+OBJS	= $(GLU_SRCS_CC:.cc=.obj) $(GLU_SRCS:.c=.obj)
+NURBSINC = -Ilibnurbs\interface -Ilibnurbs\internals -Ilibnurbs\nurbtess 
+CFLAGS  = $(CFLAGS) $(NURBSINC)
 
 $(GLUDLL): $(OBJS) glu.def
 	$(link) $(LFLAGS) -out:$(GLUDLL) -def:glu.def $(OBJS) $(LIBS)

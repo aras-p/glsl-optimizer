@@ -31,10 +31,10 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/03/17 00:25:40 $ $Revision: 1.1 $
+** $Date: 2001/11/29 16:16:55 $ $Revision: 1.2 $
 */
 /*
-** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/bezierEval.cc,v 1.1 2001/03/17 00:25:40 brianp Exp $
+** $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/interface/bezierEval.cc,v 1.2 2001/11/29 16:16:55 kschultz Exp $
 */
 
 #include <stdlib.h>
@@ -72,8 +72,8 @@ void bezierCurveEval(float u0, float u1, int order, float *ctlpoints, int stride
 {
   float uprime = (u-u0)/(u1-u0);
   float *ctlptr = ctlpoints;
-  float oneMinusX = 1.0-uprime;
-  float XPower = 1.0;
+  float oneMinusX = 1.0f-uprime;
+  float XPower = 1.0f;
 
   int i,k;
   for(k=0; k<dimension; k++)
@@ -171,7 +171,7 @@ void bezierCurveEvalDerGen(int der, float u0, float u1, int order, float *ctlpoi
  */
 void bezierSurfEvalDerGen(int uder, int vder, float u0, float u1, int uorder, float v0, float v1, int vorder, int dimension, float *ctlpoints, int ustride, int vstride, float u, float v, float ret[])
 {
-  int i,j,k;
+  int i;
   float newPoints[MAX_ORDER][MAX_DIMENSION];
 
   for(i=0; i<uorder; i++){
@@ -229,7 +229,7 @@ void bezierSurfEvalNormal(float u0, float u1, int uorder, float v0, float v1, in
 /*if size is 0, then nothing is done*/
 static void normalize(float vec[3])
 {
-  float size = sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+  float size = (float)sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 
   if(size < TOLERANCE) 
     {
