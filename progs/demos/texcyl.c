@@ -1,4 +1,4 @@
-/* $Id: texcyl.c,v 1.2 1999/10/21 16:39:06 brianp Exp $ */
+/* $Id: texcyl.c,v 1.3 2000/09/29 23:09:39 brianp Exp $ */
 
 /*
  * Textured cylinder demo: lighting, texturing, reflection mapping.
@@ -12,6 +12,9 @@
 
 /*
  * $Log: texcyl.c,v $
+ * Revision 1.3  2000/09/29 23:09:39  brianp
+ * added fps output
+ *
  * Revision 1.2  1999/10/21 16:39:06  brianp
  * added -info command line option
  *
@@ -56,6 +59,10 @@ static GLboolean Animate = GL_TRUE;
 static GLfloat Xrot = 0.0, Yrot = 0.0, Zrot = 0.0;
 static GLfloat DXrot = 1.0, DYrot = 2.5;
 
+/* performance info */
+static GLint T0 = 0;
+static GLint Frames = 0;
+
 
 static void Idle( void )
 {
@@ -81,6 +88,18 @@ static void Display( void )
    glPopMatrix();
 
    glutSwapBuffers();
+
+   if (Animate) {
+      GLint t = glutGet(GLUT_ELAPSED_TIME);
+      Frames++;
+      if (t - T0 >= 5000) {
+         GLfloat seconds = (t - T0) / 1000.0;
+         GLfloat fps = Frames / seconds;
+         printf("%d frames in %g seconds = %g FPS\n", Frames, seconds, fps);
+         T0 = t;
+         Frames = 0;
+      }
+   }
 }
 
 
