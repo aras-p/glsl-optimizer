@@ -1,4 +1,4 @@
-/* $Id: m_xform_tmp.h,v 1.6 2001/03/30 14:44:43 gareth Exp $ */
+/* $Id: m_xform_tmp.h,v 1.7 2001/05/18 23:58:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -800,4 +800,8 @@ static void _XFORMAPI TAG(init_c_transformations)( void )
    TAG_TAB_4[MATRIX_3D]          = TAG(transform_points4_3d);
 
 #undef TAG_TAB
+#undef TAG_TAB_1
+#undef TAG_TAB_2
+#undef TAG_TAB_3
+#undef TAG_TAB_4
 }
