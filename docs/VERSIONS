@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.16 2000/01/05 07:02:15 brianp Exp $
+$Id: VERSIONS,v 1.17 2000/01/27 21:20:59 brianp Exp $
 
 
 Mesa Version History
@@ -685,6 +685,7 @@ Mesa Version History
 	- GLX 1.3 API
 	- support for separate draw/read buffers (ie GL_SGI_make_current_read)
 	- better thread safety
+	- improved glxinfo program
     Bug Fixes:
 	- 
     Changes:
