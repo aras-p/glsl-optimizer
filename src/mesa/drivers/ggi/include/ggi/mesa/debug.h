@@ -1,4 +1,4 @@
-/* $Id: debug.h,v 1.2 2000/01/07 08:34:44 jtaylor Exp $
+/* $Id: debug.h,v 1.3 2000/11/19 23:42:33 jtaylor Exp $
 ******************************************************************************
 
    GGIMesa debugging macros
@@ -34,6 +34,7 @@
 #include <ggi/types.h>
 #include <ggi/gg.h>
 
+#define DEBUG
 
 __BEGIN_DECLS
 

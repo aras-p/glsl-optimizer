@@ -1,4 +1,4 @@
-/* $Id: m_norm_tmp.h,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_norm_tmp.h,v 1.2 2000/11/19 23:42:33 jtaylor Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -28,6 +28,8 @@
  * New (3.1) transformation code written by Keith Whitwell.
  */
 
+#include <math.h>
+#include "m_vertices.h"
 
 static void _XFORMAPI
 TAG(transform_normalize_normals)( const GLmatrix *mat,

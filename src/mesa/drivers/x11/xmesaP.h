@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.15 2000/11/14 17:40:15 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.16 2000/11/19 23:42:33 jtaylor Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,7 +44,7 @@
 #include "types.h"
 #if defined(FX) && !defined(GLX_DIRECT_RENDERING)
 #include "GL/fxmesa.h"
-#include "../FX/fxdrv.h"
+#include "FX/fxdrv.h"
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.17 2000/06/08 22:50:28 brianp Exp $ */
+/* $Id: glxapi.c,v 1.18 2000/11/19 23:42:33 jtaylor Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +34,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include "glapi.h"
 #include "glxapi.h"
 
