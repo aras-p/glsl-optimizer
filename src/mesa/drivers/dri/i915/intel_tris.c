@@ -50,7 +50,7 @@ static void intelRasterPrimitive( GLcontext *ctx, GLenum rprim, GLuint hwprim );
  *                    Emit primitives as inline vertices               *
  ***********************************************************************/
 
-#if 1
+#ifdef __i386__
 #define COPY_DWORDS( j, vb, vertsize, v )			\
 do {								\
    int __tmp;							\
