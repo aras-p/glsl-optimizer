@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.168 2002/06/15 03:03:07 brianp Exp $ */
+/* $Id: context.c,v 1.169 2002/06/16 01:10:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2137,6 +2137,7 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
 	 /* _mesa_update_state( newCtx ); */
       }
 
+      /* This is only for T&L - a bit out of place, or misnamed (BP) */
       if (newCtx->Driver.MakeCurrent)
 	 newCtx->Driver.MakeCurrent( newCtx, drawBuffer, readBuffer );
 
