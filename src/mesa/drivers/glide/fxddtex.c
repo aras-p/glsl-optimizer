@@ -95,9 +95,9 @@ static void fxTexInvalidate(GLcontext *ctx, struct gl_texture_object *tObj)
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   tfxTexInfo *ti;
 
-  fxTMMoveOutTM(fxMesa,tObj); /* TO DO: SLOW but easy to write */
-
   ti=fxTMGetTexInfo(tObj);
+  if (ti->isInTM)   fxTMMoveOutTM(fxMesa,tObj); /* TO DO: SLOW but easy to write */
+
   ti->validated=GL_FALSE;
   fxMesa->new_state|=FX_NEW_TEXTURING;
   ctx->Driver.RenderStart = fxSetupFXUnits;

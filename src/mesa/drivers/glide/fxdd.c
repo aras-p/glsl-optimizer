@@ -966,8 +966,14 @@ static GLboolean fxIsInHardware(GLcontext *ctx)
     }
 
     if (ctx->Texture.ReallyEnabled & TEXTURE0_2D) {
-      if (ctx->Texture.Unit[0].EnvMode == GL_BLEND)
+      if (ctx->Texture.Unit[0].EnvMode == GL_BLEND &&
+	  (ctx->Texture.ReallyEnabled & TEXTURE1_2D ||
+	   ctx->Texture.Unit[0].EnvColor[0] != 0 ||
+	   ctx->Texture.Unit[0].EnvColor[1] != 0 ||
+	   ctx->Texture.Unit[0].EnvColor[2] != 0 ||
+	   ctx->Texture.Unit[0].EnvColor[3] != 1)) {
         return GL_FALSE;
+      }
       if (ctx->Texture.Unit[0].Current->Image[0]->Border > 0)
         return GL_FALSE;
     }
