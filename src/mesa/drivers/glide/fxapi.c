@@ -916,10 +916,7 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
    if(depthSize && alphaBuffer)
       alphaBuffer=0;
 
-   if(verbose)
-      fprintf(stderr,"Mesa fx Voodoo Device Driver v0.30\nWritten by David Bucciarelli (davibu@tin.it.it)\n");
-
-   if((type=fxQueryHardware()) < 0) {
+   if ((type=fxQueryHardware()) < 0) {
       fprintf(stderr,"fx Driver: ERROR no Voodoo1/2 Graphics or Voodoo Rush !\n");
       return NULL;
    }
@@ -980,12 +977,12 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
       GrVoodooConfig_t *voodoo;
       voodoo = &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig;
 
-      if (getenv("MESA_INFO")) {
+      /*
          printf("Voodoo num_sst %d\n", glbHWConfig.num_sst);
          printf("Voodoo nTexelfx %d\n", voodoo->nTexelfx);
          printf("Voodoo fbRam %d\n", voodoo->fbRam);
          printf("Voodoo fbiRev %d\n", voodoo->fbiRev);
-      }
+      */
 
       if (voodoo->nTexelfx == 2 && voodoo->fbiRev != 260) {
          /* RGB pixel order (Voodoo3, but some Quantum3D models) */
@@ -1000,8 +997,8 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
       useBGR = GL_FALSE; /* use RGB pixel order otherwise */
    }
 #endif
-   if (getenv("MESA_INFO"))
-      printf("Voodoo %s order\n", useBGR ? "BGR" : "RGB");
+   if (getenv("MESA_FX_INFO"))
+      printf("Voodoo pixel order: %s\n", useBGR ? "BGR" : "RGB");
    fxInitPixelTables(fxMesa, useBGR);
 
    fxMesa->width=FX_grSstScreenWidth();
@@ -1021,7 +1018,7 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
    fxMesa->needClip = 0;
 
    if(verbose)
-      fprintf(stderr,"Glide screen size: %dx%d\n",
+      fprintf(stderr,"Voodoo Glide screen size: %dx%d\n",
               (int)FX_grSstScreenWidth(),(int)FX_grSstScreenHeight());
 
    fxMesa->glVis=gl_create_visual(GL_TRUE,     /* RGB mode */
@@ -1231,6 +1228,25 @@ void GLAPIENTRY fxMesaMakeCurrent(fxMesaContext fxMesa)
 }
 
 
+#if 0
+static void QueryCounters(void)
+{
+   static GLuint prevPassed = 0;
+   static GLuint prevFailed = 0;
+   GLuint failed, passed;
+   GrSstPerfStats_t st;
+
+   FX_grSstPerfStats(&st);
+   failed = st.zFuncFail - st.aFuncFail - st.chromaFail;
+   passed = st.pixelsIn - failed;
+   printf("failed: %d  passed: %d\n", failed - prevFailed, passed - prevPassed);
+
+   prevPassed = passed;
+   prevFailed = failed;
+}
+#endif
+
+
 /*
  * Swap front/back buffers for current context if double buffered.
  */
@@ -1273,40 +1289,45 @@ int GLAPIENTRY fxQueryHardware(void)
     fprintf(stderr,"fxmesa: fxQueryHardware() Start\n");
   }
 
-  if(!glbGlideInitialized) {
+  if (!glbGlideInitialized) {
     grGlideInit();
-    if(FX_grSstQueryHardware(&glbHWConfig)) {
+    if (FX_grSstQueryHardware(&glbHWConfig)) {
       grSstSelect(glbCurrentBoard);
-      glb3DfxPresent=1;
+      glb3DfxPresent = 1;
 
-      if(getenv("MESA_FX_INFO")) {
+      if (getenv("MESA_FX_INFO")) {
         char buf[80];
                         
         FX_grGlideGetVersion(buf);
-        fprintf(stderr,"Using Glide V%s\n","");
-        fprintf(stderr,"Number of boards: %d\n",glbHWConfig.num_sst);
+        fprintf(stderr, "Voodoo Using Glide V%s\n", buf);
+        fprintf(stderr, "Voodoo Number of boards: %d\n", glbHWConfig.num_sst);
 
-        if(glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_VOODOO) {
-          fprintf(stderr,"Framebuffer RAM: %d\n",
-                  glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.sliDetect ?
-                  (glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.fbRam*2) :
-                  glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.fbRam);
-          fprintf(stderr,"Number of TMUs: %d\n",
-                  glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.nTexelfx);
-          fprintf(stderr,"SLI detected: %d\n",
-                  glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig.sliDetect);
-        } else if(glbHWConfig.SSTs[glbCurrentBoard].type==GR_SSTTYPE_SST96) {
-          fprintf(stderr,"Framebuffer RAM: %d\n",
-                  glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config.fbRam);
-          fprintf(stderr,"Number of TMUs: %d\n",
-                  glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config.nTexelfx);
+        if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_VOODOO) {
+          GrVoodooConfig_t *voodoo;
+          voodoo = &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.VoodooConfig;
+
+          fprintf(stderr, "Voodoo Framebuffer RAM: %d\n",
+            voodoo->sliDetect ? (voodoo->fbRam*2) : voodoo->fbRam);
+          fprintf(stderr, "Voodoo Number of TMUs: %d\n", voodoo->nTexelfx);
+          fprintf(stderr, "Voodoo fbRam: %d\n", voodoo->fbRam);
+          fprintf(stderr, "Voodoo fbiRev: %d\n", voodoo->fbiRev);
+
+          fprintf(stderr,"Voodoo SLI detected: %d\n", voodoo->sliDetect);
+        }
+        else if (glbHWConfig.SSTs[glbCurrentBoard].type == GR_SSTTYPE_SST96) {
+          GrSst96Config_t *sst96;
+          sst96 = &glbHWConfig.SSTs[glbCurrentBoard].sstBoard.SST96Config;
+          fprintf(stderr, "Voodoo Framebuffer RAM: %d\n", sst96->fbRam);
+          fprintf(stderr, "Voodoo Number of TMUs: %d\n", sst96->nTexelfx);
         }
 
       }
-    } else
-      glb3DfxPresent=0;
+    }
+    else {
+      glb3DfxPresent = 0;
+    }
 
-    glbGlideInitialized=1;
+    glbGlideInitialized = 1;
 
 #if defined(__WIN32__)
     onexit((_onexit_t)cleangraphics);
@@ -1318,17 +1339,11 @@ int GLAPIENTRY fxQueryHardware(void)
 #endif
   }
 
-  if(!glb3DfxPresent) {
-    if (MESA_VERBOSE&VERBOSE_DRIVER) {
-      fprintf(stderr,"fxmesa: fxQueryHardware() End (-1)\n");
-    }
-    return(-1);
-  }
-
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
     fprintf(stderr,"fxmesa: fxQueryHardware() End (voodooo)\n");
   }
-  return(glbHWConfig.SSTs[glbCurrentBoard].type);
+
+  return glbHWConfig.SSTs[glbCurrentBoard].type;
 }
 
 
@@ -1337,8 +1352,8 @@ int GLAPIENTRY fxQueryHardware(void)
  */
 void GLAPIENTRY fxCloseHardware(void)
 {
-  if(glbGlideInitialized) {
-    if(getenv("MESA_FX_INFO")) {
+  if (glbGlideInitialized) {
+    if (getenv("MESA_FX_INFO")) {
       GrSstPerfStats_t          st;
 
       FX_grSstPerfStats(&st);
@@ -1350,9 +1365,9 @@ void GLAPIENTRY fxCloseHardware(void)
       fprintf(stderr,"  # pixels drawn (including buffer clears and LFB writes): %u\n",(unsigned)st.pixelsOut);
     }
 
-    if(glbTotNumCtx==0) {
+    if (glbTotNumCtx == 0) {
       grGlideShutdown();
-      glbGlideInitialized=0;
+      glbGlideInitialized = 0;
     }
   }
 }
@@ -1364,7 +1379,7 @@ void GLAPIENTRY fxCloseHardware(void)
 /*
  * Need this to provide at least one external definition.
  */
-
+extern int gl_fx_dummy_function_api(void);
 int gl_fx_dummy_function_api(void)
 {
   return 0;
