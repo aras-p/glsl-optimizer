@@ -97,13 +97,11 @@ CORE_SRCS = \
 #	X86\3dnow.c \
 #	X86\sse.c \
 	math\m_debug_norm.c \
-	math\m_debug_vertex.c \
 	math\m_debug_xform.c \
 	math\m_eval.c \
 	math\m_matrix.c \
 	math\m_translate.c \
 	math\m_vector.c \
-	math\m_vertices.c \
 	math\m_xform.c \
 	array_cache\ac_context.c \
 	array_cache\ac_import.c \
