@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.6 1999/11/11 01:27:17 brianp Exp $ */
+/* $Id: glx.h,v 1.7 1999/11/22 21:51:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,6 +49,7 @@ extern "C" {
 
 
 #define GLX_VERSION_1_1		1
+#define GLX_VERSION_1_2		1
 
 #define GLX_EXTENSION_NAME   "GLX"
 
@@ -195,6 +196,11 @@ extern const char *glXQueryExtensionsString( Display *dpy, int screen );
 extern const char *glXQueryServerString( Display *dpy, int screen, int name );
 
 extern const char *glXGetClientString( Display *dpy, int name );
+
+
+/* GLX 1.2 and later */
+
+extern Display *glXGetCurrentDisplay( void );
 
 
 
