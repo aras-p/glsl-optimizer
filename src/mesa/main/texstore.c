@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.2 2001/02/07 03:27:41 brianp Exp $ */
+/* $Id: texstore.c,v 1.3 2001/02/07 03:53:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -386,49 +386,6 @@ set_teximage_component_sizes( struct gl_texture_image *texImage )
       default:
          gl_problem(NULL, "unexpected format in set_teximage_component_sizes");
    }
-}
-
-
-/*
- * Compute log base 2 of n.
- * If n isn't an exact power of two return -1.
- * If n<0 return -1.
- */
-static int
-logbase2( int n )
-{
-   GLint i = 1;
-   GLint log2 = 0;
-
-   if (n<0) {
-      return -1;
-   }
-
-   while ( n > i ) {
-      i *= 2;
-      log2++;
-   }
-   if (i != n) {
-      return -1;
-   }
-   else {
-      return log2;
-   }
-}
-
-
-
-/*
- * Return GL_TRUE if internalFormat is a compressed format, return GL_FALSE
- * otherwise.
- */
-static GLboolean
-is_compressed_format(GLcontext *ctx, GLenum internalFormat)
-{
-    if (ctx->Driver.IsCompressedFormat) {
-        return (*ctx->Driver.IsCompressedFormat)(ctx, internalFormat);
-    }
-    return GL_FALSE;
 }
 
 
