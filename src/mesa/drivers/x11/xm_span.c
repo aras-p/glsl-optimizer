@@ -1,4 +1,4 @@
-/* $Id: xm_span.c,v 1.8 2001/02/13 23:57:48 brianp Exp $ */
+/* $Id: xm_span.c,v 1.9 2001/02/22 17:50:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4277,7 +4277,6 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_pixmap;
 	    ctx->Driver.WriteRGBAPixels     = write_pixels_8R8G8B_pixmap;
 	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_pixmap;
-            ctx->Driver.DrawPixels          = NULL; /*drawpixels_8R8G8B;*/
 	    break;
 	 case PF_8R8G8B24:
 	    ctx->Driver.WriteRGBASpan       = write_span_8R8G8B24_pixmap;
@@ -4384,7 +4383,6 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 	    ctx->Driver.WriteMonoRGBASpan   = write_span_mono_8R8G8B_ximage;
 	    ctx->Driver.WriteRGBAPixels     = write_pixels_8R8G8B_ximage;
 	    ctx->Driver.WriteMonoRGBAPixels = write_pixels_mono_8R8G8B_ximage;
-            ctx->Driver.DrawPixels          = NULL;
 	    break;
 	 case PF_8R8G8B24:
 	    ctx->Driver.WriteRGBASpan       = write_span_8R8G8B24_ximage;
