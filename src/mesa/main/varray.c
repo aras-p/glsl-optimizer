@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.12 1999/11/09 17:00:25 keithw Exp $ */
+/* $Id: varray.c,v 1.13 1999/11/09 17:26:15 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -461,16 +461,11 @@ void gl_exec_array_elements( GLcontext *ctx, struct immediate *IM,
 				       flags, elts, (VERT_ELT|VERT_TEX1_ANY),
 				       start, count);
 
-   /* Lighting ignores the and-flag, so still need to do this.
-    */
-/*     fprintf(stderr, "start %d count %d\n", start, count); */
-/*     gl_print_vert_flags("translate", translate); */
 
    for (i = start ; i < count ; i++) 
-      if (flags[i] & VERT_ELT) {
-/*  	 flags[i] &= ~VERT_ELT;	*/
+      if (flags[i] & VERT_ELT) 
 	 flags[i] |= translate;
-      }      
+
 }
 
 
@@ -675,7 +670,6 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
 
          /* Transform and render.
 	  */
-	 if (0) gl_print_cassette_flags( IM, VB->Flag );
          gl_run_pipeline( VB );
 	 gl_reset_vb( VB );
 
@@ -1056,25 +1050,25 @@ void GLAPIENTRY glInterleavedArrays(CTX_ARG GLenum format, GLsizei stride,
       GLint i;
       GLint factor = ctx->Array.TexCoordInterleaveFactor;
       for (i = 0; i < factor; i++) {
-         gl_ActiveTexture( ctx, (GLenum) (GL_TEXTURE0_ARB + i) );
+         gl_ClientActiveTexture( ctx, (GLenum) (GL_TEXTURE0_ARB + i) );
          gl_EnableClientState( ctx, GL_TEXTURE_COORD_ARRAY );
          glTexCoordPointer(CTX_PRM  tcomps, GL_FLOAT, stride,
                              (GLubyte *) pointer + i * coffset );
       }
       for (i = factor; i < ctx->Const.MaxTextureUnits; i++) {
-         gl_ActiveTexture( ctx, (GLenum) (GL_TEXTURE0_ARB + i) );
+         gl_ClientActiveTexture( ctx, (GLenum) (GL_TEXTURE0_ARB + i) );
          gl_DisableClientState( ctx, GL_TEXTURE_COORD_ARRAY );
       }
    }
    else {
       GLint i;
       for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-         gl_ActiveTexture( ctx, (GLenum) (GL_TEXTURE0_ARB + i) );
+         gl_ClientActiveTexture( ctx, (GLenum) (GL_TEXTURE0_ARB + i) );
          gl_DisableClientState( ctx, GL_TEXTURE_COORD_ARRAY );
       }
    }
    /* Restore texture coordinate unit index */
-   gl_ActiveTexture( ctx, (GLenum) (GL_TEXTURE0_ARB + coordUnitSave) );
+   gl_ClientActiveTexture( ctx, (GLenum) (GL_TEXTURE0_ARB + coordUnitSave) );
 
 
    /* Color */
