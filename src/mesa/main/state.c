@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.5 2000/03/11 23:23:26 brianp Exp $ */
+/* $Id: state.c,v 1.6 2000/04/01 05:42:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -791,16 +791,9 @@ static void update_rasterflags( GLcontext *ctx )
       ctx->RasterMask |= WINCLIP_BIT;
    }
 
-   if (ctx->Depth.OcclusionTest) {
-      if (ctx->Color.ColorMask[0] == 0 && 
-          ctx->Color.ColorMask[1] == 0 && 
-          ctx->Color.ColorMask[2] == 0 &&
-          ctx->Color.ColorMask[3] == 0 && 
-          ctx->Depth.Mask == GL_FALSE &&
-          !ctx->Stencil.Enabled) {
-         ctx->RasterMask |= OCCLUSION_BIT;
-      }
-   }
+   if (ctx->Depth.OcclusionTest)
+      ctx->RasterMask |= OCCLUSION_BIT;
+
 
    /* If we're not drawing to exactly one color buffer set the
     * MULTI_DRAW_BIT flag.  Also set it if we're drawing to no
