@@ -33,13 +33,13 @@
 typedef struct {
     int Name_offset;
 #ifdef NEED_FUNCTION_POINTER
-    void * Address;
+    _glapi_proc Address;
 #endif
     unsigned int Offset;
 } glprocs_table_t;
 
 #ifdef NEED_FUNCTION_POINTER
-#  define NAME_FUNC_OFFSET(n,f,o) { n , (void *) f , o }
+#  define NAME_FUNC_OFFSET(n,f,o) { n , (_glapi_proc) f , o }
 #else
 #  define NAME_FUNC_OFFSET(n,f,o) { n , o }
 #endif

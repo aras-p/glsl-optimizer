@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.2
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -50,6 +50,8 @@
 struct _glapi_table;
 
 typedef void (*_glapi_warning_func)(void *ctx, const char *str, ...);
+
+typedef void (*_glapi_proc)(); /* generic function pointer */
 
 
 extern void *_glapi_Context;
@@ -115,7 +117,7 @@ extern GLint
 _glapi_get_proc_offset(const char *funcName);
 
 
-extern const GLvoid *
+extern const _glapi_proc
 _glapi_get_proc_address(const char *funcName);
 
 

@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -112,9 +111,9 @@ warn(void)
    return 0
 
 #define DISPATCH_TABLE_NAME __glapi_noop_table
-#define UNUSED_TABLE_NAME __usused_noop_functions
+#define UNUSED_TABLE_NAME __unused_noop_functions
 
-#define TABLE_ENTRY(name) (void *) NoOp##name
+#define TABLE_ENTRY(name) (_glapi_proc) NoOp##name
 
 static int NoOpUnused(void)
 {
@@ -169,9 +168,9 @@ static _glthread_TSD ContextTSD;         /**< Per-thread context pointer */
 
 
 #define DISPATCH_TABLE_NAME __glapi_threadsafe_table
-#define UNUSED_TABLE_NAME __usused_threadsafe_functions
+#define UNUSED_TABLE_NAME __unused_threadsafe_functions
 
-#define TABLE_ENTRY(name) (void *) gl##name
+#define TABLE_ENTRY(name) (_glapi_proc) gl##name
 
 static int glUnused(void)
 {
@@ -201,7 +200,8 @@ static GLboolean DispatchOverride = GL_FALSE;
 
 
 
-/* strdup() is actually not a standard ANSI C or POSIX routine.
+/**
+ * strdup() is actually not a standard ANSI C or POSIX routine.
  * Irix will not define it if ANSI mode is in effect.
  */
 static char *
@@ -217,7 +217,7 @@ str_dup(const char *str)
 
 
 
-/*
+/**
  * We should call this periodically from a function such as glXMakeCurrent
  * in order to test if multiple threads are being used.
  */
@@ -246,7 +246,7 @@ _glapi_check_multithread(void)
 
 
 
-/*
+/**
  * Set the current context pointer for this thread.
  * The context pointer is an opaque type which should be cast to
  * void from the real context pointer type.
@@ -254,7 +254,9 @@ _glapi_check_multithread(void)
 void
 _glapi_set_context(void *context)
 {
+   (void) __unused_noop_functions; /* silence a warning */
 #if defined(THREADS)
+   (void) __unused_threadsafe_functions; /* silence a warning */
    _glthread_SetTSD(&ContextTSD, context);
    _glapi_Context = (ThreadSafe) ? NULL : context;
 #else
@@ -264,7 +266,7 @@ _glapi_set_context(void *context)
 
 
 
-/*
+/**
  * Get the current context pointer for this thread.
  * The context pointer is an opaque type which should be cast from
  * void to the real context pointer type.
@@ -286,7 +288,7 @@ _glapi_get_context(void)
 
 
 
-/*
+/**
  * Set the global or per-thread dispatch table pointer.
  */
 void
@@ -334,7 +336,7 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 
 
 
-/*
+/**
  * Return pointer to current dispatch table for calling thread.
  */
 struct _glapi_table *
@@ -450,13 +452,6 @@ _glapi_get_override_dispatch(int layer)
 }
 
 
-struct name_address_offset {
-   const char *Name;
-   GLvoid *Address;
-   GLuint Offset;
-};
-
-
 #if !defined( USE_X86_ASM )
 #define NEED_FUNCTION_POINTER
 #endif
@@ -465,6 +460,10 @@ struct name_address_offset {
 #include "glprocs.h"
 
 
+/**
+ * Search the table of static entrypoint functions for the named function
+ * and return the corresponding glprocs_table_t entry.
+ */
 static const glprocs_table_t *
 find_entry( const char * n )
 {
@@ -481,7 +480,8 @@ find_entry( const char * n )
    return NULL;
 }
 
-/*
+
+/**
  * Return dispatch table offset of the named static (built-in) function.
  * Return -1 if function not found.
  */
@@ -507,7 +507,7 @@ extern const GLubyte gl_dispatch_functions_start[];
 # endif
 
 
-/*
+/**
  * Return dispatch function address the named static (built-in) function.
  * Return NULL if function not found.
  */
@@ -528,11 +528,11 @@ get_static_proc_address(const char *funcName)
 #else
 
 
-/*
- * Return dispatch function address the named static (built-in) function.
- * Return NULL if function not found.
+/**
+ * Return pointer to the named static (built-in) function.
+ * \return  NULL if function not found.
  */
-static const GLvoid *
+static const _glapi_proc
 get_static_proc_address(const char *funcName)
 {
    const glprocs_table_t * const f = find_entry( funcName );
@@ -542,6 +542,10 @@ get_static_proc_address(const char *funcName)
 #endif /* USE_X86_ASM */
 
 
+/**
+ * Return the name of the function at the given offset in the dispatch
+ * table.  For debugging only.
+ */
 static const char *
 get_static_proc_name( GLuint offset )
 {
@@ -568,12 +572,19 @@ get_static_proc_name( GLuint offset )
 
 
 /*
- * The disptach table size (number of entries) is the sizeof the
+ * The dispatch table size (number of entries) is the size of the
  * _glapi_table struct plus the number of dynamic entries we can add.
  * The extra slots can be filled in by DRI drivers that register new extension
  * functions.
  */
 #define DISPATCH_TABLE_SIZE (sizeof(struct _glapi_table) / sizeof(void *) + MAX_EXTENSION_FUNCS)
+
+
+struct name_address_offset {
+   const char *Name;
+   _glapi_proc Address;
+   GLuint Offset;
+};
 
 
 static struct name_address_offset ExtEntryTable[MAX_EXTENSION_FUNCS];
@@ -583,12 +594,12 @@ static GLuint NumExtEntryPoints = 0;
 extern void __glapi_sparc_icache_flush(unsigned int *);
 #endif
 
-/*
+/**
  * Generate a dispatch function (entrypoint) which jumps through
  * the given slot number (offset) in the current dispatch table.
  * We need assembly language in order to accomplish this.
  */
-static void *
+static _glapi_proc
 generate_entrypoint(GLuint functionOffset)
 {
 #if defined(USE_X86_ASM)
@@ -631,7 +642,7 @@ generate_entrypoint(GLuint functionOffset)
       *(unsigned int *)(code + 0x10) = (unsigned int)_glapi_get_dispatch - next_insn;
       *(unsigned int *)(code + 0x16) = (unsigned int)functionOffset * 4;
    }
-   return code;
+   return (_glapi_proc) code;
 #elif defined(USE_SPARC_ASM)
 
 #if (defined(__sparc_v9__) && (!defined(__linux__) || defined(__linux_sparc_64__)))
@@ -680,7 +691,7 @@ generate_entrypoint(GLuint functionOffset)
       __glapi_sparc_icache_flush(&code[2]);
 #endif
    }
-   return code;
+   return (_glapi_proc) code;
 #else
    (void) functionOffset;
    return NULL;
@@ -688,12 +699,12 @@ generate_entrypoint(GLuint functionOffset)
 }
 
 
-/*
+/**
  * This function inserts a new dispatch offset into the assembly language
  * stub that was generated with the preceeding function.
  */
 static void
-fill_in_entrypoint_offset(void *entrypoint, GLuint offset)
+fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
 {
 #if defined(USE_X86_ASM)
 
@@ -727,7 +738,7 @@ fill_in_entrypoint_offset(void *entrypoint, GLuint offset)
 }
 
 
-/*
+/**
  * Add a new extension function entrypoint.
  * Return: GL_TRUE = success or GL_FALSE = failure
  */
@@ -783,7 +794,7 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
       return GL_FALSE;
    }
    else {
-      void *entrypoint = generate_entrypoint(offset);
+      _glapi_proc entrypoint = generate_entrypoint(offset);
       if (!entrypoint)
          return GL_FALSE; /* couldn't generate assembly */
 
@@ -801,7 +812,7 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
 }
 
 
-/*
+/**
  * Return offset of entrypoint for named function within dispatch table.
  */
 GLint
@@ -821,10 +832,12 @@ _glapi_get_proc_offset(const char *funcName)
 
 
 
-/*
- * Return entrypoint for named function.
+/**
+ * Return pointer to the named function.  If the function name isn't found
+ * in the name of static functions, try generating a new API entrypoint on
+ * the fly with assembly language.
  */
-const GLvoid *
+const _glapi_proc
 _glapi_get_proc_address(const char *funcName)
 {
    GLuint i;
@@ -846,7 +859,7 @@ _glapi_get_proc_address(const char *funcName)
 
    /* search static functions */
    {
-      const GLvoid *func = get_static_proc_address(funcName);
+      const _glapi_proc func = get_static_proc_address(funcName);
       if (func)
          return func;
    }
@@ -858,7 +871,7 @@ _glapi_get_proc_address(const char *funcName)
     * when you try calling a GL function that doesn't really exist.
     */
    if (NumExtEntryPoints < MAX_EXTENSION_FUNCS) {
-      GLvoid *entrypoint = generate_entrypoint(~0);
+      _glapi_proc entrypoint = generate_entrypoint(~0);
       if (!entrypoint)
          return GL_FALSE;
 
@@ -877,7 +890,7 @@ _glapi_get_proc_address(const char *funcName)
 
 
 
-/*
+/**
  * Return the name of the function at the given dispatch offset.
  * This is only intended for debugging.
  */
@@ -904,7 +917,7 @@ _glapi_get_proc_name(GLuint offset)
 
 
 
-/*
+/**
  * Return size of dispatch table struct as number of functions (or
  * slots).
  */
@@ -916,7 +929,7 @@ _glapi_get_dispatch_table_size(void)
 
 
 
-/*
+/**
  * Get API dispatcher version string.
  */
 const char *
@@ -927,7 +940,7 @@ _glapi_get_version(void)
 
 
 
-/*
+/**
  * Make sure there are no NULL pointers in the given dispatch table.
  * Intended for debugging purposes.
  */
@@ -993,7 +1006,7 @@ _glapi_check_table(const struct _glapi_table *table)
       GLuint offset = (secondaryColor3fFunc - (char *) table) / sizeof(void *);
       assert(secondaryColor3fOffset == _gloffset_SecondaryColor3fEXT);
       assert(secondaryColor3fOffset == offset);
-      assert(_glapi_get_proc_address("glSecondaryColor3fEXT") == (void *) &glSecondaryColor3fEXT);
+      assert(_glapi_get_proc_address("glSecondaryColor3fEXT") == (_glapi_proc) &glSecondaryColor3fEXT);
    }
    {
       GLuint pointParameterivOffset = _glapi_get_proc_offset("glPointParameterivNV");
@@ -1001,7 +1014,7 @@ _glapi_check_table(const struct _glapi_table *table)
       GLuint offset = (pointParameterivFunc - (char *) table) / sizeof(void *);
       assert(pointParameterivOffset == _gloffset_PointParameterivNV);
       assert(pointParameterivOffset == offset);
-      assert(_glapi_get_proc_address("glPointParameterivNV") == (void *) &glPointParameterivNV);
+      assert(_glapi_get_proc_address("glPointParameterivNV") == &glPointParameterivNV);
    }
    {
       GLuint setFenceOffset = _glapi_get_proc_offset("glSetFenceNV");
@@ -1009,7 +1022,7 @@ _glapi_check_table(const struct _glapi_table *table)
       GLuint offset = (setFenceFunc - (char *) table) / sizeof(void *);
       assert(setFenceOffset == _gloffset_SetFenceNV);
       assert(setFenceOffset == offset);
-      assert(_glapi_get_proc_address("glSetFenceNV") == (void *) &glSetFenceNV);
+      assert(_glapi_get_proc_address("glSetFenceNV") == &glSetFenceNV);
    }
 #else
    (void) table;

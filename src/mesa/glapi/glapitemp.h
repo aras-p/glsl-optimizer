@@ -4883,7 +4883,7 @@ KEYWORD1 void KEYWORD2 NAME(PointParameterfvSGIS)(GLenum pname, const GLfloat * 
 #error TABLE_ENTRY must be defined
 #endif
 
-static void * DISPATCH_TABLE_NAME[] = {
+static _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(NewList),
    TABLE_ENTRY(EndList),
    TABLE_ENTRY(CallList),
@@ -5749,7 +5749,7 @@ static void * DISPATCH_TABLE_NAME[] = {
  * We list the functions which are not otherwise used.
  */
 #ifdef UNUSED_TABLE_NAME
-static const void * const UNUSED_TABLE_NAME[] = {
+static _glapi_proc UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(ActiveTexture),
    TABLE_ENTRY(ClientActiveTexture),
    TABLE_ENTRY(MultiTexCoord1d),
