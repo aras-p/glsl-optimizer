@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.14 2001/09/19 20:30:44 kschultz Exp $ */
+/* $Id: s_aalinetemp.h,v 1.15 2001/12/05 10:24:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -162,7 +162,7 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
    line.len = (GLfloat) sqrt(line.dx * line.dx + line.dy * line.dy);
    line.halfWidth = 0.5F * ctx->Line.Width;
 
-   if (line.len == 0.0)
+   if (line.len == 0.0 || IS_INF_OR_NAN(line.len))
       return;
 
    line.xAdj = line.dx / line.len * line.halfWidth;

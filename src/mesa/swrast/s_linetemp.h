@@ -1,4 +1,4 @@
-/* $Id: s_linetemp.h,v 1.9 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: s_linetemp.h,v 1.10 2001/12/05 10:24:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -180,6 +180,13 @@
    }
 #endif
 
+   /* Cull primitives with malformed coordinates.
+    */
+   {
+      float tmp = vert0->win[0] + vert0->win[1] + vert1->win[0] + vert1->win[1];
+      if (IS_INF_OR_NAN(tmp))
+	 return;
+   }
 
 /*
  * Despite being clipped to the view volume, the line's window coordinates

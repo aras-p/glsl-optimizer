@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.10 2001/09/19 20:30:44 kschultz Exp $ */
+/* $Id: s_pointtemp.h,v 1.11 2001/12/05 10:24:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -118,6 +118,14 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #elif FLAGS & (LARGE | SMOOTH)
    size = ctx->Point._Size;
 #endif
+
+   /* Cull primitives with malformed coordinates.
+    */
+   {
+      float tmp = vert->win[0] + vert->win[1];
+      if (IS_INF_OR_NAN(tmp))
+	 return;
+   }
 
 #if FLAGS & SPRITE
    {

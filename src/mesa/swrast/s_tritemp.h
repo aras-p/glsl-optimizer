@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.27 2001/09/19 20:30:44 kschultz Exp $ */
+/* $Id: s_tritemp.h,v 1.28 2001/12/05 10:24:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -199,7 +199,7 @@
       if (area * bf < 0.0)
          return;
 
-      if (area == 0.0F)
+      if (area == 0.0F || IS_INF_OR_NAN(area))
          return;
 
       oneOverArea = 1.0F / area;
