@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.11 2000/01/13 00:29:02 brianp Exp $ */
+/* $Id: light.c,v 1.12 2000/01/31 23:33:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,6 +42,11 @@
 #include "xform.h"
 #endif
 
+
+/* XXX this is a bit of a hack needed for compilation within XFree86 */
+#ifndef FLT_MIN
+#define FLT_MIN 1e-37
+#endif
 
 
 void
