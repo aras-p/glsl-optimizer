@@ -127,6 +127,11 @@ static void render_image( void )
 
    glPopMatrix();
 
+   /* This is very important!!!
+    * Make sure buffered commands are finished!!!
+    */
+   glFinish();
+
    gluDeleteQuadric(qobj);
 
    {
