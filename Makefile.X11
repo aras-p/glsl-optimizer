@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.59 2001/12/14 17:14:45 kschultz Exp $
+# $Id: Makefile.X11,v 1.60 2002/02/12 03:28:48 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -329,11 +329,10 @@ realclean: clean
 	cd samples     && $(MAKE) -f Makefile.X11 realclean || true
 
 
-
-DIRECTORY = Mesa-4.0
-LIB_NAME = MesaLib-4.0
-DEMO_NAME = MesaDemos-4.0
-GLU_NAME = MesaGLU-4.0
+DIRECTORY = Mesa-4.1
+LIB_NAME = MesaLib-4.1
+DEMO_NAME = MesaDemos-4.1
+GLU_NAME = MesaGLU-4.1
 GLUT_NAME = GLUT-3.7
 
 
@@ -378,7 +377,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/include/GL/internal/glcore.h			\
 	$(DIRECTORY)/include/GL/Makefile.in				\
 	$(DIRECTORY)/include/GL/Makefile.am				\
-	$(DIRECTORY)/include/GL/dosmesa.h				\
+	$(DIRECTORY)/include/GL/dmesa.h					\
 	$(DIRECTORY)/include/GL/amesa.h					\
 	$(DIRECTORY)/include/GL/fxmesa.h				\
 	$(DIRECTORY)/include/GL/ggimesa.h				\
@@ -431,6 +430,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/windml/tornado/*.cdf				\
 	$(DIRECTORY)/src/windml/man3/*.3				\
 	$(DIRECTORY)/src/windml/man3/*.html				\
+	$(DIRECTORY)/src/DOS/*.[ch]					\
 	$(DIRECTORY)/src/BeOS/*.cpp					\
 	$(DIRECTORY)/src/FX/Makefile.am					\
 	$(DIRECTORY)/src/FX/Makefile.in					\
@@ -612,6 +612,10 @@ DEMO_FILES =	\
 	$(DIRECTORY)/src-glut/descrip.mms	\
 	$(DIRECTORY)/src-glut/mms_depend	\
 	$(DIRECTORY)/src-glut/*.[ch]		\
+	$(DIRECTORY)/src-glut.dos/*.[ch]	\
+	$(DIRECTORY)/src-glut.dos/Makefile.DJ	\
+	$(DIRECTORY)/src-glut.dos/depend	\
+	$(DIRECTORY)/src-glut.dos/PC_HW/*.[chS]	\
 	$(DIRECTORY)/images/*			\
 	$(DIRECTORY)/demos/Makefile*		\
 	$(DIRECTORY)/demos/descrip.mms		\
