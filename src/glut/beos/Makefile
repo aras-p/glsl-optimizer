@@ -52,7 +52,8 @@ C_SOURCES = \
 	glut_shapes.c \
 	glut_teapot.c \
 	glut_vidresize.c \
-	glut_util.c 
+	glut_util.c \
+	glut_ext.c
 
 OBJECTS = \
 	$(CPP_SOURCES:.cpp=.o) \
@@ -62,8 +63,6 @@ INCLUDES = \
 	-I. \
 	-I- \
 	-I$(TOP)/include
-
-DEFINES += -DGLUT_API_VERSION=4
 
 # Rules
 
@@ -84,7 +83,7 @@ $(LIB_DIR):
 
 # Make the library
 $(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
-	$(TOP)/bin/mklib -o $(GLUT_LIB) -major $(GLUT_MAJOR) -minor $(GLUT_MINOR) -patch $(GLUT_TINY) \
+	@$(TOP)/bin/mklib -o $(GLUT_LIB) -major $(GLUT_MAJOR) -minor $(GLUT_MINOR) -patch $(GLUT_TINY) \
 		-install $(LIB_DIR) $(MKLIB_OPTIONS) $(GLUT_LIB_DEPS) \
 		$(OBJECTS)
 
