@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.67 2002/09/21 16:51:25 brianp Exp $ */
+/* $Id: image.c,v 1.68 2002/09/21 17:34:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,7 +58,8 @@ const struct gl_pixelstore_attrib _mesa_native_packing = {
    0,            /* SkipImages */
    GL_FALSE,     /* SwapBytes */
    GL_FALSE,     /* LsbFirst */
-   GL_FALSE      /* ClientStorage */
+   GL_FALSE,     /* ClientStorage */
+   GL_FALSE      /* Invert */
 };
 
 
@@ -494,6 +495,7 @@ _mesa_image_address( const struct gl_pixelstore_attrib *packing,
    else {
       /* Non-BITMAP data */
       GLint bytes_per_pixel, bytes_per_row, remainder, bytes_per_image;
+      GLint topOfImage;
 
       bytes_per_pixel = _mesa_bytes_per_pixel( format, type );
 
@@ -509,9 +511,19 @@ _mesa_image_address( const struct gl_pixelstore_attrib *packing,
 
       bytes_per_image = bytes_per_row * rows_per_image;
 
+      if (packing->Invert) {
+         /* set pixel_addr to the last row */
+         topOfImage = bytes_per_row * (height - 1);
+         bytes_per_row = -bytes_per_row;
+      }
+      else {
+         topOfImage = 0;
+      }
+
       /* compute final pixel address */
       pixel_addr = (GLubyte *) image
                  + (skipimages + img) * bytes_per_image
+                 + topOfImage
                  + (skiprows + row) * bytes_per_row
                  + (skippixels + column) * bytes_per_pixel;
    }
@@ -532,14 +544,18 @@ _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
    ASSERT(packing);
    if (type == GL_BITMAP) {
       /* BITMAP data */
+      GLint bytes;
       if (packing->RowLength == 0) {
-         GLint bytes = (width + 7) / 8;
-         return bytes;
+         bytes = (width + 7) / 8;
       }
       else {
-         GLint bytes = (packing->RowLength + 7) / 8;
-         return bytes;
+         bytes = (packing->RowLength + 7) / 8;
       }
+      if (packing->Invert) {
+         /* negate the bytes per row (negative row stride) */
+         bytes = -bytes;
+      }
+      return bytes;
    }
    else {
       /* Non-BITMAP data */
@@ -556,6 +572,8 @@ _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
       remainder = bytesPerRow % packing->Alignment;
       if (remainder > 0)
          bytesPerRow += (packing->Alignment - remainder);
+      if (packing->Invert)
+         bytesPerRow = -bytesPerRow;
       return bytesPerRow;
    }
 }

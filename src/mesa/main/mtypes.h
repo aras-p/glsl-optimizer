@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.86 2002/09/21 16:51:25 brianp Exp $ */
+/* $Id: mtypes.h,v 1.87 2002/09/21 17:34:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1045,6 +1045,7 @@ struct gl_pixelstore_attrib {
    GLboolean SwapBytes;
    GLboolean LsbFirst;
    GLboolean ClientStorage; /* GL_APPLE_client_storage */
+   GLboolean Invert;        /* GL_MESA_pack_invert */
 };
 
 
@@ -1434,6 +1435,7 @@ struct gl_extensions {
    GLboolean HP_occlusion_test;
    GLboolean IBM_rasterpos_clip;
    GLboolean INGR_blend_func_separate;
+   GLboolean MESA_pack_invert;
    GLboolean MESA_window_pos;
    GLboolean MESA_resize_buffers;
    GLboolean MESA_ycbcr_texture;
