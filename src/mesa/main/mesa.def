@@ -451,6 +451,9 @@ EXPORTS
 	_glapi_get_context
 	_mesa_ResizeBuffersMESA
 	_glapi_get_proc_address
+	_mesa_init_default_imports
+	_tnl_MakeCurrent
+	_swrast_DrawBuffer
 	wglCopyContext
 	wglCreateContext
 	wglDeleteContext
