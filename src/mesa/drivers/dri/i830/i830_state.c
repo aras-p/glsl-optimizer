@@ -979,7 +979,7 @@ static void update_specular( GLcontext *ctx )
    I830_STATECHANGE(imesa, I830_UPLOAD_CTX);
    imesa->Setup[I830_CTXREG_ENABLES_1] &= ~ENABLE_SPEC_ADD_MASK;
 
-   if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
+   if (NEED_SECONDARY_COLOR(ctx))
       imesa->Setup[I830_CTXREG_ENABLES_1] |= ENABLE_SPEC_ADD;
    else
       imesa->Setup[I830_CTXREG_ENABLES_1] |= DISABLE_SPEC_ADD;

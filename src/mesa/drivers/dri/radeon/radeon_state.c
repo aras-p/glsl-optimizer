@@ -738,7 +738,7 @@ static void radeonUpdateSpecular( GLcontext *ctx )
       rmesa->hw.tcl.cmd[TCL_LIGHT_MODEL_CTL] |= RADEON_LIGHTING_ENABLE;
    }
 
-   if ( ctx->_TriangleCaps & DD_SEPARATE_SPECULAR ) {
+   if (NEED_SECONDARY_COLOR(ctx)) {
       assert( (p & RADEON_SPECULAR_ENABLE) != 0 );
    } else {
       assert( (p & RADEON_SPECULAR_ENABLE) == 0 );

@@ -550,7 +550,7 @@ void radeonUpdateSpecular( GLcontext *ctx )
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    GLuint p = rmesa->hw.ctx.cmd[CTX_PP_CNTL];
 
-   if ( ctx->_TriangleCaps & DD_SEPARATE_SPECULAR ) {
+   if (NEED_SECONDARY_COLOR(ctx)) {
       p |=  RADEON_SPECULAR_ENABLE;
    } else {
       p &= ~RADEON_SPECULAR_ENABLE;

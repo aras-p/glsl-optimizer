@@ -483,7 +483,7 @@ static void updateSpecularLighting( GLcontext *ctx )
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    unsigned int specen;
 
-   specen = (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) ? TMC_specen_enable : 0;
+   specen = NEED_SECONDARY_COLOR(ctx) ? TMC_specen_enable : 0;
 
    if ( specen != mmesa->hw.specen ) {
       mmesa->hw.specen = specen;
