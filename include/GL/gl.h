@@ -2657,52 +2657,29 @@ GLAPI void GLAPIENTRY glTracePointerRangeMESA( const GLvoid* first, const GLvoid
 #define GL_MAX_FRAGMENT_PROGRAM_LOCAL_PARAMETERS_NV 0x8868
 
 
-GLAPI void GLAPIENTRY
-glProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
-                            GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+GLAPI void GLAPIENTRY glProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
-GLAPI void GLAPIENTRY
-glProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
-                            GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+GLAPI void GLAPIENTRY glProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 
-GLAPI void GLAPIENTRY
-glProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name,
-                             const float v[]);
+GLAPI void GLAPIENTRY glProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name, const float v[]);
 
-GLAPI void GLAPIENTRY
-glProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
-                             const double v[]);
+GLAPI void GLAPIENTRY glProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name, const double v[]);
 
-GLAPI void GLAPIENTRY
-glGetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
-                               GLfloat *params);
+GLAPI void GLAPIENTRY glGetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name, GLfloat *params);
 
-GLAPI void GLAPIENTRY
-glGetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
-                               GLdouble *params);
+GLAPI void GLAPIENTRY glGetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name, GLdouble *params);
 
-GLAPI void GLAPIENTRY
-glProgramLocalParameter4dARB(GLenum target, GLuint index,
-                             GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+GLAPI void GLAPIENTRY glProgramLocalParameter4dARB(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 
-GLAPI void GLAPIENTRY
-glProgramLocalParameter4dvARB(GLenum target, GLuint index,
-                              const GLdouble *params);
+GLAPI void GLAPIENTRY glProgramLocalParameter4dvARB(GLenum target, GLuint index, const GLdouble *params);
 
-GLAPI void GLAPIENTRY
-glProgramLocalParameter4fARB(GLenum target, GLuint index,
-                             GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+GLAPI void GLAPIENTRY glProgramLocalParameter4fARB(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
-GLAPI void GLAPIENTRY
-glProgramLocalParameter4fvARB(GLenum target, GLuint index,
-                              const GLfloat *params);
+GLAPI void GLAPIENTRY glProgramLocalParameter4fvARB(GLenum target, GLuint index, const GLfloat *params);
 
-GLAPI void GLAPIENTRY
-glGetProgramLocalParameterdvARB(GLenum target, GLuint index, GLdouble *params);
+GLAPI void GLAPIENTRY glGetProgramLocalParameterdvARB(GLenum target, GLuint index, GLdouble *params);
 
-GLAPI void GLAPIENTRY
-glGetProgramLocalParameterfvARB(GLenum target, GLuint index, GLfloat *params);
-
+GLAPI void GLAPIENTRY glGetProgramLocalParameterfvARB(GLenum target, GLuint index, GLfloat *params);
 
 typedef void (APIENTRY * PFNGLPROGRAMNAMEDPARAMETER4FNVPROC) (GLuint id, GLsizei len, const GLubyte * name, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 typedef void (APIENTRY * PFNGLPROGRAMNAMEDPARAMETER4DNVPROC) (GLuint id, GLsizei len, const GLubyte * name, GLdouble x, GLdouble y, GLdouble z, GLdouble w);

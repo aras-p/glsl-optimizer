@@ -5064,17 +5064,17 @@ typedef long int GLintptrARB;
 #define GL_BUFFER_MAPPED_ARB                            0x88BC
 #define GL_BUFFER_MAP_POINTER_ARB                       0x88BD
 
-extern void glBindBufferARB(GLenum target, GLuint buffer);
-extern void glDeleteBuffersARB(GLsizei n, const GLuint * buffer);
-extern void glGenBuffersARB(GLsizei n, GLuint * buffer);
+GLAPI void APIENTRY glBindBufferARB(GLenum target, GLuint buffer);
+GLAPI void APIENTRY glDeleteBuffersARB(GLsizei n, const GLuint * buffer);
+GLAPI void APIENTRY glGenBuffersARB(GLsizei n, GLuint * buffer);
 extern GLboolean glIsBufferARB(GLuint buffer);
-extern void glBufferDataARB(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage);
-extern void glBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data);
-extern void glGetBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data);
-extern void glMapBufferARB(GLenum target, GLenum access);
-extern GLboolean glUnmapBufferARB(GLenum target);
-extern void glGetBufferParameterivARB(GLenum target, GLenum pname, GLint * params);
-extern void glGetBufferPointervARB(GLenum target, GLenum pname, GLvoid ** params);
+GLAPI void APIENTRY glBufferDataARB(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage);
+GLAPI void APIENTRY glBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data);
+GLAPI void APIENTRY glGetBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data);
+GLAPI void APIENTRY glMapBufferARB(GLenum target, GLenum access);
+GLAPI GLboolean APIENTRY glUnmapBufferARB(GLenum target);
+GLAPI void APIENTRY glGetBufferParameterivARB(GLenum target, GLenum pname, GLint * params);
+GLAPI void APIENTRY glGetBufferPointervARB(GLenum target, GLenum pname, GLvoid ** params);
 
 #endif
 
