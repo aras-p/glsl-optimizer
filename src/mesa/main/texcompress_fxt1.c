@@ -857,13 +857,13 @@ fxt1_quantize_ALPHA1 (unsigned long *cc,
    for (j = n_vect - 1; j >= 0; j--) {
       /* add in alphas */
       FX64_SHL(hi, 5);
-      FX64_OR32(hi, (unsigned int)(vec[j][ACOMP] / 8.0));
+      FX64_OR32(hi, (unsigned int)(vec[j][ACOMP] / 8.0F));
    }
    for (j = n_vect - 1; j >= 0; j--) {
       for (i = 0; i < n_comp - 1; i++) {
          /* add in colors */
          FX64_SHL(hi, 5);
-         FX64_OR32(hi, (unsigned int)(vec[j][i] / 8.0));
+         FX64_OR32(hi, (unsigned int)(vec[j][i] / 8.0F));
       }
    }
    ((Fx64 *)cc)[1] = hi;
@@ -1358,7 +1358,7 @@ fxt1_encode (unsigned int width, unsigned int height, int comps,
       int newHeight = (height + 3) & ~3;
       newSource = malloc(comps * newWidth * newHeight * sizeof(unsigned char *));
       _mesa_upscale_teximage2d(width, height, newWidth, newHeight,
-                          comps, source, srcRowStride, newSource);
+                               comps, source, srcRowStride, newSource);
       source = newSource;
       width = newWidth;
       height = newHeight;
