@@ -1,10 +1,10 @@
-/* $Id: t_vb_lighttmp.h,v 1.4 2001/01/24 00:05:00 brianp Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.5 2001/02/13 23:59:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -766,14 +766,14 @@ static void TAG(light_ci)( GLcontext *ctx,
 {
    struct light_stage_data *store = LIGHT_STAGE_DATA(stage);
    GLuint j;
-   GLuint  vstride = input->stride;
+   GLuint vstride = input->stride;
    const GLfloat *vertex = (GLfloat *) input->data;
-   GLuint  nstride = VB->NormalPtr->stride; 
+   GLuint nstride = VB->NormalPtr->stride; 
    const GLfloat *normal = (GLfloat *)VB->NormalPtr->data;
    GLchan (*CMcolor)[4];
    GLuint CMstride;
    GLuint *flags = VB->Flag;
-   GLuint  *indexResult[2];
+   GLuint *indexResult[2];
    struct gl_material (*new_material)[2] = VB->Material;
    GLuint *new_material_mask = VB->MaterialMask;
    GLuint nr = VB->Count;
@@ -790,7 +790,8 @@ static void TAG(light_ci)( GLcontext *ctx,
       return;
 
    indexResult[0] = VB->IndexPtr[0]->data;
-   indexResult[1] = VB->IndexPtr[1]->data;
+   if (IDX & LIGHT_TWOSIDE)
+      indexResult[1] = VB->IndexPtr[1]->data;
 
    if (IDX & LIGHT_COLORMATERIAL) {
       CMcolor = VB->ColorPtr[0]->data;
@@ -852,7 +853,7 @@ static void TAG(light_ci)( GLcontext *ctx,
 	    /* spotlight attenuation */
 	    if (light->_Flags & LIGHT_SPOT) {
 	       GLfloat PV_dot_dir = - DOT3(VP, light->_NormDirection);
-	       if (PV_dot_dir<light->_CosCutoff) {
+	       if (PV_dot_dir < light->_CosCutoff) {
 		  continue; /* this light makes no contribution */
 	       }
 	       else {
@@ -901,9 +902,7 @@ static void TAG(light_ci)( GLcontext *ctx,
 	 }
 
 	 n_dot_h = correction * DOT3(normal, h);
-
-	 if (n_dot_h > 0.0F) 
-	 {
+	 if (n_dot_h > 0.0F) {
 	    GLfloat spec_coef;
 	    struct gl_shine_tab *tab = ctx->_ShineTable[side];
 	    GET_SHINE_TAB_ENTRY( tab, n_dot_h, spec_coef);
