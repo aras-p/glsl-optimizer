@@ -208,23 +208,23 @@ INCLUDE_DIRS = \
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 
-X86/x86.o: X86/x86.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X86/common_x86.o: X86/common_x86.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X86/common_x86_asm.o: X86/common_x86_asm.S X86/matypes.h
-X86/3dnow.o: X86/3dnow.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X86/sse.o: X86/sse.c
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
-X86/matypes.h: mtypes.h tnl/t_context.h X86/gen_matypes.c
-	$(CC) -I. -I$(INCDIR) $(CFLAGS) X86/gen_matypes.c -o X86/gen_matypes
-	./X86/gen_matypes > X86/matypes.h
-	rm -f X86/gen_matypes X86/*.o
+x86/x86.o: x86/x86.c
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+x86/common_x86.o: x86/common_x86.c
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+x86/common_x86_asm.o: x86/common_x86_asm.S x86/matypes.h
+x86/3dnow.o: x86/3dnow.c
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+x86/sse.o: x86/sse.c
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+x86/matypes.h: main/mtypes.h tnl/t_context.h x86/gen_matypes.c
+	$(CC) $(INCLUDE_DIRS) $(CFLAGS) x86/gen_matypes.c -o x86/gen_matypes
+	./x86/gen_matypes > x86/matypes.h
+	rm -f x86/gen_matypes x86/*.o
 
-# We have X86/matypes.h depend on X86/matypes.h so that if ASM_SOURCES
+# We have x86/matypes.h depend on x86/matypes.h so that if ASM_SOURCES
 # is empty we don't get an invalid Makefile.
-$(ASM_SOURCES) X86/matypes.h: X86/matypes.h
+$(ASM_SOURCES) x86/matypes.h: x86/matypes.h
 
 
 ##### TARGETS #####
