@@ -25,6 +25,6 @@ GLUT_LIB_DEPS = -L$(LIB_DIR) -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -
 APP_LIB_DEPS = -L$(LIB_DIR) -lglut -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
 MKLIB_OPTIONS = -arch icc
 
-ASM_SOURCES = $(X86_SOURCES)" \
+ASM_SOURCES = $(X86_SOURCES) $(X86_API)
 
 

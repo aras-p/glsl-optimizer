@@ -152,7 +152,6 @@ ASM_C_SOURCES =	\
 
 X86_SOURCES =			\
 	x86/common_x86_asm.S	\
-	x86/glapi_x86.S		\
 	x86/x86_xform2.S	\
 	x86/x86_xform3.S	\
 	x86/x86_xform4.S	\
@@ -170,11 +169,16 @@ X86_SOURCES =			\
 	x86/sse_normal.S \
 	tnl/t_vtx_x86_gcc.S
 
+X86_API =			\
+	x86/glapi_x86.S
+
 SPARC_SOURCES =			\
 	sparc/clip.S		\
-	sparc/glapi_sparc.S	\
 	sparc/norm.S		\
 	sparc/xform.S
+
+SPARC_API =			\
+	sparc/glapi_sparc.S
 
 COMMON_DRIVER_SOURCES =		\
 	drivers/common/driverfuncs.c
