@@ -763,12 +763,65 @@ static r300TexObj default_tex_obj={
 
 	/* there is probably a system to these value, but, for now, 
 	   we just try by hand */
-static GLuint translate_texture_format(GLuint format)
+
+static int inline translate_src(int src)
 {
-	switch(format){
-	case 0x88047:
-	case 0x55047:
+	switch (src) {
+	case GL_TEXTURE:
+		return 1;
+		break;
+	case GL_CONSTANT:
+		return 2;
+		break;
+	case GL_PRIMARY_COLOR:
+		return 3;
+		break;
+	case GL_PREVIOUS:
+		return 4;
+		break;
+	case GL_ZERO:
+		return 5;
+		break;
+	case GL_ONE:
+		return 6;
+		break;
+	default:
+		return 0;
+	}
+}
+	   
+/* I think 357 and 457 are prime numbers.. wiggle them if you get coincidences */
+#define FORMAT_HASH(opRGB, srcRGB, modeRGB, opA, srcA, modeA, format)	( \
+	(\
+	((opRGB)<<30) | ((opA)<<28) | \
+	((srcRGB)<< 25) | ((srcA)<<22) | \
+	((modeRGB)) \
+	) \
+	^ ((modeA)*357) \
+	^ (((format)) *457) \
+	)
+	   
+static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint format)
+{
+	const struct gl_texture_unit *texUnit= &ctx->Texture.Unit[tex_unit];
+	int i=0; /* number of alpha args .. */
+	switch(FORMAT_HASH(							
+		texUnit->_CurrentCombine->OperandRGB[i] -GL_SRC_COLOR,
+		translate_src(texUnit->_CurrentCombine->SourceRGB[i]),
+		texUnit->_CurrentCombine->ModeRGB,
+		texUnit->_CurrentCombine->OperandA[i] -GL_SRC_ALPHA,
+		translate_src(texUnit->_CurrentCombine->SourceA[i]),
+		texUnit->_CurrentCombine->ModeA,
+		format
+		)){
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00088047):
+		return 0x1a0c;
+	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00088047):
 		return 0x53a0c;
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00077047):
+		return 0x4ba0c;
+	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00055047):
+		return 0x53a0c;	
 	default:
 		{
 		static int warn_once=1;
@@ -789,7 +842,8 @@ void r300_setup_textures(GLcontext *ctx)
 	struct r300_tex_obj *t;
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int max_texture_unit=-1; /* -1 translates into no setup costs for fields */
-	
+	struct gl_texture_unit *texUnit;
+
 	R300_STATECHANGE(r300, txe);
 	R300_STATECHANGE(r300, tex.filter);
 	R300_STATECHANGE(r300, tex.unknown1);
@@ -838,7 +892,7 @@ void r300_setup_textures(GLcontext *ctx)
 			/* We don't know how to set this yet */
 			//value from r300_lib.c for RGB24
 			//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x88a0c; 
-			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=translate_texture_format(t->format);
+			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=translate_texture_format(ctx, i, t->format);
 			/* Use the code below to quickly find matching texture
 			   formats. Requires an app that displays the same texture
 			   repeatedly  */
@@ -850,13 +904,22 @@ void r300_setup_textures(GLcontext *ctx)
 					if(k>200){
 						k=0;
 						fmt++;
-						fprintf(stderr, "Want to set format %08x\n", t->format);
+						texUnit = &ctx->Texture.Unit[i];
+						fprintf(stderr, "Want to set FORMAT_HASH(%d, %d, 0x%04x, %d, %d, 0x%04x, 0x%08x)\n",
+							texUnit->_CurrentCombine->OperandRGB[0] -GL_SRC_COLOR,
+							translate_src(texUnit->_CurrentCombine->SourceRGB[0]),
+							texUnit->_CurrentCombine->ModeRGB,
+							texUnit->_CurrentCombine->OperandA[0] -GL_SRC_ALPHA,
+							translate_src(texUnit->_CurrentCombine->SourceA[0]),
+							texUnit->_CurrentCombine->ModeA,
+							t->format
+							);
 						if(fmt>0xff){
 							//exit(-1);
 							fmt=0;
 							}
 						//sleep(1);
-						fprintf(stderr, "Instead trying format %08x\n", 
+						fprintf(stderr, "Now trying format %08x\n", 
 							0x00a0c | (fmt<<12));
 						}
 					r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x00a0c | (fmt<<12);
