@@ -1,4 +1,4 @@
-/* $Id: debug.h,v 1.4 2000/11/23 02:50:57 jtaylor Exp $
+/* $Id: debug.h,v 1.5 2003/09/22 15:18:51 brianp Exp $
 ******************************************************************************
 
    GGIMesa debugging macros
@@ -68,23 +68,23 @@ __END_DECLS
 #ifdef __GNUC__
 
 #ifdef DEBUG
-#define GGIMESADPRINT(form,args...)	   if (_ggimesaDebugState) { ggDPrintf(_ggimesaDebugSync, "GGIMesa",form, ##args); }
-#define GGIMESADPRINT_CORE(form,args...)   if (_ggimesaDebugState & GGIMESADEBUG_CORE) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",form, ##args); }
-#define GGIMESADPRINT_MODE(form,args...)   if (_ggimesaDebugState & GGIMESADEBUG_MODE) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",form, ##args); }
-#define GGIMESADPRINT_COLOR(form,args...)  if (_ggimesaDebugState & GGIMESADEBUG_COLOR) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",form, ##args); }
-#define GGIMESADPRINT_DRAW(form,args...)   if (_ggimesaDebugState & GGIMESADEBUG_DRAW) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",form, ##args); }
-#define GGIMESADPRINT_MISC(form,args...)   if (_ggimesaDebugState & GGIMESADEBUG_MISC) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",form, ##args); }
-#define GGIMESADPRINT_LIBS(form,args...)   if (_ggimesaDebugState & GGIMESADEBUG_LIBS) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",form, ##args); }
-#define GGIMESADPRINT_EVENTS(form,args...) if (_ggimesaDebugState & GGIMESADEBUG_EVENTS) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",form, ##args); }
+#define GGIMESADPRINT(args...)		if (_ggimesaDebugState) { ggDPrintf(_ggimesaDebugSync, "GGIMesa",args); }
+#define GGIMESADPRINT_CORE(args...)	if (_ggimesaDebugState & GGIMESADEBUG_CORE) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",args); }
+#define GGIMESADPRINT_MODE(args...)	if (_ggimesaDebugState & GGIMESADEBUG_MODE) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",args); }
+#define GGIMESADPRINT_COLOR(args...)	if (_ggimesaDebugState & GGIMESADEBUG_COLOR) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",args); }
+#define GGIMESADPRINT_DRAW(args...)	if (_ggimesaDebugState & GGIMESADEBUG_DRAW) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",args); }
+#define GGIMESADPRINT_MISC(args...)	if (_ggimesaDebugState & GGIMESADEBUG_MISC) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",args); }
+#define GGIMESADPRINT_LIBS(args...)	if (_ggimesaDebugState & GGIMESADEBUG_LIBS) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",args); }
+#define GGIMESADPRINT_EVENTS(args...)	if (_ggimesaDebugState & GGIMESADEBUG_EVENTS) { ggDPrintf(_ggimesaDebugSync,"GGIMesa",args); }
 #else /* DEBUG */
-#define GGIMESADPRINT(form,args...)		do{}while(0)
-#define GGIMESADPRINT_CORE(form,args...)	do{}while(0)
-#define GGIMESADPRINT_MODE(form,args...)	do{}while(0)
-#define GGIMESADPRINT_COLOR(form,args...)	do{}while(0)
-#define GGIMESADPRINT_DRAW(form,args...)	do{}while(0)
-#define GGIMESADPRINT_MISC(form,args...)	do{}while(0)
-#define GGIMESADPRINT_LIBS(form,args...)	do{}while(0)
-#define GGIMESADPRINT_EVENTS(form,args...)	do{}while(0)
+#define GGIMESADPRINT(args...)		do{}while(0)
+#define GGIMESADPRINT_CORE(args...)	do{}while(0)
+#define GGIMESADPRINT_MODE(args...)	do{}while(0)
+#define GGIMESADPRINT_COLOR(args...)	do{}while(0)
+#define GGIMESADPRINT_DRAW(args...)	do{}while(0)
+#define GGIMESADPRINT_MISC(args...)	do{}while(0)
+#define GGIMESADPRINT_LIBS(args...)	do{}while(0)
+#define GGIMESADPRINT_EVENTS(args...)	do{}while(0)
 #endif /* DEBUG */
 
 #else /* __GNUC__ */

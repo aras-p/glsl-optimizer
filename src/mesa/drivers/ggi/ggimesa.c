@@ -39,6 +39,7 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "array_cache/acache.h"
+#include "teximage.h"
 #include "texformat.h"
 #include "texstore.h"
 
@@ -286,7 +287,7 @@ static void gl_ggiSetupPointers(GLcontext *ctx)
 static void get_mode_info(ggi_visual_t vis, int *r, int *g, int *b,
 			  GLboolean *rgb, GLboolean *db, int *ci)
 {
-	int i;
+	unsigned int i;
 	
 	*r = 0;
 	*g = 0;
@@ -392,7 +393,6 @@ int ggiMesaAttach(ggi_visual_t vis)
 		int r, g, b, ci;
 		GLboolean rgb, db;
 		GLvisual *gl_visual;
-		GLframebuffer *gl_fb;
 		
 		/* We are creating the primary instance */
 		memset(LIBGGI_MESAEXT(vis), 0, sizeof(struct ggi_mesa_ext));
@@ -435,7 +435,7 @@ int ggiMesaExtendVisual(ggi_visual_t vis, GLboolean alpha_flag,
 	get_mode_info(vis, &r, &g, &b, &rgb, &db, &ci);
        
 	/* Initialize the visual with the provided information */	
-	_mesa_initialize_visual(&(LIBGGI_MESAEXT(vis)->mesa_visual.gl_visual),
+	_mesa_initialize_visual(gl_vis,
 				rgb, db, stereo_flag,
 				r, g, b, 0 /* FIXME */, ci,
 				depth_size, stencil_size,
@@ -456,8 +456,6 @@ ggi_mesa_context_t ggiMesaCreateContext(ggi_visual_t vis)
 {
 	ggi_mesa_context_t ctx;
 	int err;
-	ggi_color pal[256];
-	int i;
 
 	GGIMESADPRINT_CORE("ggiMesaCreateContext() called\n");
 	

@@ -51,20 +51,17 @@ void GGIwrite_ci32_span(const GLcontext *ctx, GLuint n, GLint x, GLint y,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	FB_TYPE *fb;
-	fb = (FB_TYPE *)(LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
+	fb = (FB_TYPE *)((char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
 			 FLIP(y)*LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual)) + x;
 
-	if (mask)
-	{
+	if (mask) {
 		while (n--) {
 			if (*mask++)
 				*fb = *ci;
 			fb++;
 			ci++;
 		}
-	}
-	else
-	{
+	} else {
 		while (n--) *fb++ = *ci++;
 	}
 }
@@ -74,20 +71,17 @@ void GGIwrite_ci8_span(const GLcontext *ctx, GLuint n, GLint x, GLint y,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	FB_TYPE *fb;
-	fb = (FB_TYPE *)(LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
+	fb = (FB_TYPE *)((char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
 			 FLIP(y)*LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual)) + x;
 
-	if (mask)
-	{
+	if (mask) {
 		while (n--) {
 			if (*mask++)
 				*fb = *ci;
 			fb++;
 			ci++;
 		}	
-	}
-	else
-	{
+	} else {
 		while (n--) *fb++ = *ci++;
 	}
 }
@@ -98,20 +92,17 @@ void GGIwrite_rgba_span(const GLcontext *ctx, GLuint n, GLint x, GLint y,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	FB_TYPE *fb;
-	fb = (FB_TYPE *)(LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
+	fb = (FB_TYPE *)((char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
 			 FLIP(y)*LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual)) + x;
 
-	if (mask)
-	{
+	if (mask) {
 		while (n--) {
 			if (*mask++)
 				*fb = PACK(rgba[0]);
 			fb++;
 			rgba++;
 		}
-	}
-	else
-	{
+	} else {
 		while (n--) {
 			*fb++ = PACK(rgba[0]);
 			rgba++;
@@ -124,20 +115,17 @@ void GGIwrite_rgb_span(const GLcontext *ctx, GLuint n, GLint x, GLint y,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	FB_TYPE *fb;
-	fb = (FB_TYPE *)(LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
+	fb = (FB_TYPE *)((char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
 			 FLIP(y)*LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual)) + x;
 
-	if (mask)
-	{
+	if (mask) {
 		while (n--) {
 			if (*mask++)
 				*fb = PACK(rgba[0]);
 			fb++;
 			rgba++;
 		}
-	}
-	else
-	{
+	} else {
 		while (n--) {
 			*fb++ = PACK(rgba[0]);
 			rgba++;
@@ -151,19 +139,18 @@ void GGIwrite_mono_rgba_span(const GLcontext *ctx, GLuint n, GLint x, GLint y,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	FB_TYPE *fb;
-	fb = (FB_TYPE *)(LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
+	fb = (FB_TYPE *)((char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
 			 FLIP(y)*LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual)) + x;
 
-	if (mask){
+	if (mask) {
 		while (n--){
 			if (*mask++)
 				*fb = PACK(color);
 			++fb;
 		}
-	}
-	else {
+	} else {
 		while (n--) 
-		        *fb++ = PACK(color);
+			*fb++ = PACK(color);
 
 	        /* Alternatively we could write a potentialy faster HLine
 		ggiSetGCForeground(ggi_ctx->ggi_visual, color);
@@ -177,7 +164,7 @@ void GGIwrite_mono_ci_span(const GLcontext *ctx, GLuint n, GLint x, GLint y,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	FB_TYPE *fb;
-	fb = (FB_TYPE *)(LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
+	fb = (FB_TYPE *)((char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
 			 FLIP(y)*LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual)) + x;
 
 	if (mask){
@@ -186,8 +173,7 @@ void GGIwrite_mono_ci_span(const GLcontext *ctx, GLuint n, GLint x, GLint y,
 				*fb = ci;
 			++fb;
 		}
-	}
-	else {
+	} else {
 		while (n--) 
 		        *fb++ = ci;
 
@@ -209,7 +195,7 @@ void GGIread_ci32_span(const GLcontext *ctx,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	FB_TYPE *fb;
-	fb = (FB_TYPE *)(LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
+	fb = (FB_TYPE *)((char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
 			 FLIP(y)*LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual)) + x;
 
 	while (n--)
@@ -222,11 +208,10 @@ void GGIread_rgba_span(const GLcontext *ctx,
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	FB_TYPE color;
 	FB_TYPE *fb;
-	fb = (FB_TYPE *)(LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
+	fb = (FB_TYPE *)((char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual) +
 			 FLIP(y)*LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual)) + x;
 	
-	while (n--)
-	{
+	while (n--) {
 		color = *fb++;
 		rgba[0][RCOMP] = (GLubyte) (color>>(G+B))<<RS;  
 		rgba[0][GCOMP] = (GLubyte) ((color>>B)& ((1<<G)-1))<<GS;  
@@ -246,7 +231,7 @@ void GGIwrite_ci32_pixels(const GLcontext *ctx,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	int stride = LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual);
-	void *fb = LIBGGI_CURWRITE(ggi_ctx->ggi_visual);
+	char *fb = (char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual);
 
 	while (n--) {
 		if (*mask++){
@@ -265,7 +250,7 @@ void GGIwrite_mono_ci_pixels(const GLcontext *ctx,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	int stride = LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual);
-	void *fb = LIBGGI_CURWRITE(ggi_ctx->ggi_visual);
+	char *fb = (char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual);
 
 	while (n--) {
 		if (*mask++){
@@ -283,7 +268,7 @@ void GGIwrite_rgba_pixels(const GLcontext *ctx,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	int stride = LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual);
-	void *fb = LIBGGI_CURWRITE(ggi_ctx->ggi_visual);
+	char *fb = (char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual);
 
 	while (n--) {
 		if (*mask++){
@@ -302,7 +287,7 @@ void GGIwrite_mono_rgba_pixels(const GLcontext *ctx,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	int stride = LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual);
-	void *fb = LIBGGI_CURWRITE(ggi_ctx->ggi_visual);
+	char *fb = (char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual);
 
 	while (n--) {
 		if (*mask++){
@@ -325,7 +310,7 @@ void GGIread_ci32_pixels(const GLcontext *ctx,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	int stride = LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual);
-	void *fb = LIBGGI_CURWRITE(ggi_ctx->ggi_visual);
+	char *fb = (char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual);
 
 	while (n--) {
 		if (*mask++){
@@ -344,13 +329,11 @@ void GGIread_rgba_pixels(const GLcontext *ctx,
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	int stride = LIBGGI_FB_W_STRIDE(ggi_ctx->ggi_visual);
-	void *fb = LIBGGI_CURWRITE(ggi_ctx->ggi_visual);
+	char *fb = (char *)LIBGGI_CURWRITE(ggi_ctx->ggi_visual);
 	FB_TYPE color;
 
-	while (n--)
-	{
-		if (*mask++)
-		{	
+	while (n--) {
+		if (*mask++) {	
 			FB_TYPE *src = (FB_TYPE*)(fb + FLIP(*y)*stride) + *x;
 			color = *src;
 
