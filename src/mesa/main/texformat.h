@@ -40,6 +40,9 @@
  * Mesa internal texture image types.
  * 
  * All texture images must be stored in one of these formats.
+ *
+ * NOTE: when you add a new format, be sure to update the do_row()
+ * function in texstore.c used for auto mipmap generation.
  */
 enum _format {
    /** 
