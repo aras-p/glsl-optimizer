@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.36 2000/10/29 18:12:15 brianp Exp $ */
+/* $Id: state.c,v 1.37 2000/10/30 13:32:01 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -762,23 +762,36 @@ static void update_rasterflags( GLcontext *ctx )
 void gl_print_state( const char *msg, GLuint state )
 {
    fprintf(stderr,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   msg,
 	   state,
-	   (state & NEW_LIGHTING)         ? "lighting, " : "",
-	   (state & NEW_RASTER_OPS)       ? "raster-ops, " : "",
-	   (state & NEW_TEXTURING)        ? "texturing, " : "",
-	   (state & NEW_POLYGON)          ? "polygon, " : "",
-	   (state & NEW_MODELVIEW)        ? "modelview, " : "",
-	   (state & NEW_PROJECTION)       ? "projection, " : "",
-	   (state & NEW_TEXTURE_MATRIX)   ? "texture-matrix, " : "",
-	   (state & NEW_USER_CLIP)        ? "user-clip, " : "",
-	   (state & NEW_TEXTURE_ENV)      ? "texture-env, " : "",
-	   (state & NEW_CLIENT_STATE)     ? "client-state, " : "",
-	   (state & NEW_FOG)              ? "fog, " : "",
-	   (state & NEW_NORMAL_TRANSFORM) ? "normal-transform, " : "",
-	   (state & NEW_VIEWPORT)         ? "viewport, " : "",
-	   (state & NEW_TEXTURE_ENABLE)   ? "texture-enable, " : "");
+	   (state & _NEW_MODELVIEW)       ? "ctx->ModelView, " : "",
+	   (state & _NEW_PROJECTION)      ? "ctx->Projection, " : "",
+	   (state & _NEW_TEXTURE_MATRIX)  ? "ctx->TextureMatrix, " : "",
+	   (state & _NEW_COLOR_MATRIX)    ? "ctx->ColorMatrix, " : "",
+	   (state & _NEW_ACCUM)           ? "ctx->Accum, " : "",
+	   (state & _NEW_COLOR)           ? "ctx->Color, " : "",
+	   (state & _NEW_DEPTH)           ? "ctx->Depth, " : "",
+	   (state & _NEW_EVAL)            ? "ctx->Eval/EvalMap, " : "",
+	   (state & _NEW_FOG)             ? "ctx->Fog, " : "",
+	   (state & _NEW_HINT)            ? "ctx->Hint, " : "",
+	   (state & _NEW_IMAGING)         ? "ctx->Histogram/MinMax/Convolve/Seperable, ": "",
+	   (state & _NEW_LIGHT)           ? "ctx->Light, " : "",
+	   (state & _NEW_LINE)            ? "ctx->Line, " : "",
+	   (state & _NEW_FEEDBACK_SELECT) ? "ctx->Feedback/Select, " : "",
+	   (state & _NEW_PIXEL)           ? "ctx->Pixel, " : "",
+	   (state & _NEW_POINT)           ? "ctx->Point, " : "",
+	   (state & _NEW_POLYGON)         ? "ctx->Polygon, " : "",
+	   (state & _NEW_POLYGONSTIPPLE)  ? "ctx->PolygonStipple, " : "",
+	   (state & _NEW_SCISSOR)         ? "ctx->Scissor, " : "",
+	   (state & _NEW_TEXTURE)         ? "ctx->Texture, " : "",
+	   (state & _NEW_TRANSFORM)       ? "ctx->Transform, " : "",
+	   (state & _NEW_VIEWPORT)        ? "ctx->Viewport, " : "",
+	   (state & _NEW_PACKUNPACK)      ? "ctx->Pack/Unpack, " : "",
+	   (state & _NEW_ARRAY)           ? "ctx->Array, " : "",
+	   (state & _NEW_COLORTABLE)      ? "ctx->{*}ColorTable, " : "",
+	   (state & _NEW_RENDERMODE)      ? "ctx->RenderMode, " : "",
+	   (state & _NEW_BUFFERS)         ? "ctx->Visual, ctx->DrawBuffer,, " : "");
 }
 
 
@@ -814,30 +827,10 @@ void gl_update_state( GLcontext *ctx )
    if (MESA_VERBOSE & VERBOSE_STATE)
       gl_print_state("", ctx->NewState);
 
-   if (ctx->NewState & NEW_CLIENT_STATE)
+   if (ctx->NewState & _NEW_ARRAY)
       gl_update_client_state( ctx );
 
-   if ((ctx->NewState & NEW_TEXTURE_ENABLE) &&
-       (ctx->Enabled & ENABLE_TEX_ANY) != ctx->Texture.ReallyEnabled)
-      ctx->NewState |= NEW_TEXTURING | NEW_RASTER_OPS;
-
-   if (ctx->NewState & NEW_TEXTURE_ENV) {
-      if (ctx->Texture.Unit[0].EnvMode == ctx->Texture.Unit[0].LastEnvMode &&
-	  ctx->Texture.Unit[1].EnvMode == ctx->Texture.Unit[1].LastEnvMode
-#if MAX_TEXTURE_UNITS > 2
-	  && ctx->Texture.Unit[2].EnvMode == ctx->Texture.Unit[2].LastEnvMode
-#endif
-         ) {
-	 ctx->NewState &= ~NEW_TEXTURE_ENV;
-      }
-      ctx->Texture.Unit[0].LastEnvMode = ctx->Texture.Unit[0].EnvMode;
-      ctx->Texture.Unit[1].LastEnvMode = ctx->Texture.Unit[1].EnvMode;
-#if MAX_TEXTURE_UNITS > 2
-      ctx->Texture.Unit[2].LastEnvMode = ctx->Texture.Unit[2].EnvMode;
-#endif
-   }
-
-   if (ctx->NewState & NEW_TEXTURE_MATRIX) {
+   if (ctx->NewState & _NEW_TEXTURE_MATRIX) {
       ctx->Enabled &= ~(ENABLE_TEXMAT0 | ENABLE_TEXMAT1 | ENABLE_TEXMAT2);
 
       for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
@@ -852,7 +845,7 @@ void gl_update_state( GLcontext *ctx )
       }
    }
 
-   if (ctx->NewState & (NEW_TEXTURING | NEW_TEXTURE_ENABLE)) {
+   if (ctx->NewState & _NEW_TEXTURE) {
       ctx->Texture.MultiTextureEnabled = GL_FALSE;
       ctx->Texture.NeedNormals = GL_FALSE;
       gl_update_dirty_texobjs(ctx);
@@ -892,9 +885,10 @@ void gl_update_state( GLcontext *ctx )
    }
 
 
-   if (ctx->NewState & NEW_RASTER_OPS) {
+   if (ctx->NewState & _SWRAST_NEW_RASTERMASK) 
       update_rasterflags(ctx);
-
+   
+   if (ctx->NewState & (_NEW_BUFFERS|_NEW_SCISSOR)) {
       /* update scissor region */
       ctx->DrawBuffer->Xmin = 0;
       ctx->DrawBuffer->Ymin = 0;
@@ -916,7 +910,7 @@ void gl_update_state( GLcontext *ctx )
       }
    }
 
-   if (ctx->NewState & NEW_LIGHTING) {
+   if (ctx->NewState & _NEW_LIGHT) {
       ctx->TriangleCaps &= ~(DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
       if (ctx->Light.Enabled) {
          if (ctx->Light.Model.TwoSide)
@@ -925,11 +919,11 @@ void gl_update_state( GLcontext *ctx )
       }
    }
 
-   if (ctx->NewState & (NEW_POLYGON | NEW_LIGHTING)) {
+   if (ctx->NewState & (_NEW_POLYGON | _NEW_LIGHT)) {
 
       ctx->TriangleCaps &= ~DD_TRI_CULL_FRONT_BACK;
 
-      if (ctx->NewState & NEW_POLYGON) {
+      if (ctx->NewState & _NEW_POLYGON) {
 	 /* Setup CullBits bitmask */
 	 if (ctx->Polygon.CullFlag) {
 	    ctx->backface_sign = 1;
@@ -967,16 +961,13 @@ void gl_update_state( GLcontext *ctx )
       }
    }
 
-   if (ctx->NewState & ~(NEW_CLIENT_STATE | NEW_USER_CLIP | NEW_POLYGON))
+   if (ctx->NewState & (_NEW_LIGHT|
+			_NEW_TEXTURE|
+			_NEW_FOG|
+			_NEW_POLYGON))
       gl_update_clipmask(ctx);
 
-   if (ctx->NewState & (NEW_LIGHTING|
-			NEW_RASTER_OPS|
-			NEW_TEXTURING|
-			NEW_TEXTURE_ENABLE|
-			NEW_TEXTURE_ENV|
-			NEW_POLYGON|
-			NEW_USER_CLIP))
+   if (ctx->NewState & ctx->Driver.UpdateStateNotify)
    {
       ctx->IndirectTriangles = ctx->TriangleCaps & ~ctx->Driver.TriangleCaps;
       ctx->IndirectTriangles |= DD_SW_RASTERIZE;
@@ -1027,13 +1018,13 @@ void gl_update_state( GLcontext *ctx )
 
    /* Should only be calc'd when !need_eye_coords and not culling.
     */
-   if (ctx->NewState & (NEW_MODELVIEW|NEW_PROJECTION)) {
-      if (ctx->NewState & NEW_MODELVIEW) {
+   if (ctx->NewState & (_NEW_MODELVIEW|_NEW_PROJECTION)) {
+      if (ctx->NewState & _NEW_MODELVIEW) {
 	 gl_matrix_analyze( &ctx->ModelView );
 	 ctx->ProjectionMatrix.flags &= ~MAT_DIRTY_DEPENDENTS;
       }
 
-      if (ctx->NewState & NEW_PROJECTION) {
+      if (ctx->NewState & _NEW_PROJECTION) {
 	 gl_matrix_analyze( &ctx->ProjectionMatrix );
 	 ctx->ProjectionMatrix.flags &= ~MAT_DIRTY_DEPENDENTS;
 
@@ -1043,10 +1034,9 @@ void gl_update_state( GLcontext *ctx )
       }
 
       gl_calculate_model_project_matrix( ctx );
-      ctx->ModelProjectWinMatrixUptodate = 0;
    }
 
-   if (ctx->NewState & NEW_COLOR_MATRIX) {
+   if (ctx->NewState & _NEW_COLOR_MATRIX) {
       gl_matrix_analyze( &ctx->ColorMatrix );
    }
 
@@ -1055,13 +1045,15 @@ void gl_update_state( GLcontext *ctx )
     */
    if ((ctx->Enabled & (ENABLE_POINT_ATTEN | ENABLE_LIGHT | ENABLE_FOG |
 			ENABLE_TEXGEN0 | ENABLE_TEXGEN1 | ENABLE_TEXGEN2)) &&
-       (ctx->NewState & (NEW_LIGHTING | 
-                         NEW_FOG |
-			 NEW_MODELVIEW | 
-			 NEW_PROJECTION |
-			 NEW_TEXTURING |
-			 NEW_RASTER_OPS |
-			 NEW_USER_CLIP)))
+       (ctx->NewState & (_NEW_LIGHT | 
+			 _NEW_TEXTURE |
+                         _NEW_FOG |
+			 _NEW_TRANSFORM | 
+			 _NEW_MODELVIEW | 
+			 _NEW_PROJECTION |
+			 _NEW_POINT |
+			 _NEW_RENDERMODE |
+			 _NEW_TRANSFORM)))
    {
       GLboolean oldcoord, oldnorm;
 
@@ -1069,8 +1061,7 @@ void gl_update_state( GLcontext *ctx )
       oldnorm = ctx->NeedEyeNormals;
 
       ctx->NeedNormals = (ctx->Light.Enabled || ctx->Texture.NeedNormals);
-      ctx->NeedEyeCoords = ((ctx->Fog.Enabled && ctx->Hint.Fog != GL_NICEST) ||
-			    ctx->Point.Attenuated);
+      ctx->NeedEyeCoords = (ctx->Fog.Enabled || ctx->Point.Attenuated);
       ctx->NeedEyeNormals = GL_FALSE;
 
       if (ctx->Light.Enabled) {
@@ -1098,8 +1089,8 @@ void gl_update_state( GLcontext *ctx )
       if (ctx->Light.Enabled) {
 	 gl_update_lighting_function(ctx);
 
-	 if ( (ctx->NewState & NEW_LIGHTING) ||
-	      ((ctx->NewState & (NEW_MODELVIEW| NEW_PROJECTION)) &&
+	 if ( (ctx->NewState & _NEW_LIGHT) ||
+	      ((ctx->NewState & (_NEW_MODELVIEW|_NEW_PROJECTION)) &&
 	       !ctx->NeedEyeCoords) ||
 	      oldcoord != ctx->NeedEyeCoords ||
 	      oldnorm != ctx->NeedEyeNormals) {

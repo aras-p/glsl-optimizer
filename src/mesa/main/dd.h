@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.35 2000/10/29 18:12:14 brianp Exp $ */
+/* $Id: dd.h,v 1.36 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -141,6 +141,12 @@ struct dd_function_table {
     * NULL can be returned.
     */
 
+   GLuint UpdateStateNotify;
+   /*
+    * Tell mesa exactly when to call UpdateState.  This is a bitwise
+    * or of the _NEW_* flags defined in types.h. 
+    */
+   
    void (*UpdateState)( GLcontext *ctx );
    /*
     * UpdateState() is called whenver Mesa thinks the device driver should

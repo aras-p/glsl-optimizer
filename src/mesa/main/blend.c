@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.21 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: blend.c,v 1.22 2000/10/30 13:31:59 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,7 +55,7 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
    switch (sfactor) {
       case GL_SRC_COLOR:
       case GL_ONE_MINUS_SRC_COLOR:
-         if (!ctx->Extensions.HaveBlendSquare) {
+         if (!ctx->Extensions.NV_blend_square) {
             gl_error( ctx, GL_INVALID_ENUM, "glBlendFunc(sfactor)" );
             return;
          }
@@ -83,7 +83,7 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
    switch (dfactor) {
       case GL_DST_COLOR:
       case GL_ONE_MINUS_DST_COLOR:
-         if (!ctx->Extensions.HaveBlendSquare) {
+         if (!ctx->Extensions.NV_blend_square) {
             gl_error( ctx, GL_INVALID_ENUM, "glBlendFunc(dfactor)" );
             return;
          }
@@ -112,7 +112,7 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
    }
 
    ctx->Color.BlendFunc = NULL;
-   ctx->NewState |= NEW_RASTER_OPS;
+   ctx->NewState |= _NEW_COLOR;
 }
 
 
@@ -134,7 +134,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
    switch (sfactorRGB) {
       case GL_SRC_COLOR:
       case GL_ONE_MINUS_SRC_COLOR:
-         if (!ctx->Extensions.HaveBlendSquare) {
+         if (!ctx->Extensions.NV_blend_square) {
             gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(sfactorRGB)");
             return;
          }
@@ -162,7 +162,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
    switch (dfactorRGB) {
       case GL_DST_COLOR:
       case GL_ONE_MINUS_DST_COLOR:
-         if (!ctx->Extensions.HaveBlendSquare) {
+         if (!ctx->Extensions.NV_blend_square) {
             gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(dfactorRGB)");
             return;
          }
@@ -189,7 +189,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
    switch (sfactorA) {
       case GL_SRC_COLOR:
       case GL_ONE_MINUS_SRC_COLOR:
-         if (!ctx->Extensions.HaveBlendSquare) {
+         if (!ctx->Extensions.NV_blend_square) {
             gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(sfactorA)");
             return;
          }
@@ -217,7 +217,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
    switch (dfactorA) {
       case GL_DST_COLOR:
       case GL_ONE_MINUS_DST_COLOR:
-         if (!ctx->Extensions.HaveBlendSquare) {
+         if (!ctx->Extensions.NV_blend_square) {
             gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(dfactorA)");
             return;
          }
@@ -242,7 +242,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
    }
 
    ctx->Color.BlendFunc = NULL;
-   ctx->NewState |= NEW_RASTER_OPS;
+   ctx->NewState |= _NEW_COLOR;
 
    if (ctx->Driver.BlendFuncSeparate) {
       (*ctx->Driver.BlendFuncSeparate)( ctx, sfactorRGB, dfactorRGB,
@@ -267,7 +267,7 @@ _mesa_BlendEquation( GLenum mode )
       case GL_MIN_EXT:
       case GL_MAX_EXT:
       case GL_FUNC_ADD_EXT:
-         if (ctx->Extensions.HaveBlendMinmax) {
+         if (ctx->Extensions.EXT_blend_minmax) {
             ctx->Color.BlendEquation = mode;
          }
          else {
@@ -279,7 +279,7 @@ _mesa_BlendEquation( GLenum mode )
          break;
       case GL_FUNC_SUBTRACT_EXT:
       case GL_FUNC_REVERSE_SUBTRACT_EXT:
-         if (ctx->Extensions.HaveBlendSubtract) {
+         if (ctx->Extensions.EXT_blend_subtract) {
             ctx->Color.BlendEquation = mode;
          }
          else {
@@ -303,7 +303,7 @@ _mesa_BlendEquation( GLenum mode )
    }
 
    ctx->Color.BlendFunc = NULL;
-   ctx->NewState |= NEW_RASTER_OPS;
+   ctx->NewState |= _NEW_COLOR;
    
    if (ctx->Driver.BlendEquation)
       ctx->Driver.BlendEquation( ctx, mode );
@@ -319,6 +319,7 @@ _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
    ctx->Color.BlendColor[1] = CLAMP( green, 0.0F, 1.0F );
    ctx->Color.BlendColor[2] = CLAMP( blue,  0.0F, 1.0F );
    ctx->Color.BlendColor[3] = CLAMP( alpha, 0.0F, 1.0F );
+   ctx->NewState |= _NEW_COLOR;
 }
 
 #ifdef USE_MMX_ASM

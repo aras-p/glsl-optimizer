@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.18 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: lines.c,v 1.19 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,7 +57,9 @@ _mesa_LineWidth( GLfloat width )
       ctx->Line.Width = width;
       ctx->TriangleCaps &= ~DD_LINE_WIDTH;
       if (width != 1.0) ctx->TriangleCaps |= DD_LINE_WIDTH;
-      ctx->NewState |= NEW_RASTER_OPS;
+
+      ctx->NewState |= _NEW_LINE;
+
       if (ctx->Driver.LineWidth)
          (*ctx->Driver.LineWidth)(ctx, width);
    }
@@ -72,7 +74,8 @@ _mesa_LineStipple( GLint factor, GLushort pattern )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glLineStipple");
    ctx->Line.StippleFactor = CLAMP( factor, 1, 256 );
    ctx->Line.StipplePattern = pattern;
-   ctx->NewState |= NEW_RASTER_OPS;
+
+   ctx->NewState |= _NEW_LINE;
 
    if (ctx->Driver.LineStipple)
       ctx->Driver.LineStipple( ctx, factor, pattern );
@@ -1099,6 +1102,9 @@ _mesa_print_line_function(GLcontext *ctx)
 /*
  * Determine which line drawing function to use given the current
  * rendering context.
+ *
+ * Please update the summary flag _SWRAST_NEW_LINE if you add or remove
+ * tests to this code.
  */
 void gl_set_line_function( GLcontext *ctx )
 {
@@ -1136,7 +1142,8 @@ void gl_set_line_function( GLcontext *ctx )
       }
       else if (ctx->Texture.ReallyEnabled) {
          if (ctx->Texture.MultiTextureEnabled
-             || ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR) {
+             || ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR
+ 	     || ctx->Fog.ColorSumEnabled) {
             /* multi-texture and/or separate specular color */
             if (ctx->Light.ShadeModel==GL_SMOOTH)
                ctx->Driver.LineFunc = smooth_multitextured_line;

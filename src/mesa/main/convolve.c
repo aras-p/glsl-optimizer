@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.7 2000/10/28 20:41:13 brianp Exp $ */
+/* $Id: convolve.c,v 1.8 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -170,6 +170,8 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
          ctx->Convolution1D.Filter[i * 4 + 3] = a;
       }
    }
+
+   ctx->NewState |= _NEW_IMAGING;
 }
 
 
@@ -248,6 +250,8 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
          ctx->Convolution2D.Filter[i * 4 + 3] = a;
       }
    }
+
+   ctx->NewState |= _NEW_IMAGING;
 }
 
 
@@ -290,6 +294,8 @@ _mesa_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
          gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterf(pname)");
          return;
    }
+
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -345,6 +351,8 @@ _mesa_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
          gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterfv(pname)");
          return;
    }
+
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -387,6 +395,8 @@ _mesa_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
          gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteri(pname)");
          return;
    }
+
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -445,6 +455,8 @@ _mesa_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
          gl_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteriv(pname)");
          return;
    }
+
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -530,11 +542,13 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
    ctx->Unpack.SkipImages = 0;
    ctx->Unpack.SwapBytes = GL_FALSE;
    ctx->Unpack.LsbFirst = GL_FALSE;
+   ctx->NewState |= _NEW_PACKUNPACK;	
 
    _mesa_ConvolutionFilter2D(target, internalFormat, width, height,
                              GL_RGBA, GL_UNSIGNED_BYTE, rgba);
 
    ctx->Unpack = packSave;  /* restore pixel packing params */
+   ctx->NewState |= _NEW_PACKUNPACK;	
 }
 
 
@@ -860,6 +874,8 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
          ctx->Separable2D.Filter[i * 4 + 3 + colStart] = a;
       }
    }
+   
+   ctx->NewState |= _NEW_IMAGING;
 }
 
 

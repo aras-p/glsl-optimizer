@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.25 2000/10/28 20:41:14 brianp Exp $ */
+/* $Id: fog.c,v 1.26 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -142,7 +142,7 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
       (*ctx->Driver.Fogfv)( ctx, pname, params );
    }
 
-   ctx->NewState |= NEW_FOG;
+   ctx->NewState |= _NEW_FOG;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.17 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: points.c,v 1.18 2000/10/30 13:32:01 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,7 +60,7 @@ _mesa_PointSize( GLfloat size )
       ctx->TriangleCaps &= ~DD_POINT_SIZE;
       if (size != 1.0)
          ctx->TriangleCaps |= DD_POINT_SIZE;
-      ctx->NewState |= NEW_RASTER_OPS;
+      ctx->NewState |= _NEW_POINT;
    }
 }
 
@@ -91,7 +91,6 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
             if (tmp != ctx->Point.Attenuated) {
                ctx->Enabled ^= ENABLE_POINT_ATTEN;
                ctx->TriangleCaps ^= DD_POINT_ATTEN;
-               ctx->NewState |= NEW_RASTER_OPS;
             }
          }
          break;
@@ -121,7 +120,7 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
          return;
    }
 
-   ctx->NewState |= NEW_RASTER_OPS;
+   ctx->NewState |= _NEW_POINT;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.55 2000/10/29 18:23:16 brianp Exp $ */
+/* $Id: teximage.c,v 1.56 2000/10/30 13:32:01 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -561,10 +561,10 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-         return ctx->Extensions.HaveTextureCubeMap
+         return ctx->Extensions.ARB_texture_cube_map
                 ? texUnit->CurrentCubeMap : NULL;
       case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-         return ctx->Extensions.HaveTextureCubeMap
+         return ctx->Extensions.ARB_texture_cube_map
                 ? ctx->Texture.ProxyCubeMap : NULL;
       default:
          gl_problem(NULL, "bad target in _mesa_select_tex_object()");
@@ -596,37 +596,37 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
       case GL_PROXY_TEXTURE_3D:
          return ctx->Texture.Proxy3D->Image[level];
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             return texUnit->CurrentCubeMap->Image[level];
          else
             return NULL;
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             return texUnit->CurrentCubeMap->NegX[level];
          else
             return NULL;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             return texUnit->CurrentCubeMap->PosY[level];
          else
             return NULL;
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             return texUnit->CurrentCubeMap->NegY[level];
          else
             return NULL;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             return texUnit->CurrentCubeMap->PosZ[level];
          else
             return NULL;
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             return texUnit->CurrentCubeMap->NegZ[level];
          else
             return NULL;
       case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             return ctx->Texture.ProxyCubeMap->Image[level];
          else
             return NULL;
@@ -1062,7 +1062,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
    else if (dimensions == 2) {
       isProxy = (GLboolean) (target == GL_PROXY_TEXTURE_2D);
       if (target != GL_TEXTURE_2D && !isProxy &&
-          !(ctx->Extensions.HaveTextureCubeMap &&
+          !(ctx->Extensions.ARB_texture_cube_map &&
             target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
             target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)) {
           gl_error( ctx, GL_INVALID_ENUM, "glTexImage2D(target)" );
@@ -1200,7 +1200,7 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
       }
    }
    else if (dimensions == 2) {
-      if (ctx->Extensions.HaveTextureCubeMap) {
+      if (ctx->Extensions.ARB_texture_cube_map) {
          if ((target < GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB ||
               target > GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) &&
              target != GL_TEXTURE_2D) {
@@ -1315,7 +1315,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
       }
    }
    else if (dimensions == 2) {
-      if (ctx->Extensions.HaveTextureCubeMap) {
+      if (ctx->Extensions.ARB_texture_cube_map) {
          if ((target < GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB ||
               target > GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) &&
              target != GL_TEXTURE_2D) {
@@ -1403,7 +1403,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       }
    }
    else if (dimensions == 2) {
-      if (ctx->Extensions.HaveTextureCubeMap) {
+      if (ctx->Extensions.ARB_texture_cube_map) {
          if ((target < GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB ||
               target > GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) &&
              target != GL_TEXTURE_2D) {
@@ -1521,7 +1521,7 @@ get_specific_compressed_tex_format(GLcontext *ctx,
    char message[100];
    GLint internalFormat = ifmt;
 
-   if (ctx->Extensions.HaveTextureCompression
+   if (ctx->Extensions.ARB_texture_compression
        && ctx->Driver.SpecificCompressedTexFormat) {
       /*
        * First, ask the driver for the specific format.
@@ -1543,7 +1543,7 @@ get_specific_compressed_tex_format(GLcontext *ctx,
     */
    switch (internalFormat) {
       case GL_COMPRESSED_ALPHA_ARB:
-         if (ctx && !ctx->Extensions.HaveTextureCompression) {
+         if (ctx && !ctx->Extensions.ARB_texture_compression) {
             sprintf(message, "glTexImage%dD(internalFormat)", numDimensions);
             gl_error(ctx, GL_INVALID_VALUE, message);
             return -1;
@@ -1551,7 +1551,7 @@ get_specific_compressed_tex_format(GLcontext *ctx,
          internalFormat = GL_ALPHA;
          break;
       case GL_COMPRESSED_LUMINANCE_ARB:
-         if (ctx && !ctx->Extensions.HaveTextureCompression) {
+         if (ctx && !ctx->Extensions.ARB_texture_compression) {
             sprintf(message, "glTexImage%dD(internalFormat)", numDimensions);
             gl_error(ctx, GL_INVALID_VALUE, message);
             return -1;
@@ -1559,7 +1559,7 @@ get_specific_compressed_tex_format(GLcontext *ctx,
          internalFormat = GL_LUMINANCE;
          break;
       case GL_COMPRESSED_LUMINANCE_ALPHA_ARB:
-         if (ctx && !ctx->Extensions.HaveTextureCompression) {
+         if (ctx && !ctx->Extensions.ARB_texture_compression) {
             sprintf(message, "glTexImage%dD(internalFormat)", numDimensions);
             gl_error(ctx, GL_INVALID_VALUE, message);
             return -1;
@@ -1567,7 +1567,7 @@ get_specific_compressed_tex_format(GLcontext *ctx,
          internalFormat = GL_LUMINANCE_ALPHA;
          break;
       case GL_COMPRESSED_INTENSITY_ARB:
-         if (ctx && !ctx->Extensions.HaveTextureCompression) {
+         if (ctx && !ctx->Extensions.ARB_texture_compression) {
             sprintf(message, "glTexImage%dD(internalFormat)", numDimensions);
             gl_error(ctx, GL_INVALID_VALUE, message);
             return -1;
@@ -1575,7 +1575,7 @@ get_specific_compressed_tex_format(GLcontext *ctx,
          internalFormat = GL_INTENSITY;
          break;
       case GL_COMPRESSED_RGB_ARB:
-         if (ctx && !ctx->Extensions.HaveTextureCompression) {
+         if (ctx && !ctx->Extensions.ARB_texture_compression) {
             sprintf(message, "glTexImage%dD(internalFormat)", numDimensions);
             gl_error(ctx, GL_INVALID_VALUE, message);
             return -1;
@@ -1583,7 +1583,7 @@ get_specific_compressed_tex_format(GLcontext *ctx,
          internalFormat = GL_RGB;
          break;
       case GL_COMPRESSED_RGBA_ARB:
-         if (ctx && !ctx->Extensions.HaveTextureCompression) {
+         if (ctx && !ctx->Extensions.ARB_texture_compression) {
             sprintf(message, "glTexImage%dD(internalFormat)", numDimensions);
             gl_error(ctx, GL_INVALID_VALUE, message);
             return -1;
@@ -1702,7 +1702,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
 
       /* state update */
       gl_put_texobj_on_dirty_list( ctx, texObj );
-      ctx->NewState |= NEW_TEXTURING;
+      ctx->NewState |= _NEW_TEXTURE;
    }
    else if (target == GL_PROXY_TEXTURE_1D) {
       /* Proxy texture: check for errors and update proxy state */
@@ -1747,7 +1747,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
    adjust_texture_size_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
 
    if (target==GL_TEXTURE_2D ||
-       (ctx->Extensions.HaveTextureCubeMap &&
+       (ctx->Extensions.ARB_texture_cube_map &&
         target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
         target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)) {
       struct gl_texture_unit *texUnit;
@@ -1850,7 +1850,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
 
       /* state update */
       gl_put_texobj_on_dirty_list( ctx, texObj );
-      ctx->NewState |= NEW_TEXTURING;
+      ctx->NewState |= _NEW_TEXTURE;
    }
    else if (target == GL_PROXY_TEXTURE_2D) {
       /* Proxy texture: check for errors and update proxy state */
@@ -1984,7 +1984,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
 
       /* state update */
       gl_put_texobj_on_dirty_list( ctx, texObj );
-      ctx->NewState |= NEW_TEXTURING;
+      ctx->NewState |= _NEW_TEXTURE;
    }
    else if (target == GL_PROXY_TEXTURE_3D) {
       /* Proxy texture: check for errors and update proxy state */
@@ -2977,7 +2977,7 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
 
       /* state update */
       gl_put_texobj_on_dirty_list( ctx, texObj );
-      ctx->NewState |= NEW_TEXTURING;
+      ctx->NewState |= _NEW_TEXTURE;
    }
    else if (target == GL_PROXY_TEXTURE_1D) {
       /* Proxy texture: check for errors and update proxy state */
@@ -3031,7 +3031,7 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
    }
 
    if (target==GL_TEXTURE_2D ||
-       (ctx->Extensions.HaveTextureCubeMap &&
+       (ctx->Extensions.ARB_texture_cube_map &&
         target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
         target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)) {
       struct gl_texture_unit *texUnit;
@@ -3112,7 +3112,7 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
 
       /* state update */
       gl_put_texobj_on_dirty_list( ctx, texObj );
-      ctx->NewState |= NEW_TEXTURING;
+      ctx->NewState |= _NEW_TEXTURE;
    }
    else if (target == GL_PROXY_TEXTURE_2D) {
       /* Proxy texture: check for errors and update proxy state */
@@ -3241,7 +3241,7 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
 
       /* state update */
       gl_put_texobj_on_dirty_list( ctx, texObj );
-      ctx->NewState |= NEW_TEXTURING;
+      ctx->NewState |= _NEW_TEXTURE;
    }
    else if (target == GL_PROXY_TEXTURE_3D) {
       /* Proxy texture: check for errors and update proxy state */

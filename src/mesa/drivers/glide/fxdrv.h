@@ -412,6 +412,36 @@ struct tfxMesaVertexBuffer {
 #endif
 
 
+
+
+/* Covers the state referenced by IsInHardware:
+ */
+#define _FX_NEW_FALLBACK (_NEW_TEXTURE|		\
+			  _NEW_HINT|		\
+			  _NEW_STENCIL|		\
+			  _NEW_BUFFERS|		\
+			  _NEW_COLOR|		\
+			  _NEW_LIGHT) 
+
+/* Covers the state referenced by fxDDChooseRenderState and
+ * fxDDChoseRenderVBTables.
+ */
+#define _FX_NEW_RENDERSTATE (_NEW_RENDERMODE |		\
+			     _DD_NEW_FLATSHADE |	\
+			     _DD_NEW_TRI_LIGHT_TWOSIDE| \
+			     _DD_NEW_MULTIDRAW |	\
+			     _NEW_POINT |		\
+			     _NEW_LINE |		\
+			     _NEW_POLYGON)
+
+/* Covers the state referenced by fxDDChooseSetupFunction.
+ */
+#define _FX_NEW_SETUP_FUNCTION (_NEW_LIGHT|	\
+			        _NEW_FOG|	\
+			        _NEW_TEXTURE|	\
+			        _NEW_COLOR)	\
+
+
 /* These lookup table are used to extract RGB values in [0,255] from
  * 16-bit pixel values.
  */

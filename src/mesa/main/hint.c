@@ -1,4 +1,4 @@
-/* $Id: hint.c,v 1.4 2000/05/23 20:10:50 brianp Exp $ */
+/* $Id: hint.c,v 1.5 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -128,7 +128,7 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             ctx->Hint.TextureCompression = mode;
          }
          else {
@@ -141,7 +141,7 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
          return GL_FALSE;
    }
 
-   ctx->NewState |= NEW_ALL;   /* just to be safe */
+   ctx->NewState |= _NEW_HINT;
 
    if (ctx->Driver.Hint) {
       (*ctx->Driver.Hint)( ctx, target, mode );

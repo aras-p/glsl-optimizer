@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.98 2000/10/29 19:02:23 brianp Exp $ */
+/* $Id: context.c,v 1.99 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -825,8 +825,6 @@ init_attrib_groups( GLcontext *ctx )
    gl_matrix_alloc_inv( &ctx->ProjectionMatrix );
 
    gl_matrix_ctr( &ctx->ModelProjectMatrix );
-   gl_matrix_ctr( &ctx->ModelProjectWinMatrix );
-   ctx->ModelProjectWinMatrixUptodate = GL_FALSE;
 
    ctx->ProjectionStackDepth = 0;
    ctx->NearFarStack[0][0] = 1.0; /* These values seem weird by make */
@@ -1338,7 +1336,7 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_colortable(&ctx->ProxyPostColorMatrixColorTable);
 
    /* Miscellaneous */
-   ctx->NewState = NEW_ALL;
+   ctx->NewState = _NEW_ALL;
    ctx->RenderMode = GL_RENDER;
    ctx->StippleCounter = 0;
    ctx->NeedNormals = GL_FALSE;
@@ -1836,6 +1834,9 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
    if (mask & GL_VIEWPORT_BIT) {
       MEMCPY( &dst->Viewport, &src->Viewport, sizeof(struct gl_viewport_attrib) );
    }
+   /* XXX FIXME:  Call callbacks?
+    */
+   dst->NewState = _NEW_ALL;
 }
 
 
@@ -1896,7 +1897,7 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
       /* TODO: check if newCtx and buffer's visual match??? */
       newCtx->DrawBuffer = drawBuffer;
       newCtx->ReadBuffer = readBuffer;
-      newCtx->NewState = NEW_ALL;   /* just to be safe */
+      newCtx->NewState |= _NEW_BUFFERS;
       gl_update_state( newCtx );
    }
 

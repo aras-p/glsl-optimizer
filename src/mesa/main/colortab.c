@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.23 2000/10/29 18:12:14 brianp Exp $ */
+/* $Id: colortab.c,v 1.24 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -435,6 +435,8 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          (*ctx->Driver.UpdateTexturePalette)( ctx, texObj );
       }
    }
+   
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -608,6 +610,8 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
          (*ctx->Driver.UpdateTexturePalette)( ctx, texObj );
       }
    }
+   
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -907,6 +911,8 @@ _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
          gl_error(ctx, GL_INVALID_ENUM, "glColorTableParameter(target)");
          return;
    }
+
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: polygon.c,v 1.13 2000/10/21 00:02:47 brianp Exp $ */
+/* $Id: polygon.c,v 1.14 2000/10/30 13:32:01 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,7 +55,7 @@ _mesa_CullFace( GLenum mode )
    }
 
    ctx->Polygon.CullFaceMode = mode;
-   ctx->NewState |= NEW_POLYGON;
+   ctx->NewState |= _NEW_POLYGON;
 
    if (ctx->Driver.CullFace)
       ctx->Driver.CullFace( ctx, mode );
@@ -79,7 +79,7 @@ _mesa_FrontFace( GLenum mode )
 
    ctx->Polygon.FrontFace = mode;
    ctx->Polygon.FrontBit = (GLboolean) (mode == GL_CW);
-   ctx->NewState |= NEW_POLYGON;
+   ctx->NewState |= _NEW_POLYGON;
 
    if (ctx->Driver.FrontFace)
       ctx->Driver.FrontFace( ctx, mode );
@@ -123,7 +123,7 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
       ctx->TriangleCaps |= DD_TRI_UNFILLED;
    }
 
-   ctx->NewState |= (NEW_POLYGON | NEW_RASTER_OPS);
+   ctx->NewState |= _NEW_POLYGON;
 
    if (ctx->Driver.PolygonMode) {
       (*ctx->Driver.PolygonMode)( ctx, face, mode );
@@ -143,9 +143,7 @@ _mesa_PolygonStipple( const GLubyte *pattern )
 
    _mesa_unpack_polygon_stipple(pattern, ctx->PolygonStipple, &ctx->Unpack);
 
-   if (ctx->Polygon.StippleFlag) {
-      ctx->NewState |= NEW_RASTER_OPS;
-   }
+   ctx->NewState |= _NEW_POLYGONSTIPPLE;
    
    if (ctx->Driver.PolygonStipple)
       ctx->Driver.PolygonStipple( ctx, (const GLubyte *) ctx->PolygonStipple );
@@ -179,6 +177,7 @@ _mesa_PolygonOffset( GLfloat factor, GLfloat units )
    ctx->Polygon.OffsetFactor = factor;
    ctx->Polygon.OffsetUnits = units;
    ctx->Polygon.OffsetMRD = units * ctx->Visual.MRD;
+   ctx->NewState |= _NEW_POLYGON;
 }
 
 

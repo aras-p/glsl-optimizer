@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.13 2000/10/29 18:12:15 brianp Exp $ */
+/* $Id: eval.c,v 1.14 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -938,6 +938,8 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glMap1(target)" );
    }
+
+   ctx->NewState |= _NEW_EVAL;
 }
 
 
@@ -1132,6 +1134,8 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glMap2(target)" );
    }
+
+   ctx->NewState |= _NEW_EVAL;
 }
 
 
@@ -2642,6 +2646,8 @@ _mesa_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
    ctx->Eval.MapGrid1u1 = u1;
    ctx->Eval.MapGrid1u2 = u2;
    ctx->Eval.MapGrid1du = (u2 - u1) / (GLfloat) un;
+
+   ctx->NewState |= _NEW_EVAL;
 }
 
 
@@ -2674,6 +2680,8 @@ _mesa_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
    ctx->Eval.MapGrid2v1 = v1;
    ctx->Eval.MapGrid2v2 = v2;
    ctx->Eval.MapGrid2dv = (v2 - v1) / (GLfloat) vn;
+
+   ctx->NewState |= _NEW_EVAL;
 }
 
 
@@ -2683,7 +2691,6 @@ _mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
 {
    _mesa_MapGrid2f( un, u1, u2, vn, v1, v2 );
 }
-
 
 
 
@@ -2849,7 +2856,6 @@ _mesa_EvalPoint2( GLint i, GLint j )
    GET_IMMEDIATE;
    EVALPOINT2( IM, i, j );
 }
-
 
 
 

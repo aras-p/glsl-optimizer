@@ -1,4 +1,4 @@
-/* $Id: extensions.h,v 1.8 2000/03/07 18:24:14 brianp Exp $ */
+/* $Id: extensions.h,v 1.9 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,14 +31,11 @@
 #include "types.h"
 
 
-#define DEFAULT_OFF    0x0
-#define DEFAULT_ON     0x1
-#define ALWAYS_ENABLED 0x2
 
 /* Return 0 on success.
  */
-extern int gl_extensions_add( GLcontext *ctx, int state, 
-			      const char *name, void (*notify)( void ) );
+extern int gl_extensions_add( GLcontext *ctx, GLboolean enabled, 
+			      const char *name, GLboolean *flag_ptr );
 
 extern int gl_extensions_enable( GLcontext *ctx, const char *name );
 extern int gl_extensions_disable( GLcontext *ctx, const char *name );

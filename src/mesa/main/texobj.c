@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.30 2000/10/29 18:23:16 brianp Exp $ */
+/* $Id: texobj.c,v 1.31 2000/10/30 13:32:01 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -485,6 +485,7 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *texName)
 		     ctx->Shared->DefaultD[d]->RefCount++;
 		     t->RefCount--;
 		     ASSERT( t->RefCount >= 0 );
+		     ctx->NewState |= _NEW_TEXTURE;
 		  }
 	       }
             }
@@ -537,7 +538,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          oldTexObj = texUnit->CurrentD[3];
          break;
       case GL_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap) {
+         if (ctx->Extensions.ARB_texture_cube_map) {
             dim = 6;
             oldTexObj = texUnit->CurrentCubeMap;
             break;
@@ -598,28 +599,11 @@ _mesa_BindTexture( GLenum target, GLuint texName )
     */
    texUnit->Current = texUnit->CurrentD[texUnit->CurrentDimension];
 
-   /* Check if we may have to use a new triangle rasterizer */
-   if ((ctx->IndirectTriangles & DD_SW_RASTERIZE) &&
-       (   oldTexObj->WrapS != newTexObj->WrapS
-        || oldTexObj->WrapT != newTexObj->WrapT
-        || oldTexObj->WrapR != newTexObj->WrapR
-        || oldTexObj->MinFilter != newTexObj->MinFilter
-        || oldTexObj->MagFilter != newTexObj->MagFilter
-        || (oldTexObj->Image[0] && newTexObj->Image[0] && 
-	   (oldTexObj->Image[0]->Format!=newTexObj->Image[0]->Format))))
-   {
-      ctx->NewState |= (NEW_RASTER_OPS | NEW_TEXTURING);
-   }
-
-   if (oldTexObj->Complete != newTexObj->Complete)
-      ctx->NewState |= NEW_TEXTURING;
+   ctx->NewState |= _NEW_TEXTURE;
 
    /* Pass BindTexture call to device driver */
-   if (ctx->Driver.BindTexture) {
+   if (ctx->Driver.BindTexture) 
       (*ctx->Driver.BindTexture)( ctx, target, newTexObj );
-      /* Make sure the Driver.UpdateState() function gets called! */
-      ctx->NewState |= NEW_TEXTURING;
-   }
 
    if (oldTexObj->Name > 0) {
       /* never delete default (id=0) texture objects */
@@ -665,6 +649,8 @@ _mesa_PrioritizeTextures( GLsizei n, const GLuint *texName,
          }
       }
    }
+
+   ctx->NewState |= _NEW_TEXTURE;
 }
 
 

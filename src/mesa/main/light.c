@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.21 2000/10/29 19:02:23 brianp Exp $ */
+/* $Id: light.c,v 1.22 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,7 +66,9 @@ _mesa_ShadeModel( GLenum mode )
             SET_BITS(ctx->TriangleCaps, DD_FLATSHADE);
          else
             CLEAR_BITS(ctx->TriangleCaps, DD_FLATSHADE);
-         ctx->NewState |= NEW_RASTER_OPS;
+
+         ctx->NewState |= _NEW_LIGHT;
+
          if (ctx->Driver.ShadeModel) 
             (*ctx->Driver.ShadeModel)( ctx, mode );
       }
@@ -185,7 +187,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
    if (ctx->Driver.Lightfv)
       ctx->Driver.Lightfv( ctx, light, pname, params, nParams );
 
-   ctx->NewState |= NEW_LIGHTING;
+   ctx->NewState |= _NEW_LIGHT;
 }
 
 
@@ -396,7 +398,6 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
          else {
             gl_error( ctx, GL_INVALID_ENUM, "glLightModel(param)" );
          }
-	 ctx->NewState |= NEW_RASTER_OPS;
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glLightModel" );
@@ -406,7 +407,7 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
    if (ctx->Driver.LightModelfv) 
       ctx->Driver.LightModelfv( ctx, pname, params );
 
-   ctx->NewState |= NEW_LIGHTING;
+   ctx->NewState |= _NEW_LIGHT;
 }
 
 
@@ -845,6 +846,8 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
 
    if (ctx->Light.ColorMaterialEnabled)
       gl_update_color_material( ctx, ctx->Current.Color );
+
+   ctx->NewState |= _NEW_LIGHT;
 }
 
 
@@ -1211,30 +1214,6 @@ gl_compute_shine_table( GLcontext *ctx, GLuint i, GLfloat shininess )
 
 
 
-#if 0
-static void
-gl_reinit_light_attrib( GLcontext *ctx, struct gl_light_attrib *l )
-{
-   GLuint i;
-
-   if (ctx->ShineTable[0]->shininess != l->Material[0].Shininess) {
-      gl_compute_shine_table( ctx, 0, l->Material[0].Shininess );
-      gl_compute_shine_table( ctx, 2, l->Material[0].Shininess * .5 );
-   }
-
-   if (ctx->ShineTable[1]->shininess != l->Material[1].Shininess) {
-      gl_compute_shine_table( ctx, 1, l->Material[1].Shininess );
-      gl_compute_shine_table( ctx, 3, l->Material[1].Shininess * .5 );
-   }
-
-   make_empty_list( &l->EnabledList );
-   for (i = 0 ; i < MAX_LIGHTS ; i++) {
-      if (l->Light[i].Enabled) 
-	 insert_at_tail( &l->EnabledList, &l->Light[i] );
-   }
-}
-#endif
-
 
 /*
  * Examine current lighting parameters to determine if the optimized lighting
@@ -1394,9 +1373,6 @@ gl_compute_light_positions( GLcontext *ctx )
 void
 gl_update_normal_transform( GLcontext *ctx )
 {
-   GLuint new_flag = 0;
-   normal_func *last = ctx->NormalTransform;
-   
    ctx->vb_rescale_factor = 1.0;
 
    if (ctx->NeedEyeCoords) {
@@ -1408,9 +1384,7 @@ gl_update_normal_transform( GLcontext *ctx )
 				     MAT_FLAG_GENERAL_3D |
 				     MAT_FLAG_PERSPECTIVE)) 
 	    transform = NORM_TRANSFORM;
-
 	    
-	 new_flag = ctx->NewState & NEW_MODELVIEW;
 	 ctx->vb_rescale_factor = ctx->rescale_factor;
 	       
 	 if (ctx->Transform.Normalize) {
@@ -1447,7 +1421,4 @@ gl_update_normal_transform( GLcontext *ctx )
 	 ctx->NormalTransform = 0;
       }
    }
-
-   if (last != ctx->NormalTransform || new_flag)
-      ctx->NewState |= NEW_NORMAL_TRANSFORM;
 }

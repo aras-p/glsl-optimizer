@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.15 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: buffers.c,v 1.16 2000/10/30 13:31:59 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,6 +51,8 @@ _mesa_ClearIndex( GLfloat c )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glClearIndex");
    ctx->Color.ClearIndex = (GLuint) c;
+   ctx->NewState |= _NEW_COLOR;
+
    if (!ctx->Visual.RGBAflag) {
       /* it's OK to call glClearIndex in RGBA mode but it should be a NOP */
       (*ctx->Driver.ClearIndex)( ctx, ctx->Color.ClearIndex );
@@ -70,6 +72,7 @@ _mesa_ClearColor( GLclampf red, GLclampf green,
    ctx->Color.ClearColor[1] = CLAMP( green, 0.0F, 1.0F );
    ctx->Color.ClearColor[2] = CLAMP( blue,  0.0F, 1.0F );
    ctx->Color.ClearColor[3] = CLAMP( alpha, 0.0F, 1.0F );
+   ctx->NewState |= _NEW_COLOR;
 
    if (ctx->Visual.RGBAflag) {
       GLchan r = (GLint) (ctx->Color.ClearColor[0] * CHAN_MAXF);
@@ -469,7 +472,7 @@ _mesa_DrawBuffer( GLenum mode )
    }
 
    ctx->Color.DrawBuffer = mode;
-   ctx->NewState |= NEW_RASTER_OPS;
+   ctx->NewState |= _NEW_COLOR;
 }
 
 
@@ -527,7 +530,7 @@ _mesa_ReadBuffer( GLenum mode )
    }
 
    ctx->Pixel.ReadBuffer = mode;
-   ctx->NewState |= NEW_RASTER_OPS;
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -552,7 +555,7 @@ _mesa_ResizeBuffersMESA( void )
        ctx->DrawBuffer->Height == (GLint) buf_height)
       return;
 
-   ctx->NewState |= NEW_RASTER_OPS;  /* to update scissor / window bounds */
+   ctx->NewState |= _NEW_BUFFERS;  /* to update scissor / window bounds */
 
    /* save buffer size */
    ctx->DrawBuffer->Width = buf_width;

@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.22 2000/10/29 18:23:16 brianp Exp $ */
+/* $Id: matrix.c,v 1.23 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,7 +85,6 @@ void gl_print_matrix( const GLmatrix *m )
 {
    fprintf(stderr, "Matrix type: %s, flags: %x\n", types[m->type], m->flags);
    print_matrix_floats(m->m);
-#if 1
    fprintf(stderr, "Inverse: \n");
    if (m->inv) {
       GLfloat prod[16];
@@ -97,7 +96,6 @@ void gl_print_matrix( const GLmatrix *m )
    else {
       fprintf(stderr, "  - not available\n");
    }
-#endif
 }
 
 
@@ -132,8 +130,6 @@ static void matmul4( GLfloat *product, const GLfloat *a, const GLfloat *b )
 
 /* Multiply two matrices known to occupy only the top three rows,
  * such as typical modelling matrices, and ortho matrices.
- *
- * KW: 3*9 = 27 muls
  */
 static void matmul34( GLfloat *product, const GLfloat *a, const GLfloat *b )
 {
@@ -518,13 +514,6 @@ static inv_mat_func inv_mat_tab[7] = {
 static GLboolean matrix_invert( GLmatrix *mat )
 {
    if (inv_mat_tab[mat->type](mat)) {
-#if 0
-      GLmatrix m; m.inv = 0; m.type = 0; m.flags = 0;
-      matmul4( m.m, mat->m, mat->inv );
-      printf("inverted matrix of type %s:\n", types[mat->type]);
-      gl_print_matrix( mat );
-      gl_print_matrix( &m );
-#endif
       return GL_TRUE;
    } else {
       MEMCPY( mat->inv, Identity, sizeof(Identity) );
@@ -905,25 +894,6 @@ void gl_matrix_analyze( GLmatrix *mat )
 }
 
 
-/*
- * Multiply a matrix by an array of floats with known properties.
- */
-#if 000
-static void gl_mat_mul_mat( GLmatrix *mat, const GLmatrix *m )
-{
-   mat->flags |= (m->flags |
-		  MAT_DIRTY_TYPE | 
-		  MAT_DIRTY_INVERSE | 
-		  MAT_DIRTY_DEPENDENTS);
-
-   if (TEST_MAT_FLAGS(mat, MAT_FLAGS_3D))
-      matmul34( mat->m, mat->m, m->m );
-   else 
-      matmul4( mat->m, mat->m, m->m );      
-}
-#endif
-
-
 static void matrix_copy( GLmatrix *to, const GLmatrix *from )
 {
    MEMCPY( to->m, from->m, sizeof(Identity) );
@@ -991,14 +961,6 @@ void gl_matrix_dtr( GLmatrix *m )
    }
 }
 
-#if 0
-void gl_matrix_set_identity( GLmatrix *m )
-{
-   MEMCPY( m->m, Identity, sizeof(Identity) );
-   m->type = MATRIX_IDENTITY;
-   m->flags = MAT_DIRTY_DEPENDENTS;
-}
-#endif
 
 void gl_matrix_alloc_inv( GLmatrix *m )
 {
@@ -1037,19 +999,19 @@ do {									\
    switch (ctx->Transform.MatrixMode) {					\
       case GL_MODELVIEW:						\
 	 mat = &ctx->ModelView;						\
-	 flags |= NEW_MODELVIEW;					\
+	 flags |= _NEW_MODELVIEW;					\
 	 break;								\
       case GL_PROJECTION:						\
 	 mat = &ctx->ProjectionMatrix;					\
-	 flags |= NEW_PROJECTION;					\
+	 flags |= _NEW_PROJECTION;					\
 	 break;								\
       case GL_TEXTURE:							\
 	 mat = &ctx->TextureMatrix[ctx->Texture.CurrentTransformUnit];	\
-	 flags |= NEW_TEXTURE_MATRIX;					\
+	 flags |= _NEW_TEXTURE_MATRIX;					\
 	 break;								\
       case GL_COLOR:							\
 	 mat = &ctx->ColorMatrix;					\
-	 flags |= NEW_COLOR_MATRIX;					\
+	 flags |= _NEW_COLOR_MATRIX;					\
 	 break;								\
       default:								\
          gl_problem(ctx, where);					\
@@ -1242,7 +1204,7 @@ _mesa_PopMatrix( void )
          }
          matrix_copy( &ctx->ModelView,
                       &ctx->ModelViewStack[--ctx->ModelViewStackDepth] );
-	 ctx->NewState |= NEW_MODELVIEW;
+	 ctx->NewState |= _NEW_MODELVIEW;
          break;
       case GL_PROJECTION:
          if (ctx->ProjectionStackDepth==0) {
@@ -1252,7 +1214,7 @@ _mesa_PopMatrix( void )
 
          matrix_copy( &ctx->ProjectionMatrix,
                       &ctx->ProjectionStack[--ctx->ProjectionStackDepth] );
-	 ctx->NewState |= NEW_PROJECTION;
+	 ctx->NewState |= _NEW_PROJECTION;
 
          /* Device driver near/far values */
          {
@@ -1272,6 +1234,7 @@ _mesa_PopMatrix( void )
             }
 	    matrix_copy(&ctx->TextureMatrix[t],
                         &ctx->TextureStack[t][--ctx->TextureStackDepth[t]]);
+	    ctx->NewState |= _NEW_TEXTURE_MATRIX;
          }
          break;
       case GL_COLOR:
@@ -1281,6 +1244,7 @@ _mesa_PopMatrix( void )
          }
          matrix_copy(&ctx->ColorMatrix,
                      &ctx->ColorStack[--ctx->ColorStackDepth]);
+	 ctx->NewState |= _NEW_COLOR_MATRIX;
          break;
       default:
          gl_problem(ctx, "Bad matrix mode in gl_PopMatrix");
@@ -1565,9 +1529,7 @@ gl_Viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height )
 
    ctx->Viewport.WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
    ctx->Viewport.WindowMap.type = MATRIX_3D_NO_ROT;
-
-   ctx->ModelProjectWinMatrixUptodate = GL_FALSE;
-   ctx->NewState |= NEW_VIEWPORT;
+   ctx->NewState |= _NEW_VIEWPORT;
 
    /* Check if window/buffer has been resized and if so, reallocate the
     * ancillary buffers.
@@ -1620,8 +1582,7 @@ _mesa_DepthRange( GLclampd nearval, GLclampd farval )
    ctx->Viewport.Far = f;
    ctx->Viewport.WindowMap.m[MAT_SZ] = ctx->Visual.DepthMaxF * ((f - n) / 2.0);
    ctx->Viewport.WindowMap.m[MAT_TZ] = ctx->Visual.DepthMaxF * ((f - n) / 2.0 + n);
-
-   ctx->ModelProjectWinMatrixUptodate = GL_FALSE;
+   ctx->NewState |= _NEW_VIEWPORT;
 
    if (ctx->Driver.DepthRange) {
       (*ctx->Driver.DepthRange)( ctx, nearval, farval );

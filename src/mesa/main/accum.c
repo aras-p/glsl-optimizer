@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.29 2000/10/29 18:23:16 brianp Exp $ */
+/* $Id: accum.c,v 1.30 2000/10/30 13:31:59 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -107,6 +107,7 @@ _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
    ctx->Accum.ClearColor[1] = CLAMP( green, -1.0, 1.0 );
    ctx->Accum.ClearColor[2] = CLAMP( blue, -1.0, 1.0 );
    ctx->Accum.ClearColor[3] = CLAMP( alpha, -1.0, 1.0 );
+   ctx->NewState |= _NEW_ACCUM;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.20 2000/10/29 18:23:16 brianp Exp $ */
+/* $Id: depth.c,v 1.21 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,6 +54,7 @@ _mesa_ClearDepth( GLclampd depth )
    ctx->Depth.Clear = (GLfloat) CLAMP( depth, 0.0, 1.0 );
    if (ctx->Driver.ClearDepth)
       (*ctx->Driver.ClearDepth)( ctx, ctx->Depth.Clear );
+   ctx->NewState |= _NEW_DEPTH;
 }
 
 
@@ -77,7 +78,7 @@ _mesa_DepthFunc( GLenum func )
       case GL_ALWAYS:
 	 if (ctx->Depth.Func != func) {
 	    ctx->Depth.Func = func;
-	    ctx->NewState |= NEW_RASTER_OPS;
+	    ctx->NewState |= _NEW_DEPTH;
 	    ctx->TriangleCaps &= ~DD_Z_NEVER;
 	    if (ctx->Driver.DepthFunc) {
 	       (*ctx->Driver.DepthFunc)( ctx, func );
@@ -87,7 +88,7 @@ _mesa_DepthFunc( GLenum func )
       case GL_NEVER:
 	 if (ctx->Depth.Func != func) {
 	    ctx->Depth.Func = func;
-	    ctx->NewState |= NEW_RASTER_OPS;
+	    ctx->NewState |= _NEW_DEPTH;
 	    ctx->TriangleCaps |= DD_Z_NEVER;
 	    if (ctx->Driver.DepthFunc) {
 	       (*ctx->Driver.DepthFunc)( ctx, func );
@@ -116,7 +117,7 @@ _mesa_DepthMask( GLboolean flag )
     */
    if (ctx->Depth.Mask != flag) {
       ctx->Depth.Mask = flag;
-      ctx->NewState |= NEW_RASTER_OPS;
+      ctx->NewState |= _NEW_DEPTH;
       if (ctx->Driver.DepthMask) {
 	 (*ctx->Driver.DepthMask)( ctx, flag );
       }
@@ -1598,7 +1599,7 @@ _mesa_alloc_depth_buffer( GLcontext *ctx )
       if (!ctx->DrawBuffer->DepthBuffer) {
          /* out of memory */
          ctx->Depth.Test = GL_FALSE;
-         ctx->NewState |= NEW_RASTER_OPS;
+         ctx->NewState |= _NEW_DEPTH;
          gl_error( ctx, GL_OUT_OF_MEMORY, "Couldn't allocate depth buffer" );
       }
    }

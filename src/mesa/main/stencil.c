@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.20 2000/10/29 18:23:16 brianp Exp $ */
+/* $Id: stencil.c,v 1.21 2000/10/30 13:32:01 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,6 +48,7 @@ _mesa_ClearStencil( GLint s )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glClearStencil");
    ctx->Stencil.Clear = (GLstencil) s;
+   ctx->NewState |= _NEW_STENCIL;
 
    if (ctx->Driver.ClearStencil) {
       (*ctx->Driver.ClearStencil)( ctx, s );
@@ -83,6 +84,7 @@ _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
    maxref = (1 << STENCIL_BITS) - 1;
    ctx->Stencil.Ref = (GLstencil) CLAMP( ref, 0, maxref );
    ctx->Stencil.ValueMask = (GLstencil) mask;
+   ctx->NewState |= _NEW_STENCIL;
 
    if (ctx->Driver.StencilFunc) {
       (*ctx->Driver.StencilFunc)( ctx, func, ctx->Stencil.Ref, mask );
@@ -97,6 +99,7 @@ _mesa_StencilMask( GLuint mask )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glStencilMask");
    ctx->Stencil.WriteMask = (GLstencil) mask;
+   ctx->NewState |= _NEW_STENCIL;
 
    if (ctx->Driver.StencilMask) {
       (*ctx->Driver.StencilMask)( ctx, mask );
@@ -121,7 +124,7 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
          break;
       case GL_INCR_WRAP_EXT:
       case GL_DECR_WRAP_EXT:
-         if (ctx->Extensions.HaveStencilWrap) {
+         if (ctx->Extensions.EXT_stencil_wrap) {
             ctx->Stencil.FailFunc = fail;
             break;
          }
@@ -141,7 +144,7 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
          break;
       case GL_INCR_WRAP_EXT:
       case GL_DECR_WRAP_EXT:
-         if (ctx->Extensions.HaveStencilWrap) {
+         if (ctx->Extensions.EXT_stencil_wrap) {
             ctx->Stencil.ZFailFunc = zfail;
             break;
          }
@@ -161,7 +164,7 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
          break;
       case GL_INCR_WRAP_EXT:
       case GL_DECR_WRAP_EXT:
-         if (ctx->Extensions.HaveStencilWrap) {
+         if (ctx->Extensions.EXT_stencil_wrap) {
             ctx->Stencil.ZPassFunc = zpass;
             break;
          }
@@ -170,6 +173,8 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
          gl_error(ctx, GL_INVALID_ENUM, "glStencilOp");
          return;
    }
+
+   ctx->NewState |= _NEW_STENCIL;
 
    if (ctx->Driver.StencilOp) {
       (*ctx->Driver.StencilOp)(ctx, fail, zfail, zpass);

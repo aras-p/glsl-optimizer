@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.38 2000/10/27 18:31:22 brianp Exp $ */
+/* $Id: extensions.c,v 1.39 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,102 +42,86 @@
 struct extension {
    struct extension *next, *prev;
    GLint enabled;
+   GLboolean *flag;			/* optional flag stored elsewhere */
    char name[MAX_EXT_NAMELEN+1];
    void (*notify)( GLcontext *, GLboolean ); 
 };
 
+#define F(x) (int)&(((struct gl_extensions *)0)->x)
+#define ON GL_TRUE
+#define OFF GL_FALSE
 
-
-static struct { int enabled; const char *name; } default_extensions[] = {
-   { DEFAULT_ON,     "GL_ARB_imaging" },
-   { DEFAULT_ON,     "GL_ARB_multitexture" },
-   { DEFAULT_OFF,    "GL_ARB_texture_compression" },
-   { DEFAULT_OFF,    "GL_ARB_texture_cube_map" },
-   { DEFAULT_ON,     "GL_ARB_texture_env_add" },
-   { ALWAYS_ENABLED, "GL_ARB_tranpose_matrix" },
-   { ALWAYS_ENABLED, "GL_EXT_abgr" },
-   { DEFAULT_OFF,    "GL_EXT_bgra" },
-   { DEFAULT_ON,     "GL_EXT_blend_color" },
-   { DEFAULT_ON,     "GL_EXT_blend_func_separate" },
-   { DEFAULT_ON,     "GL_EXT_blend_logic_op" },
-   { DEFAULT_ON,     "GL_EXT_blend_minmax" },
-   { DEFAULT_ON,     "GL_EXT_blend_subtract" },
-   { DEFAULT_ON,     "GL_EXT_clip_volume_hint" },
-   { DEFAULT_OFF,    "GL_EXT_cull_vertex" },
-   { DEFAULT_ON,     "GL_EXT_convolution" },
-   { DEFAULT_ON,     "GL_EXT_compiled_vertex_array" },
-   { DEFAULT_ON,     "GL_EXT_fog_coord" },
-   { DEFAULT_ON,     "GL_EXT_histogram" },
-   { DEFAULT_ON,     "GL_EXT_packed_pixels" },
-   { DEFAULT_ON,     "GL_EXT_paletted_texture" },
-   { DEFAULT_ON,     "GL_EXT_point_parameters" },
-   { ALWAYS_ENABLED, "GL_EXT_polygon_offset" },
-   { ALWAYS_ENABLED, "GL_EXT_rescale_normal" },
-   { DEFAULT_ON,     "GL_EXT_secondary_color" }, 
-   { DEFAULT_ON,     "GL_EXT_shared_texture_palette" },
-   { DEFAULT_ON,     "GL_EXT_stencil_wrap" },
-   { DEFAULT_ON,     "GL_EXT_texture3D" },
-   { DEFAULT_OFF,    "GL_EXT_texture_compression_s3tc" },
-   { DEFAULT_ON,     "GL_EXT_texture_env_add" },
-   { DEFAULT_OFF,    "GL_EXT_texture_env_combine" },
-   { ALWAYS_ENABLED, "GL_EXT_texture_object" },
-   { DEFAULT_ON,     "GL_EXT_texture_lod_bias" },
-   { ALWAYS_ENABLED, "GL_EXT_vertex_array" },
-   { DEFAULT_OFF,    "GL_EXT_vertex_array_set" },
-   { DEFAULT_OFF,    "GL_HP_occlusion_test" },
-   { DEFAULT_ON,     "GL_INGR_blend_func_separate" },
-   { ALWAYS_ENABLED, "GL_MESA_window_pos" },
-   { ALWAYS_ENABLED, "GL_MESA_resize_buffers" },
-   { DEFAULT_OFF,    "GL_NV_blend_square" },
-   { ALWAYS_ENABLED, "GL_NV_texgen_reflection" },
-   { DEFAULT_ON,     "GL_PGI_misc_hints" },
-   { DEFAULT_ON,     "GL_SGI_color_matrix" },
-   { DEFAULT_ON,     "GL_SGI_color_table" },
-   { DEFAULT_ON,     "GL_SGIS_pixel_texture" },
-   { DEFAULT_ON,     "GL_SGIS_texture_edge_clamp" },
-   { DEFAULT_ON,     "GL_SGIX_pixel_texture" },
-   { DEFAULT_OFF,    "GL_3DFX_texture_compression_FXT1" }
+static struct { 
+   GLboolean enabled; 
+   const char *name; 
+   int flag_offset; 
+} default_extensions[] = {
+   { ON,  "GL_ARB_imaging",                   F(ARB_imaging) },
+   { ON,  "GL_ARB_multitexture",              F(ARB_multitexture) },
+   { OFF, "GL_ARB_texture_compression",       F(ARB_texture_compression) },
+   { OFF, "GL_ARB_texture_cube_map",          F(ARB_texture_cube_map) },
+   { ON,  "GL_ARB_texture_env_add",           F(ARB_texture_env_add) },
+   { ON,  "GL_ARB_tranpose_matrix",           0 },
+   { ON,  "GL_EXT_abgr",                      0 },
+   { OFF, "GL_EXT_bgra",                      0 },
+   { ON,  "GL_EXT_blend_color",               F(EXT_blend_color) },
+   { ON,  "GL_EXT_blend_func_separate",       F(EXT_blend_func_separate) },
+   { ON,  "GL_EXT_blend_logic_op",            F(EXT_blend_logic_op) },
+   { ON,  "GL_EXT_blend_minmax",              F(EXT_blend_minmax) },
+   { ON,  "GL_EXT_blend_subtract",            F(EXT_blend_subtract) },
+   { ON,  "GL_EXT_clip_volume_hint",          F(EXT_clip_volume_hint) },
+   { OFF, "GL_EXT_cull_vertex",               0 },
+   { ON,  "GL_EXT_convolution",               F(EXT_convolution) },
+   { ON,  "GL_EXT_compiled_vertex_array",     F(EXT_compiled_vertex_array) },
+   { ON,  "GL_EXT_fog_coord",                 F(EXT_fog_coord) },
+   { ON,  "GL_EXT_histogram",                 F(EXT_histogram) },
+   { ON,  "GL_EXT_packed_pixels",             F(EXT_packed_pixels) },
+   { ON,  "GL_EXT_paletted_texture",          F(EXT_paletted_texture) },
+   { ON,  "GL_EXT_point_parameters",          F(EXT_point_parameters) },
+   { ON,  "GL_EXT_polygon_offset",            F(EXT_polygon_offset) },
+   { ON,  "GL_EXT_rescale_normal",            F(EXT_rescale_normal) },
+   { ON,  "GL_EXT_secondary_color",           F(EXT_secondary_color) }, 
+   { ON,  "GL_EXT_shared_texture_palette",    F(EXT_shared_texture_palette) },
+   { ON,  "GL_EXT_stencil_wrap",              F(EXT_stencil_wrap) },
+   { ON,  "GL_EXT_texture3D",                 F(EXT_texture3D) },
+   { OFF, "GL_EXT_texture_compression_s3tc",  F(EXT_texture_compression_s3tc) },
+   { ON,  "GL_EXT_texture_env_add",           F(EXT_texture_env_add) },
+   { OFF, "GL_EXT_texture_env_combine",       F(EXT_texture_env_combine) },
+   { ON,  "GL_EXT_texture_object",            F(EXT_texture_object) },
+   { ON,  "GL_EXT_texture_lod_bias",          F(EXT_texture_lod_bias) },
+   { ON,  "GL_EXT_vertex_array",              0 },
+   { OFF, "GL_EXT_vertex_array_set",          F(EXT_vertex_array_set) },
+   { OFF, "GL_HP_occlusion_test",             F(HP_occlusion_test) },
+   { ON,  "GL_INGR_blend_func_separate",      F(INGR_blend_func_separate) },
+   { ON,  "GL_MESA_window_pos",               F(MESA_window_pos) },
+   { ON,  "GL_MESA_resize_buffers",           F(MESA_resize_buffers) },
+   { OFF, "GL_NV_blend_square",               F(NV_blend_square) },
+   { ON,  "GL_NV_texgen_reflection",          F(NV_texgen_reflection) },
+   { ON,  "GL_PGI_misc_hints",                F(PGI_misc_hints) },
+   { ON,  "GL_SGI_color_matrix",              F(SGI_color_matrix) },
+   { ON,  "GL_SGI_color_table",               F(SGI_color_table) },
+   { ON,  "GL_SGIS_pixel_texture",            F(SGIS_pixel_texture) },
+   { ON,  "GL_SGIS_texture_edge_clamp",       F(SGIS_texture_edge_clamp) },
+   { ON,  "GL_SGIX_pixel_texture",            F(SGIX_pixel_texture) },
+   { OFF, "GL_3DFX_texture_compression_FXT1", F(_3DFX_texture_compression_FXT1) }
 };
 
 
-/*
- * Update the boolean convenience flags in the Extensions struct.
- */
-static void
-update_extension_flags( GLcontext *ctx )
-{
-   /* Update flags */
-   ctx->Extensions.HaveBlendMinmax = gl_extension_is_enabled(ctx, "GL_EXT_blend_minmax") || gl_extension_is_enabled(ctx, "GL_ARB_imaging");
-   ctx->Extensions.HaveBlendSquare = gl_extension_is_enabled(ctx, "GL_NV_blend_square");
-   ctx->Extensions.HaveBlendSubtract = gl_extension_is_enabled(ctx, "GL_EXT_blend_subtract") || gl_extension_is_enabled(ctx, "GL_ARB_imaging");
-   ctx->Extensions.HaveHistogram = gl_extension_is_enabled(ctx, "GL_EXT_histogram") || gl_extension_is_enabled(ctx, "GL_ARB_imaging");
-   ctx->Extensions.HaveHpOcclusionTest = gl_extension_is_enabled(ctx, "GL_HP_occlusion_test");
-   ctx->Extensions.HaveStencilWrap = gl_extension_is_enabled(ctx, "GL_EXT_stencil_wrap");
-   ctx->Extensions.HaveTextureEnvAdd = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_add") || gl_extension_is_enabled(ctx, "GL_ARB_texture_env_add");
-   ctx->Extensions.HaveTextureEnvCombine = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_combine");
-   ctx->Extensions.HaveTextureCubeMap = gl_extension_is_enabled(ctx, "GL_ARB_texture_cube_map");
-   ctx->Extensions.HaveTextureCompression = gl_extension_is_enabled(ctx, "GL_ARB_texture_compression");
-   ctx->Extensions.HaveTextureCompressionFXT1 = gl_extension_is_enabled(ctx, "GL_3DFX_texture_compression_FXT1");
-   ctx->Extensions.HaveTextureCompressionS3TC = gl_extension_is_enabled(ctx, "GL_EXT_texture_compression_s3tc");
-   ctx->Extensions.HaveTextureLodBias = gl_extension_is_enabled(ctx, "GL_EXT_texture_lod_bias");
-}
 
 
 
 int gl_extensions_add( GLcontext *ctx, 
-		       int state, 
+		       GLboolean enabled, 
 		       const char *name, 
-		       void (*notify)(void) )
+		       GLboolean *flag_ptr )
 {
-   (void) notify;
-
    if (ctx->Extensions.ext_string == 0) 
    {
       struct extension *t = MALLOC_STRUCT(extension);
-      t->enabled = state;
+      t->enabled = enabled;
       strncpy(t->name, name, MAX_EXT_NAMELEN);
       t->name[MAX_EXT_NAMELEN] = 0;
-      t->notify = (void (*)(GLcontext *, GLboolean)) notify;
+      t->flag = flag_ptr;
       insert_at_tail( ctx->Extensions.ext_list, t );
       return 0;
    }
@@ -158,13 +142,8 @@ static int set_extension( GLcontext *ctx, const char *name, GLint state )
    if (i == ctx->Extensions.ext_list)
       return 1;
 
-   if (!(i->enabled & ALWAYS_ENABLED)) {
-      if (i->notify) i->notify( ctx, state );      
-      i->enabled = state;
-   }
-
-   update_extension_flags(ctx);
-
+   if (i->flag) *(i->flag) = state;      
+   i->enabled = state;
    return 0;
 }   
 
@@ -227,18 +206,23 @@ void gl_extensions_dtr( GLcontext *ctx )
 void gl_extensions_ctr( GLcontext *ctx )
 {
    GLuint i;
+   GLboolean *base = (GLboolean *)&ctx->Extensions;
 
    ctx->Extensions.ext_string = 0;
    ctx->Extensions.ext_list = MALLOC_STRUCT(extension);
    make_empty_list( ctx->Extensions.ext_list );
 
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
+      GLboolean *ptr = 0;
+
+      if (default_extensions[i].flag_offset)
+	 ptr = base + default_extensions[i].flag_offset;
+
       gl_extensions_add( ctx, 
 			 default_extensions[i].enabled,
 			 default_extensions[i].name,
-			 0 );
+			 ptr);
    }
-   update_extension_flags(ctx);
 }
 
 

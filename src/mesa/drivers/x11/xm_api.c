@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.3 2000/10/30 08:39:38 joukj Exp $ */
+/* $Id: xm_api.c,v 1.4 2000/10/30 13:32:03 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1654,6 +1654,22 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    c->pixelformat = v->dithered_pf;      /* Dithering is enabled by default */
 
    c->gl_ctx->Driver.UpdateState = xmesa_update_state;
+
+   /* These flags cover all the tests made in UpdateState, plus what
+    * the software rasterizer needs to choose line,point and triangle
+    * functions.
+    */
+   c->gl_ctx->Driver.UpdateStateNotify = (_NEW_POINT|
+					  _NEW_TEXTURE|
+					  _NEW_LINE|
+					  _NEW_LIGHT|
+					  _NEW_DEPTH|
+					  _NEW_POLYGON|
+					  _NEW_TEXTURE|
+					  _SWRAST_NEW_RASTERMASK|
+					  _SWRAST_NEW_TRIANGLE|
+					  _SWRAST_NEW_LINE|
+					  _SWRAST_NEW_POINT);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
    c->driContextPriv = driContextPriv;

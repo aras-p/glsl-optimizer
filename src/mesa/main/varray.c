@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.26 2000/10/27 16:44:41 keithw Exp $ */
+/* $Id: varray.c,v 1.27 2000/10/30 13:32:02 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -98,7 +98,7 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.VertexFunc = gl_trans_4f_tab[size][TYPE_IDX(type)];
    ctx->Array.VertexEltFunc = gl_trans_elt_4f_tab[size][TYPE_IDX(type)];
    ctx->Array.NewArrayState |= VERT_OBJ_ANY;
-   ctx->NewState |= NEW_CLIENT_STATE;
+   ctx->NewState |= _NEW_ARRAY;
 }
 
 
@@ -148,7 +148,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
    ctx->Array.NormalFunc = gl_trans_3f_tab[TYPE_IDX(type)];
    ctx->Array.NormalEltFunc = gl_trans_elt_3f_tab[TYPE_IDX(type)];
    ctx->Array.NewArrayState |= VERT_NORM;
-   ctx->NewState |= NEW_CLIENT_STATE;
+   ctx->NewState |= _NEW_ARRAY;
 }
 
 
@@ -211,7 +211,7 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.ColorFunc = gl_trans_4ub_tab[size][TYPE_IDX(type)];
    ctx->Array.ColorEltFunc = gl_trans_elt_4ub_tab[size][TYPE_IDX(type)];
    ctx->Array.NewArrayState |= VERT_RGBA;
-   ctx->NewState |= NEW_CLIENT_STATE;
+   ctx->NewState |= _NEW_ARRAY;
 }
 
 
@@ -246,7 +246,7 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.FogCoordFunc = gl_trans_1f_tab[TYPE_IDX(type)];
    ctx->Array.FogCoordEltFunc = gl_trans_elt_1f_tab[TYPE_IDX(type)];
    ctx->Array.NewArrayState |= VERT_FOG_COORD;
-   ctx->NewState |= NEW_CLIENT_STATE;
+   ctx->NewState |= _NEW_ARRAY;
 }
 
 
@@ -289,7 +289,7 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.IndexFunc = gl_trans_1ui_tab[TYPE_IDX(type)];
    ctx->Array.IndexEltFunc = gl_trans_elt_1ui_tab[TYPE_IDX(type)];
    ctx->Array.NewArrayState |= VERT_INDEX;
-   ctx->NewState |= NEW_CLIENT_STATE;
+   ctx->NewState |= _NEW_ARRAY;
 }
 
 
@@ -354,7 +354,7 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
    ctx->Array.SecondaryColorFunc = gl_trans_4ub_tab[size][TYPE_IDX(type)];
    ctx->Array.SecondaryColorEltFunc = gl_trans_elt_4ub_tab[size][TYPE_IDX(type)];
    ctx->Array.NewArrayState |= VERT_SPEC_RGB;
-   ctx->NewState |= NEW_CLIENT_STATE;
+   ctx->NewState |= _NEW_ARRAY;
 }
 
 
@@ -411,7 +411,7 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr
    ctx->Array.TexCoordFunc[texUnit] = gl_trans_4f_tab[size][TYPE_IDX(type)];
    ctx->Array.TexCoordEltFunc[texUnit] = gl_trans_elt_4f_tab[size][TYPE_IDX(type)];
    ctx->Array.NewArrayState |= PIPE_TEX(texUnit);
-   ctx->NewState |= NEW_CLIENT_STATE;
+   ctx->NewState |= _NEW_ARRAY;
 }
 
 
@@ -437,7 +437,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const void *vptr)
    }
    ctx->Array.EdgeFlagEltFunc = gl_trans_elt_1ub_tab[TYPE_IDX(GL_UNSIGNED_BYTE)];
    ctx->Array.NewArrayState |= VERT_EDGE;
-   ctx->NewState |= NEW_CLIENT_STATE;
+   ctx->NewState |= _NEW_ARRAY;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.38 2000/10/29 19:02:23 brianp Exp $ */
+/* $Id: get.c,v 1.39 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -357,7 +357,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = FLOAT_TO_BOOL(ctx->Pixel.GreenScale);
 	 break;
       case GL_HISTOGRAM:
-         if (ctx->Extensions.HaveHistogram) {
+         if (ctx->Extensions.EXT_histogram) {
             *params = ctx->Pixel.HistogramEnabled;
          }
          else {
@@ -971,19 +971,19 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = INT_TO_BOOL(textureUnit->CurrentCubeMap->Name);
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = INT_TO_BOOL(ctx->Const.MaxCubeTextureSize);
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
@@ -991,21 +991,21 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = INT_TO_BOOL(ctx->Hint.TextureCompression);
          }
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = INT_TO_BOOL(ctx->Const.NumCompressedTextureFormats);
          }
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             GLuint i;
             for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
                params[i] = INT_TO_BOOL(ctx->Const.CompressedTextureFormats[i]);
@@ -1116,7 +1116,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
       /* GL_HP_occlusion_test */
       case GL_OCCLUSION_TEST_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             *params = ctx->Depth.OcclusionTest;
          }
          else {
@@ -1124,7 +1124,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             if (ctx->Depth.OcclusionTest)
                *params = ctx->OcclusionResult;
             else
@@ -1548,7 +1548,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Pixel.GreenScale;
          break;
       case GL_HISTOGRAM:
-         if (ctx->Extensions.HaveHistogram) {
+         if (ctx->Extensions.EXT_histogram) {
             *params = (GLdouble) ctx->Pixel.HistogramEnabled;
          }
          else {
@@ -2162,19 +2162,19 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLdouble) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLdouble) textureUnit->CurrentCubeMap->Name;
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLdouble) ctx->Const.MaxCubeTextureSize;
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
@@ -2182,21 +2182,21 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLdouble) ctx->Hint.TextureCompression;
          }
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLdouble) ctx->Const.NumCompressedTextureFormats;
          }
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             GLuint i;
             for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
                params[i] = (GLdouble) ctx->Const.CompressedTextureFormats[i];
@@ -2307,7 +2307,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
       /* GL_HP_occlusion_test */
       case GL_OCCLUSION_TEST_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             *params = (GLdouble) ctx->Depth.OcclusionTest;
          }
          else {
@@ -2315,7 +2315,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             if (ctx->Depth.OcclusionTest)
                *params = (GLdouble) ctx->OcclusionResult;
             else
@@ -2740,7 +2740,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) ctx->Pixel.GreenScale;
          break;
       case GL_HISTOGRAM:
-         if (ctx->Extensions.HaveHistogram) {
+         if (ctx->Extensions.EXT_histogram) {
             *params = (GLfloat) ctx->Pixel.HistogramEnabled;
          }
          else {
@@ -3356,19 +3356,19 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLfloat) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLfloat) textureUnit->CurrentCubeMap->Name;
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLfloat) ctx->Const.MaxCubeTextureSize;
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
@@ -3376,21 +3376,21 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLfloat) ctx->Hint.TextureCompression;
          }
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLfloat) ctx->Const.NumCompressedTextureFormats;
          }
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             GLuint i;
             for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
                params[i] = (GLfloat) ctx->Const.CompressedTextureFormats[i];
@@ -3473,7 +3473,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
       /* GL_HP_occlusion_test */
       case GL_OCCLUSION_TEST_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             *params = (GLfloat) ctx->Depth.OcclusionTest;
          }
          else {
@@ -3481,7 +3481,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             if (ctx->Depth.OcclusionTest)
                *params = (GLfloat) ctx->OcclusionResult;
             else
@@ -3908,7 +3908,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Pixel.GreenScale;
          break;
       case GL_HISTOGRAM:
-         if (ctx->Extensions.HaveHistogram) {
+         if (ctx->Extensions.EXT_histogram) {
             *params = (GLint) ctx->Pixel.HistogramEnabled;
          }
          else {
@@ -4522,19 +4522,19 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLint) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = textureUnit->CurrentCubeMap->Name;
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = ctx->Const.MaxCubeTextureSize;
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
@@ -4542,21 +4542,21 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLint) ctx->Hint.TextureCompression;
          }
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLint) ctx->Const.NumCompressedTextureFormats;
          }
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             GLuint i;
             for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
                params[i] = (GLint) ctx->Const.CompressedTextureFormats[i];
@@ -4667,7 +4667,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
       /* GL_HP_occlusion_test */
       case GL_OCCLUSION_TEST_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             *params = (GLint) ctx->Depth.OcclusionTest;
          }
          else {
@@ -4675,7 +4675,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             if (ctx->Depth.OcclusionTest)
                *params = (GLint) ctx->OcclusionResult;
             else

@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.16 2000/10/29 18:12:15 brianp Exp $ */
+/* $Id: pixel.c,v 1.17 2000/10/30 13:32:01 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,6 +53,7 @@ _mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor )
 
    ctx->Pixel.ZoomX = xfactor;
    ctx->Pixel.ZoomY = yfactor;
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -177,6 +178,8 @@ _mesa_PixelStorei( GLenum pname, GLint param )
       default:
 	 gl_error( ctx, GL_INVALID_ENUM, "glPixelStore" );
    }
+
+   ctx->NewState |= _NEW_PACKUNPACK;
 }
 
 
@@ -295,6 +298,7 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glPixelMapfv(map)" );
    }
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -629,6 +633,7 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
 
    /* signal to recompute the bitmask */
    ctx->ImageTransferState = UPDATE_IMAGE_TRANSFER_STATE;
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 

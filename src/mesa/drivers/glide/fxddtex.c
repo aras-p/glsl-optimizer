@@ -340,7 +340,10 @@ void fxDDTexDel(GLcontext *ctx, struct gl_texture_object *tObj)
   FREE(ti);
   tObj->DriverData = NULL;
 
-  ctx->NewState |= NEW_TEXTURING;
+/* Pushed into core: Set _NEW_TEXTURE whenever a bound texture is
+ * deleted (changes bound texture id).
+ */
+/*    ctx->NewState |= _NEW_TEXTURE; */
 }
 
 

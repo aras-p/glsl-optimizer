@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.13 2000/10/28 20:41:14 brianp Exp $ */
+/* $Id: feedback.c,v 1.14 2000/10/30 13:32:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,6 +104,7 @@ _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
    ctx->Feedback.BufferSize = size;
    ctx->Feedback.Buffer = buffer;
    ctx->Feedback.Count = 0;
+   ctx->NewState |= _NEW_FEEDBACK_SELECT;
 }
 
 
@@ -278,6 +279,8 @@ _mesa_SelectBuffer( GLsizei size, GLuint *buffer )
    ctx->Select.HitFlag = GL_FALSE;
    ctx->Select.HitMinZ = 1.0;
    ctx->Select.HitMaxZ = 0.0;
+
+   ctx->NewState |= _NEW_FEEDBACK_SELECT;
 }
 
 
@@ -380,6 +383,7 @@ _mesa_InitNames( void )
    ctx->Select.HitFlag = GL_FALSE;
    ctx->Select.HitMinZ = 1.0;
    ctx->Select.HitMaxZ = 0.0;
+   ctx->NewState |= _NEW_FEEDBACK_SELECT;
 }
 
 
@@ -405,6 +409,7 @@ _mesa_LoadName( GLuint name )
    else {
       ctx->Select.NameStack[MAX_NAME_STACK_DEPTH-1] = name;
    }
+   ctx->NewState |= _NEW_FEEDBACK_SELECT;
 }
 
 
@@ -425,6 +430,7 @@ _mesa_PushName( GLuint name )
    else {
       gl_error( ctx, GL_STACK_OVERFLOW, "glPushName" );
    }
+   ctx->NewState |= _NEW_FEEDBACK_SELECT;
 }
 
 
@@ -446,6 +452,7 @@ _mesa_PopName( void )
    else {
       gl_error( ctx, GL_STACK_UNDERFLOW, "glPopName" );
    }
+   ctx->NewState |= _NEW_FEEDBACK_SELECT;
 }
 
 
@@ -493,6 +500,7 @@ _mesa_RenderMode( GLenum mode )
 	 ctx->Select.BufferCount = 0;
 	 ctx->Select.Hits = 0;
 	 ctx->Select.NameStackDepth = 0;
+	 ctx->NewState |= _NEW_FEEDBACK_SELECT;
 	 break;
       case GL_FEEDBACK:
 	 if (ctx->Feedback.Count > ctx->Feedback.BufferSize) {
@@ -503,6 +511,7 @@ _mesa_RenderMode( GLenum mode )
 	    result = ctx->Feedback.Count;
 	 }
 	 ctx->Feedback.Count = 0;
+	 ctx->NewState |= _NEW_FEEDBACK_SELECT;
 	 break;
       default:
 	 gl_error( ctx, GL_INVALID_ENUM, "glRenderMode" );
@@ -532,7 +541,7 @@ _mesa_RenderMode( GLenum mode )
    }
 
    ctx->RenderMode = mode;
-   ctx->NewState |= NEW_ALL;
+   ctx->NewState |= _NEW_RENDERMODE;
 
    return result;
 }

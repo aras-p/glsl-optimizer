@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.11 2000/10/28 20:41:13 brianp Exp $ */
+/* $Id: clip.c,v 1.12 2000/10/30 13:31:59 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -203,8 +203,6 @@ _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
 
 
    if (ctx->Transform.ClipEnabled[p]) {
-      ctx->NewState |= NEW_USER_CLIP;
-
       if (ctx->ProjectionMatrix.flags & MAT_DIRTY_ALL_OVER) {
 	 gl_matrix_analyze( &ctx->ProjectionMatrix );
       }
@@ -212,6 +210,8 @@ _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
 			   ctx->Transform.EyeUserPlane[p], 
 			   ctx->ProjectionMatrix.inv );
    }
+
+   ctx->NewState |= _NEW_TRANSFORM;
 }
 
 
