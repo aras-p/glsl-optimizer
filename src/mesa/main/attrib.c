@@ -1,8 +1,8 @@
-/* $Id: attrib.c,v 1.23 2000/05/07 20:41:30 brianp Exp $ */
+/* $Id: attrib.c,v 1.24 2000/07/05 22:26:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -359,6 +359,7 @@ _mesa_PushAttrib(GLbitfield mask)
          copy_texobj_state(&attr->Unit[u].Saved1D, attr->Unit[u].CurrentD[1]);
          copy_texobj_state(&attr->Unit[u].Saved2D, attr->Unit[u].CurrentD[2]);
          copy_texobj_state(&attr->Unit[u].Saved3D, attr->Unit[u].CurrentD[3]);
+         copy_texobj_state(&attr->Unit[u].SavedCubeMap, attr->Unit[u].CurrentCubeMap);
       }
       newnode = new_attrib_node( GL_TEXTURE_BIT );
       newnode->data = attr;
@@ -770,9 +771,13 @@ _mesa_PopAttrib(void)
                                      &(ctx->Texture.Unit[u].Saved2D) );
                   copy_texobj_state( ctx->Texture.Unit[u].CurrentD[3],
                                      &(ctx->Texture.Unit[u].Saved3D) );
+                  copy_texobj_state( ctx->Texture.Unit[u].CurrentCubeMap,
+                                     &(ctx->Texture.Unit[u].SavedCubeMap) );
+
                   gl_put_texobj_on_dirty_list( ctx, ctx->Texture.Unit[u].CurrentD[1] );
                   gl_put_texobj_on_dirty_list( ctx, ctx->Texture.Unit[u].CurrentD[2] );
                   gl_put_texobj_on_dirty_list( ctx, ctx->Texture.Unit[u].CurrentD[3] );
+                  gl_put_texobj_on_dirty_list( ctx, ctx->Texture.Unit[u].CurrentCubeMap );
 
                }
             }
