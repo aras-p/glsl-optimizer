@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.53 2000/04/04 15:14:10 brianp Exp $ */
+/* $Id: context.c,v 1.54 2000/04/07 00:19:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -992,6 +992,32 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->Hint.AllowDrawSpn = GL_TRUE;
    ctx->Hint.AllowDrawMem = GL_TRUE;
    ctx->Hint.StrictLighting = GL_TRUE;
+
+   /* Histogram group */
+   ctx->Histogram.Width = 0;
+   ctx->Histogram.Format = GL_RGBA;
+   ctx->Histogram.Sink = GL_FALSE;
+   ctx->Histogram.RedSize       = 0xffffffff;
+   ctx->Histogram.GreenSize     = 0xffffffff;
+   ctx->Histogram.BlueSize      = 0xffffffff;
+   ctx->Histogram.AlphaSize     = 0xffffffff;
+   ctx->Histogram.LuminanceSize = 0xffffffff;
+   for (i = 0; i < HISTOGRAM_TABLE_SIZE; i++) {
+      ctx->Histogram.Count[i][0] = 0;
+      ctx->Histogram.Count[i][1] = 0;
+      ctx->Histogram.Count[i][2] = 0;
+      ctx->Histogram.Count[i][3] = 0;
+   }
+
+   /* Min/Max group */
+   ctx->MinMax.Format = GL_RGBA;
+   ctx->MinMax.Sink = GL_FALSE;
+   ctx->MinMax.Min[RCOMP] = 1000;    ctx->MinMax.Max[RCOMP] = -1000;
+   ctx->MinMax.Min[GCOMP] = 1000;    ctx->MinMax.Max[GCOMP] = -1000;
+   ctx->MinMax.Min[BCOMP] = 1000;    ctx->MinMax.Max[BCOMP] = -1000;
+   ctx->MinMax.Min[ACOMP] = 1000;    ctx->MinMax.Max[ACOMP] = -1000;
+
+
 
    /* Pipeline */
    gl_pipeline_init( ctx );

@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.8 2000/03/16 07:36:33 keithw Exp $ */
+/* $Id: config.h,v 1.9 2000/04/07 00:19:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -111,6 +111,9 @@
 
 /* Subpixel precision for antialiasing, window coordinate snapping */
 #define SUB_PIXEL_BITS 4
+
+/* Size of histogram tables */
+#define HISTOGRAM_TABLE_SIZE 256
 
 
 
