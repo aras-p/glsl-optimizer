@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.34 2000/03/03 17:47:39 brianp Exp $ */
+/* $Id: dlist.c,v 1.35 2000/03/19 01:10:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3391,7 +3391,7 @@ static void execute_list( GLcontext *ctx, GLuint list )
                struct gl_pixelstore_attrib save = ctx->Unpack;
                ctx->Unpack = _mesa_native_packing;
                (*ctx->Exec->Bitmap)( (GLsizei) n[1].i, (GLsizei) n[2].i,
-                                n[3].f, n[4].f, n[5].f, n[6].f, n[7].data );
+                 n[3].f, n[4].f, n[5].f, n[6].f, (const GLubyte *) n[7].data );
                ctx->Unpack = save;  /* restore */
             }
 	    break;

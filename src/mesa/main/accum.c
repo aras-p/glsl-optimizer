@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.16 2000/02/02 21:53:11 brianp Exp $ */
+/* $Id: accum.c,v 1.17 2000/03/19 01:10:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -351,7 +351,7 @@ _mesa_Accum( GLenum op, GLfloat value )
             static GLchan multTable[32768];
             static GLfloat prevMult = 0.0;
             GLuint j;
-            const GLint max = 256 / mult;
+            const GLint max = (GLint) (256 / mult);
             if (mult != prevMult) {
                assert(max <= 32768);
                for (j = 0; j < max; j++)

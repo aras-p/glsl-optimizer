@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.13 2000/02/02 19:16:46 brianp Exp $ */
+/* $Id: context.h,v 1.14 2000/03/19 01:10:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -142,7 +142,7 @@ do {					\
 
 extern struct immediate *_mesa_CurrentInput;
 
-#define GET_CURRENT_CONTEXT(C)  GLcontext *C = _glapi_Context
+#define GET_CURRENT_CONTEXT(C)  GLcontext *C = (GLcontext *) _glapi_Context
 
 #define GET_IMMEDIATE struct immediate *IM = _mesa_CurrentInput
 

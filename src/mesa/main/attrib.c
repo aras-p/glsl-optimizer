@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.19 2000/03/10 22:12:22 brianp Exp $ */
+/* $Id: attrib.c,v 1.20 2000/03/19 01:10:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -699,7 +699,7 @@ _mesa_PopAttrib(void)
 	 case GL_POLYGON_STIPPLE_BIT:
 	    MEMCPY( ctx->PolygonStipple, attr->data, 32*sizeof(GLuint) );
 	    if (ctx->Driver.PolygonStipple) 
-	       ctx->Driver.PolygonStipple( ctx, attr->data );
+	       ctx->Driver.PolygonStipple( ctx, (const GLubyte *) attr->data );
 	    break;
          case GL_SCISSOR_BIT:
             MEMCPY( &ctx->Scissor, attr->data,

@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.18 2000/03/01 23:28:20 brianp Exp $ */
+/* $Id: teximage.c,v 1.19 2000/03/19 01:10:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -446,9 +446,9 @@ make_texture_image( GLcontext *ctx, GLint internalFormat,
          /* This will cover the common GL_RGB, GL_RGBA, GL_ALPHA,
           * GL_LUMINANCE_ALPHA, etc. texture formats.
           */
-         const GLubyte *src = gl_pixel_addr_in_image(unpacking,
+         const GLubyte *src = (const GLubyte *) gl_pixel_addr_in_image(unpacking,
                 pixels, width, height, srcFormat, srcType, 0, 0, 0);
-         const GLubyte *src1 = gl_pixel_addr_in_image(unpacking,
+         const GLubyte *src1 = (const GLubyte *) gl_pixel_addr_in_image(unpacking,
                 pixels, width, height, srcFormat, srcType, 0, 1, 0);
          const GLint srcStride = src1 - src;
          GLubyte *dst = texImage->Data;
@@ -468,9 +468,9 @@ make_texture_image( GLcontext *ctx, GLint internalFormat,
       }
       else if (srcFormat == GL_RGBA && internalFormat == GL_RGB) {
          /* commonly used by Quake */
-         const GLubyte *src = gl_pixel_addr_in_image(unpacking,
+         const GLubyte *src = (const GLubyte *) gl_pixel_addr_in_image(unpacking,
                 pixels, width, height, srcFormat, srcType, 0, 0, 0);
-         const GLubyte *src1 = gl_pixel_addr_in_image(unpacking,
+         const GLubyte *src1 = (const GLubyte *) gl_pixel_addr_in_image(unpacking,
                 pixels, width, height, srcFormat, srcType, 0, 1, 0);
          const GLint srcStride = src1 - src;
          GLubyte *dst = texImage->Data;
@@ -1316,7 +1316,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
          assert(dest);
          if (texImage->Format == GL_RGBA) {
             const GLubyte *src = texImage->Data + row * width * 4 * sizeof(GLubyte);
-            gl_pack_rgba_span( ctx, width, (void *) src, format, type, dest,
+            gl_pack_rgba_span( ctx, width, (CONST GLubyte (*)[4]) src,
+                               format, type, dest,
                                &ctx->Pack, GL_TRUE );
          }
          else {
@@ -1633,7 +1634,7 @@ read_color_image( GLcontext *ctx, GLint x, GLint y,
    GLint stride, i;
    GLubyte *image, *dst;
 
-   image = MALLOC(width * height * 4 * sizeof(GLubyte));
+   image = (GLubyte *) MALLOC(width * height * 4 * sizeof(GLubyte));
    if (!image)
       return NULL;
 

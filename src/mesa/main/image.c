@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.19 2000/03/13 18:31:51 brianp Exp $ */
+/* $Id: image.c,v 1.20 2000/03/19 01:10:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -497,7 +497,7 @@ void
 _mesa_unpack_polygon_stipple( const GLubyte *pattern, GLuint dest[32],
                               const struct gl_pixelstore_attrib *unpacking )
 {
-   GLubyte *ptrn = _mesa_unpack_bitmap( 32, 32, pattern, unpacking );
+   GLubyte *ptrn = (GLubyte *) _mesa_unpack_bitmap( 32, 32, pattern, unpacking );
    if (ptrn) {
       /* Convert pattern from GLubytes to GLuints and handle big/little
        * endian differences
@@ -1518,12 +1518,12 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
                for (i = 0; i < n; i++) {
                   GLfloat value = s[i];
                   SWAP4BYTE(value);
-                  indexes[i] = value;
+                  indexes[i] = (GLuint) value;
                }
             }
             else {
                for (i = 0; i < n; i++)
-                  indexes[i] = s[i];
+                  indexes[i] = (GLuint) s[i];
             }
          }
          break;

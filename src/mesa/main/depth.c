@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.14 2000/03/17 15:31:52 brianp Exp $ */
+/* $Id: depth.c,v 1.15 2000/03/19 01:10:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1570,7 +1570,7 @@ _mesa_clear_depth_buffer( GLcontext *ctx )
                     2 * ctx->DrawBuffer->Width * ctx->DrawBuffer->Height);
          }
          else {
-            GLushort *d = ctx->DrawBuffer->DepthBuffer;
+            GLushort *d = (GLushort *) ctx->DrawBuffer->DepthBuffer;
             GLint n = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height;
             while (n >= 16) {
                d[0] = clearValue;    d[1] = clearValue;

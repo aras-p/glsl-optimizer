@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.47 2000/03/17 15:31:52 brianp Exp $ */
+/* $Id: context.c,v 1.48 2000/03/19 01:10:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -287,6 +287,7 @@ GLvisual *gl_create_visual( GLboolean rgbFlag,
     * bad value now (a 1-bit depth buffer!?!).
     */
    assert(depthBits == 0 || depthBits > 1);
+printf("depthbits %d\n", depthBits);
 
    if (depthBits < 0 || depthBits > 32) {
       return NULL;
@@ -1394,8 +1395,8 @@ GLboolean gl_initialize_context_data( GLcontext *ctx,
    }
 
    /* setup API dispatch tables */
-   ctx->Exec = CALLOC(_glapi_get_dispatch_table_size() * sizeof(void *));
-   ctx->Save = CALLOC(_glapi_get_dispatch_table_size() * sizeof(void *));
+   ctx->Exec = (struct _glapi_table *) CALLOC(_glapi_get_dispatch_table_size() * sizeof(void *));
+   ctx->Save = (struct _glapi_table *) CALLOC(_glapi_get_dispatch_table_size() * sizeof(void *));
    if (!ctx->Exec || !ctx->Save) {
       free_shared_state(ctx, ctx->Shared);
       FREE(ctx->VB);
