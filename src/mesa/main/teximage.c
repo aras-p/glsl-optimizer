@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.89 2001/03/28 21:36:31 gareth Exp $ */
+/* $Id: teximage.c,v 1.90 2001/03/30 15:31:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1348,6 +1348,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
 
       ASSERT(texImage->TexFormat);
       texImage->FetchTexel = texImage->TexFormat->FetchTexel1D;
+      ASSERT(texImage->FetchTexel);
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -1457,6 +1458,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
 
       ASSERT(texImage->TexFormat);
       texImage->FetchTexel = texImage->TexFormat->FetchTexel2D;
+      ASSERT(texImage->FetchTexel);
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -1560,6 +1562,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLenum internalFormat,
 
       ASSERT(texImage->TexFormat);
       texImage->FetchTexel = texImage->TexFormat->FetchTexel3D;
+      ASSERT(texImage->FetchTexel);
 
       /* state update */
       texObj->Complete = GL_FALSE;
@@ -1784,6 +1787,10 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
    (*ctx->Driver.CopyTexImage1D)(ctx, target, level, internalFormat,
                                  x, y, width, border);
 
+   ASSERT(texImage->TexFormat);
+   texImage->FetchTexel = texImage->TexFormat->FetchTexel1D;
+   ASSERT(texImage->FetchTexel);
+
    /* state update */
    texObj->Complete = GL_FALSE;
    ctx->NewState |= _NEW_TEXTURE;
@@ -1839,6 +1846,10 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
    ASSERT(ctx->Driver.CopyTexImage2D);
    (*ctx->Driver.CopyTexImage2D)(ctx, target, level, internalFormat,
                                  x, y, width, height, border);
+
+   ASSERT(texImage->TexFormat);
+   texImage->FetchTexel = texImage->TexFormat->FetchTexel2D;
+   ASSERT(texImage->FetchTexel);
 
    /* state update */
    texObj->Complete = GL_FALSE;
