@@ -1,8 +1,8 @@
-/* $Id: 3dnow.c,v 1.5 2000/06/27 22:10:01 brianp Exp $ */
+/* $Id: 3dnow.c,v 1.6 2000/09/15 15:54:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -144,22 +144,22 @@ extern void _ASMAPI gl_v16_3dnow_general_xform( GLfloat *first_vert,
 					GLuint src_stride,
 					GLuint count );
 
+
+DECLARE_XFORM_GROUP( _3dnow, 1, raw )
+DECLARE_XFORM_GROUP( _3dnow, 2, raw )
+DECLARE_XFORM_GROUP( _3dnow, 3, raw )
+DECLARE_XFORM_GROUP( _3dnow, 4, raw )
+
+DECLARE_XFORM_GROUP( _3dnow, 1, masked )
+DECLARE_XFORM_GROUP( _3dnow, 2, masked )
+DECLARE_XFORM_GROUP( _3dnow, 3, masked )
+DECLARE_XFORM_GROUP( _3dnow, 4, masked )
+
+DECLARE_NORM_GROUP( _3dnow, raw )
+/*DECLARE_NORM_GROUP( _3dnow, masked )*/
+
 void gl_init_3dnow_asm_transforms (void)
 {
-   DECLARE_XFORM_GROUP( _3dnow, 1, raw )
-   DECLARE_XFORM_GROUP( _3dnow, 2, raw )
-   DECLARE_XFORM_GROUP( _3dnow, 3, raw )
-   DECLARE_XFORM_GROUP( _3dnow, 4, raw )
-
-   DECLARE_XFORM_GROUP( _3dnow, 1, masked )
-   DECLARE_XFORM_GROUP( _3dnow, 2, masked )
-   DECLARE_XFORM_GROUP( _3dnow, 3, masked )
-   DECLARE_XFORM_GROUP( _3dnow, 4, masked )
-
-   DECLARE_NORM_GROUP( _3dnow, raw )
-/* DECLARE_NORM_GROUP( _3dnow, masked )
-*/
-
    ASSIGN_XFORM_GROUP( _3dnow, 0, 1, raw )
    ASSIGN_XFORM_GROUP( _3dnow, 0, 2, raw )
    ASSIGN_XFORM_GROUP( _3dnow, 0, 3, raw )
@@ -171,8 +171,7 @@ void gl_init_3dnow_asm_transforms (void)
    ASSIGN_XFORM_GROUP( _3dnow, CULL_MASK_ACTIVE, 4, masked )
 
    ASSIGN_NORM_GROUP( _3dnow, 0, raw )
-/* ASSIGN_NORM_GROUP( _3dnow, CULL_MASK_ACTIVE, masked )
-*/
+/* ASSIGN_NORM_GROUP( _3dnow, CULL_MASK_ACTIVE, masked )*/
 
 #ifdef DEBUG
    gl_test_all_transform_functions("3Dnow!");
