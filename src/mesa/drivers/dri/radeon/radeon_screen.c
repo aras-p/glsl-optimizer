@@ -110,73 +110,6 @@ static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
 #ifdef USE_NEW_INTERFACE
-static __GLcontextModes * fill_in_modes( __GLcontextModes * modes,
-					 unsigned pixel_bits,
-					 unsigned depth_bits,
-					 unsigned stencil_bits,
-					 const GLenum * db_modes,
-					 unsigned num_db_modes,
-					 int visType )
-{
-    static const uint8_t bits[2][4] = {
-	{          5,          6,          5,          0 },
-	{          8,          8,          8,          8 }
-    };
-
-    static const uint32_t masks[2][4] = {
-	{ 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 },
-	{ 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000 }
-    };
-
-    unsigned   i;
-    unsigned   j;
-    const unsigned index = ((pixel_bits + 15) / 16) - 1;
-
-    for ( i = 0 ; i < num_db_modes ; i++ ) {
-	for ( j = 0 ; j < 2 ; j++ ) {
-
-	    modes->redBits   = bits[index][0];
-	    modes->greenBits = bits[index][1];
-	    modes->blueBits  = bits[index][2];
-	    modes->alphaBits = bits[index][3];
-	    modes->redMask   = masks[index][0];
-	    modes->greenMask = masks[index][1];
-	    modes->blueMask  = masks[index][2];
-	    modes->alphaMask = masks[index][3];
-	    modes->rgbBits   = modes->redBits + modes->greenBits
-		+ modes->blueBits + modes->alphaBits;
-
-	    modes->accumRedBits   = 16 * j;
-	    modes->accumGreenBits = 16 * j;
-	    modes->accumBlueBits  = 16 * j;
-	    modes->accumAlphaBits = (masks[index][3] != 0) ? 16 * j : 0;
-	    modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
-
-	    modes->stencilBits = stencil_bits;
-	    modes->depthBits = depth_bits;
-
-	    modes->visualType = visType;
-	    modes->renderType = GLX_RGBA_BIT;
-	    modes->drawableType = GLX_WINDOW_BIT;
-	    modes->rgbMode = GL_TRUE;
-
-	    if ( db_modes[i] == GLX_NONE ) {
-		modes->doubleBufferMode = GL_FALSE;
-	    }
-	    else {
-		modes->doubleBufferMode = GL_TRUE;
-		modes->swapMethod = db_modes[i];
-	    }
-
-	    modes = modes->next;
-	}
-    }
-
-    return modes;
-}
-#endif /* USE_NEW_INTERFACE */
-
-#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *
 radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
@@ -186,7 +119,8 @@ radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
     unsigned num_modes;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
-    unsigned i;
+    GLenum fb_format;
+    GLenum fb_type;
 
     /* Right now GLX_SWAP_COPY_OML isn't supported, but it would be easy
      * enough to add support.  Basically, if a context is created with an
@@ -197,38 +131,52 @@ radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
 	GLX_NONE, GLX_SWAP_UNDEFINED_OML /*, GLX_SWAP_COPY_OML */
     };
 
-    int depth_buffer_modes[2][2];
+    uint8_t depth_bits_array[2];
+    uint8_t stencil_bits_array[2];
 
 
-    depth_buffer_modes[0][0] = depth_bits;
-    depth_buffer_modes[1][0] = depth_bits;
-
+    depth_bits_array[0] = depth_bits;
+    depth_bits_array[1] = depth_bits;
+    
     /* Just like with the accumulation buffer, always provide some modes
      * with a stencil buffer.  It will be a sw fallback, but some apps won't
      * care about that.
      */
-    depth_buffer_modes[0][1] = 0;
-    depth_buffer_modes[1][1] = (stencil_bits == 0) ? 8 : stencil_bits;
+    stencil_bits_array[0] = 0;
+    stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
 
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
 
     num_modes = depth_buffer_factor * back_buffer_factor * 4;
 
-    modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
-    m = modes;
-    for ( i = 0 ; i < depth_buffer_factor ; i++ ) {
-	m = fill_in_modes( m, pixel_bits,
-			   depth_buffer_modes[i][0], depth_buffer_modes[i][1],
-			   back_buffer_modes, back_buffer_factor,
-			   GLX_TRUE_COLOR );
+    if ( pixel_bits == 16 ) {
+        fb_format = GL_RGB;
+        fb_type = GL_UNSIGNED_SHORT_5_6_5;
+    }
+    else {
+        fb_format = GL_BGRA;
+        fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-    for ( i = 0 ; i < depth_buffer_factor ; i++ ) {
-	m = fill_in_modes( m, pixel_bits,
-			   depth_buffer_modes[i][0], depth_buffer_modes[i][1],
+    modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
+    m = modes;
+    if ( ! driFillInModes( & m, fb_format, fb_type,
+			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
 			   back_buffer_modes, back_buffer_factor,
-			   GLX_DIRECT_COLOR );
+			   GLX_TRUE_COLOR ) ) {
+	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
+		 __func__, __LINE__ );
+	return NULL;
+    }
+
+    if ( ! driFillInModes( & m, fb_format, fb_type,
+			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
+			   back_buffer_modes, back_buffer_factor,
+			   GLX_DIRECT_COLOR ) ) {
+	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
+		 __func__, __LINE__ );
+	return NULL;
     }
 
     /* Mark the visual as slow if there are "fake" stencil bits.
