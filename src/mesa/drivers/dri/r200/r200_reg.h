@@ -852,8 +852,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_TXFORMAT_DXT1               (12  <<  0)
 #define     R200_TXFORMAT_DXT23              (14  <<  0)
 #define     R200_TXFORMAT_DXT45              (15  <<  0)
+#define     R200_TXFORMAT_DVDU88             (18  <<  0)
+#define     R200_TXFORMAT_LDVDU655           (19  <<  0)
+#define     R200_TXFORMAT_LDVDU8888          (20  <<  0)
+#define     R200_TXFORMAT_GR1616             (21  <<  0)
+#define     R200_TXFORMAT_ABGR8888           (22  <<  0)
+#define     R200_TXFORMAT_BGR111110          (23  <<  0)
 #define     R200_TXFORMAT_FORMAT_MASK        (31 <<  0)
 #define     R200_TXFORMAT_FORMAT_SHIFT       0
+#define     R200_TXFORMAT_APPLE_YUV          (1  <<  5)
 #define     R200_TXFORMAT_ALPHA_IN_MAP       (1  <<  6)
 #define     R200_TXFORMAT_NON_POWER2         (1  <<  7)
 #define     R200_TXFORMAT_WIDTH_MASK         (15 <<  8)
@@ -872,6 +879,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_TXFORMAT_ST_ROUTE_STQ5      (5  << 24)
 #define     R200_TXFORMAT_ST_ROUTE_MASK      (7  << 24)
 #define     R200_TXFORMAT_ST_ROUTE_SHIFT     24
+#define     R200_TXFORMAT_LOOKUP_DISABLE     (1  << 27)
 #define     R200_TXFORMAT_ALPHA_MASK_ENABLE  (1  << 28)
 #define     R200_TXFORMAT_CHROMA_KEY_ENABLE  (1  << 29)
 #define     R200_TXFORMAT_CUBIC_MAP_ENABLE   (1  << 30)
