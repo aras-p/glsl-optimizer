@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.19 2000/04/10 21:12:20 brianp Exp $ */
+/* $Id: glx.h,v 1.20 2000/04/19 01:40:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -108,8 +108,6 @@ extern "C" {
 
 /*
  * GLX 1.3 and later:
- * XXX don't know the values of some of these enums!
- * XXX some 1.3 enums may be missing!
  */
 #define GLX_CONFIG_CAVEAT		0x20
 #define GLX_DONT_CARE			0xFFFFFFFF
@@ -194,10 +192,19 @@ extern "C" {
 
 
 /*
+ * 47. GLX_EXT_import_context
+ */
+#define GLX_SHARE_CONTEXT_EXT		0x800A
+#define GLX_VISUAL_ID_EXT		0x800B
+#define GLX_SCREEN_EXT			0x800C
+
+
+/*
  * Compile-time extension tests
  */
 #define GLX_EXT_visual_info		1
 #define GLX_EXT_visual_rating		1
+#define GLX_EXT_import_context		1
 #define GLX_MESA_pixmap_colormap	1
 #define GLX_MESA_release_buffers	1
 #define GLX_MESA_copy_sub_buffer	1
@@ -353,6 +360,21 @@ extern GLboolean glXSet3DfxModeMESA( GLint mode );
 extern int glXGetVideoSyncSGI(unsigned int *count);
 extern int glXWaitVideoSyncSGI(int divisor, int remainder,
                                unsigned int *count);
+
+
+
+/* GLX_EXT_import_context */
+extern void glXFreeContextEXT(Display *dpy, GLXContext context);
+
+extern GLXContextID glXGetContextIDEXT(const GLXContext context);
+
+extern Display *glXGetCurrentDisplayEXT(void);
+
+extern GLXContext glXImportContextEXT(Display *dpy, GLXContextID contextID);
+
+extern int glXQueryContextInfoEXT(Display *dpy, GLXContext context,
+                                  int attribute,int *value);
+
 
 
 /* GLX_ARB_get_proc_address */
