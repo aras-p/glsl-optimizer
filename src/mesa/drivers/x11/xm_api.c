@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.11 2000/12/08 17:37:00 brianp Exp $ */
+/* $Id: xm_api.c,v 1.12 2000/12/13 00:47:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1067,7 +1067,7 @@ static void setup_truecolor( XMesaVisual v, XMesaBuffer buffer,
       GLint rBits = bitcount(rmask);
       GLint gBits = bitcount(gmask);
       GLint bBits = bitcount(bmask);
-      GLint minBits;
+      GLint maxBits;
       GLuint i;
 
       /* convert pixel components in [0,_mask] to RGB values in [0,255] */
@@ -1096,11 +1096,11 @@ static void setup_truecolor( XMesaVisual v, XMesaBuffer buffer,
       }
 
       /* setup dithering kernel */
-      minBits = rBits;
-      if (gBits < minBits)  minBits = gBits;
-      if (bBits < minBits)  minBits = bBits;
+      maxBits = rBits;
+      if (gBits > maxBits)  maxBits = gBits;
+      if (bBits > maxBits)  maxBits = bBits;
       for (i=0;i<16;i++) {
-         v->Kernel[i] = kernel[i] >> minBits;
+         v->Kernel[i] = kernel[i] >> maxBits;
       }
 
       v->undithered_pf = PF_TRUECOLOR;
