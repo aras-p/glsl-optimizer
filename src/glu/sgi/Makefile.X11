@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.5 2001/08/13 16:51:08 brianp Exp $
+# $Id: Makefile.X11,v 1.6 2001/12/14 17:19:32 kschultz Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -6,6 +6,7 @@
 
 # Makefile for SGI SI GLU library
 
+.SUFFIXES : .cc
 
 ##### MACROS #####
 
