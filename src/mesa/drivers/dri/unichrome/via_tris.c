@@ -230,14 +230,39 @@ static struct {
 #define AREA_IS_CCW(a) (a > 0)
 #define GET_VERTEX(e) (vmesa->verts + (e * vmesa->vertexSize * sizeof(int)))
 
-#define VERT_SET_RGBA(v, c)    VIA_COLOR(v->ub4[coloroffset], c)
-#define VERT_COPY_RGBA(v0, v1) v0->ui[coloroffset] = v1->ui[coloroffset]
-#define VERT_SAVE_RGBA(idx)    color[idx] = v[idx]->ui[coloroffset]
-#define VERT_RESTORE_RGBA(idx) v[idx]->ui[coloroffset] = color[idx]
-#define VERT_SET_SPEC(v, c)    if (havespec) VIA_SPEC(v->ub4[5], c)
-#define VERT_COPY_SPEC(v0, v1) if (havespec) COPY_3V(v0->ub4[5], v1->ub4[5])
-#define VERT_SAVE_SPEC(idx)    if (havespec) spec[idx] = v[idx]->ui[5]
-#define VERT_RESTORE_SPEC(idx) if (havespec) v[idx]->ui[5] = spec[idx]
+#define VERT_SET_RGBA( v, c )  					\
+do {								\
+   via_color_t *color = (via_color_t *)&((v)->ui[coloroffset]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->red, (c)[0]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->green, (c)[1]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->blue, (c)[2]);		\
+   UNCLAMPED_FLOAT_TO_UBYTE(color->alpha, (c)[3]);		\
+} while (0)
+
+#define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
+
+#define VERT_SET_SPEC( v0, c )					\
+do {								\
+   if (havespec) {						\
+      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.red, (c)[0]);	\
+      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.green, (c)[1]);	\
+      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.blue, (c)[2]);	\
+   }								\
+} while (0)
+#define VERT_COPY_SPEC( v0, v1 )			\
+do {							\
+   if (havespec) {					\
+      v0->v.specular.red   = v1->v.specular.red;	\
+      v0->v.specular.green = v1->v.specular.green;	\
+      v0->v.specular.blue  = v1->v.specular.blue; 	\
+   }							\
+} while (0)
+
+
+#define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
+#define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = color[idx]
+#define VERT_SAVE_SPEC( idx )    if (havespec) spec[idx] = v[idx]->ui[5]
+#define VERT_RESTORE_SPEC( idx ) if (havespec) v[idx]->ui[5] = spec[idx]
 
 
 #define LOCAL_VARS(n)                                                   \
