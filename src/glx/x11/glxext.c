@@ -1523,13 +1523,14 @@ static Bool BindContextWrapper( Display *dpy, GLXContext gc,
 	return (*gc->driContext.bindContext3)(dpy, gc->screen, draw, read, 
 					      & gc->driContext);
     }
+#ifndef DRI_NEW_INTERFACE_ONLY
     else {
 	return (*gc->driContext.bindContext2)(dpy, gc->screen, draw, read,
 					      gc);
     }
-#else
-    return GL_FALSE;
 #endif
+#endif
+    return GL_FALSE;
 }
 
 
@@ -1542,14 +1543,15 @@ static Bool UnbindContextWrapper( Display *dpy, GLXContext gc )
 						gc->currentReadable,
 						& gc->driContext );
     }
+#ifndef DRI_NEW_INTERFACE_ONLY
     else {
 	return (*gc->driContext.unbindContext2)(dpy, gc->screen,
 						gc->currentDrawable,
 						gc->currentReadable, gc);
     }
-#else
-    return GL_FALSE;
 #endif
+#endif
+    return GL_FALSE;
 }
 
 

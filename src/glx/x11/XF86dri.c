@@ -39,10 +39,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define NEED_REPLIES
 #include <X11/Xlibint.h>
-#include "xf86dristr.h"
 #include <X11/extensions/Xext.h>
 #include "extutil.h"
 #include "glheader.h"
+#include "xf86dristr.h"
 
 static XExtensionInfo _xf86dri_info_data;
 static XExtensionInfo *xf86dri_info = &_xf86dri_info_data;

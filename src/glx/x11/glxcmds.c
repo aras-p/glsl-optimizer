@@ -72,6 +72,7 @@ static void * DriverCreateContextWrapper( const __GLXscreenConfigs *psc,
     Display *dpy, XVisualInfo *vis, void *shared, __DRIcontext *ctx,
     const __GLcontextModes *fbconfig, int render_type );
 
+#ifndef DRI_NEW_INTERFACE_ONLY
 static Bool dummyBindContext2( Display *dpy, int scrn,
     GLXDrawable draw, GLXDrawable read, GLXContext gc );
 
@@ -113,6 +114,7 @@ static Bool dummyUnbindContext2( Display *dpy, int scrn,
     assert( draw == read );
     return (*gc->driContext.unbindContext)( dpy, scrn, draw, gc, GL_FALSE );
 }
+#endif /* DRI_NEW_INTERFACE_ONLY */
 
 
 /****************************************************************************/
@@ -154,6 +156,7 @@ static void * DriverCreateContextWrapper( const __GLXscreenConfigs *psc,
 	assert( (ctx_priv == NULL) || (ctx->bindContext2 != NULL)
 		|| (ctx->bindContext3 != NULL) );
     }
+#ifndef DRI_NEW_INTERFACE_ONLY
     else {
 	if ( vis != NULL ) {
 	    ctx_priv = (*psc->driScreen.createContext)(dpy, vis, shared, ctx);
@@ -169,6 +172,7 @@ static void * DriverCreateContextWrapper( const __GLXscreenConfigs *psc,
 	    }
 	}
     }
+#endif
 
     return ctx_priv;
 }
