@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.41 2000/09/02 17:54:28 brianp Exp $
+$Id: VERSIONS,v 1.42 2000/09/08 16:42:44 brianp Exp $
 
 
 Mesa Version History
@@ -759,6 +759,7 @@ Mesa Version History
 	- support for hardware T&L for DRI
 	- GL_EXT_convolution extension
 	- GL_ARB_imaging subset
+	- OSMesaCreateContextExt() function
     Bug Fixes:
 	- fbiRev and tmuRev were unitialized when using Glide3
     Changes:
