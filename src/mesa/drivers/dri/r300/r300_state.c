@@ -1200,6 +1200,10 @@ void r300_setup_textures(GLcontext *ctx)
 				t=&default_tex_obj;
 				}
 			//fprintf(stderr, "t->format=%08x\n", t->format);
+			if((t->format & 0xffffff00)==0xffffff00){
+				WARN_ONCE("unknown texture format encountered. Help me !\n");
+				//fprintf(stderr, "t->format=%08x\n", t->format);
+				}
 			if (RADEON_DEBUG & DEBUG_STATE)
 				fprintf(stderr, "Activating texture unit %d\n", i);
 			max_texture_unit=i;
