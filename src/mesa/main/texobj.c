@@ -659,6 +659,7 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
          if (delObj) {
             /* First check if this texture is currently bound.
              * If so, unbind it and decrement the reference count.
+             * XXX all RefCount accesses should be protected by a mutex.
              */
             GLuint u;
             for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
@@ -705,6 +706,7 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
             _mesa_remove_texture_object(ctx, delObj);
             /* The actual texture object will not be freed until it's no
              * longer bound in any context.
+             * XXX all RefCount accesses should be protected by a mutex.
              */
             delObj->RefCount--;
             if (delObj->RefCount == 0) {
@@ -851,6 +853,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       newTexObj->Target = target;
    }
 
+   /* XXX all RefCount accesses should be protected by a mutex. */
    newTexObj->RefCount++;
 
    /* do the actual binding, but first flush outstanding vertices:
@@ -885,6 +888,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    /* Decrement the reference count on the old texture and check if it's
     * time to delete it.
     */
+   /* XXX all RefCount accesses should be protected by a mutex. */
    oldTexObj->RefCount--;
    ASSERT(oldTexObj->RefCount >= 0);
    if (oldTexObj->RefCount == 0) {
