@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.48 2002/11/20 21:39:39 brianp Exp $ */
+/* $Id: texstore.c,v 1.49 2002/12/03 00:05:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -193,7 +193,8 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
           texDestFormat == GL_LUMINANCE_ALPHA ||
           texDestFormat == GL_ALPHA ||
           texDestFormat == GL_RGB ||
-          texDestFormat == GL_RGBA);
+          texDestFormat == GL_RGBA ||
+          texDestFormat == GL_DEPTH_COMPONENT);
    ASSERT(texDestAddr);
    ASSERT(srcWidth >= 1);
    ASSERT(srcHeight >= 1);
@@ -479,7 +480,8 @@ _mesa_transfer_teximage(GLcontext *ctx, GLuint dimensions,
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
           baseInternalFormat == GL_ALPHA ||
           baseInternalFormat == GL_RGB ||
-          baseInternalFormat == GL_RGBA);
+          baseInternalFormat == GL_RGBA ||
+          baseInternalFormat == GL_DEPTH_COMPONENT);
 
    if (transferOps & IMAGE_CONVOLUTION_BIT) {
       _mesa_adjust_image_for_convolution(ctx, dimensions, &postConvWidth,
