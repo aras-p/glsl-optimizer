@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.0
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -6129,7 +6129,7 @@ _mesa_NewList( GLuint list, GLenum mode )
 
    /* Allocate new display list */
    ctx->ListState.CurrentListNum = list;
-   ctx->ListState.CurrentBlock = (Node *) MALLOC( sizeof(Node) * BLOCK_SIZE );
+   ctx->ListState.CurrentBlock = (Node *) CALLOC( sizeof(Node) * BLOCK_SIZE );
    ctx->ListState.CurrentListPtr = ctx->ListState.CurrentBlock;
    ctx->ListState.CurrentPos = 0;
 
