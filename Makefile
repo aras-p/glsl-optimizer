@@ -47,6 +47,7 @@ $(TOP)/configs/current:
 aix \
 aix-gcc \
 aix-static \
+beos \
 darwin \
 darwin-static \
 freebsd \
