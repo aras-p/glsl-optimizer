@@ -24,6 +24,10 @@
 
 /*
  * $Log: colors.h,v $
+ * Revision 1.3  2002/01/15 18:14:34  kschultz
+ * Fixed pixel color component problem and clear code for 24-bit Windows
+ *   devices.  (Jeff Lewis)
+ *
  * Revision 1.2  2002/01/15 18:11:36  kschultz
  * Remove trailing CR's.   No logical changes.
  *
@@ -42,6 +46,10 @@
 
 /*
  * $Log: colors.h,v $
+ * Revision 1.3  2002/01/15 18:14:34  kschultz
+ * Fixed pixel color component problem and clear code for 24-bit Windows
+ *   devices.  (Jeff Lewis)
+ *
  * Revision 1.2  2002/01/15 18:11:36  kschultz
  * Remove trailing CR's.   No logical changes.
  *
@@ -60,6 +68,10 @@
  
 /*
  * $Log: colors.h,v $
+ * Revision 1.3  2002/01/15 18:14:34  kschultz
+ * Fixed pixel color component problem and clear code for 24-bit Windows
+ *   devices.  (Jeff Lewis)
+ *
  * Revision 1.2  2002/01/15 18:11:36  kschultz
  * Remove trailing CR's.   No logical changes.
  *
@@ -126,7 +138,8 @@ char ColorMap16[] = {
 #else
 #define BGR16(r,g,b)	((WORD)(((BYTE)(ColorMap16[b]) | ((BYTE)(ColorMap16[g]) << 5)) | (((WORD)(BYTE)(ColorMap16[r])) << 10)))
 #endif
-#define BGR24(r,g,b)	(unsigned long)(((DWORD)(((BYTE)(b)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(r))<<16))) << 8)
+#define BGR24(r,g,b) (unsigned long)((DWORD)(((BYTE)(b)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(r))<<16)))
+
 #define BGR32(r,g,b)	(unsigned long)((DWORD)(((BYTE)(b)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(r))<<16)))
 
 

@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.23 2001/11/01 22:44:47 kschultz Exp $ */
+/* $Id: wmesa.c,v 1.24 2002/01/15 18:14:34 kschultz Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -370,166 +370,173 @@ static void clear_color( GLcontext* ctx, const GLchan color[4] )
 }
 
 
+/* 
+ * Clear the specified region of the color buffer using the clear color 
+ * or index as specified by one of the two functions above. 
+ * 
+ * This procedure clears either the front and/or the back COLOR buffers. 
+ * Only the "left" buffer is cleared since we are not stereo. 
+ * Clearing of the other non-color buffers is left to the swrast. 
+ * We also only clear the color buffers if the color masks are all 1's. 
+ * Otherwise, we let swrast do it. 
+ */ 
 
-/*
- * Clear the specified region of the color buffer using the clear color
- * or index as specified by one of the two functions above.
- *
- * This procedure clears either the front and/or the back COLOR buffers.
- * Only the "left" buffer is cleared since we are not stereo.
- * Clearing of the other non-color buffers is left to the swrast.
- * We also only clear the color buffers if the color masks are all 1's.
- * Otherwise, we let swrast do it.
- */
+static clear(GLcontext* ctx, GLbitfield mask, 
+      GLboolean all, GLint x, GLint y, GLint width, GLint height) 
+{ 
+  const   GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask; 
+  
+  if (all){ 
+    x=y=0; 
+    width=Current->width; 
+    height=Current->height; 
+  } 
+  
+  
+  /* sanity check - can't have right(stereo) buffers */ 
+  assert((mask & (DD_FRONT_RIGHT_BIT | DD_BACK_RIGHT_BIT)) == 0); 
+  
+  if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) { 
+      if (mask & DD_BACK_LEFT_BIT) { 
+#if defined(USE_GDI_TO_CLEAR) 
+#if defined(DDRAW) 
+ // D.R.S. 10/29/01 on my system (Pentium 4 with nvidia GeForce2 MX card, 
+ // this is almose 100 times faster that the code below 
+ HDC DC=NULL; 
+ HPEN Pen=CreatePen(PS_SOLID,1,Current->clearpixel); 
+ HBRUSH Brush=CreateSolidBrush(Current->clearpixel); 
+ HPEN Old_Pen=NULL; 
+ HBRUSH Old_Brush=NULL; 
+ Current->lpDDSOffScreen->lpVtbl->Unlock(Current->lpDDSOffScreen,NULL); 
+ Current->lpDDSOffScreen->lpVtbl->GetDC(Current->lpDDSOffScreen,&DC); 
+ Old_Pen=SelectObject(DC,Pen); 
+ Old_Brush=SelectObject(DC,Brush); 
+ Rectangle(DC,x,y,x+width,y+height); 
+ SelectObject(DC,Old_Pen); 
+ SelectObject(DC,Old_Brush); 
+ DeleteObject(Pen); 
+ DeleteObject(Brush); 
+ Current->lpDDSOffScreen->lpVtbl->ReleaseDC(Current->lpDDSOffScreen,DC); 
+ while (Current->lpDDSOffScreen->lpVtbl->Lock(Current->lpDDSOffScreen,NULL, &(Current->ddsd), 0, NULL) == DDERR_WASSTILLDRAWING);
 
-static clear(GLcontext* ctx, GLbitfield mask,
-	     GLboolean all, GLint x, GLint y, GLint width, GLint height)
-{
-  const   GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
-  
-  if (all){
-    x=y=0;
-    width=Current->width;
-    height=Current->height;
-  }
-  
-  
-  /* sanity check - can't have right(stereo) buffers */
-  assert((mask & (DD_FRONT_RIGHT_BIT | DD_BACK_RIGHT_BIT)) == 0);
-  
-  if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
-      if (mask & DD_BACK_LEFT_BIT) {
-#if defined(USE_GDI_TO_CLEAR)
-#if defined(DDRAW)
-	// D.R.S. 10/29/01 on my system (Pentium 4 with nvidia GeForce2 MX card, 
-	// this is almose 100 times faster that the code below
-	HDC DC=NULL;
-	HPEN Pen=CreatePen(PS_SOLID,1,Current->clearpixel);
-	HBRUSH Brush=CreateSolidBrush(Current->clearpixel);
-	HPEN Old_Pen=NULL;
-	HBRUSH Old_Brush=NULL;
-	Current->lpDDSOffScreen->lpVtbl->Unlock(Current->lpDDSOffScreen,NULL);
-	Current->lpDDSOffScreen->lpVtbl->GetDC(Current->lpDDSOffScreen,&DC);
-	Old_Pen=SelectObject(DC,Pen);
-	Old_Brush=SelectObject(DC,Brush);
-	Rectangle(DC,x,y,x+width,y+height);
-	SelectObject(DC,Old_Pen);
-	SelectObject(DC,Old_Brush);
-	DeleteObject(Pen);
-	DeleteObject(Brush);
-	Current->lpDDSOffScreen->lpVtbl->ReleaseDC(Current->lpDDSOffScreen,DC);
-	while (Current->lpDDSOffScreen->lpVtbl->Lock(Current->lpDDSOffScreen,NULL, &(Current->ddsd), 0, NULL) == DDERR_WASSTILLDRAWING);
-	  mask &= ~DD_BACK_LEFT_BIT;
-#else
-	  /* single-buffer */
-	  HDC DC=DD_GETDC;
-	  HPEN Pen=CreatePen(PS_SOLID,1,Current->clearpixel);
-	  HBRUSH Brush=CreateSolidBrush(Current->clearpixel);
-	  HPEN Old_Pen=SelectObject(DC,Pen);
-	  HBRUSH Old_Brush=SelectObject(DC,Brush);
-	  Rectangle(DC,x+Current->rectSurface.left,Current->rectSurface.top+y,x+width+Current->rectSurface.left,y+height+Current->rectSurface.top);
-	  SelectObject(DC,Old_Pen);
-	  SelectObject(DC,Old_Brush);
-	  DeleteObject(Pen);
-	  DeleteObject(Brush);
-	  DD_RELEASEDC;
-	  mask &= ~DD_BACK_LEFT_BIT;
-#endif // DDRAW
-#else
-	  DWORD   dwColor;
-	  WORD    wColor;
-	  BYTE    bColor;
-	  LPDWORD lpdw = (LPDWORD)Current->pbPixels;
-	  LPWORD  lpw = (LPWORD)Current->pbPixels;
-	  LPBYTE  lpb = Current->pbPixels;
-	  int     lines;
-	  /* Double-buffering - clear back buffer */
-	  UINT    nBypp = Current->cColorBits / 8;
-	  int     i = 0;
-	  int     iSize = 0;
-	  
-	  assert(Current->db_flag==GL_TRUE); /* we'd better be double buffer */
-	  if(nBypp ==1 ){
-	      iSize = Current->width/4;
-	      bColor  = BGR8(GetRValue(Current->clearpixel),
-			     GetGValue(Current->clearpixel),
-			     GetBValue(Current->clearpixel));
-	      wColor  = MAKEWORD(bColor,bColor);
-	      dwColor = MAKELONG(wColor, wColor);
-	  }
-	  if(nBypp == 2){
-	      iSize = Current->width / 2;
-	      wColor = BGR16(GetRValue(Current->clearpixel),
-			     GetGValue(Current->clearpixel),
-			     GetBValue(Current->clearpixel));
-	      dwColor = MAKELONG(wColor, wColor);
-	  }
-	  else if(nBypp == 4){
-	      iSize = Current->width;
-	      dwColor = BGR32(GetRValue(Current->clearpixel),
-			      GetGValue(Current->clearpixel),
-			      GetBValue(Current->clearpixel));
-	  }
-	  
-	  /* clear a line */
-	  while(i < iSize){
-	      *lpdw = dwColor;
-	      lpdw++;
-	      i++;
-	  }
-	  
-	  /* This is the 24bit case */
-	  if (nBypp == 3) {
-	      iSize = Current->width *3/4;
-	      dwColor = BGR24(GetRValue(Current->clearpixel),
-			      GetGValue(Current->clearpixel),
-			      GetBValue(Current->clearpixel));
-	      while(i < iSize){
-		  *lpdw = dwColor;
-		  lpb += nBypp;
-		  lpdw = (LPDWORD)lpb;
-		  i++;
-	      }
-	  }
-	  
-	  i = 0;
-	  if (stereo_flag)
-	      lines = height /2;
-	  else
-	      lines = height;
-	  /* copy cleared line to other lines in buffer */
-	  do {
-	      memcpy(lpb, Current->pbPixels, iSize*4);
-	      lpb += Current->ScanWidth;
-	      i++;
-	  }
-	  while (i<lines-1);
-	  mask &= ~DD_BACK_LEFT_BIT;
-#endif // defined(USE_GDI_TO_CLEAR)
-      } /* double-buffer */
+   mask &= ~DD_BACK_LEFT_BIT; 
+#else 
+   /* single-buffer */ 
+   HDC DC=DD_GETDC; 
+   HPEN Pen=CreatePen(PS_SOLID,1,Current->clearpixel); 
+   HBRUSH Brush=CreateSolidBrush(Current->clearpixel); 
+   HPEN Old_Pen=SelectObject(DC,Pen); 
+   HBRUSH Old_Brush=SelectObject(DC,Brush); 
+   Rectangle(DC,x+Current->rectSurface.left,Current->rectSurface.top+y,x+width+Current->rectSurface.left,y+height+Current->rectSurface.top);
+
+   SelectObject(DC,Old_Pen); 
+   SelectObject(DC,Old_Brush); 
+   DeleteObject(Pen); 
+   DeleteObject(Brush); 
+   DD_RELEASEDC; 
+   mask &= ~DD_BACK_LEFT_BIT; 
+#endif // DDRAW 
+#else 
+   DWORD   dwColor; 
+   WORD    wColor; 
+   BYTE    bColor; 
+   LPDWORD lpdw = (LPDWORD)Current->pbPixels; 
+   LPWORD  lpw = (LPWORD)Current->pbPixels; 
+   LPBYTE  lpb = Current->pbPixels; 
+   int     lines; 
+   /* Double-buffering - clear back buffer */ 
+   UINT    nBypp = Current->cColorBits / 8; 
+   int     i = 0; 
+   int     iSize = 0; 
+   int   mult = 4; 
+
+   
+   assert(Current->db_flag==GL_TRUE); /* we'd better be double buffer */ 
+   if(nBypp ==1 ){ 
+       iSize = Current->width/4; 
+       bColor  = BGR8(GetRValue(Current->clearpixel), 
+        GetGValue(Current->clearpixel), 
+        GetBValue(Current->clearpixel)); 
+       wColor  = MAKEWORD(bColor,bColor); 
+       dwColor = MAKELONG(wColor, wColor); 
+   } 
+   else if(nBypp == 2){ 
+       iSize = Current->width / 2; 
+       wColor = BGR16(GetRValue(Current->clearpixel), 
+        GetGValue(Current->clearpixel), 
+        GetBValue(Current->clearpixel)); 
+       dwColor = MAKELONG(wColor, wColor); 
+   } 
+   else if(nBypp == 3){ 
+      BYTE r, g, b; 
+      r = GetRValue(Current->clearpixel); 
+      g = GetGValue(Current->clearpixel); 
+      b = GetBValue(Current->clearpixel); 
+      iSize = Current->width; 
+      while (i < iSize) { 
+        *lpb++ = r; 
+        *lpb++ = g; 
+        *lpb++ = b; 
+        i++; 
+      } 
+      lpb = Current->pbPixels + Current->ScanWidth; 
+      mult = 3; 
+   }   
+   else if(nBypp == 4){ 
+       iSize = Current->width; 
+       dwColor = BGR32(GetRValue(Current->clearpixel), 
+         GetGValue(Current->clearpixel), 
+         GetBValue(Current->clearpixel)); 
+   } 
+
+   if (nBypp != 3) 
+   { 
+      /* clear a line */ 
+    while(i < iSize){ 
+        *lpdw = dwColor; 
+     lpdw++; 
+        i++; 
+    } 
+   } 
+   
+   i = 0; 
+   if (stereo_flag) 
+       lines = height /2; 
+   else 
+       lines = height; 
+   /* copy cleared line to other lines in buffer */ 
+   do { 
+       memcpy(lpb, Current->pbPixels, iSize*mult); 
+       lpb += Current->ScanWidth; 
+       i++; 
+   } 
+   while (i<lines-1); 
+   mask &= ~DD_BACK_LEFT_BIT; 
+#endif // defined(USE_GDI_TO_CLEAR) 
+      } /* double-buffer */ 
       
-      if (mask & DD_FRONT_LEFT_BIT) {
-	  /* single-buffer */
-	  HDC DC=DD_GETDC;
-	  HPEN Pen=CreatePen(PS_SOLID,1,Current->clearpixel);
-	  HBRUSH Brush=CreateSolidBrush(Current->clearpixel);
-	  HPEN Old_Pen=SelectObject(DC,Pen);
-	  HBRUSH Old_Brush=SelectObject(DC,Brush);
-	  Rectangle(DC,x+Current->rectSurface.left,Current->rectSurface.top+y,x+width+Current->rectSurface.left,y+height+Current->rectSurface.top);
-	  SelectObject(DC,Old_Pen);
-	  SelectObject(DC,Old_Brush);
-	  DeleteObject(Pen);
-	  DeleteObject(Brush);
-	  DD_RELEASEDC;
-	  mask &= ~DD_FRONT_LEFT_BIT;
-      } /* single-buffer */
-  } /* if masks are all 1's */
+      if (mask & DD_FRONT_LEFT_BIT) { 
+   /* single-buffer */ 
+   HDC DC=DD_GETDC; 
+   HPEN Pen=CreatePen(PS_SOLID,1,Current->clearpixel); 
+   HBRUSH Brush=CreateSolidBrush(Current->clearpixel); 
+   HPEN Old_Pen=SelectObject(DC,Pen); 
+   HBRUSH Old_Brush=SelectObject(DC,Brush); 
+   Rectangle(DC,x+Current->rectSurface.left,Current->rectSurface.top+y,x+width+Current->rectSurface.left,y+height+Current->rectSurface.top);
+
+   SelectObject(DC,Old_Pen); 
+   SelectObject(DC,Old_Brush); 
+   DeleteObject(Pen); 
+   DeleteObject(Brush); 
+   DD_RELEASEDC; 
+   mask &= ~DD_FRONT_LEFT_BIT; 
+      } /* single-buffer */ 
+  } /* if masks are all 1's */ 
     
-  /* Call swrast if there is anything left to clear (like DEPTH) */
-  if (mask)
-      _swrast_Clear( ctx, mask, all, x, y, width, height );
-}
-  
+  /* Call swrast if there is anything left to clear (like DEPTH) */ 
+  if (mask) 
+      _swrast_Clear( ctx, mask, all, x, y, width, height ); 
+} 
 
 
 static void enable( GLcontext* ctx, GLenum pname, GLboolean enable )
