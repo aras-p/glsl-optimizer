@@ -1,4 +1,4 @@
-/* $Id: s_linetemp.h,v 1.16 2002/11/15 15:05:04 brianp Exp $ */
+/* $Id: s_linetemp.h,v 1.17 2003/02/25 19:26:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -268,8 +268,9 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
          span.zStep = FloatToFixed(vert1->win[2] - vert0->win[2]) / numPixels;
       }
       else {
-         span.z = vert0->win[2];
-         span.zStep = (vert1->win[2] - vert0->win[2]) / numPixels;
+         /* don't use fixed point */
+         span.z = (GLint) vert0->win[2];
+         span.zStep = (GLint) ((vert1->win[2] - vert0->win[2]) / numPixels);
       }
    }
 #endif

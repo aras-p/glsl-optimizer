@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.98 2002/11/14 03:48:03 brianp Exp $ */
+/* $Id: osmesa.c,v 1.99 2003/02/25 19:25:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -165,7 +165,7 @@ clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    if (mask & DD_FRONT_LEFT_BIT) {
       if (osmesa->format == OSMESA_COLOR_INDEX) {
          if (ctx->Color.ClearIndex == 0 &&
-             ctx->Color.IndexMask == ~0 &&
+             ctx->Color.IndexMask == (GLuint) ~0 &&
              osmesa->rowlength == osmesa->width &&
              all) {
             /* clear whole buffer to zeros */

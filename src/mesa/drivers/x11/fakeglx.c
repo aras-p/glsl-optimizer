@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.78 2003/01/14 04:49:07 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.79 2003/02/25 19:25:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1187,7 +1187,7 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
       return xmvis->vishandle;
 #else
       /* create a new vishandle - the cached one may be stale */
-      xmvis->vishandle = _mesa_malloc(sizeof(XVisualInfo));
+      xmvis->vishandle = (XVisualInfo *) _mesa_malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
          _mesa_memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }
@@ -1848,7 +1848,7 @@ Fake_glXChooseFBConfig( Display *dpy, int screen,
 {
    XMesaVisual xmvis = choose_visual(dpy, screen, attribList);
    if (xmvis) {
-      GLXFBConfig *config = _mesa_malloc(sizeof(XMesaVisual));
+      GLXFBConfig *config = (GLXFBConfig *) _mesa_malloc(sizeof(XMesaVisual));
       if (!config) {
          *nitems = 0;
          return NULL;
@@ -1891,7 +1891,7 @@ Fake_glXGetFBConfigs( Display *dpy, int screen, int *nelements )
    visuals = XGetVisualInfo(dpy, visMask, &visTemplate, nelements);
    if (*nelements > 0) {
       XMesaVisual *results;
-      results = _mesa_malloc(*nelements * sizeof(XMesaVisual));
+      results = (XMesaVisual *) _mesa_malloc(*nelements * sizeof(XMesaVisual));
       if (!results) {
          *nelements = 0;
          return NULL;
@@ -1914,7 +1914,7 @@ Fake_glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
       return xmvis->vishandle;
 #else
       /* create a new vishandle - the cached one may be stale */
-      xmvis->vishandle = _mesa_malloc(sizeof(XVisualInfo));
+      xmvis->vishandle = (XVisualInfo *) _mesa_malloc(sizeof(XVisualInfo));
       if (xmvis->vishandle) {
          _mesa_memcpy(xmvis->vishandle, xmvis->visinfo, sizeof(XVisualInfo));
       }

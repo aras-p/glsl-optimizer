@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.44 2003/01/16 18:57:44 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.45 2003/02/25 19:26:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -718,7 +718,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             /* clamp depth values to [0,1] and convert from floats to ints */
             {
                const GLfloat zs = ctx->DepthMaxF;
-               GLint i;
+               GLuint i;
                for (i = 0; i < span.end; i++) {
                   span.array->z[i] = (GLdepth) (floatSpan[i] * zs + 0.5F);
                }

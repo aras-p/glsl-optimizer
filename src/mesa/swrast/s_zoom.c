@@ -1,4 +1,4 @@
-/* $Id: s_zoom.c,v 1.21 2003/02/21 00:17:58 brianp Exp $ */
+/* $Id: s_zoom.c,v 1.22 2003/02/25 19:26:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -81,7 +81,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
    c0 = (GLint) span->x;
    c1 = (GLint) (span->x + span->end * ctx->Pixel.ZoomX);
 #else
-   c0 = (GLint) span->x + skipPixels * ctx->Pixel.ZoomX;
+   c0 = (GLint) (span->x + skipPixels * ctx->Pixel.ZoomX);
    c1 = (GLint) (span->x + (skipPixels + span->end) * ctx->Pixel.ZoomX);
 #endif
    if (c0 == c1) {
@@ -158,7 +158,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
                i = span->end + i - 1;
             }
             ASSERT(i >= 0);
-            ASSERT(i < span->end);
+            ASSERT(i < (GLint)  span->end);
             COPY_CHAN4(zoomed.array->rgba[j], rgba[i]);
          }
       }
@@ -184,7 +184,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
                i = span->end + i - 1;
             }
             ASSERT(i >= 0);
-            ASSERT(i < span->end);
+            ASSERT(i < (GLint) span->end);
             zoomed.array->rgba[j][0] = rgb[i][0];
             zoomed.array->rgba[j][1] = rgb[i][1];
             zoomed.array->rgba[j][2] = rgb[i][2];
@@ -210,7 +210,7 @@ zoom_span( GLcontext *ctx, const struct sw_span *span,
                i = span->end + i - 1;
             }
             ASSERT(i >= 0);
-            ASSERT(i < span->end);
+            ASSERT(i < (GLint) span->end);
             zoomed.array->index[j] = indexes[i];
          }
       }

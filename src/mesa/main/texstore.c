@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.52 2003/02/06 13:50:57 brianp Exp $ */
+/* $Id: texstore.c,v 1.53 2003/02/25 19:25:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1162,7 +1162,7 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    }
 
    /* copy the data */
-   ASSERT(texImage->CompressedSize == imageSize);
+   ASSERT(texImage->CompressedSize == (GLuint) imageSize);
    MEMCPY(texImage->Data, data, imageSize);
 }
 
