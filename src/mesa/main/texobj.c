@@ -306,7 +306,8 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    /* Always need the base level image */
    if (!t->Image[baseLevel]) {
       char s[100];
-      sprintf(s, "obj %p (%d) Image[baseLevel=%d] == NULL", t, t->Name, baseLevel);
+      sprintf(s, "obj %p (%d) Image[baseLevel=%d] == NULL",
+              (void *) t, t->Name, baseLevel);
       incomplete(t, s);
       t->Complete = GL_FALSE;
       return;
