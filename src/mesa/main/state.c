@@ -1,10 +1,10 @@
-/* $Id: state.c,v 1.56 2001/02/06 21:42:48 brianp Exp $ */
+/* $Id: state.c,v 1.57 2001/02/12 19:04:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -868,8 +868,8 @@ update_texture_state( GLcontext *ctx )
  */
 void gl_update_state( GLcontext *ctx )
 {
-   GLuint new_state = ctx->NewState;
-   GLuint oldneedeyecoords = ctx->_NeedEyeCoords;
+   const GLuint new_state = ctx->NewState;
+   const GLuint oldneedeyecoords = ctx->_NeedEyeCoords;
 
    if (MESA_VERBOSE & VERBOSE_STATE)
       gl_print_state("", new_state);
@@ -944,6 +944,74 @@ void gl_update_state( GLcontext *ctx )
     */
    ctx->NewState = 0;
    ctx->Driver.UpdateState(ctx, new_state);
+
+#ifdef DEBUG
+   /* At this point we can do some assertions to be sure the required device
+    * driver function pointers are all initialized.
+    */
+   assert(ctx->Driver.GetString);
+   assert(ctx->Driver.UpdateState);
+   assert(ctx->Driver.Clear);
+   assert(ctx->Driver.SetDrawBuffer);
+   assert(ctx->Driver.SetReadBuffer);
+   assert(ctx->Driver.GetBufferSize);
+   if (ctx->Visual.rgbMode) {
+      assert(ctx->Driver.WriteRGBASpan);
+      assert(ctx->Driver.WriteRGBSpan);
+      assert(ctx->Driver.WriteMonoRGBASpan);
+      assert(ctx->Driver.WriteRGBAPixels);
+      assert(ctx->Driver.WriteMonoRGBAPixels);
+      assert(ctx->Driver.ReadRGBASpan);
+      assert(ctx->Driver.ReadRGBAPixels);
+   }
+   else {
+      assert(ctx->Driver.WriteCI32Span);
+      assert(ctx->Driver.WriteCI8Span);
+      assert(ctx->Driver.WriteMonoCISpan);
+      assert(ctx->Driver.WriteCI32Pixels);
+      assert(ctx->Driver.WriteMonoCIPixels);
+      assert(ctx->Driver.ReadCI32Span);
+      assert(ctx->Driver.ReadCI32Pixels);
+   }
+   if (ctx->Visual.accumRedBits > 0) {
+      assert(ctx->Driver.Accum);
+   }
+   assert(ctx->Driver.DrawPixels);
+   assert(ctx->Driver.ReadPixels);
+   assert(ctx->Driver.CopyPixels);
+   assert(ctx->Driver.Bitmap);
+   assert(ctx->Driver.ResizeBuffersMESA);
+   assert(ctx->Driver.TexImage1D);
+   assert(ctx->Driver.TexImage2D);
+   assert(ctx->Driver.TexImage3D);
+   assert(ctx->Driver.TexSubImage1D);
+   assert(ctx->Driver.TexSubImage2D);
+   assert(ctx->Driver.TexSubImage3D);
+   if (ctx->Extensions.ARB_texture_compression) {
+      assert(ctx->Driver.CompressedTexImage1D);
+      assert(ctx->Driver.CompressedTexImage2D);
+      assert(ctx->Driver.CompressedTexImage3D);
+      assert(ctx->Driver.CompressedTexSubImage1D);
+      assert(ctx->Driver.CompressedTexSubImage2D);
+      assert(ctx->Driver.CompressedTexSubImage3D);
+      assert(ctx->Driver.IsCompressedFormat);
+      assert(ctx->Driver.GetCompressedTexImage);
+      assert(ctx->Driver.BaseCompressedTexFormat);
+   }
+   assert(ctx->Driver.RenderStart);
+   assert(ctx->Driver.RenderFinish);
+   assert(ctx->Driver.BuildProjectedVertices);
+   assert(ctx->Driver.RenderPrimitive);
+   assert(ctx->Driver.PointsFunc);
+   assert(ctx->Driver.LineFunc);
+   assert(ctx->Driver.TriangleFunc);
+   assert(ctx->Driver.QuadFunc);
+   assert(ctx->Driver.ResetLineStipple);
+   assert(ctx->Driver.RenderInterp);
+   assert(ctx->Driver.RenderCopyPV);
+   assert(ctx->Driver.RenderClippedLine);
+   assert(ctx->Driver.RenderClippedPolygon);
+#endif
    
    ctx->Array.NewState = 0;
 }
