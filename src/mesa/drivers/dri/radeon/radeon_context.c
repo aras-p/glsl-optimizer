@@ -172,7 +172,7 @@ static const struct tnl_pipeline_stage *radeon_pipeline[] = {
 
    &_radeon_render_stage,
    &_tnl_render_stage,		/* FALLBACK:  */
-   0,
+   NULL,
 };
 
 
@@ -526,7 +526,7 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
 
       if (rmesa->state.scissor.pClipRects) {
 	 FREE(rmesa->state.scissor.pClipRects);
-	 rmesa->state.scissor.pClipRects = 0;
+	 rmesa->state.scissor.pClipRects = NULL;
       }
 
       if ( release_texture_heaps ) {
@@ -612,7 +612,7 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
    } else {
       if (RADEON_DEBUG & DEBUG_DRI)
 	 fprintf(stderr, "%s ctx is null\n", __FUNCTION__);
-      _mesa_make_current( 0, 0 );
+      _mesa_make_current( NULL, NULL );
    }
 
    if (RADEON_DEBUG & DEBUG_DRI)

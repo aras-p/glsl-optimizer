@@ -303,14 +303,14 @@ struct dynfn *radeon_makeX86Color4ub( GLcontext *ctx, int key )
       return dfn;
    }
    else
-      return 0;
+      return NULL;
 }
 
 
 struct dynfn *radeon_makeX86Color3fv( GLcontext *ctx, int key )
 {
    if (key & (RADEON_CP_VC_FRMT_PKCOLOR|RADEON_CP_VC_FRMT_FPALPHA))
-      return 0;
+      return NULL;
    else
    {
       radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
@@ -323,7 +323,7 @@ struct dynfn *radeon_makeX86Color3fv( GLcontext *ctx, int key )
 struct dynfn *radeon_makeX86Color3f( GLcontext *ctx, int key )
 {
    if (key & (RADEON_CP_VC_FRMT_PKCOLOR|RADEON_CP_VC_FRMT_FPALPHA))
-      return 0;
+      return NULL;
    else
    {
       radeonContextPtr rmesa = RADEON_CONTEXT(ctx);

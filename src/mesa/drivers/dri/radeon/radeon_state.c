@@ -1808,7 +1808,7 @@ static void radeonEnable( GLcontext *ctx, GLenum cap, GLboolean state )
       RADEON_STATECHANGE(rmesa, ctx );
       if ( state ) {
 	 rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= RADEON_FOG_ENABLE;
-	 radeonFogfv( ctx, GL_FOG_MODE, 0 );
+	 radeonFogfv( ctx, GL_FOG_MODE, NULL );
       } else {
 	 rmesa->hw.ctx.cmd[CTX_PP_CNTL] &= ~RADEON_FOG_ENABLE;
 	 RADEON_STATECHANGE(rmesa, tcl);

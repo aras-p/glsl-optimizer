@@ -178,7 +178,7 @@ static void flush_prims( radeonContextPtr rmesa )
    rmesa->tcl.vertex_format = rmesa->vb.vertex_format;
    rmesa->tcl.aos_components[0] = &tmp;
    rmesa->tcl.nr_aos_components = 1;
-   rmesa->dma.flush = 0;
+   rmesa->dma.flush = NULL;
 
    /* Optimize the primitive list:
     */

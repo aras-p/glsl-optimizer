@@ -131,7 +131,7 @@ static struct dynfn *radeon_makeSSENormal3f( GLcontext *ctx, int key )
 static struct dynfn *radeon_makeSSEColor3fv( GLcontext *ctx, int key )
 {
    if (key & (RADEON_CP_VC_FRMT_PKCOLOR|RADEON_CP_VC_FRMT_FPALPHA))
-      return 0;
+      return NULL;
    else
    {
       radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
@@ -144,7 +144,7 @@ static struct dynfn *radeon_makeSSEColor3fv( GLcontext *ctx, int key )
 static struct dynfn *radeon_makeSSEColor3f( GLcontext *ctx, int key )
 {
    if (key & (RADEON_CP_VC_FRMT_PKCOLOR|RADEON_CP_VC_FRMT_FPALPHA))
-      return 0;
+      return NULL;
    else
    {
       radeonContextPtr rmesa = RADEON_CONTEXT(ctx);

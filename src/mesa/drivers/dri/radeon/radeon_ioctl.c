@@ -301,7 +301,7 @@ void radeonFlushElts( radeonContextPtr rmesa )
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    assert( rmesa->dma.flush == radeonFlushElts );
-   rmesa->dma.flush = 0;
+   rmesa->dma.flush = NULL;
 
    /* Cope with odd number of elts:
     */
@@ -734,7 +734,7 @@ void radeonReleaseDmaRegion( radeonContextPtr rmesa,
       rmesa->dma.nr_released_bufs++;
    }
 
-   region->buf = 0;
+   region->buf = NULL;
    region->start = 0;
 }
 

@@ -602,7 +602,7 @@ static struct dynfn *lookup( struct dynfn *l, int key )
 	 return f;
    }
 
-   return 0;
+   return NULL;
 }
 
 /* Can't use the loopback template for this:
@@ -876,7 +876,7 @@ void radeonVtxfmtInitChoosers( GLvertexformat *vfmt )
 static struct dynfn *codegen_noop( GLcontext *ctx, int key )
 {
    (void) ctx; (void) key;
-   return 0;
+   return NULL;
 }
 
 void radeonInitCodegen( struct dfn_generators *gen, GLboolean useCodegen )

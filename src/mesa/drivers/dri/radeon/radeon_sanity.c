@@ -389,7 +389,7 @@ static struct reg *lookup_reg( struct reg *tab, int reg )
    }
 
    fprintf(stderr, "*** unknown reg 0x%x\n", reg);
-   return 0;
+   return NULL;
 }
 
 

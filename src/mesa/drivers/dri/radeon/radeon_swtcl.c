@@ -365,7 +365,7 @@ static void flush_last_swtcl_prim( radeonContextPtr rmesa  )
    if (RADEON_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   rmesa->dma.flush = 0;
+   rmesa->dma.flush = NULL;
 
    if (rmesa->dma.current.buf) {
       struct radeon_dma_region *current = &rmesa->dma.current;
@@ -669,7 +669,7 @@ const struct tnl_pipeline_stage _radeon_render_stage =
    0,				/* re-run (always runs) */
    GL_TRUE,			/* active */
    0, 0,			/* inputs (set in check_render), outputs */
-   0, 0,			/* changed_inputs, private */
+   0, NULL,			/* changed_inputs, private */
    dtr,				/* destructor */
    radeon_check_render,		/* check - initially set to alloc data */
    radeon_run_render		/* run */
@@ -782,7 +782,7 @@ static void free_texrect_data( struct tnl_pipeline_stage *stage )
 	 if (store->texcoord[i].data)
 	    _mesa_vector4f_free( &store->texcoord[i] );
       FREE( store );
-      stage->privatePtr = 0;
+      stage->privatePtr = NULL;
    }
 }
 
@@ -1221,7 +1221,7 @@ void radeonDestroySwtcl( GLcontext *ctx )
 
    if (rmesa->swtcl.verts) {
       ALIGN_FREE(rmesa->swtcl.verts);
-      rmesa->swtcl.verts = 0;
+      rmesa->swtcl.verts = NULL;
    }
 
 }
