@@ -782,6 +782,7 @@ void r200Finish( GLcontext *ctx )
  * the kernel data structures, and the current context to get the
  * device fd.
  */
+#ifndef _SOLO
 void *r200AllocateMemoryMESA(Display *dpy, int scrn, GLsizei size,
 			     GLfloat readfreq, GLfloat writefreq, 
 			     GLfloat priority)
@@ -888,7 +889,7 @@ GLuint r200GetMemoryOffsetMESA(Display *dpy, int scrn, const GLvoid *pointer)
 
    return card_offset - rmesa->r200Screen->gart_base;
 }
-
+#endif
 
 GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 			   GLint size )
