@@ -5893,6 +5893,10 @@ parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
                                                   (Program->Base.NumInstructions+1)*sizeof(struct fp_instruction));
 
       Program->FPInstructions[Program->Base.NumInstructions].Opcode = FP_OPCODE_END;
+      /* YYY Wrong Position in program, whatever, at least not random -> crash
+	 Program->Position = parse_position (&inst);
+      */
+      Program->FPInstructions[Program->Base.NumInstructions].StringPos = Program->Position;
    }
    else {
       Program->VPInstructions =
@@ -5901,6 +5905,10 @@ parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
                                                   (Program->Base.NumInstructions+1)*sizeof(struct vp_instruction));
 
       Program->VPInstructions[Program->Base.NumInstructions].Opcode = VP_OPCODE_END;
+      /* YYY Wrong Position in program, whatever, at least not random -> crash
+	 Program->Position = parse_position (&inst);
+      */
+      Program->VPInstructions[Program->Base.NumInstructions].StringPos = Program->Position;
    }
 
    /* increment Program->Base.NumInstructions */

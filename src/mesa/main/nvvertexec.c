@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.0
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -382,9 +382,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
       ctx->VertexProgram.Current->OutputsWritten |= 0x1;
    }
 
-
-
-   for (inst = program->Instructions; inst->Opcode != VP_OPCODE_END; inst++) {
+   for (inst = program->Instructions; /*inst->Opcode != VP_OPCODE_END*/; inst++) {
 
       if (ctx->VertexProgram.CallbackEnabled &&
           ctx->VertexProgram.Callback) {
