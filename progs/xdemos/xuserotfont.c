@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.0
+ * Version:  6.1
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -276,7 +276,7 @@ glXUseRotatedXFontMESA(Font font, int first, int count, int listbase,
       const unsigned int c = first + i;
       const int list = listbase + i;
       unsigned int charWidth, charHeight;
-      unsigned int bitmapWidth, bitmapHeight;
+      unsigned int bitmapWidth = 0, bitmapHeight = 0;
       GLfloat xOrig, yOrig, xStep, yStep, dtemp;
       const XCharStruct *ch;
       int xPos, yPos;

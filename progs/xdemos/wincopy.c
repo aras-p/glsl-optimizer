@@ -32,7 +32,7 @@
  */
 
 
-
+#define GLX_GLXEXT_PROTOTYPES
 #include <GL/gl.h>
 #include <GL/glx.h>
 #include <X11/keysym.h>
