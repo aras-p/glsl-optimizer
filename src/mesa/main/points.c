@@ -1,10 +1,10 @@
-/* $Id: points.c,v 1.6 1999/12/10 15:38:08 brianp Exp $ */
+/* $Id: points.c,v 1.7 2000/03/02 18:34:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -709,15 +709,14 @@ static void dist3(GLfloat *out, GLuint first, GLuint last,
 		  const GLcontext *ctx, const GLvector4f *v)
 {
    GLuint stride = v->stride;
-   GLfloat *p = VEC_ELT(v, GLfloat, first);
+   const GLfloat *p = VEC_ELT(v, GLfloat, first);
    GLuint i;
 
-   for (i = first ; i <= last ; i++, STRIDE_F(p, stride) )
-   {
+   for (i = first ; i <= last ; i++, STRIDE_F(p, stride) ) {
       GLfloat dist = GL_SQRT(p[0]*p[0]+p[1]*p[1]+p[2]*p[2]);
-      out[i] = 1/(ctx->Point.Params[0]+ 
-		  dist * (ctx->Point.Params[1] +
-			  dist * ctx->Point.Params[2]));
+      out[i] = 1.0F / (ctx->Point.Params[0] +
+                       dist * (ctx->Point.Params[1] +
+                               dist * ctx->Point.Params[2]));
    }
 }
 
@@ -725,15 +724,14 @@ static void dist2(GLfloat *out, GLuint first, GLuint last,
 		  const GLcontext *ctx, const GLvector4f *v)
 {
    GLuint stride = v->stride;
-   GLfloat *p = VEC_ELT(v, GLfloat, first);
+   const GLfloat *p = VEC_ELT(v, GLfloat, first);
    GLuint i;
 
-   for (i = first ; i <= last ; i++, STRIDE_F(p, stride) )
-   {
+   for (i = first ; i <= last ; i++, STRIDE_F(p, stride) ) {
       GLfloat dist = GL_SQRT(p[0]*p[0]+p[1]*p[1]);
-      out[i] = 1/(ctx->Point.Params[0]+ 
-		  dist * (ctx->Point.Params[1] +
-			  dist * ctx->Point.Params[2]));
+      out[i] = 1.0F / (ctx->Point.Params[0] +
+                       dist * (ctx->Point.Params[1] +
+                               dist * ctx->Point.Params[2]));
    }
 }
 
