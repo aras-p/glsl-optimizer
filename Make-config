@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.24 2000/05/08 18:20:13 brianp Exp $
+# $Id: Make-config,v 1.25 2000/06/08 15:19:12 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=3
@@ -883,7 +883,7 @@ osf1:
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
 	"CC = cc" \
-	"CFLAGS = -O2 -std1 -ieee_with_no_inexact -DUSE_XSHM -DNO_CONST" \
+	"CFLAGS = -O0 -std1 -ieee_with_no_inexact -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
 
@@ -894,7 +894,7 @@ osf1-sl:
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = cc" \
-	"CFLAGS = -O2 -std1 -ieee_with_no_inexact -DUSE_XSHM -DNO_CONST" \
+	"CFLAGS = -O0 -std1 -ieee_with_no_inexact -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.osf1" \
 	"APP_LIB_DEPS = -lX11 -lXext -lXmu -lXi -lm"
 
