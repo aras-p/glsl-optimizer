@@ -48,13 +48,16 @@ The fbdev/DRI Mesa code is in the Mesa CVS trunk (to be released as Mesa
 Assuming you're starting with a fresh Mesa CVS checkout, do the following:
 </p>
 <pre>
-   cd Mesa-newtree
-   cp Makefile.X11 Makefile     # or use a symlink
    make linux-solo
 </pre>
 
 <p>
-When this is finished, check the <code>Mesa-newtree/lib</code> directory
+If you previously built the source tree, run <code>make realclean</code>
+first to remove the old object files.
+</p>
+
+<p>
+When this is finished, check the <code>Mesa/lib</code> directory
 to verify that the following files were made:
 </p>
 
@@ -141,7 +144,7 @@ old, you'll have to compile/install a newer one from the DRI project.
 <h2>3.2 Configuration File</h2>
 
 <p>
-The <code>Mesa-newtree/lib/miniglx.conf</code> file should be installed
+The <code>Mesa/lib/miniglx.conf</code> file should be installed
 in <code>/etc/</code>.
 </p>
 
@@ -156,11 +159,11 @@ Comments in the file explain the options.
 
 <p>
 Make sure your LD_LIBRARY_PATH environment variable is set to the
-<code>Mesa-newtree/lib/</code> directory.
+<code>Mesa/lib/</code> directory.
 </p>
 
 <p>
-Change to the <code>Mesa-newtree/progs/miniglx/</code> directory and
+Change to the <code>Mesa/progs/miniglx/</code> directory and
 start the sample_server program in the background:
 </p>
 <pre>
