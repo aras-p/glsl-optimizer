@@ -69,7 +69,7 @@ static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
 	GLubyte refByte;
 
 	CLAMPED_FLOAT_TO_UBYTE(refByte, ref);
-
+	
 	R300_STATECHANGE(rmesa, at);
 
 	pp_misc &= ~(R300_ALPHA_TEST_OP_MASK | R300_REF_ALPHA_MASK);
@@ -1997,8 +1997,12 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300SetupPixelShader(r300);
 
 	r300_set_blend_state(ctx);
-	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 
+	r300->hw.at.cmd[R300_AT_ALPHA_TEST] = 0;
+	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
+	if(ctx->Color.AlphaEnabled)
+		r300->hw.at.cmd[R300_AT_ALPHA_TEST] |= R300_ALPHA_TEST_ENABLE;
+		
 		/* Initialize magic registers
 		 TODO : learn what they really do, or get rid of
 		 those we don't have to touch */
