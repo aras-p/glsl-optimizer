@@ -1689,8 +1689,11 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk2134.cmd[1] = 0x00FFFFFF;
 	r300->hw.unk2134.cmd[2] = 0x00000000;
-
+#ifdef MESA_BIG_ENDIAN
+	r300->hw.unk2140.cmd[1] = 0x00000002;
+#elif
 	r300->hw.unk2140.cmd[1] = 0x00000000;
+#endif
 
 	#if 0 /* Done in setup routing */
 	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->unchecked_state.count = 1;
