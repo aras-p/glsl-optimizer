@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.10 2001/05/15 21:30:26 brianp Exp $ */
+/* $Id: s_aalinetemp.h,v 1.11 2001/05/17 14:49:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,8 +75,6 @@ NAME(plot)(GLcontext *ctx, const struct LineInfo *line,
 #endif
 #ifdef DO_INDEX
    index = (GLint) solve_plane(fx, fy, line->iPlane);
-#else
-   (void) index;
 #endif
 #ifdef DO_SPEC
    specRed   = solve_plane_chan(fx, fy, line->srPlane);
