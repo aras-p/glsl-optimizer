@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.6 1999/12/17 12:21:39 brianp Exp $ */
+/* $Id: context.h,v 1.7 1999/12/17 14:52:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,7 @@
 #define CONTEXT_H
 
 
+#include "glapi.h"
 #include "types.h"
 
 
@@ -73,6 +74,21 @@ extern void gl_destroy_visual( GLvisual *vis );
 
 
 /*
+ * Create/destroy a GLframebuffer.  A GLframebuffer is like a GLX drawable.
+ * It bundles up the depth buffer, stencil buffer and accum buffers into a
+ * single entity.
+ */
+extern GLframebuffer *gl_create_framebuffer( GLvisual *visual,
+                                             GLboolean softwareDepth,
+                                             GLboolean softwareStencil,
+                                             GLboolean softwareAccum,
+                                             GLboolean softwareAlpha );
+
+extern void gl_destroy_framebuffer( GLframebuffer *buffer );
+
+
+
+/*
  * Create/destroy a GLcontext.  A GLcontext is like a GLX context.  It
  * contains the rendering state.
  */
@@ -92,36 +108,24 @@ extern void gl_context_initialize( GLcontext *ctx );
 extern void gl_copy_context(const GLcontext *src, GLcontext *dst, GLuint mask);
 
 
-/*
- * Create/destroy a GLframebuffer.  A GLframebuffer is like a GLX drawable.
- * It bundles up the depth buffer, stencil buffer and accum buffers into a
- * single entity.
- */
-extern GLframebuffer *gl_create_framebuffer( GLvisual *visual,
-                                             GLboolean softwareDepth,
-                                             GLboolean softwareStencil,
-                                             GLboolean softwareAccum,
-                                             GLboolean softwareAlpha );
-
-extern void gl_destroy_framebuffer( GLframebuffer *buffer );
-
-
-
 extern void gl_make_current( GLcontext *ctx, GLframebuffer *buffer );
+
 
 extern void gl_make_current2( GLcontext *ctx, GLframebuffer *drawBuffer,
                               GLframebuffer *readBuffer );
 
+
 extern GLcontext *gl_get_current_context(void);
 
 
+/*
+ * Macros for fetching current context, input buffer, etc.
+ */
 #ifdef THREADS
 
-/*
- * A seperate GLcontext for each thread
- */
-#define GET_CURRENT_CONTEXT(C)  GLcontext *C = gl_get_current_context()
-#define GET_IMMEDIATE struct immediate *IM = (gl_get_current_context())->input;
+#define GET_CURRENT_CONTEXT(C)	GLcontext *C = (GLcontext *) (_glapi_ThreadSafe ? _glapi_get_current_context() : _glapi_CurrentContext)
+
+#define GET_IMMEDIATE  struct immediate *IM = ((GLcontext *) _glapi_get_current_context())->input;
 #define SET_IMMEDIATE(ctx, im)		\
 do {					\
    ctx->input = im;			\
@@ -129,12 +133,8 @@ do {					\
 
 #else
 
-/*
- * All threads use same pointer to current context.
- */
-extern GLcontext *_mesa_current_context;
 extern struct immediate *CURRENT_INPUT;
-#define GET_CURRENT_CONTEXT(C)  GLcontext *C = _mesa_current_context
+#define GET_CURRENT_CONTEXT(C)  GLcontext *C = _glapi_CurrentContext
 #define GET_IMMEDIATE struct immediate *IM = CURRENT_INPUT
 #define SET_IMMEDIATE(ctx, im)		\
 do {					\
@@ -148,6 +148,7 @@ do {					\
 
 extern void
 _mesa_swapbuffers(GLcontext *ctx);
+
 
 extern struct _glapi_table *
 _mesa_get_dispatch(GLcontext *ctx);
@@ -170,8 +171,8 @@ extern void gl_problem( const GLcontext *ctx, const char *s );
 extern void gl_warning( const GLcontext *ctx, const char *s );
 
 extern void gl_error( GLcontext *ctx, GLenum error, const char *s );
-extern void gl_compile_error( GLcontext *ctx, GLenum error, const char *s );
 
+extern void gl_compile_error( GLcontext *ctx, GLenum error, const char *s );
 
 extern void gl_update_state( GLcontext *ctx );
 

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.28 1999/12/17 12:21:38 brianp Exp $ */
+/* $Id: context.c,v 1.29 1999/12/17 14:52:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -83,24 +83,11 @@
 /**********************************************************************/
 
 
-#ifdef THREADS
+#if !defined(THREADS)
 
-#include "glthread.h"
-
-static _glthread_TSD ContextTSD;
-
-static void ctx_thread_init()
-{
-   _glthread_InitTSD(&ContextTSD);
-}
-
-#else
-
-/* One Current Context pointer for all threads in the address space */
-GLcontext *_mesa_current_context = NULL;
 struct immediate *CURRENT_INPUT = NULL;
 
-#endif /*THREADS*/
+#endif
 
 
 
@@ -1102,6 +1089,93 @@ void gl_destroy_visual( GLvisual *vis )
 
 
 
+
+/*
+ * Create a new framebuffer.  A GLframebuffer is a struct which
+ * encapsulates the depth, stencil and accum buffers and related
+ * parameters.
+ * Input:  visual - a GLvisual pointer
+ *         softwareDepth - create/use a software depth buffer?
+ *         softwareStencil - create/use a software stencil buffer?
+ *         softwareAccum - create/use a software accum buffer?
+ *         softwareAlpha - create/use a software alpha buffer?
+
+ * Return:  pointer to new GLframebuffer struct or NULL if error.
+ */
+GLframebuffer *gl_create_framebuffer( GLvisual *visual,
+                                      GLboolean softwareDepth,
+                                      GLboolean softwareStencil,
+                                      GLboolean softwareAccum,
+                                      GLboolean softwareAlpha )
+{
+   GLframebuffer *buffer;
+
+   buffer = CALLOC_STRUCT(gl_frame_buffer);
+   if (!buffer) {
+      return NULL;
+   }
+
+   /* sanity checks */
+   if (softwareDepth ) {
+      assert(visual->DepthBits > 0);
+   }
+   if (softwareStencil) {
+      assert(visual->StencilBits > 0);
+   }
+   if (softwareAccum) {
+      assert(visual->RGBAflag);
+      assert(visual->AccumBits > 0);
+   }
+   if (softwareAlpha) {
+      assert(visual->RGBAflag);
+      assert(visual->AlphaBits > 0);
+   }
+
+   buffer->Visual = visual;
+   buffer->UseSoftwareDepthBuffer = softwareDepth;
+   buffer->UseSoftwareStencilBuffer = softwareStencil;
+   buffer->UseSoftwareAccumBuffer = softwareAccum;
+   buffer->UseSoftwareAlphaBuffers = softwareAlpha;
+
+   return buffer;
+}
+
+
+
+/*
+ * Free a framebuffer struct and its buffers.
+ */
+void gl_destroy_framebuffer( GLframebuffer *buffer )
+{
+   if (buffer) {
+      if (buffer->Depth) {
+         FREE( buffer->Depth );
+      }
+      if (buffer->Accum) {
+         FREE( buffer->Accum );
+      }
+      if (buffer->Stencil) {
+         FREE( buffer->Stencil );
+      }
+      if (buffer->FrontLeftAlpha) {
+         FREE( buffer->FrontLeftAlpha );
+      }
+      if (buffer->BackLeftAlpha) {
+         FREE( buffer->BackLeftAlpha );
+      }
+      if (buffer->FrontRightAlpha) {
+         FREE( buffer->FrontRightAlpha );
+      }
+      if (buffer->BackRightAlpha) {
+         FREE( buffer->BackRightAlpha );
+      }
+      FREE(buffer);
+   }
+}
+
+
+
+
 /*
  * Allocate the proxy textures.  If we run out of memory part way through
  * the allocations clean up and return GL_FALSE.
@@ -1289,14 +1363,6 @@ GLcontext *gl_create_context( GLvisual *visual,
    return ctx;
 }
 
-/* Just reads the config files...
- */
-void gl_context_initialize( GLcontext *ctx )
-{
-   gl_read_config_file( ctx );
-}
-
-
 
 
 /*
@@ -1407,179 +1473,11 @@ void gl_destroy_context( GLcontext *ctx )
 
 
 /*
- * Create a new framebuffer.  A GLframebuffer is a struct which
- * encapsulates the depth, stencil and accum buffers and related
- * parameters.
- * Input:  visual - a GLvisual pointer
- *         softwareDepth - create/use a software depth buffer?
- *         softwareStencil - create/use a software stencil buffer?
- *         softwareAccum - create/use a software accum buffer?
- *         softwareAlpha - create/use a software alpha buffer?
-
- * Return:  pointer to new GLframebuffer struct or NULL if error.
+ * Just reads the config files...
  */
-GLframebuffer *gl_create_framebuffer( GLvisual *visual,
-                                      GLboolean softwareDepth,
-                                      GLboolean softwareStencil,
-                                      GLboolean softwareAccum,
-                                      GLboolean softwareAlpha )
+void gl_context_initialize( GLcontext *ctx )
 {
-   GLframebuffer *buffer;
-
-   buffer = CALLOC_STRUCT(gl_frame_buffer);
-   if (!buffer) {
-      return NULL;
-   }
-
-   /* sanity checks */
-   if (softwareDepth ) {
-      assert(visual->DepthBits > 0);
-   }
-   if (softwareStencil) {
-      assert(visual->StencilBits > 0);
-   }
-   if (softwareAccum) {
-      assert(visual->RGBAflag);
-      assert(visual->AccumBits > 0);
-   }
-   if (softwareAlpha) {
-      assert(visual->RGBAflag);
-      assert(visual->AlphaBits > 0);
-   }
-
-   buffer->Visual = visual;
-   buffer->UseSoftwareDepthBuffer = softwareDepth;
-   buffer->UseSoftwareStencilBuffer = softwareStencil;
-   buffer->UseSoftwareAccumBuffer = softwareAccum;
-   buffer->UseSoftwareAlphaBuffers = softwareAlpha;
-
-   return buffer;
-}
-
-
-
-/*
- * Free a framebuffer struct and its buffers.
- */
-void gl_destroy_framebuffer( GLframebuffer *buffer )
-{
-   if (buffer) {
-      if (buffer->Depth) {
-         FREE( buffer->Depth );
-      }
-      if (buffer->Accum) {
-         FREE( buffer->Accum );
-      }
-      if (buffer->Stencil) {
-         FREE( buffer->Stencil );
-      }
-      if (buffer->FrontLeftAlpha) {
-         FREE( buffer->FrontLeftAlpha );
-      }
-      if (buffer->BackLeftAlpha) {
-         FREE( buffer->BackLeftAlpha );
-      }
-      if (buffer->FrontRightAlpha) {
-         FREE( buffer->FrontRightAlpha );
-      }
-      if (buffer->BackRightAlpha) {
-         FREE( buffer->BackRightAlpha );
-      }
-      FREE(buffer);
-   }
-}
-
-
-
-/*
- * Set the current context, binding the given frame buffer to the context.
- */
-void gl_make_current( GLcontext *newCtx, GLframebuffer *buffer )
-{
-   gl_make_current2( newCtx, buffer, buffer );
-}
-
-
-/*
- * Bind the given context to the given draw-buffer and read-buffer
- * and make it the current context for this thread.
- */
-void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
-                       GLframebuffer *readBuffer )
-{
-#if 0
-   GLcontext *oldCtx = gl_get_current_context();
-
-   /* Flush the old context
-    */
-   if (oldCtx) {
-      ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(oldCtx, "gl_make_current");
-
-      /* unbind frame buffers from context */
-      if (oldCtx->DrawBuffer) {
-         oldCtx->DrawBuffer = NULL;
-      }
-      if (oldCtx->ReadBuffer) {
-         oldCtx->ReadBuffer = NULL;
-      }
-   }
-#endif
-
-   _glapi_check_multithread();
-
-#ifdef THREADS
-   _glthread_SetTSD(&ContextTSD, (void *) newCtx, ctx_thread_init);
-   ASSERT(gl_get_current_context() == newCtx);
-#else
-   _mesa_current_context = newCtx;
-#endif
-   if (newCtx) {
-      SET_IMMEDIATE(newCtx, newCtx->input);
-      _glapi_set_dispatch(newCtx->CurrentDispatch);
-   }
-   else {
-      _glapi_set_dispatch(NULL);  /* none current */
-   }
-
-   if (MESA_VERBOSE) fprintf(stderr, "gl_make_current()\n");
-
-   if (newCtx && drawBuffer && readBuffer) {
-      /* TODO: check if newCtx and buffer's visual match??? */
-      newCtx->DrawBuffer = drawBuffer;
-      newCtx->ReadBuffer = readBuffer;
-      newCtx->NewState = NEW_ALL;   /* just to be safe */
-      gl_update_state( newCtx );
-   }
-
-   /* We can use this to help debug user's problems.  Tell the to set
-    * the MESA_INFO env variable before running their app.  Then the
-    * first time each context is made current we'll print some useful
-    * information.
-    */
-   if (newCtx && newCtx->FirstTimeCurrent) {
-      if (getenv("MESA_INFO")) {
-         fprintf(stderr, "Mesa GL_VERSION = %s\n", (char *) _mesa_GetString(GL_VERSION));
-         fprintf(stderr, "Mesa GL_RENDERER = %s\n", (char *) _mesa_GetString(GL_RENDERER));
-         fprintf(stderr, "Mesa GL_VENDOR = %s\n", (char *) _mesa_GetString(GL_VENDOR));
-         fprintf(stderr, "Mesa GL_EXTENSIONS = %s\n", (char *) _mesa_GetString(GL_EXTENSIONS));
-      }
-      newCtx->FirstTimeCurrent = GL_FALSE;
-   }
-}
-
-
-
-/*
- * Return current context handle for the calling thread.
- */
-GLcontext *gl_get_current_context( void )
-{
-#ifdef THREADS
-   GLcontext *c = (GLcontext *) _glthread_GetTSD(&ContextTSD);
-   return c;
-#else
-   return _mesa_current_context;
-#endif
+   gl_read_config_file( ctx );
 }
 
 
@@ -1618,7 +1516,7 @@ void gl_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
    }
    if (mask & GL_LIGHTING_BIT) {
       MEMCPY( &dst->Light, &src->Light, sizeof(struct gl_light_attrib) );
-/*       gl_reinit_light_attrib( &dst->Light ); */
+      /*       gl_reinit_light_attrib( &dst->Light ); */
    }
    if (mask & GL_LINE_BIT) {
       MEMCPY( &dst->Line, &src->Line, sizeof(struct gl_line_attrib) );
@@ -1663,6 +1561,95 @@ void gl_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
 
 
 /*
+ * Set the current context, binding the given frame buffer to the context.
+ */
+void gl_make_current( GLcontext *newCtx, GLframebuffer *buffer )
+{
+   gl_make_current2( newCtx, buffer, buffer );
+}
+
+
+/*
+ * Bind the given context to the given draw-buffer and read-buffer
+ * and make it the current context for this thread.
+ */
+void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
+                       GLframebuffer *readBuffer )
+{
+#if 0
+   GLcontext *oldCtx = gl_get_current_context();
+
+   /* Flush the old context
+    */
+   if (oldCtx) {
+      ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(oldCtx, "gl_make_current");
+
+      /* unbind frame buffers from context */
+      if (oldCtx->DrawBuffer) {
+         oldCtx->DrawBuffer = NULL;
+      }
+      if (oldCtx->ReadBuffer) {
+         oldCtx->ReadBuffer = NULL;
+      }
+   }
+#endif
+
+   /* We call this function periodically (just here for now) in
+    * order to detect when multithreading has begun.
+    */
+   _glapi_check_multithread();
+
+   _glapi_set_current_context((void *) newCtx);
+   ASSERT(gl_get_current_context() == newCtx);
+   if (newCtx) {
+      SET_IMMEDIATE(newCtx, newCtx->input);
+      _glapi_set_dispatch(newCtx->CurrentDispatch);
+   }
+   else {
+      _glapi_set_dispatch(NULL);  /* none current */
+   }
+
+   if (MESA_VERBOSE) fprintf(stderr, "gl_make_current()\n");
+
+   if (newCtx && drawBuffer && readBuffer) {
+      /* TODO: check if newCtx and buffer's visual match??? */
+      newCtx->DrawBuffer = drawBuffer;
+      newCtx->ReadBuffer = readBuffer;
+      newCtx->NewState = NEW_ALL;   /* just to be safe */
+      gl_update_state( newCtx );
+   }
+
+   /* We can use this to help debug user's problems.  Tell the to set
+    * the MESA_INFO env variable before running their app.  Then the
+    * first time each context is made current we'll print some useful
+    * information.
+    */
+   if (newCtx && newCtx->FirstTimeCurrent) {
+      if (getenv("MESA_INFO")) {
+         fprintf(stderr, "Mesa GL_VERSION = %s\n", (char *) _mesa_GetString(GL_VERSION));
+         fprintf(stderr, "Mesa GL_RENDERER = %s\n", (char *) _mesa_GetString(GL_RENDERER));
+         fprintf(stderr, "Mesa GL_VENDOR = %s\n", (char *) _mesa_GetString(GL_VENDOR));
+         fprintf(stderr, "Mesa GL_EXTENSIONS = %s\n", (char *) _mesa_GetString(GL_EXTENSIONS));
+      }
+      newCtx->FirstTimeCurrent = GL_FALSE;
+   }
+}
+
+
+
+/*
+ * Return current context handle for the calling thread.
+ * This isn't the fastest way to get the current context.
+ * If you need speed, see the GET_CURRENT_CONTEXT() macro in context.h
+ */
+GLcontext *gl_get_current_context( void )
+{
+   return (GLcontext *) _glapi_get_current_context();
+}
+
+
+
+/*
  * This should be called by device drivers just before they do a
  * swapbuffers.  Any pending rendering commands will be executed.
  */
@@ -1671,6 +1658,7 @@ _mesa_swapbuffers(GLcontext *ctx)
 {
    FLUSH_VB( ctx, "swap buffers" );
 }
+
 
 
 /*
@@ -1689,7 +1677,7 @@ _mesa_get_dispatch(GLcontext *ctx)
 void
 _mesa_ResizeBuffersMESA( void )
 {
-   GET_CURRENT_CONTEXT(ctx);
+   GLcontext *ctx = gl_get_current_context();
 
    GLuint buf_width, buf_height;
 
@@ -1712,15 +1700,12 @@ _mesa_ResizeBuffersMESA( void )
 
    /* Reallocate other buffers if needed. */
    if (ctx->DrawBuffer->UseSoftwareDepthBuffer) {
-      /* reallocate depth buffer */
       gl_alloc_depth_buffer( ctx );
    }
    if (ctx->DrawBuffer->UseSoftwareStencilBuffer) {
-      /* reallocate stencil buffer */
       gl_alloc_stencil_buffer( ctx );
    }
    if (ctx->DrawBuffer->UseSoftwareAccumBuffer) {
-      /* reallocate accum buffer */
       gl_alloc_accum_buffer( ctx );
    }
    if (ctx->Visual->SoftwareAlpha) {
