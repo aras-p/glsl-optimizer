@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.21 2000/02/24 00:52:23 brianp Exp $
+# $Id: Make-config,v 1.22 2000/03/23 17:00:35 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=3
@@ -463,7 +463,7 @@ linux-static:
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
 	"CC = gcc" \
-	"CFLAGS = -O2 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
+	"CFLAGS = -O3 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lm -lpthread"
 
@@ -489,7 +489,7 @@ linux-386-static:
 	"GLUT_LIB = libglut.a" \
 	"GLW_LIB = libGLw.a" \
 	"CC = gcc" \
-	"CFLAGS = -O2 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DPTHREADS -I/usr/X11R6/include" \
+	"CFLAGS = -O3 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lm -lpthread" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S X86/vertex.S"
@@ -697,7 +697,7 @@ linux-alpha-static:
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.a" \
 	"CC = gcc" \
-	"CFLAGS = -O2 -mieee -pedantic -L/usr/X11R6/lib -D_XOPEN_SOURCE -DUSE_XSHM" \
+	"CFLAGS = -O3 -mieee -pedantic -L/usr/X11R6/lib -D_XOPEN_SOURCE -DUSE_XSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lm"
 
