@@ -129,54 +129,29 @@ void _tnl_reset_compile_input( GLcontext *ctx,
 void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
 			   GLuint flag, GLuint count )
 {
+   GLuint attr;
+
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
       _tnl_print_vert_flags("copy to current", flag);
 
-   /* XXX should be able to replace these conditions with a loop over
-    * the 16 vertex attributes.
-    */
-   if (flag & VERT_BIT_NORMAL)
-      COPY_4FV( ctx->Current.Attrib[VERT_ATTRIB_NORMAL],
-                IM->Attrib[VERT_ATTRIB_NORMAL][count]);
-
-   if (flag & VERT_BIT_COLOR0) {
-      COPY_4FV(ctx->Current.Attrib[VERT_ATTRIB_COLOR0],
-               IM->Attrib[VERT_ATTRIB_COLOR0][count]);
-      if (ctx->Light.ColorMaterialEnabled) {
-	 _mesa_update_color_material( ctx,
-                                   ctx->Current.Attrib[VERT_ATTRIB_COLOR0] );
- 	 TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
+   for (attr = 1; attr < VERT_ATTRIB_MAX; attr++) {
+      if (flag & (1 << attr)) {
+         COPY_4FV(ctx->Current.Attrib[attr], IM->Attrib[attr][count]);
       }
    }
 
-   if (flag & VERT_BIT_COLOR1)
-      COPY_4FV(ctx->Current.Attrib[VERT_ATTRIB_COLOR1],
-               IM->Attrib[VERT_ATTRIB_COLOR1][count]);
-
-   if (flag & VERT_BIT_FOG)
-      ctx->Current.Attrib[VERT_ATTRIB_FOG][0] = IM->Attrib[VERT_ATTRIB_FOG][count][0];
-
-   if (flag & VERT_BIT_SIX)
-      COPY_4FV(ctx->Current.Attrib[VERT_ATTRIB_SIX], IM->Attrib[VERT_ATTRIB_SIX][count]);
-
-   if (flag & VERT_BIT_SEVEN)
-      COPY_4FV(ctx->Current.Attrib[VERT_ATTRIB_SEVEN], IM->Attrib[VERT_ATTRIB_SEVEN][count]);
-
-   if (flag & VERT_BITS_TEX_ANY) {
-      GLuint i;
-      for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++) {
-	 if (flag & VERT_BIT_TEX(i)) {
-	    COPY_4FV( ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i],
-                      IM->Attrib[VERT_ATTRIB_TEX0 + i][count]);
-	 }
-      }
-   }
-
+   /* special cases */
    if (flag & VERT_BIT_INDEX)
       ctx->Current.Index = IM->Index[count];
 
    if (flag & VERT_BIT_EDGEFLAG)
       ctx->Current.EdgeFlag = IM->EdgeFlag[count];
+
+   if ((flag & VERT_BIT_COLOR0) & ctx->Light.ColorMaterialEnabled) {
+      _mesa_update_color_material(ctx,
+                                  ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
+      TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
+   }
 
    if (flag & VERT_BIT_MATERIAL) {
       _mesa_update_material( ctx,
