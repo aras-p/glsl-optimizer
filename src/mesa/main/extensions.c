@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.81 2002/09/27 02:45:37 brianp Exp $ */
+/* $Id: extensions.c,v 1.82 2002/10/16 17:57:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -190,8 +190,10 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_NV_point_sprite",
       "GL_NV_texture_rectangle",
       "GL_NV_texgen_reflection",
+#if FEATURE_NV_vertex_program
       "GL_NV_vertex_program",
       "GL_NV_vertex_program1_1",
+#endif
       "GL_SGI_color_matrix",
       "GL_SGI_color_table",
       "GL_SGIS_generate_mipmap",

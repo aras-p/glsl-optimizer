@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.94 2002/10/08 23:59:33 brianp Exp $ */
+/* $Id: state.c,v 1.95 2002/10/16 17:57:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,7 +69,9 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
+#if FEATURE_NV_vertex_program
 #include "vpstate.h"
+#endif
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
@@ -462,6 +464,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->WindowPos4svMESA = _mesa_WindowPos4svMESA;
 
    /* 233. GL_NV_vertex_program */
+#if FEATURE_NV_vertex_program
    exec->BindProgramNV = _mesa_BindProgramNV;
    exec->DeleteProgramsNV = _mesa_DeleteProgramsNV;
    exec->ExecuteProgramNV = _mesa_ExecuteProgramNV;
@@ -487,6 +490,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->ProgramParameters4fvNV = _mesa_ProgramParameters4fvNV;
    exec->TrackMatrixNV = _mesa_TrackMatrixNV;
    exec->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
+#endif
 
    /* 262. GL_NV_point_sprite */
    exec->PointParameteriNV = _mesa_PointParameteriNV;

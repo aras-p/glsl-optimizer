@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.69 2002/09/06 02:56:08 brianp Exp $ */
+/* $Id: enable.c,v 1.70 2002/10/16 17:57:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -91,7 +91,7 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
          flag = _NEW_ARRAY_COLOR1;
          break;
 
-      /* GL_NV_vertex_program */
+#if FEATURE_NV_vertex_program
       case GL_VERTEX_ATTRIB_ARRAY0_NV:
       case GL_VERTEX_ATTRIB_ARRAY1_NV:
       case GL_VERTEX_ATTRIB_ARRAY2_NV:
@@ -115,6 +115,8 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
             flag = _NEW_ARRAY_ATTRIB(n);
          }
          break;
+#endif /* FEATURE_NV_vertex_program */
+
       default:
          _mesa_error( ctx, GL_INVALID_ENUM,
                       "glEnable/DisableClientState(0x%x)", cap);
@@ -804,7 +806,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Point.PointSprite = state;
          break;
 
-      /* GL_NV_vertex_program */
+#if FEATURE_NV_vertex_program
       case GL_VERTEX_PROGRAM_NV:
          CHECK_EXTENSION(NV_vertex_program, cap);
          if (ctx->VertexProgram.Enabled == state)
@@ -872,6 +874,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
             ctx->Eval.Map2Attrib[map] = state;
          }
          break;
+#endif /* FEATURE_NV_vertex_program */
 
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:
@@ -1190,7 +1193,7 @@ _mesa_IsEnabled( GLenum cap )
       case GL_POINT_SPRITE_NV:
          return ctx->Point.PointSprite;
 
-      /* GL_NV_vertex_program */
+#if FEATURE_NV_vertex_program
       case GL_VERTEX_PROGRAM_NV:
          CHECK_EXTENSION(NV_vertex_program);
          return ctx->VertexProgram.Enabled;
@@ -1263,6 +1266,7 @@ _mesa_IsEnabled( GLenum cap )
             const GLuint map = (GLuint) (cap - GL_MAP2_VERTEX_ATTRIB0_4_NV);
             return ctx->Eval.Map2Attrib[map];
          }
+#endif /* FEATURE_NV_vertex_program */
 
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:

@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.97 2002/10/07 15:03:14 brianp Exp $ */
+/* $Id: dlist.c,v 1.98 2002/10/16 17:57:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -65,7 +65,9 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
+#if FEATURE_NV_vertex_program
 #include "vpstate.h"
+#endif
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
@@ -3988,6 +3990,7 @@ save_PixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value)
 /*
  * GL_NV_vertex_program
  */
+#if FEATURE_NV_vertex_program
 static void
 save_BindProgramNV(GLenum target, GLuint id)
 {
@@ -4117,6 +4120,7 @@ save_TrackMatrixNV(GLenum target, GLuint address,
       (*ctx->Exec->TrackMatrixNV)(target, address, matrix, transform);
    }
 }
+#endif /* FEATURE_NV_vertex_program */
 
 
 /* GL_EXT_stencil_two_side */
@@ -6181,6 +6185,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->WindowPos4sMESA = save_WindowPos4sMESA;
    table->WindowPos4svMESA = save_WindowPos4svMESA;
 
+#if FEATURE_NV_vertex_program
    /* 233. GL_NV_vertex_program */
    /* The following commands DO NOT go into display lists:
     * AreProgramsResidentNV, IsProgramNV, GenProgramsNV, DeleteProgramsNV,
@@ -6211,6 +6216,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->ProgramParameters4fvNV = save_ProgramParameters4fvNV;
    table->TrackMatrixNV = save_TrackMatrixNV;
    table->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
+#endif
 
    /* 262. GL_NV_point_sprite */
    table->PointParameteriNV = save_PointParameteriNV;

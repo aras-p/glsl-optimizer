@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.95 2002/10/15 15:23:16 brianp Exp $ */
+/* $Id: get.c,v 1.96 2002/10/16 17:57:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1348,7 +1348,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ENUM_TO_BOOL(ctx->Hint.GenerateMipmap);
          break;
 
-      /* GL_NV_vertex_program */
+#if FEATURE_NV_vertex_program
       case GL_VERTEX_PROGRAM_NV:
          CHECK_EXTENSION_B(NV_vertex_program, pname);
          *params = ctx->VertexProgram.Enabled;
@@ -1451,6 +1451,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             *params = ctx->Eval.Map2Attrib[n];
          }
          break;
+#endif /* FEATURE_NV_vertex_program */
 
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:
@@ -2712,7 +2713,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Hint.GenerateMipmap;
          break;
 
-      /* GL_NV_vertex_program */
+#if FEATURE_NV_vertex_program
       case GL_VERTEX_PROGRAM_NV:
          CHECK_EXTENSION_D(NV_vertex_program, pname);
          *params = (GLdouble) ctx->VertexProgram.Enabled;
@@ -2815,6 +2816,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             *params = (GLdouble) ctx->Eval.Map2Attrib[n];
          }
          break;
+#endif /* FEATURE_NV_vertex_program */
 
       /* GL_NV_texture_rectangle */
       case GL_TEXTURE_RECTANGLE_NV:
@@ -4052,7 +4054,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) ctx->Hint.GenerateMipmap;
          break;
 
-      /* GL_NV_vertex_program */
+#if FEATURE_NV_vertex_program
       case GL_VERTEX_PROGRAM_NV:
          CHECK_EXTENSION_F(NV_vertex_program, pname);
          *params = (GLfloat) ctx->VertexProgram.Enabled;
@@ -4169,6 +4171,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          CHECK_EXTENSION_F(NV_texture_rectangle, pname);
          *params = (GLfloat) ctx->Const.MaxTextureRectSize;
          break;
+#endif /* FEATURE_NV_vertex_program */
 
       /* GL_EXT_stencil_two_side */
       case GL_STENCIL_TEST_TWO_SIDE_EXT:
@@ -5431,7 +5434,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Hint.GenerateMipmap;
          break;
 
-      /* GL_NV_vertex_program */
+#if FEATURE_NV_vertex_program
       case GL_VERTEX_PROGRAM_NV:
          CHECK_EXTENSION_I(NV_vertex_program, pname);
          *params = (GLint) ctx->VertexProgram.Enabled;
@@ -5548,6 +5551,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          CHECK_EXTENSION_I(NV_texture_rectangle, pname);
          *params = (GLint) ctx->Const.MaxTextureRectSize;
          break;
+#endif /* FEATURE_NV_vertex_program */
 
       /* GL_EXT_stencil_two_side */
       case GL_STENCIL_TEST_TWO_SIDE_EXT:

@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.41 2002/10/05 03:01:28 brianp Exp $ */
+/* $Id: config.h,v 1.42 2002/10/16 17:57:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -195,6 +195,13 @@
 #define GCOMP 1
 #define BCOMP 2
 #define ACOMP 3
+
+
+
+/*
+ * Enable/disable features (blocks of code) by setting FEATURE_xyz to 0 or 1.
+ */
+#define FEATURE_NV_vertex_program 1
 
 
 #endif /* CONFIG_H */

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.184 2002/10/14 17:08:17 brianp Exp $ */
+/* $Id: context.c,v 1.185 2002/10/16 17:57:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -633,7 +633,9 @@ alloc_shared_state( void )
 
    ss->DisplayList = _mesa_NewHashTable();
    ss->TexObjects = _mesa_NewHashTable();
+#if FEATURE_NV_vertex_program
    ss->VertexPrograms = _mesa_NewHashTable();
+#endif
 
    /* Default Texture objects */
    outOfMemory = GL_FALSE;
@@ -665,7 +667,10 @@ alloc_shared_state( void )
       outOfMemory = GL_TRUE;
    }
 
-   if (!ss->DisplayList || !ss->TexObjects || !ss->VertexPrograms
+   if (!ss->DisplayList || !ss->TexObjects
+#if FEATURE_NV_vertex_program
+       || !ss->VertexPrograms
+#endif
        || outOfMemory) {
       /* Ran out of memory at some point.  Free everything and return NULL */
       if (ss->DisplayList)
@@ -720,6 +725,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    }
    _mesa_DeleteHashTable(ss->TexObjects);
 
+#if FEATURE_NV_vertex_program
    /* Free vertex programs */
    while (1) {
       GLuint prog = _mesa_HashFirstEntry(ss->VertexPrograms);
@@ -731,6 +737,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
       }
    }
    _mesa_DeleteHashTable(ss->VertexPrograms);
+#endif
 
    FREE(ss);
 }
@@ -1928,11 +1935,13 @@ _mesa_free_context_data( GLcontext *ctx )
    _math_matrix_dtr( &ctx->_ModelProjectMatrix );
 
 
+#if FEATURE_NV_vertex_program
    if (ctx->VertexProgram.Current) {
       ctx->VertexProgram.Current->RefCount--;
       if (ctx->VertexProgram.Current->RefCount <= 0)
          _mesa_delete_program(ctx, ctx->VertexProgram.CurrentID);
    }
+#endif
 
    /* Shared context state (display lists, textures, etc) */
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
