@@ -1,10 +1,10 @@
-/* $Id: texstore.c,v 1.49 2002/12/03 00:05:48 brianp Exp $ */
+/* $Id: texstore.c,v 1.50 2003/01/24 21:38:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1896,8 +1896,8 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 {
    const struct gl_texture_image *srcImage;
    const struct gl_texture_format *convertFormat;
-   const GLubyte *srcData;
-   GLubyte *dstData;
+   const GLubyte *srcData = NULL;
+   GLubyte *dstData = NULL;
    GLint level, maxLevels;
 
    ASSERT(texObj);
