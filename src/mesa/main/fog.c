@@ -1,8 +1,8 @@
-/* $Id: fog.c,v 1.21 2000/10/27 16:44:40 keithw Exp $ */
+/* $Id: fog.c,v 1.22 2000/10/27 18:38:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -353,7 +353,8 @@ _mesa_win_fog_coords_from_z( const GLcontext *ctx,
                GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
                GLfloat eyez = d / (c+ndcz);
                GLfloat tmp = negDensitySquared * eyez * eyez;
-#ifdef __alpha__
+#if defined(__alpha__) || defined(__alpha)
+               /* XXX this underflow check may be needed for other systems */
                if (tmp < FLT_MIN_10_EXP)
 		  tmp = FLT_MIN_10_EXP;
 #endif
