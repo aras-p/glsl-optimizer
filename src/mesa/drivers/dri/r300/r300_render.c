@@ -248,7 +248,7 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
 		if(tnl->render_inputs & _TNL_BIT_COLOR0)
 			output_vector(VB->ColorPtr[0], i);
 		if(tnl->render_inputs & _TNL_BIT_COLOR1)
-			output_vector(VB->ColorPtr[1], i);
+			output_vector(VB->SecondaryColorPtr[0], i);
 
 		if(tnl->render_inputs & _TNL_BIT_FOG)
 			output_vector(VB->FogCoordPtr, i);

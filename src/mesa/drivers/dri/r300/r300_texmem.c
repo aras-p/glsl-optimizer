@@ -406,7 +406,7 @@ static void uploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 	} while (ret && errno == EAGAIN);
 
 	UNLOCK_HARDWARE(&rmesa->radeon);
-
+	
 	if (ret) {
 		fprintf(stderr, "DRM_RADEON_TEXTURE: return = %d\n", ret);
 		fprintf(stderr, "   offset=0x%08x\n", offset);
