@@ -1,35 +1,38 @@
-/* $XFree86: xc/lib/GL/glx/indirect_init.c,v 1.9 2004/01/28 18:11:41 alanh Exp $ */
-/**************************************************************************
-
-Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
-All Rights Reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sub license, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice (including the
-next paragraph) shall be included in all copies or substantial portions
-of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
-IN NO EVENT SHALL PRECISION INSIGHT AND/OR ITS SUPPLIERS BE LIABLE FOR
-ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-**************************************************************************/
+/* DO NOT EDIT - This file generated automatically by glX_proto_send.py (from Mesa) script */
 
 /*
- * Authors:
- *   Kevin E. Martin <kevin@precisioninsight.com>
- *   Brian Paul <brian@precisioninsight.com>
+ * Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
+ * (C) Copyright IBM Corporation 2004
+ * All Rights Reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sub license,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
+ * PRECISION INSIGHT, IBM,
+ * AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/**
+ * \file indirect_init.c
+ * Initialize indirect rendering dispatch table.
+ *
+ * \author Kevin E. Martin <kevin@precisioninsight.com>
+ * \author Brian Paul <brian@precisioninsight.com>
+ * \author Ian Romanick <idr@us.ibm.com>
  */
 
 #include "indirect_init.h"
@@ -37,16 +40,20 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "glapi.h"
 
 
-/*
-** No-op function
-*/
+/**
+ * No-op function used to initialize functions that have no GLX protocol
+ * support.
+ */
 static int NoOp(void)
 {
     return 0;
 }
 
-
-__GLapi *__glXNewIndirectAPI(void)
+/**
+ * Create and initialize a new GL dispatch table.  The table is initialized
+ * with GLX indirect rendering protocol functions.
+ */
+__GLapi * __glXNewIndirectAPI( void )
 {
     __GLapi *glAPI;
     GLuint entries;
@@ -64,23 +71,18 @@ __GLapi *__glXNewIndirectAPI(void)
     }
 
     /* now, initialize the entries we understand */
-    glAPI->Accum = __indirect_glAccum;
-    glAPI->AlphaFunc = __indirect_glAlphaFunc;
-    glAPI->AreTexturesResident = __indirect_glAreTexturesResident;
-    glAPI->ArrayElement = __indirect_glArrayElement;
-    glAPI->Begin = __indirect_glBegin;
-    glAPI->BindTexture = __indirect_glBindTexture;
-    glAPI->Bitmap = __indirect_glBitmap;
-    glAPI->BlendFunc = __indirect_glBlendFunc;
+
+    /* GL_VERSION_1_0 */
+
+    glAPI->NewList = __indirect_glNewList;
+    glAPI->EndList = __indirect_glEndList;
     glAPI->CallList = __indirect_glCallList;
     glAPI->CallLists = __indirect_glCallLists;
-    glAPI->Clear = __indirect_glClear;
-    glAPI->ClearAccum = __indirect_glClearAccum;
-    glAPI->ClearColor = __indirect_glClearColor;
-    glAPI->ClearDepth = __indirect_glClearDepth;
-    glAPI->ClearIndex = __indirect_glClearIndex;
-    glAPI->ClearStencil = __indirect_glClearStencil;
-    glAPI->ClipPlane = __indirect_glClipPlane;
+    glAPI->DeleteLists = __indirect_glDeleteLists;
+    glAPI->GenLists = __indirect_glGenLists;
+    glAPI->ListBase = __indirect_glListBase;
+    glAPI->Begin = __indirect_glBegin;
+    glAPI->Bitmap = __indirect_glBitmap;
     glAPI->Color3b = __indirect_glColor3b;
     glAPI->Color3bv = __indirect_glColor3bv;
     glAPI->Color3d = __indirect_glColor3d;
@@ -113,89 +115,9 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->Color4uiv = __indirect_glColor4uiv;
     glAPI->Color4us = __indirect_glColor4us;
     glAPI->Color4usv = __indirect_glColor4usv;
-    glAPI->ColorMask = __indirect_glColorMask;
-    glAPI->ColorMaterial = __indirect_glColorMaterial;
-    glAPI->ColorPointer = __indirect_glColorPointer;
-    glAPI->CopyPixels = __indirect_glCopyPixels;
-    glAPI->CopyTexImage1D = __indirect_glCopyTexImage1D;
-    glAPI->CopyTexImage2D = __indirect_glCopyTexImage2D;
-    glAPI->CopyTexSubImage1D = __indirect_glCopyTexSubImage1D;
-    glAPI->CopyTexSubImage2D = __indirect_glCopyTexSubImage2D;
-    glAPI->CullFace = __indirect_glCullFace;
-    glAPI->DeleteLists = __indirect_glDeleteLists;
-    glAPI->DeleteTextures = __indirect_glDeleteTextures;
-    glAPI->DepthFunc = __indirect_glDepthFunc;
-    glAPI->DepthMask = __indirect_glDepthMask;
-    glAPI->DepthRange = __indirect_glDepthRange;
-    glAPI->Disable = __indirect_glDisable;
-    glAPI->DisableClientState = __indirect_glDisableClientState;
-    glAPI->DrawArrays = __indirect_glDrawArrays;
-    glAPI->DrawBuffer = __indirect_glDrawBuffer;
-    glAPI->DrawElements = __indirect_glDrawElements;
-    glAPI->DrawPixels = __indirect_glDrawPixels;
-    glAPI->DrawRangeElements = __indirect_glDrawRangeElements;
     glAPI->EdgeFlag = __indirect_glEdgeFlag;
-    glAPI->EdgeFlagPointer = __indirect_glEdgeFlagPointer;
     glAPI->EdgeFlagv = __indirect_glEdgeFlagv;
-    glAPI->Enable = __indirect_glEnable;
-    glAPI->EnableClientState = __indirect_glEnableClientState;
     glAPI->End = __indirect_glEnd;
-    glAPI->EndList = __indirect_glEndList;
-    glAPI->EvalCoord1d = __indirect_glEvalCoord1d;
-    glAPI->EvalCoord1dv = __indirect_glEvalCoord1dv;
-    glAPI->EvalCoord1f = __indirect_glEvalCoord1f;
-    glAPI->EvalCoord1fv = __indirect_glEvalCoord1fv;
-    glAPI->EvalCoord2d = __indirect_glEvalCoord2d;
-    glAPI->EvalCoord2dv = __indirect_glEvalCoord2dv;
-    glAPI->EvalCoord2f = __indirect_glEvalCoord2f;
-    glAPI->EvalCoord2fv = __indirect_glEvalCoord2fv;
-    glAPI->EvalMesh1 = __indirect_glEvalMesh1;
-    glAPI->EvalMesh2 = __indirect_glEvalMesh2;
-    glAPI->EvalPoint1 = __indirect_glEvalPoint1;
-    glAPI->EvalPoint2 = __indirect_glEvalPoint2;
-    glAPI->FeedbackBuffer = __indirect_glFeedbackBuffer;
-    glAPI->Finish = __indirect_glFinish;
-    glAPI->Flush = __indirect_glFlush;
-    glAPI->Fogf = __indirect_glFogf;
-    glAPI->Fogfv = __indirect_glFogfv;
-    glAPI->Fogi = __indirect_glFogi;
-    glAPI->Fogiv = __indirect_glFogiv;
-    glAPI->FrontFace = __indirect_glFrontFace;
-    glAPI->Frustum = __indirect_glFrustum;
-    glAPI->GenLists = __indirect_glGenLists;
-    glAPI->GenTextures = __indirect_glGenTextures;
-    glAPI->GetBooleanv = __indirect_glGetBooleanv;
-    glAPI->GetClipPlane = __indirect_glGetClipPlane;
-    glAPI->GetDoublev = __indirect_glGetDoublev;
-    glAPI->GetError = __indirect_glGetError;
-    glAPI->GetFloatv = __indirect_glGetFloatv;
-    glAPI->GetIntegerv = __indirect_glGetIntegerv;
-    glAPI->GetLightfv = __indirect_glGetLightfv;
-    glAPI->GetLightiv = __indirect_glGetLightiv;
-    glAPI->GetMapdv = __indirect_glGetMapdv;
-    glAPI->GetMapfv = __indirect_glGetMapfv;
-    glAPI->GetMapiv = __indirect_glGetMapiv;
-    glAPI->GetMaterialfv = __indirect_glGetMaterialfv;
-    glAPI->GetMaterialiv = __indirect_glGetMaterialiv;
-    glAPI->GetPixelMapfv = __indirect_glGetPixelMapfv;
-    glAPI->GetPixelMapuiv = __indirect_glGetPixelMapuiv;
-    glAPI->GetPixelMapusv = __indirect_glGetPixelMapusv;
-    glAPI->GetPointerv = __indirect_glGetPointerv;
-    glAPI->GetPolygonStipple = __indirect_glGetPolygonStipple;
-    glAPI->GetString = __indirect_glGetString;
-    glAPI->GetTexEnvfv = __indirect_glGetTexEnvfv;
-    glAPI->GetTexEnviv = __indirect_glGetTexEnviv;
-    glAPI->GetTexGendv = __indirect_glGetTexGendv;
-    glAPI->GetTexGenfv = __indirect_glGetTexGenfv;
-    glAPI->GetTexGeniv = __indirect_glGetTexGeniv;
-    glAPI->GetTexImage = __indirect_glGetTexImage;
-    glAPI->GetTexLevelParameterfv = __indirect_glGetTexLevelParameterfv;
-    glAPI->GetTexLevelParameteriv = __indirect_glGetTexLevelParameteriv;
-    glAPI->GetTexParameterfv = __indirect_glGetTexParameterfv;
-    glAPI->GetTexParameteriv = __indirect_glGetTexParameteriv;
-    glAPI->Hint = __indirect_glHint;
-    glAPI->IndexMask = __indirect_glIndexMask;
-    glAPI->IndexPointer = __indirect_glIndexPointer;
     glAPI->Indexd = __indirect_glIndexd;
     glAPI->Indexdv = __indirect_glIndexdv;
     glAPI->Indexf = __indirect_glIndexf;
@@ -204,45 +126,6 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->Indexiv = __indirect_glIndexiv;
     glAPI->Indexs = __indirect_glIndexs;
     glAPI->Indexsv = __indirect_glIndexsv;
-    glAPI->Indexub = __indirect_glIndexub;
-    glAPI->Indexubv = __indirect_glIndexubv;
-    glAPI->InitNames = __indirect_glInitNames;
-    glAPI->InterleavedArrays = __indirect_glInterleavedArrays;
-    glAPI->IsEnabled = __indirect_glIsEnabled;
-    glAPI->IsList = __indirect_glIsList;
-    glAPI->IsTexture = __indirect_glIsTexture;
-    glAPI->LightModelf = __indirect_glLightModelf;
-    glAPI->LightModelfv = __indirect_glLightModelfv;
-    glAPI->LightModeli = __indirect_glLightModeli;
-    glAPI->LightModeliv = __indirect_glLightModeliv;
-    glAPI->Lightf = __indirect_glLightf;
-    glAPI->Lightfv = __indirect_glLightfv;
-    glAPI->Lighti = __indirect_glLighti;
-    glAPI->Lightiv = __indirect_glLightiv;
-    glAPI->LineStipple = __indirect_glLineStipple;
-    glAPI->LineWidth = __indirect_glLineWidth;
-    glAPI->ListBase = __indirect_glListBase;
-    glAPI->LoadIdentity = __indirect_glLoadIdentity;
-    glAPI->LoadMatrixd = __indirect_glLoadMatrixd;
-    glAPI->LoadMatrixf = __indirect_glLoadMatrixf;
-    glAPI->LoadName = __indirect_glLoadName;
-    glAPI->LogicOp = __indirect_glLogicOp;
-    glAPI->Map1d = __indirect_glMap1d;
-    glAPI->Map1f = __indirect_glMap1f;
-    glAPI->Map2d = __indirect_glMap2d;
-    glAPI->Map2f = __indirect_glMap2f;
-    glAPI->MapGrid1d = __indirect_glMapGrid1d;
-    glAPI->MapGrid1f = __indirect_glMapGrid1f;
-    glAPI->MapGrid2d = __indirect_glMapGrid2d;
-    glAPI->MapGrid2f = __indirect_glMapGrid2f;
-    glAPI->Materialf = __indirect_glMaterialf;
-    glAPI->Materialfv = __indirect_glMaterialfv;
-    glAPI->Materiali = __indirect_glMateriali;
-    glAPI->Materialiv = __indirect_glMaterialiv;
-    glAPI->MatrixMode = __indirect_glMatrixMode;
-    glAPI->MultMatrixd = __indirect_glMultMatrixd;
-    glAPI->MultMatrixf = __indirect_glMultMatrixf;
-    glAPI->NewList = __indirect_glNewList;
     glAPI->Normal3b = __indirect_glNormal3b;
     glAPI->Normal3bv = __indirect_glNormal3bv;
     glAPI->Normal3d = __indirect_glNormal3d;
@@ -253,30 +136,6 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->Normal3iv = __indirect_glNormal3iv;
     glAPI->Normal3s = __indirect_glNormal3s;
     glAPI->Normal3sv = __indirect_glNormal3sv;
-    glAPI->NormalPointer = __indirect_glNormalPointer;
-    glAPI->Ortho = __indirect_glOrtho;
-    glAPI->PassThrough = __indirect_glPassThrough;
-    glAPI->PixelMapfv = __indirect_glPixelMapfv;
-    glAPI->PixelMapuiv = __indirect_glPixelMapuiv;
-    glAPI->PixelMapusv = __indirect_glPixelMapusv;
-    glAPI->PixelStoref = __indirect_glPixelStoref;
-    glAPI->PixelStorei = __indirect_glPixelStorei;
-    glAPI->PixelTransferf = __indirect_glPixelTransferf;
-    glAPI->PixelTransferi = __indirect_glPixelTransferi;
-    glAPI->PixelZoom = __indirect_glPixelZoom;
-    glAPI->PointSize = __indirect_glPointSize;
-    glAPI->PolygonMode = __indirect_glPolygonMode;
-    glAPI->PolygonOffset = __indirect_glPolygonOffset;
-    glAPI->PolygonStipple = __indirect_glPolygonStipple;
-    glAPI->PopAttrib = __indirect_glPopAttrib;
-    glAPI->PopClientAttrib = __indirect_glPopClientAttrib;
-    glAPI->PopMatrix = __indirect_glPopMatrix;
-    glAPI->PopName = __indirect_glPopName;
-    glAPI->PrioritizeTextures = __indirect_glPrioritizeTextures;
-    glAPI->PushAttrib = __indirect_glPushAttrib;
-    glAPI->PushClientAttrib = __indirect_glPushClientAttrib;
-    glAPI->PushMatrix = __indirect_glPushMatrix;
-    glAPI->PushName = __indirect_glPushName;
     glAPI->RasterPos2d = __indirect_glRasterPos2d;
     glAPI->RasterPos2dv = __indirect_glRasterPos2dv;
     glAPI->RasterPos2f = __indirect_glRasterPos2f;
@@ -301,8 +160,6 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->RasterPos4iv = __indirect_glRasterPos4iv;
     glAPI->RasterPos4s = __indirect_glRasterPos4s;
     glAPI->RasterPos4sv = __indirect_glRasterPos4sv;
-    glAPI->ReadBuffer = __indirect_glReadBuffer;
-    glAPI->ReadPixels = __indirect_glReadPixels;
     glAPI->Rectd = __indirect_glRectd;
     glAPI->Rectdv = __indirect_glRectdv;
     glAPI->Rectf = __indirect_glRectf;
@@ -311,17 +168,6 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->Rectiv = __indirect_glRectiv;
     glAPI->Rects = __indirect_glRects;
     glAPI->Rectsv = __indirect_glRectsv;
-    glAPI->RenderMode = __indirect_glRenderMode;
-    glAPI->Rotated = __indirect_glRotated;
-    glAPI->Rotatef = __indirect_glRotatef;
-    glAPI->Scaled = __indirect_glScaled;
-    glAPI->Scalef = __indirect_glScalef;
-    glAPI->Scissor = __indirect_glScissor;
-    glAPI->SelectBuffer = __indirect_glSelectBuffer;
-    glAPI->ShadeModel = __indirect_glShadeModel;
-    glAPI->StencilFunc = __indirect_glStencilFunc;
-    glAPI->StencilMask = __indirect_glStencilMask;
-    glAPI->StencilOp = __indirect_glStencilOp;
     glAPI->TexCoord1d = __indirect_glTexCoord1d;
     glAPI->TexCoord1dv = __indirect_glTexCoord1dv;
     glAPI->TexCoord1f = __indirect_glTexCoord1f;
@@ -354,27 +200,6 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->TexCoord4iv = __indirect_glTexCoord4iv;
     glAPI->TexCoord4s = __indirect_glTexCoord4s;
     glAPI->TexCoord4sv = __indirect_glTexCoord4sv;
-    glAPI->TexCoordPointer = __indirect_glTexCoordPointer;
-    glAPI->TexEnvf = __indirect_glTexEnvf;
-    glAPI->TexEnvfv = __indirect_glTexEnvfv;
-    glAPI->TexEnvi = __indirect_glTexEnvi;
-    glAPI->TexEnviv = __indirect_glTexEnviv;
-    glAPI->TexGend = __indirect_glTexGend;
-    glAPI->TexGendv = __indirect_glTexGendv;
-    glAPI->TexGenf = __indirect_glTexGenf;
-    glAPI->TexGenfv = __indirect_glTexGenfv;
-    glAPI->TexGeni = __indirect_glTexGeni;
-    glAPI->TexGeniv = __indirect_glTexGeniv;
-    glAPI->TexImage1D = __indirect_glTexImage1D;
-    glAPI->TexImage2D = __indirect_glTexImage2D;
-    glAPI->TexParameterf = __indirect_glTexParameterf;
-    glAPI->TexParameterfv = __indirect_glTexParameterfv;
-    glAPI->TexParameteri = __indirect_glTexParameteri;
-    glAPI->TexParameteriv = __indirect_glTexParameteriv;
-    glAPI->TexSubImage1D = __indirect_glTexSubImage1D;
-    glAPI->TexSubImage2D = __indirect_glTexSubImage2D;
-    glAPI->Translated = __indirect_glTranslated;
-    glAPI->Translatef = __indirect_glTranslatef;
     glAPI->Vertex2d = __indirect_glVertex2d;
     glAPI->Vertex2dv = __indirect_glVertex2dv;
     glAPI->Vertex2f = __indirect_glVertex2f;
@@ -399,56 +224,239 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->Vertex4iv = __indirect_glVertex4iv;
     glAPI->Vertex4s = __indirect_glVertex4s;
     glAPI->Vertex4sv = __indirect_glVertex4sv;
-    glAPI->VertexPointer = __indirect_glVertexPointer;
+    glAPI->ClipPlane = __indirect_glClipPlane;
+    glAPI->ColorMaterial = __indirect_glColorMaterial;
+    glAPI->CullFace = __indirect_glCullFace;
+    glAPI->Fogf = __indirect_glFogf;
+    glAPI->Fogfv = __indirect_glFogfv;
+    glAPI->Fogi = __indirect_glFogi;
+    glAPI->Fogiv = __indirect_glFogiv;
+    glAPI->FrontFace = __indirect_glFrontFace;
+    glAPI->Hint = __indirect_glHint;
+    glAPI->Lightf = __indirect_glLightf;
+    glAPI->Lightfv = __indirect_glLightfv;
+    glAPI->Lighti = __indirect_glLighti;
+    glAPI->Lightiv = __indirect_glLightiv;
+    glAPI->LightModelf = __indirect_glLightModelf;
+    glAPI->LightModelfv = __indirect_glLightModelfv;
+    glAPI->LightModeli = __indirect_glLightModeli;
+    glAPI->LightModeliv = __indirect_glLightModeliv;
+    glAPI->LineStipple = __indirect_glLineStipple;
+    glAPI->LineWidth = __indirect_glLineWidth;
+    glAPI->Materialf = __indirect_glMaterialf;
+    glAPI->Materialfv = __indirect_glMaterialfv;
+    glAPI->Materiali = __indirect_glMateriali;
+    glAPI->Materialiv = __indirect_glMaterialiv;
+    glAPI->PointSize = __indirect_glPointSize;
+    glAPI->PolygonMode = __indirect_glPolygonMode;
+    glAPI->PolygonStipple = __indirect_glPolygonStipple;
+    glAPI->Scissor = __indirect_glScissor;
+    glAPI->ShadeModel = __indirect_glShadeModel;
+    glAPI->TexParameterf = __indirect_glTexParameterf;
+    glAPI->TexParameterfv = __indirect_glTexParameterfv;
+    glAPI->TexParameteri = __indirect_glTexParameteri;
+    glAPI->TexParameteriv = __indirect_glTexParameteriv;
+    glAPI->TexImage1D = __indirect_glTexImage1D;
+    glAPI->TexImage2D = __indirect_glTexImage2D;
+    glAPI->TexEnvf = __indirect_glTexEnvf;
+    glAPI->TexEnvfv = __indirect_glTexEnvfv;
+    glAPI->TexEnvi = __indirect_glTexEnvi;
+    glAPI->TexEnviv = __indirect_glTexEnviv;
+    glAPI->TexGend = __indirect_glTexGend;
+    glAPI->TexGendv = __indirect_glTexGendv;
+    glAPI->TexGenf = __indirect_glTexGenf;
+    glAPI->TexGenfv = __indirect_glTexGenfv;
+    glAPI->TexGeni = __indirect_glTexGeni;
+    glAPI->TexGeniv = __indirect_glTexGeniv;
+    glAPI->FeedbackBuffer = __indirect_glFeedbackBuffer;
+    glAPI->SelectBuffer = __indirect_glSelectBuffer;
+    glAPI->RenderMode = __indirect_glRenderMode;
+    glAPI->InitNames = __indirect_glInitNames;
+    glAPI->LoadName = __indirect_glLoadName;
+    glAPI->PassThrough = __indirect_glPassThrough;
+    glAPI->PopName = __indirect_glPopName;
+    glAPI->PushName = __indirect_glPushName;
+    glAPI->DrawBuffer = __indirect_glDrawBuffer;
+    glAPI->Clear = __indirect_glClear;
+    glAPI->ClearAccum = __indirect_glClearAccum;
+    glAPI->ClearIndex = __indirect_glClearIndex;
+    glAPI->ClearColor = __indirect_glClearColor;
+    glAPI->ClearStencil = __indirect_glClearStencil;
+    glAPI->ClearDepth = __indirect_glClearDepth;
+    glAPI->StencilMask = __indirect_glStencilMask;
+    glAPI->ColorMask = __indirect_glColorMask;
+    glAPI->DepthMask = __indirect_glDepthMask;
+    glAPI->IndexMask = __indirect_glIndexMask;
+    glAPI->Accum = __indirect_glAccum;
+    glAPI->Disable = __indirect_glDisable;
+    glAPI->Enable = __indirect_glEnable;
+    glAPI->Finish = __indirect_glFinish;
+    glAPI->Flush = __indirect_glFlush;
+    glAPI->PopAttrib = __indirect_glPopAttrib;
+    glAPI->PushAttrib = __indirect_glPushAttrib;
+    glAPI->Map1d = __indirect_glMap1d;
+    glAPI->Map1f = __indirect_glMap1f;
+    glAPI->Map2d = __indirect_glMap2d;
+    glAPI->Map2f = __indirect_glMap2f;
+    glAPI->MapGrid1d = __indirect_glMapGrid1d;
+    glAPI->MapGrid1f = __indirect_glMapGrid1f;
+    glAPI->MapGrid2d = __indirect_glMapGrid2d;
+    glAPI->MapGrid2f = __indirect_glMapGrid2f;
+    glAPI->EvalCoord1d = __indirect_glEvalCoord1d;
+    glAPI->EvalCoord1dv = __indirect_glEvalCoord1dv;
+    glAPI->EvalCoord1f = __indirect_glEvalCoord1f;
+    glAPI->EvalCoord1fv = __indirect_glEvalCoord1fv;
+    glAPI->EvalCoord2d = __indirect_glEvalCoord2d;
+    glAPI->EvalCoord2dv = __indirect_glEvalCoord2dv;
+    glAPI->EvalCoord2f = __indirect_glEvalCoord2f;
+    glAPI->EvalCoord2fv = __indirect_glEvalCoord2fv;
+    glAPI->EvalMesh1 = __indirect_glEvalMesh1;
+    glAPI->EvalPoint1 = __indirect_glEvalPoint1;
+    glAPI->EvalMesh2 = __indirect_glEvalMesh2;
+    glAPI->EvalPoint2 = __indirect_glEvalPoint2;
+    glAPI->AlphaFunc = __indirect_glAlphaFunc;
+    glAPI->BlendFunc = __indirect_glBlendFunc;
+    glAPI->LogicOp = __indirect_glLogicOp;
+    glAPI->StencilFunc = __indirect_glStencilFunc;
+    glAPI->StencilOp = __indirect_glStencilOp;
+    glAPI->DepthFunc = __indirect_glDepthFunc;
+    glAPI->PixelZoom = __indirect_glPixelZoom;
+    glAPI->PixelTransferf = __indirect_glPixelTransferf;
+    glAPI->PixelTransferi = __indirect_glPixelTransferi;
+    glAPI->PixelStoref = __indirect_glPixelStoref;
+    glAPI->PixelStorei = __indirect_glPixelStorei;
+    glAPI->PixelMapfv = __indirect_glPixelMapfv;
+    glAPI->PixelMapuiv = __indirect_glPixelMapuiv;
+    glAPI->PixelMapusv = __indirect_glPixelMapusv;
+    glAPI->ReadBuffer = __indirect_glReadBuffer;
+    glAPI->CopyPixels = __indirect_glCopyPixels;
+    glAPI->ReadPixels = __indirect_glReadPixels;
+    glAPI->DrawPixels = __indirect_glDrawPixels;
+    glAPI->GetBooleanv = __indirect_glGetBooleanv;
+    glAPI->GetClipPlane = __indirect_glGetClipPlane;
+    glAPI->GetDoublev = __indirect_glGetDoublev;
+    glAPI->GetError = __indirect_glGetError;
+    glAPI->GetFloatv = __indirect_glGetFloatv;
+    glAPI->GetIntegerv = __indirect_glGetIntegerv;
+    glAPI->GetLightfv = __indirect_glGetLightfv;
+    glAPI->GetLightiv = __indirect_glGetLightiv;
+    glAPI->GetMapdv = __indirect_glGetMapdv;
+    glAPI->GetMapfv = __indirect_glGetMapfv;
+    glAPI->GetMapiv = __indirect_glGetMapiv;
+    glAPI->GetMaterialfv = __indirect_glGetMaterialfv;
+    glAPI->GetMaterialiv = __indirect_glGetMaterialiv;
+    glAPI->GetPixelMapfv = __indirect_glGetPixelMapfv;
+    glAPI->GetPixelMapuiv = __indirect_glGetPixelMapuiv;
+    glAPI->GetPixelMapusv = __indirect_glGetPixelMapusv;
+    glAPI->GetPolygonStipple = __indirect_glGetPolygonStipple;
+    glAPI->GetString = __indirect_glGetString;
+    glAPI->GetTexEnvfv = __indirect_glGetTexEnvfv;
+    glAPI->GetTexEnviv = __indirect_glGetTexEnviv;
+    glAPI->GetTexGendv = __indirect_glGetTexGendv;
+    glAPI->GetTexGenfv = __indirect_glGetTexGenfv;
+    glAPI->GetTexGeniv = __indirect_glGetTexGeniv;
+    glAPI->GetTexImage = __indirect_glGetTexImage;
+    glAPI->GetTexParameterfv = __indirect_glGetTexParameterfv;
+    glAPI->GetTexParameteriv = __indirect_glGetTexParameteriv;
+    glAPI->GetTexLevelParameterfv = __indirect_glGetTexLevelParameterfv;
+    glAPI->GetTexLevelParameteriv = __indirect_glGetTexLevelParameteriv;
+    glAPI->IsEnabled = __indirect_glIsEnabled;
+    glAPI->IsList = __indirect_glIsList;
+    glAPI->DepthRange = __indirect_glDepthRange;
+    glAPI->Frustum = __indirect_glFrustum;
+    glAPI->LoadIdentity = __indirect_glLoadIdentity;
+    glAPI->LoadMatrixf = __indirect_glLoadMatrixf;
+    glAPI->LoadMatrixd = __indirect_glLoadMatrixd;
+    glAPI->MatrixMode = __indirect_glMatrixMode;
+    glAPI->MultMatrixf = __indirect_glMultMatrixf;
+    glAPI->MultMatrixd = __indirect_glMultMatrixd;
+    glAPI->Ortho = __indirect_glOrtho;
+    glAPI->PopMatrix = __indirect_glPopMatrix;
+    glAPI->PushMatrix = __indirect_glPushMatrix;
+    glAPI->Rotated = __indirect_glRotated;
+    glAPI->Rotatef = __indirect_glRotatef;
+    glAPI->Scaled = __indirect_glScaled;
+    glAPI->Scalef = __indirect_glScalef;
+    glAPI->Translated = __indirect_glTranslated;
+    glAPI->Translatef = __indirect_glTranslatef;
     glAPI->Viewport = __indirect_glViewport;
 
-    /* 1.2 */
-    glAPI->CopyTexSubImage3D = __indirect_glCopyTexSubImage3D;
-    glAPI->DrawRangeElements = __indirect_glDrawRangeElements;
-    glAPI->TexImage3D = __indirect_glTexImage3D;
-    glAPI->TexSubImage3D = __indirect_glTexSubImage3D;
+    /* GL_VERSION_1_1 */
 
-    /* OpenGL 1.2  GL_ARB_imaging */
+    glAPI->ArrayElement = __indirect_glArrayElement;
+    glAPI->BindTexture = __indirect_glBindTexture;
+    glAPI->ColorPointer = __indirect_glColorPointer;
+    glAPI->DisableClientState = __indirect_glDisableClientState;
+    glAPI->DrawArrays = __indirect_glDrawArrays;
+    glAPI->DrawElements = __indirect_glDrawElements;
+    glAPI->EdgeFlagPointer = __indirect_glEdgeFlagPointer;
+    glAPI->EnableClientState = __indirect_glEnableClientState;
+    glAPI->IndexPointer = __indirect_glIndexPointer;
+    glAPI->Indexub = __indirect_glIndexub;
+    glAPI->Indexubv = __indirect_glIndexubv;
+    glAPI->InterleavedArrays = __indirect_glInterleavedArrays;
+    glAPI->NormalPointer = __indirect_glNormalPointer;
+    glAPI->PolygonOffset = __indirect_glPolygonOffset;
+    glAPI->TexCoordPointer = __indirect_glTexCoordPointer;
+    glAPI->VertexPointer = __indirect_glVertexPointer;
+    glAPI->AreTexturesResident = __indirect_glAreTexturesResident;
+    glAPI->CopyTexImage1D = __indirect_glCopyTexImage1D;
+    glAPI->CopyTexImage2D = __indirect_glCopyTexImage2D;
+    glAPI->CopyTexSubImage1D = __indirect_glCopyTexSubImage1D;
+    glAPI->CopyTexSubImage2D = __indirect_glCopyTexSubImage2D;
+    glAPI->DeleteTextures = __indirect_glDeleteTextures;
+    glAPI->GenTextures = __indirect_glGenTextures;
+    glAPI->GetPointerv = __indirect_glGetPointerv;
+    glAPI->IsTexture = __indirect_glIsTexture;
+    glAPI->PrioritizeTextures = __indirect_glPrioritizeTextures;
+    glAPI->TexSubImage1D = __indirect_glTexSubImage1D;
+    glAPI->TexSubImage2D = __indirect_glTexSubImage2D;
+    glAPI->PopClientAttrib = __indirect_glPopClientAttrib;
+    glAPI->PushClientAttrib = __indirect_glPushClientAttrib;
+
+    /* GL_VERSION_1_2 */
+
     glAPI->BlendColor = __indirect_glBlendColor;
     glAPI->BlendEquation = __indirect_glBlendEquation;
-    glAPI->ColorSubTable = __indirect_glColorSubTable;
+    glAPI->DrawRangeElements = __indirect_glDrawRangeElements;
     glAPI->ColorTable = __indirect_glColorTable;
     glAPI->ColorTableParameterfv = __indirect_glColorTableParameterfv;
     glAPI->ColorTableParameteriv = __indirect_glColorTableParameteriv;
+    glAPI->CopyColorTable = __indirect_glCopyColorTable;
+    glAPI->GetColorTable = __indirect_glGetColorTable;
+    glAPI->GetColorTableParameterfv = __indirect_glGetColorTableParameterfv;
+    glAPI->GetColorTableParameteriv = __indirect_glGetColorTableParameteriv;
+    glAPI->ColorSubTable = __indirect_glColorSubTable;
+    glAPI->CopyColorSubTable = __indirect_glCopyColorSubTable;
     glAPI->ConvolutionFilter1D = __indirect_glConvolutionFilter1D;
     glAPI->ConvolutionFilter2D = __indirect_glConvolutionFilter2D;
     glAPI->ConvolutionParameterf = __indirect_glConvolutionParameterf;
     glAPI->ConvolutionParameterfv = __indirect_glConvolutionParameterfv;
     glAPI->ConvolutionParameteri = __indirect_glConvolutionParameteri;
     glAPI->ConvolutionParameteriv = __indirect_glConvolutionParameteriv;
-    glAPI->CopyColorSubTable = __indirect_glCopyColorSubTable;
-    glAPI->CopyColorTable = __indirect_glCopyColorTable;
     glAPI->CopyConvolutionFilter1D = __indirect_glCopyConvolutionFilter1D;
     glAPI->CopyConvolutionFilter2D = __indirect_glCopyConvolutionFilter2D;
-    glAPI->GetColorTable = __indirect_glGetColorTable;
-    glAPI->GetColorTableParameterfv = __indirect_glGetColorTableParameterfv;
-    glAPI->GetColorTableParameteriv = __indirect_glGetColorTableParameteriv;
     glAPI->GetConvolutionFilter = __indirect_glGetConvolutionFilter;
     glAPI->GetConvolutionParameterfv = __indirect_glGetConvolutionParameterfv;
     glAPI->GetConvolutionParameteriv = __indirect_glGetConvolutionParameteriv;
+    glAPI->GetSeparableFilter = __indirect_glGetSeparableFilter;
+    glAPI->SeparableFilter2D = __indirect_glSeparableFilter2D;
     glAPI->GetHistogram = __indirect_glGetHistogram;
     glAPI->GetHistogramParameterfv = __indirect_glGetHistogramParameterfv;
     glAPI->GetHistogramParameteriv = __indirect_glGetHistogramParameteriv;
     glAPI->GetMinmax = __indirect_glGetMinmax;
     glAPI->GetMinmaxParameterfv = __indirect_glGetMinmaxParameterfv;
     glAPI->GetMinmaxParameteriv = __indirect_glGetMinmaxParameteriv;
-    glAPI->GetSeparableFilter = __indirect_glGetSeparableFilter;
     glAPI->Histogram = __indirect_glHistogram;
     glAPI->Minmax = __indirect_glMinmax;
     glAPI->ResetHistogram = __indirect_glResetHistogram;
     glAPI->ResetMinmax = __indirect_glResetMinmax;
-    glAPI->SeparableFilter2D = __indirect_glSeparableFilter2D;
+    glAPI->TexImage3D = __indirect_glTexImage3D;
+    glAPI->TexSubImage3D = __indirect_glTexSubImage3D;
+    glAPI->CopyTexSubImage3D = __indirect_glCopyTexSubImage3D;
 
-    /* 1.4 */
-    glAPI->MultiDrawArraysEXT = __indirect_glMultiDrawArraysEXT;
-    glAPI->MultiDrawElementsEXT = __indirect_glMultiDrawElementsEXT;
+    /* GL_ARB_multitexture */
 
-    /* ARB 1. GL_ARB_multitexture */
     glAPI->ActiveTextureARB = __indirect_glActiveTextureARB;
     glAPI->ClientActiveTextureARB = __indirect_glClientActiveTextureARB;
     glAPI->MultiTexCoord1dARB = __indirect_glMultiTexCoord1dARB;
@@ -484,94 +492,117 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->MultiTexCoord4sARB = __indirect_glMultiTexCoord4sARB;
     glAPI->MultiTexCoord4svARB = __indirect_glMultiTexCoord4svARB;
 
-    /* ARB 3. GL_ARB_transpose_matrix */
-    glAPI->LoadTransposeMatrixdARB = __indirect_glLoadTransposeMatrixdARB;
-    glAPI->LoadTransposeMatrixfARB = __indirect_glLoadTransposeMatrixfARB;
-    glAPI->MultTransposeMatrixdARB = __indirect_glMultTransposeMatrixdARB;
-    glAPI->MultTransposeMatrixfARB = __indirect_glMultTransposeMatrixfARB;
+    /* GL_ARB_transpose_matrix */
 
-    /* ARB 5. GL_ARB_multisample */
+    glAPI->LoadTransposeMatrixfARB = __indirect_glLoadTransposeMatrixfARB;
+    glAPI->LoadTransposeMatrixdARB = __indirect_glLoadTransposeMatrixdARB;
+    glAPI->MultTransposeMatrixfARB = __indirect_glMultTransposeMatrixfARB;
+    glAPI->MultTransposeMatrixdARB = __indirect_glMultTransposeMatrixdARB;
+
+    /* GL_ARB_multisample */
+
     glAPI->SampleCoverageARB = __indirect_glSampleCoverageARB;
 
-    /* ARB 12. GL_ARB_texture_compression / 1.3 */
-    glAPI->GetCompressedTexImageARB = __indirect_glGetCompressedTexImageARB;
-    glAPI->CompressedTexImage1DARB = __indirect_glCompressedTexImage1DARB;
-    glAPI->CompressedTexImage2DARB = __indirect_glCompressedTexImage2DARB;
-    glAPI->CompressedTexImage3DARB = __indirect_glCompressedTexImage3DARB;
-    glAPI->CompressedTexSubImage1DARB = __indirect_glCompressedTexSubImage1DARB;
-    glAPI->CompressedTexSubImage2DARB = __indirect_glCompressedTexSubImage2DARB;
-    glAPI->CompressedTexSubImage3DARB = __indirect_glCompressedTexSubImage3DARB;
+    /* GL_EXT_texture_object */
 
-    /* ARB 14. GL_ARB_point_parameters */
-    glAPI->PointParameterfEXT = __indirect_glPointParameterfEXT;
-    glAPI->PointParameterfvEXT = __indirect_glPointParameterfvEXT;
+    glAPI->AreTexturesResidentEXT = __indirect_glAreTexturesResidentEXT;
+    glAPI->GenTexturesEXT = __indirect_glGenTexturesEXT;
+    glAPI->IsTextureEXT = __indirect_glIsTextureEXT;
 
-    /* ARB 15. GL_ARB_window_pos */
-    glAPI->WindowPos2dMESA = __indirect_glWindowPos2dMESA;
-    glAPI->WindowPos2iMESA = __indirect_glWindowPos2iMESA;
-    glAPI->WindowPos2fMESA = __indirect_glWindowPos2fMESA;
-    glAPI->WindowPos2iMESA = __indirect_glWindowPos2iMESA;
-    glAPI->WindowPos2sMESA = __indirect_glWindowPos2sMESA;
-    glAPI->WindowPos2dvMESA = __indirect_glWindowPos2dvMESA;
-    glAPI->WindowPos2fvMESA = __indirect_glWindowPos2fvMESA;
-    glAPI->WindowPos2ivMESA = __indirect_glWindowPos2ivMESA;
-    glAPI->WindowPos2svMESA = __indirect_glWindowPos2svMESA;
-    glAPI->WindowPos3dMESA = __indirect_glWindowPos3dMESA;
-    glAPI->WindowPos3fMESA = __indirect_glWindowPos3fMESA;
-    glAPI->WindowPos3iMESA = __indirect_glWindowPos3iMESA;
-    glAPI->WindowPos3sMESA = __indirect_glWindowPos3sMESA;
-    glAPI->WindowPos3dvMESA = __indirect_glWindowPos3dvMESA;
-    glAPI->WindowPos3fvMESA = __indirect_glWindowPos3fvMESA;
-    glAPI->WindowPos3ivMESA = __indirect_glWindowPos3ivMESA;
-    glAPI->WindowPos3svMESA = __indirect_glWindowPos3svMESA;
+    /* GL_SGIS_multisample */
 
-    /* 25. GL_SGIS_multisample */
     glAPI->SampleMaskSGIS = __indirect_glSampleMaskSGIS;
     glAPI->SamplePatternSGIS = __indirect_glSamplePatternSGIS;
 
-    /* 30. GL_EXT_vertex_array */
-    glAPI->ColorPointerEXT    = __indirect_glColorPointerEXT;
+    /* GL_EXT_vertex_array */
+
+    glAPI->ColorPointerEXT = __indirect_glColorPointerEXT;
     glAPI->EdgeFlagPointerEXT = __indirect_glEdgeFlagPointerEXT;
-    glAPI->IndexPointerEXT    = __indirect_glIndexPointerEXT;
-    glAPI->NormalPointerEXT   = __indirect_glNormalPointerEXT;
+    glAPI->IndexPointerEXT = __indirect_glIndexPointerEXT;
+    glAPI->NormalPointerEXT = __indirect_glNormalPointerEXT;
     glAPI->TexCoordPointerEXT = __indirect_glTexCoordPointerEXT;
-    glAPI->VertexPointerEXT   = __indirect_glVertexPointerEXT;
+    glAPI->VertexPointerEXT = __indirect_glVertexPointerEXT;
 
-    /* 145. GL_EXT_secondary_color / GL 1.4 */
-    glAPI->SecondaryColor3bEXT       = __indirect_glSecondaryColor3bEXT;
-    glAPI->SecondaryColor3bvEXT      = __indirect_glSecondaryColor3bvEXT;
-    glAPI->SecondaryColor3sEXT       = __indirect_glSecondaryColor3sEXT;
-    glAPI->SecondaryColor3svEXT      = __indirect_glSecondaryColor3svEXT;
-    glAPI->SecondaryColor3iEXT       = __indirect_glSecondaryColor3iEXT;
-    glAPI->SecondaryColor3ivEXT      = __indirect_glSecondaryColor3ivEXT;
-    glAPI->SecondaryColor3ubEXT      = __indirect_glSecondaryColor3ubEXT;
-    glAPI->SecondaryColor3ubvEXT     = __indirect_glSecondaryColor3ubvEXT;
-    glAPI->SecondaryColor3usEXT      = __indirect_glSecondaryColor3usEXT;
-    glAPI->SecondaryColor3usvEXT     = __indirect_glSecondaryColor3usvEXT;
-    glAPI->SecondaryColor3uiEXT      = __indirect_glSecondaryColor3uiEXT;
-    glAPI->SecondaryColor3uivEXT     = __indirect_glSecondaryColor3uivEXT;
-    glAPI->SecondaryColor3fEXT       = __indirect_glSecondaryColor3fEXT;
-    glAPI->SecondaryColor3fvEXT      = __indirect_glSecondaryColor3fvEXT;
-    glAPI->SecondaryColor3dEXT       = __indirect_glSecondaryColor3dEXT;
-    glAPI->SecondaryColor3dvEXT      = __indirect_glSecondaryColor3dvEXT;
-    glAPI->SecondaryColorPointerEXT  = __indirect_glSecondaryColorPointerEXT;
+    /* GL_EXT_point_parameters */
 
-    /* 149. GL_EXT_fog_coord / GL 1.4 */
-    glAPI->FogCoordfEXT       = __indirect_glFogCoordfEXT;
-    glAPI->FogCoordfvEXT      = __indirect_glFogCoordfvEXT;
-    glAPI->FogCoorddEXT       = __indirect_glFogCoorddEXT;
-    glAPI->FogCoorddvEXT      = __indirect_glFogCoorddvEXT;
-    glAPI->FogCoordPointerEXT = __indirect_glFogCoordPointerEXT;
+    glAPI->PointParameterfEXT = __indirect_glPointParameterfEXT;
+    glAPI->PointParameterfvEXT = __indirect_glPointParameterfvEXT;
 
-    /* 173. GL_EXT_blend_func_separate / GL 1.4 */
+    /* GL_MESA_window_pos */
+
+    glAPI->WindowPos2dMESA = __indirect_glWindowPos2dMESA;
+    glAPI->WindowPos2dvMESA = __indirect_glWindowPos2dvMESA;
+    glAPI->WindowPos2fMESA = __indirect_glWindowPos2fMESA;
+    glAPI->WindowPos2fvMESA = __indirect_glWindowPos2fvMESA;
+    glAPI->WindowPos2iMESA = __indirect_glWindowPos2iMESA;
+    glAPI->WindowPos2ivMESA = __indirect_glWindowPos2ivMESA;
+    glAPI->WindowPos2sMESA = __indirect_glWindowPos2sMESA;
+    glAPI->WindowPos2svMESA = __indirect_glWindowPos2svMESA;
+    glAPI->WindowPos3dMESA = __indirect_glWindowPos3dMESA;
+    glAPI->WindowPos3dvMESA = __indirect_glWindowPos3dvMESA;
+    glAPI->WindowPos3fMESA = __indirect_glWindowPos3fMESA;
+    glAPI->WindowPos3fvMESA = __indirect_glWindowPos3fvMESA;
+    glAPI->WindowPos3iMESA = __indirect_glWindowPos3iMESA;
+    glAPI->WindowPos3ivMESA = __indirect_glWindowPos3ivMESA;
+    glAPI->WindowPos3sMESA = __indirect_glWindowPos3sMESA;
+    glAPI->WindowPos3svMESA = __indirect_glWindowPos3svMESA;
+
+    /* GL_EXT_blend_func_separate */
+
     glAPI->BlendFuncSeparateEXT = __indirect_glBlendFuncSeparateEXT;
 
-    /* 262. GL_NV_point_sprite / GL 1.4 */
+    /* GL_EXT_fog_coord */
+
+    glAPI->FogCoordfEXT = __indirect_glFogCoordfEXT;
+    glAPI->FogCoordfvEXT = __indirect_glFogCoordfvEXT;
+    glAPI->FogCoorddEXT = __indirect_glFogCoorddEXT;
+    glAPI->FogCoorddvEXT = __indirect_glFogCoorddvEXT;
+    glAPI->FogCoordPointerEXT = __indirect_glFogCoordPointerEXT;
+
+    /* GL_ARB_texture_compression */
+
+    glAPI->CompressedTexImage3DARB = __indirect_glCompressedTexImage3DARB;
+    glAPI->CompressedTexImage2DARB = __indirect_glCompressedTexImage2DARB;
+    glAPI->CompressedTexImage1DARB = __indirect_glCompressedTexImage1DARB;
+    glAPI->CompressedTexSubImage3DARB = __indirect_glCompressedTexSubImage3DARB;
+    glAPI->CompressedTexSubImage2DARB = __indirect_glCompressedTexSubImage2DARB;
+    glAPI->CompressedTexSubImage1DARB = __indirect_glCompressedTexSubImage1DARB;
+    glAPI->GetCompressedTexImageARB = __indirect_glGetCompressedTexImageARB;
+
+    /* GL_EXT_secondary_color */
+
+    glAPI->SecondaryColor3bEXT = __indirect_glSecondaryColor3bEXT;
+    glAPI->SecondaryColor3bvEXT = __indirect_glSecondaryColor3bvEXT;
+    glAPI->SecondaryColor3dEXT = __indirect_glSecondaryColor3dEXT;
+    glAPI->SecondaryColor3dvEXT = __indirect_glSecondaryColor3dvEXT;
+    glAPI->SecondaryColor3fEXT = __indirect_glSecondaryColor3fEXT;
+    glAPI->SecondaryColor3fvEXT = __indirect_glSecondaryColor3fvEXT;
+    glAPI->SecondaryColor3iEXT = __indirect_glSecondaryColor3iEXT;
+    glAPI->SecondaryColor3ivEXT = __indirect_glSecondaryColor3ivEXT;
+    glAPI->SecondaryColor3sEXT = __indirect_glSecondaryColor3sEXT;
+    glAPI->SecondaryColor3svEXT = __indirect_glSecondaryColor3svEXT;
+    glAPI->SecondaryColor3ubEXT = __indirect_glSecondaryColor3ubEXT;
+    glAPI->SecondaryColor3ubvEXT = __indirect_glSecondaryColor3ubvEXT;
+    glAPI->SecondaryColor3uiEXT = __indirect_glSecondaryColor3uiEXT;
+    glAPI->SecondaryColor3uivEXT = __indirect_glSecondaryColor3uivEXT;
+    glAPI->SecondaryColor3usEXT = __indirect_glSecondaryColor3usEXT;
+    glAPI->SecondaryColor3usvEXT = __indirect_glSecondaryColor3usvEXT;
+    glAPI->SecondaryColorPointerEXT = __indirect_glSecondaryColorPointerEXT;
+
+    /* GL_NV_point_sprite */
+
     glAPI->PointParameteriNV = __indirect_glPointParameteriNV;
     glAPI->PointParameterivNV = __indirect_glPointParameterivNV;
 
-    /* 268. GL_EXT_stencil_two_side */
+    /* GL_EXT_multi_draw_arrays */
+
+    glAPI->MultiDrawArraysEXT = __indirect_glMultiDrawArraysEXT;
+    glAPI->MultiDrawElementsEXT = __indirect_glMultiDrawElementsEXT;
+
+    /* EXT_stencil_two_side */
+
     glAPI->ActiveStencilFaceEXT = __indirect_glActiveStencilFaceEXT;
 
     return glAPI;
 }
+
