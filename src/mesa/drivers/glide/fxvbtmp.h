@@ -20,8 +20,8 @@ static void TAG(emit)( GLcontext *ctx,
 
 
    if (IND & SETUP_TMU0) {
-      tc0_stride = VB->TexCoordPtr[tmu0_source]->stride;
       tc0 = VB->TexCoordPtr[tmu0_source]->data;
+      tc0_stride = VB->TexCoordPtr[tmu0_source]->stride;
       u0scale = fxMesa->s0scale;
       v0scale = fxMesa->t0scale;
       if (IND & SETUP_PTEX)
@@ -137,7 +137,7 @@ static GLboolean TAG(check_tex_sizes)( GLcontext *ctx )
 	    return GL_FALSE;
       }
 
-      if (VB->TexCoordPtr[0]->size == 4)
+      if (VB->TexCoordPtr[0] && VB->TexCoordPtr[0]->size == 4)
 	 return GL_FALSE;
    }
 
@@ -269,6 +269,11 @@ static void TAG(init)( void )
    else {
       setup_tab[IND].vertex_format = 0;
    }
+
+#if (IND & SETUP_TMU1)
+     setup_tab[IND].vertex_format |= GR_STWHINT_ST_DIFF_TMU1;
+#endif
+
 #endif
 }
 
