@@ -77,7 +77,7 @@ static void feedback_vertex( GLcontext *ctx,
 
    index = v->index;
 
-   _mesa_feedback_vertex( ctx, win, color, index, tc );
+   _mesa_feedback_vertex( ctx, win, color, (GLfloat)index, tc );
 }
 
 
