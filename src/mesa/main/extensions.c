@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.31 2000/06/08 22:47:24 brianp Exp $ */
+/* $Id: extensions.c,v 1.32 2000/06/27 21:42:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,6 +75,7 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_OFF,    "GL_EXT_texture_compression_s3tc" },
    { DEFAULT_OFF,    "GL_EXT_texture_env" },
    { DEFAULT_ON,     "GL_EXT_texture_env_add" },
+   { DEFAULT_OFF,    "GL_EXT_texture_env_combine" },
    { ALWAYS_ENABLED, "GL_EXT_texture_object" },
    { DEFAULT_ON,     "GL_EXT_texture_lod_bias" },
    { ALWAYS_ENABLED, "GL_EXT_vertex_array" },
@@ -103,6 +104,7 @@ update_extension_flags( GLcontext *ctx )
 {
    /* Update flags */
    ctx->Extensions.HaveTextureEnvAdd = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_add");
+   ctx->Extensions.HaveTextureEnvCombine = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_combine");
    ctx->Extensions.HaveTextureLodBias = gl_extension_is_enabled(ctx, "GL_EXT_texture_lod_bias");
    ctx->Extensions.HaveHpOcclusionTest = gl_extension_is_enabled(ctx, "GL_HP_occlusion_test");
    ctx->Extensions.HaveTextureCubeMap = gl_extension_is_enabled(ctx, "GL_ARB_texture_cube_map");

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.71 2000/06/27 04:29:22 brianp Exp $ */
+/* $Id: context.c,v 1.72 2000/06/27 21:42:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -594,6 +594,23 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
    texUnit->EnvMode = GL_MODULATE;
+   texUnit->CombineModeRGB = GL_MODULATE;
+   texUnit->CombineModeA = GL_MODULATE;
+   texUnit->CombineSourceRGB[0] = GL_TEXTURE;
+   texUnit->CombineSourceRGB[1] = GL_PREVIOUS_EXT;
+   texUnit->CombineSourceRGB[2] = GL_CONSTANT_EXT;
+   texUnit->CombineSourceA[0] = GL_TEXTURE;
+   texUnit->CombineSourceA[1] = GL_PREVIOUS_EXT;
+   texUnit->CombineSourceA[2] = GL_CONSTANT_EXT;
+   texUnit->CombineOperandRGB[0] = GL_SRC_COLOR;
+   texUnit->CombineOperandRGB[1] = GL_SRC_COLOR;
+   texUnit->CombineOperandRGB[2] = GL_SRC_ALPHA;
+   texUnit->CombineOperandA[0] = GL_SRC_ALPHA;
+   texUnit->CombineOperandA[1] = GL_SRC_ALPHA;
+   texUnit->CombineOperandA[2] = GL_SRC_ALPHA;
+   texUnit->CombineScaleShiftRGB = 0;
+   texUnit->CombineScaleShiftA = 0;
+
    ASSIGN_4V( texUnit->EnvColor, 0.0, 0.0, 0.0, 0.0 );
    texUnit->TexGenEnabled = 0;
    texUnit->GenModeS = GL_EYE_LINEAR;
