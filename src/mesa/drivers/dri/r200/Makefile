@@ -38,7 +38,7 @@ DRIVER_SOURCES = r200_context.c \
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
-ASM_SOURCES = 
+X86_SOURCES = r200_vtxtmp_x86.S
 
 SYMLINKS = \
 	server/radeon_dri.c \
