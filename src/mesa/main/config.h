@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.15 2000/07/05 22:40:30 brianp Exp $ */
+/* $Id: config.h,v 1.16 2000/08/21 14:24:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -119,8 +119,8 @@
 #define HISTOGRAM_TABLE_SIZE 256
 
 /* Max convolution filter sizes */
-#define MAX_CONVOLUTION_WIDTH 5
-#define MAX_CONVOLUTION_HEIGHT 5
+#define MAX_CONVOLUTION_WIDTH 9
+#define MAX_CONVOLUTION_HEIGHT 9
 
 /* GL_ARB_texture_compression */
 #define MAX_COMPRESSED_TEXTURE_FORMATS 25
