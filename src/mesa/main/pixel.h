@@ -1,4 +1,4 @@
-/* $Id: pixel.h,v 1.7 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: pixel.h,v 1.8 2000/11/28 00:07:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,8 +77,11 @@ _mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor );
  */
 
 extern void
-_mesa_scale_and_bias_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4]);
-
+_mesa_scale_and_bias_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4],
+                          GLfloat rScale, GLfloat gScale,
+                          GLfloat bScale, GLfloat aScale,
+                          GLfloat rBias, GLfloat gBias,
+                          GLfloat bBias, GLfloat aBias);
 
 extern void
 _mesa_map_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4]);

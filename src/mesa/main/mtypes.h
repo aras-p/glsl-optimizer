@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.3 2000/11/27 18:22:13 brianp Exp $ */
+/* $Id: mtypes.h,v 1.4 2000/11/28 00:07:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1235,11 +1235,12 @@ struct gl_extensions {
 #define IMAGE_MAP_COLOR_BIT                       0x4
 #define IMAGE_COLOR_TABLE_BIT                     0x8
 #define IMAGE_CONVOLUTION_BIT                     0x10
-#define IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT    0x20
-#define IMAGE_COLOR_MATRIX_BIT                    0x40
-#define IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT   0x80
-#define IMAGE_HISTOGRAM_BIT                       0x100
-#define IMAGE_MIN_MAX_BIT                         0x200
+#define IMAGE_POST_CONVOLUTION_SCALE_BIAS         0x20
+#define IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT    0x40
+#define IMAGE_COLOR_MATRIX_BIT                    0x80
+#define IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT   0x100
+#define IMAGE_HISTOGRAM_BIT                       0x200
+#define IMAGE_MIN_MAX_BIT                         0x400
 
 /* transfer ops up to convolution: */
 #define IMAGE_PRE_CONVOLUTION_BITS (IMAGE_SCALE_BIAS_BIT |     \
@@ -1248,7 +1249,8 @@ struct gl_extensions {
                                     IMAGE_COLOR_TABLE_BIT)
 
 /* transfer ops after convolution: */
-#define IMAGE_POST_CONVOLUTION_BITS (IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT | \
+#define IMAGE_POST_CONVOLUTION_BITS (IMAGE_POST_CONVOLUTION_SCALE_BIAS |      \
+                                     IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT | \
                                      IMAGE_COLOR_MATRIX_BIT |                 \
                                      IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT |\
                                      IMAGE_HISTOGRAM_BIT |                    \

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.49 2000/11/27 18:22:13 brianp Exp $ */
+/* $Id: state.c,v 1.50 2000/11/28 00:07:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -676,8 +676,19 @@ update_image_transfer_state(GLcontext *ctx)
 
    if (ctx->Pixel.Convolution1DEnabled ||
        ctx->Pixel.Convolution2DEnabled ||
-       ctx->Pixel.Separable2DEnabled)
+       ctx->Pixel.Separable2DEnabled) {
       mask |= IMAGE_CONVOLUTION_BIT;
+      if (ctx->Pixel.PostConvolutionScale[0] != 1.0F ||
+          ctx->Pixel.PostConvolutionScale[1] != 1.0F ||
+          ctx->Pixel.PostConvolutionScale[2] != 1.0F ||
+          ctx->Pixel.PostConvolutionScale[3] != 1.0F ||
+          ctx->Pixel.PostConvolutionBias[0] != 0.0F ||
+          ctx->Pixel.PostConvolutionBias[1] != 0.0F ||
+          ctx->Pixel.PostConvolutionBias[2] != 0.0F ||
+          ctx->Pixel.PostConvolutionBias[3] != 0.0F) {
+         mask |= IMAGE_POST_CONVOLUTION_SCALE_BIAS;
+      }
+   }
 
    if (ctx->Pixel.PostConvolutionColorTableEnabled)
       mask |= IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT;

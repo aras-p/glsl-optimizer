@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.49 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: image.c,v 1.50 2000/11/28 00:07:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -818,7 +818,11 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
 
       /* scale & bias */
       if (transferOps & IMAGE_SCALE_BIAS_BIT) {
-         _mesa_scale_and_bias_rgba( ctx, n, rgba );
+         _mesa_scale_and_bias_rgba(ctx, n, rgba,
+                                   ctx->Pixel.RedScale, ctx->Pixel.GreenScale,
+                                   ctx->Pixel.BlueScale, ctx->Pixel.AlphaScale,
+                                   ctx->Pixel.RedBias, ctx->Pixel.GreenBias,
+                                   ctx->Pixel.BlueBias, ctx->Pixel.AlphaBias);
       }
       /* color map lookup */
       if (transferOps & IMAGE_MAP_COLOR_BIT) {
@@ -831,6 +835,18 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
       /* convolution */
       if (transferOps & IMAGE_CONVOLUTION_BIT) {
          /* this has to be done in the calling code */
+      }
+      /* GL_POST_CONVOLUTION_RED/GREEN/BLUE/ALPHA_SCALE/BIAS */
+      if (transferOps & IMAGE_POST_CONVOLUTION_SCALE_BIAS) {
+         _mesa_scale_and_bias_rgba(ctx, n, rgba,
+                                   ctx->Pixel.PostConvolutionScale[RCOMP],
+                                   ctx->Pixel.PostConvolutionScale[GCOMP],
+                                   ctx->Pixel.PostConvolutionScale[BCOMP],
+                                   ctx->Pixel.PostConvolutionScale[ACOMP],
+                                   ctx->Pixel.PostConvolutionBias[RCOMP],
+                                   ctx->Pixel.PostConvolutionBias[GCOMP],
+                                   ctx->Pixel.PostConvolutionBias[BCOMP],
+                                   ctx->Pixel.PostConvolutionBias[ACOMP]);
       }
       /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
       if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
@@ -2589,7 +2605,11 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
 
          /* scale and bias colors */
          if (transferOps & IMAGE_SCALE_BIAS_BIT) {
-            _mesa_scale_and_bias_rgba(ctx, n, rgba);
+            _mesa_scale_and_bias_rgba(ctx, n, rgba,
+                                   ctx->Pixel.RedScale, ctx->Pixel.GreenScale,
+                                   ctx->Pixel.BlueScale, ctx->Pixel.AlphaScale,
+                                   ctx->Pixel.RedBias, ctx->Pixel.GreenBias,
+                                   ctx->Pixel.BlueBias, ctx->Pixel.AlphaBias);
          }
          /* color map lookup */
          if (transferOps & IMAGE_MAP_COLOR_BIT) {
@@ -2605,6 +2625,18 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
          /* convolution */
          if (transferOps & IMAGE_CONVOLUTION_BIT) {
             /* this has to be done in the calling code */
+         }
+         /* GL_POST_CONVOLUTION_RED/GREEN/BLUE/ALPHA_SCALE/BIAS */
+         if (transferOps & IMAGE_POST_CONVOLUTION_SCALE_BIAS) {
+            _mesa_scale_and_bias_rgba(ctx, n, rgba,
+                                      ctx->Pixel.PostConvolutionScale[RCOMP],
+                                      ctx->Pixel.PostConvolutionScale[GCOMP],
+                                      ctx->Pixel.PostConvolutionScale[BCOMP],
+                                      ctx->Pixel.PostConvolutionScale[ACOMP],
+                                      ctx->Pixel.PostConvolutionBias[RCOMP],
+                                      ctx->Pixel.PostConvolutionBias[GCOMP],
+                                      ctx->Pixel.PostConvolutionBias[BCOMP],
+                                      ctx->Pixel.PostConvolutionBias[ACOMP]);
          }
          /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
          if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
@@ -2847,7 +2879,11 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
 
          /* scale and bias colors */
          if (transferOps & IMAGE_SCALE_BIAS_BIT) {
-            _mesa_scale_and_bias_rgba(ctx, n, rgba);
+            _mesa_scale_and_bias_rgba(ctx, n, rgba,
+                                   ctx->Pixel.RedScale, ctx->Pixel.GreenScale,
+                                   ctx->Pixel.BlueScale, ctx->Pixel.AlphaScale,
+                                   ctx->Pixel.RedBias, ctx->Pixel.GreenBias,
+                                   ctx->Pixel.BlueBias, ctx->Pixel.AlphaBias);
          }
          /* color map lookup */
          if (transferOps & IMAGE_MAP_COLOR_BIT) {
@@ -2863,6 +2899,18 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
          /* convolution */
          if (transferOps & IMAGE_CONVOLUTION_BIT) {
             /* XXX to do */
+         }
+         /* GL_POST_CONVOLUTION_RED/GREEN/BLUE/ALPHA_SCALE/BIAS */
+         if (transferOps & IMAGE_POST_CONVOLUTION_SCALE_BIAS) {
+            _mesa_scale_and_bias_rgba(ctx, n, rgba,
+                                      ctx->Pixel.PostConvolutionScale[RCOMP],
+                                      ctx->Pixel.PostConvolutionScale[GCOMP],
+                                      ctx->Pixel.PostConvolutionScale[BCOMP],
+                                      ctx->Pixel.PostConvolutionScale[ACOMP],
+                                      ctx->Pixel.PostConvolutionBias[RCOMP],
+                                      ctx->Pixel.PostConvolutionBias[GCOMP],
+                                      ctx->Pixel.PostConvolutionBias[BCOMP],
+                                      ctx->Pixel.PostConvolutionBias[ACOMP]);
          }
          /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
          if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {

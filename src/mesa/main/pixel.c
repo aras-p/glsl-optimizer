@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.19 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: pixel.c,v 1.20 2000/11/28 00:07:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -653,38 +653,34 @@ _mesa_PixelTransferi( GLenum pname, GLint param )
  * Apply scale and bias factors to an array of RGBA pixels.
  */
 void
-_mesa_scale_and_bias_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4])
+_mesa_scale_and_bias_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4],
+                          GLfloat rScale, GLfloat gScale,
+                          GLfloat bScale, GLfloat aScale,
+                          GLfloat rBias, GLfloat gBias,
+                          GLfloat bBias, GLfloat aBias)
 {
-   if (ctx->Pixel.RedScale != 1.0 || ctx->Pixel.RedBias != 0.0) {
-      const GLfloat scale = ctx->Pixel.RedScale;
-      const GLfloat bias = ctx->Pixel.RedBias;
+   if (rScale != 1.0 || rBias != 0.0) {
       GLuint i;
       for (i = 0; i < n; i++) {
-         rgba[i][RCOMP] = rgba[i][RCOMP] * scale + bias;
+         rgba[i][RCOMP] = rgba[i][RCOMP] * rScale + rBias;
       }
    }
-   if (ctx->Pixel.GreenScale != 1.0 || ctx->Pixel.GreenBias != 0.0) {
-      const GLfloat scale = ctx->Pixel.GreenScale;
-      const GLfloat bias = ctx->Pixel.GreenBias;
+   if (gScale != 1.0 || gBias != 0.0) {
       GLuint i;
       for (i = 0; i < n; i++) {
-         rgba[i][GCOMP] = rgba[i][GCOMP] * scale + bias;
+         rgba[i][GCOMP] = rgba[i][GCOMP] * gScale + gBias;
       }
    }
-   if (ctx->Pixel.BlueScale != 1.0 || ctx->Pixel.BlueBias != 0.0) {
-      const GLfloat scale = ctx->Pixel.BlueScale;
-      const GLfloat bias = ctx->Pixel.BlueBias;
+   if (bScale != 1.0 || bBias != 0.0) {
       GLuint i;
       for (i = 0; i < n; i++) {
-         rgba[i][BCOMP] = rgba[i][BCOMP] * scale + bias;
+         rgba[i][BCOMP] = rgba[i][BCOMP] * bScale + bBias;
       }
    }
-   if (ctx->Pixel.AlphaScale != 1.0 || ctx->Pixel.AlphaBias != 0.0) {
-      const GLfloat scale = ctx->Pixel.AlphaScale;
-      const GLfloat bias = ctx->Pixel.AlphaBias;
+   if (aScale != 1.0 || aBias != 0.0) {
       GLuint i;
       for (i = 0; i < n; i++) {
-         rgba[i][ACOMP] = rgba[i][ACOMP] * scale + bias;
+         rgba[i][ACOMP] = rgba[i][ACOMP] * aScale + aBias;
       }
    }
 }
