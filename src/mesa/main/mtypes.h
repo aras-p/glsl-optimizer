@@ -1571,6 +1571,7 @@ struct fragment_program
    GLuint NumAluInstructions; /**< GL_ARB_fragment_program */
    GLuint NumTexInstructions;
    GLuint NumTexIndirections;
+   GLenum FogOption;
    struct program_parameter_list *Parameters; /**< array [NumParameters] */
 };
 

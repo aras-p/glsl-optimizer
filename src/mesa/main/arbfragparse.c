@@ -206,6 +206,7 @@ _mesa_parse_arb_fragment_program(GLcontext * ctx, GLenum target,
    program->NumTexInstructions = ap.NumTexInstructions;
    program->NumTexIndirections = ap.NumTexIndirections;
    program->Parameters         = ap.Parameters;
+   program->FogOption          = ap.FogOption;
 
    /* XXX: Parse error. Cleanup things and return */	
    if (retval)
