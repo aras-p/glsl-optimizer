@@ -1,4 +1,4 @@
-/* $Id: shadowtex.c,v 1.1 2001/02/20 16:43:50 brianp Exp $ */
+/* $Id: shadowtex.c,v 1.2 2001/02/20 17:06:35 brianp Exp $ */
 
 /*
  * Shadow demo using the GL_SGIX_depth_texture, GL_SGIX_shadow and
@@ -347,12 +347,15 @@ Init(void)
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+#ifdef GL_SGIX_shadow
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_SGIX, GL_TRUE);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_OPERATOR_SGIX,
                    GL_TEXTURE_LEQUAL_R_SGIX);
-
+#endif
+#ifdef GL_SGIX_shadow_ambient
    if (glutExtensionSupported("GL_SGIX_shadow_ambient"))
       glTexParameterf(GL_TEXTURE_2D, GL_SHADOW_AMBIENT_SGIX, 0.3);
+#endif
 
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_LIGHTING);
