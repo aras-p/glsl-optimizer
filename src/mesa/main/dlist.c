@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.11 1999/10/19 18:37:03 keithw Exp $ */
+/* $Id: dlist.c,v 1.12 1999/10/31 08:34:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2129,7 +2129,7 @@ static void save_TexImage1D( GLcontext *ctx, GLenum target,
       n[7].e = type;
       n[8].data = teximage;
       if (teximage) {
-         /* this prevents gl_TexImage2D() from freeing the image */
+         /* this prevents gl_TexImage1D() from freeing the image */
          teximage->RefCount = 1;
       }
    }
