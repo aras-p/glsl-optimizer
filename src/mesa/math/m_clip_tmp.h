@@ -1,10 +1,10 @@
-/* $Id: m_clip_tmp.h,v 1.8 2002/06/03 16:06:34 brianp Exp $ */
+/* $Id: m_clip_tmp.h,v 1.9 2003/03/19 05:33:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.3
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,6 +34,13 @@
  * do this, strangely enough, so I only do the divide in
  * the case where the cliptest passes.  This isn't essential,
  * and an asm implementation needn't replicate that behaviour.
+ *
+ * \param clip_vec vector of incoming clip-space coords
+ * \param proj_vec vector of resultant NDC-space projected coords
+ * \param clipMask resulting array of clip flags
+ * \param orMask bitwise-OR of clipMask values
+ * \param andMask bitwise-AND of clipMask values
+ * \return proj_vec pointer
  */
 static GLvector4f * _XFORMAPI TAG(cliptest_points4)( GLvector4f *clip_vec,
                                                      GLvector4f *proj_vec,
@@ -102,6 +109,14 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points4)( GLvector4f *clip_vec,
 
 
 
+/*
+ * \param clip_vec vector of incoming clip-space coords
+ * \param proj_vec vector of resultant NDC-space projected coords
+ * \param clipMask resulting array of clip flags
+ * \param orMask bitwise-OR of clipMask values
+ * \param andMask bitwise-AND of clipMask values
+ * \return clip_vec pointer
+ */
 static GLvector4f * _XFORMAPI TAG(cliptest_np_points4)( GLvector4f *clip_vec,
 							GLvector4f *proj_vec,
 							GLubyte clipMask[],
