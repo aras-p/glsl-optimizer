@@ -436,10 +436,15 @@ EXPORTS
 	_mesa_store_teximage3d
 	_mesa_store_teximage2d
 	_mesa_store_teximage1d
+	_mesa_store_compressed_texsubimage3d
+	_mesa_store_compressed_texsubimage2d
+	_mesa_store_compressed_texsubimage1d
+	_mesa_store_compressed_teximage3d
+	_mesa_store_compressed_teximage2d
+	_mesa_store_compressed_teximage1d
 	_mesa_choose_tex_format
 	_mesa_base_compressed_texformat
 	_mesa_compressed_texture_size
-	_mesa_get_compressed_teximage
 	_swrast_ReadPixels
 	_swrast_DrawPixels
 	_swrast_CopyPixels
