@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.26 2000/11/05 18:28:01 keithw Exp $ */
+/* $Id: osmesa.c,v 1.27 2000/11/05 23:21:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,7 +46,6 @@
 #include "mem.h"
 #include "matrix.h"
 #include "types.h"
-#include "vb.h"
 #include "extensions.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -1303,7 +1302,6 @@ static void flat_blend_rgba_line( GLcontext *ctx,
 				  SWvertex *vert0, SWvertex *vert1 )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
-   struct vertex_buffer *VB = ctx->VB;
    GLint rshift = osmesa->rshift;
    GLint gshift = osmesa->gshift;
    GLint bshift = osmesa->bshift;
@@ -1339,7 +1337,6 @@ static void flat_blend_rgba_z_line( GLcontext *ctx,
 				    SWvertex *vert0, SWvertex *vert1 )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
-   struct vertex_buffer *VB = ctx->VB;
    GLint rshift = osmesa->rshift;
    GLint gshift = osmesa->gshift;
    GLint bshift = osmesa->bshift;
@@ -1378,7 +1375,6 @@ static void flat_blend_rgba_z_line_write( GLcontext *ctx,
 					  SWvertex *vert0, SWvertex *vert1 )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
-   struct vertex_buffer *VB = ctx->VB;
    GLint rshift = osmesa->rshift;
    GLint gshift = osmesa->gshift;
    GLint bshift = osmesa->bshift;
