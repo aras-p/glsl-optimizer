@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.2 2003/08/05 15:54:08 brianp Exp $ */
+/* $Id: wgl.c,v 1.3 2004/01/07 12:34:28 dborca Exp $ */
 
 /*
 * This library is free software; you can redistribute it and/or
@@ -471,9 +471,6 @@ WGLAPI int GLAPIENTRY wglSetLayerPaletteEntries(HDC hdc,int iLayerPlane,
 
 WGLAPI int GLAPIENTRY wglGetLayerPaletteEntries(HDC hdc,int iLayerPlane,
                                        int iStart,int cEntries,
-#ifdef __MINGW32__
-                                       CONST
-#endif
                                        COLORREF *pcr)
 {
     SetLastError(0);
