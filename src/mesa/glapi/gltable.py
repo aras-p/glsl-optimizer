@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: gltable.py,v 1.1 2000/02/22 22:45:20 brianp Exp $
+# $Id: gltable.py,v 1.2 2000/05/11 17:44:42 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -249,13 +249,18 @@ def PrintTableEntries():
 
 			# end of function spec
 			if m[0] == 'offset':
-				funcOffset = int(m[1])
-				if funcOffset > maxOffset:
-					maxOffset = funcOffset
-				#PrintProto(returnType, funcName, argList)
-				s = MakeTableEntry(returnType, funcName, argList, funcOffset)
-#				print s
-				table[funcOffset] = s;
+				if m[1] == '?':
+					#print 'WARNING: skipping', funcName
+					noop = 0
+				else:
+					funcOffset = int(m[1])
+					if funcOffset > maxOffset:
+						maxOffset = funcOffset
+					#PrintProto(returnType, funcName, argList)
+					s = MakeTableEntry(returnType, funcName, argList, funcOffset)
+#					print s
+					table[funcOffset] = s;
+				#endif
 			#endif
 		#endif
 	#endfor
@@ -270,7 +275,7 @@ def PrintTableEntries():
 
 
 def PrintHead():
-	print '/* DO NOT EDIT - This file generated automatically */'
+	print '/* DO NOT EDIT - This file generated automatically with gltable.py script */'
 	print '#ifndef _GLAPI_TABLE_H_'
 	print '#define _GLAPI_TABLE_H_'
 	print ''
