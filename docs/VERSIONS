@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.68 2001/08/20 16:45:02 brianp Exp $
+$Id: VERSIONS,v 1.69 2001/08/28 22:53:44 brianp Exp $
 
 
 Mesa Version History
@@ -874,6 +874,7 @@ Mesa Version History
 	- GL_IBM_rasterpos_clip extension
 	- GL_EXT_texture_edge_clamp extension (aka GL_SGIS_texture_edge_clamp)
 	- WindML UGL driver (Stephane Raimbault)
+	- initial support for OpenGL 1.3
     Bug fixes:
 	- added some missing GLX 1.3 tokens to include/GL/glx.h
 	- GL_COLOR_MATRIX changes weren't recognized by teximage functions
