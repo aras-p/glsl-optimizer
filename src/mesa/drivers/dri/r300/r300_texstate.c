@@ -73,7 +73,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 static const struct {
 	GLuint format, filter;
 } tx_table0[] = {
-_ALPHA(RGBA8888),
+	    _ALPHA(RGBA8888),
 	    _ALPHA_REV(RGBA8888),
 	    _ALPHA(ARGB8888),
 	    _ALPHA_REV(ARGB8888),
@@ -88,7 +88,11 @@ _ALPHA(RGBA8888),
 	    _ALPHA_REV(AL88),
 	    _ALPHA(A8),
 	    _COLOR(L8),
-	    _ALPHA(I8), _INVALID(CI8), _YUV(YCBCR), _YUV(YCBCR_REV),};
+	    _ALPHA(I8), 
+	    _INVALID(CI8), 
+	    _YUV(YCBCR), 
+	    _YUV(YCBCR_REV),
+	    };
 
 static const struct {
 	GLuint format, filter;
