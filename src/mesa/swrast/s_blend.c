@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.0
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * Regarding GL_NV_blend_square:
+ *
+ * Portions of this software may use or implement intellectual
+ * property owned and licensed by NVIDIA Corporation. NVIDIA disclaims
+ * any and all warranties with respect to such intellectual property,
+ * including any use thereof or modifications thereto.
+ */
 
 
 #include "glheader.h"
