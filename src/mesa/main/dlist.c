@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.42 2000/06/06 17:03:38 brianp Exp $ */
+/* $Id: dlist.c,v 1.43 2000/06/12 15:37:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -5381,21 +5381,20 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->ResetMinmax = save_ResetMinmax;
    table->SeparableFilter2D = _mesa_SeparableFilter2D;
 
-   /* GL_EXT_texture3d */
+   /* 2. GL_EXT_blend_color */
+#if 0 
+   table->BlendColorEXT = save_BlendColorEXT;
+#endif
+
+   /* 3. GL_EXT_polygon_offset */
+   table->PolygonOffsetEXT = save_PolygonOffsetEXT;
+
+   /* 6. GL_EXT_texture3d */
 #if 0
    table->CopyTexSubImage3DEXT = save_CopyTexSubImage3D;
    table->TexImage3DEXT = save_TexImage3DEXT;
    table->TexSubImage3DEXT = save_TexSubImage3D;
 #endif
-
-   /* GL_EXT_paletted_texture */
-#if 0
-   table->ColorTableEXT = save_ColorTable;
-   table->ColorSubTableEXT = save_ColorSubTable;
-#endif
-   table->GetColorTableEXT = _mesa_GetColorTable;
-   table->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfv;
-   table->GetColorTableParameterivEXT = _mesa_GetColorTableParameteriv;
 
    /* 15. GL_SGIX_pixel_texture */
    table->PixelTexGenSGIX = save_PixelTexGenSGIX;
@@ -5408,29 +5407,38 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->GetPixelTexGenParameterivSGIS = _mesa_GetPixelTexGenParameterivSGIS;
    table->GetPixelTexGenParameterfvSGIS = _mesa_GetPixelTexGenParameterfvSGIS;
 
-   /* GL_EXT_compiled_vertex_array */
-   table->LockArraysEXT = _mesa_LockArraysEXT;
-   table->UnlockArraysEXT = _mesa_UnlockArraysEXT;
+   /* 30. GL_EXT_vertex_array */
+   table->ColorPointerEXT = _mesa_ColorPointerEXT;
+   table->EdgeFlagPointerEXT = _mesa_EdgeFlagPointerEXT;
+   table->IndexPointerEXT = _mesa_IndexPointerEXT;
+   table->NormalPointerEXT = _mesa_NormalPointerEXT;
+   table->TexCoordPointerEXT = _mesa_TexCoordPointerEXT;
+   table->VertexPointerEXT = _mesa_VertexPointerEXT;
 
-   /* GL_EXT_point_parameters */
-   table->PointParameterfEXT = save_PointParameterfEXT;
-   table->PointParameterfvEXT = save_PointParameterfvEXT;
-
-   /* GL_PGI_misc_hints */
-   table->HintPGI = save_HintPGI;
-
-   /* GL_EXT_polygon_offset */
-   table->PolygonOffsetEXT = save_PolygonOffsetEXT;
-
-   /* GL_EXT_blend_minmax */
+   /* 37. GL_EXT_blend_minmax */
 #if 0
    table->BlendEquationEXT = save_BlendEquationEXT;
 #endif
 
-   /* GL_EXT_blend_color */
-#if 0 
-   table->BlendColorEXT = save_BlendColorEXT;
+   /* 54. GL_EXT_point_parameters */
+   table->PointParameterfEXT = save_PointParameterfEXT;
+   table->PointParameterfvEXT = save_PointParameterfvEXT;
+
+   /* 77. GL_PGI_misc_hints */
+   table->HintPGI = save_HintPGI;
+
+   /* 78. GL_EXT_paletted_texture */
+#if 0
+   table->ColorTableEXT = save_ColorTable;
+   table->ColorSubTableEXT = save_ColorSubTable;
 #endif
+   table->GetColorTableEXT = _mesa_GetColorTable;
+   table->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfv;
+   table->GetColorTableParameterivEXT = _mesa_GetColorTableParameteriv;
+
+   /* 97. GL_EXT_compiled_vertex_array */
+   table->LockArraysEXT = _mesa_LockArraysEXT;
+   table->UnlockArraysEXT = _mesa_UnlockArraysEXT;
 
    /* GL_ARB_multitexture */
    table->ActiveTextureARB = save_ActiveTextureARB;
