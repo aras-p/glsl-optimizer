@@ -1,5 +1,5 @@
 DESCRIPTION 'Mesa (OpenGL work-alike) for Win32'
-VERSION 3.5
+VERSION 4.0
 
 EXPORTS
 	glAccum
