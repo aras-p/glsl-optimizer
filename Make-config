@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.53 2001/11/18 23:11:45 brianp Exp $
+# $Id: Make-config,v 1.54 2001/11/23 20:09:26 brianp Exp $
 
 MESA_MAJOR=4
 MESA_MINOR=1
@@ -662,7 +662,7 @@ linux-386-glide:
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
-	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -lglut -lGLU -lGL"
+	"APP_LIB_DEPS = -L/usr/local/glide/lib -lglide2x -lglut -lGLU -lGL" \
 	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
 		X86/x86_xform2.S X86/x86_xform3.S X86/x86_xform4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S"
