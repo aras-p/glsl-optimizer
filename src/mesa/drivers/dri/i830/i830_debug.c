@@ -291,7 +291,7 @@ void i830VertexSanity( i830ContextPtr imesa, drmI830Vertex vertex )
 		 remaining / vfmt_size);
       }
    }
-   if (1) {
+   if (vfmt_size) {
       fprintf(stderr, "\n\nPrim name (%s), vertices (%d)\n",
 	      prim_name,
 	      size / vfmt_size);
