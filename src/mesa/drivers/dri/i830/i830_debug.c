@@ -318,9 +318,26 @@ void i830EmitHwStateLockedDebug( i830ContextPtr imesa )
 
    for(i = 0; i < I830_TEXTURE_COUNT; i++) {
       if ((imesa->dirty & I830_UPLOAD_TEX_N(i)) && imesa->CurrentTexObj[i]) {
+	 unsigned * TexState;
+
 	 imesa->sarea->dirty |= I830_UPLOAD_TEX_N(i);
-	 memcpy(imesa->sarea->TexState[i],
-		imesa->CurrentTexObj[i]->Setup,
+
+	 switch( i ) {
+	 case 0:
+	 case 1:
+	    TexState = & imesa->sarea->TexState[i];
+	    break;
+
+	 case 2:
+	    TexState = & imesa->sarea->TexState2;
+	    break;
+
+	 case 3:
+	    TexState = & imesa->sarea->TexState3;
+	    break;
+	 }
+
+	 memcpy(TexState, imesa->CurrentTexObj[i]->Setup,
 		sizeof(imesa->sarea->TexState[i]));
 	 i830DumpTextureState(imesa, i);
       }
@@ -329,11 +346,33 @@ void i830EmitHwStateLockedDebug( i830ContextPtr imesa )
 
    for(i = 0; i < I830_TEXBLEND_COUNT; i++) {
       if (imesa->dirty & I830_UPLOAD_TEXBLEND_N(i)) {
+	 unsigned * TexBlendState;
+	 unsigned * words_used;
+	 
 	 imesa->sarea->dirty |= I830_UPLOAD_TEXBLEND_N(i);
-	 memcpy(imesa->sarea->TexBlendState[i],imesa->TexBlend[i],
+
+	 switch( i ) {
+	 case 0:
+	 case 1:
+	    TexBlendState = imesa->sarea->TexBlendState[i];
+	    words_used = & imesa->sarea->TexBlendStateWordsUsed[i];
+	    break;
+
+	 case 2:
+	    TexBlendState = imesa->sarea->TexBlendState2;
+	    words_used = & imesa->sarea->TexBlendStateWordsUsed2;
+	    break;
+
+	 case 3:
+	    TexBlendState = imesa->sarea->TexBlendState3;
+	    words_used = & imesa->sarea->TexBlendStateWordsUsed3;
+	    break;
+	 }
+
+	 memcpy(TexBlendState, imesa->TexBlend[i],
 		imesa->TexBlendWordsUsed[i] * 4);
-	 imesa->sarea->TexBlendStateWordsUsed[i] =
-	   imesa->TexBlendWordsUsed[i];
+	 *words_used = imesa->TexBlendWordsUsed[i];
+
 	 i830DumpTextureBlendState(imesa, i);
       }
    }

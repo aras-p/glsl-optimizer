@@ -50,6 +50,16 @@
 
 #include "i830_dri.h"
 
+#include "xmlpool.h"
+
+const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+    DRI_CONF_SECTION_PERFORMANCE
+       DRI_CONF_MAX_TEXTURE_UNITS(4,2,4)
+    DRI_CONF_SECTION_END
+DRI_CONF_END;
+const GLuint __driNConfigOptions = 1;
+
 
 static int i830_malloc_proxy_buf(drmBufMapPtr buffers)
 {
@@ -151,6 +161,11 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
       fprintf(stderr,"\nERROR!  Allocating private area failed\n");
       return GL_FALSE;
    }
+
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo (&i830Screen->optionCache,
+		       __driConfigOptions, __driNConfigOptions);
+
 
    i830Screen->driScrnPriv = sPriv;
    sPriv->private = (void *)i830Screen;

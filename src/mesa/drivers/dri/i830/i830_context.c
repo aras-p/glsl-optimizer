@@ -64,6 +64,7 @@
 
 
 #include "utils.h"
+#include "xmlpool.h" /* for symbolic values of enum-type options */
 #ifndef I830_DEBUG
 int I830_DEBUG = (0);
 #endif
@@ -74,9 +75,6 @@ int I830_DEBUG = (0);
 
 #define DRIVER_DATE                     "20040506"
 
-
-const char __driConfigOptions[] = { 0 };
-const GLuint __driNConfigOptions = 0;
 
 static const GLubyte *i830DDGetString( GLcontext *ctx, GLenum name )
 {
@@ -248,6 +246,8 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    imesa->sarea = saPriv;
    imesa->glBuffer = NULL;
 
+   driParseConfigFiles (&imesa->optionCache, &screen->optionCache,
+			screen->driScrnPriv->myNum, "i830");
 
    (void) memset( imesa->texture_heaps, 0, sizeof( imesa->texture_heaps ) );
    make_empty_list( & imesa->swapped );
@@ -263,16 +263,16 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
 	    sizeof( struct i830_texture_object_t ),
 	    (destroy_texture_object_t *) i830DestroyTexObj );
 
-
    /* Set the maximum texture size small enough that we can guarantee
-    * that both texture units can bind a maximal texture and have them
+    * that every texture unit can bind a maximal texture and have them
     * in memory at once.
     */
 
    ctx = imesa->glCtx;
-   ctx->Const.MaxTextureUnits = 2;
-   ctx->Const.MaxTextureImageUnits = 2;
-   ctx->Const.MaxTextureCoordUnits = 2;
+   ctx->Const.MaxTextureUnits = driQueryOptioni(&imesa->optionCache, 
+						"texture_units");
+   ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
+   ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
 
    /* FIXME: driCalculateMaxTextureLevels assumes that mipmaps are tightly
     * FIXME: packed, but they're not in Intel graphics hardware.
@@ -478,16 +478,21 @@ static void i830XMesaWindowMoved( i830ContextPtr imesa )
 GLboolean i830UnbindContext(__DRIcontextPrivate *driContextPriv)
 {
    i830ContextPtr imesa = (i830ContextPtr) driContextPriv->driverPrivate;
+   unsigned i;
+
    if (imesa) {
       /* Might want to change this so texblend isn't always updated */
       imesa->dirty |= (I830_UPLOAD_CTX |
 		       I830_UPLOAD_BUFFERS |
 		       I830_UPLOAD_STIPPLE |
 		       I830_UPLOAD_TEXBLEND0 |
-		       I830_UPLOAD_TEXBLEND1);
+		       I830_UPLOAD_TEXBLEND1 |
+		       I830_UPLOAD_TEXBLEND2 |
+		       I830_UPLOAD_TEXBLEND3);
 
-      if (imesa->CurrentTexObj[0]) imesa->dirty |= I830_UPLOAD_TEX0;
-      if (imesa->CurrentTexObj[1]) imesa->dirty |= I830_UPLOAD_TEX1;
+      for ( i = 0 ; i < imesa->glCtx->Const.MaxTextureUnits ; i++ ) {
+	 if (imesa->CurrentTexObj[i]) imesa->dirty |= I830_UPLOAD_TEX_N( i );
+      }
    }
    return GL_TRUE;
 }
@@ -549,10 +554,10 @@ void i830GetLock( i830ContextPtr imesa, GLuint flags )
 		       I830_UPLOAD_BUFFERS | 
 		       I830_UPLOAD_STIPPLE);
 
-      if(imesa->CurrentTexObj[0]) imesa->dirty |= I830_UPLOAD_TEX0;
-      if(imesa->CurrentTexObj[1]) imesa->dirty |= I830_UPLOAD_TEX1;
-      if(imesa->TexBlendWordsUsed[0]) imesa->dirty |= I830_UPLOAD_TEXBLEND0;
-      if(imesa->TexBlendWordsUsed[1]) imesa->dirty |= I830_UPLOAD_TEXBLEND1;
+      for ( i = 0 ; i < imesa->glCtx->Const.MaxTextureUnits ; i++ ) {
+	 if(imesa->CurrentTexObj[i]) imesa->dirty |= I830_UPLOAD_TEX_N( i );
+	 if(imesa->TexBlendWordsUsed[i]) imesa->dirty |= I830_UPLOAD_TEXBLEND_N( i );
+      }
 
       sarea->perf_boxes = imesa->perf_boxes | I830_BOX_LOST_CONTEXT;
       sarea->ctxOwner = me;

@@ -37,6 +37,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <sys/time.h>
 #include "dri_util.h"
+#include "xmlconfig.h"
 
 
 typedef struct {
@@ -82,6 +83,11 @@ typedef struct
 
    int drmMinor;
    int irq_active;
+
+   /**
+    * Configuration cache with default values for all contexts 
+    */
+   driOptionCache optionCache;
 }i830ScreenPrivate;
 
 

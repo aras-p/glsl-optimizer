@@ -764,10 +764,7 @@ static void i830RenderStart( GLcontext *ctx )
    if (index & _TNL_BITS_TEX_ANY) {
       int i, last_stage = 0;
 
-      /* Still using 2 as max tex units, but this code is fine for all
-       * 8 units supported by mesa:
-       */
-      for (i = 0; i < 2 ; i++) 
+      for (i = 0; i < ctx->Const.MaxTextureUnits ; i++)
 	 if (index & _TNL_BIT_TEX(i))
 	    last_stage = i+1;
 	 
@@ -1010,7 +1007,11 @@ void i830Fallback( i830ContextPtr imesa, GLuint bit, GLboolean mode )
 /*                            Initialization.                         */
 /**********************************************************************/
 
-
+/**
+ * \bug
+ * How are the magic numbers 12 and 26 in the call to \c _tnl_init_vertices
+ * derived?
+ */
 void i830InitTriFuncs( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -1031,7 +1032,7 @@ void i830InitTriFuncs( GLcontext *ctx )
    tnl->Driver.Render.Interp = _tnl_interp;
 
    _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
-		       22 * sizeof(GLfloat) );
+		       26 * sizeof(GLfloat) );
    
    I830_CONTEXT(ctx)->verts = (char *)tnl->clipspace.vertex_buf;
 }

@@ -1266,15 +1266,19 @@ static void i830DepthRange( GLcontext *ctx,
 
 void i830PrintDirty( const char *msg, GLuint state )
 {
-   fprintf(stderr, "%s (0x%x): %s%s%s%s%s%s%s\n",
+   fprintf(stderr, "%s (0x%x): %s%s%s%s%s%s%s%s%s%s%s\n",
 	   msg,
 	   (unsigned int) state,
 	   (state & I830_UPLOAD_TEX0)  ? "upload-tex0, " : "",
 	   (state & I830_UPLOAD_TEX1)  ? "upload-tex1, " : "",
+	   (state & I830_UPLOAD_TEX2)  ? "upload-tex2, " : "",
+	   (state & I830_UPLOAD_TEX3)  ? "upload-tex3, " : "",
 	   (state & I830_UPLOAD_CTX)        ? "upload-ctx, " : "",
 	   (state & I830_UPLOAD_BUFFERS)    ? "upload-bufs, " : "",
 	   (state & I830_UPLOAD_TEXBLEND0)  ? "upload-blend0, " : "",
 	   (state & I830_UPLOAD_TEXBLEND1)  ? "upload-blend1, " : "",
+	   (state & I830_UPLOAD_TEXBLEND2)  ? "upload-blend2, " : "",
+	   (state & I830_UPLOAD_TEXBLEND3)  ? "upload-blend3, " : "",
 	   (state & I830_UPLOAD_STIPPLE)  ? "stipple, " : ""
 	   );
 }
@@ -1288,24 +1292,44 @@ void i830EmitHwStateLocked( i830ContextPtr imesa )
    if (I830_DEBUG & DEBUG_STATE)
       i830PrintDirty( __FUNCTION__, imesa->dirty );
 
-   if ((imesa->dirty & I830_UPLOAD_TEX0_IMAGE) && imesa->CurrentTexObj[0])
-      i830UploadTexImagesLocked(imesa, imesa->CurrentTexObj[0]);
-   if ((imesa->dirty & I830_UPLOAD_TEX1_IMAGE) && imesa->CurrentTexObj[1])
-      i830UploadTexImagesLocked(imesa, imesa->CurrentTexObj[1]);
+   for ( i = 0 ; i < imesa->glCtx->Const.MaxTextureUnits ; i++ ) {
+      if ( ((imesa->dirty & I830_UPLOAD_TEX_N_IMAGE( i )) != 0)
+	  && (imesa->CurrentTexObj[i] != NULL) ) {
+	 i830UploadTexImagesLocked(imesa, imesa->CurrentTexObj[i]);
+      }
+   }
+
    if (imesa->dirty & I830_UPLOAD_CTX) {
       memcpy( imesa->sarea->ContextState,
 	     imesa->Setup, sizeof(imesa->Setup) );
    }
 
-   for (i = 0; i < I830_TEXTURE_COUNT; i++) {
+   for ( i = 0 ; i < imesa->glCtx->Const.MaxTextureUnits ; i++ ) {
       if ((imesa->dirty & I830_UPLOAD_TEX_N(i)) && imesa->CurrentTexObj[i]) {
+	 unsigned * TexState;
+	 
 	 imesa->sarea->dirty |= I830_UPLOAD_TEX_N(i);
-	 memcpy(imesa->sarea->TexState[i],
-		imesa->CurrentTexObj[i]->Setup,
+	 
+	 switch( i ) {
+	 case 0:
+	 case 1:
+	    TexState = imesa->sarea->TexState[i];
+	    break;
+
+	 case 2:
+	    TexState = imesa->sarea->TexState2;
+	    break;
+
+	 case 3:
+	    TexState = imesa->sarea->TexState3;
+	    break;
+	 }
+
+	 memcpy(TexState, imesa->CurrentTexObj[i]->Setup,
 		sizeof(imesa->sarea->TexState[i]));
 	  
-	 imesa->sarea->TexState[i][I830_TEXREG_TM0S3] &= ~TM0S3_LOD_BIAS_MASK;
-	 imesa->sarea->TexState[i][I830_TEXREG_TM0S3] |= imesa->LodBias[i];
+	 TexState[I830_TEXREG_TM0S3] &= ~TM0S3_LOD_BIAS_MASK;
+	 TexState[I830_TEXREG_TM0S3] |= imesa->LodBias[i];
 
 	 /* Update the LRU usage */
 	 if (imesa->CurrentTexObj[i]->base.memBlock)
@@ -1315,13 +1339,34 @@ void i830EmitHwStateLocked( i830ContextPtr imesa )
    }
    /* Need to figure out if texturing state, or enable changed. */
 
-   for (i = 0; i < I830_TEXBLEND_COUNT; i++) {
+   for ( i = 0 ; i < imesa->glCtx->Const.MaxTextureUnits ; i++ ) {
       if (imesa->dirty & I830_UPLOAD_TEXBLEND_N(i)) {
+	 unsigned * TexBlendState;
+	 unsigned * words_used;
+	 
 	 imesa->sarea->dirty |= I830_UPLOAD_TEXBLEND_N(i);
-	 memcpy(imesa->sarea->TexBlendState[i],imesa->TexBlend[i],
+
+	 switch( i ) {
+	 case 0:
+	 case 1:
+	    TexBlendState = imesa->sarea->TexBlendState[i];
+	    words_used = & imesa->sarea->TexBlendStateWordsUsed[i];
+	    break;
+
+	 case 2:
+	    TexBlendState = imesa->sarea->TexBlendState2;
+	    words_used = & imesa->sarea->TexBlendStateWordsUsed2;
+	    break;
+
+	 case 3:
+	    TexBlendState = imesa->sarea->TexBlendState3;
+	    words_used = & imesa->sarea->TexBlendStateWordsUsed3;
+	    break;
+	 }
+
+	 memcpy(TexBlendState, imesa->TexBlend[i],
 		imesa->TexBlendWordsUsed[i] * 4);
-	 imesa->sarea->TexBlendStateWordsUsed[i] =
-	   imesa->TexBlendWordsUsed[i];
+	 *words_used = imesa->TexBlendWordsUsed[i];
       }
    }
 
@@ -1378,11 +1423,10 @@ void i830DDInitState( GLcontext *ctx )
    imesa->mask_alpha = GL_FALSE;
 
    /* Zero all texture state */
-   for (i = 0; i < I830_TEXBLEND_COUNT; i++) {
-      for (j = 0; j < I830_TEXBLEND_SIZE; j++) {
-	 imesa->TexBlend[i][j] = 0;
-	 imesa->Init_TexBlend[i][j] = 0;
-      }
+   for (i = 0; i < I830_MAX_TEXTURE_UNITS; i++) {
+      (void) memset( imesa->TexBlend[i], 0, sizeof( imesa->TexBlend[i] ) );
+      (void) memset( imesa->Init_TexBlend[i], 0, sizeof( imesa->Init_TexBlend[i] ) );
+
       imesa->TexBlendWordsUsed[i] = 0;
       imesa->Init_TexBlendWordsUsed[i] = 0;
       imesa->TexBlendColorPipeNum[i] = 0;

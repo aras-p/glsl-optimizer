@@ -168,7 +168,8 @@ static void i830SetTexImages( i830ContextPtr imesa,
    t->Setup[I830_TEXREG_TM0S3] &= ~TM0S3_MAX_MIP_MASK;
    t->Setup[I830_TEXREG_TM0S3] &= ~TM0S3_MIN_MIP_MASK;
    t->Setup[I830_TEXREG_TM0S3] |= ((numLevels - 1)*4) << TM0S3_MIN_MIP_SHIFT;
-   t->dirty = I830_UPLOAD_TEX0 | I830_UPLOAD_TEX1;
+   t->dirty = I830_UPLOAD_TEX0 | I830_UPLOAD_TEX1 
+	| I830_UPLOAD_TEX2 | I830_UPLOAD_TEX3;
 
    LOCK_HARDWARE( imesa );
    i830UploadTexImagesLocked( imesa, t );
@@ -197,6 +198,16 @@ static void i830SetTexImages( i830ContextPtr imesa,
  * \c GL_ZERO as combine inputs (which the code already supports).  It can
  * also handle the \c GL_MODULATE_ADD_ATI mode.  Is it worth investigating
  * partial support for the extension?
+ * 
+ * \todo
+ * Some thought needs to be put into the way combiners work.  The driver
+ * treats the hardware as if there's a specific combine unit tied to each
+ * texture unit.  That's why there's the special case for a disabled texture
+ * unit.  That's not the way the hardware works.  In reality, there are 4
+ * texture units and four general instruction slots.  Each instruction slot
+ * can use any texture as an input.  There's no need for this wierd "no-op"
+ * stuff.  If texture units 0 and 3 are enabled, the  instructions to combine
+ * them should be in slots 0 and 1, not 0 and 3 with two no-ops inbetween.
  */
 
 static void i830UpdateTexEnv( GLcontext *ctx, GLuint unit )
@@ -241,215 +252,247 @@ static void i830UpdateTexEnv( GLcontext *ctx, GLuint unit )
 	       _mesa_lookup_enum_by_nr(texUnit->EnvMode));
 
 
-   switch(texUnit->_CurrentCombine->ModeRGB) {
-   case GL_REPLACE: 
-      blendop = TEXBLENDOP_ARG1;
-      break;
-   case GL_MODULATE: 
-      blendop = TEXBLENDOP_MODULATE;
-      break;
-   case GL_ADD: 
-      blendop = TEXBLENDOP_ADD;
-      break;
-   case GL_ADD_SIGNED:
-      blendop = TEXBLENDOP_ADDSIGNED; 
-      break;
-   case GL_INTERPOLATE:
-      blendop = TEXBLENDOP_BLEND; 
-      break;
-   case GL_SUBTRACT: 
-      blendop = TEXBLENDOP_SUBTRACT;
-      break;
-   case GL_DOT3_RGB_EXT:
-   case GL_DOT3_RGBA_EXT:
-      /* The EXT version of the DOT3 extension does not support the
-       * scale factor, but the ARB version (and the version in OpenGL
-       * 1.3) does.
-       */
-      rgb_shift = 0;
-      alpha_shift = 0;
-      /* FALLTHROUGH */
-
-   case GL_DOT3_RGB:
-   case GL_DOT3_RGBA:
-      blendop = TEXBLENDOP_DOT3;
-      break;
-   default: 
-      return;
+   if ( !texUnit->_ReallyEnabled ) {
+      imesa->TexBlend[unit][0] = (STATE3D_MAP_BLEND_OP_CMD(unit) |
+				  TEXPIPE_COLOR |
+				  ENABLE_TEXOUTPUT_WRT_SEL |
+				  TEXOP_OUTPUT_CURRENT |
+				  DISABLE_TEX_CNTRL_STAGE |
+				  TEXOP_SCALE_1X |
+				  TEXOP_MODIFY_PARMS |
+				  TEXBLENDOP_ARG1);
+      imesa->TexBlend[unit][1] = (STATE3D_MAP_BLEND_OP_CMD(unit) |
+				  TEXPIPE_ALPHA |
+				  ENABLE_TEXOUTPUT_WRT_SEL |
+				  TEXOP_OUTPUT_CURRENT |
+				  TEXOP_SCALE_1X |
+				  TEXOP_MODIFY_PARMS |
+				  TEXBLENDOP_ARG1);
+      imesa->TexBlend[unit][2] = (STATE3D_MAP_BLEND_ARG_CMD(unit) |
+				  TEXPIPE_COLOR |
+				  TEXBLEND_ARG1 |
+				  TEXBLENDARG_MODIFY_PARMS |
+				  TEXBLENDARG_CURRENT);
+      imesa->TexBlend[unit][3] = (STATE3D_MAP_BLEND_ARG_CMD(unit) |
+				  TEXPIPE_ALPHA |
+				  TEXBLEND_ARG1 |
+				  TEXBLENDARG_MODIFY_PARMS |
+				  TEXBLENDARG_CURRENT);
+      imesa->TexBlendColorPipeNum[unit] = 0;
+      imesa->TexBlendWordsUsed[unit] = 4;
    }
-
-   blendop |= (rgb_shift << TEXOP_SCALE_SHIFT);
-
-   switch(texUnit->_CurrentCombine->ModeA) {
-   case GL_REPLACE: 
-      ablendop = TEXBLENDOP_ARG1;
+   else {
+      switch(texUnit->_CurrentCombine->ModeRGB) {
+	  case GL_REPLACE: 
+	 blendop = TEXBLENDOP_ARG1;
       break;
-   case GL_MODULATE: 
-      ablendop = TEXBLENDOP_MODULATE;
-      break;
-   case GL_ADD: 
-      ablendop = TEXBLENDOP_ADD;
-      break;
-   case GL_ADD_SIGNED:
-      ablendop = TEXBLENDOP_ADDSIGNED; 
-      break;
-   case GL_INTERPOLATE:
-      ablendop = TEXBLENDOP_BLEND; 
-      break;
-   case GL_SUBTRACT: 
-      ablendop = TEXBLENDOP_SUBTRACT;
-      break;
-   default:
-      return;
-   }
+	  case GL_MODULATE: 
+	 blendop = TEXBLENDOP_MODULATE;
+	 break;
+	  case GL_ADD: 
+	 blendop = TEXBLENDOP_ADD;
+	 break;
+	  case GL_ADD_SIGNED:
+	 blendop = TEXBLENDOP_ADDSIGNED; 
+	 break;
+	  case GL_INTERPOLATE:
+	 blendop = TEXBLENDOP_BLEND; 
+	 break;
+	  case GL_SUBTRACT: 
+	 blendop = TEXBLENDOP_SUBTRACT;
+	 break;
+	  case GL_DOT3_RGB_EXT:
+	  case GL_DOT3_RGBA_EXT:
+	 /* The EXT version of the DOT3 extension does not support the
+	  * scale factor, but the ARB version (and the version in OpenGL
+	  * 1.3) does.
+	  */
+	 rgb_shift = 0;
+	 alpha_shift = 0;
+	 /* FALLTHROUGH */
 
-   if ( (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA_EXT)
-	|| (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA) ) {
-      ablendop = TEXBLENDOP_DOT3;
-   }
-
-   ablendop |= (alpha_shift << TEXOP_SCALE_SHIFT);
-
-   /* Handle RGB args */
-   for( i = 0 ; i < numColorArgs ; i++ ) {
-      const int op = texUnit->_CurrentCombine->OperandRGB[i] - GL_SRC_COLOR;
-
-      assert( (op >= 0) && (op <= 3) );
-      switch(texUnit->_CurrentCombine->SourceRGB[i]) {
-      case GL_TEXTURE: 
-	 args_RGB[i] = TEXBLENDARG_TEXEL0 + unit;
+	  case GL_DOT3_RGB:
+	  case GL_DOT3_RGBA:
+	 blendop = TEXBLENDOP_DOT3;
 	 break;
-      case GL_TEXTURE0:
-      case GL_TEXTURE1: 
-      case GL_TEXTURE2: 
-      case GL_TEXTURE3:
-	 args_RGB[i] = TEXBLENDARG_TEXEL0
-	     + (texUnit->_CurrentCombine->SourceRGB[i] & 0x03);
-	 break;
-      case GL_CONSTANT:
-	 args_RGB[i] = TEXBLENDARG_FACTOR_N; 
-	 need_constant_color = GL_TRUE;
-	 break;
-      case GL_PRIMARY_COLOR:
-	 args_RGB[i] = TEXBLENDARG_DIFFUSE;
-	 break;
-      case GL_PREVIOUS:
-	 args_RGB[i] = TEXBLENDARG_CURRENT; 
-	 break;
-      case GL_ONE:
-	 args_RGB[i] = TEXBLENDARG_ONE;
-	 break;
-      case GL_ZERO:
-	 args_RGB[i] = TEXBLENDARG_ONE | TEXBLENDARG_INV_ARG;
-	 break;
-      default: 
+	  default: 
 	 return;
       }
 
-      /* Xor is used so that GL_ONE_MINUS_SRC_COLOR with GL_ZERO 
-       * works correctly.
-       */
-      args_RGB[i] ^= op_rgb[op];
-   }
+      blendop |= (rgb_shift << TEXOP_SCALE_SHIFT);
 
-   /* Handle A args */
-   for( i = 0 ; i < numAlphaArgs ; i++ ) {
-      const int op = texUnit->_CurrentCombine->OperandA[i] - GL_SRC_ALPHA;
-
-      assert( (op >= 0) && (op <= 1) );
-      switch(texUnit->_CurrentCombine->SourceA[i]) {
-      case GL_TEXTURE: 
-	 args_A[i] = TEXBLENDARG_TEXEL0 + unit;
+      switch(texUnit->_CurrentCombine->ModeA) {
+	  case GL_REPLACE: 
+	 ablendop = TEXBLENDOP_ARG1;
 	 break;
-      case GL_TEXTURE0:
-      case GL_TEXTURE1: 
-      case GL_TEXTURE2: 
-      case GL_TEXTURE3:
-	 args_A[i] = TEXBLENDARG_TEXEL0 
-	     + (texUnit->_CurrentCombine->SourceA[i] & 0x03);
+	  case GL_MODULATE: 
+	 ablendop = TEXBLENDOP_MODULATE;
 	 break;
-      case GL_CONSTANT:
-	 args_A[i] = TEXBLENDARG_FACTOR_N; 
-	 need_constant_color = GL_TRUE;
+	  case GL_ADD: 
+	 ablendop = TEXBLENDOP_ADD;
 	 break;
-      case GL_PRIMARY_COLOR:
-	 args_A[i] = TEXBLENDARG_DIFFUSE; 
+	  case GL_ADD_SIGNED:
+	 ablendop = TEXBLENDOP_ADDSIGNED; 
 	 break;
-      case GL_PREVIOUS:
-	 args_A[i] = TEXBLENDARG_CURRENT; 
+	  case GL_INTERPOLATE:
+	 ablendop = TEXBLENDOP_BLEND; 
 	 break;
-      case GL_ONE:
-	 args_A[i] = TEXBLENDARG_ONE;
+	  case GL_SUBTRACT: 
+	 ablendop = TEXBLENDOP_SUBTRACT;
 	 break;
-      case GL_ZERO:
-	 args_A[i] = TEXBLENDARG_ONE | TEXBLENDARG_INV_ARG;
-	 break;
-      default: 
+	  default:
 	 return;
       }
 
-      /* We cheat. :) The register values for this are the same as for
-       * RGB.  Xor is used so that GL_ONE_MINUS_SRC_ALPHA with GL_ZERO
-       * works correctly.
+      if ( (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA_EXT)
+	   || (texUnit->_CurrentCombine->ModeRGB == GL_DOT3_RGBA) ) {
+	 ablendop = TEXBLENDOP_DOT3;
+      }
+
+      ablendop |= (alpha_shift << TEXOP_SCALE_SHIFT);
+
+      /* Handle RGB args */
+      for( i = 0 ; i < numColorArgs ; i++ ) {
+	 const int op = texUnit->_CurrentCombine->OperandRGB[i] - GL_SRC_COLOR;
+
+	 assert( (op >= 0) && (op <= 3) );
+	 switch(texUnit->_CurrentCombine->SourceRGB[i]) {
+	     case GL_TEXTURE: 
+	    args_RGB[i] = TEXBLENDARG_TEXEL0 + unit;
+	    break;
+	     case GL_TEXTURE0:
+	     case GL_TEXTURE1: 
+	     case GL_TEXTURE2: 
+	     case GL_TEXTURE3:
+	    args_RGB[i] = TEXBLENDARG_TEXEL0
+		+ (texUnit->_CurrentCombine->SourceRGB[i] & 0x03);
+	    break;
+	     case GL_CONSTANT:
+	    args_RGB[i] = TEXBLENDARG_FACTOR_N; 
+	    need_constant_color = GL_TRUE;
+	    break;
+	     case GL_PRIMARY_COLOR:
+	    args_RGB[i] = TEXBLENDARG_DIFFUSE;
+	    break;
+	     case GL_PREVIOUS:
+	    args_RGB[i] = TEXBLENDARG_CURRENT; 
+	    break;
+	     case GL_ONE:
+	    args_RGB[i] = TEXBLENDARG_ONE;
+	    break;
+	     case GL_ZERO:
+	    args_RGB[i] = TEXBLENDARG_ONE | TEXBLENDARG_INV_ARG;
+	    break;
+	     default: 
+	    return;
+	 }
+
+	 /* Xor is used so that GL_ONE_MINUS_SRC_COLOR with GL_ZERO
+	  * works correctly.
+	  */
+	 args_RGB[i] ^= op_rgb[op];
+      }
+
+      /* Handle A args */
+      for( i = 0 ; i < numAlphaArgs ; i++ ) {
+	 const int op = texUnit->_CurrentCombine->OperandA[i] - GL_SRC_ALPHA;
+
+	 assert( (op >= 0) && (op <= 1) );
+	 switch(texUnit->_CurrentCombine->SourceA[i]) {
+	     case GL_TEXTURE: 
+	    args_A[i] = TEXBLENDARG_TEXEL0 + unit;
+	    break;
+	     case GL_TEXTURE0:
+	     case GL_TEXTURE1: 
+	     case GL_TEXTURE2: 
+	     case GL_TEXTURE3:
+	    args_A[i] = TEXBLENDARG_TEXEL0 
+		+ (texUnit->_CurrentCombine->SourceA[i] & 0x03);
+	    break;
+	     case GL_CONSTANT:
+	    args_A[i] = TEXBLENDARG_FACTOR_N; 
+	    need_constant_color = GL_TRUE;
+	    break;
+	     case GL_PRIMARY_COLOR:
+	    args_A[i] = TEXBLENDARG_DIFFUSE; 
+	    break;
+	     case GL_PREVIOUS:
+	    args_A[i] = TEXBLENDARG_CURRENT; 
+	    break;
+	     case GL_ONE:
+	    args_A[i] = TEXBLENDARG_ONE;
+	    break;
+	     case GL_ZERO:
+	    args_A[i] = TEXBLENDARG_ONE | TEXBLENDARG_INV_ARG;
+	    break;
+	     default: 
+	    return;
+	 }
+
+	 /* We cheat. :) The register values for this are the same as for
+	  * RGB.  Xor is used so that GL_ONE_MINUS_SRC_ALPHA with GL_ZERO
+	  * works correctly.
+	  */
+	 args_A[i] ^= op_rgb[op];
+      }
+
+      /* Native Arg1 == Arg0 in GL_EXT_texture_env_combine spec */
+      /* Native Arg2 == Arg1 in GL_EXT_texture_env_combine spec */
+      /* Native Arg0 == Arg2 in GL_EXT_texture_env_combine spec */
+
+      /* When we render we need to figure out which is the last really enabled
+       * tex unit, and put last stage on it
        */
-      args_A[i] ^= op_rgb[op];
+
+      imesa->TexBlendColorPipeNum[unit] = 0;
+      used = 0;
+
+      /* Build color pipeline */
+
+      imesa->TexBlend[unit][used++] = (STATE3D_MAP_BLEND_OP_CMD(unit) |
+				       TEXPIPE_COLOR |
+				       ENABLE_TEXOUTPUT_WRT_SEL |
+				       TEXOP_OUTPUT_CURRENT |
+				       DISABLE_TEX_CNTRL_STAGE |
+				       TEXOP_MODIFY_PARMS |
+				       blendop);
+
+      imesa->TexBlend[unit][used++] = (STATE3D_MAP_BLEND_OP_CMD(unit) |
+				       TEXPIPE_ALPHA |
+				       ENABLE_TEXOUTPUT_WRT_SEL |
+				       TEXOP_OUTPUT_CURRENT |
+				       TEXOP_MODIFY_PARMS |
+				       ablendop);
+
+      for ( i = 0 ; i < numColorArgs ; i++ ) {
+	 imesa->TexBlend[unit][used++] = (STATE3D_MAP_BLEND_ARG_CMD(unit) |
+					  tex_blend_rgb[i] |
+					  args_RGB[i]);
+      }
+
+      for ( i = 0 ; i < numAlphaArgs ; i++ ) {
+	 imesa->TexBlend[unit][used++] = (STATE3D_MAP_BLEND_ARG_CMD(unit) |
+					  tex_blend_a[i] |
+					  args_A[i]);
+      }
+
+
+      if ( need_constant_color ) {
+	 GLubyte r, g, b, a;
+	 const GLfloat * const fc = texUnit->EnvColor;
+
+	 FLOAT_COLOR_TO_UBYTE_COLOR(r, fc[RCOMP]);
+	 FLOAT_COLOR_TO_UBYTE_COLOR(g, fc[GCOMP]);
+	 FLOAT_COLOR_TO_UBYTE_COLOR(b, fc[BCOMP]);
+	 FLOAT_COLOR_TO_UBYTE_COLOR(a, fc[ACOMP]);
+
+	 imesa->TexBlend[unit][used++] = STATE3D_COLOR_FACTOR_CMD(unit);
+	 imesa->TexBlend[unit][used++] = ((a << 24) | (r << 16) | (g << 8) | b);
+      }
+
+      imesa->TexBlendWordsUsed[unit] = used;
    }
 
-   /* Native Arg1 == Arg0 in GL_EXT_texture_env_combine spec */
-   /* Native Arg2 == Arg1 in GL_EXT_texture_env_combine spec */
-   /* Native Arg0 == Arg2 in GL_EXT_texture_env_combine spec */
-
-   /* When we render we need to figure out which is the last really enabled
-    * tex unit, and put last stage on it
-    */
-
-   imesa->TexBlendColorPipeNum[unit] = 0;
-
-   /* Build color pipeline */
-
-   used = 0;
-   imesa->TexBlend[unit][used++] = (STATE3D_MAP_BLEND_OP_CMD(unit) |
-				    TEXPIPE_COLOR |
-				    ENABLE_TEXOUTPUT_WRT_SEL |
-				    TEXOP_OUTPUT_CURRENT |
-				    DISABLE_TEX_CNTRL_STAGE |
-				    TEXOP_MODIFY_PARMS |
-				    blendop);
-
-   imesa->TexBlend[unit][used++] = (STATE3D_MAP_BLEND_OP_CMD(unit) |
-				    TEXPIPE_ALPHA |
-				    ENABLE_TEXOUTPUT_WRT_SEL |
-				    TEXOP_OUTPUT_CURRENT |
-				    TEXOP_MODIFY_PARMS |
-				    ablendop);
-
-   for ( i = 0 ; i < numColorArgs ; i++ ) {
-      imesa->TexBlend[unit][used++] = (STATE3D_MAP_BLEND_ARG_CMD(unit) |
-				       tex_blend_rgb[i] |
-				       args_RGB[i]);
-   }
-
-   for ( i = 0 ; i < numAlphaArgs ; i++ ) {
-      imesa->TexBlend[unit][used++] = (STATE3D_MAP_BLEND_ARG_CMD(unit) |
-				       tex_blend_a[i] |
-				       args_A[i]);
-   }
-
-
-   if ( need_constant_color ) {
-      GLubyte r, g, b, a;
-      const GLfloat * const fc = texUnit->EnvColor;
-
-      FLOAT_COLOR_TO_UBYTE_COLOR(r, fc[RCOMP]);
-      FLOAT_COLOR_TO_UBYTE_COLOR(g, fc[GCOMP]);
-      FLOAT_COLOR_TO_UBYTE_COLOR(b, fc[BCOMP]);
-      FLOAT_COLOR_TO_UBYTE_COLOR(a, fc[ACOMP]);
-
-      imesa->TexBlend[unit][used++] = STATE3D_COLOR_FACTOR_CMD(unit);
-      imesa->TexBlend[unit][used++] = ((a << 24) | (r << 16) | (g << 8) | b);
-   }
-
-   imesa->TexBlendWordsUsed[unit] = used;
    I830_STATECHANGE( imesa, I830_UPLOAD_TEXBLEND_N(unit) );
 }
 
@@ -507,7 +550,7 @@ static GLboolean enable_tex_common( GLcontext *ctx, GLuint unit )
 	 imesa->CurrentTexObj[unit]->base.bound &= ~(1U << unit);
       }
 
-      I830_STATECHANGE(imesa, (I830_UPLOAD_TEX0<<unit));
+      I830_STATECHANGE( imesa, I830_UPLOAD_TEX_N(unit) );
       imesa->CurrentTexObj[unit] = t;
       i830TexSetUnit(t, unit);
    }
@@ -541,7 +584,7 @@ static GLboolean enable_tex_rect( GLcontext *ctx, GLuint unit )
    mcs |= TEXCOORDS_ARE_IN_TEXELUNITS;
 
    if (mcs != t->Setup[I830_TEXREG_MCS]) {
-      I830_STATECHANGE(imesa, (I830_UPLOAD_TEX0<<unit));
+      I830_STATECHANGE( imesa, I830_UPLOAD_TEX_N(unit) );
       t->Setup[I830_TEXREG_MCS] = mcs;
    }
 
@@ -561,7 +604,7 @@ static GLboolean enable_tex_2d( GLcontext *ctx, GLuint unit )
    mcs |= TEXCOORDS_ARE_NORMAL;
 
    if (mcs != t->Setup[I830_TEXREG_MCS]) {
-      I830_STATECHANGE(imesa, (I830_UPLOAD_TEX0<<unit));
+      I830_STATECHANGE( imesa, I830_UPLOAD_TEX_N(unit) );
       t->Setup[I830_TEXREG_MCS] = mcs;
    }
 
@@ -569,9 +612,8 @@ static GLboolean enable_tex_2d( GLcontext *ctx, GLuint unit )
 }
 
  
-static GLboolean disable_tex0( GLcontext *ctx )
+static GLboolean disable_tex( GLcontext *ctx, int unit )
 {
-   const int unit = 0;
    i830ContextPtr imesa = I830_CONTEXT(ctx);
 
    /* This is happening too often.  I need to conditionally send diffuse
@@ -593,34 +635,7 @@ static GLboolean disable_tex0( GLcontext *ctx )
    imesa->TexEnvImageFmt[unit] = 0;
    imesa->dirty &= ~(I830_UPLOAD_TEX_N(unit));
    
-   imesa->TexBlend[unit][0] = (STATE3D_MAP_BLEND_OP_CMD(unit) |
-			       TEXPIPE_COLOR |
-			       ENABLE_TEXOUTPUT_WRT_SEL |
-			       TEXOP_OUTPUT_CURRENT |
-			       DISABLE_TEX_CNTRL_STAGE |
-			       TEXOP_SCALE_1X |
-			       TEXOP_MODIFY_PARMS |
-			       TEXBLENDOP_ARG1);
-   imesa->TexBlend[unit][1] = (STATE3D_MAP_BLEND_OP_CMD(unit) |
-			       TEXPIPE_ALPHA |
-			       ENABLE_TEXOUTPUT_WRT_SEL |
-			       TEXOP_OUTPUT_CURRENT |
-			       TEXOP_SCALE_1X |
-			       TEXOP_MODIFY_PARMS |
-			       TEXBLENDOP_ARG1);
-   imesa->TexBlend[unit][2] = (STATE3D_MAP_BLEND_ARG_CMD(unit) |
-			       TEXPIPE_COLOR |
-			       TEXBLEND_ARG1 |
-			       TEXBLENDARG_MODIFY_PARMS |
-			       TEXBLENDARG_CURRENT);
-   imesa->TexBlend[unit][3] = (STATE3D_MAP_BLEND_ARG_CMD(unit) |
-			       TEXPIPE_ALPHA |
-			       TEXBLEND_ARG1 |
-			       TEXBLENDARG_MODIFY_PARMS |
-			       TEXBLENDARG_CURRENT);
-   imesa->TexBlendColorPipeNum[unit] = 0;
-   imesa->TexBlendWordsUsed[unit] = 4;
-   I830_STATECHANGE(imesa, (I830_UPLOAD_TEXBLEND_N(unit)));
+   i830UpdateTexEnv( ctx, unit );
 
    return GL_TRUE;
 }
@@ -643,10 +658,8 @@ static GLboolean i830UpdateTexUnit( GLcontext *ctx, GLuint unit )
    else if (texUnit->_ReallyEnabled) {
       return GL_FALSE;
    }
-   else if (unit == 0) {
-      return disable_tex0( ctx );
-   }
    else {
+      disable_tex( ctx, unit );
       return GL_TRUE;
    }
 }
