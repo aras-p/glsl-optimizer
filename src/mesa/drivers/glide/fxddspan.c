@@ -99,7 +99,7 @@ static FxBool writeRegionClipped(fxMesaContext fxMesa, GrBuffer_t dst_buffer,
       if (dst_y>=fxMesa->pClipRects[i].y1 && dst_y<fxMesa->pClipRects[i].y2) {
 	if (dst_x<fxMesa->pClipRects[i].x1) {
 	  x=fxMesa->pClipRects[i].x1;
-	  data=((char*)src_data)+srcElt*(dst_x-x);
+	  data=((char*)src_data)+srcElt*(x - dst_x);
 	  w=src_width-(x-dst_x);
 	} else {
 	  x=dst_x;
