@@ -939,10 +939,13 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
    }
 
    /* if we get here, something passed the depth test */
-   ctx->OcclusionResult = GL_TRUE;
+   if (ctx->Depth.OcclusionTest) {
+      ctx->OcclusionResult = GL_TRUE;
+   }
 
 #if FEATURE_ARB_occlusion_query
    if (ctx->Occlusion.Active) {
+      /* update count of 'passed' fragments */
       GLuint i;
       for (i = 0; i < span->end; i++)
          ctx->Occlusion.PassedCounter += span->array->mask[i];
@@ -1155,10 +1158,13 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
    }
 
    /* if we get here, something passed the depth test */
-   ctx->OcclusionResult = GL_TRUE;
+   if (ctx->Depth.OcclusionTest) {
+      ctx->OcclusionResult = GL_TRUE;
+   }
 
 #if FEATURE_ARB_occlusion_query
    if (ctx->Occlusion.Active) {
+      /* update count of 'passed' fragments */
       GLuint i;
       for (i = 0; i < span->end; i++)
          ctx->Occlusion.PassedCounter += span->array->mask[i];
@@ -1423,10 +1429,13 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
    }
 
    /* if we get here, some fragments passed the depth test */
-   ctx->OcclusionResult = GL_TRUE;
+   if (ctx->Depth.OcclusionTest) {
+      ctx->OcclusionResult = GL_TRUE;
+   }
 
 #if FEATURE_ARB_occlusion_query
    if (ctx->Occlusion.Active) {
+      /* update count of 'passed' fragments */
       GLuint i;
       for (i = 0; i < span->end; i++)
          ctx->Occlusion.PassedCounter += span->array->mask[i];

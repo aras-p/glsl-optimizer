@@ -900,7 +900,6 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
  * Special tri function for occlusion testing
  */
 #define NAME occlusion_zless_triangle
-#define DO_OCCLUSION_TEST
 #define INTERP_Z 1
 #define SETUP_CODE						\
    ASSERT(ctx->Depth.Test);					\

@@ -304,9 +304,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
       oneOverArea = 1.0F / area;
    }
 
-#ifndef DO_OCCLUSION_TEST
-   ctx->OcclusionResult = GL_TRUE;
-#endif
    span.facing = ctx->_Facing; /* for 2-sided stencil test */
 
    /* Edge setup.  For a triangle strip these could be reused... */
@@ -1329,5 +1326,4 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #undef InterpToInt
 #undef INTERP_ONE
 
-#undef DO_OCCLUSION_TEST
 #undef NAME
