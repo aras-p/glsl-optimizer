@@ -1446,7 +1446,8 @@ enum register_file
    PROGRAM_ENV_PARAM,
    PROGRAM_NAMED_PARAM,
    PROGRAM_STATE_VAR,
-   PROGRAM_WRITE_ONLY
+   PROGRAM_WRITE_ONLY,
+	PROGRAM_ADDRESS
 };
 
 
@@ -1485,6 +1486,7 @@ struct vertex_program
    GLboolean IsPositionInvariant;  /* GL_NV_vertex_program1_1 */
    GLuint InputsRead;     /* Bitmask of which input regs are read */
    GLuint OutputsWritten; /* Bitmask of which output regs are written to */
+   struct program_parameter_list *Parameters; /**< array [NumParameters] */
 };
 
 

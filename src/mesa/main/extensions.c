@@ -281,9 +281,11 @@ void
 _mesa_enable_1_4_extensions(GLcontext *ctx)
 {
    ctx->Extensions.ARB_depth_texture = GL_TRUE;
+   ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_shadow = GL_TRUE;
    ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
    ctx->Extensions.ARB_texture_mirrored_repeat = GL_TRUE;
+   ctx->Extensions.ARB_vertex_program = GL_TRUE;
    ctx->Extensions.ARB_window_pos = GL_TRUE;
    ctx->Extensions.EXT_blend_color = GL_TRUE;
    ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
