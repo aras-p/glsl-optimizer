@@ -1,4 +1,4 @@
-/* $Id: tess.h,v 1.14 1999/11/04 04:07:57 gareth Exp $ */
+/* $Id: tess.h,v 1.15 1999/11/05 20:37:14 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -116,6 +116,7 @@ extern	int	tess_dbg_level;
 #endif /* DEBUG */
 
 extern INLINE void tess_msg( int level, char *format, ... );
+extern INLINE void tess_info( char *file, char *line );
 
 #ifdef __cplusplus
 }

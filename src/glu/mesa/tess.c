@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.19 1999/11/04 04:07:57 gareth Exp $ */
+/* $Id: tess.c,v 1.20 1999/11/05 20:36:55 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -959,11 +959,17 @@ INLINE void tess_msg( int level, char *format, ... )
     va_start( ap, format );
 
     if ( level <= tess_dbg_level ) {
-	/*fprintf( DBG_STREAM, "%9.9s:%d:\t ", __FILE__, __LINE__ );*/
 	vfprintf( DBG_STREAM, format, ap );
 	fflush( DBG_STREAM );
     }
 
     va_end( ap );
+#endif
+}
+
+INLINE void tess_info( char *file, char *line )
+{
+#ifdef DEBUG
+    fprintf( DBG_STREAM, "%9.9s:%d:\t ", file, line );
 #endif
 }
