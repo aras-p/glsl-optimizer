@@ -1,8 +1,8 @@
-/* $Id: imports.c,v 1.25 2002/10/30 20:40:46 brianp Exp $ */
+/* $Id: imports.c,v 1.26 2002/12/01 13:59:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.0.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -56,6 +56,8 @@
 
 #ifdef WIN32
 #define vsnprintf _vsnprintf
+#elif defined(__IBMC__) || defined(__IBMCPP__) || defined(VMS)
+extern int vsnprintf(char *str, size_t count, const char *fmt, va_list arg);
 #endif
 
 
