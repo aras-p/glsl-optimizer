@@ -127,12 +127,12 @@ static void Idle(void)
 
 static GLubyte warp(GLfloat s, int frame)
 {
-   static const GLfloat PI = 3.14159265;
+   static const GLfloat pi = 3.14159265;
    static int halfFrame = FRAMES / 2;
    GLfloat y, weight, v;
    if (frame >= halfFrame)
       frame = halfFrame - (frame - halfFrame);
-   y = sin(s * PI);
+   y = sin(s * pi);
    weight = (float) frame / (FRAMES-1);
    v = y * (0.8 * weight + 0.2);
    return (GLint) (v * 255.0F);
