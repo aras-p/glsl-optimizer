@@ -117,7 +117,6 @@ extern GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 extern GLuint r200GartOffsetFromVirtual( r200ContextPtr rmesa, 
 					 const GLvoid *pointer );
 
-void r200SaveHwState( r200ContextPtr rmesa );
 void r200SetUpAtomList( r200ContextPtr rmesa );
 
 /* ================================================================

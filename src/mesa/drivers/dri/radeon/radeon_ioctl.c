@@ -62,59 +62,52 @@ static void radeonWaitForIdle( radeonContextPtr rmesa );
 static int radeonFlushCmdBufLocked( radeonContextPtr rmesa, 
 				    const char * caller );
 
-void radeonSaveHwState( radeonContextPtr rmesa )
+static void radeonSaveHwState( radeonContextPtr rmesa )
 {
    struct radeon_state_atom *atom;
+   char * dest = rmesa->backup_store.cmd_buf;
 
-   foreach(atom, &rmesa->hw.atomlist)
-      memcpy(atom->savedcmd, atom->cmd, atom->cmd_size * 4);
-}
+   rmesa->backup_store.cmd_used = 0;
 
-static void radeonSwapHwState( radeonContextPtr rmesa )
-{
-   int *temp;
-   struct radeon_state_atom *atom;
-
-   foreach(atom, &rmesa->hw.atomlist) {
-      temp = atom->cmd;
-      atom->cmd = atom->savedcmd;
-      atom->savedcmd = temp;
+   foreach( atom, &rmesa->hw.atomlist ) {
+      if ( atom->check( rmesa->glCtx ) ) {
+	 int size = atom->cmd_size * 4;
+	 memcpy( dest, atom->cmd, size);
+	 dest += size;
+	 rmesa->backup_store.cmd_used += size;
+      }
    }
+
+   assert( rmesa->backup_store.cmd_used <= RADEON_CMD_BUF_SZ );
 }
 
 /* At this point we were in FlushCmdBufLocked but we had lost our context, so
- * we need to unwire our current cmdbuf and hook a new one in, emit that, then
- * wire the old cmdbuf back in so that FlushCmdBufLocked can continue and the
- * buffer can depend on the state not being lost across lock/unlock.
+ * we need to unwire our current cmdbuf, hook the one with the saved state in
+ * it, flush it, and then put the current one back.  This is so commands at the
+ * start of a cmdbuf can rely on the state being kept from the previous one.
  */
 static void radeonBackUpAndEmitLostStateLocked( radeonContextPtr rmesa )
 {
-   GLuint nr_released_bufs;
-   struct radeon_store store;
+   GLuint nr_released_bufs, saved_cmd_used;
+   struct radeon_store saved_store;
+
+   if (rmesa->backup_store.cmd_used == 0)
+      return;
+
+   if (RADEON_DEBUG & DEBUG_STATE)
+      fprintf(stderr, "Emitting backup state on lost context\n");
 
    rmesa->lost_context = GL_FALSE;
 
    nr_released_bufs = rmesa->dma.nr_released_bufs;
-   store = rmesa->store;
-   rmesa->store.statenr = 0;
-   rmesa->store.primnr = 0;
-   rmesa->store.cmd_used = 0;
-   rmesa->store.elts_start = 0;
-   rmesa->hw.all_dirty = GL_TRUE;
-   radeonSwapHwState( rmesa );
-   /* In this case it's okay to EmitState while locked because we won't exhaust
-    * our (empty) cmdbuf.
-    */
-   radeonEmitState(rmesa);
-   radeonFlushCmdBufLocked(rmesa, __FUNCTION__);
-
-   radeonSwapHwState(rmesa);
-   /* We've just cleared out the dirty flags, so we don't remember what 
-    * actually needed to be emitted for the next state emit.
-    */
-   rmesa->hw.all_dirty = GL_TRUE;
+   saved_store = rmesa->store;
+   rmesa->dma.nr_released_bufs = 0;
+   rmesa->store = rmesa->backup_store;
+   saved_cmd_used = rmesa->backup_store.cmd_used;
+   radeonFlushCmdBufLocked( rmesa, __FUNCTION__ );
+   rmesa->backup_store.cmd_used = saved_cmd_used;
    rmesa->dma.nr_released_bufs = nr_released_bufs;
-   rmesa->store = store;
+   rmesa->store = saved_store;
 }
 
 /* =============================================================
@@ -175,6 +168,11 @@ void radeonEmitState( radeonContextPtr rmesa )
 
    if (RADEON_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
       fprintf(stderr, "%s\n", __FUNCTION__);
+
+   if (rmesa->save_on_next_emit) {
+      radeonSaveHwState(rmesa);
+      rmesa->save_on_next_emit = GL_FALSE;
+   }
 
    if (!rmesa->hw.is_dirty && !rmesa->hw.all_dirty)
       return;
@@ -582,7 +580,7 @@ static int radeonFlushCmdBufLocked( radeonContextPtr rmesa,
    rmesa->store.statenr = 0;
    rmesa->store.cmd_used = 0;
    rmesa->dma.nr_released_bufs = 0;
-   rmesa->save_on_next_unlock = 1;
+   rmesa->save_on_next_emit = 1;
 
    return ret;
 }

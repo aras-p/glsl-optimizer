@@ -191,7 +191,6 @@ struct r200_state_atom {
    GLuint idx;
    int *cmd;			         /* one or more cmd's */
    int *lastcmd;			 /* one or more cmd's */
-   int *savedcmd;			 /* one or more cmd's */
    GLboolean dirty;
    GLboolean (*check)( GLcontext *, int );    /* is this state active? */
 };
@@ -825,8 +824,6 @@ struct r200_vbinfo {
 };
 
 
-
-
 struct r200_context {
    GLcontext *glCtx;			/* Mesa context */
 
@@ -854,6 +851,10 @@ struct r200_context {
    struct r200_ioctl ioctl;
    struct r200_dma dma;
    struct r200_store store;
+   /* A full state emit as of the first state emit in the main store, in case
+    * the context is lost.
+    */
+   struct r200_store backup_store;
 
    /* Page flipping
     */
@@ -876,7 +877,7 @@ struct r200_context {
    drm_clip_rect_t *pClipRects;
    unsigned int lastStamp;
    GLboolean lost_context;
-   GLboolean save_on_next_unlock;
+   GLboolean save_on_next_emit;
    r200ScreenPtr r200Screen;	/* Screen private DRI data */
    drm_radeon_sarea_t *sarea;		/* Private SAREA data */
 

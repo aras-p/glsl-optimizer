@@ -103,8 +103,6 @@ extern void radeonWaitForIdleLocked( radeonContextPtr rmesa );
 extern void radeonWaitForVBlank( radeonContextPtr rmesa );
 extern void radeonInitIoctlFuncs( GLcontext *ctx );
 extern void radeonGetAllParams( radeonContextPtr rmesa );
-
-extern void radeonSaveHwState( radeonContextPtr rmesa );
 extern void radeonSetUpAtomList( radeonContextPtr rmesa );
 
 /* radeon_compat.c:

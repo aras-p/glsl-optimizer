@@ -205,7 +205,6 @@ void radeonInitState( radeonContextPtr rmesa )
       rmesa->hw.ATOM.cmd_size = SZ;				\
       rmesa->hw.ATOM.cmd = (int *)CALLOC(SZ * sizeof(int));	\
       rmesa->hw.ATOM.lastcmd = (int *)CALLOC(SZ * sizeof(int));	\
-      rmesa->hw.ATOM.savedcmd = (int *)CALLOC(SZ * sizeof(int));	\
       rmesa->hw.ATOM.name = NM;					\
       rmesa->hw.ATOM.is_tcl = FLAG;					\
       rmesa->hw.ATOM.check = check_##CHK;				\
@@ -551,6 +550,5 @@ void radeonInitState( radeonContextPtr rmesa )
    rmesa->hw.eye.cmd[EYE_Z] = IEEE_ONE;
    rmesa->hw.eye.cmd[EYE_RESCALE_FACTOR] = IEEE_ONE;
    
-   radeonSaveHwState( rmesa );
    rmesa->hw.all_dirty = GL_TRUE;
 }

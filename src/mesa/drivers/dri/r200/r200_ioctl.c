@@ -58,59 +58,34 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 static void r200WaitForIdle( r200ContextPtr rmesa );
 
-void r200SaveHwState( r200ContextPtr rmesa )
-{
-   struct r200_state_atom *atom;
-
-   foreach( atom, &rmesa->hw.atomlist )
-      memcpy(atom->savedcmd, atom->cmd, atom->cmd_size * 4);
-}
-
-static void r200SwapHwState( r200ContextPtr rmesa )
-{
-   int *temp;
-   struct r200_state_atom *atom;
-
-   foreach( atom, &rmesa->hw.atomlist ) {
-      temp = atom->cmd;
-      atom->cmd = atom->savedcmd;
-      atom->savedcmd = temp;
-   }
-}
 
 /* At this point we were in FlushCmdBufLocked but we had lost our context, so
- * we need to unwire our current cmdbuf and hook a new one in, emit that, then
- * wire the old cmdbuf back in so that FlushCmdBufLocked can continue and the
- * buffer can depend on the state not being lost across lock/unlock.
+ * we need to unwire our current cmdbuf, hook the one with the saved state in
+ * it, flush it, and then put the current one back.  This is so commands at the
+ * start of a cmdbuf can rely on the state being kept from the previous one.
  */
 static void r200BackUpAndEmitLostStateLocked( r200ContextPtr rmesa )
 {
-   GLuint nr_released_bufs;
-   struct r200_store store;
+   GLuint nr_released_bufs, saved_cmd_used;
+   struct r200_store saved_store;
+
+   if (rmesa->backup_store.cmd_used == 0)
+      return;
+
+   if (R200_DEBUG & DEBUG_STATE)
+      fprintf(stderr, "Emitting backup state on lost context\n");
 
    rmesa->lost_context = GL_FALSE;
 
    nr_released_bufs = rmesa->dma.nr_released_bufs;
-   store = rmesa->store;
-   rmesa->store.statenr = 0;
-   rmesa->store.primnr = 0;
-   rmesa->store.cmd_used = 0;
-   rmesa->store.elts_start = 0;
-   rmesa->hw.all_dirty = GL_TRUE;
-   r200SwapHwState( rmesa );
-   /* In this case it's okay to EmitState while locked because we won't exhaust
-    * our (empty) cmdbuf.
-    */
-   r200EmitState( rmesa );
+   saved_store = rmesa->store;
+   rmesa->dma.nr_released_bufs = 0;
+   rmesa->store = rmesa->backup_store;
+   saved_cmd_used = rmesa->backup_store.cmd_used;
    r200FlushCmdBufLocked( rmesa, __FUNCTION__ );
-
-   r200SwapHwState( rmesa );
-   /* We've just cleared out the dirty flags, so we don't remember what 
-    * actually needed to be emitted for the next state emit.
-    */
-   rmesa->hw.all_dirty = GL_TRUE;
+   rmesa->backup_store.cmd_used = saved_cmd_used;
    rmesa->dma.nr_released_bufs = nr_released_bufs;
-   rmesa->store = store;
+   rmesa->store = saved_store;
 }
 
 int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller )
@@ -189,7 +164,7 @@ int r200FlushCmdBufLocked( r200ContextPtr rmesa, const char * caller )
    rmesa->store.statenr = 0;
    rmesa->store.cmd_used = 0;
    rmesa->dma.nr_released_bufs = 0;
-   rmesa->save_on_next_unlock = 1;
+   rmesa->save_on_next_emit = 1;
 
    return ret;
 }

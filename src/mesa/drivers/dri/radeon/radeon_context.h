@@ -185,7 +185,6 @@ struct radeon_state_atom {
    GLuint is_tcl;
    int *cmd;			         /* one or more cmd's */
    int *lastcmd;			 /* one or more cmd's */
-   int *savedcmd;			 /* one or more cmd's */
    GLboolean dirty;                      /* dirty-mark in emit_state_list */
    GLboolean (*check)( GLcontext * );    /* is this state active? */
 };
@@ -714,6 +713,10 @@ struct radeon_context {
    struct radeon_ioctl ioctl;
    struct radeon_dma dma;
    struct radeon_store store;
+   /* A full state emit as of the first state emit in the main store, in case
+    * the context is lost.
+    */
+   struct radeon_store backup_store;
 
    /* Page flipping
     */
@@ -732,7 +735,7 @@ struct radeon_context {
    drm_clip_rect_t *pClipRects;
    unsigned int lastStamp;
    GLboolean lost_context;
-   GLboolean save_on_next_unlock;
+   GLboolean save_on_next_emit;
    radeonScreenPtr radeonScreen;	/* Screen private DRI data */
    drm_radeon_sarea_t *sarea;		/* Private SAREA data */
 

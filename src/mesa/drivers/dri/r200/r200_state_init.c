@@ -208,7 +208,6 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.ATOM.cmd_size = SZ;				\
       rmesa->hw.ATOM.cmd = (int *)CALLOC(SZ * sizeof(int));	\
       rmesa->hw.ATOM.lastcmd = (int *)CALLOC(SZ * sizeof(int));	\
-      rmesa->hw.ATOM.savedcmd = (int *)CALLOC(SZ * sizeof(int)); \
       rmesa->hw.ATOM.name = NM;					\
       rmesa->hw.ATOM.idx = IDX;					\
       rmesa->hw.ATOM.check = check_##CHK;			\
@@ -770,6 +769,5 @@ void r200InitState( r200ContextPtr rmesa )
 
    r200LightingSpaceChange( ctx );
    
-   r200SaveHwState( rmesa );
    rmesa->hw.all_dirty = GL_TRUE;
 }

@@ -92,18 +92,38 @@ void r200SetUpAtomList( r200ContextPtr rmesa )
        insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tex[i] );
    for (i = 0; i < mtu; ++i)
        insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.cube[i] );
+   for (i = 0; i < 6; ++i)
+       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.pix[i] );
+
+   for (i = 0; i < 8; ++i)
+       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.lit[i] );
    for (i = 0; i < 3 + mtu; ++i)
        insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.mat[i] );
    insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.eye );
    insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.glt );
    for (i = 0; i < 2; ++i)
       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.mtl[i] );
-   for (i = 0; i < 8; ++i)
-       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.lit[i] );
    for (i = 0; i < 6; ++i)
        insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.ucp[i] );
-   for (i = 0; i < 6; ++i)
-       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.pix[i] );
+}
+
+static void r200SaveHwState( r200ContextPtr rmesa )
+{
+   struct r200_state_atom *atom;
+   char * dest = rmesa->backup_store.cmd_buf;
+
+   rmesa->backup_store.cmd_used = 0;
+
+   foreach( atom, &rmesa->hw.atomlist ) {
+      if ( atom->check( rmesa->glCtx, atom->idx ) ) {
+	 int size = atom->cmd_size * 4;
+	 memcpy( dest, atom->cmd, size);
+	 dest += size;
+	 rmesa->backup_store.cmd_used += size;
+      }
+   }
+
+   assert( rmesa->backup_store.cmd_used <= R200_CMD_BUF_SZ );
 }
 
 void r200EmitState( r200ContextPtr rmesa )
@@ -114,6 +134,11 @@ void r200EmitState( r200ContextPtr rmesa )
 
    if (R200_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
       fprintf(stderr, "%s\n", __FUNCTION__);
+
+   if (rmesa->save_on_next_emit) {
+      r200SaveHwState(rmesa);
+      rmesa->save_on_next_emit = GL_FALSE;
+   }
 
    if (!rmesa->hw.is_dirty && !rmesa->hw.all_dirty)
       return;
