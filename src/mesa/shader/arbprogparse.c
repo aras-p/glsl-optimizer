@@ -172,7 +172,7 @@ __extension__ static char arb_grammar_text[] =
 #define  ARB_FRAGMENT_PROGRAM_SHADOW                0x40
 
 /* GL_ARB_draw_buffers option flags */
-#define  ARB_DRAW_BUFFERS                           0x80
+#define  ARB_DRAW_BUFFERS                           0x80
 
 /* GL_ARB_fragment_program instruction class */
 #define  OP_ALU_INST                                0x00
