@@ -117,7 +117,7 @@ all	: gludll
 gludll	: $(GLUDLL)
 
 CFLAGS	= $(cvarsdll) $(CFLAGS) -D_OPENGL32_ -Iinclude -DBUILD_GL32
-LFLAGS	= $(dlllflags) $(LFLAGS)
+LFLAGS	= $(dlllflags) $(lcommon) $(LFLAGS)
 
 OBJS	= $(GLU_SRCS:.c=.obj)
 LIBS	= ../lib/$(MESALIB) winmm.lib $(guilibsdll)

@@ -20,7 +20,7 @@ all	: osmesadll
 osmesadll: $(OSMESADLL)
 
 CFLAGS	= $(cvarsdll) $(CFLAGS) -D_OPENGL32_ -DBUILD_GL32 -I$(TOP)/src
-LFLAGS	= $(LFLAGS) $(dlllflags)
+LFLAGS	= $(dlllflags) $(lcommon) $(LFLAGS)
 
 OBJS	= $(ASM_SRCS:.S=.obj) $(CORE_SRCS:.c=.obj) $(DRIVER_SRCS:.c=.obj)
 LIBS	= $(guilibsdll) $(TOP)/lib/$(MESALIB)

@@ -19,7 +19,7 @@ OPTIMIZE_CFLAGS = -DNDEBUG
 !ENDIF
 
 CFLAGS = $(cvarsdll) $(CFLAGS) $(OPTIMIZE_CFLAGS) -DMESA -DBUILD_GL32
-LFLAGS = $(dlllflags) $(LFLAGS)
+LFLAGS = $(dlllflags) $(lcommon) $(LFLAGS)
 
 OBJS   = $(SRCS:.c=.obj)
 MS_LIBS   = ../lib/$(MESALIB) ../lib/$(GLULIB) winmm.lib $(guilibsdll)
