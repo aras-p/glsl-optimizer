@@ -99,7 +99,7 @@ char *texFileName = 0;
 static void CALLBACK ErrorHandler(GLenum which)
 {
 
-    fprintf(stderr, "Quad Error: %s\n", gluErrorString(which));
+    fprintf(stderr, "Quad Error: %s\n", (char *) gluErrorString(which));
 }
 
 typedef void (GLAPIENTRY *callback_t)();
