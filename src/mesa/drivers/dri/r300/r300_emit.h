@@ -96,6 +96,16 @@ static __inline__ uint32_t cmdpacket3(int packet)
 	return cmd.u;
 }
 
+static __inline__ uint32_t cmdcpdelay(unsigned short count)
+{
+	drm_r300_cmd_header_t cmd;
+
+	cmd.delay.cmd_type = R300_CMD_CP_DELAY;
+	cmd.delay.count = count;
+
+	return cmd.u;
+}
+
 /* Prepare to write a register value to register at address reg.
    If num_extra > 0 then the following extra values are written
    to registers with address +4, +8 and so on.. */
@@ -179,6 +189,17 @@ cmd=(drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, \
 					__FUNCTION__); \
 
 cmd[0].header.cmd_type=R300_CMD_END3D;
+}
+
+void static inline cp_delay(PREFIX unsigned short count)
+{
+LOCAL_VARS
+
+cmd=(drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, \
+					0, \
+					__FUNCTION__); \
+
+cmd[0].i=cmdcpdelay(count);
 }
 
 #endif
