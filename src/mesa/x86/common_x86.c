@@ -42,7 +42,6 @@
 #include <sys/sysctl.h>
 #endif
 
-#include "context.h"
 #include "common_x86_asm.h"
 #include "imports.h"
 
