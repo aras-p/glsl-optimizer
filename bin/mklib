@@ -1,0 +1,330 @@
+#!/bin/sh
+
+# Make a shared library.
+# Basically do a switch/case depending on the OS and make a shared
+# lib conforming to that OS.
+
+
+# Usage:
+#   mklib [options] objects ...
+# Options:
+#   -o LIBRARY    specifies the name of resulting library ("GL" for example)
+#   -major N      specifies major version number (default is 1)
+#   -minor N      specifies minor version number (default is 0)
+#   -patch N      specifies patch version number (default is 0)
+#   -lLIBRARY     specifies a dependency on LIBRARY
+#   -LDIR         search in DIR for library dependencies
+#   -cplusplus    link with C++ runtime
+#   -static       make a static library (default is dynamic/shared)
+#   -install DIR  move resulting library files to DIR
+#   -arch ARCH    override using `uname` to determine architecture
+#   -archopt OPT  specify an extra achitecture-specific option OPT
+#
+# The library name should just be "GL" or "GLU", etc.  The 'lib' prefix
+# will be added here if needed, as well as the ".so" or ".a" suffix, etc.
+#
+# objects should be:  foo.o bar.o etc.o
+#
+# Environment variables recognized:
+#   CC   C compiler command
+#   CXX  C++ compiler command
+#
+
+
+#
+# Option defaults
+#
+LIBNAME=""
+MAJOR=1
+MINOR=0
+PATCH=0
+DEPS=""
+CPLUSPLUS=0
+STATIC=0
+INSTALLDIR="."
+ARCH="auto"
+ARCHOPT=""
+
+
+#
+# Parse arguments
+#
+while true
+do
+    case $1 in
+	'-o')         shift 1; LIBNAME=$1;;
+	'-major')     shift 1; MAJOR=$1;;
+	'-minor')     shift 1; MINOR=$1;;
+	'-patch')     shift 1; PATCH=$1;;
+	-l*)          DEPS="$DEPS $1";;
+	-L*)          DEPS="$DEPS $1";;
+	'-cplusplus') CPLUSPLUS=1;;
+	'-static')    STATIC=1;;
+	'-install')   shift 1; INSTALLDIR=$1;;
+	'-arch')      shift 1; ARCH=$1;;
+	'-archopt')   shift 1; ARCHOPT=$1;;
+	-*)           echo "mklib: Unknown option: " $1 ; exit 1;;
+	*) break
+    esac
+    shift 1
+done
+OBJECTS=$@
+
+if [ ${ARCH} = "auto" ] ; then
+    ARCH=`uname`
+fi
+
+
+#
+# Error checking
+#
+if [ "x${LIBNAME}" = "x" ] ; then
+    echo "mklib: Error: no library name specified"
+    exit 1
+fi
+if [ "x${OBJECTS}" = "x" ] ; then
+    echo "mklib: Error: no object files specified"
+    exit 1
+fi
+
+
+#
+# Debugging info
+#
+if [  ]  ; then
+    echo "-----------------"
+    echo ARCH is $ARCH
+    echo LIBNAME is $LIBNAME
+    echo MAJOR is $MAJOR
+    echo MINOR is $MINOR
+    echo PATCH is $PATCH
+    echo DEPS are $DEPS
+    echo "-----------------"
+fi
+
+
+#
+# OK, make the library now
+#
+case $ARCH in
+
+    'Linux')
+	LIBNAME="lib${LIBNAME}"     # prefix with "lib"
+	OPTS="-Xlinker -Bsymbolic -shared -Wl,-soname,${LIBNAME}.so.${MAJOR}"
+	VERSION="${MAJOR}.${MINOR}.${PATCH}"
+
+	echo "mklib: Making Linux shared library: " ${LIBNAME}.so.${VERSION}
+
+	if [ $CPLUSPLUS = 1 ] ; then
+	    LINK="g++"
+	else
+	    LINK="gcc"
+	fi
+
+	# rm any old libs
+	rm -f ${LIBNAME}.so.${VERSION}
+	rm -f ${LIBNAME}.so.${MAJOR}
+	rm -f ${LIBNAME}.so
+
+	# make lib
+	${LINK} ${OPTS} -o ${LIBNAME}.so.${VERSION} ${OBJECTS} ${DEPS}
+	# make usual symlinks
+	ln -s ${LIBNAME}.so.${VERSION} ${LIBNAME}.so.${MAJOR}
+	ln -s ${LIBNAME}.so.${MAJOR} ${LIBNAME}.so
+	# finish up
+	FINAL_LIBS="${LIBNAME}.so.${VERSION} ${LIBNAME}.so.${MAJOR} ${LIBNAME}.so"
+	;;
+
+    'SunOS')
+	LIBNAME="lib${LIBNAME}.so"
+	echo "mklib: Making SunOS shared library: " ${LIBNAME}
+	OPTS="-G"
+	if [ $CPLUSPLUS = 1 ] ; then
+	    # link for C++
+	    if [ "x${CXX}" = "xg++" ] ; then
+		LINK="g++"
+	    elif [ `which c++` ] ; then
+		LINK="c++"
+	    elif [ `which CC` ] ; then
+		LINK="CC"
+	    elif [ `which g++` ] ; then
+		LINK="g++"
+	    else
+		echo "mklib: warning: can't find C++ comiler, trying CC."
+		LINK="CC"
+	    fi
+	elif [ "x${CC}" = "xgcc" ] ; then
+	    # use gcc for linking
+	    LINK="gcc"
+	else
+	    # use native Sun linker
+	    LINK="ld"
+	fi
+	rm -f ${LIBNAME}
+	${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	FINAL_LIBS=${LIBNAME}
+	;;
+
+    'FreeBSD')
+	SHLIB="lib${LIBNAME}.so.${MAJOR}.${MINOR}"
+	STLIB="lib${LIBNAME}.a"
+	echo "mklib: Making FreeBSD shared library: " ${SHLIB}
+	rm -f ${SHLIB} ${STLIB}
+	ar cq ${STLIB} ${OBJECTS}
+	ranlib ${STLIB}
+	ld -Bshareable -o ${SHLIB} ${OBJECTS}
+	# XXX make lib${LIBNAME}.so.${MAJOR} symlink?
+	FINAL_LIBS="${SHLIB} ${STLIB}"
+	;;
+
+    'OpenBSD')
+	LIBNAME="lib${LIBNAME}"
+	VERSION="${MAJOR}.${MINOR}"
+	echo "Building OpenBSD PIC library: " ${LIBNAME}
+	rm -f ${LIBNAME}_pic.a ${LIBNAME}.so.${VERSION}
+	ar cq ${LIBNAME}_pic.a ${OBJECTS}
+	ranlib ${LIBNAME}_pic.a
+	ld -x -Bshareable -Bforcearchive -o ${LIBNAME}.so.${VERSION} ${LIBNAME}_pic.a
+	ln -s ${LIBNAME}.so.${VERSION} ${LIBNAME}.so
+	FINAL_LIBS="${LIBNAME}_pic.a ${LIBNAME}.so.${VERSION} ${LIBNAME}.so"
+	;;
+
+    'NetBSD')
+	LIBNAME="lib${LIBNAME}"
+	echo "mklib: Making NetBSD PIC shared library: " ${LIBNAME}
+	VERSION="${MAJOR}.${MINOR}"
+	rm -f ${LIBNAME}_pic.a ${LIBNAME}.so.${VERSION}
+	ar cq ${LIBNAME}_pic.a ${OBJECTS}
+	ranlib ${LIBNAME}_pic.a
+	ld -x -Bshareable -Bforcearchive -o ${LIBNAME}.so.${VERSION} ${LIBNAME}_pic.a
+	FINAL_LIBS="${LIBNAME}_pic.a ${LIBNAME}.so.${VERSION}"
+	;;
+
+    'IRIX')
+	LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
+	if [ $ARCHOPTS = "64" ] ; then
+	    # 64-bit ABI
+	    OPTS="-64 -shared -all"
+	    echo "mklib: Making IRIX 64-bit shared library: " ${LIBNAME}
+	elif [ $ARCHOPTS = "o32" ] ; then
+	    # old 32-bit ABI
+	    OPTS="-32 -shared -all"
+	    echo "mklib: Making IRIX o32-bit shared library: " ${LIBNAME}
+	else
+	    # new 32-bit ABI
+	    OPTS="-n32 -shared -all"
+	    echo "mklib: Making IRIX n32-bit shared library: " ${LIBNAME}
+	fi
+	ld ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	FINAL_LIBS="${LIBNAME}"
+	;;
+
+    'IRIX64')
+	LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
+	echo "mklib: Making IRIX64 library: " ${LIBNAME}
+	# 64-bit ABI
+	OPTS="-64 -shared -all"
+	ld ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	FINAL_LIBS="${LIBNAME}"
+	;;
+
+    'linux-cygwin')
+	LIBNAME="lib${LIBNAME}.a"
+	echo "mklib: Making linux-cygwin library: " ${LIBNAME}
+	gnuwin32ar ruv ${LIBNAME} ${OBJECTS}
+	FINAL_LIBS=${LIBNAME}
+	;;
+
+    'HPUX')
+	RUNLIB="lib${LIBNAME}.${MAJOR}"
+	DEVLIB="lib${LIBNAME}.sl"
+	echo "mklib: Making HPUX library: " ${RUNLIB} ${DEVLIB}
+	ld -b -o ${RUNLIB} +b ${RUNLIB} ${OBJECTS} ${DEPS}
+	ln -s ${RUNLIB} ${DEVLIB}
+	FINAL_LIBS="{RUNLIB} ${DEVLIB}"
+	;;
+
+    'OpenSTEP')
+	LIBNAME="lib${LIBNAME}.a"
+	echo "mklib: Making OpenSTEP static library: " ${LIBNAME}
+	libtool -static -o ${LIBNAME} - ${OBJECTS}
+	FINAL_LIBS=${LIBNAME}
+	;;
+
+    'OSF1')
+	VERSION="${MAJOR}.${MINOR}"
+	LIBNAME="lib${LIBNAME}.so"
+	ARNAME="lib${LIBNAME}.a"
+	echo "mklib: Making OSF/1 library: " ${LIBNAME}
+	rm -f ${LIBNAME}.${VERSION}
+	ld -o ${LIBNAME}.${VERSION} -shared -no_archive -set_version ${VERSION} -soname ${LIBNAME}.${VERSION} -expect_unresolved \* -all ${OBJECTS} ${DEPS}
+	ln -sf ${LIBNAME}.${VERSION} ${LIBNAME}
+
+	# also make static lib
+	rm -f ${ARNAME}
+	ar clqz ${ARNAME} ${OBJECTS}
+	FINAL_LIBS="${ARNAME} ${LIBNAME} ${LIBNAME}.${VERSION}"
+	;;
+
+    'Darwin')
+	VERSION="${MAJOR}.${MINOR}.${TINY}"
+	LIBNAME="lib${LIBNAME}.dylib"
+	ARNAME="lib${LIBNAME}.dylib.a"
+	echo "mklib: Making Darwin libraries: " ${LIBNAME} ${ARNAME}
+	FLAGS="-dynamiclib -multiply_defined suppress"
+	cc ${FLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	# also make regular .a files,
+	# provided by Danek Duvall (duvall@dhduvall.student.princeton.edu)
+	ar ruv ${ARNAME} ${OBJECTS}
+	ranlib ${ARNAME}
+	FINAL_LIBS="${ARNAME} ${LIBNAME}"
+	;;
+
+    'LynxOS')
+	LIBNAME="lib${LIBNAME}.a"
+	echo "mklib: Making LynxOS library: " ${LIBNAME}
+	ar ru ${LIBNAME} ${OBJECTS}
+	FINAL_LIBS=${LIBNAME}
+	;;
+
+    'BeOS')
+	LIBNAME="lib${LIBNAME}.so"
+	echo "mklib: Making BeOS shared library: " ${LIBNAME}
+	gcc -nostart -Xlinker -soname=${LIBNAME} -L/Be/develop/lib/x86 ${OBJECTS} -lbe -o ${LIBNAME}
+	FINAL_LIBS=${LIBNAME}
+	;;
+
+    'QNX')
+	LIBNAME="lib${LIBNAME}.a"
+	echo "mklib: Making QNX library: " ${LIBNAME}
+	wlib ${LIBNAME} ${OBJECTS}
+	FINAL_LIBS=${LIBNAME}
+	;;
+
+    'example')
+	# If you're adding support for a new architecture, you can
+	# start with this:
+	LIBNAME="lib${LIBNAME}.so"  # prefix with "lib"
+	echo "mklib: Making library for example arch: " ${LIBNAME}
+	ld -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	FINAL_LIBS="${LIBNAME}"
+	;;
+
+    *)
+	echo "mklib: WARNING: making library for unknown platform!"
+	echo "mklib: WARNING: this may not work!"
+	echo "mklib: WARNING: please update the bin/mklib script!"
+	# XXX this is a total hack for Mesa - remove someday
+	# fall-back to an old mklib.* script
+	${MAKELIB} "lib${LIBNAME}.a" ${MAJOR} ${MINOR} ${PATCH} ${OBJECTS}
+	;;
+esac
+
+
+#
+# Put library files into installation directory if specified.
+#
+if [ ${INSTALLDIR} != "." ] ; then
+    echo "mklib: Installing" ${FINAL_LIBS} "in" ${INSTALLDIR}
+    mv ${FINAL_LIBS} ${INSTALLDIR}/
+fi
