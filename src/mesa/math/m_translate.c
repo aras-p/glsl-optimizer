@@ -95,6 +95,7 @@ static trans_3f_func  _math_trans_3f_tab[MAX_TYPES];
 static trans_4ub_func _math_trans_4ub_tab[5][MAX_TYPES];
 static trans_4us_func _math_trans_4us_tab[5][MAX_TYPES];
 static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
+static trans_4f_func  _math_trans_4fc_tab[5][MAX_TYPES];
 
 
 #define PTR_ELT(ptr, elt) (((SRC *)ptr)[elt])
@@ -118,6 +119,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_BYTE)
 #define TRX_3F(f,n)   BYTE_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_4F(f,n)   BYTE_TO_FLOAT( PTR_ELT(f,n) )
+#define TRX_4FC(f,n)   BYTE_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_UB(ub, f,n)  ub = BYTE_TO_UBYTE( PTR_ELT(f,n) )
 #define TRX_US(ch, f,n)  ch = BYTE_TO_USHORT( PTR_ELT(f,n) )
 #define TRX_UI(f,n)  (PTR_ELT(f,n) < 0 ? 0 : (GLuint)  PTR_ELT(f,n))
@@ -126,6 +128,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 4
 #define INIT init_trans_4_GLbyte_raw
 #define DEST_4F trans_4_GLbyte_4f_raw
+#define DEST_4FC trans_4_GLbyte_4fc_raw
 #define DEST_4UB trans_4_GLbyte_4ub_raw
 #define DEST_4US trans_4_GLbyte_4us_raw
 #include "m_trans_tmp.h"
@@ -133,6 +136,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 3
 #define INIT init_trans_3_GLbyte_raw
 #define DEST_4F trans_3_GLbyte_4f_raw
+#define DEST_4FC trans_3_GLbyte_4fc_raw
 #define DEST_4UB trans_3_GLbyte_4ub_raw
 #define DEST_4US trans_3_GLbyte_4us_raw
 #define DEST_3F trans_3_GLbyte_3f_raw
@@ -141,11 +145,13 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 2
 #define INIT init_trans_2_GLbyte_raw
 #define DEST_4F trans_2_GLbyte_4f_raw
+#define DEST_4FC trans_2_GLbyte_4fc_raw
 #include "m_trans_tmp.h"
 
 #define SZ 1
 #define INIT init_trans_1_GLbyte_raw
 #define DEST_4F trans_1_GLbyte_4f_raw
+#define DEST_4FC trans_1_GLbyte_4fc_raw
 #define DEST_1UB trans_1_GLbyte_1ub_raw
 #define DEST_1UI trans_1_GLbyte_1ui_raw
 #include "m_trans_tmp.h"
@@ -153,6 +159,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #undef SRC
 #undef TRX_3F
 #undef TRX_4F
+#undef TRX_4FC
 #undef TRX_UB
 #undef TRX_US
 #undef TRX_UI
@@ -165,6 +172,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_UNSIGNED_BYTE)
 #define TRX_3F(f,n)	     UBYTE_TO_FLOAT(PTR_ELT(f,n))
 #define TRX_4F(f,n)	     UBYTE_TO_FLOAT(PTR_ELT(f,n))
+#define TRX_4FC(f,n)	     UBYTE_TO_FLOAT(PTR_ELT(f,n))
 #define TRX_UB(ub, f,n)	     ub = PTR_ELT(f,n)
 #define TRX_US(us, f,n)      us = UBYTE_TO_USHORT(PTR_ELT(f,n))
 #define TRX_UI(f,n)          (GLuint)PTR_ELT(f,n)
@@ -174,6 +182,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 4
 #define INIT init_trans_4_GLubyte_raw
 #define DEST_4F trans_4_GLubyte_4f_raw
+#define DEST_4FC trans_4_GLubyte_4fc_raw
 #define DEST_4US trans_4_GLubyte_4us_raw
 #include "m_trans_tmp.h"
 
@@ -184,6 +193,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define DEST_4US trans_3_GLubyte_4us_raw
 #define DEST_3F trans_3_GLubyte_3f_raw
 #define DEST_4F trans_3_GLubyte_4f_raw
+#define DEST_4FC trans_3_GLubyte_4fc_raw
 #include "m_trans_tmp.h"
 
 
@@ -197,6 +207,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #undef SRC_IDX
 #undef TRX_3F
 #undef TRX_4F
+#undef TRX_4FC
 #undef TRX_UB
 #undef TRX_US
 #undef TRX_UI
@@ -208,6 +219,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_SHORT)
 #define TRX_3F(f,n)   SHORT_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_4F(f,n)   (GLfloat)( PTR_ELT(f,n) )
+#define TRX_4FC(f,n)   (GLfloat)( PTR_ELT(f,n) )
 #define TRX_UB(ub, f,n)  ub = SHORT_TO_UBYTE(PTR_ELT(f,n))
 #define TRX_US(us, f,n)  us = SHORT_TO_USHORT(PTR_ELT(f,n))
 #define TRX_UI(f,n)  (PTR_ELT(f,n) < 0 ? 0 : (GLuint)  PTR_ELT(f,n))
@@ -216,6 +228,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ  4
 #define INIT init_trans_4_GLshort_raw
 #define DEST_4F trans_4_GLshort_4f_raw
+#define DEST_4FC trans_4_GLshort_4fc_raw
 #define DEST_4UB trans_4_GLshort_4ub_raw
 #define DEST_4US trans_4_GLshort_4us_raw
 #include "m_trans_tmp.h"
@@ -223,6 +236,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 3
 #define INIT init_trans_3_GLshort_raw
 #define DEST_4F trans_3_GLshort_4f_raw
+#define DEST_4FC trans_3_GLshort_4fc_raw
 #define DEST_4UB trans_3_GLshort_4ub_raw
 #define DEST_4US trans_3_GLshort_4us_raw
 #define DEST_3F trans_3_GLshort_3f_raw
@@ -231,11 +245,13 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 2
 #define INIT init_trans_2_GLshort_raw
 #define DEST_4F trans_2_GLshort_4f_raw
+#define DEST_4FC trans_2_GLshort_4fc_raw
 #include "m_trans_tmp.h"
 
 #define SZ 1
 #define INIT init_trans_1_GLshort_raw
 #define DEST_4F trans_1_GLshort_4f_raw
+#define DEST_4FC trans_1_GLshort_4fc_raw
 #define DEST_1UB trans_1_GLshort_1ub_raw
 #define DEST_1UI trans_1_GLshort_1ui_raw
 #include "m_trans_tmp.h"
@@ -245,6 +261,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #undef SRC_IDX
 #undef TRX_3F
 #undef TRX_4F
+#undef TRX_4FC
 #undef TRX_UB
 #undef TRX_US
 #undef TRX_UI
@@ -256,6 +273,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_UNSIGNED_SHORT)
 #define TRX_3F(f,n)   USHORT_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_4F(f,n)   (GLfloat)( PTR_ELT(f,n) )
+#define TRX_4FC(f,n)   (GLfloat)( PTR_ELT(f,n) )
 #define TRX_UB(ub,f,n)  ub = (GLubyte) (PTR_ELT(f,n) >> 8)
 #define TRX_US(us,f,n)  us = (GLushort) (PTR_ELT(f,n) >> 8)
 #define TRX_UI(f,n)  (GLuint)   PTR_ELT(f,n)
@@ -264,6 +282,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 4
 #define INIT init_trans_4_GLushort_raw
 #define DEST_4F trans_4_GLushort_4f_raw
+#define DEST_4FC trans_4_GLushort_4fc_raw
 #define DEST_4UB trans_4_GLushort_4ub_raw
 #define DEST_4US trans_4_GLushort_4us_raw
 #include "m_trans_tmp.h"
@@ -271,6 +290,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 3
 #define INIT init_trans_3_GLushort_raw
 #define DEST_4F trans_3_GLushort_4f_raw
+#define DEST_4FC trans_3_GLushort_4fc_raw
 #define DEST_4UB trans_3_GLushort_4ub_raw
 #define DEST_4US trans_3_GLushort_4us_raw
 #define DEST_3F trans_3_GLushort_3f_raw
@@ -279,11 +299,13 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 2
 #define INIT init_trans_2_GLushort_raw
 #define DEST_4F trans_2_GLushort_4f_raw
+#define DEST_4FC trans_2_GLushort_4fc_raw
 #include "m_trans_tmp.h"
 
 #define SZ 1
 #define INIT init_trans_1_GLushort_raw
 #define DEST_4F trans_1_GLushort_4f_raw
+#define DEST_4FC trans_1_GLushort_4fc_raw
 #define DEST_1UB trans_1_GLushort_1ub_raw
 #define DEST_1UI trans_1_GLushort_1ui_raw
 #include "m_trans_tmp.h"
@@ -292,6 +314,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #undef SRC_IDX
 #undef TRX_3F
 #undef TRX_4F
+#undef TRX_4FC
 #undef TRX_UB
 #undef TRX_US
 #undef TRX_UI
@@ -303,6 +326,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_INT)
 #define TRX_3F(f,n)   INT_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_4F(f,n)   (GLfloat)( PTR_ELT(f,n) )
+#define TRX_4FC(f,n)   (GLfloat)( PTR_ELT(f,n) )
 #define TRX_UB(ub, f,n)  ub = INT_TO_UBYTE(PTR_ELT(f,n))
 #define TRX_US(us, f,n)  us = INT_TO_USHORT(PTR_ELT(f,n))
 #define TRX_UI(f,n)  (PTR_ELT(f,n) < 0 ? 0 : (GLuint)  PTR_ELT(f,n))
@@ -311,6 +335,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 4
 #define INIT init_trans_4_GLint_raw
 #define DEST_4F trans_4_GLint_4f_raw
+#define DEST_4FC trans_4_GLint_4fc_raw
 #define DEST_4UB trans_4_GLint_4ub_raw
 #define DEST_4US trans_4_GLint_4us_raw
 #include "m_trans_tmp.h"
@@ -318,6 +343,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 3
 #define INIT init_trans_3_GLint_raw
 #define DEST_4F trans_3_GLint_4f_raw
+#define DEST_4FC trans_3_GLint_4fc_raw
 #define DEST_4UB trans_3_GLint_4ub_raw
 #define DEST_4US trans_3_GLint_4us_raw
 #define DEST_3F trans_3_GLint_3f_raw
@@ -326,11 +352,13 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 2
 #define INIT init_trans_2_GLint_raw
 #define DEST_4F trans_2_GLint_4f_raw
+#define DEST_4FC trans_2_GLint_4fc_raw
 #include "m_trans_tmp.h"
 
 #define SZ 1
 #define INIT init_trans_1_GLint_raw
 #define DEST_4F trans_1_GLint_4f_raw
+#define DEST_4FC trans_1_GLint_4fc_raw
 #define DEST_1UB trans_1_GLint_1ub_raw
 #define DEST_1UI trans_1_GLint_1ui_raw
 #include "m_trans_tmp.h"
@@ -340,6 +368,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #undef SRC_IDX
 #undef TRX_3F
 #undef TRX_4F
+#undef TRX_4FC
 #undef TRX_UB
 #undef TRX_US
 #undef TRX_UI
@@ -351,6 +380,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_UNSIGNED_INT)
 #define TRX_3F(f,n)   INT_TO_FLOAT( PTR_ELT(f,n) )
 #define TRX_4F(f,n)   (GLfloat)( PTR_ELT(f,n) )
+#define TRX_4FC(f,n)   (GLfloat)( PTR_ELT(f,n) )
 #define TRX_UB(ub, f,n)  ub = (GLubyte) (PTR_ELT(f,n) >> 24)
 #define TRX_US(us, f,n)  us = (GLshort) (PTR_ELT(f,n) >> 16)
 #define TRX_UI(f,n)		PTR_ELT(f,n)
@@ -359,6 +389,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 4
 #define INIT init_trans_4_GLuint_raw
 #define DEST_4F trans_4_GLuint_4f_raw
+#define DEST_4FC trans_4_GLuint_4fc_raw
 #define DEST_4UB trans_4_GLuint_4ub_raw
 #define DEST_4US trans_4_GLuint_4us_raw
 #include "m_trans_tmp.h"
@@ -366,6 +397,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 3
 #define INIT init_trans_3_GLuint_raw
 #define DEST_4F trans_3_GLuint_4f_raw
+#define DEST_4FC trans_3_GLuint_4fc_raw
 #define DEST_4UB trans_3_GLuint_4ub_raw
 #define DEST_4US trans_3_GLuint_4us_raw
 #define DEST_3F trans_3_GLuint_3f_raw
@@ -374,11 +406,13 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 2
 #define INIT init_trans_2_GLuint_raw
 #define DEST_4F trans_2_GLuint_4f_raw
+#define DEST_4FC trans_2_GLuint_4fc_raw
 #include "m_trans_tmp.h"
 
 #define SZ 1
 #define INIT init_trans_1_GLuint_raw
 #define DEST_4F trans_1_GLuint_4f_raw
+#define DEST_4FC trans_1_GLuint_4fc_raw
 #define DEST_1UB trans_1_GLuint_1ub_raw
 #define DEST_1UI trans_1_GLuint_1ui_raw
 #include "m_trans_tmp.h"
@@ -387,6 +421,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #undef SRC_IDX
 #undef TRX_3F
 #undef TRX_4F
+#undef TRX_4FC
 #undef TRX_UB
 #undef TRX_US
 #undef TRX_UI
@@ -398,6 +433,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SRC_IDX TYPE_IDX(GL_DOUBLE)
 #define TRX_3F(f,n)   (GLfloat) PTR_ELT(f,n)
 #define TRX_4F(f,n)   (GLfloat) PTR_ELT(f,n)
+#define TRX_4FC(f,n)   (GLfloat) PTR_ELT(f,n)
 #define TRX_UB(ub,f,n) UNCLAMPED_FLOAT_TO_UBYTE(ub, PTR_ELT(f,n))
 #define TRX_US(us,f,n) UNCLAMPED_FLOAT_TO_USHORT(us, PTR_ELT(f,n))
 #define TRX_UI(f,n)  (GLuint) (GLint) PTR_ELT(f,n)
@@ -407,6 +443,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 4
 #define INIT init_trans_4_GLdouble_raw
 #define DEST_4F trans_4_GLdouble_4f_raw
+#define DEST_4FC trans_4_GLdouble_4fc_raw
 #define DEST_4UB trans_4_GLdouble_4ub_raw
 #define DEST_4US trans_4_GLdouble_4us_raw
 #include "m_trans_tmp.h"
@@ -414,6 +451,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 3
 #define INIT init_trans_3_GLdouble_raw
 #define DEST_4F trans_3_GLdouble_4f_raw
+#define DEST_4FC trans_3_GLdouble_4fc_raw
 #define DEST_4UB trans_3_GLdouble_4ub_raw
 #define DEST_4US trans_3_GLdouble_4us_raw
 #define DEST_3F trans_3_GLdouble_3f_raw
@@ -422,11 +460,13 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 2
 #define INIT init_trans_2_GLdouble_raw
 #define DEST_4F trans_2_GLdouble_4f_raw
+#define DEST_4FC trans_2_GLdouble_4fc_raw
 #include "m_trans_tmp.h"
 
 #define SZ 1
 #define INIT init_trans_1_GLdouble_raw
 #define DEST_4F trans_1_GLdouble_4f_raw
+#define DEST_4FC trans_1_GLdouble_4fc_raw
 #define DEST_1UB trans_1_GLdouble_1ub_raw
 #define DEST_1UI trans_1_GLdouble_1ui_raw
 #define DEST_1F trans_1_GLdouble_1f_raw
@@ -444,11 +484,13 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define DEST_4UB trans_4_GLfloat_4ub_raw
 #define DEST_4US trans_4_GLfloat_4us_raw
 #define DEST_4F  trans_4_GLfloat_4f_raw
+#define DEST_4FC  trans_4_GLfloat_4fc_raw
 #include "m_trans_tmp.h"
 
 #define SZ 3
 #define INIT init_trans_3_GLfloat_raw
 #define DEST_4F  trans_3_GLfloat_4f_raw
+#define DEST_4FC  trans_3_GLfloat_4fc_raw
 #define DEST_4UB trans_3_GLfloat_4ub_raw
 #define DEST_4US trans_3_GLfloat_4us_raw
 #define DEST_3F trans_3_GLfloat_3f_raw
@@ -457,11 +499,13 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #define SZ 2
 #define INIT init_trans_2_GLfloat_raw
 #define DEST_4F trans_2_GLfloat_4f_raw
+#define DEST_4FC trans_2_GLfloat_4fc_raw
 #include "m_trans_tmp.h"
 
 #define SZ 1
 #define INIT init_trans_1_GLfloat_raw
 #define DEST_4F  trans_1_GLfloat_4f_raw
+#define DEST_4FC  trans_1_GLfloat_4fc_raw
 #define DEST_1UB trans_1_GLfloat_1ub_raw
 #define DEST_1UI trans_1_GLfloat_1ui_raw
 #define DEST_1F trans_1_GLfloat_1f_raw
@@ -472,6 +516,7 @@ static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 #undef SRC_IDX
 #undef TRX_3F
 #undef TRX_4F
+#undef TRX_4FC
 #undef TRX_UB
 #undef TRX_US
 #undef TRX_UI
@@ -510,6 +555,7 @@ static void init_translate_raw(void)
    MEMSET( TAB(_4ub), 0, sizeof(TAB(_4ub)) );
    MEMSET( TAB(_4us), 0, sizeof(TAB(_4us)) );
    MEMSET( TAB(_4f),  0, sizeof(TAB(_4f)) );
+   MEMSET( TAB(_4fc),  0, sizeof(TAB(_4fc)) );
 
    init_trans_4_GLbyte_raw();
    init_trans_3_GLbyte_raw();
@@ -624,7 +670,7 @@ void _math_trans_4chan( GLchan (*to)[4],
 #elif CHAN_TYPE == GL_UNSIGNED_SHORT
    _math_trans_4us( to, ptr, stride, type, size, start, n );
 #elif CHAN_TYPE == GL_FLOAT
-   _math_trans_4f( to, ptr, stride, type, size, start, n );
+   _math_trans_4fc( to, ptr, stride, type, size, start, n );
 #endif
 }
 
@@ -648,6 +694,17 @@ void _math_trans_4f(GLfloat (*to)[4],
 		    GLuint n )
 {
    _math_trans_4f_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
+}
+
+void _math_trans_4fc(GLfloat (*to)[4],
+		    CONST void *ptr,
+		    GLuint stride,
+		    GLenum type,
+		    GLuint size,
+		    GLuint start,
+		    GLuint n )
+{
+   _math_trans_4fc_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
 }
 
 void _math_trans_3f(GLfloat (*to)[3],

@@ -209,13 +209,13 @@ static void import( GLcontext *ctx,
 
    switch (type) {
    case GL_FLOAT:
-      _math_trans_4f( (GLfloat (*)[4]) to->Ptr,
-		      from->Ptr,
-		      from->StrideB,
-		      from->Type,
-		      from->Size,
-		      0,
-		      ac->count - ac->start);
+      _math_trans_4fc( (GLfloat (*)[4]) to->Ptr,
+		       from->Ptr,
+		       from->StrideB,
+		       from->Type,
+		       from->Size,
+		       0,
+		       ac->count - ac->start);
 
       to->StrideB = 4 * sizeof(GLfloat);
       to->Type = GL_FLOAT;

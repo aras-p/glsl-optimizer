@@ -85,6 +85,14 @@ extern void _math_trans_4f(GLfloat (*to)[4],
 			   GLuint start,
 			   GLuint n );
 
+extern void _math_trans_4fc(GLfloat (*to)[4],
+			    CONST void *ptr,
+			    GLuint stride,
+			    GLenum type,
+			    GLuint size,
+			    GLuint start,
+			    GLuint n );
+
 extern void _math_trans_3f(GLfloat (*to)[3],
 			   CONST void *ptr,
 			   GLuint stride,
