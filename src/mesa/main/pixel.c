@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.2 1999/10/08 09:27:11 keithw Exp $ */
+/* $Id: pixel.c,v 1.3 1999/10/30 08:20:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -589,6 +589,46 @@ void gl_scale_and_bias_rgba( const GLcontext *ctx, GLuint n, GLubyte rgba[][4] )
 
 
 /*
+ * Apply scale and bias factors to an array of RGBA pixels.
+ */
+void gl_scale_and_bias_rgba_float( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
+{
+   if (ctx->Pixel.RedScale != 1.0 || ctx->Pixel.RedBias != 0.0) {
+      const GLfloat scale = ctx->Pixel.RedScale;
+      const GLfloat bias = ctx->Pixel.RedBias;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         rgba[i][RCOMP] = rgba[i][RCOMP] * scale + bias;
+      }
+   }
+   if (ctx->Pixel.GreenScale != 1.0 || ctx->Pixel.GreenBias != 0.0) {
+      const GLfloat scale = ctx->Pixel.GreenScale;
+      const GLfloat bias = ctx->Pixel.GreenBias;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         rgba[i][GCOMP] = rgba[i][GCOMP] * scale + bias;
+      }
+   }
+   if (ctx->Pixel.BlueScale != 1.0 || ctx->Pixel.BlueBias != 0.0) {
+      const GLfloat scale = ctx->Pixel.BlueScale;
+      const GLfloat bias = ctx->Pixel.BlueBias;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         rgba[i][BCOMP] = rgba[i][BCOMP] * scale + bias;
+      }
+   }
+   if (ctx->Pixel.AlphaScale != 1.0 || ctx->Pixel.AlphaBias != 0.0) {
+      const GLfloat scale = ctx->Pixel.AlphaScale;
+      const GLfloat bias = ctx->Pixel.AlphaBias;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         rgba[i][ACOMP] = rgba[i][ACOMP] * scale + bias;
+      }
+   }
+}
+
+
+/*
  * Apply pixel mapping to an array of RGBA pixels.
  */
 void gl_map_rgba( const GLcontext *ctx, GLuint n, GLubyte rgba[][4] )
@@ -612,22 +652,45 @@ void gl_map_rgba( const GLcontext *ctx, GLuint n, GLubyte rgba[][4] )
 
 
 /*
+ * Apply pixel mapping to an array of floating point RGBA pixels.
+ */
+void gl_map_rgba_float( const GLcontext *ctx, GLuint n, GLfloat rgba[][4] )
+{
+   const GLfloat rscale = ctx->Pixel.MapRtoRsize - 1;
+   const GLfloat gscale = ctx->Pixel.MapGtoGsize - 1;
+   const GLfloat bscale = ctx->Pixel.MapBtoBsize - 1;
+   const GLfloat ascale = ctx->Pixel.MapAtoAsize - 1;
+   const GLfloat *rMap = ctx->Pixel.MapRtoR;
+   const GLfloat *gMap = ctx->Pixel.MapGtoG;
+   const GLfloat *bMap = ctx->Pixel.MapBtoB;
+   const GLfloat *aMap = ctx->Pixel.MapAtoA;
+   GLuint i;
+   for (i=0;i<n;i++) {
+      rgba[i][RCOMP] = rMap[(GLint) (rgba[i][RCOMP] * rscale + 0.5F)];
+      rgba[i][GCOMP] = gMap[(GLint) (rgba[i][GCOMP] * gscale + 0.5F)];
+      rgba[i][BCOMP] = bMap[(GLint) (rgba[i][BCOMP] * bscale + 0.5F)];
+      rgba[i][ACOMP] = aMap[(GLint) (rgba[i][ACOMP] * ascale + 0.5F)];
+   }
+}
+
+
+/*
  * Apply pixel mapping to an array of RGBA pixels.
  */
 void gl_map_color( const GLcontext *ctx, GLuint n,
                    GLfloat red[], GLfloat green[],
                    GLfloat blue[], GLfloat alpha[] )
 {
-   GLfloat rscale = ctx->Pixel.MapRtoRsize-1;
-   GLfloat gscale = ctx->Pixel.MapGtoGsize-1;
-   GLfloat bscale = ctx->Pixel.MapBtoBsize-1;
-   GLfloat ascale = ctx->Pixel.MapAtoAsize-1;
+   GLfloat rscale = ctx->Pixel.MapRtoRsize - 1;
+   GLfloat gscale = ctx->Pixel.MapGtoGsize - 1;
+   GLfloat bscale = ctx->Pixel.MapBtoBsize - 1;
+   GLfloat ascale = ctx->Pixel.MapAtoAsize - 1;
    GLuint i;
    for (i=0;i<n;i++) {
-      red[i]   = ctx->Pixel.MapRtoR[ (GLint) (red[i]   * rscale) ];
-      green[i] = ctx->Pixel.MapGtoG[ (GLint) (green[i] * gscale) ];
-      blue[i]  = ctx->Pixel.MapBtoB[ (GLint) (blue[i]  * bscale) ];
-      alpha[i] = ctx->Pixel.MapAtoA[ (GLint) (alpha[i] * ascale) ];
+      red[i]   = ctx->Pixel.MapRtoR[ (GLint) (red[i]   * rscale + 0.5F) ];
+      green[i] = ctx->Pixel.MapGtoG[ (GLint) (green[i] * gscale + 0.5F) ];
+      blue[i]  = ctx->Pixel.MapBtoB[ (GLint) (blue[i]  * bscale + 0.5F) ];
+      alpha[i] = ctx->Pixel.MapAtoA[ (GLint) (alpha[i] * ascale + 0.5F) ];
    }
 }
 
@@ -674,7 +737,7 @@ void gl_map_ci( const GLcontext *ctx, GLuint n, GLuint index[] )
 
 
 /*
- * Map color indexes to rgb values.
+ * Map color indexes to rgba values.
  */
 void gl_map_ci_to_rgba( const GLcontext *ctx, GLuint n, const GLuint index[],
                         GLubyte rgba[][4] )
@@ -687,6 +750,30 @@ void gl_map_ci_to_rgba( const GLcontext *ctx, GLuint n, const GLuint index[],
    const GLubyte *gMap = ctx->Pixel.MapItoG8;
    const GLubyte *bMap = ctx->Pixel.MapItoB8;
    const GLubyte *aMap = ctx->Pixel.MapItoA8;
+   GLuint i;
+   for (i=0;i<n;i++) {
+      rgba[i][RCOMP] = rMap[index[i] & rmask];
+      rgba[i][GCOMP] = gMap[index[i] & gmask];
+      rgba[i][BCOMP] = bMap[index[i] & bmask];
+      rgba[i][ACOMP] = aMap[index[i] & amask];
+   }
+}
+
+
+/*
+ * Map color indexes to float rgba values.
+ */
+void gl_map_ci_to_rgba_float( const GLcontext *ctx, GLuint n, const GLuint index[],
+                              GLfloat rgba[][4] )
+{
+   GLuint rmask = ctx->Pixel.MapItoRsize - 1;
+   GLuint gmask = ctx->Pixel.MapItoGsize - 1;
+   GLuint bmask = ctx->Pixel.MapItoBsize - 1;
+   GLuint amask = ctx->Pixel.MapItoAsize - 1;
+   const GLfloat *rMap = ctx->Pixel.MapItoR;
+   const GLfloat *gMap = ctx->Pixel.MapItoG;
+   const GLfloat *bMap = ctx->Pixel.MapItoB;
+   const GLfloat *aMap = ctx->Pixel.MapItoA;
    GLuint i;
    for (i=0;i<n;i++) {
       rgba[i][RCOMP] = rMap[index[i] & rmask];
