@@ -1,4 +1,4 @@
-/* $Id: texutil_tmp.h,v 1.12 2002/10/29 20:28:55 brianp Exp $ */
+/* $Id: texutil_tmp.h,v 1.13 2003/04/21 14:52:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -354,7 +354,7 @@ TAG(texsubimage2d_stride_unpack)( const struct convert_info *convert )
 				(convert->yoffset * convert->dstImageWidth +
 				 convert->xoffset) * DST_TEXEL_BYTES);
    GLint adjust;
-   GLint row, col;
+   GLint row, col = 0;
    (void) col;
 
    adjust = convert->dstImageWidth - convert->width;
@@ -407,7 +407,7 @@ TAG(texsubimage3d_stride_unpack)( const struct convert_info *convert )
 				  convert->yoffset) * convert->dstImageWidth +
 				 convert->xoffset) * DST_TEXEL_BYTES);
    GLint adjust;
-   GLint row, col, img;
+   GLint row, col = 0, img;
    (void) col;
 
    adjust = convert->dstImageWidth - convert->width;
