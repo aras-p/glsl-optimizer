@@ -26,10 +26,11 @@ static void Display( void )
    glRotatef(Zrot, 0.0, 0.0, 1.0);
 
    glBegin(GL_POLYGON);
-   glColor4f(1.0, 1.0, 1.0, 1);   glTexCoord2f(0, 0);   glVertex2f(-1, -1);
-   glColor4f(0.2, 0.2, 1.0, 1);   glTexCoord2f(1, 0);   glVertex2f( 1, -1);
-   glColor4f(0.2, 1.0, 0.2, 1);   glTexCoord2f(1, 1);   glVertex2f( 1,  1);
-   glColor4f(1.0, 0.2, 0.2, 1);   glTexCoord2f(0, 1);   glVertex2f(-1,  1);
+#define Q 2
+   glColor4f(1.0, 1.0, 1.0, 1);   glTexCoord4f(0, 0, 0, Q);   glVertex2f(-1, -1);
+   glColor4f(0.2, 0.2, 1.0, 1);   glTexCoord4f(1, 0, 0, Q);   glVertex2f( 1, -1);
+   glColor4f(0.2, 1.0, 0.2, 1);   glTexCoord4f(1, 1, 0, Q);   glVertex2f( 1,  1);
+   glColor4f(1.0, 0.2, 0.2, 1);   glTexCoord4f(0, 1, 0, Q);   glVertex2f(-1,  1);
    glEnd();
 
    glPopMatrix();
