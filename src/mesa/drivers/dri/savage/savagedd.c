@@ -38,6 +38,10 @@
 #include "savagecontext.h"
 #include "extensions.h"
 
+#include "utils.h"
+
+
+#define DRIVER_DATE "20050101"
 
 /***************************************
  * Mesa's Driver Functions
@@ -46,11 +50,33 @@
 
 static const GLubyte *savageDDGetString( GLcontext *ctx, GLenum name )
 {
+   static char *cardNames[S3_LAST] = {
+       "Unknown",
+       "Savage3D",
+       "Savage/MX/IX",
+       "Savage4",
+       "ProSavage",
+       "Twister",
+       "ProSavageDDR",
+       "SuperSavage",
+       "Savage2000"
+   };
+   static char buffer[128];
+   savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
+   savageScreenPrivate *screen = imesa->savageScreen;
+   enum S3CHIPTAGS chipset = screen->chipset;
+   unsigned offset;
+
+   if (chipset < S3_SAVAGE3D || chipset >= S3_LAST)
+      chipset = S3_UNKNOWN; /* should not happen */
+
    switch (name) {
    case GL_VENDOR:
       return (GLubyte *)"S3 Graphics Inc.";
    case GL_RENDERER:
-      return (GLubyte *)"Mesa DRI SAVAGE Linux_1.1.18";
+      offset = driGetRendererString( buffer, cardNames[chipset], DRIVER_DATE,
+				     screen->agpMode );
+      return (GLubyte *)buffer;
    default:
       return 0;
    }

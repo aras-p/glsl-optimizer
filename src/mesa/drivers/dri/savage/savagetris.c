@@ -100,7 +100,7 @@ static void __inline__ savage_draw_triangle (savageContextPtr imesa,
 					     savageVertexPtr v1,
 					     savageVertexPtr v2) {
    GLuint vertsize = imesa->HwVertexSize;
-   u_int32_t *vb = savageAllocDmaLow (imesa, 3*4*vertsize);
+   u_int32_t *vb = savageAllocVtxBuf (imesa, 3*vertsize);
    GLuint j;
 
    EMIT_VERT (j, vb, vertsize, 0, v0);
@@ -114,7 +114,7 @@ static void __inline__ savage_draw_quad (savageContextPtr imesa,
 					 savageVertexPtr v2,
 					 savageVertexPtr v3) {
    GLuint vertsize = imesa->HwVertexSize;
-   u_int32_t *vb = savageAllocDmaLow (imesa, 6*4*vertsize);
+   u_int32_t *vb = savageAllocVtxBuf (imesa, 6*vertsize);
    GLuint j;
 
    EMIT_VERT (j, vb, vertsize, 0, v0);
@@ -128,7 +128,7 @@ static void __inline__ savage_draw_quad (savageContextPtr imesa,
 static __inline__ void savage_draw_point (savageContextPtr imesa,
 					  savageVertexPtr tmp) {
    GLuint vertsize = imesa->HwVertexSize;
-   u_int32_t *vb = savageAllocDmaLow (imesa, 6*4*vertsize);
+   u_int32_t *vb = savageAllocVtxBuf (imesa, 6*vertsize);
    const GLfloat x = tmp->v.x;
    const GLfloat y = tmp->v.y;
    const GLfloat sz = imesa->glCtx->Point._Size * .5;
@@ -163,7 +163,7 @@ static __inline__ void savage_draw_line (savageContextPtr imesa,
 					 savageVertexPtr v0,
 					 savageVertexPtr v1 ) {
    GLuint vertsize = imesa->HwVertexSize;
-   u_int32_t *vb = savageAllocDmaLow (imesa, 6*4*vertsize);
+   u_int32_t *vb = savageAllocVtxBuf (imesa, 6*vertsize);
    GLfloat width = imesa->glCtx->Line._Width;
    GLfloat dx, dy, ix, iy;
    GLuint j;
@@ -220,7 +220,7 @@ static void __inline__ savage_ptex_tri (savageContextPtr imesa,
 					savageVertexPtr v1,
 					savageVertexPtr v2) {
    GLuint vertsize = imesa->HwVertexSize;
-   u_int32_t *vb = savageAllocDmaLow (imesa, 3*4*vertsize);
+   u_int32_t *vb = savageAllocVtxBuf (imesa, 3*vertsize);
    savageVertex tmp;
    GLuint j;
 
@@ -233,7 +233,7 @@ static __inline__ void savage_ptex_line (savageContextPtr imesa,
 					 savageVertexPtr v0,
 					 savageVertexPtr v1 ) {
    GLuint vertsize = imesa->HwVertexSize;
-   u_int32_t *vb = savageAllocDmaLow (imesa, 6*4*vertsize);
+   u_int32_t *vb = savageAllocVtxBuf (imesa, 6*vertsize);
    GLfloat width = imesa->glCtx->Line._Width;
    GLfloat dx, dy, ix, iy;
    savageVertex tmp0, tmp1;
@@ -278,7 +278,7 @@ static __inline__ void savage_ptex_line (savageContextPtr imesa,
 static __inline__ void savage_ptex_point (savageContextPtr imesa,
 					  savageVertexPtr v0) {
    GLuint vertsize = imesa->HwVertexSize;
-   u_int32_t *vb = savageAllocDmaLow (imesa, 6*4*vertsize);
+   u_int32_t *vb = savageAllocVtxBuf (imesa, 6*vertsize);
    const GLfloat x = v0->v.x;
    const GLfloat y = v0->v.y;
    const GLfloat sz = imesa->glCtx->Point._Size * .5;
@@ -428,9 +428,9 @@ do {								\
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);		\
    GLuint color[n], spec[n];					\
    GLuint coloroffset =						\
-      ((imesa->DrawPrimitiveCmd & SAVAGE_HW_NO_W) ? 3 : 4);	\
+      ((imesa->skip & SAVAGE_SKIP_W) ? 3 : 4);			\
    GLboolean specoffset =					\
-      ((imesa->DrawPrimitiveCmd & SAVAGE_HW_NO_CS) ? 0 : coloroffset+1);\
+      ((imesa->skip & SAVAGE_SKIP_C1) ? 0 : coloroffset+1);	\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;
 
 /***********************************************************************
@@ -756,6 +756,16 @@ static void savageChooseRenderState(GLcontext *ctx)
 
       imesa->RenderIndex = index;
    }
+
+   if (imesa->savageScreen->chipset < S3_SAVAGE4 && (flags & DD_FLATSHADE)) {
+      if (imesa->HwPrim != SAVAGE_PRIM_TRILIST_201)
+	 savageFlushVertices(imesa);
+      imesa->HwPrim = SAVAGE_PRIM_TRILIST_201;
+   } else {
+      if (imesa->HwPrim != SAVAGE_PRIM_TRILIST)
+	 savageFlushVertices(imesa);
+      imesa->HwPrim = SAVAGE_PRIM_TRILIST;
+   }
 }
 
 /**********************************************************************/
@@ -765,6 +775,9 @@ static void savageChooseRenderState(GLcontext *ctx)
 static void savageRunPipeline( GLcontext *ctx )
 {
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
+
+   if (imesa->no_rast)
+      FALLBACK(ctx, SAVAGE_FALLBACK_NORAST, GL_TRUE);
 
    if (imesa->new_state)
       savageDDUpdateHwState( ctx );
@@ -777,6 +790,9 @@ static void savageRunPipeline( GLcontext *ctx )
    }
 
    _tnl_run_pipeline( ctx );
+
+   if (imesa->no_rast)
+      FALLBACK(ctx, SAVAGE_FALLBACK_NORAST, GL_FALSE);
 }
 
 /**********************************************************************/
@@ -858,7 +874,7 @@ do {									\
    imesa->vertex_attrs[imesa->vertex_attr_count].format = (STYLE);	\
    imesa->vertex_attr_count++;						\
    setupIndex |= (INDEX);						\
-   drawCmd &= ~(SKIP);							\
+   skip &= ~(SKIP);							\
 } while (0)
 
 #define EMIT_PAD( N )							\
@@ -891,11 +907,8 @@ static void savageRenderStart( GLcontext *ctx )
    struct vertex_buffer *VB = &tnl->vb;
    GLuint index = tnl->render_inputs;
    GLuint setupIndex = SAVAGE_EMIT_XYZ;
-   GLuint drawCmd = SAVAGE_HW_SKIPFLAGS;
+   GLubyte skip;
    GLboolean ptexHack;
-   if (imesa->savageScreen->chipset < S3_SAVAGE4)
-      drawCmd &= ~SAVAGE_HW_NO_UV1;
-   drawCmd &= ~SAVAGE_HW_NO_Z; /* all mesa vertices have a z coordinate */
 
    /* Check if we need to apply the ptex hack. Choose a new render
     * state if necessary. (Note: this can't be done in
@@ -917,66 +930,115 @@ static void savageRenderStart( GLcontext *ctx )
    VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
    imesa->vertex_attr_count = 0;
  
-   /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
-    * build up a hardware vertex.
-    */
-   if ((index & _TNL_BITS_TEX_ANY) || !(ctx->_TriangleCaps & DD_FLATSHADE)) {
-      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, SAVAGE_EMIT_W, SAVAGE_HW_NO_W );
-   }
-   else {
-      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, 0, 0 );
-   }
+   if (imesa->savageScreen->chipset < S3_SAVAGE4) {
+      skip = SAVAGE_SKIP_ALL_S3D;
+      skip &= ~SAVAGE_SKIP_Z; /* all mesa vertices have a z coordinate */
 
-   /* t_context.c always includes a diffuse color */
-   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, SAVAGE_EMIT_C0, SAVAGE_HW_NO_CD );
+      /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
+       * build up a hardware vertex.
+       */
+      if ((index & _TNL_BITS_TEX_ANY) || !(ctx->_TriangleCaps & DD_FLATSHADE)) {
+	 EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, SAVAGE_EMIT_W, SAVAGE_SKIP_W );
+      }
+      else {
+	 EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, 0, 0 );
+	 EMIT_PAD( 4 );
+	 skip &= ~SAVAGE_SKIP_W;
+      }
+
+      /* t_context.c always includes a diffuse color */
+      EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, SAVAGE_EMIT_C0, SAVAGE_SKIP_C0 );
       
-   if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
       if ((index & _TNL_BIT_COLOR1))
-	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, SAVAGE_EMIT_C1, SAVAGE_HW_NO_CS );
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, SAVAGE_EMIT_C1, SAVAGE_SKIP_C1 );
       else
 	 EMIT_PAD( 3 );
       if ((index & _TNL_BIT_FOG))
-	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, SAVAGE_EMIT_FOG, SAVAGE_HW_NO_CS );
+	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, SAVAGE_EMIT_FOG, SAVAGE_SKIP_C1 );
       else
 	 EMIT_PAD( 1 );
-   }
+      skip &= ~SAVAGE_SKIP_C1;
 
-   if (index & _TNL_BIT_TEX(0)) {
-      if (ptexHack)
-	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_3F_XYW, SAVAGE_EMIT_STQ0, SAVAGE_HW_NO_UV0);
-      else if (VB->TexCoordPtr[0]->size == 4)
-	 assert (0); /* should be caught by savageCheckPTexHack */
-      else if (VB->TexCoordPtr[0]->size >= 2)
-	 /* The chromium menu emits some 3D tex coords even though no
-	  * 3D texture is enabled. Ignore the 3rd coordinate. */
-	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_2F, SAVAGE_EMIT_ST0, SAVAGE_HW_NO_UV0 );
+      if (index & _TNL_BIT_TEX(0)) {
+	 if (ptexHack)
+	    EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_3F_XYW, SAVAGE_EMIT_STQ0, SAVAGE_SKIP_ST0);
+	 else if (VB->TexCoordPtr[0]->size == 4)
+	    assert (0); /* should be caught by savageCheckPTexHack */
+	 else if (VB->TexCoordPtr[0]->size >= 2)
+	    /* The chromium menu emits some 3D tex coords even though no
+	     * 3D texture is enabled. Ignore the 3rd coordinate. */
+	    EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_2F, SAVAGE_EMIT_ST0, SAVAGE_SKIP_ST0 );
+	 else if (VB->TexCoordPtr[0]->size == 1) {
+	    EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_1F, SAVAGE_EMIT_S0, SAVAGE_SKIP_S0 );
+	    EMIT_PAD( 4 );
+	 } else
+	    EMIT_PAD( 8 );
+      } else
+	 EMIT_PAD( 8 );
+      skip &= ~SAVAGE_SKIP_ST0;
+   } else {
+      skip = SAVAGE_SKIP_ALL_S4;
+      skip &= ~SAVAGE_SKIP_Z; /* all mesa vertices have a z coordinate */
+
+      /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
+       * build up a hardware vertex.
+       */
+      if ((index & _TNL_BITS_TEX_ANY) || !(ctx->_TriangleCaps & DD_FLATSHADE))
+	 EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, SAVAGE_EMIT_W, SAVAGE_SKIP_W );
       else
-	 EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_1F, SAVAGE_EMIT_S0, SAVAGE_HW_NO_U0 );
-   }
-   if (index & _TNL_BIT_TEX(1)) {
-      if (VB->TexCoordPtr[1]->size == 4)
-	 /* Projective textures are not supported by the hardware */
-	 assert (0); /* should be caught by savageCheckPTexHack */
-      else if (VB->TexCoordPtr[1]->size >= 2)
-	 EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, SAVAGE_EMIT_ST1, SAVAGE_HW_NO_UV1 );
-      else
-	 EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_1F, SAVAGE_EMIT_S1, SAVAGE_HW_NO_U1 );
+	 EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, 0, 0 );
+
+      /* t_context.c always includes a diffuse color */
+      EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_BGRA, SAVAGE_EMIT_C0, SAVAGE_SKIP_C0 );
+      
+      if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
+	 if ((index & _TNL_BIT_COLOR1))
+	    EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, SAVAGE_EMIT_C1, SAVAGE_SKIP_C1 );
+	 else
+	    EMIT_PAD( 3 );
+	 if ((index & _TNL_BIT_FOG))
+	    EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, SAVAGE_EMIT_FOG, SAVAGE_SKIP_C1 );
+	 else
+	    EMIT_PAD( 1 );
+      }
+
+      if (index & _TNL_BIT_TEX(0)) {
+	 if (ptexHack)
+	    EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_3F_XYW, SAVAGE_EMIT_STQ0, SAVAGE_SKIP_ST0);
+	 else if (VB->TexCoordPtr[0]->size == 4)
+	    assert (0); /* should be caught by savageCheckPTexHack */
+	 else if (VB->TexCoordPtr[0]->size >= 2)
+	    /* The chromium menu emits some 3D tex coords even though no
+	     * 3D texture is enabled. Ignore the 3rd coordinate. */
+	    EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_2F, SAVAGE_EMIT_ST0, SAVAGE_SKIP_ST0 );
+	 else
+	    EMIT_ATTR( _TNL_ATTRIB_TEX0, EMIT_1F, SAVAGE_EMIT_S0, SAVAGE_SKIP_S0 );
+      }
+      if (index & _TNL_BIT_TEX(1)) {
+	 if (VB->TexCoordPtr[1]->size == 4)
+	    /* projective textures are not supported by the hardware */
+	    assert (0); /* should be caught by savageCheckPTexHack */
+	 else if (VB->TexCoordPtr[1]->size >= 2)
+	    EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_2F, SAVAGE_EMIT_ST1, SAVAGE_SKIP_ST1 );
+	 else
+	    EMIT_ATTR( _TNL_ATTRIB_TEX1, EMIT_1F, SAVAGE_EMIT_S1, SAVAGE_SKIP_S1 );
+      }
    }
 
    /* Need to change the vertex emit code if the SetupIndex changed or
     * is set for the first time (indicated by vertex_size == 0). */
    if (setupIndex != imesa->SetupIndex || imesa->vertex_size == 0) {
-      imesa->vertex_size = 
+      GLuint hwVertexSize;
+      imesa->vertex_size =
 	 _tnl_install_attrs( ctx, 
 			     imesa->vertex_attrs, 
 			     imesa->vertex_attr_count,
 			     imesa->hw_viewport, 0 );
       imesa->vertex_size >>= 2;
       imesa->SetupIndex = setupIndex;
+      imesa->skip = skip;
 
-      imesa->DrawPrimitiveCmd = drawCmd;
-      imesa->HwVertexSize = imesa->vertex_size;
-
+      hwVertexSize = imesa->vertex_size;
       if (setupIndex & SAVAGE_EMIT_Q0) {
 	 /* The vertex setup code emits homogenous texture
 	  * coordinates. They are converted to normal 2D coords by
@@ -984,10 +1046,28 @@ static void savageRenderStart( GLcontext *ctx )
 	  * vertex sizes. Functions that emit vertices to the hardware
 	  * need to use HwVertexSize, anything that manipulates the
 	  * vertices generated by t_vertex uses vertex_size. */
-	 imesa->HwVertexSize--;
+	 hwVertexSize--;
 	 assert (imesa->ptexHack);
       } else
 	 assert (!imesa->ptexHack);
+
+      if (hwVertexSize != imesa->HwVertexSize) {
+	 /* Changing the vertex size: flush vertex and command buffer and
+	  * discard the DMA buffer, if we were using one. */
+	 savageFlushVertices(imesa);
+	 savageFlushCmdBuf(imesa, GL_TRUE);
+	 if (hwVertexSize == 8) {
+	    if (SAVAGE_DEBUG & DEBUG_DMA)
+	       fprintf (stderr, "Using DMA, skip=0x%02x\n", skip);
+	    /* we can use vertex dma */
+	    imesa->vtxBuf = &imesa->dmaVtxBuf;
+	 } else {
+	    if (SAVAGE_DEBUG & DEBUG_DMA)
+	       fprintf (stderr, "Not using DMA, skip=0x%02x\n", skip);
+	    imesa->vtxBuf = &imesa->clientVtxBuf;
+	 }
+	 imesa->HwVertexSize = hwVertexSize;
+      }
    }
 
    /* Update hardware state and get the lock */

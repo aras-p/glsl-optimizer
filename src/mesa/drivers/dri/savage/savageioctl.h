@@ -27,16 +27,21 @@
 #define SAVAGE_IOCTL_H
 
 #include "savagecontext.h"
-#include "savagedma.h"
 
 void savageGetGeneralDmaBufferLocked( savageContextPtr mmesa ); 
 
 void savageFlushVertices( savageContextPtr mmesa ); 
-void savageFlushVerticesLocked( savageContextPtr mmesa );
 
 void savageFlushGeneralLocked( savageContextPtr imesa );
 void savageWaitAgeLocked( savageContextPtr imesa, int age );
 void savageWaitAge( savageContextPtr imesa, int age );
+
+unsigned int savageEmitEventLocked( savageContextPtr imesa, unsigned int flags );
+unsigned int savageEmitEvent( savageContextPtr imesa, unsigned int flags );
+void savageWaitEvent( savageContextPtr imesa, unsigned int event);
+
+void savageFlushCmdBufLocked( savageContextPtr imesa, GLboolean discard );
+void savageFlushCmdBuf( savageContextPtr imesa, GLboolean discard );
 
 void savageDmaFinish( savageContextPtr imesa );
 
@@ -46,54 +51,69 @@ void savageDDInitIoctlFuncs( GLcontext *ctx );
 
 void savageSwapBuffers( __DRIdrawablePrivate *dPriv );
 
-int savage_check_copy(int fd);
-
-extern GLboolean (*savagePagePending)( savageContextPtr imesa );
-extern void (*savageWaitForFIFO)( savageContextPtr imesa, unsigned count );
-extern void (*savageWaitIdleEmpty)( savageContextPtr imesa );
-
-#define PAGE_PENDING(result) do { \
-    result = savagePagePending(imesa); \
-} while (0)
-#define WAIT_FOR_FIFO(count) do { \
-    savageWaitForFIFO(imesa, count); \
-} while (0)
 #define WAIT_IDLE_EMPTY do { \
-    savageWaitIdleEmpty(imesa); \
+    savageWaitEvent(imesa, \
+		    savageEmitEvent(imesa, SAVAGE_WAIT_3D|SAVAGE_WAIT_2D)); \
 } while (0)
-
-#if SAVAGE_CMD_DMA
-int  savageAllocDMABuffer(savageContextPtr imesa,  drm_savage_alloc_cont_mem_t *req);
-GLuint savageGetPhyAddress(savageContextPtr imesa,void * pointer);
-int  savageFreeDMABuffer(savageContextPtr, drm_savage_alloc_cont_mem_t*);
-#endif
 
 #define FLUSH_BATCH(imesa) do { \
-    if (imesa->vertex_dma_buffer) savageFlushVertices(imesa); \
+    if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG) \
+        fprintf (stderr, "FLUSH_BATCH in %s\n", __FUNCTION__); \
+    savageFlushVertices(imesa); \
+    savageFlushCmdBuf(imesa, GL_FALSE); \
 } while (0)
 
+extern void savageGetDMABuffer( savageContextPtr imesa );
+
 static __inline
-u_int32_t *savageAllocDmaLow( savageContextPtr imesa, GLuint bytes )
+u_int32_t *savageAllocVtxBuf( savageContextPtr imesa, GLuint words )
 {
+   struct savage_vtxbuf_t *buffer = imesa->vtxBuf;
    u_int32_t *head;
 
-   if (!imesa->vertex_dma_buffer) {
-      LOCK_HARDWARE(imesa);
-      imesa->vertex_dma_buffer = savageFakeGetBuffer (imesa);
-      UNLOCK_HARDWARE(imesa);
-   } else if (imesa->vertex_dma_buffer->used + bytes >
-	      imesa->vertex_dma_buffer->total) {
-      LOCK_HARDWARE(imesa);
-      savageFlushVerticesLocked( imesa );
-      imesa->vertex_dma_buffer = savageFakeGetBuffer (imesa);
-      UNLOCK_HARDWARE(imesa);
+   if (buffer == &imesa->dmaVtxBuf) {
+       if (!buffer->total) {
+	   LOCK_HARDWARE(imesa);
+	   savageGetDMABuffer(imesa);
+	   UNLOCK_HARDWARE(imesa);
+       } else if (buffer->used + words > buffer->total) {
+	   if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
+	       fprintf (stderr, "... flushing DMA buffer in %s\n",
+			__FUNCTION__);
+	   savageFlushVertices( imesa );
+	   LOCK_HARDWARE(imesa);
+	   savageFlushCmdBufLocked(imesa, GL_TRUE); /* discard DMA buffer */
+	   savageGetDMABuffer(imesa);
+	   UNLOCK_HARDWARE(imesa);
+       }
+   } else if (buffer->used + words > buffer->total) {
+       if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
+	   fprintf (stderr, "... flushing client vertex buffer in %s\n",
+		    __FUNCTION__);
+       savageFlushVertices( imesa );
+       LOCK_HARDWARE(imesa);
+       savageFlushCmdBufLocked(imesa, GL_FALSE); /* free clientVtxBuf */
+       UNLOCK_HARDWARE(imesa);
    }
 
-   head = (u_int32_t *)((u_int8_t *)imesa->vertex_dma_buffer->address +
-		       imesa->vertex_dma_buffer->used);
+   head = &buffer->buf[buffer->used];
 
-   imesa->vertex_dma_buffer->used += bytes;
+   buffer->used += words;
    return head;
+}
+
+static __inline
+drm_savage_cmd_header_t *savageAllocCmdBuf( savageContextPtr imesa, GLuint bytes )
+{
+    drm_savage_cmd_header_t *ret;
+    GLuint qwords = ((bytes + 7) >> 3) + 1; /* round up */
+    assert (qwords < imesa->cmdBuf.size);
+    if (imesa->cmdBuf.write - imesa->cmdBuf.base + qwords > imesa->cmdBuf.size) {
+	savageFlushCmdBuf(imesa, GL_FALSE);
+    }
+    ret = (drm_savage_cmd_header_t *)imesa->cmdBuf.write;
+    imesa->cmdBuf.write += qwords;
+    return ret;
 }
 
 #endif

@@ -606,7 +606,7 @@ void savagePrintGlobalLRU( savageContextPtr imesa , GLuint heap)
 {
    int i, j;
 
-   drm_savage_tex_region_t *list = imesa->sarea->texList[heap];
+   drm_tex_region_t *list = imesa->sarea->texList[heap];
    
 
    for (i = 0, j = SAVAGE_NR_TEX_REGIONS ; i < SAVAGE_NR_TEX_REGIONS ; i++) {
@@ -628,7 +628,7 @@ void savagePrintGlobalLRU( savageContextPtr imesa , GLuint heap)
 
 void savageResetGlobalLRU( savageContextPtr imesa, GLuint heap )
 {
-    drm_savage_tex_region_t *list = imesa->sarea->texList[heap];
+    drm_tex_region_t *list = imesa->sarea->texList[heap];
    int sz = 1 << imesa->savageScreen->logTextureGranularity[heap];
    int i;
 
@@ -661,7 +661,7 @@ static void savageUpdateTexLRU( savageContextPtr imesa, savageTextureObjectPtr t
    int logsz = imesa->savageScreen->logTextureGranularity[heap];
    int start = t->MemBlock->ofs >> logsz;
    int end = (t->MemBlock->ofs + t->MemBlock->size - 1) >> logsz;
-   drm_savage_tex_region_t *list = imesa->sarea->texList[heap];
+   drm_tex_region_t *list = imesa->sarea->texList[heap];
    
    imesa->texAge[heap] = ++imesa->sarea->texAge[heap];
 
@@ -787,16 +787,19 @@ int savageUploadTexImages( savageContextPtr imesa, savageTextureObjectPtr t )
       ofs = t->MemBlock->ofs;
       t->texParams.hwPhysAddress = imesa->savageScreen->textureOffset[heap] + ofs;
       t->BufAddr = (char *)((GLuint) imesa->savageScreen->texVirtual[heap] + ofs);
-      imesa->dirty |= SAVAGE_UPLOAD_CTX;
+      imesa->dirty |= SAVAGE_UPLOAD_GLOBAL; /* FIXME: really needed? */
    }
 
    /* Let the world know we've used this memory recently.
     */
+   LOCK_HARDWARE(imesa);
    savageUpdateTexLRU( imesa, t );
+   UNLOCK_HARDWARE(imesa);
 
    if (t->dirty_images) {
+      savageFlushVertices (imesa);
       LOCK_HARDWARE(imesa);
-      savageFlushVerticesLocked (imesa);
+      savageFlushCmdBufLocked (imesa, GL_FALSE);
       savageDmaFinish (imesa);
       if (SAVAGE_DEBUG & DEBUG_VERBOSE_LRU)
 	 fprintf(stderr, "*");
@@ -1436,8 +1439,7 @@ static void savageUpdateTextureState_s4( GLcontext *ctx )
    imesa->CurrentTexObj[1] = 0;   
    savageUpdateTex0State_s4( ctx );
    savageUpdateTex1State_s4( ctx );
-   imesa->dirty |= (SAVAGE_UPLOAD_CTX |
-		    SAVAGE_UPLOAD_TEX0 | 
+   imesa->dirty |= (SAVAGE_UPLOAD_TEX0 | 
 		    SAVAGE_UPLOAD_TEX1);
 }
 static void savageUpdateTextureState_s3d( GLcontext *ctx )
@@ -1446,8 +1448,7 @@ static void savageUpdateTextureState_s3d( GLcontext *ctx )
     if (imesa->CurrentTexObj[0]) imesa->CurrentTexObj[0]->bound &= ~1;
     imesa->CurrentTexObj[0] = 0;
     savageUpdateTexState_s3d( ctx );
-    imesa->dirty |= (SAVAGE_UPLOAD_CTX |
-		     SAVAGE_UPLOAD_TEX0);
+    imesa->dirty |= (SAVAGE_UPLOAD_TEX0);
 }
 void savageUpdateTextureState( GLcontext *ctx)
 {

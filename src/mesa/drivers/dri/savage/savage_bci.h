@@ -341,8 +341,8 @@ typedef enum
     TPS_256
 } TexPaletteSize;
 
-    #define MAX_MIPMAP_LOD_BIAS             255
-    #define MIN_MIPMAP_LOD_BIAS             -255
+#define MAX_MIPMAP_LOD_BIAS 255
+#define MIN_MIPMAP_LOD_BIAS -255
 
 typedef enum
 {
@@ -627,107 +627,6 @@ typedef union {
 #define SAVAGE_HW_NO_UV1        ((1<<6) | (1<<7))
 #define SAVAGE_HW_SKIPFLAGS     0x000000ff
 
-#define SAVAGE_HW_TRIANGLE_TYPE     (3UL<<25)
-#define SAVAGE_HW_TRIANGLE_CONT     (1UL<<24)
-#define SAVAGE_HW_TRIANGLE_LIST     (0<<25) 
-#define SAVAGE_HW_TRIANGLE_STRIP    (1<<25) 
-#define SAVAGE_HW_TRIANGLE_FAN      (2<<25) 
-#define SAVAGE_HW_QUAD              (3<<25) 
-
-#define __HW_TEXTURE_CHANGED       0x00002FE
-#define __HW_HAS_SCISSORS_CHANGED  0x00001800
-#define __HW_ALL_CHANGED           0x1FFFFFF           
-/*Frank 2001/11/14 Wait commands*/
-#define WAIT_3D_IDLE    0xC0010000
-#define WAIT_3D_2D_IDLE 0xC0030000
-
-#define SET_REGISTER(index, count) \
-    ((CMD_SetRegister << 27) | (0x6000000) | ((count) << 16) | (index))
-
-/*frank 2001/11/20 */
-#define MAXLOOP 0xFFFFFF
-/*#define MAXFIFO 0x7F00*/
-#define MAXFIFO 0x1FF00
-
-/* get eventtag from shadow status */
-/* here we use eventTag1 because eventTag0 is used by HWXvMC*/
-#define GET_EVENTTAG \
-    (((*(volatile GLuint *)(imesa->MMIO_BASE+0x48c04)) & 0xffff0000L)>>16)
-
-#define SHADOW_WAIT(imesa ) do \
-{ \
-    int loop=0; \
-    imesa->shadowCounter = (imesa->shadowCounter + 1) & 0xffff;\
-    if(imesa->shadowCounter == 0)\
-      imesa->shadowCounter = MAX_SHADOWCOUNTER;\
-    *(volatile GLuint *)imesa->BCIBase = imesa->shadowCounter | 0x98400000L;\
-    while(\
-	  (GET_EVENTTAG) != imesa->shadowCounter  &&\
-	  (loop++ < MAXLOOP));\
-}while(0);
-
-#define SHADOW_WAIT_IDLE(imesa ) do \
-{ \
-    int loop=0; \
-    imesa->shadowCounter = (imesa->shadowCounter + 1) & 0xffff;\
-    if(imesa->shadowCounter == 0)\
-      imesa->shadowCounter = MAX_SHADOWCOUNTER;\
-/*    *(volatile GLuint *)imesa->BCIBase = WAIT_3D_IDLE;\*/\
-    *(volatile GLuint *)imesa->BCIBase = imesa->shadowCounter | 0x98400000L;\
-    while ( \
-    (GET_EVENTTAG) != imesa->shadowCounter && \
-    (loop++ < MAXLOOP)); \
-}while(0);
-
-#if 0
-#define ALT_STATUS_WORD0 (* (volatile GLuint *)(imesa->MMIO_BASE+0x48c60))
-
-#define PAGE_PENDING(result) do{\
-result=((ALT_STATUS_WORD0 & 0x08000000)?GL_TRUE:GL_FALSE);\
-}while(0)
-
-#define WAIT_FOR_FIFO(count) do{\
-int loop = 0; \
-int slots = MAXFIFO-count; \
-while(((ALT_STATUS_WORD0 &0x001fffff)>slots)&&(loop++<MAXLOOP)); \
-}while(0)
-
-
-#define WAIT_IDLE_EMPTY do{\
-int loop = 0; \
- if (/*imesa->shadowStatus*/0)\
-   {\
-     SHADOW_WAIT_IDLE(imesa);\
-   }\
- else\
-   { \
-     while(((ALT_STATUS_WORD0 &0x00ffffff)!=0x00E00000L)&&(loop++<MAXLOOP));\
-   }\
-}while(0)
-
-#define WAIT_IDLE do{\
-int loop = 0; \
-if (imesa->shadowStatus)\
- while((((*imesa->shadowPointer) & 0x0E000000L)!=0x0E000000L)&&(loop++<MAXLOOP));\
-else\
-while(((ALT_STATUS_WORD0 &0x00E00000)!=0x00E00000L)&&(loop++<MAXLOOP)); \
-}while(0)
-#endif /* 0 */
-
-#define SAVAGE_DRAW_PRIMITIVE(count, typeandvertexSkip, isCont)  \
-        ( ((count)<<16) | (typeandvertexSkip) | (isCont | (1<<31)));
-
-static __inline volatile GLuint * SAVAGE_GET_BCI_POINTER(savageContextPtr imesa, GLuint count)   
-{ 
-  WAIT_FOR_FIFO(count);                                
-  return (volatile GLuint *)(imesa->BCIBase);      
-}
-
-/*use this set bci cmd now!*/
-#define WRITE_CMD(buf,cmd,type) do {\
-    *((type*)buf)=cmd;\
-    buf++;\
-  }while(0)
 #endif
 
 

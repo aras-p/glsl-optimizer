@@ -29,6 +29,11 @@
 #include "xf86drm.h"
 #include "drm.h"
 
+/* Totals 2 Mbytes which equals 2^16 32-byte vertices divided among up
+ * to 32 clients. */
+#define SAVAGE_NUM_BUFFERS 32
+#define SAVAGE_BUFFER_SIZE (1 << 16) /* 64k */
+
 #define SAVAGE_DEFAULT_AGP_MODE     1
 #define SAVAGE_MAX_AGP_MODE         4
 
@@ -68,14 +73,17 @@ typedef struct _server{
    unsigned int frontOffset;
    unsigned int frontPitch;
    unsigned int frontbufferSize;
+   unsigned int frontBitmapDesc;
    
    unsigned int backOffset;
    unsigned int backPitch;
    unsigned int backbufferSize;
+   unsigned int backBitmapDesc;
 
    unsigned int depthOffset;
    unsigned int depthPitch;
    unsigned int depthbufferSize;
+   unsigned int depthBitmapDesc;
 
    unsigned int textureOffset;
    int textureSize;
@@ -89,12 +97,7 @@ typedef struct _server{
    drmRegion status;
 
    /* AGP mappings */
-#if 0
-   drmRegion warp;
-   drmRegion primary;
    drmRegion buffers;
-#endif
-
    drmRegion agpTextures;
    int logAgpTextureGranularity;
 
@@ -114,71 +117,41 @@ typedef struct {
    int cpp;
    int zpp;
 
-   int agpMode;
+   int agpMode; /* 0 for PCI cards */
+
+   unsigned int sarea_priv_offset;
+
+   unsigned int bufferSize; /* size of DMA buffers */
    
-   drm_handle_t frontbuffer;
    unsigned int frontbufferSize;
    unsigned int frontOffset;
-   unsigned int frontPitch;
-   unsigned int frontBitmapDesc;   /*Bitmap Descriptior*/ 
-   unsigned int IsfrontTiled;
 
-   drm_handle_t backbuffer;
    unsigned int backbufferSize;
    unsigned int backOffset;
-   unsigned int backPitch;
-   unsigned int backBitmapDesc;   /*Bitmap Descriptior*/
 
-   drm_handle_t depthbuffer;
    unsigned int depthbufferSize;
    unsigned int depthOffset;
-   unsigned int depthPitch;
-   unsigned int depthBitmapDesc;   /*Bitmap Descriptior*/
 
-
-
-   drm_handle_t textures;
-   drm_handle_t xvmcSurfHandle;
    unsigned int textureOffset;
    unsigned int textureSize;
    int logTextureGranularity;
 
-   /* Allow calculation of setup dma addresses.
-    */
-   unsigned int agpBufferOffset;
-
-   unsigned int agpTextureOffset;
-   unsigned int agpTextureSize;
-   drmRegion agpTextures;
-   int logAgpTextureGranularity;
-
-/*   unsigned int mAccess;*/
-
-   drmRegion aperture;
+   /* Linear aperture */
+   drm_handle_t apertureHandle;
+   unsigned int apertureSize;
    unsigned int aperturePitch;    /* in byte */
 
+   /* Status page (probably not needed, but no harm, read-only) */
+   drm_handle_t statusHandle;
+   unsigned int statusSize;
 
-   drmRegion registers;
-   drmRegion BCIcmdBuf;
-   drmRegion status;
+   /* AGP textures */
+   drm_handle_t agpTextureHandle;
+   unsigned int agpTextureSize;
+   int logAgpTextureGranularity;
 
-#if 0
-   drmRegion primary;
-   drmRegion buffers;
-#endif
-  /*For shadow status*/
-  unsigned long sareaPhysAddr;
-
-   unsigned int sarea_priv_offset;
-  int shadowStatus;
+   /* Not sure about this one */
+   drm_handle_t xvmcSurfHandle; /* ? */
 } SAVAGEDRIRec, *SAVAGEDRIPtr;
 
 #endif
-
-
-
-
-
-
-
-

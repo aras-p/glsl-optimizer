@@ -41,11 +41,6 @@ typedef struct {
 } savageRegion, *savageRegionPtr;
 
 typedef struct {
-   savageRegion front;
-   savageRegion back;
-   savageRegion depth;
-   savageRegion aperture;
-
    int chipset;
    int width;
    int height;
@@ -53,31 +48,34 @@ typedef struct {
 
    int cpp;			/* for front and back buffers */
    int zpp;
+
+   int agpMode;
+
+   unsigned int bufferSize;
+
 #if 0 
    int bitsPerPixel;
 #endif
    unsigned int frontFormat;
    unsigned int frontOffset;
-   unsigned int frontPitch;
-   unsigned int frontBitmapDesc;
-
    unsigned int backOffset;
-   unsigned int backBitmapDesc;
    unsigned int depthOffset;
-   unsigned int depthBitmapDesc;
 
-   unsigned int backPitch;
-   unsigned int backPitchBits;
+   unsigned int aperturePitch;
 
    unsigned int textureOffset[SAVAGE_NR_TEX_HEAPS];
    unsigned int textureSize[SAVAGE_NR_TEX_HEAPS];
    unsigned int logTextureGranularity[SAVAGE_NR_TEX_HEAPS];
    drmAddress texVirtual[SAVAGE_NR_TEX_HEAPS];
   
-  __DRIscreenPrivate *driScrnPriv;
-  drmBufMapPtr  bufs;
-  int use_copy_buf;
-  unsigned int sarea_priv_offset;
+   __DRIscreenPrivate *driScrnPriv;
+
+   savageRegion aperture;
+   savageRegion agpTextures;
+
+   drmBufMapPtr bufs;
+
+   unsigned int sarea_priv_offset;
 
    /* Configuration cache with default values for all contexts */
    driOptionCache optionCache;
@@ -87,7 +85,6 @@ typedef struct {
 #include "savagecontext.h"
 
 extern void savageGetLock( savageContextPtr imesa, GLuint flags );
-extern void savageEmitHwStateLocked( savageContextPtr imesa );
 extern void savageEmitScissorValues( savageContextPtr imesa, int box_nr, int emit );
 extern void savageEmitDrawingRectangle( savageContextPtr imesa );
 extern void savageXMesaSetBackClipRects( savageContextPtr imesa );
