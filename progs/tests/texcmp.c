@@ -65,8 +65,10 @@ static const char *TextureName (GLenum TC)
              return "GL_RGBA_S3TC";
         case GL_RGBA4_S3TC:
              return "GL_RGBA4_S3TC";
+        case 0:
+             return "Invalid format";
         default:
-             return "?";
+             return "Unknown format";
  }
 }
 
@@ -356,6 +358,12 @@ static void Key( unsigned char key, int x, int y )
 
 int main( int argc, char *argv[] )
 {
+   float gl_version;
+   GLint num_formats;
+   GLint i;
+   GLint formats[64];
+
+
    glutInit( &argc, argv );
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( 400, 300 );
@@ -367,7 +375,9 @@ int main( int argc, char *argv[] )
       exit(0);
    }
 
-   if (!glutExtensionSupported("GL_ARB_texture_compression")) {
+   gl_version = atof( (const char *) glGetString( GL_VERSION ) );
+   if ( (gl_version < 1.3) 
+	&& !glutExtensionSupported("GL_ARB_texture_compression") ) {
       printf("Sorry, GL_ARB_texture_compression not supported\n");
       exit(0);
    }
@@ -381,6 +391,16 @@ int main( int argc, char *argv[] )
       s3tc = GL_TRUE;
    }
 
+   glGetIntegerv( GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB, & num_formats );
+   
+   (void) memset( formats, 0, sizeof( formats ) );
+   glGetIntegerv( GL_COMPRESSED_TEXTURE_FORMATS_ARB, formats );
+
+   printf( "The following texture formats are supported:\n" );
+   for ( i = 0 ; i < num_formats ; i++ ) {
+      printf( "\t%s\n", TextureName( formats[i] ) );
+   }
+	
    Init();
 
    glutReshapeFunc( Reshape );
