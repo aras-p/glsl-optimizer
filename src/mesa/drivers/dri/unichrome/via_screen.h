@@ -43,7 +43,7 @@ typedef struct {
     int fbFormat;
     int fbOffset;
     int fbSize;
-#ifndef _SOLO
+#ifdef USE_XINERAMA
     Bool drixinerama;
 #endif
     

@@ -41,7 +41,7 @@
 #include "vblank.h"
 
 #ifndef _SOLO
-#include "glxextensions.h"
+#include "GL/internal/dri_interface.h"
 #endif
 
 /* Mach64 configuration
@@ -452,6 +452,10 @@ mach64InitDriver( __DRIscreenPrivate *driScreen )
  */
 void __driRegisterExtensions( void )
 {
+#if 0
+   /* KW: This is handled differently in the other drivers, not sure
+    * what to do here.
+    */
    PFNGLXENABLEEXTENSIONPROC glx_enable_extension;
 
    if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
@@ -464,6 +468,7 @@ void __driRegisterExtensions( void )
 	 glx_enable_extension( "GLX_MESA_swap_control", GL_FALSE );
       }
    }
+#endif
 }
 #endif
 

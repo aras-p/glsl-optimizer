@@ -44,12 +44,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "vblank.h"
 
-#ifdef _SOLO
-/* temporary - should really split r128_reg.h into r128_reg.h & r128_macros.h
- * like the radeon */
-#include "r128_macros.h"
-#endif
-
 #define R128_TIMEOUT        2048
 #define R128_IDLE_RETRY       32
 
@@ -221,6 +215,7 @@ static void delay( void ) {
 
 #define R128_MAX_OUTSTANDING	2
 
+
 /* Throttle the frame rate -- only allow one pending swap buffers
  * request at a time.
  * GH: We probably don't want a timeout here, as we can wait as
@@ -235,7 +230,8 @@ static int r128WaitForFrameCompletion( r128ContextPtr rmesa )
    int wait = 0;
 
    while ( 1 ) {
-      frame = INREG( R128_LAST_FRAME_REG );
+      frame = *(volatile unsigned int *)(R128MMIO + R128_LAST_FRAME_REG);
+
       if ( rmesa->sarea->last_frame - frame <= R128_MAX_OUTSTANDING ) {
 	 break;
       }

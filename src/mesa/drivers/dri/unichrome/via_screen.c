@@ -88,7 +88,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
     viaScreen->bytesPerPixel = gDRIPriv->bytesPerPixel;
     viaScreen->fbOffset = 0;
     viaScreen->fbSize = gDRIPriv->fbSize;
-#ifndef _SOLO
+#ifdef USE_XINERAMA
     viaScreen->drixinerama = gDRIPriv->drixinerama;
 #endif
     /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/

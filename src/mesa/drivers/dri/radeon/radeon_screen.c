@@ -49,7 +49,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vblank.h"
 
 #ifndef _SOLO
-#include "glxextensions.h"
+#include "GL/internal/dri_interface.h"
 #endif
 
 /* Radeon configuration

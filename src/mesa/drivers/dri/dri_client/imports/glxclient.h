@@ -78,65 +78,7 @@ typedef struct _glapi_table __GLapi;
 
 #ifdef GLX_DIRECT_RENDERING
 
-/**
- * \name DRI interface structures
- *
- * The following structures define the interface between the GLX client
- * side library and the DRI (direct rendering infrastructure).
- */
-/*@{*/
-typedef struct __DRIdisplayRec  __DRIdisplay;
-typedef struct __DRIscreenRec   __DRIscreen;
-typedef struct __DRIcontextRec  __DRIcontext;
-typedef struct __DRIdrawableRec __DRIdrawable;
-typedef struct __DRIdriverRec   __DRIdriver;
-typedef struct __DRIframebufferRec __DRIframebuffer;
-typedef struct __DRIversionRec     __DRIversion;
-/*@}*/
-
-extern __DRIscreen *__glXFindDRIScreen(Display *dpy, int scrn);
-
-/**
- * Stored version of some component (i.e., server-side DRI module, kernel-side
- * DRM, etc.).
- * 
- * \todo There are several data structures that explicitly store a major
- *       version, minor version, and patch level.  These structures should
- *       be modified to have a \c __DRIversionRec instead.
- */
-struct __DRIversionRec {
-    int    major;        /**< Major version number. */
-    int    minor;        /**< Minor version number. */
-    int    patch;        /**< Patch-level. */
-};
-
-/**
- * Framebuffer information record.  Used by libGL to communicate information
- * about the framebuffer to the driver's \c __DRIdisplayRec::createNewScreen
- * function.
- * 
- * In XFree86, most of this information is derrived from data returned by
- * calling \c XF86DRIGetDeviceInfo.
- *
- * \sa XF86DRIGetDeviceInfo __DRIdisplayRec::createNewScreen
- *     __driUtilCreateNewScreen CallCreateNewScreen
- *
- * \bug This structure could be better named.
- */
-struct __DRIframebufferRec {
-    unsigned char *base;    /**< Framebuffer base address in the CPU's
-			     * address space.  This value is calculated by
-			     * calling \c drmMap on the framebuffer handle
-			     * returned by \c XF86DRIGetDeviceInfo (or a
-			     * similar function).
-			     */
-    int size;               /**< Framebuffer size, in bytes. */
-    int stride;             /**< Number of bytes from one line to the next. */
-    int width;              /**< Pixel width of the framebuffer. */
-    int height;             /**< Pixel height of the framebuffer. */
-    int dev_priv_size;      /**< Size of the driver's dev-priv structure. */
-    void *dev_priv;         /**< Pointer to the driver's dev-priv structure. */
-};
+#include <GL/internal/dri_interface.h>
 
 typedef void *(*CreateScreenFunc)(Display *dpy, int scrn, __DRIscreen *psc,
                                   int numConfigs, __GLXvisualConfig *config);
@@ -146,6 +88,7 @@ typedef void *(*CreateNewScreenFunc)(Display *dpy, int scrn, __DRIscreen *psc,
     const __DRIversion * dri_version, const __DRIversion * drm_version,
     const __DRIframebuffer * frame_buffer, void * pSAREA,
     int fd, int internal_api_version, __GLcontextModes ** driver_modes);
+
 
 /**
  * Display dependent methods.  This structure is initialized during the
@@ -181,231 +124,6 @@ struct __DRIdisplayRec {
      * \sa __DRIdisplayRec::createScreen
      */
     CreateNewScreenFunc * createNewScreen;
-};
-
-/**
- * Screen dependent methods.  This structure is initialized during the
- * \c __DRIdisplayRec::createScreen call.
- */
-struct __DRIscreenRec {
-    /**
-     * Method to destroy the private DRI screen data.
-     */
-    void (*destroyScreen)(Display *dpy, int scrn, void *screenPrivate);
-
-    /**
-     * Method to create the private DRI context data and initialize the
-     * context dependent methods.
-     *
-     * \sa __DRIscreenRec::createNewContext driCreateContext 
-     *     driCreateNewContext
-     * \deprecated  This function has been replaced by
-     *              __DRIscreenRec::createNewContext.  New drivers will
-     *              continue to export this method, but it will eventually
-     *              (in the next XFree86 major relearse) go away.
-     */
-    void *(*createContext)(Display *dpy, XVisualInfo *vis, void *sharedPrivate,
-			   __DRIcontext *pctx);
-
-    /**
-     * Method to create the private DRI drawable data and initialize the
-     * drawable dependent methods.
-     */
-    void *(*createNewDrawable)(Display *dpy, const __GLcontextModes *modes,
-			       GLXDrawable draw, __DRIdrawable *pdraw,
-			       int renderType, const int *attrs);
-
-    /**
-     * Method to return a pointer to the DRI drawable data.
-     */
-    __DRIdrawable *(*getDrawable)(Display *dpy, GLXDrawable draw,
-				  void *drawablePrivate);
-
-    /**
-     * Opaque pointer to private per screen direct rendering data.  \c NULL
-     * if direct rendering is not supported on this screen.  Never
-     * dereferenced in libGL.
-     */
-    void *private;
-
-    /**
-     * Get the number of vertical refreshes since some point in time before
-     * this function was first called (i.e., system start up).
-     * 
-     * \since Internal API version 20030317.
-     */
-    int (*getMSC)( void *screenPrivate, int64_t *msc );
-
-    /**
-     * Opaque pointer that points back to the containing 
-     * \c __GLXscreenConfigs.  This data structure is shared with DRI drivers
-     * but \c __GLXscreenConfigs is not. However, they are needed by some GLX
-     * functions called by DRI drivers.
-     *
-     * \since Internal API version 20030813.
-     */
-    void *screenConfigs;
-
-    /**
-     * Functions associated with MESA_allocate_memory.
-     *
-     * \since Internal API version 20030815.
-     */
-    /*@{*/
-    void *(*allocateMemory)(Display *dpy, int scrn, GLsizei size,
-			    GLfloat readfreq, GLfloat writefreq,
-			    GLfloat priority);
-   
-    void (*freeMemory)(Display *dpy, int scrn, GLvoid *pointer);
-   
-    GLuint (*memoryOffset)(Display *dpy, int scrn, const GLvoid *pointer);
-    /*@}*/
-
-    /**
-     * Method to create the private DRI context data and initialize the
-     * context dependent methods.
-     *
-     * \since Internal API version 20031201.
-     */
-    void * (*createNewContext)(Display *dpy, const __GLcontextModes *modes,
-			       int render_type,
-			       void *sharedPrivate, __DRIcontext *pctx);
-};
-
-/**
- * Context dependent methods.  This structure is initialized during the
- * \c __DRIscreenRec::createContext call.
- */
-struct __DRIcontextRec {
-    /**
-     * Method to destroy the private DRI context data.
-     */
-    void (*destroyContext)(Display *dpy, int scrn, void *contextPrivate);
-
-    /**
-     * Method to bind a DRI drawable to a DRI graphics context.
-     */
-    Bool (*bindContext)(Display *dpy, int scrn, GLXDrawable draw,
-			GLXContext gc);
-
-    /**
-     * Method to unbind a DRI drawable to a DRI graphics context.
-     */
-    Bool (*unbindContext)(Display *dpy, int scrn, GLXDrawable draw,
-			  GLXContext gc, int will_rebind);
-
-    /**
-     * Opaque pointer to private per context direct rendering data.
-     * \c NULL if direct rendering is not supported on the display or
-     * screen used to create this context.  Never dereferenced in libGL.
-     */
-    void *private;
-
-    /**
-     * Method to bind a DRI drawable to a DRI graphics context.
-     *
-     * \since Internal API version 20030606.
-     */
-    Bool (*bindContext2)(Display *dpy, int scrn, GLXDrawable draw,
-			 GLXDrawable read, GLXContext gc);
-
-    /**
-     * Method to unbind a DRI drawable to a DRI graphics context.
-     *
-     * \since Internal API version 20030606.
-     */
-    Bool (*unbindContext2)(Display *dpy, int scrn, GLXDrawable draw,
-			   GLXDrawable read, GLXContext gc);
-};
-
-/**
- * Drawable dependent methods.  This structure is initialized during the
- * \c __DRIscreenRec::createDrawable call.  \c createDrawable is not called
- * by libGL at this time.  It's currently used via the dri_util.c utility code
- * instead.
- */
-struct __DRIdrawableRec {
-    /**
-     * Method to destroy the private DRI drawable data.
-     */
-    void (*destroyDrawable)(Display *dpy, void *drawablePrivate);
-
-    /**
-     * Method to swap the front and back buffers.
-     */
-    void (*swapBuffers)(Display *dpy, void *drawablePrivate);
-
-    /**
-     * Opaque pointer to private per drawable direct rendering data.
-     * \c NULL if direct rendering is not supported on the display or
-     * screen used to create this drawable.  Never dereferenced in libGL.
-     */
-    void *private;
-
-    /**
-     * Get the number of completed swap buffers for this drawable.
-     *
-     * \since Internal API version 20030317.
-     */
-    int (*getSBC)(Display *dpy, void *drawablePrivate, int64_t *sbc );
-
-    /**
-     * Wait for the SBC to be greater than or equal target_sbc.
-     *
-     * \since Internal API version 20030317.
-     */
-    int (*waitForSBC)( Display * dpy, void *drawablePriv,
-		       int64_t target_sbc,
-		       int64_t * msc, int64_t * sbc );
-
-    /**
-     * Wait for the MSC to equal target_msc, or, if that has already passed,
-     * the next time (MSC % divisor) is equal to remainder.  If divisor is
-     * zero, the function will return as soon as MSC is greater than or equal
-     * to target_msc.
-     * 
-     * \since Internal API version 20030317.
-     */
-    int (*waitForMSC)( Display * dpy, void *drawablePriv,
-		       int64_t target_msc, int64_t divisor, int64_t remainder,
-		       int64_t * msc, int64_t * sbc );
-
-    /**
-     * Like \c swapBuffers, but does NOT have an implicit \c glFlush.  Once
-     * rendering is complete, waits until MSC is equal to target_msc, or
-     * if that has already passed, waits until (MSC % divisor) is equal
-     * to remainder.  If divisor is zero, the swap will happen as soon as
-     * MSC is greater than or equal to target_msc.
-     * 
-     * \since Internal API version 20030317.
-     */
-    int64_t (*swapBuffersMSC)(Display *dpy, void *drawablePrivate,
-			      int64_t target_msc,
-			      int64_t divisor, int64_t remainder);
-
-    /**
-     * Enable or disable frame usage tracking.
-     * 
-     * \since Internal API version 20030317.
-     */
-    int (*frameTracking)(Display *dpy, void *drawablePrivate, Bool enable);
-
-    /**
-     * Retrieve frame usage information.
-     * 
-     * \since Internal API version 20030317.
-     */
-    int (*queryFrameTracking)(Display *dpy, void *drawablePrivate,
-			      int64_t * sbc, int64_t * missedFrames,
-			      float * lastMissedUsage, float * usage );
-
-    /**
-     * Used by drivers that implement the GLX_SGI_swap_control or
-     * GLX_MESA_swap_control extension.
-     *
-     * \since Internal API version 20030317.
-     */
-    unsigned swap_interval;
 };
 
 
@@ -810,16 +528,6 @@ struct __GLXcontextRec {
     * drivers should NEVER use this data or even care that it exists.
     */
    void * client_state_private;
-
-#ifdef GLX_DIRECT_RENDERING
-    /**
-     * Pointer to the mode used to create this context.  This field replaces
-     * the \c vid and \c fbconfigID fields.
-     * 
-     * \since Internal API version 20031201.
-     */
-    const __GLcontextModes * mode;
-#endif /* GLX_DIRECT_RENDERING */
 };
 
 #define __glXSetError(gc,code) \
@@ -1103,41 +811,7 @@ extern char *__glXCombineExtensionStrings( const char *cext_string,
 /* Determine the internal API version */
 extern int __glXGetInternalVersion(void);
 
-/**
- * Type of a pointer to \c __glXGetInternalVersion, as returned by
- * \c glXGetProcAddress.
- *
- * \sa __glXGetInternalVersion, glXGetProcAddress
- */
-typedef int (* PFNGLXGETINTERNALVERSIONPROC) ( void );
-
-/**
- * Type of a pointer to \c __glXWindowExists, as returned by
- * \c glXGetProcAddress.
- *
- * \sa __glXWindowExists, glXGetProcAddress
- */
-typedef Bool (* PFNGLXWINDOWEXISTSPROC) (Display *dpy, GLXDrawable draw);
-
 /* Get the unadjusted system time */
 extern int __glXGetUST( int64_t * ust );
-
-/**
- * Type of a pointer to \c __glXGetUST, as returned by \c glXGetProcAddress.
- * 
- * \sa __glXGetUST, glXGetProcAddress
- */
-typedef int (* PFNGLXGETUSTPROC) ( int64_t * ust );
-
-
-/**
- * Type of pointer to \c __glXCreateContextModes, as returned by
- * \c glXGetProcAddress.
- * 
- * \sa _gl_context_modes_create, glXGetProcAddress
- */
-
-typedef __GLcontextModes * (* PFNGLXCREATECONTEXTMODES) ( unsigned count,
-    size_t minimum_bytes_per_struct );
 
 #endif /* !__GLX_client_h__ */

@@ -575,25 +575,6 @@ __driUtilCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                       int numConfigs, __GLXvisualConfig *config,
                       const struct __DriverAPIRec *driverAPI);
 
-/** This must be implemented in each driver
- * \deprecated
- */
-extern void *
-__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                  int numConfigs, __GLXvisualConfig *config);
-
-/** This must be implemented in each driver */
-extern void * __driCreateNewScreen( Display *dpy, int scrn, __DRIscreen *psc,
-    const __GLcontextModes * modes,
-    const __DRIversion * ddx_version, const __DRIversion * dri_version,
-    const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
-    drmAddress pSAREA, int fd, int internal_api_version,
-     __GLcontextModes ** driver_modes );
-
-/** This is optionally implemented in each driver */
-extern void
-__driRegisterExtensions( void );
-
 /* Test the version of the internal GLX API.  Returns a value like strcmp. */
 extern int
 driCompareGLXAPIVersion( GLuint required_version );

@@ -60,7 +60,7 @@
 #include "vblank.h"
 
 #ifndef _SOLO
-#include "glxextensions.h"
+#include "GL/internal/dri_interface.h"
 #endif
 
 /* MGA configuration

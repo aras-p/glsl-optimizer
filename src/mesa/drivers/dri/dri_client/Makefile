@@ -23,6 +23,7 @@ OBJECTS = $(C_SOURCES:.c=.o)
 
 INCLUDES = \
 	-I$(TOP)/include \
+	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \

@@ -35,6 +35,9 @@
  * \author Ian Romanick <idr@us.ibm.com>
  */
 
+#ifndef DRI_INTERFACE_H
+#define DRI_INTERFACE_H
+
 /* FIXME: With a small amount of work, these two includes can be removed. */
 #include <X11/Xlib.h>
 #include <GL/glx.h>
@@ -497,3 +500,5 @@ struct __DRIdrawableRec {
      */
     unsigned swap_interval;
 };
+
+#endif

@@ -454,7 +454,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     _tnl_allow_vertex_fog(ctx, GL_TRUE);
 
 #ifndef _SOLO
-    vmesa->display = dpy;
+/*     vmesa->display = dpy; */
     vmesa->display = sPriv->display;
 #endif
     
@@ -545,7 +545,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     {
 	GLboolean saam;
 	int count = 0, fbSize;
-#ifdef _SOLO
+#ifndef USE_XINERAMA
         vmesa->saam = 0;
 #else
 	saam = XineramaIsActive(vmesa->display);
@@ -706,7 +706,7 @@ void viaXMesaWindowMoved(viaContextPtr vmesa)
         break;
     }
 
-#ifdef _SOLO
+#ifndef USE_XINERAMA
     vmesa->viaScreen->fbOffset = 0;
     vmesa->saam &= ~S1;
     vmesa->saam |= S0;

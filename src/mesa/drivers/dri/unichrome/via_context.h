@@ -44,7 +44,7 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 #include "via_tex.h"
 #include "via_common.h"
 #include "xf86drmVIA.h"
-#ifndef _SOLO
+#ifdef USE_XINERAMA
 #include "../../../../../include/extensions/Xinerama.h"
 #endif
 #define VIA_FALLBACK_TEXTURE           	0x1
@@ -264,7 +264,7 @@ struct via_context_t {
     int drawW;                  
     int drawH;
     GLuint saam;
-#ifndef _SOLO
+#ifdef USE_XINERAMA
     XineramaScreenInfo *xsi;
 #endif
     int drawXoffSaam;

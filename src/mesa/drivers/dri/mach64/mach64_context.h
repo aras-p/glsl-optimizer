@@ -116,6 +116,8 @@ typedef struct {
 } mach64_vertex;
 #endif
 
+#define CARD32 GLuint		/* KW: For building in mesa tree */
+
 /* The size of this union is not of relevence:
  */
 union mach64_vertex_t {

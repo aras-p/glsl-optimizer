@@ -29,7 +29,7 @@ typedef struct {
     int priv2;
     int fbOffset;
     int fbSize;
-#ifndef _SOLO
+#ifdef USE_XINERAMA
     Bool drixinerama;
 #endif
     int backOffset;

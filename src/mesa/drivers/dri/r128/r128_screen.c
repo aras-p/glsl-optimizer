@@ -47,7 +47,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vblank.h"
 
 #ifndef _SOLO
-#include "glxextensions.h"
+#include "GL/internal/dri_interface.h"
 #endif
 
 /* R128 configuration
@@ -345,7 +345,12 @@ r128InitDriver( __DRIscreenPrivate *sPriv )
  */
 void __driRegisterExtensions( void )
 {
-   PFNGLXENABLEEXTENSIONPROC glx_enable_extension;
+#if 0
+   /* KW: This is done slightly differently to the other drivers and
+      dri_interface.h doesn't seem to cope. 
+   */
+   PFNGLXENABLEEXTENSIONPROC
+   glx_enable_extension;
 
    if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
       glx_enable_extension = (PFNGLXENABLEEXTENSIONPROC)
@@ -357,6 +362,7 @@ void __driRegisterExtensions( void )
 	 glx_enable_extension( "GLX_MESA_swap_control", GL_FALSE );
       }
    }
+#endif
 }
 #endif
 

@@ -14,7 +14,9 @@ $(LIB_DIR):
 
 
 subdirs:
+	echo $(DRI_DIRS)
 	@for dir in $(DRI_DIRS) ; do \
+		echo $$dir ; \
 		(cd $$dir ; make) || exit 1; \
 	done
 

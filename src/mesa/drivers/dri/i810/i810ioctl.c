@@ -91,7 +91,7 @@ static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       { 	 
 	 int nr = MIN2(i + I810_NR_SAREA_CLIPRECTS, imesa->numClipRects);
 	 drm_clip_rect_t *box = imesa->pClipRects;	 
-	 drm_clip_rect_t *b = imesa->sarea->boxes;
+	 drm_clip_rect_t *b = (drm_clip_rect_t *)imesa->sarea->boxes;
 	 int n = 0;
 
 	 if (!all) {
@@ -156,13 +156,13 @@ void i810CopyBuffer( const __DRIdrawablePrivate *dPriv )
    I810_FIREVERTICES( imesa );
    LOCK_HARDWARE( imesa );
    
-   pbox = dPriv->pClipRects;
+   pbox = (drm_clip_rect_t *)dPriv->pClipRects;
    nbox = dPriv->numClipRects;
 
    for (i = 0 ; i < nbox ; )
    {
       int nr = MIN2(i + I810_NR_SAREA_CLIPRECTS, dPriv->numClipRects);
-      drm_clip_rect_t *b = imesa->sarea->boxes;
+      drm_clip_rect_t *b = (drm_clip_rect_t *)imesa->sarea->boxes;
 
       imesa->sarea->nbox = nr - i;
 
@@ -204,8 +204,8 @@ void i810PageFlip( const __DRIdrawablePrivate *dPriv )
   LOCK_HARDWARE( imesa );
   
   if (dPriv->pClipRects) {
-    *imesa->sarea->boxes = dPriv->pClipRects[0];
-    imesa->sarea->nbox = 1;
+     imesa->sarea->boxes[0] = dPriv->pClipRects[0];
+     imesa->sarea->nbox = 1;
   }
   ret = drmCommandNone(imesa->driFd, DRM_I810_FLIP);
   if (ret) {
@@ -403,7 +403,7 @@ void i810FlushPrimsLocked( i810ContextPtr imesa )
       for (i = 0 ; i < nbox ; )
       {
 	 int nr = MIN2(i + I810_NR_SAREA_CLIPRECTS, nbox);
-	 drm_clip_rect_t *b = sarea->boxes;
+	 drm_clip_rect_t *b = (drm_clip_rect_t *)sarea->boxes;
 
 	 if (imesa->scissor) {
 	    sarea->nbox = 0;

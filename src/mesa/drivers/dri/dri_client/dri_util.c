@@ -312,9 +312,9 @@ static void __driGarbageCollectDrawables(void *drawHash)
  * While casting the opaque private pointers associated with the parameters
  * into their respective real types it also assures they are not \c NULL. 
  */
-static Bool driUnbindContext2(Display *dpy, int scrn,
+static Bool driUnbindContext3(Display *dpy, int scrn,
 			      GLXDrawable draw, GLXDrawable read,
-			      GLXContext gc)
+			      __DRIcontext *ctx)
 {
     __DRIscreen *pDRIScreen;
     __DRIdrawable *pdraw;
@@ -326,10 +326,10 @@ static Bool driUnbindContext2(Display *dpy, int scrn,
 
     /*
     ** Assume error checking is done properly in glXMakeCurrent before
-    ** calling driUnbindContext2.
+    ** calling driUnbindContext3.
     */
 
-    if (gc == NULL || draw == None || read == None) {
+    if (ctx == NULL || draw == None || read == None) {
 	/* ERROR!!! */
 	return GL_FALSE;
     }
@@ -341,7 +341,7 @@ static Bool driUnbindContext2(Display *dpy, int scrn,
     }
 
     psp = (__DRIscreenPrivate *)pDRIScreen->private;
-    pcp = (__DRIcontextPrivate *)gc->driContext.private;
+    pcp = (__DRIcontextPrivate *)ctx->private;
 
     pdraw = __driFindDrawable(psp->drawHash, draw);
     if (!pdraw) {
@@ -403,59 +403,19 @@ static Bool driUnbindContext2(Display *dpy, int scrn,
  *      be needed in those places when support for pbuffers and / or pixmaps
  *      is added.  Is it safe to assume that the drawable is a window?
  */
-static Bool driBindContext2(Display *dpy, int scrn,
-                            GLXDrawable draw, GLXDrawable read,
-                            GLXContext gc)
+static Bool DoBindContext(Display *dpy,
+			  GLXDrawable draw, GLXDrawable read,
+			  __DRIcontext *ctx, const __GLcontextModes * modes,
+			  __DRIscreenPrivate *psp)
 {
-    __DRIscreen *pDRIScreen;
     __DRIdrawable *pdraw;
     __DRIdrawablePrivate *pdp;
     __DRIdrawable *pread;
     __DRIdrawablePrivate *prp;
-    __DRIscreenPrivate *psp;
-    __DRIcontextPrivate *pcp;
-    const __GLcontextModes *modes;
-
-    /*
-    ** Assume error checking is done properly in glXMakeCurrent before
-    ** calling driBindContext.
-    */
-
-    if (gc == NULL || draw == None || read == None) {
-	/* ERROR!!! */
-	return GL_FALSE;
-    }
-
-    pDRIScreen = __glXFindDRIScreen(dpy, scrn);
-#ifdef DRI_NEW_INTERFACE_ONLY
-    if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
-	/* ERROR!!! */
-	return GL_FALSE;
-    }
-#else
-    if ( driCompareGLXAPIVersion( 20031201 ) >= 0 ) {
-#endif /* DRI_NEW_INTERFACE_ONLY */
-	modes = gc->mode;
-#ifndef DRI_NEW_INTERFACE_ONLY
-    }
-    else {
-	modes = findConfigMode( dpy, scrn, gc->vid, pDRIScreen );
-	if ( modes == NULL ) {
-	    /* ERROR!!! */
-	    return GL_FALSE;
-	}
-    }
-
-
-    /* findConfigMode will return NULL if the DRI screen or screen private
-     * are NULL.
-     */
-    assert( (pDRIScreen != NULL) && (pDRIScreen->private != NULL) );
-#endif /* DRI_NEW_INTERFACE_ONLY */
+    __DRIcontextPrivate * const pcp = ctx->private;
 
 
     /* Find the _DRIdrawable which corresponds to the writing GLXDrawable */
-    psp = (__DRIscreenPrivate *)pDRIScreen->private;
     pdraw = __driFindDrawable(psp->drawHash, draw);
     if (!pdraw) {
 	/* Allocate a new drawable */
@@ -505,7 +465,6 @@ static Bool driBindContext2(Display *dpy, int scrn,
     }
 
     /* Bind the drawable to the context */
-    pcp = (__DRIcontextPrivate *)gc->driContext.private;
     pcp->driDrawablePriv = pdp;
     pdp->driContextPriv = pcp;
     pdp->refcount++;
@@ -530,6 +489,87 @@ static Bool driBindContext2(Display *dpy, int scrn,
 }
 
 
+/**
+ * This function takes both a read buffer and a draw buffer.  This is needed
+ * for \c glXMakeCurrentReadSGI or GLX 1.3's \c glXMakeContextCurrent
+ * function.
+ */
+static Bool driBindContext3(Display *dpy, int scrn,
+                            GLXDrawable draw, GLXDrawable read,
+                            __DRIcontext * ctx)
+{
+    __DRIscreen *pDRIScreen;
+
+    /*
+    ** Assume error checking is done properly in glXMakeCurrent before
+    ** calling driBindContext.
+    */
+
+    if (ctx == NULL || draw == None || read == None) {
+	/* ERROR!!! */
+	return GL_FALSE;
+    }
+
+    pDRIScreen = __glXFindDRIScreen(dpy, scrn);
+    if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
+	/* ERROR!!! */
+	return GL_FALSE;
+    }
+
+    return DoBindContext( dpy, draw, read, ctx, ctx->mode,
+			  (__DRIscreenPrivate *)pDRIScreen->private );
+}
+
+
+#ifndef DRI_NEW_INTERFACE_ONLY
+/**
+ * This function takes both a read buffer and a draw buffer.  This is needed
+ * for \c glXMakeCurrentReadSGI or GLX 1.3's \c glXMakeContextCurrent
+ * function.
+ */
+static Bool driBindContext2(Display *dpy, int scrn,
+                            GLXDrawable draw, GLXDrawable read,
+                            GLXContext gc)
+{
+    __DRIscreen *pDRIScreen;
+    const __GLcontextModes *modes;
+
+    /*
+    ** Assume error checking is done properly in glXMakeCurrent before
+    ** calling driBindContext.
+    */
+
+    if (gc == NULL || draw == None || read == None) {
+	/* ERROR!!! */
+	return GL_FALSE;
+    }
+
+    pDRIScreen = __glXFindDRIScreen(dpy, scrn);
+    modes = (driCompareGLXAPIVersion( 20040317 ) >= 0)
+	? gc->driContext.mode
+	: findConfigMode( dpy, scrn, gc->vid, pDRIScreen );
+
+    if ( modes == NULL ) {
+	/* ERROR!!! */
+	return GL_FALSE;
+    }
+
+    /* findConfigMode will return NULL if the DRI screen or screen private
+     * are NULL.
+     */
+    assert( (pDRIScreen != NULL) && (pDRIScreen->private != NULL) );
+
+    return DoBindContext( dpy, draw, read, & gc->driContext, modes,
+			  (__DRIscreenPrivate *)pDRIScreen->private );
+}
+
+static Bool driUnbindContext2(Display *dpy, int scrn,
+			      GLXDrawable draw, GLXDrawable read,
+			      GLXContext gc)
+{
+    return driUnbindContext3(dpy, scrn, draw, read, & gc->driContext);
+}
+
 /*
  * Simply call bind with the same GLXDrawable for the read and draw buffers.
  */
@@ -550,6 +590,7 @@ static Bool driUnbindContext(Display *dpy, int scrn,
    (void) will_rebind;
    return driUnbindContext2( dpy, scrn, draw, draw, gc );
 }
+#endif /* DRI_NEW_INTERFACE_ONLY */
 
 /*@}*/
 
@@ -957,12 +998,26 @@ driCreateNewContext(Display *dpy, const __GLcontextModes *modes,
     }
 
     pctx->destroyContext = driDestroyContext;
+#ifdef DRI_NEW_INTERFACE_ONLY
+    pctx->bindContext    = NULL;
+    pctx->unbindContext  = NULL;
+    pctx->bindContext2   = NULL;
+    pctx->unbindContext2 = NULL;
+    pctx->bindContex3    = driBindContext3;
+    pctx->unbindContext3 = driUnbindContext3;
+#else
     pctx->bindContext    = driBindContext;
     pctx->unbindContext  = driUnbindContext;
     if ( driCompareGLXAPIVersion( 20030606 ) >= 0 ) {
         pctx->bindContext2   = driBindContext2;
         pctx->unbindContext2 = driUnbindContext2;
     }
+
+    if ( driCompareGLXAPIVersion( 20040415 ) >= 0 ) {
+        pctx->bindContext3   = driBindContext3;
+        pctx->unbindContext3 = driUnbindContext3;
+    }
+#endif
 
     if ( !(*psp->DriverAPI.CreateContext)(modes, pcp, shareCtx) ) {
         (void)XF86DRIDestroyContext(dpy, modes->screen, pcp->contextID);
@@ -1108,6 +1163,22 @@ __driUtilCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
     __DRIscreenPrivate *psp;
 
 
+#ifdef DRI_NEW_INTERFACE_ONLY
+    if ( internal_api_version < 20040415 ) {
+	fprintf( stderr, "libGL error: libGL.so version (%08u) is too old.  "
+		 "20040415 or later is required.\n", internal_api_version );
+	return NULL;
+    }
+#else
+    if ( internal_api_version == 20031201 ) {
+	fprintf( stderr, "libGL error: libGL version 20031201 has critical "
+		 "binary compatilibity bugs.\nlibGL error: You must upgrade "
+		 "to use direct-rendering!\n" );
+	return NULL;
+    }
+#endif /* DRI_NEW_INTERFACE_ONLY */
+
+
     window_exists = (PFNGLXWINDOWEXISTSPROC)
 	glXGetProcAddress( (const GLubyte *) "__glXWindowExists" );
 
@@ -1200,6 +1271,10 @@ __driUtilCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
 #endif
     psc->createNewDrawable = driCreateNewDrawable;
     psc->getDrawable       = driGetDrawable;
+#ifdef DRI_NEW_INTERFACE_ONLY
+    psc->getMSC            = driGetMSC;
+    psc->createNewContext  = driCreateNewContext;
+#else
     if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
         psc->getMSC        = driGetMSC;
 
@@ -1207,6 +1282,7 @@ __driUtilCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
 	    psc->createNewContext = driCreateNewContext;
 	}
     }
+#endif
 
     if ( (psp->DriverAPI.InitDriver != NULL)
 	 && !(*psp->DriverAPI.InitDriver)(psp) ) {

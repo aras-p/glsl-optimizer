@@ -21,7 +21,6 @@ else
 WINOBJ=
 WINLIB=-L$(MESA)/src/glx/mini
 MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
-MINIGLX_SOURCES = 
 INCLUDES = $(MINIGLX_INCLUDES) \
 	   -I$(DRM_SOURCE_PATH)/shared \
 	   $(SHARED_INCLUDES)
@@ -32,12 +31,17 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 endif
 
 
+
+
+
 ### Include directories
 SHARED_INCLUDES = \
 	-I. \
 	-I../common \
 	-Iserver \
+	-I$(DRM_SOURCE_PATH)/shared \
 	-I$(TOP)/include \
+	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \
@@ -59,7 +63,7 @@ SHARED_INCLUDES = \
 
 ##### TARGETS #####
 
-default: depend $(LIB_DIR)/$(LIBNAME)
+default: depend symlinks $(LIB_DIR)/$(LIBNAME)
 
 
 #$(LIB_DIR)/$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile
@@ -70,7 +74,6 @@ default: depend $(LIB_DIR)/$(LIBNAME)
 
 $(LIB_DIR)/$(LIBNAME):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile ../Makefile.template
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(GL_LIB_DEPS)
-
 
 
 
@@ -90,6 +93,6 @@ tags:
 
 # Remove .o and backup files
 clean:
-	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o
+	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o $(SYMLINKS)
 
 include depend

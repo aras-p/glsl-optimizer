@@ -607,7 +607,6 @@ Bool XF86DRIGetDeviceInfo(dpy, screen, hFrameBuffer,
     return True;
 }
 
-#if 0
 Bool XF86DRIOpenFullScreen(dpy, screen, drawable)
     Display* dpy;
     int screen;
@@ -633,4 +632,3 @@ Bool XF86DRICloseFullScreen(dpy, screen, drawable)
     (void) drawable;
     return True;
 }
-#endif
