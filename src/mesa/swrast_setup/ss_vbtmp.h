@@ -1,10 +1,10 @@
-/* $Id: ss_vbtmp.h,v 1.23 2003/01/14 04:55:47 brianp Exp $ */
+/* $Id: ss_vbtmp.h,v 1.24 2003/02/04 14:40:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,16 +34,16 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    SWvertex *v;
-   GLfloat *proj;		/* projected clip coordinates */
-   GLfloat *tc[MAX_TEXTURE_COORD_UNITS];
-   GLchan *color;
-   GLchan *spec;
-   GLuint *index;
-   GLfloat *fog;
-   GLfloat *pointSize;
+   const GLfloat *ndc;		/* NDC (i.e. projected clip coordinates) */
+   const GLfloat *tc[MAX_TEXTURE_COORD_UNITS];
+   const GLchan *color;
+   const GLchan *spec;
+   const GLuint *index;
+   const GLfloat *fog;
+   const GLfloat *pointSize;
    GLuint tsz[MAX_TEXTURE_COORD_UNITS];
    GLuint tstride[MAX_TEXTURE_COORD_UNITS];
-   GLuint proj_stride, color_stride, spec_stride, index_stride;
+   GLuint ndc_stride, color_stride, spec_stride, index_stride;
    GLuint fog_stride, pointSize_stride;
    GLuint i;
    GLfloat *m = ctx->Viewport._WindowMap.m;
@@ -73,8 +73,8 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
       }
    }
 
-   proj = VB->NdcPtr->data[0];
-   proj_stride = VB->NdcPtr->stride;
+   ndc = VB->NdcPtr->data[0];
+   ndc_stride = VB->NdcPtr->stride;
 
    if (IND & FOG) {
       fog = (GLfloat *) VB->FogCoordPtr->data;
@@ -107,12 +107,12 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
 
    for (i=start; i < end; i++, v++) {
       if (VB->ClipMask[i] == 0) {
-	 v->win[0] = sx * proj[0] + tx;
-	 v->win[1] = sy * proj[1] + ty;
-	 v->win[2] = sz * proj[2] + tz;
-	 v->win[3] =      proj[3];
+	 v->win[0] = sx * ndc[0] + tx;
+	 v->win[1] = sy * ndc[1] + ty;
+	 v->win[2] = sz * ndc[2] + tz;
+	 v->win[3] =      ndc[3];
       }
-      STRIDE_F(proj, proj_stride);
+      STRIDE_F(ndc, ndc_stride);
 
       if (IND & TEX0) {
 	 COPY_CLEAN_4V( v->texcoord[0], tsz[0], tc[0] );
