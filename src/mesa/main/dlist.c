@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.69 2001/05/09 12:48:21 keithw Exp $ */
+/* $Id: dlist.c,v 1.70 2001/05/10 15:42:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -5533,7 +5533,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
 {
    _mesa_init_no_op_table(table, tableSize);
 
-   _mesa_loopback_init_api_table( table, GL_FALSE );
+   _mesa_loopback_init_api_table( table, GL_TRUE );
 
    /* GL 1.0 */
    table->Accum = save_Accum;

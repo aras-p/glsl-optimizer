@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.64 2001/03/29 21:16:25 keithw Exp $ */
+/* $Id: state.c,v 1.65 2001/05/10 15:42:43 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,7 +123,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    /* first initialize all dispatch slots to no-op */
    _mesa_init_no_op_table(exec, tableSize);
 
-   _mesa_loopback_init_api_table( exec, GL_FALSE );
+   _mesa_loopback_init_api_table( exec, GL_TRUE );
 
    /* load the dispatch slots we understand */
    exec->Accum = _mesa_Accum;

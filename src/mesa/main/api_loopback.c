@@ -1,4 +1,4 @@
-/* $Id: api_loopback.c,v 1.7 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: api_loopback.c,v 1.8 2001/05/10 15:42:42 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1444,7 +1444,7 @@ _mesa_loopback_prefer_float( struct _glapi_table *dest,
    }
 }
 
-/* Passing prefer_f_colors as true will mean that all colors
+/* Passing prefer_float_colors as true will mean that all colors
  * *except* Color{34}ub{v} are passed as floats.  Setting it false will
  * mean all colors *except* Color{34}f{v} are passed as ubytes.
  *

@@ -1,4 +1,4 @@
-/* $Id: xm_span.c,v 1.12 2001/05/10 14:21:17 brianp Exp $ */
+/* $Id: xm_span.c,v 1.13 2001/05/10 15:42:43 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2547,49 +2547,33 @@ static void write_span_mono_pixmap( MONO_SPAN_ARGS )
    XMesaGC gc = xmesa->xm_buffer->gc;
    const unsigned long pixel = xmesa_color_to_pixel(xmesa, color[RCOMP],
                color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
-   register GLboolean write_all;
    register GLuint i;
    XMesaSetForeground( xmesa->display, gc, pixel );
    y = FLIP(xmesa->xm_buffer, y);
-   write_all = GL_TRUE;
-   for (i=0;i<n;i++) {
-      if (!mask[i]) {
-	 write_all = GL_FALSE;
-	 break;
-      }
-   }
-   if (write_all) {
-      XMesaFillRectangle( dpy, buffer, gc, (int) x, (int) y, n, 1 );
-   }
-   else {
-#if 0
-      for (i=0;i<n;i++,x++) {
-	 if (mask[i]) {
-	    XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
-	 }
-      }
-#else
-      /* This version is usually faster.  Contributed by Jeff Epler
-       * and cleaned up by Keith Whitwell.
+
+   /* New code contributed by Jeff Epler and cleaned up by Keith
+    * Whitwell.  
+    */
+   for (i = 0; i < n; ) {
+      GLuint start = i;
+
+      /* Identify and emit contiguous rendered pixels
        */
-      for (i = 0; i < n; ) {
-         GLuint start = i;
-         /* Identify and emit contiguous rendered pixels
-          */
-         for( ; i < n && mask[i]; i++)
-            /* Nothing */;
-         if (start < i) 
-            XMesaFillRectangle( dpy, buffer, gc,
-                                (int)(x+start), (int) y,
-                                (int)(i-start), 1);
-         /* Eat up non-rendered pixels
-          */
-         for(; i < n && !mask[i]; i++)
-            /* Nothing */;
-      }
-#endif
+      while (i < n && mask[i])
+	 i++;
+
+      if (start < i) 
+	 XMesaFillRectangle( dpy, buffer, gc,
+			     (int)(x+start), (int) y,
+			     (int)(i-start), 1);
+
+      /* Eat up non-rendered pixels
+       */
+      while (i < n && !mask[i])
+	 i++;
    }
 }
+
 
 
 static void write_span_mono_index_pixmap( const GLcontext *ctx, GLuint n,
@@ -2600,26 +2584,27 @@ static void write_span_mono_index_pixmap( const GLcontext *ctx, GLuint n,
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
-   register GLboolean write_all;
    register GLuint i;
    XMesaSetForeground( xmesa->display, gc, colorIndex );
    y = FLIP(xmesa->xm_buffer, y);
-   write_all = GL_TRUE;
-   for (i=0;i<n;i++) {
-      if (!mask[i]) {
-	 write_all = GL_FALSE;
-	 break;
-      }
-   }
-   if (write_all) {
-      XMesaFillRectangle( dpy, buffer, gc, (int) x, (int) y, n, 1 );
-   }
-   else {
-      for (i=0;i<n;i++,x++) {
-	 if (mask[i]) {
-	    XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
-	 }
-      }
+
+   for (i = 0 ; i < n ;) {
+      GLuint start = i;
+      
+      /* Identify and emit contiguous rendered pixels 
+       */
+      while (i < n && mask[i])
+	 i++;
+
+      if (start < i) 
+	 XMesaFillRectangle( dpy, buffer, gc, 
+			     (int)(x+start), (int) y, 
+			     (int)(i-start), 1);
+
+      /* Eat up non-rendered pixels
+       */
+      while (i < n && !mask[i])
+	 i++;
    }
 }
 
