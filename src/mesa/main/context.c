@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.59 2000/04/12 00:27:37 brianp Exp $ */
+/* $Id: context.c,v 1.60 2000/04/17 17:57:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,6 +32,7 @@
 #include "accum.h"
 #include "alphabuf.h"
 #include "clip.h"
+#include "colortab.h"
 #include "context.h"
 #include "cva.h"
 #include "depth.h"
@@ -778,24 +779,6 @@ static void init_2d_map( struct gl_2d_map *map, int n, const float *initial )
 }
 
 
-static void init_color_table( struct gl_color_table *p )
-{
-   p->Table[0] = 255;
-   p->Table[1] = 255;
-   p->Table[2] = 255;
-   p->Table[3] = 255;
-   p->Size = 1;
-   p->IntFormat = GL_RGBA;
-   p->Format = GL_RGBA;
-   p->RedSize = 8;
-   p->GreenSize = 8;
-   p->BlueSize = 8;
-   p->AlphaSize = 8;
-   p->IntensitySize = 0;
-   p->LuminanceSize = 0;
-}
-
-
 /*
  * Initialize the attribute groups in a GLcontext.
  */
@@ -822,6 +805,7 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->Const.MaxLineWidthAA = MAX_LINE_WIDTH;
    ctx->Const.LineWidthGranularity = LINE_WIDTH_GRANULARITY;
    ctx->Const.NumAuxBuffers = NUM_AUX_BUFFERS;
+   ctx->Const.MaxColorTableSize = MAX_COLOR_TABLE_SIZE;
 
    /* Modelview matrix */
    gl_matrix_ctr( &ctx->ModelView );
@@ -1207,7 +1191,7 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->Texture.Enabled = 0;
    for (i=0; i<MAX_TEXTURE_UNITS; i++)
       init_texture_unit( ctx, i );
-   init_color_table(&ctx->Texture.Palette);
+   _mesa_init_colortable(&ctx->Texture.Palette);
 
    /* Transformation group */
    ctx->Transform.MatrixMode = GL_MODELVIEW;
@@ -1325,12 +1309,12 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->CurrentPos = 0;
 
    /* Color tables */
-   init_color_table(&ctx->ColorTable);
-   init_color_table(&ctx->ProxyColorTable);
-   init_color_table(&ctx->PostConvolutionColorTable);
-   init_color_table(&ctx->ProxyPostConvolutionColorTable);
-   init_color_table(&ctx->PostColorMatrixColorTable);
-   init_color_table(&ctx->ProxyPostColorMatrixColorTable);
+   _mesa_init_colortable(&ctx->ColorTable);
+   _mesa_init_colortable(&ctx->ProxyColorTable);
+   _mesa_init_colortable(&ctx->PostConvolutionColorTable);
+   _mesa_init_colortable(&ctx->ProxyPostConvolutionColorTable);
+   _mesa_init_colortable(&ctx->PostColorMatrixColorTable);
+   _mesa_init_colortable(&ctx->ProxyPostColorMatrixColorTable);
 
    /* Miscellaneous */
    ctx->NewState = NEW_ALL;
@@ -1598,7 +1582,7 @@ void gl_free_context_data( GLcontext *ctx )
 
    FREE( ctx->PB );
 
-   if(ctx->input != ctx->VB->IM)
+   if (ctx->input != ctx->VB->IM)
       gl_immediate_free( ctx->input );
 
    gl_vb_free( ctx->VB );
@@ -1660,6 +1644,11 @@ void gl_free_context_data( GLcontext *ctx )
       FREE( ctx->EvalMap.Map2Texture3.Points );
    if (ctx->EvalMap.Map2Texture4.Points)
       FREE( ctx->EvalMap.Map2Texture4.Points );
+
+   _mesa_free_colortable_data( &ctx->ColorTable );
+   _mesa_free_colortable_data( &ctx->PostConvolutionColorTable );
+   _mesa_free_colortable_data( &ctx->PostColorMatrixColorTable );
+   _mesa_free_colortable_data( &ctx->Texture.Palette );
 
    /* Free cache of immediate buffers. */
    while (ctx->nr_im_queued-- > 0) {

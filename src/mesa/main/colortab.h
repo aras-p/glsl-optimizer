@@ -1,4 +1,4 @@
-/* $Id: colortab.h,v 1.6 2000/04/12 00:27:37 brianp Exp $ */
+/* $Id: colortab.h,v 1.7 2000/04/17 17:57:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,13 @@
 
 
 #include "types.h"
+
+
+extern void
+_mesa_init_colortable( struct gl_color_table *p );
+
+extern void
+_mesa_free_colortable_data( struct gl_color_table *p );
 
 
 extern void

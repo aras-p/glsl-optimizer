@@ -332,7 +332,7 @@ void fxDDTexDel(GLcontext *ctx, struct gl_texture_object *tObj)
      fprintf(stderr,"fxmesa: fxDDTexDel(%d,%x)\n",tObj->Name,(GLuint)ti);
   }
 
-  if(!ti)
+  if (!ti)
     return;
 
   fxTMFreeTexture(fxMesa,tObj);
@@ -343,76 +343,104 @@ void fxDDTexDel(GLcontext *ctx, struct gl_texture_object *tObj)
   ctx->NewState|=NEW_TEXTURING;
 }
 
+
+
+/*
+ * Convert gl_color_table table to Glide's format.
+ */
+
+static void convertPalette(FxU32 data[256], const struct gl_color_table *table)
+{
+  const GLubyte *tableUB = (const GLubyte *) table->Table;
+  GLint width = table->Size;
+  FxU32 r, g, b, a;
+  GLint i;
+
+  ASSERT(table->TableType == GL_UNSIGNED_BYTE);
+
+  switch (table->Format) {
+    case GL_INTENSITY:
+      for (i = 0; i < width; i++) {
+        r = tableUB[i];
+        g = tableUB[i];
+        b = tableUB[i];
+        a = tableUB[i];
+        data[i] = (a << 24) | (r << 16) | (g << 8) | b;
+      }
+      break;
+    case GL_LUMINANCE:
+      for (i = 0; i < width; i++) {
+        r = tableUB[i];
+        g = tableUB[i];
+        b = tableUB[i];
+        a = 255;
+        data[i] = (a << 24) | (r << 16) | (g << 8) | b;
+      }
+      break;
+    case GL_ALPHA:
+      for (i = 0; i < width; i++) {
+        r = g = b = 255;
+        a = tableUB[i];
+        data[i] = (a << 24) | (r << 16) | (g << 8) | b;
+      }
+      break;
+    case GL_LUMINANCE_ALPHA:
+      for (i = 0; i < width; i++) {
+        r = g = b = tableUB[i*2+0];
+        a = tableUB[i*2+1];
+        data[i] = (a << 24) | (r << 16) | (g << 8) | b;
+      }
+      break;
+    case GL_RGB:
+      for (i = 0; i < width; i++) {
+        r = tableUB[i*3+0];
+        g = tableUB[i*3+1];
+        b = tableUB[i*3+2];
+        a = 255;
+        data[i] = (a << 24) | (r << 16) | (g << 8) | b;
+      }
+      break;
+    case GL_RGBA:
+      for (i = 0; i < width; i++) {
+        r = tableUB[i*4+0];
+        g = tableUB[i*4+1];
+        b = tableUB[i*4+2];
+        a = tableUB[i*4+3];
+        data[i] = (a << 24) | (r << 16) | (g << 8) | b;
+      }
+      break;
+  }
+}
+
+
 void fxDDTexPalette(GLcontext *ctx, struct gl_texture_object *tObj)
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
-  int i;
-  FxU32 r,g,b,a;
-  tfxTexInfo *ti;
 
-  if(tObj) {  
-     if (MESA_VERBOSE&VERBOSE_DRIVER) {
-	fprintf(stderr,"fxmesa: fxDDTexPalette(%d,%x)\n",tObj->Name,(GLuint)tObj->DriverData);
-     }
-
-    if(tObj->Palette.Format!=GL_RGBA) {
-#ifndef FX_SILENT
-      fprintf(stderr,"fx Driver: unsupported palette format in texpalette()\n");
-#endif
-      return;
+  if (tObj) {
+    /* per-texture palette */
+    tfxTexInfo *ti;
+    if (MESA_VERBOSE&VERBOSE_DRIVER) {
+      fprintf(stderr,"fxmesa: fxDDTexPalette(%d,%x)\n",
+              tObj->Name,(GLuint)tObj->DriverData);
     }
-
-    if(tObj->Palette.Size>256) {
-#ifndef FX_SILENT
-      fprintf(stderr,"fx Driver: unsupported palette size in texpalette()\n");
-#endif
-      return;
-    }
-
     if (!tObj->DriverData)
       tObj->DriverData=fxAllocTexObjData(fxMesa);
-  
     ti=fxTMGetTexInfo(tObj);
-
-    for(i=0;i<tObj->Palette.Size;i++) {
-      r=tObj->Palette.Table[i*4];
-      g=tObj->Palette.Table[i*4+1];
-      b=tObj->Palette.Table[i*4+2];
-      a=tObj->Palette.Table[i*4+3];
-      ti->palette.data[i]=(a<<24)|(r<<16)|(g<<8)|b;
-    }
-
+    convertPalette(ti->palette.data, &tObj->Palette);
     fxTexInvalidate(ctx,tObj);
-  } else {
-     if (MESA_VERBOSE&VERBOSE_DRIVER) {
-	fprintf(stderr,"fxmesa: fxDDTexPalette(global)\n");
-     }
-    if(ctx->Texture.Palette.Format!=GL_RGBA) {
-#ifndef FX_SILENT
-      fprintf(stderr,"fx Driver: unsupported palette format in texpalette()\n");
-#endif
-      return;
+  }
+  else {
+    /* global texture palette */
+    if (MESA_VERBOSE&VERBOSE_DRIVER) {
+      fprintf(stderr,"fxmesa: fxDDTexPalette(global)\n");
     }
-
-    if(ctx->Texture.Palette.Size>256) {
-#ifndef FX_SILENT
-      fprintf(stderr,"fx Driver: unsupported palette size in texpalette()\n");
-#endif
-      return;
-    }
-
-    for(i=0;i<ctx->Texture.Palette.Size;i++) {
-      r=ctx->Texture.Palette.Table[i*4];
-      g=ctx->Texture.Palette.Table[i*4+1];
-      b=ctx->Texture.Palette.Table[i*4+2];
-      a=ctx->Texture.Palette.Table[i*4+3];
-      fxMesa->glbPalette.data[i]=(a<<24)|(r<<16)|(g<<8)|b;
-    }
-
+    convertPalette(fxMesa->glbPalette.data, &ctx->Texture.Palette);
     fxMesa->new_state|=FX_NEW_TEXTURING;
     ctx->Driver.RenderStart = fxSetupFXUnits;
   }
 }
+
 
 void fxDDTexUseGlbPalette(GLcontext *ctx, GLboolean state)
 {

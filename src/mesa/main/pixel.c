@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.8 2000/04/17 15:13:53 brianp Exp $ */
+/* $Id: pixel.c,v 1.9 2000/04/17 17:57:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -726,40 +726,75 @@ void
 _mesa_lookup_rgba(const struct gl_color_table *table,
                   GLuint n, GLfloat rgba[][4])
 {
+   ASSERT(table->TableType == GL_FLOAT);
+   if (!table->Table)
+      return;
+
    switch (table->Format) {
       case GL_INTENSITY:
-         {
+         /* replace RGBA with I */
+         if (table->TableType == GL_UNSIGNED_BYTE) {
             const GLfloat scale = (GLfloat) (table->Size - 1);
-            const GLfloat *lut = table->TableF;
+            const GLubyte *lut = (const GLubyte *) table->Table;
             GLuint i;
-            /* replace RGBA with I */
             for (i = 0; i < n; i++) {
                GLint j = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
-               GLubyte c = lut[j];
+               GLfloat c = lut[j] * (1.0F / 255.0F);
+               rgba[i][RCOMP] = rgba[i][GCOMP] =
+                  rgba[i][BCOMP] = rgba[i][ACOMP] = c;
+            }
+
+         }
+         else {
+            const GLfloat scale = (GLfloat) (table->Size - 1);
+            const GLfloat *lut = (const GLfloat *) table->Table;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               GLint j = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
+               GLfloat c = lut[j];
                rgba[i][RCOMP] = rgba[i][GCOMP] =
                   rgba[i][BCOMP] = rgba[i][ACOMP] = c;
             }
          }
          break;
       case GL_LUMINANCE:
-         {
+         /* replace RGB with L */
+         if (table->TableType == GL_UNSIGNED_BYTE) {
             const GLfloat scale = (GLfloat) (table->Size - 1);
-            const GLfloat *lut = table->TableF;
+            const GLubyte *lut = (const GLubyte *) table->Table;
             GLuint i;
-            /* replace RGB with L */
             for (i = 0; i < n; i++) {
                GLint j = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
-               GLubyte c = lut[j];
+               GLfloat c = lut[j] * (1.0F / 255.0F);
+               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = c;
+            }
+         }
+         else {
+            const GLfloat scale = (GLfloat) (table->Size - 1);
+            const GLfloat *lut = (const GLfloat *) table->Table;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               GLint j = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
+               GLfloat c = lut[j];
                rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = c;
             }
          }
          break;
       case GL_ALPHA:
-         {
+         /* replace A with A */
+         if (table->TableType == GL_UNSIGNED_BYTE) {
             const GLfloat scale = (GLfloat) (table->Size - 1);
-            const GLfloat *lut = table->TableF;
+            const GLubyte *lut = (const GLubyte *) table->Table;
             GLuint i;
-            /* replace A with A */
+            for (i = 0; i < n; i++) {
+               GLint j = (GLint) (rgba[i][ACOMP] * scale + 0.5F);
+               rgba[i][ACOMP] = lut[j] * (1.0F / 255.0F);
+            }
+         }
+         else  {
+            const GLfloat scale = (GLfloat) (table->Size - 1);
+            const GLfloat *lut = (const GLfloat *) table->Table;
+            GLuint i;
             for (i = 0; i < n; i++) {
                GLint j = (GLint) (rgba[i][ACOMP] * scale + 0.5F);
                rgba[i][ACOMP] = lut[j];
@@ -767,27 +802,53 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          }
          break;
       case GL_LUMINANCE_ALPHA:
-         {
+         /* replace RGBA with LLLA */
+         if (table->TableType == GL_UNSIGNED_BYTE) {
             const GLfloat scale = (GLfloat) (table->Size - 1);
-            const GLfloat *lut = table->TableF;
+            const GLubyte *lut = (const GLubyte *) table->Table;
             GLuint i;
-            /* replace RGBA with LLLA */
             for (i = 0; i < n; i++) {
                GLint jL = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
                GLint jA = (GLint) (rgba[i][ACOMP] * scale + 0.5F);
-               GLubyte luminance = lut[jL * 2 + 0];
-               GLubyte alpha     = lut[jA * 2 + 1];
+               GLfloat luminance = lut[jL * 2 + 0] * (1.0F / 255.0F);
+               GLfloat alpha     = lut[jA * 2 + 1] * (1.0F / 255.0F);
+               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = luminance;
+               rgba[i][ACOMP] = alpha;;
+            }
+         }
+         else {
+            const GLfloat scale = (GLfloat) (table->Size - 1);
+            const GLfloat *lut = (const GLfloat *) table->Table;
+            GLuint i;
+            for (i = 0; i < n; i++) {
+               GLint jL = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
+               GLint jA = (GLint) (rgba[i][ACOMP] * scale + 0.5F);
+               GLfloat luminance = lut[jL * 2 + 0];
+               GLfloat alpha     = lut[jA * 2 + 1];
                rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = luminance;
                rgba[i][ACOMP] = alpha;;
             }
          }
          break;
       case GL_RGB:
-         {
+         /* replace RGB with RGB */
+         if (table->TableType == GL_UNSIGNED_BYTE) {
             const GLfloat scale = (GLfloat) (table->Size - 1);
-            const GLfloat *lut = table->TableF;
+            const GLubyte *lut = (const GLubyte *) table->Table;
             GLuint i;
-            /* replace RGB with RGB */
+            for (i = 0; i < n; i++) {
+               GLint jR = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
+               GLint jG = (GLint) (rgba[i][GCOMP] * scale + 0.5F);
+               GLint jB = (GLint) (rgba[i][BCOMP] * scale + 0.5F);
+               rgba[i][RCOMP] = lut[jR * 3 + 0] * (1.0F / 255.0F);
+               rgba[i][GCOMP] = lut[jG * 3 + 1] * (1.0F / 255.0F);
+               rgba[i][BCOMP] = lut[jB * 3 + 2] * (1.0F / 255.0F);
+            }
+         }
+         else {
+            const GLfloat scale = (GLfloat) (table->Size - 1);
+            const GLfloat *lut = (const GLfloat *) table->Table;
+            GLuint i;
             for (i = 0; i < n; i++) {
                GLint jR = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
                GLint jG = (GLint) (rgba[i][GCOMP] * scale + 0.5F);
@@ -799,11 +860,26 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          }
          break;
       case GL_RGBA:
-         {
+         /* replace RGBA with RGBA */
+         if (table->TableType == GL_UNSIGNED_BYTE) {
             const GLfloat scale = (GLfloat) (table->Size - 1);
-            const GLfloat *lut = table->TableF;
+            const GLubyte *lut = (const GLubyte *) table->Table;
             GLuint i;
-            /* replace RGBA with RGBA */
+            for (i = 0; i < n; i++) {
+               GLint jR = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
+               GLint jG = (GLint) (rgba[i][GCOMP] * scale + 0.5F);
+               GLint jB = (GLint) (rgba[i][BCOMP] * scale + 0.5F);
+               GLint jA = (GLint) (rgba[i][ACOMP] * scale + 0.5F);
+               rgba[i][RCOMP] = lut[jR * 4 + 0] * (1.0F / 255.0F);
+               rgba[i][GCOMP] = lut[jG * 4 + 1] * (1.0F / 255.0F);
+               rgba[i][BCOMP] = lut[jB * 4 + 2] * (1.0F / 255.0F);
+               rgba[i][ACOMP] = lut[jA * 4 + 3] * (1.0F / 255.0F);
+            }
+         }
+         else {
+            const GLfloat scale = (GLfloat) (table->Size - 1);
+            const GLfloat *lut = (const GLfloat *) table->Table;
+            GLuint i;
             for (i = 0; i < n; i++) {
                GLint jR = (GLint) (rgba[i][RCOMP] * scale + 0.5F);
                GLint jG = (GLint) (rgba[i][GCOMP] * scale + 0.5F);

@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.14 2000/04/17 15:13:53 brianp Exp $ */
+/* $Id: colortab.c,v 1.15 2000/04/17 17:57:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,11 +33,48 @@
 #include "context.h"
 #include "image.h"
 #include "macros.h"
+#include "mem.h"
 #include "mmath.h"
 #include "span.h"
 #include "teximage.h"
 #endif
 
+
+
+void
+_mesa_init_colortable( struct gl_color_table *p )
+{
+   p->TableType = GL_UNSIGNED_BYTE;
+   /* allocate a width=1 table by default */
+   p->Table = CALLOC(4 * sizeof(GLubyte));
+   if (p->Table) {
+      GLubyte *t = (GLubyte *) p->Table;
+      t[0] = 255;
+      t[1] = 255;
+      t[2] = 255;
+      t[3] = 255;
+   }
+   p->Size = 1;
+   p->IntFormat = GL_RGBA;
+   p->Format = GL_RGBA;
+   p->RedSize = 8;
+   p->GreenSize = 8;
+   p->BlueSize = 8;
+   p->AlphaSize = 8;
+   p->IntensitySize = 0;
+   p->LuminanceSize = 0;
+}
+
+
+
+void
+_mesa_free_colortable_data( struct gl_color_table *p )
+{
+   if (p->Table) {
+      FREE(p->Table);
+      p->Table = NULL;
+   }
+}
 
 
 /*
@@ -216,9 +253,9 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
       return;
    }
 
-   if (width < 1 || width > MAX_COLOR_TABLE_SIZE
+   if (width < 1 || width > ctx->Const.MaxColorTableSize
        || _mesa_bitcount(width) != 1) {
-      if (width > MAX_COLOR_TABLE_SIZE)
+      if (width > ctx->Const.MaxColorTableSize)
          gl_error(ctx, GL_TABLE_TOO_LARGE, "glColorTable(width)");
       else
          gl_error(ctx, GL_INVALID_VALUE, "glColorTable(width)");
@@ -237,55 +274,71 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    set_component_sizes(table);
 
    if (!proxy) {
-      _mesa_unpack_ubyte_color_span(ctx, width, table->Format,
-                                    table->Table,  /* dest */
-                                    format, type, data,
-                                    &ctx->Unpack, GL_TRUE);
-
+      /* free old table, if any */
+      if (table->Table) {
+         FREE(table->Table);
+      }
       if (floatTable) {
+         GLubyte tableUB[MAX_COLOR_TABLE_SIZE * 4];
+         GLfloat *tableF;
+         GLuint i;
+
+         _mesa_unpack_ubyte_color_span(ctx, width, table->Format,
+                                       tableUB,  /* dest */
+                                       format, type, data,
+                                       &ctx->Unpack, GL_TRUE);
+
+         table->TableType = GL_FLOAT;
+         table->Table = MALLOC(4 * width * sizeof(GLfloat));
+         if (!table->Table) {
+            gl_error(ctx, GL_OUT_OF_MEMORY, "glColorTable");
+            return;
+         }
+
          /* Apply scale and bias and convert GLubyte values to GLfloats
           * in [0, 1].  Store results in the tableF[].
           */
-         GLuint i;
          rScale /= 255.0;
          gScale /= 255.0;
          bScale /= 255.0;
          aScale /= 255.0;
+         tableF = (GLfloat *) table->Table;
+
          switch (table->Format) {
             case GL_INTENSITY:
                for (i = 0; i < width; i++) {
-                  table->TableF[i] = table->Table[i] * rScale + rBias;
+                  tableF[i] = tableUB[i] * rScale + rBias;
                }
                break;
             case GL_LUMINANCE:
                for (i = 0; i < width; i++) {
-                  table->TableF[i] = table->Table[i] * rScale + rBias;
+                  tableF[i] = tableUB[i] * rScale + rBias;
                }
                break;
             case GL_ALPHA:
                for (i = 0; i < width; i++) {
-                  table->TableF[i] = table->Table[i] * aScale + aBias;
+                  tableF[i] = tableUB[i] * aScale + aBias;
                }
                break;
             case GL_LUMINANCE_ALPHA:
                for (i = 0; i < width; i++) {
-                  table->TableF[i*2+0] = table->Table[i*2+0] * rScale + rBias;
-                  table->TableF[i*2+1] = table->Table[i*2+1] * aScale + aBias;
+                  tableF[i*2+0] = tableUB[i*2+0] * rScale + rBias;
+                  tableF[i*2+1] = tableUB[i*2+1] * aScale + aBias;
                }
                break;
             case GL_RGB:
                for (i = 0; i < width; i++) {
-                  table->TableF[i*3+0] = table->Table[i*3+0] * rScale + rBias;
-                  table->TableF[i*3+1] = table->Table[i*3+1] * gScale + gBias;
-                  table->TableF[i*3+2] = table->Table[i*3+2] * bScale + bBias;
+                  tableF[i*3+0] = tableUB[i*3+0] * rScale + rBias;
+                  tableF[i*3+1] = tableUB[i*3+1] * gScale + gBias;
+                  tableF[i*3+2] = tableUB[i*3+2] * bScale + bBias;
                }
                break;
             case GL_RGBA:
                for (i = 0; i < width; i++) {
-                  table->TableF[i*4+0] = table->Table[i*4+0] * rScale + rBias;
-                  table->TableF[i*4+1] = table->Table[i*4+1] * gScale + gBias;
-                  table->TableF[i*4+2] = table->Table[i*4+2] * bScale + bBias;
-                  table->TableF[i*4+3] = table->Table[i*4+3] * aScale + aBias;
+                  tableF[i*4+0] = tableUB[i*4+0] * rScale + rBias;
+                  tableF[i*4+1] = tableUB[i*4+1] * gScale + gBias;
+                  tableF[i*4+2] = tableUB[i*4+2] * bScale + bBias;
+                  tableF[i*4+3] = tableUB[i*4+3] * aScale + aBias;
                }
                break;
             default:
@@ -293,7 +346,20 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
                return;
          }
       }
-   }
+      else {
+         /* store GLubyte table */
+         table->TableType = GL_UNSIGNED_BYTE;
+         table->Table = MALLOC(4 * width * sizeof(GLubyte));
+         if (!table->Table) {
+            gl_error(ctx, GL_OUT_OF_MEMORY, "glColorTable");
+            return;
+         }
+         _mesa_unpack_ubyte_color_span(ctx, width, table->Format,
+                                       table->Table,  /* dest */
+                                       format, type, data,
+                                       &ctx->Unpack, GL_TRUE);
+      } /* floatTable */
+   } /* proxy */
 
    if (texObj || target == GL_SHARED_TEXTURE_PALETTE_EXT) {
       /* texture object palette, texObj==NULL means the shared palette */
@@ -370,10 +436,22 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
       return;
    }
 
-   dest = table->Table + start * comps * sizeof(GLubyte);
-   _mesa_unpack_ubyte_color_span(ctx, count, table->Format, dest,
-                                 format, type, data,
-                                 &ctx->Unpack, GL_TRUE);
+   if (!table->Table) {
+      gl_error(ctx, GL_OUT_OF_MEMORY, "glColorSubTable");
+      return;
+   }
+
+   if (table->TableType == GL_UNSIGNED_BYTE) {
+      dest = (GLubyte *) table->Table + start * comps * sizeof(GLubyte);
+      _mesa_unpack_ubyte_color_span(ctx, count, table->Format, dest,
+                                    format, type, data,
+                                    &ctx->Unpack, GL_TRUE);
+   }
+   else {
+      ASSERT(table->TableType == GL_FLOAT);
+      /* XXX todo */
+   }
+
 
    if (texObj || target == GL_SHARED_TEXTURE_PALETTE_EXT) {
       /* per-texture object palette */
@@ -450,7 +528,6 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_color_table *table = NULL;
    GLubyte rgba[MAX_COLOR_TABLE_SIZE][4];
-   GLboolean floatTable = GL_FALSE;
    GLint i;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetColorTable");
@@ -470,15 +547,12 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          break;
       case GL_COLOR_TABLE:
          table = &ctx->ColorTable;
-         floatTable = GL_TRUE;
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE:
          table = &ctx->PostConvolutionColorTable;
-         floatTable = GL_TRUE;
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE:
          table = &ctx->PostColorMatrixColorTable;
-         floatTable = GL_TRUE;
          break;
       default:
          gl_error(ctx, GL_INVALID_ENUM, "glGetColorTable(target)");
@@ -489,110 +563,122 @@ _mesa_GetColorTable( GLenum target, GLenum format,
 
    switch (table->Format) {
       case GL_ALPHA:
-         if (floatTable) {
+         if (table->TableType == GL_FLOAT) {
+            const GLfloat *tableF = (const GLfloat *) table->Table;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = 0;
                rgba[i][GCOMP] = 0;
                rgba[i][BCOMP] = 0;
-               rgba[i][ACOMP] = (GLint) (table->TableF[i] * 255.0F);
+               rgba[i][ACOMP] = (GLint) (tableF[i] * 255.0F);
             }
          }
          else {
+            const GLubyte *tableUB = (const GLubyte *) table->Table;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = 0;
                rgba[i][GCOMP] = 0;
                rgba[i][BCOMP] = 0;
-               rgba[i][ACOMP] = table->Table[i];
+               rgba[i][ACOMP] = tableUB[i];
             }
          }
          break;
       case GL_LUMINANCE:
-         if (floatTable) {
+         if (table->TableType == GL_FLOAT) {
+            const GLfloat *tableF = (const GLfloat *) table->Table;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = (GLint) (table->Table[i] * 255.0F);
-               rgba[i][GCOMP] = (GLint) (table->Table[i] * 255.0F);
-               rgba[i][BCOMP] = (GLint) (table->Table[i] * 255.0F);
+               rgba[i][RCOMP] = (GLint) (tableF[i] * 255.0F);
+               rgba[i][GCOMP] = (GLint) (tableF[i] * 255.0F);
+               rgba[i][BCOMP] = (GLint) (tableF[i] * 255.0F);
                rgba[i][ACOMP] = 255;
             }
          }
          else {
+            const GLubyte *tableUB = (const GLubyte *) table->Table;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = table->Table[i];
-               rgba[i][GCOMP] = table->Table[i];
-               rgba[i][BCOMP] = table->Table[i];
+               rgba[i][RCOMP] = tableUB[i];
+               rgba[i][GCOMP] = tableUB[i];
+               rgba[i][BCOMP] = tableUB[i];
                rgba[i][ACOMP] = 255;
             }
          }
          break;
       case GL_LUMINANCE_ALPHA:
-         if (floatTable) {
+         if (table->TableType == GL_FLOAT) {
+            const GLfloat *tableF = (const GLfloat *) table->Table;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = (GLint) (table->Table[i*2+0] * 255.0F);
-               rgba[i][GCOMP] = (GLint) (table->Table[i*2+0] * 255.0F);
-               rgba[i][BCOMP] = (GLint) (table->Table[i*2+0] * 255.0F);
-               rgba[i][ACOMP] = (GLint) (table->Table[i*2+1] * 255.0F);
+               rgba[i][RCOMP] = (GLint) (tableF[i*2+0] * 255.0F);
+               rgba[i][GCOMP] = (GLint) (tableF[i*2+0] * 255.0F);
+               rgba[i][BCOMP] = (GLint) (tableF[i*2+0] * 255.0F);
+               rgba[i][ACOMP] = (GLint) (tableF[i*2+1] * 255.0F);
             }
          }
          else {
+            const GLubyte *tableUB = (const GLubyte *) table->Table;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = table->Table[i*2+0];
-               rgba[i][GCOMP] = table->Table[i*2+0];
-               rgba[i][BCOMP] = table->Table[i*2+0];
-               rgba[i][ACOMP] = table->Table[i*2+1];
+               rgba[i][RCOMP] = tableUB[i*2+0];
+               rgba[i][GCOMP] = tableUB[i*2+0];
+               rgba[i][BCOMP] = tableUB[i*2+0];
+               rgba[i][ACOMP] = tableUB[i*2+1];
             }
          }
          break;
       case GL_INTENSITY:
-         if (floatTable) {
+         if (table->TableType == GL_FLOAT) {
+            const GLfloat *tableF = (const GLfloat *) table->Table;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = (GLint) (table->Table[i] * 255.0F);
-               rgba[i][GCOMP] = (GLint) (table->Table[i] * 255.0F);
-               rgba[i][BCOMP] = (GLint) (table->Table[i] * 255.0F);
-               rgba[i][ACOMP] = 255;
+               rgba[i][RCOMP] = (GLint) (tableF[i] * 255.0F);
+               rgba[i][GCOMP] = (GLint) (tableF[i] * 255.0F);
+               rgba[i][BCOMP] = (GLint) (tableF[i] * 255.0F);
+               rgba[i][ACOMP] = (GLint) (tableF[i] * 255.0F);
             }
          }
          else {
+            const GLubyte *tableUB = (const GLubyte *) table->Table;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = table->Table[i];
-               rgba[i][GCOMP] = table->Table[i];
-               rgba[i][BCOMP] = table->Table[i];
-               rgba[i][ACOMP] = 255;
+               rgba[i][RCOMP] = tableUB[i];
+               rgba[i][GCOMP] = tableUB[i];
+               rgba[i][BCOMP] = tableUB[i];
+               rgba[i][ACOMP] = tableUB[i];
             }
          }
          break;
       case GL_RGB:
-         if (floatTable) {
+         if (table->TableType == GL_FLOAT) {
+            const GLfloat *tableF = (const GLfloat *) table->Table;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = (GLint) (table->Table[i*3+0] * 255.0F);
-               rgba[i][GCOMP] = (GLint) (table->Table[i*3+1] * 255.0F);
-               rgba[i][BCOMP] = (GLint) (table->Table[i*3+2] * 255.0F);
+               rgba[i][RCOMP] = (GLint) (tableF[i*3+0] * 255.0F);
+               rgba[i][GCOMP] = (GLint) (tableF[i*3+1] * 255.0F);
+               rgba[i][BCOMP] = (GLint) (tableF[i*3+2] * 255.0F);
                rgba[i][ACOMP] = 255;
             }
          }
          else {
+            const GLubyte *tableUB = (const GLubyte *) table->Table;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = table->Table[i*3+0];
-               rgba[i][GCOMP] = table->Table[i*3+1];
-               rgba[i][BCOMP] = table->Table[i*3+2];
+               rgba[i][RCOMP] = tableUB[i*3+0];
+               rgba[i][GCOMP] = tableUB[i*3+1];
+               rgba[i][BCOMP] = tableUB[i*3+2];
                rgba[i][ACOMP] = 255;
             }
          }
          break;
       case GL_RGBA:
-         if (floatTable) {
+         if (table->TableType == GL_FLOAT) {
+            const GLfloat *tableF = (const GLfloat *) table->Table;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = (GLint) (table->Table[i*4+0] * 255.0F);
-               rgba[i][GCOMP] = (GLint) (table->Table[i*4+1] * 255.0F);
-               rgba[i][BCOMP] = (GLint) (table->Table[i*4+2] * 255.0F);
-               rgba[i][ACOMP] = (GLint) (table->Table[i*4+3] * 255.0F);
+               rgba[i][RCOMP] = (GLint) (tableF[i*4+0] * 255.0F);
+               rgba[i][GCOMP] = (GLint) (tableF[i*4+1] * 255.0F);
+               rgba[i][BCOMP] = (GLint) (tableF[i*4+2] * 255.0F);
+               rgba[i][ACOMP] = (GLint) (tableF[i*4+3] * 255.0F);
             }
          }
          else {
+            const GLubyte *tableUB = (const GLubyte *) table->Table;
             for (i = 0; i < table->Size; i++) {
-               rgba[i][RCOMP] = table->Table[i*4+0];
-               rgba[i][GCOMP] = table->Table[i*4+1];
-               rgba[i][BCOMP] = table->Table[i*4+2];
-               rgba[i][ACOMP] = table->Table[i*4+3];
+               rgba[i][RCOMP] = tableUB[i*4+0];
+               rgba[i][GCOMP] = tableUB[i*4+1];
+               rgba[i][BCOMP] = tableUB[i*4+2];
+               rgba[i][ACOMP] = tableUB[i*4+3];
             }
          }
          break;

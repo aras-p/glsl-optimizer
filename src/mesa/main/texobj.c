@@ -28,6 +28,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "colortab.h"
 #include "context.h"
 #include "enums.h"
 #include "hash.h"
@@ -73,13 +74,7 @@ gl_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
       obj->BaseLevel = 0;
       obj->MaxLevel = 1000;
       obj->MinMagThresh = 0.0F;
-      obj->Palette.Table[0] = 255;
-      obj->Palette.Table[1] = 255;
-      obj->Palette.Table[2] = 255;
-      obj->Palette.Table[3] = 255;
-      obj->Palette.Size = 1;
-      obj->Palette.IntFormat = GL_RGBA;
-      obj->Palette.Format = GL_RGBA;
+      _mesa_init_colortable(&obj->Palette);
 
       /* insert into linked list */
       if (shared) {
@@ -143,7 +138,9 @@ void gl_free_texture_object( struct gl_shared_state *shared,
       _mesa_HashRemove(shared->TexObjects, t->Name);
    }
 
-   /* free texture image */
+   _mesa_free_colortable_data(&t->Palette);
+
+   /* free texture images */
    {
       GLuint i;
       for (i=0;i<MAX_TEXTURE_LEVELS;i++) {
