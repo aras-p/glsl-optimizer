@@ -24,8 +24,11 @@
 
 /*
  * $Log: colors.h,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
+ * Revision 1.2  2002/01/15 18:11:36  kschultz
+ * Remove trailing CR's.   No logical changes.
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
+ * Imported sources
  *
  * Revision 1.2  1999/01/03 03:08:57  brianp
  * Ted Jump's changes
@@ -39,8 +42,11 @@
 
 /*
  * $Log: colors.h,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
+ * Revision 1.2  2002/01/15 18:11:36  kschultz
+ * Remove trailing CR's.   No logical changes.
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
+ * Imported sources
  *
  * Revision 1.2  1999/01/03 03:08:57  brianp
  * Ted Jump's changes
@@ -54,8 +60,11 @@
  
 /*
  * $Log: colors.h,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
+ * Revision 1.2  2002/01/15 18:11:36  kschultz
+ * Remove trailing CR's.   No logical changes.
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jtg
+ * Imported sources
  *
  * Revision 1.2  1999/01/03 03:08:57  brianp
  * Ted Jump's changes
