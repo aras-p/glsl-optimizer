@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.32 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: varray.c,v 1.33 2000/11/24 10:25:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -692,3 +692,48 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
 
 
 
+/* Transform the array components now, upto the setup call.  When
+ * actual draw commands arrive, the data will be merged prior to
+ * calling render_vb.  
+ */
+void
+_mesa_LockArraysEXT(GLint first, GLsizei count)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "glLockArraysEXT" );
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      fprintf(stderr, "glLockArrays %d %d\n", first, count);
+
+   if (first == 0 && count > 0 && count <= ctx->Const.MaxArrayLockSize) {
+      ctx->Array.LockFirst = first;
+      ctx->Array.LockCount = count;
+   } 
+   else {
+      ctx->Array.LockFirst = 0;
+      ctx->Array.LockCount = 0;
+   }
+
+   ctx->NewState |= _NEW_ARRAY;
+
+   if (ctx->Driver.LockArraysEXT)
+      ctx->Driver.LockArraysEXT( ctx, first, count );
+}
+
+
+void
+_mesa_UnlockArraysEXT( void )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "glUnlockArraysEXT" );
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      fprintf(stderr, "glUnlockArrays\n");
+
+   ctx->Array.LockFirst = 0;
+   ctx->Array.LockCount = 0;
+   ctx->NewState |= _NEW_ARRAY;
+
+   if (ctx->Driver.UnlockArraysEXT)
+      ctx->Driver.UnlockArraysEXT( ctx );
+}

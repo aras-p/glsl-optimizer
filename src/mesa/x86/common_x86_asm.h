@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.h,v 1.3 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: common_x86_asm.h,v 1.4 2000/11/24 10:25:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,7 +39,7 @@
 #ifndef __COMMON_X86_ASM_H__
 #define __COMMON_X86_ASM_H__
 
-/* Do not reference types.h from this file.
+/* Do not reference mtypes.h from this file.
  */
 #include "common_x86_features.h"
 

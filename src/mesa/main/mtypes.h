@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.1 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: mtypes.h,v 1.2 2000/11/24 10:25:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -208,7 +208,6 @@ struct gl_light {
    GLfloat _MatSpecular[2][3];	/* material spec * light specular */
    GLfloat _dli;			/* CI diffuse light intensity */
    GLfloat _sli;			/* CI specular light intensity */
-   GLboolean _IsMatSpecular[2];
 };
 
 
@@ -502,7 +501,6 @@ struct gl_light_attrib {
 #define LIGHT_POSITIONAL   0x4
 #define LIGHT_SPOT         0x10
 #define LIGHT_LOCAL_VIEWER 0x20
-#define LIGHT_TWO_SIDE     0x40
 
 #define LIGHT_NEED_VERTICES (LIGHT_POSITIONAL|LIGHT_LOCAL_VIEWER)
 
@@ -724,7 +722,6 @@ struct gl_stencil_attrib {
 #define ENABLE_LIGHT        0x1000000
 #define ENABLE_FOG          0x2000000
 #define ENABLE_USERCLIP     0x4000000
-#define ENABLE_VIEWCLIP     0x8000000
 #define ENABLE_NORMALIZE   0x10000000
 #define ENABLE_RESCALE     0x20000000
 #define ENABLE_POINT_ATTEN 0x40000000
@@ -976,22 +973,8 @@ struct gl_array_attrib {
 
    GLuint LockFirst;
    GLuint LockCount;
-	
 };
 
-
-/* These are used to make the ctx->Current values look like
- * arrays (with zero StrideB).
- */
-struct gl_fallback_arrays {
-   struct gl_client_array Normal;
-   struct gl_client_array Color;
-   struct gl_client_array SecondaryColor;
-   struct gl_client_array FogCoord;
-   struct gl_client_array Index;
-   struct gl_client_array TexCoord[MAX_TEXTURE_UNITS];
-   struct gl_client_array EdgeFlag;
-};
 
 
 
@@ -1428,6 +1411,9 @@ struct __GLcontextRec {
    struct _glapi_table *Save;	/* Display list save funcs */
    struct _glapi_table *Exec;	/* Execute funcs */
    struct _glapi_table *CurrentDispatch;  /* == Save or Exec !! */
+  
+   GLboolean ExecPrefersFloat;	/* What preference for color conversion? */
+   GLboolean SavePrefersFloat;
 
    GLvisual Visual;
    GLframebuffer *DrawBuffer;	/* buffer for writing */
@@ -1528,8 +1514,6 @@ struct __GLcontextRec {
    struct gl_color_table ProxyPostConvolutionColorTable;
    struct gl_color_table PostColorMatrixColorTable;
    struct gl_color_table ProxyPostColorMatrixColorTable;
-
-   struct gl_fallback_arrays Fallback; 
 
    GLenum ErrorValue;        /* Last error code */
    GLenum RenderMode;        /* either GL_RENDER, GL_SELECT, GL_FEEDBACK */

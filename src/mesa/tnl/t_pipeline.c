@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.3 2000/11/22 07:32:18 joukj Exp $ */
+/* $Id: t_pipeline.c,v 1.4 2000/11/24 10:25:12 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,6 +41,7 @@
 #include "t_bbox.h"
 #include "t_clip.h"
 #include "t_cva.h"
+#include "t_debug.h"
 #include "t_fog.h"
 #include "t_light.h"
 #include "t_pipeline.h"
@@ -55,7 +56,7 @@
 
 
 
-void gl_print_pipe_ops( const char *msg, GLuint flags )
+void _tnl_print_pipe_ops( const char *msg, GLuint flags )
 {
    fprintf(stderr,
 	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s\n",
@@ -80,13 +81,13 @@ void gl_print_pipe_ops( const char *msg, GLuint flags )
 
 /* Have to reset only those parts of the vb which are being recalculated.
  */
-void gl_reset_cva_vb( struct vertex_buffer *VB, GLuint stages )
+void _tnl_reset_cva_vb( struct vertex_buffer *VB, GLuint stages )
 {
    GLcontext *ctx = VB->ctx;
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    if (MESA_VERBOSE&VERBOSE_PIPELINE)
-      gl_print_pipe_ops( "reset cva vb", stages );
+      _tnl_print_pipe_ops( "reset cva vb", stages ); 
 
    if (stages & PIPE_OP_VERT_XFORM)
    {
@@ -142,8 +143,8 @@ static void pipeline_ctr( struct gl_pipeline *p, GLcontext *ctx, GLuint type )
    p->type = type;
    p->ops = 0;
 
-   for (i = 0 ; i < gl_default_nr_stages ; i++)
-      p->state_change |= gl_default_pipeline[i].state_change;
+   for (i = 0 ; i < _tnl_default_nr_stages ; i++) 
+      p->state_change |= _tnl_default_pipeline[i].state_change;
 }
 
 
@@ -151,12 +152,12 @@ void _tnl_pipeline_init( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-   MEMCPY( tnl->PipelineStage,
-	   gl_default_pipeline,
-	   sizeof(*gl_default_pipeline) * gl_default_nr_stages );
-
-   tnl->NrPipelineStages = gl_default_nr_stages;
-
+   MEMCPY( tnl->PipelineStage, 
+	   _tnl_default_pipeline, 
+	   sizeof(*_tnl_default_pipeline) * _tnl_default_nr_stages );
+   
+   tnl->NrPipelineStages = _tnl_default_nr_stages;
+      
    pipeline_ctr( &tnl->CVA.elt, ctx, PIPE_IMMEDIATE);
    pipeline_ctr( &tnl->CVA.pre, ctx, PIPE_PRECALC );
 }
@@ -224,7 +225,7 @@ static void build_full_precalc_pipeline( GLcontext *ctx )
 
    if (MESA_VERBOSE & VERBOSE_PIPELINE) {
       fprintf(stderr, ": Rebuild pipeline\n");
-      gl_print_vert_flags("orflag", cva->orflag);
+      _tnl_print_vert_flags("orflag", cva->orflag);
    }
 
 
@@ -290,7 +291,7 @@ static void build_full_precalc_pipeline( GLcontext *ctx )
    pre->changed_ops = changed_ops;
 }
 
-void gl_build_precalc_pipeline( GLcontext *ctx )
+void _tnl_build_precalc_pipeline( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct gl_pipeline *pre = &tnl->CVA.pre;
@@ -307,7 +308,7 @@ void gl_build_precalc_pipeline( GLcontext *ctx )
    tnl->CVA.orflag = 0;
 
    if (MESA_VERBOSE&VERBOSE_PIPELINE)
-      gl_print_pipeline( ctx, pre );
+      _tnl_print_pipeline( ctx, pre ); 
 }
 
 
@@ -378,7 +379,7 @@ static void build_full_immediate_pipeline( GLcontext *ctx )
 
 
 
-void gl_build_immediate_pipeline( GLcontext *ctx )
+void _tnl_build_immediate_pipeline( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct gl_pipeline *elt = &tnl->CVA.elt;
@@ -392,12 +393,12 @@ void gl_build_immediate_pipeline( GLcontext *ctx )
    tnl->CVA.orflag = 0;
 
    if (MESA_VERBOSE&VERBOSE_PIPELINE)
-      gl_print_pipeline( ctx, elt );
+      _tnl_print_pipeline( ctx, elt ); 
 }
 
 #define INTERESTED ~0
 
-void gl_update_pipelines( GLcontext *ctx )
+void _tnl_update_pipelines( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint newstate = ctx->NewState;
@@ -476,7 +477,7 @@ void gl_update_pipelines( GLcontext *ctx )
    cva->last_array_flags = tnl->_ArrayFlags;
 }
 
-void gl_run_pipeline( struct vertex_buffer *VB )
+void _tnl_run_pipeline( struct vertex_buffer *VB )
 {
    struct gl_pipeline *pipe = VB->pipeline;
    struct gl_pipeline_stage **stages = pipe->stages;
@@ -484,8 +485,8 @@ void gl_run_pipeline( struct vertex_buffer *VB )
 
    pipe->data_valid = 1;	/* optimized stages might want to reset this. */
 
-   if (0) gl_print_pipeline( VB->ctx, pipe );
-
+   if (0) _tnl_print_pipeline( VB->ctx, pipe );
+   
    START_FAST_MATH(x);
 
    for ( VB->Culled = 0; *stages && !VB->Culled ; stages++ )

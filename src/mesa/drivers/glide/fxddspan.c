@@ -565,6 +565,7 @@ void fxSetupDDSpanPointers(GLcontext *ctx)
  * Need this to provide at least one external definition.
  */
 
+extern int gl_fx_dummy_function_span(void);
 int gl_fx_dummy_function_span(void)
 {
   return 0;

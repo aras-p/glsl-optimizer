@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.12 2000/11/22 07:32:18 joukj Exp $ */
+/* $Id: xm_tri.c,v 1.13 2000/11/24 10:25:09 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1410,8 +1410,8 @@ static void flat_LOOKUP8_triangle( GLcontext *ctx,
 
 
 #ifdef DEBUG
-static void
-_xmesa_print_triangle_func( swrast_tri_func triFunc )
+extern void _xmesa_print_triangle_func( swrast_tri_func triFunc );
+void _xmesa_print_triangle_func( swrast_tri_func triFunc )
 {
    printf("XMesa tri func = ");
    if (triFunc ==smooth_TRUECOLOR_z_triangle)

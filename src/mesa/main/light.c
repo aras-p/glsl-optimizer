@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.27 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: light.c,v 1.28 2000/11/24 10:25:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -122,7 +122,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
       case GL_SPOT_DIRECTION:
 	 /* transform direction by inverse modelview */
 	 if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-	    _math_matrix_analyze( &ctx->ModelView );
+	    _math_matrix_analyse( &ctx->ModelView );
 	 }
 	 TRANSFORM_NORMAL( l->EyeDirection, params, ctx->ModelView.inv );
          break;
@@ -568,58 +568,48 @@ void gl_update_material( GLcontext *ctx,
    if (bitmask & (FRONT_EMISSION_BIT | FRONT_AMBIENT_BIT)) {
       struct gl_material *mat = &ctx->Light.Material[0];
       COPY_3V( ctx->Light._BaseColor[0], mat->Emission );
-      ACC_SCALE_3V( ctx->Light._BaseColor[0], mat->Ambient, ctx->Light.Model.Ambient );
+      ACC_SCALE_3V( ctx->Light._BaseColor[0], mat->Ambient, 
+		    ctx->Light.Model.Ambient );
    }
    if (bitmask & (BACK_EMISSION_BIT | BACK_AMBIENT_BIT)) {
       struct gl_material *mat = &ctx->Light.Material[1];
       COPY_3V( ctx->Light._BaseColor[1], mat->Emission );
-      ACC_SCALE_3V( ctx->Light._BaseColor[1], mat->Ambient, ctx->Light.Model.Ambient );
+      ACC_SCALE_3V( ctx->Light._BaseColor[1], mat->Ambient, 
+		    ctx->Light.Model.Ambient );
    }
 
    /* update material diffuse values */
    if (bitmask & FRONT_DIFFUSE_BIT) {
       struct gl_material *mat = &ctx->Light.Material[0];
-      GLfloat tmp[4];
-      SUB_3V( tmp, src[0].Diffuse, mat->Diffuse );
-      foreach (light, list) {
-	 ACC_SCALE_3V( light->_MatDiffuse[0], light->Diffuse, tmp );
-      }
       COPY_4FV( mat->Diffuse, src[0].Diffuse );
+      foreach (light, list) {
+	 SCALE_3V( light->_MatDiffuse[0], light->Diffuse, mat->Diffuse );
+      }
       FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[0], mat->Diffuse[3]);
    }
    if (bitmask & BACK_DIFFUSE_BIT) {
       struct gl_material *mat = &ctx->Light.Material[1];
-      GLfloat tmp[4];
-      SUB_3V( tmp, src[1].Diffuse, mat->Diffuse );
-      foreach (light, list) {
-	 ACC_SCALE_3V( light->_MatDiffuse[1], light->Diffuse, tmp );
-      }
       COPY_4FV( mat->Diffuse, src[1].Diffuse );
+      foreach (light, list) {
+	 SCALE_3V( light->_MatDiffuse[1], light->Diffuse, mat->Diffuse );
+      }
       FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[1], mat->Diffuse[3]);
    }
 
    /* update material specular values */
    if (bitmask & FRONT_SPECULAR_BIT) {
       struct gl_material *mat = &ctx->Light.Material[0];
-      GLfloat tmp[4];
-      SUB_3V( tmp, src[0].Specular, mat->Specular );
-      foreach (light, list) {
-	 ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, tmp );
-	 light->_IsMatSpecular[0] =
-	    (LEN_SQUARED_3FV(light->_MatSpecular[0]) > 1e-16);
-      }
       COPY_4FV( mat->Specular, src[0].Specular );
+      foreach (light, list) {
+	 ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, mat->Specular);
+      }
    }
    if (bitmask & BACK_SPECULAR_BIT) {
       struct gl_material *mat = &ctx->Light.Material[1];
-      GLfloat tmp[4];
-      SUB_3V( tmp, src[1].Specular, mat->Specular );
-      foreach (light, list) {
-	 ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, tmp );
-	 light->_IsMatSpecular[1] =
-	    (LEN_SQUARED_3FV(light->_MatSpecular[1]) > 1e-16);
-      }
       COPY_4FV( mat->Specular, src[1].Specular );
+      foreach (light, list) {
+	 ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, mat->Specular);
+      }
    }
 
    if (bitmask & FRONT_SHININESS_BIT) {
@@ -733,49 +723,37 @@ void gl_update_color_material( GLcontext *ctx,
    /* update light->_MatDiffuse = light's diffuse * material's diffuse */
    if (bitmask & FRONT_DIFFUSE_BIT) {
       struct gl_material *mat = &ctx->Light.Material[0];
-      GLfloat tmp[4];
-      SUB_3V( tmp, color, mat->Diffuse );
-      foreach (light, list) {
-	 ACC_SCALE_3V( light->_MatDiffuse[0], light->Diffuse, tmp );
-      }
       COPY_4FV( mat->Diffuse, color );
+      foreach (light, list) {
+	 SCALE_3V( light->_MatDiffuse[0], light->Diffuse, mat->Diffuse );
+      }
       FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[0], mat->Diffuse[3]);
    }
 
    if (bitmask & BACK_DIFFUSE_BIT) {
       struct gl_material *mat = &ctx->Light.Material[1];
-      GLfloat tmp[4];
-      SUB_3V( tmp, color, mat->Diffuse );
-      foreach (light, list) {
-	 ACC_SCALE_3V( light->_MatDiffuse[1], light->Diffuse, tmp );
-      }
       COPY_4FV( mat->Diffuse, color );
+      foreach (light, list) {
+	 SCALE_3V( light->_MatDiffuse[1], light->Diffuse, mat->Diffuse );
+      }
       FLOAT_COLOR_TO_CHAN(ctx->Light._BaseAlpha[1], mat->Diffuse[3]);
    }
 
    /* update light->_MatSpecular = light's specular * material's specular */
    if (bitmask & FRONT_SPECULAR_BIT) {
       struct gl_material *mat = &ctx->Light.Material[0];
-      GLfloat tmp[4];
-      SUB_3V( tmp, color, mat->Specular );
-      foreach (light, list) {
-	 ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, tmp );
-	 light->_IsMatSpecular[0] =
-	    (LEN_SQUARED_3FV(light->_MatSpecular[0]) > 1e-16);
-      }
       COPY_4FV( mat->Specular, color );
+      foreach (light, list) {
+	 ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, mat->Specular);
+      }
    }
 
    if (bitmask & BACK_SPECULAR_BIT) {
       struct gl_material *mat = &ctx->Light.Material[1];
-      GLfloat tmp[4];
-      SUB_3V( tmp, color, mat->Specular );
-      foreach (light, list) {
-	 ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, tmp );
-	 light->_IsMatSpecular[1] =
-	    (LEN_SQUARED_3FV(light->_MatSpecular[1]) > 1e-16);
-      }
       COPY_4FV( mat->Specular, color );
+      foreach (light, list) {
+	 ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, mat->Specular);
+      }
    }
 
    if (0)
@@ -838,51 +816,6 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
 
 
 
-
-void
-_mesa_Materialf( GLenum face, GLenum pname, GLfloat param )
-{
-   _mesa_Materialfv( face, pname, &param );
-}
-
-
-
-void
-_mesa_Materiali(GLenum face, GLenum pname, GLint param )
-{
-   _mesa_Materialiv(face, pname, &param);
-}
-
-
-void
-_mesa_Materialiv(GLenum face, GLenum pname, const GLint *params )
-{
-   GLfloat fparam[4];
-   switch (pname) {
-      case GL_AMBIENT:
-      case GL_DIFFUSE:
-      case GL_SPECULAR:
-      case GL_EMISSION:
-      case GL_AMBIENT_AND_DIFFUSE:
-         fparam[0] = INT_TO_FLOAT( params[0] );
-         fparam[1] = INT_TO_FLOAT( params[1] );
-         fparam[2] = INT_TO_FLOAT( params[2] );
-         fparam[3] = INT_TO_FLOAT( params[3] );
-         break;
-      case GL_SHININESS:
-         fparam[0] = (GLfloat) params[0];
-         break;
-      case GL_COLOR_INDEXES:
-         fparam[0] = (GLfloat) params[0];
-         fparam[1] = (GLfloat) params[1];
-         fparam[2] = (GLfloat) params[2];
-         break;
-      default:
-         /* Error will be caught later in gl_Materialfv */
-         ;
-   }
-   _mesa_Materialfv(face, pname, fparam);
-}
 
 
 void
@@ -1190,8 +1123,6 @@ gl_update_lighting( GLcontext *ctx )
 	    SCALE_3V( light->_MatAmbient[side], light->Ambient, mat->Ambient );
 	    SCALE_3V( light->_MatSpecular[side], light->Specular,
 		      mat->Specular);
-	    light->_IsMatSpecular[side] =
-	       (LEN_SQUARED_3FV(light->_MatSpecular[side]) > 1e-16);
 	 }
       }
    }

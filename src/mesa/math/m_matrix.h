@@ -1,4 +1,4 @@
-/* $Id: m_matrix.h,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_matrix.h,v 1.2 2000/11/24 10:25:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -151,7 +151,7 @@ extern void
 _math_matrix_copy( GLmatrix *to, const GLmatrix *from );
 
 extern void
-_math_matrix_analyze( GLmatrix *mat );
+_math_matrix_analyse( GLmatrix *mat );
 
 extern void
 _math_matrix_print( const GLmatrix *m );

@@ -1,4 +1,4 @@
-/* $Id: light.h,v 1.6 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: light.h,v 1.7 2000/11/24 10:25:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,18 +61,6 @@ _mesa_LightModeli( GLenum pname, GLint param );
 
 extern void
 _mesa_LightModeliv( GLenum pname, const GLint *params );
-
-extern void
-_mesa_Materialf( GLenum face, GLenum pname, GLfloat param );
-
-extern void
-_mesa_Materialfv( GLenum face, GLenum pname, const GLfloat *params );
-
-extern void
-_mesa_Materiali( GLenum face, GLenum pname, GLint param );
-
-extern void
-_mesa_Materialiv( GLenum face, GLenum pname, const GLint *params );
 
 extern void
 _mesa_GetLightfv( GLenum light, GLenum pname, GLfloat *params );

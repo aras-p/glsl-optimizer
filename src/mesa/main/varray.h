@@ -1,4 +1,4 @@
-/* $Id: varray.h,v 1.10 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: varray.h,v 1.11 2000/11/24 10:25:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,6 +35,12 @@
 extern void
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride,
                     const GLvoid *ptr);
+
+extern void
+_mesa_UnlockArraysEXT( void );
+
+extern void
+_mesa_LockArraysEXT(GLint first, GLsizei count);
 
 
 extern void

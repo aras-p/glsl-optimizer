@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.27 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: matrix.c,v 1.28 2000/11/24 10:25:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,10 +57,10 @@
 /**********************************************************************/
 
 
-#define GET_ACTIVE_MATRIX(ctx, mat, flags, where)			\
+#define GET_ACTIVE_MATRIX(ctx, mat, flags, where)		\
 do {									\
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, where);                      \
-   if (MESA_VERBOSE&VERBOSE_API) fprintf(stderr, "%s\n", where);        \
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, where);			\
+   if (MESA_VERBOSE&VERBOSE_API) fprintf(stderr, "%s\n", where);	\
    switch (ctx->Transform.MatrixMode) {					\
       case GL_MODELVIEW:						\
 	 mat = &ctx->ModelView;						\

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.47 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: state.c,v 1.48 2000/11/24 10:25:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,6 +37,7 @@
 #include "glheader.h"
 #include "accum.h"
 #include "alpha.h"
+#include "api_loopback.h"
 #include "attrib.h"
 #include "bitmap.h"
 #include "blend.h"
@@ -68,7 +69,6 @@
 #include "polygon.h"
 #include "rastpos.h"
 #include "readpix.h"
-#include "rect.h"
 #include "scissor.h"
 #include "state.h"
 #include "stencil.h"
@@ -83,10 +83,6 @@
 #include "swrast/swrast.h"
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
-#include "tnl/t_eval.h"
-#include "tnl/t_vbfill.h"
-#include "tnl/t_varray.h"
-#include "tnl/t_rect.h"
 #endif
 
 
@@ -119,6 +115,9 @@ _mesa_init_no_op_table(struct _glapi_table *table, GLuint tableSize)
 /*
  * Initialize the given dispatch table with pointers to Mesa's
  * immediate-mode commands.
+ *
+ * Pointers to begin/end object commands and a few others
+ * are provided via the vtxfmt interface elsewhere.
  */
 void
 _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
@@ -126,10 +125,11 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    /* first initialize all dispatch slots to no-op */
    _mesa_init_no_op_table(exec, tableSize);
 
+   _mesa_loopback_init_api_table( exec, GL_FALSE );
+
    /* load the dispatch slots we understand */
    exec->Accum = _mesa_Accum;
    exec->AlphaFunc = _mesa_AlphaFunc;
-   exec->Begin = _mesa_Begin;
    exec->Bitmap = _mesa_Bitmap;
    exec->BlendFunc = _mesa_BlendFunc;
    exec->CallList = _mesa_CallList;
@@ -141,38 +141,6 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->ClearIndex = _mesa_ClearIndex;
    exec->ClearStencil = _mesa_ClearStencil;
    exec->ClipPlane = _mesa_ClipPlane;
-   exec->Color3b = _mesa_Color3b;
-   exec->Color3bv = _mesa_Color3bv;
-   exec->Color3d = _mesa_Color3d;
-   exec->Color3dv = _mesa_Color3dv;
-   exec->Color3f = _mesa_Color3f;
-   exec->Color3fv = _mesa_Color3fv;
-   exec->Color3i = _mesa_Color3i;
-   exec->Color3iv = _mesa_Color3iv;
-   exec->Color3s = _mesa_Color3s;
-   exec->Color3sv = _mesa_Color3sv;
-   exec->Color3ub = _mesa_Color3ub;
-   exec->Color3ubv = _mesa_Color3ubv;
-   exec->Color3ui = _mesa_Color3ui;
-   exec->Color3uiv = _mesa_Color3uiv;
-   exec->Color3us = _mesa_Color3us;
-   exec->Color3usv = _mesa_Color3usv;
-   exec->Color4b = _mesa_Color4b;
-   exec->Color4bv = _mesa_Color4bv;
-   exec->Color4d = _mesa_Color4d;
-   exec->Color4dv = _mesa_Color4dv;
-   exec->Color4f = _mesa_Color4f;
-   exec->Color4fv = _mesa_Color4fv;
-   exec->Color4i = _mesa_Color4i;
-   exec->Color4iv = _mesa_Color4iv;
-   exec->Color4s = _mesa_Color4s;
-   exec->Color4sv = _mesa_Color4sv;
-   exec->Color4ub = _mesa_Color4ub;
-   exec->Color4ubv = _mesa_Color4ubv;
-   exec->Color4ui = _mesa_Color4ui;
-   exec->Color4uiv = _mesa_Color4uiv;
-   exec->Color4us = _mesa_Color4us;
-   exec->Color4usv = _mesa_Color4usv;
    exec->ColorMask = _mesa_ColorMask;
    exec->ColorMaterial = _mesa_ColorMaterial;
    exec->CopyPixels = _mesa_CopyPixels;
@@ -184,33 +152,12 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->Disable = _mesa_Disable;
    exec->DrawBuffer = _mesa_DrawBuffer;
    exec->DrawPixels = _mesa_DrawPixels;
-   exec->EdgeFlag = _mesa_EdgeFlag;
-   exec->EdgeFlagv = _mesa_EdgeFlagv;
    exec->Enable = _mesa_Enable;
-   exec->End = _mesa_End;
    exec->EndList = _mesa_EndList;
-   exec->EvalCoord1d = _mesa_EvalCoord1d;
-   exec->EvalCoord1dv = _mesa_EvalCoord1dv;
-   exec->EvalCoord1f = _mesa_EvalCoord1f;
-   exec->EvalCoord1fv = _mesa_EvalCoord1fv;
-   exec->EvalCoord2d = _mesa_EvalCoord2d;
-   exec->EvalCoord2dv = _mesa_EvalCoord2dv;
-   exec->EvalCoord2f = _mesa_EvalCoord2f;
-   exec->EvalCoord2fv = _mesa_EvalCoord2fv;
-   exec->EvalMesh1 = _mesa_EvalMesh1;
-   exec->EvalMesh2 = _mesa_EvalMesh2;
-   exec->EvalPoint1 = _mesa_EvalPoint1;
-   exec->EvalPoint2 = _mesa_EvalPoint2;
    exec->FeedbackBuffer = _mesa_FeedbackBuffer;
    exec->Finish = _mesa_Finish;
    exec->Flush = _mesa_Flush;
-
-   exec->FogCoordfEXT = _mesa_FogCoordfEXT;
-   exec->FogCoordfvEXT = _mesa_FogCoordfvEXT;
-   exec->FogCoorddEXT = _mesa_FogCoorddEXT;
-   exec->FogCoorddvEXT = _mesa_FogCoorddvEXT;
    exec->FogCoordPointerEXT = _mesa_FogCoordPointerEXT;
-
    exec->Fogf = _mesa_Fogf;
    exec->Fogfv = _mesa_Fogfv;
    exec->Fogi = _mesa_Fogi;
@@ -248,14 +195,6 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->GetTexParameteriv = _mesa_GetTexParameteriv;
    exec->Hint = _mesa_Hint;
    exec->IndexMask = _mesa_IndexMask;
-   exec->Indexd = _mesa_Indexd;
-   exec->Indexdv = _mesa_Indexdv;
-   exec->Indexf = _mesa_Indexf;
-   exec->Indexfv = _mesa_Indexfv;
-   exec->Indexi = _mesa_Indexi;
-   exec->Indexiv = _mesa_Indexiv;
-   exec->Indexs = _mesa_Indexs;
-   exec->Indexsv = _mesa_Indexsv;
    exec->InitNames = _mesa_InitNames;
    exec->IsEnabled = _mesa_IsEnabled;
    exec->IsList = _mesa_IsList;
@@ -283,24 +222,10 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->MapGrid1f = _mesa_MapGrid1f;
    exec->MapGrid2d = _mesa_MapGrid2d;
    exec->MapGrid2f = _mesa_MapGrid2f;
-   exec->Materialf = _mesa_Materialf;
-   exec->Materialfv = _mesa_Materialfv;
-   exec->Materiali = _mesa_Materiali;
-   exec->Materialiv = _mesa_Materialiv;
    exec->MatrixMode = _mesa_MatrixMode;
    exec->MultMatrixd = _mesa_MultMatrixd;
    exec->MultMatrixf = _mesa_MultMatrixf;
    exec->NewList = _mesa_NewList;
-   exec->Normal3b = _mesa_Normal3b;
-   exec->Normal3bv = _mesa_Normal3bv;
-   exec->Normal3d = _mesa_Normal3d;
-   exec->Normal3dv = _mesa_Normal3dv;
-   exec->Normal3f = _mesa_Normal3f;
-   exec->Normal3fv = _mesa_Normal3fv;
-   exec->Normal3i = _mesa_Normal3i;
-   exec->Normal3iv = _mesa_Normal3iv;
-   exec->Normal3s = _mesa_Normal3s;
-   exec->Normal3sv = _mesa_Normal3sv;
    exec->Ortho = _mesa_Ortho;
    exec->PassThrough = _mesa_PassThrough;
    exec->PixelMapfv = _mesa_PixelMapfv;
@@ -347,74 +272,18 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->RasterPos4sv = _mesa_RasterPos4sv;
    exec->ReadBuffer = _mesa_ReadBuffer;
    exec->ReadPixels = _mesa_ReadPixels;
-   exec->Rectd = _mesa_Rectd;
-   exec->Rectdv = _mesa_Rectdv;
-   exec->Rectf = _mesa_Rectf;
-   exec->Rectfv = _mesa_Rectfv;
-   exec->Recti = _mesa_Recti;
-   exec->Rectiv = _mesa_Rectiv;
-   exec->Rects = _mesa_Rects;
-   exec->Rectsv = _mesa_Rectsv;
    exec->RenderMode = _mesa_RenderMode;
    exec->Rotated = _mesa_Rotated;
    exec->Rotatef = _mesa_Rotatef;
    exec->Scaled = _mesa_Scaled;
    exec->Scalef = _mesa_Scalef;
    exec->Scissor = _mesa_Scissor;
-   exec->SecondaryColor3bEXT = _mesa_SecondaryColor3bEXT;
-   exec->SecondaryColor3bvEXT = _mesa_SecondaryColor3bvEXT;
-   exec->SecondaryColor3sEXT = _mesa_SecondaryColor3sEXT;
-   exec->SecondaryColor3svEXT = _mesa_SecondaryColor3svEXT;
-   exec->SecondaryColor3iEXT = _mesa_SecondaryColor3iEXT;
-   exec->SecondaryColor3ivEXT = _mesa_SecondaryColor3ivEXT;
-   exec->SecondaryColor3fEXT = _mesa_SecondaryColor3fEXT;
-   exec->SecondaryColor3fvEXT = _mesa_SecondaryColor3fvEXT;
-   exec->SecondaryColor3dEXT = _mesa_SecondaryColor3dEXT;
-   exec->SecondaryColor3dvEXT = _mesa_SecondaryColor3dvEXT;
-   exec->SecondaryColor3ubEXT = _mesa_SecondaryColor3ubEXT;
-   exec->SecondaryColor3ubvEXT = _mesa_SecondaryColor3ubvEXT;
-   exec->SecondaryColor3usEXT = _mesa_SecondaryColor3usEXT;
-   exec->SecondaryColor3usvEXT = _mesa_SecondaryColor3usvEXT;
-   exec->SecondaryColor3uiEXT = _mesa_SecondaryColor3uiEXT;
-   exec->SecondaryColor3uivEXT = _mesa_SecondaryColor3uivEXT;
    exec->SecondaryColorPointerEXT = _mesa_SecondaryColorPointerEXT;
    exec->SelectBuffer = _mesa_SelectBuffer;
    exec->ShadeModel = _mesa_ShadeModel;
    exec->StencilFunc = _mesa_StencilFunc;
    exec->StencilMask = _mesa_StencilMask;
    exec->StencilOp = _mesa_StencilOp;
-   exec->TexCoord1d = _mesa_TexCoord1d;
-   exec->TexCoord1dv = _mesa_TexCoord1dv;
-   exec->TexCoord1f = _mesa_TexCoord1f;
-   exec->TexCoord1fv = _mesa_TexCoord1fv;
-   exec->TexCoord1i = _mesa_TexCoord1i;
-   exec->TexCoord1iv = _mesa_TexCoord1iv;
-   exec->TexCoord1s = _mesa_TexCoord1s;
-   exec->TexCoord1sv = _mesa_TexCoord1sv;
-   exec->TexCoord2d = _mesa_TexCoord2d;
-   exec->TexCoord2dv = _mesa_TexCoord2dv;
-   exec->TexCoord2f = _mesa_TexCoord2f;
-   exec->TexCoord2fv = _mesa_TexCoord2fv;
-   exec->TexCoord2i = _mesa_TexCoord2i;
-   exec->TexCoord2iv = _mesa_TexCoord2iv;
-   exec->TexCoord2s = _mesa_TexCoord2s;
-   exec->TexCoord2sv = _mesa_TexCoord2sv;
-   exec->TexCoord3d = _mesa_TexCoord3d;
-   exec->TexCoord3dv = _mesa_TexCoord3dv;
-   exec->TexCoord3f = _mesa_TexCoord3f;
-   exec->TexCoord3fv = _mesa_TexCoord3fv;
-   exec->TexCoord3i = _mesa_TexCoord3i;
-   exec->TexCoord3iv = _mesa_TexCoord3iv;
-   exec->TexCoord3s = _mesa_TexCoord3s;
-   exec->TexCoord3sv = _mesa_TexCoord3sv;
-   exec->TexCoord4d = _mesa_TexCoord4d;
-   exec->TexCoord4dv = _mesa_TexCoord4dv;
-   exec->TexCoord4f = _mesa_TexCoord4f;
-   exec->TexCoord4fv = _mesa_TexCoord4fv;
-   exec->TexCoord4i = _mesa_TexCoord4i;
-   exec->TexCoord4iv = _mesa_TexCoord4iv;
-   exec->TexCoord4s = _mesa_TexCoord4s;
-   exec->TexCoord4sv = _mesa_TexCoord4sv;
    exec->TexEnvf = _mesa_TexEnvf;
    exec->TexEnvfv = _mesa_TexEnvfv;
    exec->TexEnvi = _mesa_TexEnvi;
@@ -433,35 +302,10 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->TexParameteriv = _mesa_TexParameteriv;
    exec->Translated = _mesa_Translated;
    exec->Translatef = _mesa_Translatef;
-   exec->Vertex2d = _mesa_Vertex2d;
-   exec->Vertex2dv = _mesa_Vertex2dv;
-   exec->Vertex2f = _mesa_Vertex2f;
-   exec->Vertex2fv = _mesa_Vertex2fv;
-   exec->Vertex2i = _mesa_Vertex2i;
-   exec->Vertex2iv = _mesa_Vertex2iv;
-   exec->Vertex2s = _mesa_Vertex2s;
-   exec->Vertex2sv = _mesa_Vertex2sv;
-   exec->Vertex3d = _mesa_Vertex3d;
-   exec->Vertex3dv = _mesa_Vertex3dv;
-   exec->Vertex3f = _mesa_Vertex3f;
-   exec->Vertex3fv = _mesa_Vertex3fv;
-   exec->Vertex3i = _mesa_Vertex3i;
-   exec->Vertex3iv = _mesa_Vertex3iv;
-   exec->Vertex3s = _mesa_Vertex3s;
-   exec->Vertex3sv = _mesa_Vertex3sv;
-   exec->Vertex4d = _mesa_Vertex4d;
-   exec->Vertex4dv = _mesa_Vertex4dv;
-   exec->Vertex4f = _mesa_Vertex4f;
-   exec->Vertex4fv = _mesa_Vertex4fv;
-   exec->Vertex4i = _mesa_Vertex4i;
-   exec->Vertex4iv = _mesa_Vertex4iv;
-   exec->Vertex4s = _mesa_Vertex4s;
-   exec->Vertex4sv = _mesa_Vertex4sv;
    exec->Viewport = _mesa_Viewport;
 
    /* 1.1 */
    exec->AreTexturesResident = _mesa_AreTexturesResident;
-   exec->ArrayElement = _mesa_ArrayElement;
    exec->BindTexture = _mesa_BindTexture;
    exec->ColorPointer = _mesa_ColorPointer;
    exec->CopyTexImage1D = _mesa_CopyTexImage1D;
@@ -470,15 +314,11 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->CopyTexSubImage2D = _mesa_CopyTexSubImage2D;
    exec->DeleteTextures = _mesa_DeleteTextures;
    exec->DisableClientState = _mesa_DisableClientState;
-   exec->DrawArrays = _mesa_DrawArrays;
-   exec->DrawElements = _mesa_DrawElements;
    exec->EdgeFlagPointer = _mesa_EdgeFlagPointer;
    exec->EnableClientState = _mesa_EnableClientState;
    exec->GenTextures = _mesa_GenTextures;
    exec->GetPointerv = _mesa_GetPointerv;
    exec->IndexPointer = _mesa_IndexPointer;
-   exec->Indexub = _mesa_Indexub;
-   exec->Indexubv = _mesa_Indexubv;
    exec->InterleavedArrays = _mesa_InterleavedArrays;
    exec->IsTexture = _mesa_IsTexture;
    exec->NormalPointer = _mesa_NormalPointer;
@@ -492,7 +332,6 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 
    /* 1.2 */
    exec->CopyTexSubImage3D = _mesa_CopyTexSubImage3D;
-   exec->DrawRangeElements = _mesa_DrawRangeElements;
    exec->TexImage3D = _mesa_TexImage3D;
    exec->TexSubImage3D = _mesa_TexSubImage3D;
 
@@ -634,38 +473,6 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    /* ARB 1. GL_ARB_multitexture */
    exec->ActiveTextureARB = _mesa_ActiveTextureARB;
    exec->ClientActiveTextureARB = _mesa_ClientActiveTextureARB;
-   exec->MultiTexCoord1dARB = _mesa_MultiTexCoord1dARB;
-   exec->MultiTexCoord1dvARB = _mesa_MultiTexCoord1dvARB;
-   exec->MultiTexCoord1fARB = _mesa_MultiTexCoord1fARB;
-   exec->MultiTexCoord1fvARB = _mesa_MultiTexCoord1fvARB;
-   exec->MultiTexCoord1iARB = _mesa_MultiTexCoord1iARB;
-   exec->MultiTexCoord1ivARB = _mesa_MultiTexCoord1ivARB;
-   exec->MultiTexCoord1sARB = _mesa_MultiTexCoord1sARB;
-   exec->MultiTexCoord1svARB = _mesa_MultiTexCoord1svARB;
-   exec->MultiTexCoord2dARB = _mesa_MultiTexCoord2dARB;
-   exec->MultiTexCoord2dvARB = _mesa_MultiTexCoord2dvARB;
-   exec->MultiTexCoord2fARB = _mesa_MultiTexCoord2fARB;
-   exec->MultiTexCoord2fvARB = _mesa_MultiTexCoord2fvARB;
-   exec->MultiTexCoord2iARB = _mesa_MultiTexCoord2iARB;
-   exec->MultiTexCoord2ivARB = _mesa_MultiTexCoord2ivARB;
-   exec->MultiTexCoord2sARB = _mesa_MultiTexCoord2sARB;
-   exec->MultiTexCoord2svARB = _mesa_MultiTexCoord2svARB;
-   exec->MultiTexCoord3dARB = _mesa_MultiTexCoord3dARB;
-   exec->MultiTexCoord3dvARB = _mesa_MultiTexCoord3dvARB;
-   exec->MultiTexCoord3fARB = _mesa_MultiTexCoord3fARB;
-   exec->MultiTexCoord3fvARB = _mesa_MultiTexCoord3fvARB;
-   exec->MultiTexCoord3iARB = _mesa_MultiTexCoord3iARB;
-   exec->MultiTexCoord3ivARB = _mesa_MultiTexCoord3ivARB;
-   exec->MultiTexCoord3sARB = _mesa_MultiTexCoord3sARB;
-   exec->MultiTexCoord3svARB = _mesa_MultiTexCoord3svARB;
-   exec->MultiTexCoord4dARB = _mesa_MultiTexCoord4dARB;
-   exec->MultiTexCoord4dvARB = _mesa_MultiTexCoord4dvARB;
-   exec->MultiTexCoord4fARB = _mesa_MultiTexCoord4fARB;
-   exec->MultiTexCoord4fvARB = _mesa_MultiTexCoord4fvARB;
-   exec->MultiTexCoord4iARB = _mesa_MultiTexCoord4iARB;
-   exec->MultiTexCoord4ivARB = _mesa_MultiTexCoord4ivARB;
-   exec->MultiTexCoord4sARB = _mesa_MultiTexCoord4sARB;
-   exec->MultiTexCoord4svARB = _mesa_MultiTexCoord4svARB;
 
    /* ARB 3. GL_ARB_transpose_matrix */
    exec->LoadTransposeMatrixdARB = _mesa_LoadTransposeMatrixdARB;
@@ -733,7 +540,7 @@ calculate_model_project_matrix( GLcontext *ctx )
 			       &ctx->ProjectionMatrix,
 			       &ctx->ModelView );
 
-      _math_matrix_analyze( &ctx->_ModelProjectMatrix );
+      _math_matrix_analyse( &ctx->_ModelProjectMatrix );
    }
 }
 
@@ -824,8 +631,8 @@ update_drawbuffer( GLcontext *ctx )
 static void
 update_projection( GLcontext *ctx )
 {
-   _math_matrix_analyze( &ctx->ProjectionMatrix );
-
+   _math_matrix_analyse( &ctx->ProjectionMatrix );
+      
    /* Recompute clip plane positions in clipspace.  This is also done
     * in _mesa_ClipPlane().
     */
@@ -921,7 +728,7 @@ void gl_update_state( GLcontext *ctx )
       gl_print_state("", new_state);
 
    if (new_state & _NEW_MODELVIEW)
-      _math_matrix_analyze( &ctx->ModelView );
+      _math_matrix_analyse( &ctx->ModelView );
 
    if (new_state & _NEW_PROJECTION)
       update_projection( ctx );
@@ -930,7 +737,7 @@ void gl_update_state( GLcontext *ctx )
       _mesa_update_texture_matrices( ctx );
 
    if (new_state & _NEW_COLOR_MATRIX)
-      _math_matrix_analyze( &ctx->ColorMatrix );
+      _math_matrix_analyse( &ctx->ColorMatrix );
 
    /* References ColorMatrix.type (derived above).
     */

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.108 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: context.c,v 1.109 2000/11/24 10:25:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -690,70 +690,6 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
 }
 
 
-static void
-init_fallback_arrays( GLcontext *ctx )
-{
-   struct gl_client_array *cl;
-   GLuint i;
-
-   cl = &ctx->Fallback.Normal;
-   cl->Size = 3;
-   cl->Type = GL_FLOAT;
-   cl->Stride = 0;
-   cl->StrideB = 0;
-   cl->Ptr = (void *) ctx->Current.Normal;
-   cl->Enabled = 1;
-
-   cl = &ctx->Fallback.Color;
-   cl->Size = 4;
-   cl->Type = GL_UNSIGNED_BYTE;
-   cl->Stride = 0;
-   cl->StrideB = 0;
-   cl->Ptr = (void *) ctx->Current.Color;
-   cl->Enabled = 1;
-
-   cl = &ctx->Fallback.SecondaryColor;
-   cl->Size = 3;
-   cl->Type = GL_UNSIGNED_BYTE;
-   cl->Stride = 0;
-   cl->StrideB = 0;
-   cl->Ptr = (void *) ctx->Current.SecondaryColor;
-   cl->Enabled = 1;
-
-   cl = &ctx->Fallback.FogCoord;
-   cl->Size = 1;
-   cl->Type = GL_FLOAT;
-   cl->Stride = 0;
-   cl->StrideB = 0;
-   cl->Ptr = (void *) &ctx->Current.FogCoord;
-   cl->Enabled = 1;
-
-   cl = &ctx->Fallback.Index;
-   cl->Size = 1;
-   cl->Type = GL_UNSIGNED_INT;
-   cl->Stride = 0;
-   cl->StrideB = 0;
-   cl->Ptr = (void *) &ctx->Current.Index;
-   cl->Enabled = 1;
-
-   for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++) {
-      cl = &ctx->Fallback.TexCoord[i];
-      cl->Size = 4;
-      cl->Type = GL_FLOAT;
-      cl->Stride = 0;
-      cl->StrideB = 0;
-      cl->Ptr = (void *) ctx->Current.Texcoord[i];
-      cl->Enabled = 1;
-   }
-
-   cl = &ctx->Fallback.EdgeFlag;
-   cl->Size = 1;
-   cl->Type = GL_UNSIGNED_BYTE;
-   cl->Stride = 0;
-   cl->StrideB = 0;
-   cl->Ptr = (void *) &ctx->Current.EdgeFlag;
-   cl->Enabled = 1;
-}
 
 
 /* Initialize a 1-D evaluator map */
@@ -908,7 +844,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Current.EdgeFlag = GL_TRUE;
    ASSIGN_3V( ctx->Current.Normal, 0.0, 0.0, 1.0 );
 
-   init_fallback_arrays( ctx );
 
    /* Depth buffer group */
    ctx->Depth.Test = GL_FALSE;
@@ -1524,6 +1459,9 @@ _mesa_initialize_context( GLcontext *ctx,
    _mesa_init_exec_table(ctx->Exec, dispatchSize);
    _mesa_init_dlist_table(ctx->Save, dispatchSize);
    ctx->CurrentDispatch = ctx->Exec;
+
+   ctx->ExecPrefersFloat = GL_FALSE;
+   ctx->SavePrefersFloat = GL_FALSE;
 
 #if defined(MESA_TRACE)
    ctx->TraceCtx = CALLOC( sizeof(trace_context_t) );

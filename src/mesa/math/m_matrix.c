@@ -1,4 +1,4 @@
-/* $Id: m_matrix.c,v 1.3 2000/11/20 15:16:33 brianp Exp $ */
+/* $Id: m_matrix.c,v 1.4 2000/11/24 10:25:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -739,7 +739,7 @@ _math_matrix_ortho( GLmatrix *mat,
 /* Determine type and flags from scratch.  This is expensive enough to
  * only want to do it once.
  */
-static void analyze_from_scratch( GLmatrix *mat )
+static void analyse_from_scratch( GLmatrix *mat )
 {
    const GLfloat *m = mat->m;
    GLuint mask = 0;
@@ -851,7 +851,7 @@ static void analyze_from_scratch( GLmatrix *mat )
 /* Analyse a matrix given that its flags are accurate - this is the
  * more common operation, hopefully. 
  */
-static void analyze_from_flags( GLmatrix *mat )
+static void analyse_from_flags( GLmatrix *mat )
 {
    const GLfloat *m = mat->m;
 
@@ -891,13 +891,13 @@ static void analyze_from_flags( GLmatrix *mat )
 
 
 void 
-_math_matrix_analyze( GLmatrix *mat ) 
+_math_matrix_analyse( GLmatrix *mat ) 
 {
    if (mat->flags & MAT_DIRTY_TYPE) {
       if (mat->flags & MAT_DIRTY_FLAGS) 
-	 analyze_from_scratch( mat );
+	 analyse_from_scratch( mat );
       else
-	 analyze_from_flags( mat );
+	 analyse_from_flags( mat );
    }
 
    if (mat->inv && (mat->flags & MAT_DIRTY_INVERSE)) {

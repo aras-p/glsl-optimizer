@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.h,v 1.2 2000/11/22 07:32:18 joukj Exp $ */
+/* $Id: t_pipeline.h,v 1.3 2000/11/24 10:25:12 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,24 +36,25 @@
 #include "mtypes.h"
 #include "t_context.h"
 
-extern void gl_update_materials( struct vertex_buffer *VB);
-
 extern void _tnl_pipeline_init( GLcontext *ctx );
-extern void gl_update_pipelines( GLcontext *ctx );
 
-extern void gl_build_precalc_pipeline( GLcontext *ctx );
-extern void gl_build_immediate_pipeline( GLcontext *ctx );
+extern void _tnl_update_materials( struct vertex_buffer *VB);
 
-extern void gl_print_vert_flags( const char *name, GLuint flags );
-extern void gl_print_pipeline( GLcontext *ctx, struct gl_pipeline *p );
-extern void gl_print_active_pipeline( GLcontext *ctx, struct gl_pipeline *p );
+extern void _tnl_update_pipelines( GLcontext *ctx );
 
-extern void gl_run_pipeline( struct vertex_buffer *VB );
+extern void _tnl_build_precalc_pipeline( GLcontext *ctx );
+extern void _tnl_build_immediate_pipeline( GLcontext *ctx );
 
-extern void gl_clean_color( struct vertex_buffer *VB );
+extern void _tnl_print_vert_flags( const char *name, GLuint flags );
+extern void _tnl_print_pipeline( GLcontext *ctx, struct gl_pipeline *p );
+extern void _tnl_print_active_pipeline( GLcontext *ctx, struct gl_pipeline *p );
 
-extern void gl_reset_cva_vb( struct vertex_buffer *VB, GLuint stages );
+extern void _tnl_run_pipeline( struct vertex_buffer *VB );
 
-extern void gl_print_pipe_ops( const char *msg, GLuint flags );
+extern void _tnl_clean_color( struct vertex_buffer *VB );
+
+extern void _tnl_reset_cva_vb( struct vertex_buffer *VB, GLuint stages );
+
+extern void _tnl_print_pipe_ops( const char *msg, GLuint flags );
 
 #endif

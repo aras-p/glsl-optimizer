@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.14 2000/11/16 21:05:35 keithw Exp $ */
+/* $Id: macros.h,v 1.15 2000/11/24 10:25:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,7 @@
 
 
 #include "glheader.h"
-/* Do not reference types.h from this file.
+/* Do not reference mtypes.h from this file.
  */
 
 

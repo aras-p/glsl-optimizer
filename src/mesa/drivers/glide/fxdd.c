@@ -710,13 +710,11 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
       fxMesa->currentFB=GR_BUFFER_FRONTBUFFER;
       FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
    }
-
-   fxMesa->state 	= NULL;
-   fxMesa->fogTable 	= NULL;
-
-   fxMesa->state 	= malloc(FX_grGetInteger(FX_GLIDE_STATE_SIZE));
-   fxMesa->fogTable 	= malloc(FX_grGetInteger(FX_FOG_TABLE_ENTRIES)*sizeof(GrFog_t));
-
+    
+   fxMesa->state = malloc(FX_grGetInteger(FX_GLIDE_STATE_SIZE));
+   fxMesa->fogTable = malloc(FX_grGetInteger(FX_FOG_TABLE_ENTRIES) * 
+			     sizeof(GrFog_t));
+  
    if (!fxMesa->state || !fxMesa->fogTable) {
       if (fxMesa->state) free(fxMesa->state);
       if (fxMesa->fogTable) free(fxMesa->fogTable);
@@ -756,7 +754,8 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
    _swrast_allow_vertex_fog( fxMesa->glCtx, GL_FALSE );
    _swrast_allow_pixel_fog( fxMesa->glCtx, GL_TRUE );
 
-   fxDDInitExtensions(fxMesa->glCtx);
+   fxDDInitExtensions(fxMesa->glCtx);  
+   fxDDInitVtxfmt(fxMesa->glCtx);
 
    FX_grGlideGetState((GrState*)fxMesa->state);
 
@@ -902,41 +901,75 @@ static GLboolean fxIsInHardware(GLcontext *ctx)
   return GL_TRUE;
 }
 
+static void update_texture_scales( GLcontext *ctx )
+{
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   struct gl_texture_unit *t0 = &ctx->Texture.Unit[fxMesa->tmu_source[0]];
+   struct gl_texture_unit *t1 = &ctx->Texture.Unit[fxMesa->tmu_source[1]];
+     
+   if (t0 && t0->_Current && FX_TEXTURE_DATA(t0)) {
+      fxMesa->s0scale = FX_TEXTURE_DATA(t0)->sScale;
+      fxMesa->t0scale = FX_TEXTURE_DATA(t0)->tScale;
+      fxMesa->inv_s0scale = 1.0 / fxMesa->s0scale;
+      fxMesa->inv_t0scale = 1.0 / fxMesa->t0scale;
+   }
+   
+   if (t1 && t1->_Current && FX_TEXTURE_DATA(t1)) {
+      fxMesa->s1scale = FX_TEXTURE_DATA(t1)->sScale;
+      fxMesa->t1scale = FX_TEXTURE_DATA(t1)->tScale;
+      fxMesa->inv_s1scale = 1.0 / fxMesa->s1scale;
+      fxMesa->inv_t1scale = 1.0 / fxMesa->t1scale;
+   }
+}
 
 static void fxDDUpdateDDPointers(GLcontext *ctx)
 {
-  GLuint new_state = ctx->NewState;
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   GLuint new_state = ctx->NewState;
 
-  _swrast_InvalidateState( ctx, new_state );
-  _swsetup_InvalidateState( ctx, new_state );
-  _tnl_InvalidateState( ctx, new_state );
+   _swrast_InvalidateState( ctx, new_state );
+   _swsetup_InvalidateState( ctx, new_state );
+   _tnl_InvalidateState( ctx, new_state );
 
-  /* Recalculate fog table on projection matrix changes.  This used to
-   * be triggered by the NearFar callback.
-   */
-  if (new_state & _NEW_PROJECTION) {
-     FX_CONTEXT(ctx)->new_state |= FX_NEW_FOG;
-     ctx->Driver.RenderStart = fxSetupFXUnits;
-  }
+   /* Recalculate fog table on projection matrix changes.  This used to
+    * be triggered by the NearFar callback.
+    */
+   if (new_state & _NEW_PROJECTION) 
+      fxMesa->new_state |= FX_NEW_FOG;
 
-  if (new_state & (_FX_NEW_IS_IN_HARDWARE |
-		   _FX_NEW_RENDERSTATE |
-		   _FX_NEW_SETUP_FUNCTION))
-  {
-    fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
+   if (new_state & (_FX_NEW_IS_IN_HARDWARE |
+		    _FX_NEW_RENDERSTATE |
+		    _FX_NEW_SETUP_FUNCTION | 
+		    _NEW_TEXTURE))
+   {
+      fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
 
-    if (new_state & _FX_NEW_IS_IN_HARDWARE)
-      fxMesa->is_in_hardware = fxIsInHardware(ctx);
+      if (new_state & _FX_NEW_IS_IN_HARDWARE)
+	 fxMesa->is_in_hardware = fxIsInHardware(ctx);
+    
+      if (fxMesa->new_state)
+	 fxSetupFXUnits(ctx);
 
-    if (fxMesa->new_state)
-      fxSetupFXUnits(ctx);
+      if (new_state & _FX_NEW_RENDERSTATE) 
+	 fxDDChooseRenderState( ctx );
+    
+      if (new_state & _FX_NEW_SETUP_FUNCTION)
+	 ctx->Driver.RasterSetup = fxDDChooseSetupFunction(ctx);      
 
-    if (new_state & _FX_NEW_RENDERSTATE)
-      fxDDChooseRenderState( ctx );
+      if (new_state & _NEW_TEXTURE) 
+	 update_texture_scales( ctx );
 
-    if (new_state & _FX_NEW_SETUP_FUNCTION)
-      ctx->Driver.RasterSetup = fxDDChooseSetupFunction(ctx);
-  }
+   }
+
+   if (fxMesa->allow_vfmt) {
+      if (new_state & _NEW_LIGHT)
+	 fx_update_lighting( ctx );
+
+      if (new_state & _FX_NEW_VTXFMT)
+	 fxDDCheckVtxfmt( ctx );
+      else if (fxMesa->vtxfmt_fallback_count > 1)
+	 fxMesa->vtxfmt_fallback_count--;
+   }
 }
 
 
@@ -971,7 +1004,7 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.Finish=fxDDFinish;
   ctx->Driver.Flush=NULL;
 
-  ctx->Driver.RenderStart=NULL;
+  ctx->Driver.RenderStart=fxSetupFXUnits;
   ctx->Driver.RenderFinish=_swrast_flush;
 
   ctx->Driver.TexImage2D = fxDDTexImage2D;
@@ -1013,6 +1046,7 @@ void fxSetupDDPointers(GLcontext *ctx)
  * Need this to provide at least one external definition.
  */
 
+extern int gl_fx_dummy_function_dd(void);
 int gl_fx_dummy_function_dd(void)
 {
   return 0;

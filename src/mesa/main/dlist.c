@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.52 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: dlist.c,v 1.53 2000/11/24 10:25:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,7 @@
 #else
 #include "glheader.h"
 #include "accum.h"
+#include "api_loopback.h"
 #include "attrib.h"
 #include "bitmap.h"
 #include "blend.h"
@@ -62,7 +63,6 @@
 #include "points.h"
 #include "polygon.h"
 #include "readpix.h"
-#include "rect.h"
 #include "state.h"
 #include "texobj.h"
 #include "teximage.h"
@@ -73,9 +73,6 @@
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
 
-#include "tnl/t_vbfill.h"
-#include "tnl/t_eval.h"
-#include "tnl/t_varray.h"
 #endif
 
 
@@ -216,7 +213,6 @@ typedef enum {
 	OPCODE_PUSH_MATRIX,
 	OPCODE_PUSH_NAME,
 	OPCODE_RASTER_POS,
-	OPCODE_RECTF,
 	OPCODE_READ_BUFFER,
         OPCODE_RESET_HISTOGRAM,
         OPCODE_RESET_MIN_MAX,
@@ -605,7 +601,6 @@ void gl_init_lists( void )
       InstSize[OPCODE_PUSH_MATRIX] = 1;
       InstSize[OPCODE_PUSH_NAME] = 2;
       InstSize[OPCODE_RASTER_POS] = 5;
-      InstSize[OPCODE_RECTF] = 5;
       InstSize[OPCODE_READ_BUFFER] = 2;
       InstSize[OPCODE_RESET_HISTOGRAM] = 2;
       InstSize[OPCODE_RESET_MIN_MAX] = 2;
@@ -2852,59 +2847,6 @@ static void save_ReadBuffer( GLenum mode )
 }
 
 
-static void save_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_RECTF, 4 );
-   if (n) {
-      n[1].f = x1;
-      n[2].f = y1;
-      n[3].f = x2;
-      n[4].f = y2;
-   }
-   if (ctx->ExecuteFlag) {
-      (*ctx->Exec->Rectf)( x1, y1, x2, y2 );
-   }
-}
-
-static void save_Rectd(GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2)
-{
-   save_Rectf(x1, y1, x2, y2);
-}
-
-static void save_Rectdv(const GLdouble *v1, const GLdouble *v2)
-{
-   save_Rectf(v1[0], v1[1], v2[0], v2[1]);
-}
-
-static void save_Rectfv( const GLfloat *v1, const GLfloat *v2 )
-{
-   save_Rectf(v1[0], v1[1], v2[0], v2[1]);
-}
-
-static void save_Recti(GLint x1, GLint y1, GLint x2, GLint y2)
-{
-   save_Rectf(x1, y1, x2, y2);
-}
-
-static void save_Rectiv(const GLint *v1, const GLint *v2)
-{
-   save_Rectf(v1[0], v1[1], v2[0], v2[1]);
-}
-
-static void save_Rects(GLshort x1, GLshort y1, GLshort x2, GLshort y2)
-{
-   save_Rectf(x1, y1, x2, y2);
-}
-
-static void save_Rectsv(const GLshort *v1, const GLshort *v2)
-{
-   save_Rectf(v1[0], v1[1], v2[0], v2[1]);
-}
-
-
 static void
 save_ResetHistogram(GLenum target)
 {
@@ -4481,10 +4423,6 @@ static void execute_list( GLcontext *ctx, GLuint list )
 	 case OPCODE_READ_BUFFER:
 	    (*ctx->Exec->ReadBuffer)( n[1].e );
 	    break;
-         case OPCODE_RECTF:
-            (*ctx->Exec->Rectf)( n[1].f, n[2].f, n[3].f, n[4].f );
-	    FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
-            break;
          case OPCODE_RESET_HISTOGRAM:
             (*ctx->Exec->ResetHistogram)( n[1].e );
             break;
@@ -4824,7 +4762,9 @@ _mesa_NewList( GLuint list, GLenum mode )
 
 
 /*
- * End definition of current display list.
+ * End definition of current display list.  Is the current 
+ * ASSERT_OUTSIDE_BEGIN_END strong enough to really guarentee that
+ * we are outside begin/end calls?
  */
 void
 _mesa_EndList( void )
@@ -4952,16 +4892,21 @@ _mesa_ListBase( GLuint base )
 /*
  * Assign all the pointers in <table> to point to Mesa's display list
  * building functions.
+ *
+ * This does not include any of the tnl functions - they are
+ * initialized from _mesa_init_api_defaults and from the active vtxfmt
+ * struct.
  */
 void
 _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
 {
    _mesa_init_no_op_table(table, tableSize);
 
+   _mesa_loopback_init_api_table( table, GL_FALSE );
+
    /* GL 1.0 */
    table->Accum = save_Accum;
    table->AlphaFunc = save_AlphaFunc;
-   table->Begin = _mesa_Begin;
    table->Bitmap = save_Bitmap;
    table->BlendFunc = save_BlendFunc;
    table->CallList = save_CallList;
@@ -4973,38 +4918,6 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->ClearIndex = save_ClearIndex;
    table->ClearStencil = save_ClearStencil;
    table->ClipPlane = save_ClipPlane;
-   table->Color3b = _mesa_Color3b;
-   table->Color3bv = _mesa_Color3bv;
-   table->Color3d = _mesa_Color3d;
-   table->Color3dv = _mesa_Color3dv;
-   table->Color3f = _mesa_Color3f;
-   table->Color3fv = _mesa_Color3fv;
-   table->Color3i = _mesa_Color3i;
-   table->Color3iv = _mesa_Color3iv;
-   table->Color3s = _mesa_Color3s;
-   table->Color3sv = _mesa_Color3sv;
-   table->Color3ub = _mesa_Color3ub;
-   table->Color3ubv = _mesa_Color3ubv;
-   table->Color3ui = _mesa_Color3ui;
-   table->Color3uiv = _mesa_Color3uiv;
-   table->Color3us = _mesa_Color3us;
-   table->Color3usv = _mesa_Color3usv;
-   table->Color4b = _mesa_Color4b;
-   table->Color4bv = _mesa_Color4bv;
-   table->Color4d = _mesa_Color4d;
-   table->Color4dv = _mesa_Color4dv;
-   table->Color4f = _mesa_Color4f;
-   table->Color4fv = _mesa_Color4fv;
-   table->Color4i = _mesa_Color4i;
-   table->Color4iv = _mesa_Color4iv;
-   table->Color4s = _mesa_Color4s;
-   table->Color4sv = _mesa_Color4sv;
-   table->Color4ub = _mesa_Color4ub;
-   table->Color4ubv = _mesa_Color4ubv;
-   table->Color4ui = _mesa_Color4ui;
-   table->Color4uiv = _mesa_Color4uiv;
-   table->Color4us = _mesa_Color4us;
-   table->Color4usv = _mesa_Color4usv;
    table->ColorMask = save_ColorMask;
    table->ColorMaterial = save_ColorMaterial;
    table->CopyPixels = save_CopyPixels;
@@ -5016,30 +4929,12 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->Disable = save_Disable;
    table->DrawBuffer = save_DrawBuffer;
    table->DrawPixels = save_DrawPixels;
-   table->EdgeFlag = _mesa_EdgeFlag;
-   table->EdgeFlagv = _mesa_EdgeFlagv;
    table->Enable = save_Enable;
-   table->End = _mesa_End;
    table->EndList = _mesa_EndList;
-   table->EvalCoord1d = _mesa_EvalCoord1d;
-   table->EvalCoord1dv = _mesa_EvalCoord1dv;
-   table->EvalCoord1f = _mesa_EvalCoord1f;
-   table->EvalCoord1fv = _mesa_EvalCoord1fv;
-   table->EvalCoord2d = _mesa_EvalCoord2d;
-   table->EvalCoord2dv = _mesa_EvalCoord2dv;
-   table->EvalCoord2f = _mesa_EvalCoord2f;
-   table->EvalCoord2fv = _mesa_EvalCoord2fv;
    table->EvalMesh1 = save_EvalMesh1;
    table->EvalMesh2 = save_EvalMesh2;
-   table->EvalPoint1 = _mesa_EvalPoint1;
-   table->EvalPoint2 = _mesa_EvalPoint2;
-   table->FeedbackBuffer = _mesa_FeedbackBuffer;
    table->Finish = _mesa_Finish;
    table->Flush = _mesa_Flush;
-   table->FogCoordfEXT = _mesa_FogCoordfEXT;
-   table->FogCoordfvEXT = _mesa_FogCoordfvEXT;
-   table->FogCoorddEXT = _mesa_FogCoorddEXT;
-   table->FogCoorddvEXT = _mesa_FogCoorddvEXT;
    table->Fogf = save_Fogf;
    table->Fogfv = save_Fogfv;
    table->Fogi = save_Fogi;
@@ -5077,14 +4972,6 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->GetTexParameteriv = _mesa_GetTexParameteriv;
    table->Hint = save_Hint;
    table->IndexMask = save_IndexMask;
-   table->Indexd = _mesa_Indexd;
-   table->Indexdv = _mesa_Indexdv;
-   table->Indexf = _mesa_Indexf;
-   table->Indexfv = _mesa_Indexfv;
-   table->Indexi = _mesa_Indexi;
-   table->Indexiv = _mesa_Indexiv;
-   table->Indexs = _mesa_Indexs;
-   table->Indexsv = _mesa_Indexsv;
    table->InitNames = save_InitNames;
    table->IsEnabled = _mesa_IsEnabled;
    table->IsList = _mesa_IsList;
@@ -5112,24 +4999,10 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->MapGrid1f = save_MapGrid1f;
    table->MapGrid2d = save_MapGrid2d;
    table->MapGrid2f = save_MapGrid2f;
-   table->Materialf = _mesa_Materialf;
-   table->Materialfv = _mesa_Materialfv;
-   table->Materiali = _mesa_Materiali;
-   table->Materialiv = _mesa_Materialiv;
    table->MatrixMode = save_MatrixMode;
    table->MultMatrixd = save_MultMatrixd;
    table->MultMatrixf = save_MultMatrixf;
    table->NewList = save_NewList;
-   table->Normal3b = _mesa_Normal3b;
-   table->Normal3bv = _mesa_Normal3bv;
-   table->Normal3d = _mesa_Normal3d;
-   table->Normal3dv = _mesa_Normal3dv;
-   table->Normal3f = _mesa_Normal3f;
-   table->Normal3fv = _mesa_Normal3fv;
-   table->Normal3i = _mesa_Normal3i;
-   table->Normal3iv = _mesa_Normal3iv;
-   table->Normal3s = _mesa_Normal3s;
-   table->Normal3sv = _mesa_Normal3sv;
    table->Ortho = save_Ortho;
    table->PassThrough = save_PassThrough;
    table->PixelMapfv = save_PixelMapfv;
@@ -5176,74 +5049,18 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->RasterPos4sv = save_RasterPos4sv;
    table->ReadBuffer = save_ReadBuffer;
    table->ReadPixels = _mesa_ReadPixels;
-   table->Rectd = save_Rectd;
-   table->Rectdv = save_Rectdv;
-   table->Rectf = save_Rectf;
-   table->Rectfv = save_Rectfv;
-   table->Recti = save_Recti;
-   table->Rectiv = save_Rectiv;
-   table->Rects = save_Rects;
-   table->Rectsv = save_Rectsv;
    table->RenderMode = _mesa_RenderMode;
    table->Rotated = save_Rotated;
    table->Rotatef = save_Rotatef;
    table->Scaled = save_Scaled;
    table->Scalef = save_Scalef;
    table->Scissor = save_Scissor;
-   table->SecondaryColor3bEXT = _mesa_SecondaryColor3bEXT;
-   table->SecondaryColor3bvEXT = _mesa_SecondaryColor3bvEXT;
-   table->SecondaryColor3sEXT = _mesa_SecondaryColor3sEXT;
-   table->SecondaryColor3svEXT = _mesa_SecondaryColor3svEXT;
-   table->SecondaryColor3iEXT = _mesa_SecondaryColor3iEXT;
-   table->SecondaryColor3ivEXT = _mesa_SecondaryColor3ivEXT;
-   table->SecondaryColor3fEXT = _mesa_SecondaryColor3fEXT;
-   table->SecondaryColor3fvEXT = _mesa_SecondaryColor3fvEXT;
-   table->SecondaryColor3dEXT = _mesa_SecondaryColor3dEXT;
-   table->SecondaryColor3dvEXT = _mesa_SecondaryColor3dvEXT;
-   table->SecondaryColor3ubEXT = _mesa_SecondaryColor3ubEXT;
-   table->SecondaryColor3ubvEXT = _mesa_SecondaryColor3ubvEXT;
-   table->SecondaryColor3usEXT = _mesa_SecondaryColor3usEXT;
-   table->SecondaryColor3usvEXT = _mesa_SecondaryColor3usvEXT;
-   table->SecondaryColor3uiEXT = _mesa_SecondaryColor3uiEXT;
-   table->SecondaryColor3uivEXT = _mesa_SecondaryColor3uivEXT;
-   table->SecondaryColorPointerEXT = _mesa_SecondaryColorPointerEXT;
+   table->FeedbackBuffer = _mesa_FeedbackBuffer;
    table->SelectBuffer = _mesa_SelectBuffer;
    table->ShadeModel = save_ShadeModel;
    table->StencilFunc = save_StencilFunc;
    table->StencilMask = save_StencilMask;
    table->StencilOp = save_StencilOp;
-   table->TexCoord1d = _mesa_TexCoord1d;
-   table->TexCoord1dv = _mesa_TexCoord1dv;
-   table->TexCoord1f = _mesa_TexCoord1f;
-   table->TexCoord1fv = _mesa_TexCoord1fv;
-   table->TexCoord1i = _mesa_TexCoord1i;
-   table->TexCoord1iv = _mesa_TexCoord1iv;
-   table->TexCoord1s = _mesa_TexCoord1s;
-   table->TexCoord1sv = _mesa_TexCoord1sv;
-   table->TexCoord2d = _mesa_TexCoord2d;
-   table->TexCoord2dv = _mesa_TexCoord2dv;
-   table->TexCoord2f = _mesa_TexCoord2f;
-   table->TexCoord2fv = _mesa_TexCoord2fv;
-   table->TexCoord2i = _mesa_TexCoord2i;
-   table->TexCoord2iv = _mesa_TexCoord2iv;
-   table->TexCoord2s = _mesa_TexCoord2s;
-   table->TexCoord2sv = _mesa_TexCoord2sv;
-   table->TexCoord3d = _mesa_TexCoord3d;
-   table->TexCoord3dv = _mesa_TexCoord3dv;
-   table->TexCoord3f = _mesa_TexCoord3f;
-   table->TexCoord3fv = _mesa_TexCoord3fv;
-   table->TexCoord3i = _mesa_TexCoord3i;
-   table->TexCoord3iv = _mesa_TexCoord3iv;
-   table->TexCoord3s = _mesa_TexCoord3s;
-   table->TexCoord3sv = _mesa_TexCoord3sv;
-   table->TexCoord4d = _mesa_TexCoord4d;
-   table->TexCoord4dv = _mesa_TexCoord4dv;
-   table->TexCoord4f = _mesa_TexCoord4f;
-   table->TexCoord4fv = _mesa_TexCoord4fv;
-   table->TexCoord4i = _mesa_TexCoord4i;
-   table->TexCoord4iv = _mesa_TexCoord4iv;
-   table->TexCoord4s = _mesa_TexCoord4s;
-   table->TexCoord4sv = _mesa_TexCoord4sv;
    table->TexEnvf = save_TexEnvf;
    table->TexEnvfv = save_TexEnvfv;
    table->TexEnvi = save_TexEnvi;
@@ -5262,35 +5079,10 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->TexParameteriv = save_TexParameteriv;
    table->Translated = save_Translated;
    table->Translatef = save_Translatef;
-   table->Vertex2d = _mesa_Vertex2d;
-   table->Vertex2dv = _mesa_Vertex2dv;
-   table->Vertex2f = _mesa_Vertex2f;
-   table->Vertex2fv = _mesa_Vertex2fv;
-   table->Vertex2i = _mesa_Vertex2i;
-   table->Vertex2iv = _mesa_Vertex2iv;
-   table->Vertex2s = _mesa_Vertex2s;
-   table->Vertex2sv = _mesa_Vertex2sv;
-   table->Vertex3d = _mesa_Vertex3d;
-   table->Vertex3dv = _mesa_Vertex3dv;
-   table->Vertex3f = _mesa_Vertex3f;
-   table->Vertex3fv = _mesa_Vertex3fv;
-   table->Vertex3i = _mesa_Vertex3i;
-   table->Vertex3iv = _mesa_Vertex3iv;
-   table->Vertex3s = _mesa_Vertex3s;
-   table->Vertex3sv = _mesa_Vertex3sv;
-   table->Vertex4d = _mesa_Vertex4d;
-   table->Vertex4dv = _mesa_Vertex4dv;
-   table->Vertex4f = _mesa_Vertex4f;
-   table->Vertex4fv = _mesa_Vertex4fv;
-   table->Vertex4i = _mesa_Vertex4i;
-   table->Vertex4iv = _mesa_Vertex4iv;
-   table->Vertex4s = _mesa_Vertex4s;
-   table->Vertex4sv = _mesa_Vertex4sv;
    table->Viewport = save_Viewport;
 
    /* GL 1.1 */
    table->AreTexturesResident = _mesa_AreTexturesResident;
-   table->ArrayElement = _mesa_ArrayElement;
    table->BindTexture = save_BindTexture;
    table->ColorPointer = _mesa_ColorPointer;
    table->CopyTexImage1D = save_CopyTexImage1D;
@@ -5299,15 +5091,11 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->CopyTexSubImage2D = save_CopyTexSubImage2D;
    table->DeleteTextures = _mesa_DeleteTextures;
    table->DisableClientState = _mesa_DisableClientState;
-   table->DrawArrays = _mesa_DrawArrays;
-   table->DrawElements = _mesa_DrawElements;
    table->EdgeFlagPointer = _mesa_EdgeFlagPointer;
    table->EnableClientState = _mesa_EnableClientState;
    table->GenTextures = _mesa_GenTextures;
    table->GetPointerv = _mesa_GetPointerv;
    table->IndexPointer = _mesa_IndexPointer;
-   table->Indexub = _mesa_Indexub;
-   table->Indexubv = _mesa_Indexubv;
    table->InterleavedArrays = _mesa_InterleavedArrays;
    table->IsTexture = _mesa_IsTexture;
    table->NormalPointer = _mesa_NormalPointer;
@@ -5321,7 +5109,6 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
 
    /* GL 1.2 */
    table->CopyTexSubImage3D = save_CopyTexSubImage3D;
-   table->DrawRangeElements = _mesa_DrawRangeElements;
    table->TexImage3D = save_TexImage3D;
    table->TexSubImage3D = save_TexSubImage3D;
 
@@ -5424,38 +5211,6 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    /* GL_ARB_multitexture */
    table->ActiveTextureARB = save_ActiveTextureARB;
    table->ClientActiveTextureARB = save_ClientActiveTextureARB;
-   table->MultiTexCoord1dARB = _mesa_MultiTexCoord1dARB;
-   table->MultiTexCoord1dvARB = _mesa_MultiTexCoord1dvARB;
-   table->MultiTexCoord1fARB = _mesa_MultiTexCoord1fARB;
-   table->MultiTexCoord1fvARB = _mesa_MultiTexCoord1fvARB;
-   table->MultiTexCoord1iARB = _mesa_MultiTexCoord1iARB;
-   table->MultiTexCoord1ivARB = _mesa_MultiTexCoord1ivARB;
-   table->MultiTexCoord1sARB = _mesa_MultiTexCoord1sARB;
-   table->MultiTexCoord1svARB = _mesa_MultiTexCoord1svARB;
-   table->MultiTexCoord2dARB = _mesa_MultiTexCoord2dARB;
-   table->MultiTexCoord2dvARB = _mesa_MultiTexCoord2dvARB;
-   table->MultiTexCoord2fARB = _mesa_MultiTexCoord2fARB;
-   table->MultiTexCoord2fvARB = _mesa_MultiTexCoord2fvARB;
-   table->MultiTexCoord2iARB = _mesa_MultiTexCoord2iARB;
-   table->MultiTexCoord2ivARB = _mesa_MultiTexCoord2ivARB;
-   table->MultiTexCoord2sARB = _mesa_MultiTexCoord2sARB;
-   table->MultiTexCoord2svARB = _mesa_MultiTexCoord2svARB;
-   table->MultiTexCoord3dARB = _mesa_MultiTexCoord3dARB;
-   table->MultiTexCoord3dvARB = _mesa_MultiTexCoord3dvARB;
-   table->MultiTexCoord3fARB = _mesa_MultiTexCoord3fARB;
-   table->MultiTexCoord3fvARB = _mesa_MultiTexCoord3fvARB;
-   table->MultiTexCoord3iARB = _mesa_MultiTexCoord3iARB;
-   table->MultiTexCoord3ivARB = _mesa_MultiTexCoord3ivARB;
-   table->MultiTexCoord3sARB = _mesa_MultiTexCoord3sARB;
-   table->MultiTexCoord3svARB = _mesa_MultiTexCoord3svARB;
-   table->MultiTexCoord4dARB = _mesa_MultiTexCoord4dARB;
-   table->MultiTexCoord4dvARB = _mesa_MultiTexCoord4dvARB;
-   table->MultiTexCoord4fARB = _mesa_MultiTexCoord4fARB;
-   table->MultiTexCoord4fvARB = _mesa_MultiTexCoord4fvARB;
-   table->MultiTexCoord4iARB = _mesa_MultiTexCoord4iARB;
-   table->MultiTexCoord4ivARB = _mesa_MultiTexCoord4ivARB;
-   table->MultiTexCoord4sARB = _mesa_MultiTexCoord4sARB;
-   table->MultiTexCoord4svARB = _mesa_MultiTexCoord4svARB;
 
    /* GL_EXT_blend_func_separate */
    table->BlendFuncSeparateEXT = save_BlendFuncSeparateEXT;
@@ -5503,6 +5258,12 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->CompressedTexSubImage2DARB = save_CompressedTexSubImage2DARB;
    table->CompressedTexSubImage1DARB = save_CompressedTexSubImage1DARB;
    table->GetCompressedTexImageARB = _mesa_GetCompressedTexImageARB;
+
+   /* GL_EXT_secondary_color */
+   table->SecondaryColorPointerEXT = _mesa_SecondaryColorPointerEXT;
+
+   /* GL_EXT_fog_coord */
+   table->FogCoordPointerEXT = _mesa_FogCoordPointerEXT;
 }
 
 
@@ -5623,9 +5384,6 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
 	 case OPCODE_RASTER_POS:
             fprintf(f,"RasterPos %g %g %g %g\n", n[1].f, n[2].f,n[3].f,n[4].f);
 	    break;
-         case OPCODE_RECTF:
-            fprintf( f, "Rectf %g %g %g %g\n", n[1].f, n[2].f, n[3].f, n[4].f);
-            break;
          case OPCODE_ROTATE:
             fprintf(f,"Rotate %g %g %g %g\n", n[1].f, n[2].f, n[3].f, n[4].f );
             break;

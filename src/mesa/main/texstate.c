@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.24 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: texstate.c,v 1.25 2000/11/24 10:25:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1116,7 +1116,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
             /* Transform plane equation by the inverse modelview matrix */
             if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-               _math_matrix_analyze( &ctx->ModelView );
+               _math_matrix_analyse( &ctx->ModelView );
             }
             gl_transform_vector( texUnit->EyePlaneS, params,
                                  ctx->ModelView.inv );
@@ -1164,7 +1164,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
             /* Transform plane equation by the inverse modelview matrix */
             if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-               _math_matrix_analyze( &ctx->ModelView );
+               _math_matrix_analyse( &ctx->ModelView );
             }
             gl_transform_vector( texUnit->EyePlaneT, params,
                                  ctx->ModelView.inv );
@@ -1208,7 +1208,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
             /* Transform plane equation by the inverse modelview matrix */
             if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-               _math_matrix_analyze( &ctx->ModelView );
+               _math_matrix_analyse( &ctx->ModelView );
             }
             gl_transform_vector( texUnit->EyePlaneR, params,
                                  ctx->ModelView.inv );
@@ -1244,7 +1244,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
             /* Transform plane equation by the inverse modelview matrix */
             if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
-               _math_matrix_analyze( &ctx->ModelView );
+               _math_matrix_analyse( &ctx->ModelView );
             }
             gl_transform_vector( texUnit->EyePlaneQ, params,
                                  ctx->ModelView.inv );
@@ -1258,6 +1258,9 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
          gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(coord)" );
 	 return;
    }
+   
+   if (ctx->Driver.TexGen)
+      ctx->Driver.TexGen( ctx, coord, pname, params );
 
    ctx->NewState |= _NEW_TEXTURE;
 }

@@ -68,18 +68,6 @@
 
 #include "math/m_vector.h"
 
-/* use gl/gl.h GLAPI/GLAPIENTRY/GLCALLBACK in place of
- * WINGDIAPI/APIENTRY/CALLBACK, these are defined in mesa gl/gl.h -
- * tjump@spgs.com
- */
-
-
-
-extern void fx_sanity_triangle( GrVertex *, GrVertex *, GrVertex * );
-#if defined(MESA_DEBUG) && 0
-#define grDrawTriangle fx_sanity_triangle
-#endif
-
 
 /* Define some shorter names for these things.
  */
@@ -99,18 +87,6 @@ extern void fx_sanity_triangle( GrVertex *, GrVertex *, GrVertex * );
 #define T1COORD  GR_VERTEX_TOW_TMU1_OFFSET
 
 
-
-#define CLIP_XCOORD 0		/* normal place */
-#define CLIP_YCOROD 1		/* normal place */
-#define CLIP_ZCOORD 2		/* GR_VERTEX_Z_OFFSET */
-#define CLIP_WCOORD 3		/* GR_VERTEX_R_OFFSET */
-#define CLIP_GCOORD 4		/* normal place */
-#define CLIP_BCOORD 5		/* normal place */
-#define CLIP_RCOORD 6		/* GR_VERTEX_OOZ_OFFSET */
-#define CLIP_ACOORD 7		/* normal place */
-
-
-
 /* Should have size == 16 * sizeof(float).
  */
 typedef union {
@@ -118,6 +94,26 @@ typedef union {
   GLfloat f[16];	
   GLuint ui[16];
 } fxVertex;
+
+/* Used in the fxvtxfmt t&l engine.
+ */
+typedef struct {
+   GrVertex v;
+   GLfloat clip[4];
+   GLfloat win[4];	
+   GLfloat texcoord[2][2];
+   GLubyte mask;
+   GLfloat normal[3];		/* for replay & fallback */
+} fxClipVertex;
+
+
+
+typedef void (*vfmt_project_func)( GLcontext *ctx, fxClipVertex *v );
+typedef void (*vfmt_interpolate_func)( GLfloat t, 
+				       fxClipVertex *O,
+				       const fxClipVertex *I, 
+				       const fxClipVertex *J );
+
 
 
 #if defined(FXMESA_USE_ARGB)
@@ -141,15 +137,13 @@ typedef union {
 
 
 
-/* Mergable items first
+/* fastpath/vtxfmt flags first
  */
-#define SETUP_RGBA 0x1
-#define SETUP_TMU0 0x2
-#define SETUP_TMU1 0x4
+#define SETUP_TMU0 0x1
+#define SETUP_TMU1 0x2
+#define SETUP_RGBA 0x4
 #define SETUP_XYZW 0x8
 #define MAX_SETUP  0x10
-
-#define MAX_MERGABLE 0x8
 
 
 #define FX_NUM_TMU 2
@@ -199,7 +193,6 @@ typedef union {
 #define FX_UM_ALPHA_ITERATED        0x04000000
 #define FX_UM_ALPHA_CONSTANT        0x08000000
 
-typedef void (*tfxRenderVBFunc)(GLcontext *);
 
 /*
   Memory range from startAddr to endAddr-1
@@ -355,6 +348,15 @@ struct tfxMesaVertexBuffer {
 			        _NEW_COLOR)	\
 
 
+/* Covers the state referenced in fxDDCheckVtxfmt.
+ */
+#define _FX_NEW_VTXFMT (_NEW_TEXTURE |		\
+			_NEW_TEXTURE_MATRIX |	\
+			_NEW_TRANSFORM |	\
+			_NEW_LIGHT |		\
+			_FX_NEW_RENDERSTATE)
+			
+
 /* These lookup table are used to extract RGB values in [0,255] from
  * 16-bit pixel values.
  */
@@ -369,101 +371,127 @@ typedef void (*fx_point_func)( GLcontext *, const fxVertex * );
 typedef void (*fxRenderEltsFunc)( struct vertex_buffer * );
 
 struct tfxMesaContext {
-  GuTexPalette glbPalette;
+   GuTexPalette glbPalette;
 
-  GLcontext *glCtx;              /* the core Mesa context */
-  GLvisual *glVis;               /* describes the color buffer */
-  GLframebuffer *glBuffer;       /* the ancillary buffers */
+   GLcontext *glCtx;              /* the core Mesa context */
+   GLvisual *glVis;               /* describes the color buffer */
+   GLframebuffer *glBuffer;       /* the ancillary buffers */
 
-  GLint board;                   /* the board used for this context */
-  GLint width, height;           /* size of color buffer */
+   GLint board;                   /* the board used for this context */
+   GLint width, height;           /* size of color buffer */
 
-  GrBuffer_t currentFB;
+   GrBuffer_t currentFB;
 
-  GLboolean bgrOrder;
-  GrColor_t color;
-  GrColor_t clearC;
-  GrAlpha_t clearA;
-  GLuint constColor;
-  GrCullMode_t cullMode;
+   GLboolean bgrOrder;
+   GrColor_t color;
+   GrColor_t clearC;
+   GrAlpha_t clearA;
+   GLuint constColor;
+   GrCullMode_t cullMode;
 
-  tfxUnitsState unitsState;
-  tfxUnitsState restoreUnitsState; /* saved during multipass */
+   tfxUnitsState unitsState;
+   tfxUnitsState restoreUnitsState; /* saved during multipass */
 
-  GLuint tmu_source[FX_NUM_TMU];
-  GLuint tex_dest[MAX_TEXTURE_UNITS];
-  GLuint render_index;
-  GLuint setupindex;
-  GLuint setupdone;
-  GLuint stw_hint_state;		/* for grHints */
-  GLuint is_in_hardware;
-  GLuint new_state;
-  GLuint using_fast_path, passes, multipass;
+   GLuint tmu_source[FX_NUM_TMU];
+   GLuint tex_dest[MAX_TEXTURE_UNITS];
+   GLuint render_index;
+   GLuint setupindex;
+   GLuint setupdone;
+   GLuint stw_hint_state;		/* for grHints */
+   GLuint is_in_hardware;
+   GLuint new_state;   
+   GLuint using_fast_path, passes, multipass;
 
-  /* Texture Memory Manager Data */
+   /* Texture Memory Manager Data */
 
-  GLuint texBindNumber;
-  GLint tmuSrc;
-  GLuint lastUnitsMode;
-  GLuint freeTexMem[FX_NUM_TMU];
-  MemRange *tmPool;
-  MemRange *tmFree[FX_NUM_TMU];
+   GLuint texBindNumber;
+   GLint tmuSrc;
+   GLuint lastUnitsMode;
+   GLuint freeTexMem[FX_NUM_TMU];
+   MemRange *tmPool;
+   MemRange *tmFree[FX_NUM_TMU];
 
-  GLenum fogTableMode;
-  GLfloat fogDensity;
-  GLfloat fogStart, fogEnd;
-  GrFog_t *fogTable;
-  GLint textureAlign;
+   GLenum fogTableMode;
+   GLfloat fogDensity;
+   GLfloat fogStart, fogEnd;
+   GrFog_t *fogTable;
+   GLint textureAlign;
 
-  /* Acc. functions */
+   /* Acc. functions */
 
-  fx_point_func draw_point;
-  fx_line_func draw_line;
-  fx_tri_func draw_tri;
+   fx_point_func draw_point;
+   fx_line_func draw_line;
+   fx_tri_func draw_tri;
 
-  fxRenderEltsFunc RenderElementsRaw;
+   fxRenderEltsFunc RenderElementsRaw;
 
    /* System to turn culling on/off for tris/lines/points.
     */
-  fx_point_func initial_point;
-  fx_line_func initial_line;
-  fx_tri_func initial_tri;
+   fx_point_func initial_point;
+   fx_line_func initial_line;
+   fx_tri_func initial_tri;
 
-  fx_point_func subsequent_point;
-  fx_line_func subsequent_line;
-  fx_tri_func subsequent_tri;
+   fx_point_func subsequent_point;
+   fx_line_func subsequent_line;
+   fx_tri_func subsequent_tri;
 
+   GLfloat s0scale;
+   GLfloat s1scale;
+   GLfloat t0scale;
+   GLfloat t1scale;
 
    GLfloat inv_s0scale;
    GLfloat inv_s1scale;
    GLfloat inv_t0scale;
    GLfloat inv_t1scale;
 
-  tfxStats stats;
+   tfxStats stats;
 
-  void *state;
+   void *state;
 
-  /* Options */
+   /* Options */
 
-  GLboolean verbose;
-  GLboolean haveTwoTMUs;	/* True if we really have 2 tmu's  */
-  GLboolean emulateTwoTMUs;	/* True if we present 2 tmu's to mesa.  */
-  GLboolean haveAlphaBuffer;
-  GLboolean haveZBuffer;
-  GLboolean haveDoubleBuffer;
-  GLboolean haveGlobalPaletteTexture;
-  GLint swapInterval;
-  GLint maxPendingSwapBuffers;
+   GLboolean verbose;
+   GLboolean haveTwoTMUs;	/* True if we really have 2 tmu's  */
+   GLboolean emulateTwoTMUs;	/* True if we present 2 tmu's to mesa.  */
+   GLboolean haveAlphaBuffer;
+   GLboolean haveZBuffer;
+   GLboolean haveDoubleBuffer;
+   GLboolean haveGlobalPaletteTexture;
+   GLint swapInterval;
+   GLint maxPendingSwapBuffers;
+  
+   FX_GrContext_t glideContext;
 
-  FX_GrContext_t glideContext;
+   int screen_width;
+   int screen_height;
+   int initDone;
+   int clipMinX;
+   int clipMaxX;
+   int clipMinY;
+   int clipMaxY;
 
-  int screen_width;
-  int screen_height;
-  int initDone;
-  int clipMinX;
-  int clipMaxX;
-  int clipMinY;
-  int clipMaxY;
+   /* fxvtxfmt
+    */
+   GLboolean allow_vfmt;
+   GLvertexformat vtxfmt;
+   fxClipVertex current;
+   fxClipVertex verts[4];
+   fxClipVertex *vert;		/* points into verts[] */
+   void (*fire_on_vertex)( GLcontext * );
+   void (*fire_on_end)( GLcontext * );
+   void (*fire_on_fallback)( GLcontext * );
+   
+   vfmt_project_func project_vertex;
+   vfmt_interpolate_func interpolate_vertices;
+
+   int vtxfmt_fallback_count;
+   int vtxfmt_installed;
+   void (*old_begin)( GLenum );
+   GLenum prim;
+   
+   GLuint accel_light;
+   GLfloat basecolor[4];
 };
 
 typedef void (*tfxSetupFunc)(struct vertex_buffer *, GLuint, GLuint);
@@ -593,5 +621,8 @@ extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa,
 				struct gl_texture_object *tObj,
 				GLint where);
 extern void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder);
+
+extern void fxDDCheckVtxfmt( GLcontext *ctx );
+extern void fx_update_lighting( GLcontext *ctx );
 
 #endif

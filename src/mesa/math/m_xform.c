@@ -1,4 +1,4 @@
-/* $Id: m_xform.c,v 1.3 2000/11/18 08:10:24 jtaylor Exp $ */
+/* $Id: m_xform.c,v 1.4 2000/11/24 10:25:11 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -173,7 +173,7 @@ void gl_transform_vector( GLfloat u[4], const GLfloat v[4], const GLfloat m[16] 
 
 
 /* Useful for one-off point transformations, as in clipping.
- * Note that because the matrix isn't analyzed we do too many
+ * Note that because the matrix isn't analysed we do too many
  * multiplies, and that the result is always 4-clean.
  */
 void gl_transform_point_sz( GLfloat Q[4], const GLfloat M[16],

@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.33 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: enable.c,v 1.34 2000/11/24 10:25:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -100,7 +100,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	       ctx->Transform._AnyClip++;
 	
 	       if (ctx->ProjectionMatrix.flags & MAT_DIRTY) {
- 		  _math_matrix_analyze( &ctx->ProjectionMatrix );
+ 		  _math_matrix_analyse( &ctx->ProjectionMatrix );
 	       }
 	
 	       /* This derived state also calculated in clip.c and

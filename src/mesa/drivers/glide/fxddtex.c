@@ -99,7 +99,6 @@ static void fxTexInvalidate(GLcontext *ctx, struct gl_texture_object *tObj)
 
   ti->validated=GL_FALSE;
   fxMesa->new_state|=FX_NEW_TEXTURING;
-  ctx->Driver.RenderStart = fxSetupFXUnits;
 }
 
 static tfxTexInfo *fxAllocTexObjData(fxMesaContext fxMesa)
@@ -159,7 +158,6 @@ void fxDDTexBind(GLcontext *ctx, GLenum target, struct gl_texture_object *tObj)
   ti->lastTimeUsed=fxMesa->texBindNumber;
 
   fxMesa->new_state|=FX_NEW_TEXTURING;
-  ctx->Driver.RenderStart = fxSetupFXUnits;
 }
 
 void fxDDTexEnv(GLcontext *ctx, GLenum target, GLenum pname, const GLfloat *param)
@@ -184,7 +182,6 @@ void fxDDTexEnv(GLcontext *ctx, GLenum target, GLenum pname, const GLfloat *para
    }
 
    fxMesa->new_state|=FX_NEW_TEXTURING;
-   ctx->Driver.RenderStart = fxSetupFXUnits;
 }
 
 void fxDDTexParam(GLcontext *ctx, GLenum target, struct gl_texture_object *tObj,
@@ -282,7 +279,6 @@ void fxDDTexParam(GLcontext *ctx, GLenum target, struct gl_texture_object *tObj,
       break;
     }
     fxMesa->new_state|=FX_NEW_TEXTURING;
-    ctx->Driver.RenderStart = fxSetupFXUnits;
     break;
 
   case GL_TEXTURE_WRAP_T:
@@ -297,7 +293,6 @@ void fxDDTexParam(GLcontext *ctx, GLenum target, struct gl_texture_object *tObj,
       break;
     }
     fxMesa->new_state|=FX_NEW_TEXTURING;
-    ctx->Driver.RenderStart = fxSetupFXUnits;
     break;
 
   case GL_TEXTURE_BORDER_COLOR:
@@ -439,7 +434,6 @@ void fxDDTexPalette(GLcontext *ctx, struct gl_texture_object *tObj)
     }
     convertPalette(fxMesa->glbPalette.data, &ctx->Texture.Palette);
     fxMesa->new_state |= FX_NEW_TEXTURING;
-    ctx->Driver.RenderStart = fxSetupFXUnits;
   }
 }
 
@@ -1191,6 +1185,7 @@ GLvoid *fxDDGetTexImage(GLcontext *ctx, GLenum target, GLint level,
  * Need this to provide at least one external definition.
  */
 
+extern int gl_fx_dummy_function_ddtex(void);
 int gl_fx_dummy_function_ddtex(void)
 {
   return 0;

@@ -44,5 +44,19 @@ _tnl_DestroyContext( GLcontext *ctx );
 extern void
 _tnl_InvalidateState( GLcontext *ctx, GLuint new_state );
 
+/* Functions to revive the tnl module after being unhooked from
+ * dispatch and/or driver callbacks.
+ */
+
+/* Restore just the ctx->Exec table:
+ */
+extern void
+_tnl_wakeup_exec( GLcontext *ctx );
+
+/* Restore both ctx->Exec and ctx->Save:
+ */
+extern void
+_tnl_wakeup_save_exec( GLcontext *ctx );
+
 
 #endif

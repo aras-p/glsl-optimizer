@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.42 2000/11/16 21:05:34 keithw Exp $ */
+/* $Id: dd.h,v 1.43 2000/11/24 10:25:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,7 +29,7 @@
 #ifndef DD_INCLUDED
 #define DD_INCLUDED
 
-/* THIS FILE ONLY INCLUDED BY types.h !!!!! */
+/* THIS FILE ONLY INCLUDED BY mtypes.h !!!!! */
 
 
 struct gl_pixelstore_attrib;
@@ -872,6 +872,12 @@ struct dd_function_table {
     */
 
 
+   void (*LockArraysEXT)( GLcontext *ctx, GLint first, GLsizei count );
+   void (*UnlockArraysEXT)( GLcontext *ctx );
+   /* 
+    */
+
+
    /*
     * State-changing functions (drawing functions are above)
     *
@@ -888,9 +894,11 @@ struct dd_function_table {
 			      GLenum dfactorRGB, GLenum sfactorA,
 			      GLenum dfactorA );
    void (*ClearDepth)(GLcontext *ctx, GLclampd d);
+   void (*ClearStencil)(GLcontext *ctx, GLint s);
    void (*ColorMask)(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
                      GLboolean bmask, GLboolean amask );
    void (*CullFace)(GLcontext *ctx, GLenum mode);
+   void (*ClipPlane)(GLcontext *ctx, GLenum plane, const GLfloat *equation );
    void (*FrontFace)(GLcontext *ctx, GLenum mode);
    void (*DepthFunc)(GLcontext *ctx, GLenum func);
    void (*DepthMask)(GLcontext *ctx, GLboolean flag);
@@ -909,10 +917,12 @@ struct dd_function_table {
    void (*PolygonStipple)(GLcontext *ctx, const GLubyte *mask );
    void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
    void (*ShadeModel)(GLcontext *ctx, GLenum mode);
-   void (*ClearStencil)(GLcontext *ctx, GLint s);
    void (*StencilFunc)(GLcontext *ctx, GLenum func, GLint ref, GLuint mask);
    void (*StencilMask)(GLcontext *ctx, GLuint mask);
    void (*StencilOp)(GLcontext *ctx, GLenum fail, GLenum zfail, GLenum zpass);
+   void (*TexGen)(GLcontext *ctx, GLenum coord, GLenum pname, 
+		  const GLfloat *params );
+   void (*TextureMatrix)(GLcontext *ctx, GLuint unit, const GLmatrix *mat);
    void (*Viewport)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
 
    /* State-query functions
@@ -943,6 +953,115 @@ struct dd_function_table {
    void (*EdgeFlagPointer)(GLcontext *ctx, GLsizei stride, const GLvoid *ptr);
 };
 
+
+
+
+
+
+
+typedef struct {
+
+   void (*ArrayElement)( GLint ); /* NOTE */
+   void (*Color3f)( GLfloat, GLfloat, GLfloat );
+   void (*Color3fv)( const GLfloat * );
+   void (*Color3ub)( GLubyte, GLubyte, GLubyte );
+   void (*Color3ubv)( const GLubyte * );
+   void (*Color4f)( GLfloat, GLfloat, GLfloat, GLfloat );
+   void (*Color4fv)( const GLfloat * );
+   void (*Color4ub)( GLubyte, GLubyte, GLubyte, GLubyte );
+   void (*Color4ubv)( const GLubyte * );
+   void (*EdgeFlag)( GLboolean );
+   void (*EdgeFlagv)( const GLboolean * );
+   void (*EvalCoord1f)( GLfloat );          /* NOTE */
+   void (*EvalCoord1fv)( const GLfloat * );          /* NOTE */
+   void (*EvalCoord2f)( GLfloat, GLfloat ); /* NOTE */
+   void (*EvalCoord2fv)( const GLfloat * ); /* NOTE */
+   void (*EvalPoint1)( GLint );             /* NOTE */
+   void (*EvalPoint2)( GLint, GLint );      /* NOTE */
+   void (*FogCoordfEXT)( GLfloat );
+   void (*FogCoordfvEXT)( const GLfloat * );
+   void (*Indexi)( GLint );
+   void (*Indexiv)( const GLint * );
+   void (*Materialfv)( GLenum face, GLenum pname, const GLfloat * ); /* NOTE */ 
+   void (*MultiTexCoord1fARB)( GLenum, GLfloat );
+   void (*MultiTexCoord1fvARB)( GLenum, const GLfloat * );
+   void (*MultiTexCoord2fARB)( GLenum, GLfloat, GLfloat );
+   void (*MultiTexCoord2fvARB)( GLenum, const GLfloat * );
+   void (*MultiTexCoord3fARB)( GLenum, GLfloat, GLfloat, GLfloat );
+   void (*MultiTexCoord3fvARB)( GLenum, const GLfloat * );
+   void (*MultiTexCoord4fARB)( GLenum, GLfloat, GLfloat, GLfloat, GLfloat );
+   void (*MultiTexCoord4fvARB)( GLenum, const GLfloat * );
+   void (*Normal3f)( GLfloat, GLfloat, GLfloat );
+   void (*Normal3fv)( const GLfloat * );
+   void (*SecondaryColor3fEXT)( GLfloat, GLfloat, GLfloat );
+   void (*SecondaryColor3fvEXT)( const GLfloat * );
+   void (*SecondaryColor3ubEXT)( GLubyte, GLubyte, GLubyte );
+   void (*SecondaryColor3ubvEXT)( const GLubyte * );
+   void (*TexCoord1f)( GLfloat );
+   void (*TexCoord1fv)( const GLfloat * );
+   void (*TexCoord2f)( GLfloat, GLfloat );
+   void (*TexCoord2fv)( const GLfloat * );
+   void (*TexCoord3f)( GLfloat, GLfloat, GLfloat );
+   void (*TexCoord3fv)( const GLfloat * );
+   void (*TexCoord4f)( GLfloat, GLfloat, GLfloat, GLfloat );
+   void (*TexCoord4fv)( const GLfloat * );
+   void (*Vertex2f)( GLfloat, GLfloat );
+   void (*Vertex2fv)( const GLfloat * );
+   void (*Vertex3f)( GLfloat, GLfloat, GLfloat );
+   void (*Vertex3fv)( const GLfloat * );
+   void (*Vertex4f)( GLfloat, GLfloat, GLfloat, GLfloat );
+   void (*Vertex4fv)( const GLfloat * );
+   void (*CallList)( GLuint );	/* NOTE */
+   void (*Begin)( GLenum );
+   void (*End)( void );
+   /* Drivers present a reduced set of the functions possible in
+    * begin/end objects.  Core mesa provides translation stubs for the
+    * remaining functions to map down to these entrypoints.  
+    *
+    * These are the initial values to be installed into dispatch by
+    * mesa.  If the t&l driver wants to modify the dispatch table
+    * while installed, it must do so itself.  It would be possible for
+    * the vertexformat to install it's own initial values for these
+    * functions, but this way there is an obvious list of what is
+    * expected of the driver.
+    *
+    * If the driver wants to hook in entrypoints other than those
+    * listed above, it must restore them to their original values in
+    * the disable() callback, below.  
+    */
+
+   void (*Rectf)( GLfloat, GLfloat, GLfloat, GLfloat );
+   /* 
+    */
+
+
+   void (*DrawArrays)( GLenum mode, GLint start, GLsizei count );
+   void (*DrawElements)( GLenum mode, GLsizei count, GLenum type, 
+			 const GLvoid *indices );
+   void (*DrawRangeElements)(GLenum mode, GLuint start,
+			     GLuint end, GLsizei count,
+			     GLenum type, const GLvoid *indices);
+   /* These may or may not belong here.  Heuristic: If an array is
+    * enabled, the installed vertex format should support that array and
+    * it's current size natively.
+    */
+
+   void (*EvalMesh1)( GLenum mode, GLint i1, GLint i2 );
+   void (*EvalMesh2)( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 );
+   /* If you don't support eval, fallback to the default vertex format
+    * on receiving an eval call and use the pipeline mechanism to
+    * provide partial t&l acceleration.
+    *
+    * Mesa will provide a set of helper functions to do eval within
+    * accelerated vertex formats, eventually...
+    */
+
+   GLboolean prefer_float_colors;
+   /* Should core send non-standard colors to glColor4f or glColor4ub
+    */
+
+
+} GLvertexformat;
 
 
 #endif

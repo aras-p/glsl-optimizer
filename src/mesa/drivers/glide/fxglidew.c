@@ -436,6 +436,7 @@ FX_GrContext_t FX_grSstWinOpen( FxU32                hWnd,
  * Need this to provide at least one external definition.
  */
 
+extern int gl_fx_dummy_function_glidew(void);
 int gl_fx_dummy_function_glidew(void)
 {
   return 0;

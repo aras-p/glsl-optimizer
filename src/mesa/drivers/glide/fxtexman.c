@@ -738,6 +738,7 @@ fxTMRestoreTextures_NoLock(fxMesaContext ctx) {
  * Need this to provide at least one external definition.
  */
 
+extern int gl_fx_dummy_function_texman(void);
 int gl_fx_dummy_function_texman(void)
 {
   return 0;

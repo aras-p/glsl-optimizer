@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.15 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: rastpos.c,v 1.16 2000/11/24 10:25:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -168,7 +168,7 @@ static void gl_shade_rastpos( GLcontext *ctx,
       ACC_SCALE_SCALAR_3V(contrib, n_dot_VP, light->_MatDiffuse[0]);
       diffuse += n_dot_VP * light->_dli * attenuation;
 
-      if (light->_IsMatSpecular[0]) {
+      {
 	 if (ctx->Light.Model.LocalViewer) {
 	    GLfloat v[3];
 	    COPY_3V(v, vertex);

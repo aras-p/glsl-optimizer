@@ -55,7 +55,7 @@ static void TAG(rs)(struct vertex_buffer *VB, GLuint start, GLuint end)
 
    /* TODO:  Get import_client_data to pad vectors out to 4 cleanly.
     */
-   gl_import_client_data( VB, tnl->_RenderFlags,
+   _tnl_import_client_data( VB, tnl->_RenderFlags,
 			  (VB->ClipOrMask
 			   ? /*  VEC_CLEAN| */VEC_WRITABLE|VEC_GOOD_STRIDE
 			   : /*  VEC_CLEAN| */VEC_GOOD_STRIDE));

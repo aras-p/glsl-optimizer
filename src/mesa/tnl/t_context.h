@@ -1,5 +1,5 @@
 
-/* $Id: t_context.h,v 1.3 2000/11/22 07:32:18 joukj Exp $ */
+/* $Id: t_context.h,v 1.4 2000/11/24 10:25:12 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -142,6 +142,9 @@
 #define VERT_TEX3_1234    (VERT_TEX3_4|VERT_TEX3_123)
 #define VERT_TEX3_ANY     VERT_TEX3_12
 
+#define VERT_TEX_ANY_ANY (VERT_TEX0_ANY|VERT_TEX1_ANY| \
+			  VERT_TEX2_ANY|VERT_TEX3_ANY)
+
 #define NR_TEXSIZE_BITS   3
 #define VERT_TEX_ANY(i)   (VERT_TEX0_ANY << ((i) * NR_TEXSIZE_BITS))
 
@@ -173,12 +176,6 @@
                             VERT_FOG_COORD)
 
 
-/* For beginstate
- */
-#define VERT_BEGIN_0    0x1	   /* glBegin (if initially inside beg/end) */
-#define VERT_BEGIN_1    0x2	   /* glBegin (if initially outside beg/end) */
-#define VERT_ERROR_0    0x4	   /* invalid_operation in initial state 0 */
-#define VERT_ERROR_1    0x8        /* invalid_operation in initial state 1 */
 
 
 struct gl_pipeline;
@@ -240,7 +237,6 @@ enum {
 #define VERT_ERROR_0    0x4	   /* invalid_operation in initial state 0 */
 #define VERT_ERROR_1    0x8        /* invalid_operation in initial state 1 */
 
-
 /* KW: Represents everything that can take place between a begin and
  * end, and can represent multiple begin/end pairs.  This plus *any*
  * state variable (GLcontext) should be all you need to replay the
@@ -259,7 +255,8 @@ struct immediate
     */
    GLuint Start, Count;
    GLuint LastData;		/* count or count+1 */
-   GLuint AndFlag, OrFlag, BeginState;
+   GLuint AndFlag, OrFlag;
+   GLuint BeginState, SavedBeginState;
    GLuint LastPrimitive;	
 
    GLuint ArrayAndFlags;	/* precalc'ed for glArrayElt */
@@ -437,7 +434,7 @@ typedef struct vertex_buffer
 } TNLvertexbuffer;
 
 
-typedef void (*gl_shade_func)( struct vertex_buffer *VB );
+typedef void (*shade_func)( struct vertex_buffer *VB );
 
 typedef void (*clip_interp_func)( struct vertex_buffer *VB, GLuint dst,
                                   GLfloat t, GLuint in, GLuint out );
@@ -531,10 +528,24 @@ struct gl_cva {
    GLuint orflag;
    GLuint merge;
 
+   GLuint locked;
    GLuint lock_changed;
    GLuint last_orflag;
    GLuint last_array_flags;
    GLuint last_array_new_state;
+};
+
+/* These are used to make the ctx->Current values look like
+ * arrays (with zero StrideB).
+ */
+struct gl_fallback_arrays {
+   struct gl_client_array Normal;
+   struct gl_client_array Color;
+   struct gl_client_array SecondaryColor;
+   struct gl_client_array FogCoord;
+   struct gl_client_array Index;
+   struct gl_client_array TexCoord[MAX_TEXTURE_UNITS];
+   struct gl_client_array EdgeFlag;
 };
 
 
@@ -577,17 +588,23 @@ typedef struct tnl_context {
    clip_poly_func *_poly_clip_tab;
    clip_line_func *_line_clip_tab;
    clip_interp_func _ClipInterpFunc; /* Clip interpolation function */
-   normal_func *_NormalTransform;
-   gl_shade_func *_shade_func_tab;   /* Current shading function table */
+   normal_func *_NormalTransform; 
+   shade_func *_shade_func_tab;   /* Current shading function table */
 
    GLenum _CurrentPrimitive;         /* Prim or GL_POLYGON+1 */
    GLuint _CurrentFlag;
+
+   GLboolean _ReplayHardBeginEnd; /* Display list execution of rect, etc */
 
    GLuint _RenderFlags;	      /* Active inputs to render stage */
 
    /* Cache of unused immediate structs */
    struct immediate *freed_im_queue;
    GLuint nr_im_queued;
+
+   struct gl_fallback_arrays Fallback; 
+
+   GLvertexformat vtxfmt;
 
 } TNLcontext;
 
@@ -597,7 +614,6 @@ typedef struct tnl_context {
 #define TNL_CURRENT_IM(ctx) ((struct immediate *)(ctx->swtnl_im))
 #define TNL_VB(ctx) ((struct vertex_buffer *)(ctx->swtnl_vb))
 
-extern void _tnl_reset_immediate( GLcontext *ctx );
 extern GLboolean _tnl_flush_vertices( GLcontext *ctx, GLuint flush_flags );
 
 
@@ -617,12 +633,12 @@ _tnl_LightingSpaceChange( GLcontext *ctx );
 #define GET_IMMEDIATE  struct immediate *IM = TNL_CURRENT_IM(((GLcontext *) (_glapi_Context ? _glapi_Context : _glapi_get_context())))
 #define SET_IMMEDIATE(ctx, im)  ctx->swtnl_im = (void *)im
 #else
-extern struct immediate *_mesa_CurrentInput;
-#define GET_IMMEDIATE struct immediate *IM = _mesa_CurrentInput
+extern struct immediate *_tnl_CurrentInput;
+#define GET_IMMEDIATE struct immediate *IM = _tnl_CurrentInput
 #define SET_IMMEDIATE(ctx, im)			\
 do {						\
    ctx->swtnl_im = (void *)im;			\
-   _mesa_CurrentInput = im;			\
+   _tnl_CurrentInput = im;			\
 } while (0)
 #endif
 
