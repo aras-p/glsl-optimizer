@@ -204,6 +204,13 @@ print_limits(void)
             printf("    %s = %d, %d\n", limits[i].name, max[0], max[1]);
       }
    }
+   /* these don't fit into the above mechanism, unfortunately */
+   glGetConvolutionParameteriv(GL_CONVOLUTION_2D, GL_MAX_CONVOLUTION_WIDTH, max);
+   glGetConvolutionParameteriv(GL_CONVOLUTION_2D, GL_MAX_CONVOLUTION_HEIGHT, max+1);
+   if (glGetError() == GL_NONE) {
+      printf("    GL_MAX_CONVOLUTION_WIDTH/HEIGHT = %d, %d\n", max[0], max[1]);
+   }
+
 }
 
 
