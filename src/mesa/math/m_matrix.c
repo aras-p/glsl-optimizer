@@ -1,10 +1,10 @@
-/* $Id: m_matrix.c,v 1.14 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: m_matrix.c,v 1.15 2003/01/08 16:42:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -594,7 +594,7 @@ _math_matrix_rotate( GLmatrix *mat,
          /* rotate only around x-axis */
          M(1,1) = c;
          M(2,2) = c;
-         if (y < 0.0F) {
+         if (x < 0.0F) {
             M(1,2) = s;
             M(2,1) = -s;
          }
