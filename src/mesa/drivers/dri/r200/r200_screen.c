@@ -103,67 +103,83 @@ static const GLuint __driNConfigOptions = 10;
 #define PCI_CHIP_RS300_5837     0x5837
 #endif
 
-#ifdef USE_NEWINTERFACE
+#ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-#endif /* USE_NEWINTERFACE */
+#endif /* USE_NEW_INTERFACE */
 
 static r200ScreenPtr __r200Screen;
 
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
-#ifdef USE_NEWINTERFACE
+#ifdef USE_NEW_INTERFACE
 static __GLcontextModes * fill_in_modes( __GLcontextModes * modes,
 					 unsigned pixel_bits, 
 					 unsigned depth_bits,
 					 unsigned stencil_bits,
 					 const GLenum * db_modes,
-					 unsigned num_db_modes )
+					 unsigned num_db_modes,
+					 int visType )
 {
     static const uint8_t bits[2][4] = {
 	{          5,          6,          5,          0 },
-	{          8,          8,          8,          8 }
+	{          8,          8,          8,          0 }
     };
 
     static const uint32_t masks[2][4] = {
 	{ 0x0000F800, 0x000007E0, 0x0000001F, 0x00000000 },
-	{ 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000 }
+	{ 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00000000 }
     };
 
     unsigned   i;
-    const unsigned index = (pixel_bits / 8) - 1;
+    unsigned   j;
+    const unsigned index = ((pixel_bits + 15) / 16) - 1;
 
     for ( i = 0 ; i < num_db_modes ; i++ ) {
+	for ( j = 0 ; j < 2 ; j++ ) {
 
-	modes->redBits   = bits[index][0];
-	modes->greenBits = bits[index][1];
-	modes->blueBits  = bits[index][2];
-	modes->alphaBits = bits[index][3];
-	modes->redMask   = masks[index][0];
-	modes->greenMask = masks[index][1];
-	modes->blueMask  = masks[index][2];
-	modes->alphaMask = masks[index][3];
-	modes->rgbBits   = pixel_bits;
+	    modes->redBits   = bits[index][0];
+	    modes->greenBits = bits[index][1];
+	    modes->blueBits  = bits[index][2];
+	    modes->alphaBits = bits[index][3];
+	    modes->redMask   = masks[index][0];
+	    modes->greenMask = masks[index][1];
+	    modes->blueMask  = masks[index][2];
+	    modes->alphaMask = masks[index][3];
+	    modes->rgbBits   = modes->redBits + modes->greenBits
+		+ modes->blueBits;
 
-	modes->stencilBits = stencil_bits;
-	modes->depthBits = depth_bits;
-	
-	if ( db_modes[i] == GLX_NONE ) {
-	    modes->doubleBufferMode = GL_FALSE;
+	    modes->accumRedBits   = 16 * j;
+	    modes->accumGreenBits = 16 * j;
+	    modes->accumBlueBits  = 16 * j;
+	    modes->accumAlphaBits = 0;
+	    modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
+
+	    modes->stencilBits = stencil_bits;
+	    modes->depthBits = depth_bits;
+
+	    modes->visualType = visType;
+	    modes->renderType = GLX_RGBA_BIT;
+	    modes->drawableType = GLX_WINDOW_BIT;
+	    modes->rgbMode = GL_TRUE;
+
+	    if ( db_modes[i] == GLX_NONE ) {
+		modes->doubleBufferMode = GL_FALSE;
+	    }
+	    else {
+		modes->doubleBufferMode = GL_TRUE;
+		modes->swapMethod = db_modes[i];
+	    }
+
+	    modes = modes->next;
 	}
-	else {
-	    modes->doubleBufferMode = GL_TRUE;
-	    modes->swapMethod = db_modes[i];
-	}
-	
-	modes = modes->next;
     }
     
     return modes;
 }
-#endif /* USE_NEWINTERFACE */
+#endif /* USE_NEW_INTERFACE */
 
 
-#ifdef USE_NEWINTERFACE
+#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *
 r200FillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
@@ -195,19 +211,27 @@ r200FillInModes( unsigned pixel_bits, unsigned depth_bits,
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
 
-    num_modes = depth_buffer_factor * back_buffer_factor;
+    num_modes = depth_buffer_factor * back_buffer_factor * 4;
 
     modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
     m = modes;
     for ( i = 0 ; i < depth_buffer_factor ; i++ ) {
 	m = fill_in_modes( m, pixel_bits, 
 			   depth_buffer_modes[i][0], depth_buffer_modes[i][1],
-			   back_buffer_modes, back_buffer_factor );
+			   back_buffer_modes, back_buffer_factor,
+			   GLX_TRUE_COLOR );
+    }
+
+    for ( i = 0 ; i < depth_buffer_factor ; i++ ) {
+	m = fill_in_modes( m, pixel_bits, 
+			   depth_buffer_modes[i][0], depth_buffer_modes[i][1],
+			   back_buffer_modes, back_buffer_factor,
+			   GLX_DIRECT_COLOR );
     }
 
     return modes;
 }
-#endif USE_NEWINTERFACE
+#endif /* USE_NEW_INTERFACE */
 
 
 /* Create the device specific screen private data struct.
@@ -585,7 +609,7 @@ void *__driCreateScreen(struct DRIDriverRec *driver,
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
  *         failure.
  */
-#ifdef USE_NEWINTERFACE
+#ifdef USE_NEW_INTERFACE
 void * __driCreateNewScreen( Display *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
@@ -599,7 +623,7 @@ void * __driCreateNewScreen( Display *dpy, int scrn, __DRIscreen *psc,
 {
    __DRIscreenPrivate *psp;
 
-   psp = __driUtilCreateNewScreen(dpy, scrn, psc, modes,
+   psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
 				  ddx_version, dri_version, drm_version,
 				  frame_buffer, pSAREA, fd,
 				  internal_api_version, &r200API);
@@ -617,7 +641,7 @@ void * __driCreateNewScreen( Display *dpy, int scrn, __DRIscreen *psc,
 
    return (void *) psp;
 }
-#endif /* USE_NEWINTERFACE */
+#endif /* USE_NEW_INTERFACE */
 
 
 /**
