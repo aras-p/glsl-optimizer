@@ -43,7 +43,7 @@ static void TAG(emit)( GLcontext *ctx,
    GLfloat (*tc0)[4], (*tc1)[4];
    GLfloat (*col)[4], (*spec)[4];
    GLuint tc0_stride, tc1_stride, col_stride, spec_stride;
-   GLuint tc0_size, tc1_size;
+   GLuint tc0_size, tc1_size, col_size;
    GLfloat (*proj)[4] = VB->NdcPtr->data; 
    GLuint proj_stride = VB->NdcPtr->stride;
    GLfloat (*psize)[4];
@@ -80,6 +80,7 @@ static void TAG(emit)( GLcontext *ctx,
    if (IND & SETUP_RGBA) {
       col = VB->ColorPtr[0]->data;
       col_stride = VB->ColorPtr[0]->stride;
+      col_size = VB->ColorPtr[0]->size;
    }
 
    if (IND & SETUP_SPEC) {
@@ -138,7 +139,11 @@ static void TAG(emit)( GLcontext *ctx,
          UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[2], col[0][0]);
          UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[1], col[0][1]);
          UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[0], col[0][2]);
-         UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[3], col[0][3]);
+         if (col_size == 4) {
+            UNCLAMPED_FLOAT_TO_UBYTE(v->pargb[3], col[0][3]);
+         } else {
+            v->pargb[3] = 255;
+         }
 	 STRIDE_4F(col, col_stride);
       }
       if (IND & SETUP_SPEC) {

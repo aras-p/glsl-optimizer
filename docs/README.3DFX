@@ -191,14 +191,14 @@ MESA_3DFX_STRING
 	Desc: advertise "3dfx" substring in GL_RENDERER
 	Note: used by some games aware by 3dfx hw limitations
 MESA_GLX_FX
-	OS: win32, linux
-	HW: selective
-	Desc: force display mode
-	Note: (!) experimental!
+	OS: linux
+	HW: Voodoo1, Rush, Voodoo2
+	Desc: display mode
+	Note: (!) experimental: "w" may work in Win32 using non-V1/V2 HW
 	Value:
-	    "w" - windowed mode (linux: V1/2/Rush, win32: all except V1/V2)
-	    "f" - fullscreen mode (linux: V1/V2/Rush)
-	    "d" - disable glide driver (linux: V1/V2/Rush)
+	    "w" - windowed mode
+	    "f" - fullscreen mode
+	    "d" - disable glide driver
 
 
 
