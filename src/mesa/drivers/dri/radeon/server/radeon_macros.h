@@ -45,7 +45,7 @@
 #  define MMIO_IN8(base, offset) \
 	*(volatile unsigned char *)(((unsigned char*)(base)) + (offset))
 #  define MMIO_IN32(base, offset) \
-	read_MMIO_LE32(base, addr)
+	read_MMIO_LE32(base, offset)
 #  define MMIO_OUT8(base, offset, val) \
 	*(volatile unsigned char *)(((unsigned char*)(base)) + (offset)) = (val)
 #  define MMIO_OUT32(base, offset, val) \
