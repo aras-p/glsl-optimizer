@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.4 for Mesa
+ * DOS/DJGPP glut driver v1.5 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -38,8 +38,6 @@ typedef struct {
         int fid;            /* func-id as returned from PCHW */
 } GLUTSShotCB;
 
-static GLboolean g_sscb_semaphore;
-
 GLUTidleCB g_idle_func = NULL;
 
 
@@ -47,11 +45,12 @@ GLUTidleCB g_idle_func = NULL;
 static void g_single_shot_callback (void *opaque)
 {
  GLUTSShotCB *cb = (GLUTSShotCB *)opaque;
- while (g_sscb_semaphore) {
- }
  if (!--cb->ttl) {
     cb->func(cb->value);
     pc_remove_int(cb->fid);
+    /* We won't be needing this slot anymore, so free it. This operation
+     * must be the last thing, and must be atomic, to mutex `glutTimerFunc'
+     */
     cb->func = NULL;
  }
 } ENDOFUNC(g_single_shot_callback)
@@ -139,7 +138,6 @@ void APIENTRY glutTimerFunc (unsigned int millis, GLUTtimerCB func, int value)
  if (virgin) {
     virgin = GL_FALSE;
     LOCKDATA(g_sscb);
-    LOCKDATA(g_sscb_semaphore);
     LOCKFUNC(g_single_shot_callback);
     /* we should lock the callee also... */
  }
@@ -153,20 +151,27 @@ void APIENTRY glutTimerFunc (unsigned int millis, GLUTtimerCB func, int value)
        freq = 1000 / millis;
        ttl = 1;
     }
-    g_sscb_semaphore++;
     for (i = 0; i < MAX_SSHOT_CB; i++) {
         if (g_sscb[i].func == NULL) {
-           int fid = pc_install_int((PFUNC)func, &g_sscb[i], freq);
-           if (fid >= 0) {
-              g_sscb[i].func = func;
-              g_sscb[i].value = value;
-              g_sscb[i].ttl = ttl;
-              g_sscb[i].fid = fid;
+           /* We will be needing this slot, so alloc it. This operation
+            * must be the first thing, and must be atomic, to mutex callbacks!
+            */
+           g_sscb[i].func = func;
+           g_sscb[i].value = value;
+           g_sscb[i].ttl = ttl;
+           /* There is a very small gap here: `pc_install_int' enables
+            * interrupts just before returning FID value (which will be
+            * used inside callback). The critical gap is 1 millisecond
+            * - which I'm sure we won't overrun...
+            */
+           g_sscb[i].fid = pc_install_int((PFUNC)func, &g_sscb[i], freq);
+           if (g_sscb[i].fid < 0) {
+              /* Interrupt could not be set! Release the slot back */
+              g_sscb[i].func = NULL;
            }
            break;
         }
     }
-    g_sscb_semaphore--;
  }
 }
 

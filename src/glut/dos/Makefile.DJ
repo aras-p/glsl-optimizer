@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# DOS/DJGPP glut makefile v1.4 for Mesa
+# DOS/DJGPP glut makefile v1.5 for Mesa
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@users.sourceforge.net
@@ -34,7 +34,9 @@
 #	CFLAGS
 #
 #	MKGLUT		absolute path to original GLUT.
-#			default = $(TOP)/src-glut
+#			default = $(TOP)/src/glut/glx
+#	GLIDE		path to Glide3 SDK; used to resolve DXEs.
+#			default = $(TOP)/glide3
 #
 #    Targets:
 #	all:		build GLUT
@@ -46,7 +48,7 @@
 .PHONY: all clean
 
 TOP = ../../..
-GLIDE ?= $(TOP)/include/glide3
+GLIDE ?= $(TOP)/glide3
 MKGLUT ?= $(TOP)/src/glut/glx
 LIBDIR = $(TOP)/lib
 GLUT_LIB = libglut.a

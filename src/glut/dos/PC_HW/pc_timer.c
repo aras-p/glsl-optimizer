@@ -1,5 +1,5 @@
 /*
- * PC/HW routine collection v1.4 for DOS/DJGPP
+ * PC/HW routine collection v1.5 for DOS/DJGPP
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -93,6 +93,137 @@ void pc_remove_timer (void)
 
 
 
+/* Desc: remove timerfunc
+ *
+ * In  : timerfunc id
+ * Out : 0 if success
+ *
+ * Note: tries to relax the main timer whenever possible
+ */
+int pc_remove_int (int fid)
+{
+ int i;
+ unsigned int freq = 0;
+
+ /* are we installed? */
+ if (!timer_installed) {
+    return -1;
+ }
+
+ /* sanity check */
+ if ((fid < 0) || (fid >= MAX_TIMERS) || (timer_func[fid].func == NULL)) {
+    return -1;
+ }
+ timer_func[fid].func = NULL;
+
+ /* scan for maximum frequency */
+ for (i = 0; i < MAX_TIMERS; i++) {
+     TIMER *t = &timer_func[i];
+     if (t->func) {
+        if (freq < t->freq) {
+           freq = t->freq;
+        }
+     }
+ }
+
+ /* if there are no callbacks left, cleanup */
+ if (!freq) {
+    pc_remove_timer();
+    return 0;
+ }
+
+ /* if we just lowered the maximum frequency, try to relax the timer engine */
+ if (freq < timer_main.freq) {
+    unsigned int new_counter = PIT_FREQ / freq;
+
+    DISABLE();
+
+    for (i = 0; i < MAX_TIMERS; i++) {
+        if (timer_func[i].func) {
+           ADJUST(timer_func[i], freq);
+        }
+    }
+
+    outportb(0x43, 0x34);
+    outportb(0x40, (unsigned char)new_counter);
+    outportb(0x40, (unsigned char)(new_counter>>8));
+    timer_main.clock_ticks = 0;
+    timer_main.counter = new_counter;
+    timer_main.freq = freq;
+
+    ENABLE();
+ }
+ 
+ return 0;
+} ENDOFUNC(pc_remove_int)
+
+
+
+/* Desc: adjust timerfunc
+ *
+ * In  : timerfunc id, new frequency (Hz)
+ * Out : 0 if success
+ *
+ * Note: might change the main timer frequency
+ */
+int pc_adjust_int (int fid, unsigned int freq)
+{
+ int i;
+
+ /* are we installed? */
+ if (!timer_installed) {
+    return -1;
+ }
+
+ /* sanity check */
+ if ((fid < 0) || (fid >= MAX_TIMERS) || (timer_func[fid].func == NULL)) {
+    return -1;
+ }
+ timer_func[fid].freq = freq;
+
+ /* scan for maximum frequency */
+ freq = 0;
+ for (i = 0; i < MAX_TIMERS; i++) {
+     TIMER *t = &timer_func[i];
+     if (t->func) {
+        if (freq < t->freq) {
+           freq = t->freq;
+        }
+     }
+ }
+
+ /* update main timer / sons to match highest frequency */
+ DISABLE();
+
+ /* using '>' is correct still (and avoids updating
+  * the HW timer too often), but doesn't relax the timer!
+  */
+ if (freq != timer_main.freq) {
+    unsigned int new_counter = PIT_FREQ / freq;
+
+    for (i = 0; i < MAX_TIMERS; i++) {
+        if (timer_func[i].func) {
+           ADJUST(timer_func[i], freq);
+        }
+    }
+
+    outportb(0x43, 0x34);
+    outportb(0x40, (unsigned char)new_counter);
+    outportb(0x40, (unsigned char)(new_counter>>8));
+    timer_main.clock_ticks = 0;
+    timer_main.counter = new_counter;
+    timer_main.freq = freq;
+ } else {
+    ADJUST(timer_func[fid], timer_main.freq);
+ }
+
+ ENABLE();
+
+ return 0;
+} ENDOFUNC(pc_adjust_int)
+
+
+
 /* Desc: install timer engine
  *
  * In  : -
@@ -110,6 +241,8 @@ static int install_timer (void)
     LOCKDATA(timer_func);
     LOCKDATA(timer_main);
     LOCKFUNC(timer);
+    LOCKFUNC(pc_adjust_int);
+    LOCKFUNC(pc_remove_int);
 
     timer_main.counter = 0x10000;
 
@@ -186,138 +319,9 @@ int pc_install_int (PFUNC func, void *parm, unsigned int freq)
     ADJUST(timer_func[i], timer_main.freq);
  }
 
- ENABLE();
-
- return t - timer_func;
-}
-
-
-
-/* Desc: remove timerfunc
- *
- * In  : timerfunc id
- * Out : 0 if success
- *
- * Note: tries to relax the main timer whenever possible
- */
-int pc_remove_int (int fid)
-{
- int i;
- unsigned int freq = 0;
-
- /* are we installed? */
- if (!timer_installed) {
-    return -1;
- }
-
- /* sanity check */
- if ((fid < 0) || (fid >= MAX_TIMERS) || (timer_func[fid].func == NULL)) {
-    return -1;
- }
- timer_func[fid].func = NULL;
-
- /* scan for maximum frequency */
- for (i = 0; i < MAX_TIMERS; i++) {
-     TIMER *t = &timer_func[i];
-     if (t->func) {
-        if (freq < t->freq) {
-           freq = t->freq;
-        }
-     }
- }
-
- /* if there are no callbacks left, cleanup */
- if (!freq) {
-    pc_remove_timer();
-    return 0;
- }
-
- /* if we just lowered the maximum frequency, try to relax the timer engine */
- if (freq < timer_main.freq) {
-    unsigned int new_counter = PIT_FREQ / freq;
-
-    DISABLE();
-
-    for (i = 0; i < MAX_TIMERS; i++) {
-        if (timer_func[i].func) {
-           ADJUST(timer_func[i], freq);
-        }
-    }
-
-    outportb(0x43, 0x34);
-    outportb(0x40, (unsigned char)new_counter);
-    outportb(0x40, (unsigned char)(new_counter>>8));
-    timer_main.clock_ticks = 0;
-    timer_main.counter = new_counter;
-    timer_main.freq = freq;
-
-    ENABLE();
- }
- 
- return 0;
-}
-
-
-
-/* Desc: adjust timerfunc
- *
- * In  : timerfunc id, new frequency (Hz)
- * Out : 0 if success
- *
- * Note: might change the main timer frequency
- */
-int pc_adjust_int (int fid, unsigned int freq)
-{
- int i;
-
- /* are we installed? */
- if (!timer_installed) {
-    return -1;
- }
-
- /* sanity check */
- if ((fid < 0) || (fid >= MAX_TIMERS) || (timer_func[fid].func == NULL)) {
-    return -1;
- }
- timer_func[fid].freq = freq;
-
- /* scan for maximum frequency */
- freq = 0;
- for (i = 0; i < MAX_TIMERS; i++) {
-     TIMER *t = &timer_func[i];
-     if (t->func) {
-        if (freq < t->freq) {
-           freq = t->freq;
-        }
-     }
- }
-
- /* update main timer / sons to match highest frequency */
- DISABLE();
-
- /* using '>' is correct still (and avoids updating
-  * the HW timer too often), but doesn't relax the timer!
-  */
- if (freq != timer_main.freq) {
-    unsigned int new_counter = PIT_FREQ / freq;
-
-    for (i = 0; i < MAX_TIMERS; i++) {
-        if (timer_func[i].func) {
-           ADJUST(timer_func[i], freq);
-        }
-    }
-
-    outportb(0x43, 0x34);
-    outportb(0x40, (unsigned char)new_counter);
-    outportb(0x40, (unsigned char)(new_counter>>8));
-    timer_main.clock_ticks = 0;
-    timer_main.counter = new_counter;
-    timer_main.freq = freq;
- } else {
-    ADJUST(timer_func[fid], timer_main.freq);
- }
+ i = t - timer_func;
 
  ENABLE();
 
- return 0;
+ return i;
 }
