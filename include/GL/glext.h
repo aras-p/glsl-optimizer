@@ -50,7 +50,8 @@ extern "C" {
  *   7. Brian Paul, 7 Apr 2000
  *      Minor clean-ups, temporary token values for GL_SGIS_pixel_texture
  *   8. Brian Paul, 15 Apr 2000
- *      Added GL_EXT_texture_cube_map, adding some missing tokens values.
+ *      Added GL_EXT_texture_cube_map, GL_NV_texgen_emboss, adding some
+ *      missing tokens values.
  */
 #define GL_GLEXT_VERSION_EXT 8
 
@@ -3193,6 +3194,21 @@ typedef void (APIENTRY * PFNGLGETCOMPRESSEDTEXIMAGEARBPROC) (GLenum target, GLin
 #define GL_MAX_CUBE_MAP_TEXTURE_SIZE_EXT	0x851C
 
 #endif /* GL_EXT_texture_cube_map */
+
+
+
+/*
+ * ? GL_NV_texgen_emboss
+ */
+
+#ifndef GL_NV_texgen_emboss
+#define GL_NV_texgen_emboss 1
+
+#define GL_EMBOSS_MAP_NV			0x855F
+#define GL_EMBOSS_LIGHT_NV			0x855D
+#define GL_EMBOSS_CONSTANT_NV			0x855E
+
+#endif /* GL_NV_texgen_emboss */
 
 
 
