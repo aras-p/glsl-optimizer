@@ -400,10 +400,7 @@ static struct {
 #define GET_VERTEX(e) (fxMesa->verts + e)
 
 #ifdef USE_IEEE
-/* type-punning, keep -fstrict-aliasing happy */
-typedef union { GLfloat f; GLuint u; } fu_type;
-/* 0/1 value, to allow XOR'ing with other booleans */
-#define AREA_IS_CCW( a ) (((fu_type *)&(a))->u >> 31)
+#define AREA_IS_CCW( a ) (((fi_type *)&(a))->i < 0)
 #else
 #define AREA_IS_CCW( a ) (a < 0)
 #endif
@@ -881,6 +878,17 @@ static void fx_render_vb_quads( GLcontext *ctx,
    }
 
    INIT(GL_QUADS);
+
+#if 1
+   /* [dBorca] Hack alert:
+    * since VTX-0-2 we get here with start = 0, count = 2,
+    * causing around 4 billion triangles. Revise this after
+    * a while
+    */
+   if (count < 3) {
+      return;
+   }
+#endif
 
    for (i = start ; i < count-3 ; i += 4 ) {
 #define VERT(x) (fxVB + (x))
