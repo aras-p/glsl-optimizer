@@ -657,6 +657,11 @@ static GLboolean r300_run_render(GLcontext *ctx,
    #if 1
 	
    	#if 1
+	/* I dont recall fog locking up before polygon offset modifications.
+	   Or then having fog on only locks up if immediate mode is on... */
+	if(ctx->Fog.Enabled)
+		return GL_FALSE;
+	
         return r300_run_immediate_render(ctx, stage);
 	#else 
         return r300_run_vb_render(ctx, stage);
