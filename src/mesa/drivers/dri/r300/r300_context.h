@@ -58,7 +58,7 @@ typedef struct r300_context *r300ContextPtr;
 typedef GLuint uint32_t;
 typedef GLubyte uint8_t;
 
-  /* We should probably change types within vertex_shader 
+  /* We should probably change types within vertex_shader
       and pixel_shader structure later on */
 #define CARD32 GLuint
 #include "vertex_shader.h"
@@ -113,16 +113,6 @@ struct r300_dma {
 
        /* Texture related */
 
-#define TEX_0   0x1
-#define TEX_1   0x2
-#define TEX_2	0x4
-#define TEX_3	0x8
-#define TEX_4	0x10
-#define TEX_5	0x20
-#define TEX_6	0x40
-#define TEX_7	0x80
-#define TEX_ALL 0xff
-
 typedef struct r300_tex_obj r300TexObj, *r300TexObjPtr;
 
 /* Texture object in locally shared texture space.
@@ -146,25 +136,25 @@ struct r300_tex_obj {
 
 	/* hardware register values */
 	/* Note that R200 has 8 registers per texture and R300 only 7 */
-	GLuint filter;	
+	GLuint filter;
 	GLuint pitch; /* one of the unknown registers.. unknown 1 ?*/
 	GLuint size;	/* npot only */
 	GLuint format;
 	GLuint offset;	/* Image location in texmem.
 				   All cube faces follow. */
 	GLuint unknown4;
-	GLuint unknown5; 
+	GLuint unknown5;
 	/* end hardware registers */
-	
-	/* registers computed by r200 code - keep them here to 
+
+	/* registers computed by r200 code - keep them here to
 	   compare against what is actually written.
-	   
+
 	   to be removed later.. */
 	GLuint pp_border_color;
 	GLuint pp_cubic_faces;	/* cube face 1,2,3,4 log2 sizes */
 	GLuint format_x;
-	
-	
+
+
 	GLboolean border_fallback;
 };
 
@@ -356,7 +346,7 @@ struct r300_state_atom {
 	/* the layout is common for all fields inside tex */
 #define R300_TEX_CMD_0		0
 #define R300_TEX_VALUE_0	1
-/* We don't really use this, instead specify mtu+1 dynamically 
+/* We don't really use this, instead specify mtu+1 dynamically
 #define R300_TEX_CMDSIZE	(MAX_TEXTURE_UNITS+1)
 */
 
@@ -431,9 +421,9 @@ struct r300_hw_state {
 	struct r300_state_atom vps;	/* vertex point size (?) */
 
 		/* 8 texture units */
-		/* the state is grouped by function and not by 
+		/* the state is grouped by function and not by
 		   texture unit. This makes single unit updates
-		   really awkward - we are much better off 
+		   really awkward - we are much better off
 		   updating the whole thing at once */
 	struct {
 		struct r300_state_atom filter;
@@ -467,7 +457,7 @@ struct r300_cmdbuf {
 /**
  * State cache
  */
- 
+
 struct r300_depthbuffer_state {
 	GLfloat scale;
 };
@@ -492,7 +482,7 @@ struct r300_vap_reg_state {
 struct r300_vertex_shader_fragment {
 	int length;
 	union {
-		GLuint d[VSF_MAX_FRAGMENT_LENGTH];  
+		GLuint d[VSF_MAX_FRAGMENT_LENGTH];
 		float f[VSF_MAX_FRAGMENT_LENGTH];
 		VERTEX_SHADER_INSTRUCTION i[VSF_MAX_FRAGMENT_LENGTH/4];
 		} body;
@@ -514,17 +504,17 @@ struct r300_vertex_shader_state {
 	    but easier to program */
 	struct r300_vertex_shader_fragment matrix[3];
 	struct r300_vertex_shader_fragment vector[2];
-		
+
 	struct r300_vertex_shader_fragment unknown1;
 	struct r300_vertex_shader_fragment unknown2;
-		
+
 	int program_start;
 	int unknown_ptr1;  /* pointer within program space */
 	int program_end;
-		
+
 	int param_offset;
 	int param_count;
-		
+
 	int unknown_ptr2;  /* pointer within program space */
 	int unknown_ptr3;  /* pointer within program space */
 	};
@@ -537,7 +527,7 @@ struct r300_pixel_shader_program {
 		int length;
 		GLuint inst[PSF_MAX_PROGRAM_LENGTH];
 		} tex;
-	
+
 	/* ALU intructions (logic and integer) */
 	struct {
 		int length;
@@ -548,7 +538,7 @@ struct r300_pixel_shader_program {
 			GLuint inst3;
 			} inst[PSF_MAX_PROGRAM_LENGTH];
 		} alu;
-	
+
 	/* node information */
 	/* nodes are used to synchronize ALU and TEX streams */
 	/* There could be up to 4 nodes each consisting of
@@ -557,29 +547,29 @@ struct r300_pixel_shader_program {
 	/* the last node of a program should always be node3 */
 	struct {
 		int tex_offset;
-		int tex_end;		
+		int tex_end;
 		int alu_offset;
 		int alu_end;
 		} node[4];
-		
+
 	int active_nodes;	/* must be between 1 and 4, inclusive */
 	int first_node_has_tex;  /* other nodes always have it */
-	
+
 	int temp_register_count;  /* magic value goes into PFS_CNTL_1 */
-	
+
 	/* entire program */
 	int tex_offset;
 	int tex_end;
 	int alu_offset;
 	int alu_end;
-	
+
 	};
-	
-	#define MAX_PIXEL_SHADER_PARAMS 32
+
+#define MAX_PIXEL_SHADER_PARAMS 32
 struct r300_pixel_shader_state {
 	struct r300_pixel_shader_program program;
-	
-	/* parameters */		
+
+	/* parameters */
 	int param_length;  /* to limit the number of unnecessary writes */
 	struct {
 		float x;
@@ -588,28 +578,29 @@ struct r300_pixel_shader_state {
 		float w;
 		} param[MAX_PIXEL_SHADER_PARAMS];
 	};
-	
+
 /* 8 is somewhat bogus... it is probably something like 24 */
 #define R300_MAX_AOS_ARRAYS		8
+
+#define AOS_FORMAT_FLOAT	1
+#define AOS_FORMAT_UBYTE	2
+#define AOS_FORMAT_FLOAT_COLOR	3
+
+#define REG_COORDS	0
+#define REG_COLOR0	1
+#define REG_TEX0	2
 
 struct r300_aos_rec {
 	GLuint offset;
 	int element_size; /* in dwords */
 	int stride;       /* distance between elements, in dwords */
-	
-	#define AOS_FORMAT_FLOAT	1
-	#define AOS_FORMAT_UBYTE	2
-	#define AOS_FORMAT_FLOAT_COLOR	3
-	int format;	
-	
+
+	int format;
+
 	int ncomponents; /* number of components - between 1 and 4, inclusive */
 
- 	 /* just guesses */
-	#define REG_COORDS	0
-	#define REG_COLOR0	1
-	#define REG_TEX0	2
 	int reg; /* which register they are assigned to. */
-			
+
 	};
 
 struct r300_state {
@@ -620,7 +611,7 @@ struct r300_state {
 	struct r300_pixel_shader_state pixel_shader;
 	struct r300_aos_rec aos[R300_MAX_AOS_ARRAYS];
 	int aos_count;
-	
+
 	int hw_stencil;
 };
 
@@ -634,17 +625,14 @@ struct r300_context {
 	struct r300_hw_state hw;
 	struct r300_cmdbuf cmdbuf;
 	struct r300_state state;
-	
+
 	/* Vertex buffers */
 	int elt_count;  /* size of the buffer for vertices */
 	int attrib_count; /* size of the buffer for vertex attributes.. Somehow it can be different ? */
-	
+
 
 	/* Vertex buffers
 	 */
-	#if 0 /* we'll need it later, but not now */
-	struct r300_ioctl ioctl;
-	#endif
 	struct r300_dma dma;
 	GLboolean save_on_next_unlock;
 

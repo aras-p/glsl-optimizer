@@ -89,14 +89,6 @@ struct r200_stipple_state {
 	GLuint mask[32];
 };
 
-#define TEX_0   0x1
-#define TEX_1   0x2
-#define TEX_2	0x4
-#define TEX_3	0x8
-#define TEX_4	0x10
-#define TEX_5	0x20
-#define TEX_ALL 0x3f
-
 typedef struct r200_tex_obj r200TexObj, *r200TexObjPtr;
 
 /* Texture object in locally shared texture space.
