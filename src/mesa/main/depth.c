@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.5 1999/10/10 12:51:29 brianp Exp $ */
+/* $Id: depth.c,v 1.6 1999/10/11 04:22:11 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
  * Depth buffer functions
  */
 
+#include <stdlib.h>
 
 #ifdef PC_HEADER
 #include "all.h"

@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.6 1999/10/10 12:44:35 brianp Exp $ */
+/* $Id: attrib.c,v 1.7 1999/10/11 04:20:55 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,7 +26,7 @@
 
 
 
-
+#include <stdlib.h>
 
 #ifdef PC_HEADER
 #include "all.h"
