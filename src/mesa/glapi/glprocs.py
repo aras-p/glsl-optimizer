@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glx86asm.py,v 1.4 2001/11/18 22:42:57 brianp Exp $
+# $Id: glprocs.py,v 1.1 2001/11/18 22:42:57 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -25,49 +25,36 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-# Generate the src/X86/glapi_x86.S file.
+# Generate the glprocs.h file.
 #
 # Usage:
-#    gloffsets.py >glapi_x86.S
+#    gloffsets.py >glprocs.h
 #
 # Dependencies:
 #    The apispec file must be in the current directory.
 
 
+
 import apiparser
+import string
 
 
 def PrintHead():
-	print '/* DO NOT EDIT - This file generated automatically with glx86asm.py script */'
-	print '#include "assyntax.h"'
-	print '#include "glapioffsets.h"'
+	print '/* DO NOT EDIT - This file generated automatically by glprocs.py script */'
 	print ''
-	print '#ifndef __WIN32__'
+	print '/* This file is only included by glapi.c and is used for'
+	print ' * the GetProcAddress() function'
+	print ' */'
 	print ''
-	print '#if defined(USE_MGL_NAMESPACE)'
-	print '#define GL_PREFIX(n) GLNAME(CONCAT(mgl,n))'
-	print '#else'
-	print '#define GL_PREFIX(n) GLNAME(CONCAT(gl,n))'
-	print '#endif'
-	print ''
-	print '#define GL_OFFSET(x) CODEPTR(REGOFF(4 * x, EAX))'
-	print ''
-	print '#ifdef GNU_ASSEMBLER'
-	print '#define GLOBL_FN(x) GLOBL x ; .type x,@function'
-	print '#else'
-	print '#define GLOBL_FN(x) GLOBL x'
-	print '#endif'
-	print ''
-	print ''
+	print 'static struct name_address_offset static_functions[] = {'
 	return
 #enddef
 
 
 def PrintTail():
-	print ''
-	print '#endif  /* __WIN32__ */'
+	print '   { NULL, NULL }  /* end of list marker */'
+	print '};'
 #enddef
-
 
 
 records = []
@@ -81,39 +68,22 @@ def FindOffset(funcName):
 	return -1
 #enddef
 
-def EmitFunction(name, returnType, argTypeList, argNameList, alias, offset):
-	argList = apiparser.MakeArgList(argTypeList, argNameList)
-	if alias != '':
-		dispatchName = alias
-	else:
+
+def EmitEntry(name, returnType, argTypeList, argNameList, alias, offset):
+	if alias == '':
 		dispatchName = name
-	#endif
-	
+	else:
+		dispatchName = alias
 	if offset < 0:
-		# try to find offset from alias name
-		assert dispatchName != ''
 		offset = FindOffset(dispatchName)
-		if offset == -1:
-			#print 'Cannot dispatch %s' % name
-			return
-		#endif
-	#endif
-
-	# save this info in case we need to look up an alias later
-	records.append((name, dispatchName, offset))
-
-	# print the assembly code
-	print 'ALIGNTEXT16'
-	print "GLOBL_FN(GL_PREFIX(%s))" % (name)
-	print "GL_PREFIX(%s):" % (name)
-	print '\tMOV_L(GLNAME(_glapi_Dispatch), EAX)'
-	print "\tJMP(GL_OFFSET(_gloffset_%s))" % (dispatchName)
-	print ''
+	if offset >= 0 and string.find(name, "unused") == -1:
+		print '   { "gl%s", (GLvoid *) gl%s, _gloffset_%s },' % (name, name, dispatchName)
+		# save this info in case we need to look up an alias later
+		records.append((name, dispatchName, offset))
 
 #enddef
 
 
-
 PrintHead()
-apiparser.ProcessSpecFile("APIspec", EmitFunction)
+apiparser.ProcessSpecFile("APIspec", EmitEntry)
 PrintTail()

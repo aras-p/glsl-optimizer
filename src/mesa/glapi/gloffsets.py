@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-# $Id: gloffsets.py,v 1.4 2000/05/11 17:45:20 brianp Exp $
+# $Id: gloffsets.py,v 1.5 2001/11/18 22:42:57 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.3
+# Version:  4.1
 # 
-# Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -31,13 +31,11 @@
 #    gloffsets.py >glapioffsets.h
 #
 # Dependencies:
-#    The gl.spec file from the SI must be in the current directory.
-#
-# Brian Paul  3 February 2000
+#    The apispec file must be in the current directory.
 
 
-import string
-import re
+
+import apiparser;
 
 
 def PrintHead():
@@ -46,75 +44,42 @@ def PrintHead():
 	print '#define _GLAPI_OFFSETS_H_'
 	print ''
 	return
-#endif
+#enddef
 
 
 def PrintTail():
 	print ''
 	print '#endif'
-#endif
-
-
-def GenerateDefine(name, offset):
-	s = '#define _gloffset_' + name + ' ' + str(offset)
-	return s;
 #enddef
 
 
-def PrintDefines():
-	functionPattern = re.compile('^[a-zA-Z0-9]+\(')
-	functionNamePattern = re.compile('^[a-zA-Z0-9]+')
+records = {}
 
-	funcName = ''
-
-	maxOffset = 0
-	offsetInfo = { }
-
-	f = open('gl.spec')
-	for line in f.readlines():
-
-		m = functionPattern.match(line)
-		if m:
-			# extract funcName
-			n = functionNamePattern.findall(line)
-			funcName = n[0]
-
-		m = string.split(line)
-		if len(m) > 1:
-			if m[0] == 'param':
-				paramName = m[1]
-			if m[0] == 'offset':
-				if m[1] == '?':
-					#print 'WARNING skipping', funcName
-					noop = 0
-				else:
-					funcOffset = int(m[1])
-					if funcOffset > maxOffset:
-						maxOffset = funcOffset
-					s = GenerateDefine(funcName, funcOffset)
-					if offsetInfo.has_key(funcOffset):
-						print 'ERROR: offset', funcOffset, 'already used!'
-						raise ERROR
-					else:
-						offsetInfo[funcOffset] = s;
-					#endif
-				#endif
-			#endif
-		#endif
-	#endfor
-
-	# Now print the #defines in order of dispatch offset
-	for i in range(0, maxOffset + 1):
-		if offsetInfo.has_key(i):
-			print offsetInfo[i]
-		else:
-			print 'ERROR: missing offset:', i
-			raise ERROR
-
+def AddOffset(name, returnType, argTypeList, argNameList, alias, offset):
+	argList = apiparser.MakeArgList(argTypeList, argNameList)
+	if offset >= 0 and not records.has_key(offset):
+		records[offset] = name
+		#print '#define _gloffset_%s %d' % (name, offset)
 #enddef
+
+
+def PrintRecords():
+	keys = records.keys()
+	keys.sort()
+	prevk = -1
+	for k in keys:
+		if k != prevk + 1:
+			#print 'Missing offset %d' % (prevk)
+			pass
+		prevk = int(k)
+		name = records[k]
+		print '#define _gloffset_%s %d' % (name, k)
+#endef
+
 
 
 
 PrintHead()
-PrintDefines()
+apiparser.ProcessSpecFile("APIspec", AddOffset)
+PrintRecords()
 PrintTail()

@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-# $Id: glsparcasm.py,v 1.4 2001/08/03 13:16:31 davem69 Exp $
+# $Id: glsparcasm.py,v 1.5 2001/11/18 22:42:57 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  3.5
+# Version:  4.1
 # 
-# Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+# Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -25,19 +25,16 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-# Generate the glapi_sparc.S assembly language file.
+# Generate the src/SPARC/glapi_sparc.S file.
 #
 # Usage:
-#    glsparcasm.py >glapi_sparc.S
+#    gloffsets.py >glapi_sparc.S
 #
 # Dependencies:
-#    The gl.spec file from the SI must be in the current directory.
-#
-# Brian Paul      11 May 2000
-# David S. Miller  4 Jun 2001
+#    The apispec file must be in the current directory.
 
-import string
-import re
+
+import apiparser;
 
 
 def PrintHead():
@@ -45,7 +42,7 @@ def PrintHead():
 	print '#include "glapioffsets.h"'
 	print ''
 	print '#define GL_PREFIX(n) gl##n'
-	print '#define GLOBL_FN(x) .globl x ; .type x,#function'
+	print '#define GLOBL_FN(x) .globl x'
 	print ''
 	print '/* The _glapi_Dispatch symbol addresses get relocated into the'
 	print ' * sethi/or instruction sequences below at library init time.'
@@ -58,7 +55,7 @@ def PrintHead():
 	print '__glapi_sparc_icache_flush: /* %o0 = insn_addr */'
 	print '\tflush\t%o0'
 	print '\tretl'
-	print '\t nop'
+	print '\tnop'
 	print ''
 	print '.data'
 	print '.align 64'
@@ -66,7 +63,6 @@ def PrintHead():
 	print '.globl _mesa_sparc_glapi_begin'
 	print '.type _mesa_sparc_glapi_begin,#function'
 	print '_mesa_sparc_glapi_begin:'
-	print ''
 	return
 #endif
 
@@ -80,9 +76,43 @@ def PrintTail():
 #endif
 
 
-def GenerateDispatchCode(name, offset):
+
+records = []
+
+def FindOffset(funcName):
+	for (name, alias, offset) in records:
+		if name == funcName:
+			return offset
+		#endif
+	#endfor
+	return -1
+#enddef
+
+def EmitFunction(name, returnType, argTypeList, argNameList, alias, offset):
+	argList = apiparser.MakeArgList(argTypeList, argNameList)
+	if alias != '':
+		dispatchName = alias
+	else:
+		dispatchName = name
+	#endif
+	
+	if offset < 0:
+		# try to find offset from alias name
+		assert dispatchName != ''
+		offset = FindOffset(dispatchName)
+		if offset == -1:
+			#print 'Cannot dispatch %s' % name
+			return
+		#endif
+	#endif
+
+	# save this info in case we need to look up an alias later
+	records.append((name, dispatchName, offset))
+
+	# print the assembly code
 	print ''
 	print "GLOBL_FN(GL_PREFIX(%s))" % (name)
+	print '.type %s,#function' %(name)
 	print "GL_PREFIX(%s):" % (name)
 	print '#ifdef __sparc_v9__'
 	print '\tsethi\t%hi(0x00000000), %g2'
@@ -91,79 +121,19 @@ def GenerateDispatchCode(name, offset):
 	print '\tor\t%g1, %lo(0x00000000), %g1'
 	print '\tsllx\t%g2, 32, %g2'
 	print '\tldx\t[%g1 + %g2], %g1'
-	print "\tsethi\t%%hi(8 * _gloffset_%s), %%g2" % (offset)
-	print "\tor\t%%g2, %%lo(8 * _gloffset_%s), %%g2" % (offset)
+	print "\tsethi\t%%hi(8 * _gloffset_%s), %%g2" % (dispatchName)
+	print "\tor\t%%g2, %%lo(8 * _gloffset_%s), %%g2" % (dispatchName)
 	print '\tldx\t[%g1 + %g2], %g3'
 	print '#else'
 	print '\tsethi\t%hi(0x00000000), %g1'
 	print '\tld\t[%g1 + %lo(0x00000000)], %g1'
-	print "\tld\t[%%g1 + (4 * _gloffset_%s)], %%g3" % (offset)
+	print "\tld\t[%%g1 + (4 * _gloffset_%s)], %%g3" % (dispatchName)
 	print '#endif'
 	print '\tjmpl\t%g3, %g0'
+	print '\tnop'
 #enddef
-
-
-def FindAlias(list, funcName):
-	for i in range(0, len(list)):
-		entry = list[i]
-		if entry[0] == funcName:
-			return entry[1]
-		#endif
-	#endfor
-	return ''
-#enddef
-
-
-
-def PrintDefines():
-	functionPattern = re.compile('^[a-zA-Z0-9]+\(')
-	functionNamePattern = re.compile('^[a-zA-Z0-9]+')
-
-	funcName = ''
-	functions = [ ]
-
-	f = open('gl.spec')
-	for line in f.readlines():
-
-		m = functionPattern.match(line)
-		if m:
-			# extract funcName
-			n = functionNamePattern.findall(line)
-			funcName = n[0]
-
-		m = string.split(line)
-		if len(m) > 1:
-			if m[0] == 'param':
-				paramName = m[1]
-			if m[0] == 'offset':
-				if m[1] == '?':
-					#print 'WARNING skipping', funcName
-					noop = 0
-				else:
-					entry = [ funcName, funcName ]
-					functions.append(entry)
-				#endif
-			elif m[0] == 'alias':
-				aliasedName = FindAlias(functions, m[1])
-				if aliasedName:
-					entry = [ funcName, aliasedName ]
-					functions.append(entry)
-				else:
-					print 'WARNING: alias to unknown function:', aliasedName
-				#endif
-			#endif
-		#endif
-	#endfor
-
-	# Now generate the assembly dispatch code
-	for i in range(0, len(functions)):
-		entry = functions[i]
-		GenerateDispatchCode( entry[0], entry[1] )
-
-#enddef
-
 
 
 PrintHead()
-PrintDefines()
+apiparser.ProcessSpecFile("APIspec", EmitFunction)
 PrintTail()
