@@ -198,30 +198,24 @@ void viaEmitState(viaContextPtr vmesa)
 	    if (VIA_DEBUG) fprintf(stderr, "multi texture\n");
 	    nDummyValue = (HC_SubA_HTXSMD << 24) | (1 << 3);
                 
-	    /* Clear cache flag never set:
-	     */
-	    if (0) {
-	       OUT_RING( nDummyValue | HC_HTXCHCLR_MASK );
-	       OUT_RING( nDummyValue );
-	    }
-	    else {
-	       OUT_RING( nDummyValue );
-	       OUT_RING( nDummyValue );
-	    }
 	 }
 	 else {
 	    if (VIA_DEBUG) fprintf(stderr, "single texture\n");
 	    nDummyValue = (HC_SubA_HTXSMD << 24) | 0;
-                
-	    if (0) {
-	       OUT_RING( nDummyValue | HC_HTXCHCLR_MASK );
-	       OUT_RING( nDummyValue );
-	    }
-	    else {
-	       OUT_RING( nDummyValue );
-	       OUT_RING( nDummyValue );
-	    }
 	 }
+
+	 /* Clear cache flag never set:
+	  */
+	 if (vmesa->clearTexCache) {
+	    vmesa->clearTexCache = 0;
+	    OUT_RING( nDummyValue | HC_HTXCHCLR_MASK );
+	    OUT_RING( nDummyValue );
+	 }
+	 else {
+	    OUT_RING( nDummyValue );
+	    OUT_RING( nDummyValue );
+	 }
+
 	 OUT_RING( HC_HEADER2 );
 	 OUT_RING( HC_ParaType_NotTex << 16 );
 	 OUT_RING( (HC_SubA_HEnable << 24) | vmesa->regEnable );
@@ -1318,6 +1312,9 @@ static void viaChooseColorState(GLcontext *ctx)
         }
     }
 
+
+    vmesa->regEnable &= ~HC_HenDT_MASK;
+
     if (ctx->Color.ColorLogicOpEnabled) 
         vmesa->regHROP = ROP[ctx->Color.LogicOp & 0xF];
     else
@@ -1615,21 +1612,6 @@ void viaValidateState( GLcontext *ctx )
         vmesa->regEnable |= HC_HenCS_MASK;
     else
         vmesa->regEnable &= ~HC_HenCS_MASK;
-
-    /* CLE266 gets this wrong at least: Pixels which fail alpha test
-     * are incorrectly writen to the z buffer.  This is a pretty big
-     * slowdown, it would be good to find out this wasn't necessary:
-     */
-#if 0
-    /* Disabling now, as the main problem was that the alpha reference
-     * value was calculated incorrectly, it's now fixed. */
-    if (vmesa->viaScreen->deviceID == VIA_CLE266) {
-       GLboolean fallback = (ctx->Color.AlphaEnabled && 
-			     ctx->Color.AlphaFunc != GL_ALWAYS &&
-			     ctx->Depth.Mask);
-       FALLBACK( vmesa, VIA_FALLBACK_ALPHATEST, fallback );
-    }
-#endif
 
     vmesa->newEmitState |= vmesa->newState;
     vmesa->newState = 0;

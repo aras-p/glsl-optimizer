@@ -286,6 +286,7 @@ struct via_context_t {
    GLuint agpFullCount;
 
    GLboolean strictConformance;
+   GLboolean clearTexCache;
 
    /* Configuration cache
     */

@@ -446,6 +446,7 @@ void viaUploadTexImages(viaContextPtr vmesa, viaTextureObjectPtr t)
             viaUploadTexLevel(t, i);
 
     t->dirtyImages = 0;
+    vmesa->clearTexCache = 1;
 
     UNLOCK_HARDWARE(vmesa);
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
