@@ -66,7 +66,7 @@
 #define GLwDrawingAreaRec                GLwMDrawingAreaRec
 #endif 
 
-#define ATTRIBLIST_SIZE 30
+#define ATTRIBLIST_SIZE 32
 
 #define offset(field) XtOffset(GLwDrawingAreaWidget,glwDrawingArea.field)
 
