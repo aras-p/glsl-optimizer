@@ -1,4 +1,4 @@
-/* $Id: texcompress.c,v 1.1 2002/09/27 02:45:38 brianp Exp $ */
+/* $Id: texcompress.c,v 1.2 2002/10/18 17:41:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -142,18 +142,14 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
  */
 void
 _mesa_compress_teximage( GLcontext *ctx, GLsizei width, GLsizei height,
-                   GLenum srcFormat, const GLchan *source, GLint srcRowStride,
-                   GLenum dstFormat, GLubyte *dest, GLint dstRowStride )
+                         GLenum srcFormat, const GLchan *source,
+                         GLint srcRowStride,
+                         const struct gl_texture_format *dstFormat,
+                         GLubyte *dest, GLint dstRowStride )
 {
-   GLuint len = 0;
-
-   switch (dstFormat) {
+   switch (dstFormat->MesaFormat) {
    default:
       _mesa_problem(ctx, "Bad dstFormat in _mesa_compress_teximage()");
       return;
    }
-
-   /* sanity check */
-   ASSERT(len == _mesa_compressed_texture_size(ctx, width, height,
-                                               1, dstFormat));
 }

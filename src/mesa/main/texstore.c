@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.42 2002/09/27 02:45:38 brianp Exp $ */
+/* $Id: texstore.c,v 1.43 2002/10/18 17:41:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -674,7 +674,8 @@ transfer_compressed_teximage(GLcontext *ctx, GLuint dimensions,
                              GLenum srcFormat, GLenum srcType,
                              const struct gl_pixelstore_attrib *unpacking,
                              const GLvoid *source,
-                             GLenum dstFormat, GLubyte *dest,
+                             const struct gl_texture_format *dstFormat,
+                             GLubyte *dest,
                              GLint dstRowStride)
 {
    GLchan *tempImage = NULL;
@@ -682,8 +683,10 @@ transfer_compressed_teximage(GLcontext *ctx, GLuint dimensions,
    GLenum baseFormat;
 
    ASSERT(dimensions == 2);
+   /* TexelBytes is zero if and only if it's a compressed format */
+   ASSERT(dstFormat->TexelBytes == 0);
 
-   baseFormat = _mesa_base_tex_format(ctx, dstFormat);
+   baseFormat = dstFormat->BaseFormat;
 
    if (srcFormat != baseFormat || srcType != CHAN_TYPE ||
        ctx->_ImageTransferState != 0 || unpacking->SwapBytes) {
@@ -786,7 +789,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
                                                        width);
       transfer_compressed_teximage(ctx, 1, width, 1, 1,
                                    format, type, packing,
-                                   pixels, texImage->IntFormat,
+                                   pixels, texImage->TexFormat,
                                    (GLubyte *) texImage->Data, dstRowStride);
    }
    else {
@@ -862,7 +865,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
                                                        width);
       transfer_compressed_teximage(ctx, 2, width, height, 1,
                                    format, type, packing,
-                                   pixels, texImage->IntFormat,
+                                   pixels, texImage->TexFormat,
                                    (GLubyte *) texImage->Data, dstRowStride);
    }
    else {
@@ -933,7 +936,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
                                                        width);
       transfer_compressed_teximage(ctx, 3, width, height, depth,
                                    format, type, packing,
-                                   pixels, texImage->IntFormat,
+                                   pixels, texImage->TexFormat,
                                    (GLubyte *) texImage->Data, dstRowStride);
    }
    else {
@@ -982,7 +985,7 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
                                    format, type,       /* source format/type */
                                    packing,            /* source packing */
                                    pixels,             /* source data */
-                                   texImage->IntFormat,/* dest format */
+                                   texImage->TexFormat,/* dest format */
                                    dest, dstRowStride);
    }
    else {
@@ -1031,7 +1034,7 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
                                    format, type,       /* source format/type */
                                    packing,            /* source packing */
                                    pixels,             /* source data */
-                                   texImage->IntFormat,/* dest format */
+                                   texImage->TexFormat,/* dest format */
                                    dest, dstRowStride);
    }
    else {
@@ -1079,7 +1082,7 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                                    format, type,       /* source format/type */
                                    packing,            /* source packing */
                                    pixels,             /* source data */
-                                   texImage->IntFormat,/* dest format */
+                                   texImage->TexFormat,/* dest format */
                                    dest, dstRowStride);
    }
    else {
@@ -1890,13 +1893,16 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
                       const struct gl_texture_unit *texUnit,
                       struct gl_texture_object *texObj)
 {
+   const struct gl_texture_image *srcImage;
+   const struct gl_texture_format *convertFormat;
    const GLubyte *srcData;
    GLubyte *dstData;
    GLint level;
    GLint maxLevels = 0;
 
    ASSERT(texObj);
-   ASSERT(texObj->Image[texObj->BaseLevel]);
+   srcImage = texObj->Image[texObj->BaseLevel];
+   ASSERT(srcImage);
 
    switch (texObj->Target) {
    case GL_TEXTURE_1D:
@@ -1920,27 +1926,56 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       return;
    }
 
-   /* setup for compressed textures */
-   {
-      const struct gl_texture_image *srcImage;
-      srcImage = texObj->Image[texObj->BaseLevel];
-      if (srcImage->IsCompressed) {
-         /* allocate storage for uncompressed images */
-         GLint size = _mesa_bytes_per_pixel(srcImage->Format, CHAN_TYPE)
-            * srcImage->Width * srcImage->Height * srcImage->Depth;
-         srcData = MALLOC(size);
-         if (!srcData) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
-            return;
-         }
-         dstData = MALLOC(size / 2);  /* 1/4 would probably be OK */
-         if (!dstData) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
-            FREE((void *) srcData);
-            return;
-         }
-         /* XXX decompress base image here */
+   /* Find convertFormat - the format that do_row() will process */
+   if (srcImage->IsCompressed) {
+      /* setup for compressed textures */
+      GLint row, components, size;
+      GLchan *dst;
+
+      assert(texObj->Target == GL_TEXTURE_2D);
+
+      if (srcImage->Format == GL_RGB) {
+         convertFormat = &_mesa_texformat_rgb;
+         components = 3;
       }
+      else if (srcImage->Format == GL_RGBA) {
+         convertFormat = &_mesa_texformat_rgba;
+         components = 4;
+      }
+      else {
+         _mesa_problem(ctx, "bad srcImage->Format in _mesa_generate_mipmaps");
+         return;
+      }
+
+      /* allocate storage for uncompressed GL_RGB or GL_RGBA images */
+      size = _mesa_bytes_per_pixel(srcImage->Format, CHAN_TYPE)
+         * srcImage->Width * srcImage->Height * srcImage->Depth + 20;
+      /* 20 extra bytes, just be safe when calling last FetchTexel */
+      srcData = MALLOC(size);
+      if (!srcData) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
+         return;
+      }
+      dstData = MALLOC(size / 2);  /* 1/4 would probably be OK */
+      if (!dstData) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
+         FREE((void *) srcData);
+         return;
+      }
+
+      /* decompress base image here */
+      dst = (GLchan *) srcData;
+      for (row = 0; row < srcImage->Height; row++) {
+         GLint col;
+         for (col = 0; col < srcImage->Width; col++) {
+            (*srcImage->FetchTexel)(srcImage, col, row, 0, (GLvoid *) dst);
+            dst += components;
+         }
+      }
+   }
+   else {
+      /* uncompressed */
+      convertFormat = srcImage->TexFormat;
    }
 
    for (level = texObj->BaseLevel; level < texObj->MaxLevel
@@ -2025,7 +2060,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
             return;
          }
-         /* srcData and dstData are all set */
+         /* srcData and dstData are already set */
          ASSERT(srcData);
          ASSERT(dstData);
       }
@@ -2047,7 +2082,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
        */
       switch (target) {
          case GL_TEXTURE_1D:
-            make_1d_mipmap(srcImage->TexFormat, border,
+            make_1d_mipmap(convertFormat, border,
                            srcWidth, srcData,
                            dstWidth, dstData);
             break;
@@ -2058,12 +2093,12 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
          case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
          case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-            make_2d_mipmap(srcImage->TexFormat, border,
+            make_2d_mipmap(convertFormat, border,
                            srcWidth, srcHeight, srcData,
                            dstWidth, dstHeight, dstData);
             break;
          case GL_TEXTURE_3D:
-            make_3d_mipmap(srcImage->TexFormat, border,
+            make_3d_mipmap(convertFormat, border,
                            srcWidth, srcHeight, srcDepth, srcData,
                            dstWidth, dstHeight, dstDepth, dstData);
             break;
@@ -2077,7 +2112,19 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 
       if (dstImage->IsCompressed) {
          GLubyte *temp;
-         /* XXX compress from dstData into dstImage->Data */
+         /* compress image from dstData into dstImage->Data */
+         const GLenum srcFormat = convertFormat->BaseFormat;
+         GLint dstRowStride = _mesa_compressed_row_stride(srcImage->IntFormat,
+                                                          dstWidth);
+         ASSERT(srcFormat == GL_RGB || srcFormat == GL_RGBA);
+         _mesa_compress_teximage(ctx,
+                                 dstWidth, dstHeight, /* size */
+                                 srcFormat,           /* source format */
+                                 dstData,             /* source buffer */
+                                 dstWidth,            /* source row stride */
+                                 dstImage->TexFormat, /* dest format */
+                                 dstImage->Data,      /* dest buffer */
+                                 dstRowStride );      /* dest row stride */
 
          /* swap src and dest pointers */
          temp = (GLubyte *) srcData;

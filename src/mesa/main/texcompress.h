@@ -1,4 +1,4 @@
-/* $Id: texcompress.h,v 1.1 2002/09/27 02:45:38 brianp Exp $ */
+/* $Id: texcompress.h,v 1.2 2002/10/18 17:41:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,9 +50,9 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
 
 extern void
 _mesa_compress_teximage( GLcontext *ctx, GLsizei width, GLsizei height,
-                         GLenum srcFormat,
-                         const GLchan *source, GLint srcRowStride,
-                         GLenum dstformat, GLubyte *dest, GLint dstRowStride );
-
+                         GLenum srcFormat, const GLchan *source,
+                         GLint srcRowStride,
+                         const struct gl_texture_format *dstFormat,
+                         GLubyte *dest, GLint dstRowStride );
 
 #endif /* TEXCOMPRESS_H */
