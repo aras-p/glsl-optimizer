@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.16 2001/05/11 15:53:06 keithw Exp $ */
+/* $Id: t_array_import.c,v 1.17 2001/05/17 11:33:33 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -308,13 +308,11 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    struct vertex_arrays *tmp = &tnl->array_inputs;
    GLuint i;
 
-   if (0) {
-      fprintf(stderr, "%s %d..%d // %d..%d\n", __FUNCTION__,
-	      start, count, ctx->Array.LockFirst, ctx->Array.LockCount); 
-      _tnl_print_vert_flags("    inputs", inputs); 
-      _tnl_print_vert_flags("    _Enabled", ctx->Array._Enabled);
-      _tnl_print_vert_flags("    importable", inputs & VERT_FIXUP);
-   }
+/*        fprintf(stderr, "%s %d..%d // %d..%d\n", __FUNCTION__, */
+/*  	      start, count, ctx->Array.LockFirst, ctx->Array.LockCount);  */
+/*        _tnl_print_vert_flags("    inputs", inputs);  */
+/*        _tnl_print_vert_flags("    _Enabled", ctx->Array._Enabled); */
+/*        _tnl_print_vert_flags("    importable", inputs & VERT_FIXUP); */
 
    VB->Count = count - start;
    VB->FirstClipped = VB->Count;
