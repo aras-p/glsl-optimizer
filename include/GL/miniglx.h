@@ -440,6 +440,19 @@ glXChooseFBConfig( Display *dpy, int screen, const int *attribList,
 extern XVisualInfo *
 glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config );
 
+extern void *glXAllocateMemoryMESA(Display *dpy, int scrn,
+				   size_t size, float readFreq,
+				   float writeFreq, float priority);
+
+extern void glXFreeMemoryMESA(Display *dpy, int scrn, void *pointer);
+
+extern GLuint glXGetMemoryOffsetMESA( Display *dpy, int scrn,
+				      const void *pointer );
+/*@}*/
+
+extern void
+__glXScrEnableExtension( void *, const char * name );
+
 /*@}*/
 
 

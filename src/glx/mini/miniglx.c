@@ -2289,6 +2289,7 @@ void (*glXGetProcAddress(const GLubyte *procname))( void )
       { "__glXWindowExists", (void *) __glXWindowExists },
       { "__glXCreateContextModes", (void *) _gl_context_modes_create },
       { "__glXFindDRIScreen", (void *)__glXFindDRIScreen },
+      { "__glXScrEnableExtension", (void *)__glXScrEnableExtension },
       { NULL, NULL }
    };
    const struct name_address *entry;
@@ -2367,6 +2368,37 @@ glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
    /* XVisualInfo and GLXFBConfig are the same structure */
    (void) dpy;
    return config.visInfo;
+}
+
+void *glXAllocateMemoryMESA(Display *dpy, int scrn,
+                            size_t size, float readFreq,
+                            float writeFreq, float priority)
+{
+        if (dpy->driScreen.private && dpy->driScreen.allocateMemory) {
+         return (*dpy->driScreen.allocateMemory)( dpy, scrn, size,
+                                                  readFreq, writeFreq,
+                                                  priority );
+      }
+}
+
+void glXFreeMemoryMESA(Display *dpy, int scrn, void *pointer){
+      if (dpy->driScreen.private && dpy->driScreen.freeMemory) {
+         (*dpy->driScreen.freeMemory)( dpy, scrn, pointer );
+      }
+}
+
+GLuint glXGetMemoryOffsetMESA( Display *dpy, int scrn,
+                               const void *pointer )
+{
+   if (dpy->driScreen.private && dpy->driScreen.memoryOffset) {
+         return (*dpy->driScreen.memoryOffset)( dpy, scrn, pointer );
+   }
+}
+
+void
+__glXScrEnableExtension( void *psc, const char * name )
+{
+
 }
 
 
