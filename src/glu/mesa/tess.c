@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.6 1999/09/15 02:11:10 gareth Exp $ */
+/* $Id: tess.c,v 1.7 1999/09/16 06:41:42 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.c,v $
+ * Revision 1.7  1999/09/16 06:41:42  gareth
+ * Misc winding rule bug fixes.
+ *
  * Revision 1.6  1999/09/15 02:11:10  gareth
  * Fixed vector macro calls, specifically COPY_3V params.
  *
@@ -197,16 +200,17 @@ void GLAPIENTRY gluTessBeginContour( GLUtesselator *tobj )
     tobj->current_contour->vertices =
 	tobj->current_contour->last_vertex = NULL;
 
-    tobj->current_contour->reflex_count = 0;
-    tobj->current_contour->reflex_vertices =
-	tobj->current_contour->last_reflex = NULL;
+    tobj->current_contour->reflex_vertices = NULL;
+    tobj->current_contour->cross_vertices = hashtable_init( HT_DEFAULT_SIZE );
 
     tobj->current_contour->orientation = GLU_UNKNOWN;
     tobj->current_contour->area = 0.0;
 
-    tobj->current_contour->winding = 0;
+    tobj->current_contour->label = 0;
     CLEAR_BBOX_2DV( tobj->current_contour->mins,
 		    tobj->current_contour->maxs );
+
+    tobj->current_contour->rotx = tobj->current_contour->roty = 0.0;
 
  cleanup:
     DEBUGP( 3, ( "  <- gluTessBeginContour( tobj:%p )\n", tobj ) );
@@ -772,7 +776,7 @@ static void project_current_contour( GLUtesselator *tobj )
     znormal[Z] = current->plane.normal[Z];
 
     dot = DOT3( znormal, zaxis );
-    roty = acos( dot );
+    current->roty = roty = acos( dot );
 
     /* Rotate the plane normal around the x-axis. */
 
@@ -781,7 +785,7 @@ static void project_current_contour( GLUtesselator *tobj )
     xnormal[Z] = sin( roty ) * znormal[X] + cos( roty ) * znormal[Z];
 
     dot = DOT3( xnormal, zaxis );
-    rotx = acos( dot );
+    current->rotx = rotx = acos( dot );
 
     for ( vertex = current->vertices, i = 0;
 	  i < current->vertex_count; vertex = vertex->next, i++ )
@@ -964,7 +968,7 @@ static void delete_all_contours( GLUtesselator *tobj )
  * Debugging output
  *****************************************************************************/
 #ifdef DEBUG
-int	tess_debug_level = 3;
+int	tess_debug_level = 0;
 
 int vdebugstr( char *format_str, ... )
 {
