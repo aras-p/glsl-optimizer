@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.4 1999/09/15 16:31:31 brianp Exp $
+# $Id: Makefile.X11,v 1.5 1999/09/17 12:06:56 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -11,7 +11,7 @@
 
 GLU_MAJOR = 1
 GLU_MINOR = 2
-GLU_TINY = $(MESA_MAJOR)$(MESA_MINOR)$(MESA_TINY)
+GLU_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 VPATH = RCS
 
