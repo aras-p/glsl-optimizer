@@ -291,6 +291,22 @@ struct via_context_t {
     volatile GLuint* regTranSpace;
     GLuint* agpBase;
     GLuint drawType;
+
+   /* Configuration cache
+    */
+   driOptionCache optionCache;
+
+   GLuint vblank_flags;
+   GLuint vbl_seq;
+
+   int64_t swap_ust;
+   int64_t swap_missed_ust;
+
+   GLuint swap_count;
+   GLuint swap_missed_count;
+
+   PFNGLXGETUSTPROC get_ust;
+
 };
 /*#define DMA_OFFSET 16*/
 #define DMA_OFFSET 32

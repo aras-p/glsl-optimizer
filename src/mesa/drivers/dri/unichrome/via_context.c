@@ -62,6 +62,7 @@
 
 #define DRIVER_DATE	"20041215"
 
+#include "vblank.h"
 #include "utils.h"
 
 viaContextPtr current_mesa;
@@ -230,9 +231,14 @@ calculate_buffer_parameters( viaContextPtr vmesa )
 			   vmesa->depth.size);
 
     /*=* John Sheng [2003.5.31] flip *=*/
-    if( (vmesa->viaScreen->width == vmesa->driDrawable->w)
-	&& (vmesa->viaScreen->height == vmesa->driDrawable->h) ) {
+    if( vmesa->viaScreen->width == vmesa->driDrawable->w && 
+	vmesa->viaScreen->height == vmesa->driDrawable->h ) {
+#define ALLOW_EXPERIMENTAL_PAGEFLIP 1       
+#if ALLOW_EXPERIMENTAL_PAGEFLIP
+	vmesa->doPageFlip = GL_TRUE;
+#else
 	vmesa->doPageFlip = GL_FALSE;
+#endif
 	vmesa->currentPage = 0;
 	vmesa->back.pitch = vmesa->front.pitch;
     }
@@ -368,6 +374,13 @@ FreeBuffer(viaContextPtr vmesa)
         via_free_dma_buffer(vmesa);
 }
 
+static int
+get_ust_nop( int64_t * ust )
+{
+   *ust = 1;
+   return 0;
+}
+
 GLboolean
 viaCreateContext(const __GLcontextModes *mesaVis,
                  __DRIcontextPrivate *driContextPriv,
@@ -387,6 +400,12 @@ viaCreateContext(const __GLcontextModes *mesaVis,
         return GL_FALSE;
     }
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
+
+    /* Parse configuration files.
+     */
+    driParseConfigFiles (&vmesa->optionCache, &viaScreen->optionCache,
+			 sPriv->myNum, "via");
+
     current_mesa = vmesa;    
     /* pick back buffer */
     if (mesaVis->doubleBufferMode) {
@@ -554,6 +573,24 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 	}
     }
 #endif	
+
+    /* I don't understand why this isn't working:
+     */
+    vmesa->vblank_flags =
+       vmesa->viaScreen->irqEnabled ?
+        driGetDefaultVBlankFlags(&vmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
+
+    /* Hack this up in its place:
+     */
+    vmesa->vblank_flags = getenv("VIA_VSYNC") ? VBLANK_FLAG_SYNC : VBLANK_FLAG_NO_IRQ;
+
+    
+    vmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
+    if ( vmesa->get_ust == NULL ) {
+       vmesa->get_ust = get_ust_nop;
+    }
+    (*vmesa->get_ust)( & vmesa->swap_ust );
+
 
     if (!AllocateDmaBuffer(mesaVis, vmesa)) {
 	fprintf(stderr ,"AllocateDmaBuffer fail\n");
@@ -894,9 +931,12 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
 	if (VIA_DEBUG) fprintf(stderr, "viaMakeCurrent: w = %d\n", vmesa->driDrawable->w);
 
-	vmesa->driDrawable = driDrawPriv;
-	if ( ! calculate_buffer_parameters( vmesa ) ) {
-	    return GL_FALSE;
+	if ( vmesa->driDrawable != driDrawPriv ) {
+	   driDrawableInitVBlank( driDrawPriv, vmesa->vblank_flags );
+	   vmesa->driDrawable = driDrawPriv;
+	   if ( ! calculate_buffer_parameters( vmesa ) ) {
+	      return GL_FALSE;
+	   }
 	}
 
         _mesa_make_current2(vmesa->glCtx,
@@ -938,6 +978,7 @@ void viaGetLock(viaContextPtr vmesa, GLuint flags)
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
 }
 
+#if 0
 void viaLock(viaContextPtr vmesa, GLuint flags)
 {
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
@@ -968,6 +1009,7 @@ void viaLock(viaContextPtr vmesa, GLuint flags)
     
     return;
 }
+#endif
 
 void viaUnLock(viaContextPtr vmesa, GLuint flags)
 {

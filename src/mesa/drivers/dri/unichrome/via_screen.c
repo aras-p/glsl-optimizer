@@ -30,6 +30,7 @@
 #include "context.h"
 #include "matrix.h"
 #include "simple_list.h"
+#include "vblank.h"
 
 #include "via_state.h"
 #include "via_tex.h"
@@ -38,14 +39,34 @@
 #include "via_ioctl.h"
 #include "via_screen.h"
 #include "via_fb.h"
-
 #include "via_dri.h"
+
+#include "GL/internal/dri_interface.h"
+
+/* Radeon configuration
+ */
+#include "xmlpool.h"
+
+const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+    DRI_CONF_SECTION_PERFORMANCE
+        DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
+        DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_DEBUG
+        DRI_CONF_NO_RAST(false)
+    DRI_CONF_SECTION_END
+DRI_CONF_END;
+static const GLuint __driNConfigOptions = 3;
+
+
 extern viaContextPtr current_mesa;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /* USE_NEW_INTERFACE */
 
+static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
 static drmBufMapPtr via_create_empty_buffers(void)
 {
@@ -79,6 +100,11 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
         return GL_FALSE;
     }
 
+    /* parse information in __driConfigOptions */
+    driParseOptionInfo (&viaScreen->optionCache,
+			__driConfigOptions, __driNConfigOptions);
+
+
     viaScreen->driScrnPriv = sPriv;
     sPriv->private = (void *)viaScreen;
 
@@ -90,6 +116,9 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
     viaScreen->bytesPerPixel = gDRIPriv->bytesPerPixel;
     viaScreen->fbOffset = 0;
     viaScreen->fbSize = gDRIPriv->fbSize;
+    viaScreen->irqEnabled = gDRIPriv->irqEnabled;
+    viaScreen->irqEnabled = 1;
+
 #ifdef USE_XINERAMA
     viaScreen->drixinerama = gDRIPriv->drixinerama;
 #endif
@@ -141,6 +170,33 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 	viaScreen->agpLinearStart = 0;
 
     viaScreen->sareaPrivOffset = gDRIPriv->sarea_priv_offset;
+
+
+
+   if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
+      PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+          (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+      void * const psc = sPriv->psc->screenConfigs;
+
+      if ( glx_enable_extension != NULL ) {
+	 if ( viaScreen->irqEnabled ) {
+	    (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+	    (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+	    (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+	 }
+
+	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+
+         if ( driCompareGLXAPIVersion( 20030915 ) >= 0 ) {
+	    (*glx_enable_extension)( psc, "GLX_SGIX_fbconfig" );
+	    (*glx_enable_extension)( psc, "GLX_OML_swap_method" );
+	 }
+
+      }
+   }
+
+
+
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
     return GL_TRUE;
 }
@@ -219,47 +275,22 @@ viaDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 }
 
 
-#if 0
-/* Initialize the fullscreen mode.
- */
-GLboolean
-XMesaOpenFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
-    vmesa->doPageFlip = 1;
-    vmesa->currentPage = 0;
-    return GL_TRUE;
-}
-
-/* Shut down the fullscreen mode.
- */
-GLboolean
-XMesaCloseFullScreen(__DRIcontextPrivate *driContextPriv)
-{
-    viaContextPtr vmesa = (viaContextPtr)driContextPriv->driverPrivate;
-
-    if (vmesa->currentPage == 1) {
-        viaPageFlip(vmesa);
-        vmesa->currentPage = 0;
-    }
-
-    vmesa->doPageFlip = GL_FALSE;
-    vmesa->Setup[VIA_DESTREG_DI0] = vmesa->driScreen->front_offset;
-    return GL_TRUE;
-}
-#endif
-
 
 static struct __DriverAPIRec viaAPI = {
-    viaInitDriver,
-    viaDestroyScreen,
-    viaCreateContext,
-    viaDestroyContext,
-    viaCreateBuffer,
-    viaDestroyBuffer,
-    viaSwapBuffers,
-    viaMakeCurrent,
-    viaUnbindContext
+   .InitDriver      = viaInitDriver,
+   .DestroyScreen   = viaDestroyScreen,
+   .CreateContext   = viaCreateContext,
+   .DestroyContext  = viaDestroyContext,
+   .CreateBuffer    = viaCreateBuffer,
+   .DestroyBuffer   = viaDestroyBuffer,
+   .SwapBuffers     = viaSwapBuffers,
+   .MakeCurrent     = viaMakeCurrent,
+   .UnbindContext   = viaUnbindContext,
+   .GetSwapInfo     = getSwapInfo,
+   .GetMSC          = driGetMSC32,
+   .WaitForMSC      = driWaitForMSC32,
+   .WaitForSBC      = NULL,
+   .SwapBuffersMSC  = NULL
 };
 
 
@@ -395,3 +426,30 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
    return (void *) psp;
 }
 #endif /* USE_NEW_INTERFACE */
+
+
+/**
+ * Get information about previous buffer swaps.
+ */
+static int
+getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
+{
+   viaContextPtr  vmesa;
+
+   if ( (dPriv == NULL) || (dPriv->driContextPriv == NULL)
+	|| (dPriv->driContextPriv->driverPrivate == NULL)
+	|| (sInfo == NULL) ) {
+      return -1;
+   }
+
+   vmesa = (viaContextPtr) dPriv->driContextPriv->driverPrivate;
+   sInfo->swap_count = vmesa->swap_count;
+   sInfo->swap_ust = vmesa->swap_ust;
+   sInfo->swap_missed_count = vmesa->swap_missed_count;
+
+   sInfo->swap_missed_usage = (sInfo->swap_missed_count != 0)
+       ? driCalculateSwapUsage( dPriv, 0, vmesa->swap_missed_ust )
+       : 0.0;
+
+   return 0;
+}

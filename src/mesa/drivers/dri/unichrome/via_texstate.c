@@ -206,6 +206,7 @@ static void viaSetTexImages(viaContextPtr vmesa,
     default:
         _mesa_problem(vmesa->glCtx, "Bad texture format in viaSetTexImages");
 	fprintf(stderr, "-- TexFormat = %d\n",baseImage->TexFormat->MesaFormat);
+	return;
     };
 
     /* Compute which mipmap levels we really want to send to the hardware.

@@ -35,6 +35,7 @@ v * copy of this software and associated documentation files (the "Software"),
 #include "via_ioctl.h"
 #include "via_state.h"
 
+#include "vblank.h"
 #include "drm.h"
 #include "xf86drm.h"
 #include <sys/ioctl.h>
@@ -316,6 +317,9 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
     drm_clip_rect_t *pbox;
     int nbox, i;
     GLuint scrn = 0, side = 0;
+    GLboolean missed_target;
+    int64_t ust;
+
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);        
     assert(dPriv);
     assert(dPriv->driContextPriv);
@@ -324,6 +328,8 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
     vmesa = (viaContextPtr)dPriv->driContextPriv->driverPrivate;
     
     VIA_FIREVERTICES(vmesa);
+
+    driWaitForVBlank( dPriv, & vmesa->vbl_seq, vmesa->vblank_flags, & missed_target );
     LOCK_HARDWARE(vmesa);
     
     scrn = vmesa->saam & S_MASK;
@@ -400,6 +406,16 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
     }
     UNLOCK_HARDWARE(vmesa);
     vmesa->uploadCliprects = GL_TRUE;
+
+    vmesa->swap_count++;
+    (*vmesa->get_ust)( & ust );
+    if ( missed_target ) {
+       vmesa->swap_missed_count++;
+       vmesa->swap_missed_ust = ust - vmesa->swap_ust;
+    }
+    
+    vmesa->swap_ust = ust;
+
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);        
 }
 
@@ -414,6 +430,8 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     GLuint nBackBase;
     viaBuffer buffer_tmp;
     GLcontext *ctx;
+    GLboolean missed_target;
+    int retcode;
 
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);        
     assert(dPriv);
@@ -426,6 +444,29 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     if(DRAW_FRONT)
 	return;
     
+    VIA_FIREVERTICES(vmesa);
+
+    /* Now wait for the vblank:
+     */
+    retcode = driWaitForVBlank( dPriv, &vmesa->vbl_seq, 
+				vmesa->vblank_flags, &missed_target );
+    if ( missed_target ) {
+       vmesa->swap_missed_count++;
+       (void) (*vmesa->get_ust)( &vmesa->swap_missed_ust );
+    }
+
+    if (missed_target)
+       fprintf(stderr, "missed target\n");
+/*     else */
+/*        fprintf(stderr, "retcode %d vbl_seq %d vblank_flags %x missed_target %d\n", */
+/* 	       retcode, vmesa->vbl_seq, vmesa->vblank_flags, missed_target); */
+
+
+
+
+    LOCK_HARDWARE(vmesa);
+
+
     /* Page Flip*/
     if(GL_FALSE) {
 	viaFlushPrimsLocked(vmesa);
@@ -454,17 +495,17 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     /* Auto Swap */
     else {
 	viaFlushPrimsLocked(vmesa);
-	vb = viaCheckDma(vmesa, vmesa->sarea->nbox*56);
-	if (nFirstSwap) {
+	vb = viaCheckDma(vmesa, 8 * 4);
+	if (nFirstFlip) {
     	    *vb++ = HALCYON_HEADER2;
     	    *vb++ = 0x00fe0000;
     	    *vb++ = 0x0000000e;
     	    *vb++ = 0x0000000e;
 	    vmesa->dmaLow += 16;
 
-    	    nFirstSwap = GL_FALSE;
+    	    nFirstFlip = GL_FALSE;
 	}
-	nBackBase = (vmesa->back.offset << 1);
+	nBackBase = (vmesa->back.offset );
 
 	*vb++ = HALCYON_HEADER2;
 	*vb++ = 0x00fe0000;
@@ -475,6 +516,8 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
 	viaFlushPrimsLocked(vmesa);
     }
     
+    UNLOCK_HARDWARE(vmesa);
+    vmesa->uploadCliprects = GL_TRUE;
     
     memcpy(&buffer_tmp, &vmesa->back, sizeof(viaBuffer));
     memcpy(&vmesa->back, &vmesa->front, sizeof(viaBuffer));

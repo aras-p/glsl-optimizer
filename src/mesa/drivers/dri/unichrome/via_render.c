@@ -137,7 +137,7 @@ static GLboolean via_run_fastrender(GLcontext *ctx,
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct vertex_buffer *VB = &tnl->vb;
-    GLuint i, length, flags = 0;
+    GLuint i;
     
     /* Don't handle clipping or indexed vertices.
      */

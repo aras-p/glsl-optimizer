@@ -28,6 +28,7 @@
 #include <sys/time.h>
 #include "dri_util.h"
 #include "via_dri.h"
+#include "xmlconfig.h"
 
 typedef struct {
     viaRegion regs;
@@ -68,6 +69,10 @@ typedef struct {
     unsigned int sareaPrivOffset;
     /*=* John Sheng [2003.12.9] Tuxracer & VQ *=*/
     int VQEnable;
+    int irqEnabled;
+
+    /* Configuration cache with default values for all contexts */
+    driOptionCache optionCache;
 } viaScreenPrivate;
 
 extern GLboolean
