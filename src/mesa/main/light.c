@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.5 1999/10/19 18:37:04 keithw Exp $ */
+/* $Id: light.c,v 1.6 1999/10/19 20:32:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -319,15 +319,18 @@ void gl_LightModelfv( GLcontext *ctx, GLenum pname, const GLfloat *params )
             ctx->Light.Model.TwoSide = GL_TRUE;
          break;
       case GL_LIGHT_MODEL_COLOR_CONTROL:
-	 ctx->TriangleCaps &= ~DD_SEPERATE_SPECULAR;
-	 ctx->NewState |= NEW_RASTER_OPS;
-         if (params[0] == (GLfloat) GL_SINGLE_COLOR) 
+         if (params[0] == (GLfloat) GL_SINGLE_COLOR) {
             ctx->Light.Model.ColorControl = GL_SINGLE_COLOR;
+            ctx->TriangleCaps &= ~DD_SEPERATE_SPECULAR;
+         }
          else if (params[0] == (GLfloat) GL_SEPARATE_SPECULAR_COLOR) {
             ctx->Light.Model.ColorControl = GL_SEPARATE_SPECULAR_COLOR;
 	    ctx->TriangleCaps |= DD_SEPERATE_SPECULAR;
-	 } else
+	 }
+         else {
             gl_error( ctx, GL_INVALID_ENUM, "glLightModel(param)" );
+         }
+	 ctx->NewState |= NEW_RASTER_OPS;
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glLightModel" );
