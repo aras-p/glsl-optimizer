@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.30 2001/08/28 22:46:22 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.31 2001/10/17 13:29:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2875,7 +2875,7 @@ KEYWORD1 void KEYWORD2 NAME(SecondaryColor3usvEXT)(const GLushort * v)
    DISPATCH(SecondaryColor3usvEXT, (v), (F, "glSecondaryColor3usvEXT(%d, %d, %d);", v[0], v[1], v[2]));
 }
 
-KEYWORD1 void KEYWORD2 NAME(SecondaryColorPointerEXT)(GLint size, GLenum type, GLsizei stride, GLvoid * pointer)
+KEYWORD1 void KEYWORD2 NAME(SecondaryColorPointerEXT)(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
    DISPATCH(SecondaryColorPointerEXT, (size, type, stride, pointer), (F, "glSecondaryColorPointerEXT(%d, 0x%x, %d, %p);", size, type, stride, pointer));
 }
@@ -3356,10 +3356,12 @@ KEYWORD1 void KEYWORD2 NAME(SampleCoverageARB)(GLclampf value, GLboolean invert)
    DISPATCH(SampleCoverageARB, (value, invert), (F, "glSampleCoverageARB(%f, %d);", value, invert));
 }
 
+/*
 KEYWORD1 void KEYWORD2 NAME(SamplePassARB)(GLenum pass)
 {
    DISPATCH(SamplePassARB, (pass), (F, "glSamplePassARB(0x%x);", pass));
 }
+*/
 
 /* ARB 12. GL_ARB_texture_compression */
 KEYWORD1 void KEYWORD2 NAME(CompressedTexImage1DARB)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid *data)
@@ -3631,11 +3633,12 @@ KEYWORD1 void KEYWORD2 NAME(SampleCoverage)(GLclampf value, GLboolean invert)
    DISPATCH(SampleCoverageARB, (value, invert), (F, "glSampleCoverageARB(%f, %d);", value, invert));
 }
 
+/*
 KEYWORD1 void KEYWORD2 NAME(SamplePass)(GLenum pass)
 {
    DISPATCH(SamplePassARB, (pass), (F, "glSamplePassARB(0x%x);", pass));
 }
-
+*/
 
 
 
@@ -4065,7 +4068,11 @@ void *DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(MultTransposeMatrixdARB),
    /* GL_ARB_multisample */
    TABLE_ENTRY(SampleCoverageARB),
+#if 0
    TABLE_ENTRY(SamplePassARB),
+#else
+   TABLE_ENTRY(Unused),
+#endif
    /* GL_EXT_blend_color */
    /* GL_EXT_polygon_offset */
    TABLE_ENTRY(PolygonOffsetEXT),
@@ -4322,7 +4329,11 @@ void *DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(MultTransposeMatrixd),
    TABLE_ENTRY(MultTransposeMatrixf),
    TABLE_ENTRY(SampleCoverage),
+#if 0
    TABLE_ENTRY(SamplePass),
+#else
+   TABLE_ENTRY(Unused),
+#endif
 #endif
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered extension
@@ -4590,7 +4601,9 @@ void *UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(MultTransposeMatrixd),
    TABLE_ENTRY(MultTransposeMatrixf),
    TABLE_ENTRY(SampleCoverage),
+#if 0
    TABLE_ENTRY(SamplePass)
+#endif
 };
 #endif /*UNUSED_TABLE_NAME*/
 
