@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.17 1999/11/15 14:26:07 brianp Exp $ */
+/* $Id: glu.h,v 1.18 1999/11/23 22:41:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,13 +30,13 @@
 #include "glu_mangle.h"
 #endif
 
+#include "GL/gl.h"
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-#include "GL/gl.h"
 
 	/* to facilitate clean DLL building ... */
 #if !defined(OPENSTEP) && (defined(__WIN32__) || defined(__CYGWIN32__))
@@ -189,15 +189,21 @@ extern "C" {
 #define GLU_NURBS_ERROR36	100286   /* null control point reference */
 #define GLU_NURBS_ERROR37	100287   /* duplicate point on pwlcurve */
 
+/* GLU 1.3 and later */
+#define GLU_NURBS_MODE ?
+
+
 /* Errors */
 #define GLU_INVALID_ENUM		100900
 #define GLU_INVALID_VALUE		100901
 #define GLU_OUT_OF_MEMORY		100902
 #define GLU_INCOMPATIBLE_GL_VERSION	100903
 
-/* New in GLU 1.1 */
+/* GLU 1.1 and later */
 #define GLU_VERSION			100800
 #define GLU_EXTENSIONS			100801
+
+
 
 /*** GLU 1.0 tessellation - obsolete! ***/
 
@@ -462,6 +468,47 @@ GLUAPI void GLAPIENTRY gluEndPolygon( GLUtesselator *tobj );
  */
 
 GLUAPI const GLubyte* GLAPIENTRY gluGetString( GLenum name );
+
+
+
+/*
+ *
+ * GLU 1.3 functions
+ *
+ */
+
+GLUAPI GLboolean GLAPIENTRY
+gluCheckExtension(const char *extName, const GLubyte *extString);
+
+
+GLUAPI GLint GLAPIENTRY
+gluBuild3DMipmaps( GLenum target, GLint internalFormat, GLsizei width,
+                   GLsizei height, GLsizei depth, GLenum format,
+                   GLenum type, const void *data );
+
+GLUAPI GLint GLAPIENTRY
+gluBuild1DMipmapLevels( GLenum target, GLint internalFormat, GLsizei width,
+                        GLenum format, GLenum type, GLint level, GLint base,
+                        GLint max, const void *data );
+
+GLUAPI GLint GLAPIENTRY
+gluBuild2DMipmapLevels( GLenum target, GLint internalFormat, GLsizei width,
+                        GLsizei height, GLenum format, GLenum type,
+                        GLint level, GLint base, GLint max,
+                        const void *data );
+
+GLUAPI GLint GLAPIENTRY
+gluBuild3DMipmapLevels( GLenum target, GLint internalFormat, GLsizei width,
+                        GLsizei height, GLsizei depth, GLenum format,
+                        GLenum type, GLint level, GLint base, GLint max,
+                        const void *data );
+
+GLUAPI GLint GLAPIENTRY
+gluUnProject4( GLdouble winx, GLdouble winy, GLdouble winz, GLdouble clipw,
+               const GLdouble modelMatrix[16], const GLdouble projMatrix[16],
+               const GLint viewport[4], GLclampd near, GLclampd far,
+               GLdouble *objx, GLdouble *objy, GLdouble *objz,
+               GLdouble *objw );
 
 
 
