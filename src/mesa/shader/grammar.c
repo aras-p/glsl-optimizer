@@ -1,3 +1,33 @@
+/*
+ * Mesa 3-D graphics library
+ * Version:  6.1
+ *
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * \file grammar.c
+ * syntax parsing engine
+ * \author Michal Krol
+ */
+
 #ifndef GRAMMAR_PORT_BUILD
 #error Do not build this file directly, build your grammar_XXX.c instead, which includes this file
 #endif
@@ -92,6 +122,15 @@
         <symbol$1> <symbol$2> .or .true;
         <symbol$2> <symbol> .and <symbol$1>;
         <symbol> <definition>;
+
+    Synek supports also a register mechanizm. User can, in its SYN file, declare a number of
+    registers that can be accessed in the syn body. Each reg has its name and a default value.
+    The register is one byte wide. The C code can change the default value by calling
+    grammar_set_reg8() with grammar id, register name and a new value. As we know, each rule is
+    a sequence of specifiers joined with .and or .or operator. And now each specifier can be
+    prefixed with a condition expression in a form ".if (<reg_name> <operator> <hex_literal>)"
+    where <operator> can be == or !=. If the condition evaluates to false, the specifier
+    evaluates to .false. Otherwise it evalutes to the specifier.
 
     ESCAPE SEQUENCES
     ----------------

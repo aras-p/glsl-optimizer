@@ -1,3 +1,33 @@
+/*
+ * Mesa 3-D graphics library
+ * Version:  6.1
+ *
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * \file arbprogram_syn.h
+ * ARB_fragment_program/ARB_vertex_program syntax
+ * \author Michal Krol
+ */
+
 ".syntax program;\n"
 ".emtcode REVISION 0x07\n"
 ".emtcode FRAGMENT_PROGRAM 0x01\n"
@@ -257,10 +287,10 @@
 ".errtext ADDRESS_REGISTER_OR_INTEGER_EXPECTED \"1058: address register or integer literal expected but '$e_token$' found\"\n"
 ".regbyte vertex_blend 0x00\n"
 ".regbyte matrix_palette 0x00\n"
-".regbyte point_parameters 0x01\n"
-".regbyte secondary_color 0x01\n"
-".regbyte fog_coord 0x01\n"
-".regbyte texture_rectangle 0x01\n"
+".regbyte point_parameters 0x00\n"
+".regbyte secondary_color 0x00\n"
+".regbyte fog_coord 0x00\n"
+".regbyte texture_rectangle 0x00\n"
 ".regbyte fragment_program_shadow 0x00\n"
 ".regbyte ARB_precision_hint_fastest 0x00\n"
 ".regbyte ARB_precision_hint_nicest 0x00\n"

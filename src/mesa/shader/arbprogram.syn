@@ -385,17 +385,17 @@
 
 /* GL_ARB_point_parameters */
 /* GL_EXT_point_parameters */
-.regbyte point_parameters                           0x01
+.regbyte point_parameters                           0x00
 
 /* GL_EXT_secondary_color */
-.regbyte secondary_color                            0x01
+.regbyte secondary_color                            0x00
 
 /* GL_EXT_fog_coord */
-.regbyte fog_coord                                  0x01
+.regbyte fog_coord                                  0x00
 
 /* GL_EXT_texture_rectangle */
 /* GL_NV_texture_rectangle */
-.regbyte texture_rectangle                          0x01
+.regbyte texture_rectangle                          0x00
 
 /* GL_ARB_fragment_program_shadow */
 .regbyte fragment_program_shadow                    0x00
