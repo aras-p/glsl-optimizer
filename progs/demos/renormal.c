@@ -1,4 +1,4 @@
-/* $Id: renormal.c,v 1.2 1999/09/17 02:40:51 tjump Exp $ */
+/* $Id: renormal.c,v 1.3 1999/09/17 12:27:01 brianp Exp $ */
 
 /*
  * Test GL_EXT_rescale_normal extension
@@ -6,7 +6,7 @@
  */
 
 /*
- * $Id: renormal.c,v 1.2 1999/09/17 02:40:51 tjump Exp $
+ * $Id: renormal.c,v 1.3 1999/09/17 12:27:01 brianp Exp $
  */
 
 
@@ -98,6 +98,8 @@ static void ModeMenu(int entry)
 static void
 key(unsigned char k, int x, int y)
 {
+  (void) x;
+  (void) y;
   switch (k) {
   case 27:  /* Escape */
     exit(0);

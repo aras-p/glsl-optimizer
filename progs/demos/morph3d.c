@@ -1,9 +1,12 @@
-/* $Id: morph3d.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: morph3d.c,v 1.2 1999/09/17 12:27:01 brianp Exp $ */
 
 /*
  * $Log: morph3d.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  1999/09/17 12:27:01  brianp
+ * silenced some warnings
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.1  1998/06/29 02:37:30  brianp
  * minor changes for Windows (Ted Jump)
@@ -717,6 +720,8 @@ static void pinit(void);
 
 static void key( unsigned char k, int x, int y )
 {
+  (void) x;
+  (void) y;
   switch (k) {
     case '1': object=1; break;
     case '2': object=2; break;
