@@ -868,8 +868,8 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
    struct tdfx_texcombine tex0, tex1;
    GrCombineLocal_t localc, locala;
    tfxTexInfo *ti0, *ti1;
-   struct gl_texture_object *tObj0 = ctx->Texture.Unit[0].Current2D;
-   struct gl_texture_object *tObj1 = ctx->Texture.Unit[1].Current2D;
+   struct gl_texture_object *tObj0 = ctx->Texture.Unit[1].Current2D;
+   struct gl_texture_object *tObj1 = ctx->Texture.Unit[0].Current2D;
    GLuint envmode, ifmt, unitsmode;
    int tmu0 = 0, tmu1 = 1;
 
@@ -973,7 +973,7 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
 	 break;
       }
    case (FX_UM_E0_REPLACE | FX_UM_E1_BLEND):	/* Only for GLQuake */
-      if (tmu1 == FX_TMU1) {
+      if (tmu0 == FX_TMU1) {
          tex1.FunctionRGB   = GR_COMBINE_FUNCTION_LOCAL;
          tex1.FactorRGB     = GR_COMBINE_FACTOR_NONE;
          tex1.FunctionAlpha = GR_COMBINE_FUNCTION_LOCAL;
@@ -1084,6 +1084,48 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
 
          alphaComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
          alphaComb.Factor   = GR_COMBINE_FACTOR_LOCAL;
+         alphaComb.Other    = GR_COMBINE_OTHER_TEXTURE;
+	 break;
+      }
+
+   case (FX_UM_E0_REPLACE | FX_UM_E1_ADD):	/* Vulpine Sky */
+      {
+	 GLboolean isalpha[FX_NUM_TMU];
+
+	 isalpha[tmu0] = (ti0->baseLevelInternalFormat == GL_ALPHA);
+	 isalpha[tmu1] = (ti1->baseLevelInternalFormat == GL_ALPHA);
+
+	 if (isalpha[FX_TMU1]) {
+            tex1.FunctionRGB   = GR_COMBINE_FUNCTION_ZERO;
+            tex1.FactorRGB     = GR_COMBINE_FACTOR_NONE;
+            tex1.FunctionAlpha = GR_COMBINE_FUNCTION_LOCAL;
+            tex1.FactorAlpha   = GR_COMBINE_FACTOR_NONE;
+            tex1.InvertRGB     = FXTRUE;
+	 } else {
+            tex1.FunctionRGB   = GR_COMBINE_FUNCTION_LOCAL;
+            tex1.FactorRGB     = GR_COMBINE_FACTOR_NONE;
+            tex1.FunctionAlpha = GR_COMBINE_FUNCTION_LOCAL;
+            tex1.FactorAlpha   = GR_COMBINE_FACTOR_NONE;
+         }
+
+	 if (isalpha[FX_TMU0]) {
+            tex0.FunctionRGB   = GR_COMBINE_FUNCTION_SCALE_OTHER;
+            tex0.FactorRGB     = GR_COMBINE_FACTOR_ONE;
+            tex0.FunctionAlpha = GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL;
+            tex0.FactorAlpha   = GR_COMBINE_FACTOR_ONE;
+	 } else {
+            tex0.FunctionRGB   = GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL;
+            tex0.FactorRGB     = GR_COMBINE_FACTOR_ONE;
+            tex0.FunctionAlpha = GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL;
+            tex0.FactorAlpha   = GR_COMBINE_FACTOR_ONE;
+         }
+
+         colorComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
+         colorComb.Factor   = GR_COMBINE_FACTOR_ONE;
+         colorComb.Other    = GR_COMBINE_OTHER_TEXTURE;
+
+         alphaComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
+         alphaComb.Factor   = GR_COMBINE_FACTOR_ONE;
          alphaComb.Other    = GR_COMBINE_OTHER_TEXTURE;
 	 break;
       }

@@ -20,7 +20,7 @@
 # AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# MinGW samples makefile v1.0 for Mesa
+# MinGW samples makefile v1.1 for Mesa
 #
 #  Copyright (C) 2002 - Borca Daniel
 #  Email : dborca@users.sourceforge.net
@@ -50,6 +50,9 @@ CC = mingw32-gcc
 CFLAGS = -Wall -W -pedantic
 CFLAGS += -O2 -ffast-math -mcpu=$(CPU)
 CFLAGS += -I$(TOP)/include -I../util
+ifeq ($(FX),1)
+CFLAGS += -DFX
+endif
 CFLAGS += -DGLUT_DISABLE_ATEXIT_HACK -D_STDCALL_SUPPORTED
 CFLAGS += -D_WINDEF_ -D_WINGDI_
 

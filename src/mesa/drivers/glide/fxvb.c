@@ -517,13 +517,11 @@ void fxChooseVertexState( GLcontext *ctx )
 
    if (ctx->Texture._EnabledUnits & 0x2) {
       if (ctx->Texture._EnabledUnits & 0x1) {
-	 ind |= SETUP_TMU1|SETUP_TMU0;
+	 ind |= SETUP_TMU1;
       }
-      else {
-	 fxMesa->tmu_source[0] = 1;
-	 fxMesa->tmu_source[1] = 0;
-	 ind |= SETUP_TMU0;
-      }
+      ind |= SETUP_TMU0;
+      fxMesa->tmu_source[0] = 1;
+      fxMesa->tmu_source[1] = 0;
    }
    else if (ctx->Texture._EnabledUnits & 0x1) {
       ind |= SETUP_TMU0;
