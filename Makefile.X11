@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.78 2003/06/10 14:46:24 brianp Exp $
+# $Id: Makefile.X11,v 1.79 2003/08/22 18:06:59 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -41,6 +41,7 @@ default:
 	@echo "  make darwin               for Darwin - Mac OS X"
 	@echo "  make freebsd              for FreeBSD systems with GCC"
 	@echo "  make freebsd-386          for FreeBSD systems with GCC, w/ Intel assembly"
+	@echo "  make gcc-sl               for a generic system with GCC for shared libs"
 	@echo "  make hpux9                for HP systems with HPUX 9.x"
 	@echo "  make hpux9-sl             for HP systems with HPUX 9.x, make shared libs"
 	@echo "  make hpux9-gcc            for HP systems with HPUX 9.x using GCC"
@@ -99,7 +100,7 @@ default:
 # XXX we may have to split up this group of targets into those that
 # have a C++ compiler and those that don't for the SI-GLU library.
 
-aix aix-sl darwin freebsd freebsd-386 \
+aix aix-sl darwin freebsd freebsd-386 gcc-sl \
 hpux9 hpux9-sl hpux9-gcc hpux9-gcc-sl \
 hpux10 hpux10-sl hpux10-gcc hpux10-gcc-sl \
 linux linux-debug \
@@ -126,6 +127,9 @@ ultrix-gcc unixware:
 	if [ -d progs/samples ] ; then cd progs/samples ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d progs/redbook ] ; then cd progs/redbook ; $(MAKE) -f Makefile.X11 $@ ; fi
 	if [ -d src/glw       ] ; then cd src/glw       ; $(MAKE) -f Makefile.X11 $@ ; fi
+
+gcc-mesa-sl:
+	if [ -d src ] ; then cd src  ; $(MAKE) -f Makefile.X11 $@ ; fi
 
 irix6-o32 irix6-o32-dso irix6-n32 irix6-n32-dso irix6-gcc-n32-sl:
 	-mkdir lib32

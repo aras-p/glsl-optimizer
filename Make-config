@@ -152,6 +152,20 @@ freebsd-386:
 	"APP_LIB_DEPS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm" \
 	"ASM_SOURCES = $(X86_SOURCES)"
 
+gcc-sl:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
+	"CC = gcc" \
+	"CPLUSPLUS = g++" \
+	"CFLAGS = -fPIC -O3" \
+	"CCFLAGS = $(CFLAGS)" \
+	"MAKELIB = ../bin/mklib.gcc-sl" \
+	"APP_LIB_DEPS = -lX11 -lm"
+
 #special hidden target, to make a shared lib for ONLY Mesa "core"
 gcc-mesa-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 libmesa \
