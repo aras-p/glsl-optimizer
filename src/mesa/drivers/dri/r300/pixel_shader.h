@@ -91,4 +91,13 @@
 #define EASY_PFS_INSTR3(dstc, src0, src1, src2, flag) \
 	MAKE_PFS_INSTR3(dstc, src0, src1, src2, PFS_FLAG_##flag)
 
+	/* What are 0's ORed with flags ? They are register numbers that
+	   just happen to be 0 */
+#define PFS_NOP	{ \
+		EASY_PFS_INSTR0(MAD, SRC0C_XYZ, ONE, ZERO), \
+		EASY_PFS_INSTR1(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, NONE, ALL), \
+		EASY_PFS_INSTR2(MAD, SRC0A, ONE, ZERO), \
+		EASY_PFS_INSTR3(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, OUTPUT) \
+		} 
+	
 #endif

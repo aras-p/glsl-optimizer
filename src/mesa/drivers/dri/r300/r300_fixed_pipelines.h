@@ -98,25 +98,7 @@ static struct r300_pixel_shader_state FLAT_COLOR_PIXEL_SHADER={
 				length: 0
 				},
 			alu: {
-				length: 2,
-				inst: { 
-					/* What are 0's ORed with flags ? They are register numbers that
-					   just happen to be 0 */
-					{
-					EASY_PFS_INSTR0(MAD, SRC0C_XYZ, ONE, ZERO), 
-					EASY_PFS_INSTR1(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, NONE, ALL),
-					EASY_PFS_INSTR2(MAD, SRC0A, ONE, ZERO),
-					EASY_PFS_INSTR3(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, OUTPUT)
-					},
-					
-					{
-					EASY_PFS_INSTR0(MAD, SRC0C_XYZ, ONE, ZERO), 
-					EASY_PFS_INSTR1(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, NONE, ALL),
-					EASY_PFS_INSTR2(MAD, SRC0A, ONE, ZERO),
-					EASY_PFS_INSTR3(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, OUTPUT)
-					}
-					
-					}
+				length: 0,
 				},
 			node: {
 				{ 0, 0, 0, 0},
@@ -247,17 +229,11 @@ static struct r300_pixel_shader_state SINGLE_TEXTURE_PIXEL_SHADER={
 				inst: { 0x00018000 }
 				},
 			alu: {
-				length: 3,
-				inst: { 
+				length: 1,
+				inst: 	
+					{ 
 					/* What are 0's ORed with flags ? They are register numbers that
 					   just happen to be 0 */
-					{
-					EASY_PFS_INSTR0(MAD, SRC0C_XYZ, ONE, ZERO), 
-					EASY_PFS_INSTR1(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, NONE, ALL),
-					EASY_PFS_INSTR2(MAD, SRC0A, ONE, ZERO),
-					EASY_PFS_INSTR3(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, OUTPUT)
-					},
-					
 					{
 					EASY_PFS_INSTR0(MAD, SRC0C_XYZ, SRC1C_XYZ, ZERO), 
 					EASY_PFS_INSTR1(0, 0, 1, 0 | PFS_FLAG_CONST, NONE, ALL), 
@@ -271,13 +247,6 @@ static struct r300_pixel_shader_state SINGLE_TEXTURE_PIXEL_SHADER={
 					/* alpha in textures */
 					EASY_PFS_INSTR2(MAD, SRC0A, SRC1A, ZERO), 
 					EASY_PFS_INSTR3(0, 0, 1, 0 | PFS_FLAG_CONST, OUTPUT)
-					},
-					
-					{
-					EASY_PFS_INSTR0(MAD, SRC0C_XYZ, ONE, ZERO), 
-					EASY_PFS_INSTR1(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, NONE, ALL),
-					EASY_PFS_INSTR2(MAD, SRC0A, ONE, ZERO),
-					EASY_PFS_INSTR3(0, 0, 0 | PFS_FLAG_CONST, 0 | PFS_FLAG_CONST, OUTPUT)
 					}
 					}
 				},
