@@ -1,8 +1,8 @@
-/* $Id: texstore.c,v 1.35 2002/03/19 16:47:05 brianp Exp $ */
+/* $Id: texstore.c,v 1.36 2002/04/04 16:59:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.2
+ * Version:  4.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -239,7 +239,8 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
       /* color index texture */
       const GLenum texType = CHAN_TYPE;
       GLint img, row;
-      GLchan *dest = (GLchan *) texDestAddr + dstZoffset * dstImageStride
+      GLchan *dest = (GLchan *) texDestAddr
+                   + dstZoffset * (dstImageStride / sizeof(GLchan))
                    + dstYoffset * (dstRowStride / sizeof(GLchan))
                    + dstXoffset * texComponents;
       for (img = 0; img < srcDepth; img++) {
@@ -332,7 +333,8 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
 
             /* packing and transfer ops after convolution */
             srcf = convImage;
-            dest = (GLchan *) texDestAddr + (dstZoffset + img) * dstImageStride
+            dest = (GLchan *) texDestAddr
+                 + (dstZoffset + img) * (dstImageStride / sizeof(GLchan))
                  + dstYoffset * (dstRowStride / sizeof(GLchan));
             for (row = 0; row < convHeight; row++) {
                _mesa_pack_float_rgba_span(ctx, convWidth,
@@ -354,7 +356,8 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
           * no convolution
           */
          GLint img, row;
-         GLchan *dest = (GLchan *) texDestAddr + dstZoffset * dstImageStride
+         GLchan *dest = (GLchan *) texDestAddr
+                      + dstZoffset * (dstImageStride / sizeof(GLchan))
                       + dstYoffset * (dstRowStride / sizeof(GLchan))
                       + dstXoffset * texComponents;
          for (img = 0; img < srcDepth; img++) {
@@ -368,7 +371,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
                                        srcPacking, transferOps);
                destRow += (dstRowStride / sizeof(GLchan));
             }
-            dest += dstImageStride;
+            dest += dstImageStride / sizeof(GLchan);
          }
       }
    }
@@ -389,7 +392,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
  *   srcWidth, srcHeight, srcDepth - size of source iamge
  *   dstX/Y/Zoffset - as specified by glTexSubImage
  *   dstRowStride - stride between dest rows in bytes
- *   dstImagetride - stride between dest images in bytes
+ *   dstImageStride - stride between dest images in bytes
  *   srcFormat, srcType - incoming image format and datatype
  *   srcAddr - source image address
  *   srcPacking - packing params of source image
