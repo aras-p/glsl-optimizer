@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.0.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -933,6 +933,7 @@ static XMesaVisual choose_visual( Display *dpy, int screen, const int *list )
    int trans_value = DONT_CARE;
    GLint caveat = DONT_CARE;
    XMesaVisual xmvis = NULL;
+   int desiredVisualID = -1;
 
    parselist = list;
 
@@ -1088,8 +1089,13 @@ static XMesaVisual choose_visual( Display *dpy, int screen, const int *list )
             }
             parselist++;
             break;
+         case GLX_FBCONFIG_ID:
+            parselist++;
+            desiredVisualID = *parselist;
+            break;
 
 	 case None:
+            /* end of list */
 	    break;
 
 	 default:
@@ -1109,7 +1115,24 @@ static XMesaVisual choose_visual( Display *dpy, int screen, const int *list )
     * double buffering, depth buffer, etc. will be associated with the X
     * visual and stored in the VisualTable[].
     */
-   if (level==0) {
+   if (desiredVisualID != -1) {
+      /* try to get a specific visual, by visualID */
+      XVisualInfo temp;
+      int n;
+      temp.visualid = desiredVisualID;
+      temp.screen = screen;
+      vis = XGetVisualInfo(dpy, VisualIDMask | VisualScreenMask, &temp, &n);
+      if (vis) {
+         /* give the visual some useful GLX attributes */
+         double_flag = GL_TRUE;
+         if (vis->depth > 8)
+            rgb_flag = GL_TRUE;
+         depth_size = DEFAULT_SOFTWARE_DEPTH_BITS;
+         stencil_size = STENCIL_BITS;
+         /* XXX accum??? */
+      }
+   }
+   else if (level==0) {
       /* normal color planes */
       if (rgb_flag) {
          /* Get an RGB visual */
