@@ -1,4 +1,4 @@
-/* $Id: polygon.c,v 1.10 2000/03/13 18:31:51 brianp Exp $ */
+/* $Id: polygon.c,v 1.11 2000/03/13 18:32:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,9 +132,6 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
 
 
 
-/*
- * NOTE:  stipple pattern has already been unpacked.
- */
 void
 _mesa_PolygonStipple( const GLubyte *pattern )
 {
@@ -184,6 +181,7 @@ _mesa_PolygonOffset( GLfloat factor, GLfloat units )
 }
 
 
+
 void
 _mesa_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
 {
@@ -191,4 +189,3 @@ _mesa_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPolygonOffsetEXT");
    _mesa_PolygonOffset(factor, bias * ctx->Visual->DepthMaxF );
 }
-
