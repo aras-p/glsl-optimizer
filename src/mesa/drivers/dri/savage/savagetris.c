@@ -712,13 +712,13 @@ static void savageChooseRenderState(GLcontext *ctx)
       imesa->draw_line = savage_ptex_line;
       imesa->draw_tri = savage_ptex_tri;
       index |= SAVAGE_FALLBACK_BIT;
-   }
-
-   if (flags & (ANY_RASTER_FLAGS|ANY_FALLBACK_FLAGS)) {
+   } else {
       imesa->draw_point = savage_draw_point;
       imesa->draw_line = savage_draw_line;
       imesa->draw_tri = savage_draw_triangle;
+   }
 
+   if (flags & (ANY_RASTER_FLAGS|ANY_FALLBACK_FLAGS)) {
       if (flags & ANY_RASTER_FLAGS) {
 	 if (flags & DD_TRI_LIGHT_TWOSIDE) index |= SAVAGE_TWOSIDE_BIT;
 	 if (flags & DD_TRI_OFFSET)        index |= SAVAGE_OFFSET_BIT;
