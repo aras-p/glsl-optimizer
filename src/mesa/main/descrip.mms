@@ -1,6 +1,6 @@
 # Makefile for core library for VMS
 # contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
-# Last revision : 17 November 2000
+# Last revision : 5 Januari 2001
 
 .first
 	define gl [-.include.gl]
@@ -88,7 +88,6 @@ DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]xfonts.c \
 [.fx]fxtexman.c \
 [.fx]fxtris.c \
 [.fx]fxvb.c \
-[.fx]fxsimplerender.c \
 [.fx]fxglidew.c
 
 RASTER_SOURCES = [.swrast]s_aatriangle.c \
@@ -237,7 +236,6 @@ OBJECTS6=[.fx]fxddspan.obj,\
 [.fx]fxtexman.obj,\
 [.fx]fxtris.obj,\
 [.fx]fxvb.obj,\
-[.fx]fxsimplerender.obj,\
 [.fx]fxglidew.obj
 
 OBJECTS7=[.swrast]s_aatriangle.obj,\
@@ -416,8 +414,6 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxtris.obj [.fx]fxtris.c
 [.fx]fxvb.obj : [.fx]fxvb.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxvb.obj [.fx]fxvb.c
-[.fx]fxsimplerender.obj : [.fx]fxsimplerender.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxsimplerender.obj [.fx]fxsimplerender.c
 [.fx]fxglidew.obj : [.fx]fxglidew.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxglidew.obj [.fx]fxglidew.c
 [.swrast]s_aaline.obj : [.swrast]s_aaline.c
