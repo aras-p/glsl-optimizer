@@ -1,4 +1,4 @@
-/* $Id: nvfragparse.c,v 1.6 2003/02/23 04:09:21 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.7 2003/02/23 04:23:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1431,7 +1431,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
                                     parseState.pos, &line, &column);
          _mesa_debug(ctx, "Parse error on line %d, column %d:%s\n",
                      line, column, lineStr);
-         _mesa_free(lineStr);
+         _mesa_free((void *) lineStr);
       }
 #endif
    }
