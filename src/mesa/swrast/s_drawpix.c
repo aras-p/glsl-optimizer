@@ -727,7 +727,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                _swrast_write_rgba_span(ctx, &span);
             }
             else {
-                  _swrast_write_index_span(ctx, &span);
+               _swrast_write_index_span(ctx, &span);
             }
          }
          skipPixels += spanEnd;
