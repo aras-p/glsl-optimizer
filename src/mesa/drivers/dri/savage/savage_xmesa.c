@@ -295,8 +295,8 @@ savageCreateContext( const __GLcontextModes *mesaVis,
        if (size > maxTextureSize)
 	   break;
    }
-   ctx->Const.MaxTextureLevels = maxTextureLevels-1;
-   assert (ctx->Const.MaxTextureLevels >= 6); /*spec requires at least 64x64*/
+   ctx->Const.MaxTextureLevels = maxTextureLevels;
+   assert (ctx->Const.MaxTextureLevels > 6); /*spec requires at least 64x64*/
 
 #if 0
    ctx->Const.MinLineWidth = 1.0;
