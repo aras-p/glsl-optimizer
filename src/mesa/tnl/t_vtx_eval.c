@@ -165,9 +165,9 @@ void _tnl_do_EvalCoord1f(GLcontext* ctx, GLfloat u)
 				map->Order);
 
       if (tnl->vtx.eval.map1[0].sz == 4) 
-	 glVertex4fv( vertex );
+	 GL_CALL(Vertex4fv)( vertex );
       else
-	 glVertex3fv( vertex ); 
+	 GL_CALL(Vertex3fv)( vertex ); 
    }
 }
 
@@ -244,9 +244,9 @@ void _tnl_do_EvalCoord2f( GLcontext* ctx, GLfloat u, GLfloat v )
       }
 
       if (tnl->vtx.attrsz[0] == 4) 
-	 glVertex4fv( vertex );
+	 GL_CALL(Vertex4fv)( vertex );
       else
-	 glVertex3fv( vertex ); 
+	 GL_CALL(Vertex3fv)( vertex ); 
    }
 }
 

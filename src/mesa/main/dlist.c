@@ -7694,7 +7694,7 @@ static void GLAPIENTRY print_list( GLcontext *ctx, GLuint list )
    Node *n;
    GLboolean done;
 
-   if (!glIsList(list)) {
+   if (!GL_CALL(IsList)(list)) {
       _mesa_printf("%u is not a display list ID\n", list);
       return;
    }

@@ -196,7 +196,7 @@ static void loopback_prim( GLcontext *ctx,
    GLuint k;
 
    if (prim->mode & PRIM_BEGIN) {
-      glBegin( prim->mode & PRIM_MODE_MASK );
+      GL_CALL(Begin)( prim->mode & PRIM_MODE_MASK );
    }
    else {
       assert(i == 0);
@@ -221,7 +221,7 @@ static void loopback_prim( GLcontext *ctx,
    }
 
    if (prim->mode & PRIM_END) {
-      glEnd();
+      GL_CALL(End)();
    }
    else {
       assert (i == list->prim_count-1);

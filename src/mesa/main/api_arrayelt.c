@@ -64,78 +64,273 @@ typedef struct {
  */
 #define TYPE_IDX(t) ( (t) == GL_DOUBLE ? 7 : (t) & 7 )
 
+static void GLAPIENTRY Color3bv(const GLbyte *v)
+{
+   GL_CALL(Color3bv)(v);
+}
 
-static array_func ColorFuncs[2][8] = {
-   { (array_func)glColor3bv,
-     (array_func)glColor3ubv,
-     (array_func)glColor3sv,
-     (array_func)glColor3usv,
-     (array_func)glColor3iv,
-     (array_func)glColor3uiv,
-     (array_func)glColor3fv,
-     (array_func)glColor3dv },
+static void GLAPIENTRY Color3ubv(const GLubyte *v)
+{
+   GL_CALL(Color3ubv)(v);
+}
 
-   { (array_func)glColor4bv,
-     (array_func)glColor4ubv,
-     (array_func)glColor4sv,
-     (array_func)glColor4usv,
-     (array_func)glColor4iv,
-     (array_func)glColor4uiv,
-     (array_func)glColor4fv,
-     (array_func)glColor4dv }
+static void GLAPIENTRY Color3sv(const GLshort *v)
+{
+   GL_CALL(Color3sv)(v);
+}
+
+static void GLAPIENTRY Color3usv(const GLushort *v)
+{
+   GL_CALL(Color3usv)(v);
+}
+
+static void GLAPIENTRY Color3iv(const GLint *v)
+{
+   GL_CALL(Color3iv)(v);
+}
+
+static void GLAPIENTRY Color3uiv(const GLuint *v)
+{
+   GL_CALL(Color3uiv)(v);
+}
+
+static void GLAPIENTRY Color3fv(const GLfloat *v)
+{
+   GL_CALL(Color3fv)(v);
+}
+
+static void GLAPIENTRY Color3dv(const GLdouble *v)
+{
+   GL_CALL(Color3dv)(v);
+}
+
+static void GLAPIENTRY Color4bv(const GLbyte *v)
+{
+   GL_CALL(Color4bv)(v);
+}
+
+static void GLAPIENTRY Color4ubv(const GLubyte *v)
+{
+   GL_CALL(Color4ubv)(v);
+}
+
+static void GLAPIENTRY Color4sv(const GLshort *v)
+{
+   GL_CALL(Color4sv)(v);
+}
+
+static void GLAPIENTRY Color4usv(const GLushort *v)
+{
+   GL_CALL(Color4usv)(v);
+}
+
+static void GLAPIENTRY Color4iv(const GLint *v)
+{
+   GL_CALL(Color4iv)(v);
+}
+
+static void GLAPIENTRY Color4uiv(const GLuint *v)
+{
+   GL_CALL(Color4uiv)(v);
+}
+
+static void GLAPIENTRY Color4fv(const GLfloat *v)
+{
+   GL_CALL(Color4fv)(v);
+}
+
+static void GLAPIENTRY Color4dv(const GLdouble *v)
+{
+   GL_CALL(Color4dv)(v);
+}
+
+static const array_func ColorFuncs[2][8] = {
+   {
+      (array_func) Color3bv,
+      (array_func) Color3ubv,
+      (array_func) Color3sv,
+      (array_func) Color3usv,
+      (array_func) Color3iv,
+      (array_func) Color3uiv,
+      (array_func) Color3fv,
+      (array_func) Color3dv,
+   },
+   {
+      (array_func) Color4bv,
+      (array_func) Color4ubv,
+      (array_func) Color4sv,
+      (array_func) Color4usv,
+      (array_func) Color4iv,
+      (array_func) Color4uiv,
+      (array_func) Color4fv,
+      (array_func) Color4dv,
+   },
 };
 
-static array_func VertexFuncs[3][8] = {
-   { 0,
-     0,
-     (array_func)glVertex2sv,
-     0,
-     (array_func)glVertex2iv,
-     0,
-     (array_func)glVertex2fv,
-     (array_func)glVertex2dv },
+static void GLAPIENTRY Vertex2sv(const GLshort *v)
+{
+   GL_CALL(Vertex2sv)(v);
+}
 
-   { 0,
-     0,
-     (array_func)glVertex3sv,
-     0,
-     (array_func)glVertex3iv,
-     0,
-     (array_func)glVertex3fv,
-     (array_func)glVertex3dv },
+static void GLAPIENTRY Vertex2iv(const GLint *v)
+{
+   GL_CALL(Vertex2iv)(v);
+}
 
-   { 0,
-     0,
-     (array_func)glVertex4sv,
-     0,
-     (array_func)glVertex4iv,
-     0,
-     (array_func)glVertex4fv,
-     (array_func)glVertex4dv }
+static void GLAPIENTRY Vertex2fv(const GLfloat *v)
+{
+   GL_CALL(Vertex2fv)(v);
+}
+
+static void GLAPIENTRY Vertex2dv(const GLdouble *v)
+{
+   GL_CALL(Vertex2dv)(v);
+}
+
+static void GLAPIENTRY Vertex3sv(const GLshort *v)
+{
+   GL_CALL(Vertex3sv)(v);
+}
+
+static void GLAPIENTRY Vertex3iv(const GLint *v)
+{
+   GL_CALL(Vertex3iv)(v);
+}
+
+static void GLAPIENTRY Vertex3fv(const GLfloat *v)
+{
+   GL_CALL(Vertex3fv)(v);
+}
+
+static void GLAPIENTRY Vertex3dv(const GLdouble *v)
+{
+   GL_CALL(Vertex3dv)(v);
+}
+
+static void GLAPIENTRY Vertex4sv(const GLshort *v)
+{
+   GL_CALL(Vertex4sv)(v);
+}
+
+static void GLAPIENTRY Vertex4iv(const GLint *v)
+{
+   GL_CALL(Vertex4iv)(v);
+}
+
+static void GLAPIENTRY Vertex4fv(const GLfloat *v)
+{
+   GL_CALL(Vertex4fv)(v);
+}
+
+static void GLAPIENTRY Vertex4dv(const GLdouble *v)
+{
+   GL_CALL(Vertex4dv)(v);
+}
+
+static const array_func VertexFuncs[3][8] = {
+   {
+      0,
+      0,
+      (array_func) Vertex2sv,
+      0,
+      (array_func) Vertex2iv,
+      0,
+      (array_func) Vertex2fv,
+      (array_func) Vertex2dv,
+   },
+   {
+      0,
+      0,
+      (array_func) Vertex3sv,
+      0,
+      (array_func) Vertex3iv,
+      0,
+      (array_func) Vertex3fv,
+      (array_func) Vertex3dv,
+   },
+   {
+      0,
+      0,
+      (array_func) Vertex4sv,
+      0,
+      (array_func) Vertex4iv,
+      0,
+      (array_func) Vertex4fv,
+      (array_func) Vertex4dv,
+   },
 };
 
-static array_func IndexFuncs[8] = {
+static void GLAPIENTRY Indexubv(const GLubyte *c)
+{
+   GL_CALL(Indexubv)(c);
+}
+
+static void GLAPIENTRY Indexsv(const GLshort *c)
+{
+   GL_CALL(Indexsv)(c);
+}
+
+static void GLAPIENTRY Indexiv(const GLint *c)
+{
+   GL_CALL(Indexiv)(c);
+}
+
+static void GLAPIENTRY Indexfv(const GLfloat *c)
+{
+   GL_CALL(Indexfv)(c);
+}
+
+static void GLAPIENTRY Indexdv(const GLdouble *c)
+{
+   GL_CALL(Indexdv)(c);
+}
+
+static const array_func IndexFuncs[8] = {
    0,
-   (array_func)glIndexubv,
-   (array_func)glIndexsv,
+   (array_func) Indexubv,
+   (array_func) Indexsv,
    0,
-   (array_func)glIndexiv,
+   (array_func) Indexiv,
    0,
-   (array_func)glIndexfv,
-   (array_func)glIndexdv
+   (array_func) Indexfv,
+   (array_func) Indexdv,
 };
 
-static array_func NormalFuncs[8] = {
-   (array_func)glNormal3bv,
-   0,
-   (array_func)glNormal3sv,
-   0,
-   (array_func)glNormal3iv,
-   0,
-   (array_func)glNormal3fv,
-   (array_func)glNormal3dv,
-};
+static void GLAPIENTRY Normal3bv(const GLbyte *v)
+{
+   GL_CALL(Normal3bv)(v);
+}
 
+static void GLAPIENTRY Normal3sv(const GLshort *v)
+{
+   GL_CALL(Normal3sv)(v);
+}
+
+static void GLAPIENTRY Normal3iv(const GLint *v)
+{
+   GL_CALL(Normal3iv)(v);
+}
+
+static void GLAPIENTRY Normal3fv(const GLfloat *v)
+{
+   GL_CALL(Normal3fv)(v);
+}
+
+static void GLAPIENTRY Normal3dv(const GLdouble *v)
+{
+   GL_CALL(Normal3dv)(v);
+}
+
+static const array_func NormalFuncs[8] = {
+   (array_func) Normal3bv,
+   0,
+   (array_func) Normal3sv,
+   0,
+   (array_func) Normal3iv,
+   0,
+   (array_func) Normal3fv,
+   (array_func) Normal3dv,
+};
 
 /* Wrapper functions in case glSecondaryColor*EXT doesn't exist */
 static void GLAPIENTRY SecondaryColor3bvEXT(const GLbyte *c)
@@ -178,7 +373,7 @@ static void GLAPIENTRY SecondaryColor3dvEXT(const GLdouble *c)
    GL_CALL(SecondaryColor3dvEXT)(c);
 }
 
-static array_func SecondaryColorFuncs[8] = {
+static const array_func SecondaryColorFuncs[8] = {
    (array_func) SecondaryColor3bvEXT,
    (array_func) SecondaryColor3ubvEXT,
    (array_func) SecondaryColor3svEXT,
@@ -201,7 +396,7 @@ static void GLAPIENTRY FogCoorddvEXT(const GLdouble *f)
    GL_CALL(FogCoorddvEXT)(f);
 }
 
-static array_func FogCoordFuncs[8] = {
+static const array_func FogCoordFuncs[8] = {
    0,
    0,
    0,
@@ -211,7 +406,6 @@ static array_func FogCoordFuncs[8] = {
    (array_func) FogCoordfvEXT,
    (array_func) FogCoorddvEXT
 };
-
 
 /**********************************************************************/
 
@@ -549,7 +743,7 @@ static void GLAPIENTRY VertexAttrib4dv(GLuint index, const GLdouble *v)
 /*
  * Array [size][type] of VertexAttrib functions
  */
-static attrib_func AttribFuncs[2][4][8] = {
+static const attrib_func AttribFuncs[2][4][8] = {
    {
       /* non-normalized */
       {
@@ -646,6 +840,11 @@ static attrib_func AttribFuncs[2][4][8] = {
    }
 };
 
+static void GLAPIENTRY EdgeFlagv(const GLboolean *flag)
+{
+   GL_CALL(EdgeFlagv)(flag);
+}
+
 /**********************************************************************/
 
 
@@ -693,7 +892,7 @@ static void _ae_update_state( GLcontext *ctx )
    }
    if (ctx->Array.EdgeFlag.Enabled) {
       aa->array = &ctx->Array.EdgeFlag;
-      aa->func = (array_func) glEdgeFlagv;
+      aa->func = (array_func) EdgeFlagv;
       aa++;
    }
    if (ctx->Array.Normal.Enabled) {
