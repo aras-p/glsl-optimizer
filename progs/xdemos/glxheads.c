@@ -1,4 +1,4 @@
-/* $Id: glxheads.c,v 1.3 2002/03/08 19:44:28 brianp Exp $ */
+/* $Id: glxheads.c,v 1.4 2003/04/21 14:51:16 brianp Exp $ */
 
 /*
  * Exercise multiple GLX connections on multiple X displays.
@@ -248,9 +248,9 @@ static void
 PrintInfo(const struct head *h)
 {
    printf("Name: %s\n", h->DisplayName);
-   printf("  Display:     0x%x\n", (int) h->Dpy);
+   printf("  Display:     %p\n", h->Dpy);
    printf("  Window:      0x%x\n", (int) h->Win);
-   printf("  Context:     0x%x\n", (int) h->Context);
+   printf("  Context:     0x%lx\n", (long) h->Context);
    printf("  GL_VERSION:  %s\n", h->Version);
    printf("  GL_VENDOR:   %s\n", h->Vendor);
    printf("  GL_RENDERER: %s\n", h->Renderer);

@@ -1,4 +1,4 @@
-/* $Id: pbinfo.c,v 1.1 2002/10/05 18:30:13 brianp Exp $ */
+/* $Id: pbinfo.c,v 1.2 2003/04/21 14:51:16 brianp Exp $ */
 
 /*
  * Print list of fbconfigs and test each to see if a pbuffer can be created
@@ -49,6 +49,7 @@ PrintConfigs(Display *dpy, int screen, Bool horizFormat)
    fbConfigs = glXChooseFBConfigSGIX(dpy, screen, fbAttribs, &nConfigs);
 #else
    /* GLX 1.3 method */
+   (void) fbAttribs;
    fbConfigs = glXGetFBConfigs(dpy, screen, &nConfigs);
 #endif
 
