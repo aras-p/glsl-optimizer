@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.5 1999/09/12 12:04:13 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.6 1999/09/15 20:04:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1407,7 +1407,7 @@ const char *Fake_glXQueryServerString( Display *dpy, int screen, int name )
 {
    static char *extensions = EXTENSIONS;
    static char *vendor = "Brian Paul";
-   static char *version = "1.1 Mesa 3.0";
+   static char *version = "1.1 Mesa 3.1";
 
    (void) dpy;
    (void) screen;
@@ -1431,7 +1431,7 @@ const char *Fake_glXGetClientString( Display *dpy, int name )
 {
    static char *extensions = EXTENSIONS;
    static char *vendor = "Brian Paul";
-   static char *version = "1.1 Mesa 3.0";
+   static char *version = "1.1 Mesa 3.1";
 
    (void) dpy;
 
