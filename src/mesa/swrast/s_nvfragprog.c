@@ -714,6 +714,10 @@ execute_program( GLcontext *ctx,
                result[0] = result[1] = result[2] = result[3] = 
                   a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
                store_vector4( inst, machine, result );
+#if DEBUG_FRAG
+               printf("DP4 %g = (%g, %g %g %g) . (%g, %g %g %g)\n",
+                      result[0], a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]);
+#endif
             }
             break;
          case FP_OPCODE_DPH:
@@ -850,6 +854,12 @@ execute_program( GLcontext *ctx,
                result[2] = MAX2(a[2], b[2]);
                result[3] = MAX2(a[3], b[3]);
                store_vector4( inst, machine, result );
+#if DEBUG_FRAG
+               printf("MAX (%g %g %g %g) = (%g %g %g %g), (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3], 
+                      a[0], a[1], a[2], a[3],
+                      b[0], b[1], b[2], b[3]);
+#endif
             }
             break;
          case FP_OPCODE_MIN:
@@ -869,6 +879,10 @@ execute_program( GLcontext *ctx,
                GLfloat result[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, result );
                store_vector4( inst, machine, result );
+#if DEBUG_FRAG
+               printf("MOV (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3]);
+#endif
             }
             break;
          case FP_OPCODE_MUL:
