@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.16 1999/11/18 23:56:04 brianp Exp $ */
+/* $Id: varray.c,v 1.17 1999/11/19 00:03:27 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -505,13 +505,22 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
        * rendering to keep it turned on.
        */
       relock = ctx->CompileCVAFlag;
-      ctx->CompileCVAFlag = 0;
 
-      if (!elt->pipeline_valid || relock)
+      if (relock) {
+	 ctx->CompileCVAFlag = 0;
+	 elt->pipeline_valid = 0;
+      }
+
+      if (!elt->pipeline_valid)
 	 gl_build_immediate_pipeline( ctx );
 
       required = elt->inputs;
       fallback = (elt->inputs & ~ctx->Array.Summary);
+
+      /* The translate function doesn't do anything about size.  It
+       * just ensures that type and stride come out right.
+       */
+      IM->v.Obj.size = ctx->Array.Vertex.Size;
 
       if (required & VERT_RGBA) 
       {
@@ -586,8 +595,6 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
       VB->MaterialMask = IM->MaterialMask;
       VB->Material = IM->Material;
       VB->BoundsPtr = 0;
-
-      IM->v.Obj.size = ctx->Array.Vertex.Size;  /* added by Andree Borrmann */
 
       while (remaining > 0) {
          GLint vbspace = VB_MAX - VB_START;
@@ -675,7 +682,6 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
          /* Transform and render.
 	  */
          gl_run_pipeline( VB );
-         gl_flush_vb( ctx, "DrawArrays" );  /* added by Andree Borrmann */
 	 gl_reset_vb( VB );
 
 	 ctx->Array.Flag[count] = ctx->Array.Flags;
@@ -685,7 +691,12 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
          remaining -= n;
       }
 
-      ctx->CompileCVAFlag = relock;
+      gl_reset_input( ctx );
+
+      if (relock) {
+	 ctx->CompileCVAFlag = relock;
+	 elt->pipeline_valid = 0;
+      }
    }
    else if (ctx->Array.Vertex.Enabled) 
    {
