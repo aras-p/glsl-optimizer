@@ -1,0 +1,88 @@
+<HTML>
+
+<TITLE>Mesa glFBDev Driver</TITLE>
+
+<BODY text="#000000" bgcolor="#55bbff" link="#111188">
+
+<center><H1>Mesa glFBDev Driver</H1></center>
+
+
+<H1>1. Introduction</H1>
+
+<p>
+The GLFBDev driver interface allows one to do OpenGL rendering into a
+framebuffer managed with the Linux's fbdev interface.
+</p>
+
+<p>
+Basically, the programmer uses the fbdev functions to initialize the
+graphics hardware and setup the framebuffer.
+Then, using a calls to Mesa's glFBDev API functions, one can render
+into the framebuffer with the OpenGL API functions.
+</p>
+
+<p>
+Note, only software rendering is supported; there is no hardware
+acceleration.
+</p>
+
+
+<p>
+The GL/glfbdev.h header file defines the glFBDev interface.
+</p>
+
+<p>
+The progs/fbdev/glfbdevtest.c demonstrates how to use the glFBDev interface.
+</p>
+
+<p>
+For more information about fbdev, see the
+<a href="http://www.tldp.org/HOWTO/Framebuffer-HOWTO.html" target="_parent">
+Framebuffer Howto</a>
+</p>
+
+
+<h1>2. Compilation</h1>
+
+<p>
+To compile Mesa with support for the glFBDev interface:
+<pre>
+   XXX todo
+</pre>
+
+<p>
+When compilation is finished look in progs/glfbdev/ for the glfbdevtest demo.
+</p>
+
+</p>
+xxx todo
+</p>
+
+
+<h1>3. Compiling and linking glFBDev programs</h1>
+
+<p>
+xxx todo
+</p>
+
+
+
+<h1>4. Running glFBDev programs</h1>
+
+<p>
+First, you need to have a working fbdev environment.
+See the
+<a href="http://www.tldp.org/HOWTO/Framebuffer-HOWTO.html" target="_parent">
+Framebuffer Howto</a> for information.
+</p>
+
+<p>
+Programs must be run with root permission.
+</p>
+
+</p>
+
+
+
+</body>
+</html>
