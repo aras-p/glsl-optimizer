@@ -75,6 +75,24 @@ GL_IBM_multimode_draw_arrays
 GL_SUN_multi_draw_arrays
    An alias for GL_EXT_multi_draw_arrays, standard in OpenGL 1.4.
 
+Faster glDrawPixels / glCopyPixels in X11 driver
+   If your X screen is 32bpp, glDrawPixels to the front color buffer will
+   be accelerated (via XPutImage()) if the image format is GL_BGRA and the
+   type is GL_UNSIGNED_BYTE.  No raster operations, such as depth test,
+   blend, fog, etc. can be enabled.
+
+   If your X screen is 16bpp, glDrawPixels to the front color buffer will
+   be accelerated (via XPutImage()) if the image format is GL_RGB and the
+   type is GL_UNSIGNED_SHORT_5_6_5.  No raster operations, such as depth
+   test, blend, fog, etc. can be enabled.
+
+   glCopyPixels() calls for the front color buffer will be accelerated
+   (via XCopyArea()) if no raster operations, such as depth test, blend,
+   fog, pixel zoom, etc. are enabled.
+
+   The speed-up over typical software rendering is a factor of 10 for
+   glDrawPixels and 100 for glCopyPixels.
+
 
 With the addition of GL_ARB_occlusion_query, GL_ARB_vertex_buffer_object,
 GL_ARB_texture_non_power_of_two and GL_EXT_shadow_funcs, Mesa 5.1 supports

@@ -1166,6 +1166,8 @@ Mesa Version History
 	- demo of per-pixel lighting with a fragment program (demos/fplight.c)
 	- new version (18) of glext.h header
 	- new spriteblast.c demo of GL_ARB_point_sprite
+	- faster glDrawPixels in X11 driver in some cases (see RELNOTES-5.1)
+	- faster glCopyPixels in X11 driver in some cases (see RELNOTES-5.1)
     Bug fixes:
 	- really enable OpenGL 1.4 features in DOS driver.
 	- fixed issues in glDrawPixels and glCopyPixels for very wide images
@@ -1181,3 +1183,4 @@ Mesa Version History
 	- documentation overhaul.  merged with website content.  more html.
 	- glxgears.c demo updated to use GLX swap rate extensions
 	- glTexImage1/2/3D now allows width/height/depth = 0
+	- disable SPARC asm code on Linux (bug 852204)
