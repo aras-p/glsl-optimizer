@@ -964,8 +964,8 @@ static enum_elt all_enums[] =
 
 typedef int (*cfunc)(const void *, const void *);
 
-static enum_elt **index1 = 0;
-static int sorted = 0;
+static enum_elt **index1;
+static int sorted;
 
 static int compar_name( const enum_elt *a, const enum_elt *b )
 {

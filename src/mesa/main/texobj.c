@@ -700,7 +700,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    GLuint unit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *oldTexObj;
-   struct gl_texture_object *newTexObj = 0;
+   struct gl_texture_object *newTexObj = NULL;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))

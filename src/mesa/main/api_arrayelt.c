@@ -229,32 +229,32 @@ static void GLAPIENTRY Vertex4dv(const GLdouble *v)
 
 static const array_func VertexFuncs[3][8] = {
    {
-      0,
-      0,
+      NULL,
+      NULL,
       (array_func) Vertex2sv,
-      0,
+      NULL,
       (array_func) Vertex2iv,
-      0,
+      NULL,
       (array_func) Vertex2fv,
       (array_func) Vertex2dv,
    },
    {
-      0,
-      0,
+      NULL,
+      NULL,
       (array_func) Vertex3sv,
-      0,
+      NULL,
       (array_func) Vertex3iv,
-      0,
+      NULL,
       (array_func) Vertex3fv,
       (array_func) Vertex3dv,
    },
    {
-      0,
-      0,
+      NULL,
+      NULL,
       (array_func) Vertex4sv,
-      0,
+      NULL,
       (array_func) Vertex4iv,
-      0,
+      NULL,
       (array_func) Vertex4fv,
       (array_func) Vertex4dv,
    },
@@ -286,12 +286,12 @@ static void GLAPIENTRY Indexdv(const GLdouble *c)
 }
 
 static const array_func IndexFuncs[8] = {
-   0,
+   NULL,
    (array_func) Indexubv,
    (array_func) Indexsv,
-   0,
+   NULL,
    (array_func) Indexiv,
-   0,
+   NULL,
    (array_func) Indexfv,
    (array_func) Indexdv,
 };
@@ -323,11 +323,11 @@ static void GLAPIENTRY Normal3dv(const GLdouble *v)
 
 static const array_func NormalFuncs[8] = {
    (array_func) Normal3bv,
-   0,
+   NULL,
    (array_func) Normal3sv,
-   0,
+   NULL,
    (array_func) Normal3iv,
-   0,
+   NULL,
    (array_func) Normal3fv,
    (array_func) Normal3dv,
 };
@@ -397,12 +397,12 @@ static void GLAPIENTRY FogCoorddvEXT(const GLdouble *f)
 }
 
 static const array_func FogCoordFuncs[8] = {
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
    (array_func) FogCoordfvEXT,
    (array_func) FogCoorddvEXT
 };
@@ -866,7 +866,7 @@ void _ae_destroy_context( GLcontext *ctx )
 {
    if ( AE_CONTEXT( ctx ) ) {
       FREE( ctx->aelt_context );
-      ctx->aelt_context = 0;
+      ctx->aelt_context = NULL;
    }
 }
 

@@ -56,7 +56,7 @@ _mesa_GetString( GLenum name )
    static const char *version_1_5 = "1.5 Mesa " MESA_VERSION_STRING;
    static const char *version_2_0 = "1.5 Mesa " MESA_VERSION_STRING;/*XXX FIX*/
 
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, NULL);
 
    /* this is a required driver function */
    assert(ctx->Driver.GetString);

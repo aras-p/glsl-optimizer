@@ -474,7 +474,7 @@ _mesa_BindBufferARB(GLenum target, GLuint buffer)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *oldBufObj;
-   struct gl_buffer_object *newBufObj = 0;
+   struct gl_buffer_object *newBufObj = NULL;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    oldBufObj = buffer_object_get_target( ctx, target, "BindBufferARB" );

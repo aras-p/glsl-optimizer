@@ -876,7 +876,7 @@ _mesa_invalidate_shine_table( GLcontext *ctx, GLuint side )
    ASSERT(side < 2);
    if (ctx->_ShineTable[side])
       ctx->_ShineTable[side]->refcount--;
-   ctx->_ShineTable[side] = 0;
+   ctx->_ShineTable[side] = NULL;
 }
 
 
@@ -1281,7 +1281,8 @@ _mesa_init_lighting( GLcontext *ctx )
    ctx->Light.ColorMaterialMode = GL_AMBIENT_AND_DIFFUSE;
    ctx->Light.ColorMaterialBitmask = _mesa_material_bitmask( ctx,
                                                GL_FRONT_AND_BACK,
-                                               GL_AMBIENT_AND_DIFFUSE, ~0, 0 );
+                                               GL_AMBIENT_AND_DIFFUSE, ~0,
+                                               NULL );
 
    ctx->Light.ColorMaterialEnabled = GL_FALSE;
 

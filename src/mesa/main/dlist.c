@@ -5169,7 +5169,7 @@ static void GLAPIENTRY save_Materialfv( GLenum face, GLenum pname, const GLfloat
    }
 
    {
-      GLuint bitmask = _mesa_material_bitmask( ctx, face, pname, ~0, 0 );
+      GLuint bitmask = _mesa_material_bitmask( ctx, face, pname, ~0, NULL );
       for (i = 0 ; i < MAT_ATTRIB_MAX ; i++) 
 	 if (bitmask & (1<<i)) {
 	    ctx->ListState.ActiveMaterialSize[i] = args;
