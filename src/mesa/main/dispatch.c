@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.10 2000/01/18 17:38:40 brianp Exp $ */
+/* $Id: dispatch.c,v 1.11 2000/01/28 19:02:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,6 +73,69 @@
 #include "winpos.h"
 #endif
 
+
+
+/**********************************************************************
+ * Generate the GL entrypoint functions here.
+ */
+
+#define KEYWORD1
+#define KEYWORD2 GLAPIENTRY
+#if defined(USE_X86_ASM) && !defined(__WIN32__) && !defined(XF86DRI)
+#define NAME(func) _glapi_fallback_##func
+#elif defined(USE_MGL_NAMESPACE)
+#define NAME(func)  mgl##func
+#else
+#define NAME(func)  gl##func
+#endif
+
+#ifdef DEBUG
+
+static int
+trace(void)
+{
+   static int trace = -1;
+   if (trace < 0)
+      trace = getenv("MESA_TRACE") ? 1 : 0;
+   return trace > 0;
+}
+
+#define DISPATCH(FUNC, ARGS, MESSAGE)					\
+   const struct _glapi_table *dispatch;					\
+   dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
+   if (trace()) printf MESSAGE;						\
+   (dispatch->FUNC) ARGS
+
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 				\
+   const struct _glapi_table *dispatch;					\
+   dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
+   if (trace()) printf MESSAGE;						\
+   return (dispatch->FUNC) ARGS
+
+#else
+
+#define DISPATCH(FUNC, ARGS, MESSAGE)					\
+   const struct _glapi_table *dispatch;					\
+   dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
+   (dispatch->FUNC) ARGS
+
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE)				\
+   const struct _glapi_table *dispatch;					\
+   dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
+   return (dispatch->FUNC) ARGS
+
+#endif
+
+
+#ifndef GLAPIENTRY
+#define GLAPIENTRY
+#endif
+
+#include "glapitemp.h"
+
+
+
+/**********************************************************************/
 
 
 static int
