@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.26 2000/10/21 01:29:12 brianp Exp $ */
+/* $Id: enable.c,v 1.27 2000/10/27 16:44:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -535,6 +535,16 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          }
 	 break;
 
+      /* GL_EXT_secondary_color */
+      case GL_COLOR_SUM_EXT:
+         ctx->Fog.ColorSumEnabled = state;
+	 if (state)
+	    SET_BITS(ctx->TriangleCaps, DD_SEPERATE_SPECULAR);
+	 else if (ctx->Light.Model.ColorControl == GL_SINGLE_COLOR)
+	    CLEAR_BITS(ctx->TriangleCaps, DD_SEPERATE_SPECULAR);
+	 ctx->NewState |= NEW_RASTER_OPS;
+         break;
+
       default:
          gl_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
          return;
@@ -814,6 +824,12 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
          break;
       case GL_EDGE_FLAG_ARRAY:
          ctx->Array.EdgeFlag.Enabled = state;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_EXT:
+         ctx->Array.FogCoord.Enabled = state;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_EXT:
+         ctx->Array.SecondaryColor.Enabled = state;
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glEnable/DisableClientState" );

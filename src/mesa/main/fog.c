@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.20 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: fog.c,v 1.21 2000/10/27 16:44:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,6 +64,7 @@ _mesa_Fogiv(GLenum pname, const GLint *params )
       case GL_FOG_START:
       case GL_FOG_END:
       case GL_FOG_INDEX:
+      case GL_FOG_COORDINATE_SOURCE_EXT:
 	 p[0] = (GLfloat) *params;
 	 break;
       case GL_FOG_COLOR:
@@ -123,6 +124,14 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 	 ctx->Fog.Color[2] = params[2];
 	 ctx->Fog.Color[3] = params[3];
          break;
+      case GL_FOG_COORDINATE_SOURCE_EXT: {
+	 GLenum p = (GLenum)(GLint) *params;
+	 if (p == GL_FOG_COORDINATE_EXT || p == GL_FRAGMENT_DEPTH_EXT)
+	    ctx->Fog.FogCoordinateSource = p;
+	 else
+	    gl_error( ctx, GL_INVALID_ENUM, "glFog" );
+	 break;
+      }
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glFog" );
          return;
@@ -136,218 +145,136 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 }
 
 
-typedef void (*fog_func)( struct vertex_buffer *VB, GLuint side, 
-			  GLubyte flag );
-
-typedef void (*fog_coord_func)( struct vertex_buffer *VB, 
-				const GLvector4f *from,
-				GLubyte flag );
-
-static fog_func fog_ci_tab[2];
-static fog_func fog_rgba_tab[2];
-static fog_coord_func make_fog_coord_tab[2];
-
-/*
- * Compute the fogged color for an array of vertices.
- * Input:  n - number of vertices
- *         v - array of vertices
- *         color - the original vertex colors
- * Output:  color - the fogged colors
- * 
- */
-#define TAG(x) x##_raw
-#define CULLCHECK
-#define IDX 0
-#include "fog_tmp.h"
-
-#define TAG(x) x##_masked
-#define CULLCHECK if (cullmask[i]&flag)
-#define IDX 1
-#include "fog_tmp.h"
 
 
 void
 _mesa_init_fog( void )
 {
-   init_fog_tab_masked();
-   init_fog_tab_raw();
 }
 
-
-/*
- * Compute fog for the vertices in the vertex buffer.
- */
-void
-_mesa_fog_vertices( struct vertex_buffer *VB )
+static GLvector1f *get_fogcoord_ptr( GLcontext *ctx, GLvector1f *tmp )
 {
-   GLcontext *ctx = VB->ctx;
-   GLuint i = VB->CullMode & 1;
+   struct vertex_buffer *VB = ctx->VB;
 
-   if (ctx->Visual.RGBAflag) {
-      /* Fog RGB colors */
-      if (ctx->TriangleCaps & DD_TRI_LIGHT_TWOSIDE) {
-	 fog_rgba_tab[i]( VB, 0, VERT_FACE_FRONT );
-	 fog_rgba_tab[i]( VB, 1, VERT_FACE_REAR );
-      } else {
-	 fog_rgba_tab[i]( VB, 0, VERT_FACE_FRONT|VERT_FACE_REAR );
+   if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT) {      
+      if (!ctx->NeedEyeCoords) {
+	 GLfloat *m = ctx->ModelView.m;
+	 GLfloat plane[4];
+
+	 plane[0] = m[2];
+	 plane[1] = m[6];
+	 plane[2] = m[10];
+	 plane[3] = m[14];
+
+	 /* Full eye coords weren't required, just calculate the
+	  * eye Z values.  
+	  */
+	 gl_dotprod_tab[0][VB->ObjPtr->size](&VB->Eye, 2,
+					     VB->ObjPtr, plane, 0 );
+
+	 tmp->data = &(VB->Eye.data[0][2]);
+	 tmp->start = VB->Eye.start+2;
+	 tmp->stride = VB->Eye.stride;
+	 return tmp;
       }
-   }
-   else {
-      /* Fog color indexes */
-      if (ctx->TriangleCaps & DD_TRI_LIGHT_TWOSIDE) {
-	 fog_ci_tab[i]( VB, 0, VERT_FACE_FRONT );
-         fog_ci_tab[i]( VB, 1, VERT_FACE_REAR );
-      } else {
-	 fog_ci_tab[i]( VB, 0, VERT_FACE_FRONT|VERT_FACE_REAR );
+      else 
+      {
+	 if (VB->EyePtr->size < 2)
+	    gl_vector4f_clean_elem( &VB->Eye, VB->Count, 2 );
+
+	 tmp->data = &(VB->EyePtr->data[0][2]);
+	 tmp->start = VB->EyePtr->start+2;
+	 tmp->stride = VB->EyePtr->stride;
+	 return tmp;
       }
-   }
+   } else
+      return VB->FogCoordPtr;
 }
 
 
-static void check_fog_coords( GLcontext *ctx, struct gl_pipeline_stage *d )
-{
-   d->type = 0;
-
-   if (ctx->FogMode==FOG_FRAGMENT)
-   {
-      d->type = PIPE_IMMEDIATE|PIPE_PRECALC;
-      d->inputs = VERT_OBJ_ANY;
-      d->outputs = VERT_FOG_COORD;
-   }
-}
-
-
-static void gl_make_fog_coords( struct vertex_buffer *VB )
-{
-   GLcontext *ctx = VB->ctx;
-
-   /* If full eye coords weren't required, just calculate the eye Z
-    * values.  
-    */
-   if (!ctx->NeedEyeCoords) {
-      GLfloat *m = ctx->ModelView.m;
-      GLfloat plane[4];
-
-      plane[0] = m[2];
-      plane[1] = m[6];
-      plane[2] = m[10];
-      plane[3] = m[14];
-
-      gl_dotprod_tab[0][VB->ObjPtr->size](&VB->Eye,
-					  2, /* fill z coordinates */
-					  VB->ObjPtr,
-					  plane,
-					  0 );
-
-      make_fog_coord_tab[0]( VB, &VB->Eye, 0 );
-   }
-   else
-   {
-      make_fog_coord_tab[0]( VB, VB->EyePtr, 0 );
-   }
-}
-
-
-/* Drivers that want fog coordinates in VB->Spec[0] alpha, can substitute this
- * stage for the default PIPE_OP_FOG pipeline stage.
+/* Use lookup table & interpolation?
  */
-struct gl_pipeline_stage gl_fog_coord_stage = {
-   "build fog coordinates",
-   PIPE_OP_FOG,
-   PIPE_PRECALC|PIPE_IMMEDIATE,
-   0,
-   NEW_FOG,
-   NEW_LIGHTING|NEW_RASTER_OPS|NEW_FOG|NEW_MODELVIEW,
-   0, 0,
-   0, 0, 0,
-   check_fog_coords,
-   gl_make_fog_coords 
-};
+static void 
+make_win_fog_coords( struct vertex_buffer *VB,
+		     GLvector1f *fogcoord)
+{
+   const GLcontext *ctx = VB->ctx;
+   GLfloat end  = ctx->Fog.End;
+   GLfloat *v = fogcoord->start;
+   GLuint stride = fogcoord->stride;
+   GLuint n = VB->Count - VB->Start;
+   GLfloat *out;		
+   GLfloat d;
+   GLuint i;
+
+   VB->FogCoordPtr = VB->store.FogCoord;
+   out = VB->FogCoordPtr->data + VB->Start;
+
+   switch (ctx->Fog.Mode) {
+   case GL_LINEAR:
+      d = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
+      for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
+	 out[i] = (end - ABSF(*v)) * d;
+	 if (0) fprintf(stderr, "z %f out %f\n", *v, out[i]);
+      }
+      break;
+   case GL_EXP:
+      d = -ctx->Fog.Density;
+      for ( i = 0 ; i < n ; i++, STRIDE_F(v,stride)) {
+	 out[i] = exp( d*ABSF(*v) );
+	 if (0) fprintf(stderr, "z %f out %f\n", *v, out[i]);
+      }
+      break;
+   case GL_EXP2:
+      d = -(ctx->Fog.Density*ctx->Fog.Density);
+      for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
+	 GLfloat z = *v;
+	 out[i] = exp( d*z*z ); 
+	 if (0) fprintf(stderr, "z %f out %f\n", *v, out[i]);
+      }
+      break;
+   default:
+      gl_problem(ctx, "Bad fog mode in make_fog_coord");
+      return;
+   }
+}
 
 
+void 
+_mesa_make_win_fog_coords( struct vertex_buffer *VB )
+{
+   GLvector1f tmp;
+
+   make_win_fog_coords( VB, get_fogcoord_ptr( VB->ctx, &tmp ) );
+}
 
 
 
 /*
  * Apply fog to an array of RGBA pixels.
  * Input:  n - number of pixels
- *         z - array of integer depth values
+ *         fog - array of interpolated screen-space fog coordinates in [0..1]
  *         red, green, blue, alpha - pixel colors
  * Output:  red, green, blue, alpha - fogged pixel colors
  */
 void
 _mesa_fog_rgba_pixels( const GLcontext *ctx,
-                       GLuint n, const GLdepth z[], GLubyte rgba[][4] )
+                       GLuint n, 
+		       const GLfixed fog[], 
+		       GLubyte rgba[][4] )
 {
-   GLfloat c = ctx->ProjectionMatrix.m[10];
-   GLfloat d = ctx->ProjectionMatrix.m[14];
+   GLfixed rFog = ctx->Fog.Color[0] * 255.0;
+   GLfixed gFog = ctx->Fog.Color[1] * 255.0;
+   GLfixed bFog = ctx->Fog.Color[2] * 255.0;
    GLuint i;
 
-   GLfloat rFog = ctx->Fog.Color[0] * 255.0F;
-   GLfloat gFog = ctx->Fog.Color[1] * 255.0F;
-   GLfloat bFog = ctx->Fog.Color[2] * 255.0F;
-
-   GLfloat tz = ctx->Viewport.WindowMap.m[MAT_TZ];
-   GLfloat szInv = 1.0F / ctx->Viewport.WindowMap.m[MAT_SZ];
-
-   switch (ctx->Fog.Mode) {
-      case GL_LINEAR:
-         {
-            GLfloat fogEnd = ctx->Fog.End;
-            GLfloat fogScale = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
-            for (i=0;i<n;i++) {
-               GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
-               GLfloat eyez = -d / (c+ndcz);
-               GLfloat f, g;
-               if (eyez < 0.0)  eyez = -eyez;
-               f = (fogEnd - eyez) * fogScale;
-               f = CLAMP( f, 0.0F, 1.0F );
-               g = 1.0F - f;
-               rgba[i][RCOMP] = (GLint) (f * rgba[i][RCOMP] + g * rFog);
-               rgba[i][GCOMP] = (GLint) (f * rgba[i][GCOMP] + g * gFog);
-               rgba[i][BCOMP] = (GLint) (f * rgba[i][BCOMP] + g * bFog);
-            }
-         }
-	 break;
-      case GL_EXP:
-	 for (i=0;i<n;i++) {
-	    GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
-	    GLfloat eyez = d / (c+ndcz);
-            GLfloat f, g;
-	    if (eyez < 0.0)
-               eyez = -eyez;
-	    f = exp( -ctx->Fog.Density * eyez );
-            g = 1.0F - f;
-            rgba[i][RCOMP] = (GLint) (f * rgba[i][RCOMP] + g * rFog);
-            rgba[i][GCOMP] = (GLint) (f * rgba[i][GCOMP] + g * gFog);
-            rgba[i][BCOMP] = (GLint) (f * rgba[i][BCOMP] + g * bFog);
-	 }
-	 break;
-      case GL_EXP2:
-         {
-            GLfloat negDensitySquared = -ctx->Fog.Density * ctx->Fog.Density;
-            for (i=0;i<n;i++) {
-               GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
-               GLfloat eyez = d / (c+ndcz);
-               GLfloat f, g;
-               GLfloat tmp = negDensitySquared * eyez * eyez;
-#ifdef __alpha__
-               /* XXX this underflow check may be needed for other systems */
-               if (tmp < FLT_MIN_10_EXP)
-                  f = exp( FLT_MIN_10_EXP );
-               else
-#endif
-                  f = exp( tmp );
-               g = 1.0F - f;
-               rgba[i][RCOMP] = (GLint) (f * rgba[i][RCOMP] + g * rFog);
-               rgba[i][GCOMP] = (GLint) (f * rgba[i][GCOMP] + g * gFog);
-               rgba[i][BCOMP] = (GLint) (f * rgba[i][BCOMP] + g * bFog);
-            }
-         }
-	 break;
-      default:
-         gl_problem(ctx, "Bad fog mode in _mesa_fog_rgba_pixels");
-         return;
+   for (i=0;i<n;i++) {
+      GLfixed f = CLAMP(fog[i], 0, FIXED_ONE);
+      GLfixed g = FIXED_ONE - f;
+/*        fprintf(stderr, "f %d/%f g %d ONE %d\n", f, f/(float)FIXED_ONE, g, FIXED_ONE); */
+      rgba[i][0] = (f*rgba[i][0] + g*rFog) >> FIXED_SHIFT;
+      rgba[i][1] = (f*rgba[i][1] + g*gFog) >> FIXED_SHIFT;
+      rgba[i][2] = (f*rgba[i][2] + g*bFog) >> FIXED_SHIFT;
    }
 }
 
@@ -363,7 +290,33 @@ _mesa_fog_rgba_pixels( const GLcontext *ctx,
  */
 void
 _mesa_fog_ci_pixels( const GLcontext *ctx,
-                     GLuint n, const GLdepth z[], GLuint index[] )
+                     GLuint n, const GLfixed fog[], GLuint index[] )
+{
+   GLuint idx = ctx->Fog.Index;
+   GLuint i;
+
+   for (i=0;i<n;i++) {
+      GLfixed f = FixedToFloat(CLAMP(fog[i], 0, FIXED_ONE));
+      index[i] = (GLuint) ((GLfloat) index[i] + (1.0F-f) * idx);
+   }
+}
+
+
+
+/*
+ * Calculate fog coords from window z values 
+ * Input:  n - number of pixels
+ *         z - array of integer depth values
+ *         red, green, blue, alpha - pixel colors
+ * Output:  red, green, blue, alpha - fogged pixel colors
+ *
+ * Use lookup table & interpolation? 
+ */
+void
+_mesa_win_fog_coords_from_z( const GLcontext *ctx,
+			     GLuint n, 
+			     const GLdepth z[], 
+			     GLfixed fogcoord[] )
 {
    GLfloat c = ctx->ProjectionMatrix.m[10];
    GLfloat d = ctx->ProjectionMatrix.m[14];
@@ -380,24 +333,17 @@ _mesa_fog_ci_pixels( const GLcontext *ctx,
             for (i=0;i<n;i++) {
                GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
                GLfloat eyez = -d / (c+ndcz);
-               GLfloat f;
-               if (eyez < 0.0)  eyez = -eyez;
-               f = (fogEnd - eyez) * fogScale;
-               f = CLAMP( f, 0.0F, 1.0F );
-               index[i] = (GLuint) ((GLfloat) index[i] + (1.0F-f) * ctx->Fog.Index);
+	       if (eyez < 0.0)  eyez = -eyez;
+               fogcoord[i] = (fogEnd - eyez) * fogScale;
             }
-	 }
+         }
 	 break;
       case GL_EXP:
-         for (i=0;i<n;i++) {
+	 for (i=0;i<n;i++) {
 	    GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
-	    GLfloat eyez = -d / (c+ndcz);
-            GLfloat f;
-	    if (eyez < 0.0)
-               eyez = -eyez;
-	    f = exp( -ctx->Fog.Density * eyez );
-	    f = CLAMP( f, 0.0F, 1.0F );
-	    index[i] = (GLuint) ((GLfloat) index[i] + (1.0F-f) * ctx->Fog.Index);
+	    GLfloat eyez = d / (c+ndcz);
+	    if (eyez < 0.0) eyez = -eyez;
+	    fogcoord[i] = exp( -ctx->Fog.Density * eyez );
 	 }
 	 break;
       case GL_EXP2:
@@ -405,25 +351,53 @@ _mesa_fog_ci_pixels( const GLcontext *ctx,
             GLfloat negDensitySquared = -ctx->Fog.Density * ctx->Fog.Density;
             for (i=0;i<n;i++) {
                GLfloat ndcz = ((GLfloat) z[i] - tz) * szInv;
-               GLfloat eyez = -d / (c+ndcz);
-               GLfloat tmp, f;
-               if (eyez < 0.0)
-                  eyez = -eyez;
-               tmp = negDensitySquared * eyez * eyez;
+               GLfloat eyez = d / (c+ndcz);
+               GLfloat tmp = negDensitySquared * eyez * eyez;
 #ifdef __alpha__
-               /* XXX this underflow check may be needed for other systems */
                if (tmp < FLT_MIN_10_EXP)
-                  f = exp( FLT_MIN_10_EXP );
-               else
+		  tmp = FLT_MIN_10_EXP;
 #endif
-               f = exp( tmp );
-               f = CLAMP( f, 0.0F, 1.0F );
-               index[i] = (GLuint) ((GLfloat) index[i] + (1.0F-f) * ctx->Fog.Index);
+	       fogcoord[i] = exp( tmp );
             }
-	 }
+         }
 	 break;
       default:
-         gl_problem(ctx, "Bad fog mode in _mesa_fog_ci_pixels");
+         gl_problem(ctx, "Bad fog mode in _mesa_win_fog_coords_from_z");
          return;
    }
 }
+
+
+/*
+ * Apply fog to an array of RGBA pixels.
+ * Input:  n - number of pixels
+ *         z - array of integer depth values
+ *         red, green, blue, alpha - pixel colors
+ * Output:  red, green, blue, alpha - fogged pixel colors
+ */
+void
+_mesa_depth_fog_rgba_pixels( const GLcontext *ctx,
+			     GLuint n, const GLdepth z[], GLubyte rgba[][4] )
+{
+   GLfixed fog[MAX_WIDTH];
+   _mesa_win_fog_coords_from_z( ctx, n, z, fog );
+   _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
+}
+
+
+/*
+ * Apply fog to an array of color index pixels.
+ * Input:  n - number of pixels
+ *         z - array of integer depth values
+ *         index - pixel color indexes
+ * Output:  index - fogged pixel color indexes
+ */
+void
+_mesa_depth_fog_ci_pixels( const GLcontext *ctx,
+                     GLuint n, const GLdepth z[], GLuint index[] )
+{
+   GLfixed fog[MAX_WIDTH];
+   _mesa_win_fog_coords_from_z( ctx, n, z, fog );
+   _mesa_fog_ci_pixels( ctx, n, fog, index );
+}
+

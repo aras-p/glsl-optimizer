@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.38 2000/10/17 00:42:02 brianp Exp $ */
+/* $Id: drawpix.c,v 1.39 2000/10/27 16:44:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -239,7 +239,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                GLint row;
                for (row=0; row<drawHeight; row++) {
                   gl_write_zoomed_rgba_span(ctx, drawWidth, destX, destY,
-                                            zSpan, (void *) src, zoomY0);
+                                            zSpan, 0, (void *) src, zoomY0);
                   src += rowLength * 4;
                   destY++;
                }
@@ -276,7 +276,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                GLint row;
                for (row=0; row<drawHeight; row++) {
                   gl_write_zoomed_rgb_span(ctx, drawWidth, destX, destY,
-                                           zSpan, (void *) src, zoomY0);
+                                           zSpan, 0, (void *) src, zoomY0);
                   src += rowLength * 3;
                   destY++;
                }
@@ -335,7 +335,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                      rgb[i][2] = src[i];
 		  }
                   gl_write_zoomed_rgb_span(ctx, drawWidth, destX, destY,
-                                           zSpan, (void *) rgb, zoomY0);
+                                           zSpan, 0, (void *) rgb, zoomY0);
                   src += rowLength;
                   destY++;
                }
@@ -400,7 +400,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                      rgba[i][3] = *ptr++;
 		  }
                   gl_write_zoomed_rgba_span(ctx, drawWidth, destX, destY,
-                                            zSpan, (void *) rgba, zoomY0);
+                                            zSpan, 0, (void *) rgba, zoomY0);
                   src += rowLength*2;
                   destY++;
                }
@@ -447,7 +447,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   ASSERT(drawWidth < MAX_WIDTH);
                   _mesa_map_ci8_to_rgba(ctx, drawWidth, src, rgba);
                   gl_write_zoomed_rgba_span(ctx, drawWidth, destX, destY,
-                                            zSpan, (void *) rgba, zoomY0);
+                                            zSpan, 0, (void *) rgba, zoomY0);
                   src += rowLength;
                   destY++;
                }
@@ -520,10 +520,10 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
                               type, source, &ctx->Unpack,
                               ctx->ImageTransferState);
       if (zoom) {
-         gl_write_zoomed_index_span(ctx, drawWidth, x, y, zspan, indexes, desty);
+         gl_write_zoomed_index_span(ctx, drawWidth, x, y, zspan, 0, indexes, desty);
       }
       else {
-         gl_write_index_span(ctx, drawWidth, x, y, zspan, indexes, GL_BITMAP);
+         gl_write_index_span(ctx, drawWidth, x, y, zspan, 0, indexes, GL_BITMAP);
       }
    }
 }
@@ -643,7 +643,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          GLint i;
          for (i = 0; i < width; i++)
             zspan[i] = zptr[i];
-         gl_write_rgba_span( ctx, width, x, y, zspan, rgba, GL_BITMAP );
+         gl_write_rgba_span( ctx, width, x, y, zspan, 0, rgba, GL_BITMAP );
       }
    }
    else if (type==GL_UNSIGNED_INT && ctx->Visual.DepthBits == 32
@@ -653,7 +653,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       for (row = 0; row < height; row++, y++) {
          const GLuint *zptr = _mesa_image_address(&ctx->Unpack,
                 pixels, width, height, GL_DEPTH_COMPONENT, type, 0, row, 0);
-         gl_write_rgba_span( ctx, width, x, y, zptr, rgba, GL_BITMAP );
+         gl_write_rgba_span( ctx, width, x, y, zptr, 0, rgba, GL_BITMAP );
       }
    }
    else {
@@ -667,20 +667,21 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                                   &ctx->Unpack, ctx->ImageTransferState );
          if (ctx->Visual.RGBAflag) {
             if (zoom) {
-               gl_write_zoomed_rgba_span(ctx, width, x, y, zspan,
+               gl_write_zoomed_rgba_span(ctx, width, x, y, zspan, 0,
                                          (const GLubyte (*)[4])rgba, desty);
             }
             else {
-               gl_write_rgba_span(ctx, width, x, y, zspan, rgba, GL_BITMAP);
+               gl_write_rgba_span(ctx, width, x, y, zspan, 0, rgba, GL_BITMAP);
             }
          }
          else {
             if (zoom) {
-               gl_write_zoomed_index_span(ctx, width, x, y, zspan,
+               gl_write_zoomed_index_span(ctx, width, x, y, zspan, 0,
                                           ispan, GL_BITMAP);
             }
             else {
-               gl_write_index_span(ctx, width, x, y, zspan, ispan, GL_BITMAP);
+               gl_write_index_span(ctx, width, x, y, zspan, 0,
+				   ispan, GL_BITMAP);
             }
          }
 
@@ -827,11 +828,12 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                                           (CONST GLubyte (*)[]) rgba, NULL);
          }
          else if (zoom) {
-            gl_write_zoomed_rgba_span( ctx, width, x, y, zspan, 
+            gl_write_zoomed_rgba_span( ctx, width, x, y, zspan, 0,
 				       (CONST GLubyte (*)[]) rgba, desty );
          }
          else {
-            gl_write_rgba_span( ctx, (GLuint) width, x, y, zspan, rgba, GL_BITMAP);
+            gl_write_rgba_span( ctx, (GLuint) width, x, y, zspan, 0,
+				rgba, GL_BITMAP);
          }
       }
    }

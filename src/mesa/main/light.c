@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.17 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: light.c,v 1.18 2000/10/27 16:44:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -385,7 +385,8 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
       case GL_LIGHT_MODEL_COLOR_CONTROL:
          if (params[0] == (GLfloat) GL_SINGLE_COLOR) {
             ctx->Light.Model.ColorControl = GL_SINGLE_COLOR;
-            CLEAR_BITS(ctx->TriangleCaps, DD_SEPERATE_SPECULAR);
+	    if (!ctx->Fog.ColorSumEnabled)
+	       CLEAR_BITS(ctx->TriangleCaps, DD_SEPERATE_SPECULAR);
          }
          else if (params[0] == (GLfloat) GL_SEPARATE_SPECULAR_COLOR) {
             ctx->Light.Model.ColorControl = GL_SEPARATE_SPECULAR_COLOR;

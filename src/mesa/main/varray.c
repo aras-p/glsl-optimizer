@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.25 2000/10/20 19:54:49 brianp Exp $ */
+/* $Id: varray.c,v 1.26 2000/10/27 16:44:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -217,6 +217,40 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 
 
 void
+_mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   
+   if (stride<0) {
+      gl_error( ctx, GL_INVALID_VALUE, "glFogCoordPointer(stride)" );
+      return;
+   }
+
+   ctx->Array.FogCoord.StrideB = stride;
+   if (!stride) {
+      switch (type) {
+      case GL_FLOAT:
+         ctx->Array.FogCoord.StrideB =  sizeof(GLfloat);
+         break;
+      case GL_DOUBLE:
+         ctx->Array.FogCoord.StrideB =  sizeof(GLdouble);
+         break;
+      default:
+         gl_error( ctx, GL_INVALID_ENUM, "glFogCoordPointer(type)" );
+         return;
+      }
+   }
+   ctx->Array.FogCoord.Type = type;
+   ctx->Array.FogCoord.Stride = stride;
+   ctx->Array.FogCoord.Ptr = (void *) ptr;
+   ctx->Array.FogCoordFunc = gl_trans_1f_tab[TYPE_IDX(type)];
+   ctx->Array.FogCoordEltFunc = gl_trans_elt_1f_tab[TYPE_IDX(type)];
+   ctx->Array.NewArrayState |= VERT_FOG_COORD;
+   ctx->NewState |= NEW_CLIENT_STATE;
+}
+
+
+void
 _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -255,6 +289,71 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.IndexFunc = gl_trans_1ui_tab[TYPE_IDX(type)];
    ctx->Array.IndexEltFunc = gl_trans_elt_1ui_tab[TYPE_IDX(type)];
    ctx->Array.NewArrayState |= VERT_INDEX;
+   ctx->NewState |= NEW_CLIENT_STATE;
+}
+
+
+void
+_mesa_SecondaryColorPointerEXT(GLint size, GLenum type, 
+			       GLsizei stride, const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   fprintf(stderr, "%s\n", __FUNCTION__);
+   
+   if (size != 3 && size != 4) {
+      gl_error( ctx, GL_INVALID_VALUE, "glColorPointer(size)" );
+      return;
+   }
+   if (stride<0) {
+      gl_error( ctx, GL_INVALID_VALUE, "glColorPointer(stride)" );
+      return;
+   }
+
+   if (MESA_VERBOSE&(VERBOSE_VARRAY|VERBOSE_API))
+      fprintf(stderr, "glColorPointer( sz %d type %s stride %d )\n", size, 
+	  gl_lookup_enum_by_nr( type ),
+	  stride);
+
+   ctx->Array.SecondaryColor.StrideB = stride;
+   if (!stride) {
+      switch (type) {
+      case GL_BYTE:
+         ctx->Array.SecondaryColor.StrideB =  size*sizeof(GLbyte);
+         break;
+      case GL_UNSIGNED_BYTE:
+         ctx->Array.SecondaryColor.StrideB =  size*sizeof(GLubyte);
+         break;
+      case GL_SHORT:
+         ctx->Array.SecondaryColor.StrideB =  size*sizeof(GLshort);
+         break;
+      case GL_UNSIGNED_SHORT:
+         ctx->Array.SecondaryColor.StrideB =  size*sizeof(GLushort);
+         break;
+      case GL_INT:
+         ctx->Array.SecondaryColor.StrideB =  size*sizeof(GLint);
+         break;
+      case GL_UNSIGNED_INT:
+         ctx->Array.SecondaryColor.StrideB =  size*sizeof(GLuint);
+         break;
+      case GL_FLOAT:
+         ctx->Array.SecondaryColor.StrideB =  size*sizeof(GLfloat);
+         break;
+      case GL_DOUBLE:
+         ctx->Array.SecondaryColor.StrideB =  size*sizeof(GLdouble);
+         break;
+      default:
+         gl_error( ctx, GL_INVALID_ENUM, "glSecondaryColorPointer(type)" );
+         return;
+      }
+   }
+   ctx->Array.SecondaryColor.Size = 3; /* hardwire */
+   ctx->Array.SecondaryColor.Type = type;
+   ctx->Array.SecondaryColor.Stride = stride;
+   ctx->Array.SecondaryColor.Ptr = (void *) ptr;
+   ctx->Array.SecondaryColorFunc = gl_trans_4ub_tab[size][TYPE_IDX(type)];
+   ctx->Array.SecondaryColorEltFunc = gl_trans_elt_4ub_tab[size][TYPE_IDX(type)];
+   ctx->Array.NewArrayState |= VERT_SPEC_RGB;
    ctx->NewState |= NEW_CLIENT_STATE;
 }
 
@@ -342,32 +441,6 @@ _mesa_EdgeFlagPointer(GLsizei stride, const void *vptr)
 }
 
 
-#if 0
-/* Called only from gl_DrawElements
- */
-static void gl_CVAEltPointer( GLcontext *ctx, GLenum type, const GLvoid *ptr )
-{
-   switch (type) {
-      case GL_UNSIGNED_BYTE:
-         ctx->CVA.Elt.StrideB = sizeof(GLubyte);
-         break;
-      case GL_UNSIGNED_SHORT:
-         ctx->CVA.Elt.StrideB = sizeof(GLushort);
-         break;
-      case GL_UNSIGNED_INT:
-         ctx->CVA.Elt.StrideB = sizeof(GLuint);
-         break;
-      default:
-         gl_error( ctx, GL_INVALID_ENUM, "glEltPointer(type)" );
-         return;
-   }
-   ctx->CVA.Elt.Type = type;
-   ctx->CVA.Elt.Stride = 0;
-   ctx->CVA.Elt.Ptr = (void *) ptr;
-   ctx->CVA.EltFunc = gl_trans_1ui_tab[TYPE_IDX(type)];
-   ctx->Array.NewArrayState |= VERT_ELT; /* ??? */
-}
-#endif
 
 
 
@@ -470,6 +543,19 @@ void gl_exec_array_elements( GLcontext *ctx, struct immediate *IM,
 				 flags, elts, (VERT_ELT|VERT_RGBA),
 				 start, count);
 
+
+   if (translate & VERT_SPEC_RGB)
+      (ctx->Array.SecondaryColorEltFunc)( IM->SecondaryColor, 
+					  &ctx->Array.SecondaryColor, 
+					  flags, elts, (VERT_ELT|VERT_SPEC_RGB),
+					  start, count);
+
+   if (translate & VERT_FOG_COORD)
+      (ctx->Array.FogCoordEltFunc)( IM->FogCoord, 
+				    &ctx->Array.FogCoord, 
+				    flags, elts, (VERT_ELT|VERT_FOG_COORD),
+				    start, count);
+
    if (translate & VERT_INDEX)
       (ctx->Array.IndexEltFunc)( IM->Index, 
 				 &ctx->Array.Index, 
@@ -563,6 +649,8 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
       GLint i;
       struct gl_client_array *Normal;
       struct gl_client_array *Color;
+      struct gl_client_array *SecondaryColor;
+      struct gl_client_array *FogCoord;
       struct gl_client_array *Index;
       struct gl_client_array *TexCoord[MAX_TEXTURE_UNITS];
       struct gl_client_array *EdgeFlag;
@@ -601,6 +689,26 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	    Color = &ctx->Fallback.Color;
 	    ctx->Array.ColorFunc = 
 	       gl_trans_4ub_tab[4][TYPE_IDX(GL_UNSIGNED_BYTE)];
+	 }
+      }
+
+      if (required & VERT_SPEC_RGB) 
+      {
+	 SecondaryColor = &ctx->Array.SecondaryColor;
+	 if (fallback & VERT_SPEC_RGB) {
+	    SecondaryColor = &ctx->Fallback.SecondaryColor;
+	    ctx->Array.SecondaryColorFunc = 
+	       gl_trans_4ub_tab[4][TYPE_IDX(GL_UNSIGNED_BYTE)];
+	 }
+      }
+
+      if (required & VERT_FOG_COORD) 
+      {
+	 FogCoord = &ctx->Array.FogCoord;
+	 if (fallback & VERT_FOG_COORD) {
+	    FogCoord = &ctx->Fallback.FogCoord;
+	    ctx->Array.FogCoordFunc = 
+	       gl_trans_1f_tab[TYPE_IDX(GL_FLOAT)];
 	 }
       }
    
@@ -694,6 +802,16 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	    ctx->Array.ColorFunc( IM->Color + VB_START, 
 				  Color, start, n );
 	 }
+
+	 if (required & VERT_SPEC_RGB) {
+	    ctx->Array.SecondaryColorFunc( IM->SecondaryColor + VB_START, 
+					   SecondaryColor, start, n );
+	 }
+
+	 if (required & VERT_FOG_COORD) {
+	    ctx->Array.FogCoordFunc( IM->FogCoord + VB_START, 
+				     FogCoord, start, n );
+	 }
 	 
 	 if (required & VERT_INDEX) {
 	    ctx->Array.IndexFunc( IM->Index + VB_START, 
@@ -732,6 +850,8 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 VB->Color[0] = VB->Color[1] = VB->ColorPtr;
 	 VB->IndexPtr = &IM->v.Index;
 	 VB->EdgeFlagPtr = &IM->v.EdgeFlag;
+	 VB->SecondaryColorPtr = &IM->v.SecondaryColor;
+	 VB->FogCoordPtr = &IM->v.FogCoord;
          for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
             VB->TexCoordPtr[i] = &IM->v.TexCoord[i];
          }
@@ -913,10 +1033,6 @@ _mesa_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indice
 
    if (ctx->CompileCVAFlag) 
    {
-#if defined(MESA_CVA_PROF)
-      force_init_prof(); 
-#endif
-
       /* Treat VERT_ELT like a special client array.
        */
       ctx->Array.NewArrayState |= VERT_ELT;
@@ -1246,10 +1362,12 @@ void gl_update_client_state( GLcontext *ctx )
    ctx->Array.Summary = 0;
    ctx->input->ArrayIncr = 0;
    
-   if (ctx->Array.Normal.Enabled)      ctx->Array.Flags |= VERT_NORM;
-   if (ctx->Array.Color.Enabled)       ctx->Array.Flags |= VERT_RGBA;
-   if (ctx->Array.Index.Enabled)       ctx->Array.Flags |= VERT_INDEX;
-   if (ctx->Array.EdgeFlag.Enabled)    ctx->Array.Flags |= VERT_EDGE;
+   if (ctx->Array.Normal.Enabled)         ctx->Array.Flags |= VERT_NORM;
+   if (ctx->Array.Color.Enabled)          ctx->Array.Flags |= VERT_RGBA;
+   if (ctx->Array.SecondaryColor.Enabled) ctx->Array.Flags |= VERT_SPEC_RGB;
+   if (ctx->Array.FogCoord.Enabled)       ctx->Array.Flags |= VERT_FOG_COORD;
+   if (ctx->Array.Index.Enabled)          ctx->Array.Flags |= VERT_INDEX;
+   if (ctx->Array.EdgeFlag.Enabled)       ctx->Array.Flags |= VERT_EDGE;
    if (ctx->Array.Vertex.Enabled) {
       ctx->Array.Flags |= sz_flags[ctx->Array.Vertex.Size];
       ctx->input->ArrayIncr = 1;

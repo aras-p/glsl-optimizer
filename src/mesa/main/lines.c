@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.16 2000/10/20 19:54:49 brianp Exp $ */
+/* $Id: lines.c,v 1.17 2000/10/27 16:44:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -119,7 +119,7 @@ static void flat_ci_line( GLcontext *ctx,
    PB_SET_INDEX( ctx->PB, ctx->VB->IndexPtr->data[pvert] );
 
 #define INTERP_XY 1
-#define PLOT(X,Y)  PB_WRITE_PIXEL(ctx->PB, X, Y, 0);
+#define PLOT(X,Y)  PB_WRITE_PIXEL(ctx->PB, X, Y, 0, 0);
 
 #include "linetemp.h"
 
@@ -136,7 +136,7 @@ static void flat_ci_z_line( GLcontext *ctx,
 
 #define INTERP_XY 1
 #define INTERP_Z 1
-#define PLOT(X,Y)  PB_WRITE_PIXEL(ctx->PB, X, Y, Z);
+#define PLOT(X,Y)  PB_WRITE_PIXEL(ctx->PB, X, Y, Z, fog0);
 
 #include "linetemp.h"
 
@@ -153,7 +153,7 @@ static void flat_rgba_line( GLcontext *ctx,
    PB_SET_COLOR( ctx->PB, color[0], color[1], color[2], color[3] );
 
 #define INTERP_XY 1
-#define PLOT(X,Y)   PB_WRITE_PIXEL(ctx->PB, X, Y, 0);
+#define PLOT(X,Y)   PB_WRITE_PIXEL(ctx->PB, X, Y, 0, 0);
 
 #include "linetemp.h"
 
@@ -171,7 +171,7 @@ static void flat_rgba_z_line( GLcontext *ctx,
 
 #define INTERP_XY 1
 #define INTERP_Z 1
-#define PLOT(X,Y)   PB_WRITE_PIXEL(ctx->PB, X, Y, Z);
+#define PLOT(X,Y)   PB_WRITE_PIXEL(ctx->PB, X, Y, Z, fog0);
 
 #include "linetemp.h"
 
@@ -282,6 +282,7 @@ static void smooth_rgba_z_line( GLcontext *ctx,
    GLint *pbx = ctx->PB->x;
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
+   GLfixed *pbfog = ctx->PB->fog;
    GLubyte (*pbrgba)[4] = ctx->PB->rgba;
    (void) pvert;
 
@@ -296,6 +297,7 @@ static void smooth_rgba_z_line( GLcontext *ctx,
 	pbx[count] = X;			\
 	pby[count] = Y;			\
 	pbz[count] = Z;			\
+	pbfog[count] = fog0;			\
 	pbrgba[count][RCOMP] = FixedToInt(r0);	\
 	pbrgba[count][GCOMP] = FixedToInt(g0);	\
 	pbrgba[count][BCOMP] = FixedToInt(b0);	\
@@ -326,6 +328,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
    GLint *pbx = ctx->PB->x;
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
+   GLfixed *pbfog = ctx->PB->fog;
    GLuint *pbi = ctx->PB->index;
    (void) pvert;
 
@@ -342,6 +345,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
 	pbx[count] = X;		\
 	pby[count] = Y;		\
 	pbz[count] = Z;		\
+	pbfog[count] = fog0;			\
 	pbi[count] = I;		\
 	count++;		\
 	CHECK_FULL(count);
@@ -358,6 +362,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
 	pbx[count] = X;  pbx[count+1] = X;	\
 	pby[count] = Y;  pby[count+1] = Y+1;	\
 	pbz[count] = Z;  pbz[count+1] = Z;	\
+	pbfog[count] = fog0;  pbfog[count+1] = fog0;	\
 	pbi[count] = I;  pbi[count+1] = I;	\
 	count += 2;				\
 	CHECK_FULL(count);
@@ -365,6 +370,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
 	pbx[count] = X;  pbx[count+1] = X+1;	\
 	pby[count] = Y;  pby[count+1] = Y;	\
 	pbz[count] = Z;  pbz[count+1] = Z;	\
+	pbfog[count] = fog0;  pbfog[count+1] = fog0;	\
 	pbi[count] = I;  pbi[count+1] = I;	\
 	count += 2;				\
 	CHECK_FULL(count);
@@ -381,6 +387,7 @@ static void general_smooth_ci_line( GLcontext *ctx,
 	pby[count] = Y;		\
 	pbz[count] = Z;		\
 	pbi[count] = I;		\
+	pbfog[count] = fog0;	\
 	count++;		\
 	CHECK_FULL(count);
 #include "linetemp.h"
@@ -400,6 +407,7 @@ static void general_flat_ci_line( GLcontext *ctx,
    GLint *pbx = ctx->PB->x;
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
+   GLfixed *pbfog = ctx->PB->fog;
    PB_SET_INDEX( ctx->PB, ctx->VB->IndexPtr->data[pvert] );
    count = ctx->PB->count;
 
@@ -413,6 +421,7 @@ static void general_flat_ci_line( GLcontext *ctx,
 	pbx[count] = X;		\
 	pby[count] = Y;		\
 	pbz[count] = Z;		\
+	pbfog[count] = fog0;		\
 	count++;		\
 	CHECK_FULL(count);
 #include "linetemp.h"
@@ -427,12 +436,14 @@ static void general_flat_ci_line( GLcontext *ctx,
 	pbx[count] = X;  pbx[count+1] = X;	\
 	pby[count] = Y;  pby[count+1] = Y+1;	\
 	pbz[count] = Z;  pbz[count+1] = Z;	\
+	pbfog[count] = fog0;  pbfog[count+1] = fog0;	\
 	count += 2;				\
 	CHECK_FULL(count);
 #define YMAJOR_PLOT(X,Y)			\
 	pbx[count] = X;  pbx[count+1] = X+1;	\
 	pby[count] = Y;  pby[count+1] = Y;	\
 	pbz[count] = Z;  pbz[count+1] = Z;	\
+	pbfog[count] = fog0;  pbfog[count+1] = fog0;	\
 	count += 2;				\
 	CHECK_FULL(count);
 #include "linetemp.h"
@@ -446,6 +457,7 @@ static void general_flat_ci_line( GLcontext *ctx,
 	pbx[count] = X;		\
 	pby[count] = Y;		\
 	pbz[count] = Z;		\
+	pbfog[count] = fog0;		\
 	count++;		\
 	CHECK_FULL(count);
 #include "linetemp.h"
@@ -465,6 +477,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
    GLint *pbx = ctx->PB->x;
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
+   GLfixed *pbfog = ctx->PB->fog;
    GLubyte (*pbrgba)[4] = ctx->PB->rgba;
    (void) pvert;
 
@@ -482,6 +495,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
 	pbx[count] = X;				\
 	pby[count] = Y;				\
 	pbz[count] = Z;				\
+	pbfog[count] = fog0;		\
 	pbrgba[count][RCOMP] = FixedToInt(r0);	\
 	pbrgba[count][GCOMP] = FixedToInt(g0);	\
 	pbrgba[count][BCOMP] = FixedToInt(b0);	\
@@ -502,6 +516,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
 	pbx[count] = X;  pbx[count+1] = X;		\
 	pby[count] = Y;  pby[count+1] = Y+1;		\
 	pbz[count] = Z;  pbz[count+1] = Z;		\
+	pbfog[count] = fog0;  pbfog[count+1] = fog0;	\
 	pbrgba[count][RCOMP] = FixedToInt(r0);		\
 	pbrgba[count][GCOMP] = FixedToInt(g0);		\
 	pbrgba[count][BCOMP] = FixedToInt(b0);		\
@@ -516,6 +531,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
 	pbx[count] = X;  pbx[count+1] = X+1;		\
 	pby[count] = Y;  pby[count+1] = Y;		\
 	pbz[count] = Z;  pbz[count+1] = Z;		\
+	pbfog[count] = fog0;  pbfog[count+1] = fog0;	\
 	pbrgba[count][RCOMP] = FixedToInt(r0);		\
 	pbrgba[count][GCOMP] = FixedToInt(g0);		\
 	pbrgba[count][BCOMP] = FixedToInt(b0);		\
@@ -539,6 +555,7 @@ static void general_smooth_rgba_line( GLcontext *ctx,
 	pbx[count] = X;				\
 	pby[count] = Y;				\
 	pbz[count] = Z;				\
+	pbfog[count] = fog0;  	\
 	pbrgba[count][RCOMP] = FixedToInt(r0);	\
 	pbrgba[count][GCOMP] = FixedToInt(g0);	\
 	pbrgba[count][BCOMP] = FixedToInt(b0);	\
@@ -566,7 +583,7 @@ static void general_flat_rgba_line( GLcontext *ctx,
 #define INTERP_Z 1
 #define WIDE 1
 #define STIPPLE 1
-#define PLOT(X,Y)  PB_WRITE_PIXEL(ctx->PB, X, Y, Z);
+#define PLOT(X,Y)  PB_WRITE_PIXEL(ctx->PB, X, Y, Z, fog0);
 #include "linetemp.h"
    }
    else {
@@ -575,10 +592,10 @@ static void general_flat_rgba_line( GLcontext *ctx,
          /* special case: unstippled and width=2 */
 #define INTERP_XY 1
 #define INTERP_Z 1
-#define XMAJOR_PLOT(X,Y) PB_WRITE_PIXEL(ctx->PB, X, Y, Z); \
-                         PB_WRITE_PIXEL(ctx->PB, X, Y+1, Z);
-#define YMAJOR_PLOT(X,Y)  PB_WRITE_PIXEL(ctx->PB, X, Y, Z); \
-                          PB_WRITE_PIXEL(ctx->PB, X+1, Y, Z);
+#define XMAJOR_PLOT(X,Y) PB_WRITE_PIXEL(ctx->PB, X, Y, Z, fog0); \
+                         PB_WRITE_PIXEL(ctx->PB, X, Y+1, Z, fog0);
+#define YMAJOR_PLOT(X,Y)  PB_WRITE_PIXEL(ctx->PB, X, Y, Z, fog0); \
+                          PB_WRITE_PIXEL(ctx->PB, X+1, Y, Z, fog0);
 #include "linetemp.h"
       }
       else {
@@ -586,7 +603,7 @@ static void general_flat_rgba_line( GLcontext *ctx,
 #define INTERP_XY 1
 #define INTERP_Z 1
 #define WIDE 1
-#define PLOT(X,Y) PB_WRITE_PIXEL(ctx->PB, X, Y, Z);
+#define PLOT(X,Y) PB_WRITE_PIXEL(ctx->PB, X, Y, Z, fog0);
 #include "linetemp.h"
       }
    }
@@ -603,6 +620,7 @@ static void flat_textured_line( GLcontext *ctx,
    GLint *pbx = ctx->PB->x;
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
+   GLfixed *pbfog = ctx->PB->fog;
    GLfloat *pbs = ctx->PB->s[0];
    GLfloat *pbt = ctx->PB->t[0];
    GLfloat *pbu = ctx->PB->u[0];
@@ -622,6 +640,7 @@ static void flat_textured_line( GLcontext *ctx,
 	   pbx[count] = X;		\
 	   pby[count] = Y;		\
 	   pbz[count] = Z;		\
+ 	   pbfog[count] = fog0;		\
 	   pbs[count] = fragTexcoord[0];\
 	   pbt[count] = fragTexcoord[1];\
 	   pbu[count] = fragTexcoord[2];\
@@ -641,6 +660,7 @@ static void flat_textured_line( GLcontext *ctx,
 	   pbx[count] = X;		\
 	   pby[count] = Y;		\
 	   pbz[count] = Z;		\
+ 	   pbfog[count] = fog0;		\
 	   pbs[count] = fragTexcoord[0];\
 	   pbt[count] = fragTexcoord[1];\
 	   pbu[count] = fragTexcoord[2];\
@@ -664,6 +684,7 @@ static void smooth_textured_line( GLcontext *ctx,
    GLint *pbx = ctx->PB->x;
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
+   GLfixed *pbfog = ctx->PB->fog;
    GLfloat *pbs = ctx->PB->s[0];
    GLfloat *pbt = ctx->PB->t[0];
    GLfloat *pbu = ctx->PB->u[0];
@@ -686,6 +707,7 @@ static void smooth_textured_line( GLcontext *ctx,
 	   pbx[count] = X;				\
 	   pby[count] = Y;				\
 	   pbz[count] = Z;				\
+ 	   pbfog[count] = fog0;		\
 	   pbs[count] = fragTexcoord[0];		\
 	   pbt[count] = fragTexcoord[1];		\
 	   pbu[count] = fragTexcoord[2];		\
@@ -711,6 +733,7 @@ static void smooth_textured_line( GLcontext *ctx,
 	   pbx[count] = X;				\
 	   pby[count] = Y;				\
 	   pbz[count] = Z;				\
+ 	   pbfog[count] = fog0;		\
 	   pbs[count] = fragTexcoord[0];		\
 	   pbt[count] = fragTexcoord[1];		\
 	   pbu[count] = fragTexcoord[2];		\
@@ -739,6 +762,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
    GLint *pbx = ctx->PB->x;
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
+   GLfixed *pbfog = ctx->PB->fog;
    GLubyte (*pbrgba)[4] = ctx->PB->rgba;
    GLubyte (*pbspec)[3] = ctx->PB->spec;
    (void) pvert;
@@ -761,6 +785,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
 	   pbx[count] = X;					\
 	   pby[count] = Y;					\
 	   pbz[count] = Z;					\
+ 	   pbfog[count] = fog0;		\
 	   pbrgba[count][RCOMP] = FixedToInt(r0);		\
 	   pbrgba[count][GCOMP] = FixedToInt(g0);		\
 	   pbrgba[count][BCOMP] = FixedToInt(b0);		\
@@ -796,6 +821,7 @@ static void smooth_multitextured_line( GLcontext *ctx,
 	   pbx[count] = X;					\
 	   pby[count] = Y;					\
 	   pbz[count] = Z;					\
+ 	   pbfog[count] = fog0;		\
 	   pbrgba[count][RCOMP] = FixedToInt(r0);		\
 	   pbrgba[count][GCOMP] = FixedToInt(g0);		\
 	   pbrgba[count][BCOMP] = FixedToInt(b0);		\
@@ -832,12 +858,13 @@ static void flat_multitextured_line( GLcontext *ctx,
    GLint *pbx = ctx->PB->x;
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
+   GLfixed *pbfog = ctx->PB->fog;
    GLubyte (*pbrgba)[4] = ctx->PB->rgba;
    GLubyte (*pbspec)[3] = ctx->PB->spec;
    GLubyte *color = ctx->VB->ColorPtr->data[pvert];
-   GLubyte sRed   = ctx->VB->Specular ? ctx->VB->Specular[pvert][0] : 0;
-   GLubyte sGreen = ctx->VB->Specular ? ctx->VB->Specular[pvert][1] : 0;
-   GLubyte sBlue  = ctx->VB->Specular ? ctx->VB->Specular[pvert][2] : 0;
+   GLubyte sRed   = ctx->VB->SecondaryColorPtr->data ? ctx->VB->SecondaryColorPtr->data[pvert][0] : 0;
+   GLubyte sGreen = ctx->VB->SecondaryColorPtr->data ? ctx->VB->SecondaryColorPtr->data[pvert][1] : 0;
+   GLubyte sBlue  = ctx->VB->SecondaryColorPtr->data ? ctx->VB->SecondaryColorPtr->data[pvert][2] : 0;
 
    (void) pvert;
 
@@ -857,6 +884,7 @@ static void flat_multitextured_line( GLcontext *ctx,
 	   pbx[count] = X;					\
 	   pby[count] = Y;					\
 	   pbz[count] = Z;					\
+ 	   pbfog[count] = fog0;		\
 	   pbrgba[count][RCOMP] = color[0];			\
 	   pbrgba[count][GCOMP] = color[1];			\
 	   pbrgba[count][BCOMP] = color[2];			\
@@ -890,6 +918,7 @@ static void flat_multitextured_line( GLcontext *ctx,
 	   pbx[count] = X;					\
 	   pby[count] = Y;					\
 	   pbz[count] = Z;					\
+ 	   pbfog[count] = fog0;		\
 	   pbrgba[count][RCOMP] = color[0];			\
 	   pbrgba[count][GCOMP] = color[1];			\
 	   pbrgba[count][BCOMP] = color[2];			\
@@ -931,7 +960,7 @@ static void aa_rgba_line( GLcontext *ctx,
 #define INTERP_RGBA 1
 #define PLOT(x, y)						\
    {								\
-      PB_WRITE_RGBA_PIXEL( pb, (x), (y), z,			\
+      PB_WRITE_RGBA_PIXEL( pb, (x), (y), z, fog0,		\
 			   red, green, blue, coverage );	\
    }
 #include "lnaatemp.h"
@@ -951,7 +980,8 @@ static void aa_tex_rgba_line( GLcontext *ctx,
 #define INTERP_TEX 1
 #define PLOT(x, y)							\
    {									\
-      PB_WRITE_TEX_PIXEL( pb, (x), (y), z, red, green, blue, coverage,	\
+      PB_WRITE_TEX_PIXEL( pb, (x), (y), z, fog0,                        \
+			  red, green, blue, coverage,	                \
                  fragTexcoord[0], fragTexcoord[1], fragTexcoord[2] );	\
    }
 #include "lnaatemp.h"
@@ -973,7 +1003,7 @@ static void aa_multitex_rgba_line( GLcontext *ctx,
 #define INTERP_MULTITEX 1
 #define PLOT(x, y)							\
    {									\
-      PB_WRITE_MULTITEX_SPEC_PIXEL( pb, (x), (y), z,			\
+      PB_WRITE_MULTITEX_SPEC_PIXEL( pb, (x), (y), z, fog0,		\
             red, green, blue, coverage, specRed, specGreen, specBlue,	\
             fragTexcoord );						\
    }
@@ -990,7 +1020,7 @@ static void aa_ci_line( GLcontext *ctx,
 #define INTERP_INDEX 1
 #define PLOT(x, y)						\
    {								\
-      PB_WRITE_CI_PIXEL( pb, (x), (y), z, index + coverage );	\
+      PB_WRITE_CI_PIXEL( pb, (x), (y), z, fog0, index + coverage );	\
    }
 #include "lnaatemp.h"
 }
@@ -1057,7 +1087,7 @@ _mesa_print_line_function(GLcontext *ctx)
    else if (ctx->Driver.LineFunc == null_line)
       printf("null_line\n");
    else
-      printf("Driver func %p\n", ctx->Driver.PointsFunc);
+      printf("Driver func %p\n", ctx->Driver.LineFunc);
 }
 #endif
 
@@ -1087,7 +1117,8 @@ void gl_set_line_function( GLcontext *ctx )
          if (rgbmode) {
             if (ctx->Texture.ReallyEnabled) {
                if (ctx->Texture.MultiTextureEnabled
-                  || ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
+                  || ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR
+		  || ctx->Fog.ColorSumEnabled)
                   /* Multitextured! */
                   ctx->Driver.LineFunc = aa_multitex_rgba_line;
                else
@@ -1136,7 +1167,7 @@ void gl_set_line_function( GLcontext *ctx )
       else {
 	 if (ctx->Light.ShadeModel==GL_SMOOTH) {
 	    /* Width==1, non-stippled, smooth-shaded */
-            if (ctx->Depth.Test || ctx->FogMode == FOG_FRAGMENT) {
+            if (ctx->Depth.Test || ctx->Fog.Enabled) {
                if (rgbmode)
                   ctx->Driver.LineFunc = smooth_rgba_z_line;
                else
@@ -1151,7 +1182,7 @@ void gl_set_line_function( GLcontext *ctx )
 	 }
          else {
 	    /* Width==1, non-stippled, flat-shaded */
-            if (ctx->Depth.Test || ctx->FogMode == FOG_FRAGMENT) {
+            if (ctx->Depth.Test || ctx->Fog.Enabled) {
                if (rgbmode)
                   ctx->Driver.LineFunc = flat_rgba_z_line;
                else

@@ -1,4 +1,4 @@
-/* $Id: varray.h,v 1.7 2000/06/12 15:30:52 brianp Exp $ */
+/* $Id: varray.h,v 1.8 2000/10/27 16:44:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -87,7 +87,12 @@ extern void
 _mesa_EdgeFlagPointerEXT(GLsizei stride, GLsizei count, const GLboolean *ptr);
 
 
+extern void
+_mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr);
 
+extern void
+_mesa_SecondaryColorPointerEXT(GLint size, GLenum type, 
+			       GLsizei stride, const GLvoid *ptr);
 
 
 extern void

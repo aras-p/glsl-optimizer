@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.15 2000/10/20 19:54:49 brianp Exp $ */
+/* $Id: points.c,v 1.16 2000/10/27 16:44:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -153,19 +153,23 @@ size1_ci_points( GLcontext *ctx, GLuint first, GLuint last )
 {
    struct vertex_buffer *VB = ctx->VB;
    struct pixel_buffer *PB = ctx->PB;
-   GLfloat *win;
+   GLfloat *win, *fog;
    GLint *pbx = PB->x, *pby = PB->y;
    GLdepth *pbz = PB->z;
+   GLfixed *pbfog = PB->fog;
    GLuint *pbi = PB->index;
    GLuint pbcount = PB->count;
    GLuint i;
 
    win = &VB->Win.data[first][0];
+   fog = &VB->FogCoordPtr->data[first];
+
    for (i = first; i <= last; i++) {
       if (VB->ClipMask[i] == 0) {
          pbx[pbcount] = (GLint)  win[0];
          pby[pbcount] = (GLint)  win[1];
          pbz[pbcount] = (GLint) (win[2] + ctx->PointZoffset);
+	 pbfog[pbcount] = FloatToFixed(fog[i]);
          pbi[pbcount] = VB->IndexPtr->data[i];
          pbcount++;
       }
@@ -190,18 +194,21 @@ size1_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
    for (i = first; i <= last; i++) {
       if (VB->ClipMask[i] == 0) {
          GLint x, y, z;
+	 GLint fog;
          GLint red, green, blue, alpha;
 
          x = (GLint)  VB->Win.data[i][0];
          y = (GLint)  VB->Win.data[i][1];
          z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
 
+	 fog = FloatToFixed( VB->FogCoordPtr->data[i] );
+
          red   = VB->ColorPtr->data[i][0];
          green = VB->ColorPtr->data[i][1];
          blue  = VB->ColorPtr->data[i][2];
          alpha = VB->ColorPtr->data[i][3];
 
-         PB_WRITE_RGBA_PIXEL( PB, x, y, z, red, green, blue, alpha );
+         PB_WRITE_RGBA_PIXEL( PB, x, y, z, fog, red, green, blue, alpha );
       }
    }
    PB_CHECK_FLUSH(ctx, PB);
@@ -230,6 +237,8 @@ general_ci_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint y = (GLint)  VB->Win.data[i][1];
          GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
 
+	 GLfixed fog = FloatToFixed( VB->FogCoordPtr->data[i] );
+
          if (isize & 1) {
             /* odd size */
             x0 = x - radius;
@@ -249,7 +258,7 @@ general_ci_points( GLcontext *ctx, GLuint first, GLuint last )
 
          for (iy = y0; iy <= y1; iy++) {
             for (ix = x0; ix <= x1; ix++) {
-               PB_WRITE_PIXEL( PB, ix, iy, z );
+               PB_WRITE_PIXEL( PB, ix, iy, z, fog );
             }
          }
          PB_CHECK_FLUSH(ctx,PB);
@@ -279,6 +288,8 @@ general_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint y = (GLint)  VB->Win.data[i][1];
          GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
 
+	 GLfixed fog = FloatToFixed( VB->FogCoordPtr->data[i] );
+
          if (isize & 1) {
             /* odd size */
             x0 = x - radius;
@@ -302,7 +313,7 @@ general_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 
          for (iy = y0; iy <= y1; iy++) {
             for (ix = x0; ix <= x1; ix++) {
-               PB_WRITE_PIXEL( PB, ix, iy, z );
+               PB_WRITE_PIXEL( PB, ix, iy, z, fog );
             }
          }
          PB_CHECK_FLUSH(ctx,PB);
@@ -334,6 +345,8 @@ textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint y = (GLint)  VB->Win.data[i][1];
          GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
          GLint isize = (GLint) (ctx->Point.Size + 0.5F);
+
+	 GLfixed fog = FloatToFixed( VB->FogCoordPtr->data[i] );
 
          if (isize < 1) {
             isize = 1;
@@ -389,7 +402,7 @@ textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 
          for (iy = y0; iy <= y1; iy++) {
             for (ix = x0; ix <= x1; ix++) {
-               PB_WRITE_TEX_PIXEL( PB, ix, iy, z, red, green, blue, alpha,
+               PB_WRITE_TEX_PIXEL( PB, ix, iy, z, fog, red, green, blue, alpha,
                                    s, t, u );
             }
          }
@@ -416,9 +429,9 @@ multitextured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          const GLint green = VB->ColorPtr->data[i][1];
          const GLint blue  = VB->ColorPtr->data[i][2];
          const GLint alpha = VB->ColorPtr->data[i][3];
-	 const GLint sRed   = VB->Specular ? VB->Specular[i][0] : 0;
-	 const GLint sGreen = VB->Specular ? VB->Specular[i][1] : 0;
-	 const GLint sBlue  = VB->Specular ? VB->Specular[i][2] : 0;
+	 const GLint sRed   = VB->SecondaryColorPtr->data ? VB->SecondaryColorPtr->data[i][0] : 0;
+	 const GLint sGreen = VB->SecondaryColorPtr->data ? VB->SecondaryColorPtr->data[i][1] : 0;
+	 const GLint sBlue  = VB->SecondaryColorPtr->data ? VB->SecondaryColorPtr->data[i][2] : 0;
          const GLint x = (GLint)  VB->Win.data[i][0];
          const GLint y = (GLint)  VB->Win.data[i][1];
          const GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
@@ -427,6 +440,8 @@ multitextured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          GLfloat texcoord[MAX_TEXTURE_UNITS][4];
          GLint radius, u;
          GLint isize = (GLint) (ctx->Point.Size + 0.5F);
+
+	 GLfixed fog = FloatToFixed( VB->FogCoordPtr->data[i] );
 
          if (isize < 1) {
             isize = 1;
@@ -483,7 +498,7 @@ multitextured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 
          for (iy = y0; iy <= y1; iy++) {
             for (ix = x0; ix <= x1; ix++) {
-               PB_WRITE_MULTITEX_SPEC_PIXEL( PB, ix, iy, z,
+               PB_WRITE_MULTITEX_SPEC_PIXEL( PB, ix, iy, z, fog,
                                              red, green, blue, alpha,
                                              sRed, sGreen, sBlue,
                                              texcoord );
@@ -541,6 +556,8 @@ antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             GLfloat texcoord[MAX_TEXTURE_UNITS][4];
             GLint u, alpha;
 
+	    GLfixed fog = FloatToFixed( VB->FogCoordPtr->data[i] );
+
             for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
                if (ctx->Texture.Unit[u].ReallyEnabled) {
                   switch (VB->TexCoordPtr[0]->size) {
@@ -591,11 +608,13 @@ antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
                         alpha = (alpha * coverage) >> 8;
                      }
                      if (ctx->Texture.MultiTextureEnabled) {
-                        PB_WRITE_MULTITEX_PIXEL( PB, x,y,z, red, green, blue, 
+                        PB_WRITE_MULTITEX_PIXEL( PB, x,y,z, fog,
+						 red, green, blue, 
 						 alpha, texcoord );
                      }
                      else {
-                        PB_WRITE_TEX_PIXEL( PB, x,y,z, red, green, blue, alpha,
+                        PB_WRITE_TEX_PIXEL( PB, x,y,z, fog,
+					    red, green, blue, alpha,
                                             texcoord[0][0],
                                             texcoord[0][1],
                                             texcoord[0][2] );
@@ -622,6 +641,8 @@ antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             const GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
             GLint x, y;
 
+	    GLfixed fog = FloatToFixed( VB->FogCoordPtr->data[i] );
+
             /*
             printf("point %g, %g\n", VB->Win.data[i][0], VB->Win.data[i][1]);
             printf("%d..%d X %d..%d\n", xmin, xmax, ymin, ymax);
@@ -638,7 +659,8 @@ antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
                         /* coverage is in [0,256] */
                         alpha = (alpha * coverage) >> 8;
                      }
-                     PB_WRITE_RGBA_PIXEL(PB, x, y, z, red, green, blue, alpha);
+                     PB_WRITE_RGBA_PIXEL(PB, x, y, z, fog,
+					 red, green, blue, alpha);
                   }
                }
             }
@@ -715,35 +737,6 @@ static dist_func eye_dist_tab[5] = {
 };
 
 
-static void
-clip_dist(GLfloat *out, GLuint first, GLuint last,
-          const GLcontext *ctx, GLvector4f *clip)
-{
-   /* this is never called */
-   gl_problem(NULL, "clip_dist() called - dead code!\n");
-
-   (void) out;
-   (void) first;
-   (void) last;
-   (void) ctx;
-   (void) clip;
-
-#if 0
-   GLuint i;
-   const GLfloat *from = (GLfloat *)clip_vec->start;
-   const GLuint stride = clip_vec->stride;
-
-   for (i = first ; i <= last ; i++ )
-   {
-      GLfloat dist = win[i][2];
-      out[i] = 1/(ctx->Point.Params[0]+ 
-		  dist * (ctx->Point.Params[1] +
-			  dist * ctx->Point.Params[2]));
-   }
-#endif
-}
-
-
 
 /*
  * Distance Attenuated General CI points.
@@ -757,10 +750,9 @@ dist_atten_general_ci_points( GLcontext *ctx, GLuint first, GLuint last )
    const GLfloat psize = ctx->Point.Size;
    GLuint i;
 
-   if (ctx->NeedEyeCoords)
-      (eye_dist_tab[VB->EyePtr->size])( dist, first, last, ctx, VB->EyePtr );
-   else 
-      clip_dist( dist, first, last, ctx, VB->ClipPtr );
+   ASSERT(ctx->NeedEyeCoords);
+   (eye_dist_tab[VB->EyePtr->size])( dist, first, last, ctx, VB->EyePtr );
+
 
    for (i=first;i<=last;i++) {
       if (VB->ClipMask[i]==0) {
@@ -771,6 +763,8 @@ dist_atten_general_ci_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint y = (GLint)  VB->Win.data[i][1];
          GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
          GLfloat dsize = psize * dist[i];
+
+	 GLfixed fog = FloatToFixed( VB->FogCoordPtr->data[i] );
 
          if (dsize >= ctx->Point.Threshold) {
             isize = (GLint) (MIN2(dsize, ctx->Point.MaxSize) + 0.5F);
@@ -799,7 +793,7 @@ dist_atten_general_ci_points( GLcontext *ctx, GLuint first, GLuint last )
 
          for (iy=y0;iy<=y1;iy++) {
             for (ix=x0;ix<=x1;ix++) {
-               PB_WRITE_PIXEL( PB, ix, iy, z );
+               PB_WRITE_PIXEL( PB, ix, iy, z, fog );
             }
          }
          PB_CHECK_FLUSH(ctx,PB);
@@ -819,10 +813,8 @@ dist_atten_general_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
    const GLfloat psize = ctx->Point.Size;
    GLuint i;
 
-   if (ctx->NeedEyeCoords)
-      (eye_dist_tab[VB->EyePtr->size])( dist, first, last, ctx, VB->EyePtr );
-   else 
-      clip_dist( dist, first, last, ctx, VB->ClipPtr );
+   ASSERT (ctx->NeedEyeCoords);
+   (eye_dist_tab[VB->EyePtr->size])( dist, first, last, ctx, VB->EyePtr );
 
    for (i=first;i<=last;i++) {
       if (VB->ClipMask[i]==0) {
@@ -834,6 +826,8 @@ dist_atten_general_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
          GLfloat dsize=psize*dist[i];
          GLubyte alpha;
+
+	 GLfixed fog = FloatToFixed( VB->FogCoordPtr->data[i] );
 
          if (dsize >= ctx->Point.Threshold) {
             isize = (GLint) (MIN2(dsize,ctx->Point.MaxSize)+0.5F);
@@ -869,7 +863,7 @@ dist_atten_general_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 
          for (iy = y0; iy <= y1; iy++) {
             for (ix = x0; ix <= x1; ix++) {
-               PB_WRITE_PIXEL( PB, ix, iy, z );
+               PB_WRITE_PIXEL( PB, ix, iy, z, fog );
             }
          }
          PB_CHECK_FLUSH(ctx,PB);
@@ -889,10 +883,8 @@ dist_atten_textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
    const GLfloat psize = ctx->Point.Size;
    GLuint i;
 
-   if (ctx->NeedEyeCoords)
-      (eye_dist_tab[VB->EyePtr->size])( dist, first, last, ctx, VB->EyePtr );
-   else 
-      clip_dist( dist, first, last, ctx, VB->ClipPtr );
+   ASSERT(ctx->NeedEyeCoords);
+   (eye_dist_tab[VB->EyePtr->size])( dist, first, last, ctx, VB->EyePtr );
 
    for (i=first;i<=last;i++) {
       if (VB->ClipMask[i]==0) {
@@ -907,6 +899,8 @@ dist_atten_textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          GLint ix, iy, alpha, u;
          GLint isize, radius;
          GLfloat dsize = psize*dist[i];
+
+	 GLfixed fog = FloatToFixed( VB->FogCoordPtr->data[i] );
 
          /* compute point size and alpha */
          if (dsize >= ctx->Point.Threshold) {
@@ -975,12 +969,13 @@ dist_atten_textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
          for (iy = y0; iy <= y1; iy++) {
             for (ix = x0; ix <= x1; ix++) {
                if (ctx->Texture.MultiTextureEnabled) {
-                  PB_WRITE_MULTITEX_PIXEL( PB, ix, iy, z,
+                  PB_WRITE_MULTITEX_PIXEL( PB, ix, iy, z, fog,
                                            red, green, blue, alpha,
                                            texcoord );
                }
                else {
-                  PB_WRITE_TEX_PIXEL( PB, ix, iy, z, red, green, blue, alpha,
+                  PB_WRITE_TEX_PIXEL( PB, ix, iy, z, fog,
+				      red, green, blue, alpha,
                                       texcoord[0][0],
                                       texcoord[0][1],
                                       texcoord[0][2] );
@@ -1004,10 +999,8 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
    const GLfloat psize = ctx->Point.Size;
    GLuint i;
 
-   if (ctx->NeedEyeCoords)
-      (eye_dist_tab[VB->EyePtr->size])( dist, first, last, ctx, VB->EyePtr );
-   else 
-      clip_dist( dist, first, last, ctx, VB->ClipPtr );
+   ASSERT(ctx->NeedEyeCoords);
+   (eye_dist_tab[VB->EyePtr->size])( dist, first, last, ctx, VB->EyePtr );
 
    if (ctx->Texture.ReallyEnabled) {
       for (i=first;i<=last;i++) {
@@ -1019,6 +1012,8 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             GLfloat texcoord[MAX_TEXTURE_UNITS][4];
             GLfloat dsize = psize * dist[i];
             GLint u;
+
+	    GLfixed fog = FloatToFixed( VB->FogCoordPtr->data[i] );
 
             if (dsize >= ctx->Point.Threshold) {
                radius = MIN2(dsize, ctx->Point.MaxSize) * 0.5F;
@@ -1093,12 +1088,13 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
                      }
                      alpha = (GLint) (alpha * alphaf);
                      if (ctx->Texture.MultiTextureEnabled) {
-                        PB_WRITE_MULTITEX_PIXEL( PB, x, y, z,
+                        PB_WRITE_MULTITEX_PIXEL( PB, x, y, z, fog,
                                                  red, green, blue, alpha,
                                                  texcoord );
                      }
                      else {
-                        PB_WRITE_TEX_PIXEL( PB, x,y,z, red, green, blue, alpha,
+                        PB_WRITE_TEX_PIXEL( PB, x,y,z, fog,
+					    red, green, blue, alpha,
                                             texcoord[0][0],
                                             texcoord[0][1],
                                             texcoord[0][2] );
@@ -1117,6 +1113,7 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             GLfloat radius, rmin, rmax, rmin2, rmax2, cscale, alphaf;
             GLint xmin, ymin, xmax, ymax;
             GLint x, y, z;
+	    GLfixed fog;
             GLint red, green, blue, alpha;
             GLfloat dsize = psize * dist[i];
 
@@ -1141,6 +1138,8 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
             ymax = (GLint) (VB->Win.data[i][1] + radius);
             z = (GLint) (VB->Win.data[i][2] + ctx->PointZoffset);
 
+	    fog = FloatToFixed( VB->FogCoordPtr->data[i] );
+
             red   = VB->ColorPtr->data[i][0];
             green = VB->ColorPtr->data[i][1];
             blue  = VB->ColorPtr->data[i][2];
@@ -1158,7 +1157,8 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
                         alpha = (alpha * coverage) >> 8;
                      }
                      alpha = (GLint) (alpha * alphaf);
-                     PB_WRITE_RGBA_PIXEL(PB, x, y, z, red, green, blue, alpha);
+                     PB_WRITE_RGBA_PIXEL(PB, x, y, z, fog, 
+					 red, green, blue, alpha);
                   }
                }
             }
@@ -1231,7 +1231,8 @@ void gl_set_point_function( GLcontext *ctx )
          }
          else if (ctx->Texture.ReallyEnabled) {
             if (ctx->Texture.MultiTextureEnabled ||
-                ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR) {
+                ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR ||
+		ctx->Fog.ColorSumEnabled) {
 	       ctx->Driver.PointsFunc = multitextured_rgba_points;
             }
             else {

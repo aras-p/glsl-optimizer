@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.33 2000/10/21 01:29:12 brianp Exp $ */
+/* $Id: state.c,v 1.34 2000/10/27 16:44:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -203,6 +203,13 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->FeedbackBuffer = _mesa_FeedbackBuffer;
    exec->Finish = _mesa_Finish;
    exec->Flush = _mesa_Flush;
+
+   exec->FogCoordfEXT = _mesa_FogCoordfEXT;
+   exec->FogCoordfvEXT = _mesa_FogCoordfvEXT;
+   exec->FogCoorddEXT = _mesa_FogCoorddEXT;
+   exec->FogCoorddvEXT = _mesa_FogCoorddvEXT;
+   exec->FogCoordPointerEXT = _mesa_FogCoordPointerEXT;
+
    exec->Fogf = _mesa_Fogf;
    exec->Fogfv = _mesa_Fogfv;
    exec->Fogi = _mesa_Fogi;
@@ -353,6 +360,27 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
    exec->Scaled = _mesa_Scaled;
    exec->Scalef = _mesa_Scalef;
    exec->Scissor = _mesa_Scissor;
+
+#if 0
+   exec->SecondaryColor3fEXT = _mesa_SecondaryColor3bEXT;
+   exec->SecondaryColor3fvEXT = _mesa_SecondaryColor3bvEXT;
+   exec->SecondaryColor3dEXT = _mesa_SecondaryColor3sEXT;
+   exec->SecondaryColordvEXT = _mesa_SecondaryColor3svEXT;
+   exec->SecondaryColor3fEXT = _mesa_SecondaryColor3iEXT;
+   exec->SecondaryColor3fvEXT = _mesa_SecondaryColor3ivEXT;
+   exec->SecondaryColor3dEXT = _mesa_SecondaryColor3fEXT;
+   exec->SecondaryColordvEXT = _mesa_SecondaryColor3fvEXT;
+   exec->SecondaryColor3fEXT = _mesa_SecondaryColor3dEXT;
+   exec->SecondaryColor3fvEXT = _mesa_SecondaryColor3dvEXT;
+   exec->SecondaryColor3dEXT = _mesa_SecondaryColor3ubEXT;
+   exec->SecondaryColordvEXT = _mesa_SecondaryColor3ubvEXT;
+   exec->SecondaryColor3fEXT = _mesa_SecondaryColor3usEXT;
+   exec->SecondaryColor3fvEXT = _mesa_SecondaryColor3usvEXT;
+   exec->SecondaryColor3dEXT = _mesa_SecondaryColor3uiEXT;
+   exec->SecondaryColordvEXT = _mesa_SecondaryColor3uivEXT;
+   exec->SecondaryColorPointerEXT = _mesa_SecondaryColorPointerEXT;
+#endif
+
    exec->SelectBuffer = _mesa_SelectBuffer;
    exec->ShadeModel = _mesa_ShadeModel;
    exec->StencilFunc = _mesa_StencilFunc;
@@ -666,30 +694,6 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 /**********************************************************************/
 
 
-static void update_fog_mode( GLcontext *ctx )
-{
-   int old_mode = ctx->FogMode;
-
-   if (ctx->Fog.Enabled) {
-      if (ctx->Texture.ReallyEnabled)
-         ctx->FogMode = FOG_FRAGMENT;
-      else if (ctx->Hint.Fog == GL_NICEST)
-         ctx->FogMode = FOG_FRAGMENT;
-      else
-         ctx->FogMode = FOG_VERTEX;
-
-      if (ctx->Driver.GetParameteri)
-         if ((ctx->Driver.GetParameteri)( ctx, DD_HAVE_HARDWARE_FOG ))
-            ctx->FogMode = FOG_FRAGMENT;
-   }
-   else {
-      ctx->FogMode = FOG_NONE;
-   }
-   
-   if (old_mode != ctx->FogMode)
-      ctx->NewState |= NEW_FOG;
-}
-
 
 /*
  * Recompute the value of ctx->RasterMask, etc. according to
@@ -702,7 +706,7 @@ static void update_rasterflags( GLcontext *ctx )
    if (ctx->Color.AlphaEnabled)           ctx->RasterMask |= ALPHATEST_BIT;
    if (ctx->Color.BlendEnabled)           ctx->RasterMask |= BLEND_BIT;
    if (ctx->Depth.Test)                   ctx->RasterMask |= DEPTH_BIT;
-   if (ctx->FogMode == FOG_FRAGMENT)      ctx->RasterMask |= FOG_BIT;
+   if (ctx->Fog.Enabled)                  ctx->RasterMask |= FOG_BIT;
    if (ctx->Scissor.Enabled)              ctx->RasterMask |= SCISSOR_BIT;
    if (ctx->Stencil.Enabled)              ctx->RasterMask |= STENCIL_BIT;
    if (ctx->Visual.RGBAflag) {
@@ -891,9 +895,6 @@ void gl_update_state( GLcontext *ctx )
       ctx->NeedNormals = (ctx->Light.Enabled || ctx->Texture.NeedNormals);
    }
 
-   if (ctx->NewState & NEW_FOG) {
-      update_fog_mode(ctx);
-   }
 
    if (ctx->NewState & NEW_RASTER_OPS) {
       update_rasterflags(ctx);

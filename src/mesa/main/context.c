@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.95 2000/10/23 00:16:28 gareth Exp $ */
+/* $Id: context.c,v 1.96 2000/10/27 16:44:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -698,6 +698,22 @@ init_fallback_arrays( GLcontext *ctx )
    cl->Ptr = (void *) ctx->Current.ByteColor;
    cl->Enabled = 1;
 
+   cl = &ctx->Fallback.SecondaryColor;
+   cl->Size = 3;
+   cl->Type = GL_UNSIGNED_BYTE;
+   cl->Stride = 0;
+   cl->StrideB = 0;
+   cl->Ptr = (void *) ctx->Current.SecondaryColor;
+   cl->Enabled = 1;
+
+   cl = &ctx->Fallback.FogCoord;
+   cl->Size = 1;
+   cl->Type = GL_FLOAT;
+   cl->Stride = 0;
+   cl->StrideB = 0;
+   cl->Ptr = (void *) &ctx->Current.FogCoord;
+   cl->Enabled = 1;
+
    cl = &ctx->Fallback.Index;
    cl->Size = 1;
    cl->Type = GL_UNSIGNED_INT;
@@ -887,6 +903,8 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Current.Flag = (VERT_NORM |
                         VERT_INDEX |
                         VERT_RGBA |
+                        VERT_SPEC_RGB |
+                        VERT_FOG_COORD |
                         VERT_EDGE |
                         VERT_TEX0_1 |
                         VERT_TEX1_1 |
@@ -969,6 +987,8 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Fog.Density = 1.0;
    ctx->Fog.Start = 0.0;
    ctx->Fog.End = 1.0;
+   ctx->Fog.ColorSumEnabled = GL_FALSE;
+   ctx->Fog.FogCoordinateSource = GL_FRAGMENT_DEPTH_EXT;
 
    /* Hint group */
    ctx->Hint.PerspectiveCorrection = GL_DONT_CARE;

@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.36 2000/09/25 16:03:59 brianp Exp $ */
+/* $Id: extensions.c,v 1.37 2000/10/27 16:44:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,7 +92,12 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_ON,     "GL_SGIS_pixel_texture" },
    { DEFAULT_ON,     "GL_SGIS_texture_edge_clamp" },
    { DEFAULT_ON,     "GL_SGIX_pixel_texture" },
-   { DEFAULT_OFF,    "GL_3DFX_texture_compression_FXT1" }
+   { DEFAULT_OFF,    "GL_3DFX_texture_compression_FXT1" },
+
+   { DEFAULT_OFF,    "GL_EXT_secondary_color" }, 
+   { DEFAULT_ON,     "GL_EXT_fog_coord" },
+   { DEFAULT_OFF,    "GL_EXT_bgra" },
+   { DEFAULT_OFF,    "GL_EXT_cull_vertex" },
 };
 
 

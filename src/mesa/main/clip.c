@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.9 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: clip.c,v 1.10 2000/10/27 16:44:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -396,7 +396,7 @@ void gl_update_clipmask( GLcontext *ctx )
 	 mask |= CLIP_INDEX1;
    }
 
-   if (ctx->FogMode == FOG_FRAGMENT && (ctx->TriangleCaps & DD_CLIP_FOG_COORD))
+   if (ctx->Fog.Enabled)
       mask |= CLIP_FOG_COORD;
    
    ctx->ClipInterpFunc = clip_interp_tab[mask];

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.34 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: get.c,v 1.35 2000/10/27 16:44:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,6 +56,7 @@
 #define ENUM_TO_FLOAT(X) ((GLfloat)(X))
 #define ENUM_TO_DOUBLE(X) ((GLdouble)(X))
 #endif
+
 
 
 static GLenum
@@ -1228,6 +1229,42 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          *params = ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
+	 
+      /* GL_EXT_secondary_color */
+      case GL_COLOR_SUM_EXT: 
+	 *params = ctx->Fog.ColorSumEnabled;
+	 break;
+      case GL_CURRENT_SECONDARY_COLOR_EXT: 
+         params[0] = INT_TO_BOOL(ctx->Current.SecondaryColor[0]);
+         params[1] = INT_TO_BOOL(ctx->Current.SecondaryColor[1]);
+         params[2] = INT_TO_BOOL(ctx->Current.SecondaryColor[2]);
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_EXT:
+         *params = ctx->Array.SecondaryColor.Enabled;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT: 
+	 *params = ENUM_TO_BOOL(ctx->Array.SecondaryColor.Type);
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT: 
+	 *params = INT_TO_BOOL(ctx->Array.SecondaryColor.Stride);
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT: 
+	 *params = INT_TO_BOOL(ctx->Array.SecondaryColor.Stride);
+	 break;
+
+      /* GL_EXT_fog_coord */
+      case GL_CURRENT_FOG_COORDINATE_EXT: 
+	 *params = FLOAT_TO_BOOL(ctx->Current.FogCoord);
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_EXT:
+         *params = ctx->Array.FogCoord.Enabled;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT: 
+	 *params = ENUM_TO_BOOL(ctx->Array.FogCoord.Type);
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT: 
+	 *params = INT_TO_BOOL(ctx->Array.FogCoord.Stride);
+	 break;
 
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
@@ -2384,6 +2421,43 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
 
+      /* GL_EXT_secondary_color */
+      case GL_COLOR_SUM_EXT: 
+	 *params = (GLdouble) ctx->Fog.ColorSumEnabled;
+	 break;
+      case GL_CURRENT_SECONDARY_COLOR_EXT: 
+         params[0] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[0]);
+         params[1] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[1]);
+         params[2] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[2]);
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_EXT:
+         *params = (GLdouble) ctx->Array.SecondaryColor.Enabled;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT: 
+	 *params = (GLdouble) ctx->Array.SecondaryColor.Type;
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT: 
+	 *params = (GLdouble) ctx->Array.SecondaryColor.Stride;
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT: 
+	 *params = (GLdouble) ctx->Array.SecondaryColor.Stride;
+	 break;
+
+      /* GL_EXT_fog_coord */
+      case GL_CURRENT_FOG_COORDINATE_EXT: 
+	 *params = (GLdouble) ctx->Current.FogCoord;
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_EXT:
+         *params = (GLdouble) ctx->Array.FogCoord.Enabled;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT: 
+	 *params = (GLdouble) ctx->Array.FogCoord.Type;
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT: 
+	 *params = (GLdouble) ctx->Array.FogCoord.Stride;
+	 break;
+
+
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
    }
@@ -3509,6 +3583,43 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          *params = (GLfloat) ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
+
+      /* GL_EXT_secondary_color */
+      case GL_COLOR_SUM_EXT: 
+	 *params = (GLfloat) ctx->Fog.ColorSumEnabled;
+	 break;
+      case GL_CURRENT_SECONDARY_COLOR_EXT: 
+         params[0] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[0]);
+         params[1] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[1]);
+         params[2] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[2]);
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_EXT:
+         *params = (GLfloat) ctx->Array.SecondaryColor.Enabled;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT: 
+	 *params = (GLfloat) ctx->Array.SecondaryColor.Type;
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT: 
+	 *params = (GLfloat) ctx->Array.SecondaryColor.Stride;
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT: 
+	 *params = (GLfloat) ctx->Array.SecondaryColor.Stride;
+	 break;
+
+      /* GL_EXT_fog_coord */
+      case GL_CURRENT_FOG_COORDINATE_EXT: 
+	 *params = (GLfloat) ctx->Current.FogCoord;
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_EXT:
+         *params = (GLfloat) ctx->Array.FogCoord.Enabled;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT: 
+	 *params = (GLfloat) ctx->Array.FogCoord.Type;
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT: 
+	 *params = (GLfloat) ctx->Array.FogCoord.Stride;
+	 break;
+
 
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
@@ -4667,6 +4778,43 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
 
+
+      /* GL_EXT_secondary_color */
+      case GL_COLOR_SUM_EXT: 
+	 *params = (GLint) ctx->Fog.ColorSumEnabled;
+	 break;
+      case GL_CURRENT_SECONDARY_COLOR_EXT: 
+         params[0] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.SecondaryColor[0] ) );
+         params[1] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.SecondaryColor[1] ) );
+         params[2] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.SecondaryColor[2] ) );
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_EXT:
+         *params = (GLint) ctx->Array.SecondaryColor.Enabled;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT: 
+	 *params = (GLint) ctx->Array.SecondaryColor.Type;
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT: 
+	 *params = (GLint) ctx->Array.SecondaryColor.Stride;
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT: 
+	 *params = (GLint) ctx->Array.SecondaryColor.Stride;
+	 break;
+
+      /* GL_EXT_fog_coord */
+      case GL_CURRENT_FOG_COORDINATE_EXT: 
+	 *params = (GLint) ctx->Current.FogCoord;
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_EXT:
+         *params = (GLint) ctx->Array.FogCoord.Enabled;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT: 
+	 *params = (GLint) ctx->Array.FogCoord.Type;
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT: 
+	 *params = (GLint) ctx->Array.FogCoord.Stride;
+	 break;
+
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
    }
@@ -4701,6 +4849,12 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
          break;
       case GL_COLOR_ARRAY_POINTER:
          *params = ctx->Array.Color.Ptr;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_POINTER_EXT:
+         *params = ctx->Array.SecondaryColor.Ptr;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_POINTER_EXT:
+         *params = ctx->Array.FogCoord.Ptr;
          break;
       case GL_INDEX_ARRAY_POINTER:
          *params = ctx->Array.Index.Ptr;

@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.46 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: dlist.c,v 1.47 2000/10/27 16:44:40 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -5076,6 +5076,10 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->FeedbackBuffer = _mesa_FeedbackBuffer;
    table->Finish = _mesa_Finish;
    table->Flush = _mesa_Flush;
+   table->FogCoordfEXT = _mesa_FogCoordfEXT;
+   table->FogCoordfvEXT = _mesa_FogCoordfvEXT;
+   table->FogCoorddEXT = _mesa_FogCoorddEXT;
+   table->FogCoorddvEXT = _mesa_FogCoorddvEXT;
    table->Fogf = save_Fogf;
    table->Fogfv = save_Fogfv;
    table->Fogi = save_Fogi;
@@ -5226,6 +5230,26 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->Scaled = save_Scaled;
    table->Scalef = save_Scalef;
    table->Scissor = save_Scissor;
+
+#if 0
+   table->SecondaryColor3fEXT = _mesa_SecondaryColor3bEXT;
+   table->SecondaryColor3fvEXT = _mesa_SecondaryColor3bvEXT;
+   table->SecondaryColor3dEXT = _mesa_SecondaryColor3sEXT;
+   table->SecondaryColordvEXT = _mesa_SecondaryColor3svEXT;
+   table->SecondaryColor3fEXT = _mesa_SecondaryColor3iEXT;
+   table->SecondaryColor3fvEXT = _mesa_SecondaryColor3ivEXT;
+   table->SecondaryColor3dEXT = _mesa_SecondaryColor3fEXT;
+   table->SecondaryColordvEXT = _mesa_SecondaryColor3fvEXT;
+   table->SecondaryColor3fEXT = _mesa_SecondaryColor3dEXT;
+   table->SecondaryColor3fvEXT = _mesa_SecondaryColor3dvEXT;
+   table->SecondaryColor3dEXT = _mesa_SecondaryColor3ubEXT;
+   table->SecondaryColordvEXT = _mesa_SecondaryColor3ubvEXT;
+   table->SecondaryColor3fEXT = _mesa_SecondaryColor3usEXT;
+   table->SecondaryColor3fvEXT = _mesa_SecondaryColor3usvEXT;
+   table->SecondaryColor3dEXT = _mesa_SecondaryColor3uiEXT;
+   table->SecondaryColordvEXT = _mesa_SecondaryColor3uivEXT;
+#endif
+
    table->SelectBuffer = _mesa_SelectBuffer;
    table->ShadeModel = save_ShadeModel;
    table->StencilFunc = save_StencilFunc;
