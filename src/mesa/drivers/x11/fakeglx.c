@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.37 2000/09/26 21:28:39 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.38 2000/10/05 17:38:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1050,15 +1050,16 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
    if (vis) {
       /* Note: we're not exactly obeying the glXChooseVisual rules here.
        * When GLX_DEPTH_SIZE = 1 is specified we're supposed to choose the
-       * largest depth buffer size, which is 32bits/value.  However, we
+       * largest depth buffer size, which is 32bits/value.  Instead, we
        * return 16 to maintain performance with earlier versions of Mesa.
        */
-      if (depth_size == 1)
-         depth_size = DEFAULT_SOFTWARE_DEPTH_BITS;
-      else if (depth_size > 24)
-         depth_size = 31;
+      if (depth_size > 24)
+         depth_size = 31;   /* 32 causes int overflow problems */
       else if (depth_size > 16)
          depth_size = 24;
+      else if (depth_size > 0)
+         depth_size = DEFAULT_SOFTWARE_DEPTH_BITS; /*16*/
+
       /* we only support one size of stencil and accum buffers. */
       if (stencil_size > 0)
          stencil_size = STENCIL_BITS;
