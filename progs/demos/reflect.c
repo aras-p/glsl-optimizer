@@ -1,4 +1,4 @@
-/* $Id: reflect.c,v 1.5 2000/12/24 22:53:54 pesco Exp $ */
+/* $Id: reflect.c,v 1.6 2001/01/23 23:43:53 brianp Exp $ */
 
 /*
  * Demo of a reflective, texture-mapped surface with OpenGL.
@@ -32,8 +32,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "GL/glut.h"
-#include "showbuffer.c"
-#include "readtex.c"
+#include "../util/showbuffer.c"
+#include "../util/readtex.c"
 
 
 #define DEG2RAD (3.14159/180.0)
@@ -53,6 +53,7 @@ static GLfloat spin;
 
 static GLint Width = 400, Height = 300;
 static GLenum ShowBuffer = GL_NONE;
+static GLboolean Anim = GL_TRUE;
 
 /* performance info */
 static GLint T0 = 0;
@@ -313,6 +314,14 @@ static void draw_scene( void )
 }
 
 
+static void idle( void )
+{
+   spin += 2.0;
+   yrot += 3.0;
+   glutPostRedisplay();
+}
+
+
 static void Key( unsigned char key, int x, int y )
 {
    (void) x;
@@ -322,6 +331,13 @@ static void Key( unsigned char key, int x, int y )
    }
    else if (key == 's') {
       ShowBuffer = GL_STENCIL;
+   }
+   else if (key == ' ') {
+      Anim = !Anim;
+      if (Anim)
+         glutIdleFunc(idle);
+      else
+         glutIdleFunc(NULL);
    }
    else if (key==27) {
       exit(0);
@@ -357,16 +373,6 @@ static void SpecialKey( int key, int x, int y )
    }
    glutPostRedisplay();
 }
-
-
-
-static void idle( void )
-{
-   spin += 2.0;
-   yrot += 3.0;
-   glutPostRedisplay();
-}
-
 
 
 int main( int argc, char *argv[] )
