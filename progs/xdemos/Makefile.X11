@@ -24,7 +24,8 @@ PROGS = glthreads \
 	pbdemo \
 	wincopy \
 	xdemo \
-	xfont
+	xfont \
+	xrotfontdemo
 
 
 
@@ -52,6 +53,16 @@ pbdemo.o: pbdemo.c pbutil.h
 
 pbutil.o: pbutil.c pbutil.h
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) pbutil.c
+
+
+xrotfontdemo: xrotfontdemo.o xuserotfont.o
+	$(CC) xrotfontdemo.o xuserotfont.o $(LIBS) -o $@
+
+xuserotfont.o: xuserotfont.c xuserotfont.h
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) xuserotfont.c
+
+xrotfontdemo.o: xrotfontdemo.c xuserotfont.h
+	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) xrotfontdemo.c
 
 
 
