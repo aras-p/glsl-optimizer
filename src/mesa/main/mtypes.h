@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.21 2001/02/20 16:42:25 brianp Exp $ */
+/* $Id: mtypes.h,v 1.22 2001/02/28 00:27:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1118,7 +1118,7 @@ struct gl_shared_state {
  * will make derived classes.
  */
 struct gl_frame_buffer {
-   GLvisual *Visual;		/* The corresponding visual */
+   GLvisual Visual;		/* The corresponding visual */
 
    GLint Width, Height;		/* size of frame buffer in pixels */
 

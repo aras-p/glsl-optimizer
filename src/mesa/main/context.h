@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.22 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: context.h,v 1.23 2001/02/28 00:27:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -103,7 +103,7 @@ _mesa_destroy_visual( GLvisual *vis );
  * single entity.
  */
 extern GLframebuffer *
-_mesa_create_framebuffer( GLvisual *visual,
+_mesa_create_framebuffer( const GLvisual *visual,
                           GLboolean softwareDepth,
                           GLboolean softwareStencil,
                           GLboolean softwareAccum,
@@ -111,7 +111,7 @@ _mesa_create_framebuffer( GLvisual *visual,
 
 extern void
 _mesa_initialize_framebuffer( GLframebuffer *fb,
-                              GLvisual *visual,
+                              const GLvisual *visual,
                               GLboolean softwareDepth,
                               GLboolean softwareStencil,
                               GLboolean softwareAccum,
@@ -127,14 +127,14 @@ _mesa_destroy_framebuffer( GLframebuffer *buffer );
  * contains the rendering state.
  */
 extern GLcontext *
-_mesa_create_context( GLvisual *visual,
+_mesa_create_context( const GLvisual *visual,
                       GLcontext *share_list,
                       void *driver_ctx,
                       GLboolean direct);
 
 extern GLboolean
 _mesa_initialize_context( GLcontext *ctx,
-                          GLvisual *visual,
+                          const GLvisual *visual,
                           GLcontext *share_list,
                           void *driver_ctx,
                           GLboolean direct );
@@ -160,7 +160,7 @@ _mesa_make_current( GLcontext *ctx, GLframebuffer *buffer );
 
 extern void
 _mesa_make_current2( GLcontext *ctx, GLframebuffer *drawBuffer,
-                  GLframebuffer *readBuffer );
+                     GLframebuffer *readBuffer );
 
 
 extern GLcontext *
