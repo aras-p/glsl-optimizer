@@ -1,4 +1,4 @@
-/* $Id: tessdemo.c,v 1.9 2001/03/21 02:43:14 gareth Exp $ */
+/* $Id: tessdemo.c,v 1.10 2001/03/21 02:44:36 gareth Exp $ */
 
 /*
  * A demo of the GLU polygon tesselation functions written by Bogdan Sikorski.
@@ -433,6 +433,7 @@ static void key_pressed( unsigned char key, int x, int y )
    case 'T':
       tesse();
       break;
+   case 27:
    case 'q':
    case 'Q':
       quit();
