@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.52 2001/03/28 17:19:58 brianp Exp $ */
+/* $Id: glapi.c,v 1.53 2001/03/28 17:39:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -211,7 +211,6 @@ _glapi_check_multithread(void)
          firstCall = GL_FALSE;
       }
       else if (knownID != _glthread_GetID()) {
-         printf("Going thread-safe\n");
          ThreadSafe = GL_TRUE;
       }
    }
