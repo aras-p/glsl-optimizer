@@ -30,6 +30,7 @@
 #include "context.h"
 #include "mtypes.h"
 #include "texobj.h"
+#include "nvfragprog.h"
 
 #include "swrast.h"
 #include "s_blend.h"
@@ -226,7 +227,9 @@ _swrast_validate_triangle( GLcontext *ctx,
    _swrast_validate_derived( ctx );
    swrast->choose_triangle( ctx );
 
-   if (ctx->Texture._EnabledUnits == 0 && NEED_SECONDARY_COLOR(ctx)) {
+   if (ctx->Texture._EnabledUnits == 0
+       && NEED_SECONDARY_COLOR(ctx)
+       && !ctx->FragmentProgram.Enabled) {
       /* separate specular color, but no texture */
       swrast->SpecTriangle = swrast->Triangle;
       swrast->Triangle = _swrast_add_spec_terms_triangle;
@@ -243,7 +246,9 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
    _swrast_validate_derived( ctx );
    swrast->choose_line( ctx );
 
-   if (ctx->Texture._EnabledUnits == 0 && NEED_SECONDARY_COLOR(ctx)) {
+   if (ctx->Texture._EnabledUnits == 0
+       && NEED_SECONDARY_COLOR(ctx)
+       && !ctx->FragmentProgram.Enabled) {
       swrast->SpecLine = swrast->Line;
       swrast->Line = _swrast_add_spec_terms_line;
    }
@@ -260,7 +265,9 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
    _swrast_validate_derived( ctx );
    swrast->choose_point( ctx );
 
-   if (ctx->Texture._EnabledUnits == 0 && NEED_SECONDARY_COLOR(ctx)) {
+   if (ctx->Texture._EnabledUnits == 0
+       && NEED_SECONDARY_COLOR(ctx)
+       && !ctx->FragmentProgram.Enabled) {
       swrast->SpecPoint = swrast->Point;
       swrast->Point = _swrast_add_spec_terms_point;
    }

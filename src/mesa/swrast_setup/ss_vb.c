@@ -30,6 +30,7 @@
 #include "context.h"
 #include "macros.h"
 #include "imports.h"
+#include "nvfragprog.h"
 
 #include "swrast/swrast.h"
 #include "tnl/t_context.h"

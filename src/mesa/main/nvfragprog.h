@@ -50,6 +50,21 @@
 #define FRAG_ATTRIB_TEX6  10
 #define FRAG_ATTRIB_TEX7  11
 
+/* Bitmasks for the above */
+#define FRAG_BIT_WPOS  (1 << FRAG_ATTRIB_WPOS)
+#define FRAG_BIT_COL0  (1 << FRAG_ATTRIB_COL0)
+#define FRAG_BIT_COL1  (1 << FRAG_ATTRIB_COL1)
+#define FRAG_BIT_FOGC  (1 << FRAG_ATTRIB_FOGC)
+#define FRAG_BIT_TEX0  (1 << FRAG_ATTRIB_TEX0)
+#define FRAG_BIT_TEX1  (1 << FRAG_ATTRIB_TEX1)
+#define FRAG_BIT_TEX2  (1 << FRAG_ATTRIB_TEX2)
+#define FRAG_BIT_TEX3  (1 << FRAG_ATTRIB_TEX3)
+#define FRAG_BIT_TEX4  (1 << FRAG_ATTRIB_TEX4)
+#define FRAG_BIT_TEX5  (1 << FRAG_ATTRIB_TEX5)
+#define FRAG_BIT_TEX6  (1 << FRAG_ATTRIB_TEX6)
+#define FRAG_BIT_TEX7  (1 << FRAG_ATTRIB_TEX7)
+
+/* output registers */
 #define FRAG_OUTPUT_COLR  0
 #define FRAG_OUTPUT_COLH  1
 #define FRAG_OUTPUT_DEPR  2

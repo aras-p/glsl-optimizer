@@ -34,6 +34,7 @@
 #include "context.h"
 #include "macros.h"
 #include "imports.h"
+#include "nvfragprog.h"
 #include "s_aatriangle.h"
 #include "s_context.h"
 #include "s_span.h"

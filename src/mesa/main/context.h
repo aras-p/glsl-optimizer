@@ -374,7 +374,12 @@ do {									\
 #define NEED_SECONDARY_COLOR(CTX)					\
    (((CTX)->Light.Enabled &&						\
      (CTX)->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)	\
-    || (CTX)->Fog.ColorSumEnabled)
+    || (CTX)->Fog.ColorSumEnabled					\
+    || ((CTX)->VertexProgram.Enabled &&					\
+        ((CTX)->VertexProgram.Current->InputsRead & VERT_BIT_COLOR1))	\
+    || ((CTX)->FragmentProgram.Enabled &&				\
+        ((CTX)->FragmentProgram.Current->InputsRead & FRAG_BIT_COL1))	\
+   )
 
 
 /**

@@ -1207,7 +1207,7 @@ _swrast_write_texture_span( GLcontext *ctx, struct sw_span *span)
 	  span->primitive == GL_POLYGON  ||  span->primitive == GL_BITMAP);
    ASSERT(span->end <= MAX_WIDTH);
    ASSERT((span->interpMask & span->arrayMask) == 0);
-   ASSERT(ctx->Texture._EnabledCoordUnits);
+   ASSERT(ctx->Texture._EnabledCoordUnits || ctx->FragmentProgram.Enabled);
 
    /*
    printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__, span->interpMask, span->arrayMask);

@@ -45,7 +45,7 @@
 #include "macros.h"
 #include "imports.h"
 #include "mtypes.h"
-
+#include "nvfragprog.h"
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
 
