@@ -53,7 +53,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include <stdio.h>
 #include <string.h>
 
-/*#undef GL_EXT_polygon_offset   uncomment to use new version*/
+#undef GL_EXT_polygon_offset  /* use GL 1.1 version instead of extension */
 
 
 #ifndef EXIT_FAILURE
