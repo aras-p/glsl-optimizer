@@ -17,23 +17,23 @@
  */
 
 /*
- * $Log: wmesadef.h,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
- *
- * Revision 1.3  1999/01/03 03:08:57  brianp
- * Ted Jump's changes
+ * $Log: wmesadef.h,v 
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jt
+ * Imported source
+ 
+ * Revision 1.3  1999/01/03 03:08:57  brian
+ * Ted Jump's change
  *
  * Initial version 1997/6/14 CST by Li Wei(liwei@aiar.xjtu.edu.cn)
  */
 
 /*
- * $Log: wmesadef.h,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
- *
- * Revision 1.3  1999/01/03 03:08:57  brianp
- * Ted Jump's changes
+ * $Log: wmesadef.h,v 
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jt
+ * Imported source
+ 
+ * Revision 1.3  1999/01/03 03:08:57  brian
+ * Ted Jump's change
  *
  * Revision 2.1  1996/11/15 10:54:00  CST by Li Wei(liwei@aiar.xjtu.edu.cn)
  * a new element added to wmesa_context :
@@ -41,12 +41,12 @@
  */
 
 /*
- * $Log: wmesadef.h,v $
- * Revision 1.1  1999/08/19 00:55:42  jtg
- * Initial revision
- *
- * Revision 1.3  1999/01/03 03:08:57  brianp
- * Ted Jump's changes
+ * $Log: wmesadef.h,v 
+ * Revision 1.1.1.1  1999/08/19 00:55:42  jt
+ * Imported source
+ 
+ * Revision 1.3  1999/01/03 03:08:57  brian
+ * Ted Jump's change
  *
  * Revision 2.0  1996/11/15 10:54:00  CST by Li Wei(liwei@aiar.xjtu.edu.cn)
  * Initial revision
