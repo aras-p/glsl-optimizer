@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.19 2001/06/11 19:44:01 brianp Exp $ */
+/* $Id: s_lines.c,v 1.20 2001/08/20 16:41:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1001,6 +1001,26 @@ _mesa_print_line_function(GLcontext *ctx)
 
 
 
+#ifdef DEBUG
+
+/* record the current line function name */
+static const char *lineFuncName = NULL;
+
+#define USE(lineFunc)                   \
+do {                                    \
+    lineFuncName = #lineFunc;           \
+    /*printf("%s\n", lineFuncName);*/   \
+    swrast->Line = lineFunc;            \
+} while (0)
+
+#else
+
+#define USE(lineFunc)  swrast->Line = lineFunc;
+
+#endif
+
+
+
 /*
  * Determine which line drawing function to use given the current
  * rendering context.
@@ -1025,31 +1045,31 @@ _swrast_choose_line( GLcontext *ctx )
 	     (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)) {
             /* multi-texture and/or separate specular color */
             if (ctx->Light.ShadeModel==GL_SMOOTH)
-               swrast->Line = smooth_multitextured_line;
+               USE(smooth_multitextured_line);
             else
-               swrast->Line = flat_multitextured_line;
+               USE(flat_multitextured_line);
          }
          else {
             if (ctx->Light.ShadeModel==GL_SMOOTH) {
-                swrast->Line = smooth_textured_line;
+                USE(smooth_textured_line);
             }
             else {
-                swrast->Line = flat_textured_line;
+                USE(flat_textured_line);
             }
          }
       }
       else if (ctx->Line.Width!=1.0 || ctx->Line.StippleFlag) {
          if (ctx->Light.ShadeModel==GL_SMOOTH) {
             if (rgbmode)
-               swrast->Line = general_smooth_rgba_line;
+               USE(general_smooth_rgba_line);
             else
-               swrast->Line = general_smooth_ci_line;
+               USE(general_smooth_ci_line);
          }
          else {
             if (rgbmode)
-               swrast->Line = general_flat_rgba_line;
+               USE(general_flat_rgba_line);
             else
-               swrast->Line = general_flat_ci_line;
+               USE(general_flat_ci_line);
          }
       }
       else {
@@ -1057,40 +1077,40 @@ _swrast_choose_line( GLcontext *ctx )
 	    /* Width==1, non-stippled, smooth-shaded */
             if (ctx->Depth.Test || ctx->Fog.Enabled) {
                if (rgbmode)
-                  swrast->Line = smooth_rgba_z_line;
+                  USE(smooth_rgba_z_line);
                else
-                  swrast->Line = smooth_ci_z_line;
+                  USE(smooth_ci_z_line);
             }
             else {
                if (rgbmode)
-                  swrast->Line = smooth_rgba_line;
+                  USE(smooth_rgba_line);
                else
-                  swrast->Line = smooth_ci_line;
+                  USE(smooth_ci_line);
             }
 	 }
          else {
 	    /* Width==1, non-stippled, flat-shaded */
             if (ctx->Depth.Test || ctx->Fog.Enabled) {
                if (rgbmode)
-                  swrast->Line = flat_rgba_z_line;
+                  USE(flat_rgba_z_line);
                else
-                  swrast->Line = flat_ci_z_line;
+                  USE(flat_ci_z_line);
             }
             else {
                if (rgbmode)
-                  swrast->Line = flat_rgba_line;
+                  USE(flat_rgba_line);
                else
-                  swrast->Line = flat_ci_line;
+                  USE(flat_ci_line);
             }
          }
       }
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
-      swrast->Line = _mesa_feedback_line;
+      USE(_mesa_feedback_line);
    }
    else {
       /* GL_SELECT mode */
-      swrast->Line = _mesa_select_line;
+      USE(_mesa_select_line);
    }
 
    /*_mesa_print_line_function(ctx);*/
