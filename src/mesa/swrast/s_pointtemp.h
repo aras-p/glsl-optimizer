@@ -220,6 +220,21 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       count = span->end;
       (void) radius;
       for (y = ymin; y <= ymax; y++) {
+         /* check if we need to flush */
+         if (count + (xmax-xmin+1) >= MAX_WIDTH) {
+	     span->end = count;
+#if FLAGS & (TEXTURE | SPRITE)
+            if (ctx->Texture._EnabledUnits)
+               _swrast_write_texture_span(ctx, span);
+            else
+               _swrast_write_rgba_span(ctx, span);
+#elif FLAGS & RGBA
+            _swrast_write_rgba_span(ctx, span);
+#else
+            _swrast_write_index_span(ctx, span);
+#endif
+            count = span->end = 0;
+         }
          for (x = xmin; x <= xmax; x++) {
 #if FLAGS & (SPRITE | TEXTURE)
             GLuint u;
