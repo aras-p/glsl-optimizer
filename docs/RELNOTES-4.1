@@ -234,8 +234,9 @@ are some things to change:
      Call _swrast_DrawBuffer() too, to update the swrast state.
    - Removed swrast->Driver.SetReadBuffer
    - Added swrast->Driver.SetBuffer.  This function should be implemented by
-     _all_ device drivers.  Mesa will call it to specify the buffer to use
-     for span reading AND writing and point/line/triangle rendering.  There
+     all device drivers that use swrast fallbacks (and the span functions).
+     Mesa will call this function to specify the buffer to use for span
+     reading AND writing and point/line/triangle rendering.  There
      should be no confusion between current read or draw buffer anymore.
 
 
@@ -267,16 +268,29 @@ are some things to change:
 
 8. GLfloat / GLchan changes:
 
-     Changed ctx->Driver.ClearColor() to take GLfloat[4] instead of GLchan[4].
+   - Changed ctx->Driver.ClearColor() to take GLfloat[4] instead of GLchan[4].
      ctx->Color.ClearColor is now GLfloat[4] too.
-     Changed ctx->Driver.AlphaRef() to take GLfloat instead of GLchan.
-     ctx->Color.AlphaRef is now GLfloat.
-     texObj->BorderColor is now GLfloat[4].  texObj->_BorderChan is GLchan[4].
+   - Changed ctx->Driver.AlphaRef() to take GLfloat instead of GLchan.
+   - ctx->Color.AlphaRef is now GLfloat.
+   - texObj->BorderColor is now GLfloat[4].  texObj->_BorderChan is GLchan[4].
 
    This is part of an effort to remove all GLchan types from core Mesa so
    that someday we can support 8, 16 and 32-bit color channels dynamically
    at runtime, instead of at compile-time.
 
 
+9. GLboolean ctx->Tranform.ClipEnabled[MAX_CLIP_PLANES] has been replaced
+   by GLuint ctx->Transform.ClipPlanesEnabled.  The later is a bitfield.
+
+
+10. There's a new matrix_stack type in mtypes.h used for the Modelview,
+   Projection, Color and Texcoord matrix stacks.
+
+
+11. The ctx->Current.* fields have changed a lot.  Now, there's a
+   ctx->Current.Attrib[] array for all vertex attributes which matches
+   the NV vertex program conventions.
+
+
 ----------------------------------------------------------------------
-$Id: RELNOTES-4.1,v 1.18 2002/10/05 18:32:38 brianp Exp $
+$Id: RELNOTES-4.1,v 1.19 2002/10/10 23:49:02 brianp Exp $
