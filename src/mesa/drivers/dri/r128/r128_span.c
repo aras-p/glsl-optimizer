@@ -154,7 +154,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* 16-bit depth buffer functions
  */
 #define READ_DEPTH(d, _x, _y)                                           \
-    d = *(GLushort *)(buf + _x*2 + _y*pitch)
+    d = *(GLushort *)(buf + (_x)*2 + (_y)*pitch)
 
 #define WRITE_DEPTH_SPAN()						\
    r128WriteDepthSpanLocked( rmesa, n,					\

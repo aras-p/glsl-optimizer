@@ -121,10 +121,10 @@
 
 
 #define WRITE_DEPTH(_x, _y, d)                      \
-    *(GLushort *)(buf + _x * 2 + _y * depth_pitch) = d;
+    *(GLushort *)(buf + (_x) * 2 + (_y) * depth_pitch) = d;
 
 #define READ_DEPTH(d, _x, _y)                       \
-    d = *(GLushort *)(buf + _x * 2 + _y * depth_pitch);
+    d = *(volatile GLushort *)(buf + (_x) * 2 + (_y) * depth_pitch);
 
 #define TAG(x) via##x##_16
 #include "depthtmp.h"
@@ -132,10 +132,10 @@
 /* 32 bit depthbuffer functions.
  */
 #define WRITE_DEPTH(_x, _y, d)                      \
-    *(GLuint *)(buf + _x * 4 + _y * depth_pitch) = d;
+    *(GLuint *)(buf + (_x) * 4 + (_y) * depth_pitch) = d;
 
 #define READ_DEPTH(d, _x, _y)                       \
-    d = *(GLuint *)(buf + _x * 4 + _y * depth_pitch);
+    d = *(volatile GLuint *)(buf + (_x) * 4 + (_y) * depth_pitch);
 
 #define TAG(x) via##x##_32
 #include "depthtmp.h"

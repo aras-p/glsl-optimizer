@@ -102,10 +102,10 @@ do {									\
 /* 16 bit depthbuffer functions.
  */
 #define WRITE_DEPTH( _x, _y, d ) \
-   *(GLushort *)(buf + _x*2 + _y*pitch)  = d;
+   *(GLushort *)(buf + (_x)*2 + (_y)*pitch)  = d;
 
 #define READ_DEPTH( d, _x, _y )	\
-   d = *(GLushort *)(buf + _x*2 + _y*pitch);
+   d = *(GLushort *)(buf + (_x)*2 + (_y)*pitch);
 
 #define TAG(x) i810##x##_16
 #include "depthtmp.h"

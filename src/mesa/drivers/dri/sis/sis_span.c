@@ -143,10 +143,10 @@ do {							\
 /* 16 bit depthbuffer functions.
  */
 #define WRITE_DEPTH( _x, _y, d )	\
-   *(GLushort *)(buf + _x*2 + _y*smesa->depthPitch) = d;
+   *(GLushort *)(buf + (_x)*2 + (_y)*smesa->depthPitch) = d;
 
 #define READ_DEPTH( d, _x, _y )		\
-   d = *(GLushort *)(buf + _x*2 + _y*smesa->depthPitch);
+   d = *(GLushort *)(buf + (_x)*2 + (_y)*smesa->depthPitch);
 
 #define TAG(x) sis##x##_16
 #include "depthtmp.h"
@@ -155,10 +155,10 @@ do {							\
 /* 32 bit depthbuffer functions.
  */
 #define WRITE_DEPTH( _x, _y, d )	\
-   *(GLuint *)(buf + _x*4 + _y*smesa->depthPitch) = d;
+   *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch) = d;
 
 #define READ_DEPTH( d, _x, _y )		\
-   d = *(GLuint *)(buf + _x*4 + _y*smesa->depthPitch);
+   d = *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch);
 
 #define TAG(x) sis##x##_32
 #include "depthtmp.h"
@@ -167,28 +167,28 @@ do {							\
 /* 8/24 bit interleaved depth/stencil functions
  */
 #define WRITE_DEPTH( _x, _y, d ) {				\
-   GLuint tmp = *(GLuint *)(buf + _x*4 + _y*smesa->depthPitch); \
+   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch); \
    tmp &= 0xff000000;						\
    tmp |= (d & 0x00ffffff);					\
-   *(GLuint *)(buf + _x*4 + _y*smesa->depthPitch) = tmp;	\
+   *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch) = tmp;	\
 }
 
 #define READ_DEPTH( d, _x, _y )	{			\
-   d = *(GLuint *)(buf + _x*4 + _y*smesa->depthPitch) & 0x00ffffff; \
+   d = *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch) & 0x00ffffff; \
 }
 
 #define TAG(x) sis##x##_24_8
 #include "depthtmp.h"
 
 #define WRITE_STENCIL( _x, _y, d ) {				\
-   GLuint tmp = *(GLuint *)(buf + _x*4 + _y*smesa->depthPitch); \
+   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch); \
    tmp &= 0x00ffffff;						\
    tmp |= (d << 24);						\
-   *(GLuint *)(buf + _x*4 + _y*smesa->depthPitch) = tmp;	\
+   *(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch) = tmp;	\
 }
 
 #define READ_STENCIL( d, _x, _y )			\
-   d = (*(GLuint *)(buf + _x*4 + _y*smesa->depthPitch) & 0xff000000) >> 24;
+   d = (*(GLuint *)(buf + (_x)*4 + (_y)*smesa->depthPitch) & 0xff000000) >> 24;
 
 #define TAG(x) sis##x##_24_8
 #include "stenciltmp.h"
