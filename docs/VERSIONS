@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.80 2002/01/09 02:16:58 brianp Exp $
+$Id: VERSIONS,v 1.81 2002/01/12 16:19:04 brianp Exp $
 
 
 Mesa Version History
@@ -939,5 +939,6 @@ Mesa Version History
 	- GL_BLEND with non-black texture env color wasn't always correct
 	- GL_REPLACE with GL_RGB texture format wasn't always correct (alpha)
 	- glTexEnviv( pname != GL_TEXTURE_ENV_COLOR ) was broken
+	- glReadPixels was sometimes mistakenly clipped by the scissor box
     Changes:
 	- New spec file and Python code to generate some GL dispatch files
