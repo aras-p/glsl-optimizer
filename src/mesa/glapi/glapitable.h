@@ -1,4 +1,4 @@
-/* $Id: glapitable.h,v 1.1 1999/11/25 18:16:33 brianp Exp $ */
+/* $Id: glapitable.h,v 1.2 1999/11/27 21:30:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -65,6 +65,8 @@
 #define _GLAPI_MESA_resize_buffers  1
 
 
+
+#define _GLAPI_EXTRA_SLOTS 1000
 
 
 /*
@@ -552,7 +554,7 @@ struct _glapi_table
 #endif
 
 
-   void *ExtensionFuncs[1000];
+   void *ExtensionFuncs[_GLAPI_EXTRA_SLOTS];
 };
 
 
