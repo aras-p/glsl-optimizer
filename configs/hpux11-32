@@ -1,0 +1,26 @@
+# Configuration for HPUX v11
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = hpux11-32
+
+# Compiler and flags
+CC = cc
+CXX = aCC
+
+CFLAGS = +z -Ae +O2 +Onolimit +Oaggressive -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS
+
+CXXFLAGS = +z -Aa +O2 +Onolimit +Oaggressive -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include
+
+MKLIB_OPTIONS =
+
+
+# Library names (actual file names)
+GL_LIB_NAME = libGL.a
+GLU_LIB_NAME = libGLU.a
+GLUT_LIB_NAME = libglut.a
+GLW_LIB_NAME = libGLw.a
+OSMESA_LIB_NAME = libOSMesa.a
+
+# Library/program dependencies
+APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm
