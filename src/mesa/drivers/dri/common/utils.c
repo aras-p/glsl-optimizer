@@ -257,7 +257,7 @@ driCheckDriDdxDrmVersions(__DRIscreenPrivate *sPriv,
  * \param driActual    Actual DRI version supplied __driCreateNewScreen.
  * \param driExpected  Minimum DRI version required by the driver.
  * \param ddxActual    Actual DDX version supplied __driCreateNewScreen.
- * \param ddxExpected  Minimum DDX version required by the driver.
+ * \param ddxExpected  Minimum DDX minor and range of DDX major version required by the driver.
  * \param drmActual    Actual DRM version supplied __driCreateNewScreen.
  * \param drmExpected  Minimum DRM version required by the driver.
  * 
@@ -267,15 +267,17 @@ driCheckDriDdxDrmVersions(__DRIscreenPrivate *sPriv,
  * \sa __driCreateNewScreen, driCheckDriDdxDrmVersions, __driUtilMessage
  */
 GLboolean
-driCheckDriDdxDrmVersions2(const char * driver_name,
+driCheckDriDdxDrmVersions3(const char * driver_name,
 			   const __DRIversion * driActual,
 			   const __DRIversion * driExpected,
 			   const __DRIversion * ddxActual,
-			   const __DRIversion * ddxExpected,
+			   const __DRIutilversion2 * ddxExpected,
 			   const __DRIversion * drmActual,
 			   const __DRIversion * drmExpected)
 {
    static const char format[] = "%s DRI driver expected %s version %d.%d.x "
+       "but got version %d.%d.%d";
+   static const char format2[] = "%s DRI driver expected %s version %d-%d.%d.x "
        "but got version %d.%d.%d";
 
 
@@ -289,10 +291,11 @@ driCheckDriDdxDrmVersions2(const char * driver_name,
    }
 
    /* Check that the DDX driver version is compatible */
-   if ( (ddxActual->major != ddxExpected->major)
+   if ( (ddxActual->major < ddxExpected->major_min)
+	|| (ddxActual->major > ddxExpected->major_max)
 	|| (ddxActual->minor < ddxExpected->minor) ) {
-      __driUtilMessage(format, driver_name, "DDX",
-		       ddxExpected->major, ddxExpected->minor,
+      __driUtilMessage(format2, driver_name, "DDX",
+		       ddxExpected->major_min, ddxExpected->major_max, ddxExpected->minor,
 		       ddxActual->major, ddxActual->minor, ddxActual->patch);
       return GL_FALSE;
    }
@@ -308,6 +311,26 @@ driCheckDriDdxDrmVersions2(const char * driver_name,
 
    return GL_TRUE;
 }
+
+GLboolean
+driCheckDriDdxDrmVersions2(const char * driver_name,
+			   const __DRIversion * driActual,
+			   const __DRIversion * driExpected,
+			   const __DRIversion * ddxActual,
+			   const __DRIversion * ddxExpected,
+			   const __DRIversion * drmActual,
+			   const __DRIversion * drmExpected)
+{
+   __DRIutilversion2 ddx_expected;
+   ddx_expected.major_min = ddxExpected->major;
+   ddx_expected.major_max = ddxExpected->major;
+   ddx_expected.minor = ddxExpected->minor;
+   ddx_expected.patch = ddxExpected->patch;
+   return driCheckDriDdxDrmVersions3(driver_name, driActual,
+				driExpected, ddxActual, & ddx_expected,
+				drmActual, drmExpected);
+}
+
 
 
 GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,

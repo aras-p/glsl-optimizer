@@ -77,6 +77,7 @@ typedef struct __DRIscreenPrivateRec   __DRIscreenPrivate;
 typedef struct __DRIcontextPrivateRec  __DRIcontextPrivate;
 typedef struct __DRIdrawablePrivateRec __DRIdrawablePrivate;
 typedef struct __DRIswapInfoRec        __DRIswapInfo;
+typedef struct __DRIutilversionRec2    __DRIutilversion2;
 
 
 /**
@@ -525,6 +526,17 @@ struct __DRIscreenPrivateRec {
     __DRIscreen *psc;
 };
 
+
+/**
+ * Used to store a version which includes a major range instead of a single
+ * major version number.
+ */
+struct __DRIutilversionRec2 {
+    int    major_min;    /** min allowed Major version number. */
+    int    major_max;    /** max allowed Major version number. */
+    int    minor;        /**< Minor version number. */
+    int    patch;        /**< Patch-level. */
+};
 
 
 extern void
