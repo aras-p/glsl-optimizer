@@ -1,4 +1,4 @@
-/* $Id: osdemo.c,v 1.1 1999/08/19 00:55:40 jtg Exp $ */
+/* $Id: osdemo.c,v 1.2 2000/01/15 06:11:33 rjfrank Exp $ */
 
 /*
  * Demo of off-screen Mesa rendering
@@ -19,8 +19,11 @@
 
 /*
  * $Log: osdemo.c,v $
- * Revision 1.1  1999/08/19 00:55:40  jtg
- * Initial revision
+ * Revision 1.2  2000/01/15 06:11:33  rjfrank
+ * Added test for the occlusion test code.
+ *
+ * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
+ * Imported sources
  *
  * Revision 3.0  1998/02/14 18:42:29  brianp
  * initial rev
@@ -85,11 +88,55 @@ static void render_image( void )
    glutSolidCone(1.0, 2.0, 16, 1);
    glPopMatrix();
 
+#ifdef OSMESA_OCCLUSION_TEST_RESULT_HP
+   {
+      GLboolean bRet;
+      OSMesaGetBooleanv(OSMESA_OCCLUSION_TEST_RESULT_HP,&bRet);
+      glDepthMask(GL_FALSE);
+      glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+
+      glPushMatrix();
+      glTranslatef(0.75, 0.0, -1.0); 
+      glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, blue_mat );
+      glutSolidSphere(1.0, 20, 20);
+      glPopMatrix();
+
+      OSMesaGetBooleanv(OSMESA_OCCLUSION_TEST_RESULT_HP,&bRet);
+      printf("Occlusion test 1 (result should be 1): %d\n",bRet);
+
+      glDepthMask(GL_TRUE);
+      glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+   }
+#endif
+
    glPushMatrix();
    glTranslatef(0.75, 0.0, -1.0); 
    glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, blue_mat );
    glutSolidSphere(1.0, 20, 20);
    glPopMatrix();
+
+#ifdef OSMESA_OCCLUSION_TEST_RESULT_HP
+   {
+      GLboolean bRet;
+
+      OSMesaGetBooleanv(OSMESA_OCCLUSION_TEST_RESULT_HP,&bRet);
+      glDepthMask(GL_FALSE);
+      glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+
+      /* draw a sphere inside the previous sphere */
+      glPushMatrix();
+      glTranslatef(0.75, 0.0, -1.0); 
+      glMaterialfv( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, blue_mat );
+      glutSolidSphere(0.5, 20, 20);
+      glPopMatrix();
+
+      OSMesaGetBooleanv(OSMESA_OCCLUSION_TEST_RESULT_HP,&bRet);
+      printf("Occlusion test 2 (result should be 0): %d\n",bRet);
+
+      glDepthMask(GL_TRUE);
+      glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+   }
+#endif
 
    glPopMatrix();
 }
