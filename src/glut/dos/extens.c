@@ -64,9 +64,9 @@ int APIENTRY glutExtensionSupported (const char *extension)
 }
 
 
-void * APIENTRY
+GLUTproc APIENTRY
 glutGetProcAddress (const char *procName)
 {
  /* TODO - handle glut namespace */
- return DMesaGetProcAddress(procName);
+ return (GLUTproc)DMesaGetProcAddress(procName);
 }
