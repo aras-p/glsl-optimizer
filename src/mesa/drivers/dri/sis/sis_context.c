@@ -120,6 +120,7 @@ sisCreateContext( const __GLcontextModes *glVisual,
     * (the texture functions are especially important)
     */
    _mesa_init_driver_functions(&functions);
+   sisInitDriverFuncs(&functions);
    sisInitTextureFuncs(&functions);
 
    /* Allocate the Mesa context */
