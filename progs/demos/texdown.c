@@ -1,4 +1,4 @@
-/* $Id: texdown.c,v 1.2 2000/03/29 15:47:48 brianp Exp $ */
+/* $Id: texdown.c,v 1.3 2000/03/29 18:02:52 brianp Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
@@ -303,6 +303,7 @@ Key(unsigned char key, int x, int y)
    (void) y;
    switch (key) {
       case ' ':
+         Mode = 0;
          break;
       case 'b':
          /* toggle border */
