@@ -1,10 +1,10 @@
-/* $Id: s_triangle.c,v 1.44 2001/12/19 01:09:46 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.45 2002/01/09 00:09:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -302,7 +302,7 @@ struct affine_info
    GLint smask, tmask;
    GLint twidth_log2;
    const GLchan *texture;
-   GLchan er, eg, eb, ea;
+   GLfixed er, eg, eb, ea;
    GLint tbytesline, tsize;
 };
 
@@ -350,7 +350,7 @@ affine_span(GLcontext *ctx, struct sw_span *span,
    sample[ACOMP] = (ti * (si * tex00[3] + sf * tex01[3]) +		\
                tf * (si * tex10[3] + sf * tex11[3])) >> 2 * FIXED_SHIFT
 
-#define MODULATE							   \
+#define MODULATE							  \
    dest[RCOMP] = span->red   * (sample[RCOMP] + 1u) >> (FIXED_SHIFT + 8); \
    dest[GCOMP] = span->green * (sample[GCOMP] + 1u) >> (FIXED_SHIFT + 8); \
    dest[BCOMP] = span->blue  * (sample[BCOMP] + 1u) >> (FIXED_SHIFT + 8); \
@@ -589,10 +589,10 @@ static void affine_textured_triangle( GLcontext *ctx,
 									\
    if (info.envmode == GL_BLEND) {					\
       /* potential off-by-one error here? (1.0f -> 2048 -> 0) */	\
-      info.er = FloatToFixed(unit->EnvColor[RCOMP]);			\
-      info.eg = FloatToFixed(unit->EnvColor[GCOMP]);			\
-      info.eb = FloatToFixed(unit->EnvColor[BCOMP]);			\
-      info.ea = FloatToFixed(unit->EnvColor[ACOMP]);			\
+      info.er = FloatToFixed(unit->EnvColor[RCOMP] * CHAN_MAXF);	\
+      info.eg = FloatToFixed(unit->EnvColor[GCOMP] * CHAN_MAXF);	\
+      info.eb = FloatToFixed(unit->EnvColor[BCOMP] * CHAN_MAXF);	\
+      info.ea = FloatToFixed(unit->EnvColor[ACOMP] * CHAN_MAXF);	\
    }									\
    if (!info.texture) {							\
       /* this shouldn't happen */					\
@@ -636,7 +636,7 @@ struct persp_info
    GLint smask, tmask;
    GLint twidth_log2;
    const GLchan *texture;
-   GLchan er, eg, eb, ea;   /* texture env color */
+   GLfixed er, eg, eb, ea;   /* texture env color */
    GLint tbytesline, tsize;
 };
 
@@ -860,10 +860,10 @@ static void persp_textured_triangle( GLcontext *ctx,
 									\
    if (info.envmode == GL_BLEND) {					\
       /* potential off-by-one error here? (1.0f -> 2048 -> 0) */	\
-      info.er = FloatToFixed(unit->EnvColor[RCOMP]);			\
-      info.eg = FloatToFixed(unit->EnvColor[GCOMP]);			\
-      info.eb = FloatToFixed(unit->EnvColor[BCOMP]);			\
-      info.ea = FloatToFixed(unit->EnvColor[ACOMP]);			\
+      info.er = FloatToFixed(unit->EnvColor[RCOMP] * CHAN_MAXF);	\
+      info.eg = FloatToFixed(unit->EnvColor[GCOMP] * CHAN_MAXF);	\
+      info.eb = FloatToFixed(unit->EnvColor[BCOMP] * CHAN_MAXF);	\
+      info.ea = FloatToFixed(unit->EnvColor[ACOMP] * CHAN_MAXF);	\
    }									\
    if (!info.texture) {							\
       /* this shouldn't happen */					\
@@ -1204,11 +1204,11 @@ void _swrast_add_spec_terms_triangle( GLcontext *ctx,
 #ifdef DEBUG
 
 /* record the current triangle function name */
-static const char *triFuncName = NULL;
+const char *_mesa_triFuncName = NULL;
 
 #define USE(triFunc)                   \
 do {                                   \
-    triFuncName = #triFunc;            \
+    _mesa_triFuncName = #triFunc;      \
     /*printf("%s\n", triFuncName);*/   \
     swrast->Triangle = triFunc;        \
 } while (0)
