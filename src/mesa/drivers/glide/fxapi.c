@@ -725,6 +725,8 @@ void GLAPIENTRY gl3DfxSetPaletteEXT(GLuint *pal)
 static GrScreenResolution_t fxBestResolution(int width, int height, int aux)
 {
   static int resolutions[][5]={ 
+    { 320, 200, GR_RESOLUTION_320x200, 2, 2 },
+    { 320, 240, GR_RESOLUTION_320x240, 2, 2 },
     { 512, 384, GR_RESOLUTION_512x384, 2, 2 },
     { 640, 400, GR_RESOLUTION_640x400, 2, 2 },
     { 640, 480, GR_RESOLUTION_640x480, 2, 2 },
@@ -734,15 +736,15 @@ static GrScreenResolution_t fxBestResolution(int width, int height, int aux)
     ,{ 1024, 768, GR_RESOLUTION_1024x768, 8, 4 }
 #endif
 #ifdef GR_RESOLUTION_1280x1024
-    ,{ 1024, 768, GR_RESOLUTION_1280x1024, 8, 8 }
+    ,{ 1280, 1024, GR_RESOLUTION_1280x1024, 8, 8 }
 #endif
 #ifdef GR_RESOLUTION_1600x1200
-    ,{ 1024, 768, GR_RESOLUTION_1600x1200, 16, 8 }
+    ,{ 1600, 1200, GR_RESOLUTION_1600x1200, 16, 8 }
 #endif
   };
   int NUM_RESOLUTIONS = sizeof(resolutions) / (sizeof(int)*5);
   int i,fbmem;
-  GrScreenResolution_t lastvalidres=resolutions[1][2];
+  GrScreenResolution_t lastvalidres=resolutions[4][2];
 
   fxQueryHardware();
 
