@@ -1,10 +1,10 @@
-/* $Id: glxapi.c,v 1.21 2001/05/24 00:00:57 brianp Exp $ */
+/* $Id: glxapi.c,v 1.22 2001/05/24 19:06:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -161,11 +161,10 @@ get_dispatch(Display *dpy)
 
 
 /* Set by glXMakeCurrent() and glXMakeContextCurrent() only */
-static Display *CurrentDisplay = NULL;
+#ifndef GLX_BUILD_IN_XLIB_MESA
 static GLXContext CurrentContext = 0;
-static GLXDrawable CurrentDrawable = 0;
-static GLXDrawable CurrentReadDrawable = 0;
-
+#define __glXGetCurrentContext() CurrentContext;
+#endif
 
 
 /*
@@ -243,15 +242,21 @@ int glXGetConfig(Display *dpy, XVisualInfo *visinfo, int attrib, int *value)
 }
 
 
+#ifdef GLX_BUILD_IN_XLIB_MESA
+/* Use real libGL's glXGetCurrentContext() function */
+#else
+/* stand-alone Mesa */
 GLXContext glXGetCurrentContext(void)
 {
    return CurrentContext;
 }
+#endif
 
 
 GLXDrawable glXGetCurrentDrawable(void)
 {
-   return CurrentDrawable;
+   GLXContext gc = glXGetCurrentContext();
+   return gc ? gc->currentDrawable : 0;
 }
 
 
@@ -273,12 +278,11 @@ Bool glXMakeCurrent(Display *dpy, GLXDrawable drawable, GLXContext ctx)
    if (!t)
       return False;
    b = (*t->MakeCurrent)(dpy, drawable, ctx);
+#ifndef  GLX_BUILD_IN_XLIB_MESA
    if (b) {
-      CurrentDisplay = dpy;
       CurrentContext = ctx;
-      CurrentDrawable = drawable;
-      CurrentReadDrawable = drawable;
    }
+#endif
    return b;
 }
 
@@ -316,7 +320,8 @@ void glXSwapBuffers(Display *dpy, GLXDrawable drawable)
 void glXUseXFont(Font font, int first, int count, int listBase)
 {
    struct _glxapi_table *t;
-   GET_DISPATCH(CurrentDisplay, t);
+   Display *dpy = glXGetCurrentDisplay();
+   GET_DISPATCH(dpy, t);
    if (!t)
       return;
    (t->UseXFont)(font, first, count, listBase);
@@ -326,7 +331,8 @@ void glXUseXFont(Font font, int first, int count, int listBase)
 void glXWaitGL(void)
 {
    struct _glxapi_table *t;
-   GET_DISPATCH(CurrentDisplay, t);
+   Display *dpy = glXGetCurrentDisplay();
+   GET_DISPATCH(dpy, t);
    if (!t)
       return;
    (t->WaitGL)();
@@ -336,7 +342,8 @@ void glXWaitGL(void)
 void glXWaitX(void)
 {
    struct _glxapi_table *t;
-   GET_DISPATCH(CurrentDisplay, t);
+   Display *dpy = glXGetCurrentDisplay();
+   GET_DISPATCH(dpy, t);
    if (!t)
       return;
    (t->WaitX)();
@@ -382,7 +389,10 @@ const char *glXQueryServerString(Display *dpy, int screen, int name)
 #ifdef GLX_VERSION_1_2
 Display *glXGetCurrentDisplay(void)
 {
-   return CurrentDisplay;
+   /* Same code as in libGL's glxext.c */
+   GLXContext gc = __glXGetCurrentContext();
+   if (NULL == gc) return NULL;
+   return gc->currentDpy;
 }
 #endif
 
@@ -472,7 +482,8 @@ void glXDestroyWindow(Display *dpy, GLXWindow window)
 
 GLXDrawable glXGetCurrentReadDrawable(void)
 {
-   return CurrentReadDrawable;
+   GLXContext gc = glXGetCurrentContext();
+   return gc ? gc->currentReadable : 0;
 }
 
 
@@ -523,12 +534,11 @@ Bool glXMakeContextCurrent(Display *dpy, GLXDrawable draw, GLXDrawable read, GLX
    if (!t)
       return False;
    b = (t->MakeContextCurrent)(dpy, draw, read, ctx);
+#ifndef  GLX_BUILD_IN_XLIB_MESA
    if (b) {
-      CurrentDisplay = dpy;
       CurrentContext = ctx;
-      CurrentDrawable = draw;
-      CurrentReadDrawable = read;
    }
+#endif
    return b;
 }
 
@@ -571,7 +581,8 @@ void glXSelectEvent(Display *dpy, GLXDrawable drawable, unsigned long mask)
 int glXSwapIntervalSGI(int interval)
 {
    struct _glxapi_table *t;
-   GET_DISPATCH(CurrentDisplay, t);
+   Display *dpy = glXGetCurrentDisplay();
+   GET_DISPATCH(dpy, t);
    if (!t)
       return 0;
    return (t->SwapIntervalSGI)(interval);
@@ -585,7 +596,8 @@ int glXSwapIntervalSGI(int interval)
 int glXGetVideoSyncSGI(unsigned int *count)
 {
    struct _glxapi_table *t;
-   GET_DISPATCH(CurrentDisplay, t);
+   Display *dpy = glXGetCurrentDisplay();
+   GET_DISPATCH(dpy, t);
    if (!t)
       return 0;
    return (t->GetVideoSyncSGI)(count);
@@ -594,7 +606,8 @@ int glXGetVideoSyncSGI(unsigned int *count)
 int glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
 {
    struct _glxapi_table *t;
-   GET_DISPATCH(CurrentDisplay, t);
+   Display *dpy = glXGetCurrentDisplay();
+   GET_DISPATCH(dpy, t);
    if (!t)
       return 0;
    return (t->WaitVideoSyncSGI)(divisor, remainder, count);
@@ -616,13 +629,8 @@ Bool glXMakeCurrentReadSGI(Display *dpy, GLXDrawable draw, GLXDrawable read, GLX
 
 GLXDrawable glXGetCurrentReadDrawableSGI(void)
 {
-   struct _glxapi_table *t;
-   GET_DISPATCH(CurrentDisplay, t);
-   if (!t)
-      return 0;
-   return (t->GetCurrentReadDrawableSGI)();
+   return glXGetCurrentReadDrawable();
 }
-
 #endif
 
 
@@ -660,19 +668,19 @@ void glXFreeContextEXT(Display *dpy, GLXContext context)
    (t->FreeContextEXT)(dpy, context);
 }
 
+#ifdef GLX_BUILD_IN_XLIB_MESA
+/* Use real libGL's glXGetContextIDEXT() function */
+#else
+/* stand-alone Mesa */
 GLXContextID glXGetContextIDEXT(const GLXContext context)
 {
-   /* XXX is this function right? */
-   struct _glxapi_table *t;
-   GET_DISPATCH(CurrentDisplay, t);
-   if (!t)
-      return 0;
-   return (t->GetContextIDEXT)(context);
+   return context->xid;
 }
+#endif
 
 Display *glXGetCurrentDisplayEXT(void)
 {
-   return CurrentDisplay;
+   return glXGetCurrentDisplay();
 }
 
 GLXContext glXImportContextEXT(Display *dpy, GLXContextID contextID)
@@ -981,7 +989,8 @@ GLXPixmap glXCreateGLXPixmapMESA(Display *dpy, XVisualInfo *visinfo, Pixmap pixm
 Bool glXSet3DfxModeMESA(int mode)
 {
    struct _glxapi_table *t;
-   GET_DISPATCH(CurrentDisplay, t);
+   Display *dpy = glXGetCurrentDisplay();
+   GET_DISPATCH(dpy, t);
    if (!t)
       return False;
    return (t->Set3DfxModeMESA)(mode);

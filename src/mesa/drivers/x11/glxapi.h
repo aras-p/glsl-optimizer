@@ -1,10 +1,10 @@
-/* $Id: glxapi.h,v 1.8 2000/12/15 04:02:50 brianp Exp $ */
+/* $Id: glxapi.h,v 1.9 2001/05/24 19:06:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,21 @@
 
 #define GLX_GLXEXT_PROTOTYPES
 #include "GL/glx.h"
+
+
+#ifdef GLX_BUILD_IN_XLIB_MESA
+/* The GLX API dispatcher is being built into XFree86's libGL */
+#include "glxclient.h"
+#else
+/* The GLX API dispatcher is being built into stand-alone Mesa */
+typedef struct __GLXcontextRec {
+   Display *currentDpy;
+   GLboolean isDirect;
+   GLXDrawable currentDrawable;
+   GLXDrawable currentReadable;
+   XID xid;
+} __GLXcontext;
+#endif
 
 
 /*
@@ -106,7 +121,7 @@ struct _glxapi_table {
 
 #ifdef GLX_SGI_make_current_read
    Bool (*MakeCurrentReadSGI)(Display *, GLXDrawable, GLXDrawable, GLXContext);
-   GLXDrawable (*GetCurrentReadDrawableSGI)(void);
+   /*GLXDrawable (*GetCurrentReadDrawableSGI)(void);*/
 #endif
 
 #if defined(_VL_H) && defined(GLX_SGIX_video_source)
@@ -117,7 +132,7 @@ struct _glxapi_table {
 #ifdef GLX_EXT_import_context
    void (*FreeContextEXT)(Display *dpy, GLXContext context);
    GLXContextID (*GetContextIDEXT)(const GLXContext context);
-   Display *(*GetCurrentDisplayEXT)(void);
+   /*Display *(*GetCurrentDisplayEXT)(void);*/
    GLXContext (*ImportContextEXT)(Display *dpy, GLXContextID contextID);
    int (*QueryContextInfoEXT)(Display *dpy, GLXContext context, int attribute,int *value);
 #endif
