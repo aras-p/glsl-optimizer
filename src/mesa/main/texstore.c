@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.25 2001/05/21 16:41:03 brianp Exp $ */
+/* $Id: texstore.c,v 1.26 2001/05/22 21:49:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1011,9 +1011,194 @@ do_row(const struct gl_texture_format *format, GLint dstWidth,
       }
       return;
    case MESA_FORMAT_DEPTH_COMPONENT:
-
-   /* XXX do hardware texture formats */
-
+      {
+         GLuint i, j;
+         const GLfloat *rowA = (const GLfloat *) srcRowA;
+         const GLfloat *rowB = (const GLfloat *) srcRowB;
+         GLfloat *dst = (GLfloat *) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            dst[i] = (rowA[j] + rowA[j+1] + rowB[j] + rowB[j+1]) * 0.25F;
+         }
+      }
+      return;
+   /* Begin hardware formats */
+   case MESA_FORMAT_RGBA8888:
+   case MESA_FORMAT_ARGB8888:
+      {
+         GLuint i, j;
+         const GLubyte (*rowA)[4] = (const GLubyte (*)[4]) srcRowA;
+         const GLubyte (*rowB)[4] = (const GLubyte (*)[4]) srcRowB;
+         GLubyte (*dst)[4] = (GLubyte (*)[4]) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            dst[i][0] = (rowA[j][0] + rowA[j+1][0] +
+                         rowB[j][0] + rowB[j+1][0]) >> 2;
+            dst[i][1] = (rowA[j][1] + rowA[j+1][1] +
+                         rowB[j][1] + rowB[j+1][1]) >> 2;
+            dst[i][2] = (rowA[j][2] + rowA[j+1][2] +
+                         rowB[j][2] + rowB[j+1][2]) >> 2;
+            dst[i][3] = (rowA[j][3] + rowA[j+1][3] +
+                         rowB[j][3] + rowB[j+1][3]) >> 2;
+         }
+      }
+      return;
+   case MESA_FORMAT_RGB888:
+      {
+         GLuint i, j;
+         const GLubyte (*rowA)[3] = (const GLubyte (*)[3]) srcRowA;
+         const GLubyte (*rowB)[3] = (const GLubyte (*)[3]) srcRowB;
+         GLubyte (*dst)[3] = (GLubyte (*)[3]) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            dst[i][0] = (rowA[j][0] + rowA[j+1][0] +
+                         rowB[j][0] + rowB[j+1][0]) >> 2;
+            dst[i][1] = (rowA[j][1] + rowA[j+1][1] +
+                         rowB[j][1] + rowB[j+1][1]) >> 2;
+            dst[i][2] = (rowA[j][2] + rowA[j+1][2] +
+                         rowB[j][2] + rowB[j+1][2]) >> 2;
+         }
+      }
+      return;
+   case MESA_FORMAT_RGB565:
+      {
+         GLuint i, j;
+         const GLushort *rowA = (const GLushort *) srcRowA;
+         const GLushort *rowB = (const GLushort *) srcRowB;
+         GLushort *dst = (GLushort *) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            const GLint rowAr0 = rowA[j]   & 0x1f;
+            const GLint rowAr1 = rowA[j+1] & 0x1f;
+            const GLint rowBr0 = rowB[j]   & 0x1f;
+            const GLint rowBr1 = rowB[j+1] & 0x1f;
+            const GLint rowAg0 = (rowA[j]   >> 5) & 0x3f;
+            const GLint rowAg1 = (rowA[j+1] >> 5) & 0x3f;
+            const GLint rowBg0 = (rowB[j]   >> 5) & 0x3f;
+            const GLint rowBg1 = (rowB[j+1] >> 5) & 0x3f;
+            const GLint rowAb0 = (rowA[j]   >> 11) & 0x1f;
+            const GLint rowAb1 = (rowA[j+1] >> 11) & 0x1f;
+            const GLint rowBb0 = (rowB[j]   >> 11) & 0x1f;
+            const GLint rowBb1 = (rowB[j+1] >> 11) & 0x1f;
+            const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 4;
+            const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 4;
+            const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 4;
+            dst[i] = (blue << 11) | (green << 5) | red;
+         }
+      }
+      return;
+   case MESA_FORMAT_ARGB4444:
+      {
+         GLuint i, j;
+         const GLushort *rowA = (const GLushort *) srcRowA;
+         const GLushort *rowB = (const GLushort *) srcRowB;
+         GLushort *dst = (GLushort *) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            const GLint rowAr0 = rowA[j]   & 0xf;
+            const GLint rowAr1 = rowA[j+1] & 0xf;
+            const GLint rowBr0 = rowB[j]   & 0xf;
+            const GLint rowBr1 = rowB[j+1] & 0xf;
+            const GLint rowAg0 = (rowA[j]   >> 4) & 0xf;
+            const GLint rowAg1 = (rowA[j+1] >> 4) & 0xf;
+            const GLint rowBg0 = (rowB[j]   >> 4) & 0xf;
+            const GLint rowBg1 = (rowB[j+1] >> 4) & 0xf;
+            const GLint rowAb0 = (rowA[j]   >> 8) & 0xf;
+            const GLint rowAb1 = (rowA[j+1] >> 8) & 0xf;
+            const GLint rowBb0 = (rowB[j]   >> 8) & 0xf;
+            const GLint rowBb1 = (rowB[j+1] >> 8) & 0xf;
+            const GLint rowAa0 = (rowA[j]   >> 12) & 0xf;
+            const GLint rowAa1 = (rowA[j+1] >> 12) & 0xf;
+            const GLint rowBa0 = (rowB[j]   >> 12) & 0xf;
+            const GLint rowBa1 = (rowB[j+1] >> 12) & 0xf;
+            const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 4;
+            const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 4;
+            const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 4;
+            const GLint alpha = (rowAa0 + rowAa1 + rowBa0 + rowBa1) >> 4;
+            dst[i] = (alpha << 12) | (blue << 8) | (green << 4) | red;
+         }
+      }
+      return;
+   case MESA_FORMAT_ARGB1555:
+      {
+         GLuint i, j;
+         const GLushort *rowA = (const GLushort *) srcRowA;
+         const GLushort *rowB = (const GLushort *) srcRowB;
+         GLushort *dst = (GLushort *) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            const GLint rowAr0 = rowA[j]   & 0x1f;
+            const GLint rowAr1 = rowA[j+1] & 0x1f;
+            const GLint rowBr0 = rowB[j]   & 0x1f;
+            const GLint rowBr1 = rowB[j+1] & 0xf;
+            const GLint rowAg0 = (rowA[j]   >> 5) & 0x1f;
+            const GLint rowAg1 = (rowA[j+1] >> 5) & 0x1f;
+            const GLint rowBg0 = (rowB[j]   >> 5) & 0x1f;
+            const GLint rowBg1 = (rowB[j+1] >> 5) & 0x1f;
+            const GLint rowAb0 = (rowA[j]   >> 10) & 0x1f;
+            const GLint rowAb1 = (rowA[j+1] >> 10) & 0x1f;
+            const GLint rowBb0 = (rowB[j]   >> 10) & 0x1f;
+            const GLint rowBb1 = (rowB[j+1] >> 10) & 0x1f;
+            const GLint rowAa0 = (rowA[j]   >> 15) & 0x1;
+            const GLint rowAa1 = (rowA[j+1] >> 15) & 0x1;
+            const GLint rowBa0 = (rowB[j]   >> 15) & 0x1;
+            const GLint rowBa1 = (rowB[j+1] >> 15) & 0x1;
+            const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 4;
+            const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 4;
+            const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 4;
+            const GLint alpha = (rowAa0 + rowAa1 + rowBa0 + rowBa1) >> 4;
+            dst[i] = (alpha << 15) | (blue << 10) | (green << 5) | red;
+         }
+      }
+      return;
+   case MESA_FORMAT_AL88:
+      {
+         GLuint i, j;
+         const GLubyte (*rowA)[2] = (const GLubyte (*)[2]) srcRowA;
+         const GLubyte (*rowB)[2] = (const GLubyte (*)[2]) srcRowB;
+         GLubyte (*dst)[2] = (GLubyte (*)[2]) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            dst[i][0] = (rowA[j][0] + rowA[j+1][0] +
+                         rowB[j][0] + rowB[j+1][0]) >> 2;
+            dst[i][1] = (rowA[j][1] + rowA[j+1][1] +
+                         rowB[j][1] + rowB[j+1][1]) >> 2;
+         }
+      }
+      return;
+   case MESA_FORMAT_RGB332:
+      {
+         GLuint i, j;
+         const GLubyte *rowA = (const GLubyte *) srcRowA;
+         const GLubyte *rowB = (const GLubyte *) srcRowB;
+         GLubyte *dst = (GLubyte *) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            const GLint rowAr0 = rowA[j]   & 0x3;
+            const GLint rowAr1 = rowA[j+1] & 0x3;
+            const GLint rowBr0 = rowB[j]   & 0x3;
+            const GLint rowBr1 = rowB[j+1] & 0x3;
+            const GLint rowAg0 = (rowA[j]   >> 2) & 0x7;
+            const GLint rowAg1 = (rowA[j+1] >> 2) & 0x7;
+            const GLint rowBg0 = (rowB[j]   >> 2) & 0x7;
+            const GLint rowBg1 = (rowB[j+1] >> 2) & 0x7;
+            const GLint rowAb0 = (rowA[j]   >> 5) & 0x7;
+            const GLint rowAb1 = (rowA[j+1] >> 5) & 0x7;
+            const GLint rowBb0 = (rowB[j]   >> 5) & 0x7;
+            const GLint rowBb1 = (rowB[j+1] >> 5) & 0x7;
+            const GLint red   = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 4;
+            const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 4;
+            const GLint blue  = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 4;
+            dst[i] = (blue << 5) | (green << 2) | red;
+         }
+      }
+      return;
+   case MESA_FORMAT_A8:
+   case MESA_FORMAT_L8:
+   case MESA_FORMAT_I8:
+   case MESA_FORMAT_CI8:
+      {
+         GLuint i, j;
+         const GLubyte *rowA = (const GLubyte *) srcRowA;
+         const GLubyte *rowB = (const GLubyte *) srcRowB;
+         GLubyte *dst = (GLubyte *) dstRow;
+         for (i = j = 0; i < dstWidth; i++, j+=2) {
+            dst[i] = (rowA[j] + rowA[j+1] + rowB[j] + rowB[j+1]) >> 2;
+         }
+      }
+      return;
    default:
       _mesa_problem(NULL, "bad format in do_row()");
    }
@@ -1076,6 +1261,7 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
       dst += dstRowStride;
    }
 
+   /* This is ugly but probably won't be used much */
    if (border > 0) {
       /* fill in dest border */
       /* lower-left border pixel */
@@ -1200,7 +1386,8 @@ _mesa_generate_mipmap(GLcontext *ctx,
       return;
    }
 
-   for (level = texObj->BaseLevel; level < texObj->MaxLevel; level++) {
+   for (level = texObj->BaseLevel; level < texObj->MaxLevel
+           && level < ctx->Const.MaxTextureLevels; level++) {
       /* generate level+1 from level */
       const struct gl_texture_image *srcImage;
       struct gl_texture_image *dstImage;
