@@ -130,7 +130,9 @@ _mesa_DetachObjectARB (GLhandleARB containerObj, GLhandleARB attachedObj)
 GLhandleARB GLAPIENTRY
 _mesa_CreateShaderObjectARB (GLenum shaderType)
 {
+#if 0
 	return _mesa_3dlabs_create_shader_object (shaderType);
+#endif
 }
 
 void GLAPIENTRY
@@ -233,7 +235,9 @@ _mesa_CompileShaderARB (GLhandleARB shaderObj)
 GLhandleARB GLAPIENTRY
 _mesa_CreateProgramObjectARB (void)
 {
+#if 0
 	return _mesa_3dlabs_create_program_object ();
+#endif
 }
 
 void GLAPIENTRY
