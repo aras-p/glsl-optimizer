@@ -1411,6 +1411,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int i, cur_reg;
+	/* I'm still unsure if these are needed */
 	GLuint interp_magic[8] = {
 		0x00,
 		0x40,
@@ -1430,6 +1431,8 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	
 #if 1
 	cur_reg = 0;
+	r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0;
+
 	for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
 		r300->hw.ri.cmd[R300_RI_INTERP_0+i] = 0
 				| R300_RS_INTERP_USED
@@ -1438,6 +1441,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 //		fprintf(stderr, "RS_INTERP[%d] = 0x%x\n", i, r300->hw.ri.cmd[R300_RI_INTERP_0+i]);
 
 		if (r300->state.render_inputs & (_TNL_BIT_TEX0<<i)) {
+			assert(r300->state.texture.tc_count != 0);
 			r300->hw.rr.cmd[R300_RR_ROUTE_0 + cur_reg] = 0
 					| R300_RS_ROUTE_ENABLE
 					| i /* source INTERP */
@@ -1450,20 +1454,25 @@ void r300_setup_rs_unit(GLcontext *ctx)
 		r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0
 				| R300_RS_ROUTE_0_COLOR
 				| (cur_reg << R300_RS_ROUTE_0_COLOR_DEST_SHIFT);
-	r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, cur_reg);
-//	fprintf(stderr, "ADJ_RR0 = 0x%x\n", r300->hw.rr.cmd[R300_RR_ROUTE_0]);
 
-//	fprintf(stderr, "rendering with %d texture co-ordinate sets\n", cur_reg);
+//	fprintf(stderr, "ADJ_RR0 = 0x%x\n", r300->hw.rr.cmd[R300_RR_ROUTE_0]);
 
 	r300->hw.rc.cmd[1] = 0
 			| (cur_reg /* count */ << R300_RS_CNTL_TC_CNT_SHIFT)
 			| R300_RS_CNTL_0_UNKNOWN_7
 			| R300_RS_CNTL_0_UNKNOWN_18;
+
+	if (r300->state.texture.tc_count > 0) {
+			r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, cur_reg);
+			r300->hw.rc.cmd[2] = 0xC0 | (cur_reg-1); /* index of highest */
+	} else {
+			r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, 1);
+			r300->hw.rc.cmd[2] = 0x0;
+	}
+
+
+//	fprintf(stderr, "rendering with %d texture co-ordinate sets\n", cur_reg);
 	
-	if(cur_reg == 0)
-		r300->hw.rc.cmd[2] = 0x0;
-	else
-		r300->hw.rc.cmd[2] = 0xC0 | (cur_reg-1); /* index of highest */
 #else
 	for(i = 1; i <= 8; ++i)
 		r300->hw.ri.cmd[i] = 0x00d10000;
@@ -1562,6 +1571,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa);
 void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 {
 	int i;
+	GLuint o_reg = 0;
 
 	/* Allocate parameters */
 	r300->state.vap_param.transform_offset=0x0;  /* transform matrix */
@@ -1629,13 +1639,14 @@ void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 		VSF_ATTR_X(0),
 		VSF_TMP(0)
 		)
-		
+	o_reg += 2;
+
 	/* Pass through texture coordinates, if any */
 	for(i=0;i < r300->radeon.glCtx->Const.MaxTextureUnits;i++)
 		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i)){
 			// fprintf(stderr, "i_tex[%d]=%d\n", i, r300->state.vap_reg.i_tex[i]);
 			WRITE_OP(
-				EASY_VSF_OP(MUL, 2+i, ALL, RESULT),
+				EASY_VSF_OP(MUL, o_reg++ /* 2+i */, ALL, RESULT),
 				VSF_REG(r300->state.vap_reg.i_tex[i]),
 				VSF_ATTR_UNITY(r300->state.vap_reg.i_tex[i]),
 				VSF_UNITY(r300->state.vap_reg.i_tex[i])
