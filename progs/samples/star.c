@@ -45,7 +45,7 @@ enum {
 
 #define MAXSTARS 400
 #define MAXPOS 10000
-#define MAXWARP 10
+#define MAXWARP 500
 #define MAXANGLES 6000
 
 
@@ -115,6 +115,13 @@ void MoveStars(void)
 {
     float offset;
     GLint n;
+    static double t0 = -1.;
+    double t, dt;
+    t = glutGet(GLUT_ELAPSED_TIME) / 1000.;
+    if (t0 < 0.)
+       t0 = t;
+    dt = 85.*(t - t0);
+    t0 = t;
 
     offset = speed * 60.0;
 
@@ -122,10 +129,10 @@ void MoveStars(void)
 	stars[n].x[1] = stars[n].x[0];
 	stars[n].y[1] = stars[n].y[0];
 	stars[n].z[1] = stars[n].z[0];
-	stars[n].x[0] += stars[n].offsetX;
-	stars[n].y[0] += stars[n].offsetY;
-	stars[n].z[0] -= offset;
-        stars[n].rotation += stars[n].offsetR;
+	stars[n].x[0] += stars[n].offsetX*dt;
+	stars[n].y[0] += stars[n].offsetY*dt;
+	stars[n].z[0] -= offset*dt;
+        stars[n].rotation += stars[n].offsetR*dt;
         if (stars[n].rotation > MAXANGLES) {
             stars[n].rotation = 0.0;
 	}
@@ -295,6 +302,10 @@ static GLenum Args(int argc, char **argv)
     }
     return GL_TRUE;
 }
+
+#if !defined(GLUTCALLBACK)
+#define GLUTCALLBACK
+#endif
 
 void GLUTCALLBACK glut_post_redisplay_p(void)
 {

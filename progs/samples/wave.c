@@ -87,9 +87,26 @@ GLubyte contourTexture2[] = {
     255, 127, 127, 127,
 };
 
+#if !defined(GLUTCALLBACK)
+#define GLUTCALLBACK
+#endif
+
+
 void GLUTCALLBACK glut_post_redisplay_p(void)
 {
-      glutPostRedisplay();
+    static double t0 = -1.;
+    double t, dt;
+    t = glutGet(GLUT_ELAPSED_TIME) / 1000.;
+    if (t0 < 0.)
+       t0 = t;
+    dt = t - t0;
+
+    if (dt < 1./30.)
+        return;
+
+    t0 = t;
+
+    glutPostRedisplay();
 }
 
 static void Animate(void)

@@ -108,7 +108,6 @@ void FillTorus(float rc, int numc, float rt, int numt)
 
 float Clamp(int iters_left, float t)
 {
-
     if (iters_left < 3) {
 	return 0.0;
     }
@@ -119,6 +118,17 @@ void DrawScene(void)
 {
     int i, j;
     GLboolean goIdle;
+    static double t0 = -1.;
+    double t, dt;
+    t = glutGet(GLUT_ELAPSED_TIME) / 1000.;
+    if (t0 < 0.)
+       t0 = t;
+    dt = t - t0;
+
+    if (dt < 1./30.)
+        return;
+
+    t0 = t;
 
     goIdle = GL_TRUE;
     for (i = 0; i < RINGS; i++) {
@@ -166,6 +176,10 @@ float MyRand(void)
 {
    return 10.0 * ( (float) rand() / (float) RAND_MAX - 0.5 );
 }
+
+#if !defined(GLUTCALLBACK)
+#define GLUTCALLBACK
+#endif
 
 void GLUTCALLBACK glut_post_redisplay_p(void)
 {

@@ -29,7 +29,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <GL/glut.h>
-#include "../util/readtex.c"
+#include "readtex.h"
 
 
 #ifndef PI
@@ -820,8 +820,16 @@ void Reshape(int width, int height)
 
 void Idle(void)
 {
-   xRotation += .75;
-   yRotation += .375;
+   static double t0 = -1.;
+   double t, dt;
+   t = glutGet(GLUT_ELAPSED_TIME) / 1000.;
+   if (t0 < 0.)
+      t0 = t;
+   dt = t - t0;
+   t0 = t;
+
+   xRotation += .75*60.*dt;
+   yRotation += .375*60.*dt;
    glutPostRedisplay();
 }
 

@@ -265,6 +265,17 @@ void Mouse(int button, int state, int mouseX, int mouseY)
 
 void Animate(void)
 {
+    static double t0 = -1.;
+    double t, dt;
+    t = glutGet(GLUT_ELAPSED_TIME) / 1000.;
+    if (t0 < 0.)
+       t0 = t;
+    dt = t - t0;
+
+    if (dt < 1./60.)
+        return;
+
+    t0 = t;
 
     switch (op) {
       case OP_STRETCH:
@@ -306,6 +317,10 @@ static GLenum Args(int argc, char **argv)
     }
     return GL_TRUE;
 }
+
+#if !defined(GLUTCALLBACK)
+#define GLUTCALLBACK
+#endif
 
 void GLUTCALLBACK glut_post_redisplay_p(void)
 {
