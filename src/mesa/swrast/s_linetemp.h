@@ -1,8 +1,8 @@
-/* $Id: s_linetemp.h,v 1.14 2002/11/09 21:26:41 brianp Exp $ */
+/* $Id: s_linetemp.h,v 1.15 2002/11/14 03:48:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -34,9 +34,8 @@
  * must be interplated along the line:
  *    INTERP_Z        - if defined, interpolate Z values
  *    INTERP_FOG      - if defined, interpolate FOG values
- *    INTERP_RGB      - if defined, interpolate RGB values
+ *    INTERP_RGBA     - if defined, interpolate RGBA values
  *    INTERP_SPEC     - if defined, interpolate specular RGB values
- *    INTERP_ALPHA    - if defined, interpolate Alpha values
  *    INTERP_INDEX    - if defined, interpolate color index values
  *    INTERP_TEX      - if defined, interpolate unit 0 texcoords
  *    INTERP_MULTITEX - if defined, interpolate multi-texcoords
@@ -70,100 +69,35 @@
  */
 
 
-/*void line( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )*/
+static void
+NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 {
+   struct sw_span span;
+   GLuint interpFlags = 0;
+   GLuint arrayFlags = SPAN_XY;
    GLint x0 = (GLint) vert0->win[0];
    GLint x1 = (GLint) vert1->win[0];
    GLint y0 = (GLint) vert0->win[1];
    GLint y1 = (GLint) vert1->win[1];
    GLint dx, dy;
-#ifdef INTERP_XY
+   GLint numPixels;
    GLint xstep, ystep;
-#endif
-#ifdef INTERP_Z
-   GLint z0, z1, dz;
+#if defined(DEPTH_TYPE)
    const GLint depthBits = ctx->Visual.depthBits;
    const GLint fixedToDepthShift = depthBits <= 16 ? FIXED_SHIFT : 0;
-#  define FixedToDepth(F)  ((F) >> fixedToDepthShift)
-#  ifdef DEPTH_TYPE
+#define FixedToDepth(F)  ((F) >> fixedToDepthShift)
    GLint zPtrXstep, zPtrYstep;
    DEPTH_TYPE *zPtr;
-#  endif
-#endif
-#ifdef INTERP_FOG
-   GLfloat fog0 = vert0->fog;
-   GLfloat dfog = vert1->fog - fog0;
-#endif
-#ifdef INTERP_RGB
-   GLfixed r0 = ChanToFixed(vert0->color[0]);
-   GLfixed dr = ChanToFixed(vert1->color[0]) - r0;
-   GLfixed g0 = ChanToFixed(vert0->color[1]);
-   GLfixed dg = ChanToFixed(vert1->color[1]) - g0;
-   GLfixed b0 = ChanToFixed(vert0->color[2]);
-   GLfixed db = ChanToFixed(vert1->color[2]) - b0;
-#endif
-#ifdef INTERP_SPEC
-   GLfixed sr0 = ChanToFixed(vert0->specular[0]);
-   GLfixed dsr = ChanToFixed(vert1->specular[0]) - sr0;
-   GLfixed sg0 = ChanToFixed(vert0->specular[1]);
-   GLfixed dsg = ChanToFixed(vert1->specular[1]) - sg0;
-   GLfixed sb0 = ChanToFixed(vert0->specular[2]);
-   GLfixed dsb = ChanToFixed(vert1->specular[2]) - sb0;
-#endif
-#ifdef INTERP_ALPHA
-   GLfixed a0 = ChanToFixed(vert0->color[3]);
-   GLfixed da = ChanToFixed(vert1->color[3]) - a0;
-#endif
-#ifdef INTERP_INDEX
-   GLint i0 = vert0->index << 8;
-   GLint di = (GLint) (vert1->index << 8) - i0;
-#endif
-#ifdef INTERP_TEX
-   const GLfloat invw0 = vert0->win[3];
-   const GLfloat invw1 = vert1->win[3];
-   GLfloat tex[4];
-   GLfloat dtex[4];
-   GLfloat fragTexcoord[4];
-#endif
-#ifdef INTERP_MULTITEX
-   const GLfloat invw0 = vert0->win[3];
-   const GLfloat invw1 = vert1->win[3];
-   GLfloat tex[MAX_TEXTURE_UNITS][4];
-   GLfloat dtex[MAX_TEXTURE_UNITS][4];
-   GLfloat fragTexcoord[MAX_TEXTURE_UNITS][4];
+#elif defined(INTERP_Z)
+   const GLint depthBits = ctx->Visual.depthBits;
 #endif
 #ifdef PIXEL_ADDRESS
    PIXEL_TYPE *pixelPtr;
    GLint pixelXstep, pixelYstep;
 #endif
-#ifdef INTERP_TEX
-   {
-      tex[0]  = invw0 * vert0->texcoord[0][0];
-      dtex[0] = invw1 * vert1->texcoord[0][0] - tex[0];
-      tex[1]  = invw0 * vert0->texcoord[0][1];
-      dtex[1] = invw1 * vert1->texcoord[0][1] - tex[1];
-      tex[2]  = invw0 * vert0->texcoord[0][2];
-      dtex[2] = invw1 * vert1->texcoord[0][2] - tex[2];
-      tex[3]  = invw0 * vert0->texcoord[0][3];
-      dtex[3] = invw1 * vert1->texcoord[0][3] - tex[3];
-   }
-#endif
-#ifdef INTERP_MULTITEX
-   {
-      GLuint u;
-      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-         if (ctx->Texture.Unit[u]._ReallyEnabled) {
-            tex[u][0]  = invw0 * vert0->texcoord[u][0];
-            dtex[u][0] = invw1 * vert1->texcoord[u][0] - tex[u][0];
-	    tex[u][1]  = invw0 * vert0->texcoord[u][1];
-	    dtex[u][1] = invw1 * vert1->texcoord[u][1] - tex[u][1];
-	    tex[u][2]  = invw0 * vert0->texcoord[u][2];
-	    dtex[u][2] = invw1 * vert1->texcoord[u][2] - tex[u][2];
-	    tex[u][3]  = invw0 * vert0->texcoord[u][3];
-	    dtex[u][3] = invw1 * vert1->texcoord[u][3] - tex[u][3];
-	 }
-      }
-   }
+
+#ifdef SETUP_CODE
+   SETUP_CODE
 #endif
 
    /* Cull primitives with malformed coordinates.
@@ -173,6 +107,27 @@
       if (IS_INF_OR_NAN(tmp))
 	 return;
    }
+
+#ifdef INTERP_RGBA
+   interpFlags |= SPAN_RGBA;
+#endif
+#ifdef INTERP_SPEC
+   interpFlags |= SPAN_SPEC;
+#endif
+#ifdef INTERP_INDEX
+   interpFlags |= SPAN_INDEX;
+#endif
+#ifdef INTERP_Z
+   interpFlags |= SPAN_Z;
+#endif
+#ifdef INTERP_FOG
+   interpFlags |= SPAN_FOG;
+#endif
+#if defined(INTERP_TEX) || defined(INTERP_MULTITEX)
+   interpFlags |= SPAN_TEXTURE;
+#endif
+
+   INIT_SPAN(span, GL_LINE, 0, interpFlags, arrayFlags);
 
    /*
    printf("%s():\n", __FUNCTION__);
@@ -212,31 +167,14 @@
       }
    }
 #endif
+
    dx = x1 - x0;
    dy = y1 - y0;
-   if (dx==0 && dy==0) {
+   if (dx == 0 && dy == 0)
       return;
-   }
 
-   /*
-    * Setup
-    */
-#ifdef SETUP_CODE
-   SETUP_CODE
-#endif
-
-#ifdef INTERP_Z
-#  ifdef DEPTH_TYPE
-     zPtr = (DEPTH_TYPE *) _mesa_zbuffer_address(ctx, x0, y0);
-#  endif
-   if (depthBits <= 16) {
-      z0 = FloatToFixed(vert0->win[2]) + FIXED_HALF;
-      z1 = FloatToFixed(vert1->win[2]) + FIXED_HALF;
-   }
-   else {
-      z0 = (int) vert0->win[2];
-      z1 = (int) vert1->win[2];
-   }
+#ifdef DEPTH_TYPE
+   zPtr = (DEPTH_TYPE *) _mesa_zbuffer_address(ctx, x0, y0);
 #endif
 #ifdef PIXEL_ADDRESS
    pixelPtr = (PIXEL_TYPE *) PIXEL_ADDRESS(x0,y0);
@@ -244,10 +182,8 @@
 
    if (dx<0) {
       dx = -dx;   /* make positive */
-#ifdef INTERP_XY
       xstep = -1;
-#endif
-#if defined(INTERP_Z) && defined(DEPTH_TYPE)
+#ifdef DEPTH_TYPE
       zPtrXstep = -((GLint)sizeof(DEPTH_TYPE));
 #endif
 #ifdef PIXEL_ADDRESS
@@ -255,10 +191,8 @@
 #endif
    }
    else {
-#ifdef INTERP_XY
       xstep = 1;
-#endif
-#if defined(INTERP_Z) && defined(DEPTH_TYPE)
+#ifdef DEPTH_TYPE
       zPtrXstep = ((GLint)sizeof(DEPTH_TYPE));
 #endif
 #ifdef PIXEL_ADDRESS
@@ -268,10 +202,8 @@
 
    if (dy<0) {
       dy = -dy;   /* make positive */
-#ifdef INTERP_XY
       ystep = -1;
-#endif
-#if defined(INTERP_Z) && defined(DEPTH_TYPE)
+#ifdef DEPTH_TYPE
       zPtrYstep = -((GLint) (ctx->DrawBuffer->Width * sizeof(DEPTH_TYPE)));
 #endif
 #ifdef PIXEL_ADDRESS
@@ -279,10 +211,8 @@
 #endif
    }
    else {
-#ifdef INTERP_XY
       ystep = 1;
-#endif
-#if defined(INTERP_Z) && defined(DEPTH_TYPE)
+#ifdef DEPTH_TYPE
       zPtrYstep = (GLint) (ctx->DrawBuffer->Width * sizeof(DEPTH_TYPE));
 #endif
 #ifdef PIXEL_ADDRESS
@@ -290,146 +220,157 @@
 #endif
    }
 
+   ASSERT(dx >= 0);
+   ASSERT(dy >= 0);
+
+   span.end = numPixels = MAX2(dx, dy);
+
+#ifdef INTERP_RGBA
+   if (ctx->Light.ShadeModel == GL_SMOOTH) {
+      span.red   = ChanToFixed(vert0->color[0]);
+      span.green = ChanToFixed(vert0->color[1]);
+      span.blue  = ChanToFixed(vert0->color[2]);
+      span.alpha = ChanToFixed(vert0->color[3]);
+      span.redStep   = (ChanToFixed(vert1->color[0]) - span.red  ) / numPixels;
+      span.greenStep = (ChanToFixed(vert1->color[1]) - span.green) / numPixels;
+      span.blueStep  = (ChanToFixed(vert1->color[2]) - span.blue ) / numPixels;
+      span.alphaStep = (ChanToFixed(vert1->color[3]) - span.alpha) / numPixels;
+   }
+   else {
+      span.red   = ChanToFixed(vert1->color[0]);
+      span.green = ChanToFixed(vert1->color[1]);
+      span.blue  = ChanToFixed(vert1->color[2]);
+      span.alpha = ChanToFixed(vert1->color[3]);
+      span.redStep   = 0;
+      span.greenStep = 0;
+      span.blueStep  = 0;
+      span.alphaStep = 0;
+   }
+#endif
+#ifdef INTERP_SPEC
+   if (ctx->Light.ShadeModel == GL_SMOOTH) {
+      span.specRed       = ChanToFixed(vert0->specular[0]);
+      span.specGreen     = ChanToFixed(vert0->specular[1]);
+      span.specBlue      = ChanToFixed(vert0->specular[2]);
+      span.specRedStep   = (ChanToFixed(vert1->specular[0]) - span.specRed) / numPixels;
+      span.specGreenStep = (ChanToFixed(vert1->specular[1]) - span.specBlue) / numPixels;
+      span.specBlueStep  = (ChanToFixed(vert1->specular[2]) - span.specGreen) / numPixels;
+   }
+   else {
+      span.specRed       = ChanToFixed(vert1->specular[0]);
+      span.specGreen     = ChanToFixed(vert1->specular[1]);
+      span.specBlue      = ChanToFixed(vert1->specular[2]);
+      span.specRedStep   = 0;
+      span.specGreenStep = 0;
+      span.specBlueStep  = 0;
+   }
+#endif
+#ifdef INTERP_INDEX
+   if (ctx->Light.ShadeModel == GL_SMOOTH) {
+      span.index = IntToFixed(vert0->index);
+      span.indexStep = IntToFixed(vert1->index - vert0->index) / numPixels;
+   }
+   else {
+      span.index = IntToFixed(vert1->index);
+      span.indexStep = 0;
+   }
+#endif
+#if defined(INTERP_Z) || defined(DEPTH_TYPE)
+   {
+      if (depthBits <= 16) {
+         span.z = FloatToFixed(vert0->win[2]) + FIXED_HALF;
+         span.zStep = FloatToFixed(vert1->win[2] - vert0->win[2]) / numPixels;
+      }
+      else {
+         span.z = vert0->win[2];
+         span.zStep = (vert1->win[2] - vert0->win[2]) / numPixels;
+      }
+   }
+#endif
+#ifdef INTERP_FOG
+   span.fog = vert0->fog;
+   span.fogStep = (vert1->fog - vert0->fog) / numPixels;
+#endif
+#ifdef INTERP_TEX
+   {
+      const GLfloat invw0 = vert0->win[3];
+      const GLfloat invw1 = vert1->win[3];
+      const GLfloat invLen = 1.0F / numPixels;
+      GLfloat ds, dt, dr, dq;
+      span.tex[0][0] = invw0 * vert0->texcoord[0][0];
+      span.tex[0][1] = invw0 * vert0->texcoord[0][1];
+      span.tex[0][2] = invw0 * vert0->texcoord[0][2];
+      span.tex[0][3] = invw0 * vert0->texcoord[0][3];
+      ds = (invw1 * vert1->texcoord[0][0]) - span.tex[0][0];
+      dt = (invw1 * vert1->texcoord[0][1]) - span.tex[0][1];
+      dr = (invw1 * vert1->texcoord[0][2]) - span.tex[0][2];
+      dq = (invw1 * vert1->texcoord[0][3]) - span.tex[0][3];
+      span.texStepX[0][0] = ds * invLen;
+      span.texStepX[0][1] = dt * invLen;
+      span.texStepX[0][2] = dr * invLen;
+      span.texStepX[0][3] = dq * invLen;
+      span.texStepY[0][0] = 0.0F;
+      span.texStepY[0][1] = 0.0F;
+      span.texStepY[0][2] = 0.0F;
+      span.texStepY[0][3] = 0.0F;
+   }
+#endif
+#ifdef INTERP_MULTITEX
+   {
+      const GLfloat invLen = 1.0F / numPixels;
+      GLuint u;
+      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+         if (ctx->Texture.Unit[u]._ReallyEnabled) {
+            const GLfloat invw0 = vert0->win[3];
+            const GLfloat invw1 = vert1->win[3];
+            GLfloat ds, dt, dr, dq;
+            span.tex[u][0] = invw0 * vert0->texcoord[u][0];
+            span.tex[u][1] = invw0 * vert0->texcoord[u][1];
+            span.tex[u][2] = invw0 * vert0->texcoord[u][2];
+            span.tex[u][3] = invw0 * vert0->texcoord[u][3];
+            ds = (invw1 * vert1->texcoord[u][0]) - span.tex[u][0];
+            dt = (invw1 * vert1->texcoord[u][1]) - span.tex[u][1];
+            dr = (invw1 * vert1->texcoord[u][2]) - span.tex[u][2];
+            dq = (invw1 * vert1->texcoord[u][3]) - span.tex[u][3];
+            span.texStepX[u][0] = ds * invLen;
+            span.texStepX[u][1] = dt * invLen;
+            span.texStepX[u][2] = dr * invLen;
+            span.texStepX[u][3] = dq * invLen;
+            span.texStepY[u][0] = 0.0F;
+            span.texStepY[u][1] = 0.0F;
+            span.texStepY[u][2] = 0.0F;
+            span.texStepY[u][3] = 0.0F;
+	 }
+      }
+   }
+#endif
+
    /*
     * Draw
     */
 
-   if (dx>dy) {
+   if (dx > dy) {
       /*** X-major line ***/
       GLint i;
       GLint errorInc = dy+dy;
       GLint error = errorInc-dx;
       GLint errorDec = error-dx;
-#ifdef SET_XMAJOR
-      xMajor = GL_TRUE;
-#endif
-#ifdef INTERP_Z
-      dz = (z1-z0) / dx;
-#endif
-#ifdef INTERP_FOG
-      dfog /= dx;
-#endif
-#ifdef INTERP_RGB
-      dr /= dx;   /* convert from whole line delta to per-pixel delta */
-      dg /= dx;
-      db /= dx;
-#endif
-#ifdef INTERP_SPEC
-      dsr /= dx;   /* convert from whole line delta to per-pixel delta */
-      dsg /= dx;
-      dsb /= dx;
-#endif
-#ifdef INTERP_ALPHA
-      da /= dx;
-#endif
-#ifdef INTERP_INDEX
-      di /= dx;
-#endif
-#ifdef INTERP_TEX
-      {
-         const GLfloat invDx = 1.0F / (GLfloat) dx;
-         dtex[0] *= invDx;
-         dtex[1] *= invDx;
-         dtex[2] *= invDx;
-         dtex[3] *= invDx;
-      }
-#endif
-#ifdef INTERP_MULTITEX
-      {
-         const GLfloat invDx = 1.0F / (GLfloat) dx;
-         GLuint u;
-         for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-            if (ctx->Texture.Unit[u]._ReallyEnabled) {
-               dtex[u][0] *= invDx;
-               dtex[u][1] *= invDx;
-               dtex[u][2] *= invDx;
-               dtex[u][3] *= invDx;
-            }
-         }
-      }
-#endif
 
-      for (i=0;i<dx;i++) {
-#ifdef INTERP_Z
-            GLdepth Z = FixedToDepth(z0);
+      for (i = 0; i < dx; i++) {
+#ifdef DEPTH_TYPE
+         GLdepth Z = FixedToDepth(span.z);
 #endif
-#ifdef INTERP_INDEX
-            GLint I = i0 >> 8;
+#ifdef PLOT
+         PLOT( x0, y0 );
+#else
+         span.array->x[i] = x0;
+         span.array->y[i] = y0;
 #endif
-#ifdef INTERP_TEX
-            {
-               const GLfloat invQ = tex[3] ? (1.0F / tex[3]) : 1.0F;
-               fragTexcoord[0] = tex[0] * invQ;
-               fragTexcoord[1] = tex[1] * invQ;
-               fragTexcoord[2] = tex[2] * invQ;
-               fragTexcoord[3] = tex[3];
-            }
-#endif
-#ifdef INTERP_MULTITEX
-            {
-               GLuint u;
-               for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-                  if (ctx->Texture.Unit[u]._ReallyEnabled) {
-                     const GLfloat invQ = 1.0F / tex[u][3];
-                     fragTexcoord[u][0] = tex[u][0] * invQ;
-                     fragTexcoord[u][1] = tex[u][1] * invQ;
-                     fragTexcoord[u][2] = tex[u][2] * invQ;
-                     fragTexcoord[u][3] = tex[u][3];
-                  }
-               }
-            }
-#endif
-
-            PLOT( x0, y0 );
-
-#ifdef INTERP_XY
          x0 += xstep;
-#endif
-#ifdef INTERP_Z
-#  ifdef DEPTH_TYPE
+#ifdef DEPTH_TYPE
          zPtr = (DEPTH_TYPE *) ((GLubyte*) zPtr + zPtrXstep);
-#  endif
-         z0 += dz;
+         span.z += span.zStep;
 #endif
-#ifdef INTERP_FOG
-	 fog0 += dfog;
-#endif
-#ifdef INTERP_RGB
-         r0 += dr;
-         g0 += dg;
-         b0 += db;
-#endif
-#ifdef INTERP_SPEC
-         sr0 += dsr;
-         sg0 += dsg;
-         sb0 += dsb;
-#endif
-#ifdef INTERP_ALPHA
-         a0 += da;
-#endif
-#ifdef INTERP_INDEX
-         i0 += di;
-#endif
-#ifdef INTERP_TEX
-         tex[0] += dtex[0];
-         tex[1] += dtex[1];
-         tex[2] += dtex[2];
-         tex[3] += dtex[3];
-#endif
-#ifdef INTERP_MULTITEX
-         {
-            GLuint u;
-            for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-               if (ctx->Texture.Unit[u]._ReallyEnabled) {
-                  tex[u][0] += dtex[u][0];
-                  tex[u][1] += dtex[u][1];
-                  tex[u][2] += dtex[u][2];
-                  tex[u][3] += dtex[u][3];
-               }
-            }
-         }
-#endif
-
 #ifdef PIXEL_ADDRESS
          pixelPtr = (PIXEL_TYPE*) ((GLubyte*) pixelPtr + pixelXstep);
 #endif
@@ -438,10 +379,8 @@
          }
          else {
             error += errorDec;
-#ifdef INTERP_XY
             y0 += ystep;
-#endif
-#if defined(INTERP_Z) && defined(DEPTH_TYPE)
+#ifdef DEPTH_TYPE
             zPtr = (DEPTH_TYPE *) ((GLubyte*) zPtr + zPtrYstep);
 #endif
 #ifdef PIXEL_ADDRESS
@@ -456,131 +395,21 @@
       GLint errorInc = dx+dx;
       GLint error = errorInc-dy;
       GLint errorDec = error-dy;
-#ifdef INTERP_Z
-      dz = (z1-z0) / dy;
-#endif
-#ifdef INTERP_FOG
-      dfog /= dy;
-#endif
-#ifdef INTERP_RGB
-      dr /= dy;   /* convert from whole line delta to per-pixel delta */
-      dg /= dy;
-      db /= dy;
-#endif
-#ifdef INTERP_SPEC
-      dsr /= dy;   /* convert from whole line delta to per-pixel delta */
-      dsg /= dy;
-      dsb /= dy;
-#endif
-#ifdef INTERP_ALPHA
-      da /= dy;
-#endif
-#ifdef INTERP_INDEX
-      di /= dy;
-#endif
-#ifdef INTERP_TEX
-      {
-         const GLfloat invDy = 1.0F / (GLfloat) dy;
-         dtex[0] *= invDy;
-         dtex[1] *= invDy;
-         dtex[2] *= invDy;
-         dtex[3] *= invDy;
-      }
-#endif
-#ifdef INTERP_MULTITEX
-      {
-         const GLfloat invDy = 1.0F / (GLfloat) dy;
-         GLuint u;
-         for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-            if (ctx->Texture.Unit[u]._ReallyEnabled) {
-               dtex[u][0] *= invDy;
-               dtex[u][1] *= invDy;
-               dtex[u][2] *= invDy;
-               dtex[u][3] *= invDy;
-            }
-         }
-      }
-#endif
 
       for (i=0;i<dy;i++) {
-#ifdef INTERP_Z
-            GLdepth Z = FixedToDepth(z0);
+#ifdef DEPTH_TYPE
+         GLdepth Z = FixedToDepth(span.z);
 #endif
-#ifdef INTERP_INDEX
-            GLint I = i0 >> 8;
+#ifdef PLOT
+         PLOT( x0, y0 );
+#else
+         span.array->x[i] = x0;
+         span.array->y[i] = y0;
 #endif
-#ifdef INTERP_TEX
-            {
-               const GLfloat invQ = tex[3] ? (1.0F / tex[3]) : 1.0F;
-               fragTexcoord[0] = tex[0] * invQ;
-               fragTexcoord[1] = tex[1] * invQ;
-               fragTexcoord[2] = tex[2] * invQ;
-               fragTexcoord[3] = tex[3];
-            }
-#endif
-#ifdef INTERP_MULTITEX
-            {
-               GLuint u;
-               for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-                  if (ctx->Texture.Unit[u]._ReallyEnabled) {
-                     const GLfloat invQ = 1.0F / tex[u][3];
-                     fragTexcoord[u][0] = tex[u][0] * invQ;
-                     fragTexcoord[u][1] = tex[u][1] * invQ;
-                     fragTexcoord[u][2] = tex[u][2] * invQ;
-                     fragTexcoord[u][3] = tex[u][3];
-                  }
-               }
-            }
-#endif
-
-            PLOT( x0, y0 );
-
-#ifdef INTERP_XY
          y0 += ystep;
-#endif
-#ifdef INTERP_Z
-#  ifdef DEPTH_TYPE
+#ifdef DEPTH_TYPE
          zPtr = (DEPTH_TYPE *) ((GLubyte*) zPtr + zPtrYstep);
-#  endif
-         z0 += dz;
-#endif
-#ifdef INTERP_FOG
-	 fog0 += dfog;
-#endif
-#ifdef INTERP_RGB
-         r0 += dr;
-         g0 += dg;
-         b0 += db;
-#endif
-#ifdef INTERP_SPEC
-         sr0 += dsr;
-         sg0 += dsg;
-         sb0 += dsb;
-#endif
-#ifdef INTERP_ALPHA
-         a0 += da;
-#endif
-#ifdef INTERP_INDEX
-         i0 += di;
-#endif
-#ifdef INTERP_TEX
-         tex[0] += dtex[0];
-         tex[1] += dtex[1];
-         tex[2] += dtex[2];
-         tex[3] += dtex[3];
-#endif
-#ifdef INTERP_MULTITEX
-         {
-            GLuint u;
-            for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-               if (ctx->Texture.Unit[u]._ReallyEnabled) {
-                  tex[u][0] += dtex[u][0];
-                  tex[u][1] += dtex[u][1];
-                  tex[u][2] += dtex[u][2];
-                  tex[u][3] += dtex[u][3];
-               }
-            }
-         }
+         span.z += span.zStep;
 #endif
 #ifdef PIXEL_ADDRESS
          pixelPtr = (PIXEL_TYPE*) ((GLubyte*) pixelPtr + pixelYstep);
@@ -590,10 +419,8 @@
          }
          else {
             error += errorDec;
-#ifdef INTERP_XY
             x0 += xstep;
-#endif
-#if defined(INTERP_Z) && defined(DEPTH_TYPE)
+#ifdef DEPTH_TYPE
             zPtr = (DEPTH_TYPE *) ((GLubyte*) zPtr + zPtrXstep);
 #endif
 #ifdef PIXEL_ADDRESS
@@ -603,15 +430,18 @@
       }
    }
 
+#ifdef RENDER_SPAN
+   RENDER_SPAN( span );
+#endif
+
 }
 
 
-#undef INTERP_XY
+#undef NAME
 #undef INTERP_Z
 #undef INTERP_FOG
-#undef INTERP_RGB
+#undef INTERP_RGBA
 #undef INTERP_SPEC
-#undef INTERP_ALPHA
 #undef INTERP_TEX
 #undef INTERP_MULTITEX
 #undef INTERP_INDEX
@@ -623,4 +453,4 @@
 #undef PLOT
 #undef CLIP_HACK
 #undef FixedToDepth
-#undef SET_XMAJOR
+#undef RENDER_SPAN

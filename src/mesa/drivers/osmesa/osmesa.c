@@ -1,8 +1,8 @@
-/* $Id: osmesa.c,v 1.97 2002/11/13 16:57:44 brianp Exp $ */
+/* $Id: osmesa.c,v 1.98 2002/11/14 03:48:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -393,14 +393,12 @@ do {									\
 /*
  * Draw a flat-shaded, RGB line into an osmesa buffer.
  */
-static void
-flat_rgba_line( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
-{
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+#define NAME flat_rgba_line
+#define CLIP_HACK 1
+#define SETUP_CODE						\
+   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);		\
    const GLchan *color = vert1->color;
 
-#define INTERP_XY 1
-#define CLIP_HACK 1
 #define PLOT(X, Y)						\
 do {								\
    GLchan *p = PIXELADDR4(X, Y);				\
@@ -412,22 +410,20 @@ do {								\
 #else
 #include "swrast/s_linetemp.h"
 #endif
-}
+
 
 
 /*
  * Draw a flat-shaded, Z-less, RGB line into an osmesa buffer.
  */
-static void
-flat_rgba_z_line(GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1)
-{
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   const GLchan *color = vert1->color;
-
-#define INTERP_XY 1
+#define NAME flat_rgba_z_line
+#define CLIP_HACK 1
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
-#define CLIP_HACK 1
+#define SETUP_CODE					\
+   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);	\
+   const GLchan *color = vert1->color;
+
 #define PLOT(X, Y)					\
 do {							\
    if (Z < *zPtr) {					\
@@ -438,166 +434,12 @@ do {							\
    }							\
 } while (0)
 
-
 #ifdef WIN32
 #include "..\swrast\s_linetemp.h"
 #else
 #include "swrast/s_linetemp.h"
 #endif
-}
 
-
-/*
- * Draw a flat-shaded, alpha-blended, RGB line into an osmesa buffer.
- * XXX update for GLchan
- */
-static void
-flat_blend_rgba_line( GLcontext *ctx,
-                      const SWvertex *vert0, const SWvertex *vert1 )
-{
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   const GLint rshift = osmesa->rshift;
-   const GLint gshift = osmesa->gshift;
-   const GLint bshift = osmesa->bshift;
-   const GLint avalue = vert0->color[3];
-   const GLint msavalue = CHAN_MAX - avalue;
-   const GLint rvalue = vert1->color[0]*avalue;
-   const GLint gvalue = vert1->color[1]*avalue;
-   const GLint bvalue = vert1->color[2]*avalue;
-
-#define INTERP_XY 1
-#define CLIP_HACK 1
-#define PLOT(X,Y)					\
-   { GLuint *ptr4 = (GLuint *) PIXELADDR4(X, Y);	\
-     GLuint  pixel = 0;					\
-     pixel |=((((((*ptr4) >> rshift) & 0xff)*msavalue+rvalue)>>8) << rshift);\
-     pixel |=((((((*ptr4) >> gshift) & 0xff)*msavalue+gvalue)>>8) << gshift);\
-     pixel |=((((((*ptr4) >> bshift) & 0xff)*msavalue+bvalue)>>8) << bshift);\
-     *ptr4 = pixel;					\
-   }
-
-#if 0  /* XXX use this in the future */
-#define PLOT(X,Y)							\
-   {									\
-      GLchan *pixel = (GLchan *) PIXELADDR4(X, Y);			\
-      pixel[rInd] = (pixel[rInd] * msavalue + rvalue) >> CHAN_BITS;	\
-      pixel[gInd] = (pixel[gInd] * msavalue + gvalue) >> CHAN_BITS;	\
-      pixel[bInd] = (pixel[bInd] * msavalue + bvalue) >> CHAN_BITS;	\
-      pixel[aInd] = (pixel[aInd] * msavalue + avalue) >> CHAN_BITS;	\
-   }
-#endif
-
-#ifdef WIN32
-#include "..\swrast\s_linetemp.h"
-#else
-#include "swrast/s_linetemp.h"
-#endif
-}
-
-
-/*
- * Draw a flat-shaded, Z-less, alpha-blended, RGB line into an osmesa buffer.
- * But don't write to Z buffer.
- * XXX update for GLchan
- */
-static void
-flat_blend_rgba_z_line( GLcontext *ctx,
-                        const SWvertex *vert0, const SWvertex *vert1 )
-{
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   const GLint rshift = osmesa->rshift;
-   const GLint gshift = osmesa->gshift;
-   const GLint bshift = osmesa->bshift;
-   const GLint avalue = vert0->color[3];
-   const GLint msavalue = 256 - avalue;
-   const GLint rvalue = vert1->color[0]*avalue;
-   const GLint gvalue = vert1->color[1]*avalue;
-   const GLint bvalue = vert1->color[2]*avalue;
-
-#define INTERP_XY 1
-#define INTERP_Z 1
-#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
-#define CLIP_HACK 1
-#define PLOT(X,Y)							\
-	if (Z < *zPtr) {						\
-	   GLuint *ptr4 = (GLuint *) PIXELADDR4(X, Y);			\
-	   GLuint  pixel = 0;						\
-	   pixel |=((((((*ptr4) >> rshift) & 0xff)*msavalue+rvalue)>>8) << rshift);	\
-	   pixel |=((((((*ptr4) >> gshift) & 0xff)*msavalue+gvalue)>>8) << gshift);	\
-	   pixel |=((((((*ptr4) >> bshift) & 0xff)*msavalue+bvalue)>>8) << bshift);	\
-	   *ptr4 = pixel; 						\
-	}
-
-#if 0  /* XXX use this in the future */
-#define PLOT(X,Y)							\
-   if (Z < *zPtr) {							\
-      GLchan *pixel = (GLchan *) PIXELADDR4(X, Y);			\
-      pixel[rInd] = (pixel[rInd] * msavalue + rvalue) >> CHAN_BITS;	\
-      pixel[gInd] = (pixel[gInd] * msavalue + gvalue) >> CHAN_BITS;	\
-      pixel[bInd] = (pixel[bInd] * msavalue + bvalue) >> CHAN_BITS;	\
-      pixel[aInd] = (pixel[aInd] * msavalue + avalue) >> CHAN_BITS;	\
-   }
-#endif
-
-#ifdef WIN32
-#include "..\swrast\s_linetemp.h"
-#else
-#include "swrast/s_linetemp.h"
-#endif
-}
-
-
-/*
- * Draw a flat-shaded, Z-less, alpha-blended, RGB line into an osmesa buffer.
- * XXX update for GLchan
- */
-static void
-flat_blend_rgba_z_line_write( GLcontext *ctx,
-                              const SWvertex *vert0, const SWvertex *vert1 )
-{
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   const GLint rshift = osmesa->rshift;
-   const GLint gshift = osmesa->gshift;
-   const GLint bshift = osmesa->bshift;
-   const GLint avalue = vert0->color[3];
-   const GLint msavalue = 256 - avalue;
-   const GLint rvalue = vert1->color[0]*avalue;
-   const GLint gvalue = vert1->color[1]*avalue;
-   const GLint bvalue = vert1->color[2]*avalue;
-
-#define INTERP_XY 1
-#define INTERP_Z 1
-#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
-#define CLIP_HACK 1
-#define PLOT(X,Y)							\
-	if (Z < *zPtr) {						\
-	   GLuint *ptr4 = (GLuint *) PIXELADDR4(X, Y);			\
-	   GLuint  pixel = 0;						\
-	   pixel |=((((((*ptr4) >> rshift) & 0xff)*msavalue+rvalue)>>8) << rshift);	\
-	   pixel |=((((((*ptr4) >> gshift) & 0xff)*msavalue+gvalue)>>8) << gshift);	\
-	   pixel |=((((((*ptr4) >> bshift) & 0xff)*msavalue+bvalue)>>8) << bshift);	\
-	   *ptr4 = pixel;						\
-	   *zPtr = Z;							\
-	}
-
-#if 0  /* XXX use this in the future */
-#define PLOT(X,Y)							\
-   if (Z < *zPtr) {							\
-      GLchan *pixel = (GLchan *) PIXELADDR4(X, Y);			\
-      pixel[rInd] = (pixel[rInd] * msavalue + rvalue) >> CHAN_BITS;	\
-      pixel[gInd] = (pixel[gInd] * msavalue + gvalue) >> CHAN_BITS;	\
-      pixel[bInd] = (pixel[bInd] * msavalue + bvalue) >> CHAN_BITS;	\
-      pixel[aInd] = (pixel[aInd] * msavalue + avalue) >> CHAN_BITS;	\
-      *zPtr = Z;							\
-   }
-#endif
-
-#ifdef WIN32
-#include "..\swrast\s_linetemp.h"
-#else
-#include "swrast/s_linetemp.h"
-#endif
-}
 
 
 /*
@@ -631,39 +473,6 @@ osmesa_choose_line_function( GLcontext *ctx )
 
    if (swrast->_RasterMask == 0) {
       return (swrast_line_func) flat_rgba_line;
-   }
-
-   if (swrast->_RasterMask==(DEPTH_BIT|BLEND_BIT)
-       && ctx->Depth.Func==GL_LESS
-       && ctx->Depth.Mask==GL_TRUE
-       && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS
-       && ctx->Color.BlendSrcRGB==GL_SRC_ALPHA
-       && ctx->Color.BlendDstRGB==GL_ONE_MINUS_SRC_ALPHA
-       && ctx->Color.BlendSrcA==GL_SRC_ALPHA
-       && ctx->Color.BlendDstA==GL_ONE_MINUS_SRC_ALPHA
-       && ctx->Color.BlendEquation==GL_FUNC_ADD_EXT) {
-      return (swrast_line_func) flat_blend_rgba_z_line_write;
-   }
-
-   if (swrast->_RasterMask==(DEPTH_BIT|BLEND_BIT)
-       && ctx->Depth.Func==GL_LESS
-       && ctx->Depth.Mask==GL_FALSE
-       && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS
-       && ctx->Color.BlendSrcRGB==GL_SRC_ALPHA
-       && ctx->Color.BlendDstRGB==GL_ONE_MINUS_SRC_ALPHA
-       && ctx->Color.BlendSrcA==GL_SRC_ALPHA
-       && ctx->Color.BlendDstA==GL_ONE_MINUS_SRC_ALPHA
-       && ctx->Color.BlendEquation==GL_FUNC_ADD_EXT) {
-      return (swrast_line_func) flat_blend_rgba_z_line;
-   }
-
-   if (swrast->_RasterMask==BLEND_BIT
-       && ctx->Color.BlendSrcRGB==GL_SRC_ALPHA
-       && ctx->Color.BlendDstRGB==GL_ONE_MINUS_SRC_ALPHA
-       && ctx->Color.BlendSrcA==GL_SRC_ALPHA
-       && ctx->Color.BlendDstA==GL_ONE_MINUS_SRC_ALPHA
-       && ctx->Color.BlendEquation==GL_FUNC_ADD_EXT) {
-      return (swrast_line_func) flat_blend_rgba_line;
    }
 
    return (swrast_line_func) NULL;

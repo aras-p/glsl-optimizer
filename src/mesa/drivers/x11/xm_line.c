@@ -1,10 +1,10 @@
-/* $Id: xm_line.c,v 1.20 2002/06/15 03:03:10 brianp Exp $ */
+/* $Id: xm_line.c,v 1.21 2002/11/14 03:48:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -123,73 +123,60 @@ void xmesa_choose_point( GLcontext *ctx )
 /*
  * Draw a flat-shaded, PF_TRUECOLOR line into an XImage.
  */
-static void flat_TRUECOLOR_line( GLcontext *ctx,
-                                 const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
-   XMesaImage *img = xmesa->xm_buffer->backimage;
-   unsigned long pixel;
+#define NAME flat_TRUECOLOR_line
+#define SETUP_CODE					\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   const GLubyte *color = vert1->color;			\
+   XMesaImage *img = xmesa->xm_buffer->backimage;	\
+   unsigned long pixel;					\
    PACK_TRUECOLOR( pixel, color[0], color[1], color[2] );
-
-#define INTERP_XY 1
 #define CLIP_HACK 1
 #define PLOT(X,Y) XMesaPutPixel( img, X, FLIP(xmesa->xm_buffer, Y), pixel );
-
 #include "swrast/s_linetemp.h"
-}
 
 
 
 /*
  * Draw a flat-shaded, PF_8A8B8G8R line into an XImage.
  */
-static void flat_8A8B8G8R_line( GLcontext *ctx,
-                                const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
+#define NAME flat_8A8B8G8R_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   const GLubyte *color = vert1->color;				\
    GLuint pixel = PACK_8B8G8R( color[0], color[1], color[2] );
-
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define PIXEL_ADDRESS(X,Y) PIXELADDR4(xmesa->xm_buffer,X,Y)
 #define CLIP_HACK 1
 #define PLOT(X,Y) *pixelPtr = pixel;
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, PF_8R8G8B line into an XImage.
  */
-static void flat_8R8G8B_line( GLcontext *ctx,
-                              const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
+#define NAME flat_8R8G8B_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   const GLubyte *color = vert1->color;				\
    GLuint pixel = PACK_8R8G8B( color[0], color[1], color[2] );
-
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define PIXEL_ADDRESS(X,Y) PIXELADDR4(xmesa->xm_buffer,X,Y)
 #define CLIP_HACK 1
 #define PLOT(X,Y) *pixelPtr = pixel;
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, PF_8R8G8B24 line into an XImage.
  */
-static void flat_8R8G8B24_line( GLcontext *ctx,
-                              const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+#define NAME flat_8R8G8B24_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
    const GLubyte *color = vert1->color;
-
 #define PIXEL_TYPE bgr_t
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define PIXEL_ADDRESS(X,Y) PIXELADDR3(xmesa->xm_buffer,X,Y)
@@ -199,130 +186,109 @@ static void flat_8R8G8B24_line( GLcontext *ctx,
       pixelPtr->g = color[GCOMP];	\
       pixelPtr->b = color[BCOMP];	\
 }
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, PF_5R6G5B line into an XImage.
  */
-static void flat_5R6G5B_line( GLcontext *ctx,
-                              const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
+#define NAME flat_5R6G5B_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   const GLubyte *color = vert1->color;				\
    GLushort pixel = PACK_5R6G5B( color[0], color[1], color[2] );
-
 #define PIXEL_TYPE GLushort
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define PIXEL_ADDRESS(X,Y) PIXELADDR2(xmesa->xm_buffer,X,Y)
 #define CLIP_HACK 1
 #define PLOT(X,Y) *pixelPtr = pixel;
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, PF_DITHER_5R6G5B line into an XImage.
  */
-static void flat_DITHER_5R6G5B_line( GLcontext *ctx,
-                                     const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+#define NAME flat_DITHER_5R6G5B_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
    const GLubyte *color = vert1->color;
-
 #define PIXEL_TYPE GLushort
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define PIXEL_ADDRESS(X,Y) PIXELADDR2(xmesa->xm_buffer,X,Y)
 #define CLIP_HACK 1
 #define PLOT(X,Y) PACK_TRUEDITHER( *pixelPtr, X, Y, color[0], color[1], color[2] );
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 
 /*
  * Draw a flat-shaded, PF_DITHER 8-bit line into an XImage.
  */
-static void flat_DITHER8_line( GLcontext *ctx,
-                               const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
-   GLint r = color[0], g = color[1], b = color[2];
+#define NAME flat_DITHER8_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   const GLubyte *color = vert1->color;				\
+   GLint r = color[0], g = color[1], b = color[2];		\
    DITHER_SETUP;
-
-#define INTERP_XY 1
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define PIXEL_ADDRESS(X,Y) PIXELADDR1(xmesa->xm_buffer,X,Y)
 #define CLIP_HACK 1
 #define PLOT(X,Y) *pixelPtr = DITHER(X,Y,r,g,b);
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, PF_LOOKUP 8-bit line into an XImage.
  */
-static void flat_LOOKUP8_line( GLcontext *ctx,
-                               const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
-   GLubyte pixel;
-   LOOKUP_SETUP;
+#define NAME flat_LOOKUP8_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   const GLubyte *color = vert1->color;				\
+   GLubyte pixel;						\
+   LOOKUP_SETUP;						\
    pixel = (GLubyte) LOOKUP( color[0], color[1], color[2] );
-
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define PIXEL_ADDRESS(X,Y) PIXELADDR1(xmesa->xm_buffer,X,Y)
 #define CLIP_HACK 1
 #define PLOT(X,Y) *pixelPtr = pixel;
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, PF_HPCR line into an XImage.
  */
-static void flat_HPCR_line( GLcontext *ctx,
-                            const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
+#define NAME flat_HPCR_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   const GLubyte *color = vert1->color;				\
    GLint r = color[0], g = color[1], b = color[2];
-
-#define INTERP_XY 1
 #define PIXEL_TYPE GLubyte
 #define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
 #define PIXEL_ADDRESS(X,Y) PIXELADDR1(xmesa->xm_buffer,X,Y)
 #define CLIP_HACK 1
 #define PLOT(X,Y) *pixelPtr = (GLubyte) DITHER_HPCR(X,Y,r,g,b);
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 
 /*
  * Draw a flat-shaded, Z-less, PF_TRUECOLOR line into an XImage.
  */
-static void flat_TRUECOLOR_z_line( GLcontext *ctx,
-                                   const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
-   XMesaImage *img = xmesa->xm_buffer->backimage;
-   unsigned long pixel;
+#define NAME flat_TRUECOLOR_z_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   const GLubyte *color = vert1->color;				\
+   XMesaImage *img = xmesa->xm_buffer->backimage;		\
+   unsigned long pixel;						\
    PACK_TRUECOLOR( pixel, color[0], color[1], color[2] );
-
-#define INTERP_XY 1
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define CLIP_HACK 1
@@ -331,21 +297,18 @@ static void flat_TRUECOLOR_z_line( GLcontext *ctx,
 	   *zPtr = Z;							\
            XMesaPutPixel( img, X, FLIP(xmesa->xm_buffer, Y), pixel );	\
 	}
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, Z-less, PF_8A8B8G8R line into an XImage.
  */
-static void flat_8A8B8G8R_z_line( GLcontext *ctx,
-                                  const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
+#define NAME flat_8A8B8G8R_z_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   const GLubyte *color = vert1->color;				\
    GLuint pixel = PACK_8B8G8R( color[0], color[1], color[2] );
-
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define PIXEL_TYPE GLuint
@@ -357,21 +320,18 @@ static void flat_8A8B8G8R_z_line( GLcontext *ctx,
 	   *zPtr = Z;		\
 	   *pixelPtr = pixel;	\
 	}
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, Z-less, PF_8R8G8B line into an XImage.
  */
-static void flat_8R8G8B_z_line( GLcontext *ctx,
-                                const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
+#define NAME flat_8R8G8B_z_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   const GLubyte *color = vert1->color;				\
    GLuint pixel = PACK_8R8G8B( color[0], color[1], color[2] );
-
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define PIXEL_TYPE GLuint
@@ -383,20 +343,17 @@ static void flat_8R8G8B_z_line( GLcontext *ctx,
 	   *zPtr = Z;		\
 	   *pixelPtr = pixel;	\
 	}
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, Z-less, PF_8R8G8B24 line into an XImage.
  */
-static void flat_8R8G8B24_z_line( GLcontext *ctx,
-                                    const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+#define NAME flat_8R8G8B24_z_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
    const GLubyte *color = vert1->color;
-
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define PIXEL_TYPE bgr_t
@@ -410,21 +367,18 @@ static void flat_8R8G8B24_z_line( GLcontext *ctx,
            pixelPtr->g = color[GCOMP];	\
            pixelPtr->b = color[BCOMP];	\
 	}
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, Z-less, PF_5R6G5B line into an XImage.
  */
-static void flat_5R6G5B_z_line( GLcontext *ctx,
-                                const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
+#define NAME flat_5R6G5B_z_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   const GLubyte *color = vert1->color;				\
    GLushort pixel = PACK_5R6G5B( color[0], color[1], color[2] );
-
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define PIXEL_TYPE GLushort
@@ -437,18 +391,16 @@ static void flat_5R6G5B_z_line( GLcontext *ctx,
 	   *pixelPtr = pixel;	\
 	}
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, Z-less, PF_DITHER_5R6G5B line into an XImage.
  */
-static void flat_DITHER_5R6G5B_z_line( GLcontext *ctx,
-                                       const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
+#define NAME flat_DITHER_5R6G5B_z_line
+#define SETUP_CODE					\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
    const GLubyte *color = vert1->color;
-
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define PIXEL_TYPE GLushort
@@ -461,21 +413,18 @@ static void flat_DITHER_5R6G5B_z_line( GLcontext *ctx,
 	   PACK_TRUEDITHER(*pixelPtr, X, Y, color[0], color[1], color[2]); \
 	}
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, Z-less, PF_DITHER 8-bit line into an XImage.
  */
-static void flat_DITHER8_z_line( GLcontext *ctx,
-                                 const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
-   GLint r = color[0], g = color[1], b = color[2];
+#define NAME flat_DITHER8_z_line
+#define SETUP_CODE					\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;	\
+   const GLubyte *color = vert1->color;			\
+   GLint r = color[0], g = color[1], b = color[2];	\
    DITHER_SETUP;
-
-#define INTERP_XY 1
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define PIXEL_TYPE GLubyte
@@ -488,21 +437,19 @@ static void flat_DITHER8_z_line( GLcontext *ctx,
 	   *pixelPtr = (GLubyte) DITHER( X, Y, r, g, b);	\
 	}
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, Z-less, PF_LOOKUP 8-bit line into an XImage.
  */
-static void flat_LOOKUP8_z_line( GLcontext *ctx,
-                                 const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
-   GLubyte pixel;
-   LOOKUP_SETUP;
+#define NAME flat_LOOKUP8_z_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   const GLubyte *color = vert1->color;				\
+   GLubyte pixel;						\
+   LOOKUP_SETUP;						\
    pixel = (GLubyte) LOOKUP( color[0], color[1], color[2] );
-
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define PIXEL_TYPE GLubyte
@@ -514,22 +461,18 @@ static void flat_LOOKUP8_z_line( GLcontext *ctx,
 	   *zPtr = Z;		\
 	   *pixelPtr = pixel;	\
 	}
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 /*
  * Draw a flat-shaded, Z-less, PF_HPCR line into an XImage.
  */
-static void flat_HPCR_z_line( GLcontext *ctx,
-                              const SWvertex *vert0, const SWvertex *vert1 )
-{
-   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
-   const GLubyte *color = vert1->color;
+#define NAME flat_HPCR_z_line
+#define SETUP_CODE 						\
+   XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;		\
+   const GLubyte *color = vert1->color;				\
    GLint r = color[0], g = color[1], b = color[2];
-
-#define INTERP_XY 1
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define PIXEL_TYPE GLubyte
@@ -541,9 +484,8 @@ static void flat_HPCR_z_line( GLcontext *ctx,
 	   *zPtr = Z;						\
 	   *pixelPtr = (GLubyte) DITHER_HPCR( X, Y, r, g, b);	\
 	}
-
 #include "swrast/s_linetemp.h"
-}
+
 
 
 static swrast_line_func get_line_func( GLcontext *ctx )
