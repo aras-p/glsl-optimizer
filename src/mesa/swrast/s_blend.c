@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.18 2002/04/04 16:53:26 brianp Exp $ */
+/* $Id: s_blend.c,v 1.19 2002/04/10 16:32:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -646,10 +646,8 @@ void _swrast_choose_blend_func( GLcontext *ctx )
       SWRAST_CONTEXT(ctx)->BlendFunc = blend_general;
    }
    else if (eq==GL_FUNC_ADD_EXT && srcRGB==GL_SRC_ALPHA
-            && dstRGB==GL_ONE_MINUS_SRC_ALPHA)
-   {
-      /* XXX It looks like the MMX blend code is broken.  Disable for now. */
-#if 0 && defined(USE_MMX_ASM)
+            && dstRGB==GL_ONE_MINUS_SRC_ALPHA) {
+#if defined(USE_MMX_ASM)
       if ( cpu_has_mmx ) {
          SWRAST_CONTEXT(ctx)->BlendFunc = _mesa_mmx_blend_transparency;
       }
