@@ -41,7 +41,7 @@ OBJECTS = \
 	nvprogram.obj,\
 	nvvertexec.obj,\
 	nvvertparse.obj,\
-	program.obj \
+	program.obj,\
 	shaderobjects.obj
 
 
@@ -69,4 +69,4 @@ nvprogram.obj : nvprogram.c
 nvvertexec.obj : nvvertexec.c
 nvvertparse.obj : nvvertparse.c
 program.obj : program.c
-shaderobjects.obj: shaderobjects.c
+shaderobjects.obj : shaderobjects.c
