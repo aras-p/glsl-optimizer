@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.146 2001/07/26 20:02:10 brianp Exp $ */
+/* $Id: context.c,v 1.147 2001/09/15 18:02:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -608,7 +608,7 @@ init_light( struct gl_light *l, GLuint n )
 static void
 init_lightmodel( struct gl_lightmodel *lm )
 {
-   ASSIGN_4V( lm->Ambient, 0.2, 0.2, 0.2, 1.0 );
+   ASSIGN_4V( lm->Ambient, 0.2F, 0.2F, 0.2F, 1.0F );
    lm->LocalViewer = GL_FALSE;
    lm->TwoSide = GL_FALSE;
    lm->ColorControl = GL_SINGLE_COLOR;
@@ -618,10 +618,10 @@ init_lightmodel( struct gl_lightmodel *lm )
 static void
 init_material( struct gl_material *m )
 {
-   ASSIGN_4V( m->Ambient,  0.2, 0.2, 0.2, 1.0 );
-   ASSIGN_4V( m->Diffuse,  0.8, 0.8, 0.8, 1.0 );
-   ASSIGN_4V( m->Specular, 0.0, 0.0, 0.0, 1.0 );
-   ASSIGN_4V( m->Emission, 0.0, 0.0, 0.0, 1.0 );
+   ASSIGN_4V( m->Ambient,  0.2F, 0.2F, 0.2F, 1.0F );
+   ASSIGN_4V( m->Diffuse,  0.8F, 0.8F, 0.8F, 1.0F );
+   ASSIGN_4V( m->Specular, 0.0F, 0.0F, 0.0F, 1.0F );
+   ASSIGN_4V( m->Emission, 0.0F, 0.0F, 0.0F, 1.0F );
    m->Shininess = 0.0;
    m->AmbientIndex = 0;
    m->DiffuseIndex = 1;
@@ -743,12 +743,12 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Const.MaxPointSize = MAX_POINT_SIZE;
    ctx->Const.MinPointSizeAA = MIN_POINT_SIZE;
    ctx->Const.MaxPointSizeAA = MAX_POINT_SIZE;
-   ctx->Const.PointSizeGranularity = POINT_SIZE_GRANULARITY;
+   ctx->Const.PointSizeGranularity = (GLfloat) POINT_SIZE_GRANULARITY;
    ctx->Const.MinLineWidth = MIN_LINE_WIDTH;
    ctx->Const.MaxLineWidth = MAX_LINE_WIDTH;
    ctx->Const.MinLineWidthAA = MIN_LINE_WIDTH;
    ctx->Const.MaxLineWidthAA = MAX_LINE_WIDTH;
-   ctx->Const.LineWidthGranularity = LINE_WIDTH_GRANULARITY;
+   ctx->Const.LineWidthGranularity = (GLfloat) LINE_WIDTH_GRANULARITY;
    ctx->Const.NumAuxBuffers = NUM_AUX_BUFFERS;
    ctx->Const.MaxColorTableSize = MAX_COLOR_TABLE_SIZE;
    ctx->Const.MaxConvolutionWidth = MAX_CONVOLUTION_WIDTH;
@@ -1159,8 +1159,8 @@ init_attrib_groups( GLcontext *ctx )
 
 #define Sz 10
 #define Tz 14
-   ctx->Viewport._WindowMap.m[Sz] = 0.5 * ctx->DepthMaxF;
-   ctx->Viewport._WindowMap.m[Tz] = 0.5 * ctx->DepthMaxF;
+   ctx->Viewport._WindowMap.m[Sz] = 0.5F * ctx->DepthMaxF;
+   ctx->Viewport._WindowMap.m[Tz] = 0.5F * ctx->DepthMaxF;
 #undef Sz
 #undef Tz
 

@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.22 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: clip.c,v 1.23 2001/09/15 18:02:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,9 +41,6 @@
 
 
 
-
-
-
 /**********************************************************************/
 /*                     Get/Set User clip-planes.                      */
 /**********************************************************************/
@@ -64,10 +61,10 @@ _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
       return;
    }
 
-   equation[0] = eq[0];
-   equation[1] = eq[1];
-   equation[2] = eq[2];
-   equation[3] = eq[3];
+   equation[0] = (GLfloat) eq[0];
+   equation[1] = (GLfloat) eq[1];
+   equation[2] = (GLfloat) eq[2];
+   equation[3] = (GLfloat) eq[3];
 
    /*
     * The equation is transformed by the transpose of the inverse of the

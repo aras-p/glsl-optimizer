@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.41 2001/07/14 17:53:04 brianp Exp $ */
+/* $Id: colortab.c,v 1.42 2001/09/15 18:02:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1009,10 +1009,10 @@ _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
 
    switch (pname) {
       case GL_COLOR_TABLE_FORMAT:
-         *params = table->IntFormat;
+         *params = (GLfloat) table->IntFormat;
          break;
       case GL_COLOR_TABLE_WIDTH:
-         *params = table->Size;
+         *params = (GLfloat) table->Size;
          break;
       case GL_COLOR_TABLE_RED_SIZE:
          *params = table->RedSize;
