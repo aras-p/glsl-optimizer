@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.53 2001/02/26 23:58:12 brianp Exp $ */
+/* $Id: get.c,v 1.54 2001/02/27 22:33:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1147,7 +1147,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
       /* GL_EXT_convolution (also in 1.2 imaging) */
       case GL_CONVOLUTION_1D_EXT:
-         if (ctx->Extensions.EXT_convolution) {
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
             *params = ctx->Pixel.Convolution1DEnabled;
          }
          else {
@@ -1156,7 +1156,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
          break;
       case GL_CONVOLUTION_2D:
-         if (ctx->Extensions.EXT_convolution) {
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
             *params = ctx->Pixel.Convolution2DEnabled;
          }
          else {
@@ -1165,7 +1165,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          }
          break;
       case GL_SEPARABLE_2D:
-         if (ctx->Extensions.EXT_convolution) {
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
             *params = ctx->Pixel.Separable2DEnabled;
          }
          else {
@@ -1549,7 +1549,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Pixel.GreenScale;
          break;
       case GL_HISTOGRAM:
-         if (ctx->Extensions.EXT_histogram) {
+         if (ctx->Extensions.EXT_histogram || ctx->Extensions.ARB_imaging) {
             *params = (GLdouble) ctx->Pixel.HistogramEnabled;
          }
          else {
@@ -2335,7 +2335,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
       /* GL_EXT_convolution (also in 1.2 imaging) */
       case GL_CONVOLUTION_1D_EXT:
-         if (ctx->Extensions.EXT_convolution) {
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
             *params = (GLdouble) ctx->Pixel.Convolution1DEnabled;
          }
          else {
@@ -2344,7 +2344,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          }
          break;
       case GL_CONVOLUTION_2D:
-         if (ctx->Extensions.EXT_convolution) {
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
             *params = (GLdouble) ctx->Pixel.Convolution2DEnabled;
          }
          else {
@@ -2353,7 +2353,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          }
          break;
       case GL_SEPARABLE_2D:
-         if (ctx->Extensions.EXT_convolution) {
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
             *params = (GLdouble) ctx->Pixel.Separable2DEnabled;
          }
          else {
@@ -2737,7 +2737,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) ctx->Pixel.GreenScale;
          break;
       case GL_HISTOGRAM:
-         if (ctx->Extensions.EXT_histogram) {
+         if (ctx->Extensions.EXT_histogram || ctx->Extensions.ARB_imaging) {
             *params = (GLfloat) ctx->Pixel.HistogramEnabled;
          }
          else {
@@ -3497,7 +3497,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
       /* GL_EXT_convolution (also in 1.2 imaging) */
       case GL_CONVOLUTION_1D_EXT:
-         if (ctx->Extensions.EXT_convolution) {
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
             *params = (GLfloat) ctx->Pixel.Convolution1DEnabled;
          }
          else {
@@ -3506,7 +3506,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          }
          break;
       case GL_CONVOLUTION_2D:
-         if (ctx->Extensions.EXT_convolution) {
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
             *params = (GLfloat) ctx->Pixel.Convolution2DEnabled;
          }
          else {
@@ -3515,7 +3515,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          }
          break;
       case GL_SEPARABLE_2D:
-         if (ctx->Extensions.EXT_convolution) {
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
             *params = (GLfloat) ctx->Pixel.Separable2DEnabled;
          }
          else {
@@ -3901,7 +3901,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Pixel.GreenScale;
          break;
       case GL_HISTOGRAM:
-         if (ctx->Extensions.EXT_histogram) {
+         if (ctx->Extensions.EXT_histogram || ctx->Extensions.ARB_imaging) {
             *params = (GLint) ctx->Pixel.HistogramEnabled;
          }
          else {
@@ -4687,7 +4687,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
       /* GL_EXT_convolution (also in 1.2 imaging) */
       case GL_CONVOLUTION_1D_EXT:
-         if (ctx->Extensions.EXT_convolution) {
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
             *params = (GLint) ctx->Pixel.Convolution1DEnabled;
          }
          else {
@@ -4696,7 +4696,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          }
          break;
       case GL_CONVOLUTION_2D:
-         if (ctx->Extensions.EXT_convolution) {
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
             *params = (GLint) ctx->Pixel.Convolution2DEnabled;
          }
          else {
@@ -4705,7 +4705,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          }
          break;
       case GL_SEPARABLE_2D:
-         if (ctx->Extensions.EXT_convolution) {
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
             *params = (GLint) ctx->Pixel.Separable2DEnabled;
          }
          else {
@@ -4912,7 +4912,7 @@ _mesa_GetString( GLenum name )
           case GL_VERSION:
              return (const GLubyte *) version;
           case GL_EXTENSIONS:
-             return (const GLubyte *) _mesa_extensions_get_string( ctx );
+             return (const GLubyte *) _mesa_extensions_get_string(ctx);
           default:
              gl_error( ctx, GL_INVALID_ENUM, "glGetString" );
              return (const GLubyte *) 0;
