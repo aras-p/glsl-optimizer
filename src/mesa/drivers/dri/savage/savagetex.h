@@ -31,7 +31,7 @@
 #include "savagecontext.h"
 #include "texmem.h"
 
-#define SAVAGE_TEX_MAXLEVELS 11
+#define SAVAGE_TEX_MAXLEVELS 12
 
 /** \brief Texture tiling information */
 typedef struct savage_tileinfo_t {
