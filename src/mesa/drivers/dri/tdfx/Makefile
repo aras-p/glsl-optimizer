@@ -1,10 +1,9 @@
 # src/mesa/drivers/dri/tdfx/Makefile
 
 TOP = ../../../../..
-include $(TOP)/configs/default
+include $(TOP)/configs/current
 
-SHARED_INCLUDES = $(INCLUDE_DIRS) -I. -I../common -Iserver
-MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
+LIBNAME = tdfx_dri.so
 
 DEFINES += \
 	-D_HAVE_SWRAST=1 \
@@ -14,39 +13,61 @@ DEFINES += \
 	-D_HAVE_LIGHTING=1 \
 	-D_HAVE_TEXGEN=1 \
 	-D_HAVE_USERCLIP=1 \
-	-DGLX_DIRECT_RENDERING 
+	-DGLX_DIRECT_RENDERING
 
 # not yet
 # MINIGLX_SOURCES = server/tdfx_dri.c 
 
-DRIVER_SOURCES = tdfx_context.c \
-		../../common/driverfuncs.c \
-		 ../common/mm.c \
-		 ../common/utils.c \
-		 ../common/texmem.c \
-		 ../common/vblank.c \
-		 ../common/xmlconfig.c \
-		 tdfx_dd.c \
-		 tdfx_lock.c \
-		 tdfx_pixels.c \
-		 tdfx_render.c \
-		 tdfx_screen.c \
-		 tdfx_span.c \
-		 tdfx_state.c \
-		 tdfx_tex.c \
-		 tdfx_texman.c \
-		 tdfx_texstate.c \
-		 tdfx_tris.c \
-		 tdfx_vb.c
+COMMON_SOURCES = \
+	../../common/driverfuncs.c \
+	../common/mm.c \
+	../common/utils.c \
+	../common/texmem.c \
+	../common/vblank.c \
+	../common/xmlconfig.c
 
-INCLUDES = $(MINIGLX_INCLUDES) \
-	   $(SHARED_INCLUDES)
+DRIVER_SOURCES = \
+	tdfx_context.c \
+	tdfx_dd.c \
+	tdfx_lock.c \
+	tdfx_pixels.c \
+	tdfx_render.c \
+	tdfx_screen.c \
+	tdfx_span.c \
+	tdfx_state.c \
+	tdfx_tex.c \
+	tdfx_texman.c \
+	tdfx_texstate.c \
+	tdfx_tris.c \
+	tdfx_vb.c
 
+C_SOURCES = \
+	$(COMMON_SOURCES) \
+	$(MINIGLX_SOURCES) \
+	$(DRIVER_SOURCES)
 
-C_SOURCES = $(DRIVER_SOURCES) \
-	    $(MINIGLX_SOURCES) 
+# Include directories
+INCLUDE_DIRS = \
+	-I. \
+	-I../common \
+	-Iserver \
+	-I$(TOP)/src/glx/mini \
+	-I$(TOP)/include \
+	-I$(TOP)/src/mesa/drivers/dri/drm/shared \
+	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mesa/main \
+	-I$(TOP)/src/mesa/glapi \
+	-I$(TOP)/src/mesa/math \
+	-I$(TOP)/src/mesa/transform \
+	-I$(TOP)/src/mesa/shader \
+	-I$(TOP)/src/mesa/swrast \
+	-I$(TOP)/src/mesa/swrast_setup
 
+# Core Mesa objects
 MESA_MODULES = $(TOP)/src/mesa/mesa.a
+
+# Libraries that the driver shared lib depends on
+LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread -lexpat -ldl -lc
 
 
 ifeq ($(WINDOW_SYSTEM),dri)
@@ -58,56 +79,34 @@ WINLIB=-L$(MESA)/src/glx/mini
 endif
 
 ASM_SOURCES = 
+
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) 
-
-$(SYMLINKS):
-	mkdir -p server
-	cd server
-	rm -f $@ && ln -s ../../radeon/$@ $@
-
-
-### Include directories
-
-INCLUDE_DIRS = \
-	-I$(TOP)/include \
-	-I$(TOP)/src/mesa \
-	-I$(TOP)/src/mesa/main \
-	-I$(TOP)/src/mesa/glapi \
-	-I$(TOP)/src/mesa/math \
-	-I$(TOP)/src/mesa/transform \
-	-I$(TOP)/src/mesa/swrast \
-	-I$(TOP)/src/mesa/swrast_setup
 
 
 ##### RULES #####
 
 .c.o:
-	$(CC) -c $(SHARED_INCLUDES) $(MINIGLX_INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $(DEFINES) $< -o $@
 
 .S.o:
-	$(CC) -c $(SHARED_INCLUDES) $(MINIGLX_INCLUDES) $(CFLAGS) $(DEFINES)  $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $(DEFINES)  $< -o $@
 
 
 ##### TARGETS #####
 
-default: depend tdfx_dri.so
+default: depend $(LIB_DIR)/$(LIBNAME)
 
-tdfx_dri.so:  $(SYMLINKS) $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.solo
-	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
-	rm -f $(LIB_DIR)/tdfx_dri.so && \
-	install tdfx_dri.so $(LIB_DIR)/tdfx_dri.so
 
-$(LIB_DIR)/tdfx_dri.so:	tdfx_dri.so
-	rm -f $(LIB_DIR)/tdfx_dri.so && \
-	install tdfx_dri.so $(LIB_DIR)/tdfx_dri.so
+$(LIB_DIR)/$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile
+	$(TOP)/bin/mklib -o $(LIBNAME) -noprefix -install $(LIB_DIR) \
+		$(WINLIB) $(LIB_DEPS) $(WINOBJ) $(MESA_MODULES) $(OBJECTS)
 
-# Run 'make -f Makefile.solo dep' to update the dependencies if you change
-# what's included by any source file.
+
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	touch depend
-	makedepend -fdepend -Y $(SHARED_INCLUDES) $(MINIGLX_INCLUDES) \
-		$(C_SOURCES) $(ASM_SOURCES) >& /dev/null
+	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDE_DIRS) $(C_SOURCES) $(ASM_SOURCES) \
+		>& /dev/null
 
 
 # Emacs tags
@@ -115,9 +114,8 @@ tags:
 	etags `find . -name \*.[ch]` `find ../include`
 
 
-# Remove .o and backup files
 clean:
-	-rm -f *.o */*.o *~ *.o *~ *.so server/*.o
-	-rm -f $(SYMLINKS)
+	-rm -f *.o server/*.o
+
 
 include depend
