@@ -444,7 +444,6 @@ static void _save_upgrade_vertex( GLcontext *ctx,
       tnl->save.counter = ctx->Const.MaxArrayLockSize;
    tnl->save.initial_counter = tnl->save.counter;
 
-
    /* Recalculate all the attrptr[] values:
     */
    for (i = 0, tmp = tnl->save.vertex ; i < _TNL_ATTRIB_MAX ; i++) {
@@ -459,7 +458,6 @@ static void _save_upgrade_vertex( GLcontext *ctx,
    /* Copy from current to repopulate the vertex with correct values.
     */
    _save_copy_from_current( ctx );
-
 
    /* Replay stored vertices to translate them to new format here.
     *
@@ -1534,13 +1532,16 @@ static void _save_current_init( GLcontext *ctx )
    GLint i;
 
    for (i = 0; i < _TNL_ATTRIB_MAT_FRONT_AMBIENT; i++) {
+      ASSERT(i < VERT_ATTRIB_MAX);
       tnl->save.currentsz[i] = &ctx->ListState.ActiveAttribSize[i];
       tnl->save.current[i] = ctx->ListState.CurrentAttrib[i];
    }
 
    for (i = _TNL_ATTRIB_MAT_FRONT_AMBIENT; i < _TNL_ATTRIB_INDEX; i++) {
-      tnl->save.currentsz[i] = &ctx->ListState.ActiveMaterialSize[i];
-      tnl->save.current[i] = ctx->ListState.CurrentMaterial[i];
+      const GLuint j = i - _TNL_ATTRIB_MAT_FRONT_AMBIENT;
+      ASSERT(j < MAT_ATTRIB_MAX);
+      tnl->save.currentsz[i] = &ctx->ListState.ActiveMaterialSize[j];
+      tnl->save.current[i] = ctx->ListState.CurrentMaterial[j];
    }
 
    tnl->save.currentsz[_TNL_ATTRIB_INDEX] = &ctx->ListState.ActiveIndex;
