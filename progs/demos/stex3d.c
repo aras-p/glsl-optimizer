@@ -1,4 +1,4 @@
-/* $Id: stex3d.c,v 1.2 1999/09/17 12:27:01 brianp Exp $ */
+/* $Id: stex3d.c,v 1.3 1999/12/16 08:54:22 brianp Exp $ */
 
 /*----------------------------- 
  * stex3d.c GL example of the mesa 3d-texture extention to simulate procedural
@@ -17,6 +17,9 @@
 
 /*
  * $Log: stex3d.c,v $
+ * Revision 1.3  1999/12/16 08:54:22  brianp
+ * added a cast to malloc call
+ *
  * Revision 1.2  1999/09/17 12:27:01  brianp
  * silenced some warnings
  *
@@ -230,7 +233,7 @@ void create3Dtexture()
  int tmp;
 
  printf("creating 3d textures...\n");
- voxels = (unsigned char  *) malloc((4*tex_width*tex_height*tex_depth));
+ voxels = (unsigned char  *) malloc((size_t)(4*tex_width*tex_height*tex_depth));
  vp=voxels;
  for (i=0;i<tex_width;i++){
     vec[0]=i;
