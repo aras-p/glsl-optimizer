@@ -2212,6 +2212,17 @@ glGetProgramRegisterfvMESA(GLenum target, GLsizei len, const GLubyte *name,
 #endif /* GL_MESA_program_debug */
 
 
+#ifndef GL_ATI_blend_equation_separate
+#define GL_ATI_blend_equation_separate 1
+
+#define GL_ALPHA_BLEND_EQUATION_ATI	        0x883D
+
+GLAPI void GLAPIENTRY glBlendEquationSeparateATI( GLenum modeRGB, GLenum modeA );
+typedef void (APIENTRYP PFNGLBLENDEQUATIONSEPARATEATIPROC) (GLenum modeRGB, GLenum modeA);
+
+#endif /* GL_ATI_blend_equation_separate */
+
+
 /**********************************************************************
  * Begin system-specific stuff
  */
