@@ -1,4 +1,4 @@
-/* $Id: m_debug_util.h,v 1.3 2001/03/30 14:44:43 gareth Exp $ */
+/* $Id: m_debug_util.h,v 1.4 2001/05/23 14:27:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,7 +38,9 @@
  * NOTE: it works only on CPUs which know the 'rdtsc' command (586 or higher)
  * (hope, you don't try to debug Mesa on a 386 ;)
  */
-#if defined(__GNUC__) && defined(__i386__) && defined(USE_X86_ASM)
+#if defined(__GNUC__) && \
+    ((defined(__i386__) && defined(USE_X86_ASM)) || \
+     (defined(__sparc__) && defined(USE_SPARC_ASM)))
 #define  RUN_DEBUG_BENCHMARK
 #endif
 
@@ -66,6 +68,8 @@ extern char *mesa_profile;
  * positive (time used by other processes, task switches etc).
  * It is assumed that all calculations are done in the cache.
  */
+
+#if defined(__i386__)
 
 #if 1 /* PPro, PII, PIII version */
 
@@ -181,6 +185,30 @@ extern char *mesa_profile;
    }									\
    x -= counter_overhead;
 
+#endif
+
+#elif defined(__sparc__)
+
+#define  INIT_COUNTER()	\
+	 do { counter_overhead = 5; } while(0)
+
+#define  BEGIN_RACE(x)                                                        \
+x = LONG_MAX;                                                                 \
+for (cycle_i = 0; cycle_i <10; cycle_i++) {                                   \
+   register long cycle_tmp1 asm("l0");					      \
+   register long cycle_tmp2 asm("l1");					      \
+   /* rd %tick, %l0 */							      \
+   __asm__ __volatile__ (".word 0xa1410000" : "=r" (cycle_tmp1));  /*  save timestamp   */
+
+#define END_RACE(x)                                                           \
+   /* rd %tick, %l1 */							      \
+   __asm__ __volatile__ (".word 0xa3410000" : "=r" (cycle_tmp2));	      \
+   if (x > (cycle_tmp2-cycle_tmp1)) x = cycle_tmp2 - cycle_tmp1;              \
+}                                                                             \
+x -= counter_overhead;
+
+#else
+#error Your processor is not supported for RUN_XFORM_BENCHMARK
 #endif
 
 #else
