@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.47 2002/01/16 16:00:04 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.48 2002/01/21 18:12:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -107,7 +107,7 @@ static void smooth_ci_triangle( GLcontext *ctx,
       span.color.index[i] = FixedToInt(span.index);			\
       span.index += span.indexStep;					\
    }									\
-   _mesa_write_index_span(ctx, &span, GL_POLYGON);
+   _mesa_write_index_span(ctx, &span, NULL, GL_POLYGON);
 
 #include "s_tritemp.h"
 }
@@ -155,6 +155,7 @@ static void smooth_rgba_triangle( GLcontext *ctx,
 #define RENDER_SPAN( span )					\
    GLuint i;				        	        \
    SW_SPAN_SET_FLAG(span.filledColor);			        \
+   SW_SPAN_SET_FLAG(span.filledAlpha);			        \
    for (i = 0; i < span.end; i++) {				\
       span.color.rgba[i][RCOMP] = FixedToChan(span.red);	\
       span.color.rgba[i][GCOMP] = FixedToChan(span.green);	\
@@ -165,7 +166,7 @@ static void smooth_rgba_triangle( GLcontext *ctx,
       span.blue += span.blueStep;				\
       span.alpha += span.alphaStep;				\
    }								\
-   _mesa_write_rgba_span(ctx, &span, GL_POLYGON);
+   _mesa_write_rgba_span(ctx, &span, NULL, GL_POLYGON);
 
 #include "s_tritemp.h"
 
@@ -192,7 +193,7 @@ static void simple_textured_triangle( GLcontext *ctx,
 #define SETUP_CODE							\
    SWcontext *swrast = SWRAST_CONTEXT(ctx);                             \
    struct gl_texture_object *obj = ctx->Texture.Unit[0].Current2D;	\
-   GLint b = obj->BaseLevel;						\
+   const GLint b = obj->BaseLevel;					\
    const GLfloat twidth = (GLfloat) obj->Image[b]->Width;		\
    const GLfloat theight = (GLfloat) obj->Image[b]->Height;		\
    const GLint twidth_log2 = obj->Image[b]->WidthLog2;			\
@@ -221,7 +222,8 @@ static void simple_textured_triangle( GLcontext *ctx,
       span.intTex[1] += span.intTexStep[1];				\
    }									\
    (*swrast->Driver.WriteRGBSpan)(ctx, span.end, span.x, span.y,	\
-                                  (CONST GLchan (*)[3]) span.color.rgb, NULL );
+                                  (CONST GLchan (*)[3]) span.color.rgb,	\
+                                  NULL );
 
 #include "s_tritemp.h"
 }
@@ -248,13 +250,13 @@ static void simple_z_textured_triangle( GLcontext *ctx,
 #define SETUP_CODE							\
    SWcontext *swrast = SWRAST_CONTEXT(ctx);                             \
    struct gl_texture_object *obj = ctx->Texture.Unit[0].Current2D;	\
-   GLint b = obj->BaseLevel;						\
-   GLfloat twidth = (GLfloat) obj->Image[b]->Width;			\
-   GLfloat theight = (GLfloat) obj->Image[b]->Height;			\
-   GLint twidth_log2 = obj->Image[b]->WidthLog2;			\
+   const GLint b = obj->BaseLevel;					\
+   const GLfloat twidth = (GLfloat) obj->Image[b]->Width;		\
+   const GLfloat theight = (GLfloat) obj->Image[b]->Height;		\
+   const GLint twidth_log2 = obj->Image[b]->WidthLog2;			\
    const GLchan *texture = (const GLchan *) obj->Image[b]->Data;	\
-   GLint smask = obj->Image[b]->Width - 1;				\
-   GLint tmask = obj->Image[b]->Height - 1;				\
+   const GLint smask = obj->Image[b]->Width - 1;			\
+   const GLint tmask = obj->Image[b]->Height - 1;			\
    if (!texture) {							\
       /* this shouldn't happen */					\
       return;								\
@@ -286,7 +288,8 @@ static void simple_z_textured_triangle( GLcontext *ctx,
       span.z += span.zStep;						\
    }									\
    (*swrast->Driver.WriteRGBSpan)(ctx, span.end, span.x, span.y,	\
-                                  (CONST GLchan (*)[3]) span.color.rgb, span.mask );
+                                  (CONST GLchan (*)[3]) span.color.rgb,	\
+                                  span.mask );
 
 #include "s_tritemp.h"
 }
@@ -552,7 +555,7 @@ affine_span(GLcontext *ctx, struct sw_span *span,
       }
       break;
    }
-   _mesa_write_rgba_span(ctx, span, GL_POLYGON);
+   _mesa_write_rgba_span(ctx, span, NULL, GL_POLYGON);
 
 #undef SPAN_NEAREST
 #undef SPAN_LINEAR
@@ -581,9 +584,9 @@ static void affine_textured_triangle( GLcontext *ctx,
    struct affine_info info;						\
    struct gl_texture_unit *unit = ctx->Texture.Unit+0;			\
    struct gl_texture_object *obj = unit->Current2D;			\
-   GLint b = obj->BaseLevel;						\
-   GLfloat twidth = (GLfloat) obj->Image[b]->Width;			\
-   GLfloat theight = (GLfloat) obj->Image[b]->Height;			\
+   const GLint b = obj->BaseLevel;					\
+   const GLfloat twidth = (GLfloat) obj->Image[b]->Width;		\
+   const GLfloat theight = (GLfloat) obj->Image[b]->Height;		\
    info.texture = (const GLchan *) obj->Image[b]->Data;			\
    info.twidth_log2 = obj->Image[b]->WidthLog2;				\
    info.smask = obj->Image[b]->Width - 1;				\
@@ -824,7 +827,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
       break;
    }
    
-   _mesa_write_rgba_span(ctx, span, GL_POLYGON);
+   _mesa_write_rgba_span(ctx, span, NULL, GL_POLYGON);
 
 
 #undef SPAN_NEAREST
@@ -852,9 +855,9 @@ static void persp_textured_triangle( GLcontext *ctx,
 
 #define SETUP_CODE							\
    struct persp_info info;						\
-   struct gl_texture_unit *unit = ctx->Texture.Unit+0;			\
-   struct gl_texture_object *obj = unit->Current2D;			\
-   GLint b = obj->BaseLevel;						\
+   const struct gl_texture_unit *unit = ctx->Texture.Unit+0;		\
+   const struct gl_texture_object *obj = unit->Current2D;		\
+   const GLint b = obj->BaseLevel;					\
    info.texture = (const GLchan *) obj->Image[b]->Data;			\
    info.twidth_log2 = obj->Image[b]->WidthLog2;				\
    info.smask = obj->Image[b]->Width - 1;				\
@@ -932,22 +935,20 @@ static void general_textured_triangle( GLcontext *ctx,
    (void) fixedToDepthShift;
 
 #define RENDER_SPAN( span )						\
-   GLfloat fogSpan[MAX_WIDTH];						\
    GLuint i;								\
    SW_SPAN_SET_FLAG(span.filledColor);					\
+   SW_SPAN_SET_FLAG(span.filledAlpha);					\
    SW_SPAN_SET_FLAG(span.filledTex[0]);					\
    /* NOTE: we could just call rasterize_span() here instead */		\
    for (i = 0; i < span.end; i++) {					\
       GLdouble invQ = span.tex[0][3] ? (1.0 / span.tex[0][3]) : 1.0;	\
       span.depth[i] = FixedToDepth(span.z);				\
       span.z += span.zStep;						\
-      fogSpan[i] = span.fog;			          		\
-      span.fog += span.fogStep;					\
       span.color.rgba[i][RCOMP] = FixedToChan(span.red);		\
       span.color.rgba[i][GCOMP] = FixedToChan(span.green);		\
       span.color.rgba[i][BCOMP] = FixedToChan(span.blue);		\
       span.color.rgba[i][ACOMP] = FixedToChan(span.alpha);		\
-      span.red += span.redStep;					\
+      span.red += span.redStep;						\
       span.green += span.greenStep;					\
       span.blue += span.blueStep;					\
       span.alpha += span.alphaStep;					\
@@ -959,8 +960,7 @@ static void general_textured_triangle( GLcontext *ctx,
       span.tex[0][2] += span.texStep[0][2];				\
       span.tex[0][3] += span.texStep[0][3];				\
    }									\
-   _mesa_write_texture_span( ctx, &span, fogSpan,			\
-                             GL_POLYGON );
+   _mesa_write_texture_span( ctx, &span, NULL, GL_POLYGON );
 
 #include "s_tritemp.h"
 }
@@ -1124,7 +1124,7 @@ static void occlusion_zless_triangle( GLcontext *ctx,
 #define RENDER_SPAN( span )				\
    GLuint i;						\
    for (i = 0; i < span.end; i++) {			\
-      GLdepth z = FixedToDepth(span.z);		\
+      GLdepth z = FixedToDepth(span.z);			\
       if (z < zRow[i]) {				\
          ctx->OcclusionResult = GL_TRUE;		\
          return;					\

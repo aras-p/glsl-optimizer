@@ -1,4 +1,4 @@
-/* $Id: s_fog.h,v 1.6 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: s_fog.h,v 1.7 2002/01/21 18:12:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,10 +44,17 @@ _old_fog_rgba_pixels( const GLcontext *ctx,
 extern void
 _mesa_fog_rgba_pixels( const GLcontext *ctx, struct sw_span *span,
 		       GLchan rgba[][4]);
+extern void
+_mesa_fog_rgba_pixels_with_array( const GLcontext *ctx, struct sw_span *span,
+				  const GLfloat fog[], GLchan rgba[][4] );
+
 
 extern void
 _mesa_fog_ci_pixels( const GLcontext *ctx, struct sw_span *span,
 		     GLuint indx[]);
+extern void
+_mesa_fog_ci_pixels_with_array( const GLcontext *ctx, struct sw_span *span,
+				const GLfloat fog[], GLuint index[] );
 extern void
 _old_fog_ci_pixels( const GLcontext *ctx,
 		    GLuint n, const GLfloat fog[],

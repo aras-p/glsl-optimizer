@@ -1,10 +1,10 @@
-/* $Id: s_alpha.c,v 1.4 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: s_alpha.c,v 1.5 2002/01/21 18:12:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,7 +34,84 @@
 #include "s_alpha.h"
 
 
+/*
+ * Apply the alpha test to a span of pixels.
+ * In:  rgba - array of pixels
+ * In/Out:  span -
+ * Return:  0 = all pixels in the span failed the alpha test.
+ *          1 = one or more pixels passed the alpha test.
+ */
+GLint
+_mesa_alpha_test( const GLcontext *ctx, struct sw_span *span,
+                  CONST GLchan rgba[][4])
+{
+   GLuint i;
+   const GLchan ref = ctx->Color.AlphaRef;
+   GLubyte *mask = span->mask;
 
+   ASSERT (span->filledMask == GL_TRUE);
+   ASSERT (span->filledAlpha == GL_TRUE);
+
+   SW_SPAN_SET_FLAG(span->testedAlpha);
+
+
+   /* switch cases ordered from most frequent to less frequent */
+   switch (ctx->Color.AlphaFunc) {
+      case GL_LESS:
+         for (i=span->start; i<span->end; i++) {
+	    mask[i] &= (rgba[i][ACOMP] < ref);
+	 }
+	 break;
+      case GL_LEQUAL:
+         for (i=span->start; i<span->end; i++)
+	    mask[i] &= (rgba[i][ACOMP] <= ref);
+	 break;
+      case GL_GEQUAL:
+         for (i=span->start; i<span->end; i++) {
+	    mask[i] &= (rgba[i][ACOMP] >= ref);
+	 }
+	 break;
+      case GL_GREATER:
+         for (i=span->start; i<span->end; i++) {
+	    mask[i] &= (rgba[i][ACOMP] > ref);
+	 }
+	 break;
+      case GL_NOTEQUAL:
+         for (i=span->start; i<span->end; i++) {
+	    mask[i] &= (rgba[i][ACOMP] != ref);
+	 }
+	 break;
+      case GL_EQUAL:
+         for (i=span->start; i<span->end; i++) {
+	    mask[i] &= (rgba[i][ACOMP] == ref);
+	 }
+	 break;
+      case GL_ALWAYS:
+	 /* do nothing */
+	 return 1;
+      case GL_NEVER:
+         /* caller should check for zero! */
+	 return 0;
+      default:
+	 _mesa_problem( ctx, "Invalid alpha test in gl_alpha_test" );
+         return 0;
+   }
+
+   while ((span->start <= span->end)  &&
+	  (mask[span->start] == 0))
+     span->start ++;
+
+   while ((span->end >= span->start)  &&
+	  (mask[span->end] == 0))
+     span->end --;
+
+   span->writeAll = GL_FALSE;
+
+   if (span->start >= span->end)
+     return 0;
+   else
+     return 1;
+}
 
 
 /*
@@ -46,11 +123,11 @@
  *          1 = one or more pixels passed the alpha test.
  */
 GLint
-_mesa_alpha_test( const GLcontext *ctx,
-                  GLuint n, CONST GLchan rgba[][4], GLubyte mask[] )
+_old_alpha_test( const GLcontext *ctx,
+		 GLuint n, CONST GLchan rgba[][4], GLubyte mask[] )
 {
    GLuint i;
-   GLchan ref = ctx->Color.AlphaRef;
+   const GLchan ref = ctx->Color.AlphaRef;
 
    /* switch cases ordered from most frequent to less frequent */
    switch (ctx->Color.AlphaFunc) {

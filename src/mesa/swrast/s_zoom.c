@@ -1,10 +1,10 @@
-/* $Id: s_zoom.c,v 1.7 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: s_zoom.c,v 1.8 2002/01/21 18:12:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,8 @@
 
 #include "glheader.h"
 #include "macros.h"
+#include "mem.h"
+#include "colormac.h"
 
 #include "s_context.h"
 #include "s_span.h"
@@ -33,6 +35,36 @@
 #include "s_zoom.h"
 
 
+#ifdef DEBUG
+
+#define SAVE_SPAN(span)    struct sw_span tmp_span = (span);
+
+#define RESTORE_SPAN(span)						\
+{									\
+   GLint i;								\
+   for (i=tmp_span.start; i<tmp_span.end; i++) {			\
+      if (tmp_span.color.rgba[i][RCOMP] !=				\
+          (span).color.rgba[i][RCOMP] ||	 			\
+          tmp_span.color.rgba[i][GCOMP] != 				\
+	  (span).color.rgba[i][GCOMP] || 				\
+	  tmp_span.color.rgba[i][BCOMP] != 				\
+	  (span).color.rgba[i][BCOMP]) {				\
+         fprintf(stderr, "glZoom: Color-span changed in subfunction.");	\
+      }									\
+      if (tmp_span.depth[i] != (span).depth[i]) {			\
+         fprintf(stderr, "glZoom: Depth-span changed in subfunction.");	\
+      }									\
+   }									\
+   (span) = tmp_span;							\
+}
+
+#else /* DEBUG not defined */
+
+#define SAVE_SPAN(span)    GLint start = (span).start, end = (span).end;
+#define RESTORE_SPAN(span) (span).start = start, (span).end = end;      \
+			   (span).writeAll = GL_TRUE;
+
+#endif /* DEBUG */
 
 /*
  * Write a span of pixels to the frame buffer while applying a pixel zoom.
@@ -49,25 +81,31 @@ _mesa_write_zoomed_rgba_span( GLcontext *ctx,
                               const GLfloat *fog,
                               CONST GLchan rgba[][4], GLint y0 )
 {
-   GLint m;
-   GLint r0, r1, row, r;
-   GLint i, j, skipcol;
-   GLchan zrgba[MAX_WIDTH][4];  /* zoomed pixel colors */
-   GLdepth zdepth[MAX_WIDTH];  /* zoomed depth values */
+   GLint r0, r1, row;
+   GLint i, j;
+   struct sw_span dstspan;
    GLfloat zfog[MAX_WIDTH];  /* zoomed fog values */
-   GLint maxwidth = MIN2( ctx->DrawBuffer->Width, MAX_WIDTH );
-   const GLuint *srcRGBA32 = (const GLuint *) rgba;
-   GLuint *dstRGBA32 = (GLuint *) zrgba;
+   const GLint maxwidth = MIN2( ctx->DrawBuffer->Width, MAX_WIDTH );
+
+   SW_SPAN_RESET (dstspan);
 
    /* compute width of output row */
-   m = (GLint) ABSF( n * ctx->Pixel.ZoomX );
-   if (m==0) {
+   dstspan.end = (GLint) ABSF( n * ctx->Pixel.ZoomX );
+   if (dstspan.end == 0) {
       return;
    }
+   /*here ok or better latter? like it was before */
+   else if (dstspan.end > maxwidth) {
+     dstspan.end = maxwidth;
+   }
+
    if (ctx->Pixel.ZoomX<0.0) {
       /* adjust x coordinate for left/right mirroring */
-      x = x - m;
+      dstspan.x = x - dstspan.end;
    }
+   else
+     dstspan.x = x;
+
 
    /* compute which rows to draw */
    row = y-y0;
@@ -93,47 +131,53 @@ _mesa_write_zoomed_rgba_span( GLcontext *ctx,
    }
 
    /* check if left edge is outside window */
-   skipcol = 0;
-   if (x<0) {
-      skipcol = -x;
-      m += x;
+   if (dstspan.x < 0) {
+      dstspan.start = -x;
    }
+
    /* make sure span isn't too long or short */
-   if (m>maxwidth) {
+   /*   if (m>maxwidth) {
       m = maxwidth;
-   }
-   else if (m<=0) {
+      }*/
+
+   if (dstspan.end <= dstspan.start) {
       return;
    }
 
-   ASSERT( m <= MAX_WIDTH );
+   ASSERT( dstspan.end <= MAX_WIDTH );
 
    /* zoom the span horizontally */
    if (ctx->Pixel.ZoomX==-1.0F) {
+      SW_SPAN_SET_FLAG(dstspan.filledColor);
+      SW_SPAN_SET_FLAG(dstspan.filledAlpha);
+      SW_SPAN_SET_FLAG(dstspan.filledDepth);
       /* n==m */
-      for (j=0;j<m;j++) {
-         i = n - (j+skipcol) - 1;
-         dstRGBA32[j] = srcRGBA32[i];
-         zdepth[j] = z[i];
+      for (j=dstspan.start; j<dstspan.end; j++) {
+         i = n - j - 1;
+	 COPY_CHAN4(dstspan.color.rgba[j], rgba[i]);
+         dstspan.depth[j] = z[i];
       }
       if (fog && ctx->Fog.Enabled) {
-	 for (j=0;j<m;j++) {
-	    i = n - (j+skipcol) - 1;
+	 for (j=dstspan.start; j<dstspan.end; j++) {
+	    i = n - j - 1;
 	    zfog[j] = fog[i];
 	 }
       }
    }
    else {
-      GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
-      for (j=0;j<m;j++) {
-         i = (GLint) ((j+skipcol) * xscale);
+      const GLfloat xscale = 1.0F / ctx->Pixel.ZoomX;
+      SW_SPAN_SET_FLAG(dstspan.filledColor);
+      SW_SPAN_SET_FLAG(dstspan.filledAlpha);
+      SW_SPAN_SET_FLAG(dstspan.filledDepth);
+      for (j=dstspan.start; j<dstspan.end; j++) {
+         i = (GLint) (j * xscale);
          if (i<0)  i = n + i - 1;
-         dstRGBA32[j] = srcRGBA32[i];
-         zdepth[j] = z[i];
+	 COPY_CHAN4(dstspan.color.rgba[j], rgba[i]);
+         dstspan.depth[j] = z[i];
       }
       if (fog && ctx->Fog.Enabled) {
-	 for (j=0;j<m;j++) {
-	    i = (GLint) ((j+skipcol) * xscale);
+	 for (j=dstspan.start; j<dstspan.end; j++) {
+	    i = (GLint) (j * xscale);
 	    if (i<0)  i = n + i - 1;
 	    zfog[j] = fog[i];
 	 }
@@ -141,9 +185,13 @@ _mesa_write_zoomed_rgba_span( GLcontext *ctx,
    }
 
    /* write the span */
-   for (r=r0; r<r1; r++) {
-      _old_write_rgba_span( ctx, m, x+skipcol, r, zdepth,
-			  (fog ? zfog : 0), zrgba, NULL, GL_BITMAP );
+   for (dstspan.y = r0; dstspan.y < r1; dstspan.y++) {
+      SAVE_SPAN(dstspan);
+      _mesa_write_rgba_span(ctx, &dstspan, (fog ? zfog : NULL), GL_BITMAP);
+      RESTORE_SPAN(dstspan);
+      /* problem here: "dstspan" can change inside
+	 "_mesa_write_rgba_span". Best solution: make copy "tmpspan"
+	 and give to function, but too slow */
    }
 }
 

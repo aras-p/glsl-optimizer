@@ -1,4 +1,4 @@
-/* $Id: s_span.h,v 1.10 2002/01/16 16:00:04 brianp Exp $ */
+/* $Id: s_span.h,v 1.11 2002/01/21 18:12:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,7 +47,7 @@ _old_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 void
 _mesa_write_index_span( GLcontext *ctx,	struct sw_span *span,
-			GLenum primitive);
+			const GLfloat fog[MAX_WIDTH], GLenum primitive);
 
 extern void
 _mesa_write_monoindex_span( GLcontext *ctx, struct sw_span *span,
@@ -55,7 +55,7 @@ _mesa_write_monoindex_span( GLcontext *ctx, struct sw_span *span,
 
 extern void
 _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
-                       GLenum primitive );
+		       const GLfloat fog[MAX_WIDTH], GLenum primitive);
 
 extern void
 _mesa_write_monocolor_span( GLcontext *ctx, struct sw_span *span,
@@ -63,7 +63,7 @@ _mesa_write_monocolor_span( GLcontext *ctx, struct sw_span *span,
 
 extern void
 _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
-			  const GLfloat fog[], GLenum primitive );
+			  const GLfloat fog[MAX_WIDTH], GLenum primitive );
 
 
 extern void

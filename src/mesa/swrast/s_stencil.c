@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.14 2002/01/08 14:56:51 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.15 2002/01/21 18:12:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -586,7 +586,7 @@ _mesa_stencil_and_ztest_span(GLcontext *ctx, struct sw_span *span)
 					span->y, stencil, span->mask );
    }
    
-   span->write_all = GL_FALSE;
+   span->writeAll = GL_FALSE;
    
    return result;
 }

@@ -1,10 +1,10 @@
-/* $Id: s_zoom.h,v 1.5 2001/05/03 22:13:32 brianp Exp $ */
+/* $Id: s_zoom.h,v 1.6 2002/01/21 18:12:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,7 @@
 
 
 #include "mtypes.h"
-
+#include "swrast.h"
 
 extern void
 _mesa_write_zoomed_rgba_span( GLcontext *ctx,

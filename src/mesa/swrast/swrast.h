@@ -1,4 +1,4 @@
-/* $Id: swrast.h,v 1.14 2002/01/10 16:54:29 brianp Exp $ */
+/* $Id: swrast.h,v 1.15 2002/01/21 18:12:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,6 @@
 #define SWRAST_H
 
 #include "mtypes.h"
-
 
 
 /* The software rasterizer now uses this format for vertices.  Thus a
@@ -98,9 +97,15 @@ typedef struct {
 
 struct sw_span {
    GLint x, y;
-   GLuint start, end;  /* start=first pixel in span, end=last pixel in span*/
-                       /* only end is used until now.(end was before called count) */
+
+   /* only need to process pixels between start <= i < end */
+   GLuint start, end;
+
+   /* This flag indicates that only a part of the span is visible */
+   GLboolean writeAll;
+
    GLuint activeMask;  /* OR of the SPAN_* flags */
+
 #if CHAN_TYPE == GL_FLOAT
    GLfloat red, redStep;
    GLfloat green, greenStep;
@@ -127,28 +132,32 @@ struct sw_span {
    GLfloat rho[MAX_TEXTURE_UNITS];
    GLfloat texWidth[MAX_TEXTURE_UNITS], texHeight[MAX_TEXTURE_UNITS];
 
-   GLboolean write_all;   /* This flag indicates that only a part of */
-                          /*the span is visible. */
-#ifdef DEBUG
-   GLboolean filledDepth, filledMask, filledAlpha;
-   GLboolean filledColor, filledSpecular;
-   GLboolean filledLambda[MAX_TEXTURE_UNITS], filledTex[MAX_TEXTURE_UNITS];
-   GLboolean testedDepth, testedAlpha;
-#endif
-   /* The interpolated fragment values */
+   /**
+    * Arrays of fragment values.  These will either be computed from the
+    * x/xStep values above or loadd from glDrawPixels, etc.
+    */
    GLdepth depth[MAX_WIDTH];
    union {
       GLchan rgb[MAX_WIDTH][3];
       GLchan rgba[MAX_WIDTH][4];
       GLuint index[MAX_WIDTH];
    } color;
-   GLchan specular[MAX_WIDTH][4];
-   GLint   itexcoords[MAX_WIDTH][2];                       /* s, t    */
-   GLfloat texcoords[MAX_TEXTURE_UNITS][MAX_WIDTH][4];     /* s, t, r */
+   GLchan  specular[MAX_WIDTH][4];
+   GLint   itexcoords[MAX_WIDTH][2];           /* Integer texture (s, t) */
+   /* Texture (s,t,r).  4th component only used for pixel texture */
+   GLfloat texcoords[MAX_TEXTURE_UNITS][MAX_WIDTH][4];
    GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];
    GLfloat coverage[MAX_WIDTH];
    GLubyte mask[MAX_WIDTH];
+
+#ifdef DEBUG
+   GLboolean filledDepth, filledMask, filledAlpha;
+   GLboolean filledColor, filledSpecular;
+   GLboolean filledLambda[MAX_TEXTURE_UNITS], filledTex[MAX_TEXTURE_UNITS];
+   GLboolean testedDepth, testedAlpha;
+#endif
 };
+
 
 #ifdef DEBUG
 #define SW_SPAN_SET_FLAG(flag) {ASSERT((flag) == GL_FALSE);(flag) = GL_TRUE;}
@@ -160,10 +169,10 @@ struct sw_span {
 		MAX_TEXTURE_UNITS*sizeof(GLboolean));                \
          MEMSET((span).filledLambda, GL_FALSE,                       \
 		MAX_TEXTURE_UNITS*sizeof(GLboolean));                \
-         (span).start = 0; (span).write_all = GL_TRUE;}
+         (span).start = 0; (span).writeAll = GL_TRUE;}
 #else
 #define SW_SPAN_SET_FLAG(flag) ;
-#define SW_SPAN_RESET(span) {(span).start = 0;(span).write_all = GL_TRUE;}
+#define SW_SPAN_RESET(span) {(span).start = 0;(span).writeAll = GL_TRUE;}
 #endif
 
 struct swrast_device_driver;

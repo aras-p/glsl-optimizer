@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.22 2002/01/16 16:00:03 brianp Exp $ */
+/* $Id: s_span.c,v 1.23 2002/01/21 18:12:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -105,7 +105,7 @@ stipple_polygon_span( GLcontext *ctx, struct sw_span *span)
          m = highbit;
       }
    }
-   span->write_all = GL_FALSE;
+   span->writeAll = GL_FALSE;
 }
 
 
@@ -179,7 +179,7 @@ clip_span( GLcontext *ctx, struct sw_span *span)
       }
       else {
          /* partially off left side */
-	 span->write_all = GL_FALSE;
+	 span->writeAll = GL_FALSE;
          BZERO(span->mask, -x * sizeof(GLubyte));
 	 return GL_TRUE;
       }
@@ -488,7 +488,7 @@ _old_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 
    /* Do the alpha test */
    if (ctx->Color.AlphaEnabled) {
-      if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4]) rgba, mask ) == 0) {
+      if (_old_alpha_test( ctx, n, (const GLchan (*)[4]) rgba, mask ) == 0) {
 	 return;
       }
       write_all = GL_FALSE;
@@ -575,7 +575,7 @@ _old_write_rgba_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
  */
 void
 _mesa_write_index_span( GLcontext *ctx,	struct sw_span *span,
-			GLenum primitive )
+			const GLfloat fog[MAX_WIDTH], GLenum primitive)
 {
    const GLuint modBits = FOG_BIT | BLEND_BIT | MASKING_BIT | LOGIC_OP_BIT;
    GLuint indexBackup[MAX_WIDTH];
@@ -659,8 +659,9 @@ _mesa_write_index_span( GLcontext *ctx,	struct sw_span *span,
    }
 
    if (ctx->Fog.Enabled) {
-     /* Is this the right 'if' ?? */
-     if ((span->activeMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
+     if (fog != NULL  &&  !swrast->_PreferPixelFog)
+       _mesa_fog_ci_pixels_with_array( ctx, span, fog, index);
+     else if ((span->activeMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
        _mesa_fog_ci_pixels( ctx, span, index);
      else
        _mesa_depth_fog_ci_pixels( ctx, span, index);
@@ -791,7 +792,6 @@ _mesa_write_monoindex_span( GLcontext *ctx, struct sw_span *span,
       }
 
       if (ctx->Fog.Enabled) {
-	 /* Is this the right 'if' ?? */
 	 if ((span->activeMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
  	    _mesa_fog_ci_pixels( ctx, span, indexes );
  	 else
@@ -853,7 +853,7 @@ _mesa_write_monoindex_span( GLcontext *ctx, struct sw_span *span,
  */
 void
 _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
-                       GLenum primitive )
+		       const GLfloat fog[MAX_WIDTH], GLenum primitive)
 {
    const GLuint modBits = FOG_BIT | BLEND_BIT | MASKING_BIT |
                           LOGIC_OP_BIT | TEXTURE_BIT;
@@ -898,10 +898,9 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
 
    /* Do the alpha test */
    if (ctx->Color.AlphaEnabled) {
-      if (_mesa_alpha_test( ctx, span->end, (const GLchan (*)[4]) rgba, span->mask ) == 0) {
+      if (_mesa_alpha_test( ctx, span, (const GLchan (*)[4]) rgba) == 0) {
 	 return;
       }
-      span->write_all = GL_FALSE;
    }
 
    /* I have to think where to put this!! */
@@ -943,8 +942,9 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
 
    /* Per-pixel fog */
    if (ctx->Fog.Enabled) {
-      /* Is this the right 'if' ?? */
-      if ((span->activeMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
+      if (fog != NULL  &&  !swrast->_PreferPixelFog)
+	 _mesa_fog_rgba_pixels_with_array( ctx, span, fog, rgba);
+      else if ((span->activeMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
          _mesa_fog_rgba_pixels( ctx, span, rgba );
       else
          _mesa_depth_fog_rgba_pixels( ctx, span, rgba );
@@ -986,12 +986,12 @@ _mesa_write_rgba_span( GLcontext *ctx, struct sw_span *span,
       /* write pixels */
       (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y,
                                  (const GLchan (*)[4]) rgba,
-                                 span->write_all ? ((const GLubyte *) NULL) : span->mask );
+                                 span->writeAll ? ((const GLubyte *) NULL) : span->mask );
 
       if (swrast->_RasterMask & ALPHABUF_BIT) {
          _mesa_write_alpha_span( ctx, span->end, span->x, span->y,
                                  (const GLchan (*)[4]) rgba,
-                                 span->write_all ? ((const GLubyte *) NULL) : span->mask );
+                                 span->writeAll ? ((const GLubyte *) NULL) : span->mask );
       }
    }
 }
@@ -1036,13 +1036,13 @@ _mesa_write_monocolor_span( GLcontext *ctx, struct sw_span *span,
 
    /* Do the alpha test */
    if (ctx->Color.AlphaEnabled) {
+      SW_SPAN_SET_FLAG(span->filledAlpha);
       for (i = 0; i < span->end; i++) {
          rgba[i][ACOMP] = color[ACOMP];
       }
-      if (_mesa_alpha_test( ctx, span->end, (const GLchan (*)[4])rgba, span->mask ) == 0) {
+      if (_mesa_alpha_test( ctx, span, (const GLchan (*)[4])rgba) == 0) {
 	 return;
       }
-      span->write_all = GL_FALSE;
    }
 
    /* I have to think where to put this!! */
@@ -1103,8 +1103,7 @@ _mesa_write_monocolor_span( GLcontext *ctx, struct sw_span *span,
 
       /* Per-pixel fog */
       if (ctx->Fog.Enabled) {
-	/* Is this the right 'if' ?? */
-	if ((span->activeMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
+	 if ((span->activeMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
 	    _mesa_fog_rgba_pixels( ctx, span, rgba );
 	 else
 	    _mesa_depth_fog_rgba_pixels( ctx, span, rgba );
@@ -1144,11 +1143,11 @@ _mesa_write_monocolor_span( GLcontext *ctx, struct sw_span *span,
          /* write pixels */
          (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y,
                                 (const GLchan (*)[4]) rgba,
-                                 span->write_all ? ((const GLubyte *) NULL) : span->mask );
+                                 span->writeAll ? ((const GLubyte *) NULL) : span->mask );
          if (swrast->_RasterMask & ALPHABUF_BIT) {
             _mesa_write_alpha_span( ctx, span->end, span->x, span->y,
                                  (const GLchan (*)[4]) rgba,
-                                 span->write_all ? ((const GLubyte *) NULL) : span->mask );
+                                 span->writeAll ? ((const GLubyte *) NULL) : span->mask );
          }
       }
    }
@@ -1170,8 +1169,9 @@ _mesa_write_monocolor_span( GLcontext *ctx, struct sw_span *span,
       else {
          (*swrast->Driver.WriteMonoRGBASpan)( ctx, span->end, span->x, span->y, color, span->mask );
          if (swrast->_RasterMask & ALPHABUF_BIT) {
-            _mesa_write_mono_alpha_span( ctx, span->end, span->x, span->y, (GLchan) color[ACOMP],
-                                 span->write_all ? ((const GLubyte *) NULL) : span->mask );
+            _mesa_write_mono_alpha_span( ctx, span->end, span->x, span->y,
+                                         (GLchan) color[ACOMP],
+                                 span->writeAll ? ((const GLubyte *) NULL) : span->mask );
          }
       }
    }
@@ -1219,7 +1219,7 @@ add_colors(CONST struct sw_span *span, GLchan rgba[][4])
  */
 void
 _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
-			  const GLfloat fog[], GLenum primitive )
+			  const GLfloat fog[MAX_WIDTH], GLenum primitive )
 {
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
    GLchan rgbaBackup[MAX_WIDTH][4];
@@ -1265,10 +1265,9 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
       _swrast_texture_fragments( ctx, 0, span, rgba );
 
       /* Do the alpha test */
-      if (_mesa_alpha_test( ctx, span->end, (const GLchan (*)[4]) rgba, span->mask ) == 0) {
+      if (_mesa_alpha_test( ctx, span, (const GLchan (*)[4]) rgba ) == 0) {
          return;
       }
-      span->write_all = GL_FALSE;
    }
 
    if (ctx->Stencil.Enabled) {
@@ -1301,9 +1300,10 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
    
    /* Per-pixel fog */
    if (ctx->Fog.Enabled) {
-      /* Is this the right 'if' ?? */
-      if ((span->activeMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
-	 _old_fog_rgba_pixels( ctx, span->end, fog, rgba );
+      if (fog != NULL && !swrast->_PreferPixelFog)
+	 _mesa_fog_rgba_pixels_with_array( ctx, span, fog, rgba);
+      else if ((span->activeMask & SPAN_FOG)  &&  !swrast->_PreferPixelFog)
+	 _mesa_fog_rgba_pixels( ctx, span, rgba );
       else
 	 _mesa_depth_fog_rgba_pixels(ctx, span, rgba);
    }
@@ -1337,14 +1337,15 @@ _mesa_write_texture_span( GLcontext *ctx, struct sw_span *span,
          _mesa_mask_rgba_span( ctx, span->end, span->x, span->y, rgba );
       }
 
-      (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y, (const GLchan (*)[4])rgba,
-				    span->write_all ? NULL : span->mask );
+      (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y,
+                                       (const GLchan (*)[4]) rgba,
+                                       span->writeAll ? NULL : span->mask );
       if (swrast->_RasterMask & ALPHABUF_BIT) {
-         _mesa_write_alpha_span( ctx, span->end, span->x, span->y, (const GLchan (*)[4]) rgba,
-                                 span->write_all ? NULL : span->mask );
+         _mesa_write_alpha_span( ctx, span->end, span->x, span->y,
+                                 (const GLchan (*)[4]) rgba,
+                                 span->writeAll ? NULL : span->mask );
       }
    }
-
 }
 
 
@@ -1391,10 +1392,9 @@ masked_texture_span( GLcontext *ctx, struct sw_span *span)
    /* Texture with alpha test */
    if (ctx->Color.AlphaEnabled) {
       /* Do the alpha test */
-      if (_mesa_alpha_test( ctx, span->end, (const GLchan (*)[4]) rgba, span->mask ) == 0) {
+      if (_mesa_alpha_test( ctx, span, (const GLchan (*)[4]) rgba ) == 0) {
          return;
       }
-      span->write_all = GL_FALSE;
       
       /* Depth test usually in 'rasterize_span' but if alpha test
          needed, we have to wait for that test before depth test can
@@ -1459,11 +1459,13 @@ masked_texture_span( GLcontext *ctx, struct sw_span *span)
          _mesa_mask_rgba_span( ctx, span->end, span->x, span->y, rgba );
       }
 
-      (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y, (const GLchan (*)[4])rgba,
-				    span->write_all ? NULL : span->mask );
+      (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y,
+                                       (const GLchan (*)[4]) rgba,
+				       span->writeAll ? NULL : span->mask );
       if (swrast->_RasterMask & ALPHABUF_BIT) {
-         _mesa_write_alpha_span( ctx, span->end, span->x, span->y, (const GLchan (*)[4]) rgba,
-                                 span->write_all ? NULL : span->mask );
+         _mesa_write_alpha_span( ctx, span->end, span->x, span->y,
+                                 (const GLchan (*)[4]) rgba,
+                                 span->writeAll ? NULL : span->mask );
       }
    }
 }
@@ -1500,10 +1502,10 @@ masked_multitexture_span( GLcontext *ctx, struct sw_span *span)
    /* Texture with alpha test */
    if (ctx->Color.AlphaEnabled) {
       /* Do the alpha test */
-      if (_mesa_alpha_test( ctx, span->end, (const GLchan (*)[4])rgba, span->mask ) == 0) {
+      if (_mesa_alpha_test( ctx, span, (const GLchan (*)[4])rgba ) == 0) {
          return;
       }
-      span->write_all = GL_FALSE;
+
       /* Depth test usually in 'rasterize_span' but if alpha test
          needed, we have to wait for that test before depth test can
          be done. */
@@ -1550,7 +1552,8 @@ masked_multitexture_span( GLcontext *ctx, struct sw_span *span)
 #endif
 
    if (swrast->_RasterMask & MULTI_DRAW_BIT) {
-      multi_write_rgba_span( ctx, span->end, span->x, span->y, (const GLchan (*)[4]) rgba, span->mask );
+      multi_write_rgba_span( ctx, span->end, span->x, span->y,
+                             (const GLchan (*)[4]) rgba, span->mask );
    }
    else {
       /* normal: write to exactly one buffer */
@@ -1570,11 +1573,13 @@ masked_multitexture_span( GLcontext *ctx, struct sw_span *span)
          _mesa_mask_rgba_span( ctx, span->end, span->x, span->y, rgba );
       }
 
-      (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y, (const GLchan (*)[4])rgba,
-                                    span->write_all ? NULL : span->mask );
+      (*swrast->Driver.WriteRGBASpan)( ctx, span->end, span->x, span->y,
+                                       (const GLchan (*)[4])rgba,
+                                       span->writeAll ? NULL : span->mask );
       if (swrast->_RasterMask & ALPHABUF_BIT) {
-         _mesa_write_alpha_span( ctx, span->end, span->x, span->y, (const GLchan (*)[4])rgba,
-                                 span->write_all ? NULL : span->mask );
+         _mesa_write_alpha_span( ctx, span->end, span->x, span->y,
+                                 (const GLchan (*)[4])rgba,
+                                 span->writeAll ? NULL : span->mask );
       }
    }
 }
@@ -1655,8 +1660,8 @@ _mesa_rasterize_span(GLcontext *ctx, struct sw_span *span)
    }
 
    if (span->activeMask & SPAN_RGBA) {
-      ASSERT(span->filledColor == GL_FALSE);
       SW_SPAN_SET_FLAG(span->filledColor);
+      SW_SPAN_SET_FLAG(span->filledAlpha);
       if (span->activeMask & SPAN_FLAT) {
          GLuint i;
          GLchan color[4];
@@ -1696,7 +1701,7 @@ _mesa_rasterize_span(GLcontext *ctx, struct sw_span *span)
    }
 
    if (span->activeMask & SPAN_SPEC) {
-     SW_SPAN_SET_FLAG(span->filledSpecular);
+      SW_SPAN_SET_FLAG(span->filledSpecular);
       if (span->activeMask & SPAN_FLAT) {
          const GLchan r = FixedToChan(span->specRed);
          const GLchan g = FixedToChan(span->specGreen);
@@ -1993,7 +1998,7 @@ _old_write_texture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                                  (CONST GLchan (*)[4]) rgba, rgba );
 
       /* Do the alpha test */
-      if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4]) rgba, mask ) == 0) {
+      if (_old_alpha_test( ctx, n, (const GLchan (*)[4]) rgba, mask ) == 0) {
          return;
       }
       write_all = GL_FALSE;
@@ -2149,7 +2154,7 @@ _old_write_multitexture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
                                     (CONST GLchan (*)[4]) rgbaIn, rgba );
 
       /* Do the alpha test */
-      if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4])rgba, mask ) == 0) {
+      if (_old_alpha_test( ctx, n, (const GLchan (*)[4])rgba, mask ) == 0) {
          return;
       }
       write_all = GL_FALSE;

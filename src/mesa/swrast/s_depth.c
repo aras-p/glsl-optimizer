@@ -1,10 +1,10 @@
-/* $Id: s_depth.c,v 1.10 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: s_depth.c,v 1.11 2002/01/21 18:12:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -587,7 +587,7 @@ _mesa_depth_test_span( GLcontext *ctx, struct sw_span *span)
       ASSERT(swrast->Driver.WriteDepthSpan);
       (*swrast->Driver.WriteDepthSpan)(ctx, span->end, span->x, span->y, zbuffer, span->mask);
       if (passed < span->end)
-         span->write_all = GL_FALSE;
+         span->writeAll = GL_FALSE;
       return passed;
    }
    else {
@@ -602,7 +602,7 @@ _mesa_depth_test_span( GLcontext *ctx, struct sw_span *span)
          passed = depth_test_span32(ctx, span->end, span->x, span->y, zptr, span->depth, span->mask);
       }
       if (passed < span->end)
-         span->write_all = GL_FALSE;
+         span->writeAll = GL_FALSE;
       return passed;
    }
 }
