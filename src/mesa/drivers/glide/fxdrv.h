@@ -675,7 +675,6 @@ extern int fxDDInitFxMesaContext( fxMesaContext fxMesa );
 
 
 extern void fxCloseHardware(void);
-extern tfxTMFreeNode *fxTMNewTMFreeNode(FxU32 start, FxU32 end);
 extern void fxSetScissorValues(GLcontext *ctx);
 extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa, 
 				struct gl_texture_object *tObj, 
