@@ -635,10 +635,12 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    _tnl_destroy_pipeline( ctx );
    _tnl_install_pipeline( ctx, mga_pipeline );
 
-   /* Configure swrast to match hardware characteristics:
+   /* Configure swrast and T&L to match hardware characteristics:
     */
    _swrast_allow_pixel_fog( ctx, GL_FALSE );
    _swrast_allow_vertex_fog( ctx, GL_TRUE );
+   _tnl_allow_pixel_fog( ctx, GL_FALSE );
+   _tnl_allow_vertex_fog( ctx, GL_TRUE );
 
    mmesa->primary_offset = mmesa->mgaScreen->primary.handle;
 

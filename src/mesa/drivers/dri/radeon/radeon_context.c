@@ -380,10 +380,12 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    _tnl_isolate_materials( ctx, GL_TRUE );
 
 
-   /* Configure swrast to match hardware characteristics:
+   /* Configure swrast and T&L to match hardware characteristics:
     */
    _swrast_allow_pixel_fog( ctx, GL_FALSE );
    _swrast_allow_vertex_fog( ctx, GL_TRUE );
+   _tnl_allow_pixel_fog( ctx, GL_FALSE );
+   _tnl_allow_vertex_fog( ctx, GL_TRUE );
 
 
    _math_matrix_ctr( &rmesa->TexGenMatrix[0] );

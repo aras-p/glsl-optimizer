@@ -446,10 +446,12 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     _tnl_destroy_pipeline(ctx);
     _tnl_install_pipeline(ctx, via_pipeline);
 
-    /* Configure swrast to match hardware characteristics:
+    /* Configure swrast and T&L to match hardware characteristics:
      */
     _swrast_allow_pixel_fog(ctx, GL_FALSE);
     _swrast_allow_vertex_fog(ctx, GL_TRUE);
+    _tnl_allow_pixel_fog(ctx, GL_FALSE);
+    _tnl_allow_vertex_fog(ctx, GL_TRUE);
 
 #ifndef _SOLO
     vmesa->display = dpy;
