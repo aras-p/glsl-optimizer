@@ -1,10 +1,10 @@
-/* $Id: feedback.c,v 1.20 2001/01/14 06:14:21 keithw Exp $ */
+/* $Id: feedback.c,v 1.21 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -77,16 +77,16 @@ _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
 	 break;
       case GL_3D_COLOR:
 	 ctx->Feedback._Mask = (FB_3D | 
-				(ctx->Visual.RGBAflag ? FB_COLOR : FB_INDEX));
+				(ctx->Visual.rgbMode ? FB_COLOR : FB_INDEX));
 	 break;
       case GL_3D_COLOR_TEXTURE:
 	 ctx->Feedback._Mask = (FB_3D | 
-				(ctx->Visual.RGBAflag ? FB_COLOR : FB_INDEX) | 
+				(ctx->Visual.rgbMode ? FB_COLOR : FB_INDEX) | 
 				FB_TEXTURE);
 	 break;
       case GL_4D_COLOR_TEXTURE:
 	 ctx->Feedback._Mask = (FB_3D | FB_4D | 
-				(ctx->Visual.RGBAflag ? FB_COLOR : FB_INDEX) |
+				(ctx->Visual.rgbMode ? FB_COLOR : FB_INDEX) |
 				FB_TEXTURE);
 	 break;
       default:

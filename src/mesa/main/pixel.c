@@ -1,10 +1,10 @@
-/* $Id: pixel.c,v 1.23 2001/01/03 15:59:30 brianp Exp $ */
+/* $Id: pixel.c,v 1.24 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1254,19 +1254,19 @@ void
 _mesa_chan_to_float_span(const GLcontext *ctx, GLuint n,
                          CONST GLchan rgba[][4], GLfloat rgbaf[][4])
 {
-   const GLuint rShift = CHAN_BITS - ctx->Visual.RedBits;
-   const GLuint gShift = CHAN_BITS - ctx->Visual.GreenBits;
-   const GLuint bShift = CHAN_BITS - ctx->Visual.BlueBits;
+   const GLuint rShift = CHAN_BITS - ctx->Visual.redBits;
+   const GLuint gShift = CHAN_BITS - ctx->Visual.greenBits;
+   const GLuint bShift = CHAN_BITS - ctx->Visual.blueBits;
    GLuint aShift;
-   const GLfloat rScale = 1.0 / (GLfloat) ((1 << ctx->Visual.RedBits  ) - 1);
-   const GLfloat gScale = 1.0 / (GLfloat) ((1 << ctx->Visual.GreenBits) - 1);
-   const GLfloat bScale = 1.0 / (GLfloat) ((1 << ctx->Visual.BlueBits ) - 1);
+   const GLfloat rScale = 1.0 / (GLfloat) ((1 << ctx->Visual.redBits  ) - 1);
+   const GLfloat gScale = 1.0 / (GLfloat) ((1 << ctx->Visual.greenBits) - 1);
+   const GLfloat bScale = 1.0 / (GLfloat) ((1 << ctx->Visual.blueBits ) - 1);
    GLfloat aScale;
    GLuint i;
 
-   if (ctx->Visual.AlphaBits > 0) {
-      aShift = CHAN_BITS - ctx->Visual.AlphaBits;
-      aScale = 1.0 / (GLfloat) ((1 << ctx->Visual.AlphaBits) - 1);
+   if (ctx->Visual.alphaBits > 0) {
+      aShift = CHAN_BITS - ctx->Visual.alphaBits;
+      aScale = 1.0 / (GLfloat) ((1 << ctx->Visual.alphaBits) - 1);
    }
    else {
       aShift = 0;

@@ -1,10 +1,10 @@
-/* $Id: polygon.c,v 1.17 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: polygon.c,v 1.18 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -195,7 +195,7 @@ _mesa_PolygonOffset( GLfloat factor, GLfloat units )
    FLUSH_VERTICES(ctx, _NEW_POLYGON);
    ctx->Polygon.OffsetFactor = factor;
    ctx->Polygon.OffsetUnits = units;
-   ctx->Polygon.OffsetMRD = units * ctx->Visual.MRD;
+   ctx->Polygon.OffsetMRD = units * ctx->MRD;
 }
 
 
@@ -204,5 +204,5 @@ void
 _mesa_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_PolygonOffset(factor, bias * ctx->Visual.DepthMaxF );
+   _mesa_PolygonOffset(factor, bias * ctx->DepthMaxF );
 }

@@ -1,10 +1,10 @@
-/* $Id: s_triangle.c,v 1.8 2001/01/05 02:26:49 keithw Exp $ */
+/* $Id: s_triangle.c,v 1.9 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2266,7 +2266,7 @@ void
 _swrast_choose_triangle( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const GLboolean rgbmode = ctx->Visual.RGBAflag;
+   const GLboolean rgbmode = ctx->Visual.rgbMode;
 
    if (ctx->RenderMode==GL_RENDER) {
 

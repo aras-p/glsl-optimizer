@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.15 2001/01/05 02:26:48 keithw Exp $ */
+/* $Id: xm_line.c,v 1.16 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -565,7 +565,7 @@ static swrast_line_func get_line_func( GLcontext *ctx )
        && swrast->_RasterMask==DEPTH_BIT
        && ctx->Depth.Func==GL_LESS
        && ctx->Depth.Mask==GL_TRUE
-       && ctx->Visual.DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
+       && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS
        && ctx->Line.Width==1.0F) {
       switch (xmesa->pixelformat) {
          case PF_TRUECOLOR:

@@ -1,10 +1,10 @@
-/* $Id: s_readpix.c,v 1.5 2000/12/13 00:46:22 brianp Exp $ */
+/* $Id: s_readpix.c,v 1.6 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -55,7 +55,7 @@ static void read_index_pixels( GLcontext *ctx,
    GLint i, j, readWidth;
 
    /* error checking */
-   if (ctx->Visual.RGBAflag) {
+   if (ctx->Visual.rgbMode) {
       gl_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
       return;
    }
@@ -176,7 +176,7 @@ static void read_depth_pixels( GLcontext *ctx,
    GLboolean bias_or_scale;
 
    /* Error checking */
-   if (ctx->Visual.DepthBits <= 0) {
+   if (ctx->Visual.depthBits <= 0) {
       /* No depth buffer */
       gl_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
       return;
@@ -197,7 +197,7 @@ static void read_depth_pixels( GLcontext *ctx,
 
    bias_or_scale = ctx->Pixel.DepthBias!=0.0 || ctx->Pixel.DepthScale!=1.0;
 
-   if (type==GL_UNSIGNED_SHORT && ctx->Visual.DepthBits == 16
+   if (type==GL_UNSIGNED_SHORT && ctx->Visual.depthBits == 16
        && !bias_or_scale && !packing->SwapBytes) {
       /* Special case: directly read 16-bit unsigned depth values. */
       for (j=0;j<height;j++,y++) {
@@ -210,7 +210,7 @@ static void read_depth_pixels( GLcontext *ctx,
             dst[i] = depth[i];
       }
    }
-   else if (type==GL_UNSIGNED_INT && ctx->Visual.DepthBits == 32
+   else if (type==GL_UNSIGNED_INT && ctx->Visual.depthBits == 32
             && !bias_or_scale && !packing->SwapBytes) {
       /* Special case: directly read 32-bit unsigned depth values. */
       for (j=0;j<height;j++,y++) {
@@ -342,7 +342,7 @@ static void read_stencil_pixels( GLcontext *ctx,
 
    readWidth = (width > MAX_WIDTH) ? MAX_WIDTH : width;
 
-   if (ctx->Visual.StencilBits<=0) {
+   if (ctx->Visual.stencilBits <= 0) {
       /* No stencil buffer */
       gl_error( ctx, GL_INVALID_OPERATION, "glReadPixels" );
       return;
@@ -657,7 +657,7 @@ static void read_rgba_pixels( GLcontext *ctx,
       dest = tmpImage;
       for (row = 0; row < height; row++, y++) {
          GLchan rgba[MAX_WIDTH][4];
-         if (ctx->Visual.RGBAflag) {
+         if (ctx->Visual.rgbMode) {
             gl_read_rgba_span(ctx, ctx->ReadBuffer, readWidth, x, y, rgba);
          }
          else {
@@ -703,7 +703,7 @@ static void read_rgba_pixels( GLcontext *ctx,
       for (row = 0; row < height; row++, y++) {
          GLchan rgba[MAX_WIDTH][4];
          GLvoid *dst;
-         if (ctx->Visual.RGBAflag) {
+         if (ctx->Visual.rgbMode) {
             gl_read_rgba_span(ctx, ctx->ReadBuffer, readWidth, x, y, rgba);
          }
          else {
@@ -716,9 +716,9 @@ static void read_rgba_pixels( GLcontext *ctx,
          }
          dst = _mesa_image_address(packing, pixels, width, height,
                                    format, type, 0, row, 0);
-         if (ctx->Visual.RedBits < CHAN_BITS ||
-             ctx->Visual.GreenBits < CHAN_BITS ||
-             ctx->Visual.BlueBits < CHAN_BITS) {
+         if (ctx->Visual.redBits < CHAN_BITS ||
+             ctx->Visual.greenBits < CHAN_BITS ||
+             ctx->Visual.blueBits < CHAN_BITS) {
             /* Requantize the color values into floating point and go from
              * there.  This fixes conformance failures with 16-bit color
              * buffers, for example.

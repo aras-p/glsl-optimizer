@@ -1,10 +1,10 @@
-/* $Id: context.c,v 1.116 2001/01/08 04:09:41 keithw Exp $ */
+/* $Id: context.c,v 1.117 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -239,6 +239,8 @@ _mesa_initialize_visual( GLvisual *vis,
                          GLint accumAlphaBits,
                          GLint numSamples )
 {
+   (void) numSamples;
+
    assert(vis);
 
    /* This is to catch bad values from device drivers not updated for
@@ -266,43 +268,21 @@ _mesa_initialize_visual( GLvisual *vis,
       return GL_FALSE;
    }
 
-   vis->RGBAflag   = rgbFlag;
-   vis->DBflag     = dbFlag;
-   vis->StereoFlag = stereoFlag;
-   vis->RedBits    = redBits;
-   vis->GreenBits  = greenBits;
-   vis->BlueBits   = blueBits;
-   vis->AlphaBits  = alphaBits;
+   vis->rgbMode          = rgbFlag;
+   vis->doubleBufferMode = dbFlag;
+   vis->stereoMode       = stereoFlag;
+   vis->redBits          = redBits;
+   vis->greenBits        = greenBits;
+   vis->blueBits         = blueBits;
+   vis->alphaBits        = alphaBits;
 
-   vis->IndexBits      = indexBits;
-   vis->DepthBits      = depthBits;
-   vis->AccumRedBits   = (accumRedBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->AccumGreenBits = (accumGreenBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->AccumBlueBits  = (accumBlueBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->AccumAlphaBits = (accumAlphaBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->StencilBits    = (stencilBits > 0) ? (8 * sizeof(GLstencil)) : 0;
-
-   if (depthBits == 0) {
-      /* Special case.  Even if we don't have a depth buffer we need
-       * good values for DepthMax for Z vertex transformation purposes
-       * and for per-fragment fog computation.
-       */
-      vis->DepthMax = 1 << 16;
-      vis->DepthMaxF = (GLfloat) vis->DepthMax;
-   }
-   else if (depthBits < 32) {
-      vis->DepthMax = (1 << depthBits) - 1;
-      vis->DepthMaxF = (GLfloat) vis->DepthMax;
-   }
-   else {
-      /* Special case since shift values greater than or equal to the
-       * number of bits in the left hand expression's type are
-       * undefined.
-       */
-      vis->DepthMax = 0xffffffff;
-      vis->DepthMaxF = (GLfloat) vis->DepthMax;
-   }
-   vis->MRD = 2.0;  /* XXX temporary value */
+   vis->indexBits      = indexBits;
+   vis->depthBits      = depthBits;
+   vis->accumRedBits   = (accumRedBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->accumGreenBits = (accumGreenBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->accumBlueBits  = (accumBlueBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->accumAlphaBits = (accumAlphaBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->stencilBits    = (stencilBits > 0) ? (8 * sizeof(GLstencil)) : 0;
 
    return GL_TRUE;
 }
@@ -367,20 +347,20 @@ _mesa_initialize_framebuffer( GLframebuffer *buffer,
 
    /* sanity checks */
    if (softwareDepth ) {
-      assert(visual->DepthBits > 0);
+      assert(visual->depthBits > 0);
    }
    if (softwareStencil) {
-      assert(visual->StencilBits > 0);
+      assert(visual->stencilBits > 0);
    }
    if (softwareAccum) {
-      assert(visual->RGBAflag);
-      assert(visual->AccumRedBits > 0);
-      assert(visual->AccumGreenBits > 0);
-      assert(visual->AccumBlueBits > 0);
+      assert(visual->rgbMode);
+      assert(visual->accumRedBits > 0);
+      assert(visual->accumGreenBits > 0);
+      assert(visual->accumBlueBits > 0);
    }
    if (softwareAlpha) {
-      assert(visual->RGBAflag);
-      assert(visual->AlphaBits > 0);
+      assert(visual->rgbMode);
+      assert(visual->alphaBits > 0);
    }
 
    buffer->Visual = visual;
@@ -1159,8 +1139,8 @@ init_attrib_groups( GLcontext *ctx )
 
 #define Sz 10
 #define Tz 14
-   ctx->Viewport._WindowMap.m[Sz] = 0.5 * ctx->Visual.DepthMaxF;
-   ctx->Viewport._WindowMap.m[Tz] = 0.5 * ctx->Visual.DepthMaxF;
+   ctx->Viewport._WindowMap.m[Sz] = 0.5 * ctx->DepthMaxF;
+   ctx->Viewport._WindowMap.m[Tz] = 0.5 * ctx->DepthMaxF;
 #undef Sz
 #undef Tz
 
@@ -1408,7 +1388,7 @@ _mesa_initialize_context( GLcontext *ctx,
 
    init_attrib_groups( ctx );
 
-   if (visual->DBflag) {
+   if (visual->doubleBufferMode) {
       ctx->Color.DrawBuffer = GL_BACK;
       ctx->Color.DriverDrawBuffer = GL_BACK_LEFT;
       ctx->Color.DrawDestMask = BACK_LEFT_BIT;
@@ -1460,6 +1440,29 @@ _mesa_initialize_context( GLcontext *ctx,
 
    ctx->ExecPrefersFloat = GL_FALSE;
    ctx->SavePrefersFloat = GL_FALSE;
+
+   /* Z buffer stuff */
+   if (ctx->Visual.depthBits == 0) {
+      /* Special case.  Even if we don't have a depth buffer we need
+       * good values for DepthMax for Z vertex transformation purposes
+       * and for per-fragment fog computation.
+       */
+      ctx->DepthMax = 1 << 16;
+      ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
+   }
+   else if (ctx->Visual.depthBits < 32) {
+      ctx->DepthMax = (1 << ctx->Visual.depthBits) - 1;
+      ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
+   }
+   else {
+      /* Special case since shift values greater than or equal to the
+       * number of bits in the left hand expression's type are undefined.
+       */
+      ctx->DepthMax = 0xffffffff;
+      ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
+   }
+   ctx->MRD = 2.0;  /* XXX temporary value */
+
 
 #if defined(MESA_TRACE)
    ctx->TraceCtx = CALLOC( sizeof(trace_context_t) );

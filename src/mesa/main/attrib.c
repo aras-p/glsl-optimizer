@@ -1,10 +1,10 @@
-/* $Id: attrib.c,v 1.39 2000/12/26 05:09:27 keithw Exp $ */
+/* $Id: attrib.c,v 1.40 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -588,7 +588,7 @@ _mesa_PopAttrib(void)
 		   ctx->Driver.LogicOpcode) {
 		  ctx->Driver.LogicOpcode( ctx, ctx->Color.LogicOp );
                }
-               if (ctx->Visual.RGBAflag) {
+               if (ctx->Visual.rgbMode) {
                   GLchan r = (GLint) (ctx->Color.ClearColor[0] * CHAN_MAXF);
                   GLchan g = (GLint) (ctx->Color.ClearColor[1] * CHAN_MAXF);
                   GLchan b = (GLint) (ctx->Color.ClearColor[2] * CHAN_MAXF);

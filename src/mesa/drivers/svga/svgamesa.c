@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.11 2000/12/26 05:09:30 keithw Exp $ */
+/* $Id: svgamesa.c,v 1.12 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -422,10 +422,10 @@ SVGAMesaContext SVGAMesaCreateContext( GLboolean doubleBuffer )
    _mesa_enable_sw_extensions(ctx->gl_ctx);
 
    ctx->gl_buffer = _mesa_create_framebuffer( ctx->gl_vis,
-                                              ctx->gl_vis->DepthBits > 0,
-                                              ctx->gl_vis->StencilBits > 0,
-                                              ctx->gl_vis->AccumRedBits > 0,
-                                              ctx->gl_vis->AlphaBits > 0 );
+                                              ctx->gl_vis->depthBits > 0,
+                                              ctx->gl_vis->stencilBits > 0,
+                                              ctx->gl_vis->accumRedBits > 0,
+                                              ctx->gl_vis->alphaBits > 0 );
 
    ctx->width = ctx->height = 0;  /* temporary until first "make-current" */
 #endif
@@ -491,7 +491,7 @@ void SVGAMesaSwapBuffers( void )
 
 #ifndef DEV
    _mesa_swapbuffers( SVGAMesa->gl_ctx );
-   if (SVGAMesa->gl_vis->DBflag)
+   if (SVGAMesa->gl_vis->doubleBufferMode)
 #endif /* DEV */
    {
 #ifdef SVGA_DEBUG

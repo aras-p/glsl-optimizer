@@ -1,10 +1,10 @@
-/* $Id: s_points.c,v 1.11 2001/01/04 15:32:10 brianp Exp $ */
+/* $Id: s_points.c,v 1.12 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -186,7 +186,7 @@ void
 _swrast_choose_point( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLboolean rgbMode = ctx->Visual.RGBAflag;
+   GLboolean rgbMode = ctx->Visual.rgbMode;
 
    if (ctx->RenderMode==GL_RENDER) {
       if (ctx->Point.SpriteMode) {

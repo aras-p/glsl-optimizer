@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.39 2001/01/05 05:31:42 keithw Exp $ */
+/* $Id: enable.c,v 1.40 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -212,7 +212,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       ctx->Polygon.CullFlag = state;
       break;
    case GL_DEPTH_TEST:
-      if (state && ctx->Visual.DepthBits==0) {
+      if (state && ctx->Visual.depthBits==0) {
 	 _mesa_warning(ctx,"glEnable(GL_DEPTH_TEST) but no depth buffer");
 	 return;
       }
@@ -481,7 +481,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       ctx->Texture.SharedPalette = state;
       break;
    case GL_STENCIL_TEST:
-      if (state && ctx->Visual.StencilBits==0) {
+      if (state && ctx->Visual.stencilBits==0) {
 	 _mesa_warning(ctx, "glEnable(GL_STENCIL_TEST) but no stencil buffer");
 	 return;
       }
@@ -497,7 +497,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       GLuint newenabled = texUnit->Enabled & ~TEXTURE0_1D;
       if (state) 
 	 newenabled |= TEXTURE0_1D;
-      if (!ctx->Visual.RGBAflag || texUnit->Enabled == newenabled)
+      if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
       texUnit->Enabled = newenabled;
@@ -509,7 +509,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       GLuint newenabled = texUnit->Enabled & ~TEXTURE0_2D;
       if (state) 
 	 newenabled |= TEXTURE0_2D;
-      if (!ctx->Visual.RGBAflag || texUnit->Enabled == newenabled)
+      if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
       texUnit->Enabled = newenabled;
@@ -521,7 +521,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       GLuint newenabled = texUnit->Enabled & ~TEXTURE0_3D;
       if (state) 
 	 newenabled |= TEXTURE0_3D;
-      if (!ctx->Visual.RGBAflag || texUnit->Enabled == newenabled)
+      if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
       texUnit->Enabled = newenabled;
@@ -708,7 +708,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 gl_error(ctx, GL_INVALID_ENUM, state ? "glEnable" : "glDisable");
 	 return;
       }
-      if (!ctx->Visual.RGBAflag || texUnit->Enabled == newenabled)
+      if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
 	 return;
       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
       texUnit->Enabled = newenabled;

@@ -1,10 +1,10 @@
-/* $Id: matrix.c,v 1.29 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: matrix.c,v 1.30 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -478,8 +478,8 @@ gl_Viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height )
    ctx->Viewport._WindowMap.m[MAT_TX] = ctx->Viewport._WindowMap.m[MAT_SX] + x;
    ctx->Viewport._WindowMap.m[MAT_SY] = (GLfloat) height / 2.0F;
    ctx->Viewport._WindowMap.m[MAT_TY] = ctx->Viewport._WindowMap.m[MAT_SY] + y;
-   ctx->Viewport._WindowMap.m[MAT_SZ] = 0.5 * ctx->Visual.DepthMaxF;
-   ctx->Viewport._WindowMap.m[MAT_TZ] = 0.5 * ctx->Visual.DepthMaxF;
+   ctx->Viewport._WindowMap.m[MAT_SZ] = 0.5 * ctx->DepthMaxF;
+   ctx->Viewport._WindowMap.m[MAT_TZ] = 0.5 * ctx->DepthMaxF;
    ctx->Viewport._WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
    ctx->Viewport._WindowMap.type = MATRIX_3D_NO_ROT;
    ctx->NewState |= _NEW_VIEWPORT;
@@ -522,8 +522,8 @@ _mesa_DepthRange( GLclampd nearval, GLclampd farval )
 
    ctx->Viewport.Near = n;
    ctx->Viewport.Far = f;
-   ctx->Viewport._WindowMap.m[MAT_SZ] = ctx->Visual.DepthMaxF * ((f - n) / 2.0);
-   ctx->Viewport._WindowMap.m[MAT_TZ] = ctx->Visual.DepthMaxF * ((f - n) / 2.0 + n);
+   ctx->Viewport._WindowMap.m[MAT_SZ] = ctx->DepthMaxF * ((f - n) / 2.0);
+   ctx->Viewport._WindowMap.m[MAT_TZ] = ctx->DepthMaxF * ((f - n) / 2.0 + n);
    ctx->NewState |= _NEW_VIEWPORT;
 
    if (ctx->Driver.DepthRange) {

@@ -271,7 +271,7 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
    if (ctx->_TriangleCaps & DD_TRI_UNFILLED)
       ind |= SS_UNFILLED_BIT;
 
-   if (ctx->Visual.RGBAflag) 
+   if (ctx->Visual.rgbMode)
       ind |= SS_RGBA_BIT;
 
    swsetup->Triangle = tri_tab[ind];

@@ -1,4 +1,4 @@
-/* $Id: s_linetemp.h,v 1.3 2000/11/19 23:10:26 brianp Exp $ */
+/* $Id: s_linetemp.h,v 1.4 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,7 +85,7 @@
 #endif
 #ifdef INTERP_Z
    GLint z0, z1, dz;
-   const GLint depthBits = ctx->Visual.DepthBits;
+   const GLint depthBits = ctx->Visual.depthBits;
    const GLint fixedToDepthShift = depthBits <= 16 ? FIXED_SHIFT : 0;
 #  define FixedToDepth(F)  ((F) >> fixedToDepthShift)
 #  ifdef DEPTH_TYPE

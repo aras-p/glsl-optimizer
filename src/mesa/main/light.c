@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.34 2001/01/13 05:48:25 keithw Exp $ */
+/* $Id: light.c,v 1.35 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1163,7 +1163,7 @@ gl_update_lighting( GLcontext *ctx )
     * FLUSH_UPDATE_CURRENT, as when any outstanding material changes
     * are flushed, they will update the derived state at that time.  
     */
-   if (ctx->Visual.RGBAflag) {
+   if (ctx->Visual.rgbMode) {
       GLuint sides = ctx->Light.Model.TwoSide ? 2 : 1;
       GLuint side;
       for (side=0; side < sides; side++) {

@@ -1,10 +1,10 @@
-/* $Id: rastpos.c,v 1.19 2001/01/03 15:56:41 brianp Exp $ */
+/* $Id: rastpos.c,v 1.20 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -215,7 +215,7 @@ shade_rastpos(GLcontext *ctx,
       ACC_SCALE_SCALAR_3V( color, attenuation, contrib );
    }
 
-   if (ctx->Visual.RGBAflag) {
+   if (ctx->Visual.rgbMode) {
       Rcolor[0] = CLAMP(color[0], 0.0F, 1.0F);
       Rcolor[1] = CLAMP(color[1], 0.0F, 1.0F);
       Rcolor[2] = CLAMP(color[2], 0.0F, 1.0F);
@@ -273,7 +273,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    }
    else {
       /* use current color or index */
-      if (ctx->Visual.RGBAflag) {
+      if (ctx->Visual.rgbMode) {
          ctx->Current.RasterColor[0] = CHAN_TO_FLOAT(ctx->Current.Color[0]);
          ctx->Current.RasterColor[1] = CHAN_TO_FLOAT(ctx->Current.Color[1]);
          ctx->Current.RasterColor[2] = CHAN_TO_FLOAT(ctx->Current.Color[2]);
@@ -316,7 +316,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    ctx->Current.RasterPos[1] = (ndc[1] * ctx->Viewport._WindowMap.m[MAT_SY] +
 				ctx->Viewport._WindowMap.m[MAT_TY]);
    ctx->Current.RasterPos[2] = (ndc[2] * ctx->Viewport._WindowMap.m[MAT_SZ] +
-				ctx->Viewport._WindowMap.m[MAT_TZ]) / ctx->Visual.DepthMaxF;
+				ctx->Viewport._WindowMap.m[MAT_TZ]) / ctx->DepthMaxF;
    ctx->Current.RasterPos[3] = clip[3];
    ctx->Current.RasterPosValid = GL_TRUE;
 

@@ -1,10 +1,10 @@
-/* $Id: s_bitmap.c,v 1.3 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: s_bitmap.c,v 1.4 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,7 +57,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
       _swrast_validate_derived( ctx );
 
    /* Set bitmap drawing color */
-   if (ctx->Visual.RGBAflag) {
+   if (ctx->Visual.rgbMode) {
       GLint r, g, b, a;
       r = (GLint) (ctx->Current.RasterColor[0] * CHAN_MAXF);
       g = (GLint) (ctx->Current.RasterColor[1] * CHAN_MAXF);
@@ -69,7 +69,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
       PB_SET_INDEX( PB, ctx->Current.RasterIndex );
    }
 
-   fragZ = (GLdepth) ( ctx->Current.RasterPos[2] * ctx->Visual.DepthMaxF);
+   fragZ = (GLdepth) ( ctx->Current.RasterPos[2] * ctx->DepthMaxF);
     
    _mesa_win_fog_coords_from_z( ctx, 1, &fragZ, &fogCoord );
 

@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.6 2000/12/08 00:09:24 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.7 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -88,9 +88,9 @@
    } EdgeT;
 
 #ifdef INTERP_Z
-   const GLint depthBits = ctx->Visual.DepthBits;
+   const GLint depthBits = ctx->Visual.depthBits;
    const GLint fixedToDepthShift = depthBits <= 16 ? FIXED_SHIFT : 0;
-   const GLfloat maxDepth = ctx->Visual.DepthMaxF;
+   const GLfloat maxDepth = ctx->DepthMaxF;
 #define FixedToDepth(F)  ((F) >> fixedToDepthShift)
 #endif
    EdgeT eMaj, eTop, eBot;

@@ -1,10 +1,10 @@
-/* $Id: t_vb_light.c,v 1.3 2001/01/08 04:09:42 keithw Exp $ */
+/* $Id: t_vb_light.c,v 1.4 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -161,7 +161,7 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
    GLuint ind = 0;
    light_func *tab;   
    
-   if (ctx->Visual.RGBAflag) {
+   if (ctx->Visual.rgbMode) {
       if (ctx->Light._NeedVertices) {
 	 if (ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR) 
 	    tab = _tnl_light_spec_tab;

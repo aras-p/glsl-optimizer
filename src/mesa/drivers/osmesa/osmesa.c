@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.39 2001/01/16 21:16:56 brianp Exp $ */
+/* $Id: osmesa.c,v 1.40 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -280,10 +280,10 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       _mesa_enable_sw_extensions(&(osmesa->gl_ctx));
 
       osmesa->gl_buffer = _mesa_create_framebuffer( osmesa->gl_visual,
-                                          osmesa->gl_visual->DepthBits > 0,
-                                          osmesa->gl_visual->StencilBits > 0,
-                                          osmesa->gl_visual->AccumRedBits > 0,
-                                          osmesa->gl_visual->AlphaBits > 0 );
+                                          osmesa->gl_visual->depthBits > 0,
+                                          osmesa->gl_visual->stencilBits > 0,
+                                          osmesa->gl_visual->accumRedBits > 0,
+                                          osmesa->gl_visual->alphaBits > 0 );
 
       if (!osmesa->gl_buffer) {
          _mesa_destroy_visual( osmesa->gl_visual );
@@ -1420,7 +1420,7 @@ osmesa_choose_line_function( GLcontext *ctx )
        if (swrast->_RasterMask==DEPTH_BIT
            && ctx->Depth.Func==GL_LESS
            && ctx->Depth.Mask==GL_TRUE
-           && ctx->Visual.DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS) {
+           && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS) {
            switch(osmesa->format) {
        		case OSMESA_RGBA:
        		case OSMESA_BGRA:
@@ -1445,7 +1445,7 @@ osmesa_choose_line_function( GLcontext *ctx )
        if (swrast->_RasterMask==(DEPTH_BIT|BLEND_BIT)
            && ctx->Depth.Func==GL_LESS
            && ctx->Depth.Mask==GL_TRUE
-           && ctx->Visual.DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
+           && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS
            && ctx->Color.BlendSrcRGB==GL_SRC_ALPHA
            && ctx->Color.BlendDstRGB==GL_ONE_MINUS_SRC_ALPHA
            && ctx->Color.BlendSrcA==GL_SRC_ALPHA
@@ -1464,7 +1464,7 @@ osmesa_choose_line_function( GLcontext *ctx )
        if (swrast->_RasterMask==(DEPTH_BIT|BLEND_BIT)
            && ctx->Depth.Func==GL_LESS
            && ctx->Depth.Mask==GL_FALSE
-           && ctx->Visual.DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
+           && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS
            && ctx->Color.BlendSrcRGB==GL_SRC_ALPHA
            && ctx->Color.BlendDstRGB==GL_ONE_MINUS_SRC_ALPHA
            && ctx->Color.BlendSrcA==GL_SRC_ALPHA
@@ -1611,7 +1611,7 @@ osmesa_choose_triangle_function( GLcontext *ctx )
    if (swrast->_RasterMask==DEPTH_BIT
        && ctx->Depth.Func==GL_LESS
        && ctx->Depth.Mask==GL_TRUE
-       && ctx->Visual.DepthBits == DEFAULT_SOFTWARE_DEPTH_BITS
+       && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS
        && osmesa->format!=OSMESA_COLOR_INDEX) {
       if (ctx->Light.ShadeModel==GL_SMOOTH) {
          return smooth_rgba_z_triangle;

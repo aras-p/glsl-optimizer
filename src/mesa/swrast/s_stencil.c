@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.4 2000/11/28 21:34:04 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.5 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1130,7 +1130,7 @@ _mesa_alloc_stencil_buffer( GLcontext *ctx )
 static void
 clear_software_stencil_buffer( GLcontext *ctx )
 {
-   if (ctx->Visual.StencilBits==0 || !ctx->DrawBuffer->Stencil) {
+   if (ctx->Visual.stencilBits==0 || !ctx->DrawBuffer->Stencil) {
       /* no stencil buffer */
       return;
    }

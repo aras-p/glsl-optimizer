@@ -95,6 +95,8 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	    if (bc < 0.0f) bc = -bc;
 	    offset += MAX2(ac, bc) * ctx->Polygon.OffsetFactor;
 	 }
+         offset *= ctx->MRD;
+         /*printf("offset %g\n", offset);*/
       }
    }
 

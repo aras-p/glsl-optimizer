@@ -1,10 +1,10 @@
-/* $Id: mtypes.h,v 1.13 2001/01/08 21:55:59 keithw Exp $ */
+/* $Id: mtypes.h,v 1.14 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -117,9 +117,9 @@ typedef int GLfixed;
  */
 struct _mesa_HashTable;
 struct gl_texture_object;
-typedef struct gl_visual GLvisual;
-typedef struct gl_frame_buffer GLframebuffer;
 typedef struct __GLcontextRec GLcontext;
+typedef struct __GLcontextModesRec GLvisual;
+typedef struct gl_frame_buffer GLframebuffer;
 
 
 
@@ -1099,38 +1099,6 @@ struct gl_shared_state {
 
 
 /*
- * Describes the color, depth, stencil and accum buffer parameters.
- * In C++ terms, think of this as a base class from which device drivers
- * will make derived classes.
- */
-struct gl_visual {
-   GLboolean RGBAflag;		/* Is frame buffer in RGBA mode, not CI? */
-   GLboolean DBflag;		/* Is color buffer double buffered? */
-   GLboolean StereoFlag;	/* stereo buffer? */
-
-   GLint RedBits;		/* Bits per color component */
-   GLint GreenBits;
-   GLint BlueBits;
-   GLint AlphaBits;
-
-   GLint IndexBits;		/* Bits/pixel if in color index mode */
-
-   GLint AccumRedBits;		/* Number of bits in red accum channel */
-   GLint AccumGreenBits;	/* Number of bits in green accum channel */
-   GLint AccumBlueBits;		/* Number of bits in blue accum channel */
-   GLint AccumAlphaBits;	/* Number of bits in alpha accum channel */
-   GLint DepthBits;		/* Number of bits in depth buffer, or 0 */
-   GLint StencilBits;		/* Number of bits in stencil buffer, or 0 */
-   GLint NumSamples;            /* Samples/pixel for multisampling */
-
-   GLuint DepthMax;		/* Max depth buffer value */
-   GLfloat DepthMaxF;		/* Float max depth buffer value */
-   GLfloat MRD;			/* minimum resolvable difference in Z values */
-};
-
-
-
-/*
  * A "frame buffer" is a color buffer and its optional ancillary buffers:
  * depth, accum, stencil, and software-simulated alpha buffers.
  * In C++ terms, think of this as a base class from which device drivers
@@ -1565,6 +1533,11 @@ struct __GLcontextRec {
 
    GLboolean OcclusionResult;  /* GL_HP_occlusion_test */
    GLboolean OcclusionResultSaved;  /* GL_HP_occlusion_test */
+
+   /* Z buffer stuff */
+   GLuint DepthMax;		/* Max depth buffer value */
+   GLfloat DepthMaxF;		/* Float max depth buffer value */
+   GLfloat MRD;			/* minimum resolvable difference in Z values */
 
    /* Should 3Dfx Glide driver catch signals? */
    GLboolean CatchSignals;

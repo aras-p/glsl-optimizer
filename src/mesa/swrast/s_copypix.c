@@ -1,10 +1,10 @@
-/* $Id: s_copypix.c,v 1.9 2001/01/05 21:28:31 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.10 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -88,7 +88,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
       /* fill in array of z values */
       GLdepth z = (GLdepth)
-         (ctx->Current.RasterPos[2] * ctx->Visual.DepthMax);
+         (ctx->Current.RasterPos[2] * ctx->DepthMax);
       GLint i;
       for (i = 0; i < width; i++) {
          zspan[i] = z;
@@ -315,7 +315,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
       /* fill in array of z values */
-      GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->Visual.DepthMax);
+      GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMax);
       for (i=0;i<width;i++) {
          zspan[i] = z;
       }
@@ -552,7 +552,7 @@ static void copy_ci_pixels( GLcontext *ctx,
 
    if (ctx->Depth.Test || ctx->Fog.Enabled) {
       /* fill in array of z values */
-      GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->Visual.DepthMax);
+      GLdepth z = (GLdepth) (ctx->Current.RasterPos[2] * ctx->DepthMax);
       for (i=0;i<width;i++) {
          zspan[i] = z;
       }
@@ -650,7 +650,7 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
 
-   if (!ctx->Visual.DepthBits) {
+   if (!ctx->Visual.depthBits) {
       gl_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
       return;
    }
@@ -673,7 +673,7 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
                                  ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
 
    /* setup colors or indexes */
-   if (ctx->Visual.RGBAflag) {
+   if (ctx->Visual.rgbMode) {
       GLuint *rgba32 = (GLuint *) rgba;
       GLuint color = *(GLuint*)( ctx->Current.Color );
       for (i = 0; i < width; i++) {
@@ -716,10 +716,10 @@ static void copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
       for (i = 0; i < width; i++) {
          GLfloat d = depth[i] * ctx->Pixel.DepthScale + ctx->Pixel.DepthBias;
-         zspan[i] = (GLdepth) (CLAMP(d, 0.0F, 1.0F) * ctx->Visual.DepthMax);
+         zspan[i] = (GLdepth) (CLAMP(d, 0.0F, 1.0F) * ctx->DepthMax);
       }
 
-      if (ctx->Visual.RGBAflag) {
+      if (ctx->Visual.rgbMode) {
          if (zoom) {
             gl_write_zoomed_rgba_span( ctx, width, destx, dy, zspan, 0,
 				       (const GLchan (*)[4])rgba, desty );
@@ -758,7 +758,7 @@ static void copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    const GLboolean shift_or_offset = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    GLint overlapping;
 
-   if (!ctx->Visual.StencilBits) {
+   if (!ctx->Visual.stencilBits) {
       gl_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
       return;
    }
@@ -841,10 +841,10 @@ _swrast_CopyPixels( GLcontext *ctx,
    if (SWRAST_CONTEXT(ctx)->NewState)
       _swrast_validate_derived( ctx );
 
-   if (type == GL_COLOR && ctx->Visual.RGBAflag) {
+   if (type == GL_COLOR && ctx->Visual.rgbMode) {
       copy_rgba_pixels( ctx, srcx, srcy, width, height, destx, desty );
    }
-   else if (type == GL_COLOR && !ctx->Visual.RGBAflag) {
+   else if (type == GL_COLOR && !ctx->Visual.rgbMode) {
       copy_ci_pixels( ctx, srcx, srcy, width, height, destx, desty );
    }
    else if (type == GL_DEPTH) {

@@ -1,10 +1,10 @@
-/* $Id: buffers.c,v 1.22 2001/01/05 02:26:48 keithw Exp $ */
+/* $Id: buffers.c,v 1.23 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -58,7 +58,7 @@ _mesa_ClearIndex( GLfloat c )
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    ctx->Color.ClearIndex = (GLuint) c;
 
-   if (!ctx->Visual.RGBAflag) {
+   if (!ctx->Visual.rgbMode) {
       /* it's OK to call glClearIndex in RGBA mode but it should be a NOP */
       (*ctx->Driver.ClearIndex)( ctx, ctx->Color.ClearIndex );
    }
@@ -85,7 +85,7 @@ _mesa_ClearColor( GLclampf red, GLclampf green,
    FLUSH_VERTICES(ctx, _NEW_COLOR);
    COPY_4FV( ctx->Color.ClearColor, tmp );
 
-   if (ctx->Visual.RGBAflag) {
+   if (ctx->Visual.rgbMode) {
       GLchan r = (GLint) (ctx->Color.ClearColor[0] * CHAN_MAXF);
       GLchan g = (GLint) (ctx->Color.ClearColor[1] * CHAN_MAXF);
       GLchan b = (GLint) (ctx->Color.ClearColor[2] * CHAN_MAXF);
@@ -175,63 +175,63 @@ _mesa_DrawBuffer( GLenum mode )
          gl_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
          return;
       case GL_RIGHT:
-         if (!ctx->Visual.StereoFlag) {
+         if (!ctx->Visual.stereoMode) {
             gl_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
             return;}
-         if (ctx->Visual.DBflag)
+         if (ctx->Visual.doubleBufferMode)
             ctx->Color.DrawDestMask = FRONT_RIGHT_BIT | BACK_RIGHT_BIT;
          else
             ctx->Color.DrawDestMask = FRONT_RIGHT_BIT;
          break;
       case GL_FRONT_RIGHT:
-         if (!ctx->Visual.StereoFlag) {
+         if (!ctx->Visual.stereoMode) {
             gl_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
             return;
          }
          ctx->Color.DrawDestMask = FRONT_RIGHT_BIT;
          break;
       case GL_BACK_RIGHT:
-         if (!ctx->Visual.StereoFlag) {
+         if (!ctx->Visual.stereoMode) {
             gl_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
             return;
          }
-         if (!ctx->Visual.DBflag) {
+         if (!ctx->Visual.doubleBufferMode) {
             gl_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
             return;
          }
          ctx->Color.DrawDestMask = BACK_RIGHT_BIT;
          break;
       case GL_BACK_LEFT:
-         if (!ctx->Visual.DBflag) {
+         if (!ctx->Visual.doubleBufferMode) {
             gl_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
             return;
          }
          ctx->Color.DrawDestMask = BACK_LEFT_BIT;
          break;
       case GL_FRONT_AND_BACK:
-         if (!ctx->Visual.DBflag) {
+         if (!ctx->Visual.doubleBufferMode) {
             gl_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
             return;
          }
-         if (ctx->Visual.StereoFlag)
+         if (ctx->Visual.stereoMode)
             ctx->Color.DrawDestMask = FRONT_LEFT_BIT | BACK_LEFT_BIT
                                     | FRONT_RIGHT_BIT | BACK_RIGHT_BIT;
          else
             ctx->Color.DrawDestMask = FRONT_LEFT_BIT | BACK_LEFT_BIT;
          break;
       case GL_BACK:
-         if (!ctx->Visual.DBflag) {
+         if (!ctx->Visual.doubleBufferMode) {
             gl_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
             return;
          }
-         if (ctx->Visual.StereoFlag)
+         if (ctx->Visual.stereoMode)
             ctx->Color.DrawDestMask = BACK_LEFT_BIT | BACK_RIGHT_BIT;
          else
             ctx->Color.DrawDestMask = BACK_LEFT_BIT;
          break;
       case GL_LEFT:
          /* never an error */
-         if (ctx->Visual.DBflag)
+         if (ctx->Visual.doubleBufferMode)
             ctx->Color.DrawDestMask = FRONT_LEFT_BIT | BACK_LEFT_BIT;
          else
             ctx->Color.DrawDestMask = FRONT_LEFT_BIT;
@@ -242,7 +242,7 @@ _mesa_DrawBuffer( GLenum mode )
          break;
       case GL_FRONT:
          /* never an error */
-         if (ctx->Visual.StereoFlag)
+         if (ctx->Visual.stereoMode)
             ctx->Color.DrawDestMask = FRONT_LEFT_BIT | FRONT_RIGHT_BIT;
          else
             ctx->Color.DrawDestMask = FRONT_LEFT_BIT;
@@ -259,13 +259,13 @@ _mesa_DrawBuffer( GLenum mode )
    /*
     * Make the dest buffer mode more precise if possible
     */
-   if (mode == GL_LEFT && !ctx->Visual.DBflag)
+   if (mode == GL_LEFT && !ctx->Visual.doubleBufferMode)
       ctx->Color.DriverDrawBuffer = GL_FRONT_LEFT;
-   else if (mode == GL_RIGHT && !ctx->Visual.DBflag)
+   else if (mode == GL_RIGHT && !ctx->Visual.doubleBufferMode)
       ctx->Color.DriverDrawBuffer = GL_FRONT_RIGHT;
-   else if (mode == GL_FRONT && !ctx->Visual.StereoFlag)
+   else if (mode == GL_FRONT && !ctx->Visual.stereoMode)
       ctx->Color.DriverDrawBuffer = GL_FRONT_LEFT;
-   else if (mode == GL_BACK && !ctx->Visual.StereoFlag)
+   else if (mode == GL_BACK && !ctx->Visual.stereoMode)
       ctx->Color.DriverDrawBuffer = GL_BACK_LEFT;
    else
       ctx->Color.DriverDrawBuffer = mode;
@@ -335,7 +335,7 @@ _mesa_ReadBuffer( GLenum mode )
       case GL_BACK:
       case GL_BACK_LEFT:
          /* Back-Left buffer, requires double buffering */
-         if (!ctx->Visual.DBflag) {
+         if (!ctx->Visual.doubleBufferMode) {
             gl_error( ctx, GL_INVALID_OPERATION, "glReadBuffer" );
             return;
          }
@@ -343,14 +343,14 @@ _mesa_ReadBuffer( GLenum mode )
          break;
       case GL_FRONT_RIGHT:
       case GL_RIGHT:
-         if (!ctx->Visual.StereoFlag) {
+         if (!ctx->Visual.stereoMode) {
             gl_error( ctx, GL_INVALID_OPERATION, "glReadBuffer" );
             return;
          }
          ctx->Pixel.DriverReadBuffer = GL_FRONT_RIGHT;
          break;
       case GL_BACK_RIGHT:
-         if (!ctx->Visual.StereoFlag || !ctx->Visual.DBflag) {
+         if (!ctx->Visual.stereoMode || !ctx->Visual.doubleBufferMode) {
             gl_error( ctx, GL_INVALID_OPERATION, "glReadBuffer" );
             return;
          }

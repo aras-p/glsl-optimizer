@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.52 2001/01/03 15:59:30 brianp Exp $ */
+/* $Id: image.c,v 1.53 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2506,7 +2506,7 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV);
 
    /* this is intended for RGBA mode only */
-   assert(ctx->Visual.RGBAflag);
+   assert(ctx->Visual.rgbMode);
 
    /* Try simple cases first */
    if (transferOps == 0 && srcType == CHAN_TYPE) {
@@ -2830,7 +2830,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
           srcType == GL_UNSIGNED_INT_2_10_10_10_REV);
 
    /* this is intended for RGBA mode only */
-   assert(ctx->Visual.RGBAflag);
+   assert(ctx->Visual.rgbMode);
 
    /* general solution, no special cases, yet */
    {
@@ -3342,7 +3342,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
 
    /* clamp depth values to [0,1] and convert from floats to integers */
    {
-      const GLfloat zs = ctx->Visual.DepthMaxF;
+      const GLfloat zs = ctx->DepthMaxF;
       GLuint i;
       for (i = 0; i < n; i++) {
          dest[i] = (GLdepth) (CLAMP(depth[i], 0.0F, 1.0F) * zs);

@@ -1,10 +1,10 @@
-/* $Id: t_vb_render.c,v 1.10 2001/01/16 05:29:43 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.11 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -635,8 +635,7 @@ static void check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
    GLuint inputs = VERT_CLIP;
    GLuint i;
 
-   if (ctx->Visual.RGBAflag)
-   {
+   if (ctx->Visual.rgbMode) {
       interp |= INTERP_RGBA;
       inputs |= VERT_RGBA;
 

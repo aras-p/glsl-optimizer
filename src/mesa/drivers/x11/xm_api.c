@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.15 2001/01/08 04:55:22 keithw Exp $ */
+/* $Id: xm_api.c,v 1.16 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -822,8 +822,8 @@ static GLboolean setup_grayscale( int client, XMesaVisual v,
 
       prevBuffer = find_xmesa_buffer(v->display, cmap, buffer);
       if (prevBuffer &&
-          (buffer->xm_visual->gl_visual->RGBAflag ==
-           prevBuffer->xm_visual->gl_visual->RGBAflag)) {
+          (buffer->xm_visual->gl_visual->rgbMode ==
+           prevBuffer->xm_visual->gl_visual->rgbMode)) {
          /* Copy colormap stuff from previous XMesaBuffer which uses same
           * X colormap.  Do this to avoid time spent in noFaultXAllocColor.
           */
@@ -910,8 +910,8 @@ static GLboolean setup_dithered_color( int client, XMesaVisual v,
 
       prevBuffer = find_xmesa_buffer(v->display, cmap, buffer);
       if (prevBuffer &&
-          (buffer->xm_visual->gl_visual->RGBAflag ==
-           prevBuffer->xm_visual->gl_visual->RGBAflag)) {
+          (buffer->xm_visual->gl_visual->rgbMode ==
+           prevBuffer->xm_visual->gl_visual->rgbMode)) {
          /* Copy colormap stuff from previous, matching XMesaBuffer.
           * Do this to avoid time spent in noFaultXAllocColor.
           */
@@ -1277,7 +1277,7 @@ static GLboolean initialize_visual_and_buffer( int client,
       assert( v->gl_visual );
 
       /* Setup for single/double buffering */
-      if (v->gl_visual->DBflag) {
+      if (v->gl_visual->doubleBufferMode) {
          /* Double buffered */
 #ifndef XFree86Server
          b->shm = check_for_xshm( v->display );
@@ -1793,7 +1793,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 #endif
 
    /* determine back buffer implementation */
-   if (v->gl_visual->DBflag) {
+   if (v->gl_visual->doubleBufferMode) {
       if (v->ximage_flag) {
 	 b->db_state = BACK_XIMAGE;
       }
@@ -1806,16 +1806,16 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
    }
 
    b->gl_buffer = _mesa_create_framebuffer( v->gl_visual,
-                                            v->gl_visual->DepthBits > 0,
-                                            v->gl_visual->StencilBits > 0,
-                                            v->gl_visual->AccumRedBits > 0,
-                                            v->gl_visual->AlphaBits > 0 );
+                                            v->gl_visual->depthBits > 0,
+                                            v->gl_visual->stencilBits > 0,
+                                            v->gl_visual->accumRedBits > 0,
+                                            v->gl_visual->alphaBits > 0 );
    if (!b->gl_buffer) {
       free_xmesa_buffer(client, b);
       return NULL;
    }
 
-   if (!initialize_visual_and_buffer( client, v, b, v->gl_visual->RGBAflag,
+   if (!initialize_visual_and_buffer( client, v, b, v->gl_visual->rgbMode,
                                       (XMesaDrawable)w, b->cmap )) {
       _mesa_destroy_framebuffer( b->gl_buffer );
       free_xmesa_buffer(client, b);
@@ -1829,22 +1829,22 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
        int attribs[100];
        int numAttribs = 0;
        int hw;
-       if (v->gl_visual->DepthBits > 0) {
+       if (v->gl_visual->depthBits > 0) {
 	 attribs[numAttribs++] = FXMESA_DEPTH_SIZE;
 	 attribs[numAttribs++] = 1;
        }
-       if (v->gl_visual->DBflag) {
+       if (v->gl_visual->doubleBufferMode) {
 	 attribs[numAttribs++] = FXMESA_DOUBLEBUFFER;
        }
-       if (v->gl_visual->AccumRedBits > 0) {
+       if (v->gl_visual->accumRedBits > 0) {
 	 attribs[numAttribs++] = FXMESA_ACCUM_SIZE;
-	 attribs[numAttribs++] = v->gl_visual->AccumRedBits;
+	 attribs[numAttribs++] = v->gl_visual->accumRedBits;
        }
-       if (v->gl_visual->StencilBits > 0) {
+       if (v->gl_visual->stencilBits > 0) {
          attribs[numAttribs++] = FXMESA_STENCIL_SIZE;
-         attribs[numAttribs++] = v->gl_visual->StencilBits;
+         attribs[numAttribs++] = v->gl_visual->stencilBits;
        }
-       if (v->gl_visual->AlphaBits > 0) {
+       if (v->gl_visual->alphaBits > 0) {
          attribs[numAttribs++] = FXMESA_ALPHA_SIZE;
          attribs[numAttribs++] = 1;
        }
@@ -1935,7 +1935,7 @@ XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
    b->cmap = cmap;
 
    /* determine back buffer implementation */
-   if (v->gl_visual->DBflag) {
+   if (v->gl_visual->doubleBufferMode) {
       if (v->ximage_flag) {
 	 b->db_state = BACK_XIMAGE;
       }
@@ -1948,18 +1948,18 @@ XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
    }
 
    b->gl_buffer = _mesa_create_framebuffer( v->gl_visual,
-                                            v->gl_visual->DepthBits > 0,
-                                            v->gl_visual->StencilBits > 0,
-                                            v->gl_visual->AccumRedBits +
-                                            v->gl_visual->AccumGreenBits +
-                                            v->gl_visual->AccumBlueBits > 0,
-                                            v->gl_visual->AlphaBits > 0 );
+                                            v->gl_visual->depthBits > 0,
+                                            v->gl_visual->stencilBits > 0,
+                                            v->gl_visual->accumRedBits +
+                                            v->gl_visual->accumGreenBits +
+                                            v->gl_visual->accumBlueBits > 0,
+                                            v->gl_visual->alphaBits > 0 );
    if (!b->gl_buffer) {
       free_xmesa_buffer(client, b);
       return NULL;
    }
 
-   if (!initialize_visual_and_buffer(client, v, b, v->gl_visual->RGBAflag,
+   if (!initialize_visual_and_buffer(client, v, b, v->gl_visual->rgbMode,
 				     (XMesaDrawable)p, cmap)) {
       _mesa_destroy_framebuffer( b->gl_buffer );
       free_xmesa_buffer(client, b);
@@ -2087,7 +2087,7 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
 	 c->gl_ctx->Scissor.Height = drawBuffer->height;
       }
 
-      if (c->xm_visual->gl_visual->RGBAflag) {
+      if (c->xm_visual->gl_visual->rgbMode) {
          /*
           * Must recompute and set these pixel values because colormap
           * can be different for different windows.

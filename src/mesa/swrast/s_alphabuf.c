@@ -1,9 +1,10 @@
+/* $Id: s_alphabuf.c,v 1.3 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -69,7 +70,7 @@ alloc_alpha_buffers( GLcontext *ctx, GLframebuffer *buf )
                 "Couldn't allocate front-left alpha buffer" );
    }
 
-   if (ctx->Visual.DBflag) {
+   if (ctx->Visual.doubleBufferMode) {
       if (buf->BackLeftAlpha) {
          FREE( buf->BackLeftAlpha );
       }
@@ -81,7 +82,7 @@ alloc_alpha_buffers( GLcontext *ctx, GLframebuffer *buf )
       }
    }
 
-   if (ctx->Visual.StereoFlag) {
+   if (ctx->Visual.stereoMode) {
       if (buf->FrontRightAlpha) {
          FREE( buf->FrontRightAlpha );
       }
@@ -92,7 +93,7 @@ alloc_alpha_buffers( GLcontext *ctx, GLframebuffer *buf )
                    "Couldn't allocate front-right alpha buffer" );
       }
 
-      if (ctx->Visual.DBflag) {
+      if (ctx->Visual.doubleBufferMode) {
          if (buf->BackRightAlpha) {
             FREE( buf->BackRightAlpha );
          }

@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.10 2001/01/13 07:13:28 keithw Exp $ */
+/* $Id: s_context.c,v 1.11 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,7 +59,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
    if (ctx->Fog.Enabled)                  RasterMask |= FOG_BIT;
    if (ctx->Scissor.Enabled)              RasterMask |= SCISSOR_BIT;
    if (ctx->Stencil.Enabled)              RasterMask |= STENCIL_BIT;
-   if (ctx->Visual.RGBAflag) {
+   if (ctx->Visual.rgbMode) {
       const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
       if (colorMask != 0xffffffff)        RasterMask |= MASKING_BIT;
       if (ctx->Color.ColorLogicOpEnabled) RasterMask |= LOGIC_OP_BIT;
@@ -96,10 +96,10 @@ _swrast_update_rasterflags( GLcontext *ctx )
    else if (ctx->Color.DrawBuffer==GL_NONE) {
       RasterMask |= MULTI_DRAW_BIT;
    }
-   else if (ctx->Visual.RGBAflag && *((GLuint *) ctx->Color.ColorMask) == 0) {
+   else if (ctx->Visual.rgbMode && *((GLuint *) ctx->Color.ColorMask) == 0) {
       RasterMask |= MULTI_DRAW_BIT; /* all RGBA channels disabled */
    }
-   else if (!ctx->Visual.RGBAflag && ctx->Color.IndexMask==0) {
+   else if (!ctx->Visual.rgbMode && ctx->Color.IndexMask==0) {
       RasterMask |= MULTI_DRAW_BIT; /* all color index bits disabled */
    }
 

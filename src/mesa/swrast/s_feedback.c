@@ -1,10 +1,10 @@
-/* $Id: s_feedback.c,v 1.4 2001/01/05 02:26:49 keithw Exp $ */
+/* $Id: s_feedback.c,v 1.5 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,7 +57,7 @@ static void feedback_vertex( GLcontext *ctx,
 
    win[0] = v->win[0];
    win[1] = v->win[1];
-   win[2] = v->win[2] / ctx->Visual.DepthMaxF;
+   win[2] = v->win[2] / ctx->DepthMaxF;
    win[3] = 1.0 / v->win[3];
 
    color[0] = CHAN_TO_FLOAT(pv->color[0]);
@@ -143,7 +143,7 @@ void gl_select_triangle( GLcontext *ctx,
 			 const SWvertex *v2)
 {
    if (gl_cull_triangle( ctx, v0, v1, v2 )) {
-      const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
+      const GLfloat zs = 1.0F / ctx->DepthMaxF;
 
       gl_update_hitflag( ctx, v0->win[2] * zs );
       gl_update_hitflag( ctx, v1->win[2] * zs );
@@ -154,7 +154,7 @@ void gl_select_triangle( GLcontext *ctx,
 
 void gl_select_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
-   const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
+   const GLfloat zs = 1.0F / ctx->DepthMaxF;
    gl_update_hitflag( ctx, v0->win[2] * zs );
    gl_update_hitflag( ctx, v1->win[2] * zs );
 }
@@ -162,7 +162,7 @@ void gl_select_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 
 void gl_select_point( GLcontext *ctx, const SWvertex *v )
 {
-   const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
+   const GLfloat zs = 1.0F / ctx->DepthMaxF;
    gl_update_hitflag( ctx, v->win[2] * zs );
 }
 

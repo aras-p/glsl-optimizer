@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.33 2000/12/26 05:09:27 keithw Exp $ */
+/* $Id: accum.c,v 1.34 2001/01/23 23:39:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,7 +69,7 @@ _mesa_Accum( GLenum op, GLfloat value )
    GLuint xpos, ypos, width, height;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   if (ctx->Visual.AccumRedBits == 0 || ctx->DrawBuffer != ctx->ReadBuffer) {
+   if (ctx->Visual.accumRedBits == 0 || ctx->DrawBuffer != ctx->ReadBuffer) {
       gl_error(ctx, GL_INVALID_OPERATION, "glAccum");
       return;
    }

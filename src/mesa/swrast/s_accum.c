@@ -1,10 +1,10 @@
-/* $Id: s_accum.c,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_accum.c,v 1.4 2001/01/23 23:39:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,7 @@
 #include "mem.h"
 
 #include "s_accum.h"
+#include "s_alphabuf.h"
 #include "s_context.h"
 #include "s_masking.h"
 #include "s_span.h"
@@ -135,7 +136,7 @@ _mesa_clear_accum_buffer( GLcontext *ctx )
    GLuint buffersize;
    GLfloat acc_scale;
 
-   if (ctx->Visual.AccumRedBits==0) {
+   if (ctx->Visual.accumRedBits==0) {
       /* No accumulation buffer! */
       return;
    }
@@ -472,6 +473,11 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                }
                (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos, 
                                              (const GLchan (*)[4])rgba, NULL );
+               if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
+                   && ctx->Color.ColorMask[ACOMP]) {
+                  _mesa_write_alpha_span(ctx, width, xpos, ypos,
+                                         (CONST GLubyte (*)[4]) rgba, NULL);
+               }
                ypos++;
             }
          }
@@ -499,6 +505,11 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                }
                (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos, 
                                              (const GLchan (*)[4])rgba, NULL );
+               if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
+                   && ctx->Color.ColorMask[ACOMP]) {
+                  _mesa_write_alpha_span(ctx, width, xpos, ypos,
+                                         (CONST GLubyte (*)[4]) rgba, NULL);
+               }
                ypos++;
             }
 	 }
