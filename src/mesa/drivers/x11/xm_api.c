@@ -1,10 +1,10 @@
-/* $Id: xm_api.c,v 1.30 2001/11/06 16:01:19 brianp Exp $ */
+/* $Id: xm_api.c,v 1.31 2002/02/15 19:15:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1306,23 +1306,31 @@ static GLboolean initialize_visual_and_buffer( int client,
 #endif
       XMesaSetFunction( v->display, b->gc, GXcopy );
 
+      /* cleargc - for glClear() */
+#ifdef XFree86Server
+      b->cleargc = CreateScratchGC(v->display, window->depth);
+#else
+      b->cleargc = XCreateGC( v->display, window, 0, NULL );
+#endif
+      XMesaSetFunction( v->display, b->cleargc, GXcopy );
+
       /*
        * Don't generate Graphics Expose/NoExpose events in swapbuffers().
        * Patch contributed by Michael Pichler May 15, 1995.
        */
 #ifdef XFree86Server
-      b->cleargc = CreateScratchGC(v->display, window->depth);
+      b->swapgc = CreateScratchGC(v->display, window->depth);
       {
 	  CARD32 v[1];
 	  v[0] = FALSE;
-	  dixChangeGC(NullClient, b->cleargc, GCGraphicsExposures, v, NULL);
+	  dixChangeGC(NullClient, b->swapgc, GCGraphicsExposures, v, NULL);
       }
 #else
       gcvalues.graphics_exposures = False;
-      b->cleargc = XCreateGC( v->display, window,
+      b->swapgc = XCreateGC( v->display, window,
                               GCGraphicsExposures, &gcvalues);
 #endif
-      XMesaSetFunction( v->display, b->cleargc, GXcopy );
+      XMesaSetFunction( v->display, b->swapgc, GXcopy );
       /*
        * Set fill style and tile pixmap once for all for HPCR stuff
        * (instead of doing it each time in clear_color_HPCR_pixmap())
@@ -2022,6 +2030,7 @@ void XMesaDestroyBuffer( XMesaBuffer b )
 
    if (b->gc)  XMesaFreeGC( b->xm_visual->display, b->gc );
    if (b->cleargc)  XMesaFreeGC( b->xm_visual->display, b->cleargc );
+   if (b->swapgc)  XMesaFreeGC( b->xm_visual->display, b->swapgc );
 
    if (b->backimage) {
 #if defined(USE_XSHM) && !defined(XFree86Server)
@@ -2396,7 +2405,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
 	 if (b->shm) {
             /*_glthread_LOCK_MUTEX(_xmesa_lock);*/
 	    XShmPutImage( b->xm_visual->display, b->frontbuffer,
-			  b->cleargc,
+			  b->swapgc,
 			  b->backimage, 0, 0,
 			  0, 0, b->width, b->height, False );
             /*_glthread_UNLOCK_MUTEX(_xmesa_lock);*/
@@ -2406,7 +2415,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
          {
             /*_glthread_LOCK_MUTEX(_xmesa_lock);*/
             XMesaPutImage( b->xm_visual->display, b->frontbuffer,
-			   b->cleargc,
+			   b->swapgc,
 			   b->backimage, 0, 0,
 			   0, 0, b->width, b->height );
             /*_glthread_UNLOCK_MUTEX(_xmesa_lock);*/
@@ -2418,7 +2427,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
 	 XMesaCopyArea( b->xm_visual->display,
 			b->backpixmap,   /* source drawable */
 			b->frontbuffer,  /* dest. drawable */
-			b->cleargc,
+			b->swapgc,
 			0, 0, b->width, b->height,  /* source region */
 			0, 0                 /* dest region */
 		      );
@@ -2462,7 +2471,7 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
          if (b->shm) {
             /* XXX assuming width and height aren't too large! */
             XShmPutImage( b->xm_visual->display, b->frontbuffer,
-                          b->cleargc,
+                          b->swapgc,
                           b->backimage, x, yTop,
                           x, yTop, width, height, False );
             /* wait for finished event??? */
@@ -2472,7 +2481,7 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
          {
             /* XXX assuming width and height aren't too large! */
             XMesaPutImage( b->xm_visual->display, b->frontbuffer,
-			   b->cleargc,
+			   b->swapgc,
 			   b->backimage, x, yTop,
 			   x, yTop, width, height );
          }
@@ -2482,7 +2491,7 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
          XMesaCopyArea( b->xm_visual->display,
 			b->backpixmap,           /* source drawable */
 			b->frontbuffer,          /* dest. drawable */
-			b->cleargc,
+			b->swapgc,
 			x, yTop, width, height,  /* source region */
 			x, yTop                  /* dest region */
                       );

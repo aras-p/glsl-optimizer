@@ -1,10 +1,10 @@
-/* $Id: xmesaP.h,v 1.24 2001/09/01 20:23:25 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.25 2002/02/15 19:15:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.2
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -190,6 +190,7 @@ struct xmesa_buffer {
 
    XMesaGC gc;			/* scratch GC for span, line, tri drawing */
    XMesaGC cleargc;		/* GC for clearing the color buffer */
+   XMesaGC swapgc;		/* GC for swapping the color buffers */
 
    /* The following are here instead of in the XMesaVisual
     * because they depend on the window's colormap.
