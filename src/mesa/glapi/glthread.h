@@ -109,6 +109,20 @@ typedef pthread_mutex_t _glthread_Mutex;
 #define _glthread_UNLOCK_MUTEX(name) \
    (void) pthread_mutex_unlock(&(name))
 
+/* This is temporarilly removed because driver binaries cannot count on
+ * the existance of _gl_DispatchTSD in libGL.  It only exists in "new"
+ * libGL.  We may be able to ressurect this optimization at some point
+ * for DRI driver or for software Mesa.
+ */
+#if 0
+extern struct _glapi_table * _glapi_DispatchTSD;
+extern _glthread_TSD _gl_DispatchTSD;
+
+#define GL_CALL(name) \
+   (((__builtin_expect( _glapi_DispatchTSD != NULL, 1 )) \
+	? _glapi_DispatchTSD : (struct _glapi_table *) pthread_getspecific(_gl_DispatchTSD.key))-> name)
+#endif
+
 #endif /* PTHREADS */
 
 
@@ -291,8 +305,15 @@ extern void
 _glthread_SetTSD(_glthread_TSD *, void *);
 
 #ifndef GL_CALL
-# define GL_CALL(name) (*(_glapi_Dispatch-> name))
-#endif
+# if defined(THREADS)
+extern struct _glapi_table * _glapi_DispatchTSD;
+#  define GL_CALL(name) \
+   (((__builtin_expect( _glapi_DispatchTSD != NULL, 1 )) \
+	? _glapi_DispatchTSD : _glapi_get_dispatch())-> name)
+# else
+#  define GL_CALL(name) (*(_glapi_Dispatch-> name))
+# endif /* defined(THREADS) */
+#endif  /* ndef GL_CALL */
 
 
 #endif /* THREADS_H */

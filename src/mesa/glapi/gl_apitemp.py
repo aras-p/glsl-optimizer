@@ -112,16 +112,13 @@ class PrintGlOffsets(gl_XML.FilterGLAPISpecBase):
  */
 
 
+#if defined( NAME )
 #ifndef KEYWORD1
 #define KEYWORD1
 #endif
 
 #ifndef KEYWORD2
 #define KEYWORD2
-#endif
-
-#ifndef NAME
-#error NAME must be defined
 #endif
 
 #ifndef DISPATCH
@@ -140,6 +137,7 @@ GLAPI void GLAPIENTRY gl__unused413(void);  /* silence warning */
 
 	def printInitDispatch(self):
 		print """
+#endif /* defined( NAME ) */
 
 /*
  * This is how a dispatch table can be initialized with all the functions

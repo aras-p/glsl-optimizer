@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glapitemp.py,v 1.5 2002/11/30 17:18:46 brianp Exp $
+# $Id: glapitemp.py,v 1.6 2004/06/29 19:08:20 idr Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -67,16 +67,13 @@ def PrintHead():
  */
 
 
+#if defined( NAME )
 #ifndef KEYWORD1
 #define KEYWORD1
 #endif
 
 #ifndef KEYWORD2
 #define KEYWORD2
-#endif
-
-#ifndef NAME
-#error NAME must be defined
 #endif
 
 #ifndef DISPATCH
@@ -231,6 +228,7 @@ def EmitFunction(name, returnType, argTypeList, argNameList, alias, offset):
 
 def PrintInitDispatch():
 	print """
+#endif /* defined( NAME ) */
 
 /*
  * This is how a dispatch table can be initialized with all the functions

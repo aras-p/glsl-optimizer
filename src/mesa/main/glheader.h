@@ -328,6 +328,12 @@ typedef GLushort GLhalfARB;
 #endif
 
 
+#if !defined __GNUC__ || __GNUC__ < 3
+# define __builtin_expect(x, y) x
+#endif
+
+
+
 /**
  * Sometimes we treat GLfloats as GLints.  On x86 systems, moving a float
  * as a int (thereby using integer registers instead of FP registers) is

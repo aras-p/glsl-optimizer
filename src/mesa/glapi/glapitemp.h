@@ -26,16 +26,13 @@
  */
 
 
+#if defined( NAME )
 #ifndef KEYWORD1
 #define KEYWORD1
 #endif
 
 #ifndef KEYWORD2
 #define KEYWORD2
-#endif
-
-#ifndef NAME
-#error NAME must be defined
 #endif
 
 #ifndef DISPATCH
@@ -4778,6 +4775,7 @@ KEYWORD1 void KEYWORD2 NAME(BlendEquationSeparateATI)(GLenum modeRGB, GLenum mod
 }
 
 
+#endif /* defined( NAME ) */
 
 /*
  * This is how a dispatch table can be initialized with all the functions

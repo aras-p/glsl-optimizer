@@ -77,15 +77,65 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print '#define GLOBL_FN(x) GLOBL x'
 		print '#endif'
 		print ''
-		print '#define GL_STUB(fn,off,stack)\t\t\t\t\\'
+		print '#if defined(PTHREADS)'
+		print '#  define GL_STUB(fn,off,fn_alt)\t\t\t\\'
 		print 'ALIGNTEXT16;\t\t\t\t\t\t\\'
-		print 'GLOBL_FN(GL_PREFIX(fn, fn ## @ ## stack));\t\t\\'
-		print 'GL_PREFIX(fn, fn ## @ ## stack):\t\t\t\\'
-		print '\tMOV_L(CONTENT(GLNAME(_glapi_Dispatch)), EAX) ;\t\\'
+		print 'GLOBL_FN(GL_PREFIX(fn, fn_alt));\t\t\t\\'
+		print 'GL_PREFIX(fn, fn_alt):\t\t\t\t\t\\'
+		print '\tMOV_L(CONTENT(GLNAME(_glapi_DispatchTSD)), EAX) ;\t\\'
+		print '\tTEST_L(EAX, EAX) ;\t\t\t\t\\'
+		print '\tJE(1f) ;\t\t\t\t\t\\'
+		print '\tJMP(GL_OFFSET(off)) ;\t\t\t\t\\'
+		print '1:\tCALL(get_dispatch) ;\t\t\t\t\\'
 		print '\tJMP(GL_OFFSET(off))'
+		print '#elif defined(THREADS)'
+		print '#  define GL_STUB(fn,off,fn_alt)\t\t\t\\'
+		print 'ALIGNTEXT16;\t\t\t\t\t\t\\'
+		print 'GLOBL_FN(GL_PREFIX(fn, fn_alt));\t\t\t\\'
+		print 'GL_PREFIX(fn, fn_alt):\t\t\t\t\t\\'
+		print '\tMOV_L(CONTENT(GLNAME(_glapi_DispatchTSD)), EAX) ;\t\\'
+		print '\tTEST_L(EAX, EAX) ;\t\t\t\t\\'
+		print '\tJE(1f) ;\t\t\t\t\t\\'
+		print '\tJMP(GL_OFFSET(off)) ;\t\t\t\t\\'
+		print '1:\tCALL(_glapi_get_dispatch) ;\t\t\t\\'
+		print '\tJMP(GL_OFFSET(off))'
+		print '#else /* Non-threaded version. */'
+		print '#  define GL_STUB(fn,off,fn_alt)\t\t\t\\'
+		print 'ALIGNTEXT16;\t\t\t\t\t\t\\'
+		print 'GLOBL_FN(GL_PREFIX(fn, fn_alt));\t\t\t\\'
+		print 'GL_PREFIX(fn, fn_alt):\t\t\t\t\t\\'
+		print '\tMOV_L(CONTENT(GLNAME(_glapi_DispatchTSD)), EAX) ;\t\\'
+		print '\tJMP(GL_OFFSET(off))'
+		print '#endif'
 		print ''
 		print 'SEG_TEXT'
+		print ''
+		print '#ifdef PTHREADS'
 		print 'EXTERN GLNAME(_glapi_Dispatch)'
+		print 'EXTERN GLNAME(_gl_DispatchTSD)'
+		print '#ifdef __PIC__'
+		print 'EXTERN GLNAME(pthread_getspecific@PLT)'
+		print '#else'
+		print 'EXTERN GLNAME(pthread_getspecific)'
+		print '#endif'
+		print ''
+		print 'ALIGNTEXT16'
+		print 'GLNAME(get_dispatch):'
+		print '\tSUB_L(CONST(24), ESP)'
+		print '\tPUSH_L(GLNAME(_gl_DispatchTSD))'
+		print '#ifdef __PIC__'
+		print '\tCALL(GLNAME(pthread_getspecific@PLT))'
+		print '#else'
+		print '\tCALL(GLNAME(pthread_getspecific))'
+		print '#endif'
+		print '\tADD_L(CONST(28), ESP)'
+		print '\tRET'
+		print '#elif defined(THREADS)'
+		print 'EXTERN GLNAME(_glapi_get_dispatch)'
+		print '#endif'
+		print ''
+		print '\t\tALIGNTEXT16 ; GLOBL gl_dispatch_functions_start'
+		print 'gl_dispatch_functions_start:'
 		print ''
 		return
 
@@ -95,11 +145,10 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		return
 
 	def printFunction(self, f):
-		if f.fn_offset == -1: return
-
 		stack = self.get_stack_size(f)
 
-		print '\tGL_STUB(%s, _gloffset_%s, %u)' % (f.name, f.real_name, stack)
+		alt = "%s@%u" % (f.name, stack)
+		print '\tGL_STUB(%s, _gloffset_%s, %s)' % (f.name, f.real_name, alt)
 		return
 
 def show_usage():
