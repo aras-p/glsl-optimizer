@@ -395,8 +395,8 @@ hpux11-32:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CXX = aCC" \
-	"CFLAGS = +O3 +DA2.0 -Aa -D_HPUX_SOURCE -D_USE_ISFINITE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS" \
-	"CXXFLAGS = +O3 +DA2.0 -Aa -D_HPUX_SOURCE -D_USE_ISFINITE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS" \
+	"CFLAGS = +O3 +DA2.0 -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS" \
+	"CXXFLAGS = +O3 +DA2.0 -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS" \
 	"MKLIB_OPTIONS = -static" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
@@ -409,8 +409,8 @@ hpux11-32-nothreads:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CXX = aCC" \
-	"CFLAGS = +O3 +DA2.0 -Aa -D_HPUX_SOURCE -D_USE_ISFINITE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
-	"CXXFLAGS = +O3 +DA2.0 -Aa -D_HPUX_SOURCE -D_USE_ISFINITE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
+	"CFLAGS = +O3 +DA2.0 -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
+	"CXXFLAGS = +O3 +DA2.0 -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
 	"MKLIB_OPTIONS = -static" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
@@ -424,8 +424,8 @@ hpux11-64:
 	"LIBDIR = $(TOP)/lib64" \
 	"CC = cc" \
 	"CXX = aCC" \
-	"CFLAGS = +O3 +DA2.0W -Ae -D_HPUX_SOURCE -D_USE_ISFINITE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS" \
-	"CXXFLAGS = +O3 +DA2.0W -Aa -D_HPUX_SOURCE -D_USE_ISFINITE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS" \
+	"CFLAGS = +O3 +DA2.0W -Ae -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS" \
+	"CXXFLAGS = +O3 +DA2.0W -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM -DPTHREADS" \
 	"MKLIB_OPTIONS = -static" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
@@ -439,8 +439,8 @@ hpux11-64-nothreads:
 	"LIBDIR = $(TOP)/lib64" \
 	"CC = cc" \
 	"CXX = aCC" \
-	"CFLAGS = +O3 +DA2.0W -Ae -D_HPUX_SOURCE -D_USE_ISFINITE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
-	"CXXFLAGS = +O3 +DA2.0W -Aa -D_HPUX_SOURCE -D_USE_ISFINITE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
+	"CFLAGS = +O3 +DA2.0W -Ae -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
+	"CXXFLAGS = +O3 +DA2.0W -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DUSE_XSHM" \
 	"MKLIB_OPTIONS = -static" \
 	"APP_LIB_DEPS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
@@ -703,8 +703,8 @@ linux-x86-static:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CXX = g++" \
-	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
-	"CXXFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
+	"CFLAGS = -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
+	"CXXFLAGS = -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"MKLIB_OPTIONS = -static" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
@@ -723,8 +723,8 @@ linux-x86-static-nothreads:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CXX = g++" \
-	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -I/usr/X11R6/include" \
-	"CXXFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
+	"CFLAGS = -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -I/usr/X11R6/include" \
+	"CXXFLAGS = -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"MKLIB_OPTIONS = -static" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm " \
@@ -743,7 +743,8 @@ linux-x86-64-static:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CPLUSPLUS = g++" \
-	"CFLAGS = -m64 -Wall -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
+	"CFLAGS = -m64 -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
+	"CXXFLAGS = -m64 -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -759,7 +760,8 @@ linux-x86-64-static-nothreads:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = gcc" \
 	"CPLUSPLUS = g++" \
-	"CFLAGS = -m64 -Wall -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
+	"CFLAGS = -m64 -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
+	"CXXFLAGS = -m64 -Wall -O3 -ansi -pedantic -ffast-math -funroll-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -810,7 +812,8 @@ linux-icc-static:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = icc" \
 	"CXX = icpc" \
-	"CFLAGS = -O3 -tpp6 -KPIC -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
+	"CFLAGS = -O3 -tpp6 -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
+	"CXXFLAGS = -O3 -tpp6 -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
@@ -828,7 +831,8 @@ linux-icc-static-nothreads:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = icc" \
 	"CXX = icpc" \
-	"CFLAGS = -O3 -tpp6 -KPIC -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -I/usr/X11R6/include" \
+	"CFLAGS = -O3 -tpp6 -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -I/usr/X11R6/include" \
+	"CXXFLAGS = -O3 -tpp6 -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
@@ -932,11 +936,11 @@ linux-ia64-ecc-static:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = ecc" \
-	"CPLUSPLUS = ecpc" \
-	"CFLAGS = -O3 -ansi -KPIC -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
-	"CXXFLAGS = -O3 -ansi -KPIC -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
+	"CXX = ecpc" \
+	"CFLAGS = -O3 -ansi -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
+	"CXXFLAGS = -O3 -ansi -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
@@ -950,11 +954,11 @@ linux-ia64-ecc-static-nothreads:
 	"GLW_LIB = libGLw.a" \
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = ecc" \
-	"CPLUSPLUS = ecpc" \
-	"CFLAGS = -O3 -ansi -KPIC -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
-	"CXXFLAGS = -O3 -ansi -KPIC -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
+	"CXX = ecpc" \
+	"CFLAGS = -O3 -ansi -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
+	"CXXFLAGS = -O3 -ansi -D_GCC_LIMITS_H_ -D__GNUC__ -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -I/usr/X11R6/include" \
 	"MKLIB_OPTIONS = -static" \
-	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
+	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm" \
@@ -1224,8 +1228,8 @@ osf1:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CXX = cxx" \
-	"CFLAGS = -O0 -std1 -ieee_with_no_inexact -DPTHREADS -D_REENTRANT -DUSE_XSHM" \
-	"CXXFLAGS = -O0 -std1 -ieee_with_no_inexact -DPTHREADS -D_REENTRANT -DUSE_XSHM" \
+	"CFLAGS = -O2 -std1 -ieee_with_no_inexact -DPTHREADS -D_REENTRANT -DUSE_XSHM" \
+	"CXXFLAGS = -O2 -std1 -ieee_with_no_inexact -DPTHREADS -D_REENTRANT -DUSE_XSHM" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -lX11 -lXext -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
@@ -1241,8 +1245,8 @@ osf1-nothreads:
 	"OSMESA_LIB = libOSMesa.a" \
 	"CC = cc" \
 	"CXX = cxx" \
-	"CFLAGS = -O0 -std1 -ieee_with_no_inexact -DUSE_XSHM" \
-	"CXXFLAGS = -O0 -std1 -ieee_with_no_inexact -DUSE_XSHM" \
+	"CFLAGS = -O2 -std1 -ieee_with_no_inexact -DUSE_XSHM" \
+	"CXXFLAGS = -O2 -std1 -ieee_with_no_inexact -DUSE_XSHM" \
 	"MKLIB_OPTIONS = -static" \
 	"GL_LIB_DEPS = -lX11 -lXext -lm" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
