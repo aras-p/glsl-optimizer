@@ -1,7 +1,7 @@
 # Makefile.cygnus for Cygnus-Win32 target
 # /Stephane Rehel, November 16 1997
 
-# Makefile for GLUT 3.6
+# Makefile for GLUT 3.7
 #
 # NOTICE:  The OpenGL Utility Toolkit (GLUT) distribution contains source
 # code published in a book titled "Programming OpenGL for the X Window
@@ -19,7 +19,8 @@
 ##### MACROS #####
 
 GLUT_MAJOR = 3
-GLUT_MINOR = 6
+GLUT_MINOR = 7
+GLUT_TINY = 0
 
 VPATH = RCS
 
@@ -92,7 +93,7 @@ targets: $(LIBDIR)/$(GLUT_LIB)
 
 # Make the library
 $(LIBDIR)/$(GLUT_LIB): $(OBJECTS)
-	$(MAKELIB) $(GLUT_LIB) $(GLUT_MAJOR) $(GLUT_MINOR) $(OBJECTS)
+	$(MAKELIB) $(GLUT_LIB) $(GLUT_MAJOR) $(GLUT_MINOR) $(GLUT_TINY) $(OBJECTS)
 	mv $(GLUT_LIB)* $(LIBDIR)
 
 include ../Make-config

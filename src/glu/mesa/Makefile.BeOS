@@ -54,7 +54,7 @@ targets: $(LIBDIR)/$(GLU_LIB)
 
 # Make the library:
 $(LIBDIR)/$(GLU_LIB): $(OBJECTS)
-	$(MAKELIB) $(GLU_LIB) 2 6 $(OBJECTS)
+	$(MAKELIB) $(GLU_LIB) $(MAJOR) $(MINOR) $(TINY) $(OBJECTS)
 #	$(RANLIB) $(GLU_LIB)
 	mv $(GLU_LIB)* $(LIBDIR)
 

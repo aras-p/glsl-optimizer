@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.2 1999/09/07 21:32:30 brianp Exp $
+# $Id: Makefile.X11,v 1.3 1999/09/15 15:11:52 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.1
@@ -222,7 +222,7 @@ targets: $(LIBDIR)/$(GL_LIB)
 
 # Make the library
 $(LIBDIR)/$(GL_LIB): $(OBJECTS)
-	$(MAKELIB) $(GL_LIB) $(MAJOR) $(MINOR) $(OBJECTS)
+	$(MAKELIB) $(GL_LIB) $(MAJOR) $(MINOR) $(TINY) $(OBJECTS)
 	rm -f $(LIBDIR)/$(GL_LIB)*
 	mv $(GL_LIB)* $(LIBDIR)
 

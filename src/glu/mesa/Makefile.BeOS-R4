@@ -19,9 +19,12 @@
 # Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 
-# $Id: Makefile.BeOS-R4,v 1.2 1999/09/10 02:03:31 gareth Exp $
+# $Id: Makefile.BeOS-R4,v 1.3 1999/09/15 15:11:01 brianp Exp $
 
 # $Log: Makefile.BeOS-R4,v $
+# Revision 1.3  1999/09/15 15:11:01  brianp
+# added third, tiny version number to mklib scripts
+#
 # Revision 1.2  1999/09/10 02:03:31  gareth
 # Added GLU 1.3 tessellation (except winding rule code).
 #
@@ -63,7 +66,7 @@ targets: $(LIBDIR)/$(GLU_LIB)
 
 # Make the library:
 $(LIBDIR)/$(GLU_LIB): $(OBJECTS)
-	$(MAKELIB) $(GLU_LIB) $(MAJOR) $(MINOR) -L$(LIBDIR) -lMesaGL $(OBJECTS)
+	$(MAKELIB) $(GLU_LIB) $(MAJOR) $(MINOR) $(TINY) -L$(LIBDIR) -lMesaGL $(OBJECTS)
 	mv $(GLU_LIB)* $(LIBDIR)
 
 include ../Make-config

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.1 1999/08/19 14:00:01 brianp Exp $
+# $Id: Makefile.X11,v 1.2 1999/09/15 15:11:24 brianp Exp $
 
 # Makefile for GLUT
 #
@@ -16,6 +16,9 @@
 
 
 # $Log: Makefile.X11,v $
+# Revision 1.2  1999/09/15 15:11:24  brianp
+# added third, tiny version number to mklib scripts
+#
 # Revision 1.1  1999/08/19 14:00:01  brianp
 # initial check-in (post crash)
 #
@@ -25,6 +28,7 @@
 
 GLUT_MAJOR = 3
 GLUT_MINOR = 7
+GLUT_TINY = 0
 
 VPATH = RCS
 
@@ -104,7 +108,7 @@ targets: $(LIBDIR)/$(GLUT_LIB)
 
 # Make the library
 $(LIBDIR)/$(GLUT_LIB): $(OBJECTS)
-	$(MAKELIB) $(GLUT_LIB) $(GLUT_MAJOR) $(GLUT_MINOR) $(OBJECTS)
+	$(MAKELIB) $(GLUT_LIB) $(GLUT_MAJOR) $(GLUT_MINOR) $(GLUT_TINY) $(OBJECTS)
 	mv $(GLUT_LIB)* $(LIBDIR)
 
 include ../Make-config
