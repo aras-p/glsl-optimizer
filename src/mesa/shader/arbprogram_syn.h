@@ -28,8 +28,9 @@
  * \author Michal Krol
  */
 
+
 ".syntax program;\n"
-".emtcode REVISION 0x07\n"
+".emtcode REVISION 0x08\n"
 ".emtcode FRAGMENT_PROGRAM 0x01\n"
 ".emtcode VERTEX_PROGRAM 0x02\n"
 ".emtcode OPTION 0x01\n"
@@ -1007,6 +1008,13 @@
 " lbracket_ne .and stateModMatNum .and rbracket;\n"
 "stateModMatNum\n"
 " integer;\n"
+"optOutputColorNum\n"
+" optOutputColorNum_1 .or .true .emit 0x00;\n"
+"optOutputColorNum_1\n"
+" lbracket_ne .and outputColorNum .and rbracket;\n"
+" \n"
+"outputColorNum\n"
+" integer;\n"
 "optTexCoordNum\n"
 " optTexCoordNum_1 .or .true .emit 0x00;\n"
 "optTexCoordNum_1\n"
@@ -1101,8 +1109,10 @@
 "vp_resultBinding\n"
 " \"result\" .and dot .and vp_resultBinding_1 .error INVALID_RESULT_PROPERTY;\n"
 "fp_resultBinding_1\n"
-" \"color\" .emit FRAGMENT_RESULT_COLOR .or\n"
+" fp_resultBinding_2 .emit FRAGMENT_RESULT_COLOR .or\n"
 " \"depth\" .emit FRAGMENT_RESULT_DEPTH;\n"
+"fp_resultBinding_2\n"
+" \"color\" .and optOutputColorNum;\n"
 "vp_resultBinding_1\n"
 " .if (ARB_position_invariant == 0x00) \"position\" .emit VERTEX_RESULT_POSITION .or\n"
 " resultColBinding .emit VERTEX_RESULT_COLOR .or\n"
@@ -1342,3 +1352,4 @@
 "e_charordigit\n"
 " 'A'-'Z' .or 'a'-'z' .or '0'-'9';\n"
 ""
+

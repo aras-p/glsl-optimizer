@@ -6,7 +6,7 @@
    compares the value with its REVISION value. If they do not match, the loader is not up
    to date.
 */
-.emtcode REVISION                                   0x07
+.emtcode REVISION                                   0x08
 
 /* program type */
 .emtcode FRAGMENT_PROGRAM                           0x01
@@ -2064,6 +2064,23 @@ stateModMatNum
     integer;
 
 /*
+    From ARB_draw_buffers:
+    <optOutputColorNum>    ::= ""
+                             | "[" <OutputColorNum> "]"
+*/
+optOutputColorNum
+    optOutputColorNum_1 .or .true .emit 0x00;
+optOutputColorNum_1
+    lbracket_ne .and outputColorNum .and rbracket;
+
+/*
+    From ARB_draw_buffers:
+    <outputColorNum>       ::= <integer> from 0 to MAX_DRAW_BUFFERS_ARB-1
+*/ 
+outputColorNum
+    integer;
+
+/*
     <optTexCoordNum>       ::= ""
                              | "[" <texCoordNum> "]"
 */
@@ -2305,8 +2322,9 @@ vp_OUTPUT_statement
     vp_resultBinding .error RESULT_EXPECTED;
 
 /*
+      From ARB_draw_buffers:
 fragment program
-    <resultBinding>        ::= "result" "." "color"
+    <resultBinding>        ::= "result" "." "color" <optOutputColorNum>
                              | "result" "." "depth"
 
 vertex program
@@ -2321,8 +2339,10 @@ fp_resultBinding
 vp_resultBinding
     "result" .and dot .and vp_resultBinding_1 .error INVALID_RESULT_PROPERTY;
 fp_resultBinding_1
-    "color" .emit FRAGMENT_RESULT_COLOR .or
+    fp_resultBinding_2 .emit FRAGMENT_RESULT_COLOR .or
     "depth" .emit FRAGMENT_RESULT_DEPTH;
+fp_resultBinding_2
+    "color" .and optOutputColorNum;
 vp_resultBinding_1
     .if (ARB_position_invariant == 0x00) "position" .emit VERTEX_RESULT_POSITION .or
     resultColBinding .emit VERTEX_RESULT_COLOR .or

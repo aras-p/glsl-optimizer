@@ -146,7 +146,7 @@ __extension__ static char arb_grammar_text[] =
     - changed and merged V_* and F_* opcode values to OP_*.
     - added GL_ARB_fragment_program_shadow specific tokens (michal)
 */
-#define  REVISION                                   0x07
+#define  REVISION                                   0x08
 
 /* program type */
 #define  FRAGMENT_PROGRAM                           0x01
@@ -821,6 +821,28 @@ parse_generic_attrib_num(GLcontext *ctx, GLubyte ** inst,
 
    *attrib = (GLuint) i;
 
+   return 0;
+}
+
+
+/**
+ * \param color The index of the color buffer to write into
+ * \return 0 on sucess, 1 on error
+ */
+static GLuint
+parse_output_color_num (GLcontext * ctx, GLubyte ** inst,
+                    struct arb_program *Program, GLuint * color)
+{
+   GLint i = parse_integer (inst, Program);
+
+   if ((i < 0) || (i >= (int)ctx->Const.MaxDrawBuffers)) {
+      _mesa_set_program_error (ctx, Program->Position,
+                               "Invalid draw buffer index");
+      _mesa_error (ctx, GL_INVALID_OPERATION, "Invalid draw buffer index");
+      return 1;
+   }
+
+   *color = (GLuint) i;
    return 0;
 }
 
@@ -1558,13 +1580,20 @@ static GLuint
 parse_result_binding (GLcontext * ctx, GLubyte ** inst, GLuint * binding,
                       GLuint * binding_idx, struct arb_program *Program)
 {
-   GLuint b;
+   GLuint b, out_color;
 
    switch (*(*inst)++) {
       case FRAGMENT_RESULT_COLOR:
          /* for frag programs, this is FRAGMENT_RESULT_COLOR */
          if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
+            /* This gets result of the color buffer we're supposed to 
+             * draw into
+             */
+            parse_output_color_num(ctx, inst, Program, &out_color);
+
             *binding = FRAG_OUTPUT_COLR;
+
+				/* XXX: We're ignoring the color buffer for now. */
             *binding_idx = 0;
          }
          /* for vtx programs, this is VERTEX_RESULT_POSITION */
