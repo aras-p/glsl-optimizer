@@ -224,8 +224,7 @@ SWRAST_SOURCES =\
 
 SWRAST_SETUP_SOURCES =\
 	swrast_setup\ss_context.c\
-	swrast_setup\ss_triangle.c\
-	swrast_setup\ss_vb.c
+	swrast_setup\ss_triangle.c
 
 TNL_SOURCES =\
 	tnl\t_array_api.c\
@@ -244,6 +243,7 @@ TNL_SOURCES =\
 	tnl\t_vb_texgen.c\
 	tnl\t_vb_texmat.c\
 	tnl\t_vb_vertex.c\
+	tnl\t_vertex.c\
 	tnl\t_vtx_api.c\
 	tnl\t_vtx_eval.c\
 	tnl\t_vtx_exec.c 
