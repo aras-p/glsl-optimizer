@@ -1,4 +1,4 @@
-/* $Id: fxdrv.h,v 1.56 2003/01/08 21:32:33 brianp Exp $ */
+/* $Id: fxdrv.h,v 1.57 2003/07/17 14:50:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -334,6 +334,8 @@ extern GLubyte FX_PixelToR[0x10000];
 extern GLubyte FX_PixelToG[0x10000];
 extern GLubyte FX_PixelToB[0x10000];
 
+/* lookup table for scaling 5 bit colors up to 8 bits */
+GLuint FX_rgb_scale_5[32];
 
 typedef void (*fx_tri_func) (fxMesaContext, GrVertex *, GrVertex *, GrVertex *);
 typedef void (*fx_line_func) (fxMesaContext, GrVertex *, GrVertex *);
@@ -440,6 +442,8 @@ struct tfxMesaContext
    int clipMaxX;
    int clipMinY;
    int clipMaxY;
+
+   int colDepth;
 };
 
 

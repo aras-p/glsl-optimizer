@@ -51,6 +51,7 @@ extern "C" {
 #define FXMESA_DEPTH_SIZE	12      /* followed by an integer */
 #define FXMESA_STENCIL_SIZE	13      /* followed by an integer */
 #define FXMESA_ACCUM_SIZE	14      /* followed by an integer */
+#define FXMESA_COLORDEPTH	20      /* followed by an integer */
 
 
 

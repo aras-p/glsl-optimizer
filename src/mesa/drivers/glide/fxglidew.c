@@ -1,4 +1,4 @@
-/* $Id: fxglidew.c,v 1.19 2001/09/23 16:50:01 brianp Exp $ */
+/* $Id: fxglidew.c,v 1.20 2003/07/17 14:50:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -386,6 +386,13 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
 	 grGet(GR_REVISION_TMU, 4, &result);
 	 config->SSTs[i].sstBoard.VoodooConfig.tmuConfig[j].tmuRev = result;
       }
+
+      {
+       const char *extension = grGetString(GR_EXTENSION);
+       if (strstr(extension, " PIXEXT ")) {
+          config->SSTs[i].sstBoard.VoodooConfig.gExt.grSstWinOpen = grGetProcAddress("grSstWinOpenExt");
+       }
+      }
    }
    END_BOARD_LOCK();
    return 1;
@@ -428,15 +435,25 @@ FX_grSstQueryHardware(GrHwConfiguration * c)
 
 /* It appears to me that this function is needed either way. */
 FX_GrContext_t
-FX_grSstWinOpen(FxU32 hWnd,
+FX_grSstWinOpen(struct SstCard_St *c,
+		FxU32 hWnd,
 		GrScreenResolution_t screen_resolution,
 		GrScreenRefresh_t refresh_rate,
 		GrColorFormat_t color_format,
+		GrPixelFormat_t pixel_format,
 		GrOriginLocation_t origin_location,
 		int nColBuffers, int nAuxBuffers)
 {
    FX_GrContext_t i;
    BEGIN_BOARD_LOCK();
+   if ((c->type == GR_SSTTYPE_VOODOO) && c->sstBoard.VoodooConfig.gExt.grSstWinOpen) {
+      i = c->sstBoard.VoodooConfig.gExt.grSstWinOpen(hWnd,
+                       screen_resolution,
+                       refresh_rate,
+                       color_format, origin_location,
+                       pixel_format,
+                       nColBuffers, nAuxBuffers);
+   } else
    i = grSstWinOpen(hWnd,
 		    screen_resolution,
 		    refresh_rate,

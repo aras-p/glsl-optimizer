@@ -1,4 +1,4 @@
-/* $Id: fxglidew.h,v 1.13 2001/09/23 16:50:01 brianp Exp $ */
+/* $Id: fxglidew.h,v 1.14 2003/07/17 14:50:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,7 +42,9 @@
  */
 #if !defined(FX_GLIDE3)
 typedef FxU32 FX_GrContext_t;	/* Not used in Glide2 */
+typedef FxU32 GrPixelFormat_t;
 #else
+#include <g3ext.h>
 typedef GrContext_t FX_GrContext_t;
 #endif
 
@@ -117,6 +119,9 @@ typedef struct GrVoodooConfig_St
    int fbiRev;			/* Rev of Pixelfx chip */
    int nTexelfx;		/* How many texelFX chips are there? */
    FxBool sliDetect;		/* Is it a scan-line interleaved board? */
+   struct { /* Glide extensions */
+           GrProc grSstWinOpen;
+   } gExt;
    GrTMUConfig_t tmuConfig[GLIDE_NUM_TMU];	/* Configuration of the Texelfx chips */
 }
 GrVoodooConfig_t;
@@ -140,7 +145,7 @@ GrAT3DConfig_t;
 typedef struct
 {
    int num_sst;			/* # of HW units in the system */
-   struct
+   struct SstCard_St
    {
       GrSstType type;		/* Which hardware is it? */
       union SstBoard_u
@@ -474,10 +479,12 @@ extern void FX_grGammaCorrectionValue(float val);
 #endif
 
 
-extern FX_GrContext_t FX_grSstWinOpen(FxU32 hWnd,
+extern FX_GrContext_t FX_grSstWinOpen(struct SstCard_St *c,
+				      FxU32 hWnd,
 				      GrScreenResolution_t screen_resolution,
 				      GrScreenRefresh_t refresh_rate,
 				      GrColorFormat_t color_format,
+				      GrPixelFormat_t pixel_format,
 				      GrOriginLocation_t origin_location,
 				      int nColBuffers, int nAuxBuffers);
 

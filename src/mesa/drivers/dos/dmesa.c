@@ -1452,6 +1452,8 @@ DMesaVisual DMesaCreateVisual (GLint width,
  if (stencilSize > 0) { fx_attrib[i++] = FXMESA_STENCIL_SIZE; fx_attrib[i++] = stencilSize; }
  if (accumSize > 0) { fx_attrib[i++] = FXMESA_ACCUM_SIZE; fx_attrib[i++] = accumSize; }
  if (alphaFlag) { fx_attrib[i++] = FXMESA_ALPHA_SIZE; fx_attrib[i++] = 1; }
+ fx_attrib[i++] = FXMESA_COLORDEPTH;
+ fx_attrib[i++] = colDepth;
  fx_attrib[i] = FXMESA_NONE;
 
  return (DMesaVisual)fxMesaCreateBestContext(-1, width, height, fx_attrib);
@@ -1534,6 +1536,7 @@ DMesaContext DMesaCreateContext (DMesaVisual visual,
     _mesa_enable_sw_extensions((GLcontext *)c);
     _mesa_enable_1_3_extensions((GLcontext *)c);
     _mesa_enable_1_4_extensions((GLcontext *)c);
+    _mesa_enable_1_5_extensions((GLcontext *)c);
 
     /* you probably have to do a bunch of other initializations here. */
     c->visual = visual;

@@ -1,4 +1,8 @@
-/* $Id: fxdd.c,v 1.97 2003/06/16 14:30:57 brianp Exp $ */
+/* Hack alert:
+ * fxDDReadPixels888 does not convert 8A8R8G8B into 5R5G5B
+ */
+
+/* $Id: fxdd.c,v 1.98 2003/07/17 14:50:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -66,6 +70,14 @@ GLubyte FX_PixelToR[0x10000];
 GLubyte FX_PixelToG[0x10000];
 GLubyte FX_PixelToB[0x10000];
 
+/* lookup table for scaling 5 bit colors up to 8 bits */
+GLuint FX_rgb_scale_5[32] = {
+   0,   8,   16,  25,  33,  41,  49,  58,
+   66,  74,  82,  90,  99,  107, 115, 123,
+   132, 140, 148, 156, 165, 173, 181, 189,
+   197, 206, 214, 222, 230, 239, 247, 255
+};
+
 
 /*
  * Initialize the FX_PixelTo{RGB} arrays.
@@ -89,9 +101,10 @@ fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder)
 	 g = (pixel & 0x07E0) >> 3;
 	 b = (pixel & 0x001F) << 3;
       }
-      r = r * 255 / 0xF8;	/* fill in low-order bits */
-      g = g * 255 / 0xFC;
-      b = b * 255 / 0xF8;
+      /* fill in low-order bits with proper rounding */
+      r = (GLuint)(((double)r * 255. / 0xF8) + 0.5);
+      g = (GLuint)(((double)g * 255. / 0xFC) + 0.5);
+      b = (GLuint)(((double)b * 255. / 0xF8) + 0.5);
       FX_PixelToR[pixel] = r;
       FX_PixelToG[pixel] = g;
       FX_PixelToB[pixel] = b;
@@ -581,6 +594,190 @@ fxDDReadPixels(GLcontext * ctx, GLint x, GLint y,
    }
 }
 
+static void fxDDReadPixels555 (GLcontext * ctx,
+                               GLint x, GLint y,
+                               GLsizei width, GLsizei height,
+                               GLenum format, GLenum type,
+                               const struct gl_pixelstore_attrib *packing,
+                               GLvoid *dstImage)
+{
+   if (ctx->_ImageTransferState) {
+      _swrast_ReadPixels(ctx, x, y, width, height, format, type,
+			 packing, dstImage);
+      return;
+   }
+   else {
+      fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+      GrLfbInfo_t info;
+
+      BEGIN_BOARD_LOCK();
+      if (grLfbLock(GR_LFB_READ_ONLY,
+		    fxMesa->currentFB,
+		    GR_LFBWRITEMODE_ANY,
+		    GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
+	 const GLint winX = 0;
+	 const GLint winY = fxMesa->height - 1;
+	 const GLint srcStride = info.strideInBytes / 2;	/* stride in GLushorts */
+	 const GLushort *src = (const GLushort *) info.lfbPtr
+	    + (winY - y) * srcStride + (winX + x);
+	 GLubyte *dst = (GLubyte *) _mesa_image_address(packing, dstImage,
+							width, height, format,
+							type, 0, 0, 0);
+	 GLint dstStride =
+	    _mesa_image_row_stride(packing, width, format, type);
+
+	 if (format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+	    /* convert 5R5G5B into 8R8G8B */
+	    GLint row, col;
+	    const GLint halfWidth = width >> 1;
+	    const GLint extraPixel = (width & 1);
+	    for (row = 0; row < height; row++) {
+	       GLubyte *d = dst;
+	       for (col = 0; col < halfWidth; col++) {
+		  const GLuint pixel = ((const GLuint *) src)[col];
+                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 5)  & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 10) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 16) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 21) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 26) & 0x1f];
+	       }
+	       if (extraPixel) {
+		  GLushort pixel = src[width - 1];
+                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 5)  & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 10) & 0x1f];
+	       }
+	       dst += dstStride;
+	       src -= srcStride;
+	    }
+	 }
+	 else if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+	    /* convert 5R6G5B into 8R8G8B8A */
+	    GLint row, col;
+	    const GLint halfWidth = width >> 1;
+	    const GLint extraPixel = (width & 1);
+	    for (row = 0; row < height; row++) {
+	       GLubyte *d = dst;
+	       for (col = 0; col < halfWidth; col++) {
+		  const GLuint pixel = ((const GLuint *) src)[col];
+                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 5)  & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 10) & 0x1f];
+		  *d++ =  (pixel & 0x8000) ? 255 : 0;
+                  *d++ = FX_rgb_scale_5[(pixel >> 16) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 21) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 26) & 0x1f];
+		  *d++ =  (pixel & 0x80000000) ? 255 : 0;
+	       }
+	       if (extraPixel) {
+		  const GLushort pixel = src[width - 1];
+                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 5)  & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 10) & 0x1f];
+		  *d++ =  (pixel & 0x8000) ? 255 : 0;
+	       }
+	       dst += dstStride;
+	       src -= srcStride;
+	    }
+	 }
+	 else if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
+	    /* directly memcpy 5R5G5B pixels into client's buffer */
+	    const GLint widthInBytes = width * 2;
+	    GLint row;
+	    for (row = 0; row < height; row++) {
+	       MEMCPY(dst, src, widthInBytes);
+	       dst += dstStride;
+	       src -= srcStride;
+	    }
+	 }
+	 else {
+	    grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+	    END_BOARD_LOCK();
+	    _swrast_ReadPixels(ctx, x, y, width, height, format, type,
+			       packing, dstImage);
+	    return;
+	 }
+
+	 grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+      }
+      END_BOARD_LOCK();
+   }
+}
+
+static void fxDDReadPixels888 (GLcontext * ctx,
+                               GLint x, GLint y,
+                               GLsizei width, GLsizei height,
+                               GLenum format, GLenum type,
+                               const struct gl_pixelstore_attrib *packing,
+                               GLvoid *dstImage)
+{
+   if (ctx->_ImageTransferState) {
+      _swrast_ReadPixels(ctx, x, y, width, height, format, type,
+			 packing, dstImage);
+      return;
+   }
+   else {
+      fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+      GrLfbInfo_t info;
+
+      BEGIN_BOARD_LOCK();
+      if (grLfbLock(GR_LFB_READ_ONLY,
+		    fxMesa->currentFB,
+		    GR_LFBWRITEMODE_ANY,
+		    GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
+	 const GLint winX = 0;
+	 const GLint winY = fxMesa->height - 1;
+	 const GLint srcStride = info.strideInBytes / 4;	/* stride in GLuints */
+	 const GLuint *src = (const GLuint *) info.lfbPtr
+	    + (winY - y) * srcStride + (winX + x);
+	 GLubyte *dst = (GLubyte *) _mesa_image_address(packing, dstImage,
+							width, height, format,
+							type, 0, 0, 0);
+	 GLint dstStride =
+	    _mesa_image_row_stride(packing, width, format, type);
+
+	 if (format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+	    /* convert 8A8R8G8B into 8R8G8B */
+	    GLint row, col;
+	    for (row = 0; row < height; row++) {
+	       GLubyte *d = dst;
+	       for (col = 0; col < width; col++) {
+		  const GLuint pixel = ((const GLuint *) src)[col];
+                  *d++ = pixel >> 16;
+                  *d++ = pixel >> 8;
+                  *d++ = pixel;
+	       }
+	       dst += dstStride;
+	       src -= srcStride;
+	    }
+	 }
+	 else if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+	    /* directly memcpy 8A8R8G8B pixels into client's buffer */
+	    const GLint widthInBytes = width * 4;
+	    GLint row;
+	    for (row = 0; row < height; row++) {
+	       MEMCPY(dst, src, widthInBytes);
+	       dst += dstStride;
+	       src -= srcStride;
+	    }
+	 }
+	 else if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
+	    /* convert 8A8R8G8B into 5R5G5B */
+	 }
+	 else {
+	    grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+	    END_BOARD_LOCK();
+	    _swrast_ReadPixels(ctx, x, y, width, height, format, type,
+			       packing, dstImage);
+	    return;
+	 }
+
+	 grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+      }
+      END_BOARD_LOCK();
+   }
+}
 
 
 static void
@@ -804,7 +1001,7 @@ fxDDInitExtensions(GLcontext * ctx)
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
 
-   _mesa_add_extension(ctx, GL_TRUE, "3DFX_set_global_palette", 0);
+   /*_mesa_add_extension(ctx, GL_TRUE, "3DFX_set_global_palette", 0);*/
    _mesa_enable_extension(ctx, "GL_EXT_point_parameters");
    _mesa_enable_extension(ctx, "GL_EXT_paletted_texture");
    _mesa_enable_extension(ctx, "GL_EXT_texture_lod_bias");
@@ -1009,7 +1206,20 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.Bitmap = fxDDDrawBitmap;
    ctx->Driver.CopyPixels = _swrast_CopyPixels;
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
-   ctx->Driver.ReadPixels = fxDDReadPixels;
+  {
+   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   switch (fxMesa->colDepth) {
+          case 15:
+               ctx->Driver.ReadPixels = fxDDReadPixels555;
+               break;
+          case 16:
+               ctx->Driver.ReadPixels = fxDDReadPixels;
+               break;
+          case 32:
+               ctx->Driver.ReadPixels = fxDDReadPixels888;
+               break;
+   }
+  }
    ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
    ctx->Driver.Finish = fxDDFinish;
    ctx->Driver.Flush = NULL;

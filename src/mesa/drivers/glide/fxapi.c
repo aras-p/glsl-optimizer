@@ -1,4 +1,4 @@
-/* $Id: fxapi.c,v 1.35 2002/10/24 23:57:23 brianp Exp $ */
+/* $Id: fxapi.c,v 1.36 2003/07/17 14:50:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -283,6 +283,8 @@ fxMesaCreateContext(GLuint win,
    char *errorstr;
    GLboolean useBGR;
    char *system = NULL;
+   GLuint pixFmt, colDepth = 16;
+   GLint redBits, greenBits, blueBits, alphaBits;
 
    if (MESA_VERBOSE & VERBOSE_DRIVER) {
       fprintf(stderr, "fxmesa: fxMesaCreateContext() Start\n");
@@ -295,6 +297,9 @@ fxMesaCreateContext(GLuint win,
    i = 0;
    while (attribList[i] != FXMESA_NONE) {
       switch (attribList[i]) {
+      case FXMESA_COLORDEPTH:
+	 colDepth = attribList[++i];
+	 break;
       case FXMESA_DOUBLEBUFFER:
 	 doubleBuffer = GL_TRUE;
 	 break;
@@ -379,12 +384,42 @@ fxMesaCreateContext(GLuint win,
    fxMesa->board = glbCurrentBoard;
 
 
-   fxMesa->glideContext = FX_grSstWinOpen((FxU32) win, res, ref,
+   switch (fxMesa->colDepth = colDepth) {
+          case 15:
+               redBits = 5;
+               greenBits = 5;
+               blueBits = 5;
+               alphaBits = 1;
+               pixFmt = 4; /* GR_PIXFMT_ARGB_1555 */
+               break;
+          case 16:
+               redBits = 5;
+               greenBits = 6;
+               blueBits = 5;
+               alphaBits = 0;
+               pixFmt = 3; /* GR_PIXFMT_ARGB_565 */
+               break;
+          case 32:
+               redBits = 8;
+               greenBits = 8;
+               blueBits = 8;
+               alphaBits = 8;
+               pixFmt = 5; /* GR_PIXFMT_ARGB_8888 */
+               break;
+          default:
+               errorstr = "pixelFormat";
+               goto errorhandler;
+   }
+
+
+   fxMesa->glideContext = FX_grSstWinOpen(&glbHWConfig.SSTs[glbCurrentBoard],
+                                          (FxU32)win, res, ref,
 #ifdef  FXMESA_USE_ARGB
 					  GR_COLORFORMAT_ARGB,
 #else
 					  GR_COLORFORMAT_ABGR,
 #endif
+					  pixFmt,
 					  GR_ORIGIN_LOWER_LEFT, 2, aux);
    if (!fxMesa->glideContext) {
       errorstr = "grSstWinOpen";
@@ -497,7 +532,7 @@ fxMesaCreateContext(GLuint win,
 
    fxMesa->glVis = _mesa_create_visual(GL_TRUE,	/* RGB mode */
 				       doubleBuffer, GL_FALSE,	/* stereo */
-				       5, 6, 5, 0,	/* RGBA bits */
+				       redBits, greenBits, blueBits, alphaBits,	/* RGBA bits */
 				       0,	/* index bits */
 				       depthSize,	/* depth_size */
 				       stencilSize,	/* stencil_size */

@@ -1,4 +1,9 @@
-/* $Id: fxddspan.c,v 1.22 2002/11/04 20:29:04 brianp Exp $ */
+/* Hack alert:
+ * Depth32 functions won't compile with Glide2
+ * Optimize and check endianess for `read_R8G8B8_pixels'
+ */
+
+/* $Id: fxddspan.c,v 1.23 2003/07/17 14:50:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,6 +47,7 @@
 #if defined(FX)
 
 #include "fxdrv.h"
+#include "fxglidew.h"
 #include "swrast/swrast.h"
 
 #ifdef _MSC_VER
@@ -347,6 +353,69 @@ read_R5G6B5_span(const GLcontext * ctx,
    END_BOARD_LOCK();
 }
 
+/*
+ * Read a span of 15-bit RGB pixels.  Note, we don't worry about cliprects
+ * since OpenGL says obscured pixels have undefined values.
+ */
+static void read_R5G5B5_span (const GLcontext * ctx,
+                              GLuint n,
+                              GLint x, GLint y,
+                              GLubyte rgba[][4])
+{
+   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   GrLfbInfo_t info;
+   BEGIN_BOARD_LOCK();
+   if (grLfbLock(GR_LFB_READ_ONLY,
+		 fxMesa->currentFB,
+		 GR_LFBWRITEMODE_ANY, GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
+      const GLint winX = 0;
+      const GLint winY = fxMesa->height - 1;
+      const GLint srcStride = info.strideInBytes / 2;	/* stride in GLushorts */
+      const GLushort *data16 = (const GLushort *) info.lfbPtr
+	 + (winY - y) * srcStride + (winX + x);
+      const GLuint *data32 = (const GLuint *) data16;
+      GLuint i, j;
+      GLuint extraPixel = (n & 1);
+      n -= extraPixel;
+      for (i = j = 0; i < n; i += 2, j++) {
+	 GLuint pixel = data32[j];
+	 rgba[i][RCOMP] = FX_rgb_scale_5[ pixel        & 0x1f];
+	 rgba[i][GCOMP] = FX_rgb_scale_5[(pixel >> 5)  & 0x1f];
+	 rgba[i][BCOMP] = FX_rgb_scale_5[(pixel >> 10) & 0x1f];
+	 rgba[i][ACOMP] = (pixel & 0x8000) ? 255 : 0;
+	 rgba[i + 1][RCOMP] = FX_rgb_scale_5[(pixel >> 16) & 0x1f];
+	 rgba[i + 1][GCOMP] = FX_rgb_scale_5[(pixel >> 21) & 0x1f];
+	 rgba[i + 1][BCOMP] = FX_rgb_scale_5[(pixel >> 26) & 0x1f];
+	 rgba[i + 1][ACOMP] = (pixel & 0x80000000) ? 255 : 0;
+      }
+      if (extraPixel) {
+	 GLushort pixel = data16[n];
+	 rgba[n][RCOMP] = FX_rgb_scale_5[ pixel        & 0x1f];
+	 rgba[n][GCOMP] = FX_rgb_scale_5[(pixel >> 5)  & 0x1f];
+	 rgba[n][BCOMP] = FX_rgb_scale_5[(pixel >> 10) & 0x1f];
+	 rgba[n][ACOMP] = (pixel & 0x8000) ? 255 : 0;
+      }
+
+      grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+   }
+   END_BOARD_LOCK();
+}
+
+/*
+ * Read a span of 32-bit RGB pixels.  Note, we don't worry about cliprects
+ * since OpenGL says obscured pixels have undefined values.
+ */
+static void read_R8G8B8_span (const GLcontext * ctx,
+                              GLuint n,
+                              GLint x, GLint y,
+                              GLubyte rgba[][4])
+{
+   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   BEGIN_BOARD_LOCK();
+   FX_grLfbReadRegion(fxMesa->currentFB, x, fxMesa->height - 1 - y, n, 1, n * 4, rgba);
+   END_BOARD_LOCK();
+}
+
 
 /************************************************************************/
 /*****                    Pixel functions                           *****/
@@ -424,6 +493,68 @@ read_R5G6B5_pixels(const GLcontext * ctx,
 }
 
 
+static void read_R5G5B5_pixels (const GLcontext * ctx,
+                                GLuint n,
+                                const GLint x[], const GLint y[],
+                                GLubyte rgba[][4],
+                                const GLubyte mask[])
+{
+   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   GrLfbInfo_t info;
+   BEGIN_BOARD_LOCK();
+   if (grLfbLock(GR_LFB_READ_ONLY,
+		 fxMesa->currentFB,
+		 GR_LFBWRITEMODE_ANY, GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
+      const GLint srcStride = info.strideInBytes / 2;	/* stride in GLushorts */
+      const GLint winX = 0;
+      const GLint winY = fxMesa->height - 1;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+	 if (mask[i]) {
+	    const GLushort *data16 = (const GLushort *) info.lfbPtr
+	       + (winY - y[i]) * srcStride + (winX + x[i]);
+	    const GLushort pixel = *data16;
+	    rgba[i][RCOMP] = FX_rgb_scale_5[ pixel        & 0x1f];
+	    rgba[i][GCOMP] = FX_rgb_scale_5[(pixel >> 5)  & 0x1f];
+	    rgba[i][BCOMP] = FX_rgb_scale_5[(pixel >> 10) & 0x1f];
+	    rgba[i][ACOMP] = (pixel & 0x8000) ? 255 : 0;
+	 }
+      }
+      grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+   }
+   END_BOARD_LOCK();
+}
+
+
+static void
+read_R8G8B8_pixels(const GLcontext * ctx,
+		   GLuint n, const GLint x[], const GLint y[],
+		   GLubyte rgba[][4], const GLubyte mask[])
+{
+   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   GrLfbInfo_t info;
+   BEGIN_BOARD_LOCK();
+   if (grLfbLock(GR_LFB_READ_ONLY,
+		 fxMesa->currentFB,
+		 GR_LFBWRITEMODE_ANY, GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
+      const GLint srcStride = info.strideInBytes / 4;	/* stride in GLuints */
+      const GLint winX = 0;
+      const GLint winY = fxMesa->height - 1;
+      GLuint i;
+      for (i = 0; i < n; i++) {
+	 if (mask[i]) {
+	    const GLuint *data32 = (const GLuint *) info.lfbPtr
+	       + (winY - y[i]) * srcStride + (winX + x[i]);
+	    const GLuint pixel = *data32;
+	    *(GLuint *)&rgba[i][0] = pixel;
+	 }
+      }
+      grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
+   }
+   END_BOARD_LOCK();
+}
+
+
 
 /************************************************************************/
 /*****                    Depth functions                           *****/
@@ -465,6 +596,35 @@ fxDDWriteDepthSpan(GLcontext * ctx,
 
 
 void
+fxDDWriteDepth32Span(GLcontext * ctx,
+		   GLuint n, GLint x, GLint y, const GLdepth depth[],
+		   const GLubyte mask[])
+{
+   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   GLint bottom = fxMesa->height - 1;
+
+   if (MESA_VERBOSE & VERBOSE_DRIVER) {
+      fprintf(stderr, "fxmesa: fxDDWriteDepth32Span(...)\n");
+   }
+
+
+   if (mask) {
+      GLint i;
+      for (i = 0; i < n; i++) {
+	 if (mask[i]) {
+	    writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, x + i, bottom - y,
+			       GR_LFBWRITEMODE_Z32, 1, 1, 0, (void *) &depth[i]);
+	 }
+      }
+   }
+   else {
+      writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, x, bottom - y,
+			 GR_LFBWRITEMODE_Z32, n, 1, 0, (void *) depth);
+   }
+}
+
+
+void
 fxDDReadDepthSpan(GLcontext * ctx,
 		  GLuint n, GLint x, GLint y, GLdepth depth[])
 {
@@ -481,6 +641,21 @@ fxDDReadDepthSpan(GLcontext * ctx,
    for (i = 0; i < n; i++) {
       depth[i] = depth16[i];
    }
+}
+
+
+void
+fxDDReadDepth32Span(GLcontext * ctx,
+		  GLuint n, GLint x, GLint y, GLdepth depth[])
+{
+   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   GLint bottom = fxMesa->height - 1;
+
+   if (MESA_VERBOSE & VERBOSE_DRIVER) {
+      fprintf(stderr, "fxmesa: fxDDReadDepth32Span(...)\n");
+   }
+
+   FX_grLfbReadRegion(GR_BUFFER_AUXBUFFER, x, bottom - y, n, 1, 0, depth);
 }
 
 
@@ -511,6 +686,30 @@ fxDDWriteDepthPixels(GLcontext * ctx,
 
 
 void
+fxDDWriteDepth32Pixels(GLcontext * ctx,
+		     GLuint n, const GLint x[], const GLint y[],
+		     const GLdepth depth[], const GLubyte mask[])
+{
+   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   GLint bottom = fxMesa->height - 1;
+   GLuint i;
+
+   if (MESA_VERBOSE & VERBOSE_DRIVER) {
+      fprintf(stderr, "fxmesa: fxDDWriteDepth32Pixels(...)\n");
+   }
+
+   for (i = 0; i < n; i++) {
+      if (mask[i]) {
+	 int xpos = x[i];
+	 int ypos = bottom - y[i];
+	 writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, xpos, ypos,
+			    GR_LFBWRITEMODE_Z32, 1, 1, 0, (void *) &depth[i]);
+      }
+   }
+}
+
+
+void
 fxDDReadDepthPixels(GLcontext * ctx, GLuint n,
 		    const GLint x[], const GLint y[], GLdepth depth[])
 {
@@ -528,6 +727,26 @@ fxDDReadDepthPixels(GLcontext * ctx, GLuint n,
       GLushort d;
       FX_grLfbReadRegion(GR_BUFFER_AUXBUFFER, xpos, ypos, 1, 1, 0, &d);
       depth[i] = d;
+   }
+}
+
+
+void
+fxDDReadDepth32Pixels(GLcontext * ctx, GLuint n,
+		    const GLint x[], const GLint y[], GLdepth depth[])
+{
+   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   GLint bottom = fxMesa->height - 1;
+   GLuint i;
+
+   if (MESA_VERBOSE & VERBOSE_DRIVER) {
+      fprintf(stderr, "fxmesa: fxDDReadDepth32Pixels(...)\n");
+   }
+
+   for (i = 0; i < n; i++) {
+      int xpos = x[i];
+      int ypos = bottom - y[i];
+      FX_grLfbReadRegion(GR_BUFFER_AUXBUFFER, xpos, ypos, 1, 1, 0, &depth[i]);
    }
 }
 
@@ -573,14 +792,36 @@ fxSetupDDSpanPointers(GLcontext * ctx)
    swdd->WriteRGBAPixels = fxDDWriteRGBAPixels;
    swdd->WriteMonoRGBAPixels = fxDDWriteMonoRGBAPixels;
 
-   swdd->WriteDepthSpan = fxDDWriteDepthSpan;
-   swdd->WriteDepthPixels = fxDDWriteDepthPixels;
-   swdd->ReadDepthSpan = fxDDReadDepthSpan;
-   swdd->ReadDepthPixels = fxDDReadDepthPixels;
-
    /*  swdd->ReadRGBASpan        =fxDDReadRGBASpan; */
-   swdd->ReadRGBASpan = read_R5G6B5_span;
-   swdd->ReadRGBAPixels = read_R5G6B5_pixels;
+  {
+   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   switch (fxMesa->colDepth) {
+          case 15:
+               swdd->ReadRGBASpan = read_R5G5B5_span;
+               swdd->ReadRGBAPixels = read_R5G5B5_pixels;
+               swdd->WriteDepthSpan = fxDDWriteDepthSpan;
+               swdd->WriteDepthPixels = fxDDWriteDepthPixels;
+               swdd->ReadDepthSpan = fxDDReadDepthSpan;
+               swdd->ReadDepthPixels = fxDDReadDepthPixels;
+               break;
+          case 16:
+               swdd->ReadRGBASpan = read_R5G6B5_span;
+               swdd->ReadRGBAPixels = read_R5G6B5_pixels;
+               swdd->WriteDepthSpan = fxDDWriteDepthSpan;
+               swdd->WriteDepthPixels = fxDDWriteDepthPixels;
+               swdd->ReadDepthSpan = fxDDReadDepthSpan;
+               swdd->ReadDepthPixels = fxDDReadDepthPixels;
+               break;
+          case 32:
+               swdd->ReadRGBASpan = read_R8G8B8_span;
+               swdd->ReadRGBAPixels = read_R8G8B8_pixels;
+               swdd->WriteDepthSpan = fxDDWriteDepth32Span;
+               swdd->WriteDepthPixels = fxDDWriteDepth32Pixels;
+               swdd->ReadDepthSpan = fxDDReadDepth32Span;
+               swdd->ReadDepthPixels = fxDDReadDepth32Pixels;
+               break;
+   }
+  }
 }
 
 
