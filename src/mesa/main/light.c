@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.51 2002/06/15 02:38:16 brianp Exp $ */
+/* $Id: light.c,v 1.52 2002/09/16 17:56:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -91,7 +91,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
    struct gl_light *l = &ctx->Light.Light[i];
 
    if (i < 0 || i >= (GLint) ctx->Const.MaxLights) {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glLight" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glLight(light=0x%x)", light );
       return;
    }
 
@@ -200,7 +200,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
       l->QuadraticAttenuation = params[0];
       break;
    default:
-      _mesa_error( ctx, GL_INVALID_ENUM, "glLight" );
+      _mesa_error( ctx, GL_INVALID_ENUM, "glLight(pname=0x%x)", pname );
       return;
    }
 
@@ -419,7 +419,8 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
          else if (params[0] == (GLfloat) GL_SEPARATE_SPECULAR_COLOR)
 	    newenum = GL_SEPARATE_SPECULAR_COLOR;
 	 else {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glLightModel(param)" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glLightModel(param=0x0%x)",
+                         (GLint) params[0] );
 	    return;
          }
 	 if (ctx->Light.Model.ColorControl == newenum)
@@ -436,7 +437,7 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
 
          break;
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glLightModel" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glLightModel(pname=0x%x)", pname );
          break;
    }
 
