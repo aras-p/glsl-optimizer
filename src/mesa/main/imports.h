@@ -383,8 +383,8 @@ static INLINE int ifloor(float f)
 
    af = (3 << 22) + 0.5 + (double)f;
    bf = (3 << 22) + 0.5 - (double)f;
-   u.f = af; ai = u.i;
-   u.f = bf; bi = u.i;
+   u.f = (float) af;  ai = u.i;
+   u.f = (float) bf;  bi = u.i;
    return (ai - bi) >> 1;
 }
 #define IFLOOR(x)  ifloor(x)
