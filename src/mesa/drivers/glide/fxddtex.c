@@ -1166,9 +1166,8 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 	       struct gl_texture_image *texImage)
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
-   GrTextureFormat_t gldformat;
    tfxTexInfo *ti;
-   tfxMipMapLevel *mml = FX_MIPMAP_DATA(texImage);
+   tfxMipMapLevel *mml;
    GLint texelBytes;
 
    if (!fxIsTexSupported(target, internalFormat, texImage)) {
@@ -1176,16 +1175,23 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       return;
    }
 
-   if (!texObj->DriverData)
+   if (!texObj->DriverData) {
       texObj->DriverData = fxAllocTexObjData(fxMesa);
+      if (!texObj->DriverData) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+         return;
+      }
+   }
    ti = fxTMGetTexInfo(texObj);
 
-   if (!mml) {
+   if (!texImage->DriverData) {
       texImage->DriverData = MALLOC(sizeof(tfxMipMapLevel));
-      mml = FX_MIPMAP_DATA(texImage);
+      if (!texImage->DriverData) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+         return;
+      }
    }
-
-   fxTexGetFormat(internalFormat, &gldformat, NULL);
+   mml = FX_MIPMAP_DATA(texImage);
 
    fxTexGetInfo(width, height, NULL, NULL, NULL, NULL,
 		NULL, NULL, &mml->wScale, &mml->hScale);
@@ -1199,7 +1205,6 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, format, type);
    assert(texImage->TexFormat);
-
    texelBytes = texImage->TexFormat->TexelBytes;
    assert(texelBytes == 1 || texelBytes == 2);
 
