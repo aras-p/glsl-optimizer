@@ -450,11 +450,6 @@ static struct __DriverAPIRec x11API = {
    x11OpenCloseFullScreen
 };
 
-void
-__driRegisterExtensions(void)
-{
-}
-
 /*
  * This is the bootstrap function for the driver.
  * The __driCreateScreen name is the symbol that libGL.so fetches.

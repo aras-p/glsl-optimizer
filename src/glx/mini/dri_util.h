@@ -524,8 +524,4 @@ driCalculateSwapUsage( __DRIdrawablePrivate *dPriv,
 extern int
 driCompareGLXAPIVersion( GLuint required_version );
 
-/** This is optionally implemented in each driver */
-extern void
-__driRegisterExtensions( void );
-
 #endif /* _DRI_UTIL_H_ */

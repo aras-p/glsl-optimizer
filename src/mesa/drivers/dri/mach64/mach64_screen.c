@@ -443,32 +443,6 @@ mach64InitDriver( __DRIscreenPrivate *driScreen )
    return GL_TRUE;
 }
 
-#ifndef _SOLO
-/* This function is called by libGL.so as soon as libGL.so is loaded.
- * This is where we register new extension functions with the dispatcher.
- */
-void __driRegisterExtensions( void )
-{
-#if 0
-   /* KW: This is handled differently in the other drivers, not sure
-    * what to do here.
-    */
-   PFNGLXENABLEEXTENSIONPROC glx_enable_extension;
-
-   if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
-      glx_enable_extension = (PFNGLXENABLEEXTENSIONPROC)
-	  glXGetProcAddress( (const GLubyte *) "__glXEnableExtension" );
-
-      if ( glx_enable_extension != NULL ) {
-	 glx_enable_extension( "GLX_SGI_swap_control", GL_FALSE );
-	 glx_enable_extension( "GLX_SGI_video_sync", GL_FALSE );
-	 glx_enable_extension( "GLX_MESA_swap_control", GL_FALSE );
-      }
-   }
-#endif
-}
-#endif
-
 static struct __DriverAPIRec mach64API = {
    .InitDriver      = mach64InitDriver,
    .DestroyScreen   = mach64DestroyScreen,

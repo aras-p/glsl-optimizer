@@ -176,9 +176,6 @@ extern void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscre
 extern void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
     int numConfigs, __GLXvisualConfig *config);
 
-/** This is optionally implemented in each driver */
-extern void __driRegisterExtensions( void );
-
 #endif /* DRI_NEW_INTERFACE_ONLY */
 
 
