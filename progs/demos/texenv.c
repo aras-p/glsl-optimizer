@@ -561,24 +561,28 @@ static void drawSample( int x, int y, int w, int h,
    if ( drawSmooth ) {
       glShadeModel( GL_SMOOTH );
    }
+   else {
+      glShadeModel( GL_FLAT );
+      glColor4f(1, 1, 1, 1);
+   }
    if ( drawTextured ) {
       glEnable( GL_TEXTURE_2D );
    }
 
    glBegin( GL_QUADS );
-      glColor4f( 1.0, 0.0, 0.0, 1.0 );
+      if ( drawSmooth )  glColor4f( 1.0, 0.0, 1.0, 1.0 );
       glTexCoord2f( 0.0, 0.0 );
       glVertex2f( -0.8, -0.8 );
 
-      glColor4f( 0.0, 1.0, 0.0, 1.0 );
+      if ( drawSmooth )  glColor4f( 1.0, 0.0, 1.0, 1.0 );
       glTexCoord2f( 1.0, 0.0 );
       glVertex2f( 0.8, -0.8 );
 
-      glColor4f( 0.0, 0.0, 1.0, 1.0 );
+      if ( drawSmooth )  glColor4f( 0.0, 1.0, 0.0, 1.0 );
       glTexCoord2f( 1.0, 1.0 );
       glVertex2f( 0.8, 0.8 );
 
-      glColor4f( 1.0, 1.0, 1.0, 1.0 );
+      if ( drawSmooth )  glColor4f( 0.0, 1.0, 0.0, 1.0 );
       glTexCoord2f( 0.0, 1.0 );
       glVertex2f( -0.8, 0.8 );
    glEnd();
