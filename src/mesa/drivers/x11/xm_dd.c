@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.32 2002/06/15 02:38:17 brianp Exp $ */
+/* $Id: xm_dd.c,v 1.33 2002/06/19 21:49:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,19 +61,20 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
     */
    const XMesaBuffer xmBuffer = (XMesaBuffer) buffer;
    unsigned int winwidth, winheight;
-#ifndef XFree86Server
+#ifdef XFree86Server
+   /* XFree86 GLX renderer */
+   winwidth = xmBuffer->frontbuffer->width;
+   winheight = xmBuffer->frontbuffer->height;
+#else
    Window root;
    int winx, winy;
    unsigned int bw, d;
 
    _glthread_LOCK_MUTEX(_xmesa_lock);
+   XSync(xmBuffer->xm_visual->display, 0); /* added for Chromium */
    XGetGeometry( xmBuffer->xm_visual->display, xmBuffer->frontbuffer, &root,
 		 &winx, &winy, &winwidth, &winheight, &bw, &d );
    _glthread_UNLOCK_MUTEX(_xmesa_lock);
-#else
-   /* XFree86 GLX renderer */
-   winwidth = xmBuffer->frontbuffer->width;
-   winheight = xmBuffer->frontbuffer->height;
 #endif
 
    (void)kernel8;		/* Muffle compiler */
