@@ -35,8 +35,8 @@
 /*
  * slicer.c++
  *
- * $Date: 2001/05/01 14:56:00 $ $Revision: 1.2 $
- * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/slicer.cc,v 1.2 2001/05/01 14:56:00 brianp Exp $
+ * $Date: 2002/06/30 16:58:11 $ $Revision: 1.3 $
+ * $Header: /home/krh/git/sync/mesa-cvs-repo/Mesa/src/glu/sgi/libnurbs/internals/slicer.cc,v 1.3 2002/06/30 16:58:11 brianp Exp $
  */
 
 #include <stdlib.h>
@@ -309,7 +309,6 @@ static void triangulateRectAux(PwlArc* top, PwlArc* bot, PwlArc* left, PwlArc* r
 
 static void triangulateRect(Arc_ptr loop, Backend& backend, int TB_or_LR, int ulinear, int vlinear)
 {
-  int i;
   //we know the loop is a rectangle, but not sure which is top
   Arc_ptr top, bot, left, right;
   if(loop->tail()[1] == loop->head()[1])
@@ -572,8 +571,6 @@ static void triangulateRectCenter(int n_ulines, REAL* u_val,
 				  int n_vlines, REAL* v_val,
 				  Backend& backend)
 {
-  TrimVertex trimVert;
-  trimVert.nuid = 0;//????
 
   // XXX this code was patched by Diego Santa Cruz <Diego.SantaCruz@epfl.ch>
   // to fix a problem in which glMapGrid2f() was called with bad parameters.
@@ -1075,18 +1072,21 @@ void Slicer::slice_new(Arc_ptr loop)
   mydu = (du>0)? du: -du;
   mydv = (dv>0)? dv: -dv;
 
- for(Arc_ptr jarc=loop->next; jarc != loop; jarc = jarc->next)
-  {
+  for(Arc_ptr jarc=loop->next; jarc != loop; jarc = jarc->next)
+   {
 
-    if(jarc->tail()[0] < uMin)
-      uMin = jarc->tail()[0];
-    if(jarc->tail()[0] > uMax)
-      uMax = jarc->tail()[0];
-    if(jarc->tail()[1] < vMin)
-      vMin = jarc->tail()[1];
-    if(jarc->tail()[1] > vMax)
-      vMax = jarc->tail()[1];
-  }
+     if(jarc->tail()[0] < uMin)
+       uMin = jarc->tail()[0];
+     if(jarc->tail()[0] > uMax)
+       uMax = jarc->tail()[0];
+     if(jarc->tail()[1] < vMin)
+       vMin = jarc->tail()[1];
+     if(jarc->tail()[1] > vMax)
+       vMax = jarc->tail()[1];
+   }
+
+  if (uMax == uMin)
+    return; // prevent divide-by-zero.  Jon Perry.  17 June 2002
 
   if(mydu > uMax - uMin)
     num_ulines = 2;
