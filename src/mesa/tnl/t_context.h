@@ -37,23 +37,38 @@
  * necessary transformations (rotations, clipping, vertex shader etc.)
  * and passes then the output to the rasterizer.
  *
- * The gl_pipeline contains an array of stages. The stages are
- * black-boxes, which are described by gl_pipeline_stage.
- * The function _tnl_run_pipeline (in file t_pipeline.c) applies all
- * the stages to the vertex buffer.
- * Note that the last stage in the pipeline is the rasterizer.
+ * The gl_pipeline contains the array of all stages, which should be
+ * applied. Each stage is a black-box, which is described by an
+ * gl_pipeline_stage. The function ::_tnl_run_pipeline applies all the
+ * stages to the vertex_buffer TNLcontext::vb, where the vertex data
+ * is stored. The last stage in the pipeline is the rasterizer.
  *
- * _tnl_run_pipeline is called either, when the vertex buffer is full or
- * when a state change flushes the pipeline.
- * Note that _tnl_run_pipeline is not called directly but via
- * tnl_device_driver::RunPipeline, which is stored in TNLcontext::Driver.
+ * The initial vertex_buffer data may either come from an ::immediate
+ * structure or client vertex_arrays or display lists:
  *
- * The 'immediate' structure records all the GL commands issued between
- * glBegin and glEnd.  The 'vertex_buffer' structure stores the vertex
- * data as its passed through the pipeline stages.  The initial vertex_buffer
- * data may either come from the 'immediate' structure or client vertex
- * arrays or display lists.
+ *
+ * - The ::immediate structure records all the GL commands issued between
+ * glBegin and glEnd.  \n
+ * The structure accumulates data, until it is either full or it is
+ * flushed (usually by a state change). Before starting then the pipeline,
+ * the collected vertex data in ::immediate has to be pushed into
+ * TNLcontext::vb.
+ * This happens in ::_tnl_vb_bind_immediate. The pipeline is then run by
+ * calling tnl_device_driver::RunPipeline = ::_tnl_run_pipeline, which
+ * is stored in TNLcontext::Driver.   \n
+ * An ::immediate does (for performance reasons) usually not finish with a
+ * glEnd, and hence it also does not need to start with a glBegin.
+ * This means that the last vertices of one ::immediate may need to be
+ * saved for the next one.
+ *
+ *
+ * - NOT SURE ABOUT THIS: The vertex_arrays structure is used to handle
+ * glDrawArrays etc.  \n
+ * Here, the data of the vertex_arrays is copied by ::_tnl_vb_bind_arrays
+ * into TNLcontext::vb, so that the pipeline can be started.
  */
+
+/* What is ELT? */
 
 #ifndef _T_CONTEXT_H
 #define _T_CONTEXT_H
@@ -168,6 +183,7 @@
 
 
 /**
+ * \struct immediate
  * Stores everything that can take place between a glBegin and glEnd.
  * Adjacent glBegin/glEnd pairs are stored back-to-back when there's no
  * state changes between them.
