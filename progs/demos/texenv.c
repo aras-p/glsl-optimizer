@@ -208,7 +208,8 @@ static void checkErrors( void )
    }
 }
 
-static void drawString( char *string, GLfloat x, GLfloat y, GLfloat color[4] )
+static void drawString( const char *string, GLfloat x, GLfloat y,
+                        const GLfloat color[4] )
 {
    glColor4fv( color );
    glRasterPos2f( x, y );
@@ -219,8 +220,9 @@ static void drawString( char *string, GLfloat x, GLfloat y, GLfloat color[4] )
    }
 }
 
-static void drawStringOutline( char *string, GLfloat x, GLfloat y,
-			       GLfloat color[4], GLfloat outline[4] )
+static void drawStringOutline( const char *string, GLfloat x, GLfloat y,
+			       const GLfloat color[4],
+                               const GLfloat outline[4] )
 {
    drawString( string, x - 1, y, outline );
    drawString( string, x + 1, y, outline );
@@ -335,7 +337,8 @@ reshape( int w, int h )
    /* No need to call glViewPort here since "draw" calls it! */
 }
 
-static void loadTexture( int width, int height, struct formatInfo *format )
+static void loadTexture( int width, int height,
+                         const struct formatInfo *format )
 {
    int		luminanceSize = 0;
    int		alphaSize = 0;
@@ -497,7 +500,8 @@ static void loadTexture( int width, int height, struct formatInfo *format )
    free( texImage );
 }
 
-static void drawCheck( int w, int h, GLfloat lightCheck[4], GLfloat darkCheck[4] )
+static void drawCheck( int w, int h, const GLfloat lightCheck[4],
+                       const GLfloat darkCheck[4] )
 {
    float	dw = 2.0 / w;
    float	dh = 2.0 / h;
@@ -527,7 +531,8 @@ static void drawCheck( int w, int h, GLfloat lightCheck[4], GLfloat darkCheck[4]
 }
 
 static void drawSample( int x, int y, int w, int h,
-			struct formatInfo *format, struct envModeInfo *envMode )
+			const struct formatInfo *format,
+                        const struct envModeInfo *envMode )
 {
    glViewport( x, y, w, h );
    glScissor( x, y, w, h );
@@ -715,6 +720,8 @@ static void instructions( void )
    fprintf( stderr, "  [s] - toggle smooth shading\n" );
    fprintf( stderr, "  [t] - toggle texturing\n" );
    fprintf( stderr, "  [i] - toggle information display\n" );
+   fprintf( stderr, "  up/down - select row\n" );
+   fprintf( stderr, "  left/right - change row's internal format\n" );
 }
 
 int main( int argc, char *argv[] )
