@@ -11,6 +11,7 @@ LIB_DEP = $(LIB_DIR)/$(GL_LIB_NAME) $(LIB_DIR)/$(GLU_LIB_NAME)
 PROGS = glthreads \
 	glxdemo \
 	glxgears \
+	glxcontexts \
 	glxheads \
 	glxinfo \
 	glxpixmap \
