@@ -1,4 +1,4 @@
-# $Id: Makefile.cygnus,v 1.8 2000/04/07 16:30:46 brianp Exp $
+# $Id: Makefile.cygnus,v 1.9 2000/05/30 01:19:49 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -19,9 +19,9 @@ GL_LIBS = -L$(LIBDIR) -lglut -lMesaGLU -lMesaGL -lm $(WLIBS)
 
 LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 
-PROGS = clearspd drawpix gamma gears geartrain glinfo glutfx gloss isosurf \
-	lodbias morph3d multiext occlude osdemo paltex pixeltex pointblast \
-	readpix reflect \
+PROGS = clearspd cubemap drawpix gamma gears geartrain glinfo glutfx \
+	gloss isosurf lodbias morph3d multiext occlude osdemo paltex \
+	pixeltex pointblast readpix reflect \
 	renormal spectex stex3d tessdemo texcyl texdown texobj trispd winpos
 
 

@@ -1,4 +1,4 @@
-# $Id: Makefile.BeOS-R4,v 1.9 2000/04/07 16:30:46 brianp Exp $
+# $Id: Makefile.BeOS-R4,v 1.10 2000/05/30 01:19:49 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -17,9 +17,9 @@ GL_LIBS = -L$(LIBDIR) -L/boot/home/config/lib -Xlinker -rpath $(LIBDIR) -lbe -lg
 
 LIB_DEP = $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(GLU_LIB) $(LIBDIR)/$(GLUT_LIB)
 
-PROGS = bounce clearspd drawpix gamma gears geartrain glinfo gloss isosurf \
-	lodbias morph3d multiarb occlude osdemo paltex pixeltex \
-	pointblast readpix \
+PROGS = bounce clearspd cubemap drawpix gamma gears geartrain glinfo \
+	gloss isosurf lodbias morph3d multiarb occlude osdemo paltex \
+	pixeltex pointblast readpix \
 	reflect renormal spectex stex3d texcyl texdown texobj trispd winpos
 
 
