@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.69 2002/04/25 22:11:33 brianp Exp $ */
+/* $Id: texstate.c,v 1.70 2002/04/26 13:40:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1611,6 +1611,12 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
       case GL_TEXTURE_MAX_LEVEL:
          *params = obj->MaxLevel;
          return;
+      case GL_TEXTURE_MAX_ANISOTROPY_EXT:
+         if (ctx->Extensions.EXT_texture_filter_anisotropic) {
+            *params = (GLint) obj->MaxAnisotropy;
+            return;
+         }
+         break;
       case GL_TEXTURE_COMPARE_SGIX:
          if (ctx->Extensions.SGIX_shadow) {
             *params = (GLint) obj->CompareFlag;
