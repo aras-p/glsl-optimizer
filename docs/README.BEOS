@@ -1,3 +1,10 @@
+
+NOTE:  The BeOS driver hasn't been updated since Mesa version 2.6.
+I'm in the process of writing a new BeOS R4 driver for Mesa 3.x.
+-Brian  (29 Jan 1999)
+
+
+
 ========================================================
 MESA 2.6 BEOS PORT RELEASE 2
 ========================================================
