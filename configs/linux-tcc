@@ -2,7 +2,7 @@
 
 include $(TOP)/configs/default
 
-CONFIG_NAME = linux-debug
+CONFIG_NAME = linux-tcc
 
 # Compiler and flags
 CC = gcc
