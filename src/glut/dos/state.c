@@ -27,6 +27,8 @@
  */
 
 
+#include <stdio.h>
+
 #include "glutint.h"
 
 
@@ -139,4 +141,79 @@ int APIENTRY glutGetModifiers (void)
  }
 
  return mod;
+}
+
+
+
+/* GAME MODE
+ * Hack alert: incomplete... what is GameMode, anyway?
+ */
+GLint g_game;
+static GLboolean game_possible;
+static GLboolean game_active;
+static GLuint game_width;
+static GLuint game_height;
+static GLuint game_bpp;
+static GLuint game_refresh;
+
+
+
+void APIENTRY glutGameModeString (const char *string)
+{
+ if (sscanf(string, "%ux%u:%u@%u", &game_width, &game_height, &game_bpp, &game_refresh) == 4) {
+    game_possible = GL_TRUE;
+ }
+}
+
+
+
+int APIENTRY glutGameModeGet (GLenum mode)
+{
+ switch (mode) {
+        case GLUT_GAME_MODE_ACTIVE:
+             return game_active;
+        case GLUT_GAME_MODE_POSSIBLE:
+             return game_possible && !g_curwin;
+        case GLUT_GAME_MODE_WIDTH:
+             return game_active ? (int)game_width : -1;
+        case GLUT_GAME_MODE_HEIGHT:
+             return game_active ? (int)game_height : -1;
+        case GLUT_GAME_MODE_PIXEL_DEPTH:
+             return game_active ? (int)game_bpp : -1;
+        case GLUT_GAME_MODE_REFRESH_RATE:
+             return game_active ? (int)game_refresh : -1;
+        default:
+             return -1;
+ }
+}
+
+
+
+int APIENTRY glutEnterGameMode (void)
+{
+ if (glutGameModeGet(GLUT_GAME_MODE_POSSIBLE)) {
+    g_bpp = game_bpp;
+    g_refresh = game_refresh;
+
+    glutInitWindowSize(game_width, game_height);
+
+    if ((g_game = glutCreateWindow("<game>")) > 0) {
+       game_active = GL_TRUE;
+    }
+
+    return g_game;
+ } else {
+    return 0;
+ }
+}
+
+
+
+void GLUTAPIENTRY glutLeaveGameMode (void)
+{
+ if (glutGameModeGet(GLUT_GAME_MODE_ACTIVE)) {
+    game_active = GL_FALSE;
+
+    glutDestroyWindow(g_game);
+ }
 }
