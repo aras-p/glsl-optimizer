@@ -31,6 +31,7 @@
 #include "drawpix.h"
 #include "extensions.h"
 #include "macros.h"
+#include "image.h"
 #include "imports.h"
 #include "mtypes.h"
 #include "state.h"
@@ -43,7 +44,6 @@
 #include "swrast/swrast.h"
 #include "swrast/s_auxbuffer.h"
 #include "swrast/s_context.h"
-#include "swrast/s_drawpix.h"
 #include "swrast/s_alphabuf.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
@@ -865,7 +865,7 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
          pixels = ADD_POINTERS(buf, pixels);
       }
 
-      if (_swrast_clip_pixelrect(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
+      if (_mesa_clip_drawpixels(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
          /* This is a little tricky since all coordinates up to now have
           * been in the OpenGL bottom-to-top orientation.  X is top-to-bottom
           * so we have to carefully compute the Y coordinates/addresses here.
@@ -968,7 +968,7 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
          pixels = ADD_POINTERS(buf, pixels);
       }
 
-      if (_swrast_clip_pixelrect(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
+      if (_mesa_clip_drawpixels(ctx, &dstX, &dstY, &w, &h, &srcX, &srcY)) {
          /* This is a little tricky since all coordinates up to now have
           * been in the OpenGL bottom-to-top orientation.  X is top-to-bottom
           * so we have to carefully compute the Y coordinates/addresses here.

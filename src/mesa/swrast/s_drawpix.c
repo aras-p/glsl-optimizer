@@ -40,53 +40,6 @@
 #include "s_zoom.h"
 
 
-
-/*
- * Given the dest position, size and skipPixels and skipRows values
- * for a glDrawPixels command, perform clipping of the image bounds
- * so the result lies withing the context's buffer bounds.
- * Return:  GL_TRUE if image is ready for drawing
- *          GL_FALSE if image was completely clipped away (draw nothing)
- */
-GLboolean
-_swrast_clip_pixelrect(const GLcontext *ctx,
-                     GLint *destX, GLint *destY,
-                     GLsizei *width, GLsizei *height,
-                     GLint *skipPixels, GLint *skipRows)
-{
-   const GLframebuffer *buffer = ctx->DrawBuffer;
-
-   /* left clipping */
-   if (*destX < buffer->_Xmin) {
-      *skipPixels += (buffer->_Xmin - *destX);
-      *width -= (buffer->_Xmin - *destX);
-      *destX = buffer->_Xmin;
-   }
-   /* right clipping */
-   if (*destX + *width > buffer->_Xmax)
-      *width -= (*destX + *width - buffer->_Xmax);
-
-   if (*width <= 0)
-      return GL_FALSE;
-
-   /* bottom clipping */
-   if (*destY < buffer->_Ymin) {
-      *skipRows += (buffer->_Ymin - *destY);
-      *height -= (buffer->_Ymin - *destY);
-      *destY = buffer->_Ymin;
-   }
-   /* top clipping */
-   if (*destY + *height > buffer->_Ymax)
-      *height -= (*destY + *height - buffer->_Ymax);
-
-   if (*height <= 0)
-      return GL_TRUE;
-
-   return GL_TRUE;
-}
-
-
-
 /*
  * Try to do a fast and simple RGB(a) glDrawPixels.
  * Return:  GL_TRUE if success, GL_FALSE if slow path must be used instead
