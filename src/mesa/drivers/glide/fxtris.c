@@ -298,14 +298,25 @@ static void fx_draw_point_sprite ( fxMesaContext fxMesa,
  /* point coverage? */
  /* we don't care about culling here (see fxSetupCull) */
 
- _v_[0].x -= radius;
- _v_[0].y += radius;
- _v_[1].x += radius;
- _v_[1].y += radius;
- _v_[2].x += radius;
- _v_[2].y -= radius;
- _v_[3].x -= radius;
- _v_[3].y -= radius;
+ if (ctx->Point.SpriteOrigin == GL_UPPER_LEFT) {
+    _v_[0].x -= radius;
+    _v_[0].y += radius;
+    _v_[1].x += radius;
+    _v_[1].y += radius;
+    _v_[2].x += radius;
+    _v_[2].y -= radius;
+    _v_[3].x -= radius;
+    _v_[3].y -= radius;
+ } else {
+    _v_[0].x -= radius;
+    _v_[0].y -= radius;
+    _v_[1].x += radius;
+    _v_[1].y -= radius;
+    _v_[2].x += radius;
+    _v_[2].y += radius;
+    _v_[3].x -= radius;
+    _v_[3].y += radius;
+ }
 
  if (ctx->Point.CoordReplace[ts0]) {
     _v_[0].tmuvtx[0].sow = 0;
@@ -904,7 +915,6 @@ static void fx_render_vb_tri_strip( GLcontext *ctx,
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GrVertex *fxVB = fxMesa->verts;
-   int mode;
    (void) flags;
 
    if (TDFX_DEBUG & VERBOSE_VARRAY) {
@@ -913,13 +923,9 @@ static void fx_render_vb_tri_strip( GLcontext *ctx,
 
    INIT(GL_TRIANGLE_STRIP);
 
-   /* [dBorca] WTF?!?
-   if (flags & PRIM_PARITY) 
-      mode = GR_TRIANGLE_STRIP_CONTINUE;
-   else*/
-      mode = GR_TRIANGLE_STRIP;
+   /* no GR_TRIANGLE_STRIP_CONTINUE?!? */
 
-   grDrawVertexArrayContiguous( mode, count-start,
+   grDrawVertexArrayContiguous( GR_TRIANGLE_STRIP, count-start,
                                 fxVB + start, sizeof(GrVertex));
 }
 
@@ -1466,7 +1472,7 @@ void fxDDInitTriFuncs( GLcontext *ctx )
 
 /* [dBorca] Hack alert:
  * doesn't work with blending.
- * need to take care of stencil.
+ * XXX todo - need to take care of stencil.
  */
 GLboolean fxMultipass_ColorSum (GLcontext *ctx, GLuint pass)
 {
