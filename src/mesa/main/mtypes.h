@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.80 2002/06/15 03:03:08 brianp Exp $ */
+/* $Id: mtypes.h,v 1.81 2002/06/18 16:53:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1234,7 +1234,6 @@ struct vp_program
    GLubyte *String;                      /* Original user code */
    struct vp_instruction *Instructions;  /* Compiled instructions */
    GLenum Target;      /* GL_VERTEX_PROGRAM_NV or GL_VERTEX_STATE_PROGRAM_NV */
-   GLint ErrorPos;            /* Position in string where error was detected */
    GLint RefCount;            /* Since programs can be shared among contexts */
    GLboolean IsPositionInvariant;  /* GL_NV_vertex_program1_1 */
    GLboolean Resident;
@@ -1252,6 +1251,7 @@ struct vertex_program_state
    GLboolean PointSizeEnabled;           /* GL_VERTEX_PROGRAM_POINT_SIZE_NV */
    GLboolean TwoSideEnabled;             /* GL_VERTEX_PROGRAM_TWO_SIDE_NV */
    GLuint CurrentID;                     /* currently bound program's ID */
+   GLint ErrorPos;                       /* GL_PROGRAM_ERROR_POSITION_NV */
    struct vp_program *Current;           /* ptr to currently bound program */
    struct vp_machine Machine;            /* machine state */
 

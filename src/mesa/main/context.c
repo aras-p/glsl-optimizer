@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.171 2002/06/17 23:38:14 brianp Exp $ */
+/* $Id: context.c,v 1.172 2002/06/18 16:53:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1446,11 +1446,12 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_colortable(&ctx->ProxyPostColorMatrixColorTable);
 
    /* GL_NV_vertex_program */
-   ctx->VertexProgram.Current = NULL;
-   ctx->VertexProgram.CurrentID = 0;
    ctx->VertexProgram.Enabled = GL_FALSE;
    ctx->VertexProgram.PointSizeEnabled = GL_FALSE;
    ctx->VertexProgram.TwoSideEnabled = GL_FALSE;
+   ctx->VertexProgram.CurrentID = 0;
+   ctx->VertexProgram.ErrorPos = -1;
+   ctx->VertexProgram.Current = NULL;
    for (i = 0; i < VP_NUM_PROG_REGS / 4; i++) {
       ctx->VertexProgram.TrackMatrix[i] = GL_NONE;
       ctx->VertexProgram.TrackMatrixTransform[i] = GL_IDENTITY_NV;
