@@ -66,13 +66,21 @@ enum _format {
 				/* msb <------ TEXEL BITS -----------> lsb */
 				/* ---- ---- ---- ---- ---- ---- ---- ---- */
    MESA_FORMAT_RGBA8888,	/* RRRR RRRR GGGG GGGG BBBB BBBB AAAA AAAA */
+   MESA_FORMAT_ABGR8888,	/* AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR */
    MESA_FORMAT_ARGB8888,	/* AAAA AAAA RRRR RRRR GGGG GGGG BBBB BBBB */
+   MESA_FORMAT_BGRA8888,	/* BBBB BBBB GGGG GGGG RRRR RRRR AAAA AAAA */
    MESA_FORMAT_RGB888,		/*           RRRR RRRR GGGG GGGG BBBB BBBB */
+   MESA_FORMAT_BGR888,		/*           BBBB BBBB GGGG GGGG RRRR RRRR */
    MESA_FORMAT_RGB565,		/*                     RRRR RGGG GGGB BBBB */
+   MESA_FORMAT_BGR565,		/*                     BBBB BGGG GGGR RRRR */
    MESA_FORMAT_ARGB4444,	/*                     AAAA RRRR GGGG BBBB */
+   MESA_FORMAT_BGRA4444,	/*                     AAAA RRRR GGGG BBBB */
    MESA_FORMAT_ARGB1555,	/*                     ARRR RRGG GGGB BBBB */
+   MESA_FORMAT_BGRA5551,	/*                     BBBB BGGG GGRR RRRA */
    MESA_FORMAT_AL88,		/*                     AAAA AAAA LLLL LLLL */
+   MESA_FORMAT_LA88,		/*                     LLLL LLLL AAAA AAAA */
    MESA_FORMAT_RGB332,		/*                               RRRG GGBB */
+   MESA_FORMAT_BGR233,		/*                               BBGG GRRR */
    MESA_FORMAT_A8,		/*                               AAAA AAAA */
    MESA_FORMAT_L8,		/*                               LLLL LLLL */
    MESA_FORMAT_I8,		/*                               IIII IIII */
@@ -80,24 +88,6 @@ enum _format {
    MESA_FORMAT_YCBCR,		/*                     YYYY YYYY UorV UorV */
    MESA_FORMAT_YCBCR_REV,	/*                     UorV UorV YYYY YYYY */
    /*@}*/
-
-#if 0
-   /** 
-    * \name Upcoming little-endian formats 
-    */
-   /*@{*/
-				/* msb <------ TEXEL BITS -----------> lsb */
-				/* ---- ---- ---- ---- ---- ---- ---- ---- */
-   MESA_FORMAT_ABGR8888,	/* AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR */
-   MESA_FORMAT_BGRA8888,	/* BBBB BBBB GGGG GGGG RRRR RRRR AAAA AAAA */
-   MESA_FORMAT_BGR888,		/*           BBBB BBBB GGGG GGGG RRRR RRRR */
-   MESA_FORMAT_BGR565,		/*                     BBBB BGGG GGGR RRRR */
-   MESA_FORMAT_BGRA4444,	/*                     BBBB GGGG RRRR AAAA */
-   MESA_FORMAT_BGRA5551,	/*                     BBBB BGGG GGRR RRRA */
-   MESA_FORMAT_LA88,		/*                     LLLL LLLL AAAA AAAA */
-   MESA_FORMAT_BGR233,		/*                               BBGG GRRR */
-   /*@}*/
-#endif
 
    /**
     * \name Compressed texture formats.
@@ -128,7 +118,6 @@ enum _format {
    MESA_FORMAT_LUMINANCE,
    MESA_FORMAT_LUMINANCE_ALPHA,
    MESA_FORMAT_INTENSITY,
-   MESA_FORMAT_COLOR_INDEX,
    /*@}*/
 
    /**
@@ -167,7 +156,6 @@ extern const struct gl_texture_format _mesa_texformat_alpha;
 extern const struct gl_texture_format _mesa_texformat_luminance;
 extern const struct gl_texture_format _mesa_texformat_luminance_alpha;
 extern const struct gl_texture_format _mesa_texformat_intensity;
-extern const struct gl_texture_format _mesa_texformat_color_index;
 /*@}*/
 
 /** Depth textures */
@@ -195,17 +183,26 @@ extern const struct gl_texture_format _mesa_texformat_intensity_float16;
 /** \name Assorted hardware-friendly formats */
 /*@{*/
 extern const struct gl_texture_format _mesa_texformat_rgba8888;
+extern const struct gl_texture_format _mesa_texformat_abgr8888;
 extern const struct gl_texture_format _mesa_texformat_argb8888;
+extern const struct gl_texture_format _mesa_texformat_bgra8888;
 extern const struct gl_texture_format _mesa_texformat_rgb888;
+extern const struct gl_texture_format _mesa_texformat_bgr888;
 extern const struct gl_texture_format _mesa_texformat_rgb565;
+extern const struct gl_texture_format _mesa_texformat_bgr565;
 extern const struct gl_texture_format _mesa_texformat_argb4444;
+extern const struct gl_texture_format _mesa_texformat_bgra4444;
 extern const struct gl_texture_format _mesa_texformat_argb1555;
+extern const struct gl_texture_format _mesa_texformat_bgra5551;
 extern const struct gl_texture_format _mesa_texformat_al88;
+extern const struct gl_texture_format _mesa_texformat_la88;
 extern const struct gl_texture_format _mesa_texformat_rgb332;
+extern const struct gl_texture_format _mesa_texformat_bgr233;
 extern const struct gl_texture_format _mesa_texformat_a8;
 extern const struct gl_texture_format _mesa_texformat_l8;
 extern const struct gl_texture_format _mesa_texformat_i8;
 extern const struct gl_texture_format _mesa_texformat_ci8;
+
 /*@}*/
 
 /** \name YCbCr formats */

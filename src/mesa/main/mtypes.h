@@ -1116,6 +1116,8 @@ struct gl_texture_image {
 
    const struct gl_texture_format *TexFormat;
 
+   struct gl_texture_object *TexObject;  /**< Pointer back to parent object */
+
    FetchTexelFuncC FetchTexelc;	/**< GLchan texel fetch function pointer */
    FetchTexelFuncF FetchTexelf;	/**< Float texel fetch function pointer */
 

@@ -502,7 +502,7 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
       case GL_TEXTURE_2D:
       case GL_TEXTURE_3D:
          tObj->Image[0][level] = texImage;
-         return;
+         break;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
       case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
       case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
@@ -517,11 +517,13 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
       case GL_TEXTURE_RECTANGLE_NV:
          ASSERT(level == 0);
          tObj->Image[0][level] = texImage;
-         return;
+         break;
       default:
          _mesa_problem(NULL, "bad target in _mesa_set_tex_image()");
          return;
    }
+   /* Set the 'back' pointer */
+   texImage->TexObject = tObj;
 }
 
 
@@ -757,6 +759,8 @@ _mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level)
             return NULL;
          }
          ctx->Texture.Proxy1D->Image[0][level] = texImage;
+         /* Set the 'back' pointer */
+         texImage->TexObject = ctx->Texture.Proxy1D;
       }
       return texImage;
    case GL_PROXY_TEXTURE_2D:
@@ -770,6 +774,8 @@ _mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level)
             return NULL;
          }
          ctx->Texture.Proxy2D->Image[0][level] = texImage;
+         /* Set the 'back' pointer */
+         texImage->TexObject = ctx->Texture.Proxy2D;
       }
       return texImage;
    case GL_PROXY_TEXTURE_3D:
@@ -783,6 +789,8 @@ _mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level)
             return NULL;
          }
          ctx->Texture.Proxy3D->Image[0][level] = texImage;
+         /* Set the 'back' pointer */
+         texImage->TexObject = ctx->Texture.Proxy3D;
       }
       return texImage;
    case GL_PROXY_TEXTURE_CUBE_MAP:
@@ -796,6 +804,8 @@ _mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level)
             return NULL;
          }
          ctx->Texture.ProxyCubeMap->Image[0][level] = texImage;
+         /* Set the 'back' pointer */
+         texImage->TexObject = ctx->Texture.ProxyCubeMap;
       }
       return texImage;
    case GL_PROXY_TEXTURE_RECTANGLE_NV:
@@ -809,6 +819,8 @@ _mesa_get_proxy_tex_image(GLcontext *ctx, GLenum target, GLint level)
             return NULL;
          }
          ctx->Texture.ProxyRect->Image[0][level] = texImage;
+         /* Set the 'back' pointer */
+         texImage->TexObject = ctx->Texture.ProxyRect;
       }
       return texImage;
    default:
@@ -1922,8 +1934,6 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
-
-
    {
       const GLint width = texImage->Width;
       const GLint height = texImage->Height;
@@ -1940,10 +1950,25 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
             if (format == GL_COLOR_INDEX) {
                GLuint indexRow[MAX_WIDTH];
                GLint col;
-               for (col = 0; col < width; col++) {
-                  GLchan indx;
-                  (*texImage->FetchTexelc)(texImage, col, row, img, &indx);
-                  indexRow[col] = indx;
+               /* Can't use FetchTexel here because that returns RGBA */
+               if (texImage->TexFormat->IndexBits == 8) {
+                  const GLubyte *src = (const GLubyte *) texImage->Data;
+                  for (col = 0; col < width; col++) {
+                     indexRow[col] = src[texImage->Width *
+                                        (img * texImage->Height + row) + col];
+                  }
+               }
+               else if (texImage->TexFormat->IndexBits == 16) {
+                  const GLushort *src = (const GLushort *) texImage->Data;
+                  for (col = 0; col < width; col++) {
+                     indexRow[col] = src[texImage->Width *
+                                        (img * texImage->Height + row) + col];
+                  }
+               }
+               else {
+                  _mesa_problem(ctx,
+                                "Color index problem in _mesa_GetTexImage");
+                  return;
                }
                _mesa_pack_index_span(ctx, width, type, dest,
                                      indexRow, &ctx->Pack,
@@ -1954,7 +1979,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
                GLint col;
                for (col = 0; col < width; col++) {
                   (*texImage->FetchTexelf)(texImage, col, row, img,
-                                           (GLvoid *) &depthRow[col]);
+                                           depthRow + col);
                }
                _mesa_pack_depth_span(ctx, width, dest, type,
                                      depthRow, &ctx->Pack);
