@@ -113,15 +113,6 @@
 #  endif /* _STATIC_MESA support */
 #  define GLAPIENTRY __stdcall
 #  define GLAPIENTRYP GLAPIENTRY *
-#  define GLCALLBACK __stdcall
-#  define GLCALLBACKP GLCALLBACK *
-#  if defined(__CYGWIN__)
-#    define GLCALLBACKPCAST *
-#  else
-#    define GLCALLBACKPCAST __stdcall *
-#  endif
-#  define GLWINAPI __stdcall
-#  define GLWINAPIV __cdecl
 #elif !defined(BUILD_FOR_SNAP)
 /* non-Windows compilation */
 #  define GLAPI extern
@@ -129,11 +120,6 @@
 #  ifndef GLAPIENTRYP
 #    define GLAPIENTRYP *
 #  endif
-#  define GLCALLBACK
-#  define GLCALLBACKP *
-#  define GLCALLBACKPCAST *
-#  define GLWINAPI
-#  define GLWINAPIV
 #endif /* WIN32 / CYGWIN bracket */
 
 

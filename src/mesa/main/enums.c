@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,7 +36,10 @@ typedef struct {
    int n;
 } enum_elt;
 
-enum_elt all_enums[] =
+/**
+ * XXX We should auto-generate this with a Python script someday.
+ */
+static enum_elt all_enums[] =
 {
    /* Boolean values */
    { "GL_FALSE", 0 },
@@ -889,7 +891,7 @@ enum_elt all_enums[] =
 
 #define Elements(x) sizeof(x)/sizeof(*x)
 
-typedef int (GLWINAPIV *cfunc)(const void *, const void *);
+typedef int (*cfunc)(const void *, const void *);
 
 static enum_elt **index1 = 0;
 static int sorted = 0;
