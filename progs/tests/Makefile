@@ -15,7 +15,6 @@ SOURCES = antialias.c \
 	arbfptest1.c \
 	arbfptexture.c \
 	arbfptrig.c \
-	arbfpwpos.c \
 	arbvptest1.c \
 	arbvptest3.c \
 	arbvptorus.c \
@@ -52,6 +51,8 @@ PROGS = $(SOURCES:%.c=%)
 
 INCLUDES = -I. -I$(TOP)/include
 
+UTIL_FILES = readtex.h readtex.c
+
 
 ##### RULES #####
 
@@ -70,7 +71,7 @@ INCLUDES = -I. -I$(TOP)/include
 
 ##### TARGETS #####
 
-default: $(PROGS)
+default: $(UTIL_FILES) $(PROGS)
 
 clean:
 	rm -f $(PROGS)
