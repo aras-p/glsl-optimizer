@@ -1,4 +1,4 @@
-/* $Id: vtxfmt.c,v 1.9 2001/12/14 02:50:02 brianp Exp $ */
+/* $Id: vtxfmt.c,v 1.10 2001/12/15 02:14:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -82,7 +82,6 @@
 
 static void install_vtxfmt( struct _glapi_table *tab, GLvertexformat *vfmt )
 {
-   printf("%s()\n", __FUNCTION__);
    tab->ArrayElement = vfmt->ArrayElement;
    tab->Color3f = vfmt->Color3f;
    tab->Color3fv = vfmt->Color3fv;
