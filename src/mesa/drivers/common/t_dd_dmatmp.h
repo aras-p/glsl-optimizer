@@ -44,6 +44,7 @@
 #endif
 
 #if !HAVE_ELTS 
+#define ELTS_VARS
 #define ALLOC_ELTS( nr )
 #define EMIT_ELT( offset, elt )
 #define INCR_ELTS( nr )
@@ -392,7 +393,7 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
    if (HAVE_QUAD_STRIPS && 0) {
       /* TODO.
        */
-   } else if (ctx->_TriangleCaps & DD_FLATSHADE) {
+   } else if (HAVE_TRI_STRIPS && ctx->_TriangleCaps & DD_FLATSHADE) {
       if (TAG(emit_elt_verts)( ctx, start, count )) {   
 	 LOCAL_VARS;
 	 int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
@@ -881,7 +882,8 @@ static void TAG(render_quad_strip_elts)( GLcontext *ctx,
 					 GLuint flags )
 {
    if (HAVE_QUAD_STRIPS && 0) {
-   } else {
+   } 
+   else if (HAVE_TRI_STRIPS) {
       LOCAL_VARS;
       GLuint *elts = TNL_CONTEXT(ctx)->vb.Elts;
       int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
