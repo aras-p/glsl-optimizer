@@ -365,7 +365,7 @@ void GGIread_rgba_pixels(const GLcontext *ctx,
 	}
 }
 
-void GGIset_read_buffer(GLcontext *ctx, GLframebuffer *buffer, GLenum mode)
+void GGIset_buffer(GLcontext *ctx, GLframebuffer *buffer, GLenum mode)
 {
 }
 
@@ -393,7 +393,7 @@ int GGIsetup_driver(ggi_mesa_context_t ggi_ctx)
 	swdd->ReadCI32Pixels = GGIread_ci32_pixels;
 	swdd->ReadRGBAPixels = GGIread_rgba_pixels;
 
-	swdd->SetReadBuffer = GGIset_read_buffer;	
+	swdd->SetBuffer = GGIset_buffer;	
 
 	return 0;
 }
