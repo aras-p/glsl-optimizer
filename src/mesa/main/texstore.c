@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.31 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: texstore.c,v 1.32 2001/07/16 15:54:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -189,8 +189,9 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
          const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
                                                srcWidth, srcFormat, srcType);
          const GLint widthInBytes = srcWidth * texComponents * sizeof(GLchan);
-         GLchan *dst = (GLchan *) texDestAddr + dstYoffset * dstRowStride
-                      + dstXoffset * texComponents;
+         GLchan *dst = (GLchan *) texDestAddr
+                     + dstYoffset * (dstRowStride / sizeof(GLchan))
+                     + dstXoffset * texComponents;
          if (srcRowStride == widthInBytes && dstRowStride == widthInBytes) {
             MEMCPY(dst, src, srcHeight * widthInBytes);
          }
@@ -198,8 +199,8 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
             GLint i;
             for (i = 0; i < srcHeight; i++) {
                MEMCPY(dst, src, widthInBytes);
-               src += srcRowStride;
-               dst += dstRowStride;
+               src += (srcRowStride / sizeof(GLchan));
+               dst += (dstRowStride / sizeof(GLchan));
             }
          }
          return;  /* all done */
@@ -211,8 +212,9 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
                                    srcFormat, srcType, 0, 0, 0);
          const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
                                                srcWidth, srcFormat, srcType);
-         GLchan *dst = (GLchan *) texDestAddr + dstYoffset * dstRowStride
-                      + dstXoffset * texComponents;
+         GLchan *dst = (GLchan *) texDestAddr
+                     + dstYoffset * (dstRowStride / sizeof(GLchan))
+                     + dstXoffset * texComponents;
          GLint i, j;
          for (i = 0; i < srcHeight; i++) {
             const GLchan *s = src;
@@ -223,8 +225,8 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
                *d++ = *s++;  /*blue*/
                s++;          /*alpha*/
             }
-            src += srcRowStride;
-            dst += dstRowStride;
+            src += (srcRowStride / sizeof(GLchan));
+            dst += (dstRowStride / sizeof(GLchan));
          }
          return;  /* all done */
       }
@@ -238,8 +240,8 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
       const GLenum texType = CHAN_TYPE;
       GLint img, row;
       GLchan *dest = (GLchan *) texDestAddr + dstZoffset * dstImageStride
-                    + dstYoffset * dstRowStride
-                    + dstXoffset * texComponents;
+                   + dstYoffset * (dstRowStride / sizeof(GLchan))
+                   + dstXoffset * texComponents;
       for (img = 0; img < srcDepth; img++) {
          GLchan *destRow = dest;
          for (row = 0; row < srcHeight; row++) {
@@ -247,7 +249,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
                 srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
             _mesa_unpack_index_span(ctx, srcWidth, texType, destRow,
                                     srcType, src, srcPacking, transferOps);
-            destRow += dstRowStride;
+            destRow += (dstRowStride / sizeof(GLchan));
          }
          dest += dstImageStride;
       }
@@ -257,7 +259,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
       GLint img, row;
       GLubyte *dest = (GLubyte *) texDestAddr
                     + dstZoffset * dstImageStride
-                    + dstYoffset * dstRowStride
+                    + dstYoffset * (dstRowStride / sizeof(GLchan))
                     + dstXoffset * texComponents;
       for (img = 0; img < srcDepth; img++) {
          GLubyte *destRow = dest;
@@ -266,7 +268,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
                 srcAddr, srcWidth, srcHeight, srcFormat, srcType, img, row, 0);
             _mesa_unpack_depth_span(ctx, srcWidth, (GLfloat *) destRow,
                                     srcType, src, srcPacking);
-            destRow += dstRowStride;
+            destRow += (dstRowStride / sizeof(GLchan));
          }
          dest += dstImageStride;
       }
@@ -331,7 +333,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
             /* packing and transfer ops after convolution */
             srcf = convImage;
             dest = (GLchan *) texDestAddr + (dstZoffset + img) * dstImageStride
-                 + dstYoffset * dstRowStride;
+                 + dstYoffset * (dstRowStride / sizeof(GLchan));
             for (row = 0; row < convHeight; row++) {
                _mesa_pack_float_rgba_span(ctx, convWidth,
                                           (const GLfloat (*)[4]) srcf,
@@ -340,7 +342,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
                                           transferOps
                                           & IMAGE_POST_CONVOLUTION_BITS);
                srcf += convWidth * 4;
-               dest += dstRowStride;
+               dest += (dstRowStride / sizeof(GLchan));
             }
          }
 
@@ -353,8 +355,8 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
           */
          GLint img, row;
          GLchan *dest = (GLchan *) texDestAddr + dstZoffset * dstImageStride
-                       + dstYoffset * dstRowStride
-                       + dstXoffset * texComponents;
+                      + dstYoffset * (dstRowStride / sizeof(GLchan))
+                      + dstXoffset * texComponents;
          for (img = 0; img < srcDepth; img++) {
             GLchan *destRow = dest;
             for (row = 0; row < srcHeight; row++) {
@@ -364,7 +366,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
                _mesa_unpack_chan_color_span(ctx, srcWidth, texDestFormat,
                                        destRow, srcFormat, srcType, srcRow,
                                        srcPacking, transferOps);
-               destRow += dstRowStride;
+               destRow += (dstRowStride / sizeof(GLchan));
             }
             dest += dstImageStride;
          }

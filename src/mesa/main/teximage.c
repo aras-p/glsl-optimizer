@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.100 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: teximage.c,v 1.101 2001/07/16 15:54:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -520,6 +520,7 @@ make_null_texture(GLint width, GLint height, GLint depth, GLenum format)
    const GLint numPixels = width * height * depth;
    GLubyte *data = (GLubyte *) MALLOC(numPixels * components * sizeof(GLubyte));
 
+#ifdef DEBUG
    /*
     * Let's see if anyone finds this.  If glTexImage2D() is called with
     * a NULL image pointer then load the texture image with something
@@ -552,6 +553,7 @@ make_null_texture(GLint width, GLint height, GLint depth, GLenum format)
          }
       }
    }
+#endif
 
    return data;
 }

@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.9 2001/03/27 19:18:02 gareth Exp $ */
+/* $Id: imports.c,v 1.10 2001/07/16 15:54:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,7 +71,7 @@ _mesa_Free(__GLcontext *gc, void *addr)
 
 /* Must be before '#undef getenv' for inclusion in XFree86.
  */
-static char *
+static char * CAPI
 _mesa_getenv(__GLcontext *gc, const char *var)
 {
    (void) gc;
@@ -109,33 +109,33 @@ _mesa_fatal(__GLcontext *gc, char *str)
    abort();
 }
 
-static int
+static int CAPI
 _mesa_atoi(__GLcontext *gc, const char *str)
 {
    (void) gc;
    return atoi(str);
 }
 
-static int
+static int CAPI
 _mesa_sprintf(__GLcontext *gc, char *str, const char *fmt, ...)
 {
    /* XXX fix this */
    return sprintf(str, fmt);
 }
 
-static void *
+static void * CAPI
 _mesa_fopen(__GLcontext *gc, const char *path, const char *mode)
 {
    return fopen(path, mode);
 }
 
-static int
+static int CAPI
 _mesa_fclose(__GLcontext *gc, void *stream)
 {
    return fclose((FILE *) stream);
 }
 
-static int
+static int CAPI
 _mesa_fprintf(__GLcontext *gc, void *stream, const char *fmt, ...)
 {
    /* XXX fix this */

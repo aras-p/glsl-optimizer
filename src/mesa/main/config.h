@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.33 2001/07/13 20:07:37 brianp Exp $ */
+/* $Id: config.h,v 1.34 2001/07/16 15:54:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -152,7 +152,9 @@
  * work.  32 doesn't work because of integer overflow problems in the
  * rasterizer code.
  */
+#ifndef DEFAULT_SOFTWARE_DEPTH_BITS
 #define DEFAULT_SOFTWARE_DEPTH_BITS 16
+#endif
 #if DEFAULT_SOFTWARE_DEPTH_BITS <= 16
 #define DEFAULT_SOFTWARE_DEPTH_TYPE GLushort
 #else

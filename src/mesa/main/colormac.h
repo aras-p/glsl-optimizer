@@ -1,4 +1,4 @@
-/* $Id: colormac.h,v 1.9 2001/03/11 18:49:11 gareth Exp $ */
+/* $Id: colormac.h,v 1.10 2001/07/16 15:54:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -81,7 +81,7 @@
 
 #define COPY_CHAN4(DST, SRC)  COPY_4V(DST, SRC)
 
-#define CHAN_PRODUCT(a, b) ((GLchan) ((((GLint) (a)) * ((GLint) (b))) / 65535))
+#define CHAN_PRODUCT(a, b) ((GLchan) ((((GLuint) (a)) * ((GLuint) (b))) / 65535))
 
 
 #elif CHAN_BITS == 32

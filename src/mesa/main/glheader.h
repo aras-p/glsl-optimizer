@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.21 2001/06/15 15:22:07 brianp Exp $ */
+/* $Id: glheader.h,v 1.22 2001/07/16 15:54:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -173,7 +173,11 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 
 
 #ifndef CAPI
+#ifdef WIN32
+#define CAPI _cdecl
+#else
 #define CAPI
+#endif
 #endif
 #include <GL/internal/glcore.h>
 
@@ -220,6 +224,10 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #if defined(__GNUC__)
 #  define INLINE __inline__
 #elif defined(__MSC__)
+#  define INLINE __inline
+#elif defined(_MSC_VER)
+#  define INLINE __inline
+#elif defined(__ICL)
 #  define INLINE __inline
 #else
 #  define INLINE
