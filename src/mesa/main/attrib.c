@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.51 2001/05/29 15:23:48 brianp Exp $ */
+/* $Id: attrib.c,v 1.52 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,6 @@
 #else
 #include "glheader.h"
 #include "accum.h"
-#include "alpha.h"
 #include "attrib.h"
 #include "blend.h"
 #include "buffers.h"
@@ -44,13 +43,10 @@
 #include "hint.h"
 #include "light.h"
 #include "lines.h"
-#include "logic.h"
-#include "masking.h"
 #include "matrix.h"
 #include "mem.h"
 #include "points.h"
 #include "polygon.h"
-#include "scissor.h"
 #include "simple_list.h"
 #include "stencil.h"
 #include "texstate.h"

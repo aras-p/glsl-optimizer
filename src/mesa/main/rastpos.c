@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.25 2001/05/30 15:22:04 brianp Exp $ */
+/* $Id: rastpos.c,v 1.26 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -482,3 +482,239 @@ _mesa_RasterPos4sv(const GLshort *v)
 {
    _mesa_RasterPos4f(v[0], v[1], v[2], v[3]);
 }
+
+
+
+/**********************************************************************/
+/***                     GL_MESA_window_pos                         ***/
+/**********************************************************************/
+
+
+/*
+ * This is a MESA extension function.  Pretty much just like glRasterPos
+ * except we don't apply the modelview or projection matrices; specify a
+ * window coordinate directly.
+ * Caller:  context->API.WindowPos4fMESA pointer.
+ */
+void
+_mesa_WindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT(ctx, 0);
+
+   /* set raster position */
+   ctx->Current.RasterPos[0] = x;
+   ctx->Current.RasterPos[1] = y;
+   ctx->Current.RasterPos[2] = CLAMP( z, 0.0F, 1.0F );
+   ctx->Current.RasterPos[3] = w;
+
+   ctx->Current.RasterPosValid = GL_TRUE;
+   ctx->Current.RasterDistance = 0.0F;
+   ctx->Current.RasterFogCoord = 0.0F;
+
+   /* raster color = current color or index */
+   if (ctx->Visual.rgbMode) {
+      ctx->Current.RasterColor[0] = (ctx->Current.Color[0]);
+      ctx->Current.RasterColor[1] = (ctx->Current.Color[1]);
+      ctx->Current.RasterColor[2] = (ctx->Current.Color[2]);
+      ctx->Current.RasterColor[3] = (ctx->Current.Color[3]);
+   }
+   else {
+      ctx->Current.RasterIndex = ctx->Current.Index;
+   }
+
+   /* raster texcoord = current texcoord */
+   {
+      GLuint texSet;
+      for (texSet = 0; texSet < ctx->Const.MaxTextureUnits; texSet++) {
+         COPY_4FV( ctx->Current.RasterMultiTexCoord[texSet],
+                  ctx->Current.Texcoord[texSet] );
+      }
+   }
+
+   if (ctx->RenderMode==GL_SELECT) {
+      _mesa_update_hitflag( ctx, ctx->Current.RasterPos[2] );
+   }
+}
+
+
+
+
+void
+_mesa_WindowPos2dMESA(GLdouble x, GLdouble y)
+{
+   _mesa_WindowPos4fMESA(x, y, 0.0F, 1.0F);
+}
+
+void
+_mesa_WindowPos2fMESA(GLfloat x, GLfloat y)
+{
+   _mesa_WindowPos4fMESA(x, y, 0.0F, 1.0F);
+}
+
+void
+_mesa_WindowPos2iMESA(GLint x, GLint y)
+{
+   _mesa_WindowPos4fMESA(x, y, 0.0F, 1.0F);
+}
+
+void
+_mesa_WindowPos2sMESA(GLshort x, GLshort y)
+{
+   _mesa_WindowPos4fMESA(x, y, 0.0F, 1.0F);
+}
+
+void
+_mesa_WindowPos3dMESA(GLdouble x, GLdouble y, GLdouble z)
+{
+   _mesa_WindowPos4fMESA(x, y, z, 1.0F);
+}
+
+void
+_mesa_WindowPos3fMESA(GLfloat x, GLfloat y, GLfloat z)
+{
+   _mesa_WindowPos4fMESA(x, y, z, 1.0F);
+}
+
+void
+_mesa_WindowPos3iMESA(GLint x, GLint y, GLint z)
+{
+   _mesa_WindowPos4fMESA(x, y, z, 1.0F);
+}
+
+void
+_mesa_WindowPos3sMESA(GLshort x, GLshort y, GLshort z)
+{
+   _mesa_WindowPos4fMESA(x, y, z, 1.0F);
+}
+
+void
+_mesa_WindowPos4dMESA(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+{
+   _mesa_WindowPos4fMESA(x, y, z, w);
+}
+
+void
+_mesa_WindowPos4iMESA(GLint x, GLint y, GLint z, GLint w)
+{
+   _mesa_WindowPos4fMESA(x, y, z, w);
+}
+
+void
+_mesa_WindowPos4sMESA(GLshort x, GLshort y, GLshort z, GLshort w)
+{
+   _mesa_WindowPos4fMESA(x, y, z, w);
+}
+
+void
+_mesa_WindowPos2dvMESA(const GLdouble *v)
+{
+   _mesa_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
+}
+
+void
+_mesa_WindowPos2fvMESA(const GLfloat *v)
+{
+   _mesa_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
+}
+
+void
+_mesa_WindowPos2ivMESA(const GLint *v)
+{
+   _mesa_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
+}
+
+void
+_mesa_WindowPos2svMESA(const GLshort *v)
+{
+   _mesa_WindowPos4fMESA(v[0], v[1], 0.0F, 1.0F);
+}
+
+void
+_mesa_WindowPos3dvMESA(const GLdouble *v)
+{
+   _mesa_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
+}
+
+void
+_mesa_WindowPos3fvMESA(const GLfloat *v)
+{
+   _mesa_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
+}
+
+void
+_mesa_WindowPos3ivMESA(const GLint *v)
+{
+   _mesa_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
+}
+
+void
+_mesa_WindowPos3svMESA(const GLshort *v)
+{
+   _mesa_WindowPos4fMESA(v[0], v[1], v[2], 1.0F);
+}
+
+void
+_mesa_WindowPos4dvMESA(const GLdouble *v)
+{
+   _mesa_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
+}
+
+void
+_mesa_WindowPos4fvMESA(const GLfloat *v)
+{
+   _mesa_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
+}
+
+void
+_mesa_WindowPos4ivMESA(const GLint *v)
+{
+   _mesa_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
+}
+
+void
+_mesa_WindowPos4svMESA(const GLshort *v)
+{
+   _mesa_WindowPos4fMESA(v[0], v[1], v[2], v[3]);
+}
+
+
+
+#if 0
+
+/*
+ * OpenGL implementation of glWindowPos*MESA()
+ */
+void glWindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+   GLfloat fx, fy;
+
+   /* Push current matrix mode and viewport attributes */
+   glPushAttrib( GL_TRANSFORM_BIT | GL_VIEWPORT_BIT );
+
+   /* Setup projection parameters */
+   glMatrixMode( GL_PROJECTION );
+   glPushMatrix();
+   glLoadIdentity();
+   glMatrixMode( GL_MODELVIEW );
+   glPushMatrix();
+   glLoadIdentity();
+
+   glDepthRange( z, z );
+   glViewport( (int) x - 1, (int) y - 1, 2, 2 );
+
+   /* set the raster (window) position */
+   fx = x - (int) x;
+   fy = y - (int) y;
+   glRasterPos4f( fx, fy, 0.0, w );
+
+   /* restore matrices, viewport and matrix mode */
+   glPopMatrix();
+   glMatrixMode( GL_PROJECTION );
+   glPopMatrix();
+
+   glPopAttrib();
+}
+
+#endif

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.53 2001/06/01 22:22:41 keithw Exp $
+# $Id: Makefile.X11,v 1.54 2001/06/18 17:26:08 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -22,38 +22,11 @@ LIBDIR = ../lib
 
 CORE_SOURCES = \
 	api_arrayelt.c \
-	tnl/t_array_api.c \
-	tnl/t_array_import.c \
-	tnl/t_context.c \
-	tnl/t_eval_api.c \
-	tnl/t_imm_alloc.c \
-	tnl/t_imm_api.c \
-	tnl/t_imm_debug.c \
-	tnl/t_imm_dlist.c \
-	tnl/t_imm_elt.c \
-	tnl/t_imm_eval.c \
-	tnl/t_imm_exec.c \
-	tnl/t_imm_fixup.c \
-	tnl/t_pipeline.c \
-	tnl/t_vb_fog.c \
-	tnl/t_vb_light.c \
-	tnl/t_vb_normals.c \
-	tnl/t_vb_points.c \
-	tnl/t_vb_render.c \
-	tnl/t_vb_texgen.c \
-	tnl/t_vb_texmat.c \
-	tnl/t_vb_vertex.c \
-	swrast_setup/ss_context.c \
-	swrast_setup/ss_triangle.c \
-	swrast_setup/ss_vb.c \
-	swrast_setup/ss_interp.c \
 	api_loopback.c \
 	api_noop.c \
 	api_validate.c \
 	accum.c \
-	alpha.c \
 	attrib.c \
-	bitmap.c \
 	blend.c \
 	buffers.c \
 	clip.c \
@@ -61,7 +34,6 @@ CORE_SOURCES = \
 	config.c \
 	context.c \
 	convolve.c \
-	copypix.c \
 	debug.c \
 	depth.c \
 	dispatch.c \
@@ -83,18 +55,13 @@ CORE_SOURCES = \
 	imports.c \
 	light.c \
 	lines.c \
-	logic.c \
-	masking.c \
 	matrix.c \
 	mem.c \
 	mmath.c \
 	pixel.c \
-	pixeltex.c \
 	points.c \
 	polygon.c \
 	rastpos.c \
-	readpix.c \
-	scissor.c \
 	state.c \
 	stencil.c \
 	texformat.c \
@@ -105,7 +72,6 @@ CORE_SOURCES = \
 	texutil.c \
 	varray.c \
 	vtxfmt.c \
-	winpos.c \
 	X86/x86.c \
 	X86/common_x86.c \
 	X86/3dnow.c \
@@ -151,7 +117,32 @@ CORE_SOURCES = \
 	swrast/s_texture.c \
 	swrast/s_texstore.c \
 	swrast/s_triangle.c \
-	swrast/s_zoom.c
+	swrast/s_zoom.c \
+	swrast_setup/ss_context.c \
+	swrast_setup/ss_triangle.c \
+	swrast_setup/ss_vb.c \
+	swrast_setup/ss_interp.c \
+	tnl/t_array_api.c \
+	tnl/t_array_import.c \
+	tnl/t_context.c \
+	tnl/t_eval_api.c \
+	tnl/t_imm_alloc.c \
+	tnl/t_imm_api.c \
+	tnl/t_imm_debug.c \
+	tnl/t_imm_dlist.c \
+	tnl/t_imm_elt.c \
+	tnl/t_imm_eval.c \
+	tnl/t_imm_exec.c \
+	tnl/t_imm_fixup.c \
+	tnl/t_pipeline.c \
+	tnl/t_vb_fog.c \
+	tnl/t_vb_light.c \
+	tnl/t_vb_normals.c \
+	tnl/t_vb_points.c \
+	tnl/t_vb_render.c \
+	tnl/t_vb_texgen.c \
+	tnl/t_vb_texmat.c \
+	tnl/t_vb_vertex.c
 
 
 DRIVER_SOURCES = \

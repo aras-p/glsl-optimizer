@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.53 2001/04/28 08:39:17 keithw Exp $ */
+/* $Id: drawpix.c,v 1.54 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -94,4 +94,135 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
          _mesa_update_hitflag( ctx, ctx->Current.RasterPos[2] );
       }
    }
+}
+
+
+
+void
+_mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
+		  GLenum format, GLenum type, GLvoid *pixels )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (!pixels) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glReadPixels(pixels)" );
+      return;
+   }
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   ctx->Driver.ReadPixels(ctx, x, y, width, height,
+			  format, type, &ctx->Pack, pixels);
+
+}
+
+
+
+void
+_mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
+                  GLenum type )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLint destx, desty;
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (width < 0 || height < 0) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glCopyPixels" );
+      return;
+   }
+
+   if (ctx->NewState) {
+      _mesa_update_state(ctx);
+   }
+
+   if (ctx->RenderMode==GL_RENDER) {
+      /* Destination of copy: */
+      if (!ctx->Current.RasterPosValid) {
+	 return;
+      }
+      destx = IROUND(ctx->Current.RasterPos[0]);
+      desty = IROUND(ctx->Current.RasterPos[1]);
+
+      ctx->OcclusionResult = GL_TRUE;
+
+      ctx->Driver.CopyPixels( ctx, srcx, srcy, width, height, destx, desty,
+			      type );
+   }
+   else if (ctx->RenderMode == GL_FEEDBACK) {
+      FLUSH_CURRENT( ctx, 0 );
+      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_COPY_PIXEL_TOKEN );
+      _mesa_feedback_vertex( ctx, 
+			     ctx->Current.RasterPos,
+			     ctx->Current.Color, 
+			     ctx->Current.Index,
+			     ctx->Current.Texcoord[0] );
+   }
+   else if (ctx->RenderMode == GL_SELECT) {
+      _mesa_update_hitflag( ctx, ctx->Current.RasterPos[2] );
+   }
+}
+
+
+
+void
+_mesa_Bitmap( GLsizei width, GLsizei height,
+              GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove,
+              const GLubyte *bitmap )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+
+   /* Error checking */
+   if (width < 0 || height < 0) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glBitmap" );
+      return;
+   }
+
+   if (ctx->Current.RasterPosValid == GL_FALSE) {
+      return;    /* do nothing */
+   }
+
+   if (ctx->RenderMode==GL_RENDER) {
+      if (bitmap) {
+         GLint x = (GLint) ( (ctx->Current.RasterPos[0] - xorig) + 0.0F );
+         GLint y = (GLint) ( (ctx->Current.RasterPos[1] - yorig) + 0.0F );
+
+         if (ctx->NewState) {
+            _mesa_update_state(ctx);
+         }
+
+         ctx->OcclusionResult = GL_TRUE;
+	 ctx->Driver.Bitmap( ctx, x, y, width, height, &ctx->Unpack, bitmap );
+      }
+   }
+   else if (ctx->RenderMode==GL_FEEDBACK) {
+      GLfloat color[4], texcoord[4], invq;
+
+      color[0] = ctx->Current.RasterColor[0];
+      color[1] = ctx->Current.RasterColor[1];
+      color[2] = ctx->Current.RasterColor[2];
+      color[3] = ctx->Current.RasterColor[3];
+      if (ctx->Current.Texcoord[0][3] == 0.0)
+         invq = 1.0F;
+      else
+         invq = 1.0F / ctx->Current.RasterTexCoord[3];
+      texcoord[0] = ctx->Current.RasterTexCoord[0] * invq;
+      texcoord[1] = ctx->Current.RasterTexCoord[1] * invq;
+      texcoord[2] = ctx->Current.RasterTexCoord[2] * invq;
+      texcoord[3] = ctx->Current.RasterTexCoord[3];
+      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_BITMAP_TOKEN );
+      _mesa_feedback_vertex( ctx,
+                          ctx->Current.RasterPos,
+			  color, ctx->Current.RasterIndex, texcoord );
+   }
+   else if (ctx->RenderMode==GL_SELECT) {
+      /* Bitmaps don't generate selection hits.  See appendix B of 1.1 spec. */
+   }
+
+   /* update raster position */
+   ctx->Current.RasterPos[0] += xmove;
+   ctx->Current.RasterPos[1] += ymove;
 }

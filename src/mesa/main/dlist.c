@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.74 2001/06/12 22:06:10 brianp Exp $ */
+/* $Id: dlist.c,v 1.75 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,10 +29,8 @@
 #include "all.h"
 #else
 #include "glheader.h"
-#include "accum.h"
 #include "api_loopback.h"
 #include "attrib.h"
-#include "bitmap.h"
 #include "blend.h"
 #include "buffers.h"
 #include "clip.h"
@@ -40,7 +38,6 @@
 #include "colortab.h"
 #include "context.h"
 #include "convolve.h"
-#include "copypix.h"
 #include "depth.h"
 #include "dlist.h"
 #include "enable.h"
@@ -60,10 +57,8 @@
 #include "matrix.h"
 #include "mem.h"
 #include "pixel.h"
-#include "pixeltex.h"
 #include "points.h"
 #include "polygon.h"
-#include "readpix.h"
 #include "state.h"
 #include "texobj.h"
 #include "teximage.h"

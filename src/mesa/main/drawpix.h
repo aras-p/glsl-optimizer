@@ -1,4 +1,4 @@
-/* $Id: drawpix.h,v 1.6 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: drawpix.h,v 1.7 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,9 +31,26 @@
 
 #include "mtypes.h"
 
+
 extern void
 _mesa_DrawPixels( GLsizei width, GLsizei height,
                   GLenum format, GLenum type, const GLvoid *pixels );
+
+
+extern void
+_mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
+                  GLenum format, GLenum type, GLvoid *pixels );
+
+
+extern void
+_mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
+                  GLenum type );
+
+
+extern void
+_mesa_Bitmap( GLsizei width, GLsizei height,
+              GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove,
+              const GLubyte *bitmap );
 
 
 #endif

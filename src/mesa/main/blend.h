@@ -1,4 +1,4 @@
-/* $Id: blend.h,v 1.8 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: blend.h,v 1.9 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
 
 #include "mtypes.h"
 
+
 extern void
 _mesa_BlendFunc( GLenum sfactor, GLenum dfactor );
 
@@ -46,6 +47,22 @@ _mesa_BlendEquation( GLenum mode );
 
 extern void
 _mesa_BlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+
+
+extern void
+_mesa_AlphaFunc( GLenum func, GLclampf ref );
+
+
+extern void
+_mesa_LogicOp( GLenum opcode );
+
+
+extern void
+_mesa_IndexMask( GLuint mask );
+
+extern void
+_mesa_ColorMask( GLboolean red, GLboolean green,
+                 GLboolean blue, GLboolean alpha );
 
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: rastpos.h,v 1.3 2001/03/12 00:48:38 gareth Exp $ */
+/* $Id: rastpos.h,v 1.4 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -103,6 +103,83 @@ _mesa_RasterPos4iv(const GLint *v);
 
 extern void
 _mesa_RasterPos4sv(const GLshort *v);
+
+
+/**********************************************************************/
+/***                     GL_MESA_window_pos                         ***/
+/**********************************************************************/
+
+extern void
+_mesa_WindowPos2dMESA(GLdouble x, GLdouble y);
+
+extern void
+_mesa_WindowPos2fMESA(GLfloat x, GLfloat y);
+
+extern void
+_mesa_WindowPos2iMESA(GLint x, GLint y);
+
+extern void
+_mesa_WindowPos2sMESA(GLshort x, GLshort y);
+
+extern void
+_mesa_WindowPos3dMESA(GLdouble x, GLdouble y, GLdouble z);
+
+extern void
+_mesa_WindowPos3fMESA(GLfloat x, GLfloat y, GLfloat z);
+
+extern void
+_mesa_WindowPos3iMESA(GLint x, GLint y, GLint z);
+
+extern void
+_mesa_WindowPos3sMESA(GLshort x, GLshort y, GLshort z);
+
+extern void
+_mesa_WindowPos4dMESA(GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+
+extern void
+_mesa_WindowPos4fMESA(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+
+extern void
+_mesa_WindowPos4iMESA(GLint x, GLint y, GLint z, GLint w);
+
+extern void
+_mesa_WindowPos4sMESA(GLshort x, GLshort y, GLshort z, GLshort w);
+
+extern void
+_mesa_WindowPos2dvMESA(const GLdouble *v);
+
+extern void
+_mesa_WindowPos2fvMESA(const GLfloat *v);
+
+extern void
+_mesa_WindowPos2ivMESA(const GLint *v);
+
+extern void
+_mesa_WindowPos2svMESA(const GLshort *v);
+
+extern void
+_mesa_WindowPos3dvMESA(const GLdouble *v);
+
+extern void
+_mesa_WindowPos3fvMESA(const GLfloat *v);
+
+extern void
+_mesa_WindowPos3ivMESA(const GLint *v);
+
+extern void
+_mesa_WindowPos3svMESA(const GLshort *v);
+
+extern void
+_mesa_WindowPos4dvMESA(const GLdouble *v);
+
+extern void
+_mesa_WindowPos4fvMESA(const GLfloat *v);
+
+extern void
+_mesa_WindowPos4ivMESA(const GLint *v);
+
+extern void
+_mesa_WindowPos4svMESA(const GLshort *v);
 
 
 #endif

@@ -16,12 +16,10 @@ LIBDIR = [-.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
 
 CORE_SOURCES =accum.c \
-	alpha.c \
 	api_loopback.c \
 	api_noop.c \
 	api_validate.c \
  	attrib.c \
-	bitmap.c \
 	blend.c \
 	buffers.c \
 	clip.c \
@@ -29,7 +27,6 @@ CORE_SOURCES =accum.c \
 	config.c \
 	context.c \
 	convolve.c \
-	copypix.c \
 	debug.c \
 	depth.c \
 	dispatch.c \
@@ -52,19 +49,14 @@ CORE_SOURCES =accum.c \
 	imports.c \
 	light.c \
 	lines.c \
-	logic.c \
 	lowpc.c \
-	masking.c \
 	matrix.c \
 	mem.c \
 	mmath.c \
 	pixel.c \
-	pixeltex.c \
 	points.c \
 	polygon.c \
 	rastpos.c \
-	readpix.c \
-	scissor.c \
 	state.c \
 	stencil.c \
 	texformat.c \
@@ -75,7 +67,6 @@ CORE_SOURCES =accum.c \
 	texutil.c \
 	varray.c \
 	vtxfmt.c \
-	winpos.c \
 	[.x86]x86.c
 
 DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]xfonts.c \

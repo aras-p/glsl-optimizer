@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.29 2001/05/29 15:23:48 brianp Exp $ */
+/* $Id: buffers.c,v 1.30 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,7 +36,6 @@
 #include "depth.h"
 #include "enums.h"
 #include "macros.h"
-#include "masking.h"
 #include "mem.h"
 #include "stencil.h"
 #include "state.h"
@@ -369,6 +368,37 @@ _mesa_ResizeBuffersMESA( void )
    ctx->DrawBuffer->Height = buf_height;
 
    ctx->Driver.ResizeBuffersMESA( ctx );
+}
+
+
+void
+_mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (width < 0 || height < 0) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glScissor" );
+      return;
+   }
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      fprintf(stderr, "glScissor %d %d %d %d\n", x, y, width, height);
+
+   if (x == ctx->Scissor.X &&
+       y == ctx->Scissor.Y &&
+       width == ctx->Scissor.Width &&
+       height == ctx->Scissor.Height)
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_SCISSOR);
+   ctx->Scissor.X = x;
+   ctx->Scissor.Y = y;
+   ctx->Scissor.Width = width;
+   ctx->Scissor.Height = height;
+
+   if (ctx->Driver.Scissor)
+      ctx->Driver.Scissor( ctx, x, y, width, height );
 }
 
 

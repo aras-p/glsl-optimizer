@@ -34,9 +34,7 @@ CORE_SRCS = \
 	api_noop.c \
 	api_validate.c \
 	accum.c \
-	alpha.c \
 	attrib.c \
-	bitmap.c \
 	blend.c \
 	buffers.c \
 	clip.c \
@@ -44,7 +42,6 @@ CORE_SRCS = \
 	config.c \
 	context.c \
 	convolve.c \
-	copypix.c \
 	debug.c \
 	depth.c \
 	dispatch.c \
@@ -67,19 +64,14 @@ CORE_SRCS = \
 	imports.c \
 	light.c \
 	lines.c \
-	logic.c \
 	lowpc.c \
-	masking.c \
 	matrix.c \
 	mem.c \
 	mmath.c \
 	pixel.c \
-	pixeltex.c \
 	points.c \
 	polygon.c \
 	rastpos.c \
-	readpix.c \
-	scissor.c \
 	state.c \
 	stencil.c \
 	teximage.c \
@@ -89,7 +81,6 @@ CORE_SRCS = \
 	texutil.c \
 	varray.c \
 	vtxfmt.c \
-	winpos.c \
 	X86\x86.c \
 	X86\common_x86.c \
 	X86\3dnow.c \

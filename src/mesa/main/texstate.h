@@ -1,4 +1,4 @@
-/* $Id: texstate.h,v 1.7 2001/03/12 00:48:39 gareth Exp $ */
+/* $Id: texstate.h,v 1.8 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -120,6 +120,44 @@ _mesa_ActiveTextureARB( GLenum target );
 
 extern void
 _mesa_ClientActiveTextureARB( GLenum target );
+
+
+/*
+ * Pixel Texture Extensions
+ */
+
+extern void
+_mesa_PixelTexGenSGIX(GLenum mode);
+
+extern void
+_mesa_PixelTexGenParameterfSGIS(GLenum target, GLfloat value);
+
+#ifdef VMS
+#define _mesa_PixelTexGenParameterfvSGIS _mesa_PixelTexGenParameterfv
+#endif
+extern void
+_mesa_PixelTexGenParameterfvSGIS(GLenum target, const GLfloat *value);
+
+extern void
+_mesa_PixelTexGenParameteriSGIS(GLenum target, GLint value);
+
+#ifdef VMS
+#define _mesa_PixelTexGenParameterivSGIS _mesa_PixelTexGenParameteriv
+#endif
+extern void
+_mesa_PixelTexGenParameterivSGIS(GLenum target, const GLint *value);
+
+#ifdef VMS
+#define _mesa_GetPixelTexGenParameterfvSGIS _mesa_GetPixelTexGenParameterfv
+#endif
+extern void
+_mesa_GetPixelTexGenParameterfvSGIS(GLenum target, GLfloat *value);
+
+#ifdef VMS
+#define _mesa_GetPixelTexGenParameterivSGIS _mesa_GetPixelTexGenParameteriv
+#endif
+extern void
+_mesa_GetPixelTexGenParameterivSGIS(GLenum target, GLint *value);
 
 
 #endif

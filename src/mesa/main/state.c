@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.67 2001/06/15 14:18:46 brianp Exp $ */
+/* $Id: state.c,v 1.68 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,17 +36,14 @@
 #else
 #include "glheader.h"
 #include "accum.h"
-#include "alpha.h"
 #include "api_loopback.h"
 #include "attrib.h"
-#include "bitmap.h"
 #include "blend.h"
 #include "buffers.h"
 #include "clip.h"
 #include "colortab.h"
 #include "context.h"
 #include "convolve.h"
-#include "copypix.h"
 #include "depth.h"
 #include "dlist.h"
 #include "drawpix.h"
@@ -59,17 +56,12 @@
 #include "histogram.h"
 #include "light.h"
 #include "lines.h"
-#include "logic.h"
-#include "masking.h"
 #include "matrix.h"
 #include "mmath.h"
 #include "pixel.h"
-#include "pixeltex.h"
 #include "points.h"
 #include "polygon.h"
 #include "rastpos.h"
-#include "readpix.h"
-#include "scissor.h"
 #include "state.h"
 #include "stencil.h"
 #include "teximage.h"
@@ -77,7 +69,6 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
-#include "winpos.h"
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"

@@ -1,4 +1,4 @@
-/* $Id: buffers.h,v 1.4 2001/05/29 15:23:48 brianp Exp $ */
+/* $Id: buffers.h,v 1.5 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,6 +50,9 @@ _mesa_ReadBuffer( GLenum mode );
 
 extern void
 _mesa_ResizeBuffersMESA( void );
+
+extern void
+_mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height );
 
 extern void
 _mesa_SampleCoverageARB(GLclampf value, GLboolean invert);

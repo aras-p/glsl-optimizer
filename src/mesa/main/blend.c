@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.32 2001/03/29 16:50:31 brianp Exp $ */
+/* $Id: blend.c,v 1.33 2001/06/18 17:26:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,7 @@
 #else
 #include "glheader.h"
 #include "blend.h"
+#include "colormac.h"
 #include "context.h"
 #include "enums.h"
 #include "macros.h"
@@ -338,4 +339,128 @@ _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 
    if (ctx->Driver.BlendColor)
       (*ctx->Driver.BlendColor)(ctx, tmp);
+}
+
+
+void
+_mesa_AlphaFunc( GLenum func, GLclampf ref )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLchan cref;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   switch (func) {
+   case GL_NEVER:
+   case GL_LESS:
+   case GL_EQUAL:
+   case GL_LEQUAL:
+   case GL_GREATER:
+   case GL_NOTEQUAL:
+   case GL_GEQUAL:
+   case GL_ALWAYS:
+      /* convert float alpha ref to GLchan type */
+      UNCLAMPED_FLOAT_TO_CHAN(cref, ref);
+
+      if (ctx->Color.AlphaFunc == func && ctx->Color.AlphaRef == cref)
+         return;
+
+      FLUSH_VERTICES(ctx, _NEW_COLOR);
+      ctx->Color.AlphaFunc = func;
+      ctx->Color.AlphaRef = cref;
+
+      if (ctx->Driver.AlphaFunc)
+         ctx->Driver.AlphaFunc(ctx, func, cref);
+      return;
+
+   default:
+      _mesa_error( ctx, GL_INVALID_ENUM, "glAlphaFunc(func)" );
+      return;
+   }
+}
+
+
+void
+_mesa_LogicOp( GLenum opcode )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   switch (opcode) {
+      case GL_CLEAR:
+      case GL_SET:
+      case GL_COPY:
+      case GL_COPY_INVERTED:
+      case GL_NOOP:
+      case GL_INVERT:
+      case GL_AND:
+      case GL_NAND:
+      case GL_OR:
+      case GL_NOR:
+      case GL_XOR:
+      case GL_EQUIV:
+      case GL_AND_REVERSE:
+      case GL_AND_INVERTED:
+      case GL_OR_REVERSE:
+      case GL_OR_INVERTED:
+	 break;
+      default:
+         _mesa_error( ctx, GL_INVALID_ENUM, "glLogicOp" );
+	 return;
+   }
+
+   if (ctx->Color.LogicOp == opcode)
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+   ctx->Color.LogicOp = opcode;
+
+   if (ctx->Driver.LogicOpcode)
+      ctx->Driver.LogicOpcode( ctx, opcode );
+}
+
+
+void
+_mesa_IndexMask( GLuint mask )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (ctx->Color.IndexMask == mask)
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+   ctx->Color.IndexMask = mask;
+
+   if (ctx->Driver.IndexMask)
+      ctx->Driver.IndexMask( ctx, mask );
+}
+
+
+void
+_mesa_ColorMask( GLboolean red, GLboolean green,
+                 GLboolean blue, GLboolean alpha )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   GLubyte tmp[4];
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      fprintf(stderr, "glColorMask %d %d %d %d\n", red, green, blue, alpha);
+
+   /* Shouldn't have any information about channel depth in core mesa
+    * -- should probably store these as the native booleans:
+    */
+   tmp[RCOMP] = red    ? 0xff : 0x0;
+   tmp[GCOMP] = green  ? 0xff : 0x0;
+   tmp[BCOMP] = blue   ? 0xff : 0x0;
+   tmp[ACOMP] = alpha  ? 0xff : 0x0;
+
+   if (TEST_EQ_4UBV(tmp, ctx->Color.ColorMask))
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+   COPY_4UBV(ctx->Color.ColorMask, tmp);
+
+   if (ctx->Driver.ColorMask)
+      ctx->Driver.ColorMask( ctx, red, green, blue, alpha );
 }
