@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.4 2000/02/02 20:57:51 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.5 2000/02/23 22:50:35 brianp Exp $ */
 
 /*
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
@@ -117,6 +117,8 @@ print_extension_list(const char *ext)
          else {
             i++;
             j++;
+            if (ext[j] == 0)
+               break;
             printf(", ");
             width += 2;
          }
