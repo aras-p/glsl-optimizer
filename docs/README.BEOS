@@ -28,7 +28,7 @@ working.  No optimizations have been made at this time.
 
 Compiling
 
-Simply cd to the Mesa-3.x directory and type "make beos-r4".
+In the Mesa-3.x directory type "make -f Makefile.X11 beos-r4".
 When it finishes the libMesaGL.so and libMesaGLU.so libraries for
 BeOS will be in the Mesa-3.x/lib/ directory.
 
@@ -99,4 +99,4 @@ of February, 1999.
 
 
 ----------------------------------------------------------------------
-$Id: README.BEOS,v 1.5 1999/03/03 02:34:04 brianp Exp $
+$Id: README.BEOS,v 1.6 1999/11/27 01:40:40 brianp Exp $
