@@ -391,8 +391,8 @@ struct sis_context
 
 #define mEndPrimitive()  \
 {       \
-   *(volatile char *)(smesa->IOBase + REG_3D_EndPrimitiveList) = 0xFF;	\
-   *(volatile GLint *)(smesa->IOBase + 0x8b60) = (GLint)(-1);		\
+   *(volatile GLubyte *)(smesa->IOBase + REG_3D_EndPrimitiveList) = 0xff; \
+   *(volatile GLuint *)(smesa->IOBase + 0x8b60) = 0xffffffff;		\
 }
 
 #define sis_fatal_error(msg)						\
