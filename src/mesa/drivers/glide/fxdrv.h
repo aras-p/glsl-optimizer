@@ -87,8 +87,8 @@ typedef struct tfxMesaContext *fxMesaContext;
 
 
 
-#if defined(MESA_DEBUG) && 0
 extern void fx_sanity_triangle( GrVertex *, GrVertex *, GrVertex * );
+#if defined(MESA_DEBUG) && 0
 #define grDrawTriangle fx_sanity_triangle
 #endif
 
@@ -533,6 +533,7 @@ typedef void (*tfxSetupFunc)(struct vertex_buffer *, GLuint, GLuint);
 extern GrHwConfiguration glbHWConfig;
 extern int glbCurrentBoard;
 
+extern void fxPrintSetupFlags( const char *msg, GLuint flags );
 extern void fxSetupFXUnits(GLcontext *);
 extern void fxSetupDDPointers(GLcontext *);
 extern void fxDDSetNearFar(GLcontext *, GLfloat, GLfloat);
@@ -618,6 +619,7 @@ extern void fxDDInitExtensions( GLcontext *ctx );
 #define fxTMGetTexInfo(o) ((tfxTexInfo*)((o)->DriverData))
 extern void fxTMInit(fxMesaContext ctx);
 extern void fxTMClose(fxMesaContext ctx);
+extern void fxTMRestoreTextures_NoLock(fxMesaContext ctx);
 extern void fxTMMoveInTM(fxMesaContext, struct gl_texture_object *, GLint);
 extern void fxTMMoveOutTM(fxMesaContext, struct gl_texture_object *);
 #define fxTMMoveOutTM_NoLock fxTMMoveOutTM

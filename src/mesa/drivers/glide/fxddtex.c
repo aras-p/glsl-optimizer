@@ -63,17 +63,18 @@ void fxPrintTextureData(tfxTexInfo *ti)
   } else
     fprintf(stderr, "\tName: UNNAMED\n");
   fprintf(stderr, "\tLast used: %d\n", ti->lastTimeUsed);
-  fprintf(stderr, "\tTMU: %d\n", ti->whichTMU);
+  fprintf(stderr, "\tTMU: %ld\n", ti->whichTMU);
   fprintf(stderr, "\t%s\n", (ti->isInTM)?"In TMU":"Not in TMU");
   if (ti->tm[0]) 
-    fprintf(stderr, "\tMem0: %x-%x\n", ti->tm[0]->startAddr, 
-	    ti->tm[0]->endAddr);
+    fprintf(stderr, "\tMem0: %x-%x\n", (unsigned) ti->tm[0]->startAddr, 
+	    (unsigned) ti->tm[0]->endAddr);
   if (ti->tm[1]) 
-    fprintf(stderr, "\tMem1: %x-%x\n", ti->tm[1]->startAddr, 
-	    ti->tm[1]->endAddr);
+    fprintf(stderr, "\tMem1: %x-%x\n", (unsigned) ti->tm[1]->startAddr, 
+	    (unsigned) ti->tm[1]->endAddr);
   fprintf(stderr, "\tMipmaps: %d-%d\n", ti->minLevel, ti->maxLevel);
-  fprintf(stderr, "\tFilters: min %d min %d\n", ti->minFilt, ti->maxFilt);
-  fprintf(stderr, "\tClamps: s %d t %d\n", ti->sClamp, ti->tClamp);
+  fprintf(stderr, "\tFilters: min %d min %d\n",
+          (int) ti->minFilt, (int) ti->maxFilt);
+  fprintf(stderr, "\tClamps: s %d t %d\n", (int) ti->sClamp, (int) ti->tClamp);
   fprintf(stderr, "\tScales: s %f t %f\n", ti->sScale, ti->tScale);
   fprintf(stderr, "\tInt Scales: s %d t %d\n", 
 	  ti->int_sScale/0x800000, ti->int_tScale/0x800000);
@@ -86,7 +87,7 @@ void fxPrintTextureData(tfxTexInfo *ti)
 /*************************** Texture Mapping ****************************/
 /************************************************************************/
 
-void fxTexInvalidate(GLcontext *ctx, struct gl_texture_object *tObj)
+static void fxTexInvalidate(GLcontext *ctx, struct gl_texture_object *tObj)
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   tfxTexInfo *ti;

@@ -69,7 +69,7 @@ static void fxSetupDepthTest(GLcontext *ctx);
 static void fxSetupScissor(GLcontext *ctx);
 static void fxSetupCull(GLcontext *ctx);
 static void gl_print_fx_state_flags( const char *msg, GLuint flags);
-static GLboolean fxMultipassBlend(struct vertex_buffer *, GLuint);
+/*static GLboolean fxMultipassBlend(struct vertex_buffer *, GLuint);*/
 static GLboolean fxMultipassTexture( struct vertex_buffer *, GLuint );
 
 static void fxTexValidate(GLcontext *ctx, struct gl_texture_object *tObj)
@@ -1624,6 +1624,7 @@ void fxDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
      ctx->Driver.RenderStart = fxSetupFXUnits;
      break;
   case GL_LINE_SMOOTH:
+  case GL_LINE_STIPPLE:
   case GL_POINT_SMOOTH:
   case GL_POLYGON_SMOOTH:
   case GL_TEXTURE_2D:
@@ -1631,7 +1632,7 @@ void fxDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
       ctx->Driver.RenderStart = fxSetupFXUnits;
       break;
   default:
-    ;  /* XXX no-op??? */
+    ;  /* XXX no-op? */
   }    
 }
 
@@ -1664,10 +1665,10 @@ static GLboolean fxMultipassBlend(struct vertex_buffer *VB, GLuint pass)
       fxDDDepthMask(ctx, FALSE);
     }
     /* Enable Cc*Ct mode */
-    /* ??? Set the Constant Color ??? */
+    /* XXX Set the Constant Color ? */
     fxDDEnable(ctx, GL_BLEND, GL_TRUE);
-    fxDDBlendFunc(ctx, ???, ???);
-    fxSetupTextureSingleTMU(ctx, ???);
+    fxDDBlendFunc(ctx, XXX, XXX);
+    fxSetupTextureSingleTMU(ctx, XXX);
     fxSetupBlend(ctx);
     fxSetupDepthTest(ctx);
     break;
@@ -1675,8 +1676,8 @@ static GLboolean fxMultipassBlend(struct vertex_buffer *VB, GLuint pass)
   case 2:
     /* Reset everything back to normal */
     fxMesa->unitsState = fxMesa->restoreUnitsState;
-    fxMesa->setupdone &= ???;
-    fxSetupTextureSingleTMU(ctx, ???);
+    fxMesa->setupdone &= XXX;
+    fxSetupTextureSingleTMU(ctx, XXX);
     fxSetupBlend(ctx);
     fxSetupDepthTest(ctx);
     break;
