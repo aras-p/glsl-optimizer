@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.6 2000/02/25 03:55:39 keithw Exp $ */
+/* $Id: clip.c,v 1.7 2000/04/13 14:53:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -375,13 +375,10 @@ void gl_update_clipmask( GLcontext *ctx )
 
    if (ctx->Visual->RGBAflag) 
    {
-      if (ctx->Light.ShadeModel==GL_SMOOTH) 
-      {
-	 mask |= CLIP_RGBA0;
+      mask |= CLIP_RGBA0;
       
-	 if (ctx->TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_SEPERATE_SPECULAR))
-	    mask |= CLIP_RGBA1;
-      }
+      if (ctx->TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_SEPERATE_SPECULAR))
+         mask |= CLIP_RGBA1;
 
       if (ctx->Texture.ReallyEnabled & 0xf0)
 	 mask |= CLIP_TEX1|CLIP_TEX0;
