@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.3 2000/02/02 22:16:04 brianp Exp $ */
+/* $Id: buffers.c,v 1.4 2000/04/05 14:40:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -110,7 +110,7 @@ clear_color_buffer_with_masking( GLcontext *ctx )
             rgba[j][BCOMP] = b;
             rgba[j][ACOMP] = a;
          }
-         gl_mask_rgba_span( ctx, width, x, y + i, rgba );
+         _mesa_mask_rgba_span( ctx, width, x, y + i, rgba );
          (*ctx->Driver.WriteRGBASpan)( ctx, width, x, y + i,
 				       (CONST GLubyte (*)[4])rgba, NULL );
       }
@@ -125,7 +125,7 @@ clear_color_buffer_with_masking( GLcontext *ctx )
          for (j=0;j<width;j++) {
             span[j] = ctx->Color.ClearIndex;
          }
-         gl_mask_index_span( ctx, width, x, y + i, span );
+         _mesa_mask_index_span( ctx, width, x, y + i, span );
          (*ctx->Driver.WriteCI32Span)( ctx, width, x, y + i, span, mask );
       }
    }

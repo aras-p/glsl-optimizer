@@ -1,10 +1,10 @@
-/* $Id: dlist.h,v 1.2 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: dlist.h,v 1.3 2000/04/05 14:40:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,14 +25,12 @@
  */
 
 
-
-
-
 #ifndef DLIST_H
 #define DLIST_H
 
 
 #include "types.h"
+
 
 struct display_list {
    union node *nodes;	
@@ -68,7 +66,6 @@ extern void _mesa_ListBase( GLuint base );
 extern void _mesa_NewList( GLuint list, GLenum mode );
 
 extern void _mesa_init_dlist_table( struct _glapi_table *table );
-
 
 extern void gl_compile_cassette( GLcontext *ctx );
 

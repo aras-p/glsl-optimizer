@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.19 2000/04/04 00:54:23 brianp Exp $ */
+/* $Id: accum.c,v 1.20 2000/04/05 14:40:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -375,7 +375,7 @@ _mesa_Accum( GLenum op, GLfloat value )
                   rgba[i][ACOMP] = multTable[acc[i4+3]];
                }
                if (ctx->Color.SWmasking) {
-                  gl_mask_rgba_span( ctx, width, xpos, ypos, rgba );
+                  _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );
                }
                (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos, 
                                              (const GLubyte (*)[4])rgba, NULL );
@@ -402,7 +402,7 @@ _mesa_Accum( GLenum op, GLfloat value )
                   rgba[i][ACOMP] = CLAMP( a, 0, iChanMax );
                }
                if (ctx->Color.SWmasking) {
-                  gl_mask_rgba_span( ctx, width, xpos, ypos, rgba );
+                  _mesa_mask_rgba_span( ctx, width, xpos, ypos, rgba );
                }
                (*ctx->Driver.WriteRGBASpan)( ctx, width, xpos, ypos, 
                                              (const GLubyte (*)[4])rgba, NULL );
