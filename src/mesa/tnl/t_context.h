@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.25 2001/05/16 09:28:32 keithw Exp $ */
+/* $Id: t_context.h,v 1.26 2001/05/31 23:03:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -371,7 +371,7 @@ typedef void (*quad_func)( GLcontext *ctx, GLuint v1, GLuint v2,
 typedef void (*render_func)( GLcontext *ctx, GLuint start, GLuint count,
 			     GLuint flags );
 typedef void (*interp_func)( GLcontext *ctx,
-			     GLfloat t, GLuint dst, GLuint in, GLuint out,
+			     GLfloat t, GLuint dst, GLuint out, GLuint in,
 			     GLboolean force_boundary );
 typedef void (*copy_pv_func)( GLcontext *ctx, GLuint dst, GLuint src );
 
@@ -405,12 +405,24 @@ struct tnl_device_driver {
     */
 
    interp_func RenderInterp;
-   copy_pv_func RenderCopyPV;
-   void (*RenderClippedPolygon)( GLcontext *ctx, const GLuint *elts, GLuint n );
-   void (*RenderClippedLine)( GLcontext *ctx, GLuint v0, GLuint v1 );
-   /* Functions to interpolate between prebuilt vertices, copy flat-shade
-    * provoking color, and to render clipped primitives.
+   /* The interp function is called by the clipping routines when we need
+    * to generate an interpolated vertex.  All pertinant vertex ancilliary
+    * data should be computed by interpolating between the 'in' and 'out'
+    * vertices.
     */
+
+   copy_pv_func RenderCopyPV;
+   /* The copy function is used to make a copy of a vertex.  All pertinant
+    * vertex attributes should be copied.
+    */
+
+   void (*RenderClippedPolygon)( GLcontext *ctx, const GLuint *elts, GLuint n );
+   /* Render a polygon with <n> vertices whose indexes are in the <elts>
+    * array.
+    */
+
+   void (*RenderClippedLine)( GLcontext *ctx, GLuint v0, GLuint v1 );
+   /* Render a line between the two vertices given by indexes v0 and v1. */
 
    points_func           PointsFunc; /* must now respect vb->elts */
    line_func             LineFunc;
