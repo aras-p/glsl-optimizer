@@ -44,418 +44,183 @@
 
 #include "swrast/swrast.h"
 
-/* declarations of static and inline functions */
-__inline GLuint GetTiledCoordinates8(GLuint iBufferWidth, GLint x, GLint y);
-static GLuint GetTiledCoordinates16_4( GLint iBufferWidth,GLint x,GLint y );
-static GLuint GetTiledCoordinates16_8( GLint iBufferWidth,GLint x,GLint y );
-static GLuint GetTiledCoordinates32_4( GLint iBufferWidth, GLint x,   GLint y );
-static GLuint GetTiledCoordinates32_8( GLint iBufferWidth, GLint x,   GLint y );
-__inline GLuint GetTiledCoordinates( GLint iDepth,GLint iBufferWidth,GLint x,GLint y );
-__inline void savageUploadImage(savageTextureObjectPtr t, GLuint level, GLuint startx, GLuint starty, GLuint reloc);
-__inline void  savageTileTex(savageTextureObjectPtr tex, GLuint level);
-
-/* tile sizes depending on texel color depth */
-GLuint gTileWidth[5] =
-{
-    64,    /* 4-bit */ 
-    64,    /* 8-bit */
-    64,    /* 16-bit */
-    0,     /* 24-bit */
-    32     /* 32-bit */
+/* Size 1, 2 and 4 images are packed into the last subtile. Each image
+ * is repeated to fill a 4x4 pixel area. The figure below shows the
+ * layout of those 4x4 pixel areas in the 8x8 subtile.
+ *
+ *    4 2
+ *    x 1
+ */
+static const savageTileInfo tileInfo_pro[5] = {
+    {64, 64, 8, 8, 8, 8, {0x12, 0x02}}, /* 4-bit */
+    {64, 32, 8, 4, 8, 8, {0x24, 0x04}}, /* 8-bit */
+    {64, 16, 8, 2, 8, 8, {0x48, 0x08}}, /* 16-bit */
+    { 0,  0, 0, 0, 0, 0, {0x00, 0x00}}, /* 24-bit */
+    {32, 16, 4, 2, 8, 8, {0x90, 0x10}}, /* 32-bit */
 };
 
-GLuint gTileHeight[5] = 
-{
-    64,   /* 4-bit */
-    32,   /* 8-bit */
-    16,   /* 16-bit */
-    0,    /* 24-bit */
-    16    /* 32-bit */
+/* Size 1, 2 and 4 images are packed into the last two subtiles. Each
+ * image is repeated to fill a 4x4 pixel area. The figures below show
+ * the layout of those 4x4 pixel areas in the two 4x8 subtiles.
+ *
+ * second last subtile: 4   last subtile: 2
+ *                      x                 1
+ */
+static const savageTileInfo tileInfo_s3d_s4[5] = {
+    {64, 64, 16, 8, 4, 8, {0x18, 0x10}}, /* 4-bit */
+    {64, 32, 16, 4, 4, 8, {0x30, 0x20}}, /* 8-bit */
+    {64, 16, 16, 2, 4, 8, {0x60, 0x40}}, /* 16-bit */
+    { 0,  0,  0, 0, 0, 0, {0x00, 0x00}}, /* 24-bit */
+    {32, 16,  8, 2, 4, 8, {0xc0, 0x80}}, /* 32-bit */
 };
 
-__inline GLuint GetTiledCoordinates8(GLuint iBufferWidth, GLint x, GLint y)
-{
-    GLint x10, x106, x52;
-    GLint y20, y105, y43;
-    GLuint uWidthInTiles;
-
-    uWidthInTiles = (iBufferWidth + 63) >> 6;
-    x10 = x & 0x3;
-    x52 = (x & 0x3c) >> 2;
-    x106 = (x & 0x7c0) >> 6;
-
-    y20 = y & 0x7;
-    y43 = (y & 0x18) >> 3;
-    y105 = (y & 0x7e0) >> 5;
-    
-    return ( x10         |
-            (y20 << 2)   |
-	    (x52 << 5)   |
-	    (y43 << 9)   |
-	    ((y105 * uWidthInTiles) + x106) << 11 );
-}
-
-/* 4-pixel wide subtiles */
-static GLuint GetTiledCoordinates16_4( GLint iBufferWidth,
-                                              GLint x,
-                                              GLint y )
-{
-    GLint  x106;
-    GLint  x10;
-    GLint  x52;
-    GLint  y104;
-    GLint  y20;
-    GLint  y3;
-    GLuint uiWidthInTiles;
-
-    /*
-    // calculating tiled address
-    */
-
-    uiWidthInTiles = (iBufferWidth + 63) >> 6;
-
-    x10  =  x & 0x3;
-    x52  = (x & 0x3c ) >> 2;
-    x106 = (x & 0x7c0) >> 6;
-
-    y20  =  y & 0x7;
-    y3   = (y & 8    ) >> 3;
-    y104 = (y & 0x7f0) >> 4;
-
-    return( (x10 << 1)  |
-            (y20 << 3)  |
-            (x52 << 6)  |
-            (y3  << 10) |
-            ((y104 * uiWidthInTiles) + x106) << 11 );
-}
-/* 8-pixel wide subtiles */
-static GLuint GetTiledCoordinates16_8( GLint iBufferWidth,
-                                              GLint x,
-                                              GLint y )
-{
-    GLint  x106;
-    GLint  x20;
-    GLint  x53;
-    GLint  y104;
-    GLint  y20;
-    GLint  y3;
-    GLuint uiWidthInTiles;
-
-    /*
-    // calculating tiled address
-    */
-
-    uiWidthInTiles = (iBufferWidth + 63) >> 6;
-
-    x20  =  x & 0x7;
-    x53  = (x & 0x38 ) >> 3;
-    x106 = (x & 0x7c0) >> 6;
-
-    y20  =  y & 0x7;
-    y3   = (y & 8    ) >> 3;
-    y104 = (y & 0x7f0) >> 4;
-
-    return( (x20 << 1)  |
-            (y20 << 4)  |
-            (x53 << 7)  |
-            (y3  << 10) |
-            ((y104 * uiWidthInTiles) + x106) << 11 );
-}
-/* function pointer set to the correct version in savageDDInitTextureFuncs */
-GLuint (*GetTiledCoordinates16) (GLint, GLint, GLint);
-
-/* 4-pixel wide subtiles */
-static GLuint GetTiledCoordinates32_4( GLint iBufferWidth,
-                                              GLint x,
-                                              GLint y )
-{
-    GLint  x10;
-    GLint  y20;
-    GLuint uiWidthInTiles;
-    GLint  x42;
-    GLint  x105;
-    GLint  y3;
-    GLint  y104;
-
-    /*
-    // calculating tiled address
-    */
-
-    uiWidthInTiles = (iBufferWidth + 31) >> 5;
-
-    x10  =  x & 0x3;
-    x42  = (x & 0x1c ) >> 2;
-    x105 = (x & 0x7e0) >> 5;
-
-    y20  =  y & 0x7;
-    y3   = (y & 8    ) >> 3;
-    y104 = (y & 0x7f0) >> 4;
-
-    return( (x10 << 2)  |
-            (y20 << 4)  |
-            (x42 << 7)  |
-            (y3  << 10) |
-            ((y104 * uiWidthInTiles) + x105) << 11 );
-}
-/* 8-pixel wide subtiles */
-static GLuint GetTiledCoordinates32_8( GLint iBufferWidth,
-                                              GLint x,
-                                              GLint y )
-{
-    GLint  x20;
-    GLint  y20;
-    GLuint uiWidthInTiles;
-    GLint  x43;
-    GLint  x105;
-    GLint  y3;
-    GLint  y104;
-
-    /*
-    // calculating tiled address
-    */
-
-    uiWidthInTiles = (iBufferWidth + 31) >> 5;
-
-    x20  =  x & 0x7;
-    x43  = (x & 0x18 ) >> 3;
-    x105 = (x & 0x7e0) >> 5;
-
-    y20  =  y & 0x7;
-    y3   = (y & 8    ) >> 3;
-    y104 = (y & 0x7f0) >> 4;
-
-    return( (x20 << 2)  |
-            (y20 << 5)  |
-            (x43 << 8)  |
-            (y3  << 10) |
-            ((y104 * uiWidthInTiles) + x105) << 11 );
-}
-/* function pointer set to the correct version in savageDDInitTextureFuncs */
-GLuint (*GetTiledCoordinates32) (GLint, GLint, GLint);
-
-__inline GLuint GetTiledCoordinates( GLint iDepth,
-                                            GLint iBufferWidth,
-                                            GLint x,
-                                            GLint y )
-{
-    /*
-    // don't check for 4 since we only have 3 types of fb
-    */
-
-    if (iDepth == 16)
-    {
-        return( GetTiledCoordinates16( iBufferWidth, x, y ) );
-    }
-    else if (iDepth == 32)
-    {
-        return( GetTiledCoordinates32( iBufferWidth, x, y ) );
-    }
-    else
-    {
-        return( GetTiledCoordinates8( iBufferWidth, x, y ) );
-    }
-} 
-
-__inline void savageUploadImage(savageTextureObjectPtr t, GLuint level, GLuint startx, GLuint starty, GLuint reloc)
-{
-    GLuint uMaxTileWidth = gTileWidth[t->texelBytes]; 
-    GLuint x, y, w, row, col;    
-    const struct gl_texture_image *image = t->image[level].image;
-    GLubyte * dst, * src, * pBuffer;
-    GLint xAdd, yAdd;
-    GLuint uRowSeparator, uChunk = MIN_TILE_CHUNK, uWrap;
-
-  
-    pBuffer = (GLubyte *)(t->BufAddr + t->image[level].offset);
-    src = (GLubyte *)image->Data;
-    x = startx;
-    y = starty;
-    w = image->Width;
-
-    if(image->Format ==  GL_COLOR_INDEX)
-    {
-        if(w < MIN_TILE_CHUNK)
-	{
-            w = MIN_TILE_CHUNK;
-        }
-        else
-        {
-	    if((w > 64 ) && (image->Height <= 16))
-            {
-	         reloc = GL_TRUE;
-                 if(image->Height == 16)
-		 {
-		     uChunk = MIN_TILE_CHUNK << 1;
-		 }
+/** \brief Upload a complete tile from src (srcStride) to dest
+ *
+ * \param tileInfo     Pointer to tiling information
+ * \param wInSub       Width of source/dest image in subtiles
+ * \param hInSub       Height of source/dest image in subtiles
+ * \param bpp          Bytes per pixel
+ * \param src          Pointer to source data
+ * \param srcStride    Byte stride of rows in the source data
+ * \param dest         Pointer to destination
+ *
+ * Processes rows of source data linearly and scatters them into the
+ * subtiles.
+ *
+ * For a complete tile wInSub and hInSub are set to the same values as
+ * in tileInfo. If the source image is smaller than a whole tile in
+ * one or both dimensions then they are set to the values of the
+ * source image. This only works as long as the source image is bigger
+ * than 8x8 pixels.
+ */
+static void savageUploadTile (const savageTileInfo *tileInfo,
+			      GLuint wInSub, GLuint hInSub, GLuint bpp,
+			      GLubyte *src, GLuint srcStride, GLubyte *dest) {
+    GLuint destStride = tileInfo->subWidth * tileInfo->subHeight * bpp;
+    GLuint subStride = tileInfo->subWidth * bpp;
+    GLubyte *srcRow = src, *destSRow = dest, *destRow = dest;
+    GLuint sx, sy, y;
+    /* iterate over subtile rows */
+    for (sy = 0; sy < hInSub; ++sy) {
+	destRow = destSRow;
+	/* iterate over pixel rows within the subtile row */
+	for (y = 0; y < tileInfo->subHeight; ++y) {
+	    src = srcRow;
+	    dest = destRow;
+	    /* iterate over subtile columns */
+	    for (sx = 0; sx < wInSub; ++sx) {
+		memcpy (dest, src, subStride);
+		src += subStride;
+		dest += destStride;
 	    }
-	}  
-
-	if(!reloc & (w > (64 / 2)))
-	{
-	    for(row = 0; row < image->Height; row++)
-	    {
-	        for(col = 0; col < image->Width; col++)    
-		{
-		    dst = pBuffer + GetTiledCoordinates(t->texelBytes << 3, w, x + col, y + row);
-		    memcpy (dst, src, t->texelBytes);
-		    src += t->texelBytes;
-                }
-	    }
+	    srcRow += srcStride;
+	    destRow += subStride;
 	}
-        else
-        {
-	    if(reloc & (w > 64))
-	    {
-	      uWrap = ((w + 63) >> 6) - 1;
-	        for(row = 0; row < image->Height; row++)
-	        {
-	            for(col = 0; col < image->Width; col++)    
-		    {
-		        xAdd = (col / (4 * 64)) * 64 + col % 64;
-                        yAdd = row + ((col / 64) & 3) * uChunk;
-		        dst = pBuffer + GetTiledCoordinates(t->texelBytes << 3, 64, x + xAdd, y + yAdd);
-			memcpy (dst, src, t->texelBytes);
-			src += t->texelBytes;
-                    }
-	        }
-	    }
-            else
-	    {
-	        uRowSeparator = 64 * MIN_TILE_CHUNK / w;
-	        for(row = 0; row < image->Height; row++)
-	        {
-	            xAdd = (w * (row / MIN_TILE_CHUNK)) % 64;
-                    yAdd = row % MIN_TILE_CHUNK + MIN_TILE_CHUNK * (row / uRowSeparator);
-	            for(col = 0; col < image->Width; col++)    
-		    {
-		        dst = pBuffer + GetTiledCoordinates(t->texelBytes << 3, w, x + xAdd, y + yAdd);
-			memcpy (dst, src, t->texelBytes);
-			src += t->texelBytes;
-                    }
-	        }
-	    }
-        }
+	destSRow += destStride * wInSub;
     }
-    else
-    {
-        if(w < MIN_TILE_CHUNK)
-	{
-            w = MIN_TILE_CHUNK;
-        }
-        else
-        {
-	    if((w > uMaxTileWidth ) && (image->Height <= 8))
-            {
-	         reloc = GL_TRUE;
-	    }
+}
+
+/** \brief Upload a texture image that is smaller than 8x8 pixels.
+ *
+ * \param tileInfo
+ * \param width
+ * \param height
+ * \param bpp
+ * \param src
+ * \param dest
+ */
+static void savageUploadTiny (const savageTileInfo *tileInfo,
+			      GLuint width, GLuint height, GLuint bpp,
+			      GLubyte *src, GLubyte *dest) {
+    GLuint size = MAX2(width, height);
+    GLuint offset = (size <= 2 ? tileInfo->tinyOffset[size-1] : 0);
+    GLuint wInSub = width / tileInfo->subWidth;
+
+#if 0
+    /* Fill the file with a test pattern */
+    GLuint i;
+    GLushort *sdest = (GLushort*)dest;
+    if (offset)
+	sdest += 0x20;
+    for (i = 0; i < tileInfo->subWidth*tileInfo->subHeight; ++i) {
+	GLuint x = i;
+	GLuint mask = 0;
+	GLushort val = 0;
+	switch (i & 3) {
+	case 0: mask = 1; break;
+	case 1: mask = 2; break;
+	case 2: mask = 4; break;
+	case 3: mask = 7; break;
 	}
-	if(!reloc & (w > uMaxTileWidth / 2))
-	{
-	    for(row = 0; row < image->Height; row++)
-	    {
-	        for(col = 0; col < image->Width; col++)    
-		{
-		    dst = pBuffer + GetTiledCoordinates(t->texelBytes << 3, w, x + col, y + row);
-		    memcpy (dst, src, t->texelBytes);
-		    src += t->texelBytes;
-                }
+	if (mask & 1)
+	    val |= x;
+	if (mask & 2)
+	    val |= x*2 << 5;
+	if (mask & 4)
+	    val |= x << (5+6);
+	*sdest++ = val;
+    }
+#else
+    if (wInSub > 1) { /* several subtiles wide but less than a subtile high */
+	GLuint destStride = tileInfo->subWidth * tileInfo->subHeight * bpp;
+	GLuint subStride = tileInfo->subWidth * bpp;
+	GLuint srcStride = width * bpp;
+	GLubyte *srcRow = src, *destRow = dest;
+	GLuint sx, y;
+	for (y = 0; y < height; ++y) {
+	    src = srcRow;
+	    dest = destRow;
+	    /* iterate over subtile columns */
+	    for (sx = 0; sx < wInSub; ++sx) {
+		memcpy (dest, src, subStride);
+		src += subStride;
+		dest += destStride;
 	    }
+	    srcRow += srcStride;
+	    destRow += subStride;
+	    /* if the subtile width is 4 skip every other tile */
+	    if ((y & 7) == 7 && tileInfo->subWidth == 4)
+		destRow += destStride;
 	}
-        else
-        {
-	    if(reloc & (w > uMaxTileWidth))
-	    {
-	        for(row = 0; row < image->Height; row++)
-	        {
-	            for(col = 0; col < image->Width; col++)    
-		    {
-		        xAdd = (col / (2 * uMaxTileWidth)) * uMaxTileWidth + col % uMaxTileWidth;
-                        yAdd = row + ((col / uMaxTileWidth) & 1) * MIN_TILE_CHUNK;
-		        dst = pBuffer + GetTiledCoordinates(t->texelBytes << 3, w, x + xAdd, y + yAdd);
-			memcpy (dst, src, t->texelBytes);
-			src += t->texelBytes;
-                    }
-	        }
-	    }
-            else
-	    {
-	        uRowSeparator = uMaxTileWidth * MIN_TILE_CHUNK / w;
-	        for(row = 0; row < image->Height; row++)
-	        {
-                    yAdd = row % MIN_TILE_CHUNK + MIN_TILE_CHUNK * (row / uRowSeparator);
-                    xAdd = (w * (row / MIN_TILE_CHUNK)) % uMaxTileWidth;
-	            for(col = 0; col < image->Width; col++)    
-		    {
-		        dst = pBuffer + GetTiledCoordinates(t->texelBytes << 3, w, x + col + xAdd, y + yAdd);
-			memcpy (dst, src, t->texelBytes);
-			src += t->texelBytes;
-                    }
-	        }
-	    }
-        }
-    }
-}        
-
-
-
-__inline void  savageTileTex(savageTextureObjectPtr tex, GLuint level)
-{
-    GLuint uWidth, uHeight;
-    GLint  xOffset, yOffset;
-    GLint  xStart=0, yStart=0;
-    GLint  minSize;
-    GLuint xRepeat, yRepeat;
-    GLuint startCol, startRow;
-    GLuint reloc;
-
-    const struct gl_texture_image *image = tex->image[level].image;
-    
-    reloc = GL_FALSE;
-    uWidth = image->Width2;
-    uHeight = image->Height2;
-
-    if((uWidth > 4) || (uHeight > 4))
-        minSize = MIN_TILE_CHUNK;
-    else
-        minSize = MIPMAP_CHUNK;
- 
-    if(image->Width >= minSize)
-        xRepeat = 1;
-    else
-        xRepeat = minSize / image->Width;
-
-    if(image->Height >= minSize)
-        yRepeat = 1;
-    else
-    {
-        yRepeat = minSize / image->Height;
-        if(minSize == MIN_TILE_CHUNK)
-            reloc = GL_TRUE;
-    }
-  
-    if(((uWidth < 4) && (uHeight < 4)) && (tex->texelBytes >= 2))
-    { 
-        if((uWidth == 2) || (uHeight == 2))
-        {
-            xStart = 4;
-            yStart = 0;
-        }
-
-        else
-        {
-            xStart = 4;
-            yStart = 4;
-        }
-    }
-    for(xOffset = 0; xOffset < xRepeat; xOffset++)
-    {
-        for(yOffset = 0; yOffset < yRepeat; yOffset++)
-        {
-	    startCol = image->Width * xOffset + xStart;
-            startRow = image->Height * yOffset + yStart;
-            savageUploadImage(tex,level, startCol, startRow, reloc);
+    } else if (size > 4) { /* not the last 3 mipmap levels */
+	GLuint y;
+	for (y = 0; y < height; ++y) {
+	    memcpy (dest, src, bpp*width);
+	    src += width * bpp;
+	    dest += tileInfo->subWidth * bpp;
+	    /* if the subtile width is 4 skip every other tile */
+	    if ((y & 7) == 7 && tileInfo->subWidth == 4)
+		dest += tileInfo->subHeight * tileInfo->subWidth * bpp;
+	}
+    } else { /* the last 3 mipmap levels */
+	GLuint y;
+	dest += offset;
+	for (y = 0; y < height; ++y) {
+	    memcpy (dest, src, bpp*width);
+	    src += width * bpp;
+	    dest += tileInfo->subWidth * bpp;
 	}
     }
+#endif
+}
+
+static GLuint savageTexImageSize (GLuint width, GLuint height, GLuint bpp) {
+    /* full subtiles */
+    if (width >= 8 && height >= 8)
+	return width * height * bpp;
+    /* special case for the last three mipmap levels: the hardware computes
+     * the offset internally */
+    else if (width <= 4 && height <= 4)
+	return 0;
+    /* partially filled sub tiles waste memory
+     * on Savage3D and Savage4 with subtile width 4 every other subtile is
+     * skipped if width < 8 so we can assume a uniform subtile width of 8 */
+    else if (width >= 8)
+	return width * 8 * bpp;
+    else if (height >= 8)
+	return 8 * height * bpp;
+    else
+	return 64 * bpp;
 }
 
 static void savageSetTexWrapping(savageTextureObjectPtr tex, GLenum s, GLenum t)
@@ -656,7 +421,7 @@ static void savageSetTexImages( savageContextPtr imesa,
 {
    savageTextureObjectPtr t = (savageTextureObjectPtr) tObj->DriverData;
    struct gl_texture_image *image = tObj->Image[0][tObj->BaseLevel];
-   GLuint offset, width, pitch, i, textureFormat, log_pitch;
+   GLuint offset, i, textureFormat, size;
 
    assert(t);
    assert(image);
@@ -692,28 +457,39 @@ static void savageSetTexImages( savageContextPtr imesa,
       break;
    default:
       _mesa_problem(imesa->glCtx, "Bad texture format in %s", __FUNCTION__);
+      return;
    }
+
+   /* Select tiling format depending on the chipset and bytes per texel */
+   if (imesa->savageScreen->chipset <= S3_SAVAGE4)
+       t->tileInfo = &tileInfo_s3d_s4[t->texelBytes];
+   else
+       t->tileInfo = &tileInfo_pro[t->texelBytes];
 
    /* Figure out the size now (and count the levels).  Upload won't be done
     * until later.
     */ 
-   width = image->Width * t->texelBytes;
-   for (pitch = 2, log_pitch=1 ; pitch < width ; pitch *= 2 )
-      log_pitch++;
-   
    t->dirty_images = 0;
-
    offset = 0;
+   size = 1;
    for ( i = 0 ; i < SAVAGE_TEX_MAXLEVELS && tObj->Image[0][i] ; i++ ) {
-      t->image[i].image = tObj->Image[0][i];
+      image = tObj->Image[0][i];
+      t->image[i].image = image;
       t->image[i].offset = offset;
       t->image[i].internalFormat = textureFormat;
       t->dirty_images |= (1<<i);
-      offset += t->image[i].image->Height * pitch;
-      pitch = pitch >> 1;
+      size = savageTexImageSize (image->Width2, image->Height2,
+				 t->texelBytes);
+      offset += size;
    }
 
    t->totalSize = offset;
+   /* the last three mipmap levels don't add to the offset. They are packed
+    * into 64 pixels. */
+   if (size == 0)
+       t->totalSize += 64 * t->texelBytes;
+   /* 2k-aligned */
+   t->totalSize = (t->totalSize + 2047UL) & ~2047UL;
    t->max_level = i-1;
    t->min_level = 0;
 }
@@ -762,7 +538,9 @@ static void savageSwapOutTexObj(savageContextPtr imesa, savageTextureObjectPtr t
 static void savageUploadTexLevel( savageTextureObjectPtr t, int level )
 {
    const struct gl_texture_image *image = t->image[level].image;
-
+   const savageTileInfo *tileInfo = t->tileInfo;
+   GLuint width = image->Width2, height = image->Height2;
+   GLuint bpp = t->texelBytes;
 
    /* Need triangle (rather than pixel) fallbacks to simulate this using
     * normal textured triangles.
@@ -775,7 +553,50 @@ static void savageUploadTexLevel( savageTextureObjectPtr t, int level )
        fprintf (stderr, "Not supported texture border %d.\n",
 		(int) image->Border);
 
-   savageTileTex(t, level);
+   if (width >= 8 && height >= tileInfo->subHeight) {
+       if (width >= tileInfo->width && height >= tileInfo->height) {
+	   GLuint wInTiles = width / tileInfo->width;
+	   GLuint hInTiles = height / tileInfo->height;
+	   GLubyte *srcTRow = image->Data, *src;
+	   GLubyte *dest = (GLubyte *)(t->BufAddr + t->image[level].offset);
+	   GLuint x, y;
+	   for (y = 0; y < hInTiles; ++y) {
+	       src = srcTRow;
+	       for (x = 0; x < wInTiles; ++x) {
+		   savageUploadTile (tileInfo,
+				     tileInfo->wInSub, tileInfo->hInSub, bpp,
+				     src, width * bpp, dest);
+		   src += tileInfo->width * bpp;
+		   dest += 2048; /* tile size is always 2k */
+	       }
+	       srcTRow += width * tileInfo->height * bpp;
+	   }
+       } else {
+	   savageUploadTile (tileInfo, width / tileInfo->subWidth,
+			     height / tileInfo->subHeight, bpp,
+			     image->Data, width * bpp,
+			     (GLubyte *)(t->BufAddr + t->image[level].offset));
+       }
+   } else {
+       GLuint minHeight, minWidth, hRepeat, vRepeat, x, y;
+       if (width > 4 || height > 4) {
+	   minWidth = tileInfo->subWidth;
+	   minHeight = tileInfo->subHeight;
+       } else {
+	   minWidth = 4;
+	   minHeight = 4;
+       }
+       hRepeat = width  >= minWidth  ? 1 : minWidth  / width;
+       vRepeat = height >= minHeight ? 1 : minHeight / height;
+       for (y = 0; y < vRepeat; ++y)
+	   for (x = 0; x < hRepeat; ++x) {
+	       GLuint offset = (y * tileInfo->subWidth*height +
+				x * width) * bpp;
+	       savageUploadTiny (tileInfo, width, height, bpp, image->Data,
+				 (GLubyte *)(t->BufAddr +
+					     t->image[level].offset + offset));
+	   }
+   }
 }
 
 
@@ -1689,24 +1510,14 @@ static void savageUpdateTextureState_s3d( GLcontext *ctx )
 			 SAVAGE_UPLOAD_TEX0);
     }
 }
-static void savageUpdateTextureState_first( GLcontext *ctx)
+void savageUpdateTextureState( GLcontext *ctx)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
-    if (imesa->savageScreen->chipset <= S3_SAVAGE4) {
-	GetTiledCoordinates16 = GetTiledCoordinates16_4;
-	GetTiledCoordinates32 = GetTiledCoordinates32_4;
-    } else {
-	GetTiledCoordinates16 = GetTiledCoordinates16_8;
-	GetTiledCoordinates32 = GetTiledCoordinates32_8;
-    }
     if (imesa->savageScreen->chipset >= S3_SAVAGE4)
-	savageUpdateTextureState = savageUpdateTextureState_s4;
+	savageUpdateTextureState_s4 (ctx);
     else
-	savageUpdateTextureState = savageUpdateTextureState_s3d;
-    savageUpdateTextureState (ctx);
+	savageUpdateTextureState_s3d (ctx);
 }
-void (*savageUpdateTextureState)( GLcontext *ctx ) =
-    savageUpdateTextureState_first;
 
 
 

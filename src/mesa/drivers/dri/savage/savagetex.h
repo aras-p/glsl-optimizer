@@ -61,12 +61,20 @@ typedef struct  {
     GLuint hwPhysAddress;
 } savage_texture_parameter_t;
 
+/** \brief Texture tiling information */
+typedef struct savage_tileinfo_t {
+    GLuint width, height;       /**< tile width and height */
+    GLuint wInSub, hInSub;      /**< tile width and height in subtiles */
+    GLuint subWidth, subHeight; /**< subtile width and height */
+    GLuint tinyOffset[2];       /**< internal offsets size 1 and 2 images */
+} savageTileInfo, *savageTileInfoPtr;
+
 struct savage_texture_object_t {
    struct savage_texture_object_t *next, *prev;
    struct gl_texture_object *globj;
    GLuint age;   
    
-     
+   const savageTileInfo *tileInfo;
    GLuint texelBytes;
    GLuint totalSize;
    GLuint bound;
@@ -100,7 +108,7 @@ struct savage_texture_object_t {
 #define __HWParseTexEnvCombine(imesa, flag0, TexCtrl, TexBlendCtrl)
 
 
-extern void (*savageUpdateTextureState)( GLcontext *ctx );
+void savageUpdateTextureState( GLcontext *ctx );
 void savageDDInitTextureFuncs( struct dd_function_table *functions );
 
 void savageDestroyTexObj( savageContextPtr imesa, savageTextureObjectPtr t);
