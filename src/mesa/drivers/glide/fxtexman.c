@@ -1,4 +1,3 @@
-/* -*- mode: C; tab-width:8; c-basic-offset:2 -*- */
 
 /*
  * Mesa 3-D graphics library
@@ -718,7 +717,7 @@ fxTMRestoreTextures_NoLock(fxMesaContext ctx) {
     ti=fxTMGetTexInfo(tObj);
     if (ti && ti->isInTM) {
       for (i=0; i<MAX_TEXTURE_UNITS; i++)
-	if (ctx->glCtx->Texture.Unit[i].Current==tObj) {
+	if (ctx->glCtx->Texture.Unit[i]._Current==tObj) {
 	  /* Force the texture onto the board, as it could be in use */
 	  where=ti->whichTMU;
 	  fxTMMoveOutTM_NoLock(ctx, tObj);

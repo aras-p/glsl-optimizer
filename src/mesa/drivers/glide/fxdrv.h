@@ -1,4 +1,3 @@
-/* -*- mode: C; tab-width:8; c-basic-offset:2 -*- */
 
 /*
  * Mesa 3-D graphics library
@@ -50,11 +49,7 @@
  * you turn debugging on/off from the debugger.
  */
 
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#else 
 #include "glheader.h"
-#endif
 
 
 #if defined(__linux__)
@@ -72,14 +67,13 @@
 #include "clip.h"
 #include "vbrender.h"
 
-#ifdef XF86DRI
-typedef struct tfxMesaContext *fxMesaContext;
-#else
 #include "GL/fxmesa.h"
-#endif
 #include "fxglidew.h"
-/* use gl/gl.h GLAPI/GLAPIENTRY/GLCALLBACK in place of WINGDIAPI/APIENTRY/CALLBACK, */
-/* these are defined in mesa gl/gl.h - tjump@spgs.com */
+
+/* use gl/gl.h GLAPI/GLAPIENTRY/GLCALLBACK in place of
+ * WINGDIAPI/APIENTRY/CALLBACK, these are defined in mesa gl/gl.h -
+ * tjump@spgs.com 
+ */
 
 
 
@@ -107,18 +101,6 @@ extern void fx_sanity_triangle( GrVertex *, GrVertex *, GrVertex * );
 #define T1COORD  GR_VERTEX_TOW_TMU1_OFFSET
 
 
-#if FX_USE_PARGB
-
-#define CLIP_XCOORD 0		/* normal place */
-#define CLIP_YCOROD 1		/* normal place */
-#define CLIP_ZCOORD 2		/* normal place */
-#define CLIP_WCOORD 3		/* normal place */
-#define CLIP_GCOORD 4		/* GR_VERTEX_PARGB_OFFSET */
-#define CLIP_BCOORD 5		/* GR_VERTEX_SOW_TMU0_OFFSET */
-#define CLIP_RCOORD 6		/* GR_VERTEX_TOW_TMU0_OFFSET */
-#define CLIP_ACOORD 7		/* GR_VERTEX_OOW_TMU0_OFFSET */
-
-#else
 
 #define CLIP_XCOORD 0		/* normal place */
 #define CLIP_YCOROD 1		/* normal place */
@@ -130,17 +112,14 @@ extern void fx_sanity_triangle( GrVertex *, GrVertex *, GrVertex * );
 #define CLIP_ACOORD 7		/* normal place */
 
 
-#endif
 
 /* Should have size == 16 * sizeof(float).
  */
-typedef struct {
-   GLfloat f[15];		/* Same layout as GrVertex */
-   GLubyte mask;		/* Unsued  */
-   GLubyte usermask;		/* Unused */
+typedef union {
+  GrVertex v;
+  GLfloat f[16];	
+  GLuint ui[16];
 } fxVertex;
-
-
 
 
 #if defined(FXMESA_USE_ARGB)
@@ -162,40 +141,6 @@ typedef struct {
 #endif
 #endif
 
-#define FX_VB_COLOR(fxm, color)				\
-  do {							\
-    if (sizeof(GLint) == 4*sizeof(GLubyte)) {		\
-      if (fxm->constColor != *(GLuint*)color) {		\
-	fxm->constColor = *(GLuint*)color;		\
-	FX_grConstantColorValue(FXCOLOR4(color));	\
-      }							\
-    } else {						\
-      FX_grConstantColorValue(FXCOLOR4(color));		\
-    }							\
-  } while (0)
-
-#define GOURAUD(x) {					\
-  GLubyte *col = VB->ColorPtr->data[(x)];		\
-  gWin[(x)].v.r=UBYTE_COLOR_TO_FLOAT_255_COLOR(col[0]);	\
-  gWin[(x)].v.g=UBYTE_COLOR_TO_FLOAT_255_COLOR(col[1]);	\
-  gWin[(x)].v.b=UBYTE_COLOR_TO_FLOAT_255_COLOR(col[2]);	\
-  gWin[(x)].v.a=UBYTE_COLOR_TO_FLOAT_255_COLOR(col[3]);	\
-}
-
-#if FX_USE_PARGB
-#define GOURAUD2(v, c) {			\
-  GLubyte *col = c;  				\
-  v->argb=MESACOLOR2PARGB(col);			\
-}
-#else
-#define GOURAUD2(v, c) {			\
-  GLubyte *col = c;  				\
-  v->r=UBYTE_COLOR_TO_FLOAT_255_COLOR(col[0]);	\
-  v->g=UBYTE_COLOR_TO_FLOAT_255_COLOR(col[1]);	\
-  v->b=UBYTE_COLOR_TO_FLOAT_255_COLOR(col[2]);	\
-  v->a=UBYTE_COLOR_TO_FLOAT_255_COLOR(col[3]);	\
-}
-#endif
 
 
 /* Mergable items first
@@ -203,9 +148,8 @@ typedef struct {
 #define SETUP_RGBA 0x1
 #define SETUP_TMU0 0x2
 #define SETUP_TMU1 0x4
-#define SETUP_XY   0x8
-#define SETUP_Z    0x10
-#define SETUP_W    0x20
+#define SETUP_XYZW 0x8
+#define MAX_SETUP  0x10
 
 #define MAX_MERGABLE 0x8
 
@@ -319,23 +263,6 @@ typedef struct {
 } tfxStats;
 
 
-typedef void (*tfxTriViewClipFunc)( struct vertex_buffer *VB, 
-				    GLuint v[],
-				    GLubyte mask );
-
-typedef void (*tfxTriClipFunc)( struct vertex_buffer *VB, 
-				GLuint v[],
-				GLuint mask );
-
-
-typedef void (*tfxLineClipFunc)( struct vertex_buffer *VB, 
-				 GLuint v1, GLuint v2,
-				 GLubyte mask );
-
-
-extern tfxTriViewClipFunc fxTriViewClipTab[0x8];
-extern tfxTriClipFunc fxTriClipStrideTab[0x8];
-extern tfxLineClipFunc fxLineClipTab[0x8];
 
 typedef struct {
   /* Alpha test */
@@ -360,14 +287,6 @@ typedef struct {
 } tfxUnitsState;
 
 
-/* Flags for render_index.
- */
-#define FX_OFFSET             0x1
-#define FX_TWOSIDE            0x2
-#define FX_FRONT_BACK         0x4 
-#define FX_FLAT               0x8
-#define FX_ANTIALIAS          0x10 
-#define FX_FALLBACK           0x20 
 
 
 /* Flags for fxMesa->new_state
@@ -389,50 +308,46 @@ struct tfxMesaVertexBuffer {
    fxVertex *verts;
    fxVertex *last_vert;
    void *vert_store;
-#if defined(FX_GLIDE3)
-   GrVertex **triangle_b;	/* Triangle buffer */
-   GrVertex **strips_b;		/* Strips buffer */
-#endif
 
    GLuint size;
 };
 
 #define FX_DRIVER_DATA(vb) ((struct tfxMesaVertexBuffer *)((vb)->driver_data))
 #define FX_CONTEXT(ctx) ((fxMesaContext)((ctx)->DriverCtx))
-#define FX_TEXTURE_DATA(t) fxTMGetTexInfo((t)->Current)
+#define FX_TEXTURE_DATA(t) fxTMGetTexInfo((t)->_Current)
 
-#if defined(XFree86Server) || defined(GLX_DIRECT_RENDERING)
-#include "tdfx_init.h"
-#else
-#define DRI_FX_CONTEXT
 #define BEGIN_BOARD_LOCK()
 #define END_BOARD_LOCK()
 #define BEGIN_CLIP_LOOP()
 #define END_CLIP_LOOP()
-#endif
 
 
 
 
 /* Covers the state referenced by IsInHardware:
  */
-#define _FX_NEW_FALLBACK (_NEW_TEXTURE|		\
-			  _NEW_HINT|		\
-			  _NEW_STENCIL|		\
-			  _NEW_BUFFERS|		\
-			  _NEW_COLOR|		\
-			  _NEW_LIGHT) 
+#define _FX_NEW_IS_IN_HARDWARE (_NEW_TEXTURE|		\
+			        _NEW_HINT|		\
+			        _NEW_STENCIL|		\
+			        _NEW_BUFFERS|		\
+			        _NEW_COLOR|		\
+			        _NEW_LIGHT) 
 
-/* Covers the state referenced by fxDDChooseRenderState and
- * fxDDChoseRenderVBTables.
+/* Covers the state referenced by fxDDChooseRenderState 
  */
-#define _FX_NEW_RENDERSTATE (_NEW_RENDERMODE |		\
+#define _FX_NEW_RENDERSTATE (_FX_NEW_IS_IN_HARDWARE |   \
 			     _DD_NEW_FLATSHADE |	\
 			     _DD_NEW_TRI_LIGHT_TWOSIDE| \
-			     _DD_NEW_MULTIDRAW |	\
-			     _NEW_POINT |		\
-			     _NEW_LINE |		\
-			     _NEW_POLYGON)
+			     _DD_NEW_TRI_OFFSET |	\
+			     _DD_NEW_TRI_UNFILLED |	\
+			     _DD_NEW_TRI_SMOOTH |	\
+			     _DD_NEW_TRI_STIPPLE |	\
+			     _DD_NEW_LINE_SMOOTH |	\
+			     _DD_NEW_LINE_STIPPLE |	\
+			     _DD_NEW_LINE_WIDTH |	\
+			     _DD_NEW_POINT_SMOOTH |	\
+			     _DD_NEW_POINT_SIZE |	\
+			     _NEW_LINE)
 
 /* Covers the state referenced by fxDDChooseSetupFunction.
  */
@@ -450,14 +365,17 @@ extern GLubyte FX_PixelToG[0x10000];
 extern GLubyte FX_PixelToB[0x10000];
 
 
+typedef void (*fx_tri_func)( GLcontext *, const fxVertex *, const fxVertex *, const fxVertex * );
+typedef void (*fx_line_func)( GLcontext *, const fxVertex *, const fxVertex * );
+typedef void (*fx_point_func)( GLcontext *, const fxVertex * );
+typedef void (*fxRenderEltsFunc)( struct vertex_buffer * );
+
 struct tfxMesaContext {
   GuTexPalette glbPalette;
 
   GLcontext *glCtx;              /* the core Mesa context */
-#if !defined(XFree86Server) && !defined(GLX_DIRECT_RENDERING)
   GLvisual *glVis;               /* describes the color buffer */
   GLframebuffer *glBuffer;       /* the ancillary buffers */
-#endif
 
   GLint board;                   /* the board used for this context */
   GLint width, height;           /* size of color buffer */
@@ -476,22 +394,13 @@ struct tfxMesaContext {
 
   GLuint tmu_source[FX_NUM_TMU];
   GLuint tex_dest[MAX_TEXTURE_UNITS];
-  GLuint setupindex;
-  GLuint partial_setup_index;
-  GLuint setupdone;
-  GLuint mergeindex;
-  GLuint mergeinputs;
   GLuint render_index;
-  GLuint last_tri_caps;
+  GLuint setupindex;
+  GLuint setupdone;
   GLuint stw_hint_state;		/* for grHints */
   GLuint is_in_hardware;
   GLuint new_state;   
   GLuint using_fast_path, passes, multipass;
-
-  tfxLineClipFunc clip_line;
-  tfxTriClipFunc clip_tri_stride;
-  tfxTriViewClipFunc view_clip_tri;
-
 
   /* Texture Memory Manager Data */
 
@@ -510,17 +419,27 @@ struct tfxMesaContext {
 
   /* Acc. functions */
 
-  points_func PointsFunc;
-  line_func LineFunc;
-  triangle_func TriangleFunc;
-  quad_func QuadFunc;
+  fx_point_func draw_point;
+  fx_line_func draw_line;
+  fx_tri_func draw_tri;
 
-  render_func **RenderVBTables;
+  fxRenderEltsFunc RenderElementsRaw;
 
-  render_func *RenderVBClippedTab;
-  render_func *RenderVBCulledTab;
-  render_func *RenderVBRawTab;
+   /* System to turn culling on/off for tris/lines/points.
+    */
+  fx_point_func initial_point;
+  fx_line_func initial_line;
+  fx_tri_func initial_tri;
 
+  fx_point_func subsequent_point;
+  fx_line_func subsequent_line;
+  fx_tri_func subsequent_tri;
+   
+
+   GLfloat inv_s0scale;
+   GLfloat inv_s1scale;
+   GLfloat inv_t0scale;
+   GLfloat inv_t1scale;
 
   tfxStats stats;
 
@@ -540,9 +459,6 @@ struct tfxMesaContext {
   
   FX_GrContext_t glideContext;
 
-  int x_offset;
-  int y_offset;
-  int y_delta;
   int screen_width;
   int screen_height;
   int initDone;
@@ -550,9 +466,6 @@ struct tfxMesaContext {
   int clipMaxX;
   int clipMinY;
   int clipMaxY;
-  int needClip;
-
-  DRI_FX_CONTEXT
 };
 
 typedef void (*tfxSetupFunc)(struct vertex_buffer *, GLuint, GLuint);
@@ -572,20 +485,10 @@ extern void fxDDFastPathInit(void);
 
 extern void fxDDChooseRenderState( GLcontext *ctx );
 
-extern void fxRenderClippedLine( struct vertex_buffer *VB, 
-				 GLuint v1, GLuint v2 );
-
 
 extern tfxSetupFunc fxDDChooseSetupFunction(GLcontext *);
 
-extern points_func fxDDChoosePointsFunction(GLcontext *);
-extern line_func fxDDChooseLineFunction(GLcontext *);
-extern triangle_func fxDDChooseTriangleFunction(GLcontext *);
-extern quad_func fxDDChooseQuadFunction(GLcontext *);
-extern render_func **fxDDChooseRenderVBTables(GLcontext *);
-
 extern void fxDDRenderInit(GLcontext *);
-extern void fxDDClipInit(void);
 
 extern void fxUpdateDDSpanPointers(GLcontext *);
 extern void fxSetupDDSpanPointers(GLcontext *);
@@ -626,12 +529,6 @@ extern void fxDDRegisterVB( struct vertex_buffer *VB );
 extern void fxDDUnregisterVB( struct vertex_buffer *VB );
 extern void fxDDResizeVB( struct vertex_buffer *VB, GLuint size );
 
-extern void fxDDCheckMergeAndRender( GLcontext *ctx, 
-				     struct gl_pipeline_stage *d );
-
-extern void fxDDMergeAndRender( struct vertex_buffer *VB );
-
-
 extern void fxDDPartialRasterSetup( struct vertex_buffer *VB );
 
 extern void fxDDDoRasterSetup( struct vertex_buffer *VB );
@@ -641,11 +538,6 @@ extern GLuint fxDDRegisterPipelineStages( struct gl_pipeline_stage *out,
 					  GLuint nr );
 
 extern GLboolean fxDDBuildPrecalcPipeline( GLcontext *ctx );
-
-extern void fxDDOptimizePrecalcPipeline( GLcontext *ctx, 
-					 struct gl_pipeline *pipe );
-
-extern void fxDDRenderElementsDirect( struct vertex_buffer *VB );
 
 extern void fxDDInitExtensions( GLcontext *ctx );
 

@@ -1,4 +1,3 @@
-/* -*- mode: C; tab-width:8; c-basic-offset:2 -*- */
 
 /*
  * Mesa 3-D graphics library
@@ -265,24 +264,6 @@ void FX_grDrawPolygonVertexList(int n, GrVertex *verts)
   END_CLIP_LOOP();
 }
 
-#if FX_USE_PARGB
-void FX_setupGrVertexLayout(void)
-{
-  BEGIN_BOARD_LOCK();
-  grReset(GR_VERTEX_PARAMETER);
-   
-  grCoordinateSpace(GR_WINDOW_COORDS);
-  grVertexLayout(GR_PARAM_XY, GR_VERTEX_X_OFFSET << 2, GR_PARAM_ENABLE);
-  grVertexLayout(GR_PARAM_PARGB, GR_VERTEX_PARGB_OFFSET << 2, GR_PARAM_ENABLE);
-  grVertexLayout(GR_PARAM_Q, GR_VERTEX_OOW_OFFSET << 2, GR_PARAM_ENABLE);
-  grVertexLayout(GR_PARAM_Z, GR_VERTEX_OOZ_OFFSET << 2, GR_PARAM_ENABLE);
-  grVertexLayout(GR_PARAM_ST0, GR_VERTEX_SOW_TMU0_OFFSET << 2, GR_PARAM_ENABLE);	
-  grVertexLayout(GR_PARAM_Q0, GR_VERTEX_OOW_TMU0_OFFSET << 2, GR_PARAM_DISABLE); 
-  grVertexLayout(GR_PARAM_ST1, GR_VERTEX_SOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
-  grVertexLayout(GR_PARAM_Q1, GR_VERTEX_OOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);	
-  END_BOARD_LOCK();
-}
-#else /* FX_USE_PARGB */
 void FX_setupGrVertexLayout(void)
 {
   BEGIN_BOARD_LOCK();
@@ -300,7 +281,6 @@ void FX_setupGrVertexLayout(void)
   grVertexLayout(GR_PARAM_Q1, GR_VERTEX_OOW_TMU1_OFFSET << 2, GR_PARAM_DISABLE);
   END_BOARD_LOCK();
 }
-#endif
 
 void FX_grHints_NoLock(GrHint_t hintType, FxU32 hintMask)
 {

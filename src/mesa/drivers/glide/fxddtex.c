@@ -1,4 +1,3 @@
-/* -*- mode: C; tab-width:8; c-basic-offset:2 -*- */
 
 /*
  * Mesa 3-D graphics library
@@ -463,9 +462,9 @@ void fxDDTexUseGlbPalette(GLcontext *ctx, GLboolean state)
   else {
     fxMesa->haveGlobalPaletteTexture = 0;
 
-    if ((ctx->Texture.Unit[0].Current == ctx->Texture.Unit[0].CurrentD[2]) &&
-        (ctx->Texture.Unit[0].Current != NULL)) {
-      struct gl_texture_object *tObj = ctx->Texture.Unit[0].Current;
+    if ((ctx->Texture.Unit[0]._Current == ctx->Texture.Unit[0].CurrentD[2]) &&
+        (ctx->Texture.Unit[0]._Current != NULL)) {
+      struct gl_texture_object *tObj = ctx->Texture.Unit[0]._Current;
 
       if (!tObj->DriverData)
         tObj->DriverData = fxAllocTexObjData(fxMesa);

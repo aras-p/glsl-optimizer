@@ -1051,11 +1051,8 @@ fxMesaContext GLAPIENTRY fxMesaCreateContext(GLuint win,
 
    fxMesa->screen_width = fxMesa->width;
    fxMesa->screen_height = fxMesa->height;
-   fxMesa->x_offset = 0;
-   fxMesa->y_offset = 0;
-   fxMesa->y_delta = 0;
    
-   fxMesa->needClip = 0;
+   fxMesa->new_state = ~0;
 
    if(verbose)
       fprintf(stderr,"Voodoo Glide screen size: %dx%d\n",

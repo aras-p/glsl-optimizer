@@ -1,4 +1,3 @@
-/* -*- mode: C; tab-width:8; c-basic-offset:2 -*- */
 
 /*
  * Mesa 3-D graphics library
@@ -1078,10 +1077,10 @@ static void fxSetupTexture_NoLock(GLcontext *ctx)
 
   /* Texture Combine, Color Combine and Alpha Combine.
    */  
-  tex2Denabled = (ctx->Texture.ReallyEnabled & TEXTURE0_2D);
+  tex2Denabled = (ctx->Texture._ReallyEnabled & TEXTURE0_2D);
 
   if (fxMesa->emulateTwoTMUs)
-     tex2Denabled |= (ctx->Texture.ReallyEnabled & TEXTURE1_2D);
+     tex2Denabled |= (ctx->Texture._ReallyEnabled & TEXTURE1_2D);
   
   switch(tex2Denabled) {
   case TEXTURE0_2D:
@@ -1508,10 +1507,6 @@ void fxSetScissorValues(GLcontext *ctx)
     ymax=fxMesa->height;
     check=0;
   }
-  xmin+=fxMesa->x_offset;
-  xmax+=fxMesa->x_offset;
-  ymin+=fxMesa->y_delta;
-  ymax+=fxMesa->y_delta;
   if (xmin<fxMesa->clipMinX) xmin=fxMesa->clipMinX;
   if (xmax>fxMesa->clipMaxX) xmax=fxMesa->clipMaxX;
   if (ymin<fxMesa->screen_height-fxMesa->clipMaxY) 
@@ -1524,11 +1519,9 @@ void fxSetScissorValues(GLcontext *ctx)
 static void fxSetupScissor(GLcontext *ctx)
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
-  if (!fxMesa->needClip) {
     BEGIN_BOARD_LOCK();
     fxSetScissorValues(ctx);
     END_BOARD_LOCK();
-  }
 }
 
 void fxDDScissor( GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h )
@@ -1580,6 +1573,7 @@ static void fxSetupCull(GLcontext *ctx)
       break;
     }
   } else FX_CONTEXT(ctx)->cullMode=GR_CULL_DISABLE;
+
   FX_grCullMode(FX_CONTEXT(ctx)->cullMode);
 }
 
@@ -1839,11 +1833,15 @@ void fxSetupFXUnits( GLcontext *ctx )
      if (newstate & FX_NEW_COLOR_MASK)
 	fxSetupColorMask(ctx);
 
-     if (newstate & FX_NEW_CULL)
-	fxSetupCull(ctx);     
+     if (newstate & FX_NEW_CULL) {
 
+	fxSetupCull(ctx);     
+     }
+
+     fxMesa->draw_point = fxMesa->initial_point;
+     fxMesa->draw_line = fxMesa->initial_line;
+     fxMesa->draw_tri = fxMesa->initial_tri;
      fxMesa->new_state = 0;
-/*       ctx->Driver.RenderStart = 0; */
   }
 }
 
