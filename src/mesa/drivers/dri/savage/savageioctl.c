@@ -175,7 +175,6 @@ static void savage_BCI_swap(savageContextPtr imesa)
     if (nbox > SAVAGE_NR_SAREA_CLIPRECTS)
         nbox = SAVAGE_NR_SAREA_CLIPRECTS;
     savageDMAFlush (imesa);
-    WAIT_IDLE_EMPTY;
     
     if(imesa->IsFullScreen)
     { /* full screen*/
@@ -426,7 +425,7 @@ static void savageDDFinish( GLcontext *ctx  )
 
 #define ALT_STATUS_WORD0 (* (volatile GLuint *)(imesa->MMIO_BASE+0x48c60))
 #define STATUS_WORD0 (* (volatile GLuint *)(imesa->MMIO_BASE+0x48c00))
-#define MAXFIFO_S4 0x1FF00
+#define MAXFIFO_S4  0x7F00
 #define MAXFIFO_S3D 0x7F00
 
 static GLboolean savagePagePending_s4( savageContextPtr imesa ) {
