@@ -1,8 +1,26 @@
 
                          Mesa 3.3 release notes
 
+                             July 21, 2000
+
                              PLEASE READ!!!!
 
+
+
+Introduction
+------------
+
+Mesa uses an even/odd version number scheme like the Linux kernel.
+Odd numbered versions (such as 3.3) designate new developmental releases.
+Even numbered versions (such as 3.2.1) designate stable releases.
+
+Mesa 3.3 has a undergone many internal changes since version 3.2
+and features a lot of new extensions.  3.3 is expected to be pretty
+stable, but perhaps not as stable as 3.2 which has been used by
+thousands of users over the past months.
+
+Everyone is encouraged to try Mesa 3.3.  Bugs should be reported to
+the Mesa bug database on www.sourceforge.net.
 
 
 
@@ -28,6 +46,11 @@ templatized code defined in glapitemp.h and included by glapi.c
 The glapitemp.h template should be reusable for all sorts of OpenGL
 projects.
 
+The new dispatch code has also optimized with x86 assembly code.
+This optimization eliminates copying the function arguments during
+dispatch.
+
+
 
 New thread support
 ------------------
@@ -37,6 +60,10 @@ replace mthreads.[ch].  Thread safety is always enabled (on platforms
 which support threads, that is).  There is virtually no performance
 penalty for typical single-thread applications.  See the glapi.c
 file for details.
+
+The Xlib driver (XMesa) is now thread-safe as well.  Be sure to
+call XInitThreads() in your app first.  See the xdemos/glthreads.c
+demo for an example.
 
 
 
@@ -221,6 +248,24 @@ Also added constants for NumAuxBuffers and SubPixelBits.
 
 
 
+OpenGL Conformance
+------------------
+
+Mesa now passes all the OpenGL 1.1 conformance tests, except for
+antialiased lines.  AA lines fail on some, but not all, the tests.
+In order to fix the remaining failures, a new AA line algorithm will
+be needed (which computes coverage values for end-point fragments).
+This will be done for Mesa 3.5/3.6.
+
+
+
+OpenGL 1.2 GL_ARB_imaging subset
+--------------------------------
+
+Mesa 3.3 implements all the features of GL_ARB_imaging except for
+image convolution.  This will (hopefully) be done for Mesa 3.5/3.6.
+
+
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-3.3,v 1.7 2000/07/05 16:05:44 brianp Exp $
+$Id: RELNOTES-3.3,v 1.8 2000/07/21 16:26:41 brianp Exp $
