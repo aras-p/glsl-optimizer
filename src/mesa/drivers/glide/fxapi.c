@@ -1,5 +1,3 @@
-/* $Id: fxapi.c,v 1.40 2003/10/13 11:14:58 dborca Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.0
@@ -324,6 +322,7 @@ fxMesaCreateContext(GLuint win,
  fxMesa->HaveTexFmt = voodoo->HaveTexFmt;
  fxMesa->HaveCmbExt = voodoo->HaveCmbExt;
  fxMesa->HaveMirExt = voodoo->HaveMirExt;
+ fxMesa->HaveTexUma = voodoo->HaveTexUma;
  fxMesa->HaveTexus2 = voodoo->HaveTexus2;
  fxMesa->Glide = glbHWConfig.Glide;
  Glide = &fxMesa->Glide;

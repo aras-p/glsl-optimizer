@@ -30,8 +30,6 @@
  *  Web   : http://www.geocities.com/dborca
  */
 
-#ifdef FX
-
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -243,6 +241,8 @@ const char *TRP_BLEND (GrAlphaBlendFnc_t func)
         TRAP_CASE_STRING(GR_BLEND_RESERVED_E);
         TRAP_CASE_STRING(GR_BLEND_ALPHA_SATURATE);
         /*TRAP_CASE_STRING(GR_BLEND_PREFOG_COLOR); ==GR_BLEND_ALPHA_SATURATE*/
+        TRAP_CASE_STRING(GR_BLEND_SAME_COLOR_EXT);
+        TRAP_CASE_STRING(GR_BLEND_ONE_MINUS_SAME_COLOR_EXT);
         TRAP_NODEFAULT;
  }
 }
@@ -733,8 +733,6 @@ const char *TRP_BLENDOP (GrAlphaBlendOp_t op)
         TRAP_CASE_STRING(GR_BLEND_OP_ADD);
         TRAP_CASE_STRING(GR_BLEND_OP_SUB);
         TRAP_CASE_STRING(GR_BLEND_OP_REVSUB);
-        TRAP_CASE_STRING(GR_BLEND_SAME_COLOR_EXT);
-        TRAP_CASE_STRING(GR_BLEND_ONE_MINUS_SAME_COLOR_EXT);
         TRAP_NODEFAULT;
  }
 }
@@ -2135,5 +2133,3 @@ void tdfx_hook_glide (struct tdfx_glide *Glide)
 
 #undef GET_EXT_ADDR
 }
-
-#endif /* FX */

@@ -1,5 +1,3 @@
-/* $Id: fxglidew.c,v 1.23 2003/10/13 11:14:58 dborca Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.0
@@ -230,6 +228,7 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
       config->SSTs[i].HaveTexFmt = (strstr(extension, " TEXFMT ") != NULL);
       config->SSTs[i].HaveCmbExt = (strstr(extension, " COMBINE ") != NULL);
       config->SSTs[i].HaveMirExt = (strstr(extension, " TEXMIRROR ") != NULL);
+      config->SSTs[i].HaveTexUma = (strstr(extension, " TEXUMA ") != NULL);
       config->SSTs[i].HaveTexus2 = GL_FALSE;
 
       /* number of Voodoo chips */

@@ -1,5 +1,3 @@
-/* $Id: fxvb.c,v 1.20 2003/10/09 15:12:21 dborca Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1

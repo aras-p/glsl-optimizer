@@ -1,5 +1,3 @@
-/* $Id: fxddspan.c,v 1.26 2003/10/09 15:12:21 dborca Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.0
@@ -48,41 +46,9 @@
 #include "swrast/swrast.h"
 
 
-#define writeRegionClipped(fxm,dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)		\
-  FX_grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)
-
-
-
-/* KW: Rearranged the args in the call to grLfbWriteRegion().
- */
-#define LFB_WRITE_SPAN_MESA(dst_buffer,		\
-			    dst_x,		\
-			    dst_y,		\
-			    src_width,		\
-			    src_stride,		\
-			    src_data)		\
-  writeRegionClipped(fxMesa, dst_buffer,	\
-		   dst_x,			\
-		   dst_y,			\
-		   GR_LFB_SRC_FMT_8888,		\
-		   src_width,			\
-		   1,				\
-		   src_stride,			\
-		   src_data)			\
-
-
 /************************************************************************/
 /*****                    Span functions                            *****/
 /************************************************************************/
-#define TDFXPACKCOLOR1555( r, g, b, a )					   \
-   ((((r) & 0xf8) << 7) | (((g) & 0xf8) << 2) | (((b) & 0xf8) >> 3) |	   \
-    ((a) ? 0x8000 : 0))
-#define TDFXPACKCOLOR565( r, g, b )					   \
-   ((((r) & 0xf8) << 8) | (((g) & 0xfc) << 3) | (((b) & 0xf8) >> 3))
-#define TDFXPACKCOLOR8888( r, g, b, a )					   \
-   (((a) << 24) | ((r) << 16) | ((g) << 8) | (b))
-/************************************************************************/
-
 
 #define DBG 0
 
@@ -135,20 +101,26 @@
 #define HW_WRITE_CLIPLOOP()						\
     do {								\
 	int _nc = 1; /* numcliprects */					\
+	/* [dBorca] Hack alert: */					\
+	/* remember, we need to flip the scissor, too */		\
+	/* is it better to do it inside fxDDScissor? */			\
 	while (_nc--) {							\
 	    const int minx = fxMesa->clipMinX;				\
-	    const int miny = fxMesa->clipMinY;				\
+	    const int maxy = Y_FLIP(fxMesa->clipMinY);			\
 	    const int maxx = fxMesa->clipMaxX;				\
-	    const int maxy = fxMesa->clipMaxY;
+	    const int miny = Y_FLIP(fxMesa->clipMaxY);
 
 #define HW_READ_CLIPLOOP()						\
     do {								\
 	int _nc = 1; /* numcliprects */					\
+	/* [dBorca] Hack alert: */					\
+	/* remember, we need to flip the scissor, too */		\
+	/* is it better to do it inside fxDDScissor? */			\
 	while (_nc--) {							\
 	    const int minx = fxMesa->clipMinX;				\
-	    const int miny = fxMesa->clipMinY;				\
+	    const int maxy = Y_FLIP(fxMesa->clipMinY);			\
 	    const int maxx = fxMesa->clipMaxX;				\
-	    const int maxy = fxMesa->clipMaxY;
+	    const int miny = Y_FLIP(fxMesa->clipMaxY);
 
 #define HW_ENDCLIPLOOP()						\
 	}								\
@@ -188,6 +160,13 @@
 
 
 /* 16 bit, RGB565 color spanline and pixel functions */
+/* [dBorca] Hack alert:
+ * This is wrong. The alpha value is lost, even when we provide
+ * HW alpha (565 w/o depth buffering). To really update alpha buffer,
+ * we would need to do the 565 writings via 8888 colorformat and rely
+ * on the Voodoo to perform color scaling. In which case our 565 span
+ * would look nicer! But this violates FSAA rules...
+ */
 
 #undef LFB_MODE
 #define LFB_MODE	GR_LFBWRITEMODE_565
@@ -250,6 +229,105 @@
 #define TAG(x) tdfx##x##_ARGB8888
 #include "../dri/common/spantmp.h"
 
+
+/************************************************************************/
+/*****                    Depth functions                           *****/
+/************************************************************************/
+
+#define DBG 0
+
+#undef HW_WRITE_LOCK
+#undef HW_WRITE_UNLOCK
+#undef HW_READ_LOCK
+#undef HW_READ_UNLOCK
+
+#define HW_CLIPLOOP HW_WRITE_CLIPLOOP
+
+#define LOCAL_DEPTH_VARS						\
+    GLuint pitch = info.strideInBytes;					\
+    GLuint height = fxMesa->height;					\
+    char *buf = (char *)((char *)info.lfbPtr + 0 /* x, y offset */);	\
+    (void) buf;
+
+#define HW_WRITE_LOCK()							\
+    fxMesaContext fxMesa = FX_CONTEXT(ctx);				\
+    GrLfbInfo_t info;							\
+    info.size = sizeof(GrLfbInfo_t);					\
+    if ( grLfbLock( GR_LFB_WRITE_ONLY,					\
+                   GR_BUFFER_AUXBUFFER, LFB_MODE,			\
+		   GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) ) {
+
+#define HW_WRITE_UNLOCK()						\
+	grLfbUnlock( GR_LFB_WRITE_ONLY, GR_BUFFER_AUXBUFFER);		\
+    }
+
+#define HW_READ_LOCK()							\
+    fxMesaContext fxMesa = FX_CONTEXT(ctx);				\
+    GrLfbInfo_t info;							\
+    info.size = sizeof(GrLfbInfo_t);					\
+    if ( grLfbLock( GR_LFB_READ_ONLY, GR_BUFFER_AUXBUFFER,		\
+                    LFB_MODE, GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) ) {
+
+#define HW_READ_UNLOCK()						\
+	grLfbUnlock( GR_LFB_READ_ONLY, GR_BUFFER_AUXBUFFER);		\
+    }
+
+
+/* 16 bit, depth spanline and pixel functions */
+
+#undef LFB_MODE
+#define LFB_MODE	GR_LFBWRITEMODE_ZA16
+
+#undef BYTESPERPIXEL
+#define BYTESPERPIXEL 2
+
+#define WRITE_DEPTH( _x, _y, d )					\
+    *(GLushort *)(buf + _x*BYTESPERPIXEL + _y*pitch) = d
+
+#define READ_DEPTH( d, _x, _y )						\
+    d = *(GLushort *)(buf + _x*BYTESPERPIXEL + _y*pitch)
+
+#define TAG(x) tdfx##x##_Z16
+#include "../dri/common/depthtmp.h"
+
+
+/* 24 bit, depth spanline and pixel functions (for use w/ stencil) */
+/* [dBorca] Hack alert:
+ * This is evil. The incoming Mesa's 24bit depth value
+ * is shifted left 8 bits, to obtain a full 32bit value,
+ * which will be thrown into the framebuffer. We rely on
+ * the fact that Voodoo hardware transforms a 32bit value
+ * into 24bit value automatically and, MOST IMPORTANT, won't
+ * alter the upper 8bits of the value already existing in the
+ * framebuffer (where stencil resides).
+ */
+
+#undef LFB_MODE
+#define LFB_MODE	GR_LFBWRITEMODE_Z32
+
+#undef BYTESPERPIXEL
+#define BYTESPERPIXEL 4
+
+#define WRITE_DEPTH( _x, _y, d )					\
+    *(GLuint *)(buf + _x*BYTESPERPIXEL + _y*pitch) = d << 8
+
+#define READ_DEPTH( d, _x, _y )						\
+    d = (*(GLuint *)(buf + _x*BYTESPERPIXEL + _y*pitch)) & 0xffffff
+
+#define TAG(x) tdfx##x##_Z24
+#include "../dri/common/depthtmp.h"
+
+
+/* 32 bit, depth spanline and pixel functions (for use w/o stencil) */
+/* [dBorca] Hack alert:
+ * This is more evil. We make Mesa run in 32bit depth, but
+ * tha Voodoo HW can only handle 24bit depth. Well, exploiting
+ * the pixel pipeline, we can achieve 24:8 format for greater
+ * precision...
+ * If anyone tells me how to really store 32bit values into the
+ * depth buffer, I'll write the *_Z32 routines. Howver, bear in
+ * mind that means running without stencil!
+ */
 
 /************************************************************************/
 /*****                    Span functions (optimized)                *****/
@@ -378,88 +456,24 @@ static void fxReadRGBASpan_ARGB8888 (const GLcontext * ctx,
                                      GLint x, GLint y,
                                      GLubyte rgba[][4])
 {
- /* Hack alert: WRONG! */
  fxMesaContext fxMesa = FX_CONTEXT(ctx);
+ GLuint i;
  grLfbReadRegion(fxMesa->currentFB, x, fxMesa->height - 1 - y, n, 1, n * 4, rgba);
+ for (i = 0; i < n; i++) {
+     GLubyte c = rgba[i][0];
+     rgba[i][0] = rgba[i][2];
+     rgba[i][2] = c;
+ }
 }
 
 
 /************************************************************************/
-/*****                    Depth functions                           *****/
+/*****                    Depth functions (optimized)               *****/
 /************************************************************************/
 
 void
-fxDDWriteDepthSpan(GLcontext * ctx,
-		   GLuint n, GLint x, GLint y, const GLdepth depth[],
-		   const GLubyte mask[])
-{
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   GLint bottom = fxMesa->height - 1;
-
-   if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
-   }
-
-
-   if (mask) {
-      GLint i;
-      for (i = 0; i < n; i++) {
-	 if (mask[i]) {
-	    GLshort d = depth[i];
-	    writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, x + i, bottom - y,
-			       GR_LFB_SRC_FMT_ZA16, 1, 1, 0, (void *) &d);
-	 }
-      }
-   }
-   else {
-      GLushort depth16[MAX_WIDTH];
-      GLint i;
-      for (i = 0; i < n; i++) {
-	 depth16[i] = depth[i];
-      }
-      writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, x, bottom - y,
-			 GR_LFB_SRC_FMT_ZA16, n, 1, 0, (void *) depth16);
-   }
-}
-
-
-void
-fxDDWriteDepth32Span(GLcontext * ctx,
-		   GLuint n, GLint x, GLint y, const GLdepth depth[],
-		   const GLubyte mask[])
-{
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   GLint bottom = fxMesa->height - 1;
-   GLint i;
-
-   if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
-   }
-
-
-   if (mask) {
-      for (i = 0; i < n; i++) {
-	 if (mask[i]) {
-            GLuint d = depth[i] << 8;
-	    writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, x + i, bottom - y,
-			       GR_LFBWRITEMODE_Z32, 1, 1, 0, (void *) &d);
-	 }
-      }
-   }
-   else {
-      GLuint depth32[MAX_WIDTH];
-      for (i = 0; i < n; i++) {
-          depth32[i] = depth[i] << 8;
-      }
-      writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, x, bottom - y,
-			 GR_LFBWRITEMODE_Z32, n, 1, 0, (void *) depth32);
-   }
-}
-
-
-void
-fxDDReadDepthSpan(GLcontext * ctx,
-		  GLuint n, GLint x, GLint y, GLdepth depth[])
+fxReadDepthSpan_Z16(GLcontext * ctx,
+		    GLuint n, GLint x, GLint y, GLdepth depth[])
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLint bottom = fxMesa->height - 1;
@@ -478,116 +492,81 @@ fxDDReadDepthSpan(GLcontext * ctx,
 
 
 void
-fxDDReadDepth32Span(GLcontext * ctx,
-		  GLuint n, GLint x, GLint y, GLdepth depth[])
+fxReadDepthSpan_Z24(GLcontext * ctx,
+		    GLuint n, GLint x, GLint y, GLdepth depth[])
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLint bottom = fxMesa->height - 1;
+   GLuint i;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
       fprintf(stderr, "%s(...)\n", __FUNCTION__);
    }
 
    grLfbReadRegion(GR_BUFFER_AUXBUFFER, x, bottom - y, n, 1, 0, depth);
+   for (i = 0; i < n; i++) {
+      depth[i] &= 0xffffff;
+   }
 }
 
 
+/************************************************************************/
+/*****                    Stencil functions (optimized)             *****/
+/************************************************************************/
+
+void fxWriteStencilSpan (GLcontext *ctx, GLuint n, GLint x, GLint y,
+                         const GLstencil stencil[], const GLubyte mask[])
+{
+ /*
+  * XXX todo
+  */
+}
 
 void
-fxDDWriteDepthPixels(GLcontext * ctx,
-		     GLuint n, const GLint x[], const GLint y[],
-		     const GLdepth depth[], const GLubyte mask[])
+fxReadStencilSpan(GLcontext * ctx,
+		  GLuint n, GLint x, GLint y, GLstencil stencil[])
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLint bottom = fxMesa->height - 1;
+   GLuint zs32[MAX_WIDTH];
    GLuint i;
 
    if (TDFX_DEBUG & VERBOSE_DRIVER) {
       fprintf(stderr, "%s(...)\n", __FUNCTION__);
    }
 
+   grLfbReadRegion(GR_BUFFER_AUXBUFFER, x, bottom - y, n, 1, 0, zs32);
    for (i = 0; i < n; i++) {
-      if (mask[i]) {
-	 int xpos = x[i];
-	 int ypos = bottom - y[i];
-	 GLushort d = depth[i];
-	 writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, xpos, ypos,
-			    GR_LFB_SRC_FMT_ZA16, 1, 1, 0, (void *) &d);
-      }
+      stencil[i] = zs32[i] >> 24;
    }
 }
 
-
-void
-fxDDWriteDepth32Pixels(GLcontext * ctx,
-		     GLuint n, const GLint x[], const GLint y[],
-		     const GLdepth depth[], const GLubyte mask[])
+void fxWriteStencilPixels (GLcontext *ctx, GLuint n,
+                           const GLint x[], const GLint y[],
+                           const GLstencil stencil[],
+                           const GLubyte mask[])
 {
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   GLint bottom = fxMesa->height - 1;
-   GLuint i;
-
-   if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
-   }
-
-   for (i = 0; i < n; i++) {
-      if (mask[i]) {
-	 int xpos = x[i];
-	 int ypos = bottom - y[i];
-         GLuint d = depth[i] << 8;
-	 writeRegionClipped(fxMesa, GR_BUFFER_AUXBUFFER, xpos, ypos,
-			    GR_LFBWRITEMODE_Z32, 1, 1, 0, (void *) &d);
-      }
-   }
+ /*
+  * XXX todo
+  */
 }
 
-
-void
-fxDDReadDepthPixels(GLcontext * ctx, GLuint n,
-		    const GLint x[], const GLint y[], GLdepth depth[])
+void fxReadStencilPixels (GLcontext *ctx, GLuint n,
+                          const GLint x[], const GLint y[],
+                          GLstencil stencil[])
 {
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   GLint bottom = fxMesa->height - 1;
-   GLuint i;
-
-   if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
-   }
-
-   for (i = 0; i < n; i++) {
-      int xpos = x[i];
-      int ypos = bottom - y[i];
-      GLushort d;
-      grLfbReadRegion(GR_BUFFER_AUXBUFFER, xpos, ypos, 1, 1, 0, &d);
-      depth[i] = d;
-   }
-}
-
-
-void
-fxDDReadDepth32Pixels(GLcontext * ctx, GLuint n,
-		    const GLint x[], const GLint y[], GLdepth depth[])
-{
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   GLint bottom = fxMesa->height - 1;
-   GLuint i;
-
-   if (TDFX_DEBUG & VERBOSE_DRIVER) {
-      fprintf(stderr, "%s(...)\n", __FUNCTION__);
-   }
-
-   for (i = 0; i < n; i++) {
-      int xpos = x[i];
-      int ypos = bottom - y[i];
-      grLfbReadRegion(GR_BUFFER_AUXBUFFER, xpos, ypos, 1, 1, 0, &depth[i]);
-   }
+ /*
+  * XXX todo
+  */
 }
 
 
 
-/* Set the buffer used for reading */
-/* XXX support for separate read/draw buffers hasn't been tested */
+/*
+ * This function is called to specify which buffer to read and write
+ * for software rasterization (swrast) fallbacks.  This doesn't necessarily
+ * correspond to glDrawBuffer() or glReadBuffer() calls.
+ */
 static void
 fxDDSetBuffer(GLcontext * ctx, GLframebuffer * buffer, GLuint bufferBit)
 {
@@ -631,10 +610,10 @@ fxSetupDDSpanPointers(GLcontext * ctx)
                swdd->ReadRGBASpan = /*td*/fxReadRGBASpan_ARGB1555;
                swdd->ReadRGBAPixels = tdfxReadRGBAPixels_ARGB1555;
 
-               swdd->WriteDepthSpan = fxDDWriteDepthSpan;
-               swdd->WriteDepthPixels = fxDDWriteDepthPixels;
-               swdd->ReadDepthSpan = fxDDReadDepthSpan;
-               swdd->ReadDepthPixels = fxDDReadDepthPixels;
+               swdd->WriteDepthSpan = tdfxWriteDepthSpan_Z16;
+               swdd->WriteDepthPixels = tdfxWriteDepthPixels_Z16;
+               swdd->ReadDepthSpan = /*td*/fxReadDepthSpan_Z16;
+               swdd->ReadDepthPixels = tdfxReadDepthPixels_Z16;
                break;
           case 16:
                swdd->WriteRGBASpan = tdfxWriteRGBASpan_RGB565;
@@ -644,11 +623,11 @@ fxSetupDDSpanPointers(GLcontext * ctx)
                swdd->WriteMonoRGBAPixels = tdfxWriteMonoRGBAPixels_RGB565;
                swdd->ReadRGBASpan = /*td*/fxReadRGBASpan_RGB565;
                swdd->ReadRGBAPixels = tdfxReadRGBAPixels_RGB565;
-               
-               swdd->WriteDepthSpan = fxDDWriteDepthSpan;
-               swdd->WriteDepthPixels = fxDDWriteDepthPixels;
-               swdd->ReadDepthSpan = fxDDReadDepthSpan;
-               swdd->ReadDepthPixels = fxDDReadDepthPixels;
+
+               swdd->WriteDepthSpan = tdfxWriteDepthSpan_Z16;
+               swdd->WriteDepthPixels = tdfxWriteDepthPixels_Z16;
+               swdd->ReadDepthSpan = /*td*/fxReadDepthSpan_Z16;
+               swdd->ReadDepthPixels = tdfxReadDepthPixels_Z16;
                break;
           case 32:
                swdd->WriteRGBASpan = tdfxWriteRGBASpan_ARGB8888;
@@ -656,29 +635,23 @@ fxSetupDDSpanPointers(GLcontext * ctx)
                swdd->WriteRGBAPixels = tdfxWriteRGBAPixels_ARGB8888;
                swdd->WriteMonoRGBASpan = tdfxWriteMonoRGBASpan_ARGB8888;
                swdd->WriteMonoRGBAPixels = tdfxWriteMonoRGBAPixels_ARGB8888;
-               swdd->ReadRGBASpan = tdfxReadRGBASpan_ARGB8888;
+               swdd->ReadRGBASpan = /*td*/fxReadRGBASpan_ARGB8888;
                swdd->ReadRGBAPixels = tdfxReadRGBAPixels_ARGB8888;
 
-               swdd->WriteDepthSpan = fxDDWriteDepth32Span;
-               swdd->WriteDepthPixels = fxDDWriteDepth32Pixels;
-               swdd->ReadDepthSpan = fxDDReadDepth32Span;
-               swdd->ReadDepthPixels = fxDDReadDepth32Pixels;
+               swdd->WriteDepthSpan = tdfxWriteDepthSpan_Z24;
+               swdd->WriteDepthPixels = tdfxWriteDepthPixels_Z24;
+               swdd->ReadDepthSpan = /*td*/fxReadDepthSpan_Z24;
+               swdd->ReadDepthPixels = tdfxReadDepthPixels_Z24;
                break;
    }
 
-#if 0
-   if ( fxMesa->haveHwStencil ) {
-      swdd->WriteStencilSpan	= write_stencil_span;
-      swdd->ReadStencilSpan	= read_stencil_span;
-      swdd->WriteStencilPixels	= write_stencil_pixels;
-      swdd->ReadStencilPixels	= read_stencil_pixels;
+   if (fxMesa->haveHwStencil) {
+      swdd->WriteStencilSpan = fxWriteStencilSpan;
+      swdd->ReadStencilSpan = fxReadStencilSpan;
+      swdd->WriteStencilPixels = fxWriteStencilPixels;
+      swdd->ReadStencilPixels = fxReadStencilPixels;
    }
-
-   swdd->WriteDepthSpan		= tdfxDDWriteDepthSpan;
-   swdd->WriteDepthPixels	= tdfxDDWriteDepthPixels;
-   swdd->ReadDepthSpan		= tdfxDDReadDepthSpan;
-   swdd->ReadDepthPixels	= tdfxDDReadDepthPixels;
-
+#if 0
    swdd->WriteCI8Span		= NULL;
    swdd->WriteCI32Span		= NULL;
    swdd->WriteMonoCISpan	= NULL;
@@ -687,8 +660,8 @@ fxSetupDDSpanPointers(GLcontext * ctx)
    swdd->ReadCI32Span		= NULL;
    swdd->ReadCI32Pixels		= NULL;
 
-   swdd->SpanRenderStart          = tdfxSpanRenderStart; /* BEGIN_BOARD_LOCK */
-   swdd->SpanRenderFinish         = tdfxSpanRenderFinish; /* END_BOARD_LOCK */
+   swdd->SpanRenderStart        = tdfxSpanRenderStart; /* BEGIN_BOARD_LOCK */
+   swdd->SpanRenderFinish       = tdfxSpanRenderFinish; /* END_BOARD_LOCK */
 #endif
 }
 

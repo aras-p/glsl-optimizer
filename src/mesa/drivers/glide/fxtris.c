@@ -1,5 +1,3 @@
-/* $Id: fxtris.c,v 1.25 2003/10/09 15:12:21 dborca Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.0
@@ -332,7 +330,7 @@ do {						\
 #define LOCAL_VARS(n)					\
    fxMesaContext fxMesa = FX_CONTEXT(ctx);		\
    GLubyte color[n][4];					\
-   (void) color; 
+   (void) color;
 
 
 
@@ -1026,11 +1024,24 @@ static void fxRunPipeline( GLcontext *ctx )
       fprintf(stderr, "fxRunPipeline()\n");
    }
 
+#if 0
    /* Recalculate fog table on projection matrix changes.  This used to
     * be triggered by the NearFar callback.
     */
    if (new_gl_state & _NEW_PROJECTION)
       fxMesa->new_state |= FX_NEW_FOG;
+   /* [dBorca] Hack alert:
+    * the above _NEW_PROJECTION is not included in the test below,
+    * so we may end up with fxMesa->new_state still dirty by the end
+    * of the routine. The fact is, we don't have NearFar callback
+    * anymore. We could use fxDDDepthRange instead, but it seems
+    * fog needs to be updated only by a fog-basis.
+    * Implementing fxDDDepthRange correctly is another story:
+    * that, together with a presumable fxDDViewport function would set
+    *   fxMesa->SetupNewInputs |= VERT_BIT_CLIP;
+    * which might be useful in fxBuildVertices...
+    */
+#endif
 
    if (new_gl_state & (_FX_NEW_IS_IN_HARDWARE |
 		       _FX_NEW_RENDERSTATE |
@@ -1174,7 +1185,7 @@ void fxCheckIsInHardware( GLcontext *ctx )
    if (newfallback) {
       if (oldfallback == 0) {
          if (fxMesa->verbose) {
-            fprintf(stderr, "Voodoo ! begin SW 0x%08x %s\n", newfallback, getFallbackString(newfallback));
+            fprintf(stderr, "Voodoo ! enter SW 0x%08x %s\n", newfallback, getFallbackString(newfallback));
          }
 	 _swsetup_Wakeup( ctx );
       }
@@ -1195,7 +1206,7 @@ void fxCheckIsInHardware( GLcontext *ctx )
 	 fxChooseVertexState(ctx);
 	 fxDDChooseRenderState(ctx);
          if (fxMesa->verbose) {
-            fprintf(stderr, "Voodoo ! end SW 0x%08x %s\n", oldfallback, getFallbackString(oldfallback));
+            fprintf(stderr, "Voodoo ! leave SW 0x%08x %s\n", oldfallback, getFallbackString(oldfallback));
          }
       }
    }

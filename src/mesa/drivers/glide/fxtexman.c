@@ -1,5 +1,3 @@
-/* $Id: fxtexman.c,v 1.18 2003/10/09 15:12:21 dborca Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.0
@@ -199,6 +197,10 @@ fxTMFindStartAddr(fxMesaContext fxMesa, GLint tmu, int size)
    int result;
    struct gl_texture_object *obj;
 
+   if (fxMesa->HaveTexUma) {
+      tmu = FX_TMU0;
+   }
+
    while (1) {
       prev = 0;
       tmp = fxMesa->tmFree[tmu];
@@ -235,10 +237,37 @@ fxTMFindStartAddr(fxMesaContext fxMesa, GLint tmu, int size)
    }
 }
 
+int fxTMCheckStartAddr (fxMesaContext fxMesa, GLint tmu, tfxTexInfo *ti)
+{
+ MemRange *prev, *tmp;
+ int size;
+ struct gl_texture_object *obj;
+
+ if (fxMesa->HaveTexUma) {
+    return FXTRUE;
+ }
+
+ size = grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH, &(ti->info));
+
+ tmp = fxMesa->tmFree[tmu];
+ while (tmp) {
+       if (tmp->endAddr - tmp->startAddr >= size) { /* Fits here */
+          return FXTRUE;
+       }
+       tmp = tmp->next;
+ }
+
+ return FXFALSE;
+}
+
 static void
 fxTMRemoveRange(fxMesaContext fxMesa, GLint tmu, MemRange * range)
 {
    MemRange *tmp, *prev;
+
+   if (fxMesa->HaveTexUma) {
+      tmu = FX_TMU0;
+   }
 
    if (range->startAddr == range->endAddr) {
       fxTMDeleteRangeNode(fxMesa, range);
@@ -529,7 +558,17 @@ fxTMReloadMipMapLevel(fxMesaContext fxMesa, struct gl_texture_object *tObj,
    }
 
    tmu = (int) ti->whichTMU;
+#if 0
+   /* [dBorca]
+    * We get here by (see Tex[Sub]Image2D), thus we are in TMU.
+    * Also, we just set the correct TMU above. fxTMMoveInTM will
+    * bail early, so don't bother...
+    */
    fxTMMoveInTM(fxMesa, tObj, tmu);
+#else
+   fxMesa->stats.reqTexUpload++;
+   fxMesa->stats.texUpload++;
+#endif
 
    lodlevel =  ti->info.largeLodLog2 - (level - ti->minLevel);
 
@@ -757,9 +796,13 @@ fxTMInit(fxMesaContext fxMesa)
    fxMesa->texBindNumber = 0;
    fxMesa->tmPool = 0;
 
+   if (fxMesa->HaveTexUma) {
+      grEnable(GR_TEXTURE_UMA_EXT);
+   }
+
    fxTMUInit(fxMesa, FX_TMU0);
 
-   if (fxMesa->haveTwoTMUs)
+   if (!fxMesa->HaveTexUma && fxMesa->haveTwoTMUs)
       fxTMUInit(fxMesa, FX_TMU1);
 
    texBoundMask = (fxMesa->type >= GR_SSTTYPE_Banshee) ? -1 : (FX_2MB_SPLIT - 1);

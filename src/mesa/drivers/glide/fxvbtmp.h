@@ -1,5 +1,3 @@
-/* $Id: fxvbtmp.h,v 1.14 2003/10/09 15:12:21 dborca Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.1

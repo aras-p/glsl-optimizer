@@ -1,5 +1,3 @@
-/* $Id: fxdrv.h,v 1.61 2003/10/14 14:56:45 dborca Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.0
@@ -85,6 +83,14 @@
   ( ((unsigned int)(c[1]))<<8 )  | \
   (  (unsigned int)(c[0])) )
 #endif
+
+#define TDFXPACKCOLOR1555( r, g, b, a )					   \
+   ((((r) & 0xf8) << 7) | (((g) & 0xf8) << 2) | (((b) & 0xf8) >> 3) |	   \
+    ((a) ? 0x8000 : 0))
+#define TDFXPACKCOLOR565( r, g, b )					   \
+   ((((r) & 0xf8) << 8) | (((g) & 0xfc) << 3) | (((b) & 0xf8) >> 3))
+#define TDFXPACKCOLOR8888( r, g, b, a )					   \
+   (((a) << 24) | ((r) << 16) | ((g) << 8) | (b))
 
 
 
@@ -313,6 +319,7 @@ typedef struct
    GrAlphaBlendFnc_t blendDstFuncRGB;
    GrAlphaBlendFnc_t blendSrcFuncAlpha;
    GrAlphaBlendFnc_t blendDstFuncAlpha;
+   GrAlphaBlendOp_t blendEq;
 
    /* Depth test */
 
@@ -531,6 +538,7 @@ struct tfxMesaContext
    FxBool HaveTexFmt;	/* TEXFMT */
    FxBool HaveCmbExt;	/* COMBINE */
    FxBool HaveMirExt;	/* TEXMIRROR */
+   FxBool HaveTexUma;	/* TEXUMA */
    FxBool HaveTexus2;	/* Texus 2 - FXT1 */
    struct tdfx_glide Glide;
    char rendererString[100];
@@ -597,6 +605,8 @@ extern void fxDDTexUseGlbPalette(GLcontext *, GLboolean);
 extern void fxDDEnable(GLcontext *, GLenum, GLboolean);
 extern void fxDDAlphaFunc(GLcontext *, GLenum, GLfloat);
 extern void fxDDBlendFunc(GLcontext *, GLenum, GLenum);
+extern void fxDDBlendFuncSeparate(GLcontext *, GLenum, GLenum, GLenum, GLenum);
+extern void fxDDBlendEquation(GLcontext *, GLenum);
 extern void fxDDDepthMask(GLcontext *, GLboolean);
 extern void fxDDDepthFunc(GLcontext *, GLenum);
 extern void fxDDStencilFunc (GLcontext *ctx, GLenum func, GLint ref, GLuint mask);
@@ -617,6 +627,7 @@ extern void fxTMReloadMipMapLevel(fxMesaContext, struct gl_texture_object *,
 extern void fxTMReloadSubMipMapLevel(fxMesaContext,
 				     struct gl_texture_object *, GLint, GLint,
 				     GLint);
+extern int fxTMCheckStartAddr (fxMesaContext fxMesa, GLint tmu, tfxTexInfo *ti);
 
 extern void fxTexGetFormat(GLcontext *, GLenum, GrTextureFormat_t *, GLint *); /* [koolsmoky] */
 
@@ -665,6 +676,7 @@ extern void fxCheckIsInHardware(GLcontext *ctx);
 /* fxsetup:
  * semi-private functions
  */
+void fxSetupCull (GLcontext * ctx);
 void fxSetupScissor (GLcontext * ctx);
 void fxSetupColorMask (GLcontext * ctx);
 

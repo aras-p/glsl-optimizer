@@ -1,5 +1,3 @@
-/* $Id: fxglidew.h,v 1.18 2003/10/13 11:14:58 dborca Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.0
@@ -78,6 +76,7 @@ typedef struct {
                FxBool HaveTexFmt;	/* TEXFMT */
                FxBool HaveCmbExt;	/* COMBINE */
                FxBool HaveMirExt;	/* TEXMIRROR */
+               FxBool HaveTexUma;	/* TEXUMA */
                FxBool HaveTexus2;	/* Texus 2 - FXT1 */
         }
         SSTs[MAX_NUM_SST];	/* configuration for each board */

@@ -1,5 +1,3 @@
-/* $Id: fxwgl.c,v 1.19 2003/10/13 11:14:58 dborca Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.0
@@ -365,7 +363,7 @@ wglCreateContext(HDC hdc)
       SetWindowLong(hWnd, GWL_WNDPROC, (LONG) __wglMonitor);
    }
 
-#ifdef FX_DEBUG
+#if FX_DEBUG
    freopen("MESA.LOG", "w", stderr);
 #endif
 

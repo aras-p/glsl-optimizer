@@ -1,5 +1,3 @@
-/* $Id: fxsetup.c,v 1.42 2003/10/13 11:14:58 dborca Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.0
@@ -315,13 +313,8 @@ fxSetupSingleTMU_NoLock(fxMesaContext fxMesa, struct gl_texture_object *tObj)
       if (ti->LODblend)
 	 fxTMMoveInTM_NoLock(fxMesa, tObj, FX_TMU_SPLIT);
       else {
-         /* XXX putting textures into the second memory bank when the
-          * first bank is full is not working at this time.
-          */
-	 if (/*[dBorca]: fixme*/0 && fxMesa->haveTwoTMUs) {
-	    if (fxMesa->freeTexMem[FX_TMU0] >
-		grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,
-						  &(ti->info))) {
+	 if (fxMesa->haveTwoTMUs) {
+            if (fxTMCheckStartAddr(fxMesa, FX_TMU0, ti)) {
 	       fxTMMoveInTM_NoLock(fxMesa, tObj, FX_TMU0);
 	    }
 	    else {
@@ -431,8 +424,10 @@ fxSelectSingleTMUSrc_NoLock(fxMesaContext fxMesa, GLint tmu, FxBool LODblend)
          tex1.FunctionAlpha = GR_COMBINE_FUNCTION_LOCAL;
          tex1.FactorAlpha   = GR_COMBINE_FACTOR_NONE;
 
-	 /* GR_COMBINE_FUNCTION_SCALE_OTHER doesn't work ?!? */
-
+	 /* [dBorca] Hack alert:
+          * don't use GR_COMBINE_FUNCTION_SCALE_OTHER
+          * such that Glide recognizes TMU0 in passthrough mode
+          */
          tex0.FunctionRGB   = GR_COMBINE_FUNCTION_BLEND;
          tex0.FactorRGB     = GR_COMBINE_FACTOR_ONE;
          tex0.FunctionAlpha = GR_COMBINE_FUNCTION_BLEND;
@@ -549,49 +544,49 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
       }
       break;
    case GL_BLEND:
-#if 1
-      if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	 fprintf(stderr, "%s: GL_BLEND not quite supported\n", __FUNCTION__);
-      }
-      return;
-#else
-      /*
-       * XXX we can't do real GL_BLEND mode.  These settings assume that
-       * the TexEnv color is black and incoming fragment color is white.
-       */
       if (ifmt == GL_LUMINANCE || ifmt == GL_RGB) {
          /* Av = Af */
          alphaComb.Function = GR_COMBINE_FUNCTION_LOCAL;
-         alphaComb.Factor = GR_COMBINE_FACTOR_NONE;
-         alphaComb.Other = GR_COMBINE_OTHER_NONE;
+         alphaComb.Factor   = GR_COMBINE_FACTOR_NONE;
+         alphaComb.Other    = GR_COMBINE_OTHER_NONE;
       }
       else if (ifmt == GL_INTENSITY) {
          /* Av = Af * (1 - It) + Ac * It */
-         /* XXX this is wrong */
-         alphaComb.Function = GR_COMBINE_FUNCTION_LOCAL;
-         alphaComb.Factor = GR_COMBINE_FACTOR_NONE;
-         alphaComb.Other = GR_COMBINE_OTHER_NONE;
+         alphaComb.Function = GR_COMBINE_FUNCTION_BLEND;
+         alphaComb.Factor   = GR_COMBINE_FACTOR_TEXTURE_ALPHA;
+         alphaComb.Other    = GR_COMBINE_OTHER_CONSTANT;
       }
       else {
          /* Av = Af * At */
          alphaComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
-         alphaComb.Factor = GR_COMBINE_FACTOR_LOCAL;
-         alphaComb.Other = GR_COMBINE_OTHER_TEXTURE;
+         alphaComb.Factor   = GR_COMBINE_FACTOR_LOCAL;
+         alphaComb.Other    = GR_COMBINE_OTHER_TEXTURE;
       }
+
       if (ifmt == GL_ALPHA) {
          colorComb.Function = GR_COMBINE_FUNCTION_LOCAL;
-         colorComb.Factor = GR_COMBINE_FACTOR_NONE;
-         colorComb.Other = GR_COMBINE_OTHER_NONE;
+         colorComb.Factor   = GR_COMBINE_FACTOR_NONE;
+         colorComb.Other    = GR_COMBINE_OTHER_NONE;
+      } else {
+         /* [dBorca] Hack alert:
+          * only Voodoo^2 can GL_BLEND (GR_COMBINE_FACTOR_TEXTURE_RGB)
+          */
+         if (fxMesa->type >= GR_SSTTYPE_Voodoo2) {
+            colorComb.Function = GR_COMBINE_FUNCTION_BLEND;
+            colorComb.Factor   = GR_COMBINE_FACTOR_TEXTURE_RGB;
+            colorComb.Other    = GR_COMBINE_OTHER_CONSTANT;
+         } else {
+            _mesa_problem(NULL, "can't GL_BLEND with SST1");
+            return;
+         }
       }
-      else {
-         colorComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
-         colorComb.Factor = GR_COMBINE_FACTOR_ONE;
-         colorComb.Other = GR_COMBINE_OTHER_TEXTURE;
-         colorComb.Invert = FXTRUE;
-      }
-      /* XXX return GL_FALSE for modes we don't support */
+
+      grConstantColorValue(
+         ((GLuint)((ctx->Texture.Unit[textureset].EnvColor[0] * 255.0f))      ) |
+         ((GLuint)((ctx->Texture.Unit[textureset].EnvColor[1] * 255.0f)) <<  8) |
+         ((GLuint)((ctx->Texture.Unit[textureset].EnvColor[2] * 255.0f)) << 16) |
+         ((GLuint)((ctx->Texture.Unit[textureset].EnvColor[3] * 255.0f)) << 24));
       break;
-#endif
    case GL_REPLACE:
       if ((ifmt == GL_RGB) || (ifmt == GL_LUMINANCE)) {
          alphaComb.Function = GR_COMBINE_FUNCTION_LOCAL;
@@ -609,6 +604,41 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
          colorComb.Other    = GR_COMBINE_OTHER_NONE;
       } else {
          colorComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
+         colorComb.Factor   = GR_COMBINE_FACTOR_ONE;
+         colorComb.Other    = GR_COMBINE_OTHER_TEXTURE;
+      }
+      break;
+   case GL_ADD:
+      if (ifmt == GL_ALPHA ||
+          ifmt == GL_LUMINANCE_ALPHA ||
+          ifmt == GL_RGBA) {
+         /* product of texel and fragment alpha */
+         alphaComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
+         alphaComb.Factor   = GR_COMBINE_FACTOR_LOCAL;
+         alphaComb.Other    = GR_COMBINE_OTHER_TEXTURE;
+      }
+      else if (ifmt == GL_LUMINANCE || ifmt == GL_RGB) {
+         /* fragment alpha is unchanged */
+         alphaComb.Function = GR_COMBINE_FUNCTION_LOCAL;
+         alphaComb.Factor   = GR_COMBINE_FACTOR_NONE;
+         alphaComb.Other    = GR_COMBINE_OTHER_NONE;
+      }
+      else {
+         /* sum of texel and fragment alpha */
+         alphaComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL,
+         alphaComb.Factor   = GR_COMBINE_FACTOR_ONE;
+         alphaComb.Other    = GR_COMBINE_OTHER_TEXTURE;
+      }
+
+      if (ifmt == GL_ALPHA) {
+         /* rgb unchanged */
+         colorComb.Function = GR_COMBINE_FUNCTION_LOCAL;
+         colorComb.Factor   = GR_COMBINE_FACTOR_NONE;
+         colorComb.Other    = GR_COMBINE_OTHER_NONE;
+      }
+      else {
+         /* sum of texel and fragment rgb */
+         colorComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL,
          colorComb.Factor   = GR_COMBINE_FACTOR_ONE;
          colorComb.Other    = GR_COMBINE_OTHER_TEXTURE;
       }
@@ -1083,6 +1113,8 @@ fxSetupTextureNone_NoLock(GLcontext * ctx)
    fxMesa->lastUnitsMode = FX_UM_NONE;
 }
 
+#include "fxsetup.h"
+
 /************************************************************************/
 /************************** Texture Mode SetUp **************************/
 /************************************************************************/
@@ -1096,20 +1128,38 @@ fxSetupTexture_NoLock(GLcontext * ctx)
       fprintf(stderr, "%s(...)\n", __FUNCTION__);
    }
 
-   /* Texture Combine, Color Combine and Alpha Combine. */
-   if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT &&
-       ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT &&
-       fxMesa->haveTwoTMUs) {
-      fxSetupTextureDoubleTMU_NoLock(ctx);
-   }
-   else if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT) {
-      fxSetupTextureSingleTMU_NoLock(ctx, 0);
-   }
-   else if (ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT) {
-      fxSetupTextureSingleTMU_NoLock(ctx, 1);
-   }
-   else {
-      fxSetupTextureNone_NoLock(ctx);
+   if (fxMesa->HaveCmbExt) {
+      /* Texture Combine, Color Combine and Alpha Combine. */
+      if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT &&
+          ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT &&
+          fxMesa->haveTwoTMUs) {
+         fxSetupTextureDoubleTMUNapalm_NoLock(ctx);
+      }
+      else if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT) {
+         fxSetupTextureSingleTMUNapalm_NoLock(ctx, 0);
+      }
+      else if (ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT) {
+         fxSetupTextureSingleTMUNapalm_NoLock(ctx, 1);
+      }
+      else {
+         fxSetupTextureNoneNapalm_NoLock(ctx);
+      }
+   } else {
+      /* Texture Combine, Color Combine and Alpha Combine. */
+      if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT &&
+          ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT &&
+          fxMesa->haveTwoTMUs) {
+         fxSetupTextureDoubleTMU_NoLock(ctx);
+      }
+      else if (ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT) {
+         fxSetupTextureSingleTMU_NoLock(ctx, 0);
+      }
+      else if (ctx->Texture.Unit[1]._ReallyEnabled == TEXTURE_2D_BIT) {
+         fxSetupTextureSingleTMU_NoLock(ctx, 1);
+      }
+      else {
+         fxSetupTextureNone_NoLock(ctx);
+      }
    }
 }
 
@@ -1125,62 +1175,202 @@ fxSetupTexture(GLcontext * ctx)
 /**************************** Blend SetUp *******************************/
 /************************************************************************/
 
-/* XXX consider supporting GL_INGR_blend_func_separate */
 void
-fxDDBlendFunc(GLcontext * ctx, GLenum sfactor, GLenum dfactor)
+fxDDBlendFuncSeparate(GLcontext * ctx, GLenum sfactor, GLenum dfactor, GLenum asfactor, GLenum adfactor)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
+   GLboolean have32bpp = (fxMesa->colDepth == 32);
+   GLboolean haveAlpha = fxMesa->haveHwAlpha;
    GrAlphaBlendFnc_t sfact, dfact, asfact, adfact;
 
-   /* From the Glide documentation:
-      For alpha source and destination blend function factor
-      parameters, Voodoo Graphics supports only
-      GR_BLEND_ZERO and GR_BLEND_ONE.
+   /* [dBorca] Hack alert:
+    * We should condition *DST_ALPHA* modes
+    * by the boolean `haveAlpha' above!
+    * It indicates whether we really have HW alpha buffer...
     */
+
+/*
+When the value A_COLOR is selected as the destination alpha blending factor,
+the source pixel color is used as the destination blending factor.  When the
+value A_COLOR is selected as the source alpha blending factor, the destination
+pixel color is used as the source blending factor.  When the value A_SAMECOLOR
+is selected as the destination alpha blending factor, the destination pixel
+color is used as the destination blending factor.  When the value A_SAMECOLOR
+is selected as the source alpha blending factor, the source pixel color is
+used as the source blending factor.  Note also that the alpha blending
+function 0xf (A_COLORBEFOREFOG/ASATURATE) is different depending upon whether
+it is being used as a source or destination alpha blending function.  When the
+value 0xf is selected as the destination alpha blending factor, the source
+color before the fog unit ("unfogged" color) is used as the destination
+blending factor -- this alpha blending function is useful for multi-pass
+rendering with atmospheric effects.  When the value 0xf is selected as the
+source alpha blending factor, the alpha-saturate anti-aliasing algorithm is
+selected -- this MIN function performs polygonal anti-aliasing for polygons
+which are drawn front-to-back.
+
+15/16 BPP alpha channel alpha blending modes
+	0x0	AZERO		Zero
+	0x4	AONE		One
+
+32 BPP alpha channel alpha blending modes
+	0x0	AZERO		Zero
+	0x1	ASRC_ALPHA	Source alpha
+	0x3	ADST_ALPHA	Destination alpha
+	0x4	AONE		One
+	0x5	AOMSRC_ALPHA	1 - Source alpha
+	0x7	AOMDST_ALPHA	1 - Destination alpha
+*/
 
    switch (sfactor) {
    case GL_ZERO:
-      asfact = sfact = GR_BLEND_ZERO;
+      sfact = GR_BLEND_ZERO;
       break;
    case GL_ONE:
-      asfact = sfact = GR_BLEND_ONE;
+      sfact = GR_BLEND_ONE;
       break;
    case GL_DST_COLOR:
       sfact = GR_BLEND_DST_COLOR;
-      asfact = GR_BLEND_ONE;
       break;
    case GL_ONE_MINUS_DST_COLOR:
       sfact = GR_BLEND_ONE_MINUS_DST_COLOR;
-      asfact = GR_BLEND_ONE;
       break;
    case GL_SRC_ALPHA:
       sfact = GR_BLEND_SRC_ALPHA;
-      asfact = GR_BLEND_ONE;
       break;
    case GL_ONE_MINUS_SRC_ALPHA:
       sfact = GR_BLEND_ONE_MINUS_SRC_ALPHA;
-      asfact = GR_BLEND_ONE;
       break;
    case GL_DST_ALPHA:
       sfact = GR_BLEND_DST_ALPHA;
-      asfact = GR_BLEND_ONE;
       break;
    case GL_ONE_MINUS_DST_ALPHA:
       sfact = GR_BLEND_ONE_MINUS_DST_ALPHA;
-      asfact = GR_BLEND_ONE;
       break;
    case GL_SRC_ALPHA_SATURATE:
       sfact = GR_BLEND_ALPHA_SATURATE;
-      asfact = GR_BLEND_ONE;
       break;
    case GL_SRC_COLOR:
    case GL_ONE_MINUS_SRC_COLOR:
       /* USELESS */
-      asfact = sfact = GR_BLEND_ONE;
+      sfact = GR_BLEND_ONE;
       break;
    default:
-      asfact = sfact = GR_BLEND_ONE;
+      sfact = GR_BLEND_ONE;
+      break;
+   }
+
+   switch (asfactor) {
+   case GL_ZERO:
+      asfact = GR_BLEND_ZERO;
+      break;
+   case GL_ONE:
+      asfact = GR_BLEND_ONE;
+      break;
+   case GL_DST_COLOR:
+      asfact = GR_BLEND_ONE/*bad*/;
+      break;
+   case GL_ONE_MINUS_DST_COLOR:
+      asfact = GR_BLEND_ONE/*bad*/;
+      break;
+   case GL_SRC_ALPHA:
+      asfact = have32bpp ? GR_BLEND_SRC_ALPHA : GR_BLEND_ONE/*bad*/;
+      break;
+   case GL_ONE_MINUS_SRC_ALPHA:
+      asfact = have32bpp ? GR_BLEND_ONE_MINUS_SRC_ALPHA : GR_BLEND_ONE/*bad*/;
+      break;
+   case GL_DST_ALPHA:
+      asfact = have32bpp ? GR_BLEND_DST_ALPHA : GR_BLEND_ONE/*bad*/;
+      break;
+   case GL_ONE_MINUS_DST_ALPHA:
+      asfact = have32bpp ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ONE/*bad*/;
+      break;
+   case GL_SRC_ALPHA_SATURATE:
+      asfact = GR_BLEND_ONE/*bad*/;
+      break;
+   case GL_SRC_COLOR:
+   case GL_ONE_MINUS_SRC_COLOR:
+      /* USELESS */
+      asfact = GR_BLEND_ONE/*bad*/;
+      break;
+   default:
+      asfact = GR_BLEND_ONE/*bad*/;
+      break;
+   }
+
+   switch (dfactor) {
+   case GL_ZERO:
+      dfact = GR_BLEND_ZERO;
+      break;
+   case GL_ONE:
+      dfact = GR_BLEND_ONE;
+      break;
+   case GL_SRC_COLOR:
+      dfact = GR_BLEND_SRC_COLOR;
+      break;
+   case GL_ONE_MINUS_SRC_COLOR:
+      dfact = GR_BLEND_ONE_MINUS_SRC_COLOR;
+      break;
+   case GL_SRC_ALPHA:
+      dfact = GR_BLEND_SRC_ALPHA;
+      break;
+   case GL_ONE_MINUS_SRC_ALPHA:
+      dfact = GR_BLEND_ONE_MINUS_SRC_ALPHA;
+      break;
+   case GL_DST_ALPHA:
+      /* dfact=GR_BLEND_DST_ALPHA; */
+      /* We can't do DST_ALPHA */
+      dfact = GR_BLEND_ONE;
+      break;
+   case GL_ONE_MINUS_DST_ALPHA:
+      /* dfact=GR_BLEND_ONE_MINUS_DST_ALPHA; */
+      /* We can't do DST_ALPHA */
+      dfact = GR_BLEND_ZERO;
+      break;
+   case GL_SRC_ALPHA_SATURATE:
+   case GL_DST_COLOR:
+   case GL_ONE_MINUS_DST_COLOR:
+      /* USELESS */
+      dfact = GR_BLEND_ZERO;
+      break;
+   default:
+      dfact = GR_BLEND_ZERO;
+      break;
+   }
+
+   switch (adfactor) {
+   case GL_ZERO:
+      adfact = GR_BLEND_ZERO;
+      break;
+   case GL_ONE:
+      adfact = GR_BLEND_ONE;
+      break;
+   case GL_SRC_COLOR:
+      adfact = GR_BLEND_ZERO/*bad*/;
+      break;
+   case GL_ONE_MINUS_SRC_COLOR:
+      adfact = GR_BLEND_ZERO/*bad*/;
+      break;
+   case GL_SRC_ALPHA:
+      adfact = have32bpp ? GR_BLEND_SRC_ALPHA : GR_BLEND_ZERO/*bad*/;
+      break;
+   case GL_ONE_MINUS_SRC_ALPHA:
+      adfact = have32bpp ? GR_BLEND_ONE_MINUS_SRC_ALPHA : GR_BLEND_ZERO/*bad*/;
+      break;
+   case GL_DST_ALPHA:
+      adfact = have32bpp ? GR_BLEND_DST_ALPHA : GR_BLEND_ZERO/*bad*/;
+      break;
+   case GL_ONE_MINUS_DST_ALPHA:
+      adfact = have32bpp ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ZERO/*bad*/;
+      break;
+   case GL_SRC_ALPHA_SATURATE:
+   case GL_DST_COLOR:
+   case GL_ONE_MINUS_DST_COLOR:
+      /* USELESS */
+      adfact = GR_BLEND_ZERO/*bad*/;
+      break;
+   default:
+      adfact = GR_BLEND_ZERO/*bad*/;
       break;
    }
 
@@ -1190,52 +1380,6 @@ fxDDBlendFunc(GLcontext * ctx, GLenum sfactor, GLenum dfactor)
       fxMesa->new_state |= FX_NEW_BLEND;
    }
 
-   switch (dfactor) {
-   case GL_ZERO:
-      adfact = dfact = GR_BLEND_ZERO;
-      break;
-   case GL_ONE:
-      adfact = dfact = GR_BLEND_ONE;
-      break;
-   case GL_SRC_COLOR:
-      dfact = GR_BLEND_SRC_COLOR;
-      adfact = GR_BLEND_ZERO;
-      break;
-   case GL_ONE_MINUS_SRC_COLOR:
-      dfact = GR_BLEND_ONE_MINUS_SRC_COLOR;
-      adfact = GR_BLEND_ZERO;
-      break;
-   case GL_SRC_ALPHA:
-      dfact = GR_BLEND_SRC_ALPHA;
-      adfact = GR_BLEND_ZERO;
-      break;
-   case GL_ONE_MINUS_SRC_ALPHA:
-      dfact = GR_BLEND_ONE_MINUS_SRC_ALPHA;
-      adfact = GR_BLEND_ZERO;
-      break;
-   case GL_DST_ALPHA:
-      /* dfact=GR_BLEND_DST_ALPHA; */
-      /* We can't do DST_ALPHA */
-      dfact = GR_BLEND_ONE;
-      adfact = GR_BLEND_ZERO;
-      break;
-   case GL_ONE_MINUS_DST_ALPHA:
-      /* dfact=GR_BLEND_ONE_MINUS_DST_ALPHA; */
-      /* We can't do DST_ALPHA */
-      dfact = GR_BLEND_ZERO;
-      adfact = GR_BLEND_ZERO;
-      break;
-   case GL_SRC_ALPHA_SATURATE:
-   case GL_DST_COLOR:
-   case GL_ONE_MINUS_DST_COLOR:
-      /* USELESS */
-      adfact = dfact = GR_BLEND_ZERO;
-      break;
-   default:
-      adfact = dfact = GR_BLEND_ZERO;
-      break;
-   }
-
    if ((dfact != us->blendDstFuncRGB) || (adfact != us->blendDstFuncAlpha)) {
       us->blendDstFuncRGB = dfact;
       us->blendDstFuncAlpha = adfact;
@@ -1243,18 +1387,66 @@ fxDDBlendFunc(GLcontext * ctx, GLenum sfactor, GLenum dfactor)
    }
 }
 
+void
+fxDDBlendFunc(GLcontext * ctx, GLenum sfactor, GLenum dfactor)
+{
+   fxDDBlendFuncSeparate(ctx, sfactor, dfactor, sfactor, dfactor);
+}
+
+void
+fxDDBlendEquation(GLcontext * ctx, GLenum mode)
+{
+ fxMesaContext fxMesa = FX_CONTEXT(ctx);
+ tfxUnitsState *us = &fxMesa->unitsState;
+ GrAlphaBlendOp_t q;
+
+ switch (mode) {
+        case GL_FUNC_ADD_EXT:
+             q = GR_BLEND_OP_ADD;
+             break;
+        case GL_FUNC_SUBTRACT_EXT:
+             q = GR_BLEND_OP_SUB;
+             break;
+        case GL_FUNC_REVERSE_SUBTRACT_EXT:
+             q = GR_BLEND_OP_REVSUB;
+             break;
+        default:
+             return;
+ }
+
+ if ((q != us->blendEq) && fxMesa->HavePixExt) {
+    us->blendEq = q;
+    fxMesa->new_state |= FX_NEW_BLEND;
+ }
+}
+
 static void
 fxSetupBlend(GLcontext * ctx)
 {
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   tfxUnitsState *us = &fxMesa->unitsState;
+ fxMesaContext fxMesa = FX_CONTEXT(ctx);
+ tfxUnitsState *us = &fxMesa->unitsState;
 
-   if (us->blendEnabled)
-      grAlphaBlendFunction(us->blendSrcFuncRGB, us->blendDstFuncRGB,
-			      us->blendSrcFuncAlpha, us->blendDstFuncAlpha);
-   else
-      grAlphaBlendFunction(GR_BLEND_ONE, GR_BLEND_ZERO, GR_BLEND_ONE,
-			      GR_BLEND_ZERO);
+ if (fxMesa->HavePixExt) {
+    if (us->blendEnabled) {
+       fxMesa->Glide.grAlphaBlendFunctionExt(us->blendSrcFuncRGB, us->blendDstFuncRGB,
+                                             us->blendEq,
+                                             us->blendSrcFuncAlpha, us->blendDstFuncAlpha,
+                                             us->blendEq);
+    } else {
+       fxMesa->Glide.grAlphaBlendFunctionExt(GR_BLEND_ONE, GR_BLEND_ZERO,
+                                             GR_BLEND_OP_ADD,
+                                             GR_BLEND_ONE, GR_BLEND_ZERO,
+                                             GR_BLEND_OP_ADD);
+    }
+ } else {
+    if (us->blendEnabled) {
+       grAlphaBlendFunction(us->blendSrcFuncRGB, us->blendDstFuncRGB,
+                            us->blendSrcFuncAlpha, us->blendDstFuncAlpha);
+    } else {
+       grAlphaBlendFunction(GR_BLEND_ONE, GR_BLEND_ZERO,
+                            GR_BLEND_ONE, GR_BLEND_ZERO);
+    }
+ }
 }
 
 /************************************************************************/
@@ -1468,8 +1660,8 @@ fxSetupColorMask(GLcontext * ctx)
    }
    else {
       /* 16 bpp mode */
-      grColorMask(ctx->Color.ColorMask[RCOMP] ||
-                  ctx->Color.ColorMask[GCOMP] ||
+      grColorMask(ctx->Color.ColorMask[RCOMP] |
+                  ctx->Color.ColorMask[GCOMP] |
                   ctx->Color.ColorMask[BCOMP],
                   ctx->Color.ColorMask[ACOMP] && fxMesa->haveHwAlpha);
    }

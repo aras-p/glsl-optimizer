@@ -1,5 +1,3 @@
-/* $Id: fxddtex.c,v 1.51 2003/10/14 14:56:45 dborca Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.0
@@ -715,6 +713,7 @@ fetch_alpha8(const struct gl_texture_image *texImage,
 
    i = i * mml->wScale;
    j = j * mml->hScale;
+   /* [dBorca] why, oh... why? */
    i = i * mml->width / texImage->Width;
    j = j * mml->height / texImage->Height;
 
@@ -736,6 +735,7 @@ fetch_index8(const struct gl_texture_image *texImage,
 
    i = i * mml->wScale;
    j = j * mml->hScale;
+   /* [dBorca] why, oh... why? */
    i = i * mml->width / texImage->Width;
    j = j * mml->height / texImage->Height;
 
@@ -862,6 +862,21 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLboolean allow32bpt = fxMesa->HaveTexFmt;
+
+   /* [dBorca] Hack alert:
+    * There is something wrong with this!!! Take an example:
+    * 1) start HW rendering
+    * 2) create a texture like this:
+    *    glTexImage2D(GL_TEXTURE_2D, 0, 3, 16, 16, 0,
+    *                 GL_RGB, GL_UNSIGNED_BYTE, floorTexture);
+    *    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    * 3) we get here with internalFormat==3 and return either
+    *    _mesa_texformat_argb565 or _mesa_texformat_argb8888
+    * 4) at some point, we encounter total rasterization fallback
+    * 5) displaying a polygon with the above textures yield garbage on areas
+    *    where pixel is larger than a texel, because our already set texel
+    *    function doesn't match the real _mesa_texformat_argb888
+    */
 
    if (TDFX_DEBUG & VERBOSE_TEXTURE) {
       fprintf(stderr, "fxDDChooseTextureFormat(...)\n");
