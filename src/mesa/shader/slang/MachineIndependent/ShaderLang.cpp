@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -51,9 +51,15 @@ extern "C" int InitPreprocessor(void);
 extern "C" int FinalizePreprocessor(void);
 extern void SetGlobalPoolAllocatorPtr(TPoolAllocator* poolAllocator);
 
-bool generateBuiltInSymbolTable(TBuiltInResource& resources, TInfoSink&);
-bool initializeSymbolTable(TBuiltInStrings* BuiltInStrings, EShLanguage language, TInfoSink& infoSink, TBuiltInResource &resources);
-void GenerateResources(TBuiltInResource& resources);
+bool generateBuiltInSymbolTable(const TBuiltInResource* resources, TInfoSink&, TSymbolTable*, EShLanguage language = EShLangCount);
+bool initializeSymbolTable(TBuiltInStrings* BuiltInStrings, EShLanguage language, TInfoSink& infoSink, const TBuiltInResource *resources, TSymbolTable*);
+
+//
+// A symbol table for each language.  Each has a different
+// set of built-ins, and we want to preserve that from
+// compile to compile.
+//
+TSymbolTable SymbolTables[EShLangCount];
 
 TPoolAllocator* PerProcessGPA = 0;
 //
@@ -68,8 +74,6 @@ TPoolAllocator* PerProcessGPA = 0;
 int ShInitialize()
 {
     TInfoSink infoSink;
-    TBuiltInResource resources;
-    GenerateResources(resources);
     bool ret = true;
 
     if (!InitProcess())
@@ -79,13 +83,29 @@ int ShInitialize()
     // we need to have thread synchronization code around the initialization of per process
     // global pool allocator
     if (!PerProcessGPA) { 
+        TPoolAllocator *builtInPoolAllocator = new TPoolAllocator(true);
+        builtInPoolAllocator->push();
+        TPoolAllocator* gPoolAllocator = &GlobalPoolAllocator;
+        SetGlobalPoolAllocatorPtr(builtInPoolAllocator);
+
+        TSymbolTable symTables[EShLangCount];
+        generateBuiltInSymbolTable(0, infoSink, symTables);
+
         PerProcessGPA = new TPoolAllocator(true);
         PerProcessGPA->push();
-        
-        TPoolAllocator* gPoolAllocator = &GlobalPoolAllocator;
-        SetGlobalPoolAllocatorPtr(PerProcessGPA);            
-        ret = generateBuiltInSymbolTable(resources, infoSink);
+        SetGlobalPoolAllocatorPtr(PerProcessGPA);
+
+        SymbolTables[EShLangVertex].copyTable(symTables[EShLangVertex]);
+        SymbolTables[EShLangFragment].copyTable(symTables[EShLangFragment]);
+
         SetGlobalPoolAllocatorPtr(gPoolAllocator);
+
+        symTables[EShLangVertex].pop();
+        symTables[EShLangFragment].pop();
+
+        builtInPoolAllocator->popAll();
+        delete builtInPoolAllocator;        
+
     }
 
     return ret ? 1 : 0;
@@ -142,13 +162,6 @@ void ShDestruct(ShHandle handle)
 }
 
 //
-// A symbol table for each language.  Each has a different
-// set of built-ins, and we want to preserve that from
-// compile to compile.
-//
-TSymbolTable SymbolTables[EShLangCount];
-
-//
 // Cleanup symbol tables
 //
 int __fastcall ShFinalize()
@@ -161,86 +174,84 @@ int __fastcall ShFinalize()
 }
 
 //
-// This method is required only for Sh interface, not for OGLC interface
-//
-void GenerateResources(TBuiltInResource& resources)
-{    
-    resources.maxLights = 32;
-    resources.maxClipPlanes = 6;
-    resources.maxTextureUnits = 32;
-    resources.maxTextureCoords = 32;
-    resources.maxVertexAttribs = 64;
-    resources.maxVertexUniformComponents = 4096;
-    resources.maxVaryingFloats = 64;
-    resources.maxVertexTextureImageUnits = 32;
-    resources.maxCombinedTextureImageUnits = 32;
-    resources.maxTextureImageUnits = 32;
-    resources.maxFragmentUniformComponents = 4096;
-    resources.maxDrawBuffers = 32;
-}
-
-//
 // This function should be called only once by the Master Dll. Currently, this is being called for each thread 
 // which is incorrect. This is required to keep the Sh interface working for now and will eventually be called 
 // from master dll once.
 //
-bool generateBuiltInSymbolTable(TBuiltInResource& resources, TInfoSink& infoSink)
+bool generateBuiltInSymbolTable(const TBuiltInResource* resources, TInfoSink& infoSink, TSymbolTable* symbolTables, EShLanguage language)
 {
     TBuiltIns builtIns;
-    builtIns.initialize(resources);
-    initializeSymbolTable(builtIns.getBuiltInStrings(), EShLangVertex, infoSink, resources);
-    initializeSymbolTable(builtIns.getBuiltInStrings(), EShLangFragment, infoSink, resources);
+    
+    if (resources) {
+        builtIns.initialize(*resources);
+        initializeSymbolTable(builtIns.getBuiltInStrings(), language, infoSink, resources, symbolTables);
+    } else {
+        builtIns.initialize();
+        initializeSymbolTable(builtIns.getBuiltInStrings(), EShLangVertex, infoSink, resources, symbolTables);
+        initializeSymbolTable(builtIns.getBuiltInStrings(), EShLangFragment, infoSink, resources, symbolTables);
+    }
+
     return true;
 }
 
-bool initializeSymbolTable(TBuiltInStrings* BuiltInStrings, EShLanguage language, TInfoSink& infoSink, TBuiltInResource &resources)
+bool initializeSymbolTable(TBuiltInStrings* BuiltInStrings, EShLanguage language, TInfoSink& infoSink, const TBuiltInResource* resources, TSymbolTable* symbolTables)
 {
     TIntermediate intermediate(infoSink);
-    TSymbolTable& symbolTable = SymbolTables[language];
-    TParseContext parseContext(symbolTable, intermediate, language, infoSink);
+    TSymbolTable* symbolTable;
+    
+    if (resources)
+        symbolTable = symbolTables;
+    else
+        symbolTable = &symbolTables[language];
+
+    TParseContext parseContext(*symbolTable, intermediate, language, infoSink);
 
     GlobalParseContext = &parseContext;
     
     setInitialState();
 
-    if (symbolTable.isEmpty()) {
+    assert (symbolTable->isEmpty() || symbolTable->atSharedBuiltInLevel());
        
-        //
-        // Parse the built-ins.  This should only happen once per
-        // language symbol table.
-        //
-        // Push the symbol table to give it an initial scope.  This
-        // push should not have a corresponding pop, so that built-ins
-        // are preserved, and the test for an empty table fails.
-        //
+    //
+    // Parse the built-ins.  This should only happen once per
+    // language symbol table.
+    //
+    // Push the symbol table to give it an initial scope.  This
+    // push should not have a corresponding pop, so that built-ins
+    // are preserved, and the test for an empty table fails.
+    //
 
-        symbolTable.push();
-        
-        //Initialize the Preprocessor
-        int ret = InitPreprocessor();
-        if (ret) {
-            infoSink.info.message(EPrefixInternalError,  "Unable to intialize the Preprocessor");
+    symbolTable->push();
+    
+    //Initialize the Preprocessor
+    int ret = InitPreprocessor();
+    if (ret) {
+        infoSink.info.message(EPrefixInternalError,  "Unable to intialize the Preprocessor");
+        return false;
+    }
+    
+    for (TBuiltInStrings::iterator i  = BuiltInStrings[parseContext.language].begin();
+                                    i != BuiltInStrings[parseContext.language].end();
+                                    ++i) {
+        const char* builtInShaders[1];
+        int builtInLengths[1];
+
+        builtInShaders[0] = (*i).c_str();
+        builtInLengths[0] = (int) (*i).size();
+
+        if (PaParseStrings(const_cast<char**>(builtInShaders), builtInLengths, 1, parseContext) != 0) {
+            infoSink.info.message(EPrefixInternalError, "Unable to parse built-ins");
             return false;
         }
-        
-        for (TBuiltInStrings::iterator i  = BuiltInStrings[parseContext.language].begin();
-                                       i != BuiltInStrings[parseContext.language].end();
-                                       ++i) {
-            const char* builtInShaders[1];
-            int builtInLengths[1];
-
-            builtInShaders[0] = (*i).c_str();
-            builtInLengths[0] = (int) (*i).size();
-
-            if (PaParseStrings(const_cast<char**>(builtInShaders), builtInLengths, 1, parseContext) != 0) {
-                infoSink.info.message(EPrefixInternalError, "Unable to parse built-ins");
-                return false;
-            }
-        }
-
-        IdentifyBuiltIns(parseContext.language, symbolTable, resources);
-        FinalizePreprocessor();
     }
+
+    if (resources) {
+        IdentifyBuiltIns(parseContext.language, *symbolTable, *resources);
+    } else {                                       
+        IdentifyBuiltIns(parseContext.language, *symbolTable);
+    }
+
+    FinalizePreprocessor();
 
     return true;
 }
@@ -258,6 +269,7 @@ int ShCompile(
     const char* const shaderStrings[],
     const int numStrings,
     const EShOptimizationLevel optLevel,
+    const TBuiltInResource* resources,
     int debugOptions
     )
 {
@@ -271,7 +283,8 @@ int ShCompile(
     TCompiler* compiler = base->getAsCompiler();
     if (compiler == 0)
         return 0;
-
+    
+    GlobalPoolAllocator.push();
     compiler->infoSink.info.erase();
     compiler->infoSink.debug.erase();
 
@@ -280,6 +293,9 @@ int ShCompile(
 
     TIntermediate intermediate(compiler->infoSink);
     TSymbolTable symbolTable(SymbolTables[compiler->getLanguage()]);
+    
+    generateBuiltInSymbolTable(resources, compiler->infoSink, &symbolTable, compiler->getLanguage());
+
     TParseContext parseContext(symbolTable, intermediate, compiler->getLanguage(), compiler->infoSink);
     parseContext.initializeExtensionBehavior();
 
@@ -294,7 +310,7 @@ int ShCompile(
     // be thrown away, then push a scope for the current shader's globals.
     //
     bool success = true;
-    GlobalPoolAllocator.push();
+    
     symbolTable.push();
     if (!symbolTable.atGlobalLevel())
         parseContext.infoSink.info.message(EPrefixInternalError, "Wrong symbol table level");
@@ -306,41 +322,39 @@ int ShCompile(
     if (ret)
         success = false;
 
-    if (! ret && parseContext.treeRoot) {
-        if (parseContext.recoveredFromError) {
-            parseContext.infoSink.info.prefix(EPrefixError);
-			parseContext.infoSink.info << parseContext.numErrors << " compilation errors.  No code generated.\n\n";
-            success = false;
-            if (debugOptions & EDebugOpIntermediate)
-                intermediate.outputTree(parseContext.treeRoot);
-        } else {
-            if (optLevel == EShOptNoGeneration)
-                parseContext.infoSink.info.message(EPrefixNone, "No errors.  No code generation or linking was requested.");
-            else {
-                success = intermediate.postProcess(parseContext.treeRoot, parseContext.language);
+    if (success && parseContext.treeRoot) {
+        if (optLevel == EShOptNoGeneration)
+            parseContext.infoSink.info.message(EPrefixNone, "No errors.  No code generation or linking was requested.");
+        else {
+            success = intermediate.postProcess(parseContext.treeRoot, parseContext.language);
 
-                if (success) {
+            if (success) {
 
-                    if (debugOptions & EDebugOpIntermediate)
-                        intermediate.outputTree(parseContext.treeRoot);
+                if (debugOptions & EDebugOpIntermediate)
+                    intermediate.outputTree(parseContext.treeRoot);
 
-                    //
-                    // Call the machine dependent compiler
-                    //
-                    if (! compiler->compile(parseContext.treeRoot))
-                        success = false;
-                }
+                //
+                // Call the machine dependent compiler
+                //
+                if (! compiler->compile(parseContext.treeRoot))
+                    success = false;
             }
         }
+    } else if (!success) {
+        parseContext.infoSink.info.prefix(EPrefixError);
+        parseContext.infoSink.info << parseContext.numErrors << " compilation errors.  No code generated.\n\n";
+        success = false;
+        if (debugOptions & EDebugOpIntermediate)
+            intermediate.outputTree(parseContext.treeRoot);
     }
 
-	intermediate.remove(parseContext.treeRoot);
+    intermediate.remove(parseContext.treeRoot);
 
     //
     // Ensure symbol table is returned to the built-in level,
     // throwing away all but the built-ins.
     //
-    while (! symbolTable.atBuiltInLevel())
+    while (! symbolTable.atSharedBuiltInLevel())
         symbolTable.pop();
 
     FinalizePreprocessor();
@@ -397,21 +411,22 @@ int ShLinkExt(
         return 0;
 
     THandleList cObjects;
-	int i;
 
-    for (i = 0; i < numHandles; ++i) {
-        if (compHandles[i] == 0)
-            return 0;
-        TShHandleBase* base = reinterpret_cast<TShHandleBase*>(compHandles[i]);
-        if (base->getAsLinker()) {
-            cObjects.push_back(base->getAsLinker());
+    {// support MSVC++6.0
+        for (int i = 0; i < numHandles; ++i) {
+            if (compHandles[i] == 0)
+                return 0;
+            TShHandleBase* base = reinterpret_cast<TShHandleBase*>(compHandles[i]);
+            if (base->getAsLinker()) {
+                cObjects.push_back(base->getAsLinker());
+            }
+            if (base->getAsCompiler())
+                cObjects.push_back(base->getAsCompiler());
+    
+    
+            if (cObjects[i] == 0)
+                return 0;
         }
-        if (base->getAsCompiler())
-            cObjects.push_back(base->getAsCompiler());
-
-
-        if (cObjects[i] == 0)
-            return 0;
     }
 
     TShHandleBase* base = reinterpret_cast<TShHandleBase*>(linkHandle);
@@ -422,11 +437,13 @@ int ShLinkExt(
 
     linker->infoSink.info.erase();
 
-    for (i = 0; i < numHandles; ++i) {
-        if (cObjects[i]->getAsCompiler()) {
-            if (! cObjects[i]->getAsCompiler()->linkable()) {
-                linker->infoSink.info.message(EPrefixError, "Not all shaders have valid object code.");                
-                return 0;
+    {// support MSVC++6.0
+        for (int i = 0; i < numHandles; ++i) {
+            if (cObjects[i]->getAsCompiler()) {
+                if (! cObjects[i]->getAsCompiler()->linkable()) {
+                    linker->infoSink.info.message(EPrefixError, "Not all shaders have valid object code.");                
+                    return 0;
+                }
             }
         }
     }
@@ -554,7 +571,7 @@ int ShExcludeAttributes(const ShHandle handle, int *attributes, int count)
     if (handle == 0)
         return 0;
 
-	TShHandleBase* base = reinterpret_cast<TShHandleBase*>(handle);
+    TShHandleBase* base = reinterpret_cast<TShHandleBase*>(handle);
     TLinker* linker = static_cast<TLinker*>(base->getAsLinker());
     if (linker == 0)
         return 0;

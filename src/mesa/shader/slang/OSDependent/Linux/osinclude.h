@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,11 @@
 //
 // This file contains any Linux specific functions.
 //
+
+/* WORKAROUND: linux builds seem not to define "linux" */
+/*#if !(defined(linux))
+#error Trying to include a Linux specific file in a non-Linux build.
+#endif*/
 
 #include <pthread.h>
 #include <semaphore.h>

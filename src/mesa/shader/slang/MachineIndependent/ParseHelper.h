@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,13 @@ typedef enum {
     EBhDisable
 } TBehavior;
 
+struct TPragma {
+	TPragma(bool o, bool d) : optimize(o), debug(d) { }
+	bool optimize;
+	bool debug;
+	TPragmaTable pragmaTable;
+};
+
 //
 // The following are extra variables needed during parsing, grouped together so
 // they can be passed to the parser without needing a global.
@@ -60,7 +67,7 @@ struct TParseContext {
     TParseContext(TSymbolTable& symt, TIntermediate& interm, EShLanguage L, TInfoSink& is) : 
             intermediate(interm), symbolTable(symt), infoSink(is), language(L), treeRoot(0),
             recoveredFromError(false), numErrors(0), lexAfterType(false), loopNestingLevel(0), 
-            inTypeParen(false) {  }
+            inTypeParen(false), contextPragma(true, false) {  }
     TIntermediate& intermediate; // to hold and build a parse tree
     TSymbolTable& symbolTable;   // symbol table that goes with the language currently being parsed
     TInfoSink& infoSink;
@@ -113,8 +120,7 @@ struct TParseContext {
     TIntermTyped* addConstMatrixNode(int , TIntermTyped*, TSourceLoc);
     TIntermTyped* addConstStruct(TString& , TIntermTyped*, TSourceLoc);
     bool arraySetMaxSize(TIntermSymbol*, TType*, int, bool, TSourceLoc);
-    typedef std::map<TString, TString> PragmaStringMap;
-    PragmaStringMap PragmaTable;
+	struct TPragma contextPragma;
 	TString HashErrMsg; 
     bool AfterEOF;
 };

@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -77,6 +77,8 @@ public:
     void setUniqueId(int id) { uniqueId = id; }
     int getUniqueId() const { return uniqueId; }
     virtual void dump(TInfoSink &infoSink) const = 0;
+	TSymbol(const TSymbol&);
+	virtual TSymbol* clone(TStructureMap& remapper) = 0;
 
 protected:
     const TString *name;
@@ -95,11 +97,11 @@ protected:
 //
 class TVariable : public TSymbol {
 public:
-    TVariable(const TString *name, TType t, bool uT = false ) : TSymbol(name), type(t), userType(uT), unionArray(0), arrayInformationType(0) { }
+    TVariable(const TString *name, const TType& t, bool uT = false ) : TSymbol(name), type(t), userType(uT), unionArray(0), arrayInformationType(0) { }
     virtual ~TVariable() { }
     virtual bool isVariable() const { return true; }    
     TType& getType() { return type; }    
-    const TType getType() const { return type; }
+    const TType& getType() const { return type; }
     bool isUserType() const { return userType; }
     void changeQualifier(TQualifier qualifier) { type.changeQualifier(qualifier); }
     void updateArrayInformationType(TType *t) { arrayInformationType = t; }
@@ -124,6 +126,8 @@ public:
         delete unionArray;
         unionArray = constArray;  
     }
+	TVariable(const TVariable&, TStructureMap& remapper); // copy constructor
+	virtual TVariable* clone(TStructureMap& remapper);
       
 protected:
     TType type;
@@ -141,6 +145,10 @@ protected:
 struct TParameter {
     TString *name;
     TType* type;
+	void copyParam(const TParameter& param, TStructureMap& remapper) {
+		name = NewPoolTString(param.name->c_str());
+		type = param.type->clone(remapper);
+	}
 };
 
 //
@@ -153,7 +161,7 @@ public:
         returnType(TType(EbtVoid)),
         op(o),
         defined(false) { }
-    TFunction(const TString *name, TType retType, TOperator tOp = EOpNull) : 
+    TFunction(const TString *name, TType& retType, TOperator tOp = EOpNull) : 
         TSymbol(name), 
         returnType(retType),
         mangledName(*name + '('),
@@ -180,6 +188,8 @@ public:
     const TParameter& operator [](int i) const { return parameters[i]; }
     
     virtual void dump(TInfoSink &infoSink) const;
+	TFunction(const TFunction&, TStructureMap& remapper);
+	virtual TFunction* clone(TStructureMap& remapper);
     
 protected:
     typedef TVector<TParameter> TParamList;
@@ -219,6 +229,7 @@ public:
 
     void relateToOperator(const char* name, TOperator op);
     void dump(TInfoSink &infoSink) const;    
+	TSymbolTableLevel* clone(TStructureMap& remapper);
     
 protected:
     typedef std::map<TString, TSymbol*, std::less<TString>, pool_allocator<std::pair<const TString, TSymbol*> > > tLevel;
@@ -258,8 +269,9 @@ public:
     // globals are at level 1.
     //
     bool isEmpty() { return table.size() == 0; }
-    bool atBuiltInLevel() { return table.size() == 1; }
-    bool atGlobalLevel() { return table.size() <= 2; }
+    bool atBuiltInLevel() { return atSharedBuiltInLevel() || atDynamicBuiltInLevel(); }
+    bool atSharedBuiltInLevel() { return table.size() == 1; }	
+    bool atGlobalLevel() { return table.size() <= 3; }
     void push() { 
         table.push_back(new TSymbolTableLevel);
     }
@@ -291,12 +303,15 @@ public:
         return symbol;
     }
 
+    TSymbolTableLevel* getGlobalLevel() { assert (table.size() >= 3); return table[2]; }
     void relateToOperator(const char* name, TOperator op) { table[0]->relateToOperator(name, op); }
     int getMaxSymbolId() { return uniqueId; }
     void dump(TInfoSink &infoSink) const;    
+	void copyTable(const TSymbolTable& copyOf);
 
 protected:    
     int currentLevel() const { return static_cast<int>(table.size()) - 1; }
+    bool atDynamicBuiltInLevel() { return table.size() == 2; }
 
     std::vector<TSymbolTableLevel*> table;
     int uniqueId;     // for unique identification in code generation

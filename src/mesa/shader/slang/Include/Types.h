@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -74,6 +74,8 @@ public:
     int line;
 };
 
+typedef std::map<TTypeList*, TTypeList*> TStructureMap;
+typedef std::map<TTypeList*, TTypeList*>::iterator TStructureMapIterator;
 //
 // Base class for things that have a type.
 //
@@ -82,33 +84,91 @@ public:
     POOL_ALLOCATOR_NEW_DELETE(GlobalPoolAllocator)
     explicit TType(TBasicType t, TQualifier q = EvqTemporary, int s = 1, bool m = false, bool a = false) :
                             type(t), qualifier(q), size(s), matrix(m), array(a), arraySize(0),
-                            structure(0), structureSize(0), maxArraySize(0), arrayInformationType(0)
+                            structure(0), structureSize(0), maxArraySize(0), arrayInformationType(0), typeName(0), mangled(0), fieldName(0)
                             { }
     explicit TType(TPublicType p) :  
                             type(p.type), qualifier(p.qualifier), size(p.size), matrix(p.matrix), array(p.array), arraySize(0), 
-                            structure(0), structureSize(0), maxArraySize(0), arrayInformationType(0)
+                            structure(0), structureSize(0), maxArraySize(0), arrayInformationType(0), fieldName(0), mangled(0), typeName(0)
                             {
                               if (p.userDef) {
                                   structure = p.userDef->getStruct();
                                   structureSize = setStructSize(p.userDef->getStruct());
-                                  typeName = p.userDef->getTypeName();
+                                  typeName = NewPoolTString(p.userDef->getTypeName().c_str());
                               }
                             }
     explicit TType(TTypeList* userDef, TString n) : 
                             type(EbtStruct), qualifier(EvqTemporary), size(1), matrix(false), array(false), arraySize(0),
-                            structure(userDef), typeName(n), maxArraySize(0), arrayInformationType(0) {
+                            structure(userDef), maxArraySize(0), arrayInformationType(0), fieldName(0), mangled(0) {
                                 structureSize = setStructSize(userDef);
+								typeName = NewPoolTString(n.c_str());
                             }
-    
+	explicit TType() {}
     virtual ~TType() {}
+
 	TType (const TType& type) { *this = type; }
+    
+	void copyType(const TType& copyOf, TStructureMap& remapper)
+	{
+		type = copyOf.type;
+		qualifier = copyOf.qualifier;
+		size = copyOf.size;
+		matrix = copyOf.matrix;
+		array = copyOf.array;
+		arraySize = copyOf.arraySize;
+		
+		TStructureMapIterator iter;
+		if (copyOf.structure) {
+	        if ((iter = remapper.find(structure)) == remapper.end()) {
+				// create the new structure here
+				structure = NewPoolTTypeList();
+				for (unsigned int i = 0; i < copyOf.structure->size(); ++i) {
+					TTypeLine typeLine;
+					typeLine.line = (*copyOf.structure)[i].line;
+					typeLine.type = (*copyOf.structure)[i].type->clone(remapper);
+					structure->push_back(typeLine);
+				}
+			} else {
+				structure = iter->second;
+			}
+		} else
+			structure = 0;
+
+		fieldName = 0;
+		if (copyOf.fieldName)
+			fieldName = NewPoolTString(copyOf.fieldName->c_str());
+		typeName = 0;
+		if (copyOf.typeName)
+			typeName = NewPoolTString(copyOf.typeName->c_str());
+		
+		mangled = 0;
+		if (copyOf.mangled)
+			mangled = NewPoolTString(copyOf.mangled->c_str());
+
+		structureSize = copyOf.structureSize;
+		maxArraySize = copyOf.maxArraySize;
+		assert (copyOf.arrayInformationType == 0);
+		arrayInformationType = 0; // arrayInformationType should not be set for builtIn symbol table level
+	}
+
+	TType* clone(TStructureMap& remapper)
+	{
+		TType *newType = new TType();
+		newType->copyType(*this, remapper);
+
+		return newType;
+	}
     
     int setStructSize(TTypeList* userDef)
     {
         int stSize = 0;
         for (TTypeList::iterator tl = userDef->begin(); tl != userDef->end(); tl++) {
             if (((*tl).type)->isArray()) { 
+				if (((*tl).type)->getStruct()) {
+					int structSize = setStructSize(((*tl).type)->getStruct());
+					stSize += structSize * ((*tl).type)->getArraySize();
+				} else {
                 stSize += ((*tl).type)->getInstanceSize() * ((*tl).type)->getArraySize();
+				}
             } else if (((*tl).type)->isMatrix() || ((*tl).type)->isVector()){
                 stSize += ((*tl).type)->getInstanceSize();
             } else if (((*tl).type)->getStruct()) {
@@ -132,10 +192,20 @@ public:
                                   structure = userDef->getStruct(); 
                               // leave array information intact.
                             }
-    virtual void setTypeName(const TString& n) { typeName = n; }
-    virtual void setFieldName(const TString& n) { fieldName = n; }
-    virtual const TString& getTypeName() const { return typeName; }
-    virtual const TString& getFieldName() const { return fieldName; }
+    virtual void setTypeName(const TString& n) { typeName = NewPoolTString(n.c_str()); }
+    virtual void setFieldName(const TString& n) { fieldName = NewPoolTString(n.c_str()); }
+    virtual const TString& getTypeName() const
+    { 
+		assert (typeName);    		
+    	return *typeName; 
+    }
+
+    virtual const TString& getFieldName() const
+    { 
+    	assert (fieldName);
+		return *fieldName; 
+    }
+    
     virtual TBasicType getBasicType() const { return type; }
     virtual TQualifier getQualifier() const { return qualifier; }
     virtual void changeQualifier(TQualifier q) { qualifier = q; }
@@ -152,8 +222,8 @@ public:
             return size;
     }
     
-    virtual bool isMatrix() const { return matrix; }
-    virtual bool isArray() const  { return array; }
+	virtual bool isMatrix() const { return matrix ? true : false; }
+    virtual bool isArray() const  { return array ? true : false; }
     int getArraySize() const { return arraySize; }
     void setArraySize(int s) { array = true; arraySize = s; }
     void setMaxArraySize (int s) { maxArraySize = s; }
@@ -180,14 +250,16 @@ public:
     const char* getBasicString() const { return TType::getBasicString(type); }
     const char* getQualifierString() const { return ::getQualifierString(qualifier); }
     TTypeList* getStruct() { return structure; }
-    int getStructSize() { return structureSize; }
+    int getStructSize() const { return structureSize; }
     TTypeList* getStruct() const { return structure; }
     TString& getMangledName() {
-        if (mangled.size() == 0) {
-            buildMangledName(mangled);            
-            mangled+=';';
+        if (!mangled) {
+			mangled = NewPoolTString("");
+            buildMangledName(*mangled);            
+            *mangled+=';';
         }
-        return mangled;
+    
+        return *mangled;
     }
     bool operator==(const TType& right) const {
         return      type == right.type   &&
@@ -203,21 +275,22 @@ public:
     TString getCompleteString() const;
         
 protected:
-    TBasicType type;
-    TQualifier qualifier;
-    int size;                  // size of vector or matrix, not size of array
-    bool matrix;
-    bool array;
+    void buildMangledName(TString&);
+
     int arraySize;
     TTypeList* structure;      // 0 unless this is a struct
-    TString fieldName;         // for structure field names
-    TString typeName;          // for structure field type name
-    TString mangled;
+	TString *fieldName;         // for structure field names
+	TString *typeName;          // for structure field type name
+    TString *mangled;
     int structureSize;
     int maxArraySize;
     TType* arrayInformationType;
 
-    void buildMangledName(TString&);
+	TQualifier qualifier : 7;
+	TBasicType type      : 6;
+	int size             : 8; // size of vector or matrix, not size of array
+	unsigned int matrix  : 1;
+	unsigned int array   : 1;
 };
 
 #endif // _TYPES_INCLUDED_

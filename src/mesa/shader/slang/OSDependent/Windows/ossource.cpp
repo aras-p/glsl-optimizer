@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -42,11 +42,7 @@
 #error Trying to build a windows specific file in a non windows build.
 #endif
 
-//
-// disable DllMain on Mesa-3D builds, call appropriate Init* and Detach*
-// routines manually in context initialization
-//
-/*BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason)
     {
@@ -76,7 +72,7 @@
     }
 
     return true;
-}*/
+}
 
 //
 // Thread Local Storage Operations

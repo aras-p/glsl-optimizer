@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,9 @@
 #include "osinclude.h"
 #include "Initialisation.h"
 
-#if !(defined(linux))
+/*#if !(defined(linux))
 #error Trying to build a Linux specific file in a non-Linux build.
-#endif
+#endif*/
 
 //
 // Thread cleanup

@@ -1,36 +1,36 @@
-/*
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
-//All rights reserved.
-//
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
-//
-//    Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-//
-//    Redistributions in binary form must reproduce the above
-//    copyright notice, this list of conditions and the following
-//    disclaimer in the documentation and/or other materials provided
-//    with the distribution.
-//
-//    Neither the name of 3Dlabs Inc. Ltd. nor the names of its
-//    contributors may be used to endorse or promote products derived
-//    from this software without specific prior written permission.
-//
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
-*/
+/* */
+/*Copyright (C) 2002-2005  3Dlabs Inc. Ltd. */
+/*All rights reserved. */
+/* */
+/*Redistribution and use in source and binary forms, with or without */
+/*modification, are permitted provided that the following conditions */
+/*are met: */
+/* */
+/*    Redistributions of source code must retain the above copyright */
+/*    notice, this list of conditions and the following disclaimer. */
+/* */
+/*    Redistributions in binary form must reproduce the above */
+/*    copyright notice, this list of conditions and the following */
+/*    disclaimer in the documentation and/or other materials provided */
+/*    with the distribution. */
+/* */
+/*    Neither the name of 3Dlabs Inc. Ltd. nor the names of its */
+/*    contributors may be used to endorse or promote products derived */
+/*    from this software without specific prior written permission. */
+/* */
+/*THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS */
+/*"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT */
+/*LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS */
+/*FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE */
+/*COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, */
+/*INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, */
+/*BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; */
+/*LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER */
+/*CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT */
+/*LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN */
+/*ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
+/*POSSIBILITY OF SUCH DAMAGE. */
+/* */
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,9 +74,9 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-/*
-// cpp.c
-*/
+/* */
+/* cpp.c */
+/* */
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -85,8 +85,6 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctype.h>
 
 #include "slglobals.h"
-
-#include "slang_mesa.h"
 
 static int CPPif(yystypepp * yylvalpp);
 
@@ -154,7 +152,7 @@ int InitCPP(void)
     strcpy(buffer, "PROFILE_");
     t = buffer + strlen(buffer);
     f = cpp->options.profileString;
-    while ((_mesa_isalnum(*f) || *f == '_') && t < buffer + sizeof(buffer) - 1)
+    while ((isalnum(*f) || *f == '_') && t < buffer + sizeof(buffer) - 1)
         *t++ = toupper(*f++);
     *t = 0;
 	return 1;
@@ -299,10 +297,13 @@ static int CPPelse(int matchelse, yystypepp * yylvalpp)
     int token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
 	
 	while (token > 0) {
+        if (token != '#') {
 		while (token != '\n')
             token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-		if ((token = cpp->currentInput->scan(cpp->currentInput, yylvalpp)) != '#')
+            
+            token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
 			continue;
+        }
 		if ((token = cpp->currentInput->scan(cpp->currentInput, yylvalpp)) != CPP_IDENTIFIER)
 			continue;
         atom = yylvalpp->sc_ident;
@@ -321,7 +322,13 @@ static int CPPelse(int matchelse, yystypepp * yylvalpp)
                 --cpp->ifdepth;
             }
         else if (((int)(matchelse) != 0)&& depth==0) {
-			if (atom == elseAtom ){
+			if (atom == elseAtom ) {
+                token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
+                if (token != '\n') {
+                    CPPWarningToInfoLog("unexpected tokens following #else preprocessor directive - expected a newline");
+                    while (token != '\n')
+                        token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
+                } 
 				break;
 			} 
 			else if (atom == elifAtom) {
@@ -472,7 +479,7 @@ static int eval(int token, int prec, int *res, int *err, yystypepp * yylvalpp)
     }
     return token;
 error:
-    CPPErrorToInfoLog("#if");;
+    CPPErrorToInfoLog("incorrect preprocessor directive");
     *err = 1;
     *res = 0;
     return token;
@@ -490,10 +497,14 @@ static int CPPif(yystypepp * yylvalpp) {
 	}
 	token = eval(token, MIN_PREC, &res, &err, yylvalpp);
     if (token != '\n') {
-        CPPErrorToInfoLog("#if");
-    } else if (!res && !err) {
+        CPPWarningToInfoLog("unexpected tokens following the preprocessor directive - expected a newline");
+        while (token != '\n')
+            token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
+    } 
+    if (!res && !err) {
         token = CPPelse(1, yylvalpp);
     }
+
     return token;
 } /* CPPif */
 
@@ -510,6 +521,12 @@ static int CPPifdef(int defined, yystypepp * yylvalpp)
             defined ? CPPErrorToInfoLog("ifdef"):CPPErrorToInfoLog("ifndef");
     } else {
         Symbol *s = LookUpSymbol(macros, name);
+        token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
+        if (token != '\n') {
+            CPPWarningToInfoLog("unexpected tokens following #ifdef preprocessor directive - expected a newline");
+            while (token != '\n')
+                token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
+        }
         if (((s && !s->details.mac.undef) ? 1 : 0) != defined)
             token = CPPelse(1, yylvalpp);
     }
@@ -566,45 +583,77 @@ static int CPPerror(yystypepp * yylvalpp) {
 		token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
 	}
 	DecLineNumber();
-	/* store this msg into the shader's information log..set the Compile Error flag!!!! */
+	/*store this msg into the shader's information log..set the Compile Error flag!!!! */
 	message=GetStrfromTStr();
     CPPShInfoLogMsg(message);
     ResetTString();
     cpp->CompileError=1;
     IncLineNumber();
     return '\n';
-}/* CPPerror */
+}/*CPPerror */
 
 static int CPPpragma(yystypepp * yylvalpp)
 {
-    const char *SrcStr;
-	const char *DestStr;
+	char SrcStrName[2];
+	char** allTokens;
+	int tokenCount = 0;
+	int maxTokenCount = 10;
+	const char* SrcStr;
+	int i;
+
 	int token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
 	
-	if(token=='\n'){
+	if (token=='\n') {
 		DecLineNumber();
         CPPErrorToInfoLog("#pragma");
         IncLineNumber();
 	    return token;
 	}
-	if (token != CPP_IDENTIFIER)goto error;
+	
+	allTokens = (char**)malloc(sizeof(char*) * maxTokenCount);	
+
+	while (token != '\n') {
+		if (tokenCount >= maxTokenCount) {
+			maxTokenCount *= 2;
+			allTokens = (char**)realloc((char**)allTokens, sizeof(char*) * maxTokenCount);
+		}
+		switch (token) {
+		case CPP_IDENTIFIER:
     SrcStr = GetAtomString(atable, yylvalpp->sc_ident);
+			allTokens[tokenCount] = (char*)malloc(strlen(SrcStr) + 1);
+			strcpy(allTokens[tokenCount++], SrcStr);
+			break;
+		case CPP_INTCONSTANT:
+			SrcStr = yylvalpp->symbol_name;
+			allTokens[tokenCount] = (char*)malloc(strlen(SrcStr) + 1);
+			strcpy(allTokens[tokenCount++], SrcStr);
+			break;
+		case CPP_FLOATCONSTANT:
+			SrcStr = yylvalpp->symbol_name;
+			allTokens[tokenCount] = (char*)malloc(strlen(SrcStr) + 1);
+			strcpy(allTokens[tokenCount++], SrcStr);
+			break;
+		case -1:
+			/* EOF */
+            CPPShInfoLogMsg("#pragma directive must end with a newline");			
+			return token;
+		default:
+			SrcStrName[0] = token;
+			SrcStrName[1] = '\0';
+			allTokens[tokenCount] = (char*)malloc(2);
+			strcpy(allTokens[tokenCount++], SrcStrName);
+		}
     token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-    if (token == '(') {
-          token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-          if (token != CPP_IDENTIFIER) goto error;
-		  DestStr = GetAtomString(atable, yylvalpp->sc_ident);
-          token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-	      if (token != ')') goto error;
-		  token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
-		  if(token!='\n')goto error;
-	      /* make a call to CPP function MapStrings with SrcStr and DestStr. */
-		  MapStrings(SrcStr,DestStr);
-	}else{
-error:
-		CPPErrorToInfoLog("#pragma");
-		return token;
 	}
+
+	cpp->currentInput->ungetch(cpp->currentInput, token, yylvalpp);
+	HandlePragma(allTokens, tokenCount);
+		  token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
+	
+	for (i = 0; i < tokenCount; ++i) {
+		free (allTokens[i]);
+	}
+	free (allTokens);	
 
 	return token;
 } /* CPPpragma */
@@ -629,7 +678,7 @@ static int CPPversion(yystypepp * yylvalpp)
         CPPErrorToInfoLog("#version");
 	
     yylvalpp->sc_int=atoi(yylvalpp->symbol_name);
-	/* SetVersionNumber(yylvalpp->sc_int); */
+	/*SetVersionNumber(yylvalpp->sc_int); */
     
     if (yylvalpp->sc_int != GL2_VERSION_NUMBER)
         CPPShInfoLogMsg("Version number not supported by GL2");
@@ -702,6 +751,12 @@ int readCPPline(yystypepp * yylvalpp)
                      CPPErrorToInfoLog("#else mismatch");
                      cpp->CompileError=1;
                  }
+                 token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
+                 if (token != '\n') {
+                     CPPWarningToInfoLog("unexpected tokens following #else preprocessor directive - expected a newline");
+                     while (token != '\n')
+                         token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
+                 }
 			     token = CPPelse(0, yylvalpp);
              }else{
                  CPPErrorToInfoLog("#else after a #else");
@@ -714,6 +769,10 @@ int readCPPline(yystypepp * yylvalpp)
                  CPPErrorToInfoLog("#elif mismatch");
                  cpp->CompileError=1;
             } 
+            /* this token is really a dont care, but we still need to eat the tokens */
+            token = cpp->currentInput->scan(cpp->currentInput, yylvalpp); 
+            while (token != '\n')
+                token = cpp->currentInput->scan(cpp->currentInput, yylvalpp);
 			 token = CPPelse(0, yylvalpp);
         } else if (yylvalpp->sc_ident == endifAtom) {
 			 cpp->elsedepth[cpp->elsetracker]=0;

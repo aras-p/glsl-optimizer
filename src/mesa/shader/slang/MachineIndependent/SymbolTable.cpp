@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -53,8 +53,6 @@ void TType::buildMangledName(TString& mangledName)
     else if (isVector())
         mangledName += 'v';
 
-	unsigned int i;
-
     switch (type) {
     case EbtFloat:              mangledName += 'f';      break;
     case EbtInt:                mangledName += 'i';      break;
@@ -65,12 +63,15 @@ void TType::buildMangledName(TString& mangledName)
     case EbtSamplerCube:        mangledName += "sC";     break;
     case EbtSampler1DShadow:    mangledName += "sS1";    break;
     case EbtSampler2DShadow:    mangledName += "sS2";    break;
-    case EbtStruct:
+    case EbtStruct:        
         mangledName += "struct-";
-        mangledName += typeName;
-        for (i = 0; i < structure->size(); ++i) {
-            mangledName += '-';
-            (*structure)[i].type->buildMangledName(mangledName);
+        if (typeName)
+            mangledName += *typeName;
+        {// support MSVC++6.0
+            for (unsigned int i = 0; i < structure->size(); ++i) {
+                mangledName += '-';
+                (*structure)[i].type->buildMangledName(mangledName);
+            }
         }
     default: 
         break;
@@ -124,8 +125,8 @@ void TSymbolTable::dump(TInfoSink &infoSink) const
 //
 TFunction::~TFunction()
 {
-	for (TParamList::iterator i = parameters.begin(); i != parameters.end(); ++i)
-		delete (*i).type;
+    for (TParamList::iterator i = parameters.begin(); i != parameters.end(); ++i)
+        delete (*i).type;
 }
 
 //
@@ -133,8 +134,8 @@ TFunction::~TFunction()
 //
 TSymbolTableLevel::~TSymbolTableLevel()
 {
-	for (tLevel::iterator it = level.begin(); it != level.end(); ++it)
-		delete (*it).second;
+    for (tLevel::iterator it = level.begin(); it != level.end(); ++it)
+        delete (*it).second;
 }
 
 //
@@ -154,3 +155,81 @@ void TSymbolTableLevel::relateToOperator(const char* name, TOperator op)
         }
     }
 }    
+
+
+TSymbol::TSymbol(const TSymbol& copyOf)
+{
+    name = NewPoolTString(copyOf.name->c_str());
+    uniqueId = copyOf.uniqueId;
+}
+
+TVariable::TVariable(const TVariable& copyOf, TStructureMap& remapper) : TSymbol(copyOf)
+{    
+    type.copyType(copyOf.type, remapper);
+    userType = copyOf.userType;
+    // for builtIn symbol table level, unionArray and arrayInformation pointers should be NULL
+    assert(copyOf.arrayInformationType == 0); 
+    arrayInformationType = 0;
+
+    if (copyOf.unionArray) {        
+        assert(!copyOf.type.getStruct()); 
+        assert(copyOf.type.getInstanceSize() == 1);
+        unionArray = new constUnion[1];
+        switch (type.getBasicType()) {
+        case EbtFloat: unionArray[0].fConst = copyOf.unionArray[0].fConst; break;
+        case EbtInt:   unionArray[0].iConst = copyOf.unionArray[0].iConst; break;
+        case EbtBool:  unionArray[0].bConst = copyOf.unionArray[0].bConst; break;
+        default:
+            assert (false && "Unknown type");
+        }
+    } else
+        unionArray = 0;
+}
+
+TVariable* TVariable::clone(TStructureMap& remapper) 
+{
+    TVariable *variable = new TVariable(*this, remapper);
+
+    return variable;
+}
+
+TFunction::TFunction(const TFunction& copyOf, TStructureMap& remapper) : TSymbol(copyOf)
+{    
+    for (unsigned int i = 0; i < copyOf.parameters.size(); ++i) {
+        TParameter param;
+        parameters.push_back(param);
+        parameters.back().copyParam(copyOf.parameters[i], remapper);
+    }
+
+    returnType.copyType(copyOf.returnType, remapper);
+    mangledName = copyOf.mangledName;
+    op = copyOf.op;
+    defined = copyOf.defined;
+}
+
+TFunction* TFunction::clone(TStructureMap& remapper) 
+{
+    TFunction *function = new TFunction(*this, remapper);
+
+    return function;
+}
+
+TSymbolTableLevel* TSymbolTableLevel::clone(TStructureMap& remapper)
+{
+    TSymbolTableLevel *symTableLevel = new TSymbolTableLevel();
+    tLevel::iterator iter;
+    for (iter = level.begin(); iter != level.end(); ++iter) {
+        symTableLevel->insert(*iter->second->clone(remapper));
+    }
+
+    return symTableLevel;
+}
+
+void TSymbolTable::copyTable(const TSymbolTable& copyOf)
+{
+    TStructureMap remapper;
+    uniqueId = copyOf.uniqueId;
+    for (unsigned int i = 0; i < copyOf.table.size(); ++i) {
+        table.push_back(copyOf.table[i]->clone(remapper));
+    }
+}

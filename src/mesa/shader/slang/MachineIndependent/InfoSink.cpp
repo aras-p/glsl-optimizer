@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@ void TInfoSinkBase::append(const char *s)
 void TInfoSinkBase::append(int count, char c)       
 { 
     if (outputStream & EString) {
-        checkMem(1);         
+        checkMem(count);         
         sink.append(count, c); 
     }
 

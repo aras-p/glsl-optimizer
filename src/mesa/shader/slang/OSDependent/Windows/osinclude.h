@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@
 #error Trying to include a windows specific file in a non windows build.
 #endif
 
-#define STRICT 1
+#define STRICT
 #define VC_EXTRALEAN 1
 #include <windows.h>
 #include <assert.h>

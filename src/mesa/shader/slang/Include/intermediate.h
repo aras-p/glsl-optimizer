@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,6 @@
 //
 // Operators used by the high-level (parse tree) representation.
 //
-
 enum TOperator {
     EOpNull,            // if in a node, should only mean a node is still being built
     EOpSequence,        // denotes a list of statements, or parameters, etc.
@@ -379,7 +378,7 @@ public:
     virtual bool promote(TInfoSink&) { return true; }
 protected:
     TIntermOperator(TOperator o) : TIntermTyped(TType(EbtFloat)), op(o) {}
-    TIntermOperator(TOperator o, TType t) : TIntermTyped(t), op(o) {}   
+    TIntermOperator(TOperator o, TType& t) : TIntermTyped(t), op(o) {}   
     TOperator op;
 };
 
@@ -406,7 +405,7 @@ protected:
 //
 class TIntermUnary : public TIntermOperator {
 public:
-    TIntermUnary(TOperator o, TType t) : TIntermOperator(o, t), operand(0) {}
+    TIntermUnary(TOperator o, TType& t) : TIntermOperator(o, t), operand(0) {}
     TIntermUnary(TOperator o) : TIntermOperator(o), operand(0) {}
     virtual void traverse(TIntermTraverser*);
     virtual void setOperand(TIntermTyped* o) { operand = o; }
@@ -423,8 +422,9 @@ typedef TVector<int> TQualifierList;
 //
 class TIntermAggregate : public TIntermOperator {
 public:
-    TIntermAggregate() : TIntermOperator(EOpNull), userDefined(false) { }
-    TIntermAggregate(TOperator o) : TIntermOperator(o) { }
+    TIntermAggregate() : TIntermOperator(EOpNull), userDefined(false), pragmaTable(0) { }
+    TIntermAggregate(TOperator o) : TIntermOperator(o), pragmaTable(0) { }
+	~TIntermAggregate() { delete pragmaTable; }
     virtual TIntermAggregate* getAsAggregate() { return this; }
     virtual void setOperator(TOperator o) { op = o; }
     virtual TIntermSequence& getSequence() { return sequence; }
@@ -434,11 +434,22 @@ public:
     virtual void setUserDefined() { userDefined = true; }
     virtual bool isUserDefined() { return userDefined; }
     virtual TQualifierList& getQualifier() { return qualifier; }
+	void setOptimize(bool o) { optimize = o; }
+	void setDebug(bool d) { debug = d; }
+	bool getOptimize() { return optimize; }
+	bool getDebug() { return debug; }
+	void addToPragmaTable(const TPragmaTable& pTable);
+	const TPragmaTable& getPragmaTable() const { return *pragmaTable; }
 protected:
+	TIntermAggregate(const TIntermAggregate&); // disallow copy constructor
+	TIntermAggregate& operator=(const TIntermAggregate&); // disallow assignment operator
     TIntermSequence sequence;
     TQualifierList qualifier;
 	TString name;
     bool userDefined; // used for user defined function names
+	bool optimize;
+	bool debug;
+	TPragmaTable *pragmaTable;
 };
 
 //
@@ -448,7 +459,7 @@ class TIntermSelection : public TIntermTyped {
 public:
     TIntermSelection(TIntermTyped* cond, TIntermNode* trueB, TIntermNode* falseB) :
         TIntermTyped(TType(EbtVoid)), condition(cond), trueBlock(trueB), falseBlock(falseB) {}
-    TIntermSelection(TIntermTyped* cond, TIntermNode* trueB, TIntermNode* falseB, TType type) :
+    TIntermSelection(TIntermTyped* cond, TIntermNode* trueB, TIntermNode* falseB, const TType& type) :
         TIntermTyped(type), condition(cond), trueBlock(trueB), falseBlock(falseB) {}
     virtual void traverse(TIntermTraverser*);
     virtual TIntermNode* getCondition() const { return condition; }

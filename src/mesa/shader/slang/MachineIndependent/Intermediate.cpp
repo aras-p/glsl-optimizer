@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,6 @@
 #include "localintermediate.h"
 #include "QualifierAlive.h"
 #include "RemoveTree.h"
-#include <assert.h>
 #include <float.h>
 
 ////////////////////////////////////////////////////////////////////////////
@@ -230,7 +229,7 @@ TIntermTyped* TIntermediate::addIndex(TOperator op, TIntermTyped* base, TIntermT
     node->setLeft(base);
     node->setRight(index);
 
-	// caller should set the type
+    // caller should set the type
 
     return node;
 }
@@ -446,12 +445,17 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     bool allConstant = true;
     // check to see if there is an aggregate node
     if (node->getAsAggregate()) {
+        if (node->getAsAggregate()->getOp() != EOpFunctionCall) {
+            // if the aggregate node is a constructor or a comma operator, look at its children, if they are constant
+            // convert them into the right type
         TIntermSequence &sequenceVector = node->getAsAggregate()->getSequence() ;
         for (TIntermSequence::iterator p = sequenceVector.begin(); 
                                     p != sequenceVector.end(); p++) {
             if (!(*p)->getAsTyped()->getAsConstantUnion())
                 allConstant = false;
         }
+        } else
+            allConstant = false;
     }
     if (allConstant && node->getAsAggregate()) {  // we can do the constant folding here as all the nodes of the aggregate are const
         TIntermSequence &sequenceVector = node->getAsAggregate()->getSequence() ;
@@ -559,10 +563,8 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
             return 0;
         }
 
-        newNode = new TIntermUnary(newOp, TType(promoteTo, EvqTemporary,
-                                                        node->getNominalSize(), 
-                                                        node->isMatrix(), 
-                                                        node->isArray()));
+        TType type(promoteTo, EvqTemporary, node->getNominalSize(), node->isMatrix(), node->isArray());
+        newNode = new TIntermUnary(newOp, type);
         newNode->setLine(node->getLine());
         newNode->setOperand(node);
 
@@ -646,6 +648,20 @@ TIntermNode* TIntermediate::addSelection(TIntermTyped* cond, TIntermNodePair nod
     node->setLine(line);
 
     return node;
+}
+
+
+TIntermTyped* TIntermediate::addComma(TIntermTyped* left, TIntermTyped* right, TSourceLoc line)
+{
+    if (left->getType().getQualifier() == EvqConst && right->getType().getQualifier() == EvqConst) {
+        return right;
+    } else {
+        TIntermTyped *commaAggregate = growAggregate(left, right, line);
+        commaAggregate->getAsAggregate()->setOperator(EOpComma);    
+        commaAggregate->setType(right->getType());
+        commaAggregate->getTypePointer()->changeQualifier(EvqTemporary);
+        return commaAggregate;
+    }
 }
 
 //
@@ -768,15 +784,6 @@ bool TIntermediate::postProcess(TIntermNode* root, EShLanguage language)
     if (aggRoot && aggRoot->getOp() == EOpNull)
         aggRoot->setOperator(EOpSequence);
 
-    //
-    // Other things...
-    //
-
-    if (language == EShLangVertex && !QualifierWritten(root, EvqPosition)) {
-        infoSink.info.message(EPrefixError, "gl_Position must be written by all paths through a vertex shader.");
-        return false;
-    }
-
     return true;
 }
 
@@ -785,8 +792,8 @@ bool TIntermediate::postProcess(TIntermNode* root, EShLanguage language)
 //
 void TIntermediate::remove(TIntermNode* root)
 {
-	if (root)
-		RemoveAllTreeNodes(root);
+    if (root)
+        RemoveAllTreeNodes(root);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1062,7 +1069,7 @@ bool TIntermBinary::promote(TInfoSink& infoSink)
     case EOpAdd:
     case EOpSub:
     case EOpDiv:
-	case EOpMod:
+    case EOpMod:
     case EOpAddAssign:
     case EOpSubAssign:
     case EOpDivAssign:
@@ -1073,8 +1080,8 @@ bool TIntermBinary::promote(TInfoSink& infoSink)
             return false;
         setType(TType(type, EvqTemporary, size, left->isMatrix() || right->isMatrix()));
         break;
-		
-	case EOpEqual:
+        
+    case EOpEqual:
     case EOpNotEqual:
     case EOpLessThan:
     case EOpGreaterThan:
@@ -1116,7 +1123,7 @@ default:
     return true;
 }
 
-bool compareStructure(TType leftNodeType, constUnion* rightUnionArray, constUnion* leftUnionArray, int& index)
+bool compareStructure(const TType& leftNodeType, constUnion* rightUnionArray, constUnion* leftUnionArray, int& index)
 {
     TTypeList* fields = leftNodeType.getStruct();
 
@@ -1172,131 +1179,144 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, TIntermTyped* constantNod
             TIntermConstantUnion *node = constantNode->getAsConstantUnion();
             TIntermConstantUnion *newNode;
             constUnion* tempConstArray;
-			int i;
             switch(op) {
             case EOpAdd: 
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {
-                    switch (this->getType().getBasicType()) {
-                    case EbtFloat: tempConstArray[i].fConst = unionArray[i].fConst + node->getUnionArrayPointer()->fConst; break;
-                    case EbtInt:   tempConstArray[i].iConst = unionArray[i].iConst + node->getUnionArrayPointer()->iConst; break;
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"+\"", this->getLine());
-                        return 0;
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {
+                        switch (this->getType().getBasicType()) {
+                        case EbtFloat: tempConstArray[i].fConst = unionArray[i].fConst + node->getUnionArrayPointer()->fConst; break;
+                        case EbtInt:   tempConstArray[i].iConst = unionArray[i].iConst + node->getUnionArrayPointer()->iConst; break;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"+\"", this->getLine());
+                            return 0;
+                        }
                     }
                 }
                 break;
             case EOpMatrixTimesScalar: 
             case EOpVectorTimesScalar:
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {
-                    switch (this->getType().getBasicType()) {
-                    case EbtFloat: tempConstArray[i].fConst = unionArray[i].fConst * node->getUnionArrayPointer()->fConst; break;
-                    case EbtInt:   tempConstArray[i].iConst = unionArray[i].iConst * node->getUnionArrayPointer()->iConst; break;
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"*\"", this->getLine());
-                        return 0;
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {
+                        switch (this->getType().getBasicType()) {
+                        case EbtFloat: tempConstArray[i].fConst = unionArray[i].fConst * node->getUnionArrayPointer()->fConst; break;
+                        case EbtInt:   tempConstArray[i].iConst = unionArray[i].iConst * node->getUnionArrayPointer()->iConst; break;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"*\"", this->getLine());
+                            return 0;
+                        }
                     }
                 }
                 break;
             case EOpSub:
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {
-                    switch (this->getType().getBasicType()) {
-                    case EbtFloat: 
-                        if (leftOperand)
-                            tempConstArray[i].fConst = unionArray[i].fConst - node->getUnionArrayPointer()->fConst; 
-                        else
-                            tempConstArray[i].fConst = node->getUnionArrayPointer()->fConst - unionArray[i].fConst; 
-                    break;
-
-                    case EbtInt:   
-                        if (leftOperand) 
-                            tempConstArray[i].iConst = unionArray[i].iConst - node->getUnionArrayPointer()->iConst; 
-                        else
-                            tempConstArray[i].iConst = node->getUnionArrayPointer()->iConst - unionArray[i].iConst; 
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {
+                        switch (this->getType().getBasicType()) {
+                        case EbtFloat: 
+                            if (leftOperand)
+                                tempConstArray[i].fConst = unionArray[i].fConst - node->getUnionArrayPointer()->fConst; 
+                            else
+                                tempConstArray[i].fConst = node->getUnionArrayPointer()->fConst - unionArray[i].fConst; 
                         break;
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"-\"", this->getLine());
-                        return 0;
+
+                        case EbtInt:   
+                            if (leftOperand) 
+                                tempConstArray[i].iConst = unionArray[i].iConst - node->getUnionArrayPointer()->iConst; 
+                            else
+                                tempConstArray[i].iConst = node->getUnionArrayPointer()->iConst - unionArray[i].iConst; 
+                            break;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"-\"", this->getLine());
+                            return 0;
+                        }
                     }
                 }
                 break;
 
             case EOpDiv:
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {
-                    switch (this->getType().getBasicType()) {
-                    case EbtFloat: 
-                        if (leftOperand) {
-                            if (node->getUnionArrayPointer()->fConst == 0.0) {
-                                infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
-                                tempConstArray[i].fConst = FLT_MAX;
-                            } else
-                                tempConstArray[i].fConst = unionArray[i].fConst / node->getUnionArrayPointer()->fConst; 
-                        } else {
-                            if (unionArray[i].fConst == 0.0) {
-                                infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
-                                tempConstArray[i].fConst = FLT_MAX;
-                            } else
-                                tempConstArray[i].fConst = node->getUnionArrayPointer()->fConst / unionArray[i].fConst; 
-                        }
-                        break;
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {
+                        switch (this->getType().getBasicType()) {
+                        case EbtFloat: 
+                            if (leftOperand) {
+                                if (node->getUnionArrayPointer()->fConst == 0.0) {
+                                    infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
+                                    tempConstArray[i].fConst = FLT_MAX;
+                                } else
+                                    tempConstArray[i].fConst = unionArray[i].fConst / node->getUnionArrayPointer()->fConst; 
+                            } else {
+                                if (unionArray[i].fConst == 0.0) {
+                                    infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
+                                    tempConstArray[i].fConst = FLT_MAX;
+                                } else
+                                    tempConstArray[i].fConst = node->getUnionArrayPointer()->fConst / unionArray[i].fConst; 
+                            }
+                            break;
 
-                    case EbtInt:   
-                        if (leftOperand) {
-                            if (node->getUnionArrayPointer()->iConst == 0) {
-                                infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
-                                tempConstArray[i].iConst = INT_MAX;
-                            } else
-                                tempConstArray[i].iConst = unionArray[i].iConst / node->getUnionArrayPointer()->iConst; 
-                        } else {
-                            if (unionArray[i].iConst == 0) {
-                                infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
-                                tempConstArray[i].iConst = INT_MAX;
-                            } else
-                                tempConstArray[i].iConst = node->getUnionArrayPointer()->iConst / unionArray[i].iConst; 
+                        case EbtInt:   
+                            if (leftOperand) {
+                                if (node->getUnionArrayPointer()->iConst == 0) {
+                                    infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
+                                    tempConstArray[i].iConst = INT_MAX;
+                                } else
+                                    tempConstArray[i].iConst = unionArray[i].iConst / node->getUnionArrayPointer()->iConst; 
+                            } else {
+                                if (unionArray[i].iConst == 0) {
+                                    infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
+                                    tempConstArray[i].iConst = INT_MAX;
+                                } else
+                                    tempConstArray[i].iConst = node->getUnionArrayPointer()->iConst / unionArray[i].iConst; 
+                            }
+                            break;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"/\"", this->getLine());
+                            return 0;
                         }
-                        break;
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"/\"", this->getLine());
-                        return 0;
                     }
                 }
                 break;
 
             case EOpLogicalAnd: // this code is written for possible future use, will not get executed currently
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {
-                    switch (this->getType().getBasicType()) {
-                    case EbtBool:   tempConstArray[i].bConst = unionArray[i].bConst && node->getUnionArrayPointer()->bConst; break;
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"&&\"", this->getLine());
-                        return 0;
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {
+                        switch (this->getType().getBasicType()) {
+                        case EbtBool:   tempConstArray[i].bConst = unionArray[i].bConst && node->getUnionArrayPointer()->bConst; break;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"&&\"", this->getLine());
+                            return 0;
+                        }
                     }
                 }
                 break;
             
             case EOpLogicalXor: // this code is written for possible future use, will not get executed currently
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {
-                    switch (this->getType().getBasicType()) {
-                    case EbtBool:   tempConstArray[i].bConst = unionArray[i].bConst ^ node->getUnionArrayPointer()->bConst; break;
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"^^\"", this->getLine());
-                        return 0;
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {
+                        switch (this->getType().getBasicType()) {
+                        case EbtBool:   tempConstArray[i].bConst = unionArray[i].bConst ^ node->getUnionArrayPointer()->bConst; break;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"^^\"", this->getLine());
+                            return 0;
+                        }
                     }
                 }
                 break;
 
-            case EOpLogicalOr: // this code is written for possible future use, will not get executed currently
+            case EOpLogicalOr: // this code is written for possible future use, will not get executed currently                
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {
-                    switch (this->getType().getBasicType()) {
-                    case EbtBool:   tempConstArray[i].bConst = unionArray[i].bConst || node->getUnionArrayPointer()->bConst; break;
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"||\"", this->getLine());
-                        return 0;
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {
+                        switch (this->getType().getBasicType()) {
+                        case EbtBool:   tempConstArray[i].bConst = unionArray[i].bConst || node->getUnionArrayPointer()->bConst; break;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"||\"", this->getLine());
+                            return 0;
+                        }
                     }
                 }
                 break;
@@ -1316,68 +1336,69 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, TIntermTyped* constantNod
             TIntermConstantUnion *tempNode;
             int index = 0;
             bool boolNodeFlag = false;
-			int i;
             switch(op) {
             case EOpAdd: 
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {            
-                    switch (this->getType().getBasicType()) {
-                    case EbtFloat: tempConstArray[i].fConst = unionArray[i].fConst + rightUnionArray[i].fConst; break;
-                    case EbtInt:   tempConstArray[i].iConst = unionArray[i].iConst + rightUnionArray[i].iConst; break;
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"+\"", this->getLine());
-                        return 0;
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {            
+                        switch (this->getType().getBasicType()) {
+                        case EbtFloat: tempConstArray[i].fConst = unionArray[i].fConst + rightUnionArray[i].fConst; break;
+                        case EbtInt:   tempConstArray[i].iConst = unionArray[i].iConst + rightUnionArray[i].iConst; break;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"+\"", this->getLine());
+                            return 0;
+                        }
                     }
                 }
                 break;
             case EOpSub: 
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {            
-                    switch (this->getType().getBasicType()) {                                
-                    case EbtFloat: 
-                        if (leftOperand)
-                            tempConstArray[i].fConst = unionArray[i].fConst - rightUnionArray[i].fConst; 
-                        else
-                            tempConstArray[i].fConst = rightUnionArray[i].fConst - unionArray[i].fConst; 
-                    break;
-
-                    case EbtInt:   
-                        if (leftOperand) 
-                            tempConstArray[i].iConst = unionArray[i].iConst - rightUnionArray[i].iConst;
-                        else
-                            tempConstArray[i].iConst = rightUnionArray[i].iConst - unionArray[i].iConst; 
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {            
+                        switch (this->getType().getBasicType()) {                                
+                        case EbtFloat: 
+                            if (leftOperand)
+                                tempConstArray[i].fConst = unionArray[i].fConst - rightUnionArray[i].fConst; 
+                            else
+                                tempConstArray[i].fConst = rightUnionArray[i].fConst - unionArray[i].fConst; 
                         break;
+
+                        case EbtInt:   
+                            if (leftOperand) 
+                                tempConstArray[i].iConst = unionArray[i].iConst - rightUnionArray[i].iConst;
+                            else
+                                tempConstArray[i].iConst = rightUnionArray[i].iConst - unionArray[i].iConst; 
+                            break;
             
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"-\"", this->getLine());
-                        return 0;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"-\"", this->getLine());
+                            return 0;
+                        }
                     }
                 }
                 break;
             case EOpMul: 
-                {
-                    if (this->isVector()) { // two vectors multiplied together
-                        int size = this->getSize();
-                        tempConstArray = new constUnion[size];
-                        
-                        for (int i = 0; i < size; i++) {            
-                            switch (this->getType().getBasicType()) {
-                            case EbtFloat: tempConstArray[i].fConst = unionArray[i].fConst * rightUnionArray[i].fConst;     break;
-                            case EbtInt:   tempConstArray[i].iConst = unionArray[i].iConst * rightUnionArray[i].iConst; break;
-                            default: 
-                                infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for vector multiply", this->getLine());
-                                return 0;
-                            }
+                if (this->isVector()) { // two vectors multiplied together
+                    int size = this->getSize();
+                    tempConstArray = new constUnion[size];
+                    
+                    for (int i = 0; i < size; i++) {            
+                        switch (this->getType().getBasicType()) {
+                        case EbtFloat: tempConstArray[i].fConst = unionArray[i].fConst * rightUnionArray[i].fConst;     break;
+                        case EbtInt:   tempConstArray[i].iConst = unionArray[i].iConst * rightUnionArray[i].iConst; break;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for vector multiply", this->getLine());
+                            return 0;
                         }
-                    } 
-                }
+                    }
+                } 
                 break;
             case EOpMatrixTimesMatrix:                
-                {
-                    if (this->getType().getBasicType() != EbtFloat || node->getBasicType() != EbtFloat) {
-                            infoSink.info.message(EPrefixInternalError, "Constant Folding cannot be done for matrix multiply", this->getLine());
-                            return 0;
-                    }
+                if (this->getType().getBasicType() != EbtFloat || node->getBasicType() != EbtFloat) {
+                        infoSink.info.message(EPrefixInternalError, "Constant Folding cannot be done for matrix multiply", this->getLine());
+                        return 0;
+                }
+                {// support MSVC++6.0
                     int size = this->getNominalSize();
                     tempConstArray = new constUnion[size*size];
                     for (int row = 0; row < size; row++) {
@@ -1392,42 +1413,44 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, TIntermTyped* constantNod
                 break;
             case EOpDiv: 
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {            
-                    switch (this->getType().getBasicType()) {
-                    case EbtFloat: 
-                        if (leftOperand) {
-                            if (rightUnionArray[i].fConst == 0.0) {
-                                infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
-                                tempConstArray[i].fConst = FLT_MAX;
-                            } else
-                                tempConstArray[i].fConst = unionArray[i].fConst / rightUnionArray[i].fConst; 
-                        } else {
-                            if (unionArray[i].fConst == 0.0) {
-                                infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
-                                tempConstArray[i].fConst = FLT_MAX;
-                            } else
-                                tempConstArray[i].fConst = rightUnionArray[i].fConst / unionArray[i].fConst; 
-                        }
-                        break;
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {            
+                        switch (this->getType().getBasicType()) {
+                        case EbtFloat: 
+                            if (leftOperand) {
+                                if (rightUnionArray[i].fConst == 0.0) {
+                                    infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
+                                    tempConstArray[i].fConst = FLT_MAX;
+                                } else
+                                    tempConstArray[i].fConst = unionArray[i].fConst / rightUnionArray[i].fConst; 
+                            } else {
+                                if (unionArray[i].fConst == 0.0) {
+                                    infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
+                                    tempConstArray[i].fConst = FLT_MAX;
+                                } else
+                                    tempConstArray[i].fConst = rightUnionArray[i].fConst / unionArray[i].fConst; 
+                            }
+                            break;
 
-                    case EbtInt:   
-                        if (leftOperand) {
-                            if (rightUnionArray[i].iConst == 0) {
-                                infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
-                                tempConstArray[i].iConst = INT_MAX;
-                            } else
-                                tempConstArray[i].iConst = unionArray[i].iConst / rightUnionArray[i].iConst; 
-                        } else {
-                            if (unionArray[i].iConst == 0) {
-                                infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
-                                tempConstArray[i].iConst = INT_MAX;
-                            } else
-                                tempConstArray[i].iConst = rightUnionArray[i].iConst / unionArray[i].iConst; 
+                        case EbtInt:   
+                            if (leftOperand) {
+                                if (rightUnionArray[i].iConst == 0) {
+                                    infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
+                                    tempConstArray[i].iConst = INT_MAX;
+                                } else
+                                    tempConstArray[i].iConst = unionArray[i].iConst / rightUnionArray[i].iConst; 
+                            } else {
+                                if (unionArray[i].iConst == 0) {
+                                    infoSink.info.message(EPrefixWarning, "Divide by zero error during constant folding", this->getLine());
+                                    tempConstArray[i].iConst = INT_MAX;
+                                } else
+                                    tempConstArray[i].iConst = rightUnionArray[i].iConst / unionArray[i].iConst; 
+                            }
+                            break;            
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"/\"", this->getLine());
+                            return 0;
                         }
-                        break;            
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"/\"", this->getLine());
-                        return 0;
                     }
                 }
                 break;
@@ -1436,22 +1459,23 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, TIntermTyped* constantNod
                 if (node->getBasicType() != EbtFloat) {
                         infoSink.info.message(EPrefixInternalError, "Constant Folding cannot be done for matrix times vector", this->getLine());
                         return 0;
-                }  
+                }
                 tempConstArray = new constUnion[this->getNominalSize()];
-				{
-					for (int size = this->getNominalSize(), i = 0; i < size; i++) {
-						tempConstArray[i].fConst = 0.0;
-						for (int j = 0; j < size; j++) {
-							tempConstArray[i].fConst += ((unionArray[j*size + i].fConst) * rightUnionArray[j].fConst); 
-						}
-					}
-				}
+                
+                {// support MSVC++6.0                    
+                    for (int size = this->getNominalSize(), i = 0; i < size; i++) {
+                        tempConstArray[i].fConst = 0.0;
+                        for (int j = 0; j < size; j++) {
+                            tempConstArray[i].fConst += ((unionArray[j*size + i].fConst) * rightUnionArray[j].fConst); 
+                        }
+                    }
+                }
                 
                 tempNode = new TIntermConstantUnion(tempConstArray, node->getType());
                 tempNode->setLine(this->getLine());
 
                 return tempNode;                
-            
+
             case EOpVectorTimesMatrix:
                 if (this->getType().getBasicType() != EbtFloat) {
                     infoSink.info.message(EPrefixInternalError, "Constant Folding cannot be done for vector times matrix", this->getLine());
@@ -1459,48 +1483,54 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, TIntermTyped* constantNod
                 }  
 
                 tempConstArray = new constUnion[this->getNominalSize()];
-				{
-					for (int size = this->getNominalSize(), i = 0; i < size; i++) {
-						tempConstArray[i].fConst = 0.0;
-						for (int j = 0; j < size; j++) {
-							tempConstArray[i].fConst += ((unionArray[j].fConst) * rightUnionArray[i*size + j].fConst); 
-						}
-					}
+                {// support MSVC++6.0
+                    for (int size = this->getNominalSize(), i = 0; i < size; i++) {
+                        tempConstArray[i].fConst = 0.0;
+                        for (int j = 0; j < size; j++) {
+                            tempConstArray[i].fConst += ((unionArray[j].fConst) * rightUnionArray[i*size + j].fConst); 
+                        }
+                    }
                 }
                 break;
 
             case EOpLogicalAnd: // this code is written for possible future use, will not get executed currently
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {            
-                    switch (this->getType().getBasicType()) {
-                    case EbtBool:   tempConstArray[i].bConst = unionArray[i].bConst && rightUnionArray[i].bConst; break;
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"&&\"", this->getLine());
-                        return 0;
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {            
+                        switch (this->getType().getBasicType()) {
+                        case EbtBool:   tempConstArray[i].bConst = unionArray[i].bConst && rightUnionArray[i].bConst; break;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"&&\"", this->getLine());
+                            return 0;
+                        }
                     }
                 }
                 break;
 
             case EOpLogicalXor: // this code is written for possible future use, will not get executed currently
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {            
-                    switch (this->getType().getBasicType()) {
-                    case EbtBool:   tempConstArray[i].bConst = unionArray[i].bConst ^ rightUnionArray[i].bConst; break;
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"^^\"", this->getLine());
-                        return 0;
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {            
+                        switch (this->getType().getBasicType()) {
+                        case EbtBool:   tempConstArray[i].bConst = unionArray[i].bConst ^ rightUnionArray[i].bConst; break;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"^^\"", this->getLine());
+                            return 0;
+                        }
                     }
                 }
                 break;
 
             case EOpLogicalOr: // this code is written for possible future use, will not get executed currently
                 tempConstArray = new constUnion[this->getSize()];
-                for (i = 0; i < this->getSize(); i++) {            
-                    switch (this->getType().getBasicType()) {
-                    case EbtBool:   tempConstArray[i].bConst = unionArray[i].bConst || rightUnionArray[i].bConst; break;
-                    default: 
-                        infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"||\"", this->getLine());
-                        return 0;
+                {// support MSVC++6.0
+                    for (int i = 0; i < this->getSize(); i++) {            
+                        switch (this->getType().getBasicType()) {
+                        case EbtBool:   tempConstArray[i].bConst = unionArray[i].bConst || rightUnionArray[i].bConst; break;
+                        default: 
+                            infoSink.info.message(EPrefixInternalError, "Constant folding cannot be done for \"||\"", this->getLine());
+                            return 0;
+                        }
                     }
                 }
                 break;
@@ -1509,27 +1539,33 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, TIntermTyped* constantNod
                    
                 switch (this->getType().getBasicType()) {
                 case EbtFloat: 
-                    for (i = 0; i < this->getSize(); i++) {    
-                        if (unionArray[i].fConst != rightUnionArray[i].fConst) {
-                            boolNodeFlag = true;
-                            break;  // break out of for loop
+                    {// support MSVC++6.0
+                        for (int i = 0; i < this->getSize(); i++) {    
+                            if (unionArray[i].fConst != rightUnionArray[i].fConst) {
+                                boolNodeFlag = true;
+                                break;  // break out of for loop
+                            }
                         }
                     }
                     break;
 
                 case EbtInt:   
-                    for (i = 0; i < this->getSize(); i++) {    
-                        if (unionArray[i].iConst != rightUnionArray[i].iConst) {
-                            boolNodeFlag = true;
-                            break;  // break out of for loop
+                    {// support MSVC++6.0
+                        for (int i = 0; i < this->getSize(); i++) {    
+                            if (unionArray[i].iConst != rightUnionArray[i].iConst) {
+                                boolNodeFlag = true;
+                                break;  // break out of for loop
+                            }
                         }
                     }
                     break;
                 case EbtBool:   
-                    for (i = 0; i < this->getSize(); i++) {    
-                        if (unionArray[i].bConst != rightUnionArray[i].bConst) {
-                            boolNodeFlag = true;
-                            break;  // break out of for loop
+                    {// support MSVC++6.0
+                        for (int i = 0; i < this->getSize(); i++) {    
+                            if (unionArray[i].bConst != rightUnionArray[i].bConst) {
+                                boolNodeFlag = true;
+                                break;  // break out of for loop
+                            }
                         }
                     }
                     break;
@@ -1559,27 +1595,33 @@ TIntermTyped* TIntermConstantUnion::fold(TOperator op, TIntermTyped* constantNod
             case EOpNotEqual: 
                 switch (this->getType().getBasicType()) {
                 case EbtFloat: 
-                    for (i = 0; i < this->getSize(); i++) {    
-                        if (unionArray[i].fConst == rightUnionArray[i].fConst) {
-                            boolNodeFlag = true;
-                            break;  // break out of for loop
+                    {// support MSVC++6.0
+                        for (int i = 0; i < this->getSize(); i++) {    
+                            if (unionArray[i].fConst == rightUnionArray[i].fConst) {
+                                boolNodeFlag = true;
+                                break;  // break out of for loop
+                            }
                         }
                     }
                     break;
 
                 case EbtInt:   
-                    for (i = 0; i < this->getSize(); i++) {    
-                        if (unionArray[i].iConst == rightUnionArray[i].iConst) {
-                            boolNodeFlag = true;
-                            break;  // break out of for loop
+                    {// support MSVC++6.0
+                        for (int i = 0; i < this->getSize(); i++) {    
+                            if (unionArray[i].iConst == rightUnionArray[i].iConst) {
+                                boolNodeFlag = true;
+                                break;  // break out of for loop
+                            }
                         }
                     }
                     break;
                 case EbtBool:   
-                    for (i = 0; i < this->getSize(); i++) {    
-                        if (unionArray[i].bConst == rightUnionArray[i].bConst) {
-                            boolNodeFlag = true;
-                            break;  // break out of for loop
+                    {// support MSVC++6.0
+                        for (int i = 0; i < this->getSize(); i++) {    
+                            if (unionArray[i].bConst == rightUnionArray[i].bConst) {
+                                boolNodeFlag = true;
+                                break;  // break out of for loop
+                            }
                         }
                     }
                     break;
@@ -1945,7 +1987,8 @@ TIntermTyped* TIntermediate::promoteConstantUnion(TBasicType promoteTo, TIntermC
         }
     
     }
-    TType t = node->getType();
+    
+    const TType& t = node->getType();
     
     return addConstantUnion(leftUnionArray, TType(promoteTo, t.getQualifier(), t.getNominalSize(), t.isMatrix(), t.isArray()), node->getLine());
 }
@@ -2027,31 +2070,40 @@ bool TIntermediate::removeMatrixConstNode(TIntermSequence &parentSequence, TType
 
     TIntermSequence::iterator parentNodeIter;
     TIntermSequence &childSequence = child->getSequence();
-	int i;
 
     switch (child->getOp()) {
     case EOpConstructMat2:
     case EOpConstructMat3:
     case EOpConstructMat4:
-        for (i = 0; i < child->getType().getInstanceSize(); i++) {
-            constUnion* constantUnion = new constUnion[1];
-            if (i % (child->getType().getNominalSize() + 1) == 0) {
-                *constantUnion = *(childSequence[0]->getAsConstantUnion()->getUnionArrayPointer());
-            } else {
-                switch (parentType.getBasicType()) {
-                case EbtInt:   constantUnion->iConst = 0;     break;
-                case EbtFloat: constantUnion->fConst = 0.0;   break;
-                case EbtBool:  constantUnion->bConst = false; break;
+        {// support MSVC++6.0
+            for (int i = 0; i < child->getType().getInstanceSize(); i++) {
+                constUnion* constantUnion = new constUnion[1];
+                if (i % (child->getType().getNominalSize() + 1) == 0) {
+                    *constantUnion = *(childSequence[0]->getAsConstantUnion()->getUnionArrayPointer());
+                } else {
+                    switch (parentType.getBasicType()) {
+                    case EbtInt:   constantUnion->iConst = 0;     break;
+                    case EbtFloat: constantUnion->fConst = 0.0;   break;
+                    case EbtBool:  constantUnion->bConst = false; break;
+                    }
                 }
+                TIntermConstantUnion *constant = new TIntermConstantUnion(constantUnion,
+                    childSequence[0]->getAsConstantUnion()->getType());
+                constant->setLine(child->getLine());
+                parentNodeIter = parentSequence.begin() + offset + i;
+                parentSequence.insert(parentNodeIter, constant);
             }
-            TIntermConstantUnion *constant = new TIntermConstantUnion(constantUnion,
-                childSequence[0]->getAsConstantUnion()->getType());
-            constant->setLine(child->getLine());
-            parentNodeIter = parentSequence.begin() + offset + i;
-            parentSequence.insert(parentNodeIter, constant);
         }
         return true;
     default:
         return false;
     }
 }
+
+void TIntermAggregate::addToPragmaTable(const TPragmaTable& pTable)
+{
+    assert (!pragmaTable);
+    pragmaTable = new TPragmaTable();
+    *pragmaTable = pTable;
+}
+

@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -45,12 +45,14 @@ typedef TVector<TString> TBuiltInStrings;
 class TBuiltIns {
 public:
     POOL_ALLOCATOR_NEW_DELETE(GlobalPoolAllocator)
-    void initialize(TBuiltInResource &resources);
+    void initialize();
+	void initialize(const TBuiltInResource& resources);
     TBuiltInStrings* getBuiltInStrings() { return builtInStrings; }
 protected:
     TBuiltInStrings builtInStrings[EShLangCount];
 };
 
-void IdentifyBuiltIns(EShLanguage, TSymbolTable&, TBuiltInResource &resources);
+void IdentifyBuiltIns(EShLanguage, TSymbolTable&);
+void IdentifyBuiltIns(EShLanguage, TSymbolTable&, const TBuiltInResource &resources);
 
 #endif // _INITIALIZE_INCLUDED_

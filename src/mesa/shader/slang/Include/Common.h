@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -45,8 +45,6 @@
     #define UINT_PTR uintptr_t
 #endif
 
-#include <assert.h>
-
 /* windows only pragma */
 #ifdef _MSC_VER
     #pragma warning(disable : 4786) // Don't warn about too long identifiers
@@ -73,6 +71,7 @@
 
 typedef int TSourceLoc;
 
+#include <assert.h>
 #include "PoolAlloc.h"
 
 //
@@ -194,7 +193,7 @@ public :
 //
 typedef pool_allocator<char> TStringAllocator;
 typedef std::basic_string <char, std::char_traits<char>, TStringAllocator > TString;
-inline TString* NewPoolTString(char* s)
+inline TString* NewPoolTString(const char* s)
 {
 	void* memory = GlobalPoolAllocator.allocate(sizeof(TString));
 	return new(memory) TString(s);
@@ -253,13 +252,12 @@ inline const TString String(const int i, const int base = 10)
 {
     char text[16];     // 32 bit ints are at most 10 digits in base 10
     
-    // we assume base 10 or 16 for all cases
-	if (base == 10)
-		sprintf(text, "%d", i);
-	else if (base == 16)
-		sprintf(text, "%x", i);
-	else
-		assert (!"String(int): unsupported base");
+    #ifdef _WIN32
+        itoa(i, text, base);
+    #else
+        // we assume base 10 for all cases
+        sprintf(text, "%d", i);
+    #endif
 
     return text;
 }
@@ -281,5 +279,7 @@ __inline TPersistString FormatSourceLoc(const TSourceLoc loc)
 
     return TPersistString(locText);
 }
+typedef TMap<TString, TString> TPragmaTable;
+typedef TMap<TString, TString>::tAllocator TPragmaTableAllocator;
 
 #endif // _COMMON_INCLUDED_

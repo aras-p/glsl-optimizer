@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -40,9 +40,8 @@
 
 #include "../Include/intermediate.h"
 #include "Initialize.h"
-#include <assert.h>
 
-void TBuiltIns::initialize(TBuiltInResource &resources)
+void TBuiltIns::initialize()
 {
     //
     // Initialize all the built-in strings for parsing.
@@ -355,53 +354,26 @@ void TBuiltIns::initialize(TBuiltInResource &resources)
         // Texture Functions.
         //
         s.append(TString("vec4 texture1D(sampler1D sampler, float coord);"));
-        s.append(TString("vec4 texture1D(sampler1D sampler, float coord, float bias);"));
         s.append(TString("vec4 texture1DProj(sampler1D sampler, vec2 coord);"));
-        s.append(TString("vec4 texture1DProj(sampler1D sampler, vec2 coord, float bias);"));
         s.append(TString("vec4 texture1DProj(sampler1D sampler, vec4 coord);"));
-        s.append(TString("vec4 texture1DProj(sampler1D sampler, vec4 coord, float bias);"));
-        s.append(TString("vec4 texture1DLod(sampler1D sampler, float coord, float lod);"));
-        s.append(TString("vec4 texture1DProjLod(sampler1D sampler, vec2 coord, float lod);"));
-        s.append(TString("vec4 texture1DProjLod(sampler1D sampler, vec4 coord, float lod);"));
 
         s.append(TString("vec4 texture2D(sampler2D sampler, vec2 coord);"));
-        s.append(TString("vec4 texture2D(sampler2D sampler, vec2 coord, float bias);"));
         s.append(TString("vec4 texture2DProj(sampler2D sampler, vec3 coord);"));
-        s.append(TString("vec4 texture2DProj(sampler2D sampler, vec3 coord, float bias);"));
         s.append(TString("vec4 texture2DProj(sampler2D sampler, vec4 coord);"));
-        s.append(TString("vec4 texture2DProj(sampler2D sampler, vec4 coord, float bias);"));
-        s.append(TString("vec4 texture2DLod(sampler2D sampler, vec2 coord, float lod);"));
-        s.append(TString("vec4 texture2DProjLod(sampler2D sampler, vec3 coord, float lod);"));
-        s.append(TString("vec4 texture2DProjLod(sampler2D sampler, vec4 coord, float lod);"));
 
         s.append(TString("vec4 texture3D(sampler3D sampler, vec3 coord);"));
-        s.append(TString("vec4 texture3D(sampler3D sampler, vec3 coord, float bias);"));
         s.append(TString("vec4 texture3DProj(sampler3D sampler, vec4 coord);"));
-        s.append(TString("vec4 texture3DProj(sampler3D sampler, vec4 coord, float bias);"));
-        s.append(TString("vec4 texture3DLod(sampler3D sampler, vec3 coord, float lod);"));
-        s.append(TString("vec4 texture3DProjLod(sampler3D sampler, vec4 coord, float lod);"));
 
         s.append(TString("vec4 textureCube(samplerCube sampler, vec3 coord);"));
-        s.append(TString("vec4 textureCube(samplerCube sampler, vec3 coord, float bias);"));
-        s.append(TString("vec4 textureCubeLod(samplerCube sampler, vec3 coord, float lod);"));
 
         s.append(TString("vec4 shadow1D(sampler1DShadow sampler, vec3 coord);"));
-        s.append(TString("vec4 shadow1D(sampler1DShadow sampler, vec3 coord, float bias);"));
 
         s.append(TString("vec4 shadow2D(sampler2DShadow sampler, vec3 coord);"));
-        s.append(TString("vec4 shadow2D(sampler2DShadow sampler, vec3 coord, float bias);"));
 
         s.append(TString("vec4 shadow1DProj(sampler1DShadow sampler, vec4 coord);"));
-        s.append(TString("vec4 shadow1DProj(sampler1DShadow sampler, vec4 coord, float bias);"));
 
         s.append(TString("vec4 shadow2DProj(sampler2DShadow sampler, vec4 coord);"));
-        s.append(TString("vec4 shadow2DProj(sampler2DShadow sampler, vec4 coord, float bias);"));
 
-        s.append(TString("vec4 shadow1DLod(sampler1DShadow sampler, vec3 coord, float lod);"));
-        s.append(TString("vec4 shadow2DLod(sampler2DShadow sampler, vec3 coord, float lod);"));
-
-        s.append(TString("vec4 shadow1DProjLod(sampler1DShadow sampler, vec4 coord, float lod);"));
-        s.append(TString("vec4 shadow2DProjLod(sampler2DShadow sampler, vec4 coord, float lod);"));
 
         //
         // Noise functions.
@@ -442,6 +414,26 @@ void TBuiltIns::initialize(TBuiltInResource &resources)
         //
         s.append(TString("vec4 ftransform();"));
 
+        //
+        // Texture Functions.
+        //
+        s.append(TString("vec4 texture1DLod(sampler1D sampler, float coord, float lod);"));
+        s.append(TString("vec4 texture1DProjLod(sampler1D sampler, vec2 coord, float lod);"));
+        s.append(TString("vec4 texture1DProjLod(sampler1D sampler, vec4 coord, float lod);"));
+
+        s.append(TString("vec4 texture2DLod(sampler2D sampler, vec2 coord, float lod);"));
+        s.append(TString("vec4 texture2DProjLod(sampler2D sampler, vec3 coord, float lod);"));
+        s.append(TString("vec4 texture2DProjLod(sampler2D sampler, vec4 coord, float lod);"));
+
+        s.append(TString("vec4 texture3DLod(sampler3D sampler, vec3 coord, float lod);"));
+        s.append(TString("vec4 texture3DProjLod(sampler3D sampler, vec4 coord, float lod);"));
+        s.append(TString("vec4 textureCubeLod(samplerCube sampler, vec3 coord, float lod);"));
+
+        s.append(TString("vec4 shadow1DLod(sampler1DShadow sampler, vec3 coord, float lod);"));
+        s.append(TString("vec4 shadow2DLod(sampler2DShadow sampler, vec3 coord, float lod);"));
+        s.append(TString("vec4 shadow1DProjLod(sampler1DShadow sampler, vec4 coord, float lod);"));
+        s.append(TString("vec4 shadow2DProjLod(sampler2DShadow sampler, vec4 coord, float lod);"));
+
         s.append(TString("\n"));
     }
     {
@@ -452,6 +444,26 @@ void TBuiltIns::initialize(TBuiltInResource &resources)
         //============================================================================
 
         TString& s = BuiltInFunctionsFragment;
+
+        //
+        // Texture Functions.
+        //
+		s.append(TString("vec4 texture1D(sampler1D sampler, float coord, float bias);"));
+        s.append(TString("vec4 texture1DProj(sampler1D sampler, vec2 coord, float bias);"));
+        s.append(TString("vec4 texture1DProj(sampler1D sampler, vec4 coord, float bias);"));
+
+        s.append(TString("vec4 texture2D(sampler2D sampler, vec2 coord, float bias);"));
+        s.append(TString("vec4 texture2DProj(sampler2D sampler, vec3 coord, float bias);"));
+        s.append(TString("vec4 texture2DProj(sampler2D sampler, vec4 coord, float bias);"));
+
+		s.append(TString("vec4 texture3D(sampler3D sampler, vec3 coord, float bias);"));
+        s.append(TString("vec4 texture3DProj(sampler3D sampler, vec4 coord, float bias);"));
+        s.append(TString("vec4 textureCube(samplerCube sampler, vec3 coord, float bias);"));
+        
+		s.append(TString("vec4 shadow1D(sampler1DShadow sampler, vec3 coord, float bias);"));
+        s.append(TString("vec4 shadow2D(sampler2DShadow sampler, vec3 coord, float bias);"));
+        s.append(TString("vec4 shadow1DProj(sampler1DShadow sampler, vec4 coord, float bias);"));
+        s.append(TString("vec4 shadow2DProj(sampler2DShadow sampler, vec4 coord, float bias);"));
 
         s.append(TString("float dFdx(float p);"));
         s.append(TString("vec2  dFdx(vec2  p);"));
@@ -479,46 +491,6 @@ void TBuiltIns::initialize(TBuiltInResource &resources)
 
         TString& s = StandardUniforms;
        
-        //
-        // Implementation dependent constants.  The example values below
-        // are the minimum values allowed for these maximums.
-        //
-        char builtInConstant[80];
-        sprintf(builtInConstant, "const int  gl_MaxLights = %d;", resources.maxLights); // GL 1.0
-        s.append(TString(builtInConstant));                            
-        
-        sprintf(builtInConstant, "const int  gl_MaxClipPlanes = %d;", resources.maxClipPlanes);  // GL 1.0
-        s.append(TString(builtInConstant));
-        
-        sprintf(builtInConstant, "const int  gl_MaxTextureUnits = %d;", resources.maxTextureUnits); // GL 1.2
-        s.append(TString(builtInConstant));
-        
-        sprintf(builtInConstant, "const int  gl_MaxTextureCoords = %d;", resources.maxTextureCoords); // ARB_fragment_program
-        s.append(TString(builtInConstant));
-        
-        sprintf(builtInConstant, "const int  gl_MaxVertexAttribs = %d;", resources.maxVertexAttribs); // ARB_vertex_shader
-        s.append(TString(builtInConstant));
-        
-        sprintf(builtInConstant, "const int  gl_MaxVertexUniformComponents = %d;", resources.maxVertexUniformComponents); // ARB_vertex_shader
-        s.append(TString(builtInConstant));       
-        
-        sprintf(builtInConstant, "const int  gl_MaxVaryingFloats = %d;", resources.maxVaryingFloats); // ARB_vertex_shader
-        s.append(TString(builtInConstant));        
-        
-        sprintf(builtInConstant, "const int  gl_MaxVertexTextureImageUnits = %d;", resources.maxVertexTextureImageUnits); // ARB_vertex_shader
-        s.append(TString(builtInConstant));        
-        
-        sprintf(builtInConstant, "const int  gl_MaxCombinedTextureImageUnits = %d;", resources.maxCombinedTextureImageUnits); // ARB_vertex_shader
-        s.append(TString(builtInConstant));        
-        
-        sprintf(builtInConstant, "const int  gl_MaxTextureImageUnits = %d;", resources.maxTextureImageUnits); // ARB_fragment_shader
-        s.append(TString(builtInConstant));        
-        
-        sprintf(builtInConstant, "const int  gl_MaxFragmentUniformComponents = %d;", resources.maxFragmentUniformComponents); // ARB_fragment_shader
-        s.append(TString(builtInConstant));        
-        
-        sprintf(builtInConstant, "const int  gl_MaxDrawBuffers = %d;", resources.maxDrawBuffers); // proposed ARB_draw_buffers
-        s.append(TString(builtInConstant));
 
         //
         // OpenGL'uniform' state.  Page numbers are in reference to version
@@ -531,7 +503,6 @@ void TBuiltIns::initialize(TBuiltInResource &resources)
         s.append(TString("uniform mat4  gl_ModelViewMatrix;"));
         s.append(TString("uniform mat4  gl_ProjectionMatrix;"));
         s.append(TString("uniform mat4  gl_ModelViewProjectionMatrix;"));
-        s.append(TString("uniform mat4  gl_TextureMatrix[gl_MaxTextureCoords];"));
 
         //
         // Derived matrix state that provides inverse and transposed versions
@@ -542,17 +513,14 @@ void TBuiltIns::initialize(TBuiltInResource &resources)
         s.append(TString("uniform mat4  gl_ModelViewMatrixInverse;"));
         s.append(TString("uniform mat4  gl_ProjectionMatrixInverse;"));
         s.append(TString("uniform mat4  gl_ModelViewProjectionMatrixInverse;"));
-        s.append(TString("uniform mat4  gl_TextureMatrixInverse[gl_MaxTextureCoords];"));
 
         s.append(TString("uniform mat4  gl_ModelViewMatrixTranspose;"));
         s.append(TString("uniform mat4  gl_ProjectionMatrixTranspose;"));
         s.append(TString("uniform mat4  gl_ModelViewProjectionMatrixTranspose;"));
-        s.append(TString("uniform mat4  gl_TextureMatrixTranspose[gl_MaxTextureCoords];"));
 
         s.append(TString("uniform mat4  gl_ModelViewMatrixInverseTranspose;"));
         s.append(TString("uniform mat4  gl_ProjectionMatrixInverseTranspose;"));
         s.append(TString("uniform mat4  gl_ModelViewProjectionMatrixInverseTranspose;"));
-        s.append(TString("uniform mat4  gl_TextureMatrixInverseTranspose[gl_MaxTextureCoords];"));
 
         //
         // Normal scaling p. 39.
@@ -569,10 +537,6 @@ void TBuiltIns::initialize(TBuiltInResource &resources)
         s.append(TString("};"));
         s.append(TString("uniform gl_DepthRangeParameters gl_DepthRange;"));
 
-        //
-        // Clip planes p. 42.
-        //
-        s.append(TString("uniform vec4  gl_ClipPlane[gl_MaxClipPlanes];"));
 
         //
         // Point Size, p. 66, 67.
@@ -623,7 +587,6 @@ void TBuiltIns::initialize(TBuiltInResource &resources)
         s.append(TString("    float quadraticAttenuation;"));// K2
         s.append(TString("};"));
 
-        s.append(TString("uniform gl_LightSourceParameters  gl_LightSource[gl_MaxLights];"));
 
         s.append(TString("struct gl_LightModelParameters {"));
         s.append(TString("    vec4  ambient;"));       // Acs
@@ -648,21 +611,8 @@ void TBuiltIns::initialize(TBuiltInResource &resources)
         s.append(TString("    vec4  specular;"));       // Scm * Scli
         s.append(TString("};"));
 
-        s.append(TString("uniform gl_LightProducts gl_FrontLightProduct[gl_MaxLights];"));
-        s.append(TString("uniform gl_LightProducts gl_BackLightProduct[gl_MaxLights];"));
 
-        //
-        // Textureg Environment and Generation, p. 152, p. 40-42.
-        //
-        s.append(TString("uniform vec4  gl_TextureEnvColor[gl_MaxTextureImageUnits];"));
-        s.append(TString("uniform vec4  gl_EyePlaneS[gl_MaxTextureCoords];"));
-        s.append(TString("uniform vec4  gl_EyePlaneT[gl_MaxTextureCoords];"));
-        s.append(TString("uniform vec4  gl_EyePlaneR[gl_MaxTextureCoords];"));
-        s.append(TString("uniform vec4  gl_EyePlaneQ[gl_MaxTextureCoords];"));
-        s.append(TString("uniform vec4  gl_ObjectPlaneS[gl_MaxTextureCoords];"));
-        s.append(TString("uniform vec4  gl_ObjectPlaneT[gl_MaxTextureCoords];"));
-        s.append(TString("uniform vec4  gl_ObjectPlaneR[gl_MaxTextureCoords];"));
-        s.append(TString("uniform vec4  gl_ObjectPlaneQ[gl_MaxTextureCoords];"));
+
 
         //
         // Fog p. 161
@@ -751,7 +701,121 @@ void TBuiltIns::initialize(TBuiltInResource &resources)
     builtInStrings[EShLangVertex].push_back(StandardUniforms);
 }
 
-void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable, TBuiltInResource &resources)
+
+void TBuiltIns::initialize(const TBuiltInResource &resources)
+{
+    //
+    // Initialize all the built-in strings for parsing.
+    //
+    TString StandardUniforms;    
+
+    {
+        //============================================================================
+        //
+        // Standard Uniforms
+        //
+        //============================================================================
+
+        TString& s = StandardUniforms;
+       
+        //
+        // Implementation dependent constants.  The example values below
+        // are the minimum values allowed for these maximums.
+        //
+        char builtInConstant[80];
+        sprintf(builtInConstant, "const int  gl_MaxLights = %d;", resources.maxLights); // GL 1.0
+        s.append(TString(builtInConstant));                            
+        
+        sprintf(builtInConstant, "const int  gl_MaxClipPlanes = %d;", resources.maxClipPlanes);  // GL 1.0
+        s.append(TString(builtInConstant));
+        
+        sprintf(builtInConstant, "const int  gl_MaxTextureUnits = %d;", resources.maxTextureUnits); // GL 1.2
+        s.append(TString(builtInConstant));
+        
+        sprintf(builtInConstant, "const int  gl_MaxTextureCoords = %d;", resources.maxTextureCoords); // ARB_fragment_program
+        s.append(TString(builtInConstant));
+        
+        sprintf(builtInConstant, "const int  gl_MaxVertexAttribs = %d;", resources.maxVertexAttribs); // ARB_vertex_shader
+        s.append(TString(builtInConstant));
+        
+        sprintf(builtInConstant, "const int  gl_MaxVertexUniformComponents = %d;", resources.maxVertexUniformComponents); // ARB_vertex_shader
+        s.append(TString(builtInConstant));       
+        
+        sprintf(builtInConstant, "const int  gl_MaxVaryingFloats = %d;", resources.maxVaryingFloats); // ARB_vertex_shader
+        s.append(TString(builtInConstant));        
+        
+        sprintf(builtInConstant, "const int  gl_MaxVertexTextureImageUnits = %d;", resources.maxVertexTextureImageUnits); // ARB_vertex_shader
+        s.append(TString(builtInConstant));        
+        
+        sprintf(builtInConstant, "const int  gl_MaxCombinedTextureImageUnits = %d;", resources.maxCombinedTextureImageUnits); // ARB_vertex_shader
+        s.append(TString(builtInConstant));        
+        
+        sprintf(builtInConstant, "const int  gl_MaxTextureImageUnits = %d;", resources.maxTextureImageUnits); // ARB_fragment_shader
+        s.append(TString(builtInConstant));
+        
+        sprintf(builtInConstant, "const int  gl_MaxFragmentUniformComponents = %d;", resources.maxFragmentUniformComponents); // ARB_fragment_shader
+        s.append(TString(builtInConstant));
+        
+        sprintf(builtInConstant, "const int  gl_MaxDrawBuffers = %d;", resources.maxDrawBuffers); // proposed ARB_draw_buffers
+        s.append(TString(builtInConstant));
+
+        //
+        // OpenGL'uniform' state.  Page numbers are in reference to version
+        // 1.4 of the OpenGL specification.
+        //
+
+        //
+        // Matrix state. p. 31, 32, 37, 39, 40.
+        //
+        s.append(TString("uniform mat4  gl_TextureMatrix[gl_MaxTextureCoords];"));
+
+        //
+        // Derived matrix state that provides inverse and transposed versions
+        // of the matrices above.
+        //
+        s.append(TString("uniform mat4  gl_TextureMatrixInverse[gl_MaxTextureCoords];"));
+
+        s.append(TString("uniform mat4  gl_TextureMatrixTranspose[gl_MaxTextureCoords];"));
+
+        s.append(TString("uniform mat4  gl_TextureMatrixInverseTranspose[gl_MaxTextureCoords];"));
+
+        //
+        // Clip planes p. 42.
+        //
+        s.append(TString("uniform vec4  gl_ClipPlane[gl_MaxClipPlanes];"));
+
+        //
+        // Light State p 50, 53, 55.
+        //
+        s.append(TString("uniform gl_LightSourceParameters  gl_LightSource[gl_MaxLights];"));
+
+        //
+        // Derived state from products of light.
+        //
+        s.append(TString("uniform gl_LightProducts gl_FrontLightProduct[gl_MaxLights];"));
+        s.append(TString("uniform gl_LightProducts gl_BackLightProduct[gl_MaxLights];"));
+
+        //
+        // Textureg Environment and Generation, p. 152, p. 40-42.
+        //
+        s.append(TString("uniform vec4  gl_TextureEnvColor[gl_MaxTextureImageUnits];"));
+        s.append(TString("uniform vec4  gl_EyePlaneS[gl_MaxTextureCoords];"));
+        s.append(TString("uniform vec4  gl_EyePlaneT[gl_MaxTextureCoords];"));
+        s.append(TString("uniform vec4  gl_EyePlaneR[gl_MaxTextureCoords];"));
+        s.append(TString("uniform vec4  gl_EyePlaneQ[gl_MaxTextureCoords];"));
+        s.append(TString("uniform vec4  gl_ObjectPlaneS[gl_MaxTextureCoords];"));
+        s.append(TString("uniform vec4  gl_ObjectPlaneT[gl_MaxTextureCoords];"));
+        s.append(TString("uniform vec4  gl_ObjectPlaneR[gl_MaxTextureCoords];"));
+        s.append(TString("uniform vec4  gl_ObjectPlaneQ[gl_MaxTextureCoords];"));
+
+        s.append(TString("\n"));
+    }
+
+    builtInStrings[EShLangFragment].push_back(StandardUniforms);
+    builtInStrings[EShLangVertex].push_back(StandardUniforms);
+}
+
+void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable)
 {
     //
     // First, insert some special built-in variables that are not in 
@@ -765,10 +829,6 @@ void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable, TBuiltInR
         symbolTable.insert(*new TVariable(NewPoolTString("gl_FragColor"),   TType(EbtFloat, EvqFragColor,   4)));
         symbolTable.insert(*new TVariable(NewPoolTString("gl_FragDepth"),   TType(EbtFloat, EvqFragDepth,   1)));
 
-            // Set up gl_FragData.  The array size.
-            TType fragData(EbtFloat, EvqFragColor,   4, false, true);
-            fragData.setArraySize(resources.maxDrawBuffers);
-            symbolTable.insert(*new TVariable(NewPoolTString("gl_FragData"),    fragData));
         }
         break;
 
@@ -863,6 +923,26 @@ void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable, TBuiltInR
         symbolTable.relateToOperator("writeOutput",  EOpWriteOutput);
         symbolTable.relateToOperator("readPixel",    EOpReadPixel);
         break;
-	default: assert (true && "Language not supported");
+	default: assert (false && "Language not supported");
+    }
+}
+
+void IdentifyBuiltIns(EShLanguage language, TSymbolTable& symbolTable, const TBuiltInResource &resources)
+{
+    //
+    // First, insert some special built-in variables that are not in 
+    // the built-in header files.
+    //
+    switch(language) {
+
+    case EShLangFragment: {
+            // Set up gl_FragData.  The array size.
+            TType fragData(EbtFloat, EvqFragColor,   4, false, true);
+            fragData.setArraySize(resources.maxDrawBuffers);
+            symbolTable.insert(*new TVariable(NewPoolTString("gl_FragData"),    fragData));
+        }
+        break;
+
+	default: break;
     }
 }

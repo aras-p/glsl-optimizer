@@ -1,36 +1,36 @@
-/*
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
-//All rights reserved.
-//
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
-//
-//    Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-//
-//    Redistributions in binary form must reproduce the above
-//    copyright notice, this list of conditions and the following
-//    disclaimer in the documentation and/or other materials provided
-//    with the distribution.
-//
-//    Neither the name of 3Dlabs Inc. Ltd. nor the names of its
-//    contributors may be used to endorse or promote products derived
-//    from this software without specific prior written permission.
-//
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
-*/
+/* */
+/*Copyright (C) 2002-2005  3Dlabs Inc. Ltd. */
+/*All rights reserved. */
+/* */
+/*Redistribution and use in source and binary forms, with or without */
+/*modification, are permitted provided that the following conditions */
+/*are met: */
+/* */
+/*    Redistributions of source code must retain the above copyright */
+/*    notice, this list of conditions and the following disclaimer. */
+/* */
+/*    Redistributions in binary form must reproduce the above */
+/*    copyright notice, this list of conditions and the following */
+/*    disclaimer in the documentation and/or other materials provided */
+/*    with the distribution. */
+/* */
+/*    Neither the name of 3Dlabs Inc. Ltd. nor the names of its */
+/*    contributors may be used to endorse or promote products derived */
+/*    from this software without specific prior written permission. */
+/* */
+/*THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS */
+/*"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT */
+/*LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS */
+/*FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE */
+/*COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, */
+/*INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, */
+/*BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; */
+/*LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER */
+/*CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT */
+/*LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN */
+/*ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
+/*POSSIBILITY OF SUCH DAMAGE. */
+/* */
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -75,9 +75,9 @@ TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
 
-/*
-// atom.c
-*/
+/* */
+/* atom.c */
+/* */
 
 #include <assert.h>
 #include <stdlib.h>
@@ -90,9 +90,9 @@ NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef realloc
 #undef free
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////// String table: //////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////*/
+/*///////////////////////////////////////////////////////////////////////////////////////////// */
+/*//////////////////////////////////////// String table: ////////////////////////////////////// */
+/*///////////////////////////////////////////////////////////////////////////////////////////// */
 
 static const struct {
     int val;
@@ -130,9 +130,9 @@ static const struct {
     { CPP_TYPEIDENTIFIER, "<type-ident>" },
 };
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////// String table: //////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////*/
+/*///////////////////////////////////////////////////////////////////////////////////////////// */
+/*//////////////////////////////////////// String table: ////////////////////////////////////// */
+/*///////////////////////////////////////////////////////////////////////////////////////////// */
 
 #define INIT_STRING_TABLE_SIZE 16384
 
@@ -228,9 +228,9 @@ static int AddString(StringTable *stable, const char *s)
     return loc;
 } /* AddString */
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////// Hash table: ///////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////*/
+/*///////////////////////////////////////////////////////////////////////////////////////////// */
+/*///////////////////////////////////////// Hash table: /////////////////////////////////////// */
+/*///////////////////////////////////////////////////////////////////////////////////////////// */
 
 #define INIT_HASH_TABLE_SIZE 2047
 #define HASH_TABLE_MAX_COLLISIONS 3
@@ -316,24 +316,24 @@ static int Match(HashTable *htable, StringTable *stable, const char *s, int hash
     }
 } /* Match */
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////// Atom table: ///////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////*/
+/*///////////////////////////////////////////////////////////////////////////////////////////// */
+/*///////////////////////////////////////// Atom table: /////////////////////////////////////// */
+/*///////////////////////////////////////////////////////////////////////////////////////////// */
 
 #define INIT_ATOM_TABLE_SIZE 1024
 
 
 struct AtomTable_Rec {
     StringTable stable; /* String table. */
-    HashTable htable;   /* Hashes string to atom number and token value.  Multiple strings can
-                        // have the same token value but each unique string is a unique atom. */
-    int *amap;          /* Maps atom value to offset in string table.  Atoms all map to unique
-                        // strings except for some undefined values in the lower, fixed part
-                        // of the atom table that map to "<undefined>".  The lowest 256 atoms
-                        // correspond to single character ASCII values except for alphanumeric
-                        // characters and '_', which can be other tokens.  Next come the
-                        // language tokens with their atom values equal to the token value.
-                        // Then come predefined atoms, followed by user specified identifiers. */
+    HashTable htable;   /* Hashes string to atom number and token value.  Multiple strings can */
+                        /* have the same token value but each unique string is a unique atom. */
+    int *amap;          /* Maps atom value to offset in string table.  Atoms all map to unique */
+                        /* strings except for some undefined values in the lower, fixed part */
+                        /* of the atom table that map to "<undefined>".  The lowest 256 atoms */
+                        /* correspond to single character ASCII values except for alphanumeric */
+                        /* characters and '_', which can be other tokens.  Next come the */
+                        /* language tokens with their atom values equal to the token value. */
+                        /* Then come predefined atoms, followed by user specified identifiers. */
     int *arev;          /* Reversed atom for symbol table use. */
     int nextFree;
     int size;
@@ -396,8 +396,8 @@ static int lReverse(int fval)
         cnt++;
     }
 
-    /* Don't use all 31 bits.  One million atoms is plenty and sometimes the
-    // upper bits are used for other things. */
+    /* Don't use all 31 bits.  One million atoms is plenty and sometimes the */
+    /* upper bits are used for other things. */
 
     if (cnt < 20)
         result <<= 20 - cnt;
@@ -636,8 +636,8 @@ static int AddAtomFixed(AtomTable *atable, const char *s, int atom)
     }
     atable->amap[atom] = atable->htable.entry[hashindex].index;
     atable->htable.entry[hashindex].value = atom;
-    /*if (atom >= atable->nextFree)
-    //    atable->nextFree = atom + 1; */
+    /*if (atom >= atable->nextFree) */
+    /*    atable->nextFree = atom + 1; */
     while (atom >= atable->nextFree) {
         atable->arev[atable->nextFree] = lReverse(atable->nextFree);
         atable->nextFree++;
@@ -702,9 +702,9 @@ int InitAtomTable(AtomTable *atable, int htsize)
     return 1;
 } /* InitAtomTable */
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////// Debug Printing Functions: //////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////*/
+/*///////////////////////////////////////////////////////////////////////////////////////////// */
+/*//////////////////////////////// Debug Printing Functions: ////////////////////////////////// */
+/*///////////////////////////////////////////////////////////////////////////////////////////// */
 
 /*
  * PrintAtomTable()
@@ -762,7 +762,7 @@ void FreeAtomTable(AtomTable *atable)
     atable->size = 0;
 } /* FreeAtomTable */
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////// End of atom.c ///////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////*/
+/*///////////////////////////////////////////////////////////////////////////////////////////// */
+/*/////////////////////////////////////// End of atom.c /////////////////////////////////////// */
+/*///////////////////////////////////////////////////////////////////////////////////////////// */
 

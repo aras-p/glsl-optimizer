@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,6 @@
 
 #include "../Include/PoolAlloc.h"
 #include "../Include/Common.h"
-#include <assert.h>
 
 #include "Include/InitializeGlobals.h"
 #include "osinclude.h"
@@ -52,7 +51,6 @@ void InitializeGlobalPools()
     TThreadGlobalPools* threadData = new TThreadGlobalPools();
     
     threadData->globalPoolAllocator = globalPoolAllocator;
-    threadData->compilerPoolAllocator = 0;
     	
     OS_SetTLSValue(PoolIndex, threadData);     
 	globalPoolAllocator->push();
@@ -97,13 +95,6 @@ void SetGlobalPoolAllocatorPtr(TPoolAllocator* poolAllocator)
     TThreadGlobalPools* threadData = static_cast<TThreadGlobalPools*>(OS_GetTLSValue(PoolIndex));
 
     threadData->globalPoolAllocator = poolAllocator;
-}
-
-PoolAllocatorPointer& GetCompilerPoolAllocator()
-{
-    TThreadGlobalPools* threadData = static_cast<TThreadGlobalPools*>(OS_GetTLSValue(PoolIndex));
-
-    return threadData->compilerPoolAllocator;
 }
 
 //
@@ -191,6 +182,16 @@ TPoolAllocator::~TPoolAllocator()
     }
 }
 
+// Support MSVC++ 6.0
+const unsigned char TAllocation::guardBlockBeginVal = 0xfb;
+const unsigned char TAllocation::guardBlockEndVal   = 0xfe;
+const unsigned char TAllocation::userDataFill       = 0xcd;
+
+#   ifdef GUARD_BLOCKS
+    const size_t TAllocation::guardBlockSize = 16;
+#   else
+    const size_t TAllocation::guardBlockSize = 0;
+#   endif
 
 //
 // Check a single guard block for damage

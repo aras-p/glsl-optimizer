@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -84,8 +84,8 @@ public:
     }
     
     void check() const {
-        checkGuardBlock(preGuard(),  (unsigned char) (guardBlockBeginVal), "before");
-        checkGuardBlock(postGuard(), (unsigned char) (guardBlockEndVal),   "after");
+        checkGuardBlock(preGuard(),  guardBlockBeginVal, "before");
+        checkGuardBlock(postGuard(), guardBlockEndVal,   "after");
     }
 
     void checkAllocList() const;
@@ -113,21 +113,16 @@ private:
     unsigned char* mem;           // beginning of our allocation (pts to header)
     TAllocation* prevAlloc;       // prior allocation in the chain
 
-	enum {
-		guardBlockBeginVal = 0xfb,
-		guardBlockEndVal   = 0xfe,
-		userDataFill       = 0xcd
-	};
+    // Support MSVC++ 6.0
+    const static unsigned char guardBlockBeginVal;
+    const static unsigned char guardBlockEndVal;
+    const static unsigned char userDataFill;
 
 #   ifdef GUARD_BLOCKS
-	enum {
-		guardBlockSize = 16
-	};
+    const static size_t guardBlockSize;
     inline static size_t headerSize() { return sizeof(TAllocation); }
 #   else
-	enum {
-		guardBlockSize = 0
-	};
+    const static size_t guardBlockSize;
     inline static size_t headerSize() { return 0; }
 #   endif
 };
@@ -254,13 +249,10 @@ private:
 //
 typedef TPoolAllocator* PoolAllocatorPointer;
 extern TPoolAllocator& GetGlobalPoolAllocator();
-extern PoolAllocatorPointer& GetCompilerPoolAllocator();
 #define GlobalPoolAllocator GetGlobalPoolAllocator()
-#define CompilerPoolAllocator GetCompilerPoolAllocator()
 struct TThreadGlobalPools
 {
         TPoolAllocator* globalPoolAllocator;
-        TPoolAllocator* compilerPoolAllocator;
 };
 
 //

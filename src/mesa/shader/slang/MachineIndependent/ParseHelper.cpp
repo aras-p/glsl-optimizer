@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -54,25 +54,62 @@ bool TParseContext::parseVectorFields(const TString& compString, int vecSize, TV
         return false;
     }
 
-    bool tooBig = false;
+    enum {
+        exyzw,
+        ergba,
+        estpq
+    } fieldSet[4];
 
     for (int i = 0; i < fields.num; ++i) {
         switch (compString[i])  {
-        case 'x': case 'r': case 's': case '0':
+        case 'x': 
             fields.offsets[i] = 0;
+            fieldSet[i] = exyzw;
             break;
-        case 'y': case 'g': case 't': case '1':
+        case 'r': 
+            fields.offsets[i] = 0;
+            fieldSet[i] = ergba;
+            break;
+        case 's':
+            fields.offsets[i] = 0;
+            fieldSet[i] = estpq;
+            break;
+        case 'y': 
             fields.offsets[i] = 1;
+            fieldSet[i] = exyzw;
             break;
-        case 'z': case 'b': case 'p': case '2':
-            if (vecSize < 3)
-                tooBig = true;
+        case 'g': 
+            fields.offsets[i] = 1;
+            fieldSet[i] = ergba;
+            break;
+        case 't':
+            fields.offsets[i] = 1;
+            fieldSet[i] = estpq;
+            break;
+        case 'z': 
             fields.offsets[i] = 2;
+            fieldSet[i] = exyzw;
             break;
-        case 'w': case 'a': case 'q': case '3':
-            if (vecSize < 4)
-                tooBig = true;
+        case 'b': 
+            fields.offsets[i] = 2;
+            fieldSet[i] = ergba;
+            break;
+        case 'p':
+            fields.offsets[i] = 2;
+            fieldSet[i] = estpq;
+            break;
+        
+        case 'w': 
             fields.offsets[i] = 3;
+            fieldSet[i] = exyzw;
+            break;
+        case 'a': 
+            fields.offsets[i] = 3;
+            fieldSet[i] = ergba;
+            break;
+        case 'q':
+            fields.offsets[i] = 3;
+            fieldSet[i] = estpq;
             break;
         default:
             error(line, "illegal vector field selection", compString.c_str(), "");
@@ -80,9 +117,18 @@ bool TParseContext::parseVectorFields(const TString& compString, int vecSize, TV
         }
     }
 
-    if (tooBig) {
+    for (int i = 0; i < fields.num; ++i) {
+        if (fields.offsets[i] >= vecSize) {
         error(line, "vector field selection out of range",  compString.c_str(), "");
         return false;
+    }
+
+        if (i > 0) {
+            if (fieldSet[i] != fieldSet[i-1]) {
+                error(line, "illegal - vector component fields not from the same set", compString.c_str(), "");
+                return false;
+            }
+        }
     }
 
     return true;
@@ -970,7 +1016,7 @@ TIntermTyped* TParseContext::addConstructor(TIntermNode* node, TType* type, TOpe
     TTypeList::iterator list;
     TTypeList* structure = 0;  // Store the information (vector) about the return type of the structure.
     if (op == EOpConstructStruct) {
-        TType ttype = fnCall->getReturnType();
+        const TType& ttype = fnCall->getReturnType();
         structure = ttype.getStruct();
         list = (*structure).begin();
     }

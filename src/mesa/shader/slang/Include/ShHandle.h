@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -101,32 +101,10 @@ public:
     virtual TCompiler* getAsCompiler() { return this; }
     virtual bool linkable() { return haveValidObjectCode; }
     
-    // Initialize our private pool for a new compilation, and
-    // return it.
-    virtual TPoolAllocator& getNewCompilationAllocator()
-    {
-        // We do a pop and push on the compiler pool, because compile can
-        // be called repeatedly on the same compiler handle.  Each time,
-        // we want to pop away the results of any previous compile.  We
-        // could do that with popAll, but this is a somewhat smaller
-        // hammer.
-        compilerPool.pop();
-        compilerPool.push();
-    
-        return compilerPool;
-    }
-
-    TPoolAllocator& getCompilerPoolAllocator() { return compilerPool; }
-
     TInfoSink& infoSink;
 protected:
     EShLanguage language;
-    bool haveValidObjectCode;
-        
-    // This is a per-compiler-object pool allocator.  Allocations
-    // who's lifetime need not extend beyond the lifetime of the
-    // compiler itself can use this private pool.
-    TPoolAllocator compilerPool;    
+    bool haveValidObjectCode;        
 };
 
 //

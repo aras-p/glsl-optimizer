@@ -1,5 +1,5 @@
 //
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
+//Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without
@@ -64,6 +64,7 @@ public:
     TIntermAggregate* setAggregateOperator(TIntermNode*, TOperator, TSourceLoc);
     TIntermNode*  addSelection(TIntermTyped* cond, TIntermNodePair code, TSourceLoc);
     TIntermTyped* addSelection(TIntermTyped* cond, TIntermTyped* trueBlock, TIntermTyped* falseBlock, TSourceLoc);
+    TIntermTyped* addComma(TIntermTyped* left, TIntermTyped* right, TSourceLoc);
     TIntermConstantUnion* addConstantUnion(constUnion*, const TType&, TSourceLoc);
     TIntermTyped* promoteConstantUnion(TBasicType, TIntermConstantUnion*) ;
     TIntermTyped* copyConstUnion(TIntermConstantUnion*) ;

@@ -1,36 +1,36 @@
-/*
-//Copyright (C) 2002-2004  3Dlabs Inc. Ltd.
-//All rights reserved.
-//
-//Redistribution and use in source and binary forms, with or without
-//modification, are permitted provided that the following conditions
-//are met:
-//
-//    Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-//
-//    Redistributions in binary form must reproduce the above
-//    copyright notice, this list of conditions and the following
-//    disclaimer in the documentation and/or other materials provided
-//    with the distribution.
-//
-//    Neither the name of 3Dlabs Inc. Ltd. nor the names of its
-//    contributors may be used to endorse or promote products derived
-//    from this software without specific prior written permission.
-//
-//THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-//"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-//LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-//FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-//COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-//BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-//LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-//LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-//ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-//POSSIBILITY OF SUCH DAMAGE.
-*/
+/* */
+/*Copyright (C) 2002-2005  3Dlabs Inc. Ltd. */
+/*All rights reserved. */
+/* */
+/*Redistribution and use in source and binary forms, with or without */
+/*modification, are permitted provided that the following conditions */
+/*are met: */
+/* */
+/*    Redistributions of source code must retain the above copyright */
+/*    notice, this list of conditions and the following disclaimer. */
+/* */
+/*    Redistributions in binary form must reproduce the above */
+/*    copyright notice, this list of conditions and the following */
+/*    disclaimer in the documentation and/or other materials provided */
+/*    with the distribution. */
+/* */
+/*    Neither the name of 3Dlabs Inc. Ltd. nor the names of its */
+/*    contributors may be used to endorse or promote products derived */
+/*    from this software without specific prior written permission. */
+/* */
+/*THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS */
+/*"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT */
+/*LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS */
+/*FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE */
+/*COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, */
+/*INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, */
+/*BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; */
+/*LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER */
+/*CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT */
+/*LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN */
+/*ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
+/*POSSIBILITY OF SUCH DAMAGE. */
+/* */
 /****************************************************************************\
 Copyright (c) 2002, NVIDIA Corporation.
 
@@ -74,9 +74,9 @@ NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
 TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
 NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 \****************************************************************************/
-/*
-// cpp.h
-*/
+/* */
+/* cpp.h */
+/* */
 
 #if !defined(__CPP_H)
 #define __CPP_H 1
@@ -103,15 +103,16 @@ int PredefineMacro(char *);
 
 void  CPPDebugLogMsg(const char *msg);       /* Prints information into debug log */
 void  CPPShInfoLogMsg(const char*);         /* Store cpp Err Msg into Sh.Info.Log */
-void  MapStrings(const char*,const char*);  /* #pragma directive container. */
+void  CPPWarningToInfoLog(const char *msg); /* Prints warning messages into info log */
+void  HandlePragma(const char**, int numTokens);  /* #pragma directive container. */
 void  ResetTString(void);                   /* #error Message as TString. */
-void  CPPErrorToInfoLog(char*);             /* Stick all cpp errors into Sh.Info.log */ 
+void  CPPErrorToInfoLog(char*);             /* Stick all cpp errors into Sh.Info.log   . */
 void  StoreStr(char*);                      /* Store the TString in Parse Context. */
-void  SetLineNumber(int);                   /* Set line number. */
-void  SetStringNumber(int);                 /* Set string number. */
-int   GetLineNumber(void);                  /* Get the current String Number. */
-int   GetStringNumber(void);                /* Get the current String Number. */
-const char* GetStrfromTStr(void);           /* Convert TString to String. */
+void  SetLineNumber(int);                   /* Set line number.   */
+void  SetStringNumber(int);                 /* Set string number.     */
+int   GetLineNumber(void);                  /* Get the current String Number.  */
+int   GetStringNumber(void);                /* Get the current String Number.  */
+const char* GetStrfromTStr(void);           /* Convert TString to String.   */
 void  updateExtensionBehavior(const char* extName, const char* behavior);
 int   FreeCPP(void);
 
