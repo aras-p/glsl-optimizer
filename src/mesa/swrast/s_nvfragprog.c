@@ -391,6 +391,7 @@ store_vector4( const struct fp_instruction *inst,
    const GLboolean clamp = inst->Saturate;
    const GLboolean updateCC = inst->UpdateCondRegister;
    GLfloat *dstReg;
+   GLfloat dummyReg[4];
    GLfloat clampedValue[4];
    const GLboolean *writeMask = dest->WriteMask;
    GLboolean condWriteMask[4];
@@ -402,6 +403,9 @@ store_vector4( const struct fp_instruction *inst,
       case PROGRAM_TEMPORARY:
          dstReg = machine->Temporaries[dest->Index];
          break;
+      case PROGRAM_WRITE_ONLY:
+         dstReg = dummyReg;
+         return;
       default:
          _mesa_problem(NULL, "bad register file in store_vector4(fp)");
          return;
