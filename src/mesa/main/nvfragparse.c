@@ -1,4 +1,4 @@
-/* $Id: nvfragparse.c,v 1.7 2003/02/23 04:23:43 brianp Exp $ */
+/* $Id: nvfragparse.c,v 1.8 2003/02/23 05:25:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1302,37 +1302,6 @@ Parse_InstructionSequence(struct parse_state *parseState,
 }
 
 
-static const char *
-find_line_column(const char *string, const char *pos, GLint *line, GLint *col)
-{
-   const char *lineStart = string;
-   const char *p = string;
-   char *s;
-   int len;
-
-   *line = 1;
-
-   while (p != pos) {
-      if (*p == '\n') {
-         (*line)++;
-         lineStart = p + 1;
-      }
-      p++;
-   }
-
-   *col = (pos - lineStart) + 1;
-
-   /* return copy of this line */
-   while (*p != 0 && *p != '\n')
-      p++;
-   len = p - lineStart;
-   s = (char *) _mesa_malloc(len + 1);
-   _mesa_memcpy(s, lineStart, len);
-   s[len] = 0;
-
-   return s;
-}
-
 
 /**
  * Parse/compile the 'str' returning the compiled 'program'.
@@ -1427,8 +1396,8 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
       {
          GLint line, column;
          const char *lineStr;
-         lineStr = find_line_column((const char *) programString,
-                                    parseState.pos, &line, &column);
+         lineStr = _mesa_find_line_column((const char *) programString,
+                                          parseState.pos, &line, &column);
          _mesa_debug(ctx, "Parse error on line %d, column %d:%s\n",
                      line, column, lineStr);
          _mesa_free((void *) lineStr);
