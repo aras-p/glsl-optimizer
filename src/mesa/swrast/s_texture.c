@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.12 2001/02/20 16:42:26 brianp Exp $ */
+/* $Id: s_texture.c,v 1.13 2001/02/26 18:24:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,6 +49,13 @@
 
 /*
  * Used to compute texel locations for linear sampling.
+ * Input:
+ *    wrapMode = GL_REPEAT, GL_CLAMP or GL_CLAMP_TO_EDGE
+ *    S = texcoord in [0,1]
+ *    SIZE = width (or height or depth) of texture
+ * Output:
+ *    U = texcoord in [0, width]
+ *    I0, I1 = two nearest texel indexes
  */
 #define COMPUTE_LINEAR_TEXEL_LOCATIONS(wrapMode, S, U, SIZE, I0, I1)	\
 {									\
@@ -2341,12 +2348,12 @@ apply_texture( const GLcontext *ctx,
 
 
 /*
- * Apply a shadow/depth texture to the array of colors.
+ * Sample a shadow/depth texture.
  * Input:  ctx - context
  *         texUnit - the texture unit
- *         n - number of colors
- *         r - array [n] of texture R coordinates
- * In/Out:  rgba - array [n] of colors.
+ *         n - number of samples
+ *         s,t,r - array [n] of texture coordinates
+ * In/Out:  rgba - array [n] of texel colors.
  */
 static void
 sample_depth_texture(const GLcontext *ctx,
@@ -2356,10 +2363,31 @@ sample_depth_texture(const GLcontext *ctx,
                      GLchan texel[][4])
 {
    const struct gl_texture_object *texObj = texUnit->_Current;
-   const struct gl_texture_image *texImage = texObj->Image[0]; /* XXX hack */
+   const GLint baseLevel = texObj->BaseLevel;
+   const struct gl_texture_image *texImage = texObj->Image[baseLevel];
+   const GLuint width = texImage->Width;
+   const GLuint height = texImage->Height;
    const GLchan ambient = texObj->ShadowAmbient;
    GLboolean lequal, gequal;
-   GLuint i;
+
+   if (texObj->Dimensions != 2) {
+      gl_problem(ctx, "only 2-D depth textures supported at this time");
+      return;
+   }
+
+   if (texObj->MinFilter != texObj->MagFilter) {
+      gl_problem(ctx, "mipmapped depth textures not supported at this time");
+      return;
+   }
+
+   /* XXX the GL_SGIX_shadow extension spec doesn't say what to do if
+    * GL_TEXTURE_COMPARE_SGIX == GL_TRUE but the current texture object
+    * isn't a depth texture.
+    */
+   if (texImage->Format != GL_DEPTH_COMPONENT) {
+      gl_problem(ctx,"GL_TEXTURE_COMPARE_SGIX enabled with non-depth texture");
+      return;
+   }
 
    if (texObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
       lequal = GL_TRUE;
@@ -2370,34 +2398,228 @@ sample_depth_texture(const GLcontext *ctx,
       gequal = GL_TRUE;
    }
 
-   assert(texObj->Dimensions == 2);
-   assert(texImage->Format == GL_DEPTH_COMPONENT);
-
-   for (i = 0; i < n; i++) {
-      const GLfloat *src;
-      GLfloat depthSample;
-      GLint col, row;
-      /* XXX this is a hack - implement proper sampling */
-      COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapS, s[i], texImage->Width, col);
-      COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapT, t[i], texImage->Height,row);
-      src = (const GLfloat *) texImage->Data + row * texImage->Width + col;
-      depthSample = *src;
-      if ((depthSample <= r[i] && lequal) ||
-          (depthSample >= r[i] && gequal)) {
-         texel[i][RCOMP] = ambient;
-         texel[i][GCOMP] = ambient;
-         texel[i][BCOMP] = ambient;
-         texel[i][ACOMP] = CHAN_MAX;
+   if (texObj->MagFilter == GL_NEAREST) {
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         GLfloat depthSample;
+         GLint col, row;
+         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapS, s[i], width, col);
+         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapT, t[i], height, row);
+         depthSample = *((const GLfloat *) texImage->Data + row * width + col);
+         if ((depthSample <= r[i] && lequal) ||
+             (depthSample >= r[i] && gequal)) {
+            texel[i][RCOMP] = ambient;
+            texel[i][GCOMP] = ambient;
+            texel[i][BCOMP] = ambient;
+            texel[i][ACOMP] = CHAN_MAX;
+         }
+         else {
+            texel[i][RCOMP] = CHAN_MAX;
+            texel[i][GCOMP] = CHAN_MAX;
+            texel[i][BCOMP] = CHAN_MAX;
+            texel[i][ACOMP] = CHAN_MAX;
+         }
       }
-      else {
-         texel[i][RCOMP] = CHAN_MAX;
-         texel[i][GCOMP] = CHAN_MAX;
-         texel[i][BCOMP] = CHAN_MAX;
-         texel[i][ACOMP] = CHAN_MAX;
+   }
+   else {
+      GLuint i;
+      ASSERT(texObj->MagFilter == GL_LINEAR);
+      for (i = 0; i < n; i++) {
+         GLfloat depth00, depth01, depth10, depth11;
+         GLint i0, i1, j0, j1;
+         GLfloat u, v;
+         GLuint useBorderTexel;
+
+         COMPUTE_LINEAR_TEXEL_LOCATIONS(texObj->WrapS, s[i], u, width, i0, i1);
+         COMPUTE_LINEAR_TEXEL_LOCATIONS(texObj->WrapT, t[i], v, height,j0, j1);
+
+         useBorderTexel = 0;
+         if (texImage->Border) {
+            i0 += texImage->Border;
+            i1 += texImage->Border;
+            j0 += texImage->Border;
+            j1 += texImage->Border;
+         }
+         else {
+            if (i0 < 0 || i0 >= width)   useBorderTexel |= I0BIT;
+            if (i1 < 0 || i1 >= width)   useBorderTexel |= I1BIT;
+            if (j0 < 0 || j0 >= height)  useBorderTexel |= J0BIT;
+            if (j1 < 0 || j1 >= height)  useBorderTexel |= J1BIT;
+         }
+
+         /* get four depth samples from the texture */
+         if (useBorderTexel & (I0BIT | J0BIT)) {
+            depth00 = 1.0;
+         }
+         else {
+            depth00 = *((const GLfloat *) texImage->Data + j0 * width + i0);
+         }
+         if (useBorderTexel & (I1BIT | J0BIT)) {
+            depth10 = 1.0;
+         }
+         else {
+            depth10 = *((const GLfloat *) texImage->Data + j0 * width + i1);
+         }
+         if (useBorderTexel & (I0BIT | J1BIT)) {
+            depth01 = 1.0;
+         }
+         else {
+            depth01 = *((const GLfloat *) texImage->Data + j1 * width + i0);
+         }
+         if (useBorderTexel & (I1BIT | J1BIT)) {
+            depth11 = 1.0;
+         }
+         else {
+            depth11 = *((const GLfloat *) texImage->Data + j1 * width + i1);
+         }
+
+         if (0) {
+            /* compute a single weighted depth sample and do one comparison */
+            const GLfloat a = FRAC(u);
+            const GLfloat b = FRAC(v);
+            const GLfloat w00 = (1.0F - a) * (1.0F - b);
+            const GLfloat w10 = (       a) * (1.0F - b);
+            const GLfloat w01 = (1.0F - a) * (       b);
+            const GLfloat w11 = (       a) * (       b);
+            const GLfloat depthSample = w00 * depth00 + w10 * depth10
+                                      + w01 * depth01 + w11 * depth11;
+            if ((depthSample <= r[i] && lequal) ||
+                (depthSample >= r[i] && gequal)) {
+               texel[i][RCOMP] = ambient;
+               texel[i][GCOMP] = ambient;
+               texel[i][BCOMP] = ambient;
+               texel[i][ACOMP] = CHAN_MAX;
+            }
+            else {
+               texel[i][RCOMP] = CHAN_MAX;
+               texel[i][GCOMP] = CHAN_MAX;
+               texel[i][BCOMP] = CHAN_MAX;
+               texel[i][ACOMP] = CHAN_MAX;
+            }
+         }
+         else {
+            /* Do four depth/R comparisons and compute a weighted result.
+             * If this touches on somebody's I.P., I'll remove this code
+             * upon request.
+             */
+            const GLfloat d = (CHAN_MAXF - (GLfloat) ambient) * 0.25F;
+            GLfloat luminance = CHAN_MAXF;
+            GLchan lum;
+            if (lequal) {
+               if (depth00 <= r[i])   luminance -= d;
+               if (depth01 <= r[i])   luminance -= d;
+               if (depth10 <= r[i])   luminance -= d;
+               if (depth11 <= r[i])   luminance -= d;
+            }
+            else {
+               if (depth00 >= r[i])   luminance -= d;
+               if (depth01 >= r[i])   luminance -= d;
+               if (depth10 >= r[i])   luminance -= d;
+               if (depth11 >= r[i])   luminance -= d;
+            }
+            lum = (GLchan) luminance;
+            texel[i][RCOMP] = lum;
+            texel[i][GCOMP] = lum;
+            texel[i][BCOMP] = lum;
+            texel[i][ACOMP] = CHAN_MAX;
+         }
       }
    }
 }
 
+
+#if 0
+/*
+ * Experimental depth texture sampling function.
+ */
+static void
+sample_depth_texture2(const GLcontext *ctx,
+                     const struct gl_texture_unit *texUnit,
+                     GLuint n,
+                     const GLfloat s[], const GLfloat t[], const GLfloat r[],
+                     GLchan texel[][4])
+{
+   const struct gl_texture_object *texObj = texUnit->_Current;
+   const GLint baseLevel = texObj->BaseLevel;
+   const struct gl_texture_image *texImage = texObj->Image[baseLevel];
+   const GLuint width = texImage->Width;
+   const GLuint height = texImage->Height;
+   const GLchan ambient = texObj->ShadowAmbient;
+   GLboolean lequal, gequal;
+
+   if (texObj->Dimensions != 2) {
+      gl_problem(ctx, "only 2-D depth textures supported at this time");
+      return;
+   }
+
+   if (texObj->MinFilter != texObj->MagFilter) {
+      gl_problem(ctx, "mipmapped depth textures not supported at this time");
+      return;
+   }
+
+   /* XXX the GL_SGIX_shadow extension spec doesn't say what to do if
+    * GL_TEXTURE_COMPARE_SGIX == GL_TRUE but the current texture object
+    * isn't a depth texture.
+    */
+   if (texImage->Format != GL_DEPTH_COMPONENT) {
+      gl_problem(ctx,"GL_TEXTURE_COMPARE_SGIX enabled with non-depth texture");
+      return;
+   }
+
+   if (texObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
+      lequal = GL_TRUE;
+      gequal = GL_FALSE;
+   }
+   else {
+      lequal = GL_FALSE;
+      gequal = GL_TRUE;
+   }
+
+   {
+      GLuint i;
+      for (i = 0; i < n; i++) {
+         const GLint K = 3;
+         GLint col, row, ii, jj, imin, imax, jmin, jmax, samples, count;
+         GLfloat w;
+         GLchan lum;
+         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapS, s[i], width, col);
+         COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapT, t[i], height, row);
+
+         imin = col - K;
+         imax = col + K;
+         jmin = row - K;
+         jmax = row + K;
+
+         if (imin < 0)  imin = 0;
+         if (imax >= width)  imax = width - 1;
+         if (jmin < 0)  jmin = 0;
+         if (jmax >= height) jmax = height - 1;
+
+         samples = (imax - imin + 1) * (jmax - jmin + 1);
+         count = 0;
+         for (jj = jmin; jj <= jmax; jj++) {
+            for (ii = imin; ii <= imax; ii++) {
+               GLfloat depthSample = *((const GLfloat *) texImage->Data
+                                       + jj * width + ii);
+               if ((depthSample <= r[i] && lequal) ||
+                   (depthSample >= r[i] && gequal)) {
+                  count++;
+               }
+            }
+         }
+
+         w = (GLfloat) count / (GLfloat) samples;
+         w = CHAN_MAXF - w * (CHAN_MAXF - (GLfloat) ambient);
+         lum = (GLint) w;
+
+         texel[i][RCOMP] = lum;
+         texel[i][GCOMP] = lum;
+         texel[i][BCOMP] = lum;
+         texel[i][ACOMP] = CHAN_MAX;
+      }
+   }
+}
+#endif
 
 
 /*
