@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.39 2001/09/19 20:30:44 kschultz Exp $ */
+/* $Id: s_texture.c,v 1.40 2001/10/17 13:31:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,6 +92,19 @@
       I0 = IFLOOR(U);							\
       I1 = I0 + 1;							\
    }									\
+   else if (wrapMode == GL_MIRRORED_REPEAT_ARB) {			\
+      const GLint flr = IFLOOR(S);					\
+      if (flr & 1)							\
+         U = 1.0 - (S - (GLfloat) flr);	/* flr is odd */		\
+      else								\
+         U = S - (GLfloat) flr;		/* flr is even */		\
+      I0 = IFLOOR(U);							\
+      I1 = I0 + 1;							\
+      if (I0 < 0)							\
+         I0 = 0;							\
+      if (I1 >= (GLint) SIZE)						\
+         I1 = SIZE - 1;							\
+   }									\
    else {								\
       ASSERT(wrapMode == GL_CLAMP);					\
       if (S <= 0.0F)							\
@@ -141,6 +154,22 @@
          I = SIZE;							\
       else								\
          I = IFLOOR(S * SIZE);						\
+   }									\
+   else if (wrapMode == GL_MIRRORED_REPEAT_ARB) {			\
+      const GLfloat min = 1.0F / (2.0F * SIZE);				\
+      const GLfloat max = 1.0F - min;					\
+      const GLint flr = IFLOOR(S);					\
+      GLfloat u;							\
+      if (flr & 1)							\
+         u = 1.0 - (S - (GLfloat) flr);	/* flr is odd */		\
+      else								\
+         u = S - (GLfloat) flr;		/* flr is even */		\
+      if (u < min)							\
+         I = 0;								\
+      else if (u > max)							\
+         I = SIZE - 1;							\
+      else								\
+         I = IFLOOR(u * SIZE);						\
    }									\
    else {								\
       ASSERT(wrapMode == GL_CLAMP);					\
@@ -2133,8 +2162,6 @@ texture_combine(const GLcontext *ctx,
             }
          }
          break;
-      case GL_DOT3_RGB_EXT:
-      case GL_DOT3_RGBA_EXT:
       case GL_DOT3_RGB_ARB:
       case GL_DOT3_RGBA_ARB:
          {

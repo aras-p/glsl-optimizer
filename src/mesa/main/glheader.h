@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.22 2001/07/16 15:54:23 brianp Exp $ */
+/* $Id: glheader.h,v 1.23 2001/10/17 13:31:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -258,6 +258,14 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
  * The following union typedef is used to solve that.
  */
 typedef union { GLfloat f; GLint i; } fi_type;
+
+
+#ifndef GL_MIRRORED_REPEAT_ARB
+#define GL_MIRRORED_REPEAT_ARB  0x8370
+#endif
+#ifndef GL_ARB_texture_mirrored_repeat
+#define GL_ARB_texture_mirrored_repeat 1
+#endif
 
 
 #endif /* GLHEADER_H */

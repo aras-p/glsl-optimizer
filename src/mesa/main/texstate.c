@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.57 2001/09/18 23:06:14 kschultz Exp $ */
+/* $Id: texstate.c,v 1.58 2001/10/17 13:31:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -140,16 +140,10 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
                   return;
                }
                break;
-	    case GL_DOT3_RGB_EXT:
-	    case GL_DOT3_RGBA_EXT:
-	       if (!ctx->Extensions.EXT_texture_env_dot3) {
-                  TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
-		  return;
-	       }
-	       break;
 	    case GL_DOT3_RGB_ARB:
 	    case GL_DOT3_RGBA_ARB:
-	       if (!ctx->Extensions.ARB_texture_env_dot3) {
+	       if (!ctx->Extensions.EXT_texture_env_dot3 &&
+                   !ctx->Extensions.ARB_texture_env_dot3) {
                   TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
 		  return;
 	       }
@@ -929,7 +923,9 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
              eparam==GL_REPEAT ||
              eparam==GL_CLAMP_TO_EDGE ||
              (eparam == GL_CLAMP_TO_BORDER_ARB &&
-              ctx->Extensions.ARB_texture_border_clamp)) {
+              ctx->Extensions.ARB_texture_border_clamp) ||
+             (eparam == GL_MIRRORED_REPEAT_ARB &&
+              ctx->Extensions.ARB_texture_mirrored_repeat)) {
             texObj->WrapS = eparam;
          }
          else {
@@ -944,7 +940,9 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
              eparam==GL_REPEAT ||
              eparam==GL_CLAMP_TO_EDGE ||
              (eparam == GL_CLAMP_TO_BORDER_ARB &&
-              ctx->Extensions.ARB_texture_border_clamp)) {
+              ctx->Extensions.ARB_texture_border_clamp) ||
+             (eparam == GL_MIRRORED_REPEAT_ARB &&
+              ctx->Extensions.ARB_texture_mirrored_repeat)) {
             texObj->WrapT = eparam;
          }
          else {
@@ -959,7 +957,9 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
              eparam==GL_REPEAT ||
              eparam==GL_CLAMP_TO_EDGE ||
              (eparam == GL_CLAMP_TO_BORDER_ARB &&
-              ctx->Extensions.ARB_texture_border_clamp)) {
+              ctx->Extensions.ARB_texture_border_clamp) ||
+             (eparam == GL_MIRRORED_REPEAT_ARB &&
+              ctx->Extensions.ARB_texture_mirrored_repeat)) {
             texObj->WrapR = eparam;
          }
          else {
