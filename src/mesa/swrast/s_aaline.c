@@ -1,4 +1,4 @@
-/* $Id: s_aaline.c,v 1.8 2001/04/10 15:46:51 brianp Exp $ */
+/* $Id: s_aaline.c,v 1.9 2001/05/10 17:41:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -201,7 +201,10 @@ compute_lambda(const GLfloat sPlane[4], const GLfloat tPlane[4],
    GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
    GLfloat rho2 = r1 + r2;
    /* return log base 2 of rho */
-   return log(rho2) * 1.442695 * 0.5;       /* 1.442695 = 1/log(2) */
+   if (rho2 == 0.0F)
+      return 0.0;
+   else
+      return log(rho2) * 1.442695 * 0.5;       /* 1.442695 = 1/log(2) */
 }
 
 

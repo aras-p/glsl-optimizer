@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.8 2001/05/03 22:13:32 brianp Exp $ */
+/* $Id: s_aalinetemp.h,v 1.9 2001/05/10 17:41:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -166,14 +166,12 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
    line.dy = line.y1 - line.y0;
    line.len = sqrt(line.dx * line.dx + line.dy * line.dy);
    line.halfWidth = 0.5F * ctx->Line.Width;
-   if (line.len == 0.0) {
-      line.xAdj = 0.0;
-      line.yAdj = 0.0;
-   }
-   else {
-      line.xAdj = line.dx / line.len * line.halfWidth;
-      line.yAdj = line.dy / line.len * line.halfWidth;
-   }
+
+   if (line.len == 0.0)
+      return;
+
+   line.xAdj = line.dx / line.len * line.halfWidth;
+   line.yAdj = line.dy / line.len * line.halfWidth;
 
 #ifdef DO_Z
    compute_plane(line.x0, line.y0, line.x1, line.y1,
