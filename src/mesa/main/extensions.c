@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.47 2001/02/17 18:41:01 brianp Exp $ */
+/* $Id: extensions.c,v 1.48 2001/02/20 16:42:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -105,6 +105,7 @@ static struct {
    { ON,  "GL_SGIS_texture_edge_clamp",       F(SGIS_texture_edge_clamp) },
    { OFF, "GL_SGIX_depth_texture",            F(SGIX_depth_texture) },
    { OFF, "GL_SGIX_shadow",                   F(SGIX_shadow) },
+   { OFF, "GL_SGIX_shadow_ambient",           F(SGIX_shadow_ambient) },
    { ON,  "GL_SGIX_pixel_texture",            F(SGIX_pixel_texture) },
    { OFF, "GL_3DFX_texture_compression_FXT1", F(_3DFX_texture_compression_FXT1) }
 };
@@ -127,7 +128,8 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    gl_extensions_enable(ctx, "GL_NV_blend_square");
    gl_extensions_enable(ctx, "GL_MESA_sprite_point");
    gl_extensions_enable(ctx, "GL_SGIX_depth_texture");
-   /*gl_extensions_enable(ctx, "GL_SGIX_shadow"); not finished */
+   gl_extensions_enable(ctx, "GL_SGIX_shadow");
+   gl_extensions_enable(ctx, "GL_SGIX_shadow_ambient");
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.58 2001/02/16 00:35:35 keithw Exp $ */
+/* $Id: state.c,v 1.59 2001/02/20 16:42:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -993,6 +993,11 @@ void gl_update_state( GLcontext *ctx )
    ASSERT(ctx->Driver.TexSubImage1D);
    ASSERT(ctx->Driver.TexSubImage2D);
    ASSERT(ctx->Driver.TexSubImage3D);
+   ASSERT(ctx->Driver.CopyTexImage1D);
+   ASSERT(ctx->Driver.CopyTexImage2D);
+   ASSERT(ctx->Driver.CopyTexSubImage1D);
+   ASSERT(ctx->Driver.CopyTexSubImage2D);
+   ASSERT(ctx->Driver.CopyTexSubImage3D);
    if (ctx->Extensions.ARB_texture_compression) {
       ASSERT(ctx->Driver.CompressedTexImage1D);
       ASSERT(ctx->Driver.CompressedTexImage2D);

@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.9 2001/02/17 18:41:01 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.10 2001/02/20 16:42:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -821,7 +821,8 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                   _mesa_pixeltexgen(ctx, width, (const GLchan (*)[4]) rgba,
                                     s, t, r, q);
                   _swrast_texture_fragments(ctx, unit, width, s, t, r, NULL,
-                                            primary_rgba, rgba);
+                                            (CONST GLchan (*)[4]) primary_rgba,
+                                            rgba);
                }
             }
          }

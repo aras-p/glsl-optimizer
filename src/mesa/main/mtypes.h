@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.20 2001/02/17 18:41:01 brianp Exp $ */
+/* $Id: mtypes.h,v 1.21 2001/02/20 16:42:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -834,6 +834,7 @@ struct gl_texture_object {
    GLint MaxLevel;		/* max mipmap level, OpenGL 1.2 */
    GLboolean CompareFlag;	/* GL_SGIX_shadow */
    GLenum CompareOperator;	/* GL_SGIX_shadow */
+   GLchan ShadowAmbient;	/* GL_SGIX_shadow_ambient */
    GLint _MaxLevel;		/* actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/* = _MaxLevel - BaseLevel (q - b in spec) */
    struct gl_texture_image *Image[MAX_TEXTURE_LEVELS];
@@ -1230,6 +1231,7 @@ struct gl_extensions {
    GLboolean SGIX_depth_texture;
    GLboolean SGIX_pixel_texture;
    GLboolean SGIX_shadow;
+   GLboolean SGIX_shadow_ambient;
    GLboolean _3DFX_texture_compression_FXT1;
 };
 

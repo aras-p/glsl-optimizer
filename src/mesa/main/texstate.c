@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.32 2001/02/17 18:41:01 brianp Exp $ */
+/* $Id: texstate.c,v 1.33 2001/02/20 16:42:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -784,11 +784,20 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             GLenum op = (GLenum) params[0];
             if (op == GL_TEXTURE_LEQUAL_R_SGIX ||
                 op == GL_TEXTURE_GEQUAL_R_SGIX) {
-               texObj->CompareFlag = (GLenum) op;
+               texObj->CompareOperator = op;
             }
             else {
                gl_error(ctx, GL_INVALID_ENUM, "glTexParameter(param)");
             }
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname)");
+            return;
+         }
+         break;
+      case GL_SHADOW_AMBIENT_SGIX:
+         if (ctx->Extensions.SGIX_shadow_ambient) {
+            UNCLAMPED_FLOAT_TO_CHAN(texObj->ShadowAmbient, params[0]);
          }
          else {
             gl_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname)");
@@ -1064,6 +1073,15 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
             return;
          }
          break;
+      case GL_SHADOW_AMBIENT_SGIX:
+         if (ctx->Extensions.SGIX_shadow_ambient) {
+            *params = CHAN_TO_FLOAT(obj->ShadowAmbient);
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname)");
+            return;
+         }
+         break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname)" );
    }
@@ -1153,6 +1171,16 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          }
          else {
             gl_error( ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname)" );
+            return;
+         }
+         break;
+      case GL_SHADOW_AMBIENT_SGIX:
+         if (ctx->Extensions.SGIX_shadow_ambient) {
+            /* XXX range? */
+            *params = CHAN_TO_FLOAT(obj->ShadowAmbient);
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname)");
             return;
          }
          break;

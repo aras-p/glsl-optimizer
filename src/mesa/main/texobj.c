@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.39 2001/02/17 18:41:01 brianp Exp $ */
+/* $Id: texobj.c,v 1.40 2001/02/20 16:42:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -81,6 +81,7 @@ _mesa_alloc_texture_object( struct gl_shared_state *shared,
       obj->MaxLevel = 1000;
       obj->CompareFlag = GL_FALSE;
       obj->CompareOperator = GL_TEXTURE_LEQUAL_R_SGIX;
+      obj->ShadowAmbient = 0;
       _mesa_init_colortable(&obj->Palette);
 
       /* insert into linked list */

@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.8 2001/02/15 22:59:01 brianp Exp $ */
+/* $Id: s_span.c,v 1.9 2001/02/20 16:42:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -817,7 +817,8 @@ void gl_write_texture_span( GLcontext *ctx,
       /* Texturing without alpha is done after depth-testing which
          gives a potential speed-up. */
       ASSERT(ctx->Texture._ReallyEnabled);
-      _swrast_texture_fragments( ctx, 0, n, s, t, u, lambda, rgba, rgba );
+      _swrast_texture_fragments( ctx, 0, n, s, t, u, lambda,
+                                 (CONST GLchan (*)[4]) rgba, rgba );
      
       /* Do the alpha test */
       if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4]) rgba, mask ) == 0) {
@@ -850,7 +851,8 @@ void gl_write_texture_span( GLcontext *ctx,
    /* Texture without alpha test */
    if (! ctx->Color.AlphaEnabled) {
       ASSERT(ctx->Texture._ReallyEnabled);
-      _swrast_texture_fragments( ctx, 0, n, s, t, u, lambda, rgba, rgba );
+      _swrast_texture_fragments( ctx, 0, n, s, t, u, lambda,
+                                 (CONST GLchan (*)[4]) rgba, rgba );
    }
 
    /* Add base and specular colors */
@@ -965,8 +967,8 @@ gl_write_multitexture_span( GLcontext *ctx,
        */
       ASSERT(ctx->Texture._ReallyEnabled);
       for (i = 0; i < texUnits; i++)
-         _swrast_texture_fragments( ctx, i, n, s[i], t[i], u[i],
-                                    lambda[i], rgbaIn, rgba );
+         _swrast_texture_fragments( ctx, i, n, s[i], t[i], u[i], lambda[i],
+                                    (CONST GLchan (*)[4]) rgbaIn, rgba );
      
       /* Do the alpha test */
       if (_mesa_alpha_test( ctx, n, (const GLchan (*)[4])rgba, mask ) == 0) {
@@ -1000,8 +1002,8 @@ gl_write_multitexture_span( GLcontext *ctx,
    if (! ctx->Color.AlphaEnabled) {
       ASSERT(ctx->Texture._ReallyEnabled);
       for (i = 0; i < texUnits; i++)
-         _swrast_texture_fragments( ctx, i, n, s[i], t[i], u[i],
-                                    lambda[i], rgbaIn, rgba );
+         _swrast_texture_fragments( ctx, i, n, s[i], t[i], u[i], lambda[i],
+                                    (CONST GLchan (*)[4]) rgbaIn, rgba );
    }
 
    /* Add base and specular colors */

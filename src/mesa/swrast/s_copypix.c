@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.10 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.11 2001/02/20 16:42:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -248,7 +248,8 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
             _mesa_pixeltexgen(ctx, width, (const GLchan (*)[4]) rgba,
                               s, t, r, q);
             _swrast_texture_fragments(ctx, unit, width, s, t, r, NULL,
-                                      primary_rgba, rgba);
+                                      (CONST GLchan (*)[4]) primary_rgba,
+                                      rgba);
          }
       }
 
@@ -494,7 +495,8 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
             _mesa_pixeltexgen(ctx, width, (const GLchan (*)[4]) rgba,
                               s, t, r, q);
             _swrast_texture_fragments(ctx, unit, width, s, t, r, NULL,
-                                      primary_rgba, rgba);
+                                      (CONST GLchan (*)[4]) primary_rgba,
+                                      rgba);
          }
       }
 

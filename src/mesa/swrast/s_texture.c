@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.11 2001/02/17 18:41:01 brianp Exp $ */
+/* $Id: s_texture.c,v 1.12 2001/02/20 16:42:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1667,16 +1667,16 @@ _swrast_choose_texture_sample_func( GLcontext *ctx, GLuint texUnit,
 #define S_PROD(A,B) ( (GLint)(A) * ((GLint)(B)+1) )
 
 static INLINE void
-_mesa_texture_combine(const GLcontext *ctx,
-                      const struct gl_texture_unit *textureUnit,
-                      GLuint n,
-                      GLchan (*primary_rgba)[4],
-                      GLchan (*texel)[4],
-                      GLchan (*rgba)[4])
+texture_combine(const GLcontext *ctx,
+                const struct gl_texture_unit *textureUnit,
+                GLuint n,
+                CONST GLchan (*primary_rgba)[4],
+                CONST GLchan (*texel)[4],
+                GLchan (*rgba)[4])
 {
    GLchan ccolor [3][3*MAX_WIDTH][4];
-   GLchan (*argRGB [3])[4];
-   GLchan (*argA [3])[4];
+   const GLchan (*argRGB [3])[4];
+   const GLchan (*argA [3])[4];
    GLuint i, j;
    const GLuint RGBshift = textureUnit->CombineScaleShiftRGB;
    const GLuint Ashift   = textureUnit->CombineScaleShiftA;
@@ -1692,7 +1692,7 @@ _mesa_texture_combine(const GLcontext *ctx,
             argA[j] = primary_rgba;
             break;
          case GL_PREVIOUS_EXT:
-            argA[j] = rgba;
+            argA[j] = (const GLchan (*)[4]) rgba;
             break;
          case GL_CONSTANT_EXT:
             {
@@ -1700,7 +1700,7 @@ _mesa_texture_combine(const GLcontext *ctx,
                UNCLAMPED_FLOAT_TO_CHAN(alpha, textureUnit->EnvColor[3]);
                for (i = 0; i < n; i++)
                   c[i][ACOMP] = alpha;
-               argA[j] = ccolor[j];
+               argA[j] = (const GLchan (*)[4]) ccolor[j];
             }
             break;
          default:
@@ -1715,7 +1715,7 @@ _mesa_texture_combine(const GLcontext *ctx,
             argRGB[j] = primary_rgba;
             break;
          case GL_PREVIOUS_EXT:
-            argRGB[j] = rgba;
+            argRGB[j] = (const GLchan (*)[4]) rgba;
             break;
          case GL_CONSTANT_EXT:
             {
@@ -1729,7 +1729,7 @@ _mesa_texture_combine(const GLcontext *ctx,
                   c[i][GCOMP] = green;
                   c[i][BCOMP] = blue;
                }
-               argRGB[j] = ccolor[j];
+               argRGB[j] = (const GLchan (*)[4]) ccolor[j];
             }
             break;
          default:
@@ -1737,10 +1737,10 @@ _mesa_texture_combine(const GLcontext *ctx,
       }
 
       if (textureUnit->CombineOperandRGB[j] != GL_SRC_COLOR) {
-         GLchan (*src)[4] = argRGB[j];
+         const GLchan (*src)[4] = argRGB[j];
          GLchan (*dst)[4] = ccolor[j];
 
-         argRGB[j] = ccolor[j];
+         argRGB[j] = (const GLchan (*)[4]) ccolor[j];
 
          if (textureUnit->CombineOperandRGB[j] == GL_ONE_MINUS_SRC_COLOR) {
             for (i = 0; i < n; i++) {
@@ -1750,7 +1750,7 @@ _mesa_texture_combine(const GLcontext *ctx,
             }
          }
          else if (textureUnit->CombineOperandRGB[j] == GL_SRC_ALPHA) {
-            src = argA[j];
+            src = (const GLchan (*)[4]) argA[j];
             for (i = 0; i < n; i++) {
                dst[i][RCOMP] = src[i][ACOMP];
                dst[i][GCOMP] = src[i][ACOMP];
@@ -1758,7 +1758,7 @@ _mesa_texture_combine(const GLcontext *ctx,
             }
          }
          else {                      /*  GL_ONE_MINUS_SRC_ALPHA  */
-            src = argA[j];
+            src = (const GLchan (*)[4]) argA[j];
             for (i = 0; i < n; i++) {
                dst[i][RCOMP] = CHAN_MAX - src[i][ACOMP];
                dst[i][GCOMP] = CHAN_MAX - src[i][ACOMP];
@@ -1768,9 +1768,9 @@ _mesa_texture_combine(const GLcontext *ctx,
       }
 
       if (textureUnit->CombineOperandA[j] == GL_ONE_MINUS_SRC_ALPHA) {
-         GLchan (*src)[4] = argA[j];
+         const GLchan (*src)[4] = argA[j];
          GLchan (*dst)[4] = ccolor[j];
-         argA[j] = ccolor[j];
+         argA[j] = (const GLchan (*)[4]) ccolor[j];
          for (i = 0; i < n; i++) {
             dst[i][ACOMP] = CHAN_MAX - src[i][ACOMP];
          }
@@ -1994,7 +1994,7 @@ _mesa_texture_combine(const GLcontext *ctx,
  * Input:  textureUnit - pointer to texture unit to apply
  *         format - base internal texture format
  *         n - number of fragments
- *         primary_rgba - primary colors (may be rgba for single texture)
+ *         primary_rgba - primary colors (may alias rgba for single texture)
  *         texels - array of texel colors
  * InOut:  rgba - incoming fragment colors modified by texel colors
  *                according to the texture environment mode.
@@ -2003,7 +2003,7 @@ static void
 apply_texture( const GLcontext *ctx,
                const struct gl_texture_unit *texUnit,
                GLuint n,
-               GLchan primary_rgba[][4], GLchan texel[][4],
+               CONST GLchan primary_rgba[][4], CONST GLchan texel[][4],
                GLchan rgba[][4] )
 {
    GLint baseLevel;
@@ -2019,7 +2019,7 @@ apply_texture( const GLcontext *ctx,
 
    format = texUnit->_Current->Image[baseLevel]->Format;
 
-   if (format==GL_COLOR_INDEX) {
+   if (format==GL_COLOR_INDEX || format==GL_DEPTH_COMPONENT) {
       format = GL_RGBA;  /* XXXX a hack! */
    }
 
@@ -2328,55 +2328,73 @@ apply_texture( const GLcontext *ctx,
 	 }
 	 break;
 
-      case GL_COMBINE_EXT:    /*  GL_EXT_combine_ext; we modify texel array */
-         switch (format) {
-            case GL_ALPHA:
-               for (i=0;i<n;i++)
-                  texel[i][RCOMP] = texel[i][GCOMP] = texel[i][BCOMP] = 0;
-               break;
-            case GL_LUMINANCE:
-               for (i=0;i<n;i++) {
-                  /* Cv = Lt */
-                  GLchan Lt = texel[i][RCOMP];
-                  texel[i][GCOMP] = texel[i][BCOMP] = Lt;
-                  /* Av = 1 */
-                  texel[i][ACOMP] = CHAN_MAX;
-               }
-               break;
-            case GL_LUMINANCE_ALPHA:
-               for (i=0;i<n;i++) {
-                  GLchan Lt = texel[i][RCOMP];
-                  /* Cv = Lt */
-                  texel[i][GCOMP] = texel[i][BCOMP] = Lt;
-               }
-               break;
-            case GL_INTENSITY:
-               for (i=0;i<n;i++) {
-                  /* Cv = It */
-                  GLchan It = texel[i][RCOMP];
-                  texel[i][GCOMP] = texel[i][BCOMP] = It;
-                  /* Av = It */
-                  texel[i][ACOMP] = It;
-               }
-               break;
-            case GL_RGB:
-               for (i=0;i<n;i++) {
-                  /* Av = 1 */
-                  texel[i][ACOMP] = CHAN_MAX;
-               }
-               break;
-            case GL_RGBA:  /* do nothing. */
-               break;
-            default:
-               gl_problem(ctx, "Bad format in apply_texture (GL_COMBINE_EXT)");
-               return;
-         }
-         _mesa_texture_combine(ctx, texUnit, n, primary_rgba, texel, rgba);
+      case GL_COMBINE_EXT:
+         texture_combine(ctx, texUnit, n, primary_rgba, texel, rgba);
          break;
 
       default:
          gl_problem(ctx, "Bad env mode in apply_texture");
          return;
+   }
+}
+
+
+
+/*
+ * Apply a shadow/depth texture to the array of colors.
+ * Input:  ctx - context
+ *         texUnit - the texture unit
+ *         n - number of colors
+ *         r - array [n] of texture R coordinates
+ * In/Out:  rgba - array [n] of colors.
+ */
+static void
+sample_depth_texture(const GLcontext *ctx,
+                     const struct gl_texture_unit *texUnit,
+                     GLuint n,
+                     const GLfloat s[], const GLfloat t[], const GLfloat r[],
+                     GLchan texel[][4])
+{
+   const struct gl_texture_object *texObj = texUnit->_Current;
+   const struct gl_texture_image *texImage = texObj->Image[0]; /* XXX hack */
+   const GLchan ambient = texObj->ShadowAmbient;
+   GLboolean lequal, gequal;
+   GLuint i;
+
+   if (texObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
+      lequal = GL_TRUE;
+      gequal = GL_FALSE;
+   }
+   else {
+      lequal = GL_FALSE;
+      gequal = GL_TRUE;
+   }
+
+   assert(texObj->Dimensions == 2);
+   assert(texImage->Format == GL_DEPTH_COMPONENT);
+
+   for (i = 0; i < n; i++) {
+      const GLfloat *src;
+      GLfloat depthSample;
+      GLint col, row;
+      /* XXX this is a hack - implement proper sampling */
+      COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapS, s[i], texImage->Width, col);
+      COMPUTE_NEAREST_TEXEL_LOCATION(texObj->WrapT, t[i], texImage->Height,row);
+      src = (const GLfloat *) texImage->Data + row * texImage->Width + col;
+      depthSample = *src;
+      if ((depthSample <= r[i] && lequal) ||
+          (depthSample >= r[i] && gequal)) {
+         texel[i][RCOMP] = ambient;
+         texel[i][GCOMP] = ambient;
+         texel[i][BCOMP] = ambient;
+         texel[i][ACOMP] = CHAN_MAX;
+      }
+      else {
+         texel[i][RCOMP] = CHAN_MAX;
+         texel[i][GCOMP] = CHAN_MAX;
+         texel[i][BCOMP] = CHAN_MAX;
+         texel[i][ACOMP] = CHAN_MAX;
+      }
    }
 }
 
@@ -2389,7 +2407,7 @@ void
 _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
                            const GLfloat s[], const GLfloat t[],
                            const GLfloat r[], GLfloat lambda[],
-                           GLchan primary_rgba[][4], GLchan rgba[][4] )
+                           CONST GLchan primary_rgba[][4], GLchan rgba[][4] )
 {
    const GLuint mask = TEXTURE0_ANY << (texUnit * 4);
 
@@ -2410,8 +2428,8 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
          if (textureUnit->_Current->MinLod != -1000.0
              || textureUnit->_Current->MaxLod != 1000.0) {
             /* apply LOD clamping to lambda */
-            GLfloat min = textureUnit->_Current->MinLod;
-            GLfloat max = textureUnit->_Current->MaxLod;
+            const GLfloat min = textureUnit->_Current->MinLod;
+            const GLfloat max = textureUnit->_Current->MaxLod;
             GLuint i;
             for (i=0;i<n;i++) {
                GLfloat l = lambda[i];
@@ -2420,12 +2438,19 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
          }
 
          /* Sample the texture. */
-         SWRAST_CONTEXT(ctx)->TextureSample[texUnit]( ctx, texUnit,
-						      textureUnit->_Current,
-						      n, s, t, r,
-						      lambda, texel );
-
-         apply_texture( ctx, textureUnit, n, primary_rgba, texel, rgba );
+         if (textureUnit->_Current->CompareFlag) {
+            /* depth texture */
+            sample_depth_texture(ctx, textureUnit, n, s, t, r, texel);
+         }
+         else {
+            /* color texture */
+            SWRAST_CONTEXT(ctx)->TextureSample[texUnit]( ctx, texUnit,
+                                                         textureUnit->_Current,
+                                                         n, s, t, r,
+                                                         lambda, texel );
+         }
+         apply_texture( ctx, textureUnit, n, primary_rgba,
+                        (const GLchan (*)[4]) texel, rgba );
       }
    }
 }

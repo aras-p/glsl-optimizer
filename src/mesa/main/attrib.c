@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.43 2001/01/29 22:15:44 brianp Exp $ */
+/* $Id: attrib.c,v 1.44 2001/02/20 16:42:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -101,6 +101,9 @@ copy_texobj_state( struct gl_texture_object *dest,
    dest->MaxLod = src->MaxLod;
    dest->BaseLevel = src->BaseLevel;
    dest->MaxLevel = src->MaxLevel;
+   dest->CompareFlag = src->CompareFlag;
+   dest->CompareOperator = src->CompareOperator;
+   dest->ShadowAmbient = src->ShadowAmbient;
    dest->_MaxLevel = src->_MaxLevel;
    dest->_MaxLambda = src->_MaxLambda;
    dest->Palette = src->Palette;
