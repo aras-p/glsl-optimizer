@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.13 2002/06/15 02:38:15 brianp Exp $ */
+/* $Id: imports.c,v 1.14 2002/06/18 08:35:25 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,6 +50,7 @@
 
 
 #include "glheader.h"
+#include "mtypes.h"
 #include "imports.h"
 #include "mem.h"
 
