@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_aatritemp.h,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -86,7 +86,7 @@
    GLfloat u[MAX_TEXTURE_UNITS][MAX_WIDTH];
    GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];
 #endif
-   GLfloat bf = ctx->_backface_sign;
+   GLfloat bf = SWRAST_CONTEXT(ctx)->_backface_sign;
 
    /* determine bottom to top order of vertices */
    {

@@ -1,4 +1,4 @@
-/* $Id: s_feedback.c,v 1.1 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_feedback.c,v 1.2 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,7 +46,7 @@
 
 
 
-static void feedback_vertex( GLcontext *ctx, SWvertex *v )
+static void feedback_vertex( GLcontext *ctx, SWvertex *v, SWvertex *pv )
 {
    GLfloat win[4];
    GLfloat color[4];
@@ -59,10 +59,10 @@ static void feedback_vertex( GLcontext *ctx, SWvertex *v )
    win[2] = v->win[2] / ctx->Visual.DepthMaxF;
    win[3] = 1.0 / v->win[3];
 
-   color[0] = CHAN_TO_FLOAT(v->color[0]);
-   color[1] = CHAN_TO_FLOAT(v->color[1]);
-   color[2] = CHAN_TO_FLOAT(v->color[2]);
-   color[3] = CHAN_TO_FLOAT(v->color[3]);
+   color[0] = CHAN_TO_FLOAT(pv->color[0]);
+   color[1] = CHAN_TO_FLOAT(pv->color[1]);
+   color[2] = CHAN_TO_FLOAT(pv->color[2]);
+   color[3] = CHAN_TO_FLOAT(pv->color[3]);
 
    if (v->texcoord[texUnit][3] != 1.0 &&
        v->texcoord[texUnit][3] != 0.0) {
@@ -92,9 +92,15 @@ void gl_feedback_triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1,
       FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POLYGON_TOKEN );
       FEEDBACK_TOKEN( ctx, (GLfloat) 3 );        /* three vertices */
       
-      feedback_vertex( ctx, v0 );
-      feedback_vertex( ctx, v1 );
-      feedback_vertex( ctx, v2 );
+      if (ctx->Light.ShadeModel == GL_SMOOTH) {
+	 feedback_vertex( ctx, v0, v0 );
+	 feedback_vertex( ctx, v1, v1 );
+	 feedback_vertex( ctx, v2, v2 );
+      } else {
+	 feedback_vertex( ctx, v0, v0 );
+	 feedback_vertex( ctx, v1, v0 );
+	 feedback_vertex( ctx, v2, v0 );
+      }
    }
 }
 
@@ -109,8 +115,13 @@ void gl_feedback_line( GLcontext *ctx, SWvertex *v0, SWvertex *v1 )
 
    FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) token );
 
-   feedback_vertex( ctx, v0 );
-   feedback_vertex( ctx, v1 );
+   if (ctx->Light.ShadeModel == GL_SMOOTH) {
+      feedback_vertex( ctx, v0, v0 );
+      feedback_vertex( ctx, v1, v1 );
+   } else {
+      feedback_vertex( ctx, v0, v0 );
+      feedback_vertex( ctx, v1, v0 );
+   }
 
    swrast->StippleCounter++;
 }
@@ -119,7 +130,7 @@ void gl_feedback_line( GLcontext *ctx, SWvertex *v0, SWvertex *v1 )
 void gl_feedback_point( GLcontext *ctx, SWvertex *v )
 {
    FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POINT_TOKEN );
-   feedback_vertex( ctx, v );
+   feedback_vertex( ctx, v, v );
 }
 
 
@@ -128,6 +139,7 @@ void gl_select_triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1,
 {
    if (gl_cull_triangle( ctx, v0, v1, v2 )) {
       const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
+
       gl_update_hitflag( ctx, v0->win[2] * zs );
       gl_update_hitflag( ctx, v1->win[2] * zs );
       gl_update_hitflag( ctx, v2->win[2] * zs );

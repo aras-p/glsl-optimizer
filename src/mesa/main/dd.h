@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.39 2000/11/10 17:36:42 brianp Exp $ */
+/* $Id: dd.h,v 1.40 2000/11/13 20:02:56 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -799,13 +799,6 @@ struct dd_function_table {
     * gl_render_vb() function in vbrender.c for more details.  
     */
 
-   void (*ReducedPrimitiveChange)( GLcontext *ctx, GLenum primitive );
-   /* If registered, this will be called when rendering transitions between
-    * points, lines and triangles.  It is not called on transitions between 
-    * primtives such as GL_TRIANGLES and GL_TRIANGLE_STRIPS, or between
-    * triangles and quads or triangles and polygons.
-    */
-
    GLboolean (*MultipassFunc)( struct vertex_buffer *VB, GLuint passno );
    /* Driver may request additional render passes by returning GL_TRUE
     * when this function is called.  This function will be called
@@ -819,6 +812,11 @@ struct dd_function_table {
    /***
     *** NEW in Mesa 3.x
     ***/
+   void (*LightingSpaceChange)( GLcontext *ctx );
+   /* Notify driver that the special derived value _NeedEyeCoords has
+    * changed.  
+    */
+   
 
    void (*RegisterVB)( struct vertex_buffer *VB );
    void (*UnregisterVB)( struct vertex_buffer *VB );
@@ -890,7 +888,7 @@ struct dd_function_table {
    void (*Hint)(GLcontext *ctx, GLenum target, GLenum mode);
    void (*IndexMask)(GLcontext *ctx, GLuint mask);
    void (*Lightfv)(GLcontext *ctx, GLenum light,
-		   GLenum pname, const GLfloat *params, GLint nparams );
+		   GLenum pname, const GLfloat *params );
    void (*LightModelfv)(GLcontext *ctx, GLenum pname, const GLfloat *params);
    void (*LineStipple)(GLcontext *ctx, GLint factor, GLushort pattern );
    void (*LineWidth)(GLcontext *ctx, GLfloat width);

@@ -766,6 +766,10 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
    _swrast_CreateContext( fxMesa->glCtx );
    _swsetup_CreateContext( fxMesa->glCtx );
 
+   /* Tell the software rasterizer to use pixel fog always.
+    */
+   _swrast_allow_vertex_fog( fxMesa->glCtx, GL_FALSE );
+   _swrast_allow_pixel_fog( fxMesa->glCtx, GL_TRUE );
 
    fxSetupDDPointers(fxMesa->glCtx);
    fxDDInitExtensions(fxMesa->glCtx);  
@@ -992,7 +996,7 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.Flush=NULL;
 
   ctx->Driver.RenderStart=NULL;
-  ctx->Driver.RenderFinish=NULL;
+  ctx->Driver.RenderFinish=_swrast_flush;
 
   ctx->Driver.TexImage2D = fxDDTexImage2D;
   ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;

@@ -1,4 +1,4 @@
-/* $Id: s_points.c,v 1.3 2000/11/10 17:45:16 brianp Exp $ */
+/* $Id: s_points.c,v 1.4 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -362,7 +362,8 @@ multitextured_rgba_point( GLcontext *ctx, SWvertex *vert )
 static void
 antialiased_rgba_point( GLcontext *ctx, SWvertex *vert )
 {
-   struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   struct pixel_buffer *PB = swrast->PB;
    const GLfloat radius = ctx->Point.Size * 0.5F;
    const GLfloat rmin = radius - 0.7071F;  /* 0.7071 = sqrt(2)/2 */
    const GLfloat rmax = radius + 0.7071F;
@@ -421,7 +422,7 @@ antialiased_rgba_point( GLcontext *ctx, SWvertex *vert )
 		  /* coverage is in [0,256] */
 		  alpha = (alpha * coverage) >> 8;
 	       }
-	       if (ctx->Texture._MultiTextureEnabled) {
+	       if (swrast->_MultiTextureEnabled) {
 		  PB_WRITE_MULTITEX_PIXEL( PB, x,y,z, fog,
 					   red, green, blue, 
 					   alpha, texcoord );
@@ -614,7 +615,8 @@ dist_atten_general_rgba_point( GLcontext *ctx, SWvertex *vert )
 static void
 dist_atten_textured_rgba_point( GLcontext *ctx, SWvertex *vert )
 {
-   struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   struct pixel_buffer *PB = swrast->PB;
    const GLfloat psize = ctx->Point.Size;
    GLfloat dist = attenuation_distance( ctx, vert->eye );
 
@@ -683,7 +685,7 @@ dist_atten_textured_rgba_point( GLcontext *ctx, SWvertex *vert )
 
    for (iy = y0; iy <= y1; iy++) {
       for (ix = x0; ix <= x1; ix++) {
-	 if (ctx->Texture._MultiTextureEnabled) {
+	 if (swrast->_MultiTextureEnabled) {
 	    PB_WRITE_MULTITEX_PIXEL( PB, ix, iy, z, fog,
 				     red, green, blue, alpha,
 				     texcoord );
@@ -706,7 +708,8 @@ dist_atten_textured_rgba_point( GLcontext *ctx, SWvertex *vert )
 static void
 dist_atten_antialiased_rgba_point( GLcontext *ctx, SWvertex *vert )
 {
-   struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   struct pixel_buffer *PB = swrast->PB;
    const GLfloat psize = ctx->Point.Size;
    GLfloat dist = attenuation_distance( ctx, vert->eye );
 
@@ -775,7 +778,7 @@ dist_atten_antialiased_rgba_point( GLcontext *ctx, SWvertex *vert )
 		  alpha = (alpha * coverage) >> 8;
 	       }
 	       alpha = (GLint) (alpha * alphaf);
-	       if (ctx->Texture._MultiTextureEnabled) {
+	       if (swrast->_MultiTextureEnabled) {
 		  PB_WRITE_MULTITEX_PIXEL( PB, x, y, z, fog,
 					   red, green, blue, alpha,
 					   texcoord );
@@ -906,7 +909,7 @@ _swrast_choose_point( GLcontext *ctx )
             swrast->Point = antialiased_rgba_point;
          }
          else if (ctx->Texture._ReallyEnabled) {
-            if (ctx->Texture._MultiTextureEnabled ||
+            if (swrast->_MultiTextureEnabled ||
                 ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR ||
 		ctx->Fog.ColorSumEnabled) {
 	       swrast->Point = multitextured_rgba_point;

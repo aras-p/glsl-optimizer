@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.20 2000/11/05 18:40:58 keithw Exp $ */
+/* $Id: points.c,v 1.21 2000/11/13 20:02:56 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -89,6 +89,7 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
             if (tmp != ctx->Point._Attenuated) {
                ctx->_Enabled ^= ENABLE_POINT_ATTEN;
                ctx->_TriangleCaps ^= DD_POINT_ATTEN;
+	       ctx->_NeedEyeCoords ^= NEED_EYE_POINT_ATTEN;
             }
          }
          break;

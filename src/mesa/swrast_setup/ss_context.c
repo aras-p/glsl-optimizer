@@ -1,4 +1,4 @@
-/* $Id: ss_context.c,v 1.2 2000/11/10 17:45:16 brianp Exp $ */
+/* $Id: ss_context.c,v 1.3 2000/11/13 20:02:58 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -107,10 +107,9 @@ static void
 _swsetup_invalidate_state( GLcontext *ctx, GLuint new_state )
 {
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
-
+   
    swsetup->NewState |= new_state;
 
-   
    if (new_state & _SWSETUP_NEW_RENDERINDEX) {
       swsetup->Triangle = _swsetup_validate_triangle;
       swsetup->Line = _swsetup_validate_line;

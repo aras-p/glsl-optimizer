@@ -93,16 +93,34 @@ typedef void (*swrast_point_func)( GLcontext *ctx, SWvertex *);
 
 typedef struct
 {
-   GLuint NewState;
-   GLuint StateChanges;
+   /* Configuration mechanisms to make software rasterizer match
+    * characteristics of the hardware rasterizer (if present): 
+    */
+   GLboolean AllowVertexFog;
+   GLboolean AllowPixelFog;
 
+   /* Derived values, invalidated on statechanges, updated from
+    * _swrast_validate_derived():
+    */
    GLuint _RasterMask;
+   GLboolean _MultiTextureEnabled;
    GLuint _MinMagThresh[MAX_TEXTURE_UNITS];
+   GLfloat _backface_sign;
+   GLboolean _PreferPixelFog;
 
+   /* Accum buffer temporaries.  
+    */
+   GLboolean _IntegerAccumMode;	/* Storing unscaled integers? */
+   GLfloat _IntegerAccumScaler;	/* Implicit scale factor */
+
+   
+   /* Working values:
+    */
    struct pixel_buffer* PB;
    GLuint StippleCounter;    /* Line stipple counter */
-
-
+   GLuint NewState;
+   GLuint StateChanges;
+   
    /* Mechanism to allow driver (like X11) to register further
     * software rasterization routines.
     */

@@ -1,4 +1,4 @@
-/* $Id: s_alpha.c,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_alpha.c,v 1.2 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,9 +60,8 @@ _mesa_alpha_test( const GLcontext *ctx,
 	 }
 	 return 1;
       case GL_LEQUAL:
-         for (i=0;i<n;i++) {
+         for (i=0;i<n;i++) 
 	    mask[i] &= (rgba[i][ACOMP] <= ref);
-	 }
 	 return 1;
       case GL_GEQUAL:
          for (i=0;i<n;i++) {

@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_accum.c,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -68,6 +68,7 @@
 void
 _mesa_alloc_accum_buffer( GLcontext *ctx )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLint n;
 
    if (ctx->DrawBuffer->Accum) {
@@ -83,11 +84,11 @@ _mesa_alloc_accum_buffer( GLcontext *ctx )
       gl_error( ctx, GL_OUT_OF_MEMORY, "glAccum" );
    }
 #ifdef USE_OPTIMIZED_ACCUM
-   ctx->IntegerAccumMode = GL_TRUE;
+   swrast->_IntegerAccumMode = GL_TRUE;
 #else
-   ctx->IntegerAccumMode = GL_FALSE;
+   swrast->_IntegerAccumMode = GL_FALSE;
 #endif
-   ctx->IntegerAccumScaler = 0.0;
+   swrast->_IntegerAccumScaler = 0.0;
 }
 
 
@@ -102,20 +103,21 @@ _mesa_alloc_accum_buffer( GLcontext *ctx )
  */
 static void rescale_accum( GLcontext *ctx )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLuint n = ctx->DrawBuffer->Width * ctx->DrawBuffer->Height * 4;
    const GLfloat fChanMax = (1 << (sizeof(GLchan) * 8)) - 1;
-   const GLfloat s = ctx->IntegerAccumScaler * (32767.0 / fChanMax);
+   const GLfloat s = swrast->_IntegerAccumScaler * (32767.0 / fChanMax);
    GLaccum *accum = ctx->DrawBuffer->Accum;
    GLuint i;
 
-   assert(ctx->IntegerAccumMode);
+   assert(swrast->_IntegerAccumMode);
    assert(accum);
 
    for (i = 0; i < n; i++) {
       accum[i] = (GLaccum) (accum[i] * s);
    }
 
-   ctx->IntegerAccumMode = GL_FALSE;
+   swrast->_IntegerAccumMode = GL_FALSE;
 }
 
 
@@ -129,6 +131,7 @@ static void rescale_accum( GLcontext *ctx )
 void
 _mesa_clear_accum_buffer( GLcontext *ctx )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint buffersize;
    GLfloat acc_scale;
 
@@ -169,12 +172,12 @@ _mesa_clear_accum_buffer( GLcontext *ctx )
 	 b = (GLaccum) (ctx->Accum.ClearColor[2] * acc_scale);
 	 a = (GLaccum) (ctx->Accum.ClearColor[3] * acc_scale);
          /* size of region to clear */
-         width = 4 * (ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin);
-         height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
+         width = 4 * (ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin);
+         height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
          /* ptr to first element to clear */
          row = ctx->DrawBuffer->Accum
-               + 4 * (ctx->DrawBuffer->Ymin * ctx->DrawBuffer->Width
-                      + ctx->DrawBuffer->Xmin);
+               + 4 * (ctx->DrawBuffer->_Ymin * ctx->DrawBuffer->Width
+                      + ctx->DrawBuffer->_Xmin);
          for (j=0;j<height;j++) {
             for (i=0;i<width;i+=4) {
                row[i+0] = r;
@@ -217,14 +220,14 @@ _mesa_clear_accum_buffer( GLcontext *ctx )
       if (ctx->Accum.ClearColor[0] == 0.0 && ctx->Accum.ClearColor[1] == 0.0 &&
           ctx->Accum.ClearColor[2] == 0.0 && ctx->Accum.ClearColor[3] == 0.0) {
 #ifdef USE_OPTIMIZED_ACCUM
-         ctx->IntegerAccumMode = GL_TRUE;
+         swrast->_IntegerAccumMode = GL_TRUE;
 #else
-         ctx->IntegerAccumMode = GL_FALSE;
+         swrast->_IntegerAccumMode = GL_FALSE;
 #endif
-         ctx->IntegerAccumScaler = 0.0;  /* denotes empty accum buffer */
+         swrast->_IntegerAccumScaler = 0.0;  /* denotes empty accum buffer */
       }
       else {
-         ctx->IntegerAccumMode = GL_FALSE;
+         swrast->_IntegerAccumMode = GL_FALSE;
       }
    }
 }
@@ -236,6 +239,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
 	       GLint width, GLint height )
 
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint width4;
    GLfloat acc_scale;
    GLchan rgba[MAX_WIDTH][4];
@@ -273,7 +277,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
 	    const GLaccum intVal = (GLaccum) (value * acc_scale);
 	    GLuint j;
             /* Leave optimized accum buffer mode */
-            if (ctx->IntegerAccumMode)
+            if (swrast->_IntegerAccumMode)
                rescale_accum(ctx);
 	    for (j = 0; j < height; j++) {
 	       GLaccum * acc = ctx->DrawBuffer->Accum + ypos * width4 + 4 * xpos;
@@ -290,7 +294,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
          if (value != 1.0F) {
 	    GLuint j;
             /* Leave optimized accum buffer mode */
-            if (ctx->IntegerAccumMode)
+            if (swrast->_IntegerAccumMode)
                rescale_accum(ctx);
 	    for (j = 0; j < height; j++) {
 	       GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + 4 * xpos;
@@ -311,19 +315,19 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                                        ctx->Pixel.DriverReadBuffer );
 
          /* May have to leave optimized accum buffer mode */
-         if (ctx->IntegerAccumScaler == 0.0 && value > 0.0 && value <= 1.0)
-            ctx->IntegerAccumScaler = value;
-         if (ctx->IntegerAccumMode && value != ctx->IntegerAccumScaler)
+         if (swrast->_IntegerAccumScaler == 0.0 && value > 0.0 && value <= 1.0)
+            swrast->_IntegerAccumScaler = value;
+         if (swrast->_IntegerAccumMode && value != swrast->_IntegerAccumScaler)
             rescale_accum(ctx);
             
          RENDER_START(ctx);
 
-         if (ctx->IntegerAccumMode) {
+         if (swrast->_IntegerAccumMode) {
             /* simply add integer color values into accum buffer */
             GLuint j;
             GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
-            assert(ctx->IntegerAccumScaler > 0.0);
-            assert(ctx->IntegerAccumScaler <= 1.0);
+            assert(swrast->_IntegerAccumScaler > 0.0);
+            assert(swrast->_IntegerAccumScaler <= 1.0);
             for (j = 0; j < height; j++) {
                
                GLuint i, i4;
@@ -371,24 +375,24 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
          /* This is a change to go into optimized accum buffer mode */
          if (value > 0.0 && value <= 1.0) {
 #ifdef USE_OPTIMIZED_ACCUM
-            ctx->IntegerAccumMode = GL_TRUE;
+            swrast->_IntegerAccumMode = GL_TRUE;
 #else
-            ctx->IntegerAccumMode = GL_FALSE;
+            swrast->_IntegerAccumMode = GL_FALSE;
 #endif
-            ctx->IntegerAccumScaler = value;
+            swrast->_IntegerAccumScaler = value;
          }
          else {
-            ctx->IntegerAccumMode = GL_FALSE;
-            ctx->IntegerAccumScaler = 0.0;
+            swrast->_IntegerAccumMode = GL_FALSE;
+            swrast->_IntegerAccumScaler = 0.0;
          }
 
          RENDER_START(ctx);
-         if (ctx->IntegerAccumMode) {
+         if (swrast->_IntegerAccumMode) {
             /* just copy values into accum buffer */
             GLuint j;
             GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
-            assert(ctx->IntegerAccumScaler > 0.0);
-            assert(ctx->IntegerAccumScaler <= 1.0);
+            assert(swrast->_IntegerAccumScaler > 0.0);
+            assert(swrast->_IntegerAccumScaler <= 1.0);
             for (j = 0; j < height; j++) {
                GLuint i, i4;
                gl_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
@@ -431,15 +435,15 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
 
       case GL_RETURN:
          /* May have to leave optimized accum buffer mode */
-         if (ctx->IntegerAccumMode && value != 1.0)
+         if (swrast->_IntegerAccumMode && value != 1.0)
             rescale_accum(ctx);
 
          RENDER_START(ctx);
-         if (ctx->IntegerAccumMode && ctx->IntegerAccumScaler > 0) {
+         if (swrast->_IntegerAccumMode && swrast->_IntegerAccumScaler > 0) {
             /* build lookup table to avoid many floating point multiplies */
             static GLchan multTable[32768];
             static GLfloat prevMult = 0.0;
-            const GLfloat mult = ctx->IntegerAccumScaler;
+            const GLfloat mult = swrast->_IntegerAccumScaler;
             const GLint max = MIN2((GLint) (256 / mult), 32767);
             GLuint j;
             if (mult != prevMult) {
@@ -448,8 +452,8 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
                prevMult = mult;
             }
 
-            assert(ctx->IntegerAccumScaler > 0.0);
-            assert(ctx->IntegerAccumScaler <= 1.0);
+            assert(swrast->_IntegerAccumScaler > 0.0);
+            assert(swrast->_IntegerAccumScaler <= 1.0);
             for (j = 0; j < height; j++) {
                const GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos*4;
                GLuint i, i4;

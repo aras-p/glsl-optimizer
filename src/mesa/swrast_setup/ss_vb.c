@@ -165,16 +165,16 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
          if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ||
              ctx->Fog.ColorSumEnabled)
             funcindex |= SPEC;
-
-         if (ctx->Point._Attenuated)
-            funcindex |= EYE;
-
-	 if (ctx->Fog.Enabled)
-	    funcindex |= FOG;
       }
       else {
          funcindex = INDEX;
       }
+
+      if (ctx->Point._Attenuated)
+	 funcindex |= EYE;
+
+      if (ctx->Fog.Enabled)
+	 funcindex |= FOG;
    }
    else {
       /* feedback or section */

@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.3 2000/11/10 17:45:16 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.4 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,27 +61,27 @@ _mesa_clip_pixelrect(const GLcontext *ctx,
    const GLframebuffer *buffer = ctx->DrawBuffer;
 
    /* left clipping */
-   if (*destX < buffer->Xmin) {
-      *skipPixels += (buffer->Xmin - *destX);
-      *width -= (buffer->Xmin - *destX);
-      *destX = buffer->Xmin;
+   if (*destX < buffer->_Xmin) {
+      *skipPixels += (buffer->_Xmin - *destX);
+      *width -= (buffer->_Xmin - *destX);
+      *destX = buffer->_Xmin;
    }
    /* right clipping */
-   if (*destX + *width > buffer->Xmax)
-      *width -= (*destX + *width - buffer->Xmax);
+   if (*destX + *width > buffer->_Xmax)
+      *width -= (*destX + *width - buffer->_Xmax);
 
    if (*width <= 0)
       return GL_FALSE;
 
    /* bottom clipping */
-   if (*destY < buffer->Ymin) {
-      *skipRows += (buffer->Ymin - *destY);
-      *height -= (buffer->Ymin - *destY);
-      *destY = buffer->Ymin;
+   if (*destY < buffer->_Ymin) {
+      *skipRows += (buffer->_Ymin - *destY);
+      *height -= (buffer->_Ymin - *destY);
+      *destY = buffer->_Ymin;
    }
    /* top clipping */
-   if (*destY + *height > buffer->Ymax)
-      *height -= (*destY + *height - buffer->Ymax);
+   if (*destY + *height > buffer->_Ymax)
+      *height -= (*destY + *height - buffer->_Ymax);
 
    if (*height <= 0)
       return GL_TRUE;
@@ -139,48 +139,48 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
        */
       if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
          /* horizontal clipping */
-         if (destX < ctx->DrawBuffer->Xmin) {
-            skipPixels += (ctx->DrawBuffer->Xmin - destX);
-            drawWidth  -= (ctx->DrawBuffer->Xmin - destX);
-            destX = ctx->DrawBuffer->Xmin;
+         if (destX < ctx->DrawBuffer->_Xmin) {
+            skipPixels += (ctx->DrawBuffer->_Xmin - destX);
+            drawWidth  -= (ctx->DrawBuffer->_Xmin - destX);
+            destX = ctx->DrawBuffer->_Xmin;
          }
-         if (destX + drawWidth > ctx->DrawBuffer->Xmax)
-            drawWidth -= (destX + drawWidth - ctx->DrawBuffer->Xmax);
+         if (destX + drawWidth > ctx->DrawBuffer->_Xmax)
+            drawWidth -= (destX + drawWidth - ctx->DrawBuffer->_Xmax);
          if (drawWidth <= 0)
             return GL_TRUE;
 
          /* vertical clipping */
-         if (destY < ctx->DrawBuffer->Ymin) {
-            skipRows   += (ctx->DrawBuffer->Ymin - destY);
-            drawHeight -= (ctx->DrawBuffer->Ymin - destY);
-            destY = ctx->DrawBuffer->Ymin;
+         if (destY < ctx->DrawBuffer->_Ymin) {
+            skipRows   += (ctx->DrawBuffer->_Ymin - destY);
+            drawHeight -= (ctx->DrawBuffer->_Ymin - destY);
+            destY = ctx->DrawBuffer->_Ymin;
          }
-         if (destY + drawHeight > ctx->DrawBuffer->Ymax)
-            drawHeight -= (destY + drawHeight - ctx->DrawBuffer->Ymax);
+         if (destY + drawHeight > ctx->DrawBuffer->_Ymax)
+            drawHeight -= (destY + drawHeight - ctx->DrawBuffer->_Ymax);
          if (drawHeight <= 0)
             return GL_TRUE;
       }
       else if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==-1.0F) {
          /* upside-down image */
          /* horizontal clipping */
-         if (destX < ctx->DrawBuffer->Xmin) {
-            skipPixels += (ctx->DrawBuffer->Xmin - destX);
-            drawWidth  -= (ctx->DrawBuffer->Xmin - destX);
-            destX = ctx->DrawBuffer->Xmin;
+         if (destX < ctx->DrawBuffer->_Xmin) {
+            skipPixels += (ctx->DrawBuffer->_Xmin - destX);
+            drawWidth  -= (ctx->DrawBuffer->_Xmin - destX);
+            destX = ctx->DrawBuffer->_Xmin;
          }
-         if (destX + drawWidth > ctx->DrawBuffer->Xmax)
-            drawWidth -= (destX + drawWidth - ctx->DrawBuffer->Xmax);
+         if (destX + drawWidth > ctx->DrawBuffer->_Xmax)
+            drawWidth -= (destX + drawWidth - ctx->DrawBuffer->_Xmax);
          if (drawWidth <= 0)
             return GL_TRUE;
 
          /* vertical clipping */
-         if (destY > ctx->DrawBuffer->Ymax) {
-            skipRows   += (destY - ctx->DrawBuffer->Ymax);
-            drawHeight -= (destY - ctx->DrawBuffer->Ymax);
-            destY = ctx->DrawBuffer->Ymax;
+         if (destY > ctx->DrawBuffer->_Ymax) {
+            skipRows   += (destY - ctx->DrawBuffer->_Ymax);
+            drawHeight -= (destY - ctx->DrawBuffer->_Ymax);
+            destY = ctx->DrawBuffer->_Ymax;
          }
-         if (destY - drawHeight < ctx->DrawBuffer->Ymin)
-            drawHeight -= (ctx->DrawBuffer->Ymin - (destY - drawHeight));
+         if (destY - drawHeight < ctx->DrawBuffer->_Ymin)
+            drawHeight -= (ctx->DrawBuffer->_Ymin - (destY - drawHeight));
          if (drawHeight <= 0)
             return GL_TRUE;
       }

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.42 2000/11/10 18:31:04 brianp Exp $ */
+/* $Id: state.c,v 1.43 2000/11/13 20:02:56 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -747,264 +747,348 @@ void gl_print_enable_flags( const char *msg, GLuint flags )
 }
 
 
-/*
- * If ctx->NewState is non-zero then this function MUST be called before
- * rendering any primitive.  Basically, function pointers and miscellaneous
- * flags are updated to reflect the current state of the state machine.
+/* Note: This routine refers to derived texture attribute values to
+ * compute the ENABLE_TEXMAT flags, but is only called on
+ * _NEW_TEXTURE_MATRIX.  On changes to _NEW_TEXTURE, the ENABLE_TEXMAT
+ * flags are updated by _mesa_update_textures(), below.  
+ * 
+ * If both TEXTURE and TEXTURE_MATRIX change at once, these values
+ * will be computed twice. 
  */
-void gl_update_state( GLcontext *ctx )
+static void
+_mesa_update_texture_matrices( GLcontext *ctx )
 {
    GLuint i;
 
-   if (MESA_VERBOSE & VERBOSE_STATE)
-      gl_print_state("", ctx->NewState);
+   ctx->_Enabled &= ~(ENABLE_TEXMAT0 | ENABLE_TEXMAT1 | ENABLE_TEXMAT2);
 
-   if (ctx->NewState & (_NEW_PIXEL|_NEW_COLOR_MATRIX))
-      _mesa_update_image_transfer_state(ctx);
+   for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
+      if (ctx->TextureMatrix[i].flags & MAT_DIRTY_ALL_OVER) {
+	 gl_matrix_analyze( &ctx->TextureMatrix[i] );
+	 ctx->TextureMatrix[i].flags &= ~MAT_DIRTY_DEPENDENTS;
 
-   if (ctx->NewState & _NEW_ARRAY)
-      gl_update_client_state( ctx );
+	 if (ctx->Texture.Unit[i]._ReallyEnabled &&
+	     ctx->TextureMatrix[i].type != MATRIX_IDENTITY)
+	    ctx->_Enabled |= ENABLE_TEXMAT0 << i;
+      }
+   }
+}
 
-   if (ctx->NewState & _NEW_TEXTURE_MATRIX) {
-      ctx->_Enabled &= ~(ENABLE_TEXMAT0 | ENABLE_TEXMAT1 | ENABLE_TEXMAT2);
 
-      for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
-	 if (ctx->TextureMatrix[i].flags & MAT_DIRTY_ALL_OVER) {
-	    gl_matrix_analyze( &ctx->TextureMatrix[i] );
-	    ctx->TextureMatrix[i].flags &= ~MAT_DIRTY_DEPENDENTS;
+/* Note: This routine refers to derived texture matrix values to
+ * compute the ENABLE_TEXMAT flags, but is only called on
+ * _NEW_TEXTURE.  On changes to _NEW_TEXTURE_MATRIX, the ENABLE_TEXMAT
+ * flags are updated by _mesa_update_texture_matrices, above.  
+ * 
+ * If both TEXTURE and TEXTURE_MATRIX change at once, these values
+ * will be computed twice.  
+ */
+static void
+_mesa_update_textures( GLcontext *ctx )
+{
+   GLuint i;
 
-	    if (ctx->Texture.Unit[i].Enabled &&
-		ctx->TextureMatrix[i].type != MATRIX_IDENTITY)
+   ctx->Texture._ReallyEnabled = 0;
+   ctx->_Enabled &= ~(ENABLE_TEXGEN0 | ENABLE_TEXGEN1 | ENABLE_TEXGEN2 |
+		      ENABLE_TEXMAT0 | ENABLE_TEXMAT1 | ENABLE_TEXMAT2 |
+		      ENABLE_TEX0 | ENABLE_TEX1 | ENABLE_TEX2);
+
+   gl_update_dirty_texobjs(ctx);
+
+   for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
+      
+      ctx->Texture.Unit[i]._ReallyEnabled = 0;
+
+      if (ctx->Texture.Unit[i].Enabled) {
+
+	 gl_update_texture_unit( ctx, &ctx->Texture.Unit[i] );
+
+	 if (ctx->Texture.Unit[i]._ReallyEnabled) {
+	    GLuint flag = ctx->Texture.Unit[i]._ReallyEnabled << (i * 4);
+
+	    ctx->Texture._ReallyEnabled |= flag;
+	    ctx->_Enabled |= flag;
+
+	    if (ctx->Texture.Unit[i]._GenFlags) {
+	       ctx->_Enabled |= ENABLE_TEXGEN0 << i;
+	       ctx->Texture._GenFlags |= ctx->Texture.Unit[i]._GenFlags;
+	    }
+
+	    if (ctx->TextureMatrix[i].type != MATRIX_IDENTITY)
 	       ctx->_Enabled |= ENABLE_TEXMAT0 << i;
 	 }
       }
    }
 
-   if (ctx->NewState & _NEW_TEXTURE) {
-      ctx->Texture._MultiTextureEnabled = GL_FALSE;
-      ctx->Texture._NeedNormals = GL_FALSE;
-      gl_update_dirty_texobjs(ctx);
-      ctx->_Enabled &= ~(ENABLE_TEXGEN0 | ENABLE_TEXGEN1 | ENABLE_TEXGEN2);
-      ctx->Texture._ReallyEnabled = 0;
+   ctx->_NeedNormals &= ~NEED_NORMALS_TEXGEN;
+   ctx->_NeedEyeCoords &= ~NEED_EYE_TEXGEN;
 
-      for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
-	 if (ctx->Texture.Unit[i].Enabled) {
-	    gl_update_texture_unit( ctx, &ctx->Texture.Unit[i] );
+   if (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS) {
+      ctx->_NeedNormals |= NEED_NORMALS_TEXGEN;
+      ctx->_NeedEyeCoords |= NEED_EYE_TEXGEN;
+   }
+   
+   if (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD) {
+      ctx->_NeedEyeCoords |= NEED_EYE_TEXGEN;
+   }
+}
 
-	    ctx->Texture._ReallyEnabled |=
-	       ctx->Texture.Unit[i]._ReallyEnabled << (i * 4);
+static void
+_mesa_update_polygon( GLcontext *ctx )
+{
+   ctx->_TriangleCaps &= ~DD_TRI_CULL_FRONT_BACK;
 
-	    if (ctx->Texture.Unit[i]._GenFlags != 0) {
-	       ctx->_Enabled |= ENABLE_TEXGEN0 << i;
+   /* Setup CullBits bitmask */
+   if (ctx->Polygon.CullFlag) {
+      switch(ctx->Polygon.CullFaceMode) {
+      case GL_BACK:
+	 ctx->Polygon._CullBits = 1;
+	 break;
+      case GL_FRONT:
+	 ctx->Polygon._CullBits = 2;
+	 break;
+      default:
+      case GL_FRONT_AND_BACK:
+	 ctx->Polygon._CullBits = 0;
+	 ctx->_TriangleCaps |= DD_TRI_CULL_FRONT_BACK;
+	 break;
+      }
+   }
+   else {
+      ctx->Polygon._CullBits = 3;
+   }
 
-	       if (ctx->Texture.Unit[i]._GenFlags & TEXGEN_NEED_NORMALS) {
-		  ctx->Texture._NeedNormals = GL_TRUE;
-		  ctx->Texture._NeedEyeCoords = GL_TRUE;
-	       }
+   /* Any Polygon offsets enabled? */
+   ctx->_TriangleCaps &= ~DD_TRI_OFFSET;
 
-	       if (ctx->Texture.Unit[i]._GenFlags & TEXGEN_NEED_EYE_COORD) {
-		  ctx->Texture._NeedEyeCoords = GL_TRUE;
-	       }
-	    }
+   if (ctx->Polygon.OffsetPoint ||
+       ctx->Polygon.OffsetLine ||
+       ctx->Polygon.OffsetFill)
+      ctx->_TriangleCaps |= DD_TRI_OFFSET;
+}
 
-            if (i > 0 && ctx->Texture.Unit[i]._ReallyEnabled) {
-               ctx->Texture._MultiTextureEnabled = GL_TRUE;
-            }
+static void 
+_mesa_calculate_model_project_matrix( GLcontext *ctx )
+{
+   if (!ctx->_NeedEyeCoords) {
+      gl_matrix_mul( &ctx->_ModelProjectMatrix,
+		     &ctx->ProjectionMatrix,
+		     &ctx->ModelView );
+
+      gl_matrix_analyze( &ctx->_ModelProjectMatrix );
+   }
+}
+
+static void
+_mesa_update_modelview_scale( GLcontext *ctx )
+{
+   ctx->_ModelViewInvScale = 1.0F;
+   if (ctx->ModelView.flags & (MAT_FLAG_UNIFORM_SCALE |
+			       MAT_FLAG_GENERAL_SCALE |
+			       MAT_FLAG_GENERAL_3D |
+			       MAT_FLAG_GENERAL) ) {
+      const GLfloat *m = ctx->ModelView.inv;
+      GLfloat f = m[2] * m[2] + m[6] * m[6] + m[10] * m[10];
+      if (f < 1e-12) f = 1.0;
+      if (ctx->_NeedEyeCoords)
+	 ctx->_ModelViewInvScale = 1.0/GL_SQRT(f);
+      else
+	 ctx->_ModelViewInvScale = GL_SQRT(f);
+   }
+}
+
+
+/* Bring uptodate any state that relies on _NeedEyeCoords.  
+ */
+static void
+_mesa_update_tnl_spaces( GLcontext *ctx, GLuint oldneedeyecoords )
+{   
+   /* Check if the truth-value interpretations of the bitfields have
+    * changed: 
+    */
+   if ((oldneedeyecoords == 0) != (ctx->_NeedEyeCoords == 0))
+   {
+      /* Recalculate all state that depends on _NeedEyeCoords.
+       */
+      _mesa_update_modelview_scale(ctx);
+      _mesa_calculate_model_project_matrix(ctx);
+      gl_update_normal_transform( ctx ); 
+      gl_compute_light_positions( ctx );
+
+      if (ctx->Driver.LightingSpaceChange)
+	 ctx->Driver.LightingSpaceChange( ctx );
+   }
+   else 
+   {
+      GLuint new_state = ctx->NewState;
+
+      /* Recalculate that same state if and only if it has been
+       * invalidated by other statechanges.
+       */
+      if (new_state & _NEW_MODELVIEW) 
+	 _mesa_update_modelview_scale(ctx);
+
+      if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION)) 
+	 _mesa_calculate_model_project_matrix(ctx);
+	    
+      if (new_state & _TNL_NEW_NORMAL_TRANSFORM)
+	 gl_update_normal_transform( ctx ); /* references _ModelViewInvScale */
+	     
+      if (new_state & (_NEW_LIGHT|_NEW_MODELVIEW))
+	 gl_compute_light_positions( ctx );
+   }
+}
+
+
+static void
+_mesa_update_drawbuffer( GLcontext *ctx )
+{
+   ctx->DrawBuffer->_Xmin = 0;
+   ctx->DrawBuffer->_Ymin = 0;
+   ctx->DrawBuffer->_Xmax = ctx->DrawBuffer->Width;
+   ctx->DrawBuffer->_Ymax = ctx->DrawBuffer->Height;
+   if (ctx->Scissor.Enabled) {
+      if (ctx->Scissor.X > ctx->DrawBuffer->_Xmin) {
+	 ctx->DrawBuffer->_Xmin = ctx->Scissor.X;
+      }
+      if (ctx->Scissor.Y > ctx->DrawBuffer->_Ymin) {
+	 ctx->DrawBuffer->_Ymin = ctx->Scissor.Y;
+      }
+      if (ctx->Scissor.X + ctx->Scissor.Width < ctx->DrawBuffer->_Xmax) {
+	 ctx->DrawBuffer->_Xmax = ctx->Scissor.X + ctx->Scissor.Width;
+      }
+      if (ctx->Scissor.Y + ctx->Scissor.Height < ctx->DrawBuffer->_Ymax) {
+	 ctx->DrawBuffer->_Ymax = ctx->Scissor.Y + ctx->Scissor.Height;
+      }
+   }
+}
+
+
+/* NOTE: This routine references Tranform attribute values to compute
+ * userclip positions in clip space, but is only called on
+ * _NEW_PROJECTION.  The _mesa_ClipPlane() function keeps these values
+ * uptodate across changes to the Transform attributes.
+ */
+static void
+_mesa_update_projection( GLcontext *ctx )
+{
+   gl_matrix_analyze( &ctx->ProjectionMatrix );
+      
+   /* Recompute clip plane positions in clipspace.  This is also done
+    * in _mesa_ClipPlane().
+    */
+   if (ctx->Transform._AnyClip) {
+      GLuint p;
+      for (p = 0 ; p < MAX_CLIP_PLANES ; p++) {
+	 if (ctx->Transform.ClipEnabled[p]) {
+	    gl_transform_vector( ctx->Transform._ClipUserPlane[p],
+				 ctx->Transform.EyeUserPlane[p],
+				 ctx->ProjectionMatrix.inv );
 	 }
-         else {
-            ctx->Texture.Unit[i]._ReallyEnabled = 0;
-         }
-      }
-      ctx->_Enabled = ((ctx->_Enabled & ~ENABLE_TEX_ANY) | 
-		       ctx->Texture._ReallyEnabled);
-      ctx->_NeedNormals = (ctx->Light.Enabled || ctx->Texture._NeedNormals);
-   }
-
-
-   if (ctx->NewState & (_NEW_BUFFERS|_NEW_SCISSOR)) {
-      /* update scissor region */
-      ctx->DrawBuffer->Xmin = 0;
-      ctx->DrawBuffer->Ymin = 0;
-      ctx->DrawBuffer->Xmax = ctx->DrawBuffer->Width;
-      ctx->DrawBuffer->Ymax = ctx->DrawBuffer->Height;
-      if (ctx->Scissor.Enabled) {
-         if (ctx->Scissor.X > ctx->DrawBuffer->Xmin) {
-            ctx->DrawBuffer->Xmin = ctx->Scissor.X;
-         }
-         if (ctx->Scissor.Y > ctx->DrawBuffer->Ymin) {
-            ctx->DrawBuffer->Ymin = ctx->Scissor.Y;
-         }
-         if (ctx->Scissor.X + ctx->Scissor.Width < ctx->DrawBuffer->Xmax) {
-            ctx->DrawBuffer->Xmax = ctx->Scissor.X + ctx->Scissor.Width;
-         }
-         if (ctx->Scissor.Y + ctx->Scissor.Height < ctx->DrawBuffer->Ymax) {
-            ctx->DrawBuffer->Ymax = ctx->Scissor.Y + ctx->Scissor.Height;
-         }
       }
    }
-
-   if (ctx->NewState & _NEW_LIGHT) {
-      ctx->_TriangleCaps &= ~(DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
-      if (ctx->Light.Enabled) {
-         if (ctx->Light.Model.TwoSide)
-            ctx->_TriangleCaps |= (DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
-         gl_update_lighting(ctx);
-      }
-   }
-
-   if (ctx->NewState & (_NEW_POLYGON | _NEW_LIGHT)) {
+}
 
 
-      if (ctx->NewState & _NEW_POLYGON) {
-	 ctx->_TriangleCaps &= ~DD_TRI_CULL_FRONT_BACK;
 
-	 /* Setup CullBits bitmask */
-	 if (ctx->Polygon.CullFlag) {
-	    ctx->_backface_sign = 1;
-	    switch(ctx->Polygon.CullFaceMode) {
-	    case GL_BACK:
-	       if(ctx->Polygon.FrontFace==GL_CCW)
-		  ctx->_backface_sign = -1;
-	       ctx->Polygon._CullBits = 1;
-	       break;
-	    case GL_FRONT:
-	       if(ctx->Polygon.FrontFace!=GL_CCW)
-		  ctx->_backface_sign = -1;
-	       ctx->Polygon._CullBits = 2;
-	       break;
-	    default:
-	    case GL_FRONT_AND_BACK:
-	       ctx->_backface_sign = 0;
-	       ctx->Polygon._CullBits = 0;
-	       ctx->_TriangleCaps |= DD_TRI_CULL_FRONT_BACK;
-	       break;
-	    }
-	 }
-	 else {
-	    ctx->Polygon._CullBits = 3;
-	    ctx->_backface_sign = 0;
-	 }
 
-	 /* Any Polygon offsets enabled? */
-	 ctx->_TriangleCaps &= ~DD_TRI_OFFSET;
+/*
+ * If ctx->NewState is non-zero then this function MUST be called before
+ * rendering any primitive.  Basically, function pointers and miscellaneous
+ * flags are updated to reflect the current state of the state machine.
+ *
+ * Special care is taken with the derived value _NeedEyeCoords.  These
+ * is a bitflag which is updated with information from a number of
+ * attribute groups (MODELVIEW, LIGHT, TEXTURE).  A lot of derived
+ * state references this value, and must be treated with care to
+ * ensure that updates are done correctly.  All state dependent on
+ * _NeedEyeCoords is calculated from within _mesa_update_tnl_spaces(),
+ * and from nowhere else.  
+ */
+void gl_update_state( GLcontext *ctx )
+{
+   GLuint new_state = ctx->NewState;
+   GLuint oldneedeyecoords = ctx->_NeedEyeCoords;
 
-	 if (ctx->Polygon.OffsetPoint ||
-	     ctx->Polygon.OffsetLine ||
-	     ctx->Polygon.OffsetFill)
-	    ctx->_TriangleCaps |= DD_TRI_OFFSET;
-      }
-   }
+   if (MESA_VERBOSE & VERBOSE_STATE)
+      gl_print_state("", new_state);
 
-   if (ctx->NewState & (_NEW_LIGHT|
-			_NEW_TEXTURE|
-			_NEW_FOG|
-			_NEW_POLYGON))
+   if (new_state & _NEW_MODELVIEW) 
+      gl_matrix_analyze( &ctx->ModelView );
+
+   if (new_state & _NEW_PROJECTION) 
+      _mesa_update_projection( ctx );
+
+   if (new_state & _NEW_TEXTURE_MATRIX) 
+      _mesa_update_texture_matrices( ctx );
+
+   if (new_state & _NEW_COLOR_MATRIX) 
+      gl_matrix_analyze( &ctx->ColorMatrix );
+   
+   /* References ColorMatrix.type (derived above).
+    */
+   if (new_state & (_NEW_PIXEL|_NEW_COLOR_MATRIX))
+      _mesa_update_image_transfer_state(ctx);
+
+   if (new_state & _NEW_ARRAY)
+      gl_update_client_state( ctx );
+
+   /* Contributes to NeedEyeCoords, NeedNormals.
+    */
+   if (new_state & _NEW_TEXTURE) 
+      _mesa_update_textures( ctx );
+
+   if (new_state & (_NEW_BUFFERS|_NEW_SCISSOR)) 
+      _mesa_update_drawbuffer( ctx );
+
+   if (new_state & _NEW_POLYGON) 
+      _mesa_update_polygon( ctx );
+
+   /* Contributes to NeedEyeCoords, NeedNormals.
+    */
+   if (new_state & _NEW_LIGHT) 
+      gl_update_lighting( ctx );
+
+   if (new_state & (_NEW_LIGHT|_NEW_TEXTURE|_NEW_FOG|
+		    _DD_NEW_TRI_LIGHT_TWOSIDE |
+		    _DD_NEW_SEPERATE_SPECULAR |
+		    _DD_NEW_TRI_UNFILLED ))
       gl_update_clipmask(ctx);
 
-   if (ctx->NewState & ctx->Driver.UpdateStateNotify)
+   /* We can light in object space if the modelview matrix preserves
+    * lengths and relative angles.
+    */
+   if (new_state & (_NEW_MODELVIEW|_NEW_LIGHT)) {
+      ctx->_NeedEyeCoords &= ~NEED_EYE_LIGHT_MODELVIEW;
+      if (ctx->Light.Enabled &&
+	  !TEST_MAT_FLAGS( &ctx->ModelView, MAT_FLAGS_LENGTH_PRESERVING))
+	    ctx->_NeedEyeCoords |= NEED_EYE_LIGHT_MODELVIEW;
+   }
+
+   /* ctx->_NeedEyeCoords and ctx->_NeedEyeNormals are now uptodate.
+    *
+    * If the truth value of either has changed, update for the new
+    * lighting space and recompute the positions of lights and the
+    * normal transform.
+    * 
+    * If the lighting space hasn't changed, may still need to recompute
+    * light positions & normal transforms for other reasons.  
+    */
+   if (new_state & (_NEW_MODELVIEW |
+		    _NEW_PROJECTION |
+		    _TNL_NEW_NORMAL_TRANSFORM |
+		    _NEW_LIGHT |
+		    _TNL_NEW_NEED_EYE_COORDS)) 
+      _mesa_update_tnl_spaces( ctx, oldneedeyecoords );
+
+   if (new_state & ctx->Driver.UpdateStateNotify)
    {
       /*
        * Here the driver sets up all the ctx->Driver function pointers to
        * it's specific, private functions.
        */
       ctx->Driver.UpdateState(ctx);
-      gl_set_render_vb_function(ctx); /* fix me */
-   }
-
-   /* Should only be calc'd when !need_eye_coords and not culling.
-    */
-   if (ctx->NewState & (_NEW_MODELVIEW|_NEW_PROJECTION)) {
-      if (ctx->NewState & _NEW_MODELVIEW) {
-	 gl_matrix_analyze( &ctx->ModelView );
-	 ctx->ProjectionMatrix.flags &= ~MAT_DIRTY_DEPENDENTS;
-      }
-
-      if (ctx->NewState & _NEW_PROJECTION) {
-	 gl_matrix_analyze( &ctx->ProjectionMatrix );
-	 ctx->ProjectionMatrix.flags &= ~MAT_DIRTY_DEPENDENTS;
-
-	 if (ctx->Transform._AnyClip) {
-	    gl_update_userclip( ctx );
-	 }
-      }
-
-      gl_calculate_model_project_matrix( ctx );
-   }
-
-   if (ctx->NewState & _NEW_COLOR_MATRIX) {
-      gl_matrix_analyze( &ctx->ColorMatrix );
-   }
-
-   /* Figure out whether we can light in object space or not.  If we
-    * can, find the current positions of the lights in object space
-    */
-   if ((ctx->_Enabled & (ENABLE_POINT_ATTEN | ENABLE_LIGHT | ENABLE_FOG |
-			ENABLE_TEXGEN0 | ENABLE_TEXGEN1 | ENABLE_TEXGEN2)) &&
-       (ctx->NewState & (_NEW_LIGHT | 
-			 _NEW_TEXTURE |
-                         _NEW_FOG |
-			 _NEW_TRANSFORM | 
-			 _NEW_MODELVIEW | 
-			 _NEW_PROJECTION |
-			 _NEW_POINT |
-			 _NEW_RENDERMODE |
-			 _NEW_TRANSFORM)))
-   {
-      GLboolean oldcoord, oldnorm;
-
-      oldcoord = ctx->_NeedEyeCoords;
-      oldnorm = ctx->_NeedEyeNormals;
-
-      ctx->_NeedNormals = (ctx->Light.Enabled || ctx->Texture._NeedNormals);
-      ctx->_NeedEyeCoords = (ctx->Fog.Enabled || ctx->Point._Attenuated);
-      ctx->_NeedEyeNormals = GL_FALSE;
-
-      if (ctx->Light.Enabled) {
-	 if ((ctx->Light._Flags & LIGHT_POSITIONAL) ||
-             ctx->Light._NeedVertices ||
-             !TEST_MAT_FLAGS( &ctx->ModelView, MAT_FLAGS_LENGTH_PRESERVING)) {
-            /* Need length for attenuation or need angle for spotlights
-             * or non-uniform scale matrix
-             */
-            ctx->_NeedEyeCoords = GL_TRUE;
-	 }
-	 ctx->_NeedEyeNormals = ctx->_NeedEyeCoords;
-      }
-      if (ctx->Texture._ReallyEnabled || ctx->RenderMode==GL_FEEDBACK) {
-	 if (ctx->Texture._NeedEyeCoords) ctx->_NeedEyeCoords = GL_TRUE;
-	 if (ctx->Texture._NeedNormals)
-	    ctx->_NeedNormals = ctx->_NeedEyeNormals = GL_TRUE;
-      }
-
-      if (ctx->_NeedEyeCoords)
-	 ctx->_vb_proj_matrix = &ctx->ProjectionMatrix;
-      else
-	 ctx->_vb_proj_matrix = &ctx->_ModelProjectMatrix;
-
-      if (ctx->Light.Enabled) {
-	 gl_update_lighting_function(ctx);
-
-	 if ( (ctx->NewState & _NEW_LIGHT) ||
-	      ((ctx->NewState & (_NEW_MODELVIEW|_NEW_PROJECTION)) &&
-	       !ctx->_NeedEyeCoords) ||
-	      oldcoord != ctx->_NeedEyeCoords ||
-	      oldnorm != ctx->_NeedEyeNormals) {
-	    gl_compute_light_positions(ctx);
-	 }
-
-	 ctx->_rescale_factor = 1.0F;
-	 if (ctx->ModelView.flags & (MAT_FLAG_UNIFORM_SCALE |
-				     MAT_FLAG_GENERAL_SCALE |
-				     MAT_FLAG_GENERAL_3D |
-				     MAT_FLAG_GENERAL) ) {
-	    const GLfloat *m = ctx->ModelView.inv;
-	    const GLfloat f = m[2] * m[2] + m[6] * m[6] + m[10] * m[10];
-	    if (f > 1e-12 && (f - 1.0) * (f - 1.0) > 1e-12)
-	       ctx->_rescale_factor = 1.0 / GL_SQRT(f);
-	 }
-      }
-
-      gl_update_normal_transform( ctx );
+      gl_set_render_vb_function(ctx); /* XXX: remove this mechanism */
    }
 
    gl_update_pipelines(ctx);

@@ -150,5 +150,12 @@ _swrast_flush( GLcontext *ctx );
 extern void
 _swrast_InvalidateState( GLcontext *ctx, GLuint new_state );
 
+/* Configure software rasterizer to match hardware rasterizer characteristics:
+ */
+extern void
+_swrast_allow_vertex_fog( GLcontext *ctx, GLboolean value );
+
+extern void
+_swrast_allow_pixel_fog( GLcontext *ctx, GLboolean value );
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: s_readpix.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_readpix.c,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -520,24 +520,24 @@ read_fast_rgba_pixels( GLcontext *ctx,
          rowLength = width;
 
       /* horizontal clipping */
-      if (srcX < ctx->ReadBuffer->Xmin) {
-         skipPixels += (ctx->ReadBuffer->Xmin - srcX);
-         readWidth  -= (ctx->ReadBuffer->Xmin - srcX);
-         srcX = ctx->ReadBuffer->Xmin;
+      if (srcX < ctx->ReadBuffer->_Xmin) {
+         skipPixels += (ctx->ReadBuffer->_Xmin - srcX);
+         readWidth  -= (ctx->ReadBuffer->_Xmin - srcX);
+         srcX = ctx->ReadBuffer->_Xmin;
       }
-      if (srcX + readWidth > ctx->ReadBuffer->Xmax)
-         readWidth -= (srcX + readWidth - ctx->ReadBuffer->Xmax);
+      if (srcX + readWidth > ctx->ReadBuffer->_Xmax)
+         readWidth -= (srcX + readWidth - ctx->ReadBuffer->_Xmax);
       if (readWidth <= 0)
          return GL_TRUE;
 
       /* vertical clipping */
-      if (srcY < ctx->ReadBuffer->Ymin) {
-         skipRows   += (ctx->ReadBuffer->Ymin - srcY);
-         readHeight -= (ctx->ReadBuffer->Ymin - srcY);
-         srcY = ctx->ReadBuffer->Ymin;
+      if (srcY < ctx->ReadBuffer->_Ymin) {
+         skipRows   += (ctx->ReadBuffer->_Ymin - srcY);
+         readHeight -= (ctx->ReadBuffer->_Ymin - srcY);
+         srcY = ctx->ReadBuffer->_Ymin;
       }
-      if (srcY + readHeight > ctx->ReadBuffer->Ymax)
-         readHeight -= (srcY + readHeight - ctx->ReadBuffer->Ymax);
+      if (srcY + readHeight > ctx->ReadBuffer->_Ymax)
+         readHeight -= (srcY + readHeight - ctx->ReadBuffer->_Ymax);
       if (readHeight <= 0)
          return GL_TRUE;
 

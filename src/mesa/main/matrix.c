@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.24 2000/11/05 18:40:58 keithw Exp $ */
+/* $Id: matrix.c,v 1.25 2000/11/13 20:02:56 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -927,16 +927,6 @@ static void mat_mul_floats( GLmatrix *mat, const GLfloat *m, GLuint flags )
    else 
       matmul4( mat->m, mat->m, m );      
 
-}
-
-
-void gl_calculate_model_project_matrix( GLcontext *ctx )
-{
-   gl_matrix_mul( &ctx->_ModelProjectMatrix,
-		  &ctx->ProjectionMatrix,
-		  &ctx->ModelView );
-
-   gl_matrix_analyze( &ctx->_ModelProjectMatrix );
 }
 
 

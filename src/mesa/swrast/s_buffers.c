@@ -1,4 +1,4 @@
-/* $Id: s_buffers.c,v 1.1 2000/10/31 18:00:04 keithw Exp $ */
+/* $Id: s_buffers.c,v 1.2 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,10 +44,10 @@
 static void
 clear_color_buffer_with_masking( GLcontext *ctx )
 {
-   const GLint x = ctx->DrawBuffer->Xmin;
-   const GLint y = ctx->DrawBuffer->Ymin;
-   const GLint height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
-   const GLint width  = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin;
+   const GLint x = ctx->DrawBuffer->_Xmin;
+   const GLint y = ctx->DrawBuffer->_Ymin;
+   const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
+   const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
 
    if (ctx->Visual.RGBAflag) {
       /* RGBA mode */
@@ -94,10 +94,10 @@ clear_color_buffer_with_masking( GLcontext *ctx )
 static void
 clear_color_buffer(GLcontext *ctx)
 {
-   const GLint x = ctx->DrawBuffer->Xmin;
-   const GLint y = ctx->DrawBuffer->Ymin;
-   const GLint height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
-   const GLint width  = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin;
+   const GLint x = ctx->DrawBuffer->_Xmin;
+   const GLint y = ctx->DrawBuffer->_Ymin;
+   const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
+   const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
 
    if (ctx->Visual.RGBAflag) {
       /* RGBA mode */

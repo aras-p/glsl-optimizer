@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.3 2000/11/10 17:45:16 brianp Exp $ */
+/* $Id: s_context.c,v 1.4 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -114,6 +114,44 @@ _swrast_update_rasterflags( GLcontext *ctx )
 }
 
 
+static void
+_swrast_update_polygon( GLcontext *ctx )
+{
+   GLfloat backface_sign = 1;
+
+   if (ctx->Polygon.CullFlag) {
+      backface_sign = 1;
+      switch(ctx->Polygon.CullFaceMode) {
+      case GL_BACK:
+	 if(ctx->Polygon.FrontFace==GL_CCW)
+	    backface_sign = -1;
+	 break;
+      case GL_FRONT:
+	 if(ctx->Polygon.FrontFace!=GL_CCW)
+	    backface_sign = -1;
+	 break;
+      default:
+      case GL_FRONT_AND_BACK:
+	 backface_sign = 0;
+	 break;
+      }
+   }
+   else {
+      backface_sign = 0;
+   }
+
+   SWRAST_CONTEXT(ctx)->_backface_sign = backface_sign;
+}
+
+
+static void
+_swrast_update_hint( GLcontext *ctx )
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);   
+   swrast->_PreferPixelFog = (!swrast->AllowVertexFog ||
+			      (ctx->Hint.Fog == GL_NICEST && 
+			       swrast->AllowPixelFog));
+}
 
 #define _SWRAST_NEW_TRIANGLE (_NEW_RENDERMODE|		\
                               _NEW_POLYGON|		\
@@ -282,7 +320,17 @@ _swrast_validate_derived( GLcontext *ctx )
    if (swrast->NewState) 
    {
       if (swrast->NewState & _SWRAST_NEW_RASTERMASK) 
-	 _swrast_update_rasterflags( ctx );
+ 	 _swrast_update_rasterflags( ctx );
+
+      if (swrast->NewState & _NEW_TEXTURE)
+	 swrast->_MultiTextureEnabled = (ctx->Texture._ReallyEnabled & 
+					 ~ENABLE_TEX0);
+
+      if (swrast->NewState & _NEW_POLYGON)
+	 _swrast_update_polygon( ctx );
+
+      if (swrast->NewState & _NEW_HINT)
+	 _swrast_update_hint( ctx );
 
       swrast->NewState = 0;
       swrast->StateChanges = 0;
@@ -332,6 +380,20 @@ _swrast_get_stipple_counter_ref( GLcontext *ctx )
    return &SWRAST_CONTEXT(ctx)->StippleCounter;
 }
 
+void 
+_swrast_allow_vertex_fog( GLcontext *ctx, GLboolean value )
+{
+   SWRAST_CONTEXT(ctx)->InvalidateState( ctx, _NEW_HINT );
+   SWRAST_CONTEXT(ctx)->AllowVertexFog = value;
+}
+
+void 
+_swrast_allow_pixel_fog( GLcontext *ctx, GLboolean value )
+{
+   SWRAST_CONTEXT(ctx)->InvalidateState( ctx, _NEW_HINT );
+   SWRAST_CONTEXT(ctx)->AllowPixelFog = value;
+}
+
 
 GLboolean
 _swrast_CreateContext( GLcontext *ctx )
@@ -365,6 +427,14 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->Quad = _swrast_validate_quad;
    swrast->InvalidateState = _swrast_sleep;
    swrast->BlendFunc = _swrast_validate_blend_func;
+
+   swrast->AllowVertexFog = GL_TRUE;
+   swrast->AllowPixelFog = GL_TRUE;
+
+   /* Optimized Accum buffer */
+   swrast->_IntegerAccumMode = GL_TRUE;
+   swrast->_IntegerAccumScaler = 0.0;
+
 
    for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
       swrast->TextureSample[i] = _swrast_validate_texture_sample;

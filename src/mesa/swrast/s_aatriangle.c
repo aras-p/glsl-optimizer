@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_aatriangle.c,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -400,13 +400,14 @@ spec_multitex_aa_tri(GLcontext *ctx,
 void
 _mesa_set_aa_triangle_function(GLcontext *ctx)
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    ASSERT(ctx->Polygon.SmoothFlag);
 
    if (ctx->Texture._ReallyEnabled) {
       if (ctx->Light.Enabled &&
           (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ||
 	   ctx->Fog.ColorSumEnabled)) {
-         if (ctx->Texture._MultiTextureEnabled) {
+         if (swrast->_MultiTextureEnabled) {
             SWRAST_CONTEXT(ctx)->Triangle = spec_multitex_aa_tri;
          }
          else {
@@ -414,7 +415,7 @@ _mesa_set_aa_triangle_function(GLcontext *ctx)
          }
       }
       else {
-         if (ctx->Texture._MultiTextureEnabled) {
+         if (swrast->_MultiTextureEnabled) {
             SWRAST_CONTEXT(ctx)->Triangle = multitex_aa_tri;
          }
          else {

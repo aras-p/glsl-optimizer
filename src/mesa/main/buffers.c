@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.18 2000/10/31 18:09:44 keithw Exp $ */
+/* $Id: buffers.c,v 1.19 2000/11/13 20:02:56 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -98,14 +98,14 @@ _mesa_Clear( GLbitfield mask )
       fprintf(stderr, "glClear 0x%x\n", mask);
 
    if (ctx->NewState) {
-      gl_update_state( ctx );
+      gl_update_state( ctx );	/* update _Xmin, etc */
    }
 
    if (ctx->RenderMode==GL_RENDER) {
-      const GLint x = ctx->DrawBuffer->Xmin;
-      const GLint y = ctx->DrawBuffer->Ymin;
-      const GLint height = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin;
-      const GLint width  = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin;
+      const GLint x = ctx->DrawBuffer->_Xmin;
+      const GLint y = ctx->DrawBuffer->_Ymin;
+      const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
+      const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
       GLbitfield ddMask;
       GLbitfield newMask;
 

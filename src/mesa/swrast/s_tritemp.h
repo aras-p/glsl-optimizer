@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.2 2000/11/05 18:24:41 keithw Exp $ */
+/* $Id: s_tritemp.h,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -96,7 +96,7 @@
    EdgeT eMaj, eTop, eBot;
    GLfloat oneOverArea;
    SWvertex *vMin, *vMid, *vMax;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
-   float bf = ctx->_backface_sign;
+   float bf = SWRAST_CONTEXT(ctx)->_backface_sign;
 
    /* find the order of the 3 vertices along the Y axis */
    {
@@ -713,8 +713,10 @@
                   dZRowOuter = (ctx->DrawBuffer->Width + idxOuter) * sizeof(DEPTH_TYPE);
 #  endif
                }
-               ffog = FloatToFixed(vLower->fog) * 256 + dfogdx * adjx + dfogdy * adjy + FIXED_HALF;
-               fdfogOuter = SignedFloatToFixed(dfogdy + dxOuter * dfogdx);
+	       {
+		  ffog = FloatToFixed(vLower->fog) * 256 + dfogdx * adjx + dfogdy * adjy + FIXED_HALF;
+		  fdfogOuter = SignedFloatToFixed(dfogdy + dxOuter * dfogdx);
+	       }
 #endif
 #ifdef INTERP_RGB
                fr = (GLfixed)(IntToFixed(vLower->color[0])
@@ -980,7 +982,7 @@
                   zRow = (DEPTH_TYPE *) ((GLubyte*)zRow + dZRowOuter);
 #  endif
                   fz += fdzOuter;
-                  ffog += fdfogOuter;
+                  ffog += fdfogOuter; 
 #endif
 #ifdef INTERP_RGB
                   fr += fdrOuter;   fg += fdgOuter;   fb += fdbOuter;

@@ -36,7 +36,8 @@
 #define SS_OFFSET_BIT	    0x2	
 #define SS_TWOSIDE_BIT	    0x4	
 #define SS_UNFILLED_BIT	    0x10	
-#define SS_MAX_TRIFUNC      0x20
+#define SS_COPY_EXTRAS	    0x20 /* optimization */
+#define SS_MAX_TRIFUNC      0x40
 
 static triangle_func tri_tab[SS_MAX_TRIFUNC];
 static line_func     line_tab[SS_MAX_TRIFUNC];
@@ -112,6 +113,70 @@ static quad_func     quad_tab[SS_MAX_TRIFUNC];
 #define TAG(x) x##_flat_offset_twoside_unfilled
 #include "ss_tritmp.h"
 
+#define IND (0|SS_COPY_EXTRAS)
+#define TAG(x) x##_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_FLAT_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_flat_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_OFFSET_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_offset_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_flat_offset_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_TWOSIDE_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_twoside_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_FLAT_BIT|SS_TWOSIDE_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_flat_twoside_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_offset_twoside_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_flat_offset_twoside_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_UNFILLED_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_unfilled_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_FLAT_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_flat_unfilled_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_OFFSET_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_offset_unfilled_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_flat_offset_unfilled_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_twoside_unfilled_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_FLAT_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_flat_twoside_unfilled_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_offset_twoside_unfilled_spec
+#include "ss_tritmp.h"
+
+#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
+#define TAG(x) x##_flat_offset_twoside_unfilled_spec
+#include "ss_tritmp.h"
+
 
 void _swsetup_trifuncs_init( GLcontext *ctx )
 {
@@ -133,6 +198,23 @@ void _swsetup_trifuncs_init( GLcontext *ctx )
    init_flat_twoside_unfilled();
    init_offset_twoside_unfilled();
    init_flat_offset_twoside_unfilled();
+
+   init_spec();
+   init_flat_spec();
+   init_offset_spec();
+   init_flat_offset_spec();
+   init_twoside_spec();
+   init_flat_twoside_spec();
+   init_offset_twoside_spec();
+   init_flat_offset_twoside_spec();
+   init_unfilled_spec();
+   init_flat_unfilled_spec();
+   init_offset_unfilled_spec();
+   init_flat_offset_unfilled_spec();
+   init_twoside_unfilled_spec();
+   init_flat_twoside_unfilled_spec();
+   init_offset_twoside_unfilled_spec();
+   init_flat_offset_twoside_unfilled_spec();
 }
 
 
@@ -152,6 +234,11 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
    
    if (ctx->Polygon._Unfilled) 
       ind |= SS_UNFILLED_BIT;
+
+   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) ||
+       ctx->RenderMode == GL_SELECT ||
+       !ctx->Visual.RGBAflag)
+      ind |= SS_COPY_EXTRAS;
 
    swsetup->Triangle = tri_tab[ind];
    swsetup->Line = line_tab[ind];

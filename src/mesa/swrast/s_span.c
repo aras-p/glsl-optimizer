@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_span.c,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -206,7 +206,7 @@ void gl_write_index_span( GLcontext *ctx,
 
    /* Per-pixel fog */
    if (ctx->Fog.Enabled) {
-      if (fog && ctx->Hint.Fog != GL_NICEST)
+      if (fog && !swrast->_PreferPixelFog)
 	 _mesa_fog_ci_pixels( ctx, n, fog, index );
       else
 	 _mesa_depth_fog_ci_pixels( ctx, n, z, index );
@@ -323,7 +323,7 @@ void gl_write_monoindex_span( GLcontext *ctx,
       }
 
       if (ctx->Fog.Enabled) {
- 	 if (fog && ctx->Hint.Fog != GL_NICEST)
+ 	 if (fog && !swrast->_PreferPixelFog)
  	    _mesa_fog_ci_pixels( ctx, n, fog, indexes );
  	 else
  	    _mesa_depth_fog_ci_pixels( ctx, n, z, indexes );
@@ -476,7 +476,7 @@ void gl_write_rgba_span( GLcontext *ctx,
 
    /* Per-pixel fog */
    if (ctx->Fog.Enabled) {
-      if (fog && ctx->Hint.Fog != GL_NICEST) 
+      if (fog && !swrast->_PreferPixelFog) 
 	 _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
       else
 	 _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
@@ -660,7 +660,7 @@ void gl_write_monocolor_span( GLcontext *ctx,
 
       /* Per-pixel fog */
       if (ctx->Fog.Enabled) {
-	 if (fog && ctx->Hint.Fog != GL_NICEST)
+	 if (fog && !swrast->_PreferPixelFog)
 	    _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
 	 else
 	    _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
@@ -796,13 +796,14 @@ void gl_write_texture_span( GLcontext *ctx,
    gl_texture_pixels( ctx, 0, n, s, t, u, lambda, rgba, rgba );
 
    /* Add base and specular colors */
-   if (spec && ctx->Light.Enabled
-       && ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
+   if (spec && 
+       (ctx->Fog.ColorSumEnabled ||
+	(ctx->Light.Enabled && ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)))
       add_colors( n, rgba, spec );   /* rgba = rgba + spec */
 
    /* Per-pixel fog */
    if (ctx->Fog.Enabled) {
-      if (fog && ctx->Hint.Fog != GL_NICEST)
+      if (fog && !swrast->_PreferPixelFog)
 	 _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
       else
 	 _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );
@@ -932,13 +933,15 @@ gl_write_multitexture_span( GLcontext *ctx,
       gl_texture_pixels( ctx, i, n, s[i], t[i], u[i], lambda[i], rgbaIn, rgba );
 
    /* Add base and specular colors */
-   if (spec && ctx->Light.Enabled
-       && ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
+   if (spec && 
+       (ctx->Fog.ColorSumEnabled ||
+	(ctx->Light.Enabled && 
+	 ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)))
       add_colors( n, rgba, spec );   /* rgba = rgba + spec */
 
    /* Per-pixel fog */
    if (ctx->Fog.Enabled) {
-      if (fog && ctx->Hint.Fog != GL_NICEST)
+      if (fog && !swrast->_PreferPixelFog)
 	 _mesa_fog_rgba_pixels( ctx, n, fog, rgba );
       else
 	 _mesa_depth_fog_rgba_pixels( ctx, n, z, rgba );

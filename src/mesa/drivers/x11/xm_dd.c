@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.3 2000/11/05 18:26:12 keithw Exp $ */
+/* $Id: xm_dd.c,v 1.4 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -947,7 +947,7 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.Finish = finish;
    
    ctx->Driver.RenderStart = 0;
-   ctx->Driver.RenderFinish = 0;
+   ctx->Driver.RenderFinish = _swrast_flush;
 
    ctx->Driver.SetDrawBuffer = set_draw_buffer;
    ctx->Driver.SetReadBuffer = set_read_buffer;

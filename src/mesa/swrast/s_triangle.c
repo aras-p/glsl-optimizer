@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.2 2000/11/05 18:24:41 keithw Exp $ */
+/* $Id: s_triangle.c,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,7 +58,7 @@ GLboolean gl_cull_triangle( GLcontext *ctx,
    GLfloat fy = v2->win[1] - v0->win[1];
    GLfloat c = ex*fy-ey*fx;
 
-   if (c * ctx->_backface_sign > 0)
+   if (c * SWRAST_CONTEXT(ctx)->_backface_sign > 0)
       return 0;
    
    return 1;
@@ -2378,7 +2378,7 @@ _swrast_choose_triangle( GLcontext *ctx )
                needLambda = GL_TRUE;
             else
                needLambda = GL_FALSE;
-            if (ctx->Texture._MultiTextureEnabled) {
+            if (swrast->_MultiTextureEnabled) {
                swrast->Triangle = lambda_multitextured_triangle;
 	       dputs("lambda_multitextured_triangle");
             }

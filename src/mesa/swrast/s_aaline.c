@@ -1,4 +1,4 @@
-/* $Id: s_aaline.c,v 1.1 2000/11/05 23:15:16 brianp Exp $ */
+/* $Id: s_aaline.c,v 1.2 2000/11/13 20:02:57 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -489,7 +489,7 @@ _swrast_choose_aa_line_function(GLcontext *ctx)
    if (ctx->Visual.RGBAflag) {
       /* RGBA */
       if (ctx->Texture._ReallyEnabled) {
-         if (ctx->Texture._MultiTextureEnabled
+         if (swrast->_MultiTextureEnabled
              || ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR
              || ctx->Fog.ColorSumEnabled)
             /* Multitextured! */

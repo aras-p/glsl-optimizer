@@ -161,11 +161,11 @@ _mesa_clear_alpha_buffers( GLcontext *ctx )
          if (ctx->Scissor.Enabled) {
             /* clear scissor region */
             GLint j;
-            GLint rowLen = ctx->DrawBuffer->Xmax - ctx->DrawBuffer->Xmin + 1;
-            GLint rows = ctx->DrawBuffer->Ymax - ctx->DrawBuffer->Ymin + 1;
+            GLint rowLen = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin + 1;
+            GLint rows = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin + 1;
             GLchan *aptr = buffer
-                          + ctx->DrawBuffer->Ymin * ctx->DrawBuffer->Width
-                          + ctx->DrawBuffer->Xmin;
+                          + ctx->DrawBuffer->_Ymin * ctx->DrawBuffer->Width
+                          + ctx->DrawBuffer->_Xmin;
             for (j = 0; j < rows; j++) {
 #if CHAN_BITS == 8
                MEMSET( aptr, aclear, rowLen );

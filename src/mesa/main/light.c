@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.23 2000/11/05 18:40:58 keithw Exp $ */
+/* $Id: light.c,v 1.24 2000/11/13 20:02:56 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -91,93 +91,85 @@ void
 _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLint l;
-   GLint nParams;
+   GLint i = (GLint) (light - GL_LIGHT0);
+   struct gl_light *l = &ctx->Light.Light[i];
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glLight");
 
-   l = (GLint) (light - GL_LIGHT0);
-
-   if (l < 0 || l >= MAX_LIGHTS) {
+   if (i < 0 || i >= MAX_LIGHTS) {
       gl_error( ctx, GL_INVALID_ENUM, "glLight" );
       return;
    }
 
    switch (pname) {
       case GL_AMBIENT:
-         COPY_4V( ctx->Light.Light[l].Ambient, params );
-         nParams = 4;
+         COPY_4V( l->Ambient, params );
          break;
       case GL_DIFFUSE:
-         COPY_4V( ctx->Light.Light[l].Diffuse, params );
-         nParams = 4;
+         COPY_4V( l->Diffuse, params );
          break;
       case GL_SPECULAR:
-         COPY_4V( ctx->Light.Light[l].Specular, params );
-         nParams = 4;
+         COPY_4V( l->Specular, params );
          break;
       case GL_POSITION:
 	 /* transform position by ModelView matrix */
-	 TRANSFORM_POINT( ctx->Light.Light[l].EyePosition, 
-			  ctx->ModelView.m,
-                          params );
-         nParams = 4;
+	 TRANSFORM_POINT( l->EyePosition, ctx->ModelView.m, params );
+	 if (l->EyePosition[3] != 0.0F) 
+	    l->_Flags |= LIGHT_POSITIONAL;
+	 else
+	    l->_Flags &= ~LIGHT_POSITIONAL;
          break;
       case GL_SPOT_DIRECTION:
 	 /* transform direction by inverse modelview */
 	 if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
 	    gl_matrix_analyze( &ctx->ModelView );
 	 }
-	 TRANSFORM_NORMAL( ctx->Light.Light[l].EyeDirection,
-			   params,
-			   ctx->ModelView.inv );
-         nParams = 3;
+	 TRANSFORM_NORMAL( l->EyeDirection, params, ctx->ModelView.inv );
          break;
       case GL_SPOT_EXPONENT:
          if (params[0]<0.0 || params[0]>128.0) {
             gl_error( ctx, GL_INVALID_VALUE, "glLight" );
             return;
          }
-         if (ctx->Light.Light[l].SpotExponent != params[0]) {
-            ctx->Light.Light[l].SpotExponent = params[0];
-            gl_compute_spot_exp_table( &ctx->Light.Light[l] );
+         if (l->SpotExponent != params[0]) {
+            l->SpotExponent = params[0];
+            gl_compute_spot_exp_table( l );
          }
-         nParams = 1;
          break;
       case GL_SPOT_CUTOFF:
          if ((params[0]<0.0 || params[0]>90.0) && params[0]!=180.0) {
             gl_error( ctx, GL_INVALID_VALUE, "glLight" );
             return;
          }
-         ctx->Light.Light[l].SpotCutoff = params[0];
-         ctx->Light.Light[l]._CosCutoff = cos(params[0]*DEG2RAD);
-         if (ctx->Light.Light[l]._CosCutoff < 0) 
-	    ctx->Light.Light[l]._CosCutoff = 0;
-         nParams = 1;
+         l->SpotCutoff = params[0];
+         l->_CosCutoff = cos(params[0]*DEG2RAD);
+         if (l->_CosCutoff < 0) 
+	    l->_CosCutoff = 0;
+	 if (l->SpotCutoff != 180.0F)
+	    l->_Flags |= LIGHT_SPOT;
+	 else
+	    l->_Flags &= ~LIGHT_SPOT;
          break;
       case GL_CONSTANT_ATTENUATION:
          if (params[0]<0.0) {
             gl_error( ctx, GL_INVALID_VALUE, "glLight" );
             return;
          }
-         ctx->Light.Light[l].ConstantAttenuation = params[0];
-         nParams = 1;
+         l->ConstantAttenuation = params[0];
          break;
       case GL_LINEAR_ATTENUATION:
          if (params[0]<0.0) {
             gl_error( ctx, GL_INVALID_VALUE, "glLight" );
             return;
          }
-         ctx->Light.Light[l].LinearAttenuation = params[0];
-         nParams = 1;
+         l->LinearAttenuation = params[0];
          break;
       case GL_QUADRATIC_ATTENUATION:
          if (params[0]<0.0) {
             gl_error( ctx, GL_INVALID_VALUE, "glLight" );
             return;
          }
-         ctx->Light.Light[l].QuadraticAttenuation = params[0];
-         nParams = 1;
+         l->QuadraticAttenuation = params[0];
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glLight" );
@@ -185,7 +177,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
    }
 
    if (ctx->Driver.Lightfv)
-      ctx->Driver.Lightfv( ctx, light, pname, params, nParams );
+      ctx->Driver.Lightfv( ctx, light, pname, params );
 
    ctx->NewState |= _NEW_LIGHT;
 }
@@ -612,11 +604,9 @@ void gl_update_material( GLcontext *ctx,
       GLfloat tmp[4];
       SUB_3V( tmp, src[0].Specular, mat->Specular );
       foreach (light, list) {
-	 if (light->_Flags & LIGHT_SPECULAR) {
-	    ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, tmp );
-	    light->_IsMatSpecular[0] = 
-	       (LEN_SQUARED_3FV(light->_MatSpecular[0]) > 1e-16);
-	 }
+	 ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, tmp );
+	 light->_IsMatSpecular[0] = 
+	    (LEN_SQUARED_3FV(light->_MatSpecular[0]) > 1e-16);
       }
       COPY_4FV( mat->Specular, src[0].Specular );
    }
@@ -625,11 +615,9 @@ void gl_update_material( GLcontext *ctx,
       GLfloat tmp[4];
       SUB_3V( tmp, src[1].Specular, mat->Specular );
       foreach (light, list) {
-	 if (light->_Flags & LIGHT_SPECULAR) {
-	    ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, tmp );
-	    light->_IsMatSpecular[1] = 
-	       (LEN_SQUARED_3FV(light->_MatSpecular[1]) > 1e-16);
-	 }
+	 ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, tmp );
+	 light->_IsMatSpecular[1] = 
+	    (LEN_SQUARED_3FV(light->_MatSpecular[1]) > 1e-16);
       }
       COPY_4FV( mat->Specular, src[1].Specular );
    }
@@ -771,11 +759,9 @@ void gl_update_color_material( GLcontext *ctx,
       GLfloat tmp[4];
       SUB_3V( tmp, color, mat->Specular );
       foreach (light, list) {
-	 if (light->_Flags & LIGHT_SPECULAR) {
-	    ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, tmp );
-	    light->_IsMatSpecular[0] = 
-	       (LEN_SQUARED_3FV(light->_MatSpecular[0]) > 1e-16);
-	 }
+	 ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, tmp );
+	 light->_IsMatSpecular[0] = 
+	    (LEN_SQUARED_3FV(light->_MatSpecular[0]) > 1e-16);
       }
       COPY_4FV( mat->Specular, color );
    }
@@ -785,11 +771,9 @@ void gl_update_color_material( GLcontext *ctx,
       GLfloat tmp[4];
       SUB_3V( tmp, color, mat->Specular );
       foreach (light, list) {
-	 if (light->_Flags & LIGHT_SPECULAR) {
-	    ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, tmp );
-	    light->_IsMatSpecular[1] = 
-	       (LEN_SQUARED_3FV(light->_MatSpecular[1]) > 1e-16);
-	 }
+	 ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, tmp );
+	 light->_IsMatSpecular[1] = 
+	    (LEN_SQUARED_3FV(light->_MatSpecular[1]) > 1e-16);
       }
       COPY_4FV( mat->Specular, color );
    }
@@ -1225,35 +1209,45 @@ void
 gl_update_lighting( GLcontext *ctx )
 {
    struct gl_light *light;
-
+   ctx->_TriangleCaps &= ~(DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
+   ctx->_NeedEyeCoords &= ~NEED_EYE_LIGHT;
+   ctx->_NeedNormals &= ~NEED_NORMALS_LIGHT;
    ctx->Light._Flags = 0;
+   
+   if (!ctx->Light.Enabled) 
+      return;
+
+   ctx->_NeedNormals |= NEED_NORMALS_LIGHT;
+
+   if (ctx->Light.Model.TwoSide)
+      ctx->_TriangleCaps |= (DD_TRI_LIGHT_TWOSIDE|DD_LIGHTING_CULL);
 
    foreach(light, &ctx->Light.EnabledList) {
-
-      light->_Flags = 0;
-
-      if (light->EyePosition[3] != 0.0F) 
-	 light->_Flags |= LIGHT_POSITIONAL;
-      
-      if (LEN_SQUARED_3FV(light->Specular) > 1e-16) 
-	 light->_Flags |= LIGHT_SPECULAR;
-      
-      if (light->SpotCutoff != 180.0F)
-	 light->_Flags |= LIGHT_SPOT;
-
       ctx->Light._Flags |= light->_Flags;
    }
 
    ctx->Light._NeedVertices = 
       ((ctx->Light._Flags & (LIGHT_POSITIONAL|LIGHT_SPOT)) ||
-       (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR) ||
-       (ctx->Light.Model.LocalViewer && (ctx->Light._Flags & LIGHT_SPECULAR)));
-
+       ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ||
+       ctx->Light.Model.LocalViewer);
+   
+   if ((ctx->Light._Flags & LIGHT_POSITIONAL) || 
+       ctx->Light.Model.LocalViewer) 
+      ctx->_NeedEyeCoords |= NEED_EYE_LIGHT;
+      
+   
+   /* XXX: This test is overkill & needs to be fixed both for software and
+    * hardware t&l drivers.  The above should be sufficient & should
+    * be tested to verify this.  
+    */
+   if (ctx->Light._NeedVertices)
+      ctx->_NeedEyeCoords |= NEED_EYE_LIGHT;
+  
 
    /* Precompute some shading values.
     */
    if (ctx->Visual.RGBAflag) {
-      GLuint sides = ((ctx->_TriangleCaps & DD_TRI_LIGHT_TWOSIDE) ? 2 : 1);
+      GLuint sides = ctx->Light.Model.TwoSide ? 2 : 1;
       GLuint side;
       for (side=0; side < sides; side++) {
 	 struct gl_material *mat = &ctx->Light.Material[side];
@@ -1272,14 +1266,10 @@ gl_update_lighting( GLcontext *ctx )
 	    const struct gl_material *mat = &ctx->Light.Material[side];
 	    SCALE_3V( light->_MatDiffuse[side], light->Diffuse, mat->Diffuse );
 	    SCALE_3V( light->_MatAmbient[side], light->Ambient, mat->Ambient );
-	    if (light->_Flags & LIGHT_SPECULAR) {
-	       SCALE_3V( light->_MatSpecular[side], light->Specular,
-			 mat->Specular);
-	       light->_IsMatSpecular[side] = 
-		  (LEN_SQUARED_3FV(light->_MatSpecular[side]) > 1e-16);
-	    } 
-	    else 
-	       light->_IsMatSpecular[side] = 0;
+	    SCALE_3V( light->_MatSpecular[side], light->Specular,
+		      mat->Specular);
+	    light->_IsMatSpecular[side] = 
+	       (LEN_SQUARED_3FV(light->_MatSpecular[side]) > 1e-16);
 	 }
       }
    } 
@@ -1290,28 +1280,34 @@ gl_update_lighting( GLcontext *ctx )
 	 light->_sli = DOT3(ci, light->Specular);
       }
    }
+
+   gl_update_lighting_function(ctx);
 }
 
 
-
-/* Need to seriously restrict the circumstances under which these
- * calc's are performed.
+/* _NEW_MODELVIEW
+ * _NEW_LIGHT
+ * _TNL_NEW_NEED_EYE_COORDS
+ *
+ * Update on (_NEW_MODELVIEW | _NEW_LIGHT) when lighting is enabled.
+ * Also update on lighting space changes.
  */
 void
 gl_compute_light_positions( GLcontext *ctx )
 {
    struct gl_light *light;
-   
-   if (1 /*ctx->Light.NeedVertices && !ctx->Light.Model.LocalViewer*/) {
-      static const GLfloat eye_z[3] = { 0, 0, 1 };
-      if (ctx->_NeedEyeCoords) {
-	 COPY_3V( ctx->_EyeZDir, eye_z );
-      }
-      else {
-	 TRANSFORM_NORMAL( ctx->_EyeZDir, eye_z, ctx->ModelView.m );
-      }
-   }
+   static const GLfloat eye_z[3] = { 0, 0, 1 };
 
+   if (!ctx->Light.Enabled)
+      return;
+
+   if (ctx->_NeedEyeCoords) {
+      COPY_3V( ctx->_EyeZDir, eye_z );
+   }
+   else {
+      TRANSFORM_NORMAL( ctx->_EyeZDir, eye_z, ctx->ModelView.m );
+   }
+   
    foreach (light, &ctx->Light.EnabledList) {
 
       if (ctx->_NeedEyeCoords) {
@@ -1336,7 +1332,7 @@ gl_compute_light_positions( GLcontext *ctx )
       }
       
       if (light->_Flags & LIGHT_SPOT) {
-	 if (ctx->_NeedEyeNormals) {
+	 if (ctx->_NeedEyeCoords) {
 	    COPY_3V( light->_NormDirection, light->EyeDirection );
 	 }
          else {
@@ -1347,9 +1343,6 @@ gl_compute_light_positions( GLcontext *ctx )
 
 	 NORMALIZE_3FV( light->_NormDirection );
 
-
-	 /* Unlikely occurrance?
-	  */
 	 if (!(light->_Flags & LIGHT_POSITIONAL)) {
 	    GLfloat PV_dot_dir = - DOT3(light->_VP_inf_norm, 
 					light->_NormDirection);
@@ -1370,52 +1363,51 @@ gl_compute_light_positions( GLcontext *ctx )
 }
 
 
+/* _NEW_TRANSFORM
+ * _NEW_MODELVIEW
+ * _TNL_NEW_NEED_NORMALS    
+ * _TNL_NEW_NEED_EYE_COORDS
+ *
+ * Update on (_NEW_TRANSFORM|_NEW_MODELVIEW)
+ * And also on NewLightingSpaces() callback.
+ */
 void
 gl_update_normal_transform( GLcontext *ctx )
 {
-   ctx->_vb_rescale_factor = 1.0;
+
+   if (!ctx->_NeedNormals) {
+      ctx->_NormalTransform = 0;
+      return;
+   }
 
    if (ctx->_NeedEyeCoords) {
-      if (ctx->_NeedNormals) {
-	 GLuint transform = NORM_TRANSFORM_NO_ROT;
+      GLuint transform = NORM_TRANSFORM_NO_ROT;
 
-	 if (ctx->ModelView.flags & (MAT_FLAG_GENERAL |
-				     MAT_FLAG_ROTATION |
-				     MAT_FLAG_GENERAL_3D |
-				     MAT_FLAG_PERSPECTIVE)) 
-	    transform = NORM_TRANSFORM;
+      if (ctx->ModelView.flags & (MAT_FLAG_GENERAL |
+				  MAT_FLAG_ROTATION |
+				  MAT_FLAG_GENERAL_3D |
+				  MAT_FLAG_PERSPECTIVE)) 
+	 transform = NORM_TRANSFORM;
 	    
-	 ctx->_vb_rescale_factor = ctx->_rescale_factor;
 	       
-	 if (ctx->Transform.Normalize) {
-	    ctx->_NormalTransform = gl_normal_tab[transform | NORM_NORMALIZE];
-	 } 
-	 else if (ctx->Transform.RescaleNormals &&
-		  ctx->_rescale_factor != 1.0) {
-	    ctx->_NormalTransform = gl_normal_tab[transform | NORM_RESCALE];
-	 }
-	 else {
-	    ctx->_NormalTransform = gl_normal_tab[transform];
-	 }
+      if (ctx->Transform.Normalize) {
+	 ctx->_NormalTransform = gl_normal_tab[transform | NORM_NORMALIZE];
+      } 
+      else if (ctx->Transform.RescaleNormals &&
+	       ctx->_ModelViewInvScale != 1.0) {
+	 ctx->_NormalTransform = gl_normal_tab[transform | NORM_RESCALE];
       }
       else {
-	 ctx->_NormalTransform = 0;
+	 ctx->_NormalTransform = gl_normal_tab[transform];
       }
    }
    else {
-      if (ctx->_NeedNormals) {
-	 ctx->_vb_rescale_factor = 1.0/ctx->_rescale_factor;
-
-	 if (ctx->Transform.Normalize) {
-	    ctx->_NormalTransform = gl_normal_tab[NORM_NORMALIZE];
-	 }
-	 else if (!ctx->Transform.RescaleNormals &&
-		  ctx->_rescale_factor != 1.0) {
-	    ctx->_NormalTransform = gl_normal_tab[NORM_RESCALE];
-	 }
-	 else {
-	    ctx->_NormalTransform = 0;
-	 }
+      if (ctx->Transform.Normalize) {
+	 ctx->_NormalTransform = gl_normal_tab[NORM_NORMALIZE];
+      }
+      else if (!ctx->Transform.RescaleNormals &&
+	       ctx->_ModelViewInvScale != 1.0) {
+	 ctx->_NormalTransform = gl_normal_tab[NORM_RESCALE];
       }
       else {
 	 ctx->_NormalTransform = 0;

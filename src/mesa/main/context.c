@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.103 2000/11/05 18:40:57 keithw Exp $ */
+/* $Id: context.c,v 1.104 2000/11/13 20:02:56 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1308,10 +1308,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Select.Hits = 0;
    ctx->Select.NameStackDepth = 0;
 
-   /* Optimized Accum buffer */
-   ctx->IntegerAccumMode = GL_TRUE;
-   ctx->IntegerAccumScaler = 0.0;
-
    /* Renderer and client attribute stacks */
    ctx->AttribStackDepth = 0;
    ctx->ClientAttribStackDepth = 0;
@@ -1336,12 +1332,11 @@ init_attrib_groups( GLcontext *ctx )
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;
    ctx->RenderMode = GL_RENDER;
-   ctx->_NeedNormals = GL_FALSE;
    ctx->_ImageTransferState = 0;
 
-   ctx->_NeedEyeCoords = GL_FALSE;
-   ctx->_NeedEyeNormals = GL_FALSE;
-   ctx->_vb_proj_matrix = &ctx->_ModelProjectMatrix;
+   ctx->_NeedNormals = 0;
+   ctx->_NeedEyeCoords = 0;
+   ctx->_ModelViewInvScale = 1.0;
 
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
 

@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.12 2000/11/05 18:40:58 keithw Exp $ */
+/* $Id: rastpos.c,v 1.13 2000/11/13 20:02:56 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -68,15 +68,10 @@ static void raster_pos4f( GLcontext *ctx,
    /* raster color */
    if (ctx->Light.Enabled) 
    {
-      /*GLfloat *vert;*/
       GLfloat *norm, eyenorm[3];
       GLfloat *objnorm = ctx->Current.Normal;
 
-	  /* Not needed???
-      vert = (ctx->_NeedEyeCoords ? eye : v);
-	  */
-
-      if (ctx->_NeedEyeNormals) {
+      if (ctx->_NeedEyeCoords) {
 	 GLfloat *inv = ctx->ModelView.inv;
 	 TRANSFORM_NORMAL( eyenorm, objnorm, inv );
 	 norm = eyenorm;
