@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.33 2000/02/12 16:44:25 brianp Exp $ */
+/* $Id: glapi.c,v 1.34 2000/02/12 17:31:40 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -345,8 +345,6 @@ generate_entrypoint(GLuint functionOffset)
 GLboolean
 _glapi_add_entrypoint(const char *funcName, GLuint offset)
 {
-   GLint index;
-
    /* Make sure we don't try to add a new entrypoint after someone
     * has already called _glapi_get_dispatch_table_size()!  If that's
     * happened the caller's information will now be out of date.
@@ -354,12 +352,21 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
    assert(!GetSizeCalled);
 
    /* first check if the named function is already statically present */
-   index = get_static_proc_offset(funcName);
-
-   if (index >= 0) {
-      return (GLboolean) (index == offset);  /* bad offset! */
+   {
+      GLint index = get_static_proc_offset(funcName);
+      if (index >= 0) {
+         return (GLboolean) (index == offset);  /* bad offset! */
+      }
    }
-   else {
+
+   {
+      /* make sure this offset/name pair is legal */
+      const char *name = _glapi_get_proc_name(offset);
+      if (name && strcmp(name, funcName) != 0)
+         return GL_FALSE;  /* bad name! */
+   }
+
+   {
       /* be sure index and name match known data */
       GLuint i;
       for (i = 0; i < NumExtEntryPoints; i++) {
