@@ -1188,6 +1188,40 @@ fxSetupTextureDoubleTMU_NoLock(GLcontext * ctx)
          alphaComb.Other    = GR_COMBINE_OTHER_TEXTURE;
 	 break;
       }
+
+   case (FX_UM_E0_MODULATE | FX_UM_E1_REPLACE): /* Homeworld2 */
+      {
+         tex1.FunctionRGB   = GR_COMBINE_FUNCTION_ZERO;
+         tex1.FactorRGB     = GR_COMBINE_FACTOR_NONE;
+         tex1.FunctionAlpha = GR_COMBINE_FUNCTION_ZERO;
+         tex1.FactorAlpha   = GR_COMBINE_FACTOR_NONE;
+
+         tex0.FunctionRGB   = GR_COMBINE_FUNCTION_LOCAL;
+         tex0.FactorRGB     = GR_COMBINE_FACTOR_NONE;
+         tex0.FunctionAlpha = GR_COMBINE_FUNCTION_LOCAL;
+         tex0.FactorAlpha   = GR_COMBINE_FACTOR_NONE;
+
+         if (ifmt & (FX_UM_E0_RGB | FX_UM_E0_LUMINANCE)) {
+            alphaComb.Function = GR_COMBINE_FUNCTION_LOCAL;
+            alphaComb.Factor   = GR_COMBINE_FACTOR_NONE;
+            alphaComb.Other    = GR_COMBINE_OTHER_NONE;
+         } else {
+            alphaComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
+            alphaComb.Factor   = GR_COMBINE_FACTOR_ONE;
+            alphaComb.Other    = GR_COMBINE_OTHER_TEXTURE;
+         }
+
+         if (ifmt & FX_UM_E0_ALPHA) {
+            colorComb.Function = GR_COMBINE_FUNCTION_LOCAL;
+            colorComb.Factor   = GR_COMBINE_FACTOR_NONE;
+            colorComb.Other    = GR_COMBINE_OTHER_NONE;
+         } else {
+            colorComb.Function = GR_COMBINE_FUNCTION_SCALE_OTHER;
+            colorComb.Factor   = GR_COMBINE_FACTOR_ONE;
+            colorComb.Other    = GR_COMBINE_OTHER_TEXTURE;
+         }
+         break;
+      }
    default:
       fprintf(stderr, "fxSetupTextureDoubleTMU_NoLock: Unexpected dual texture mode encountered\n");
       return;
