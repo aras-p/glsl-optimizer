@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.60 2002/10/22 15:14:49 brianp Exp $ */
+/* $Id: texobj.c,v 1.61 2002/10/22 15:15:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -567,7 +567,6 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *texName)
              * If so, unbind it and decrement the reference count.
              */
             GLuint u;
-            printf("RefCount in delete = %d\n", delObj->RefCount);
             for (u = 0; u < MAX_TEXTURE_UNITS; u++) {
                struct gl_texture_unit *unit = &ctx->Texture.Unit[u];
                if (delObj == unit->Current1D) {
@@ -610,7 +609,6 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *texName)
 
             /* Decrement reference count and delete if zero */
             delObj->RefCount--;
-            printf("RefCount' in delete = %d\n", delObj->RefCount);
             ASSERT(delObj->RefCount >= 0);
 
             if (delObj->RefCount == 0) {
