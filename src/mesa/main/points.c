@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.5 1999/11/11 01:22:27 brianp Exp $ */
+/* $Id: points.c,v 1.6 1999/12/10 15:38:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,39 +77,48 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPointParameterfvEXT");
 
-   if (pname == GL_DISTANCE_ATTENUATION_EXT) {
-      GLboolean tmp = ctx->Point.Attenuated;
-      COPY_3V(ctx->Point.Params,params);
-      ctx->Point.Attenuated = (params[0] != 1.0 ||
-			       params[1] != 0.0 ||
-			       params[2] != 0.0);
+   switch (pname) {
+      case GL_DISTANCE_ATTENUATION_EXT:
+         {
+            const GLboolean tmp = ctx->Point.Attenuated;
+            COPY_3V(ctx->Point.Params, params);
+            ctx->Point.Attenuated = (params[0] != 1.0 ||
+                                     params[1] != 0.0 ||
+                                     params[2] != 0.0);
 
-      if (tmp != ctx->Point.Attenuated) {
-	 ctx->Enabled ^= ENABLE_POINT_ATTEN;
-	 ctx->TriangleCaps ^= DD_POINT_ATTEN;
-	 ctx->NewState |= NEW_RASTER_OPS;
-      }
-   }
-   else {
-      if (*params<0.0 ) {
-         gl_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
-         return;
-      }
-      switch (pname) {
-         case GL_POINT_SIZE_MIN_EXT:
-            ctx->Point.MinSize=*params;
-            break;
-         case GL_POINT_SIZE_MAX_EXT:
-            ctx->Point.MaxSize=*params;
-            break;
-         case GL_POINT_FADE_THRESHOLD_SIZE_EXT:
-            ctx->Point.Threshold=*params;
-            break;
-         default:
-            gl_error( ctx, GL_INVALID_ENUM, "glPointParameterfvEXT" );
+            if (tmp != ctx->Point.Attenuated) {
+               ctx->Enabled ^= ENABLE_POINT_ATTEN;
+               ctx->TriangleCaps ^= DD_POINT_ATTEN;
+               ctx->NewState |= NEW_RASTER_OPS;
+            }
+         }
+         break;
+      case GL_POINT_SIZE_MIN_EXT:
+         if (*params < 0.0F) {
+            gl_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
             return;
-      }
+         }
+         ctx->Point.MinSize = *params;
+         break;
+      case GL_POINT_SIZE_MAX_EXT:
+         if (*params < 0.0F) {
+            gl_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
+            return;
+         }
+         ctx->Point.MaxSize = *params;
+         break;
+      case GL_POINT_FADE_THRESHOLD_SIZE_EXT:
+         if (*params < 0.0F) {
+            gl_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
+            return;
+         }
+         ctx->Point.Threshold = *params;
+         break;
+      default:
+         gl_error( ctx, GL_INVALID_ENUM, "glPointParameterfvEXT" );
+         return;
    }
+
    ctx->NewState |= NEW_RASTER_OPS;
 }
 
