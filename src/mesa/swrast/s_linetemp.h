@@ -251,11 +251,11 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 #ifdef INTERP_INDEX
    interpFlags |= SPAN_INDEX;
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
-      span.index = IntToFixed(vert0->index);
-      span.indexStep = IntToFixed(vert1->index - vert0->index) / numPixels;
+      span.index = FloatToFixed(vert0->index);
+      span.indexStep = FloatToFixed(vert1->index - vert0->index) / numPixels;
    }
    else {
-      span.index = IntToFixed(vert1->index);
+      span.index = FloatToFixed(vert1->index);
       span.indexStep = 0;
    }
 #endif

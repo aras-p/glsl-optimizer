@@ -77,7 +77,7 @@ _swrast_culltriangle( GLcontext *ctx,
 #define INTERP_FOG 1
 #define SETUP_CODE			\
    span.interpMask |= SPAN_INDEX;	\
-   span.index = IntToFixed(v2->index);	\
+   span.index = FloatToFixed(v2->index);\
    span.indexStep = 0;
 #define RENDER_SPAN( span )  _swrast_write_index_span(ctx, &span);
 #include "s_tritemp.h"

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.0.3
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -328,6 +328,19 @@ compute_coveragef(const struct LineInfo *info,
       return 1.0F;
    else
       return insideCount * (1.0F / (SUB_PIXEL * SUB_PIXEL));
+}
+
+
+/**
+ * Compute coverage value for color index mode.
+ * XXX this may not be quite correct.
+ * \return coverage in [0,15].
+ */
+static GLfloat
+compute_coveragei(const struct LineInfo *info,
+                  GLint winx, GLint winy)
+{
+   return compute_coveragef(info, winx, winy) * 15.0F;
 }
 
 

@@ -192,6 +192,9 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
    printf("  %g, %g, %g\n", v1->win[0], v1->win[1], v1->win[2]);
    printf("  %g, %g, %g\n", v2->win[0], v2->win[1], v2->win[2]);
    */
+   ASSERT(v0->win[2] >= 0.0);
+   ASSERT(v1->win[2] >= 0.0);
+   ASSERT(v2->win[2] >= 0.0);
 
    /* Compute fixed point x,y coords w/ half-pixel offsets and snapping.
     * And find the order of the 3 vertices along the Y axis.
@@ -530,8 +533,8 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_INDEX
       span.interpMask |= SPAN_INDEX;
       if (ctx->Light.ShadeModel == GL_SMOOTH) {
-         GLfloat eMaj_di = (GLfloat) ((GLint) vMax->index - (GLint) vMin->index);
-         GLfloat eBot_di = (GLfloat) ((GLint) vMid->index - (GLint) vMin->index);
+         GLfloat eMaj_di = vMax->index - vMin->index;
+         GLfloat eBot_di = vMid->index - vMin->index;
          didx = oneOverArea * (eMaj_di * eBot.dy - eMaj.dy * eBot_di);
          didy = oneOverArea * (eMaj.dx * eBot_di - eMaj_di * eBot.dx);
          span.indexStep = SignedFloatToFixed(didx);
@@ -907,7 +910,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   diOuter = SignedFloatToFixed(didy + dxOuter * didx);
                }
                else {
-                  iLeft = (GLfixed) (v2->index * FIXED_SCALE);
+                  iLeft = FloatToFixed(v2->index);
                   diOuter = 0;
                }
 #endif
