@@ -157,12 +157,10 @@ CACHE_SOURCES=[.array_cache]ac_context.c \
 	[.array_cache]ac_import.c
  
 OBJECTS1=accum.obj,\
-alpha.obj,\
 api_loopback.obj,\
 api_noop.obj,\
 api_validate.obj,\
 attrib.obj,\
-bitmap.obj,\
 blend.obj,\
 buffers.obj,\
 clip.obj,\
@@ -170,7 +168,6 @@ colortab.obj,\
 config.obj,\
 context.obj,\
 convolve.obj,\
-copypix.obj,\
 debug.obj,\
 depth.obj,\
 dispatch.obj,\
@@ -194,20 +191,15 @@ image.obj,\
 imports.obj,\
 light.obj,\
 lines.obj,\
-logic.obj,\
 lowpc.obj,\
-masking.obj,\
 matrix.obj,\
 mem.obj
 
 OBJECTS3=mmath.obj,\
 pixel.obj,\
-pixeltex.obj,\
 points.obj,\
 polygon.obj,\
 rastpos.obj,\
-readpix.obj,\
-scissor.obj,\
 state.obj,\
 stencil.obj,\
 texformat.obj,\
@@ -218,7 +210,6 @@ texstore.obj,\
 texutil.obj,\
 varray.obj,\
 vtxfmt.obj,\
-winpos.obj,\
 [.x86]x86.obj
 
 OBJECTS4=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
