@@ -41,9 +41,6 @@
  */
 
 
-static void choose_emit_func( GLcontext *ctx, GLuint count, GLubyte *dest);
-
-
 
 
 
@@ -274,6 +271,11 @@ static INLINE void insert_1f_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
    (void) a;
 
    out[0] = in[0];
+}
+
+static INLINE void insert_null( const struct tnl_clipspace_attr *a, GLubyte *v, const GLfloat *in )
+{
+   (void) a; (void) v; (void) in;
 }
 
 static INLINE void insert_4chan_4f_rgba_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
@@ -730,7 +732,7 @@ static void extract_1ub_1f( const struct tnl_clipspace_attr *a, GLfloat *out, co
 }
 
 
-static struct {
+const static struct {
    const char *name;
    tnl_extract_func extract;
    tnl_insert_func insert[4];
@@ -842,266 +844,81 @@ static struct {
  * Hardwired fastpaths for emitting whole vertices or groups of
  * vertices
  */
+static void choose_emit_func( GLcontext *ctx, GLuint count, GLubyte *dest);
 
 
-static void emit_xyz3_rgba4(  GLcontext *ctx,
-				   GLuint count,
-				   GLubyte *v )
-{
-   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   struct tnl_clipspace_attr *a = vtx->attr;
-   GLuint i;
-
-   if (a[0].emit != insert_3f_3 ||
-       a[1].emit != insert_4ub_4f_rgba_4) {
-      choose_emit_func( ctx, count, v );
-      return;
-   }
-
-   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {
-      insert_3f_3( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );
-      a[0].inputptr += a[0].inputstride;
-
-      insert_4ub_4f_rgba_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
-      a[1].inputptr += a[1].inputstride;
-   }
+#define EMIT5(NR, F0, F1, F2, F3, F4, NAME)				\
+static void NAME( GLcontext *ctx,					\
+		  GLuint count,						\
+		  GLubyte *v )						\
+{									\
+   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);			\
+   struct tnl_clipspace_attr *a = vtx->attr;				\
+   GLuint i;								\
+									\
+   if (vtx->attr_count != NR ||						\
+       (NR > 0 && a[0].emit != F0) ||					\
+       (NR > 1 && a[1].emit != F1) ||					\
+       (NR > 2 && a[2].emit != F2) ||					\
+       (NR > 3 && a[3].emit != F3) ||					\
+       (NR > 4 && a[4].emit != F4)) {					\
+      choose_emit_func( ctx, count, v );				\
+      return;								\
+   }									\
+									\
+   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {		\
+      if (NR > 0) {							\
+	 F0( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );	\
+	 a[0].inputptr += a[0].inputstride;				\
+      }									\
+      									\
+      if (NR > 1) {							\
+	 F1( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );	\
+	 a[1].inputptr += a[1].inputstride;				\
+      }									\
+      									\
+      if (NR > 2) {							\
+	 F1( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );	\
+	 a[1].inputptr += a[1].inputstride;				\
+      }									\
+      									\
+      if (NR > 3) {							\
+	 F1( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );	\
+	 a[1].inputptr += a[1].inputstride;				\
+      }									\
+									\
+      if (NR > 4) {							\
+	 F1( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );	\
+	 a[1].inputptr += a[1].inputstride;				\
+      }									\
+   }									\
 }
 
+   
+#define EMIT2(F0, F1, NAME) EMIT5(2, F0, F1, insert_null, \
+				  insert_null, insert_null, NAME)
 
-static void emit_viewport3_rgba4(  GLcontext *ctx,
-				   GLuint count,
-				   GLubyte *v )
-{
-   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   struct tnl_clipspace_attr *a = vtx->attr;
-   GLuint i;
+#define EMIT3(F0, F1, F2, NAME) EMIT5(2, F0, F1, F2, insert_null, \
+				      insert_null, NAME)
+   
+#define EMIT4(F0, F1, F2, F3, NAME) EMIT5(2, F0, F1, F2, F3, \
+				          insert_null, NAME)
+   
 
-   if (a[0].emit != insert_3f_viewport_3 ||
-       a[1].emit != insert_4ub_4f_rgba_4) {
-      choose_emit_func( ctx, count, v );
-      return;
-   }
+EMIT2(insert_3f_viewport_3, insert_4ub_4f_rgba_4, emit_viewport3_rgba4)
+EMIT2(insert_3f_viewport_3, insert_4ub_4f_bgra_4, emit_viewport3_bgra4)
+EMIT2(insert_3f_3, insert_4ub_4f_rgba_4, emit_xyz3_rgba4)
 
-   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {
-      insert_3f_viewport_3( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );
-      a[0].inputptr += a[0].inputstride;
+EMIT3(insert_4f_viewport_4, insert_4ub_4f_rgba_4, insert_2f_2, emit_viewport4_rgba4_st2)
+EMIT3(insert_4f_viewport_4, insert_4ub_4f_bgra_4, insert_2f_2,  emit_viewport4_bgra4_st2)
+EMIT3(insert_4f_4, insert_4ub_4f_rgba_4, insert_2f_2, emit_xyzw4_rgba4_st2)
 
-      insert_4ub_4f_rgba_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
-      a[1].inputptr += a[1].inputstride;
-   }
-}
- 
-
-static void emit_viewport3_bgra4(  GLcontext *ctx,
-				   GLuint count,
-				   GLubyte *v )
-{
-   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   struct tnl_clipspace_attr *a = vtx->attr;
-   GLuint i;
-
-   if (a[0].emit != insert_3f_viewport_3 ||
-       a[1].emit != insert_4ub_4f_bgra_4) {
-      choose_emit_func( ctx, count, v );
-      return;
-   }
-
-   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {
-      insert_3f_viewport_3( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );
-      a[0].inputptr += a[0].inputstride;
-
-      insert_4ub_4f_bgra_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
-      a[1].inputptr += a[1].inputstride;
-   }
-}
+EMIT4(insert_4f_viewport_4, insert_4ub_4f_rgba_4, insert_2f_2, insert_2f_2, emit_viewport4_rgba4_st2_st2)
+EMIT4(insert_4f_viewport_4, insert_4ub_4f_bgra_4, insert_2f_2, insert_2f_2,  emit_viewport4_bgra4_st2_st2)
+EMIT4(insert_4f_4, insert_4ub_4f_rgba_4, insert_2f_2, insert_2f_2, emit_xyzw4_rgba4_st2_st2)
 
 
-static void emit_xyzw4_rgba4_st2( GLcontext *ctx,
-				      GLuint count,
-				      GLubyte *v )
-{
-   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   struct tnl_clipspace_attr *a = vtx->attr;
-   GLuint i;
-
-   if (a[0].emit != insert_4f_4 ||
-       a[1].emit != insert_4ub_4f_rgba_4 ||
-       a[2].emit != insert_2f_2) {
-      choose_emit_func( ctx, count, v );
-      return;
-   }
-
-   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {
-      insert_4f_4( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );
-      a[0].inputptr += a[0].inputstride;
-
-      insert_4ub_4f_rgba_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
-      a[1].inputptr += a[1].inputstride;
-
-      insert_2f_2( &a[2], v + a[2].vertoffset, (GLfloat *)a[2].inputptr );
-      a[2].inputptr += a[2].inputstride;
-   }
-}
-
-
-static void emit_viewport4_rgba4_st2( GLcontext *ctx,
-				      GLuint count,
-				      GLubyte *v )
-{
-   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   struct tnl_clipspace_attr *a = vtx->attr;
-   GLuint i;
-
-   if (a[0].emit != insert_4f_viewport_4 ||
-       a[1].emit != insert_4ub_4f_rgba_4 ||
-       a[2].emit != insert_2f_2) {
-      choose_emit_func( ctx, count, v );
-      return;
-   }
-
-   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {
-      insert_4f_viewport_4( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );
-      a[0].inputptr += a[0].inputstride;
-
-      insert_4ub_4f_rgba_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
-      a[1].inputptr += a[1].inputstride;
-
-      insert_2f_2( &a[2], v + a[2].vertoffset, (GLfloat *)a[2].inputptr );
-      a[2].inputptr += a[2].inputstride;
-   }
-}
-
-
-static void emit_viewport4_bgra4_st2(  GLcontext *ctx,
-				   GLuint count,
-				   GLubyte *v )
-{
-   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   struct tnl_clipspace_attr *a = vtx->attr;
-   GLuint i;
-
-   if (a[0].emit != insert_4f_viewport_4 ||
-       a[1].emit != insert_4ub_4f_bgra_4 ||
-       a[2].emit != insert_2f_2) {
-      choose_emit_func( ctx, count, v );
-      return;
-   }
-
-   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {
-      insert_4f_viewport_4( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );
-      a[0].inputptr += a[0].inputstride;
-
-      insert_4ub_4f_bgra_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
-      a[1].inputptr += a[1].inputstride;
-
-      insert_2f_2( &a[2], v + a[2].vertoffset, (GLfloat *)a[2].inputptr );
-      a[2].inputptr += a[2].inputstride;
-   }
-}
-
-
-static void emit_xyzw4_rgba4_st2_st2( GLcontext *ctx,
-				      GLuint count,
-				      GLubyte *v )
-{
-   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   struct tnl_clipspace_attr *a = vtx->attr;
-   GLuint i;
-
-   if (a[0].emit != insert_4f_4 ||
-       a[1].emit != insert_4ub_4f_rgba_4 ||
-       a[2].emit != insert_2f_2 ||
-       a[3].emit != insert_2f_2) {
-      choose_emit_func( ctx, count, v );
-      return;
-   }
-
-   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {
-      insert_4f_4( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );
-      a[0].inputptr += a[0].inputstride;
-
-      insert_4ub_4f_rgba_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
-      a[1].inputptr += a[1].inputstride;
-
-      insert_2f_2( &a[2], v + a[2].vertoffset, (GLfloat *)a[2].inputptr );
-      a[2].inputptr += a[2].inputstride;
-
-      insert_2f_2( &a[3], v + a[3].vertoffset, (GLfloat *)a[3].inputptr );
-      a[3].inputptr += a[3].inputstride;
-   }
-}
-
-
-static void emit_viewport4_rgba4_st2_st2( GLcontext *ctx,
-					  GLuint count,
-					  GLubyte *v )
-{
-   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   struct tnl_clipspace_attr *a = vtx->attr;
-   GLuint i;
-
-   if (a[0].emit != insert_4f_viewport_4 ||
-       a[1].emit != insert_4ub_4f_rgba_4 ||
-       a[2].emit != insert_2f_2 ||
-       a[3].emit != insert_2f_2) {
-      choose_emit_func( ctx, count, v );
-      return;
-   }
-
-   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {
-      insert_4f_viewport_4( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );
-      a[0].inputptr += a[0].inputstride;
-
-      insert_4ub_4f_rgba_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
-      a[1].inputptr += a[1].inputstride;
-
-      insert_2f_2( &a[2], v + a[2].vertoffset, (GLfloat *)a[2].inputptr );
-      a[2].inputptr += a[2].inputstride;
-
-      insert_2f_2( &a[3], v + a[3].vertoffset, (GLfloat *)a[3].inputptr );
-      a[3].inputptr += a[3].inputstride;
-   }
-}
-
-
-
-static void emit_viewport4_bgra4_st2_st2( GLcontext *ctx,
-					  GLuint count,
-					  GLubyte *v )
-{
-   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   struct tnl_clipspace_attr *a = vtx->attr;
-   GLuint i;
-
-   if (a[0].emit != insert_4f_viewport_4 ||
-       a[1].emit != insert_4ub_4f_bgra_4 ||
-       a[2].emit != insert_2f_2 ||
-       a[3].emit != insert_2f_2) {
-      choose_emit_func( ctx, count, v );
-      return;
-   }
-
-   for (i = 0 ; i < count ; i++, v += vtx->vertex_size) {
-      insert_4f_viewport_4( &a[0], v + a[0].vertoffset, (GLfloat *)a[0].inputptr );
-      a[0].inputptr += a[0].inputstride;
-
-      insert_4ub_4f_bgra_4( &a[1], v + a[1].vertoffset, (GLfloat *)a[1].inputptr );
-      a[1].inputptr += a[1].inputstride;
-
-      insert_2f_2( &a[2], v + a[2].vertoffset, (GLfloat *)a[2].inputptr );
-      a[2].inputptr += a[2].inputstride;
-
-      insert_2f_2( &a[3], v + a[3].vertoffset, (GLfloat *)a[3].inputptr );
-      a[3].inputptr += a[3].inputstride;
-   }
-}
-
-
-
-
-
-
-
+      
 
 
 /***********************************************************************
