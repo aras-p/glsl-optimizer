@@ -473,7 +473,7 @@ static void _save_upgrade_vertex( GLcontext *ctx,
 
       /* Need to note this and fix up at runtime (or loopback):
        */
-      if (tnl->save.currentsz[attr] == 0) {
+      if (tnl->save.currentsz[attr][0] == 0) {
 	 assert(oldsz == 0);
 	 tnl->save.dangling_attr_ref = GL_TRUE;
 	 _mesa_debug(0, "_save_upgrade_vertex: dangling reference attr %d\n", 
@@ -496,10 +496,19 @@ static void _save_upgrade_vertex( GLcontext *ctx,
 	 for (j = 0 ; j < _TNL_ATTRIB_MAX ; j++) {
 	    if (tnl->save.attrsz[j]) {
 	       if (j == attr) {
-		  ASSIGN_4V( dest, 0, 0, 0, 1 );
-		  COPY_SZ_4V( dest, oldsz, data );
-		  data += oldsz;
-		  dest += newsz;
+		  if (oldsz) {
+		     ASSIGN_4V( dest, 0, 0, 0, 1 );
+		     COPY_SZ_4V( dest, oldsz, data );
+		     data += oldsz;
+		     dest += newsz;
+		  }
+		  else {
+		     GLuint currentsz = tnl->save.currentsz[attr][0];
+		     GLfloat *current = tnl->save.current[attr];
+		     ASSIGN_4V( dest, 0, 0, 0, 1 );
+		     COPY_SZ_4V( dest, currentsz, current );
+		     dest += newsz;
+		  }
 	       }
 	       else {
 		  GLint sz = tnl->save.attrsz[j];
