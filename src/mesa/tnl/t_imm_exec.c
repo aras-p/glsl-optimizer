@@ -139,12 +139,6 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
       COPY_4FV( ctx->Current.Attrib[VERT_ATTRIB_NORMAL],
                 IM->Attrib[VERT_ATTRIB_NORMAL][count]);
 
-   if (flag & VERT_BIT_INDEX)
-      ctx->Current.Index = IM->Index[count];
-
-   if (flag & VERT_BIT_EDGEFLAG)
-      ctx->Current.EdgeFlag = IM->EdgeFlag[count];
-
    if (flag & VERT_BIT_COLOR0) {
       COPY_4FV(ctx->Current.Attrib[VERT_ATTRIB_COLOR0],
                IM->Attrib[VERT_ATTRIB_COLOR0][count]);
@@ -162,6 +156,12 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
    if (flag & VERT_BIT_FOG)
       ctx->Current.Attrib[VERT_ATTRIB_FOG][0] = IM->Attrib[VERT_ATTRIB_FOG][count][0];
 
+   if (flag & VERT_BIT_SIX)
+      COPY_4FV(ctx->Current.Attrib[VERT_ATTRIB_SIX], IM->Attrib[VERT_ATTRIB_SIX][count]);
+
+   if (flag & VERT_BIT_SEVEN)
+      COPY_4FV(ctx->Current.Attrib[VERT_ATTRIB_SEVEN], IM->Attrib[VERT_ATTRIB_SEVEN][count]);
+
    if (flag & VERT_BITS_TEX_ANY) {
       GLuint i;
       for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++) {
@@ -171,6 +171,12 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
 	 }
       }
    }
+
+   if (flag & VERT_BIT_INDEX)
+      ctx->Current.Index = IM->Index[count];
+
+   if (flag & VERT_BIT_EDGEFLAG)
+      ctx->Current.EdgeFlag = IM->EdgeFlag[count];
 
    if (flag & VERT_BIT_MATERIAL) {
       _mesa_update_material( ctx,
