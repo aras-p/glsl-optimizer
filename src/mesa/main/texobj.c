@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.46 2001/03/28 21:31:54 brianp Exp $ */
+/* $Id: texobj.c,v 1.47 2001/04/20 17:16:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -592,7 +592,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          /* error checking */
          if (newTexObj->Dimensions > 0 && newTexObj->Dimensions != targetDim) {
             /* the named texture object's dimensions don't match the target */
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glBindTexture" );
+            _mesa_error( ctx, GL_INVALID_OPERATION, "glBindTexture(wrong dimensionality)" );
             return;
          }
       }
