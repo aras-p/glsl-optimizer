@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.18 2000/05/24 14:03:04 brianp Exp $ */
+/* $Id: colortab.c,v 1.19 2000/06/27 15:47:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -301,7 +301,8 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
 
    assert(table);
 
-   if (!_mesa_is_legal_format_and_type(format, type)) {
+   if (!_mesa_is_legal_format_and_type(format, type) ||
+       format == GL_INTENSITY) {
       gl_error(ctx, GL_INVALID_ENUM, "glColorTable(format or type)");
       return;
    }
@@ -477,7 +478,8 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
 
    assert(table);
 
-   if (!_mesa_is_legal_format_and_type(format, type)) {
+   if (!_mesa_is_legal_format_and_type(format, type) ||
+       format == GL_INTENSITY) {
       gl_error(ctx, GL_INVALID_ENUM, "glColorSubTable(format or type)");
       return;
    }

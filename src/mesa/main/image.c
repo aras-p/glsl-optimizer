@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.33 2000/06/22 21:26:51 brianp Exp $ */
+/* $Id: image.c,v 1.34 2000/06/27 15:47:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -330,6 +330,7 @@ _mesa_is_legal_format_and_type( GLenum format, GLenum type )
       case GL_GREEN:
       case GL_BLUE:
       case GL_ALPHA:
+      case GL_INTENSITY:
       case GL_LUMINANCE:
       case GL_LUMINANCE_ALPHA:
       case GL_DEPTH_COMPONENT:
