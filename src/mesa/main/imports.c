@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.4 2001/01/08 04:09:41 keithw Exp $ */
+/* $Id: imports.c,v 1.5 2001/02/06 04:06:35 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -158,7 +158,7 @@ _mesa_InitDefaultImports(__GLimports *imports, void *driverCtx, void *other)
    imports->warning = _mesa_warning;
    imports->fatal = _mesa_fatal;
    imports->getenv = _mesa_getenv;
-/*     imports->atoi = _mesa_atoi; */
+   imports->atoi = _mesa_atoi;
    imports->sprintf = _mesa_sprintf;
    imports->fopen = _mesa_fopen;
    imports->fclose = _mesa_fclose;

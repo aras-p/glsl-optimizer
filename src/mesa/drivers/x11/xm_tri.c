@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.17 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: xm_tri.c,v 1.18 2001/02/06 04:06:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1521,7 +1521,7 @@ do {                                   \
 
 #endif
 
-   
+
 static swrast_tri_func get_triangle_func( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);

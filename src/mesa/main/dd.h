@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.49 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: dd.h,v 1.50 2001/02/06 04:06:34 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -900,12 +900,13 @@ struct dd_function_table {
 #define PRIM_UNKNOWN             GL_POLYGON+3
    
    GLuint CurrentExecPrimitive;
-   /* Set by the driver-supplied t&l engine.  Set to GL_POLYGON+1 when
-    * outside begin/end.
+   /* Set by the driver-supplied t&l engine.  Set to
+    * PRIM_OUTSIDE_BEGIN_END when outside begin/end.  
     */
 
    GLuint CurrentSavePrimitive;
-   /* Current state of an inprogress compilation.
+   /* Current state of an in-progress compilation.  May take on any of
+    * the additional values defined above.
     */
 
    
@@ -926,7 +927,6 @@ struct dd_function_table {
     *   if (flags & FLUSH_STORED_VERTICES) flushes any buffered vertices,
     *   if (flags & FLUSH_UPDATE_CURRENT) updates ctx->Current 
     *                                     and ctx->Light.Material
-    *   returns GL_TRUE. 
     *
     * Note that the default t&l engine never clears the
     * FLUSH_UPDATE_CURRENT bit, even after performing the update.

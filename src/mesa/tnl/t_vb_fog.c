@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.2 2001/01/03 22:56:23 brianp Exp $ */
+/* $Id: t_vb_fog.c,v 1.3 2001/02/06 04:06:36 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,10 +49,42 @@ struct fog_stage_data {
 
 #define FOG_STAGE_DATA(stage) ((struct fog_stage_data *)stage->private)
 
+#define FOG_EXP_TABLE_SIZE 256
+#define FOG_MAX (5.0)
+#define EXP_FOG_MAX .0006595
+#define FOG_INCR (FOG_MAX/FOG_EXP_TABLE_SIZE)
+static GLfloat exp_table[FOG_EXP_TABLE_SIZE];
+static GLfloat inited = 0;
+
+#if 1
+#define NEG_EXP( result, narg )						\
+do {									\
+   float f = (narg * (1.0/FOG_INCR));					\
+   int k = (int) f;							\
+   if (k > FOG_EXP_TABLE_SIZE-2) 					\
+      result = EXP_FOG_MAX;						\
+   else									\
+      result = exp_table[k] + (f-k)*(exp_table[k+1]-exp_table[k]);	\
+} while (0)
+#else
+#define NEG_EXP( result, narg )					\
+do {								\
+   result = exp(-narg);						\
+} while (0)
+#endif
 
 
-/* Use lookup table & interpolation?
- */
+static void init_static_data( void )
+{
+   float f = 0;
+   int i = 0;
+   for ( ; i < FOG_EXP_TABLE_SIZE ; i++, f += FOG_INCR) {
+      exp_table[i] = exp(-f);
+   }
+   inited = 1;
+}
+
+
 static void make_win_fog_coords( GLcontext *ctx, GLvector1f *out, 
 				 const GLvector1f *in )
 {
@@ -76,15 +108,15 @@ static void make_win_fog_coords( GLcontext *ctx, GLvector1f *out,
 	 data[i] = (end - ABSF(*v)) * d;
       break;
    case GL_EXP:
-      d = -ctx->Fog.Density;
+      d = ctx->Fog.Density;
       for ( i = 0 ; i < n ; i++, STRIDE_F(v,stride)) 
-	 data[i] = exp( d*ABSF(*v) );
+	 NEG_EXP( data[i], d*ABSF(*v) );
       break;
    case GL_EXP2:
-      d = -(ctx->Fog.Density*ctx->Fog.Density);
+      d = ctx->Fog.Density*ctx->Fog.Density;
       for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
 	 GLfloat z = *v;
-	 data[i] = exp( d*z*z );
+	 NEG_EXP( data[i], d*z*z );
       }
       break;
    default:
@@ -172,6 +204,9 @@ static GLboolean alloc_fog_data( GLcontext *ctx,
 
    gl_vector1f_alloc( &store->fogcoord, 0, tnl->vb.Size, 32 );
    gl_vector1f_init( &store->input, 0, 0 );
+
+   if (!inited)
+      init_static_data();
 
    /* Now run the stage.
     */
