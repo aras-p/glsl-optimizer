@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.13 2000/01/13 00:27:05 brianp Exp $ */
+/* $Id: matrix.c,v 1.14 2000/02/02 19:28:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,6 +41,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "buffers.h"
 #include "context.h"
 #include "enums.h"
 #include "matrix.h"
