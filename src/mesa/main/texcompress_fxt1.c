@@ -45,7 +45,7 @@ fxt1_encode (GLuint width, GLuint height, GLint comps,
              const void *source, GLint srcRowStride,
              void *dest, GLint destRowStride);
 
-static void
+void
 fxt1_decode_1 (const void *texture, GLint stride,
                GLint i, GLint j, GLubyte *rgba);
 
@@ -1635,7 +1635,7 @@ fxt1_decode_1ALPHA (GLubyte *code, GLint t, GLubyte *rgba)
 }
 
 
-static void
+void
 fxt1_decode_1 (const void *texture, GLint stride, /* in pixels */
                GLint i, GLint j, GLubyte *rgba)
 {
