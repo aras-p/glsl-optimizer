@@ -64,17 +64,17 @@
 # endif
 #endif /* !_WIN32 */
 
+#include "glutint.h"
+
 #if defined(__vms) && ( __VMS_VER < 70000000 )
 #include <ssdef.h>
 #include <psldef.h>
 extern int SYS$CLREF(int efn);
-extern int SYS$SETIMR(unsigned int efn, struct timeval *timeout, void *ast,
+extern int SYS$SETIMR(unsigned int efn, struct timeval6 *timeout, void *ast,
   unsigned int request_id, unsigned int flags);
 extern int SYS$WFLOR(unsigned int efn, unsigned int mask);
 extern int SYS$CANTIM(unsigned int request_id, unsigned int mode);
 #endif /* __vms, VMs 6.2 or earlier */
-
-#include "glutint.h"
 
 static GLUTtimer *freeTimerList = NULL;
 
@@ -114,8 +114,12 @@ glutTimerFunc(unsigned int interval, GLUTtimerCB timerFunc, int value)
 {
   GLUTtimer *timer, *other;
   GLUTtimer **prevptr;
-  struct timeval now;
-
+#ifdef OLD_VMS
+   struct timeval6 now;
+#else
+   struct timeval now;
+#endif
+   
   if (!timerFunc)
     return;
 
@@ -156,8 +160,12 @@ glutTimerFunc(unsigned int interval, GLUTtimerCB timerFunc, int value)
 void
 handleTimeouts(void)
 {
-  struct timeval now;
-  GLUTtimer *timer;
+#ifdef OLD_VMS
+   struct timeval6 now;
+#else
+   struct timeval now;
+#endif
+   GLUTtimer *timer;
 
   /* Assumption is that __glutTimerList is already determined
      to be non-NULL. */
@@ -839,7 +847,7 @@ static void
 waitForSomething(void)
 {
 #if defined(__vms) && ( __VMS_VER < 70000000 )
-  static struct timeval zerotime =
+  static struct timeval6 zerotime =
   {0};
   unsigned int timer_efn;
 #define timer_id 'glut' /* random :-) number */
@@ -851,7 +859,11 @@ waitForSomething(void)
   fd_set fds;
 #endif
 #endif
-  struct timeval now, timeout, waittime;
+#ifdef OLD_VMS
+   struct timeval6 now, timeout, waittime;
+#else
+   struct timeval now, timeout, waittime;
+#endif
 #if !defined(_WIN32)
   int rc;
 #endif

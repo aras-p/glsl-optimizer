@@ -186,9 +186,13 @@ glutGet(GLenum param)
     }
   case GLUT_ELAPSED_TIME:
     {
-      struct timeval elapsed, beginning, now;
+#ifdef OLD_VMS
+       struct timeval6 elapsed, beginning, now;
+#else
+       struct timeval elapsed, beginning, now;
+#endif
 
-      __glutInitTime(&beginning);
+       __glutInitTime(&beginning);
       GETTIMEOFDAY(&now);
       TIMEDELTA(elapsed, now, beginning);
       /* Return elapsed milliseconds. */

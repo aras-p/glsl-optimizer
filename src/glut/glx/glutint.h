@@ -69,10 +69,11 @@
 
 #ifdef __vms
 #if ( __VMS_VER < 70000000 )
-struct timeval {
+#define OLD_VMS
+struct timeval6 {
   __int64 val;
 };
-extern int sys$gettim(struct timeval *);
+extern int sys$gettim(struct timeval6 *);
 #else
 #include <time.h>
 #endif
@@ -530,8 +531,12 @@ struct _GLUTmenuItem {
 typedef struct _GLUTtimer GLUTtimer;
 struct _GLUTtimer {
   GLUTtimer *next;      /* list of timers */
-  struct timeval timeout;  /* time to be called */
-  GLUTtimerCB func;     /* timer  (value) */
+#ifdef OLD_VMS
+   struct timeval6 timeout;  /* time to be called */
+#else
+   struct timeval timeout;  /* time to be called */
+#endif
+   GLUTtimerCB func;     /* timer  (value) */
   int value;            /*  return value */
 #ifdef SUPPORT_FORTRAN
   GLUTtimerFCB ffunc;   /* Fortran timer  */
@@ -713,7 +718,11 @@ extern void __glutOpenXConnection(char *display);
 #else
 extern void __glutOpenWin32Connection(char *display);
 #endif
+#if OLD_VMS
+extern void __glutInitTime(struct timeval6 *beginning);
+#else
 extern void __glutInitTime(struct timeval *beginning);
+#endif
 
 /* private routines for glut_menu.c (or win32_menu.c) */
 #if defined(_WIN32)

@@ -154,11 +154,19 @@ __glutOpenXConnection(char *display)
 #endif /* _WIN32 */
 
 void
-__glutInitTime(struct timeval *beginning)
+#ifdef OLD_VMS
+  __glutInitTime(struct timeval6 *beginning)
+#else
+  __glutInitTime(struct timeval *beginning)
+#endif
 {
   static int beenhere = 0;
-  static struct timeval genesis;
-
+#ifdef OLD_VMS
+   static struct timeval6 genesis;
+#else
+   static struct timeval genesis;
+#endif
+   
   if (!beenhere) {
     GETTIMEOFDAY(&genesis);
     beenhere = 1;
@@ -183,8 +191,12 @@ glutInit(int *argcp, char **argv)
 {
   char *display = NULL;
   char *str, *geometry = NULL;
-  struct timeval unused;
-  int i;
+#ifdef OLD_VMS
+   struct timeval6 unused;
+#else
+   struct timeval unused;
+#endif
+   int i;
 
   if (__glutDisplay) {
     __glutWarning("glutInit being called a second time.");
