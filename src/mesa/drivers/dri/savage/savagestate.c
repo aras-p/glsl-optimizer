@@ -1394,6 +1394,7 @@ void savageEmitDrawingRectangle( savageContextPtr imesa )
     /*   imesa->regs.ni.changed.ni.fDrawCtrl0Changed=GL_TRUE;
          imesa->regs.ni.changed.ni.fDrawCtrl1Changed=GL_TRUE;*/
 
+    savageCalcViewport (imesa->glCtx);
 
     imesa->dirty |= SAVAGE_UPLOAD_BUFFERS;
 }
