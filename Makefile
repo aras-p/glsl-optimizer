@@ -45,6 +45,7 @@ $(TOP)/configs/current:
 
 # Rules to set/install a specific build configuration
 aix \
+aix-64 \
 aix-gcc \
 aix-static \
 beos \
