@@ -17,6 +17,7 @@ PROGS = \
 	cubemap \
 	drawpix \
 	fire \
+	fogcoord \
 	fplight \
 	gamma \
 	gears \
