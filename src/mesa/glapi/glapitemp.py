@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glapitemp.py,v 1.2 2001/12/14 03:17:00 brianp Exp $
+# $Id: glapitemp.py,v 1.3 2001/12/15 16:43:00 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -34,7 +34,7 @@
 #    The apispec file must be in the current directory.
 
 
-
+import string
 import apiparser;
 
 
@@ -120,23 +120,44 @@ def MakeParamList(nameList):
 #enddef
 
 
+def Contains(haystack, needle):
+	if string.find(haystack, needle) >= 0:
+		return 1
+	else:
+		return 0
+#enddef
+
+		
 def MakePrintfString(funcName, argTypeList, argNameList):
 	result = '(F, "gl%s(' % (funcName)
 
 	n = len(argTypeList)
 	i = 1
 	isPointer = {}
+	floatv = {}
 	for argType in argTypeList:
 		isPointer[i] = 0
+		floatv[i] = 0
 		if argType == 'GLenum':
 			result = result + '0x%x'
 		elif argType in ['GLfloat', 'GLdouble', 'GLclampf', 'GLclampd']:
 			result = result + '%f'
-		elif argType in ['GLbyte', 'GLubyte', 'GLshort', 'GLushort', 'GLint', 'GLuint', 'GLboolean']:
+		elif argType in ['GLbyte', 'GLubyte', 'GLshort', 'GLushort', 'GLint', 'GLuint', 'GLboolean', 'GLsizei']:
 			result = result + '%d'
 		else:
 			result = result + '%p'
 			isPointer[i] = 1
+			if argType[0:13] == 'const GLfloat' or argType[0:14] == 'const GLdouble':
+				if Contains(funcName, '2fv') or Contains(funcName, '2dv'):
+					result = result + ' /* %g, %g */'
+					floatv[i] = 2
+				elif Contains(funcName, '3fv') or Contains(funcName, '3dv'):
+					result = result + ' /* %g, %g, %g */'
+					floatv[i] = 3
+				elif Contains(funcName, '4fv') or Contains(funcName, '4dv'):
+					result = result + ' /* %g, %g, %g, %g */'
+					floatv[i] = 4
+			#endif
 		if i < n:
 			result = result + ', '
 		i = i + 1
@@ -152,6 +173,12 @@ def MakePrintfString(funcName, argTypeList, argNameList):
 		if isPointer[i]:
 			result = result + '(void *) '
 		result = result + pname
+		if floatv[i] == 2:
+			result = result + ', ' + pname + '[0], ' + pname + '[1]'
+		elif floatv[i] == 3:
+			result = result + ', ' + pname + '[0], ' + pname + '[1], ' + pname + '[2]'
+		elif floatv[i] == 4:
+			result = result + ', ' + pname + '[0], ' + pname + '[1], ' + pname + '[2], ' + pname + '[3]'
 		if i < n:
 			result = result + ', '
 		i = i + 1

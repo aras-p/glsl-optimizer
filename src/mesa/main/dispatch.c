@@ -1,8 +1,8 @@
-/* $Id: dispatch.c,v 1.25 2001/12/04 23:43:31 brianp Exp $ */
+/* $Id: dispatch.c,v 1.26 2001/12/15 16:42:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -66,20 +66,22 @@
 
 #define F stdout
 #define DISPATCH(FUNC, ARGS, MESSAGE)		\
-   (_glapi_Dispatch->FUNC) ARGS; \
-   fprintf MESSAGE; \
-   fprintf(F, "\n");
+   fprintf MESSAGE;				\
+   (_glapi_Dispatch->FUNC) ARGS;
+
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 	\
+   fprintf MESSAGE;				\
+   return (_glapi_Dispatch->FUNC) ARGS
 
 #else
 
 #define DISPATCH(FUNC, ARGS, MESSAGE)		\
    (_glapi_Dispatch->FUNC) ARGS;
 
-#endif /* logging */
-
-
 #define RETURN_DISPATCH(FUNC, ARGS, MESSAGE) 	\
    return (_glapi_Dispatch->FUNC) ARGS
+
+#endif /* logging */
 
 
 #ifndef GLAPIENTRY
