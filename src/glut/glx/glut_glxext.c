@@ -188,7 +188,7 @@ __glut_glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config,
   static glXCreateContextWithConfigSGIX_t glXCreateContextWithConfig_ptr = NULL;
   if (!glXCreateContextWithConfig_ptr) {
     glXCreateContextWithConfig_ptr = (glXCreateContextWithConfigSGIX_t)
-       glXGetProcAddress((const GLubyte *) "glXCreateContextWithConfigSGIX");
+       glXGetProcAddressARB((const GLubyte *) "glXCreateContextWithConfigSGIX");
   }
   if (glXCreateContextWithConfig_ptr)
     return (*glXCreateContextWithConfig_ptr)(dpy, config, render_type,
@@ -214,7 +214,7 @@ __glut_glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfigSGIX config,
   static glXGetFBConfigAttribSGIX_t glXGetFBConfigAttrib_ptr = NULL;
   if (!glXGetFBConfigAttrib_ptr) {
     glXGetFBConfigAttrib_ptr = (glXGetFBConfigAttribSGIX_t)
-       glXGetProcAddress((const GLubyte *) "glXGetFBConfigAttribSGIX");
+       glXGetProcAddressARB((const GLubyte *) "glXGetFBConfigAttribSGIX");
   }
   if (glXGetFBConfigAttrib_ptr)
     return (*glXGetFBConfigAttrib_ptr)(dpy, config, attribute, value);
@@ -237,7 +237,7 @@ __glut_glXGetFBConfigFromVisualSGIX(Display *dpy, XVisualInfo *vis)
   static glXGetFBConfigFromVisualSGIX_t glXGetFBConfigFromVisual_ptr = NULL;
   if (!glXGetFBConfigFromVisual_ptr) {
     glXGetFBConfigFromVisual_ptr = (glXGetFBConfigFromVisualSGIX_t)
-       glXGetProcAddress((const GLubyte *) "glXGetFBConfigFromVisualSGIX");
+       glXGetProcAddressARB((const GLubyte *) "glXGetFBConfigFromVisualSGIX");
   }
   if (glXGetFBConfigFromVisual_ptr)
     return (*glXGetFBConfigFromVisual_ptr)(dpy, vis);
