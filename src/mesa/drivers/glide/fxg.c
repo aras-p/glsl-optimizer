@@ -2228,11 +2228,13 @@ void FX_CALL fake_grTexNCCTableExt (GrChipID_t   tmu,
 void tdfx_hook_glide (struct tdfx_glide *Glide)
 {
 #if DEBUG_TRAP
-#define GET_EXT_ADDR(name)  *(GrProc *)&real_##name = grGetProcAddress(#name), Glide->name = trap_##name
-#define GET_TXS_ADDR(name)  Glide->name = trap_##name
+#define GET_EXT_ADDR(name) *(GrProc *)&real_##name = grGetProcAddress(#name), Glide->name = trap_##name
+#define GET_EXT_FAKE(name) GET_EXT_ADDR(name); if (real_##name == NULL) real_##name = fake_##name
+#define GET_TXS_ADDR(name) Glide->name = trap_##name
 #else  /* DEBUG_TRAP */
-#define GET_EXT_ADDR(name)  *(GrProc *)&Glide->name = grGetProcAddress(#name)
-#define GET_TXS_ADDR(name)  Glide->name = name
+#define GET_EXT_ADDR(name) *(GrProc *)&Glide->name = grGetProcAddress(#name)
+#define GET_EXT_FAKE(name) GET_EXT_ADDR(name); if (Glide->name == NULL) Glide->name = fake_##name
+#define GET_TXS_ADDR(name) Glide->name = name
 #endif /* DEBUG_TRAP */
 
  /*
@@ -2245,9 +2247,9 @@ void tdfx_hook_glide (struct tdfx_glide *Glide)
  GET_EXT_ADDR(grTexChromaModeExt);
  GET_EXT_ADDR(grTexChromaRangeExt);
  /* pointcast */
- GET_EXT_ADDR(grTexDownloadTableExt);
- GET_EXT_ADDR(grTexDownloadTablePartialExt);
- GET_EXT_ADDR(grTexNCCTableExt);
+ GET_EXT_FAKE(grTexDownloadTableExt);
+ GET_EXT_FAKE(grTexDownloadTablePartialExt);
+ GET_EXT_FAKE(grTexNCCTableExt);
  /* tbext */
  GET_EXT_ADDR(grTextureBufferExt);
  GET_EXT_ADDR(grTextureAuxBufferExt);
@@ -2274,19 +2276,6 @@ void tdfx_hook_glide (struct tdfx_glide *Glide)
  GET_TXS_ADDR(txImgQuantize);
  GET_TXS_ADDR(txMipQuantize);
  GET_TXS_ADDR(txPalToNcc);
-
- /* housekeeping: make sure the pointcast always point to something valid */
- if (grGetProcAddress("grTexDownloadTableExt") == NULL) {
-#if DEBUG_TRAP
-    real_grTexDownloadTableExt = fake_grTexDownloadTableExt;
-    real_grTexDownloadTablePartialExt = fake_grTexDownloadTablePartialExt;
-    real_grTexNCCTableExt = fake_grTexNCCTableExt;
-#else
-    Glide->grTexDownloadTableExt = fake_grTexDownloadTableExt;
-    Glide->grTexDownloadTablePartialExt = fake_grTexDownloadTablePartialExt;
-    Glide->grTexNCCTableExt = fake_grTexNCCTableExt;
-#endif
- }
 
 #undef GET_EXT_ADDR
 }
