@@ -1487,6 +1487,7 @@ fxDDInitExtensions(GLcontext * ctx)
       _mesa_enable_extension(ctx, "GL_3DFX_texture_compression_FXT1");
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
       _mesa_enable_extension(ctx, "GL_S3_s3tc");
+      _mesa_enable_extension(ctx, "GL_NV_blend_square");
    }
 
    if (fxMesa->HaveCmbExt) {

@@ -1313,47 +1313,31 @@ fxDDBlendFuncSeparate(GLcontext * ctx, GLenum sfactor, GLenum dfactor, GLenum as
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    tfxUnitsState *us = &fxMesa->unitsState;
+   GLboolean isNapalm = (fxMesa->type >= GR_SSTTYPE_Voodoo4);
    GLboolean have32bpp = (fxMesa->colDepth == 32);
    GLboolean haveAlpha = fxMesa->haveHwAlpha;
    GrAlphaBlendFnc_t sfact, dfact, asfact, adfact;
 
    /* [dBorca] Hack alert:
-    * We should condition *DST_ALPHA* modes
-    * by the boolean `haveAlpha' above!
-    * It indicates whether we really have HW alpha buffer...
+    * 15/16 BPP alpha channel alpha blending modes
+    *   0x0	AZERO		Zero
+    *   0x4	AONE		One
+    *
+    * 32 BPP alpha channel alpha blending modes
+    *   0x0	AZERO		Zero
+    *   0x1	ASRC_ALPHA	Source alpha
+    *   0x3	ADST_ALPHA	Destination alpha
+    *   0x4	AONE		One
+    *   0x5	AOMSRC_ALPHA	1 - Source alpha
+    *   0x7	AOMDST_ALPHA	1 - Destination alpha
+    *
+    * If we don't have HW alpha buffer:
+    *   DST_ALPHA == 1
+    *   ONE_MINUS_DST_ALPHA == 0
+    * Unsupported modes are:
+    *   1 if used as src blending factor
+    *   0 if used as dst blending factor
     */
-
-/* Use the text below to implement GL_NV_blend_square!
-When the value A_COLOR is selected as the destination alpha blending factor,
-the source pixel color is used as the destination blending factor.  When the
-value A_COLOR is selected as the source alpha blending factor, the destination
-pixel color is used as the source blending factor.  When the value A_SAMECOLOR
-is selected as the destination alpha blending factor, the destination pixel
-color is used as the destination blending factor.  When the value A_SAMECOLOR
-is selected as the source alpha blending factor, the source pixel color is
-used as the source blending factor.  Note also that the alpha blending
-function 0xf (A_COLORBEFOREFOG/ASATURATE) is different depending upon whether
-it is being used as a source or destination alpha blending function.  When the
-value 0xf is selected as the destination alpha blending factor, the source
-color before the fog unit ("unfogged" color) is used as the destination
-blending factor -- this alpha blending function is useful for multi-pass
-rendering with atmospheric effects.  When the value 0xf is selected as the
-source alpha blending factor, the alpha-saturate anti-aliasing algorithm is
-selected -- this MIN function performs polygonal anti-aliasing for polygons
-which are drawn front-to-back.
-
-15/16 BPP alpha channel alpha blending modes
-	0x0	AZERO		Zero
-	0x4	AONE		One
-
-32 BPP alpha channel alpha blending modes
-	0x0	AZERO		Zero
-	0x1	ASRC_ALPHA	Source alpha
-	0x3	ADST_ALPHA	Destination alpha
-	0x4	AONE		One
-	0x5	AOMSRC_ALPHA	1 - Source alpha
-	0x7	AOMDST_ALPHA	1 - Destination alpha
-*/
 
    switch (sfactor) {
    case GL_ZERO:
@@ -1375,19 +1359,24 @@ which are drawn front-to-back.
       sfact = GR_BLEND_ONE_MINUS_SRC_ALPHA;
       break;
    case GL_DST_ALPHA:
-      sfact = GR_BLEND_DST_ALPHA;
+      sfact = haveAlpha ? GR_BLEND_DST_ALPHA : GR_BLEND_ONE/*bad*/;
       break;
    case GL_ONE_MINUS_DST_ALPHA:
-      sfact = GR_BLEND_ONE_MINUS_DST_ALPHA;
+      sfact = haveAlpha ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ZERO/*bad*/;
       break;
    case GL_SRC_ALPHA_SATURATE:
       sfact = GR_BLEND_ALPHA_SATURATE;
       break;
    case GL_SRC_COLOR:
+      if (isNapalm) {
+         sfact = GR_BLEND_SAME_COLOR_EXT;
+         break;
+      }
    case GL_ONE_MINUS_SRC_COLOR:
-      /* USELESS */
-      sfact = GR_BLEND_ONE;
-      break;
+      if (isNapalm) {
+         sfact = GR_BLEND_ONE_MINUS_SAME_COLOR_EXT;
+         break;
+      }
    default:
       sfact = GR_BLEND_ONE;
       break;
@@ -1400,34 +1389,27 @@ which are drawn front-to-back.
    case GL_ONE:
       asfact = GR_BLEND_ONE;
       break;
-   case GL_DST_COLOR:
-      asfact = GR_BLEND_ONE/*bad*/;
-      break;
-   case GL_ONE_MINUS_DST_COLOR:
-      asfact = GR_BLEND_ONE/*bad*/;
-      break;
+   case GL_SRC_COLOR:
    case GL_SRC_ALPHA:
       asfact = have32bpp ? GR_BLEND_SRC_ALPHA : GR_BLEND_ONE/*bad*/;
       break;
+   case GL_ONE_MINUS_SRC_COLOR:
    case GL_ONE_MINUS_SRC_ALPHA:
       asfact = have32bpp ? GR_BLEND_ONE_MINUS_SRC_ALPHA : GR_BLEND_ONE/*bad*/;
       break;
+   case GL_DST_COLOR:
    case GL_DST_ALPHA:
-      asfact = have32bpp ? GR_BLEND_DST_ALPHA : GR_BLEND_ONE/*bad*/;
+      asfact = (have32bpp && haveAlpha) ? GR_BLEND_DST_ALPHA : GR_BLEND_ONE/*bad*/;
       break;
+   case GL_ONE_MINUS_DST_COLOR:
    case GL_ONE_MINUS_DST_ALPHA:
-      asfact = have32bpp ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ONE/*bad*/;
+      asfact = (have32bpp && haveAlpha) ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ZERO/*bad*/;
       break;
    case GL_SRC_ALPHA_SATURATE:
-      asfact = GR_BLEND_ONE/*bad*/;
-      break;
-   case GL_SRC_COLOR:
-   case GL_ONE_MINUS_SRC_COLOR:
-      /* USELESS */
-      asfact = GR_BLEND_ONE/*bad*/;
+      asfact = GR_BLEND_ONE;
       break;
    default:
-      asfact = GR_BLEND_ONE/*bad*/;
+      asfact = GR_BLEND_ONE;
       break;
    }
 
@@ -1451,21 +1433,21 @@ which are drawn front-to-back.
       dfact = GR_BLEND_ONE_MINUS_SRC_ALPHA;
       break;
    case GL_DST_ALPHA:
-      /* dfact=GR_BLEND_DST_ALPHA; */
-      /* We can't do DST_ALPHA */
-      dfact = GR_BLEND_ONE;
+      dfact = haveAlpha ? GR_BLEND_DST_ALPHA : GR_BLEND_ONE/*bad*/;
       break;
    case GL_ONE_MINUS_DST_ALPHA:
-      /* dfact=GR_BLEND_ONE_MINUS_DST_ALPHA; */
-      /* We can't do DST_ALPHA */
-      dfact = GR_BLEND_ZERO;
+      dfact = haveAlpha ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ZERO/*bad*/;
       break;
-   case GL_SRC_ALPHA_SATURATE:
    case GL_DST_COLOR:
+      if (isNapalm) {
+         dfact = GR_BLEND_SAME_COLOR_EXT;
+         break;
+      }
    case GL_ONE_MINUS_DST_COLOR:
-      /* USELESS */
-      dfact = GR_BLEND_ZERO;
-      break;
+      if (isNapalm) {
+         dfact = GR_BLEND_ONE_MINUS_SAME_COLOR_EXT;
+         break;
+      }
    default:
       dfact = GR_BLEND_ZERO;
       break;
@@ -1479,31 +1461,23 @@ which are drawn front-to-back.
       adfact = GR_BLEND_ONE;
       break;
    case GL_SRC_COLOR:
-      adfact = GR_BLEND_ZERO/*bad*/;
-      break;
-   case GL_ONE_MINUS_SRC_COLOR:
-      adfact = GR_BLEND_ZERO/*bad*/;
-      break;
    case GL_SRC_ALPHA:
       adfact = have32bpp ? GR_BLEND_SRC_ALPHA : GR_BLEND_ZERO/*bad*/;
       break;
+   case GL_ONE_MINUS_SRC_COLOR:
    case GL_ONE_MINUS_SRC_ALPHA:
       adfact = have32bpp ? GR_BLEND_ONE_MINUS_SRC_ALPHA : GR_BLEND_ZERO/*bad*/;
       break;
-   case GL_DST_ALPHA:
-      adfact = have32bpp ? GR_BLEND_DST_ALPHA : GR_BLEND_ZERO/*bad*/;
-      break;
-   case GL_ONE_MINUS_DST_ALPHA:
-      adfact = have32bpp ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ZERO/*bad*/;
-      break;
-   case GL_SRC_ALPHA_SATURATE:
    case GL_DST_COLOR:
+   case GL_DST_ALPHA:
+      adfact = (have32bpp && haveAlpha) ? GR_BLEND_DST_ALPHA : GR_BLEND_ONE/*bad*/;
+      break;
    case GL_ONE_MINUS_DST_COLOR:
-      /* USELESS */
-      adfact = GR_BLEND_ZERO/*bad*/;
+   case GL_ONE_MINUS_DST_ALPHA:
+      adfact = (have32bpp && haveAlpha) ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ZERO/*bad*/;
       break;
    default:
-      adfact = GR_BLEND_ZERO/*bad*/;
+      adfact = GR_BLEND_ZERO;
       break;
    }
 

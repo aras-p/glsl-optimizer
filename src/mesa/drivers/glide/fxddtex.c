@@ -1212,8 +1212,8 @@ adjust2DRatio (GLcontext *ctx,
          return GL_FALSE;
       }
       /* unpack image, apply transfer ops and store in rawImage */
-      _mesa_texstore_argb8888(ctx, 2, GL_RGBA,
-                              &_mesa_texformat_argb8888, rawImage,
+      _mesa_texstore_rgba8888(ctx, 2, GL_RGBA,
+                              &_mesa_texformat_rgba8888_rev, rawImage,
                               0, 0, 0, /* dstX/Y/Zoffset */
                               width * rawBytes, /* dstRowStride */
                               0, /* dstImageStride */
@@ -1230,7 +1230,7 @@ adjust2DRatio (GLcontext *ctx,
                                       dstRowStride,
                                       0, /* dstImageStride */
                                       newWidth, newHeight, 1,
-                                      GL_BGRA, CHAN_TYPE, tempImage, &ctx->DefaultPacking);
+                                      GL_RGBA, CHAN_TYPE, tempImage, &ctx->DefaultPacking);
       FREE(rawImage);
    }
 
