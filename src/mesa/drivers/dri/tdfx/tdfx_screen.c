@@ -402,7 +402,7 @@ static __GLcontextModes *tdfxFillInModes(unsigned pixel_bits,
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on
  *         failure.
  */
-void * __driCreateNewScreen( Display *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -453,7 +453,7 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &tdfxAPI);
    return (void *) psp;
 }
-#else
+#elif !defined(DRI_NEW_INTERFACE_ONLY)
 void *__driCreateScreen(struct DRIDriverRec *driver,
                         struct DRIDriverContextRec *driverContext)
 {

@@ -392,7 +392,7 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &i830API);
    return (void *) psp;
 }
-#else
+#elif !defined(DRI_NEW_INTERFACE_ONLY)
 void *__driCreateScreen(struct DRIDriverRec *driver,
                         struct DRIDriverContextRec *driverContext)
 {
@@ -551,7 +551,7 @@ i830FillInModes( unsigned pixel_bits, unsigned depth_bits,
  *         failure.
  */
 #ifdef USE_NEW_INTERFACE
-void * __driCreateNewScreen( Display *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,

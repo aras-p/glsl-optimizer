@@ -44,7 +44,7 @@
 /*#define DRI_NEW_INTERFACE_ONLY*/
 
 #ifndef GLX_OML_sync_control
-typedef Bool ( * PFNGLXGETMSCRATEOMLPROC) (Display *dpy, __DRIid drawable, int32_t *numerator, int32_t *denominator);
+typedef Bool ( * PFNGLXGETMSCRATEOMLPROC) (__DRInativeDisplay *dpy, __DRIid drawable, int32_t *numerator, int32_t *denominator);
 #endif
 
 /**
@@ -61,7 +61,7 @@ static const int empty_attribute_list[1] = { None };
  */
 static PFNGLXWINDOWEXISTSPROC window_exists;
 
-typedef Bool (*PFNGLXCREATECONTEXTWITHCONFIGPROC)( Display*, int, int, void *,
+typedef Bool (*PFNGLXCREATECONTEXTWITHCONFIGPROC)( __DRInativeDisplay*, int, int, void *,
     drmContextPtr );
 
 static PFNGLXCREATECONTEXTWITHCONFIGPROC create_context_with_config;
@@ -73,14 +73,14 @@ static PFNGLXCREATECONTEXTWITHCONFIGPROC create_context_with_config;
 static int api_ver = 0;
 
 /* forward declarations */
-static int driQueryFrameTracking( Display * dpy, void * priv,
+static int driQueryFrameTracking( __DRInativeDisplay * dpy, void * priv,
     int64_t * sbc, int64_t * missedFrames, float * lastMissedUsage,
     float * usage );
 
-static void *driCreateNewDrawable(Display *dpy, const __GLcontextModes *modes,
+static void *driCreateNewDrawable(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
     __DRIid draw, __DRIdrawable *pdraw, int renderType, const int *attrs);
 
-static void driDestroyDrawable(Display *dpy, void *drawablePrivate);
+static void driDestroyDrawable(__DRInativeDisplay *dpy, void *drawablePrivate);
 
 
 
@@ -144,7 +144,7 @@ __driUtilMessage(const char *f, ...)
  *          if found, or \c NULL if no match is found.
  */
 static const __GLcontextModes *
-findConfigMode(Display *dpy, int scrn, VisualID vid, 
+findConfigMode(__DRInativeDisplay *dpy, int scrn, VisualID vid, 
 	       const __DRIscreen * pDRIScreen)
 {
     if ( (pDRIScreen != NULL) && (pDRIScreen->private != NULL) ) {
@@ -166,7 +166,7 @@ findConfigMode(Display *dpy, int scrn, VisualID vid,
  * about X structures like a \c Visual.
  */
 static Bool
-fake_XF86DRICreateContextWithConfig( Display* dpy, int screen, int configID,
+fake_XF86DRICreateContextWithConfig( __DRInativeDisplay* dpy, int screen, int configID,
 				     XID* context, drmContextPtr hHWContext )
 {
     Visual  vis;
@@ -272,7 +272,7 @@ static void __driGarbageCollectDrawables(void *drawHash)
 {
     __DRIid draw;
     __DRIdrawable *pdraw;
-    Display *dpy;
+    __DRInativeDisplay *dpy;
 
     if (drmHashFirst(drawHash, &draw, (void **)&pdraw)) {
 	do {
@@ -316,7 +316,7 @@ static void __driGarbageCollectDrawables(void *drawHash)
  * While casting the opaque private pointers associated with the parameters
  * into their respective real types it also assures they are not \c NULL. 
  */
-static Bool driUnbindContext3(Display *dpy, int scrn,
+static Bool driUnbindContext3(__DRInativeDisplay *dpy, int scrn,
 			      __DRIid draw, __DRIid read,
 			      __DRIcontext *ctx)
 {
@@ -407,7 +407,7 @@ static Bool driUnbindContext3(Display *dpy, int scrn,
  *      be needed in those places when support for pbuffers and / or pixmaps
  *      is added.  Is it safe to assume that the drawable is a window?
  */
-static Bool DoBindContext(Display *dpy,
+static Bool DoBindContext(__DRInativeDisplay *dpy,
 			  __DRIid draw, __DRIid read,
 			  __DRIcontext *ctx, const __GLcontextModes * modes,
 			  __DRIscreenPrivate *psp)
@@ -498,7 +498,7 @@ static Bool DoBindContext(Display *dpy,
  * for \c glXMakeCurrentReadSGI or GLX 1.3's \c glXMakeContextCurrent
  * function.
  */
-static Bool driBindContext3(Display *dpy, int scrn,
+static Bool driBindContext3(__DRInativeDisplay *dpy, int scrn,
                             __DRIid draw, __DRIid read,
                             __DRIcontext * ctx)
 {
@@ -686,7 +686,7 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
  * 
  * Is called directly from glXSwapBuffers().
  */
-static void driSwapBuffers( Display *dpy, void *drawablePrivate )
+static void driSwapBuffers( __DRInativeDisplay *dpy, void *drawablePrivate )
 {
     __DRIdrawablePrivate *dPriv = (__DRIdrawablePrivate *) drawablePrivate;
     dPriv->swapBuffers(dPriv);
@@ -706,7 +706,7 @@ static int driGetMSC( void *screenPrivate, int64_t *msc )
 /**
  * Called directly from a number of higher-level GLX functions.
  */
-static int driGetSBC( Display *dpy, void *drawablePrivate, int64_t *sbc )
+static int driGetSBC( __DRInativeDisplay *dpy, void *drawablePrivate, int64_t *sbc )
 {
    __DRIdrawablePrivate *dPriv = (__DRIdrawablePrivate *) drawablePrivate;
    __DRIswapInfo  sInfo;
@@ -719,7 +719,7 @@ static int driGetSBC( Display *dpy, void *drawablePrivate, int64_t *sbc )
    return status;
 }
 
-static int driWaitForSBC( Display * dpy, void *drawablePriv,
+static int driWaitForSBC( __DRInativeDisplay * dpy, void *drawablePriv,
 			  int64_t target_sbc,
 			  int64_t * msc, int64_t * sbc )
 {
@@ -729,7 +729,7 @@ static int driWaitForSBC( Display * dpy, void *drawablePriv,
                                                        msc, sbc );
 }
 
-static int driWaitForMSC( Display * dpy, void *drawablePriv,
+static int driWaitForMSC( __DRInativeDisplay * dpy, void *drawablePriv,
 			  int64_t target_msc,
 			  int64_t divisor, int64_t remainder,
 			  int64_t * msc, int64_t * sbc )
@@ -756,7 +756,7 @@ static int driWaitForMSC( Display * dpy, void *drawablePriv,
     return status;
 }
 
-static int64_t driSwapBuffersMSC( Display * dpy, void *drawablePriv,
+static int64_t driSwapBuffersMSC( __DRInativeDisplay * dpy, void *drawablePriv,
 				  int64_t target_msc,
 				  int64_t divisor, int64_t remainder )
 {
@@ -771,7 +771,7 @@ static int64_t driSwapBuffersMSC( Display * dpy, void *drawablePriv,
 /**
  * This is called via __DRIscreenRec's createNewDrawable pointer.
  */
-static void *driCreateNewDrawable(Display *dpy,
+static void *driCreateNewDrawable(__DRInativeDisplay *dpy,
 				  const __GLcontextModes *modes,
 				  __DRIid draw,
 				  __DRIdrawable *pdraw,
@@ -823,7 +823,7 @@ static void *driCreateNewDrawable(Display *dpy,
     pdp->driScreenPriv = psp;
     pdp->driContextPriv = &psp->dummyContextPriv;
 
-    pdp->getInfo = (GetDrawableInfo *)
+    pdp->getInfo = (PFNGLXGETDRAWABLEINFOPROC)
 	glXGetProcAddress( (const GLubyte *) "__glXGetDrawableInfo" );
     if ( pdp->getInfo == NULL ) {
 #ifdef DRI_NEW_INTERFACE_ONLY
@@ -874,7 +874,7 @@ static void *driCreateNewDrawable(Display *dpy,
    return (void *) pdp;
 }
 
-static __DRIdrawable *driGetDrawable(Display *dpy, __DRIid draw,
+static __DRIdrawable *driGetDrawable(__DRInativeDisplay *dpy, __DRIid draw,
 					 void *screenPrivate)
 {
     __DRIscreenPrivate *psp = (__DRIscreenPrivate *) screenPrivate;
@@ -886,7 +886,7 @@ static __DRIdrawable *driGetDrawable(Display *dpy, __DRIid draw,
     return __driFindDrawable(psp->drawHash, draw);
 }
 
-static void driDestroyDrawable(Display *dpy, void *drawablePrivate)
+static void driDestroyDrawable(__DRInativeDisplay *dpy, void *drawablePrivate)
 {
     __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *) drawablePrivate;
     __DRIscreenPrivate *psp = pdp->driScreenPriv;
@@ -927,7 +927,7 @@ static void driDestroyDrawable(Display *dpy, void *drawablePrivate)
  * This function calls __DriverAPIRec::DestroyContext on \p contextPrivate, calls
  * drmDestroyContext(), and finally frees \p contextPrivate.
  */
-static void driDestroyContext(Display *dpy, int scrn, void *contextPrivate)
+static void driDestroyContext(__DRInativeDisplay *dpy, int scrn, void *contextPrivate)
 {
     __DRIcontextPrivate  *pcp   = (__DRIcontextPrivate *) contextPrivate;
 
@@ -962,7 +962,7 @@ static void driDestroyContext(Display *dpy, int scrn, void *contextPrivate)
  *
  */
 static void *
-driCreateNewContext(Display *dpy, const __GLcontextModes *modes,
+driCreateNewContext(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
 		    int render_type, void *sharedPrivate, __DRIcontext *pctx)
 {
     __DRIscreen *pDRIScreen;
@@ -1109,7 +1109,7 @@ static void *driCreateContext(Display *dpy, XVisualInfo *vis,
  * This function calls __DriverAPIRec::DestroyScreen on \p screenPrivate, calls
  * drmClose(), and finally frees \p screenPrivate.
  */
-static void driDestroyScreen(Display *dpy, int scrn, void *screenPrivate)
+static void driDestroyScreen(__DRInativeDisplay *dpy, int scrn, void *screenPrivate)
 {
     __DRIscreenPrivate *psp = (__DRIscreenPrivate *) screenPrivate;
 
@@ -1159,7 +1159,7 @@ static void driDestroyScreen(Display *dpy, int scrn, void *screenPrivate)
  * \param driverAPI Driver API functions used by other routines in dri_util.c.
  */
 __DRIscreenPrivate *
-__driUtilCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
+__driUtilCreateNewScreen(__DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			 __GLcontextModes * modes,
 			 const __DRIversion * ddx_version,
 			 const __DRIversion * dri_version,
@@ -1560,7 +1560,7 @@ int driCompareGLXAPIVersion( GLuint required_version )
 
 
 static int
-driQueryFrameTracking( Display * dpy, void * priv,
+driQueryFrameTracking( __DRInativeDisplay * dpy, void * priv,
 		       int64_t * sbc, int64_t * missedFrames,
 		       float * lastMissedUsage, float * usage )
 {

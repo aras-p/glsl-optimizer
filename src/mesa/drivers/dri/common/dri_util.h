@@ -254,14 +254,6 @@ struct __DRIswapInfoRec {
 };
 
 
-typedef Bool (GetDrawableInfo)( Display *dpy, int scrn, __DRIid draw,
-    unsigned int * index, unsigned int * stamp,
-    int * x, int * y, int * width, int * height,
-    int * numClipRects, drm_clip_rect_t ** pClipRects,
-    int * backX, int * backY,
-    int * numBackClipRects, drm_clip_rect_t ** pBackClipRects );
-
-
 /**
  * Per-drawable private DRI driver information.
  */
@@ -357,7 +349,7 @@ struct __DRIdrawablePrivateRec {
      * __driUtilUpdateDrawableInfo() which calls XF86DRIGetDrawableInfo().
      */
     /*@{*/
-    Display *display;
+    __DRInativeDisplay *display;
     int screen;
     /*@}*/
 
@@ -370,7 +362,7 @@ struct __DRIdrawablePrivateRec {
      * Get information about the location, size, and clip rects of the
      * drawable within the display.
      */
-    GetDrawableInfo * getInfo;
+    PFNGLXGETDRAWABLEINFOPROC getInfo;
 };
 
 /**
@@ -395,7 +387,7 @@ struct __DRIcontextPrivateRec {
     /**
      * This context's display pointer.
      */
-    Display *display;
+    __DRInativeDisplay *display;
 
     /**
      * Pointer to drawable currently bound to this context.
@@ -415,7 +407,7 @@ struct __DRIscreenPrivateRec {
     /**
      * Display for this screen
      */
-    Display *display;
+    __DRInativeDisplay *display;
 
     /**
      * Current screen's number
@@ -563,17 +555,19 @@ extern void
 __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp);
 
 
-extern __DRIscreenPrivate * __driUtilCreateNewScreen( Display *dpy,
+extern __DRIscreenPrivate * __driUtilCreateNewScreen( __DRInativeDisplay *dpy,
     int scrn, __DRIscreen *psc, __GLcontextModes * modes,
     const __DRIversion * ddx_version, const __DRIversion * dri_version,
     const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
     drmAddress pSAREA, int fd, int internal_api_version,
     const struct __DriverAPIRec *driverAPI );
 
+#ifndef DRI_NEW_INTERFACE_ONLY
 extern __DRIscreenPrivate *
 __driUtilCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                       int numConfigs, __GLXvisualConfig *config,
                       const struct __DriverAPIRec *driverAPI);
+#endif /* DRI_NEW_INTERFACE_ONLY */
 
 /* Test the version of the internal GLX API.  Returns a value like strcmp. */
 extern int
