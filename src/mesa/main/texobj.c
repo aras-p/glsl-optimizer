@@ -46,8 +46,8 @@
 /*@{*/
 
 /**
- * Allocate and initialize a new texture object and add it to the linked list of
- * texture objects.  
+ * Allocate and initialize a new texture object.  But don't put it into the
+ * texture object hash table.
  *
  * Called via ctx->Driver.NewTextureObject, unless overridden by a device
  * driver.
@@ -616,11 +616,6 @@ _mesa_GenTextures( GLsizei n, GLuint *texName )
 
    first = _mesa_HashFindFreeKeyBlock(ctx->Shared->TexObjects, n);
 
-   /* Return the texture names */
-   for (i=0;i<n;i++) {
-      texName[i] = first + i;
-   }
-
    /* Allocate new, empty texture objects */
    for (i = 0; i < n; i++) {
       struct gl_texture_object *texObj;
@@ -632,6 +627,7 @@ _mesa_GenTextures( GLsizei n, GLuint *texName )
          return;
       }
       _mesa_save_texture_object(ctx, texObj);
+      texName[i] = name;
    }
 
    _glthread_UNLOCK_MUTEX(GenTexturesLock);
