@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.4 1999/11/25 17:37:00 brianp Exp $ */
+/* $Id: osmesa.c,v 1.5 1999/12/10 19:09:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -220,7 +220,7 @@ OSMesaContext GLAPIENTRY OSMesaCreateContext( GLenum format, OSMesaContext share
                                             GL_FALSE,	/* stereo */
                                             DEPTH_BITS,
                                             STENCIL_BITS,
-                                            ACCUM_BITS,
+                                            rgbmode ? ACCUM_BITS : 0,
                                             indexBits,
                                             8, 8, 8, alphaBits );
       if (!osmesa->gl_visual) {
@@ -235,7 +235,12 @@ OSMesaContext GLAPIENTRY OSMesaCreateContext( GLenum format, OSMesaContext share
          FREE(osmesa);
          return NULL;
       }
-      osmesa->gl_buffer = gl_create_framebuffer( osmesa->gl_visual );
+      osmesa->gl_buffer = gl_create_framebuffer( osmesa->gl_visual,
+                                           osmesa->gl_visual->DepthBits > 0,
+                                           osmesa->gl_visual->StencilBits > 0,
+                                           osmesa->gl_visual->AccumBits > 0,
+                                           osmesa->gl_visual->AlphaBits > 0 );
+
       if (!osmesa->gl_buffer) {
          gl_destroy_visual( osmesa->gl_visual );
          gl_destroy_context( osmesa->gl_ctx );
