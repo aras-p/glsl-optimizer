@@ -358,20 +358,30 @@ void r300ResetHwState(r300ContextPtr r300)
 	else
 		r300->hw.unk2288.cmd[1] = R300_2288_RV350;
 
+	r300->hw.vof.cmd[R300_VOF_CNTL_0] = R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT
+				| R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
+	r300->hw.vof.cmd[R300_VOF_CNTL_1] = 0; /* no textures */
+		
 	r300->hw.pvs.cmd[R300_PVS_CNTL_1] = 0;
 	r300->hw.pvs.cmd[R300_PVS_CNTL_2] = 0;
 	r300->hw.pvs.cmd[R300_PVS_CNTL_3] = 0;
 
-	r300->hw.unk4008.cmd[1] = 0x00000007;
+	r300->hw.gb_enable.cmd[1] = R300_GB_POINT_STUFF_ENABLE
+		| R300_GB_LINE_STUFF_ENABLE
+		| R300_GB_TRIANGLE_STUFF_ENABLE;
 
-	r300->hw.unk4010.cmd[1] = 0x66666666;
-	r300->hw.unk4010.cmd[2] = 0x06666666;
+	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_0] = 0x66666666;
+	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_1] = 0x06666666;
 	if (GET_CHIP(r300->radeon.radeonScreen) == RADEON_CHIP_R300)
-		r300->hw.unk4010.cmd[3] = 0x00000017;
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] = R300_GB_TILE_ENABLE
+							| R300_GB_TILE_PIPE_COUNT_R300
+							| R300_GB_TILE_SIZE_16;
 	else
-		r300->hw.unk4010.cmd[3] = 0x00000011;
-	r300->hw.unk4010.cmd[4] = 0x00000000;
-	r300->hw.unk4010.cmd[5] = 0x00000000;
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] = R300_GB_TILE_ENABLE
+							| R300_GB_TILE_PIPE_COUNT_RV300
+							| R300_GB_TILE_SIZE_16;
+	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = 0x00000000;
+	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = 0x00000000; /* No antialiasing */
 
 	r300->hw.txe.cmd[R300_TXE_ENABLE] = 0;
 

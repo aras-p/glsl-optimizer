@@ -115,11 +115,25 @@ struct r300_state_atom {
 #define R300_VIC_CNTL_1		2
 #define R300_VIC_CMDSIZE	3
 
+#define R300_VOF_CMD_0		0
+#define R300_VOF_CNTL_0		1
+#define R300_VOF_CNTL_1		2
+#define R300_VOF_CMDSIZE	3
+
+
 #define R300_PVS_CMD_0		0
 #define R300_PVS_CNTL_1		1
 #define R300_PVS_CNTL_2		2
 #define R300_PVS_CNTL_3		3
 #define R300_PVS_CMDSIZE	4
+
+#define R300_GB_MISC_CMD_0		0
+#define R300_GB_MISC_MSPOS_0		1
+#define R300_GB_MISC_MSPOS_1		2
+#define R300_GB_MISC_TILE_CONFIG	3
+#define R300_GB_MISC_SELECT		4
+#define R300_GB_MISC_AA_CONFIG		5
+#define R300_GB_MISC_CMDSIZE		6
 
 #define R300_TXE_CMD_0		0
 #define R300_TXE_ENABLE		1
@@ -242,8 +256,9 @@ struct r300_hw_state {
 	struct r300_state_atom unk2220; /* (2220) */
 	struct r300_state_atom unk2288; /* (2288) */
 	struct r300_state_atom pvs;	/* pvs_cntl (22D0) */
-	struct r300_state_atom unk4008; /* (4008) */
-	struct r300_state_atom unk4010; /* (4010) */
+	struct r300_state_atom vof;     /* VAP output format register 0x4000 */
+	struct r300_state_atom gb_enable; /* (4008) */
+	struct r300_state_atom gb_misc; /* Multisampling position shifts ? (4010) */
 	struct r300_state_atom txe;	/* tex enable (4104) */
 	struct r300_state_atom unk4200; /* (4200) */
 	struct r300_state_atom unk4214; /* (4214) */
