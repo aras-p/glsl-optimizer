@@ -1,4 +1,4 @@
-/* $Id: s_stencil.c,v 1.8 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_stencil.c,v 1.9 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1260,7 +1260,7 @@ clear_hardware_stencil_buffer( GLcontext *ctx )
          GLint y;
          for (y = 0; y < height; y++) {
             GLstencil stencil[MAX_WIDTH];
-            GLuint i;
+            GLint i;
             (*ctx->Driver.ReadStencilSpan)(ctx, width, x, y, stencil);
             for (i = 0; i < width; i++) {
                stencil[i] = (stencil[i] & invMask) | clearVal;

@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.3 2001/01/30 16:38:20 brianp Exp $ */
+/* $Id: s_pointtemp.h,v 1.4 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -200,10 +200,10 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       iRadius = iSize / 2;
       if (iSize & 1) {
          /* odd size */
-         xmin = vert->win[0] - iRadius;
-         xmax = vert->win[0] + iRadius;
-         ymin = vert->win[1] - iRadius;
-         ymax = vert->win[1] + iRadius;
+         xmin = (GLint) (vert->win[0] - iRadius);
+         xmax = (GLint) (vert->win[0] + iRadius);
+         ymin = (GLint) (vert->win[1] - iRadius);
+         ymax = (GLint) (vert->win[1] + iRadius);
       }
       else {
          /* even size */
@@ -281,8 +281,8 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 
    {
       /* size == 1 */
-      GLint x = vert->win[0];
-      GLint y = vert->win[1];
+      GLint x = (GLint) vert->win[0];
+      GLint y = (GLint) vert->win[1];
 #if ((FLAGS & (SPECULAR | TEXTURE)) == (SPECULAR | TEXTURE))
       PB_WRITE_MULTITEX_SPEC_PIXEL(PB, x, y, z, fog,
                                    red, green, blue, alpha,

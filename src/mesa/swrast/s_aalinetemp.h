@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.5 2001/01/29 23:38:41 brianp Exp $ */
+/* $Id: s_aalinetemp.h,v 1.6 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,7 +41,7 @@ NAME(plot)(GLcontext *ctx, const struct LineInfo *line,
    const GLfloat fy = (GLfloat) iy;
    const GLfloat coverage = compute_coveragef(line, ix, iy);
    GLdepth z;
-   GLfloat fog;
+   GLfixed fog;
    GLchan red, green, blue, alpha;
    GLint frac, indx, index;
    GLchan specRed, specGreen, specBlue;
@@ -60,9 +60,9 @@ NAME(plot)(GLcontext *ctx, const struct LineInfo *line,
    z = 0.0;
 #endif
 #ifdef DO_FOG
-   fog = solve_plane(fx, fy, line->fPlane);
+   fog = FloatToFixed( solve_plane(fx, fy, line->fPlane) );
 #else
-   fog = 0.0;
+   fog = 0;
 #endif
 #ifdef DO_RGBA
    red   = solve_plane_chan(fx, fy, line->rPlane);

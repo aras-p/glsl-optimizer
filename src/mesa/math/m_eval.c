@@ -1,4 +1,4 @@
-/* $Id: m_eval.c,v 1.1 2000/12/26 05:09:31 keithw Exp $ */
+/* $Id: m_eval.c,v 1.2 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -89,7 +89,7 @@ _math_horner_bezier_curve(const GLfloat *cp, GLfloat *out, GLfloat t,
       for(i=2, cp+=2*dim, powert=t*t; i<order; i++, powert*=t, cp +=dim)
       {
 	 bincoeff *= order-i;
-	 bincoeff *= inv_tab[i];
+	 bincoeff *= (GLuint) inv_tab[i];
 
 	 for(k=0; k<dim; k++)
 	    out[k] = s*out[k] + bincoeff*powert*cp[k];
@@ -147,7 +147,7 @@ _math_horner_bezier_surf(GLfloat *cn, GLfloat *out, GLfloat u, GLfloat v,
 		i++, poweru*=u, ucp +=uinc)
 	    {
 	       bincoeff *= uorder-i;
-	       bincoeff *= inv_tab[i];
+	       bincoeff *= (GLuint) inv_tab[i];
 
 	       for(k=0; k<dim; k++)
 		  cp[j*dim+k] = s*cp[j*dim+k] + bincoeff*poweru*ucp[k];

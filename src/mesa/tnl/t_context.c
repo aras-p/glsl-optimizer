@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.11 2001/01/13 18:28:20 keithw Exp $ */
+/* $Id: t_context.c,v 1.12 2001/03/07 05:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -84,7 +84,7 @@ _tnl_CreateContext( GLcontext *ctx )
 
    /* Create the TNLcontext structure
     */
-   ctx->swtnl_context = tnl = CALLOC( sizeof(TNLcontext) );
+   ctx->swtnl_context = tnl = (TNLcontext *) CALLOC( sizeof(TNLcontext) );
 
    if (!tnl) {
       return GL_FALSE;

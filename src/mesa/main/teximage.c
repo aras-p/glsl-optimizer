@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.82 2001/03/05 22:18:23 brianp Exp $ */
+/* $Id: teximage.c,v 1.83 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,50 +56,49 @@
 #ifdef DEBUG
 static void PrintTexture(const struct gl_texture_image *img)
 {
-  int i, j, c;
-  GLchan *data = img->Data;
+   GLuint i, j, c;
+   const GLchan *data = (const GLchan *) img->Data;
 
-  if (!data) {
-     printf("No texture data\n");
-     return;
-  }
+   if (!data) {
+      printf("No texture data\n");
+      return;
+   }
 
-  switch (img->Format) {
-     case GL_ALPHA:
-     case GL_LUMINANCE:
-     case GL_INTENSITY:
-     case GL_COLOR_INDEX:
-        c = 1;
-        break;
-     case GL_LUMINANCE_ALPHA:
-        c = 2;
-        break;
-     case GL_RGB:
-        c = 3;
-        break;
-     case GL_RGBA:
-        c = 4;
-        break;
-     default:
-        _mesa_problem(NULL, "error in PrintTexture\n");
-        return;
-  }
+   switch (img->Format) {
+      case GL_ALPHA:
+      case GL_LUMINANCE:
+      case GL_INTENSITY:
+      case GL_COLOR_INDEX:
+         c = 1;
+         break;
+      case GL_LUMINANCE_ALPHA:
+         c = 2;
+         break;
+      case GL_RGB:
+         c = 3;
+         break;
+      case GL_RGBA:
+         c = 4;
+         break;
+      default:
+         _mesa_problem(NULL, "error in PrintTexture\n");
+         return;
+   }
 
-
-  for (i = 0; i < img->Height; i++) {
-    for (j = 0; j < img->Width; j++) {
-      if (c==1)
-        printf("%02x  ", data[0]);
-      else if (c==2)
-        printf("%02x%02x  ", data[0], data[1]);
-      else if (c==3)
-        printf("%02x%02x%02x  ", data[0], data[1], data[2]);
-      else if (c==4)
-        printf("%02x%02x%02x%02x  ", data[0], data[1], data[2], data[3]);
-      data += c;
-    }
-    printf("\n");
-  }
+   for (i = 0; i < img->Height; i++) {
+      for (j = 0; j < img->Width; j++) {
+         if (c==1)
+            printf("%02x  ", data[0]);
+         else if (c==2)
+            printf("%02x%02x  ", data[0], data[1]);
+         else if (c==3)
+            printf("%02x%02x%02x  ", data[0], data[1], data[2]);
+         else if (c==4)
+            printf("%02x%02x%02x%02x  ", data[0], data[1], data[2], data[3]);
+         data += c;
+      }
+      printf("\n");
+   }
 }
 #endif
 

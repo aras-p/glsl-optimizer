@@ -1,4 +1,4 @@
-/* $Id: t_imm_alloc.c,v 1.3 2001/02/15 01:33:52 keithw Exp $ */
+/* $Id: t_imm_alloc.c,v 1.4 2001/03/07 05:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,8 +64,10 @@ struct immediate *_tnl_alloc_immediate( GLcontext *ctx )
     */
    IM->TexCoord[0] = IM->TexCoord0;
 
-   for (j = 1; j < ctx->Const.MaxTextureUnits; j++) 
-      IM->TexCoord[j] = ALIGN_MALLOC( IMM_SIZE * sizeof(GLfloat) * 4, 32 );
+   for (j = 1; j < ctx->Const.MaxTextureUnits; j++) {
+      IM->TexCoord[j] = (GLfloat (*)[4])
+         ALIGN_MALLOC( IMM_SIZE * sizeof(GLfloat) * 4, 32 );
+   }
 
    /* KW: Removed initialization of normals as these are now treated
     * identically to all other data types.

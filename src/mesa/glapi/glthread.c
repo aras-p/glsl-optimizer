@@ -1,4 +1,4 @@
-/* $Id: glthread.c,v 1.6 2000/02/11 21:38:33 brianp Exp $ */
+/* $Id: glthread.c,v 1.7 2001/03/07 05:06:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -93,7 +93,7 @@ _glthread_InitTSD(_glthread_TSD *tsd)
 void *
 _glthread_GetTSD(_glthread_TSD *tsd)
 {
-   if (tsd->initMagic != INIT_MAGIC) {
+   if (tsd->initMagic != (int) INIT_MAGIC) {
       _glthread_InitTSD(tsd);
    }
    return pthread_getspecific(tsd->key);
@@ -103,7 +103,7 @@ _glthread_GetTSD(_glthread_TSD *tsd)
 void
 _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 {
-   if (tsd->initMagic != INIT_MAGIC) {
+   if (tsd->initMagic != (int) INIT_MAGIC) {
       _glthread_InitTSD(tsd);
    }
    if (pthread_setspecific(tsd->key, ptr) != 0) {

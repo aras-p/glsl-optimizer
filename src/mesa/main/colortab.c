@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.35 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: colortab.c,v 1.36 2001/03/07 05:06:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -314,7 +314,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
       return;
    }
 
-   if (width > ctx->Const.MaxColorTableSize) {
+   if (width > (GLsizei) ctx->Const.MaxColorTableSize) {
       if (proxy) {
          table->Size = 0;
          table->IntFormat = (GLenum) 0;
@@ -344,7 +344,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          if (floatTable) {
             GLfloat tempTab[MAX_COLOR_TABLE_SIZE * 4];
             GLfloat *tableF;
-            GLuint i;
+            GLint i;
 
             _mesa_unpack_float_color_span(ctx, width, table->Format,
                                           tempTab,  /* dest */
@@ -411,7 +411,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
                return;
             }
             _mesa_unpack_chan_color_span(ctx, width, table->Format,
-                                         table->Table,  /* dest */
+                                         (GLchan *) table->Table,  /* dest */
                                          format, type, data,
                                          &ctx->Unpack, 0);
          } /* floatTable */
@@ -514,7 +514,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
    comps = _mesa_components_in_format(table->Format);
    assert(comps > 0);  /* error should have been caught sooner */
 
-   if (start + count > table->Size) {
+   if (start + count > (GLint) table->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glColorSubTable(count)");
       return;
    }
@@ -532,7 +532,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
    else {
       GLfloat tempTab[MAX_COLOR_TABLE_SIZE * 4];
       GLfloat *tableF;
-      GLuint i;
+      GLint i;
 
       ASSERT(table->FloatTable);
 
@@ -673,7 +673,6 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_color_table *table = NULL;
    GLchan rgba[MAX_COLOR_TABLE_SIZE][4];
-   GLint i;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState) {
@@ -713,6 +712,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
       case GL_ALPHA:
          if (table->FloatTable) {
             const GLfloat *tableF = (const GLfloat *) table->Table;
+            GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = 0;
                rgba[i][GCOMP] = 0;
@@ -722,6 +722,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          }
          else {
             const GLchan *tableUB = (const GLchan *) table->Table;
+            GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = 0;
                rgba[i][GCOMP] = 0;
@@ -733,6 +734,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
       case GL_LUMINANCE:
          if (table->FloatTable) {
             const GLfloat *tableF = (const GLfloat *) table->Table;
+            GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = (GLint) (tableF[i] * CHAN_MAXF);
                rgba[i][GCOMP] = (GLint) (tableF[i] * CHAN_MAXF);
@@ -742,6 +744,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          }
          else {
             const GLchan *tableUB = (const GLchan *) table->Table;
+            GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = tableUB[i];
                rgba[i][GCOMP] = tableUB[i];
@@ -753,6 +756,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
       case GL_LUMINANCE_ALPHA:
          if (table->FloatTable) {
             const GLfloat *tableF = (const GLfloat *) table->Table;
+            GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = (GLint) (tableF[i*2+0] * CHAN_MAXF);
                rgba[i][GCOMP] = (GLint) (tableF[i*2+0] * CHAN_MAXF);
@@ -762,6 +766,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          }
          else {
             const GLchan *tableUB = (const GLchan *) table->Table;
+            GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = tableUB[i*2+0];
                rgba[i][GCOMP] = tableUB[i*2+0];
@@ -773,6 +778,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
       case GL_INTENSITY:
          if (table->FloatTable) {
             const GLfloat *tableF = (const GLfloat *) table->Table;
+            GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = (GLint) (tableF[i] * CHAN_MAXF);
                rgba[i][GCOMP] = (GLint) (tableF[i] * CHAN_MAXF);
@@ -782,6 +788,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          }
          else {
             const GLchan *tableUB = (const GLchan *) table->Table;
+            GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = tableUB[i];
                rgba[i][GCOMP] = tableUB[i];
@@ -793,6 +800,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
       case GL_RGB:
          if (table->FloatTable) {
             const GLfloat *tableF = (const GLfloat *) table->Table;
+            GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = (GLint) (tableF[i*3+0] * CHAN_MAXF);
                rgba[i][GCOMP] = (GLint) (tableF[i*3+1] * CHAN_MAXF);
@@ -802,6 +810,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          }
          else {
             const GLchan *tableUB = (const GLchan *) table->Table;
+            GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = tableUB[i*3+0];
                rgba[i][GCOMP] = tableUB[i*3+1];
@@ -813,6 +822,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
       case GL_RGBA:
          if (table->FloatTable) {
             const GLfloat *tableF = (const GLfloat *) table->Table;
+            GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = (GLint) (tableF[i*4+0] * CHAN_MAXF + 0.5F);
                rgba[i][GCOMP] = (GLint) (tableF[i*4+1] * CHAN_MAXF + 0.5F);
@@ -822,6 +832,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
          }
          else {
             const GLchan *tableUB = (const GLchan *) table->Table;
+            GLuint i;
             for (i = 0; i < table->Size; i++) {
                rgba[i][RCOMP] = tableUB[i*4+0];
                rgba[i][GCOMP] = tableUB[i*4+1];

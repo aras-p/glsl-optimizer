@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.6 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.7 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -437,7 +437,7 @@
             for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
                if (ctx->Texture.Unit[unit]._ReallyEnabled) {
                   GLint j;
-                  for (j = 0; j < n; j++) {
+                  for (j = 0; j < (GLint) n; j++) {
                      s[unit][j] = s[unit][j + left];
                      t[unit][j] = t[unit][j + left];
                      u[unit][j] = u[unit][j + left];

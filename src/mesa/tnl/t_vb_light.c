@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.10 2001/03/03 20:33:31 brianp Exp $ */
+/* $Id: t_vb_light.c,v 1.11 2001/03/07 05:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -55,7 +55,7 @@ struct light_stage_data {
    light_func *light_func_tab;
 };
 
-#define LIGHT_STAGE_DATA(stage) ((struct light_stage_data *)(stage->private))
+#define LIGHT_STAGE_DATA(stage) ((struct light_stage_data *)(stage->privatePtr))
 
 /* Tables for all the shading functions.
  */
@@ -209,7 +209,7 @@ static GLboolean run_init_lighting( GLcontext *ctx,
    struct light_stage_data *store;
    GLuint size = tnl->vb.Size;
 
-   stage->private = MALLOC(sizeof(*store));
+   stage->privatePtr = MALLOC(sizeof(*store));
    store = LIGHT_STAGE_DATA(stage);
    if (!store)
       return GL_FALSE;
@@ -241,7 +241,7 @@ static void check_lighting( GLcontext *ctx, struct gl_pipeline_stage *stage )
 {
    stage->active = ctx->Light.Enabled;
    if (stage->active) {
-      if (stage->private)
+      if (stage->privatePtr)
 	 stage->run = run_validate_lighting;
       stage->inputs = VERT_NORM|VERT_MATERIAL;
       if (ctx->Light._NeedVertices) 
@@ -268,7 +268,7 @@ static void dtr( struct gl_pipeline_stage *stage )
       _mesa_vector1ui_free( &store->LitIndex[0] );      
       _mesa_vector1ui_free( &store->LitIndex[1] );      
       FREE( store );
-      stage->private = 0;
+      stage->privatePtr = 0;
    }
 }
 

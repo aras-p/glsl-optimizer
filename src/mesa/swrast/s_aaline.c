@@ -1,4 +1,4 @@
-/* $Id: s_aaline.c,v 1.4 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_aaline.c,v 1.5 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,7 +31,7 @@
 #include "swrast/s_context.h"
 #include "swrast/swrast.h"
 #include "mtypes.h"
-
+#include "mmath.h"
 
 
 #define SUB_PIXEL 4
@@ -170,7 +170,7 @@ solve_plane_chan(GLfloat x, GLfloat y, const GLfloat plane[4])
    if (z < 0.0F)
       return 0;
    else if (z > CHAN_MAXF)
-      return CHAN_MAXF;
+      return (GLchan) CHAN_MAXF;
    return (GLchan) (GLint) z;
 }
 

@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.11 2001/03/03 00:37:27 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.12 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -725,7 +725,7 @@
 #  endif
                }
 	       {
-		  ffog = FloatToFixed(vLower->fog) * 256 + dfogdx * adjx + dfogdy * adjy + FIXED_HALF;
+		  ffog = FloatToFixed(vLower->fog * 256 + dfogdx * adjx + dfogdy * adjy) + FIXED_HALF;
 		  fdfogOuter = SignedFloatToFixed(dfogdy + dxOuter * dfogdx);
 	       }
 #endif

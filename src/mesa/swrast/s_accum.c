@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.5 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_accum.c,v 1.6 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -276,7 +276,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
       case GL_ADD:
          if (value != 0.0F) {
 	    const GLaccum intVal = (GLaccum) (value * acc_scale);
-	    GLuint j;
+	    GLint j;
             /* Leave optimized accum buffer mode */
             if (swrast->_IntegerAccumMode)
                rescale_accum(ctx);
@@ -293,7 +293,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
 
       case GL_MULT:
          if (value != 1.0F) {
-	    GLuint j;
+	    GLint j;
             /* Leave optimized accum buffer mode */
             if (swrast->_IntegerAccumMode)
                rescale_accum(ctx);
@@ -325,13 +325,13 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
 
          if (swrast->_IntegerAccumMode) {
             /* simply add integer color values into accum buffer */
-            GLuint j;
+            GLint j;
             GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
             assert(swrast->_IntegerAccumScaler > 0.0);
             assert(swrast->_IntegerAccumScaler <= 1.0);
             for (j = 0; j < height; j++) {
                
-               GLuint i, i4;
+               GLint i, i4;
                _mesa_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i = i4 = 0; i < width; i++, i4+=4) {
                   acc[i4+0] += rgba[i][RCOMP];
@@ -349,10 +349,10 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             const GLfloat gscale = value * acc_scale / fChanMax;
             const GLfloat bscale = value * acc_scale / fChanMax;
             const GLfloat ascale = value * acc_scale / fChanMax;
-            GLuint j;
+            GLint j;
             for (j=0;j<height;j++) {
                GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
-               GLuint i;
+               GLint i;
                _mesa_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i=0;i<width;i++) {
                   *acc += (GLaccum) ( (GLfloat) rgba[i][RCOMP] * rscale );  acc++;
@@ -390,12 +390,12 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
          RENDER_START(ctx);
          if (swrast->_IntegerAccumMode) {
             /* just copy values into accum buffer */
-            GLuint j;
+            GLint j;
             GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
             assert(swrast->_IntegerAccumScaler > 0.0);
             assert(swrast->_IntegerAccumScaler <= 1.0);
             for (j = 0; j < height; j++) {
-               GLuint i, i4;
+               GLint i, i4;
                _mesa_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
                for (i = i4 = 0; i < width; i++, i4 += 4) {
                   acc[i4+0] = rgba[i][RCOMP];
@@ -414,7 +414,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             const GLfloat bscale = value * acc_scale / fChanMax;
             const GLfloat ascale = value * acc_scale / fChanMax;
             const GLfloat d = 3.0 / acc_scale;
-            GLuint i, j;
+            GLint i, j;
             for (j = 0; j < height; j++) {
                GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos * 4;
                _mesa_read_rgba_span(ctx, ctx->DrawBuffer, width, xpos, ypos, rgba);
@@ -446,7 +446,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             static GLfloat prevMult = 0.0;
             const GLfloat mult = swrast->_IntegerAccumScaler;
             const GLint max = MIN2((GLint) (256 / mult), 32767);
-            GLuint j;
+            GLint j;
             if (mult != prevMult) {
                for (j = 0; j < max; j++)
                   multTable[j] = (GLint) ((GLfloat) j * mult + 0.5F);
@@ -457,7 +457,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             assert(swrast->_IntegerAccumScaler <= 1.0);
             for (j = 0; j < height; j++) {
                const GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos*4;
-               GLuint i, i4;
+               GLint i, i4;
                for (i = i4 = 0; i < width; i++, i4 += 4) {
                   ASSERT(acc[i4+0] < max);
                   ASSERT(acc[i4+1] < max);
@@ -486,7 +486,7 @@ _swrast_Accum( GLcontext *ctx, GLenum op, GLfloat value,
             const GLfloat gscale = value / acc_scale * fChanMax;
             const GLfloat bscale = value / acc_scale * fChanMax;
             const GLfloat ascale = value / acc_scale * fChanMax;
-            GLuint i, j;
+            GLint i, j;
             for (j=0;j<height;j++) {
                const GLaccum *acc = ctx->DrawBuffer->Accum + ypos * width4 + xpos*4;
                for (i=0;i<width;i++) {

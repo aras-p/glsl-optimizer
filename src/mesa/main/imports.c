@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.6 2001/03/02 16:01:22 brianp Exp $ */
+/* $Id: imports.c,v 1.7 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -130,14 +130,14 @@ _mesa_fopen(__GLcontext *gc, const char *path, const char *mode)
 static int
 _mesa_fclose(__GLcontext *gc, void *stream)
 {
-   return fclose(stream);
+   return fclose((FILE *) stream);
 }
 
 static int
 _mesa_fprintf(__GLcontext *gc, void *stream, const char *fmt, ...)
 {
    /* XXX fix this */
-   return fprintf(stream, fmt);
+   return fprintf((FILE *) stream, fmt);
 }
 
 /* XXX this really is driver-specific and can't be here */

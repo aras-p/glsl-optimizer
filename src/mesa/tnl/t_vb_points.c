@@ -1,4 +1,4 @@
-/* $Id: t_vb_points.c,v 1.2 2001/03/03 20:33:31 brianp Exp $ */
+/* $Id: t_vb_points.c,v 1.3 2001/03/07 05:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,7 +37,7 @@ struct point_stage_data {
    GLvector1f PointSize;	
 };
 
-#define POINT_STAGE_DATA(stage) ((struct point_stage_data *)stage->private)
+#define POINT_STAGE_DATA(stage) ((struct point_stage_data *)stage->privatePtr)
 
 
 /*
@@ -84,7 +84,7 @@ static GLboolean alloc_point_data( GLcontext *ctx,
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct point_stage_data *store;
-   stage->private = MALLOC(sizeof(*store));
+   stage->privatePtr = MALLOC(sizeof(*store));
    store = POINT_STAGE_DATA(stage);
    if (!store)
       return GL_FALSE;
@@ -104,7 +104,7 @@ static void free_point_data( struct gl_pipeline_stage *stage )
    if (store) {
       _mesa_vector1f_free( &store->PointSize );
       FREE( store );
-      stage->private = 0;
+      stage->privatePtr = 0;
    }
 }
 

@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.20 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: clip.c,v 1.21 2001/03/07 05:06:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,7 +59,7 @@ _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
-   if (p < 0 || p >= ctx->Const.MaxClipPlanes) {
+   if (p < 0 || p >= (GLint) ctx->Const.MaxClipPlanes) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glClipPlane" );
       return;
    }
@@ -114,7 +114,7 @@ _mesa_GetClipPlane( GLenum plane, GLdouble *equation )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    p = (GLint) (plane - GL_CLIP_PLANE0);
-   if (p < 0 || p >= ctx->Const.MaxClipPlanes) {
+   if (p < 0 || p >= (GLint) ctx->Const.MaxClipPlanes) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glGetClipPlane" );
       return;
    }

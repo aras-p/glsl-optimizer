@@ -1,4 +1,4 @@
-/* $Id: t_vb_texmat.c,v 1.2 2001/03/03 20:33:31 brianp Exp $ */
+/* $Id: t_vb_texmat.c,v 1.3 2001/03/07 05:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,7 +53,7 @@ struct texmat_stage_data {
    GLvector4f texcoord[MAX_TEXTURE_UNITS];
 };
 
-#define TEXMAT_STAGE_DATA(stage) ((struct texmat_stage_data *)stage->private)
+#define TEXMAT_STAGE_DATA(stage) ((struct texmat_stage_data *)stage->privatePtr)
 
 static void check_texmat( GLcontext *ctx, struct gl_pipeline_stage *stage )
 {
@@ -104,7 +104,7 @@ static GLboolean alloc_texmat_data( GLcontext *ctx,
    struct texmat_stage_data *store;
    GLuint i;
 
-   stage->private = CALLOC(sizeof(*store));
+   stage->privatePtr = CALLOC(sizeof(*store));
    store = TEXMAT_STAGE_DATA(stage);
    if (!store)
       return GL_FALSE;
@@ -129,7 +129,7 @@ static void free_texmat_data( struct gl_pipeline_stage *stage )
 	 if (store->texcoord[i].data)
 	    _mesa_vector4f_free( &store->texcoord[i] );
       FREE( store );
-      stage->private = 0;
+      stage->privatePtr = 0;
    }
 }
   

@@ -1,4 +1,4 @@
-/* $Id: t_vb_vertex.c,v 1.5 2001/03/03 20:57:00 brianp Exp $ */
+/* $Id: t_vb_vertex.c,v 1.6 2001/03/07 05:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,7 +60,7 @@ struct vertex_stage_data {
    GLvector4f *save_projptr;
 };
 
-#define VERTEX_STAGE_DATA(stage) ((struct vertex_stage_data *)stage->private)
+#define VERTEX_STAGE_DATA(stage) ((struct vertex_stage_data *)stage->privatePtr)
 
 
 
@@ -133,7 +133,7 @@ static void (*(usercliptab[5]))( GLcontext *,
 static GLboolean run_vertex_stage( GLcontext *ctx, 
 				   struct gl_pipeline_stage *stage )
 {
-   struct vertex_stage_data *store = (struct vertex_stage_data *)stage->private;
+   struct vertex_stage_data *store = (struct vertex_stage_data *)stage->privatePtr;
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
    struct vertex_buffer *VB = &tnl->vb; 
    
@@ -262,7 +262,7 @@ static GLboolean init_vertex_stage( GLcontext *ctx,
    struct vertex_stage_data *store;
    GLuint size = VB->Size;
 
-   stage->private = CALLOC(sizeof(*store));
+   stage->privatePtr = CALLOC(sizeof(*store));
    store = VERTEX_STAGE_DATA(stage);
    if (!store)
       return GL_FALSE;
@@ -295,7 +295,7 @@ static void dtr( struct gl_pipeline_stage *stage )
       _mesa_vector4f_free( &store->proj );
       ALIGN_FREE( store->clipmask );
       FREE(store);
-      stage->private = 0;
+      stage->privatePtr = NULL;
       stage->run = init_vertex_stage;
    }
 }

@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.9 2001/02/20 18:28:52 keithw Exp $ */
+/* $Id: t_array_import.c,v 1.10 2001/03/07 05:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,8 +57,8 @@ static void _tnl_import_vertex( GLcontext *ctx,
 			   writeable, 
 			   &is_writeable);
       
-   inputs->Obj.data = tmp->Ptr;
-   inputs->Obj.start = (GLfloat *)tmp->Ptr;
+   inputs->Obj.data = (GLfloat (*)[4]) tmp->Ptr;
+   inputs->Obj.start = (GLfloat *) tmp->Ptr;
    inputs->Obj.stride = tmp->StrideB;
    inputs->Obj.size = tmp->Size;
    inputs->Obj.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
@@ -80,8 +80,8 @@ static void _tnl_import_normal( GLcontext *ctx,
 			   stride ? 3*sizeof(GLfloat) : 0, writeable, 
 			   &is_writeable);
       
-   inputs->Normal.data = tmp->Ptr;
-   inputs->Normal.start = (GLfloat *)tmp->Ptr;
+   inputs->Normal.data = (GLfloat (*)[3]) tmp->Ptr;
+   inputs->Normal.start = (GLfloat *) tmp->Ptr;
    inputs->Normal.stride = tmp->StrideB;
    inputs->Normal.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
    if (inputs->Normal.stride != 3*sizeof(GLfloat))
@@ -106,8 +106,8 @@ static void _tnl_import_color( GLcontext *ctx,
 			  writeable, 
 			  &is_writeable);
       
-   inputs->Color.data = tmp->Ptr;
-   inputs->Color.start = (GLchan *)tmp->Ptr;
+   inputs->Color.data = (GLchan (*)[4]) tmp->Ptr;
+   inputs->Color.start = (GLchan *) tmp->Ptr;
    inputs->Color.stride = tmp->StrideB;
    inputs->Color.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
    if (inputs->Color.stride != 4*sizeof(GLchan))
@@ -131,8 +131,8 @@ static void _tnl_import_secondarycolor( GLcontext *ctx,
 				   writeable, 
 				   &is_writeable);
       
-   inputs->SecondaryColor.data = tmp->Ptr;
-   inputs->SecondaryColor.start = (GLchan *)tmp->Ptr;
+   inputs->SecondaryColor.data = (GLchan (*)[4]) tmp->Ptr;
+   inputs->SecondaryColor.start = (GLchan *) tmp->Ptr;
    inputs->SecondaryColor.stride = tmp->StrideB;
    inputs->SecondaryColor.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
    if (inputs->SecondaryColor.stride != 4*sizeof(GLubyte))
@@ -153,8 +153,8 @@ static void _tnl_import_fogcoord( GLcontext *ctx,
 			     stride ? sizeof(GLfloat) : 0, writeable, 
 			     &is_writeable);
       
-   inputs->FogCoord.data = tmp->Ptr;
-   inputs->FogCoord.start = (GLfloat *)tmp->Ptr;
+   inputs->FogCoord.data = (GLfloat *) tmp->Ptr;
+   inputs->FogCoord.start = (GLfloat *) tmp->Ptr;
    inputs->FogCoord.stride = tmp->StrideB;
    inputs->FogCoord.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
    if (inputs->FogCoord.stride != sizeof(GLfloat))
@@ -175,8 +175,8 @@ static void _tnl_import_index( GLcontext *ctx,
 			  stride ? sizeof(GLuint) : 0, writeable, 
 			  &is_writeable);
       
-   inputs->Index.data = tmp->Ptr;
-   inputs->Index.start = (GLuint *)tmp->Ptr;
+   inputs->Index.data = (GLuint *) tmp->Ptr;
+   inputs->Index.start = (GLuint *) tmp->Ptr;
    inputs->Index.stride = tmp->StrideB;
    inputs->Index.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
    if (inputs->Index.stride != sizeof(GLuint))
@@ -201,8 +201,8 @@ static void _tnl_import_texcoord( GLcontext *ctx,
 			     writeable, 
 			     &is_writeable);
       
-   inputs->TexCoord[i].data = tmp->Ptr;
-   inputs->TexCoord[i].start = (GLfloat *)tmp->Ptr;
+   inputs->TexCoord[i].data = (GLfloat (*)[4]) tmp->Ptr;
+   inputs->TexCoord[i].start = (GLfloat *) tmp->Ptr;
    inputs->TexCoord[i].stride = tmp->StrideB;
    inputs->TexCoord[i].size = tmp->Size;
    inputs->TexCoord[i].flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
@@ -226,8 +226,8 @@ static void _tnl_import_edgeflag( GLcontext *ctx,
 			     0, 
 			     &is_writeable);
       
-   inputs->EdgeFlag.data = tmp->Ptr;
-   inputs->EdgeFlag.start = (GLubyte *)tmp->Ptr;
+   inputs->EdgeFlag.data = (GLubyte *) tmp->Ptr;
+   inputs->EdgeFlag.start = (GLubyte *) tmp->Ptr;
    inputs->EdgeFlag.stride = tmp->StrideB;
    inputs->EdgeFlag.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
    if (inputs->EdgeFlag.stride != sizeof(GLubyte))
@@ -320,8 +320,8 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
 /*  	   start, count, ctx->Array.LockFirst, ctx->Array.LockCount); */
 
    if (ctx->Array.LockCount) {
-      ASSERT(start == ctx->Array.LockFirst);
-      ASSERT(count == ctx->Array.LockCount);
+      ASSERT(start == (GLint) ctx->Array.LockFirst);
+      ASSERT(count == (GLint) ctx->Array.LockCount);
    }
    
    imports = tnl->pipeline.inputs;

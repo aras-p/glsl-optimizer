@@ -1,4 +1,4 @@
-/* $Id: s_readpix.c,v 1.8 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_readpix.c,v 1.9 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -155,7 +155,8 @@ read_depth_pixels( GLcontext *ctx,
          dest = _mesa_image_address(packing, pixels, width, height,
                                     GL_DEPTH_COMPONENT, type, 0, j, 0);
 
-         _mesa_pack_depth_span(ctx, readWidth, dest, type, depth, &ctx->Pack);
+         _mesa_pack_depth_span(ctx, readWidth, (GLdepth *) dest, type,
+                               depth, &ctx->Pack);
       }
    }
 }

@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.35 2001/03/03 20:33:28 brianp Exp $ */
+/* $Id: texstate.c,v 1.36 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1165,7 +1165,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
       case GL_SHADOW_AMBIENT_SGIX:
          if (ctx->Extensions.SGIX_shadow_ambient) {
             /* XXX range? */
-            *params = CHAN_TO_FLOAT(obj->ShadowAmbient);
+            *params = (GLint) CHAN_TO_FLOAT(obj->ShadowAmbient);
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexParameteriv(pname)");

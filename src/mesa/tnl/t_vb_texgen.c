@@ -1,4 +1,4 @@
-/* $Id: t_vb_texgen.c,v 1.4 2001/03/03 20:57:00 brianp Exp $ */
+/* $Id: t_vb_texgen.c,v 1.5 2001/03/07 05:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,7 +74,7 @@ struct texgen_stage_data {
 };
 
 
-#define TEXGEN_STAGE_DATA(stage) ((struct texgen_stage_data *)stage->private)
+#define TEXGEN_STAGE_DATA(stage) ((struct texgen_stage_data *)stage->privatePtr)
 
 
 
@@ -620,7 +620,7 @@ static void check_texgen( GLcontext *ctx, struct gl_pipeline_stage *stage )
 	    /* Something for Feedback? */
 	 }
 
-      if (stage->private)
+      if (stage->privatePtr)
 	 stage->run = run_validate_texgen_stage;
       stage->active = 1;
       stage->inputs = inputs;
@@ -640,7 +640,7 @@ static GLboolean alloc_texgen_data( GLcontext *ctx,
    struct texgen_stage_data *store;
    GLuint i;
 
-   stage->private = CALLOC(sizeof(*store));
+   stage->privatePtr = CALLOC(sizeof(*store));
    store = TEXGEN_STAGE_DATA(stage);
    if (!store)
       return GL_FALSE;
@@ -673,7 +673,7 @@ static void free_texgen_data( struct gl_pipeline_stage *stage )
       if (store->tmp_f) FREE( store->tmp_f );
       if (store->tmp_m) FREE( store->tmp_m );
       FREE( store );
-      stage->private = 0;
+      stage->privatePtr = NULL;
    }
 }
 

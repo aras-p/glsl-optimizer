@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.9 2001/03/03 20:33:28 brianp Exp $ */
+/* $Id: texstore.c,v 1.10 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -820,7 +820,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
       return;      /* out of memory */
 
    /* unpack image, apply transfer ops and store in texImage->Data */
-   _mesa_transfer_teximage(ctx, 1, texImage->Format, texImage->Data,
+   _mesa_transfer_teximage(ctx, 1, texImage->Format, (GLchan *) texImage->Data,
                            width, 1, 1, 0, 0, 0,
                            0, /* dstRowStride */
                            0, /* dstImageStride */
@@ -873,7 +873,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       return;      /* out of memory */
 
    /* unpack image, apply transfer ops and store in texImage->Data */
-   _mesa_transfer_teximage(ctx, 2, texImage->Format, texImage->Data,
+   _mesa_transfer_teximage(ctx, 2, texImage->Format, (GLchan *) texImage->Data,
                            width, height, 1, 0, 0, 0,
                            texImage->Width * components * sizeof(GLchan),
                            0, /* dstImageStride */
@@ -921,7 +921,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
       return;      /* out of memory */
 
    /* unpack image, apply transfer ops and store in texImage->Data */
-   _mesa_transfer_teximage(ctx, 3, texImage->Format, texImage->Data,
+   _mesa_transfer_teximage(ctx, 3, texImage->Format, (GLchan *) texImage->Data,
                            width, height, depth, 0, 0, 0,
                            texImage->Width * components * sizeof(GLchan),
                            texImage->Width * texImage->Height * components
@@ -943,7 +943,7 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
-   _mesa_transfer_teximage(ctx, 1, texImage->Format, texImage->Data,
+   _mesa_transfer_teximage(ctx, 1, texImage->Format, (GLchan *) texImage->Data,
                            width, 1, 1, /* src size */
                            xoffset, 0, 0, /* dest offsets */
                            0, /* dstRowStride */
@@ -966,7 +966,7 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
 {
    const GLint components = components_in_intformat(texImage->IntFormat);
    const GLint compSize = _mesa_sizeof_type(texImage->Type);
-   _mesa_transfer_teximage(ctx, 2, texImage->Format, texImage->Data,
+   _mesa_transfer_teximage(ctx, 2, texImage->Format, (GLchan *) texImage->Data,
                            width, height, 1, /* src size */
                            xoffset, yoffset, 0, /* dest offsets */
                            texImage->Width * components * compSize,
@@ -989,7 +989,7 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
 {
    const GLint components = components_in_intformat(texImage->IntFormat);
    const GLint compSize = _mesa_sizeof_type(texImage->Type);
-   _mesa_transfer_teximage(ctx, 3, texImage->Format, texImage->Data,
+   _mesa_transfer_teximage(ctx, 3, texImage->Format, (GLchan *) texImage->Data,
                            width, height, depth, /* src size */
                            xoffset, yoffset, xoffset, /* dest offsets */
                            texImage->Width * components * compSize,

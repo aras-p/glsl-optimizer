@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.13 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.14 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -430,7 +430,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       if (transferOps) {
          const GLfloat scale = (1.0F / CHAN_MAXF);
          GLfloat rgbaFloat[MAX_WIDTH][4];
-         GLuint k;
+         GLint k;
          /* convert chan to float */
          for (k = 0; k < width; k++) {
             rgbaFloat[k][RCOMP] = (GLfloat) rgba[k][RCOMP] * scale;

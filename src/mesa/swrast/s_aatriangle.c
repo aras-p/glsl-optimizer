@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.7 2001/02/16 18:14:41 keithw Exp $ */
+/* $Id: s_aatriangle.c,v 1.8 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,7 +123,7 @@ solve_plane_chan(GLfloat x, GLfloat y, const GLfloat plane[4])
    if (z < 0.0F)
       return 0;
    else if (z > CHAN_MAXF)
-      return CHAN_MAXF;
+      return (GLchan) CHAN_MAXF;
    return (GLchan) (GLint) z;
 }
 

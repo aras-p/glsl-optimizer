@@ -1,4 +1,4 @@
-/* $Id: ac_import.c,v 1.7 2001/02/20 18:28:52 keithw Exp $ */
+/* $Id: ac_import.c,v 1.8 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,7 +39,7 @@
 
 #define STRIDE_ARRAY( array, offset ) 		\
 do {						\
-   char *tmp = (array).Ptr;			\
+   char *tmp = (char *) (array).Ptr;		\
    tmp += (offset) * (array).StrideB;		\
    (array).Ptr = tmp;				\
 } while (0)
@@ -193,7 +193,7 @@ static void import_texcoord( GLcontext *ctx, GLuint unit,
    ASSERT(stride == 4*sizeof(GLfloat) || stride == 0);
    ASSERT(ac->count - ac->start < ctx->Const.MaxArrayLockSize);
    
-   _math_trans_4f( to->Ptr,
+   _math_trans_4f( (GLfloat (*)[4]) to->Ptr,
 		   from->Ptr,
 		   from->StrideB,
 		   from->Type,
@@ -219,7 +219,7 @@ static void import_vertex( GLcontext *ctx,
    ASSERT(type == GL_FLOAT);
    ASSERT(stride == 4*sizeof(GLfloat) || stride == 0);
 
-   _math_trans_4f( to->Ptr,
+   _math_trans_4f( (GLfloat (*)[4]) to->Ptr,
 		   from->Ptr,
 		   from->StrideB,
 		   from->Type,
@@ -245,7 +245,7 @@ static void import_normal( GLcontext *ctx,
    ASSERT(type == GL_FLOAT);
    ASSERT(stride == 3*sizeof(GLfloat) || stride == 0);
 
-   _math_trans_3f( to->Ptr,
+   _math_trans_3f( (GLfloat (*)[3]) to->Ptr,
 		   from->Ptr,
 		   from->StrideB,
 		   from->Type,
@@ -270,7 +270,7 @@ static void import_color( GLcontext *ctx,
    ASSERT(type == CHAN_TYPE);
    ASSERT(stride == 4 * sizeof(GLchan) || stride == 0);
 
-   _math_trans_4chan( to->Ptr,
+   _math_trans_4chan( (GLchan (*)[4]) to->Ptr,
 		      from->Ptr,
 		      from->StrideB,
 		      from->Type,
@@ -296,7 +296,7 @@ static void import_index( GLcontext *ctx,
    ASSERT(type == GL_UNSIGNED_INT);
    ASSERT(stride == sizeof(GLuint) || stride == 0);
 
-   _math_trans_1ui( to->Ptr,
+   _math_trans_1ui( (GLuint *) to->Ptr,
 		    from->Ptr,
 		    from->StrideB,
 		    from->Type,
@@ -320,7 +320,7 @@ static void import_secondarycolor( GLcontext *ctx,
    ASSERT(type == CHAN_TYPE);
    ASSERT(stride == 4 * sizeof(GLchan) || stride == 0);
 
-   _math_trans_4chan( to->Ptr,
+   _math_trans_4chan( (GLchan (*)[4]) to->Ptr,
 		      from->Ptr,
 		      from->StrideB,
 		      from->Type,
@@ -345,7 +345,7 @@ static void import_fogcoord( GLcontext *ctx,
    ASSERT(type == GL_FLOAT);
    ASSERT(stride == sizeof(GLfloat) || stride == 0);
 
-   _math_trans_1f( to->Ptr,
+   _math_trans_1f( (GLfloat *) to->Ptr,
 		   from->Ptr,
 		   from->StrideB,
 		   from->Type,
@@ -369,7 +369,7 @@ static void import_edgeflag( GLcontext *ctx,
    ASSERT(type == GL_FLOAT);
    ASSERT(stride == sizeof(GLfloat) || stride == 0);
 
-   _math_trans_1f( to->Ptr,
+   _math_trans_1f( (GLfloat *) to->Ptr,
 		   from->Ptr,
 		   from->StrideB,
 		   from->Type,
@@ -402,13 +402,13 @@ struct gl_client_array *_ac_import_texcoord( GLcontext *ctx,
 
    /* Is the request impossible?
     */
-   if (reqsize != 0 && ac->Raw.TexCoord[unit].Size > reqsize)
+   if (reqsize != 0 && ac->Raw.TexCoord[unit].Size > (GLint) reqsize)
       return 0;
 
    /* Do we need to pull in a copy of the client data:
     */
    if (ac->Raw.TexCoord[unit].Type != type ||
-       (reqstride != 0 && ac->Raw.TexCoord[unit].StrideB != reqstride) ||
+       (reqstride != 0 && ac->Raw.TexCoord[unit].StrideB != (GLint) reqstride) ||
        reqwriteable) 
    {
       if (!ac->IsCached.TexCoord[unit])
@@ -438,13 +438,13 @@ struct gl_client_array *_ac_import_vertex( GLcontext *ctx,
 
    /* Is the request impossible?
     */
-   if (reqsize != 0 && ac->Raw.Vertex.Size > reqsize)
+   if (reqsize != 0 && ac->Raw.Vertex.Size > (GLint) reqsize)
       return 0;
 
    /* Do we need to pull in a copy of the client data:
     */
    if (ac->Raw.Vertex.Type != type ||
-       (reqstride != 0 && ac->Raw.Vertex.StrideB != reqstride) ||
+       (reqstride != 0 && ac->Raw.Vertex.StrideB != (GLint) reqstride) ||
        reqwriteable) 
    {
       if (!ac->IsCached.Vertex)
@@ -474,7 +474,7 @@ struct gl_client_array *_ac_import_normal( GLcontext *ctx,
    /* Do we need to pull in a copy of the client data:
     */
    if (ac->Raw.Normal.Type != type ||
-       (reqstride != 0 && ac->Raw.Normal.StrideB != reqstride) ||
+       (reqstride != 0 && ac->Raw.Normal.StrideB != (GLint) reqstride) ||
        reqwriteable) 
    {
       if (!ac->IsCached.Normal)
@@ -504,14 +504,14 @@ struct gl_client_array *_ac_import_color( GLcontext *ctx,
 
    /* Is the request impossible?
     */
-   if (reqsize != 0 && ac->Raw.Color.Size > reqsize) {
+   if (reqsize != 0 && ac->Raw.Color.Size > (GLint) reqsize) {
       return 0;
    }
 
    /* Do we need to pull in a copy of the client data:
     */
    if (ac->Raw.Color.Type != type ||
-       (reqstride != 0 && ac->Raw.Color.StrideB != reqstride) ||
+       (reqstride != 0 && ac->Raw.Color.StrideB != (GLint) reqstride) ||
        reqwriteable) 
    {
       if (!ac->IsCached.Color)
@@ -542,7 +542,7 @@ struct gl_client_array *_ac_import_index( GLcontext *ctx,
    /* Do we need to pull in a copy of the client data:
     */
    if (ac->Raw.Index.Type != type ||
-       (reqstride != 0 && ac->Raw.Index.StrideB != reqstride) ||
+       (reqstride != 0 && ac->Raw.Index.StrideB != (GLint) reqstride) ||
        reqwriteable) 
    {
       if (!ac->IsCached.Index)
@@ -572,13 +572,13 @@ struct gl_client_array *_ac_import_secondarycolor( GLcontext *ctx,
 
    /* Is the request impossible?
     */
-   if (reqsize != 0 && ac->Raw.SecondaryColor.Size > reqsize)
+   if (reqsize != 0 && ac->Raw.SecondaryColor.Size > (GLint) reqsize)
       return 0;
 
    /* Do we need to pull in a copy of the client data:
     */
    if (ac->Raw.SecondaryColor.Type != type ||
-       (reqstride != 0 && ac->Raw.SecondaryColor.StrideB != reqstride) ||
+       (reqstride != 0 && ac->Raw.SecondaryColor.StrideB != (GLint) reqstride) ||
        reqwriteable) 
    {
       if (!ac->IsCached.SecondaryColor)
@@ -608,7 +608,7 @@ struct gl_client_array *_ac_import_fogcoord( GLcontext *ctx,
    /* Do we need to pull in a copy of the client data:
     */
    if (ac->Raw.FogCoord.Type != type ||
-       (reqstride != 0 && ac->Raw.FogCoord.StrideB != reqstride) ||
+       (reqstride != 0 && ac->Raw.FogCoord.StrideB != (GLint) reqstride) ||
        reqwriteable) 
    {
       if (!ac->IsCached.FogCoord)
@@ -641,7 +641,7 @@ struct gl_client_array *_ac_import_edgeflag( GLcontext *ctx,
    /* Do we need to pull in a copy of the client data:
     */
    if (ac->Raw.EdgeFlag.Type != type ||
-       (reqstride != 0 && ac->Raw.EdgeFlag.StrideB != reqstride) ||
+       (reqstride != 0 && ac->Raw.EdgeFlag.StrideB != (GLint) reqstride) ||
        reqwriteable) 
    {
       if (!ac->IsCached.EdgeFlag)
@@ -714,7 +714,7 @@ _ac_import_elements( GLcontext *ctx,
       if (ac->Elts) FREE(ac->Elts);
       while (ac->elt_size < count * sizeof(GLuint)) 
 	 ac->elt_size *= 2;
-      ac->Elts = MALLOC(ac->elt_size);
+      ac->Elts = (GLuint *) MALLOC(ac->elt_size);
    }
 
    switch (new_type) {

@@ -1,4 +1,4 @@
-/* $Id: image.h,v 1.16 2001/02/17 18:41:01 brianp Exp $ */
+/* $Id: image.h,v 1.17 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -156,7 +156,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
                          const struct gl_pixelstore_attrib *srcPacking );
 
 extern void
-_mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLdepth *dest,
+_mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
                        GLenum dstType, const GLfloat *depthSpan,
                        const struct gl_pixelstore_attrib *dstPacking );
 

@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.65 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: dlist.c,v 1.66 2001/03/07 05:06:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -329,8 +329,8 @@ void _mesa_destroy_list( GLcontext *ctx, GLuint list )
 
       /* check for extension opcodes first */
 
-      int i = (int)n[0].opcode - (int)OPCODE_DRV_0;
-      if (i >= 0 && i < ctx->listext.nr_opcodes) {
+      GLint i = (GLint) n[0].opcode - (GLint) OPCODE_DRV_0;
+      if (i >= 0 && i < (GLint) ctx->listext.nr_opcodes) {
 	 ctx->listext.opcode[i].destroy(ctx, &n[1]);
 	 n += ctx->listext.opcode[i].size;
       }
@@ -658,7 +658,7 @@ _mesa_alloc_instruction( GLcontext *ctx, int opcode, GLint sz )
 
 #ifdef DEBUG
    if (opcode < (int) OPCODE_DRV_0) {
-      assert( (GLint) count == InstSize[opcode] );
+      assert( count == InstSize[opcode] );
    }
 #endif
 
@@ -3992,7 +3992,7 @@ execute_list( GLcontext *ctx, GLuint list )
       OpCode opcode = n[0].opcode;
       int i = (int)n[0].opcode - (int)OPCODE_DRV_0;
 
-      if (i >= 0 && i < ctx->listext.nr_opcodes) {
+      if (i >= 0 && i < (GLint) ctx->listext.nr_opcodes) {
 	 ctx->listext.opcode[i].execute(ctx, &n[1]);
 	 n += ctx->listext.opcode[i].size;
       }
@@ -5917,12 +5917,13 @@ static void print_list( GLcontext *ctx, FILE *f, GLuint list )
    done = n ? GL_FALSE : GL_TRUE;
    while (!done) {
       OpCode opcode = n[0].opcode;
-      int i = (int)n[0].opcode - (int)OPCODE_DRV_0;
+      GLint i = (GLint) n[0].opcode - (GLint) OPCODE_DRV_0;
 
-      if (i >= 0 && i < ctx->listext.nr_opcodes) {
+      if (i >= 0 && i < (GLint) ctx->listext.nr_opcodes) {
 	 ctx->listext.opcode[i].print(ctx, &n[1]);
 	 n += ctx->listext.opcode[i].size;
-      } else {
+      }
+      else {
 	 switch (opcode) {
          case OPCODE_ACCUM:
             fprintf(f,"accum %s %g\n", enum_string(n[1].e), n[2].f );

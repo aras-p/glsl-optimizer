@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.6 2001/03/03 20:57:00 brianp Exp $ */
+/* $Id: t_vb_fog.c,v 1.7 2001/03/07 05:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,7 +47,7 @@ struct fog_stage_data {
    GLvector1f input;		/* points into VB->EyePtr Z values */
 };
 
-#define FOG_STAGE_DATA(stage) ((struct fog_stage_data *)stage->private)
+#define FOG_STAGE_DATA(stage) ((struct fog_stage_data *)stage->privatePtr)
 
 #define FOG_EXP_TABLE_SIZE 256
 #define FOG_MAX (5.0)
@@ -199,7 +199,7 @@ static GLboolean alloc_fog_data( GLcontext *ctx,
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct fog_stage_data *store;
-   stage->private = MALLOC(sizeof(*store));
+   stage->privatePtr = MALLOC(sizeof(*store));
    store = FOG_STAGE_DATA(stage);
    if (!store)
       return GL_FALSE;
@@ -223,7 +223,7 @@ static void free_fog_data( struct gl_pipeline_stage *stage )
    if (store) {
       _mesa_vector1f_free( &store->fogcoord );
       FREE( store );
-      stage->private = 0;
+      stage->privatePtr = NULL;
    }
 }
 

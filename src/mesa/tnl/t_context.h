@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.15 2001/02/20 18:28:52 keithw Exp $ */
+/* $Id: t_context.h,v 1.16 2001/03/07 05:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -315,7 +315,7 @@ struct gl_pipeline_stage {
 
    /* Private data for the pipeline stage:
     */
-   void *private;
+   void *privatePtr;
 
    /* Free private data.  May not be null.
     */

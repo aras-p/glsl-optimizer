@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.6 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_depth.c,v 1.7 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1367,14 +1367,14 @@ _mesa_read_depth_span( GLcontext *ctx,
       /* read from software depth buffer */
       if (ctx->Visual.depthBits <= 16) {
          const GLushort *zptr = Z_ADDRESS16( ctx, x, y );
-         GLuint i;
+         GLint i;
          for (i = 0; i < n; i++) {
             depth[i] = zptr[i];
          }
       }
       else {
          const GLuint *zptr = Z_ADDRESS32( ctx, x, y );
-         GLuint i;
+         GLint i;
          for (i = 0; i < n; i++) {
             depth[i] = zptr[i];
          }
@@ -1439,14 +1439,14 @@ _mesa_read_depth_span_float( GLcontext *ctx,
       /* read from software depth buffer */
       if (ctx->Visual.depthBits <= 16) {
          const GLushort *zptr = Z_ADDRESS16( ctx, x, y );
-         GLuint i;
+         GLint i;
          for (i = 0; i < n; i++) {
             depth[i] = (GLfloat) zptr[i] * scale;
          }
       }
       else {
          const GLuint *zptr = Z_ADDRESS32( ctx, x, y );
-         GLuint i;
+         GLint i;
          for (i = 0; i < n; i++) {
             depth[i] = (GLfloat) zptr[i] * scale;
          }
@@ -1455,7 +1455,7 @@ _mesa_read_depth_span_float( GLcontext *ctx,
    else if (ctx->Driver.ReadDepthSpan) {
       /* read from hardware depth buffer */
       GLdepth d[MAX_WIDTH];
-      GLuint i;
+      GLint i;
       assert(n <= MAX_WIDTH);
       (*ctx->Driver.ReadDepthSpan)( ctx, n, x, y, d );
       for (i = 0; i < n; i++) {

@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.8 2001/03/03 20:33:31 brianp Exp $ */
+/* $Id: t_array_api.c,v 1.9 2001/03/07 05:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,10 +56,10 @@ static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
     */
 #if 1
    if (_tnl_hard_begin( ctx, mode )) {
-      GLuint j;
+      GLint j;
       for (j = 0 ; j < count ; ) {
 	 struct immediate *IM = TNL_CURRENT_IM(ctx);
-	 GLuint nr = MIN2( IMM_MAXDATA - IM->Start, count - j );
+	 GLuint nr = MIN2( IMM_MAXDATA - IM->Start, (GLuint) (count - j) );
 	 GLuint sf = IM->Flag[IM->Start];
 
 	 _tnl_fill_immediate_drawarrays( ctx, IM, j, j+nr );
@@ -98,11 +98,11 @@ static void _tnl_draw_elements( GLcontext *ctx, GLenum mode, GLsizei count,
     * _tnl_array_element for each index in the list.
     */
    if (_tnl_hard_begin( ctx, mode )) {
-      GLuint i,j;
+      GLint i, j;
       for (j = 0 ; j < count ; ) {
 	 struct immediate *IM = TNL_CURRENT_IM(ctx);
 	 GLuint start = IM->Start;
-	 GLuint nr = MIN2( IMM_MAXDATA - start, count - j ) + start;
+	 GLint nr = MIN2( (GLint) (IMM_MAXDATA - start), count - j ) + start;
 	 GLuint sf = IM->Flag[start];
 	 IM->FlushElt |= 1;
 
@@ -179,14 +179,17 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
 
-   if (!ctx->CompileFlag && count - start < ctx->Const.MaxArrayLockSize) {
+   if (!ctx->CompileFlag && count - start < (GLint) ctx->Const.MaxArrayLockSize) {
       FLUSH_CURRENT( ctx, 0 );
 
       if (ctx->Array.LockCount)
       {
-	 if (start < ctx->Array.LockFirst) start = ctx->Array.LockFirst;
-	 if (count > ctx->Array.LockCount) count = ctx->Array.LockCount;
-	 if (start >= count) return;
+	 if (start < (GLint) ctx->Array.LockFirst)
+            start = ctx->Array.LockFirst;
+	 if (count > (GLint) ctx->Array.LockCount)
+            count = ctx->Array.LockCount;
+	 if (start >= count)
+            return;
 
 	 /* Locked drawarrays.  Reuse any previously transformed data.
 	  */
@@ -325,13 +328,14 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
       /* Scan the index list and see if we can use the locked path anyway.
        */
       GLuint max_elt = 0;
-      GLuint i;
+      GLint i;
 
       for (i = 0 ; i < count ; i++) 
-	 if (ui_indices[i] > max_elt) max_elt = ui_indices[i];
+	 if (ui_indices[i] > max_elt)
+            max_elt = ui_indices[i];
 
       if (max_elt < ctx->Const.MaxArrayLockSize && /* can we use it? */
-	  max_elt < count) 	                   /* do we want to use it? */
+	  max_elt < (GLuint) count) 	           /* do we want to use it? */
 	 _tnl_draw_range_elements( ctx, mode, 0, max_elt+1, count, ui_indices );
       else
 	 _tnl_draw_elements( ctx, mode, count, ui_indices );

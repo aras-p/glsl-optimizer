@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.20 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: convolve.c,v 1.21 2001/03/07 05:06:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -564,7 +564,7 @@ void
 _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *image)
 {
    const struct gl_convolution_attrib *filter;
-   GLint row;
+   GLuint row;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 

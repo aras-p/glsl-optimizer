@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.9 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: s_fog.c,v 1.10 2001/03/07 05:06:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -89,7 +89,7 @@ void
 _mesa_fog_ci_pixels( const GLcontext *ctx,
                      GLuint n, const GLfixed fog[], GLuint index[] )
 {
-   GLuint idx = ctx->Fog.Index;
+   GLuint idx = (GLuint) ctx->Fog.Index;
    GLuint i;
 
    for (i=0;i<n;i++) {
