@@ -60,12 +60,12 @@ _mesa_halve2x2_teximage2d ( GLcontext *ctx,
    GLint dstWidth = srcWidth / 2;
    GLint dstHeight = srcHeight / 2;
    GLint srcRowStride = srcWidth * bytesPerPixel;
-   GLubyte *src = srcImage;
+   GLubyte *src = (GLubyte *)srcImage;
    GLubyte *dst = dstImage;
 
    GLuint bpt = 0;
-   GLubyte *_s;
-   GLubyte *_d;
+   GLubyte *_s = NULL;
+   GLubyte *_d = NULL;
    GLenum _t;
 
    if (texImage->TexFormat->MesaFormat == MESA_FORMAT_RGB565) {
