@@ -250,7 +250,10 @@ void r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp)
 	_mesa_load_state_parameters(ctx, mesa_vp->Parameters);
 	
 	//debug_vp(ctx, mesa_vp);
-	
+	if(mesa_vp->Parameters->NumParameters * 4 > VSF_MAX_FRAGMENT_LENGTH){
+		fprintf(stderr, "%s:Params exhausted\n", __FUNCTION__);
+		exit(-1);
+	}
 	dst_index=0;
 	for(pi=0; pi < mesa_vp->Parameters->NumParameters; pi++){
 		switch(mesa_vp->Parameters->Parameters[pi].Type){
@@ -349,7 +352,21 @@ static unsigned long t_swizzle(GLubyte swizzle)
 			exit(0);
 	}
 }
-		
+
+void vp_dump_inputs(struct r300_vertex_program *vp, char *caller)
+{
+	int i;
+	
+	if(vp == NULL)
+		return ;
+	
+	fprintf(stderr, "%s:<", caller);
+	for(i=0; i < VERT_ATTRIB_MAX; i++)
+		fprintf(stderr, "%d ", vp->inputs[i]);
+	fprintf(stderr, ">\n");
+	
+}
+
 static unsigned long t_src_index(struct r300_vertex_program *vp, struct vp_src_register *src)
 {
 	int i;
@@ -366,7 +383,6 @@ static unsigned long t_src_index(struct r300_vertex_program *vp, struct vp_src_r
 			
 		default: printf("unknown input index %d\n", src->Index); exit(0); break;
 		}*/
-				
 		if(vp->inputs[src->Index] != -1)
 			return vp->inputs[src->Index];
 		
@@ -375,6 +391,8 @@ static unsigned long t_src_index(struct r300_vertex_program *vp, struct vp_src_r
 				max_reg=vp->inputs[i];
 		
 		vp->inputs[src->Index]=max_reg+1;
+		
+		//vp_dump_inputs(vp, __FUNCTION__);	
 		
 		return vp->inputs[src->Index];
 	}else{

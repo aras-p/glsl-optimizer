@@ -216,7 +216,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	 * texturable memory at once.
 	 */
 
-	ctx = r300->radeon.glCtx;
+	ctx = r300->radeon.glCtx; 
 	
 	ctx->Const.MaxTextureImageUnits = driQueryOptioni(&r300->radeon.optionCache,
 						     "texture_image_units");

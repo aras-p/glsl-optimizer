@@ -1515,7 +1515,7 @@ void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 	int i;
 
 	/* Allocate parameters */
-	//r300->state.vap_param.transform_offset=0x0;  /* transform matrix */
+	r300->state.vap_param.transform_offset=0x0;  /* transform matrix */
 	r300->state.vertex_shader.param_offset=0x0;
 	r300->state.vertex_shader.param_count=0x4;  /* 4 vector values - 4x4 matrix */
 	
@@ -1675,6 +1675,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	int inst_count;
 	int param_count;
 	LOCAL_VARS
+			
 
 	/* Reset state, in case we don't use something */
 	((drm_r300_cmd_header_t*)rmesa->hw.vpp.cmd)->vpu.count = 0;
@@ -2256,7 +2257,6 @@ void r300ResetHwState(r300ContextPtr r300)
 
 //END: TODO
 	//verify_r300ResetHwState(r300, 0);
-
 	r300->hw.all_dirty = GL_TRUE;
 }
 

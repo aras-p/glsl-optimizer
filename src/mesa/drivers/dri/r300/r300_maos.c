@@ -52,6 +52,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define DEBUG_ALL DEBUG_VERTS
 
+
 #if defined(USE_X86_ASM)
 #define COPY_DWORDS( dst, src, nr )					\
 do {									\
@@ -243,6 +244,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	GLuint aa_vap_reg = 0; /* VAP register assignment */
 	GLuint i;
 	GLuint inputs = 0;
+	
 
 #define CONFIGURE_AOS(r, f, v, sz, cn) { \
 		if (RADEON_DEBUG & DEBUG_STATE) \
@@ -291,10 +293,15 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 			inputs |= _TNL_BIT_FOG;
 			rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_FOG];
 		}
+		if(ctx->Const.MaxTextureUnits > 8) { /* Not sure if this can even happen... */
+			fprintf(stderr, "%s: Cant handle that many inputs\n", __FUNCTION__);
+			exit(-1);
+		}
 		for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
-			if (rmesa->current_vp->inputs[VERT_ATTRIB_TEX0+i] != -1)
+			if (rmesa->current_vp->inputs[VERT_ATTRIB_TEX0+i] != -1) {
 				inputs |= _TNL_BIT_TEX0<<i;
 				rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_TEX0+i];
+			}
 		}
 		nr = 0;
 	} else {
@@ -310,7 +317,6 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 
 		vic_1 |= R300_INPUT_CNTL_POS;
 	}
-	//DUMP_DMA(rmesa);
 
 	if (inputs & _TNL_BIT_NORMAL) {
 		CONFIGURE_AOS(i_normal,	AOS_FORMAT_FLOAT,
@@ -368,6 +374,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 			vic_1 |= R300_INPUT_CNTL_TC0 << i;
 		}
 	}
+	
 
 int cmd_reserved=0;
 int cmd_written=0;
