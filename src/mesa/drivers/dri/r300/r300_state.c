@@ -77,6 +77,22 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 
 
 /**
+ * Handle glColorMask()
+ */
+static void r300ColorMask(GLcontext* ctx,
+			  GLboolean r, GLboolean g, GLboolean b, GLboolean a)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	int mask = (b << 0) | (g << 1) | (r << 2) | (a << 3);
+
+	if (mask != r300->hw.cmk.cmd[R300_CMK_COLORMASK]) {
+		R300_STATECHANGE(r300, cmk);
+		r300->hw.cmk.cmd[R300_CMK_COLORMASK] = mask;
+	}
+}
+
+
+/**
  * Called by Mesa after an internal state update.
  */
 static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
@@ -99,6 +115,7 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
  */
 void r300ResetHwState(r300ContextPtr r300)
 {
+	GLcontext* ctx = r300->radeon.glCtx;
 	int i;
 
 	if (RADEON_DEBUG & DEBUG_STATE)
@@ -108,7 +125,7 @@ void r300ResetHwState(r300ContextPtr r300)
 		__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
 		GLfloat xoffset = dPriv ? (GLfloat) dPriv->x : 0;
 		GLfloat yoffset = dPriv ? (GLfloat) dPriv->y + dPriv->h : 0;
-		const GLfloat *v = r300->radeon.glCtx->Viewport._WindowMap.m;
+		const GLfloat *v = ctx->Viewport._WindowMap.m;
 
 		r300->hw.vpt.cmd[R300_VPT_XSCALE] =
 			r300PackFloat32(v[MAT_SX]);
@@ -123,6 +140,12 @@ void r300ResetHwState(r300ContextPtr r300)
 		r300->hw.vpt.cmd[R300_VPT_YOFFSET] =
 			r300PackFloat32(v[MAT_TZ]);
 	}
+
+	r300->hw.cmk.cmd[R300_CMK_COLORMASK] =
+		(ctx->Color.ColorMask[BCOMP] ? R300_COLORMASK0_B : 0) |
+		(ctx->Color.ColorMask[GCOMP] ? R300_COLORMASK0_G : 0) |
+		(ctx->Color.ColorMask[RCOMP] ? R300_COLORMASK0_R : 0) |
+		(ctx->Color.ColorMask[ACOMP] ? R300_COLORMASK0_A : 0);
 
 //BEGIN: TODO
 	r300->hw.unk2080.cmd[1] = 0x0030045A;
@@ -267,8 +290,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.bld.cmd[R300_BLD_CBLEND] = 0;
 	r300->hw.bld.cmd[R300_BLD_ABLEND] = 0;
 
-	r300->hw.cmk.cmd[R300_CMK_COLORMASK] = 0xF;
-
 	r300->hw.unk4E10.cmd[1] = 0;
 	r300->hw.unk4E10.cmd[2] = 0;
 	r300->hw.unk4E10.cmd[3] = 0;
@@ -360,6 +381,7 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	radeonInitStateFuncs(functions);
 
 	functions->UpdateState = r300InvalidateState;
-	functions->Enable= r300Enable;
+	functions->Enable = r300Enable;
+	functions->ColorMask = r300ColorMask;
 }
 

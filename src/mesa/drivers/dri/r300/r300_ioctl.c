@@ -110,10 +110,15 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	r300->hw.rr.cmd[1] = 0x00004000;
 
 	R300_STATECHANGE(r300, cmk);
-	if (flags & CLEARBUFFER_COLOR)
-		r300->hw.cmk.cmd[R300_CMK_COLORMASK] = 0xF;
-	else
+	if (flags & CLEARBUFFER_COLOR) {
+		r300->hw.cmk.cmd[R300_CMK_COLORMASK] =
+			(ctx->Color.ColorMask[BCOMP] ? R300_COLORMASK0_B : 0) |
+			(ctx->Color.ColorMask[GCOMP] ? R300_COLORMASK0_G : 0) |
+			(ctx->Color.ColorMask[RCOMP] ? R300_COLORMASK0_R : 0) |
+			(ctx->Color.ColorMask[ACOMP] ? R300_COLORMASK0_A : 0);
+	} else {
 		r300->hw.cmk.cmd[R300_CMK_COLORMASK] = 0;
+	}
 
 	R300_STATECHANGE(r300, fp);
 	r300->hw.fp.cmd[R300_FP_CNTL0] = 0; /* 1 pass, no textures */
@@ -234,8 +239,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	}
 
 	if (mask & DD_DEPTH_BIT) {
-		if (ctx->Depth.Mask)
-			bits |= CLEARBUFFER_DEPTH;
+		bits |= CLEARBUFFER_DEPTH;
 		mask &= ~DD_DEPTH_BIT;
 	}
 
