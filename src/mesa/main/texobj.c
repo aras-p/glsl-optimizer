@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.65 2003/01/14 04:55:46 brianp Exp $ */
+/* $Id: texobj.c,v 1.66 2003/03/10 00:26:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -816,7 +816,7 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLboolean allResident = GL_TRUE;
-   GLint i;
+   GLint i, j;
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
    if (n < 0) {
@@ -830,26 +830,32 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
    for (i = 0; i < n; i++) {
       struct gl_texture_object *t;
       if (texName[i] == 0) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident(textures)");
+         _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident");
          return GL_FALSE;
       }
       t = (struct gl_texture_object *)
          _mesa_HashLookup(ctx->Shared->TexObjects, texName[i]);
-      if (t) {
-	 if (ctx->Driver.IsTextureResident) {
-	    residences[i] = ctx->Driver.IsTextureResident(ctx, t);
-            if (!residences[i])
-               allResident = GL_FALSE;
-         }
-	 else {
-	    residences[i] = GL_TRUE;
-         }
-      }
-      else {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident(textures)");
+      if (!t) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident");
          return GL_FALSE;
       }
+      if (!ctx->Driver.IsTextureResident ||
+          ctx->Driver.IsTextureResident(ctx, t)) {
+         /* The texture is resident */
+	 if (!allResident)
+	    residences[i] = GL_TRUE;
+      }
+      else {
+         /* The texture is not resident */
+         if (allResident) {
+	    allResident = GL_FALSE;
+	    for (j = 0; j < i; j++)
+	       residences[j] = GL_TRUE;
+	 }
+	 residences[i] = GL_FALSE;
+      }
    }
+   
    return allResident;
 }
 

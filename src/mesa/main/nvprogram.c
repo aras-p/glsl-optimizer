@@ -1,4 +1,4 @@
-/* $Id: nvprogram.c,v 1.6 2003/02/27 19:00:00 kschultz Exp $ */
+/* $Id: nvprogram.c,v 1.7 2003/03/10 00:26:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -437,8 +437,8 @@ _mesa_GenProgramsNV(GLsizei n, GLuint *ids)
 GLboolean _mesa_AreProgramsResidentNV(GLsizei n, const GLuint *ids,
                                       GLboolean *residences)
 {
-   GLint i;
-   GLboolean retVal = GL_TRUE;
+   GLint i, j;
+   GLboolean allResident = GL_TRUE;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
@@ -448,36 +448,32 @@ GLboolean _mesa_AreProgramsResidentNV(GLsizei n, const GLuint *ids,
    }
 
    for (i = 0; i < n; i++) {
-      struct program *prog;
-
+      const struct program *prog;
       if (ids[i] == 0) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glAreProgramsResidentNV(id=0)");
+         _mesa_error(ctx, GL_INVALID_VALUE, "glAreProgramsResidentNV");
          return GL_FALSE;
       }
-
-      prog = (struct program *)
-                   _mesa_HashLookup(ctx->Shared->Programs, ids[i]);
+      prog = (const struct program *)
+         _mesa_HashLookup(ctx->Shared->Programs, ids[i]);
       if (!prog) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glAreProgramsResidentNV(id)");
+         _mesa_error(ctx, GL_INVALID_VALUE, "glAreProgramsResidentNV");
          return GL_FALSE;
       }
-
-      if (!prog->Resident) {
-         retVal = GL_FALSE;
-         break;
+      if (prog->Resident) {
+	 if (!allResident)
+	    residences[i] = GL_TRUE;
+      }
+      else {
+         if (allResident) {
+	    allResident = GL_FALSE;
+	    for (j = 0; j < i; j++)
+	       residences[j] = GL_TRUE;
+	 }
+	 residences[i] = GL_FALSE;
       }
    }
 
-   /* only write to residences if returning false! */
-   if (retVal == GL_FALSE) {
-      for (i = 0; i < n; i++) {
-         const struct program *prog = (const struct program *)
-            _mesa_HashLookup(ctx->Shared->Programs, ids[i]);
-         residences[i] = prog->Resident;
-      }
-   }
-
-   return retVal;
+   return allResident;
 }
 
 
