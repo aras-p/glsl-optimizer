@@ -183,27 +183,37 @@ do {						\
 #define PACK_COLOR_8888( R, G, B, A )					\
    (((R) << 24) | ((G) << 16) | ((B) << 8) | (A))
 
+#define PACK_COLOR_8888_REV( R, G, B, A )				\
+   (((A) << 24) | ((B) << 16) | ((G) << 8) | (R))
+
 #define PACK_COLOR_888( R, G, B )					\
    (((R) << 16) | ((G) << 8) | (B))
 
 #define PACK_COLOR_565( R, G, B )					\
    ((((R) & 0xf8) << 8) | (((G) & 0xfc) << 3) | (((B) & 0xf8) >> 3))
 
+#define PACK_COLOR_565_REV( R, G, B )					\
+   (((R) & 0xf8) | ((G) & 0xe0) >> 5 | (((G) & 0x1c) << 11) | (((B) & 0xf8) << 5))
+
 #define PACK_COLOR_1555( A, B, G, R )					\
    ((((B) & 0xf8) << 7) | (((G) & 0xf8) << 2) | (((R) & 0xf8) >> 3) |	\
     ((A) ? 0x8000 : 0))
 
-#define PACK_COLOR_5551( R, G, B, A )					\
-   ((((B) & 0xf8) << 8) |						\
-    (((G) & 0xf8) << 3) |						\
-    (((R) & 0xf8) >> 2) |						\
-    (((A) & 0x80) >> 7))
+#define PACK_COLOR_1555_REV( A, B, G, R )					\
+   ((((B) & 0xf8) >> 1) | (((G) & 0xc0) >> 6) | (((G) & 0x38) << 10) | (((R) & 0xf8) << 5) |	\
+    ((A) ? 0x80 : 0))
 
 #define PACK_COLOR_4444( R, G, B, A )					\
    ((((R) & 0xf0) << 8) | (((G) & 0xf0) << 4) | ((B) & 0xf0) | ((A) >> 4))
 
+#define PACK_COLOR_4444_REV( R, G, B, A )				\
+   ((((B) & 0xf0) << 8) | (((A) & 0xf0) << 4) | ((R) & 0xf0) | ((G) >> 4))
+
 #define PACK_COLOR_88( L, A )						\
    (((L) << 8) | (A))
+
+#define PACK_COLOR_88_REV( L, A )					\
+   (((A) << 8) | (L))
 
 #define PACK_COLOR_332( R, G, B )					\
    (((R) & 0xe0) | (((G) & 0xe0) >> 3) | (((B) & 0xc0) >> 6))

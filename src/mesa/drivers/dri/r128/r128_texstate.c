@@ -65,12 +65,15 @@ static void r128SetTexImages( r128ContextPtr rmesa,
 
    switch (baseImage->TexFormat->MesaFormat) {
    case MESA_FORMAT_ARGB8888:
+   case MESA_FORMAT_ARGB8888_REV:
       t->textureFormat = R128_DATATYPE_ARGB8888;
       break;
    case MESA_FORMAT_ARGB4444:
+   case MESA_FORMAT_ARGB4444_REV:
       t->textureFormat = R128_DATATYPE_ARGB4444;
       break;
    case MESA_FORMAT_RGB565:
+   case MESA_FORMAT_RGB565_REV:
       t->textureFormat = R128_DATATYPE_RGB565;
       break;
    case MESA_FORMAT_RGB332:

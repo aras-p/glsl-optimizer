@@ -365,6 +365,7 @@ is_color_format(GLenum format)
       case GL_RGB12:
       case GL_RGB16:
       case 4:
+      case GL_ABGR_EXT:
       case GL_RGBA:
       case GL_BGRA:
       case GL_RGBA2:

@@ -56,8 +56,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define _COLOR(f) \
     [ MESA_FORMAT_ ## f ] = { R200_TXFORMAT_ ## f, 0 }
+#define _COLOR_REV(f) \
+    [ MESA_FORMAT_ ## f ## _REV ] = { R200_TXFORMAT_ ## f, 0 }
 #define _ALPHA(f) \
     [ MESA_FORMAT_ ## f ] = { R200_TXFORMAT_ ## f | R200_TXFORMAT_ALPHA_IN_MAP, 0 }
+#define _ALPHA_REV(f) \
+    [ MESA_FORMAT_ ## f ## _REV ] = { R200_TXFORMAT_ ## f | R200_TXFORMAT_ALPHA_IN_MAP, 0 }
 #define _YUV(f) \
     [ MESA_FORMAT_ ## f ] = { R200_TXFORMAT_ ## f, R200_YUV_TO_RGB }
 #define _INVALID(f) \
@@ -71,12 +75,18 @@ static const struct {
 tx_table[] =
 {
    _ALPHA(RGBA8888),
+   _ALPHA_REV(RGBA8888),
    _ALPHA(ARGB8888),
+   _ALPHA_REV(ARGB8888),
    _INVALID(RGB888),
    _COLOR(RGB565),
+   _COLOR_REV(RGB565),
    _ALPHA(ARGB4444),
+   _ALPHA_REV(ARGB4444),
    _ALPHA(ARGB1555),
+   _ALPHA_REV(ARGB1555),
    _ALPHA(AL88),
+   _ALPHA_REV(AL88),
    _ALPHA(A8),
    _COLOR(L8),
    _ALPHA(I8),

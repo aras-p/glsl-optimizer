@@ -47,6 +47,7 @@
 #include "simple_list.h"
 #include "imports.h"
 #include "macros.h"
+#include "texformat.h"
 
 #include <assert.h>
 
@@ -64,11 +65,10 @@ static unsigned dummy_swap_counter;
  * \param n Value whose \f$\log_2\f$ is to be calculated
  */
 
-static unsigned
-driLog2( unsigned n )
+static GLuint
+driLog2( GLuint n )
 {
-   unsigned   log2;
-
+   GLuint log2;
 
    for ( log2 = 1 ; n > 1 ; log2++ ) {
       n >>= 1;
@@ -1227,4 +1227,52 @@ driCalculateTextureFirstLastLevel( driTextureObject * t )
    /* save these values */
    t->firstLevel = firstLevel;
    t->lastLevel = lastLevel;
+}
+
+
+
+
+/**
+ * \name DRI texture formats.  Pointers initialized to either the big- or
+ * little-endian Mesa formats.
+ */
+/*@{*/
+const struct gl_texture_format *_dri_texformat_rgba8888 = NULL;
+const struct gl_texture_format *_dri_texformat_argb8888 = NULL;
+const struct gl_texture_format *_dri_texformat_rgb565 = NULL;
+const struct gl_texture_format *_dri_texformat_argb4444 = NULL;
+const struct gl_texture_format *_dri_texformat_argb1555 = NULL;
+const struct gl_texture_format *_dri_texformat_al88 = NULL;
+const struct gl_texture_format *_dri_texformat_a8 = &_mesa_texformat_a8;
+const struct gl_texture_format *_dri_texformat_ci8 = &_mesa_texformat_ci8;
+const struct gl_texture_format *_dri_texformat_i8 = &_mesa_texformat_i8;
+const struct gl_texture_format *_dri_texformat_l8 = &_mesa_texformat_l8;
+/*@}*/
+
+
+/**
+ * Initialize little endian target, host byte order independent texture formats
+ */
+void
+driInitTextureFormats(void)
+{
+   const GLuint ui = 1;
+   const GLubyte littleEndian = *((const GLubyte *) &ui);
+
+   if (littleEndian) {
+      _dri_texformat_rgba8888	= &_mesa_texformat_rgba8888;
+      _dri_texformat_argb8888	= &_mesa_texformat_argb8888;
+      _dri_texformat_rgb565	= &_mesa_texformat_rgb565;
+      _dri_texformat_argb4444	= &_mesa_texformat_argb4444;
+      _dri_texformat_argb1555	= &_mesa_texformat_argb1555;
+      _dri_texformat_al88	= &_mesa_texformat_al88;
+   }
+   else {
+      _dri_texformat_rgba8888	= &_mesa_texformat_rgba8888_rev;
+      _dri_texformat_argb8888	= &_mesa_texformat_argb8888_rev;
+      _dri_texformat_rgb565	= &_mesa_texformat_rgb565_rev;
+      _dri_texformat_argb4444	= &_mesa_texformat_argb4444_rev;
+      _dri_texformat_argb1555	= &_mesa_texformat_argb1555_rev;
+      _dri_texformat_al88	= &_mesa_texformat_al88_rev;
+   }
 }

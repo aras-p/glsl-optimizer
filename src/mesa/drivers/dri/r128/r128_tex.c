@@ -200,9 +200,9 @@ r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGBA:
    case GL_COMPRESSED_RGBA:
       if (do32bpt)
-         return &_mesa_texformat_argb8888;
+         return _dri_texformat_argb8888;
       else
-         return &_mesa_texformat_argb4444;
+         return _dri_texformat_argb4444;
 
    /* 16-bit formats with alpha */
    case GL_INTENSITY4:
@@ -210,7 +210,7 @@ r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE4_ALPHA4:
    case GL_RGBA2:
    case GL_RGBA4:
-      return &_mesa_texformat_argb4444;
+      return _dri_texformat_argb4444;
 
    /* 32-bit formats with alpha */
    case GL_INTENSITY8:
@@ -230,9 +230,9 @@ r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGBA12:
    case GL_RGBA16:
       if (!force16bpt)
-         return &_mesa_texformat_argb8888;
+         return _dri_texformat_argb8888;
       else
-         return &_mesa_texformat_argb4444;
+         return _dri_texformat_argb4444;
 
    /* non-sized formats without alpha */
    case 1:
@@ -242,16 +242,16 @@ r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB:
    case GL_COMPRESSED_RGB:
       if (do32bpt)
-         return &_mesa_texformat_argb8888;
+         return _dri_texformat_argb8888;
       else
-         return &_mesa_texformat_rgb565;
+         return _dri_texformat_rgb565;
 
    /* 16-bit formats without alpha */
    case GL_LUMINANCE4:
    case GL_R3_G3_B2:
    case GL_RGB4:
    case GL_RGB5:
-      return &_mesa_texformat_rgb565;
+      return _dri_texformat_rgb565;
 
    /* 32-bit formats without alpha */
    case GL_LUMINANCE8:
@@ -262,9 +262,9 @@ r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_RGB12:
    case GL_RGB16:
       if (!force16bpt)
-         return &_mesa_texformat_argb8888;
+         return _dri_texformat_argb8888;
       else
-         return &_mesa_texformat_rgb565;
+         return _dri_texformat_rgb565;
 
    /* color-indexed formats */
    case GL_COLOR_INDEX:
@@ -274,7 +274,7 @@ r128ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_COLOR_INDEX8_EXT:
    case GL_COLOR_INDEX12_EXT:
    case GL_COLOR_INDEX16_EXT:
-      return &_mesa_texformat_ci8;
+      return _dri_texformat_ci8;
 
    case GL_YCBCR_MESA:
       if (type == GL_UNSIGNED_SHORT_8_8_APPLE ||
@@ -612,5 +612,7 @@ void r128InitTextureFuncs( struct dd_function_table *functions )
    functions->NewTextureObject		= r128NewTextureObject;
    functions->DeleteTexture		= r128DeleteTexture;
    functions->IsTextureResident		= driIsTextureResident;
+
+   driInitTextureFormats();
 }
 

@@ -293,4 +293,18 @@ GLboolean driValidateTextureHeaps( driTexHeap * const * texture_heaps,
 
 extern void driCalculateTextureFirstLastLevel( driTextureObject * t );
 
+
+extern const struct gl_texture_format *_dri_texformat_rgba8888;
+extern const struct gl_texture_format *_dri_texformat_argb8888;
+extern const struct gl_texture_format *_dri_texformat_rgb565;
+extern const struct gl_texture_format *_dri_texformat_argb4444;
+extern const struct gl_texture_format *_dri_texformat_argb1555;
+extern const struct gl_texture_format *_dri_texformat_al88;
+extern const struct gl_texture_format *_dri_texformat_a8;
+extern const struct gl_texture_format *_dri_texformat_ci8;
+extern const struct gl_texture_format *_dri_texformat_i8;
+extern const struct gl_texture_format *_dri_texformat_l8;
+
+extern void driInitTextureFormats( void );
+
 #endif /* DRI_TEXMEM_H */
