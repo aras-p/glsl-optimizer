@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.25 2001/05/14 09:00:51 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.26 2001/05/16 09:28:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -314,6 +314,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
 	 tmp->Color.Ptr = ctx->Current.Color;
 	 tmp->Color.StrideB = 0;
 	 tmp->Color.Flags = CA_CLIENT_DATA; /* hack */
+	 VB->import_source = IM;
 	 VB->importable_data |= VERT_RGBA;
 	 VB->import_data = _tnl_upgrade_current_data;
       }

@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.24 2001/05/11 08:11:31 keithw Exp $ */
+/* $Id: t_context.h,v 1.25 2001/05/16 09:28:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -271,6 +271,7 @@ typedef struct vertex_buffer
 
 
    GLuint importable_data;
+   void *import_source;
    void (*import_data)( GLcontext *ctx, GLuint flags, GLuint vecflags );
    /* Callback to the provider of the untransformed input for the
     * render stage (or other stages) to call if they need to write into

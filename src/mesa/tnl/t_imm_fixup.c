@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.18 2001/05/14 16:34:24 keithw Exp $ */
+/* $Id: t_imm_fixup.c,v 1.19 2001/05/16 09:28:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -824,8 +824,8 @@ void _tnl_upgrade_current_data( GLcontext *ctx,
 				GLuint flags )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct immediate *IM = TNL_CURRENT_IM(ctx); /* hmmm */
    struct vertex_buffer *VB = &tnl->vb;
+   struct immediate *IM = (struct immediate *)VB->import_source;
 
    ASSERT(IM);
 
@@ -840,6 +840,9 @@ void _tnl_upgrade_current_data( GLcontext *ctx,
       tmp->Flags = 0;
 
       COPY_4FV( IM->Color[start], ctx->Current.Color);   
+
+      ASSERT(IM->Flag[IM->LastData+1] & VERT_END_VB);
+
       fixup_first_4f( IM->Color, IM->Flag, VERT_END_VB, start, 
 		      IM->Color[start] );
 
