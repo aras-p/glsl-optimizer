@@ -1954,10 +1954,12 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    }
 
    /* Make sure the requested image format is compatible with the
-    * texture's format.
+    * texture's format. We let the colorformat-indexformat go through,
+    * because the texelfetcher will dequantize to full rgba.
     */
    if (is_color_format(format)
-       && !is_color_format(texImage->TexFormat->BaseFormat)) {
+       && !is_color_format(texImage->TexFormat->BaseFormat)
+       && !is_index_format(texImage->TexFormat->BaseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return;
    }
