@@ -57,26 +57,52 @@ package)
 <a name="new">
 <H2>NEW-STYLE compilation and installation</H2>
 
-<pre>
-0) If you've downloaded Mesa via CVS there will not be a "configure"
+<p>
+<b> 0.</b> If you've downloaded Mesa via CVS there will not be a "configure"
    script.  You'll have to run the "bootstrap" script first.  This script
    may not work on any OS other than Linux.  You'll need these programs
    to run the bootstrap script:
+</p>
 
+<pre>
 	autoconf 2.50
 	automake 1.4-p2
 	libtool 1.4
+</pre>
 
+<p>
+<b>1.</b> Run the configure script
+</p>
 
-1) Run the configure script
-
+<pre>
 	./configure [options]
+</pre>
 
+<p>
 For Linux, it is recommended that you use:
+</p>
+<pre>
 	./configure --prefix=/usr
+</pre>
+
 So that the headers and libs are located according to the Linux/OpenGL
 standard spec at http://oss.sgi.com/projects/ogl-sample/ABI/
-
+</p>
+<p>
+For Red Hat 8.0, Mandrake 9.1 and other Linux distros, you may have to use
+the following:
+</p>
+<pre>
+	export LDFLAGS="-lstdc++" ; ./configure --prefix=/usr
+    or
+        setenv LDFLAGS -lstdc++ ; ./configure --prefix=/usr
+</pre>
+<p>
+This works around a problem when building the GLU library.  It needs to
+be linked with the C++ runtime library, but libtool (for some reason)
+doesn't do this.
+</p>
+<pre>
 Possible options are:
 
 --prefix=DIR
@@ -185,47 +211,69 @@ Possible options are:
 	
 --x-libraries=DIR
 	Search for the X library files in DIR.
+</pre>
 
+<p>
 User specific compiler options can be set using the shell variable
 CFLAGS. For instance,
+</p>
+<pre>
 	CFLAGS="-g -O2" ./configure
+</pre>
+<p>
 (on some systems: env CFLAGS="-g -O2" ./configure)
 sets the compiler flags to "-g -O2".
-
+</p>
+<p>
 For more options run "./configure --help" and read INSTALL.GNU.
+</p>
 
-2) To build the Mesa libraries run:
-
+<p>
+<b>2.</b> To build the Mesa libraries run:
+</p>
+<pre>
 	make
-
-When finished, libGL.so will be in src/.libs/, libGLU.so will be in
+</pre>
+<p>
+When finished, libGL.so will be in src/.libs/ and libGLU.so will be in
 si-glu/.libs/, etc.
-
+</p>
+<p>
 Optionally, you can strip the libraries using
-
+</p>
+<pre>
 	make strip
-	
+</pre>
+<p>
 Now make sure that you have the permissions to install Mesa in the 
 specified directories, for example, by becoming super user ("su")
 Then run:
-
+</p>
+<pre>
 	make install
-
+</pre>
+<p>
 Mesa is now installed.
 Please don't move the installed files but rerun all installation
 steps if you want to use other directories.
+</p>
 
-
-3) To test whether Mesa works properly you might want to run the Mesa demos:
-
+<p>
+<b>3.</b>To test whether Mesa works properly you might want to run the
+Mesa demos:
+</p>
+<pre>
 	make check
-	
-Builds all demos.
-
-	make exec
-
-Builds and executes all demos.	
 </pre>
+<p>
+Builds all demos.
+</p>
+<pre>
+	make exec
+</pre>
+<p>
+Builds and executes all demos.	
+</p>
 
 
 <a name="old">
@@ -242,9 +290,10 @@ first copy the top-level <code>Makefile.X11</code> file over
 </p>
 
 <p>
-First, just type <code>make</code> alone.
+Just type <code>make</code> alone.
 You'll see a list of supported system configurations.
-Choose one and type <code>make</code> <em>config</em>.
+Choose one and type <code>make</code> <em>config</em>
+(for example <code>make linux-x86</code>).
 The Mesa libraries and demo programs will be compiled.
 </p>
 
