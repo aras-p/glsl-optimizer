@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.2 2000/09/26 20:54:13 brianp Exp $ */
+/* $Id: xm_api.c,v 1.3 2000/10/30 08:39:38 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,7 +75,7 @@
 #ifdef HAVE_CONFIG_H
 #include "conf.h"
 #endif
-
+#include "macros.h"
 
 #ifndef GLX_NONE_EXT
 #define GLX_NONE_EXT 0x8000
