@@ -130,16 +130,17 @@ typedef enum {
 *************************/
 
 typedef enum {
-    ZCF_Never,
-    ZCF_Less,
-    ZCF_Equal,
-    ZCF_LessEqual,
-    ZCF_Greater,
-    ZCF_NotEqual,
-    ZCF_GreaterEqual,
-    ZCF_Always
-}ZCmpFunc;   /* same for Alpha test compare function*/
+    CF_Never,
+    CF_Less,
+    CF_Equal,
+    CF_LessEqual,
+    CF_Greater,
+    CF_NotEqual,
+    CF_GreaterEqual,
+    CF_Always
+}ZCmpFunc;   /* same for Alpha test and Stencil test compare function */
 
+typedef ZCmpFunc ACmpFunc;
 
 typedef enum {
   ZDS_16i,    /* .16 fixed*/
@@ -428,17 +429,7 @@ typedef enum
  * stencil control
  */
 
-typedef enum
-{
-    STC_COMP_Never,
-    STC_COMP_Less,
-    STC_COMP_Equal,
-    STC_COMP_LessEqual,
-    STC_COMP_Greater,
-    STC_COMP_NotEqual,
-    STC_COMP_GreaterEqual,
-    STC_COMP_Always
-} StencilCompareMode;
+typedef ZCmpFunc SCmpFunc;
 
 typedef enum
 {

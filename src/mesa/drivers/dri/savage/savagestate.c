@@ -230,25 +230,25 @@ static void savageBlendFunc_s4(GLcontext *ctx)
 
     if(ctx->Color.AlphaEnabled) 
     {
-        int a;
+        ACmpFunc a;
 	GLubyte alphaRef;
 
 	CLAMPED_FLOAT_TO_UBYTE(alphaRef,ctx->Color.AlphaRef);
          
         switch(ctx->Color.AlphaFunc)  { 
-            case GL_NEVER: a = LCS_A_NEVER; break;
-            case GL_ALWAYS: a = LCS_A_ALWAYS; break;
-            case GL_LESS: a = LCS_A_LESS; break; 
-            case GL_LEQUAL: a = LCS_A_LEQUAL; break;
-            case GL_EQUAL: a = LCS_A_EQUAL; break;
-            case GL_GREATER: a = LCS_A_GREATER; break;
-            case GL_GEQUAL: a = LCS_A_GEQUAL; break;
-            case GL_NOTEQUAL: a = LCS_A_NOTEQUAL; break;
-            default:return;
+	case GL_NEVER: a = CF_Never; break;
+	case GL_ALWAYS: a = CF_Always; break;
+	case GL_LESS: a = CF_Less; break; 
+	case GL_LEQUAL: a = CF_LessEqual; break;
+	case GL_EQUAL: a = CF_Equal; break;
+	case GL_GREATER: a = CF_Greater; break;
+	case GL_GEQUAL: a = CF_GreaterEqual; break;
+	case GL_NOTEQUAL: a = CF_NotEqual; break;
+	default:return;
         }   
       
 	imesa->regs.s4.drawCtrl1.ni.alphaTestEn = GL_TRUE;
-	imesa->regs.s4.drawCtrl1.ni.alphaTestCmpFunc = a & 0x0F;
+	imesa->regs.s4.drawCtrl1.ni.alphaTestCmpFunc = a;
 	imesa->regs.s4.drawCtrl0.ni.alphaRefVal = alphaRef;
     }
     else
@@ -398,25 +398,25 @@ static void savageBlendFunc_s3d(GLcontext *ctx)
 
     if(ctx->Color.AlphaEnabled) 
     {
-        GLint a;
+        ACmpFunc a;
 	GLubyte alphaRef;
 
 	CLAMPED_FLOAT_TO_UBYTE(alphaRef,ctx->Color.AlphaRef);
          
         switch(ctx->Color.AlphaFunc)  { 
-            case GL_NEVER: a = LCS_A_NEVER; break;
-            case GL_ALWAYS: a = LCS_A_ALWAYS; break;
-            case GL_LESS: a = LCS_A_LESS; break; 
-            case GL_LEQUAL: a = LCS_A_LEQUAL; break;
-            case GL_EQUAL: a = LCS_A_EQUAL; break;
-            case GL_GREATER: a = LCS_A_GREATER; break;
-            case GL_GEQUAL: a = LCS_A_GEQUAL; break;
-            case GL_NOTEQUAL: a = LCS_A_NOTEQUAL; break;
-            default:return;
+	case GL_NEVER: a = CF_Never; break;
+	case GL_ALWAYS: a = CF_Always; break;
+	case GL_LESS: a = CF_Less; break; 
+	case GL_LEQUAL: a = CF_LessEqual; break;
+	case GL_EQUAL: a = CF_Equal; break;
+	case GL_GREATER: a = CF_Greater; break;
+	case GL_GEQUAL: a = CF_GreaterEqual; break;
+	case GL_NOTEQUAL: a = CF_NotEqual; break;
+	default:return;
         }   
 
 	imesa->regs.s3d.drawCtrl.ni.alphaTestEn = GL_TRUE;
-	imesa->regs.s3d.drawCtrl.ni.alphaTestCmpFunc = a & 0x07;
+	imesa->regs.s3d.drawCtrl.ni.alphaTestCmpFunc = a;
 	imesa->regs.s3d.drawCtrl.ni.alphaRefVal = alphaRef;
     }
     else
@@ -452,7 +452,7 @@ static void savageDDBlendFuncSeparate_s3d( GLcontext *ctx, GLenum sfactorRGB,
 static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    int zmode;
+    ZCmpFunc zmode;
 #define depthIndex 0
 
     /* set up z-buffer control register (global)
@@ -461,20 +461,20 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
      */
 
     switch(func)  { 
-        case GL_NEVER: zmode = LCS_Z_NEVER; break;
-        case GL_ALWAYS: zmode = LCS_Z_ALWAYS; break;
-        case GL_LESS: zmode = LCS_Z_LESS; break; 
-        case GL_LEQUAL: zmode = LCS_Z_LEQUAL; break;
-        case GL_EQUAL: zmode = LCS_Z_EQUAL; break;
-        case GL_GREATER: zmode = LCS_Z_GREATER; break;
-        case GL_GEQUAL: zmode = LCS_Z_GEQUAL; break;
-        case GL_NOTEQUAL: zmode = LCS_Z_NOTEQUAL; break;
-        default:return;
+    case GL_NEVER: zmode = CF_Never; break;
+    case GL_ALWAYS: zmode = CF_Always; break;
+    case GL_LESS: zmode = CF_Less; break; 
+    case GL_LEQUAL: zmode = CF_LessEqual; break;
+    case GL_EQUAL: zmode = CF_Equal; break;
+    case GL_GREATER: zmode = CF_Greater; break;
+    case GL_GEQUAL: zmode = CF_GreaterEqual; break;
+    case GL_NOTEQUAL: zmode = CF_NotEqual; break;
+    default:return;
     } 
     if (ctx->Depth.Test)
     {
 
-	imesa->regs.s4.zBufCtrl.ni.zCmpFunc = zmode & 0x0F;
+	imesa->regs.s4.zBufCtrl.ni.zCmpFunc = zmode;
 	imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn = ctx->Depth.Mask;
 	imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_TRUE;
 #if 1
@@ -492,7 +492,7 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
 #if HW_STENCIL
         if(imesa->hw_stencil)
         {
-	    imesa->regs.s4.zBufCtrl.ni.zCmpFunc = LCS_Z_ALWAYS & 0x0F;
+	    imesa->regs.s4.zBufCtrl.ni.zCmpFunc = CF_Always;
 	    imesa->regs.s4.zBufCtrl.ni.zBufEn   = GL_TRUE;
 	    imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn = GL_FALSE;
 	    imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_FALSE;
@@ -505,7 +505,7 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
 
         if (imesa->regs.s4.drawLocalCtrl.ni.drawUpdateEn == GL_FALSE)
         {
-            imesa->regs.s4.zBufCtrl.ni.zCmpFunc = LCS_Z_ALWAYS & 0x0F;
+            imesa->regs.s4.zBufCtrl.ni.zCmpFunc = CF_Always;
             imesa->regs.s4.zBufCtrl.ni.zBufEn   = GL_TRUE;
         }
         else
@@ -524,7 +524,7 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
 static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    int zmode;
+    ZCmpFunc zmode;
 #define depthIndex 0
 
     /* set up z-buffer control register (global)
@@ -532,20 +532,20 @@ static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
      * set up z read/write watermarks register (global)
      */
     switch(func)  { 
-        case GL_NEVER: zmode = LCS_Z_NEVER; break;
-        case GL_ALWAYS: zmode = LCS_Z_ALWAYS; break;
-        case GL_LESS: zmode = LCS_Z_LESS; break; 
-        case GL_LEQUAL: zmode = LCS_Z_LEQUAL; break;
-        case GL_EQUAL: zmode = LCS_Z_EQUAL; break;
-        case GL_GREATER: zmode = LCS_Z_GREATER; break;
-        case GL_GEQUAL: zmode = LCS_Z_GEQUAL; break;
-        case GL_NOTEQUAL: zmode = LCS_Z_NOTEQUAL; break;
-        default:return;
+    case GL_NEVER: zmode = CF_Never; break;
+    case GL_ALWAYS: zmode = CF_Always; break;
+    case GL_LESS: zmode = CF_Less; break; 
+    case GL_LEQUAL: zmode = CF_LessEqual; break;
+    case GL_EQUAL: zmode = CF_Equal; break;
+    case GL_GREATER: zmode = CF_Greater; break;
+    case GL_GEQUAL: zmode = CF_GreaterEqual; break;
+    case GL_NOTEQUAL: zmode = CF_NotEqual; break;
+    default:return;
     } 
     if (ctx->Depth.Test)
     {
 	imesa->regs.s3d.zBufCtrl.ni.zBufEn = GL_TRUE;
-	imesa->regs.s3d.zBufCtrl.ni.zCmpFunc = zmode & 0x0F;
+	imesa->regs.s3d.zBufCtrl.ni.zCmpFunc = zmode;
 	imesa->regs.s3d.zBufCtrl.ni.zUpdateEn = ctx->Depth.Mask;
 	
 	imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
@@ -556,7 +556,7 @@ static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
     else
     {
 	if (imesa->regs.s3d.zBufCtrl.ni.drawUpdateEn == GL_FALSE) {
-	    imesa->regs.s3d.zBufCtrl.ni.zCmpFunc = LCS_Z_ALWAYS & 0x0F;
+	    imesa->regs.s3d.zBufCtrl.ni.zCmpFunc = CF_Always;
             imesa->regs.s3d.zBufCtrl.ni.zBufEn = GL_TRUE;
 	}
         else
@@ -1016,7 +1016,7 @@ static void savageDDStencilOp(GLcontext *ctx, GLenum fail, GLenum zfail,
 static void savageStencilFunc(GLcontext *ctx)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    int a=0;
+    SCmpFunc a=0;
     
     if (ctx->Stencil.Enabled)
     {
@@ -1024,19 +1024,19 @@ static void savageStencilFunc(GLcontext *ctx)
 
         switch (ctx->Stencil.Function[0])
         {
-            case GL_NEVER: a = LCS_S_NEVER; break;
-            case GL_ALWAYS: a = LCS_S_ALWAYS; break;
-            case GL_LESS: a = LCS_S_LESS; break; 
-            case GL_LEQUAL: a = LCS_S_LEQUAL; break;
-            case GL_EQUAL: a = LCS_S_EQUAL; break;
-            case GL_GREATER: a = LCS_S_GREATER; break;
-            case GL_GEQUAL: a = LCS_S_GEQUAL; break;
-            case GL_NOTEQUAL: a = LCS_S_NOTEQUAL; break;      
-            default:
-                break;
+	case GL_NEVER: a = CF_Never; break;
+	case GL_ALWAYS: a = CF_Always; break;
+	case GL_LESS: a = CF_Less; break; 
+	case GL_LEQUAL: a = CF_LessEqual; break;
+	case GL_EQUAL: a = CF_Equal; break;
+	case GL_GREATER: a = CF_Greater; break;
+	case GL_GEQUAL: a = CF_GreaterEqual; break;
+	case GL_NOTEQUAL: a = CF_NotEqual; break;
+	default:
+	    break;
         }
 
-        imesa->regs.s4.stencilCtrl.ni.cmpFunc     = (GLuint)a & 0x0F;
+        imesa->regs.s4.stencilCtrl.ni.cmpFunc     = a;
         imesa->regs.s4.stencilCtrl.ni.stencilEn   = GL_TRUE;
         imesa->regs.s4.stencilCtrl.ni.readMask    = ctx->Stencil.ValueMask[0];
         imesa->regs.s4.stencilCtrl.ni.writeMask   = ctx->Stencil.WriteMask[0];
@@ -1140,7 +1140,7 @@ static void savageStencilFunc(GLcontext *ctx)
 
         if (imesa->regs.s4.zBufCtrl.ni.zBufEn != GL_TRUE)
         {
-            imesa->regs.s4.zBufCtrl.ni.zCmpFunc       = LCS_Z_ALWAYS & 0x0F;
+            imesa->regs.s4.zBufCtrl.ni.zCmpFunc       = CF_Always;
             imesa->regs.s4.zBufCtrl.ni.zBufEn         = GL_TRUE;
             imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn = GL_FALSE;
         }
@@ -1612,7 +1612,7 @@ static void savageDDInitState_s4( savageContextPtr imesa )
     imesa->regs.s4.destCtrl.ui          = 1<<7;
 #endif
 
-    imesa->regs.s4.zBufCtrl.ni.zCmpFunc = LCS_Z_LESS;
+    imesa->regs.s4.zBufCtrl.ni.zCmpFunc = CF_Less;
     imesa->regs.s4.zBufCtrl.ni.wToZEn               = GL_TRUE;
     /*imesa->regs.s4.ZBufCtrl.ni.floatZEn          = GL_TRUE;*/
     imesa->regs.s4.texBlendCtrl[0].ui            = TBC_NoTexMap;
@@ -1675,7 +1675,7 @@ static void savageDDInitState_s3d( savageContextPtr imesa )
     imesa->regs.s3d.destCtrl.ui           = 1<<7;
 #endif
 
-    imesa->regs.s3d.zBufCtrl.ni.zCmpFunc  = LCS_Z_LESS & 0x07;
+    imesa->regs.s3d.zBufCtrl.ni.zCmpFunc  = CF_Less;
 #if 0
     imesa->regs.s3d.drawCtrl.ni.xyOffsetEn = 1;
 #endif
