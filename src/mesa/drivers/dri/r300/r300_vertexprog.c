@@ -436,7 +436,15 @@ static unsigned long op_operands(enum vp_opcode opcode)
 	exit(-1);
 	return 0;
 }
-		
+
+/* TODO: Get rid of t_src_class call */
+#define CMP_SRCS(a, b) (a.Index != b.Index && \
+		       ((t_src_class(a.File) == VSF_IN_CLASS_PARAM && \
+			 t_src_class(b.File) == VSF_IN_CLASS_PARAM) || \
+			(t_src_class(a.File) == VSF_IN_CLASS_ATTR && \
+			 t_src_class(b.File) == VSF_IN_CLASS_ATTR))) \
+			 
+#define SRCS_WRITABLE 1
 static void translate_program(struct r300_vertex_program *vp)
 {
 	struct vertex_program *mesa_vp=(void *)vp;
@@ -445,8 +453,12 @@ static void translate_program(struct r300_vertex_program *vp)
 	VERTEX_SHADER_INSTRUCTION t2rs[1024];
 	VERTEX_SHADER_INSTRUCTION *o_inst;
 	unsigned long operands;
-	int u_temp_i=63; /* Initial value should be last tmp reg that we can use */
-			
+	int u_temp_i=63; /* Initial value should be last tmp reg that hw supports */
+#ifdef SRCS_WRITABLE
+	struct vp_src_register src[3];
+#else	
+#define src	vpi->SrcReg	
+#endif			
 	vp->t2rs=0;
 	vp->program.length=0;
 	vp->num_temporaries=mesa_vp->Base.NumTemporaries;
@@ -459,74 +471,133 @@ static void translate_program(struct r300_vertex_program *vp)
 		
 		operands=op_operands(vpi->Opcode);
 		
+		for(i=0; i < operands; i++)
+			src[i]=vpi->SrcReg[i];
+		
+		if(operands == 3){
+			if( CMP_SRCS(src[1], src[2]) || CMP_SRCS(src[0], src[2]) ){
+				o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, u_temp_i,
+						VSF_FLAG_ALL, VSF_OUT_CLASS_TMP);
+				
+				o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[2]),
+						SWIZZLE_X, SWIZZLE_Y,
+						SWIZZLE_Z, SWIZZLE_W,
+						t_src_class(src[0].File), VSF_FLAG_NONE);
+
+				o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[2]),
+						SWIZZLE_ZERO, SWIZZLE_ZERO,
+						SWIZZLE_ZERO, SWIZZLE_ZERO,
+						t_src_class(src[0].File), VSF_FLAG_NONE);
+				o_inst->src3=0;
+				o_inst++;
+						
+				src[2].File=PROGRAM_TEMPORARY;
+				src[2].Index=u_temp_i;
+				u_temp_i--;
+			}
+			
+		}
+		if(operands >= 2){
+			if( CMP_SRCS(src[1], src[0]) ){
+				o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, u_temp_i,
+						VSF_FLAG_ALL, VSF_OUT_CLASS_TMP);
+				
+				o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+						SWIZZLE_X, SWIZZLE_Y,
+						SWIZZLE_Z, SWIZZLE_W,
+						t_src_class(src[0].File), VSF_FLAG_NONE);
+
+				o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+						SWIZZLE_ZERO, SWIZZLE_ZERO,
+						SWIZZLE_ZERO, SWIZZLE_ZERO,
+						t_src_class(src[0].File), VSF_FLAG_NONE);
+				o_inst->src3=0;
+				o_inst++;
+						
+				src[0].File=PROGRAM_TEMPORARY;
+				src[0].Index=u_temp_i;
+				u_temp_i--;
+			}
+		}
+		
 		/* these ops need special handling.
 		   Ops that need temp vars should probably be given reg indexes starting at the end of tmp area. */
 		switch(vpi->Opcode){
 		case VP_OPCODE_MOV://ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO} 
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, vpi->DstReg.Index,
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
-			o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
-			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &vpi->SrcReg[0]),
+			o_inst->src1=t_src(vp, &src[0]);
+			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
 					SWIZZLE_ZERO, SWIZZLE_ZERO,
 					SWIZZLE_ZERO, SWIZZLE_ZERO,
-					t_src_class(vpi->SrcReg[0].File), VSF_FLAG_NONE);
+					t_src_class(src[0].File), VSF_FLAG_NONE);
 
 			o_inst->src3=0;
 			goto next;
-			
+						
 		case VP_OPCODE_DP3://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ZERO} PARAM 0{} {X Y Z ZERO} 
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_DOT, vpi->DstReg.Index,
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
-			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &vpi->SrcReg[0]),
-					t_swizzle(vpi->SrcReg[0].Swizzle[0]),
-					t_swizzle(vpi->SrcReg[0].Swizzle[1]),
-					t_swizzle(vpi->SrcReg[0].Swizzle[2]),
+			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+					t_swizzle(src[0].Swizzle[0]),
+					t_swizzle(src[0].Swizzle[1]),
+					t_swizzle(src[0].Swizzle[2]),
 					SWIZZLE_ZERO,
-					t_src_class(vpi->SrcReg[0].File),
-					vpi->SrcReg[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					t_src_class(src[0].File),
+					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			
-			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &vpi->SrcReg[1]),
-					t_swizzle(vpi->SrcReg[1].Swizzle[0]),
-					t_swizzle(vpi->SrcReg[1].Swizzle[1]),
-					t_swizzle(vpi->SrcReg[1].Swizzle[2]),
+			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
+					t_swizzle(src[1].Swizzle[0]),
+					t_swizzle(src[1].Swizzle[1]),
+					t_swizzle(src[1].Swizzle[2]),
 					SWIZZLE_ZERO,
-					t_src_class(vpi->SrcReg[1].File),
-					vpi->SrcReg[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					t_src_class(src[1].File),
+					src[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 
 			o_inst->src3=0;
 			goto next;
-			
+
 		case VP_OPCODE_SUB://ADD RESULT 1.X Y Z W TMP 0{} {X Y Z W} PARAM 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
+#ifdef SRCS_WRITABLE
+			vpi->Opcode=VP_OPCODE_ADD;
+			src[1].Negate=!src[1].Negate;
+			break;
+#else
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, vpi->DstReg.Index,
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
-			o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
-			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &vpi->SrcReg[1]),
-					t_swizzle(vpi->SrcReg[1].Swizzle[0]),
-					t_swizzle(vpi->SrcReg[1].Swizzle[1]),
-					t_swizzle(vpi->SrcReg[1].Swizzle[2]),
-					t_swizzle(vpi->SrcReg[1].Swizzle[3]),
-					t_src_class(vpi->SrcReg[1].File),
-					(!vpi->SrcReg[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+			o_inst->src1=t_src(vp, &src[0]);
+			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
+					t_swizzle(src[1].Swizzle[0]),
+					t_swizzle(src[1].Swizzle[1]),
+					t_swizzle(src[1].Swizzle[2]),
+					t_swizzle(src[1].Swizzle[3]),
+					t_src_class(src[1].File),
+					(!src[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			o_inst->src3=0;
 			goto next;
-			
+#endif						
 		case VP_OPCODE_ABS://MAX RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
+#ifdef SRCS_WRITABLE
+			vpi->Opcode=VP_OPCODE_MAX;
+			src[1]=src[0];
+			src[1].Negate=GL_TRUE;
+#else
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_MAX, vpi->DstReg.Index,
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
-			o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
-			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &vpi->SrcReg[0]),
-					t_swizzle(vpi->SrcReg[0].Swizzle[0]),
-					t_swizzle(vpi->SrcReg[0].Swizzle[1]),
-					t_swizzle(vpi->SrcReg[0].Swizzle[2]),
-					t_swizzle(vpi->SrcReg[0].Swizzle[3]),
-					t_src_class(vpi->SrcReg[0].File),
+			o_inst->src1=t_src(vp, &src[0]);
+			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+					t_swizzle(src[0].Swizzle[0]),
+					t_swizzle(src[0].Swizzle[1]),
+					t_swizzle(src[0].Swizzle[2]),
+					t_swizzle(src[0].Swizzle[3]),
+					t_src_class(src[0].File),
 					VSF_FLAG_ALL);
 			o_inst->src3=0;
 			goto next;
-			
+#endif						
 		case VP_OPCODE_FLR:
 		/* FRC TMP 0.X Y Z W PARAM 0{} {X Y Z W} 
 		   ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} TMP 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W */
@@ -534,7 +605,7 @@ static void translate_program(struct r300_vertex_program *vp)
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_FRC, u_temp_i,
 					t_dst_mask(vpi->DstReg.WriteMask), VSF_OUT_CLASS_TMP);
 			
-			o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
+			o_inst->src1=t_src(vp, &src[0]);
 			o_inst->src2=0;
 			o_inst->src3=0;
 			o_inst++;
@@ -542,7 +613,7 @@ static void translate_program(struct r300_vertex_program *vp)
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, vpi->DstReg.Index,
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
-			o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
+			o_inst->src1=t_src(vp, &src[0]);
 			o_inst->src2=MAKE_VSF_SOURCE(u_temp_i,
 					VSF_IN_COMPONENT_X,
 					VSF_IN_COMPONENT_Y,
@@ -550,7 +621,7 @@ static void translate_program(struct r300_vertex_program *vp)
 					VSF_IN_COMPONENT_W,
 					VSF_IN_CLASS_TMP,
 					/* Not 100% sure about this */
-					(!vpi->SrcReg[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
+					(!src[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
 
 			o_inst->src3=0;
 			u_temp_i--;
@@ -560,14 +631,14 @@ static void translate_program(struct r300_vertex_program *vp)
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_DOT, vpi->DstReg.Index,
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
-			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &vpi->SrcReg[0]),
-					t_swizzle(vpi->SrcReg[0].Swizzle[0]),
-					t_swizzle(vpi->SrcReg[0].Swizzle[1]),
-					t_swizzle(vpi->SrcReg[0].Swizzle[2]),
+			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+					t_swizzle(src[0].Swizzle[0]),
+					t_swizzle(src[0].Swizzle[1]),
+					t_swizzle(src[0].Swizzle[2]),
 					VSF_IN_COMPONENT_ONE,
-					t_src_class(vpi->SrcReg[0].File),
-					vpi->SrcReg[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
-			o_inst->src2=t_src(vp, &vpi->SrcReg[1]);
+					t_src_class(src[0].File),
+					src[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+			o_inst->src2=t_src(vp, &src[1]);
 			o_inst->src3=0;
 			goto next;
 			
@@ -579,11 +650,11 @@ static void translate_program(struct r300_vertex_program *vp)
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, u_temp_i,
 					t_dst_mask(vpi->DstReg.WriteMask), VSF_OUT_CLASS_TMP);
 			
-			o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
-			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &vpi->SrcReg[0]),
+			o_inst->src1=t_src(vp, &src[0]);
+			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
 					SWIZZLE_ZERO, SWIZZLE_ZERO,
 					SWIZZLE_ZERO, SWIZZLE_ZERO,
-					t_src_class(vpi->SrcReg[0].File), VSF_FLAG_NONE);
+					t_src_class(src[0].File), VSF_FLAG_NONE);
 			o_inst->src3=0;
 			o_inst++;
 			u_temp_i--;
@@ -598,8 +669,8 @@ static void translate_program(struct r300_vertex_program *vp)
 					SWIZZLE_ZERO,
 					VSF_IN_CLASS_TMP,
 					/* Not 100% sure about this */
-					(!vpi->SrcReg[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
-			o_inst->src2=t_src(vp, &vpi->SrcReg[1]);
+					(!src[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
+			o_inst->src2=t_src(vp, &src[1]);
 			o_inst->src3=0;
 			u_temp_i--;
 			o_inst++;
@@ -614,7 +685,7 @@ static void translate_program(struct r300_vertex_program *vp)
 					SWIZZLE_ONE,
 					VSF_IN_CLASS_TMP,
 					/* Not 100% sure about this */
-					vpi->SrcReg[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
+					src[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
 			
 			o_inst->src2=MAKE_VSF_SOURCE(u_temp_i+1,
 					VSF_IN_COMPONENT_X,
@@ -623,10 +694,10 @@ static void translate_program(struct r300_vertex_program *vp)
 					VSF_IN_COMPONENT_W,
 					VSF_IN_CLASS_TMP,
 					/* Not 100% sure about this */
-					(!vpi->SrcReg[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
+					(!src[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
 			o_inst->src3=0;
 			goto next;
-			
+
 		case VP_OPCODE_ARL:
 		case VP_OPCODE_SWZ:
 		case VP_OPCODE_RCC:
@@ -646,21 +717,21 @@ static void translate_program(struct r300_vertex_program *vp)
 
 		switch(operands){
 			case 1:
-				o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
+				o_inst->src1=t_src(vp, &src[0]);
 				o_inst->src2=0;
 				o_inst->src3=0;
 			break;
 			
 			case 2:
-				o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
-				o_inst->src2=t_src(vp, &vpi->SrcReg[1]);
+				o_inst->src1=t_src(vp, &src[0]);
+				o_inst->src2=t_src(vp, &src[1]);
 				o_inst->src3=0;
 			break;
 			
 			case 3:
-				o_inst->src1=t_src(vp, &vpi->SrcReg[0]);
-				o_inst->src2=t_src(vp, &vpi->SrcReg[1]);
-				o_inst->src3=t_src(vp, &vpi->SrcReg[2]);
+				o_inst->src1=t_src(vp, &src[0]);
+				o_inst->src2=t_src(vp, &src[1]);
+				o_inst->src3=t_src(vp, &src[2]);
 			break;
 			
 			default:
@@ -673,7 +744,7 @@ static void translate_program(struct r300_vertex_program *vp)
 		/* If instruction writes to result and one of the inputs is tmp, we move it at the end of program */
 		if(vpi->DstReg.File == PROGRAM_OUTPUT){
 			for(operand_index=0; operand_index < operands; operand_index++)
-				if(vpi->SrcReg[operand_index].File == PROGRAM_TEMPORARY){
+				if(src[operand_index].File == PROGRAM_TEMPORARY){
 					t2rs[vp->t2rs++]=*o_inst;
 					o_inst--; /* FIXME */
 					break;
