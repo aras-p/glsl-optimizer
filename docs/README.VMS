@@ -5,8 +5,9 @@ VMS support contributed by Jouk Jansen (joukj@hrem.stm.tudelft.nl)
 The latest version was tested on a VMSAlpha7.2 system using DECC6.0, but
 probably also works for other versions.
 
-At the moment only the libraries LIBMESGL.EXE/LIBMESGL.OLB, LIBMESAGLU.OLB and
-LIBGLUT.OLB and the demos of the directory [.DEMOS] can be build.
+At the moment only the libraries LIBMESGL.EXE/LIBMESGL.OLB,
+LIBMESAGLU.EXE/LIBMESAGLU.OLB and LIBGLUT.EXE/LIBGLUT.OLB and the demos of the
+directory [.DEMOS] can be build.
 However, feel free to create the missing "decrip.mms-files" in the other
 directories.
 
@@ -20,7 +21,8 @@ mesagl.  For MMS the deafult makefile is called descrip.mms, and
 that is what I have called it.  I included alse some config files,
 all having mms somewhere in the name which all the makefiles need
 (just as your unix makefiles).
-On Alpha platforms at default a sharable image is created for LIBMESAGL.EXE.
+
+On Alpha platforms at default a sharable images for the libraries are created.
 To get a static library make it by typing MMS/MACRO=(NOSHARE=1).
 On VAX platforms only static libraries can be build.
 
