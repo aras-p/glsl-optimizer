@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  5.0
  * 
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa 5.0
+ * DOS/DJGPP device driver v1.3 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -39,6 +39,7 @@
 #include "extensions.h"
 #include "macros.h"
 #include "matrix.h"
+#include "mmath.h"
 #include "texformat.h"
 #include "texstore.h"
 #include "array_cache/acache.h"
@@ -1099,7 +1100,7 @@ static const GLubyte* get_string (GLcontext *ctx, GLenum name)
                                      #ifdef MATROX
                                      " (MGA)"
                                      #endif
-                                     "\0port (c) Borca Daniel feb-2003";
+                                     "\0port (c) Borca Daniel mar-2003";
         default:
              return NULL;
  }

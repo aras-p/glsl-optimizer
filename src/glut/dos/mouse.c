@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.3 for Mesa 5.0
+ * DOS/DJGPP glut driver v1.3 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -43,4 +43,18 @@ void __glutInitMouse (void)
 
     g_curwin->show_mouse = (g_curwin->mouse || g_curwin->motion || g_curwin->passive);
  }
+}
+
+
+
+void APIENTRY glutSetCursor (int cursor)
+{
+ /* XXX completely futile until full mouse support (maybe never) */
+}
+
+
+
+void APIENTRY glutWarpPointer (int x, int y)
+{
+ pc_warp_mouse(x, y);
 }

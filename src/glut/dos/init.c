@@ -19,7 +19,7 @@
  */
 
 /*
- * DOS/DJGPP glut driver v1.3 for Mesa 5.0
+ * DOS/DJGPP glut driver v1.3 for Mesa
  *
  *  Copyright (C) 2002 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -152,10 +152,11 @@ void APIENTRY glutMainLoop (void)
        if (g_mouse) {
           int mouse_x;
           int mouse_y;
+          int mouse_z;
           int mouse_b;
 
           /* query mouse */
-          mouse_b = pc_query_mouse(&mouse_x, &mouse_y);
+          mouse_b = pc_query_mouse(&mouse_x, &mouse_y, &mouse_z);
 
           /* relative to window coordinates */
           g_mouse_x = mouse_x - g_curwin->xpos;

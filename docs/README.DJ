@@ -1,12 +1,12 @@
-			Mesa 5.0 DOS/DJGPP Port v1.3
-			~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			Mesa 5.0.1 DOS/DJGPP Port v1.3
+			~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
 Description:
 ~~~~~~~~~~~~
 
-Well, guess what... this is the DOS port of Mesa 5.0, for DJGPP fans... Whoa!
+Well, guess what... this is the DOS port of Mesa 5.0.1, for DJGPP fans... Whoa!
 The driver has its origins in ddsample.c, written by Brian Paul and found by me
 in Mesa 3.4.2.
 
@@ -165,8 +165,8 @@ space (and since dynamic modules shall) the SIGINT can't be hooked (well, it
 can, but it is useless), therefore you must live with the 'Exiting due to
 signal SIGINT' message...
 
-The mouse driver is far from complete (lack of positioning, drawing, etc), but
-is enough to make almost all the demos work.
+The mouse driver is far from complete (lack of drawing, etc), but is enough to
+make almost all the demos work. Supports the CuteMouse WheelAPI.
 
 The timer is pretty versatile for it supports multiple timers with different
 frequencies. While not being the most accurate timer in the known universe, I
@@ -207,7 +207,7 @@ v1.2 (nov-2002)
 	* synced w/ Mesa-4.1
 	- removed dmesadxe.h
 
-v1.3 (feb-2003)
+v1.3 (mar-2003)
 	+ enabled OpenGL 1.4 support
 	+ added MMX clear/blit routines
 	+ enabled SGI's GLU compilation

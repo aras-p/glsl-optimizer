@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa 5.0  --  MGA2064W triangle template
+ * DOS/DJGPP device driver v1.3 for Mesa  --  MGA2064W triangle template
  *
  *  Copyright (c) 2003 - Borca Daniel
  *  Email : dborca@yahoo.com

@@ -25,7 +25,7 @@
 
 typedef void (*VFUNC) (void);
 typedef void (*PFUNC) (void *);
-typedef void (*MFUNC) (int x, int y, int b);
+typedef void (*MFUNC) (int x, int y, int z, int b);
 
 /*
  * atexit
@@ -211,7 +211,8 @@ void pc_remove_mouse (void);
 MFUNC pc_install_mouse_handler (MFUNC handler);
 void pc_mouse_area (int x1, int y1, int x2, int y2);
 void pc_mouse_speed (int xspeed, int yspeed);
-int pc_query_mouse (int *x, int *y);
+int pc_query_mouse (int *x, int *y, int *z);
+void pc_warp_mouse (int x, int y);
 
 /*
  * standard redirection

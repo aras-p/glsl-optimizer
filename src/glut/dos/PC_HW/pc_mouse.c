@@ -8,10 +8,14 @@
 
 
 #include <dpmi.h>
+#include <sys/exceptn.h>
+#include <sys/segments.h>
 
 #include "pc_hw.h"
 
 
+
+#define PC_CUTE_WHEEL 1 /* CuteMouse WheelAPI */
 
 #define MOUSE_STACK_SIZE 16384
 
@@ -21,20 +25,23 @@
             ox = oy = 0; \
         } while (0)
 
-extern void mouse_wrapper (void);
-extern void mouse_wrapper_end (void);
+extern void mouse_wrap (void);
+extern int mouse_wrap_end[];
 
 static MFUNC mouse_func;
-static void *mouse_stack;
 static long mouse_callback;
 static __dpmi_regs mouse_regs;
 
-static volatile int pc_mouse_x, pc_mouse_y, pc_mouse_b;
+static volatile struct {
+       volatile int x, y, z, b;
+} pc_mouse;
 
 static int minx = 0;
 static int maxx = 319;
 static int miny = 0;
 static int maxy = 199;
+static int minz = 0;
+static int maxz = 255;
 
 static int sx = 2;
 static int sy = 2;
@@ -43,27 +50,34 @@ static int emulat3 = FALSE;
 
 static int ox, oy;
 
+
 static void mouse (__dpmi_regs *r)
 {
  int nx = (signed short)r->x.si / sx;
  int ny = (signed short)r->x.di / sy;
  int dx = nx - ox;
  int dy = ny - oy;
+#if PC_CUTE_WHEEL
+ int dz = (signed char)r->h.bh;
+#endif
  ox = nx;
  oy = ny;
 
- pc_mouse_b = r->x.bx;
- pc_mouse_x = MID(minx, pc_mouse_x + dx, maxx);
- pc_mouse_y = MID(miny, pc_mouse_y + dy, maxy);
+ pc_mouse.b = r->h.bl;
+ pc_mouse.x = MID(minx, pc_mouse.x + dx, maxx);
+ pc_mouse.y = MID(miny, pc_mouse.y + dy, maxy);
+#if PC_CUTE_WHEEL
+ pc_mouse.z = MID(minz, pc_mouse.z + dz, maxz);
+#endif
 
  if (emulat3) {
-    if ((pc_mouse_b&3)==3) {
-       pc_mouse_b = 4;
+    if ((pc_mouse.b&3)==3) {
+       pc_mouse.b = 4;
     }
  }
 
  if (mouse_func) {
-    mouse_func(pc_mouse_x, pc_mouse_y, pc_mouse_b);
+    mouse_func(pc_mouse.x, pc_mouse.y, pc_mouse.z, pc_mouse.b);
  }
 } ENDOFUNC(mouse)
 
@@ -83,7 +97,7 @@ void pc_remove_mouse (void)
 
     mouse_callback = 0;
 
-    free((void *)((unsigned long)mouse_stack-MOUSE_STACK_SIZE));
+    free((void *)(mouse_wrap_end[0] - MOUSE_STACK_SIZE));
  }
 }
 
@@ -109,26 +123,26 @@ int pc_install_mouse (void)
 
  /* lock wrapper */
  LOCKDATA(mouse_func);
- LOCKDATA(mouse_stack);
  LOCKDATA(mouse_callback);
  LOCKDATA(mouse_regs);
- LOCKDATA(pc_mouse_x);
- LOCKDATA(pc_mouse_y);
- LOCKDATA(pc_mouse_b);
+ LOCKDATA(pc_mouse);
  LOCKDATA(minx);
  LOCKDATA(maxx);
  LOCKDATA(miny);
  LOCKDATA(maxy);
+ LOCKDATA(minz);
+ LOCKDATA(maxz);
  LOCKDATA(sx);
  LOCKDATA(sy);
  LOCKDATA(emulat3);
  LOCKDATA(ox);
  LOCKDATA(oy);
  LOCKFUNC(mouse);
- LOCKFUNC(mouse_wrapper);
+ LOCKFUNC(mouse_wrap);
 
+ mouse_wrap_end[1] = __djgpp_ds_alias;
  /* grab a locked stack */
- if ((mouse_stack=pc_malloc(MOUSE_STACK_SIZE))==NULL) {
+ if ((mouse_wrap_end[0] = (int)pc_malloc(MOUSE_STACK_SIZE)) == NULL) {
     return 0;
  }
 
@@ -150,19 +164,23 @@ int pc_install_mouse (void)
 		movl	%%ecx, %0	\n\
 	0:				\n\
  ":"=g"(mouse_callback)
-  :"S" (mouse_wrapper), "D"(&mouse_regs)
+  :"S" (mouse_wrap), "D"(&mouse_regs)
   :"%eax", "%ecx", "%edx");
  if (!mouse_callback) {
-    free(mouse_stack);
+    free((void *)mouse_wrap_end[0]);
     return 0;
  }
 
  /* adjust stack */
- mouse_stack = (void *)((unsigned long)mouse_stack + MOUSE_STACK_SIZE);
+ mouse_wrap_end[0] += MOUSE_STACK_SIZE;
 
  /* install the handler */
  mouse_regs.x.ax = 0x000c;
- mouse_regs.x.cx = 0x007f;
+#if PC_CUTE_WHEEL
+ mouse_regs.x.cx = 0x7f | 0x80;
+#else
+ mouse_regs.x.cx = 0x7f;
+#endif
  mouse_regs.x.dx = mouse_callback&0xffff;
  mouse_regs.x.es = mouse_callback>>16;
  __dpmi_int(0x33, &mouse_regs);
@@ -205,41 +223,57 @@ void pc_mouse_speed (int xspeed, int yspeed)
  ENABLE();
 }
 
-int pc_query_mouse (int *x, int *y)
+int pc_query_mouse (int *x, int *y, int *z)
 {
- *x = pc_mouse_x;
- *y = pc_mouse_y;
- return pc_mouse_b;
+ *x = pc_mouse.x;
+ *y = pc_mouse.y;
+ *z = pc_mouse.z;
+ return pc_mouse.b;
 }
 
+void pc_warp_mouse (int x, int y)
+{
+ CLEAR_MICKEYS();
+
+ pc_mouse.x = MID(minx, x, maxx);
+ pc_mouse.y = MID(miny, y, maxy);
+
+ if (mouse_func) {
+    mouse_func(pc_mouse.x, pc_mouse.y, pc_mouse.z, pc_mouse.b);
+ }
+}
+
+/* Hack alert:
+ * `mouse_wrap_end' actually holds the
+ * address of stack in a safe data selector.
+ */
 __asm("\n\
-		.text					\n\
-		.p2align 5,,31				\n\
-		.global	_mouse_wrapper			\n\
-_mouse_wrapper:						\n\
-		cld					\n\
-		lodsl					\n\
-		movl	%eax, %es:42(%edi)		\n\
-		addw	$4, %es:46(%edi)		\n\
-		pushl	%es				\n\
-		movl	%ss, %ebx			\n\
-		movl	%esp, %esi			\n\
-		movl	%cs:___djgpp_ds_alias, %ss	\n\
-		movl	%cs:_mouse_stack, %esp		\n\
-		pushl	%ss				\n\
-		pushl	%ss				\n\
-		popl	%es				\n\
-		popl	%ds				\n\
-		movl	___djgpp_dos_sel, %fs		\n\
-		pushl	%fs				\n\
-		popl	%gs				\n\
-		pushl	%edi				\n\
-		call	_mouse				\n\
-		popl	%edi				\n\
-		movl	%ebx, %ss			\n\
-		movl	%esi, %esp			\n\
-		popl	%es				\n\
-		iret					\n\
-		.balign	4				\n\
-		.global	_mouse_wrapper_end		\n\
-_mouse_wrapper_end:");
+		.text				\n\
+		.p2align 5,,31			\n\
+		.global	_mouse_wrap		\n\
+_mouse_wrap:					\n\
+		cld				\n\
+		lodsl				\n\
+		movl	%eax, %es:42(%edi)	\n\
+		addw	$4, %es:46(%edi)	\n\
+		pushl	%es			\n\
+		movl	%ss, %ebx		\n\
+		movl	%esp, %esi		\n\
+		lss	%cs:_mouse_wrap_end, %esp\n\
+		pushl	%ss			\n\
+		pushl	%ss			\n\
+		popl	%es			\n\
+		popl	%ds			\n\
+		movl	___djgpp_dos_sel, %fs	\n\
+		pushl	%fs			\n\
+		popl	%gs			\n\
+		pushl	%edi			\n\
+		call	_mouse			\n\
+		popl	%edi			\n\
+		movl	%ebx, %ss		\n\
+		movl	%esi, %esp		\n\
+		popl	%es			\n\
+		iret				\n\
+		.balign	4			\n\
+		.global	_mouse_wrap_end		\n\
+_mouse_wrap_end:.long	0, 0");

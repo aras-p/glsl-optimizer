@@ -357,20 +357,6 @@ static void handle_code (int scancode, int keycode)
  in_a_terrupt--;
 } ENDOFUNC(handle_code)
 
-static __inline void satisfy (void)
-{
- __asm("\n\
-		inb	$0x61, %%al	\n\
-		movb	%%al, %%ah	\n\
-		orb	$0x80, %%al	\n\
-		outb	%%al, $0x61	\n\
-		xchgb	%%al, %%ah	\n\
-		outb	%%al, $0x61	\n\
-		movb	$0x20, %%al	\n\
-		outb	%%al, $0x20	\n\
- ":::"%eax");
-}
-
 static int keyboard ()
 {
  unsigned char temp, scancode;
@@ -410,7 +396,16 @@ static int keyboard ()
     ":::"%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi", "memory");
  }
 
- satisfy();
+ __asm("\n\
+		inb	$0x61, %%al	\n\
+		movb	%%al, %%ah	\n\
+		orb	$0x80, %%al	\n\
+		outb	%%al, $0x61	\n\
+		xchgb	%%al, %%ah	\n\
+		outb	%%al, $0x61	\n\
+		movb	$0x20, %%al	\n\
+		outb	%%al, $0x20	\n\
+ ":::"%eax");
  return 0;
 } ENDOFUNC(keyboard)
 
