@@ -41,32 +41,13 @@
 ** These are _size functions that are needed to pack the arguments
 ** into the protocol
 */
+
+#include "indirect_size.h"
+
 extern GLint __glBitmap_size(GLsizei w, GLsizei h);
-extern GLint __glCallLists_size(GLsizei n, GLenum type);
-extern GLint __glColorTableParameterfv_size(GLenum pname);
-extern GLint __glColorTableParameteriv_size(GLenum pname);
-extern GLint __glConvolutionParameterfv_size(GLenum pname);
-extern GLint __glConvolutionParameteriv_size(GLenum pname);
 extern GLint __glDrawPixels_size(GLenum format, GLenum type, GLsizei w,GLsizei h);
-extern GLint __glFogfv_size(GLenum pname);
-extern GLint __glFogiv_size(GLenum pname);
-extern GLint __glLightModelfv_size(GLenum pname);
-extern GLint __glLightModeliv_size(GLenum pname);
-extern GLint __glLightfv_size(GLenum pname);
-extern GLint __glLightiv_size(GLenum pname);
-extern GLint __glMaterialfv_size(GLenum pname);
-extern GLint __glMaterialiv_size(GLenum pname);
-extern GLint __glTexEnvfv_size(GLenum e);
-extern GLint __glTexEnviv_size(GLenum e);
-extern GLint __glTexGendv_size(GLenum e);
-extern GLint __glTexGenfv_size(GLenum e);
-extern GLint __glTexGeniv_size(GLenum pname);
 extern GLint __glTexImage1D_size(GLenum format, GLenum type, GLsizei w);
 extern GLint __glTexImage2D_size(GLenum format, GLenum type, GLsizei w, GLsizei h);
 extern GLint __glTexImage3D_size(GLenum format, GLenum type, GLsizei w, GLsizei h, GLsizei d);
-extern GLint __glTexParameterfv_size(GLenum e);
-extern GLint __glTexParameteriv_size(GLenum e);
-extern GLint __glPointParameterfvEXT_size(GLenum e);
-extern GLint __glPointParameterivNV_size(GLenum e);
 
 #endif /* _size_h_ */

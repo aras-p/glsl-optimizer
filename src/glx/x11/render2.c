@@ -49,7 +49,7 @@ void __indirect_glCallLists(GLsizei n, GLenum type, const GLvoid *lists)
     __GLX_DECLARE_VARIABLES();
     __GLX_LOAD_VARIABLES();
 
-    compsize = __glCallLists_size(n,type);
+    compsize = (n <= 0) ? 0 : __glCallLists_size(type) * n;
     cmdlen = __GLX_PAD(12 + compsize);
     if (!gc->currentDpy) return;
 
@@ -76,7 +76,7 @@ void __indirect_glMap1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride,
     GLint k;
 
     __GLX_LOAD_VARIABLES();
-    k = __glEvalComputeK(target);
+    k = __glMap1d_size(target);
     if (k == 0) {
 	__glXSetError(gc, GL_INVALID_ENUM);
 	return;
@@ -138,7 +138,7 @@ void __indirect_glMap1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride,
     GLint k;
 
     __GLX_LOAD_VARIABLES();
-    k = __glEvalComputeK(target);
+    k = __glMap1f_size(target);
     if (k == 0) {
 	__glXSetError(gc, GL_INVALID_ENUM);
 	return;
@@ -197,7 +197,7 @@ void __indirect_glMap2d(GLenum target, GLdouble u1, GLdouble u2, GLint ustr, GLi
     GLint k;
 
     __GLX_LOAD_VARIABLES();
-    k = __glEvalComputeK(target);
+    k = __glMap2d_size(target);
     if (k == 0) {
 	__glXSetError(gc, GL_INVALID_ENUM);
 	return;
@@ -270,7 +270,7 @@ void __indirect_glMap2f(GLenum target, GLfloat u1, GLfloat u2, GLint ustr, GLint
     GLint k;
 
     __GLX_LOAD_VARIABLES();
-    k = __glEvalComputeK(target);
+    k = __glMap2f_size(target);
     if (k == 0) {
 	__glXSetError(gc, GL_INVALID_ENUM);
 	return;
