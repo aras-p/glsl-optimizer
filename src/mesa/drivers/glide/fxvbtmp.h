@@ -163,7 +163,7 @@ static void TAG(interp)( GLcontext *ctx,
 
    dst->x   = s[0]  * dstclip[0] * oow + s[12];	
    dst->y   = s[5]  * dstclip[1] * oow + s[13];	
-   dst->z   = s[10] * dstclip[2] * oow + s[14];	
+   dst->ooz = s[10] * dstclip[2] * oow + s[14];	
    dst->oow = oow;	
    
    if (IND & SETUP_SNAP) {
