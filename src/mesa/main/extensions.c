@@ -299,6 +299,7 @@ _mesa_enable_1_5_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
    ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
+   ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
 }
 
 

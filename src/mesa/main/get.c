@@ -6379,6 +6379,7 @@ _mesa_GetString( GLenum name )
    static const char *version_1_2 = "1.2 Mesa " MESA_VERSION_STRING;
    static const char *version_1_3 = "1.3 Mesa " MESA_VERSION_STRING;
    static const char *version_1_4 = "1.4 Mesa " MESA_VERSION_STRING;
+   static const char *version_1_5 = "1.5 Mesa " MESA_VERSION_STRING;
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
@@ -6419,7 +6420,15 @@ _mesa_GetString( GLenum name )
                    ctx->Extensions.EXT_secondary_color &&
                    ctx->Extensions.EXT_stencil_wrap &&
                    ctx->Extensions.SGIS_generate_mipmap) {
-                  return (const GLubyte *) version_1_4;
+                  if (ctx->Extensions.ARB_occlusion_query &&
+                      ctx->Extensions.ARB_vertex_buffer_object &&
+                      ctx->Extensions.ARB_texture_non_power_of_two &&
+                      ctx->Extensions.EXT_shadow_funcs) {
+                     return (const GLubyte *) version_1_5;
+                  }
+                  else {
+                     return (const GLubyte *) version_1_4;
+                  }
                }
                else {
                   return (const GLubyte *) version_1_3;
