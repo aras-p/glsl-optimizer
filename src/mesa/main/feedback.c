@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.23 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: feedback.c,v 1.24 2001/03/29 17:08:26 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -343,7 +343,6 @@ _mesa_RenderMode( GLenum mode )
       fprintf(stderr, "glRenderMode %s\n", _mesa_lookup_enum_by_nr(mode));
 
    FLUSH_VERTICES(ctx, _NEW_RENDERMODE);
-   ctx->_TriangleCaps &= ~(DD_FEEDBACK|DD_SELECT);
 
    switch (ctx->RenderMode) {
       case GL_RENDER:
@@ -386,14 +385,12 @@ _mesa_RenderMode( GLenum mode )
       case GL_RENDER:
          break;
       case GL_SELECT:
-	 ctx->_TriangleCaps |= DD_SELECT;
 	 if (ctx->Select.BufferSize==0) {
 	    /* haven't called glSelectBuffer yet */
 	    _mesa_error( ctx, GL_INVALID_OPERATION, "glRenderMode" );
 	 }
 	 break;
       case GL_FEEDBACK:
-	 ctx->_TriangleCaps |= DD_FEEDBACK;
 	 if (ctx->Feedback.BufferSize==0) {
 	    /* haven't called glFeedbackBuffer yet */
 	    _mesa_error( ctx, GL_INVALID_OPERATION, "glRenderMode" );

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.36 2001/03/29 16:50:32 brianp Exp $ */
+/* $Id: mtypes.h,v 1.37 2001/03/29 17:08:26 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1327,31 +1327,26 @@ struct gl_extensions {
 
 /* A bunch of flags that we think might be useful to drivers.
  */
-#define DD_FEEDBACK                 0x1
-#define DD_SELECT                   0x2
-#define DD_FLATSHADE                0x4
-#define DD_SEPARATE_SPECULAR        0x10
-#define DD_TRI_LIGHT_TWOSIDE        0x20
-#define DD_TRI_UNFILLED             0x40
-#define DD_TRI_SMOOTH               0x80
-#define DD_TRI_STIPPLE              0x100
-#define DD_TRI_OFFSET               0x200
-#define DD_LINE_SMOOTH              0x800
-#define DD_LINE_STIPPLE             0x1000
-#define DD_LINE_WIDTH               0x2000
-#define DD_POINT_SMOOTH             0x4000
-#define DD_POINT_SIZE               0x8000
-#define DD_POINT_ATTEN              0x10000
-#define DD_TRI_CULL_FRONT_BACK      0x400000 /* special case on some hw */
-#define DD_STENCIL                  0x800000
+#define DD_FLATSHADE                0x1
+#define DD_SEPARATE_SPECULAR        0x2
+#define DD_TRI_CULL_FRONT_BACK      0x4 /* special case on some hw */
+#define DD_TRI_LIGHT_TWOSIDE        0x8
+#define DD_TRI_UNFILLED             0x10
+#define DD_TRI_SMOOTH               0x20
+#define DD_TRI_STIPPLE              0x40
+#define DD_TRI_OFFSET               0x80
+#define DD_LINE_SMOOTH              0x100
+#define DD_LINE_STIPPLE             0x200
+#define DD_LINE_WIDTH               0x400
+#define DD_POINT_SMOOTH             0x800
+#define DD_POINT_SIZE               0x1000
+#define DD_POINT_ATTEN              0x2000
 
 /* Define the state changes under which each of these bits might change
  */
-#define _DD_NEW_FEEDBACK                 _NEW_RENDERMODE
-#define _DD_NEW_SELECT                   _NEW_RENDERMODE
 #define _DD_NEW_FLATSHADE                _NEW_LIGHT
-#define _DD_NEW_MULTIDRAW                _NEW_COLOR
 #define _DD_NEW_SEPARATE_SPECULAR        (_NEW_LIGHT | _NEW_FOG)
+#define _DD_NEW_TRI_CULL_FRONT_BACK      _NEW_POLYGON
 #define _DD_NEW_TRI_LIGHT_TWOSIDE        _NEW_LIGHT
 #define _DD_NEW_TRI_UNFILLED             _NEW_POLYGON
 #define _DD_NEW_TRI_SMOOTH               _NEW_POLYGON
@@ -1363,8 +1358,6 @@ struct gl_extensions {
 #define _DD_NEW_POINT_SMOOTH             _NEW_POINT
 #define _DD_NEW_POINT_SIZE               _NEW_POINT
 #define _DD_NEW_POINT_ATTEN              _NEW_POINT
-#define _DD_NEW_TRI_CULL_FRONT_BACK      _NEW_POLYGON
-#define _DD_NEW_STENCIL                  _NEW_STENCIL
 
 #define _MESA_NEW_NEED_EYE_COORDS         (_NEW_LIGHT |		\
                                            _NEW_TEXTURE |	\

@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.46 2001/03/29 16:50:32 brianp Exp $ */
+/* $Id: enable.c,v 1.47 2001/03/29 17:08:26 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -497,7 +497,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 return;
       FLUSH_VERTICES(ctx, _NEW_STENCIL);
       ctx->Stencil.Enabled = state;
-      ctx->_TriangleCaps ^= DD_STENCIL;
       break;
    case GL_TEXTURE_1D: {
       const GLuint curr = ctx->Texture.CurrentUnit;

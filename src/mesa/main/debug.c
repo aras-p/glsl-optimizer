@@ -1,4 +1,4 @@
-/* $Id: debug.c,v 1.10 2001/03/29 16:50:31 brianp Exp $ */
+/* $Id: debug.c,v 1.11 2001/03/29 17:08:26 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,7 +30,7 @@
 void _mesa_print_state( const char *msg, GLuint state )
 {
    fprintf(stderr,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   msg,
 	   state,
 	   (state & _NEW_MODELVIEW)       ? "ctx->ModelView, " : "",
@@ -92,11 +92,9 @@ void _mesa_print_enable_flags( const char *msg, GLuint flags )
 void _mesa_print_tri_caps( const char *name, GLuint flags )
 {
    fprintf(stderr,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   name,
 	   flags,
-	   (flags & DD_FEEDBACK)            ? "feedback, " : "",
-	   (flags & DD_SELECT)              ? "select, " : "",
 	   (flags & DD_FLATSHADE)           ? "flat-shade, " : "",
 	   (flags & DD_SEPARATE_SPECULAR)   ? "separate-specular, " : "",
 	   (flags & DD_TRI_LIGHT_TWOSIDE)   ? "tri-light-twoside, " : "",
@@ -110,7 +108,6 @@ void _mesa_print_tri_caps( const char *name, GLuint flags )
 	   (flags & DD_POINT_SMOOTH)        ? "point-smooth, " : "",
 	   (flags & DD_POINT_SIZE)          ? "point-size, " : "",
 	   (flags & DD_POINT_ATTEN)         ? "point-atten, " : "",
-	   (flags & DD_TRI_CULL_FRONT_BACK) ? "cull-all, " : "",
-	   (flags & DD_STENCIL)             ? "stencil, " : ""
+	   (flags & DD_TRI_CULL_FRONT_BACK) ? "cull-all, " : ""
       );
 }

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.62 2001/03/19 02:25:35 keithw Exp $ */
+/* $Id: state.c,v 1.63 2001/03/29 17:08:26 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -949,11 +949,6 @@ void _mesa_update_state( GLcontext *ctx )
 
    /* At this point we can do some assertions to be sure the required
     * device driver function pointers are all initialized.
-    *
-    * KW: Moved the some of these asserts to t_vb_render.c, as they
-    * are strictly only required for that stage.  The Driver struct
-    * should probably be split; the read/write span/pixels functions
-    * should be referenced only from swrast, for instance.
     */
    ASSERT(ctx->Driver.GetString);
    ASSERT(ctx->Driver.UpdateState);
