@@ -393,13 +393,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
     */
    _tnl_isolate_materials( ctx, GL_TRUE );
 
-
 /*     _mesa_allow_light_in_model( ctx, GL_FALSE ); */
-
-   /* Try and keep materials and vertices separate:
-    */
-   _tnl_isolate_materials( ctx, GL_TRUE );
-
 
    /* Configure swrast and T&L to match hardware characteristics:
     */
