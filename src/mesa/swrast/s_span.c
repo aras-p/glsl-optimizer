@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.15 2001/06/18 23:55:18 brianp Exp $ */
+/* $Id: s_span.c,v 1.16 2001/07/23 16:08:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -777,12 +777,19 @@ add_colors(GLuint n, GLchan rgba[][4], CONST GLchan specular[][4] )
 {
    GLuint i;
    for (i = 0; i < n; i++) {
+#if CHAN_TYPE == GL_FLOAT
+      /* no clamping */
+      rgba[i][RCOMP] += specular[i][RCOMP];
+      rgba[i][GCOMP] += specular[i][GCOMP];
+      rgba[i][BCOMP] += specular[i][BCOMP];
+#else
       GLint r = rgba[i][RCOMP] + specular[i][RCOMP];
       GLint g = rgba[i][GCOMP] + specular[i][GCOMP];
       GLint b = rgba[i][BCOMP] + specular[i][BCOMP];
       rgba[i][RCOMP] = (GLchan) MIN2(r, CHAN_MAX);
       rgba[i][GCOMP] = (GLchan) MIN2(g, CHAN_MAX);
       rgba[i][BCOMP] = (GLchan) MIN2(b, CHAN_MAX);
+#endif
    }
 }
 
