@@ -69,7 +69,7 @@ static int scrheight = HEIGHT;
 
 static float obs[3] = { OBSSTARTX, heightMnt * 1.3, OBSSTARTY };
 static float dir[3], v1[2], v2[2];
-static float v = 15.0;
+static float v = 900.0;
 static float alpha = 75.0;
 static float beta = 90.0;
 
@@ -77,6 +77,12 @@ static void
 calcposobs(void)
 {
    float alpha1, alpha2;
+   static double t0 = -1.;
+   double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+   if (t0 < 0.0)
+      t0 = t;
+   dt = t - t0;
+   t0 = t;
 
    dir[0] = sin(alpha * M_PI / 180.0);
    dir[2] = cos(alpha * M_PI / 180.0) * sin(beta * M_PI / 180.0);
@@ -97,9 +103,9 @@ calcposobs(void)
    v2[0] = sin(alpha2 * M_PI / 180.0);
    v2[1] = cos(alpha2 * M_PI / 180.0);
 
-   obs[0] += v * dir[0];
-   obs[1] += v * dir[1];
-   obs[2] += v * dir[2];
+   obs[0] += v * dir[0] * dt;
+   obs[1] += v * dir[1] * dt;
+   obs[2] += v * dir[2] * dt;
 
    if (obs[1] < 0.0)
       obs[1] = 0.0;
@@ -432,10 +438,10 @@ key(unsigned char k, int x, int y)
       exit(0);
       break;
    case 'a':
-      v += 0.5;
+      v += 50.;
       break;
    case 'z':
-      v -= 0.5;
+      v -= 50.;
       break;
    case 'p':
       if (poutline) {

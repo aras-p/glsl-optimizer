@@ -9,14 +9,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <time.h>
+#include <string.h>
 
 #ifdef WIN32
 #include <windows.h>
 #endif
 
 #include <GL/glut.h>
-#include "readtex.c"
+#include "readtex.h"
 #include "tunneldat.h"
 
 #ifdef XMESA
@@ -55,7 +55,7 @@ static int win = 0;
 
 static float obs[3] = { 1000.0, 0.0, 2.0 };
 static float dir[3];
-static float v = 0.5;
+static float v = 30.;
 static float alpha = 90.0;
 static float beta = 90.0;
 
@@ -84,7 +84,7 @@ inittextures(void)
    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-		   GL_LINEAR_MIPMAP_LINEAR);
+		   GL_LINEAR_MIPMAP_NEAREST);
    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
    glGenTextures(1, &t2id);
@@ -160,6 +160,13 @@ drawobjs(const int *l, const float *f)
 static void
 calcposobs(void)
 {
+   static double t0 = -1.;
+   double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+   if (t0 < 0.0)
+      t0 = t;
+   dt = t - t0;
+   t0 = t;
+
    dir[0] = sin(alpha * M_PI / 180.0);
    dir[1] = cos(alpha * M_PI / 180.0) * sin(beta * M_PI / 180.0);
    dir[2] = cos(beta * M_PI / 180.0);
@@ -171,9 +178,9 @@ calcposobs(void)
    if (dir[2] < 1.0e-5 && dir[2] > -1.0e-5)
       dir[2] = 0;
 
-   obs[0] += v * dir[0];
-   obs[1] += v * dir[1];
-   obs[2] += v * dir[2];
+   obs[0] += v * dir[0] * dt;
+   obs[1] += v * dir[1] * dt;
+   obs[2] += v * dir[2] * dt;
 }
 
 static void
@@ -204,10 +211,10 @@ key(unsigned char k, int x, int y)
       break;
 
    case 'a':
-      v += 0.01;
+      v += 5.;
       break;
    case 'z':
-      v -= 0.01;
+      v -= 5.;
       break;
 
 #ifdef XMESA

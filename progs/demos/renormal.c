@@ -13,9 +13,15 @@
 static GLfloat Phi = 0.0;
 
 
-static void Idle(void)
+static void Idle( void )
 {
-   Phi += 0.1;
+   static double t0 = -1.;
+   double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+   if (t0 < 0.0)
+      t0 = t;
+   dt = t - t0;
+   t0 = t;
+   Phi += 3.0 * dt;
    glutPostRedisplay();
 }
 

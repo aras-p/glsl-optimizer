@@ -912,14 +912,18 @@ draw (void)
 }
 
 
-
-
 static void
 idle (void)
 {
     int i;
+    static double t0 = -1.;
+    double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+    if (t0 < 0.0)
+       t0 = t;
+    dt = t - t0;
+    t0 = t;
     for (i = 0; i < number_of_gears; i++)
-      g[i].angle += g[i].angular_velocity;
+      g[i].angle += g[i].angular_velocity * dt;
     glutPostRedisplay();
 }
 

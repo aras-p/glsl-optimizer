@@ -12,9 +12,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include <GL/glut.h>
 
-#include "readtex.c"   /* I know, this is a hack. */
+#include "readtex.h"
 
 #define TEXTURE_FILE "../images/reflect.rgb"
 
@@ -30,7 +31,7 @@ static GLuint CylinderObj = 0;
 static GLboolean Animate = GL_TRUE;
 
 static GLfloat Xrot = 0.0, Yrot = 0.0, Zrot = 0.0;
-static GLfloat DXrot = 1.0, DYrot = 2.5;
+static GLfloat DXrot = 50.0, DYrot = 125.0;
 
 /* performance info */
 static GLint T0 = 0;
@@ -39,9 +40,16 @@ static GLint Frames = 0;
 
 static void Idle( void )
 {
+   static double t0 = -1.;
+   double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+   if (t0 < 0.0)
+      t0 = t;
+   dt = t - t0;
+   t0 = t;
+
    if (Animate) {
-      Xrot += DXrot;
-      Yrot += DYrot;
+      Xrot += DXrot * dt;
+      Yrot += DYrot * dt;
       glutPostRedisplay();
    }
 }

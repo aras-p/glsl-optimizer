@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <GL/glut.h>
+#include <sys/time.h>
+#include <time.h>
 
 #define COS(X)   cos( (X) * 3.14159/180.0 )
 #define SIN(X)   sin( (X) * 3.14159/180.0 )
@@ -25,12 +27,12 @@
 GLboolean IndexMode = GL_FALSE;
 GLuint Ball;
 GLenum Mode;
-GLfloat Zrot = 0.0, Zstep = 6.0;
+GLfloat Zrot = 0.0, Zstep = 180.0;
 GLfloat Xpos = 0.0, Ypos = 1.0;
-GLfloat Xvel = 0.2, Yvel = 0.0;
+GLfloat Xvel = 2.0, Yvel = 0.0;
 GLfloat Xmin = -4.0, Xmax = 4.0;
 GLfloat Ymin = -3.8, Ymax = 4.0;
-GLfloat G = -0.1;
+GLfloat G = -9.8;
 
 static GLuint 
 make_ball(void)
@@ -149,10 +151,17 @@ static void
 idle(void)
 {
   static float vel0 = -100.0;
+  static double t0 = -1.;
+  double t, dt;
+  t = glutGet(GLUT_ELAPSED_TIME) / 1000.;
+  if (t0 < 0.)
+     t0 = t;
+  dt = t - t0;
+  t0 = t;
 
-  Zrot += Zstep;
+  Zrot += Zstep*dt;
 
-  Xpos += Xvel;
+  Xpos += Xvel*dt;
   if (Xpos >= Xmax) {
     Xpos = Xmax;
     Xvel = -Xvel;
@@ -163,8 +172,8 @@ idle(void)
     Xvel = -Xvel;
     Zstep = -Zstep;
   }
-  Ypos += Yvel;
-  Yvel += G;
+  Ypos += Yvel*dt;
+  Yvel += G*dt;
   if (Ypos < Ymin) {
     Ypos = Ymin;
     if (vel0 == -100.0)

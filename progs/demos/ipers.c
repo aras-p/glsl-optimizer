@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <time.h>
+#include <string.h>
 
 #if defined (WIN32)|| defined(_WIN32)
 #include <windows.h>
@@ -18,7 +18,7 @@
 
 #include <GL/glut.h>
 
-#include "readtex.c"
+#include "readtex.h"
 
 #ifdef XMESA
 #include "GL/xmesa.h"
@@ -543,6 +543,12 @@ draw(void)
    static GLfloat alpha = 0.0f;
    static GLfloat beta = 0.0f;
    static float fr = 0.0;
+   static double t0 = -1.;
+   double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+   if (t0 < 0.0)
+      t0 = t;
+   dt = t - t0;
+   t0 = t;
 
    dojoy();
 
@@ -586,8 +592,8 @@ draw(void)
    drawipers(0, FROM_NONE);
    glPopMatrix();
 
-   alpha += 0.5f;
-   beta += 0.3f;
+   alpha += 4.f * dt;
+   beta += 2.4f * dt;
 
    glDisable(GL_LIGHTING);
    glDisable(GL_LIGHT0);

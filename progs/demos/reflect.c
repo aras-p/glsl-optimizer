@@ -31,8 +31,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "GL/glut.h"
-#include "../util/showbuffer.c"
-#include "../util/readtex.c"
+#include "showbuffer.h"
+#include "readtex.h"
 
 
 #define DEG2RAD (3.14159/180.0)
@@ -318,8 +318,14 @@ static void draw_scene( void )
 
 static void idle( void )
 {
-   spin += 2.0;
-   yrot += 3.0;
+   static double t0 = -1.;
+   double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+   if (t0 < 0.0)
+      t0 = t;
+   dt = t - t0;
+   t0 = t;
+   spin += 60.0 * dt;
+   yrot += 90.0 * dt;
    glutPostRedisplay();
 }
 

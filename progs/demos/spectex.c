@@ -25,8 +25,8 @@
 static GLUquadricObj *Quadric;
 static GLuint Sphere;
 static GLfloat LightPos[4] = {10.0, 10.0, 10.0, 1.0};
-static GLfloat Delta = 1.0;
-static GLint Mode = 0;
+static GLfloat Delta = 20.0;
+static GLint Mode = 4;
 
 /*static GLfloat Blue[4] = {0.0, 0.0, 1.0, 1.0};*/
 /*static GLfloat Gray[4] = {0.5, 0.5, 0.5, 1.0};*/
@@ -34,14 +34,18 @@ static GLfloat Black[4] = {0.0, 0.0, 0.0, 1.0};
 static GLfloat White[4] = {1.0, 1.0, 1.0, 1.0};
 
 
-
-static void Idle( void )
+static void
+Idle(void)
 {
-   LightPos[0] += Delta;
-   if (LightPos[0]>15.0)
-      Delta = -1.0;
-   else if (LightPos[0]<-15.0)
-      Delta = 1.0;
+   static double t0 = -1.;
+   double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;;
+   if (t0 < 0.0)
+      t0 = t;
+   dt = t - t0;
+   t0 = t;
+   LightPos[0] += Delta * dt;
+   if (LightPos[0]>15.0 || LightPos[0]<-15.0)
+      Delta = -Delta;
 
    glutPostRedisplay();
 }

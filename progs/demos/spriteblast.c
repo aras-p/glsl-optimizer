@@ -104,7 +104,6 @@ static float float_rand(void) { return rand() / (float) RAND_MAX; }
 
 #define MEAN_VELOCITY 3.0
 #define GRAVITY 2.0
-#define TIME_DELTA 0.025  /* The speed of time. */
 
 /* Modeling units of ground extent in each X and Z direction. */
 #define EDGE 12
@@ -139,6 +138,13 @@ updatePointList(void)
   float distance;
   int i;
 
+  static double t0 = -1.;
+  double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+  if (t0 < 0.0)
+    t0 = t;
+  dt = t - t0;
+  t0 = t;
+
   motion = 0;
   for (i=0; i<numPoints; i++) {
     distance = pointVelocity[i][0] * theTime;
@@ -164,9 +170,9 @@ updatePointList(void)
       pointTime[i] = 0.0;  /* Reset the particles sense of up time. */
     }
     motion = 1;
-    pointTime[i] += TIME_DELTA;
+    pointTime[i] += dt;
   }
-  theTime += TIME_DELTA;
+  theTime += dt;
   if (!motion && !spin) {
     if (repeat) {
       makePointList();

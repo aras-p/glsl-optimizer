@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glut.h>
-#include "../util/showbuffer.c"
+#include "showbuffer.h"
 
 #if 0 /* change to 1 if you want to use the old SGIX extensions */
 #undef GL_ARB_depth_texture
@@ -386,7 +386,13 @@ Reshape(int width, int height)
 static void
 Idle(void)
 {
-   Yrot += 5.0;
+   static double t0 = -1.;
+   double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+   if (t0 < 0.0)
+      t0 = t;
+   dt = t - t0;
+   t0 = t;
+   Yrot += 75.0 * dt;
    /*LightLongitude -= 5.0;*/
    glutPostRedisplay();
 }

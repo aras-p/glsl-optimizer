@@ -85,7 +85,13 @@ static void draw( void )
 
 static void idle( void )
 {
-   Angle += 2.0;
+   static double t0 = -1.;
+   double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+   if (t0 < 0.0)
+      t0 = t;
+   dt = t - t0;
+   t0 = t;
+   Angle += 120.0*dt;
    glutPostRedisplay();
 }
 
