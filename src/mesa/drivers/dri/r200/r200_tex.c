@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_tex.c,v 1.2 2002/11/05 17:46:08 tsi Exp $ */
 /*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
@@ -296,7 +296,7 @@ r200ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
                            GLenum format, GLenum type )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   const GLboolean do32bpt = ( rmesa->r200Screen->cpp == 4 );
+   const GLboolean do32bpt = rmesa->default32BitTextures;
 
    switch ( internalFormat ) {
    case 4:
@@ -495,7 +495,7 @@ r200ValidateClientStorage( GLcontext *ctx, GLenum target,
        * relaxed, but would need to store the image pitch somewhere,
        * as packing details might change before image is uploaded:
        */
-      if (!r200IsAgpMemory( rmesa, pixels, srcHeight * srcRowStride ) ||
+      if (!r200IsGartMemory( rmesa, pixels, srcHeight * srcRowStride ) ||
 	  (srcRowStride & 63))
 	 return 0;
 
@@ -626,8 +626,8 @@ static void r200TexImage2D( GLcontext *ctx, GLenum target, GLint level,
 	 fprintf(stderr, "%s: Using normal storage\n", __FUNCTION__); 
 
       /* Normal path: copy (to cached memory) and eventually upload
-       * via another copy to agp memory and then a blit...  Could
-       * eliminate one copy by going straight to (permanent) agp.
+       * via another copy to GART memory and then a blit...  Could
+       * eliminate one copy by going straight to (permanent) GART.
        *
        * Note, this will call r200ChooseTextureFormat.
        */
@@ -729,8 +729,8 @@ static void r200TexImage3D( GLcontext *ctx, GLenum target, GLint level,
 	 fprintf(stderr, "%s: Using normal storage\n", __FUNCTION__); 
 
       /* Normal path: copy (to cached memory) and eventually upload
-       * via another copy to agp memory and then a blit...  Could
-       * eliminate one copy by going straight to (permanent) agp.
+       * via another copy to GART memory and then a blit...  Could
+       * eliminate one copy by going straight to (permanent) GART.
        *
        * Note, this will call r200ChooseTextureFormat.
        */

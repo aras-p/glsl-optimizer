@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_texmem.c,v 1.5 2002/12/17 00:32:56 dawes Exp $ */
 /**************************************************************************
 
 Copyright (C) Tungsten Graphics 2002.  All Rights Reserved.  
@@ -35,6 +35,7 @@ SOFTWARE.
  *   Gareth Hughes <gareth@valinux.com>
  *
  */
+ 
 #include <errno.h>
 
 #include "glheader.h"
@@ -86,12 +87,12 @@ r200DestroyTexObj( r200ContextPtr rmesa, r200TexObjPtr t )
  */
 
 
-static void r200UploadAGPClientSubImage( r200ContextPtr rmesa,
-					 r200TexObjPtr t, 
-					 struct gl_texture_image *texImage,
-					 GLint hwlevel,
-					 GLint x, GLint y, 
-					 GLint width, GLint height )
+static void r200UploadGARTClientSubImage( r200ContextPtr rmesa,
+					  r200TexObjPtr t, 
+					  struct gl_texture_image *texImage,
+					  GLint hwlevel,
+					  GLint x, GLint y, 
+					  GLint width, GLint height )
 {
    const struct gl_texture_format *texFormat = texImage->TexFormat;
    GLuint srcPitch, dstPitch;
@@ -124,7 +125,7 @@ static void r200UploadAGPClientSubImage( r200ContextPtr rmesa,
    }
 
    t->image[0][hwlevel].data = texImage->Data;
-   srcOffset = r200AgpOffsetFromVirtual( rmesa, texImage->Data );
+   srcOffset = r200GartOffsetFromVirtual( rmesa, texImage->Data );
 
    assert( srcOffset != ~0 );
 
@@ -181,16 +182,16 @@ static void r200UploadRectSubImage( r200ContextPtr rmesa,
    height = texImage->Height;
    dstPitch = t->pp_txpitch + 32;
 
-   if (rmesa->prefer_agp_client_texturing && texImage->IsClientData) {
-      /* In this case, could also use agp texturing.  This is
+   if (rmesa->prefer_gart_client_texturing && texImage->IsClientData) {
+      /* In this case, could also use GART texturing.  This is
        * currently disabled, but has been tested & works.
        */
-      t->pp_txoffset = r200AgpOffsetFromVirtual( rmesa, texImage->Data );
+      t->pp_txoffset = r200GartOffsetFromVirtual( rmesa, texImage->Data );
       t->pp_txpitch = texImage->RowStride * texFormat->TexelBytes - 32;
 
       if (R200_DEBUG & DEBUG_TEXTURE)
 	 fprintf(stderr, 
-		 "Using agp texturing for rectangular client texture\n");
+		 "Using GART texturing for rectangular client texture\n");
 
       /* Release FB memory allocated for this image:
        */
@@ -202,21 +203,21 @@ static void r200UploadRectSubImage( r200ContextPtr rmesa,
       }
    }
    else if (texImage->IsClientData) {
-      /* Data already in agp memory, with usable pitch.
+      /* Data already in GART memory, with usable pitch.
        */
       GLuint srcPitch;
       srcPitch = texImage->RowStride * texFormat->TexelBytes;
       r200EmitBlit( rmesa, 
 		    blit_format, 
 		    srcPitch,
-		    r200AgpOffsetFromVirtual( rmesa, texImage->Data ),   
+		    r200GartOffsetFromVirtual( rmesa, texImage->Data ),   
 		    dstPitch, t->bufAddr,
 		    0, 0, 
 		    0, 0, 
 		    width, height );
    }
    else {
-      /* Data not in agp memory, or bad pitch.
+      /* Data not in GART memory, or bad pitch.
        */
       for (done = 0; done < height ; ) {
 	 struct r200_dma_region region;
@@ -344,9 +345,9 @@ static void uploadSubImage( r200ContextPtr rmesa, r200TexObjPtr t,
    }
    else if (texImage->IsClientData) {
       if ( R200_DEBUG & DEBUG_TEXTURE )
-	 fprintf( stderr, "%s: image data is in agp client storage\n",
+	 fprintf( stderr, "%s: image data is in GART client storage\n",
 		  __FUNCTION__);
-      r200UploadAGPClientSubImage( rmesa, t, texImage, hwlevel,
+      r200UploadGARTClientSubImage( rmesa, t, texImage, hwlevel,
 				   x, y, width, height );
       return;
    }

@@ -107,7 +107,7 @@ static void radeonSetTexImages( radeonContextPtr rmesa,
    const struct gl_texture_image *baseImage = tObj->Image[tObj->BaseLevel];
    GLint curOffset;
    GLint i;
-   GLint firstLevel=0, lastLevel=0, numLevels;
+   GLint numLevels;
    GLint log2Width, log2Height, log2Depth;
 
    /* Set the hardware texture format
@@ -127,40 +127,15 @@ static void radeonSetTexImages( radeonContextPtr rmesa,
    }
 
 
-
    /* Compute which mipmap levels we really want to send to the hardware.
-    * This depends on the base image size, GL_TEXTURE_MIN_LOD,
-    * GL_TEXTURE_MAX_LOD, GL_TEXTURE_BASE_LEVEL, and GL_TEXTURE_MAX_LEVEL.
-    * Yes, this looks overly complicated, but it's all needed.
     */
-   switch (tObj->Target) {
-   case GL_TEXTURE_1D:
-   case GL_TEXTURE_2D:
-      firstLevel = tObj->BaseLevel + (GLint)(tObj->MinLod + 0.5);
-      firstLevel = MAX2(firstLevel, tObj->BaseLevel);
-      lastLevel = tObj->BaseLevel + (GLint)(tObj->MaxLod + 0.5);
-      lastLevel = MAX2(lastLevel, tObj->BaseLevel);
-      lastLevel = MIN2(lastLevel, tObj->BaseLevel + baseImage->MaxLog2);
-      lastLevel = MIN2(lastLevel, tObj->MaxLevel);
-      lastLevel = MAX2(firstLevel, lastLevel); /* need at least one level */
-      log2Width = tObj->Image[firstLevel]->WidthLog2;
-      log2Height = tObj->Image[firstLevel]->HeightLog2;
-      log2Depth = 0;
-      break;
-   case GL_TEXTURE_RECTANGLE_NV:
-      firstLevel = lastLevel = 0;
-      log2Width = log2Height = 1; /* ? */
-      log2Depth = 0;
-      break;
-   default:
-      return;
-   }
 
-   /* save these values */
-   t->base.firstLevel = firstLevel;
-   t->base.lastLevel = lastLevel;
+   driCalculateTextureFirstLastLevel( (driTextureObject *) t );
+   log2Width  = tObj->Image[t->base.firstLevel]->WidthLog2;
+   log2Height = tObj->Image[t->base.firstLevel]->HeightLog2;
+   log2Depth  = tObj->Image[t->base.firstLevel]->DepthLog2;
 
-   numLevels = lastLevel - firstLevel + 1;
+   numLevels = t->base.lastLevel - t->base.firstLevel + 1;
 
    assert(numLevels <= RADEON_MAX_TEXTURE_LEVELS);
 
@@ -174,7 +149,7 @@ static void radeonSetTexImages( radeonContextPtr rmesa,
       const struct gl_texture_image *texImage;
       GLuint size;
 
-      texImage = tObj->Image[i + firstLevel];
+      texImage = tObj->Image[i + t->base.firstLevel];
       if ( !texImage )
 	 break;
 
@@ -194,10 +169,12 @@ static void radeonSetTexImages( radeonContextPtr rmesa,
       }
       assert(size > 0);
 
-      if (curOffset & 0x1f) {
-         /* align to 32-byte offset */
-         curOffset = (curOffset + 0x1f) & ~0x1f;
-      }
+
+      /* Align to 32-byte offset.  It is faster to do this unconditionally
+       * (no branch penalty).
+       */
+
+      curOffset = (curOffset + 0x1f) & ~0x1f;
 
       t->image[0][i].x = curOffset % BLIT_WIDTH_BYTES;
       t->image[0][i].y = curOffset / BLIT_WIDTH_BYTES;
@@ -237,17 +214,17 @@ static void radeonSetTexImages( radeonContextPtr rmesa,
    t->pp_txformat |= ((log2Width << RADEON_TXFORMAT_WIDTH_SHIFT) |
 		      (log2Height << RADEON_TXFORMAT_HEIGHT_SHIFT));
 
-   t->pp_txsize = (((tObj->Image[firstLevel]->Width - 1) << 0) |
-                   ((tObj->Image[firstLevel]->Height - 1) << 16));
+   t->pp_txsize = (((tObj->Image[t->base.firstLevel]->Width - 1) << 0) |
+                   ((tObj->Image[t->base.firstLevel]->Height - 1) << 16));
 
    /* Only need to round to nearest 32 for textures, but the blitter
     * requires 64-byte aligned pitches, and we may/may not need the
     * blitter.   NPOT only!
     */
    if (baseImage->IsCompressed)
-      t->pp_txpitch = (tObj->Image[firstLevel]->Width + 63) & ~(63);
+      t->pp_txpitch = (tObj->Image[t->base.firstLevel]->Width + 63) & ~(63);
    else
-      t->pp_txpitch = ((tObj->Image[firstLevel]->Width * baseImage->TexFormat->TexelBytes) + 63) & ~(63);
+      t->pp_txpitch = ((tObj->Image[t->base.firstLevel]->Width * baseImage->TexFormat->TexelBytes) + 63) & ~(63);
    t->pp_txpitch -= 32;
 
    t->dirty_state = TEX_ALL;
@@ -1500,7 +1477,7 @@ static GLboolean enable_tex_rect( GLcontext *ctx, int unit )
       RADEON_FIREVERTICES( rmesa );
       radeonSetTexImages( rmesa, tObj );
       radeonUploadTexImages( rmesa, (radeonTexObjPtr) tObj->DriverData, 0 );
-      if ( !t->base.memBlock /* && !rmesa->prefer_agp_client_texturing  FIXME */ ) {
+      if ( !t->base.memBlock /* && !rmesa->prefer_gart_client_texturing  FIXME */ ) {
 	 fprintf(stderr, "%s: upload failed\n", __FUNCTION__);
 	 return GL_FALSE;
       }

@@ -676,8 +676,7 @@ static void mgaFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 #define POINT_FALLBACK (DD_POINT_SMOOTH)
 #define LINE_FALLBACK (DD_LINE_SMOOTH | DD_LINE_STIPPLE)
 #define TRI_FALLBACK (DD_TRI_SMOOTH | DD_TRI_UNFILLED)
-#define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK| \
-                            DD_TRI_STIPPLE)
+#define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK)
 #define ANY_RASTER_FLAGS (DD_FLATSHADE|DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET| \
                           DD_TRI_UNFILLED)
 
@@ -688,7 +687,7 @@ void mgaChooseRenderState(GLcontext *ctx)
    GLuint flags = ctx->_TriangleCaps;
    GLuint index = 0;
 
-   if (flags & (ANY_FALLBACK_FLAGS|ANY_RASTER_FLAGS)) {
+   if (flags & (ANY_FALLBACK_FLAGS|ANY_RASTER_FLAGS|DD_TRI_STIPPLE)) {
       if (flags & ANY_RASTER_FLAGS) {
 	 if (flags & DD_TRI_LIGHT_TWOSIDE)    index |= MGA_TWOSIDE_BIT;
 	 if (flags & DD_TRI_OFFSET)	      index |= MGA_OFFSET_BIT;
@@ -713,9 +712,11 @@ void mgaChooseRenderState(GLcontext *ctx)
 	 if (flags & TRI_FALLBACK) 
 	    mmesa->draw_tri = mga_fallback_tri;
 	 
-	 if ((flags & DD_TRI_STIPPLE) && !mmesa->haveHwStipple)
-	    mmesa->draw_tri = mga_fallback_tri;
-      
+	 index |= MGA_FALLBACK_BIT;
+      }
+
+      if ((flags & DD_TRI_STIPPLE) && !mmesa->haveHwStipple) {
+	 mmesa->draw_tri = mga_fallback_tri;
 	 index |= MGA_FALLBACK_BIT;
       }
    }
@@ -782,10 +783,9 @@ void mgaRasterPrimitive( GLcontext *ctx, GLenum prim, GLuint hwprim )
    if (ctx->Polygon.StippleFlag && mmesa->haveHwStipple)
    {
       mmesa->dirty |= MGA_UPLOAD_CONTEXT;
+      mmesa->setup.dwgctl &= ~(0xf<<20);
       if (mmesa->raster_primitive == GL_TRIANGLES)
 	 mmesa->setup.dwgctl |= mmesa->poly_stipple;
-      else
-	 mmesa->setup.dwgctl &= ~(0xf<<20);
    }
 }
 

@@ -32,6 +32,7 @@
 
 #include "context.h"
 #include "dri_util.h"
+#include "xmlconfig.h"
 
 #define VBLANK_FLAG_INTERVAL  (1U << 0)  /* Respect the swap_interval setting
 					  */
@@ -45,7 +46,8 @@
 extern int driGetMSC32( __DRIscreenPrivate * priv, int64_t * count );
 extern int driWaitForMSC32( __DRIdrawablePrivate *priv,
     int64_t target_msc, int64_t divisor, int64_t remainder, int64_t * msc );
-extern GLuint driGetDefaultVBlankFlags( void );
+extern GLuint driGetDefaultVBlankFlags( const driOptionCache *optionCache );
+extern void driDrawableInitVBlank ( __DRIdrawablePrivate *priv, GLuint flags );
 extern int driWaitForVBlank( const __DRIdrawablePrivate *priv,
     GLuint * vbl_seq, GLuint flags, GLboolean * missed_deadline );
 

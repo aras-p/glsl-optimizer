@@ -46,4 +46,6 @@ void mgaDestroyTexObj( mgaContextPtr mmesa, mgaTextureObjectPtr t );
 
 void mgaDDInitTextureFuncs( GLcontext *ctx );
 
+GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit );
+
 #endif

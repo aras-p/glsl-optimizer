@@ -1,6 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
-
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_context.h,v 1.2 2002/12/16 16:18:54 dawes Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -532,7 +531,7 @@ struct r200_dma_buffer {
    drmBufPtr buf;
 };
 
-#define GET_START(rvb) (rmesa->r200Screen->agp_buffer_offset +		\
+#define GET_START(rvb) (rmesa->r200Screen->gart_buffer_offset +		\
 			(rvb)->address - rmesa->dma.buf0_address +	\
 			(rvb)->start)
 
@@ -779,6 +778,7 @@ struct r200_context {
    unsigned              nr_heaps;
    driTexHeap          * texture_heaps[ R200_NR_TEX_HEAPS ];
    driTextureObject      swapped;
+   GLboolean             default32BitTextures;
 
 
    /* Rasterization and vertex state:
@@ -812,7 +812,7 @@ struct r200_context {
 
    /* Clientdata textures;
     */
-   GLuint prefer_agp_client_texturing;
+   GLuint prefer_gart_client_texturing;
 
    /* Drawable, cliprect and scissor information
     */
@@ -863,6 +863,10 @@ struct r200_context {
    /* Mirrors of some DRI state
     */
    struct r200_dri_mirror dri;
+
+   /* Configuration cache
+    */
+   driOptionCache optionCache;
 };
 
 #define R200_CONTEXT(ctx)		((r200ContextPtr)(ctx->DriverCtx))

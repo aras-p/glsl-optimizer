@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_vtxtmp_x86.S,v 1.1 2002/10/30 12:51:53 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_vtxtmp_x86.S,v 1.2 2002/11/07 18:31:59 tsi Exp $ */
 /**************************************************************************
 
 Copyright 2002 Tungsten Graphics Inc., Cedar Park, Texas.
@@ -32,16 +32,6 @@ x:
 
 .data
 .align 4
-GLOBL( _x86_Normal3fv)
-	movl 4(%esp), %eax      /* load 'v' off stack */
-	movl (%eax), %ecx       /* load v[0] */
-	movl 4(%eax), %edx      /* load v[1] */
-	movl 8(%eax), %eax      /* load v[2] */
-	movl %ecx, 0      	/* store v[0] to current vertex */
-	movl %edx, 4      	/* store v[1] to current vertex */
-	movl %eax, 8      	/* store v[2] to current vertex */
-	ret
-GLOBL ( _x86_Normal3fv_end )
 
 /*
 	vertex 3f vertex size 4
@@ -218,19 +208,70 @@ GLOBL ( _x86_Vertex3fv )
 .6:	jmp    *0
 GLOBL ( _x86_Vertex3fv_end )
 
-/*
-	Normal 3f
-*/
-GLOBL ( _x86_Normal3f )
-	movl	$0x12345678, %edx
+
+/**
+ * Generic handler for 2 float format data.  This can be used for
+ * TexCoord2f and possibly other functions.
+ */
+
+GLOBL ( _x86_Attribute2f )
+	movl	$0x0, %edx
 	movl	4(%esp), %eax
+	movl	8(%esp), %ecx
 	movl	%eax, (%edx)
-	movl	8(%esp), %eax
-	movl	%eax, 4(%edx)
-	movl	12(%esp), %eax
-	movl	%eax, 8(%edx)
+	movl	%ecx, 4(%edx)
 	ret
-GLOBL ( _x86_Normal3f_end )
+GLOBL ( _x86_Attribute2f_end )
+
+
+/**
+ * Generic handler for 2 float vector format data.  This can be used for
+ * TexCoord2fv and possibly other functions.
+ */
+
+GLOBL( _x86_Attribute2fv)
+	movl 4(%esp), %eax      /* load 'v' off stack */
+	movl (%eax), %ecx       /* load v[0] */
+	movl 4(%eax), %eax      /* load v[1] */
+	movl %ecx, 0      	/* store v[0] to current vertex */
+	movl %eax, 4      	/* store v[1] to current vertex */
+	ret
+GLOBL ( _x86_Attribute2fv_end )
+
+
+/**
+ * Generic handler for 3 float format data.  This can be used for
+ * Normal3f, Color3f (when the color target is also float), or
+ * TexCoord3f.
+ */
+
+GLOBL ( _x86_Attribute3f )
+	movl	4(%esp), %ecx
+	movl	8(%esp), %edx
+	movl	12(%esp), %eax
+	movl	%ecx, 0
+	movl	%edx, 4
+	movl	%eax, 8
+	ret
+GLOBL ( _x86_Attribute3f_end )
+
+/**
+ * Generic handler for 3 float vector format data.  This can be used for
+ * Normal3f, Color3f (when the color target is also float), or
+ * TexCoord3f.
+ */
+
+GLOBL( _x86_Attribute3fv)
+	movl 4(%esp), %eax      /* load 'v' off stack */
+	movl (%eax), %ecx       /* load v[0] */
+	movl 4(%eax), %edx      /* load v[1] */
+	movl 8(%eax), %eax      /* load v[2] */
+	movl %ecx, 0      	/* store v[0] to current vertex */
+	movl %edx, 4      	/* store v[1] to current vertex */
+	movl %eax, 8      	/* store v[2] to current vertex */
+	ret
+GLOBL ( _x86_Attribute3fv_end )
+
 
 /*
 	Color 4ubv_ub
@@ -290,69 +331,13 @@ GLOBL( _x86_Color4ub_ub )
 	ret
 GLOBL( _x86_Color4ub_ub_end )
 
-/*
-	Color3fv_3f
-*/
-GLOBL( _x86_Color3fv_3f )
-	movl	4(%esp), %eax
-	movl	$0, %edx
-	movl	(%eax), %ecx
-	movl	%ecx, (%edx)
-	movl	4(%eax), %ecx
-	movl	%ecx, 4(%edx)
-	movl	8(%eax), %ecx
-	movl	%ecx, 8(%edx)
-	ret
-GLOBL( _x86_Color3fv_3f_end )
 
 /*
-	Color3f_3f
+	MultiTexCoord2fv st0/st1
 */
-GLOBL( _x86_Color3f_3f )
-	movl	$0x12345678, %edx
-	movl	4(%esp), %eax
-	movl	%eax, (%edx)
-	movl	8(%esp,1), %eax
-	movl	%eax, 4(%edx)
-	movl	12(%esp), %eax
-	movl	%eax, 8(%edx)
-	ret
-GLOBL( _x86_Color3f_3f_end )
-
-/*
-	TexCoord2fv
-*/
-
-GLOBL( _x86_TexCoord2fv )
-	movl	4(%esp), %eax
-	movl	$0x12345678, %edx
-	movl	(%eax), %ecx
-	movl	4(%eax), %eax
-	movl	%ecx, (%edx)
-	movl	%eax, 4(%edx)
-	ret
-
-GLOBL( _x86_TexCoord2fv_end )
-/*
-	TexCoord2f
-*/
-GLOBL( _x86_TexCoord2f )
-	movl	$0x12345678, %edx
+GLOBL( _x86_MultiTexCoord2fv )
 	movl	4(%esp), %eax
 	movl	8(%esp), %ecx
-	movl	%eax, (%edx)
-	movl	%ecx, 4(%edx)
-	ret
-GLOBL( _x86_TexCoord2f_end )
-
-/*
-	MultiTexCoord2fvARB st0/st1
-*/
-GLOBL( _x86_MultiTexCoord2fvARB )
-
-	movl	4(%esp), %eax
-	movl	8(%esp), %ecx
-	sub	$0x84c0, %eax
 	and	$1, %eax
 	movl	(%ecx), %edx
 	shl	$3, %eax
@@ -360,15 +345,15 @@ GLOBL( _x86_MultiTexCoord2fvARB )
 	movl	%edx, 0xdeadbeef(%eax)
 	movl	%ecx, 0xdeadbeef(%eax)
 	ret
-GLOBL( _x86_MultiTexCoord2fvARB_end )
+GLOBL( _x86_MultiTexCoord2fv_end )
+
 /*
-	MultiTexCoord2fvARB
+	MultiTexCoord2fv
 */
 
-GLOBL( _x86_MultiTexCoord2fvARB_2 )
+GLOBL( _x86_MultiTexCoord2fv_2 )
 	movl	4(%esp,1), %eax
 	movl	8(%esp,1), %ecx
-	sub	$0x84c0, %eax
 	and	$0x1, %eax
 	movl	0(,%eax,4), %edx
 	movl	(%ecx), %eax
@@ -376,35 +361,132 @@ GLOBL( _x86_MultiTexCoord2fvARB_2 )
 	movl	4(%ecx), %eax
 	movl	%eax, 4(%edx)
 	ret
-
-GLOBL( _x86_MultiTexCoord2fvARB_2_end )
+GLOBL( _x86_MultiTexCoord2fv_2_end )
 
 /*
-	MultiTexCoord2fARB st0/st1
+	MultiTexCoord2f st0/st1
 */
-GLOBL( _x86_MultiTexCoord2fARB )
+GLOBL( _x86_MultiTexCoord2f )
 	movl	4(%esp), %eax
 	movl	8(%esp), %edx
-	sub	$0x84c0, %eax
 	movl	12(%esp), %ecx
 	and	$1, %eax
 	shl	$3, %eax
 	movl	%edx, 0xdeadbeef(%eax)
 	movl	%ecx, 0xdeadbeef(%eax)
 	ret
-GLOBL( _x86_MultiTexCoord2fARB_end )
+GLOBL( _x86_MultiTexCoord2f_end )
 
 /*
-	MultiTexCoord2fARB
+	MultiTexCoord2f
 */
-GLOBL( _x86_MultiTexCoord2fARB_2 )
+GLOBL( _x86_MultiTexCoord2f_2 )
 	movl	4(%esp), %eax
 	movl	8(%esp), %edx
-	sub	$0x84c0, %eax
 	movl	12(%esp,1), %ecx
 	and	$1,%eax
 	movl	0(,%eax,4), %eax
 	movl	%edx, (%eax)
 	movl	%ecx, 4(%eax)
 	ret
-GLOBL( _x86_MultiTexCoord2fARB_2_end )
+GLOBL( _x86_MultiTexCoord2f_2_end )
+
+/**
+ * This can be used as a template for either Color3fv (when the color
+ * target is also a 3f) or Normal3fv.
+ */
+
+GLOBL( _sse_Attribute3fv )
+	movl	4(%esp), %eax
+	movlps	(%eax), %xmm0
+	movl	8(%eax), %eax
+	movlps	%xmm0, 0
+	movl	%eax, 8
+	ret
+GLOBL( _sse_Attribute3fv_end )
+
+/**
+ * This can be used as a template for either Color3f (when the color
+ * target is also a 3f) or Normal3f.
+ */
+
+GLOBL( _sse_Attribute3f )
+	movlps	4(%esp), %xmm0
+	movl	12(%esp), %eax
+	movlps	%xmm0, 0
+	movl	%eax, 8
+	ret
+GLOBL( _sse_Attribute3f_end )
+
+
+/**
+ * Generic handler for 2 float vector format data.  This can be used for
+ * TexCoord2fv and possibly other functions.
+ */
+
+GLOBL( _sse_Attribute2fv )
+	movl	4(%esp), %eax
+	movlps	(%eax), %xmm0
+	movlps	%xmm0, 0
+	ret
+GLOBL( _sse_Attribute2fv_end )
+
+
+/**
+ * Generic handler for 2 float format data.  This can be used for
+ * TexCoord2f and possibly other functions.
+ */
+
+GLOBL( _sse_Attribute2f )
+	movlps	4(%esp), %xmm0
+	movlps	%xmm0, 0
+	ret
+GLOBL( _sse_Attribute2f_end )
+
+/*
+	MultiTexCoord2fv st0/st1
+*/
+GLOBL( _sse_MultiTexCoord2fv )
+	movl	4(%esp), %eax
+	movl	8(%esp), %ecx
+	and	$1, %eax
+	movlps	(%ecx), %xmm0
+	movlps	%xmm0, 0xdeadbeef(,%eax,8)
+	ret
+GLOBL( _sse_MultiTexCoord2fv_end )
+
+/*
+	MultiTexCoord2fv
+*/
+GLOBL( _sse_MultiTexCoord2fv_2 )
+	movl	4(%esp), %eax
+	movl	8(%esp), %ecx
+	and	$0x1, %eax
+	movl	0(,%eax,4), %edx
+	movlps	(%ecx), %xmm0
+	movlps	%xmm0, (%edx)
+	ret
+GLOBL( _sse_MultiTexCoord2fv_2_end )
+
+/*
+	MultiTexCoord2f st0/st1
+*/
+GLOBL( _sse_MultiTexCoord2f )
+	movl	4(%esp), %eax
+	and	$1, %eax
+	movlps	8(%esp), %xmm0
+	movlps	%xmm0, 0xdeadbeef(,%eax,8)
+	ret
+GLOBL( _sse_MultiTexCoord2f_end )
+
+/*
+	MultiTexCoord2f
+*/
+GLOBL( _sse_MultiTexCoord2f_2 )
+	movl	4(%esp), %eax
+	movlps	8(%esp), %xmm0
+	and	$1,%eax
+	movl	0(,%eax,4), %eax
+	movlps	%xmm0, (%eax)
+	ret
+GLOBL( _sse_MultiTexCoord2f_2_end )

@@ -102,10 +102,10 @@ typedef struct {
      * \name CP AGP Texture data
      */
     /*@{*/
-    drmHandle     agpTexHandle;   /**< \brief AGP texture area map handle */
-    drmSize       agpTexMapSize;  /**< \brief AGP texture area map size */
-    int           log2AGPTexGran; /**< \brief AGP texture granularity in log base 2 */
-    int           agpTexOffset;   /**< \brief AGP texture area offset in AGP space */
+    drmHandle     gartTexHandle;   /**< \brief AGP texture area map handle */
+    drmSize       gartTexMapSize;  /**< \brief AGP texture area map size */
+    int           log2GARTTexGran; /**< \brief AGP texture granularity in log base 2 */
+    int           gartTexOffset;   /**< \brief AGP texture area offset in AGP space */
     /*@}*/
 
     unsigned int  sarea_priv_offset; /**< \brief offset of the private SAREA data*/

@@ -706,7 +706,7 @@ static void r128DDDrawBuffer( GLcontext *ctx, GLenum mode )
       break;
    }
 
-   /* We want to update the s/w rast state too so that r200SetBuffer()
+   /* We want to update the s/w rast state too so that r128DDSetBuffer()
     * gets called.
     */
    _swrast_DrawBuffer(ctx, mode);

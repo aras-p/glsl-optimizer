@@ -108,11 +108,11 @@ typedef struct {
     * \name AGP
     */
    /*@{*/
-   drmSize           agpSize;          /**< \brief AGP map size */
-   drmHandle         agpMemHandle;     /**< \brief AGP map handle */
-   unsigned long     agpOffset;        /**< \brief AGP offset */
-   int               agpMode;          /**< \brief AGP mode */
-   int               agpFastWrite;
+   drmSize           gartSize;          /**< \brief AGP map size */
+   drmHandle         gartMemHandle;     /**< \brief AGP map handle */
+   unsigned long     gartOffset;        /**< \brief AGP offset */
+   int               gartMode;          /**< \brief AGP mode */
+   int               gartFastWrite;
    /*@}*/
 
    /**
@@ -144,11 +144,11 @@ typedef struct {
     * \name CP AGP Texture data
     */
    /*@{*/
-   unsigned long     agpTexStart;      /**< \brief Offset into AGP space */
-   drmHandle         agpTexHandle;     /**< \brief Handle from drmAddMap() */
-   drmSize           agpTexMapSize;    /**< \brief Size of map */
-   int               agpTexSize;       /**< \brief Size of AGP tex space (in MB) */
-   int               log2AGPTexGran;
+   unsigned long     gartTexStart;      /**< \brief Offset into AGP space */
+   drmHandle         gartTexHandle;     /**< \brief Handle from drmAddMap() */
+   drmSize           gartTexMapSize;    /**< \brief Size of map */
+   int               gartTexSize;       /**< \brief Size of AGP tex space (in MB) */
+   int               log2GARTTexGran;
    /*@}*/
 
    int               drmMinor;         /**< \brief DRM device minor number */

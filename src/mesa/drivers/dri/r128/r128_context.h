@@ -178,10 +178,6 @@ struct r128_context {
     */
    GLuint doPageFlip;
 
-   /* Busy waiting
-    */
-   GLuint do_irqs;
-
    /* Drawable, cliprect and scissor information
     */
    GLint drawOffset, drawPitch;
@@ -222,6 +218,10 @@ struct r128_context {
     */
    GLuint vbl_seq;
    GLuint vblank_flags;
+
+   /* Configuration cache
+    */
+   driOptionCache optionCache;
 };
 
 #define R128_CONTEXT(ctx)		((r128ContextPtr)(ctx->DriverCtx))

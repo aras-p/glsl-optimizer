@@ -60,6 +60,27 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "texmem.h"
 
+/* R128 configuration
+ */
+#include "xmlpool.h"
+
+const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+#if ENABLE_PERF_BOXES
+    DRI_CONF_SECTION_DEBUG
+        DRI_CONF_PERFORMANCE_BOXES(false)
+    DRI_CONF_SECTION_END
+#endif
+    DRI_CONF_SECTION_PERFORMANCE
+        DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+    DRI_CONF_SECTION_END
+DRI_CONF_END;
+#if ENABLE_PERF_BOXES
+const GLuint __driNConfigOptions = 2;
+#else
+const GLuint __driNConfigOptions = 1;
+#endif
+
 #ifndef R128_DEBUG
 int R128_DEBUG = 0;
 #endif
@@ -127,6 +148,10 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
 
    r128scrn = rmesa->r128Screen = (r128ScreenPtr)(sPriv->private);
 
+   /* Parse configuration files */
+   driParseConfigFiles (&rmesa->optionCache, &r128scrn->optionCache,
+                        r128scrn->driScreen->myNum, "r128");
+
    rmesa->sarea = (R128SAREAPrivPtr)((char *)sPriv->pSAREA +
 				     r128scrn->sarea_priv_offset);
 
@@ -191,7 +216,7 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
    ctx->Const.LineWidthGranularity = 1.0;
 
 #if ENABLE_PERF_BOXES
-   rmesa->boxes = (getenv( "LIBGL_PERFORMANCE_BOXES" ) != NULL);
+   rmesa->boxes = driQueryOptionb(&rmesa->optionCache, "performance_boxes");
 #endif
 
    /* Initialize the software rasterizer and helper modules.
@@ -224,10 +249,8 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
    r128DDInitTextureFuncs( ctx );
    r128DDInitState( rmesa );
 
-   rmesa->do_irqs = (rmesa->r128Screen->irq && !getenv("R128_NO_IRQS"));
-
-   rmesa->vblank_flags = (rmesa->do_irqs)
-       ? driGetDefaultVBlankFlags() : VBLANK_FLAG_NO_IRQ;
+   rmesa->vblank_flags = (rmesa->r128Screen->irq != 0)
+       ? driGetDefaultVBlankFlags(&rmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
 
    driContextPriv->driverPrivate = (void *)rmesa;
 
@@ -277,6 +300,9 @@ void r128DestroyContext( __DRIcontextPrivate *driContextPriv  )
          }
       }
 
+      /* free the option cache */
+      driDestroyOptionCache (&rmesa->optionCache);
+
       FREE( rmesa );
    }
 
@@ -305,6 +331,7 @@ r128MakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 newR128Ctx->dirty = R128_UPLOAD_ALL;
       }
 
+      driDrawableInitVBlank( driDrawPriv, newR128Ctx->vblank_flags );
       newR128Ctx->driDrawable = driDrawPriv;
 
       _mesa_make_current2( newR128Ctx->glCtx,

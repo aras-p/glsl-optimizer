@@ -1,6 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
-
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_screen.c,v 1.4 2003/05/08 09:25:35 herrb Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -43,14 +42,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_screen.h"
 #include "r200_context.h"
 #include "r200_ioctl.h"
+#include "radeon_macros.h"
+#include "radeon_reg.h"
 
 #include "utils.h"
 #include "vblank.h"
-
 #ifndef _SOLO
 #include "glxextensions.h"
-#endif 
-
+#endif
 #if 1
 /* Including xf86PciInfo.h introduces a bunch of errors...
  */
@@ -108,6 +107,8 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
       break;
    }
 
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo (&screen->optionCache);
 
    /* This is first since which regions we map depends on whether or
     * not we are using a PCI card.
@@ -118,30 +119,26 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
       int ret;
       drmRadeonGetParam gp;
 
-      gp.param = RADEON_PARAM_AGP_BUFFER_OFFSET;
-      gp.value = &screen->agp_buffer_offset;
+      gp.param = RADEON_PARAM_GART_BUFFER_OFFSET;
+      gp.value = &screen->gart_buffer_offset;
 
       ret = drmCommandWriteRead( sPriv->fd, DRM_RADEON_GETPARAM,
 				 &gp, sizeof(gp));
       if (ret) {
 	 FREE( screen );
-	 fprintf(stderr, "drmRadeonGetParam (RADEON_PARAM_AGP_BUFFER_OFFSET): %d\n", ret);
+	 fprintf(stderr, "drmRadeonGetParam (RADEON_PARAM_GART_BUFFER_OFFSET): %d\n", ret);
 	 return NULL;
       }
 
-      screen->agp_texture_offset = 
-	 screen->agp_buffer_offset + 2*1024*1024;
-
-
       if (sPriv->drmMinor >= 6) {
-	 gp.param = RADEON_PARAM_AGP_BASE;
-	 gp.value = &screen->agp_base;
+	 gp.param = RADEON_PARAM_GART_BASE;
+	 gp.value = &screen->gart_base;
 
 	 ret = drmCommandWriteRead( sPriv->fd, DRM_RADEON_GETPARAM,
 				    &gp, sizeof(gp));
 	 if (ret) {
 	    FREE( screen );
-	    fprintf(stderr, "drmR200GetParam (RADEON_PARAM_AGP_BASE): %d\n", ret);
+	    fprintf(stderr, "drmR200GetParam (RADEON_PARAM_GART_BASE): %d\n", ret);
 	    return NULL;
 	 }
 
@@ -196,23 +193,27 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
       return NULL;
    }
 
-   if ( !screen->IsPCI ) {
-      screen->agpTextures.handle = dri_priv->agpTexHandle;
-      screen->agpTextures.size   = dri_priv->agpTexMapSize;
+   if ( dri_priv->gartTexHandle && dri_priv->gartTexMapSize ) {
+      unsigned char *RADEONMMIO = screen->mmio.map;
+
+      screen->gartTextures.handle = dri_priv->gartTexHandle;
+      screen->gartTextures.size   = dri_priv->gartTexMapSize;
       if ( drmMap( sPriv->fd,
-		   screen->agpTextures.handle,
-		   screen->agpTextures.size,
-		   (drmAddressPtr)&screen->agpTextures.map ) ) {
+		   screen->gartTextures.handle,
+		   screen->gartTextures.size,
+		   (drmAddressPtr)&screen->gartTextures.map ) ) {
 	 drmUnmapBufs( screen->buffers );
 	 drmUnmap( screen->status.map, screen->status.size );
 	 drmUnmap( screen->mmio.map, screen->mmio.size );
 	 FREE( screen );
-         __driUtilMessage("%s: IsPCI failed\n", __FUNCTION__);
+	 __driUtilMessage("%s: drmMAP failed for GART texture area\n", __FUNCTION__);
 	 return NULL;
       }
+
+      screen->gart_texture_offset = dri_priv->gartTexOffset + ( screen->IsPCI
+		? INREG( RADEON_AIC_LO_ADDR )
+		: ( ( INREG( RADEON_MC_AGP_LOCATION ) & 0x0ffffU ) << 16 ) );
    }
-
-
 
    screen->cpp = dri_priv->bpp / 8;
    screen->AGPMode = dri_priv->AGPMode;
@@ -229,22 +230,46 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
    screen->logTexGranularity[RADEON_CARD_HEAP] =
       dri_priv->log2TexGran;
 
-   if ( screen->IsPCI ) {
+   if ( !screen->gartTextures.map ) {
       screen->numTexHeaps = RADEON_NR_TEX_HEAPS - 1;
-      screen->texOffset[RADEON_AGP_HEAP] = 0;
-      screen->texSize[RADEON_AGP_HEAP] = 0;
-      screen->logTexGranularity[RADEON_AGP_HEAP] = 0;
+      screen->texOffset[RADEON_GART_HEAP] = 0;
+      screen->texSize[RADEON_GART_HEAP] = 0;
+      screen->logTexGranularity[RADEON_GART_HEAP] = 0;
    } else {
       screen->numTexHeaps = RADEON_NR_TEX_HEAPS;
-      screen->texOffset[RADEON_AGP_HEAP] =
-	 dri_priv->agpTexOffset + R200_AGP_TEX_OFFSET;
-      screen->texSize[RADEON_AGP_HEAP] = dri_priv->agpTexMapSize;
-      screen->logTexGranularity[RADEON_AGP_HEAP] =
-	 dri_priv->log2AGPTexGran;
+      screen->texOffset[RADEON_GART_HEAP] = screen->gart_texture_offset;
+      screen->texSize[RADEON_GART_HEAP] = dri_priv->gartTexMapSize;
+      screen->logTexGranularity[RADEON_GART_HEAP] =
+	 dri_priv->log2GARTTexGran;
    }
 
    screen->driScreen = sPriv;
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
+#ifndef _SOLO
+   if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
+      PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+          (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+      void * const psc = sPriv->psc->screenConfigs;
+
+      if ( glx_enable_extension != NULL ) {
+	 if ( screen->irq != 0 ) {
+	    (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+	    (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+	    (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+	 }
+
+	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+
+	 if ( driCompareGLXAPIVersion( 20030818 ) >= 0 ) {
+	    sPriv->psc->allocateMemory = r200AllocateMemoryMESA;
+	    sPriv->psc->freeMemory     = r200FreeMemoryMESA;
+	    sPriv->psc->memoryOffset   = r200GetMemoryOffsetMESA;
+
+	    (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
+	 }
+      }
+   }
+#endif
    return screen;
 }
 
@@ -258,13 +283,15 @@ r200DestroyScreen( __DRIscreenPrivate *sPriv )
    if (!screen)
       return;
 
-   if ( !screen->IsPCI ) {
-      drmUnmap( screen->agpTextures.map,
-		screen->agpTextures.size );
+   if ( screen->gartTextures.map ) {
+      drmUnmap( screen->gartTextures.map, screen->gartTextures.size );
    }
    drmUnmapBufs( screen->buffers );
    drmUnmap( screen->status.map, screen->status.size );
    drmUnmap( screen->mmio.map, screen->mmio.size );
+
+   /* free all option information */
+   driDestroyOptionInfo (&screen->optionCache);
 
    FREE( screen );
    sPriv->private = NULL;
@@ -362,7 +389,7 @@ static struct __DriverAPIRec r200API = {
  * Return:  pointer to a __DRIscreenPrivate.
  *
  */
-#ifndef _SOLO
+#ifndef _SOLO 
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
@@ -380,56 +407,31 @@ void *__driCreateScreen(struct DRIDriverRec *driver,
 }
 #endif
 
-
-
 #ifndef _SOLO
-/* This function is called by libGL.so to allow the driver to dynamically
+/**
+ * This function is called by libGL.so to allow the driver to dynamically
  * extend libGL.  We can add new GLX functions and/or new GL functions.
  * Note that _mesa_create_context() will probably add most of the newer
  * OpenGL extension functions into the dispatcher.
+ *
+ * \todo This interface has been deprecated, so we should probably remove
+ *       this function before the next XFree86 release.
  */
 void
 __driRegisterExtensions( void )
 {
    PFNGLXENABLEEXTENSIONPROC glx_enable_extension;
-   typedef void *(*registerFunc)(const char *funcName, void *funcAddr);
-   registerFunc regFunc;
 
 
    if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
       glx_enable_extension = (PFNGLXENABLEEXTENSIONPROC)
-	  glXGetProcAddress( "__glXEnableExtension" );
+	  glXGetProcAddress( (const GLubyte *) "__glXEnableExtension" );
 
       if ( glx_enable_extension != NULL ) {
-	 glx_enable_extension( "GLX_SGI_swap_control", GL_FALSE );
-	 glx_enable_extension( "GLX_SGI_video_sync", GL_FALSE );
-	 glx_enable_extension( "GLX_MESA_swap_control", GL_FALSE );
-	 glx_enable_extension( "GLX_MESA_swap_frame_usage", GL_FALSE );
-
-
-	 /* Get pointers to libGL's __glXRegisterGLXFunction
-	  * and __glXRegisterGLXExtensionString, if they exist.
-	  */
-	 regFunc = (registerFunc) glXGetProcAddress( "__glXRegisterGLXFunction" );
-
-	 if (regFunc) {
-	    /* register our GLX extensions with libGL */
-	    void *p;
-	    p = regFunc("glXAllocateMemoryNV", (void *) r200AllocateMemoryNV);
-	    if (p)
-		;  /* XXX already registered - what to do, wrap? */
-
-	    p = regFunc("glXFreeMemoryNV", (void *) r200FreeMemoryNV);
-	    if (p)
-		;  /* XXX already registered - what to do, wrap? */
-
-	    p = regFunc("glXGetAGPOffsetMESA", (void *) r200GetAGPOffset);
-	    if (p)
-		;  /* XXX already registered - what to do, wrap? */
-
-	    glx_enable_extension( "GLX_NV_vertex_array_range", GL_TRUE );
-	    glx_enable_extension( "GLX_MESA_agp_offset", GL_TRUE );
-	 }
+	 (*glx_enable_extension)( "GLX_SGI_swap_control", GL_FALSE );
+	 (*glx_enable_extension)( "GLX_SGI_video_sync", GL_FALSE );
+	 (*glx_enable_extension)( "GLX_MESA_swap_control", GL_FALSE );
+	 (*glx_enable_extension)( "GLX_MESA_swap_frame_usage", GL_FALSE );
       }
    }
 }

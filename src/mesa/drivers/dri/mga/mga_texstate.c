@@ -52,6 +52,8 @@ static const unsigned TMC_tformat[ TMC_nr_tformat ] =
     [MESA_FORMAT_RGB565]   = TMC_tformat_tw16 | TMC_takey_1 | TMC_tamask_0,
     [MESA_FORMAT_ARGB4444] = TMC_tformat_tw12 | TMC_takey_1 | TMC_tamask_0,
     [MESA_FORMAT_ARGB1555] = TMC_tformat_tw15 | TMC_takey_1 | TMC_tamask_0,
+    [MESA_FORMAT_AL88]     = TMC_tformat_tw8al | TMC_takey_1 | TMC_tamask_0,
+    [MESA_FORMAT_I8]       = TMC_tformat_tw8a | TMC_takey_1 | TMC_tamask_0,
     [MESA_FORMAT_CI8]      = TMC_tformat_tw8  | TMC_takey_1 | TMC_tamask_0,
     [MESA_FORMAT_YCBCR]     = TMC_tformat_tw422uyvy | TMC_takey_1 | TMC_tamask_0,
     [MESA_FORMAT_YCBCR_REV] = TMC_tformat_tw422 | TMC_takey_1 | TMC_tamask_0,
@@ -67,7 +69,7 @@ mgaSetTexImages( mgaContextPtr mmesa,
     GLint totalSize;
     GLint width, height;
     GLint i;
-    GLint firstLevel, lastLevel, numLevels;
+    GLint numLevels;
     GLint log2Width, log2Height;
     GLuint txformat = 0;
     GLint ofs;
@@ -81,6 +83,8 @@ mgaSetTexImages( mgaContextPtr mmesa,
 	case MESA_FORMAT_RGB565:   txformat = TMC_tformat_tw16; break;
 	case MESA_FORMAT_ARGB4444: txformat = TMC_tformat_tw12;	break;
 	case MESA_FORMAT_ARGB1555: txformat = TMC_tformat_tw15; break;
+	case MESA_FORMAT_AL88:     txformat = TMC_tformat_tw8al; break;
+	case MESA_FORMAT_I8:       txformat = TMC_tformat_tw8a; break;
 	case MESA_FORMAT_CI8:      txformat = TMC_tformat_tw8;  break;
         case MESA_FORMAT_YCBCR:    txformat  = TMC_tformat_tw422uyvy; break;
         case MESA_FORMAT_YCBCR_REV: txformat = TMC_tformat_tw422; break;
@@ -101,39 +105,21 @@ mgaSetTexImages( mgaContextPtr mmesa,
 
 #endif /* MGA_USE_TABLE_FOR_FORMAT */
 
-   if (tObj->MinFilter == GL_NEAREST || tObj->MinFilter == GL_LINEAR) {
-      /* GL_NEAREST and GL_LINEAR only care about GL_TEXTURE_BASE_LEVEL.
-       */
+   driCalculateTextureFirstLastLevel( (driTextureObject *) t );
+   log2Width  = tObj->Image[t->base.firstLevel]->WidthLog2;
+   log2Height = tObj->Image[t->base.firstLevel]->HeightLog2;
 
-      firstLevel = lastLevel = tObj->BaseLevel;
-   } else {
-      /* Compute which mipmap levels we really want to send to the hardware.
-       * This depends on the base image size, GL_TEXTURE_MIN_LOD,
-       * GL_TEXTURE_MAX_LOD, GL_TEXTURE_BASE_LEVEL, and GL_TEXTURE_MAX_LEVEL.
-       * Yes, this looks overly complicated, but it's all needed.
-       */
+   width = tObj->Image[t->base.firstLevel]->Width;
+   height = tObj->Image[t->base.firstLevel]->Height;
 
-      firstLevel = tObj->BaseLevel + (GLint)(tObj->MinLod + 0.5);
-      firstLevel = MAX2(firstLevel, tObj->BaseLevel);
-      lastLevel = tObj->BaseLevel + (GLint)(tObj->MaxLod + 0.5);
-      lastLevel = MAX2(lastLevel, tObj->BaseLevel);
-      lastLevel = MIN2(lastLevel, tObj->BaseLevel + baseImage->MaxLog2);
-      lastLevel = MIN2(lastLevel, tObj->MaxLevel);
-      lastLevel = MAX2(firstLevel, lastLevel); /* need at least one level */
-   }
-
-   log2Width = tObj->Image[firstLevel]->WidthLog2;
-   log2Height = tObj->Image[firstLevel]->HeightLog2;
-   width = tObj->Image[firstLevel]->Width;
-   height = tObj->Image[firstLevel]->Height;
-
-   numLevels = MIN2( lastLevel - firstLevel + 1,
+   numLevels = MIN2( t->base.lastLevel - t->base.firstLevel + 1,
                      MGA_IS_G200(mmesa) ? G200_TEX_MAXLEVELS : G400_TEX_MAXLEVELS);
 
 
    totalSize = 0;
    for ( i = 0 ; i < numLevels ; i++ ) {
-      const struct gl_texture_image * const texImage = tObj->Image[i+firstLevel];
+      const struct gl_texture_image * const texImage = 
+	  tObj->Image[ i + t->base.firstLevel ];
 
       if ( (texImage == NULL)
 	   || ((i != 0)
@@ -149,13 +135,9 @@ mgaSetTexImages( mgaContextPtr mmesa,
                      baseImage->TexFormat->TexelBytes) + 31) & ~31;
    }
 
-   numLevels = i;
-   lastLevel = firstLevel + numLevels - 1;
-
    /* save these values */
-   t->base.firstLevel = firstLevel;
-   t->base.lastLevel = lastLevel;
-
+   numLevels = i;
+   t->base.lastLevel = t->base.firstLevel + numLevels - 1;
    t->base.totalSize = totalSize;
 
    /* setup hardware register values */
@@ -225,7 +207,7 @@ static void mgaUpdateTextureEnvG200( GLcontext *ctx, GLuint unit )
       t->setup.texctl2 |= TMC_decalblend_enable;
       break;
    case GL_BLEND:
-      FALLBACK( ctx, MGA_FALLBACK_TEXTURE, GL_TRUE );
+      t->texenv_fallback = GL_TRUE;
       break;
    default:
       break;
@@ -251,12 +233,124 @@ static const GLuint g400_color_combine[][MGA_MAX_COMBFUNC] =
       (0),
 
       /* GL_REPLACE
+       * Cv = Cs
+       * Av = Af
        */
       (TD0_color_sel_arg1 |
        TD0_alpha_arg2_diffuse |
-       TD0_alpha_sel_arg2 ),
+       TD0_alpha_sel_arg2),
       
       /* GL_MODULATE
+       * Cv = Cf Cs
+       * Av = Af
+       */
+      (TD0_color_arg2_diffuse |
+       TD0_color_sel_mul |
+       TD0_alpha_arg2_diffuse |
+       TD0_alpha_sel_arg2),
+      
+      /* GL_DECAL
+       * Cv = Cs
+       * Av = Af
+       */
+      (TD0_color_sel_arg1 |
+       TD0_alpha_arg2_diffuse |
+       TD0_alpha_sel_arg2),
+      
+      /* GL_BLEND (Cc=0.0)
+       * Cv = Cf ( 1 - Cs )
+       * Av = Af
+       */
+      (TD0_color_arg1_inv_enable |
+       TD0_color_arg2_diffuse |
+       TD0_color_sel_mul |
+       TD0_alpha_arg2_diffuse |
+       TD0_alpha_sel_arg2),
+      
+      /* GL_ADD
+       * Cv = Cf + Cs
+       * Av = Af
+       */
+      (TD0_color_arg2_diffuse |
+       TD0_color_add_add |
+       TD0_color_sel_add |
+       TD0_alpha_arg2_diffuse |
+       TD0_alpha_sel_arg2),
+   },
+   
+   /* Unit 1:
+    */
+   {
+      /* Disable combiner stage
+       */
+      (0),
+       
+      /* GL_REPLACE
+       * Cv = Cs
+       * Av = Ap
+       */
+      (TD0_color_sel_arg1 |
+       TD0_alpha_arg2_prevstage |
+       TD0_alpha_sel_arg2),
+      
+      /* GL_MODULATE
+       * Cv = Cp Cs
+       * Av = Ap
+       */
+      (TD0_color_arg2_prevstage |
+       TD0_color_sel_mul |
+       TD0_alpha_arg2_prevstage |
+       TD0_alpha_sel_arg2),
+
+      /* GL_DECAL
+       * Cv = Cs
+       * Av = Ap
+       */
+      (TD0_color_sel_arg1 |
+       TD0_alpha_arg2_prevstage |
+       TD0_alpha_sel_arg2),
+      
+      /* GL_BLEND (Cc=0.0)
+       * Cv = Cp ( 1 - Cs )
+       * Av = Ap
+       */
+      (TD0_color_arg1_inv_enable |
+       TD0_color_arg2_prevstage |
+       TD0_color_sel_mul |
+       TD0_alpha_arg2_prevstage |
+       TD0_alpha_sel_arg2),
+      
+      /* GL_ADD
+       * Cv = Cp + Cs
+       * Av = Ap
+       */
+      (TD0_color_arg2_prevstage |
+       TD0_color_add_add |
+       TD0_color_sel_add |
+       TD0_alpha_arg2_prevstage |
+       TD0_alpha_sel_arg2),
+   },
+};
+
+static const GLuint g400_color_alpha_combine[][MGA_MAX_COMBFUNC] =
+{
+   /* Unit 0:
+    */
+   {
+      /* Disable combiner stage
+       */
+      (0),
+
+      /* GL_REPLACE
+       * Cv = Cs
+       * Av = As
+       */
+      (TD0_color_sel_arg1 |
+       TD0_alpha_sel_arg1),
+      
+      /* GL_MODULATE
+       * Cv = Cf Cs
+       * Av = Af As
        */
       (TD0_color_arg2_diffuse |
        TD0_color_sel_mul |
@@ -264,16 +358,35 @@ static const GLuint g400_color_combine[][MGA_MAX_COMBFUNC] =
        TD0_alpha_sel_mul),
       
       /* GL_DECAL
+       * tmp = Cf ( 1 - As )
+       * Cv = tmp + Cs As
+       * Av = Af
        */
-      (TD0_color_sel_arg1 |
+      (TD0_color_arg2_diffuse |
+       TD0_color_alpha_currtex |
+       TD0_color_alpha1inv_enable |
+       TD0_color_arg1mul_alpha1 |
+       TD0_color_blend_enable |
+       TD0_color_arg1add_mulout |
+       TD0_color_arg2add_mulout |
+       TD0_color_add_add |
+       TD0_color_sel_add |
        TD0_alpha_arg2_diffuse |
        TD0_alpha_sel_arg2),
-      
-      /* GL_BLEND
+
+      /* GL_BLEND (Cc=0.0)
+       * Cv = Cf ( 1 - Cs )
+       * Av = Af As
        */
-      (0),
+      (TD0_color_arg1_inv_enable |
+       TD0_color_arg2_diffuse |
+       TD0_color_sel_mul |
+       TD0_alpha_arg2_diffuse |
+       TD0_alpha_sel_mul),
       
       /* GL_ADD
+       * Cv = Cf + Cs
+       * Av = Af As
        */
       (TD0_color_arg2_diffuse |
        TD0_color_add_add |
@@ -290,33 +403,53 @@ static const GLuint g400_color_combine[][MGA_MAX_COMBFUNC] =
       (0),
        
       /* GL_REPLACE
+       * Cv = Cs
+       * Av = As
        */
       (TD0_color_sel_arg1 |
-       TD0_alpha_arg2_diffuse |
-       TD0_alpha_sel_arg2 ),
+       TD0_alpha_sel_arg1),
       
       /* GL_MODULATE
+       * Cv = Cp Cs
+       * Av = Ap As
        */
       (TD0_color_arg2_prevstage |
-       TD0_color_alpha_prevstage |
        TD0_color_sel_mul |
        TD0_alpha_arg2_prevstage |
        TD0_alpha_sel_mul),
 
       /* GL_DECAL
-       */
-      (TD0_color_sel_arg1 |
-       TD0_alpha_arg2_prevstage |
-       TD0_alpha_sel_arg2 ),
-      
-      /* GL_BLEND
-       */
-      (0),
-      
-      /* GL_ADD
+       * tmp = Cp ( 1 - As )
+       * Cv = tmp + Cs As
+       * Av = Ap
        */
       (TD0_color_arg2_prevstage |
-       TD0_color_alpha_prevstage |
+       TD0_color_alpha_currtex |
+       TD0_color_alpha1inv_enable |
+       TD0_color_arg1mul_alpha1 |
+       TD0_color_blend_enable |
+       TD0_color_arg1add_mulout |
+       TD0_color_arg2add_mulout |
+       TD0_color_add_add |
+       TD0_color_sel_add |
+       TD0_alpha_arg2_prevstage |
+       TD0_alpha_sel_arg2),
+      
+      /* GL_BLEND (Cc=0.0)
+       * Cv = Cp ( 1 - Cs )
+       * Av = Ap As
+       */
+      (TD0_color_arg1_inv_enable |
+       TD0_color_arg2_prevstage |
+       TD0_color_sel_mul |
+       TD0_alpha_arg2_prevstage |
+       TD0_alpha_sel_mul),
+      
+      /* GL_ADD
+       * Cv = Cp + Cs
+       * Av = Ap As
+       */
+      (TD0_color_arg2_prevstage |
        TD0_color_add_add |
        TD0_color_sel_add |
        TD0_alpha_arg2_prevstage |
@@ -334,20 +467,25 @@ static const GLuint g400_alpha_combine[][MGA_MAX_COMBFUNC] =
       (0),
 
       /* GL_REPLACE
-       */
-      (TD0_color_sel_arg2 |
-       TD0_color_arg2_diffuse |
-       TD0_alpha_sel_arg1 ),
-      
-      /* GL_MODULATE
-       * FIXME: Is this correct?
+       * Cv = Cf
+       * Av = As
        */
       (TD0_color_arg2_diffuse |
-       TD0_color_sel_mul |
+       TD0_color_sel_arg2 |
+       TD0_alpha_sel_arg1),
+      
+      /* GL_MODULATE
+       * Cv = Cf
+       * Av = Af As
+       */
+      (TD0_color_arg2_diffuse |
+       TD0_color_sel_arg2 |
        TD0_alpha_arg2_diffuse |
        TD0_alpha_sel_mul),
 
-      /* GL_DECAL
+      /* GL_DECAL (undefined)
+       * Cv = Cf
+       * Av = Af
        */
       (TD0_color_arg2_diffuse |
        TD0_color_sel_arg2 |
@@ -355,16 +493,20 @@ static const GLuint g400_alpha_combine[][MGA_MAX_COMBFUNC] =
        TD0_alpha_sel_arg2),
 
       /* GL_BLEND
+       * Cv = Cf
+       * Av = Af As
        */
       (TD0_color_arg2_diffuse |
-       TD0_color_sel_mul |
+       TD0_color_sel_arg2 |
        TD0_alpha_arg2_diffuse |
        TD0_alpha_sel_mul),
 
       /* GL_ADD
+       * Cv = Cf
+       * Av = Af As
        */
       (TD0_color_arg2_diffuse |
-       TD0_color_sel_mul |
+       TD0_color_sel_arg2 |
        TD0_alpha_arg2_diffuse |
        TD0_alpha_sel_mul),
    },
@@ -377,21 +519,25 @@ static const GLuint g400_alpha_combine[][MGA_MAX_COMBFUNC] =
       (0),
 
       /* GL_REPLACE
-       */
-      (TD0_color_sel_arg2 |
-       TD0_color_arg2_diffuse |
-       TD0_alpha_sel_arg1 ),
-      
-      /* GL_MODULATE
-       * FIXME: Is this correct?
+       * Cv = Cp
+       * Av = As
        */
       (TD0_color_arg2_prevstage |
-       TD0_color_alpha_prevstage |
-       TD0_color_sel_mul |
+       TD0_color_sel_arg2 |
+       TD0_alpha_sel_arg1),
+      
+      /* GL_MODULATE
+       * Cv = Cp
+       * Av = Ap As
+       */
+      (TD0_color_arg2_prevstage |
+       TD0_color_sel_arg2 |
        TD0_alpha_arg2_prevstage |
        TD0_alpha_sel_mul),
 
-      /* GL_DECAL
+      /* GL_DECAL (undefined)
+       * Cv = Cp
+       * Av = Ap
        */
       (TD0_color_arg2_prevstage |
        TD0_color_sel_arg2 |
@@ -399,16 +545,20 @@ static const GLuint g400_alpha_combine[][MGA_MAX_COMBFUNC] =
        TD0_alpha_sel_arg2),
 
       /* GL_BLEND
+       * Cv = Cp
+       * Av = Ap As
        */
-      (TD0_color_arg2_diffuse |
-       TD0_color_sel_mul |
-       TD0_alpha_arg2_diffuse |
+      (TD0_color_arg2_prevstage |
+       TD0_color_sel_arg2 |
+       TD0_alpha_arg2_prevstage |
        TD0_alpha_sel_mul),
 
       /* GL_ADD
+       * Cv = Cp
+       * Av = Ap As
        */
       (TD0_color_arg2_prevstage |
-       TD0_color_sel_mul |
+       TD0_color_sel_arg2 |
        TD0_alpha_arg2_prevstage |
        TD0_alpha_sel_mul),
    },
@@ -421,142 +571,235 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, GLuint unit )
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[source];
    const struct gl_texture_object *tObj = texUnit->_Current;
    GLuint *reg = ((GLuint *)&mmesa->setup.tdualstage0 + unit);
+   mgaTextureObjectPtr t;
    GLenum format;
 
-   if ( tObj != ctx->Texture.Unit[source].Current2D || !tObj ) 
+   if ( !tObj ||
+        (tObj != ctx->Texture.Unit[source].Current2D &&
+         tObj != ctx->Texture.Unit[source].CurrentRect) )
       return;
 
    format = tObj->Image[tObj->BaseLevel]->Format;
 
+   t = (mgaTextureObjectPtr) tObj->DriverData;
+
    switch (ctx->Texture.Unit[source].EnvMode) {
    case GL_REPLACE:
-      if (format == GL_RGB || format == GL_LUMINANCE) {
-	 *reg = g400_color_combine[unit][MGA_REPLACE];
-      }
-      else if (format == GL_ALPHA) {
+      if (format == GL_ALPHA) {
          *reg = g400_alpha_combine[unit][MGA_REPLACE];
-      }
-      else {
-         *reg = (TD0_color_sel_arg1 |
-                 TD0_alpha_sel_arg1 );
+      } else if (format == GL_RGB || format == GL_LUMINANCE) {
+         *reg = g400_color_combine[unit][MGA_REPLACE];
+      } else {
+         *reg = g400_color_alpha_combine[unit][MGA_REPLACE];
       }
       break;
 
    case GL_MODULATE:
-      *reg = g400_color_combine[unit][MGA_MODULATE];
+      if (format == GL_ALPHA) {
+         *reg = g400_alpha_combine[unit][MGA_MODULATE];
+      } else if (format == GL_RGB || format == GL_LUMINANCE) {
+         *reg = g400_color_combine[unit][MGA_MODULATE];
+      } else {
+         *reg = g400_color_alpha_combine[unit][MGA_MODULATE];
+      }
       break;
+
    case GL_DECAL:
       if (format == GL_RGB) {
-	 *reg = g400_color_combine[unit][MGA_DECAL];
-      }
-      else if ( format == GL_RGBA ) {
-#if 0
-         if (unit == 0) {
-            /* this doesn't work */
-            *reg = (TD0_color_arg2_diffuse |
-                    TD0_color_alpha_currtex |
-                    TD0_color_alpha2inv_enable |
-                    TD0_color_arg2mul_alpha2 |
-                    TD0_color_arg1mul_alpha1 |
-                    TD0_color_blend_enable |
-                    TD0_color_arg1add_mulout |
-                    TD0_color_arg2add_mulout |
-                    TD0_color_add_add |
-                    TD0_color_sel_mul |
-                    TD0_alpha_arg2_diffuse |
-                    TD0_alpha_sel_arg2 );
+         *reg = g400_color_combine[unit][MGA_DECAL];
+      } else if (format == GL_RGBA) {
+         *reg = g400_color_alpha_combine[unit][MGA_DECAL];
+         if (ctx->Texture._EnabledUnits != 0x03) {
+            /* Linear blending mode needs dual texturing enabled */
+            *(reg+1) = (TD0_color_arg2_prevstage |
+                        TD0_color_sel_arg2 |
+                        TD0_alpha_arg2_prevstage |
+                        TD0_alpha_sel_arg2);
+            mmesa->dualtex_env = GL_TRUE;
          }
-         else {
-            *reg = (TD0_color_arg2_prevstage |
-                    TD0_color_alpha_currtex |
-                    TD0_color_alpha2inv_enable |
-                    TD0_color_arg2mul_alpha2 |
-                    TD0_color_arg1mul_alpha1 |
-                    TD0_color_add_add |
-                    TD0_color_sel_add |
-                    TD0_alpha_arg2_prevstage |
-                    TD0_alpha_sel_arg2 );
-         }
-#else
-         /* s/w fallback, pretty sure we can't do in h/w */
-	 FALLBACK( ctx, MGA_FALLBACK_TEXTURE, GL_TRUE );
-	 if ( MGA_DEBUG & DEBUG_VERBOSE_FALLBACK )
-	    fprintf( stderr, "FALLBACK: GL_DECAL RGBA texture, unit=%d\n",
-		     unit );
-#endif
-      }
-      else {
-	*reg = g400_alpha_combine[unit][MGA_DECAL];
+      } else {
+         /* Undefined */
+         *reg = g400_alpha_combine[unit][MGA_DECAL];
       }
       break;
 
    case GL_ADD:
-     if (format == GL_INTENSITY) {
-	if (unit == 0) {
-	   *reg = ( TD0_color_arg2_diffuse |
-		   TD0_color_add_add |
-		   TD0_color_sel_add |
-		   TD0_alpha_arg2_diffuse |
-		   TD0_alpha_add_enable |
-		   TD0_alpha_sel_add);
-	}
-	else {
-	   *reg = ( TD0_color_arg2_prevstage |
-		   TD0_color_add_add |
-		   TD0_color_sel_add |
-		   TD0_alpha_arg2_prevstage |
-		   TD0_alpha_add_enable |
-		   TD0_alpha_sel_add);
-	}
-     }      
-     else if (format == GL_ALPHA) {
-	*reg = g400_alpha_combine[unit][MGA_ADD];
-     }
-     else {
-	*reg = g400_color_combine[unit][MGA_ADD];
-     }
-     break;
+      if (format == GL_ALPHA) {
+         *reg = g400_alpha_combine[unit][MGA_ADD];
+      } else if (format == GL_RGB || format == GL_LUMINANCE) {
+         *reg = g400_color_combine[unit][MGA_ADD];
+      } else if (format == GL_RGBA || format == GL_LUMINANCE_ALPHA) {
+         *reg = g400_color_alpha_combine[unit][MGA_ADD];
+      } else if (format == GL_INTENSITY) {
+         /* Cv = Cf + Cs
+          * Av = Af + As
+          */
+         if (unit == 0) {
+            *reg = (TD0_color_arg2_diffuse |
+                    TD0_color_add_add |
+                    TD0_color_sel_add |
+                    TD0_alpha_arg2_diffuse |
+                    TD0_alpha_add_enable |
+                    TD0_alpha_sel_add);
+         } else {
+            *reg = (TD0_color_arg2_prevstage |
+                    TD0_color_add_add |
+                    TD0_color_sel_add |
+                    TD0_alpha_arg2_prevstage |
+                    TD0_alpha_add_enable |
+                    TD0_alpha_sel_add);
+         }
+      }
+      break;
 
    case GL_BLEND:
       if (format == GL_ALPHA) {
-	 *reg = g400_alpha_combine[unit][MGA_BLEND];
-      }
-      else {
-	 FALLBACK( ctx, MGA_FALLBACK_TEXTURE, GL_TRUE );
-	 if ( MGA_DEBUG & DEBUG_VERBOSE_FALLBACK )
-	    fprintf( stderr, "FALLBACK: GL_BLEND envcolor=0x%08x\n",
-		     mmesa->envcolor );
-
-         /* Do singletexture GL_BLEND with 'all ones' env-color
-          * by using both texture units.  Multitexture gl_blend
-          * is a fallback.
-          */
-         if (unit == 0) {
-            /* Part 1: R1 = Rf ( 1 - Rt )
-             *         A1 = Af At
-             */
-            *reg = ( TD0_color_arg2_diffuse |
-                     TD0_color_arg1_inv_enable |
-                     TD0_color_sel_mul |
-                     TD0_alpha_arg2_diffuse |
-                     TD0_alpha_sel_arg1);
+         *reg = g400_alpha_combine[unit][MGA_BLEND];
+      } else {
+         if (mmesa->blend_flags & MGA_BLEND_RGB_ZERO) {
+            if (format == GL_RGB || format == GL_LUMINANCE) {
+               *reg = g400_color_combine[unit][MGA_BLEND];
+            } else if (format == GL_RGBA || format == GL_LUMINANCE_ALPHA) {
+               *reg = g400_color_alpha_combine[unit][MGA_BLEND];
+            } else if (format == GL_INTENSITY) {
+               if (mmesa->blend_flags & MGA_BLEND_ALPHA_ZERO) {
+                  /* Cv = Cf ( 1 - Cs )
+                   * Av = Af ( 1 - As )
+                   */
+                  if (unit == 0) {
+                     *reg = (TD0_color_arg1_inv_enable |
+                             TD0_color_arg2_diffuse |
+                             TD0_color_sel_mul |
+                             TD0_alpha_arg1_inv_enable |
+                             TD0_alpha_arg2_diffuse |
+                             TD0_alpha_sel_mul);
+                  } else {
+                     *reg = (TD0_color_arg1_inv_enable |
+                             TD0_color_arg2_prevstage |
+                             TD0_color_sel_mul |
+                             TD0_alpha_arg1_inv_enable |
+                             TD0_alpha_arg2_prevstage |
+                             TD0_alpha_sel_mul);
+                  }
+               } else if (mmesa->blend_flags & MGA_BLEND_ALPHA_ONE &&
+                          ctx->Texture._EnabledUnits != 0x03) {
+                  /* C1 = Cf ( 1 - Cs )
+                   * A1 = Af ( 1 - As )
+                   */
+                  *reg = (TD0_color_arg1_inv_enable |
+                          TD0_color_arg2_diffuse |
+                          TD0_color_sel_mul |
+                          TD0_alpha_arg1_inv_enable |
+                          TD0_alpha_arg2_diffuse |
+                          TD0_alpha_sel_mul);
+                  /* Cv = C1
+                   * Av = A1 + As
+                   */
+                  *(reg+1) = (TD0_color_arg2_prevstage |
+                              TD0_color_sel_arg2 |
+                              TD0_alpha_arg2_prevstage |
+                              TD0_alpha_add_enable |
+                              TD0_alpha_sel_add);
+                  mmesa->dualtex_env = GL_TRUE;
+               } else {
+                  t->texenv_fallback = GL_TRUE;
+               }
+            }
+         } else if (mmesa->blend_flags & MGA_BLEND_RGB_ONE &&
+                    ctx->Texture._EnabledUnits != 0x03) {
+            if (format == GL_RGB || format == GL_LUMINANCE) {
+                  /* C1 = Cf ( 1 - Cs )
+                   * A1 = Af
+                   */
+                  *reg = (TD0_color_arg1_inv_enable |
+                          TD0_color_arg2_diffuse |
+                          TD0_color_sel_mul |
+                          TD0_alpha_arg2_diffuse |
+                          TD0_alpha_sel_arg2);
+                  /* Cv = C1 + Cs
+                   * Av = A1
+                   */
+                  *(reg+1) = (TD0_color_arg2_prevstage |
+                              TD0_color_add_add |
+                              TD0_color_sel_add |
+                              TD0_alpha_arg2_prevstage |
+                              TD0_alpha_sel_arg2);
+                  mmesa->dualtex_env = GL_TRUE;
+            } else if (format == GL_RGBA || format == GL_LUMINANCE_ALPHA) {
+                  /* C1 = Cf ( 1 - Cs )
+                   * A1 = Af As
+                   */
+                  *reg = (TD0_color_arg1_inv_enable |
+                          TD0_color_arg2_diffuse |
+                          TD0_color_sel_mul |
+                          TD0_alpha_arg2_diffuse |
+                          TD0_alpha_sel_mul);
+                  /* Cv = C1 + Cs
+                   * Av = A1
+                   */
+                  *(reg+1) = (TD0_color_arg2_prevstage |
+                              TD0_color_add_add |
+                              TD0_color_sel_add |
+                              TD0_alpha_arg2_prevstage |
+                              TD0_alpha_sel_arg2);
+                  mmesa->dualtex_env = GL_TRUE;
+            } else if (format == GL_INTENSITY) {
+               if (mmesa->blend_flags & MGA_BLEND_ALPHA_ZERO) {
+                  /* C1 = Cf ( 1 - Cs )
+                   * A1 = Af ( 1 - As )
+                   */
+                  *reg = (TD0_color_arg1_inv_enable |
+                          TD0_color_arg2_diffuse |
+                          TD0_color_sel_mul |
+                          TD0_alpha_arg1_inv_enable |
+                          TD0_alpha_arg2_diffuse |
+                          TD0_alpha_sel_mul);
+                  /* Cv = C1 + Cs
+                   * Av = A1
+                   */
+                  *(reg+1) = (TD0_color_arg2_prevstage |
+                              TD0_color_add_add |
+                              TD0_color_sel_add |
+                              TD0_alpha_arg2_prevstage |
+                              TD0_alpha_sel_arg2);
+                  mmesa->dualtex_env = GL_TRUE;
+               } else if (mmesa->blend_flags & MGA_BLEND_ALPHA_ONE) {
+                  /* C1 = Cf ( 1 - Cs )
+                   * A1 = Af ( 1 - As )
+                   */
+                  *reg = (TD0_color_arg1_inv_enable |
+                          TD0_color_arg2_diffuse |
+                          TD0_color_sel_mul |
+                          TD0_alpha_arg1_inv_enable |
+                          TD0_alpha_arg2_diffuse |
+                          TD0_alpha_sel_mul);
+                  /* Cv = C1 + Cs
+                   * Av = A1 + As
+                   */
+                  *(reg+1) = (TD0_color_arg2_prevstage |
+                              TD0_color_add_add |
+                              TD0_color_sel_add |
+                              TD0_alpha_arg2_prevstage |
+                              TD0_alpha_add_enable |
+                              TD0_alpha_sel_add);
+                  mmesa->dualtex_env = GL_TRUE;
+               } else {
+                  t->texenv_fallback = GL_TRUE;
+               }
+            }
          } else {
-            /* Part 2: R2 = R1 + Rt
-             *         A2 = A1
-             */
-            *reg = ( TD0_color_arg2_prevstage |
-                     TD0_color_add_add |
-                     TD0_color_sel_add |
-                     TD0_alpha_arg2_prevstage |
-                     TD0_alpha_sel_arg2);
+            t->texenv_fallback = GL_TRUE;
          }
       }
+      break;
+   case GL_COMBINE_EXT:
+      if (!mgaUpdateTextureEnvCombine(ctx, unit))
+         t->texenv_fallback = GL_TRUE;
       break;
    default:
       break;
    }
 }
-
 
 static void disable_tex( GLcontext *ctx, int unit )
 {
@@ -573,7 +816,7 @@ static void disable_tex( GLcontext *ctx, int unit )
       mmesa->CurrentTexObj[unit] = NULL;
    }
 
-   if ( unit != 0 ) {
+   if ( unit != 0 && !mmesa->dualtex_env ) {
       mmesa->setup.tdualstage1 = mmesa->setup.tdualstage0;
    }
 
@@ -586,7 +829,7 @@ static void disable_tex( GLcontext *ctx, int unit )
    mmesa->dirty |= MGA_UPLOAD_CONTEXT | (MGA_UPLOAD_TEX0 << unit);
 }
 
-static GLboolean enable_tex_2d( GLcontext *ctx, int unit )
+static GLboolean enable_tex( GLcontext *ctx, int unit )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    const int source = mmesa->tmu_source[unit];
@@ -649,6 +892,14 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
       t->setup.texctl2 |= TMC_dualtex_enable;
    }
 
+   t->texenv_fallback = GL_FALSE;
+
+   /* Set this before mgaUpdateTextureEnvG400() since
+    * GL_ARB_texture_env_crossbar may have to disable texturing.
+    */
+   mmesa->setup.dwgctl &= DC_opcod_MASK;
+   mmesa->setup.dwgctl |= DC_opcod_texture_trap;
+
    /* FIXME: The Radeon has some cached state so that it can avoid calling
     * FIXME: UpdateTextureEnv in some cases.  Is that possible here?
     */
@@ -680,13 +931,10 @@ static GLboolean update_tex_common( GLcontext *ctx, int unit )
 
       mgaUpdateTextureEnvG200( ctx, unit );
    }
-
-   mmesa->setup.dwgctl &= DC_opcod_MASK;
-   mmesa->setup.dwgctl |= DC_opcod_texture_trap;
    mmesa->dirty |= MGA_UPLOAD_CONTEXT | (MGA_UPLOAD_TEX0 << unit);
 
    FALLBACK( ctx, MGA_FALLBACK_BORDER_MODE, t->border_fallback );
-   return !t->border_fallback;
+   return !t->border_fallback && !t->texenv_fallback;
 }
 
 
@@ -697,8 +945,9 @@ static GLboolean updateTextureUnit( GLcontext *ctx, int unit )
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[source];
 
 
-   if ( texUnit->_ReallyEnabled == TEXTURE_2D_BIT) {
-      return(enable_tex_2d( ctx, unit ) &&
+   if ( texUnit->_ReallyEnabled == TEXTURE_2D_BIT ||
+        texUnit->_ReallyEnabled == TEXTURE_RECT_BIT ) {
+      return(enable_tex( ctx, unit ) &&
 	     update_tex_common( ctx, unit ));
    }
    else if ( texUnit->_ReallyEnabled ) {
@@ -718,6 +967,7 @@ void mgaUpdateTextureState( GLcontext *ctx )
    GLboolean ok;
    unsigned  i;
 
+   mmesa->dualtex_env = GL_FALSE;
 
    /* This works around a quirk with the MGA hardware.  If only OpenGL 
     * TEXTURE1 is enabled, then the hardware TEXTURE0 must be used.  The
@@ -740,8 +990,4 @@ void mgaUpdateTextureState( GLcontext *ctx )
    }
 
    FALLBACK( ctx, MGA_FALLBACK_TEXTURE, !ok );
-   
-   /* FIXME: I believe that ChooseVertexState should be called here instead of
-    * FIXME: in mgaDDValidateState.
-    */
 }

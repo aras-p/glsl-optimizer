@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_vb.c,v 1.15 2002/10/30 12:51:43 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_vb.c,v 1.16 2003/03/26 20:43:49 tsi Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -361,6 +361,9 @@ void r128CheckTexSizes( GLcontext *ctx )
 	 tnl->Driver.Render.Interp = setup_tab[rmesa->SetupIndex].interp;
 	 tnl->Driver.Render.CopyPV = setup_tab[rmesa->SetupIndex].copy_pv;
       }
+      if (rmesa->Fallback) {
+         tnl->Driver.Render.Start(ctx);
+      }
    }
 }
 
@@ -489,7 +492,7 @@ void r128InitVB( GLcontext *ctx )
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
 
-   rmesa->verts = ALIGN_MALLOC(size * 4 * 16, 32);
+   rmesa->verts = (GLubyte *)ALIGN_MALLOC(size * 4 * 16, 32);
 
    {
       static int firsttime = 1;

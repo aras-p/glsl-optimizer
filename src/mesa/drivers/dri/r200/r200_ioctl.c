@@ -1,6 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
-
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_ioctl.c,v 1.4 2002/12/17 00:32:56 dawes Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -33,7 +32,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Authors:
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
-
+ 
 #include <sched.h>
 #include <errno.h>
 
@@ -773,7 +772,7 @@ void r200Finish( GLcontext *ctx )
 }
 
 
-/* This version of AllocateMemoryNV allocates only agp memory, and
+/* This version of AllocateMemoryMESA allocates only GART memory, and
  * only does so after the point at which the driver has been
  * initialized.
  *
@@ -782,8 +781,9 @@ void r200Finish( GLcontext *ctx )
  * the kernel data structures, and the current context to get the
  * device fd.
  */
-void *r200AllocateMemoryNV(GLsizei size, GLfloat readfreq,
-			    GLfloat writefreq, GLfloat priority)
+void *r200AllocateMemoryMESA(GLsizei size,
+			     GLfloat readfreq, GLfloat writefreq, 
+			     GLfloat priority)
 {
    GET_CURRENT_CONTEXT(ctx);
    r200ContextPtr rmesa;
@@ -795,7 +795,7 @@ void *r200AllocateMemoryNV(GLsizei size, GLfloat readfreq,
       fprintf(stderr, "%s sz %d %f/%f/%f\n", __FUNCTION__, size, readfreq, 
 	      writefreq, priority);
 
-   if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || rmesa->r200Screen->IsPCI ) 
+   if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || !rmesa->r200Screen->gartTextures.map)
       return NULL;
 
    if (getenv("R200_NO_ALLOC"))
@@ -804,7 +804,7 @@ void *r200AllocateMemoryNV(GLsizei size, GLfloat readfreq,
    if (rmesa->dri.drmMinor < 6) 
       return NULL;
       
-   alloc.region = RADEON_MEM_REGION_AGP;
+   alloc.region = RADEON_MEM_REGION_GART;
    alloc.alignment = 0;
    alloc.size = size;
    alloc.region_offset = &region_offset;
@@ -819,14 +819,14 @@ void *r200AllocateMemoryNV(GLsizei size, GLfloat readfreq,
    }
    
    {
-      char *region_start = (char *)rmesa->r200Screen->agpTextures.map;
+      char *region_start = (char *)rmesa->r200Screen->gartTextures.map;
       return (void *)(region_start + region_offset);
    }
 }
 
 
-/* Called via glXFreeMemoryNV() */
-void r200FreeMemoryNV(GLvoid *pointer)
+/* Called via glXFreeMemoryMESA() */
+void r200FreeMemoryMESA(GLvoid *pointer)
 {
    GET_CURRENT_CONTEXT(ctx);
    r200ContextPtr rmesa;
@@ -837,7 +837,7 @@ void r200FreeMemoryNV(GLvoid *pointer)
    if (R200_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s %p\n", __FUNCTION__, pointer);
 
-   if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || rmesa->r200Screen->IsPCI ) {
+   if (!ctx || !(rmesa = R200_CONTEXT(ctx)) || !rmesa->r200Screen->gartTextures.map) {
       fprintf(stderr, "%s: no context\n", __FUNCTION__);
       return;
    }
@@ -845,16 +845,16 @@ void r200FreeMemoryNV(GLvoid *pointer)
    if (rmesa->dri.drmMinor < 6) 
       return;
 
-   region_offset = (char *)pointer - (char *)rmesa->r200Screen->agpTextures.map;
+   region_offset = (char *)pointer - (char *)rmesa->r200Screen->gartTextures.map;
 
    if (region_offset < 0 || 
-       region_offset > rmesa->r200Screen->agpTextures.size) {
+       region_offset > rmesa->r200Screen->gartTextures.size) {
       fprintf(stderr, "offset %d outside range 0..%d\n", region_offset,
-	      rmesa->r200Screen->agpTextures.size);
+	      rmesa->r200Screen->gartTextures.size);
       return;
    }
 
-   memfree.region = RADEON_MEM_REGION_AGP;
+   memfree.region = RADEON_MEM_REGION_GART;
    memfree.region_offset = region_offset;
    
    ret = drmCommandWrite( rmesa->r200Screen->driScreen->fd,
@@ -865,8 +865,8 @@ void r200FreeMemoryNV(GLvoid *pointer)
       fprintf(stderr, "%s: DRM_RADEON_FREE ret %d\n", __FUNCTION__, ret);
 }
 
-/* Called via glXGetAGPOffsetMESA() */
-GLuint r200GetAGPOffset(const GLvoid *pointer)
+/* Called via glXGetMemoryOffsetMESA() */
+GLuint r200GetMemoryOffsetMESA(const GLvoid *pointer)
 {
    GET_CURRENT_CONTEXT(ctx);
    r200ContextPtr rmesa;
@@ -877,41 +877,41 @@ GLuint r200GetAGPOffset(const GLvoid *pointer)
       return ~0;
    }
 
-   if (!r200IsAgpMemory( rmesa, pointer, 0 ))
+   if (!r200IsGartMemory( rmesa, pointer, 0 ))
       return ~0;
 
    if (rmesa->dri.drmMinor < 6) 
       return ~0;
 
-   card_offset = r200AgpOffsetFromVirtual( rmesa, pointer );
+   card_offset = r200GartOffsetFromVirtual( rmesa, pointer );
 
-   return card_offset - rmesa->r200Screen->agp_base;
+   return card_offset - rmesa->r200Screen->gart_base;
 }
 
 
-GLboolean r200IsAgpMemory( r200ContextPtr rmesa, const GLvoid *pointer,
+GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 			   GLint size )
 {
-   int offset = (char *)pointer - (char *)rmesa->r200Screen->agpTextures.map;
+   int offset = (char *)pointer - (char *)rmesa->r200Screen->gartTextures.map;
    int valid = (size >= 0 &&
 		offset >= 0 &&
-		offset + size < rmesa->r200Screen->agpTextures.size);
+		offset + size < rmesa->r200Screen->gartTextures.size);
 
    if (R200_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "r200IsAgpMemory( %p ) : %d\n", pointer, valid );
+      fprintf(stderr, "r200IsGartMemory( %p ) : %d\n", pointer, valid );
    
    return valid;
 }
 
 
-GLuint r200AgpOffsetFromVirtual( r200ContextPtr rmesa, const GLvoid *pointer )
+GLuint r200GartOffsetFromVirtual( r200ContextPtr rmesa, const GLvoid *pointer )
 {
-   int offset = (char *)pointer - (char *)rmesa->r200Screen->agpTextures.map;
+   int offset = (char *)pointer - (char *)rmesa->r200Screen->gartTextures.map;
 
-   if (offset < 0 || offset > rmesa->r200Screen->agpTextures.size)
+   if (offset < 0 || offset > rmesa->r200Screen->gartTextures.size)
       return ~0;
    else
-      return rmesa->r200Screen->agp_texture_offset + offset;
+      return rmesa->r200Screen->gart_texture_offset + offset;
 }
 
 

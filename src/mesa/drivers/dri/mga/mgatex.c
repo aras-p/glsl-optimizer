@@ -221,7 +221,7 @@ mgaChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
       /* FIXME: This will report incorrect component sizes... */
-      return &_mesa_texformat_argb4444;
+      return MGA_IS_G400(mmesa) ? &_mesa_texformat_al88 : &_mesa_texformat_argb4444;
 
    case 1:
    case GL_LUMINANCE:
@@ -231,7 +231,7 @@ mgaChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
       /* FIXME: This will report incorrect component sizes... */
-      return &_mesa_texformat_rgb565;
+      return MGA_IS_G400(mmesa) ? &_mesa_texformat_al88 : &_mesa_texformat_rgb565;
 
    case 2:
    case GL_LUMINANCE_ALPHA:
@@ -243,7 +243,7 @@ mgaChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE16_ALPHA16:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
       /* FIXME: This will report incorrect component sizes... */
-      return &_mesa_texformat_argb4444;
+      return MGA_IS_G400(mmesa) ? &_mesa_texformat_al88 : &_mesa_texformat_argb4444;
 
    case GL_INTENSITY:
    case GL_INTENSITY4:
@@ -252,7 +252,7 @@ mgaChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
       /* FIXME: This will report incorrect component sizes... */
-      return &_mesa_texformat_argb4444;
+      return MGA_IS_G400(mmesa) ? &_mesa_texformat_i8 : &_mesa_texformat_argb4444;
 
    case GL_YCBCR_MESA:
       if (MGA_IS_G400(mmesa) &&
@@ -309,6 +309,7 @@ mgaAllocTexObj( struct gl_texture_object *tObj )
 			    | TF_uvoffset_OGL);
 
       t->border_fallback = GL_FALSE;
+      t->texenv_fallback = GL_FALSE;
 
       make_empty_list( & t->base );
 
@@ -328,31 +329,31 @@ static void mgaDDTexEnv( GLcontext *ctx, GLenum target,
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
-
    switch( pname ) {
    case GL_TEXTURE_ENV_COLOR: {
       GLubyte c[4];
-      GLuint envColor;
 
       UNCLAMPED_FLOAT_TO_RGBA_CHAN( c, texUnit->EnvColor );
-      envColor = mgaPackColor( mmesa->mgaScreen->cpp, c[0], c[1], c[2], c[3] );
       mmesa->envcolor = PACK_COLOR_8888( c[3], c[0], c[1], c[2] );
 
-      if (mmesa->setup.fcol != envColor) {
+      if (mmesa->setup.fcol != mmesa->envcolor) {
 	 FLUSH_BATCH(mmesa);
-	 mmesa->setup.fcol = envColor;
+	 mmesa->setup.fcol = mmesa->envcolor;
 	 mmesa->dirty |= MGA_UPLOAD_CONTEXT;
 
-	 mmesa->blend_flags &= ~MGA_BLEND_ENV_COLOR;
+	 mmesa->blend_flags = 0;
 
-	 /* Actually just require all four components to be
-	  * equal.  This permits a single-pass GL_BLEND.
-	  *
-	  * More complex multitexture/multipass fallbacks
-	  * for blend can be done later.
-	  */
-	 if (mmesa->envcolor != 0x0 && mmesa->envcolor != 0xffffffff)
-	    mmesa->blend_flags |= MGA_BLEND_ENV_COLOR;
+         if ((mmesa->envcolor & 0xffffff) == 0x0) {
+            mmesa->blend_flags |= MGA_BLEND_RGB_ZERO;
+         } else if ((mmesa->envcolor & 0xffffff) == 0xffffff) {
+            mmesa->blend_flags |= MGA_BLEND_RGB_ONE;
+         }
+
+	 if ((mmesa->envcolor >> 24) == 0x0) {
+            mmesa->blend_flags |= MGA_BLEND_ALPHA_ZERO;
+         } else if ((mmesa->envcolor >> 24) == 0xff) {
+            mmesa->blend_flags |= MGA_BLEND_ALPHA_ONE;
+         }
       }
       break;
    }
@@ -445,8 +446,9 @@ mgaDDTexParameter( GLcontext *ctx, GLenum target,
     * to do anything now 
     */
 
-   if ( (t == NULL)
-        || (target != GL_TEXTURE_2D) ) {
+   if ( (t == NULL) ||
+        (target != GL_TEXTURE_2D &&
+         target != GL_TEXTURE_RECTANGLE_NV) ) {
       return;
    }
 
@@ -492,7 +494,8 @@ static void
 mgaDDBindTexture( GLcontext *ctx, GLenum target,
 		  struct gl_texture_object *tObj )
 {
-   if ( target == GL_TEXTURE_2D ) {
+   if ( target == GL_TEXTURE_2D ||
+        target == GL_TEXTURE_RECTANGLE_NV ) {
       if ( tObj->DriverData == NULL ) {
 	 mgaAllocTexObj( tObj );
       }
@@ -547,5 +550,7 @@ mgaDDInitTextureFuncs( GLcontext *ctx )
    ctx->Driver.TexEnv			= mgaDDTexEnv;
    ctx->Driver.TexParameter		= mgaDDTexParameter;
 
-   driInitTextureObjects( ctx, & mmesa->swapped, DRI_TEXMGR_DO_TEXTURE_2D );
+   driInitTextureObjects( ctx, & mmesa->swapped,
+                          (DRI_TEXMGR_DO_TEXTURE_2D |
+                           DRI_TEXMGR_DO_TEXTURE_RECT) );
 }

@@ -35,7 +35,7 @@ SOFTWARE.
  *   Gareth Hughes <gareth@valinux.com>
  *
  */
-#include <errno.h>
+#include <errno.h> 
 
 #include "glheader.h"
 #include "imports.h"
@@ -112,8 +112,8 @@ static void radeonUploadRectSubImage( radeonContextPtr rmesa,
    height = texImage->Height;
    dstPitch = t->pp_txpitch + 32;
 
-   {	/* FIXME: prefer AGP-texturing if possible */
-      /* Data not in agp memory, or bad pitch.
+   {	/* FIXME: prefer GART-texturing if possible */
+      /* Data not in GART memory, or bad pitch.
        */
       for (done = 0; done < height ; ) {
 	 struct radeon_dma_region region;

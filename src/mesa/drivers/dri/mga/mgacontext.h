@@ -38,6 +38,7 @@
 #include "mga_sarea.h"
 #include "texmem.h"
 #include "macros.h"
+#include "xmlconfig.h"
 
 #define MGA_SET_FIELD(reg,mask,val)  reg = ((reg) & (mask)) | ((val) & ~(mask))
 #define MGA_FIELD(field,val) (((val) << (field ## _SHIFT)) & ~(field ## _MASK))
@@ -79,10 +80,12 @@ typedef void (*mga_point_func)( mgaContextPtr, mgaVertex * );
 
 
 
-/* Reasons why the GL_BLEND fallback mightn't work:
+/* GL_BLEND has some limitations
  */
-#define MGA_BLEND_ENV_COLOR 0x1
-#define MGA_BLEND_MULTITEX  0x2
+#define MGA_BLEND_RGB_ZERO   0x1
+#define MGA_BLEND_RGB_ONE    0x2
+#define MGA_BLEND_ALPHA_ZERO 0x4
+#define MGA_BLEND_ALPHA_ONE  0x8
 
 struct mga_texture_object_s;
 struct mga_screen_private_s;
@@ -149,6 +152,10 @@ typedef struct mga_texture_object_s
     * to fallback for GL_CLAMP_TO_BORDER.
     */
    GLboolean          border_fallback;
+   /* Depending on multitxturing and environment color
+    * GL_BLEND may have to be a software fallback.
+    */
+   GLboolean texenv_fallback;
 } mgaTextureObject_t;
 
 struct mga_hw_state {
@@ -202,10 +209,11 @@ struct mga_context_t {
    struct gl_client_array UbyteColor;
    struct gl_client_array UbyteSecondaryColor;
 
-   /* Support for limited GL_BLEND fallback
+   /* Support for GL_DECAL and GL_BLEND
     */
    unsigned int blend_flags;
    unsigned int envcolor;
+   GLboolean dualtex_env;
 
    /* Rasterization state 
     */
@@ -299,6 +307,10 @@ struct mga_context_t {
    __DRIscreenPrivate *driScreen;
    struct mga_screen_private_s *mgaScreen;
    MGASAREAPrivPtr sarea;
+
+   /* Configuration cache
+    */
+   driOptionCache optionCache;
 };
 
 #define MGA_CONTEXT(ctx) ((mgaContextPtr)(ctx->DriverCtx))

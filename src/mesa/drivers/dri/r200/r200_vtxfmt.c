@@ -1,6 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
-
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_vtxfmt.c,v 1.4 2003/05/06 23:52:08 daenzer Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -970,7 +969,7 @@ static void r200VtxFmtFlushVertices( GLcontext *ctx, GLuint flags )
  */
 
 
-void r200VtxfmtInit( GLcontext *ctx )
+void r200VtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    GLvertexformat *vfmt = &(rmesa->vb.vtxfmt);
@@ -1067,7 +1066,7 @@ void r200VtxfmtInit( GLcontext *ctx )
    make_empty_list( &rmesa->vb.dfn_cache.MultiTexCoord1fARB );
    make_empty_list( &rmesa->vb.dfn_cache.MultiTexCoord1fvARB );
 
-   r200InitCodegen( &rmesa->vb.codegen );
+   r200InitCodegen( &rmesa->vb.codegen, useCodegen );
 }
 
 static void free_funcs( struct dynfn *l )

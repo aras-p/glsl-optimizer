@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_screen.c,v 1.6 2002/12/16 16:18:58 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_screen.c,v 1.7 2003/03/26 20:43:51 tsi Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -48,7 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifndef _SOLO
 #include "glxextensions.h"
-#endif 
+#endif
 
 #if 1
 /* Including xf86PciInfo.h introduces a bunch of errors...
@@ -89,32 +89,26 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
       return NULL;
    }
 
-   if ( sPriv->drmMinor < 3 ||
-        getenv("RADEON_COMPAT")) {
-	   fprintf( stderr, "Radeon DRI driver:\n\t"
-		    "Compatibility mode for DRM driver version %d.%d.%d\n\t"
-		    "TCL will be disabled, expect reduced performance\n\t"
-		    "(prefer DRM radeon.o 1.3.x or newer)\n\t", 
-		    sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch ); 
-   }
-
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo (&screen->optionCache);
 
    /* This is first since which regions we map depends on whether or
     * not we are using a PCI card.
     */
    screen->IsPCI = dri_priv->IsPCI;
 
-   if (sPriv->drmMinor >= 3) {
+   {
       int ret;
       drmRadeonGetParam gp;
 
-      gp.param = RADEON_PARAM_AGP_BUFFER_OFFSET;
-      gp.value = &screen->agp_buffer_offset;
+      gp.param = RADEON_PARAM_GART_BUFFER_OFFSET;
+      gp.value = &screen->gart_buffer_offset;
 
       ret = drmCommandWriteRead( sPriv->fd, DRM_RADEON_GETPARAM,
 				 &gp, sizeof(gp));
       if (ret) {
-	 fprintf(stderr, "drmRadeonGetParam (RADEON_PARAM_AGP_BUFFER_OFFSET): %d\n", ret);
+	 FREE( screen );
+	 fprintf(stderr, "drmRadeonGetParam (RADEON_PARAM_GART_BUFFER_OFFSET): %d\n", ret);
 	 return NULL;
       }
 
@@ -166,20 +160,26 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
       return NULL;
    }
 
-   if ( !screen->IsPCI ) {
-      screen->agpTextures.handle = dri_priv->agpTexHandle;
-      screen->agpTextures.size   = dri_priv->agpTexMapSize;
+   if ( dri_priv->gartTexHandle && dri_priv->gartTexMapSize ) {
+      unsigned char *RADEONMMIO = screen->mmio.map;
+
+      screen->gartTextures.handle = dri_priv->gartTexHandle;
+      screen->gartTextures.size   = dri_priv->gartTexMapSize;
       if ( drmMap( sPriv->fd,
-		   screen->agpTextures.handle,
-		   screen->agpTextures.size,
-		   (drmAddressPtr)&screen->agpTextures.map ) ) {
+		   screen->gartTextures.handle,
+		   screen->gartTextures.size,
+		   (drmAddressPtr)&screen->gartTextures.map ) ) {
 	 drmUnmapBufs( screen->buffers );
 	 drmUnmap( screen->status.map, screen->status.size );
 	 drmUnmap( screen->mmio.map, screen->mmio.size );
 	 FREE( screen );
-         __driUtilMessage("%s: IsPCI failed\n", __FUNCTION__);
+	 __driUtilMessage("%s: drmMap failed for GART texture area\n", __FUNCTION__);
 	 return NULL;
       }
+
+      screen->gart_texture_offset = dri_priv->gartTexOffset + ( screen->IsPCI
+		? INREG( RADEON_AIC_LO_ADDR )
+		: ( ( INREG( RADEON_MC_AGP_LOCATION ) & 0x0ffffU ) << 16 ) );
    }
 
    screen->chipset = 0;
@@ -215,21 +215,36 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->logTexGranularity[RADEON_CARD_HEAP] =
       dri_priv->log2TexGran;
 
-   if ( screen->IsPCI 
-	|| getenv( "RADEON_AGPTEXTURING_FORCE_DISABLE" ) ) {
+   if ( !screen->gartTextures.map
+	|| getenv( "RADEON_GARTTEXTURING_FORCE_DISABLE" ) ) {
       screen->numTexHeaps = RADEON_NR_TEX_HEAPS - 1;
-      screen->texOffset[RADEON_AGP_HEAP] = 0;
-      screen->texSize[RADEON_AGP_HEAP] = 0;
-      screen->logTexGranularity[RADEON_AGP_HEAP] = 0;
+      screen->texOffset[RADEON_GART_HEAP] = 0;
+      screen->texSize[RADEON_GART_HEAP] = 0;
+      screen->logTexGranularity[RADEON_GART_HEAP] = 0;
    } else {
       screen->numTexHeaps = RADEON_NR_TEX_HEAPS;
-      screen->texOffset[RADEON_AGP_HEAP] =
-	 dri_priv->agpTexOffset + RADEON_AGP_TEX_OFFSET;
-      screen->texSize[RADEON_AGP_HEAP] = dri_priv->agpTexMapSize;
-      screen->logTexGranularity[RADEON_AGP_HEAP] =
-	 dri_priv->log2AGPTexGran;
+      screen->texOffset[RADEON_GART_HEAP] = screen->gart_texture_offset;
+      screen->texSize[RADEON_GART_HEAP] = dri_priv->gartTexMapSize;
+      screen->logTexGranularity[RADEON_GART_HEAP] =
+	 dri_priv->log2GARTTexGran;
    }
+#ifndef _SOLO
+   if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
+      PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+          (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+      void * const psc = sPriv->psc->screenConfigs;
 
+      if ( glx_enable_extension != NULL ) {
+	 if ( screen->irq != 0 ) {
+	    (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+	    (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+	    (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+	 }
+
+	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+      }
+   }
+#endif
    screen->driScreen = sPriv;
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
    return screen;
@@ -244,13 +259,15 @@ void radeonDestroyScreen( __DRIscreenPrivate *sPriv )
    if (!screen)
       return;
 
-   if ( !screen->IsPCI ) {
-      drmUnmap( screen->agpTextures.map,
-		screen->agpTextures.size );
+   if ( screen->gartTextures.map ) {
+      drmUnmap( screen->gartTextures.map, screen->gartTextures.size );
    }
    drmUnmapBufs( screen->buffers );
    drmUnmap( screen->status.map, screen->status.size );
    drmUnmap( screen->mmio.map, screen->mmio.size );
+
+   /* free all option information */
+   driDestroyOptionInfo (&screen->optionCache);
 
    FREE( screen );
    sPriv->private = NULL;
@@ -350,7 +367,7 @@ static struct __DriverAPIRec radeonAPI = {
  * The __driCreateScreen name is the symbol that libGL.so fetches.
  * Return:  pointer to a __DRIscreenPrivate.
  */
-#ifndef _SOLO
+#ifndef _SOLO 
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
@@ -368,10 +385,13 @@ void *__driCreateScreen(struct DRIDriverRec *driver,
 }
 #endif
 
-
 #ifndef _SOLO
-/* This function is called by libGL.so as soon as libGL.so is loaded.
+/**
+ * This function is called by libGL.so as soon as libGL.so is loaded.
  * This is where we'd register new extension functions with the dispatcher.
+ *
+ * \todo This interface has been deprecated, so we should probably remove
+ *       this function before the next XFree86 release.
  */
 void
 __driRegisterExtensions( void )
@@ -381,18 +401,17 @@ __driRegisterExtensions( void )
 
    if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
       glx_enable_extension = (PFNGLXENABLEEXTENSIONPROC)
-	  glXGetProcAddress( "__glXEnableExtension" );
+	  glXGetProcAddress( (const GLubyte *) "__glXEnableExtension" );
 
       if ( glx_enable_extension != NULL ) {
-	 glx_enable_extension( "GLX_SGI_swap_control", GL_FALSE );
-	 glx_enable_extension( "GLX_SGI_video_sync", GL_FALSE );
-	 glx_enable_extension( "GLX_MESA_swap_control", GL_FALSE );
-	 glx_enable_extension( "GLX_MESA_swap_frame_usage", GL_FALSE );
+	 (*glx_enable_extension)( "GLX_SGI_swap_control", GL_FALSE );
+	 (*glx_enable_extension)( "GLX_SGI_video_sync", GL_FALSE );
+	 (*glx_enable_extension)( "GLX_MESA_swap_control", GL_FALSE );
+	 (*glx_enable_extension)( "GLX_MESA_swap_frame_usage", GL_FALSE );
       }
    }
 }
 #endif
-
 
 /**
  * Get information about previous buffer swaps.

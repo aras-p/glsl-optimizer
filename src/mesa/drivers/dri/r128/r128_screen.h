@@ -39,6 +39,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifdef GLX_DIRECT_RENDERING
 
 #include "r128_sarea.h"
+#include "xmlconfig.h"
 
 typedef struct {
    drmHandle handle;			/* Handle to the DRM region */
@@ -76,6 +77,9 @@ typedef struct {
 
    __DRIscreenPrivate *driScreen;
    unsigned int sarea_priv_offset;
+
+   /* Configuration cache with default values for all contexts */
+   driOptionCache optionCache;
 
 } r128ScreenRec, *r128ScreenPtr;
 

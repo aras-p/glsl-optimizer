@@ -1,6 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
-
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_state.h,v 1.2 2002/11/05 17:46:08 tsi Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the

@@ -31,7 +31,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $Id: miniglx.c,v 1.1 2003/08/22 20:11:43 brianp Exp $ */
+/* $Id: miniglx.c,v 1.2 2003/10/21 06:05:40 jonsmirl Exp $ */
 
 /**
  * \mainpage Mini GLX
@@ -732,7 +732,7 @@ static int get_chipset_from_busid( Display *dpy )
       nr = sscanf(buf, "%04x\t%04x%04x", &encode, 
 		  &vendor, &device);
       
-      bus = encode >> 16;
+      bus = encode >> 8;
       dev = (encode & 0xFF) >> 3;
       fn = encode & 0x7;
 

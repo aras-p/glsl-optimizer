@@ -1,6 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
-
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_context.c,v 1.3 2003/05/06 23:52:08 daenzer Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -69,7 +68,26 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int R200_DEBUG = (0);
 #endif
 
+/* R200 configuration
+ */
+#include "xmlpool.h"
 
+
+const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+    DRI_CONF_SECTION_PERFORMANCE
+        DRI_CONF_TCL_MODE(DRI_CONF_TCL_CODEGEN)
+        DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
+        DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_QUALITY
+        DRI_CONF_PREFERRED_BPT(0,"0,16,32")
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_DEBUG
+        DRI_CONF_NO_RAST(false)
+    DRI_CONF_SECTION_END
+DRI_CONF_END;
+const GLuint __driNConfigOptions = 5;
 
 /* Return the width and height of the given buffer.
  */
@@ -224,7 +242,7 @@ static const struct dri_debug_control debug_control[] =
 
 
 static int
-get_ust_nop( int64_t * ust )
+get_ust_nop( uint64_t * ust )
 {
    *ust = 1;
    return 0;
@@ -242,6 +260,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    r200ContextPtr rmesa;
    GLcontext *ctx, *shareCtx;
    int i;
+   int tcl_mode, fthrottle_mode, preferred_bpt;
 
    assert(glVisual);
    assert(driContextPriv);
@@ -273,6 +292,9 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    rmesa->dri.fd = sPriv->fd;
    rmesa->dri.drmMinor = sPriv->drmMinor;
 
+   /* Parse configuration files */
+   driParseConfigFiles (&rmesa->optionCache, &screen->optionCache,
+			screen->driScreen->myNum, "r200");
    rmesa->r200Screen = screen;
    rmesa->sarea = (RADEONSAREAPrivPtr)((GLubyte *)sPriv->pSAREA +
 				       screen->sarea_priv_offset);
@@ -295,6 +317,9 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 	    sizeof( r200TexObj ),
 	    (destroy_texture_object_t *) r200DestroyTexObj );
    }
+   preferred_bpt = driQueryOptioni (&rmesa->optionCache, "preferred_bpt");
+   rmesa->default32BitTextures =
+       ( ( preferred_bpt == 0 && screen->cpp == 4 ) || preferred_bpt == 32 );
 
    rmesa->swtcl.RenderIndex = ~0;
    rmesa->lost_context = 1;
@@ -382,36 +407,38 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    r200InitState( rmesa );
    r200InitSwtcl( ctx );
 
+   fthrottle_mode = driQueryOptioni(&rmesa->optionCache, "fthrottle_mode");
    rmesa->iw.irq_seq = -1;
    rmesa->irqsEmitted = 0;
    rmesa->do_irqs = (rmesa->dri.drmMinor >= 6 && 
-		     !getenv("R200_NO_IRQS") &&
+		     fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS &&
 		     rmesa->r200Screen->irq);
 
+   rmesa->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
+
    if (!rmesa->do_irqs)
-      fprintf(stderr, 
-	      "IRQ's not enabled, falling back to busy waits: %d %d %d\n",
+      fprintf(stderr,
+	      "IRQ's not enabled, falling back to %s: %d %d %d\n",
+	      rmesa->do_usleeps ? "usleeps" : "busy waits",
 	      rmesa->dri.drmMinor,
-	      !!getenv("R200_NO_IRQS"),
+	      fthrottle_mode,
 	      rmesa->r200Screen->irq);
 
+   rmesa->vblank_flags = (rmesa->r200Screen->irq != 0)
+       ? driGetDefaultVBlankFlags(&rmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
 
-   rmesa->do_usleeps = !getenv("R200_NO_USLEEPS");
-
-   rmesa->vblank_flags = (rmesa->do_irqs)
-       ? driGetDefaultVBlankFlags() : VBLANK_FLAG_NO_IRQ;
-
-   rmesa->prefer_agp_client_texturing = 
-      (getenv("R200_AGP_CLIENT_TEXTURES") != 0);
-   
-#ifndef _SOLO
-   rmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( "__glXGetUST" );
+   rmesa->prefer_gart_client_texturing = 
+      (getenv("R200_GART_CLIENT_TEXTURES") != 0);
+#ifndef _SOLO   
+   rmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
    if ( rmesa->get_ust == NULL ) {
       rmesa->get_ust = get_ust_nop;
    }
-
-   (*rmesa->get_ust)( & rmesa->swap_ust );
+#else
+   rmesa->get_ust = get_ust_nop;
 #endif
+   (*rmesa->get_ust)( & rmesa->swap_ust );
+
 
 #if DO_DEBUG
    R200_DEBUG  = driParseDebugString( getenv( "R200_DEBUG" ),
@@ -420,17 +447,18 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 				      debug_control );
 #endif
 
-   if (getenv("R200_NO_RAST")) {
+   tcl_mode = driQueryOptioni(&rmesa->optionCache, "tcl_mode");
+   if (driQueryOptionb(&rmesa->optionCache, "no_rast")) {
       fprintf(stderr, "disabling 3D acceleration\n");
       FALLBACK(rmesa, R200_FALLBACK_DISABLE, 1); 
    }
-   else if (getenv("R200_NO_TCL")) {
+   else if (tcl_mode == DRI_CONF_TCL_SW) {
       fprintf(stderr, "disabling TCL support\n");
       TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, 1); 
    }
    else {
-      if (!getenv("R200_NO_VTXFMT")) {
-	 r200VtxfmtInit( ctx );
+      if (tcl_mode >= DRI_CONF_TCL_VTXFMT) {
+	 r200VtxfmtInit( ctx, tcl_mode >= DRI_CONF_TCL_CODEGEN );
       }
       _tnl_need_dlist_norm_lengths( ctx, GL_FALSE );
    }
@@ -474,9 +502,11 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
 	 r200FlushCmdBuf( rmesa, __FUNCTION__ );
       }
 
-      if (!rmesa->TclFallback & R200_TCL_FALLBACK_TCL_DISABLE)
-	 if (!getenv("R200_NO_VTXFMT"))
+      if (!(rmesa->TclFallback & R200_TCL_FALLBACK_TCL_DISABLE)) {
+	 int tcl_mode = driQueryOptioni(&rmesa->optionCache, "tcl_mode");
+	 if (tcl_mode >= DRI_CONF_TCL_VTXFMT)
 	    r200VtxfmtDestroy( rmesa->glCtx );
+      }
 
       /* free the Mesa context */
       rmesa->glCtx->DriverCtx = NULL;
@@ -492,7 +522,7 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
           * texture object data.
           */
          int i;
-	 
+
 	 /* this assert is wrong. The default textures are always on swap list
 	 assert( is_empty_list( & rmesa->swapped ) ); */
 
@@ -501,6 +531,9 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
 	    rmesa->texture_heaps[ i ] = NULL;
          }
       }
+
+      /* free the option cache */
+      driDestroyOptionCache (&rmesa->optionCache);
 
       FREE( rmesa );
    }
@@ -550,6 +583,7 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, newCtx->glCtx);
 
       if ( newCtx->dri.drawable != driDrawPriv ) {
+	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags );
 	 newCtx->dri.drawable = driDrawPriv;
 	 r200UpdateWindow( newCtx->glCtx );
 	 r200UpdateViewportOffset( newCtx->glCtx );

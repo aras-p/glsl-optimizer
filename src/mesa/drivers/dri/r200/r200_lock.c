@@ -1,5 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_lock.c,v 1.1 2002/10/30 12:51:52 alanh Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -81,6 +81,7 @@ r200UpdatePageFlipping( r200ContextPtr rmesa )
 void r200GetLock( r200ContextPtr rmesa, GLuint flags )
 {
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;
+   __DRIscreenPrivate *sPriv = rmesa->dri.screen;
    RADEONSAREAPrivPtr sarea = rmesa->sarea;
    int i;
 

@@ -1,5 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_maos_arrays.c,v 1.3 2003/02/23 23:59:01 dawes Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -175,6 +175,28 @@ static void emit_ubyte_rgba( GLcontext *ctx,
 }
 
 
+static void emit_vec4( GLcontext *ctx,
+		       struct r200_dma_region *rvb,
+		       char *data,
+		       int stride,
+		       int count )
+{
+   int i;
+   int *out = (int *)(rvb->address + rvb->start);
+
+   if (R200_DEBUG & DEBUG_VERTS)
+      fprintf(stderr, "%s count %d stride %d\n",
+	      __FUNCTION__, count, stride);
+
+   if (stride == 4)
+      COPY_DWORDS( out, data, count );
+   else
+      for (i = 0; i < count; i++) {
+	 out[0] = *(int *)data;
+	 out++;
+	 data += stride;
+      }
+}
 
 
 static void emit_vec8( GLcontext *ctx,
@@ -285,6 +307,9 @@ static void emit_vector( GLcontext *ctx,
    /* Emit the data
     */
    switch (size) {
+   case 1:
+      emit_vec4( ctx, rvb, data, stride, count );
+      break;
    case 2:
       emit_vec8( ctx, rvb, data, stride, count );
       break;
@@ -304,7 +329,7 @@ static void emit_vector( GLcontext *ctx,
 
 
 
-/* Emit any changed arrays to new agp memory, re-emit a packet to
+/* Emit any changed arrays to new GART memory, re-emit a packet to
  * update the arrays.  
  */
 void r200EmitArrays( GLcontext *ctx, GLuint inputs )

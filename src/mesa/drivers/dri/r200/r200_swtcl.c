@@ -1,6 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
-
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_swtcl.c,v 1.5 2003/05/06 23:52:08 daenzer Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -397,7 +396,7 @@ static void flush_last_swtcl_prim( r200ContextPtr rmesa  )
 
    if (rmesa->dma.current.buf) {
       struct r200_dma_region *current = &rmesa->dma.current;
-      GLuint current_offset = (rmesa->r200Screen->agp_buffer_offset +
+      GLuint current_offset = (rmesa->r200Screen->gart_buffer_offset +
 			       current->buf->buf->idx * RADEON_BUFFER_SIZE + 
 			       current->start);
 
@@ -446,7 +445,7 @@ static __inline void *r200AllocDmaLowVerts( r200ContextPtr rmesa,
 
 
    {
-      char *head = rmesa->dma.current.address + rmesa->dma.current.ptr;
+      GLubyte *head = (GLubyte *) (rmesa->dma.current.address + rmesa->dma.current.ptr);
       rmesa->dma.current.ptr += bytes;
       rmesa->swtcl.numverts += nverts;
       return head;
@@ -590,7 +589,7 @@ do {									\
 									\
       r200EmitVertexAOS( rmesa,					\
 			   rmesa->swtcl.vertex_size,			\
-			   (rmesa->r200Screen->agp_buffer_offset +	\
+			   (rmesa->r200Screen->gart_buffer_offset +	\
 			    rmesa->swtcl.indexed_verts.buf->buf->idx * 	\
 			    RADEON_BUFFER_SIZE +			\
 			    rmesa->swtcl.indexed_verts.start));		\

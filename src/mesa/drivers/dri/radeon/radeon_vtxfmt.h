@@ -42,7 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 extern void radeonVtxfmtUpdate( GLcontext *ctx );
-extern void radeonVtxfmtInit( GLcontext *ctx );
+extern void radeonVtxfmtInit( GLcontext *ctx, GLboolean useCodegen );
 extern void radeonVtxfmtInvalidate( GLcontext *ctx );
 extern void radeonVtxfmtDestroy( GLcontext *ctx );
 extern void radeonVtxfmtInitChoosers( GLvertexformat *vfmt );
@@ -84,7 +84,7 @@ do {								\
 
 /* 
  */
-void radeonInitCodegen( struct dfn_generators *gen );
+void radeonInitCodegen( struct dfn_generators *gen, GLboolean useCodegen );
 void radeonInitX86Codegen( struct dfn_generators *gen );
 void radeonInitSSECodegen( struct dfn_generators *gen );
 

@@ -290,4 +290,6 @@ void driInitTextureObjects( GLcontext *ctx, driTextureObject * swapped,
 GLboolean driValidateTextureHeaps( driTexHeap * const * texture_heaps,
     unsigned nr_heaps, const driTextureObject * swapped );
 
+extern void driCalculateTextureFirstLastLevel( driTextureObject * t );
+
 #endif /* DRI_TEXMEM_H */

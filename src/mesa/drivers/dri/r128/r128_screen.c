@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_screen.c,v 1.8 2002/12/16 16:18:53 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_screen.c,v 1.9 2003/03/26 20:43:49 tsi Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -55,7 +55,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define PCI_CHIP_RAGE128LE	0x4C45
 #define PCI_CHIP_RAGE128LF	0x4C46
-#define PCI_CHIP_RAGE128PD	0x5044
 #define PCI_CHIP_RAGE128PF	0x5046
 #define PCI_CHIP_RAGE128PR	0x5052
 #define PCI_CHIP_RAGE128RE	0x5245
@@ -79,6 +78,9 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    /* Allocate the private area */
    r128Screen = (r128ScreenPtr) CALLOC( sizeof(*r128Screen) );
    if ( !r128Screen ) return NULL;
+
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo (&r128Screen->optionCache);
 
    /* This is first since which regions we map depends on whether or
     * not we are using a PCI card.
@@ -140,7 +142,6 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RAGE128RL:
       r128Screen->chipset = R128_CARD_TYPE_R128;
       break;
-   case PCI_CHIP_RAGE128PD:
    case PCI_CHIP_RAGE128PF:
       r128Screen->chipset = R128_CARD_TYPE_R128_PRO;
       break;
@@ -183,7 +184,23 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    }
 
    r128Screen->driScreen = sPriv;
+#ifndef _SOLO
+   if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
+      PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+          (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+      void * const psc = sPriv->psc->screenConfigs;
 
+      if ( glx_enable_extension != NULL ) {
+	 if ( r128Screen->irq != 0 ) {
+	    (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+	    (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+	    (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+	 }
+
+	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+      }
+   }
+#endif
    return r128Screen;
 }
 
@@ -203,6 +220,9 @@ r128DestroyScreen( __DRIscreenPrivate *sPriv )
    }
    drmUnmapBufs( r128Screen->buffers );
    drmUnmap( (drmAddress)r128Screen->mmio.map, r128Screen->mmio.size );
+
+   /* free all option information */
+   driDestroyOptionInfo (&r128Screen->optionCache);
 
    FREE( r128Screen );
    sPriv->private = NULL;
@@ -290,10 +310,13 @@ r128InitDriver( __DRIscreenPrivate *sPriv )
    return GL_TRUE;
 }
 
-
 #ifndef _SOLO
-/* This function is called by libGL.so as soon as libGL.so is loaded.
+/**
+ * This function is called by libGL.so as soon as libGL.so is loaded.
  * This is where we register new extension functions with the dispatcher.
+ *
+ * \todo This interface has been deprecated, so we should probably remove
+ *       this function before the next XFree86 release.
  */
 void __driRegisterExtensions( void )
 {
@@ -301,7 +324,7 @@ void __driRegisterExtensions( void )
 
    if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
       glx_enable_extension = (PFNGLXENABLEEXTENSIONPROC)
-	  glXGetProcAddress( "__glXEnableExtension" );
+	  glXGetProcAddress( (const GLubyte *) "__glXEnableExtension" );
 
       if ( glx_enable_extension != NULL ) {
 	 glx_enable_extension( "GLX_SGI_swap_control", GL_FALSE );
@@ -338,7 +361,7 @@ static struct __DriverAPIRec r128API = {
  * The __driCreateScreen name is the symbol that libGL.so fetches.
  * Return:  pointer to a __DRIscreenPrivate.
  */
-#ifndef _SOLO
+#ifndef _SOLO 
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {

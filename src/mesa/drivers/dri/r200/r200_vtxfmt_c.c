@@ -1,6 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
-
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_vtxfmt_c.c,v 1.2 2002/12/16 16:18:56 dawes Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -860,7 +859,7 @@ static struct dynfn *codegen_noop( GLcontext *ctx, const int *key )
    return 0;
 }
 
-void r200InitCodegen( struct dfn_generators *gen )
+void r200InitCodegen( struct dfn_generators *gen, GLboolean useCodegen )
 {
    gen->Vertex3f = codegen_noop;
    gen->Vertex3fv = codegen_noop;
@@ -889,7 +888,7 @@ void r200InitCodegen( struct dfn_generators *gen )
    gen->MultiTexCoord1fARB = codegen_noop;
    gen->MultiTexCoord1fvARB = codegen_noop;
 
-   if (!getenv("R200_NO_CODEGEN")) {
+   if (useCodegen) {
 #if defined(USE_X86_ASM)
       r200InitX86Codegen( gen );
 #endif

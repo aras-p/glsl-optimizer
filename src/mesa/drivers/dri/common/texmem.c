@@ -1,6 +1,6 @@
 /*
  * Copyright 2000-2001 VA Linux Systems, Inc.
- * (c) Copyright IBM Corporation 2002
+ * (C) Copyright IBM Corporation 2002, 2003
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -46,6 +46,7 @@
 #include "texmem.h"
 #include "simple_list.h"
 #include "imports.h"
+#include "macros.h"
 
 #include <assert.h>
 
@@ -156,22 +157,22 @@ static void printLocalLRU( driTexHeap * heap, const char *callername  )
 	 continue;
       if (!t->tObj) {
 	 fprintf( stderr, "Placeholder (%p) %d at 0x%x sz 0x%x\n",
-		  t,
+		  (void *)t,
 		  t->memBlock->ofs / sz,
 		  t->memBlock->ofs,
 		  t->memBlock->size );
       } else {
 	 fprintf( stderr, "Texture (%p) at 0x%x sz 0x%x\n",
-		  t,
+		  (void *)t,
 		  t->memBlock->ofs,
 		  t->memBlock->size );
       }
    }
    foreach ( t, heap->swapped_objects ) {
       if (!t->tObj) {
-	 fprintf( stderr, "Swapped Placeholder (%p)\n", t );
+	 fprintf( stderr, "Swapped Placeholder (%p)\n", (void *)t );
       } else {
-	 fprintf( stderr, "Swapped Texture (%p)\n", t );
+	 fprintf( stderr, "Swapped Texture (%p)\n", (void *)t );
       }
    }
 
@@ -190,7 +191,7 @@ static void printGlobalLRU( driTexHeap * heap, const char *callername )
    int i, j;
 
    fprintf( stderr, "%s in %s:\nGlobal LRU, heap %d list %p:\n", 
-	    __FUNCTION__, callername, heap->heapId, list );
+	    __FUNCTION__, callername, heap->heapId, (void *)list );
 
    for ( i = 0, j = heap->nrRegions ; i < heap->nrRegions ; i++ ) {
       fprintf( stderr, "list[%d] age %d next %d prev %d in_use %d\n",
@@ -323,9 +324,9 @@ void driDestroyTextureObject( driTextureObject * t )
    if ( 0 ) {
       fprintf( stderr, "[%s:%d] freeing %p (tObj = %p, DriverData = %p)\n",
 	       __FILE__, __LINE__,
-	       t,
-	       (t != NULL) ? t->tObj : NULL,
-	       (t != NULL && t->tObj != NULL) ? t->tObj->DriverData : NULL );
+	       (void *)t,
+	       (void *)((t != NULL) ? t->tObj : NULL),
+	       (void *)((t != NULL && t->tObj != NULL) ? t->tObj->DriverData : NULL ));
    }
 
    if ( t != NULL ) {
@@ -355,7 +356,7 @@ void driDestroyTextureObject( driTextureObject * t )
    }
 
    if ( 0 ) {
-      fprintf( stderr, "[%s:%d] done freeing %p\n", __FILE__, __LINE__, t );
+      fprintf( stderr, "[%s:%d] done freeing %p\n", __FILE__, __LINE__, (void *)t );
    }
 }
 
@@ -645,7 +646,7 @@ driCreateTextureHeap( unsigned heap_id, void * context, unsigned size,
    if ( 0 )
        fprintf( stderr, "%s( %u, %p, %u, %u, %u )\n",
 		__FUNCTION__,
-		heap_id, context, size, alignmentShift, nr_regions );
+		heap_id, (void *)context, size, alignmentShift, nr_regions );
 
    heap = (driTexHeap *) CALLOC( sizeof( driTexHeap ) );
    if ( heap != NULL ) {
@@ -688,7 +689,7 @@ driCreateTextureHeap( unsigned heap_id, void * context, unsigned size,
 
 
    if ( 0 )
-       fprintf( stderr, "%s returning %p\n", __FUNCTION__, heap );
+       fprintf( stderr, "%s returning %p\n", __FUNCTION__, (void *)heap );
 
    return heap;
 }
@@ -894,7 +895,7 @@ get_max_size( unsigned nr_heaps,
 /**
  * Given the amount of texture memory, the number of texture units, and the
  * maximum size of a texel, calculate the maximum texture size the driver can
- * adverteise.
+ * advertise.
  * 
  * \param heaps Texture heaps for this card
  * \param nr_heap Number of texture heaps
@@ -1097,7 +1098,7 @@ driValidateTextureHeaps( driTexHeap * const * texture_heaps,
 	 if ( !check_in_heap( t, heap ) ) {
 	    fprintf( stderr, "%s memory block for texture object @ %p not "
 		     "found in heap #%d\n",
-		     __FUNCTION__, t, i );
+		     __FUNCTION__, (void *)t, i );
 	    return GL_FALSE;
 	 }
 
@@ -1105,7 +1106,7 @@ driValidateTextureHeaps( driTexHeap * const * texture_heaps,
 	 if ( t->totalSize > t->memBlock->size ) {
 	    fprintf( stderr, "%s: Memory block for texture object @ %p is "
 		     "only %u bytes, but %u are required\n",
-		     __FUNCTION__, t, t->totalSize, t->memBlock->size );
+		     __FUNCTION__, (void *)t, t->totalSize, t->memBlock->size );
 	    return GL_FALSE;
 	 }
 
@@ -1159,15 +1160,76 @@ driValidateTextureHeaps( driTexHeap * const * texture_heaps,
    foreach ( t, swapped ) {
       if ( t->memBlock != NULL ) {
 	 fprintf( stderr, "%s: Swapped texobj %p has non-NULL memblock %p\n",
-		  __FUNCTION__, t, t->memBlock );
+		  __FUNCTION__, (void *)t, (void *)t->memBlock );
 	 return GL_FALSE;
       }
       i++;
    }
 
 #if 0
-   fprintf( stderr, "%s: swapped texture count = %u\n", i );
+   fprintf( stderr, "%s: swapped texture count = %u\n", __FUNCTION__, i );
 #endif
 
    return GL_TRUE;
+}
+
+
+
+
+/****************************************************************************/
+/**
+ * Compute which mipmap levels that really need to be sent to the hardware.
+ * This depends on the base image size, GL_TEXTURE_MIN_LOD,
+ * GL_TEXTURE_MAX_LOD, GL_TEXTURE_BASE_LEVEL, and GL_TEXTURE_MAX_LEVEL.
+ */
+
+void
+driCalculateTextureFirstLastLevel( driTextureObject * t )
+{
+   struct gl_texture_object * const tObj = t->tObj;
+   const struct gl_texture_image * const baseImage =
+       tObj->Image[tObj->BaseLevel];
+
+   /* These must be signed values.  MinLod and MaxLod can be negative numbers,
+    * and having firstLevel and lastLevel as signed prevents the need for
+    * extra sign checks.
+    */
+   int   firstLevel;
+   int   lastLevel;
+
+   /* Yes, this looks overly complicated, but it's all needed.
+    */
+
+   switch (tObj->Target) {
+   case GL_TEXTURE_1D:
+   case GL_TEXTURE_2D:
+   case GL_TEXTURE_3D:
+   case GL_TEXTURE_CUBE_MAP:
+      if (tObj->MinFilter == GL_NEAREST || tObj->MinFilter == GL_LINEAR) {
+         /* GL_NEAREST and GL_LINEAR only care about GL_TEXTURE_BASE_LEVEL.
+          */
+
+         firstLevel = lastLevel = tObj->BaseLevel;
+      }
+      else {
+	 firstLevel = tObj->BaseLevel + (GLint)(tObj->MinLod + 0.5);
+	 firstLevel = MAX2(firstLevel, tObj->BaseLevel);
+	 lastLevel = tObj->BaseLevel + (GLint)(tObj->MaxLod + 0.5);
+	 lastLevel = MAX2(lastLevel, t->tObj->BaseLevel);
+	 lastLevel = MIN2(lastLevel, t->tObj->BaseLevel + baseImage->MaxLog2);
+	 lastLevel = MIN2(lastLevel, t->tObj->MaxLevel);
+	 lastLevel = MAX2(firstLevel, lastLevel); /* need at least one level */
+      }
+      break;
+   case GL_TEXTURE_RECTANGLE_NV:
+   case GL_TEXTURE_4D_SGIS:
+      firstLevel = lastLevel = 0;
+      break;
+   default:
+      return;
+   }
+
+   /* save these values */
+   t->firstLevel = firstLevel;
+   t->lastLevel = lastLevel;
 }

@@ -318,7 +318,7 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
    int            s, l;
 
    if (drmAgpAcquire(ctx->drmFD) < 0) {
-      fprintf(stderr, "[agp] AGP not available\n");
+      fprintf(stderr, "[gart] AGP not available\n");
       return 0;
    }
     
@@ -334,40 +334,40 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
    /* Disable fast write entirely - too many lockups.
     */
    mode &= ~RADEON_AGP_MODE_MASK;
-   switch (info->agpMode) {
+   switch (info->gartMode) {
    case 4:          mode |= RADEON_AGP_4X_MODE;
    case 2:          mode |= RADEON_AGP_2X_MODE;
    case 1: default: mode |= RADEON_AGP_1X_MODE;
    }
 
    if (drmAgpEnable(ctx->drmFD, mode) < 0) {
-      fprintf(stderr, "[agp] AGP not enabled\n");
+      fprintf(stderr, "[gart] AGP not enabled\n");
       drmAgpRelease(ctx->drmFD);
       return 0;
    }
     
-   info->agpOffset = 0;
+   info->gartOffset = 0;
 
-   if ((ret = drmAgpAlloc(ctx->drmFD, info->agpSize*1024*1024, 0, NULL,
-			  &info->agpMemHandle)) < 0) {
-      fprintf(stderr, "[agp] Out of memory (%d)\n", ret);
+   if ((ret = drmAgpAlloc(ctx->drmFD, info->gartSize*1024*1024, 0, NULL,
+			  &info->gartMemHandle)) < 0) {
+      fprintf(stderr, "[gart] Out of memory (%d)\n", ret);
       drmAgpRelease(ctx->drmFD);
       return 0;
    }
    fprintf(stderr,
-	   "[agp] %d kB allocated with handle 0x%08x\n",
-	   info->agpSize*1024, (unsigned)info->agpMemHandle);
+	   "[gart] %d kB allocated with handle 0x%08x\n",
+	   info->gartSize*1024, (unsigned)info->gartMemHandle);
     
    if (drmAgpBind(ctx->drmFD,
-		  info->agpMemHandle, info->agpOffset) < 0) {
-      fprintf(stderr, "[agp] Could not bind\n");
-      drmAgpFree(ctx->drmFD, info->agpMemHandle);
+		  info->gartMemHandle, info->gartOffset) < 0) {
+      fprintf(stderr, "[gart] Could not bind\n");
+      drmAgpFree(ctx->drmFD, info->gartMemHandle);
       drmAgpRelease(ctx->drmFD);
       return 0;
    }
 
    /* Initialize the CP ring buffer data */
-   info->ringStart       = info->agpOffset;
+   info->ringStart       = info->gartOffset;
    info->ringMapSize     = info->ringSize*1024*1024 + DRM_PAGE_SIZE;
 
    info->ringReadOffset  = info->ringStart + info->ringMapSize;
@@ -378,51 +378,51 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
    info->bufMapSize      = info->bufSize*1024*1024;
 
    /* Reserve the rest for AGP textures */
-   info->agpTexStart     = info->bufStart + info->bufMapSize;
-   s = (info->agpSize*1024*1024 - info->agpTexStart);
+   info->gartTexStart     = info->bufStart + info->bufMapSize;
+   s = (info->gartSize*1024*1024 - info->gartTexStart);
    l = RADEONMinBits((s-1) / RADEON_NR_TEX_REGIONS);
    if (l < RADEON_LOG_TEX_GRANULARITY) l = RADEON_LOG_TEX_GRANULARITY;
-   info->agpTexMapSize   = (s >> l) << l;
-   info->log2AGPTexGran  = l;
+   info->gartTexMapSize   = (s >> l) << l;
+   info->log2GARTTexGran  = l;
 
    if (drmAddMap(ctx->drmFD, info->ringStart, info->ringMapSize,
 		 DRM_AGP, DRM_READ_ONLY, &info->ringHandle) < 0) {
-      fprintf(stderr, "[agp] Could not add ring mapping\n");
+      fprintf(stderr, "[gart] Could not add ring mapping\n");
       return 0;
    }
-   fprintf(stderr, "[agp] ring handle = 0x%08lx\n", info->ringHandle);
+   fprintf(stderr, "[gart] ring handle = 0x%08lx\n", info->ringHandle);
     
 
    if (drmAddMap(ctx->drmFD, info->ringReadOffset, info->ringReadMapSize,
 		 DRM_AGP, DRM_READ_ONLY, &info->ringReadPtrHandle) < 0) {
       fprintf(stderr,
-	      "[agp] Could not add ring read ptr mapping\n");
+	      "[gart] Could not add ring read ptr mapping\n");
       return 0;
    }
     
    fprintf(stderr,
-	   "[agp] ring read ptr handle = 0x%08lx\n",
+	   "[gart] ring read ptr handle = 0x%08lx\n",
 	   info->ringReadPtrHandle);
     
    if (drmAddMap(ctx->drmFD, info->bufStart, info->bufMapSize,
 		 DRM_AGP, 0, &info->bufHandle) < 0) {
       fprintf(stderr,
-	      "[agp] Could not add vertex/indirect buffers mapping\n");
+	      "[gart] Could not add vertex/indirect buffers mapping\n");
       return 0;
    }
    fprintf(stderr,
-	   "[agp] vertex/indirect buffers handle = 0x%08lx\n",
+	   "[gart] vertex/indirect buffers handle = 0x%08lx\n",
 	   info->bufHandle);
 
-   if (drmAddMap(ctx->drmFD, info->agpTexStart, info->agpTexMapSize,
-		 DRM_AGP, 0, &info->agpTexHandle) < 0) {
+   if (drmAddMap(ctx->drmFD, info->gartTexStart, info->gartTexMapSize,
+		 DRM_AGP, 0, &info->gartTexHandle) < 0) {
       fprintf(stderr,
-	      "[agp] Could not add AGP texture map mapping\n");
+	      "[gart] Could not add AGP texture map mapping\n");
       return 0;
    }
    fprintf(stderr,
-	   "[agp] AGP texture map handle = 0x%08lx\n",
-	   info->agpTexHandle);
+	   "[gart] AGP texture map handle = 0x%08lx\n",
+	   info->gartTexHandle);
 
    /* Initialize Radeon's AGP registers */
    /* Ring buffer is at AGP offset 0 */
@@ -463,7 +463,7 @@ static int RADEONDRIKernelInit( const DRIDriverContext *ctx,
    drmInfo.sarea_priv_offset   = sizeof(XF86DRISAREARec);
    drmInfo.is_pci              = 0;
    drmInfo.cp_mode             = RADEON_DEFAULT_CP_BM_MODE;
-   drmInfo.agp_size            = info->agpSize*1024*1024;
+   drmInfo.gart_size            = info->gartSize*1024*1024;
    drmInfo.ring_size           = info->ringSize*1024*1024;
    drmInfo.usec_timeout        = 1000;
    drmInfo.fb_bpp              = ctx->bpp;
@@ -479,7 +479,7 @@ static int RADEONDRIKernelInit( const DRIDriverContext *ctx,
    drmInfo.ring_offset         = info->ringHandle;
    drmInfo.ring_rptr_offset    = info->ringReadPtrHandle;
    drmInfo.buffers_offset      = info->bufHandle;
-   drmInfo.agp_textures_offset = info->agpTexHandle;
+   drmInfo.gart_textures_offset = info->gartTexHandle;
 
    ret = drmCommandWrite(ctx->drmFD, DRM_RADEON_CP_INIT, &drmInfo, 
 			 sizeof(drmRadeonInit));
@@ -502,19 +502,19 @@ static void RADEONDRIAgpHeapInit(const DRIDriverContext *ctx,
 {
    drmRadeonMemInitHeap drmHeap;
 
-   /* Start up the simple memory manager for agp space */
-   drmHeap.region = RADEON_MEM_REGION_AGP;
+   /* Start up the simple memory manager for gart space */
+   drmHeap.region = RADEON_MEM_REGION_GART;
    drmHeap.start  = 0;
-   drmHeap.size   = info->agpTexMapSize;
+   drmHeap.size   = info->gartTexMapSize;
     
    if (drmCommandWrite(ctx->drmFD, DRM_RADEON_INIT_HEAP,
 		       &drmHeap, sizeof(drmHeap))) {
       fprintf(stderr,
-	      "[drm] Failed to initialized agp heap manager\n");
+	      "[drm] Failed to initialized gart heap manager\n");
    } else {
       fprintf(stderr,
-	      "[drm] Initialized kernel agp heap manager, %d\n",
-	      info->agpTexMapSize);
+	      "[drm] Initialized kernel gart heap manager, %d\n",
+	      info->gartTexMapSize);
    }
 }
 
@@ -640,13 +640,13 @@ static int RADEONMemoryInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
    info->frontPitch = ctx->shared.virtualWidth;
 
    fprintf(stderr, 
-	   "Using %d MB AGP aperture\n", info->agpSize);
+	   "Using %d MB AGP aperture\n", info->gartSize);
    fprintf(stderr, 
 	   "Using %d MB for the ring buffer\n", info->ringSize);
    fprintf(stderr, 
 	   "Using %d MB for vertex/indirect buffers\n", info->bufSize);
    fprintf(stderr, 
-	   "Using %d MB for AGP textures\n", info->agpTexSize);
+	   "Using %d MB for AGP textures\n", info->gartTexSize);
 
    /* Front, back and depth buffers - everything else texture??
     */
@@ -733,7 +733,7 @@ static int RADEONMemoryInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
  * Setups a RADEONDRIRec structure to be passed to radeon_dri.so for its
  * initialization.
  */
-static int RADEONScreenInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
+static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
 {
    RADEONDRIPtr   pRADEONDRI;
    int err;
@@ -883,7 +883,7 @@ static int RADEONScreenInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
    /* Initialize IRQ */
    RADEONDRIIrqInit(ctx, info);
 
-   /* Initialize kernel agp memory manager */
+   /* Initialize kernel gart memory manager */
    RADEONDRIAgpHeapInit(ctx, info);
 
    /* Initialize the SAREA private data structure */
@@ -919,7 +919,7 @@ static int RADEONScreenInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
    pRADEONDRI->depth             = ctx->bpp; /* XXX: depth */
    pRADEONDRI->bpp               = ctx->bpp;
    pRADEONDRI->IsPCI             = 0;
-   pRADEONDRI->AGPMode           = info->agpMode;
+   pRADEONDRI->AGPMode           = info->gartMode;
    pRADEONDRI->frontOffset       = info->frontOffset;
    pRADEONDRI->frontPitch        = info->frontPitch;
    pRADEONDRI->backOffset        = info->backOffset;
@@ -933,10 +933,10 @@ static int RADEONScreenInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
    pRADEONDRI->registerSize      = info->registerSize; 
    pRADEONDRI->statusHandle      = info->ringReadPtrHandle;
    pRADEONDRI->statusSize        = info->ringReadMapSize;
-   pRADEONDRI->agpTexHandle      = info->agpTexHandle;
-   pRADEONDRI->agpTexMapSize     = info->agpTexMapSize;
-   pRADEONDRI->log2AGPTexGran    = info->log2AGPTexGran;
-   pRADEONDRI->agpTexOffset      = info->agpTexStart;
+   pRADEONDRI->gartTexHandle      = info->gartTexHandle;
+   pRADEONDRI->gartTexMapSize     = info->gartTexMapSize;
+   pRADEONDRI->log2GARTTexGran    = info->log2GARTTexGran;
+   pRADEONDRI->gartTexOffset      = info->gartTexStart;
    pRADEONDRI->sarea_priv_offset = sizeof(XF86DRISAREARec);
 
    /* Don't release the lock now - let the VT switch handler do it. */
@@ -1139,10 +1139,10 @@ static int radeonInitFBDev( DRIDriverContext *ctx )
 
    ctx->driverPrivate = (void *)info;
    
-   info->agpFastWrite  = RADEON_DEFAULT_AGP_FAST_WRITE;
-   info->agpMode       = RADEON_DEFAULT_AGP_MODE;
-   info->agpSize       = RADEON_DEFAULT_AGP_SIZE;
-   info->agpTexSize    = RADEON_DEFAULT_AGP_TEX_SIZE;
+   info->gartFastWrite  = RADEON_DEFAULT_AGP_FAST_WRITE;
+   info->gartMode       = RADEON_DEFAULT_AGP_MODE;
+   info->gartSize       = RADEON_DEFAULT_AGP_SIZE;
+   info->gartTexSize    = RADEON_DEFAULT_AGP_TEX_SIZE;
    info->bufSize       = RADEON_DEFAULT_BUFFER_SIZE;
    info->ringSize      = RADEON_DEFAULT_RING_SIZE;
   

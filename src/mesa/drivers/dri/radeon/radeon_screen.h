@@ -48,6 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_dri.h"
 #include "radeon_reg.h"
 #include "radeon_sarea.h"
+#include "xmlconfig.h"
 
 
 typedef struct {
@@ -83,7 +84,7 @@ typedef struct {
 
    radeonRegionRec mmio;
    radeonRegionRec status;
-   radeonRegionRec agpTextures;
+   radeonRegionRec gartTextures;
 
    drmBufMapPtr buffers;
 
@@ -91,7 +92,11 @@ typedef struct {
 
    __DRIscreenPrivate *driScreen;
    unsigned int sarea_priv_offset;
-   unsigned int agp_buffer_offset;	/* offset in card memory space */
+   unsigned int gart_buffer_offset;	/* offset in card memory space */
+   unsigned int gart_texture_offset;	/* offset in card memory space */
+
+   /* Configuration cache with default values for all contexts */
+   driOptionCache optionCache;
 } radeonScreenRec, *radeonScreenPtr;
 
 extern radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv );

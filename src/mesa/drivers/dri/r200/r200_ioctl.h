@@ -1,6 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
-
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_ioctl.h,v 1.1 2002/10/30 12:51:52 alanh Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -106,15 +105,15 @@ extern void r200WaitForIdleLocked( r200ContextPtr rmesa );
 extern void r200WaitForVBlank( r200ContextPtr rmesa );
 extern void r200InitIoctlFuncs( GLcontext *ctx );
 
-extern void *r200AllocateMemoryNV( GLsizei size, GLfloat readfreq,
+extern void *r200AllocateMemoryMESA( GLsizei size, GLfloat readfreq,
 				   GLfloat writefreq, GLfloat priority );
-extern void r200FreeMemoryNV( GLvoid *pointer );
-extern GLuint r200GetAGPOffset( const GLvoid *pointer );
-extern GLboolean r200IsAgpMemory( r200ContextPtr rmesa, const GLvoid *pointer,
-				  GLint size );
+extern void r200FreeMemoryMESA( GLvoid *pointer );
+extern GLuint r200GetMemoryOffsetMESA( const GLvoid *pointer );
+extern GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
+				   GLint size );
 
-extern GLuint r200AgpOffsetFromVirtual( r200ContextPtr rmesa, 
-					const GLvoid *pointer );
+extern GLuint r200GartOffsetFromVirtual( r200ContextPtr rmesa, 
+					 const GLvoid *pointer );
 
 /* ================================================================
  * Helper macros:

@@ -36,6 +36,7 @@
 #include "mtypes.h"
 #include "mgaregs.h"
 #include "mga_common.h"
+#include "xmlconfig.h"
 
 typedef struct mga_screen_private_s {
 
@@ -78,6 +79,9 @@ typedef struct mga_screen_private_s {
    drmRegion primary;
    drmRegion buffers;
    unsigned int sarea_priv_offset;
+
+   /* Configuration cache with default values for all contexts */
+   driOptionCache optionCache;
 } mgaScreenPrivate;
 
 

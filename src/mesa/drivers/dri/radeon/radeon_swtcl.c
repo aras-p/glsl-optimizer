@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_swtcl.c,v 1.6 2003/05/06 23:52:08 daenzer Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -67,7 +67,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define RADEON_MAX_SETUP	0x40
 
 static void flush_last_swtcl_prim( radeonContextPtr rmesa  );
-static void flush_last_swtcl_prim_compat( radeonContextPtr rmesa );
 
 static struct {
    void                (*emit)( GLcontext *, GLuint, GLuint, void *, GLuint );
@@ -282,7 +281,6 @@ static void radeonRenderStart( GLcontext *ctx )
    }
    
    if (rmesa->dma.flush != 0 && 
-       rmesa->dma.flush != flush_last_swtcl_prim_compat &&
        rmesa->dma.flush != flush_last_swtcl_prim)
       rmesa->dma.flush( rmesa );
 }
@@ -381,7 +379,7 @@ static void flush_last_swtcl_prim( radeonContextPtr rmesa  )
 
    if (rmesa->dma.current.buf) {
       struct radeon_dma_region *current = &rmesa->dma.current;
-      GLuint current_offset = (rmesa->radeonScreen->agp_buffer_offset +
+      GLuint current_offset = (rmesa->radeonScreen->gart_buffer_offset +
 			       current->buf->buf->idx * RADEON_BUFFER_SIZE + 
 			       current->start);
 
@@ -408,46 +406,6 @@ static void flush_last_swtcl_prim( radeonContextPtr rmesa  )
 }
 
 
-static void flush_last_swtcl_prim_compat( radeonContextPtr rmesa )
-{
-   struct radeon_dma_region *current = &rmesa->dma.current;
-
-   if (RADEON_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "%s buf %p start %d ptr %d\n", 
-	      __FUNCTION__,
-	      current->buf,
-	      current->start,
-	      current->ptr);
-
-   assert (!(rmesa->swtcl.hw_primitive & RADEON_CP_VC_CNTL_PRIM_WALK_IND));
-   assert (current->start + 
-	   rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
-	   current->ptr);
-   assert (current->start == 0);
-
-   rmesa->dma.flush = 0;
-
-   if (current->ptr && current->buf) {
-      assert (current->buf->refcount == 1);
-
-      radeonCompatEmitPrimitive( rmesa,
-				 rmesa->swtcl.vertex_format,
-				 rmesa->swtcl.hw_primitive,
-				 rmesa->swtcl.numverts);
-      
-      /* The buffer has been released:
-       */
-      FREE(current->buf);
-      current->buf = 0;
-      current->start = 0;
-      current->ptr = current->end;
-
-   }
-
-   rmesa->swtcl.numverts = 0;
-}
-
-
 /* Alloc space in the current dma region.
  */
 static __inline void *radeonAllocDmaLowVerts( radeonContextPtr rmesa,
@@ -460,22 +418,18 @@ static __inline void *radeonAllocDmaLowVerts( radeonContextPtr rmesa,
 
    if (!rmesa->dma.flush) {
       rmesa->glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-      if (rmesa->dri.drmMinor == 1)
-	 rmesa->dma.flush = flush_last_swtcl_prim_compat;
-      else
-	 rmesa->dma.flush = flush_last_swtcl_prim;
+      rmesa->dma.flush = flush_last_swtcl_prim;
    }
 
    assert( vsize == rmesa->swtcl.vertex_size * 4 );
-   assert( rmesa->dma.flush == flush_last_swtcl_prim ||
-	   rmesa->dma.flush == flush_last_swtcl_prim_compat);
+   assert( rmesa->dma.flush == flush_last_swtcl_prim );
    assert (rmesa->dma.current.start + 
 	   rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
 	   rmesa->dma.current.ptr);
 
 
    {
-      char *head = rmesa->dma.current.address + rmesa->dma.current.ptr;
+      GLubyte *head = (GLubyte *)(rmesa->dma.current.address + rmesa->dma.current.ptr);
       rmesa->dma.current.ptr += bytes;
       rmesa->swtcl.numverts += nverts;
       return head;
@@ -624,7 +578,7 @@ do {									\
 									\
       radeonEmitVertexAOS( rmesa,					\
 			   rmesa->swtcl.vertex_size,			\
-			   (rmesa->radeonScreen->agp_buffer_offset +		\
+			   (rmesa->radeonScreen->gart_buffer_offset +	\
 			    rmesa->swtcl.indexed_verts.buf->buf->idx * 	\
 			    RADEON_BUFFER_SIZE +			\
 			    rmesa->swtcl.indexed_verts.start));		\
@@ -682,15 +636,6 @@ static GLboolean radeon_run_render( GLcontext *ctx,
        rmesa->swtcl.RenderIndex != 0 ||    /* No per-vertex manipulations */
        ctx->Line.StippleFlag)        /* GH: THIS IS A HACK!!! */
       return GL_TRUE;		
-
-   if (rmesa->dri.drmMinor < 3) {
-      /* drm 1.1 doesn't support vertex primitives starting in the
-       * middle of a buffer.  It doesn't support sane indexed vertices
-       * either.  drm 1.2 fixes both of these problems, but we don't have a
-       * compatibility layer to that version yet.  
-       */
-      return GL_TRUE;
-   }
 
    tnl->Driver.Render.Start( ctx );
 
@@ -952,7 +897,6 @@ static void radeonResetLineStipple( GLcontext *ctx );
 
 #define RADEON_TWOSIDE_BIT	0x01
 #define RADEON_UNFILLED_BIT	0x02
-#define RADEON_OFFSET_BIT	0x04 /* drmMinor == 1 */
 #define RADEON_MAX_TRIFUNC	0x08
 
 
@@ -965,7 +909,7 @@ static struct {
 
 
 #define DO_FALLBACK  0
-#define DO_OFFSET   (IND & RADEON_OFFSET_BIT)
+#define DO_OFFSET    0
 #define DO_UNFILLED (IND & RADEON_UNFILLED_BIT)
 #define DO_TWOSIDE  (IND & RADEON_TWOSIDE_BIT)
 #define DO_FLAT      0
@@ -1051,22 +995,6 @@ static struct {
 #define TAG(x) x##_twoside_unfilled
 #include "tnl_dd/t_dd_tritmp.h"
 
-#define IND (RADEON_OFFSET_BIT)
-#define TAG(x) x##_offset
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (RADEON_TWOSIDE_BIT|RADEON_OFFSET_BIT)
-#define TAG(x) x##_twoside_offset
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (RADEON_UNFILLED_BIT|RADEON_OFFSET_BIT)
-#define TAG(x) x##_unfilled_offset
-#include "tnl_dd/t_dd_tritmp.h"
-
-#define IND (RADEON_TWOSIDE_BIT|RADEON_UNFILLED_BIT|RADEON_OFFSET_BIT)
-#define TAG(x) x##_twoside_unfilled_offset
-#include "tnl_dd/t_dd_tritmp.h"
-
 
 static void init_rast_tab( void )
 {
@@ -1074,10 +1002,6 @@ static void init_rast_tab( void )
    init_twoside();
    init_unfilled();
    init_twoside_unfilled();
-   init_offset();
-   init_twoside_offset();
-   init_unfilled_offset();
-   init_twoside_unfilled_offset();
 }
 
 /**********************************************************************/
@@ -1136,8 +1060,6 @@ void radeonChooseRenderState( GLcontext *ctx )
 
    if (flags & DD_TRI_LIGHT_TWOSIDE) index |= RADEON_TWOSIDE_BIT;
    if (flags & DD_TRI_UNFILLED)      index |= RADEON_UNFILLED_BIT;
-   if ((flags & DD_TRI_OFFSET) &&
-       rmesa->dri.drmMinor == 1)  index |= RADEON_OFFSET_BIT;
 
    if (index != rmesa->swtcl.RenderIndex) {
       tnl->Driver.Render.Points = rast_tab[index].points;
@@ -1300,7 +1222,7 @@ void radeonInitSwtcl( GLcontext *ctx )
    tnl->Driver.Render.ResetLineStipple = radeonResetLineStipple;
    tnl->Driver.Render.BuildVertices = radeonBuildVertices;
 
-   rmesa->swtcl.verts = ALIGN_MALLOC( size * 16 * 4, 32 );
+   rmesa->swtcl.verts = (GLubyte *)ALIGN_MALLOC( size * 16 * 4, 32 );
    rmesa->swtcl.RenderIndex = ~0;
    rmesa->swtcl.render_primitive = GL_TRIANGLES;
    rmesa->swtcl.hw_primitive = 0;

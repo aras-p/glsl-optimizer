@@ -27,14 +27,13 @@
 #include <stdio.h>
 
 #include "mm.h"
-#include "hwlog.h"
 
 
 void mmDumpMemInfo( memHeap_t *heap )
 {
    TMemBlock *p;
 
-   fprintf(stderr, "Memory heap %p:\n", heap);
+   fprintf(stderr, "Memory heap %p:\n", (void *)heap);
    if (heap == 0) {
       fprintf(stderr, "  heap == 0\n");
    } else {

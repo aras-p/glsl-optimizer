@@ -401,7 +401,7 @@ static void mgaDDColorMask(GLcontext *ctx,
  */
 
 static int mgaStipples[16] = {
-   0xffff1,  /* See above note */
+   0xffff,
    0xa5a5,
    0x5a5a,
    0xa0a0,
@@ -425,9 +425,6 @@ static int mgaStipples[16] = {
  *
  * \param ctx GL rendering context to be affected
  * \param mask Pointer to the 32x32 stipple mask
- *
- * \note the fully opaque pattern (0xffff) has been disabled in order
- * to work around a conformance issue.
  */
 
 static void mgaDDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
@@ -492,8 +489,7 @@ static void updateSpecularLighting( GLcontext *ctx )
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    unsigned int specen;
 
-   specen = (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR &&
-	     ctx->Light.Enabled) ? TMC_specen_enable : 0;
+   specen = (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) ? TMC_specen_enable : 0;
 
    if ( specen != mmesa->hw.specen ) {
       mmesa->hw.specen = specen;
@@ -516,14 +512,6 @@ static void mgaDDLightModelfv(GLcontext *ctx, GLenum pname,
       FLUSH_BATCH( MGA_CONTEXT(ctx) );
       updateSpecularLighting( ctx );
    }
-}
-
-
-static void mgaDDShadeModel(GLcontext *ctx, GLenum mode)
-{
-   /* FIXME: This used to FLUSH_BATCH and set MGA_NEW_TEXTURE in new_state,
-    * FIXME: so I'm not sure what to do here now.
-    */
 }
 
 
@@ -670,6 +658,12 @@ static void mgaDDStencilOp(GLcontext *ctx, GLenum fail, GLenum zfail,
       break;
    case GL_DECR:
       stencilctl |= SC_szpassop_decrsat;
+      break;
+   case GL_INCR_WRAP:
+      stencilctl |= SC_szpassop_incr;
+      break;
+   case GL_DECR_WRAP:
+      stencilctl |= SC_szpassop_decr;
       break;
    case GL_INVERT:
       stencilctl |= SC_szpassop_invert;
@@ -826,8 +820,10 @@ void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )
    else
       mgaXMesaSetBackClipRects( mmesa );
 
+#ifndef _SOLO
+   sarea->req_drawable = driDrawable->draw;
    sarea->req_draw_buffer = mmesa->draw_buffer;
-
+#endif
    mgaUpdateClipping( mmesa->glCtx );
    mgaCalcViewport( mmesa->glCtx );
 
@@ -888,6 +884,11 @@ static void mgaDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 
    switch(cap) {
+   case GL_LIGHTING:
+   case GL_COLOR_SUM_EXT:
+      FLUSH_BATCH( mmesa );
+      updateSpecularLighting( ctx );
+      break;
    case GL_ALPHA_TEST:
       FLUSH_BATCH( mmesa );
       mmesa->hw.alpha_func_enable = (state) ? ~0 : 0;
@@ -1034,25 +1035,24 @@ void mgaEmitHwStateLocked( mgaContextPtr mmesa )
    }
 
    if ((mmesa->dirty & MGA_UPLOAD_TEX0) && mmesa->CurrentTexObj[0]) {
-      mmesa->CurrentTexObj[0]->setup.texctl2 &= ~TMC_specen_enable;
-      mmesa->CurrentTexObj[0]->setup.texctl2 |= mmesa->hw.specen;
-
       memcpy(&sarea->TexState[0],
 	     &mmesa->CurrentTexObj[0]->setup,
 	     sizeof(sarea->TexState[0]));
    }
 
    if ((mmesa->dirty & MGA_UPLOAD_TEX1) && mmesa->CurrentTexObj[1]) {
-      mmesa->CurrentTexObj[1]->setup.texctl2 &= ~TMC_specen_enable;
-      mmesa->CurrentTexObj[1]->setup.texctl2 |= mmesa->hw.specen;
-
       memcpy(&sarea->TexState[1],
 	     &mmesa->CurrentTexObj[1]->setup,
 	     sizeof(sarea->TexState[1]));
    }
 
-   if ( (sarea->TexState[0].texctl2 & TMC_borderen_MASK) !=
-	(sarea->TexState[1].texctl2 & TMC_borderen_MASK) ) {
+   if (mmesa->dualtex_env) {
+      sarea->TexState[0].texctl2 |= TMC_dualtex_enable;
+      memcpy( &sarea->TexState[1], &sarea->TexState[0],
+	      sizeof(sarea->TexState[0]) );
+      mmesa->dirty |= MGA_UPLOAD_TEX1|MGA_UPLOAD_TEX0;
+   } else if ( (sarea->TexState[0].texctl2 & TMC_borderen_MASK) !=
+               (sarea->TexState[1].texctl2 & TMC_borderen_MASK) ) {
       const int borderen = sarea->TexState[1].texctl2 & ~TMC_borderen_MASK;
 
       memcpy( &sarea->TexState[1], &sarea->TexState[0],
@@ -1070,15 +1070,10 @@ void mgaEmitHwStateLocked( mgaContextPtr mmesa )
    mmesa->sarea->dirty |= mmesa->dirty;
    mmesa->dirty &= MGA_UPLOAD_CLIPRECTS;
 
-   /* This is a bit of a hack but seems to be the best place to ensure
-    * that separate specular is disabled when not needed.
-    */
-   if (ctx->Texture._EnabledUnits == 0 ||
-       !ctx->Light.Enabled ||
-       ctx->Light.Model.ColorControl == GL_SINGLE_COLOR) {
-      sarea->TexState[0].texctl2 &= ~TMC_specen_enable;
-      sarea->TexState[1].texctl2 &= ~TMC_specen_enable;
-   }
+   sarea->TexState[0].texctl2 &= ~TMC_specen_enable;
+   sarea->TexState[1].texctl2 &= ~TMC_specen_enable;
+   sarea->TexState[0].texctl2 |= mmesa->hw.specen;
+   sarea->TexState[1].texctl2 |= mmesa->hw.specen;
 }
 
 
@@ -1089,21 +1084,21 @@ void mgaEmitHwStateLocked( mgaContextPtr mmesa )
 static void mgaDDValidateState( GLcontext *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
-   int new_state = mmesa->NewGLState;
-
 
    FLUSH_BATCH( mmesa );
 
-   if (mmesa->NewGLState & _MGA_NEW_RASTERSETUP) {
-      mgaChooseVertexState( ctx );
-   }
-
-   if (mmesa->NewGLState & _MGA_NEW_RENDERSTATE) {
-      mgaChooseRenderState( ctx );
-   }
-
-   if (new_state & _NEW_TEXTURE) {
+   if (mmesa->NewGLState & _NEW_TEXTURE) {
       mgaUpdateTextureState(ctx);
+   }
+
+   if (!mmesa->Fallback) {
+      if (mmesa->NewGLState & _MGA_NEW_RASTERSETUP) {
+         mgaChooseVertexState( ctx );
+      }
+
+      if (mmesa->NewGLState & _MGA_NEW_RENDERSTATE) {
+         mgaChooseRenderState( ctx );
+      }
    }
 
    mmesa->NewGLState = 0;
@@ -1186,13 +1181,14 @@ void mgaInitState( mgaContextPtr mmesa )
       break;
    }
 
+   mmesa->hw.blend_func = AC_src_one | AC_dst_zero;
    mmesa->hw.zmode = DC_zmode_zlt | DC_atype_zi;
    mmesa->hw.stencil = (0x0ff << S_smsk_SHIFT) | (0x0ff << S_swtmsk_SHIFT);
    mmesa->hw.stencilctl = SC_smode_salways | SC_sfailop_keep 
        | SC_szfailop_keep | SC_szpassop_keep;
    mmesa->hw.stencil_enable = 0;
-   mmesa->hw.cull = _CULL_NEGATIVE;
-   mmesa->hw.cull_dualtex = _CULL_POSITIVE;
+   mmesa->hw.cull = _CULL_DISABLE;
+   mmesa->hw.cull_dualtex = _CULL_DISABLE;
    mmesa->hw.specen = 0;
 
    mmesa->setup.dwgctl = (DC_opcod_trap |
@@ -1227,6 +1223,10 @@ void mgaInitState( mgaContextPtr mmesa )
    mmesa->setup.tdualstage1 = 0;
    mmesa->setup.fcol = 0;
    mmesa->dirty |= MGA_UPLOAD_CONTEXT;
+
+   mmesa->envcolor = 0;
+   mmesa->blend_flags = MGA_BLEND_RGB_ZERO | MGA_BLEND_ALPHA_ZERO;
+   mmesa->dualtex_env = GL_FALSE;
 }
 
 
@@ -1243,7 +1243,6 @@ void mgaDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.DepthMask = mgaDDDepthMask;
    ctx->Driver.Fogfv = mgaDDFogfv;
    ctx->Driver.Scissor = mgaDDScissor;
-   ctx->Driver.ShadeModel = mgaDDShadeModel;
    ctx->Driver.CullFace = mgaDDCullFaceFrontFace;
    ctx->Driver.FrontFace = mgaDDCullFaceFrontFace;
    ctx->Driver.ColorMask = mgaDDColorMask;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mga_xmesa.c,v 1.18 2002/12/16 16:18:52 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mga_xmesa.c,v 1.19 2003/03/26 20:43:49 tsi Exp $ */
 /*
  * Copyright 2000-2001 VA Linux Systems, Inc.
  * All Rights Reserved.
@@ -56,10 +56,22 @@
 
 #include "utils.h"
 #include "vblank.h"
-#include "dri_util.h"
+
 #ifndef _SOLO
 #include "glxextensions.h"
 #endif
+
+/* MGA configuration
+ */
+#include "xmlpool.h"
+
+const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+    DRI_CONF_SECTION_PERFORMANCE
+        DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+    DRI_CONF_SECTION_END
+DRI_CONF_END;
+const GLuint __driNConfigOptions = 1;
 
 #ifndef MGA_DEBUG
 int MGA_DEBUG = 0;
@@ -97,7 +109,7 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 				    &gp, sizeof(gp));
       if (ret) {
 	    fprintf(stderr, "drmMgaGetParam (MGA_PARAM_IRQ_NR): %d\n", ret);
-	    free(mgaScreen);
+	    FREE(mgaScreen);
 	    sPriv->private = NULL;
 	    return GL_FALSE;
       }
@@ -105,23 +117,26 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
    
    mgaScreen->linecomp_sane = (sPriv->ddxMajor > 1) || (sPriv->ddxMinor > 1)
        || ((sPriv->ddxMinor == 1) && (sPriv->ddxPatch > 0));
-#ifndef _SOLO   
-   if ( ! mgaScreen->linecomp_sane ) {
-      PFNGLXDISABLEEXTENSIONPROC glx_disable_extension;
+#ifndef _SOLO       
+   if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
+      PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+          (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+      void * const psc = sPriv->psc->screenConfigs;
 
-      glx_disable_extension = (PFNGLXDISABLEEXTENSIONPROC)
-	  glXGetProcAddress( "__glXDisableExtension" );
+      if ( glx_enable_extension != NULL ) {
+	 if ( mgaScreen->linecomp_sane ) {
+	    (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+	    (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+	    (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+	 }
 
-      if ( glx_disable_extension != NULL ) {
-	 (*glx_disable_extension)( "GLX_SGI_swap_control" );
-	 (*glx_disable_extension)( "GLX_SGI_video_sync" );
-	 (*glx_disable_extension)( "GLX_MESA_swap_control" );
+	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
       }
    }
 #endif
    if (serverInfo->chipset != MGA_CARD_TYPE_G200 &&
        serverInfo->chipset != MGA_CARD_TYPE_G400) {
-      free(mgaScreen);
+      FREE(mgaScreen);
       sPriv->private = NULL;
       __driUtilMessage("Unrecognized chipset");
       return GL_FALSE;
@@ -168,7 +183,7 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 	      mgaScreen->agp.size,
 	      (drmAddress *)&mgaScreen->agp.map) != 0)
    {
-      free(mgaScreen);
+      Xfree(mgaScreen);
       sPriv->private = NULL;
       __driUtilMessage("Couldn't map agp region");
       return GL_FALSE;
@@ -194,7 +209,7 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
               serverInfo->agpTextureSize,
               (drmAddress *)&mgaScreen->texVirtual[MGA_AGP_HEAP]) != 0)
    {
-      free(mgaScreen);
+      FREE(mgaScreen);
       sPriv->private = NULL;
       __driUtilMessage("Couldn't map agptexture region");
       return GL_FALSE;
@@ -214,12 +229,15 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
    mgaScreen->bufs = drmMapBufs(sPriv->fd);
    if (!mgaScreen->bufs) {
       /*drmUnmap(mgaScreen->agp_tex.map, mgaScreen->agp_tex.size);*/
-      free(mgaScreen);
+      FREE(mgaScreen);
       sPriv->private = NULL;
       __driUtilMessage("Couldn't map dma buffers");
       return GL_FALSE;
    }
    mgaScreen->sarea_priv_offset = serverInfo->sarea_priv_offset;
+
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo (&mgaScreen->optionCache);
 
    return GL_TRUE;
 }
@@ -234,7 +252,11 @@ mgaDestroyScreen(__DRIscreenPrivate *sPriv)
       fprintf(stderr, "mgaDestroyScreen\n");
 
    /*drmUnmap(mgaScreen->agp_tex.map, mgaScreen->agp_tex.size);*/
-   free(mgaScreen);
+
+   /* free all option information */
+   driDestroyOptionInfo (&mgaScreen->optionCache);
+
+   FREE(mgaScreen);
    sPriv->private = NULL;
 }
 
@@ -263,6 +285,10 @@ static const char * const g400_extensions[] =
    "GL_ARB_multitexture",
    "GL_ARB_texture_env_add",
    "GL_EXT_texture_env_add",
+   "GL_ARB_texture_env_combine",
+   "GL_EXT_texture_env_combine",
+   "GL_ARB_texture_env_crossbar",
+   "GL_ATI_texture_env_combine3",
    "GL_EXT_texture_edge_clamp",
    "GL_SGIS_texture_edge_clamp",
 #if defined (MESA_packed_depth_stencil)
@@ -286,6 +312,7 @@ static const char * const card_extensions[] =
    "GL_MESA_ycbcr_texture",
    "GL_SGIS_generate_mipmap",
    "GL_SGIS_texture_lod",
+   "GL_NV_texture_rectangle",
    NULL
 };
 
@@ -353,6 +380,10 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    mmesa->sarea = (void *)saPriv;
    mmesa->glBuffer = NULL;
 
+   /* Parse configuration files */
+   driParseConfigFiles (&mmesa->optionCache, &mgaScreen->optionCache,
+                        sPriv->myNum, "mga");
+
    (void) memset( mmesa->texture_heaps, 0, sizeof( mmesa->texture_heaps ) );
    make_empty_list( & mmesa->swapped );
 
@@ -388,10 +419,10 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
 				 mmesa->nr_heaps,
 				 & ctx->Const,
 				 4,
-				 11, /* max 2D texture size is 1024x1024 */
+				 11, /* max 2D texture size is 2048x2048 */
 				 0,  /* 3D textures unsupported. */
 				 0,  /* cube textures unsupported. */
-				 0,  /* texture rectangles unsupported. */
+				 11, /* max texture rect size is 2048x2048 */
 				 maxlevels,
 				 GL_FALSE );
 
@@ -487,14 +518,15 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
 
    mmesa->vblank_flags = ((mmesa->mgaScreen->irq == 0) 
 			  || !mmesa->mgaScreen->linecomp_sane)
-       ? VBLANK_FLAG_NO_IRQ : driGetDefaultVBlankFlags();
+       ? VBLANK_FLAG_NO_IRQ : driGetDefaultVBlankFlags(&mmesa->optionCache);
 #ifndef _SOLO
-   mmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( "__glXGetUST" );
-   if ( mmesa->get_ust == NULL ) 
-#endif
-   {
+   mmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
+   if ( mmesa->get_ust == NULL ) {
       mmesa->get_ust = get_ust_nop;
    }
+#else
+   mmesa->get_ust = get_ust_nop;
+#endif   
 
    (*mmesa->get_ust)( & mmesa->swap_ust );
 
@@ -540,6 +572,9 @@ mgaDestroyContext(__DRIcontextPrivate *driContextPriv)
 	    mmesa->texture_heaps[ i ] = NULL;
          }
       }
+
+      /* free the option cache */
+      driDestroyOptionCache (&mmesa->optionCache);
 
       FREE(mmesa);
    }
@@ -614,6 +649,7 @@ mgaMakeCurrent(__DRIcontextPrivate *driContextPriv,
       mgaContextPtr mmesa = (mgaContextPtr) driContextPriv->driverPrivate;
 
       if (mmesa->driDrawable != driDrawPriv) {
+	 driDrawableInitVBlank( driDrawPriv, mmesa->vblank_flags );
 	 mmesa->driDrawable = driDrawPriv;
 	 mmesa->dirty = ~0; 
 	 mmesa->dirty_cliprects = (MGA_FRONT|MGA_BACK); 
@@ -695,7 +731,7 @@ static const struct __DriverAPIRec mgaAPI = {
  * The __driCreateScreen name is the symbol that libGL.so fetches.
  * Return:  pointer to a __DRIscreenPrivate.
  */
-#ifndef _SOLO
+#ifndef _SOLO 
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
@@ -713,30 +749,6 @@ void *__driCreateScreen(struct DRIDriverRec *driver,
 }
 #endif
 
-
-#ifndef _SOLO
-/* This function is called by libGL.so as soon as libGL.so is loaded.
- * This is where we'd register new extension functions with the dispatcher.
- */
-void
-__driRegisterExtensions( void )
-{
-   PFNGLXENABLEEXTENSIONPROC glx_enable_extension;
-
-
-   if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
-      glx_enable_extension = (PFNGLXENABLEEXTENSIONPROC)
-	  glXGetProcAddress( "__glXEnableExtension" );
-
-      if ( glx_enable_extension != NULL ) {
-	 (*glx_enable_extension)( "GLX_SGI_swap_control", GL_FALSE );
-	 (*glx_enable_extension)( "GLX_SGI_video_sync", GL_FALSE );
-	 (*glx_enable_extension)( "GLX_MESA_swap_control", GL_FALSE );
-	 (*glx_enable_extension)( "GLX_MESA_swap_frame_usage", GL_FALSE );
-      }
-   }
-}
-#endif
 
 /**
  * Get information about previous buffer swaps.

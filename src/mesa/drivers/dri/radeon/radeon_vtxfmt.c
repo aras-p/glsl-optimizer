@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_vtxfmt.c,v 1.5 2002/12/16 16:18:59 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_vtxfmt.c,v 1.6 2003/05/06 23:52:08 daenzer Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -937,7 +937,7 @@ static void radeonVtxfmtFlushVertices( GLcontext *ctx, GLuint flags )
  */
 
 
-void radeonVtxfmtInit( GLcontext *ctx )
+void radeonVtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
    GLvertexformat *vfmt = &(rmesa->vb.vtxfmt);
@@ -1034,7 +1034,7 @@ void radeonVtxfmtInit( GLcontext *ctx )
    make_empty_list( &rmesa->vb.dfn_cache.MultiTexCoord1fARB );
    make_empty_list( &rmesa->vb.dfn_cache.MultiTexCoord1fvARB );
 
-   radeonInitCodegen( &rmesa->vb.codegen );
+   radeonInitCodegen( &rmesa->vb.codegen, useCodegen );
 }
 
 static void free_funcs( struct dynfn *l )

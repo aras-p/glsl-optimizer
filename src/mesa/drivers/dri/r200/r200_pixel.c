@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_pixel.c,v 1.2 2002/12/16 16:18:54 dawes Exp $ */
 /*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
@@ -160,12 +160,12 @@ r200TryReadPixels( GLcontext *ctx,
    if (R200_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   /* Only accelerate reading to agp buffers.
+   /* Only accelerate reading to GART buffers.
     */
-   if ( !r200IsAgpMemory(rmesa, pixels, 
+   if ( !r200IsGartMemory(rmesa, pixels, 
 			 pitch * height * rmesa->r200Screen->cpp ) ) {
       if (R200_DEBUG & DEBUG_PIXEL)
-	 fprintf(stderr, "%s: dest not agp\n", __FUNCTION__);
+	 fprintf(stderr, "%s: dest not GART\n", __FUNCTION__);
       return GL_FALSE;
    }
 
@@ -217,7 +217,7 @@ r200TryReadPixels( GLcontext *ctx,
       int nbox = dPriv->numClipRects;
       int src_offset = rmesa->state.color.drawOffset;
       int src_pitch = rmesa->state.color.drawPitch * rmesa->r200Screen->cpp;
-      int dst_offset = r200AgpOffsetFromVirtual( rmesa, pixels);
+      int dst_offset = r200GartOffsetFromVirtual( rmesa, pixels );
       int dst_pitch = pitch * rmesa->r200Screen->cpp;
       XF86DRIClipRectRec *box = dPriv->pClipRects;
       int i;
@@ -297,7 +297,7 @@ static void do_draw_pix( GLcontext *ctx,
    int i;
    int blit_format;
    int size;
-   int src_offset = r200AgpOffsetFromVirtual( rmesa, pixels);
+   int src_offset = r200GartOffsetFromVirtual( rmesa, pixels );
    int src_pitch = pitch * rmesa->r200Screen->cpp;
 
    if (R200_DEBUG & DEBUG_PIXEL)
@@ -402,11 +402,11 @@ r200TryDrawPixels( GLcontext *ctx,
       if (planemask != ~0)
 	 return GL_FALSE;	/* fix me -- should be possible */
 
-      /* Can't do conversions on agp reads/draws. 
+      /* Can't do conversions on GART reads/draws. 
        */
-      if ( !r200IsAgpMemory( rmesa, pixels, size ) ) {
+      if ( !r200IsGartMemory( rmesa, pixels, size ) ) {
 	 if (R200_DEBUG & DEBUG_PIXEL)
-	    fprintf(stderr, "%s: not agp memory\n", __FUNCTION__);
+	    fprintf(stderr, "%s: not GART memory\n", __FUNCTION__);
 	 return GL_FALSE;
       }
 
@@ -426,7 +426,7 @@ r200TryDrawPixels( GLcontext *ctx,
       return GL_FALSE;
    }
 
-   if ( r200IsAgpMemory(rmesa, pixels, size) )
+   if ( r200IsGartMemory(rmesa, pixels, size) )
    {
       do_draw_pix( ctx, x, y, width, height, pitch, pixels,
 		   dest, planemask );

@@ -33,6 +33,7 @@
 #include "macros.h"
 #include "dd.h"
 #include "vblank.h"
+#include "xmlpool.h"
 
 
 /****************************************************************************/
@@ -127,7 +128,7 @@ int driWaitForMSC32( __DRIdrawablePrivate *priv,
 	 if ( drmWaitVBlank( priv->driScreenPriv->fd, &vbl ) != 0 ) {
 	    /* FIXME: This doesn't seem like the right thing to return here.
 	     */
-#ifndef _SOLO
+#ifndef _SOLO	     
 	    return GLX_BAD_CONTEXT;
 #else
 	    return -1;
@@ -163,9 +164,9 @@ int driWaitForMSC32( __DRIdrawablePrivate *priv,
 	 /* FIXME: This doesn't seem like the right thing to return here.
 	  */
 #ifndef _SOLO
-	    return GLX_BAD_CONTEXT;
+	 return GLX_BAD_CONTEXT;
 #else
-	    return -1;
+	 return -1;
 #endif
       }
    }
@@ -183,22 +184,53 @@ int driWaitForMSC32( __DRIdrawablePrivate *priv,
 /****************************************************************************/
 /**
  * Gets a set of default vertical-blank-wait flags based on the internal GLX
- * API version and several environment variables.
+ * API version and several configuration options.
  */
 
-GLuint driGetDefaultVBlankFlags( void )
+GLuint driGetDefaultVBlankFlags( const driOptionCache *optionCache )
 {
    GLuint  flags = 0;
-
+   int vblank_mode;
 
    flags |= (driCompareGLXAPIVersion( 20030317 ) >= 0) 
        ? VBLANK_FLAG_INTERVAL : 0;
-   flags |= (getenv("LIBGL_SYNC_REFRESH") != NULL)
-       ? VBLANK_FLAG_SYNC : 0;
-   flags |= (getenv("LIBGL_THROTTLE_REFRESH") != NULL)
-       ? VBLANK_FLAG_THROTTLE : 0;
+
+   if ( driCheckOption( optionCache, "vblank_mode", DRI_ENUM ) )
+      vblank_mode = driQueryOptioni( optionCache, "vblank_mode" );
+   else
+      vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
+
+   switch (vblank_mode) {
+   case DRI_CONF_VBLANK_NEVER:
+      flags = 0;
+      break;
+   case DRI_CONF_VBLANK_DEF_INTERVAL_0:
+      break;
+   case DRI_CONF_VBLANK_DEF_INTERVAL_1:
+      flags |= VBLANK_FLAG_THROTTLE;
+      break;
+   case DRI_CONF_VBLANK_ALWAYS_SYNC:
+      flags |= VBLANK_FLAG_SYNC;
+      break;
+   }
 
    return flags;
+}
+
+
+/****************************************************************************/
+/**
+ * Sets the default swap interval when the drawable is first bound to a
+ * direct rendering context.
+ */
+
+void driDrawableInitVBlank( __DRIdrawablePrivate *priv, GLuint flags )
+{
+#ifndef _SOLO
+   if ( priv->pdraw->swap_interval == (unsigned)-1 ) {
+      priv->pdraw->swap_interval = (flags & VBLANK_FLAG_THROTTLE) != 0 ? 1 : 0;
+   }
+#endif   
 }
 
 
@@ -265,7 +297,10 @@ driWaitForVBlank( const  __DRIdrawablePrivate *priv, GLuint * vbl_seq,
 
 
    *missed_deadline = GL_FALSE;
-   if ( (flags & VBLANK_FLAG_NO_IRQ) != 0 ) {
+   if ( (flags & (VBLANK_FLAG_INTERVAL |
+		  VBLANK_FLAG_THROTTLE |
+		  VBLANK_FLAG_SYNC)) == 0 ||
+	(flags & VBLANK_FLAG_NO_IRQ) != 0 ) {
       return 0;
    }
 
@@ -293,11 +328,14 @@ driWaitForVBlank( const  __DRIdrawablePrivate *priv, GLuint * vbl_seq,
    vbl.request.type = DRM_VBLANK_ABSOLUTE;
 
    if ( (flags & VBLANK_FLAG_INTERVAL) != 0 ) {
-#ifndef _SOLO
+#ifndef _SOLO   
       interval = priv->pdraw->swap_interval;
 #else
       interval = 0;
-#endif
+#endif      
+      /* this must have been initialized when the drawable was first bound
+       * to a direct rendering context. */
+      assert ( interval != (unsigned)-1 );
    }
    else if ( (flags & VBLANK_FLAG_THROTTLE) != 0 ) {
       interval = 1;

@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_maos_arrays.c,v 1.1 2002/10/30 12:51:55 alanh Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -409,7 +409,7 @@ static void emit_tex_vector( GLcontext *ctx,
 
 
 
-/* Emit any changed arrays to new agp memory, re-emit a packet to
+/* Emit any changed arrays to new GART memory, re-emit a packet to
  * update the arrays.  
  */
 void radeonEmitArrays( GLcontext *ctx, GLuint inputs )

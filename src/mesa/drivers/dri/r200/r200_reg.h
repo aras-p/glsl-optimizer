@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_reg.h,v 1.2 2002/12/16 16:18:54 dawes Exp $ */
 /*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
@@ -1433,12 +1433,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R200_CP_CMD_PAINT_MULTI		0xC0009A00
 #define R200_CP_CMD_BITBLT_MULTI	0xC0009B00
 #define R200_CP_CMD_TRANS_BITBLT	0xC0009C00
-
-
-#define R200_AGP_TEX_OFFSET               0x02000000
-
-
-
 
 #endif
 

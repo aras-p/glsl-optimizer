@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.2 2003/10/20 02:17:33 jonsmirl Exp $
+# $Id: Makefile.X11,v 1.3 2003/10/21 06:05:49 jonsmirl Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -49,7 +49,8 @@ DRIVER_SOURCES = radeon_context.c \
 		 ../common/mm.c \
 		 ../common/utils.c \
 		 ../common/texmem.c \
-		 ../common/vblank.c
+		 ../common/vblank.c \
+		 ../common/xmlconfig.c
 
 SUBSET_DRIVER_SOURCES = \
 		radeon_subset_bitmap.c \

@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_vtxfmt_c.c,v 1.2 2002/12/16 16:18:59 dawes Exp $ */
 /**************************************************************************
 
 Copyright 2002 ATI Technologies Inc., Ontario, Canada, and
@@ -864,7 +864,7 @@ static struct dynfn *codegen_noop( GLcontext *ctx, int key )
    return 0;
 }
 
-void radeonInitCodegen( struct dfn_generators *gen )
+void radeonInitCodegen( struct dfn_generators *gen, GLboolean useCodegen )
 {
    gen->Vertex3f = codegen_noop;
    gen->Vertex3fv = codegen_noop;
@@ -893,7 +893,7 @@ void radeonInitCodegen( struct dfn_generators *gen )
    gen->MultiTexCoord1fARB = codegen_noop;
    gen->MultiTexCoord1fvARB = codegen_noop;
 
-   if (!getenv("RADEON_NO_CODEGEN")) {
+   if (useCodegen) {
 #if defined(USE_X86_ASM)
       radeonInitX86Codegen( gen );
 #endif

@@ -1,6 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
-
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_screen.h,v 1.1 2002/10/30 12:51:52 alanh Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -43,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xf86drm.h"
 #include "radeon_common.h"
 #include "radeon_sarea.h"
+#include "xmlconfig.h"
 
 typedef struct {
    drmHandle handle;			/* Handle to the DRM region */
@@ -80,7 +80,7 @@ typedef struct {
 
    r200RegionRec mmio;
    r200RegionRec status;
-   r200RegionRec agpTextures;
+   r200RegionRec gartTextures;
 
    drmBufMapPtr buffers;
 
@@ -88,11 +88,14 @@ typedef struct {
 
    __DRIscreenPrivate *driScreen;
    unsigned int sarea_priv_offset;
-   unsigned int agp_buffer_offset;	/* offset in card memory space */
-   unsigned int agp_texture_offset;	/* offset in card memory space */
-   unsigned int agp_base;
+   unsigned int gart_buffer_offset;	/* offset in card memory space */
+   unsigned int gart_texture_offset;	/* offset in card memory space */
+   unsigned int gart_base;
 
    GLboolean drmSupportsCubeMaps;       /* need radeon kernel module >=1.7 */
+
+   /* Configuration cache with default values for all contexts */
+   driOptionCache optionCache;
 } r200ScreenRec, *r200ScreenPtr;
 
 #endif

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.5 2003/10/20 02:17:33 jonsmirl Exp $
+# $Id: Makefile.X11,v 1.6 2003/10/21 06:05:46 jonsmirl Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -33,6 +33,7 @@ DRIVER_SOURCES = r200_context.c \
 		 ../common/utils.c \
 		 ../common/texmem.c \
 		 ../common/vblank.c \
+		 ../common/xmlconfig.c \
 		 r200_cmdbuf.c \
 		 r200_pixel.c \
 		 r200_tex.c \

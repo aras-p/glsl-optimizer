@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_state_init.c,v 1.4 2003/02/22 06:21:11 dawes Exp $ */
 /*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
@@ -130,28 +130,15 @@ static GLboolean check_##NM( GLcontext *ctx, int idx )	\
 
 
 CHECK( always, GL_TRUE )
+CHECK( never, GL_FALSE )
 CHECK( tex_any, ctx->Texture._EnabledUnits )
 CHECK( tex, ctx->Texture.Unit[idx]._ReallyEnabled )
 CHECK( fog, ctx->Fog.Enabled )
 TCL_CHECK( tcl, GL_TRUE )
-TCL_CHECK( tcl_tex_any, ctx->Texture._EnabledUnits )
 TCL_CHECK( tcl_tex, ctx->Texture.Unit[idx]._ReallyEnabled )
 TCL_CHECK( tcl_lighting, ctx->Light.Enabled )
-TCL_CHECK( tcl_eyespace_or_lighting, ctx->_NeedEyeCoords || ctx->Light.Enabled )
 TCL_CHECK( tcl_light, ctx->Light.Enabled && ctx->Light.Light[idx].Enabled )
 TCL_CHECK( tcl_ucp, (ctx->Transform.ClipPlanesEnabled & (1 << idx)) )
-/* TCL_CHECK( tcl_eyespace_or_fog, ctx->_NeedEyeCoords || ctx->Fog.Enabled )  */
-
-
-static GLboolean check_tcl_eyespace_or_fog( GLcontext *ctx, int idx )
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   int res;
-   (void) idx;
-   res = !rmesa->TclFallback && (ctx->_NeedEyeCoords || ctx->Fog.Enabled);
-   fprintf(stderr, "%s: %d\n", __FUNCTION__, res);
-   return res;
-}
 
 
 /* Initialize the context's hardware state.
@@ -244,8 +231,15 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( tf, tex_any, TF_STATE_SIZE, "TF/tfactor", 0 );
    ALLOC_STATE( tex[0], tex_any, TEX_STATE_SIZE, "TEX/tex-0", 0 );
    ALLOC_STATE( tex[1], tex_any, TEX_STATE_SIZE, "TEX/tex-1", 1 );
-   ALLOC_STATE( cube[0], tex_any, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
-   ALLOC_STATE( cube[1], tex_any, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
+
+   if (rmesa->r200Screen->drmSupportsCubeMaps) {
+      ALLOC_STATE( cube[0], tex_any, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
+      ALLOC_STATE( cube[1], tex_any, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
+   }
+   else {
+      ALLOC_STATE( cube[0], never, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
+      ALLOC_STATE( cube[1], never, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
+   }
 
    ALLOC_STATE( tcl, tcl, TCL_STATE_SIZE, "TCL/tcl", 0 );
    ALLOC_STATE( msl, tcl, MSL_STATE_SIZE, "MSL/matrix-select", 0 );
@@ -656,7 +650,7 @@ void r200InitState( r200ContextPtr rmesa )
       ctx->Driver.Lightfv( ctx, p, GL_LINEAR_ATTENUATION, 
 			   &l->LinearAttenuation );
       ctx->Driver.Lightfv( ctx, p, GL_QUADRATIC_ATTENUATION, 
-		     &l->QuadraticAttenuation );
+			   &l->QuadraticAttenuation );
    }
 
    ctx->Driver.LightModelfv( ctx, GL_LIGHT_MODEL_AMBIENT, 

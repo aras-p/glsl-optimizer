@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_context.c,v 1.7 2003/02/08 21:26:45 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_context.c,v 1.9 2003/09/24 02:43:12 dawes Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -69,6 +69,25 @@ int RADEON_DEBUG = (0);
 #endif
 
 
+/* Radeon configuration
+ */
+#include "xmlpool.h"
+
+const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+    DRI_CONF_SECTION_PERFORMANCE
+        DRI_CONF_TCL_MODE(DRI_CONF_TCL_CODEGEN)
+        DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
+        DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_QUALITY
+        DRI_CONF_PREFERRED_BPT(0,"0,16,32")
+    DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_DEBUG
+        DRI_CONF_NO_RAST(false)
+    DRI_CONF_SECTION_END
+DRI_CONF_END;
+const GLuint __driNConfigOptions = 5;
 
 /* Return the width and height of the given buffer.
  */
@@ -102,8 +121,7 @@ static const GLubyte *radeonGetString( GLcontext *ctx, GLenum name )
       offset = driGetRendererString( buffer, "Radeon", DRIVER_DATE,
 				     agp_mode );
 
-      sprintf( & buffer[ offset ], "%s %sTCL",
-	       ( rmesa->dri.drmMinor < 3 ) ? " DRM-COMPAT" : "",
+      sprintf( & buffer[ offset ], "%sTCL",
 	       !(rmesa->TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)
 	       ? "" : "NO-" );
 
@@ -229,6 +247,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    radeonContextPtr rmesa;
    GLcontext *ctx, *shareCtx;
    int i;
+   int tcl_mode, fthrottle_mode, preferred_bpt;
 
    assert(glVisual);
    assert(driContextPriv);
@@ -258,13 +277,11 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    rmesa->dri.hwContext = driContextPriv->hHWContext;
    rmesa->dri.hwLock = &sPriv->pSAREA->lock;
    rmesa->dri.fd = sPriv->fd;
+   rmesa->dri.drmMinor = sPriv->drmMinor;
 
-   /* If we don't have 1.3, fallback to the 1.1 interfaces.
-    */
-   if (getenv("RADEON_COMPAT") || sPriv->drmMinor < 3 ) 
-      rmesa->dri.drmMinor = 1;
-   else
-      rmesa->dri.drmMinor = sPriv->drmMinor;
+   /* Parse configuration files */
+   driParseConfigFiles (&rmesa->optionCache, &screen->optionCache,
+			screen->driScreen->myNum, "radeon");
 
    rmesa->radeonScreen = screen;
    rmesa->sarea = (RADEONSAREAPrivPtr)((GLubyte *)sPriv->pSAREA +
@@ -291,6 +308,9 @@ radeonCreateContext( const __GLcontextModes *glVisual,
       driSetTextureSwapCounterLocation( rmesa->texture_heaps[i],
 					& rmesa->c_textureSwaps );
    }
+   preferred_bpt = driQueryOptioni (&rmesa->optionCache, "preferred_bpt");
+   rmesa->default32BitTextures =
+       ( ( preferred_bpt == 0 && screen->cpp == 4 ) || preferred_bpt == 32 );
 
    rmesa->swtcl.RenderIndex = ~0;
    rmesa->lost_context = 1;
@@ -338,7 +358,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
       MIN2( ctx->Const.MaxArrayLockSize, 
  	    RADEON_BUFFER_SIZE / RADEON_MAX_TCL_VERTSIZE ); 
 
-   rmesa->boxes = (getenv("LIBGL_PERFORMANCE_BOXES") != NULL);
+   rmesa->boxes = 0;
 
    /* Initialize the software rasterizer and helper modules.
     */
@@ -392,22 +412,24 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    radeonInitState( rmesa );
    radeonInitSwtcl( ctx );
 
+   fthrottle_mode = driQueryOptioni(&rmesa->optionCache, "fthrottle_mode");
    rmesa->iw.irq_seq = -1;
    rmesa->irqsEmitted = 0;
-   rmesa->do_irqs = (rmesa->radeonScreen->irq && !getenv("RADEON_NO_IRQS"));
+   rmesa->do_irqs = (rmesa->radeonScreen->irq != 0 &&
+		     fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS);
 
-   rmesa->do_usleeps = !getenv("RADEON_NO_USLEEPS");
+   rmesa->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
-   rmesa->vblank_flags = (rmesa->do_irqs)
-       ? driGetDefaultVBlankFlags() : VBLANK_FLAG_NO_IRQ;
-
+   rmesa->vblank_flags = (rmesa->radeonScreen->irq != 0)
+       ? driGetDefaultVBlankFlags(&rmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
 #ifndef _SOLO
-   rmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( "__glXGetUST" );
-   if ( rmesa->get_ust == NULL ) 
-#endif
-   {
+   rmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
+   if ( rmesa->get_ust == NULL ) {
       rmesa->get_ust = get_ust_nop;
    }
+#else
+   rmesa->get_ust = get_ust_nop;
+#endif   
 
    (*rmesa->get_ust)( & rmesa->swap_ust );
 
@@ -417,25 +439,20 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 				       debug_control );
 #endif
 
-   if (getenv("RADEON_NO_RAST")) {
+   tcl_mode = driQueryOptioni(&rmesa->optionCache, "tcl_mode");
+   if (driQueryOptionb(&rmesa->optionCache, "no_rast")) {
       fprintf(stderr, "disabling 3D acceleration\n");
       FALLBACK(rmesa, RADEON_FALLBACK_DISABLE, 1); 
-   }
-   else if (getenv("RADEON_TCL_FORCE_ENABLE")) {
-      fprintf(stderr, "Enabling TCL support...  this will probably crash\n");
-      fprintf(stderr, "         your card if it isn't capable of TCL!\n");
-      rmesa->radeonScreen->chipset |= RADEON_CHIPSET_TCL;
-   } else if (getenv("RADEON_TCL_FORCE_DISABLE") ||
-	    rmesa->dri.drmMinor < 3 ||
-	    !(rmesa->radeonScreen->chipset & RADEON_CHIPSET_TCL)) {
+   } else if (tcl_mode == DRI_CONF_TCL_SW ||
+	      !(rmesa->radeonScreen->chipset & RADEON_CHIPSET_TCL)) {
       rmesa->radeonScreen->chipset &= ~RADEON_CHIPSET_TCL;
       fprintf(stderr, "disabling TCL support\n");
       TCL_FALLBACK(rmesa->glCtx, RADEON_TCL_FALLBACK_TCL_DISABLE, 1); 
    }
 
    if (rmesa->radeonScreen->chipset & RADEON_CHIPSET_TCL) {
-      if (!getenv("RADEON_NO_VTXFMT"))
-	 radeonVtxfmtInit( ctx );
+      if (tcl_mode >= DRI_CONF_TCL_VTXFMT)
+	 radeonVtxfmtInit( ctx, tcl_mode >= DRI_CONF_TCL_CODEGEN );
 
       _tnl_need_dlist_norm_lengths( ctx, GL_FALSE );
    }
@@ -478,9 +495,11 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
 	 radeonFlushCmdBuf( rmesa, __FUNCTION__ );
       }
 
-      if (!rmesa->TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)
-	 if (!getenv("RADEON_NO_VTXFMT"))
+      if (!(rmesa->TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)) {
+	 int tcl_mode = driQueryOptioni(&rmesa->optionCache, "tcl_mode");
+	 if (tcl_mode >= DRI_CONF_TCL_VTXFMT)
 	    radeonVtxfmtDestroy( rmesa->glCtx );
+      }
 
       /* free the Mesa context */
       rmesa->glCtx->DriverCtx = NULL;
@@ -497,14 +516,16 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
           */
          int i;
 
-	 /* this assert is not correct, default textures are always on swap list
-	 assert( is_empty_list( & rmesa->swapped ) ); */
+	 assert( is_empty_list( & rmesa->swapped ) );
 
          for ( i = 0 ; i < rmesa->nr_heaps ; i++ ) {
 	    driDestroyTextureHeap( rmesa->texture_heaps[ i ] );
 	    rmesa->texture_heaps[ i ] = NULL;
          }
       }
+
+      /* free the option cache */
+      driDestroyOptionCache (&rmesa->optionCache);
 
       FREE( rmesa );
    }
@@ -556,11 +577,12 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, newCtx->glCtx);
 
       if ( newCtx->dri.drawable != driDrawPriv ) {
+	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags );
 	 newCtx->dri.drawable = driDrawPriv;
 	 radeonUpdateWindow( newCtx->glCtx );
 	 radeonUpdateViewportOffset( newCtx->glCtx );
       }
-
+  
       _mesa_make_current2( newCtx->glCtx,
 			   (GLframebuffer *) driDrawPriv->driverPrivate,
 			   (GLframebuffer *) driReadPriv->driverPrivate );

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.4 2003/10/20 02:17:33 jonsmirl Exp $
+# $Id: Makefile.X11,v 1.5 2003/10/21 06:05:41 jonsmirl Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -31,7 +31,8 @@ DRIVER_SOURCES = mgadd.c \
 		 ../common/mm.c \
 		 ../common/utils.c \
 		 ../common/texmem.c \
-		 ../common/vblank.c
+		 ../common/vblank.c \
+		 ../common/xmlconfig.c
 
 FULL_DRIVER_SOURCES = 	\
 		 mgapixel.c \
@@ -39,6 +40,7 @@ FULL_DRIVER_SOURCES = 	\
 		 mgatex.c \
 		 mgatexmem.c \
 		 mga_texstate.c \
+		 mga_texcombine.c \
 		 mgavb.c \
 		 mga_xmesa.c
 

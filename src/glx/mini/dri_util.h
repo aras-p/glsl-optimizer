@@ -488,6 +488,12 @@ struct __DRIscreenPrivateRec {
      * the drawable that was bound.  Otherwise, this is NULL.
      */
     __DRIdrawablePrivate *fullscreen;
+    
+    
+    /**
+     * \brief Screen number for when multiple screens are supported
+     */
+    int myNum;
 };
 
 extern void

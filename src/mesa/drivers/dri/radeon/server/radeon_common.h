@@ -31,7 +31,7 @@
  * Converted to common header format:
  *   Jens Owen <jens@tungstengraphics.com>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drmRadeon.h,v 1.6 2001/04/16 15:02:13 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_common.h,v 1.2 2003/04/07 01:22:09 martin Exp $
  *
  */
 
@@ -70,6 +70,7 @@
 #define DRM_RADEON_INIT_HEAP              0x15
 #define DRM_RADEON_IRQ_EMIT               0x16
 #define DRM_RADEON_IRQ_WAIT               0x17
+#define DRM_RADEON_CP_RESUME              0x18
 #define DRM_RADEON_MAX_DRM_COMMAND_INDEX  0x39
 
 
@@ -94,7 +95,7 @@ typedef struct {
    unsigned long sarea_priv_offset;
    int is_pci;
    int cp_mode;
-   int agp_size;
+   int gart_size;
    int ring_size;
    int usec_timeout;
 
@@ -109,7 +110,7 @@ typedef struct {
    unsigned long ring_offset;
    unsigned long ring_rptr_offset;
    unsigned long buffers_offset;
-   unsigned long agp_textures_offset;
+   unsigned long gart_textures_offset;
 } drmRadeonInit;
 
 typedef struct {
@@ -404,22 +405,22 @@ typedef struct drm_radeon_getparam {
 	void *value;
 } drmRadeonGetParam;
 
-#define RADEON_PARAM_AGP_BUFFER_OFFSET 1
-#define RADEON_PARAM_LAST_FRAME        2
-#define RADEON_PARAM_LAST_DISPATCH     3
-#define RADEON_PARAM_LAST_CLEAR        4
-#define RADEON_PARAM_IRQ_NR            5
-#define RADEON_PARAM_AGP_BASE          6
+#define RADEON_PARAM_GART_BUFFER_OFFSET 1
+#define RADEON_PARAM_LAST_FRAME         2
+#define RADEON_PARAM_LAST_DISPATCH      3
+#define RADEON_PARAM_LAST_CLEAR         4
+#define RADEON_PARAM_IRQ_NR             5
+#define RADEON_PARAM_GART_BASE          6
 
 
-#define RADEON_MEM_REGION_AGP 1
-#define RADEON_MEM_REGION_FB  2
+#define RADEON_MEM_REGION_GART 1
+#define RADEON_MEM_REGION_FB   2
 
 typedef struct drm_radeon_mem_alloc {
 	int region;
 	int alignment;
 	int size;
-	int *region_offset;	/* offset from start of fb or agp */
+	int *region_offset;	/* offset from start of fb or GART */
 } drmRadeonMemAlloc;
 
 typedef struct drm_radeon_mem_free {

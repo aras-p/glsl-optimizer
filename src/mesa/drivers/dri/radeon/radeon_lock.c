@@ -53,8 +53,6 @@ radeonUpdatePageFlipping( radeonContextPtr rmesa )
 {
    int use_back;
 
-   if (rmesa->dri.drmMinor < 3)
-      return;
 
    rmesa->doPageFlip = rmesa->sarea->pfAllowPageFlip;
 

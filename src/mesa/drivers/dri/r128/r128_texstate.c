@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tex.c,v 1.7 2001/01/08 01:07:21 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_texstate.c,v 1.1 2002/02/22 21:44:58 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -90,17 +90,11 @@ static void r128SetTexImages( r128ContextPtr rmesa,
    };
 
    /* Compute which mipmap levels we really want to send to the hardware.
-    * This depends on the base image size, GL_TEXTURE_MIN_LOD,
-    * GL_TEXTURE_MAX_LOD, GL_TEXTURE_BASE_LEVEL, and GL_TEXTURE_MAX_LEVEL.
-    * Yes, this looks overly complicated, but it's all needed.
     */
-   firstLevel = tObj->BaseLevel + (GLint) (tObj->MinLod + 0.5);
-   firstLevel = MAX2(firstLevel, tObj->BaseLevel);
-   lastLevel = tObj->BaseLevel + (GLint) (tObj->MaxLod + 0.5);
-   lastLevel = MAX2(lastLevel, tObj->BaseLevel);
-   lastLevel = MIN2(lastLevel, tObj->BaseLevel + baseImage->MaxLog2);
-   lastLevel = MIN2(lastLevel, tObj->MaxLevel);
-   lastLevel = MAX2(firstLevel, lastLevel); /* need at least one level */
+
+   driCalculateTextureFirstLastLevel( (driTextureObject *) t );
+   firstLevel = t->base.firstLevel;
+   lastLevel  = t->base.lastLevel;
 
    log2Pitch = tObj->Image[firstLevel]->WidthLog2;
    log2Height = tObj->Image[firstLevel]->HeightLog2;

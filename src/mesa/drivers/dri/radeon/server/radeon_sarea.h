@@ -1,11 +1,4 @@
-/**
- * \file server/radeon_sarea.h
- * \brief SAREA definition.
- * 
- * \author Kevin E. Martin <martin@xfree86.org>
- * \author Gareth Hughes <gareth@valinux.com>
- */
-
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_sarea.h,v 1.5 2002/10/30 12:52:14 alanh Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario,
  *                VA Linux Systems Inc., Fremont, California.
@@ -34,7 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_sarea.h,v 1.4 2002/04/24 16:20:41 martin Exp $ */
+/*
+ * Authors:
+ *   Kevin E. Martin <martin@xfree86.org>
+ *   Gareth Hughes <gareth@valinux.com>
+ *
+ */
 
 #ifndef _RADEON_SAREA_H_
 #define _RADEON_SAREA_H_
@@ -94,11 +92,11 @@
 /* Keep these small for testing */
 #define RADEON_NR_SAREA_CLIPRECTS	12
 
-/* There are 2 heaps (local/AGP).  Each region within a heap is a
+/* There are 2 heaps (local/GART).  Each region within a heap is a
  * minimum of 64k, and there are at most 64 of them per heap.
  */
 #define RADEON_CARD_HEAP		0
-#define RADEON_AGP_HEAP			1
+#define RADEON_GART_HEAP		1
 #define RADEON_NR_TEX_HEAPS		2
 #define RADEON_NR_TEX_REGIONS		64
 #define RADEON_LOG_TEX_GRANULARITY	16
@@ -115,10 +113,6 @@
 
 #endif /* __RADEON_SAREA_DEFINES__ */
 
-
-/**
- * \brief Color register format.
- */
 typedef struct {
     unsigned int red;
     unsigned int green;
@@ -126,15 +120,8 @@ typedef struct {
     unsigned int alpha;
 } radeon_color_regs_t;
 
-
-/**
- * \brief Context registers.
- */
 typedef struct {
-    /**
-     * \name Context state
-     */
-    /*@{*/
+    /* Context state */
     unsigned int pp_misc;
     unsigned int pp_fog_color;
     unsigned int re_solid_color;
@@ -149,76 +136,44 @@ typedef struct {
     unsigned int re_width_height;
     unsigned int rb3d_colorpitch;
     unsigned int se_cntl;
-    /*@}*/
 
-    /**
-     * \name Vertex format state
-     */
-    /*@{*/
+    /* Vertex format state */
     unsigned int se_coord_fmt;
-    /*@}*/
 
-    /**
-     * \name Line state
-     */
-    /*@{*/
+    /* Line state */
     unsigned int re_line_pattern;
     unsigned int re_line_state;
 
     unsigned int se_line_width;
-    /*@}*/
 
-    /**
-     * \name Bumpmap state
-     */
-    /*@{*/
+    /* Bumpmap state */
     unsigned int pp_lum_matrix;
 
     unsigned int pp_rot_matrix_0;
     unsigned int pp_rot_matrix_1;
-    /*@}*/
 
-    /**
-     * \name Mask state
-     */
-    /*@{*/
+    /* Mask state */
     unsigned int rb3d_stencilrefmask;
     unsigned int rb3d_ropcntl;
     unsigned int rb3d_planemask;
-    /*@}*/
 
-    /** 
-     * \name Viewport state
-     */
-    /*@{*/
+    /* Viewport state */
     unsigned int se_vport_xscale;
     unsigned int se_vport_xoffset;
     unsigned int se_vport_yscale;
     unsigned int se_vport_yoffset;
     unsigned int se_vport_zscale;
     unsigned int se_vport_zoffset;
-    /*@}*/
 
-    /**
-     * \name Setup state
-     */
-    /*@{*/
+    /* Setup state */
     unsigned int se_cntl_status;
-    /*@}*/
 
-    /** 
-     * \name Misc state
-     */
-    /*@{*/
+    /* Misc state */
     unsigned int re_top_left;
     unsigned int re_misc;
-    /*@}*/
 } radeon_context_regs_t;
 
-
-/**
- * \brief Setup registers for each texture unit
- */
+/* Setup registers for each texture unit */
 typedef struct {
     unsigned int pp_txfilter;
     unsigned int pp_txformat;
@@ -229,82 +184,48 @@ typedef struct {
     unsigned int pp_border_color;
 } radeon_texture_regs_t;
 
-/**
- * \brief Maintain an LRU of contiguous regions of texture space.  
- *
- * If you think you own a region of texture memory, and it has an age different
- * to the one you set, then you are mistaken and it has been stolen by another
- * client.  If global RADEONSAREAPriv::texAge hasn't changed, there is no need to walk the list.
- *
- * These regions can be used as a proxy for the fine-grained texture
- * information of other clients - by maintaining them in the same LRU which is
- * used to age their own textures, clients have an approximate LRU for the
- * whole of global texture space, and can make informed decisions as to which
- * areas to kick out.  There is no need to choose whether to kick out your own
- * texture or someone else's - simply eject them all in LRU order.
- * 
- * \sa RADEONSAREAPriv::texList.
- */
 typedef struct {
-    unsigned char next; 	/**< \brief indices to form a circular LRU */
-    unsigned char prev;		/**< \brief indices to form a circular LRU */
-    unsigned char in_use;	/**< \brief owned by a client, or free? */
-    int age;			/**< \brief tracked by clients to update local LRU's */
-} radeon_tex_region_t;
-
-
-/**
- * \brief Private SAREA definition
- *
- * The channel for communication of state information to the kernel
- * on firing a vertex buffer.
- */
-typedef struct {
-    radeon_context_regs_t ContextState; /** \brief Context registers */
+    /* The channel for communication of state information to the kernel
+     * on firing a vertex buffer.
+     */
+    radeon_context_regs_t ContextState;
     radeon_texture_regs_t TexState[RADEON_MAX_TEXTURE_UNITS];
-                                        /**< \brief Texture registers */
-    unsigned int dirty; 
-    unsigned int vertsize;              /**< \brief vertex size */
-    unsigned int vc_format;             /**< \brief vertex format */
+    unsigned int dirty;
+    unsigned int vertsize;
+    unsigned int vc_format;
 
-    /**
-     * \name Cliprects 
-     *
-     * The current cliprects, or a subset thereof.
-     */
-    /*@{*/
-    XF86DRIClipRectRec boxes[RADEON_NR_SAREA_CLIPRECTS]; 
-                       /**< \brief cliprects */
-    unsigned int nbox; /**< \brief number of cliprects */
-    /*@}*/
+    /* The current cliprects, or a subset thereof */
+    XF86DRIClipRectRec boxes[RADEON_NR_SAREA_CLIPRECTS];
+    unsigned int nbox;
 
-    /**
-     * \name Counters
-     *
-     * Counters for throttling rendering of clients.
-     */
-    /*@{*/
-    unsigned int last_frame;    /**< \brief last emmited frame */
+    /* Counters for throttling of rendering clients */
+    unsigned int last_frame;
     unsigned int last_dispatch;
-    unsigned int last_clear;    /**< \brief last emmited clear */
-    /*@}*/
+    unsigned int last_clear;
 
-    /**
-     * \name LRU
+    /* Maintain an LRU of contiguous regions of texture space.  If you
+     * think you own a region of texture memory, and it has an age
+     * different to the one you set, then you are mistaken and it has
+     * been stolen by another client.  If global texAge hasn't changed,
+     * there is no need to walk the list.
+     *
+     * These regions can be used as a proxy for the fine-grained texture
+     * information of other clients - by maintaining them in the same
+     * lru which is used to age their own textures, clients have an
+     * approximate lru for the whole of global texture space, and can
+     * make informed decisions as to which areas to kick out.  There is
+     * no need to choose whether to kick out your own texture or someone
+     * else's - simply eject them all in LRU order.
      */
-    /*@{*/
-    /** \brief Texture regions. 
-     * Last element is sentinal
-     */
+				/* Last elt is sentinal */
     drmTextureRegion texList[RADEON_NR_TEX_HEAPS][RADEON_NR_TEX_REGIONS+1];
-    /** \brief last time texture was uploaded */
+				/* last time texture was uploaded */
     unsigned int texAge[RADEON_NR_TEX_HEAPS];
-    /*@}*/
 
-    int ctxOwner;		/**< \brief last context to upload state */
-    int pfAllowPageFlip;	/**< \brief set by the 2d driver, read by the client */
-    int pfCurrentPage;		/**< \brief set by kernel, read by others */
-    int crtc2_base;		/**< \brief for pageflipping with CloneMode */
+    int ctxOwner;		/* last context to upload state */
+    int pfAllowPageFlip;	/* set by the 2d driver, read by the client */
+    int pfCurrentPage;		/* set by kernel, read by others */
+    int crtc2_base;		/* for pageflipping with CloneMode */
 } RADEONSAREAPriv, *RADEONSAREAPrivPtr;
 
 #endif

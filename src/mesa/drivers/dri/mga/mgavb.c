@@ -24,7 +24,7 @@
  * Authors:
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.c,v 1.14 2002/10/30 12:51:36 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.c,v 1.15 2003/03/26 20:43:49 tsi Exp $ */
 
 #include "mgacontext.h"
 #include "mgavb.h"
@@ -340,6 +340,9 @@ void mgaCheckTexSizes( GLcontext *ctx )
 	 tnl->Driver.Render.Interp = setup_tab[mmesa->SetupIndex].interp;
 	 tnl->Driver.Render.CopyPV = setup_tab[mmesa->SetupIndex].copy_pv;
       }
+      if (mmesa->Fallback) {
+         tnl->Driver.Render.Start(ctx);
+      }
    }
 }
 
@@ -456,7 +459,7 @@ void mgaInitVB( GLcontext *ctx )
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    GLuint size = TNL_CONTEXT(ctx)->vb.Size;
 
-   mmesa->verts = ALIGN_MALLOC(size * sizeof(mgaVertex), 32);
+   mmesa->verts = (GLubyte *)ALIGN_MALLOC(size * sizeof(mgaVertex), 32);
 
    {
       static int firsttime = 1;

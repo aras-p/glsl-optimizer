@@ -1,6 +1,5 @@
-/* $XFree86$ */
-/**************************************************************************
-
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_vtxfmt.h,v 1.1 2002/10/30 12:51:53 alanh Exp $ */
+/*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
@@ -44,7 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 extern void r200VtxfmtUpdate( GLcontext *ctx );
-extern void r200VtxfmtInit( GLcontext *ctx );
+extern void r200VtxfmtInit( GLcontext *ctx, GLboolean useCodegen );
 extern void r200VtxfmtInvalidate( GLcontext *ctx );
 extern void r200VtxfmtDestroy( GLcontext *ctx );
 extern void r200VtxfmtInitChoosers( GLvertexformat *vfmt );
@@ -87,7 +86,7 @@ do {								\
 
 /* 
  */
-void r200InitCodegen( struct dfn_generators *gen );
+void r200InitCodegen( struct dfn_generators *gen, GLboolean useCodegen );
 void r200InitX86Codegen( struct dfn_generators *gen );
 void r200InitSSECodegen( struct dfn_generators *gen );
 

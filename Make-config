@@ -721,7 +721,7 @@ linux-solo:
 	"CFLAGS = -g -std=c99 -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"CXXFLAGS = -g -std=c99 -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
-	"GL_LIB_DEPS = -lm -lpthread" \
+	"GL_LIB_DEPS = -lm -lpthread -lexpat" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm  -Wl,-rpath,$(TOP)/lib" \
 	"GLUT_LIB_DEPS = -L$(TOP)/lib -lGLU -lGL -lm  -Wl,-rpath,$(TOP)/lib" \
 	"APP_LIB_DEPS = -L$(TOP)/lib -lglut -lGLU -lGL -lm  -lpthread -Wl,-rpath,$(TOP)/lib" 

@@ -34,8 +34,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Gareth Hughes <gareth@valinux.com>
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
+
 #include <sched.h>
-#include <errno.h>
+#include <errno.h> 
 
 #include "glheader.h"
 #include "imports.h"
@@ -162,7 +163,6 @@ extern void radeonEmitVbufPrim( radeonContextPtr rmesa,
    drmRadeonCmdHeader *cmd;
 
 
-   assert(rmesa->dri.drmMinor >= 3); 
    assert(!(primitive & RADEON_CP_VC_CNTL_PRIM_WALK_IND));
    
    radeonEmitState( rmesa );
@@ -254,7 +254,6 @@ GLushort *radeonAllocEltsOpenEnded( radeonContextPtr rmesa,
    if (RADEON_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s %d\n", __FUNCTION__, min_nr);
 
-   assert(rmesa->dri.drmMinor >= 3); 
    assert((primitive & RADEON_CP_VC_CNTL_PRIM_WALK_IND));
    
    radeonEmitState( rmesa );
@@ -317,7 +316,6 @@ void radeonEmitVertexAOS( radeonContextPtr rmesa,
    rmesa->ioctl.vertex_offset = offset;
 #else
    drmRadeonCmdHeader *cmd;
-   assert(rmesa->dri.drmMinor >= 3); 
 
    if (RADEON_DEBUG & (DEBUG_PRIMS|DEBUG_IOCTL))
       fprintf(stderr, "%s:  vertex_size 0x%x offset 0x%x \n",
@@ -356,7 +354,6 @@ void radeonEmitAOS( radeonContextPtr rmesa,
    if (RADEON_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   assert(rmesa->dri.drmMinor >= 3); 
 
    cmd = (drmRadeonCmdHeader *)radeonAllocCmdBuf( rmesa, sz * sizeof(int),
 						  __FUNCTION__ );
@@ -531,8 +528,6 @@ void radeonFlushCmdBuf( radeonContextPtr rmesa, const char *caller )
    int ret;
 
 	      
-   assert (rmesa->dri.drmMinor >= 3);
-
    LOCK_HARDWARE( rmesa );
 
    ret = radeonFlushCmdBufLocked( rmesa, caller );
@@ -691,9 +686,6 @@ void radeonAllocDmaRegion( radeonContextPtr rmesa,
    rmesa->dma.current.ptr += bytes; /* bug - if alignment > 7 */
    rmesa->dma.current.start = 
       rmesa->dma.current.ptr = (rmesa->dma.current.ptr + 0x7) & ~0x7;  
-
-   if ( rmesa->dri.drmMinor < 3 ) 
-      radeonRefillCurrentDmaRegion( rmesa );
 }
 
 void radeonAllocDmaRegionVerts( radeonContextPtr rmesa, 
@@ -719,7 +711,7 @@ static CARD32 radeonGetLastFrame (radeonContextPtr rmesa)
       drmRadeonGetParam gp;
 
       gp.param = RADEON_PARAM_LAST_FRAME;
-      gp.value = &frame;
+      gp.value = (int *)&frame;
       ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_GETPARAM,
 				 &gp, sizeof(gp) );
    } 
@@ -1012,7 +1004,7 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	drmRadeonGetParam gp;
 
 	gp.param = RADEON_PARAM_LAST_CLEAR;
-	gp.value = &clear;
+	gp.value = (int *)&clear;
 	ret = drmCommandWriteRead( rmesa->dri.fd,
 				   DRM_RADEON_GETPARAM, &gp, sizeof(gp) );
       } else
@@ -1154,13 +1146,11 @@ void radeonFlush( GLcontext *ctx )
    if (rmesa->dma.flush)
       rmesa->dma.flush( rmesa );
 
-   if (rmesa->dri.drmMinor >= 3) {
-      if (!is_empty_list(&rmesa->hw.dirty)) 
-	 radeonEmitState( rmesa );
+   if (!is_empty_list(&rmesa->hw.dirty)) 
+      radeonEmitState( rmesa );
    
-      if (rmesa->store.cmd_used)
-	 radeonFlushCmdBuf( rmesa, __FUNCTION__ );
-   }
+   if (rmesa->store.cmd_used)
+      radeonFlushCmdBuf( rmesa, __FUNCTION__ );
 }
 
 /* Make sure all commands have been sent to the hardware and have
