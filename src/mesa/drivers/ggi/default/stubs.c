@@ -27,6 +27,7 @@
 #include <ggi/internal/ggi-dl.h>
 #include <ggi/mesa/ggimesa_int.h>
 
+#include "mmath.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "swrast/s_context.h"
@@ -321,7 +322,7 @@ int GGIsetup_driver(GGIMesaContext ggictx, struct ggi_mesa_info *info)
 
 void GGIupdate_state(GLcontext *ctx)
 {
-	ctx->Driver.TriangleFunc = ggiGetTriangleFunc(ctx);
+	ctx->Driver.TriangleFunc = _swsetup_Triangle;
 }
 
 
