@@ -527,6 +527,14 @@ execute_program( GLcontext *ctx,
 
    for (pc = 0; pc < maxInst; pc++) {
       const struct fp_instruction *inst = program->Instructions + pc;
+
+      if (ctx->FragmentProgram.CallbackEnabled &&
+          ctx->FragmentProgram.Callback) {
+         ctx->FragmentProgram.CurrentPosition = inst->StringPos;
+         ctx->FragmentProgram.Callback(program->Base.Target,
+                                       ctx->FragmentProgram.CallbackData);
+      }
+
       switch (inst->Opcode) {
          case FP_OPCODE_ADD:
             {
@@ -1105,7 +1113,11 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
               const struct fragment_program *program,
               const struct sw_span *span, GLuint col )
 {
+   GLuint inputsRead = program->InputsRead;
    GLuint j, u;
+
+   if (ctx->FragmentProgram.CallbackEnabled)
+      inputsRead = ~0;
 
    /* Clear temporary registers */
    _mesa_bzero(machine->Registers + FP_TEMP_REG_START,
@@ -1118,28 +1130,28 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    }
 
    /* Load input registers */
-   if (program->InputsRead & (1 << FRAG_ATTRIB_WPOS)) {
+   if (inputsRead & (1 << FRAG_ATTRIB_WPOS)) {
       GLfloat *wpos = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_WPOS];
       wpos[0] = span->x + col;
       wpos[1] = span->y;
       wpos[2] = (GLfloat) span->array->z[col] / ctx->DepthMaxF;
       wpos[3] = span->w + col * span->dwdx;
    }
-   if (program->InputsRead & (1 << FRAG_ATTRIB_COL0)) {
+   if (inputsRead & (1 << FRAG_ATTRIB_COL0)) {
       GLfloat *col0 = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_COL0];
       col0[0] = CHAN_TO_FLOAT(span->array->rgba[col][RCOMP]);
       col0[1] = CHAN_TO_FLOAT(span->array->rgba[col][GCOMP]);
       col0[2] = CHAN_TO_FLOAT(span->array->rgba[col][BCOMP]);
       col0[3] = CHAN_TO_FLOAT(span->array->rgba[col][ACOMP]);
    }
-   if (program->InputsRead & (1 << FRAG_ATTRIB_COL1)) {
+   if (inputsRead & (1 << FRAG_ATTRIB_COL1)) {
       GLfloat *col1 = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_COL1];
       col1[0] = CHAN_TO_FLOAT(span->array->spec[col][RCOMP]);
       col1[1] = CHAN_TO_FLOAT(span->array->spec[col][GCOMP]);
       col1[2] = CHAN_TO_FLOAT(span->array->spec[col][BCOMP]);
       col1[3] = CHAN_TO_FLOAT(span->array->spec[col][ACOMP]);
    }
-   if (program->InputsRead & (1 << FRAG_ATTRIB_FOGC)) {
+   if (inputsRead & (1 << FRAG_ATTRIB_FOGC)) {
       GLfloat *fogc = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_FOGC];
       fogc[0] = span->array->fog[col];
       fogc[1] = 0.0F;
@@ -1147,11 +1159,11 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
       fogc[3] = 0.0F;
    }
    for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
-      if (program->InputsRead & (1 << (FRAG_ATTRIB_TEX0 + u))) {
+      if (inputsRead & (1 << (FRAG_ATTRIB_TEX0 + u))) {
          GLfloat *tex = machine->Registers[FP_INPUT_REG_START+FRAG_ATTRIB_TEX0+u];
-         ASSERT(ctx->Texture._EnabledCoordUnits & (1 << u));
+         /*ASSERT(ctx->Texture._EnabledCoordUnits & (1 << u));*/
          COPY_4V(tex, span->array->texcoords[u][col]);
-         ASSERT(tex[0] != 0 || tex[1] != 0 || tex[2] != 0);
+         /*ASSERT(tex[0] != 0 || tex[1] != 0 || tex[2] != 0);*/
       }
    }
 

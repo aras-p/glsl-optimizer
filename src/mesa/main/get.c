@@ -1630,6 +1630,25 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[1] = FLOAT_TO_BOOL(ctx->Depth.BoundsMax);
          break;
 
+#if FEATURE_MESA_program_debug
+      case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
+         CHECK_EXTENSION_B(MESA_program_debug, pname);
+         *params = ctx->FragmentProgram.CallbackEnabled;
+         break;
+      case GL_VERTEX_PROGRAM_CALLBACK_MESA:
+         CHECK_EXTENSION_B(MESA_program_debug, pname);
+         *params = ctx->VertexProgram.CallbackEnabled;
+         break;
+      case GL_FRAGMENT_PROGRAM_POSITION_MESA:
+         CHECK_EXTENSION_B(MESA_program_debug, pname);
+         *params = INT_TO_BOOL(ctx->FragmentProgram.CurrentPosition);
+         break;
+      case GL_VERTEX_PROGRAM_POSITION_MESA:
+         CHECK_EXTENSION_B(MESA_program_debug, pname);
+         *params = INT_TO_BOOL(ctx->VertexProgram.CurrentPosition);
+         break;
+#endif
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -3148,6 +3167,25 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          params[1] = ctx->Depth.BoundsMax;
          break;
 
+#if FEATURE_MESA_program_debug
+      case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
+         CHECK_EXTENSION_D(MESA_program_debug, pname);
+         *params = (GLdouble) ctx->FragmentProgram.CallbackEnabled;
+         break;
+      case GL_VERTEX_PROGRAM_CALLBACK_MESA:
+         CHECK_EXTENSION_D(MESA_program_debug, pname);
+         *params = (GLdouble) ctx->VertexProgram.CallbackEnabled;
+         break;
+      case GL_FRAGMENT_PROGRAM_POSITION_MESA:
+         CHECK_EXTENSION_D(MESA_program_debug, pname);
+         *params = (GLdouble) ctx->FragmentProgram.CurrentPosition;
+         break;
+      case GL_VERTEX_PROGRAM_POSITION_MESA:
+         CHECK_EXTENSION_D(MESA_program_debug, pname);
+         *params = (GLdouble) ctx->VertexProgram.CurrentPosition;
+         break;
+#endif
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev(pname=0x%x)", pname);
    }
@@ -4642,6 +4680,25 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[1] = ctx->Depth.BoundsMax;
          break;
 
+#if FEATURE_MESA_program_debug
+      case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
+         CHECK_EXTENSION_F(MESA_program_debug, pname);
+         *params = (GLfloat) ctx->FragmentProgram.CallbackEnabled;
+         break;
+      case GL_VERTEX_PROGRAM_CALLBACK_MESA:
+         CHECK_EXTENSION_F(MESA_program_debug, pname);
+         *params = (GLfloat) ctx->VertexProgram.CallbackEnabled;
+         break;
+      case GL_FRAGMENT_PROGRAM_POSITION_MESA:
+         CHECK_EXTENSION_F(MESA_program_debug, pname);
+         *params = (GLfloat) ctx->FragmentProgram.CurrentPosition;
+         break;
+      case GL_VERTEX_PROGRAM_POSITION_MESA:
+         CHECK_EXTENSION_F(MESA_program_debug, pname);
+         *params = (GLfloat) ctx->VertexProgram.CurrentPosition;
+         break;
+#endif
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(0x%x)", pname);
    }
@@ -4672,6 +4729,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
    if (!params)
       return;
 
+#if 0
    /* We need this in order to get correct results for
     * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
     */
@@ -4683,6 +4741,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
    if (ctx->Driver.GetIntegerv
        && (*ctx->Driver.GetIntegerv)(ctx, pname, params))
       return;
+#endif
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
@@ -6174,6 +6233,25 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[1] = (GLint) ctx->Depth.BoundsMax;
          break;
 
+#if FEATURE_MESA_program_debug
+      case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
+         CHECK_EXTENSION_I(MESA_program_debug, pname);
+         *params = (GLint) ctx->FragmentProgram.CallbackEnabled;
+         break;
+      case GL_VERTEX_PROGRAM_CALLBACK_MESA:
+         CHECK_EXTENSION_I(MESA_program_debug, pname);
+         *params = (GLint) ctx->VertexProgram.CallbackEnabled;
+         break;
+      case GL_FRAGMENT_PROGRAM_POSITION_MESA:
+         CHECK_EXTENSION_I(MESA_program_debug, pname);
+         *params = (GLint) ctx->FragmentProgram.CurrentPosition;
+         break;
+      case GL_VERTEX_PROGRAM_POSITION_MESA:
+         CHECK_EXTENSION_I(MESA_program_debug, pname);
+         *params = (GLint) ctx->VertexProgram.CurrentPosition;
+         break;
+#endif
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
    }
@@ -6239,6 +6317,36 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
       case GL_SELECTION_BUFFER_POINTER:
          *params = ctx->Select.Buffer;
          break;
+#if FEATURE_MESA_program_debug
+      case GL_FRAGMENT_PROGRAM_CALLBACK_FUNC_MESA:
+         if (!ctx->Extensions.MESA_program_debug) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetPointerv");
+            return;
+         }
+         *params = (GLvoid *) ctx->FragmentProgram.Callback;
+         break;
+      case GL_FRAGMENT_PROGRAM_CALLBACK_DATA_MESA:
+         if (!ctx->Extensions.MESA_program_debug) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetPointerv");
+            return;
+         }
+         *params = ctx->FragmentProgram.CallbackData;
+         break;
+      case GL_VERTEX_PROGRAM_CALLBACK_FUNC_MESA:
+         if (!ctx->Extensions.MESA_program_debug) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetPointerv");
+            return;
+         }
+         *params = (GLvoid *) ctx->VertexProgram.Callback;
+         break;
+      case GL_VERTEX_PROGRAM_CALLBACK_DATA_MESA:
+         if (!ctx->Extensions.MESA_program_debug) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetPointerv");
+            return;
+         }
+         *params = ctx->VertexProgram.CallbackData;
+         break;
+#endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glGetPointerv" );
          return;

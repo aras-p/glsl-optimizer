@@ -1,4 +1,3 @@
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -24,8 +23,8 @@
  */
 
 
-/* Private vertex program types and constants only used by files
- * related to vertex programs.
+/* Private fragment program types and constants only used by files
+ * related to fragment programs.
  */
 
 
@@ -166,8 +165,10 @@ struct fp_instruction
    GLubyte Precision;    /* FLOAT32, FLOAT16 or FIXED12 */
    GLubyte TexSrcUnit;   /* texture unit for TEX, TXD, TXP instructions */
    GLubyte TexSrcBit;    /* TEXTURE_1D,2D,3D,CUBE,RECT_BIT source target */
+#if FEATURE_MESA_program_debug
+   GLint StringPos;
+#endif
 };
-
 
 
 #endif

@@ -1105,6 +1105,7 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_pixel( ctx );
    _mesa_init_point( ctx );
    _mesa_init_polygon( ctx );
+   /* XXX _mesa_init_program( ctx ); */
    _mesa_init_rastpos( ctx );
    _mesa_init_stencil( ctx );
    _mesa_init_transform( ctx );

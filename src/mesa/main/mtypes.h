@@ -1501,6 +1501,13 @@ struct vertex_program_state
 
    GLenum TrackMatrix[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
    GLenum TrackMatrixTransform[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
+
+#if FEATURE_MESA_program_debug
+   GLprogramcallbackMESA Callback;
+   GLvoid *CallbackData;
+   GLboolean CallbackEnabled;
+   GLuint CurrentPosition;
+#endif
 };
 
 
@@ -1512,6 +1519,13 @@ struct fragment_program_state
    GLboolean Enabled;                    /* GL_VERTEX_PROGRAM_NV */
    struct fragment_program *Current;     /* ptr to currently bound program */
    struct fp_machine Machine;            /* machine state */
+
+#if FEATURE_MESA_program_debug
+   GLprogramcallbackMESA Callback;
+   GLvoid *CallbackData;
+   GLboolean CallbackEnabled;
+   GLuint CurrentPosition;
+#endif
 };
 
 /*@}*/
@@ -1735,6 +1749,7 @@ struct gl_extensions {
    GLboolean IBM_rasterpos_clip;
    GLboolean MESA_pack_invert;
    GLboolean MESA_packed_depth_stencil;
+   GLboolean MESA_program_debug;
    GLboolean MESA_resize_buffers;
    GLboolean MESA_ycbcr_texture;
    GLboolean NV_blend_square;

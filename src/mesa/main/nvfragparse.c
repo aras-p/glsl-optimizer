@@ -126,6 +126,7 @@ struct parse_state {
    GLcontext *ctx;
    const GLubyte *start;              /* start of program string */
    const GLubyte *pos;                /* current position */
+   const GLubyte *curLine;
    struct fragment_program *program;  /* current program */
 
    GLuint numParameters;
@@ -332,8 +333,9 @@ static GLboolean IsWhitespace(GLubyte b)
  * \return <= 0 we found an error, else, return number of characters parsed.
  */
 static GLint
-GetToken(const GLubyte *str, GLubyte *token)
+GetToken(struct parse_state *parseState, GLubyte *token)
 {
+   const GLubyte *str = parseState->pos;
    GLint i = 0, j = 0;
 
    token[0] = 0;
@@ -345,9 +347,13 @@ GetToken(const GLubyte *str, GLubyte *token)
          while (str[i] && (str[i] != '\n' && str[i] != '\r')) {
             i++;
          }
+         if (str[i] == '\n' || str[i] == '\r')
+            parseState->curLine = str + i + 1;
       }
       else {
          /* skip whitespace */
+         if (str[i] == '\n' || str[i] == '\r')
+            parseState->curLine = str + i + 1;
          i++;
       }
    }
@@ -393,7 +399,7 @@ static GLboolean
 Parse_Token(struct parse_state *parseState, GLubyte *token)
 {
    GLint i;
-   i = GetToken(parseState->pos, token);
+   i = GetToken(parseState, token);
    if (i <= 0) {
       parseState->pos += (-i);
       return GL_FALSE;
@@ -410,7 +416,7 @@ static GLboolean
 Peek_Token(struct parse_state *parseState, GLubyte *token)
 {
    GLint i, len;
-   i = GetToken(parseState->pos, token);
+   i = GetToken(parseState, token);
    if (i <= 0) {
       parseState->pos += (-i);
       return GL_FALSE;
@@ -510,9 +516,13 @@ Parse_String(struct parse_state *parseState, const char *pattern)
          while (*parseState->pos && (*parseState->pos != '\n' && *parseState->pos != '\r')) {
             parseState->pos += 1;
          }
+         if (*parseState->pos == '\n' || *parseState->pos == '\r')
+            parseState->curLine = parseState->pos + 1;
       }
       else {
          /* skip whitespace */
+         if (*parseState->pos == '\n' || *parseState->pos == '\r')
+            parseState->curLine = parseState->pos + 1;
          parseState->pos += 1;
       }
    }
@@ -1337,6 +1347,8 @@ Parse_InstructionSequence(struct parse_state *parseState,
       }
       else if (Parse_String(parseState, "END")) {
          inst->Opcode = FP_OPCODE_END;
+         inst->StringPos = parseState->curLine - parseState->start;
+         assert(inst->StringPos >= 0);
          parseState->numInst++;
          if (Parse_Token(parseState, token)) {
             RETURN_ERROR1("Code after END opcode.");
@@ -1362,6 +1374,8 @@ Parse_InstructionSequence(struct parse_state *parseState,
          inst->Precision = instMatch.suffixes & (_R | _H | _X);
          inst->Saturate = (instMatch.suffixes & (_S)) ? GL_TRUE : GL_FALSE;
          inst->UpdateCondRegister = (instMatch.suffixes & (_C)) ? GL_TRUE : GL_FALSE;
+         inst->StringPos = parseState->curLine - parseState->start;
+         assert(inst->StringPos >= 0);
 
          /*
           * parse the input and output operands
@@ -1491,6 +1505,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
    parseState.start = programString;
    parseState.program = program;
    parseState.numInst = 0;
+   parseState.curLine = programString;
 
    /* Reset error state */
    _mesa_set_program_error(ctx, -1, NULL);
@@ -1844,4 +1859,20 @@ _mesa_print_nv_fragment_program(const struct fragment_program *program)
       }
    }
    _mesa_printf("END\n");
+}
+
+
+const char *
+_mesa_nv_fragment_input_register_name(GLuint i)
+{
+   ASSERT(i < MAX_NV_FRAGMENT_PROGRAM_INPUTS);
+   return InputRegisters[i];
+}
+
+
+const char *
+_mesa_nv_fragment_output_register_name(GLuint i)
+{
+   ASSERT(i < MAX_NV_FRAGMENT_PROGRAM_OUTPUTS);
+   return OutputRegisters[i];
 }

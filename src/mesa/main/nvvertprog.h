@@ -1,4 +1,3 @@
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -27,6 +26,7 @@
 /* Private vertex program types and constants only used by files
  * related to vertex programs.
  */
+
 
 #ifndef NVVERTPROG_H
 #define NVVERTPROG_H

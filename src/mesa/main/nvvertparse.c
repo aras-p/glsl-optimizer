@@ -262,12 +262,12 @@ Parse_String(struct parse_state *parseState, const char *pattern)
 
 /**********************************************************************/
 
-static const char *InputRegisters[] = {
+static const char *InputRegisters[MAX_NV_VERTEX_PROGRAM_INPUTS + 1] = {
    "OPOS", "WGHT", "NRML", "COL0", "COL1", "FOGC", "6", "7",
    "TEX0", "TEX1", "TEX2", "TEX3", "TEX4", "TEX5", "TEX6", "TEX7", NULL
 };
 
-static const char *OutputRegisters[] = {
+static const char *OutputRegisters[MAX_NV_VERTEX_PROGRAM_OUTPUTS + 1] = {
    "HPOS", "COL0", "COL1", "BFC0", "BFC1", "FOGC", "PSIZ",
    "TEX0", "TEX1", "TEX2", "TEX3", "TEX4", "TEX5", "TEX6", "TEX7", NULL
 };
@@ -1472,3 +1472,18 @@ _mesa_print_nv_vertex_program(const struct vertex_program *program)
    }
 }
 
+
+const char *
+_mesa_nv_vertex_input_register_name(GLuint i)
+{
+   ASSERT(i < MAX_NV_VERTEX_PROGRAM_INPUTS);
+   return InputRegisters[i];
+}
+
+
+const char *
+_mesa_nv_vertex_output_register_name(GLuint i)
+{
+   ASSERT(i < MAX_NV_VERTEX_PROGRAM_OUTPUTS);
+   return OutputRegisters[i];
+}

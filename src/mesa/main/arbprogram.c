@@ -37,7 +37,9 @@
 #include "macros.h"
 #include "mtypes.h"
 #include "nvprogram.h"
+#include "nvfragparse.h"
 #include "nvfragprog.h"
+#include "nvvertparse.h"
 #include "nvvertprog.h"
 
 
@@ -482,7 +484,7 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
       prog = &(ctx->VertexProgram.Current->Base);
    }
    else if (target == GL_FRAGMENT_PROGRAM_ARB
-            && ctx->Extensions.ARB_vertex_program) {
+            && ctx->Extensions.ARB_fragment_program) {
       prog = &(ctx->FragmentProgram.Current->Base);
    }
    else {
@@ -701,4 +703,216 @@ _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
    }
 
    MEMCPY(string, prog->String, _mesa_strlen((char *) prog->String));
+}
+
+
+
+/* XXX temporary */
+void
+glProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback,
+                      GLvoid *data)
+{
+   _mesa_ProgramCallbackMESA(target, callback, data);
+}
+
+
+void
+_mesa_ProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback,
+                          GLvoid *data)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   switch (target) {
+      case GL_FRAGMENT_PROGRAM_ARB:
+         if (!ctx->Extensions.ARB_fragment_program) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glProgramCallbackMESA(target)");
+            return;
+         }
+         ctx->FragmentProgram.Callback = callback;
+         ctx->FragmentProgram.CallbackData = data;
+         break;
+      case GL_FRAGMENT_PROGRAM_NV:
+         if (!ctx->Extensions.NV_fragment_program) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glProgramCallbackMESA(target)");
+            return;
+         }
+         ctx->FragmentProgram.Callback = callback;
+         ctx->FragmentProgram.CallbackData = data;
+         break;
+      case GL_VERTEX_PROGRAM_ARB: /* == GL_VERTEX_PROGRAM_NV */
+         if (!ctx->Extensions.ARB_vertex_program &&
+             !ctx->Extensions.ARB_vertex_program) {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glProgramCallbackMESA(target)");
+            return;
+         }
+         ctx->VertexProgram.Callback = callback;
+         ctx->VertexProgram.CallbackData = data;
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM, "glProgramCallbackMESA(target)");
+         return;
+   }
+}
+
+
+/* XXX temporary */
+void
+glGetProgramRegisterfvMESA(GLenum target,
+                           GLsizei len, const GLubyte *registerName,
+                           GLfloat *v)
+{
+   _mesa_GetProgramRegisterfvMESA(target, len, registerName, v);
+}
+
+
+void
+_mesa_GetProgramRegisterfvMESA(GLenum target,
+                               GLsizei len, const GLubyte *registerName,
+                               GLfloat *v)
+{
+   char reg[1000];
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* We _should_ be inside glBegin/glEnd */
+#if 0
+   if (ctx->Driver.CurrentExecPrimitive == PRIM_OUTSIDE_BEGIN_END) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetProgramRegisterfvMESA");
+      return;
+   }
+#endif
+
+   /* make null-terminated copy of registerName */
+   _mesa_memcpy(reg, registerName, len);
+   reg[len] = 0;
+
+   switch (target) {
+      case GL_VERTEX_PROGRAM_NV:
+         if (!ctx->Extensions.ARB_vertex_program &&
+             !ctx->Extensions.NV_vertex_program) {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetProgramRegisterfvMESA(target)");
+            return;
+         }
+         if (!ctx->VertexProgram.Enabled) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGetProgramRegisterfvMESA");
+            return;
+         }
+         /* GL_NV_vertex_program */
+         if (reg[0] == 'R') {
+            /* Temp register */
+            GLint i = _mesa_atoi(reg + 1);
+            if (i >= ctx->Const.MaxVertexProgramTemps) {
+               _mesa_error(ctx, GL_INVALID_VALUE,
+                           "glGetProgramRegisterfvMESA(registerName)");
+               return;
+            }
+            COPY_4V(v, ctx->VertexProgram.Machine.Registers
+                    [VP_TEMP_REG_START + i]);
+         }
+         else if (reg[0] == 'v' && reg[1] == '[') {
+            /* Vertex Input attribute */
+            GLint i;
+            for (i = 0; i < ctx->Const.MaxVertexProgramAttribs; i++) {
+               const char *name = _mesa_nv_vertex_input_register_name(i);
+               if (_mesa_strncmp(reg + 2, name, 4) == 0) {
+                  COPY_4V(v, ctx->VertexProgram.Machine.Registers
+                          [VP_INPUT_REG_START + i]);
+                  return;
+               }
+            }
+            _mesa_error(ctx, GL_INVALID_VALUE,
+                        "glGetProgramRegisterfvMESA(registerName)");
+            return;
+         }
+         else if (reg[0] == 'o' && reg[1] == '[') {
+            /* Vertex output attribute */
+         }
+         /* GL_ARB_vertex_program */
+         else if (_mesa_strncmp(reg, "vertex.", 7) == 0) {
+
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_VALUE,
+                        "glGetProgramRegisterfvMESA(registerName)");
+            return;
+         }
+         break;
+      case GL_FRAGMENT_PROGRAM_ARB:
+         if (!ctx->Extensions.ARB_fragment_program) {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetProgramRegisterfvMESA(target)");
+            return;
+         }
+         if (!ctx->FragmentProgram.Enabled) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGetProgramRegisterfvMESA");
+            return;
+         }
+         /* XXX to do */
+         break;
+      case GL_FRAGMENT_PROGRAM_NV:
+         if (!ctx->Extensions.NV_fragment_program) {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glGetProgramRegisterfvMESA(target)");
+            return;
+         }
+         if (!ctx->FragmentProgram.Enabled) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glGetProgramRegisterfvMESA");
+            return;
+         }
+         if (reg[0] == 'R') {
+            /* Temp register */
+            GLint i = _mesa_atoi(reg + 1);
+            if (i >= ctx->Const.MaxFragmentProgramTemps) {
+               _mesa_error(ctx, GL_INVALID_VALUE,
+                           "glGetProgramRegisterfvMESA(registerName)");
+               return;
+            }
+            COPY_4V(v,
+               ctx->FragmentProgram.Machine.Registers[FP_TEMP_REG_START + i]);
+         }
+         else if (reg[0] == 'f' && reg[1] == '[') {
+            /* Fragment input attribute */
+            GLint i;
+            for (i = 0; i < ctx->Const.MaxFragmentProgramAttribs; i++) {
+               const char *name = _mesa_nv_fragment_input_register_name(i);
+               if (_mesa_strncmp(reg + 2, name, 4) == 0) {
+                  COPY_4V(v, ctx->FragmentProgram.Machine.Registers
+                          [FP_INPUT_REG_START + i]);
+                  return;
+               }
+            }
+            _mesa_error(ctx, GL_INVALID_VALUE,
+                        "glGetProgramRegisterfvMESA(registerName)");
+            return;
+         }
+         else if (_mesa_strcmp(reg, "o[COLR]") == 0) {
+            /* Fragment output color */
+            COPY_4V(v, ctx->FragmentProgram.Machine.Registers
+                    [FP_OUTPUT_REG_START + FRAG_OUTPUT_COLR]);
+         }
+         else if (_mesa_strcmp(reg, "o[COLH]") == 0) {
+            /* Fragment output color */
+            COPY_4V(v, ctx->FragmentProgram.Machine.Registers
+                    [FP_OUTPUT_REG_START + FRAG_OUTPUT_COLH]);
+         }
+         else if (_mesa_strcmp(reg, "o[DEPR]") == 0) {
+            /* Fragment output depth */
+            COPY_4V(v, ctx->FragmentProgram.Machine.Registers
+                    [FP_OUTPUT_REG_START + FRAG_OUTPUT_DEPR]);
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_VALUE,
+                        "glGetProgramRegisterfvMESA(registerName)");
+            return;
+         }
+         break;
+      default:
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glGetProgramRegisterfvMESA(target)");
+         return;
+   }
+
 }

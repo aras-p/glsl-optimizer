@@ -115,6 +115,7 @@ static const struct {
    { OFF, "GL_INGR_blend_func_separate",       F(EXT_blend_func_separate) },
    { OFF, "GL_MESA_pack_invert",               F(MESA_pack_invert) },
    { OFF, "GL_MESA_packed_depth_stencil",      F(MESA_packed_depth_stencil) },
+   { OFF, "GL_MESA_program_debug",             F(MESA_program_debug) },
    { OFF, "GL_MESA_resize_buffers",            F(MESA_resize_buffers) },
    { OFF, "GL_MESA_ycbcr_texture",             F(MESA_ycbcr_texture) },
    { ON,  "GL_MESA_window_pos",                F(ARB_window_pos) },
@@ -151,7 +152,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 {
    ctx->Extensions.ARB_depth_texture = GL_TRUE;
 #if FEATURE_ARB_fragment_program
-   /*ctx->Extensions.ARB_fragment_program = GL_TRUE;*/
+   ctx->Extensions.ARB_fragment_program = GL_TRUE;
 #endif
    ctx->Extensions.ARB_imaging = GL_TRUE;
    ctx->Extensions.ARB_multitexture = GL_TRUE;
@@ -193,6 +194,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
    ctx->Extensions.HP_occlusion_test = GL_TRUE;
    ctx->Extensions.MESA_pack_invert = GL_TRUE;
+#if FEATURE_MESA_program_debug
+   ctx->Extensions.MESA_program_debug = GL_TRUE;
+#endif
    ctx->Extensions.MESA_resize_buffers = GL_TRUE;
    ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
    ctx->Extensions.NV_blend_square = GL_TRUE;

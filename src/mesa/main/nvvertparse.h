@@ -41,5 +41,10 @@ _mesa_print_nv_vertex_instruction(const struct vp_instruction *inst);
 extern void
 _mesa_print_nv_vertex_program(const struct vertex_program *program);
 
+extern const char *
+_mesa_nv_vertex_input_register_name(GLuint i);
+
+extern const char *
+_mesa_nv_vertex_output_register_name(GLuint i);
 
 #endif
