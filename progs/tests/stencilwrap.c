@@ -13,7 +13,7 @@
 
 static void RunTest(void)
 {
-   const GLenum prim = GL_LINES;
+   const GLenum prim = GL_QUAD_STRIP;
    GLubyte val;
    int bits, max, i;
    GLboolean failed;
@@ -33,7 +33,8 @@ static void RunTest(void)
    for (i = 1; i < max+10; i++) {
       int expected = (i > max) ? max : i;
       glBegin(prim);
-      glVertex2f(0.5, 0.5);      glVertex2f(9.5, 0.5);
+      glVertex2f(0, 0);      glVertex2f(10, 0);
+      glVertex2f(0, 10);      glVertex2f(10, 10);
       glEnd();
 
       glReadPixels(0, 0, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, &val);
@@ -55,7 +56,8 @@ static void RunTest(void)
    for (i = 1; i < max+10; i++) {
       int expected = i % (max + 1);
       glBegin(prim);
-      glVertex2f(0.5, 0.5);      glVertex2f(9.5, 0.5);
+      glVertex2f(0, 0);      glVertex2f(10, 0);
+      glVertex2f(0, 10);      glVertex2f(10, 10);
       glEnd();
       glReadPixels(0, 0, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, &val);
       if (val != expected) {
@@ -76,7 +78,8 @@ static void RunTest(void)
    for (i = max-1; i > -10; i--) {
       int expected = (i < 0) ? 0 : i;
       glBegin(prim);
-      glVertex2f(0.5, 0.5);      glVertex2f(9.5, 0.5);
+      glVertex2f(0, 0);      glVertex2f(10, 0);
+      glVertex2f(0, 10);      glVertex2f(10, 10);
       glEnd();
       glReadPixels(0, 0, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, &val);
       if (val != expected) {
@@ -95,7 +98,8 @@ static void RunTest(void)
    for (i = max-1; i > -10; i--) {
       int expected = (i < 0) ? max + i + 1: i;
       glBegin(prim);
-      glVertex2f(0.5, 0.5);      glVertex2f(9.5, 0.5);
+      glVertex2f(0, 0);      glVertex2f(10, 0);
+      glVertex2f(0, 10);      glVertex2f(10, 10);
       glEnd();
       glReadPixels(0, 0, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, &val);
       if (val != expected) {
