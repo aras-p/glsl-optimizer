@@ -50,9 +50,9 @@ static void copy_pv_rgba4_spec5( GLcontext *ctx, GLuint edst, GLuint esrc )
 {
    LOCALVARS   
    GLubyte *verts = GET_VERTEX_STORE();
-   GLuint shift = GET_VERTEX_STRIDE_SHIFT();
-   GLuint *dst = (GLuint *)(verts + (edst << shift));
-   GLuint *src = (GLuint *)(verts + (esrc << shift));
+   GLuint size = GET_VERTEX_SIZE();
+   GLuint *dst = (GLuint *)(verts + (edst * size));
+   GLuint *src = (GLuint *)(verts + (esrc * size));
    dst[4] = src[4];
    dst[5] = src[5];
 }
@@ -61,9 +61,9 @@ static void copy_pv_rgba4( GLcontext *ctx, GLuint edst, GLuint esrc )
 {
    LOCALVARS
    GLubyte *verts = GET_VERTEX_STORE();
-   GLuint shift = GET_VERTEX_STRIDE_SHIFT();
-   GLuint *dst = (GLuint *)(verts + (edst << shift));
-   GLuint *src = (GLuint *)(verts + (esrc << shift));
+   GLuint size = GET_VERTEX_SIZE();
+   GLuint *dst = (GLuint *)(verts + (edst * size));
+   GLuint *src = (GLuint *)(verts + (esrc * size));
    dst[4] = src[4];
 }
 
@@ -71,9 +71,9 @@ static void copy_pv_rgba3( GLcontext *ctx, GLuint edst, GLuint esrc )
 {
    LOCALVARS
    GLubyte *verts = GET_VERTEX_STORE();
-   GLuint shift = GET_VERTEX_STRIDE_SHIFT();
-   GLuint *dst = (GLuint *)(verts + (edst << shift));
-   GLuint *src = (GLuint *)(verts + (esrc << shift));
+   GLuint size = GET_VERTEX_SIZE();
+   GLuint *dst = (GLuint *)(verts + (edst * size));
+   GLuint *src = (GLuint *)(verts + (esrc * size));
    dst[3] = src[3];
 }
 
