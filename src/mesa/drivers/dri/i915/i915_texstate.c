@@ -238,7 +238,15 @@ static void i915SetTexImages( i915ContextPtr i915,
 	 
 	 t->intel.image[0][i].offset = total_height * pitch;
 	 t->intel.image[0][i].internalFormat = baseImage->Format;
-	 total_height += MAX2(2, t->intel.image[0][i].image->Height);
+	 if (t->intel.image[0][i].image->IsCompressed)
+	 {
+	   if (t->intel.image[0][i].image->Height > 4)
+	     total_height += t->intel.image[0][i].image->Height/4;
+	   else
+	     total_height += 1;
+	 }
+	 else
+	   total_height += MAX2(2, t->intel.image[0][i].image->Height);
       }
       break;
    }
