@@ -1,4 +1,4 @@
-/* $Id: varray.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: varray.h,v 1.2 1999/09/09 23:48:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,9 +23,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
-
 
 
 #ifndef VARRAY_H
@@ -63,10 +60,6 @@ extern void gl_EdgeFlagPointer( GLcontext *ctx,
                                 GLsizei stride, const GLboolean *ptr );
 
 
-extern void gl_GetPointerv( GLcontext *ctx, GLenum pname, GLvoid **params );
-
-
-
 extern void gl_DrawArrays( GLcontext *ctx,
                            GLenum mode, GLint first, GLsizei count );
 
@@ -96,10 +89,10 @@ extern void gl_DrawRangeElements( GLcontext *ctx, GLenum mode, GLuint start,
                                   GLuint end, GLsizei count, GLenum type,
                                   const GLvoid *indices );
 
+
 extern void gl_save_DrawRangeElements( GLcontext *ctx, GLenum mode,
                                        GLuint start, GLuint end, GLsizei count,
                                        GLenum type, const GLvoid *indices );
-
 
 
 extern void gl_exec_array_elements( GLcontext *ctx, 
@@ -108,6 +101,3 @@ extern void gl_exec_array_elements( GLcontext *ctx,
 extern void gl_update_client_state( GLcontext *ctx );
 
 #endif
-
-
-
