@@ -263,6 +263,9 @@ static void viaDeleteTexture(GLcontext *ctx, struct gl_texture_object *texObj)
 #ifdef DEBUG    
     if (VIA_DEBUG) fprintf(stderr, "viaDeleteTexture - out\n");    
 #endif
+
+   /* Free mipmap images and the texture object itself */
+   _mesa_delete_texture_object(ctx, texObj);
 }
 
 static GLboolean viaIsTextureResident(GLcontext *ctx,
