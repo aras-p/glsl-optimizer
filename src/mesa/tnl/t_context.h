@@ -536,8 +536,8 @@ typedef void (*tnl_insert_func)( const struct tnl_clipspace_attr *a,
 				 const GLfloat *in );
 
 typedef void (*tnl_emit_func)( GLcontext *ctx, 
-			       GLuint start, 
-			       GLuint end, void *dest );
+			       GLuint count, 
+			       GLubyte *dest );
 
 
 /**

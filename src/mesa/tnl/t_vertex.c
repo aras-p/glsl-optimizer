@@ -41,6 +41,9 @@
  */
 
 
+static void choose_emit_func( GLcontext *ctx, GLuint count, GLubyte *dest);
+
+
 
 
 
@@ -50,8 +53,7 @@
  * NDC->Viewport mapping and store the results at 'v'.
  */
 
-static void
-insert_4f_viewport_4( const struct tnl_clipspace_attr *a, GLubyte *v,
+static void insert_4f_viewport_4( const struct tnl_clipspace_attr *a, GLubyte *v,
                       const GLfloat *in )
 {
    GLfloat *out = (GLfloat *)v;
@@ -833,6 +835,77 @@ static struct {
 
 };
      
+static void emit_viewport3_rgba4( GLcontext *ctx,
+				  GLuint count,
+				  GLubyte *v )
+{
+   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
+   const struct tnl_clipspace_attr *a = vtx->attr;
+   const GLfloat * const vp = a[0].vp;
+   GLfloat *in0 = (GLfloat *)a[0].inputptr;
+   GLfloat *in1 = (GLfloat *)a[1].inputptr;
+   GLuint in0_stride = a[0].inputstride;
+   GLuint in1_stride = a[1].inputstride;
+   GLuint i;
+
+   if (a[0].emit != insert_3f_viewport_3 ||
+       a[1].emit != insert_4ub_4f_rgba_4) {
+      choose_emit_func( ctx, count, v );
+      return;
+   }
+
+   for (i = 0 ; i < count ; i++) {
+      GLfloat *out = (GLfloat *)v;
+      out[0] = vp[0] * in0[0] + vp[12];
+      out[1] = vp[5] * in0[1] + vp[13];
+      out[2] = vp[10] * in0[2] + vp[14];
+      v += 12; 
+      STRIDE_F(in0, in0_stride);
+      UNCLAMPED_FLOAT_TO_UBYTE(v[0], in1[0]);
+      UNCLAMPED_FLOAT_TO_UBYTE(v[1], in1[1]);
+      UNCLAMPED_FLOAT_TO_UBYTE(v[2], in1[2]);
+      UNCLAMPED_FLOAT_TO_UBYTE(v[3], in1[3]);
+      v += 4; 
+      STRIDE_F(in1, in1_stride);
+   }
+}
+
+
+static void emit_viewport3_bgra4(  GLcontext *ctx,
+				   GLuint count,
+				   GLubyte *v )
+{
+   struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
+   const struct tnl_clipspace_attr *a = vtx->attr;
+   const GLfloat * const vp = a[0].vp;
+   GLfloat *in0 = (GLfloat *)a[0].inputptr;
+   GLfloat *in1 = (GLfloat *)a[1].inputptr;
+   GLuint in0_stride = a[0].inputstride;
+   GLuint in1_stride = a[1].inputstride;
+   GLuint i;
+
+   if (a[0].emit != insert_3f_viewport_3 ||
+       a[1].emit != insert_4ub_4f_bgra_4) {
+      choose_emit_func( ctx, count, v );
+      return;
+   }
+
+   for (i = 0 ; i < count ; i++) {
+      GLfloat *out = (GLfloat *)v;
+      out[0] = vp[0] * in0[0] + vp[12];
+      out[1] = vp[5] * in0[1] + vp[13];
+      out[2] = vp[10] * in0[2] + vp[14];
+      v += 12; STRIDE_F(in0, in0_stride);
+      UNCLAMPED_FLOAT_TO_UBYTE(v[2], in1[0]);
+      UNCLAMPED_FLOAT_TO_UBYTE(v[1], in1[1]);
+      UNCLAMPED_FLOAT_TO_UBYTE(v[0], in1[2]);
+      UNCLAMPED_FLOAT_TO_UBYTE(v[3], in1[3]);
+      v += 4; STRIDE_F(in1, in1_stride);
+   }
+}
+
+
+
 
 /***********************************************************************
  * Generic (non-codegen) functions for whole vertices or groups of
@@ -840,29 +913,17 @@ static struct {
  */
 
 static void generic_emit( GLcontext *ctx,
-			  GLuint start, GLuint end,
-			  void *dest )
+			  GLuint count,
+			  GLubyte *v )
 {
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    struct tnl_clipspace_attr *a = vtx->attr;
-   GLubyte *v = (GLubyte *)dest;
+   const GLuint attr_count = vtx->attr_count;
+   const GLuint stride = vtx->vertex_size;
    GLuint i, j;
-   const GLuint count = vtx->attr_count;
-   GLuint stride;
 
-   for (j = 0; j < count; j++) {
-      GLvector4f *vptr = VB->AttribPtr[a[j].attrib];
-      a[j].inputstride = vptr->stride;
-      a[j].inputptr = ((GLubyte *)vptr->data) + start * vptr->stride;
-      a[j].emit = a[j].insert[vptr->size - 1];
-   }
-
-   end -= start;
-   stride = vtx->vertex_size;
-
-   for (i = 0 ; i < end ; i++, v += stride) {
-      for (j = 0; j < count; j++) {
+   for (i = 0 ; i < count ; i++, v += stride) {
+      for (j = 0; j < attr_count; j++) {
 	 GLfloat *in = (GLfloat *)a[j].inputptr;
 	 a[j].inputptr += a[j].inputstride;
 	 a[j].emit( &a[j], v + a[j].vertoffset, in );
@@ -1013,32 +1074,34 @@ static void generic_copy_pv_extras( GLcontext *ctx,
  */
 
 
-static void do_emit( GLcontext *ctx, GLuint start, GLuint end,
-		     void *dest)
+static void choose_emit_func( GLcontext *ctx, GLuint count, GLubyte *dest)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
    struct tnl_clipspace_attr *a = vtx->attr;
-   const GLuint count = vtx->attr_count;
-   GLuint j;
-
-   for (j = 0; j < count; j++) {
-      GLvector4f *vptr = VB->AttribPtr[a[j].attrib];
-      a[j].inputstride = vptr->stride;
-      a[j].inputptr = ((GLubyte *)vptr->data) + start * vptr->stride;
-      a[j].emit = a[j].insert[vptr->size - 1];
-   }
-
+   const GLuint attr_count = vtx->attr_count;
+   
    vtx->emit = 0;
    
    if (0) 
       vtx->emit = _tnl_codegen_emit(ctx);
+
+   /* Does it fit a hardwired fastpath?
+    */
+   if (attr_count == 2) {
+      if (a[0].emit == insert_3f_viewport_3) {
+	 if (a[1].emit == insert_4ub_4f_bgra_4) 
+	    vtx->emit = emit_viewport3_bgra4;
+	 else if (a[1].emit == insert_4ub_4f_rgba_4) 
+	    vtx->emit = emit_viewport3_rgba4;
+      }
+   }
    
+   /* Otherwise use the generic version:
+    */
    if (!vtx->emit)
       vtx->emit = generic_emit;
 
-   vtx->emit( ctx, start, end, dest );
+   vtx->emit( ctx, count, dest );
 }
 
 
@@ -1174,7 +1237,7 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
    assert(nr < _TNL_ATTRIB_MAX);
    assert(nr == 0 || map[0].attrib == VERT_ATTRIB_POS);
 
-   vtx->emit = 0;
+   vtx->emit = choose_emit_func;
    vtx->interp = choose_interp_func;
    vtx->copy_pv = choose_copy_pv_func;
    vtx->new_inputs = ~0;
@@ -1239,14 +1302,27 @@ void _tnl_build_vertices( GLcontext *ctx,
 			  GLuint newinputs )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   const GLuint stride = vtx->vertex_size;
-   GLubyte *vDest = ((GLubyte *)vtx->vertex_buf + (start*stride));
-
+   
    newinputs |= vtx->new_inputs;
    vtx->new_inputs = 0;
 
-   if (newinputs) 
-      do_emit( ctx, start, end, vDest );
+   if (newinputs) {
+      struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+      struct tnl_clipspace_attr *a = vtx->attr;
+      const GLuint stride = vtx->vertex_size;
+      const GLuint count = vtx->attr_count;
+      GLuint j;
+
+      for (j = 0; j < count; j++) {
+	 GLvector4f *vptr = VB->AttribPtr[a[j].attrib];
+	 a[j].inputstride = vptr->stride;
+	 a[j].inputptr = ((GLubyte *)vptr->data) + start * vptr->stride;
+	 a[j].emit = a[j].insert[vptr->size - 1];
+      }
+
+      vtx->emit( ctx, end - start, 
+		 (GLubyte *)vtx->vertex_buf + start * stride );
+   }
 }
 
 
@@ -1256,7 +1332,22 @@ void *_tnl_emit_vertices_to_buffer( GLcontext *ctx,
 				    void *dest )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   do_emit( ctx, start, end, dest );
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   struct tnl_clipspace_attr *a = vtx->attr;
+   const GLuint count = vtx->attr_count;
+   GLuint j;
+
+   for (j = 0; j < count; j++) {
+      GLvector4f *vptr = VB->AttribPtr[a[j].attrib];
+      a[j].inputstride = vptr->stride;
+      a[j].inputptr = ((GLubyte *)vptr->data) + start * vptr->stride;
+      a[j].emit = a[j].insert[vptr->size - 1];
+   }
+
+   /* Note: dest should not be adjusted for non-zero 'start' values:
+    */
+   vtx->emit( ctx, end - start, dest );	
+
    return (void *)((GLubyte *)dest + vtx->vertex_size * (end - start));
 }
 
