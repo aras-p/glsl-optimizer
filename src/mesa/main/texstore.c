@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.53 2003/02/25 19:25:52 brianp Exp $ */
+/* $Id: texstore.c,v 1.54 2003/03/04 19:16:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2104,7 +2104,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          _mesa_compress_teximage(ctx,
                                  dstWidth, dstHeight, /* size */
                                  srcFormat,           /* source format */
-                                 dstData,             /* source buffer */
+                (const GLchan *) dstData,             /* source buffer */
                                  dstWidth,            /* source row stride */
                                  dstImage->TexFormat, /* dest format */
                       (GLubyte*) dstImage->Data,      /* dest buffer */
