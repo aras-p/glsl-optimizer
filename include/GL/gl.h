@@ -1,8 +1,8 @@
-/* $Id: gl.h,v 1.58 2001/08/28 22:49:32 brianp Exp $ */
+/* $Id: gl.h,v 1.59 2001/09/23 16:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5.1
+ * Version:  4.0
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *

@@ -1,10 +1,10 @@
-/* $Id: glx.h,v 1.31 2001/09/14 02:43:04 brianp Exp $ */
+/* $Id: glx.h,v 1.32 2001/09/23 16:06:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

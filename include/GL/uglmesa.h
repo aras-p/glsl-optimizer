@@ -4,7 +4,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.0
  *
  * The MIT License
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -38,7 +38,7 @@
 extern "C" {
 #endif
 
-#define UGL_MESA_MAJOR_VERSION 1
+#define UGL_MESA_MAJOR_VERSION 4
 #define UGL_MESA_MINOR_VERSION 0
 
 #include <GL/gl.h>
