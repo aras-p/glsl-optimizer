@@ -1,8 +1,8 @@
-/* $Id: osmesa.c,v 1.2 1999/10/13 18:43:46 brianp Exp $ */
+/* $Id: osmesa.c,v 1.3 1999/11/11 01:28:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -38,7 +38,7 @@
 #include "GL/osmesa.h"
 #include "context.h"
 #include "depth.h"
-#include "macros.h"
+#include "mem.h"
 #include "matrix.h"
 #include "types.h"
 #include "vb.h"
@@ -400,7 +400,7 @@ GLboolean GLAPIENTRY OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum 
    /* init viewport */
    if (ctx->gl_ctx->Viewport.Width==0) {
       /* initialize viewport and scissor box to buffer size */
-      gl_Viewport( ctx->gl_ctx, 0, 0, width, height );
+      _mesa_Viewport( 0, 0, width, height );
       ctx->gl_ctx->Scissor.Width = width;
       ctx->gl_ctx->Scissor.Height = height;
    }
