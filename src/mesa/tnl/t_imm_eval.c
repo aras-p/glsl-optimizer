@@ -1,10 +1,10 @@
-/* $Id: t_imm_eval.c,v 1.23 2002/06/13 04:49:17 brianp Exp $ */
+/* $Id: t_imm_eval.c,v 1.24 2002/06/23 02:47:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,7 @@
  *
  * Authors:
  *    Keith Whitwell <keithw@valinux.com>
- *
+ *    Brian Paul - vertex program updates
  */
 
 
@@ -93,7 +93,7 @@ static void eval1_4f( GLvector4f *dest,
 		      GLfloat coord[][4],
 		      const GLuint *flags,
 		      GLuint dimension,
-		      struct gl_1d_map *map )
+		      const struct gl_1d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -112,11 +112,13 @@ static void eval1_4f( GLvector4f *dest,
    dest->flags |= dirty_flags[dimension];
 }
 
+
+/* as above, but dest is a gl_client_array */
 static void eval1_4f_ca( struct gl_client_array *dest,
 			 GLfloat coord[][4],
 			 const GLuint *flags,
 			 GLuint dimension,
-			 struct gl_1d_map *map )
+			 const struct gl_1d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -141,7 +143,7 @@ static void eval1_4f_ca( struct gl_client_array *dest,
 static void eval1_1ui( GLvector1ui *dest,
 		       GLfloat coord[][4],
 		       const GLuint *flags,
-		       struct gl_1d_map *map )
+		       const struct gl_1d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -161,7 +163,7 @@ static void eval1_1ui( GLvector1ui *dest,
 static void eval1_norm( GLvector4f *dest,
 			GLfloat coord[][4],
 			const GLuint *flags,
-			struct gl_1d_map *map )
+			const struct gl_1d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -176,15 +178,12 @@ static void eval1_norm( GLvector4f *dest,
 }
 
 
-
-
-
 static void eval2_obj_norm( GLvector4f *obj_ptr,
 			    GLvector4f *norm_ptr,
 			    GLfloat coord[][4],
 			    GLuint *flags,
 			    GLuint dimension,
-			    struct gl_2d_map *map )
+			    const struct gl_2d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -227,7 +226,7 @@ static void eval2_4f( GLvector4f *dest,
 		      GLfloat coord[][4],
 		      const GLuint *flags,
 		      GLuint dimension,
-		      struct gl_2d_map *map )
+		      const struct gl_2d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -249,11 +248,13 @@ static void eval2_4f( GLvector4f *dest,
    dest->flags |= dirty_flags[dimension];
 }
 
+
+/* as above, but dest is a gl_client_array */
 static void eval2_4f_ca( struct gl_client_array *dest,
 			 GLfloat coord[][4],
 			 const GLuint *flags,
 			 GLuint dimension,
-			 struct gl_2d_map *map )
+			 const struct gl_2d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -280,7 +281,7 @@ static void eval2_4f_ca( struct gl_client_array *dest,
 static void eval2_norm( GLvector4f *dest,
 			GLfloat coord[][4],
 			GLuint *flags,
-			struct gl_2d_map *map )
+			const struct gl_2d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -303,7 +304,7 @@ static void eval2_norm( GLvector4f *dest,
 static void eval2_1ui( GLvector1ui *dest,
 		       GLfloat coord[][4],
 		       const GLuint *flags,
-		       struct gl_2d_map *map )
+		       const struct gl_2d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
@@ -325,16 +326,12 @@ static void eval2_1ui( GLvector1ui *dest,
 }
 
 
-
-
-
-
 static void copy_4f( GLfloat to[][4], GLfloat from[][4], GLuint count )
 {
    MEMCPY( to, from, count * sizeof(to[0]));
 }
 
-static void copy_4f_stride( GLfloat to[][4], GLfloat *from, 
+static void copy_4f_stride( GLfloat to[][4], const GLfloat *from, 
 			    GLuint stride, GLuint count )
 {
    if (stride == 4 * sizeof(GLfloat))
@@ -355,7 +352,7 @@ static void copy_3f( GLfloat to[][4], GLfloat from[][4], GLuint count )
 }
 
 
-static void copy_1ui( GLuint to[], GLuint from[], GLuint count )
+static void copy_1ui( GLuint to[], const GLuint from[], GLuint count )
 {
    MEMCPY( to, from, (count) * sizeof(to[0]));
 }
@@ -368,6 +365,7 @@ static void update_eval( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint eval1 = 0, eval2 = 0;
+   GLuint i;
 
    if (ctx->Eval.Map1Index)
       eval1 |= VERT_BIT_INDEX;
@@ -420,6 +418,18 @@ static void update_eval( GLcontext *ctx )
 
    tnl->eval.EvalMap1Flags = eval1;
    tnl->eval.EvalMap2Flags = eval2;
+
+   /* GL_NV_vertex_program evaluators */
+   eval1 = eval2 = 0;
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      if (ctx->Eval.Map1Attrib[i])
+         eval1 |= (1 << i);
+      if (ctx->Eval.Map2Attrib[i])
+         eval2 |= (1 << i);
+   }
+   tnl->eval.EvalMap1AttribFlags = eval1;
+   tnl->eval.EvalMap2AttribFlags = eval2;
+
    tnl->eval.EvalNewState = 0;
 }
 
@@ -457,9 +467,11 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       update_eval( ctx );
 
    if (any_eval1) {
-      req |= tnl->pipeline.inputs & tnl->eval.EvalMap1Flags;
+      req |= tnl->pipeline.inputs
+         & (tnl->eval.EvalMap1Flags | tnl->eval.EvalMap1AttribFlags);
 
-      if (!ctx->Eval.Map1Vertex4 && !ctx->Eval.Map1Vertex3)
+      if (!ctx->Eval.Map1Vertex4 && !ctx->Eval.Map1Vertex3 &&
+          !ctx->Eval.Map1Attrib[0])
 	 purge_flags = (VERT_BIT_EVAL_P1|VERT_BIT_EVAL_C1);
 
       if (orflag & VERT_BIT_EVAL_P1) {
@@ -473,9 +485,11 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    }
 
    if (any_eval2) {
-      req |= tnl->pipeline.inputs & tnl->eval.EvalMap2Flags;
+      req |= tnl->pipeline.inputs
+         & (tnl->eval.EvalMap2Flags | tnl->eval.EvalMap2AttribFlags);
 
-      if (!ctx->Eval.Map2Vertex4 && !ctx->Eval.Map2Vertex3)
+      if (!ctx->Eval.Map2Vertex4 && !ctx->Eval.Map2Vertex3 &&
+          !ctx->Eval.Map2Attrib[0])
 	 purge_flags |= (VERT_BIT_EVAL_P2|VERT_BIT_EVAL_C2);
 
       if (orflag & VERT_BIT_EVAL_P2) {
@@ -490,13 +504,9 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       }
    }
 
-
-/*     _tnl_print_vert_flags(__FUNCTION__, req); */
-
    /* Perform the evaluations on active data elements.
     */
-   if (req & VERT_BIT_INDEX)
-   {
+   if (req & VERT_BIT_INDEX) {
       GLuint generated = 0;
 
       if (copycount)
@@ -516,8 +526,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       }
    }
 
-   if (req & VERT_BIT_COLOR0)
-   {
+   if (req & VERT_BIT_COLOR0) {
       GLuint generated = 0;
 
       if (copycount) 
@@ -531,20 +540,44 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       tmp->Color.Flags = 0;
       tnl->vb.importable_data &= ~VERT_BIT_COLOR0;
 
-      if (ctx->Eval.Map1Color4 && any_eval1) {
-	 eval1_4f_ca( &tmp->Color, coord, flags, 4, &ctx->EvalMap.Map1Color4 );
-	 generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
+#if 1
+      /*tmp->Attribs[0].count = count;*/
+      tmp->Attribs[3].data = store->Attrib[3] + IM->CopyStart;
+      tmp->Attribs[3].start = (GLfloat *) tmp->Attribs[3].data;
+      tmp->Attribs[3].size = 0;
+#endif
+
+      /* Vertex program maps have priority over conventional attribs */
+      if (any_eval1) {
+         if (ctx->VertexProgram.Enabled
+             && ctx->Eval.Map1Attrib[VERT_ATTRIB_COLOR0]) {
+            eval1_4f_ca( &tmp->Color, coord, flags, 4,
+                         &ctx->EvalMap.Map1Attrib[VERT_ATTRIB_COLOR0] );
+            generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
+         }
+         else if (ctx->Eval.Map1Color4) {
+            eval1_4f_ca( &tmp->Color, coord, flags, 4,
+                         &ctx->EvalMap.Map1Color4 );
+            generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
+         }
       }
 
-      if (ctx->Eval.Map2Color4 && any_eval2) {
-	 eval2_4f_ca( &tmp->Color, coord, flags, 4, &ctx->EvalMap.Map2Color4 );
-	 generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
+      if (any_eval2) {
+         if (ctx->VertexProgram.Enabled
+             && ctx->Eval.Map2Attrib[VERT_ATTRIB_COLOR0]) {
+            eval2_4f_ca( &tmp->Color, coord, flags, 4,
+                         &ctx->EvalMap.Map2Attrib[VERT_ATTRIB_COLOR0] );
+            generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
+         }
+         else if (ctx->Eval.Map2Color4) {
+            eval2_4f_ca( &tmp->Color, coord, flags, 4,
+                         &ctx->EvalMap.Map2Color4 );
+            generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
+         }
       }
    }
 
-
-   if (req & VERT_BIT_TEX(0))
-   {
+   if (req & VERT_BIT_TEX0) {
       GLuint generated = 0;
 
       if (copycount)
@@ -556,8 +589,15 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       tmp->TexCoord[0].data = store->Attrib[VERT_ATTRIB_TEX0] + IM->CopyStart;
       tmp->TexCoord[0].start = (GLfloat *)tmp->TexCoord[0].data;
 
+      /* Vertex program maps have priority over conventional attribs */
       if (any_eval1) {
-	 if (ctx->Eval.Map1TextureCoord4) {
+         if (ctx->VertexProgram.Enabled
+             && ctx->Eval.Map1Attrib[VERT_ATTRIB_TEX0]) {
+	    eval1_4f( &tmp->TexCoord[0], coord, flags, 4,
+		      &ctx->EvalMap.Map1Attrib[VERT_ATTRIB_TEX0] );
+	    generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
+         }
+	 else if (ctx->Eval.Map1TextureCoord4) {
 	    eval1_4f( &tmp->TexCoord[0], coord, flags, 4,
 		      &ctx->EvalMap.Map1Texture4 );
 	    generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
@@ -580,7 +620,13 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       }
 
       if (any_eval2) {
-	 if (ctx->Eval.Map2TextureCoord4) {
+         if (ctx->VertexProgram.Enabled
+             && ctx->Eval.Map2Attrib[VERT_ATTRIB_TEX0]) {
+	    eval2_4f( &tmp->TexCoord[0], coord, flags, 4,
+		      &ctx->EvalMap.Map2Attrib[VERT_ATTRIB_TEX0] );
+	    generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
+         }
+	 else if (ctx->Eval.Map2TextureCoord4) {
 	    eval2_4f( &tmp->TexCoord[0], coord, flags, 4,
 		      &ctx->EvalMap.Map2Texture4 );
 	    generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
@@ -603,9 +649,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       }
    }
 
-
-   if (req & VERT_BIT_NORMAL)
-   {
+   if (req & VERT_BIT_NORMAL) {
       GLuint generated = 0;
 
       if (copycount) {
@@ -616,24 +660,37 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       tmp->Normal.data = store->Attrib[VERT_ATTRIB_NORMAL] + IM->CopyStart;
       tmp->Normal.start = (GLfloat *)tmp->Normal.data;
 
-      if (ctx->Eval.Map1Normal && any_eval1) {
-	 eval1_norm( &tmp->Normal, coord, flags, &ctx->EvalMap.Map1Normal );
-	 generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
+      if (any_eval1) {
+         if (ctx->VertexProgram.Enabled &&
+             ctx->Eval.Map1Attrib[VERT_ATTRIB_NORMAL]) {
+            eval1_norm( &tmp->Normal, coord, flags,
+                        &ctx->EvalMap.Map1Attrib[VERT_ATTRIB_NORMAL] );
+            generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
+         }
+         else if (ctx->Eval.Map1Normal) {
+            eval1_norm( &tmp->Normal, coord, flags, &ctx->EvalMap.Map1Normal );
+            generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
+         }
       }
 
-      if (ctx->Eval.Map2Normal && any_eval2) {
-	 eval2_norm( &tmp->Normal, coord, flags, &ctx->EvalMap.Map2Normal );
-	 generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
+      if (any_eval2) {
+         if (ctx->VertexProgram.Enabled &&
+             ctx->Eval.Map2Attrib[VERT_ATTRIB_NORMAL]) {
+            eval2_norm( &tmp->Normal, coord, flags,
+                        &ctx->EvalMap.Map2Attrib[VERT_ATTRIB_NORMAL] );
+            generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
+         }
+         else if (ctx->Eval.Map2Normal) {
+            eval2_norm( &tmp->Normal, coord, flags, &ctx->EvalMap.Map2Normal );
+            generated |= VERT_BIT_EVAL_C2|VERT_BIT_EVAL_P2;
+         }
       }
    }
-
-
 
    /* In the AutoNormal case, the copy and assignment of tmp->NormalPtr
     * are done above.
     */
-   if (req & VERT_BIT_POS)
-   {
+   if (req & VERT_BIT_POS) {
       if (copycount) {
 	 /* This copy may already have occurred when eliminating
 	  * glEvalPoint calls:
@@ -648,13 +705,25 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       }
 
       tmp->Obj.data = store->Attrib[VERT_ATTRIB_POS] + IM->CopyStart;
-      tmp->Obj.start = (GLfloat *)tmp->Obj.data;
+      tmp->Obj.start = (GLfloat *) tmp->Obj.data;
+
+#if 1
+      /*tmp->Attribs[0].count = count;*/
+      tmp->Attribs[0].data = store->Attrib[0] + IM->CopyStart;
+      tmp->Attribs[0].start = (GLfloat *) tmp->Attribs[0].data;
+      tmp->Attribs[0].size = 0;
+#endif
 
       /* Note: Normal data is already prepared above.
        */
 
       if (any_eval1) {
-	 if (ctx->Eval.Map1Vertex4) {
+         if (ctx->VertexProgram.Enabled &&
+             ctx->Eval.Map1Attrib[VERT_ATTRIB_POS]) {
+	    eval1_4f( &tmp->Obj, coord, flags, 4,
+		      &ctx->EvalMap.Map1Attrib[VERT_ATTRIB_POS] );
+         }
+	 else if (ctx->Eval.Map1Vertex4) {
 	    eval1_4f( &tmp->Obj, coord, flags, 4,
 		      &ctx->EvalMap.Map1Vertex4 );
 	 }
@@ -665,7 +734,16 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       }
 
       if (any_eval2) {
-	 if (ctx->Eval.Map2Vertex4) {
+         if (ctx->VertexProgram.Enabled &&
+             ctx->Eval.Map2Attrib[VERT_ATTRIB_POS]) {
+	    if (ctx->Eval.AutoNormal && (req & VERT_BIT_NORMAL))
+	       eval2_obj_norm( &tmp->Obj, &tmp->Normal, coord, flags, 4,
+			       &ctx->EvalMap.Map2Attrib[VERT_ATTRIB_POS] );
+	    else
+	       eval2_4f( &tmp->Obj, coord, flags, 4,
+			 &ctx->EvalMap.Map2Attrib[VERT_ATTRIB_POS] );
+         }
+	 else if (ctx->Eval.Map2Vertex4) {
 	    if (ctx->Eval.AutoNormal && (req & VERT_BIT_NORMAL))
 	       eval2_obj_norm( &tmp->Obj, &tmp->Normal, coord, flags, 4,
 			       &ctx->EvalMap.Map2Vertex4 );
@@ -685,18 +763,45 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    }
 
 
+   if (0/*ctx->VertexProgram.Enabled*/) {
+      /* we already evaluated position, normal, color and texture 0 above */
+      const GLuint skipBits = (VERT_BIT_POS |
+                               VERT_BIT_NORMAL |
+                               VERT_BIT_COLOR0 |
+                               VERT_BIT_TEX0);
+      GLuint generated = 0;
+      GLuint attr;
+      for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
+         if ((1 << attr) & req & ~skipBits) {
+            if (any_eval1 && ctx->Eval.Map1Attrib[attr]) {
+               /* evaluate 1-D vertex attrib map [i] */
+               eval1_4f( &tmp->Attribs[attr], coord, flags, 4,
+                         &ctx->EvalMap.Map1Attrib[attr] );
+               generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
+            }
+            if (any_eval2 && ctx->Eval.Map2Attrib[attr]) {
+               /* evaluate 2-D vertex attrib map [i] */
+               eval2_4f( &tmp->Attribs[attr], coord, flags, 4,
+                         &ctx->EvalMap.Map2Attrib[attr] );
+               generated |= VERT_BIT_EVAL_C1|VERT_BIT_EVAL_P1;
+            }
+         }
+      }
+   }
+
    /* Calculate new IM->Elts, IM->Primitive, IM->PrimitiveLength for
     * the case where vertex maps are not enabled for some received
     * eval coordinates.  In this case those slots in the immediate
     * must be ignored.
     */
    if (purge_flags) {
-      GLuint vertex = VERT_BIT_POS|(VERT_BITS_EVAL_ANY & ~purge_flags);
+      const GLuint vertex = VERT_BIT_POS|(VERT_BITS_EVAL_ANY & ~purge_flags);
       GLuint last_new_prim = 0;
       GLuint new_prim_length = 0;
       GLuint next_old_prim = 0;
       struct vertex_buffer *VB = &tnl->vb;
-      GLuint i,j,count = VB->Count;
+      const GLuint count = VB->Count;
+      GLuint i, j;
 
       for (i = 0, j = 0 ; i < count ; i++) {
 	 if (flags[i] & vertex) {
@@ -718,8 +823,8 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    /* Produce new flags array:
     */
    {
+      const GLuint count = tnl->vb.Count + 1;
       GLuint i;
-      GLuint count = tnl->vb.Count + 1;
 
       copy_1ui( store->Flag, flags, count );
       tnl->vb.Flag = store->Flag;
