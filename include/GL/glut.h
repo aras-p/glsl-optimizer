@@ -648,7 +648,7 @@ GLUTAPI void GLUTAPIENTRY glutJoystickFunc(void (GLUTCALLBACK *func)(unsigned in
 #endif
 
 /* GLUT color index sub-API. */
-GLUTAPI void GLUTAPIENTRY glutSetColor(int, GLfloat red, GLfloat green, GLfloat blue);
+GLUTAPI void GLUTAPIENTRY glutSetColor(int ndx, GLfloat red, GLfloat green, GLfloat blue);
 GLUTAPI GLfloat GLUTAPIENTRY glutGetColor(int ndx, int component);
 GLUTAPI void GLUTAPIENTRY glutCopyColormap(int win);
 
