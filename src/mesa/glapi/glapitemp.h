@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.10 2000/01/31 22:54:06 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.11 2000/01/31 23:06:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -89,17 +89,17 @@
 
 KEYWORD1 void KEYWORD2 NAME(Accum)(GLenum op, GLfloat value)
 {
-   DISPATCH(Accum, (op, value), (F, "glAccum(0x%x, %g);\n", op, value));
+   DISPATCH(Accum, (op, value), (F, "glAccum(0x%x, %g);", op, value));
 }
 
 KEYWORD1 void KEYWORD2 NAME(AlphaFunc)(GLenum func, GLclampf ref)
 {
-   DISPATCH(AlphaFunc, (func, ref), (F, "glAlphaFunc(0x%x, %g);\n", func, ref));
+   DISPATCH(AlphaFunc, (func, ref), (F, "glAlphaFunc(0x%x, %g);", func, ref));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Begin)(GLenum mode)
 {
-   DISPATCH(Begin, (mode), (F, "glBegin(0x%x);\n", mode));
+   DISPATCH(Begin, (mode), (F, "glBegin(0x%x);", mode));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Bitmap)(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap)
@@ -114,7 +114,7 @@ KEYWORD1 void KEYWORD2 NAME(BlendFunc)(GLenum sfactor, GLenum dfactor)
 
 KEYWORD1 void KEYWORD2 NAME(CallList)(GLuint list)
 {
-   DISPATCH(CallList, (list), (F, "glCallList(%u);\n", list));
+   DISPATCH(CallList, (list), (F, "glCallList(%u);", list));
 }
 
 KEYWORD1 void KEYWORD2 NAME(CallLists)(GLsizei n, GLenum type, const GLvoid *lists)
@@ -124,7 +124,7 @@ KEYWORD1 void KEYWORD2 NAME(CallLists)(GLsizei n, GLenum type, const GLvoid *lis
 
 KEYWORD1 void KEYWORD2 NAME(Clear)(GLbitfield mask)
 {
-   DISPATCH(Clear, (mask), (F, "glClear(0x%x);\n", mask));
+   DISPATCH(Clear, (mask), (F, "glClear(0x%x);", mask));
 }
 
 KEYWORD1 void KEYWORD2 NAME(ClearAccum)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
@@ -169,7 +169,7 @@ KEYWORD1 void KEYWORD2 NAME(Color3d)(GLdouble red, GLdouble green, GLdouble blue
 
 KEYWORD1 void KEYWORD2 NAME(Color3f)(GLfloat red, GLfloat green, GLfloat blue)
 {
-   DISPATCH(Color3f, (red, green, blue), (F, "glColor3f(%g, %g, %g);\n", red, green, blue));
+   DISPATCH(Color3f, (red, green, blue), (F, "glColor3f(%g, %g, %g);", red, green, blue));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Color3i)(GLint red, GLint green, GLint blue)
@@ -359,7 +359,7 @@ KEYWORD1 void KEYWORD2 NAME(DeleteLists)(GLuint list, GLsizei range)
 
 KEYWORD1 void KEYWORD2 NAME(Disable)(GLenum cap)
 {
-   DISPATCH(Disable, (cap), (F, "glDisable(0x%x);\n", cap));
+   DISPATCH(Disable, (cap), (F, "glDisable(0x%x);", cap));
 }
 
 KEYWORD1 void KEYWORD2 NAME(DrawBuffer)(GLenum mode)
@@ -379,7 +379,7 @@ KEYWORD1 void KEYWORD2 NAME(DrawPixels)(GLsizei width, GLsizei height, GLenum fo
 
 KEYWORD1 void KEYWORD2 NAME(Enable)(GLenum cap)
 {
-   DISPATCH(Enable, (cap), (F, "glEnable(0x%x);\n", cap));
+   DISPATCH(Enable, (cap), (F, "glEnable(0x%x);", cap));
 }
 
 KEYWORD1 void KEYWORD2 NAME(End)(void)
@@ -509,7 +509,7 @@ KEYWORD1 void KEYWORD2 NAME(Frustum)(GLdouble left, GLdouble right, GLdouble bot
 
 KEYWORD1 GLuint KEYWORD2 NAME(GenLists)(GLsizei range)
 {
-   RETURN_DISPATCH(GenLists, (range), (F, "glGenLists(%d);\n", range));
+   RETURN_DISPATCH(GenLists, (range), (F, "glGenLists(%d);", range));
 }
 
 KEYWORD1 void KEYWORD2 NAME(GetBooleanv)(GLenum pname, GLboolean *params)
@@ -599,7 +599,7 @@ KEYWORD1 void KEYWORD2 NAME(GetPolygonStipple)(GLubyte *mask)
 
 KEYWORD1 const GLubyte * KEYWORD2 NAME(GetString)(GLenum name)
 {
-   RETURN_DISPATCH(GetString, (name), (F, "glGetString(0x%x);\n", name));
+   RETURN_DISPATCH(GetString, (name), (F, "glGetString(0x%x);", name));
 }
 
 KEYWORD1 void KEYWORD2 NAME(GetTexEnvfv)(GLenum target, GLenum pname, GLfloat *params)
@@ -709,12 +709,12 @@ KEYWORD1 void KEYWORD2 NAME(InitNames)(void)
 
 KEYWORD1 GLboolean KEYWORD2 NAME(IsEnabled)(GLenum cap)
 {
-   RETURN_DISPATCH(IsEnabled, (cap), (F, "glIsEnabled(0x%x);\n", cap));
+   RETURN_DISPATCH(IsEnabled, (cap), (F, "glIsEnabled(0x%x);", cap));
 }
 
 KEYWORD1 GLboolean KEYWORD2 NAME(IsList)(GLuint list)
 {
-   RETURN_DISPATCH(IsList, (list), (F, "glIsList(%u);\n", list));
+   RETURN_DISPATCH(IsList, (list), (F, "glIsList(%u);", list));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Lightf)(GLenum light, GLenum pname, GLfloat param)
@@ -899,7 +899,7 @@ KEYWORD1 void KEYWORD2 NAME(Normal3dv)(const GLdouble *v)
 
 KEYWORD1 void KEYWORD2 NAME(Normal3f)(GLfloat nx, GLfloat ny, GLfloat nz)
 {
-   DISPATCH(Normal3f, (nx, ny, nz), (F, "glNormal3f(%g, %g, %g);\n", nx, ny, nz));
+   DISPATCH(Normal3f, (nx, ny, nz), (F, "glNormal3f(%g, %g, %g);", nx, ny, nz));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Normal3fv)(const GLfloat *v)
@@ -1194,7 +1194,7 @@ KEYWORD1 void KEYWORD2 NAME(Rectsv)(const GLshort *v1, const GLshort *v2)
 
 KEYWORD1 GLint KEYWORD2 NAME(RenderMode)(GLenum mode)
 {
-   RETURN_DISPATCH(RenderMode, (mode), (F, "glRenderMode(0x%x);\n", mode));
+   RETURN_DISPATCH(RenderMode, (mode), (F, "glRenderMode(0x%x);", mode));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Rotated)(GLdouble angle, GLdouble x, GLdouble y, GLdouble z)
@@ -1204,7 +1204,7 @@ KEYWORD1 void KEYWORD2 NAME(Rotated)(GLdouble angle, GLdouble x, GLdouble y, GLd
 
 KEYWORD1 void KEYWORD2 NAME(Rotatef)(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
-   DISPATCH(Rotatef, (angle, x, y, z), (F, "glRotatef(%g, %g, %g, %g);\n", angle, x, y, z));
+   DISPATCH(Rotatef, (angle, x, y, z), (F, "glRotatef(%g, %g, %g, %g);", angle, x, y, z));
 }
 
 KEYWORD1 void KEYWORD2 NAME(SelectBuffer)(GLsizei size, GLuint *buffer)
@@ -1219,17 +1219,17 @@ KEYWORD1 void KEYWORD2 NAME(Scaled)(GLdouble x, GLdouble y, GLdouble z)
 
 KEYWORD1 void KEYWORD2 NAME(Scalef)(GLfloat x, GLfloat y, GLfloat z)
 {
-   DISPATCH(Scalef, (x, y, z), (F, "glScalef(%g, %g, %g);\n", x, y, z));
+   DISPATCH(Scalef, (x, y, z), (F, "glScalef(%g, %g, %g);", x, y, z));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Scissor)(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   DISPATCH(Scissor, (x, y, width, height), (F, "glScissor(%d, %d, %d, %d);\n", x, y, width, height));
+   DISPATCH(Scissor, (x, y, width, height), (F, "glScissor(%d, %d, %d, %d);", x, y, width, height));
 }
 
 KEYWORD1 void KEYWORD2 NAME(ShadeModel)(GLenum mode)
 {
-   DISPATCH(ShadeModel, (mode), (F, "glShadeModel(0x%x);\n", mode));
+   DISPATCH(ShadeModel, (mode), (F, "glShadeModel(0x%x);", mode));
 }
 
 KEYWORD1 void KEYWORD2 NAME(StencilFunc)(GLenum func, GLint ref, GLuint mask)
@@ -1494,7 +1494,7 @@ KEYWORD1 void KEYWORD2 NAME(Translated)(GLdouble x, GLdouble y, GLdouble z)
 
 KEYWORD1 void KEYWORD2 NAME(Translatef)(GLfloat x, GLfloat y, GLfloat z)
 {
-   DISPATCH(Translatef, (x, y, z), (F, "glTranslatef(%g, %g, %g);\n", x, y, z));
+   DISPATCH(Translatef, (x, y, z), (F, "glTranslatef(%g, %g, %g);", x, y, z));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex2d)(GLdouble x, GLdouble y)
@@ -1549,7 +1549,7 @@ KEYWORD1 void KEYWORD2 NAME(Vertex3dv)(const GLdouble *v)
 
 KEYWORD1 void KEYWORD2 NAME(Vertex3f)(GLfloat x, GLfloat y, GLfloat z)
 {
-   DISPATCH(Vertex3f, (x, y, z), (F, "glVertex3f(%g, %g, %g);\n", x, y, z));
+   DISPATCH(Vertex3f, (x, y, z), (F, "glVertex3f(%g, %g, %g);", x, y, z));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Vertex3fv)(const GLfloat *v)
@@ -1629,7 +1629,7 @@ KEYWORD1 void KEYWORD2 NAME(Viewport)(GLint x, GLint y, GLsizei width, GLsizei h
 
 KEYWORD1 GLboolean KEYWORD2 NAME(AreTexturesResident)(GLsizei n, const GLuint *textures, GLboolean *residences)
 {
-   RETURN_DISPATCH(AreTexturesResident, (n, textures, residences), (F, "glAreTexturesResident(%d, %p, %p);\n", n, textures, residences));
+   RETURN_DISPATCH(AreTexturesResident, (n, textures, residences), (F, "glAreTexturesResident(%d, %p, %p);", n, textures, residences));
 }
 
 KEYWORD1 void KEYWORD2 NAME(ArrayElement)(GLint i)
@@ -1724,7 +1724,7 @@ KEYWORD1 void KEYWORD2 NAME(InterleavedArrays)(GLenum format, GLsizei stride, co
 
 KEYWORD1 GLboolean KEYWORD2 NAME(IsTexture)(GLuint texture)
 {
-   RETURN_DISPATCH(IsTexture, (texture), (F, "glIsTexture(%u);\n", texture));
+   RETURN_DISPATCH(IsTexture, (texture), (F, "glIsTexture(%u);", texture));
 }
 
 KEYWORD1 void KEYWORD2 NAME(NormalPointer)(GLenum type, GLsizei stride, const GLvoid *ptr)
@@ -2461,12 +2461,12 @@ KEYWORD1 void KEYWORD2 NAME(PrioritizeTexturesEXT)(GLsizei n, const GLuint *text
 
 KEYWORD1 GLboolean KEYWORD2 NAME(AreTexturesResidentEXT)(GLsizei n, const GLuint *textures, GLboolean *residences)
 {
-   RETURN_DISPATCH(AreTexturesResident, (n, textures, residences), (F, "glAreTexturesResidentEXT(%d %p %p);\n", n, textures, residences));
+   RETURN_DISPATCH(AreTexturesResident, (n, textures, residences), (F, "glAreTexturesResidentEXT(%d %p %p);", n, textures, residences));
 }
 
 KEYWORD1 GLboolean KEYWORD2 NAME(IsTextureEXT)(GLuint texture)
 {
-   RETURN_DISPATCH(IsTexture, (texture), (F, "glIsTextureEXT(%u);\n", texture));
+   RETURN_DISPATCH(IsTexture, (texture), (F, "glIsTextureEXT(%u);", texture));
 }
 
 
