@@ -1,5 +1,3 @@
-/* $Id: glxinfo.c,v 1.21 2002/11/04 16:24:18 brianp Exp $ */
-
 /*
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  * 
@@ -718,7 +716,7 @@ usage(void)
    printf("\t-h: This information.\n");
    printf("\t-i: Force an indirect rendering context.\n");
    printf("\t-b: Find the 'best' visual and print it's number.\n");
-   printf("\t-l: Print interesting OpenGLl imits.\n");
+   printf("\t-l: Print interesting OpenGL limits.\n");
 }
 
 

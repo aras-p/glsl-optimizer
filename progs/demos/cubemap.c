@@ -1,5 +1,3 @@
-/* $Id: cubemap.c,v 1.4 2002/10/25 17:20:26 brianp Exp $ */
-
 /*
  * GL_ARB_texture_cube_map demo
  *
@@ -395,7 +393,7 @@ int main( int argc, char *argv[] )
    glutInitWindowPosition(0, 0);
    glutInitWindowSize(600, 500);
    glutInitDisplayMode( GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
-   glutCreateWindow("Texture Cube Maping");
+   glutCreateWindow("Texture Cube Mapping");
 
    if (argc > 1 && strcmp(argv[1] , "-i") == 0)
       init( 1 );
