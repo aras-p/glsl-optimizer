@@ -1,7 +1,8 @@
-# $Id: Make-config,v 1.2 1999/09/14 12:20:17 brianp Exp $
+# $Id: Make-config,v 1.3 1999/09/15 15:09:00 brianp Exp $
 
 MAJOR=3
 MINOR=1
+TINY=0
 VERSION=$(MAJOR).$(MINOR)
 
 # Mesa 3-D graphics library
