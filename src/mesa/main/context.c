@@ -1,10 +1,10 @@
-/* $Id: context.c,v 1.31 2000/01/14 04:45:47 brianp Exp $ */
+/* $Id: context.c,v 1.32 2000/01/17 20:00:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1667,6 +1667,11 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
          fprintf(stderr, "Mesa thread-safe: YES\n");
 #else
          fprintf(stderr, "Mesa thread-safe: NO\n");
+#endif
+#if defined(USE_X86_ASM)
+         fprintf(stderr, "Mesa x86-optimized: YES\n");
+#else
+         fprintf(stderr, "Mesa x86-optimized: NO\n");
 #endif
       }
       newCtx->FirstTimeCurrent = GL_FALSE;
