@@ -219,4 +219,3 @@ NormalProgramTarget(xfont,xfont.o,NullParameter,$(LOCAL_LIBRARIES),NullParameter
 
 DependTarget()
  
-
