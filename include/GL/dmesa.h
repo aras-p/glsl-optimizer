@@ -23,9 +23,9 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.6 for Mesa
+ * DOS/DJGPP device driver v1.7 for Mesa
  *
- *  Copyright (C) 2002 - Borca Daniel
+ *  Copyright (C) 2002 - Daniel Borca
  *  Email : dborca@users.sourceforge.net
  *  Web   : http://www.geocities.com/dborca
  */
@@ -138,7 +138,8 @@ void DMesaSetCI (int ndx, GLfloat red, GLfloat green, GLfloat blue);
 /*
  * DMesa functions
  */
-void *DMesaGetProcAddress (const char *name);
+typedef void (*DMesaProc) (void);
+DMesaProc DMesaGetProcAddress (const char *name);
 
 /*
  * DMesa state retrieval.
