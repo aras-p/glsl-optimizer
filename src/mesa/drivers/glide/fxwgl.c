@@ -799,6 +799,7 @@ BOOL GLAPIENTRY wglSwapBuffers(HDC hdc)
      * display. Obviously, it's performance hit will be higher on larger displays and
      * less on smaller displays. To support the window-hack display this is probably fine.
      */
+#if  FXMESA_USE_ARGB
     {
       unsigned long *pixel = dibSurfacePtr;
       unsigned long count = (width * height) / 2;
@@ -811,7 +812,8 @@ BOOL GLAPIENTRY wglSwapBuffers(HDC hdc)
             ;
         }
     }
-
+#endif
+    
     BitBlt(hdcScreen, 0, 0,
            width, height,
            hdcDIBSection,
