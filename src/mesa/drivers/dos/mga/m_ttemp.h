@@ -23,7 +23,7 @@
  */
 
 /*
- * DOS/DJGPP device driver v1.3 for Mesa  --  MGA2064W triangle template
+ * DOS/DJGPP device driver v1.4 for Mesa  --  MGA2064W triangle template
  *
  *  Copyright (c) 2003 - Borca Daniel
  *  Email : dborca@yahoo.com
@@ -83,7 +83,9 @@ void TAG (int cull, const MGAvertex *v1, const MGAvertex *v2, const MGAvertex *v
 #endif
 
 #if defined(INTERP_Z) || defined(INTERP_RGB)
+#if !LONG_LONG
  double one_area;
+#endif
 #ifndef INTERP_RGB
  int red = v3->color[0];
  int green = v3->color[1];
@@ -147,7 +149,9 @@ void TAG (int cull, const MGAvertex *v1, const MGAvertex *v2, const MGAvertex *v
 
  /* draw lower triangle */
 #if defined(INTERP_Z) || defined(INTERP_RGB)
+#if !LONG_LONG
  one_area = (double)(1<<15) / (double)area;
+#endif
  mga_fifo(1);
 #else
  mga_fifo(2);
@@ -163,8 +167,13 @@ void TAG (int cull, const MGAvertex *v1, const MGAvertex *v2, const MGAvertex *v
  /* compute d?/dx and d?/dy derivatives */
  eMaj_dz = z3 - z1;
  eBot_dz = z2 - z1;
+#if !LONG_LONG
  dzdx = (eMaj_dz * eBot_dy - eMaj_dy * eBot_dz) * one_area;
  dzdy = (eMaj_dx * eBot_dz - eMaj_dz * eBot_dx) * one_area;
+#else
+ dzdx = ((long long)(eMaj_dz * eBot_dy - eMaj_dy * eBot_dz)<<15) / area;
+ dzdy = ((long long)(eMaj_dx * eBot_dz - eMaj_dz * eBot_dx)<<15) / area;
+#endif
 
 #ifndef INTERP_RGB
  mga_fifo(11);
@@ -196,12 +205,21 @@ void TAG (int cull, const MGAvertex *v1, const MGAvertex *v2, const MGAvertex *v
  eBot_db = v2->color[2] - v1->color[2];
 
  /* compute color increments */
+#if !LONG_LONG
  drdx = (eMaj_dr * eBot_dy - eMaj_dy * eBot_dr) * one_area;
  drdy = (eMaj_dx * eBot_dr - eMaj_dr * eBot_dx) * one_area;
  dgdx = (eMaj_dg * eBot_dy - eMaj_dy * eBot_dg) * one_area;
  dgdy = (eMaj_dx * eBot_dg - eMaj_dg * eBot_dx) * one_area;
  dbdx = (eMaj_db * eBot_dy - eMaj_dy * eBot_db) * one_area;
  dbdy = (eMaj_dx * eBot_db - eMaj_db * eBot_dx) * one_area;
+#else
+ drdx = ((long long)(eMaj_dr * eBot_dy - eMaj_dy * eBot_dr)<<15) / area;
+ drdy = ((long long)(eMaj_dx * eBot_dr - eMaj_dr * eBot_dx)<<15) / area;
+ dgdx = ((long long)(eMaj_dg * eBot_dy - eMaj_dy * eBot_dg)<<15) / area;
+ dgdy = ((long long)(eMaj_dx * eBot_dg - eMaj_dg * eBot_dx)<<15) / area;
+ dbdx = ((long long)(eMaj_db * eBot_dy - eMaj_dy * eBot_db)<<15) / area;
+ dbdy = ((long long)(eMaj_dx * eBot_db - eMaj_db * eBot_dx)<<15) / area;
+#endif
 
  mga_fifo(6);
  mga_outl(M_DR6, drdx);

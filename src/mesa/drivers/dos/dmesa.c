@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.0.1
+ * Version:  5.1
  * 
  * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  * 
@@ -1109,10 +1109,21 @@ static void clear (GLcontext *ctx, GLbitfield mask, GLboolean all,
 
 
 
+/*
+ * This function is called to specify which buffer to read and write
+ * for software rasterization (swrast) fallbacks.  This doesn't necessarily
+ * correspond to glDrawBuffer() or glReadBuffer() calls.
+ */
 static void set_buffer (GLcontext *ctx, GLframebuffer *colorBuffer, GLuint bufferBit)
 {
  /*
   * XXX todo - examine bufferBit and set read/write pointers
+  */
+ /* Normally, we would have
+  *    ctx->Driver.ReadBuffer == set_read_buffer
+  *    ctx->Driver.DrawBuffer == set_draw_buffer
+  * and make sure set_draw_buffer calls _swrast_DrawBuffer,
+  * which in turn will call this routine via dd->SetBuffer.
   */
 }
 
@@ -1138,9 +1149,6 @@ static const GLubyte* get_string (GLcontext *ctx, GLenum name)
  switch (name) {
         case GL_RENDERER:
              return (const GLubyte *)"Mesa DJGPP"
-                                     #ifdef FX
-                                     " (FX)"
-                                     #endif
                                      #ifdef MATROX
                                      " (MGA)"
                                      #endif
@@ -1269,16 +1277,16 @@ static void dmesa_init_pointers (GLcontext *ctx)
  tnl->Driver.RunPipeline = _tnl_run_pipeline;
 
 #if FEATURE_ARB_vertex_buffer_object
-   ctx->Driver.NewBufferObject = _mesa_new_buffer_object;
-   ctx->Driver.DeleteBuffer = _mesa_delete_buffer_object;
-   ctx->Driver.BindBuffer = NULL;
-   ctx->Driver.BufferData = _mesa_buffer_data;
-   ctx->Driver.BufferSubData = _mesa_buffer_subdata;
-   ctx->Driver.MapBuffer = _mesa_buffer_map;
-   ctx->Driver.UnmapBuffer = NULL;
+ ctx->Driver.NewBufferObject = _mesa_new_buffer_object;
+ ctx->Driver.DeleteBuffer = _mesa_delete_buffer_object;
+ ctx->Driver.BindBuffer = NULL;
+ ctx->Driver.BufferData = _mesa_buffer_data;
+ ctx->Driver.BufferSubData = _mesa_buffer_subdata;
+ ctx->Driver.MapBuffer = _mesa_buffer_map;
+ ctx->Driver.UnmapBuffer = NULL;
 #endif
 
-  dd->SetBuffer = set_buffer;
+ dd->SetBuffer = set_buffer;
    
  /* Install swsetup for tnl->Driver.Render.*:
   */
@@ -1322,7 +1330,7 @@ static void dmesa_init_pointers (GLcontext *ctx)
 
 static void dmesa_update_state (GLcontext *ctx, GLuint new_state)
 {
- /* Propogate statechange information to swrast and swrast_setup
+ /* Propagate statechange information to swrast and swrast_setup
   * modules. The DMesa driver has no internal GL-dependent state.
   */
  _swrast_InvalidateState( ctx, new_state );
