@@ -80,37 +80,60 @@ compute_component_mapping(GLenum logicalBaseFormat, GLenum textureBaseFormat,
                           GLint map[4])
 {
    /* compute mapping from dest components back to src components */
-   switch (logicalBaseFormat) {
-   case GL_LUMINANCE:
-      map[0] = map[1] = map[2] = 0;
-      if (textureBaseFormat == GL_RGBA)
-         map[3] = ONE;
-      break;
-   case GL_ALPHA:
-      ASSERT(textureBaseFormat == GL_RGBA);
-      map[0] = map[1] = map[2] = ZERO;
-      map[3] = 0;
-      break;
-   case GL_INTENSITY:
-      map[0] = map[1] = map[2] = 0;
-      if (textureBaseFormat == GL_RGBA)
+   switch (textureBaseFormat) {
+   case GL_RGB:
+   case GL_RGBA:
+      switch (logicalBaseFormat) {
+      case GL_LUMINANCE:
+         map[0] = map[1] = map[2] = 0;
+         if (textureBaseFormat == GL_RGBA)
+            map[3] = ONE;
+         break;
+      case GL_ALPHA:
+         ASSERT(textureBaseFormat == GL_RGBA);
+         map[0] = map[1] = map[2] = ZERO;
          map[3] = 0;
+         break;
+      case GL_INTENSITY:
+         map[0] = map[1] = map[2] = 0;
+         if (textureBaseFormat == GL_RGBA)
+            map[3] = 0;
+         break;
+      case GL_LUMINANCE_ALPHA:
+         ASSERT(textureBaseFormat == GL_RGBA);
+         map[0] = map[1] = map[2] = 0;
+         map[3] = 1;
+         break;
+      case GL_RGB:
+         ASSERT(textureBaseFormat == GL_RGBA);
+         map[0] = 0;
+         map[1] = 1;
+         map[2] = 2;
+         map[3] = ONE;
+         break;
+      default:
+         _mesa_problem(NULL, "Unexpected logicalBaseFormat");
+         map[0] = map[1] = map[2] = map[3] = 0;
+      }
       break;
    case GL_LUMINANCE_ALPHA:
-      ASSERT(textureBaseFormat == GL_RGBA);
-      map[0] = map[1] = map[2] = 0;
-      map[3] = 1;
-      break;
-   case GL_RGB:
-      ASSERT(textureBaseFormat == GL_RGBA);
-      map[0] = 0;
-      map[1] = 1;
-      map[2] = 2;
-      map[3] = ONE;
-      break;
-   default:
-      _mesa_problem(NULL, "Unexpected logicalBaseFormat");
-      map[0] = map[1] = map[2] = map[3] = 0;
+      switch (logicalBaseFormat) {
+      case GL_LUMINANCE:
+         map[0] = 0;
+         map[1] = ONE;
+         break;
+      case GL_ALPHA:
+         map[0] = ZERO;
+         map[1] = 0;
+         break;
+      case GL_INTENSITY:
+         map[0] = 0;
+         map[1] = 0;
+         break;
+      default:
+         _mesa_problem(NULL, "Unexpected logicalBaseFormat");
+         map[0] = map[1] = 0;
+      }
    }
 }
 
@@ -298,8 +321,9 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
       GLint i, n;
       GLint map[4];
 
-      /* we only promote up to RGB and RGBA formats for now */
-      ASSERT(textureBaseFormat == GL_RGB || textureBaseFormat == GL_RGBA);
+      /* we only promote up to RGB, RGBA and LUMINANCE_ALPHA formats for now */
+      ASSERT(textureBaseFormat == GL_RGB || textureBaseFormat == GL_RGBA ||
+             textureBaseFormat == GL_LUMINANCE_ALPHA);
 
       /* The actual texture format should have at least as many components
        * as the logical texture format.
@@ -451,8 +475,9 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
       GLint i, n;
       GLint map[4];
 
-      /* we only promote up to RGB and RGBA formats for now */
-      ASSERT(textureBaseFormat == GL_RGB || textureBaseFormat == GL_RGBA);
+      /* we only promote up to RGB, RGBA and LUMINANCE_ALPHA formats for now */
+      ASSERT(textureBaseFormat == GL_RGB || textureBaseFormat == GL_RGBA ||
+             textureBaseFormat == GL_LUMINANCE_ALPHA);
 
       /* The actual texture format should have at least as many components
        * as the logical texture format.
