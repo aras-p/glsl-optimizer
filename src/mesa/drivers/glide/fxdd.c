@@ -1458,9 +1458,9 @@ fxDDInitExtensions(GLcontext * ctx)
    _mesa_enable_extension(ctx, "GL_EXT_texture_lod_bias");
    _mesa_enable_extension(ctx, "GL_EXT_shared_texture_palette");
    _mesa_enable_extension(ctx, "GL_EXT_blend_func_separate");
+   _mesa_enable_extension(ctx, "GL_EXT_texture_env_add");
 
    if (fxMesa->haveTwoTMUs) {
-      _mesa_enable_extension(ctx, "GL_EXT_texture_env_add");
       _mesa_enable_extension(ctx, "GL_ARB_multitexture");
    }
 
