@@ -1,4 +1,4 @@
-/* $Id: teximage.h,v 1.10 2000/05/24 14:04:06 brianp Exp $ */
+/* $Id: teximage.h,v 1.11 2000/06/05 07:28:49 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -170,7 +170,11 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
                               GLsizei height, GLsizei depth, GLint border,
                               GLsizei imageSize, const GLvoid *data);
 
-
+#ifdef VMS
+#define _mesa_CompressedTexSubImage1DARB _mesa_CompressedTexSubImage1DAR
+#define _mesa_CompressedTexSubImage2DARB _mesa_CompressedTexSubImage2DAR
+#define _mesa_CompressedTexSubImage3DARB _mesa_CompressedTexSubImage3DAR
+#endif
 extern void
 _mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
                                  GLsizei width, GLenum format,
