@@ -1,4 +1,4 @@
-/* $Id: s_logic.c,v 1.6 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: s_logic.c,v 1.7 2001/05/10 16:54:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -207,9 +207,9 @@ _mesa_logicop_ci_pixels( GLcontext *ctx,
  * Note:  Since the R, G, B, and A channels are all treated the same we
  * process them as 4-byte GLuints instead of four GLubytes.
  */
-static void rgba_logicop( const GLcontext *ctx, GLuint n,
-                          const GLubyte mask[],
-                          GLuint src[], const GLuint dest[] )
+static void rgba_logicop_ui( const GLcontext *ctx, GLuint n,
+                             const GLubyte mask[],
+                             GLuint src[], const GLuint dest[] )
 {
    GLuint i;
    switch (ctx->Color.LogicOp) {
@@ -261,7 +261,132 @@ static void rgba_logicop( const GLcontext *ctx, GLuint n,
       case GL_NAND:
          for (i=0;i<n;i++) {
             if (mask[i]) {
-               src[i] = ~(src[i] & src[i]);
+               src[i] = ~(src[i] & dest[i]);
+            }
+         }
+         break;
+      case GL_OR:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i]|= dest[i];
+            }
+         }
+         break;
+      case GL_NOR:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] = ~(src[i] | dest[i]);
+            }
+         }
+         break;
+      case GL_XOR:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] ^= dest[i];
+            }
+         }
+         break;
+      case GL_EQUIV:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] = ~(src[i] ^ dest[i]);
+            }
+         }
+         break;
+      case GL_AND_REVERSE:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] = src[i] & ~dest[i];
+            }
+         }
+         break;
+      case GL_AND_INVERTED:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] = ~src[i] & dest[i];
+            }
+         }
+         break;
+      case GL_OR_REVERSE:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] = src[i] | ~dest[i];
+            }
+         }
+         break;
+      case GL_OR_INVERTED:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] = ~src[i] | dest[i];
+            }
+         }
+         break;
+      default:
+         /* should never happen */
+         _mesa_problem(ctx, "Bad function in rgba_logicop");
+   }
+}
+
+
+/*
+ * As above, but operate on GLchan values
+ * Note: need to pass n = numPixels * 4.
+ */
+static void rgba_logicop_chan( const GLcontext *ctx, GLuint n,
+                               const GLubyte mask[],
+                               GLchan src[], const GLchan dest[] )
+{
+   GLuint i;
+   switch (ctx->Color.LogicOp) {
+      case GL_CLEAR:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] = 0;
+            }
+         }
+         break;
+      case GL_SET:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] = ~0;
+            }
+         }
+         break;
+      case GL_COPY:
+         /* do nothing */
+         break;
+      case GL_COPY_INVERTED:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] = ~src[i];
+            }
+         }
+         break;
+      case GL_NOOP:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] = dest[i];
+            }
+         }
+         break;
+      case GL_INVERT:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] = ~dest[i];
+            }
+         }
+         break;
+      case GL_AND:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] &= dest[i];
+            }
+         }
+         break;
+      case GL_NAND:
+         for (i=0;i<n;i++) {
+            if (mask[i]) {
+               src[i] = ~(src[i] & dest[i]);
             }
          }
          break;
@@ -340,7 +465,13 @@ _mesa_logicop_rgba_span( GLcontext *ctx,
 {
    GLchan dest[MAX_WIDTH][4];
    _mesa_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
-   rgba_logicop( ctx, n, mask, (GLuint *) rgba, (const GLuint *) dest );
+   if (sizeof(GLchan) * 4 == sizeof(GLuint)) {
+      rgba_logicop_ui(ctx, n, mask, (GLuint *) rgba, (const GLuint *) dest);
+   }
+   else {
+      rgba_logicop_chan(ctx, 4 * n, mask,
+                        (GLchan *) rgba, (const GLchan *) dest);
+   }
 }
 
 
@@ -360,5 +491,11 @@ _mesa_logicop_rgba_pixels( GLcontext *ctx,
    if (SWRAST_CONTEXT(ctx)->_RasterMask & ALPHABUF_BIT) {
       _mesa_read_alpha_pixels( ctx, n, x, y, dest, mask );
    }
-   rgba_logicop( ctx, n, mask, (GLuint *) rgba, (const GLuint *) dest );
+   if (sizeof(GLchan) * 4 == sizeof(GLuint)) {
+      rgba_logicop_ui(ctx, n, mask, (GLuint *) rgba, (const GLuint *) dest);
+   }
+   else {
+      rgba_logicop_chan(ctx, 4 * n, mask,
+                        (GLchan *) rgba, (const GLchan *) dest);
+   }
 }
