@@ -30,6 +30,7 @@
 #include <ggi/mesa/ggimesa_int.h>
 #include <ggi/mesa/debug.h>
 #include "extensions.h"
+#include "colormac.h"
 #include "imports.h"
 #include "matrix.h"
 #include "swrast/swrast.h"
@@ -155,7 +156,7 @@ static GLboolean gl_ggiSetBuffer(GLcontext *ctx, GLframebuffer *buffer, GLuint b
 {
 	ggi_mesa_context_t ggi_ctx = (ggi_mesa_context_t)ctx->DriverCtx;
 	
-	printf("set read %d\n", mode);
+	printf("set read %d\n", bufferBit);
 	GGIMESADPRINT_CORE("gl_ggiSetBuffer() called\n");
 
 	if (bufferBit == FRONT_LEFT_BIT) 
