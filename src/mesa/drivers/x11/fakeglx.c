@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.9 1999/10/13 18:49:47 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.10 1999/10/14 18:47:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -718,6 +718,7 @@ static XVisualInfo *choose_x_visual( Display *dpy, int screen,
  * Return:  pointer to an XVisualInfo or NULL.
  */
 static XVisualInfo *choose_x_overlay_visual( Display *dpy, int scr,
+                                             GLboolean rgbFlag,
                                              int level, int trans_type,
                                              int trans_value,
                                              int min_depth,
@@ -808,6 +809,16 @@ static XVisualInfo *choose_x_overlay_visual( Display *dpy, int scr,
          /* wrong visual class */
          continue;
       }
+
+      /* if RGB was requested, make sure we have True/DirectColor */
+      if (rgbFlag && vislist->CLASS != TrueColor
+          && vislist->CLASS != DirectColor)
+         continue;
+
+      /* if CI was requested, make sure we have a color indexed visual */
+      if (!rgbFlag
+          && (vislist->CLASS == TrueColor || vislist->CLASS == DirectColor))
+         continue;
 
       if (deepvis==NULL || vislist->depth > deepest) {
          /* YES!  found a satisfactory visual */
@@ -979,8 +990,21 @@ XVisualInfo *Fake_glXChooseVisual( Display *dpy, int screen, int *list )
    }
    else {
       /* over/underlay planes */
-      vis = choose_x_overlay_visual( dpy, screen, level, trans_type,
-                                     trans_value, min_ci, visual_type );
+      if (rgb_flag) {
+         /* rgba overlay */
+         int min_rgb = min_red + min_green + min_blue;
+         if (min_rgb>1 && min_rgb<8) {
+            /* a special case to be sure we can get a monochrome visual */
+            min_rgb = 1;
+         }
+         vis = choose_x_overlay_visual( dpy, screen, rgb_flag, level,
+                              trans_type, trans_value, min_rgb, visual_type );
+      }
+      else {
+         /* color index overlay */
+         vis = choose_x_overlay_visual( dpy, screen, rgb_flag, level,
+                              trans_type, trans_value, min_ci, visual_type );
+      }
    }
 
    if (vis) {
