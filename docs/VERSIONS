@@ -1255,3 +1255,5 @@ Mesa Version History
 	- glArrayElement in display lists didn't handle generic vertex attribs
 	- glFogCoord didn't always work properly
 	- ARB_fragment_program fog options didn't work
+	- fp TEX instruction no longer incorrectly divides s,t,r by q
+	- ARB fp TEX and TEXP instructions now use LOD=0
