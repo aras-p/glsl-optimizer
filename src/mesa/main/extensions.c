@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.39 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: extensions.c,v 1.40 2000/10/30 16:27:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -115,13 +115,14 @@ int gl_extensions_add( GLcontext *ctx,
 		       const char *name, 
 		       GLboolean *flag_ptr )
 {
-   if (ctx->Extensions.ext_string == 0) 
-   {
+   if (ctx->Extensions.ext_string == 0) {
       struct extension *t = MALLOC_STRUCT(extension);
       t->enabled = enabled;
       strncpy(t->name, name, MAX_EXT_NAMELEN);
       t->name[MAX_EXT_NAMELEN] = 0;
       t->flag = flag_ptr;
+      if (t->flag)
+         *t->flag = enabled;
       insert_at_tail( ctx->Extensions.ext_list, t );
       return 0;
    }
@@ -142,7 +143,8 @@ static int set_extension( GLcontext *ctx, const char *name, GLint state )
    if (i == ctx->Extensions.ext_list)
       return 1;
 
-   if (i->flag) *(i->flag) = state;      
+   if (i->flag)
+      *(i->flag) = state;      
    i->enabled = state;
    return 0;
 }   
