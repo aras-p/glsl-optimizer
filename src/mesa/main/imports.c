@@ -1,4 +1,4 @@
-/* $Id: imports.c,v 1.17 2002/08/01 15:10:23 brianp Exp $ */
+/* $Id: imports.c,v 1.18 2002/08/03 16:19:20 kschultz Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,6 +49,9 @@
 
 #define MAXSTRING 4000  /* for vsnprintf() */
 
+#ifdef WIN32
+#define vsnprintf _vsnprintf
+#endif
 
 static void *
 _mesa_Malloc(__GLcontext *gc, size_t size)
