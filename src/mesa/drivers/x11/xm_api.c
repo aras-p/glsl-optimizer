@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.29 2001/09/12 03:32:29 brianp Exp $ */
+/* $Id: xm_api.c,v 1.30 2001/11/06 16:01:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1260,7 +1260,7 @@ static GLboolean initialize_visual_and_buffer( int client,
     * reports bugs.
     */
    if (getenv("MESA_INFO")) {
-      fprintf(stderr, "X/Mesa visual = %p\n", v);
+      fprintf(stderr, "X/Mesa visual = %p\n", (void *) v);
       fprintf(stderr, "X/Mesa dithered pf = %u\n", v->dithered_pf);
       fprintf(stderr, "X/Mesa undithered pf = %u\n", v->undithered_pf);
       fprintf(stderr, "X/Mesa level = %d\n", v->level);

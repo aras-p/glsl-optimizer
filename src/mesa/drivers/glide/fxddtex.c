@@ -1,4 +1,4 @@
-/* $Id: fxddtex.c,v 1.45 2001/09/23 16:50:01 brianp Exp $ */
+/* $Id: fxddtex.c,v 1.46 2001/11/06 16:01:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -327,7 +327,7 @@ fxDDTexDel(GLcontext * ctx, struct gl_texture_object *tObj)
    tfxTexInfo *ti = fxTMGetTexInfo(tObj);
 
    if (MESA_VERBOSE & VERBOSE_DRIVER) {
-      fprintf(stderr, "fxmesa: fxDDTexDel(%d,%p)\n", tObj->Name, ti);
+      fprintf(stderr, "fxmesa: fxDDTexDel(%d,%p)\n", tObj->Name, (void *) ti);
    }
 
    if (!ti)

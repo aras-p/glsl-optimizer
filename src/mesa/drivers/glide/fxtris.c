@@ -1,4 +1,4 @@
-/* $Id: fxtris.c,v 1.17 2001/09/23 16:50:01 brianp Exp $ */
+/* $Id: fxtris.c,v 1.18 2001/11/06 16:01:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -214,7 +214,7 @@ fx_fallback_point( fxMesaContext fxMesa,
 
 static void fx_print_vertex( GLcontext *ctx, const GrVertex *v )
 {
-   fprintf(stderr, "vertex at %p\n", v);
+   fprintf(stderr, "vertex at %p\n", (void *) v);
 
    fprintf(stderr, "x %f y %f z %f oow %f\n", 
 	   v->x, v->y, v->ooz, v->oow);

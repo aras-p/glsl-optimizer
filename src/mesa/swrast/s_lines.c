@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.21 2001/08/20 21:45:15 brianp Exp $ */
+/* $Id: s_lines.c,v 1.22 2001/11/06 16:01:19 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -995,7 +995,7 @@ _mesa_print_line_function(GLcontext *ctx)
    else if (swrast->Line == flat_multitextured_line)
       printf("flat_multitextured_line\n");
    else
-      printf("Driver func %p\n", swrast->Line);
+      printf("Driver func %p\n", (void *) swrast->Line);
 }
 #endif
 
