@@ -1,10 +1,10 @@
-/* $Id: fog.h,v 1.2 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: fog.h,v 1.3 2000/02/02 22:21:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,16 +49,21 @@ _mesa_Fogiv(GLenum pname, const GLint *params );
 
 
 
-extern void gl_fog_vertices( struct vertex_buffer *VB );
+extern void
+_mesa_fog_vertices( struct vertex_buffer *VB );
 
-extern void gl_fog_rgba_pixels( const GLcontext *ctx,
-                                GLuint n, const GLdepth z[],
-                                GLubyte rgba[][4] );
+extern void
+_mesa_fog_rgba_pixels( const GLcontext *ctx,
+                       GLuint n, const GLdepth z[],
+                       GLubyte rgba[][4] );
 
-extern void gl_fog_ci_pixels( const GLcontext *ctx,
-                              GLuint n, const GLdepth z[], GLuint indx[] );
+extern void
+_mesa_fog_ci_pixels( const GLcontext *ctx,
+                     GLuint n, const GLdepth z[], GLuint indx[] );
 
 
-extern void gl_init_fog( void );
+extern void
+_mesa_init_fog( void );
+
 
 #endif

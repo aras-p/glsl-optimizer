@@ -1,10 +1,10 @@
-/* $Id: fog.c,v 1.4 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: fog.c,v 1.5 2000/02/02 22:21:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -172,16 +172,20 @@ static fog_func fog_rgba_tab[2];
 #define IDX 1
 #include "fog_tmp.h"
 
-void gl_init_fog( void )
+
+void
+_mesa_init_fog( void )
 {
    init_fog_tab_masked();
    init_fog_tab_raw();
 }
 
+
 /*
  * Compute fog for the vertices in the vertex buffer.
  */
-void gl_fog_vertices( struct vertex_buffer *VB )
+void
+_mesa_fog_vertices( struct vertex_buffer *VB )
 {
    GLcontext *ctx = VB->ctx;
    GLuint i = VB->CullMode & 1;
@@ -213,8 +217,9 @@ void gl_fog_vertices( struct vertex_buffer *VB )
  *         red, green, blue, alpha - pixel colors
  * Output:  red, green, blue, alpha - fogged pixel colors
  */
-void gl_fog_rgba_pixels( const GLcontext *ctx,
-                         GLuint n, const GLdepth z[], GLubyte rgba[][4] )
+void
+_mesa_fog_rgba_pixels( const GLcontext *ctx,
+                       GLuint n, const GLdepth z[], GLubyte rgba[][4] )
 {
    GLfloat c = ctx->ProjectionMatrix.m[10];
    GLfloat d = ctx->ProjectionMatrix.m[14];
@@ -298,8 +303,9 @@ void gl_fog_rgba_pixels( const GLcontext *ctx,
  *         index - pixel color indexes
  * Output:  index - fogged pixel color indexes
  */
-void gl_fog_ci_pixels( const GLcontext *ctx,
-                       GLuint n, const GLdepth z[], GLuint index[] )
+void
+_mesa_fog_ci_pixels( const GLcontext *ctx,
+                     GLuint n, const GLdepth z[], GLuint index[] )
 {
    GLfloat c = ctx->ProjectionMatrix.m[10];
    GLfloat d = ctx->ProjectionMatrix.m[14];

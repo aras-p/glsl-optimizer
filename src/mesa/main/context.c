@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.39 2000/02/02 19:50:26 brianp Exp $ */
+/* $Id: context.c,v 1.40 2000/02/02 22:21:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -440,7 +440,7 @@ static void one_time_init( void )
 
       gl_init_clip();
       gl_init_eval();
-      gl_init_fog();
+      _mesa_init_fog();
       gl_init_math();
       gl_init_lists();
       gl_init_shade();
