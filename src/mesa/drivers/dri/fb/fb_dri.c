@@ -639,17 +639,6 @@ __driValidateMode(const DRIDriverContext *ctx )
    return 1;
 }
 
-/* HACK - for now, put this here... */
-/* Alpha - this may need to be a variable to handle UP1x00 vs TITAN */
-#if defined(__alpha__)
-# define DRM_PAGE_SIZE 8192
-#elif defined(__ia64__)
-# define DRM_PAGE_SIZE getpagesize()
-#else
-# define DRM_PAGE_SIZE 4096
-#endif
-
-
 static int
 __driInitFBDev( struct DRIDriverContextRec *ctx )
 {
