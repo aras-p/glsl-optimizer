@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.2 2000/08/21 14:24:30 brianp Exp $ */
+/* $Id: convolve.c,v 1.3 2000/08/22 18:54:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,8 +48,13 @@ convolve_1d_reduce(GLint srcWidth, const GLfloat src[][4],
                    GLint filterWidth, const GLfloat filter[][4],
                    GLfloat dest[][4])
 {
-   const GLint dstWidth = srcWidth - (filterWidth - 1);
+   GLint dstWidth;
    GLint i, n;
+
+   if (filterWidth >= 1)
+      dstWidth = srcWidth - (filterWidth - 1);
+   else
+      dstWidth = srcWidth;
 
    if (dstWidth <= 0)
       return;  /* null result */
@@ -157,9 +162,18 @@ convolve_2d_reduce(GLint srcWidth, GLint srcHeight,
                    const GLfloat filter[][4],
                    GLfloat dest[][4])
 {
-   const GLint dstWidth = srcWidth - (filterWidth - 1);
-   const GLint dstHeight = srcHeight - (filterHeight - 1);
+   GLint dstWidth, dstHeight;
    GLint i, j, n, m;
+
+   if (filterWidth >= 1)
+      dstWidth = srcWidth - (filterWidth - 1);
+   else
+      dstWidth = srcWidth;
+
+   if (filterHeight >= 1)
+      dstHeight = srcHeight - (filterHeight - 1);
+   else
+      dstHeight = srcHeight;
 
    if (dstWidth <= 0 || dstHeight <= 0)
       return;
@@ -200,13 +214,6 @@ convolve_2d_constant(GLint srcWidth, GLint srcHeight,
    const GLint halfFilterWidth = filterWidth / 2;
    const GLint halfFilterHeight = filterHeight / 2;
    GLint i, j, n, m;
-
-   {
-      for (i=0;i<filterWidth*filterHeight;i++){
-         printf("%d %f %f %f %f\n", i,
-                filter[i][0], filter[i][1], filter[i][2], filter[i][3]);
-      }
-   }
 
    for (j = 0; j < srcHeight; j++) {
       for (i = 0; i < srcWidth; i++) {
@@ -299,41 +306,43 @@ convolve_sep_reduce(GLint srcWidth, GLint srcHeight,
                     const GLfloat colFilt[][4],
                     GLfloat dest[][4])
 {
-   const GLint halfFilterWidth = filterWidth / 2;
-   const GLint halfFilterHeight = filterHeight / 2;
+   GLint dstWidth, dstHeight;
    GLint i, j, n, m;
-#if 0
-   for (j = 0; j < srcHeight; j++) {
-      for (i = 0; i < srcWidth; i++) {
+
+   if (filterWidth >= 1)
+      dstWidth = srcWidth - (filterWidth - 1);
+   else
+      dstWidth = srcWidth;
+
+   if (filterHeight >= 1)
+      dstHeight = srcHeight - (filterHeight - 1);
+   else
+      dstHeight = srcHeight;
+
+   if (dstWidth <= 0 || dstHeight <= 0)
+      return;
+
+   for (j = 0; j < dstHeight; j++) {
+      for (i = 0; i < dstWidth; i++) {
          GLfloat sumR = 0.0;
          GLfloat sumG = 0.0;
          GLfloat sumB = 0.0;
          GLfloat sumA = 0.0;
          for (m = 0; m < filterHeight; m++) {
             for (n = 0; n < filterWidth; n++) {
-               if (i + n < halfFilterWidth ||
-                   i + n - halfFilterWidth >= srcWidth) {
-                  sumR += borderColor[RCOMP] * rowFilt[n][RCOMP] * colFilt[m][RCOMP];
-                  sumG += borderColor[GCOMP] * rowFilt[n][GCOMP] * colFilt[m][GCOMP];
-                  sumB += borderColor[BCOMP] * rowFilt[n][BCOMP] * colFilt[m][BCOMP];
-                  sumA += borderColor[ACOMP] * rowFilt[n][ACOMP] * colFilt[m][ACOMP];
-               }
-               else {
-                  const GLint k = m * srcWidth + i + n - halfFilterWidth;
-                  sumR += src[k][RCOMP] * rowFilt[n][RCOMP] * colFilt[m][RCOMP];
-                  sumG += src[k][GCOMP] * rowFilt[n][GCOMP] * colFilt[m][GCOMP];
-                  sumB += src[k][BCOMP] * rowFilt[n][BCOMP] * colFilt[m][BCOMP];
-                  sumA += src[k][ACOMP] * rowFilt[n][ACOMP] * colFilt[m][ACOMP];
-               }
+               GLint k = (j + m) * srcWidth + i + n;
+               sumR += src[k][RCOMP] * rowFilt[n][RCOMP] * colFilt[m][RCOMP];
+               sumG += src[k][GCOMP] * rowFilt[n][GCOMP] * colFilt[m][GCOMP];
+               sumB += src[k][BCOMP] * rowFilt[n][BCOMP] * colFilt[m][BCOMP];
+               sumA += src[k][ACOMP] * rowFilt[n][ACOMP] * colFilt[m][ACOMP];
             }
          }
-         dest[i][RCOMP] = sumR;
-         dest[i][GCOMP] = sumG;
-         dest[i][BCOMP] = sumB;
-         dest[i][ACOMP] = sumA;
+         dest[j * dstWidth + i][RCOMP] = sumR;
+         dest[j * dstWidth + i][GCOMP] = sumG;
+         dest[j * dstWidth + i][BCOMP] = sumB;
+         dest[j * dstWidth + i][ACOMP] = sumA;
       }
    }
-#endif
 }
 
 
@@ -349,7 +358,7 @@ convolve_sep_constant(GLint srcWidth, GLint srcHeight,
    const GLint halfFilterWidth = filterWidth / 2;
    const GLint halfFilterHeight = filterHeight / 2;
    GLint i, j, n, m;
-#if 0
+
    for (j = 0; j < srcHeight; j++) {
       for (i = 0; i < srcWidth; i++) {
          GLfloat sumR = 0.0;
@@ -358,29 +367,31 @@ convolve_sep_constant(GLint srcWidth, GLint srcHeight,
          GLfloat sumA = 0.0;
          for (m = 0; m < filterHeight; m++) {
             for (n = 0; n < filterWidth; n++) {
-               if (i + n < halfFilterWidth ||
-                   i + n - halfFilterWidth >= srcWidth) {
+               const GLint is = i + n - halfFilterWidth;
+               const GLint js = j + m - halfFilterHeight;
+               if (is < 0 || is >= srcWidth ||
+                   js < 0 || js >= srcHeight) {
                   sumR += borderColor[RCOMP] * rowFilt[n][RCOMP] * colFilt[m][RCOMP];
                   sumG += borderColor[GCOMP] * rowFilt[n][GCOMP] * colFilt[m][GCOMP];
                   sumB += borderColor[BCOMP] * rowFilt[n][BCOMP] * colFilt[m][BCOMP];
                   sumA += borderColor[ACOMP] * rowFilt[n][ACOMP] * colFilt[m][ACOMP];
                }
                else {
-                  const GLint k = m * srcWidth + i + n - halfFilterWidth;
+                  GLint k = js * srcWidth + is;
                   sumR += src[k][RCOMP] * rowFilt[n][RCOMP] * colFilt[m][RCOMP];
                   sumG += src[k][GCOMP] * rowFilt[n][GCOMP] * colFilt[m][GCOMP];
                   sumB += src[k][BCOMP] * rowFilt[n][BCOMP] * colFilt[m][BCOMP];
                   sumA += src[k][ACOMP] * rowFilt[n][ACOMP] * colFilt[m][ACOMP];
                }
+
             }
          }
-         dest[i][RCOMP] = sumR;
-         dest[i][GCOMP] = sumG;
-         dest[i][BCOMP] = sumB;
-         dest[i][ACOMP] = sumA;
+         dest[j * srcWidth + i][RCOMP] = sumR;
+         dest[j * srcWidth + i][GCOMP] = sumG;
+         dest[j * srcWidth + i][BCOMP] = sumB;
+         dest[j * srcWidth + i][ACOMP] = sumA;
       }
    }
-#endif
 }
 
 
@@ -404,33 +415,28 @@ convolve_sep_replicate(GLint srcWidth, GLint srcHeight,
          GLfloat sumA = 0.0;
          for (m = 0; m < filterHeight; m++) {
             for (n = 0; n < filterWidth; n++) {
-               if (i + n < halfFilterWidth) {
-                  const GLint k = m * srcWidth + 0;
-                  sumR += src[k][RCOMP] * rowFilt[n][RCOMP] * colFilt[m][RCOMP];
-                  sumG += src[k][GCOMP] * rowFilt[n][GCOMP] * colFilt[m][GCOMP];
-                  sumB += src[k][BCOMP] * rowFilt[n][BCOMP] * colFilt[m][BCOMP];
-                  sumA += src[k][ACOMP] * rowFilt[n][ACOMP] * colFilt[m][ACOMP];
-               }
-               else if (i + n - halfFilterWidth >= srcWidth) {
-                  const GLint k = m * srcWidth + srcWidth - 1;
-                  sumR += src[k][RCOMP] * rowFilt[n][RCOMP] * colFilt[m][RCOMP];
-                  sumG += src[k][GCOMP] * rowFilt[n][GCOMP] * colFilt[m][GCOMP];
-                  sumB += src[k][BCOMP] * rowFilt[n][BCOMP] * colFilt[m][BCOMP];
-                  sumA += src[k][ACOMP] * rowFilt[n][ACOMP] * colFilt[m][ACOMP];
-               }
-               else {
-                  const GLint k = m * srcWidth + i + n - halfFilterWidth;
-                  sumR += src[k][RCOMP] * rowFilt[n][RCOMP] * colFilt[m][RCOMP];
-                  sumG += src[k][GCOMP] * rowFilt[n][GCOMP] * colFilt[m][GCOMP];
-                  sumB += src[k][BCOMP] * rowFilt[n][BCOMP] * colFilt[m][BCOMP];
-                  sumA += src[k][ACOMP] * rowFilt[n][ACOMP] * colFilt[m][ACOMP];
-               }
+               GLint is = i + n - halfFilterWidth;
+               GLint js = j + m - halfFilterHeight;
+               GLint k;
+               if (is < 0)
+                  is = 0;
+               else if (is >= srcWidth)
+                  is = srcWidth - 1;
+               if (js < 0)
+                  js = 0;
+               else if (js >= srcHeight)
+                  js = srcHeight - 1;
+               k = js * srcWidth + is;
+               sumR += src[k][RCOMP] * rowFilt[n][RCOMP] * colFilt[m][RCOMP];
+               sumG += src[k][GCOMP] * rowFilt[n][GCOMP] * colFilt[m][GCOMP];
+               sumB += src[k][BCOMP] * rowFilt[n][BCOMP] * colFilt[m][BCOMP];
+               sumA += src[k][ACOMP] * rowFilt[n][ACOMP] * colFilt[m][ACOMP];
             }
          }
-         dest[i][RCOMP] = sumR;
-         dest[i][GCOMP] = sumG;
-         dest[i][BCOMP] = sumB;
-         dest[i][ACOMP] = sumA;
+         dest[j * srcWidth + i][RCOMP] = sumR;
+         dest[j * srcWidth + i][GCOMP] = sumG;
+         dest[j * srcWidth + i][BCOMP] = sumB;
+         dest[j * srcWidth + i][ACOMP] = sumA;
       }
    }
 }
@@ -447,7 +453,7 @@ _mesa_convolve_1d_image(const GLcontext *ctx, GLsizei *width,
                             ctx->Convolution1D.Width,
                             (const GLfloat (*)[4]) ctx->Convolution1D.Filter,
                             (GLfloat (*)[4]) dstImage);
-         *width -= (ctx->Convolution1D.Width - 1);
+         *width = *width - (MAX2(ctx->Convolution1D.Width, 1) - 1);
          break;
       case GL_CONSTANT_BORDER:
          convolve_1d_constant(*width, (const GLfloat (*)[4]) srcImage,
@@ -480,8 +486,8 @@ _mesa_convolve_2d_image(const GLcontext *ctx, GLsizei *width, GLsizei *height,
                             ctx->Convolution2D.Height,
                             (const GLfloat (*)[4]) ctx->Convolution2D.Filter,
                             (GLfloat (*)[4]) dstImage);
-         *width = *width - (ctx->Convolution2D.Width - 1);
-         *height = *height - (ctx->Convolution2D.Height - 1);
+         *width = *width - (MAX2(ctx->Convolution2D.Width, 1) - 1);
+         *height = *height - (MAX2(ctx->Convolution2D.Height, 1) - 1);
          break;
       case GL_CONSTANT_BORDER:
          convolve_2d_constant(*width, *height,
@@ -518,19 +524,19 @@ _mesa_convolve_sep_image(const GLcontext *ctx,
       case GL_REDUCE:
          convolve_sep_reduce(*width, *height,
                              (const GLfloat (*)[4]) srcImage,
-                             ctx->Convolution2D.Width,
-                             ctx->Convolution2D.Height,
+                             ctx->Separable2D.Width,
+                             ctx->Separable2D.Height,
                              (const GLfloat (*)[4]) rowFilter,
                              (const GLfloat (*)[4]) colFilter,
                              (GLfloat (*)[4]) dstImage);
-         *width = *width - (ctx->Convolution2D.Width - 1);
-         *height = *height - (ctx->Convolution2D.Height - 1);
+         *width = *width - (MAX2(ctx->Separable2D.Width, 1) - 1);
+         *height = *height - (MAX2(ctx->Separable2D.Height, 1) - 1);
          break;
       case GL_CONSTANT_BORDER:
          convolve_sep_constant(*width, *height,
                                (const GLfloat (*)[4]) srcImage,
-                               ctx->Convolution2D.Width,
-                               ctx->Convolution2D.Height,
+                               ctx->Separable2D.Width,
+                               ctx->Separable2D.Height,
                                (const GLfloat (*)[4]) rowFilter,
                                (const GLfloat (*)[4]) colFilter,
                                (GLfloat (*)[4]) dstImage,
@@ -539,8 +545,8 @@ _mesa_convolve_sep_image(const GLcontext *ctx,
       case GL_REPLICATE_BORDER:
          convolve_sep_replicate(*width, *height,
                                 (const GLfloat (*)[4]) srcImage,
-                                ctx->Convolution2D.Width,
-                                ctx->Convolution2D.Height,
+                                ctx->Separable2D.Width,
+                                ctx->Separable2D.Height,
                                 (const GLfloat (*)[4]) rowFilter,
                                 (const GLfloat (*)[4]) colFilter,
                                 (GLfloat (*)[4]) dstImage);
