@@ -234,12 +234,12 @@ static void init_checkers( void )
 #define CUBE_TEX_SIZE 64
    GLubyte image[CUBE_TEX_SIZE][CUBE_TEX_SIZE][3];
    static const GLubyte colors[6][3] = {
-      { 255,   0,   0 },
-      {   0, 255, 255 },
-      {   0, 255,   0 },
-      { 255,   0, 255 },
-      {   0,   0, 255 },
-      { 255, 255,   0 }
+      { 255,   0,   0 },	/* face 0 - red */
+      {   0, 255, 255 },	/* face 1 - cyan */
+      {   0, 255,   0 },	/* face 2 - green */
+      { 255,   0, 255 },	/* face 3 - purple */
+      {   0,   0, 255 },	/* face 4 - blue */
+      { 255, 255,   0 }		/* face 5 - yellow */
    };
    static const GLenum targets[6] = {
       GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,
