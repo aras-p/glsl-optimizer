@@ -5025,6 +5025,28 @@ typedef void (APIENTRY * PFNGLACTIVESTENCILFACEEXTPROC) (GLenum face);
 #define GL_ATI_texture_env_combine3 1
 #endif
 
+
+#ifndef GL_ARB_vertex_buffer_object
+#define GL_ARB_vertex_buffer_object 1
+/* large enough to contain any pointer (32 or 64 bit): */
+typedef long int GLsizeiptrARB;
+typedef long int GLintptrARB;
+
+extern void glBindBufferARB(GLenum target, GLuint buffer);
+extern void glDeleteBuffersARB(GLsizei n, const GLuint * buffer);
+extern void glGenBuffersARB(GLsizei n, GLuint * buffer);
+extern GLboolean glIsBufferARB(GLuint buffer);
+extern void glBufferDataARB(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage);
+extern void glBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data);
+extern void glGetBufferSubDataARB(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data);
+extern void glMapBufferARB(GLenum target, GLenum access);
+extern GLboolean glUnmapBufferARB(GLenum target);
+extern void glGetBufferParameterivARB(GLenum target, GLenum pname, GLint * params);
+extern void glGetBufferPointervARB(GLenum target, GLenum pname, GLvoid ** params);
+
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif
