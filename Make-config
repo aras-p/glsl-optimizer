@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.6 1999/10/15 22:00:07 brianp Exp $
+# $Id: Make-config,v 1.7 1999/10/20 11:45:39 holger Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=1
@@ -491,7 +491,7 @@ linux-386:
 	"CFLAGS = -O2 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DUSE_X86_ASM -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-386-elf:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -503,7 +503,7 @@ linux-386-elf:
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DUSE_X86_ASM -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-386-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -515,7 +515,7 @@ linux-386-glide:
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DSHM -DFX -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-386-glide-mits:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -527,7 +527,7 @@ linux-386-glide-mits:
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DFX -D_REENTRANT -DMITS -DUSE_X86_ASM -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-386-opt-V2-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -539,7 +539,7 @@ linux-386-opt-V2-glide:
 	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DFX -DFX_V2 -DUSE_X86_ASM -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include"\
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-386-opt-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -551,7 +551,7 @@ linux-386-opt-glide:
 	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DFX -DUSE_X86_ASM -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -L/usr/local/glide/lib -lglide2x -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-3dnow:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -569,7 +569,7 @@ linux-3dnow:
 	X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
 	X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
 	X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
-	X86/3dnow_norm_raw.S"
+	X86/3dnow_norm_raw.S X86/vertex.S X86/vertex_3dnow.S" 
 
 linux-3dnow-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -587,7 +587,7 @@ linux-3dnow-glide:
 	X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
 	X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
 	X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
-	X86/3dnow_norm_raw.S \
+	X86/3dnow_norm_raw.S X86/vertex.S X86/vertex_3dnow.S \
 	FX/X86/fx_3dnow_fastpath.S"
 
 
@@ -601,7 +601,8 @@ linux-386-pthread-shared-glide:
 	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS -DFX -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../mklib.glide" \
 	"XLIBS = -L/usr/X11/lib -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread" \
-	"ASM_SOURCES = asm_386.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S \
+	X86/mmx_blend.S X86/vertex.S"
 
 # Contributed by Uwe_Maurer@t-online.de
 linux-ggi:
@@ -626,7 +627,7 @@ linux-386-ggi:
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DUSE_X86_ASM -DGGI -DCDECL=" \
 	"MAKELIB = ../bin/mklib.ggi" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lggi" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 # Linux on Alpha (based on email from John Ferguson ferguson@viz.tamu.edu)
 linux-alpha:
@@ -689,7 +690,7 @@ linux-386-pthread:
 	"CFLAGS = -O2 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R\6/include -DSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread" \
-	"ASM_SOURCES = asm_386.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 # Contributed by John Gotts
 linux-386-pthread-shared:
@@ -701,7 +702,7 @@ linux-386-pthread-shared:
 	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/us\r/X11R6/include -DSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread" \
-	"ASM_SOURCES = asm_386.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-sparc:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -846,7 +847,7 @@ os2-x11:
 	"CFLAGS = -Zmt -O3 -m486 -funroll-loops -Wall -Wno-unused -ansi -pedantic -ffast-math -DUSE_X86_ASM -D_SVID_SOURCE -D_BSD_SOURCE -I$(X11ROOT)/XFree86/include" \
 	"MAKELIB = ..\\bin\\mklib-emx.cmd " \
 	"XLIBS = -Zmt -Zcrtdll -Zexe -L$(X11ROOT)/XFree86/lib -lXt -lX11" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 osf1:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1255,7 +1256,7 @@ linux-debug:
 	"CFLAGS = -g -ansi -pedantic -Wall -DSHM -DDEBUG -DSVGA -DFX -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM_not -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"XLIBS = -L/usr/local/glide/lib -lglide2x -ltexus -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-elf-debug:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1267,7 +1268,7 @@ linux-elf-debug:
 	"CFLAGS = -g -ansi -pedantic -Wall -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DFX -DDEBUG -I/usr/local/glide/include -I/usr/include/glide" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/local/glide/lib -lglide2x -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -L/usr/local/glide/lib -lglide2x -lm" \
-	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
+	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 # for profiling on Linux systems
 linux-prof:
@@ -1286,4 +1287,5 @@ linux-prof:
 	X86/3dnow_xform_raw3.S X86/3dnow_xform_raw4.S \
 	X86/3dnow_xform_masked1.S X86/3dnow_xform_masked2.S \
 	X86/3dnow_xform_masked3.S X86/3dnow_xform_masked4.S \
-	X86/3dnow_norm_raw.S"
+	X86/3dnow_norm_raw.S X86/vertex.S X86/vertex_3dnow.S \
+	FX/X86/fx_3dnow_fastpath.S"
