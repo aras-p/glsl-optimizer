@@ -1,8 +1,6 @@
 # -*-makefile-*-
 
 TOP = ../../../../..
-include $(TOP)/configs/current
-
 
 MESA_MODULES = $(TOP)/src/mesa/mesa.a
 
