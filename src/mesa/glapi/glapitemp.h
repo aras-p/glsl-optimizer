@@ -69,7 +69,6 @@
 #error RETURN_DISPATCH must be defined
 #endif
 
-GLAPI void GLAPIENTRY gl__unused413(void);  /* silence warning */
 
 KEYWORD1 void KEYWORD2 NAME(NewList)(GLuint list, GLenum mode)
 {

@@ -129,7 +129,6 @@ class PrintGlOffsets(gl_XML.FilterGLAPISpecBase):
 #error RETURN_DISPATCH must be defined
 #endif
 
-GLAPI void GLAPIENTRY gl__unused413(void);  /* silence warning */
 """
 		return
 

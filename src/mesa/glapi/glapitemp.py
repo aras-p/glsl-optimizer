@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# $Id: glapitemp.py,v 1.6 2004/06/29 19:08:20 idr Exp $
+# $Id: glapitemp.py,v 1.7 2004/10/02 22:47:48 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -84,7 +84,6 @@ def PrintHead():
 #error RETURN_DISPATCH must be defined
 #endif
 
-GLAPI void GLAPIENTRY gl__unused413(void);  /* silence warning */
 """
 
 #enddef
