@@ -195,11 +195,15 @@ static void printhelp(void)
 
 static void drawbase(void)
 {
+  static const GLfloat amb[4] = { 1, .5, 0.2, 1 };
+  static const GLfloat diff[4] = { 1, .4, 0.2, 1 };
   int i,j;
   float x,y,dx,dy;
 
   glBindTexture(GL_TEXTURE_2D,t1id);
 
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, amb);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diff);
   dx=BASESIZE/BASERES;
   dy=-BASESIZE/BASERES;
   for(y=BASESIZE/2.0,j=0;j<BASERES;y+=dy,j++) {
@@ -219,8 +223,13 @@ static void drawbase(void)
 
 static void drawteapot(void)
 {
+  static const GLfloat amb[4] = {  0.2, 0.2, 0.2, 1 };
+  static const GLfloat diff[4] = { 0.8, 0.3, 0.5, 1 };
   static float xrot=0.0;
   static float zrot=0.0;
+
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, amb);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diff);
 
   glPushMatrix();
   glRotatef(lightalpha,0.0,0.0,1.0);
@@ -421,10 +430,25 @@ static void inittextures(void)
   glGenTextures(1,&t2id);
   glBindTexture(GL_TEXTURE_2D,t2id);
 
+  glPixelTransferf(GL_RED_SCALE, 0.75);
+  glPixelTransferf(GL_RED_BIAS, 0.25);
+  glPixelTransferf(GL_GREEN_SCALE, 0.75);
+  glPixelTransferf(GL_GREEN_BIAS, 0.25);
+  glPixelTransferf(GL_BLUE_SCALE, 0.75);
+  glPixelTransferf(GL_BLUE_BIAS, 0.25);
+
   if (!LoadRGBMipmaps("../images/bw.rgb", GL_RGB)) {
     fprintf(stderr,"Error reading a texture.\n");
     exit(-1);
   }
+
+  glPixelTransferf(GL_RED_SCALE, 1.0);
+  glPixelTransferf(GL_RED_BIAS, 0.0);
+  glPixelTransferf(GL_GREEN_SCALE, 1.0);
+  glPixelTransferf(GL_GREEN_BIAS, 0.0);
+  glPixelTransferf(GL_BLUE_SCALE, 1.0);
+  glPixelTransferf(GL_BLUE_BIAS, 0.0);
+
 
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
@@ -437,17 +461,26 @@ static void inittextures(void)
 
 static void initlight(void)
 {
-  float lamb[4]={0.2,0.2,0.2,1.0};
-  float lspec[4]={1.0,1.0,1.0,1.0};
+  float matamb[4] ={0.5, 0.5, 0.5, 1.0};
+  float matdiff[4]={0.9, 0.2, 0.2, 1.0};
+  float matspec[4]={1.0,1.0,1.0,1.0};
+
+  float lamb[4] ={1.5, 1.5, 1.5, 1.0};
+  float ldiff[4]={1.0, 1.0, 1.0, 1.0};
+  float lspec[4]={1.0, 1.0, 1.0, 1.0};
 
   glLightf(GL_LIGHT0,GL_SPOT_CUTOFF,70.0);
   glLightf(GL_LIGHT0,GL_SPOT_EXPONENT,20.0);
   glLightfv(GL_LIGHT0,GL_AMBIENT,lamb);
+  glLightfv(GL_LIGHT0,GL_DIFFUSE,ldiff);
   glLightfv(GL_LIGHT0,GL_SPECULAR,lspec);
 
-  glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,20.0);
-  glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,lspec);
+  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 15.0);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, matdiff);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matspec);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, matamb);
 
+  glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lamb);
   glEnable(GL_LIGHT0);
 }
 
