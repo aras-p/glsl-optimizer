@@ -1,4 +1,3 @@
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -221,7 +220,7 @@ _swrast_CopyColorTable( GLcontext *ctx,
 
 
 /*
- * Texture fallbacks, Brian Paul.  Could also live in a new module
+ * Texture fallbacks.  Could also live in a new module
  * with the rest of the texture store fallbacks?
  */
 extern void
