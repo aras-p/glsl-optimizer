@@ -749,7 +749,7 @@ static void TAG(line)( GLcontext *ctx, GLuint e0, GLuint e1 )
 static void TAG(points)( GLcontext *ctx, GLuint first, GLuint last )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
-   int i;
+   GLuint i;
    LOCAL_VARS(1);
 
    if (VB->Elts == 0) {
