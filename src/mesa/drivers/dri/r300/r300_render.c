@@ -257,13 +257,20 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
    
    /* Update texture state - needs to be done only when actually changed..
       All the time for now.. */
-   /* Flush state - make sure command buffer is nice and large */
-   //r300Flush(ctx);
 
 
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
+   #if 1 /* we need this, somehow */
+   /* Flush state - make sure command buffer is nice and large */
+   r300Flush(ctx);
+   /* Make sure we have enough space */
+   #else 0
+   /* Count is very imprecize, but should be good upper bound */
+   r300EnsureCmdBufSpace(rmesa, rmesa->hw.max_state_size + 4+2+30
+   	+VB->PrimitiveCount*(1+8)+VB->Count*4*rmesa->state.texture.tc_count+4, __FUNCTION__);
+   #endif
      
    /* needed before starting 3d operation .. */
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
@@ -285,6 +292,7 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
       
    /* Magic register - note it is right after 20b0 */
 
+   
    if(rmesa->state.texture.tc_count>0){
    	reg_start(0x20b4,0);
 		e32(0x0000000c);
