@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.65 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: teximage.c,v 1.66 2000/12/08 18:09:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1084,7 +1084,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
    if (border != 0 && border != 1) {
       if (!isProxy) {
          char message[100];
-         sprintf(message, "glTexImage%dD(border)", dimensions);
+         sprintf(message, "glTexImage%dD(border=%d)", dimensions, border);
          gl_error(ctx, GL_INVALID_VALUE, message);
       }
       return GL_TRUE;
@@ -1095,7 +1095,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
        || logbase2( width - 2 * border ) < 0) {
       if (!isProxy) {
          char message[100];
-         sprintf(message, "glTexImage%dD(width)", dimensions);
+         sprintf(message, "glTexImage%dD(width=%d)", dimensions, width);
          gl_error(ctx, GL_INVALID_VALUE, message);
       }
       return GL_TRUE;
@@ -1107,7 +1107,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
           || logbase2( height - 2 * border ) < 0) {
          if (!isProxy) {
             char message[100];
-            sprintf(message, "glTexImage%dD(height)", dimensions);
+            sprintf(message, "glTexImage%dD(height=%d)", dimensions, height);
             gl_error(ctx, GL_INVALID_VALUE, message);
          }
          return GL_TRUE;
@@ -1130,7 +1130,9 @@ texture_error_check( GLcontext *ctx, GLenum target,
       if (depth < 2 * border || depth > 2 + ctx->Const.MaxTextureSize
           || logbase2( depth - 2 * border ) < 0) {
          if (!isProxy) {
-            gl_error( ctx, GL_INVALID_VALUE, "glTexImage3D(depth)" );
+            char message[100];
+            sprintf(message, "glTexImage3D(depth=%d)", depth );
+            gl_error( ctx, GL_INVALID_VALUE, message );
          }
          return GL_TRUE;
       }
@@ -1140,7 +1142,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
    if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
       if (!isProxy) {
          char message[100];
-         sprintf(message, "glTexImage%dD(level)", dimensions);
+         sprintf(message, "glTexImage%dD(level=%d)", dimensions, level);
          gl_error(ctx, GL_INVALID_VALUE, message);
       }
       return GL_TRUE;
@@ -1150,7 +1152,8 @@ texture_error_check( GLcontext *ctx, GLenum target,
    if (iformat < 0) {
       if (!isProxy) {
          char message[100];
-         sprintf(message, "glTexImage%dD(internalFormat)", dimensions);
+         sprintf(message, "glTexImage%dD(internalFormat=0x%x)", dimensions,
+                 internalFormat);
          gl_error(ctx, GL_INVALID_VALUE, message);
       }
       return GL_TRUE;
@@ -1224,25 +1227,27 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
    }
 
    if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
-      gl_error(ctx, GL_INVALID_ENUM, "glTexSubImage2D(level)");
+      char message[100];
+      sprintf(message, "glTexSubImage2D(level=%d)", level);
+      gl_error(ctx, GL_INVALID_ENUM, message);
       return GL_TRUE;
    }
 
    if (width < 0) {
       char message[100];
-      sprintf(message, "glTexSubImage%dD(width)", dimensions);
+      sprintf(message, "glTexSubImage%dD(width=%d)", dimensions, width);
       gl_error(ctx, GL_INVALID_VALUE, message);
       return GL_TRUE;
    }
    if (height < 0 && dimensions > 1) {
       char message[100];
-      sprintf(message, "glTexSubImage%dD(height)", dimensions);
+      sprintf(message, "glTexSubImage%dD(height=%d)", dimensions, height);
       gl_error(ctx, GL_INVALID_VALUE, message);
       return GL_TRUE;
    }
    if (depth < 0 && dimensions > 2) {
       char message[100];
-      sprintf(message, "glTexSubImage%dD(depth)", dimensions);
+      sprintf(message, "glTexSubImage%dD(depth=%d)", dimensions, depth);
       gl_error(ctx, GL_INVALID_VALUE, message);
       return GL_TRUE;
    }
@@ -1340,7 +1345,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
    if (width < 2 * border || width > 2 + ctx->Const.MaxTextureSize
        || logbase2( width - 2 * border ) < 0) {
       char message[100];
-      sprintf(message, "glCopyTexImage%dD(width)", dimensions);
+      sprintf(message, "glCopyTexImage%dD(width=%d)", dimensions, width);
       gl_error(ctx, GL_INVALID_VALUE, message);
       return GL_TRUE;
    }
@@ -1350,7 +1355,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
       if (height < 2 * border || height > 2 + ctx->Const.MaxTextureSize
           || logbase2( height - 2 * border ) < 0) {
          char message[100];
-         sprintf(message, "glCopyTexImage%dD(height)", dimensions);
+         sprintf(message, "glCopyTexImage%dD(height=%d)", dimensions, height);
          gl_error(ctx, GL_INVALID_VALUE, message);
          return GL_TRUE;
       }
@@ -1368,7 +1373,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
    /* Level */
    if (level<0 || level>=ctx->Const.MaxTextureLevels) {
       char message[100];
-      sprintf(message, "glCopyTexImage%dD(level)", dimensions);
+      sprintf(message, "glCopyTexImage%dD(level=%d)", dimensions, level);
       gl_error(ctx, GL_INVALID_VALUE, message);
       return GL_TRUE;
    }
@@ -1424,20 +1429,20 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
 
    if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
       char message[100];
-      sprintf(message, "glCopyTexSubImage%dD(level)", dimensions);
+      sprintf(message, "glCopyTexSubImage%dD(level=%d)", dimensions, level);
       gl_error(ctx, GL_INVALID_VALUE, message);
       return GL_TRUE;
    }
 
    if (width < 0) {
       char message[100];
-      sprintf(message, "glCopyTexSubImage%dD(width)", dimensions );
+      sprintf(message, "glCopyTexSubImage%dD(width=%d)", dimensions, width);
       gl_error(ctx, GL_INVALID_VALUE, message);
       return GL_TRUE;
    }
    if (dimensions > 1 && height < 0) {
       char message[100];
-      sprintf(message, "glCopyTexSubImage%dD(height)", dimensions );
+      sprintf(message, "glCopyTexSubImage%dD(height=%d)", dimensions, height);
       gl_error(ctx, GL_INVALID_VALUE, message);
       return GL_TRUE;
    }
@@ -1452,7 +1457,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
 
    if (xoffset < -((GLint)teximage->Border)) {
       char message[100];
-      sprintf(message, "glCopyTexSubImage%dD(xoffset)", dimensions);
+      sprintf(message, "glCopyTexSubImage%dD(xoffset=%d)", dimensions, xoffset);
       gl_error(ctx, GL_INVALID_VALUE, message);
       return GL_TRUE;
    }
@@ -1465,7 +1470,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
    if (dimensions > 1) {
       if (yoffset < -((GLint)teximage->Border)) {
          char message[100];
-         sprintf(message, "glCopyTexSubImage%dD(yoffset)", dimensions);
+         sprintf(message, "glCopyTexSubImage%dD(yoffset=%d)", dimensions, yoffset);
          gl_error(ctx, GL_INVALID_VALUE, message);
          return GL_TRUE;
       }
