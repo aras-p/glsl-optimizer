@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.26 2000/06/05 14:40:11 brianp Exp $
+# $Id: Makefile.X11,v 1.27 2000/06/27 17:37:17 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.3
@@ -548,7 +548,9 @@ DEMO_FILES =	\
 	$(DIRECTORY)/demos/Makefile*		\
 	$(DIRECTORY)/demos/descrip.mms		\
 	$(DIRECTORY)/demos/*.[ch]		\
+	$(DIRECTORY)/demos/*.cxx		\
 	$(DIRECTORY)/demos/*.dat		\
+	$(DIRECTORY)/demos/README		\
 	$(DIRECTORY)/xdemos/Makefile*		\
 	$(DIRECTORY)/xdemos/descrip.mms		\
 	$(DIRECTORY)/xdemos/*.[cf]		\
@@ -559,7 +561,6 @@ DEMO_FILES =	\
 	$(DIRECTORY)/samples/README		\
 	$(DIRECTORY)/samples/*.c		\
 	$(DIRECTORY)/samples/*.dja		\
-	$(DIRECTORY)/3Dfx			\
 	$(DIRECTORY)/mtdemos			\
 	$(DIRECTORY)/ggi
 
