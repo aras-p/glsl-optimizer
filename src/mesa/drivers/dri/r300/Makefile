@@ -33,6 +33,9 @@ DRIVER_SOURCES = \
 		 r300_state.c \
 		 r300_render.c \
 		 r300_lib.c \
+		 r300_texmem.c \
+		 r300_tex.c \
+		 r300_texstate.c \
 		 \
 		 r200_context.c \
 		 r200_ioctl.c \
@@ -51,6 +54,7 @@ DRIVER_SOURCES = \
 		 r200_vtxfmt_c.c \
 		 r200_vtxfmt_sse.c \
 		 r200_vtxfmt_x86.c
+
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 

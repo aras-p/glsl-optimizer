@@ -458,12 +458,14 @@ static void r300_render_tex_primitive(r300ContextPtr rmesa,
        	
    type=r300_get_primitive_type(rmesa, ctx, start, end, prim);
 		
+   		#if 1
 		fprintf(stderr,"ObjPtr: size=%d stride=%d\n", 
 			VB->ObjPtr->size, VB->ObjPtr->stride);
 		fprintf(stderr,"ColorPtr[0]: size=%d stride=%d\n", 
 			VB->ColorPtr[0]->size, VB->ColorPtr[0]->stride);
 		fprintf(stderr,"TexCoordPtr[0]: size=%d stride=%d\n", 
 			VB->TexCoordPtr[0]->size, VB->TexCoordPtr[0]->stride);
+		#endif
    
    if(type<0)return;
 
@@ -508,16 +510,21 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    AOS_DATA vb_arrays[3];
    /* Only do 2d textures */
    struct gl_texture_object *to=ctx->Texture.Unit[0].Current2D;
-   radeonScreenPtr rsp=rmesa->radeon.radeonScreen;
+   r300TexObjPtr t=to->DriverData;
    LOCAL_VARS
 	
+   
+   /* Update texture state - needs to be done only when actually changed..
+      All the time for now.. */
+   r300UpdateTextureState(ctx);
    
    /* Flush state - make sure command buffer is nice and large */
    r300Flush(ctx);
    
    //fprintf(stderr, "You can enable texture drawing in %s:%s \n", __FILE__, __FUNCTION__);
    //return GL_TRUE;
-   
+
+
 	if (RADEON_DEBUG == DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
@@ -549,8 +556,6 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    vb_arrays[2].ncomponents=4;
    vb_arrays[2].reg=REG_TEX0;
 
-   /* Fill texture with some random data */
-   for(i=0;i<100000;i++)((int *)(rsp->gartTextures.map))[i]=rand();
      
    /* needed before starting 3d operation .. */
    reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
@@ -578,8 +583,16 @@ static GLboolean r300_run_tex_render(GLcontext *ctx,
    SINGLE_TEXTURE_PIPELINE.vertex_shader.unknown2.body.f[2]=1.0;
    SINGLE_TEXTURE_PIPELINE.vertex_shader.unknown2.body.f[3]=0.0;
 
-   /* Put it in the beginning of texture memory */
-   SINGLE_TEXTURE_PIPELINE.texture_unit[0].offset=rsp->gartTextures.handle;
+   /* Use actual texture offset */
+   
+   SINGLE_TEXTURE_PIPELINE.texture_unit[0].offset=rmesa->radeon.radeonScreen->fbLocation+t->offset;
+   #if 0
+   SINGLE_TEXTURE_PIPELINE.texture_unit[0].format=t->format;
+   SINGLE_TEXTURE_PIPELINE.texture_unit[0].size=t->size;
+   #endif
+   SINGLE_TEXTURE_PIPELINE.texture_unit[0].filter=t->filter;
+   SINGLE_TEXTURE_PIPELINE.texture_unit[0].unknown1=t->pitch; /* Unknown 1 is pitch ! */
+   SINGLE_TEXTURE_PIPELINE.texture_unit[0].filter=t->filter;
    
    
    /* Upload texture, a hack, really  we can do a lot better */
@@ -644,6 +657,7 @@ reg_start(R300_RS_INTERP_0,7);
    reg_start(0x4f18,0);
 	e32(0x00000003);
          
+//   exit(-1);
    fprintf(stderr, "\n");
    return GL_FALSE;
 }
@@ -671,7 +685,7 @@ static GLboolean r300_run_render(GLcontext *ctx,
         if(ctx->Texture.Unit[0].Enabled)
         	return r300_run_tex_render(ctx, stage);
 		else
-        	return r300_run_flat_render(ctx, stage);
+        	return r300_run_vb_flat_render(ctx, stage);
    #else
 	return GL_TRUE;
    #endif

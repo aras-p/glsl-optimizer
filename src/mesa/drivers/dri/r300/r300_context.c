@@ -57,6 +57,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_cmdbuf.h"
 #include "r300_state.h"
 #include "r300_ioctl.h"
+#include "r300_tex.h"
 
 #include "vblank.h"
 #include "utils.h"
@@ -147,7 +148,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	struct dd_function_table functions;
 	r300ContextPtr r300;
 	GLcontext *ctx;
-	int tcl_mode;
+	int tcl_mode, i;
 
 	assert(glVisual);
 	assert(driContextPriv);
@@ -171,7 +172,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	_mesa_init_driver_functions(&functions);
 	r300InitIoctlFuncs(&functions);
 	r300InitStateFuncs(&functions);
-	//r200InitTextureFuncs(&functions);
+	r300InitTextureFuncs(&functions);
 
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv, sharedContextPrivate)) {
@@ -180,6 +181,35 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	}
 
 	/* Init r300 context data */
+	r300->dma.buf0_address = r300->radeon.radeonScreen->buffers->list[0].address;
+
+	(void)memset(r300->texture_heaps, 0, sizeof(r300->texture_heaps));
+	make_empty_list(&r300->swapped);
+
+	r300->nr_heaps = 1 /* screen->numTexHeaps */ ;
+	assert(r300->nr_heaps < R200_NR_TEX_HEAPS);
+	for (i = 0; i < r300->nr_heaps; i++) {
+		r300->texture_heaps[i] = driCreateTextureHeap(i, r300,
+							       screen->
+							       texSize[i], 12,
+							       RADEON_NR_TEX_REGIONS,
+							       (drmTextureRegionPtr)
+							       r300->radeon.sarea->
+							       tex_list[i],
+							       &r300->radeon.sarea->
+							       tex_age[i],
+							       &r300->swapped,
+							       sizeof
+							       (r300TexObj),
+							       (destroy_texture_object_t
+								*)
+							       r300DestroyTexObj);
+	}
+	r300->texture_depth = driQueryOptioni(&r300->radeon.optionCache,
+					       "texture_depth");
+	if (r300->texture_depth == DRI_CONF_TEXTURE_DEPTH_FB)
+		r300->texture_depth = (screen->cpp == 4) ?
+		    DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
 	/* Set the maximum texture size small enough that we can guarentee that
 	 * all texture units can bind a maximal texture and have them both in
@@ -239,8 +269,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 #if 0
 	/* plug in a few more device driver functions */
 	/* XXX these should really go right after _mesa_init_driver_functions() */
-	r200InitPixelFuncs(ctx);
-	r200InitSwtcl(ctx);
+	r300InitPixelFuncs(ctx);
+	r300InitSwtcl(ctx);
 #endif
 	TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 

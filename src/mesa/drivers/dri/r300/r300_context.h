@@ -66,6 +66,44 @@ static __inline__ uint32_t r300PackFloat32(float fl)
 	return u.u;
 }
 
+
+/************ DMA BUFFERS **************/
+
+/* Need refcounting on dma buffers:
+ */
+struct r300_dma_buffer {
+	int refcount;		/* the number of retained regions in buf */
+	drmBufPtr buf;
+};
+
+#define GET_START(rvb) (rmesa->radeon.radeonScreen->gart_buffer_offset +		\
+			(rvb)->address - rmesa->dma.buf0_address +	\
+			(rvb)->start)
+
+/* A retained region, eg vertices for indexed vertices.
+ */
+struct r300_dma_region {
+	struct r300_dma_buffer *buf;
+	char *address;		/* == buf->address */
+	int start, end, ptr;	/* offsets from start of buf */
+	int aos_start;
+	int aos_stride;
+	int aos_size;
+};
+
+struct r300_dma {
+	/* Active dma region.  Allocations for vertices and retained
+	 * regions come from here.  Also used for emitting random vertices,
+	 * these may be flushed by calling flush_current();
+	 */
+	struct r300_dma_region current;
+
+	void (*flush) (r300ContextPtr);
+
+	char *buf0_address;	/* start of buf[0], for index calcs */
+	GLuint nr_released_bufs;	/* flush after so many buffers released */
+};
+
        /* Texture related */
 
 #define TEX_0   0x1
@@ -74,8 +112,8 @@ static __inline__ uint32_t r300PackFloat32(float fl)
 #define TEX_3	0x8
 #define TEX_4	0x10
 #define TEX_5	0x20
-#define TEX_6	0x20
-#define TEX_7	0x20
+#define TEX_6	0x40
+#define TEX_7	0x80
 #define TEX_ALL 0xff
 
 typedef struct r300_tex_obj r300TexObj, *r300TexObjPtr;
@@ -114,6 +152,17 @@ struct r300_tex_obj {
 	GLboolean border_fallback;
 };
 
+struct r300_texture_env_state {
+	r300TexObjPtr texobj;
+	GLenum format;
+	GLenum envMode;
+};
+
+#define R300_MAX_TEXTURE_UNITS 6
+
+struct r300_texture_state {
+	struct r300_texture_env_state unit[R300_MAX_TEXTURE_UNITS];
+};
 
 /**
  * A block of hardware state.
@@ -402,6 +451,7 @@ struct r300_depthbuffer_state {
 
 struct r300_state {
 	struct r300_depthbuffer_state depth;
+	struct r300_texture_state texture;
 };
 
 
@@ -419,6 +469,38 @@ struct r300_context {
 	int elt_count;  /* size of the buffer for vertices */
 	int attrib_count; /* size of the buffer for vertex attributes.. Somehow it can be different ? */
 	
+
+	/* Vertex buffers
+	 */
+	#if 0 /* we'll need it later, but not now */
+	struct r300_ioctl ioctl;
+	#endif
+	struct r300_dma dma;
+	GLboolean save_on_next_unlock;
+
+	/* Texture object bookkeeping
+	 */
+	unsigned nr_heaps;
+	driTexHeap *texture_heaps[R200_NR_TEX_HEAPS];
+	driTextureObject swapped;
+	int texture_depth;
+	float initialMaxAnisotropy;
+
+	/* Clientdata textures;
+	 */
+	GLuint prefer_gart_client_texturing;
+
+	/* TCL stuff
+	 */
+	GLmatrix TexGenMatrix[R300_MAX_TEXTURE_UNITS];
+	GLboolean recheck_texgen[R300_MAX_TEXTURE_UNITS];
+	GLboolean TexGenNeedNormals[R300_MAX_TEXTURE_UNITS];
+	GLuint TexMatEnabled;
+	GLuint TexMatCompSel;
+	GLuint TexGenEnabled;
+	GLuint TexGenInputs;
+	GLuint TexGenCompSel;
+	GLmatrix tmpmat;
 };
 
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))

@@ -1,3 +1,4 @@
+/* $XFree86: xc/lib/GL/mesa/src/drv/r300/r300_tex.h,v 1.1 2002/10/30 12:51:53 alanh Exp $ */
 /*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
@@ -30,25 +31,21 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Keith Whitwell <keith@tungstengraphics.com>
- *   Nicolai Haehnle <prefect_@gmx.net>
  */
 
-#ifndef __R300_IOCTL_H__
-#define __R300_IOCTL_H__
+#ifndef __r300_TEX_H__
+#define __r300_TEX_H__
 
-#include "r300_context.h"
-#include "radeon_drm.h"
+#ifdef GLX_DIRECT_RENDERING
 
-extern GLuint r300GetMemoryOffsetMESA(__DRInativeDisplay * dpy, int scrn,
-				      const GLvoid * pointer);
+extern void r300UpdateTextureState(GLcontext * ctx);
 
-extern GLboolean r300IsGartMemory(r300ContextPtr rmesa, const GLvoid * pointer,
-				  GLint size);
+extern int r300UploadTexImages(r300ContextPtr rmesa, r300TexObjPtr t,
+			       GLuint face);
 
-extern GLuint r300GartOffsetFromVirtual(r300ContextPtr rmesa,
-					const GLvoid * pointer);
+extern void r300DestroyTexObj(r300ContextPtr rmesa, r300TexObjPtr t);
 
-extern void r300Flush(GLcontext * ctx);
-extern void r300InitIoctlFuncs(struct dd_function_table *functions);
+extern void r300InitTextureFuncs(struct dd_function_table *functions);
 
-#endif				/* __R300_IOCTL_H__ */
+#endif
+#endif				/* __r300_TEX_H__ */

@@ -46,6 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_ioctl.h"
 #include "r300_context.h"
 #include "r300_ioctl.h"
+#include "radeon_reg.h"
 #include "r300_reg.h"
 #include "r300_cmdbuf.h"
 
@@ -545,3 +546,65 @@ void r300DestroyCmdBuf(r300ContextPtr r300)
 	}
 }
 
+void r300EmitBlit(r300ContextPtr rmesa,
+		  GLuint color_fmt,
+		  GLuint src_pitch,
+		  GLuint src_offset,
+		  GLuint dst_pitch,
+		  GLuint dst_offset,
+		  GLint srcx, GLint srcy,
+		  GLint dstx, GLint dsty, GLuint w, GLuint h)
+{
+	drm_radeon_cmd_header_t *cmd;
+
+	if (RADEON_DEBUG & DEBUG_IOCTL)
+		fprintf(stderr,
+			"%s src %x/%x %d,%d dst: %x/%x %d,%d sz: %dx%d\n",
+			__FUNCTION__, src_pitch, src_offset, srcx, srcy,
+			dst_pitch, dst_offset, dstx, dsty, w, h);
+
+	assert((src_pitch & 63) == 0);
+	assert((dst_pitch & 63) == 0);
+	assert((src_offset & 1023) == 0);
+	assert((dst_offset & 1023) == 0);
+	assert(w < (1 << 16));
+	assert(h < (1 << 16));
+
+	cmd =
+	    (drm_radeon_cmd_header_t *) r200AllocCmdBuf(rmesa, 8 * sizeof(int),
+							__FUNCTION__);
+
+	cmd[0].header.cmd_type = RADEON_CMD_PACKET3;
+	cmd[1].i = R200_CP_CMD_BITBLT_MULTI | (5 << 16);
+	cmd[2].i = (RADEON_GMC_SRC_PITCH_OFFSET_CNTL |
+		    RADEON_GMC_DST_PITCH_OFFSET_CNTL |
+		    RADEON_GMC_BRUSH_NONE |
+		    (color_fmt << 8) |
+		    RADEON_GMC_SRC_DATATYPE_COLOR |
+		    RADEON_ROP3_S |
+		    RADEON_DP_SRC_SOURCE_MEMORY |
+		    RADEON_GMC_CLR_CMP_CNTL_DIS | RADEON_GMC_WR_MSK_DIS);
+
+	cmd[3].i = ((src_pitch / 64) << 22) | (src_offset >> 10);
+	cmd[4].i = ((dst_pitch / 64) << 22) | (dst_offset >> 10);
+	cmd[5].i = (srcx << 16) | srcy;
+	cmd[6].i = (dstx << 16) | dsty;	/* dst */
+	cmd[7].i = (w << 16) | h;
+}
+
+void r300EmitWait(r300ContextPtr rmesa, GLuint flags)
+{
+	if (rmesa->radeon.dri.drmMinor >= 6) {
+		drm_radeon_cmd_header_t *cmd;
+
+		assert(!(flags & ~(RADEON_WAIT_2D | RADEON_WAIT_3D)));
+
+		cmd =
+		    (drm_radeon_cmd_header_t *) r200AllocCmdBuf(rmesa,
+								1 * sizeof(int),
+								__FUNCTION__);
+		cmd[0].i = 0;
+		cmd[0].wait.cmd_type = RADEON_CMD_WAIT;
+		cmd[0].wait.flags = flags;
+	}
+}
