@@ -1,4 +1,4 @@
-/* $Id: m_eval.c,v 1.2 2001/03/07 05:06:12 brianp Exp $ */
+/* $Id: m_eval.c,v 1.3 2001/03/08 17:15:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,12 +75,12 @@ void
 _math_horner_bezier_curve(const GLfloat *cp, GLfloat *out, GLfloat t,
 			  GLuint dim, GLuint order)
 {
-   GLfloat s, powert;
-   GLuint i, k, bincoeff;
+   GLfloat s, powert, bincoeff;
+   GLuint i, k;
 
    if(order >= 2)
    {
-      bincoeff = order-1;
+      bincoeff = (GLfloat) (order - 1);
       s = 1.0-t;
 
       for(k=0; k<dim; k++)
@@ -88,8 +88,8 @@ _math_horner_bezier_curve(const GLfloat *cp, GLfloat *out, GLfloat t,
 
       for(i=2, cp+=2*dim, powert=t*t; i<order; i++, powert*=t, cp +=dim)
       {
-	 bincoeff *= order-i;
-	 bincoeff *= (GLuint) inv_tab[i];
+	 bincoeff *= (GLfloat) (order - i);
+	 bincoeff *= inv_tab[i];
 
 	 for(k=0; k<dim; k++)
 	    out[k] = s*out[k] + bincoeff*powert*cp[k];
@@ -127,8 +127,8 @@ _math_horner_bezier_surf(GLfloat *cn, GLfloat *out, GLfloat u, GLfloat v,
    {
       if(uorder >= 2)
       {
-	 GLfloat s, poweru;
-	 GLuint j, k, bincoeff;
+	 GLfloat s, poweru, bincoeff;
+	 GLuint j, k;
 
 	 /* Compute the control polygon for the surface-curve in u-direction */
 	 for(j=0; j<vorder; j++)
@@ -137,7 +137,7 @@ _math_horner_bezier_surf(GLfloat *cn, GLfloat *out, GLfloat u, GLfloat v,
 
 	    /* Each control point is the point for parameter u on a */
 	    /* curve defined by the control polygons in u-direction */
-	    bincoeff = uorder-1;
+	    bincoeff = (GLfloat) (uorder - 1);
 	    s = 1.0-u;
 
 	    for(k=0; k<dim; k++)
@@ -146,8 +146,8 @@ _math_horner_bezier_surf(GLfloat *cn, GLfloat *out, GLfloat u, GLfloat v,
 	    for(i=2, ucp+=2*uinc, poweru=u*u; i<uorder;
 		i++, poweru*=u, ucp +=uinc)
 	    {
-	       bincoeff *= uorder-i;
-	       bincoeff *= (GLuint) inv_tab[i];
+	       bincoeff *= (GLfloat) (uorder - i);
+	       bincoeff *= inv_tab[i];
 
 	       for(k=0; k<dim; k++)
 		  cp[j*dim+k] = s*cp[j*dim+k] + bincoeff*poweru*ucp[k];
