@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.99 2003/01/21 15:49:15 brianp Exp $ */
+/* $Id: mtypes.h,v 1.100 2003/01/21 21:47:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -975,6 +975,10 @@ struct gl_texture_attrib {
    /* GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;
    struct gl_color_table Palette;
+   /* GL_SGI_texture_color_table */
+   GLfloat ColorTableScale[4];
+   GLfloat ColorTableBias[4];
+   GLboolean ColorTableEnabled;
 };
 
 
@@ -1395,6 +1399,7 @@ struct gl_extensions {
    GLboolean NV_vertex_program1_1;
    GLboolean SGI_color_matrix;
    GLboolean SGI_color_table;
+   GLboolean SGI_texture_color_table;
    GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_pixel_texture;
    GLboolean SGIS_texture_edge_clamp;
@@ -1715,6 +1720,8 @@ struct __GLcontextRec {
    struct gl_color_table ProxyPostConvolutionColorTable;
    struct gl_color_table PostColorMatrixColorTable;
    struct gl_color_table ProxyPostColorMatrixColorTable;
+   struct gl_color_table TextureColorTable;
+   struct gl_color_table ProxyTextureColorTable;
 
    struct program_state Program;             /* for vertex or fragment progs */
    struct vertex_program_state VertexProgram;      /* GL_NV_vertex_program */

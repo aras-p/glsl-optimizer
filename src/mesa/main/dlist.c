@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.101 2003/01/14 04:55:45 brianp Exp $ */
+/* $Id: dlist.c,v 1.102 2003/01/21 21:47:48 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1141,7 +1141,8 @@ save_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
       n[3].f = params[0];
       if (pname == GL_COLOR_TABLE_SGI ||
           pname == GL_POST_CONVOLUTION_COLOR_TABLE_SGI ||
-          pname == GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI) {
+          pname == GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI ||
+          pname == GL_TEXTURE_COLOR_TABLE_SGI) {
          n[4].f = params[1];
          n[5].f = params[2];
          n[6].f = params[3];
@@ -1169,7 +1170,8 @@ save_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
       n[3].i = params[0];
       if (pname == GL_COLOR_TABLE_SGI ||
           pname == GL_POST_CONVOLUTION_COLOR_TABLE_SGI ||
-          pname == GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI) {
+          pname == GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI ||
+          pname == GL_TEXTURE_COLOR_TABLE_SGI) {
          n[4].i = params[1];
          n[5].i = params[2];
          n[6].i = params[3];

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.102 2003/01/21 15:45:39 brianp Exp $ */
+/* $Id: get.c,v 1.103 2003/01/21 21:47:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1227,6 +1227,12 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          *params = ctx->Pixel.PostColorMatrixColorTableEnabled;
+         break;
+
+      /* GL_SGI_texture_color_table */
+      case GL_TEXTURE_COLOR_TABLE_SGI:
+         CHECK_EXTENSION_B(SGI_texture_color_table, pname);
+         *params = ctx->Texture.ColorTableEnabled;
          break;
 
       /* GL_EXT_secondary_color */
@@ -2621,6 +2627,12 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
 
+      /* GL_SGI_texture_color_table */
+      case GL_TEXTURE_COLOR_TABLE_SGI:
+         CHECK_EXTENSION_D(SGI_texture_color_table, pname);
+         *params = (GLdouble) ctx->Texture.ColorTableEnabled;
+         break;
+
       /* GL_EXT_secondary_color */
       case GL_COLOR_SUM_EXT:
          CHECK_EXTENSION_D(EXT_secondary_color, pname);
@@ -3985,6 +3997,12 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          *params = (GLfloat) ctx->Pixel.PostColorMatrixColorTableEnabled;
+         break;
+
+      /* GL_SGI_texture_color_table */
+      case GL_TEXTURE_COLOR_TABLE_SGI:
+         CHECK_EXTENSION_F(SGI_texture_color_table, pname);
+         *params = (GLfloat) ctx->Texture.ColorTableEnabled;
          break;
 
       /* GL_EXT_secondary_color */
@@ -5391,6 +5409,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
 
+      /* GL_SGI_texture_color_table */
+      case GL_TEXTURE_COLOR_TABLE_SGI:
+         CHECK_EXTENSION_I(SGI_texture_color_table, pname);
+         *params = (GLint) ctx->Texture.ColorTableEnabled;
+         break;
 
       /* GL_EXT_secondary_color */
       case GL_COLOR_SUM_EXT:

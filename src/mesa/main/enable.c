@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.72 2003/01/14 04:55:45 brianp Exp $ */
+/* $Id: enable.c,v 1.73 2003/01/21 21:47:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -690,6 +690,13 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
             return;
          FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostColorMatrixColorTableEnabled = state;
+         break;
+      case GL_TEXTURE_COLOR_TABLE_SGI:
+         CHECK_EXTENSION(SGI_texture_color_table, cap);
+         if (ctx->Texture.ColorTableEnabled == state)
+            return;
+         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+         ctx->Texture.ColorTableEnabled = state;
          break;
 
       /* GL_EXT_convolution */

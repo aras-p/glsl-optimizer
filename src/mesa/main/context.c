@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.191 2003/01/14 04:55:45 brianp Exp $ */
+/* $Id: context.c,v 1.192 2003/01/21 21:47:45 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1323,6 +1323,9 @@ init_attrib_groups( GLcontext *ctx )
       init_texture_unit( ctx, i );
    ctx->Texture.SharedPalette = GL_FALSE;
    _mesa_init_colortable(&ctx->Texture.Palette);
+   ASSIGN_4V(ctx->Texture.ColorTableScale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Texture.ColorTableBias, 0.0, 0.0, 0.0, 0.0);
+   ctx->Texture.ColorTableEnabled = GL_FALSE;
 
    /* Transformation group */
    ctx->Transform.MatrixMode = GL_MODELVIEW;
@@ -1462,6 +1465,8 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_colortable(&ctx->ProxyPostConvolutionColorTable);
    _mesa_init_colortable(&ctx->PostColorMatrixColorTable);
    _mesa_init_colortable(&ctx->ProxyPostColorMatrixColorTable);
+   _mesa_init_colortable(&ctx->TextureColorTable);
+   _mesa_init_colortable(&ctx->ProxyTextureColorTable);
 
    /* Vertex/fragment programs */
    ctx->Program.ErrorPos = -1;
@@ -2035,6 +2040,7 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_colortable_data( &ctx->PostConvolutionColorTable );
    _mesa_free_colortable_data( &ctx->PostColorMatrixColorTable );
    _mesa_free_colortable_data( &ctx->Texture.Palette );
+   _mesa_free_colortable_data( &ctx->TextureColorTable );
 
    _math_matrix_dtr(&ctx->Viewport._WindowMap);
 
