@@ -40,9 +40,7 @@
 #include "utils.h"
 #include "vblank.h"
 
-#ifndef _SOLO
 #include "GL/internal/dri_interface.h"
-#endif
 
 /* Mach64 configuration
  */
@@ -314,7 +312,6 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
    }
 
    mach64Screen->driScreen = sPriv;
-#ifndef _SOLO
    if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
       PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
           (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
@@ -330,7 +327,6 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
 	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
       }
    }
-#endif
    return mach64Screen;
 }
 
@@ -451,7 +447,6 @@ static struct __DriverAPIRec mach64API = {
  * Return:  pointer to a __DRIscreenPrivate.
  */
 #if !defined(DRI_NEW_INTERFACE_ONLY)
-#ifndef _SOLO 
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
@@ -459,15 +454,6 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &mach64API);
    return (void *) psp;
 }
-#else
-void *__driCreateScreen(struct DRIDriverRec *driver,
-                        struct DRIDriverContextRec *driverContext)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(driver, driverContext, &mach64API);
-   return (void *) psp;
-}
-#endif
 #endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
 
 /**

@@ -32,10 +32,6 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 
 #include "dri_util.h"
 
-#ifndef _SOLO
-#include <X11/Xlibint.h>
-#endif
-
 #include "mtypes.h"
 #include "drm.h"
 #include "mm.h"
@@ -291,9 +287,7 @@ struct via_context_t {
     drm_context_t hHWContext;
     drm_hw_lock_t *driHwLock;
     int driFd;
-#ifndef _SOLO
-    Display *display;
-#endif
+    __DRInativeDisplay *display;
 
     __DRIdrawablePrivate *driDrawable;
     __DRIscreenPrivate *driScreen;

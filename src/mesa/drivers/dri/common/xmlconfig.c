@@ -34,6 +34,7 @@
 #include <expat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#define __USE_GNU /* defines program_invocation_short_name */
 #include <errno.h>
 #include "imports.h"
 #include "dri_util.h"
@@ -900,11 +901,7 @@ void driParseConfigFiles (driOptionCache *cache, const driOptionCache *info,
     userData.cache = cache;
     userData.screenNum = screenNum;
     userData.driverName = driverName;
-#ifndef _SOLO    
     userData.execName = GET_PROGRAM_NAME();
-#else
-    userData.execName = "Solo";
-#endif    
 
     if ((home = getenv ("HOME"))) {
 	GLuint len = strlen (home);

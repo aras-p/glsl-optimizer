@@ -50,9 +50,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "utils.h"
 #include "vblank.h"
-#ifndef _SOLO
 #include "GL/internal/dri_interface.h"
-#endif
 
 /* R200 configuration
  */
@@ -433,7 +431,7 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
 
    screen->driScreen = sPriv;
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
-#ifndef _SOLO
+
    if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
       PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
           (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
@@ -462,7 +460,6 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
 	 }
       }
    }
-#endif
    return screen;
 }
 
@@ -572,7 +569,6 @@ static const struct __DriverAPIRec r200API = {
  *
  */
 #if !defined(DRI_NEW_INTERFACE_ONLY)
-#ifndef _SOLO 
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
@@ -580,15 +576,6 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &r200API);
    return (void *) psp;
 }
-#else
-void *__driCreateScreen(struct DRIDriverRec *driver,
-                        struct DRIDriverContextRec *driverContext)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(driver, driverContext, &r200API);
-   return (void *) psp;
-}
-#endif
 #endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
 
 

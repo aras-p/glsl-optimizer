@@ -803,10 +803,9 @@ void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )
    else
       mgaXMesaSetBackClipRects( mmesa );
 
-#ifndef _SOLO
    sarea->req_drawable = driDrawable->draw;
    sarea->req_draw_buffer = mmesa->draw_buffer;
-#endif
+
    mgaUpdateClipping( mmesa->glCtx );
    mgaCalcViewport( mmesa->glCtx );
 

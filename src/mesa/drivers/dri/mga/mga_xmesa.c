@@ -59,9 +59,7 @@
 #include "utils.h"
 #include "vblank.h"
 
-#ifndef _SOLO
 #include "GL/internal/dri_interface.h"
-#endif
 
 /* MGA configuration
  */
@@ -260,7 +258,7 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
    
    mgaScreen->linecomp_sane = (sPriv->ddxMajor > 1) || (sPriv->ddxMinor > 1)
        || ((sPriv->ddxMinor == 1) && (sPriv->ddxPatch > 0));
-#ifndef _SOLO       
+
    if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
       PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
           (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
@@ -282,7 +280,6 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 	 }
       }
    }
-#endif
 
    if (serverInfo->chipset != MGA_CARD_TYPE_G200 &&
        serverInfo->chipset != MGA_CARD_TYPE_G400) {
@@ -688,14 +685,11 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    mmesa->vblank_flags = ((mmesa->mgaScreen->irq == 0) 
 			  || !mmesa->mgaScreen->linecomp_sane)
        ? VBLANK_FLAG_NO_IRQ : driGetDefaultVBlankFlags(&mmesa->optionCache);
-#ifndef _SOLO
+
    mmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
    if ( mmesa->get_ust == NULL ) {
       mmesa->get_ust = get_ust_nop;
    }
-#else
-   mmesa->get_ust = get_ust_nop;
-#endif   
 
    (*mmesa->get_ust)( & mmesa->swap_ust );
 
@@ -913,7 +907,6 @@ static const struct __DriverAPIRec mgaAPI = {
  * Return:  pointer to a __DRIscreenPrivate.
  */
 #if !defined(DRI_NEW_INTERFACE_ONLY)
-#ifndef _SOLO 
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
@@ -921,15 +914,6 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &mgaAPI);
    return (void *) psp;
 }
-#else
-void *__driCreateScreen(struct DRIDriverRec *driver,
-                        struct DRIDriverContextRec *driverContext)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(driver, driverContext, &mgaAPI);
-   return (void *) psp;
-}
-#endif
 #endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
 
 

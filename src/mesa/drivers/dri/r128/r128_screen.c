@@ -46,9 +46,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "vblank.h"
 
-#ifndef _SOLO
 #include "GL/internal/dri_interface.h"
-#endif
 
 /* R128 configuration
  */
@@ -210,7 +208,6 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    }
 
    r128Screen->driScreen = sPriv;
-#ifndef _SOLO
    if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
       PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
           (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
@@ -226,7 +223,6 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
 	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
       }
    }
-#endif
    return r128Screen;
 }
 
@@ -353,7 +349,6 @@ static struct __DriverAPIRec r128API = {
  * The __driCreateScreen name is the symbol that libGL.so fetches.
  * Return:  pointer to a __DRIscreenPrivate.
  */
-#ifndef _SOLO 
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
@@ -361,15 +356,6 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &r128API);
    return (void *) psp;
 }
-#else
-void *__driCreateScreen(struct DRIDriverRec *driver,
-                        struct DRIDriverContextRec *driverContext)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(driver, driverContext, &r128API);
-   return (void *) psp;
-}
-#endif
 #endif /* DRI_NEW_INTERFACE_ONLY */
 
 

@@ -277,7 +277,6 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
    }
 #endif
 
-#ifndef _SOLO       
    if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
       PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
           (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
@@ -292,7 +291,6 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
 	 }
       }
    }
-#endif
 
    return GL_TRUE;
 }
@@ -365,7 +363,6 @@ static const struct __DriverAPIRec i830API = {
  * Return:  pointer to a __DRIscreenPrivate.
  */
 #if !defined(DRI_NEW_INTERFACE_ONLY)
-#ifndef _SOLO
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 			int numConfigs, __GLXvisualConfig *config)
 {
@@ -373,15 +370,6 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &i830API);
    return (void *) psp;
 }
-#else
-void *__driCreateScreen(struct DRIDriverRec *driver,
-                        struct DRIDriverContextRec *driverContext)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(driver, driverContext, &i830API);
-   return (void *) psp;
-}
-#endif
 #endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
 
 

@@ -48,9 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "context.h"
 #include "vblank.h"
 
-#ifndef _SOLO
 #include "GL/internal/dri_interface.h"
-#endif
 
 /* Radeon configuration
  */
@@ -367,7 +365,7 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
       screen->logTexGranularity[RADEON_GART_TEX_HEAP] =
 	 dri_priv->log2GARTTexGran;
    }
-#ifndef _SOLO
+
    if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
       PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
           (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
@@ -389,7 +387,7 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
       }
    }
-#endif
+
    screen->driScreen = sPriv;
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
    return screen;
@@ -498,7 +496,6 @@ static struct __DriverAPIRec radeonAPI = {
  * Return:  pointer to a __DRIscreenPrivate.
  */
 #if !defined(DRI_NEW_INTERFACE_ONLY)
-#ifndef _SOLO 
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
@@ -506,15 +503,6 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &radeonAPI);
    return (void *) psp;
 }
-#else
-void *__driCreateScreen(struct DRIDriverRec *driver,
-                        struct DRIDriverContextRec *driverContext)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(driver, driverContext, &radeonAPI);
-   return (void *) psp;
-}
-#endif
 #endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
 
 /**

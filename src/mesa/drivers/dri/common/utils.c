@@ -32,7 +32,7 @@
 #include "extensions.h"
 #include "utils.h"
 
-#if !defined( DRI_NEW_INTERFACE_ONLY ) && !defined( _SOLO )
+#if !defined( DRI_NEW_INTERFACE_ONLY )
 #include "xf86dri.h"        /* For XF86DRIQueryVersion prototype. */
 #endif
 
@@ -171,7 +171,6 @@ driCheckDriDdxDrmVersions(__DRIscreenPrivate *sPriv,
        "but got version %d.%d.%d";
    int major, minor, patch;
 
-#ifndef _SOLO
    /* Check the DRI version */
    if (XF86DRIQueryVersion(sPriv->display, &major, &minor, &patch)) {
       if (major != dri_major || minor < dri_minor) {
@@ -187,9 +186,6 @@ driCheckDriDdxDrmVersions(__DRIscreenPrivate *sPriv,
 		       sPriv->ddxMajor, sPriv->ddxMinor, sPriv->ddxPatch);
       return GL_FALSE;
    }
-#else
-   (void)major;(void)minor;(void)patch;
-#endif
    
    /* Check that the DRM driver version is compatible */
    if (sPriv->drmMajor != drm_major || sPriv->drmMinor < drm_minor) {

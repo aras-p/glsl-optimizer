@@ -291,7 +291,6 @@ static struct __DriverAPIRec viaAPI = {
  * Return:  pointer to a __DRIscreenPrivate.
  */
 #if !defined(DRI_NEW_INTERFACE_ONLY)
-#ifndef _SOLO
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
                         int numConfigs, __GLXvisualConfig *config)
 {
@@ -299,15 +298,6 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
     psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &viaAPI);
     return (void *)psp;
 }
-#else
-void *__driCreateScreen(struct DRIDriverRec *driver,
-                        struct DRIDriverContextRec *driverContext)
-{
-    __DRIscreenPrivate *psp;
-    psp = __driUtilCreateScreen(driver, driverContext, &viaAPI);
-    return (void *) psp;
-}
-#endif
 #endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
 
 

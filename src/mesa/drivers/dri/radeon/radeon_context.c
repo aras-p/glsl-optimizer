@@ -421,15 +421,11 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 
    rmesa->vblank_flags = (rmesa->radeonScreen->irq != 0)
        ? driGetDefaultVBlankFlags(&rmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
-#ifndef _SOLO
+
    rmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
    if ( rmesa->get_ust == NULL ) {
       rmesa->get_ust = get_ust_nop;
    }
-#else
-   rmesa->get_ust = get_ust_nop;
-#endif   
-
    (*rmesa->get_ust)( & rmesa->swap_ust );
 
 

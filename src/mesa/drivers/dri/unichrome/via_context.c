@@ -56,9 +56,6 @@
 #include "via_ioctl.h"
 #include "via_fb.h"
 
-#ifndef _SOLO
-#include <X11/Xlibint.h>
-#endif
 #include <stdio.h>
 #include "macros.h"
 
@@ -482,10 +479,8 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     _tnl_allow_pixel_fog(ctx, GL_FALSE);
     _tnl_allow_vertex_fog(ctx, GL_TRUE);
 
-#ifndef _SOLO
 /*     vmesa->display = dpy; */
     vmesa->display = sPriv->display;
-#endif
     
     vmesa->hHWContext = driContextPriv->hHWContext;
     vmesa->driFd = sPriv->fd;

@@ -443,14 +443,11 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 
    rmesa->prefer_gart_client_texturing = 
       (getenv("R200_GART_CLIENT_TEXTURES") != 0);
-#ifndef _SOLO   
+
    rmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
    if ( rmesa->get_ust == NULL ) {
       rmesa->get_ust = get_ust_nop;
    }
-#else
-   rmesa->get_ust = get_ust_nop;
-#endif
    (*rmesa->get_ust)( & rmesa->swap_ust );
 
 

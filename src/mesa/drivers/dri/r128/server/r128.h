@@ -39,33 +39,6 @@
 #define _R128_H_
 
 #include "dri_util.h"
-#ifndef _SOLO
-#include "xf86str.h"
-
-				/* PCI support */
-#include "xf86Pci.h"
-
-				/* XAA and Cursor Support */
-#include "xaa.h"
-#include "xf86Cursor.h"
-
-				/* DDC support */
-#include "xf86DDC.h"
-
-				/* Xv support */
-#include "xf86xv.h"
-
-				/* DRI support */
-#ifdef XF86DRI
-#define _XF86DRI_SERVER_
-#include "r128_dripriv.h"
-#include "dri.h"
-#include "GL/glxint.h"
-#endif
-#endif
-#ifdef _SOLO
-#define XF86DRI
-#endif
 
 #define R128_DEBUG          0   /* Turn off debugging output               */
 #define R128_IDLE_RETRY    32   /* Fall out of idle loops after this count */
@@ -184,31 +157,7 @@ typedef struct {
     uint32_t     palette[256];
 } R128SaveRec, *R128SavePtr;
 
-#ifndef _SOLO
 typedef struct {
-    CARD16        reference_freq;
-    CARD16        reference_div;
-    uint32_t        min_pll_freq;
-    uint32_t        max_pll_freq;
-    CARD16        xclk;
-} R128PLLRec, *R128PLLPtr;
-
-typedef struct {
-    int                bitsPerPixel;
-    int                depth;
-    int                displayWidth;
-    int                pixel_code;
-    int                pixel_bytes;
-    DisplayModePtr     mode;
-} R128FBLayout;
-#endif
-
-typedef struct {
-#ifndef _SOLO    
-    EntityInfoPtr     pEnt;
-    pciVideoPtr       PciInfo;
-    PCITAG            PciTag;
-#endif    
     int               Chipset;
     GLboolean              Primary;
 
@@ -225,13 +174,6 @@ typedef struct {
     unsigned long     FbMapSize;    /* Size of frame buffer, in bytes        */
     int               Flags;        /* Saved copy of mode flags              */
 
-#ifndef _SOLO    
-    uint8_t             BIOSDisplay;  /* Device the BIOS is set to display to  */
-
-    GLboolean         HasPanelRegs; /* Current chip can connect to a FP      */
-    uint8_t             *VBIOS;       /* Video BIOS for mode validation on FPs */
-    int               FPBIOSstart;  /* Start of the flat panel info          */
-#endif
 				/* Computed values for FPs */
     int               PanelXRes;
     int               PanelYRes;
@@ -242,21 +184,7 @@ typedef struct {
     int               VSyncWidth;
     int               VBlank;
     int               PanelPwrDly;
-#ifndef _SOLO
-    R128PLLRec        pll;
-    R128RAMPtr        ram;
-
-    R128SaveRec       SavedReg;     /* Original (text) mode                  */
-    R128SaveRec       ModeReg;      /* Current mode                          */
-    GLboolean              (*CloseScreen)(int, ScreenPtr);
-    void              (*BlockHandler)(int, pointer, pointer, pointer);
-
-    GLboolean              PaletteSavedOnVT; /* Palette saved on last VT switch   */
-
-    XAAInfoRecPtr     accel;
-    GLboolean              accelOn;
-    xf86CursorInfoPtr cursor;
-#endif    
+    
     unsigned long     cursor_start;
     unsigned long     cursor_end;
 
@@ -286,35 +214,19 @@ typedef struct {
     int               scanline_y;
     int               scanline_w;
     int               scanline_h;
-#ifdef XF86DRI
+
     int               scanline_hpass;
     int               scanline_x1clip;
     int               scanline_x2clip;
     int               scanline_rop;
     int               scanline_fg;
     int               scanline_bg;
-#endif /* XF86DRI */
+
     int               scanline_words;
     int               scanline_direct;
     int               scanline_bpp; /* Only used for ImageWrite */
 
-#ifndef _SOLO    
-    DGAModePtr        DGAModes;
-    int               numDGAModes;
-    GLboolean         DGAactive;
-    int               DGAViewportStatus;
-    DGAFunctionRec    DGAFuncs;
-
-    R128FBLayout      CurrentLayout;
-#endif    
-#ifdef XF86DRI
     drm_context_t        drmCtx;
-#ifndef _SOLO    
-    DRIInfoPtr        pDRIInfo;
-    int               numVisualConfigs;
-    __GLXvisualConfig *pVisualConfigs;
-    R128ConfigPrivPtr pVisualConfigsPriv;
-#endif    
 
     drmSize           registerSize;
     drm_handle_t         registerHandle;
@@ -408,20 +320,7 @@ typedef struct {
     uint32_t            gen_int_cntl;
 
     GLboolean              DMAForXv;
-#endif
 
-#ifndef _SOLO    
-    XF86VideoAdaptorPtr adaptor;
-    void              (*VideoTimerCallback)(ScrnInfoPtr, Time);
-    int               videoKey;
-    GLboolean              showCache;
-    OptionInfoPtr     Options;
-
-    GLboolean              isDFP;
-    GLboolean              isPro2;
-    I2CBusPtr         pI2CBus;
-    uint32_t            DDCReg;
-#endif
 } R128InfoRec, *R128InfoPtr;
 
 #define R128WaitForFifo(pScrn, entries)                                      \
