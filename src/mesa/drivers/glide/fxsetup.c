@@ -803,39 +803,40 @@ fxSetupDoubleTMU_NoLock(fxMesaContext fxMesa,
       }
    }
 
+   /* [dBorca] Hack alert:
+    * we put these in reverse order, so that if we can't
+    * do _REAL_ pointcast, the TMU0 table gets broadcasted
+    */
    if (!fxMesa->haveGlobalPaletteTexture) {
       /* pointcast */
-      if (ti0->info.format == GR_TEXFMT_P_8) {
-	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
-	    fprintf(stderr, "%s: uploading texture palette for TMU0\n", __FUNCTION__);
-	 }
-	 fxMesa->Glide.grTexDownloadTableExt(ti0->whichTMU, ti0->paltype, &(ti0->palette));
-      }
-#if 1
-      else /* does anyone guess why is this here? :D */
-#endif
       if (ti1->info.format == GR_TEXFMT_P_8) {
 	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
 	    fprintf(stderr, "%s: uploading texture palette for TMU1\n", __FUNCTION__);
 	 }
 	 fxMesa->Glide.grTexDownloadTableExt(ti1->whichTMU, ti1->paltype, &(ti1->palette));
       }
+      if (ti0->info.format == GR_TEXFMT_P_8) {
+	 if (TDFX_DEBUG & VERBOSE_DRIVER) {
+	    fprintf(stderr, "%s: uploading texture palette for TMU0\n", __FUNCTION__);
+	 }
+	 fxMesa->Glide.grTexDownloadTableExt(ti0->whichTMU, ti0->paltype, &(ti0->palette));
+      }
    }
 #if FX_TC_NCC
    /* pointcast */
-   if ((ti0->info.format == GR_TEXFMT_AYIQ_8422) ||
-       (ti0->info.format == GR_TEXFMT_YIQ_422)) {
-      if (TDFX_DEBUG & VERBOSE_DRIVER) {
-         fprintf(stderr, "%s: uploading NCC0 table for TMU0\n", __FUNCTION__);
-      }
-      fxMesa->Glide.grTexDownloadTableExt(ti0->whichTMU, GR_TEXTABLE_NCC0, &(ti0->palette));
-   }
    if ((ti1->info.format == GR_TEXFMT_AYIQ_8422) ||
        (ti1->info.format == GR_TEXFMT_YIQ_422)) {
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
          fprintf(stderr, "%s: uploading NCC0 table for TMU1\n", __FUNCTION__);
       }
       fxMesa->Glide.grTexDownloadTableExt(ti1->whichTMU, GR_TEXTABLE_NCC0, &(ti1->palette));
+   }
+   if ((ti0->info.format == GR_TEXFMT_AYIQ_8422) ||
+       (ti0->info.format == GR_TEXFMT_YIQ_422)) {
+      if (TDFX_DEBUG & VERBOSE_DRIVER) {
+         fprintf(stderr, "%s: uploading NCC0 table for TMU0\n", __FUNCTION__);
+      }
+      fxMesa->Glide.grTexDownloadTableExt(ti0->whichTMU, GR_TEXTABLE_NCC0, &(ti0->palette));
    }
 #endif
 

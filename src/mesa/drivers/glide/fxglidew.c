@@ -194,7 +194,9 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
       grSstSelect(i);
 
       extension = grGetString(GR_HARDWARE);
-      if (strstr(extension, "Voodoo Banshee")) {
+      if (strstr(extension, "Voodoo2")) {
+         config->SSTs[i].type = GR_SSTTYPE_Voodoo2;
+      } else if (strstr(extension, "Voodoo Banshee")) {
          config->SSTs[i].type = GR_SSTTYPE_Banshee;
       } else if (strstr(extension, "Voodoo3")) {
          config->SSTs[i].type = GR_SSTTYPE_Voodoo3;
@@ -202,8 +204,8 @@ FX_grSstQueryHardware(GrHwConfiguration * config)
          config->SSTs[i].type = GR_SSTTYPE_Voodoo4;
       } else if (strstr(extension, "Voodoo5")) {
          config->SSTs[i].type = GR_SSTTYPE_Voodoo5;
-      } else { /* Voodoo1,2,rush */
-         /* ZZZ TO DO: Need to distinguish whether we have V1 or V2 or Rush. */
+      } else { /* Voodoo1,rush */
+         /* ZZZ TO DO: Need to distinguish whether we have V1 or Rush. */
          config->SSTs[i].type = GR_SSTTYPE_VOODOO;
       }
 

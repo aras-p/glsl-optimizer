@@ -555,19 +555,19 @@ fxMesaCreateContext(GLuint win,
     grGet(GR_MEMORY_TMU, 4, &result);
     tmuRam = result / (1024 * 1024);
     grGet(GR_MEMORY_FB, 4, &result);
-    fbRam = result / 1024;
+    fbRam = result / (1024 * 1024);
   }
   END_BOARD_LOCK();
 
-  sprintf(fxMesa->rendererString, "Mesa %s v0.51 %s %dkB FB, %dMB TM, %d TMU, %s",
+  sprintf(fxMesa->rendererString, "Mesa %s v0.51 %s %dMB FB, %dMB TM, %d TMU, %s",
                            grGetString(GR_RENDERER),
                            grGetString(GR_HARDWARE),
                            fbRam,
                            tmuRam * voodoo->nTexelfx,
                            voodoo->nTexelfx,
                            (voodoo->numChips > 1) ? "SLI" : "NOSLI");
-  
-   fxInitPixelTables(fxMesa, useBGR);
+
+  fxMesa->bgrOrder = useBGR;
 
    /* screen */
    fxMesa->screen_width = FX_grSstScreenWidth();

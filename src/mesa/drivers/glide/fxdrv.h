@@ -409,13 +409,6 @@ tfxUnitsState;
 			        _NEW_COLOR)	\
 
 
-/* These lookup table are used to extract RGB values in [0,255] from
- * 16-bit pixel values.
- */
-extern GLubyte FX_PixelToR[0x10000];
-extern GLubyte FX_PixelToG[0x10000];
-extern GLubyte FX_PixelToB[0x10000];
-
 /* lookup table for scaling y bit colors up to 8 bits */
 extern GLuint FX_rgb_scale_4[16];
 extern GLuint FX_rgb_scale_5[32];
@@ -688,7 +681,6 @@ extern void fxDDDestroyFxMesaContext(fxMesaContext fxMesa);
 extern void fxSetScissorValues(GLcontext * ctx);
 extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa,
 				struct gl_texture_object *tObj, GLint where);
-extern void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder);
 
 extern void fxCheckIsInHardware(GLcontext *ctx);
 

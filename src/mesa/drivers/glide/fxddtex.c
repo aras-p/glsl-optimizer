@@ -864,8 +864,8 @@ GLboolean fxDDIsCompressedFormat ( GLcontext *ctx, GLenum internalFormat )
 
 /* [dBorca]
  * we are handling differently the above formats from the generic
- * GL_COMPRESSED_RGB[A]. For this, we will always separately
- * check for the ones below!
+ * GL_COMPRESSED_RGB[A]. For this, we will always have to separately
+ * check the below formats...
  */
 
 #if FX_TC_NCC || FX_TC_NAPALM
@@ -1495,7 +1495,7 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
    /* choose the texture format */
    assert(ctx->Driver.ChooseTextureFormat);
    texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
-                                          internalFormat, format, type);
+                                          internalFormat, -1/*format*/, -1/*type*/);
    assert(texImage->TexFormat);
 
    /* Determine the appropriate Glide texel format,
@@ -1542,11 +1542,12 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
    }
 #endif
 
+   ti->info.format = mml->glideFormat;
+   texImage->FetchTexel = fxFetchFunction(texImage->TexFormat->MesaFormat);
+
    /* [dBorca] Hack alert:
     * what about different size/texel? other anomalies? SW rescaling?
     */
-   ti->info.format = mml->glideFormat;
-   texImage->FetchTexel = fxFetchFunction(texImage->TexFormat->MesaFormat);
 
    /* [dBorca]
     * Hack alert: unsure...

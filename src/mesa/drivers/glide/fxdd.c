@@ -58,13 +58,6 @@
 
 
 
-/* These lookup table are used to extract RGB values in [0,255] from
- * 16-bit pixel values.
- */
-GLubyte FX_PixelToR[0x10000];
-GLubyte FX_PixelToG[0x10000];
-GLubyte FX_PixelToB[0x10000];
-
 /* lookup table for scaling 4 bit colors up to 8 bits */
 GLuint FX_rgb_scale_4[16] = {
    0,   17,  34,  51,  68,  85,  102, 119,
@@ -90,39 +83,6 @@ GLuint FX_rgb_scale_6[64] = {
    194, 198, 202, 206, 210, 215, 219, 223,
    227, 231, 235, 239, 243, 247, 251, 255
 };
-
-
-/*
- * Initialize the FX_PixelTo{RGB} arrays.
- * Input: bgrOrder - if TRUE, pixels are in BGR order, else RGB order.
- */
-void
-fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder)
-{
-   GLuint pixel;
-
-   fxMesa->bgrOrder = bgrOrder;
-   for (pixel = 0; pixel <= 0xffff; pixel++) {
-      GLuint r, g, b;
-      if (bgrOrder) {
-	 r = (pixel & 0x001F) << 3;
-	 g = (pixel & 0x07E0) >> 3;
-	 b = (pixel & 0xF800) >> 8;
-      }
-      else {
-	 r = (pixel & 0xF800) >> 8;
-	 g = (pixel & 0x07E0) >> 3;
-	 b = (pixel & 0x001F) << 3;
-      }
-      /* fill in low-order bits with proper rounding */
-      r = (GLuint)(((double)r * 255. / 0xF8) + 0.5);
-      g = (GLuint)(((double)g * 255. / 0xFC) + 0.5);
-      b = (GLuint)(((double)b * 255. / 0xF8) + 0.5);
-      FX_PixelToR[pixel] = r;
-      FX_PixelToG[pixel] = g;
-      FX_PixelToB[pixel] = b;
-   }
-}
 
 
 /*
@@ -577,27 +537,13 @@ fxDDDrawBitmap2 (GLcontext *ctx, GLint px, GLint py,
       GLint g = (GLint) (ctx->Current.RasterColor[GCOMP] * 255.0f);
       GLint b = (GLint) (ctx->Current.RasterColor[BCOMP] * 255.0f);
       GLint a = (GLint) (ctx->Current.RasterColor[ACOMP] * 255.0f);
-#if 0
-      /* [dBorca]
-       * who uses bgr, anyway? Expecting the V2 from HM... :D
-       */
-      if (fxMesa->bgrOrder)
-	 color = (FxU16)
-	    (((FxU16) 0xf8 & b) << (11 - 3)) |
-	    (((FxU16) 0xfc & g) << (5 - 3 + 1)) | (((FxU16) 0xf8 & r) >> 3);
-      else
-	 color = (FxU16)
-	    (((FxU16) 0xf8 & r) << (11 - 3)) |
-	    (((FxU16) 0xfc & g) << (5 - 3 + 1)) | (((FxU16) 0xf8 & b) >> 3);
-#else
       if (fxMesa->colDepth == 15) {
          color = TDFXPACKCOLOR1555(b, g, r, a);
          mode = GR_LFBWRITEMODE_1555;
       } else {
-         color = TDFXPACKCOLOR565(b, g, r);
+         color = fxMesa->bgrOrder ? TDFXPACKCOLOR565(r, g, b) : TDFXPACKCOLOR565(b, g, r);
          mode = GR_LFBWRITEMODE_565;
       }
-#endif
    }
 
    info.size = sizeof(info);
@@ -755,21 +701,7 @@ fxDDDrawBitmap4 (GLcontext *ctx, GLint px, GLint py,
       GLint g = (GLint) (ctx->Current.RasterColor[GCOMP] * 255.0f);
       GLint b = (GLint) (ctx->Current.RasterColor[BCOMP] * 255.0f);
       GLint a = (GLint) (ctx->Current.RasterColor[ACOMP] * 255.0f);
-#if 0
-      /* [dBorca]
-       * who uses bgr, anyway? Expecting the V2 from HM... :D
-       */
-      if (fxMesa->bgrOrder)
-	 color = (FxU16)
-	    (((FxU16) 0xf8 & b) << (11 - 3)) |
-	    (((FxU16) 0xfc & g) << (5 - 3 + 1)) | (((FxU16) 0xf8 & r) >> 3);
-      else
-	 color = (FxU16)
-	    (((FxU16) 0xf8 & r) << (11 - 3)) |
-	    (((FxU16) 0xfc & g) << (5 - 3 + 1)) | (((FxU16) 0xf8 & b) >> 3);
-#else
       color = TDFXPACKCOLOR8888(b, g, r, a);
-#endif
    }
 
    info.size = sizeof(info);
@@ -889,20 +821,18 @@ fxDDReadPixels565 (GLcontext * ctx,
 	       GLubyte *d = dst;
 	       for (col = 0; col < halfWidth; col++) {
 		  const GLuint pixel = ((const GLuint *) src)[col];
-		  const GLint pixel0 = pixel & 0xffff;
-		  const GLint pixel1 = pixel >> 16;
-		  *d++ = FX_PixelToR[pixel0];
-		  *d++ = FX_PixelToG[pixel0];
-		  *d++ = FX_PixelToB[pixel0];
-		  *d++ = FX_PixelToR[pixel1];
-		  *d++ = FX_PixelToG[pixel1];
-		  *d++ = FX_PixelToB[pixel1];
+                  *d++ = FX_rgb_scale_5[(pixel >> 11) & 0x1f];
+                  *d++ = FX_rgb_scale_6[(pixel >> 5)  & 0x3f];
+                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 27) & 0x1f];
+                  *d++ = FX_rgb_scale_6[(pixel >> 21) & 0x3f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 16) & 0x1f];
 	       }
 	       if (extraPixel) {
 		  GLushort pixel = src[width - 1];
-		  *d++ = FX_PixelToR[pixel];
-		  *d++ = FX_PixelToG[pixel];
-		  *d++ = FX_PixelToB[pixel];
+                  *d++ = FX_rgb_scale_5[(pixel >> 11) & 0x1f];
+                  *d++ = FX_rgb_scale_6[(pixel >> 5)  & 0x3f];
+                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
 	       }
 	       dst += dstStride;
 	       src -= srcStride;
@@ -917,22 +847,20 @@ fxDDReadPixels565 (GLcontext * ctx,
 	       GLubyte *d = dst;
 	       for (col = 0; col < halfWidth; col++) {
 		  const GLuint pixel = ((const GLuint *) src)[col];
-		  const GLint pixel0 = pixel & 0xffff;
-		  const GLint pixel1 = pixel >> 16;
-		  *d++ = FX_PixelToR[pixel0];
-		  *d++ = FX_PixelToG[pixel0];
-		  *d++ = FX_PixelToB[pixel0];
+                  *d++ = FX_rgb_scale_5[(pixel >> 11) & 0x1f];
+                  *d++ = FX_rgb_scale_6[(pixel >> 5)  & 0x3f];
+                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
 		  *d++ = 255;
-		  *d++ = FX_PixelToR[pixel1];
-		  *d++ = FX_PixelToG[pixel1];
-		  *d++ = FX_PixelToB[pixel1];
+                  *d++ = FX_rgb_scale_5[(pixel >> 27) & 0x1f];
+                  *d++ = FX_rgb_scale_6[(pixel >> 21) & 0x3f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 16) & 0x1f];
 		  *d++ = 255;
 	       }
 	       if (extraPixel) {
 		  const GLushort pixel = src[width - 1];
-		  *d++ = FX_PixelToR[pixel];
-		  *d++ = FX_PixelToG[pixel];
-		  *d++ = FX_PixelToB[pixel];
+                  *d++ = FX_rgb_scale_5[(pixel >> 11) & 0x1f];
+                  *d++ = FX_rgb_scale_6[(pixel >> 5)  & 0x3f];
+                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
 		  *d++ = 255;
 	       }
 	       dst += dstStride;
@@ -1005,18 +933,18 @@ fxDDReadPixels555 (GLcontext * ctx,
 	       GLubyte *d = dst;
 	       for (col = 0; col < halfWidth; col++) {
 		  const GLuint pixel = ((const GLuint *) src)[col];
-                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
-                  *d++ = FX_rgb_scale_5[(pixel >> 5)  & 0x1f];
                   *d++ = FX_rgb_scale_5[(pixel >> 10) & 0x1f];
-                  *d++ = FX_rgb_scale_5[(pixel >> 16) & 0x1f];
-                  *d++ = FX_rgb_scale_5[(pixel >> 21) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 5)  & 0x1f];
+                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
                   *d++ = FX_rgb_scale_5[(pixel >> 26) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 21) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 16) & 0x1f];
 	       }
 	       if (extraPixel) {
 		  GLushort pixel = src[width - 1];
-                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
-                  *d++ = FX_rgb_scale_5[(pixel >> 5)  & 0x1f];
                   *d++ = FX_rgb_scale_5[(pixel >> 10) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 5)  & 0x1f];
+                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
 	       }
 	       dst += dstStride;
 	       src -= srcStride;
@@ -1031,20 +959,20 @@ fxDDReadPixels555 (GLcontext * ctx,
 	       GLubyte *d = dst;
 	       for (col = 0; col < halfWidth; col++) {
 		  const GLuint pixel = ((const GLuint *) src)[col];
-                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
-                  *d++ = FX_rgb_scale_5[(pixel >>  5) & 0x1f];
                   *d++ = FX_rgb_scale_5[(pixel >> 10) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >>  5) & 0x1f];
+                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
 		  *d++ =  (pixel & 0x8000) ? 255 : 0;
-                  *d++ = FX_rgb_scale_5[(pixel >> 16) & 0x1f];
-                  *d++ = FX_rgb_scale_5[(pixel >> 21) & 0x1f];
                   *d++ = FX_rgb_scale_5[(pixel >> 26) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 21) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >> 16) & 0x1f];
 		  *d++ =  (pixel & 0x80000000) ? 255 : 0;
 	       }
 	       if (extraPixel) {
 		  const GLushort pixel = src[width - 1];
-                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
-                  *d++ = FX_rgb_scale_5[(pixel >>  5) & 0x1f];
                   *d++ = FX_rgb_scale_5[(pixel >> 10) & 0x1f];
+                  *d++ = FX_rgb_scale_5[(pixel >>  5) & 0x1f];
+                  *d++ = FX_rgb_scale_5[ pixel        & 0x1f];
 		  *d++ =  (pixel & 0x8000) ? 255 : 0;
 	       }
 	       dst += dstStride;
@@ -1377,7 +1305,9 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    if (fxMesa->haveZBuffer)
       grDepthBufferMode(GR_DEPTHBUFFER_ZBUFFER);
 
-   grLfbWriteColorFormat(GR_COLORFORMAT_ABGR);
+   if (!fxMesa->bgrOrder) {
+      grLfbWriteColorFormat(GR_COLORFORMAT_ABGR);
+   }
 
    fxMesa->textureAlign = FX_grGetInteger(GR_TEXTURE_ALIGN);
    /* [koolsmoky] */

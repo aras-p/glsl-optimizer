@@ -406,18 +406,6 @@ static void fxReadRGBASpan_RGB565 (const GLcontext * ctx,
 
     for (i = j = 0; i < n; i += 2, j++) {
         GLuint pixel = data32[j];
-#if 0
-        GLuint pixel0 = pixel & 0xffff;
-        GLuint pixel1 = pixel >> 16;
-        rgba[i][RCOMP] = FX_PixelToR[pixel0];
-        rgba[i][GCOMP] = FX_PixelToG[pixel0];
-        rgba[i][BCOMP] = FX_PixelToB[pixel0];
-        rgba[i][ACOMP] = 255;
-        rgba[i + 1][RCOMP] = FX_PixelToR[pixel1];
-        rgba[i + 1][GCOMP] = FX_PixelToG[pixel1];
-        rgba[i + 1][BCOMP] = FX_PixelToB[pixel1];
-        rgba[i + 1][ACOMP] = 255;
-#else
 	rgba[i][0] = FX_rgb_scale_5[(pixel >> 11) & 0x1F];
 	rgba[i][1] = FX_rgb_scale_6[(pixel >> 5)  & 0x3F];
 	rgba[i][2] = FX_rgb_scale_5[ pixel        & 0x1F];
@@ -426,21 +414,13 @@ static void fxReadRGBASpan_RGB565 (const GLcontext * ctx,
 	rgba[i+1][1] = FX_rgb_scale_6[(pixel >> 21) & 0x3F];
 	rgba[i+1][2] = FX_rgb_scale_5[(pixel >> 16) & 0x1F];
 	rgba[i+1][3] = 255;
-#endif
     }
     if (extraPixel) {
        GLushort pixel = data16[n];
-#if 0
-       rgba[n][RCOMP] = FX_PixelToR[pixel];
-       rgba[n][GCOMP] = FX_PixelToG[pixel];
-       rgba[n][BCOMP] = FX_PixelToB[pixel];
-       rgba[n][ACOMP] = 255;
-#else
        rgba[n][0] = FX_rgb_scale_5[(pixel >> 11) & 0x1F];
        rgba[n][1] = FX_rgb_scale_6[(pixel >> 5)  & 0x3F];
        rgba[n][2] = FX_rgb_scale_5[ pixel        & 0x1F];
        rgba[n][3] = 255;
-#endif
     }
 
     grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->currentFB);
