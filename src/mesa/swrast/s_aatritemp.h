@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.10 2001/05/03 22:13:32 brianp Exp $ */
+/* $Id: s_aatritemp.h,v 1.11 2001/05/07 16:01:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -268,34 +268,36 @@
          ix = startX;
          count = 0;
          while (coverage > 0.0F) {
+            /* (cx,cy) = center of fragment */
+            const GLfloat cx = ix + 0.5F, cy = iy + 0.5F;
 #ifdef DO_Z
-            z[count] = (GLdepth) solve_plane(ix, iy, zPlane);
-	    fog[count] = solve_plane(ix, iy, fogPlane);
+            z[count] = (GLdepth) solve_plane(cx, cy, zPlane);
+	    fog[count] = solve_plane(cx, cy, fogPlane);
 #endif
 #ifdef DO_RGBA
-            rgba[count][RCOMP] = solve_plane_chan(ix, iy, rPlane);
-            rgba[count][GCOMP] = solve_plane_chan(ix, iy, gPlane);
-            rgba[count][BCOMP] = solve_plane_chan(ix, iy, bPlane);
-            rgba[count][ACOMP] = (GLchan) (solve_plane_chan(ix, iy, aPlane) * coverage);
+            rgba[count][RCOMP] = solve_plane_chan(cx, cy, rPlane);
+            rgba[count][GCOMP] = solve_plane_chan(cx, cy, gPlane);
+            rgba[count][BCOMP] = solve_plane_chan(cx, cy, bPlane);
+            rgba[count][ACOMP] = (GLchan) (solve_plane_chan(cx, cy, aPlane) * coverage);
 #endif
 #ifdef DO_INDEX
             {
                GLint frac = compute_coveragei(pMin, pMid, pMax, ix, iy);
-               GLint indx = (GLint) solve_plane(ix, iy, iPlane);
+               GLint indx = (GLint) solve_plane(cx, cy, iPlane);
                index[count] = (indx & ~0xf) | frac;
             }
 #endif
 #ifdef DO_SPEC
-            spec[count][RCOMP] = solve_plane_chan(ix, iy, srPlane);
-            spec[count][GCOMP] = solve_plane_chan(ix, iy, sgPlane);
-            spec[count][BCOMP] = solve_plane_chan(ix, iy, sbPlane);
+            spec[count][RCOMP] = solve_plane_chan(cx, cy, srPlane);
+            spec[count][GCOMP] = solve_plane_chan(cx, cy, sgPlane);
+            spec[count][BCOMP] = solve_plane_chan(cx, cy, sbPlane);
 #endif
 #ifdef DO_TEX
             {
-               GLfloat invQ = solve_plane_recip(ix, iy, vPlane);
-               s[count] = solve_plane(ix, iy, sPlane) * invQ;
-               t[count] = solve_plane(ix, iy, tPlane) * invQ;
-               u[count] = solve_plane(ix, iy, uPlane) * invQ;
+               const GLfloat invQ = solve_plane_recip(cx, cy, vPlane);
+               s[count] = solve_plane(cx, cy, sPlane) * invQ;
+               t[count] = solve_plane(cx, cy, tPlane) * invQ;
+               u[count] = solve_plane(cx, cy, uPlane) * invQ;
                lambda[count] = compute_lambda(sPlane, tPlane, invQ,
                                                  texWidth, texHeight);
             }
@@ -304,10 +306,10 @@
                GLuint unit;
                for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
                   if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-                     GLfloat invQ = solve_plane_recip(ix, iy, vPlane[unit]);
-                     s[unit][count] = solve_plane(ix, iy, sPlane[unit]) * invQ;
-                     t[unit][count] = solve_plane(ix, iy, tPlane[unit]) * invQ;
-                     u[unit][count] = solve_plane(ix, iy, uPlane[unit]) * invQ;
+                     GLfloat invQ = solve_plane_recip(cx, cy, vPlane[unit]);
+                     s[unit][count] = solve_plane(cx, cy, sPlane[unit]) * invQ;
+                     t[unit][count] = solve_plane(cx, cy, tPlane[unit]) * invQ;
+                     u[unit][count] = solve_plane(cx, cy, uPlane[unit]) * invQ;
                      lambda[unit][count] = compute_lambda(sPlane[unit],
                           tPlane[unit], invQ, texWidth[unit], texHeight[unit]);
                   }
@@ -384,34 +386,36 @@
          ix = startX;
          count = 0;
          while (coverage > 0.0F) {
+            /* (cx,cy) = center of fragment */
+            const GLfloat cx = ix + 0.5F, cy = iy + 0.5F;
 #ifdef DO_Z
-            z[ix] = (GLdepth) solve_plane(ix, iy, zPlane);
-            fog[ix] = solve_plane(ix, iy, fogPlane);
+            z[ix] = (GLdepth) solve_plane(cx, cy, zPlane);
+            fog[ix] = solve_plane(cx, cy, fogPlane);
 #endif
 #ifdef DO_RGBA
-            rgba[ix][RCOMP] = solve_plane_chan(ix, iy, rPlane);
-            rgba[ix][GCOMP] = solve_plane_chan(ix, iy, gPlane);
-            rgba[ix][BCOMP] = solve_plane_chan(ix, iy, bPlane);
-            rgba[ix][ACOMP] = (GLchan) (solve_plane_chan(ix, iy, aPlane) * coverage);
+            rgba[ix][RCOMP] = solve_plane_chan(cx, cy, rPlane);
+            rgba[ix][GCOMP] = solve_plane_chan(cx, cy, gPlane);
+            rgba[ix][BCOMP] = solve_plane_chan(cx, cy, bPlane);
+            rgba[ix][ACOMP] = (GLchan) (solve_plane_chan(cx, cy, aPlane) * coverage);
 #endif
 #ifdef DO_INDEX
             {
                GLint frac = compute_coveragei(pMin, pMax, pMid, ix, iy);
-               GLint indx = (GLint) solve_plane(ix, iy, iPlane);
+               GLint indx = (GLint) solve_plane(cx, cy, iPlane);
                index[ix] = (indx & ~0xf) | frac;
             }
 #endif
 #ifdef DO_SPEC
-            spec[ix][RCOMP] = solve_plane_chan(ix, iy, srPlane);
-            spec[ix][GCOMP] = solve_plane_chan(ix, iy, sgPlane);
-            spec[ix][BCOMP] = solve_plane_chan(ix, iy, sbPlane);
+            spec[ix][RCOMP] = solve_plane_chan(cx, cy, srPlane);
+            spec[ix][GCOMP] = solve_plane_chan(cx, cy, sgPlane);
+            spec[ix][BCOMP] = solve_plane_chan(cx, cy, sbPlane);
 #endif
 #ifdef DO_TEX
             {
-               GLfloat invQ = solve_plane_recip(ix, iy, vPlane);
-               s[ix] = solve_plane(ix, iy, sPlane) * invQ;
-               t[ix] = solve_plane(ix, iy, tPlane) * invQ;
-               u[ix] = solve_plane(ix, iy, uPlane) * invQ;
+               const GLfloat invQ = solve_plane_recip(cx, cy, vPlane);
+               s[ix] = solve_plane(cx, cy, sPlane) * invQ;
+               t[ix] = solve_plane(cx, cy, tPlane) * invQ;
+               u[ix] = solve_plane(cx, cy, uPlane) * invQ;
                lambda[ix] = compute_lambda(sPlane, tPlane, invQ,
                                               texWidth, texHeight);
             }
@@ -420,10 +424,10 @@
                GLuint unit;
                for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
                   if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-                     GLfloat invQ = solve_plane_recip(ix, iy, vPlane[unit]);
-                     s[unit][ix] = solve_plane(ix, iy, sPlane[unit]) * invQ;
-                     t[unit][ix] = solve_plane(ix, iy, tPlane[unit]) * invQ;
-                     u[unit][ix] = solve_plane(ix, iy, uPlane[unit]) * invQ;
+                     GLfloat invQ = solve_plane_recip(cx, cy, vPlane[unit]);
+                     s[unit][ix] = solve_plane(cx, cy, sPlane[unit]) * invQ;
+                     t[unit][ix] = solve_plane(cx, cy, tPlane[unit]) * invQ;
+                     u[unit][ix] = solve_plane(cx, cy, uPlane[unit]) * invQ;
                      lambda[unit][ix] = compute_lambda(sPlane[unit],
                          tPlane[unit], invQ, texWidth[unit], texHeight[unit]);
                   }
