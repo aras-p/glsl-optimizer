@@ -597,7 +597,7 @@ loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
       vertex = (void (GLAPIENTRY *)(const GLfloat *)) glVertex3fv;
    
    if (orflag & VERT_BITS_TEX_ANY) {
-      for (j = 0 ; j < ctx->Const.MaxTextureUnits ; j++) {
+      for (j = 0 ; j < ctx->Const.MaxTextureCoordUnits ; j++) {
 	 if (orflag & VERT_BIT_TEX(j)) {
 	    maxtex = j+1;
 	    if ((IM->TexSize & TEX_SIZE_4(j)) == TEX_SIZE_4(j))

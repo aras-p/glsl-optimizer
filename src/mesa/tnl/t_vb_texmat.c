@@ -1,10 +1,8 @@
-/* $Id: t_vb_texmat.c,v 1.12 2003/03/01 01:50:28 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -62,7 +60,7 @@ static void check_texmat( GLcontext *ctx, struct gl_pipeline_stage *stage )
    if (ctx->Texture._TexMatEnabled && !ctx->VertexProgram.Enabled) {
       GLuint flags = 0;
 
-      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+      for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
 	 if (ctx->Texture._TexMatEnabled & ENABLE_TEXMAT(i))
 	    flags |= VERT_BIT_TEX(i);
 
@@ -82,7 +80,7 @@ static GLboolean run_texmat_stage( GLcontext *ctx,
    /* ENABLE_TEXMAT implies that the texture matrix is not the
     * identity, so we don't have to check that here.
     */
-   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+   for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
       if (ctx->Texture._TexMatEnabled & ENABLE_TEXMAT(i)) {
 	 if (stage->changed_inputs & VERT_BIT_TEX(i))
 	    (void) TransformRaw( &store->texcoord[i],
@@ -109,7 +107,7 @@ static GLboolean alloc_texmat_data( GLcontext *ctx,
    if (!store)
       return GL_FALSE;
 
-   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+   for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
       _mesa_vector4f_alloc( &store->texcoord[i], 0, VB->Size, 32 );
 
    /* Now run the stage.

@@ -39,11 +39,10 @@
 #include "math/m_xform.h"
 
 
-/*
+/**
  * Clip a point against the view volume.
- * Input:  v - vertex-vector describing the point to clip
- * Return:  0 = outside view volume
- *          1 = inside view volume
+ * \param v  vertex-vector describing the point to clip
+ * \return  0 = outside view volume, 1 = inside view volume
  */
 static GLuint
 viewclip_point( const GLfloat v[] )
@@ -73,14 +72,13 @@ viewclip_point_z( const GLfloat v[] )
 
 
 
-/*
+/**
  * Clip a point against the user clipping planes.
- * Input:  v - vertex-vector describing the point to clip.
- * Return:  0 = point was clipped
- *          1 = point not clipped
+ * \param v  vertex-vector describing the point to clip.
+ * \return  0 = point was clipped, 1 = point not clipped
  */
 static GLuint
-userclip_point( GLcontext* ctx, const GLfloat v[] )
+userclip_point( GLcontext *ctx, const GLfloat v[] )
 {
    GLuint p;
 
@@ -100,7 +98,8 @@ userclip_point( GLcontext* ctx, const GLfloat v[] )
 }
 
 
-/* This has been split off to allow the normal shade routines to
+/**
+ * This has been split off to allow the normal shade routines to
  * get a little closer to the vertex buffer, and to use the
  * GLvector objects directly.
  * Input: ctx - the context
@@ -262,11 +261,12 @@ shade_rastpos(GLcontext *ctx,
       }
       *Rindex = (GLuint) (GLint) ind;
    }
-
 }
 
-/*
- * Caller:  context->API.RasterPos4f
+
+/**
+ * All glRasterPos command call this function to update the current
+ * raster position.
  */
 static void
 raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
@@ -278,100 +278,107 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    if (ctx->NewState)
       _mesa_update_state( ctx );
 
-   ASSIGN_4V( v, x, y, z, w );
-   TRANSFORM_POINT( eye, ctx->ModelviewMatrixStack.Top->m, v );
-
-   /* raster color */
-   if (ctx->Light.Enabled) {
-      GLfloat *norm, eyenorm[3];
-      GLfloat *objnorm = ctx->Current.Attrib[VERT_ATTRIB_NORMAL];
-
-      if (ctx->_NeedEyeCoords) {
-	 GLfloat *inv = ctx->ModelviewMatrixStack.Top->inv;
-	 TRANSFORM_NORMAL( eyenorm, objnorm, inv );
-	 norm = eyenorm;
-      }
-      else {
-	 norm = objnorm;
-      }
-
-      shade_rastpos( ctx, v, norm,
-                     ctx->Current.RasterColor,
-                     ctx->Current.RasterSecondaryColor,
-                     &ctx->Current.RasterIndex );
-
+   if (ctx->VertexProgram.Enabled) {
+      /* XXX implement this */
+      _mesa_problem(ctx, "Vertex programs not implemented for glRasterPos");
+      return;
    }
    else {
-      /* use current color or index */
-      if (ctx->Visual.rgbMode) {
-         COPY_4FV(ctx->Current.RasterColor,
-                  ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
-         COPY_4FV(ctx->Current.RasterSecondaryColor,
-                  ctx->Current.Attrib[VERT_ATTRIB_COLOR1]);
+      ASSIGN_4V( v, x, y, z, w );
+      TRANSFORM_POINT( eye, ctx->ModelviewMatrixStack.Top->m, v );
+
+      /* raster color */
+      if (ctx->Light.Enabled) {
+         GLfloat *norm, eyenorm[3];
+         GLfloat *objnorm = ctx->Current.Attrib[VERT_ATTRIB_NORMAL];
+
+         if (ctx->_NeedEyeCoords) {
+            GLfloat *inv = ctx->ModelviewMatrixStack.Top->inv;
+            TRANSFORM_NORMAL( eyenorm, objnorm, inv );
+            norm = eyenorm;
+         }
+         else {
+            norm = objnorm;
+         }
+
+         shade_rastpos( ctx, v, norm,
+                        ctx->Current.RasterColor,
+                        ctx->Current.RasterSecondaryColor,
+                        &ctx->Current.RasterIndex );
+
       }
       else {
-	 ctx->Current.RasterIndex = ctx->Current.Index;
+         /* use current color or index */
+         if (ctx->Visual.rgbMode) {
+            COPY_4FV(ctx->Current.RasterColor,
+                     ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
+            COPY_4FV(ctx->Current.RasterSecondaryColor,
+                     ctx->Current.Attrib[VERT_ATTRIB_COLOR1]);
+         }
+         else {
+            ctx->Current.RasterIndex = ctx->Current.Index;
+         }
       }
-   }
 
-   /* compute raster distance */
-   if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
-      ctx->Current.RasterDistance = ctx->Current.Attrib[VERT_ATTRIB_FOG][0];
-   else
-      ctx->Current.RasterDistance =
-                      SQRTF( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );
+      /* compute raster distance */
+      if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
+         ctx->Current.RasterDistance = ctx->Current.Attrib[VERT_ATTRIB_FOG][0];
+      else
+         ctx->Current.RasterDistance =
+                         SQRTF( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );
 
-   /* apply projection matrix:  clip = Proj * eye */
-   TRANSFORM_POINT( clip, ctx->ProjectionMatrixStack.Top->m, eye );
+      /* apply projection matrix:  clip = Proj * eye */
+      TRANSFORM_POINT( clip, ctx->ProjectionMatrixStack.Top->m, eye );
 
-   /* clip to view volume */
-   if (ctx->Transform.RasterPositionUnclipped) {
-      /* GL_IBM_rasterpos_clip: only clip against Z */
-      if (viewclip_point_z(clip) == 0) {
+      /* clip to view volume */
+      if (ctx->Transform.RasterPositionUnclipped) {
+         /* GL_IBM_rasterpos_clip: only clip against Z */
+         if (viewclip_point_z(clip) == 0) {
+            ctx->Current.RasterPosValid = GL_FALSE;
+            return;
+         }
+      }
+      else if (viewclip_point(clip) == 0) {
+         /* Normal OpenGL behaviour */
          ctx->Current.RasterPosValid = GL_FALSE;
          return;
       }
-   }
-   else if (viewclip_point(clip) == 0) {
-      /* Normal OpenGL behaviour */
-      ctx->Current.RasterPosValid = GL_FALSE;
-      return;
-   }
 
-   /* clip to user clipping planes */
-   if (ctx->Transform.ClipPlanesEnabled && !userclip_point(ctx, clip)) {
-      ctx->Current.RasterPosValid = GL_FALSE;
-      return;
-   }
-
-   /* ndc = clip / W */
-   ASSERT( clip[3]!=0.0 );
-   d = 1.0F / clip[3];
-   ndc[0] = clip[0] * d;
-   ndc[1] = clip[1] * d;
-   ndc[2] = clip[2] * d;
-
-   ctx->Current.RasterPos[0] = (ndc[0] * ctx->Viewport._WindowMap.m[MAT_SX] +
-				ctx->Viewport._WindowMap.m[MAT_TX]);
-   ctx->Current.RasterPos[1] = (ndc[1] * ctx->Viewport._WindowMap.m[MAT_SY] +
-				ctx->Viewport._WindowMap.m[MAT_TY]);
-   ctx->Current.RasterPos[2] = (ndc[2] * ctx->Viewport._WindowMap.m[MAT_SZ] +
-				ctx->Viewport._WindowMap.m[MAT_TZ]) / ctx->DepthMaxF;
-   ctx->Current.RasterPos[3] = clip[3];
-   ctx->Current.RasterPosValid = GL_TRUE;
-
-   {
-      GLuint texSet;
-      for (texSet = 0; texSet < ctx->Const.MaxTextureUnits; texSet++) {
-         COPY_4FV( ctx->Current.RasterTexCoords[texSet],
-                  ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texSet] );
+      /* clip to user clipping planes */
+      if (ctx->Transform.ClipPlanesEnabled && !userclip_point(ctx, clip)) {
+         ctx->Current.RasterPosValid = GL_FALSE;
+         return;
       }
+
+      /* ndc = clip / W */
+      ASSERT( clip[3]!=0.0 );
+      d = 1.0F / clip[3];
+      ndc[0] = clip[0] * d;
+      ndc[1] = clip[1] * d;
+      ndc[2] = clip[2] * d;
+
+      ctx->Current.RasterPos[0] = (ndc[0] * ctx->Viewport._WindowMap.m[MAT_SX] +
+                                   ctx->Viewport._WindowMap.m[MAT_TX]);
+      ctx->Current.RasterPos[1] = (ndc[1] * ctx->Viewport._WindowMap.m[MAT_SY] +
+                                   ctx->Viewport._WindowMap.m[MAT_TY]);
+      ctx->Current.RasterPos[2] = (ndc[2] * ctx->Viewport._WindowMap.m[MAT_SZ] +
+                                   ctx->Viewport._WindowMap.m[MAT_TZ]) / ctx->DepthMaxF;
+      ctx->Current.RasterPos[3] = clip[3];
+      ctx->Current.RasterPosValid = GL_TRUE;
+
+      {
+         GLuint texSet;
+         for (texSet = 0; texSet < ctx->Const.MaxTextureCoordUnits; texSet++) {
+            COPY_4FV( ctx->Current.RasterTexCoords[texSet],
+                     ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texSet] );
+         }
+      }
+
    }
 
    if (ctx->RenderMode==GL_SELECT) {
       _mesa_update_hitflag( ctx, ctx->Current.RasterPos[2] );
    }
-
 }
 
 
@@ -527,6 +534,11 @@ _mesa_RasterPos4sv(const GLshort *v)
 /***           GL_ARB_window_pos / GL_MESA_window_pos               ***/
 /**********************************************************************/
 
+
+/**
+ * All glWindowPosMESA and glWindowPosARB commands call this function to
+ * update the current raster position.
+ */
 static void
 window_pos3f(GLfloat x, GLfloat y, GLfloat z)
 {
@@ -578,7 +590,7 @@ window_pos3f(GLfloat x, GLfloat y, GLfloat z)
    /* raster texcoord = current texcoord */
    {
       GLuint texSet;
-      for (texSet = 0; texSet < ctx->Const.MaxTextureUnits; texSet++) {
+      for (texSet = 0; texSet < ctx->Const.MaxTextureCoordUnits; texSet++) {
          COPY_4FV( ctx->Current.RasterTexCoords[texSet],
                   ctx->Current.Attrib[VERT_ATTRIB_TEX0 + texSet] );
       }

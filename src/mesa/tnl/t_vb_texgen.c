@@ -1,5 +1,3 @@
-/* $Id: t_vb_texgen.c,v 1.19 2003/03/31 16:48:35 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -527,7 +525,7 @@ static GLboolean run_texgen_stage( GLcontext *ctx,
    struct texgen_stage_data *store = TEXGEN_STAGE_DATA( stage );
    GLuint i;
 
-   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+   for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
       if (ctx->Texture._TexGenEnabled & ENABLE_TEXGEN(i)) {
 	 if (stage->changed_inputs & (VERT_BIT_EYE | VERT_BIT_NORMAL | VERT_BIT_TEX(i)))
 	    store->TexgenFunc[i]( ctx, store, i );
@@ -547,7 +545,7 @@ static GLboolean run_validate_texgen_stage( GLcontext *ctx,
    struct texgen_stage_data *store = TEXGEN_STAGE_DATA(stage);
    GLuint i;
 
-   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
+   for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 
       if (texUnit->TexGenEnabled) {
@@ -604,7 +602,7 @@ static void check_texgen( GLcontext *ctx, struct gl_pipeline_stage *stage )
       if (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS)
 	 inputs |= VERT_BIT_NORMAL;
 
-      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+      for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
 	 if (ctx->Texture._TexGenEnabled & ENABLE_TEXGEN(i))
 	 {
 	    outputs |= VERT_BIT_TEX(i);
@@ -642,7 +640,7 @@ static GLboolean alloc_texgen_data( GLcontext *ctx,
    if (!store)
       return GL_FALSE;
 
-   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+   for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
       _mesa_vector4f_alloc( &store->texcoord[i], 0, VB->Size, 32 );
 
    store->tmp_f = (GLfloat (*)[3]) MALLOC(VB->Size * sizeof(GLfloat) * 3);

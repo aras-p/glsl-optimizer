@@ -101,6 +101,10 @@ _swrast_update_rasterflags( GLcontext *ctx )
       RasterMask |= MULTI_DRAW_BIT; /* all color index bits disabled */
    }
 
+   if (ctx->FragmentProgram.Enabled) {
+      RasterMask |= FRAGPROG_BIT;
+   }
+
    SWRAST_CONTEXT(ctx)->_RasterMask = RasterMask;
 }
 

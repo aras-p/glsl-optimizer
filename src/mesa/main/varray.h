@@ -1,4 +1,4 @@
-/* $Id: varray.h,v 1.14 2002/06/30 15:47:01 brianp Exp $ */
+/* $Id: varray.h,v 1.15 2003/05/01 22:44:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -105,6 +105,12 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
 extern void
 _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
                             GLsizei stride, const GLvoid *pointer);
+
+
+extern void
+_mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
+                             GLboolean normalized, GLsizei stride,
+                             const GLvoid *pointer);
 
 
 extern void

@@ -241,14 +241,6 @@ _mesa_VertexAttrib4NuivARB(GLuint index, const GLuint *v)
 
 
 void
-_mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
-                             GLboolean normalized, GLsizei stride,
-                             const GLvoid *pointer)
-{
-}
-
-
-void
 _mesa_EnableVertexAttribArrayARB(GLuint index)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -280,7 +272,7 @@ _mesa_DisableVertexAttribArrayARB(GLuint index)
 
    ctx->Array.VertexAttrib[index].Enabled = GL_FALSE;
    ctx->Array._Enabled &= ~_NEW_ARRAY_ATTRIB(index);
-   ctx->Array.NewState &= ~_NEW_ARRAY_ATTRIB(index);
+   ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
 }
 
 

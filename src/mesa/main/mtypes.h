@@ -1390,9 +1390,9 @@ struct gl_constants {
    GLint Max3DTextureLevels;
    GLint MaxCubeTextureLevels;          /* GL_ARB_texture_cube_map */
    GLint MaxTextureRectSize;            /* GL_NV_texture_rectangle */
-   GLuint MaxTextureUnits;
    GLuint MaxTextureCoordUnits;
    GLuint MaxTextureImageUnits;
+   GLuint MaxTextureUnits;              /* = MAX(CoordUnits, ImageUnits) */
    GLfloat MaxTextureMaxAnisotropy;	/* GL_EXT_texture_filter_anisotropic */
    GLfloat MaxTextureLodBias;           /* GL_EXT_texture_lod_bias */
    GLuint MaxArrayLockSize;

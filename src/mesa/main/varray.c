@@ -1,5 +1,3 @@
-/* $Id: varray.c,v 1.48 2003/03/01 01:50:22 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -438,8 +436,9 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *vptr)
 }
 
 
-void _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
-                                 GLsizei stride, const GLvoid *ptr)
+void
+_mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
+                            GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -497,6 +496,73 @@ void _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
    if (ctx->Driver.VertexAttribPointer)
       ctx->Driver.VertexAttribPointer( ctx, index, size, type, stride, ptr );
 }
+
+
+void
+_mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
+                             GLboolean normalized,
+                             GLsizei stride, const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (index >= ctx->Const.MaxVertexProgramAttribs) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerARB(index)");
+      return;
+   }
+
+   if (size < 1 || size > 4) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerARB(size)");
+      return;
+   }
+
+   if (stride < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerARB(stride)");
+      return;
+   }
+
+   if (type == GL_UNSIGNED_BYTE && size != 4) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerARB(size!=4)");
+      return;
+   }
+
+   /* check for valid 'type' and compute StrideB right away */
+   switch (type) {
+      case GL_UNSIGNED_BYTE:
+         ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLubyte);
+         break;
+      case GL_SHORT:
+         ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLshort);
+         break;
+      case GL_FLOAT:
+         ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLfloat);
+         break;
+      case GL_DOUBLE:
+         ctx->Array.VertexAttrib[index].StrideB = size * sizeof(GLdouble);
+         break;
+      default:
+         _mesa_error( ctx, GL_INVALID_ENUM, "glVertexAttribPointerARB(type)" );
+         return;
+   }
+
+   if (stride)
+      ctx->Array.VertexAttrib[index].StrideB = stride;
+
+   ctx->Array.VertexAttrib[index].Stride = stride;
+   ctx->Array.VertexAttrib[index].Size = size;
+   ctx->Array.VertexAttrib[index].Type = type;
+   ctx->Array.VertexAttrib[index].Normalized = normalized;
+   ctx->Array.VertexAttrib[index].Ptr = (void *) ptr;
+
+   ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
+
+   /* XXX fix
+   if (ctx->Driver.VertexAttribPointer)
+      ctx->Driver.VertexAttribPointer( ctx, index, size, type, stride, ptr );
+   */
+}
+
 
 
 void
@@ -706,14 +772,14 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
          _mesa_TexCoordPointer( tcomps, GL_FLOAT, stride,
 				(GLubyte *) pointer + i * coffset );
       }
-      for (i = factor; i < (GLint) ctx->Const.MaxTextureUnits; i++) {
+      for (i = factor; i < (GLint) ctx->Const.MaxTextureCoordUnits; i++) {
          _mesa_ClientActiveTextureARB( (GLenum) (GL_TEXTURE0_ARB + i) );
          _mesa_DisableClientState( GL_TEXTURE_COORD_ARRAY );
       }
    }
    else {
       GLint i;
-      for (i = 0; i < (GLint) ctx->Const.MaxTextureUnits; i++) {
+      for (i = 0; i < (GLint) ctx->Const.MaxTextureCoordUnits; i++) {
          _mesa_ClientActiveTextureARB( (GLenum) (GL_TEXTURE0_ARB + i) );
          _mesa_DisableClientState( GL_TEXTURE_COORD_ARRAY );
       }

@@ -1,5 +1,3 @@
-/* $Id: t_imm_exec.c,v 1.46 2003/04/08 02:27:20 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -166,7 +164,7 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
 
    if (flag & VERT_BITS_TEX_ANY) {
       GLuint i;
-      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
+      for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++) {
 	 if (flag & VERT_BIT_TEX(i)) {
 	    COPY_4FV( ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i],
                       IM->Attrib[VERT_ATTRIB_TEX0 + i][count]);
@@ -344,7 +342,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
 
    if (inputs & VERT_BITS_TEX_ANY) {
       GLuint i;
-      for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+      for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
 	 VB->TexCoordPtr[i] = NULL;
 	 if (inputs & VERT_BIT_TEX(i)) {
 	    tmp->TexCoord[i].count = count;
@@ -569,7 +567,7 @@ void _tnl_imm_init( GLcontext *ctx )
    _mesa_vector1ui_init( &tmp->Index, 0, 0 );
    _mesa_vector1ub_init( &tmp->EdgeFlag, 0, 0 );
 
-   for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
       _mesa_vector4f_init( &tmp->TexCoord[i], 0, 0);
 
    /* Install the first immediate.  Intially outside begin/end.

@@ -1002,7 +1002,8 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       /* GL_ARB_multitexture */
       case GL_MAX_TEXTURE_UNITS_ARB:
          CHECK_EXTENSION_B(ARB_multitexture, pname);
-         *params = INT_TO_BOOL(ctx->Const.MaxTextureUnits);
+         *params = INT_TO_BOOL(MIN2(ctx->Const.MaxTextureImageUnits,
+                                    ctx->Const.MaxTextureCoordUnits));
          break;
       case GL_ACTIVE_TEXTURE_ARB:
          CHECK_EXTENSION_B(ARB_multitexture, pname);
@@ -2501,7 +2502,8 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       /* GL_ARB_multitexture */
       case GL_MAX_TEXTURE_UNITS_ARB:
          CHECK_EXTENSION_D(ARB_multitexture, pname);
-         *params = (GLdouble) ctx->Const.MaxTextureUnits;
+         *params = (GLdouble) MIN2(ctx->Const.MaxTextureImageUnits,
+                                   ctx->Const.MaxTextureCoordUnits);
          break;
       case GL_ACTIVE_TEXTURE_ARB:
          CHECK_EXTENSION_D(ARB_multitexture, pname);
@@ -4000,7 +4002,8 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       /* GL_ARB_multitexture */
       case GL_MAX_TEXTURE_UNITS_ARB:
          CHECK_EXTENSION_F(ARB_multitexture, pname);
-         *params = (GLfloat) ctx->Const.MaxTextureUnits;
+         *params = (GLfloat) MIN2(ctx->Const.MaxTextureImageUnits,
+                                  ctx->Const.MaxTextureCoordUnits);
          break;
       case GL_ACTIVE_TEXTURE_ARB:
          CHECK_EXTENSION_F(ARB_multitexture, pname);
@@ -5472,7 +5475,8 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       /* GL_ARB_multitexture */
       case GL_MAX_TEXTURE_UNITS_ARB:
          CHECK_EXTENSION_I(ARB_multitexture, pname);
-         *params = ctx->Const.MaxTextureUnits;
+         *params = MIN2(ctx->Const.MaxTextureImageUnits,
+                        ctx->Const.MaxTextureCoordUnits);
          break;
       case GL_ACTIVE_TEXTURE_ARB:
          CHECK_EXTENSION_I(ARB_multitexture, pname);

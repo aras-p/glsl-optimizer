@@ -867,7 +867,7 @@ update_texture_matrices( GLcontext *ctx )
 
    ctx->Texture._TexMatEnabled = 0;
 
-   for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
+   for (i=0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       if (ctx->TextureMatrixStack[i].Top->flags & MAT_DIRTY) {
 	 _math_matrix_analyse( ctx->TextureMatrixStack[i].Top );
 
@@ -903,6 +903,8 @@ update_texture_state( GLcontext *ctx )
    ctx->Texture._TexGenEnabled = 0;
 
    /* Update texture unit state.
+    * XXX this loop should probably be broken into separate loops for
+    * texture coord units and texture image units.
     */
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];

@@ -136,12 +136,6 @@ _mesa_VertexAttrib4NuivARB(GLuint index, const GLuint *v);
 
 
 extern void
-_mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
-                             GLboolean normalized, GLsizei stride,
-                             const GLvoid *pointer);
-
-
-extern void
 _mesa_EnableVertexAttribArrayARB(GLuint index);
 
 

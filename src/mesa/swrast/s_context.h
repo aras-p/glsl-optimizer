@@ -1,5 +1,3 @@
-/* $Id: s_context.h,v 1.26 2003/03/16 22:02:36 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -242,6 +240,7 @@ typedef void (*swrast_tri_func)( GLcontext *ctx, const SWvertex *,
                                         /**< buffer or no buffers. */
 #define OCCLUSION_BIT           0x800   /**< GL_HP_occlusion_test enabled */
 #define TEXTURE_BIT		0x1000	/**< Texturing really enabled */
+#define FRAGPROG_BIT            0x2000  /**< Fragment program enabled */
 /*@}*/
 
 #define _SWRAST_NEW_RASTERMASK (_NEW_BUFFERS|	\
@@ -249,6 +248,7 @@ typedef void (*swrast_tri_func)( GLcontext *ctx, const SWvertex *,
 			        _NEW_COLOR|	\
 			        _NEW_DEPTH|	\
 			        _NEW_FOG|	\
+                                _NEW_PROGRAM|   \
 			        _NEW_STENCIL|	\
 			        _NEW_TEXTURE|	\
 			        _NEW_VIEWPORT|	\

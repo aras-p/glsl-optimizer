@@ -1,10 +1,8 @@
-/* $Id: api_arrayelt.c,v 1.12 2003/01/14 04:55:45 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -277,7 +275,7 @@ static void _ae_update_state( GLcontext *ctx )
    AEarray *aa = actx->arrays;
    GLuint i;
 
-   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
+   for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
       if (ctx->Array.TexCoord[i].Enabled) {
 	 ta->unit = i;
 	 ta->array = &ctx->Array.TexCoord[i];
