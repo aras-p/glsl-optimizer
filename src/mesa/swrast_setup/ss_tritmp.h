@@ -1,10 +1,10 @@
-/* $Id: ss_tritmp.h,v 1.19 2002/10/29 22:25:57 brianp Exp $ */
+/* $Id: ss_tritmp.h,v 1.20 2002/11/13 15:04:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.0
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,7 +36,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    GLfloat z[3];
    GLfloat offset;
    GLenum mode = GL_FILL;
-   GLuint facing;
+   GLuint facing = 0;
 
    v[0] = &verts[e0];
    v[1] = &verts[e1];
