@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.4 1999/09/07 22:31:30 brianp Exp $ */
+/* $Id: enable.c,v 1.5 1999/09/18 20:41:23 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -341,6 +341,7 @@ void gl_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 if (ctx->Stencil.Enabled!=state) {
             ctx->Stencil.Enabled = state;
             ctx->NewState |= NEW_RASTER_OPS;
+	    ctx->TriangleCaps ^= DD_STENCIL;
          }
 	 break;
       case GL_TEXTURE_1D:

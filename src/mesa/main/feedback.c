@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: feedback.c,v 1.2 1999/09/18 20:41:23 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,6 +37,7 @@
 #include "enums.h"
 #include "feedback.h"
 #include "macros.h"
+#include "mmath.h"
 #include "types.h"
 #ifdef XFree86Server
 #include "GL/xf86glx.h"
@@ -127,20 +128,21 @@ void gl_PassThrough( GLcontext *ctx, GLfloat token )
  * Put a vertex into the feedback buffer.
  */
 void gl_feedback_vertex( GLcontext *ctx,
-                         GLfloat x, GLfloat y, GLfloat z, GLfloat w,
-			 const GLfloat color[4], GLfloat index,
+                         const GLfloat win[4],
+			 const GLfloat color[4], 
+			 GLuint index,
 			 const GLfloat texcoord[4] )
 {
-   FEEDBACK_TOKEN( ctx, x );
-   FEEDBACK_TOKEN( ctx, y );
+   FEEDBACK_TOKEN( ctx, win[0] );
+   FEEDBACK_TOKEN( ctx, win[1] );
    if (ctx->Feedback.Mask & FB_3D) {
-      FEEDBACK_TOKEN( ctx, z );
+      FEEDBACK_TOKEN( ctx, win[2] );
    }
    if (ctx->Feedback.Mask & FB_4D) {
-      FEEDBACK_TOKEN( ctx, w );
+      FEEDBACK_TOKEN( ctx, win[3] );
    }
    if (ctx->Feedback.Mask & FB_INDEX) {
-      FEEDBACK_TOKEN( ctx, index );
+      FEEDBACK_TOKEN( ctx, (GLfloat) index );
    }
    if (ctx->Feedback.Mask & FB_COLOR) {
       FEEDBACK_TOKEN( ctx, color[0] );
@@ -155,6 +157,92 @@ void gl_feedback_vertex( GLcontext *ctx,
       FEEDBACK_TOKEN( ctx, texcoord[3] );
    }
 }
+
+
+
+static void gl_do_feedback_vertex( GLcontext *ctx, GLuint v, GLuint pv )
+{
+   GLfloat win[4];
+   GLfloat color[4];
+   GLfloat tc[4];
+   GLuint texUnit = ctx->Texture.CurrentTransformUnit;
+   struct vertex_buffer *VB = ctx->VB;
+
+   win[0] = VB->Win.data[v][0];
+   win[1] = VB->Win.data[v][1];
+   win[2] = VB->Win.data[v][2] / DEPTH_SCALE;
+   win[3] = 1.0 / VB->Win.data[v][3];
+
+   if (ctx->Light.ShadeModel==GL_SMOOTH) pv = v;
+
+   UBYTE_RGBA_TO_FLOAT_RGBA( color, VB->ColorPtr->data[pv] );
+
+   if (VB->TexCoordPtr[texUnit]->size == 4 &&     
+       VB->TexCoordPtr[texUnit]->data[v][3]!=0.0)
+   {
+      GLfloat invq = 1.0F / VB->TexCoordPtr[texUnit]->data[v][3];
+      tc[0] = VB->TexCoordPtr[texUnit]->data[v][0] * invq;
+      tc[1] = VB->TexCoordPtr[texUnit]->data[v][1] * invq;
+      tc[2] = VB->TexCoordPtr[texUnit]->data[v][2] * invq;
+      tc[3] = VB->TexCoordPtr[texUnit]->data[v][3];
+   } else {
+      ASSIGN_4V(tc, 0,0,0,1);
+      COPY_SZ_4V(tc, 
+		 VB->TexCoordPtr[texUnit]->size,
+		 VB->TexCoordPtr[texUnit]->data[v]);
+   }
+
+   gl_feedback_vertex( ctx, win, color, VB->IndexPtr->data[v], tc );
+}
+
+
+
+/*
+ * Put triangle in feedback buffer.
+ */
+void gl_feedback_triangle( GLcontext *ctx,
+			   GLuint v0, GLuint v1, GLuint v2, GLuint pv )
+{
+   if (gl_cull_triangle( ctx, v0, v1, v2 )) {
+      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POLYGON_TOKEN );
+      FEEDBACK_TOKEN( ctx, (GLfloat) 3 );        /* three vertices */
+      
+      gl_do_feedback_vertex( ctx, v0, pv );
+      gl_do_feedback_vertex( ctx, v1, pv );
+      gl_do_feedback_vertex( ctx, v2, pv );
+   }
+}
+
+
+void gl_feedback_line( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv )
+{
+   GLenum token = GL_LINE_TOKEN;
+
+   if (ctx->StippleCounter==0) 
+      token = GL_LINE_RESET_TOKEN;
+
+   FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) token );
+
+   gl_do_feedback_vertex( ctx, v1, pv );
+   gl_do_feedback_vertex( ctx, v2, pv );
+
+   ctx->StippleCounter++;
+}
+
+
+void gl_feedback_points( GLcontext *ctx, GLuint first, GLuint last )
+{
+   struct vertex_buffer *VB = ctx->VB;
+   GLuint i;
+
+   for (i=first;i<=last;i++) 
+      if (VB->ClipMask[i]==0) {
+         FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POINT_TOKEN );
+	 gl_do_feedback_vertex( ctx, i, i );
+      }
+}
+
+
 
 
 
@@ -201,6 +289,37 @@ void gl_update_hitflag( GLcontext *ctx, GLfloat z )
    }
 }
 
+void gl_select_triangle( GLcontext *ctx,
+			 GLuint v0, GLuint v1, GLuint v2, GLuint pv )
+{
+   struct vertex_buffer *VB = ctx->VB;
+
+   if (gl_cull_triangle( ctx, v0, v1, v2 )) {
+      gl_update_hitflag( ctx, VB->Win.data[v0][3] / DEPTH_SCALE );
+      gl_update_hitflag( ctx, VB->Win.data[v1][3] / DEPTH_SCALE );
+      gl_update_hitflag( ctx, VB->Win.data[v2][3] / DEPTH_SCALE );
+   }
+}
+
+
+void gl_select_line( GLcontext *ctx,
+		     GLuint v0, GLuint v1, GLuint pv )
+{
+   struct vertex_buffer *VB = ctx->VB;
+
+   gl_update_hitflag( ctx, VB->Win.data[v0][3] / DEPTH_SCALE );
+   gl_update_hitflag( ctx, VB->Win.data[v1][3] / DEPTH_SCALE );
+}
+
+void gl_select_points( GLcontext *ctx, GLuint first, GLuint last )
+{
+   struct vertex_buffer *VB = ctx->VB;
+   GLuint i;
+
+   for (i=first;i<=last;i++) 
+      if (VB->ClipMask[i]==0) 
+         gl_update_hitflag( ctx, VB->Win.data[i][3] / DEPTH_SCALE);
+}
 
 
 static void write_hit_record( GLcontext *ctx )

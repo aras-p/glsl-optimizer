@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.7 1999/09/11 11:31:34 brianp Exp $ */
+/* $Id: context.c,v 1.8 1999/09/18 20:41:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2082,8 +2082,13 @@ void gl_update_state( GLcontext *ctx )
       ctx->Texture.Unit[1].LastEnvMode = ctx->Texture.Unit[1].EnvMode;
    }
 
-   if ((ctx->NewState & ~(NEW_CLIENT_STATE|NEW_TEXTURE_ENABLE)) == 0)
+   if ((ctx->NewState & ~(NEW_CLIENT_STATE|NEW_TEXTURE_ENABLE)) == 0) {
+
+      if (MESA_VERBOSE&VERBOSE_STATE)
+	 fprintf(stderr, "update_state: goto finished\n");
+
       goto finished;
+   }
 
    if (ctx->NewState & NEW_TEXTURE_MATRIX) {
       ctx->Enabled &= ~(ENABLE_TEXMAT0|ENABLE_TEXMAT1);

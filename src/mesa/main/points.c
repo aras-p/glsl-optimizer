@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: points.c,v 1.2 1999/09/18 20:41:23 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,7 +57,7 @@ void gl_PointSize( GLcontext *ctx, GLfloat size )
 
    if (ctx->Point.Size != size) {
       ctx->Point.Size = size;
-      ctx->TriangleCaps &= DD_POINT_SIZE;
+      ctx->TriangleCaps &= ~DD_POINT_SIZE;
       if (size != 1.0) ctx->TriangleCaps |= DD_POINT_SIZE;
       ctx->NewState |= NEW_RASTER_OPS;
    }
@@ -123,65 +123,6 @@ void gl_PointParameterfvEXT( GLcontext *ctx, GLenum pname,
 
 
 
-/*
- * Put points in feedback buffer.
- */
-static void feedback_points( GLcontext *ctx, GLuint first, GLuint last )
-{
-   struct vertex_buffer *VB = ctx->VB;
-   GLuint texUnit = ctx->Texture.CurrentTransformUnit;
-   GLuint tsize = VB->TexCoordPtr[texUnit]->size;
-   GLuint i;
-   GLfloat texcoord[4];
-   
-   ASSIGN_4V(texcoord, 0,0,0,1);
-
-   for (i=first;i<=last;i++) {
-      if (VB->ClipMask[i]==0) {
-         GLfloat x, y, z, w, invq;
-         GLfloat color[4];
-         x = VB->Win.data[i][0];
-         y = VB->Win.data[i][1];
-         z = VB->Win.data[i][2] / DEPTH_SCALE;
-         w = VB->ClipPtr->data[i][3];
-
-	 if (tsize == 4) {
-	    invq = 1.0F / VB->TexCoordPtr[texUnit]->data[i][3];
-	    texcoord[0] = VB->TexCoordPtr[texUnit]->data[i][0] * invq;
-	    texcoord[1] = VB->TexCoordPtr[texUnit]->data[i][1] * invq;
-	    texcoord[2] = VB->TexCoordPtr[texUnit]->data[i][2] * invq;
-	    texcoord[3] = VB->TexCoordPtr[texUnit]->data[i][3];
-	 } else {
-	    COPY_SZ_4V(texcoord, tsize, VB->TexCoordPtr[texUnit]->data[i]);
-	 }
- 
-         FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POINT_TOKEN );
-
-	 UBYTE_RGBA_TO_FLOAT_RGBA( color, VB->ColorPtr->data[i] );
-
-         gl_feedback_vertex( ctx, x, y, z, w, color,
-                             (GLfloat) VB->IndexPtr->data[i], texcoord 
-);
-      }
-   }
-}
-
-
-
-/*
- * Put points in selection buffer.
- */
-static void select_points( GLcontext *ctx, GLuint first, GLuint last )
-{
-   struct vertex_buffer *VB = ctx->VB;
-   GLuint i;
-
-   for (i=first;i<=last;i++) {
-      if (VB->ClipMask[i]==0) {
-         gl_update_hitflag( ctx, VB->Win.data[i][2] / DEPTH_SCALE );
-      }
-   }
-}
 
 
 /*
@@ -1333,11 +1274,11 @@ void gl_set_point_function( GLcontext *ctx )
      }
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
-      ctx->Driver.PointsFunc = feedback_points;
+      ctx->Driver.PointsFunc = gl_feedback_points;
    }
    else {
       /* GL_SELECT mode */
-      ctx->Driver.PointsFunc = select_points;
+      ctx->Driver.PointsFunc = gl_select_points;
    }
 
 }

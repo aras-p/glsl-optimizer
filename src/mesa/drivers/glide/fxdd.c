@@ -448,8 +448,9 @@ static GLboolean fxIsInHardware(GLcontext *ctx)
         (ctx->Color.ColorMask[GCOMP]==ctx->Color.ColorMask[BCOMP]) &&
         (ctx->Color.ColorMask[ACOMP]==ctx->Color.ColorMask[ACOMP])))
      )
-    return GL_FALSE;
-
+  {
+     return GL_FALSE;
+  }
   /* Unsupported texture/multitexture cases */
 
   if(fxMesa->emulateTwoTMUs) {
@@ -525,7 +526,7 @@ static void fxDDUpdateDDPointers(GLcontext *ctx)
   if (MESA_VERBOSE&(VERBOSE_DRIVER|VERBOSE_STATE)) 
     fprintf(stderr,"fxmesa: fxDDUpdateDDPointers(...)\n");
 
-  if (new_state & (NEW_RASTER_OPS|NEW_TEXTURING))
+  if (new_state & (NEW_RASTER_OPS|NEW_TEXTURING)) 
      fxMesa->is_in_hardware = fxIsInHardware(ctx);
 
   if (fxMesa->is_in_hardware) {
@@ -546,14 +547,8 @@ static void fxDDUpdateDDPointers(GLcontext *ctx)
     ctx->Driver.LineFunc=fxMesa->LineFunc;
     ctx->Driver.TriangleFunc=fxMesa->TriangleFunc;
     ctx->Driver.QuadFunc=fxMesa->QuadFunc;
-  }
-
-  ctx->Driver.AllocDepthBuffer=fxAllocDepthBuffer;
-  ctx->Driver.DepthTestSpan=fxDDDepthTestSpanGeneric;
-  ctx->Driver.DepthTestPixels=fxDDDepthTestPixelsGeneric;
-  ctx->Driver.ReadDepthSpanFloat=fxDDReadDepthSpanFloat;
-  ctx->Driver.ReadDepthSpanInt=fxDDReadDepthSpanInt;
-  ctx->Driver.RenderStart = 0;
+  } else 
+     fxMesa->render_index = FX_FALLBACK;
 }
 
 
@@ -564,6 +559,12 @@ void fxSetupDDPointers(GLcontext *ctx)
   }
 
   ctx->Driver.UpdateState=fxDDUpdateDDPointers;
+
+  ctx->Driver.AllocDepthBuffer=fxAllocDepthBuffer;
+  ctx->Driver.DepthTestSpan=fxDDDepthTestSpanGeneric;
+  ctx->Driver.DepthTestPixels=fxDDDepthTestPixelsGeneric;
+  ctx->Driver.ReadDepthSpanFloat=fxDDReadDepthSpanFloat;
+  ctx->Driver.ReadDepthSpanInt=fxDDReadDepthSpanInt;
          
   ctx->Driver.GetString=fxDDGetString;
 

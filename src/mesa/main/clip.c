@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: clip.c,v 1.2 1999/09/18 20:41:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,6 +33,7 @@
 #else
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "clip.h"
 #include "context.h"
 #include "macros.h"
@@ -73,10 +74,8 @@ do {								\
 #define CLIP_TEX1     0x8
 #define CLIP_INDEX0   0x10
 #define CLIP_INDEX1   0x20
-#define CLIP_EDGE     0x40
 
-/* This is sparsely populated: */
-static clip_interp_func clip_interp_tab[0x80]; 
+static clip_interp_func clip_interp_tab[0x40]; 
 
 #define IND 0
 #define NAME clip_nil
@@ -120,38 +119,6 @@ static clip_interp_func clip_interp_tab[0x80];
 
 #define IND (CLIP_INDEX0|CLIP_INDEX1)
 #define NAME clipINDEX0_INDEX1
-#include "interp_tmp.h"
-
-#define IND (CLIP_RGBA0|CLIP_EDGE)
-#define NAME clipRGBA0_EDGE
-#include "interp_tmp.h"
-
-#define IND (CLIP_RGBA0|CLIP_RGBA1|CLIP_EDGE)
-#define NAME clipRGBA0_RGBA1_EDGE
-#include "interp_tmp.h"
-
-#define IND (CLIP_TEX0|CLIP_RGBA0|CLIP_EDGE)
-#define NAME clipTEX0_RGBA0_EDGE
-#include "interp_tmp.h"
-
-#define IND (CLIP_TEX0|CLIP_RGBA0|CLIP_RGBA1|CLIP_EDGE)
-#define NAME clipTEX0_RGBA0_RGBA1_EDGE
-#include "interp_tmp.h"
-
-#define IND (CLIP_TEX1|CLIP_TEX0|CLIP_RGBA0|CLIP_EDGE)
-#define NAME clipTEX1_TEX0_RGBA0_EDGE
-#include "interp_tmp.h"
-
-#define IND (CLIP_TEX1|CLIP_TEX0|CLIP_RGBA0|CLIP_RGBA1|CLIP_EDGE)
-#define NAME clipTEX1_TEX0_RGBA0_RGBA1_EDGE
-#include "interp_tmp.h"
-
-#define IND (CLIP_INDEX0|CLIP_EDGE)
-#define NAME clipINDEX0_EDGE
-#include "interp_tmp.h"
-
-#define IND (CLIP_INDEX0|CLIP_INDEX1|CLIP_EDGE)
-#define NAME clipINDEX0_INDEX1_EDGE
 #include "interp_tmp.h"
 
 
@@ -289,30 +256,31 @@ GLuint gl_userclip_point( GLcontext* ctx, const GLfloat v[] )
 
 
 
-clip_poly_func gl_poly_clip_tab[5];
-clip_line_func gl_line_clip_tab[5];
-
-
 #if defined(__i386__)
 #define NEGATIVE(x) ((*(int *)&x)<0)
 #else
 #define NEGATIVE(x) (x < 0)
 #endif
 
+
+static clip_poly_func gl_poly_clip_tab[2][5];
+static clip_line_func gl_line_clip_tab[2][5];
+
 #define W(i) coord[i][3]
 #define Z(i) coord[i][2]
 #define Y(i) coord[i][1]
 #define X(i) coord[i][0]
 #define SIZE 4
+#define IND 0
 #define TAG(x) x##_4
 #include "clip_funcs.h"
-
 
 #define W(i) 1.0
 #define Z(i) coord[i][2]
 #define Y(i) coord[i][1]
 #define X(i) coord[i][0]
 #define SIZE 3
+#define IND 0
 #define TAG(x) x##_3
 #include "clip_funcs.h"
 
@@ -321,8 +289,79 @@ clip_line_func gl_line_clip_tab[5];
 #define Y(i) coord[i][1]
 #define X(i) coord[i][0]
 #define SIZE 2
+#define IND 0
 #define TAG(x) x##_2
 #include "clip_funcs.h"
+
+#define W(i) coord[i][3]
+#define Z(i) coord[i][2]
+#define Y(i) coord[i][1]
+#define X(i) coord[i][0]
+#define SIZE 4
+#define IND CLIP_TAB_EDGEFLAG
+#define TAG(x) x##_4_edgeflag
+#include "clip_funcs.h"
+
+#define W(i) 1.0
+#define Z(i) coord[i][2]
+#define Y(i) coord[i][1]
+#define X(i) coord[i][0]
+#define SIZE 3
+#define IND CLIP_TAB_EDGEFLAG
+#define TAG(x) x##_3_edgeflag
+#include "clip_funcs.h"
+
+#define W(i) 1.0
+#define Z(i) 0.0
+#define Y(i) coord[i][1]
+#define X(i) coord[i][0]
+#define SIZE 2
+#define IND CLIP_TAB_EDGEFLAG
+#define TAG(x) x##_2_edgeflag
+#include "clip_funcs.h"
+
+
+
+
+void gl_update_clipmask( GLcontext *ctx )
+{
+   GLuint mask = 0;
+
+   if (ctx->Visual->RGBAflag) 
+   {
+      if (ctx->Light.ShadeModel==GL_SMOOTH) 
+      {
+	 mask |= CLIP_RGBA0;
+      
+	 if (ctx->TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_SEPERATE_SPECULAR))
+	    mask |= CLIP_RGBA1;
+      }
+
+      if (ctx->Texture.ReallyEnabled & 0xf0)
+	 mask |= CLIP_TEX1|CLIP_TEX0;
+
+      if (ctx->Texture.ReallyEnabled & 0xf)
+	 mask |= CLIP_TEX0;
+   }
+   else if (ctx->Light.ShadeModel==GL_SMOOTH) 
+   {
+      mask |= CLIP_INDEX0;
+      
+      if (ctx->TriangleCaps & DD_TRI_LIGHT_TWOSIDE) 
+	 mask |= CLIP_INDEX1;
+   }
+
+   
+   ctx->ClipInterpFunc = clip_interp_tab[mask];
+   ctx->poly_clip_tab = gl_poly_clip_tab[0];
+   ctx->line_clip_tab = gl_line_clip_tab[0];
+
+   if (ctx->TriangleCaps & DD_TRI_UNFILLED) {
+      ctx->poly_clip_tab = gl_poly_clip_tab[1];
+      ctx->line_clip_tab = gl_line_clip_tab[0];
+   } 
+}
+
 
 #define USER_CLIPTEST(NAME, SZ)						\
 static void NAME( struct vertex_buffer *VB )				\
@@ -389,50 +428,15 @@ void gl_user_cliptest( struct vertex_buffer *VB )
 }
 
 
-
-static clip_interp_func get_interp_func( GLcontext *ctx )
-{
-   GLuint mask = 0;
-
-   if (ctx->Visual->RGBAflag) 
-   {
-      if (ctx->Light.ShadeModel==GL_SMOOTH) 
-      {
-	 mask |= CLIP_RGBA0;
-      
-	 if (ctx->TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_SEPERATE_SPECULAR))
-	    mask |= CLIP_RGBA1;
-      }
-
-      if (ctx->Texture.ReallyEnabled & 0xf0)
-	 mask |= CLIP_TEX1|CLIP_TEX0;
-
-      if (ctx->Texture.ReallyEnabled & 0xf)
-	 mask |= CLIP_TEX0;
-   }
-   else if (ctx->Light.ShadeModel==GL_SMOOTH) 
-   {
-      mask |= CLIP_INDEX0;
-      
-      if (ctx->TriangleCaps & DD_TRI_LIGHT_TWOSIDE) 
-	 mask |= CLIP_INDEX1;
-   }
-
-   
-   return clip_interp_tab[mask];
-}
-
-
-void gl_update_clipmask( GLcontext *ctx )
-{
-   ctx->ClipInterpFunc = get_interp_func( ctx );
-}
-
 void gl_init_clip(void)
 {
    init_clip_funcs_4();
    init_clip_funcs_3();
    init_clip_funcs_2();
+
+   init_clip_funcs_4_edgeflag();
+   init_clip_funcs_3_edgeflag();
+   init_clip_funcs_2_edgeflag();
 
    clip_interp_tab[0] = clip_nil;
    clip_interp_tab[CLIP_RGBA0] = clipRGBA0;
@@ -440,21 +444,13 @@ void gl_init_clip(void)
    clip_interp_tab[CLIP_TEX0|CLIP_RGBA0] = clipTEX0_RGBA0;
    clip_interp_tab[CLIP_TEX0|CLIP_RGBA0|CLIP_RGBA1] = clipTEX0_RGBA0_RGBA1;
    clip_interp_tab[CLIP_TEX1|CLIP_TEX0|CLIP_RGBA0] = clipTEX1_TEX0_RGBA0;
-   clip_interp_tab[CLIP_TEX1|CLIP_TEX0|CLIP_RGBA0|CLIP_RGBA1] = clipTEX1_TEX0_RGBA0_RGBA1;
+   clip_interp_tab[CLIP_TEX1|CLIP_TEX0|CLIP_RGBA0|CLIP_RGBA1] = 
+      clipTEX1_TEX0_RGBA0_RGBA1;
 
    clip_interp_tab[CLIP_TEX0] = clipTEX0;
    clip_interp_tab[CLIP_TEX1|CLIP_TEX0] = clipTEX1_TEX0;
 
    clip_interp_tab[CLIP_INDEX0] = clipINDEX0;
    clip_interp_tab[CLIP_INDEX0|CLIP_INDEX1] = clipINDEX0_INDEX1;
-
-   clip_interp_tab[CLIP_RGBA0|CLIP_EDGE] = clipRGBA0_EDGE;
-   clip_interp_tab[CLIP_RGBA0|CLIP_RGBA1|CLIP_EDGE] = clipRGBA0_RGBA1_EDGE;
-   clip_interp_tab[CLIP_TEX0|CLIP_RGBA0|CLIP_EDGE] = clipTEX0_RGBA0_EDGE;
-   clip_interp_tab[CLIP_TEX0|CLIP_RGBA0|CLIP_RGBA1|CLIP_EDGE] = clipTEX0_RGBA0_RGBA1_EDGE;
-   clip_interp_tab[CLIP_TEX1|CLIP_TEX0|CLIP_RGBA0|CLIP_EDGE] = clipTEX1_TEX0_RGBA0_EDGE;
-   clip_interp_tab[CLIP_TEX1|CLIP_TEX0|CLIP_RGBA0|CLIP_RGBA1|CLIP_EDGE] = clipTEX1_TEX0_RGBA0_RGBA1_EDGE;
-   clip_interp_tab[CLIP_INDEX0|CLIP_EDGE] = clipINDEX0_EDGE;
-   clip_interp_tab[CLIP_INDEX0|CLIP_INDEX1|CLIP_EDGE] = clipINDEX0_INDEX1_EDGE;
 }
 

@@ -1,4 +1,4 @@
-/* $Id: clip.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: clip.h,v 1.2 1999/09/18 20:41:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,16 +47,8 @@
 
 
 
-typedef GLuint (*clip_line_func)( struct vertex_buffer *VB, 
-				  GLuint *i, GLuint *j,
-				  GLubyte mask);
-typedef GLuint (*clip_poly_func)( struct vertex_buffer *VB,
-				  GLuint n, GLuint vlist[],
-				  GLubyte mask );
 
-
-extern clip_poly_func gl_poly_clip_tab[5];
-extern clip_line_func gl_line_clip_tab[5];
+#define CLIP_TAB_EDGEFLAG 1
 
 extern void gl_init_clip(void);
 

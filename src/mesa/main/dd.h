@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: dd.h,v 1.2 1999/09/18 20:41:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -458,6 +458,13 @@ struct dd_function_table {
     * gl_render_vb() function in vbrender.c for more details.  
     */
 
+
+   void (*ReducedPrimitiveChange)( GLcontext *ctx, GLenum primitive );
+   /* If registered, this will be called when rendering transitions between
+    * points, lines and triangles.  It is not called on transitions between 
+    * primtives such as GL_TRIANGLES and GL_TRIANGLE_STRIPS, or between
+    * triangles and quads or triangles and polygons.
+    */
 
    GLuint TriangleCaps;
    /* Holds a list of the reasons why we might normally want to call

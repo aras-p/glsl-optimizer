@@ -1,4 +1,4 @@
-/* $Id: feedback.h,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: feedback.h,v 1.2 1999/09/18 20:41:23 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,14 +37,15 @@
 
 #define FEEDBACK_TOKEN( CTX, T )				\
 	if (CTX->Feedback.Count < CTX->Feedback.BufferSize) {	\
-	   CTX->Feedback.Buffer[CTX->Feedback.Count] = (T);	\
+	   CTX->Feedback.Buffer[CTX->Feedback.Count] = (GLfloat) (T); \
 	}							\
 	CTX->Feedback.Count++;
 
 
 extern void gl_feedback_vertex( GLcontext *ctx,
-                                GLfloat x, GLfloat y, GLfloat z, GLfloat w,
-                                const GLfloat color[4], GLfloat index,
+                                const GLfloat win[4],
+                                const GLfloat color[4], 
+				GLuint index,
                                 const GLfloat texcoord[4] );
 
 
@@ -68,7 +69,15 @@ extern void gl_PopName( GLcontext *ctx );
 
 extern GLint gl_RenderMode( GLcontext *ctx, GLenum mode );
 
+extern void gl_feedback_points( GLcontext *ctx, GLuint first, GLuint last );
+extern void gl_feedback_line( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv );
+extern void gl_feedback_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
+				  GLuint v2, GLuint pv );
 
+extern void gl_select_points( GLcontext *ctx, GLuint first, GLuint last );
+extern void gl_select_line( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv );
+extern void gl_select_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
+				GLuint v2, GLuint pv );
 
 #endif
 

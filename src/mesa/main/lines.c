@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: lines.c,v 1.2 1999/09/18 20:41:23 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -99,83 +99,6 @@ void gl_LineStipple( GLcontext *ctx, GLint factor, GLushort pattern )
 
 
 
-static void feedback_line( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv )
-{
-   struct vertex_buffer *VB = ctx->VB;
-   GLfloat x1, y1, z1, w1;
-   GLfloat x2, y2, z2, w2;
-   GLfloat tex1[4], tex2[4], invq;
-   GLuint texUnit = ctx->Texture.CurrentTransformUnit;
-
-   x1 = VB->Win.data[v1][0];
-   y1 = VB->Win.data[v1][1];
-   z1 = VB->Win.data[v1][2] / DEPTH_SCALE;
-   w1 = (VB->ClipPtr->size == 4 ? VEC_ELT(VB->ClipPtr, GLfloat, v1)[3] : 1.0);
-
-   x2 = VB->Win.data[v2][0];
-   y2 = VB->Win.data[v2][1];
-   z2 = VB->Win.data[v2][2] / DEPTH_SCALE;
-   w2 = (VB->ClipPtr->size == 4 ? VEC_ELT(VB->ClipPtr, GLfloat, v2)[3] : 1.0);
-
-
-   if (VB->TexCoordPtr[texUnit]->size == 4) {      
-      invq = (VB->TexCoordPtr[texUnit]->data[v1][3]==0.0
-	      ? 1.0
-	      : 1.0F / VB->TexCoordPtr[texUnit]->data[v1][3]);
-
-      tex1[0] = VB->TexCoordPtr[texUnit]->data[v1][0] * invq;
-      tex1[1] = VB->TexCoordPtr[texUnit]->data[v1][1] * invq;
-      tex1[2] = VB->TexCoordPtr[texUnit]->data[v1][2] * invq;
-      tex1[3] = VB->TexCoordPtr[texUnit]->data[v1][3];
-
-      invq = (VB->TexCoordPtr[texUnit]->data[v2][3]==0.0
-	      ? 1.0
-	      : 1.0F / VB->TexCoordPtr[texUnit]->data[v2][3]);
-
-      tex2[0] = VB->TexCoordPtr[texUnit]->data[v2][0] * invq;
-      tex2[1] = VB->TexCoordPtr[texUnit]->data[v2][1] * invq;
-      tex2[2] = VB->TexCoordPtr[texUnit]->data[v2][2] * invq;
-      tex2[3] = VB->TexCoordPtr[texUnit]->data[v2][3];
-   } else {
-      ASSIGN_4V(tex1, 0,0,0,1);
-      ASSIGN_4V(tex2, 0,0,0,1);
-      COPY_SZ_4V(tex1, 
-		 VB->TexCoordPtr[texUnit]->size,
-		 VB->TexCoordPtr[texUnit]->data[v1]);
-      COPY_SZ_4V(tex2, 
-		 VB->TexCoordPtr[texUnit]->size,
-		 VB->TexCoordPtr[texUnit]->data[v2]);
-   }
-
-
-   if (ctx->StippleCounter==0) {
-      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_LINE_RESET_TOKEN );
-   }
-   else {
-      FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_LINE_TOKEN );
-   }
-
-   {
-      GLfloat color[4];
-      GLubyte *ubc = VB->ColorPtr->data[pv];
-      GLuint index = VB->IndexPtr->data[pv];
-
-      UBYTE_RGBA_TO_FLOAT_RGBA( color, ubc );
-      gl_feedback_vertex( ctx, x1,y1,z1,w1, color, (GLfloat) index, tex1 );
-      gl_feedback_vertex( ctx, x2,y2,z2,w2, color, (GLfloat) index, tex2 );
-   }
-
-   ctx->StippleCounter++;
-}
-
-
-
-static void select_line( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv )
-{
-   (void) pv;
-   gl_update_hitflag( ctx, ctx->VB->Win.data[v1][2] / DEPTH_SCALE );
-   gl_update_hitflag( ctx, ctx->VB->Win.data[v2][2] / DEPTH_SCALE );
-}
 
 
 
@@ -1136,11 +1059,11 @@ void gl_set_line_function( GLcontext *ctx )
       }
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
-      ctx->Driver.LineFunc = feedback_line;
+      ctx->Driver.LineFunc = gl_feedback_line;
    }
    else {
       /* GL_SELECT mode */
-      ctx->Driver.LineFunc = select_line;
+      ctx->Driver.LineFunc = gl_select_line;
    }
 }
 

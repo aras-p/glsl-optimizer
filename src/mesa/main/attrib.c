@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.2 1999/09/16 11:54:56 keithw Exp $ */
+/* $Id: attrib.c,v 1.3 1999/09/18 20:41:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -700,9 +700,9 @@ void gl_PopAttrib( GLcontext* ctx )
                (*ctx->Driver.ClearStencil)( ctx, ctx->Stencil.Clear );
             if (ctx->Driver.Enable)
                (*ctx->Driver.Enable)( ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled );
-/*  	    ctx->TriangleCaps &= ~DD_STENCIL; */
-/*  	    if (ctx->Stencil.Enabled) */
-/*  	       ctx->TriangleCaps |= DD_STENCIL; */
+	    ctx->TriangleCaps &= ~DD_STENCIL;
+	    if (ctx->Stencil.Enabled)
+	       ctx->TriangleCaps |= DD_STENCIL;
 
             break;
          case GL_TRANSFORM_BIT:

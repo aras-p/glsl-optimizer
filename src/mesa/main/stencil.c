@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: stencil.c,v 1.2 1999/09/18 20:41:23 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1057,7 +1057,7 @@ void gl_alloc_stencil_buffer( GLcontext *ctx )
    ctx->Buffer->Stencil = (GLstencil *) malloc(buffersize * sizeof(GLstencil));
    if (!ctx->Buffer->Stencil) {
       /* out of memory */
-      ctx->Stencil.Enabled = GL_FALSE;
+      gl_set_enable( ctx, GL_STENCIL_TEST, GL_FALSE );
       gl_error( ctx, GL_OUT_OF_MEMORY, "gl_alloc_stencil_buffer" );
    }
 }

@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: drawpix.c,v 1.2 1999/09/18 20:41:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -930,10 +930,7 @@ void gl_DrawPixels( GLcontext* ctx, struct gl_image *image )
          texcoord[3] = ctx->Current.Texcoord[0][3];
          FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_DRAW_PIXEL_TOKEN );
          gl_feedback_vertex( ctx,
-                             ctx->Current.RasterPos[0],
-                             ctx->Current.RasterPos[1],
-                             ctx->Current.RasterPos[2],
-                             ctx->Current.RasterPos[3],
+                             ctx->Current.RasterPos,
                              color, ctx->Current.Index, texcoord );
       }
    }
