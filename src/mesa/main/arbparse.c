@@ -706,7 +706,7 @@ static GLint error_position = -1;
 static GLubyte *unknown = (GLubyte *) "???";
 
 static GLvoid
-clear_last_error ()
+clear_last_error (GLvoid)
 {
    /* reset error message */
    error_message = NULL;
