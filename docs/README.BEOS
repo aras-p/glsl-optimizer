@@ -28,9 +28,11 @@ working.  No optimizations have been made at this time.
 
 * Compiling
 
-Requirements:
-  - gcc version 2.95.3 for BeOS 
-  You can find it here: http://www.bebits.com/app/2157
+Since Mesa 6.x, it can be build under BeOS with both the R5 builtin gcc version
+or more recent gcc versions available for BeOS, like this gcc version 2.95.3 for BeOS 
+you can find at http://www.bebits.com/app/2157.
+Anyway, keep in mind that to take full advantage of Mesa x86 optimizations, you better
+want to use gcc 2.95.3 or sooner versions...
 
 To build Mesa-powered BeOS libGL.so version, open an Terminal window,
 move to Mesa root folder and type this command:
@@ -111,6 +113,7 @@ cause a fatal error when running with Be's OpenGL.
 Jake Hamby                      jhamby <at> anobject <dot> com
 Marcin Konicki                  ahwayakchih <at> neoni <dot> net
 Francois Revol                  revol <at> free <dot> fr
+Nathan Whitehorn                nathanw <at> uchicago <dot> edu
 
 
 * Older BeOS Driver
@@ -131,4 +134,4 @@ as of February, 1999.
 
 
 ----------------------------------------------------------------------
-$Id: README.BEOS,v 1.11 2004/08/24 08:31:57 phoudoin Exp $
+$Id: README.BEOS,v 1.12 2004/10/13 00:35:55 phoudoin Exp $
