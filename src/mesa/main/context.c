@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.85 2000/09/12 21:07:40 brianp Exp $ */
+/* $Id: context.c,v 1.86 2000/09/14 23:13:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1153,8 +1153,10 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Texture.CurrentUnit = 0;      /* multitexture */
    ctx->Texture.CurrentTransformUnit = 0; /* multitexture */
    ctx->Texture.Enabled = 0;
+   ctx->Texture.ReallyEnabled = 0;
    for (i=0; i<MAX_TEXTURE_UNITS; i++)
       init_texture_unit( ctx, i );
+   ctx->Texture.SharedPalette = GL_FALSE;
    _mesa_init_colortable(&ctx->Texture.Palette);
 
    /* Transformation group */
