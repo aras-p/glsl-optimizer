@@ -309,15 +309,20 @@ $(LIBDIR)/$(GL_LIB): $(OBJECTS)
 
 # Make the OSMesa library
 $(LIBDIR)/$(OSMESA_LIB): $(OSMESA_OBJECTS)
-	if [ ${OSMESA_LIB} ] ; then $(TOP)/bin/mklib -o $(OSMESA_LIB_NAME) \
-		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(GL_TINY) \
-		-L$(LIBDIR) -l$(GL_LIB_NAME) -install $(LIBDIR) \
-		$(OSMESA_OBJECTS) ; fi
+	if [ ${OSMESA_LIB} ] ; then \
+		$(TOP)/bin/mklib -o $(OSMESA_LIB_NAME) -major $(MESA_MAJOR) \
+			-minor $(MESA_MINOR) -patch $(GL_TINY) -L$(LIBDIR) \
+			-l$(GL_LIB_NAME) -install $(LIBDIR) \
+			$(OSMESA_OBJECTS) ; \
+	fi
 
 
 # Make an optional library with _just_ core objects
 libmesa: $(LIBDIR)/$(MESA_LIB)
-	if [ ${MESA_LIB} ] ; then $(MAKELIB) $(MESA_LIB) $(MESA_MAJOR) $(MESA_MINOR) $(GL_TINY) $(CORE_OBJECTS) ; fi
+	if [ ${MESA_LIB} ] ; then \
+		$(MAKELIB) $(MESA_LIB) $(MESA_MAJOR) \
+			$(MESA_MINOR) $(GL_TINY) $(CORE_OBJECTS) ; \
+	fi
 	if [ ${MESA_LIB} ] ; then rm -f $(LIBDIR)/$(MESA_LIB)* ; fi
 	if [ ${MESA_LIB} ] ; then mv $(MESA_LIB)* $(LIBDIR) ; fi
 
@@ -325,6 +330,7 @@ $(LIBDIR)/$(MESA_LIB):	$(CORE_OBJECTS)
 
 mesa.a:	$(CORE_OBJECTS)
 	rm -f $@ && ar rcv $@ $(CORE_OBJECTS) && ranlib $@
+
 
 
 # Run 'make -f Makefile.X11 dep' to update the dependencies if you change
