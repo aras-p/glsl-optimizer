@@ -1,4 +1,4 @@
-/* $Id: texline.c,v 1.4 2002/08/17 00:30:36 brianp Exp $ */
+/* $Id: texline.c,v 1.5 2004/01/28 10:07:48 keithw Exp $ */
 
 /*
  * Test textured lines.
@@ -248,6 +248,7 @@ static void Init( int argc, char *argv[] )
 int main( int argc, char *argv[] )
 {
    glutInit( &argc, argv );
+   glutInitWindowPosition(0, 0);
    glutInitWindowSize( 400, 300 );
 
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
