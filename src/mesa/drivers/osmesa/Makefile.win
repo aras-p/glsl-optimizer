@@ -6,32 +6,31 @@ TOP = ..\..
 
 OSMESA_SRCS = osmesa.c
 OSMESA_OBJS = osmesa.obj
-OSMESALIB = OSmesa.lib
 
 ASM_SRCS =
-CORE_SRCS = $(OSMESA_SRCS)
-DRIVER_SRCS =
+CORE_SRCS =
+DRIVER_SRCS = $(OSMESA_SRCS)
 
 SRCS	= $(OSMESA_SRCS)
 
-all	: osmesalib install
+all	: osmesalib
 
 !include "$(TOP)/mesawin32.mak"
 
-osmesalib	: $(OSMESALIB)
+osmesalib: $(OSMESALIB)
 
-CFLAGS	= $(cvarsdll) $(CFLAGS) -D_OPENGL32_ -I$(TOP)/src
+# Undefine _DLL because osmesa is a LIB, not a DLL
+CFLAGS	= $(cvarsdll) $(CFLAGS) -U_DLL -D_OPENGL32_ -I$(TOP)/src
 LFLAGS	= /LIB
 
 OBJS	= $(ASM_SRCS:.S=.obj) $(CORE_SRCS:.c=.obj) $(DRIVER_SRCS:.c=.obj)
-LIBS	= $(TOP)/lib/OpenGL32.lib $(TOP)/src/opengl32.exp
+LIBS	= $(TOP)/lib/$(MESALIB)
 
 $(OSMESALIB)	: $(OBJS)
 	$(link) $(LFLAGS) -out:$(OSMESALIB) $(OBJS) $(LIBS)
-
-install	: $(OSMESALIB)
 	@echo "copying OSMesa library to library directory..."
 	-copy $(OSMESALIB) $(TOP)\lib
 
-clean	::
-	@del /f osmesa.obj
+install	: $(OSMESALIB)
+	@echo "copying OSMesa library to system library directory..."
+	-copy $(OSMESALIB) $(LIBINSTALL)

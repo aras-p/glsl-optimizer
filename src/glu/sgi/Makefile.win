@@ -110,9 +110,7 @@ GLU_SRCS = \
 
 SRCS	= $(GLU_SRCS)
 
-GLUDLL	= glu32.dll
-
-all	: gludll install
+all	: gludll
 
 !include "$(TOP)/mesawin32.mak"
 
@@ -122,21 +120,27 @@ CFLAGS	= $(cvarsdll) $(CFLAGS) -D_OPENGL32_ -Iinclude -DBUILD_GL32
 LFLAGS	= $(dlllflags) $(LFLAGS)
 
 OBJS	= $(GLU_SRCS:.c=.obj)
-LIBS	= ../lib/opengl32.lib winmm.lib $(guilibsdll)
+LIBS	= ../lib/$(MESALIB) winmm.lib $(guilibsdll)
 
 # Uncomment these definitions to try to compile the NURBS code.
 #OBJS	= $(GLU_SRCS_CC:.cc=.obj) $(GLU_SRCS:.c=.obj)
 #NURBSINC = -Ilibnurbs\interface -Ilibnurbs\internals -Ilibnurbs\nurbtess 
 #CFLAGS  = $(CFLAGS) $(NURBSINC)
 
-$(GLUDLL)	: $(OBJS) glu.def
+$(GLUDLL): $(OBJS) glu.def
 	$(link) $(LFLAGS) -out:$(GLUDLL) -def:glu.def $(OBJS) $(LIBS)
-
-install	: $(GLUDLL)
-	@echo "copying Mesa GLU dynamic link library to system directory..."
+	@echo "copying Mesa GLU dynamic link library to library directory..."
 	-copy $(GLUDLL) $(TOP)\lib
 	@echo "copying Mesa GLU import library to library directory..."
-	-copy $(GLU) $(TOP)\lib
+	-copy $(GLULIB) $(TOP)\lib
+
+install	: $(GLUDLL) $(GLULIB)
+	@echo "copying Mesa GLU dynamic link library to system directory..."
+	-copy $(GLUDLL) $(DLLINSTALL)
+	@echo "copying Mesa GLU header files to include directory..."
+	-copy ..\..\include\GL\glu.h $(INCLUDEINSTALL)
+	@echo "copying Mesa GLU import library to system library directory..."
+	-copy $(GLULIB) $(LIBINSTALL)
 
 clean	::
 	@del /f libtess\*.obj libutil\*.obj 
@@ -144,7 +148,7 @@ clean	::
 	@del /f libnurbs\nurbtess\*.obj
 
 # override default inference rule with one that writes the object to
-# the correct subdir. 
+# the same subdir as the c file. 
 
 .c.obj	:
 	$(cc) $(CFLAGS) -I. $< /Fo$*.obj
