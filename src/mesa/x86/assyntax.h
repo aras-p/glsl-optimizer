@@ -313,8 +313,8 @@
 
 /* Addressing Modes */
 /* Immediate Mode */
-#define ADDR(a)		CHOICE(CONCAT($,a), CONCAT($,a), a)
-#define CONST(a)	CHOICE(CONCAT($,a), CONCAT($,a), a)
+#define ADDR(a)		CHOICE(CONCAT($,a), $a, a)
+#define CONST(a)	CHOICE(CONCAT($,a), $a, a)
 
 /* Indirect Mode */
 #define CONTENT(a)	CHOICE(a, a, (a))	 /* take contents of variable */
