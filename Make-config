@@ -84,12 +84,10 @@ cygnus:
 	"LD = ld" \
 	"CFLAGS = -I. -DWIN32 -D__WIN32__ -D_WINDOWS \
 		-O2 -funroll-loops \
-		-fexpensive-optimizations -fomit-frame-pointer -ffast-math \
-		-malign-loops=2 -malign-functions=2" \
+		-fexpensive-optimizations -fomit-frame-pointer -ffast-math" \
 	"CXXFLAGS = -I. -DWIN32 -D__WIN32__ -D_WINDOWS \
 		-O2 -funroll-loops \
-		-fexpensive-optimizations -fomit-frame-pointer -ffast-math \
-		-malign-loops=2 -malign-functions=2" \
+		-fexpensive-optimizations -fomit-frame-pointer -ffast-math" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"MAKELIB = $(TOP)/bin/mklib.ar-ruv" \
 	"WLIBS = $(TOP)/lib/wing32.a -lkernel32 -luser32 -lgdi32"
@@ -107,8 +105,7 @@ cygnus-linux:
 	"WING_DIR= /dos/wing" \
 	"CFLAGS = -I. -DWIN32 -D__WIN32__ -D_WINDOWS \
 		-O2 -funroll-loops \
-		-fexpensive-optimizations -fomit-frame-pointer -ffast-math \
-		-malign-loops=2 -malign-functions=2" \
+		-fexpensive-optimizations -fomit-frame-pointer -ffast-math" \
 	"MAKELIB = $(TOP)/bin/mklib.cygnus-linux" \
 	"WLIBS = $(TOP)/lib/wing32.a -lkernel32 -luser32 -lgdi32"
 
@@ -544,8 +541,8 @@ linux-x86-glide:
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CXX = g++" \
-	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -malign-loops=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DUSE_XSHM -DFX -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include -I/usr/src/mesa-glx/src/FX/X86" \
-	"CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -malign-loops=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE" \
+	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DUSE_XSHM -DFX -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include -I/usr/src/mesa-glx/src/FX/X86" \
+	"CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
@@ -719,7 +716,6 @@ linux-solo:
 # May want to add these CFLAGS for better performance under LynxOS and GCC:
 # -fPIC -O2 -ansi -pedantic -mieee-fp -DUSE_XSHM -funroll-loops
 # -fexpensive-optimizations -fomit-frame-pointer -ffast-math
-# and  -malign-loops=2 -malign-functions=2 for Pentium
 lynxos:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.a" \
@@ -1045,8 +1041,8 @@ linux-x86-debug:
 	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CXX = g++" \
-	"CFLAGS = -O2 -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -malign-loops=2 -malign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include -DDEBUG -DMESA_DEBUG" \
-	"CXXFLAGS = -O2 -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -malign-loops=2 -malign-functions=2 -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DDEBUG" \
+	"CFLAGS = -O2 -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include -DDEBUG -DMESA_DEBUG" \
+	"CXXFLAGS = -O2 -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DDEBUG" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lm -lpthread" \
 	"GLU_LIB_DEPS = -L$(TOP)/lib -lGL -lm" \
