@@ -26,7 +26,7 @@
 #ifndef _FFB_DAC_H
 #define _FFB_DAC_H
 
-#ifdef _SOLO
+#if defined( _SOLO ) || defined( DRI_NEW_INTERFACE_ONLY )
 #define Bool int
 #endif
 
