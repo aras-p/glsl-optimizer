@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.3
  * 
  * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  * 
@@ -27,12 +27,13 @@
  */
 
 
+#include "sparc.h"
+
 #ifdef USE_SPARC_ASM
 
 #include "context.h"
 #include "math/m_xform.h"
 #include "tnl/t_context.h"
-#include "sparc.h"
 
 #ifdef DEBUG
 #include "math/m_debug.h"
@@ -68,7 +69,6 @@
       _mesa_##pfx##_transform_points##sz##_3d;
 
 
-#ifdef USE_SPARC_ASM
 DECLARE_XFORM_GROUP(sparc, 1)
 DECLARE_XFORM_GROUP(sparc, 2)
 DECLARE_XFORM_GROUP(sparc, 3)
@@ -101,11 +101,10 @@ extern void _mesa_sparc_transform_normals(NORM_ARGS);
 extern void _mesa_sparc_normalize_normals(NORM_ARGS);
 extern void _mesa_sparc_rescale_normals(NORM_ARGS);
 
-#endif
+
 
 void _mesa_init_all_sparc_transform_asm(void)
 {
-#ifdef USE_SPARC_ASM
    ASSIGN_XFORM_GROUP(sparc, 1)
    ASSIGN_XFORM_GROUP(sparc, 2)
    ASSIGN_XFORM_GROUP(sparc, 3)
@@ -142,8 +141,6 @@ void _mesa_init_all_sparc_transform_asm(void)
    _math_test_all_transform_functions("sparc");
    _math_test_all_cliptest_functions("sparc");
    _math_test_all_normal_transform_functions("sparc");
-#endif
-
 #endif
 }
 
