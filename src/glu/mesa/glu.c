@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.15 1999/09/19 02:03:19 tjump Exp $ */
+/* $Id: glu.c,v 1.16 1999/10/27 09:47:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.c,v $
+ * Revision 1.16  1999/10/27 09:47:41  brianp
+ * disabled gluGetProcAddressEXT
+ *
  * Revision 1.15  1999/09/19 02:03:19  tjump
  * More Win32 build compliance fixups
  *
@@ -379,7 +382,7 @@ const GLubyte* GLAPIENTRY gluGetString( GLenum name )
 
 
 
-#ifdef GLU_EXT_get_proc_address
+#if 0  /* gluGetProcAddressEXT not finalized yet! */
 
 #ifdef __cplusplus
    /* for BeOS R4.5 */
