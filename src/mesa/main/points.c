@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.14 2000/09/29 16:58:44 brianp Exp $ */
+/* $Id: points.c,v 1.15 2000/10/20 19:54:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -590,7 +590,7 @@ antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
                         /* coverage is in [0,256] */
                         alpha = (alpha * coverage) >> 8;
                      }
-                     if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
+                     if (ctx->Texture.MultiTextureEnabled) {
                         PB_WRITE_MULTITEX_PIXEL( PB, x,y,z, red, green, blue, 
 						 alpha, texcoord );
                      }
@@ -974,7 +974,7 @@ dist_atten_textured_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
 
          for (iy = y0; iy <= y1; iy++) {
             for (ix = x0; ix <= x1; ix++) {
-               if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
+               if (ctx->Texture.MultiTextureEnabled) {
                   PB_WRITE_MULTITEX_PIXEL( PB, ix, iy, z,
                                            red, green, blue, alpha,
                                            texcoord );
@@ -1092,7 +1092,7 @@ dist_atten_antialiased_rgba_points( GLcontext *ctx, GLuint first, GLuint last )
                         alpha = (alpha * coverage) >> 8;
                      }
                      alpha = (GLint) (alpha * alphaf);
-                     if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D) {
+                     if (ctx->Texture.MultiTextureEnabled) {
                         PB_WRITE_MULTITEX_PIXEL( PB, x, y, z,
                                                  red, green, blue, alpha,
                                                  texcoord );
@@ -1230,7 +1230,7 @@ void gl_set_point_function( GLcontext *ctx )
             ctx->Driver.PointsFunc = antialiased_rgba_points;
          }
          else if (ctx->Texture.ReallyEnabled) {
-            if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D ||
+            if (ctx->Texture.MultiTextureEnabled ||
                 ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR) {
 	       ctx->Driver.PointsFunc = multitextured_rgba_points;
             }

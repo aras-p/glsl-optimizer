@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.92 2000/10/09 22:42:40 brianp Exp $ */
+/* $Id: context.c,v 1.93 2000/10/20 19:54:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -882,8 +882,14 @@ init_attrib_groups( GLcontext *ctx )
    ASSIGN_3V( ctx->Current.Normal, 0.0, 0.0, 1.0 );
    ctx->Current.Primitive = (GLenum) (GL_POLYGON + 1);
 
-   ctx->Current.Flag = (VERT_NORM|VERT_INDEX|VERT_RGBA|VERT_EDGE|
-                        VERT_TEX0_1|VERT_TEX1_1|VERT_MATERIAL);
+   ctx->Current.Flag = (VERT_NORM |
+                        VERT_INDEX | 
+                        VERT_RGBA |
+                        VERT_EDGE |
+                        VERT_TEX0_1 |
+                        VERT_TEX1_1 |
+                        VERT_TEX2_1 | /* XXX fix for MAX_TEXTURE_UNITS > 3 */
+                        VERT_MATERIAL);
 
    init_fallback_arrays( ctx );
 

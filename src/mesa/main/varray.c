@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.24 2000/10/18 15:02:59 brianp Exp $ */
+/* $Id: varray.c,v 1.25 2000/10/20 19:54:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -490,9 +490,16 @@ void gl_exec_array_elements( GLcontext *ctx, struct immediate *IM,
 
 #if MAX_TEXTURE_UNITS > 2
    if (translate & VERT_TEX2_ANY)
-      (ctx->Array.TexCoordEltFunc[1])( IM->TexCoord[2], 
+      (ctx->Array.TexCoordEltFunc[2])( IM->TexCoord[2], 
 				       &ctx->Array.TexCoord[2], 
 				       flags, elts, (VERT_ELT|VERT_TEX2_ANY),
+				       start, count);
+#endif
+#if MAX_TEXTURE_UNITS > 3
+   if (translate & VERT_TEX3_ANY)
+      (ctx->Array.TexCoordEltFunc[3])( IM->TexCoord[3], 
+				       &ctx->Array.TexCoord[3], 
+				       flags, elts, (VERT_ELT|VERT_TEX3_ANY),
 				       start, count);
 #endif
 
@@ -709,6 +716,13 @@ _mesa_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	    IM->v.TexCoord[2].size = TexCoord[2]->Size;
 	    ctx->Array.TexCoordFunc[2]( IM->TexCoord[2] + VB_START, 
 					TexCoord[2], start, n );
+	 }
+#endif
+#if MAX_TEXTURE_UNITS > 3
+	 if (required & VERT_TEX3_ANY) {
+	    IM->v.TexCoord[3].size = TexCoord[3]->Size;
+	    ctx->Array.TexCoordFunc[3]( IM->TexCoord[3] + VB_START, 
+					TexCoord[3], start, n );
 	 }
 #endif
 

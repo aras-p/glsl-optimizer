@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.31 2000/10/18 15:02:59 brianp Exp $ */
+/* $Id: state.c,v 1.32 2000/10/20 19:54:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -853,6 +853,7 @@ void gl_update_state( GLcontext *ctx )
    }
 
    if (ctx->NewState & (NEW_TEXTURING | NEW_TEXTURE_ENABLE)) {
+      ctx->Texture.MultiTextureEnabled = GL_FALSE;
       ctx->Texture.NeedNormals = GL_FALSE;
       gl_update_dirty_texobjs(ctx);
       ctx->Enabled &= ~(ENABLE_TEXGEN0 | ENABLE_TEXGEN1 | ENABLE_TEXGEN2);
@@ -877,6 +878,10 @@ void gl_update_state( GLcontext *ctx )
 		  ctx->Texture.NeedEyeCoords = GL_TRUE;
 	       }
 	    }
+
+            if (i > 0 && ctx->Texture.Unit[i].ReallyEnabled) {
+               ctx->Texture.MultiTextureEnabled = GL_TRUE;
+            }
 	 }
       }
 

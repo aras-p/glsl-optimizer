@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.15 2000/09/30 18:42:29 brianp Exp $ */
+/* $Id: lines.c,v 1.16 2000/10/20 19:54:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1086,7 +1086,7 @@ void gl_set_line_function( GLcontext *ctx )
          /* antialiased lines */
          if (rgbmode) {
             if (ctx->Texture.ReallyEnabled) {
-               if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D
+               if (ctx->Texture.MultiTextureEnabled
                   || ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
                   /* Multitextured! */
                   ctx->Driver.LineFunc = aa_multitex_rgba_line;
@@ -1101,7 +1101,7 @@ void gl_set_line_function( GLcontext *ctx )
          }
       }
       else if (ctx->Texture.ReallyEnabled) {
-         if (ctx->Texture.ReallyEnabled >= TEXTURE1_1D
+         if (ctx->Texture.MultiTextureEnabled
              || ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR) {
             /* multi-texture and/or separate specular color */
             if (ctx->Light.ShadeModel==GL_SMOOTH)
