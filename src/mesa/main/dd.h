@@ -1,8 +1,8 @@
-/* $Id: dd.h,v 1.4 1999/10/21 12:46:27 brianp Exp $ */
+/* $Id: dd.h,v 1.5 1999/11/22 21:54:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -216,8 +216,7 @@ struct dd_function_table {
    void (*WriteRGBSpan)( const GLcontext *ctx,
                          GLuint n, GLint x, GLint y,
                          CONST GLubyte rgb[][3], const GLubyte mask[] );
-   /* Write a horizontal run of RGB[A] pixels.  The later version is only
-    * used to accelerate GL_RGB, GL_UNSIGNED_BYTE glDrawPixels() calls.
+   /* Write a horizontal run of RGBA or RGB pixels.
     * If mask is NULL, draw all pixels.
     * If mask is not null, only draw pixel [i] when mask [i] is true.
     */
