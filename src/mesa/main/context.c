@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.66 2000/05/22 16:33:20 brianp Exp $ */
+/* $Id: context.c,v 1.67 2000/05/23 20:10:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -722,6 +722,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Const.MaxColorTableSize = MAX_COLOR_TABLE_SIZE;
    ctx->Const.MaxConvolutionWidth = MAX_CONVOLUTION_WIDTH;
    ctx->Const.MaxConvolutionHeight = MAX_CONVOLUTION_HEIGHT;
+   ctx->Const.NumCompressedTextureFormats = 0;
 
    /* Modelview matrix */
    gl_matrix_ctr( &ctx->ModelView );
@@ -900,11 +901,12 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Hint.LineSmooth = GL_DONT_CARE;
    ctx->Hint.PolygonSmooth = GL_DONT_CARE;
    ctx->Hint.Fog = GL_DONT_CARE;
-
    ctx->Hint.AllowDrawWin = GL_TRUE;
    ctx->Hint.AllowDrawFrg = GL_TRUE;
    ctx->Hint.AllowDrawMem = GL_TRUE;
    ctx->Hint.StrictLighting = GL_TRUE;
+   ctx->Hint.ClipVolumeClipping = GL_DONT_CARE;
+   ctx->Hint.TextureCompression = GL_DONT_CARE;
 
    /* Histogram group */
    ctx->Histogram.Width = 0;

@@ -1,4 +1,4 @@
-/* $Id: hint.c,v 1.3 2000/04/10 15:52:26 brianp Exp $ */
+/* $Id: hint.c,v 1.4 2000/05/23 20:10:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -121,13 +121,23 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
       case GL_NATIVE_GRAPHICS_HANDLE_PGI:
          break;
 
-         /* GL_EXT_clip_volume_hint */
+      /* GL_EXT_clip_volume_hint */
       case GL_CLIP_VOLUME_CLIPPING_HINT_EXT:
          ctx->Hint.ClipVolumeClipping = mode;
          break;
 
+      /* GL_ARB_texture_compression */
+      case GL_TEXTURE_COMPRESSION_HINT_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            ctx->Hint.TextureCompression = mode;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glHint(target)");
+         }
+         break;
+
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glHint(target)" );
+         gl_error(ctx, GL_INVALID_ENUM, "glHint(target)");
          return GL_FALSE;
    }
 

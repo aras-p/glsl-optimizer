@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.28 2000/05/23 17:14:49 brianp Exp $ */
+/* $Id: get.c,v 1.29 2000/05/23 20:10:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -970,6 +970,31 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
          if (ctx->Extensions.HaveTextureCubeMap)
             *params = INT_TO_BOOL(ctx->Const.MaxCubeTextureSize);
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         break;
+
+      /* GL_ARB_texture_compression */
+      case GL_TEXTURE_COMPRESSION_HINT_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            *params = INT_TO_BOOL(ctx->Hint.TextureCompression);
+         }
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         break;
+      case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            *params = INT_TO_BOOL(ctx->Const.NumCompressedTextureFormats);
+         }
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+         break;
+      case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            GLuint i;
+            for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
+               params[i] = INT_TO_BOOL(ctx->Const.CompressedTextureFormats[i]);
+         }
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
@@ -2092,6 +2117,31 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
 
+      /* GL_ARB_texture_compression */
+      case GL_TEXTURE_COMPRESSION_HINT_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            *params = (GLdouble) ctx->Hint.TextureCompression;
+         }
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+         break;
+      case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            *params = (GLdouble) ctx->Const.NumCompressedTextureFormats;
+         }
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+         break;
+      case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            GLuint i;
+            for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
+               params[i] = (GLdouble) ctx->Const.CompressedTextureFormats[i];
+         }
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+         break;
+
       /* GL_PGI_misc_hints */
       case GL_STRICT_DEPTHFUNC_HINT_PGI:
 	 *params = ENUM_TO_DOUBLE(GL_NICEST);
@@ -3209,6 +3259,31 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
          return;
 
+      /* GL_ARB_texture_compression */
+      case GL_TEXTURE_COMPRESSION_HINT_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            *params = (GLfloat) ctx->Hint.TextureCompression;
+         }
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+         break;
+      case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            *params = (GLfloat) ctx->Const.NumCompressedTextureFormats;
+         }
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+         break;
+      case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            GLuint i;
+            for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
+               params[i] = (GLfloat) ctx->Const.CompressedTextureFormats[i];
+         }
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+         break;
+
       /* GL_PGI_misc_hints */
       case GL_STRICT_DEPTHFUNC_HINT_PGI:
 	 *params = ENUM_TO_FLOAT(GL_NICEST);
@@ -4299,6 +4374,31 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          else
             gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;
+
+      /* GL_ARB_texture_compression */
+      case GL_TEXTURE_COMPRESSION_HINT_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            *params = (GLint) ctx->Hint.TextureCompression;
+         }
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+         break;
+      case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            *params = (GLint) ctx->Const.NumCompressedTextureFormats;
+         }
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+         break;
+      case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            GLuint i;
+            for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
+               params[i] = (GLint) ctx->Const.CompressedTextureFormats[i];
+         }
+         else
+            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+         break;
 
       /* GL_PGI_misc_hints */
       case GL_STRICT_DEPTHFUNC_HINT_PGI:

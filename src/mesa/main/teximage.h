@@ -1,4 +1,4 @@
-/* $Id: teximage.h,v 1.8 2000/05/23 17:14:49 brianp Exp $ */
+/* $Id: teximage.h,v 1.9 2000/05/23 20:10:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -144,6 +144,48 @@ extern void
 _mesa_CopyTexSubImage3D( GLenum target, GLint level,
                          GLint xoffset, GLint yoffset, GLint zoffset,
                          GLint x, GLint y, GLsizei width, GLsizei height );
+
+
+
+extern void
+_mesa_CompressedTexImage1DARB(GLenum target, GLint level,
+                              GLenum internalformat, GLsizei width,
+                              GLint border, GLsizei imageSize,
+                              const GLvoid *data);
+
+extern void
+_mesa_CompressedTexImage2DARB(GLenum target, GLint level,
+                              GLenum internalformat, GLsizei width,
+                              GLsizei height, GLint border, GLsizei imageSize,
+                              const GLvoid *data);
+
+extern void
+_mesa_CompressedTexImage3DARB(GLenum target, GLint level,
+                              GLenum internalformat, GLsizei width,
+                              GLsizei height, GLsizei depth, GLint border,
+                              GLsizei imageSize, const GLvoid *data);
+
+
+extern void
+_mesa_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
+                                 GLsizei width, GLenum format,
+                                 GLsizei imageSize, const GLvoid *data);
+
+extern void
+_mesa_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
+                                 GLint yoffset, GLsizei width, GLsizei height,
+                                 GLenum format, GLsizei imageSize,
+                                 const GLvoid *data);
+
+extern void
+_mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
+                                 GLint yoffset, GLint zoffset, GLsizei width,
+                                 GLsizei height, GLsizei depth, GLenum format,
+                                 GLsizei imageSize, const GLvoid *data);
+
+extern void
+_mesa_GetCompressedTexImageARB(GLenum target, GLint lod, GLvoid *img);
+
 
 #endif
 

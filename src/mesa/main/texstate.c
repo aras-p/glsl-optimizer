@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.12 2000/05/23 17:14:49 brianp Exp $ */
+/* $Id: texstate.c,v 1.13 2000/05/23 20:10:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -463,6 +463,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    const struct gl_texture_image *img = NULL;
    GLuint dimensions;
+   GLboolean isProxy;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexLevelParameter");
 
@@ -485,6 +486,11 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          *params = 0;
       return;
    }
+
+   isProxy = (target == GL_PROXY_TEXTURE_1D) ||
+             (target == GL_PROXY_TEXTURE_2D) ||
+             (target == GL_PROXY_TEXTURE_3D) ||
+             (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB);
 
    switch (pname) {
       case GL_TEXTURE_WIDTH:
@@ -535,9 +541,31 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       case GL_TEXTURE_INDEX_SIZE_EXT:
          *params = img->IndexBits;
          return;
+
+      /* GL_ARB_texture_compression */
+      case GL_TEXTURE_COMPRESSED_IMAGE_SIZE_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            if (img->IsCompressed && !isProxy)
+               *params = img->CompressedSize;
+            else
+               gl_error(ctx, GL_INVALID_OPERATION,
+                        "glGetTexLevelParameter[if]v(pname)");
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(pname)");
+         }
+         return;
+      case GL_TEXTURE_COMPRESSED_ARB:
+         if (ctx->Extensions.HaveTextureCompression) {
+            *params = (GLint) img->IsCompressed;
+         }
+         else {
+            gl_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(pname)");
+         }
+         return;
+
       default:
-         gl_error( ctx, GL_INVALID_ENUM,
-                   "glGetTexLevelParameter[if]v(pname)" );
+         gl_error(ctx, GL_INVALID_ENUM, "glGetTexLevelParameter[if]v(pname)");
    }
 }
 

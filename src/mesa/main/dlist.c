@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.39 2000/05/19 13:12:29 brianp Exp $ */
+/* $Id: dlist.c,v 1.40 2000/05/23 20:10:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3559,6 +3559,8 @@ static void save_ClientActiveTextureARB( GLenum target )
 
 
 
+/* GL_ARB_transpose_matrix */
+
 static void save_LoadTransposeMatrixdARB( const GLdouble m[16] )
 {
    GLdouble tm[16];
@@ -3605,6 +3607,62 @@ static void save_PixelTexGenSGIX(GLenum mode)
    }
 }
 
+
+/* GL_ARB_texture_compression */
+static void
+save_CompressedTexImage1DARB(GLenum target, GLint level,
+                             GLenum internalformat, GLsizei width,
+                             GLint border, GLsizei imageSize,
+                             const GLvoid *data)
+{
+}
+
+
+static void
+save_CompressedTexImage2DARB(GLenum target, GLint level,
+                             GLenum internalformat, GLsizei width,
+                             GLsizei height, GLint border, GLsizei imageSize,
+                             const GLvoid *data)
+{
+}
+
+
+static void
+save_CompressedTexImage3DARB(GLenum target, GLint level,
+                             GLenum internalformat, GLsizei width,
+                             GLsizei height, GLsizei depth, GLint border,
+                             GLsizei imageSize, const GLvoid *data)
+{
+}
+
+
+static void
+save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
+                                GLsizei width, GLenum format,
+                                GLsizei imageSize, const GLvoid *data)
+{
+}
+
+
+static void
+save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
+                                GLint yoffset, GLsizei width, GLsizei height,
+                                GLenum format, GLsizei imageSize,
+                                const GLvoid *data)
+{
+}
+
+
+static void
+save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
+                                GLint yoffset, GLint zoffset, GLsizei width,
+                                GLsizei height, GLsizei depth, GLenum format,
+                                GLsizei imageSize, const GLvoid *data)
+{
+}
+
+
+/* GL_SGIS_pixel_texture */
 
 static void save_PixelTexGenParameteriSGIS(GLenum target, GLint value)
 {
@@ -5181,6 +5239,14 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->MultTransposeMatrixdARB = save_MultTransposeMatrixdARB;
    table->MultTransposeMatrixfARB = save_MultTransposeMatrixfARB;
 
+   /* ARB 12. GL_ARB_texture_compression */
+   table->CompressedTexImage3DARB = save_CompressedTexImage3DARB;
+   table->CompressedTexImage2DARB = save_CompressedTexImage2DARB;
+   table->CompressedTexImage1DARB = save_CompressedTexImage1DARB;
+   table->CompressedTexSubImage3DARB = save_CompressedTexSubImage3DARB;
+   table->CompressedTexSubImage2DARB = save_CompressedTexSubImage2DARB;
+   table->CompressedTexSubImage1DARB = save_CompressedTexSubImage1DARB;
+   table->GetCompressedTexImageARB = _mesa_GetCompressedTexImageARB;
 }
 
 

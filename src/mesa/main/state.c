@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.12 2000/05/10 22:36:05 brianp Exp $ */
+/* $Id: state.c,v 1.13 2000/05/23 20:10:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -641,7 +641,18 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->LoadTransposeMatrixfARB = _mesa_LoadTransposeMatrixfARB;
    exec->MultTransposeMatrixdARB = _mesa_MultTransposeMatrixdARB;
    exec->MultTransposeMatrixfARB = _mesa_MultTransposeMatrixfARB;
+
+   /* ARB 12. GL_ARB_texture_compression */
+   exec->CompressedTexImage3DARB = _mesa_CompressedTexImage3DARB;
+   exec->CompressedTexImage2DARB = _mesa_CompressedTexImage2DARB;
+   exec->CompressedTexImage1DARB = _mesa_CompressedTexImage1DARB;
+   exec->CompressedTexSubImage3DARB = _mesa_CompressedTexSubImage3DARB;
+   exec->CompressedTexSubImage2DARB = _mesa_CompressedTexSubImage2DARB;
+   exec->CompressedTexSubImage1DARB = _mesa_CompressedTexSubImage1DARB;
+   exec->GetCompressedTexImageARB = _mesa_GetCompressedTexImageARB;
+
 }
+
 
 
 /**********************************************************************/
