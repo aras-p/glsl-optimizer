@@ -199,7 +199,7 @@ case $ARCH in
             ln -s ${LIBNAME}.so.${MAJOR} ${LIBNAME}.so
             # finish up
             FINAL_LIBS="${LIBNAME}.so.${VERSION} ${LIBNAME}.so.${MAJOR} ${LIBNAME}.so"
-	    rm -f exptmp
+#	    rm -f exptmp
         fi
 	;;
 
@@ -356,53 +356,27 @@ case $ARCH in
 	fi
 	;;
 
-    'AIX')
-        if [ $STATIC = 1 ] ; then
-            LIBNAME="lib${LIBNAME}.a"
-            echo "mklib: Making AIX static library: " ${LIBNAME}
-            ar -ruv ${LIBNAME} ${OBJECTS}
-            FINAL_LIBS=${LIBNAME}
-        else
-	    EXPFILE="lib${LIBNAME}.exp"
-	    OFILE=shr.o  #Want to be consistent with the IBM libGL.a
-	    LIBNAME="lib${LIBNAME}.a"  # shared objects are still stored in the .a libraries
-	    OPTS="-bE:${EXPFILE} -bM:SRE -bnoentry"
-	    rm -f ${EXPFILE} ${OFILE}
-	    NM="/bin/nm -eC"
-	    echo "#! /usr/lib/${LIBNAME}" > ${EXPFILE}
-	    ${NM} ${OBJECTS} | awk '{
-	    if ((($2 == "T") || ($2 == "D") || ($2 == "B")) \
-	    && ( substr($1,1,1) != ".")) {
-		    if (substr ($1, 1, 7) != "__sinit" &&
-			    substr ($1, 1, 7) != "__sterm") {
-			    if (substr ($1, 1, 5) == "__tf1")
-				print (substr ($1, 7))
-			    else if (substr ($1, 1, 5) == "__tf9")
-				print (substr ($1, 15))
-			    else
-				print $1
-			}
-		}
-	    }' | sort -u >> ${EXPFILE}
-	    cc ${OPTS} -o ${OFILE} ${OBJECTS} ${DEPS}
-	    ar -r ${LIBNAME} ${OFILE}
-            FINAL_LIBS="${LIBNAME}"
-        fi
-        ;;
+    'AIX' | 'AIX64')
+	if [ $ARCH = "AIX64" ] ; then
+	    X64="-X64"
+	fi
 
-    'AIX64')
         if [ $STATIC = 1 ] ; then
             LIBNAME="lib${LIBNAME}.a"
             echo "mklib: Making AIX static library: " ${LIBNAME}
-            ar -X64 -ruv ${LIBNAME} ${OBJECTS}
+            ar -ruv ${X64} ${LIBNAME} ${OBJECTS}
             FINAL_LIBS=${LIBNAME}
         else
 	    EXPFILE="lib${LIBNAME}.exp"
 	    OFILE=shr.o  #Want to be consistent with the IBM libGL.a
 	    LIBNAME="lib${LIBNAME}.a"  # shared objects are still stored in the .a libraries
-	    OPTS="-bE:${EXPFILE} -bM:SRE -bnoentry -q64"
+	    if [ $ARCH = "AIX64" ] ; then
+		OPTS="-bE:${EXPFILE} -bM:SRE -bnoentry -q64"
+	    else
+		OPTS="-bE:${EXPFILE} -bM:SRE -bnoentry"
+	    fi
 	    rm -f ${EXPFILE} ${OFILE}
-	    NM="/bin/nm -eC -X64"
+	    NM="/bin/nm -eC ${X64}"
 	    echo "#! /usr/lib/${LIBNAME}" > ${EXPFILE}
 	    ${NM} ${OBJECTS} | awk '{
 	    if ((($2 == "T") || ($2 == "D") || ($2 == "B")) \
@@ -419,7 +393,7 @@ case $ARCH in
 		}
 	    }' | sort -u >> ${EXPFILE}
 	    cc ${OPTS} -o ${OFILE} ${OBJECTS} ${DEPS}
-	    ar -X64 -r ${LIBNAME} ${OFILE}
+	    ar ${X64} -r ${LIBNAME} ${OFILE}
             FINAL_LIBS="${LIBNAME}"
         fi
         ;;
