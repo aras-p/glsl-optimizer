@@ -1,4 +1,4 @@
-/* $Id: ss_vb.c,v 1.11 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: ss_vb.c,v 1.12 2001/03/29 21:16:26 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -298,7 +298,7 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
    else
       funcindex = 0;
 
-/*     printSetupFlags("software setup func", funcindex); */
+   if (0) printSetupFlags("software setup func", funcindex); 
    swsetup->BuildProjVerts = setup_func[funcindex];
    ASSERT(setup_func[funcindex] != rs_invalid);
 }

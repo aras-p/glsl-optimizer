@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.37 2001/03/29 17:08:26 keithw Exp $ */
+/* $Id: mtypes.h,v 1.38 2001/03/29 21:16:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -703,16 +703,9 @@ struct gl_stencil_attrib {
 #define TEXGEN_REFLECTION_MAP_NV 0x8
 #define TEXGEN_NORMAL_MAP_NV     0x10
 
-#define TEXGEN_NEED_M            (TEXGEN_SPHERE_MAP)
-#define TEXGEN_NEED_F            (TEXGEN_SPHERE_MAP        | \
-				  TEXGEN_REFLECTION_MAP_NV)
 #define TEXGEN_NEED_NORMALS      (TEXGEN_SPHERE_MAP        | \
 				  TEXGEN_REFLECTION_MAP_NV | \
 				  TEXGEN_NORMAL_MAP_NV)
-#define TEXGEN_NEED_VERTICES     (TEXGEN_OBJ_LINEAR | 		\
-				  TEXGEN_EYE_LINEAR |		\
-				  TEXGEN_REFLECTION_MAP_NV |	\
-				  TEXGEN_SPHERE_MAP )
 #define TEXGEN_NEED_EYE_COORD    (TEXGEN_SPHERE_MAP        | \
 				  TEXGEN_REFLECTION_MAP_NV | \
 				  TEXGEN_NORMAL_MAP_NV     | \
@@ -730,35 +723,18 @@ struct gl_stencil_attrib {
 #define ENABLE_TEXGEN5        0x20
 #define ENABLE_TEXGEN6        0x40
 #define ENABLE_TEXGEN7        0x80
-#define ENABLE_TEXMAT0        0x100	/* Ie. not the identity matrix */
-#define ENABLE_TEXMAT1        0x200
-#define ENABLE_TEXMAT2        0x400
-#define ENABLE_TEXMAT3        0x800
-#define ENABLE_TEXMAT4        0x1000
-#define ENABLE_TEXMAT5        0x2000
-#define ENABLE_TEXMAT6        0x4000
-#define ENABLE_TEXMAT7        0x8000
-#define ENABLE_LIGHT          0x10000
-#define ENABLE_FOG            0x20000
-#define ENABLE_USERCLIP       0x40000
-#define ENABLE_NORMALIZE      0x100000
-#define ENABLE_RESCALE        0x200000
-#define ENABLE_POINT_ATTEN    0x400000
 
-
-#define ENABLE_TEXGEN_ANY (ENABLE_TEXGEN0 | ENABLE_TEXGEN1 | \
-                           ENABLE_TEXGEN2 | ENABLE_TEXGEN3 | \
-                           ENABLE_TEXGEN4 | ENABLE_TEXGEN5 | \
-                           ENABLE_TEXGEN6 | ENABLE_TEXGEN7)
-
-#define ENABLE_TEXMAT_ANY (ENABLE_TEXMAT0 | ENABLE_TEXMAT1 | \
-                           ENABLE_TEXMAT2 | ENABLE_TEXMAT3 | \
-                           ENABLE_TEXMAT4 | ENABLE_TEXMAT5 | \
-                           ENABLE_TEXMAT6 | ENABLE_TEXMAT7)
+#define ENABLE_TEXMAT0        0x1	/* Ie. not the identity matrix */
+#define ENABLE_TEXMAT1        0x2
+#define ENABLE_TEXMAT2        0x4
+#define ENABLE_TEXMAT3        0x8
+#define ENABLE_TEXMAT4        0x10
+#define ENABLE_TEXMAT5        0x20
+#define ENABLE_TEXMAT6        0x40
+#define ENABLE_TEXMAT7        0x80
 
 #define ENABLE_TEXGEN(i) (ENABLE_TEXGEN0 << (i))
 #define ENABLE_TEXMAT(i) (ENABLE_TEXMAT0 << (i))
-
 
 /*
  * If teximage is color-index, texelOut returns GLchan[1].
@@ -931,7 +907,10 @@ struct gl_texture_attrib {
                              /* = (Unit[0]._ReallyEnabled << 0) | */
                              /*   (Unit[1]._ReallyEnabled << 4) | */
 	                     /*   (Unit[2]._ReallyEnabled << 8) | etc... */
+
    GLuint _GenFlags;  /* for texgen */
+   GLuint _TexGenEnabled;	
+   GLuint _TexMatEnabled;
 
    struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
 
@@ -1536,7 +1515,6 @@ struct __GLcontextRec {
    GLuint NewState;          /* bitwise-or of _NEW_* flags */
 
    /* Derived */
-   GLuint _Enabled;           /* bitwise-or of ENABLE_* flags */
    GLuint _TriangleCaps;      /* bitwise-or of DD_* flags */
    GLuint _ImageTransferState;/* bitwise-or of IMAGE_*_BIT flags */
    GLfloat _EyeZDir[3];

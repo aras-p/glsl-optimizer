@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.47 2001/03/29 17:08:26 keithw Exp $ */
+/* $Id: enable.c,v 1.48 2001/03/29 21:16:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -175,7 +175,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       ctx->Transform.ClipEnabled[p] = state;
 
       if (state) {
-	 ctx->_Enabled |= ENABLE_USERCLIP;
 	 ctx->Transform._AnyClip++;
 
 	 if (ctx->ProjectionMatrix.flags & MAT_DIRTY) {
@@ -189,9 +188,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 _mesa_transform_vector( ctx->Transform._ClipUserPlane[p],
 			      ctx->Transform.EyeUserPlane[p],
 			      ctx->ProjectionMatrix.inv );
-      } else {
-	 if (--ctx->Transform._AnyClip == 0)
-	    ctx->_Enabled &= ~ENABLE_USERCLIP;
       }
    }
    break;
@@ -235,7 +231,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 return;
       FLUSH_VERTICES(ctx, _NEW_FOG);
       ctx->Fog.Enabled = state;
-      ctx->_Enabled ^= ENABLE_FOG;
       break;
    case GL_HISTOGRAM:
       if (!ctx->Extensions.EXT_histogram && !ctx->Extensions.ARB_imaging) {
@@ -272,7 +267,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 return;
       FLUSH_VERTICES(ctx, _NEW_LIGHT);
       ctx->Light.Enabled = state;
-      ctx->_Enabled ^= ENABLE_LIGHT;
 
       if ((ctx->Light.Enabled &&
 	   ctx->Light.Model.ColorControl==GL_SEPARATE_SPECULAR_COLOR)
@@ -427,7 +421,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 return;
       FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
       ctx->Transform.Normalize = state;
-      ctx->_Enabled ^= ENABLE_NORMALIZE;
       break;
    case GL_POINT_SMOOTH:
       if (ctx->Point.SmoothFlag==state)
@@ -474,7 +467,6 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 	 return;
       FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
       ctx->Transform.RescaleNormals = state;
-      ctx->_Enabled ^= ENABLE_RESCALE;
       break;
    case GL_SCISSOR_TEST:
       if (ctx->Scissor.Enabled==state)

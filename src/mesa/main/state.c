@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.63 2001/03/29 17:08:26 keithw Exp $ */
+/* $Id: state.c,v 1.64 2001/03/29 21:16:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -712,7 +712,7 @@ update_texture_matrices( GLcontext *ctx )
 {
    GLuint i;
 
-   ctx->_Enabled &= ~ENABLE_TEXMAT_ANY;
+   ctx->Texture._TexMatEnabled = 0;
 
    for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
       if (ctx->TextureMatrix[i].flags & MAT_DIRTY) {
@@ -723,7 +723,7 @@ update_texture_matrices( GLcontext *ctx )
 
 	 if (ctx->Texture.Unit[i]._ReallyEnabled &&
 	     ctx->TextureMatrix[i].type != MATRIX_IDENTITY)
-	    ctx->_Enabled |= ENABLE_TEXMAT0 << i;
+	    ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(i);
       }
    }
 }
@@ -746,8 +746,8 @@ update_texture_state( GLcontext *ctx )
    ctx->Texture._GenFlags = 0;
    ctx->_NeedNormals &= ~NEED_NORMALS_TEXGEN;
    ctx->_NeedEyeCoords &= ~NEED_EYE_TEXGEN;
-   ctx->_Enabled &= ~(ENABLE_TEXGEN_ANY |
-		      ENABLE_TEXMAT_ANY);
+   ctx->Texture._TexMatEnabled = 0;
+   ctx->Texture._TexGenEnabled = 0;
 
    /* Update texture unit state.
     */
@@ -831,12 +831,12 @@ update_texture_state( GLcontext *ctx )
 	    texUnit->_GenFlags |= texUnit->_GenBitR;
 	 }
 
-	 ctx->_Enabled |= ENABLE_TEXGEN0 << i;
+	 ctx->Texture._TexGenEnabled |= ENABLE_TEXGEN(i);
 	 ctx->Texture._GenFlags |= texUnit->_GenFlags;
       }
 
       if (ctx->TextureMatrix[i].type != MATRIX_IDENTITY)
-	 ctx->_Enabled |= ENABLE_TEXMAT0 << i;
+	 ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(i);
    }
 
    if (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS) {

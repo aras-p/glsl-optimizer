@@ -1,4 +1,4 @@
-/* $Id: debug.c,v 1.11 2001/03/29 17:08:26 keithw Exp $ */
+/* $Id: debug.c,v 1.12 2001/03/29 21:16:25 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,34 +60,6 @@ void _mesa_print_state( const char *msg, GLuint state )
 }
 
 
-void _mesa_print_enable_flags( const char *msg, GLuint flags )
-{
-   fprintf(stderr,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
-	   msg,
-	   flags,
-	   (flags & ENABLE_LIGHT)      ? "light, " : "",
-	   (flags & ENABLE_FOG)        ? "fog, " : "",
-	   (flags & ENABLE_USERCLIP)   ? "userclip, " : "",
-	   (flags & ENABLE_TEXGEN0)    ? "tex-gen-0, " : "",
-	   (flags & ENABLE_TEXGEN1)    ? "tex-gen-1, " : "",
-	   (flags & ENABLE_TEXGEN2)    ? "tex-gen-2, " : "",
-	   (flags & ENABLE_TEXGEN3)    ? "tex-gen-3, " : "",
-	   (flags & ENABLE_TEXGEN4)    ? "tex-gen-4, " : "",
-	   (flags & ENABLE_TEXGEN5)    ? "tex-gen-5, " : "",
-	   (flags & ENABLE_TEXGEN6)    ? "tex-gen-6, " : "",
-	   (flags & ENABLE_TEXGEN7)    ? "tex-gen-7, " : "",
-	   (flags & ENABLE_TEXMAT0)    ? "tex-mat-0, " : "",
-	   (flags & ENABLE_TEXMAT1)    ? "tex-mat-1, " : "",
-	   (flags & ENABLE_TEXMAT2)    ? "tex-mat-2, " : "",
-	   (flags & ENABLE_TEXMAT3)    ? "tex-mat-3, " : "",
-	   (flags & ENABLE_TEXMAT4)    ? "tex-mat-4, " : "",
-	   (flags & ENABLE_TEXMAT5)    ? "tex-mat-5, " : "",
-	   (flags & ENABLE_TEXMAT6)    ? "tex-mat-6, " : "",
-	   (flags & ENABLE_TEXMAT7)    ? "tex-mat-7, " : "",
-	   (flags & ENABLE_NORMALIZE)  ? "normalize, " : "",
-	   (flags & ENABLE_RESCALE)    ? "rescale, " : "");
-}
 
 void _mesa_print_tri_caps( const char *name, GLuint flags )
 {

@@ -1,4 +1,4 @@
-/* $Id: t_vb_texgen.c,v 1.6 2001/03/12 00:48:44 gareth Exp $ */
+/* $Id: t_vb_texgen.c,v 1.7 2001/03/29 21:16:26 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,7 +78,6 @@ struct texgen_stage_data {
 
 
 
-
 static GLuint all_bits[5] = {
    0,
    VEC_SIZE_1,
@@ -88,6 +87,12 @@ static GLuint all_bits[5] = {
 };
 
 #define VEC_SIZE_FLAGS (VEC_SIZE_1|VEC_SIZE_2|VEC_SIZE_3|VEC_SIZE_4)
+
+#define TEXGEN_NEED_M            (TEXGEN_SPHERE_MAP)
+#define TEXGEN_NEED_F            (TEXGEN_SPHERE_MAP        | \
+				  TEXGEN_REFLECTION_MAP_NV)
+
+
 
 /*
  */
@@ -532,7 +537,7 @@ static GLboolean run_texgen_stage( GLcontext *ctx,
    GLuint i;
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
-      if (ctx->_Enabled & ENABLE_TEXGEN(i)) {
+      if (ctx->Texture._TexGenEnabled & ENABLE_TEXGEN(i)) {
 	 if (stage->changed_inputs & (VERT_EYE | VERT_NORM | VERT_TEX(i)))
 	    store->TexgenFunc[i]( ctx, store, i );
 
@@ -595,18 +600,21 @@ static void check_texgen( GLcontext *ctx, struct gl_pipeline_stage *stage )
    GLuint i;
    stage->active = 0;
 
-   if (ctx->_Enabled & ENABLE_TEXGEN_ANY) {
+   if (ctx->Texture._TexGenEnabled) {
       GLuint inputs = 0;
       GLuint outputs = 0;
 
-      if (ctx->Texture._GenFlags & TEXGEN_NEED_VERTICES)
+      if (ctx->Texture._GenFlags & TEXGEN_OBJ_LINEAR)
+	 inputs |= VERT_OBJ;
+
+      if (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD)
 	 inputs |= VERT_EYE;
 
       if (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS)
 	 inputs |= VERT_NORM;
 
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
-	 if (ctx->_Enabled & ENABLE_TEXGEN(i))
+	 if (ctx->Texture._TexGenEnabled & ENABLE_TEXGEN(i))
 	 {
 	    outputs |= VERT_TEX(i);
 

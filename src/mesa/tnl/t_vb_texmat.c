@@ -1,4 +1,4 @@
-/* $Id: t_vb_texmat.c,v 1.4 2001/03/12 00:48:44 gareth Exp $ */
+/* $Id: t_vb_texmat.c,v 1.5 2001/03/29 21:16:26 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,11 +60,11 @@ static void check_texmat( GLcontext *ctx, struct gl_pipeline_stage *stage )
    GLuint i;
    stage->active = 0;
 
-   if (ctx->_Enabled & ENABLE_TEXMAT_ANY) {
+   if (ctx->Texture._TexMatEnabled) {
       GLuint flags = 0;
 
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
-	 if (ctx->_Enabled & ENABLE_TEXMAT(i))
+	 if (ctx->Texture._TexMatEnabled & ENABLE_TEXMAT(i))
 	    flags |= VERT_TEX(i);
 
       stage->active = 1;
@@ -84,7 +84,7 @@ static GLboolean run_texmat_stage( GLcontext *ctx,
     * identity, so we don't have to check that here.
     */
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
-      if (ctx->_Enabled & ENABLE_TEXMAT(i)) {
+      if (ctx->Texture._TexMatEnabled & ENABLE_TEXMAT(i)) {
 	 if (stage->changed_inputs & VERT_TEX(i))
 	    (void) TransformRaw( &store->texcoord[i], &ctx->TextureMatrix[i],
 				 VB->TexCoordPtr[i]);
