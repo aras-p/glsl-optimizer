@@ -225,12 +225,11 @@ static void delay( void ) {
 static int r128WaitForFrameCompletion( r128ContextPtr rmesa )
 {
    unsigned char *R128MMIO = rmesa->r128Screen->mmio.map;
-   uint32_t frame;
    int i;
    int wait = 0;
 
    while ( 1 ) {
-      frame = *(volatile unsigned int *)(R128MMIO + R128_LAST_FRAME_REG);
+      uint32_t frame = LE32_TO_CPU(*(volatile uint32_t *)(R128MMIO + R128_LAST_FRAME_REG));
 
       if ( rmesa->sarea->last_frame - frame <= R128_MAX_OUTSTANDING ) {
 	 break;
