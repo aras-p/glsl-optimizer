@@ -832,7 +832,11 @@ GLboolean fxDDIsCompressedFormat ( GLcontext *ctx, GLenum internalFormat )
      (internalFormat == GL_COMPRESSED_RGB_S3TC_DXT1_EXT) ||
      (internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ||
      (internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT) ||
-     (internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)) {
+     (internalFormat == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT) ||
+     (internalFormat == GL_RGB_S3TC) ||
+     (internalFormat == GL_RGB4_S3TC) ||
+     (internalFormat == GL_RGBA_S3TC) ||
+     (internalFormat == GL_RGBA4_S3TC)) {
     return GL_TRUE;
  }
 
@@ -876,8 +880,11 @@ GLuint fxDDCompressedTextureSize (GLcontext *ctx,
  switch (format) {
  case GL_COMPRESSED_RGB_FXT1_3DFX:
  case GL_COMPRESSED_RGBA_FXT1_3DFX:
-    /* round up to multiples of 8, 4 */
-    size = ((width + 7) / 8) * ((height + 3) / 4) * 16;
+    /* round up width to next multiple of 8, height to next multiple of 4 */
+    width = (width + 7) & ~7;
+    height = (height + 3) & ~3;
+    /* 16 bytes per 8x4 tile of RGB[A] texels */
+    size = width * height / 2;
     /* Textures smaller than 8x4 will effectively be made into 8x4 and
      * take 16 bytes.
      */
@@ -886,11 +893,13 @@ GLuint fxDDCompressedTextureSize (GLcontext *ctx,
     return size;
  case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
  case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+ case GL_RGB_S3TC:
+ case GL_RGB4_S3TC:
     /* round up width, height to next multiple of 4 */
     width = (width + 3) & ~3;
     height = (height + 3) & ~3;
     /* 8 bytes per 4x4 tile of RGB[A] texels */
-    size = (width * height * 8) / 16;
+    size = width * height / 2;
     /* Textures smaller than 4x4 will effectively be made into 4x4 and
      * take 8 bytes.
      */
@@ -899,6 +908,8 @@ GLuint fxDDCompressedTextureSize (GLcontext *ctx,
     return size;
  case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
  case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+ case GL_RGBA_S3TC:
+ case GL_RGBA4_S3TC:
     /* round up width, height to next multiple of 4 */
     width = (width + 3) & ~3;
     height = (height + 3) & ~3;
@@ -1053,10 +1064,14 @@ fxDDChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       return &_mesa_texformat_argb1555;
    /* GL_EXT_texture_compression_s3tc */
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
       return &_mesa_texformat_rgb_dxt1;
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
       return &_mesa_texformat_rgba_dxt1;
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
       return &_mesa_texformat_rgba_dxt3;
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
       return &_mesa_texformat_rgba_dxt5;

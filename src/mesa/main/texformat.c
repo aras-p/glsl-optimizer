@@ -874,7 +874,7 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
 	 _mesa_problem(ctx, "texture compression extension not enabled");
       if (ctx->Extensions.TDFX_texture_compression_FXT1)
          return &_mesa_texformat_rgb_fxt1;
-      else if (ctx->Extensions.EXT_texture_compression_s3tc)
+      else if (ctx->Extensions.EXT_texture_compression_s3tc || ctx->Extensions.S3_s3tc)
          return &_mesa_texformat_rgb_dxt1;
       return &_mesa_texformat_rgb;
    case GL_COMPRESSED_RGBA_ARB:
@@ -882,7 +882,7 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
 	 _mesa_problem(ctx, "texture compression extension not enabled");
       if (ctx->Extensions.TDFX_texture_compression_FXT1)
          return &_mesa_texformat_rgba_fxt1;
-      else if (ctx->Extensions.EXT_texture_compression_s3tc)
+      else if (ctx->Extensions.EXT_texture_compression_s3tc || ctx->Extensions.S3_s3tc)
          return &_mesa_texformat_rgba_dxt3;  /* Not rgba_dxt1!  See the spec */
       return &_mesa_texformat_rgba;
 
@@ -924,6 +924,20 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
       if (ctx->Extensions.EXT_texture_compression_s3tc)
          return &_mesa_texformat_rgba_dxt5;
+      else
+         return NULL;
+
+   /* GL_S3_s3tc */
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
+      if (ctx->Extensions.S3_s3tc)
+         return &_mesa_texformat_rgb_dxt1;
+      else
+         return NULL;
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
+      if (ctx->Extensions.S3_s3tc)
+         return &_mesa_texformat_rgba_dxt3;
       else
          return NULL;
 

@@ -1815,6 +1815,7 @@ struct gl_extensions
    GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
    GLboolean TDFX_texture_compression_FXT1;
    GLboolean APPLE_client_storage;
+   GLboolean S3_s3tc;
    /*@}*/
    /* The extension string */
    const GLubyte *String;

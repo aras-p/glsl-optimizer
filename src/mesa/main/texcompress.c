@@ -73,6 +73,17 @@ _mesa_get_compressed_formats( GLcontext *ctx, GLint *formats )
             n += 3;
          }
       }
+      if (ctx->Extensions.S3_s3tc) {
+         if (formats) {
+            formats[n++] = GL_RGB_S3TC;
+            formats[n++] = GL_RGB4_S3TC;
+            formats[n++] = GL_RGBA_S3TC;
+            formats[n++] = GL_RGBA4_S3TC;
+         }
+         else {
+            n += 4;
+         }
+      }
    }
    return n;
 }
@@ -100,11 +111,16 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       return ctx->Driver.CompressedTextureSize(ctx, width, height, depth, format);
    }
 
+   ASSERT(depth == 1);
+
    switch (format) {
    case GL_COMPRESSED_RGB_FXT1_3DFX:
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
-      /* round up to multiples of 8, 4 */
-      size = ((width + 7) / 8) * ((height + 3) / 4) * 16;
+      /* round up width to next multiple of 8, height to next multiple of 4 */
+      width = (width + 7) & ~7;
+      height = (height + 3) & ~3;
+      /* 16 bytes per 8x4 tile of RGB[A] texels */
+      size = width * height / 2;
       /* Textures smaller than 8x4 will effectively be made into 8x4 and
        * take 16 bytes.
        */
@@ -113,12 +129,13 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       return size;
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
       /* round up width, height to next multiple of 4 */
       width = (width + 3) & ~3;
       height = (height + 3) & ~3;
-      ASSERT(depth == 1);
       /* 8 bytes per 4x4 tile of RGB[A] texels */
-      size = (width * height * 8) / 16;
+      size = width * height / 2;
       /* Textures smaller than 4x4 will effectively be made into 4x4 and
        * take 8 bytes.
        */
@@ -127,10 +144,11 @@ _mesa_compressed_texture_size( GLcontext *ctx,
       return size;
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
       /* round up width, height to next multiple of 4 */
       width = (width + 3) & ~3;
       height = (height + 3) & ~3;
-      ASSERT(depth == 1);
       /* 16 bytes per 4x4 tile of RGBA texels */
       size = width * height; /* simple! */
       /* Textures smaller than 4x4 will effectively be made into 4x4 and
@@ -156,26 +174,29 @@ _mesa_compressed_texture_size( GLcontext *ctx,
 GLint
 _mesa_compressed_row_stride(GLenum format, GLsizei width)
 {
-   GLint bytesPerTile, stride;
+   GLint stride;
 
    switch (format) {
    case GL_COMPRESSED_RGB_FXT1_3DFX:
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
-      bytesPerTile = 16;
+      stride = ((width + 7) / 8) * 16; /* 16 bytes per 8x4 tile */
       break;
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-      bytesPerTile = 8;
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
+      stride = ((width + 3) / 4) * 8; /* 8 bytes per 4x4 tile */
       break;
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      bytesPerTile = 16;
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
+      stride = ((width + 3) / 4) * 16; /* 16 bytes per 4x4 tile */
       break;
    default:
       return 0;
    }
 
-   stride = ((width + 3) / 4) * bytesPerTile;
    return stride;
 }
 
@@ -198,33 +219,39 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
                                GLenum format,
                                GLsizei width, const GLubyte *image)
 {
-   GLint bytesPerTile, stride;
    GLubyte *addr;
 
-   ASSERT((row & 3) == 0);
-   ASSERT((col & 3) == 0);
    (void) img;
+
+   /* We try to spot a "complete" subtexture "above" ROW, COL;
+    * this texture is given by appropriate rounding of WIDTH x ROW.
+    * Then we just add the amount left (usually on the left).
+    *
+    * Example for X*Y microtiles (Z bytes each)
+    * offset = Z * (((width + X - 1) / X) * (row / Y) + col / X);
+    */
 
    switch (format) {
    case GL_COMPRESSED_RGB_FXT1_3DFX:
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
-      bytesPerTile = 16;
+      addr = (GLubyte *) image + 16 * (((width + 7) / 8) * (row / 4) + col / 8);
       break;
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-      bytesPerTile = 8;
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
+      addr = (GLubyte *) image + 8 * (((width + 3) / 4) * (row / 4) + col / 4);
       break;
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      bytesPerTile = 16;
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
+      addr = (GLubyte *) image + 16 * (((width + 3) / 4) * (row / 4) + col / 4);
       break;
    default:
       return 0;
    }
 
-   stride = ((width + 3) / 4) * bytesPerTile;
-
-   addr = (GLubyte *) image + (row / 4) * stride + (col / 4) * bytesPerTile;
    return addr;
 }
 

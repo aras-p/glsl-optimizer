@@ -274,6 +274,18 @@ _mesa_base_tex_format( GLcontext *ctx, GLint format )
             return GL_RGBA;
          else
             return -1;
+      case GL_RGB_S3TC:
+      case GL_RGB4_S3TC:
+         if (ctx->Extensions.S3_s3tc)
+            return GL_RGB;
+         else
+            return -1;
+      case GL_RGBA_S3TC:
+      case GL_RGBA4_S3TC:
+         if (ctx->Extensions.S3_s3tc)
+            return GL_RGBA;
+         else
+            return -1;
 
       case GL_YCBCR_MESA:
          if (ctx->Extensions.MESA_ycbcr_texture)
@@ -387,6 +399,10 @@ is_compressed_format(GLcontext *ctx, GLenum internalFormat)
       case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
       case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
       case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      case GL_RGB_S3TC:
+      case GL_RGB4_S3TC:
+      case GL_RGBA_S3TC:
+      case GL_RGBA4_S3TC:
          return GL_TRUE;
       default:
          if (ctx->Driver.IsCompressedFormat) {

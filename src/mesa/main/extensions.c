@@ -143,6 +143,7 @@ static const struct {
    { OFF, "GL_SGIX_shadow",                    F(SGIX_shadow) },
    { OFF, "GL_SGIX_shadow_ambient",            F(SGIX_shadow_ambient) },
    { OFF, "GL_SUN_multi_draw_arrays",          F(EXT_multi_draw_arrays) },
+   { OFF, "GL_S3_s3tc",                        F(S3_s3tc) },
 };
 
 
