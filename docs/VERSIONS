@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.91 2002/06/26 02:36:34 brianp Exp $
+$Id: VERSIONS,v 1.92 2002/06/30 15:49:03 brianp Exp $
 
 
 Mesa Version History
@@ -996,6 +996,7 @@ Mesa Version History
 	- GL_ARB_texture_env_crossbar
 	- GL_NV_point_sprite extension
 	- GL_NV_texture_rectangle extension
+	- GL_EXT_multi_draw_arrays extension
 	- massive overhaul/simplification of software rasterizer module,
 	  many contributions from Klaus Niederkrueger
 	- faster software texturing in some cases (i.e. trilinear filtering)
