@@ -331,7 +331,8 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    /* Dri stuff */
    imesa->hHWContext = driContextPriv->hHWContext;
    imesa->driFd = sPriv->fd;
-   imesa->driHwLock = &sPriv->pSAREA->lock;
+   /* drmLock ptr = &drm_hw_lock_t */
+   imesa->driHwLock = (drmLock *) &sPriv->pSAREA->lock;
    imesa->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
 
    switch(mesaVis->depthBits) {
