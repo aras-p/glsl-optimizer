@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.4 1999/10/10 12:54:04 brianp Exp $ */
+/* $Id: image.c,v 1.5 1999/10/10 13:04:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -483,7 +483,7 @@ GLvoid *gl_pixel_addr_in_image( const struct gl_pixelstore_attrib *packing,
  */
 static struct gl_image *alloc_image( void )
 {
-   return (struct gl_image *) calloc(sizeof(struct gl_image), 1);
+   return GL_CALLOC_STRUCT(gl_image);
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.13 1999/10/10 12:49:36 brianp Exp $ */
+/* $Id: context.c,v 1.14 1999/10/10 13:04:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -365,7 +365,7 @@ static struct gl_shared_state *alloc_shared_state( void )
    struct gl_shared_state *ss;
    GLboolean outOfMemory;
 
-   ss = (struct gl_shared_state*) calloc( 1, sizeof(struct gl_shared_state) );
+   ss = GL_CALLOC_STRUCT(gl_shared_state);
    if (!ss)
       return NULL;
 
@@ -1127,7 +1127,7 @@ GLvisual *gl_create_visual( GLboolean rgbFlag,
       return NULL;
    }
 
-   vis = (GLvisual *) calloc( 1, sizeof(GLvisual) );
+   vis = (GLvisual *) GL_CALLOC( sizeof(GLvisual) );
    if (!vis) {
       return NULL;
    }
@@ -1250,7 +1250,7 @@ GLcontext *gl_create_context( GLvisual *visual,
    /* misc one-time initializations */
    one_time_init();
 
-   ctx = (GLcontext *) calloc( 1, sizeof(GLcontext) );
+   ctx = (GLcontext *) GL_CALLOC( sizeof(GLcontext) );
    if (!ctx) {
       return NULL;
    }
@@ -1484,7 +1484,7 @@ GLframebuffer *gl_create_framebuffer( GLvisual *visual )
 {
    GLframebuffer *buffer;
 
-   buffer = (GLframebuffer *) calloc( 1, sizeof(GLframebuffer) );
+   buffer = (GLframebuffer *) GL_CALLOC( sizeof(GLframebuffer) );
    if (!buffer) {
       return NULL;
    }
