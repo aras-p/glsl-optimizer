@@ -21,7 +21,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/extras/Mesa/src/X/xm_api.c,v 1.2 2002/02/26 23:37:31 tsi Exp $ */
 
 /*
  * This file contains the implementations of all the XMesa* functions.
@@ -2559,6 +2558,8 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
    GLint g = (GLint) (green * 255.0F);
    GLint b = (GLint) (blue  * 255.0F);
    GLint a = (GLint) (alpha * 255.0F);
+
+   (void) DitherValues; /* silence warning */
 
    switch (xmesa->pixelformat) {
       case PF_Index:
