@@ -84,6 +84,9 @@
 #include "nvprogram.h"
 #include "program.h"
 #endif
+#if FEATURE_ARB_shader_objects
+#include "shaderobjects.h"
+#endif
 #include "debug.h"
 
 /* #include "math/m_matrix.h" */
@@ -738,6 +741,53 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 
    /* ARB 37. GL_ARB_draw_buffers */
    exec->DrawBuffersARB = _mesa_DrawBuffersARB;
+   
+#if FEATURE_ARB_shader_objects
+   exec->DeleteObjectARB = _mesa_DeleteObjectARB;
+   exec->GetHandleARB = _mesa_GetHandleARB;
+   exec->DetachObjectARB = _mesa_DetachObjectARB;
+   exec->CreateShaderObjectARB = _mesa_CreateShaderObjectARB;
+   exec->ShaderSourceARB = _mesa_ShaderSourceARB;
+   exec->CompileShaderARB = _mesa_CompileShaderARB;
+   exec->CreateProgramObjectARB = _mesa_CreateProgramObjectARB;
+   exec->AttachObjectARB = _mesa_AttachObjectARB;
+   exec->LinkProgramARB = _mesa_LinkProgramARB;
+   exec->UseProgramObjectARB = _mesa_UseProgramObjectARB;
+   exec->ValidateProgramARB = _mesa_ValidateProgramARB;
+   exec->Uniform1fARB = _mesa_Uniform1fARB;
+   exec->Uniform2fARB = _mesa_Uniform2fARB;
+   exec->Uniform3fARB = _mesa_Uniform3fARB;
+   exec->Uniform4fARB = _mesa_Uniform4fARB;
+   exec->Uniform1iARB = _mesa_Uniform1iARB;
+   exec->Uniform2iARB = _mesa_Uniform2iARB;
+   exec->Uniform3iARB = _mesa_Uniform3iARB;
+   exec->Uniform4iARB = _mesa_Uniform4iARB;
+   exec->Uniform1fvARB = _mesa_Uniform1fvARB;
+   exec->Uniform2fvARB = _mesa_Uniform2fvARB;
+   exec->Uniform3fvARB = _mesa_Uniform3fvARB;
+   exec->Uniform4fvARB = _mesa_Uniform4fvARB;
+   exec->Uniform1ivARB = _mesa_Uniform1ivARB;
+   exec->Uniform2ivARB = _mesa_Uniform2ivARB;
+   exec->Uniform3ivARB = _mesa_Uniform3ivARB;
+   exec->Uniform4ivARB = _mesa_Uniform4ivARB;
+   exec->UniformMatrix2fvARB = _mesa_UniformMatrix2fvARB;
+   exec->UniformMatrix3fvARB = _mesa_UniformMatrix3fvARB;
+   exec->UniformMatrix4fvARB = _mesa_UniformMatrix4fvARB;
+   exec->GetObjectParameterfvARB = _mesa_GetObjectParameterfvARB;
+   exec->GetObjectParameterivARB = _mesa_GetObjectParameterivARB;
+   exec->GetInfoLogARB = _mesa_GetInfoLogARB;
+   exec->GetAttachedObjectsARB = _mesa_GetAttachedObjectsARB;
+   exec->GetUniformLocationARB = _mesa_GetUniformLocationARB;
+   exec->GetActiveUniformARB = _mesa_GetActiveUniformARB;
+   exec->GetUniformfvARB = _mesa_GetUniformfvARB;
+   exec->GetUniformivARB = _mesa_GetUniformivARB;
+   exec->GetShaderSourceARB = _mesa_GetShaderSourceARB;
+#if FEATURE_ARB_vertex_shader
+   exec->BindAttribLocationARB = _mesa_BindAttribLocationARB;
+   exec->GetActiveAttribARB = _mesa_GetActiveAttribARB;
+   exec->GetAttribLocationARB = _mesa_GetAttribLocationARB;
+#endif
+#endif    /* FEATURE_ARB_shader_objects */
 }
 
 /*@}*/
