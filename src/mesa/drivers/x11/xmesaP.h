@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.4 1999/11/25 17:38:12 brianp Exp $ */
+/* $Id: xmesaP.h,v 1.5 2000/01/06 09:28:58 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -65,6 +65,10 @@ typedef struct {
 } bgr_t;
 
 
+/* Function pointer for clearing color buffers */
+typedef void (*clear_func)( GLcontext *ctx,
+                            GLboolean all, GLint x, GLint y,
+                            GLint width, GLint height );
 
 
 /*
@@ -233,6 +237,10 @@ struct xmesa_buffer {
    GLboolean FXwindowHack;	/* Are we rendering into a window? */
    fxMesaContext FXctx;
 #endif
+
+   /* functions for clearing the front and back color buffers */
+   clear_func front_clear_func;
+   clear_func back_clear_func;
 
    struct xmesa_buffer *Next;	/* Linked list pointer: */
 };

@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.6 1999/12/17 12:23:25 brianp Exp $ */
+/* $Id: osmesa.c,v 1.7 2000/01/06 09:28:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -558,7 +558,16 @@ static GLbitfield clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
                          GLint x, GLint y, GLint width, GLint height )
 {
    OSMesaContext osmesa = (OSMesaContext) ctx->DriverCtx;
-   if (mask & GL_COLOR_BUFFER_BIT) {
+   const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
+
+   /* we can't handle color or index masking */
+   if (*colorMask != 0xffffffff || ctx->Color.IndexMask != 0xffffffff)
+      return mask;
+
+   /* sanity check - we only have a front-left buffer */
+   ASSERT((mask & (DD_FRONT_RIGHT_BIT | DD_BACK_LEFT_BIT | DD_BACK_RIGHT_BIT)) == 0);
+
+   if (mask & DD_FRONT_LEFT_BIT) {
       if (osmesa->format==OSMESA_COLOR_INDEX) {
          if (all) {
             /* Clear whole CI buffer */
@@ -631,7 +640,8 @@ static GLbitfield clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
          }
       }
    }
-   return mask & (~GL_COLOR_BUFFER_BIT);
+   /* have Mesa clear all other buffers */
+   return mask & (~DD_FRONT_LEFT_BIT);
 }
 
 

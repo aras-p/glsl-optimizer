@@ -172,73 +172,76 @@ static GLbitfield fxDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
                             GLint x, GLint y, GLint width, GLint height )
 {
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
-  GLbitfield newmask;
+  const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
+  GLbitfield softwareMask = mask & (DD_STENCIL_BIT | DD_ACCUM_BIT);
+  GLbitfield newMask = mask & ~(DD_STENCIL_BIT | DD_ACCUM_BIT);
+
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
     fprintf(stderr,"fxmesa: fxDDClear(%d,%d,%d,%d)\n",x,y,width,height);
   }
 
-  switch(mask & (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)) {
-  case (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT):
-    /* clear color and depth buffer */
+  if (mask == (DD_BACK_LEFT_BIT | DD_DEPTH_BIT)
+      && colorMask == 0xffffffff) {
+    /* common case: clear back color buffer and depth buffer */
+    FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
+    FX_grBufferClear(fxMesa->clearC, fxMesa->clearA,
+                     (FxU16)(ctx->Depth.Clear*0xffff));
+    return 0;
+  }
 
-    if (ctx->Color.DrawDestMask & BACK_LEFT_BIT) {
-      FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
-      FX_grBufferClear(fxMesa->clearC, fxMesa->clearA,
-		       (FxU16)(ctx->Depth.Clear*0xffff));
-    }
-    if (ctx->Color.DrawDestMask & FRONT_LEFT_BIT) {
+  /* depth masking */
+  if (newMask & DD_DEPTH_BIT) {
+    FX_grDepthMask(FXTRUE);
+    CLEAR_BITS(newMask, DD_DEPTH_BIT);
+  }
+  else {
+    FX_grDepthMask(FXFALSE);
+  }
+
+  if (colorMask != 0xffffffff) {
+    /* do masked color clear in software */
+    softwareMask |= (newMask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
+    CLEAR_BITS(newMask, (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
+  }
+
+  if (newMask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) {
+    if (newMask & DD_FRONT_LEFT_BIT) {
       FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA,
-		       (FxU16)(ctx->Depth.Clear*0xffff));
+                       (FxU16)(ctx->Depth.Clear*0xffff));
     }
 
-    newmask=mask & (~(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT));
-    break;
-  case (GL_COLOR_BUFFER_BIT):
-    /* clear color buffer */
-
-    if(ctx->Color.ColorMask) {
-      FX_grDepthMask(FXFALSE);
-
-      if (ctx->Color.DrawDestMask & BACK_LEFT_BIT) {
-        FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
-        FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, 0);
-      }
-      if (ctx->Color.DrawDestMask & FRONT_LEFT_BIT) {
-        FX_grRenderBuffer(GR_BUFFER_FRONTBUFFER);
-        FX_grBufferClear(fxMesa->clearC, fxMesa->clearA, 0);
-      }
-
-      if(ctx->Depth.Mask) {
-        FX_grDepthMask(FXTRUE);
-      }
-    }
-
-    newmask=mask & (~(GL_COLOR_BUFFER_BIT));
-    break;
-  case (GL_DEPTH_BUFFER_BIT):
-    /* clear depth buffer */
-
-    if(ctx->Depth.Mask) {
-      FX_grColorMask(FXFALSE,FXFALSE);
+    if (newMask & DD_BACK_LEFT_BIT) {
+      FX_grRenderBuffer(GR_BUFFER_BACKBUFFER);
       FX_grBufferClear(fxMesa->clearC, fxMesa->clearA,
-		       (FxU16)(ctx->Depth.Clear*0xffff));
-
-      FX_grColorMask(ctx->Color.ColorMask[RCOMP] ||
-		     ctx->Color.ColorMask[GCOMP] ||
-		     ctx->Color.ColorMask[BCOMP],
-		     ctx->Color.ColorMask[ACOMP] && fxMesa->haveAlphaBuffer);
+                       (FxU16)(ctx->Depth.Clear*0xffff));
     }
 
-    newmask=mask & (~(GL_DEPTH_BUFFER_BIT));
-    break;
-  default:
-    newmask=mask;
-    break;
+    CLEAR_BITS(newMask, (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
   }
-   
-  return newmask;
+  else if (mask & DD_DEPTH_BIT) {
+    /* clear depth but not color */
+    FX_grColorMask(FXFALSE,FXFALSE);
+    FX_grBufferClear(fxMesa->clearC, fxMesa->clearA,
+                     (FxU16)(ctx->Depth.Clear*0xffff));
+    FX_grColorMask(ctx->Color.ColorMask[RCOMP] ||
+                   ctx->Color.ColorMask[GCOMP] ||
+                   ctx->Color.ColorMask[BCOMP],
+                   ctx->Color.ColorMask[ACOMP] && fxMesa->haveAlphaBuffer);
+  }
+
+  /* Restore depth mask state */
+  if (mask & DD_DEPTH_BIT) {
+    if (ctx->Depth.Mask) {
+      FX_grDepthMask(FXTRUE);
+    }
+    else {
+      FX_grDepthMask(FXFALSE);
+    }
+  }
+
+  return newMask | softwareMask;
 }
 
 
