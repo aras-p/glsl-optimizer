@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.36 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: attrib.c,v 1.37 2000/11/27 18:59:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -706,7 +706,7 @@ _mesa_PopAttrib(void)
             if (ctx->Driver.ShadeModel)
                (*ctx->Driver.ShadeModel)(ctx, ctx->Light.ShadeModel);
 	    ctx->_Enabled &= ~ENABLE_LIGHT;
-	    if (ctx->Light.Enabled && !is_empty_list(&ctx->Light.EnabledList))
+	    if (ctx->Light.Enabled)
 	       ctx->_Enabled |= ENABLE_LIGHT;
             break;
          case GL_LINE_BIT:

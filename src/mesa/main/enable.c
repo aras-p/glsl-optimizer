@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.34 2000/11/24 10:25:05 keithw Exp $ */
+/* $Id: enable.c,v 1.35 2000/11/27 18:59:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -181,18 +181,13 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_LIGHT7:
 	 if (ctx->Light.Light[cap-GL_LIGHT0].Enabled != state) {
 	    ctx->Light.Light[cap-GL_LIGHT0].Enabled = state;
-
 	    if (state) {
 	       insert_at_tail(&ctx->Light.EnabledList,
 			      &ctx->Light.Light[cap-GL_LIGHT0]);
-	       if (ctx->Light.Enabled)
-		  ctx->_Enabled |= ENABLE_LIGHT;
-	    } else {
-	       remove_from_list(&ctx->Light.Light[cap-GL_LIGHT0]);
-	       if (is_empty_list(&ctx->Light.EnabledList))
-		  ctx->_Enabled &= ~ENABLE_LIGHT;
 	    }
-
+            else {
+	       remove_from_list(&ctx->Light.Light[cap-GL_LIGHT0]);
+	    }
 	    ctx->NewState |= _NEW_LIGHT;
 	 }
          break;
