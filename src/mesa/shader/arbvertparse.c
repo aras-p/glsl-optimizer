@@ -192,8 +192,8 @@ _mesa_parse_arb_vertex_program(GLcontext * ctx, GLenum target,
    /*  Parse error. Allocate a dummy program and return */	
    if (retval)
    {
-      program->Instructions = (struct vp_instruction *) _mesa_malloc (
-                                     sizeof(struct vp_instruction) );			  
+      program->Instructions = (struct vp_instruction *)
+         _mesa_malloc ( sizeof(struct vp_instruction) );
       program->Instructions[0].Opcode = VP_OPCODE_END;
       return;
    }
