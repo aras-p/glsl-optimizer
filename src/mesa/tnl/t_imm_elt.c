@@ -584,8 +584,9 @@ static void init_translate_elt(void)
 #undef CLASS
 #undef ARGS
 #undef CHECK
+#ifdef START
 #undef START
-
+#endif
 
 
 

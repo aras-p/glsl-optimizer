@@ -1,10 +1,8 @@
-/* $Id: m_translate.c,v 1.11 2003/03/01 01:50:24 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -550,7 +548,9 @@ static void init_translate_raw(void)
 
 
 #undef TAB
+#ifdef CLASS
 #undef CLASS
+#endif
 #undef ARGS
 #undef CHECK
 #undef SRC_START

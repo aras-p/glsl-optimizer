@@ -1,5 +1,3 @@
-/* $Id: t_imm_api.c,v 1.40 2003/03/31 18:19:56 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -405,7 +403,8 @@ _tnl_End(void)
  */
 #define CHECK_ATTRIB_ARRAY(IM, ATTR)					\
    if (!IM->Attrib[ATTR]) {						\
-      IM->Attrib[ATTR] = _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));	\
+      IM->Attrib[ATTR] =						\
+         (GLfloat (*)[4]) _mesa_malloc(IMM_SIZE * 4 * sizeof(GLfloat));	\
       if (!IM->Attrib[ATTR]) {						\
          GET_CURRENT_CONTEXT(ctx);					\
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glVertex/Normal/etc");	\

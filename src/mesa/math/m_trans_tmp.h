@@ -1,10 +1,8 @@
-/* $Id: m_trans_tmp.h,v 1.7 2002/01/30 16:52:02 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.2
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -224,13 +222,34 @@ static void INIT(void)
 }
 
 
+#ifdef INIT
 #undef INIT
+#endif
+#ifdef DEST_1UI
 #undef DEST_1UI
+#endif
+#ifdef DEST_1UB
 #undef DEST_1UB
+#endif
+#ifdef DEST_4UB
 #undef DEST_4UB
+#endif
+#ifdef DEST_4US
 #undef DEST_4US
+#endif
+#ifdef DEST_3F
 #undef DEST_3F
+#endif
+#ifdef DEST_4F
 #undef DEST_4F
+#endif
+#ifdef DEST_1F
 #undef DEST_1F
+#endif
+#ifdef SZ
 #undef SZ
+#endif
+#ifdef TAG
 #undef TAG
+#endif
+
