@@ -39,7 +39,15 @@
  *
  * achieving the exact results
  */
-#define GMBT_ROUNDOFF		1
+#define GMBT_ROUNDOFF		0
+
+/* instead of the roundoff this adds a small correction to satisfy the OpenGL criteria
+ *
+ *   t/255 ~= (t + (t >> 8) + (t >> 15)) >> 8
+ *
+ * note that although is faster than rounding off it doesn't give always the exact results
+ */
+#define GMBT_GEOMETRIC_CORRECTION	1
 
 /*
  * do
@@ -282,6 +290,14 @@ LLBL (GMBT_loop_begin):
 
     PADDW      ( MM3, MM2 )			/*        t1 + (t1 >> 8) ~= (t1/255) << 8        */
     PADDW      ( MM5, MM6 )			/*        t2 + (t2 >> 8) ~= (t2/255) << 8        */
+
+#if GMBT_GEOMETRIC_CORRECTION 
+    PSRLW      ( CONST(7), MM3 )		/*                    t1 >> 15                   */
+    PSRLW      ( CONST(7), MM5 )		/*                    t2 >> 15                   */
+
+    PADDW      ( MM3, MM2 )			/*  t1 + (t1 >> 8) + (t1 >>15) ~= (t1/255) << 8  */
+    PADDW      ( MM5, MM6 )			/*  t2 + (t2 >> 8) + (t2 >>15) ~= (t2/255) << 8  */
+#endif
 #endif
 
 #if GMBT_SIGNED_ARITHMETIC
