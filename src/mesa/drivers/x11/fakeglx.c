@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.14 1999/11/18 15:17:01 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.15 1999/11/22 21:52:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1481,6 +1481,18 @@ const char *Fake_glXGetClientString( Display *dpy, int name )
       default:
          return NULL;
    }
+}
+
+
+
+/* GLX 1.2 and later */
+Display *Fake_glXGetCurrentDisplay( void )
+{
+   XMesaContext xmesa = XMesaGetCurrentContext();
+   if (xmesa && xmesa->xm_visual)
+      return xmesa->xm_visual->display;
+   else
+      return NULL;
 }
 
 

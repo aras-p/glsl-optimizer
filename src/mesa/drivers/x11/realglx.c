@@ -1,4 +1,4 @@
-/* $Id: realglx.c,v 1.1 1999/08/19 00:55:42 jtg Exp $ */
+/* $Id: realglx.c,v 1.2 1999/11/22 21:52:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -237,3 +237,13 @@ const char *Real_glXGetClientString( Display *dpy, int name )
    (void) name;
    return 0;
 }
+
+
+
+/* GLX 1.2 and later */
+Display *Real_glXGetCurrentDisplay( void )
+{
+   return 0;
+}
+
+

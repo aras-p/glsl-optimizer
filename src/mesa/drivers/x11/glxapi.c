@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.4 1999/10/27 09:50:10 brianp Exp $ */
+/* $Id: glxapi.c,v 1.5 1999/11/22 21:52:23 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -344,6 +344,19 @@ const char *glXGetClientString( Display *dpy, int name )
    else
 #endif
       return Fake_glXGetClientString( dpy, name );
+}
+
+
+
+/* GLX 1.2 and later */
+Display *glXGetCurrentDisplay( void )
+{
+#ifdef REALGLX
+   if (display_has_glx(dpy))
+      return Real_glXGetCurrentDisplay();
+   else
+#endif
+      return Fake_glXGetCurrentDisplay();
 }
 
 
