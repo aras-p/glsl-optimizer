@@ -76,7 +76,6 @@
 /*
  * Genral warper functions for Glide2/Glide3:
  */ 
-extern FxI32 grGetInteger(FxU32 pname);
 extern FxI32 FX_grGetInteger(FxU32 pname);
 
 /*
@@ -334,15 +333,7 @@ typedef struct
  */
 #define FX_grDrawTriangle(a,b,c)	\
   do {					\
-    /* int big=0; */				\
     BEGIN_CLIP_LOOP();			\
-    /* if (((GrVertex*)a)->x>2000 || ((GrVertex*)a)->x<-2000 || \
-        ((GrVertex*)a)->y>2000 || ((GrVertex*)a)->y<-2000 || \
-        ((GrVertex*)a)->z>65000 || ((GrVertex*)a)->z<-65000) { \
-	  fprintf(stderr, "Extreme triangle (%f,%f,%f)\n", \
-	  ((GrVertex*)a)->x, ((GrVertex*)a)->y, ((GrVertex*)a)->z); \
-        big=1; \
-	} else */ \
     grDrawTriangle(a,b,c);		\
     END_CLIP_LOOP();			\
   } while (0)
