@@ -1,60 +1,30 @@
-/*
- * Mesa 3-D graphics library
- * Version:  6.1
- *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
-/**
- * \file grammar_syn.h
- * syntax parsing engine language syntax
- * \author Michal Krol
- */
-
 ".syntax grammar;\n"
-".emtcode DECLARATION_END 0x00\n"
-".emtcode DECLARATION_EMITCODE 0x01\n"
-".emtcode DECLARATION_ERRORTEXT 0x02\n"
-".emtcode DECLARATION_REGBYTE 0x03\n"
-".emtcode DECLARATION_LEXER 0x04\n"
-".emtcode DECLARATION_RULE 0x05\n"
-".emtcode SPECIFIER_END 0x00\n"
-".emtcode SPECIFIER_AND_TAG 0x01\n"
-".emtcode SPECIFIER_OR_TAG 0x02\n"
-".emtcode SPECIFIER_CHARACTER_RANGE 0x03\n"
-".emtcode SPECIFIER_CHARACTER 0x04\n"
-".emtcode SPECIFIER_STRING 0x05\n"
-".emtcode SPECIFIER_IDENTIFIER 0x06\n"
-".emtcode SPECIFIER_TRUE 0x07\n"
-".emtcode SPECIFIER_FALSE 0x08\n"
-".emtcode SPECIFIER_DEBUG 0x09\n"
-".emtcode IDENTIFIER_NO_LOOP 0x00\n"
-".emtcode IDENTIFIER_LOOP 0x01\n"
-".emtcode ERROR_NOT_PRESENT 0x00\n"
-".emtcode ERROR_PRESENT 0x01\n"
-".emtcode EMIT_NULL 0x00\n"
-".emtcode EMIT_INTEGER 0x01\n"
-".emtcode EMIT_IDENTIFIER 0x02\n"
-".emtcode EMIT_CHARACTER 0x03\n"
-".emtcode EMIT_LAST_CHARACTER 0x04\n"
-".emtcode EMIT_CURRENT_POSITION 0x05\n"
+".emtcode DECLARATION_END 0\n"
+".emtcode DECLARATION_EMITCODE 1\n"
+".emtcode DECLARATION_ERRORTEXT 2\n"
+".emtcode DECLARATION_REGBYTE 3\n"
+".emtcode DECLARATION_LEXER 4\n"
+".emtcode DECLARATION_RULE 5\n"
+".emtcode SPECIFIER_END 0\n"
+".emtcode SPECIFIER_AND_TAG 1\n"
+".emtcode SPECIFIER_OR_TAG 2\n"
+".emtcode SPECIFIER_CHARACTER_RANGE 3\n"
+".emtcode SPECIFIER_CHARACTER 4\n"
+".emtcode SPECIFIER_STRING 5\n"
+".emtcode SPECIFIER_IDENTIFIER 6\n"
+".emtcode SPECIFIER_TRUE 7\n"
+".emtcode SPECIFIER_FALSE 8\n"
+".emtcode SPECIFIER_DEBUG 9\n"
+".emtcode IDENTIFIER_SIMPLE 0\n"
+".emtcode IDENTIFIER_LOOP 1\n"
+".emtcode ERROR_NOT_PRESENT 0\n"
+".emtcode ERROR_PRESENT 1\n"
+".emtcode EMIT_NULL 0\n"
+".emtcode EMIT_INTEGER 1\n"
+".emtcode EMIT_IDENTIFIER 2\n"
+".emtcode EMIT_CHARACTER 3\n"
+".emtcode EMIT_LAST_CHARACTER 4\n"
+".emtcode EMIT_CURRENT_POSITION 5\n"
 ".errtext INVALID_GRAMMAR \"internal error 2001: invalid grammar script\"\n"
 ".errtext SYNTAX_EXPECTED \"internal error 2002: '.syntax' keyword expected\"\n"
 ".errtext IDENTIFIER_EXPECTED \"internal error 2003: identifier expected\"\n"
@@ -75,15 +45,17 @@
 "white_char\n"
 " ' ' .or '\\t' .or '\\n' .or '\\r';\n"
 "comment_block\n"
-" '/' .and '*' .and .loop comment_char .and '*' .and '/';\n"
-"comment_char\n"
-" comment_char_no_star .or comment_char_1;\n"
-"comment_char_1\n"
-" '*' .and comment_char_no_slash;\n"
+" '/' .and '*' .and comment_rest;\n"
+"comment_rest\n"
+" .loop comment_char_no_star .and comment_rest_1;\n"
+"comment_rest_1\n"
+" comment_end .or comment_rest_2;\n"
+"comment_rest_2\n"
+" '*' .and comment_rest;\n"
 "comment_char_no_star\n"
 " '\\x2B'-'\\xFF' .or '\\x01'-'\\x29';\n"
-"comment_char_no_slash\n"
-" '\\x30'-'\\xFF' .or '\\x01'-'\\x2E';\n"
+"comment_end\n"
+" '*' .and '/';\n"
 "identifier\n"
 " identifier_ne .error IDENTIFIER_EXPECTED;\n"
 "identifier_ne\n"
@@ -109,6 +81,8 @@
 "integer\n"
 " integer_ne .error INTEGER_EXPECTED;\n"
 "integer_ne\n"
+" hex_integer .emit 0x10 .or dec_integer .emit 10;\n"
+"hex_integer\n"
 " hex_prefix .and digit_hex .emit * .and .loop digit_hex .emit * .and .true .emit '\\0';\n"
 "hex_prefix\n"
 " '0' .and hex_prefix_1;\n"
@@ -116,6 +90,8 @@
 " 'x' .or 'X';\n"
 "digit_hex\n"
 " '0'-'9' .or 'a'-'f' .or 'A'-'F';\n"
+"dec_integer\n"
+" digit_dec .emit * .and .loop digit_dec .emit * .and .true .emit '\\0';\n"
 "space_or_null\n"
 " space .or '\\0';\n"
 "errortext_definition\n"
@@ -179,17 +155,17 @@
 " \".true\" .emit SPECIFIER_TRUE .or\n"
 " \".false\" .emit SPECIFIER_FALSE .or\n"
 " \".debug\" .emit SPECIFIER_DEBUG .or\n"
-" loop_identifier .emit SPECIFIER_IDENTIFIER;\n"
+" advanced_identifier .emit SPECIFIER_IDENTIFIER;\n"
 "character\n"
 " '\\'' .and string_char_single_quotes .and '\\'' .emit '\\0';\n"
 "string_char_single_quotes\n"
 " escape_sequence .or string_char .emit * .or '\"' .emit *;\n"
 "character_range\n"
 " character .and optional_space .and '-' .and optional_space .and character;\n"
-"loop_identifier\n"
+"advanced_identifier\n"
 " optional_loop .and identifier;\n"
 "optional_loop\n"
-" optional_loop_1 .emit IDENTIFIER_LOOP .or .true .emit IDENTIFIER_NO_LOOP;\n"
+" optional_loop_1 .emit IDENTIFIER_LOOP .or .true .emit IDENTIFIER_SIMPLE;\n"
 "optional_loop_1\n"
 " \".loop\" .and space;\n"
 "optional_error\n"
