@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.21 2001/06/26 21:15:36 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.22 2001/07/13 15:24:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -193,7 +193,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    /* do image transfer ops up until convolution */
    for (row = 0; row < height; row++) {
-      GLfloat (*rgba)[4] = (GLfloat (*)[4]) tmpImage + row * width * 4;
+      GLfloat (*rgba)[4] = (GLfloat (*)[4]) (tmpImage + row * width * 4);
 
       /* scale & bias */
       if (transferOps & IMAGE_SCALE_BIAS_BIT) {
@@ -225,7 +225,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    /* do remaining image transfer ops */
    for (row = 0; row < height; row++) {
-      GLfloat (*rgba)[4] = (GLfloat (*)[4]) convImage + row * width * 4;
+      GLfloat (*rgba)[4] = (GLfloat (*)[4]) (convImage + row * width * 4);
 
       /* GL_POST_CONVOLUTION_COLOR_TABLE lookup */
       if (transferOps & IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT) {
