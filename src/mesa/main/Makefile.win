@@ -1,8 +1,9 @@
 # Makefile for Win32
 #
 #  NOTE: the install target may overwrite important files in the system dirs
-# Sept 12, 2001
-# Windows driver not working.  OSMesa driver works.
+#  Check first, before making the install target.
+#
+#  This builds both the osmesa and Windows drivers.
 #
 
 !include <win32.mak>
