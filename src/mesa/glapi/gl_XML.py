@@ -611,6 +611,8 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 			self.current_object.startElement(name, attrs)
 		elif name == "category":
 			self.current_category = attrs.get('name', "")
+		elif name == "include":
+			self.next_include = attrs.get('name', "")
 		else:
 			self.current_object = self.factory.create(self, name, attrs)
 		return
@@ -620,6 +622,14 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 		if self.current_object != None:
 			if self.current_object.endElement(name):
 				self.current_object = None
+		elif name == "include":
+			parser = make_parser()
+			parser.setFeature(feature_namespaces, 0)
+			parser.setContentHandler(self)
+
+			f = open(self.next_include)
+			parser.parse(f)
+
 		return
 
 
