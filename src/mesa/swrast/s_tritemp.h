@@ -1,10 +1,10 @@
-/* $Id: s_tritemp.h,v 1.7 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_tritemp.h,v 1.8 2001/01/29 18:51:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,6 +39,8 @@
  *    INTERP_INDEX    - if defined, interpolate color index values
  *    INTERP_INT_TEX  - if defined, interpolate integer ST texcoords
  *                         (fast, simple 2-D texture mapping)
+ *    INTERP_LAMBDA   - if defined, the lambda value is computed at every
+ *                         pixel, to apply MIPMAPPING, and min/maxification
  *    INTERP_TEX      - if defined, interpolate set 0 float STRQ texcoords
  *                         NOTE:  OpenGL STRQ = Mesa STUV (R was taken for red)
  *    INTERP_MULTITEX - if defined, interpolate N units of STRQ texcoords
@@ -278,6 +280,14 @@
       GLfloat dudx[MAX_TEXTURE_UNITS], dudy[MAX_TEXTURE_UNITS];
       GLfloat dvdx[MAX_TEXTURE_UNITS], dvdy[MAX_TEXTURE_UNITS];
 #endif
+#ifdef INTERP_LAMBDA
+
+#ifndef INTERP_TEX
+#error "Mipmapping without texturing doesn't make sense."
+#endif
+      GLfloat lambda_nominator;
+#endif
+
 
       /*
        * Execute user-supplied setup code
@@ -955,6 +965,36 @@
                if (ffi<0) ffi = 0;
 #endif
 
+#ifdef INTERP_LAMBDA
+/*
+ * The lambda value is:
+ *        log_2(sqrt(f(n))) = 1/2*log_2(f(n)), where f(n) is a function
+ *     defined by
+ *        f(n):=  dudx * dudx + dudy * dudy  +  dvdx * dvdx + dvdy * dvdy;
+ *     and each of this terms is resp.
+ *        dudx = dsdx * invQ(n) * tex_width;
+ *        dudy = dsdy * invQ(n) * tex_width;
+ *        dvdx = dtdx * invQ(n) * tex_height;
+ *        dvdy = dtdy * invQ(n) * tex_height;
+ *     Therefore the function lambda can be represented (by factoring out) as:
+ *        f(n) = lambda_nominator * invQ(n) * invQ(n),
+ *     which saves some computation time.
+ */
+	       {
+		 GLfloat dudx = dsdx /* * invQ*/ * twidth;
+		 GLfloat dudy = dsdy /* * invQ*/ * twidth;
+		 GLfloat dvdx = dtdx /* * invQ*/ * theight;
+		 GLfloat dvdy = dtdy /* * invQ*/ * theight;
+		 GLfloat r1 = dudx * dudx + dudy * dudy;
+		 GLfloat r2 = dvdx * dvdx + dvdy * dvdy;
+		 GLfloat rho2 = r1 + r2; /* used to be:  rho2 = MAX2(r1,r2); */
+		 lambda_nominator = rho2;
+	       }
+	       
+	       /* return log base 2 of sqrt(rho) */ 
+#define COMPUTE_LAMBDA(X)  log( lambda_nominator * (X)*(X) ) * 1.442695F * 0.5F  /* 1.442695 = 1/log(2) */
+#endif
+
                INNER_LOOP( left, right, iy );
 
                /*
@@ -1084,6 +1124,8 @@
 #undef INTERP_SPEC
 #undef INTERP_ALPHA
 #undef INTERP_INDEX
+#undef INTERP_LAMBDA
+#undef COMPUTE_LAMBDA
 #undef INTERP_INT_TEX
 #undef INTERP_TEX
 #undef INTERP_MULTITEX

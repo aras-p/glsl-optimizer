@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.9 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.10 2001/01/29 18:51:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1826,6 +1826,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
+#define INTERP_LAMBDA 1
 #define INTERP_TEX 1
 
 #define SETUP_CODE							\
@@ -1864,8 +1865,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
 		    s[i] = ss*invQ;					\
 		    t[i] = tt*invQ;					\
 		    u[i] = uu*invQ;					\
-		    lambda[i] = compute_lambda( dsdx, dsdy, dtdx, dtdy,	\
-						invQ, twidth, theight );\
+                    lambda[i] = COMPUTE_LAMBDA(invQ);			\
 		    ffz += fdzdx;					\
 		    fffog += fdfogdx;					\
 		    ss += dsdx;						\
@@ -1886,8 +1886,7 @@ static void lambda_textured_triangle1( GLcontext *ctx,
 		    s[i] = ss*invQ;					\
 		    t[i] = tt*invQ;					\
 		    u[i] = uu*invQ;					\
-		    lambda[i] = compute_lambda( dsdx, dsdy, dtdx, dtdy,	\
-						invQ, twidth, theight );\
+                    lambda[i] = COMPUTE_LAMBDA(invQ);			\
 		    ffz += fdzdx;					\
 		    fffog += fdfogdx;					\
 		    ffr += fdrdx;					\
@@ -1932,6 +1931,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 #define INTERP_SPEC 1
 #define INTERP_ALPHA 1
 #define INTERP_TEX 1
+#define INTERP_LAMBDA 1
 
 #define SETUP_CODE							\
    const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;	\
@@ -1976,8 +1976,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 		    s[i] = ss*invQ;					\
 		    t[i] = tt*invQ;					\
 		    u[i] = uu*invQ;					\
-		    lambda[i] = compute_lambda( dsdx, dsdy, dtdx, dtdy,	\
-						invQ, twidth, theight );\
+                    lambda[i] = COMPUTE_LAMBDA(invQ);			\
 		    fffog += fdfogdx;					\
 		    ffz += fdzdx;					\
 		    ss += dsdx;						\
@@ -2001,8 +2000,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx,
 		    s[i] = ss*invQ;					\
 		    t[i] = tt*invQ;					\
 		    u[i] = uu*invQ;					\
-		    lambda[i] = compute_lambda( dsdx, dsdy, dtdx, dtdy,	\
-						invQ, twidth, theight );\
+                    lambda[i] = COMPUTE_LAMBDA(invQ);			\
 		    fffog += fdfogdx;					\
 		    ffz += fdzdx;					\
 		    ffr += fdrdx;					\
@@ -2307,6 +2305,7 @@ _swrast_choose_triangle( GLcontext *ctx )
              && image->Border==0
              && ((format = image->Format)==GL_RGB || format==GL_RGBA)
 	     && (filter = current2Dtex->MinFilter)==current2Dtex->MagFilter
+	     /* ==> current2Dtex->MinFilter != GL_XXX_MIPMAP_XXX */
 	     && ctx->Light.Model.ColorControl==GL_SINGLE_COLOR
 	     && ctx->Texture.Unit[0].EnvMode!=GL_COMBINE_EXT) {
 
@@ -2384,7 +2383,7 @@ _swrast_choose_triangle( GLcontext *ctx )
             }
             else {
                if (needLambda) {
-                  swrast->Triangle = lambda_textured_triangle;
+		  swrast->Triangle = lambda_textured_triangle;
 		  dputs("lambda_textured_triangle");
 	       }
                else {
