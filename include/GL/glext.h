@@ -42,8 +42,10 @@ extern "C" {
  *      Added all missing extensions up to number 137
  *   4. Brian Paul, 23 Mar 2000
  *      Now have all extenions up to number 197
+ *   5. Brian Paul, 27 Mar 2000
+ *      Added GL_ARB_texture_compression
  */
-#define GL_GLEXT_VERSION_EXT 4
+#define GL_GLEXT_VERSION_EXT 5
 
 
 /*
@@ -3030,6 +3032,44 @@ typedef void (APIENTRY * PFNGLSAMPLEPASSARBPROC) (GLenum pass);
 typedef void (APIENTRY * PFNGLSAMPLECOVERAGEARBPROC) (GLclampf value, GLboolean invert);
 
 #endif /* GL_ARB_multisample */
+
+
+
+/*
+ * ARB ?. GL_ARB_texture_compression
+ */
+#ifndef GL_ARB_texture_compression
+#define GL_ARB_texture_compression 1
+
+#define GL_COMPRESSED_ALPHA_ARB				0x84E9
+#define GL_COMPRESSED_LUMINANCE_ARB			0x84EA
+#define GL_COMPRESSED_LUMINANCE_ALPHA_ARB		0x84EB
+#define GL_COMPRESSED_INTENSITY_ARB			0x84EC
+#define GL_COMPRESSED_RGB_ARB				0x84ED
+#define GL_COMPRESSED_RGBA_ARB				0x84EE
+#define GL_TEXTURE_COMPRESSION_HINT_ARB			0x84EF
+#define GL_TEXTURE_COMPRESSED_IMAGE_SIZE_ARB		0x86A0
+#define GL_TEXTURE_COMPRESSED_ARB			0x86A1
+#define GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB		0x86A2
+#define GL_COMPRESSED_TEXTURE_FORMATS_ARB		0x86A3
+
+GLAPI void APIENTRY glCompressedTexImage3DARB(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, GLvoid *data);
+GLAPI void APIENTRY glCompressedTexImage2DARB(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, GLvoid *data);
+GLAPI void APIENTRY glCompressedTexImage1DARB(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLsizei imageSize, GLvoid *data);
+GLAPI void APIENTRY glCompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, GLvoid *data);
+GLAPI void APIENTRY glCompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, GLvoid *data);
+GLAPI void APIENTRY glCompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, GLvoid *data);
+GLAPI void APIENTRY glGetCompressedTexImageARB(GLenum target, GLint lod, GLvoid *img);
+
+typedef void (APIENTRY * PFNGLCOMPRESSEDTEXIMAGE3DARBPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, GLvoid *data);
+typedef void (APIENTRY * PFNGLCOMPRESSEDTEXIMAGE2DARBPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, GLvoid *data);
+typedef void (APIENTRY * PFNGLCOMPRESSEDTEXIMAGE1DARBPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLsizei imageSize, GLvoid *data);
+typedef void (APIENTRY * PFNGLCOMPRESSEDTEXSUBIMAGE3DARBPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, GLvoid *data);
+typedef void (APIENTRY * PFNGLCOMPRESSEDTEXSUBIMAGE2DARBPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, GLvoid *data);
+typedef void (APIENTRY * PFNGLCOMPRESSEDTEXSUBIMAGE1DARBPROC) (GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, GLvoid *data);
+typedef void (APIENTRY * PFNGLGETCOMPRESSEDTEXIMAGEARBPROC) (GLenum target, GLint lod, GLvoid *img);
+
+#endif /* GL_ARB_texture_compression */
 
 
 
