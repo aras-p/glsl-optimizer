@@ -1,10 +1,11 @@
-/* $Id: gears.c,v 1.3 2000/03/28 16:59:39 rjfrank Exp $ */
+/* $Id: gears.c,v 1.4 2000/03/29 23:57:20 brianp Exp $ */
 
 /*
  * 3-D gear wheels.  This program is in the public domain.
  *
  * Command line options:
  *    -info      print GL implementation information
+ *    -exit      automatically exit after 30 seconds
  *
  *
  * Brian Paul
@@ -12,27 +13,6 @@
 
 /* Conversion to GLUT by Mark J. Kilgard */
 
-/*
- * $Log: gears.c,v $
- * Revision 1.3  2000/03/28 16:59:39  rjfrank
- * Implemented support for the HP occlusion test extension (osmesa and X)
- *
- * Revision 1.2  1999/10/21 16:39:06  brianp
- * added -info command line option
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 3.2  1999/06/03 17:07:36  brianp
- * an extra quad was being drawn in front and back faces
- *
- * Revision 3.1  1998/11/03 02:49:10  brianp
- * added fps output
- *
- * Revision 3.0  1998/02/14 18:42:29  brianp
- * initial rev
- *
- */
 
 
 #include <math.h>
@@ -47,7 +27,7 @@
 
 static GLint T0 = 0;
 static GLint Frames = 0;
-
+static GLint autoexit = 0;
 
 /**
 
@@ -181,7 +161,7 @@ gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 }
 
 static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
-static GLint gear1, gear2, gear3, gear3box;
+static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
 
 static void
@@ -192,54 +172,44 @@ draw(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix();
-  glRotatef(view_rotx, 1.0, 0.0, 0.0);
-  glRotatef(view_roty, 0.0, 1.0, 0.0);
-  glRotatef(view_rotz, 0.0, 0.0, 1.0);
+    glRotatef(view_rotx, 1.0, 0.0, 0.0);
+    glRotatef(view_roty, 0.0, 1.0, 0.0);
+    glRotatef(view_rotz, 0.0, 0.0, 1.0);
 
-  glPushMatrix();
-  glTranslatef(-3.0, -2.0, 0.0);
-  glRotatef(angle, 0.0, 0.0, 1.0);
-  glCallList(gear1);
-  glPopMatrix();
+    glPushMatrix();
+      glTranslatef(-3.0, -2.0, 0.0);
+      glRotatef(angle, 0.0, 0.0, 1.0);
+      glCallList(gear1);
+    glPopMatrix();
 
-  glPushMatrix();
-  glTranslatef(3.1, -2.0, 0.0);
-  glRotatef(-2.0 * angle - 9.0, 0.0, 0.0, 1.0);
-  glCallList(gear2);
-  glPopMatrix();
+    glPushMatrix();
+      glTranslatef(3.1, -2.0, 0.0);
+      glRotatef(-2.0 * angle - 9.0, 0.0, 0.0, 1.0);
+      glCallList(gear2);
+    glPopMatrix();
 
-  glPushMatrix();
-  glTranslatef(-3.1, 4.2, 0.0);
-  glRotatef(-2.0 * angle - 25.0, 0.0, 0.0, 1.0);
-
-#ifdef GL_HP_occlusion_test 
-  glDepthMask(GL_FALSE);
-  glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-  glEnable(GL_OCCLUSION_TEST_HP);
-  glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP,&bRet);
-  glCallList(gear3box); 
-  glGetBooleanv(GL_OCCLUSION_TEST_RESULT_HP,&bRet);
-  glDepthMask(GL_TRUE);
-  glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-  glDisable(GL_OCCLUSION_TEST_HP);
-#endif
-
-  if (bRet) glCallList(gear3);
-  glPopMatrix();
+    glPushMatrix();
+      glTranslatef(-3.1, 4.2, 0.0);
+      glRotatef(-2.0 * angle - 25.0, 0.0, 0.0, 1.0);
+      glCallList(gear3);
+    glPopMatrix();
 
   glPopMatrix();
 
   glutSwapBuffers();
 
   Frames++;
+
   {
      GLint t = glutGet(GLUT_ELAPSED_TIME);
      if (t - T0 >= 5000) {
         GLfloat seconds = (t - T0) / 1000.0;
         GLfloat fps = Frames / seconds;
-        printf("%d frames in %g seconds = %g FPS\n", Frames, seconds, fps);
+        printf("%d frames in %6.3f seconds = %6.3f FPS\n", Frames, seconds, fps);
         T0 = t;
         Frames = 0;
+        if ((t >= 999.0 * autoexit) && (autoexit))
+           exit(0);
      }
   }
 }
@@ -315,24 +285,11 @@ reshape(int width, int height)
 static void
 init(int argc, char *argv[])
 {
-  static GLfloat pos[4] =
-  {5.0, 5.0, 10.0, 0.0};
-  static GLfloat red[4] =
-  {0.8, 0.1, 0.0, 1.0};
-  static GLfloat green[4] =
-  {0.0, 0.8, 0.2, 1.0};
-  static GLfloat blue[4] =
-  {0.2, 0.2, 1.0, 1.0};
-  static float	cube[8][3] = {
-	{-2.35,-2.35,-0.5},
-	{ 2.35,-2.35,-0.5},
-	{ 2.35, 2.35,-0.5},
-	{-2.35, 2.35,-0.5},
-	{-2.35,-2.35, 0.5},
-	{ 2.35,-2.35, 0.5},
-	{ 2.35, 2.35, 0.5},
-	{-2.35, 2.35, 0.5},
-  };
+  static GLfloat pos[4] = {5.0, 5.0, 10.0, 0.0};
+  static GLfloat red[4] = {0.8, 0.1, 0.0, 1.0};
+  static GLfloat green[4] = {0.0, 0.8, 0.2, 1.0};
+  static GLfloat blue[4] = {0.2, 0.2, 1.0, 1.0};
+  GLint i;
 
   glLightfv(GL_LIGHT0, GL_POSITION, pos);
   glEnable(GL_CULL_FACE);
@@ -359,33 +316,19 @@ init(int argc, char *argv[])
   gear(1.3, 2.0, 0.5, 10, 0.7);
   glEndList();
 
-  gear3box = glGenLists(1);
-  glNewList(gear3box, GL_COMPILE);
-  glDisable(GL_LIGHTING);
-  glBegin(GL_QUADS);
-  glVertex3fv(cube[3]); glVertex3fv(cube[2]); 
-	glVertex3fv(cube[1]); glVertex3fv(cube[0]);
-  glVertex3fv(cube[4]); glVertex3fv(cube[5]); 
-	glVertex3fv(cube[6]); glVertex3fv(cube[7]);
-  glVertex3fv(cube[0]); glVertex3fv(cube[1]); 
-	glVertex3fv(cube[5]); glVertex3fv(cube[4]);
-  glVertex3fv(cube[1]); glVertex3fv(cube[2]); 
-	glVertex3fv(cube[6]); glVertex3fv(cube[5]);
-  glVertex3fv(cube[2]); glVertex3fv(cube[3]); 
-	glVertex3fv(cube[7]); glVertex3fv(cube[6]);
-  glVertex3fv(cube[3]); glVertex3fv(cube[0]); 
-	glVertex3fv(cube[4]); glVertex3fv(cube[7]);
-  glEnd();
-  glEnable(GL_LIGHTING);
-  glEndList();
-
   glEnable(GL_NORMALIZE);
 
-  if (argc > 1 && strcmp(argv[1], "-info")==0) {
-     printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
-     printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
-     printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
-     printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+  for ( i=1; i<argc; i++ ) {
+    if (strcmp(argv[i], "-info")==0) {
+      printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
+      printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
+      printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
+      printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+    }
+    else if ( strcmp(argv[i], "-exit")==0) {
+      autoexit = 30;
+      printf("Auto Exit after %i seconds.\n", autoexit );
+    }
   }
 }
 
