@@ -1,4 +1,4 @@
-/* $Id: s_pointtemp.h,v 1.5 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_pointtemp.h,v 1.6 2001/05/09 17:31:46 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -65,7 +65,6 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    struct pixel_buffer *PB = swrast->PB;
 
    const GLint z = (GLint) (vert->win[2]);
-   const GLfixed fog = FloatToFixed( vert->fog );
 
 #if FLAGS & RGBA
    const GLint red   = vert->color[0];
@@ -131,7 +130,6 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       (void) green;
       (void) blue;
       (void) alpha;
-      (void) fog;
       (void) z;
 
       /* lower left corner */
@@ -243,31 +241,32 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #endif
 
 #if FLAGS & SPECULAR
-               PB_WRITE_MULTITEX_SPEC_PIXEL(PB, x, y, z, fog,
+               PB_WRITE_MULTITEX_SPEC_PIXEL(PB, x, y, z, vert->fog,
                                             red, green, blue, alpha,
                                             sRed, sGreen, sBlue,
                                             texcoord);
 #elif FLAGS & TEXTURE
 	       if (swrast->_MultiTextureEnabled) {
-		  PB_WRITE_MULTITEX_PIXEL(PB, x, y, z, fog,
+		  PB_WRITE_MULTITEX_PIXEL(PB, x, y, z, vert->fog,
 					  red, green, blue, alpha,
 					  texcoord);
 	       }
 	       else if (ctx->Texture._ReallyEnabled) {
-		  PB_WRITE_TEX_PIXEL(PB, x,y,z, fog,
+		  PB_WRITE_TEX_PIXEL(PB, x,y,z, vert->fog,
 				     red, green, blue, alpha,
 				     texcoord[0][0],
 				     texcoord[0][1],
 				     texcoord[0][2]);
 	       }
                else {
-                  PB_WRITE_RGBA_PIXEL(PB, x, y, z, fog,
+                  PB_WRITE_RGBA_PIXEL(PB, x, y, z, vert->fog,
                                       red, green, blue, alpha);
                }
 #elif FLAGS & RGBA
-	       PB_WRITE_RGBA_PIXEL(PB, x, y, z, fog, red, green, blue, alpha);
+	       PB_WRITE_RGBA_PIXEL(PB, x, y, z, vert->fog,
+                                   red, green, blue, alpha);
 #else /* color index */
-               PB_WRITE_CI_PIXEL(PB, x, y, z, fog, index);
+               PB_WRITE_CI_PIXEL(PB, x, y, z, vert->fog, index);
 #endif
 #if FLAGS & SMOOTH
 	    }
@@ -284,27 +283,27 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       GLint x = (GLint) vert->win[0];
       GLint y = (GLint) vert->win[1];
 #if ((FLAGS & (SPECULAR | TEXTURE)) == (SPECULAR | TEXTURE))
-      PB_WRITE_MULTITEX_SPEC_PIXEL(PB, x, y, z, fog,
+      PB_WRITE_MULTITEX_SPEC_PIXEL(PB, x, y, z, vert->fog,
                                    red, green, blue, alpha,
                                    sRed, sGreen, sBlue,
                                    texcoord);
 #elif FLAGS & TEXTURE
       if (swrast->_MultiTextureEnabled) {
-         PB_WRITE_MULTITEX_PIXEL(PB, x, y, z, fog,
+         PB_WRITE_MULTITEX_PIXEL(PB, x, y, z, vert->fog,
                                  red, green, blue, alpha, texcoord );
       }
       else {
-         PB_WRITE_TEX_PIXEL(PB, x, y, z, fog,
+         PB_WRITE_TEX_PIXEL(PB, x, y, z, vert->fog,
                             red, green, blue, alpha,
                             texcoord[0][0], texcoord[0][1], texcoord[0][2]);
       }
 #elif FLAGS & RGBA
       /* rgba size 1 point */
       alpha = vert->color[3];
-      PB_WRITE_RGBA_PIXEL(PB, x, y, z, fog, red, green, blue, alpha);
+      PB_WRITE_RGBA_PIXEL(PB, x, y, z, vert->fog, red, green, blue, alpha);
 #else
       /* color index size 1 point */
-      PB_WRITE_CI_PIXEL(PB, x, y, z, fog, index);
+      PB_WRITE_CI_PIXEL(PB, x, y, z, vert->fog, index);
 #endif
    }
 #endif /* LARGE || ATTENUATE || SMOOTH */
