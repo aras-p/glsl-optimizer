@@ -68,7 +68,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
 
    ASSERT(span->end < MAX_WIDTH);
 
-   width = (GLint) CLAMP( ctx->Line.Width, MIN_LINE_WIDTH, MAX_LINE_WIDTH );
+   width = (GLint) CLAMP( ctx->Line._Width, MIN_LINE_WIDTH, MAX_LINE_WIDTH );
 
    if (width & 1)
       start = width / 2;
@@ -144,7 +144,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       span.arrayMask |= SPAN_MASK;				\
       compute_stipple_mask(ctx, span.end, span.array->mask);    \
    }								\
-   if (ctx->Line.Width > 1.0) {					\
+   if (ctx->Line._Width > 1.0) {					\
       draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
@@ -163,7 +163,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       span.arrayMask |= SPAN_MASK;				\
       compute_stipple_mask(ctx, span.end, span.array->mask);	\
    }								\
-   if (ctx->Line.Width > 1.0) {					\
+   if (ctx->Line._Width > 1.0) {					\
       draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
@@ -183,7 +183,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       span.arrayMask |= SPAN_MASK;				\
       compute_stipple_mask(ctx, span.end, span.array->mask);	\
    }								\
-   if (ctx->Line.Width > 1.0) {					\
+   if (ctx->Line._Width > 1.0) {					\
       draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
@@ -204,7 +204,7 @@ draw_wide_line( GLcontext *ctx, struct sw_span *span, GLboolean xMajor )
       span.arrayMask |= SPAN_MASK;				\
       compute_stipple_mask(ctx, span.end, span.array->mask);	\
    }								\
-   if (ctx->Line.Width > 1.0) {					\
+   if (ctx->Line._Width > 1.0) {					\
       draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
@@ -310,7 +310,7 @@ _swrast_choose_line( GLcontext *ctx )
             USE(textured_line);
          }
       }
-      else if (ctx->Depth.Test || ctx->Fog.Enabled || ctx->Line.Width != 1.0
+      else if (ctx->Depth.Test || ctx->Fog.Enabled || ctx->Line._Width != 1.0
                || ctx->Line.StippleFlag) {
          /* no texture, but Z, fog, width>1, stipple, etc. */
          if (rgbmode)
