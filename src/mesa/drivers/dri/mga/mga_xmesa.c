@@ -59,6 +59,8 @@
 #include "utils.h"
 #include "vblank.h"
 
+#include "extensions.h"
+
 #include "GL/internal/dri_interface.h"
 
 /* MGA configuration
@@ -74,8 +76,12 @@ DRI_CONF_BEGIN
         DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
         DRI_CONF_COLOR_REDUCTION(DRI_CONF_COLOR_REDUCTION_DITHER)
     DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_SOFTWARE
+        DRI_CONF_ARB_VERTEX_PROGRAM(true)
+        DRI_CONF_NV_VERTEX_PROGRAM(true)
+    DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 3;
+static const GLuint __driNConfigOptions = 5;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -420,6 +426,8 @@ static const struct tnl_pipeline_stage *mga_pipeline[] = {
    &_tnl_fog_coordinate_stage,
    &_tnl_texgen_stage, 
    &_tnl_texture_transform_stage, 
+   &_tnl_vertex_program_stage,
+
 				/* REMOVE: point attenuation stage */
 #if 0
    &_mga_render_stage,		/* ADD: unclipped rastersetup-to-dma */
@@ -449,8 +457,10 @@ static const char * const card_extensions[] =
 {
    "GL_ARB_multisample",
    "GL_ARB_texture_compression",
+   "GL_ARB_texture_rectangle",
    "GL_EXT_blend_logic_op",
    "GL_EXT_fog_coord",
+   "GL_EXT_multi_draw_arrays",
    /* paletted_textures currently doesn't work, but we could fix them later */
 #if 0
    "GL_EXT_shared_texture_palette",
@@ -458,10 +468,8 @@ static const char * const card_extensions[] =
 #endif
    "GL_EXT_secondary_color",
    "GL_EXT_stencil_wrap",
-   "GL_EXT_texture_rectangle",
    "GL_MESA_ycbcr_texture",
    "GL_SGIS_generate_mipmap",
-   "GL_SGIS_texture_lod",
    NULL
 };
 
@@ -666,6 +674,16 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
       driInitExtensions( ctx, g400_extensions, GL_FALSE );
    }
 
+   if ( driQueryOptionb( &mmesa->optionCache, "arb_vertex_program" ) ) {
+      _mesa_enable_extension( ctx, "GL_ARB_vertex_program" );
+   }
+   
+   if ( driQueryOptionb( &mmesa->optionCache, "nv_vertex_program" ) ) {
+      _mesa_enable_extension( ctx, "GL_NV_vertex_program" );
+      _mesa_enable_extension( ctx, "GL_NV_vertex_program1_1" );
+   }
+
+	
    /* XXX these should really go right after _mesa_init_driver_functions() */
    mgaDDInitStateFuncs( ctx );
    mgaDDInitSpanFuncs( ctx );
