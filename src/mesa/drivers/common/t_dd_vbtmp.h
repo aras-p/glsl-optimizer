@@ -1,8 +1,8 @@
-/* $Id: t_dd_vbtmp.h,v 1.18 2002/06/15 02:38:18 brianp Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.19 2002/08/21 02:59:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.3
+ * Version:  4.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -145,8 +145,8 @@ static void TAG(emit)( GLcontext *ctx,
       coord_stride = VB->ClipPtr->stride;
    }
    else {
-      coord = VB->ProjectedClipPtr->data;
-      coord_stride = VB->ProjectedClipPtr->stride;
+      coord = VB->NdcPtr->data;
+      coord_stride = VB->NdcPtr->stride;
    }
 
    if (DO_TEX3) {
@@ -417,8 +417,8 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLubyte (*col)[4];
    GLuint col_stride;
-   GLfloat (*coord)[4] = VB->ProjectedClipPtr->data;
-   GLuint coord_stride = VB->ProjectedClipPtr->stride;
+   GLfloat (*coord)[4] = VB->NdcPtr->data;
+   GLuint coord_stride = VB->NdcPtr->stride;
    GLfloat *v = (GLfloat *)dest;
    const GLubyte *mask = VB->ClipMask;
    const GLfloat *s = GET_VIEWPORT_MAT();
@@ -671,8 +671,8 @@ static void TAG(interp)( GLcontext *ctx,
 	       INTERP_F( t, dst->pv.v0, out->pv.v0, in->pv.v0 );
 	       INTERP_F( t, dst->pv.q0, out->pv.q0, in->pv.q0 );
 	    } else {
-	       GLfloat wout = VB->ProjectedClipPtr->data[eout][3];
-	       GLfloat win = VB->ProjectedClipPtr->data[ein][3];
+	       GLfloat wout = VB->NdcPtr->data[eout][3];
+	       GLfloat win = VB->NdcPtr->data[ein][3];
 	       GLfloat qout = out->pv.w / wout;
 	       GLfloat qin = in->pv.w / win;
 	       GLfloat qdst, rqdst;

@@ -1,10 +1,10 @@
-/* $Id: fxvbtmp.h,v 1.10 2001/09/23 16:50:01 brianp Exp $ */
+/* $Id: fxvbtmp.h,v 1.11 2002/08/21 02:59:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,8 +41,8 @@ static void TAG(emit)( GLcontext *ctx,
    GLubyte (*col)[4];
    GLuint tc0_stride, tc1_stride, col_stride;
    GLuint tc0_size, tc1_size;
-   GLfloat (*proj)[4] = VB->ProjectedClipPtr->data; 
-   GLuint proj_stride = VB->ProjectedClipPtr->stride;
+   GLfloat (*proj)[4] = VB->NdcPtr->data; 
+   GLuint proj_stride = VB->NdcPtr->stride;
    GrVertex *v = (GrVertex *)dest;
    GLfloat u0scale,v0scale,u1scale,v1scale;
    const GLfloat *const s = ctx->Viewport._WindowMap.m;
