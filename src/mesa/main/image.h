@@ -1,4 +1,4 @@
-/* $Id: image.h,v 1.10 2000/08/21 14:22:24 brianp Exp $ */
+/* $Id: image.h,v 1.11 2000/08/30 18:21:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,6 +77,14 @@ _mesa_unpack_polygon_stipple( const GLubyte *pattern, GLuint dest[32],
 extern void
 _mesa_pack_polygon_stipple( const GLuint pattern[32], GLubyte *dest,
                             const struct gl_pixelstore_attrib *packing );
+
+
+extern void
+_mesa_pack_float_rgba_span( GLcontext *ctx,
+                            GLuint n, CONST GLfloat rgba[][4],
+                            GLenum format, GLenum type, GLvoid *dest,
+                            const struct gl_pixelstore_attrib *packing,
+                            GLuint transferOps );
 
 
 extern void
