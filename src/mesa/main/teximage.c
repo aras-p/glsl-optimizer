@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.21 2000/03/20 23:40:12 brianp Exp $ */
+/* $Id: teximage.c,v 1.22 2000/03/21 00:49:33 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -423,47 +423,45 @@ gl_free_texture_image( struct gl_texture_image *teximage )
 
 
 /*
- * This is called by glTexImage[123]D in order to build a gl_texture_image
- * object given the client's parameters and image data.
- * 
- * NOTES: Width, height and depth should include the border.
- *        All texture image parameters should have already been error checked.
+ * Called by glTexImage[123]D.  Fill in a texture image with data given
+ * by the client.  All pixel transfer and unpack modes are handled here.
+ * NOTE: All texture image parameters should have already been error checked.
  */
-static struct gl_texture_image *
-make_texture_image( GLcontext *ctx, GLint internalFormat,
-                    GLint width, GLint height, GLint depth, GLint border,
+static void
+make_texture_image( GLcontext *ctx,
+                    struct gl_texture_image *texImage,
                     GLenum srcFormat, GLenum srcType, const GLvoid *pixels,
                     const struct gl_pixelstore_attrib *unpacking)
 {
    GLint components, numPixels;
-   struct gl_texture_image *texImage;
+   GLint internalFormat, width, height, depth, border;
 
-   assert(width > 0);
-   assert(height > 0);
-   assert(depth > 0);
-   assert(border == 0 || border == 1);
-   assert(pixels);
-   assert(unpacking);
+   ASSERT(ctx);
+   ASSERT(texImage);
+   ASSERT(!texImage->Data);
+   ASSERT(pixels);
+   ASSERT(unpacking);
 
-
-   /*
-    * Allocate and initialize the texture_image struct
-    */
-   texImage = new_texture_image(width, height, depth, border, internalFormat);
-   if (!texImage)
-      return NULL;
-
+   internalFormat = texImage->IntFormat;
+   width = texImage->Width;
+   height = texImage->Height;
+   depth = texImage->Depth;
+   border = texImage->Border;
    components = components_in_intformat(internalFormat);
-   numPixels = texImage->Width * texImage->Height * texImage->Depth;
+
+   ASSERT(width > 0);
+   ASSERT(height > 0);
+   ASSERT(depth > 0);
+   ASSERT(border == 0 || border == 1);
+   ASSERT(pixels);
+   ASSERT(unpacking);
+   ASSERT(components);
+
+   numPixels = width * height * depth;
 
    texImage->Data = (GLubyte *) MALLOC(numPixels * components + EXTRA_BYTE);
-
-   if (!texImage->Data) {
-      /* out of memory */
-      gl_free_texture_image(texImage);
-      return NULL;
-   }
-
+   if (!texImage->Data)
+      return;      /* out of memory */
 
    /*
     * OK, the texture image struct has been initialized and the texture
@@ -477,15 +475,18 @@ make_texture_image( GLcontext *ctx, GLint internalFormat,
        && !ctx->Pixel.IndexOffset && !ctx->Pixel.IndexShift
        && srcType == GL_UNSIGNED_BYTE && depth == 1) {
 
-      if (srcFormat == internalFormat) {
+      if (srcFormat == internalFormat ||
+          (srcFormat == GL_LUMINANCE && internalFormat == 1) ||
+          (srcFormat == GL_LUMINANCE_ALPHA && internalFormat == 2) ||
+          (srcFormat == GL_RGB && internalFormat == 3) ||
+          (srcFormat == GL_RGBA && internalFormat == 4)) {
          /* This will cover the common GL_RGB, GL_RGBA, GL_ALPHA,
           * GL_LUMINANCE_ALPHA, etc. texture formats.
           */
-         const GLubyte *src = (const GLubyte *) gl_pixel_addr_in_image(unpacking,
-                pixels, width, height, srcFormat, srcType, 0, 0, 0);
-         const GLubyte *src1 = (const GLubyte *) gl_pixel_addr_in_image(unpacking,
-                pixels, width, height, srcFormat, srcType, 0, 1, 0);
-         const GLint srcStride = src1 - src;
+         const GLubyte *src = (const GLubyte *) gl_pixel_addr_in_image(
+            unpacking, pixels, width, height, srcFormat, srcType, 0, 0, 0);
+         const GLint srcStride = _mesa_image_row_stride(unpacking, width,
+                                                        srcFormat, srcType);
          GLubyte *dst = texImage->Data;
          GLint dstBytesPerRow = width * components * sizeof(GLubyte);
          if (srcStride == dstBytesPerRow) {
@@ -499,15 +500,14 @@ make_texture_image( GLcontext *ctx, GLint internalFormat,
                dst += dstBytesPerRow;
             }
          }
-         return texImage;  /* all done */
+         return;  /* all done */
       }
       else if (srcFormat == GL_RGBA && internalFormat == GL_RGB) {
          /* commonly used by Quake */
-         const GLubyte *src = (const GLubyte *) gl_pixel_addr_in_image(unpacking,
-                pixels, width, height, srcFormat, srcType, 0, 0, 0);
-         const GLubyte *src1 = (const GLubyte *) gl_pixel_addr_in_image(unpacking,
-                pixels, width, height, srcFormat, srcType, 0, 1, 0);
-         const GLint srcStride = src1 - src;
+         const GLubyte *src = (const GLubyte *) gl_pixel_addr_in_image(
+            unpacking, pixels, width, height, srcFormat, srcType, 0, 0, 0);
+         const GLint srcStride = _mesa_image_row_stride(unpacking, width,
+                                                        srcFormat, srcType);
          GLubyte *dst = texImage->Data;
          GLint i, j;
          for (i = 0; i < height; i++) {
@@ -520,7 +520,7 @@ make_texture_image( GLcontext *ctx, GLint internalFormat,
             }
             src += srcStride;
          }
-         return texImage;  /* all done */
+         return;  /* all done */
       }
    }      
 
@@ -560,8 +560,6 @@ make_texture_image( GLcontext *ctx, GLint internalFormat,
          }
       }
    }
-
-   return texImage;   /* All done! */
 }
 
 
@@ -569,26 +567,20 @@ make_texture_image( GLcontext *ctx, GLint internalFormat,
 /*
  * glTexImage[123]D can accept a NULL image pointer.  In this case we
  * create a texture image with unspecified image contents per the OpenGL
- * spec.
+ * spec.  This function creates an empty image for the given texture image.
  */
-static struct gl_texture_image *
-make_null_texture( GLcontext *ctx, GLenum internalFormat,
-                   GLsizei width, GLsizei height, GLsizei depth, GLint border )
+static void
+make_null_texture( struct gl_texture_image *texImage )
 {
    GLint components;
-   struct gl_texture_image *texImage;
    GLint numPixels;
-   (void) ctx;
 
-   /*internalFormat = decode_internal_format(internalFormat);*/
-   components = components_in_intformat(internalFormat);
-   numPixels = width * height * depth;
+   ASSERT(texImage);
+   ASSERT(!texImage->Data);
 
-   texImage = new_texture_image(width, height, depth, border, internalFormat);
+   components = components_in_intformat(texImage->IntFormat);
+   numPixels = texImage->Width * texImage->Height * texImage->Depth;
 
-   /* It's easier later if we really do have a texture image, rather than
-    * a NULL image pointer.
-    */
    texImage->Data = (GLubyte *) MALLOC( numPixels * components + EXTRA_BYTE );
 
    /*
@@ -610,9 +602,9 @@ make_null_texture( GLcontext *ctx, GLenum internalFormat,
 
       GLubyte *imgPtr = texImage->Data;
       GLint i, j, k;
-      for (i=0;i<height;i++) {
+      for (i = 0; i < texImage->Height; i++) {
          GLint srcRow = 7 - i % 8;
-         for (j=0;j<width;j++) {
+         for (j = 0; j < texImage->Width; j++) {
             GLint srcCol = j % 32;
             GLint texel = (message[srcRow][srcCol]=='X') ? 255 : 70;
             for (k=0;k<components;k++) {
@@ -621,8 +613,6 @@ make_null_texture( GLcontext *ctx, GLenum internalFormat,
          }
       }
    }
-
-   return texImage;
 }
 
 
@@ -1041,7 +1031,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
  * Called from the API.  Note that width includes the border.
  */
 void
-_mesa_TexImage1D( GLenum target, GLint level, GLint internalformat,
+_mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLint border, GLenum format,
                   GLenum type, const GLvoid *pixels )
 {
@@ -1052,7 +1042,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalformat,
       struct gl_texture_unit *texUnit;
       struct gl_texture_image *teximage;
 
-      if (texture_error_check( ctx, target, level, internalformat,
+      if (texture_error_check( ctx, target, level, internalFormat,
                                format, type, 1, width, 1, 1, border )) {
          return;   /* error in texture image was detected */
       }
@@ -1064,14 +1054,14 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalformat,
          gl_free_texture_image( texUnit->CurrentD[1]->Image[level] );
       }
 
+      teximage = new_texture_image(width, 1, 1, border, internalFormat);
+
       /* make new texture from source image */
       if (pixels) {
-         teximage = make_texture_image(ctx, internalformat, width, 1, 1,
-                              border, format, type, pixels, &ctx->Unpack);
+         make_texture_image(ctx, teximage, format, type, pixels, &ctx->Unpack);
       }
       else {
-         teximage = make_null_texture(ctx, (GLenum) internalformat,
-                                      width, 1, 1, border);
+         make_null_texture(teximage);
       }
 
       /* install new texture image */
@@ -1083,12 +1073,12 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalformat,
       if (ctx->Driver.TexImage) {
          (*ctx->Driver.TexImage)( ctx, GL_TEXTURE_1D,
                                   texUnit->CurrentD[1],
-                                  level, internalformat, teximage );
+                                  level, internalFormat, teximage );
       }
    }
    else if (target==GL_PROXY_TEXTURE_1D) {
       /* Proxy texture: check for errors and update proxy state */
-      if (texture_error_check( ctx, target, level, internalformat,
+      if (texture_error_check( ctx, target, level, internalFormat,
                                format, type, 1, width, 1, 1, border )) {
          if (level>=0 && level<ctx->Const.MaxTextureLevels) {
             MEMSET( ctx->Texture.Proxy1D->Image[level], 0,
@@ -1098,7 +1088,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalformat,
       else {
          ctx->Texture.Proxy1D->Image[level]->Format = (GLenum) format;
          set_teximage_component_sizes( ctx->Texture.Proxy1D->Image[level] );
-         ctx->Texture.Proxy1D->Image[level]->IntFormat = (GLenum) internalformat;
+         ctx->Texture.Proxy1D->Image[level]->IntFormat = (GLenum) internalFormat;
          ctx->Texture.Proxy1D->Image[level]->Border = border;
          ctx->Texture.Proxy1D->Image[level]->Width = width;
          ctx->Texture.Proxy1D->Image[level]->Height = 1;
@@ -1113,7 +1103,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalformat,
 
 
 void
-_mesa_TexImage2D( GLenum target, GLint level, GLint internalformat,
+_mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLsizei height, GLint border,
                   GLenum format, GLenum type,
                   const GLvoid *pixels )
@@ -1125,7 +1115,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalformat,
       struct gl_texture_unit *texUnit;
       struct gl_texture_image *teximage;
 
-      if (texture_error_check( ctx, target, level, internalformat,
+      if (texture_error_check( ctx, target, level, internalFormat,
                                format, type, 2, width, height, 1, border )) {
          return;   /* error in texture image was detected */
       }
@@ -1137,14 +1127,14 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalformat,
          gl_free_texture_image( texUnit->CurrentD[2]->Image[level] );
       }
 
+      teximage = new_texture_image(width, height, 1, border,internalFormat);
+
       /* make new texture from source image */
       if (pixels) {
-         teximage = make_texture_image(ctx, internalformat, width, height, 1,
-                                  border, format, type, pixels, &ctx->Unpack);
+         make_texture_image(ctx, teximage, format, type, pixels, &ctx->Unpack);
       }
       else {
-         teximage = make_null_texture(ctx, (GLenum) internalformat,
-                                      width, height, 1, border);
+         make_null_texture(teximage);
       }
 
       /* install new texture image */
@@ -1156,12 +1146,12 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalformat,
       if (ctx->Driver.TexImage) {
          (*ctx->Driver.TexImage)( ctx, GL_TEXTURE_2D,
                                   texUnit->CurrentD[2],
-                                  level, internalformat, teximage );
+                                  level, internalFormat, teximage );
       }
    }
    else if (target==GL_PROXY_TEXTURE_2D) {
       /* Proxy texture: check for errors and update proxy state */
-      if (texture_error_check( ctx, target, level, internalformat,
+      if (texture_error_check( ctx, target, level, internalFormat,
                                format, type, 2, width, height, 1, border )) {
          if (level>=0 && level<ctx->Const.MaxTextureLevels) {
             MEMSET( ctx->Texture.Proxy2D->Image[level], 0,
@@ -1171,7 +1161,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalformat,
       else {
          ctx->Texture.Proxy2D->Image[level]->Format = (GLenum) format;
          set_teximage_component_sizes( ctx->Texture.Proxy2D->Image[level] );
-         ctx->Texture.Proxy2D->Image[level]->IntFormat = (GLenum) internalformat;
+         ctx->Texture.Proxy2D->Image[level]->IntFormat = (GLenum) internalFormat;
          ctx->Texture.Proxy2D->Image[level]->Border = border;
          ctx->Texture.Proxy2D->Image[level]->Width = width;
          ctx->Texture.Proxy2D->Image[level]->Height = height;
@@ -1191,7 +1181,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalformat,
  * Note that width and height include the border.
  */
 void
-_mesa_TexImage3D( GLenum target, GLint level, GLint internalformat,
+_mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
                   GLsizei width, GLsizei height, GLsizei depth,
                   GLint border, GLenum format, GLenum type,
                   const GLvoid *pixels )
@@ -1202,7 +1192,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalformat,
    if (target==GL_TEXTURE_3D_EXT) {
       struct gl_texture_unit *texUnit;
       struct gl_texture_image *teximage;
-      if (texture_error_check( ctx, target, level, internalformat,
+      if (texture_error_check( ctx, target, level, internalFormat,
                                format, type, 3, width, height, depth,
                                border )) {
          return;   /* error in texture image was detected */
@@ -1215,14 +1205,15 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalformat,
          gl_free_texture_image( texUnit->CurrentD[3]->Image[level] );
       }
 
+      teximage = new_texture_image(width, height, depth,
+                                   border, internalFormat);
+
       /* make new texture from source image */
       if (pixels) {
-         teximage = make_texture_image(ctx, internalformat, width, height,
-                       depth, border, format, type, pixels, &ctx->Unpack);
+         make_texture_image(ctx, teximage, format, type, pixels, &ctx->Unpack);
       }
       else {
-         teximage = make_null_texture(ctx, (GLenum) internalformat,
-                                      width, height, depth, border);
+         make_null_texture(teximage);
       }
 
       /* install new texture image */
@@ -1234,12 +1225,12 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalformat,
       if (ctx->Driver.TexImage) {
          (*ctx->Driver.TexImage)( ctx, GL_TEXTURE_3D_EXT,
                                   texUnit->CurrentD[3],
-                                  level, internalformat, teximage );
+                                  level, internalFormat, teximage );
       }
    }
    else if (target==GL_PROXY_TEXTURE_3D_EXT) {
       /* Proxy texture: check for errors and update proxy state */
-      if (texture_error_check( ctx, target, level, internalformat,
+      if (texture_error_check( ctx, target, level, internalFormat,
                                format, type, 3, width, height, depth,
                                border )) {
          if (level>=0 && level<ctx->Const.MaxTextureLevels) {
@@ -1250,7 +1241,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalformat,
       else {
          ctx->Texture.Proxy3D->Image[level]->Format = (GLenum) format;
          set_teximage_component_sizes( ctx->Texture.Proxy3D->Image[level] );
-         ctx->Texture.Proxy3D->Image[level]->IntFormat = (GLenum) internalformat;
+         ctx->Texture.Proxy3D->Image[level]->IntFormat = (GLenum) internalFormat;
          ctx->Texture.Proxy3D->Image[level]->Border = border;
          ctx->Texture.Proxy3D->Image[level]->Width = width;
          ctx->Texture.Proxy3D->Image[level]->Height = height;
@@ -1265,12 +1256,12 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalformat,
 
 
 void
-_mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalformat,
+_mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalFormat,
                      GLsizei width, GLsizei height, GLsizei depth,
                      GLint border, GLenum format, GLenum type,
                      const GLvoid *pixels )
 {
-   _mesa_TexImage3D(target, level, (GLint) internalformat, width, height,
+   _mesa_TexImage3D(target, level, (GLint) internalFormat, width, height,
                     depth, border, format, type, pixels);
 }
 
