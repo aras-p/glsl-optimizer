@@ -1,8 +1,8 @@
-/* $Id: s_texture.c,v 1.74 2002/10/28 23:01:24 kschultz Exp $ */
+/* $Id: s_texture.c,v 1.75 2002/11/12 19:27:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -3139,8 +3139,8 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
                GLchan dot = ((arg0[i][RCOMP]-0.5F) * (arg1[i][RCOMP]-0.5F) +
                              (arg0[i][GCOMP]-0.5F) * (arg1[i][GCOMP]-0.5F) +
                              (arg0[i][BCOMP]-0.5F) * (arg1[i][BCOMP]-0.5F))
-                            * 4.0F;
-               dot = CLAMP(dot, 0.0, CHAN_MAXF) * RGBmult;
+                            * 4.0F * RGBmult;
+               dot = CLAMP(dot, 0.0, CHAN_MAXF);
 #else
                GLint dot = (S_PROD((GLint)arg0[i][RCOMP] - half,
 				   (GLint)arg1[i][RCOMP] - half) +
@@ -3148,7 +3148,8 @@ texture_combine( const GLcontext *ctx, GLuint unit, GLuint n,
 				   (GLint)arg1[i][GCOMP] - half) +
 			    S_PROD((GLint)arg0[i][BCOMP] - half,
 				   (GLint)arg1[i][BCOMP] - half)) >> 6;
-               dot = CLAMP(dot, 0, CHAN_MAX) << RGBshift;
+               dot <<= RGBshift;
+               dot = CLAMP(dot, 0, CHAN_MAX);
 #endif
                rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = (GLchan) dot;
             }
