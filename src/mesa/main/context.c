@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.19 1999/11/11 01:22:25 brianp Exp $ */
+/* $Id: context.c,v 1.20 1999/11/15 22:21:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2078,14 +2078,6 @@ void gl_update_state( GLcontext *ctx )
       ctx->Texture.Unit[1].LastEnvMode = ctx->Texture.Unit[1].EnvMode;
    }
 
-   if ((ctx->NewState & ~(NEW_CLIENT_STATE|NEW_TEXTURE_ENABLE)) == 0) {
-
-      if (MESA_VERBOSE&VERBOSE_STATE)
-	 fprintf(stderr, "update_state: goto finished\n");
-
-      goto finished;
-   }
-
    if (ctx->NewState & NEW_TEXTURE_MATRIX) {
       ctx->Enabled &= ~(ENABLE_TEXMAT0|ENABLE_TEXMAT1);
 
@@ -2102,7 +2094,7 @@ void gl_update_state( GLcontext *ctx )
       }
    }
 
-   if (ctx->NewState & NEW_TEXTURING) {
+   if (ctx->NewState & (NEW_TEXTURING | NEW_TEXTURE_ENABLE)) {
       ctx->Texture.NeedNormals = GL_FALSE;
       gl_update_dirty_texobjs(ctx);
       ctx->Enabled &= ~(ENABLE_TEXGEN0|ENABLE_TEXGEN1);
@@ -2264,7 +2256,7 @@ void gl_update_state( GLcontext *ctx )
       }
    }
 
-   if (ctx->NewState & ~(NEW_CLIENT_STATE|NEW_TEXTURE_ENABLE|
+   if (ctx->NewState & ~(NEW_CLIENT_STATE|
 			 NEW_DRIVER_STATE|NEW_USER_CLIP|
 			 NEW_POLYGON))
       gl_update_clipmask(ctx);
@@ -2272,6 +2264,7 @@ void gl_update_state( GLcontext *ctx )
    if (ctx->NewState & (NEW_LIGHTING|
 			NEW_RASTER_OPS|
 			NEW_TEXTURING|
+			NEW_TEXTURE_ENABLE|
 			NEW_TEXTURE_ENV|
 			NEW_POLYGON|
 			NEW_DRVSTATE0|
@@ -2423,7 +2416,6 @@ void gl_update_state( GLcontext *ctx )
       gl_update_normal_transform( ctx );
    }
 
- finished:
    gl_update_pipelines(ctx);
    ctx->NewState = 0;
 }
