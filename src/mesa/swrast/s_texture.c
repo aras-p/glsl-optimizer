@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.59 2002/04/12 15:39:59 brianp Exp $ */
+/* $Id: s_texture.c,v 1.60 2002/04/12 21:17:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2813,15 +2813,12 @@ texture_combine(const GLcontext *ctx,
             }
          }
          break;
-      case GL_DOT3_RGB_ARB:
-      case GL_DOT3_RGBA_ARB:
+      case GL_DOT3_RGB_EXT:
+      case GL_DOT3_RGBA_EXT:
          {
+            /* Do not scale the result by 1 2 or 4 */
             const GLchan (*arg0)[4] = (const GLchan (*)[4]) argRGB[0];
             const GLchan (*arg1)[4] = (const GLchan (*)[4]) argRGB[1];
-	    /* ATI's EXT extension has a constant scale by 4.  The ARB
-	     * one will likely remove this restriction, and we should
-	     * drop the EXT extension in favour of the ARB one.
-	     */
             for (i = 0; i < n; i++) {
 #if CHAN_TYPE == GL_FLOAT
                GLchan dot = ((arg0[i][RCOMP]-0.5F) * (arg1[i][RCOMP]-0.5F) +
@@ -2837,6 +2834,31 @@ texture_combine(const GLcontext *ctx,
 				   (GLint)arg1[i][BCOMP] - half)) >> 6;
 #endif
                dot = CLAMP(dot, 0, CHAN_MAX);
+               rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = (GLchan) dot;
+            }
+         }
+         break;
+      case GL_DOT3_RGB_ARB:
+      case GL_DOT3_RGBA_ARB:
+         {
+            /* DO scale the result by 1 2 or 4 */
+            const GLchan (*arg0)[4] = (const GLchan (*)[4]) argRGB[0];
+            const GLchan (*arg1)[4] = (const GLchan (*)[4]) argRGB[1];
+            for (i = 0; i < n; i++) {
+#if CHAN_TYPE == GL_FLOAT
+               GLchan dot = ((arg0[i][RCOMP]-0.5F) * (arg1[i][RCOMP]-0.5F) +
+                             (arg0[i][GCOMP]-0.5F) * (arg1[i][GCOMP]-0.5F) +
+                             (arg0[i][BCOMP]-0.5F) * (arg1[i][BCOMP]-0.5F))
+                            * 4.0F;
+#else
+               GLint dot = (S_PROD((GLint)arg0[i][RCOMP] - half,
+				   (GLint)arg1[i][RCOMP] - half) +
+			    S_PROD((GLint)arg0[i][GCOMP] - half,
+				   (GLint)arg1[i][GCOMP] - half) +
+			    S_PROD((GLint)arg0[i][BCOMP] - half,
+				   (GLint)arg1[i][BCOMP] - half)) >> 6;
+#endif
+               dot = CLAMP(dot, 0, CHAN_MAX) << RGBshift;
                rgba[i][RCOMP] = rgba[i][GCOMP] = rgba[i][BCOMP] = (GLchan) dot;
             }
          }
@@ -2953,7 +2975,10 @@ texture_combine(const GLcontext *ctx,
          _mesa_problem(ctx, "invalid combine mode");
    }
 
-   /* Fix the alpha component for GL_DOT3_RGBA_EXT combining.
+   /* Fix the alpha component for GL_DOT3_RGBA_EXT/ARB combining.
+    * This is kind of a kludge.  It would have been better if the spec
+    * were written such that the GL_COMBINE_ALPHA value could be set to
+    * GL_DOT3.
     */
    if (textureUnit->CombineModeRGB == GL_DOT3_RGBA_EXT ||
        textureUnit->CombineModeRGB == GL_DOT3_RGBA_ARB) {

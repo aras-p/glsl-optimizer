@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.66 2002/03/23 16:33:53 brianp Exp $ */
+/* $Id: texstate.c,v 1.67 2002/04/12 21:17:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -140,10 +140,16 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
                   return;
                }
                break;
+	    case GL_DOT3_RGB_EXT:
+	    case GL_DOT3_RGBA_EXT:
+	       if (!ctx->Extensions.EXT_texture_env_dot3) {
+                  TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
+		  return;
+	       }
+	       break;
 	    case GL_DOT3_RGB_ARB:
 	    case GL_DOT3_RGBA_ARB:
-	       if (!ctx->Extensions.EXT_texture_env_dot3 &&
-                   !ctx->Extensions.ARB_texture_env_dot3) {
+	       if (!ctx->Extensions.ARB_texture_env_dot3) {
                   TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", mode);
 		  return;
 	       }
