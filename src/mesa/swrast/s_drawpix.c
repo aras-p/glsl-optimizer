@@ -476,10 +476,10 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
                           ? MAX_WIDTH : (width - skipPixels);
       ASSERT(spanEnd <= MAX_WIDTH);
       for (row = 0; row < height; row++, spanY++) {
-         const GLvoid *source = _mesa_image_address(unpack, pixels,
-                                                    width, height,
-                                                    GL_COLOR_INDEX, type,
-                                                    0, row, skipPixels);
+         const GLvoid *source = _mesa_image_address2d(unpack, pixels,
+                                                      width, height,
+                                                      GL_COLOR_INDEX, type,
+                                                      row, skipPixels);
          _mesa_unpack_index_span(ctx, spanEnd, GL_UNSIGNED_INT,
                                  span.array->index, type, source, unpack,
                                  ctx->_ImageTransferState);
@@ -543,10 +543,10 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
          GLstencil values[MAX_WIDTH];
          GLenum destType = (sizeof(GLstencil) == sizeof(GLubyte))
                          ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
-         const GLvoid *source = _mesa_image_address(unpack, pixels,
-                                                    width, height,
-                                                    GL_COLOR_INDEX, type,
-                                                    0, row, skipPixels);
+         const GLvoid *source = _mesa_image_address2d(unpack, pixels,
+                                                      width, height,
+                                                      GL_COLOR_INDEX, type,
+                                                      row, skipPixels);
          _mesa_unpack_index_span(ctx, spanWidth, destType, values,
                                  type, source, unpack,
                                  ctx->_ImageTransferState);
@@ -616,8 +616,8 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       GLint row, spanY = y;
       for (row = 0; row < height; row++, spanY++) {
          const GLushort *zSrc = (const GLushort *)
-            _mesa_image_address(unpack, pixels, width, height,
-                                GL_DEPTH_COMPONENT, type, 0, row, 0);
+            _mesa_image_address2d(unpack, pixels, width, height,
+                                  GL_DEPTH_COMPONENT, type, row, 0);
          GLint i;
          for (i = 0; i < width; i++)
             span.array->z[i] = zSrc[i];
@@ -638,8 +638,8 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
       GLint row, spanY = y;
       for (row = 0; row < height; row++, spanY++) {
          const GLuint *zSrc = (const GLuint *)
-            _mesa_image_address(unpack, pixels, width, height,
-                                GL_DEPTH_COMPONENT, type, 0, row, 0);
+            _mesa_image_address2d(unpack, pixels, width, height,
+                                  GL_DEPTH_COMPONENT, type, row, 0);
          if (shift == 0) {
             MEMCPY(span.array->z, zSrc, width * sizeof(GLdepth));
          }
@@ -667,10 +667,10 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
          ASSERT(span.end <= MAX_WIDTH);
          for (row = 0; row < height; row++, spanY++) {
             GLfloat floatSpan[MAX_WIDTH];
-            const GLvoid *zSrc = _mesa_image_address(unpack,
-                                                     pixels, width, height,
-                                                     GL_DEPTH_COMPONENT, type,
-                                                     0, row, skipPixels);
+            const GLvoid *zSrc = _mesa_image_address2d(unpack,
+                                                      pixels, width, height,
+                                                      GL_DEPTH_COMPONENT, type,
+                                                      row, skipPixels);
 
             /* Set these for each row since the _swrast_write_* function may
              * change them while clipping.
@@ -776,8 +776,8 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       /* Unpack the image and apply transfer ops up to convolution */
       dest = tmpImage;
       for (row = 0; row < height; row++) {
-         const GLvoid *source = _mesa_image_address(unpack,
-                  pixels, width, height, format, type, 0, row, 0);
+         const GLvoid *source = _mesa_image_address2d(unpack,
+                                  pixels, width, height, format, type, row, 0);
          _mesa_unpack_color_span_float(ctx, width, GL_RGBA, (GLfloat *) dest,
                                      format, type, source, unpack,
                                      transferOps & IMAGE_PRE_CONVOLUTION_BITS);
@@ -819,8 +819,8 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
          ASSERT(span.end <= MAX_WIDTH);
 
          for (row = 0; row < height; row++, spanY++) {
-            const GLvoid *source = _mesa_image_address(unpack,
-                     pixels, width, height, format, type, 0, row, skipPixels);
+            const GLvoid *source = _mesa_image_address2d(unpack,
+                     pixels, width, height, format, type, row, skipPixels);
 
             /* Set these for each row since the _swrast_write_* function may
              * change them while clipping.
@@ -888,7 +888,7 @@ _swrast_DrawPixels( GLcontext *ctx,
    if (unpack->BufferObj->Name) {
       /* unpack from PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(unpack, width, height, 1,
+      if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
                                      format, type, pixels)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glDrawPixels(invalid PBO access)");

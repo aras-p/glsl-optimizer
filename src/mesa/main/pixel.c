@@ -362,7 +362,7 @@ _mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
       GLubyte *buf;
       /* Note, need to use DefaultPacking and Unpack's buffer object */
       ctx->DefaultPacking.BufferObj = ctx->Unpack.BufferObj;
-      if (!_mesa_validate_pbo_access(&ctx->DefaultPacking, mapsize, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
                                      GL_INTENSITY, GL_FLOAT, values)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glPixelMapfv(invalid PBO access)");
@@ -422,7 +422,7 @@ _mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values )
       GLubyte *buf;
       /* Note, need to use DefaultPacking and Unpack's buffer object */
       ctx->DefaultPacking.BufferObj = ctx->Unpack.BufferObj;
-      if (!_mesa_validate_pbo_access(&ctx->DefaultPacking, mapsize, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
                                      GL_INTENSITY, GL_UNSIGNED_INT, values)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glPixelMapuiv(invalid PBO access)");
@@ -496,7 +496,7 @@ _mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values )
       GLubyte *buf;
       /* Note, need to use DefaultPacking and Unpack's buffer object */
       ctx->DefaultPacking.BufferObj = ctx->Unpack.BufferObj;
-      if (!_mesa_validate_pbo_access(&ctx->DefaultPacking, mapsize, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
                                      GL_INTENSITY, GL_UNSIGNED_SHORT,
                                      values)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -590,7 +590,7 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
       GLubyte *buf;
       /* Note, need to use DefaultPacking and Pack's buffer object */
       ctx->DefaultPacking.BufferObj = ctx->Pack.BufferObj;
-      if (!_mesa_validate_pbo_access(&ctx->DefaultPacking, mapsize, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
                                      GL_INTENSITY, GL_FLOAT, values)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetPixelMapfv(invalid PBO access)");
@@ -673,7 +673,7 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
       GLubyte *buf;
       /* Note, need to use DefaultPacking and Pack's buffer object */
       ctx->DefaultPacking.BufferObj = ctx->Pack.BufferObj;
-      if (!_mesa_validate_pbo_access(&ctx->DefaultPacking, mapsize, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
                                      GL_INTENSITY, GL_UNSIGNED_INT, values)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetPixelMapuiv(invalid PBO access)");
@@ -768,7 +768,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
       GLubyte *buf;
       /* Note, need to use DefaultPacking and Pack's buffer object */
       ctx->DefaultPacking.BufferObj = ctx->Pack.BufferObj;
-      if (!_mesa_validate_pbo_access(&ctx->DefaultPacking, mapsize, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->DefaultPacking, mapsize, 1, 1,
                                      GL_INTENSITY, GL_UNSIGNED_SHORT,
                                      values)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,

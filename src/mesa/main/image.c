@@ -451,31 +451,31 @@ _mesa_is_legal_format_and_type( GLcontext *ctx, GLenum format, GLenum type )
 
 
 /**
- * Get the address of a pixel in an image (actually a volume).
+ * Return the address of a specific pixel in an image (1D, 2D or 3D).
  *
  * Pixel unpacking/packing parameters are observed according to \p packing.
  *
- * \param image start of image data.
- * \param width image width.
- * \param height image height.
- * \param format pixel format.
- * \param type pixel data type.
- * \param packing the pixelstore attributes
- * \param img which image in the volume (0 for 1D or 2D images)
- * \param row of pixel in the image
- * \param column of pixel in the image
+ * \param dimensions either 1, 2 or 3 to indicate dimensionality of image
+ * \param image  starting address of image data
+ * \param width  the image width
+ * \param height  theimage height
+ * \param format  the pixel format
+ * \param type  the pixel data type
+ * \param packing  the pixelstore attributes
+ * \param img  which image in the volume (0 for 1D or 2D images)
+ * \param row  row of pixel in the image (0 for 1D images)
+ * \param column column of pixel in the image
  * 
  * \return address of pixel on success, or NULL on error.
- *
- * According to the \p packing information calculates the number of pixel/bytes
- * per row/image and refers it.
  *
  * \sa gl_pixelstore_attrib.
  */
 GLvoid *
-_mesa_image_address( const struct gl_pixelstore_attrib *packing,
-                     const GLvoid *image, GLsizei width,
-                     GLsizei height, GLenum format, GLenum type,
+_mesa_image_address( GLuint dimensions,
+                     const struct gl_pixelstore_attrib *packing,
+                     const GLvoid *image,
+                     GLsizei width, GLsizei height,
+                     GLenum format, GLenum type,
                      GLint img, GLint row, GLint column )
 {
    GLint alignment;        /* 1, 2 or 4 */
@@ -485,6 +485,8 @@ _mesa_image_address( const struct gl_pixelstore_attrib *packing,
    GLint skippixels;
    GLint skipimages;       /* for 3-D volume images */
    GLubyte *pixel_addr;
+
+   ASSERT(dimensions >= 1 && dimensions <= 3);
 
    alignment = packing->Alignment;
    if (packing->RowLength > 0) {
@@ -499,9 +501,12 @@ _mesa_image_address( const struct gl_pixelstore_attrib *packing,
    else {
       rows_per_image = height;
    }
-   skiprows = packing->SkipRows;
+
    skippixels = packing->SkipPixels;
-   skipimages = packing->SkipImages;
+   /* Note: SKIP_ROWS _is_ used for 1D images */
+   skiprows = packing->SkipRows;
+   /* Note: SKIP_IMAGES is only used for 3D images */
+   skipimages = (dimensions == 3) ? packing->SkipImages : 0;
 
    if (type == GL_BITMAP) {
       /* BITMAP data */
@@ -570,6 +575,43 @@ _mesa_image_address( const struct gl_pixelstore_attrib *packing,
 
    return (GLvoid *) pixel_addr;
 }
+
+
+GLvoid *
+_mesa_image_address1d( const struct gl_pixelstore_attrib *packing,
+                       const GLvoid *image,
+                       GLsizei width,
+                       GLenum format, GLenum type,
+                       GLint column )
+{
+   return _mesa_image_address(1, packing, image, width, 1,
+                              format, type, 0, 0, column);
+}
+
+
+GLvoid *
+_mesa_image_address2d( const struct gl_pixelstore_attrib *packing,
+                       const GLvoid *image,
+                       GLsizei width, GLsizei height,
+                       GLenum format, GLenum type,
+                       GLint row, GLint column )
+{
+   return _mesa_image_address(2, packing, image, width, height,
+                              format, type, 0, row, column);
+}
+
+
+GLvoid *
+_mesa_image_address3d( const struct gl_pixelstore_attrib *packing,
+                       const GLvoid *image,
+                       GLsizei width, GLsizei height,
+                       GLenum format, GLenum type,
+                       GLint img, GLint row, GLint column )
+{
+   return _mesa_image_address(3, packing, image, width, height,
+                              format, type, img, row, column);
+}
+
 
 
 /**
@@ -744,8 +786,8 @@ _mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
    dst = buffer;
    for (row = 0; row < height; row++) {
       const GLubyte *src = (const GLubyte *)
-         _mesa_image_address(packing, pixels, width, height,
-                             GL_COLOR_INDEX, GL_BITMAP, 0, row, 0);
+         _mesa_image_address2d(packing, pixels, width, height,
+                               GL_COLOR_INDEX, GL_BITMAP, row, 0);
       if (!src) {
          FREE(buffer);
          return NULL;
@@ -838,8 +880,8 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
    width_in_bytes = CEILING( width, 8 );
    src = source;
    for (row = 0; row < height; row++) {
-      GLubyte *dst = (GLubyte *) _mesa_image_address( packing, dest,
-                       width, height, GL_COLOR_INDEX, GL_BITMAP, 0, row, 0 );
+      GLubyte *dst = (GLubyte *) _mesa_image_address2d(packing, dest,
+                       width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
       if (!dst)
          return;
 
@@ -3992,7 +4034,8 @@ _mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
  * need a copy of the data in a standard format.
  */
 void *
-_mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
+_mesa_unpack_image( GLuint dimensions,
+                    GLsizei width, GLsizei height, GLsizei depth,
                     GLenum format, GLenum type, const GLvoid *pixels,
                     const struct gl_pixelstore_attrib *unpack )
 {
@@ -4036,7 +4079,7 @@ _mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
       dst = destBuffer;
       for (img = 0; img < depth; img++) {
          for (row = 0; row < height; row++) {
-            const GLvoid *src = _mesa_image_address(unpack, pixels,
+            const GLvoid *src = _mesa_image_address(dimensions, unpack, pixels,
                                width, height, format, type, img, row, 0);
             MEMCPY(dst, src, bytesPerRow);
             /* byte flipping/swapping */

@@ -1901,6 +1901,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    const struct gl_texture_object *texObj;
    const struct gl_texture_image *texImage;
    GLint maxLevels = 0;
+   GLuint dimensions;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -1975,6 +1976,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       return;
    }
 
+   dimensions = (target == GL_TEXTURE_3D) ? 3 : 2;
+
    /* XXX - someday the rest of this function should be moved into a
     * fallback routine called via ctx->Driver.GetTexImage()
     */
@@ -1982,7 +1985,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    if (ctx->Pack.BufferObj->Name) {
       /* pack texture image into a PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&ctx->Pack, texImage->Width,
+      if (!_mesa_validate_pbo_access(dimensions, &ctx->Pack, texImage->Width,
                                      texImage->Height, texImage->Depth,
                                      format, type, pixels)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -2015,7 +2018,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
       for (img = 0; img < depth; img++) {
          for (row = 0; row < height; row++) {
             /* compute destination address in client memory */
-            GLvoid *dest = _mesa_image_address( &ctx->Pack, pixels,
+            GLvoid *dest = _mesa_image_address( dimensions, &ctx->Pack, pixels,
                                                 width, height, format, type,
                                                 img, row, 0);
             assert(dest);

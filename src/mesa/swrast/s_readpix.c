@@ -84,8 +84,8 @@ read_index_pixels( GLcontext *ctx,
 
       (*swrast->Driver.ReadCI32Span)(ctx, readWidth, x, y + i, index);
 
-      dest = _mesa_image_address(packing, pixels, width, height,
-                                 GL_COLOR_INDEX, type, 0, i, 0);
+      dest = _mesa_image_address2d(packing, pixels, width, height,
+                                   GL_COLOR_INDEX, type, i, 0);
 
       _mesa_pack_index_span(ctx, readWidth, type, dest, index,
                             &ctx->Pack, ctx->_ImageTransferState);
@@ -138,8 +138,8 @@ read_depth_pixels( GLcontext *ctx,
       GLint j;
       for (j=0;j<height;j++,y++) {
          GLdepth depth[MAX_WIDTH];
-         GLushort *dst = (GLushort*) _mesa_image_address( packing, pixels,
-                         width, height, GL_DEPTH_COMPONENT, type, 0, j, 0 );
+         GLushort *dst = (GLushort*) _mesa_image_address2d(packing, pixels,
+                                width, height, GL_DEPTH_COMPONENT, type, j, 0);
          GLint i;
          _swrast_read_depth_span(ctx, width, x, y, depth);
          for (i = 0; i < width; i++)
@@ -151,8 +151,8 @@ read_depth_pixels( GLcontext *ctx,
       /* Special case: directly read 32-bit unsigned depth values. */
       GLint j;
       for (j=0;j<height;j++,y++) {
-         GLdepth *dst = (GLdepth *) _mesa_image_address( packing, pixels,
-                         width, height, GL_DEPTH_COMPONENT, type, 0, j, 0 );
+         GLdepth *dst = (GLdepth *) _mesa_image_address2d(packing, pixels,
+                                width, height, GL_DEPTH_COMPONENT, type, j, 0);
          _swrast_read_depth_span(ctx, width, x, y, dst);
       }
    }
@@ -165,8 +165,8 @@ read_depth_pixels( GLcontext *ctx,
 
          _swrast_read_depth_span_float(ctx, readWidth, x, y, depth);
 
-         dest = _mesa_image_address(packing, pixels, width, height,
-                                    GL_DEPTH_COMPONENT, type, 0, j, 0);
+         dest = _mesa_image_address2d(packing, pixels, width, height,
+                                      GL_DEPTH_COMPONENT, type, j, 0);
 
          _mesa_pack_depth_span(ctx, readWidth, (GLdepth *) dest, type,
                                depth, packing);
@@ -215,8 +215,8 @@ read_stencil_pixels( GLcontext *ctx,
 
       _swrast_read_stencil_span(ctx, readWidth, x, y, stencil);
 
-      dest = _mesa_image_address(packing, pixels, width, height,
-                                 GL_STENCIL_INDEX, type, 0, j, 0);
+      dest = _mesa_image_address2d(packing, pixels, width, height,
+                                   GL_STENCIL_INDEX, type, j, 0);
 
       _mesa_pack_stencil_span(ctx, readWidth, type, dest, stencil, packing);
    }
@@ -423,8 +423,8 @@ read_rgba_pixels( GLcontext *ctx,
       src = convImage;
       for (row = 0; row < height; row++) {
          GLvoid *dest;
-         dest = _mesa_image_address(packing, pixels, readWidth, height,
-                                    format, type, 0, row, 0);
+         dest = _mesa_image_address2d(packing, pixels, readWidth, height,
+                                      format, type, row, 0);
          _mesa_pack_rgba_span_float(ctx, readWidth,
                                     (const GLfloat (*)[4]) src,
                                     format, type, dest, packing,
@@ -449,8 +449,8 @@ read_rgba_pixels( GLcontext *ctx,
             }
             _mesa_map_ci_to_rgba_chan(ctx, readWidth, index, rgba);
          }
-         dst = _mesa_image_address(packing, pixels, width, height,
-                                   format, type, 0, row, 0);
+         dst = _mesa_image_address2d(packing, pixels, width, height,
+                                     format, type, row, 0);
          if (ctx->Visual.redBits < CHAN_BITS ||
              ctx->Visual.greenBits < CHAN_BITS ||
              ctx->Visual.blueBits < CHAN_BITS) {
@@ -510,7 +510,7 @@ _swrast_ReadPixels( GLcontext *ctx,
    if (clippedPacking.BufferObj->Name) {
       /* pack into PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&clippedPacking, width, height, 1,
+      if (!_mesa_validate_pbo_access(2, &clippedPacking, width, height, 1,
                                      format, type, pixels)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glReadPixels(invalid PBO access)");

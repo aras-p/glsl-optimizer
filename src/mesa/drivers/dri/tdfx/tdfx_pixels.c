@@ -264,10 +264,10 @@ tdfx_bitmap_R5G6B5(GLcontext * ctx, GLint px, GLint py,
 
       for (row = 0; row < height; row++) {
 	 const GLubyte *src =
-	    (const GLubyte *) _mesa_image_address(finalUnpack,
-						  bitmap, width, height,
-						  GL_COLOR_INDEX,
-						  GL_BITMAP, 0, row, 0);
+	    (const GLubyte *) _mesa_image_address2d(finalUnpack,
+                                                    bitmap, width, height,
+                                                    GL_COLOR_INDEX,
+                                                    GL_BITMAP, row, 0);
 	 if (finalUnpack->LsbFirst) {
 	    /* least significan bit first */
 	    GLubyte mask = 1U << (finalUnpack->SkipPixels & 0x7);
@@ -423,10 +423,10 @@ tdfx_bitmap_R8G8B8A8(GLcontext * ctx, GLint px, GLint py,
       /* compute dest address of bottom-left pixel in bitmap */
       for (row = 0; row < height; row++) {
 	 const GLubyte *src =
-	    (const GLubyte *) _mesa_image_address(finalUnpack,
-						  bitmap, width, height,
-						  GL_COLOR_INDEX,
-						  GL_BITMAP, 0, row, 0);
+	    (const GLubyte *) _mesa_image_address2d(finalUnpack,
+                                                    bitmap, width, height,
+                                                    GL_COLOR_INDEX,
+                                                    GL_BITMAP, row, 0);
 	 if (finalUnpack->LsbFirst) {
 	    /* least significan bit first */
 	    GLubyte mask = 1U << (finalUnpack->SkipPixels & 0x7);
@@ -512,8 +512,8 @@ tdfx_readpixels_R5G6B5(GLcontext * ctx, GLint x, GLint y,
 	     GL_FRONT) ? (fxMesa->screen_width) : (info.strideInBytes / 2);
 	 const GLushort *src = (const GLushort *) info.lfbPtr
 	    + scrY * srcStride + scrX;
-	 GLubyte *dst = (GLubyte *) _mesa_image_address(packing,
-            dstImage, width, height, format, type, 0, 0, 0);
+	 GLubyte *dst = (GLubyte *) _mesa_image_address2d(packing,
+            dstImage, width, height, format, type, 0, 0);
 	 const GLint dstStride = _mesa_image_row_stride(packing,
             width, format, type);
 
@@ -573,8 +573,8 @@ tdfx_readpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
             + scrY * srcStride + scrX;
          const GLint dstStride =
             _mesa_image_row_stride(packing, width, format, type);
-         GLubyte *dst = (GLubyte *) _mesa_image_address(packing,
-            dstImage, width, height, format, type, 0, 0, 0);
+         GLubyte *dst = (GLubyte *) _mesa_image_address2d(packing,
+            dstImage, width, height, format, type, 0, 0);
          const GLint widthInBytes = width * 4;
 
 	 {
@@ -667,8 +667,8 @@ tdfx_drawpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
             + scrY * dstStride + scrX * 4;
          const GLint srcStride =
             _mesa_image_row_stride(unpack, width, format, type);
-         const GLubyte *src = (GLubyte *) _mesa_image_address(unpack,
-            pixels, width, height, format, type, 0, 0, 0);
+         const GLubyte *src = (GLubyte *) _mesa_image_address2d(unpack,
+            pixels, width, height, format, type, 0, 0);
          const GLint widthInBytes = width * 4;
 
          if ((format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8) ||

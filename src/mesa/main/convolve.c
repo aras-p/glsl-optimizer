@@ -147,7 +147,7 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
    if (ctx->Unpack.BufferObj->Name) {
       /* unpack filter from PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&ctx->Unpack, width, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->Unpack, width, 1, 1,
                                      format, type, image)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glConvolutionFilter1D(invalid PBO access)");
@@ -245,7 +245,7 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
    if (ctx->Unpack.BufferObj->Name) {
       /* unpack filter from PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&ctx->Unpack, width, height, 1,
+      if (!_mesa_validate_pbo_access(2, &ctx->Unpack, width, height, 1,
                                      format, type, image)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glConvolutionFilter2D(invalid PBO access)");
@@ -268,8 +268,8 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
 
    /* Unpack filter image.  We always store filters in RGBA format. */
    for (i = 0; i < height; i++) {
-      const GLvoid *src = _mesa_image_address(&ctx->Unpack, image, width,
-                                              height, format, type, 0, i, 0);
+      const GLvoid *src = _mesa_image_address2d(&ctx->Unpack, image, width,
+                                                height, format, type, i, 0);
       GLfloat *dst = ctx->Convolution2D.Filter + i * width * 4;
       _mesa_unpack_color_span_float(ctx, width, GL_RGBA, dst,
                                     format, type, src, &ctx->Unpack,
@@ -600,7 +600,8 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *im
    if (ctx->Pack.BufferObj->Name) {
       /* Pack the filter into a PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&ctx->Pack, filter->Width, filter->Height,
+      if (!_mesa_validate_pbo_access(2, &ctx->Pack,
+                                     filter->Width, filter->Height,
                                      1, format, type, image)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetConvolutionFilter(invalid PBO access)");
@@ -619,9 +620,9 @@ _mesa_GetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLvoid *im
    }
 
    for (row = 0; row < filter->Height; row++) {
-      GLvoid *dst = _mesa_image_address( &ctx->Pack, image, filter->Width,
-                                         filter->Height, format, type,
-                                         0, row, 0);
+      GLvoid *dst = _mesa_image_address2d(&ctx->Pack, image, filter->Width,
+                                          filter->Height, format, type,
+                                          row, 0);
       const GLfloat *src = filter->Filter + row * filter->Width * 4;
       _mesa_pack_rgba_span_float(ctx, filter->Width,
                                  (const GLfloat (*)[4]) src,
@@ -802,13 +803,13 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row,
    if (ctx->Pack.BufferObj->Name) {
       /* Pack filter into PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&ctx->Pack, filter->Width, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->Pack, filter->Width, 1, 1,
                                      format, type, row)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetSeparableFilter(invalid PBO access, width)");
          return;
       }
-      if (!_mesa_validate_pbo_access(&ctx->Pack, filter->Height, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->Pack, filter->Height, 1, 1,
                                      format, type, column)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetSeparableFilter(invalid PBO access, height)");
@@ -829,9 +830,8 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row,
 
    /* Row filter */
    if (row) {
-      GLvoid *dst = _mesa_image_address( &ctx->Pack, row, filter->Width,
-                                         filter->Height, format, type,
-                                         0, 0, 0);
+      GLvoid *dst = _mesa_image_address1d(&ctx->Pack, row, filter->Width,
+                                          format, type, 0);
       _mesa_pack_rgba_span_float(ctx, filter->Width,
                                  (const GLfloat (*)[4]) filter->Filter,
                                  format, type, dst, &ctx->Pack, 0);
@@ -839,9 +839,8 @@ _mesa_GetSeparableFilter(GLenum target, GLenum format, GLenum type, GLvoid *row,
 
    /* Column filter */
    if (column) {
-      GLvoid *dst = _mesa_image_address( &ctx->Pack, column, filter->Width,
-                                         1, format, type,
-                                         0, 0, 0);
+      GLvoid *dst = _mesa_image_address1d(&ctx->Pack, column, filter->Height,
+                                          format, type, 0);
       const GLfloat *src = filter->Filter + colStart;
       _mesa_pack_rgba_span_float(ctx, filter->Height,
                                  (const GLfloat (*)[4]) src,
@@ -908,13 +907,13 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
    if (ctx->Unpack.BufferObj->Name) {
       /* unpack filter from PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&ctx->Unpack, width, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->Unpack, width, 1, 1,
                                      format, type, row)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glSeparableFilter2D(invalid PBO access, width)");
          return;
       }
-      if (!_mesa_validate_pbo_access(&ctx->Unpack, height, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->Unpack, height, 1, 1,
                                      format, type, column)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glSeparableFilter2D(invalid PBO access, height)");

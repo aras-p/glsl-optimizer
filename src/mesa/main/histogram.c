@@ -717,7 +717,7 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
    if (ctx->Pack.BufferObj->Name) {
       /* pack min/max values into a PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&ctx->Pack, 2, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->Pack, 2, 1, 1,
                                      format, type, values)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetMinMax(invalid PBO access)");
@@ -801,7 +801,7 @@ _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, G
    if (ctx->Pack.BufferObj->Name) {
       /* pack min/max values into a PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&ctx->Pack, ctx->Histogram.Width, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->Pack, ctx->Histogram.Width, 1, 1,
                                      format, type, values)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetHistogram(invalid PBO access)");

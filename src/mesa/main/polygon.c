@@ -196,7 +196,7 @@ _mesa_polygon_stipple(GLcontext *ctx, const GLubyte *pattern)
    if (ctx->Unpack.BufferObj->Name) {
       /* Get/unpack the stipple pattern from a PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&ctx->Unpack, 32, 32, 1,
+      if (!_mesa_validate_pbo_access(2, &ctx->Unpack, 32, 32, 1,
                                      GL_COLOR_INDEX, GL_BITMAP, pattern)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glPolygonStipple(bad PBO access)");
@@ -261,7 +261,7 @@ _mesa_GetPolygonStipple( GLubyte *dest )
    if (ctx->Pack.BufferObj->Name) {
       /* Put/pack the stipple pattern into a PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&ctx->Pack, 32, 32, 1,
+      if (!_mesa_validate_pbo_access(2, &ctx->Pack, 32, 32, 1,
                                      GL_COLOR_INDEX, GL_BITMAP, dest)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetPolygonStipple(bad PBO access)");

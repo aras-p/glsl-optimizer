@@ -839,8 +839,8 @@ r200PointsBitmap( GLcontext *ctx, GLint px, GLint py,
     */
    for (row=0; row<height; row++) {
       const GLubyte *src = (const GLubyte *) 
-	 _mesa_image_address( unpack, bitmap, width, height, 
-			      GL_COLOR_INDEX, GL_BITMAP, 0, row, 0 );
+	 _mesa_image_address2d(unpack, bitmap, width, height, 
+                               GL_COLOR_INDEX, GL_BITMAP, row, 0 );
 
       if (unpack->LsbFirst) {
          /* Lsb first */

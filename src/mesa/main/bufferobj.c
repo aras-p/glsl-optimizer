@@ -429,7 +429,8 @@ _mesa_init_buffer_objects( GLcontext *ctx )
  *         go out of bounds.
  */
 GLboolean
-_mesa_validate_pbo_access(const struct gl_pixelstore_attrib *pack,
+_mesa_validate_pbo_access(GLuint dimensions,
+                          const struct gl_pixelstore_attrib *pack,
                           GLsizei width, GLsizei height, GLsizei depth,
                           GLenum format, GLenum type, const GLvoid *ptr)
 {
@@ -442,11 +443,11 @@ _mesa_validate_pbo_access(const struct gl_pixelstore_attrib *pack,
       return GL_FALSE;
 
    /* get address of first pixel we'll read */
-   start = _mesa_image_address(pack, ptr, width, height,
+   start = _mesa_image_address(dimensions, pack, ptr, width, height,
                                format, type, 0, 0, 0);
 
    /* get address just past the last pixel we'll read */
-   end =  _mesa_image_address(pack, ptr, width, height,
+   end =  _mesa_image_address(dimensions, pack, ptr, width, height,
                               format, type, depth-1, height-1, width);
 
 

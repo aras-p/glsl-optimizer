@@ -810,19 +810,19 @@ _mesa_init_lists( void )
  * \todo This won't suffice when the PBO is really in VRAM/GPU memory.
  */
 static GLvoid *
-unpack_image( GLsizei width, GLsizei height, GLsizei depth,
+unpack_image( GLuint dimensions, GLsizei width, GLsizei height, GLsizei depth,
               GLenum format, GLenum type, const GLvoid *pixels,
               const struct gl_pixelstore_attrib *unpack )
 {
    if (unpack->BufferObj->Name == 0) {
       /* no PBO */
-      return _mesa_unpack_image(width, height, depth, format, type,
+      return _mesa_unpack_image(dimensions, width, height, depth, format, type,
                                 pixels, unpack);
    }
-   else if (_mesa_validate_pbo_access(unpack, width, height, depth, format,
-                                      type, pixels)) {
+   else if (_mesa_validate_pbo_access(dimensions, unpack, width, height, depth,
+                                      format, type, pixels)) {
       const GLubyte *src = ADD_POINTERS(unpack->BufferObj->Data, pixels);
-      return _mesa_unpack_image(width, height, depth, format, type,
+      return _mesa_unpack_image(dimensions, width, height, depth, format, type,
                                 src, unpack);
    }
    /* bad access! */
@@ -1296,7 +1296,7 @@ static void GLAPIENTRY save_ColorTable( GLenum target, GLenum internalFormat,
                                 format, type, table );
    }
    else {
-      GLvoid *image = unpack_image(width, 1, 1, format, type, table,
+      GLvoid *image = unpack_image(1, width, 1, 1, format, type, table,
                                    &ctx->Unpack);
       Node *n;
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -1385,7 +1385,7 @@ static void GLAPIENTRY save_ColorSubTable( GLenum target, GLsizei start, GLsizei
                                 const GLvoid *table)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLvoid *image = unpack_image(count, 1, 1, format, type, table,
+   GLvoid *image = unpack_image(1, count, 1, 1, format, type, table,
                                 &ctx->Unpack);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -1456,7 +1456,7 @@ save_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width,
                          GLenum format, GLenum type, const GLvoid *filter)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLvoid *image = unpack_image(width, 1, 1, format, type, filter,
+   GLvoid *image = unpack_image(1, width, 1, 1, format, type, filter,
                                 &ctx->Unpack);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -1485,7 +1485,7 @@ save_ConvolutionFilter2D(GLenum target, GLenum internalFormat,
                          GLenum type, const GLvoid *filter)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLvoid *image = unpack_image(width, height, 1, format, type, filter,
+   GLvoid *image = unpack_image(2, width, height, 1, format, type, filter,
                                 &ctx->Unpack);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -1850,7 +1850,7 @@ static void GLAPIENTRY save_DrawPixels( GLsizei width, GLsizei height,
                              const GLvoid *pixels )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLvoid *image = unpack_image(width, height, 1, format, type,
+   GLvoid *image = unpack_image(2, width, height, 1, format, type,
                                 pixels, &ctx->Unpack);
    Node *n;
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -3418,7 +3418,7 @@ static void GLAPIENTRY save_TexImage1D( GLenum target,
                                border, format, type, pixels );
    }
    else {
-      GLvoid *image = unpack_image(width, 1, 1, format, type,
+      GLvoid *image = unpack_image(1, width, 1, 1, format, type,
                                    pixels, &ctx->Unpack);
       Node *n;
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -3457,7 +3457,7 @@ static void GLAPIENTRY save_TexImage2D( GLenum target,
                                height, border, format, type, pixels );
    }
    else {
-      GLvoid *image = unpack_image(width, height, 1, format, type,
+      GLvoid *image = unpack_image(2, width, height, 1, format, type,
                                    pixels, &ctx->Unpack);
       Node *n;
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
@@ -3499,7 +3499,7 @@ static void GLAPIENTRY save_TexImage3D( GLenum target,
    }
    else {
       Node *n;
-      GLvoid *image = unpack_image(width, height, depth, format, type,
+      GLvoid *image = unpack_image(3, width, height, depth, format, type,
                                    pixels, &ctx->Unpack);
       ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_IMAGE3D, 10 );
@@ -3532,7 +3532,7 @@ static void GLAPIENTRY save_TexSubImage1D( GLenum target, GLint level, GLint xof
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   GLvoid *image = unpack_image(width, 1, 1, format, type,
+   GLvoid *image = unpack_image(1, width, 1, 1, format, type,
                                 pixels, &ctx->Unpack);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_SUB_IMAGE1D, 7 );
@@ -3563,7 +3563,7 @@ static void GLAPIENTRY save_TexSubImage2D( GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   GLvoid *image = unpack_image(width, height, 1, format, type,
+   GLvoid *image = unpack_image(2, width, height, 1, format, type,
                                 pixels, &ctx->Unpack);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_SUB_IMAGE2D, 9 );
@@ -3596,7 +3596,7 @@ static void GLAPIENTRY save_TexSubImage3D( GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   GLvoid *image = unpack_image(width, height, depth, format, type,
+   GLvoid *image = unpack_image(3, width, height, depth, format, type,
                                 pixels, &ctx->Unpack);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_SUB_IMAGE3D, 11 );

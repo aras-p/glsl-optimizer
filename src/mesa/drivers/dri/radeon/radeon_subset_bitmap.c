@@ -146,8 +146,8 @@ radeonPointsBitmap(  GLsizei width, GLsizei height,
    if (ctx->_RotateMode) {
       for (col=0; col<width; col++) {
 	 const GLubyte *src = (const GLubyte *) 
-	    _mesa_image_address( unpack, bitmap, height, width, 
-				 GL_COLOR_INDEX, GL_BITMAP, 0, col, 0 );
+	    _mesa_image_address2d(unpack, bitmap, height, width, 
+                                  GL_COLOR_INDEX, GL_BITMAP, col, 0 );
 	    
 	 /* Msb first */
 	 GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
@@ -166,8 +166,8 @@ radeonPointsBitmap(  GLsizei width, GLsizei height,
    else {
       for (row=0; row<height; row++) {
 	 const GLubyte *src = (const GLubyte *) 
-	    _mesa_image_address( unpack, bitmap, width, height, 
-				 GL_COLOR_INDEX, GL_BITMAP, 0, row, 0 );
+	    _mesa_image_address2d(unpack, bitmap, width, height, 
+                                  GL_COLOR_INDEX, GL_BITMAP, row, 0 );
 	    
 	 /* Msb first */
 	 GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);

@@ -846,7 +846,7 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
       if (unpack->BufferObj->Name) {
          /* unpack from PBO */
          GLubyte *buf;
-         if (!_mesa_validate_pbo_access(unpack, width, height, 1,
+         if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
                                         format, type, pixels)) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
                         "glDrawPixels(invalid PBO access)");
@@ -949,7 +949,7 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
       if (unpack->BufferObj->Name) {
          /* unpack from PBO */
          GLubyte *buf;
-         if (!_mesa_validate_pbo_access(unpack, width, height, 1,
+         if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
                                         format, type, pixels)) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
                         "glDrawPixels(invalid PBO access)");

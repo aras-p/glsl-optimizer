@@ -195,7 +195,7 @@ store_colortable_entries(GLcontext *ctx, struct gl_color_table *table,
    if (ctx->Unpack.BufferObj->Name) {
       /* Get/unpack the color table data from a PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&ctx->Unpack, count, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->Unpack, count, 1, 1,
                                      format, type, data)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glColor[Sub]Table(bad PBO access)");
@@ -891,7 +891,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    if (ctx->Pack.BufferObj->Name) {
       /* pack color table into PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(&ctx->Pack, table->Size, 1, 1,
+      if (!_mesa_validate_pbo_access(1, &ctx->Pack, table->Size, 1, 1,
                                      format, type, data)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetColorTable(invalid PBO access)");

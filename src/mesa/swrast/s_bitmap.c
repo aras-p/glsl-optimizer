@@ -58,7 +58,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
    if (unpack->BufferObj->Name) {
       /* unpack from PBO */
       GLubyte *buf;
-      if (!_mesa_validate_pbo_access(unpack, width, height, 1,
+      if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
                                      GL_COLOR_INDEX, GL_BITMAP,
                                      (GLvoid *) bitmap)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,"glBitmap(invalid PBO access)");
@@ -104,8 +104,8 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
       _swrast_span_default_texcoords(ctx, &span);
 
    for (row = 0; row < height; row++, span.y++) {
-      const GLubyte *src = (const GLubyte *) _mesa_image_address( unpack,
-                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, 0, row, 0 );
+      const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
+                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
 
       if (unpack->LsbFirst) {
          /* Lsb first */
@@ -226,8 +226,8 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
       _swrast_span_default_texcoords(ctx, &span);
 
    for (row=0; row<height; row++, span.y++) {
-      const GLubyte *src = (const GLubyte *) _mesa_image_address( unpack,
-                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, 0, row, 0 );
+      const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
+                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
 
       if (unpack->LsbFirst) {
          /* Lsb first */
