@@ -649,9 +649,9 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    /* glDeleteProgramsARB aliases glDeleteProgramsNV */
    /* glGenProgramsARB aliases glGenProgramsNV */
    /* glIsProgramARB aliases glIsProgramNV */
-   /* glGetVertexAttribdvARB aliases glGetVertexAttribdvNV */
-   /* glGetVertexAttribfvARB aliases glGetVertexAttribfvNV */
-   /* glGetVertexAttribivARB aliases glGetVertexAttribivNV */
+   exec->GetVertexAttribdvARB = _mesa_GetVertexAttribdvARB;
+   exec->GetVertexAttribfvARB = _mesa_GetVertexAttribfvARB;
+   exec->GetVertexAttribivARB = _mesa_GetVertexAttribivARB;
    /* glGetVertexAttribPointervARB aliases glGetVertexAttribPointervNV */
    exec->ProgramEnvParameter4dARB = _mesa_ProgramEnvParameter4dARB;
    exec->ProgramEnvParameter4dvARB = _mesa_ProgramEnvParameter4dvARB;

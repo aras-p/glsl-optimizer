@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -95,6 +94,39 @@ static attr_func vert_attrfunc[4] = {
    VertexAttrib3fvNV,
    VertexAttrib4fvNV
 };
+
+
+static void VertexAttrib1fvARB(GLcontext *ctx, GLint target, const GLfloat *v)
+{
+   ctx->Exec->VertexAttrib1fvARB(target, v);
+}
+
+static void VertexAttrib2fvARB(GLcontext *ctx, GLint target, const GLfloat *v)
+{
+   ctx->Exec->VertexAttrib2fvARB(target, v);
+}
+
+static void VertexAttrib3fvARB(GLcontext *ctx, GLint target, const GLfloat *v)
+{
+   ctx->Exec->VertexAttrib3fvARB(target, v);
+}
+
+static void VertexAttrib4fvARB(GLcontext *ctx, GLint target, const GLfloat *v)
+{
+   ctx->Exec->VertexAttrib4fvARB(target, v);
+}
+
+static attr_func vert_attrfunc_arb[4] = {
+   VertexAttrib1fvARB,
+   VertexAttrib2fvARB,
+   VertexAttrib3fvARB,
+   VertexAttrib4fvARB
+};
+
+
+
+
+
 
 
 static void mat_attr1fv( GLcontext *ctx, GLint target, const GLfloat *v )
@@ -297,6 +329,8 @@ void _tnl_loopback_vertex_list( GLcontext *ctx,
       la[nr].func = index_attr1fv;
       nr++;
    }
+
+   /* XXX ARB vertex attribs */
 
    for (i = 0 ; i < list->prim_count ; i++) {
       if (list->prim[i].mode & PRIM_WEAK)

@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -956,6 +956,14 @@ typedef struct {
    void (GLAPIENTRYP VertexAttrib3fvNV)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib4fNV)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w );
    void (GLAPIENTRYP VertexAttrib4fvNV)( GLuint index, const GLfloat *v );
+   void (GLAPIENTRYP VertexAttrib1fARB)( GLuint index, GLfloat x );
+   void (GLAPIENTRYP VertexAttrib1fvARB)( GLuint index, const GLfloat *v );
+   void (GLAPIENTRYP VertexAttrib2fARB)( GLuint index, GLfloat x, GLfloat y );
+   void (GLAPIENTRYP VertexAttrib2fvARB)( GLuint index, const GLfloat *v );
+   void (GLAPIENTRYP VertexAttrib3fARB)( GLuint index, GLfloat x, GLfloat y, GLfloat z );
+   void (GLAPIENTRYP VertexAttrib3fvARB)( GLuint index, const GLfloat *v );
+   void (GLAPIENTRYP VertexAttrib4fARB)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w );
+   void (GLAPIENTRYP VertexAttrib4fvARB)( GLuint index, const GLfloat *v );
    /*@}*/
 
    /*

@@ -258,7 +258,7 @@ _mesa_print_line_function(GLcontext *ctx)
    else if (swrast->Line == multitextured_line)
       _mesa_printf("multitextured_line\n");
    else
-      _mesa_printf("Driver func %p\n", (void *) swrast->Line);
+      _mesa_printf("Driver func %p\n", (void *(*)()) swrast->Line);
 }
 #endif
 

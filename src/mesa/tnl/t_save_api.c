@@ -991,6 +991,79 @@ static void GLAPIENTRY _save_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
 }
 
 
+static void GLAPIENTRY
+_save_VertexAttrib1fARB( GLuint index, GLfloat x )
+{
+   if (index < VERT_ATTRIB_MAX)
+      DISPATCH_ATTR1F( index, x );
+   else
+      enum_error(); 
+}
+
+static void GLAPIENTRY
+_save_VertexAttrib1fvARB( GLuint index, const GLfloat *v )
+{
+   if (index < VERT_ATTRIB_MAX)
+      DISPATCH_ATTR1FV( index, v );
+   else
+      enum_error();
+}
+
+static void GLAPIENTRY
+_save_VertexAttrib2fARB( GLuint index, GLfloat x, GLfloat y )
+{
+   if (index < VERT_ATTRIB_MAX)
+      DISPATCH_ATTR2F( index, x, y );
+   else
+      enum_error();
+}
+
+static void GLAPIENTRY
+_save_VertexAttrib2fvARB( GLuint index, const GLfloat *v )
+{
+   if (index < VERT_ATTRIB_MAX)
+      DISPATCH_ATTR2FV( index, v );
+   else
+      enum_error();
+}
+
+static void GLAPIENTRY
+_save_VertexAttrib3fARB( GLuint index, GLfloat x, GLfloat y, GLfloat z )
+{
+   if (index < VERT_ATTRIB_MAX)
+      DISPATCH_ATTR3F( index, x, y, z );
+   else
+      enum_error();
+}
+
+static void GLAPIENTRY
+_save_VertexAttrib3fvARB( GLuint index, const GLfloat *v )
+{
+   if (index < VERT_ATTRIB_MAX)
+      DISPATCH_ATTR3FV( index, v );
+   else
+      enum_error();
+}
+
+static void GLAPIENTRY
+_save_VertexAttrib4fARB( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+   if (index < VERT_ATTRIB_MAX)
+      DISPATCH_ATTR4F( index, x, y, z, w );
+   else
+      enum_error();
+}
+
+static void GLAPIENTRY
+_save_VertexAttrib4fvARB( GLuint index, const GLfloat *v )
+{
+   if (index < VERT_ATTRIB_MAX)
+      DISPATCH_ATTR4FV( index, v );
+   else
+      enum_error();
+}
+
+
 /* Materials:  
  * 
  * These are treated as per-vertex attributes, at indices above where
@@ -1427,6 +1500,14 @@ static void _save_vtxfmt_init( GLcontext *ctx )
    vfmt->VertexAttrib3fvNV = _save_VertexAttrib3fvNV;
    vfmt->VertexAttrib4fNV = _save_VertexAttrib4fNV;
    vfmt->VertexAttrib4fvNV = _save_VertexAttrib4fvNV;
+   vfmt->VertexAttrib1fARB = _save_VertexAttrib1fARB;
+   vfmt->VertexAttrib1fvARB = _save_VertexAttrib1fvARB;
+   vfmt->VertexAttrib2fARB = _save_VertexAttrib2fARB;
+   vfmt->VertexAttrib2fvARB = _save_VertexAttrib2fvARB;
+   vfmt->VertexAttrib3fARB = _save_VertexAttrib3fARB;
+   vfmt->VertexAttrib3fvARB = _save_VertexAttrib3fvARB;
+   vfmt->VertexAttrib4fARB = _save_VertexAttrib4fARB;
+   vfmt->VertexAttrib4fvARB = _save_VertexAttrib4fvARB;
    
    /* This will all require us to fallback to saving the list as opcodes:
     */ 

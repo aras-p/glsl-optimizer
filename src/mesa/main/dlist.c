@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -320,10 +320,14 @@ typedef enum {
 	/* Vertex attributes -- fallback for when optimized display
 	 * list build isn't active.
 	 */
-	OPCODE_ATTR_1F,
-	OPCODE_ATTR_2F,
-	OPCODE_ATTR_3F,
-	OPCODE_ATTR_4F,
+	OPCODE_ATTR_1F_NV,
+	OPCODE_ATTR_2F_NV,
+	OPCODE_ATTR_3F_NV,
+	OPCODE_ATTR_4F_NV,
+	OPCODE_ATTR_1F_ARB,
+	OPCODE_ATTR_2F_ARB,
+	OPCODE_ATTR_3F_ARB,
+	OPCODE_ATTR_4F_ARB,
 	OPCODE_MATERIAL,
 	OPCODE_INDEX,
 	OPCODE_EDGEFLAG,
@@ -785,10 +789,14 @@ _mesa_init_lists( void )
       InstSize[OPCODE_END_QUERY_ARB] = 2;
 #endif
       InstSize[OPCODE_DRAW_BUFFERS_ARB] = 2 + MAX_DRAW_BUFFERS;
-      InstSize[OPCODE_ATTR_1F] = 3;
-      InstSize[OPCODE_ATTR_2F] = 4;
-      InstSize[OPCODE_ATTR_3F] = 5;
-      InstSize[OPCODE_ATTR_4F] = 6;
+      InstSize[OPCODE_ATTR_1F_NV] = 3;
+      InstSize[OPCODE_ATTR_2F_NV] = 4;
+      InstSize[OPCODE_ATTR_3F_NV] = 5;
+      InstSize[OPCODE_ATTR_4F_NV] = 6;
+      InstSize[OPCODE_ATTR_1F_ARB] = 3;
+      InstSize[OPCODE_ATTR_2F_ARB] = 4;
+      InstSize[OPCODE_ATTR_3F_ARB] = 5;
+      InstSize[OPCODE_ATTR_4F_ARB] = 6;
       InstSize[OPCODE_MATERIAL] = 7;
       InstSize[OPCODE_INDEX] = 2;
       InstSize[OPCODE_EDGEFLAG] = 2;
@@ -4708,12 +4716,12 @@ save_DrawBuffersARB(GLsizei count, const GLenum *buffers)
 }
 
 
-static void save_Attr1f( GLenum attr, GLfloat x )
+static void save_Attr1fNV( GLenum attr, GLfloat x )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    SAVE_FLUSH_VERTICES( ctx );
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_ATTR_1F, 2 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ATTR_1F_NV, 2 );
    if (n) {
       n[1].e = attr;
       n[2].f = x;
@@ -4728,12 +4736,12 @@ static void save_Attr1f( GLenum attr, GLfloat x )
    }
 }
 
-static void save_Attr2f( GLenum attr, GLfloat x, GLfloat y )
+static void save_Attr2fNV( GLenum attr, GLfloat x, GLfloat y )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    SAVE_FLUSH_VERTICES( ctx );
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_ATTR_2F, 3 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ATTR_2F_NV, 3 );
    if (n) {
       n[1].e = attr;
       n[2].f = x;
@@ -4749,12 +4757,12 @@ static void save_Attr2f( GLenum attr, GLfloat x, GLfloat y )
    }
 }
 
-static void save_Attr3f( GLenum attr, GLfloat x, GLfloat y, GLfloat z )
+static void save_Attr3fNV( GLenum attr, GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    SAVE_FLUSH_VERTICES( ctx );
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_ATTR_3F, 4 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ATTR_3F_NV, 4 );
    if (n) {
       n[1].e = attr;
       n[2].f = x;
@@ -4771,13 +4779,13 @@ static void save_Attr3f( GLenum attr, GLfloat x, GLfloat y, GLfloat z )
    }
 }
 
-static void save_Attr4f( GLenum attr, GLfloat x, GLfloat y, GLfloat z,
-			 GLfloat w )
+static void save_Attr4fNV( GLenum attr, GLfloat x, GLfloat y, GLfloat z,
+                           GLfloat w )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
    SAVE_FLUSH_VERTICES( ctx );
-   n = ALLOC_INSTRUCTION( ctx, OPCODE_ATTR_4F, 5 );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ATTR_4F_NV, 5 );
    if (n) {
       n[1].e = attr;
       n[2].f = x;
@@ -4794,6 +4802,95 @@ static void save_Attr4f( GLenum attr, GLfloat x, GLfloat y, GLfloat z,
       (*ctx->Exec->VertexAttrib4fNV)( attr, x, y, z, w );
    }
 }
+
+
+static void save_Attr1fARB( GLenum attr, GLfloat x )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   SAVE_FLUSH_VERTICES( ctx );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ATTR_1F_ARB, 2 );
+   if (n) {
+      n[1].e = attr;
+      n[2].f = x;
+   }
+
+   ASSERT(attr < VERT_ATTRIB_MAX);
+   ctx->ListState.ActiveAttribSize[attr] = 1;
+   ASSIGN_4V( ctx->ListState.CurrentAttrib[attr], x, 0, 0, 1);
+
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->VertexAttrib1fARB)( attr, x );
+   }
+}
+
+static void save_Attr2fARB( GLenum attr, GLfloat x, GLfloat y )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   SAVE_FLUSH_VERTICES( ctx );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ATTR_2F_ARB, 3 );
+   if (n) {
+      n[1].e = attr;
+      n[2].f = x;
+      n[3].f = y;
+   }
+
+   ASSERT(attr < VERT_ATTRIB_MAX);
+   ctx->ListState.ActiveAttribSize[attr] = 2;
+   ASSIGN_4V( ctx->ListState.CurrentAttrib[attr], x, y, 0, 1);
+
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->VertexAttrib2fARB)( attr, x, y );
+   }
+}
+
+static void save_Attr3fARB( GLenum attr, GLfloat x, GLfloat y, GLfloat z )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   SAVE_FLUSH_VERTICES( ctx );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ATTR_3F_ARB, 4 );
+   if (n) {
+      n[1].e = attr;
+      n[2].f = x;
+      n[3].f = y;
+      n[4].f = z;
+   }
+
+   ASSERT(attr < VERT_ATTRIB_MAX);
+   ctx->ListState.ActiveAttribSize[attr] = 3;
+   ASSIGN_4V( ctx->ListState.CurrentAttrib[attr], x, y, z, 1);
+
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->VertexAttrib3fARB)( attr, x, y, z );
+   }
+}
+
+static void save_Attr4fARB( GLenum attr, GLfloat x, GLfloat y, GLfloat z,
+                           GLfloat w )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   SAVE_FLUSH_VERTICES( ctx );
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_ATTR_4F_ARB, 5 );
+   if (n) {
+      n[1].e = attr;
+      n[2].f = x;
+      n[3].f = y;
+      n[4].f = z;
+      n[5].f = w;
+   }
+
+   ASSERT(attr < VERT_ATTRIB_MAX);
+   ctx->ListState.ActiveAttribSize[attr] = 4;
+   ASSIGN_4V( ctx->ListState.CurrentAttrib[attr], x, y, z, w);
+
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->VertexAttrib4fARB)( attr, x, y, z, w );
+   }
+}
+
 
 static void GLAPIENTRY save_EvalCoord1f( GLfloat x )
 {
@@ -5024,8 +5121,7 @@ static void GLAPIENTRY save_End( void )
    }
 }
 
-static void GLAPIENTRY save_Rectf( GLfloat a, GLfloat b,
-			GLfloat c, GLfloat d )
+static void GLAPIENTRY save_Rectf( GLfloat a, GLfloat b, GLfloat c, GLfloat d )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -5042,126 +5138,125 @@ static void GLAPIENTRY save_Rectf( GLfloat a, GLfloat b,
    }
 }
 
-/*
- */
+
 static void GLAPIENTRY save_Vertex2f( GLfloat x, GLfloat y )
 {
-   save_Attr2f( VERT_ATTRIB_POS, x, y );
+   save_Attr2fNV( VERT_ATTRIB_POS, x, y );
 }
 
 static void GLAPIENTRY save_Vertex2fv( const GLfloat *v )
 {
-   save_Attr2f( VERT_ATTRIB_POS, v[0], v[1] );
+   save_Attr2fNV( VERT_ATTRIB_POS, v[0], v[1] );
 }
 
 static void GLAPIENTRY save_Vertex3f( GLfloat x, GLfloat y, GLfloat z )
 {
-   save_Attr3f( VERT_ATTRIB_POS, x, y, z );
+   save_Attr3fNV( VERT_ATTRIB_POS, x, y, z );
 }
 
 static void GLAPIENTRY save_Vertex3fv( const GLfloat *v )
 {
-   save_Attr3f( VERT_ATTRIB_POS, v[0], v[1], v[2] );
+   save_Attr3fNV( VERT_ATTRIB_POS, v[0], v[1], v[2] );
 }
 
 static void GLAPIENTRY save_Vertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
-   save_Attr4f( VERT_ATTRIB_POS, x, y, z, w );
+   save_Attr4fNV( VERT_ATTRIB_POS, x, y, z, w );
 }
 
 static void GLAPIENTRY save_Vertex4fv( const GLfloat *v )
 {
-   save_Attr4f( VERT_ATTRIB_POS, v[0], v[1], v[2], v[3] );
+   save_Attr4fNV( VERT_ATTRIB_POS, v[0], v[1], v[2], v[3] );
 }
 
 static void GLAPIENTRY save_TexCoord1f( GLfloat x )
 {
-   save_Attr1f( VERT_ATTRIB_TEX0, x );
+   save_Attr1fNV( VERT_ATTRIB_TEX0, x );
 }
 
 static void GLAPIENTRY save_TexCoord1fv( const GLfloat *v )
 {
-   save_Attr1f( VERT_ATTRIB_TEX0, v[0] );
+   save_Attr1fNV( VERT_ATTRIB_TEX0, v[0] );
 }
 
 static void GLAPIENTRY save_TexCoord2f( GLfloat x, GLfloat y )
 {
-   save_Attr2f( VERT_ATTRIB_TEX0, x, y );
+   save_Attr2fNV( VERT_ATTRIB_TEX0, x, y );
 }
 
 static void GLAPIENTRY save_TexCoord2fv( const GLfloat *v )
 {
-   save_Attr2f( VERT_ATTRIB_TEX0, v[0], v[1] );
+   save_Attr2fNV( VERT_ATTRIB_TEX0, v[0], v[1] );
 }
 
 static void GLAPIENTRY save_TexCoord3f( GLfloat x, GLfloat y, GLfloat z )
 {
-   save_Attr3f( VERT_ATTRIB_TEX0, x, y, z );
+   save_Attr3fNV( VERT_ATTRIB_TEX0, x, y, z );
 }
 
 static void GLAPIENTRY save_TexCoord3fv( const GLfloat *v )
 {
-   save_Attr3f( VERT_ATTRIB_TEX0, v[0], v[1], v[2] );
+   save_Attr3fNV( VERT_ATTRIB_TEX0, v[0], v[1], v[2] );
 }
 
 static void GLAPIENTRY save_TexCoord4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
-   save_Attr4f( VERT_ATTRIB_TEX0, x, y, z, w );
+   save_Attr4fNV( VERT_ATTRIB_TEX0, x, y, z, w );
 }
 
 static void GLAPIENTRY save_TexCoord4fv( const GLfloat *v )
 {
-   save_Attr4f( VERT_ATTRIB_TEX0, v[0], v[1], v[2], v[3] );
+   save_Attr4fNV( VERT_ATTRIB_TEX0, v[0], v[1], v[2], v[3] );
 }
 
 static void GLAPIENTRY save_Normal3f( GLfloat x, GLfloat y, GLfloat z )
 {
-   save_Attr3f( VERT_ATTRIB_NORMAL, x, y, z );
+   save_Attr3fNV( VERT_ATTRIB_NORMAL, x, y, z );
 }
 
 static void GLAPIENTRY save_Normal3fv( const GLfloat *v )
 {
-   save_Attr3f( VERT_ATTRIB_NORMAL, v[0], v[1], v[2] );
+   save_Attr3fNV( VERT_ATTRIB_NORMAL, v[0], v[1], v[2] );
 }
 
 static void GLAPIENTRY save_FogCoordfEXT( GLfloat x )
 {
-   save_Attr1f( VERT_ATTRIB_FOG, x );
+   save_Attr1fNV( VERT_ATTRIB_FOG, x );
 }
 
 static void GLAPIENTRY save_FogCoordfvEXT( const GLfloat *v )
 {
-   save_Attr1f( VERT_ATTRIB_FOG, v[0] );
+   save_Attr1fNV( VERT_ATTRIB_FOG, v[0] );
 }
 
 static void GLAPIENTRY save_Color3f( GLfloat x, GLfloat y, GLfloat z )
 {
-   save_Attr3f( VERT_ATTRIB_COLOR0, x, y, z );
+   save_Attr3fNV( VERT_ATTRIB_COLOR0, x, y, z );
 }
 
 static void GLAPIENTRY save_Color3fv( const GLfloat *v )
 {
-   save_Attr3f( VERT_ATTRIB_COLOR0, v[0], v[1], v[2] );
+   save_Attr3fNV( VERT_ATTRIB_COLOR0, v[0], v[1], v[2] );
 }
 
 static void GLAPIENTRY save_Color4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
-   save_Attr4f( VERT_ATTRIB_COLOR0, x, y, z, w );
+   save_Attr4fNV( VERT_ATTRIB_COLOR0, x, y, z, w );
 }
 
 static void GLAPIENTRY save_Color4fv( const GLfloat *v )
 {
-   save_Attr4f( VERT_ATTRIB_COLOR0, v[0], v[1], v[2], v[3] );
+   save_Attr4fNV( VERT_ATTRIB_COLOR0, v[0], v[1], v[2], v[3] );
 }
 
 static void GLAPIENTRY save_SecondaryColor3fEXT( GLfloat x, GLfloat y, GLfloat z )
 {
-   save_Attr3f( VERT_ATTRIB_COLOR1, x, y, z );
+   save_Attr3fNV( VERT_ATTRIB_COLOR1, x, y, z );
 }
 
 static void GLAPIENTRY save_SecondaryColor3fvEXT( const GLfloat *v )
 {
-   save_Attr3f( VERT_ATTRIB_COLOR1, v[0], v[1], v[2] );
+   save_Attr3fNV( VERT_ATTRIB_COLOR1, v[0], v[1], v[2] );
 }
 
 
@@ -5170,51 +5265,51 @@ static void GLAPIENTRY save_SecondaryColor3fvEXT( const GLfloat *v )
 static void GLAPIENTRY save_MultiTexCoord1f( GLenum target, GLfloat x  )
 {
    GLuint attr = (target & 0x7) + VERT_ATTRIB_TEX0;
-   save_Attr1f( attr, x );
+   save_Attr1fNV( attr, x );
 }
 
 static void GLAPIENTRY save_MultiTexCoord1fv( GLenum target, const GLfloat *v )
 {
    GLuint attr = (target & 0x7) + VERT_ATTRIB_TEX0;
-   save_Attr1f( attr, v[0] );
+   save_Attr1fNV( attr, v[0] );
 }
 
 static void GLAPIENTRY save_MultiTexCoord2f( GLenum target, GLfloat x, GLfloat y )
 {
    GLuint attr = (target & 0x7) + VERT_ATTRIB_TEX0;
-   save_Attr2f( attr, x, y );
+   save_Attr2fNV( attr, x, y );
 }
 
 static void GLAPIENTRY save_MultiTexCoord2fv( GLenum target, const GLfloat *v )
 {
    GLuint attr = (target & 0x7) + VERT_ATTRIB_TEX0;
-   save_Attr2f( attr, v[0], v[1] );
+   save_Attr2fNV( attr, v[0], v[1] );
 }
 
 static void GLAPIENTRY save_MultiTexCoord3f( GLenum target, GLfloat x, GLfloat y,
 				    GLfloat z)
 {
    GLuint attr = (target & 0x7) + VERT_ATTRIB_TEX0;
-   save_Attr3f( attr, x, y, z );
+   save_Attr3fNV( attr, x, y, z );
 }
 
 static void GLAPIENTRY save_MultiTexCoord3fv( GLenum target, const GLfloat *v )
 {
    GLuint attr = (target & 0x7) + VERT_ATTRIB_TEX0;
-   save_Attr3f( attr, v[0], v[1], v[2] );
+   save_Attr3fNV( attr, v[0], v[1], v[2] );
 }
 
 static void GLAPIENTRY save_MultiTexCoord4f( GLenum target, GLfloat x, GLfloat y,
 				  GLfloat z, GLfloat w )
 {
    GLuint attr = (target & 0x7) + VERT_ATTRIB_TEX0;
-   save_Attr4f( attr, x, y, z, w );
+   save_Attr4fNV( attr, x, y, z, w );
 }
 
 static void GLAPIENTRY save_MultiTexCoord4fv( GLenum target, const GLfloat *v )
 {
    GLuint attr = (target & 0x7) + VERT_ATTRIB_TEX0;
-   save_Attr4f( attr, v[0], v[1], v[2], v[3] );
+   save_Attr4fNV( attr, v[0], v[1], v[2], v[3] );
 }
 
 
@@ -5231,7 +5326,7 @@ static void enum_error( void )
 static void GLAPIENTRY save_VertexAttrib1fNV( GLuint index, GLfloat x )
 {
    if (index < VERT_ATTRIB_MAX)
-      save_Attr1f( index, x );
+      save_Attr1fNV( index, x );
    else
       enum_error(); 
 }
@@ -5239,7 +5334,7 @@ static void GLAPIENTRY save_VertexAttrib1fNV( GLuint index, GLfloat x )
 static void GLAPIENTRY save_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
 {
    if (index < VERT_ATTRIB_MAX)
-      save_Attr1f( index, v[0] );
+      save_Attr1fNV( index, v[0] );
    else
       enum_error();
 }
@@ -5247,7 +5342,7 @@ static void GLAPIENTRY save_VertexAttrib1fvNV( GLuint index, const GLfloat *v )
 static void GLAPIENTRY save_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y )
 {
    if (index < VERT_ATTRIB_MAX)
-      save_Attr2f( index, x, y );
+      save_Attr2fNV( index, x, y );
    else
       enum_error();
 }
@@ -5255,7 +5350,7 @@ static void GLAPIENTRY save_VertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y
 static void GLAPIENTRY save_VertexAttrib2fvNV( GLuint index, const GLfloat *v )
 {
    if (index < VERT_ATTRIB_MAX)
-      save_Attr2f( index, v[0], v[1] );
+      save_Attr2fNV( index, v[0], v[1] );
    else
       enum_error();
 }
@@ -5264,7 +5359,7 @@ static void GLAPIENTRY save_VertexAttrib3fNV( GLuint index, GLfloat x, GLfloat y
 				   GLfloat z )
 {
    if (index < VERT_ATTRIB_MAX)
-      save_Attr3f( index, x, y, z );
+      save_Attr3fNV( index, x, y, z );
    else
       enum_error();
 }
@@ -5272,7 +5367,7 @@ static void GLAPIENTRY save_VertexAttrib3fNV( GLuint index, GLfloat x, GLfloat y
 static void GLAPIENTRY save_VertexAttrib3fvNV( GLuint index, const GLfloat *v )
 {
    if (index < VERT_ATTRIB_MAX)
-      save_Attr3f( index, v[0], v[1], v[2] );
+      save_Attr3fNV( index, v[0], v[1], v[2] );
    else
       enum_error();
 }
@@ -5281,7 +5376,7 @@ static void GLAPIENTRY save_VertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y
 				   GLfloat z, GLfloat w )
 {
    if (index < VERT_ATTRIB_MAX)
-      save_Attr4f( index, x, y, z, w );
+      save_Attr4fNV( index, x, y, z, w );
    else
       enum_error();
 }
@@ -5289,7 +5384,82 @@ static void GLAPIENTRY save_VertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y
 static void GLAPIENTRY save_VertexAttrib4fvNV( GLuint index, const GLfloat *v )
 {
    if (index < VERT_ATTRIB_MAX)
-      save_Attr4f( index, v[0], v[1], v[2], v[3] );
+      save_Attr4fNV( index, v[0], v[1], v[2], v[3] );
+   else
+      enum_error();
+}
+
+
+
+
+static void GLAPIENTRY
+save_VertexAttrib1fARB( GLuint index, GLfloat x )
+{
+   if (index < VERT_ATTRIB_MAX)
+      save_Attr1fARB( index, x );
+   else
+      enum_error(); 
+}
+
+static void GLAPIENTRY
+save_VertexAttrib1fvARB( GLuint index, const GLfloat *v )
+{
+   if (index < VERT_ATTRIB_MAX)
+      save_Attr1fARB( index, v[0] );
+   else
+      enum_error();
+}
+
+static void GLAPIENTRY
+save_VertexAttrib2fARB( GLuint index, GLfloat x, GLfloat y )
+{
+   if (index < VERT_ATTRIB_MAX)
+      save_Attr2fARB( index, x, y );
+   else
+      enum_error();
+}
+
+static void GLAPIENTRY
+save_VertexAttrib2fvARB( GLuint index, const GLfloat *v )
+{
+   if (index < VERT_ATTRIB_MAX)
+      save_Attr2fARB( index, v[0], v[1] );
+   else
+      enum_error();
+}
+
+static void GLAPIENTRY
+save_VertexAttrib3fARB( GLuint index, GLfloat x, GLfloat y, GLfloat z )
+{
+   if (index < VERT_ATTRIB_MAX)
+      save_Attr3fARB( index, x, y, z );
+   else
+      enum_error();
+}
+
+static void GLAPIENTRY
+save_VertexAttrib3fvARB( GLuint index, const GLfloat *v )
+{
+   if (index < VERT_ATTRIB_MAX)
+      save_Attr3fARB( index, v[0], v[1], v[2] );
+   else
+      enum_error();
+}
+
+static void GLAPIENTRY
+save_VertexAttrib4fARB( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+   if (index < VERT_ATTRIB_MAX)
+      save_Attr4fARB( index, x, y, z, w );
+   else
+      enum_error();
+}
+
+static void GLAPIENTRY
+save_VertexAttrib4fvARB( GLuint index, const GLfloat *v )
+{
+   if (index < VERT_ATTRIB_MAX)
+      save_Attr4fARB( index, v[0], v[1], v[2], v[3] );
    else
       enum_error();
 }
@@ -6076,10 +6246,10 @@ execute_list( GLcontext *ctx, GLuint list )
 	       ctx->Exec->DrawBuffersARB(n[1].i, buffers);
 	    }
             break;
-	 case OPCODE_ATTR_1F:
+	 case OPCODE_ATTR_1F_NV:
 	    (*ctx->Exec->VertexAttrib1fNV)(n[1].e, n[2].f);
 	    break;
-	 case OPCODE_ATTR_2F:
+	 case OPCODE_ATTR_2F_NV:
 	    /* Really shouldn't have to do this - the Node structure
 	     * is convenient, but it would be better to store the data
 	     * packed appropriately so that it can be sent directly
@@ -6091,18 +6261,47 @@ execute_list( GLcontext *ctx, GLuint list )
 	    else
 	       (*ctx->Exec->VertexAttrib2fNV)(n[1].e, n[2].f, n[3].f);
 	    break;
-	 case OPCODE_ATTR_3F:
+	 case OPCODE_ATTR_3F_NV:
 	    if (sizeof(Node)==sizeof(GLfloat)) 
 	       (*ctx->Exec->VertexAttrib3fvNV)(n[1].e, &n[2].f);
 	    else
 	       (*ctx->Exec->VertexAttrib3fNV)(n[1].e, n[2].f, n[3].f,
 					      n[4].f);
 	    break;
-	 case OPCODE_ATTR_4F:
+	 case OPCODE_ATTR_4F_NV:
 	    if (sizeof(Node)==sizeof(GLfloat)) 
 	       (*ctx->Exec->VertexAttrib4fvNV)(n[1].e, &n[2].f);
 	    else
 	       (*ctx->Exec->VertexAttrib4fNV)(n[1].e, n[2].f, n[3].f,
+					      n[4].f, n[5].f);
+	    break;
+	 case OPCODE_ATTR_1F_ARB:
+	    (*ctx->Exec->VertexAttrib1fARB)(n[1].e, n[2].f);
+	    break;
+	 case OPCODE_ATTR_2F_ARB:
+	    /* Really shouldn't have to do this - the Node structure
+	     * is convenient, but it would be better to store the data
+	     * packed appropriately so that it can be sent directly
+	     * on.  With x86_64 becoming common, this will start to
+	     * matter more.
+	     */
+	    if (sizeof(Node)==sizeof(GLfloat)) 
+	       (*ctx->Exec->VertexAttrib2fvARB)(n[1].e, &n[2].f);
+	    else
+	       (*ctx->Exec->VertexAttrib2fARB)(n[1].e, n[2].f, n[3].f);
+	    break;
+	 case OPCODE_ATTR_3F_ARB:
+	    if (sizeof(Node)==sizeof(GLfloat)) 
+	       (*ctx->Exec->VertexAttrib3fvARB)(n[1].e, &n[2].f);
+	    else
+	       (*ctx->Exec->VertexAttrib3fARB)(n[1].e, n[2].f, n[3].f,
+					      n[4].f);
+	    break;
+	 case OPCODE_ATTR_4F_ARB:
+	    if (sizeof(Node)==sizeof(GLfloat)) 
+	       (*ctx->Exec->VertexAttrib4fvARB)(n[1].e, &n[2].f);
+	    else
+	       (*ctx->Exec->VertexAttrib4fARB)(n[1].e, n[2].f, n[3].f,
 					      n[4].f, n[5].f);
 	    break;
 	 case OPCODE_MATERIAL:
@@ -7847,24 +8046,39 @@ static void GLAPIENTRY print_list( GLcontext *ctx, GLuint list )
                          n[1].i, n[2].i, n[3].i, n[4].i);
 	    break;
 
-
-
-	 case OPCODE_ATTR_1F:
-	    _mesa_printf("ATTR_1F attr %d: %f\n",
+	 case OPCODE_ATTR_1F_NV:
+	    _mesa_printf("ATTR_1F_NV attr %d: %f\n",
 			 n[1].i, n[2].f);
 	    break;
-	 case OPCODE_ATTR_2F:
-	    _mesa_printf("ATTR_2F attr %d: %f %f\n",
+	 case OPCODE_ATTR_2F_NV:
+	    _mesa_printf("ATTR_2F_NV attr %d: %f %f\n",
 			 n[1].i, n[2].f, n[3].f);
 	    break;
-	 case OPCODE_ATTR_3F:
-	    _mesa_printf("ATTR_3F attr %d: %f %f %f\n",
+	 case OPCODE_ATTR_3F_NV:
+	    _mesa_printf("ATTR_3F_NV attr %d: %f %f %f\n",
 			 n[1].i, n[2].f, n[3].f, n[4].f);
 	    break;
-	 case OPCODE_ATTR_4F:
-	    _mesa_printf("ATTR_4F attr %d: %f %f %f %f\n",
+	 case OPCODE_ATTR_4F_NV:
+	    _mesa_printf("ATTR_4F_NV attr %d: %f %f %f %f\n",
 			 n[1].i, n[2].f, n[3].f, n[4].f, n[5].f);
 	    break;
+	 case OPCODE_ATTR_1F_ARB:
+	    _mesa_printf("ATTR_1F_ARB attr %d: %f\n",
+			 n[1].i, n[2].f);
+	    break;
+	 case OPCODE_ATTR_2F_ARB:
+	    _mesa_printf("ATTR_2F_ARB attr %d: %f %f\n",
+			 n[1].i, n[2].f, n[3].f);
+	    break;
+	 case OPCODE_ATTR_3F_ARB:
+	    _mesa_printf("ATTR_3F_ARB attr %d: %f %f %f\n",
+			 n[1].i, n[2].f, n[3].f, n[4].f);
+	    break;
+	 case OPCODE_ATTR_4F_ARB:
+	    _mesa_printf("ATTR_4F_ARB attr %d: %f %f %f %f\n",
+			 n[1].i, n[2].f, n[3].f, n[4].f, n[5].f);
+	    break;
+
 	 case OPCODE_MATERIAL:
 	    _mesa_printf("MATERIAL %x %x: %f %f %f %f\n",
 			 n[1].i, n[2].i, n[3].f, n[4].f, n[5].f, n[6].f);
@@ -8009,6 +8223,14 @@ void _mesa_save_vtxfmt_init( GLvertexformat *vfmt )
    vfmt->VertexAttrib3fvNV = save_VertexAttrib3fvNV;
    vfmt->VertexAttrib4fNV = save_VertexAttrib4fNV;
    vfmt->VertexAttrib4fvNV = save_VertexAttrib4fvNV;
+   vfmt->VertexAttrib1fARB = save_VertexAttrib1fARB;
+   vfmt->VertexAttrib1fvARB = save_VertexAttrib1fvARB;
+   vfmt->VertexAttrib2fARB = save_VertexAttrib2fARB;
+   vfmt->VertexAttrib2fvARB = save_VertexAttrib2fvARB;
+   vfmt->VertexAttrib3fARB = save_VertexAttrib3fARB;
+   vfmt->VertexAttrib3fvARB = save_VertexAttrib3fvARB;
+   vfmt->VertexAttrib4fARB = save_VertexAttrib4fARB;
+   vfmt->VertexAttrib4fvARB = save_VertexAttrib4fvARB;
 
    vfmt->EvalMesh1 = _mesa_save_EvalMesh1;
    vfmt->EvalMesh2 = _mesa_save_EvalMesh2;

@@ -4932,77 +4932,124 @@
     <enum name="MATRIX30_ARB"                             value="0x88DE"/>
     <enum name="MATRIX31_ARB"                             value="0x88DF"/>
 
-    <function name="VertexAttrib1sARB" alias="VertexAttrib1sNV">
+    <function name="GetVertexAttribdvARB" offset="588">
         <param name="index" type="GLuint"/>
-        <param name="x" type="GLshort"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLdouble *"/>
     </function>
 
-    <function name="VertexAttrib1fARB" alias="VertexAttrib1fNV">
+    <function name="GetVertexAttribfvARB" offset="589">
         <param name="index" type="GLuint"/>
-        <param name="x" type="GLfloat"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLfloat *"/>
     </function>
 
-    <function name="VertexAttrib1dARB" alias="VertexAttrib1dNV">
+    <function name="GetVertexAttribivARB" offset="590">
+        <param name="index" type="GLuint"/>
+        <param name="pname" type="GLenum"/>
+        <param name="params" type="GLint *"/>
+    </function>
+
+    <function name="VertexAttrib1dARB" offset="603">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib2sARB" alias="VertexAttrib2sNV">
+    <function name="VertexAttrib1dvARB" offset="604">
         <param name="index" type="GLuint"/>
-        <param name="x" type="GLshort"/>
-        <param name="y" type="GLshort"/>
+        <param name="v" type="const GLdouble *" count="1"/>
     </function>
 
-    <function name="VertexAttrib2fARB" alias="VertexAttrib2fNV">
+    <function name="VertexAttrib1fARB" offset="605">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
-        <param name="y" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib2dARB" alias="VertexAttrib2dNV">
+    <function name="VertexAttrib1fvARB" offset="606">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *" count="1"/>
+    </function>
+
+    <function name="VertexAttrib1sARB" offset="607">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLshort"/>
+    </function>
+
+    <function name="VertexAttrib1svARB" offset="608">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLshort *" count="1"/>
+    </function>
+
+    <function name="VertexAttrib2dARB" offset="609">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib3sARB" alias="VertexAttrib3sNV">
+    <function name="VertexAttrib2dvARB" offset="610">
         <param name="index" type="GLuint"/>
-        <param name="x" type="GLshort"/>
-        <param name="y" type="GLshort"/>
-        <param name="z" type="GLshort"/>
+        <param name="v" type="const GLdouble *" count="2"/>
     </function>
 
-    <function name="VertexAttrib3fARB" alias="VertexAttrib3fNV">
+    <function name="VertexAttrib2fARB" offset="611">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
-        <param name="z" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib3dARB" alias="VertexAttrib3dNV">
+    <function name="VertexAttrib2fvARB" offset="612">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *" count="2"/>
+    </function>
+
+    <function name="VertexAttrib2sARB" offset="613">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLshort"/>
+        <param name="y" type="GLshort"/>
+    </function>
+
+    <function name="VertexAttrib2svARB" offset="614">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLshort *" count="2"/>
+    </function>
+
+    <function name="VertexAttrib3dARB" offset="615">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <param name="z" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib4sARB" alias="VertexAttrib4sNV">
+    <function name="VertexAttrib3dvARB" offset="616">
         <param name="index" type="GLuint"/>
-        <param name="x" type="GLshort"/>
-        <param name="y" type="GLshort"/>
-        <param name="z" type="GLshort"/>
-        <param name="w" type="GLshort"/>
+        <param name="v" type="const GLdouble *" count="3"/>
     </function>
 
-    <function name="VertexAttrib4fARB" alias="VertexAttrib4fNV">
+    <function name="VertexAttrib3fARB" offset="617">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <param name="z" type="GLfloat"/>
-        <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="VertexAttrib4dARB" alias="VertexAttrib4dNV">
+    <function name="VertexAttrib3fvARB" offset="618">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *" count="3"/>
+    </function>
+
+    <function name="VertexAttrib3sARB" offset="619">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLshort"/>
+        <param name="y" type="GLshort"/>
+        <param name="z" type="GLshort"/>
+    </function>
+
+    <function name="VertexAttrib3svARB" offset="620">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLshort *" count="3"/>
+    </function>
+
+    <function name="VertexAttrib4dARB" offset="621">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
@@ -5010,7 +5057,38 @@
         <param name="w" type="GLdouble"/>
     </function>
 
-    <function name="VertexAttrib4NubARB" alias="VertexAttrib4ubNV">
+    <function name="VertexAttrib4dvARB" offset="622">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLdouble *" count="4"/>
+    </function>
+
+    <function name="VertexAttrib4fARB" offset="623">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="z" type="GLfloat"/>
+        <param name="w" type="GLfloat"/>
+    </function>
+
+    <function name="VertexAttrib4fvARB" offset="624">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *" count="4"/>
+    </function>
+
+    <function name="VertexAttrib4sARB" offset="625">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLshort"/>
+        <param name="y" type="GLshort"/>
+        <param name="z" type="GLshort"/>
+        <param name="w" type="GLshort"/>
+    </function>
+
+    <function name="VertexAttrib4svARB" offset="626">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLshort *" count="4"/>
+    </function>
+
+    <function name="VertexAttrib4NubARB" offset="627">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLubyte"/>
         <param name="y" type="GLubyte"/>
@@ -5018,60 +5096,15 @@
         <param name="w" type="GLubyte"/>
     </function>
 
-    <function name="VertexAttrib1svARB" alias="VertexAttrib1svNV">
+    <function name="VertexAttrib4NubvARB" offset="628">
         <param name="index" type="GLuint"/>
-        <param name="v" type="const GLshort *" count="1"/>
-    </function>
-
-    <function name="VertexAttrib1fvARB" alias="VertexAttrib1fvNV">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLfloat *" count="1"/>
-    </function>
-
-    <function name="VertexAttrib1dvARB" alias="VertexAttrib1dvNV">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLdouble *" count="1"/>
-    </function>
-
-    <function name="VertexAttrib2svARB" alias="VertexAttrib2svNV">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLshort *" count="2"/>
-    </function>
-
-    <function name="VertexAttrib2fvARB" alias="VertexAttrib2fvNV">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLfloat *" count="2"/>
-    </function>
-
-    <function name="VertexAttrib2dvARB" alias="VertexAttrib2dvNV">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLdouble *" count="2"/>
-    </function>
-
-    <function name="VertexAttrib3svARB" alias="VertexAttrib3svNV">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLshort *" count="3"/>
-    </function>
-
-    <function name="VertexAttrib3fvARB" alias="VertexAttrib3fvNV">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLfloat *" count="3"/>
-    </function>
-
-    <function name="VertexAttrib3dvARB" alias="VertexAttrib3dvNV">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLdouble *" count="3"/>
+        <param name="v" type="const GLubyte *" count="4"/>
     </function>
 
     <function name="VertexAttrib4bvARB" offset="654">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLbyte *" count="4"/>
         <glx rop="4230" ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib4svARB" alias="VertexAttrib4svNV">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLshort *" count="4"/>
     </function>
 
     <function name="VertexAttrib4ivARB" offset="655">
@@ -5098,16 +5131,6 @@
         <glx rop="4234" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4fvARB" alias="VertexAttrib4fvNV">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLfloat *" count="4"/>
-    </function>
-
-    <function name="VertexAttrib4dvARB" alias="VertexAttrib4dvNV">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLdouble *" count="4"/>
-    </function>
-
     <function name="VertexAttrib4NbvARB" offset="659">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLbyte *" count="4"/>
@@ -5124,11 +5147,6 @@
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLint *" count="4"/>
         <glx rop="4237" ignore="true"/>
-    </function>
-
-    <function name="VertexAttrib4NubvARB" alias="VertexAttrib4ubvNV">
-        <param name="index" type="GLuint"/>
-        <param name="v" type="const GLubyte *" count="4"/>
     </function>
 
     <function name="VertexAttrib4NusvARB" offset="662">
@@ -5293,7 +5311,6 @@
         <glx vendorpriv="1305" ignore="true"/>
     </function>
 
-    <!-- FIXME: This should alias to GetProgramivNV -->
     <function name="GetProgramivARB" offset="680">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
@@ -5301,30 +5318,11 @@
         <glx vendorpriv="1307" ignore="true"/>
     </function>
 
-    <!-- FIXME: This should alias to GetProgramStringNV -->
     <function name="GetProgramStringARB" offset="681">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="string" type="GLvoid *"/>
         <glx vendorpriv="1308" handcode="true" ignore="true"/>
-    </function>
-
-    <function name="GetVertexAttribdvARB" alias="GetVertexAttribdvNV">
-        <param name="index" type="GLuint"/>
-        <param name="pname" type="GLenum"/>
-        <param name="params" type="GLdouble *"/>
-    </function>
-
-    <function name="GetVertexAttribfvARB" alias="GetVertexAttribfvNV">
-        <param name="index" type="GLuint"/>
-        <param name="pname" type="GLenum"/>
-        <param name="params" type="GLfloat *"/>
-    </function>
-
-    <function name="GetVertexAttribivARB" alias="GetVertexAttribivNV">
-        <param name="index" type="GLuint"/>
-        <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint *"/>
     </function>
 
     <function name="GetVertexAttribPointervARB" alias="GetVertexAttribPointervNV">
@@ -8696,21 +8694,21 @@
         <glx vendorpriv="1300" ignore="true"/>
     </function>
 
-    <function name="GetVertexAttribdvNV" offset="588">
+    <function name="GetVertexAttribdvNV" offset="753">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLdouble *" output="true"/>
         <glx vendorpriv="1301" ignore="true"/>
     </function>
 
-    <function name="GetVertexAttribfvNV" offset="589">
+    <function name="GetVertexAttribfvNV" offset="754">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfloat *" output="true"/>
         <glx vendorpriv="1302" ignore="true"/>
     </function>
 
-    <function name="GetVertexAttribivNV" offset="590">
+    <function name="GetVertexAttribivNV" offset="755">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
@@ -8819,82 +8817,82 @@
         <glx handcode="true" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib1dNV" offset="603" vectorequiv="VertexAttrib1dvNV">
+    <function name="VertexAttrib1dNV" offset="756" vectorequiv="VertexAttrib1dvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib1dvNV" offset="604">
+    <function name="VertexAttrib1dvNV" offset="757">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="1"/>
         <glx rop="4197" doubles_in_order="true" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib1fNV" offset="605" vectorequiv="VertexAttrib1fvNV">
+    <function name="VertexAttrib1fNV" offset="758" vectorequiv="VertexAttrib1fvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib1fvNV" offset="606">
+    <function name="VertexAttrib1fvNV" offset="759">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="1"/>
         <glx rop="4193" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib1sNV" offset="607" vectorequiv="VertexAttrib1svNV">
+    <function name="VertexAttrib1sNV" offset="760" vectorequiv="VertexAttrib1svNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib1svNV" offset="608">
+    <function name="VertexAttrib1svNV" offset="761">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="1"/>
         <glx rop="4189" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib2dNV" offset="609" vectorequiv="VertexAttrib2dvNV">
+    <function name="VertexAttrib2dNV" offset="762" vectorequiv="VertexAttrib2dvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib2dvNV" offset="610">
+    <function name="VertexAttrib2dvNV" offset="763">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="2"/>
         <glx rop="4198" doubles_in_order="true" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib2fNV" offset="611" vectorequiv="VertexAttrib2fvNV">
+    <function name="VertexAttrib2fNV" offset="764" vectorequiv="VertexAttrib2fvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib2fvNV" offset="612">
+    <function name="VertexAttrib2fvNV" offset="765">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="2"/>
         <glx rop="4194" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib2sNV" offset="613" vectorequiv="VertexAttrib2svNV">
+    <function name="VertexAttrib2sNV" offset="766" vectorequiv="VertexAttrib2svNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib2svNV" offset="614">
+    <function name="VertexAttrib2svNV" offset="767">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="2"/>
         <glx rop="4190" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib3dNV" offset="615" vectorequiv="VertexAttrib3dvNV">
+    <function name="VertexAttrib3dNV" offset="768" vectorequiv="VertexAttrib3dvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
@@ -8902,13 +8900,13 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib3dvNV" offset="616">
+    <function name="VertexAttrib3dvNV" offset="769">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="3"/>
         <glx rop="4199" doubles_in_order="true" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib3fNV" offset="617" vectorequiv="VertexAttrib3fvNV">
+    <function name="VertexAttrib3fNV" offset="770" vectorequiv="VertexAttrib3fvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
@@ -8916,13 +8914,13 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib3fvNV" offset="618">
+    <function name="VertexAttrib3fvNV" offset="771">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="3"/>
         <glx rop="4195" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib3sNV" offset="619" vectorequiv="VertexAttrib3svNV">
+    <function name="VertexAttrib3sNV" offset="772" vectorequiv="VertexAttrib3svNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
@@ -8930,13 +8928,13 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib3svNV" offset="620">
+    <function name="VertexAttrib3svNV" offset="773">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="3"/>
         <glx rop="4191" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4dNV" offset="621" vectorequiv="VertexAttrib4dvNV">
+    <function name="VertexAttrib4dNV" offset="774" vectorequiv="VertexAttrib4dvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
         <param name="y" type="GLdouble"/>
@@ -8945,13 +8943,13 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4dvNV" offset="622">
+    <function name="VertexAttrib4dvNV" offset="775">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLdouble *" count="4"/>
         <glx rop="4200" doubles_in_order="true" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4fNV" offset="623" vectorequiv="VertexAttrib4fvNV">
+    <function name="VertexAttrib4fNV" offset="776" vectorequiv="VertexAttrib4fvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
         <param name="y" type="GLfloat"/>
@@ -8960,13 +8958,13 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4fvNV" offset="624">
+    <function name="VertexAttrib4fvNV" offset="777">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *" count="4"/>
         <glx rop="4196" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4sNV" offset="625" vectorequiv="VertexAttrib4svNV">
+    <function name="VertexAttrib4sNV" offset="778" vectorequiv="VertexAttrib4svNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
         <param name="y" type="GLshort"/>
@@ -8975,13 +8973,13 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4svNV" offset="626">
+    <function name="VertexAttrib4svNV" offset="779">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *" count="4"/>
         <glx rop="4192" ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4ubNV" offset="627" vectorequiv="VertexAttrib4ubvNV">
+    <function name="VertexAttrib4ubNV" offset="780" vectorequiv="VertexAttrib4ubvNV">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLubyte"/>
         <param name="y" type="GLubyte"/>
@@ -8990,7 +8988,7 @@
         <glx ignore="true"/>
     </function>
 
-    <function name="VertexAttrib4ubvNV" offset="628">
+    <function name="VertexAttrib4ubvNV" offset="781">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLubyte *" count="4"/>
         <glx rop="4201" ignore="true"/>

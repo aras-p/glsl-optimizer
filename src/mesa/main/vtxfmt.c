@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -131,6 +131,14 @@ install_vtxfmt( struct _glapi_table *tab, const GLvertexformat *vfmt )
    tab->VertexAttrib3fvNV = vfmt->VertexAttrib3fvNV;
    tab->VertexAttrib4fNV = vfmt->VertexAttrib4fNV;
    tab->VertexAttrib4fvNV = vfmt->VertexAttrib4fvNV;
+   tab->VertexAttrib1fARB = vfmt->VertexAttrib1fARB;
+   tab->VertexAttrib1fvARB = vfmt->VertexAttrib1fvARB;
+   tab->VertexAttrib2fARB = vfmt->VertexAttrib2fARB;
+   tab->VertexAttrib2fvARB = vfmt->VertexAttrib2fvARB;
+   tab->VertexAttrib3fARB = vfmt->VertexAttrib3fARB;
+   tab->VertexAttrib3fvARB = vfmt->VertexAttrib3fvARB;
+   tab->VertexAttrib4fARB = vfmt->VertexAttrib4fARB;
+   tab->VertexAttrib4fvARB = vfmt->VertexAttrib4fvARB;
    tab->Rectf = vfmt->Rectf;
    tab->DrawArrays = vfmt->DrawArrays;
    tab->DrawElements = vfmt->DrawElements;

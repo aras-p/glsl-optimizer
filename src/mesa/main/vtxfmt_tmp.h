@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -409,6 +408,55 @@ static void GLAPIENTRY TAG(VertexAttrib4fvNV)( GLuint index, const GLfloat *v )
 }
 
 
+static void GLAPIENTRY TAG(VertexAttrib1fARB)( GLuint index, GLfloat x )
+{
+   PRE_LOOPBACK( VertexAttrib1fARB );
+   GL_CALL(VertexAttrib1fARB)( index, x );
+}
+
+static void GLAPIENTRY TAG(VertexAttrib1fvARB)( GLuint index, const GLfloat *v )
+{
+   PRE_LOOPBACK( VertexAttrib1fvARB );
+   GL_CALL(VertexAttrib1fvARB)( index, v );
+}
+
+static void GLAPIENTRY TAG(VertexAttrib2fARB)( GLuint index, GLfloat x, GLfloat y )
+{
+   PRE_LOOPBACK( VertexAttrib2fARB );
+   GL_CALL(VertexAttrib2fARB)( index, x, y );
+}
+
+static void GLAPIENTRY TAG(VertexAttrib2fvARB)( GLuint index, const GLfloat *v )
+{
+   PRE_LOOPBACK( VertexAttrib2fvARB );
+   GL_CALL(VertexAttrib2fvARB)( index, v );
+}
+
+static void GLAPIENTRY TAG(VertexAttrib3fARB)( GLuint index, GLfloat x, GLfloat y, GLfloat z )
+{
+   PRE_LOOPBACK( VertexAttrib3fARB );
+   GL_CALL(VertexAttrib3fARB)( index, x, y, z );
+}
+
+static void GLAPIENTRY TAG(VertexAttrib3fvARB)( GLuint index, const GLfloat *v )
+{
+   PRE_LOOPBACK( VertexAttrib3fvARB );
+   GL_CALL(VertexAttrib3fvARB)( index, v );
+}
+
+static void GLAPIENTRY TAG(VertexAttrib4fARB)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+   PRE_LOOPBACK( VertexAttrib4fARB );
+   GL_CALL(VertexAttrib4fARB)( index, x, y, z, w );
+}
+
+static void GLAPIENTRY TAG(VertexAttrib4fvARB)( GLuint index, const GLfloat *v )
+{
+   PRE_LOOPBACK( VertexAttrib4fvARB );
+   GL_CALL(VertexAttrib4fvARB)( index, v );
+}
+
+
 static GLvertexformat TAG(vtxfmt) = {
    TAG(ArrayElement),
    TAG(Color3f),
@@ -466,6 +514,14 @@ static GLvertexformat TAG(vtxfmt) = {
    TAG(VertexAttrib3fvNV),
    TAG(VertexAttrib4fNV),
    TAG(VertexAttrib4fvNV),
+   TAG(VertexAttrib1fARB),
+   TAG(VertexAttrib1fvARB),
+   TAG(VertexAttrib2fARB),
+   TAG(VertexAttrib2fvARB),
+   TAG(VertexAttrib3fARB),
+   TAG(VertexAttrib3fvARB),
+   TAG(VertexAttrib4fARB),
+   TAG(VertexAttrib4fvARB),
    TAG(Rectf),
    TAG(DrawArrays),
    TAG(DrawElements),

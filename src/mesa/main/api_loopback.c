@@ -65,15 +65,16 @@
 #define MATERIALFV(a,b,c)           GL_CALL(Materialfv)(a,b,c)
 #define RECTF(a,b,c,d)              GL_CALL(Rectf)(a,b,c,d)
 
-/* Extension functions must be dereferenced through _glapi_Dispatch as
- * not all libGL.so's will have all the uptodate entrypoints.
- */
-#define ATTRIB1(index,x)        GL_CALL(VertexAttrib1fNV)(index,x)
-#define ATTRIB2(index,x,y)      GL_CALL(VertexAttrib2fNV)(index,x,y)
-#define ATTRIB3(index,x,y,z)    GL_CALL(VertexAttrib3fNV)(index,x,y,z)
-#define ATTRIB4(index,x,y,z,w)  GL_CALL(VertexAttrib4fNV)(index,x,y,z,w)
-#define FOGCOORDF(x)            GL_CALL(FogCoordfEXT)(x)
-#define SECONDARYCOLORF(a,b,c)  GL_CALL(SecondaryColor3fEXT)(a,b,c)
+#define ATTRIB1NV(index,x)          GL_CALL(VertexAttrib1fNV)(index,x)
+#define ATTRIB2NV(index,x,y)        GL_CALL(VertexAttrib2fNV)(index,x,y)
+#define ATTRIB3NV(index,x,y,z)      GL_CALL(VertexAttrib3fNV)(index,x,y,z)
+#define ATTRIB4NV(index,x,y,z,w)    GL_CALL(VertexAttrib4fNV)(index,x,y,z,w)
+#define ATTRIB1ARB(index,x)         GL_CALL(VertexAttrib1fARB)(index,x)
+#define ATTRIB2ARB(index,x,y)       GL_CALL(VertexAttrib2fARB)(index,x,y)
+#define ATTRIB3ARB(index,x,y,z)     GL_CALL(VertexAttrib3fARB)(index,x,y,z)
+#define ATTRIB4ARB(index,x,y,z,w)   GL_CALL(VertexAttrib4fARB)(index,x,y,z,w)
+#define FOGCOORDF(x)                GL_CALL(FogCoordfEXT)(x)
+#define SECONDARYCOLORF(a,b,c)      GL_CALL(SecondaryColor3fEXT)(a,b,c)
 
 static void GLAPIENTRY
 loopback_Color3b_f( GLbyte red, GLbyte green, GLbyte blue )
@@ -1024,159 +1025,118 @@ loopback_SecondaryColor3ubvEXT_f( const GLubyte *v )
 
 
 /*
- * GL_NV_vertex_program
+ * GL_NV_vertex_program:
+ * Always loop-back to one of the VertexAttrib[1234]f[v]NV functions.
  */
 
 static void GLAPIENTRY
 loopback_VertexAttrib1sNV(GLuint index, GLshort x)
 {
-   ATTRIB1(index, (GLfloat) x);
-}
-
-static void GLAPIENTRY
-loopback_VertexAttrib1fNV(GLuint index, GLfloat x)
-{
-   ATTRIB1(index, x);
+   ATTRIB1NV(index, (GLfloat) x);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib1dNV(GLuint index, GLdouble x)
 {
-   ATTRIB1(index, (GLfloat) x);
+   ATTRIB1NV(index, (GLfloat) x);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib2sNV(GLuint index, GLshort x, GLshort y)
 {
-   ATTRIB2(index, (GLfloat) x, y);
-}
-
-static void GLAPIENTRY
-loopback_VertexAttrib2fNV(GLuint index, GLfloat x, GLfloat y)
-{
-   ATTRIB2(index, (GLfloat) x, y);
+   ATTRIB2NV(index, (GLfloat) x, y);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib2dNV(GLuint index, GLdouble x, GLdouble y)
 {
-   ATTRIB2(index, (GLfloat) x, (GLfloat) y);
+   ATTRIB2NV(index, (GLfloat) x, (GLfloat) y);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib3sNV(GLuint index, GLshort x, GLshort y, GLshort z)
 {
-   ATTRIB3(index, (GLfloat) x, (GLfloat) y, (GLfloat) z);
-}
-
-static void GLAPIENTRY
-loopback_VertexAttrib3fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z)
-{
-   ATTRIB3(index, x, y, z);
+   ATTRIB3NV(index, (GLfloat) x, (GLfloat) y, (GLfloat) z);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib3dNV(GLuint index, GLdouble x, GLdouble y, GLdouble z)
 {
-   ATTRIB4(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
+   ATTRIB4NV(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4sNV(GLuint index, GLshort x, GLshort y, GLshort z, GLshort w)
 {
-   ATTRIB4(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
+   ATTRIB4NV(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4dNV(GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   ATTRIB4(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
+   ATTRIB4NV(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4ubNV(GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w)
 {
-   ATTRIB4(index, UBYTE_TO_FLOAT(x), UBYTE_TO_FLOAT(y),
+   ATTRIB4NV(index, UBYTE_TO_FLOAT(x), UBYTE_TO_FLOAT(y),
 	UBYTE_TO_FLOAT(z), UBYTE_TO_FLOAT(w));
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib1svNV(GLuint index, const GLshort *v)
 {
-   ATTRIB1(index, (GLfloat) v[0]);
-}
-
-static void GLAPIENTRY
-loopback_VertexAttrib1fvNV(GLuint index, const GLfloat *v)
-{
-   ATTRIB1(index, v[0]);
+   ATTRIB1NV(index, (GLfloat) v[0]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib1dvNV(GLuint index, const GLdouble *v)
 {
-   ATTRIB1(index, (GLfloat) v[0]);
+   ATTRIB1NV(index, (GLfloat) v[0]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib2svNV(GLuint index, const GLshort *v)
 {
-   ATTRIB2(index, (GLfloat) v[0], (GLfloat) v[1]);
-}
-
-static void GLAPIENTRY
-loopback_VertexAttrib2fvNV(GLuint index, const GLfloat *v)
-{
-   ATTRIB2(index, v[0], v[1]);
+   ATTRIB2NV(index, (GLfloat) v[0], (GLfloat) v[1]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib2dvNV(GLuint index, const GLdouble *v)
 {
-   ATTRIB2(index, (GLfloat) v[0], (GLfloat) v[1]);
+   ATTRIB2NV(index, (GLfloat) v[0], (GLfloat) v[1]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib3svNV(GLuint index, const GLshort *v)
 {
-   ATTRIB3(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2]);
-}
-
-static void GLAPIENTRY
-loopback_VertexAttrib3fvNV(GLuint index, const GLfloat *v)
-{
-   ATTRIB3(index, v[0], v[1], v[2]);
+   ATTRIB3NV(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib3dvNV(GLuint index, const GLdouble *v)
 {
-   ATTRIB3(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2]);
+   ATTRIB3NV(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4svNV(GLuint index, const GLshort *v)
 {
-   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 
+   ATTRIB4NV(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 
 	  (GLfloat)v[3]);
-}
-
-static void GLAPIENTRY
-loopback_VertexAttrib4fvNV(GLuint index, const GLfloat *v)
-{
-   ATTRIB4(index, v[0], v[1], v[2], v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4dvNV(GLuint index, const GLdouble *v)
 {
-   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+   ATTRIB4NV(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4ubvNV(GLuint index, const GLubyte *v)
 {
-   ATTRIB4(index, UBYTE_TO_FLOAT(v[0]), UBYTE_TO_FLOAT(v[1]),
+   ATTRIB4NV(index, UBYTE_TO_FLOAT(v[0]), UBYTE_TO_FLOAT(v[1]),
           UBYTE_TO_FLOAT(v[2]), UBYTE_TO_FLOAT(v[3]));
 }
 
@@ -1194,7 +1154,7 @@ loopback_VertexAttribs1fvNV(GLuint index, GLsizei n, const GLfloat *v)
 {
    GLint i;
    for (i = n - 1; i >= 0; i--)
-      loopback_VertexAttrib1fvNV(index + i, v + i);
+      ATTRIB1NV(index + i, v[i]);
 }
 
 static void GLAPIENTRY
@@ -1218,7 +1178,7 @@ loopback_VertexAttribs2fvNV(GLuint index, GLsizei n, const GLfloat *v)
 {
    GLint i;
    for (i = n - 1; i >= 0; i--)
-      loopback_VertexAttrib2fvNV(index + i, v + 2 * i);
+      ATTRIB2NV(index + i, v[2 * i], v[2 * i + 1]);
 }
 
 static void GLAPIENTRY
@@ -1242,7 +1202,7 @@ loopback_VertexAttribs3fvNV(GLuint index, GLsizei n, const GLfloat *v)
 {
    GLint i;
    for (i = n - 1; i >= 0; i--)
-      loopback_VertexAttrib3fvNV(index + i, v + 3 * i);
+      ATTRIB3NV(index + i, v[3 * i], v[3 * i + 1], v[3 * i + 2]);
 }
 
 static void GLAPIENTRY
@@ -1266,7 +1226,7 @@ loopback_VertexAttribs4fvNV(GLuint index, GLsizei n, const GLfloat *v)
 {
    GLint i;
    for (i = n - 1; i >= 0; i--)
-      loopback_VertexAttrib4fvNV(index + i, v + 4 * i);
+      ATTRIB4NV(index + i, v[4 * i], v[4 * i + 1], v[4 * i + 2], v[4 * i + 3]);
 }
 
 static void GLAPIENTRY
@@ -1288,70 +1248,182 @@ loopback_VertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte *v)
 
 /*
  * GL_ARB_vertex_program
+ * Always loop-back to one of the VertexAttrib[1234]f[v]ARB functions.
  */
+
+static void GLAPIENTRY
+loopback_VertexAttrib1sARB(GLuint index, GLshort x)
+{
+   ATTRIB1ARB(index, (GLfloat) x);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib1dARB(GLuint index, GLdouble x)
+{
+   ATTRIB1ARB(index, (GLfloat) x);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib2sARB(GLuint index, GLshort x, GLshort y)
+{
+   ATTRIB2ARB(index, (GLfloat) x, y);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib2dARB(GLuint index, GLdouble x, GLdouble y)
+{
+   ATTRIB2ARB(index, (GLfloat) x, (GLfloat) y);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib3sARB(GLuint index, GLshort x, GLshort y, GLshort z)
+{
+   ATTRIB3ARB(index, (GLfloat) x, (GLfloat) y, (GLfloat) z);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib3dARB(GLuint index, GLdouble x, GLdouble y, GLdouble z)
+{
+   ATTRIB4ARB(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib4sARB(GLuint index, GLshort x, GLshort y, GLshort z, GLshort w)
+{
+   ATTRIB4ARB(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib4dARB(GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+{
+   ATTRIB4ARB(index, (GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib1svARB(GLuint index, const GLshort *v)
+{
+   ATTRIB1ARB(index, (GLfloat) v[0]);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib1dvARB(GLuint index, const GLdouble *v)
+{
+   ATTRIB1ARB(index, (GLfloat) v[0]);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib2svARB(GLuint index, const GLshort *v)
+{
+   ATTRIB2ARB(index, (GLfloat) v[0], (GLfloat) v[1]);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib2dvARB(GLuint index, const GLdouble *v)
+{
+   ATTRIB2ARB(index, (GLfloat) v[0], (GLfloat) v[1]);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib3svARB(GLuint index, const GLshort *v)
+{
+   ATTRIB3ARB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2]);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib3dvARB(GLuint index, const GLdouble *v)
+{
+   ATTRIB3ARB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2]);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib4svARB(GLuint index, const GLshort *v)
+{
+   ATTRIB4ARB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 
+	  (GLfloat)v[3]);
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib4dvARB(GLuint index, const GLdouble *v)
+{
+   ATTRIB4ARB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+}
 
 static void GLAPIENTRY
 loopback_VertexAttrib4bvARB(GLuint index, const GLbyte * v)
 {
-   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+   ATTRIB4ARB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4ivARB(GLuint index, const GLint * v)
 {
-   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+   ATTRIB4ARB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4ubvARB(GLuint index, const GLubyte * v)
 {
-   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+   ATTRIB4ARB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4usvARB(GLuint index, const GLushort * v)
 {
-   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+   ATTRIB4ARB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4uivARB(GLuint index, const GLuint * v)
 {
-   ATTRIB4(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
+   ATTRIB4ARB(index, (GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], (GLfloat) v[3]);
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4NbvARB(GLuint index, const GLbyte * v)
 {
-   ATTRIB4(index, BYTE_TO_FLOAT(v[0]), BYTE_TO_FLOAT(v[1]),
+   ATTRIB4ARB(index, BYTE_TO_FLOAT(v[0]), BYTE_TO_FLOAT(v[1]),
           BYTE_TO_FLOAT(v[2]), BYTE_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4NsvARB(GLuint index, const GLshort * v)
 {
-   ATTRIB4(index, SHORT_TO_FLOAT(v[0]), SHORT_TO_FLOAT(v[1]),
+   ATTRIB4ARB(index, SHORT_TO_FLOAT(v[0]), SHORT_TO_FLOAT(v[1]),
           SHORT_TO_FLOAT(v[2]), SHORT_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4NivARB(GLuint index, const GLint * v)
 {
-   ATTRIB4(index, INT_TO_FLOAT(v[0]), INT_TO_FLOAT(v[1]),
+   ATTRIB4ARB(index, INT_TO_FLOAT(v[0]), INT_TO_FLOAT(v[1]),
           INT_TO_FLOAT(v[2]), INT_TO_FLOAT(v[3]));
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib4NubARB(GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w)
+{
+   ATTRIB4ARB(index, UBYTE_TO_FLOAT(x), UBYTE_TO_FLOAT(y),
+              UBYTE_TO_FLOAT(z), UBYTE_TO_FLOAT(w));
+}
+
+static void GLAPIENTRY
+loopback_VertexAttrib4NubvARB(GLuint index, const GLubyte * v)
+{
+   ATTRIB4ARB(index, UBYTE_TO_FLOAT(v[0]), UBYTE_TO_FLOAT(v[1]),
+          UBYTE_TO_FLOAT(v[2]), UBYTE_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4NusvARB(GLuint index, const GLushort * v)
 {
-   ATTRIB4(index, USHORT_TO_FLOAT(v[0]), USHORT_TO_FLOAT(v[1]),
+   ATTRIB4ARB(index, USHORT_TO_FLOAT(v[0]), USHORT_TO_FLOAT(v[1]),
           USHORT_TO_FLOAT(v[2]), USHORT_TO_FLOAT(v[3]));
 }
 
 static void GLAPIENTRY
 loopback_VertexAttrib4NuivARB(GLuint index, const GLuint * v)
 {
-   ATTRIB4(index, UINT_TO_FLOAT(v[0]), UINT_TO_FLOAT(v[1]),
+   ATTRIB4ARB(index, UINT_TO_FLOAT(v[0]), UINT_TO_FLOAT(v[1]),
           UINT_TO_FLOAT(v[2]), UINT_TO_FLOAT(v[3]));
 }
 
@@ -1511,32 +1583,23 @@ _mesa_loopback_init_api_table( struct _glapi_table *dest )
    dest->FogCoorddvEXT = loopback_FogCoorddvEXT;
 
    dest->VertexAttrib1sNV = loopback_VertexAttrib1sNV;
-   dest->VertexAttrib1fNV = loopback_VertexAttrib1fNV;
    dest->VertexAttrib1dNV = loopback_VertexAttrib1dNV;
    dest->VertexAttrib2sNV = loopback_VertexAttrib2sNV;
-   dest->VertexAttrib2fNV = loopback_VertexAttrib2fNV;
    dest->VertexAttrib2dNV = loopback_VertexAttrib2dNV;
    dest->VertexAttrib3sNV = loopback_VertexAttrib3sNV;
-   dest->VertexAttrib3fNV = loopback_VertexAttrib3fNV;
    dest->VertexAttrib3dNV = loopback_VertexAttrib3dNV;
    dest->VertexAttrib4sNV = loopback_VertexAttrib4sNV;
    dest->VertexAttrib4dNV = loopback_VertexAttrib4dNV;
    dest->VertexAttrib4ubNV = loopback_VertexAttrib4ubNV;
-
    dest->VertexAttrib1svNV = loopback_VertexAttrib1svNV;
-   dest->VertexAttrib1fvNV = loopback_VertexAttrib1fvNV;
    dest->VertexAttrib1dvNV = loopback_VertexAttrib1dvNV;
    dest->VertexAttrib2svNV = loopback_VertexAttrib2svNV;
-   dest->VertexAttrib2fvNV = loopback_VertexAttrib2fvNV;
    dest->VertexAttrib2dvNV = loopback_VertexAttrib2dvNV;
    dest->VertexAttrib3svNV = loopback_VertexAttrib3svNV;
-   dest->VertexAttrib3fvNV = loopback_VertexAttrib3fvNV;
    dest->VertexAttrib3dvNV = loopback_VertexAttrib3dvNV;
    dest->VertexAttrib4svNV = loopback_VertexAttrib4svNV;
-   dest->VertexAttrib4fvNV = loopback_VertexAttrib4fvNV;
    dest->VertexAttrib4dvNV = loopback_VertexAttrib4dvNV;
    dest->VertexAttrib4ubvNV = loopback_VertexAttrib4ubvNV;
-
    dest->VertexAttribs1svNV = loopback_VertexAttribs1svNV;
    dest->VertexAttribs1fvNV = loopback_VertexAttribs1fvNV;
    dest->VertexAttribs1dvNV = loopback_VertexAttribs1dvNV;
@@ -1551,6 +1614,24 @@ _mesa_loopback_init_api_table( struct _glapi_table *dest )
    dest->VertexAttribs4dvNV = loopback_VertexAttribs4dvNV;
    dest->VertexAttribs4ubvNV = loopback_VertexAttribs4ubvNV;
 
+   dest->VertexAttrib1sARB = loopback_VertexAttrib1sARB;
+   dest->VertexAttrib1dARB = loopback_VertexAttrib1dARB;
+   dest->VertexAttrib2sARB = loopback_VertexAttrib2sARB;
+   dest->VertexAttrib2dARB = loopback_VertexAttrib2dARB;
+   dest->VertexAttrib3sARB = loopback_VertexAttrib3sARB;
+   dest->VertexAttrib3dARB = loopback_VertexAttrib3dARB;
+   dest->VertexAttrib4sARB = loopback_VertexAttrib4sARB;
+   dest->VertexAttrib4dARB = loopback_VertexAttrib4dARB;
+   dest->VertexAttrib1svARB = loopback_VertexAttrib1svARB;
+   dest->VertexAttrib1dvARB = loopback_VertexAttrib1dvARB;
+   dest->VertexAttrib2svARB = loopback_VertexAttrib2svARB;
+   dest->VertexAttrib2dvARB = loopback_VertexAttrib2dvARB;
+   dest->VertexAttrib3svARB = loopback_VertexAttrib3svARB;
+   dest->VertexAttrib3dvARB = loopback_VertexAttrib3dvARB;
+   dest->VertexAttrib4svARB = loopback_VertexAttrib4svARB;
+   dest->VertexAttrib4dvARB = loopback_VertexAttrib4dvARB;
+   dest->VertexAttrib4NubARB = loopback_VertexAttrib4NubARB;
+   dest->VertexAttrib4NubvARB = loopback_VertexAttrib4NubvARB;
    dest->VertexAttrib4bvARB = loopback_VertexAttrib4bvARB;
    dest->VertexAttrib4ivARB = loopback_VertexAttrib4ivARB;
    dest->VertexAttrib4ubvARB = loopback_VertexAttrib4ubvARB;

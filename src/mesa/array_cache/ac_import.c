@@ -461,7 +461,7 @@ import_attrib( GLcontext *ctx, GLuint index, GLenum type, GLuint stride )
    struct gl_client_array *to = &ac->Cache.Attrib[index];
    (void) type; (void) stride;
 
-   ASSERT(index < VERT_ATTRIB_MAX);
+   ASSERT(index < MAX_VERTEX_PROGRAM_ATTRIBS);
 
    /* Limited choices at this stage:
     */
