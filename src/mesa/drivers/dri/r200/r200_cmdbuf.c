@@ -124,10 +124,9 @@ void r200EmitState( r200ContextPtr rmesa )
     * for enough space for the case of emitting all state, and inline the
     * r200AllocCmdBuf code here without all the checks.
     */
-   dest = rmesa->store.cmd_buf + rmesa->store.cmd_used;
    r200EnsureCmdBufSpace( rmesa, rmesa->hw.max_state_size );
 
-   /* we need to recalculate dest after EnsureCmdBufSpace
+   /* we need to calculate dest after EnsureCmdBufSpace
       as we may flush the buffer - airlied */
    dest = rmesa->store.cmd_buf + rmesa->store.cmd_used;
    if (R200_DEBUG & DEBUG_STATE) {
