@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.12 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: buffers.c,v 1.13 2000/10/17 00:42:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -290,6 +290,8 @@ _mesa_Clear( GLbitfield mask )
       }
 #endif
 
+      RENDER_START(ctx);
+
       /* do software clearing here */
       if (newMask) {
          if (newMask & ctx->Color.DrawDestMask)   clear_color_buffers(ctx);
@@ -304,6 +306,8 @@ _mesa_Clear( GLbitfield mask )
            && ctx->Color.ColorMask[ACOMP]) {
          _mesa_clear_alpha_buffers( ctx );
       }
+
+      RENDER_FINISH(ctx);
 
 #ifdef PROFILE
       ctx->ClearTime += gl_time() - t0;

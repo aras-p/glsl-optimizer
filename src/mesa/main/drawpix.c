@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.37 2000/10/05 16:22:23 brianp Exp $ */
+/* $Id: drawpix.c,v 1.38 2000/10/17 00:42:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -410,8 +410,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
       }
       else if (format==GL_COLOR_INDEX && type==GL_UNSIGNED_BYTE) {
          GLubyte *src = (GLubyte *) pixels + skipRows * rowLength + skipPixels;
-         if (ctx->Visual.RGBAflag
-             && ctx->ImageTransferState==IMAGE_MAP_COLOR_BIT) {
+         if (ctx->Visual.RGBAflag) {
             /* convert CI data to RGBA */
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                /* no zooming */
@@ -879,6 +878,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
          return;
       }
 
+      RENDER_START(ctx);
       switch (format) {
 	 case GL_STENCIL_INDEX:
 	    draw_stencil_pixels( ctx, x, y, width, height, type, pixels );
@@ -907,8 +907,8 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
 	    break;
 	 default:
 	    gl_error( ctx, GL_INVALID_ENUM, "glDrawPixels(format)" );
-            return;
       }
+      RENDER_FINISH(ctx);
    }
    else if (ctx->RenderMode==GL_FEEDBACK) {
       if (ctx->Current.RasterPosValid) {
