@@ -186,8 +186,8 @@ static void SetColorMap(void)
 {
     static float green[3] = {0.2, 1.0, 0.2};
     static float red[3] = {1.0, 0.2, 0.2};
-    float *color, percent;
-    GLint *indexes, entries, i, j;
+    float *color = 0, percent;
+    GLint *indexes = 0, entries, i, j;
 
     entries = glutGet(GLUT_WINDOW_COLORMAP_SIZE);
 

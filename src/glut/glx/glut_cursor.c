@@ -118,7 +118,7 @@ void
 __glutSetCursor(GLUTwindow *window)
 {
   int cursor = window->cursor;
-  Cursor xcursor;
+  Cursor xcursor = 0;
 
   if (cursor >= 0 &&
     cursor < sizeof(cursorTable) / sizeof(cursorTable[0])) {

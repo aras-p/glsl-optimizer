@@ -315,7 +315,7 @@ probeDevices(void)
   XButtonInfoPtr b;
   XValuatorInfoPtr v;
   XAxisInfoPtr a;
-  int num_dev, btns, dials;
+  int num_dev = 0, btns = 0, dials = 0;
   int i, j, k;
 #endif /* !_WIN32 */
 

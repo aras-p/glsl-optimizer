@@ -103,8 +103,8 @@ ifSunCreator(void)
 {
   char *xvendor, *glvendor, *renderer;
   int isSunCreator = 0; /* Until proven that it is. */
-  int savedDisplayMode;
-  char *savedDisplayString;
+  int savedDisplayMode = 0;
+  char *savedDisplayString = 0;
   GLUTwindow *window;
 
 #define VENDOR_SUN "Sun Microsystems"
@@ -158,7 +158,7 @@ menuVisualSetup(void)
   Bool presumablyMesa;
   int layer, nVisuals, i, dummy;
   unsigned long *placeHolders = NULL;
-  int numPlaceHolders;
+  int numPlaceHolders = 0;
   Bool allocateHigh;
 
   allocateHigh = ifSunCreator();

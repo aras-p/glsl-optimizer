@@ -1,4 +1,4 @@
-/* $Id: nurbscrv.c,v 1.2 2000/07/11 14:11:04 brianp Exp $ */
+/* $Id: nurbscrv.c,v 1.3 2000/11/10 17:23:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -359,7 +359,7 @@ do_nurbs_curve(GLUnurbsObj * nobj)
    GLint n_ctrl;
    GLfloat *new_geom_ctrl, *new_color_ctrl, *new_normal_ctrl,
       *new_texture_ctrl;
-   GLfloat *geom_ctrl, *color_ctrl, *normal_ctrl, *texture_ctrl;
+   GLfloat *geom_ctrl = 0, *color_ctrl = 0, *normal_ctrl = 0, *texture_ctrl = 0;
    GLint *factors;
    GLint i, j;
    GLint geom_dim, color_dim = 0, normal_dim = 0, texture_dim = 0;

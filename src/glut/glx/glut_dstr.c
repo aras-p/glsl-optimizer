@@ -630,7 +630,7 @@ findMatch(FrameBufferMode * fbmodes, int nfbmodes,
 {
   FrameBufferMode *found;
   int *bestScore, *thisScore;
-  int i, j, numok, result, worse, better;
+  int i, j, numok, result = 0, worse, better;
 
   found = NULL;
   numok = 1;            /* "num" capability is indexed from 1,
@@ -760,7 +760,7 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
   Bool * allowDoubleAsSingle)
 {
   char *cstr, *vstr, *response;
-  int comparator, value;
+  int comparator, value = 0;
   int rgb, rgba, acc, acca, count, i;
 
   cstr = strpbrk(word, "=><!~");

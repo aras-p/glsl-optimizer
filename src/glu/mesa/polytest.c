@@ -1,4 +1,4 @@
-/* $Id: polytest.c,v 1.3 2000/07/11 14:11:04 brianp Exp $ */
+/* $Id: polytest.c,v 1.4 2000/11/10 17:23:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -786,7 +786,7 @@ cut_out_hole(GLUtriangulatorObj * tobj,
    tess_vertex *v1, *v2, *tmp_vertex;
    GLuint vertex1_cnt, vertex2_cnt, tmp_vertex_cnt;
    GLuint i, j, k;
-   GLenum test;
+   GLenum test = 0;
 
    /* find an edge connecting contour and hole not intersecting any other */
    /* edge belonging to either the contour or any of the other holes */

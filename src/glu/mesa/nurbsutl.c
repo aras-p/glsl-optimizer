@@ -1,4 +1,4 @@
-/* $Id: nurbsutl.c,v 1.3 2000/07/11 20:39:00 brianp Exp $ */
+/* $Id: nurbsutl.c,v 1.4 2000/11/10 17:23:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -130,7 +130,7 @@ set_new_t_min_t_max(knot_str_type * geom_knot, knot_str_type * color_knot,
 		    knot_str_type * normal_knot, knot_str_type * texture_knot,
 		    GLfloat maximal_min_knot, GLfloat minimal_max_knot)
 {
-   GLuint t_min, t_max, cnt;
+   GLuint t_min = 0, t_max = 0, cnt = 0;
 
    if (minimal_max_knot - maximal_min_knot < EPSILON) {
       /* knot common range empty */

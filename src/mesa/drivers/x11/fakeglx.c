@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.38 2000/10/05 17:38:21 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.39 2000/11/10 17:23:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -561,7 +561,7 @@ static XVisualInfo *choose_x_visual( Display *dpy, int screen,
                                      int preferred_class )
 {
    XVisualInfo *vis;
-   int xclass, visclass;
+   int xclass, visclass = 0;
    int depth;
 
    if (rgba) {

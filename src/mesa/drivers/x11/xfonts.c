@@ -1,4 +1,4 @@
-/* $Id: xfonts.c,v 1.9 2000/08/22 13:31:04 joukj Exp $ */
+/* $Id: xfonts.c,v 1.10 2000/11/10 17:23:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -183,7 +183,7 @@ fill_bitmap (Display *dpy, Window win, GC gc,
 static XCharStruct *isvalid(XFontStruct *fs, int which)
 {
   unsigned int  rows,pages;
-  int           byte1,byte2;
+  int           byte1 = 0,byte2 = 0;
   int           i,valid = 1;
 
   rows = fs->max_byte1 - fs->min_byte1 + 1;

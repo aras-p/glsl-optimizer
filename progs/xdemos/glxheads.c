@@ -1,4 +1,4 @@
-/* $Id: glxheads.c,v 1.1 2000/06/13 19:41:30 brianp Exp $ */
+/* $Id: glxheads.c,v 1.2 2000/11/10 17:23:07 brianp Exp $ */
 
 /*
  * Exercise multiple GLX connections on multiple X displays.
@@ -139,7 +139,7 @@ AddHead(const char *displayName)
    if (!glXMakeCurrent(dpy, win, ctx)) {
       Error(displayName, "glXMakeCurrent failed");
       printf("glXMakeCurrent failed in Redraw()\n");
-      return;
+      return NULL;
    }
 
    /* save the info for this head */
