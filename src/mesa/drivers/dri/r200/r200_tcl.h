@@ -55,10 +55,11 @@ extern void r200TclFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
 #define R200_TCL_FALLBACK_TEXGEN_0          0x10 /* texgen, unit 0 */
 #define R200_TCL_FALLBACK_TEXGEN_1          0x20 /* texgen, unit 1 */
 #define R200_TCL_FALLBACK_TEXGEN_2          0x40 /* texgen, unit 2 */
-#define R200_TCL_FALLBACK_TCL_DISABLE       0x80 /* user disable */
-#define R200_TCL_FALLBACK_BITMAP            0x100 /* draw bitmap with points */
-
-#define R200_MAX_TCL_VERTSIZE (4*4) /* using maos now... */
+#define R200_TCL_FALLBACK_TEXGEN_3          0x80 /* texgen, unit 3 */
+#define R200_TCL_FALLBACK_TEXGEN_4          0x100 /* texgen, unit 4 */
+#define R200_TCL_FALLBACK_TEXGEN_5          0x200 /* texgen, unit 5 */
+#define R200_TCL_FALLBACK_TCL_DISABLE       0x400 /* user disable */
+#define R200_TCL_FALLBACK_BITMAP            0x800 /* draw bitmap with points */
 
 #define TCL_FALLBACK( ctx, bit, mode )	r200TclFallback( ctx, bit, mode )
 

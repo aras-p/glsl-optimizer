@@ -537,7 +537,7 @@ TEX_to_nF( 3fv, (const GLfloat * v),               v[0], v[1], v[2] )
  * \c target before masking and using it.  The value of GL_TEXTURE0 is 0x84C0,
  * which has the low-order 5 bits 0.  For all possible valid values of 
  * \c target.  Subtracting GL_TEXTURE0 has the net effect of masking \c target
- * with 0x1F.  Masking with 0x1F and then masking with 0x01 is redundant, so
+ * with 0x1F.  Masking with 0x1F and then masking with 0x07 is redundant, so
  * the subtraction has been omitted.
  */
 
@@ -558,13 +558,14 @@ TEX_to_nF( 3fv, (const GLfloat * v),               v[0], v[1], v[2] )
       }									\
    }
 
-MTEX_to_nF( 1f, (GLenum target, GLfloat s), (target & 1), s, 0.0, 0.0 )
-MTEX_to_nF( 2f, (GLenum target, GLfloat s, GLfloat t), (target & 1), s, t, 0.0 )
-MTEX_to_nF( 3f, (GLenum target, GLfloat s, GLfloat t, GLfloat r), (target & 1), s, t, r )
+/* \todo maybe (target & 4 ? target & 5 : target & 3) is more save than (target & 7) */
+MTEX_to_nF( 1f, (GLenum target, GLfloat s), (target & 7), s, 0.0, 0.0 )
+MTEX_to_nF( 2f, (GLenum target, GLfloat s, GLfloat t), (target & 7), s, t, 0.0 )
+MTEX_to_nF( 3f, (GLenum target, GLfloat s, GLfloat t, GLfloat r), (target & 7), s, t, r )
 
-MTEX_to_nF( 1fv, (GLenum target, const GLfloat *v), (target & 1), v[0], 0.0, 0.0 )
-MTEX_to_nF( 2fv, (GLenum target, const GLfloat *v), (target & 1), v[0], v[1], 0.0 )
-MTEX_to_nF( 3fv, (GLenum target, const GLfloat *v), (target & 1), v[0], v[1], v[2] )
+MTEX_to_nF( 1fv, (GLenum target, const GLfloat *v), (target & 7), v[0], 0.0, 0.0 )
+MTEX_to_nF( 2fv, (GLenum target, const GLfloat *v), (target & 7), v[0], v[1], 0.0 )
+MTEX_to_nF( 3fv, (GLenum target, const GLfloat *v), (target & 7), v[0], v[1], v[2] )
 
 static struct dynfn *lookup( struct dynfn *l, const int *key )
 {
@@ -722,7 +723,7 @@ static void choose_##FN ARGS1						\
 /* VTXFMT_1
  */
 #define MASK_ST0 (0x7 << R200_VTX_TEX0_COMP_CNT_SHIFT)
-
+/* FIXME: maybe something like in the radeon driver is needed here? */
 
 
 typedef void (*p4f)( GLfloat, GLfloat, GLfloat, GLfloat );

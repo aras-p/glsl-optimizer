@@ -134,7 +134,9 @@ static GLboolean check_##NM( GLcontext *ctx, int idx )	\
 CHECK( always, GL_TRUE )
 CHECK( never, GL_FALSE )
 CHECK( tex_any, ctx->Texture._EnabledUnits )
+CHECK( tex_pair, (ctx->Texture.Unit[idx]._ReallyEnabled | ctx->Texture.Unit[idx & ~1]._ReallyEnabled))
 CHECK( tex, ctx->Texture.Unit[idx]._ReallyEnabled )
+CHECK( tex_cube, ctx->Texture.Unit[idx]._ReallyEnabled & TEXTURE_CUBE_BIT)
 CHECK( fog, ctx->Fog.Enabled )
 TCL_CHECK( tcl, GL_TRUE )
 TCL_CHECK( tcl_tex, ctx->Texture.Unit[idx]._ReallyEnabled )
@@ -232,18 +234,37 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( msc, always, MSC_STATE_SIZE, "MSC/misc", 0 );
    ALLOC_STATE( cst, always, CST_STATE_SIZE, "CST/constant", 0 );
    ALLOC_STATE( zbs, always, ZBS_STATE_SIZE, "ZBS/zbias", 0 );
-   ALLOC_STATE( tam, tex_any, TAM_STATE_SIZE, "TAM/tam", 0 );
    ALLOC_STATE( tf, tex_any, TF_STATE_SIZE, "TF/tfactor", 0 );
-   ALLOC_STATE( tex[0], tex_any, TEX_STATE_SIZE, "TEX/tex-0", 0 );
-   ALLOC_STATE( tex[1], tex_any, TEX_STATE_SIZE, "TEX/tex-1", 1 );
-
+   if (rmesa->r200Screen->chipset & R200_CHIPSET_REAL_R200) {
+   /* make sure texture units 0/1 are emitted pair-wise for r200 t0 hang workaround */
+      ALLOC_STATE( tex[0], tex_pair, TEX_STATE_SIZE, "TEX/tex-0", 0 );
+      ALLOC_STATE( tex[1], tex_pair, TEX_STATE_SIZE, "TEX/tex-1", 1 );
+      ALLOC_STATE( tam, tex_any, TAM_STATE_SIZE, "TAM/tam", 0 );
+   }
+   else {
+      ALLOC_STATE( tex[0], tex, TEX_STATE_SIZE, "TEX/tex-0", 0 );
+      ALLOC_STATE( tex[1], tex, TEX_STATE_SIZE, "TEX/tex-1", 1 );
+      ALLOC_STATE( tam, never, TAM_STATE_SIZE, "TAM/tam", 0 );
+   }
+   ALLOC_STATE( tex[2], tex, TEX_STATE_SIZE, "TEX/tex-2", 2 );
+   ALLOC_STATE( tex[3], tex, TEX_STATE_SIZE, "TEX/tex-3", 3 );
+   ALLOC_STATE( tex[4], tex, TEX_STATE_SIZE, "TEX/tex-4", 4 );
+   ALLOC_STATE( tex[5], tex, TEX_STATE_SIZE, "TEX/tex-5", 5 );
    if (rmesa->r200Screen->drmSupportsCubeMaps) {
-      ALLOC_STATE( cube[0], tex_any, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
-      ALLOC_STATE( cube[1], tex_any, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
+      ALLOC_STATE( cube[0], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
+      ALLOC_STATE( cube[1], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
+      ALLOC_STATE( cube[2], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-2", 2 );
+      ALLOC_STATE( cube[3], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-3", 3 );
+      ALLOC_STATE( cube[4], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
+      ALLOC_STATE( cube[5], tex_cube, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
    }
    else {
       ALLOC_STATE( cube[0], never, CUBE_STATE_SIZE, "CUBE/tex-0", 0 );
       ALLOC_STATE( cube[1], never, CUBE_STATE_SIZE, "CUBE/tex-1", 1 );
+      ALLOC_STATE( cube[2], never, CUBE_STATE_SIZE, "CUBE/tex-2", 2 );
+      ALLOC_STATE( cube[3], never, CUBE_STATE_SIZE, "CUBE/tex-3", 3 );
+      ALLOC_STATE( cube[4], never, CUBE_STATE_SIZE, "CUBE/tex-4", 4 );
+      ALLOC_STATE( cube[5], never, CUBE_STATE_SIZE, "CUBE/tex-5", 5 );
    }
 
    ALLOC_STATE( tcl, tcl, TCL_STATE_SIZE, "TCL/tcl", 0 );
@@ -260,6 +281,10 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( mat[R200_MTX_MVP], tcl, MAT_STATE_SIZE, "MAT/modelproject", 0 );
    ALLOC_STATE( mat[R200_MTX_TEX0], tcl_tex, MAT_STATE_SIZE, "MAT/texmat0", 0 );
    ALLOC_STATE( mat[R200_MTX_TEX1], tcl_tex, MAT_STATE_SIZE, "MAT/texmat1", 1 );
+   ALLOC_STATE( mat[R200_MTX_TEX2], tcl_tex, MAT_STATE_SIZE, "MAT/texmat2", 2 );
+   ALLOC_STATE( mat[R200_MTX_TEX3], tcl_tex, MAT_STATE_SIZE, "MAT/texmat3", 3 );
+   ALLOC_STATE( mat[R200_MTX_TEX4], tcl_tex, MAT_STATE_SIZE, "MAT/texmat4", 4 );
+   ALLOC_STATE( mat[R200_MTX_TEX5], tcl_tex, MAT_STATE_SIZE, "MAT/texmat5", 5 );
    ALLOC_STATE( ucp[0], tcl_ucp, UCP_STATE_SIZE, "UCP/userclip-0", 0 );
    ALLOC_STATE( ucp[1], tcl_ucp, UCP_STATE_SIZE, "UCP/userclip-1", 1 );
    ALLOC_STATE( ucp[2], tcl_ucp, UCP_STATE_SIZE, "UCP/userclip-2", 2 );
@@ -276,6 +301,10 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( lit[7], tcl_light, LIT_STATE_SIZE, "LIT/light-7", 7 );
    ALLOC_STATE( pix[0], always, PIX_STATE_SIZE, "PIX/pixstage-0", 0 );
    ALLOC_STATE( pix[1], tex, PIX_STATE_SIZE, "PIX/pixstage-1", 1 );
+   ALLOC_STATE( pix[2], tex, PIX_STATE_SIZE, "PIX/pixstage-2", 2 );
+   ALLOC_STATE( pix[3], tex, PIX_STATE_SIZE, "PIX/pixstage-3", 3 );
+   ALLOC_STATE( pix[4], tex, PIX_STATE_SIZE, "PIX/pixstage-4", 4 );
+   ALLOC_STATE( pix[5], tex, PIX_STATE_SIZE, "PIX/pixstage-5", 5 );
 
 
    /* Fill in the packet headers:
@@ -304,12 +333,32 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->hw.tex[0].cmd[TEX_CMD_1] = cmdpkt(R200_EMIT_PP_TXOFFSET_0);
    rmesa->hw.tex[1].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_1);
    rmesa->hw.tex[1].cmd[TEX_CMD_1] = cmdpkt(R200_EMIT_PP_TXOFFSET_1);
+   rmesa->hw.tex[2].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_2);
+   rmesa->hw.tex[2].cmd[TEX_CMD_1] = cmdpkt(R200_EMIT_PP_TXOFFSET_2);
+   rmesa->hw.tex[3].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_3);
+   rmesa->hw.tex[3].cmd[TEX_CMD_1] = cmdpkt(R200_EMIT_PP_TXOFFSET_3);
+   rmesa->hw.tex[4].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_4);
+   rmesa->hw.tex[4].cmd[TEX_CMD_1] = cmdpkt(R200_EMIT_PP_TXOFFSET_4);
+   rmesa->hw.tex[5].cmd[TEX_CMD_0] = cmdpkt(R200_EMIT_PP_TXFILTER_5);
+   rmesa->hw.tex[5].cmd[TEX_CMD_1] = cmdpkt(R200_EMIT_PP_TXOFFSET_5);
    rmesa->hw.cube[0].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_0);
    rmesa->hw.cube[0].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_0);
    rmesa->hw.cube[1].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_1);
    rmesa->hw.cube[1].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_1);
+   rmesa->hw.cube[2].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_2);
+   rmesa->hw.cube[2].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_2);
+   rmesa->hw.cube[3].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_3);
+   rmesa->hw.cube[3].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_3);
+   rmesa->hw.cube[4].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_4);
+   rmesa->hw.cube[4].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_4);
+   rmesa->hw.cube[5].cmd[CUBE_CMD_0] = cmdpkt(R200_EMIT_PP_CUBIC_FACES_5);
+   rmesa->hw.cube[5].cmd[CUBE_CMD_1] = cmdpkt(R200_EMIT_PP_CUBIC_OFFSETS_5);
    rmesa->hw.pix[0].cmd[PIX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCBLEND_0);
    rmesa->hw.pix[1].cmd[PIX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCBLEND_1);
+   rmesa->hw.pix[2].cmd[PIX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCBLEND_2);
+   rmesa->hw.pix[3].cmd[PIX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCBLEND_3);
+   rmesa->hw.pix[4].cmd[PIX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCBLEND_4);
+   rmesa->hw.pix[5].cmd[PIX_CMD_0] = cmdpkt(R200_EMIT_PP_TXCBLEND_5);
    rmesa->hw.zbs.cmd[ZBS_CMD_0] = cmdpkt(RADEON_EMIT_SE_ZBIAS_FACTOR);
    rmesa->hw.tcl.cmd[TCL_CMD_0] = cmdpkt(R200_EMIT_TCL_LIGHT_MODEL_CTL_0);
    rmesa->hw.tcl.cmd[TCL_CMD_1] = cmdpkt(R200_EMIT_TCL_UCP_VERT_BLEND_CTL);
@@ -348,6 +397,14 @@ void r200InitState( r200ContextPtr rmesa )
       cmdvec( R200_VS_MATRIX_3_TEX0, 1, 16);
    rmesa->hw.mat[R200_MTX_TEX1].cmd[MAT_CMD_0] = 
       cmdvec( R200_VS_MATRIX_4_TEX1, 1, 16);
+   rmesa->hw.mat[R200_MTX_TEX2].cmd[MAT_CMD_0] = 
+      cmdvec( R200_VS_MATRIX_5_TEX2, 1, 16);
+   rmesa->hw.mat[R200_MTX_TEX3].cmd[MAT_CMD_0] = 
+      cmdvec( R200_VS_MATRIX_6_TEX3, 1, 16);
+   rmesa->hw.mat[R200_MTX_TEX4].cmd[MAT_CMD_0] = 
+      cmdvec( R200_VS_MATRIX_7_TEX4, 1, 16);
+   rmesa->hw.mat[R200_MTX_TEX5].cmd[MAT_CMD_0] = 
+      cmdvec( R200_VS_MATRIX_8_TEX5, 1, 16);
 
    for (i = 0 ; i < 8; i++) {
       rmesa->hw.lit[i].cmd[LIT_CMD_0] = 

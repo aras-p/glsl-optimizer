@@ -290,22 +290,34 @@ static GLuint r200_register_color[][R200_MAX_TEXTURE_UNITS] =
    {
       R200_TXC_ARG_A_R0_COLOR,
       R200_TXC_ARG_A_R1_COLOR,
-      R200_TXC_ARG_A_R2_COLOR
+      R200_TXC_ARG_A_R2_COLOR,
+      R200_TXC_ARG_A_R3_COLOR,
+      R200_TXC_ARG_A_R4_COLOR,
+      R200_TXC_ARG_A_R5_COLOR
    },
    {
       R200_TXC_ARG_A_R0_COLOR | R200_TXC_COMP_ARG_A,
       R200_TXC_ARG_A_R1_COLOR | R200_TXC_COMP_ARG_A,
-      R200_TXC_ARG_A_R2_COLOR | R200_TXC_COMP_ARG_A
+      R200_TXC_ARG_A_R2_COLOR | R200_TXC_COMP_ARG_A,
+      R200_TXC_ARG_A_R3_COLOR | R200_TXC_COMP_ARG_A,
+      R200_TXC_ARG_A_R4_COLOR | R200_TXC_COMP_ARG_A,
+      R200_TXC_ARG_A_R5_COLOR | R200_TXC_COMP_ARG_A
    },
    {
       R200_TXC_ARG_A_R0_ALPHA,
       R200_TXC_ARG_A_R1_ALPHA,
-      R200_TXC_ARG_A_R2_ALPHA
+      R200_TXC_ARG_A_R2_ALPHA,
+      R200_TXC_ARG_A_R3_ALPHA,
+      R200_TXC_ARG_A_R4_ALPHA,
+      R200_TXC_ARG_A_R5_ALPHA
    },
    {
       R200_TXC_ARG_A_R0_ALPHA | R200_TXC_COMP_ARG_A,
       R200_TXC_ARG_A_R1_ALPHA | R200_TXC_COMP_ARG_A,
-      R200_TXC_ARG_A_R2_ALPHA | R200_TXC_COMP_ARG_A
+      R200_TXC_ARG_A_R2_ALPHA | R200_TXC_COMP_ARG_A,
+      R200_TXC_ARG_A_R3_ALPHA | R200_TXC_COMP_ARG_A,
+      R200_TXC_ARG_A_R4_ALPHA | R200_TXC_COMP_ARG_A,
+      R200_TXC_ARG_A_R5_ALPHA | R200_TXC_COMP_ARG_A
    },
 };
 
@@ -344,12 +356,18 @@ static GLuint r200_register_alpha[][R200_MAX_TEXTURE_UNITS] =
    {
       R200_TXA_ARG_A_R0_ALPHA,
       R200_TXA_ARG_A_R1_ALPHA,
-      R200_TXA_ARG_A_R2_ALPHA
+      R200_TXA_ARG_A_R2_ALPHA,
+      R200_TXA_ARG_A_R3_ALPHA,
+      R200_TXA_ARG_A_R4_ALPHA,
+      R200_TXA_ARG_A_R5_ALPHA
    },
    {
       R200_TXA_ARG_A_R0_ALPHA | R200_TXA_COMP_ARG_A,
       R200_TXA_ARG_A_R1_ALPHA | R200_TXA_COMP_ARG_A,
-      R200_TXA_ARG_A_R2_ALPHA | R200_TXA_COMP_ARG_A
+      R200_TXA_ARG_A_R2_ALPHA | R200_TXA_COMP_ARG_A,
+      R200_TXA_ARG_A_R3_ALPHA | R200_TXA_COMP_ARG_A,
+      R200_TXA_ARG_A_R4_ALPHA | R200_TXA_COMP_ARG_A,
+      R200_TXA_ARG_A_R5_ALPHA | R200_TXA_COMP_ARG_A
    },
 };
 
@@ -428,11 +446,12 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
     * reduces the amount of special-casing we have to do, alpha-only
     * textures being a notable exception.
     */
+   /* Don't cache these results.
+    */
+   rmesa->state.texture.unit[unit].format = 0;
+   rmesa->state.texture.unit[unit].envMode = 0;
+
    if ( !texUnit->_ReallyEnabled ) {
-      /* Don't cache these results.
-       */
-      rmesa->state.texture.unit[unit].format = 0;
-      rmesa->state.texture.unit[unit].envMode = 0;
       if ( unit == 0 ) {
 	 color_combine = R200_TXC_ARG_A_ZERO | R200_TXC_ARG_B_ZERO
 	     | R200_TXC_ARG_C_DIFFUSE_COLOR | R200_TXC_OP_MADD;
@@ -453,11 +472,6 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit )
       const GLuint numAlphaArgs = texUnit->_CurrentCombine->_NumArgsA;
       GLuint RGBshift = texUnit->_CurrentCombine->ScaleShiftRGB;
       GLuint Ashift = texUnit->_CurrentCombine->ScaleShiftA;
-
-      /* Don't cache these results.
-       */
-      rmesa->state.texture.unit[unit].format = 0;
-      rmesa->state.texture.unit[unit].envMode = 0;
 
 
       /* Step 1:
@@ -1249,75 +1263,102 @@ void r200UpdateTextureState( GLcontext *ctx )
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLboolean ok;
    GLuint dbg;
+   int i;
 
    ok = (r200UpdateTextureUnit( ctx, 0 ) &&
-	 r200UpdateTextureUnit( ctx, 1 ));
+	 r200UpdateTextureUnit( ctx, 1 ) &&
+	 r200UpdateTextureUnit( ctx, 2 ) &&
+	 r200UpdateTextureUnit( ctx, 3 ) &&
+	 r200UpdateTextureUnit( ctx, 4 ) &&
+	 r200UpdateTextureUnit( ctx, 5 ));
 
    FALLBACK( rmesa, R200_FALLBACK_TEXTURE, !ok );
 
    if (rmesa->TclFallback)
       r200ChooseVertexState( ctx );
 
-   /*
-    * T0 hang workaround -------------
-    */
-#if 1
-   if ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_ENABLE_MASK) == R200_TEX_0_ENABLE &&
-       (rmesa->hw.tex[0].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK) > R200_MIN_FILTER_LINEAR) {
 
-      R200_STATECHANGE(rmesa, ctx);
-      R200_STATECHANGE(rmesa, tex[1]);
-      rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_1_ENABLE;
-      rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] &= ~TEXOBJ_TXFORMAT_MASK;
-      rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] |= 0x08000000;
-   }
-   else {
-      if ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_1_ENABLE) &&
-	  (rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] & 0x08000000)) {
-	 R200_STATECHANGE(rmesa, tex[1]);
-	 rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] &= ~0x08000000;
+   if (rmesa->r200Screen->chipset & R200_CHIPSET_REAL_R200) {
+
+      /*
+       * T0 hang workaround -------------
+       * not needed for r200 derivatives?
+       */
+      if ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_ENABLE_MASK) == R200_TEX_0_ENABLE &&
+         (rmesa->hw.tex[0].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK) > R200_MIN_FILTER_LINEAR) {
+
+         R200_STATECHANGE(rmesa, ctx);
+         R200_STATECHANGE(rmesa, tex[1]);
+         rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_1_ENABLE;
+         rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] &= ~TEXOBJ_TXFORMAT_MASK;
+         rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] |= 0x08000000;
+      }
+      else {
+         if ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_1_ENABLE) &&
+            (rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] & 0x08000000)) {
+               R200_STATECHANGE(rmesa, tex[1]);
+               rmesa->hw.tex[1].cmd[TEX_PP_TXFORMAT] &= ~0x08000000;
+         }
+      }
+
+      /* maybe needs to be done pairwise due to 2 parallel (physical) tex units ?
+         looks like that's not the case, if 8500/9100 owners don't complain remove this...
+      for ( i = 0; i < ctx->Const.MaxTextureUnits; i += 2) {
+         if (((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & ((R200_TEX_0_ENABLE |
+            R200_TEX_1_ENABLE ) << i)) == (R200_TEX_0_ENABLE << i)) &&
+            ((rmesa->hw.tex[i].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK) >
+            R200_MIN_FILTER_LINEAR)) {
+            R200_STATECHANGE(rmesa, ctx);
+            R200_STATECHANGE(rmesa, tex[i+1]);
+            rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= (R200_TEX_1_ENABLE << i);
+            rmesa->hw.tex[i+1].cmd[TEX_PP_TXFORMAT] &= ~TEXOBJ_TXFORMAT_MASK;
+            rmesa->hw.tex[i+1].cmd[TEX_PP_TXFORMAT] |= 0x08000000;
+         }
+         else {
+            if ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & (R200_TEX_1_ENABLE << i)) &&
+               (rmesa->hw.tex[i+1].cmd[TEX_PP_TXFORMAT] & 0x08000000)) {
+               R200_STATECHANGE(rmesa, tex[i+1]);
+               rmesa->hw.tex[i+1].cmd[TEX_PP_TXFORMAT] &= ~0x08000000;
+            }
+         }
+      } */
+
+      /*
+       * Texture cache LRU hang workaround -------------
+       * not needed for r200 derivatives?
+       */
+      dbg = 0x0;
+
+      if (((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & (R200_TEX_0_ENABLE )) &&
+         ((((rmesa->hw.tex[0].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) &
+         0x04) == 0)) ||
+         ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_2_ENABLE) &&
+         ((((rmesa->hw.tex[2].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) &
+         0x04) == 0)) ||
+         ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_4_ENABLE) &&
+         ((((rmesa->hw.tex[4].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) &
+         0x04) == 0)))
+      {
+         dbg |= 0x02;
+      }
+
+      if (((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & (R200_TEX_1_ENABLE )) &&
+         ((((rmesa->hw.tex[1].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) &
+         0x04) == 0)) ||
+         ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_3_ENABLE) &&
+         ((((rmesa->hw.tex[3].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) &
+         0x04) == 0)) ||
+         ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_5_ENABLE) &&
+         ((((rmesa->hw.tex[5].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) &
+         0x04) == 0)))
+      {
+         dbg |= 0x04;
+      }
+
+      if (dbg != rmesa->hw.tam.cmd[TAM_DEBUG3]) {
+         R200_STATECHANGE( rmesa, tam );
+         rmesa->hw.tam.cmd[TAM_DEBUG3] = dbg;
+         if (0) printf("TEXCACHE LRU HANG WORKAROUND %x\n", dbg);
       }
    }
-#endif
-
-#if 1
-   /*
-    * Texture cache LRU hang workaround -------------
-    */
-   dbg = 0x0;
-   if (((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_0_ENABLE) &&
-	((((rmesa->hw.tex[0].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) & 
-	  0x04) == 0)))
-   {
-      dbg |= 0x02;
-   }
-
-   if (((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_1_ENABLE) &&
-	((((rmesa->hw.tex[1].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) & 
-	  0x04) == 0)))
-   {
-      dbg |= 0x04;
-   }
-
-   if (dbg != rmesa->hw.tam.cmd[TAM_DEBUG3]) {
-      R200_STATECHANGE( rmesa, tam );
-      rmesa->hw.tam.cmd[TAM_DEBUG3] = dbg;
-      if (0) printf("TEXCACHE LRU HANG WORKAROUND %x\n", dbg);
-   }
-#endif
 }
-
-/*
-  also tests for higher texunits:
-
-       ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_2_ENABLE) &&
-	((((rmesa->hw.tex[2].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) & 0x04) == 0)) ||
-       ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_4_ENABLE) &&
-	((((rmesa->hw.tex[4].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) & 0x04) == 0)))
-
-       ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_3_ENABLE) &&
-	((((rmesa->hw.tex[3].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) & 0x04) == 0)) ||
-       ((rmesa->hw.ctx.cmd[CTX_PP_CNTL] & R200_TEX_5_ENABLE) &&
-	((((rmesa->hw.tex[5].cmd[TEX_PP_TXFILTER] & R200_MIN_FILTER_MASK)) & 0x04) == 0)))
-
-*/

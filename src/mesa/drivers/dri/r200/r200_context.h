@@ -131,7 +131,11 @@ struct r200_stipple_state {
 
 #define TEX_0   0x1
 #define TEX_1   0x2
-#define TEX_ALL 0x3
+#define TEX_2	0x4
+#define TEX_3	0x8
+#define TEX_4	0x10
+#define TEX_5	0x20
+#define TEX_ALL 0x3f
 
 typedef struct r200_tex_obj r200TexObj, *r200TexObjPtr;
 
@@ -173,7 +177,7 @@ struct r200_texture_env_state {
    GLenum envMode;
 };
 
-#define R200_MAX_TEXTURE_UNITS 3
+#define R200_MAX_TEXTURE_UNITS 6
 
 struct r200_texture_state {
    struct r200_texture_env_state unit[R200_MAX_TEXTURE_UNITS];
@@ -512,11 +516,11 @@ struct r200_hw_state {
    struct r200_state_atom cst;
    struct r200_state_atom tam;
    struct r200_state_atom tf;
-   struct r200_state_atom tex[2];
-   struct r200_state_atom cube[2];
+   struct r200_state_atom tex[6];
+   struct r200_state_atom cube[6];
    struct r200_state_atom zbs;
    struct r200_state_atom mtl[2]; 
-   struct r200_state_atom mat[5]; 
+   struct r200_state_atom mat[9]; 
    struct r200_state_atom lit[8]; /* includes vec, scl commands */
    struct r200_state_atom ucp[6];
    struct r200_state_atom pix[6]; /* pixshader stages */
@@ -769,29 +773,33 @@ struct r200_prim {
    GLuint prim;
 };
 
+   /* A maximum total of 29 elements per vertex:  3 floats for position, 3
+    * floats for normal, 4 floats for color, 4 bytes for secondary color,
+    * 3 floats for each texture unit (18 floats total).
+    * 
+    * we maybe need add. 4 to prevent segfault if someone specifies
+    * GL_TEXTURE6/GL_TEXTURE7 (esp. for the codegen-path) (FIXME: )
+    * 
+    * The position data is never actually stored here, so 3 elements could be
+    * trimmed out of the buffer.
+    */
+
+#define R200_MAX_VERTEX_SIZE ((3*6)+11)
+
 struct r200_vbinfo {
    GLint counter, initial_counter;
    GLint *dmaptr;
    void (*notify)( void );
    GLint vertex_size;
 
-   /* A maximum total of 17 elements per vertex:  3 floats for position, 3
-    * floats for normal, 4 floats for color, 4 bytes for secondary color,
-    * 3 floats for each texture unit (6 floats total).
-    * 
-    * As soon as the 3rd through 6th TMUs are supported, this value will grow.
-    * 
-    * The position data is never actually stored here, so 3 elements could be
-    * trimmed out of the buffer.
-    */
-   union { float f; int i; r200_color_t color; } vertex[17];
+   union { float f; int i; r200_color_t color; } vertex[R200_MAX_VERTEX_SIZE];
 
    GLfloat *normalptr;
    GLfloat *floatcolorptr;
    r200_color_t *colorptr;
    GLfloat *floatspecptr;
    r200_color_t *specptr;
-   GLfloat *texcoordptr[2];
+   GLfloat *texcoordptr[8];	/* 6 (TMU) + 2 for r200_vtxfmt_c.c when GL_TEXTURE6/7 */
 
 
    GLenum *prim;		/* &ctx->Driver.CurrentExecPrimitive */

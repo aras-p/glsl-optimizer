@@ -332,13 +332,14 @@ GLOBL( _x86_Color4ub_ub )
 GLOBL( _x86_Color4ub_ub_end )
 
 
+/* \todo: change the "and $7, %eax" to something like "target & 4 ? target & 5 : target & 3)" */
 /*
 	MultiTexCoord2fv st0/st1
 */
 GLOBL( _x86_MultiTexCoord2fv )
 	movl	4(%esp), %eax
 	movl	8(%esp), %ecx
-	and	$1, %eax
+	and	$7, %eax
 	movl	(%ecx), %edx
 	shl	$3, %eax
 	movl	4(%ecx), %ecx
@@ -354,7 +355,7 @@ GLOBL( _x86_MultiTexCoord2fv_end )
 GLOBL( _x86_MultiTexCoord2fv_2 )
 	movl	4(%esp,1), %eax
 	movl	8(%esp,1), %ecx
-	and	$0x1, %eax
+	and	$0x7, %eax
 	movl	0(,%eax,4), %edx
 	movl	(%ecx), %eax
 	movl	%eax, (%edx)
@@ -370,7 +371,7 @@ GLOBL( _x86_MultiTexCoord2f )
 	movl	4(%esp), %eax
 	movl	8(%esp), %edx
 	movl	12(%esp), %ecx
-	and	$1, %eax
+	and	$7, %eax
 	shl	$3, %eax
 	movl	%edx, 0xdeadbeef(%eax)
 	movl	%ecx, 0xdeadbeef(%eax)
@@ -384,7 +385,7 @@ GLOBL( _x86_MultiTexCoord2f_2 )
 	movl	4(%esp), %eax
 	movl	8(%esp), %edx
 	movl	12(%esp,1), %ecx
-	and	$1,%eax
+	and	$7,%eax
 	movl	0(,%eax,4), %eax
 	movl	%edx, (%eax)
 	movl	%ecx, 4(%eax)
@@ -450,7 +451,7 @@ GLOBL( _sse_Attribute2f_end )
 GLOBL( _sse_MultiTexCoord2fv )
 	movl	4(%esp), %eax
 	movl	8(%esp), %ecx
-	and	$1, %eax
+	and	$7, %eax
 	movlps	(%ecx), %xmm0
 	movlps	%xmm0, 0xdeadbeef(,%eax,8)
 	ret
@@ -462,7 +463,7 @@ GLOBL( _sse_MultiTexCoord2fv_end )
 GLOBL( _sse_MultiTexCoord2fv_2 )
 	movl	4(%esp), %eax
 	movl	8(%esp), %ecx
-	and	$0x1, %eax
+	and	$0x7, %eax
 	movl	0(,%eax,4), %edx
 	movlps	(%ecx), %xmm0
 	movlps	%xmm0, (%edx)
@@ -474,7 +475,7 @@ GLOBL( _sse_MultiTexCoord2fv_2_end )
 */
 GLOBL( _sse_MultiTexCoord2f )
 	movl	4(%esp), %eax
-	and	$1, %eax
+	and	$7, %eax
 	movlps	8(%esp), %xmm0
 	movlps	%xmm0, 0xdeadbeef(,%eax,8)
 	ret
@@ -486,7 +487,7 @@ GLOBL( _sse_MultiTexCoord2f_end )
 GLOBL( _sse_MultiTexCoord2f_2 )
 	movl	4(%esp), %eax
 	movlps	8(%esp), %xmm0
-	and	$1,%eax
+	and	$7,%eax
 	movl	0(,%eax,4), %eax
 	movlps	%xmm0, (%eax)
 	ret

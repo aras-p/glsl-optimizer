@@ -910,8 +910,9 @@ void r200InitSwtcl( GLcontext *ctx )
    tnl->Driver.Render.CopyPV = _tnl_copy_pv;
    tnl->Driver.Render.Interp = _tnl_interp;
 
+   /* FIXME: what are these numbers? */
    _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
-		       22 * sizeof(GLfloat) );
+		       36 * sizeof(GLfloat) );
    
    rmesa->swtcl.verts = (GLubyte *)tnl->clipspace.vertex_buf;
    rmesa->swtcl.RenderIndex = ~0;

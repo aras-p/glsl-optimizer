@@ -53,6 +53,7 @@ typedef struct {
 
 /* chipset features */
 #define R200_CHIPSET_TCL	(1 << 0)
+#define R200_CHIPSET_REAL_R200  (1 << 1)
 
 
 #define R200_NR_TEX_HEAPS 2

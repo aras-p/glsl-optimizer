@@ -330,9 +330,10 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
     */
 
    ctx = rmesa->glCtx;
-   ctx->Const.MaxTextureUnits = 2;
-   ctx->Const.MaxTextureImageUnits = 2;
-   ctx->Const.MaxTextureCoordUnits = 2;
+   ctx->Const.MaxTextureUnits = driQueryOptioni (&rmesa->optionCache,
+						 "texture_units");
+   ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
+   ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
 
    driCalculateMaxTextureLevels( rmesa->texture_heaps,
 				 rmesa->nr_heaps,
@@ -391,11 +392,11 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    _tnl_allow_vertex_fog( ctx, GL_TRUE );
 
 
-   _math_matrix_ctr( &rmesa->TexGenMatrix[0] );
-   _math_matrix_ctr( &rmesa->TexGenMatrix[1] );
+   for ( i = 0 ; i < R200_MAX_TEXTURE_UNITS ; i++ ) {
+      _math_matrix_ctr( &rmesa->TexGenMatrix[i] );
+      _math_matrix_set_identity( &rmesa->TexGenMatrix[i] );
+   }
    _math_matrix_ctr( &rmesa->tmpmat );
-   _math_matrix_set_identity( &rmesa->TexGenMatrix[0] );
-   _math_matrix_set_identity( &rmesa->TexGenMatrix[1] );
    _math_matrix_set_identity( &rmesa->tmpmat );
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );

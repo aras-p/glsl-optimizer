@@ -305,7 +305,7 @@ static void copy_vertex( r200ContextPtr rmesa, GLuint n, GLfloat *dst )
  * memory.  Could also use the counter/notify mechanism to populate
  * tmp on the fly as vertices are generated.  
  */
-static GLuint copy_dma_verts( r200ContextPtr rmesa, GLfloat (*tmp)[15] )
+static GLuint copy_dma_verts( r200ContextPtr rmesa, GLfloat (*tmp)[R200_MAX_VERTEX_SIZE] )
 {
    GLuint ovf, i;
    GLuint nr = (rmesa->vb.initial_counter - rmesa->vb.counter) - 
@@ -441,7 +441,7 @@ static void VFMT_FALLBACK( const char *caller )
 {
    GET_CURRENT_CONTEXT(ctx);
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLfloat tmp[3][15];
+   GLfloat tmp[3][R200_MAX_VERTEX_SIZE];
    GLuint i, prim;
    GLuint ind0 = rmesa->vb.vtxfmt_0;
    GLuint ind1 = rmesa->vb.vtxfmt_1;
@@ -510,11 +510,7 @@ static void VFMT_FALLBACK( const char *caller )
 	 offset++;
       }
 
-      count = VTX_TEXn_COUNT( ind1, 0 );
-      dispatch_texcoord( count, &tmp[i][offset] );
-      offset += count;
-
-      for ( unit = 1 ; unit < ctx->Const.MaxTextureUnits ; unit++ ) {
+      for ( unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++ ) {
 	 count = VTX_TEXn_COUNT( ind1, unit );
 	 dispatch_multitexcoord( count, unit, &tmp[i][offset] );
 	 offset += count;
@@ -554,10 +550,7 @@ static void VFMT_FALLBACK( const char *caller )
 				      rmesa->vb.specptr->green,
 				      rmesa->vb.specptr->blue ); 
 
-   count = VTX_TEXn_COUNT( ind1, 0 );
-   dispatch_texcoord( count, rmesa->vb.texcoordptr[0] );
-
-   for ( unit = 1 ; unit < ctx->Const.MaxTextureUnits ; unit++ ) {
+   for ( unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++ ) {
       count = VTX_TEXn_COUNT( ind1, unit );
       dispatch_multitexcoord( count, unit, rmesa->vb.texcoordptr[unit] );
    }
@@ -569,7 +562,7 @@ static void wrap_buffer( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLfloat tmp[3][15];
+   GLfloat tmp[3][R200_MAX_VERTEX_SIZE];
    GLuint i, nrverts;
 
    if (R200_DEBUG & (DEBUG_VFMT|DEBUG_PRIMS))
@@ -757,6 +750,12 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
    rmesa->vb.floatspecptr = ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
    rmesa->vb.texcoordptr[0] = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
    rmesa->vb.texcoordptr[1] = ctx->Current.Attrib[VERT_ATTRIB_TEX1];
+   rmesa->vb.texcoordptr[2] = ctx->Current.Attrib[VERT_ATTRIB_TEX2];
+   rmesa->vb.texcoordptr[3] = ctx->Current.Attrib[VERT_ATTRIB_TEX3];
+   rmesa->vb.texcoordptr[4] = ctx->Current.Attrib[VERT_ATTRIB_TEX4];
+   rmesa->vb.texcoordptr[5] = ctx->Current.Attrib[VERT_ATTRIB_TEX5];
+   rmesa->vb.texcoordptr[6] = ctx->Current.Attrib[VERT_ATTRIB_TEX0];	/* dummy */
+   rmesa->vb.texcoordptr[7] = ctx->Current.Attrib[VERT_ATTRIB_TEX0];	/* dummy */
 
    /* Run through and initialize the vertex components in the order
     * the hardware understands:

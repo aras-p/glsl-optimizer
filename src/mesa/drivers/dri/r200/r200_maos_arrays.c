@@ -420,9 +420,6 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
       vfmt0 |= R200_VTX_FP_RGB << R200_VTX_COLOR_1_SHIFT; 
       component[nr++] = &rmesa->tcl.spec;
    }
-
-/*    vtx = (rmesa->hw.tcl.cmd[TCL_OUTPUT_VTXFMT] & */
-/* 	  ~(R200_TCL_VTX_Q0|R200_TCL_VTX_Q1|R200_TCL_VTX_Q2|R200_TCL_VTX_Q3|R200_TCL_VTX_Q4|R200_TCL_VTX_Q5)); */
       
    re_cntl = rmesa->hw.set.cmd[SET_RE_CNTL] & ~(R200_VTX_STQ0_D3D |
 						R200_VTX_STQ1_D3D |

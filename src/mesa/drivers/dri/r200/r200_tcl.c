@@ -419,9 +419,12 @@ static void transition_to_swtnl( GLcontext *ctx )
 
    R200_STATECHANGE( rmesa, set );
    rmesa->hw.set.cmd[SET_RE_CNTL] |= (R200_VTX_STQ0_D3D |
-				      R200_VTX_STQ1_D3D);
+				      R200_VTX_STQ1_D3D |
+				      R200_VTX_STQ2_D3D |
+				      R200_VTX_STQ3_D3D |
+				      R200_VTX_STQ4_D3D |
+				      R200_VTX_STQ5_D3D);
 }
-
 
 static void transition_to_hwtnl( GLcontext *ctx )
 {
@@ -454,7 +457,11 @@ static void transition_to_hwtnl( GLcontext *ctx )
 
    R200_STATECHANGE( rmesa, set );
    rmesa->hw.set.cmd[SET_RE_CNTL] &= ~(R200_VTX_STQ0_D3D |
-				       R200_VTX_STQ1_D3D);
+				       R200_VTX_STQ1_D3D |
+				       R200_VTX_STQ2_D3D |
+				       R200_VTX_STQ3_D3D |
+				       R200_VTX_STQ4_D3D |
+				       R200_VTX_STQ5_D3D);
 
 
    if (R200_DEBUG & DEBUG_FALLBACKS) 
@@ -470,7 +477,11 @@ static char *fallbackStrings[] = {
    "Texgen unit 0",
    "Texgen unit 1",
    "Texgen unit 2",
-   "User disable"
+   "Texgen unit 3",
+   "Texgen unit 4",
+   "Texgen unit 5",
+   "User disable",
+   "Bitmap as points"
 };
 
 

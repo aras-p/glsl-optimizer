@@ -64,6 +64,7 @@ DRI_CONF_BEGIN
         DRI_CONF_TCL_MODE(DRI_CONF_TCL_CODEGEN)
         DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
         DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+        DRI_CONF_MAX_TEXTURE_UNITS(4,2,6)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_QUALITY
         DRI_CONF_TEXTURE_DEPTH(DRI_CONF_TEXTURE_DEPTH_FB)
@@ -77,13 +78,13 @@ DRI_CONF_BEGIN
         DRI_CONF_NO_RAST(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 10;
+static const GLuint __driNConfigOptions = 11;
 
 #if 1
 /* Including xf86PciInfo.h introduces a bunch of errors...
  */
-#define PCI_CHIP_R200_QD	0x5144
-#define PCI_CHIP_R200_QE	0x5145
+#define PCI_CHIP_R200_QD	0x5144 /* why do they have r200 names? */
+#define PCI_CHIP_R200_QE	0x5145 /* Those are all standard radeons */
 #define PCI_CHIP_R200_QF	0x5146
 #define PCI_CHIP_R200_QG	0x5147
 #define PCI_CHIP_R200_QY	0x5159
@@ -92,6 +93,7 @@ static const GLuint __driNConfigOptions = 10;
 #define PCI_CHIP_R200_LY	0x4C59
 #define PCI_CHIP_R200_LZ	0x4C5A
 #define PCI_CHIP_RV200_QW	0x5157 /* Radeon 7500 - not an R200 at all */
+#define PCI_CHIP_RV200_QX       0x5158
 #define PCI_CHIP_RS100_4136     0x4136 /* IGP RS100, RS200, RS250 are not R200 */
 #define PCI_CHIP_RS200_4137     0x4137
 #define PCI_CHIP_RS250_4237     0x4237
@@ -102,6 +104,19 @@ static const GLuint __driNConfigOptions = 10;
 #define PCI_CHIP_RS300_5835     0x5835
 #define PCI_CHIP_RS300_5836     0x5836
 #define PCI_CHIP_RS300_5837     0x5837
+#define PCI_CHIP_R200_BB        0x4242 /* r200 (non-derived) start */
+#define PCI_CHIP_R200_BC        0x4243
+#define PCI_CHIP_R200_QH        0x5148
+#define PCI_CHIP_R200_QI        0x5149
+#define PCI_CHIP_R200_QJ        0x514A
+#define PCI_CHIP_R200_QK        0x514B
+#define PCI_CHIP_R200_QL        0x514C
+#define PCI_CHIP_R200_QM        0x514D
+#define PCI_CHIP_R200_QN        0x514E
+#define PCI_CHIP_R200_QO        0x514F /* r200 (non-derived) end */
+/* are the R200 Qh (0x5168) and following needed too? They are not in xf86PciInfo.h
+   but in the pci database. Maybe just secondary ports or something ? */
+
 #endif
 
 #ifdef USE_NEW_INTERFACE
@@ -277,6 +292,7 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_R200_QY:
    case PCI_CHIP_R200_QZ:
    case PCI_CHIP_RV200_QW:
+   case PCI_CHIP_RV200_QX:
    case PCI_CHIP_R200_LW:
    case PCI_CHIP_R200_LY:
    case PCI_CHIP_R200_LZ:
@@ -296,6 +312,18 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RS300_5837:
       break;
 
+   case PCI_CHIP_R200_BB:
+   case PCI_CHIP_R200_BC:
+   case PCI_CHIP_R200_QH:
+   case PCI_CHIP_R200_QI:
+   case PCI_CHIP_R200_QJ:
+   case PCI_CHIP_R200_QK:
+   case PCI_CHIP_R200_QL:
+   case PCI_CHIP_R200_QM:
+   case PCI_CHIP_R200_QN:
+   case PCI_CHIP_R200_QO:
+      screen->chipset |= R200_CHIPSET_REAL_R200;
+   /* fallthrough */
    default:
       screen->chipset |= R200_CHIPSET_TCL;
       break;
