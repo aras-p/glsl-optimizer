@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.9 2000/03/03 17:47:39 brianp Exp $ */
+/* $Id: feedback.c,v 1.10 2000/05/09 23:54:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -133,7 +133,6 @@ void gl_feedback_vertex( GLcontext *ctx,
    FEEDBACK_TOKEN( ctx, win[0] );
    FEEDBACK_TOKEN( ctx, win[1] );
    if (ctx->Feedback.Mask & FB_3D) {
-      printf("FB %g\n", win[2]);
       FEEDBACK_TOKEN( ctx, win[2] );
    }
    if (ctx->Feedback.Mask & FB_4D) {
