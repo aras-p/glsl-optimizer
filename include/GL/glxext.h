@@ -252,7 +252,8 @@ extern "C" {
 /*************************************************************/
 
 #ifndef GLX_ARB_get_proc_address
-typedef void (*__GLXextFuncPtr)();
+/* XXX Added void parameter to silence many, many warnings (BrianP) */
+typedef void (*__GLXextFuncPtr)(void);
 #endif
 
 #ifndef GLX_SGIX_video_source
