@@ -1337,7 +1337,7 @@ void r300_setup_textures(GLcontext *ctx)
 	R300_STATECHANGE(r300, tex.offset);
 	R300_STATECHANGE(r300, tex.unknown4);
 	R300_STATECHANGE(r300, tex.border_color);
-
+	
 	r300->state.texture.tc_count=0;
 
 	r300->hw.txe.cmd[R300_TXE_ENABLE]=0x0;
@@ -1346,35 +1346,43 @@ void r300_setup_textures(GLcontext *ctx)
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "mtu=%d\n", mtu);
 
-	if(mtu>R300_MAX_TEXTURE_UNITS){
+	if(mtu > R300_MAX_TEXTURE_UNITS) {
 		fprintf(stderr, "Aiiee ! mtu=%d is greater than R300_MAX_TEXTURE_UNITS=%d\n",
 			mtu, R300_MAX_TEXTURE_UNITS);
 		exit(-1);
-		}
-	for(i=0;i<mtu;i++){
+	}
+	
+	for(i=0; i < mtu; i++) {
+		
 		if( ((r300->state.render_inputs & (_TNL_BIT_TEX0<<i))!=0) != ((ctx->Texture.Unit[i].Enabled)!=0) ) {
 			WARN_ONCE("Mismatch between render_inputs and ctx->Texture.Unit[i].Enabled value.\n");
-			}
-		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i)){
+		}
+		
+		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i)) {
 			t=r300->state.texture.unit[i].texobj;
 			//fprintf(stderr, "format=%08x\n", r300->state.texture.unit[i].format);
 			r300->state.texture.tc_count++;
-			if(t==NULL){
+			
+			if(t == NULL){
 				fprintf(stderr, "Texture unit %d enabled, but corresponding texobj is NULL, using default object.\n", i);
 				//exit(-1);
 				t=&default_tex_obj;
-				}
+			}
+			
 			//fprintf(stderr, "t->format=%08x\n", t->format);
-			if((t->format & 0xffffff00)==0xffffff00){
+			if((t->format & 0xffffff00)==0xffffff00) {
 				WARN_ONCE("unknown texture format (entry %x) encountered. Help me !\n", t->format & 0xff);
 				//fprintf(stderr, "t->format=%08x\n", t->format);
-				}
+			}
+			
 			if (RADEON_DEBUG & DEBUG_STATE)
 				fprintf(stderr, "Activating texture unit %d\n", i);
 			max_texture_unit=i;
 			r300->hw.txe.cmd[R300_TXE_ENABLE]|=(1<<i);
-
+			
 			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=gen_fixed_filter(t->filter);
+			r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=0x0;
+			
 			/* No idea why linear filtered textures shake when puting random data */
 			/*r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=(rand()%0xffffffff) & (~0x1fff);*/
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]=t->size;
@@ -1383,8 +1391,9 @@ void r300_setup_textures(GLcontext *ctx)
 			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=r300->radeon.radeonScreen->fbLocation+t->offset;
 			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
 			r300->hw.tex.border_color.cmd[R300_TEX_VALUE_0+i]=t->pp_border_color;
-			}
 		}
+	}
+	
 	((drm_r300_cmd_header_t*)r300->hw.tex.filter.cmd)->unchecked_state.count = max_texture_unit+1;
 	((drm_r300_cmd_header_t*)r300->hw.tex.unknown1.cmd)->unchecked_state.count = max_texture_unit+1;
 	((drm_r300_cmd_header_t*)r300->hw.tex.size.cmd)->unchecked_state.count = max_texture_unit+1;

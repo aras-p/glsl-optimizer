@@ -414,7 +414,6 @@ struct r300_hw_state {
 #ifdef EXP_C
 	struct r300_state_atom lsf;	/* line stipple factor */
 #endif
-	struct r300_state_atom dummy[4];
 	struct r300_state_atom unk4260; /* (4260) */
 	struct r300_state_atom unk4274; /* (4274) */
 	struct r300_state_atom unk4288; /* (4288) */
@@ -456,7 +455,6 @@ struct r300_hw_state {
 	struct r300_state_atom vpi;	/* vp instructions */
 	struct r300_state_atom vpp;	/* vp parameters */
 	struct r300_state_atom vps;	/* vertex point size (?) */
-
 		/* 8 texture units */
 		/* the state is grouped by function and not by
 		   texture unit. This makes single unit updates

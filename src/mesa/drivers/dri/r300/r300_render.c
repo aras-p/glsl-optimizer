@@ -614,10 +614,10 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
    struct vertex_buffer *VB = &tnl->vb;
    int i, j;
    LOCAL_VARS
-
+   
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
-
+	
 
 	r300ReleaseArrays(ctx);
 	r300EmitArrays(ctx, GL_FALSE);
@@ -634,7 +634,6 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 
 	reg_start(0x4f18,0);
 	e32(0x00000003);
-
 	r300EmitState(rmesa);
 
 	rmesa->state.Elts = VB->Elts;

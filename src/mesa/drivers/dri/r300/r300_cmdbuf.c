@@ -183,7 +183,6 @@ static __inline__ void r300DoEmitState(r300ContextPtr r300, GLboolean dirty)
 	}
 }
 
-
 /**
  * Copy dirty hardware state atoms into the command buffer.
  *
@@ -197,7 +196,7 @@ void r300EmitState(r300ContextPtr r300)
 
 	if (r300->cmdbuf.count_used && !r300->hw.is_dirty && !r300->hw.all_dirty)
 		return;
-
+	
 	/* To avoid going across the entire set of states multiple times, just check
 	 * for enough space for the case of emitting all state, and inline the
 	 * r300AllocCmdBuf code here without all the checks.
@@ -270,13 +269,13 @@ CHECK( vpu, vpucount(atom->cmd) ? (1 + vpucount(atom->cmd)*4) : 0 )
 
 #define ALLOC_STATE( ATOM, CHK, SZ, NM, IDX )				\
    do {									\
-      r300->hw.ATOM.cmd_size = SZ;					\
-      r300->hw.ATOM.cmd = (uint32_t*)CALLOC(SZ * sizeof(uint32_t));	\
-      r300->hw.ATOM.name = NM;						\
-      r300->hw.ATOM.idx = IDX;						\
+      r300->hw.ATOM.cmd_size = (SZ);					\
+      r300->hw.ATOM.cmd = (uint32_t*)CALLOC((SZ) * sizeof(uint32_t));	\
+      r300->hw.ATOM.name = (NM);					\
+      r300->hw.ATOM.idx = (IDX);					\
       r300->hw.ATOM.check = check_##CHK;				\
       r300->hw.ATOM.dirty = GL_FALSE;					\
-      r300->hw.max_state_size += SZ;					\
+      r300->hw.max_state_size += (SZ);					\
    } while (0)
 
 
@@ -287,7 +286,7 @@ CHECK( vpu, vpucount(atom->cmd) ? (1 + vpucount(atom->cmd)*4) : 0 )
 void r300InitCmdBuf(r300ContextPtr r300)
 {
 	int size, i, mtu;
-
+	
 	r300->hw.max_state_size = 0;
 
 	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
