@@ -3962,6 +3962,191 @@ KEYWORD1 void KEYWORD2 NAME(PointParameterivNV)(GLenum pname, const GLint * para
    DISPATCH(PointParameterivNV, (pname, params), (F, "glPointParameterivNV(0x%x, %p);\n", pname, (void *) params));
 }
 
+KEYWORD1 void KEYWORD2 NAME(PointParameterf)(GLenum pname, GLfloat param)
+{
+   DISPATCH(PointParameterfEXT, (pname, param), (F, "glPointParameterf(0x%x, %f);\n", pname, param));
+}
+
+KEYWORD1 void KEYWORD2 NAME(PointParameterfv)(GLenum pname, const GLfloat * params)
+{
+   DISPATCH(PointParameterfvEXT, (pname, params), (F, "glPointParameterfv(0x%x, %p);\n", pname, (void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(PointParameteri)(GLenum pname, GLint param)
+{
+   DISPATCH(PointParameteriNV, (pname, param), (F, "glPointParameteri(0x%x, %d);\n", pname, param));
+}
+
+KEYWORD1 void KEYWORD2 NAME(PointParameteriv)(GLenum pname, const GLint * params)
+{
+   DISPATCH(PointParameterivNV, (pname, params), (F, "glPointParameteriv(0x%x, %p);\n", pname, (void *) params));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3b)(GLbyte red, GLbyte green, GLbyte blue)
+{
+   DISPATCH(SecondaryColor3bEXT, (red, green, blue), (F, "glSecondaryColor3b(%d, %d, %d);\n", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3bv)(const GLbyte * v)
+{
+   DISPATCH(SecondaryColor3bvEXT, (v), (F, "glSecondaryColor3bv(%p);\n", (void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3d)(GLdouble red, GLdouble green, GLdouble blue)
+{
+   DISPATCH(SecondaryColor3dEXT, (red, green, blue), (F, "glSecondaryColor3d(%f, %f, %f);\n", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3dv)(const GLdouble * v)
+{
+   DISPATCH(SecondaryColor3dvEXT, (v), (F, "glSecondaryColor3dv(%p /* %g, %g, %g */);\n", (void *) v, v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3f)(GLfloat red, GLfloat green, GLfloat blue)
+{
+   DISPATCH(SecondaryColor3fEXT, (red, green, blue), (F, "glSecondaryColor3f(%f, %f, %f);\n", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3fv)(const GLfloat * v)
+{
+   DISPATCH(SecondaryColor3fvEXT, (v), (F, "glSecondaryColor3fv(%p /* %g, %g, %g */);\n", (void *) v, v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3i)(GLint red, GLint green, GLint blue)
+{
+   DISPATCH(SecondaryColor3iEXT, (red, green, blue), (F, "glSecondaryColor3i(%d, %d, %d);\n", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3iv)(const GLint * v)
+{
+   DISPATCH(SecondaryColor3ivEXT, (v), (F, "glSecondaryColor3iv(%p);\n", (void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3s)(GLshort red, GLshort green, GLshort blue)
+{
+   DISPATCH(SecondaryColor3sEXT, (red, green, blue), (F, "glSecondaryColor3s(%d, %d, %d);\n", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3sv)(const GLshort * v)
+{
+   DISPATCH(SecondaryColor3svEXT, (v), (F, "glSecondaryColor3sv(%p);\n", (void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3ub)(GLubyte red, GLubyte green, GLubyte blue)
+{
+   DISPATCH(SecondaryColor3ubEXT, (red, green, blue), (F, "glSecondaryColor3ub(%d, %d, %d);\n", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3ubv)(const GLubyte * v)
+{
+   DISPATCH(SecondaryColor3ubvEXT, (v), (F, "glSecondaryColor3ubv(%p);\n", (void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3ui)(GLuint red, GLuint green, GLuint blue)
+{
+   DISPATCH(SecondaryColor3uiEXT, (red, green, blue), (F, "glSecondaryColor3ui(%d, %d, %d);\n", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3uiv)(const GLuint * v)
+{
+   DISPATCH(SecondaryColor3uivEXT, (v), (F, "glSecondaryColor3uiv(%p);\n", (void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3us)(GLushort red, GLushort green, GLushort blue)
+{
+   DISPATCH(SecondaryColor3usEXT, (red, green, blue), (F, "glSecondaryColor3us(%d, %d, %d);\n", red, green, blue));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColor3usv)(const GLushort * v)
+{
+   DISPATCH(SecondaryColor3usvEXT, (v), (F, "glSecondaryColor3usv(%p);\n", (void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SecondaryColorPointer)(GLint size, GLenum type, GLsizei stride, const void * pointer)
+{
+   DISPATCH(SecondaryColorPointerEXT, (size, type, stride, pointer), (F, "glSecondaryColorPointer(%d, 0x%x, %d, %p);\n", size, type, stride, (void *) pointer));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2d)(GLdouble x, GLdouble y)
+{
+   DISPATCH(WindowPos2dMESA, (x, y), (F, "glWindowPos2d(%f, %f);\n", x, y));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2dv)(const GLdouble * v)
+{
+   DISPATCH(WindowPos2dvMESA, (v), (F, "glWindowPos2dv(%p /* %g, %g */);\n", (void *) v, v[0], v[1]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2f)(GLfloat x, GLfloat y)
+{
+   DISPATCH(WindowPos2fMESA, (x, y), (F, "glWindowPos2f(%f, %f);\n", x, y));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2fv)(const GLfloat * v)
+{
+   DISPATCH(WindowPos2fvMESA, (v), (F, "glWindowPos2fv(%p /* %g, %g */);\n", (void *) v, v[0], v[1]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2i)(GLint x, GLint y)
+{
+   DISPATCH(WindowPos2iMESA, (x, y), (F, "glWindowPos2i(%d, %d);\n", x, y));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2iv)(const GLint * v)
+{
+   DISPATCH(WindowPos2ivMESA, (v), (F, "glWindowPos2iv(%p);\n", (void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2s)(GLshort x, GLshort y)
+{
+   DISPATCH(WindowPos2sMESA, (x, y), (F, "glWindowPos2s(%d, %d);\n", x, y));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos2sv)(const GLshort * v)
+{
+   DISPATCH(WindowPos2svMESA, (v), (F, "glWindowPos2sv(%p);\n", (void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3d)(GLdouble x, GLdouble y, GLdouble z)
+{
+   DISPATCH(WindowPos3dMESA, (x, y, z), (F, "glWindowPos3d(%f, %f, %f);\n", x, y, z));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3dv)(const GLdouble * v)
+{
+   DISPATCH(WindowPos3dvMESA, (v), (F, "glWindowPos3dv(%p /* %g, %g, %g */);\n", (void *) v, v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3f)(GLfloat x, GLfloat y, GLfloat z)
+{
+   DISPATCH(WindowPos3fMESA, (x, y, z), (F, "glWindowPos3f(%f, %f, %f);\n", x, y, z));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3fv)(const GLfloat * v)
+{
+   DISPATCH(WindowPos3fvMESA, (v), (F, "glWindowPos3fv(%p /* %g, %g, %g */);\n", (void *) v, v[0], v[1], v[2]));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3i)(GLint x, GLint y, GLint z)
+{
+   DISPATCH(WindowPos3iMESA, (x, y, z), (F, "glWindowPos3i(%d, %d, %d);\n", x, y, z));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3iv)(const GLint * v)
+{
+   DISPATCH(WindowPos3ivMESA, (v), (F, "glWindowPos3iv(%p);\n", (void *) v));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3s)(GLshort x, GLshort y, GLshort z)
+{
+   DISPATCH(WindowPos3sMESA, (x, y, z), (F, "glWindowPos3s(%d, %d, %d);\n", x, y, z));
+}
+
+KEYWORD1 void KEYWORD2 NAME(WindowPos3sv)(const GLshort * v)
+{
+   DISPATCH(WindowPos3svMESA, (v), (F, "glWindowPos3sv(%p);\n", (void *) v));
+}
+
 
 
 /*
@@ -4840,6 +5025,43 @@ void *UNUSED_TABLE_NAME[] = {
    TABLE_ENTRY(WindowPos3fvARB),
    TABLE_ENTRY(WindowPos3ivARB),
    TABLE_ENTRY(WindowPos3svARB),
+   TABLE_ENTRY(PointParameterf),
+   TABLE_ENTRY(PointParameterfv),
+   TABLE_ENTRY(PointParameteri),
+   TABLE_ENTRY(PointParameteriv),
+   TABLE_ENTRY(SecondaryColor3b),
+   TABLE_ENTRY(SecondaryColor3bv),
+   TABLE_ENTRY(SecondaryColor3d),
+   TABLE_ENTRY(SecondaryColor3dv),
+   TABLE_ENTRY(SecondaryColor3f),
+   TABLE_ENTRY(SecondaryColor3fv),
+   TABLE_ENTRY(SecondaryColor3i),
+   TABLE_ENTRY(SecondaryColor3iv),
+   TABLE_ENTRY(SecondaryColor3s),
+   TABLE_ENTRY(SecondaryColor3sv),
+   TABLE_ENTRY(SecondaryColor3ub),
+   TABLE_ENTRY(SecondaryColor3ubv),
+   TABLE_ENTRY(SecondaryColor3ui),
+   TABLE_ENTRY(SecondaryColor3uiv),
+   TABLE_ENTRY(SecondaryColor3us),
+   TABLE_ENTRY(SecondaryColor3usv),
+   TABLE_ENTRY(SecondaryColorPointer),
+   TABLE_ENTRY(WindowPos2d),
+   TABLE_ENTRY(WindowPos2dv),
+   TABLE_ENTRY(WindowPos2f),
+   TABLE_ENTRY(WindowPos2fv),
+   TABLE_ENTRY(WindowPos2i),
+   TABLE_ENTRY(WindowPos2iv),
+   TABLE_ENTRY(WindowPos2s),
+   TABLE_ENTRY(WindowPos2sv),
+   TABLE_ENTRY(WindowPos3d),
+   TABLE_ENTRY(WindowPos3dv),
+   TABLE_ENTRY(WindowPos3f),
+   TABLE_ENTRY(WindowPos3fv),
+   TABLE_ENTRY(WindowPos3i),
+   TABLE_ENTRY(WindowPos3iv),
+   TABLE_ENTRY(WindowPos3s),
+   TABLE_ENTRY(WindowPos3sv),
 };
 #endif /*UNUSED_TABLE_NAME*/
 

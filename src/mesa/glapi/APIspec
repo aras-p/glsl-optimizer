@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.8 2002/06/30 15:47:43 brianp Exp $
+# $Id: APIspec,v 1.9 2002/09/06 02:46:44 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -7362,7 +7362,268 @@ category	GL_NV_point_sprite
 offset		643
 
 
+# OpenGL 1.4
+
+name		PointParameterf
+return		void
+param		pname		GLenum
+param		param		GLfloat
+category	1.4
+alias		PointParameterfEXT
+
+name		PointParameterfv
+return		void
+param		pname		GLenum
+param		params		const GLfloat *
+category	1.4
+alias		PointParameterfvEXT
+
+name		PointParameteri
+return		void
+param		pname		GLenum
+param		param		GLint
+category	1.4
+alias		PointParameteriNV
+
+name		PointParameteriv
+return		void
+param		pname		GLenum
+param		params		const GLint *
+category	1.4
+alias		PointParameterivNV
+
+name		SecondaryColor3b
+return		void
+param		red		GLbyte
+param		green		GLbyte
+param		blue		GLbyte
+category	1.4
+alias		SecondaryColor3bEXT
+
+name		SecondaryColor3bv
+return		void
+param		v		const GLbyte *
+category	1.4
+alias		SecondaryColor3bvEXT
+
+name		SecondaryColor3d
+return		void
+param		red		GLdouble
+param		green		GLdouble
+param		blue		GLdouble
+category	1.4
+alias		SecondaryColor3dEXT
+
+name		SecondaryColor3dv
+return		void
+param		v		const GLdouble *
+category	1.4
+alias		SecondaryColor3dvEXT
+
+name		SecondaryColor3f
+return		void
+param		red		GLfloat
+param		green		GLfloat
+param		blue		GLfloat
+category	1.4
+alias		SecondaryColor3fEXT
+
+name		SecondaryColor3fv
+return		void
+param		v		const GLfloat *
+category	1.4
+alias		SecondaryColor3fvEXT
+
+name		SecondaryColor3i
+return		void
+param		red		GLint
+param		green		GLint
+param		blue		GLint
+category	1.4
+alias		SecondaryColor3iEXT
+
+name		SecondaryColor3iv
+return		void
+param		v		const GLint *
+category	1.4
+alias		SecondaryColor3ivEXT
+
+name		SecondaryColor3s
+return		void
+param		red		GLshort
+param		green		GLshort
+param		blue		GLshort
+category	1.4
+alias		SecondaryColor3sEXT
+
+name		SecondaryColor3sv
+return		void
+param		v		const GLshort *
+category	1.4
+alias		SecondaryColor3svEXT
+
+name		SecondaryColor3ub
+return		void
+param		red		GLubyte
+param		green		GLubyte
+param		blue		GLubyte
+category	1.4
+alias		SecondaryColor3ubEXT
+
+name		SecondaryColor3ubv
+return		void
+param		v		const GLubyte *
+category	1.4
+alias		SecondaryColor3ubvEXT
+
+name		SecondaryColor3ui
+return		void
+param		red		GLuint
+param		green		GLuint
+param		blue		GLuint
+category	1.4
+alias		SecondaryColor3uiEXT
+
+name		SecondaryColor3uiv
+return		void
+param		v		const GLuint *
+category	1.4
+alias		SecondaryColor3uivEXT
+
+name		SecondaryColor3us
+return		void
+param		red		GLushort
+param		green		GLushort
+param		blue		GLushort
+category	1.4
+alias		SecondaryColor3usEXT
+
+name		SecondaryColor3usv
+return		void
+param		v		const GLushort *
+category	1.4
+alias		SecondaryColor3usvEXT
+
+name		SecondaryColorPointer
+return		void
+param		size		GLint
+param		type		GLenum
+param		stride		GLsizei
+param		pointer		const void *
+category	1.4
+alias		SecondaryColorPointerEXT
+
+name		WindowPos2d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+category	1.4
+alias		WindowPos2dMESA
+
+name		WindowPos2dv
+return		void
+param		v		const GLdouble *
+category	1.4
+alias		WindowPos2dvMESA
+
+name		WindowPos2f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+category	1.4
+alias		WindowPos2fMESA
+
+name		WindowPos2fv
+return		void
+param		v		const GLfloat *
+category	1.4
+alias		WindowPos2fvMESA
+
+name		WindowPos2i
+return		void
+param		x		GLint
+param		y		GLint
+category	1.4
+alias		WindowPos2iMESA
+
+name		WindowPos2iv
+return		void
+param		v		const GLint *
+category	1.4
+alias		WindowPos2ivMESA
+
+name		WindowPos2s
+return		void
+param		x		GLshort
+param		y		GLshort
+category	1.4
+alias		WindowPos2sMESA
+
+name		WindowPos2sv
+return		void
+param		v		const GLshort *
+category	1.4
+alias		WindowPos2svMESA
+
+name		WindowPos3d
+return		void
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	1.4
+alias		WindowPos3dMESA
+
+name		WindowPos3dv
+return		void
+param		v		const GLdouble *
+category	1.4
+alias		WindowPos3dvMESA
+
+name		WindowPos3f
+return		void
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	1.4
+alias		WindowPos3fMESA
+
+name		WindowPos3fv
+return		void
+param		v		const GLfloat *
+category	1.4
+alias		WindowPos3fvMESA
+
+name		WindowPos3i
+return		void
+param		x		GLint
+param		y		GLint
+param		z		GLint
+category	1.4
+alias		WindowPos3iMESA
+
+name		WindowPos3iv
+return		void
+param		v		const GLint *
+category	1.4
+alias		WindowPos3ivMESA
+
+name		WindowPos3s
+return		void
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+category	1.4
+alias		WindowPos3sMESA
+
+name		WindowPos3sv
+return		void
+param		v		const GLshort *
+category	1.4
+alias		WindowPos3svMESA
+
+
+
 # end of file sentinal
 
 name		dummy
-offset		?
+alias		dummyEXT
