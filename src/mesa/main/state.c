@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.75 2001/12/18 04:06:45 brianp Exp $ */
+/* $Id: state.c,v 1.76 2002/01/12 02:55:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -957,6 +957,13 @@ void _mesa_update_state( GLcontext *ctx )
 	    ctx->_NeedEyeCoords |= NEED_EYE_LIGHT_MODELVIEW;
    }
 
+   /* XXX this is a bit of a hack.  We should be checking elsewhere if
+    * vertex program mode is enabled.  We set _NeedEyeCoords to zero to
+    * ensure that the combined modelview/projection matrix is computed
+    * in calculate_model_project_matrix().
+    */
+   if (ctx->VertexProgram.Enabled)
+      ctx->_NeedEyeCoords = 0;
 
    /* ctx->_NeedEyeCoords is now uptodate.
     *
