@@ -1,4 +1,4 @@
-/* $Id: hash.c,v 1.11 2001/11/02 00:57:04 brianp Exp $ */
+/* $Id: hash.c,v 1.12 2002/06/29 19:48:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
 #include "glheader.h"
 #include "glthread.h"
 #include "hash.h"
+#include "context.h"
 #include "mem.h"
 #endif
 
@@ -237,7 +238,7 @@ void _mesa_HashPrint(const struct _mesa_HashTable *table)
    for (i=0;i<TABLE_SIZE;i++) {
       const struct HashEntry *entry = table->Table[i];
       while (entry) {
-	 printf("%u %p\n", entry->Key, entry->Data);
+	 _mesa_debug(NULL, "%u %p\n", entry->Key, entry->Data);
 	 entry = entry->Next;
       }
    }
@@ -294,17 +295,19 @@ int main(int argc, char *argv[])
    int a, b, c;
    struct HashTable *t;
 
-   printf("&a = %p\n", &a);
-   printf("&b = %p\n", &b);
+   _mesa_printf("&a = %p\n", &a);
+   _mesa_printf("&b = %p\n", &b);
 
    t = _mesa_NewHashTable();
    _mesa_HashInsert(t, 501, &a);
    _mesa_HashInsert(t, 10, &c);
    _mesa_HashInsert(t, 0xfffffff8, &b);
    _mesa_HashPrint(t);
-   printf("Find 501: %p\n", _mesa_HashLookup(t,501));
-   printf("Find 1313: %p\n", _mesa_HashLookup(t,1313));
-   printf("Find block of 100: %d\n", _mesa_HashFindFreeKeyBlock(t, 100));
+
+   _mesa_printf("Find 501: %p\n", _mesa_HashLookup(t,501));
+   _mesa_printf("Find 1313: %p\n", _mesa_HashLookup(t,1313));
+   _mesa_printf("Find block of 100: %d\n", _mesa_HashFindFreeKeyBlock(t, 100));
+
    _mesa_DeleteHashTable(t);
 
    return 0;

@@ -1,4 +1,4 @@
-/* $Id: texutil_tmp.h,v 1.9 2002/02/21 15:12:31 brianp Exp $ */
+/* $Id: texutil_tmp.h,v 1.10 2002/06/29 19:48:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,9 +27,13 @@
  *    Gareth Hughes <gareth@valinux.com>
  */
 
+
+
 /*
  * NOTE: All 3D teximage code is untested and most definitely broken...
  */
+
+
 
 
 #define DST_TEXEL_BYTES		(4 / DST_TEXELS_PER_DWORD)
@@ -51,7 +55,7 @@ TAG(texsubimage2d)( struct gl_texture_convert *convert )
 			     convert->xoffset) * DST_TEXEL_BYTES);
 
 #if DEBUG_TEXUTIL
-   fprintf( stderr, __FUNCTION__ "\n" );
+   _mesa_debug( NULL, __FUNCTION__ "\n" );
 #endif
 
 #ifdef CONVERT_DIRECT
@@ -87,7 +91,7 @@ TAG(texsubimage3d)( struct gl_texture_convert *convert )
 			      convert->yoffset) * convert->width +
 			     convert->xoffset) * DST_TEXEL_BYTES);
 #if DEBUG_TEXUTIL
-   fprintf( stderr, __FUNCTION__ "\n" );
+   _mesa_debug( NULL, __FUNCTION__ "\n" );
 #endif
 
 #ifdef CONVERT_DIRECT
@@ -130,11 +134,11 @@ TAG(texsubimage2d_stride)( struct gl_texture_convert *convert )
    adjust = convert->dstImageWidth - convert->width;
 
 #if DEBUG_TEXUTIL
-   fprintf( stderr, __FUNCTION__ ":\n" );
-   fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
+   _mesa_debug( NULL, __FUNCTION__ ":\n" );
+   _mesa_debug( NULL, "   x=%d y=%d w=%d h=%d s=%d\n",
             convert->xoffset, convert->yoffset, convert->width,
             convert->height, convert->dstImageWidth );
-   fprintf( stderr, "   adjust=%d\n", adjust );
+   _mesa_debug( NULL, "   adjust=%d\n", adjust );
 #endif
 
    for ( row = 0 ; row < convert->height ; row++ ) {
@@ -164,11 +168,11 @@ TAG(texsubimage3d_stride)( struct gl_texture_convert *convert )
    adjust = convert->dstImageWidth - convert->width;
 
 #if DEBUG_TEXUTIL
-   fprintf( stderr, __FUNCTION__ ":\n" );
-   fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
+   _mesa_debug( NULL, __FUNCTION__ ":\n" );
+   _mesa_debug( NULL, "   x=%d y=%d w=%d h=%d s=%d\n",
             convert->xoffset, convert->yoffset, convert->width,
             convert->height, convert->dstImageWidth );
-   fprintf( stderr, "   adjust=%d\n", adjust );
+   _mesa_debug( NULL, "   adjust=%d\n", adjust );
 #endif
 
    for ( img = 0 ; img < convert->depth ; img++ ) {
@@ -203,7 +207,7 @@ TAG(texsubimage2d_unpack)( struct gl_texture_convert *convert )
    GLint row, col;
 
 #if DEBUG_TEXUTIL
-   fprintf( stderr, __FUNCTION__ "\n" );
+   _mesa_debug( NULL, __FUNCTION__ "\n" );
 #endif
 
    if (convert->width & (DST_TEXELS_PER_DWORD - 1)) {
@@ -265,7 +269,7 @@ TAG(texsubimage3d_unpack)( struct gl_texture_convert *convert )
    GLint row, col, img;
 
 #if DEBUG_TEXUTIL
-   fprintf( stderr, __FUNCTION__ "\n" );
+   _mesa_debug( NULL, __FUNCTION__ "\n" );
 #endif
 
    if (convert->width & (DST_TEXELS_PER_DWORD - 1)) {
@@ -343,11 +347,11 @@ TAG(texsubimage2d_stride_unpack)( struct gl_texture_convert *convert )
    adjust = convert->dstImageWidth - convert->width;
 
 #if DEBUG_TEXUTIL
-   fprintf( stderr, __FUNCTION__ ":\n" );
-   fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
+   _mesa_debug( NULL, __FUNCTION__ ":\n" );
+   _mesa_debug( NULL, "   x=%d y=%d w=%d h=%d s=%d\n",
             convert->xoffset, convert->yoffset, convert->width,
             convert->height, convert->dstImageWidth );
-   fprintf( stderr, "   adjust=%d\n", adjust );
+   _mesa_debug( NULL, "   adjust=%d\n", adjust );
 #endif
 
    for ( row = 0 ; row < convert->height ; row++ ) {
@@ -396,11 +400,11 @@ TAG(texsubimage3d_stride_unpack)( struct gl_texture_convert *convert )
    adjust = convert->dstImageWidth - convert->width;
 
 #if DEBUG_TEXUTIL
-   fprintf( stderr, __FUNCTION__ ":\n" );
-   fprintf( stderr, "   x=%d y=%d w=%d h=%d s=%d\n",
+   _mesa_debug( NULL, __FUNCTION__ ":\n" );
+   _mesa_debug( NULL, "   x=%d y=%d w=%d h=%d s=%d\n",
             convert->xoffset, convert->yoffset, convert->width,
             convert->height, convert->dstImageWidth );
-   fprintf( stderr, "   adjust=%d\n", adjust );
+   _mesa_debug( NULL, "   adjust=%d\n", adjust );
 #endif
 
    for ( img = 0 ; img < convert->depth ; img++ ) {

@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.83 2002/06/18 16:53:46 brianp Exp $ */
+/* $Id: get.c,v 1.84 2002/06/29 19:48:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -63,33 +63,29 @@
 
 #define CHECK_EXTENSION_B(EXTNAME, PNAME)			\
    if (!ctx->Extensions.EXTNAME) {				\
-      char s[100];						\
-      sprintf(s, "glGetBooleanv(0x%x)", (int) PNAME);		\
-      _mesa_error(ctx, GL_INVALID_VALUE, s);			\
+      _mesa_error(ctx, GL_INVALID_VALUE,			\
+                  "glGetBooleanv(0x%x)", (int) PNAME);		\
       return;							\
    }	
 
 #define CHECK_EXTENSION_I(EXTNAME, PNAME)			\
    if (!ctx->Extensions.EXTNAME) {				\
-      char s[100];						\
-      sprintf(s, "glGetIntegerv(0x%x)", (int) PNAME);		\
-      _mesa_error(ctx, GL_INVALID_VALUE, s);			\
+      _mesa_error(ctx, GL_INVALID_VALUE,			\
+                  "glGetIntegerv(0x%x)", (int) PNAME);		\
       return;							\
    }	
 
 #define CHECK_EXTENSION_F(EXTNAME, PNAME)			\
    if (!ctx->Extensions.EXTNAME) {				\
-      char s[100];						\
-      sprintf(s, "glGetFloatv(0x%x)", (int) PNAME);		\
-      _mesa_error(ctx, GL_INVALID_VALUE, s);			\
+      _mesa_error(ctx, GL_INVALID_VALUE,			\
+                  "glGetFloatv(0x%x)", (int) PNAME);		\
       return;							\
    }	
 
 #define CHECK_EXTENSION_D(EXTNAME, PNAME)			\
    if (!ctx->Extensions.EXTNAME) {				\
-      char s[100];						\
-      sprintf(s, "glGetDoublev(0x%x)", (int) PNAME);		\
-      _mesa_error(ctx, GL_INVALID_VALUE, s);			\
+      _mesa_error(ctx, GL_INVALID_VALUE,			\
+                  "glGetDoublev(0x%x)", (int) PNAME);		\
       return;							\
    }	
 
@@ -1471,11 +1467,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
 
       default:
-         {
-            char s[100];
-            sprintf(s, "glGetBooleanv(pname=0x%x)", pname);
-            _mesa_error( ctx, GL_INVALID_ENUM, s );
-         }
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
 }
 
@@ -2829,11 +2821,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
 
       default:
-         {
-            char s[100];
-            sprintf(s, "glGetDoublev(pname=0x%x)", pname);
-            _mesa_error( ctx, GL_INVALID_ENUM, s );
-         }
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev(pname=0x%x)", pname);
    }
 }
 
@@ -4163,11 +4151,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
 
       default:
-         {
-            char s[100];
-            sprintf(s, "glGetFloatv(0x%x)", pname);
-            _mesa_error(ctx, GL_INVALID_ENUM, s);
-         }
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(0x%x)", pname);
    }
 }
 
@@ -5542,11 +5526,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
 
       default:
-         {
-            char s[100];
-            sprintf(s, "glGetIntegerv(pname=0x%x)", pname);
-            _mesa_error( ctx, GL_INVALID_ENUM, s );
-         }
+         _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
    }
 }
 

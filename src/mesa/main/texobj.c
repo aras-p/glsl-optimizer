@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.56 2002/06/17 23:36:31 brianp Exp $ */
+/* $Id: texobj.c,v 1.57 2002/06/29 19:48:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -219,7 +219,7 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
 static void
 incomplete(const struct gl_texture_object *t, const char *why)
 {
-   printf("Texture Obj %d incomplete because: %s\n", t->Name, why);
+   _mesa_printf("Texture Obj %d incomplete because: %s\n", t->Name, why);
 }
 #else
 #define incomplete(a, b)

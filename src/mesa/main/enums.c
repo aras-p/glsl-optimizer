@@ -1,4 +1,4 @@
-/* $Id: enums.c,v 1.20 2001/06/08 20:10:55 brianp Exp $ */
+/* $Id: enums.c,v 1.21 2002/06/29 19:48:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,6 +33,7 @@
 #else
 #include "glheader.h"
 #include "enums.h"
+#include "imports.h"
 #include "mem.h"
 #endif
 
@@ -928,7 +929,7 @@ const char *_mesa_lookup_enum_by_nr( int nr )
    }
    else {
       /* this isn't re-entrant safe, no big deal here */
-      sprintf(token_tmp, "0x%x", nr);
+      _mesa_sprintf(NULL, token_tmp, "0x%x", nr);
       return token_tmp;
    }
 }

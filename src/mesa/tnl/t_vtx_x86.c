@@ -46,7 +46,7 @@ struct dynfn *tnl_makeX86Vertex2f( TNLcontext *tnl, int key )
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
 
    if (RADEON_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    switch (tnl->vertex_size) {
    default: {
@@ -104,7 +104,7 @@ struct dynfn *tnl_makeX86Vertex3f( TNLcontext *tnl, int key )
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
 
    if (RADEON_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    switch (tnl->vertex_size) {
    case 4: {
@@ -232,7 +232,7 @@ struct dynfn *tnl_makeX86Vertex3fv( TNLcontext *tnl, int key )
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
 
    if (TNL_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    switch (tnl->vertex_size) {
    case 6: {
@@ -391,7 +391,7 @@ struct dynfn *tnl_makeX86Attr4fv( TNLcontext *tnl, int key )
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
 
    if (TNL_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    insert_at_head( &tnl->dfn_cache.Normal3fv, dfn );
    dfn->key = key;
@@ -419,7 +419,7 @@ struct dynfn *tnl_makeX86Attr4f( TNLcontext *tnl, int key )
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
 
    if (TNL_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    insert_at_head( &tnl->dfn_cache.Normal3f, dfn );
    dfn->key = key;
@@ -447,7 +447,7 @@ struct dynfn *tnl_makeX86Attr3fv( TNLcontext *tnl, int key )
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
 
    if (TNL_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    insert_at_head( &tnl->dfn_cache.Normal3fv, dfn );
    dfn->key = key;
@@ -473,7 +473,7 @@ struct dynfn *tnl_makeX86Attr3f( TNLcontext *tnl, int key )
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
 
    if (TNL_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    insert_at_head( &tnl->dfn_cache.Normal3f, dfn );
    dfn->key = key;
@@ -490,7 +490,7 @@ struct dynfn *tnl_makeX86Attr4ubv( TNLcontext *tnl, int key )
    dfn->key = key;
 
    if (TNL_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    if (key & TNL_CP_VC_FRMT_PKCOLOR) {
       static  char temp[] = {
@@ -547,7 +547,7 @@ struct dynfn *tnl_makeX86Attr4ubv( TNLcontext *tnl, int key )
 struct dynfn *tnl_makeX86Attr4ub( TNLcontext *tnl, int key )
 {
    if (TNL_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    if (key & TNL_CP_VC_FRMT_PKCOLOR) {
       /* XXX push/pop */
@@ -598,7 +598,7 @@ struct dynfn *tnl_makeX86Attr2fv( TNLcontext *tnl, int key )
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
 
    if (TNL_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    insert_at_head( &tnl->dfn_cache.TexCoord2fv, dfn );
    dfn->key = key;
@@ -622,7 +622,7 @@ struct dynfn *tnl_makeX86Attr2f( TNLcontext *tnl, int key )
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
 
    if (TNL_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    insert_at_head( &tnl->dfn_cache.TexCoord2f, dfn );
    dfn->key = key;
@@ -646,7 +646,7 @@ struct dynfn *tnl_makeX86Attr1fv( TNLcontext *tnl, int key )
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
 
    if (TNL_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    insert_at_head( &tnl->dfn_cache.TexCoord2fv, dfn );
    dfn->key = key;
@@ -668,7 +668,7 @@ struct dynfn *tnl_makeX86Attr1f( TNLcontext *tnl, int key )
    struct dynfn *dfn = MALLOC_STRUCT( dynfn );
 
    if (TNL_DEBUG & DEBUG_CODEGEN)
-      fprintf(stderr, "%s 0x%08x\n", __FUNCTION__, key );
+      _mesa_debug(NULL,  "%s 0x%08x\n", __FUNCTION__, key );
 
    insert_at_head( &tnl->dfn_cache.TexCoord2f, dfn );
    dfn->key = key;

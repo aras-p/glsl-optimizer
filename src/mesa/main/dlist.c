@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.90 2002/06/15 02:38:15 brianp Exp $ */
+/* $Id: dlist.c,v 1.91 2002/06/29 19:48:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4817,7 +4817,7 @@ execute_list( GLcontext *ctx, GLuint list )
 	 default:
             {
                char msg[1000];
-               sprintf(msg, "Error in execute_list: opcode=%d", (int) opcode);
+               _mesa_sprintf( ctx, msg, "Error in execute_list: opcode=%d", (int) opcode);
                _mesa_problem( ctx, msg );
             }
             done = GL_TRUE;

@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.67 2002/06/18 16:53:46 brianp Exp $ */
+/* $Id: enable.c,v 1.68 2002/06/29 19:48:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,9 +44,8 @@
 
 #define CHECK_EXTENSION(EXTNAME, CAP)					\
    if (!ctx->Extensions.EXTNAME) {					\
-      char s[100];							\
-      sprintf(s, "gl%sClientState(0x%x)", state ? "Enable" : "Disable", CAP);\
-      _mesa_error(ctx, GL_INVALID_ENUM,	s);				\
+      _mesa_error(ctx, GL_INVALID_ENUM, "gl%sClientState(0x%x)",	\
+                  state ? "Enable" : "Disable", CAP);			\
       return;								\
    }
 
@@ -117,11 +116,8 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
          }
          break;
       default:
-         {
-            char s[100];
-            sprintf(s, "glEnable/DisableClientState(0x%x)", cap);
-            _mesa_error( ctx, GL_INVALID_ENUM, s);
-         }
+         _mesa_error( ctx, GL_INVALID_ENUM,
+                      "glEnable/DisableClientState(0x%x)", cap);
          return;
    }
 
@@ -166,9 +162,8 @@ _mesa_DisableClientState( GLenum cap )
 #undef CHECK_EXTENSION
 #define CHECK_EXTENSION(EXTNAME, CAP)					\
    if (!ctx->Extensions.EXTNAME) {					\
-      char s[100];							\
-      sprintf(s, "gl%s(0x%x)", state ? "Enable" : "Disable", CAP);	\
-      _mesa_error(ctx, GL_INVALID_ENUM, s);				\
+      _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(0x%x)",			\
+                  state ? "Enable" : "Disable", CAP);			\
       return;								\
    }
 
@@ -895,11 +890,8 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          break;
 
       default:
-         {
-            char s[100];
-            sprintf(s, "%s(0x%x)", state ? "glEnable" : "glDisable", cap);
-            _mesa_error(ctx, GL_INVALID_ENUM, s);
-         }
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "%s(0x%x)", state ? "glEnable" : "glDisable", cap);
          return;
    }
 
@@ -1272,11 +1264,7 @@ _mesa_IsEnabled( GLenum cap )
          }
 
       default:
-         {
-            char s[100];
-            sprintf(s, "glIsEnabled(0x%x)", (int) cap);
-            _mesa_error( ctx, GL_INVALID_ENUM, s );
-         }
+         _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(0x%x)", (int) cap);
 	 return GL_FALSE;
    }
 }

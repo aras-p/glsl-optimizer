@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.81 2002/06/18 16:53:46 brianp Exp $ */
+/* $Id: mtypes.h,v 1.82 2002/06/29 19:48:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1845,7 +1845,7 @@ enum _debug {
 #define FLUSH_VERTICES(ctx, newstate)				\
 do {								\
    if (MESA_VERBOSE & VERBOSE_STATE)				\
-      fprintf(stderr, "FLUSH_VERTICES in %s\n", __FUNCTION__);	\
+      _mesa_debug(ctx, "FLUSH_VERTICES in %s\n", __FUNCTION__);	\
    if (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES)		\
       ctx->Driver.FlushVertices(ctx, FLUSH_STORED_VERTICES);	\
    ctx->NewState |= newstate;					\
@@ -1854,7 +1854,7 @@ do {								\
 #define FLUSH_CURRENT(ctx, newstate)				\
 do {								\
    if (MESA_VERBOSE & VERBOSE_STATE)				\
-      fprintf(stderr, "FLUSH_CURRENT in %s\n", __FUNCTION__);	\
+      _mesa_debug(ctx, "FLUSH_CURRENT in %s\n", __FUNCTION__);	\
    if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)		\
       ctx->Driver.FlushVertices(ctx, FLUSH_UPDATE_CURRENT);	\
    ctx->NewState |= newstate;					\

@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.24 2002/04/21 20:37:04 brianp Exp $ */
+/* $Id: t_array_import.c,v 1.25 2002/06/29 19:48:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -340,7 +340,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    GLuint inputs = tnl->pipeline.inputs;
    struct vertex_arrays *tmp = &tnl->array_inputs;
 
-/*        fprintf(stderr, "%s %d..%d // %d..%d\n", __FUNCTION__, */
+/*        _mesa_debug(ctx, "%s %d..%d // %d..%d\n", __FUNCTION__, */
 /*  	      start, count, ctx->Array.LockFirst, ctx->Array.LockCount);  */
 /*        _tnl_print_vert_flags("    inputs", inputs);  */
 /*        _tnl_print_vert_flags("    _Enabled", ctx->Array._Enabled); */

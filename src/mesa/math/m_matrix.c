@@ -1,4 +1,4 @@
-/* $Id: m_matrix.c,v 1.11 2002/03/29 17:18:08 brianp Exp $ */
+/* $Id: m_matrix.c,v 1.12 2002/06/29 19:48:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,6 +37,7 @@
 #include <math.h>
 
 #include "glheader.h"
+#include "imports.h"
 #include "macros.h"
 #include "mem.h"
 #include "mmath.h"
@@ -136,25 +137,25 @@ static void print_matrix_floats( const GLfloat m[16] )
 {
    int i;
    for (i=0;i<4;i++) {
-      fprintf(stderr,"\t%f %f %f %f\n", m[i], m[4+i], m[8+i], m[12+i] );
+      _mesa_debug(NULL,"\t%f %f %f %f\n", m[i], m[4+i], m[8+i], m[12+i] );
    }
 }
 
 void
 _math_matrix_print( const GLmatrix *m )
 {
-   fprintf(stderr, "Matrix type: %s, flags: %x\n", types[m->type], m->flags);
+   _mesa_debug(NULL, "Matrix type: %s, flags: %x\n", types[m->type], m->flags);
    print_matrix_floats(m->m);
-   fprintf(stderr, "Inverse: \n");
+   _mesa_debug(NULL, "Inverse: \n");
    if (m->inv) {
       GLfloat prod[16];
       print_matrix_floats(m->inv);
       matmul4(prod, m->m, m->inv);
-      fprintf(stderr, "Mat * Inverse:\n");
+      _mesa_debug(NULL, "Mat * Inverse:\n");
       print_matrix_floats(prod);
    }
    else {
-      fprintf(stderr, "  - not available\n");
+      _mesa_debug(NULL, "  - not available\n");
    }
 }
 
@@ -468,6 +469,8 @@ static GLboolean invert_matrix_2d_no_rot( GLmatrix *mat )
 }
 
 
+#if 0
+/* broken */
 static GLboolean invert_matrix_perspective( GLmatrix *mat )
 {
    const GLfloat *in = mat->m;
@@ -492,6 +495,7 @@ static GLboolean invert_matrix_perspective( GLmatrix *mat )
 
    return GL_TRUE;
 }
+#endif
 
 
 typedef GLboolean (*inv_mat_func)( GLmatrix *mat );

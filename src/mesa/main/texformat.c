@@ -1,4 +1,4 @@
-/* $Id: texformat.c,v 1.12 2002/06/15 02:38:16 brianp Exp $ */
+/* $Id: texformat.c,v 1.13 2002/06/29 19:48:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -739,7 +739,7 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
 
    default:
       _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");
-      printf("intformat = %d %x\n", internalFormat, internalFormat);
+      _mesa_debug(ctx, "intformat = %d %x\n", internalFormat, internalFormat);
       return NULL;
    }
 }

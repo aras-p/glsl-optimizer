@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.62 2002/05/29 15:23:16 brianp Exp $ */
+/* $Id: glapi.c,v 1.63 2002/06/29 19:48:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,11 +37,12 @@
  * flexible enough to be reused in several places:  XFree86, DRI-
  * based libGL.so, and perhaps the SGI SI.
  *
- * There are no dependencies on Mesa in this code.
+ * NOTE: There are no dependencies on Mesa in this code.
  *
  * Versions (API changes):
  *   2000/02/23  - original version for Mesa 3.3 and XFree86 4.0
  *   2001/01/16  - added dispatch override feature for Mesa 3.5
+ *   2002/06/28  - added _glapi_set_warning_func(), Mesa 4.1.
  */
 
 
@@ -55,20 +56,37 @@
 /***** BEGIN NO-OP DISPATCH *****/
 
 static GLboolean WarnFlag = GL_FALSE;
+static _glapi_warning_func warning_func;
 
+
+/*
+ * Enable/disable printing of warning messages.
+ */
 void
 _glapi_noop_enable_warnings(GLboolean enable)
 {
    WarnFlag = enable;
 }
 
+/*
+ * Register a callback function for reporting errors.
+ */
+void
+_glapi_set_warning_func( _glapi_warning_func func )
+{
+   warning_func = func;
+}
+
 static GLboolean
 warn(void)
 {
-   if (WarnFlag || getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"))
+   if ((WarnFlag || getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"))
+       && warning_func) {
       return GL_TRUE;
-   else
+   }
+   else {
       return GL_FALSE;
+   }
 }
 
 
@@ -76,21 +94,19 @@ warn(void)
 #define KEYWORD2
 #define NAME(func)  NoOp##func
 
-#define F stderr
+#define F NULL
 
-#define DISPATCH(func, args, msg)			\
-   if (warn()) {					\
-      fprintf(stderr, "GL User Error: calling ");	\
-      fprintf msg;					\
-      fprintf(stderr, " without a current context\n");	\
+#define DISPATCH(func, args, msg)					\
+   if (warn()) {							\
+      warning_func(NULL, "GL User Error: called without context:");	\
+      warning_func msg;							\
    }
 
-#define RETURN_DISPATCH(func, args, msg)		\
-   if (warn()) {					\
-      fprintf(stderr, "GL User Error: calling ");	\
-      fprintf msg;					\
-      fprintf(stderr, " without a current context\n");	\
-   }							\
+#define RETURN_DISPATCH(func, args, msg)				\
+   if (warn()) {							\
+      warning_func(NULL, "GL User Error: called without context:");	\
+      warning_func msg;							\
+   }									\
    return 0
 
 #define DISPATCH_TABLE_NAME __glapi_noop_table
@@ -101,7 +117,7 @@ warn(void)
 static int NoOpUnused(void)
 {
    if (warn()) {
-      fprintf(stderr, "GL User Error: calling extension function without a current context\n");
+      warning_func(NULL, "GL User Error: calling extension function without a current context\n");
    }
    return 0;
 }
@@ -442,7 +458,7 @@ _glapi_get_dispatch_table_size(void)
 const char *
 _glapi_get_version(void)
 {
-   return "20010116";  /* YYYYMMDD */
+   return "20020628";  /* YYYYMMDD */
 }
 
 

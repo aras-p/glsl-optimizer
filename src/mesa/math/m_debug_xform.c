@@ -1,4 +1,4 @@
-/* $Id: m_debug_xform.c,v 1.8 2001/03/30 14:44:43 gareth Exp $ */
+/* $Id: m_debug_xform.c,v 1.9 2002/06/29 19:48:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -150,6 +150,14 @@ static void ref_transform( GLvector4f *dst,
  * Vertex transformation tests
  */
 
+static void init_matrix( GLfloat *m )
+{
+   m[0] = 63.0; m[4] = 43.0; m[ 8] = 29.0; m[12] = 43.0;
+   m[1] = 55.0; m[5] = 17.0; m[ 9] = 31.0; m[13] =  7.0;
+   m[2] = 44.0; m[6] =  9.0; m[10] =  7.0; m[14] =  3.0;
+   m[3] = 11.0; m[7] = 23.0; m[11] = 91.0; m[15] =  9.0;
+}
+
 static GLfloat s[TEST_COUNT][4] ALIGN16;
 static GLfloat d[TEST_COUNT][4] ALIGN16;
 static GLfloat r[TEST_COUNT][4] ALIGN16;
@@ -242,18 +250,18 @@ static int test_transform_function( transform_func func, int psize,
    for ( i = 0 ; i < TEST_COUNT ; i++ ) {
       for ( j = 0 ; j < 4 ; j++ ) {
          if ( significand_match( d[i][j], r[i][j] ) < REQUIRED_PRECISION ) {
-            printf( "-----------------------------\n" );
-            printf( "(i = %i, j = %i)\n", i, j );
-            printf( "%f \t %f \t [diff = %e - %i bit missed]\n",
+            _mesa_printf(NULL, "-----------------------------\n" );
+            _mesa_printf(NULL, "(i = %i, j = %i)\n", i, j );
+            _mesa_printf(NULL, "%f \t %f \t [diff = %e - %i bit missed]\n",
 		    d[i][0], r[i][0], r[i][0]-d[i][0],
 		    MAX_PRECISION - significand_match( d[i][0], r[i][0] ) );
-            printf( "%f \t %f \t [diff = %e - %i bit missed]\n",
+            _mesa_printf(NULL, "%f \t %f \t [diff = %e - %i bit missed]\n",
 		    d[i][1], r[i][1], r[i][1]-d[i][1],
 		    MAX_PRECISION - significand_match( d[i][1], r[i][1] ) );
-            printf( "%f \t %f \t [diff = %e - %i bit missed]\n",
+            _mesa_printf(NULL, "%f \t %f \t [diff = %e - %i bit missed]\n",
 		    d[i][2], r[i][2], r[i][2]-d[i][2],
 		    MAX_PRECISION - significand_match( d[i][2], r[i][2] ) );
-            printf( "%f \t %f \t [diff = %e - %i bit missed]\n",
+            _mesa_printf(NULL, "%f \t %f \t [diff = %e - %i bit missed]\n",
 		    d[i][3], r[i][3], r[i][3]-d[i][3],
 		    MAX_PRECISION - significand_match( d[i][3], r[i][3] ) );
             return 0;
@@ -280,19 +288,19 @@ void _math_test_all_transform_functions( char *description )
    if ( mesa_profile ) {
       if ( !counter_overhead ) {
 	 INIT_COUNTER();
-	 printf( "counter overhead: %ld cycles\n\n", counter_overhead );
+	 _mesa_printf(NULL, "counter overhead: %ld cycles\n\n", counter_overhead );
       }
-      printf( "transform results after hooking in %s functions:\n", description );
+      _mesa_printf(NULL, "transform results after hooking in %s functions:\n", description );
    }
 #endif
 
 #ifdef RUN_DEBUG_BENCHMARK
    if ( mesa_profile ) {
-      printf( "\n" );
+      _mesa_printf(NULL, "\n" );
       for ( psize = 1 ; psize <= 4 ; psize++ ) {
-	 printf( " p%d\t", psize );
+	 _mesa_printf(NULL, " p%d\t", psize );
       }
-      printf( "\n--------------------------------------------------------\n" );
+      _mesa_printf(NULL, "\n--------------------------------------------------------\n" );
    }
 #endif
 
@@ -303,23 +311,23 @@ void _math_test_all_transform_functions( char *description )
 
 	 if ( test_transform_function( func, psize, mtype, cycles ) == 0 ) {
 	    char buf[100];
-	    sprintf( buf, "_mesa_transform_tab[0][%d][%s] failed test (%s)",
+	    _mesa_sprintf(NULL, buf, "_mesa_transform_tab[0][%d][%s] failed test (%s)",
 		     psize, mstrings[mtype], description );
 	    _mesa_problem( NULL, buf );
 	 }
 #ifdef RUN_DEBUG_BENCHMARK
 	 if ( mesa_profile )
-	    printf( " %li\t", benchmark_tab[psize-1][mtype] );
+	    _mesa_printf(NULL, " %li\t", benchmark_tab[psize-1][mtype] );
 #endif
       }
 #ifdef RUN_DEBUG_BENCHMARK
       if ( mesa_profile )
-	 printf( " | [%s]\n", mstrings[mtype] );
+	 _mesa_printf(NULL, " | [%s]\n", mstrings[mtype] );
 #endif
    }
 #ifdef RUN_DEBUG_BENCHMARK
    if ( mesa_profile )
-      printf( "\n" );
+      _mesa_printf(NULL, "\n" );
 #endif
 }
 

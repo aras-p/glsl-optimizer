@@ -1,4 +1,4 @@
-/* $Id: m_debug_clip.c,v 1.1 2001/05/21 16:33:41 gareth Exp $ */
+/* $Id: m_debug_clip.c,v 1.2 2002/06/29 19:48:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,10 +48,12 @@ static char *cnames[2] = {
    "_mesa_clip_tab",
    "_mesa_clip_np_tab"
 };
+#ifdef RUN_DEBUG_BENCHMARK
 static char *cstrings[2] = {
    "clip, perspective divide",
    "clip, no divide"
 };
+#endif
 
 
 /* =============================================================
@@ -253,20 +255,20 @@ static int test_cliptest_function( clip_func func, int np,
    }
 
    if ( dco != rco ) {
-      printf( "\n-----------------------------\n" );
-      printf( "dco = 0x%02x   rco = 0x%02x\n", dco, rco );
+      _mesa_printf(NULL, "\n-----------------------------\n" );
+      _mesa_printf(NULL, "dco = 0x%02x   rco = 0x%02x\n", dco, rco );
       return 0;
    }
    if ( dca != rca ) {
-      printf( "\n-----------------------------\n" );
-      printf( "dca = 0x%02x   rca = 0x%02x\n", dca, rca );
+      _mesa_printf(NULL, "\n-----------------------------\n" );
+      _mesa_printf(NULL, "dca = 0x%02x   rca = 0x%02x\n", dca, rca );
       return 0;
    }
    for ( i = 0 ; i < TEST_COUNT ; i++ ) {
       if ( dm[i] != rm[i] ) {
-	 printf( "\n-----------------------------\n" );
-	 printf( "(i = %i)\n", i );
-	 printf( "dm = 0x%02x   rm = 0x%02x\n", dm[i], rm[i] );
+	 _mesa_printf(NULL, "\n-----------------------------\n" );
+	 _mesa_printf(NULL, "(i = %i)\n", i );
+	 _mesa_printf(NULL, "dm = 0x%02x   rm = 0x%02x\n", dm[i], rm[i] );
 	 return 0;
       }
    }
@@ -280,19 +282,19 @@ static int test_cliptest_function( clip_func func, int np,
    for ( i = 0 ; i < TEST_COUNT ; i++ ) {
       for ( j = 0 ; j < 4 ; j++ ) {
          if ( significand_match( d[i][j], r[i][j] ) < REQUIRED_PRECISION ) {
-            printf( "\n-----------------------------\n" );
-            printf( "(i = %i, j = %i)  dm = 0x%02x   rm = 0x%02x\n",
+            _mesa_printf(NULL, "\n-----------------------------\n" );
+            _mesa_printf(NULL, "(i = %i, j = %i)  dm = 0x%02x   rm = 0x%02x\n",
 		    i, j, dm[i], rm[i] );
-            printf( "%f \t %f \t [diff = %e - %i bit missed]\n",
+            _mesa_printf(NULL, "%f \t %f \t [diff = %e - %i bit missed]\n",
 		    d[i][0], r[i][0], r[i][0]-d[i][0],
 		    MAX_PRECISION - significand_match( d[i][0], r[i][0] ) );
-            printf( "%f \t %f \t [diff = %e - %i bit missed]\n",
+            _mesa_printf(NULL, "%f \t %f \t [diff = %e - %i bit missed]\n",
 		    d[i][1], r[i][1], r[i][1]-d[i][1],
 		    MAX_PRECISION - significand_match( d[i][1], r[i][1] ) );
-            printf( "%f \t %f \t [diff = %e - %i bit missed]\n",
+            _mesa_printf(NULL, "%f \t %f \t [diff = %e - %i bit missed]\n",
 		    d[i][2], r[i][2], r[i][2]-d[i][2],
 		    MAX_PRECISION - significand_match( d[i][2], r[i][2] ) );
-            printf( "%f \t %f \t [diff = %e - %i bit missed]\n",
+            _mesa_printf(NULL, "%f \t %f \t [diff = %e - %i bit missed]\n",
 		    d[i][3], r[i][3], r[i][3]-d[i][3],
 		    MAX_PRECISION - significand_match( d[i][3], r[i][3] ) );
             return 0;
@@ -318,19 +320,19 @@ void _math_test_all_cliptest_functions( char *description )
    if ( mesa_profile ) {
       if ( !counter_overhead ) {
 	 INIT_COUNTER();
-	 printf( "counter overhead: %ld cycles\n\n", counter_overhead );
+	 _mesa_printf(NULL, "counter overhead: %ld cycles\n\n", counter_overhead );
       }
-      printf( "cliptest results after hooking in %s functions:\n", description );
+      _mesa_printf(NULL, "cliptest results after hooking in %s functions:\n", description );
    }
 #endif
 
 #ifdef RUN_DEBUG_BENCHMARK
    if ( mesa_profile ) {
-      printf( "\n\t" );
+      _mesa_printf(NULL, "\n\t" );
       for ( psize = 2 ; psize <= 4 ; psize++ ) {
-	 printf( " p%d\t", psize );
+	 _mesa_printf(NULL, " p%d\t", psize );
       }
-      printf( "\n--------------------------------------------------------\n\t" );
+      _mesa_printf(NULL, "\n--------------------------------------------------------\n\t" );
    }
 #endif
 
@@ -341,23 +343,23 @@ void _math_test_all_cliptest_functions( char *description )
 
 	 if ( test_cliptest_function( func, np, psize, cycles ) == 0 ) {
 	    char buf[100];
-	    sprintf( buf, "%s[%d] failed test (%s)",
+	    _mesa_sprintf(NULL, buf, "%s[%d] failed test (%s)",
 		     cnames[np], psize, description );
 	    _mesa_problem( NULL, buf );
 	 }
 #ifdef RUN_DEBUG_BENCHMARK
 	 if ( mesa_profile )
-	    printf( " %li\t", benchmark_tab[np][psize-1] );
+	    _mesa_printf(NULL, " %li\t", benchmark_tab[np][psize-1] );
 #endif
       }
 #ifdef RUN_DEBUG_BENCHMARK
       if ( mesa_profile )
-	 printf( " | [%s]\n\t", cstrings[np] );
+	 _mesa_printf(NULL, " | [%s]\n\t", cstrings[np] );
 #endif
    }
 #ifdef RUN_DEBUG_BENCHMARK
    if ( mesa_profile )
-      printf( "\n" );
+      _mesa_printf(NULL, "\n" );
 #endif
 }
 

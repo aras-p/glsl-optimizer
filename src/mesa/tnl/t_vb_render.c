@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.30 2002/06/15 03:03:12 brianp Exp $ */
+/* $Id: t_vb_render.c,v 1.31 2002/06/29 19:48:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -327,7 +327,7 @@ static GLboolean run_render( GLcontext *ctx,
 	 ASSERT((flags & PRIM_MODE_MASK) <= GL_POLYGON+1);
 
 	 if (MESA_VERBOSE & VERBOSE_PRIMS)
-	    fprintf(stderr, "MESA prim %s %d..%d\n", 
+	    _mesa_debug(NULL, "MESA prim %s %d..%d\n", 
 		    _mesa_lookup_enum_by_nr(flags & PRIM_MODE_MASK), 
 		    i, i+length);
 

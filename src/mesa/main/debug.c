@@ -1,4 +1,4 @@
-/* $Id: debug.c,v 1.12 2001/03/29 21:16:25 keithw Exp $ */
+/* $Id: debug.c,v 1.13 2002/06/29 19:48:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,11 +25,12 @@
  */
 
 #include "mtypes.h"
+#include "context.h"
 #include "debug.h"
 
 void _mesa_print_state( const char *msg, GLuint state )
 {
-   fprintf(stderr,
+   _mesa_debug(NULL,
 	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   msg,
 	   state,
@@ -63,7 +64,7 @@ void _mesa_print_state( const char *msg, GLuint state )
 
 void _mesa_print_tri_caps( const char *name, GLuint flags )
 {
-   fprintf(stderr,
+   _mesa_debug(NULL,
 	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   name,
 	   flags,

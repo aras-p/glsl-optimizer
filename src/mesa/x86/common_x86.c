@@ -1,4 +1,4 @@
-/* $Id: common_x86.c,v 1.17 2002/04/09 14:58:03 keithw Exp $ */
+/* $Id: common_x86.c,v 1.18 2002/06/29 19:48:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -225,6 +225,7 @@ static void check_os_sse_support( void )
 
 void _mesa_init_all_x86_transform_asm( void )
 {
+   (void) message; /* silence warning */
 #ifdef USE_X86_ASM
    _mesa_x86_cpu_features = _mesa_identify_x86_cpu_features();
 

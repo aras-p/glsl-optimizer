@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.173 2002/06/23 02:53:22 brianp Exp $ */
+/* $Id: context.c,v 1.174 2002/06/29 19:48:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -579,13 +579,14 @@ one_time_init( GLcontext *ctx )
 #endif
       if (ctx->imports.getenv(ctx, "MESA_DEBUG")) {
          _glapi_noop_enable_warnings(GL_TRUE);
+         _glapi_set_warning_func( (_glapi_warning_func) _mesa_warning );
       }
       else {
          _glapi_noop_enable_warnings(GL_FALSE);
       }
 
 #if defined(DEBUG) && defined(__DATE__) && defined(__TIME__)
-      fprintf(stderr, "Mesa DEBUG build %s %s\n", __DATE__, __TIME__);
+      _mesa_debug(ctx, "Mesa DEBUG build %s %s\n", __DATE__, __TIME__);
 #endif
 
       alreadyCalled = GL_TRUE;
@@ -1480,7 +1481,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->NoDither = ctx->imports.getenv(ctx, "MESA_NO_DITHER") ? GL_TRUE : GL_FALSE;
    if (ctx->NoDither) {
       if (ctx->imports.getenv(ctx, "MESA_DEBUG")) {
-         fprintf(stderr, "MESA_NO_DITHER set - dithering disabled\n");
+         _mesa_debug(ctx, "MESA_NO_DITHER set - dithering disabled\n");
       }
       ctx->Color.DitherFlag = GL_FALSE;
    }
@@ -2089,28 +2090,28 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
 
 static void print_info( void )
 {
-   fprintf(stderr, "Mesa GL_VERSION = %s\n",
+   _mesa_debug(NULL, "Mesa GL_VERSION = %s\n",
 	   (char *) _mesa_GetString(GL_VERSION));
-   fprintf(stderr, "Mesa GL_RENDERER = %s\n",
+   _mesa_debug(NULL, "Mesa GL_RENDERER = %s\n",
 	   (char *) _mesa_GetString(GL_RENDERER));
-   fprintf(stderr, "Mesa GL_VENDOR = %s\n",
+   _mesa_debug(NULL, "Mesa GL_VENDOR = %s\n",
 	   (char *) _mesa_GetString(GL_VENDOR));
-   fprintf(stderr, "Mesa GL_EXTENSIONS = %s\n",
+   _mesa_debug(NULL, "Mesa GL_EXTENSIONS = %s\n",
 	   (char *) _mesa_GetString(GL_EXTENSIONS));
 #if defined(THREADS)
-   fprintf(stderr, "Mesa thread-safe: YES\n");
+   _mesa_debug(NULL, "Mesa thread-safe: YES\n");
 #else
-   fprintf(stderr, "Mesa thread-safe: NO\n");
+   _mesa_debug(NULL, "Mesa thread-safe: NO\n");
 #endif
 #if defined(USE_X86_ASM)
-   fprintf(stderr, "Mesa x86-optimized: YES\n");
+   _mesa_debug(NULL, "Mesa x86-optimized: YES\n");
 #else
-   fprintf(stderr, "Mesa x86-optimized: NO\n");
+   _mesa_debug(NULL, "Mesa x86-optimized: NO\n");
 #endif
 #if defined(USE_SPARC_ASM)
-   fprintf(stderr, "Mesa sparc-optimized: YES\n");
+   _mesa_debug(NULL, "Mesa sparc-optimized: YES\n");
 #else
-   fprintf(stderr, "Mesa sparc-optimized: NO\n");
+   _mesa_debug(NULL, "Mesa sparc-optimized: NO\n");
 #endif
 }
 
@@ -2270,112 +2271,12 @@ _mesa_get_dispatch(GLcontext *ctx)
 
 
 /*
- * This function is called when the Mesa user has stumbled into a code
- * path which may not be implemented fully or correctly.
- */
-void _mesa_problem( const GLcontext *ctx, const char *s )
-{
-   if (ctx) {
-      ctx->imports.fprintf((GLcontext *) ctx, stderr, "Mesa implementation error: %s\n", s);
-#ifdef XF86DRI
-      ctx->imports.fprintf((GLcontext *) ctx, stderr, "Please report to the DRI bug database at dri.sourceforge.net\n");
-#else
-      ctx->imports.fprintf((GLcontext *) ctx, stderr, "Please report to the Mesa bug database at www.mesa3d.org\n" );
-#endif
-   }
-   else {
-      /* what can we do if we don't have a context???? */
-      fprintf( stderr, "Mesa implementation error: %s\n", s );
-#ifdef XF86DRI
-      fprintf( stderr, "Please report to the DRI bug database at dri.sourceforge.net\n");
-#else
-      fprintf( stderr, "Please report to the Mesa bug database at www.mesa3d.org\n" );
-#endif
-   }
-}
-
-
-
-/*
- * This is called to inform the user that he or she has tried to do
- * something illogical or if there's likely a bug in their program
- * (like enabled depth testing without a depth buffer).
+ * Record the given error code and call the driver's Error function if defined.
+ * This is called via _mesa_error().
  */
 void
-_mesa_warning( const GLcontext *ctx, const char *s )
+_mesa_record_error( GLcontext *ctx, GLenum error )
 {
-   (*ctx->imports.warning)((__GLcontext *) ctx, (char *) s);
-}
-
-
-
-/*
- * This is Mesa's error handler.  Normally, all that's done is the updating
- * of the current error value.  If Mesa is compiled with -DDEBUG or if the
- * environment variable "MESA_DEBUG" is defined then a real error message
- * is printed to stderr.
- * Input:  ctx - the GL context
- *         error - the error value
- *         where - usually the name of function where error was detected
- */
-void
-_mesa_error( GLcontext *ctx, GLenum error, const char *where )
-{
-   const char *debugEnv;
-   GLboolean debug;
-
-   if (ctx)
-      debugEnv = ctx->imports.getenv(ctx, "MESA_DEBUG");
-   else
-      /* what can we do??? */
-      debugEnv = "";
-
-#ifdef DEBUG
-   if (debugEnv && strstr(debugEnv, "silent"))
-      debug = GL_FALSE;
-   else
-      debug = GL_TRUE;
-#else
-   if (debugEnv)
-      debug = GL_TRUE;
-   else
-      debug = GL_FALSE;
-#endif
-
-   if (debug) {
-      const char *errstr;
-      switch (error) {
-	 case GL_NO_ERROR:
-	    errstr = "GL_NO_ERROR";
-	    break;
-	 case GL_INVALID_VALUE:
-	    errstr = "GL_INVALID_VALUE";
-	    break;
-	 case GL_INVALID_ENUM:
-	    errstr = "GL_INVALID_ENUM";
-	    break;
-	 case GL_INVALID_OPERATION:
-	    errstr = "GL_INVALID_OPERATION";
-	    break;
-	 case GL_STACK_OVERFLOW:
-	    errstr = "GL_STACK_OVERFLOW";
-	    break;
-	 case GL_STACK_UNDERFLOW:
-	    errstr = "GL_STACK_UNDERFLOW";
-	    break;
-	 case GL_OUT_OF_MEMORY:
-	    errstr = "GL_OUT_OF_MEMORY";
-	    break;
-         case GL_TABLE_TOO_LARGE:
-            errstr = "GL_TABLE_TOO_LARGE";
-            break;
-	 default:
-	    errstr = "unknown";
-	    break;
-      }
-      fprintf(stderr, "Mesa user error: %s in %s\n", errstr, where);
-   }
-
    if (!ctx)
       return;
 
@@ -2388,37 +2289,6 @@ _mesa_error( GLcontext *ctx, GLenum error, const char *where )
       (*ctx->Driver.Error)( ctx );
    }
 }
-
-
-/*
- * Call this to report debug information.  Uses stderr.
- */
-void
-_mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
-{
-   char s[1000];
-   va_list args;
-   va_start( args, fmtString );  
-   vsprintf(s, fmtString, args);
-   (void) ctx->imports.fprintf( (__GLcontext *) ctx, stderr, s );
-   va_end( args );
-}
-
-
-/*
- * A wrapper for printf.  Uses stdout.
- */
-void
-_mesa_printf( const GLcontext *ctx, const char *fmtString, ... )
-{
-   char s[1000];
-   va_list args;
-   va_start( args, fmtString );  
-   vsprintf(s, fmtString, args);
-   (void) ctx->imports.fprintf( (__GLcontext *) ctx, stdout, s );
-   va_end( args );
-}
-
 
 
 void

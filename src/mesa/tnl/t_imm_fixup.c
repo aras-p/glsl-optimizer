@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.36 2002/04/19 12:32:14 brianp Exp $ */
+/* $Id: t_imm_fixup.c,v 1.37 2002/06/29 19:48:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,7 +78,7 @@ _tnl_fixup_3f( float data[][3], GLuint flag[], GLuint start, GLuint match )
 
    for (;;) {
       if ((flag[++i] & match) == 0) {
-/*  	 fprintf(stderr, "_tnl_fixup_3f copy to %p values %f %f %f\n", */
+/*  	 _mesa_debug(NULL, "_tnl_fixup_3f copy to %p values %f %f %f\n", */
 /*  		 data[i],  */
 /*  		 data[i-1][0], */
 /*  		 data[i-1][1], */
@@ -153,7 +153,7 @@ fixup_first_3f( GLfloat data[][3], GLuint flag[], GLuint match,
    GLuint i = start-1;
    match |= VERT_BIT_END_VB;
 
-/*     fprintf(stderr, "fixup_first_3f default: %f %f %f start: %d\n", */
+/*     _mesa_debug(NULL, "fixup_first_3f default: %f %f %f start: %d\n", */
 /*  	   dflt[0], dflt[1], dflt[2], start);  */
 
    while ((flag[++i]&match) == 0)
@@ -260,7 +260,7 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 
    IM->CopyTexSize = IM->TexSize;
 
-/*     fprintf(stderr, "Fixup input, Start: %u Count: %u LastData: %u\n", */
+/*     _mesa_debug(ctx, "Fixup input, Start: %u Count: %u LastData: %u\n", */
 /*  	   IM->Start, IM->Count, IM->LastData); */
 /*     _tnl_print_vert_flags("Orflag", orflag); */
 /*     _tnl_print_vert_flags("Andflag", andflag); */
@@ -397,7 +397,7 @@ copy_material( struct immediate *next,
                struct immediate *prev,
                GLuint dst, GLuint src )
 {
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+/*     _mesa_debug(NULL, "%s\n", __FUNCTION__); */
 
    if (next->Material == 0) {
       next->Material = (struct gl_material (*)[2])
@@ -466,7 +466,7 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
 	 next->Flag[dst] = VERT_BIT_ELT;
 	 elts[i+offset] = dst;
       }
-/*        fprintf(stderr, "ADDING VERT_BIT_ELT!\n"); */
+/*        _mesa_debug(ctx, "ADDING VERT_BIT_ELT!\n"); */
       next->CopyOrFlag |= VERT_BIT_ELT;
       next->CopyAndFlag &= VERT_BIT_ELT;
    }
@@ -509,7 +509,7 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
                    inputs->Obj.data[isrc] );
 
 	 if (copy & VERT_BIT_NORMAL) {
-/*  	    fprintf(stderr, "copy vert norm %d to %d (%p): %f %f %f\n", */
+/*  	    _mesa_debug(ctx, "copy vert norm %d to %d (%p): %f %f %f\n", */
 /*  		    isrc, dst,  */
 /*  		    next->Normal[dst], */
 /*  		    inputs->Normal.data[isrc][0], */
@@ -578,7 +578,7 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
    GLuint fixup;
    GLuint start = IM->Start;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+/*     _mesa_debug(ctx, "%s\n", __FUNCTION__); */
 
    IM->Evaluated = 0;
    IM->CopyOrFlag = IM->OrFlag;	  
@@ -768,7 +768,7 @@ _tnl_get_exec_copy_verts( GLcontext *ctx, struct immediate *IM )
    GLuint pintro = intro[prim];
    GLuint ovf = 0;
 
-/*     fprintf(stderr, "_tnl_get_exec_copy_verts %s\n",  */
+/*     _mesa_debug(ctx, "_tnl_get_exec_copy_verts %s\n",  */
 /*  	   _mesa_lookup_enum_by_nr(prim)); */
 
    if (tnl->ExecCopySource)

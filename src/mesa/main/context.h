@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.32 2002/06/15 02:38:15 brianp Exp $ */
+/* $Id: context.h,v 1.33 2002/06/29 19:48:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,6 +31,7 @@
 
 #include "glapi.h"
 #include "mtypes.h"
+#include "imports.h"
 
 
 /*
@@ -229,20 +230,7 @@ _mesa_get_dispatch(GLcontext *ctx);
  */
 
 extern void
-_mesa_problem( const GLcontext *ctx, const char *s );
-
-extern void
-_mesa_warning( const GLcontext *ctx, const char *s );
-
-extern void
-_mesa_error( GLcontext *ctx, GLenum error, const char *s );
-
-extern void
-_mesa_debug( const GLcontext *ctx, const char *fmtString, ... );
-
-extern void
-_mesa_printf( const GLcontext *ctx, const char *fmtString, ... );
-
+_mesa_record_error( GLcontext *ctx, GLenum error );
 
 
 extern void

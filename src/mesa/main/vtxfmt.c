@@ -1,4 +1,4 @@
-/* $Id: vtxfmt.c,v 1.11 2002/04/09 16:56:50 keithw Exp $ */
+/* $Id: vtxfmt.c,v 1.12 2002/06/29 19:48:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,7 +61,7 @@
    tnl->SwapCount++;							\
 									\
    if ( 0 )								\
-      fprintf( stderr, "   swapping gl" #FUNC"...\n" );			\
+      _mesa_debug(ctx, "   swapping gl" #FUNC"...\n" );			\
 									\
    /* Install the tnl function pointer.	*/				\
    ctx->Exec->FUNC = tnl->Current->FUNC;				\

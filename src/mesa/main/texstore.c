@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.37 2002/06/15 03:03:09 brianp Exp $ */
+/* $Id: texstore.c,v 1.38 2002/06/29 19:48:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1470,7 +1470,7 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
     */
 
    /*
-   printf("mip3d %d x %d x %d  ->  %d x %d x %d\n",
+   _mesa_printf("mip3d %d x %d x %d  ->  %d x %d x %d\n",
           srcWidth, srcHeight, srcDepth, dstWidth, dstHeight, dstDepth);
    */
 

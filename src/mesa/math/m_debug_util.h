@@ -1,4 +1,4 @@
-/* $Id: m_debug_util.h,v 1.4 2001/05/23 14:27:03 brianp Exp $ */
+/* $Id: m_debug_util.h,v 1.5 2002/06/29 19:48:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -262,15 +262,6 @@ static int significand_match( GLfloat a, GLfloat b )
 }
 
 enum { NIL = 0, ONE = 1, NEG = -1, VAR = 2 };
-
-static void init_matrix( GLfloat *m )
-{
-   m[0] = 63.0; m[4] = 43.0; m[ 8] = 29.0; m[12] = 43.0;
-   m[1] = 55.0; m[5] = 17.0; m[ 9] = 31.0; m[13] =  7.0;
-   m[2] = 44.0; m[6] =  9.0; m[10] =  7.0; m[14] =  3.0;
-   m[3] = 11.0; m[7] = 23.0; m[11] = 91.0; m[15] =  9.0;
-}
-
 
 /* Ensure our arrays are correctly aligned.
  */

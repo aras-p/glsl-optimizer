@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.26 2001/12/15 16:42:59 brianp Exp $ */
+/* $Id: dispatch.c,v 1.27 2002/06/29 19:48:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -62,7 +62,7 @@
 #endif
 
 
-#if 0  /* Use this to log GL calls to stdout */
+#if 0  /* Use this to log GL calls to stdout (for DEBUG only!) */
 
 #define F stdout
 #define DISPATCH(FUNC, ARGS, MESSAGE)		\

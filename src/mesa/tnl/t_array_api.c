@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.26 2002/04/19 00:45:50 brianp Exp $ */
+/* $Id: t_array_api.c,v 1.27 2002/06/29 19:48:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -80,7 +80,7 @@ static void _tnl_draw_range_elements( GLcontext *ctx, GLenum mode,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    FLUSH_CURRENT( ctx, 0 );
    
-   /*  fprintf(stderr, "%s\n", __FUNCTION__); */
+   /*  _mesa_debug(ctx, "%s\n", __FUNCTION__); */
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
 
@@ -116,7 +116,7 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
    GLuint thresh = (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES) ? 30 : 10;
    
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "_tnl_DrawArrays %d %d\n", start, count); 
+      _mesa_debug(NULL, "_tnl_DrawArrays %d %d\n", start, count); 
    
    /* Check arguments, etc.
     */
@@ -252,7 +252,7 @@ _tnl_DrawRangeElements(GLenum mode,
    GLuint *ui_indices;
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "_tnl_DrawRangeElements %d %d %d\n", start, end, count); 
+      _mesa_debug(NULL, "_tnl_DrawRangeElements %d %d %d\n", start, end, count); 
 
    /* Check arguments, etc.
     */
@@ -319,7 +319,7 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
    GLuint *ui_indices;
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "_tnl_DrawElements %d\n", count); 
+      _mesa_debug(NULL, "_tnl_DrawElements %d\n", count); 
 
    /* Check arguments, etc.
     */

@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.43 2002/06/08 12:39:18 brianp Exp $ */
+/* $Id: colortab.c,v 1.44 2002/06/29 19:48:15 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -322,9 +322,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
          table->Format = (GLenum) 0;
       }
       else {
-         char msg[100];
-         sprintf(msg, "glColorTable(width=%d)", width);
-         _mesa_error(ctx, GL_INVALID_VALUE, msg);
+         _mesa_error(ctx, GL_INVALID_VALUE, "glColorTable(width=%d)", width);
       }
       return;
    }

@@ -144,7 +144,7 @@ static void flush_prims( TNLcontext *tnl )
 static void start_prim( TNLcontext *tnl, GLuint mode )
 {
    if (MESA_VERBOSE & DEBUG_VFMT)
-      fprintf(stderr, "%s %d\n", __FUNCTION__, 
+      _mesa_debug(NULL, "%s %d\n", __FUNCTION__, 
 	      tnl->initial_counter - tnl->counter);
 
    tnl->primlist[tnl->nrprims].start = tnl->initial_counter - tnl->counter;
@@ -154,7 +154,7 @@ static void start_prim( TNLcontext *tnl, GLuint mode )
 static void note_last_prim( TNLcontext *tnl, GLuint flags )
 {
    if (MESA_VERBOSE & DEBUG_VFMT)
-      fprintf(stderr, "%s %d\n", __FUNCTION__, 
+      _mesa_debug(NULL, "%s %d\n", __FUNCTION__, 
 	      tnl->initial_counter - tnl->counter);
 
    if (tnl->prim[0] != GL_POLYGON+1) {
@@ -176,7 +176,7 @@ static void copy_vertex( TNLcontext *tnl, GLuint n, GLfloat *dst )
 			      tnl->vertex_size * 4);
 
    if (MESA_VERBOSE & DEBUG_VFMT) 
-      fprintf(stderr, "copy_vertex %d\n", 
+      _mesa_debug(NULL, "copy_vertex %d\n", 
 	      tnl->primlist[tnl->nrprims].start + n);
 
    for (i = 0 ; i < tnl->vertex_size; i++) {
@@ -190,7 +190,7 @@ static GLuint copy_wrapped_verts( TNLcontext *tnl, GLfloat (*tmp)[15] )
    GLuint nr = (tnl->initial_counter - tnl->counter) - tnl->primlist[tnl->nrprims].start;
 
    if (MESA_VERBOSE & DEBUG_VFMT)
-      fprintf(stderr, "%s %d verts\n", __FUNCTION__, nr);
+      _mesa_debug(NULL, "%s %d verts\n", __FUNCTION__, nr);
 
    switch( tnl->prim[0] )
    {
@@ -257,7 +257,7 @@ static void wrap_buffer( void )
    GLuint i, nrverts;
 
    if (MESA_VERBOSE & (DEBUG_VFMT|DEBUG_PRIMS))
-      fprintf(stderr, "%s %d\n", __FUNCTION__, 
+      _mesa_debug(NULL, "%s %d\n", __FUNCTION__, 
 	      tnl->initial_counter - tnl->counter);
 
    /* Don't deal with parity.  *** WONT WORK FOR COMPILE
@@ -274,7 +274,7 @@ static void wrap_buffer( void )
    nrverts = copy_dma_verts( tnl, tmp );
 
    if (MESA_VERBOSE & DEBUG_VFMT)
-      fprintf(stderr, "%d vertices to copy\n", nrverts);
+      _mesa_debug(NULL, "%d vertices to copy\n", nrverts);
    
 
    /* Finish the prim at this point:
@@ -302,10 +302,10 @@ static void wrap_buffer( void )
    for (i = 0 ; i < nrverts; i++) {
       if (MESA_VERBOSE & DEBUG_VERTS) {
 	 int j;
-	 fprintf(stderr, "re-emit vertex %d to %p\n", i, tnl->dmaptr);
+	 _mesa_debug(NULL, "re-emit vertex %d to %p\n", i, tnl->dmaptr);
 	 if (MESA_VERBOSE & DEBUG_VERBOSE)
 	    for (j = 0 ; j < tnl->vertex_size; j++) 
-	       fprintf(stderr, "\t%08x/%f\n", *(int*)&tmp[i][j], tmp[i][j]);
+	       _mesa_debug(NULL, "\t%08x/%f\n", *(int*)&tmp[i][j], tmp[i][j]);
       }
 
       memcpy( tnl->dmaptr, tmp[i], tnl->vertex_size * 4 );
@@ -371,7 +371,7 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
 
    if (tnl->installed_vertex_format != tnl->vertex_format) {
       if (MESA_VERBOSE & DEBUG_VFMT)
-	 fprintf(stderr, "reinstall on vertex_format change\n");
+	 _mesa_debug(NULL, "reinstall on vertex_format change\n");
       _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
       tnl->installed_vertex_format = tnl->vertex_format;
    }
@@ -392,7 +392,7 @@ void _tnl_InvalidateVtxfmt( GLcontext *ctx )
 static void _tnl_ValidateVtxfmt( GLcontext *ctx )
 {
    if (MESA_VERBOSE & DEBUG_VFMT)
-      fprintf(stderr, "%s\n", __FUNCTION__);
+      _mesa_debug(NULL, "%s\n", __FUNCTION__);
 
    if (ctx->Driver.NeedFlush)
       ctx->Driver.FlushVertices( ctx, ctx->Driver.NeedFlush );
@@ -402,18 +402,18 @@ static void _tnl_ValidateVtxfmt( GLcontext *ctx )
    if (check_vtx_fmt( ctx )) {
       if (!tnl->installed) {
 	 if (MESA_VERBOSE & DEBUG_VFMT)
-	    fprintf(stderr, "reinstall (new install)\n");
+	    _mesa_debug(NULL, "reinstall (new install)\n");
 
 	 _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
 	 ctx->Driver.FlushVertices = _tnl_FlushVertices;
 	 tnl->installed = GL_TRUE;
       }
       else
-	 fprintf(stderr, "%s: already installed", __FUNCTION__);
+	 _mesa_debug(NULL, "%s: already installed", __FUNCTION__);
    } 
    else {
       if (MESA_VERBOSE & DEBUG_VFMT)
-	 fprintf(stderr, "%s: failed\n", __FUNCTION__);
+	 _mesa_debug(NULL, "%s: failed\n", __FUNCTION__);
 
       if (tnl->installed) {
 	 if (tnl->tnl->dma.flush)
@@ -436,7 +436,7 @@ static void _tnl_Begin( GLenum mode )
    TNLcontext *tnl = tnl->tnl;
    
    if (MESA_VERBOSE & DEBUG_VFMT)
-      fprintf(stderr, "%s\n", __FUNCTION__);
+      _mesa_debug(NULL, "%s\n", __FUNCTION__);
 
    if (mode > GL_POLYGON) {
       _mesa_error( ctx, GL_INVALID_ENUM, "glBegin" );
@@ -456,7 +456,7 @@ static void _tnl_Begin( GLenum mode )
 
    if (tnl->dma.flush && tnl->counter < 12) {
       if (MESA_VERBOSE & DEBUG_VFMT)
-	 fprintf(stderr, "%s: flush almost-empty buffers\n", __FUNCTION__);
+	 _mesa_debug(NULL, "%s: flush almost-empty buffers\n", __FUNCTION__);
       flush_prims( tnl );
    }
 
@@ -492,7 +492,7 @@ static void _tnl_End( void )
    GLcontext *ctx = tnl->context;
 
    if (MESA_VERBOSE & DEBUG_VFMT)
-      fprintf(stderr, "%s\n", __FUNCTION__);
+      _mesa_debug(NULL, "%s\n", __FUNCTION__);
 
    if (tnl->prim[0] == GL_POLYGON+1) {
       _mesa_error( ctx, GL_INVALID_OPERATION, "glEnd" );
@@ -507,14 +507,14 @@ static void _tnl_End( void )
 static void _tnl_FlushVertices( GLcontext *ctx, GLuint flags )
 {
    if (MESA_VERBOSE & DEBUG_VFMT)
-      fprintf(stderr, "%s\n", __FUNCTION__);
+      _mesa_debug(NULL, "%s\n", __FUNCTION__);
 
    assert(tnl->installed);
 
    if (flags & FLUSH_UPDATE_CURRENT) {
       _tnl_copy_to_current( ctx );
       if (MESA_VERBOSE & DEBUG_VFMT)
-	 fprintf(stderr, "reinstall on update_current\n");
+	 _mesa_debug(NULL, "reinstall on update_current\n");
       _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
       ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
    }

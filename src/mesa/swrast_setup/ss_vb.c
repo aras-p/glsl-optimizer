@@ -1,4 +1,4 @@
-/* $Id: ss_vb.c,v 1.19 2002/06/15 03:03:12 brianp Exp $ */
+/* $Id: ss_vb.c,v 1.20 2002/06/29 19:48:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -361,6 +361,7 @@ static void init_standard( void )
 
 
 /* debug only */
+#if 0
 static void
 printSetupFlags(const GLcontext *ctx, char *msg, GLuint flags )
 {
@@ -375,7 +376,7 @@ printSetupFlags(const GLcontext *ctx, char *msg, GLuint flags )
                (flags & FOG) ? "fog, " : "",
                (flags & POINT) ? "point, " : "");
 }
-
+#endif
 
 void
 _swsetup_choose_rastersetup_func(GLcontext *ctx)

@@ -1,4 +1,4 @@
-/* $Id: m_debug_norm.c,v 1.8 2002/01/05 20:51:12 brianp Exp $ */
+/* $Id: m_debug_norm.c,v 1.9 2002/06/29 19:48:17 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -181,6 +181,15 @@ static void ref_norm_transform_normalize( const GLmatrix *mat,
  * Normal transformation tests
  */
 
+static void init_matrix( GLfloat *m )
+{
+   m[0] = 63.0; m[4] = 43.0; m[ 8] = 29.0; m[12] = 43.0;
+   m[1] = 55.0; m[5] = 17.0; m[ 9] = 31.0; m[13] =  7.0;
+   m[2] = 44.0; m[6] =  9.0; m[10] =  7.0; m[14] =  3.0;
+   m[3] = 11.0; m[7] = 23.0; m[11] = 91.0; m[15] =  9.0;
+}
+
+
 static int test_norm_function( normal_func func, int mtype, long *cycles )
 {
    GLvector4f source[1], dest[1], dest2[1], ref[1], ref2[1];
@@ -282,15 +291,15 @@ static int test_norm_function( normal_func func, int mtype, long *cycles )
    for ( i = 0 ; i < TEST_COUNT ; i++ ) {
       for ( j = 0 ; j < 3 ; j++ ) {
          if ( significand_match( d[i][j], r[i][j] ) < REQUIRED_PRECISION ) {
-            printf( "-----------------------------\n" );
-            printf( "(i = %i, j = %i)\n", i, j );
-            printf( "%f \t %f \t [ratio = %e - %i bit missed]\n",
+            _mesa_printf(NULL, "-----------------------------\n" );
+            _mesa_printf(NULL, "(i = %i, j = %i)\n", i, j );
+            _mesa_printf(NULL, "%f \t %f \t [ratio = %e - %i bit missed]\n",
 		    d[i][0], r[i][0], r[i][0]/d[i][0],
 		    MAX_PRECISION - significand_match( d[i][0], r[i][0] ) );
-            printf( "%f \t %f \t [ratio = %e - %i bit missed]\n",
+            _mesa_printf(NULL, "%f \t %f \t [ratio = %e - %i bit missed]\n",
 		    d[i][1], r[i][1], r[i][1]/d[i][1],
 		    MAX_PRECISION - significand_match( d[i][1], r[i][1] ) );
-            printf( "%f \t %f \t [ratio = %e - %i bit missed]\n",
+            _mesa_printf(NULL, "%f \t %f \t [ratio = %e - %i bit missed]\n",
 		    d[i][2], r[i][2], r[i][2]/d[i][2],
 		    MAX_PRECISION - significand_match( d[i][2], r[i][2] ) );
             return 0;
@@ -298,15 +307,15 @@ static int test_norm_function( normal_func func, int mtype, long *cycles )
 
          if ( norm_normalize_types[mtype] != 0 ) {
             if ( significand_match( d2[i][j], r2[i][j] ) < REQUIRED_PRECISION ) {
-               printf( "------------------- precalculated length case ------\n" );
-               printf( "(i = %i, j = %i)\n", i, j );
-               printf( "%f \t %f \t [ratio = %e - %i bit missed]\n",
+               _mesa_printf(NULL, "------------------- precalculated length case ------\n" );
+               _mesa_printf(NULL, "(i = %i, j = %i)\n", i, j );
+               _mesa_printf(NULL, "%f \t %f \t [ratio = %e - %i bit missed]\n",
 		       d2[i][0], r2[i][0], r2[i][0]/d2[i][0],
 		       MAX_PRECISION - significand_match( d2[i][0], r2[i][0] ) );
-               printf( "%f \t %f \t [ratio = %e - %i bit missed]\n",
+               _mesa_printf(NULL, "%f \t %f \t [ratio = %e - %i bit missed]\n",
 		       d2[i][1], r2[i][1], r2[i][1]/d2[i][1],
 		       MAX_PRECISION - significand_match( d2[i][1], r2[i][1] ) );
-               printf( "%f \t %f \t [ratio = %e - %i bit missed]\n",
+               _mesa_printf(NULL, "%f \t %f \t [ratio = %e - %i bit missed]\n",
 		       d2[i][2], r2[i][2], r2[i][2]/d2[i][2],
 		       MAX_PRECISION - significand_match( d2[i][2], r2[i][2] ) );
                return 0;
@@ -334,11 +343,11 @@ void _math_test_all_normal_transform_functions( char *description )
    if ( mesa_profile ) {
       if ( !counter_overhead ) {
 	 INIT_COUNTER();
-	 printf( "counter overhead: %ld cycles\n\n", counter_overhead );
+	 _mesa_printf(NULL, "counter overhead: %ld cycles\n\n", counter_overhead );
       }
-      printf( "normal transform results after hooking in %s functions:\n",
+      _mesa_printf(NULL, "normal transform results after hooking in %s functions:\n",
 	      description );
-      printf( "\n-------------------------------------------------------\n" );
+      _mesa_printf(NULL, "\n-------------------------------------------------------\n" );
    }
 #endif
 
@@ -348,21 +357,21 @@ void _math_test_all_normal_transform_functions( char *description )
 
       if ( test_norm_function( func, mtype, cycles ) == 0 ) {
 	 char buf[100];
-	 sprintf( buf, "_mesa_normal_tab[0][%s] failed test (%s)",
+	 _mesa_sprintf(NULL, buf, "_mesa_normal_tab[0][%s] failed test (%s)",
 		  norm_strings[mtype], description );
 	 _mesa_problem( NULL, buf );
       }
 
 #ifdef RUN_DEBUG_BENCHMARK
       if ( mesa_profile ) {
-	 printf( " %li\t", benchmark_tab[mtype] );
-	 printf( " | [%s]\n", norm_strings[mtype] );
+	 _mesa_printf(NULL, " %li\t", benchmark_tab[mtype] );
+	 _mesa_printf(NULL, " | [%s]\n", norm_strings[mtype] );
       }
 #endif
    }
 #ifdef RUN_DEBUG_BENCHMARK
    if ( mesa_profile ) {
-      printf( "\n" );
+      _mesa_printf(NULL, "\n" );
       fflush( stdout );
    }
 #endif

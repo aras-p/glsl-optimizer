@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.76 2002/06/17 23:36:31 brianp Exp $ */
+/* $Id: texstate.c,v 1.77 2002/06/29 19:48:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -131,11 +131,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
 #define TE_ERROR(errCode, msg, value)				\
-   {								\
-      char s[100];						\
-      sprintf(s, msg, _mesa_lookup_enum_by_nr(value));		\
-      _mesa_error(ctx, errCode, s);				\
-   }
+   _mesa_error(ctx, errCode, msg, _mesa_lookup_enum_by_nr(value));
 
    if (target == GL_TEXTURE_ENV) {
       switch (pname) {
@@ -1347,11 +1343,8 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          break;
 
       default:
-         {
-            char s[100];
-            sprintf(s, "glTexParameter(pname=0x%x)", pname);
-            _mesa_error( ctx, GL_INVALID_ENUM, s);
-         }
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glTexParameter(pname=0x%x)", pname);
          return;
    }
 
@@ -1454,7 +1447,12 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    case GL_PROXY_TEXTURE_3D:
       maxLevels = ctx->Const.Max3DTextureLevels;
       break;
-   case GL_TEXTURE_CUBE_MAP_ARB:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
    case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
       maxLevels = ctx->Const.MaxCubeTextureLevels;
       break;
@@ -1463,7 +1461,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       maxLevels = 1;
       break;
    default:
-      _mesa_problem(ctx, "bad target in _mesa_GetTexLevelParameter");
+      _mesa_printf(ctx, "bad target in _mesa_GetTexLevelParameter (0x%x)", target);
       return;
    }
 

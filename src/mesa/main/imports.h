@@ -1,4 +1,4 @@
-/* $Id: imports.h,v 1.3 2002/06/13 04:28:29 brianp Exp $ */
+/* $Id: imports.h,v 1.4 2002/06/29 19:48:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,28 @@
 
 
 #include "glheader.h"
+
+
+extern int CAPI
+_mesa_sprintf(__GLcontext *gc, char *str, const char *fmt, ...);
+
+extern void
+_mesa_warning(__GLcontext *gc, const char *fmtString, ...);
+
+extern void
+_mesa_fatal(__GLcontext *gc, char *str);
+
+extern void
+_mesa_problem( const __GLcontext *ctx, const char *s );
+
+extern void
+_mesa_error( __GLcontext *ctx, GLenum error, const char *fmtString, ... );
+
+extern void
+_mesa_debug( const __GLcontext *ctx, const char *fmtString, ... );
+
+extern void
+_mesa_printf( const __GLcontext *ctx, const char *fmtString, ... );
 
 
 extern void

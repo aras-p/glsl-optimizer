@@ -619,13 +619,13 @@ static void choose_##FN ARGS1						\
    if (dfn == 0)							\
       dfn = tnl->codegen.FN( &vb, key );				\
    else if (MESA_VERBOSE & DEBUG_CODEGEN)				\
-      fprintf(stderr, "%s -- cached codegen\n", __FUNCTION__ );		\
+      _mesa_debug(NULL, "%s -- cached codegen\n", __FUNCTION__ );		\
 									\
    if (dfn)								\
       tnl->context->Exec->FN = (FNTYPE)(dfn->code);			\
    else {								\
       if (MESA_VERBOSE & DEBUG_CODEGEN)					\
-	 fprintf(stderr, "%s -- generic version\n", __FUNCTION__ );	\
+	 _mesa_debug(NULL, "%s -- generic version\n", __FUNCTION__ );	\
       tnl->context->Exec->FN = tnl_##FN;				\
    }									\
 									\
