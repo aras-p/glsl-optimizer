@@ -1,8 +1,8 @@
-/* $Id: t_vb_vertex.c,v 1.16 2002/10/29 20:29:04 brianp Exp $ */
+/* $Id: t_vb_vertex.c,v 1.17 2002/10/31 17:14:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.0
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -137,6 +137,8 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
 
+   ASSERT(!ctx->VertexProgram.Enabled);
+
    if (stage->changed_inputs) {
 
       if (ctx->_NeedEyeCoords) {
@@ -194,7 +196,6 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
                                                store->clipmask,
                                                &store->ormask,
                                                &store->andmask );
-
       }
       else {
 	 VB->NdcPtr = 0;
@@ -305,11 +306,12 @@ static void dtr( struct gl_pipeline_stage *stage )
 const struct gl_pipeline_stage _tnl_vertex_transform_stage =
 {
    "modelview/project/cliptest/divide",
-   0,				/* re-check -- always on */
-   _MESA_NEW_NEED_EYE_COORDS |
+   _NEW_PROGRAM,                /* check_state: only care about vertex prog */
+   _MESA_NEW_NEED_EYE_COORDS |  /* run_state: when to invalidate / re-run */
    _NEW_MODELVIEW|
    _NEW_PROJECTION|
-   _NEW_TRANSFORM,		/* re-run */
+   _NEW_PROGRAM|
+   _NEW_TRANSFORM,
    GL_TRUE,			/* active */
    VERT_BIT_POS,		/* inputs */
    VERT_BIT_EYE|VERT_BIT_CLIP,		/* outputs */
