@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.53 2001/09/23 18:19:30 brianp Exp $
+# $Id: Makefile.X11,v 1.54 2001/09/23 18:32:51 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.0
@@ -426,6 +426,9 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/tnl/*.[ch]					\
 	$(DIRECTORY)/src/tnl/Makefile*					\
 	$(DIRECTORY)/src/tnl/libMesaTnl_la_SOURCES			\
+	$(DIRECTORY)/src/tnl_dd/*.[ch]					\
+	$(DIRECTORY)/src/tnl_dd/imm/*.[ch]				\
+	$(DIRECTORY)/src/tnl_dd/imm/NOTES.imm				\
 	$(DIRECTORY)/src/windml/*.[ch]					\
 	$(DIRECTORY)/src/windml/tornado/*.c				\
 	$(DIRECTORY)/src/windml/tornado/*.cdf				\
