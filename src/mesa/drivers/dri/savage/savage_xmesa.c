@@ -273,6 +273,8 @@ savageCreateContext( const __GLcontextModes *mesaVis,
        ctx->Const.MaxTextureUnits = 2;
    else
        ctx->Const.MaxTextureUnits = 1;
+   ctx->Const.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
+   ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
 
 #if 0
    ctx->Const.MinLineWidth = 1.0;
