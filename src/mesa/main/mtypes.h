@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.100 2003/01/21 21:47:50 brianp Exp $ */
+/* $Id: mtypes.h,v 1.101 2003/01/22 17:58:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -381,6 +381,9 @@ struct gl_enable_attrib {
    GLboolean Blend;
    GLuint ClipPlanes;
    GLboolean ColorMaterial;
+   GLboolean ColorTable;                /* SGI_color_table */
+   GLboolean PostColorMatrixColorTable; /* SGI_color_table */
+   GLboolean PostConvolutionColorTable; /* SGI_color_table */
    GLboolean Convolution1D;
    GLboolean Convolution2D;
    GLboolean Separable2D;
@@ -435,6 +438,7 @@ struct gl_enable_attrib {
    GLboolean RasterPositionUnclipped; /* GL_IBM_rasterpos_clip */
    GLuint Texture[MAX_TEXTURE_IMAGE_UNITS];
    GLuint TexGen[MAX_TEXTURE_COORD_UNITS];
+   GLboolean TextureColorTable;       /* SGI_texture_color_table */
    GLboolean VertexProgram;           /* GL_NV_vertex_program */
    GLboolean VertexProgramPointSize;  /* GL_NV_vertex_program */
    GLboolean VertexProgramTwoSide;    /* GL_NV_vertex_program */

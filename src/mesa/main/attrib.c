@@ -1,10 +1,10 @@
-/* $Id: attrib.c,v 1.75 2002/10/24 23:57:19 brianp Exp $ */
+/* $Id: attrib.c,v 1.76 2003/01/22 17:58:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,7 @@
 #include "blend.h"
 #include "buffers.h"
 #include "colormac.h"
+#include "colortab.h"
 #include "context.h"
 #include "depth.h"
 #include "enable.h"
@@ -137,6 +138,9 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->Blend = ctx->Color.BlendEnabled;
       attr->ClipPlanes = ctx->Transform.ClipPlanesEnabled;
       attr->ColorMaterial = ctx->Light.ColorMaterialEnabled;
+      attr->ColorTable = ctx->Pixel.ColorTableEnabled;
+      attr->PostColorMatrixColorTable = ctx->Pixel.PostColorMatrixColorTableEnabled;
+      attr->PostConvolutionColorTable = ctx->Pixel.PostConvolutionColorTableEnabled;
       attr->Convolution1D = ctx->Pixel.Convolution1DEnabled;
       attr->Convolution2D = ctx->Pixel.Convolution2DEnabled;
       attr->Separable2D = ctx->Pixel.Separable2DEnabled;
@@ -196,6 +200,7 @@ _mesa_PushAttrib(GLbitfield mask)
          attr->Texture[i] = ctx->Texture.Unit[i].Enabled;
          attr->TexGen[i] = ctx->Texture.Unit[i].TexGenEnabled;
       }
+      attr->TextureColorTable = ctx->Texture.ColorTableEnabled;
       /* GL_NV_vertex_program */
       attr->VertexProgram = ctx->VertexProgram.Enabled;
       attr->VertexProgramPointSize = ctx->VertexProgram.PointSizeEnabled;
@@ -420,6 +425,14 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
 
    TEST_AND_UPDATE(ctx->Light.ColorMaterialEnabled, enable->ColorMaterial,
                    GL_COLOR_MATERIAL);
+   TEST_AND_UPDATE(ctx->Pixel.ColorTableEnabled, enable->ColorTable,
+                   GL_COLOR_TABLE);
+   TEST_AND_UPDATE(ctx->Pixel.PostColorMatrixColorTableEnabled,
+                   enable->PostColorMatrixColorTable,
+                   GL_POST_COLOR_MATRIX_COLOR_TABLE);
+   TEST_AND_UPDATE(ctx->Pixel.PostConvolutionColorTableEnabled,
+                   enable->PostConvolutionColorTable,
+                   GL_POST_CONVOLUTION_COLOR_TABLE);
    TEST_AND_UPDATE(ctx->Polygon.CullFlag, enable->CullFace, GL_CULL_FACE);
    TEST_AND_UPDATE(ctx->Depth.Test, enable->DepthTest, GL_DEPTH_TEST);
    TEST_AND_UPDATE(ctx->Color.DitherFlag, enable->Dither, GL_DITHER);
@@ -521,6 +534,8 @@ pop_enable_group(GLcontext *ctx, const struct gl_enable_attrib *enable)
    TEST_AND_UPDATE(ctx->Multisample.SampleCoverageInvert,
                    enable->SampleCoverageInvert,
                    GL_SAMPLE_COVERAGE_INVERT_ARB);
+   TEST_AND_UPDATE(ctx->Texture.ColorTableEnabled, enable->TextureColorTable,
+                   GL_TEXTURE_COLOR_TABLE_SGI);
    /* GL_NV_vertex_program */
    TEST_AND_UPDATE(ctx->VertexProgram.Enabled,
                    enable->VertexProgram,
@@ -612,6 +627,16 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
       if (ctx->Extensions.NV_texture_rectangle) {
          _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE_NV,
              (GLboolean) (unit->Enabled & TEXTURE_RECT_BIT ? GL_TRUE : GL_FALSE));
+      }
+      if (ctx->Extensions.SGI_texture_color_table) {
+         _mesa_set_enable(ctx, GL_TEXTURE_COLOR_TABLE_SGI,
+                          texAttrib->ColorTableEnabled);
+         _mesa_ColorTableParameterfv(GL_TEXTURE_COLOR_TABLE_SGI,
+                                     GL_COLOR_TABLE_SCALE_SGI,
+                                     texAttrib->ColorTableScale);
+         _mesa_ColorTableParameterfv(GL_TEXTURE_COLOR_TABLE_SGI,
+                                     GL_COLOR_TABLE_BIAS_SGI,
+                                     texAttrib->ColorTableBias);
       }
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, unit->EnvMode);
       _mesa_TexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, unit->EnvColor);
