@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.90 2002/12/30 19:24:05 alanh Exp $ */
+/* $Id: texstate.c,v 1.91 2003/01/16 15:22:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2434,7 +2434,13 @@ _mesa_ActiveTextureARB( GLenum target )
    }
 
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+
    ctx->Texture.CurrentUnit = texUnit;
+   if (ctx->Transform.MatrixMode == GL_TEXTURE) {
+      /* update current stack pointer */
+      ctx->CurrentStack = &ctx->TextureMatrixStack[texUnit];
+   }
+
    if (ctx->Driver.ActiveTexture) {
       (*ctx->Driver.ActiveTexture)( ctx, (GLuint) texUnit );
    }
