@@ -334,9 +334,9 @@ typedef struct {
 #if defined(__UNIXOS2__) || defined(__SOL64__)
 typedef long int int32_t;
 typedef long long int int64_t;
-#endif
-
-#if defined(__SCO__) || defined(__USLC__)
+#elif defined( __VMS )
+#include <inttypes.h>
+#elif defined(__SCO__) || defined(__USLC__)
 #include <stdint.h>
 #endif
 
