@@ -611,7 +611,7 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
    int i, j;
    LOCAL_VARS
 
-	if (RADEON_DEBUG == DEBUG_PRIMS)
+	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
 
