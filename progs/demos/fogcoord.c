@@ -27,7 +27,9 @@ typedef void (GLAPIENTRYP GLFOGCOORDFEXTPROC) (GLfloat f);
 typedef void (GLAPIENTRYP GLFOGCOORDPOINTEREXTPROC) (GLenum, GLsizei, const GLvoid *);
 
 static GLFOGCOORDFEXTPROC glFogCoordf_ext;
+#if ARRAYS
 static GLFOGCOORDPOINTEREXTPROC glFogCoordPointer_ext;
+#endif
 static GLboolean have_fog_coord;
 
 static GLfloat camz;
@@ -40,107 +42,108 @@ static GLfloat fogStart = 1.0, fogEnd = 40.0;
 static GLfloat fogColor[4] = {0.6f, 0.3f, 0.0f, 1.0f};
 
 
-void APIENTRY glFogCoordf_nop (GLfloat f)
+static void APIENTRY glFogCoordf_nop (GLfloat f)
 {
- (void)f;
+   (void)f;
 }
 
 
 static int BuildTexture (const char *filename, GLuint texid[])
 {
- GLubyte *tex_data;
- GLenum tex_format;
- GLint tex_width, tex_height;
+   GLubyte *tex_data;
+   GLenum tex_format;
+   GLint tex_width, tex_height;
 
- tex_data = LoadRGBImage(filename, &tex_width, &tex_height, &tex_format);
- if (tex_data == NULL) {
-    return -1;
- }
+   tex_data = LoadRGBImage(filename, &tex_width, &tex_height, &tex_format);
+   if (tex_data == NULL) {
+      return -1;
+   }
 
- {
-  GLint tex_max;
-  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &tex_max);
-  if ((tex_width > tex_max) || (tex_height > tex_max)) {
-     return -1;
-  }
- }
+   {
+      GLint tex_max;
+      glGetIntegerv(GL_MAX_TEXTURE_SIZE, &tex_max);
+      if ((tex_width > tex_max) || (tex_height > tex_max)) {
+         return -1;
+      }
+   }
 
- glGenTextures(1, texid);
+   glGenTextures(1, texid);
+   
+   glBindTexture(GL_TEXTURE_2D, texid[0]);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
- glBindTexture(GL_TEXTURE_2D, texid[0]);
- glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
- glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glTexImage2D(GL_TEXTURE_2D, 0, tex_format, tex_width, tex_height, 0,
+                tex_format, GL_UNSIGNED_BYTE, tex_data);
 
- glTexImage2D(GL_TEXTURE_2D, 0, tex_format, tex_width, tex_height, 0, tex_format, GL_UNSIGNED_BYTE, tex_data);
-
- return 0;
+   return 0;
 }
 
 
 static int SetFogMode (GLint fogMode)
 {
- fogMode &= 3;
- switch (fogMode) {
-        case 0:
-             glDisable(GL_FOG);
+   fogMode &= 3;
+   switch (fogMode) {
+   case 0:
+      glDisable(GL_FOG);
 #if VERBOSE
-             printf("fog(disable)\n");
+      printf("fog(disable)\n");
 #endif
-             break;
-        case 1:
-             glEnable(GL_FOG);
-             glFogi(GL_FOG_MODE, GL_LINEAR);
-             glFogf(GL_FOG_START, fogStart);
-             glFogf(GL_FOG_END, fogEnd);
+      break;
+   case 1:
+      glEnable(GL_FOG);
+      glFogi(GL_FOG_MODE, GL_LINEAR);
+      glFogf(GL_FOG_START, fogStart);
+      glFogf(GL_FOG_END, fogEnd);
 #if VERBOSE
-             printf("fog(GL_LINEAR, %.2f, %.2f)\n", fogStart, fogEnd);
+      printf("fog(GL_LINEAR, %.2f, %.2f)\n", fogStart, fogEnd);
 #endif
-             break;
-        case 2:
-             glEnable(GL_FOG);
-             glFogi(GL_FOG_MODE, GL_EXP);
-             glFogf(GL_FOG_DENSITY, fogDensity);
+      break;
+   case 2:
+      glEnable(GL_FOG);
+      glFogi(GL_FOG_MODE, GL_EXP);
+      glFogf(GL_FOG_DENSITY, fogDensity);
 #if VERBOSE
-             printf("fog(GL_EXP, %.2f)\n", fogDensity);
+      printf("fog(GL_EXP, %.2f)\n", fogDensity);
 #endif
-             break;
-        case 3:
-             glEnable(GL_FOG);
-             glFogi(GL_FOG_MODE, GL_EXP2);
-             glFogf(GL_FOG_DENSITY, fogDensity);
+      break;
+   case 3:
+      glEnable(GL_FOG);
+      glFogi(GL_FOG_MODE, GL_EXP2);
+      glFogf(GL_FOG_DENSITY, fogDensity);
 #if VERBOSE
-             printf("fog(GL_EXP2, %.2f)\n", fogDensity);
+      printf("fog(GL_EXP2, %.2f)\n", fogDensity);
 #endif
-             break;
- }
- return fogMode;
+      break;
+   }
+   return fogMode;
 }
 
 
 static GLboolean SetFogCoord (GLboolean fogCoord)
 {
- glFogCoordf_ext = glFogCoordf_nop;
+   glFogCoordf_ext = glFogCoordf_nop;
 
- if (!have_fog_coord) {
+   if (!have_fog_coord) {
 #if VERBOSE
-    printf("fog(GL_FRAGMENT_DEPTH_EXT)%s\n", fogCoord ? " EXT_fog_coord not available!" : "");
+      printf("fog(GL_FRAGMENT_DEPTH_EXT)%s\n", fogCoord ? " EXT_fog_coord not available!" : "");
 #endif
-    return GL_FALSE;
- }
+      return GL_FALSE;
+   }
 
- if (fogCoord) {
-    glFogCoordf_ext = (GLFOGCOORDFEXTPROC)glutGetProcAddress("glFogCoordfEXT");
-    glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
+   if (fogCoord) {
+      glFogCoordf_ext = (GLFOGCOORDFEXTPROC)glutGetProcAddress("glFogCoordfEXT");
+      glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
 #if VERBOSE
-    printf("fog(GL_FOG_COORDINATE_EXT)\n");
+      printf("fog(GL_FOG_COORDINATE_EXT)\n");
 #endif
- } else {
-    glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+   } else {
+      glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
 #if VERBOSE
-    printf("fog(GL_FRAGMENT_DEPTH_EXT)\n");
+      printf("fog(GL_FRAGMENT_DEPTH_EXT)\n");
 #endif
- }
- return fogCoord;
+   }
+   return fogCoord;
 }
 
 
