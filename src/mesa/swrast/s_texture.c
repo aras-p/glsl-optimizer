@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.71 2002/10/18 17:02:01 kschultz Exp $ */
+/* $Id: s_texture.c,v 1.72 2002/10/21 15:52:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -97,7 +97,31 @@
          U = 1.0F - (S - (GLfloat) flr);	/* flr is odd */	\
       else								\
          U = S - (GLfloat) flr;		/* flr is even */		\
-      U = (U * SIZE) - 0.5F;						\
+      U = (U * SIZE) - 0.5;						\
+      I0 = IFLOOR(U);							\
+      I1 = I0 + 1;							\
+      if (I0 < 0)							\
+         I0 = 0;							\
+      if (I1 >= (GLint) SIZE)						\
+         I1 = SIZE - 1;							\
+   }									\
+   else if (wrapMode == GL_MIRROR_CLAMP_ATI) {				\
+      U = fabs(S);							\
+      if (U >= 1.0F)							\
+         U = (GLfloat) SIZE;						\
+      else								\
+         U *= SIZE;							\
+      U -= 0.5F;							\
+      I0 = IFLOOR(U);							\
+      I1 = I0 + 1;							\
+   }									\
+   else if (wrapMode == GL_MIRROR_CLAMP_TO_EDGE_ATI) {			\
+      U = fabs(S);							\
+      if (U >= 1.0F)							\
+         U = (GLfloat) SIZE;						\
+      else								\
+         U *= SIZE;							\
+      U -= 0.5F;							\
       I0 = IFLOOR(U);							\
       I1 = I0 + 1;							\
       if (I0 < 0)							\
@@ -164,6 +188,30 @@
          u = 1.0F - (S - (GLfloat) flr);	/* flr is odd */	\
       else								\
          u = S - (GLfloat) flr;		/* flr is even */		\
+      if (u < min)							\
+         I = 0;								\
+      else if (u > max)							\
+         I = SIZE - 1;							\
+      else								\
+         I = IFLOOR(u * SIZE);						\
+   }									\
+   else if (wrapMode == GL_MIRROR_CLAMP_ATI) {				\
+      /* s limited to [0,1] */						\
+      /* i limited to [0,size-1] */					\
+      const GLfloat u = fabs(S);					\
+      if (u <= 0.0F)							\
+         I = 0;								\
+      else if (u >= 1.0F)						\
+         I = SIZE - 1;							\
+      else								\
+         I = IFLOOR(u * SIZE);						\
+   }									\
+   else if (wrapMode == GL_MIRROR_CLAMP_TO_EDGE_ATI) {			\
+      /* s limited to [min,max] */					\
+      /* i limited to [0, size-1] */					\
+      const GLfloat min = 1.0F / (2.0F * SIZE);				\
+      const GLfloat max = 1.0F - min;					\
+      const GLfloat u = fabs(S);					\
       if (u < min)							\
          I = 0;								\
       else if (u > max)							\

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.96 2002/10/11 17:41:04 brianp Exp $ */
+/* $Id: mtypes.h,v 1.97 2002/10/21 15:52:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1367,6 +1367,7 @@ struct gl_extensions {
    GLboolean ARB_texture_env_dot3;
    GLboolean ARB_texture_mirrored_repeat;
    GLboolean ARB_window_pos;
+   GLboolean ATI_texture_mirror_once;
    GLboolean EXT_blend_color;
    GLboolean EXT_blend_func_separate;
    GLboolean EXT_blend_logic_op;

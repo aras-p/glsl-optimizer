@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.81 2002/10/17 22:26:06 kschultz Exp $ */
+/* $Id: texstate.c,v 1.82 2002/10/21 15:52:34 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1093,7 +1093,11 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          else if (texObj->Target != GL_TEXTURE_RECTANGLE_NV &&
                   (eparam == GL_REPEAT ||
                    (eparam == GL_MIRRORED_REPEAT_ARB &&
-                    ctx->Extensions.ARB_texture_mirrored_repeat))) {
+                    ctx->Extensions.ARB_texture_mirrored_repeat) ||
+                   (eparam == GL_MIRROR_CLAMP_ATI &&
+                    ctx->Extensions.ATI_texture_mirror_once) ||
+                   (eparam == GL_MIRROR_CLAMP_TO_EDGE_ATI &&
+                    ctx->Extensions.ATI_texture_mirror_once))) {
             /* non-rectangle texture */
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->WrapS = eparam;
@@ -1116,7 +1120,11 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          else if (texObj->Target != GL_TEXTURE_RECTANGLE_NV &&
                   (eparam == GL_REPEAT ||
                    (eparam == GL_MIRRORED_REPEAT_ARB &&
-                    ctx->Extensions.ARB_texture_mirrored_repeat))) {
+                    ctx->Extensions.ARB_texture_mirrored_repeat) ||
+                   (eparam == GL_MIRROR_CLAMP_ATI &&
+                    ctx->Extensions.ATI_texture_mirror_once) ||
+                   (eparam == GL_MIRROR_CLAMP_TO_EDGE_ATI &&
+                    ctx->Extensions.ATI_texture_mirror_once))) {
             /* non-rectangle texture */
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->WrapT = eparam;
@@ -1139,7 +1147,11 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          else if (texObj->Target != GL_TEXTURE_RECTANGLE_NV &&
                   (eparam == GL_REPEAT ||
                    (eparam == GL_MIRRORED_REPEAT_ARB &&
-                    ctx->Extensions.ARB_texture_mirrored_repeat))) {
+                    ctx->Extensions.ARB_texture_mirrored_repeat) ||
+                   (eparam == GL_MIRROR_CLAMP_ATI &&
+                    ctx->Extensions.ATI_texture_mirror_once) ||
+                   (eparam == GL_MIRROR_CLAMP_TO_EDGE_ATI &&
+                    ctx->Extensions.ATI_texture_mirror_once))) {
             /* non-rectangle texture */
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->WrapR = eparam;
