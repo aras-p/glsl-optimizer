@@ -14,7 +14,7 @@ extern "C" {
 #endif
 
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN32__)
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 #endif
@@ -23,7 +23,7 @@ extern "C" {
 #define GLAPI extern
 #endif
 
-#ifdef GLAPIENTRY
+#if defined(GLAPIENTRY) && !defined(APIENTRY)
 #define APIENTRY GLAPIENTRY
 #endif
 
