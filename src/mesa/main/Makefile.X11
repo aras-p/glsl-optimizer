@@ -40,7 +40,6 @@ CORE_SOURCES = \
 	eval.c \
 	extensions.c \
 	feedback.c \
-	fetchstate.c \
 	fog.c \
 	get.c \
 	glapi.c \
