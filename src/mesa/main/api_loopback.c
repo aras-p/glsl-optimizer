@@ -1,4 +1,4 @@
-/* $Id: api_loopback.c,v 1.5 2001/01/02 22:02:51 brianp Exp $ */
+/* $Id: api_loopback.c,v 1.6 2001/01/02 22:05:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -229,9 +229,9 @@ loopback_Color3dv( const GLdouble *v )
    GLfloat r = v[0];
    GLfloat g = v[1];
    GLfloat b = v[2];
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[0], r);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[1], g);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[2], b);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
    col[3] = 255;
    COLORUBV( col );
 }
@@ -300,10 +300,10 @@ loopback_Color4dv( const GLdouble *v )
    GLfloat g = v[1];
    GLfloat b = v[2];
    GLfloat a = v[3];
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[0], r);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[1], g);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[2], b);
-   FLOAT_COLOR_TO_UBYTE_COLOR(col[3], a);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[0], r);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[1], g);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[2], b);
+   UNCLAMPED_FLOAT_TO_UBYTE(col[3], a);
    COLORUBV( col );
 }
 
