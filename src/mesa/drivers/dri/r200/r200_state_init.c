@@ -504,11 +504,16 @@ void r200InitState( r200ContextPtr rmesa )
           0x100000);	/* Small default bias */
 
       rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_FACES] = 0;
-      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F1] = 0;
-      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F2] = 0;
-      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F3] = 0;
-      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F4] = 0;
-      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F5] = 0;
+      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F1] =
+         rmesa->r200Screen->texOffset[RADEON_CARD_HEAP];
+      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F2] =
+         rmesa->r200Screen->texOffset[RADEON_CARD_HEAP];
+      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F3] =
+         rmesa->r200Screen->texOffset[RADEON_CARD_HEAP];
+      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F4] =
+         rmesa->r200Screen->texOffset[RADEON_CARD_HEAP];
+      rmesa->hw.cube[i].cmd[CUBE_PP_CUBIC_OFFSET_F5] =
+         rmesa->r200Screen->texOffset[RADEON_CARD_HEAP];
    }
 
    rmesa->hw.pix[0].cmd[PIX_PP_TXCBLEND] =  
