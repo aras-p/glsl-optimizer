@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.100 2003/12/13 01:33:36 brianp Exp $
+# $Id: Makefile.X11,v 1.101 2003/12/13 01:58:41 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -137,7 +137,7 @@ ultrix-gcc unixware:
 	fi
 	if [ -d src/glw ] ; then \
 		cd src/glw ; \
-		touch src/glw/depend ; \
+		touch depend ; \
 		$(MAKE) -f Makefile.X11 $@ ; \
 	fi
 	if [ -d progs/demos ] ; then \
