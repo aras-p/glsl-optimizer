@@ -1,4 +1,4 @@
-/* $Id: xfonts.c,v 1.13 2001/03/08 15:23:46 brianp Exp $ */
+/* $Id: xfonts.c,v 1.14 2001/04/26 19:28:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -258,7 +258,7 @@ void Fake_glXUseXFont( Font font, int first, int count, int listbase )
   bm = (GLubyte *) MALLOC((max_bm_width * max_bm_height) * sizeof 
 (GLubyte));
   if (!bm) {
-      XFreeFontInfo( NULL, fs, 0 );
+      XFreeFontInfo( NULL, fs, 1 );
       _mesa_error(NULL, GL_OUT_OF_MEMORY,
                 "Couldn't allocate bitmap in glXUseXFont()");
       return;
@@ -373,7 +373,7 @@ bm_height);
     }
 
   FREE(bm);
-  XFreeFontInfo( NULL, fs, 0 );
+  XFreeFontInfo( NULL, fs, 1 );
   XFreeGC (dpy, gc);
 
   /* Restore saved packing modes.  */
