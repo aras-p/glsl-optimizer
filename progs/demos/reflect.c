@@ -1,4 +1,4 @@
-/* $Id: reflect.c,v 1.6 2001/01/23 23:43:53 brianp Exp $ */
+/* $Id: reflect.c,v 1.7 2001/04/25 15:51:32 brianp Exp $ */
 
 /*
  * Demo of a reflective, texture-mapped surface with OpenGL.
@@ -148,7 +148,7 @@ static void init( void )
    glEnable( GL_LIGHT0 );
    glEnable( GL_LIGHTING );
 
-   glClearColor( 0.5, 0.5, 0.9, 1.0 );
+   glClearColor( 0.5, 0.5, 0.9, 0.0 );
 
    glEnable( GL_NORMALIZE );
 }
@@ -297,6 +297,9 @@ static void draw_scene( void )
    else if (ShowBuffer == GL_STENCIL) {
       ShowStencilBuffer(Width, Height, 255.0, 0.0);
    }
+   else if (ShowBuffer == GL_ALPHA) {
+      ShowAlphaBuffer(Width, Height);
+   }
 
    glutSwapBuffers();
 
@@ -331,6 +334,9 @@ static void Key( unsigned char key, int x, int y )
    }
    else if (key == 's') {
       ShowBuffer = GL_STENCIL;
+   }
+   else if (key == 'a') {
+      ShowBuffer = GL_ALPHA;
    }
    else if (key == ' ') {
       Anim = !Anim;
