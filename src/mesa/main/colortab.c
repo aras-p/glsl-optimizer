@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.11 2000/04/11 15:07:48 brianp Exp $ */
+/* $Id: colortab.c,v 1.12 2000/04/11 20:54:49 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -114,7 +114,7 @@ decode_internal_format( GLint format )
 void 
 _mesa_ColorTable( GLenum target, GLenum internalFormat,
                   GLsizei width, GLenum format, GLenum type,
-                  const GLvoid *table )
+                  const GLvoid *data )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -202,7 +202,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    if (!proxy) {
       _mesa_unpack_ubyte_color_span(ctx, width, table->Format,
                                     table->Table,  /* dest */
-                                    format, type, table,
+                                    format, type, data,
                                     &ctx->Unpack, GL_FALSE);
    }
    if (texObj) {
