@@ -640,6 +640,34 @@ struct dd_function_table {
     * Core Mesa will perform any image format/type conversions that are needed.
     */
 
+   GLboolean (*CompressedTexImage1D)( GLcontext *ctx, GLenum target,
+                                      GLint level, const GLvoid *data,
+                                      struct gl_texture_object *texObj,
+                                      struct gl_texture_image *texImage,
+                                      GLboolean *retainInternalCopy);
+   GLboolean (*CompressedTexImage2D)( GLcontext *ctx, GLenum target,
+                                      GLint level, const GLvoid *data,
+                                      struct gl_texture_object *texObj,
+                                      struct gl_texture_image *texImage,
+                                      GLboolean *retainInternalCopy);
+   GLboolean (*CompressedTexImage3D)( GLcontext *ctx, GLenum target,
+                                      GLint level, const GLvoid *data,
+                                      struct gl_texture_object *texObj,
+                                      struct gl_texture_image *texImage,
+                                      GLboolean *retainInternalCopy);
+   /* Called by glCompressedTexImage1/2/3D.
+    * Arguments:
+    *   <target>, <level>, <internalFormat>, <data> are user specified.
+    *   <texObj> is the target texture object.
+    *   <texImage> is the target texture image.  It will have the texture
+    *      width, height, depth, border and internalFormat information.
+    *   <retainInternalCopy> is returned by this function and indicates whether
+    *      core Mesa should keep an internal copy of the texture image.
+    * Return GL_TRUE if operation completed, return GL_FALSE if core Mesa
+    * should do the job.
+    */
+
+
    void (*TexEnv)( GLcontext *ctx, GLenum target, GLenum pname,
                    const GLfloat *param );
    /* Called by glTexEnv*().

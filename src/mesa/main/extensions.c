@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.28 2000/05/23 20:10:49 brianp Exp $ */
+/* $Id: extensions.c,v 1.29 2000/05/24 14:04:06 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,6 +71,7 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_ON,     "GL_EXT_shared_texture_palette" },
    { ALWAYS_ENABLED, "GL_EXT_stencil_wrap" },
    { DEFAULT_ON,     "GL_EXT_texture3D" },
+   { DEFAULT_OFF,    "GL_EXT_texture_compression_s3tc" },
    { DEFAULT_OFF,    "GL_EXT_texture_env" },
    { DEFAULT_ON,     "GL_EXT_texture_env_add" },
    { ALWAYS_ENABLED, "GL_EXT_texture_object" },
@@ -87,7 +88,8 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_ON,     "GL_SGI_color_table" },
    { DEFAULT_ON,     "GL_SGIS_pixel_texture" },
    { DEFAULT_ON,     "GL_SGIS_texture_edge_clamp" },
-   { DEFAULT_ON,     "GL_SGIX_pixel_texture" }
+   { DEFAULT_ON,     "GL_SGIX_pixel_texture" },
+   { DEFAULT_OFF,    "GL_3DFX_texture_compression_FXT1" }
 };
 
 
@@ -103,6 +105,8 @@ update_extension_flags( GLcontext *ctx )
    ctx->Extensions.HaveHpOcclusionTest = gl_extension_is_enabled(ctx, "GL_HP_occlusion_test");
    ctx->Extensions.HaveTextureCubeMap = gl_extension_is_enabled(ctx, "GL_ARB_texture_cube_map");
    ctx->Extensions.HaveTextureCompression = gl_extension_is_enabled(ctx, "GL_ARB_texture_compression");
+   ctx->Extensions.HaveTextureCompressionS3TC = gl_extension_is_enabled(ctx, "GL_EXT_texture_compression_s3tc");
+   ctx->Extensions.HaveTextureCompressionFXT1 = gl_extension_is_enabled(ctx, "GL_3DFX_texture_compression_FXT1");
 }
 
 
