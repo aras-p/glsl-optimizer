@@ -1,8 +1,8 @@
-/* $Id: xfonts.c,v 1.7 2000/08/13 03:44:08 brianp Exp $ */
+/* $Id: xfonts.c,v 1.8 2000/08/13 03:57:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.4
  *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
@@ -41,11 +41,9 @@
 #include <X11/Xutil.h>
 #include "GL/gl.h"
 #include "GL/glx.h"
-#include "GL/xmesa.h"
 #include "context.h"
 #include "mem.h"
 #include "xfonts.h"
-#include "xmesaP.h"
 
 
 /* Some debugging info.  */
@@ -223,7 +221,6 @@ static XCharStruct *isvalid(XFontStruct *fs, int which)
 
 void Fake_glXUseXFont( Font font, int first, int count, int listbase )
 {
-  XMesaContext CC;
   Display *dpy;
   Window win;
   Pixmap pixmap;
@@ -244,8 +241,8 @@ void Fake_glXUseXFont( Font font, int first, int count, int listbase )
 
   fs = XQueryFont (dpy, font);
   if (!fs) {
-      gl_error (CC->gl_ctx, GL_INVALID_VALUE,
-                "Couldn't get font structure information");
+      gl_error(NULL, GL_INVALID_VALUE,
+               "Couldn't get font structure information");
       return;
   }
 
@@ -259,7 +256,7 @@ void Fake_glXUseXFont( Font font, int first, int count, int listbase )
 (GLubyte));
   if (!bm) {
       XFreeFontInfo( NULL, fs, 0 );
-      gl_error (CC->gl_ctx, GL_OUT_OF_MEMORY,
+      gl_error(NULL, GL_OUT_OF_MEMORY,
                 "Couldn't allocate bitmap in glXUseXFont()");
       return;
   }
@@ -384,16 +381,3 @@ bm_height);
   glPixelStorei(GL_UNPACK_SKIP_PIXELS, skippixels);
   glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 }
-
-
-extern void xmesa_xfonts_dummy( void );
-void xmesa_xfonts_dummy( void )
-{
-   /* silence unused var warnings */
-   (void) kernel8;
-   (void) DitherValues;
-   (void) HPCR_DRGB;
-   (void) kernel1;
-}
-
-/* The End. */
