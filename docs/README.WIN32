@@ -1,8 +1,12 @@
 File: docs/README.WIN32
 
-Last updated: Aug 15, 2002 - Karl Schultz - kschultz@users.sourceforge.net
+Last updated: Nov 08, 2002 - Karl Schultz - kschultz@users.sourceforge.net
 
 Quick Start
+
+Unzip both ZIP files (MesaLib and MesaDemos) into the same directory.
+This is important because the current makefiles in MesaLib assume that
+the directories in MesaDemos are present.
 
 If you have Microsoft Visual C++ 6.0 installed, simply go to the top directory
 of the Mesa distribution and type 'nmake -f Makefile.win NODEBUG=1' for
