@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.4 2001/01/05 02:26:48 keithw Exp $ */
+/* $Id: s_aalinetemp.h,v 1.5 2001/01/29 23:38:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -307,6 +307,11 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
             }
          }
          swrast->StippleCounter++;
+      }
+
+      if (inSegment) {
+         /* draw the final segment of the line */
+         segment(ctx, &line, NAME(plot), pb, tStart, 1.0F);
       }
    }
    else {
