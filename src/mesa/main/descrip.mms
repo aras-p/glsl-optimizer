@@ -48,7 +48,6 @@ CORE_SOURCES =accum.c \
 	light.c \
 	lines.c \
 	matrix.c \
-	mem.c \
 	mmath.c \
 	pixel.c \
 	points.c \
@@ -187,8 +186,7 @@ image.obj,\
 imports.obj,\
 light.obj,\
 lines.obj,\
-matrix.obj,\
-mem.obj
+matrix.obj
 
 OBJECTS3=mmath.obj,\
 pixel.obj,\
