@@ -661,8 +661,16 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
                             (GLframebuffer *)driDrawPriv->driverPrivate,
                             (GLframebuffer *)driReadPriv->driverPrivate);
 	if (VIA_DEBUG) fprintf(stderr, "Context %d MakeCurrent\n", vmesa->hHWContext);
-        viaXMesaWindowMoved(vmesa);
-
+	
+	/* These are probably needed only the first time a context is
+	 * made current:
+	 */
+	viaXMesaWindowMoved(vmesa);
+	ctx->Driver.Scissor(ctx, 
+			    ctx->Scissor.X,
+			    ctx->Scissor.Y,
+			    ctx->Scissor.Width,
+			    ctx->Scissor.Height);
 
     }
     else {

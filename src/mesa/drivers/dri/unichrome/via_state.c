@@ -615,7 +615,8 @@ static void viaScissor(GLcontext *ctx, GLint x, GLint y,
     if (!vmesa->driDrawable)
        return;
 
-    if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);    
+    if (VIA_DEBUG)
+       fprintf(stderr, "%s %d,%d %dx%d, drawH %d\n", __FUNCTION__, x,y,w,h, vmesa->driDrawable->h);
 
     if (ctx->Scissor.Enabled) {
         VIA_FLUSH_DMA(vmesa); /* don't pipeline cliprect changes */
@@ -626,6 +627,19 @@ static void viaScissor(GLcontext *ctx, GLint x, GLint y,
     vmesa->scissorRect.x2 = x + w;
     vmesa->scissorRect.y2 = vmesa->driDrawable->h - y;
     if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);    
+}
+
+static void viaEnable(GLcontext *ctx, GLenum cap, GLboolean state)
+{
+   viaContextPtr vmesa = VIA_CONTEXT(ctx);
+
+   switch (cap) {
+   case GL_SCISSOR_TEST:
+      VIA_FLUSH_DMA(vmesa);
+      break;
+   default:
+      break;
+   }
 }
 
 
@@ -1612,6 +1626,7 @@ void viaInitStateFuncs(GLcontext *ctx)
     ctx->Driver.Scissor = viaScissor;
     ctx->Driver.DepthRange = viaDepthRange;
     ctx->Driver.Viewport = viaViewport;
+    ctx->Driver.Enable = viaEnable;
 
     /* Pixel path fallbacks.
      */

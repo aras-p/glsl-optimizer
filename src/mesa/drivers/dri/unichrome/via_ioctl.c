@@ -495,11 +495,9 @@ static void via_emit_cliprect(viaContextPtr vmesa,
    GLuint pitch = buffer->pitch;
    GLuint offset = buffer->orig;
 
-   GLuint clipL = b->x1 - vmesa->drawX;
-   GLuint clipR = b->x2 - vmesa->drawX;
-   GLuint clipT = b->y1 - vmesa->drawY;
-   GLuint clipB = b->y2 - vmesa->drawY;
-	    
+   if (0)
+      fprintf(stderr, "emit cliprect for box %d,%d %d,%d\n", b->x1, b->y1, b->x2, b->y2);
+
    vb[0] = HC_HEADER2;
    vb[1] = (HC_ParaType_NotTex << 16);
 
@@ -508,8 +506,8 @@ static void via_emit_cliprect(viaContextPtr vmesa,
       vb[3] = (HC_SubA_HClipLR << 24) | 0x0;
    }
    else {
-      vb[2] = (HC_SubA_HClipTB << 24) | (clipT << 12) | clipB;
-      vb[3] = (HC_SubA_HClipLR << 24) | (clipL << 12) | clipR;
+      vb[2] = (HC_SubA_HClipTB << 24) | (b->y1 << 12) | b->y2;
+      vb[3] = (HC_SubA_HClipLR << 24) | (b->x1 << 12) | b->x2;
    }
 	    
    vb[4] = ((HC_SubA_HDBBasL << 24) | (offset & 0xFFFFFF));
@@ -525,6 +523,11 @@ static int intersect_rect(drm_clip_rect_t *out,
                           drm_clip_rect_t *b)
 {
     *out = *a;
+    
+    if (0)
+       fprintf(stderr, "intersect %d,%d %d,%d and %d,%d %d,%d\n", 
+	       a->x1, a->y1, a->x2, a->y2,
+	       b->x1, b->y1, b->x2, b->y2);
 
     if (b->x1 > out->x1) out->x1 = b->x1;
     if (b->x2 < out->x2) out->x2 = b->x2;
@@ -556,6 +559,9 @@ void viaFlushDmaLocked(viaContextPtr vmesa, GLuint flags)
 {
    int i;
    RING_VARS;
+
+   if (VIA_DEBUG)
+      fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (*(GLuint *)vmesa->driHwLock != (DRM_LOCK_HELD|vmesa->hHWContext) &&
        *(GLuint *)vmesa->driHwLock != (DRM_LOCK_HELD|DRM_LOCK_CONT|vmesa->hHWContext)) {
@@ -622,35 +628,42 @@ void viaFlushDmaLocked(viaContextPtr vmesa, GLuint flags)
       dump_dma( vmesa );
 
    if (flags & VIA_NO_CLIPRECTS) {
+      if (0) fprintf(stderr, "%s VIA_NO_CLIPRECTS\n", __FUNCTION__);
       assert(vmesa->dmaCliprectAddr == 0);
       fire_buffer( vmesa );
    }
    else if (!vmesa->dmaCliprectAddr) {
       /* Contains only state.  Could just dump the packet?
        */
-      if (0) fprintf(stderr, "no dmaCliprectAddr\n");
+      if (0) fprintf(stderr, "%s: no dmaCliprectAddr\n", __FUNCTION__);
       if (0) fire_buffer( vmesa );
    }
    else if (vmesa->numClipRects) {
-      int ret;
       drm_clip_rect_t *pbox = vmesa->pClipRects;
+      if (0) fprintf(stderr, "%s: %d cliprects\n", __FUNCTION__, vmesa->numClipRects);
       
       for (i = 0; i < vmesa->numClipRects; i++) {
-	 if (vmesa->glCtx->Scissor.Enabled) {
-	    drm_clip_rect_t b;
-	    if (!intersect_rect(&b, &pbox[i], &vmesa->scissorRect)) 
-	       continue;
-	    via_emit_cliprect(vmesa, &b);	 
-	 }
-	 else {
-	    via_emit_cliprect(vmesa, &pbox[i]);
-	 }
-	 
-	 ret = fire_buffer(vmesa);
-	 if (ret)
+	 drm_clip_rect_t b;
+
+	 b.x1 = pbox[i].x1 - (vmesa->drawX + vmesa->drawXoff);
+	 b.x2 = pbox[i].x2 - (vmesa->drawX + vmesa->drawXoff);
+	 b.y1 = pbox[i].y1 - vmesa->drawY;
+	 b.y2 = pbox[i].y2 - vmesa->drawY;
+
+	 if (vmesa->glCtx->Scissor.Enabled &&
+	     !intersect_rect(&b, &b, &vmesa->scissorRect)) 
+	    continue;
+
+	 b.x1 += vmesa->drawXoff;
+	 b.x2 += vmesa->drawXoff;
+
+	 via_emit_cliprect(vmesa, &b);
+
+	 if (fire_buffer(vmesa) != 0)
 	    goto done;
       }
    } else {
+      if (0) fprintf(stderr, "%s: no cliprects\n", __FUNCTION__);
       UNLOCK_HARDWARE(vmesa);
       sched_yield();
       LOCK_HARDWARE(vmesa);
@@ -742,6 +755,9 @@ GLuint *viaAllocDmaFunc(viaContextPtr vmesa, int bytes, const char *func, int li
 
 GLuint *viaExtendPrimitive(viaContextPtr vmesa, int bytes)
 {
+   if (0)
+      fprintf(stderr, "%s %d\n", __FUNCTION__, bytes);
+
    assert(vmesa->dmaLastPrim);
    if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
       viaWrapPrimitive(vmesa);

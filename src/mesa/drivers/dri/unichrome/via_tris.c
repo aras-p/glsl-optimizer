@@ -790,9 +790,11 @@ static void viaRenderPrimitive( GLcontext *ctx, GLuint prim )
 
 void viaFinishPrimitive(viaContextPtr vmesa)
 {
-   if (VIA_DEBUG) fprintf(stderr, "%s\n", __FUNCTION__);
+   if (VIA_DEBUG)
+      fprintf(stderr, "%s\n", __FUNCTION__);
 
-   if (!vmesa->dmaLastPrim) {
+   if (!vmesa->dmaLastPrim || !vmesa->dmaCliprectAddr) {
+      assert(0);
    }
    else if (vmesa->dmaLow != vmesa->dmaLastPrim) {
       GLuint cmdA = vmesa->regCmdA_End | HC_HPLEND_MASK | HC_HPMValidN_MASK | HC_HE3Fire_MASK;    
@@ -818,6 +820,9 @@ void viaFinishPrimitive(viaContextPtr vmesa)
 	 viaFlushDma( vmesa );
    }
    else {
+      if (VIA_DEBUG)
+	 fprintf(stderr, "remove empty primitive\n");
+
       /* Remove the primitive header:
        */
       vmesa->dmaLastPrim = 0;
