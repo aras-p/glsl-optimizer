@@ -1,8 +1,8 @@
-/* $Id: mipmap.c,v 1.7 2000/07/11 14:11:04 brianp Exp $ */
+/* $Id: mipmap.c,v 1.8 2000/10/26 21:48:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.4
  * Copyright (C) 1995-2000  Brian Paul
  *
  * This library is free software; you can redistribute it and/or
@@ -576,6 +576,7 @@ bytes_per_pixel(GLenum format, GLenum type)
       n = 2;
       break;
    case GL_RGB:
+   case GL_BGR:
       n = 3;
       break;
    case GL_RGBA:
