@@ -1,4 +1,4 @@
-/* $Id: tessdemo.c,v 1.3 1999/11/04 04:00:42 gareth Exp $ */
+/* $Id: tessdemo.c,v 1.4 2000/01/23 21:25:39 gareth Exp $ */
 
 /*
  * A demo of the GLU polygon tesselation functions written by Bogdan Sikorski.
@@ -14,6 +14,13 @@
 
 /*
  * $Log: tessdemo.c,v $
+ * Revision 1.4  2000/01/23 21:25:39  gareth
+ * Merged 3.2 updates, namely combine callback for intersecting
+ * contours.
+ *
+ * Revision 1.3.2.1  1999/11/16 11:09:09  gareth
+ * Added combine callback.  Converted vertices from ints to floats.
+ *
  * Revision 1.3  1999/11/04 04:00:42  gareth
  * Updated demo for new GLU 1.3 tessellation.  Added optimized rendering
  * by saving the output of the tessellation into display lists.
@@ -79,20 +86,20 @@ static GLfloat		edge_color[3];
 
 static struct
 {
-   GLint	p[MAX_POINTS][2];
+   GLfloat	p[MAX_POINTS][2];
    GLuint	point_cnt;
 } contours[MAX_CONTOURS];
 
 static struct
 {
    GLsizei	no;
-   GLint	p[3][2];
+   GLfloat	p[3][2];
    GLclampf	color[3][3];
 } triangles[MAX_TRIANGLES];
 
 
 
-void GLCALLBACK my_error( GLenum err )
+void GLCALLBACK error_callback( GLenum err )
 {
    int		len, i;
    char const	*str;
@@ -146,22 +153,22 @@ void GLCALLBACK end_callback()
 		 triangles[i].color[0][1],
 		 triangles[i].color[0][2] );
 
-      glVertex2i( triangles[i].p[0][0], triangles[i].p[0][1] );
-      glVertex2i( triangles[i].p[1][0], triangles[i].p[1][1] );
+      glVertex2f( triangles[i].p[0][0], triangles[i].p[0][1] );
+      glVertex2f( triangles[i].p[1][0], triangles[i].p[1][1] );
 
       glColor3f( triangles[i].color[1][0],
 		 triangles[i].color[1][1],
 		 triangles[i].color[1][2] );
 
-      glVertex2i( triangles[i].p[1][0], triangles[i].p[1][1] );
-      glVertex2i( triangles[i].p[2][0], triangles[i].p[2][1] );
+      glVertex2f( triangles[i].p[1][0], triangles[i].p[1][1] );
+      glVertex2f( triangles[i].p[2][0], triangles[i].p[2][1] );
 
       glColor3f( triangles[i].color[2][0],
 		 triangles[i].color[2][1],
 		 triangles[i].color[2][2] );
 
-      glVertex2i( triangles[i].p[2][0], triangles[i].p[2][1] );
-      glVertex2i( triangles[i].p[0][0], triangles[i].p[0][1] );
+      glVertex2f( triangles[i].p[2][0], triangles[i].p[2][1] );
+      glVertex2f( triangles[i].p[0][0], triangles[i].p[0][1] );
    }
 
    glEnd();
@@ -170,9 +177,9 @@ void GLCALLBACK end_callback()
 void GLCALLBACK vertex_callback( void *data )
 {
    GLsizei	no;
-   GLint	*p;
+   GLfloat	*p;
 
-   p = (GLint *) data;
+   p = (GLfloat *) data;
    no = triangles[triangle_cnt].no;
 
    triangles[triangle_cnt].p[no][0] = p[0];
@@ -189,6 +196,22 @@ void GLCALLBACK vertex_callback( void *data )
       triangles[triangle_cnt].no = 0;
    }
 }
+
+void GLCALLBACK combine_callback( GLdouble coords[3],
+				  GLdouble *vertex_data[4],
+				  GLfloat weight[4], void **data )
+{
+   GLfloat	*vertex;
+   int		i;
+
+   vertex = (GLfloat *) malloc( 2 * sizeof(GLfloat) );
+
+   vertex[0] = (GLfloat) coords[0];
+   vertex[1] = (GLfloat) coords[1];
+
+   *data = vertex;
+}
+
 
 void set_screen_wh( GLsizei w, GLsizei h )
 {
@@ -208,10 +231,12 @@ void tesse( void )
 
    if ( tobj != NULL )
    {
-      gluTessCallback( tobj, GLU_BEGIN, glBegin );
-      gluTessCallback( tobj, GLU_VERTEX, glVertex2iv );
-      gluTessCallback( tobj, GLU_END, glEnd );
-      gluTessCallback( tobj, GLU_ERROR, my_error );
+      gluTessNormal( tobj, 0.0, 0.0, 1.0 );
+      gluTessCallback( tobj, GLU_TESS_BEGIN, glBegin );
+      gluTessCallback( tobj, GLU_TESS_VERTEX, glVertex2fv );
+      gluTessCallback( tobj, GLU_TESS_END, glEnd );
+      gluTessCallback( tobj, GLU_TESS_ERROR, error_callback );
+      gluTessCallback( tobj, GLU_TESS_COMBINE, combine_callback );
 
       glNewList( list_start, GL_COMPILE );
       gluBeginPolygon( tobj );
@@ -233,10 +258,11 @@ void tesse( void )
       gluEndPolygon( tobj );
       glEndList();
 
-      gluTessCallback( tobj, GLU_BEGIN, begin_callback );
-      gluTessCallback( tobj, GLU_VERTEX, vertex_callback );
-      gluTessCallback( tobj, GLU_END, end_callback );
-      gluTessCallback( tobj, GLU_EDGE_FLAG, edge_callback );
+#if 0
+      gluTessCallback( tobj, GLU_TESS_BEGIN, begin_callback );
+      gluTessCallback( tobj, GLU_TESS_VERTEX, vertex_callback );
+      gluTessCallback( tobj, GLU_TESS_END, end_callback );
+      gluTessCallback( tobj, GLU_TESS_EDGE_FLAG, edge_callback );
 
       glNewList( list_start + 1, GL_COMPILE );
       gluBeginPolygon( tobj );
@@ -257,6 +283,7 @@ void tesse( void )
 
       gluEndPolygon( tobj );
       glEndList();
+#endif
 
       gluDeleteTess( tobj );
 
@@ -267,7 +294,7 @@ void tesse( void )
 
 void left_down( int x1, int y1 )
 {
-   GLint	P[2];
+   GLfloat	P[2];
    GLuint	point_cnt;
 
    /* translate GLUT into GL coordinates */
@@ -284,13 +311,13 @@ void left_down( int x1, int y1 )
 
    if ( point_cnt )
    {
-      glVertex2iv( contours[contour_cnt].p[point_cnt-1] );
-      glVertex2iv( P );
+      glVertex2fv( contours[contour_cnt].p[point_cnt-1] );
+      glVertex2fv( P );
    }
    else
    {
-      glVertex2iv( P );
-      glVertex2iv( P );
+      glVertex2fv( P );
+      glVertex2fv( P );
    }
 
    glEnd();
@@ -311,8 +338,8 @@ void middle_down( int x1, int y1 )
    {
       glBegin( GL_LINES );
 
-      glVertex2iv( contours[contour_cnt].p[0] );
-      glVertex2iv( contours[contour_cnt].p[point_cnt-1] );
+      glVertex2fv( contours[contour_cnt].p[0] );
+      glVertex2fv( contours[contour_cnt].p[point_cnt-1] );
 
       contours[contour_cnt].p[point_cnt][0] = -1;
 
@@ -383,24 +410,24 @@ void display( void )
 	 case 0:
 	    break;
 	 case 1:
-	    glVertex2iv( contours[i].p[0] );
-	    glVertex2iv( contours[i].p[0] );
+	    glVertex2fv( contours[i].p[0] );
+	    glVertex2fv( contours[i].p[0] );
 	    break;
 	 case 2:
-	    glVertex2iv( contours[i].p[0] );
-	    glVertex2iv( contours[i].p[1] );
+	    glVertex2fv( contours[i].p[0] );
+	    glVertex2fv( contours[i].p[1] );
 	    break;
 	 default:
 	    --point_cnt;
 	    for ( j = 0 ; j < point_cnt ; j++ )
 	    {
-	       glVertex2iv( contours[i].p[j] );
-	       glVertex2iv( contours[i].p[j+1] );
+	       glVertex2fv( contours[i].p[j] );
+	       glVertex2fv( contours[i].p[j+1] );
 	    }
 	    if ( contours[i].p[j+1][0] == -1 )
 	    {
-	       glVertex2iv( contours[i].p[0] );
-	       glVertex2iv( contours[i].p[j] );
+	       glVertex2fv( contours[i].p[0] );
+	       glVertex2fv( contours[i].p[j] );
 	    }
 	    break;
 	 }
