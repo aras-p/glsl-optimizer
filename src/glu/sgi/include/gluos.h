@@ -52,7 +52,7 @@
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4761)
 
-#if defined(_MSC_VER) && _MSC_VER >= 1200
+#if defined(_MSC_VER) && _MSC_VER >= 1200 && _MSC_VER < 1300
 #pragma comment(linker, "/OPT:NOWIN98")
 #endif
 
