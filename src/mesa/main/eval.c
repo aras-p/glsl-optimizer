@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.5 1999/10/19 18:37:03 keithw Exp $ */
+/* $Id: eval.c,v 1.6 1999/11/08 15:30:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,9 +56,6 @@
 #include "vbcull.h"
 #include "vbfill.h"
 #include "vbxform.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#endif
 #endif
 
 

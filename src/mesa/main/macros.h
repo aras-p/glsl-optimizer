@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.5 1999/10/13 18:42:50 brianp Exp $ */
+/* $Id: macros.h,v 1.6 1999/11/08 15:29:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,16 +36,16 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-#if defined( XFree86LOADER ) && defined( XFree86Server )
-#include <GL/glx_ansic.h>
-#else
+#ifndef XFree86Server
+#include <assert.h>
 #include <math.h>
 #include <string.h>
+#else
+#include <GL/glx_ansic.h>
 #endif
 
 
 #ifdef DEBUG
-#  include <assert.h>
 #  define ASSERT(X)   assert(X)
 #else
 #  define ASSERT(X)
