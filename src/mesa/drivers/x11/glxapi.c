@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.10 1999/12/10 15:16:49 brianp Exp $ */
+/* $Id: glxapi.c,v 1.11 2000/02/23 23:09:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -169,7 +169,8 @@ XVisualInfo *glXChooseVisual(Display *dpy, int screen, int *list)
 }
 
 
-void glXCopyContext(Display *dpy, GLXContext src, GLXContext dst, GLuint mask)
+void glXCopyContext(Display *dpy, GLXContext src, GLXContext dst,
+                    unsigned long mask)
 {
    struct _glxapi_table *t = get_dispatch(dpy);
    if (!t)
