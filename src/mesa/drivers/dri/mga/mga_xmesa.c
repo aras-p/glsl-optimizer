@@ -127,7 +127,7 @@ static __GLcontextModes * fill_in_modes( __GLcontextModes * modes,
 	    modes->accumRedBits   = 16 * j;
 	    modes->accumGreenBits = 16 * j;
 	    modes->accumBlueBits  = 16 * j;
-	    modes->accumAlphaBits = 0;
+	    modes->accumAlphaBits = (masks[index][3] != 0) ? 16 * j : 0;
 	    modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
 
 	    modes->stencilBits = stencil_bits;
@@ -174,13 +174,18 @@ mgaFillInModes( unsigned pixel_bits, unsigned depth_bits,
 	GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
     };
 
-    int depth_buffer_modes[2][2] = {
-	{ 0, 0 },
-	{ 0, 0 }
-    };
+    int depth_buffer_modes[2][2];
 
+
+    depth_buffer_modes[0][0] = depth_bits;
     depth_buffer_modes[1][0] = depth_bits;
-    depth_buffer_modes[1][1] = stencil_bits;
+
+    /* Just like with the accumulation buffer, always provide some modes
+     * with a stencil buffer.  It will be a sw fallback, but some apps won't
+     * care about that.
+     */
+    depth_buffer_modes[0][1] = 0;
+    depth_buffer_modes[1][1] = (stencil_bits == 0) ? 8 : stencil_bits;
 
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
@@ -201,6 +206,14 @@ mgaFillInModes( unsigned pixel_bits, unsigned depth_bits,
 			   depth_buffer_modes[i][0], depth_buffer_modes[i][1],
 			   back_buffer_modes, back_buffer_factor,
 			   GLX_DIRECT_COLOR );
+    }
+
+    /* Mark the visual as slow if there are "fake" stencil bits.
+     */
+    for ( m = modes ; m != NULL ; m = m->next ) {
+	if ( (m->stencilBits != 0) && (m->stencilBits != stencil_bits) ) {
+	    m->visualRating = GLX_SLOW_CONFIG;
+	}
     }
 
     return modes;
