@@ -1,4 +1,4 @@
-/* $Id: s_readpix.c,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_readpix.c,v 1.4 2000/11/28 00:04:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -688,7 +688,7 @@ static void read_rgba_pixels( GLcontext *ctx,
       src = convImage;
       for (row = 0; row < height; row++) {
          GLvoid *dest;
-         dest = _mesa_image_address(packing, pixels, width, height,
+         dest = _mesa_image_address(packing, pixels, readWidth, height,
                                     format, type, 0, row, 0);
          _mesa_pack_float_rgba_span(ctx, readWidth,
                                     (const GLfloat (*)[4]) src,
