@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.50 2001/07/23 15:09:52 brianp Exp $
+# $Id: Makefile.X11,v 1.51 2001/08/20 16:16:36 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -396,6 +396,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/include/GL/mglmesa.h				\
 	$(DIRECTORY)/include/GL/osmesa.h				\
 	$(DIRECTORY)/include/GL/svgamesa.h				\
+	$(DIRECTORY)/include/GL/ugl*.h					\
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
 	$(DIRECTORY)/include/GL/xmesa.h					\
@@ -425,6 +426,10 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/tnl/*.[ch]					\
 	$(DIRECTORY)/src/tnl/Makefile*					\
 	$(DIRECTORY)/src/tnl/libMesaTnl_la_SOURCES			\
+	$(DIRECTORY)/src/windml/*.[ch]					\
+	$(DIRECTORY)/src/windml/tornado/*.c				\
+	$(DIRECTORY)/src/windml/tornado/*.cdf				\
+	$(DIRECTORY)/src/windml/torVars.sample				\
 	$(DIRECTORY)/src/BeOS/*.cpp					\
 	$(DIRECTORY)/src/FX/Makefile.am					\
 	$(DIRECTORY)/src/FX/Makefile.in					\
@@ -619,6 +624,9 @@ DEMO_FILES =	\
 	$(DIRECTORY)/samples/README		\
 	$(DIRECTORY)/samples/*.c		\
 	$(DIRECTORY)/mtdemos			\
+	$(DIRECTORY)windmldemos/Makefile.ugl	\
+	$(DIRECTORY)windmldemos/*.c		\
+	$(DIRECTORY)windmldemos/*.bmp		\
 	$(DIRECTORY)/ggi
 
 OBSOLETE_DEMO_FILES = \
