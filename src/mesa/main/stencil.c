@@ -1,4 +1,4 @@
-/* $Id: stencil.c,v 1.14 2000/02/02 22:16:04 brianp Exp $ */
+/* $Id: stencil.c,v 1.15 2000/04/11 20:42:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1130,24 +1130,44 @@ gl_stencil_and_depth_test_pixels( GLcontext *ctx,
  *         x,y - location of first pixel
  * Output:  stencil - the array of stencil values
  */
-void gl_read_stencil_span( GLcontext *ctx,
-                           GLint n, GLint x, GLint y, GLstencil stencil[] )
+void
+_mesa_read_stencil_span( GLcontext *ctx,
+                         GLint n, GLint x, GLint y, GLstencil stencil[] )
 {
+   if (y < 0 || y >= ctx->DrawBuffer->Height ||
+       x + n <= 0 || x >= ctx->DrawBuffer->Width) {
+      /* span is completely outside framebuffer */
+      return; /* undefined values OK */
+   }
+
+   if (x < 0) {
+      GLint dx = -x;
+      x = 0;
+      n -= dx;
+      stencil += dx;
+   }
+   if (x + n > ctx->DrawBuffer->Width) {
+      GLint dx = x + n - ctx->DrawBuffer->Width;
+      n -= dx;
+   }
+   if (n <= 0) {
+      return;
+   }
+
+
    ASSERT(n >= 0);
-   if (ctx->DrawBuffer->Stencil) {
-      if (ctx->Driver.ReadStencilSpan) {
-         (*ctx->Driver.ReadStencilSpan)( ctx, (GLuint) n, x, y, stencil );
-      }
-      else {
-         const GLstencil *s = STENCIL_ADDRESS( x, y );
+   if (ctx->Driver.ReadStencilSpan) {
+      (*ctx->Driver.ReadStencilSpan)( ctx, (GLuint) n, x, y, stencil );
+   }
+   else if (ctx->DrawBuffer->Stencil) {
+      const GLstencil *s = STENCIL_ADDRESS( x, y );
 #if STENCIL_BITS == 8
-         MEMCPY( stencil, s, n * sizeof(GLstencil) );
+      MEMCPY( stencil, s, n * sizeof(GLstencil) );
 #else
-         GLuint i;
-         for (i=0;i<n;i++)
-            stencil[i] = s[i];
+      GLuint i;
+      for (i=0;i<n;i++)
+         stencil[i] = s[i];
 #endif
-      }
    }
 }
 
@@ -1160,41 +1180,42 @@ void gl_read_stencil_span( GLcontext *ctx,
  *         x, y - location of first pixel
  *         stencil - the array of stencil values
  */
-void gl_write_stencil_span( GLcontext *ctx,
-                            GLint n, GLint x, GLint y,
-			    const GLstencil stencil[] )
+void
+_mesa_write_stencil_span( GLcontext *ctx, GLint n, GLint x, GLint y,
+                          const GLstencil stencil[] )
 {
-   ASSERT(n >= 0);
-   if (ctx->DrawBuffer->Stencil) {
-      /* do clipping */
-      if (y < ctx->DrawBuffer->Ymin || y > ctx->DrawBuffer->Ymax)
-         return;
-      if (x < ctx->DrawBuffer->Xmin) {
-         GLint diff = ctx->DrawBuffer->Xmin - x;
-         n -= diff;
-         stencil += diff;
-         x = ctx->DrawBuffer->Xmin;
-      }
-      if (x + n > ctx->DrawBuffer->Xmax) {
-         GLint diff = x + n - ctx->DrawBuffer->Xmax;
-         n -= diff;
-      }
+   if (y < 0 || y >= ctx->DrawBuffer->Height ||
+       x + n <= 0 || x >= ctx->DrawBuffer->Width) {
+      /* span is completely outside framebuffer */
+      return; /* undefined values OK */
+   }
 
-      ASSERT( n >= 0);
+   if (x < 0) {
+      GLint dx = -x;
+      x = 0;
+      n -= dx;
+      stencil += dx;
+   }
+   if (x + n > ctx->DrawBuffer->Width) {
+      GLint dx = x + n - ctx->DrawBuffer->Width;
+      n -= dx;
+   }
+   if (n <= 0) {
+      return;
+   }
 
-      if (ctx->Driver.WriteStencilSpan) {
-         (*ctx->Driver.WriteStencilSpan)( ctx, n, x, y, stencil, NULL );
-      }
-      else {
-         GLstencil *s = STENCIL_ADDRESS( x, y );
+   if (ctx->Driver.WriteStencilSpan) {
+      (*ctx->Driver.WriteStencilSpan)( ctx, n, x, y, stencil, NULL );
+   }
+   else if (ctx->DrawBuffer->Stencil) {
+      GLstencil *s = STENCIL_ADDRESS( x, y );
 #if STENCIL_BITS == 8
-         MEMCPY( s, stencil, n * sizeof(GLstencil) );
+      MEMCPY( s, stencil, n * sizeof(GLstencil) );
 #else
-         GLuint i;
-         for (i=0;i<n;i++)
-            s[i] = stencil[i];
+      GLuint i;
+      for (i=0;i<n;i++)
+         s[i] = stencil[i];
 #endif
-      }
    }
 }
 

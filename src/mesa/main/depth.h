@@ -1,4 +1,4 @@
-/* $Id: depth.h,v 1.7 2000/03/03 17:47:39 brianp Exp $ */
+/* $Id: depth.h,v 1.8 2000/04/11 20:42:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -68,7 +68,12 @@ _mesa_depth_test_pixels( GLcontext *ctx,
 
 
 extern void
-_mesa_read_depth_span_float( GLcontext *ctx, GLuint n, GLint x, GLint y,
+_mesa_read_depth_span( GLcontext *ctx,
+                       GLint n, GLint x, GLint y, GLdepth depth[] );
+
+
+extern void
+_mesa_read_depth_span_float( GLcontext *ctx, GLint n, GLint x, GLint y,
                              GLfloat depth[] );
 
 

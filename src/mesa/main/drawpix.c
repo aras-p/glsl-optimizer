@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.18 2000/04/08 18:57:45 brianp Exp $ */
+/* $Id: drawpix.c,v 1.19 2000/04/11 20:42:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -479,7 +479,7 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
                                        values, desty );
       }
       else {
-         gl_write_stencil_span( ctx, (GLuint) drawWidth, x, y, values );
+         _mesa_write_stencil_span( ctx, (GLuint) drawWidth, x, y, values );
       }
    }
 }

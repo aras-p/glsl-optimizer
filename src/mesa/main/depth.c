@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.16 2000/04/04 00:54:23 brianp Exp $ */
+/* $Id: depth.c,v 1.17 2000/04/11 20:42:22 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1418,6 +1418,74 @@ _mesa_depth_test_pixels( GLcontext *ctx,
 
 
 /*
+ * Read a span of depth values from the depth buffer.
+ * This function does clipping before calling the device driver function.
+ */
+void
+_mesa_read_depth_span( GLcontext *ctx,
+                       GLint n, GLint x, GLint y, GLdepth depth[] )
+{
+   if (y < 0 || y >= ctx->DrawBuffer->Height ||
+       x + (GLint) n <= 0 || x >= ctx->DrawBuffer->Width) {
+      /* span is completely outside framebuffer */
+      GLint i;
+      for (i = 0; i < n; i++)
+         depth[i] = 0;
+      return;
+   }
+
+   if (x < 0) {
+      GLint dx = -x;
+      GLint i;
+      for (i = 0; i < dx; i++)
+         depth[i] = 0;
+      x = 0;
+      n -= dx;
+      depth += dx;
+   }
+   if (x + n > ctx->DrawBuffer->Width) {
+      GLint dx = x + n - ctx->DrawBuffer->Width;
+      GLint i;
+      for (i = 0; i < dx; i++)
+         depth[n - i - 1] = 0;
+      n -= dx;
+   }
+   if (n <= 0) {
+      return;
+   }
+
+   if (ctx->DrawBuffer->DepthBuffer) {
+      /* read from software depth buffer */
+      if (ctx->Visual->DepthBits <= 16) {
+         const GLushort *zptr = Z_ADDRESS16( ctx, x, y );
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            depth[i] = zptr[i];
+         }
+      }
+      else {
+         const GLuint *zptr = Z_ADDRESS32( ctx, x, y );
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            depth[i] = zptr[i];
+         }
+      }
+   }
+   else if (ctx->Driver.ReadDepthSpan) {
+      /* read from hardware depth buffer */
+      (*ctx->Driver.ReadDepthSpan)( ctx, n, x, y, depth );
+   }
+   else {
+      /* no depth buffer */
+      BZERO(depth, n * sizeof(GLfloat));
+   }
+
+}
+
+
+
+
+/*
  * Return a span of depth values from the depth buffer as floats in [0,1].
  * This is used for both hardware and software depth buffers.
  * Input:  n - how many pixels
@@ -1425,10 +1493,38 @@ _mesa_depth_test_pixels( GLcontext *ctx,
  * Output:  depth - the array of depth values
  */
 void
-_mesa_read_depth_span_float( GLcontext* ctx,
-                             GLuint n, GLint x, GLint y, GLfloat depth[] )
+_mesa_read_depth_span_float( GLcontext *ctx,
+                             GLint n, GLint x, GLint y, GLfloat depth[] )
 {
    const GLfloat scale = 1.0F / ctx->Visual->DepthMaxF;
+
+   if (y < 0 || y >= ctx->DrawBuffer->Height ||
+       x + (GLint) n <= 0 || x >= ctx->DrawBuffer->Width) {
+      /* span is completely outside framebuffer */
+      GLint i;
+      for (i = 0; i < n; i++)
+         depth[i] = 0.0F;
+      return;
+   }
+
+   if (x < 0) {
+      GLint dx = -x;
+      GLint i;
+      for (i = 0; i < dx; i++)
+         depth[i] = 0.0F;
+      n -= dx;
+      x = 0;
+   }
+   if (x + n > ctx->DrawBuffer->Width) {
+      GLint dx = x + n - ctx->DrawBuffer->Width;
+      GLint i;
+      for (i = 0; i < dx; i++)
+         depth[n - i - 1] = 0.0F;
+      n -= dx;
+   }
+   if (n <= 0) {
+      return;
+   }
 
    if (ctx->DrawBuffer->DepthBuffer) {
       /* read from software depth buffer */
