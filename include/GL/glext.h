@@ -3290,7 +3290,11 @@ typedef GLboolean (APIENTRYP PFNGLISPROGRAMARBPROC) (GLuint program);
 #define GL_ARB_vertex_buffer_object 1
 /* GL types for handling large vertex buffer objects */
 /* Only used by this extension for now; later needs to be moved earlier in glext.h */
+#ifndef XFree86Server
 #include <stddef.h>
+#else
+#define ptrdiff_t int
+#endif
 typedef ptrdiff_t GLintptrARB;
 typedef ptrdiff_t GLsizeiptrARB;
 #ifdef GL_GLEXT_PROTOTYPES
