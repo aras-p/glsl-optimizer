@@ -1257,7 +1257,6 @@ struct gl_attrib_node {
 struct gl_buffer_object {
    GLint RefCount;
    GLuint Name;
-   GLenum Target;
    GLenum Usage;
    GLenum Access;
    GLvoid *Pointer;   /**< Only valid while buffer is mapped */
