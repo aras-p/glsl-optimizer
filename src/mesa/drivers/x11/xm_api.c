@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.37 2002/06/13 04:28:30 brianp Exp $ */
+/* $Id: xm_api.c,v 1.38 2002/06/16 01:11:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1277,6 +1277,8 @@ static GLboolean initialize_visual_and_buffer( int client,
       get_drawable_size( v->display, window, &w, &h );
       b->width = w;
       b->height = h;
+      b->mesa_buffer.Width = w;
+      b->mesa_buffer.Height = h;
 
       b->frontbuffer = window;
 
