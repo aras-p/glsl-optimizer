@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.66 2001/09/10 18:53:45 brianp Exp $ */
+/* $Id: osmesa.c,v 1.67 2001/09/12 03:30:02 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2014,6 +2014,9 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 
+   ctx->Driver.BaseCompressedTexFormat = _mesa_base_compressed_texformat;
+   ctx->Driver.CompressedTextureSize = _mesa_compressed_texture_size;
+   ctx->Driver.GetCompressedTexImage = _mesa_get_compressed_teximage;
 
    /* RGB(A) span/pixel functions */
    if (osmesa->format == OSMESA_RGB) {
