@@ -66,26 +66,47 @@ PROGS = \
 
 
 # make executable from .c file:
-.c: $(LIB_DEP)
-	$(CC) -I$(INCDIR) $(CFLAGS) $< $(APP_LIB_DEPS) -o $@
+.c: $(LIB_DEP) readtex.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $< readtex.o $(APP_LIB_DEPS) -o $@
 
 
 ##### TARGETS #####
 
-default: readtex.c readtex.h $(PROGS)
+default: readtex.o $(PROGS)
 
 
-clean:
-	-rm -f $(PROGS)
-	-rm -f *.o *~
-	-rm -f readtex.[ch]
+readtex.c: $(TOP)/progs/util/readtex.c
+	cp $< .
+
+readtex.h: $(TOP)/progs/util/readtex.h
+	cp $< .
+
+readtex.o: readtex.c readtex.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) readtex.c
 
 
-readtex.c:
-	cp $(TOP)/progs/util/readtex.c .
+showbuffer.c: $(TOP)/progs/util/showbuffer.c
+	cp $< .
 
-readtex.h:
-	cp $(TOP)/progs/util/readtex.h .
+showbuffer.h: $(TOP)/progs/util/showbuffer.h
+	cp $< .
+
+showbuffer.o: showbuffer.c showbuffer.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) showbuffer.c
+
+
+reflect: reflect.o showbuffer.o readtex.o
+	$(CC) -I$(INCDIR) $(CFLAGS) reflect.o showbuffer.o readtex.o $(APP_LIB_DEPS) -o $@
+
+reflect.o: reflect.c showbuffer.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) reflect.c
+
+
+shadowtex: shadowtex.o showbuffer.o
+	$(CC) -I$(INCDIR) $(CFLAGS) shadowtex.o showbuffer.o $(APP_LIB_DEPS) -o $@
+
+shadowtex.o: shadowtex.c showbuffer.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) shadowtex.c
 
 # special case: need the -lOSMesa library:
 osdemo: osdemo.c
@@ -95,3 +116,9 @@ osdemo: osdemo.c
 osdemo32: osdemo32.c
 	$(CC) -I$(INCDIR) $(CFLAGS) osdemo32.c $(OSMESA32_LIBS) -o $@
 
+
+
+clean:
+	-rm -f $(PROGS)
+	-rm -f *.o *~
+	-rm -f readtex.[ch]
