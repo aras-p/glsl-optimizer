@@ -30,7 +30,9 @@
 
 #ifndef _WIN32
 /* added by BrianP: */
+#ifndef APIENTRY
 #define APIENTRY GLAPIENTRY
+#endif
 #define __cdecl GLAPIENTRY
 #define CDECL GLAPIENTRY
 #endif
