@@ -3,7 +3,7 @@
 
 
 
-Mesa-6.1 release notes:
+Mesa-6.2 release notes:
 -----------------------
 
 1) Glide2 support has been ceased; please visit the Glide SourceForge and
@@ -142,6 +142,11 @@ MESA_FX_INFO
 	HW: all
 	Desc: verbose to stderr
 	Value: any; special value "r" to redirect stderr to MESA.LOG
+MESA_FX_NOSNAP
+	OS: all
+	HW: Voodoo1, Rush, Banshee
+	Desc: do not snap vertices inside Mesa
+	Note: to be used with Glide3x that snaps vertices itself
 MESA_FX_POINTCAST
 	OS: all
 	HW: dual-TMU cards (some Voodoo1, Voodoo2, Avenger, Napalm)
