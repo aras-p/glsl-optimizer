@@ -758,34 +758,41 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 		return;
 	}
 
-	// I failed to figure out how dither works in hardware,
-	// let's just ignore it for now
-	//FALLBACK_IF(ctx->Color.DitherFlag);
 
 	/* I'm almost certain I forgot something here */
-#if 0 /* This should work now.. */
+#if 0 /* These should work now.. */
+	FALLBACK_IF(ctx->Color.DitherFlag);
 	FALLBACK_IF(ctx->Color.AlphaEnabled); // GL_ALPHA_TEST
 	FALLBACK_IF(ctx->Color.BlendEnabled); // GL_BLEND
+	FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
 #endif
-	//FALLBACK_IF(ctx->Fog.Enabled); // GL_FOG disable as swtcl doesnt seem to support this
-	FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH
-	FALLBACK_IF(ctx->Line.StippleFlag); // GL_LINE_STIPPLE
-	FALLBACK_IF(ctx->Point.SmoothFlag); // GL_POINT_SMOOTH
-	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
-		FALLBACK_IF(ctx->Point.PointSprite); // GL_POINT_SPRITE_NV
 	//FALLBACK_IF(ctx->Polygon.OffsetPoint); // GL_POLYGON_OFFSET_POINT
 	//FALLBACK_IF(ctx->Polygon.OffsetLine); // GL_POLYGON_OFFSET_LINE
-	//FALLBACK_IF(ctx->Polygon.OffsetFill); // GL_POLYGON_OFFSET_FILL
-	//if(ctx->Polygon.OffsetFill)WARN_ONCE("Polygon.OffsetFill not implemented, ignoring\n");
-	FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH
-	FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
 	//FALLBACK_IF(ctx->Stencil.Enabled); // GL_STENCIL_TEST
+	
+	//FALLBACK_IF(ctx->Fog.Enabled); // GL_FOG disable as swtcl doesnt seem to support this
+	//FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH disabling to get blender going
+	FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
 	FALLBACK_IF(ctx->Multisample.Enabled); // GL_MULTISAMPLE_ARB
 
+#if 0 /* ut2k3 fails to start if this is on */
 	/* One step at a time - let one texture pass.. */
 	for (i = 1; i < ctx->Const.MaxTextureUnits; i++)
 		FALLBACK_IF(ctx->Texture.Unit[i].Enabled);
-
+#endif	
+	
+	/* Assumed factor reg is found but pattern is still missing */
+	//FALLBACK_IF(ctx->Line.StippleFlag); // GL_LINE_STIPPLE disabling to get blender going
+	
+	/* HW doesnt appear to directly support these */
+	//FALLBACK_IF(ctx->Line.SmoothFlag); // GL_LINE_SMOOTH disabling to get blender going
+	FALLBACK_IF(ctx->Point.SmoothFlag); // GL_POINT_SMOOTH
+	/* Rest could be done with vertex fragments */
+	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
+		FALLBACK_IF(ctx->Point.PointSprite); // GL_POINT_SPRITE_NV
+	//GL_POINT_DISTANCE_ATTENUATION_ARB
+	//GL_POINT_FADE_THRESHOLD_SIZE_ARB
+	
 	/* let r300_run_render do its job */
 #if 0
 	stage->active = GL_FALSE;
