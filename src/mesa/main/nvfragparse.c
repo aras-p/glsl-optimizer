@@ -1111,14 +1111,14 @@ Parse_VectorSrc(struct parse_state *parseState,
       srcReg->Register = paramIndex;      
    }
    else if (IsDigit(token[0]) || token[0] == '-' || token[0] == '+'){
-      /* XXX literal scalar constant */
+      /* literal scalar constant */
       GLfloat values[4];
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
       srcReg->Register = 0; /* XXX fix */
    }
    else if (token[0] == '{'){
-      /* XXX literal vector constant */
+      /* literal vector constant */
       GLfloat values[4];
       GLuint paramIndex;
       (void) Parse_String(parseState, "{");
@@ -1162,6 +1162,7 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
 {
    GLubyte token[100];
    GLfloat sign = 1.0F;
+   GLboolean needSuffix = GL_TRUE;
 
    /*
     * First, take care of +/- and absolute value stuff.
@@ -1204,37 +1205,54 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       /* vector literal */
       GLfloat values[4];
       GLuint paramIndex;
-      if (!Parse_VectorOrScalarConstant(parseState, values))
+      (void) Parse_String(parseState, "{");
+      if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = add_unnamed_constant(parseState, values);
       srcReg->IsParameter = GL_TRUE;
       srcReg->Register = paramIndex;      
    }
+   else if (IsDigit(token[0])) {
+      /* scalar literal */
+      GLfloat values[4];
+      GLuint paramIndex;
+      if (!Parse_ScalarConstant(parseState, values))
+         RETURN_ERROR;
+      paramIndex = add_unnamed_constant(parseState, values);
+      srcReg->IsParameter = GL_TRUE;
+      srcReg->Register = paramIndex;      
+      needSuffix = GL_FALSE;
+   }
    else {
-      RETURN_ERROR2("Invalid source register name", token);
+      RETURN_ERROR2("Invalid scalar source argument", token);
    }
 
-   /* Look for .[xyzw] suffix */
-   if (!Parse_String(parseState, "."))
-      RETURN_ERROR1("Expected .");
+   if (needSuffix) {
+      /* parse .[xyzw] suffix */
+      if (!Parse_String(parseState, "."))
+         RETURN_ERROR1("Expected .");
 
-   if (!Parse_Token(parseState, token))
-      RETURN_ERROR;
+      if (!Parse_Token(parseState, token))
+         RETURN_ERROR;
 
-   if (token[0] == 'x' && token[1] == 0) {
+      if (token[0] == 'x' && token[1] == 0) {
+         srcReg->Swizzle[0] = 0;
+      }
+      else if (token[0] == 'y' && token[1] == 0) {
+         srcReg->Swizzle[0] = 1;
+      }
+      else if (token[0] == 'z' && token[1] == 0) {
+         srcReg->Swizzle[0] = 2;
+      }
+      else if (token[0] == 'w' && token[1] == 0) {
+         srcReg->Swizzle[0] = 3;
+      }
+      else {
+         RETURN_ERROR1("Invalid scalar source suffix");
+      }
+   }
+   else {
       srcReg->Swizzle[0] = 0;
-   }
-   else if (token[0] == 'y' && token[1] == 0) {
-      srcReg->Swizzle[0] = 1;
-   }
-   else if (token[0] == 'z' && token[1] == 0) {
-      srcReg->Swizzle[0] = 2;
-   }
-   else if (token[0] == 'w' && token[1] == 0) {
-      srcReg->Swizzle[0] = 3;
-   }
-   else {
-      RETURN_ERROR1("Invalid scalar source suffix");
    }
    srcReg->Swizzle[1] = srcReg->Swizzle[2] = srcReg->Swizzle[3] = 0;
 
@@ -1265,6 +1283,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
       inst->SrcReg[1].IsParameter = GL_FALSE;
       inst->SrcReg[2].IsParameter = GL_FALSE;
       inst->DstReg.Register = -1;
+      inst->DstReg.CondSwizzle[0] = 0;
+      inst->DstReg.CondSwizzle[1] = 1;
+      inst->DstReg.CondSwizzle[2] = 2;
+      inst->DstReg.CondSwizzle[3] = 3;
 
       /* special instructions */
       if (Parse_String(parseState, "DEFINE")) {
@@ -1279,8 +1301,6 @@ Parse_InstructionSequence(struct parse_state *parseState,
             RETURN_ERROR;
          if (!Parse_String(parseState, ";"))
             RETURN_ERROR1("Expected ;");
-         printf("Parsed DEFINE %s = %f %f %f %f\n", id, value[0], value[1],
-                value[2], value[3]);
          if (lookup_parameter(parseState, (const char *) id)) {
             RETURN_ERROR2(id, "already defined");
          }
@@ -1295,11 +1315,6 @@ Parse_InstructionSequence(struct parse_state *parseState,
          if (Parse_String(parseState, "=")) {
             if (!Parse_VectorOrScalarConstant(parseState, value))
                RETURN_ERROR;
-            printf("Parsed DECLARE %s = %f %f %f %f\n", id,
-                   value[0], value[1], value[2], value[3]);
-         }
-         else {
-            printf("Parsed DECLARE %s\n", id);
          }
          if (!Parse_String(parseState, ";"))
             RETURN_ERROR1("Expected ;");
