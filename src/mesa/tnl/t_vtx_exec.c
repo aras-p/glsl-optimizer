@@ -259,28 +259,30 @@ static GLuint _tnl_copy_vertices( GLcontext *ctx )
 void _tnl_flush_vtx( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   GLuint vertex_count = tnl->vtx.initial_counter - tnl->vtx.counter;
 
    if (0)
       _tnl_print_vtx( ctx );
 
-   if (tnl->vtx.prim_count && 
-       tnl->vtx.counter != tnl->vtx.initial_counter) {
+   if (tnl->vtx.prim_count && vertex_count) {
 
       tnl->vtx.copied.nr = _tnl_copy_vertices( ctx ); 
 
-      if (ctx->NewState)
-	 _mesa_update_state( ctx );
+      if (tnl->vtx.copied.nr != vertex_count) {
+	 if (ctx->NewState)
+	    _mesa_update_state( ctx );
       
-      if (tnl->pipeline.build_state_changes)
-	 _tnl_validate_pipeline( ctx );
+	 if (tnl->pipeline.build_state_changes)
+	    _tnl_validate_pipeline( ctx );
 
-      _tnl_vb_bind_vtx( ctx );
+	 _tnl_vb_bind_vtx( ctx );
 
-      /* Invalidate all stored data before and after run:
-       */
-      tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
-      tnl->Driver.RunPipeline( ctx );
-      tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
+	 /* Invalidate all stored data before and after run:
+	  */
+	 tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
+	 tnl->Driver.RunPipeline( ctx );
+	 tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
+      }
    }
 
    tnl->vtx.prim_count = 0;
