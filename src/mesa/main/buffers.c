@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.25 2001/01/29 20:47:39 keithw Exp $ */
+/* $Id: buffers.c,v 1.26 2001/01/29 22:10:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -110,7 +110,6 @@ _mesa_Clear( GLbitfield mask )
       const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
       const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
       GLbitfield ddMask;
-      GLbitfield newMask;
 
       /* don't clear depth buffer if depth writing disabled */
       if (!ctx->Depth.Mask)
