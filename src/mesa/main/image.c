@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.20 2000/03/19 01:10:12 brianp Exp $ */
+/* $Id: image.c,v 1.21 2000/03/21 00:48:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -485,6 +485,44 @@ GLvoid *gl_pixel_addr_in_image( const struct gl_pixelstore_attrib *packing,
    }
 
    return (GLvoid *) pixel_addr;
+}
+
+
+
+/*
+ * Compute the stride between image rows (in bytes) for the given
+ * pixel packing parameters and image width, format and type.
+ */
+GLint
+_mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
+                        GLint width, GLenum format, GLenum type )
+{
+   ASSERT(packing);
+   if (type == GL_BITMAP) {
+      /* BITMAP data */
+      if (packing->RowLength == 0) {
+         GLint bytes = (width + 7) / 8;
+         return bytes;
+      }
+      else {
+         GLint bytes = (packing->RowLength + 7) / 8;
+         return bytes;
+      }
+   }
+   else {
+      /* Non-BITMAP data */
+      const GLint bytesPerPixel = gl_bytes_per_pixel(format, type);
+      if (bytesPerPixel <= 0)
+         return -1;  /* error */
+      if (packing->RowLength == 0) {
+         GLint bytes = bytesPerPixel * width;
+         return bytes;
+      }
+      else {
+         GLint bytes = bytesPerPixel * packing->RowLength;
+         return bytes;
+      }
+   }
 }
 
 

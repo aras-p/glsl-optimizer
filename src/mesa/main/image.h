@@ -1,4 +1,4 @@
-/* $Id: image.h,v 1.4 2000/03/13 18:31:51 brianp Exp $ */
+/* $Id: image.h,v 1.5 2000/03/21 00:48:53 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,6 +59,11 @@ gl_pixel_addr_in_image( const struct gl_pixelstore_attrib *packing,
                         const GLvoid *image, GLsizei width,
                         GLsizei height, GLenum format, GLenum type,
                         GLint img, GLint row, GLint column );
+
+
+extern GLint
+_mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
+                        GLint width, GLenum format, GLenum type );
 
 
 extern void
