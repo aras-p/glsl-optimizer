@@ -149,9 +149,8 @@ SHADER_SOURCES = \
 	shader/nvvertexec.c \
 	shader/nvvertparse.c \
 	shader/program.c \
-	shader/shaderobjects.c
-
-#	shader/shaderobjects_3dlabs.c
+	shader/shaderobjects.c \
+	shader/shaderobjects_3dlabs.c
 
 SLANG_SOURCES = \
 	shader/slang/MachineIndependent/preprocessor/atom.c \
@@ -277,7 +276,7 @@ CORE_SOURCES = \
 
 ### Object files
 
-CORE_OBJECTS = $(CORE_SOURCES:.c=.o)
+CORE_OBJECTS = $(CORE_SOURCES:.c=.o) $(SLANG_CPP_SOURCES:.cpp=.o)
 
 OSMESA_DRIVER_OBJECTS = $(OSMESA_DRIVER_SOURCES:.c=.o)
 
