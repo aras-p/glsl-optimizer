@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.56 2001/09/01 20:23:25 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.57 2001/09/14 02:43:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,13 +57,13 @@
 
 /* This indicates the client-side GLX API and GLX encoder version. */
 #define CLIENT_MAJOR_VERSION 1
-#define CLIENT_MINOR_VERSION 2
+#define CLIENT_MINOR_VERSION 2  /* don't have 1.3's pbuffers, etc yet */
 
 /* This indicates the server-side GLX decoder version.
- * GLX 1.3 indicates OpenGL 1.2 support
+ * GLX 1.4 indicates OpenGL 1.3 support
  */
 #define SERVER_MAJOR_VERSION 1
-#define SERVER_MINOR_VERSION 3
+#define SERVER_MINOR_VERSION 4
 
 /* This is appended onto the glXGetClient/ServerString version strings. */
 #define MESA_GLX_VERSION "Mesa 3.5.1"

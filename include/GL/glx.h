@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.30 2001/09/01 20:17:16 brianp Exp $ */
+/* $Id: glx.h,v 1.31 2001/09/14 02:43:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -60,6 +60,7 @@ extern "C" {
 #define GLX_VERSION_1_1		1
 #define GLX_VERSION_1_2		1
 #define GLX_VERSION_1_3		1
+#define GLX_VERSION_1_4		1
 
 #define GLX_EXTENSION_NAME   "GLX"
 
@@ -167,6 +168,13 @@ extern "C" {
 #define GLX_PBUFFER			0x8023
 #define GLX_PBUFFER_HEIGHT              0x8040
 #define GLX_PBUFFER_WIDTH               0x8041
+
+
+/*
+ * GLX 1.4 and later:
+ */
+#define GLX_SAMPLE_BUFFERS_SGIS            100000
+#define GLX_SAMPLES_SGIS                   100001
 
 
 
@@ -284,6 +292,10 @@ extern void glXSelectEvent( Display *dpy, GLXDrawable drawable,
 
 extern void glXGetSelectedEvent( Display *dpy, GLXDrawable drawable,
                                  unsigned long *mask );
+
+
+/* GLX 1.4 and later */
+extern void (*glXGetProcAddress(const GLubyte *procname))();
 
 
 

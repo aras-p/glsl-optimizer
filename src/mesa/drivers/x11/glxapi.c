@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.27 2001/05/29 23:15:07 brianp Exp $ */
+/* $Id: glxapi.c,v 1.28 2001/09/14 02:43:03 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1253,6 +1253,9 @@ static struct name_address_pair GLX_functions[] = {
    { "glXQueryDrawable", (GLvoid *) glXQueryDrawable },
    { "glXSelectEvent", (GLvoid *) glXSelectEvent },
 
+   /*** GLX_VERSION_1_4 ***/
+   { "glXGetProcAddress", (GLvoid *) glXGetProcAddress },
+
    /*** GLX_SGI_swap_control ***/
    { "glXSwapIntervalSGI", (GLvoid *) glXSwapIntervalSGI },
 
@@ -1369,4 +1372,11 @@ void (*glXGetProcAddressARB(const GLubyte *procName))()
 
    f = (gl_function) _glapi_get_proc_address((const char *) procName);
    return f;
+}
+
+
+/* GLX 1.4 */
+void (*glXGetProcAddress(const GLubyte *procName))()
+{
+   return glXGetProcAddressARB(procName);
 }
