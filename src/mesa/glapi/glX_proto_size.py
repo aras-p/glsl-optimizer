@@ -170,13 +170,13 @@ class PrintGlxSizeStubs_c(PrintGlxSizeStubs_common):
 		print '#include "indirect_size.h"'
 		
 		print ''
-		glX_XML.printHaveAlias()
+		self.printHaveAlias()
 		print ''
-		glX_XML.printPure()
+		self.printPure()
 		print ''
-		glX_XML.printFastcall()
+		self.printFastcall()
 		print ''
-		glX_XML.printVisibility( "INTERNAL", "internal" )
+		self.printVisibility( "INTERNAL", "internal" )
 		print ''
 		print ''
 		print '#ifdef HAVE_ALIAS'
@@ -220,18 +220,12 @@ class PrintGlxSizeStubs_h(PrintGlxSizeStubs_common):
  * \\author Ian Romanick <idr@us.ibm.com>
  */
 """
-		glX_XML.printPure();
+		self.printPure();
 		print ''
-		glX_XML.printFastcall();
+		self.printFastcall();
 		print ''
-		glX_XML.printVisibility( "INTERNAL", "internal" );
+		self.printVisibility( "INTERNAL", "internal" );
 		print ''
-
-	def printRealFooter(self):
-		print ''
-		print "#  undef INTERNAL"
-		print "#  undef PURE"
-		print "#  undef FASTCALL"
 
 
 	def printFunction(self, f):
@@ -250,16 +244,10 @@ class PrintGlxReqSize_h(glX_XML.GlxProto):
 
 
 	def printRealHeader(self):
-		glX_XML.printVisibility("HIDDEN", "hidden")
+		self.printVisibility("HIDDEN", "hidden")
 		print ''
-		glX_XML.printPure()
+		self.printPure()
 		print ''
-
-
-	def printRealFooter(self):
-		print ''
-		print '#  undef HIDDEN'
-		print '#  undef PURE'
 
 
 	def printFunction(self, f):
@@ -300,7 +288,7 @@ class PrintGlxReqSize_c(glX_XML.GlxProto):
 		print ''
 		print '#define __GLX_PAD(x)  (((x) + 3) & ~3)'
 		print ''
-		glX_XML.printHaveAlias()
+		self.printHaveAlias()
 		print ''
 		print '#ifdef HAVE_ALIAS'
 		print '#  define ALIAS2(from,to) \\'

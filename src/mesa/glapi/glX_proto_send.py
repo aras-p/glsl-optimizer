@@ -126,8 +126,8 @@ class PrintGlxProtoStubs(glX_XML.GlxProto):
 		print ''
 		print '#define __GLX_PAD(n) (((n) + 3) & ~3)'
 		print ''
-		glX_XML.printFastcall()
-		glX_XML.printNoinline()
+		self.printFastcall()
+		self.printNoinline()
 		print ''
 		print '#if !defined __GNUC__ || __GNUC__ < 3'
 		print '#  define __builtin_expect(x, y) x'
@@ -769,11 +769,7 @@ class PrintGlxProtoInit_h(glX_XML.GlxProto):
  * \\author Ian Romanick <idr@us.ibm.com>
  */
 """
-		glX_XML.printVisibility( "HIDDEN", "hidden" )
-
-
-	def printRealFooter(self):
-		print "#  undef HIDDEN"
+		self.printVisibility( "HIDDEN", "hidden" )
 
 
 	def printFunction(self, f):

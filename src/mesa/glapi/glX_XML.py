@@ -34,39 +34,6 @@ import license
 import sys, getopt
 
 
-def printPure():
-	print """#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96)
-#    define PURE __attribute__((pure))
-#  else
-#    define PURE
-#  endif"""
-
-def printFastcall():
-	print """#  if defined(__i386__) && defined(__GNUC__)
-#    define FASTCALL __attribute__((fastcall))
-#  else
-#    define FASTCALL
-#  endif"""
-
-def printVisibility(S, s):
-	print """#  if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)
-#    define %s  __attribute__((visibility("%s")))
-#  else
-#    define %s
-#  endif""" % (S, s, S)
-
-def printNoinline():
-	print """#  if defined(__GNUC__)
-#    define NOINLINE __attribute__((noinline))
-#  else
-#    define NOINLINE
-#  endif"""
-
-def printHaveAlias():
-	print """#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
-#    define HAVE_ALIAS
-#  endif"""
-
 class glXItemFactory(gl_XML.glItemFactory):
 	"""Factory to create GLX protocol oriented objects derived from glItem."""
     

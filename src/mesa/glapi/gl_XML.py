@@ -509,6 +509,7 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 		self.xref = {}
 		self.factory = glItemFactory()
 		self.header_tag = None
+		self.undef_list = []
 
 
 	def find_type(self,type_name):
@@ -558,8 +559,12 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 		self.printFunctions()
 		self.printRealFooter()
 		if self.header_tag:
-		    print ''
-		    print '#endif /* !defined( %s ) */' % (self.header_tag)
+			if self.undef_list:
+				print ''
+				for u in self.undef_list:
+					print "#  undef %s" % (u)
+			print ''
+			print '#endif /* !defined( %s ) */' % (self.header_tag)
 
 
 	def get_category_define(self):
@@ -624,6 +629,44 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 				self.current_object = None
 		return
 
+
+	def printPure(self):
+		self.undef_list.append("PURE")
+		print """#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96)
+#    define PURE __attribute__((pure))
+#  else
+#    define PURE
+#  endif"""
+
+	def printFastcall(self):
+		self.undef_list.append("FASTCALL")
+		print """#  if defined(__i386__) && defined(__GNUC__)
+#    define FASTCALL __attribute__((fastcall))
+#  else
+#    define FASTCALL
+#  endif"""
+
+	def printVisibility(self, S, s):
+		self.undef_list.append(S)
+		print """#  if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)
+#    define %s  __attribute__((visibility("%s")))
+#  else
+#    define %s
+#  endif""" % (S, s, S)
+
+	def printNoinline(self):
+		self.undef_list.append("NOINLINE")
+		print """#  if defined(__GNUC__)
+#    define NOINLINE __attribute__((noinline))
+#  else
+#    define NOINLINE
+#  endif"""
+
+	def printHaveAlias(self):
+		self.undef_list.append("HAVE_ALIAS")
+		print """#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
+#    define HAVE_ALIAS
+#  endif"""
 
 	def printFunction(self,offset):
 		"""Print a single function.
