@@ -87,8 +87,8 @@ void drawSquares(GLenum mode)
  */
 void processHits (GLint hits, GLuint buffer[])
 {
-   unsigned int i, j;
-   GLuint ii = 0, jj = 0, names, *ptr;
+   GLint i;
+   GLuint j, ii = 0, jj = 0, names, *ptr;
 
    printf ("hits = %d\n", hits);
    ptr = (GLuint *) buffer;

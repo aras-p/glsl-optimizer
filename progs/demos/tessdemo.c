@@ -1,4 +1,4 @@
-/* $Id: tessdemo.c,v 1.12 2002/07/12 15:54:02 brianp Exp $ */
+/* $Id: tessdemo.c,v 1.13 2002/10/18 17:47:36 kschultz Exp $ */
 
 /*
  * A demo of the GLU polygon tesselation functions written by Bogdan Sikorski.
@@ -90,7 +90,7 @@ static void GLCALLBACK edge_callback( GLenum flag )
 
 static void GLCALLBACK end_callback()
 {
-   GLint	i;
+   GLuint	i;
 
    glBegin( GL_LINES );
 
@@ -310,6 +310,7 @@ static void mouse_clicked( int button, int state, int x, int y )
 static void display( void )
 {
    GLuint i,j;
+   GLsizei ii, jj;
    GLuint point_cnt;
 
    glClear( GL_COLOR_BUFFER_BIT );
@@ -321,12 +322,12 @@ static void display( void )
 
       glBegin( GL_LINES );
 
-      for ( i = 0 ; i < width ; i += 10 ) {
-	 for ( j = 0 ; j < height ; j += 10 ) {
-	    glVertex2i( 0, j );
-	    glVertex2i( width, j );
-	    glVertex2i( i, height );
-	    glVertex2i( i, 0 );
+      for ( ii = 0 ; ii < width ; ii += 10 ) {
+	 for ( jj = 0 ; jj < height ; jj += 10 ) {
+	    glVertex2i( 0, jj );
+	    glVertex2i( width, jj );
+	    glVertex2i( ii, height );
+	    glVertex2i( ii, 0 );
 	 }
       }
 

@@ -1,4 +1,4 @@
-/* $Id: manytex.c,v 1.3 2000/11/09 16:53:26 brianp Exp $ */
+/* $Id: manytex.c,v 1.4 2002/10/18 17:47:36 kschultz Exp $ */
 
 /*
  * test handling of many texture maps
@@ -28,7 +28,7 @@ static GLboolean MipMap = GL_FALSE;
 static GLboolean LinearFilter = GL_FALSE;
 static GLboolean RandomSize = GL_FALSE;
 static GLint Rows, Columns;
-static GLuint LowPriorityCount = 0;
+static GLint LowPriorityCount = 0;
 
 
 static void Idle( void )

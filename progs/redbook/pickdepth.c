@@ -103,8 +103,8 @@ drawRects(GLenum mode)
 void
 processHits(GLint hits, GLuint buffer[])
 {
-  unsigned int i, j;
-  GLuint names, *ptr;
+  GLint i;
+  GLuint j, names, *ptr;
 
   printf("hits = %d\n", hits);
   ptr = (GLuint *) buffer;

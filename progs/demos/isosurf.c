@@ -1,4 +1,4 @@
-/* $Id: isosurf.c,v 1.14 2002/01/04 09:47:17 gareth Exp $ */
+/* $Id: isosurf.c,v 1.15 2002/10/18 17:47:35 kschultz Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.
@@ -32,6 +32,7 @@
 #include <math.h>
 #ifdef _WIN32
 #include <windows.h>
+#undef CLIP_MASK
 #endif
 #define GL_GLEXT_LEGACY
 #include "GL/glut.h"
@@ -84,7 +85,7 @@
 #define POLYGON_MASK		(POLYGON_FILL|POLYGON_LINE)
 
 #define MAXVERTS 10000
-static GLuint maxverts = MAXVERTS;
+static GLint maxverts = MAXVERTS;
 static float data[MAXVERTS][6];
 static float compressed_data[MAXVERTS][6];
 static float expanded_data[MAXVERTS*3][6];
@@ -337,7 +338,7 @@ static void make_tri_indices( void )
 {
    unsigned int *v = tri_indices;
    unsigned int parity = 0;
-   unsigned int i, j;
+   int i, j;
 
    for (j=2;j<numverts;j++,parity^=1) {
       if (parity) {
@@ -367,9 +368,9 @@ static void make_tri_indices( void )
 
 #define MIN(x,y) (x < y) ? x : y
 
-static void draw_surface( int with_state )
+static void draw_surface( unsigned int with_state )
 {
-   GLuint i, j;
+   GLint i, j;
    
    if (with_state & DISPLAYLIST) {
       if ((with_state & (RENDER_STYLE_MASK|PRIMITIVE_MASK|MATERIAL_MASK)) != 

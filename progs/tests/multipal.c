@@ -1,4 +1,4 @@
-/* $Id: multipal.c,v 1.3 2002/10/18 13:23:19 brianp Exp $ */
+/* $Id: multipal.c,v 1.4 2002/10/18 17:47:36 kschultz Exp $ */
 
 /*
  * Test multitexture and paletted textures.
@@ -213,7 +213,7 @@ static void SpecialKey( int key, int x, int y )
 static void load_tex(const char *fname, int channel)
 {
    GLubyte *image;
-   GLenum format, type;
+   GLenum format;
    GLint w, h;
    GLubyte *grayImage;
    int i;

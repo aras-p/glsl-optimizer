@@ -1,6 +1,6 @@
 
 typedef struct {
-    int sizeX, sizeY;
+    size_t sizeX, sizeY;
     GLubyte *data;
 } PPMImage;
 

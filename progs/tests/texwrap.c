@@ -1,4 +1,4 @@
-/* $Id: texwrap.c,v 1.3 2002/10/17 17:39:37 brianp Exp $ */
+/* $Id: texwrap.c,v 1.4 2002/10/18 17:47:36 kschultz Exp $ */
 
 /*
  * Test texture wrap modes.
@@ -82,7 +82,7 @@ PrintString(const char *s)
 
 static void Display( void )
 {
-   GLint i, j;
+   GLenum i, j;
    GLint offset;
    GLfloat version;
 
