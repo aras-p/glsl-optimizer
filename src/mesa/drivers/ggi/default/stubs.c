@@ -28,7 +28,6 @@
 #include <ggi/mesa/ggimesa_int.h>
 #include <ggi/mesa/debug.h>
 
-#include "mmath.h"
 #include "swrast/swrast.h"
 //#include "swrast_setup/swrast_setup.h"
 //#include "swrast/s_context.h"
