@@ -696,7 +696,7 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
           }
         }
         /* now make the GL_RENDERER string */
-        sprintf(buffer, "Mesa DRI %s 20000415", hardware);
+        sprintf(buffer, "Mesa DRI %s 20000420", hardware);
         return buffer;
       }
     case GL_VENDOR:
