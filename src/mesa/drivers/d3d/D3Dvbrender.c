@@ -17,7 +17,7 @@
 #include "matrix.h"
 #include "pb.h"
 #include "points.h"
-#include "types.h"
+#include "mtypes.h"
 #include "vb.h"
 #include "vbrender.h"
 #include "xform.h"
@@ -38,7 +38,7 @@ void 	RenderOneLine( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv );
 /*  I went with a D3D vertex buffer that is 6 times that of the Mesa one */
 /* instead of having the D3D one flush when its full.  This way Mesa will*/
 /* handle all the flushing.  I need x6 as points can use 4 vertex each.  */
-D3DTLVERTEX 	D3DTLVertices[ (VB_MAX*6) ];    
+D3DTLVERTEX 	D3DTLVertices[ (VB_MAX*6) ];
 GLuint   		VList[VB_SIZE];
 /*===========================================================================*/
 /* Compute Z offsets for a polygon with plane defined by (A,B,C,D)           */
@@ -48,27 +48,27 @@ GLuint   		VList[VB_SIZE];
 /*===========================================================================*/
 static void OffsetPolygon( GLcontext *ctx, GLfloat a, GLfloat b, GLfloat c )
 {
-  GLfloat	ac, 
-          bc, 
+  GLfloat	ac,
+          bc,
           m,
           offset;
 
   DPF(( DBG_FUNC, "OffsetPolygon();" ));
 
-  if ( (c < 0.001F) && (c > - 0.001F) ) 
+  if ( (c < 0.001F) && (c > - 0.001F) )
   {
     /* Prevents underflow problems. */
     ctx->PointZoffset   = 0.0F;
     ctx->LineZoffset    = 0.0F;
     ctx->PolygonZoffset = 0.0F;
   }
-  else 
+  else
   {
     ac = a / c;
     bc = b / c;
-    if ( ac < 0.0F )  
+    if ( ac < 0.0F )
 	 ac = -ac;
-    if ( bc<0.0F )  
+    if ( bc<0.0F )
 	 bc = -bc;
     m = MAX2( ac, bc );     /* m = sqrt( ac*ac + bc*bc ); */
 
@@ -104,7 +104,7 @@ static GLfloat PolygonArea( const struct vertex_buffer *vb, GLuint n, const GLui
 #define  y1    vb->Win[j1][1]
 
   /* area = sum of trapezoids */
-  for( i = 0, area = 0.0; i < n; i++ ) 
+  for( i = 0, area = 0.0; i < n; i++ )
     area += ((x0 - x1) * (y0 + y1));  /* Note: no divide by two here! */
 
 #undef x0
@@ -132,9 +132,9 @@ static void RenderClippedPolygon( GLcontext *ctx, GLuint n, GLuint vlist[] )
   struct vertex_buffer	*VB = ctx->VB;
   GLfloat 			(*win)[3] = VB->Win,
                          *proj = ctx->ProjectionMatrix,
-                         ex, ey, 
+                         ex, ey,
                          fx, fy, c,
-	                    wInv; 
+	                    wInv;
   GLuint				index,
 	                    pv,
                          facing;
@@ -152,14 +152,14 @@ static void RenderClippedPolygon( GLcontext *ctx, GLuint n, GLuint vlist[] )
   VB->Free = VB_MAX;
 
   /* Clip against user clipping planes in eye coord space. */
-  if ( ctx->Transform.AnyClip ) 
+  if ( ctx->Transform.AnyClip )
   {
     n = gl_userclip_polygon( ctx, n, vlist );
     if ( n < 3 )
 	 return;
 
     /* Transform vertices from eye to clip coordinates:  clip = Proj * eye */
-    for( index = 0; index < n; index++ ) 
+    for( index = 0; index < n; index++ )
     {
 	 TRANSFORM_POINT( VB->Clip[vlist[index]], proj, VB->Eye[vlist[index]] );
     }
@@ -176,9 +176,9 @@ static void RenderClippedPolygon( GLcontext *ctx, GLuint n, GLuint vlist[] )
   /* depth buffer values.                                         */
 
   /* Only need to compute window coords for new vertices */
-  for( index = VB_MAX; index < VB->Free; index++ ) 
+  for( index = VB_MAX; index < VB->Free; index++ )
   {
-    if ( VB->Clip[index][3] != 0.0F ) 
+    if ( VB->Clip[index][3] != 0.0F )
     {
 	 wInv = 1.0F / VB->Clip[index][3];
 
@@ -186,7 +186,7 @@ static void RenderClippedPolygon( GLcontext *ctx, GLuint n, GLuint vlist[] )
 	 win[index][1] = VB->Clip[index][1] * wInv * ctx->Viewport.Sy + ctx->Viewport.Ty;
 	 win[index][2] = VB->Clip[index][2] * wInv * ctx->Viewport.Sz + ctx->Viewport.Tz;
     }
-    else 
+    else
     {
 	 /* Can't divide by zero, so... */
 	 win[index][0] = win[index][1] = win[index][2] = 0.0F;
@@ -194,7 +194,7 @@ static void RenderClippedPolygon( GLcontext *ctx, GLuint n, GLuint vlist[] )
   }
 
   /* Draw filled polygon as a triangle fan */
-  for( index = 2; index < n; index++ ) 
+  for( index = 2; index < n; index++ )
   {
     /* Compute orientation of triangle */
     ex = win[vlist[index-1]][0] - win[vlist[0]][0];
@@ -209,18 +209,18 @@ static void RenderClippedPolygon( GLcontext *ctx, GLuint n, GLuint vlist[] )
 
     /* Backface culling. */
     facing = (c < 0.0F) ^ ctx->Polygon.FrontBit;
-    if ( (facing + 1) & ctx->Polygon.CullBits )  
+    if ( (facing + 1) & ctx->Polygon.CullBits )
 	 continue;
-        
-    if ( ctx->IndirectTriangles & DD_TRI_LIGHT_TWOSIDE ) 
+
+    if ( ctx->IndirectTriangles & DD_TRI_LIGHT_TWOSIDE )
     {
-	 if ( facing == 1 ) 
+	 if ( facing == 1 )
 	 {
 	   /* use back color */
 	   VB->Color   = VB->Bcolor;
 	   VB->Specular= VB->Bspec;
 	 }
-	 else 
+	 else
 	 {
 	   /* use front color */
 	   VB->Color   = VB->Fcolor;
@@ -228,10 +228,10 @@ static void RenderClippedPolygon( GLcontext *ctx, GLuint n, GLuint vlist[] )
 	 }
     }
 
-    if ( ctx->IndirectTriangles & DD_TRI_OFFSET ) 
+    if ( ctx->IndirectTriangles & DD_TRI_OFFSET )
     {
 	 /* finish computing plane equation of polygon, compute offset */
-	 GLfloat fz = win[vlist[index]][2]   - win[vlist[0]][2];  
+	 GLfloat fz = win[vlist[index]][2]   - win[vlist[0]][2];
 	 GLfloat ez = win[vlist[index-1]][2] - win[vlist[0]][2];
 	 GLfloat a = (ey * fz) - (ez * fy);
 	 GLfloat b = (ez * fx) - (ex * fz);
@@ -278,7 +278,7 @@ GLboolean RenderVertexBuffer( GLcontext *ctx, GLboolean allDone )
   /* slow down to some cases...                                    */
   SetRenderStates( ctx );
 
-  switch( ctx->Primitive ) 
+  switch( ctx->Primitive )
   {
     case GL_POINTS:
 	 DPF(( DBG_PRIM_INFO, "GL_POINTS( %d )", VB->Count ));
@@ -346,17 +346,17 @@ GLboolean RenderVertexBuffer( GLcontext *ctx, GLboolean allDone )
 
 	 DPF(( DBG_PRIM_INFO, "GL_QUAD_STRIP( %d )", VB->Count ));
 
-	 if ( VB->ClipOrMask ) 
+	 if ( VB->ClipOrMask )
 	 {
-	   for( index = 3; index < VB->Count; index += 2 ) 
+	   for( index = 3; index < VB->Count; index += 2 )
 	   {
-		if ( VB->ClipMask[index-3] & VB->ClipMask[index-2] & VB->ClipMask[index-1] & VB->ClipMask[index] & CLIP_ALL_BITS ) 
+		if ( VB->ClipMask[index-3] & VB->ClipMask[index-2] & VB->ClipMask[index-1] & VB->ClipMask[index] & CLIP_ALL_BITS )
 		{
 		   /* All points clipped by common plane */
 		  DPF(( DBG_PRIM_WARN, "GL_QUAD_STRIP( %d )", VB->Count ));
 		  continue;
 		}
-		else if ( VB->ClipMask[index-3] | VB->ClipMask[index-2] | VB->ClipMask[index-1] | VB->ClipMask[index] ) 
+		else if ( VB->ClipMask[index-3] | VB->ClipMask[index-2] | VB->ClipMask[index-1] | VB->ClipMask[index] )
 		{
 		  vlist[0] = index - 3;
 		  vlist[1] = index - 2;
@@ -364,22 +364,22 @@ GLboolean RenderVertexBuffer( GLcontext *ctx, GLboolean allDone )
 		  vlist[3] = index - 1;
 		  RenderClippedPolygon( ctx, 4, vlist );
 		}
-		else 
+		else
 		{
 		  RenderQuad( ctx, (index-3), (index-2), index, (index-1), index );
 		}	
 	   }
 	 }
-	 else 
+	 else
 	 {
 	   /* No clipping needed */
-	   for( index = 3; index < VB->Count; index += 2 ) 
+	   for( index = 3; index < VB->Count; index += 2 )
 		RenderQuad( ctx, (index-3), (index-2), index, (index-1), index );
 	 }	
 	 break;
-	   
+	
     case GL_POLYGON:
-	 if ( VB->Count < 3 ) 
+	 if ( VB->Count < 3 )
 	 {
 	   DPF(( DBG_PRIM_WARN, "GL_POLYGON( %d )", VB->Count ));
 	   return FALSE;
@@ -388,7 +388,7 @@ GLboolean RenderVertexBuffer( GLcontext *ctx, GLboolean allDone )
 	 DPF(( DBG_PRIM_INFO, "GL_POLYGON( %d )", VB->Count ));
 
 	 /* All points clipped by common plane, draw nothing */
-	 if ( !(VB->ClipAndMask & CLIP_ALL_BITS) ) 
+	 if ( !(VB->ClipAndMask & CLIP_ALL_BITS) )
 	   RenderTriangleFanVB( ctx, 0, VB->Count );
 	 break;
 
@@ -396,7 +396,7 @@ GLboolean RenderVertexBuffer( GLcontext *ctx, GLboolean allDone )
 	 /* should never get here */
 	 gl_problem( ctx, "invalid mode in gl_render_vb" );
    }
- 
+
   DPF(( DBG_PRIM_INFO, "ResetVB" ));
 
   /* We return TRUE to indicate we rendered the VB. */
@@ -422,7 +422,7 @@ static void RenderTriangleVB( GLcontext *ctx, GLuint start, GLuint end )
                          cVertex,
                          height = (pContext->pShared->rectW.bottom - pContext->pShared->rectW.top);
    DWORD                	dwPVColor;
-   GLfloat              	ex, ey, 
+   GLfloat              	ex, ey,
                          fx, fy, c;
    GLuint               	facing;
 
@@ -434,7 +434,7 @@ static void RenderTriangleVB( GLcontext *ctx, GLuint start, GLuint end )
 	for( index = start, cVertex = 0; index < end; )
 	{
 	  dwPVColor = (VB->Color[(index+2)][3]<<24) | (VB->Color[(index+2)][0]<<16) | (VB->Color[(index+2)][1]<<8) | VB->Color[(index+2)][2];
-   
+
 	  /*=====================================*/
 	  /* Populate the the triangle vertices. */
 	  /*=====================================*/
@@ -448,7 +448,7 @@ static void RenderTriangleVB( GLcontext *ctx, GLuint start, GLuint end )
 	                                  dwPVColor :
                                        (VB->Color[index][3]<<24) | (VB->Color[index][0]<<16) | (VB->Color[index][1]<<8) | VB->Color[index][2];
 	  index++;
-   
+
 	  D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[index][0] );
 	  D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[index][1]) );
 	  D3DTLVertices[cVertex].sz     = D3DVAL( VB->Win[index][2] );
@@ -459,7 +459,7 @@ static void RenderTriangleVB( GLcontext *ctx, GLuint start, GLuint end )
                                        dwPVColor :
                                        (VB->Color[index][3]<<24) | (VB->Color[index][0]<<16) | (VB->Color[index][1]<<8) | VB->Color[index][2];
 	  index++;
-      
+
 	  D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[index][0] );
 	  D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[index][1]) );
 	  D3DTLVertices[cVertex].sz     = D3DVAL( VB->Win[index][2] );
@@ -478,11 +478,11 @@ static void RenderTriangleVB( GLcontext *ctx, GLuint start, GLuint end )
 
 	for( index = start, cVertex = 0; index < end; index += 3 )
 	{
-	  if ( VB->ClipMask[v1] & VB->ClipMask[v2] & VB->ClipMask[v3] & CLIP_ALL_BITS ) 
+	  if ( VB->ClipMask[v1] & VB->ClipMask[v2] & VB->ClipMask[v3] & CLIP_ALL_BITS )
 	  {
 	    continue;
 	  }
-	  else if ( VB->ClipMask[v1] | VB->ClipMask[v2] | VB->ClipMask[v3] ) 
+	  else if ( VB->ClipMask[v1] | VB->ClipMask[v2] | VB->ClipMask[v3] )
 	  {
 	    VList[0] = v1;
 	    VList[1] = v2;
@@ -504,18 +504,18 @@ static void RenderTriangleVB( GLcontext *ctx, GLuint start, GLuint end )
 
 	  /* Backface culling. */
 	  facing = (c < 0.0F) ^ ctx->Polygon.FrontBit;
-	  if ( (facing + 1) & ctx->Polygon.CullBits )  
+	  if ( (facing + 1) & ctx->Polygon.CullBits )
 	    continue;
 
-	  if ( ctx->IndirectTriangles & DD_TRI_LIGHT_TWOSIDE ) 
+	  if ( ctx->IndirectTriangles & DD_TRI_LIGHT_TWOSIDE )
 	  {
-	    if ( facing == 1 ) 
+	    if ( facing == 1 )
 	    {
 		 /* use back color */
 		 VB->Color   = VB->Bcolor;
 		 VB->Specular= VB->Bspec;
 	    }
-	    else 
+	    else
 	    {
 		 /* use front color */
 		 VB->Color   = VB->Fcolor;
@@ -523,10 +523,10 @@ static void RenderTriangleVB( GLcontext *ctx, GLuint start, GLuint end )
 	    }
 	  }
 
-	  if ( ctx->IndirectTriangles & DD_TRI_OFFSET ) 
+	  if ( ctx->IndirectTriangles & DD_TRI_OFFSET )
 	  {
 	    /* Finish computing plane equation of polygon, compute offset */
-	    GLfloat fz = VB->Win[v3][2] - VB->Win[v1][2];  
+	    GLfloat fz = VB->Win[v3][2] - VB->Win[v1][2];
 	    GLfloat ez = VB->Win[v2][2] - VB->Win[v1][2];
 	    GLfloat a = (ey * fz) - (ez * fy);
 	    GLfloat b = (ez * fx) - (ex * fz);
@@ -538,7 +538,7 @@ static void RenderTriangleVB( GLcontext *ctx, GLuint start, GLuint end )
 	  /*=====================================*/
 	  /* Solve the prevoking vertex color as we need it for the 3rd triangle and flat shading. */
 	  dwPVColor = (VB->Color[v3][3]<<24) | (VB->Color[v3][0]<<16) | (VB->Color[v3][1]<<8) | VB->Color[v3][2];
-   
+
 	  D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v1][0] );
 	  D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v1][1]) );
 	  D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v1][2] + ctx->PolygonZoffset) );
@@ -548,7 +548,7 @@ static void RenderTriangleVB( GLcontext *ctx, GLuint start, GLuint end )
 	  D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                        dwPVColor :
                                        (VB->Color[v1][3]<<24) | (VB->Color[v1][0]<<16) | (VB->Color[v1][1]<<8) | VB->Color[v1][2];
-   
+
 	  D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v2][0] );
 	  D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v2][1]) );
 	  D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v2][2] + ctx->PolygonZoffset) );
@@ -558,7 +558,7 @@ static void RenderTriangleVB( GLcontext *ctx, GLuint start, GLuint end )
 	  D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                        dwPVColor :
                                        (VB->Color[v2][3]<<24) | (VB->Color[v2][0]<<16) | (VB->Color[v2][1]<<8) | VB->Color[v2][2];
-      
+
 	  D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v3][0] );
 	  D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v3][1]) );
 	  D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v3][2] + ctx->PolygonZoffset) );
@@ -570,9 +570,9 @@ static void RenderTriangleVB( GLcontext *ctx, GLuint start, GLuint end )
 #undef v1
 #undef v2
 #undef v3
-   }    
+   }
 
-   /* Render the converted vertex buffer. */  
+   /* Render the converted vertex buffer. */
    if ( cVertex > 2 )
 	DrawPrimitiveHAL( pContext->pShared, D3DPT_TRIANGLELIST, &D3DTLVertices[0], cVertex );
 }
@@ -594,7 +594,7 @@ static void RenderTriangleFanVB( GLcontext *ctx, GLuint start, GLuint end )
   int                  	index,
                          cVertex,
                          height = (pContext->pShared->rectW.bottom - pContext->pShared->rectW.top);
-   GLfloat              	ex, ey, 
+   GLfloat              	ex, ey,
                          fx, fy, c;
    GLuint               	facing;
    DWORD                	dwPVColor;
@@ -614,7 +614,7 @@ static void RenderTriangleFanVB( GLcontext *ctx, GLuint start, GLuint end )
 	D3DTLVertices[0].tv   = D3DVAL( VB->TexCoord[start][1] );
 	D3DTLVertices[0].rhw  = D3DVAL( (1.0 / VB->Clip[start][3]) );
 	D3DTLVertices[0].color= (VB->Color[start][3]<<24) | (VB->Color[start][0]<<16) | (VB->Color[start][1]<<8) | VB->Color[start][2];
-   
+
 	/* Seed the the fan. */
 	D3DTLVertices[1].sx   = D3DVAL( VB->Win[(start+1)][0] );
 	D3DTLVertices[1].sy   = D3DVAL( (height - VB->Win[(start+1)][1]) );
@@ -623,7 +623,7 @@ static void RenderTriangleFanVB( GLcontext *ctx, GLuint start, GLuint end )
 	D3DTLVertices[1].tv   = D3DVAL( VB->TexCoord[(start+1)][1] );
 	D3DTLVertices[1].rhw  = D3DVAL( (1.0 / VB->Clip[(start+1)][3]) );
 	D3DTLVertices[1].color= (VB->Color[(start+1)][3]<<24) | (VB->Color[(start+1)][0]<<16) | (VB->Color[(start+1)][1]<<8) | VB->Color[(start+1)][2];
-   
+
 	for( index = (start+2), cVertex = 2; index < end; index++, cVertex++ )
 	{
 	  /*=================================*/
@@ -638,7 +638,7 @@ static void RenderTriangleFanVB( GLcontext *ctx, GLuint start, GLuint end )
 	  D3DTLVertices[cVertex].color  = (VB->Color[index][3]<<24) | (VB->Color[index][0]<<16) | (VB->Color[index][1]<<8) | VB->Color[index][2];
       }
 
-	/* Render the converted vertex buffer. */  
+	/* Render the converted vertex buffer. */
 	if ( cVertex )
 	  DrawPrimitiveHAL( pContext->pShared, D3DPT_TRIANGLEFAN, &D3DTLVertices[0], cVertex );
    }
@@ -650,14 +650,14 @@ static void RenderTriangleFanVB( GLcontext *ctx, GLuint start, GLuint end )
 
 	for( index = (start+2), cVertex = 0; index < end; index++ )
 	{
-	  if ( VB->ClipOrMask ) 
+	  if ( VB->ClipOrMask )
 	  {
 	    /* All points clipped by common plane */
-	    if ( VB->ClipMask[v1] & VB->ClipMask[v2] & VB->ClipMask[v3] & CLIP_ALL_BITS ) 
+	    if ( VB->ClipMask[v1] & VB->ClipMask[v2] & VB->ClipMask[v3] & CLIP_ALL_BITS )
 	    {
 		 continue;
 	    }
-	    else if ( VB->ClipMask[v1] | VB->ClipMask[v2] | VB->ClipMask[v3] ) 
+	    else if ( VB->ClipMask[v1] | VB->ClipMask[v2] | VB->ClipMask[v3] )
 	    {
 		 VList[0] = v1;
 		 VList[1] = v2;
@@ -673,20 +673,20 @@ static void RenderTriangleFanVB( GLcontext *ctx, GLuint start, GLuint end )
 	  fx = VB->Win[v3][0] - VB->Win[v1][0];
 	  fy = VB->Win[v3][1] - VB->Win[v1][1];
 	  c = (ex * fy) - (ey * fx);
-   
+
 	  /* polygon is perpindicular to view plane, don't draw it */
 	  if ( (c == 0.0F) && !ctx->Polygon.Unfilled )
 	    continue;
 
 	  /* Backface culling. */
 	  facing = (c < 0.0F) ^ ctx->Polygon.FrontBit;
-	  if ( (facing + 1) & ctx->Polygon.CullBits )  
+	  if ( (facing + 1) & ctx->Polygon.CullBits )
 	    continue;
-   
-	  if ( ctx->IndirectTriangles & DD_TRI_OFFSET ) 
+
+	  if ( ctx->IndirectTriangles & DD_TRI_OFFSET )
 	  {
 	    /* Finish computing plane equation of polygon, compute offset */
-	    GLfloat fz = VB->Win[v3][2] - VB->Win[v1][2];  
+	    GLfloat fz = VB->Win[v3][2] - VB->Win[v1][2];
 	    GLfloat ez = VB->Win[v2][2] - VB->Win[v1][2];
 	    GLfloat a = (ey * fz) - (ez * fy);
 	    GLfloat b = (ez * fx) - (ex * fz);
@@ -706,7 +706,7 @@ static void RenderTriangleFanVB( GLcontext *ctx, GLuint start, GLuint end )
 	  D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v1][3]) );
 	  D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? dwPVColor :
                                          (VB->Color[v1][3]<<24) | (VB->Color[v1][0]<<16) | (VB->Color[v1][1]<<8) | VB->Color[v1][2];
-      
+
 	  D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v2][0] );
 	  D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v2][1]) );
 	  D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v2][2] + ctx->PolygonZoffset)  );
@@ -715,7 +715,7 @@ static void RenderTriangleFanVB( GLcontext *ctx, GLuint start, GLuint end )
 	  D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v2][3]) );
 	  D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? dwPVColor :
                                          (VB->Color[v2][3]<<24) | (VB->Color[v2][0]<<16) | (VB->Color[v2][1]<<8) | VB->Color[v2][2];
-         
+
 	  D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v3][0] );
 	  D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v3][1]) );
 	  D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v3][2] + ctx->PolygonZoffset) );
@@ -725,7 +725,7 @@ static void RenderTriangleFanVB( GLcontext *ctx, GLuint start, GLuint end )
 	  D3DTLVertices[cVertex++].color= dwPVColor;
 	}
 
-	/* Render the converted vertex buffer. */  
+	/* Render the converted vertex buffer. */
 	if ( cVertex )
 	  DrawPrimitiveHAL( pContext->pShared, D3DPT_TRIANGLELIST, &D3DTLVertices[0], cVertex );
 #undef v1
@@ -752,7 +752,7 @@ static void RenderTriangleStripVB( GLcontext *ctx, GLuint start, GLuint end )
                          cVertex = 0,
 	                    v1, v2, v3,
                          height = (pContext->pShared->rectW.bottom - pContext->pShared->rectW.top);
-  GLfloat              	ex, ey, 
+  GLfloat              	ex, ey,
                          fx, fy, c;
   GLuint               	facing;
   DWORD                	dwPVColor;
@@ -781,7 +781,7 @@ static void RenderTriangleStripVB( GLcontext *ctx, GLuint start, GLuint end )
     D3DTLVertices[1].tv   = D3DVAL( VB->TexCoord[(start+1)][1] );
     D3DTLVertices[1].rhw  = D3DVAL( (1.0 / VB->Clip[(start+1)][3]) );
     D3DTLVertices[1].color= (VB->Color[(start+1)][3]<<24) | (VB->Color[(start+1)][0]<<16) | (VB->Color[(start+1)][1]<<8) | VB->Color[(start+1)][2];
-   
+
     for( index = (start+2), cVertex = 2; index < end; index++, cVertex++ )
     {
 	 /*===================================*/
@@ -796,13 +796,13 @@ static void RenderTriangleStripVB( GLcontext *ctx, GLuint start, GLuint end )
 	 D3DTLVertices[cVertex].color  = (VB->Color[index][3]<<24) | (VB->Color[index][0]<<16) | (VB->Color[index][1]<<8) | VB->Color[index][2];
     }
 
-    /* Render the converted vertex buffer. */  
+    /* Render the converted vertex buffer. */
     if ( cVertex )
 	 DrawPrimitiveHAL( pContext->pShared, D3DPT_TRIANGLESTRIP, &D3DTLVertices[0], cVertex );
   }
   else
   {
-    for( index = (start+2); index < end; index++ ) 
+    for( index = (start+2); index < end; index++ )
     {
 	 /* We need to switch order so that winding won't be a problem. */
 	 if ( index & 1 )
@@ -819,18 +819,18 @@ static void RenderTriangleStripVB( GLcontext *ctx, GLuint start, GLuint end )
 	 }
 
 	 /* All vertices clipped by common plane */
-	 if ( VB->ClipMask[v1] & VB->ClipMask[v2] & VB->ClipMask[v3] & CLIP_ALL_BITS ) 
+	 if ( VB->ClipMask[v1] & VB->ClipMask[v2] & VB->ClipMask[v3] & CLIP_ALL_BITS )
 	   continue;
 
 	 /* Check if any vertices need clipping. */
-	 if ( VB->ClipMask[v1] | VB->ClipMask[v2] | VB->ClipMask[v3] ) 
+	 if ( VB->ClipMask[v1] | VB->ClipMask[v2] | VB->ClipMask[v3] )
 	 {
 	   VList[0] = v1;
 	   VList[1] = v2;
 	   VList[2] = v3;
 	   RenderClippedPolygon( ctx, 3, VList );
 	 }
-	 else 
+	 else
 	 {
 	   /* Compute orientation of triangle */
 	   ex = VB->Win[v2][0] - VB->Win[v1][0];
@@ -845,19 +845,19 @@ static void RenderTriangleStripVB( GLcontext *ctx, GLuint start, GLuint end )
 
 	   /* Backface culling. */
 	   facing = (c < 0.0F) ^ ctx->Polygon.FrontBit;
-	   if ( (facing + 1) & ctx->Polygon.CullBits )  
+	   if ( (facing + 1) & ctx->Polygon.CullBits )
 		continue;
 
 	   /* Need right color if we have two sided lighting. */
-	   if ( ctx->IndirectTriangles & DD_TRI_LIGHT_TWOSIDE ) 
+	   if ( ctx->IndirectTriangles & DD_TRI_LIGHT_TWOSIDE )
 	   {
-		if ( facing == 1 ) 
+		if ( facing == 1 )
 		{
 		  /* use back color */
 		  VB->Color   = VB->Bcolor;
 		  VB->Specular= VB->Bspec;
 		}
-		else 
+		else
 		{
 		  /* use front color */
 		  VB->Color   = VB->Fcolor;
@@ -865,10 +865,10 @@ static void RenderTriangleStripVB( GLcontext *ctx, GLuint start, GLuint end )
 		}
 	   }
 
-	   if ( ctx->IndirectTriangles & DD_TRI_OFFSET ) 
+	   if ( ctx->IndirectTriangles & DD_TRI_OFFSET )
 	   {
 		/* Finish computing plane equation of polygon, compute offset */
-		GLfloat fz = VB->Win[v3][2] - VB->Win[v1][2];  
+		GLfloat fz = VB->Win[v3][2] - VB->Win[v1][2];
 		GLfloat ez = VB->Win[v2][2] - VB->Win[v1][2];
 		GLfloat a = (ey * fz) - (ez * fy);
 		GLfloat b = (ez * fx) - (ex * fz);
@@ -880,7 +880,7 @@ static void RenderTriangleStripVB( GLcontext *ctx, GLuint start, GLuint end )
 
 	   /* Solve the prevoking vertex color as we need it for the 3rd triangle and flat shading. */
 	   dwPVColor = (VB->Color[v3][3]<<24) | (VB->Color[v3][0]<<16) | (VB->Color[v3][1]<<8) | VB->Color[v3][2];
-   
+
 	   D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v1][0] );
 	   D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v1][1]) );
 	   D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v1][2] + ctx->PolygonZoffset) );
@@ -890,7 +890,7 @@ static void RenderTriangleStripVB( GLcontext *ctx, GLuint start, GLuint end )
 	   D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                         dwPVColor :
                                         (VB->Color[v1][3]<<24) | (VB->Color[v1][0]<<16) | (VB->Color[v1][1]<<8) | VB->Color[v1][2];
-   
+
 	   D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v2][0] );
 	   D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v2][1]) );
 	   D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v2][2] + ctx->PolygonZoffset) );
@@ -900,7 +900,7 @@ static void RenderTriangleStripVB( GLcontext *ctx, GLuint start, GLuint end )
 	   D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                           dwPVColor :
                                           (VB->Color[v2][3]<<24) | (VB->Color[v2][0]<<16) | (VB->Color[v2][1]<<8) | VB->Color[v2][2];
-      
+
 	   D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v3][0] );
 	   D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v3][1]) );
 	   D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v3][2] + ctx->PolygonZoffset) );
@@ -911,7 +911,7 @@ static void RenderTriangleStripVB( GLcontext *ctx, GLuint start, GLuint end )
 	 }
     }
 
-    /* Render the converted vertex buffer. */  
+    /* Render the converted vertex buffer. */
     if ( cVertex )	
 	 DrawPrimitiveHAL( pContext->pShared, D3DPT_TRIANGLELIST, &D3DTLVertices[0], cVertex );
   }	
@@ -935,7 +935,7 @@ static void RenderQuadVB( GLcontext *ctx, GLuint start, GLuint end )
                          cVertex,
                          height = (pContext->pShared->rectW.bottom - pContext->pShared->rectW.top);
   DWORD                	dwPVColor;
-  GLfloat             	ex, ey, 
+  GLfloat             	ex, ey,
                          fx, fy, c;
   GLuint				facing;  /* 0=front, 1=back */
 
@@ -954,7 +954,7 @@ static void RenderQuadVB( GLcontext *ctx, GLuint start, GLuint end )
     {
 	 if ( ctx->Light.ShadeModel == GL_FLAT )
 	   dwPVColor = (VB->Color[v4][3]<<24) | (VB->Color[v4][0]<<16) | (VB->Color[v4][1]<<8) | VB->Color[v4][2];
-   
+
 	 /*=====================================*/
 	 /* Populate the the triangle vertices. */
 	 /*=====================================*/
@@ -964,57 +964,57 @@ static void RenderQuadVB( GLcontext *ctx, GLuint start, GLuint end )
 	 D3DTLVertices[cVertex].tu     = D3DVAL( VB->TexCoord[v1][0] );
 	 D3DTLVertices[cVertex].tv     = D3DVAL( VB->TexCoord[v1][1] );
 	 D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v1][3]) );
-	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? 
+	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                       dwPVColor :
 	                                 (VB->Color[v1][3]<<24) | (VB->Color[v1][0]<<16) | (VB->Color[v1][1]<<8) | VB->Color[v1][2];
-   
+
 	 D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v2][0] );
 	 D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v2][1]) );
 	 D3DTLVertices[cVertex].sz     = D3DVAL( VB->Win[v2][2] );
 	 D3DTLVertices[cVertex].tu     = D3DVAL( VB->TexCoord[v2][0] );
 	 D3DTLVertices[cVertex].tv     = D3DVAL( VB->TexCoord[v2][1] );
 	 D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v2][3]) );
-	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? 
+	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                       dwPVColor :
                                       (VB->Color[v2][3]<<24) | (VB->Color[v2][0]<<16) | (VB->Color[v2][1]<<8) | VB->Color[v2][2];
-      
+
 	 D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v3][0] );
 	 D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v3][1]) );
 	 D3DTLVertices[cVertex].sz     = D3DVAL( VB->Win[v3][2] );
 	 D3DTLVertices[cVertex].tu     = D3DVAL( VB->TexCoord[v3][0] );
 	 D3DTLVertices[cVertex].tv     = D3DVAL( VB->TexCoord[v3][1] );
 	 D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v3][3]) );
-	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? 
+	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
 	                                 dwPVColor :
                                       (VB->Color[v3][3]<<24) | (VB->Color[v3][0]<<16) | (VB->Color[v3][1]<<8) | VB->Color[v3][2];
-   
+
 	 D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v1][0] );
 	 D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v1][1]) );
 	 D3DTLVertices[cVertex].sz     = D3DVAL( VB->Win[v1][2] );
 	 D3DTLVertices[cVertex].tu     = D3DVAL( VB->TexCoord[v1][0] );
 	 D3DTLVertices[cVertex].tv     = D3DVAL( VB->TexCoord[v1][1] );
 	 D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v1][3]) );
-	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? 
+	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
 	                                 dwPVColor :
                                       (VB->Color[v1][3]<<24) | (VB->Color[v1][0]<<16) | (VB->Color[v1][1]<<8) | VB->Color[v1][2];
-   
+
 	 D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v3][0] );
 	 D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v3][1]) );
 	 D3DTLVertices[cVertex].sz     = D3DVAL( VB->Win[v3][2] );
 	 D3DTLVertices[cVertex].tu     = D3DVAL( VB->TexCoord[v3][0] );
 	 D3DTLVertices[cVertex].tv     = D3DVAL( VB->TexCoord[v3][1] );
 	 D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v3][3]) );
-	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? 
+	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                       dwPVColor :
                                       (VB->Color[v3][3]<<24) | (VB->Color[v3][0]<<16) | (VB->Color[v3][1]<<8) | VB->Color[v3][2];
-   
+
 	 D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v4][0] );
 	 D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v4][1]) );
 	 D3DTLVertices[cVertex].sz     = D3DVAL( VB->Win[v4][2] );
 	 D3DTLVertices[cVertex].tu     = D3DVAL( VB->TexCoord[v4][0] );
 	 D3DTLVertices[cVertex].tv     = D3DVAL( VB->TexCoord[v4][1] );
 	 D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v4][3]) );
-	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? 
+	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                       dwPVColor :
                                       (VB->Color[v4][3]<<24) | (VB->Color[v4][0]<<16) | (VB->Color[v4][1]<<8) | VB->Color[v4][2];
     }
@@ -1023,11 +1023,11 @@ static void RenderQuadVB( GLcontext *ctx, GLuint start, GLuint end )
   {
     for( cVertex = 0, index = start; index < end; index += 4 )
     {
-	 if ( VB->ClipMask[v1] & VB->ClipMask[v2] & VB->ClipMask[v3]  & VB->ClipMask[v4] & CLIP_ALL_BITS ) 
+	 if ( VB->ClipMask[v1] & VB->ClipMask[v2] & VB->ClipMask[v3]  & VB->ClipMask[v4] & CLIP_ALL_BITS )
 	 {
 	   continue;
 	 }	
-	 else if ( VB->ClipMask[v1] | VB->ClipMask[v2] | VB->ClipMask[v3] | VB->ClipMask[v4] ) 
+	 else if ( VB->ClipMask[v1] | VB->ClipMask[v2] | VB->ClipMask[v3] | VB->ClipMask[v4] )
 	 {
 	   VList[0] = v1;
 	   VList[1] = v2;
@@ -1050,18 +1050,18 @@ static void RenderQuadVB( GLcontext *ctx, GLuint start, GLuint end )
 
 	 /* Backface culling. */
 	 facing = (c < 0.0F) ^ ctx->Polygon.FrontBit;
-	 if ( (facing + 1) & ctx->Polygon.CullBits ) 
+	 if ( (facing + 1) & ctx->Polygon.CullBits )
 	   continue;
 
-	 if ( ctx->IndirectTriangles & DD_TRI_LIGHT_TWOSIDE ) 
+	 if ( ctx->IndirectTriangles & DD_TRI_LIGHT_TWOSIDE )
 	 {
-	   if ( facing == 1 ) 
+	   if ( facing == 1 )
 	   {
 		/* use back color */
 		VB->Color   = VB->Bcolor;
 		VB->Specular= VB->Bspec;
 	   }
-	   else 
+	   else
 	   {
 		/* use front color */
 		VB->Color   = VB->Fcolor;
@@ -1069,10 +1069,10 @@ static void RenderQuadVB( GLcontext *ctx, GLuint start, GLuint end )
 	   }	
 	 }	
 
-	 if ( ctx->IndirectTriangles & DD_TRI_OFFSET ) 
+	 if ( ctx->IndirectTriangles & DD_TRI_OFFSET )
 	 {
 	   /* Finish computing plane equation of polygon, compute offset */
-	   GLfloat fz = VB->Win[v3][2] - VB->Win[v1][2];  
+	   GLfloat fz = VB->Win[v3][2] - VB->Win[v1][2];
 	   GLfloat ez = VB->Win[v2][2] - VB->Win[v1][2];
 	   GLfloat a = (ey * fz) - (ez * fy);
 	   GLfloat b = (ez * fx) - (ex * fz);
@@ -1081,7 +1081,7 @@ static void RenderQuadVB( GLcontext *ctx, GLuint start, GLuint end )
 
 	 if ( ctx->Light.ShadeModel == GL_FLAT )
 	   dwPVColor = (VB->Color[v4][3]<<24) | (VB->Color[v4][0]<<16) | (VB->Color[v4][1]<<8) | VB->Color[v4][2];
-   
+
 	 /*=====================================*/
 	 /* Populate the the triangle vertices. */
 	 /*=====================================*/
@@ -1091,57 +1091,57 @@ static void RenderQuadVB( GLcontext *ctx, GLuint start, GLuint end )
 	 D3DTLVertices[cVertex].tu     = D3DVAL( VB->TexCoord[v1][0] );
 	 D3DTLVertices[cVertex].tv     = D3DVAL( VB->TexCoord[v1][1] );
 	 D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v1][3]) );
-	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? 
+	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                        dwPVColor :
                                        (VB->Color[v1][3]<<24) | (VB->Color[v1][0]<<16) | (VB->Color[v1][1]<<8) | VB->Color[v1][2];
-   
+
 	 D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v2][0] );
 	 D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v2][1]) );
 	 D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v2][2] + ctx->PolygonZoffset) );
 	 D3DTLVertices[cVertex].tu     = D3DVAL( VB->TexCoord[v2][0] );
 	 D3DTLVertices[cVertex].tv     = D3DVAL( VB->TexCoord[v2][1] );
 	 D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v2][3]) );
-	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? 
+	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                        dwPVColor :
                                        (VB->Color[v2][3]<<24) | (VB->Color[v2][0]<<16) | (VB->Color[v2][1]<<8) | VB->Color[v2][2];
-      
+
 	 D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v3][0] );
 	 D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v3][1]) );
 	 D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v3][2] + ctx->PolygonZoffset) );
 	 D3DTLVertices[cVertex].tu     = D3DVAL( VB->TexCoord[v3][0] );
 	 D3DTLVertices[cVertex].tv     = D3DVAL( VB->TexCoord[v3][1] );
 	 D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v3][3]) );
-	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? 
+	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                        dwPVColor :
                                        (VB->Color[v3][3]<<24) | (VB->Color[v3][0]<<16) | (VB->Color[v3][1]<<8) | VB->Color[v3][2];
-   
+
 	 D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v1][0] );
 	 D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v1][1]) );
 	 D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v1][2] + ctx->PolygonZoffset) );
 	 D3DTLVertices[cVertex].tu     = D3DVAL( VB->TexCoord[v1][0] );
 	 D3DTLVertices[cVertex].tv     = D3DVAL( VB->TexCoord[v1][1] );
 	 D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v1][3]) );
-	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? 
+	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
 	                                  dwPVColor :
                                        (VB->Color[v1][3]<<24) | (VB->Color[v1][0]<<16) | (VB->Color[v1][1]<<8) | VB->Color[v1][2];
-   
+
 	 D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v3][0] );
 	 D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v3][1]) );
 	 D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v3][2] + ctx->PolygonZoffset) );
 	 D3DTLVertices[cVertex].tu     = D3DVAL( VB->TexCoord[v3][0] );
 	 D3DTLVertices[cVertex].tv     = D3DVAL( VB->TexCoord[v3][1] );
 	 D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v3][3]) );
-	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? 
+	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                        dwPVColor :
                                        (VB->Color[v3][3]<<24) | (VB->Color[v3][0]<<16) | (VB->Color[v3][1]<<8) | VB->Color[v3][2];
-   
+
 	 D3DTLVertices[cVertex].sx     = D3DVAL( VB->Win[v4][0] );
 	 D3DTLVertices[cVertex].sy     = D3DVAL( (height - VB->Win[v4][1]) );
 	 D3DTLVertices[cVertex].sz     = D3DVAL( (VB->Win[v4][2] + ctx->PolygonZoffset) );
 	 D3DTLVertices[cVertex].tu     = D3DVAL( VB->TexCoord[v4][0] );
 	 D3DTLVertices[cVertex].tv     = D3DVAL( VB->TexCoord[v4][1] );
 	 D3DTLVertices[cVertex].rhw    = D3DVAL( (1.0 / VB->Clip[v4][3]) );
-	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ? 
+	 D3DTLVertices[cVertex++].color= (ctx->Light.ShadeModel == GL_FLAT) ?
                                        dwPVColor :
                                        (VB->Color[v4][3]<<24) | (VB->Color[v4][0]<<16) | (VB->Color[v4][1]<<8) | VB->Color[v4][2];
     }
@@ -1152,7 +1152,7 @@ static void RenderQuadVB( GLcontext *ctx, GLuint start, GLuint end )
 #undef   v2
 #undef   v1
 
-  /* Render the converted vertex buffer. */  
+  /* Render the converted vertex buffer. */
   if ( cVertex )
     DrawPrimitiveHAL( pContext->pShared, D3DPT_TRIANGLELIST, &D3DTLVertices[0], cVertex );
 }
@@ -1167,7 +1167,7 @@ static void RenderQuad( GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint 
   struct vertex_buffer 	*VB = ctx->VB;
   int                  	height = (pContext->pShared->rectW.bottom - pContext->pShared->rectW.top);
   DWORD                	dwPVColor;
-  GLfloat              	ex, ey, 
+  GLfloat              	ex, ey,
                          fx, fy, c;
   GLuint               	facing;  /* 0=front, 1=back */
   static D3DTLVERTEX   	TLVertices[6];
@@ -1188,18 +1188,18 @@ static void RenderQuad( GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint 
 
   /* Backface culling. */
   facing = (c < 0.0F) ^ ctx->Polygon.FrontBit;
-  if ( (facing + 1) & ctx->Polygon.CullBits )  
+  if ( (facing + 1) & ctx->Polygon.CullBits )
     return;
 
-  if ( ctx->IndirectTriangles & DD_TRI_LIGHT_TWOSIDE ) 
+  if ( ctx->IndirectTriangles & DD_TRI_LIGHT_TWOSIDE )
   {
-    if ( facing == 1 ) 
+    if ( facing == 1 )
     {
 	 /* use back color */
 	 VB->Color   = VB->Bcolor;
 	 VB->Specular= VB->Bspec;
     }
-    else 
+    else
     {
 	 /* use front color */
 	 VB->Color   = VB->Fcolor;
@@ -1207,16 +1207,16 @@ static void RenderQuad( GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint 
     }
   }
 
-  if ( ctx->IndirectTriangles & DD_TRI_OFFSET ) 
+  if ( ctx->IndirectTriangles & DD_TRI_OFFSET )
   {
     /* Finish computing plane equation of polygon, compute offset */
-    GLfloat fz = VB->Win[v3][2] - VB->Win[v1][2];  
+    GLfloat fz = VB->Win[v3][2] - VB->Win[v1][2];
     GLfloat ez = VB->Win[v2][2] - VB->Win[v1][2];
     GLfloat a = (ey * fz) - (ez * fy);
     GLfloat b = (ez * fx) - (ex * fz);
     OffsetPolygon( ctx, a, b, c );
   }
-  
+
   if ( ctx->Light.ShadeModel == GL_FLAT )
     dwPVColor = (VB->Color[pv][3]<<24) | (VB->Color[pv][0]<<16) | (VB->Color[pv][1]<<8) | VB->Color[pv][2];
 
@@ -1240,7 +1240,7 @@ static void RenderQuad( GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint 
    TLVertices[1].rhw     = D3DVAL( (1.0 / VB->Clip[v2][3]) );
    TLVertices[1].color   = (ctx->Light.ShadeModel == GL_FLAT) ? dwPVColor :
                            (VB->Color[v2][3]<<24) | (VB->Color[v2][0]<<16) | (VB->Color[v2][1]<<8) | VB->Color[v2][2];
-   
+
    TLVertices[2].sx      = D3DVAL( VB->Win[v3][0] );
    TLVertices[2].sy      = D3DVAL( (height - VB->Win[v3][1]) );
    TLVertices[2].sz      = D3DVAL( (VB->Win[v3][2] + ctx->PolygonZoffset) );
@@ -1277,7 +1277,7 @@ static void RenderQuad( GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint 
    TLVertices[5].color   = (ctx->Light.ShadeModel == GL_FLAT) ? dwPVColor :
                            (VB->Color[v1][3]<<24) | (VB->Color[v1][0]<<16) | (VB->Color[v1][1]<<8) | VB->Color[v1][2];
 
-   /* Draw the two triangles. */  
+   /* Draw the two triangles. */
    DrawPrimitiveHAL( pContext->pShared, D3DPT_TRIANGLELIST, &TLVertices[0], 6 );
 }
 /*===========================================================================*/
@@ -1329,7 +1329,7 @@ void	RenderOneTriangle( GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint 
 	   TLVertices[1].sy,
 	   TLVertices[1].sz,
 	   TLVertices[1].color ));
-   
+
   TLVertices[2].sx      = D3DVAL( VB->Win[v3][0] );
   TLVertices[2].sy      = D3DVAL( (height - VB->Win[v3][1]) );
   TLVertices[2].sz      = D3DVAL( (VB->Win[v3][2] + ctx->PolygonZoffset) );
@@ -1344,7 +1344,7 @@ void	RenderOneTriangle( GLcontext *ctx, GLuint v1, GLuint v2, GLuint v3, GLuint 
 	   TLVertices[2].sz,
 	   TLVertices[2].color ));
 
-  /* Draw the triangle. */  
+  /* Draw the triangle. */
   DrawPrimitiveHAL( pContext->pShared, D3DPT_TRIANGLELIST, &TLVertices[0], 3 );
 }
 /*===========================================================================*/
@@ -1363,7 +1363,7 @@ void RenderOneLine( GLcontext *ctx, GLuint v1, GLuint v2, GLuint pv )
   DPF(( DBG_FUNC, "RenderOneLine" ));
   DPF(( DBG_PRIM_INFO, "RenderLine( 1 )" ));
 
-  if ( VB->MonoColor ) 
+  if ( VB->MonoColor )
     dwPVColor = (pContext->aCurrent<<24) | (pContext->rCurrent<<16) | (pContext->gCurrent<<8) | pContext->bCurrent;
   else 	
     dwPVColor = (VB->Color[pv][3]<<24) | (VB->Color[pv][0]<<16) | (VB->Color[pv][1]<<8) | VB->Color[pv][2];
@@ -1403,19 +1403,19 @@ static void RenderPointsVB( GLcontext *ctx, GLuint start, GLuint end )
   struct pixel_buffer 	*PB = ctx->PB;
   GLuint 				index;
   GLfloat                radius, z,
-                         xmin, ymin, 
+                         xmin, ymin,
                          xmax, ymax;
   GLint				cVertex,
                          height = (pContext->pShared->rectW.bottom - pContext->pShared->rectW.top);
   DWORD				dwPVColor;
-  
+
   DPF(( DBG_FUNC, "RenderPointsVB();" ));
 
   radius = CLAMP( ctx->Point.Size, MIN_POINT_SIZE, MAX_POINT_SIZE ) * 0.5F;
 
-  for( index = start, cVertex = 0; index <= end; index++ ) 
+  for( index = start, cVertex = 0; index <= end; index++ )
   {
-    if ( VB->ClipMask[index] == 0 ) 
+    if ( VB->ClipMask[index] == 0 )
     {
 	 xmin = D3DVAL( VB->Win[index][0] - radius );
 	 xmax = D3DVAL( VB->Win[index][0] + radius );
@@ -1423,9 +1423,9 @@ static void RenderPointsVB( GLcontext *ctx, GLuint start, GLuint end )
 	 ymax = D3DVAL( height - VB->Win[index][1] + radius );
 	 z    = D3DVAL( (VB->Win[index][2] + ctx->PointZoffset) );
 
-	 dwPVColor = (VB->Color[index][3]<<24) | 
-	             (VB->Color[index][0]<<16) | 
-	             (VB->Color[index][1]<<8) | 
+	 dwPVColor = (VB->Color[index][3]<<24) |
+	             (VB->Color[index][0]<<16) |
+	             (VB->Color[index][1]<<8) |
                   VB->Color[index][2];
 
 	 D3DTLVertices[cVertex].sx	  = xmin;
@@ -1443,7 +1443,7 @@ static void RenderPointsVB( GLcontext *ctx, GLuint start, GLuint end )
 	 D3DTLVertices[cVertex].tv      = 0.0;
 	 D3DTLVertices[cVertex].rhw     = D3DVAL( (1.0 / VB->Clip[index][3]) );
 	 D3DTLVertices[cVertex++].color = dwPVColor;
-   
+
 	 D3DTLVertices[cVertex].sx      = xmax;
 	 D3DTLVertices[cVertex].sy      = ymin;
 	 D3DTLVertices[cVertex].sz      = z;
@@ -1451,7 +1451,7 @@ static void RenderPointsVB( GLcontext *ctx, GLuint start, GLuint end )
 	 D3DTLVertices[cVertex].tv      = 0.0;
 	 D3DTLVertices[cVertex].rhw     = D3DVAL( (1.0 / VB->Clip[index][3]) );
 	 D3DTLVertices[cVertex++].color = dwPVColor;
-   
+
 	 D3DTLVertices[cVertex].sx      = xmax;
 	 D3DTLVertices[cVertex].sy      = ymin;
 	 D3DTLVertices[cVertex].sz      = z;
@@ -1478,7 +1478,7 @@ static void RenderPointsVB( GLcontext *ctx, GLuint start, GLuint end )
     }
   }
 
-  /* Render the converted vertex buffer. */  
+  /* Render the converted vertex buffer. */
   if ( cVertex )
     DrawPrimitiveHAL( pContext->pShared, D3DPT_TRIANGLELIST, &D3DTLVertices[0], cVertex );
 }
@@ -1525,7 +1525,7 @@ static void SetRenderStates( GLcontext *ctx )
 	   case GL_BLEND:
 		dwFunc = pContext->pShared->dwTexFunc[d3dtblend_decalalpha];
 		break;
-  
+
         case GL_REPLACE:
 		dwFunc = pContext->pShared->dwTexFunc[d3dtblend_decal];
 		break;
@@ -1538,7 +1538,7 @@ static void SetRenderStates( GLcontext *ctx )
 		break;
       }
       SetStateHAL( pContext->pShared, D3DRENDERSTATE_TEXTUREMAPBLEND, dwFunc );
-      
+
       switch( ctx->Texture.Set[ctx->Texture.CurrentSet].Current->MagFilter )
       {
 	   case GL_NEAREST:
@@ -1589,12 +1589,12 @@ static void SetRenderStates( GLcontext *ctx )
 	 //	 if ( texName != ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Name )
 	 //	 {
 	   texName = ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Name;
-	   CreateTMgrHAL( pContext->pShared, 
+	   CreateTMgrHAL( pContext->pShared,
 				   texName,
 				   0,
 				   ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Format,
 				   (RECT *)NULL,
-				   ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Width, 
+				   ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Width,
 				   ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Height,
 				   TM_ACTION_BIND,
 				   (void *)ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Data );
@@ -1635,30 +1635,30 @@ static void SetRenderStates( GLcontext *ctx )
    if ( ctx->Depth.Test == GL_TRUE )
    {
 	switch( ctx->Depth.Func )
-	{  
-	  case GL_NEVER:    
-	    dwFunc = D3DCMP_NEVER;        
+	{
+	  case GL_NEVER:
+	    dwFunc = D3DCMP_NEVER;
 	    break;
-	  case GL_LESS:     
-	    dwFunc = D3DCMP_LESS;         
+	  case GL_LESS:
+	    dwFunc = D3DCMP_LESS;
 	    break;
-  	  case GL_GEQUAL:   
-	    dwFunc = D3DCMP_GREATEREQUAL; 
+  	  case GL_GEQUAL:
+	    dwFunc = D3DCMP_GREATEREQUAL;
 	    break;
-  	  case GL_LEQUAL:   
-	    dwFunc = D3DCMP_LESSEQUAL;    
+  	  case GL_LEQUAL:
+	    dwFunc = D3DCMP_LESSEQUAL;
 	    break;
-	  case GL_GREATER:  
-	    dwFunc = D3DCMP_GREATER;      
+	  case GL_GREATER:
+	    dwFunc = D3DCMP_GREATER;
 	    break;
-	  case GL_NOTEQUAL: 
-	    dwFunc = D3DCMP_NOTEQUAL;     
+	  case GL_NOTEQUAL:
+	    dwFunc = D3DCMP_NOTEQUAL;
 	    break;
-	  case GL_EQUAL:    
-	    dwFunc = D3DCMP_EQUAL;        
+	  case GL_EQUAL:
+	    dwFunc = D3DCMP_EQUAL;
 	    break;
-	  case GL_ALWAYS:   
-	    dwFunc = D3DCMP_ALWAYS;       
+	  case GL_ALWAYS:
+	    dwFunc = D3DCMP_ALWAYS;
 	    break;
 	}
 	SetStateHAL( pContext->pShared, D3DRENDERSTATE_ZFUNC, dwFunc );
@@ -1680,30 +1680,30 @@ static void SetRenderStates( GLcontext *ctx )
    if ( ctx->Color.AlphaEnabled == GL_TRUE )
    {
 	switch( ctx->Color.AlphaFunc )
-     {  
-	  case GL_NEVER:    
-	    dwFunc = D3DCMP_NEVER;        
+     {
+	  case GL_NEVER:
+	    dwFunc = D3DCMP_NEVER;
 	    break;
-	  case GL_LESS:     
-	    dwFunc = D3DCMP_LESS;         
+	  case GL_LESS:
+	    dwFunc = D3DCMP_LESS;
 	    break;
-  	  case GL_GEQUAL:   
-	    dwFunc = D3DCMP_GREATEREQUAL; 
+  	  case GL_GEQUAL:
+	    dwFunc = D3DCMP_GREATEREQUAL;
 	    break;
-  	  case GL_LEQUAL:   
-	    dwFunc = D3DCMP_LESSEQUAL;    
+  	  case GL_LEQUAL:
+	    dwFunc = D3DCMP_LESSEQUAL;
 	    break;
-	  case GL_GREATER:  
-	    dwFunc = D3DCMP_GREATER;      
+	  case GL_GREATER:
+	    dwFunc = D3DCMP_GREATER;
 	    break;
-	  case GL_NOTEQUAL: 
-	    dwFunc = D3DCMP_NOTEQUAL;     
+	  case GL_NOTEQUAL:
+	    dwFunc = D3DCMP_NOTEQUAL;
 	    break;
-	  case GL_EQUAL:    
-	    dwFunc = D3DCMP_EQUAL;        
+	  case GL_EQUAL:
+	    dwFunc = D3DCMP_EQUAL;
 	    break;
-	  case GL_ALWAYS:   
-	    dwFunc = D3DCMP_ALWAYS;       
+	  case GL_ALWAYS:
+	    dwFunc = D3DCMP_ALWAYS;
 	    break;
 	}
 	SetStateHAL( pContext->pShared, D3DRENDERSTATE_ALPHAFUNC , dwFunc );
@@ -1719,42 +1719,42 @@ static void SetRenderStates( GLcontext *ctx )
    /****************/
    if ( ctx->Color.BlendEnabled == GL_TRUE )
    {
-	switch( ctx->Color.BlendSrc ) 
+	switch( ctx->Color.BlendSrc )
 	{
 	  case GL_ZERO:	    			
 	    dwFunc = pContext->pShared->dwSrcBlendCaps[s_zero];
 	    break;
-       case GL_ONE:                     
+       case GL_ONE:
 	    dwFunc = pContext->pShared->dwSrcBlendCaps[s_one];
 	    break;
-       case GL_DST_COLOR:               
+       case GL_DST_COLOR:
 	    dwFunc = pContext->pShared->dwSrcBlendCaps[s_dst_color];
 	    break;
-       case GL_ONE_MINUS_DST_COLOR:     
+       case GL_ONE_MINUS_DST_COLOR:
 	    dwFunc = pContext->pShared->dwSrcBlendCaps[s_one_minus_dst_color];
 	    break;
-       case GL_SRC_ALPHA:               
+       case GL_SRC_ALPHA:
 	    dwFunc = pContext->pShared->dwSrcBlendCaps[s_src_alpha];
 	    break;
-       case GL_ONE_MINUS_SRC_ALPHA:     
+       case GL_ONE_MINUS_SRC_ALPHA:
 	    dwFunc = pContext->pShared->dwSrcBlendCaps[s_one_minus_src_alpha];
 	    break;
-       case GL_DST_ALPHA:               
+       case GL_DST_ALPHA:
 	    dwFunc = pContext->pShared->dwSrcBlendCaps[s_dst_alpha];
 	    break;
-       case GL_ONE_MINUS_DST_ALPHA:     
+       case GL_ONE_MINUS_DST_ALPHA:
 	    dwFunc = pContext->pShared->dwSrcBlendCaps[s_one_minus_dst_alpha];
 	    break;
-       case GL_SRC_ALPHA_SATURATE:      
+       case GL_SRC_ALPHA_SATURATE:
 	    dwFunc = pContext->pShared->dwSrcBlendCaps[s_src_alpha_saturate];
 	    break;
-       case GL_CONSTANT_COLOR:          
+       case GL_CONSTANT_COLOR:
 	    dwFunc = pContext->pShared->dwSrcBlendCaps[s_constant_color];
 	    break;
        case GL_ONE_MINUS_CONSTANT_COLOR:
 	    dwFunc = pContext->pShared->dwSrcBlendCaps[s_one_minus_constant_color];
 	    break;
-       case GL_CONSTANT_ALPHA:          
+       case GL_CONSTANT_ALPHA:
 	    dwFunc = pContext->pShared->dwSrcBlendCaps[s_constant_alpha];
 	    break;
        case GL_ONE_MINUS_CONSTANT_ALPHA:
@@ -1763,39 +1763,39 @@ static void SetRenderStates( GLcontext *ctx )
 	}
 	SetStateHAL( pContext->pShared, D3DRENDERSTATE_SRCBLEND, dwFunc );
 
-	switch( ctx->Color.BlendDst ) 
+	switch( ctx->Color.BlendDst )
 	{
        case GL_ZERO:                  	
 	    dwFunc = pContext->pShared->dwDestBlendCaps[d_zero];
 	    break;
-       case GL_ONE:                     
+       case GL_ONE:
 	    dwFunc = pContext->pShared->dwDestBlendCaps[d_one];
 	    break;
-       case GL_SRC_COLOR:               
+       case GL_SRC_COLOR:
 	    dwFunc = pContext->pShared->dwDestBlendCaps[d_src_color];
 	    break;
-       case GL_ONE_MINUS_SRC_COLOR:     
+       case GL_ONE_MINUS_SRC_COLOR:
 	    dwFunc = pContext->pShared->dwDestBlendCaps[d_one_minus_src_color];
 	    break;
-       case GL_SRC_ALPHA:               
+       case GL_SRC_ALPHA:
 	    dwFunc = pContext->pShared->dwDestBlendCaps[d_src_alpha];
 	    break;
-       case GL_ONE_MINUS_SRC_ALPHA:     
+       case GL_ONE_MINUS_SRC_ALPHA:
 	    dwFunc = pContext->pShared->dwDestBlendCaps[d_one_minus_src_alpha];
 	    break;
-       case GL_DST_ALPHA:               
+       case GL_DST_ALPHA:
 	    dwFunc = pContext->pShared->dwDestBlendCaps[d_dst_alpha];
 	    break;
-       case GL_ONE_MINUS_DST_ALPHA:     
+       case GL_ONE_MINUS_DST_ALPHA:
 	    dwFunc = pContext->pShared->dwDestBlendCaps[d_one_minus_dst_alpha];
 	    break;
-       case GL_CONSTANT_COLOR:          
+       case GL_CONSTANT_COLOR:
 	    dwFunc = pContext->pShared->dwDestBlendCaps[d_constant_color];
 	    break;
        case GL_ONE_MINUS_CONSTANT_COLOR:
 	    dwFunc = pContext->pShared->dwDestBlendCaps[d_one_minus_constant_color];
 	    break;
-       case GL_CONSTANT_ALPHA:          
+       case GL_CONSTANT_ALPHA:
 	    dwFunc = pContext->pShared->dwDestBlendCaps[d_constant_alpha];
 	    break;
        case GL_ONE_MINUS_CONSTANT_ALPHA:
@@ -1883,8 +1883,8 @@ static void DebugRenderStates( GLcontext *ctx, BOOL bForce )
 	{
 	  textName = ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Name;
 	  DPF(( 0, "\tTexture Name:\t%d", textName ));
-	  DPF(( 0, "\tTexture Format:\t%s", 
-		   (ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Format == GL_RGBA) ? 
+	  DPF(( 0, "\tTexture Format:\t%s",
+		   (ctx->Texture.Set[ctx->Texture.CurrentSet].Current->Image[0]->Format == GL_RGBA) ?
 		   "GL_RGBA" : "GLRGB" ));
 	}
 
@@ -1912,7 +1912,7 @@ static void DebugRenderStates( GLcontext *ctx, BOOL bForce )
 	if ( textMag != ctx->Texture.Set[ctx->Texture.CurrentSet].Current->MagFilter )
 	{
 	  textMag = ctx->Texture.Set[ctx->Texture.CurrentSet].Current->MagFilter;
-	  
+	
 	  switch( textMag )
 	  {
        case GL_NEAREST:
@@ -1987,29 +1987,29 @@ static void DebugRenderStates( GLcontext *ctx, BOOL bForce )
 	depthFunc = ctx->Depth.Func;
 
 	switch( depthFunc )
-	{  
-       case GL_NEVER:    
+	{
+       case GL_NEVER:
 	    DPF(( 0, "\tDepth Func\tGL_NEVER" ));
 	    break;
-       case GL_LESS:     
+       case GL_LESS:
 	    DPF(( 0, "\tDepth Func\tGL_LESS" ));
 	    break;
-       case GL_GEQUAL:   
+       case GL_GEQUAL:
 	    DPF(( 0, "\tDepth Func\tGL_GEQUAL" ));
 	    break;
-       case GL_LEQUAL:   
+       case GL_LEQUAL:
 	    DPF(( 0, "\tDepth Func\tGL_LEQUAL" ));
 	    break;
-       case GL_GREATER:  
+       case GL_GREATER:
 	    DPF(( 0, "\tDepth Func\tGL_GREATER" ));
 	    break;
-       case GL_NOTEQUAL: 
+       case GL_NOTEQUAL:
  	    DPF(( 0, "\tDepth Func\tGL_NOTEQUAL" ));
 	    break;
-       case GL_EQUAL:    
+       case GL_EQUAL:
 	    DPF(( 0, "\tDepth Func\tGL_EQUAL" ));
 	    break;
-       case GL_ALWAYS:   
+       case GL_ALWAYS:
 	    DPF(( 0, "\tDepth Func\tGL_ALWAYS" ));
 	    break;
 	}
@@ -2026,74 +2026,74 @@ static void DebugRenderStates( GLcontext *ctx, BOOL bForce )
 	alphaFunc = ctx->Color.AlphaFunc;
 
 	switch( alphaFunc )
-     {  
-	  case GL_NEVER:    
+     {
+	  case GL_NEVER:
 	    DPF(( 0, "\tAlpha Func\tGL_NEVER" ));
 	    break;
-	  case GL_LESS:     
+	  case GL_LESS:
 	    DPF(( 0, "\tAlpha Func\tGL_LESS" ));
 	    break;
-  	  case GL_GEQUAL:   
+  	  case GL_GEQUAL:
 	    DPF(( 0, "\tAlpha Func\tGL_GEQUAL" ));
 	    break;
-  	  case GL_LEQUAL:   
+  	  case GL_LEQUAL:
 	    DPF(( 0, "\tAlpha Func\tGL_LEQUAL" ));
 	    break;
-	  case GL_GREATER:  
+	  case GL_GREATER:
 	    DPF(( 0, "\tAlpha Func\tGL_GREATER" ));
 	    break;
-	  case GL_NOTEQUAL: 
+	  case GL_NOTEQUAL:
 	    DPF(( 0, "\tAlpha Func\tGL_NOTEQUAL" ));
 	    break;
-	  case GL_EQUAL:    
+	  case GL_EQUAL:
 	    DPF(( 0, "\tAlpha Func\tGL_EQUAL" ));
 	    break;
-	  case GL_ALWAYS:   
+	  case GL_ALWAYS:
 	    DPF(( 0, "\tAlpha Func\tGL_ALWAYS" ));
 	    break;
 	}
    }
 
-   if ( blendSrc != ctx->Color.BlendSrc ) 
+   if ( blendSrc != ctx->Color.BlendSrc )
    {
 	blendSrc = ctx->Color.BlendSrc;
 
-	switch( blendSrc ) 
+	switch( blendSrc )
 	{
 	  case GL_ZERO:	    			
 	    DPF(( 0, "\tSRC Blend\tGL_ZERO" ));
 	    break;
-       case GL_ONE:                     
+       case GL_ONE:
 	    DPF(( 0, "\tSRC Blend\tGL_ONE" ));
 	    break;
-       case GL_DST_COLOR:               
+       case GL_DST_COLOR:
 	    DPF(( 0, "\tSRC Blend\tGL_DST_COLOR" ));
 	    break;
-       case GL_ONE_MINUS_DST_COLOR:     
+       case GL_ONE_MINUS_DST_COLOR:
 	    DPF(( 0, "\tSRC Blend\tGL_ONE_MINUS_DST_COLOR" ));
 	    break;
-       case GL_SRC_ALPHA:               
+       case GL_SRC_ALPHA:
 	    DPF(( 0, "\tSRC Blend\tGL_SRC_ALPHA" ));
 	    break;
-       case GL_ONE_MINUS_SRC_ALPHA:     
+       case GL_ONE_MINUS_SRC_ALPHA:
 	    DPF(( 0, "\tSRC Blend\tGL_MINUS_SRC_ALPHA" ));
 	    break;
-       case GL_DST_ALPHA:               
+       case GL_DST_ALPHA:
 	    DPF(( 0, "\tSRC Blend\tGL_DST_ALPHA" ));
 	    break;
-       case GL_ONE_MINUS_DST_ALPHA:     
+       case GL_ONE_MINUS_DST_ALPHA:
 	    DPF(( 0, "\tSRC Blend\tGL_ONE_MINUS_DST_ALPHA" ));
 	    break;
-       case GL_SRC_ALPHA_SATURATE:      
+       case GL_SRC_ALPHA_SATURATE:
 	    DPF(( 0, "\tSRC Blend\tGL_SRC_ALPHA_SATURATE" ));
 	    break;
-       case GL_CONSTANT_COLOR:          
+       case GL_CONSTANT_COLOR:
 	    DPF(( 0, "\tSRC Blend\tGL_CONSTANT_COLOR" ));
 	    break;
        case GL_ONE_MINUS_CONSTANT_COLOR:
 	    DPF(( 0, "\tSRC Blend\tGL_ONE_MINUS_CONSTANT_COLOR" ));
 	    break;
-       case GL_CONSTANT_ALPHA:          
+       case GL_CONSTANT_ALPHA:
 	    DPF(( 0, "\tSRC Blend\tGL_CONSTANT_ALPHA" ));
 	    break;
        case GL_ONE_MINUS_CONSTANT_ALPHA:
@@ -2102,43 +2102,43 @@ static void DebugRenderStates( GLcontext *ctx, BOOL bForce )
 	}
    }
 
-   if ( blendDest != ctx->Color.BlendDst ) 
+   if ( blendDest != ctx->Color.BlendDst )
    {
 	blendDest = ctx->Color.BlendDst;
 
-	switch( blendDest ) 
+	switch( blendDest )
 	{
        case GL_ZERO:                  	
 	    DPF(( 0, "\tDST Blend\tGL_ZERO" ));
 	    break;
-       case GL_ONE:                     
+       case GL_ONE:
 	    DPF(( 0, "\tDST Blend\tGL_ONE" ));
 	    break;
-       case GL_SRC_COLOR:               
+       case GL_SRC_COLOR:
 	    DPF(( 0, "\tDST Blend\tGL_SRC_COLOR" ));
 	    break;
-       case GL_ONE_MINUS_SRC_COLOR:     
+       case GL_ONE_MINUS_SRC_COLOR:
 	    DPF(( 0, "\tDST Blend\tGL_ONE_MINUS_SRC_COLOR" ));
 	    break;
-       case GL_SRC_ALPHA:               
+       case GL_SRC_ALPHA:
 	    DPF(( 0, "\tDST Blend\tGL_SRC_ALPHA" ));
 	    break;
-       case GL_ONE_MINUS_SRC_ALPHA:     
+       case GL_ONE_MINUS_SRC_ALPHA:
 	    DPF(( 0, "\tDST Blend\tGL_ONE_MINUS_SRC_ALPHA" ));
 	    break;
-       case GL_DST_ALPHA:               
+       case GL_DST_ALPHA:
 	    DPF(( 0, "\tDST Blend\tGL_DST_ALPHA" ));
 	    break;
-       case GL_ONE_MINUS_DST_ALPHA:     
+       case GL_ONE_MINUS_DST_ALPHA:
 	    DPF(( 0, "\tDST Blend\tGL_ONE_MINUS_DST_ALPHA" ));
 	    break;
-       case GL_CONSTANT_COLOR:          
+       case GL_CONSTANT_COLOR:
 	    DPF(( 0, "\tDST Blend\tGL_CONSTANT_COLOR" ));
 	    break;
        case GL_ONE_MINUS_CONSTANT_COLOR:
 	    DPF(( 0, "\tDST Blend\tGL_ONE_MINUS_CONSTANT_COLOR" ));
 	    break;
-       case GL_CONSTANT_ALPHA:          
+       case GL_CONSTANT_ALPHA:
 	    DPF(( 0, "\tDST Blend\tGL_CONSTANT_ALPHA" ));
 	    break;
        case GL_ONE_MINUS_CONSTANT_ALPHA:

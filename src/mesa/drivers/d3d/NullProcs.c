@@ -8,122 +8,42 @@
 /*                                                                           */
 /* Copyright (c) 1999-1998  alt.software inc.  All Rights Reserved           */
 /*===========================================================================*/
-#include "NULLProcs.h"
+#ifndef NULL_MESA_PROCS_INC
+#define NULL_MESA_PROCS_INC
 /*===========================================================================*/
-/*                                                                           */
+/* Includes.                                                                 */
 /*===========================================================================*/
-/* RETURN:                                                                   */
+#include "matrix.h"
+#include "context.h"
+#include "mtypes.h"
+#include "vb.h"
 /*===========================================================================*/
-void NULLSetColor( GLcontext *ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte a )
-{
+/* Macros.                                                                   */
+/*===========================================================================*/
+/*===========================================================================*/
+/* Magic numbers.                                                            */
+/*===========================================================================*/
+/*===========================================================================*/
+/* Type defines.                                                             */
+/*===========================================================================*/
+void NULLSetColor( GLcontext *ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte a );
+void NULLClearColor( GLcontext *ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte a );
+GLboolean NULLSetBuffer( GLcontext *ctx, GLenum mode );
+void NULLGetBufferSize( GLcontext *ctx, GLuint *width, GLuint *height );
+GLbitfield NULLClearBuffers( GLcontext *ctx, GLbitfield m, GLboolean a, GLint x, GLint y, GLint w, GLint h );
+void NULLWrSpRGB( const GLcontext* ctx, GLuint n, GLint x, GLint y, const GLubyte r[][3], const GLubyte m[] );
+void NULLWrSpRGBA( const GLcontext* ctx, GLuint n, GLint x, GLint y, const GLubyte r[][4], const GLubyte m[] );
+void NULLWrSpRGBAMono( const GLcontext* ctx, GLuint n, GLint x, GLint y, const GLubyte m[] );
+void NULLWrPiRGBA( const GLcontext* ctx, GLuint n, const GLint x[], const GLint y[], const GLubyte r[][4], const GLubyte m[] );
+void NULLWrPiRGBAMono( const GLcontext* ctx, GLuint n, const GLint x[], const GLint y[], const GLubyte m[] );
+void NULLReSpRGBA( const GLcontext* ctx, GLuint n, GLint x, GLint y, GLubyte r[][4] );
+void NULLRePiRGBA( const GLcontext* ctx, GLuint n, const GLint x[], const GLint y[], GLubyte r[][4], const GLubyte m[] );
+/*===========================================================================*/
+/* Extern function prototypes.                                               */
+/*===========================================================================*/
+/*===========================================================================*/
+/* Global variables.                                                         */
+/*===========================================================================*/
 
-}
-/*===========================================================================*/
-/*                                                                           */
-/*===========================================================================*/
-/* RETURN:                                                                   */
-/*===========================================================================*/
-void NULLClearColor( GLcontext *ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte a )
-{
-}
-/*===========================================================================*/
-/*                                                                           */
-/*===========================================================================*/
-/* RETURN:                                                                   */
-/*===========================================================================*/
-GLboolean NULLSetBuffer( GLcontext *ctx, GLenum mode )
-{
-   return TRUE;
-}
-/*===========================================================================*/
-/*                                                                           */
-/*===========================================================================*/
-/* RETURN:                                                                   */
-/*===========================================================================*/
-void NULLGetBufferSize( GLcontext *ctx, GLuint *width, GLuint *height )
-{
-  *width = 1;
-  *height = 1;
-}
-/*===========================================================================*/
-/*                                                                           */
-/*===========================================================================*/
-/* RETURN:                                                                   */
-/*===========================================================================*/
-GLbitfield NULLClearBuffers( GLcontext *ctx, GLbitfield m, GLboolean a, GLint x, GLint y, GLint w, GLint h )
-{
-   return m;
-}
-/*===========================================================================*/
-/*                                                                           */
-/*===========================================================================*/
-/* RETURN:                                                                   */
-/*===========================================================================*/
-void NULLWrSpRGB( const GLcontext* ctx, GLuint n, GLint x, GLint y, const GLubyte r[][3], const GLubyte m[] )
-{
-
-}
-/*===========================================================================*/
-/*                                                                           */
-/*===========================================================================*/
-/* RETURN:                                                                   */
-/*===========================================================================*/
-void NULLWrSpRGBA( const GLcontext* ctx, GLuint n, GLint x, GLint y, const GLubyte r[][4], const GLubyte m[] )
-{
-
-}
-/*===========================================================================*/
-/*                                                                           */
-/*===========================================================================*/
-/* RETURN:                                                                   */
-/*===========================================================================*/
-void NULLWrSpRGBAMono( const GLcontext* ctx, GLuint n, GLint x, GLint y, const GLubyte m[] )
-{
-
-}
-/*===========================================================================*/
-/*                                                                           */
-/*===========================================================================*/
-/* RETURN:                                                                   */
-/*===========================================================================*/
-void NULLWrPiRGBA( const GLcontext* ctx, GLuint n, const GLint x[], const GLint y[], const GLubyte r[][4], const GLubyte m[] )
-{
-
-}
-/*===========================================================================*/
-/*                                                                           */
-/*===========================================================================*/
-/* RETURN:                                                                   */
-/*===========================================================================*/
-void NULLWrPiRGBAMono( const GLcontext* ctx, GLuint n, const GLint x[], const GLint y[], const GLubyte m[] )
-{
-
-}
-/*===========================================================================*/
-/*                                                                           */
-/*===========================================================================*/
-/* RETURN:                                                                   */
-/*===========================================================================*/
-void NULLReSpRGBA( const GLcontext* ctx, GLuint n, GLint x, GLint y, GLubyte r[][4] )
-{
-
-}
-/*===========================================================================*/
-/*                                                                           */
-/*===========================================================================*/
-/* RETURN:                                                                   */
-/*===========================================================================*/
-void NULLRePiRGBA( const GLcontext* ctx, GLuint n, const GLint x[], const GLint y[], GLubyte r[][4], const GLubyte m[] )
-{
-
-}
-
-
-
-
-
-
-
-
-
+#endif
 

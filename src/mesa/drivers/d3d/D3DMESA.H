@@ -18,7 +18,7 @@
 #include <d3d.h>
 #include "matrix.h"
 #include "context.h"
-#include "types.h"
+#include "mtypes.h"
 #include "vb.h"
 #include "D3DShared.h"
 #include "Debug.h"
