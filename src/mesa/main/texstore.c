@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.13 2001/03/18 13:31:52 gareth Exp $ */
+/* $Id: texstore.c,v 1.14 2001/03/18 14:05:32 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -128,7 +128,6 @@ components_in_intformat( GLint format )
          return -1;  /* error */
    }
 }
-#endif
 
 
 /*
