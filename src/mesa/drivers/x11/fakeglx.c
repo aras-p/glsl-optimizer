@@ -1727,7 +1727,7 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
 {
    XMesaVisual xmvis;
 
-   if (!dpy || !visInfo)
+   if (!dpy || !visinfo)
       return GLX_BAD_ATTRIBUTE;
 
    xmvis = find_glx_visual( dpy, visinfo );
