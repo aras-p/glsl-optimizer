@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.42 2002/10/29 22:32:50 brianp Exp $ */
+/* $Id: wmesa.c,v 1.43 2003/01/30 15:47:06 kschultz Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -407,7 +407,7 @@ static clear(GLcontext* ctx, GLbitfield mask,
   assert((mask & (DD_FRONT_RIGHT_BIT | DD_BACK_RIGHT_BIT)) == 0); 
   
   /* clear alpha */
-  if ((mask & (DD_FRONT_LEFT_BIT | DD_BACK_RIGHT_BIT)) &&
+  if ((mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) &&
       ctx->DrawBuffer->UseSoftwareAlphaBuffers &&
       ctx->Color.ColorMask[ACOMP]) {
       _mesa_clear_alpha_buffers( ctx );
