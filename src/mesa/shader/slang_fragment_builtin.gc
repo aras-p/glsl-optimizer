@@ -7,12 +7,11 @@
 // 
 
 // 
-// From Shader Spec, ver. 1.051
+// From Shader Spec, ver. 1.10, rev. 59
 // 
-// The output of the fragment shader goes on to be processed by the fixed function operations at
-// the back end of the OpenGL pipeline. Fragment shaders interface with the back end of the OpenGL
-// pipeline using the built-in variables gl_FragColor and gl_FragDepth, or by executing the discard
-// keyword.
+// The output of the fragment shader is processed by the fixed function operations at the back end
+// of the OpenGL pipeline. Fragment shaders output values to the OpenGL pipeline using the built-in
+// variables gl_FragColor, gl_FragData and gl_FragDepth, unless the discard keyword is executed.
 // 
 // These variables may be written more than once within a fragment shader. If so, the last value
 // assigned is the one used in the subsequent fixed function pipeline. The values written to these
@@ -32,18 +31,26 @@
 // depth buffering is enabled, and a shader does not write gl_FragDepth, then the fixed function
 // value for depth will be used as the fragment’s depth value. If a shader statically assigns
 // a value to gl_FragDepth, and there is an execution path through the shader that does not set
-// gl_FragDepth, then the value of the fragment’s depth may be undefined for some executions of
-// the shader. That is, if a shader statically writes gl_FragDepth, then it is responsible for
-// always writing it. There is also no guarantee that a shader can compute the same depth value
-// as the fixed function value; an implementation will provide invariant results within shaders
-// computing depth with the same source-level expression, but invariance is not provided between
-// shaders and fixed functionality.
-// 
-// Writes to gl_FragColor and gl_FragDepth need not be clamped within a shader. The fixed
-// functionality pipeline following the fragment shader will clamp these values.
+// gl_FragDepth, then the value of the fragment's depth may be undefined for executions of the
+// shader that take that path. That is, if a shader statically contains a write gl_FragDepth, then
+// it is responsible for always writing it.
+//
+// (A shader contains a static assignment to a variable x if, after pre-processing, the shader
+// contains statement that would write x, whether or not run-time flow of control will cause
+// that statement to be executed.)
+//
+// The variable gl_FragData is an array. Writing to gl_FragData[n] specifies the fragment data
+// that will be used by the subsequent fixed functionality pipeline for data n. If subsequent
+// fixed functionality consumes fragment data and an execution of a fragment shader does not
+// write a value to it, then the fragment data consumed is undefined.
+//
+// If a shader statically assigns a value to gl_FragColor, it may not assign a value to any element
+// of gl_FragData. If a shader statically writes a value to any element of gl_FragData, it may not
+// assign a value to gl_FragColor. That is, a shader may assign values to either gl_FragColor or
+// gl_FragData, but not both.
 // 
 // If a shader executes the discard keyword, the fragment is discarded, and the values of
-// gl_FragDepth and gl_FragColor become irrelevant.
+// gl_FragDepth, gl_FragColor and gl_FragData become irrelevant.
 // 
 // The variable gl_FragCoord is available as a read-only variable from within fragment shaders
 // and it holds the window relative coordinates x, y, z, and 1/w values for the fragment. This
@@ -64,6 +71,7 @@
 vec4 gl_FragCoord;
 bool gl_FrontFacing;
 vec4 gl_FragColor;
+vec4 gl_FragData[gl_MaxDrawBuffers];
 float gl_FragDepth;
 
 // 
@@ -84,7 +92,7 @@ float gl_FragDepth;
 
 varying vec4 gl_Color;
 varying vec4 gl_SecondaryColor;
-varying vec4 gl_TexCoord[];                             // at most will be gl_MaxTextureCoordsARB
+varying vec4 gl_TexCoord[];                             // at most will be gl_MaxTextureCoords
 varying float gl_FogFragCoord;
 
 // 
@@ -130,7 +138,7 @@ varying float gl_FogFragCoord;
 // 
 
 // 
-// Texture Lookup Functions
+// 8.7 Texture Lookup Functions
 // 
 // Texture lookup functions are available to both vertex and fragment shaders. However, level
 // of detail is not computed by fixed functionality for vertex shaders, so there are some
@@ -140,9 +148,11 @@ varying float gl_FogFragCoord;
 // levels, depth comparison, and so on are also defined by OpenGL API calls. Such properties are
 // taken into account as the texture is accessed via the built-in functions defined below.
 // 
-// If a non-shadow texture call is made to a sampler whose texture has depth comparisons enabled,
-// then results are undefined. If a shadow texture call is made to a sampler whose texture does not
-// have depth comparisions enabled, the results are also undefined.
+// If a non-shadow texture call is made to a sampler that represents a depth texture with depth
+// comparisons turned on, then results are undefined. If a shadow texture call is made to a sampler
+// that represents a depth texture with depth comparisions turned off, the results are undefined.
+// If a shadow texture call is made to a sampler that does not represent a depth texture, then
+// results are undefined.
 // 
 // In all functions below, the bias parameter is optional for fragment shaders. The bias parameter
 // is not accepted in a vertex shader. For a fragment shader, if bias is present, it is added to
@@ -235,6 +245,8 @@ vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord, float bias) {
     return shadow2D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q), bias);
 }
 
+//
+// 8.8 Fragment Processing Functions
 // 
 // Fragment processing functions are only available in shaders intended for use on the fragment
 // processor. Derivatives may be computationally expensive and/or numerically unstable. Therefore,

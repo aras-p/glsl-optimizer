@@ -7,7 +7,7 @@
 // 
 
 // 
-// From Shader Spec, ver. 1.051
+// From Shader Spec, ver. 1.10, rev. 59
 // 
 // Some OpenGL operations still continue to occur in fixed functionality in between the vertex
 // processor and the fragment processor. Other OpenGL operations continue to occur in fixed
@@ -87,7 +87,7 @@ varying vec4 gl_FrontColor;
 varying vec4 gl_BackColor;
 varying vec4 gl_FrontSecondaryColor;
 varying vec4 gl_BackSecondaryColor;
-varying vec4 gl_TexCoord[];                             // at most will be gl_MaxTextureCoordsARB
+varying vec4 gl_TexCoord[];                             // at most will be gl_MaxTextureCoords
 varying float gl_FogFragCoord;
 
 // 
@@ -96,9 +96,9 @@ varying float gl_FogFragCoord;
 // of the fragment in eye space is desired as “c”, then that's what the vertex shader should write
 // into gl_FogFragCoord.
 // 
-// As with all arrays, indices used to subscript gl_TexCoord must either be integral constant
+// As with all arrays, indices used to subscript gl_TexCoord must either be an integral constant
 // expressions, or this array must be re-declared by the shader with a size. The size can be
-// at most gl_MaxTextureCoordsARB. Using indexes close to 0 may aid the implementation
+// at most gl_MaxTextureCoords. Using indexes close to 0 may aid the implementation
 // in preserving varying resources.
 // 
 
@@ -152,7 +152,7 @@ vec4 ftransform () {
 }
 
 // 
-// Texture Lookup Functions
+// 8.7 Texture Lookup Functions
 // 
 // Texture lookup functions are available to both vertex and fragment shaders. However, level
 // of detail is not computed by fixed functionality for vertex shaders, so there are some
@@ -162,9 +162,11 @@ vec4 ftransform () {
 // levels, depth comparison, and so on are also defined by OpenGL API calls. Such properties are
 // taken into account as the texture is accessed via the built-in functions defined below.
 // 
-// If a non-shadow texture call is made to a sampler whose texture has depth comparisons enabled,
-// then results are undefined. If a shadow texture call is made to a sampler whose texture does not
-// have depth comparisions enabled, the results are also undefined.
+// If a non-shadow texture call is made to a sampler that represents a depth texture with depth
+// comparisons turned on, then results are undefined. If a shadow texture call is made to a sampler
+// that represents a depth texture with depth comparisions turned off, the results are undefined.
+// If a shadow texture call is made to a sampler that does not represent a depth texture, then
+// results are undefined.
 // 
 // In all functions below, the bias parameter is optional for fragment shaders. The bias parameter
 // is not accepted in a vertex shader. For a fragment shader, if bias is present, it is added to

@@ -8,7 +8,7 @@
 // 
 
 // 
-// From Shader Spec, ver. 1.051
+// From Shader Spec, ver. 1.10, rev. 59
 // 
 // The following built-in constants are provided to vertex and fragment shaders.
 // 
@@ -20,14 +20,16 @@
 
 const int gl_MaxLights = 8;                             // GL 1.0
 const int gl_MaxClipPlanes = 6;                         // GL 1.0
-const int gl_MaxTextureUnits = 2;                       // GL 1.2
-const int gl_MaxTextureCoordsARB = 2;                   // ARB_fragment_program
-const int gl_MaxVertexAttributesGL2 = 16;               // GL2_vertex_shader
-const int gl_MaxVertexUniformFloatsGL2 = 512;           // GL2_vertex_shader
-const int gl_MaxVaryingFloatsGL2 = 32;                  // GL2_vertex_shader
-const int gl_MaxVertexTextureUnitsGL2 = 1;              // GL2_vertex_shader
-const int gl_MaxFragmentTextureUnitsGL2 = 2;            // GL2_fragment_shader
-const int gl_MaxFragmentUniformFloatsGL2 = 64;          // GL2_fragment_shader
+const int gl_MaxTextureUnits = 2;                       // GL 1.3
+const int gl_MaxTextureCoords = 2;                      // ARB_fragment_program
+const int gl_MaxVertexAttribs = 16;                     // ARB_vertex_shader
+const int gl_MaxVertexUniformComponents = 512;          // ARB_vertex_shader
+const int gl_MaxVaryingFloats = 32;                     // ARB_vertex_shader
+const int gl_MaxVertexTextureImageUnits = 0;            // ARB_vertex_shader
+const int gl_MaxCombinedTextureImageUnits = 2;          // ARB_vertex_shader
+const int gl_MaxTextureImageUnits = 2;                  // ARB_fragment_shader
+const int gl_MaxFragmentUniformComponents = 64;         // ARB_fragment_shader
+const int gl_MaxDrawBuffers = 1;                        // proposed ARB_draw_buffers
 
 // 
 // As an aid to accessing OpenGL processing state, the following uniform variables are built into
@@ -42,8 +44,30 @@ const int gl_MaxFragmentUniformFloatsGL2 = 64;          // GL2_fragment_shader
 uniform mat4 gl_ModelViewMatrix;
 uniform mat4 gl_ProjectionMatrix;
 uniform mat4 gl_ModelViewProjectionMatrix;
-uniform mat3 gl_NormalMatrix;                           // derived
-uniform mat4 gl_TextureMatrix[gl_MaxTextureCoordsARB];
+uniform mat4 gl_TextureMatrix[gl_MaxTextureCoords];
+
+//
+// Derived matrix state that provides inverse and transposed versions
+// of the matrices above. Poorly conditioned matrices may result
+// in unpredictable values in their inverse forms.
+//
+uniform mat3 gl_NormalMatrix; // transpose of the inverse of the
+                              // upper leftmost 3x3 of gl_ModelViewMatrix
+
+uniform mat4 gl_ModelViewMatrixInverse;
+uniform mat4 gl_ProjectionMatrixInverse;
+uniform mat4 gl_ModelViewProjectionMatrixInverse;
+uniform mat4 gl_TextureMatrixInverse[gl_MaxTextureCoords];
+
+uniform mat4 gl_ModelViewMatrixTranspose;
+uniform mat4 gl_ProjectionMatrixTranspose;
+uniform mat4 gl_ModelViewProjectionMatrixTranspose;
+uniform mat4 gl_TextureMatrixTranspose[gl_MaxTextureCoords];
+
+uniform mat4 gl_ModelViewMatrixInverseTranspose;
+uniform mat4 gl_ProjectionMatrixInverseTranspose;
+uniform mat4 gl_ModelViewProjectionMatrixInverseTranspose;
+uniform mat4 gl_TextureMatrixInverseTranspose[gl_MaxTextureCoords];
 
 // 
 // Normal scaling p. 39.
@@ -150,18 +174,18 @@ uniform gl_LightProducts gl_FrontLightProduct[gl_MaxLights];
 uniform gl_LightProducts gl_BackLightProduct[gl_MaxLights];
 
 // 
-// Textureg Environment and Generation, p. 152, p. 40-42.
+// Texture Environment and Generation, p. 152, p. 40-42.
 // 
 
-uniform vec4 gl_TextureEnvColor[gl_MaxFragmentTextureUnitsGL2];
-uniform vec4 gl_EyePlaneS[gl_MaxTextureCoordsARB];
-uniform vec4 gl_EyePlaneT[gl_MaxTextureCoordsARB];
-uniform vec4 gl_EyePlaneR[gl_MaxTextureCoordsARB];
-uniform vec4 gl_EyePlaneQ[gl_MaxTextureCoordsARB];
-uniform vec4 gl_ObjectPlaneS[gl_MaxTextureCoordsARB];
-uniform vec4 gl_ObjectPlaneT[gl_MaxTextureCoordsARB];
-uniform vec4 gl_ObjectPlaneR[gl_MaxTextureCoordsARB];
-uniform vec4 gl_ObjectPlaneQ[gl_MaxTextureCoordsARB];
+uniform vec4 gl_TextureEnvColor[gl_MaxTextureImageUnits];
+uniform vec4 gl_EyePlaneS[gl_MaxTextureCoords];
+uniform vec4 gl_EyePlaneT[gl_MaxTextureCoords];
+uniform vec4 gl_EyePlaneR[gl_MaxTextureCoords];
+uniform vec4 gl_EyePlaneQ[gl_MaxTextureCoords];
+uniform vec4 gl_ObjectPlaneS[gl_MaxTextureCoords];
+uniform vec4 gl_ObjectPlaneT[gl_MaxTextureCoords];
+uniform vec4 gl_ObjectPlaneR[gl_MaxTextureCoords];
+uniform vec4 gl_ObjectPlaneQ[gl_MaxTextureCoords];
 
 // 
 // Fog p. 161
@@ -172,7 +196,7 @@ struct gl_FogParameters {
     float density;
     float start;
     float end;
-    float scale;                                        // 1 / (gl_FogEnd - gl_FogStart)
+    float scale;    // Derived:    1.0 / (end - start)
 };
 
 uniform gl_FogParameters gl_Fog;
@@ -207,13 +231,13 @@ uniform gl_FogParameters gl_Fog;
 // 
 
 // 
-// Angle and Trigonometry Functions
+// 8.1 Angle and Trigonometry Functions
 // 
 // Function parameters specified as angle are assumed to be in units of radians. In no case will
 // any of these functions result in a divide by zero error. If the divisor of a ratio is 0, then
 // results will be undefined.
 // 
-// These all operate component-wise.
+// These all operate component-wise. The description is per component.
 // 
 
 // 
@@ -375,13 +399,15 @@ vec4 atan (vec4 y_over_x) {
 }
 
 // 
-// Exponential Functions
+// 8.2 Exponential Functions
 // 
-// These all operate component-wise.
+// These all operate component-wise. The description is per component.
 // 
 
 // 
-// Returns x raised to the y power, i.e., x^y
+// Returns x raised to the y power, i.e., x^y.
+// Results are undefined if x < 0.
+// Results are undefined if x = 0 and y <= 0.
 // 
 // XXX
 float pow (float x, float y) {
@@ -395,6 +421,42 @@ vec3 pow (vec3 x, vec3 y) {
 }
 vec4 pow (vec4 x, vec4 y) {
     return vec4 (pow (x.x, y.x), pow (x.y, y.y), pow (x.z, y.z), pow (x.w, y.w));
+}
+
+// 
+// Returns the natural exponentiation of x, i.e., e^x.
+// 
+
+float exp (float x) {
+    return pow (2.71828183, x);
+}
+vec2 exp (vec2 x) {
+    return vec2 (exp (x.x), exp (x.y));
+}
+vec3 exp (vec3 x) {
+    return vec3 (exp (x.x), exp (x.y), exp (x.z));
+}
+vec4 exp (vec4 x) {
+    return vec4 (exp (x.x), exp (x.y), exp (x.z), exp (x.w));
+}
+
+// 
+// Returns the natural logarithm of x, i.e., returns the value y which satisfies the equation
+// x = e^y.
+// Results are undefined if x <= 0.
+// 
+
+float log (float x) {
+    return log2 (x) / log2 (2.71828183);
+}
+vec2 log (vec2 x) {
+    return vec2 (log (x.x), log (x.y));
+}
+vec3 log (vec3 x) {
+    return vec3 (log (x.x), log (x.y), log (x.z));
+}
+vec4 log (vec4 x) {
+    return vec4 (log (x.x), log (x.y), log (x.z), log (x.w));
 }
 
 // 
@@ -415,7 +477,9 @@ vec4 exp2 (vec4 x) {
 }
 
 // 
-// Returns the base 2 log of x, i.e., returns the value y which satisfies the equation x = 2^y
+// Returns the base 2 logarithm of x, i.e., returns the value y which satisfies the equation
+// x = 2^y.
+// Results are undefined if x <= 0.
 // 
 // XXX
 float log2 (float x) {
@@ -432,7 +496,8 @@ vec4 log2 (vec4 x) {
 }
 
 // 
-// Returns the positive square root of x
+// Returns the positive square root of x.
+// Results are undefined if x < 0.
 // 
 
 float sqrt (float x) {
@@ -449,7 +514,8 @@ vec4 sqrt (vec4 x) {
 }
 
 // 
-// Returns the reciprocal of the positive square root of x
+// Returns the reciprocal of the positive square root of x.
+// Results are undefined if x <= 0.
 // 
 
 float inversesqrt (float x) {
@@ -466,9 +532,9 @@ vec4 inversesqrt (vec4 x) {
 }
 
 // 
-// Common Functions
+// 8.3 Common Functions
 // 
-// These all operate component-wise.
+// These all operate component-wise. The description is per component.
 // 
 
 // 
@@ -695,11 +761,11 @@ vec4 mix (vec4 x, vec4 y, vec4 a) {
 }
 
 // 
-// Returns 0.0 if x <= edge, otherwise it returns 1.0
+// Returns 0.0 if x < edge, otherwise it returns 1.0
 // 
 
 float step (float edge, float x) {
-    return x <= edge ? 0.0 : 1.0;
+    return x < edge ? 0.0 : 1.0;
 }
 vec2 step (float edge, vec2 x) {
     return vec2 (step (edge, x.x), step (edge, x.y));
@@ -757,7 +823,7 @@ vec4 smoothstep (vec4 edge0, vec4 edge1, vec4 x) {
 }
 
 // 
-// Geometric Functions
+// 8.4 Geometric Functions
 // 
 // These operate on vectors as vectors, not component-wise.
 // 
@@ -860,8 +926,8 @@ vec4 faceforward (vec4 N, vec4 I, vec4 Nref) {
 
 // 
 // For the incident vector I and surface orientation N, returns the reflection direction:
-// result = I – 2 * dot (N, I) * N
-// N should be normalized in order to achieve the desired result.
+// result = I - 2 * dot (N, I) * N
+// N must already be normalized in order to achieve the desired result.
 
 float reflect (float I, float N) {
     return I - 2.0 * dot (N, I) * N;
@@ -876,8 +942,47 @@ vec4 reflect (vec4 I, vec4 N) {
     return I - 2.0 * dot (N, I) * N;
 }
 
+//
+// For the incident vector I and surface normal N, and the ratio of inidices of refraction eta,
+// return the refraction vector. The returned result is computed by
+//
+// k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I))
+// if (k < 0.0)
+//   result = genType (0.0)
+// else
+//   result = eta * I - (eta * dot (N, I) + sqrt (k)) * N
+//
+// The input parameters for the incident vector I and the surface normal N must already be
+// normalized to get the desired results.
+//
+
+float refract (float I, float N, float eta) {
+    const float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
+    if (k < 0.0)
+        return 0.0;
+    return eta * I - (eta * dot (N, I) + sqrt (k)) * N;
+}
+vec2 refract (vec2 I, vec2 N, float eta) {
+    const float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
+    if (k < 0.0)
+        return vec2 (0.0);
+    return eta * I - (eta * dot (N, I) + sqrt (k)) * N;
+}
+vec3 refract (vec3 I, vec3 N, float eta) {
+    const float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
+    if (k < 0.0)
+        return vec3 (0.0);
+    return eta * I - (eta * dot (N, I) + sqrt (k)) * N;
+}
+vec4 refract (vec4 I, vec4 N, float eta) {
+    const float k = 1.0 - eta * eta * (1.0 - dot (N, I) * dot (N, I));
+    if (k < 0.0)
+        return vec4 (0.0);
+    return eta * I - (eta * dot (N, I) + sqrt (k)) * N;
+}
+
 // 
-// Matrix Functions
+// 8.5 Matrix Functions
 // 
 
 // 
@@ -909,7 +1014,7 @@ mat4 matrixCompMult (mat4 x, mat4 y) {
 }
 
 // 
-// Vector Relational Functions
+// 8.6 Vector Relational Functions
 // 
 // Relational and equality operators (<, <=, >, >=, ==, !=) are defined (or reserved) to produce
 // scalar Boolean results.
@@ -1096,7 +1201,7 @@ bvec4 not (bvec4 x) {
 }
 
 // 
-// Texture Lookup Functions
+// 8.7 Texture Lookup Functions
 // 
 // Texture lookup functions are available to both vertex and fragment shaders. However, level
 // of detail is not computed by fixed functionality for vertex shaders, so there are some
@@ -1106,9 +1211,11 @@ bvec4 not (bvec4 x) {
 // levels, depth comparison, and so on are also defined by OpenGL API calls. Such properties are
 // taken into account as the texture is accessed via the built-in functions defined below.
 // 
-// If a non-shadow texture call is made to a sampler whose texture has depth comparisons enabled,
-// then results are undefined. If a shadow texture call is made to a sampler whose texture does not
-// have depth comparisions enabled, the results are also undefined.
+// If a non-shadow texture call is made to a sampler that represents a depth texture with depth
+// comparisons turned on, then results are undefined. If a shadow texture call is made to a sampler
+// that represents a depth texture with depth comparisions turned off, the results are undefined.
+// If a shadow texture call is made to a sampler that does not represent a depth texture, then
+// results are undefined.
 // 
 // In all functions below, the bias parameter is optional for fragment shaders. The bias parameter
 // is not accepted in a vertex shader. For a fragment shader, if bias is present, it is added to
@@ -1201,14 +1308,15 @@ vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord) {
 }
 
 // 
-// Noise Functions
+// 8.9 Noise Functions
 // 
 // Noise functions are available to both fragment and vertex shaders. They are stochastic functions
 // that can be used to increase visual complexity. Values returned by the following noise functions
 // give the appearance of randomness, but are not truly random. The noise functions below are
 // defined to have the following characteristics:
 // 
-// • The return value(s) are always in the range [-1,1]
+// - The return value(s) are always in the range [-1,1], and cover at least the range [-0.6, 0.6],
+//   with a gaussian-like distribution.
 // • The return value(s) have an overall average of 0.0
 // • They are repeatable, in that a particular input value will always produce the same return value
 // • They are statistically invariant under rotation (i.e., no matter how the domain is rotated, it
@@ -1216,8 +1324,7 @@ vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord) {
 // • They have a statistical invariance under translation (i.e., no matter how the domain is
 //   translated, it has the same statistical character)
 // • They typically give different results under translation.
-// • They have a narrow bandpass limit in frequency (i.e., it has no visible features larger or
-//   smaller than a certain narrow size range)
+// - The spatial frequency is narrowly concentrated, centered somewhere between 0.5 to 1.0.
 // 
 
 // 
