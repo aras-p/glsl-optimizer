@@ -1,4 +1,4 @@
-/* $Id: glapi.h,v 1.6 1999/12/15 15:02:31 brianp Exp $ */
+/* $Id: glapi.h,v 1.7 1999/12/15 15:03:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -67,6 +67,10 @@ _glapi_get_proc_offset(const char *funcName);
 
 extern const GLvoid *
 _glapi_get_proc_address(const char *funcName);
+
+
+extern const char *
+_glapi_get_proc_name(GLuint offset);
 
 
 #endif
