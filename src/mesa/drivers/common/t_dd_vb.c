@@ -74,11 +74,18 @@ void TAG(translate_vertex)(GLcontext *ctx,
    UNVIEWPORT_VARS;
 
    if (format == TINY_VERTEX_FORMAT) {
-      dst->win[0] =   s[0]  * src->v.x + s[12];
-      dst->win[1] =   s[5]  * src->v.y + s[13];
-      dst->win[2] =   s[10] * src->v.z + s[14];
-      dst->win[3] =   1.0;
-      
+      if (HAVE_HW_VIEWPORT) {
+	 dst->win[0] = s[0]  * src->v.x + s[12];
+	 dst->win[1] = s[5]  * src->v.y + s[13];
+	 dst->win[2] = s[10] * src->v.z + s[14];
+	 dst->win[3] = 1.0;
+      } else {
+	 dst->win[0] = UNVIEWPORT_X( src->v.x );
+	 dst->win[1] = UNVIEWPORT_Y( src->v.y );
+	 dst->win[2] = UNVIEWPORT_Z( src->v.z );
+	 dst->win[3] = 1.0;
+      }
+
       dst->color[0] = src->tv.color.red;
       dst->color[1] = src->tv.color.green;
       dst->color[2] = src->tv.color.blue;
@@ -88,10 +95,17 @@ void TAG(translate_vertex)(GLcontext *ctx,
       GLfloat oow = (HAVE_HW_DIVIDE) ? 1.0 / src->v.w : src->v.w;
 
       if (HAVE_HW_VIEWPORT) {
-	 dst->win[0] = s[0]  * src->v.x * oow + s[12];
-	 dst->win[1] = s[5]  * src->v.y * oow + s[13];
-	 dst->win[2] = s[10] * src->v.z * oow + s[14];
-	 dst->win[3] = oow;
+	 if (HAVE_HW_DIVIDE) {
+	    dst->win[0] = s[0]  * src->v.x * oow + s[12];
+	    dst->win[1] = s[5]  * src->v.y * oow + s[13];
+	    dst->win[2] = s[10] * src->v.z * oow + s[14];
+	    dst->win[3] = oow;
+	 } else {
+	    dst->win[0] = s[0]  * src->v.x + s[12];
+	    dst->win[1] = s[5]  * src->v.y + s[13];
+	    dst->win[2] = s[10] * src->v.z + s[14];
+	    dst->win[3] = oow;
+	 }
       } else {
 	 dst->win[0] = UNVIEWPORT_X( src->v.x );
 	 dst->win[1] = UNVIEWPORT_Y( src->v.y );
@@ -111,7 +125,7 @@ void TAG(translate_vertex)(GLcontext *ctx,
       dst->fog = src->v.color.alpha/255.0;
 
       if (HAVE_PTEX_VERTICES && 
-	  ((HAVE_TEX2_VERTICES && format == PROJ_TEX3_VERTEX_FORMAT) ||
+	  ((HAVE_TEX2_VERTICES && fbormat == PROJ_TEX3_VERTEX_FORMAT) ||
 	   (format == PROJ_TEX1_VERTEX_FORMAT))) {
 
 	 dst->texcoord[0][0] = src->pv.u0;

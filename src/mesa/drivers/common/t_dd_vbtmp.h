@@ -103,6 +103,7 @@
 #error "can't cope with this combination"
 #endif
 
+
 #if (HAVE_HW_DIVIDE || DO_SPEC || DO_TEX0 || DO_FOG || !HAVE_TINY_VERTICES)
 
 static void TAG(emit)( GLcontext *ctx,
@@ -372,10 +373,6 @@ static void TAG(emit)( GLcontext *ctx,
 	    }
 	 }
       }
-   }
-
-   if (DO_PTEX && !HAVE_PTEX_VERTICES) {
-      INVALIDATE_STORED_VERTICES();
    }
 }
 #else 
