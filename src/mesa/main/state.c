@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.92 2002/09/27 02:45:38 brianp Exp $ */
+/* $Id: state.c,v 1.93 2002/10/02 21:44:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -80,7 +80,7 @@ static int
 generic_noop(void)
 {
 #ifdef DEBUG
-   _mesa_problem(NULL, "undefined function dispatch");
+   _mesa_problem(NULL, "User called no-op dispatch function");
 #endif
    return 0;
 }
@@ -542,23 +542,21 @@ update_polygon( GLcontext *ctx )
       ctx->_TriangleCaps |= DD_TRI_CULL_FRONT_BACK;
 
    /* Any Polygon offsets enabled? */
-   ctx->Polygon._OffsetAny = GL_FALSE;
    if (ctx->Polygon.OffsetPoint ||
        ctx->Polygon.OffsetLine ||
        ctx->Polygon.OffsetFill) {
       ctx->_TriangleCaps |= DD_TRI_OFFSET;
-      ctx->Polygon._OffsetAny = GL_TRUE;
    }
 }
 
 static void
 calculate_model_project_matrix( GLcontext *ctx )
 {
-      _math_matrix_mul_matrix( &ctx->_ModelProjectMatrix,
-			       ctx->ProjectionMatrixStack.Top,
-			       ctx->ModelviewMatrixStack.Top );
+   _math_matrix_mul_matrix( &ctx->_ModelProjectMatrix,
+                            ctx->ProjectionMatrixStack.Top,
+                            ctx->ModelviewMatrixStack.Top );
 
-      _math_matrix_analyse( &ctx->_ModelProjectMatrix );
+   _math_matrix_analyse( &ctx->_ModelProjectMatrix );
 }
 
 static void

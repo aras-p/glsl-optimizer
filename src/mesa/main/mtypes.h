@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.89 2002/09/27 02:45:37 brianp Exp $ */
+/* $Id: mtypes.h,v 1.90 2002/10/02 21:44:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -692,7 +692,7 @@ struct gl_polygon_attrib {
    GLenum FrontFace;		/* Either GL_CW or GL_CCW */
    GLenum FrontMode;		/* Either GL_POINT, GL_LINE or GL_FILL */
    GLenum BackMode;		/* Either GL_POINT, GL_LINE or GL_FILL */
-   GLboolean _FrontBit;		/*  */
+   GLboolean _FrontBit;		/* 0=GL_CCW, 1=GL_CW */
    GLboolean CullFlag;		/* Culling on/off flag */
    GLboolean SmoothFlag;	/* True if GL_POLYGON_SMOOTH is enabled */
    GLboolean StippleFlag;	/* True if GL_POLYGON_STIPPLE is enabled */
@@ -703,7 +703,6 @@ struct gl_polygon_attrib {
    GLboolean OffsetPoint;	/* Offset in GL_POINT mode */
    GLboolean OffsetLine;	/* Offset in GL_LINE mode */
    GLboolean OffsetFill;	/* Offset in GL_FILL mode */
-   GLboolean _OffsetAny;
 };
 
 

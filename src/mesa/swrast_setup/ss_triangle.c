@@ -1,4 +1,4 @@
-/* $Id: ss_triangle.c,v 1.15 2001/07/17 19:39:32 keithw Exp $ */
+/* $Id: ss_triangle.c,v 1.16 2002/10/02 21:44:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -265,7 +265,9 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    GLuint ind = 0;
 
-   if (ctx->Polygon._OffsetAny)
+   if (ctx->Polygon.OffsetPoint ||
+       ctx->Polygon.OffsetLine ||
+       ctx->Polygon.OffsetFill)
       ind |= SS_OFFSET_BIT;
 
    if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
