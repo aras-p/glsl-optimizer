@@ -19,9 +19,9 @@ INCDIR = [---.include],[-.main],[-.glapi]
 LIBDIR = [---.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
 
-SOURCES = ss_context.c ss_triangle.c ss_vb.c
+SOURCES = ss_context.c ss_triangle.c
 
-OBJECTS =  ss_context.obj,ss_triangle.obj,ss_vb.obj
+OBJECTS =  ss_context.obj,ss_triangle.obj
 ##### RULES #####
 
 VERSION=Mesa V3.4
@@ -37,4 +37,3 @@ clean :
 
 ss_context.obj : ss_context.c
 ss_triangle.obj : ss_triangle.c
-ss_vb.obj : ss_vb.c
