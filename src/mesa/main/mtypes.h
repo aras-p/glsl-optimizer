@@ -625,6 +625,7 @@ struct gl_enable_attrib
    GLboolean VertexProgramTwoSide;
    /* GL_ARB_point_sprite / GL_NV_point_sprite */
    GLboolean PointSprite;
+   GLboolean FragmentShaderATI;
 };
 
 
@@ -1659,6 +1660,21 @@ struct fp_machine
    GLuint CondCodes[4];
 };
 
+/**
+ * ATI_fragment_shader runtime state
+ */
+#define ATI_FS_INPUT_PRIMARY 0
+#define ATI_FS_INPUT_SECONDARY 1
+
+/* 6 register sets - 2 inputs (primary, secondary) */
+struct atifs_machine
+{
+   GLfloat Registers[6][4];
+   GLfloat PrevPassRegisters[6][4];
+   GLfloat Inputs[2][4];
+   GLuint pass;
+};
+
 
 /**
  * Names of the various vertex/fragment register files
@@ -1680,7 +1696,7 @@ enum register_file
 /** Vertex and fragment instructions */
 struct vp_instruction;
 struct fp_instruction;
-
+struct atifs_instruction;
 struct program_parameter_list;
 
 
@@ -1738,6 +1754,13 @@ struct fragment_program
 #endif
 };
 
+struct ati_fragment_shader
+{
+  struct program Base;
+  struct atifs_instruction *Instructions;
+  GLfloat Constants[8][4];
+  GLint cur_pass;
+};
 
 /**
  * State common to vertex and fragment programs.
@@ -1799,6 +1822,17 @@ struct gl_fragment_program_state
 #endif
 };
 
+/*
+ * State for GL_fragment_shader
+ */
+struct gl_ati_fragment_shader_state
+{
+  GLboolean Enabled;
+  GLboolean _Enabled;
+  GLboolean Compiling;
+  struct atifs_machine Machine;            /* machine state */
+  struct ati_fragment_shader *Current;
+};
 
 /*
  * State for GL_ARB_occlusion_query
@@ -1844,6 +1878,9 @@ struct gl_shared_state
 #endif
 #if FEATURE_ARB_fragment_program
    struct program *DefaultFragmentProgram;
+#endif
+#if FEATURE_ATI_fragment_shader
+   struct program *DefaultFragmentShader;
 #endif
    /*@}*/
 
@@ -2064,6 +2101,7 @@ struct gl_extensions
    GLboolean APPLE_packed_pixels;
    GLboolean ATI_texture_mirror_once;
    GLboolean ATI_texture_env_combine3;
+   GLboolean ATI_fragment_shader;
    GLboolean HP_occlusion_test;
    GLboolean IBM_rasterpos_clip;
    GLboolean IBM_multimode_draw_arrays;
@@ -2476,6 +2514,7 @@ struct __GLcontextRec
    struct gl_program_state Program;        /**< for vertex or fragment progs */
    struct gl_vertex_program_state VertexProgram;   /**< GL_NV_vertex_program */
    struct gl_fragment_program_state FragmentProgram;  /**< GL_NV_fragment_program */
+   struct gl_ati_fragment_shader_state ATIFragmentShader;  /**< GL_ATI_fragment_shader */
 
    struct gl_occlusion_state Occlusion;  /**< GL_ARB_occlusion_query */
    /*@}*/

@@ -859,6 +859,11 @@ alloc_shared_state( GLcontext *ctx )
    if (!ss->DefaultFragmentProgram)
       goto cleanup;
 #endif
+#if FEATURE_ATI_fragment_shader
+   ss->DefaultFragmentShader = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_SHADER_ATI, 0);
+   if (!ss->DefaultFragmentShader)
+      goto cleanup;
+#endif
 
    ss->BufferObjects = _mesa_NewHashTable();
 
@@ -908,6 +913,10 @@ alloc_shared_state( GLcontext *ctx )
 #if FEATURE_ARB_fragment_program
    if (ss->DefaultFragmentProgram)
       ctx->Driver.DeleteProgram(ctx, ss->DefaultFragmentProgram);
+#endif
+#if FEATURE_ATI_fragment_shader
+   if (ss->DefaultFragmentShader)
+      ctx->Driver.DeleteProgram(ctx, ss->DefaultFragmentShader);
 #endif
 #if FEATURE_ARB_vertex_buffer_object
    if (ss->BufferObjects)
@@ -1002,6 +1011,9 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
 #endif
 #if FEATURE_ARB_fragment_program
    _mesa_delete_program(ctx, ss->DefaultFragmentProgram);
+#endif
+#if FEATURE_ATI_fragment_shader
+   _mesa_delete_program(ctx, ss->DefaultFragmentShader);
 #endif
 
 #if FEATURE_ARB_vertex_buffer_object
@@ -1100,6 +1112,7 @@ _mesa_init_constants( GLcontext *ctx )
    ctx->Const.MaxFragmentProgramTexInstructions = MAX_FRAGMENT_PROGRAM_TEX_INSTRUCTIONS;
    ctx->Const.MaxFragmentProgramTexIndirections = MAX_FRAGMENT_PROGRAM_TEX_INDIRECTIONS;
 #endif
+
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
    ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
 
@@ -1385,6 +1398,22 @@ add_newer_entrypoints(void)
       { "glActiveStencilFaceEXT", _gloffset_ActiveStencilFaceEXT },
       /* GL_ARB_draw_buffers */
       { "glDrawBuffersARB", _gloffset_DrawBuffersARB },
+#if FEATURE_ATI_fragment_shader
+      { "glGenFragmentShadersATI", _gloffset_GenFragmentShadersATI },
+      { "glBindFragmentShaderATI", _gloffset_BindFragmentShaderATI },
+      { "glDeleteFragmentShaderATI", _gloffset_DeleteFragmentShaderATI },
+      { "glBeginFragmentShaderATI", _gloffset_BeginFragmentShaderATI },
+      { "glEndFragmentShaderATI", _gloffset_EndFragmentShaderATI },
+      { "glPassTexCoordATI", _gloffset_PassTexCoordATI },
+      { "glSampleMapATI", _gloffset_SampleMapATI },
+      { "glColorFragmentOp1ATI", _gloffset_ColorFragmentOp1ATI },
+      { "glColorFragmentOp2ATI", _gloffset_ColorFragmentOp2ATI },
+      { "glColorFragmentOp3ATI", _gloffset_ColorFragmentOp3ATI },
+      { "glAlphaFragmentOp1ATI", _gloffset_AlphaFragmentOp1ATI },
+      { "glAlphaFragmentOp2ATI", _gloffset_AlphaFragmentOp2ATI },
+      { "glAlphaFragmentOp3ATI", _gloffset_AlphaFragmentOp3ATI },
+      { "glSetFragmentShaderConstantATI", _gloffset_SetFragmentShaderConstantATI },
+#endif
    };
    
    for (i = 0; i < Elements(newer_entrypoints); i++ ) {

@@ -37,6 +37,9 @@
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 #include "arbprogram.h"
 #endif
+#if FEATURE_ATI_fragment_shader
+#include "atifragshader.h"
+#endif
 #include "attrib.h"
 #include "blend.h"
 #if FEATURE_ARB_vertex_buffer_object
@@ -745,6 +748,24 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->GetAttribLocationARB = _mesa_GetAttribLocationARB;
 #endif
 #endif    /* FEATURE_ARB_shader_objects */
+
+  /* GL_ATI_fragment_shader */
+#if FEATURE_ATI_fragment_shader
+   exec->GenFragmentShadersATI = _mesa_GenFragmentShadersATI;
+   exec->BindFragmentShaderATI = _mesa_BindFragmentShaderATI;
+   exec->DeleteFragmentShaderATI = _mesa_DeleteFragmentShaderATI;
+   exec->BeginFragmentShaderATI = _mesa_BeginFragmentShaderATI;
+   exec->EndFragmentShaderATI = _mesa_EndFragmentShaderATI;
+   exec->PassTexCoordATI = _mesa_PassTexCoordATI;
+   exec->SampleMapATI = _mesa_SampleMapATI;
+   exec->ColorFragmentOp1ATI = _mesa_ColorFragmentOp1ATI;
+   exec->ColorFragmentOp2ATI = _mesa_ColorFragmentOp2ATI;
+   exec->ColorFragmentOp3ATI = _mesa_ColorFragmentOp3ATI;
+   exec->AlphaFragmentOp1ATI = _mesa_AlphaFragmentOp1ATI;
+   exec->AlphaFragmentOp2ATI = _mesa_AlphaFragmentOp2ATI;
+   exec->AlphaFragmentOp3ATI = _mesa_AlphaFragmentOp3ATI;
+   exec->SetFragmentShaderConstantATI = _mesa_SetFragmentShaderConstantATI;
+#endif
 }
 
 
@@ -881,6 +902,8 @@ update_program(GLcontext *ctx)
       && ctx->VertexProgram.Current->Instructions;
    ctx->FragmentProgram._Enabled = ctx->FragmentProgram.Enabled
       && ctx->FragmentProgram.Current->Instructions;
+   ctx->ATIFragmentShader._Enabled = ctx->ATIFragmentShader.Enabled
+      && ctx->ATIFragmentShader.Current->Instructions;
 }
 
 

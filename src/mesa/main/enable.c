@@ -993,6 +993,15 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->VertexProgram.CallbackEnabled = state;
          break;
 
+#if FEATURE_ATI_fragment_shader
+      case GL_FRAGMENT_SHADER_ATI:
+        CHECK_EXTENSION(ATI_fragment_shader, cap);
+	if (ctx->ATIFragmentShader.Enabled == state)
+	  return;
+	FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+	ctx->ATIFragmentShader.Enabled = state;
+        break;
+#endif
       default:
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "%s(0x%x)", state ? "glEnable" : "glDisable", cap);
@@ -1430,7 +1439,11 @@ _mesa_IsEnabled( GLenum cap )
       case GL_VERTEX_PROGRAM_CALLBACK_MESA:
          CHECK_EXTENSION(MESA_program_debug);
          return ctx->VertexProgram.CallbackEnabled;
-
+#if FEATURE_ATI_fragment_shader
+      case GL_FRAGMENT_SHADER_ATI:
+	 CHECK_EXTENSION(ATI_fragment_shader);
+	 return ctx->ATIFragmentShader.Enabled;
+#endif /* FEATURE_ATI_fragment_shader */
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(0x%x)", (int) cap);
 	 return GL_FALSE;

@@ -811,5 +811,19 @@
 #define _gloffset_VertexAttrib4svNV 779
 #define _gloffset_VertexAttrib4ubNV 780
 #define _gloffset_VertexAttrib4ubvNV 781
+#define _gloffset_GenFragmentShadersATI 782
+#define _gloffset_BindFragmentShaderATI 783
+#define _gloffset_DeleteFragmentShaderATI 784
+#define _gloffset_BeginFragmentShaderATI 785
+#define _gloffset_EndFragmentShaderATI 786
+#define _gloffset_PassTexCoordATI 787
+#define _gloffset_SampleMapATI 788
+#define _gloffset_ColorFragmentOp1ATI 789
+#define _gloffset_ColorFragmentOp2ATI 790
+#define _gloffset_ColorFragmentOp3ATI 791
+#define _gloffset_AlphaFragmentOp1ATI 792
+#define _gloffset_AlphaFragmentOp2ATI 793
+#define _gloffset_AlphaFragmentOp3ATI 794
+#define _gloffset_SetFragmentShaderConstantATI 795
 
 #endif

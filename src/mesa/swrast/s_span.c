@@ -36,6 +36,7 @@
 #include "macros.h"
 #include "imports.h"
 
+#include "s_atifragshader.h"
 #include "s_alpha.h"
 #include "s_alphabuf.h"
 #include "s_blend.h"
@@ -127,7 +128,7 @@ _swrast_span_default_texcoords( GLcontext *ctx, struct sw_span *span )
    GLuint i;
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
       const GLfloat *tc = ctx->Current.RasterTexCoords[i];
-      if (ctx->FragmentProgram._Enabled) {
+      if (ctx->FragmentProgram._Enabled || ctx->ATIFragmentShader._Enabled) {
          COPY_4V(span->tex[i], tc);
       }
       else if (tc[3] > 0.0F) {
@@ -1153,6 +1154,8 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       if (ctx->FragmentProgram._Enabled)
          /* XXX interpolate depth values here??? */
          _swrast_exec_fragment_program( ctx, span );
+      else if (ctx->ATIFragmentShader._Enabled)
+         _swrast_exec_fragment_shader( ctx, span );
       else if (ctx->Texture._EnabledUnits)
          _swrast_texture_span( ctx, span );
 
@@ -1225,6 +1228,8 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
 
       if (ctx->FragmentProgram._Enabled)
          _swrast_exec_fragment_program( ctx, span );
+      else if (ctx->ATIFragmentShader._Enabled)
+         _swrast_exec_fragment_shader( ctx, span );
       else if (ctx->Texture._EnabledUnits)
          _swrast_texture_span( ctx, span );
    }

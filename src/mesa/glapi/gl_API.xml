@@ -9300,6 +9300,119 @@ glx:
 <!-- Extension number 237 is a GLX extension. -->
 <!-- Extension number 238 is a GLX extension. -->
 <!-- Extension number 242 is a WGL extension. -->
+
+<category name="GL_ATI_fragment_shader" number="245">
+   <function name="GenFragmentShadersATI" offset="782">
+      <return type="GLuint"/>
+      <param name="range" type="GLuint"/>
+    </function>
+    
+    <function name="BindFragmentShaderATI" offset="783">
+      <param name="id" type="GLuint"/>
+    </function>
+
+    <function name="DeleteFragmentShaderATI" offset="784">
+      <param name="id" type="GLuint"/>
+    </function>
+
+    <function name="BeginFragmentShaderATI" offset="785">
+    </function>
+
+    <function name="EndFragmentShaderATI" offset="786">
+    </function>
+    
+    <function name="PassTexCoordATI" offset="787">
+      <param name="dst" type="GLuint"/>
+      <param name="coord" type="GLuint"/>
+      <param name="swizzle" type="GLenum"/>
+    </function>
+
+    <function name="SampleMapATI" offset="788">
+      <param name="dst" type="GLuint"/>
+      <param name="interp" type="GLuint"/>
+      <param name="swizzle" type="GLenum"/>
+    </function>
+
+    <function name="ColorFragmentOp1ATI" offset="789">
+      <param name="op" type="GLenum"/>
+      <param name="dst" type="GLuint"/>
+      <param name="dstMask" type="GLuint"/>
+      <param name="dstMod" type="GLuint"/>
+      <param name="arg1" type="GLuint"/>
+      <param name="arg1Rep" type="GLuint"/>
+      <param name="arg1Mod" type="GLuint"/>
+    </function>
+
+   <function name="ColorFragmentOp2ATI" offset="790">
+      <param name="op" type="GLenum"/>
+      <param name="dst" type="GLuint"/>
+      <param name="dstMask" type="GLuint"/>
+      <param name="dstMod" type="GLuint"/>
+      <param name="arg1" type="GLuint"/>
+      <param name="arg1Rep" type="GLuint"/>
+      <param name="arg1Mod" type="GLuint"/>
+      <param name="arg2" type="GLuint"/>
+      <param name="arg2Rep" type="GLuint"/>
+      <param name="arg2Mod" type="GLuint"/>
+    </function>
+
+   <function name="ColorFragmentOp3ATI" offset="791">
+      <param name="op" type="GLenum"/>
+      <param name="dst" type="GLuint"/>
+      <param name="dstMask" type="GLuint"/>
+      <param name="dstMod" type="GLuint"/>
+      <param name="arg1" type="GLuint"/>
+      <param name="arg1Rep" type="GLuint"/>
+      <param name="arg1Mod" type="GLuint"/>
+      <param name="arg2" type="GLuint"/>
+      <param name="arg2Rep" type="GLuint"/>
+      <param name="arg2Mod" type="GLuint"/>
+      <param name="arg3" type="GLuint"/>
+      <param name="arg3Rep" type="GLuint"/>
+      <param name="arg3Mod" type="GLuint"/>
+    </function>
+
+    <function name="AlphaFragmentOp1ATI" offset="792">
+      <param name="op" type="GLenum"/>
+      <param name="dst" type="GLuint"/>
+      <param name="dstMod" type="GLuint"/>
+      <param name="arg1" type="GLuint"/>
+      <param name="arg1Rep" type="GLuint"/>
+      <param name="arg1Mod" type="GLuint"/>
+    </function>
+
+   <function name="AlphaFragmentOp2ATI" offset="793">
+      <param name="op" type="GLenum"/>
+      <param name="dst" type="GLuint"/>
+      <param name="dstMod" type="GLuint"/>
+      <param name="arg1" type="GLuint"/>
+      <param name="arg1Rep" type="GLuint"/>
+      <param name="arg1Mod" type="GLuint"/>
+      <param name="arg2" type="GLuint"/>
+      <param name="arg2Rep" type="GLuint"/>
+      <param name="arg2Mod" type="GLuint"/>
+    </function>
+
+   <function name="AlphaFragmentOp3ATI" offset="794">
+      <param name="op" type="GLenum"/>
+      <param name="dst" type="GLuint"/>
+      <param name="dstMod" type="GLuint"/>
+      <param name="arg1" type="GLuint"/>
+      <param name="arg1Rep" type="GLuint"/>
+      <param name="arg1Mod" type="GLuint"/>
+      <param name="arg2" type="GLuint"/>
+      <param name="arg2Rep" type="GLuint"/>
+      <param name="arg2Mod" type="GLuint"/>
+      <param name="arg3" type="GLuint"/>
+      <param name="arg3Rep" type="GLuint"/>
+      <param name="arg3Mod" type="GLuint"/>
+    </function>
+
+    <function name="SetFragmentShaderConstantATI" offset="795">
+      <param name="dst" type="GLuint"/>
+      <param name="value" type="const GLfloat *"/>
+    </function>
+</category>
 <!-- Extension number 250 is a WGL extension. -->
 <!-- Extension number 251 is a WGL extension. -->
 <!-- Extension number 252 is a WGL extension. -->

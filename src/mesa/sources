@@ -77,6 +77,7 @@ SWRAST_SOURCES = \
 	swrast/s_accum.c \
 	swrast/s_alpha.c \
 	swrast/s_alphabuf.c \
+	swrast/s_atifragshader.c \
 	swrast/s_auxbuffer.c \
 	swrast/s_bitmap.c \
 	swrast/s_blend.c \
@@ -138,6 +139,7 @@ SHADER_SOURCES = \
 	shader/arbprogparse.c \
 	shader/arbprogram.c \
 	shader/arbvertparse.c \
+	shader/atifragshader.c \
 	shader/grammar_mesa.c \
 	shader/nvfragparse.c \
 	shader/nvprogram.c \

@@ -79,6 +79,9 @@
 #include "nvprogram.h"
 #include "program.h"
 #endif
+#if FEATURE_ATI_fragment_shader
+#include "atifragshader.h"
+#endif
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
@@ -316,7 +319,10 @@ typedef enum {
         OPCODE_END_QUERY_ARB,
 	/* GL_ARB_draw_buffers */
         OPCODE_DRAW_BUFFERS_ARB,
-
+	/* GL_ATI_fragment_shader */
+	OPCODE_BIND_FRAGMENT_SHADER_ATI,
+	OPCODE_SET_FRAGMENT_SHADER_CONSTANTS_ATI,
+	
 	/* Vertex attributes -- fallback for when optimized display
 	 * list build isn't active.
 	 */
@@ -789,6 +795,10 @@ _mesa_init_lists( void )
       InstSize[OPCODE_END_QUERY_ARB] = 2;
 #endif
       InstSize[OPCODE_DRAW_BUFFERS_ARB] = 2 + MAX_DRAW_BUFFERS;
+#if FEATURE_ATI_fragment_shader
+      InstSize[OPCODE_BIND_FRAGMENT_SHADER_ATI] = 2;
+      InstSize[OPCODE_SET_FRAGMENT_SHADER_CONSTANTS_ATI] = 6;
+#endif
       InstSize[OPCODE_ATTR_1F_NV] = 3;
       InstSize[OPCODE_ATTR_2F_NV] = 4;
       InstSize[OPCODE_ATTR_3F_NV] = 5;
@@ -4715,6 +4725,41 @@ save_DrawBuffersARB(GLsizei count, const GLenum *buffers)
    }
 }
 
+#if FEATURE_ATI_fragment_shader
+static void GLAPIENTRY
+save_BindFragmentShaderATI(GLuint id)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_BIND_FRAGMENT_SHADER_ATI, 1);
+   if (n) {
+     n[1].ui = id;
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->BindFragmentShaderATI)(id);
+   }
+}
+
+static void GLAPIENTRY
+save_SetFragmentShaderConstantATI(GLuint dst, const GLfloat *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   
+   n = ALLOC_INSTRUCTION( ctx, OPCODE_SET_FRAGMENT_SHADER_CONSTANTS_ATI, 5);
+   if (n) {
+     n[1].ui = dst;
+     n[2].f = value[0];
+     n[3].f = value[1];
+     n[4].f = value[2];
+     n[5].f = value[3];
+   }
+   if (ctx->ExecuteFlag) {
+      (*ctx->Exec->SetFragmentShaderConstantATI)(dst, value);
+   }
+}
+#endif
 
 static void save_Attr1fNV( GLenum attr, GLfloat x )
 {
@@ -6246,6 +6291,21 @@ execute_list( GLcontext *ctx, GLuint list )
 	       ctx->Exec->DrawBuffersARB(n[1].i, buffers);
 	    }
             break;
+#if FEATURE_ATI_fragment_shader
+	 case OPCODE_BIND_FRAGMENT_SHADER_ATI:
+ 	    ctx->Exec->BindFragmentShaderATI(n[1].i);
+	    break;
+	 case OPCODE_SET_FRAGMENT_SHADER_CONSTANTS_ATI:	
+ 	    {
+	       GLfloat values[4];
+	       GLuint i, dst = n[1].ui;
+	       
+	       for (i = 0; i < 4; i++)
+		  values[i] = n[1+i].f;
+	       ctx->Exec->SetFragmentShaderConstantATI(dst, values);
+	    }
+ 	    break;
+#endif
 	 case OPCODE_ATTR_1F_NV:
 	    (*ctx->Exec->VertexAttrib1fNV)(n[1].e, n[2].f);
 	    break;
@@ -7751,6 +7811,12 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->ProgramParameters4fvNV = save_ProgramParameters4fvNV;
    table->TrackMatrixNV = save_TrackMatrixNV;
    table->VertexAttribPointerNV = _mesa_VertexAttribPointerNV;
+#endif
+
+   /* 245. GL_ATI_fragment_shader */
+#if FEATURE_ATI_fragment_shader
+   table->BindFragmentShaderATI = save_BindFragmentShaderATI;
+   table->SetFragmentShaderConstantATI = save_SetFragmentShaderConstantATI;
 #endif
 
    /* 282. GL_NV_fragment_program */

@@ -126,6 +126,7 @@ static const struct {
    { OFF, "GL_ATI_blend_equation_separate",    F(EXT_blend_equation_separate) },
    { OFF, "GL_ATI_texture_env_combine3",       F(ATI_texture_env_combine3)},
    { OFF, "GL_ATI_texture_mirror_once",        F(ATI_texture_mirror_once)},
+   { OFF, "GL_ATI_fragment_shader",            F(ATI_fragment_shader)},
    { OFF, "GL_HP_occlusion_test",              F(HP_occlusion_test) },
    { OFF, "GL_IBM_multimode_draw_arrays",      F(IBM_multimode_draw_arrays) },
    { ON,  "GL_IBM_rasterpos_clip",             F(IBM_rasterpos_clip) },
@@ -206,6 +207,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
 #if FEATURE_ARB_vertex_shader
    ctx->Extensions.ARB_vertex_shader = GL_FALSE; /*GL_TRUE;*/
 #endif
+#endif
+#if FEATURE_ATI_fragment_shader
+   ctx->Extensions.ATI_fragment_shader = GL_TRUE;
 #endif
    ctx->Extensions.ATI_texture_env_combine3 = GL_TRUE;
    ctx->Extensions.ATI_texture_mirror_once = GL_TRUE;

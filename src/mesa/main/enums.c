@@ -765,6 +765,8 @@ static enum_elt all_enums[] =
    { "GL_TEXTURE1_ARB", 0x84C1 },
    { "GL_TEXTURE2_ARB", 0x84C2 },
    { "GL_TEXTURE3_ARB", 0x84C3 },
+   { "GL_TEXTURE4_ARB", 0x84C4 },
+   { "GL_TEXTURE5_ARB", 0x84C5 },
    { "GL_ACTIVE_TEXTURE_ARB", 0x84E0 },
    { "GL_CLIENT_ACTIVE_TEXTURE_ARB", 0x84E1 },
    { "GL_MAX_TEXTURE_UNITS_ARB", 0x84E2 },
@@ -887,6 +889,42 @@ static enum_elt all_enums[] =
    /* GL_3DFX_texture_compression_FXT1 */
    { "GL_COMPRESSED_RGB_FXT1_3DFX", 0x86B0 },
    { "GL_COMPRESSED_RGBA_FXT1_3DFX", 0x86B1 },
+
+   /* GL_ATI_fragment_shader */
+   { "GL_REG_0_ATI", 0x8921 },
+   { "GL_REG_1_ATI", 0x8922 },
+   { "GL_REG_2_ATI", 0x8923 },
+   { "GL_REG_3_ATI", 0x8924 },
+   { "GL_REG_4_ATI", 0x8925 },
+   { "GL_REG_5_ATI", 0x8926 },
+
+   { "GL_CON_0_ATI", 0x8941 },
+   { "GL_CON_1_ATI", 0x8942 },
+   { "GL_CON_2_ATI", 0x8943 },
+   { "GL_CON_3_ATI", 0x8944 },
+   { "GL_CON_4_ATI", 0x8945 },
+   { "GL_CON_5_ATI", 0x8946 },
+   { "GL_CON_6_ATI", 0x8947 },
+   { "GL_CON_7_ATI", 0x8948 },
+
+   { "GL_MOV_ATI", 0x8961 },
+   { "GL_ADD_ATI", 0x8963 },
+   { "GL_MUL_ATI", 0x8964 },
+   { "GL_SUB_ATI", 0x8965 },
+   { "GL_DOT3_ATI", 0x8966 },
+   { "GL_DOT4_ATI", 0x8967 },
+	
+   { "GL_MAD_ATI", 0x8968 },
+   { "GL_LERP_ATI", 0x8969 },
+   { "GL_CND_ATI", 0x896A },
+   { "GL_CND0_ATI", 0x896B },
+   { "GL_DOT2_ADD_ATI", 0x896C },
+   { "GL_SECONDARY_INTERPOLATER_ATI", 0x896D },
+
+   { "SWIZZLE_STR_ATI", 0x8976 },
+   { "SWIZZLE_STQ_ATI", 0x8977 },
+   { "SWIZZLE_STR_DR_ATI", 0x8978 },
+   { "SWIZZLE_STQ_DQ_ATI", 0x8979 },
 };
 
 #define Elements(x) sizeof(x)/sizeof(*x)

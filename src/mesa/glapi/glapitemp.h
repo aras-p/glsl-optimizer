@@ -3980,6 +3980,76 @@ KEYWORD1 void KEYWORD2 NAME(VertexAttrib4ubvNV)(GLuint index, const GLubyte * v)
    DISPATCH(VertexAttrib4ubvNV, (index, v), (F, "glVertexAttrib4ubvNV(%d, %p);\n", index, (const void *) v));
 }
 
+KEYWORD1 GLuint KEYWORD2 NAME(GenFragmentShadersATI)(GLuint range)
+{
+   RETURN_DISPATCH(GenFragmentShadersATI, (range), (F, "glGenFragmentShadersATI(%d);\n", range));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BindFragmentShaderATI)(GLuint id)
+{
+   DISPATCH(BindFragmentShaderATI, (id), (F, "glBindFragmentShaderATI(%d);\n", id));
+}
+
+KEYWORD1 void KEYWORD2 NAME(DeleteFragmentShaderATI)(GLuint id)
+{
+   DISPATCH(DeleteFragmentShaderATI, (id), (F, "glDeleteFragmentShaderATI(%d);\n", id));
+}
+
+KEYWORD1 void KEYWORD2 NAME(BeginFragmentShaderATI)(void)
+{
+   DISPATCH(BeginFragmentShaderATI, (), (F, "glBeginFragmentShaderATI();\n"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(EndFragmentShaderATI)(void)
+{
+   DISPATCH(EndFragmentShaderATI, (), (F, "glEndFragmentShaderATI();\n"));
+}
+
+KEYWORD1 void KEYWORD2 NAME(PassTexCoordATI)(GLuint dst, GLuint coord, GLenum swizzle)
+{
+   DISPATCH(PassTexCoordATI, (dst, coord, swizzle), (F, "glPassTexCoordATI(%d, %d, 0x%x);\n", dst, coord, swizzle));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SampleMapATI)(GLuint dst, GLuint interp, GLenum swizzle)
+{
+   DISPATCH(SampleMapATI, (dst, interp, swizzle), (F, "glSampleMapATI(%d, %d, 0x%x);\n", dst, interp, swizzle));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ColorFragmentOp1ATI)(GLenum op, GLuint dst, GLuint dstMask, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod)
+{
+   DISPATCH(ColorFragmentOp1ATI, (op, dst, dstMask, dstMod, arg1, arg1Rep, arg1Mod), (F, "glColorFragmentOp1ATI(0x%x, %d, %d, %d, %d, %d, %d);\n", op, dst, dstMask, dstMod, arg1, arg1Rep, arg1Mod));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ColorFragmentOp2ATI)(GLenum op, GLuint dst, GLuint dstMask, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod)
+{
+   DISPATCH(ColorFragmentOp2ATI, (op, dst, dstMask, dstMod, arg1, arg1Rep, arg1Mod, arg2, arg2Rep, arg2Mod), (F, "glColorFragmentOp2ATI(0x%x, %d, %d, %d, %d, %d, %d, %d, %d, %d);\n", op, dst, dstMask, dstMod, arg1, arg1Rep, arg1Mod, arg2, arg2Rep, arg2Mod));
+}
+
+KEYWORD1 void KEYWORD2 NAME(ColorFragmentOp3ATI)(GLenum op, GLuint dst, GLuint dstMask, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod, GLuint arg3, GLuint arg3Rep, GLuint arg3Mod)
+{
+   DISPATCH(ColorFragmentOp3ATI, (op, dst, dstMask, dstMod, arg1, arg1Rep, arg1Mod, arg2, arg2Rep, arg2Mod, arg3, arg3Rep, arg3Mod), (F, "glColorFragmentOp3ATI(0x%x, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);\n", op, dst, dstMask, dstMod, arg1, arg1Rep, arg1Mod, arg2, arg2Rep, arg2Mod, arg3, arg3Rep, arg3Mod));
+}
+
+KEYWORD1 void KEYWORD2 NAME(AlphaFragmentOp1ATI)(GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod)
+{
+   DISPATCH(AlphaFragmentOp1ATI, (op, dst, dstMod, arg1, arg1Rep, arg1Mod), (F, "glAlphaFragmentOp1ATI(0x%x, %d, %d, %d, %d, %d);\n", op, dst, dstMod, arg1, arg1Rep, arg1Mod));
+}
+
+KEYWORD1 void KEYWORD2 NAME(AlphaFragmentOp2ATI)(GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod)
+{
+   DISPATCH(AlphaFragmentOp2ATI, (op, dst, dstMod, arg1, arg1Rep, arg1Mod, arg2, arg2Rep, arg2Mod), (F, "glAlphaFragmentOp2ATI(0x%x, %d, %d, %d, %d, %d, %d, %d, %d);\n", op, dst, dstMod, arg1, arg1Rep, arg1Mod, arg2, arg2Rep, arg2Mod));
+}
+
+KEYWORD1 void KEYWORD2 NAME(AlphaFragmentOp3ATI)(GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod, GLuint arg3, GLuint arg3Rep, GLuint arg3Mod)
+{
+   DISPATCH(AlphaFragmentOp3ATI, (op, dst, dstMod, arg1, arg1Rep, arg1Mod, arg2, arg2Rep, arg2Mod, arg3, arg3Rep, arg3Mod), (F, "glAlphaFragmentOp3ATI(0x%x, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d);\n", op, dst, dstMod, arg1, arg1Rep, arg1Mod, arg2, arg2Rep, arg2Mod, arg3, arg3Rep, arg3Mod));
+}
+
+KEYWORD1 void KEYWORD2 NAME(SetFragmentShaderConstantATI)(GLuint dst, const GLfloat * value)
+{
+   DISPATCH(SetFragmentShaderConstantATI, (dst, value), (F, "glSetFragmentShaderConstantATI(%d, %p);\n", dst, (const void *) value));
+}
+
 KEYWORD1 void KEYWORD2 NAME(ActiveTexture)(GLenum texture)
 {
    DISPATCH(ActiveTextureARB, (texture), (F, "glActiveTexture(0x%x);\n", texture));
@@ -5666,6 +5736,20 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(VertexAttrib4svNV),
    TABLE_ENTRY(VertexAttrib4ubNV),
    TABLE_ENTRY(VertexAttrib4ubvNV),
+   TABLE_ENTRY(GenFragmentShadersATI),
+   TABLE_ENTRY(BindFragmentShaderATI),
+   TABLE_ENTRY(DeleteFragmentShaderATI),
+   TABLE_ENTRY(BeginFragmentShaderATI),
+   TABLE_ENTRY(EndFragmentShaderATI),
+   TABLE_ENTRY(PassTexCoordATI),
+   TABLE_ENTRY(SampleMapATI),
+   TABLE_ENTRY(ColorFragmentOp1ATI),
+   TABLE_ENTRY(ColorFragmentOp2ATI),
+   TABLE_ENTRY(ColorFragmentOp3ATI),
+   TABLE_ENTRY(AlphaFragmentOp1ATI),
+   TABLE_ENTRY(AlphaFragmentOp2ATI),
+   TABLE_ENTRY(AlphaFragmentOp3ATI),
+   TABLE_ENTRY(SetFragmentShaderConstantATI),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.
