@@ -503,7 +503,6 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 		self.factory = glItemFactory()
 		self.header_tag = None
 		self.undef_list = []
-		self.enums = []
 
 
 	def find_type(self,type_name):
@@ -588,8 +587,6 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 				self.xref[obj.name] = index
 		elif object_type == "type":
 			self.types[obj.name] = obj
-		elif object_type == "enum":
-			self.enums.append(obj)
 
 		return
 

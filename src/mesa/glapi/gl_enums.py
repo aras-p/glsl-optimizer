@@ -41,6 +41,7 @@ class PrintGlEnums(gl_XML.FilterGLAPISpecBase):
 		gl_XML.FilterGLAPISpecBase.__init__(self)
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2005 Brian Paul All Rights Reserved.""", "BRIAN PAUL")
+		self.enum_table = {}
 
 
 	def printRealHeader(self):
@@ -49,32 +50,46 @@ class PrintGlEnums(gl_XML.FilterGLAPISpecBase):
 		print '#include "imports.h"'
 		print ''
 		print 'typedef struct {'
-		print '   const char *c;'
+		print '   size_t offset;'
 		print '   int n;'
 		print '} enum_elt;'
 		print ''
-		print 'static const enum_elt all_enums[] ='
-		print '{'
 		return
 
 	def printBody(self):
 		print """
-};
-
 #define Elements(x) sizeof(x)/sizeof(*x)
 
 typedef int (*cfunc)(const void *, const void *);
 
-/* note the extra level of indirection
+/**
+ * Compare a key name to an element in the \c all_enums array.
+ *
+ * \c bsearch always passes the key as the first parameter and the pointer
+ * to the array element as the second parameter.  We can elimiate some
+ * extra work by taking advantage of that fact.
+ *
+ * \param a  Pointer to the desired enum name.
+ * \param b  Pointer to an element of the \c all_enums array.
  */
-static int compar_name( const enum_elt **a, const enum_elt **b )
+static int compar_name( const char *a, const enum_elt *b )
 {
-   return _mesa_strcmp((*a)->c, (*b)->c);
+   return _mesa_strcmp( a, & enum_string_table[ b->offset ] );
 }
 
-static int compar_nr( const enum_elt *a, const enum_elt *b )
+/**
+ * Compare a key enum value to an element in the \c all_enums array.
+ *
+ * \c bsearch always passes the key as the first parameter and the pointer
+ * to the array element as the second parameter.  We can elimiate some
+ * extra work by taking advantage of that fact.
+ *
+ * \param a  Pointer to the desired enum name.
+ * \param b  Pointer to an index into the \c all_enums array.
+ */
+static int compar_nr( const int *a, const unsigned *b )
 {
-   return a->n - b->n;
+   return a[0] - all_enums[*b].n;
 }
 
 
@@ -82,18 +97,16 @@ static char token_tmp[20];
 
 const char *_mesa_lookup_enum_by_nr( int nr )
 {
-   enum_elt tmp, *e;
+   unsigned * i;
 
-   tmp.n = nr;
+   i = (unsigned *)bsearch( & nr, reduced_enums, Elements(reduced_enums),
+                            sizeof(reduced_enums[0]), (cfunc) compar_nr );
 
-   e = (enum_elt *)bsearch( &tmp, all_enums, Elements(all_enums),
-			     sizeof(*all_enums), (cfunc) compar_nr );
-
-   if (e) {
-      return e->c;
+   if ( i != NULL ) {
+      return & enum_string_table[ all_enums[ *i ].offset ];
    }
    else {
-      /* this isn't re-entrant safe, no big deal here */
+      /* this is not re-entrant safe, no big deal here */
       _mesa_sprintf(token_tmp, "0x%x", nr);
       return token_tmp;
    }
@@ -101,37 +114,108 @@ const char *_mesa_lookup_enum_by_nr( int nr )
 
 int _mesa_lookup_enum_by_name( const char *symbol )
 {
-   enum_elt tmp, *e, **f;
-   static const enum_elt * const index1[] = {"""
+   enum_elt * f = NULL;
 
-	def printRealFooter(self):
-		print """   };
+   if ( symbol != NULL ) {
+      f = (enum_elt *)bsearch( symbol, all_enums, Elements(all_enums),
+			       sizeof( enum_elt ), (cfunc) compar_name );
+   }
 
-   if (!symbol)
-      return 0;
-
-   tmp.c = symbol;
-   e = &tmp;
-
-   f = (enum_elt **)bsearch( &e, index1, Elements(all_enums),
-			    sizeof(*index1), (cfunc) compar_name );
-
-   return f ? (*f)->n : -1;
+   return (f != NULL) ? f->n : -1;
 }
 
 """
 		return
 
 	def printFunctions(self):
-		self.enums.sort(lambda x,y: x.value - y.value)
-		for enum in self.enums:
-			print '   { "%s", 0x%X },' % (enum.name, enum.value)
-		nameEnums = self.enums[:]
+		keys = self.enum_table.keys()
+		keys.sort()
+
+		name_table = []
+		enum_table = {}
+
+		for enum in keys:
+			low_pri = 9
+			for [name, pri] in self.enum_table[ enum ]:
+				name_table.append( [name, enum] )
+
+				if pri < low_pri:
+					low_pri = pri
+					enum_table[enum] = name
+						
+
+		name_table.sort()
+
+		string_offsets = {}
+		i = 0;
+		print 'static const char enum_string_table[] = '
+		for [name, enum] in name_table:
+			print '   "%s\\0"' % (name)
+			string_offsets[ name ] = i
+			i += len(name) + 1
+
+		print '   ;'
+		print ''
+
+
+		print 'static const enum_elt all_enums[%u] =' % (len(name_table))
+		print '{'
+		for [name, enum] in name_table:
+			print '   { % 5u, 0x%08X }, /* %s */' % (string_offsets[name], enum, name)
+		print '};'
+		print ''
+
+		print 'static const unsigned reduced_enums[%u] =' % (len(keys))
+		print '{'
+		for enum in keys:
+			name = enum_table[ enum ]
+			if [name, enum] not in name_table:
+				print '      /* Error! %s, 0x%04x */ 0,' % (name, enum)
+			else:
+				i = name_table.index( [name, enum] )
+
+				print '      % 4u, /* %s */' % (i, name)
+		print '};'
+
+
 		self.printBody();
-		self.enums.sort(lambda x,y: cmp(x.name, y.name))
-		for enum in self.enums:
-			print '      &all_enums[%d], ' % (nameEnums.index(enum))
 		return
+
+
+	def append(self, object_type, obj):
+		if object_type == "enum":
+			if obj.value not in self.enum_table:
+				self.enum_table[ obj.value ] = []
+
+
+			# Prevent duplicate names in the enum table.
+
+			if obj.name not in self.enum_table[ obj.value ]:
+
+				# Calculate a "priority" for this enum name.
+				# When we lookup an enum by number, there may
+				# be many possible names, but only one can be
+				# returned.  The priority is used by this
+				# script to select which name is the "best".
+				#
+				# Highest precedence is given to "core" name.
+				# ARB extension names have the next highest,
+				# followed by EXT extension names.  Vendor
+				# extension names are the lowest.
+
+				if obj.category.startswith( "GL_VERSION_" ):
+					priority = 0
+				elif obj.category.startswith( "GL_ARB_" ):
+					priority = 1
+				elif obj.category.startswith( "GL_EXT_" ):
+					priority = 2
+				else:
+					priority = 3
+
+				self.enum_table[ obj.value ].append( [obj.name, priority] )
+
+		else:
+			gl_XML.FilterGLAPISpecBase.append(self, object_type, obj)
 
 
 def show_usage():
@@ -140,7 +224,7 @@ def show_usage():
 
 if __name__ == '__main__':
 	file_name = "gl_API.xml"
-    
+
 	try:
 		(args, trail) = getopt.getopt(sys.argv[1:], "f:")
 	except Exception,e:
