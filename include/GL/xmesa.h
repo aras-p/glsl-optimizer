@@ -1,4 +1,4 @@
-/* $Id: xmesa.h,v 1.2 1999/11/24 18:36:14 brianp Exp $ */
+/* $Id: xmesa.h,v 1.3 1999/11/24 18:45:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -22,26 +22,6 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
-
-/*
- * $Log: xmesa.h,v $
- * Revision 1.2  1999/11/24 18:36:14  brianp
- * added XMesaMakeCurrent2(), XMesaGetCurrentReadBuffer(), bumped version to 3.3
- *
- * Revision 1.1.1.1  1999/08/19 00:55:40  jtg
- * Imported sources
- *
- * Revision 1.3  1999/02/24 22:43:27  jens
- * Name changes to get XMesa to compile standalone inside XFree86
- *
- * Revision 1.2  1999/02/14 03:39:09  brianp
- * new copyright
- *
- * Revision 1.1  1998/02/13 03:17:32  brianp
- * Initial revision
- *
  */
 
 
