@@ -478,6 +478,7 @@ struct tfxMesaContext {
 
   GLenum fogTableMode;
   GLfloat fogDensity;
+  GLfloat fogStart, fogEnd;
   GrFog_t *fogTable;
 
   /* Acc. functions */
