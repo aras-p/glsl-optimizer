@@ -1,4 +1,4 @@
-/* $Id: readpix.c,v 1.7 2002/05/02 09:17:59 alanh Exp $ */
+/* $Id: readpix.c,v 1.8 2002/07/12 15:54:02 brianp Exp $ */
 
 /*
  * glReadPixels and glCopyPixels test
@@ -219,7 +219,7 @@ Init( GLboolean ciMode )
 
    if (ciMode) {
       /* Convert RGB image to grayscale */
-      GLubyte *indexImage = malloc( ImgWidth * ImgHeight );
+      GLubyte *indexImage = (GLubyte *) malloc( ImgWidth * ImgHeight );
       GLint i;
       for (i=0; i<ImgWidth*ImgHeight; i++) {
          int gray = Image[i*3] + Image[i*3+1] + Image[i*3+2];

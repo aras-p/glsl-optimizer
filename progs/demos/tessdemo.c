@@ -1,4 +1,4 @@
-/* $Id: tessdemo.c,v 1.11 2001/03/21 02:47:32 gareth Exp $ */
+/* $Id: tessdemo.c,v 1.12 2002/07/12 15:54:02 brianp Exp $ */
 
 /*
  * A demo of the GLU polygon tesselation functions written by Bogdan Sikorski.
@@ -165,6 +165,8 @@ static void set_screen_wh( GLsizei w, GLsizei h )
    height = h;
 }
 
+typedef void (GLAPIENTRY *callback_t)();
+
 static void tesse( void )
 {
    GLUtesselator	*tobj;
@@ -177,11 +179,11 @@ static void tesse( void )
 
    if ( tobj != NULL ) {
       gluTessNormal( tobj, 0.0, 0.0, 1.0 );
-      gluTessCallback( tobj, GLU_TESS_BEGIN, glBegin );
-      gluTessCallback( tobj, GLU_TESS_VERTEX, glVertex2fv );
-      gluTessCallback( tobj, GLU_TESS_END, glEnd );
-      gluTessCallback( tobj, GLU_TESS_ERROR, error_callback );
-      gluTessCallback( tobj, GLU_TESS_COMBINE, combine_callback );
+      gluTessCallback( tobj, GLU_TESS_BEGIN, (callback_t) glBegin );
+      gluTessCallback( tobj, GLU_TESS_VERTEX, (callback_t) glVertex2fv );
+      gluTessCallback( tobj, GLU_TESS_END, (callback_t) glEnd );
+      gluTessCallback( tobj, GLU_TESS_ERROR, (callback_t) error_callback );
+      gluTessCallback( tobj, GLU_TESS_COMBINE, (callback_t) combine_callback );
 
       glNewList( list_start, GL_COMPILE );
       gluBeginPolygon( tobj );
@@ -201,10 +203,10 @@ static void tesse( void )
       gluEndPolygon( tobj );
       glEndList();
 
-      gluTessCallback( tobj, GLU_TESS_BEGIN, begin_callback );
-      gluTessCallback( tobj, GLU_TESS_VERTEX, vertex_callback );
-      gluTessCallback( tobj, GLU_TESS_END, end_callback );
-      gluTessCallback( tobj, GLU_TESS_EDGE_FLAG, edge_callback );
+      gluTessCallback( tobj, GLU_TESS_BEGIN, (callback_t) begin_callback );
+      gluTessCallback( tobj, GLU_TESS_VERTEX, (callback_t) vertex_callback );
+      gluTessCallback( tobj, GLU_TESS_END, (callback_t) end_callback );
+      gluTessCallback( tobj, GLU_TESS_EDGE_FLAG, (callback_t) edge_callback );
 
       glNewList( list_start + 1, GL_COMPILE );
       gluBeginPolygon( tobj );

@@ -30,7 +30,7 @@ static PPMImage *LoadPPM(const char *filename)
 	exit(1);
     }
 
-    result = malloc(sizeof(PPMImage));
+    result = (PPMImage *) malloc(sizeof(PPMImage));
     if (!result)
     {
 	fprintf(stderr, "Unable to allocate memory\n");
@@ -52,7 +52,7 @@ static PPMImage *LoadPPM(const char *filename)
     while (fgetc(fp) != '\n')
 	;
 
-    result->data = malloc(3 * result->sizeX * result->sizeY);
+    result->data = (GLubyte *) malloc(3 * result->sizeX * result->sizeY);
     if (!result)
     {
 	fprintf(stderr, "Unable to allocate memory\n");

@@ -102,6 +102,8 @@ static void CALLBACK ErrorHandler(GLenum which)
     fprintf(stderr, "Quad Error: %s\n", gluErrorString(which));
 }
 
+typedef void (GLAPIENTRY *callback_t)();
+
 static void Init(void)
 {
     static GLint colorIndexes[3] = {0, 200, 255};
@@ -163,7 +165,7 @@ static void Init(void)
     }
 
     quadObj = gluNewQuadric();
-    gluQuadricCallback(quadObj, GLU_ERROR, ErrorHandler);
+    gluQuadricCallback(quadObj, GLU_ERROR, (callback_t) ErrorHandler);
 
     radius1 = 10;
     radius2 = 5;

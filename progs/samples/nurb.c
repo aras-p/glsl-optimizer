@@ -216,11 +216,13 @@ static void CALLBACK ErrorCallback(GLenum which)
     }
 }
 
+typedef void (GLAPIENTRY *callback_t)();
+
 static void Init(void)
 {
 
     theNurbs = gluNewNurbsRenderer();
-    gluNurbsCallback(theNurbs, GLU_ERROR, ErrorCallback);
+    gluNurbsCallback(theNurbs, GLU_ERROR, (callback_t) ErrorCallback);
 
     gluNurbsProperty(theNurbs, GLU_SAMPLING_TOLERANCE, 15.0);
     gluNurbsProperty(theNurbs, GLU_DISPLAY_MODE, GLU_OUTLINE_PATCH);

@@ -1,4 +1,4 @@
-/* $Id: paltex.c,v 1.7 2002/01/16 00:48:43 kschultz Exp $ */
+/* $Id: paltex.c,v 1.8 2002/07/12 15:54:02 brianp Exp $ */
 
 /*
  * Paletted texture demo.  Written by Brian Paul.
@@ -161,7 +161,7 @@ static void Init( void )
                 0,                   /* border */
                 GL_COLOR_INDEX,      /* texture format */
                 GL_UNSIGNED_BYTE,    /* texture type */
-                texture);            /* teh texture */
+                texture);            /* the texture */
 #endif
 
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

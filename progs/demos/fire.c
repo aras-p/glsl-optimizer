@@ -752,7 +752,7 @@ main(int ac, char **av)
    glFogfv(GL_FOG_COLOR, fogcolor);
    glFogf(GL_FOG_DENSITY, 0.1);
 
-   p = malloc(sizeof(part) * np);
+   p = (part *) malloc(sizeof(part) * np);
 
    for (i = 0; i < np; i++)
       setnewpart(&p[i]);

@@ -1,4 +1,4 @@
-/* $Id: glxinfo.c,v 1.15 2002/03/08 19:44:28 brianp Exp $ */
+/* $Id: glxinfo.c,v 1.16 2002/07/12 15:54:02 brianp Exp $ */
 
 /*
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
@@ -218,7 +218,7 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect)
       const char *gluExtensions = (const char *) gluGetString(GLU_EXTENSIONS);
 #endif
       /* Strip the screen number from the display name, if present. */
-      if (!(displayName = malloc(strlen(DisplayString(dpy)) + 1))) {
+      if (!(displayName = (char *) malloc(strlen(DisplayString(dpy)) + 1))) {
          fprintf(stderr, "Error: malloc() failed\n");
          exit(1);
       }
@@ -486,16 +486,16 @@ print_visual_attribs_long(const struct visual_attribs *attribs)
 static void
 print_visual_info(Display *dpy, int scrnum, InfoMode mode)
 {
-   XVisualInfo template;
+   XVisualInfo theTemplate;
    XVisualInfo *visuals;
    int numVisuals;
    long mask;
    int i;
 
    /* get list of all visuals on this screen */
-   template.screen = scrnum;
+   theTemplate.screen = scrnum;
    mask = VisualScreenMask;
-   visuals = XGetVisualInfo(dpy, mask, &template, &numVisuals);
+   visuals = XGetVisualInfo(dpy, mask, &theTemplate, &numVisuals);
 
    if (mode == Verbose) {
       for (i = 0; i < numVisuals; i++) {
@@ -569,7 +569,7 @@ mesa_hack(Display *dpy, int scrnum)
 static int
 find_best_visual(Display *dpy, int scrnum)
 {
-   XVisualInfo template;
+   XVisualInfo theTemplate;
    XVisualInfo *visuals;
    int numVisuals;
    long mask;
@@ -577,9 +577,9 @@ find_best_visual(Display *dpy, int scrnum)
    struct visual_attribs bestVis;
 
    /* get list of all visuals on this screen */
-   template.screen = scrnum;
+   theTemplate.screen = scrnum;
    mask = VisualScreenMask;
-   visuals = XGetVisualInfo(dpy, mask, &template, &numVisuals);
+   visuals = XGetVisualInfo(dpy, mask, &theTemplate, &numVisuals);
 
    /* init bestVis with first visual info */
    get_visual_attribs(dpy, &visuals[0], &bestVis);

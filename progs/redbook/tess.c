@@ -94,7 +94,7 @@ void CALLBACK vertexCallback(GLvoid *vertex)
 
    pointer = (GLdouble *) vertex;
    glColor3dv(pointer+3);
-   glVertex3dv(vertex);
+   glVertex3dv(pointer);
 }
 
 /*  combineCallback is used to create a new vertex when edges

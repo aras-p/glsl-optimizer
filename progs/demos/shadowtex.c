@@ -1,4 +1,4 @@
-/* $Id: shadowtex.c,v 1.6 2002/03/23 16:34:18 brianp Exp $ */
+/* $Id: shadowtex.c,v 1.7 2002/07/12 15:54:02 brianp Exp $ */
 
 /*
  * Shadow demo using the GL_ARB_depth_texture, GL_ARB_shadow and
@@ -276,8 +276,8 @@ Display(void)
     */
    if (DisplayMode == SHOW_DEPTH_MAPPING) {
       /* load depth image as gray-scale luminance texture */
-      GLfloat *depth = malloc(ShadowTexWidth * ShadowTexHeight
-                              * sizeof(GLfloat));
+      GLfloat *depth = (GLfloat *) malloc(ShadowTexWidth * ShadowTexHeight
+                                          * sizeof(GLfloat));
       if (depth) {
          glReadPixels(0, 0, ShadowTexWidth, ShadowTexHeight,
                       GL_DEPTH_COMPONENT, GL_FLOAT, depth);
