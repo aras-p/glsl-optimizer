@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.36 2000/10/23 00:20:50 gareth Exp $
+# $Id: Makefile.X11,v 1.37 2000/10/23 19:33:55 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -68,15 +68,15 @@ default:
 
 	@echo "  make linux                for Linux systems, make shared .so libs"
 	@echo "  make linux-static         for Linux systems, make static .a libs"
-	@echo "  make linux-386            for Linux on Intel, make shared .so libs"
-	@echo "  make linux-386-static     for Linux on Intel, make static .a libs"
+	@echo "  make linux-trace          for Linux systems, with API trace extension"
+	@echo "  make linux-x86            for Linux on Intel, make shared .so libs"
+	@echo "  make linux-x86-static     for Linux on Intel, make static .a libs"
 	@echo "  make linux-ggi            for Linux systems with libggi"
 	@echo "  make linux-386-ggi        for Linux systems with libggi w/ Intel assembly"
 	@echo "  make linux-glide          for Linux w/ 3Dfx Glide driver"
 	@echo "  make linux-386-glide      for Linux w/ 3Dfx Glide driver, Intel assembly"
 	@echo "  make linux-386-opt-glide  for Linux with 3Dfx Voodoo1 for GLQuake"
 	@echo "  make linux-386-opt-V2-glide  for Linux with 3Dfx Voodoo2 for GLQuake"
-	@echo "  make linux-x86            for Linux w/ all x86 asm"
 	@echo "  make linux-x86-glide      for Linux w/ all x86 asm for Glide"
 	@echo "  make linux-alpha          for Linux on Alpha systems"
 	@echo "  make linux-alpha-static   for Linux on Alpha systems, static libs"

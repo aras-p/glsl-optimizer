@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.30 2000/10/23 00:20:50 gareth Exp $
+# $Id: Make-config,v 1.31 2000/10/23 19:33:55 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=5
@@ -460,6 +460,17 @@ linux:
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm"
 
+linux-static:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.a" \
+	"GLU_LIB = libGLU.a" \
+	"GLUT_LIB = libglut.a" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc" \
+	"CFLAGS = -O3 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
+	"MAKELIB = ../bin/mklib.ar-ruv" \
+	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lm -lpthread"
+
 linux-trace:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
@@ -473,17 +484,6 @@ linux-trace:
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
 	"GLUT_LIB_DEPS = -L../lib -lGLU -lGL -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm" \
 	"APP_LIB_DEPS = -lm"
-
-linux-static:
-	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
-	"GL_LIB = libGL.a" \
-	"GLU_LIB = libGLU.a" \
-	"GLUT_LIB = libglut.a" \
-	"GLW_LIB = libGLw.a" \
-	"CC = gcc" \
-	"CFLAGS = -O3 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include" \
-	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lm -lpthread"
 
 linux-x86:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -545,6 +545,35 @@ linux-x86-static:
 		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
 		X86/katmai_norm_raw.S X86/katmai_vertex.S"
 
+# Contributed by Uwe_Maurer@t-online.de
+linux-ggi:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.a" \
+	"CC = gcc"  \
+	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DGGI -DCDECL=" \
+	"MAKELIB = ../bin/mklib.ggi" \
+	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lggi -lm"
+
+# Contributed by Emmanuel marty core@ggi-project.org
+linux-386-ggi:
+	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
+	"GL_LIB = libGL.so" \
+	"GLU_LIB = libGLU.so" \
+	"GLUT_LIB = libglut.so" \
+	"GLW_LIB = libGLw.so" \
+	"CC = gcc"  \
+	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -DGGI -DCDECL=" \
+	"MAKELIB = ../bin/mklib.ggi" \
+	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lggi -lm" \
+	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
+		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
+		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
+		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
+		X86/x86_cliptest.S X86/x86_vertex.S"
+
 linux-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
@@ -578,14 +607,14 @@ linux-386-glide:
 		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S"
 
-linux-386-opt-V2-glide:
+linux-386-opt-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = gcc" \
-	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DFX_V2 -DUSE_X86_ASM -DPTHREAD -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include"\
+	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DUSE_X86_ASM -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -597,14 +626,14 @@ linux-386-opt-V2-glide:
 		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
 		X86/x86_cliptest.S X86/x86_vertex.S"
 
-linux-386-opt-glide:
+linux-386-opt-V2-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
 	"GL_LIB = libGL.so" \
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = gcc" \
-	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DUSE_X86_ASM -DPTHREADS -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include" \
+	"CFLAGS = -O3 -m486 -fomit-frame-pointer -pipe -ansi -pedantic -ffast-math -fexpensive-optimizations -malign-loops=2 -malign-jumps=2 -malign-functions=2 -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DFX -DFX_V2 -DUSE_X86_ASM -DPTHREAD -I/usr/X11R6/include -I/usr/include/glide -I/usr/local/glide/include"\
 	"MAKELIB = ../bin/mklib.linux" \
 	"GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -L/usr/local/glide/lib -lglide2x -lm -lpthread" \
 	"GLU_LIB_DEPS = -L../lib -lGL -lm" \
@@ -646,35 +675,6 @@ linux-x86-glide:
 		X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
 		X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
 		X86/katmai_norm_raw.S X86/katmai_vertex.S"
-
-# Contributed by Uwe_Maurer@t-online.de
-linux-ggi:
-	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
-	"GL_LIB = libGL.so" \
-	"GLU_LIB = libGLU.so" \
-	"GLUT_LIB = libglut.so" \
-	"GLW_LIB = libGLw.a" \
-	"CC = gcc"  \
-	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DGGI -DCDECL=" \
-	"MAKELIB = ../bin/mklib.ggi" \
-	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lggi -lm"
-
-# Contributed by Emmanuel marty core@ggi-project.org
-linux-386-ggi:
-	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
-	"GL_LIB = libGL.so" \
-	"GLU_LIB = libGLU.so" \
-	"GLUT_LIB = libglut.so" \
-	"GLW_LIB = libGLw.so" \
-	"CC = gcc"  \
-	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -DGGI -DCDECL=" \
-	"MAKELIB = ../bin/mklib.ggi" \
-	"APP_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lggi -lm" \
-	"ASM_SOURCES = X86/common_x86_asm.S X86/glapi_x86.S \
-		X86/x86_xform_raw2.S X86/x86_xform_raw3.S \
-		X86/x86_xform_raw4.S X86/x86_xform_masked2.S \
-		X86/x86_xform_masked3.S X86/x86_xform_masked4.S \
-		X86/x86_cliptest.S X86/x86_vertex.S"
 
 linux-alpha:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1283,6 +1283,7 @@ linux-debug:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
+	"OSMESA_LIB = libOSMesa.so" \
 	"CC = gcc" \
 	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DSVGA -I/usr/include/glide -DFX" \
 	"MAKELIB = ../bin/mklib.linux" \
