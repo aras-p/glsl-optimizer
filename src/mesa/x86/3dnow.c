@@ -1,4 +1,4 @@
-/* $Id: 3dnow.c,v 1.15 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: 3dnow.c,v 1.16 2001/03/03 20:56:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,30 +52,30 @@
 
 
 #define DECLARE_XFORM_GROUP( pfx, sz, masked ) \
- extern void _ASMAPI gl_##pfx##_transform_points##sz##_general_##masked( XFORM_ARGS );	    \
- extern void _ASMAPI gl_##pfx##_transform_points##sz##_identity_##masked( XFORM_ARGS );	    \
- extern void _ASMAPI gl_##pfx##_transform_points##sz##_3d_no_rot_##masked( XFORM_ARGS );    \
- extern void _ASMAPI gl_##pfx##_transform_points##sz##_perspective_##masked( XFORM_ARGS );  \
- extern void _ASMAPI gl_##pfx##_transform_points##sz##_2d_##masked( XFORM_ARGS );	    \
- extern void _ASMAPI gl_##pfx##_transform_points##sz##_2d_no_rot_##masked( XFORM_ARGS );    \
- extern void _ASMAPI gl_##pfx##_transform_points##sz##_3d_##masked( XFORM_ARGS );
+ extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_general_##masked( XFORM_ARGS );	    \
+ extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_identity_##masked( XFORM_ARGS );	    \
+ extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d_no_rot_##masked( XFORM_ARGS );    \
+ extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_perspective_##masked( XFORM_ARGS );  \
+ extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_2d_##masked( XFORM_ARGS );	    \
+ extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_2d_no_rot_##masked( XFORM_ARGS );    \
+ extern void _ASMAPI _mesa_##pfx##_transform_points##sz##_3d_##masked( XFORM_ARGS );
 
 
 #define ASSIGN_XFORM_GROUP( pfx, cma, sz, masked )			\
    _mesa_transform_tab[cma][sz][MATRIX_GENERAL] =				\
-      gl_##pfx##_transform_points##sz##_general_##masked;		\
+      _mesa_##pfx##_transform_points##sz##_general_##masked;		\
    _mesa_transform_tab[cma][sz][MATRIX_IDENTITY] =				\
-      gl_##pfx##_transform_points##sz##_identity_##masked;		\
+      _mesa_##pfx##_transform_points##sz##_identity_##masked;		\
    _mesa_transform_tab[cma][sz][MATRIX_3D_NO_ROT] =			\
-      gl_##pfx##_transform_points##sz##_3d_no_rot_##masked;		\
+      _mesa_##pfx##_transform_points##sz##_3d_no_rot_##masked;		\
    _mesa_transform_tab[cma][sz][MATRIX_PERSPECTIVE] =			\
-      gl_##pfx##_transform_points##sz##_perspective_##masked;		\
+      _mesa_##pfx##_transform_points##sz##_perspective_##masked;		\
    _mesa_transform_tab[cma][sz][MATRIX_2D] =				\
-      gl_##pfx##_transform_points##sz##_2d_##masked;			\
+      _mesa_##pfx##_transform_points##sz##_2d_##masked;			\
    _mesa_transform_tab[cma][sz][MATRIX_2D_NO_ROT] =			\
-      gl_##pfx##_transform_points##sz##_2d_no_rot_##masked;		\
+      _mesa_##pfx##_transform_points##sz##_2d_no_rot_##masked;		\
    _mesa_transform_tab[cma][sz][MATRIX_3D] =				\
-      gl_##pfx##_transform_points##sz##_3d_##masked;
+      _mesa_##pfx##_transform_points##sz##_3d_##masked;
 
 
 
@@ -88,33 +88,33 @@
 
 
 #define DECLARE_NORM_GROUP( pfx, masked ) \
- extern void _ASMAPI gl_##pfx##_rescale_normals_##masked( NORM_ARGS );			    \
- extern void _ASMAPI gl_##pfx##_normalize_normals_##masked( NORM_ARGS );		    \
- extern void _ASMAPI gl_##pfx##_transform_normals_##masked( NORM_ARGS );		    \
- extern void _ASMAPI gl_##pfx##_transform_normals_no_rot_##masked( NORM_ARGS );		    \
- extern void _ASMAPI gl_##pfx##_transform_rescale_normals_##masked( NORM_ARGS );	    \
- extern void _ASMAPI gl_##pfx##_transform_rescale_normals_no_rot_##masked( NORM_ARGS );	    \
- extern void _ASMAPI gl_##pfx##_transform_normalize_normals_##masked( NORM_ARGS );	    \
- extern void _ASMAPI gl_##pfx##_transform_normalize_normals_no_rot_##masked( NORM_ARGS );
+ extern void _ASMAPI _mesa_##pfx##_rescale_normals_##masked( NORM_ARGS );			    \
+ extern void _ASMAPI _mesa_##pfx##_normalize_normals_##masked( NORM_ARGS );		    \
+ extern void _ASMAPI _mesa_##pfx##_transform_normals_##masked( NORM_ARGS );		    \
+ extern void _ASMAPI _mesa_##pfx##_transform_normals_no_rot_##masked( NORM_ARGS );		    \
+ extern void _ASMAPI _mesa_##pfx##_transform_rescale_normals_##masked( NORM_ARGS );	    \
+ extern void _ASMAPI _mesa_##pfx##_transform_rescale_normals_no_rot_##masked( NORM_ARGS );	    \
+ extern void _ASMAPI _mesa_##pfx##_transform_normalize_normals_##masked( NORM_ARGS );	    \
+ extern void _ASMAPI _mesa_##pfx##_transform_normalize_normals_no_rot_##masked( NORM_ARGS );
 
 
 #define ASSIGN_NORM_GROUP( pfx, cma, masked )				\
-   gl_normal_tab[NORM_RESCALE][cma] =					\
-      gl_##pfx##_rescale_normals_##masked;				\
-   gl_normal_tab[NORM_NORMALIZE][cma] =					\
-      gl_##pfx##_normalize_normals_##masked;				\
-   gl_normal_tab[NORM_TRANSFORM][cma] =					\
-      gl_##pfx##_transform_normals_##masked;				\
-   gl_normal_tab[NORM_TRANSFORM_NO_ROT][cma] =				\
-      gl_##pfx##_transform_normals_no_rot_##masked;			\
-   gl_normal_tab[NORM_TRANSFORM | NORM_RESCALE][cma] =			\
-      gl_##pfx##_transform_rescale_normals_##masked;			\
-   gl_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_RESCALE][cma] =		\
-      gl_##pfx##_transform_rescale_normals_no_rot_##masked;		\
-   gl_normal_tab[NORM_TRANSFORM | NORM_NORMALIZE][cma] =		\
-      gl_##pfx##_transform_normalize_normals_##masked;			\
-   gl_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_NORMALIZE][cma] =		\
-      gl_##pfx##_transform_normalize_normals_no_rot_##masked;
+   _mesa_normal_tab[NORM_RESCALE][cma] =					\
+      _mesa_##pfx##_rescale_normals_##masked;				\
+   _mesa_normal_tab[NORM_NORMALIZE][cma] =					\
+      _mesa_##pfx##_normalize_normals_##masked;				\
+   _mesa_normal_tab[NORM_TRANSFORM][cma] =					\
+      _mesa_##pfx##_transform_normals_##masked;				\
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT][cma] =				\
+      _mesa_##pfx##_transform_normals_no_rot_##masked;			\
+   _mesa_normal_tab[NORM_TRANSFORM | NORM_RESCALE][cma] =			\
+      _mesa_##pfx##_transform_rescale_normals_##masked;			\
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_RESCALE][cma] =		\
+      _mesa_##pfx##_transform_rescale_normals_no_rot_##masked;		\
+   _mesa_normal_tab[NORM_TRANSFORM | NORM_NORMALIZE][cma] =		\
+      _mesa_##pfx##_transform_normalize_normals_##masked;			\
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_NORMALIZE][cma] =		\
+      _mesa_##pfx##_transform_normalize_normals_no_rot_##masked;
 
 
 #ifdef USE_3DNOW_ASM
@@ -132,18 +132,18 @@ DECLARE_NORM_GROUP( 3dnow, raw )
 /*DECLARE_NORM_GROUP( 3dnow, masked )*/
 
 
-extern void _ASMAPI gl_v16_3dnow_general_xform( GLfloat *first_vert,
+extern void _ASMAPI _mesa_v16_3dnow_general_xform( GLfloat *first_vert,
 						const GLfloat *m,
 						const GLfloat *src,
 						GLuint src_stride,
 						GLuint count );
 
-extern void _ASMAPI gl_3dnow_project_vertices( GLfloat *first,
+extern void _ASMAPI _mesa_3dnow_project_vertices( GLfloat *first,
 					       GLfloat *last,
 					       const GLfloat *m,
 					       GLuint stride );
 
-extern void _ASMAPI gl_3dnow_project_clipped_vertices( GLfloat *first,
+extern void _ASMAPI _mesa_3dnow_project_clipped_vertices( GLfloat *first,
 						       GLfloat *last,
 						       const GLfloat *m,
 						       GLuint stride,
@@ -177,9 +177,9 @@ void _mesa_init_3dnow_transform_asm( void )
 void _mesa_init_3dnow_vertex_asm( void )
 {
 #ifdef USE_3DNOW_ASM
-   gl_xform_points3_v16_general	= gl_v16_3dnow_general_xform;
-   gl_project_v16		= gl_3dnow_project_vertices;
-   gl_project_clipped_v16	= gl_3dnow_project_clipped_vertices;
+   _mesa_xform_points3_v16_general	= _mesa_v16_3dnow_general_xform;
+   _mesa_project_v16		= _mesa_3dnow_project_vertices;
+   _mesa_project_clipped_v16	= _mesa_3dnow_project_clipped_vertices;
 
 #ifdef DEBUG_NOT
    _math_test_all_vertex_functions( "3DNow!" );

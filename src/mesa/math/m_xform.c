@@ -1,4 +1,4 @@
-/* $Id: m_xform.c,v 1.9 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: m_xform.c,v 1.10 2001/03/03 20:57:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,11 +56,11 @@
 #include "X86/common_x86_asm.h"
 #endif
 
-clip_func gl_clip_tab[5];
-clip_func gl_clip_np_tab[5];
-dotprod_func gl_dotprod_tab[2][5];
+clip_func _mesa_clip_tab[5];
+clip_func _mesa_clip_np_tab[5];
+dotprod_func _mesa_dotprod_tab[2][5];
 vec_copy_func _mesa_copy_tab[2][0x10];
-normal_func gl_normal_tab[0xf][0x4];
+normal_func _mesa_normal_tab[0xf][0x4];
 transform_func **(_mesa_transform_tab[2]);
 static transform_func *cull_transform_tab[5];
 static transform_func *raw_transform_tab[5];

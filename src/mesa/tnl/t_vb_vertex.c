@@ -1,4 +1,4 @@
-/* $Id: t_vb_vertex.c,v 1.4 2001/03/03 20:33:31 brianp Exp $ */
+/* $Id: t_vb_vertex.c,v 1.5 2001/03/03 20:57:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -188,19 +188,19 @@ static GLboolean run_vertex_stage( GLcontext *ctx,
 
       if (tnl->NeedProjCoords) {
 	 VB->ProjectedClipPtr = 
-	    gl_clip_tab[VB->ClipPtr->size]( VB->ClipPtr,
-					    &store->proj,
-					    store->clipmask,
-					    &store->ormask,
-					    &store->andmask );
+	    _mesa_clip_tab[VB->ClipPtr->size]( VB->ClipPtr,
+                                               &store->proj,
+                                               store->clipmask,
+                                               &store->ormask,
+                                               &store->andmask );
 
       } else {
 	 VB->ProjectedClipPtr = 0;
-	 gl_clip_np_tab[VB->ClipPtr->size]( VB->ClipPtr,
-					    0,
-					    store->clipmask,
-					    &store->ormask,
-					    &store->andmask );
+	 _mesa_clip_np_tab[VB->ClipPtr->size]( VB->ClipPtr,
+                                               0,
+                                               store->clipmask,
+                                               &store->ormask,
+                                               &store->andmask );
       }
 
       if (store->andmask) 

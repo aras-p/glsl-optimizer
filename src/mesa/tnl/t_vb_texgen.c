@@ -1,4 +1,4 @@
-/* $Id: t_vb_texgen.c,v 1.3 2001/03/03 20:33:31 brianp Exp $ */
+/* $Id: t_vb_texgen.c,v 1.4 2001/03/03 20:57:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -413,12 +413,12 @@ static void texgen( GLcontext *ctx,
       GLuint i;
       switch (texUnit->GenModeS) {
       case GL_OBJECT_LINEAR:
-	 (gl_dotprod_tab[0][obj->size])((GLfloat *)out->data,
+	 (_mesa_dotprod_tab[0][obj->size])((GLfloat *)out->data,
 					sizeof(out->data[0]), obj, 
 					texUnit->ObjectPlaneS, 0);
 	 break;
       case GL_EYE_LINEAR:
-	 (gl_dotprod_tab[0][eye->size])((GLfloat *)out->data, 
+	 (_mesa_dotprod_tab[0][eye->size])((GLfloat *)out->data, 
 					sizeof(out->data[0]), eye,
 					texUnit->EyePlaneS, 0);
 	 break;
@@ -446,12 +446,12 @@ static void texgen( GLcontext *ctx,
       GLuint i;
       switch (texUnit->GenModeT) {
       case GL_OBJECT_LINEAR:
-	 (gl_dotprod_tab[0][obj->size])(&(out->data[0][1]), 
+	 (_mesa_dotprod_tab[0][obj->size])(&(out->data[0][1]), 
 					sizeof(out->data[0]), obj, 
 					texUnit->ObjectPlaneT, 0);
 	 break;
       case GL_EYE_LINEAR:
-	 (gl_dotprod_tab[0][eye->size])(&(out->data[0][1]), 
+	 (_mesa_dotprod_tab[0][eye->size])(&(out->data[0][1]), 
 					sizeof(out->data[0]), eye, 
 					texUnit->EyePlaneT, 0);
 	 break; 
@@ -479,12 +479,12 @@ static void texgen( GLcontext *ctx,
       GLuint i;
       switch (texUnit->GenModeR) {
       case GL_OBJECT_LINEAR:
-	 (gl_dotprod_tab[0][obj->size])(&(out->data[0][2]), 
+	 (_mesa_dotprod_tab[0][obj->size])(&(out->data[0][2]), 
 					sizeof(out->data[0]), obj, 
 					texUnit->ObjectPlaneR, 0);
 	 break;
       case GL_EYE_LINEAR:
-	 (gl_dotprod_tab[0][eye->size])(&(out->data[0][2]), 
+	 (_mesa_dotprod_tab[0][eye->size])(&(out->data[0][2]), 
 					sizeof(out->data[0]), eye,
 					texUnit->EyePlaneR, 0);
 	 break;
@@ -507,12 +507,12 @@ static void texgen( GLcontext *ctx,
    if (texUnit->TexGenEnabled & Q_BIT) {
       switch (texUnit->GenModeQ) {
       case GL_OBJECT_LINEAR:
-	 (gl_dotprod_tab[0][obj->size])(&(out->data[0][3]), 
+	 (_mesa_dotprod_tab[0][obj->size])(&(out->data[0][3]), 
 					sizeof(out->data[0]), obj, 
 					texUnit->ObjectPlaneQ, 0);
 	 break;
       case GL_EYE_LINEAR:
-	 (gl_dotprod_tab[0][eye->size])(&(out->data[0][3]), 
+	 (_mesa_dotprod_tab[0][eye->size])(&(out->data[0][3]), 
 					sizeof(out->data[0]), eye,
 					texUnit->EyePlaneQ, 0);
 	 break;

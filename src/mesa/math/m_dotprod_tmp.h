@@ -1,4 +1,4 @@
-/* $Id: m_dotprod_tmp.h,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
+/* $Id: m_dotprod_tmp.h,v 1.3 2001/03/03 20:57:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -112,7 +112,7 @@ static void TAG(dotprod_vec4)( GLfloat *out,
 
 static void TAG(init_dotprod)( void )
 {
-   gl_dotprod_tab[IDX&1][2] = TAG(dotprod_vec2);
-   gl_dotprod_tab[IDX&1][3] = TAG(dotprod_vec3);
-   gl_dotprod_tab[IDX&1][4] = TAG(dotprod_vec4);
+   _mesa_dotprod_tab[IDX&1][2] = TAG(dotprod_vec2);
+   _mesa_dotprod_tab[IDX&1][3] = TAG(dotprod_vec3);
+   _mesa_dotprod_tab[IDX&1][4] = TAG(dotprod_vec4);
 }

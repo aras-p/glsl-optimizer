@@ -1,4 +1,4 @@
-/* $Id: m_clip_tmp.h,v 1.4 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: m_clip_tmp.h,v 1.5 2001/03/03 20:57:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -219,11 +219,11 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points2)( GLvector4f *clip_vec,
 
 static void TAG(init_c_cliptest)( void )
 {
-   gl_clip_tab[4] = TAG(cliptest_points4);
-   gl_clip_tab[3] = TAG(cliptest_points3);
-   gl_clip_tab[2] = TAG(cliptest_points2);
+   _mesa_clip_tab[4] = TAG(cliptest_points4);
+   _mesa_clip_tab[3] = TAG(cliptest_points3);
+   _mesa_clip_tab[2] = TAG(cliptest_points2);
 
-   gl_clip_np_tab[4] = TAG(cliptest_np_points4);
-   gl_clip_np_tab[3] = TAG(cliptest_points3);
-   gl_clip_np_tab[2] = TAG(cliptest_points2);
+   _mesa_clip_np_tab[4] = TAG(cliptest_np_points4);
+   _mesa_clip_np_tab[3] = TAG(cliptest_points3);
+   _mesa_clip_np_tab[2] = TAG(cliptest_points2);
 }

@@ -1,4 +1,4 @@
-/* $Id: m_xform.h,v 1.6 2001/03/03 20:33:30 brianp Exp $ */
+/* $Id: m_xform.h,v 1.7 2001/03/03 20:57:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -197,12 +197,12 @@ extern void _mesa_transform_bounds2( GLubyte *orMask, GLubyte *andMask,
 				  CONST GLfloat src[][3] );
 
 
-extern dotprod_func  gl_dotprod_tab[2][5];
+extern dotprod_func  _mesa_dotprod_tab[2][5];
 extern vec_copy_func _mesa_copy_tab[2][0x10];
 extern vec_copy_func _mesa_copy_clean_tab[2][5];
-extern clip_func     gl_clip_tab[5];
-extern clip_func     gl_clip_np_tab[5];
-extern normal_func   gl_normal_tab[0xf][0x4];
+extern clip_func     _mesa_clip_tab[5];
+extern clip_func     _mesa_clip_np_tab[5];
+extern normal_func   _mesa_normal_tab[0xf][0x4];
 
 /* Use of 3 layers of linked 1-dimensional arrays to reduce
  * cost of lookup.

@@ -1,4 +1,4 @@
-/* $Id: t_vb_normals.c,v 1.4 2001/03/03 20:33:31 brianp Exp $ */
+/* $Id: t_vb_normals.c,v 1.5 2001/03/03 20:57:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -92,23 +92,23 @@ static GLboolean run_validate_normal_stage( GLcontext *ctx,
 	
 	
       if (ctx->Transform.Normalize) {
-	 store->NormalTransform = gl_normal_tab[transform | NORM_NORMALIZE];
+	 store->NormalTransform = _mesa_normal_tab[transform | NORM_NORMALIZE];
       }
       else if (ctx->Transform.RescaleNormals &&
 	       ctx->_ModelViewInvScale != 1.0) {
-	 store->NormalTransform = gl_normal_tab[transform | NORM_RESCALE];
+	 store->NormalTransform = _mesa_normal_tab[transform | NORM_RESCALE];
       }
       else {
-	 store->NormalTransform = gl_normal_tab[transform];
+	 store->NormalTransform = _mesa_normal_tab[transform];
       }
    }
    else {
       if (ctx->Transform.Normalize) {
-	 store->NormalTransform = gl_normal_tab[NORM_NORMALIZE];
+	 store->NormalTransform = _mesa_normal_tab[NORM_NORMALIZE];
       }
       else if (!ctx->Transform.RescaleNormals &&
 	       ctx->_ModelViewInvScale != 1.0) {
-	 store->NormalTransform = gl_normal_tab[NORM_RESCALE];
+	 store->NormalTransform = _mesa_normal_tab[NORM_RESCALE];
       }
       else {
 	 store->NormalTransform = 0;

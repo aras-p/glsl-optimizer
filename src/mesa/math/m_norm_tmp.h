@@ -1,4 +1,4 @@
-/* $Id: m_norm_tmp.h,v 1.3 2000/12/28 22:11:05 keithw Exp $ */
+/* $Id: m_norm_tmp.h,v 1.4 2001/03/03 20:57:00 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -387,27 +387,27 @@ TAG(rescale_normals)( const GLmatrix *mat,
 static void _XFORMAPI
 TAG(init_c_norm_transform)( void )
 {
-   gl_normal_tab[NORM_TRANSFORM_NO_ROT][IDX] = 
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT][IDX] = 
       TAG(transform_normals_no_rot);
 
-   gl_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_RESCALE][IDX] = 
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_RESCALE][IDX] = 
       TAG(transform_rescale_normals_no_rot);
 
-   gl_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_NORMALIZE][IDX] = 
+   _mesa_normal_tab[NORM_TRANSFORM_NO_ROT | NORM_NORMALIZE][IDX] = 
       TAG(transform_normalize_normals_no_rot);
 
-   gl_normal_tab[NORM_TRANSFORM][IDX] = 
+   _mesa_normal_tab[NORM_TRANSFORM][IDX] = 
       TAG(transform_normals);
 
-   gl_normal_tab[NORM_TRANSFORM | NORM_RESCALE][IDX] = 
+   _mesa_normal_tab[NORM_TRANSFORM | NORM_RESCALE][IDX] = 
       TAG(transform_rescale_normals);
 
-   gl_normal_tab[NORM_TRANSFORM | NORM_NORMALIZE][IDX] = 
+   _mesa_normal_tab[NORM_TRANSFORM | NORM_NORMALIZE][IDX] = 
       TAG(transform_normalize_normals);
 
-   gl_normal_tab[NORM_RESCALE][IDX] = 
+   _mesa_normal_tab[NORM_RESCALE][IDX] = 
       TAG(rescale_normals);
 
-   gl_normal_tab[NORM_NORMALIZE][IDX] = 
+   _mesa_normal_tab[NORM_NORMALIZE][IDX] = 
       TAG(normalize_normals);
 }
