@@ -1,8 +1,8 @@
-/* $Id: texstate.h,v 1.9 2002/06/17 23:36:31 brianp Exp $ */
+/* $Id: texstate.h,v 1.10 2002/12/05 04:51:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.1
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -34,6 +34,9 @@
 
 extern void
 _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst );
+
+extern void
+_mesa_print_texunit_state( GLcontext *ctx, GLuint unit );
 
 
 /*** Called from API ***/
