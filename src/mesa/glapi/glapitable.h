@@ -1,4 +1,4 @@
-/* $Id: glapitable.h,v 1.9 2000/02/11 21:14:28 brianp Exp $ */
+/* $Id: glapitable.h,v 1.10 2000/02/12 16:44:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,9 +42,6 @@
 
 
 #include "GL/gl.h"
-
-
-#define _GLAPI_EXTRA_SLOTS 1000
 
 
 /*
@@ -851,9 +848,6 @@ struct _glapi_table
    void (*MultTransposeMatrixdARB)(const GLdouble m[16]);
    void (*MultTransposeMatrixfARB)(const GLfloat m[16]);
 
-#if 0
-   void *ExtensionFuncs[_GLAPI_EXTRA_SLOTS];
-#endif
 };
 
 

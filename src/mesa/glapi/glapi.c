@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.32 2000/02/10 21:27:48 brianp Exp $ */
+/* $Id: glapi.c,v 1.33 2000/02/12 16:44:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -272,13 +272,16 @@ get_static_proc_address(const char *funcName)
  */
 
 
+#define MAX_EXTENSION_FUNCS 1000
+
+
 struct _glapi_ext_entrypoint {
    const char *Name;   /* the extension function's name */
    GLuint Offset;      /* relative to start of dispatch table */
    GLvoid *Address;    /* address of dispatch function */
 };
 
-static struct _glapi_ext_entrypoint ExtEntryTable[_GLAPI_EXTRA_SLOTS];
+static struct _glapi_ext_entrypoint ExtEntryTable[MAX_EXTENSION_FUNCS];
 static GLuint NumExtEntryPoints = 0;
 
 
@@ -354,10 +357,8 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
    index = get_static_proc_offset(funcName);
 
    if (index >= 0) {
-      assert(index == offset);
-      return GL_TRUE;
+      return (GLboolean) (index == offset);  /* bad offset! */
    }
-   /* else if (offset < _glapi_get_dispatch_table_size()) { */
    else {
       /* be sure index and name match known data */
       GLuint i;
@@ -372,23 +373,72 @@ _glapi_add_entrypoint(const char *funcName, GLuint offset)
             }
          }
       }
-      assert(NumExtEntryPoints < _GLAPI_EXTRA_SLOTS);
-      ExtEntryTable[NumExtEntryPoints].Name = strdup(funcName);
-      ExtEntryTable[NumExtEntryPoints].Offset = offset;
-      ExtEntryTable[NumExtEntryPoints].Address = generate_entrypoint(offset);
-      NumExtEntryPoints++;
 
-      if (offset > MaxDispatchOffset)
-         MaxDispatchOffset = offset;
+      /* make sure we have space */
+      if (NumExtEntryPoints >= MAX_EXTENSION_FUNCS) {
+         return GL_FALSE;
+      }
+      else {
+         void *entrypoint = generate_entrypoint(offset);
+         if (!entrypoint)
+            return GL_FALSE;
 
-      return GL_TRUE;      
+         ExtEntryTable[NumExtEntryPoints].Name = strdup(funcName);
+         ExtEntryTable[NumExtEntryPoints].Offset = offset;
+         ExtEntryTable[NumExtEntryPoints].Address = entrypoint;
+         NumExtEntryPoints++;
+
+         if (offset > MaxDispatchOffset)
+            MaxDispatchOffset = offset;
+
+         return GL_TRUE;  /* success */
+      }
    }
-/*
-   else {
-      return GL_FALSE;
-   }
-*/
+
+   /* should never get here, but play it safe */
+   return GL_FALSE;
 }
+
+
+
+#if 0000 /* prototype code for dynamic extension slot allocation */
+
+static int NextFreeOffset = 409; /*XXX*/
+#define MAX_DISPATCH_TABLE_SIZE 1000
+
+/*
+ * Dynamically allocate a dispatch slot for an extension entrypoint
+ * and generate the assembly language dispatch stub.
+ * Return the dispatch offset for the function or -1 if no room or error.
+ */
+GLint
+_glapi_add_entrypoint2(const char *funcName)
+{
+   int offset;
+
+   /* first see if extension func is already known */
+   offset = _glapi_get_proc_offset(funcName);
+   if (offset >= 0)
+      return offset;
+
+   if (NumExtEntryPoints < MAX_EXTENSION_FUNCS
+       && NextFreeOffset < MAX_DISPATCH_TABLE_SIZE) {
+      void *entryPoint;
+      offset = NextFreeOffset;
+      entryPoint = generate_entrypoint(offset);
+      if (entryPoint) {
+         NextFreeOffset++;
+         ExtEntryTable[NumExtEntryPoints].Name = strdup(funcName);
+         ExtEntryTable[NumExtEntryPoints].Offset = offset;
+         ExtEntryTable[NumExtEntryPoints].Address = entryPoint;
+         NumExtEntryPoints++;
+         return offset;
+      }
+   }
+   return -1;
+}
+
+#endif
 
 
 
