@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.55 2002/03/16 18:02:08 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.56 2002/03/25 17:24:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -548,7 +548,6 @@ affine_span(GLcontext *ctx, struct sw_span *span,
       }
       break;
    }
-   ASSERT(span->interpMask & SPAN_RGBA); /* XXXX unset */
    span->interpMask &= ~SPAN_RGBA;
    ASSERT(span->arrayMask & SPAN_RGBA);
    _mesa_write_rgba_span(ctx, span, GL_POLYGON);
