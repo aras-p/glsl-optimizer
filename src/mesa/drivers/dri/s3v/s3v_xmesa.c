@@ -172,6 +172,7 @@ s3vMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
 	s3vContextPtr vmesa;
 	__DRIdrawablePrivate *dPriv = driDrawPriv;
+	vmesa = (s3vContextPtr) dPriv->driContextPriv->driverPrivate;
 	
 	DEBUG(("s3vMakeCurrent\n"));
 
