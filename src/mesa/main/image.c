@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: image.c,v 1.2 1999/09/15 13:56:44 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -808,7 +808,7 @@ unpack_stencil_image( GLcontext *ctx, GLenum type, GLint width, GLint height,
  * Unpack a bitmap, return a new gl_image struct.
  */
 static struct gl_image *
-unpack_bitmap( GLcontext *ctx, GLenum format, GLint width, GLint height,
+unpack_bitmap( GLenum format, GLint width, GLint height,
                const GLvoid *pixels,
                const struct gl_pixelstore_attrib *packing )
 {
@@ -926,7 +926,7 @@ void gl_pack_polygon_stipple( const GLcontext *ctx,
  * Unpack an RGBA or CI image and store it as unsigned bytes
  */
 static struct gl_image *
-unpack_ubyte_image( GLcontext *ctx, GLint width, GLint height,
+unpack_ubyte_image( GLint width, GLint height,
                     GLint depth, GLenum format, const GLvoid *pixels,
                     const struct gl_pixelstore_attrib *packing )
 {
@@ -1502,7 +1502,7 @@ struct gl_image *gl_unpack_image3D( GLcontext *ctx,
          return alloc_error_image(width, height, depth, format, type);
       }
       else {
-         return unpack_bitmap( ctx, format, width, height, pixels, packing );
+         return unpack_bitmap( format, width, height, pixels, packing );
       }
    }
    else if (format==GL_DEPTH_COMPONENT) {
@@ -1515,7 +1515,7 @@ struct gl_image *gl_unpack_image3D( GLcontext *ctx,
    }
    else if (type==GL_UNSIGNED_BYTE) {
       /* upack, convert to GLubytes */
-      return unpack_ubyte_image( ctx, width, height, depth, format, pixels, packing );
+      return unpack_ubyte_image( width, height, depth, format, pixels, packing );
    }
    else {
       /* upack, convert to floats */
