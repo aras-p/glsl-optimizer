@@ -660,18 +660,14 @@ static void savageDDDrawBuffer(GLcontext *ctx, GLenum mode )
     switch ( ctx->Color._DrawDestMask[0] ) {
     case DD_FRONT_LEFT_BIT:
         imesa->IsDouble = GL_FALSE;
-      
-	imesa->drawMap = (char *)imesa->apertureBase[TARGET_FRONT];
-	imesa->readMap = (char *)imesa->apertureBase[TARGET_FRONT];
 	imesa->regs.s4.destCtrl.ni.offset = imesa->savageScreen->frontOffset>>11;
+
         imesa->NotFirstFrame = GL_FALSE;
         savageXMesaSetFrontClipRects( imesa );
 	FALLBACK( ctx, SAVAGE_FALLBACK_DRAW_BUFFER, GL_FALSE );
 	break;
     case DD_BACK_LEFT_BIT:
         imesa->IsDouble = GL_TRUE;
-        imesa->drawMap = (char *)imesa->apertureBase[TARGET_BACK];
-        imesa->readMap = (char *)imesa->apertureBase[TARGET_BACK];
 	imesa->regs.s4.destCtrl.ni.offset = imesa->savageScreen->backOffset>>11;
         imesa->NotFirstFrame = GL_FALSE;
         savageXMesaSetBackClipRects( imesa );
@@ -1779,65 +1775,39 @@ void savageDDInitState( savageContextPtr imesa ) {
     /*fprintf(stderr,"DBflag:%d\n",imesa->glCtx->Visual->DBflag);*/
     /* zbufoffset and destctrl have the same position and layout on
      * savage4 and savage3d. */
-    imesa->regs.s4.destCtrl.ni.offset = imesa->savageScreen->backOffset>>11;
-    if(imesa->savageScreen->cpp == 2)
-    {
+    if (imesa->glCtx->Visual.doubleBufferMode) {
+	imesa->IsDouble = GL_TRUE;
+	imesa->toggle = TARGET_BACK;
+	imesa->regs.s4.destCtrl.ni.offset =
+	    imesa->savageScreen->backOffset>>11;
+    } else {
+	imesa->IsDouble = GL_FALSE;
+	imesa->toggle = TARGET_FRONT;
+	imesa->regs.s4.destCtrl.ni.offset =
+	    imesa->savageScreen->frontOffset>>11;
+    }
+    if(imesa->savageScreen->cpp == 2) {
         imesa->regs.s4.destCtrl.ni.dstPixFmt = 0;
         imesa->regs.s4.destCtrl.ni.dstWidthInTile =
             (imesa->savageScreen->width+63)>>6;
-    }
-    else
-    {
+    } else {
         imesa->regs.s4.destCtrl.ni.dstPixFmt = 1;
         imesa->regs.s4.destCtrl.ni.dstWidthInTile =
             (imesa->savageScreen->width+31)>>5;
     }
-
-    imesa->IsDouble = GL_TRUE;
-
+    imesa->drawMap = (char *)imesa->apertureBase[imesa->toggle];
+    imesa->readMap = (char *)imesa->apertureBase[imesa->toggle];
     imesa->NotFirstFrame = GL_FALSE;
+
     imesa->regs.s4.zBufOffset.ni.offset=imesa->savageScreen->depthOffset>>11;
-    if(imesa->savageScreen->zpp == 2)
-    {
+    if(imesa->savageScreen->zpp == 2) {
         imesa->regs.s4.zBufOffset.ni.zBufWidthInTiles = 
             (imesa->savageScreen->width+63)>>6;
         imesa->regs.s4.zBufOffset.ni.zDepthSelect = 0;
-    }
-    else
-    {   
+    } else {   
         imesa->regs.s4.zBufOffset.ni.zBufWidthInTiles = 
             (imesa->savageScreen->width+31)>>5;
         imesa->regs.s4.zBufOffset.ni.zDepthSelect = 1;      
-    }
- 
-    if (imesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {
-        if(imesa->IsFullScreen)
-        {
-            imesa->toggle = TARGET_BACK;
-
-            imesa->drawMap = (char *)imesa->apertureBase[imesa->toggle];
-            imesa->readMap = (char *)imesa->apertureBase[imesa->toggle];
-        }
-        else
-        {
-            imesa->drawMap = (char *)imesa->apertureBase[TARGET_BACK];
-            imesa->readMap = (char *)imesa->apertureBase[TARGET_BACK];
-        }
-
-    } else {
-      
-        if(imesa->IsFullScreen)
-        {
-            imesa->toggle = TARGET_BACK;
-
-            imesa->drawMap = (char *)imesa->apertureBase[imesa->toggle];
-            imesa->readMap = (char *)imesa->apertureBase[imesa->toggle];
-        }
-        else
-        {
-            imesa->drawMap = (char *)imesa->apertureBase[TARGET_BACK];
-            imesa->readMap = (char *)imesa->apertureBase[TARGET_BACK];
-        }
     }
 
     memcpy (imesa->oldRegs.ui, imesa->regs.ui, SAVAGE_NR_REGS*sizeof(u_int32_t));
