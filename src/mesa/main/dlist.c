@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.53 2000/11/24 10:25:05 keithw Exp $ */
+/* $Id: dlist.c,v 1.54 2000/11/24 15:21:59 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1659,7 +1659,7 @@ static void save_Enable( GLenum cap )
 
 
 
-static void save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
+void _mesa_save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -1676,8 +1676,7 @@ static void save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 }
 
 
-static void save_EvalMesh2(
-                        GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
+void _mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
@@ -4931,8 +4930,8 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->DrawPixels = save_DrawPixels;
    table->Enable = save_Enable;
    table->EndList = _mesa_EndList;
-   table->EvalMesh1 = save_EvalMesh1;
-   table->EvalMesh2 = save_EvalMesh2;
+   table->EvalMesh1 = _mesa_save_EvalMesh1;
+   table->EvalMesh2 = _mesa_save_EvalMesh2;
    table->Finish = _mesa_Finish;
    table->Flush = _mesa_Flush;
    table->Fogf = save_Fogf;

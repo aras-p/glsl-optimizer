@@ -10,7 +10,7 @@
  * hence 'loopback'.
  *
  * The driver must supply all of the remaining entry points, which are
- * listed in vtxfmt.h.  The easiest way for a driver to do this is to
+ * listed in dd.h.  The easiest way for a driver to do this is to
  * install the supplied software t&l module.
  */
 #define DRIVER(x) gl##x

@@ -1,5 +1,6 @@
 #include "mtypes.h"
 #include "mem.h"
+#include "dlist.h"
 #include "vtxfmt.h"
 
 #include "t_context.h"
@@ -149,24 +150,16 @@ _tnl_CreateContext( GLcontext *ctx )
    _tnl_reset_input( ctx, 0, 0 );	/* initially outside begin/end */
 
 
-   tnl->_CurrentFlag = (VERT_NORM |
-                        VERT_INDEX |
-                        VERT_RGBA |
-                        VERT_SPEC_RGB |
-                        VERT_FOG_COORD |
-                        VERT_EDGE |
-                        VERT_TEX0_12 |
-                        VERT_TEX1_12 |
-                        VERT_TEX2_12 |
-                        VERT_TEX3_12 |
-                        VERT_MATERIAL);
-
+   tnl->_CurrentTex3Flag = 0;
+   tnl->_CurrentTex4Flag = 0;
    tnl->_CurrentPrimitive = GL_POLYGON+1;
 
    /* Hook our functions into exec and compile dispatch tables.
     */
-   _mesa_install_save_vtxfmt( ctx, &tnl->vtxfmt );
    _mesa_install_exec_vtxfmt( ctx, &tnl->vtxfmt );
+   _mesa_install_save_vtxfmt( ctx, &tnl->vtxfmt );
+   ctx->Save->EvalMesh1 = _mesa_save_EvalMesh1;	/* fixme */
+   ctx->Save->EvalMesh2 = _mesa_save_EvalMesh2;
 
    /* Set a few default values in the driver struct.
     */
@@ -250,7 +243,8 @@ _tnl_wakeup_exec( GLcontext *ctx )
    
    /* Special state not restored by other methods:
     */
-   _tnl_recalc_current_flag( ctx );
+   _tnl_validate_current_tex_flags( ctx, ~0 );
+
 }
 
 void
@@ -262,5 +256,7 @@ _tnl_wakeup_save_exec( GLcontext *ctx )
 
    _tnl_wakeup_exec( ctx );
    _mesa_install_save_vtxfmt( ctx, &tnl->vtxfmt );
+   ctx->Save->EvalMesh1 = _mesa_save_EvalMesh1;	/* fixme */
+   ctx->Save->EvalMesh2 = _mesa_save_EvalMesh2;
 }
 

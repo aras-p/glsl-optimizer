@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.28 2000/11/24 10:25:05 keithw Exp $ */
+/* $Id: light.c,v 1.29 2000/11/24 15:21:59 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -601,14 +601,14 @@ void gl_update_material( GLcontext *ctx,
       struct gl_material *mat = &ctx->Light.Material[0];
       COPY_4FV( mat->Specular, src[0].Specular );
       foreach (light, list) {
-	 ACC_SCALE_3V( light->_MatSpecular[0], light->Specular, mat->Specular);
+	 SCALE_3V( light->_MatSpecular[0], light->Specular, mat->Specular);
       }
    }
    if (bitmask & BACK_SPECULAR_BIT) {
       struct gl_material *mat = &ctx->Light.Material[1];
       COPY_4FV( mat->Specular, src[1].Specular );
       foreach (light, list) {
-	 ACC_SCALE_3V( light->_MatSpecular[1], light->Specular, mat->Specular);
+	 SCALE_3V( light->_MatSpecular[1], light->Specular, mat->Specular);
       }
    }
 

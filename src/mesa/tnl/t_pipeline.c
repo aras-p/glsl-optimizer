@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.c,v 1.4 2000/11/24 10:25:12 keithw Exp $ */
+/* $Id: t_pipeline.c,v 1.5 2000/11/24 15:22:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -67,10 +67,7 @@ void _tnl_print_pipe_ops( const char *msg, GLuint flags )
 	   (flags & PIPE_OP_NORM_XFORM)    ? "norm-xform, " : "",
 	   (flags & PIPE_OP_LIGHT)         ? "light, " : "",
 	   (flags & PIPE_OP_FOG)           ? "fog, " : "",
-	   (flags & PIPE_OP_TEX0)          ? "tex-0, " : "",
-	   (flags & PIPE_OP_TEX1)          ? "tex-1, " : "",
-	   (flags & PIPE_OP_TEX2)          ? "tex-2, " : "",
-	   (flags & PIPE_OP_TEX3)          ? "tex-3, " : "",
+	   (flags & PIPE_OP_TEX)           ? "tex-gen/tex-mat, " : "",
 	   (flags & PIPE_OP_RAST_SETUP_0)  ? "rast-0, " : "",
 	   (flags & PIPE_OP_RAST_SETUP_1)  ? "rast-1, " : "",
 	   (flags & PIPE_OP_RENDER)        ? "render, " : "");
@@ -164,16 +161,9 @@ void _tnl_pipeline_init( GLcontext *ctx )
 
 
 
-#define MINIMAL_VERT_DATA (VERT_DATA & ~(VERT_TEX0_4 | \
-                                         VERT_TEX1_4 | \
-                                         VERT_TEX2_4 | \
-                                         VERT_TEX3_4 | \
-                                         VERT_EVAL_ANY))
+#define MINIMAL_VERT_DATA (VERT_DATA & ~VERT_EVAL_ANY)
 
-#define VERT_CURRENT_DATA (VERT_TEX0_1234 | \
-                           VERT_TEX1_1234 | \
-                           VERT_TEX2_1234 | \
-                           VERT_TEX3_1234 | \
+#define VERT_CURRENT_DATA (VERT_TEX_ANY | \
                            VERT_RGBA | \
                            VERT_SPEC_RGB | \
                            VERT_FOG_COORD | \
@@ -197,7 +187,7 @@ static void build_full_precalc_pipeline( GLcontext *ctx )
    GLuint changed_ops = 0;
    GLuint oldoutputs = pre->outputs;
    GLuint oldinputs = pre->inputs;
-   GLuint fallback = (VERT_CURRENT_DATA & tnl->_CurrentFlag &
+   GLuint fallback = (VERT_CURRENT_DATA &
 		      ~tnl->_ArraySummary);
    GLuint changed_outputs = (tnl->_ArrayNewState |
 			     (fallback & cva->orflag));
@@ -414,6 +404,7 @@ void _tnl_update_pipelines( GLcontext *ctx )
        cva->orflag != cva->last_orflag ||
        tnl->_ArrayFlags != cva->last_array_flags)
    {
+      GLuint j;
       GLuint flags = VERT_WIN;
 
       if (ctx->Visual.RGBAflag) {
@@ -423,20 +414,10 @@ void _tnl_update_pipelines( GLcontext *ctx )
       } else
 	 flags |= VERT_INDEX;
 
-      if (ctx->Texture._ReallyEnabled & TEXTURE0_ANY)
-	 flags |= VERT_TEX0_ANY;
-
-      if (ctx->Texture._ReallyEnabled & TEXTURE1_ANY)
-	 flags |= VERT_TEX1_ANY;
-
-#if MAX_TEXTURE_UNITS > 2
-      if (ctx->Texture._ReallyEnabled & TEXTURE2_ANY)
-	 flags |= VERT_TEX2_ANY;
-#endif
-#if MAX_TEXTURE_UNITS > 3
-      if (ctx->Texture._ReallyEnabled & TEXTURE3_ANY)
-	 flags |= VERT_TEX3_ANY;
-#endif
+      for (j = 0 ; j < ctx->Const.MaxTextureUnits ; j++) {
+	 if (ctx->Texture.Unit[j]._ReallyEnabled)
+	    flags |= VERT_TEX(j);
+      }
 
       if (ctx->Polygon._Unfilled)
 	 flags |= VERT_EDGE;
@@ -445,16 +426,8 @@ void _tnl_update_pipelines( GLcontext *ctx )
  	 flags |= VERT_FOG_COORD;
 
       if (ctx->RenderMode==GL_FEEDBACK) {
-	 flags = (VERT_WIN | VERT_RGBA | VERT_INDEX | VERT_NORM | VERT_EDGE
-		  | VERT_TEX0_ANY
-                  | VERT_TEX1_ANY
-#if MAX_TEXTURE_UNITS > 2
-                  | VERT_TEX2_ANY
-#endif
-#if MAX_TEXTURE_UNITS > 3
-                  | VERT_TEX3_ANY
-#endif
-                  );
+	 flags = (VERT_WIN | VERT_RGBA | VERT_INDEX | VERT_NORM | 
+		  VERT_EDGE | VERT_TEX_ANY);
       }
 
       tnl->_RenderFlags = flags;

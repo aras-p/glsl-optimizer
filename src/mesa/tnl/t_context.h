@@ -1,5 +1,5 @@
 
-/* $Id: t_context.h,v 1.4 2000/11/24 10:25:12 keithw Exp $ */
+/* $Id: t_context.h,v 1.5 2000/11/24 15:22:00 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -91,24 +91,24 @@
 #define VERT_EDGE            0x200	/* glEdgeFlag */
 #define VERT_MATERIAL        0x400	/* glMaterial */
 #define VERT_END_VB          0x800	/* end vb marker */
-#define VERT_TEX0_12         0x1000	
-#define VERT_TEX0_3          0x2000
-#define VERT_TEX0_4          0x4000
-#define VERT_TEX1_12         0x8000
-#define VERT_TEX1_3          0x10000
-#define VERT_TEX1_4          0x20000
-#define VERT_TEX2_12         0x40000
-#define VERT_TEX2_3          0x80000
-#define VERT_TEX2_4          0x100000
-#define VERT_TEX3_12         0x200000
-#define VERT_TEX3_3          0x400000
-#define VERT_TEX3_4          0x800000
+#define VERT_TEX0            0x1000	
+#define VERT_TEX1            0x2000
+#define VERT_TEX2            0x3000
+#define VERT_TEX3            0x4000
+#define VERT_TEX4            0x10000	
+#define VERT_TEX5            0x20000
+#define VERT_TEX6            0x30000
+#define VERT_TEX7            0x40000
+#define VERT_TEX8            0x100000	
+#define VERT_TEX9            0x200000
+#define VERT_TEX10           0x300000
+#define VERT_TEX11           0x400000
 #define VERT_EVAL_C1         0x1000000  /* could reuse OBJ bits for this? */
 #define VERT_EVAL_C2         0x2000000  /*    - or just use 3 bits */
 #define VERT_EVAL_P1         0x4000000  /*  */
 #define VERT_EVAL_P2         0x8000000  /*  */
 #define VERT_SPEC_RGB        0x10000000	
-#define VERT_FOG_COORD       0x20000000	/* internal use only, currently */
+#define VERT_FOG_COORD       0x20000000	
 
 #define VERT_EYE             VERT_BEGIN /* reuse */
 #define VERT_WIN             VERT_END   /* reuse */
@@ -117,7 +117,6 @@
 
 /* Shorthands.
  */
-#define VERT_TEX0_SHIFT 11
 
 #define VERT_EVAL_ANY      (VERT_EVAL_C1|VERT_EVAL_P1|	\
                             VERT_EVAL_C2|VERT_EVAL_P2)
@@ -126,43 +125,30 @@
 #define VERT_OBJ_234      (VERT_OBJ_4|VERT_OBJ_23)
 #define VERT_OBJ_ANY      VERT_OBJ_2
 
-#define VERT_TEX0_123     (VERT_TEX0_3|VERT_TEX0_12)
-#define VERT_TEX0_1234    (VERT_TEX0_4|VERT_TEX0_123)
-#define VERT_TEX0_ANY     VERT_TEX0_12
+#define VERT_TEX0_SHIFT 11
+#define VERT_TEX(i)        (VERT_TEX0 << i)
+#define VERT_TEX_ANY       (VERT_TEX0 |		\
+                            VERT_TEX1 |		\
+                            VERT_TEX2 |		\
+                            VERT_TEX3 |		\
+                            VERT_TEX4 |		\
+                            VERT_TEX5 |		\
+                            VERT_TEX6 |		\
+                            VERT_TEX7 |		\
+                            VERT_TEX8 |		\
+                            VERT_TEX9 |		\
+                            VERT_TEX10 |	\
+                            VERT_TEX11)
 
-#define VERT_TEX1_123     (VERT_TEX1_3|VERT_TEX1_12)
-#define VERT_TEX1_1234    (VERT_TEX1_4|VERT_TEX1_123)
-#define VERT_TEX1_ANY     VERT_TEX1_12
-
-#define VERT_TEX2_123     (VERT_TEX2_3|VERT_TEX2_12)
-#define VERT_TEX2_1234    (VERT_TEX2_4|VERT_TEX2_123)
-#define VERT_TEX2_ANY     VERT_TEX2_12
-
-#define VERT_TEX3_123     (VERT_TEX3_3|VERT_TEX3_12)
-#define VERT_TEX3_1234    (VERT_TEX3_4|VERT_TEX3_123)
-#define VERT_TEX3_ANY     VERT_TEX3_12
-
-#define VERT_TEX_ANY_ANY (VERT_TEX0_ANY|VERT_TEX1_ANY| \
-			  VERT_TEX2_ANY|VERT_TEX3_ANY)
-
-#define NR_TEXSIZE_BITS   3
-#define VERT_TEX_ANY(i)   (VERT_TEX0_ANY << ((i) * NR_TEXSIZE_BITS))
-
-#define VERT_FIXUP         (VERT_TEX0_ANY | \
-                            VERT_TEX1_ANY | \
-                            VERT_TEX2_ANY | \
-                            VERT_TEX3_ANY | \
-			    VERT_RGBA | \
-			    VERT_SPEC_RGB | \
-			    VERT_FOG_COORD | \
-                            VERT_INDEX | \
-                            VERT_EDGE | \
+#define VERT_FIXUP         (VERT_TEX_ANY |	\
+			    VERT_RGBA |		\
+			    VERT_SPEC_RGB |	\
+			    VERT_FOG_COORD |	\
+                            VERT_INDEX |	\
+                            VERT_EDGE |		\
                             VERT_NORM)
 
-#define VERT_DATA          (VERT_TEX0_ANY | \
-                            VERT_TEX1_ANY | \
-                            VERT_TEX2_ANY | \
-                            VERT_TEX3_ANY | \
+#define VERT_DATA          (VERT_TEX_ANY | \
 			    VERT_RGBA | \
 			    VERT_SPEC_RGB | \
 			    VERT_FOG_COORD | \
@@ -256,6 +242,7 @@ struct immediate
    GLuint Start, Count;
    GLuint LastData;		/* count or count+1 */
    GLuint AndFlag, OrFlag;
+   GLuint Tex3Flag, Tex4Flag;	/* keep track of texcoord sizes */
    GLuint BeginState, SavedBeginState;
    GLuint LastPrimitive;	
 
@@ -263,11 +250,6 @@ struct immediate
    GLuint ArrayIncr;
    GLuint ArrayEltFlush;
    GLuint FlushElt;
-
-   GLuint TF1[MAX_TEXTURE_UNITS];	/* precalc'ed for glTexCoord */
-   GLuint TF2[MAX_TEXTURE_UNITS];
-   GLuint TF3[MAX_TEXTURE_UNITS];
-   GLuint TF4[MAX_TEXTURE_UNITS];
 
    GLuint  Primitive[VB_SIZE];	/* GLubyte would do... */
    GLuint  NextPrimitive[VB_SIZE];
@@ -338,6 +320,8 @@ typedef struct vertex_buffer
    GLuint     PurgeFlags;
    GLuint     IndirectCount;	/* defaults to count */
    GLuint     OrFlag, SavedOrFlag;
+   GLuint     Tex3Flag, Tex4Flag;
+   GLuint     SavedTex3Flag, SavedTex4Flag;
    GLuint     EarlyCull;
    GLuint     Culled, CullDone;
 
@@ -457,10 +441,7 @@ typedef GLuint (*clip_poly_func)( struct vertex_buffer *VB,
 #define PIPE_OP_NORM_XFORM        0x2
 #define PIPE_OP_LIGHT             0x4
 #define PIPE_OP_FOG               0x8
-#define PIPE_OP_TEX0             0x10
-#define PIPE_OP_TEX1             0x20
-#define PIPE_OP_TEX2             0x40
-#define PIPE_OP_TEX3             0x80
+#define PIPE_OP_TEX              0x10
 #define PIPE_OP_RAST_SETUP_0    0x100
 #define PIPE_OP_RAST_SETUP_1    0x200
 #define PIPE_OP_RENDER          0x400
@@ -561,6 +542,8 @@ typedef struct tnl_context {
    GLuint _ArrayFlags;
    GLuint _ArraySummary;	/* Like flags, but no size information */
    GLuint _ArrayNewState;	/* Tracks which arrays have been changed. */
+   GLuint _ArrayTex3Flag;
+   GLuint _ArrayTex4Flag;
 
 
    /* Pipeline stages - shared between the two pipelines,
@@ -592,7 +575,8 @@ typedef struct tnl_context {
    shade_func *_shade_func_tab;   /* Current shading function table */
 
    GLenum _CurrentPrimitive;         /* Prim or GL_POLYGON+1 */
-   GLuint _CurrentFlag;
+   GLuint _CurrentTex3Flag;
+   GLuint _CurrentTex4Flag;
 
    GLboolean _ReplayHardBeginEnd; /* Display list execution of rect, etc */
 
