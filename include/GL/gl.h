@@ -1,4 +1,4 @@
-/* $Id: gl.h,v 1.70 2002/09/19 16:19:45 brianp Exp $ */
+/* $Id: gl.h,v 1.71 2002/09/21 16:47:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2592,6 +2592,45 @@ GLAPI void GLAPIENTRY glTracePointerRangeMESA( const GLvoid* first, const GLvoid
 #define GL_UNSIGNED_SHORT_1_15_REV_MESA		0x8754
 
 #endif /* GL_MESA_packed_depth_stencil */
+
+
+#ifndef GL_MESA_ycbcr_texture
+#define GL_MESA_ycbcr_texture 1
+
+#define GL_YCBCR_MESA				0x8757
+#define GL_UNSIGNED_SHORT_8_8_MESA		0x85BA /* same as Apple */
+#define GL_UNSIGNED_SHORT_8_8_REV_MESA		0x85BB /* same as Apple */
+
+#endif /* GL_MESA_texture_ycbcr */
+
+
+
+#ifndef GL_MESA_pack_invert
+#define GL_MESA_pack_invert 1
+
+#define GL_PACK_INVERT_MESA                     0x8758
+
+#endif /* GL_MESA_pack_invert */
+
+
+
+#ifndef GL_APPLE_client_storage
+#define GL_APPLE_client_storage 1
+
+#define GL_UNPACK_CLIENT_STORAGE_APPLE          0x85B2
+
+#endif /* GL_APPLE_client_storage */
+
+
+
+#ifndef GL_APPLE_ycbcr_422
+#define GL_APPLE_ycbcr_422 1
+
+#define GL_YCBCR_422_APPLE			0x85B9
+#define GL_UNSIGNED_SHORT_8_8_APPLE		0x85BA
+#define GL_UNSIGNED_SHORT_8_8_REV_APPLE		0x85BB
+
+#endif /* GL_APPLE_ycbcr_422 */
 
 
 
