@@ -1,4 +1,4 @@
-/* $Id: cva.c,v 1.5 2003/01/28 15:31:35 brianp Exp $ */
+/* $Id: cva.c,v 1.6 2003/11/23 10:27:10 keithw Exp $ */
 
 /*
  * Trivial CVA test, good for testing driver fastpaths (especially
@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <malloc.h>	/* for ptrdiff_t, referenced by GL.h when GL_GLEXT_LEGACY defined */
 #ifdef _WIN32
 #include <windows.h>
 #endif

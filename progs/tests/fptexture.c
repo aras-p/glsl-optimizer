@@ -8,7 +8,7 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
 
-#include "readtex.c"
+#include "../util/readtex.c"
 
 
 #define TEXTURE_FILE "../images/girl.rgb"

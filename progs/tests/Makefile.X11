@@ -4,8 +4,9 @@
 # distro.  They're not too interesting but they're good for testing.
 
 TOP = ../..
+LIBDIR = $(TOP)/lib
 
-LIBS = $(APP_LIB_DEPS)
+LIBS = -L$(LIBDIR) $(APP_LIB_DEPS)
 
 SOURCES = antialias.c \
 	bufferobj.c \
@@ -74,10 +75,10 @@ texrect: texrect.o readtex.o
 	$(CC) texrect.o readtex.o $(LIBS) -o $@
 
 texrect.o: texrect.c readtex.h
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 readtex.o: readtex.c
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 
 readtex.h: $(TOP)/progs/util/readtex.h
