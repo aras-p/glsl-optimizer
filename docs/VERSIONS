@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.48 2001/02/14 22:59:50 brianp Exp $
+$Id: VERSIONS,v 1.49 2001/02/20 17:05:04 brianp Exp $
 
 
 Mesa Version History
@@ -803,7 +803,7 @@ Mesa Version History
 	- NURBS or evaluator surfaces inside display lists don't always work
 
 
-3.5  Month ??, 2000
+3.5  Month ??, 2001
     New:
 	- internals of Mesa divided into modular pieces (Keith Whitwell)
 	- support for hardware T&L for DRI
@@ -811,10 +811,13 @@ Mesa Version History
 	- GL_ARB_imaging subset
 	- OSMesaCreateContextExt() function
 	- GL_ARB_texture_env_add extension (same as GL_EXT_texture_env_add)
-	- GL_MAX_TEXTURE_UNITS_ARB now defaults to three.
+	- GL_MAX_TEXTURE_UNITS_ARB now defaults to eight
 	- libOSMesa.so now created, contains the OSMesa driver interface
 	- GL_EXT_fog_coord extension (Keith Whitwell)
 	- GL_EXT_secondary_color extension (Keith Whitwell)
+	- GL_SGIX_depth_texture extension
+	- GL_SGIX_shadow and GL_SGIX_shadow_ambient extensions
+	- demos/shadowtex.c demo of GL_SGIX_depth_texture and GL_SGIX_shadow
 	- GL/glxext.h header file for GLX extensions
 	- Improved precision in glReadPixels, improves conformance for 16bpp
 	- somewhat faster software texturing, fogging, depth testing
