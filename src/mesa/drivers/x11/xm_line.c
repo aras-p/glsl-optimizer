@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.16 2001/01/23 23:39:37 brianp Exp $ */
+/* $Id: xm_line.c,v 1.17 2001/04/27 21:18:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,7 +64,7 @@ static void draw_points_ANY_pixmap( GLcontext *ctx, const SWvertex *vert )
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
 
-   if (xmesa->xm_visual->gl_visual->RGBAflag) {
+   if (xmesa->xm_visual->mesa_visual.RGBAflag) {
       register int x, y;
       const GLubyte *color = vert->color;
       unsigned long pixel = xmesa_color_to_pixel( xmesa,

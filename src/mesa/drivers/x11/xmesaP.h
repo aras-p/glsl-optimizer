@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.20 2001/03/19 02:25:36 keithw Exp $ */
+/* $Id: xmesaP.h,v 1.21 2001/04/27 21:18:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,10 +75,10 @@ typedef void (*clear_func)( GLcontext *ctx,
 
 
 /*
- * "Derived" from gl_visual.  Basically corresponds to an XVisualInfo.
+ * "Derived" from GLvisual.  Basically corresponds to an XVisualInfo.
  */
 struct xmesa_visual {
-   GLvisual *gl_visual;		/* Device independent visual parameters */
+   GLvisual mesa_visual;	/* Device independent visual parameters */
    XMesaDisplay *display;	/* The X11 display */
 #ifdef XFree86Server
    GLint screen_depth;		/* The depth of the screen */
@@ -156,11 +156,11 @@ struct xmesa_context {
 
 
 /*
- * "Derived" from gl_buffer.  Basically corresponds to a GLXDrawable.
+ * "Derived" from GLframebuffer.  Basically corresponds to a GLXDrawable.
  */
 struct xmesa_buffer {
+   GLframebuffer mesa_buffer;	/* depth, stencil, accum, etc buffers */
    GLboolean wasCurrent;	/* was ever the current buffer? */
-   GLframebuffer *gl_buffer;	/* depth, stencil, accum, etc buffers */
    XMesaVisual xm_visual;	/* the X/Mesa visual */
 
    XMesaContext xm_context;     /* the context associated with this buffer */

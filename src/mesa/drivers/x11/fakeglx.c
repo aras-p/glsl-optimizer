@@ -1,4 +1,4 @@
-/* $Id: fakeglx.c,v 1.48 2001/03/23 21:37:05 brianp Exp $ */
+/* $Id: fakeglx.c,v 1.49 2001/04/27 21:18:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -269,16 +269,16 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
       if (v->display == dpy
           && v->level == level
           && v->ximage_flag == ximageFlag
-          && v->gl_visual->rgbMode == rgbFlag
-          && v->gl_visual->doubleBufferMode == dbFlag
-          && v->gl_visual->stereoMode == stereoFlag
-          && (v->gl_visual->alphaBits > 0) == alphaFlag
-          && (v->gl_visual->depthBits >= depth_size || depth_size == 0)
-          && (v->gl_visual->stencilBits >= stencil_size || stencil_size == 0)
-          && (v->gl_visual->accumRedBits >= accumRedSize || accumRedSize == 0)
-          && (v->gl_visual->accumGreenBits >= accumGreenSize || accumGreenSize == 0)
-          && (v->gl_visual->accumBlueBits >= accumBlueSize || accumBlueSize == 0)
-          && (v->gl_visual->accumAlphaBits >= accumAlphaSize || accumAlphaSize == 0)) {
+          && v->mesa_visual.rgbMode == rgbFlag
+          && v->mesa_visual.doubleBufferMode == dbFlag
+          && v->mesa_visual.stereoMode == stereoFlag
+          && (v->mesa_visual.alphaBits > 0) == alphaFlag
+          && (v->mesa_visual.depthBits >= depth_size || depth_size == 0)
+          && (v->mesa_visual.stencilBits >= stencil_size || stencil_size == 0)
+          && (v->mesa_visual.accumRedBits >= accumRedSize || accumRedSize == 0)
+          && (v->mesa_visual.accumGreenBits >= accumGreenSize || accumGreenSize == 0)
+          && (v->mesa_visual.accumBlueBits >= accumBlueSize || accumBlueSize == 0)
+          && (v->mesa_visual.accumAlphaBits >= accumAlphaSize || accumAlphaSize == 0)) {
          /* now either compare XVisualInfo pointers or visual IDs */
          if ((!comparePointers && v->visinfo->visualid == vinfo->visualid)
              || (comparePointers && v->vishandle == vinfo)) {
@@ -1418,7 +1418,7 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
 	 *value = glxvis->level;
 	 return 0;
       case GLX_RGBA:
-	 if (glxvis->gl_visual->rgbMode) {
+	 if (glxvis->mesa_visual.rgbMode) {
 	    *value = True;
 	 }
 	 else {
@@ -1426,43 +1426,43 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
 	 }
 	 return 0;
       case GLX_DOUBLEBUFFER:
-	 *value = (int) glxvis->gl_visual->doubleBufferMode;
+	 *value = (int) glxvis->mesa_visual.doubleBufferMode;
 	 return 0;
       case GLX_STEREO:
-	 *value = (int) glxvis->gl_visual->stereoMode;
+	 *value = (int) glxvis->mesa_visual.stereoMode;
 	 return 0;
       case GLX_AUX_BUFFERS:
 	 *value = (int) False;
 	 return 0;
       case GLX_RED_SIZE:
-         *value = glxvis->gl_visual->redBits;
+         *value = glxvis->mesa_visual.redBits;
 	 return 0;
       case GLX_GREEN_SIZE:
-         *value = glxvis->gl_visual->greenBits;
+         *value = glxvis->mesa_visual.greenBits;
 	 return 0;
       case GLX_BLUE_SIZE:
-         *value = glxvis->gl_visual->blueBits;
+         *value = glxvis->mesa_visual.blueBits;
 	 return 0;
       case GLX_ALPHA_SIZE:
-         *value = glxvis->gl_visual->alphaBits;
+         *value = glxvis->mesa_visual.alphaBits;
 	 return 0;
       case GLX_DEPTH_SIZE:
-         *value = glxvis->gl_visual->depthBits;
+         *value = glxvis->mesa_visual.depthBits;
 	 return 0;
       case GLX_STENCIL_SIZE:
-	 *value = glxvis->gl_visual->stencilBits;
+	 *value = glxvis->mesa_visual.stencilBits;
 	 return 0;
       case GLX_ACCUM_RED_SIZE:
-	 *value = glxvis->gl_visual->accumRedBits;
+	 *value = glxvis->mesa_visual.accumRedBits;
 	 return 0;
       case GLX_ACCUM_GREEN_SIZE:
-	 *value = glxvis->gl_visual->accumGreenBits;
+	 *value = glxvis->mesa_visual.accumGreenBits;
 	 return 0;
       case GLX_ACCUM_BLUE_SIZE:
-	 *value = glxvis->gl_visual->accumBlueBits;
+	 *value = glxvis->mesa_visual.accumBlueBits;
 	 return 0;
       case GLX_ACCUM_ALPHA_SIZE:
-         *value = glxvis->gl_visual->accumAlphaBits;
+         *value = glxvis->mesa_visual.accumAlphaBits;
 	 return 0;
 
       /*
@@ -1485,7 +1485,7 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
          }
          else if (glxvis->level>0) {
             /* overlay */
-            if (glxvis->gl_visual->rgbMode) {
+            if (glxvis->mesa_visual.rgbMode) {
                *value = GLX_TRANSPARENT_RGB_EXT;
             }
             else {
