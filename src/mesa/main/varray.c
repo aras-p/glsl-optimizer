@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.6 1999/11/04 19:42:28 keithw Exp $ */
+/* $Id: varray.c,v 1.7 1999/11/05 06:43:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -505,7 +505,7 @@ void gl_DrawArrays( GLcontext *ctx, GLenum mode, GLint start, GLsizei count )
       struct immediate *IM = VB->IM;
       struct gl_client_array *client_data;
       struct gl_pipeline *elt = &ctx->CVA.elt;
-      GLuint relock;
+      GLboolean relock;
       GLuint fallback, required;
 
       if (ctx->NewState)
@@ -1226,7 +1226,7 @@ void GLAPIENTRY glDrawRangeElements(CTX_ARG GLenum mode, GLuint start,
       return;
    }
 
-   if (!ctx->Array.LockCount && 2*count > 3*(end-start)) {
+   if (!ctx->Array.LockCount && 2*count > (GLint) 3*(end-start)) {
       glLockArraysEXT(CTX_PRM start, end );
       glDrawElements(CTX_PRM mode, count, type, indices );
       glUnlockArraysEXT(CTX_VPRM );

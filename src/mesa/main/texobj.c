@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.6 1999/10/13 18:42:50 brianp Exp $ */
+/* $Id: texobj.c,v 1.7 1999/11/05 06:43:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -415,7 +415,7 @@ void gl_BindTexture( GLcontext *ctx, GLenum target, GLuint texName )
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *oldTexObj;
    struct gl_texture_object *newTexObj;
-   GLint dim;
+   GLuint dim;
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glBindTexture %s %d\n",
@@ -423,7 +423,7 @@ void gl_BindTexture( GLcontext *ctx, GLenum target, GLuint texName )
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glBindTexture");
 
-   dim = target - GL_TEXTURE_1D;
+   dim = (GLuint) (target - GL_TEXTURE_1D);
 
    if (dim < 0 || dim > 2) {
       gl_error( ctx, GL_INVALID_ENUM, "glBindTexture" );

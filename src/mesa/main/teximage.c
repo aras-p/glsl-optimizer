@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.9 1999/11/03 17:27:05 brianp Exp $ */
+/* $Id: teximage.c,v 1.10 1999/11/05 06:43:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -619,9 +619,9 @@ make_null_texture( GLcontext *ctx, GLenum internalFormat,
          GLint srcRow = 7 - i % 8;
          for (j=0;j<width;j++) {
             GLint srcCol = j % 32;
-            GLubyte texel = (message[srcRow][srcCol]=='X') ? 255 : 70;
+            GLint texel = (message[srcRow][srcCol]=='X') ? 255 : 70;
             for (k=0;k<components;k++) {
-               *imgPtr++ = texel;
+               *imgPtr++ = (GLubyte) texel;
             }
          }
       }
@@ -642,7 +642,7 @@ static GLboolean
 texture_error_check( GLcontext *ctx, GLenum target,
                      GLint level, GLint internalFormat,
                      GLenum format, GLenum type,
-                     GLint dimensions,
+                     GLuint dimensions,
                      GLint width, GLint height,
                      GLint depth, GLint border )
 {
@@ -650,21 +650,21 @@ texture_error_check( GLcontext *ctx, GLenum target,
    GLint iformat;
 
    if (dimensions == 1) {
-      isProxy = (target == GL_PROXY_TEXTURE_1D);
+      isProxy = (GLboolean) (target == GL_PROXY_TEXTURE_1D);
       if (target != GL_TEXTURE_1D && !isProxy) {
          gl_error( ctx, GL_INVALID_ENUM, "glTexImage1D(target)" );
          return GL_TRUE;
       }
    }
    else if (dimensions == 2) {
-      isProxy = (target == GL_PROXY_TEXTURE_2D);
+      isProxy = (GLboolean) (target == GL_PROXY_TEXTURE_2D);
       if (target != GL_TEXTURE_2D && !isProxy) {
           gl_error( ctx, GL_INVALID_ENUM, "glTexImage2D(target)" );
           return GL_TRUE;
       }
    }
    else if (dimensions == 3) {
-      isProxy = (target == GL_PROXY_TEXTURE_3D);
+      isProxy = (GLboolean) (target == GL_PROXY_TEXTURE_3D);
       if (target != GL_TEXTURE_3D && !isProxy) {
          gl_error( ctx, GL_INVALID_ENUM, "glTexImage3D(target)" );
          return GL_TRUE;
@@ -946,7 +946,7 @@ static GLboolean
 copytexsubimage_error_check( GLcontext *ctx, GLint dimensions,
                              GLenum target, GLint level,
                              GLint xoffset, GLint yoffset, GLint zoffset,
-                             GLint x, GLint y, GLsizei width, GLsizei height )
+                             GLsizei width, GLsizei height )
 {
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_image *teximage;
@@ -1760,7 +1760,7 @@ void gl_CopyTexSubImage1D( GLcontext *ctx, GLenum target, GLint level,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage1D");
 
    if (!copytexsubimage_error_check(ctx, 1, target, level,
-                    xoffset, 0, 0, x, y, width, 1)) {
+                    xoffset, 0, 0, width, 1)) {
       struct gl_texture_unit *texUnit;
       struct gl_texture_image *teximage;
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -1787,7 +1787,7 @@ void gl_CopyTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage2D");
 
    if (!copytexsubimage_error_check(ctx, 2, target, level,
-                    xoffset, yoffset, 0, x, y, width, height)) {
+                    xoffset, yoffset, 0, width, height)) {
       struct gl_texture_unit *texUnit;
       struct gl_texture_image *teximage;
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -1815,7 +1815,7 @@ void gl_CopyTexSubImage3D( GLcontext *ctx, GLenum target, GLint level,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage3D");
 
    if (!copytexsubimage_error_check(ctx, 3, target, level,
-                    xoffset, yoffset, zoffset, x, y, width, height)) {
+                    xoffset, yoffset, zoffset, width, height)) {
       struct gl_texture_unit *texUnit;
       struct gl_texture_image *teximage;
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];

@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.3 1999/10/08 09:27:11 keithw Exp $ */
+/* $Id: texstate.c,v 1.4 1999/11/05 06:43:11 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -111,10 +111,10 @@ void gl_TexEnvfv( GLcontext *ctx,
       }
    }
    else if (pname==GL_TEXTURE_ENV_COLOR) {
-      texUnit->EnvColor[0] = CLAMP( param[0], 0.0, 1.0 );
-      texUnit->EnvColor[1] = CLAMP( param[1], 0.0, 1.0 );
-      texUnit->EnvColor[2] = CLAMP( param[2], 0.0, 1.0 );
-      texUnit->EnvColor[3] = CLAMP( param[3], 0.0, 1.0 );
+      texUnit->EnvColor[0] = CLAMP( param[0], 0.0F, 1.0F );
+      texUnit->EnvColor[1] = CLAMP( param[1], 0.0F, 1.0F );
+      texUnit->EnvColor[2] = CLAMP( param[2], 0.0F, 1.0F );
+      texUnit->EnvColor[3] = CLAMP( param[3], 0.0F, 1.0F );
    }
    else {
       gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname)" );
@@ -284,10 +284,10 @@ void gl_TexParameterfv( GLcontext *ctx,
          }
          break;
       case GL_TEXTURE_BORDER_COLOR:
-         texObj->BorderColor[0] = CLAMP((GLint)(params[0]*255.0), 0, 255);
-         texObj->BorderColor[1] = CLAMP((GLint)(params[1]*255.0), 0, 255);
-         texObj->BorderColor[2] = CLAMP((GLint)(params[2]*255.0), 0, 255);
-         texObj->BorderColor[3] = CLAMP((GLint)(params[3]*255.0), 0, 255);
+         texObj->BorderColor[0] = (GLubyte) CLAMP((GLint)(params[0]*255.0), 0, 255);
+         texObj->BorderColor[1] = (GLubyte) CLAMP((GLint)(params[1]*255.0), 0, 255);
+         texObj->BorderColor[2] = (GLubyte) CLAMP((GLint)(params[2]*255.0), 0, 255);
+         texObj->BorderColor[3] = (GLubyte) CLAMP((GLint)(params[3]*255.0), 0, 255);
          break;
       case GL_TEXTURE_MIN_LOD:
          texObj->MinLod = params[0];
@@ -315,7 +315,7 @@ void gl_TexParameterfv( GLcontext *ctx,
          break;
       case GL_TEXTURE_PRIORITY:
          /* (keithh@netcomuk.co.uk) */
-         texObj->Priority = CLAMP( params[0], 0.0, 1.0 );
+         texObj->Priority = CLAMP( params[0], 0.0F, 1.0F );
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glTexParameter(pname)" );
@@ -505,10 +505,10 @@ void gl_GetTexParameterfv( GLcontext *ctx,
          *params = obj->MaxLod;
          break;
       case GL_TEXTURE_BASE_LEVEL:
-         *params = obj->BaseLevel;
+         *params = (GLfloat) obj->BaseLevel;
          break;
       case GL_TEXTURE_MAX_LEVEL:
-         *params = obj->MaxLevel;
+         *params = (GLfloat) obj->MaxLevel;
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetTexParameterfv(pname)" );
@@ -556,10 +556,10 @@ void gl_GetTexParameteriv( GLcontext *ctx,
       case GL_TEXTURE_BORDER_COLOR:
          {
             GLfloat color[4];
-            color[0] = obj->BorderColor[0]/255.0;
-            color[1] = obj->BorderColor[1]/255.0;
-            color[2] = obj->BorderColor[2]/255.0;
-            color[3] = obj->BorderColor[3]/255.0;
+            color[0] = obj->BorderColor[0] / 255.0F;
+            color[1] = obj->BorderColor[1] / 255.0F;
+            color[2] = obj->BorderColor[2] / 255.0F;
+            color[3] = obj->BorderColor[3] / 255.0F;
             params[0] = FLOAT_TO_INT( color[0] );
             params[1] = FLOAT_TO_INT( color[1] );
             params[2] = FLOAT_TO_INT( color[2] );
@@ -965,10 +965,16 @@ void gl_GetTexGeniv( GLcontext *ctx,
             params[0] = texUnit->GenModeS;
 	 }
 	 else if (pname==GL_OBJECT_PLANE) {
-            COPY_4V( params, texUnit->ObjectPlaneS );
+            params[0] = (GLint) texUnit->ObjectPlaneS[0];
+            params[1] = (GLint) texUnit->ObjectPlaneS[1];
+            params[2] = (GLint) texUnit->ObjectPlaneS[2];
+            params[3] = (GLint) texUnit->ObjectPlaneS[3];
 	 }
 	 else if (pname==GL_EYE_PLANE) {
-            COPY_4V( params, texUnit->EyePlaneS );
+            params[0] = (GLint) texUnit->EyePlaneS[0];
+            params[1] = (GLint) texUnit->EyePlaneS[1];
+            params[2] = (GLint) texUnit->EyePlaneS[2];
+            params[3] = (GLint) texUnit->EyePlaneS[3];
 	 }
 	 else {
 	    gl_error( ctx, GL_INVALID_ENUM, "glGetTexGeniv(pname)" );
@@ -977,13 +983,19 @@ void gl_GetTexGeniv( GLcontext *ctx,
 	 break;
       case GL_T:
          if (pname==GL_TEXTURE_GEN_MODE) {
-            params[0] = texUnit->GenModeT;
+            params[0] = (GLint) texUnit->GenModeT;
 	 }
 	 else if (pname==GL_OBJECT_PLANE) {
-            COPY_4V( params, texUnit->ObjectPlaneT );
+            params[0] = (GLint) texUnit->ObjectPlaneT[0];
+            params[1] = (GLint) texUnit->ObjectPlaneT[1];
+            params[2] = (GLint) texUnit->ObjectPlaneT[2];
+            params[3] = (GLint) texUnit->ObjectPlaneT[3];
 	 }
 	 else if (pname==GL_EYE_PLANE) {
-            COPY_4V( params, texUnit->EyePlaneT );
+            params[0] = (GLint) texUnit->EyePlaneT[0];
+            params[1] = (GLint) texUnit->EyePlaneT[1];
+            params[2] = (GLint) texUnit->EyePlaneT[2];
+            params[3] = (GLint) texUnit->EyePlaneT[3];
 	 }
 	 else {
 	    gl_error( ctx, GL_INVALID_ENUM, "glGetTexGeniv(pname)" );
@@ -992,13 +1004,19 @@ void gl_GetTexGeniv( GLcontext *ctx,
 	 break;
       case GL_R:
          if (pname==GL_TEXTURE_GEN_MODE) {
-            params[0] = texUnit->GenModeR;
+            params[0] = (GLint) texUnit->GenModeR;
 	 }
 	 else if (pname==GL_OBJECT_PLANE) {
-            COPY_4V( params, texUnit->ObjectPlaneR );
+            params[0] = (GLint) texUnit->ObjectPlaneR[0];
+            params[1] = (GLint) texUnit->ObjectPlaneR[1];
+            params[2] = (GLint) texUnit->ObjectPlaneR[2];
+            params[3] = (GLint) texUnit->ObjectPlaneR[3];
 	 }
 	 else if (pname==GL_EYE_PLANE) {
-            COPY_4V( params, texUnit->EyePlaneR );
+            params[0] = (GLint) texUnit->EyePlaneR[0];
+            params[1] = (GLint) texUnit->EyePlaneR[1];
+            params[2] = (GLint) texUnit->EyePlaneR[2];
+            params[3] = (GLint) texUnit->EyePlaneR[3];
 	 }
 	 else {
 	    gl_error( ctx, GL_INVALID_ENUM, "glGetTexGeniv(pname)" );
@@ -1007,13 +1025,19 @@ void gl_GetTexGeniv( GLcontext *ctx,
 	 break;
       case GL_Q:
          if (pname==GL_TEXTURE_GEN_MODE) {
-            params[0] = texUnit->GenModeQ;
+            params[0] = (GLint) texUnit->GenModeQ;
 	 }
 	 else if (pname==GL_OBJECT_PLANE) {
-            COPY_4V( params, texUnit->ObjectPlaneQ );
+            params[0] = (GLint) texUnit->ObjectPlaneQ[0];
+            params[1] = (GLint) texUnit->ObjectPlaneQ[1];
+            params[2] = (GLint) texUnit->ObjectPlaneQ[2];
+            params[3] = (GLint) texUnit->ObjectPlaneQ[3];
 	 }
 	 else if (pname==GL_EYE_PLANE) {
-            COPY_4V( params, texUnit->EyePlaneQ );
+            params[0] = (GLint) texUnit->EyePlaneQ[0];
+            params[1] = (GLint) texUnit->EyePlaneQ[1];
+            params[2] = (GLint) texUnit->EyePlaneQ[2];
+            params[3] = (GLint) texUnit->EyePlaneQ[3];
 	 }
 	 else {
 	    gl_error( ctx, GL_INVALID_ENUM, "glGetTexGeniv(pname)" );
