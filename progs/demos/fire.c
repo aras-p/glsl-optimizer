@@ -73,6 +73,7 @@ static int HEIGHT = 480;
 
 static GLint T0 = 0;
 static GLint Frames = 0;
+static GLint NiceFog = 1;
 
 #define DIMP 20.0
 #define DIMTP 16.0
@@ -379,6 +380,11 @@ drawfire(void)
 
    dojoy();
 
+   if (NiceFog)
+      glHint(GL_FOG_HINT, GL_NICEST);
+   else
+      glHint(GL_FOG_HINT, GL_DONT_CARE);
+
    glEnable(GL_DEPTH_TEST);
 
    if (fog)
@@ -401,6 +407,7 @@ drawfire(void)
    glEnable(GL_TEXTURE_2D);
 
    glBindTexture(GL_TEXTURE_2D, groundid);
+#if 1
    glBegin(GL_QUADS);
    glTexCoord2fv(qt[0]);
    glVertex3fv(q[0]);
@@ -411,6 +418,26 @@ drawfire(void)
    glTexCoord2fv(qt[3]);
    glVertex3fv(q[3]);
    glEnd();
+#else
+   /* Subdivide the ground into a bunch of quads.  This improves fog
+    * if GL_FOG_HINT != GL_NICEST
+    */
+   {
+      float x, y;
+      float dx = 1.0, dy = 1.0;
+      glBegin(GL_QUADS);
+      for (y = -DIMP; y < DIMP; y += 1.0) {
+         for (x = -DIMP; x < DIMP; x += 1.0) {
+            glTexCoord2f(0, 0);   glVertex3f(x, 0, y);
+            glTexCoord2f(1, 0);   glVertex3f(x+dx, 0, y);
+            glTexCoord2f(1, 1);   glVertex3f(x+dx, 0, y+dy);
+            glTexCoord2f(0, 1);   glVertex3f(x, 0, y+dy);
+         }
+      }
+      glEnd();
+   }
+#endif
+
 
    glEnable(GL_ALPHA_TEST);
    glAlphaFunc(GL_GEQUAL, 0.9);
@@ -517,6 +544,7 @@ special(int key, int x, int y)
       beta += 2.0;
       break;
    }
+   glutPostRedisplay();
 }
 
 static void
@@ -564,7 +592,12 @@ key(unsigned char key, int x, int y)
       fullscreen = (!fullscreen);
       break;
 #endif
+   case 'n':
+      NiceFog = !NiceFog;
+      printf("NiceFog %d\n", NiceFog);
+      break;
    }
+   glutPostRedisplay();
 }
 
 static void
@@ -668,8 +701,6 @@ main(int ac, char **av)
 
    /* Default settings */
 
-   WIDTH = 640;
-   HEIGHT = 480;
    np = 800;
    eject_r = 0.1;
    dt = 0.015;
@@ -713,9 +744,6 @@ main(int ac, char **av)
    glFogi(GL_FOG_MODE, GL_EXP);
    glFogfv(GL_FOG_COLOR, fogcolor);
    glFogf(GL_FOG_DENSITY, 0.1);
-#ifdef FX
-   glHint(GL_FOG_HINT, GL_NICEST);
-#endif
 
    p = malloc(sizeof(part) * np);
 
