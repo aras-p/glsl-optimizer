@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.28 2001/03/18 08:53:49 gareth Exp $ */
+/* $Id: config.h,v 1.29 2001/04/26 22:27:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -164,7 +164,9 @@
 /*
  * Bits per color channel (must be 8 at this time!)
  */
+#ifndef CHAN_BITS
 #define CHAN_BITS 8
+#endif
 
 
 /*
