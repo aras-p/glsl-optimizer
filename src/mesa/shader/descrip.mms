@@ -28,7 +28,8 @@ SOURCES = \
 	nvprogram.c \
 	nvvertexec.c \
 	nvvertparse.c \
-	program.c
+	program.c \
+	shaderobjects.c
 
 OBJECTS = \
 	arbfragparse.obj,\
@@ -40,7 +41,8 @@ OBJECTS = \
 	nvprogram.obj,\
 	nvvertexec.obj,\
 	nvvertparse.obj,\
-	program.obj
+	program.obj \
+	shaderobjects.obj
 
 
 ##### RULES #####
@@ -67,3 +69,4 @@ nvprogram.obj : nvprogram.c
 nvvertexec.obj : nvvertexec.c
 nvvertparse.obj : nvvertparse.c
 program.obj : program.c
+shaderobjects.obj: shaderobjects.c
