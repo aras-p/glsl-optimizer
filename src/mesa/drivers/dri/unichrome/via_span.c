@@ -233,6 +233,7 @@ void viaInitSpanFuncs(GLcontext *ctx)
     else if (vmesa->glCtx->Visual.depthBits == 24) {
         swdd->ReadDepthSpan = viaReadDepthSpan_24_8;
 	swdd->WriteDepthSpan = viaWriteDepthSpan_24_8;
+	swdd->WriteMonoDepthSpan = viaWriteMonoDepthSpan_24_8;
 	swdd->ReadDepthPixels = viaReadDepthPixels_24_8;
 	swdd->WriteDepthPixels = viaWriteDepthPixels_24_8;
 
