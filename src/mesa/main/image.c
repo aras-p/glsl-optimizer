@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.47 2000/11/09 23:25:06 brianp Exp $ */
+/* $Id: image.c,v 1.48 2000/11/10 18:06:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "image.h"
-#include "imaging.h"
+#include "histogram.h"
 #include "macros.h"
 #include "mem.h"
 #include "mmath.h"

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.40 2000/11/05 18:40:58 keithw Exp $ */
+/* $Id: state.c,v 1.41 2000/11/10 18:06:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,7 +56,7 @@
 #include "feedback.h"
 #include "fog.h"
 #include "hint.h"
-#include "imaging.h"
+#include "histogram.h"
 #include "light.h"
 #include "lines.h"
 #include "logic.h"

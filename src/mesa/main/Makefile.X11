@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.29 2000/11/05 23:19:23 brianp Exp $
+# $Id: Makefile.X11,v 1.30 2000/11/10 18:06:14 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -53,8 +53,8 @@ CORE_SOURCES = \
 	hash.c \
 	highpc.c \
 	hint.c \
+	histogram.c \
 	image.c \
-	imaging.c \
 	imports.c \
 	light.c \
 	lines.c \
@@ -112,7 +112,7 @@ CORE_SOURCES = \
 	swrast/s_drawpix.c \
 	swrast/s_feedback.c \
 	swrast/s_fog.c \
-	swrast/s_imaging.c \
+	swrast/s_histogram.c \
 	swrast/s_lines.c \
 	swrast/s_logic.c \
 	swrast/s_masking.c \

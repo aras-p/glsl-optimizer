@@ -19,7 +19,7 @@ CORE_SOURCES = accum.c alpha.c attrib.c \
 bitmap.c blend.c buffers.c clip.c colortab.c context.c copypix.c depth.c \
 dispatch.c convolve.c \
 dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
-get.c hash.c highpc.c hint.c image.c imaging.c light.c lines.c logic.c\
+get.c hash.c highpc.c hint.c image.c histogram.c light.c lines.c logic.c\
 lowpc.c masking.c matrix.c \
 mem.c glapi.c glapinoop.c imports.c\
 mmath.c pixel.c points.c polygon.c \
@@ -52,7 +52,7 @@ RASTER_SOURCES = [.swrast]s_aatriangle.c \
 [.swrast]s_drawpix.c \
 [.swrast]s_fog.c \
 [.swrast]s_feedback.c \
-[.swrast]s_imaging.c \
+[.swrast]s_histogram.c \
 [.swrast]s_lines.c \
 [.swrast]s_logic.c \
 [.swrast]s_masking.c \
@@ -80,7 +80,7 @@ dlist.obj,drawpix.obj,enable.obj,eval.obj,feedback.obj,fog.obj
 
 
 OBJECTS3=get.obj,hash.obj,hint.obj,image.obj,light.obj,lines.obj,logic.obj,masking.obj,\
-matrix.obj,glapi.obj,glapinoop.obj,dispatch.obj,highpc.obj,imaging.obj,mem.obj,\
+matrix.obj,glapi.obj,glapinoop.obj,dispatch.obj,highpc.obj,histogram.obj,mem.obj,\
 mmath.obj,pixel.obj,points.obj
 
 OBJECTS7=polygon.obj,imports.obj,\
@@ -118,7 +118,7 @@ OBJECTS9=[.swrast]s_aatriangle.obj,\
 
 OBJECTS10=[.swrast]s_drawpix.obj,\
 [.swrast]s_fog.obj,\
-[.swrast]s_imaging.obj,\
+[.swrast]s_histogram.obj,\
 [.swrast]s_lines.obj,\
 [.swrast]s_logic.obj,\
 [.swrast]s_masking.obj,\
@@ -276,8 +276,8 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_feedback.obj [.swrast]s_feedback.c
 [.swrast]s_fog.obj : [.swrast]s_fog.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_fog.obj [.swrast]s_fog.c
-[.swrast]s_imaging.obj : [.swrast]s_imaging.c
-	$(CC) $(CFLAGS) /obj=[.swrast]s_imaging.obj [.swrast]s_imaging.c
+[.swrast]s_histogram.obj : [.swrast]s_histogram.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_histogram.obj [.swrast]s_histogram.c
 [.swrast]s_lines.obj : [.swrast]s_lines.c
 	$(CC) $(CFLAGS) /obj=[.swrast]s_lines.obj [.swrast]s_lines.c
 [.swrast]s_logic.obj : [.swrast]s_logic.c

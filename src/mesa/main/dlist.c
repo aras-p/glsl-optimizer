@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.49 2000/10/28 20:41:13 brianp Exp $ */
+/* $Id: dlist.c,v 1.50 2000/11/10 18:06:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,8 +51,8 @@
 #include "get.h"
 #include "glapi.h"
 #include "hash.h"
+#include "histogram.h"
 #include "image.h"
-#include "imaging.h"
 #include "light.h"
 #include "lines.h"
 #include "dlist.h"
