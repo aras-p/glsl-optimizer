@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.13 1999/11/22 01:24:25 wertmann Exp $
+# $Id: Make-config,v 1.14 1999/12/08 11:52:29 wertmann Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=3
@@ -611,6 +611,7 @@ linux-katmai:
 	X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
 	X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
 	X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
+	X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
 	X86/vertex_katmai.S"
 
 linux-katmai-glide:
@@ -635,6 +636,7 @@ linux-katmai-glide:
 	X86/katmai_xform_raw1.S X86/katmai_xform_masked1.S \
 	X86/katmai_xform_raw2.S X86/katmai_xform_masked2.S \
 	X86/katmai_xform_raw3.S X86/katmai_xform_masked3.S \
+	X86/katmai_xform_raw4.S X86/katmai_xform_masked4.S \
 	X86/vertex_katmai.S" 
 
 # Contributed by C. Alex. North-Keys (erlkonig@talisman.org)
