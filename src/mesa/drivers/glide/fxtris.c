@@ -23,17 +23,15 @@
 
 
 
-static void 
-fx_draw_point( GLcontext *ctx, const fxVertex *v )
+static void
+fx_draw_point(GLcontext * ctx, const fxVertex * v)
 {
    GLfloat sz = ctx->Point._Size;
 
-   if ( sz <= 1.0 )
-   {
-      grDrawPoint( &(v->v) );
+   if (sz <= 1.0) {
+      grDrawPoint(&(v->v));
    }
-   else
-   {
+   else {
       GrVertex verts[4];
 
       sz *= .5;
@@ -48,30 +46,28 @@ fx_draw_point( GLcontext *ctx, const fxVertex *v )
 
       verts[1].x = v->v.x + sz;
       verts[1].y = v->v.y - sz;
-	 
+
       verts[2].x = v->v.x + sz;
       verts[2].y = v->v.y + sz;
 
       verts[3].x = v->v.x - sz;
       verts[3].y = v->v.y + sz;
 
-      grDrawTriangle( &verts[0], &verts[1], &verts[3] );
-      grDrawTriangle( &verts[1], &verts[2], &verts[3] );
+      grDrawTriangle(&verts[0], &verts[1], &verts[3]);
+      grDrawTriangle(&verts[1], &verts[2], &verts[3]);
    }
 }
 
 
-static void 
-fx_draw_line( GLcontext *ctx, const fxVertex *v0, const fxVertex *v1 )
+static void
+fx_draw_line(GLcontext * ctx, const fxVertex * v0, const fxVertex * v1)
 {
    float width = ctx->Line.Width;
 
-   if ( width <= 1.0 )
-   {
-      grDrawLine( &(v0->v), &(v1->v) );
+   if (width <= 1.0) {
+      grDrawLine(&(v0->v), &(v1->v));
    }
-   else
-   {
+   else {
       GrVertex verts[4];
       float dx, dy, ix, iy;
 
@@ -81,7 +77,8 @@ fx_draw_line( GLcontext *ctx, const fxVertex *v0, const fxVertex *v1 )
       if (dx * dx > dy * dy) {
 	 iy = width * .5;
 	 ix = 0;
-      } else {
+      }
+      else {
 	 iy = 0;
 	 ix = width * .5;
       }
@@ -103,16 +100,16 @@ fx_draw_line( GLcontext *ctx, const fxVertex *v0, const fxVertex *v1 )
       verts[3].x -= ix;
       verts[3].y -= iy;
 
-      grDrawTriangle( &verts[0], &verts[1], &verts[3] );
-      grDrawTriangle( &verts[1], &verts[2], &verts[3] );
+      grDrawTriangle(&verts[0], &verts[1], &verts[3]);
+      grDrawTriangle(&verts[1], &verts[2], &verts[3]);
    }
 }
 
-static void 
-fx_draw_tri( GLcontext *ctx, const fxVertex *v0, const fxVertex *v1, 
-	     const fxVertex *v2 )
+static void
+fx_draw_tri(GLcontext * ctx, const fxVertex * v0, const fxVertex * v1,
+	    const fxVertex * v2)
 {
-   grDrawTriangle( &(v0->v), &(v1->v), &(v2->v) );
+   grDrawTriangle(&(v0->v), &(v1->v), &(v2->v));
 }
 
 
@@ -141,12 +138,14 @@ fx_draw_tri( GLcontext *ctx, const fxVertex *v0, const fxVertex *v1,
 #define FX_FALLBACK_BIT	        0x20
 #define FX_MAX_TRIFUNC          0x40
 
-static struct {
-   points_func		points;
-   line_func    	line;
-   triangle_func	triangle;
-   quad_func		quad;
-} rast_tab[FX_MAX_TRIFUNC];
+static struct
+{
+   points_func points;
+   line_func line;
+   triangle_func triangle;
+   quad_func quad;
+}
+rast_tab[FX_MAX_TRIFUNC];
 
 
 #define IND (0)
@@ -282,7 +281,8 @@ static struct {
 
 
 
-void fxDDTrifuncInit( void )
+void
+fxDDTrifuncInit(void)
 {
    init();
    init_flat();
@@ -330,13 +330,13 @@ void fxDDTrifuncInit( void )
  * primitives are being drawn, and only for the unaccelerated
  * primitives. 
  */
-static void 
-fx_translate_vertex(GLcontext *ctx, const fxVertex *src, SWvertex *dst)
+static void
+fx_translate_vertex(GLcontext * ctx, const fxVertex * src, SWvertex * dst)
 {
-   fxMesaContext fxMesa = FX_CONTEXT( ctx );
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLuint ts0 = fxMesa->tmu_source[0];
    GLuint ts1 = fxMesa->tmu_source[1];
-   GLfloat w = 1.0 / src->v.oow;	
+   GLfloat w = 1.0 / src->v.oow;
 
    dst->win[0] = src->v.x;
    dst->win[1] = src->v.y;
@@ -359,52 +359,53 @@ fx_translate_vertex(GLcontext *ctx, const fxVertex *src, SWvertex *dst)
    dst->texcoord[ts1][0] = fxMesa->inv_s1scale * src->v.tmuvtx[1].sow * w;
    dst->texcoord[ts1][1] = fxMesa->inv_t1scale * src->v.tmuvtx[1].tow * w;
 
-   if (fxMesa->stw_hint_state & GR_STWHINT_W_DIFF_TMU1) 
+   if (fxMesa->stw_hint_state & GR_STWHINT_W_DIFF_TMU1)
       dst->texcoord[ts1][3] = src->v.tmuvtx[1].oow * w;
    else
       dst->texcoord[ts1][3] = 1.0;
 }
 
 
-static void 
-fx_fallback_tri( GLcontext *ctx, 
-		 const fxVertex *v0, const fxVertex *v1, const fxVertex *v2 )
+static void
+fx_fallback_tri(GLcontext * ctx,
+		const fxVertex * v0, const fxVertex * v1, const fxVertex * v2)
 {
    SWvertex v[3];
-   fx_translate_vertex( ctx, v0, &v[0] );
-   fx_translate_vertex( ctx, v1, &v[1] );
-   fx_translate_vertex( ctx, v2, &v[2] );
-   _swrast_Triangle( ctx, &v[0], &v[1], &v[2] );
+   fx_translate_vertex(ctx, v0, &v[0]);
+   fx_translate_vertex(ctx, v1, &v[1]);
+   fx_translate_vertex(ctx, v2, &v[2]);
+   _swrast_Triangle(ctx, &v[0], &v[1], &v[2]);
 }
 
 
-static void 
-fx_fallback_line( GLcontext *ctx, const fxVertex *v0, const fxVertex *v1 )
+static void
+fx_fallback_line(GLcontext * ctx, const fxVertex * v0, const fxVertex * v1)
 {
    SWvertex v[2];
-   fx_translate_vertex( ctx, v0, &v[0] );
-   fx_translate_vertex( ctx, v1, &v[1] );
-   _swrast_Line( ctx, &v[0], &v[1] );
+   fx_translate_vertex(ctx, v0, &v[0]);
+   fx_translate_vertex(ctx, v1, &v[1]);
+   _swrast_Line(ctx, &v[0], &v[1]);
 }
 
 
-static void 
-fx_fallback_point( GLcontext *ctx, const fxVertex *v0 )
+static void
+fx_fallback_point(GLcontext * ctx, const fxVertex * v0)
 {
    SWvertex v[1];
-   fx_translate_vertex( ctx, v0, &v[0] );
-   _swrast_Point( ctx, &v[0] );
+   fx_translate_vertex(ctx, v0, &v[0]);
+   _swrast_Point(ctx, &v[0]);
 }
 
 
 /* System to turn culling off for rasterized lines and points, and
  * back on for rasterized triangles.
  */
-static void 
-fx_cull_draw_tri( GLcontext *ctx, 
-		 const fxVertex *v0, const fxVertex *v1, const fxVertex *v2 )
+static void
+fx_cull_draw_tri(GLcontext * ctx,
+		 const fxVertex * v0, const fxVertex * v1,
+		 const fxVertex * v2)
 {
-   fxMesaContext fxMesa = FX_CONTEXT( ctx );
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
    FX_grCullMode(fxMesa->cullMode);
 
@@ -412,29 +413,29 @@ fx_cull_draw_tri( GLcontext *ctx,
    fxMesa->draw_point = fxMesa->initial_point;
    fxMesa->draw_tri = fxMesa->subsequent_tri;
 
-   fxMesa->draw_tri( ctx, v0, v1, v2 );
+   fxMesa->draw_tri(ctx, v0, v1, v2);
 }
 
 
-static void 
-fx_cull_draw_line( GLcontext *ctx, const fxVertex *v0, const fxVertex *v1 )
+static void
+fx_cull_draw_line(GLcontext * ctx, const fxVertex * v0, const fxVertex * v1)
 {
-   fxMesaContext fxMesa = FX_CONTEXT( ctx );
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
-   FX_grCullMode( GR_CULL_DISABLE );
+   FX_grCullMode(GR_CULL_DISABLE);
 
    fxMesa->draw_point = fxMesa->initial_point;
    fxMesa->draw_tri = fxMesa->initial_tri;
    fxMesa->draw_line = fxMesa->subsequent_line;
 
-   fxMesa->draw_line( ctx, v0, v1 );
+   fxMesa->draw_line(ctx, v0, v1);
 }
 
 
-static void 
-fx_cull_draw_point( GLcontext *ctx, const fxVertex *v0 )
+static void
+fx_cull_draw_point(GLcontext * ctx, const fxVertex * v0)
 {
-   fxMesaContext fxMesa = FX_CONTEXT( ctx );
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
    FX_grCullMode(GR_CULL_DISABLE);
 
@@ -442,13 +443,13 @@ fx_cull_draw_point( GLcontext *ctx, const fxVertex *v0 )
    fxMesa->draw_tri = fxMesa->initial_tri;
    fxMesa->draw_point = fxMesa->subsequent_point;
 
-   fxMesa->draw_point( ctx, v0 );
+   fxMesa->draw_point(ctx, v0);
 }
 
 
-static void 
-fx_null_tri( GLcontext *ctx, 
-	     const fxVertex *v0, const fxVertex *v1, const fxVertex *v2 )
+static void
+fx_null_tri(GLcontext * ctx,
+	    const fxVertex * v0, const fxVertex * v1, const fxVertex * v2)
 {
    (void) v0;
    (void) v1;
@@ -488,8 +489,8 @@ fx_null_tri( GLcontext *ctx,
 /* Verts, no clipping.
  */
 #define ELT(x) x
-#define RESET_STIPPLE 
-#define RESET_OCCLUSION 
+#define RESET_STIPPLE
+#define RESET_OCCLUSION
 #define PRESERVE_VB_DEFS
 #include "tnl/t_vb_rendertmp.h"
 
@@ -514,7 +515,7 @@ fx_null_tri( GLcontext *ctx,
 #define LINE_FALLBACK	(DD_LINE_STIPPLE)
 #define TRI_FALLBACK	(DD_TRI_SMOOTH | DD_TRI_STIPPLE )
 #define ANY_FALLBACK	(POINT_FALLBACK | LINE_FALLBACK | TRI_FALLBACK)
-			 
+
 
 #define ANY_RENDER_FLAGS (DD_FLATSHADE | 		\
 			  DD_TRI_LIGHT_TWOSIDE | 	\
@@ -527,13 +528,14 @@ fx_null_tri( GLcontext *ctx,
  * current rendering state.  Wherever possible, use the hardware to
  * render the primitive.  Otherwise, fallback to software rendering.
  */
-void fxDDChooseRenderState( GLcontext *ctx )
+void
+fxDDChooseRenderState(GLcontext * ctx)
 {
-   fxMesaContext fxMesa = FX_CONTEXT( ctx );
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    GLuint flags = ctx->_TriangleCaps;
    GLuint index = 0;
 
-   if ( !fxMesa->is_in_hardware ) {
+   if (!fxMesa->is_in_hardware) {
       /* Build software vertices directly.  No acceleration is
        * possible.  GrVertices may be insufficient for this mode.
        */
@@ -548,20 +550,22 @@ void fxDDChooseRenderState( GLcontext *ctx )
       return;
    }
 
-   if ( flags & ANY_RENDER_FLAGS ) {
-      if ( flags & DD_FLATSHADE )		index |= FX_FLAT_BIT;
-      if ( flags & DD_TRI_LIGHT_TWOSIDE )	index |= FX_TWOSIDE_BIT;
-      if ( flags & DD_TRI_OFFSET )		index |= FX_OFFSET_BIT;
-      if ( flags & DD_TRI_UNFILLED )		index |= FX_UNFILLED_BIT;
+   if (flags & ANY_RENDER_FLAGS) {
+      if (flags & DD_FLATSHADE)
+	 index |= FX_FLAT_BIT;
+      if (flags & DD_TRI_LIGHT_TWOSIDE)
+	 index |= FX_TWOSIDE_BIT;
+      if (flags & DD_TRI_OFFSET)
+	 index |= FX_OFFSET_BIT;
+      if (flags & DD_TRI_UNFILLED)
+	 index |= FX_UNFILLED_BIT;
    }
 
-   if ( flags & (ANY_FALLBACK|
-		 DD_LINE_WIDTH|
-		 DD_POINT_SIZE|
-		 DD_TRI_CULL_FRONT_BACK) ) {
-      
+   if (flags & (ANY_FALLBACK |
+		DD_LINE_WIDTH | DD_POINT_SIZE | DD_TRI_CULL_FRONT_BACK)) {
+
       /* Hook in fallbacks for specific primitives.
-       *
+
        * Set up a system to turn culling on/off for wide points and
        * lines.  Alternately: figure out what tris to send so that
        * culling isn't a problem.  
@@ -577,19 +581,19 @@ void fxDDChooseRenderState( GLcontext *ctx )
       fxMesa->subsequent_line = fx_draw_line;
       fxMesa->subsequent_tri = fx_draw_tri;
 
-      if ( flags & POINT_FALLBACK ) 
+      if (flags & POINT_FALLBACK)
 	 fxMesa->initial_point = fx_fallback_point;
 
-      if ( flags & LINE_FALLBACK ) 
+      if (flags & LINE_FALLBACK)
 	 fxMesa->initial_line = fx_fallback_line;
 
-      if ((flags & DD_LINE_SMOOTH) && ctx->Line.Width != 1.0) 
+      if ((flags & DD_LINE_SMOOTH) && ctx->Line.Width != 1.0)
 	 fxMesa->initial_line = fx_fallback_line;
 
-      if ( flags & TRI_FALLBACK ) 
+      if (flags & TRI_FALLBACK)
 	 fxMesa->initial_tri = fx_fallback_tri;
 
-      if ( flags & DD_TRI_CULL_FRONT_BACK ) 
+      if (flags & DD_TRI_CULL_FRONT_BACK)
 	 fxMesa->initial_tri = fx_null_tri;
 
       fxMesa->draw_point = fxMesa->initial_point;
@@ -599,7 +603,7 @@ void fxDDChooseRenderState( GLcontext *ctx )
    else if (fxMesa->render_index & FX_FALLBACK_BIT) {
       FX_grCullMode(fxMesa->cullMode);
    }
-   
+
    ctx->Driver.PointsFunc = rast_tab[index].points;
    ctx->Driver.LineFunc = rast_tab[index].line;
    ctx->Driver.TriangleFunc = rast_tab[index].triangle;
@@ -609,7 +613,8 @@ void fxDDChooseRenderState( GLcontext *ctx )
    if (fxMesa->render_index == 0) {
       ctx->Driver.RenderTabVerts = fx_render_tab_verts;
       ctx->Driver.RenderTabElts = fx_render_tab_elts;
-   } else {
+   }
+   else {
       ctx->Driver.RenderTabVerts = _tnl_render_tab_verts;
       ctx->Driver.RenderTabElts = _tnl_render_tab_elts;
    }
@@ -626,9 +631,10 @@ void fxDDChooseRenderState( GLcontext *ctx )
  */
 
 extern int gl_fx_dummy_function_trifuncs(void);
-int gl_fx_dummy_function_trifuncs(void)
+int
+gl_fx_dummy_function_trifuncs(void)
 {
-  return 0;
+   return 0;
 }
 
-#endif  /* FX */
+#endif /* FX */

@@ -96,29 +96,33 @@ extern float gl_ubyte_to_float_255_color_tab[256];
 
 /* Should have size == 16 * sizeof(float).
  */
-typedef union {
-  GrVertex v;
-  GLfloat f[16];	
-  GLuint ui[16];
-} fxVertex;
+typedef union
+{
+   GrVertex v;
+   GLfloat f[16];
+   GLuint ui[16];
+}
+fxVertex;
 
 /* Used in the fxvtxfmt t&l engine.
  */
-typedef struct {
+typedef struct
+{
    GrVertex v;
    GLfloat clip[4];
    GLfloat texcoord[2][2];
    GLubyte mask;
    GLfloat normal[3];		/* for replay & fallback */
-} fxClipVertex;
+}
+fxClipVertex;
 
 
 
-typedef void (*vfmt_project_func)( GLcontext *ctx, fxClipVertex *v );
-typedef void (*vfmt_interpolate_func)( GLfloat t, 
-				       fxClipVertex *O,
-				       const fxClipVertex *I, 
-				       const fxClipVertex *J );
+typedef void (*vfmt_project_func) (GLcontext * ctx, fxClipVertex * v);
+typedef void (*vfmt_interpolate_func) (GLfloat t,
+				       fxClipVertex * O,
+				       const fxClipVertex * I,
+				       const fxClipVertex * J);
 
 
 
@@ -204,87 +208,97 @@ typedef void (*vfmt_interpolate_func)( GLfloat t,
 /*
   Memory range from startAddr to endAddr-1
 */
-typedef struct MemRange_t {
-  struct MemRange_t *next;
-  FxU32 startAddr, endAddr;
-} MemRange;
+typedef struct MemRange_t
+{
+   struct MemRange_t *next;
+   FxU32 startAddr, endAddr;
+}
+MemRange;
 
-typedef struct {
-  GLsizei width, height;              /* image size */
-  GLint wScale, hScale;               /* image scale factor */
-  GrTextureFormat_t glideFormat;      /* Glide image format */
-} tfxMipMapLevel;
+typedef struct
+{
+   GLsizei width, height;	/* image size */
+   GLint wScale, hScale;	/* image scale factor */
+   GrTextureFormat_t glideFormat;	/* Glide image format */
+}
+tfxMipMapLevel;
 
 /*
  * TDFX-specific texture object data.  This hangs off of the
  * struct gl_texture_object DriverData pointer.
  */
-typedef struct tfxTexInfo_t {
-  struct tfxTexInfo *next;
-  struct gl_texture_object *tObj;
+typedef struct tfxTexInfo_t
+{
+   struct tfxTexInfo *next;
+   struct gl_texture_object *tObj;
 
-  GLuint lastTimeUsed;
-  FxU32 whichTMU;
-  GLboolean isInTM;
+   GLuint lastTimeUsed;
+   FxU32 whichTMU;
+   GLboolean isInTM;
 
-  MemRange *tm[FX_NUM_TMU];
+   MemRange *tm[FX_NUM_TMU];
 
-  GLint minLevel, maxLevel;
-  GLint baseLevelInternalFormat;
+   GLint minLevel, maxLevel;
+   GLint baseLevelInternalFormat;
 
-  GrTexInfo info;
+   GrTexInfo info;
 
-  GrTextureFilterMode_t minFilt;
-  GrTextureFilterMode_t maxFilt;
-  FxBool LODblend;
+   GrTextureFilterMode_t minFilt;
+   GrTextureFilterMode_t maxFilt;
+   FxBool LODblend;
 
-  GrTextureClampMode_t sClamp;
-  GrTextureClampMode_t tClamp;
+   GrTextureClampMode_t sClamp;
+   GrTextureClampMode_t tClamp;
 
-  GrMipMapMode_t mmMode;
+   GrMipMapMode_t mmMode;
 
-  GLfloat sScale, tScale;
-  GLint int_sScale, int_tScale;	/* x86 floating point trick for
-				 * multiplication by powers of 2.
-				 * Used in fxfasttmp.h
-				 */
+   GLfloat sScale, tScale;
+   GLint int_sScale, int_tScale;	/* x86 floating point trick for
+					 * multiplication by powers of 2.
+					 * Used in fxfasttmp.h
+					 */
 
-  GuTexPalette palette;
+   GuTexPalette palette;
 
-  GLboolean fixedPalette;
-  GLboolean validated;
-} tfxTexInfo;
+   GLboolean fixedPalette;
+   GLboolean validated;
+}
+tfxTexInfo;
 
-typedef struct {
-  GLuint swapBuffer;
-  GLuint reqTexUpload;
-  GLuint texUpload;
-  GLuint memTexUpload;
-} tfxStats;
+typedef struct
+{
+   GLuint swapBuffer;
+   GLuint reqTexUpload;
+   GLuint texUpload;
+   GLuint memTexUpload;
+}
+tfxStats;
 
 
 
-typedef struct {
-  /* Alpha test */
+typedef struct
+{
+   /* Alpha test */
 
-  GLboolean alphaTestEnabled;
-  GrCmpFnc_t alphaTestFunc;
-  GrAlpha_t alphaTestRefValue;
+   GLboolean alphaTestEnabled;
+   GrCmpFnc_t alphaTestFunc;
+   GrAlpha_t alphaTestRefValue;
 
-  /* Blend function */
+   /* Blend function */
 
-  GLboolean blendEnabled;
-  GrAlphaBlendFnc_t blendSrcFuncRGB;
-  GrAlphaBlendFnc_t blendDstFuncRGB;
-  GrAlphaBlendFnc_t blendSrcFuncAlpha;
-  GrAlphaBlendFnc_t blendDstFuncAlpha;
+   GLboolean blendEnabled;
+   GrAlphaBlendFnc_t blendSrcFuncRGB;
+   GrAlphaBlendFnc_t blendDstFuncRGB;
+   GrAlphaBlendFnc_t blendSrcFuncAlpha;
+   GrAlphaBlendFnc_t blendDstFuncAlpha;
 
-  /* Depth test */
+   /* Depth test */
 
-  GLboolean depthTestEnabled;
-  GLboolean depthMask;
-  GrCmpFnc_t depthTestFunc;
-} tfxUnitsState;
+   GLboolean depthTestEnabled;
+   GLboolean depthMask;
+   GrCmpFnc_t depthTestFunc;
+}
+tfxUnitsState;
 
 
 
@@ -360,7 +374,7 @@ typedef struct {
 			_NEW_MODELVIEW |		\
 			_TNL_NEW_NEED_EYE_COORDS |	\
 			_FX_NEW_RENDERSTATE)
-			
+
 
 /* These lookup table are used to extract RGB values in [0,255] from
  * 16-bit pixel values.
@@ -370,20 +384,22 @@ extern GLubyte FX_PixelToG[0x10000];
 extern GLubyte FX_PixelToB[0x10000];
 
 
-typedef void (*fx_tri_func)( GLcontext *, const fxVertex *,
-			     const fxVertex *, const fxVertex * );
-typedef void (*fx_line_func)( GLcontext *, const fxVertex *, const fxVertex * );
-typedef void (*fx_point_func)( GLcontext *, const fxVertex * );
+typedef void (*fx_tri_func) (GLcontext *, const fxVertex *,
+			     const fxVertex *, const fxVertex *);
+typedef void (*fx_line_func) (GLcontext *, const fxVertex *,
+			      const fxVertex *);
+typedef void (*fx_point_func) (GLcontext *, const fxVertex *);
 
-struct tfxMesaContext {
+struct tfxMesaContext
+{
    GuTexPalette glbPalette;
 
-   GLcontext *glCtx;              /* the core Mesa context */
-   GLvisual *glVis;               /* describes the color buffer */
-   GLframebuffer *glBuffer;       /* the ancillary buffers */
+   GLcontext *glCtx;		/* the core Mesa context */
+   GLvisual *glVis;		/* describes the color buffer */
+   GLframebuffer *glBuffer;	/* the ancillary buffers */
 
-   GLint board;                   /* the board used for this context */
-   GLint width, height;           /* size of color buffer */
+   GLint board;			/* the board used for this context */
+   GLint width, height;		/* size of color buffer */
 
    GrBuffer_t currentFB;
 
@@ -395,10 +411,10 @@ struct tfxMesaContext {
    GrCullMode_t cullMode;
 
    tfxUnitsState unitsState;
-   tfxUnitsState restoreUnitsState; /* saved during multipass */
+   tfxUnitsState restoreUnitsState;	/* saved during multipass */
 
 
-   GLuint new_state;   
+   GLuint new_state;
 
    /* Texture Memory Manager Data 
     */
@@ -476,7 +492,7 @@ struct tfxMesaContext {
    GLboolean haveGlobalPaletteTexture;
    GLint swapInterval;
    GLint maxPendingSwapBuffers;
-  
+
    FX_GrContext_t glideContext;
 
    int screen_width;
@@ -493,18 +509,18 @@ struct tfxMesaContext {
    GLvertexformat vtxfmt;
    fxClipVertex current;
    fxClipVertex *vert;		/* points into verts[] */
-   void (*fire_on_vertex)( GLcontext * );
-   void (*fire_on_end)( GLcontext * );
-   void (*fire_on_fallback)( GLcontext * );
-   
+   void (*fire_on_vertex) (GLcontext *);
+   void (*fire_on_end) (GLcontext *);
+   void (*fire_on_fallback) (GLcontext *);
+
    vfmt_project_func project_vertex;
    vfmt_interpolate_func interpolate_vertices;
 
    int vtxfmt_fallback_count;
    int vtxfmt_installed;
-   void (*old_begin)( GLenum );
+   void (*old_begin) (GLenum);
    GLenum prim;
-   
+
    GLuint accel_light;
    GLfloat basecolor[4];
 
@@ -516,7 +532,7 @@ struct tfxMesaContext {
    GLuint size;
 };
 
-typedef void (*tfxSetupFunc)(GLcontext *ctx, GLuint, GLuint );
+typedef void (*tfxSetupFunc) (GLcontext * ctx, GLuint, GLuint);
 
 extern GrHwConfiguration glbHWConfig;
 extern int glbCurrentBoard;
@@ -527,40 +543,41 @@ extern void fxSetupDDPointers(GLcontext *);
 /* fxvsetup:
  */
 extern void fxDDSetupInit(void);
-extern void fxAllocVB( GLcontext *ctx );
-extern void fxFreeVB( GLcontext *ctx );
-extern void fxPrintSetupFlags( const char *msg, GLuint flags );
-extern void fx_BuildProjVerts( GLcontext *ctx, 
-			       GLuint start, GLuint count, 
-			       GLuint newinputs );
-extern void fx_validate_BuildProjVerts(GLcontext *ctx, 
+extern void fxAllocVB(GLcontext * ctx);
+extern void fxFreeVB(GLcontext * ctx);
+extern void fxPrintSetupFlags(const char *msg, GLuint flags);
+extern void fx_BuildProjVerts(GLcontext * ctx,
+			      GLuint start, GLuint count, GLuint newinputs);
+extern void fx_validate_BuildProjVerts(GLcontext * ctx,
 				       GLuint start, GLuint count,
-				       GLuint newinputs );
+				       GLuint newinputs);
 
 /* fxtrifuncs:
  */
 extern void fxDDTrifuncInit(void);
-extern void fxDDChooseRenderState( GLcontext *ctx );
+extern void fxDDChooseRenderState(GLcontext * ctx);
 
 
 extern void fxUpdateDDSpanPointers(GLcontext *);
 extern void fxSetupDDSpanPointers(GLcontext *);
 
-extern void fxPrintTextureData(tfxTexInfo *ti);
-extern void fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
-               GLint internalFormat, GLint width, GLint height, GLint border,
-               GLenum format, GLenum type, const GLvoid *pixels,
-               const struct gl_pixelstore_attrib *packing,
-               struct gl_texture_object *texObj,
-               struct gl_texture_image *texImage);
+extern void fxPrintTextureData(tfxTexInfo * ti);
+extern void fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
+			   GLint internalFormat, GLint width, GLint height,
+			   GLint border, GLenum format, GLenum type,
+			   const GLvoid * pixels,
+			   const struct gl_pixelstore_attrib *packing,
+			   struct gl_texture_object *texObj,
+			   struct gl_texture_image *texImage);
 
-extern void fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
-                              GLint xoffset, GLint yoffset,
-                              GLsizei width, GLsizei height,
-                              GLenum format, GLenum type, const GLvoid *pixels,
-                              const struct gl_pixelstore_attrib *packing,
-                              struct gl_texture_object *texObj,
-                              struct gl_texture_image *texImage);
+extern void fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
+			      GLint xoffset, GLint yoffset,
+			      GLsizei width, GLsizei height,
+			      GLenum format, GLenum type,
+			      const GLvoid * pixels,
+			      const struct gl_pixelstore_attrib *packing,
+			      struct gl_texture_object *texObj,
+			      struct gl_texture_image *texImage);
 extern void fxDDTexEnv(GLcontext *, GLenum, GLenum, const GLfloat *);
 extern void fxDDTexParam(GLcontext *, GLenum, struct gl_texture_object *,
 			 GLenum, const GLfloat *);
@@ -575,7 +592,7 @@ extern void fxDDBlendFunc(GLcontext *, GLenum, GLenum);
 extern void fxDDDepthMask(GLcontext *, GLboolean);
 extern void fxDDDepthFunc(GLcontext *, GLenum);
 
-extern void fxDDInitExtensions( GLcontext *ctx );
+extern void fxDDInitExtensions(GLcontext * ctx);
 
 extern void fxTMInit(fxMesaContext ctx);
 extern void fxTMClose(fxMesaContext ctx);
@@ -584,64 +601,64 @@ extern void fxTMMoveInTM(fxMesaContext, struct gl_texture_object *, GLint);
 extern void fxTMMoveOutTM(fxMesaContext, struct gl_texture_object *);
 #define fxTMMoveOutTM_NoLock fxTMMoveOutTM
 extern void fxTMFreeTexture(fxMesaContext, struct gl_texture_object *);
-extern void fxTMReloadMipMapLevel(fxMesaContext, struct gl_texture_object *, GLint);
-extern void fxTMReloadSubMipMapLevel(fxMesaContext, struct gl_texture_object *,
-				     GLint, GLint, GLint);
+extern void fxTMReloadMipMapLevel(fxMesaContext, struct gl_texture_object *,
+				  GLint);
+extern void fxTMReloadSubMipMapLevel(fxMesaContext,
+				     struct gl_texture_object *, GLint, GLint,
+				     GLint);
 
 extern void fxTexGetFormat(GLenum, GrTextureFormat_t *, GLint *);
 extern int fxTexGetInfo(int, int, GrLOD_t *, GrAspectRatio_t *,
 			float *, float *, int *, int *, int *, int *);
 
-extern void fxDDScissor( GLcontext *ctx,
-			      GLint x, GLint y, GLsizei w, GLsizei h );
-extern void fxDDFogfv( GLcontext *ctx, GLenum pname, const GLfloat *params );
-extern void fxDDColorMask(GLcontext *ctx,
-                          GLboolean r, GLboolean g,
-                          GLboolean b, GLboolean a );
+extern void fxDDScissor(GLcontext * ctx,
+			GLint x, GLint y, GLsizei w, GLsizei h);
+extern void fxDDFogfv(GLcontext * ctx, GLenum pname, const GLfloat * params);
+extern void fxDDColorMask(GLcontext * ctx,
+			  GLboolean r, GLboolean g, GLboolean b, GLboolean a);
 
-extern void fxDDWriteDepthSpan(GLcontext *ctx, GLuint n, GLint x, GLint y,
-                               const GLdepth depth[], const GLubyte mask[]);
+extern void fxDDWriteDepthSpan(GLcontext * ctx, GLuint n, GLint x, GLint y,
+			       const GLdepth depth[], const GLubyte mask[]);
 
-extern void fxDDReadDepthSpan(GLcontext *ctx, GLuint n, GLint x, GLint y,
-                              GLdepth depth[]);
+extern void fxDDReadDepthSpan(GLcontext * ctx, GLuint n, GLint x, GLint y,
+			      GLdepth depth[]);
 
-extern void fxDDWriteDepthPixels(GLcontext *ctx, GLuint n,
-                                 const GLint x[], const GLint y[],
-                                 const GLdepth depth[], const GLubyte mask[]);
+extern void fxDDWriteDepthPixels(GLcontext * ctx, GLuint n,
+				 const GLint x[], const GLint y[],
+				 const GLdepth depth[], const GLubyte mask[]);
 
-extern void fxDDReadDepthPixels(GLcontext *ctx, GLuint n,
-                                const GLint x[], const GLint y[],
-                                GLdepth depth[]);
+extern void fxDDReadDepthPixels(GLcontext * ctx, GLuint n,
+				const GLint x[], const GLint y[],
+				GLdepth depth[]);
 
-extern void fxDDShadeModel(GLcontext *ctx, GLenum mode);
+extern void fxDDShadeModel(GLcontext * ctx, GLenum mode);
 
-extern void fxDDCullFace(GLcontext *ctx, GLenum mode);
-extern void fxDDFrontFace(GLcontext *ctx, GLenum mode);
+extern void fxDDCullFace(GLcontext * ctx, GLenum mode);
+extern void fxDDFrontFace(GLcontext * ctx, GLenum mode);
 
-extern void fxPrintRenderState( const char *msg, GLuint state );
-extern void fxPrintHintState( const char *msg, GLuint state );
+extern void fxPrintRenderState(const char *msg, GLuint state);
+extern void fxPrintHintState(const char *msg, GLuint state);
 
-extern int fxDDInitFxMesaContext( fxMesaContext fxMesa );
-extern void fxDDDestroyFxMesaContext( fxMesaContext fxMesa );
-
+extern int fxDDInitFxMesaContext(fxMesaContext fxMesa);
+extern void fxDDDestroyFxMesaContext(fxMesaContext fxMesa);
 
 
 
-extern void fxSetScissorValues(GLcontext *ctx);
+
+extern void fxSetScissorValues(GLcontext * ctx);
 extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa,
-				struct gl_texture_object *tObj,
-				GLint where);
+				struct gl_texture_object *tObj, GLint where);
 extern void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder);
 
 
 /* fxvtxfmt:
  */
-extern void fxDDCheckVtxfmt( GLcontext *ctx );
-extern void fx_update_lighting( GLcontext *ctx );
-extern void fxDDInitVtxfmt( GLcontext *ctx );
+extern void fxDDCheckVtxfmt(GLcontext * ctx);
+extern void fx_update_lighting(GLcontext * ctx);
+extern void fxDDInitVtxfmt(GLcontext * ctx);
 
 /* fxsimplerender
  */
-extern const struct gl_pipeline_stage fx_render_stage; 
+extern const struct gl_pipeline_stage fx_render_stage;
 
 #endif

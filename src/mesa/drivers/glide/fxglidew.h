@@ -51,9 +51,9 @@
  * General context: 
  */
 #if !defined(FX_GLIDE3)
-     typedef FxU32 	 FX_GrContext_t;	/* Not used in Glide2 */
+typedef FxU32 FX_GrContext_t;	/* Not used in Glide2 */
 #else
-     typedef GrContext_t FX_GrContext_t;
+typedef GrContext_t FX_GrContext_t;
 #endif
 
 /* 
@@ -61,22 +61,22 @@
  */
 #if !defined(FX_GLIDE3)
 	/* Constanst for FX_grGetInteger( ) */
-	#define FX_FOG_TABLE_ENTRIES            0x0004    /* The number of entries in the hardware fog table. */
-	#define FX_GLIDE_STATE_SIZE             0x0006	  /* Size of buffer, in bytes, needed to save Glide state. */
-	#define FX_LFB_PIXEL_PIPE               0x0009	  /* 1 if LFB writes can go through the 3D pixel pipe. */		
-	#define FX_PENDING_BUFFERSWAPS          0x0014    /* The number of buffer swaps pending. */
-	#define FX_TEXTURE_ALIGN		0x0024    /* The required alignment for textures */
+#define FX_FOG_TABLE_ENTRIES            0x0004	/* The number of entries in the hardware fog table. */
+#define FX_GLIDE_STATE_SIZE             0x0006	/* Size of buffer, in bytes, needed to save Glide state. */
+#define FX_LFB_PIXEL_PIPE               0x0009	/* 1 if LFB writes can go through the 3D pixel pipe. */
+#define FX_PENDING_BUFFERSWAPS          0x0014	/* The number of buffer swaps pending. */
+#define FX_TEXTURE_ALIGN		0x0024	/* The required alignment for textures */
 #else
-	#define FX_FOG_TABLE_ENTRIES            GR_FOG_TABLE_ENTRIES
-	#define FX_GLIDE_STATE_SIZE             GR_GLIDE_STATE_SIZE
-	#define FX_LFB_PIXEL_PIPE               GR_LFB_PIXEL_PIPE
-	#define FX_PENDING_BUFFERSWAPS          GR_PENDING_BUFFERSWAPS
-	#define FX_TEXTURE_ALIGN		GR_TEXTURE_ALIGN
+#define FX_FOG_TABLE_ENTRIES            GR_FOG_TABLE_ENTRIES
+#define FX_GLIDE_STATE_SIZE             GR_GLIDE_STATE_SIZE
+#define FX_LFB_PIXEL_PIPE               GR_LFB_PIXEL_PIPE
+#define FX_PENDING_BUFFERSWAPS          GR_PENDING_BUFFERSWAPS
+#define FX_TEXTURE_ALIGN		GR_TEXTURE_ALIGN
 #endif
 
 /*
  * Genral warper functions for Glide2/Glide3:
- */ 
+ */
 extern FxI32 FX_grGetInteger(FxU32 pname);
 extern FxI32 FX_grGetInteger_NoLock(FxU32 pname);
 
@@ -96,7 +96,7 @@ extern FxI32 FX_grGetInteger_NoLock(FxU32 pname);
 #define GR_LOD_256	GR_LOD_LOG2_256
 #define GR_LOD_128	GR_LOD_LOG2_128
 #define GR_LOD_64	GR_LOD_LOG2_64
-#define GR_LOD_32	GR_LOD_LOG2_32	
+#define GR_LOD_32	GR_LOD_LOG2_32
 #define GR_LOD_16	GR_LOD_LOG2_16
 #define GR_LOD_8	GR_LOD_LOG2_8
 #define GR_LOD_4	GR_LOD_LOG2_4
@@ -114,43 +114,57 @@ typedef int GrSstType;
 #define GR_SSTTYPE_AT3D      2
 #define GR_SSTTYPE_Voodoo2   3
 
-typedef struct GrTMUConfig_St {
-  int    tmuRev;                /* Rev of Texelfx chip */
-  int    tmuRam;                /* 1, 2, or 4 MB */
-} GrTMUConfig_t;
+typedef struct GrTMUConfig_St
+{
+   int tmuRev;			/* Rev of Texelfx chip */
+   int tmuRam;			/* 1, 2, or 4 MB */
+}
+GrTMUConfig_t;
 
-typedef struct GrVoodooConfig_St {
-  int    fbRam;                         /* 1, 2, or 4 MB */
-  int    fbiRev;                        /* Rev of Pixelfx chip */
-  int    nTexelfx;                      /* How many texelFX chips are there? */
-  FxBool sliDetect;                     /* Is it a scan-line interleaved board? */
-  GrTMUConfig_t tmuConfig[GLIDE_NUM_TMU];   /* Configuration of the Texelfx chips */
-} GrVoodooConfig_t;
+typedef struct GrVoodooConfig_St
+{
+   int fbRam;			/* 1, 2, or 4 MB */
+   int fbiRev;			/* Rev of Pixelfx chip */
+   int nTexelfx;		/* How many texelFX chips are there? */
+   FxBool sliDetect;		/* Is it a scan-line interleaved board? */
+   GrTMUConfig_t tmuConfig[GLIDE_NUM_TMU];	/* Configuration of the Texelfx chips */
+}
+GrVoodooConfig_t;
 
-typedef struct GrSst96Config_St {
-  int   fbRam;                  /* How much? */
-  int   nTexelfx;
-  GrTMUConfig_t tmuConfig;
-} GrSst96Config_t;
+typedef struct GrSst96Config_St
+{
+   int fbRam;			/* How much? */
+   int nTexelfx;
+   GrTMUConfig_t tmuConfig;
+}
+GrSst96Config_t;
 
 typedef GrVoodooConfig_t GrVoodoo2Config_t;
 
-typedef struct GrAT3DConfig_St {
-  int   rev;
-} GrAT3DConfig_t;
+typedef struct GrAT3DConfig_St
+{
+   int rev;
+}
+GrAT3DConfig_t;
 
-typedef struct {
-  int num_sst;                  /* # of HW units in the system */
-  struct {
-    GrSstType type;             /* Which hardware is it? */
-    union SstBoard_u {
-      GrVoodooConfig_t  VoodooConfig;
-      GrSst96Config_t   SST96Config;
-      GrAT3DConfig_t    AT3DConfig;
-      GrVoodoo2Config_t Voodoo2Config;
-    } sstBoard;
-  } SSTs[MAX_NUM_SST];          /* configuration for each board */
-} GrHwConfiguration;
+typedef struct
+{
+   int num_sst;			/* # of HW units in the system */
+   struct
+   {
+      GrSstType type;		/* Which hardware is it? */
+      union SstBoard_u
+      {
+	 GrVoodooConfig_t VoodooConfig;
+	 GrSst96Config_t SST96Config;
+	 GrAT3DConfig_t AT3DConfig;
+	 GrVoodoo2Config_t Voodoo2Config;
+      }
+      sstBoard;
+   }
+   SSTs[MAX_NUM_SST];		/* configuration for each board */
+}
+GrHwConfiguration;
 
 typedef FxU32 GrHint_t;
 #define GR_HINTTYPE_MIN                 0
@@ -173,22 +187,25 @@ typedef FxU32 GrSTWHint_t;
 /*
 ** move the vertex layout defintion to application
 */
-typedef struct {
-  float  sow;                   /* s texture ordinate (s over w) */
-  float  tow;                   /* t texture ordinate (t over w) */  
-  float  oow;                   /* 1/w (used mipmapping - really 0xfff/w) */
-}  GrTmuVertex;
+typedef struct
+{
+   float sow;			/* s texture ordinate (s over w) */
+   float tow;			/* t texture ordinate (t over w) */
+   float oow;			/* 1/w (used mipmapping - really 0xfff/w) */
+}
+GrTmuVertex;
 
 
 typedef struct
 {
-  float x, y, z;                /* X, Y, and Z of scrn space -- Z is ignored */
-  float r, g, b;                /* R, G, B, ([0..255.0]) */
-  float ooz;                    /* 65535/Z (used for Z-buffering) */
-  float a;                      /* Alpha [0..255.0] */
-  float oow;                    /* 1/W (used for W-buffering, texturing) */
-  GrTmuVertex  tmuvtx[GLIDE_NUM_TMU];
-} GrVertex;
+   float x, y, z;		/* X, Y, and Z of scrn space -- Z is ignored */
+   float r, g, b;		/* R, G, B, ([0..255.0]) */
+   float ooz;			/* 65535/Z (used for Z-buffering) */
+   float a;			/* Alpha [0..255.0] */
+   float oow;			/* 1/W (used for W-buffering, texturing) */
+   GrTmuVertex tmuvtx[GLIDE_NUM_TMU];
+}
+GrVertex;
 
 #define GR_VERTEX_X_OFFSET              0
 #define GR_VERTEX_Y_OFFSET              1
@@ -248,7 +265,7 @@ typedef struct
     grSstIdle();	\
     END_BOARD_LOCK();	\
   } while (0)
-#endif	
+#endif
 
 #define FX_grFinish()	\
   do {			\
@@ -300,54 +317,54 @@ typedef struct
  * For Lod/LodLog2 conversion.
  */
 #if defined(FX_GLIDE3)
-	#define FX_largeLodLog2(info)		(info).largeLodLog2
+#define FX_largeLodLog2(info)		(info).largeLodLog2
 #else
-	#define FX_largeLodLog2(info)		(info).largeLod	
+#define FX_largeLodLog2(info)		(info).largeLod
 #endif
 
 #if defined(FX_GLIDE3)
-	#define FX_aspectRatioLog2(info)		(info).aspectRatioLog2
+#define FX_aspectRatioLog2(info)		(info).aspectRatioLog2
 #else
-	#define FX_aspectRatioLog2(info)		(info).aspectRatio
+#define FX_aspectRatioLog2(info)		(info).aspectRatio
 #endif
 
 #if defined(FX_GLIDE3)
-	#define FX_smallLodLog2(info)		(info).smallLodLog2
+#define FX_smallLodLog2(info)		(info).smallLodLog2
 #else
-	#define FX_smallLodLog2(info)		(info).smallLod
+#define FX_smallLodLog2(info)		(info).smallLod
 #endif
 
 #if defined(FX_GLIDE3)
-	#define FX_lodToValue(val)		((int)(GR_LOD_256-val))
+#define FX_lodToValue(val)		((int)(GR_LOD_256-val))
 #else
-	#define FX_lodToValue(val)		((int)(val))
+#define FX_lodToValue(val)		((int)(val))
 #endif
 
 #if defined(FX_GLIDE3)
-	#define FX_largeLodValue(info)		((int)(GR_LOD_256-(info).largeLodLog2))
+#define FX_largeLodValue(info)		((int)(GR_LOD_256-(info).largeLodLog2))
 #else
-	#define FX_largeLodValue(info)		((int)(info).largeLod)
+#define FX_largeLodValue(info)		((int)(info).largeLod)
 #endif
 #define FX_largeLodValue_NoLock FX_largeLodValue
 
 #if defined(FX_GLIDE3)
-	#define FX_smallLodValue(info)		((int)(GR_LOD_256-(info).smallLodLog2))
+#define FX_smallLodValue(info)		((int)(GR_LOD_256-(info).smallLodLog2))
 #else
-	#define FX_smallLodValue(info)		((int)(info).smallLod)
+#define FX_smallLodValue(info)		((int)(info).smallLod)
 #endif
 #define FX_smallLodValue_NoLock FX_smallLodValue
 
 #if defined(FX_GLIDE3)
-	#define FX_valueToLod(val)		((GrLOD_t)(GR_LOD_256-val))
+#define FX_valueToLod(val)		((GrLOD_t)(GR_LOD_256-val))
 #else
-	#define FX_valueToLod(val)		((GrLOD_t)(val))
+#define FX_valueToLod(val)		((GrLOD_t)(val))
 #endif
 
 /*
  * ScreenWidth/Height stuff.
  */
-	extern int FX_grSstScreenWidth(void);
-	extern int FX_grSstScreenHeight(void);
+extern int FX_grSstScreenWidth(void);
+extern int FX_grSstScreenHeight(void);
 
 
 
@@ -355,9 +372,9 @@ typedef struct
  * Version string.
  */
 #if defined(FX_GLIDE3)
-	extern void FX_grGlideGetVersion(char *buf);
+extern void FX_grGlideGetVersion(char *buf);
 #else
-	#define FX_grGlideGetVersion(b)	\
+#define FX_grGlideGetVersion(b)	\
 	do {				\
 	  BEGIN_BOARD_LOCK();		\
 	  grGlideGetVersion(b);		\
@@ -368,9 +385,9 @@ typedef struct
  * Performance statistics
  */
 #if defined(FX_GLIDE3)
-        extern void FX_grSstPerfStats(GrSstPerfStats_t *st);
+extern void FX_grSstPerfStats(GrSstPerfStats_t * st);
 #else
-	#define FX_grSstPerfStats(s)	\
+#define FX_grSstPerfStats(s)	\
 	do {				\
 	  BEGIN_BOARD_LOCK();		\
 	  grSstPerfStats(s);		\
@@ -381,30 +398,30 @@ typedef struct
 /*
  * Hardware Query
  */
-       extern int FX_grSstQueryHardware(GrHwConfiguration *config);
+extern int FX_grSstQueryHardware(GrHwConfiguration * config);
 
 /*
  * GrHints
  */
 #if defined(FX_GLIDE3)
-        extern void FX_grHints_NoLock(GrHint_t hintType, FxU32 hintMask);
-	extern void FX_grHints(GrHint_t hintType, FxU32 hintMask);
+extern void FX_grHints_NoLock(GrHint_t hintType, FxU32 hintMask);
+extern void FX_grHints(GrHint_t hintType, FxU32 hintMask);
 #else
-	#define FX_grHints(t,m)		\
+#define FX_grHints(t,m)		\
 	do {				\
 	  BEGIN_BOARD_LOCK();		\
 	  grHints(t, m);		\
 	  END_BOARD_LOCK();		\
 	} while(0)
-        #define FX_grHints_NoLock grHints
+#define FX_grHints_NoLock grHints
 #endif
 /*
  * Antialiashed line+point drawing.
  */
 #if defined(FX_GLIDE3)
-	extern void FX_grAADrawLine(GrVertex *a,GrVertex *b);
+extern void FX_grAADrawLine(GrVertex * a, GrVertex * b);
 #else
-	#define FX_grAADrawLine(a,b)	\
+#define FX_grAADrawLine(a,b)	\
 	do {				\
 	  BEGIN_CLIP_LOOP();		\
 	  grAADrawLine(a,b);		\
@@ -413,9 +430,9 @@ typedef struct
 #endif
 
 #if defined(FX_GLIDE3)
-	extern void FX_grAADrawPoint(GrVertex *a);
+extern void FX_grAADrawPoint(GrVertex * a);
 #else
-	#define FX_grAADrawPoint(a)	\
+#define FX_grAADrawPoint(a)	\
 	do {				\
 	  BEGIN_CLIP_LOOP();		\
 	  grAADrawPoint(a);		\
@@ -427,9 +444,9 @@ typedef struct
  * Needed for Glide3 only, to set up Glide2 compatible vertex layout.
  */
 #if defined(FX_GLIDE3)
-	extern void FX_setupGrVertexLayout(void);
+extern void FX_setupGrVertexLayout(void);
 #else
-	#define FX_setupGrVertexLayout()		do {} while (0)
+#define FX_setupGrVertexLayout()		do {} while (0)
 #endif
 /*
  * grSstControl stuff
@@ -440,9 +457,9 @@ extern FxBool FX_grSstControl(FxU32 code);
  * grGammaCorrectionValue
  */
 #if defined(FX_GLIDE3)
-      extern void FX_grGammaCorrectionValue(float val);
+extern void FX_grGammaCorrectionValue(float val);
 #else
-      #define FX_grGammaCorrectionValue(v)	\
+#define FX_grGammaCorrectionValue(v)	\
       do {					\
         BEGIN_BOARD_LOCK();			\
 	grGammaCorrectionValue(v)		\
@@ -467,13 +484,12 @@ extern FxBool FX_grSstControl(FxU32 code);
 #endif
 
 
-extern FX_GrContext_t FX_grSstWinOpen( FxU32                hWnd,
-                                       GrScreenResolution_t screen_resolution,
-                                       GrScreenRefresh_t    refresh_rate,
-                                       GrColorFormat_t      color_format,
-                                       GrOriginLocation_t   origin_location,
-                                       int                  nColBuffers,
-                                       int                  nAuxBuffers);
+extern FX_GrContext_t FX_grSstWinOpen(FxU32 hWnd,
+				      GrScreenResolution_t screen_resolution,
+				      GrScreenRefresh_t refresh_rate,
+				      GrColorFormat_t color_format,
+				      GrOriginLocation_t origin_location,
+				      int nColBuffers, int nAuxBuffers);
 
 
 #define FX_grDrawLine(v1, v2)	\
@@ -491,7 +507,7 @@ extern FX_GrContext_t FX_grSstWinOpen( FxU32                hWnd,
   } while (0)
 
 #if defined(FX_GLIDE3)
-extern void FX_grDrawPolygonVertexList(int n, GrVertex *v);
+extern void FX_grDrawPolygonVertexList(int n, GrVertex * v);
 #else
 #define FX_grDrawPolygonVertexList(n, v)	\
   do {						\
@@ -536,10 +552,10 @@ extern void FX_grDrawPolygonVertexList(int n, GrVertex *v);
     END_BOARD_LOCK();		\
   } while (0)
 
-extern FxBool FX_grLfbLock(GrLock_t type, GrBuffer_t buffer, 
-			   GrLfbWriteMode_t writeMode, 
-			   GrOriginLocation_t origin, FxBool pixelPipeline, 
-			   GrLfbInfo_t *info );
+extern FxBool FX_grLfbLock(GrLock_t type, GrBuffer_t buffer,
+			   GrLfbWriteMode_t writeMode,
+			   GrOriginLocation_t origin, FxBool pixelPipeline,
+			   GrLfbInfo_t * info);
 
 #define FX_grLfbUnlock(t, b)	\
   do {				\
@@ -718,7 +734,7 @@ extern FxU32 FX_grTexMaxAddress(GrChipID_t tmu);
 
 #define FX_grTexSource_NoLock grTexSource
 
-extern FxU32 FX_grTexTextureMemRequired(FxU32 evenOdd, GrTexInfo *info);
+extern FxU32 FX_grTexTextureMemRequired(FxU32 evenOdd, GrTexInfo * info);
 #define FX_grTexTextureMemRequired_NoLock grTexTextureMemRequired
 
 #define FX_grGlideGetState(s)	\
@@ -797,4 +813,3 @@ extern int FX_getFogTableSize(void);
 extern int FX_getGrStateSize(void);
 
 #endif /* __FX_GLIDE_WARPER__ */
-
