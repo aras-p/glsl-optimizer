@@ -1,8 +1,8 @@
-/* $Id: s_blend.c,v 1.9 2001/07/16 20:45:55 brianp Exp $ */
+/* $Id: s_blend.c,v 1.10 2001/12/13 16:14:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -44,6 +44,48 @@
 #else
 #define _BLENDAPI
 #endif
+
+
+/*
+ * Special case for glBlendFunc(GL_ZERO, GL_ONE)
+ */
+static void _BLENDAPI
+blend_noop( GLcontext *ctx, GLuint n, const GLubyte mask[],
+            GLchan rgba[][4], CONST GLchan dest[][4] )
+{
+   int i;
+   ASSERT(ctx->Color.BlendEquation==GL_FUNC_ADD_EXT);
+   ASSERT(ctx->Color.BlendSrcRGB==GL_ZERO);
+   ASSERT(ctx->Color.BlendDstRGB==GL_ONE);
+   (void) ctx;
+
+   for (i = 0; i < n; i++) {
+      if (mask[i]) {
+         rgba[i][RCOMP] = dest[i][RCOMP];
+         rgba[i][GCOMP] = dest[i][GCOMP];
+         rgba[i][BCOMP] = dest[i][BCOMP];
+         rgba[i][ACOMP] = dest[i][ACOMP];
+      }
+   }
+}
+
+
+/*
+ * Special case for glBlendFunc(GL_ONE, GL_ZERO)
+ */
+static void _BLENDAPI
+blend_replace( GLcontext *ctx, GLuint n, const GLubyte mask[],
+               GLchan rgba[][4], CONST GLchan dest[][4] )
+{
+   ASSERT(ctx->Color.BlendEquation==GL_FUNC_ADD_EXT);
+   ASSERT(ctx->Color.BlendSrcRGB==GL_ONE);
+   ASSERT(ctx->Color.BlendDstRGB==GL_ZERO);
+   (void) ctx;
+   (void) n;
+   (void) mask;
+   (void) rgba;
+   (void) dest;
+}
 
 
 /*
@@ -341,7 +383,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
             default:
                /* this should never happen */
                _mesa_problem(ctx, "Bad blend source RGB factor in do_blend");
-	       return;
+               return;
          }
 
          /* Source Alpha factor */
@@ -507,7 +549,7 @@ blend_general( GLcontext *ctx, GLuint n, const GLubyte mask[],
                /* this should never happen */
                dA = 0.0F;
                _mesa_problem(ctx, "Bad blend dest A factor in do_blend");
-	       return;
+               return;
          }
 
          /* Due to round-off problems we have to clamp against zero. */
@@ -584,12 +626,12 @@ void _swrast_choose_blend_func( GLcontext *ctx )
       SWRAST_CONTEXT(ctx)->BlendFunc = blend_general;
    }
    else if (eq==GL_FUNC_ADD_EXT && srcRGB==GL_SRC_ALPHA
-	    && dstRGB==GL_ONE_MINUS_SRC_ALPHA)
+            && dstRGB==GL_ONE_MINUS_SRC_ALPHA)
    {
       /* XXX It looks like the MMX blend code is broken.  Disable for now. */
 #if 0 && defined(USE_MMX_ASM)
       if ( cpu_has_mmx ) {
-	 SWRAST_CONTEXT(ctx)->BlendFunc = _mesa_mmx_blend_transparency;
+         SWRAST_CONTEXT(ctx)->BlendFunc = _mesa_mmx_blend_transparency;
       }
       else
 #endif
@@ -610,6 +652,12 @@ void _swrast_choose_blend_func( GLcontext *ctx )
    }
    else if (eq==GL_MAX_EXT) {
       SWRAST_CONTEXT(ctx)->BlendFunc = blend_max;
+   }
+   else if (eq==GL_FUNC_ADD_EXT && srcRGB == GL_ZERO && dstRGB == GL_ONE) {
+      SWRAST_CONTEXT(ctx)->BlendFunc = blend_noop;
+   }
+   else if (eq==GL_FUNC_ADD_EXT && srcRGB == GL_ONE && dstRGB == GL_ZERO) {
+      SWRAST_CONTEXT(ctx)->BlendFunc = blend_replace;
    }
    else {
       SWRAST_CONTEXT(ctx)->BlendFunc = blend_general;
