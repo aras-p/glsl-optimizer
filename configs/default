@@ -35,11 +35,11 @@ OSMESA_LIB = OSMesa
 
 
 # Library names (actual file names)
-GL_LIB_NAME = libGL.so
-GLU_LIB_NAME = libGLU.so
-GLUT_LIB_NAME = libglut.so
-GLW_LIB_NAME = libGLw.so
-OSMESA_LIB_NAME = libOSMesa.so
+GL_LIB_NAME = lib$(GL_LIB).so
+GLU_LIB_NAME = lib$(GLU_LIB).so
+GLUT_LIB_NAME = lib$(GLUT_LIB).so
+GLW_LIB_NAME = lib$(GLW_LIB).so
+OSMESA_LIB_NAME = lib$(OSMesa).so
 
 
 # Optional assembly language optimization files for libGL
