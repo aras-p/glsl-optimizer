@@ -1,6 +1,6 @@
 File: docs/README.WIN32
 
-Last updated: Sep 18, 2003 - Karl Schultz - kschultz@users.sourceforge.net
+Last updated: Oct 01, 2004 - Karl Schultz - kschultz@users.sourceforge.net
 
 Quick Start
 
@@ -14,16 +14,36 @@ The build system has been changed to use Microsoft Visual Studio project
 workspaces and projects.  Makefiles are no longer shipped or supported, but
 can be generated from the projects using Visual Studio.
 
+The workspace and project files were created with Visual Studio 6, so that
+they can be used with VS6 and so that they can also be imported into VS 7.
+
 Details and Notes
 
 - To build the Mesa libraries, open the Mesa.dsw workspace file
-  in the top directory.  You can build each project one-by-one,
-  or build the glut project to build everything except osmesa,
-  which needs to be built separately.  The build process will
-  create a lib directory in the top directory and will put the
-  following files there:
-	OPENGL32.LIB, GLU32.LIB, GLUT32.LIB, OSMESA32.LIB
-	OPENGL32.DLL, GLU32.DLL, GLUT32.DLL, OSMESA32.DLL
+  in the top directory.  You will need to build at least one
+  driver.  Currently, only the gdi and osmesa drivers are available.
+  Select one or the other as the active project and build it.
+  If you want glu, select the glu project as active and build that as well.
+
+- Glut is no longer in the Mesa.dsw workspace.  It is now built in
+  the demo workspace (see below).
+  
+- The build process will create a lib directory in the top directory 
+  and will put the following files there as you build them:
+	OPENGL32.LIB, GLU32.LIB, OSMESA32.LIB
+	OPENGL32.DLL, GLU32.DLL, OSMESA32.DLL
+
+- Some users have reported problems building glu with VS7 after importing
+  and converting the VS6 project files.  The problem is caused by a custom
+  build step that was put in place to work around a problem with VS6 not
+  recognizing .cc files as C++ source files.  It appears that VS7 can be
+  configured to recognize .cc files as C++ files and so it compiles these
+  glu files with the default settings, and does not use settings that are
+  required to compile the files correctly.  The easiest way to solve the
+  problem is to remove the .cc files from the glu project.  This does not
+  delete the files, but removes them from the project so that VS does not
+  try to compile them at all.  This allows the custom build step to compile 
+  the files with the proper settings.
 
 - After building, you can copy the above DLL files to a place in your PATH
   such as $SystemRoot/SYSTEM32.  If you don't like putting things in a
@@ -50,9 +70,6 @@ Details and Notes
 
 - The si-glu sources are used to build the GLU libs.  This was done
   mainly to get the better tessellator code.
-
-- The osmesa driver builds and should work on Windows as well as
-  any other platform.
 
 - The Windows driver (in src/Windows) builds and runs at least at
   a minimal level.  I modified this driver to work with the new
