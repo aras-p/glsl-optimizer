@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.35 2001/07/18 14:10:51 brianp Exp $ */
+/* $Id: s_texture.c,v 1.36 2001/08/07 17:26:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -851,6 +851,89 @@ sample_linear_2d( GLcontext *ctx, GLuint texUnit,
 
 
 /*
+ * Optimized 2-D texture sampling:
+ *    S and T wrap mode == GL_REPEAT
+ *    GL_NEAREST min/mag filter
+ *    No border
+ *    Format = GL_RGB
+ */
+static void
+opt_sample_rgb_2d( GLcontext *ctx, GLuint texUnit,
+                   const struct gl_texture_object *tObj,
+                   GLuint n, const GLfloat s[], const GLfloat t[],
+                   const GLfloat u[], const GLfloat lambda[],
+                   GLchan rgba[][4] )
+{
+   const struct gl_texture_image *img = tObj->Image[tObj->BaseLevel];
+   const GLfloat width = (GLfloat) img->Width;
+   const GLfloat height = (GLfloat) img->Height;
+   const GLint colMask = img->Width - 1;
+   const GLint rowMask = img->Height - 1;
+   const GLint shift = img->WidthLog2;
+   GLuint k;
+   (void) u;
+   (void) lambda;
+   ASSERT(tObj->WrapS==GL_REPEAT);
+   ASSERT(tObj->WrapT==GL_REPEAT);
+   ASSERT(tObj->MinFilter==GL_NEAREST);
+   ASSERT(tObj->MagFilter==GL_NEAREST);
+   ASSERT(img->Border==0);
+   ASSERT(img->Format==GL_RGB);
+
+   for (k=0; k<n; k++) {
+      GLint i = IFLOOR(s[k] * width) & colMask;
+      GLint j = IFLOOR(t[k] * height) & rowMask;
+      GLint pos = (j << shift) | i;
+      GLchan *texel = ((GLchan *) img->Data) + 3*pos;
+      rgba[k][RCOMP] = texel[0];
+      rgba[k][GCOMP] = texel[1];
+      rgba[k][BCOMP] = texel[2];
+   }
+}
+
+
+/*
+ * Optimized 2-D texture sampling:
+ *    S and T wrap mode == GL_REPEAT
+ *    GL_NEAREST min/mag filter
+ *    No border
+ *    Format = GL_RGBA
+ */
+static void
+opt_sample_rgba_2d( GLcontext *ctx, GLuint texUnit,
+                    const struct gl_texture_object *tObj,
+                    GLuint n, const GLfloat s[], const GLfloat t[],
+                    const GLfloat u[], const GLfloat lambda[],
+                    GLchan rgba[][4] )
+{
+   const struct gl_texture_image *img = tObj->Image[tObj->BaseLevel];
+   const GLfloat width = (GLfloat) img->Width;
+   const GLfloat height = (GLfloat) img->Height;
+   const GLint colMask = img->Width - 1;
+   const GLint rowMask = img->Height - 1;
+   const GLint shift = img->WidthLog2;
+   GLuint k;
+   GLchan (*ptr_rgba)[4] = rgba;
+   (void) u;
+   (void) lambda;
+   ASSERT(tObj->WrapS==GL_REPEAT);
+   ASSERT(tObj->WrapT==GL_REPEAT);
+   ASSERT(tObj->MinFilter==GL_NEAREST);
+   ASSERT(tObj->MagFilter==GL_NEAREST);
+   ASSERT(img->Border==0);
+   ASSERT(img->Format==GL_RGBA);
+
+   for (k=0; k<n; k++, ptr_rgba ++) {
+      GLint i = IFLOOR(s[k] * width) & colMask;
+      GLint j = IFLOOR(t[k] * height) & rowMask;
+      GLint pos = (j << shift) | i;
+      GLchan *texel = ((GLchan *) img->Data) + (pos << 2);    /* pos*4 */
+      COPY_CHAN4 (ptr_rgba, texel);
+   }
+}
+
+
+/*
  * Given an array of (s,t) texture coordinate and lambda (level of detail)
  * values, return an array of texture sample.
  */
@@ -869,14 +952,33 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
    /* since lambda is monotonous-array use this check first */
    if (lambda[0] <= minMagThresh && lambda[n-1] <= minMagThresh) {
       /* magnification for whole span */
+      const struct gl_texture_image *img = tObj->Image[tObj->BaseLevel];
       switch (tObj->MagFilter) {
       case GL_NEAREST:
-	 sample_nearest_2d(ctx, texUnit, tObj, n, s, t, u,
-                           lambda, rgba);
+         if (tObj->WrapS == GL_REPEAT && tObj->WrapT == GL_REPEAT &&
+             img->Border == 0) {
+            switch (img->Format) {
+            case GL_RGB:
+               opt_sample_rgb_2d(ctx, texUnit, tObj, n, s, t, NULL,
+                                 NULL, rgba);
+               break;
+            case GL_RGBA:
+               opt_sample_rgba_2d(ctx, texUnit, tObj, n, s, t, NULL,
+                                  NULL, rgba);
+               break;
+            default:
+               sample_nearest_2d(ctx, texUnit, tObj, n, s, t, NULL,
+                                 NULL, rgba);
+            }
+         }
+         else {
+            sample_nearest_2d(ctx, texUnit, tObj, n, s, t, NULL,
+                              NULL, rgba);
+         }
          break;
       case GL_LINEAR:
-	 sample_linear_2d(ctx, texUnit, tObj, n, s, t, u,
-                         lambda, rgba);
+	 sample_linear_2d(ctx, texUnit, tObj, n, s, t, NULL,
+			  NULL, rgba);
          break;
       default:
          _mesa_problem(NULL, "Bad mag filter in sample_lambda_2d");
@@ -932,93 +1034,6 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
             }
          }
       }
-   }
-}
-
-
-/*
- * Optimized 2-D texture sampling:
- *    S and T wrap mode == GL_REPEAT
- *    GL_NEAREST min/mag filter
- *    No border
- *    Format = GL_RGB
- */
-static void
-opt_sample_rgb_2d( GLcontext *ctx, GLuint texUnit,
-                   const struct gl_texture_object *tObj,
-                   GLuint n, const GLfloat s[], const GLfloat t[],
-                   const GLfloat u[], const GLfloat lambda[],
-                   GLchan rgba[][4] )
-{
-   const struct gl_texture_image *img = tObj->Image[tObj->BaseLevel];
-   const GLfloat width = (GLfloat) img->Width;
-   const GLfloat height = (GLfloat) img->Height;
-   const GLint colMask = img->Width - 1;
-   const GLint rowMask = img->Height - 1;
-   const GLint shift = img->WidthLog2;
-   GLuint k;
-   (void) u;
-   (void) lambda;
-   ASSERT(tObj->WrapS==GL_REPEAT);
-   ASSERT(tObj->WrapT==GL_REPEAT);
-   ASSERT(tObj->MinFilter==GL_NEAREST);
-   ASSERT(tObj->MagFilter==GL_NEAREST);
-   ASSERT(img->Border==0);
-   ASSERT(img->Format==GL_RGB);
-
-   /* NOTE: negative float->int doesn't floor, add 10000 as to work-around */
-   for (k=0;k<n;k++) {
-      GLint i = (GLint) ((s[k] + 10000.0) * width) & colMask;
-      GLint j = (GLint) ((t[k] + 10000.0) * height) & rowMask;
-      GLint pos = (j << shift) | i;
-      GLchan *texel = ((GLchan *) img->Data) + pos + pos + pos;  /* pos*3 */
-      rgba[k][RCOMP] = texel[0];
-      rgba[k][GCOMP] = texel[1];
-      rgba[k][BCOMP] = texel[2];
-   }
-}
-
-
-/*
- * Optimized 2-D texture sampling:
- *    S and T wrap mode == GL_REPEAT
- *    GL_NEAREST min/mag filter
- *    No border
- *    Format = GL_RGBA
- */
-static void
-opt_sample_rgba_2d( GLcontext *ctx, GLuint texUnit,
-                    const struct gl_texture_object *tObj,
-                    GLuint n, const GLfloat s[], const GLfloat t[],
-                    const GLfloat u[], const GLfloat lambda[],
-                    GLchan rgba[][4] )
-{
-   const struct gl_texture_image *img = tObj->Image[tObj->BaseLevel];
-   const GLfloat width = (GLfloat) img->Width;
-   const GLfloat height = (GLfloat) img->Height;
-   const GLint colMask = img->Width - 1;
-   const GLint rowMask = img->Height - 1;
-   const GLint shift = img->WidthLog2;
-   GLuint k;
-   (void) u;
-   (void) lambda;
-   ASSERT(tObj->WrapS==GL_REPEAT);
-   ASSERT(tObj->WrapT==GL_REPEAT);
-   ASSERT(tObj->MinFilter==GL_NEAREST);
-   ASSERT(tObj->MagFilter==GL_NEAREST);
-   ASSERT(img->Border==0);
-   ASSERT(img->Format==GL_RGBA);
-
-   /* NOTE: negative float->int doesn't floor, add 10000 as to work-around */
-   for (k=0;k<n;k++) {
-      GLint i = (GLint) ((s[k] + 10000.0) * width) & colMask;
-      GLint j = (GLint) ((t[k] + 10000.0) * height) & rowMask;
-      GLint pos = (j << shift) | i;
-      GLchan *texel = ((GLchan *) img->Data) + (pos << 2);    /* pos*4 */
-      rgba[k][RCOMP] = texel[0];
-      rgba[k][GCOMP] = texel[1];
-      rgba[k][BCOMP] = texel[2];
-      rgba[k][ACOMP] = texel[3];
    }
 }
 
