@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.18 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_triangle.c,v 1.19 2001/03/17 17:43:05 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2218,7 +2218,13 @@ static void occlusion_zless_triangle( GLcontext *ctx,
 #include "s_tritemp.h"
 }
 
-
+static void nodraw_triangle( GLcontext *ctx,
+			     const SWvertex *v0,
+			     const SWvertex *v1,
+			     const SWvertex *v2 )
+{
+   (void) (ctx && v0 && v1 && v2);
+}
 
 void _swrast_add_spec_terms_triangle( GLcontext *ctx,
 				      const SWvertex *v0,
@@ -2264,6 +2270,15 @@ _swrast_choose_triangle( GLcontext *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLboolean rgbmode = ctx->Visual.rgbMode;
 
+   if (ctx->Polygon.CullFlag && 
+       ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) {
+      dputs("nodraw_triangle");
+      swrast->Triangle = nodraw_triangle;
+      return;
+   }
+
+      
+   
    if (ctx->RenderMode==GL_RENDER) {
 
       if (ctx->Polygon.SmoothFlag) {

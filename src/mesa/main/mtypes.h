@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.25 2001/03/15 18:21:01 brianp Exp $ */
+/* $Id: mtypes.h,v 1.26 2001/03/17 17:43:04 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1363,7 +1363,6 @@ struct gl_extensions {
 #define _DD_NEW_POINT_SMOOTH             _NEW_POINT
 #define _DD_NEW_POINT_SIZE               _NEW_POINT
 #define _DD_NEW_POINT_ATTEN              _NEW_POINT
-#define _DD_NEW_LIGHTING_CULL            _NEW_LIGHT
 #define _DD_NEW_TRI_CULL_FRONT_BACK      _NEW_POLYGON
 #define _DD_NEW_Z_NEVER                  _NEW_DEPTH
 #define _DD_NEW_STENCIL                  _NEW_STENCIL
