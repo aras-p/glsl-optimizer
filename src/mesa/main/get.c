@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.89 2002/09/06 02:56:08 brianp Exp $ */
+/* $Id: get.c,v 1.90 2002/09/06 13:00:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1170,14 +1170,6 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_SEPARABLE_2D:
          CHECK_EXTENSION_B(EXT_convolution, pname);
          *params = ctx->Pixel.Separable2DEnabled;
-         break;
-      case GL_MAX_CONVOLUTION_WIDTH:
-         CHECK_EXTENSION_B(EXT_convolution, pname);
-         *params = INT_TO_BOOL(ctx->Const.MaxConvolutionWidth);
-         break;
-      case GL_MAX_CONVOLUTION_HEIGHT:
-         CHECK_EXTENSION_B(EXT_convolution, pname);
-         *params = INT_TO_BOOL(ctx->Const.MaxConvolutionHeight);
          break;
       case GL_POST_CONVOLUTION_RED_SCALE_EXT:
          CHECK_EXTENSION_B(EXT_convolution, pname);
@@ -2535,14 +2527,6 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          CHECK_EXTENSION_D(EXT_convolution, pname);
          *params = (GLdouble) ctx->Pixel.Separable2DEnabled;
          break;
-      case GL_MAX_CONVOLUTION_WIDTH:
-         CHECK_EXTENSION_D(EXT_convolution, pname);
-         *params = (GLdouble) ctx->Const.MaxConvolutionWidth;
-         break;
-      case GL_MAX_CONVOLUTION_HEIGHT:
-         CHECK_EXTENSION_D(EXT_convolution, pname);
-         *params = (GLdouble) ctx->Const.MaxConvolutionHeight;
-         break;
       case GL_POST_CONVOLUTION_RED_SCALE_EXT:
          CHECK_EXTENSION_D(EXT_convolution, pname);
          *params = (GLdouble) ctx->Pixel.PostConvolutionScale[0];
@@ -3874,14 +3858,6 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_SEPARABLE_2D:
          CHECK_EXTENSION_F(EXT_convolution, pname);
          *params = (GLfloat) ctx->Pixel.Separable2DEnabled;
-         break;
-      case GL_MAX_CONVOLUTION_WIDTH:
-         CHECK_EXTENSION_F(EXT_convolution, pname);
-         *params = (GLfloat) ctx->Const.MaxConvolutionWidth;
-         break;
-      case GL_MAX_CONVOLUTION_HEIGHT:
-         CHECK_EXTENSION_F(EXT_convolution, pname);
-         *params = (GLfloat) ctx->Const.MaxConvolutionHeight;
          break;
       case GL_POST_CONVOLUTION_RED_SCALE_EXT:
          CHECK_EXTENSION_F(EXT_convolution, pname);
@@ -5255,14 +5231,6 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_SEPARABLE_2D:
          CHECK_EXTENSION_I(EXT_convolution, pname);
          *params = (GLint) ctx->Pixel.Separable2DEnabled;
-         break;
-      case GL_MAX_CONVOLUTION_WIDTH:
-         CHECK_EXTENSION_I(EXT_convolution, pname);
-         *params = ctx->Const.MaxConvolutionWidth;
-         break;
-      case GL_MAX_CONVOLUTION_HEIGHT:
-         CHECK_EXTENSION_I(EXT_convolution, pname);
-         *params = ctx->Const.MaxConvolutionHeight;
          break;
       case GL_POST_CONVOLUTION_RED_SCALE_EXT:
          CHECK_EXTENSION_I(EXT_convolution, pname);
