@@ -75,6 +75,7 @@ extern "C" {
 #define GLU_INVALID_ENUM                   100900
 #define GLU_INVALID_VALUE                  100901
 #define GLU_OUT_OF_MEMORY                  100902
+#define GLU_INCOMPATIBLE_GL_VERSION        100903
 #define GLU_INVALID_OPERATION              100904
 
 /* NurbsDisplay */
