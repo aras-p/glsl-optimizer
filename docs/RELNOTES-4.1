@@ -57,9 +57,19 @@ GL_ARB_point_parameters
 
     This is basically the same as GL_EXT_point_parameters.
 
+GL_ARB_texture_env_crossbar
+
+    Allows any texture combine stage to reference any texture source unit.
+
 GL_NV_point_sprite
 
     For rendering points as textured quads.  Useful for particle effects.
+
+GL_NV_texture_rectangle
+
+    Allows one to use textures with sizes that are not powers of two.
+    Note that mipmapping and several texture wrap modes are not allowed.
+
 
 
 Device Driver Status
@@ -80,7 +90,7 @@ Wind River UGL		implements OpenGL 1.3
 Windows/Win32		implements OpenGL 1.3
 DOS/DJGPP		implements OpenGL 1.3
 GGI			needs updating
-BeOS			needs updating
+BeOS			needs updating (underway)
 Allegro			needs updating
 D3D			needs updating
 DOS			needs updating
@@ -115,19 +125,78 @@ to work as of 4/21/2002.
 
 Allow multiple points to be rendered into one sw_span.
 
-Investigate the normal transformation bug when using non-uniform
-scale matrices.
+improve point/line rendering speed.
 
 _tnl_end() has flushing forced on.
-
-improve point/line rendering speed.
 
 readpixels from stencil/z should respect ctx->ReadBuffer
 
 glVertexAttrib*NV(index>15) should cause an error.
 
-GL_ARB_texture_env_crossbar: Allows any texture combine stage to reference
-any texture source unit
+isosurf with vertex program exhibits some missing triangles (probably
+when recycling the vertex buffer for long prims).
+
+
+
+Porting Info
+------------
+
+If you're porting a DRI or other driver from Mesa 4.0.x to Mesa 4.1 here
+are some things to change:
+
+1. ctx->Texture._ReallyEnabled is obsolete.
+
+   Since there are now 5 texture targets (1D, 2D, 3D, cube and rect) that
+   left room for only 6 units (6*5 < 32) in this field.
+   This field is being replaced by ctx->Texture._EnabledUnits which has one
+   bit per texture unit.  If the bit k of _EnabledUnits is set, that means
+   ctx->Texture.Unit[k]._ReallyEnabled is non-zero.  You'll have to look at
+   ctx->Texture.Unit[k]._ReallyEnabled to learn if the 1D, 2D, 3D, cube or
+   rect texture is enabled for unit k.
+
+   This also means that the constants TEXTURE1_*, TEXTURE2_*, etc are
+   obsolete.
+
+   The tokens TEXTURE0_* have been replaced as well (since there's no
+   significance to the "0" part:
+
+   old token           new token
+   TEXTURE0_1D         TEXTURE_1D_BIT
+   TEXTURE0_2D         TEXTURE_2D_BIT
+   TEXTURE0_3D         TEXTURE_3D_BIT
+   TEXTURE0_CUBE       TEXTURE_CUBE_BIT
+   <none>              TEXTURE_RECT_BIT
+
+   These tokens are only used for the ctx->Texture.Unit[i].Enabled and
+   ctx->Texture.Unit[i]._ReallyEnabled fields.  Exactly 0 or 1 bit will
+   be set in _ReallyEnabled at any time!
+
+   Q: "What's the purpose of Unit[i].Enabled vs Unit[i]._ReallyEnabled?"
+   A: The user can enable GL_TEXTURE_1D, GL_TEXTURE_2D, etc for any
+      texure unit all at once (an unusual thing to do).
+      OpenGL defines priorities that basically say GL_TEXTURE_2D has
+      higher priority than GL_TEXTURE_1D, etc.  Also, just because a
+      texture target is enabled by the user doesn't mean we'll actually
+      use that texture!  If a texture object is incomplete (missing mip-
+      map levels, etc) it's as if texturing is disabled for that target.
+      The _ReallyEnabled field will have a bit set ONLY if the texture
+      target is enabled and complete.  This spares the driver writer from
+      examining a _lot_ of GL state to determine which texture target is
+      to be used.
+
+
+2. Tnl tokens changes
+
+   During the implementation of GL_NV_vertex_program some of the vertex
+   buffer code was changed.  Specifically, the VERT_* bits defined in
+   tnl/t_context.h have been renamed to better match the conventions of
+   GL_NV_vertex_program.  The old names are still present but obsolete.
+   Drivers should use the newer names.
+
+   For example:  VERT_RGBA is now VERT_BIT_COLOR0 and
+   VERT_SPEC_RGB is now VERT_BIT_COLOR1.
+
+
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-4.1,v 1.9 2002/06/13 04:50:09 brianp Exp $
+$Id: RELNOTES-4.1,v 1.10 2002/06/15 03:03:58 brianp Exp $
