@@ -1,4 +1,4 @@
-/* $Id: tess.h,v 1.4 1999/09/13 22:20:13 gareth Exp $ */
+/* $Id: tess.h,v 1.5 1999/09/14 22:46:02 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.h,v $
+ * Revision 1.5  1999/09/14 22:46:02  gareth
+ * Added debugging output.
+ *
  * Revision 1.4  1999/09/13 22:20:13  gareth
  * Fixed file headers.  Tracking down macro bugs.
  *
@@ -88,10 +91,10 @@ extern void tess_error_callback( GLUtesselator *, GLenum, void * );
 /*****************************************************************************
  * Debugging output:  (to be removed...)
  *****************************************************************************/
+#ifdef DEBUG
 extern	int	tess_debug_level;
 int vdebugstr( char *format_str, ... );
 
-#ifdef _DEBUG
 #define DEBUGP(level, body)						\
     do {								\
 	if ( tess_debug_level >= level ) {				\
