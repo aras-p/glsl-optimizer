@@ -39,6 +39,7 @@ _swrast_CopyColorTable( GLcontext *ctx,
 			GLint x, GLint y, GLsizei width)
 {
    GLchan data[MAX_WIDTH][4];
+   struct gl_buffer_object *bufferSave;
 
    /* Select buffer to read from */
    _swrast_use_read_buffer(ctx);
@@ -52,7 +53,14 @@ _swrast_CopyColorTable( GLcontext *ctx,
    /* Restore reading from draw buffer (the default) */
    _swrast_use_draw_buffer(ctx);
 
+   /* save PBO binding */
+   bufferSave = ctx->Unpack.BufferObj;
+   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+
    _mesa_ColorTable(target, internalformat, width, GL_RGBA, CHAN_TYPE, data);
+
+   /* restore PBO binding */
+   ctx->Unpack.BufferObj = bufferSave;
 }
 
 
@@ -61,6 +69,7 @@ _swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
 			   GLint x, GLint y, GLsizei width)
 {
    GLchan data[MAX_WIDTH][4];
+   struct gl_buffer_object *bufferSave;
 
    /* Select buffer to read from */
    _swrast_use_read_buffer(ctx);
@@ -74,7 +83,14 @@ _swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
    /* Restore reading from draw buffer (the default) */
    _swrast_use_draw_buffer(ctx);
 
+   /* save PBO binding */
+   bufferSave = ctx->Unpack.BufferObj;
+   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+
    _mesa_ColorSubTable(target, start, width, GL_RGBA, CHAN_TYPE, data);
+
+   /* restore PBO binding */
+   ctx->Unpack.BufferObj = bufferSave;
 }
 
 
