@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.14 2000/04/04 00:54:23 brianp Exp $ */
+/* $Id: osmesa.c,v 1.15 2000/04/04 15:14:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -474,8 +474,9 @@ void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value )
  *          buffer - pointer to depth buffer values
  * Return:  GL_TRUE or GL_FALSE to indicate success or failure.
  */
-GLboolean GLAPIENTRY OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
-                                GLint *bytesPerValue, void **buffer )
+GLboolean GLAPIENTRY
+OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
+                      GLint *bytesPerValue, void **buffer )
 {
    if ((!c->gl_buffer) || (!c->gl_buffer->DepthBuffer)) {
       *width = 0;
@@ -501,8 +502,9 @@ GLboolean GLAPIENTRY OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint 
  *          buffer - pointer to color buffer values
  * Return:  GL_TRUE or GL_FALSE to indicate success or failure.
  */
-GLboolean GLAPIENTRY OSMesaGetColorBuffer( OSMesaContext c, GLint *width,
-                        GLint *height, GLint *format, void **buffer )
+GLboolean GLAPIENTRY
+OSMesaGetColorBuffer( OSMesaContext c, GLint *width,
+                      GLint *height, GLint *format, void **buffer )
 {
    if (!c->buffer) {
       *width = 0;
@@ -510,7 +512,8 @@ GLboolean GLAPIENTRY OSMesaGetColorBuffer( OSMesaContext c, GLint *width,
       *format = 0;
       *buffer = 0;
       return GL_FALSE;
-   } else {
+   }
+   else {
       *width = c->width;
       *height = c->height;
       *format = c->format;
@@ -961,8 +964,6 @@ static void write_monocolor_span3( const GLcontext *ctx,
    GLint   rind = osmesa->rind;
    GLint   gind = osmesa->gind;
    GLint   bind = osmesa->bind;
-
-
    GLubyte *ptr3 = PIXELADDR3( x, y);
    GLuint i;
    for (i=0;i<n;i++,ptr3+=3) {
@@ -1024,7 +1025,7 @@ static void read_rgba_span3( const GLcontext *ctx,
    GLint rind = osmesa->rind;
    GLint gind = osmesa->gind;
    GLint bind = osmesa->bind;
-   GLubyte *ptr3 = PIXELADDR3( x, y);
+   const GLubyte *ptr3 = PIXELADDR3( x, y);
    for (i=0;i<n;i++,ptr3+=3) {
       rgba[i][RCOMP] = ptr3[rind];
       rgba[i][GCOMP] = ptr3[gind];
@@ -1044,7 +1045,7 @@ static void read_rgba_pixels3( const GLcontext *ctx,
    GLint bind = osmesa->bind;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-         GLubyte *ptr3 = PIXELADDR3(x[i],y[i]);
+         const GLubyte *ptr3 = PIXELADDR3(x[i],y[i]);
          rgba[i][RCOMP] = ptr3[rind];
          rgba[i][GCOMP] = ptr3[gind];
          rgba[i][BCOMP] = ptr3[bind];
@@ -1152,7 +1153,7 @@ static void read_index_span( const GLcontext *ctx,
 {
    OSMesaContext osmesa = (OSMesaContext) ctx;
    GLuint i;
-   GLubyte *ptr1 = PIXELADDR1(x,y);
+   const GLubyte *ptr1 = PIXELADDR1(x,y);
    for (i=0;i<n;i++,ptr1++) {
       index[i] = (GLuint) *ptr1;
    }
@@ -1167,7 +1168,7 @@ static void read_index_pixels( const GLcontext *ctx,
    GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i] ) {
-         GLubyte *ptr1 = PIXELADDR1(x[i],y[i]);
+         const GLubyte *ptr1 = PIXELADDR1(x[i],y[i]);
          index[i] = (GLuint) *ptr1;
       }
    }
@@ -1251,12 +1252,12 @@ static void flat_blend_rgba_line( GLcontext *ctx,
 #define INTERP_XY 1
 #define CLIP_HACK 1
 #define PLOT(X,Y)					\
-   { GLuint *ptr4 = PIXELADDR4(X,Y); \
-     GLuint  pixel = 0; \
+   { GLuint *ptr4 = PIXELADDR4(X,Y);			\
+     GLuint  pixel = 0;					\
      pixel |=((((((*ptr4) >> rshift) & 0xff)*msavalue+rvalue)>>8) << rshift);\
      pixel |=((((((*ptr4) >> gshift) & 0xff)*msavalue+gvalue)>>8) << gshift);\
      pixel |=((((((*ptr4) >> bshift) & 0xff)*msavalue+bvalue)>>8) << bshift);\
-     *ptr4 = pixel; \
+     *ptr4 = pixel;					\
    }
 
 #ifdef WIN32
@@ -1288,14 +1289,14 @@ static void flat_blend_rgba_z_line( GLcontext *ctx,
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define CLIP_HACK 1
-#define PLOT(X,Y)									\
-	if (Z < *zPtr) {								\
-	   GLuint *ptr4 = PIXELADDR4(X,Y);						\
-	   GLuint  pixel = 0;								\
+#define PLOT(X,Y)							\
+	if (Z < *zPtr) {						\
+	   GLuint *ptr4 = PIXELADDR4(X,Y);				\
+	   GLuint  pixel = 0;						\
 	   pixel |=((((((*ptr4) >> rshift) & 0xff)*msavalue+rvalue)>>8) << rshift);	\
 	   pixel |=((((((*ptr4) >> gshift) & 0xff)*msavalue+gvalue)>>8) << gshift);	\
 	   pixel |=((((((*ptr4) >> bshift) & 0xff)*msavalue+bvalue)>>8) << bshift);	\
-	   *ptr4 = pixel; 								\
+	   *ptr4 = pixel; 						\
 	}
 
 #ifdef WIN32
@@ -1327,15 +1328,15 @@ static void flat_blend_rgba_z_line_write( GLcontext *ctx,
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define CLIP_HACK 1
-#define PLOT(X,Y)									\
-	if (Z < *zPtr) {								\
-	   GLuint *ptr4 = PIXELADDR4(X,Y);						\
-	   GLuint  pixel = 0;								\
+#define PLOT(X,Y)							\
+	if (Z < *zPtr) {						\
+	   GLuint *ptr4 = PIXELADDR4(X,Y);				\
+	   GLuint  pixel = 0;						\
 	   pixel |=((((((*ptr4) >> rshift) & 0xff)*msavalue+rvalue)>>8) << rshift);	\
 	   pixel |=((((((*ptr4) >> gshift) & 0xff)*msavalue+gvalue)>>8) << gshift);	\
 	   pixel |=((((((*ptr4) >> bshift) & 0xff)*msavalue+bvalue)>>8) << bshift);	\
-	   *ptr4 = pixel;								\
-	   *zPtr = Z;									\
+	   *ptr4 = pixel;						\
+	   *zPtr = Z;							\
 	}
 
 #ifdef WIN32
@@ -1560,180 +1561,6 @@ static triangle_func choose_triangle_function( GLcontext *ctx )
 
 
 
-/**********************************************************************/
-/*****                 Occlusion rendering routines               *****/
-/**********************************************************************/
-
-#define OCC_STD_MASK_TEST \
-   if (ctx->OcclusionResult) return; \
-   if (mask) { \
-      GLuint i; \
-      for (i=0;i<n;i++) if (mask[i]) { \
-           ((GLcontext *)ctx)->OcclusionResult = GL_TRUE; \
-           return; \
-	} \
-   } else { \
-      ((GLcontext *)ctx)->OcclusionResult = GL_TRUE; \
-   } \
-   return;
-
-/**
-*** Color Index
-**/
-
-static void write_index32_span_occ( const GLcontext *ctx,
-                                    GLuint n, GLint x, GLint y,
-                                    const GLuint index[], const GLubyte mask[] )
-{
-   OCC_STD_MASK_TEST
-}
-
-
-static void write_index8_span_occ( const GLcontext *ctx,
-                                   GLuint n, GLint x, GLint y,
-                                   const GLubyte index[], const GLubyte mask[] )
-{
-   OCC_STD_MASK_TEST
-}
-
-
-static void write_monoindex_span_occ( const GLcontext *ctx,
-                                      GLuint n, GLint x, GLint y,
-                                      const GLubyte mask[] )
-{
-   OCC_STD_MASK_TEST
-}
-
-
-static void write_index_pixels_occ( const GLcontext *ctx,
-                                    GLuint n, const GLint x[], const GLint y[],
-                                    const GLuint index[], const GLubyte mask[] )
-{
-   OCC_STD_MASK_TEST
-}
-
-
-static void write_monoindex_pixels_occ( const GLcontext *ctx,
-                                        GLuint n, const GLint x[], const GLint y[],
-                                        const GLubyte mask[] )
-{
-   OCC_STD_MASK_TEST
-}
-
-/**
-*** RGB/RGBA
-**/
-static void write_rgba_span_occ( const GLcontext *ctx,
-                                 GLuint n, GLint x, GLint y,
-                                 CONST GLubyte rgba[][4], const GLubyte mask[] )
-{
-   OCC_STD_MASK_TEST
-}
-
-
-static void write_rgb_span_occ( const GLcontext *ctx,
-                                GLuint n, GLint x, GLint y,
-                                CONST GLubyte rgb[][3],
-                                const GLubyte mask[] )
-{
-   OCC_STD_MASK_TEST
-}
-
-
-static void write_rgba_pixels_occ( const GLcontext *ctx,
-                                   GLuint n, const GLint x[], const GLint y[],
-                                   CONST GLubyte rgba[][4], const GLubyte mask[] )
-{
-   OCC_STD_MASK_TEST
-}
-
-
-static void write_monocolor_span_occ( const GLcontext *ctx,
-                                      GLuint n, GLint x, GLint y,
-                                      const GLubyte mask[] )
-{
-   OCC_STD_MASK_TEST
-}
-
-
-static void write_monocolor_pixels_occ( const GLcontext *ctx,
-                                        GLuint n, const GLint x[], const GLint y[],
-                                        const GLubyte mask[] )
-{
-   OCC_STD_MASK_TEST
-}
-
-
-/**
-*** Line Drawing
-**/
-static void line_occ( GLcontext *ctx,
-                      GLuint vert0, GLuint vert1, GLuint pvert )
-{
-   ctx->OcclusionResult = GL_TRUE; 
-}
-
-
-static void line_z_occ( GLcontext *ctx,
-                        GLuint vert0, GLuint vert1, GLuint pvert )
-{
-   if (ctx->OcclusionResult) return; 
-
-#define INTERP_XY 1
-#define INTERP_Z 1
-#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
-#define CLIP_HACK 1
-#define PLOT(X,Y)                               \
-        if (Z < *zPtr) {                        \
-           ctx->OcclusionResult = GL_TRUE;          \
-           return;                              \
-        }
-
-#ifdef WIN32
-#include "..\linetemp.h"
-#else
-#include "linetemp.h"
-#endif
-}
-
-
-/**
-*** Triangle Drawing
-**/
-static void triangle_occ( GLcontext *ctx, GLuint v0, GLuint v1,
-                          GLuint v2, GLuint pv )
-{
-   ctx->OcclusionResult = GL_TRUE; 
-}
-
-
-static void triangle_z_occ( GLcontext *ctx, GLuint v0, GLuint v1,
-                            GLuint v2, GLuint pv )
-{
-   if (ctx->OcclusionResult) return; 
-
-#define INTERP_Z 1
-#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
-#define INNER_LOOP( LEFT, RIGHT, Y )    \
-{                                       \
-   GLint i, len = RIGHT-LEFT;           \
-   for (i=0;i<len;i++) {                \
-      GLdepth z = FixedToDepth(ffz);    \
-      if (z < zRow[i]) {                \
-         ctx->OcclusionResult = GL_TRUE;    \
-         return;                        \
-      }                                 \
-      ffz += fdzdx;                     \
-   }                                    \
-}
-#ifdef WIN32
-#include "..\tritemp.h"
-#else
-#include "tritemp.h"
-#endif
-}
-
-
 static const GLubyte *get_string( GLcontext *ctx, GLenum name )
 {
    (void) ctx;
@@ -1808,48 +1635,4 @@ static void osmesa_update_state( GLcontext *ctx )
    ctx->Driver.WriteMonoCIPixels = write_monoindex_pixels;
    ctx->Driver.ReadCI32Span = read_index_span;
    ctx->Driver.ReadCI32Pixels = read_index_pixels;
-
-   /* Occlusion test cases:
-    * If no buffers have been selected for writing,
-    * we swap in occlusion routines that:
-    *  (1) check the current flag and return if set
-    *  (2) set the flag if any pixel would be updated
-    * Note: all the other buffer writing routines will
-    * always set the visible flag so in cases of "improper"
-    * extension use will just cause unnecessary rasterization
-    * to occur.  The image will be correct in any case.
-    */
-   if ((ctx->Depth.OcclusionTest) &&
-       (((!ctx->Visual->RGBAflag) &&
-       (ctx->Color.IndexMask == 0)) ||
-       ((ctx->Visual->RGBAflag) &&
-       (ctx->Color.ColorMask[0] == 0) &&
-       (ctx->Color.ColorMask[1] == 0) &&
-       (ctx->Color.ColorMask[2] == 0) &&
-       (ctx->Color.ColorMask[3] == 0))) &&
-       (ctx->Depth.Func == GL_LESS) &&
-       (ctx->Stencil.Enabled == GL_FALSE)) {
-
-      ctx->Driver.WriteCI32Span = write_index32_span_occ;
-      ctx->Driver.WriteCI8Span = write_index8_span_occ;
-      ctx->Driver.WriteMonoCISpan = write_monoindex_span_occ;
-      ctx->Driver.WriteCI32Pixels = write_index_pixels_occ;
-      ctx->Driver.WriteMonoCIPixels = write_monoindex_pixels_occ;
-
-      ctx->Driver.WriteRGBASpan = write_rgba_span_occ;
-      ctx->Driver.WriteRGBSpan = write_rgb_span_occ;
-      ctx->Driver.WriteRGBAPixels = write_rgba_pixels_occ;
-      ctx->Driver.WriteMonoRGBASpan = write_monocolor_span_occ;
-      ctx->Driver.WriteMonoRGBAPixels = write_monocolor_pixels_occ;
-
-      if (ctx->RasterMask & DEPTH_BIT) {
-         ctx->Driver.LineFunc = line_z_occ;
-         ctx->Driver.TriangleFunc = triangle_z_occ;
-      } else {
-         ctx->Driver.LineFunc = line_occ;
-         ctx->Driver.TriangleFunc = triangle_occ;
-      }
-   } else {
-      ctx->OcclusionResult = GL_TRUE;
-   }
 }

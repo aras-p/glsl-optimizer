@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.16 2000/03/31 01:04:52 brianp Exp $ */
+/* $Id: get.c,v 1.17 2000/04/04 15:14:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1029,8 +1029,13 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
          if (ctx->Extensions.HaveHpOcclusionTest) {
-            *params = ctx->OcclusionResult;
-            ctx->OcclusionResult = GL_FALSE; /* reset now */
+            if (ctx->Depth.OcclusionTest)
+               *params = ctx->OcclusionResult;
+            else
+               *params = ctx->OcclusionResultSaved;
+            /* reset flag now */
+            ctx->OcclusionResult = GL_FALSE;
+            ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
             gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
@@ -2016,8 +2021,13 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
          if (ctx->Extensions.HaveHpOcclusionTest) {
-            *params = (GLdouble) ctx->OcclusionResult;
-            ctx->OcclusionResult = GL_FALSE; /* reset now */
+            if (ctx->Depth.OcclusionTest)
+               *params = (GLdouble) ctx->OcclusionResult;
+            else
+               *params = (GLdouble) ctx->OcclusionResultSaved;
+            /* reset flag now */
+            ctx->OcclusionResult = GL_FALSE;
+            ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
             gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
@@ -2980,8 +2990,13 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
          if (ctx->Extensions.HaveHpOcclusionTest) {
-            *params = (GLfloat) ctx->OcclusionResult;
-            ctx->OcclusionResult = GL_FALSE; /* reset now */
+            if (ctx->Depth.OcclusionTest)
+               *params = (GLfloat) ctx->OcclusionResult;
+            else
+               *params = (GLfloat) ctx->OcclusionResultSaved;
+            /* reset flag now */
+            ctx->OcclusionResult = GL_FALSE;
+            ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
             gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
@@ -3967,8 +3982,13 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
          if (ctx->Extensions.HaveHpOcclusionTest) {
-            *params = (GLint) ctx->OcclusionResult;
-            ctx->OcclusionResult = GL_FALSE; /* reset now */
+            if (ctx->Depth.OcclusionTest)
+               *params = (GLint) ctx->OcclusionResult;
+            else
+               *params = (GLint) ctx->OcclusionResultSaved;
+            /* reset flag now */
+            ctx->OcclusionResult = GL_FALSE;
+            ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
             gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );

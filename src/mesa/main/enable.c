@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.12 2000/03/11 23:23:26 brianp Exp $ */
+/* $Id: enable.c,v 1.13 2000/04/04 15:14:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -455,6 +455,10 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       case GL_OCCLUSION_TEST_HP:
          if (ctx->Extensions.HaveHpOcclusionTest) {
             ctx->Depth.OcclusionTest = state;
+            if (state)
+               ctx->OcclusionResult = ctx->OcclusionResultSaved;
+            else
+               ctx->OcclusionResultSaved = ctx->OcclusionResult;
             ctx->NewState |= NEW_RASTER_OPS;
          }
          else {
