@@ -580,16 +580,16 @@ _glthread_DECLARE_STATIC_MUTEX(GenTexturesLock);
  * Generate texture names.
  *
  * \param n number of texture names to be generated.
- * \param texName an array in which will hold the generated texture names.
+ * \param textures an array in which will hold the generated texture names.
  *
  * \sa glGenTextures().
  *
  * While holding the GenTexturesLock lock, calls _mesa_HashFindFreeKeyBlock()
- * to find a block of free texture IDs which are stored in \p texName.
+ * to find a block of free texture IDs which are stored in \p textures.
  * Corresponding empty texture objects are also generated.
  */ 
 void GLAPIENTRY
-_mesa_GenTextures( GLsizei n, GLuint *texName )
+_mesa_GenTextures( GLsizei n, GLuint *textures )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint first;
@@ -601,7 +601,7 @@ _mesa_GenTextures( GLsizei n, GLuint *texName )
       return;
    }
 
-   if (!texName)
+   if (!textures)
       return;
 
    /*
@@ -622,38 +622,41 @@ _mesa_GenTextures( GLsizei n, GLuint *texName )
          return;
       }
       _mesa_save_texture_object(ctx, texObj);
-      texName[i] = name;
+      textures[i] = name;
    }
 
    _glthread_UNLOCK_MUTEX(GenTexturesLock);
 }
 
+
 /**
  * Delete named textures.
  *
  * \param n number of textures to be deleted.
- * \param texName array of textures names to be deleted.
+ * \param textures array of texture IDs to be deleted.
  *
  * \sa glDeleteTextures().
  *
- * For each texture checks if its bound to any of the texture units, unbinding
- * it and decrementing the reference count if so. If the texture reference
- * count is zero, delete its object.
+ * If we're about to delete a texture that's currently bound to any
+ * texture unit, unbind the texture first.  Decrement the reference
+ * count on the texture object and delete it if it's zero.
+ * Recall that texture objects can be shared among several rendering
+ * contexts.
  */
 void GLAPIENTRY
-_mesa_DeleteTextures( GLsizei n, const GLuint *texName)
+_mesa_DeleteTextures( GLsizei n, const GLuint *textures)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* too complex */
 
-   if (!texName)
+   if (!textures)
       return;
 
-   for (i=0;i<n;i++) {
-      if (texName[i] > 0) {
+   for (i = 0; i < n; i++) {
+      if (textures[i] > 0) {
          struct gl_texture_object *delObj = (struct gl_texture_object *)
-            _mesa_HashLookup(ctx->Shared->TexObjects, texName[i]);
+            _mesa_HashLookup(ctx->Shared->TexObjects, textures[i]);
          if (delObj) {
             /* First check if this texture is currently bound.
              * If so, unbind it and decrement the reference count.
