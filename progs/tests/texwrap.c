@@ -1,7 +1,9 @@
-/* $Id: texwrap.c,v 1.1 2001/03/26 19:45:57 brianp Exp $ */
+/* $Id: texwrap.c,v 1.2 2001/04/12 20:50:26 brianp Exp $ */
 
 /*
  * Test texture wrap modes.
+ * Press 'b' to toggle texture image borders.  You should see the same
+ * rendering whether or not you're using borders.
  *
  * Brian Paul   March 2001
  */
@@ -19,8 +21,13 @@
 #endif
 
 
-#define SIZE 4
-static GLubyte TexImage[SIZE+2][SIZE+2][4];
+#define BORDER_TEXTURE 1
+#define NO_BORDER_TEXTURE 2
+
+#define SIZE 8
+static GLubyte BorderImage[SIZE+2][SIZE+2][4];
+static GLubyte NoBorderImage[SIZE][SIZE][4];
+static GLuint Border = 1;
 
 
 static void
@@ -63,7 +70,7 @@ static void Display( void )
    glDrawPixels(6, 6, GL_RGBA, GL_UNSIGNED_BYTE, (void *) TexImage);
 #endif
 
-   glEnable(GL_TEXTURE_2D);
+   glBindTexture(GL_TEXTURE_2D, Border ? BORDER_TEXTURE : NO_BORDER_TEXTURE);
 
    /* loop over min/mag filters */
    for (i = 0; i < 2; i++) {
@@ -78,17 +85,32 @@ static void Display( void )
 
       /* loop over border modes */
       for (j = 0; j < numModes; j++) {
+         const GLfloat x0 = 0, y0 = 0, x1 = 140, y1 = 140;
+         const GLfloat b = 0.2;
+         const GLfloat s0 = -b, t0 = -b, s1 = 1.0+b, t1 = 1.0+b;
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, modes[j]);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, modes[j]);
 
          glPushMatrix();
             glTranslatef(j * 150 + 10, i * 150 + 25, 0);
 
+            glEnable(GL_TEXTURE_2D);
+            glColor3f(1, 1, 1);
             glBegin(GL_POLYGON);
-            glTexCoord2f(-0.2, -0.2);  glVertex2f(  0,   0);
-            glTexCoord2f( 1.2, -0.2);  glVertex2f(140,   0);
-            glTexCoord2f( 1.2,  1.2);  glVertex2f(140, 140);
-            glTexCoord2f(-0.2,  1.2);  glVertex2f(  0, 140);
+            glTexCoord2f(s0, t0);  glVertex2f(x0, y0);
+            glTexCoord2f(s1, t0);  glVertex2f(x1, y0);
+            glTexCoord2f(s1, t1);  glVertex2f(x1, y1);
+            glTexCoord2f(s0, t1);  glVertex2f(x0, y1);
+            glEnd();
+
+            /* draw red outline showing bounds of texture at s=0,1 and t=0,1 */
+            glDisable(GL_TEXTURE_2D);
+            glColor3f(1, 0, 0);
+            glBegin(GL_LINE_LOOP);
+            glVertex2f(x0 + b * (x1-x0) / (s1-s0), y0 + b * (y1-y0) / (t1-t0));
+            glVertex2f(x1 - b * (x1-x0) / (s1-s0), y0 + b * (y1-y0) / (t1-t0));
+            glVertex2f(x1 - b * (x1-x0) / (s1-s0), y1 - b * (y1-y0) / (t1-t0));
+            glVertex2f(x0 + b * (x1-x0) / (s1-s0), y1 - b * (y1-y0) / (t1-t0));
             glEnd();
 
          glPopMatrix();
@@ -96,6 +118,7 @@ static void Display( void )
    }
 
    glDisable(GL_TEXTURE_2D);
+   glColor3f(1, 1, 1);
    for (i = 0; i < numModes; i++) {
       glWindowPos2iMESA( i * 150 + 10, 5);
       PrintString(names[i]);
@@ -121,6 +144,10 @@ static void Key( unsigned char key, int x, int y )
    (void) x;
    (void) y;
    switch (key) {
+      case 'b':
+         Border = !Border;
+         printf("Texture Border Size = %d\n", Border);
+         break;
       case 27:
          exit(0);
          break;
@@ -132,36 +159,63 @@ static void Key( unsigned char key, int x, int y )
 static void Init( void )
 {
    static const GLubyte border[4] = { 0, 255, 0, 255 };
+   static const GLfloat borderf[4] = { 0, 1.0, 0, 1.0 };
    GLint i, j;
 
    for (i = 0; i < SIZE+2; i++) {
       for (j = 0; j < SIZE+2; j++) {
          if (i == 0 || j == 0 || i == SIZE+1 || j == SIZE+1) {
             /* border color */
-            TexImage[i][j][0] = border[0];
-            TexImage[i][j][1] = border[1];
-            TexImage[i][j][2] = border[2];
-            TexImage[i][j][3] = border[3];
+            BorderImage[i][j][0] = border[0];
+            BorderImage[i][j][1] = border[1];
+            BorderImage[i][j][2] = border[2];
+            BorderImage[i][j][3] = border[3];
          }
          else if ((i + j) & 1) {
             /* white */
-            TexImage[i][j][0] = 255;
-            TexImage[i][j][1] = 255;
-            TexImage[i][j][2] = 255;
-            TexImage[i][j][3] = 255;
+            BorderImage[i][j][0] = 255;
+            BorderImage[i][j][1] = 255;
+            BorderImage[i][j][2] = 255;
+            BorderImage[i][j][3] = 255;
          }
          else {
             /* black */
-            TexImage[i][j][0] = 0;
-            TexImage[i][j][1] = 0;
-            TexImage[i][j][2] = 0;
-            TexImage[i][j][3] = 0;
+            BorderImage[i][j][0] = 0;
+            BorderImage[i][j][1] = 0;
+            BorderImage[i][j][2] = 0;
+            BorderImage[i][j][3] = 0;
          }
       }
    }
 
+   glBindTexture(GL_TEXTURE_2D, BORDER_TEXTURE);
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SIZE+2, SIZE+2, 1,
-                GL_RGBA, GL_UNSIGNED_BYTE, (void *) TexImage);
+                GL_RGBA, GL_UNSIGNED_BYTE, (void *) BorderImage);
+
+
+   for (i = 0; i < SIZE; i++) {
+      for (j = 0; j < SIZE; j++) {
+         if ((i + j) & 1) {
+            /* white */
+            NoBorderImage[i][j][0] = 255;
+            NoBorderImage[i][j][1] = 255;
+            NoBorderImage[i][j][2] = 255;
+            NoBorderImage[i][j][3] = 255;
+         }
+         else {
+            /* black */
+            NoBorderImage[i][j][0] = 0;
+            NoBorderImage[i][j][1] = 0;
+            NoBorderImage[i][j][2] = 0;
+            NoBorderImage[i][j][3] = 0;
+         }
+      }
+   }
+
+   glBindTexture(GL_TEXTURE_2D, NO_BORDER_TEXTURE);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SIZE, SIZE, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, (void *) NoBorderImage);
+   glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderf);
 }
 
 
