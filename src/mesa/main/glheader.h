@@ -107,9 +107,9 @@
 #    define WGLAPI __declspec(dllimport)
 #  endif /* _STATIC_MESA support */
 #  define GLAPIENTRY __stdcall
-#  define GLAPIENTRYP __stdcall *
+#  define GLAPIENTRYP GLAPIENTRY *
 #  define GLCALLBACK __stdcall
-#  define GLCALLBACKP __stdcall *
+#  define GLCALLBACKP GLCALLBACK *
 #  if defined(__CYGWIN__)
 #    define GLCALLBACKPCAST *
 #  else
