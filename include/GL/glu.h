@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.4 1999/09/14 01:32:58 gareth Exp $ */
+/* $Id: glu.h,v 1.5 1999/09/14 03:23:08 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.h,v $
+ * Revision 1.5  1999/09/14 03:23:08  gareth
+ * Fixed GLUtriangulatorObj again (spelling).
+ *
  * Revision 1.4  1999/09/14 01:32:58  gareth
  * Fixed definition of GLUtriangluatorObj for 1.3 tessellator.
  *
@@ -256,7 +259,7 @@ enum {
 
     /* FIXME: We need to implement the other 1.3 typedefs - GH */
     typedef struct GLUtesselator GLUtesselator;
-    typedef GLUtesselator GLUtriangluatorObj;
+    typedef GLUtesselator GLUtriangulatorObj;
 #endif
 
 
