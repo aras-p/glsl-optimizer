@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.2
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -293,11 +293,9 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
                   if (ctx->Point.CoordReplace[u]) {
                      GLfloat s = 0.5F + (x + 0.5F - vert->win[0]) / size;
                      GLfloat t;
-#if GL_VERSION_2_0
                      if (ctx->Point.SpriteOrigin == GL_LOWER_LEFT)
                         t = 0.5F + (y + 0.5F - vert->win[1]) / size;
                      else /* GL_UPPER_LEFT */
-#endif
                         t = 0.5F - (y + 0.5F - vert->win[1]) / size;
                      span->array->texcoords[u][count][0] = s;
                      span->array->texcoords[u][count][1] = t;
