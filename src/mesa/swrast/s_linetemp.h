@@ -1,4 +1,4 @@
-/* $Id: s_linetemp.h,v 1.15 2002/11/14 03:48:03 brianp Exp $ */
+/* $Id: s_linetemp.h,v 1.16 2002/11/15 15:05:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -74,7 +74,6 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 {
    struct sw_span span;
    GLuint interpFlags = 0;
-   GLuint arrayFlags = SPAN_XY;
    GLint x0 = (GLint) vert0->win[0];
    GLint x1 = (GLint) vert1->win[0];
    GLint y0 = (GLint) vert0->win[1];
@@ -103,31 +102,11 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    /* Cull primitives with malformed coordinates.
     */
    {
-      float tmp = vert0->win[0] + vert0->win[1] + vert1->win[0] + vert1->win[1];
+      GLfloat tmp = vert0->win[0] + vert0->win[1]
+                  + vert1->win[0] + vert1->win[1];
       if (IS_INF_OR_NAN(tmp))
 	 return;
    }
-
-#ifdef INTERP_RGBA
-   interpFlags |= SPAN_RGBA;
-#endif
-#ifdef INTERP_SPEC
-   interpFlags |= SPAN_SPEC;
-#endif
-#ifdef INTERP_INDEX
-   interpFlags |= SPAN_INDEX;
-#endif
-#ifdef INTERP_Z
-   interpFlags |= SPAN_Z;
-#endif
-#ifdef INTERP_FOG
-   interpFlags |= SPAN_FOG;
-#endif
-#if defined(INTERP_TEX) || defined(INTERP_MULTITEX)
-   interpFlags |= SPAN_TEXTURE;
-#endif
-
-   INIT_SPAN(span, GL_LINE, 0, interpFlags, arrayFlags);
 
    /*
    printf("%s():\n", __FUNCTION__);
@@ -223,9 +202,13 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    ASSERT(dx >= 0);
    ASSERT(dy >= 0);
 
-   span.end = numPixels = MAX2(dx, dy);
+   numPixels = MAX2(dx, dy);
 
+   /*
+    * Span setup: compute start and step values for all interpolated values.
+    */
 #ifdef INTERP_RGBA
+   interpFlags |= SPAN_RGBA;
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
       span.red   = ChanToFixed(vert0->color[0]);
       span.green = ChanToFixed(vert0->color[1]);
@@ -248,6 +231,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    }
 #endif
 #ifdef INTERP_SPEC
+   interpFlags |= SPAN_SPEC;
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
       span.specRed       = ChanToFixed(vert0->specular[0]);
       span.specGreen     = ChanToFixed(vert0->specular[1]);
@@ -266,6 +250,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    }
 #endif
 #ifdef INTERP_INDEX
+   interpFlags |= SPAN_INDEX;
    if (ctx->Light.ShadeModel == GL_SMOOTH) {
       span.index = IntToFixed(vert0->index);
       span.indexStep = IntToFixed(vert1->index - vert0->index) / numPixels;
@@ -276,6 +261,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    }
 #endif
 #if defined(INTERP_Z) || defined(DEPTH_TYPE)
+   interpFlags |= SPAN_Z;
    {
       if (depthBits <= 16) {
          span.z = FloatToFixed(vert0->win[2]) + FIXED_HALF;
@@ -288,10 +274,12 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    }
 #endif
 #ifdef INTERP_FOG
+   interpFlags |= SPAN_FOG;
    span.fog = vert0->fog;
    span.fogStep = (vert1->fog - vert0->fog) / numPixels;
 #endif
 #ifdef INTERP_TEX
+   interpFlags |= SPAN_TEXTURE;
    {
       const GLfloat invw0 = vert0->win[3];
       const GLfloat invw1 = vert1->win[3];
@@ -316,6 +304,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    }
 #endif
 #ifdef INTERP_MULTITEX
+   interpFlags |= SPAN_TEXTURE;
    {
       const GLfloat invLen = 1.0F / numPixels;
       GLuint u;
@@ -344,6 +333,8 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
       }
    }
 #endif
+
+   INIT_SPAN(span, GL_LINE, numPixels, interpFlags, SPAN_XY);
 
    /*
     * Draw
