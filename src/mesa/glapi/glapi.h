@@ -1,4 +1,4 @@
-/* $Id: glapi.h,v 1.13 2000/01/17 19:28:43 brianp Exp $ */
+/* $Id: glapi.h,v 1.14 2000/01/28 20:17:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,7 +34,7 @@
 struct _glapi_table;
 
 
-extern void *_glapi_CurrentContext;
+extern void *_glapi_Context;
 
 extern struct _glapi_table *_glapi_Dispatch;
 
@@ -44,11 +44,11 @@ _glapi_check_multithread(void);
 
 
 extern void
-_glapi_set_current_context(void *context);
+_glapi_set_context(void *context);
 
 
 extern void *
-_glapi_get_current_context(void);
+_glapi_get_context(void);
 
 
 extern void

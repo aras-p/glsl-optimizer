@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.35 2000/01/28 19:02:22 brianp Exp $ */
+/* $Id: context.c,v 1.36 2000/01/28 20:17:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,6 +43,7 @@
 #include "fog.h"
 #include "get.h"
 #include "glapi.h"
+#include "glapinoop.h"
 #include "hash.h"
 #include "light.h"
 #include "lines.h"
@@ -1619,7 +1620,7 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
                        GLframebuffer *readBuffer )
 {
 #if 0
-   GLcontext *oldCtx = gl_get_current_context();
+   GLcontext *oldCtx = gl_get_context();
 
    /* Flush the old context
     */
@@ -1641,7 +1642,7 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
     */
    _glapi_check_multithread();
 
-   _glapi_set_current_context((void *) newCtx);
+   _glapi_set_context((void *) newCtx);
    ASSERT(gl_get_current_context() == newCtx);
    if (newCtx) {
       SET_IMMEDIATE(newCtx, newCtx->input);
@@ -1696,7 +1697,7 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
  */
 GLcontext *gl_get_current_context( void )
 {
-   return (GLcontext *) _glapi_get_current_context();
+   return (GLcontext *) _glapi_get_context();
 }
 
 

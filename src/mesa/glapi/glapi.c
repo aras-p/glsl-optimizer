@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.28 2000/01/28 19:03:33 brianp Exp $ */
+/* $Id: glapi.c,v 1.29 2000/01/28 20:17:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -58,7 +58,7 @@
 struct _glapi_table *_glapi_Dispatch = &__glapi_noop_table;
 
 /* Used when thread safety disabled */
-void *_glapi_CurrentContext = NULL;
+void *_glapi_Context = NULL;
 
 
 #if defined(THREADS)
@@ -127,16 +127,16 @@ _glapi_check_multithread(void)
  * void from the real context pointer type.
  */
 void
-_glapi_set_current_context(void *context)
+_glapi_set_context(void *context)
 {
 #if defined(THREADS)
    _glthread_SetTSD(&ContextTSD, context, context_thread_init);
    if (ThreadSafe)
-      _glapi_CurrentContext = NULL;
+      _glapi_Context = NULL;
    else
-      _glapi_CurrentContext = context;
+      _glapi_Context = context;
 #else
-   _glapi_CurrentContext = context;
+   _glapi_Context = context;
 #endif
 }
 
@@ -148,17 +148,17 @@ _glapi_set_current_context(void *context)
  * void to the real context pointer type.
  */
 void *
-_glapi_get_current_context(void)
+_glapi_get_context(void)
 {
 #if defined(THREADS)
    if (ThreadSafe) {
       return _glthread_GetTSD(&ContextTSD);
    }
    else {
-      return _glapi_CurrentContext;
+      return _glapi_Context;
    }
 #else
-   return _glapi_CurrentContext;
+   return _glapi_Context;
 #endif
 }
 

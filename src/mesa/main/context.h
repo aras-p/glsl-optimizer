@@ -1,4 +1,4 @@
-/* $Id: context.h,v 1.11 2000/01/18 17:36:16 brianp Exp $ */
+/* $Id: context.h,v 1.12 2000/01/28 20:17:42 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -129,9 +129,9 @@ extern GLcontext *gl_get_current_context(void);
  */
 #ifdef THREADS
 
-#define GET_CURRENT_CONTEXT(C)	GLcontext *C = (GLcontext *) (_glapi_CurrentContext ? _glapi_CurrentContext : _glapi_get_current_context())
+#define GET_CURRENT_CONTEXT(C)	GLcontext *C = (GLcontext *) (_glapi_Context ? _glapi_Context : _glapi_get_context())
 
-#define GET_IMMEDIATE  struct immediate *IM = ((GLcontext *) (_glapi_CurrentContext ? _glapi_CurrentContext : _glapi_get_current_context()))->input
+#define GET_IMMEDIATE  struct immediate *IM = ((GLcontext *) (_glapi_Context ? _glapi_Context : _glapi_get_context()))->input
 
 #define SET_IMMEDIATE(ctx, im)		\
 do {					\
@@ -142,7 +142,7 @@ do {					\
 
 extern struct immediate *_mesa_CurrentInput;
 
-#define GET_CURRENT_CONTEXT(C)  GLcontext *C = _glapi_CurrentContext
+#define GET_CURRENT_CONTEXT(C)  GLcontext *C = _glapi_Context
 
 #define GET_IMMEDIATE struct immediate *IM = _mesa_CurrentInput
 
