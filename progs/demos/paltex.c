@@ -10,6 +10,7 @@
 #include <string.h>
 #ifdef _WIN32
 #include <windows.h>
+#define GL_GLEXT_PROTOTYPES
 #endif
 #include <GL/glut.h>
 
