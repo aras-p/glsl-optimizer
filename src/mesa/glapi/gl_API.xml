@@ -25,20 +25,20 @@
                    counter  CDATA #IMPLIED
                    count_scale  CDATA #IMPLIED
                    output   CDATA #IMPLIED
-		   img_width     CDATA #IMPLIED
-		   img_height    CDATA #IMPLIED
-		   img_depth     CDATA #IMPLIED
-		   img_extent    CDATA #IMPLIED
-		   img_xoff      CDATA #IMPLIED
-		   img_yoff      CDATA #IMPLIED
-		   img_zoff      CDATA #IMPLIED
-		   img_woff      CDATA #IMPLIED
-		   img_format    CDATA #IMPLIED
-		   img_type      CDATA #IMPLIED
-		   img_target    CDATA #IMPLIED
-		   img_send_null CDATA #IMPLIED
-		   img_null_flag CDATA #IMPLIED
-		   img_pad_dimensions CDATA #IMPLIED
+                   img_width     CDATA #IMPLIED
+                   img_height    CDATA #IMPLIED
+                   img_depth     CDATA #IMPLIED
+                   img_extent    CDATA #IMPLIED
+                   img_xoff      CDATA #IMPLIED
+                   img_yoff      CDATA #IMPLIED
+                   img_zoff      CDATA #IMPLIED
+                   img_woff      CDATA #IMPLIED
+                   img_format    CDATA #IMPLIED
+                   img_type      CDATA #IMPLIED
+                   img_target    CDATA #IMPLIED
+                   img_send_null CDATA #IMPLIED
+                   img_null_flag CDATA #IMPLIED
+                   img_pad_dimensions CDATA #IMPLIED
                    variable_param  CDATA #IMPLIED>
 <!ATTLIST return   type     CDATA #REQUIRED>
 <!ATTLIST glx      rop      CDATA #IMPLIED
@@ -61,8 +61,8 @@ param:
      type - fully qualified type (e.g., with "const", etc.)
      count - for counted arrays (e.g., the 'lists' parameter to glCallLists),
          the parameter or literal that represents the count.  For functions
-	 like glVertex3fv it will be a litteral, for others it will be one of
-	 the parameters.
+         like glVertex3fv it will be a litteral, for others it will be one of
+         the parameters.
      counter - this parameter is a counter that will be referenced by the
          'count' attribute in another parameter.
      count_scale - literal value scale factor for the 'count' attribute.
@@ -71,8 +71,8 @@ param:
      variable_param - name of parameter used to determine the number of
          elements referenced by this parameter.  This should be the name of a
          single enum parameter.  Most of the gl*Parameter[if]v functions use
-	 this.  Additionally, the enums that can be passed should be properly
-	 annotated.
+         this.  Additionally, the enums that can be passed should be properly
+         annotated.
      img_width / img_height / img_depth / img_extent - name of parameters
          (or hardcoded integer) used for the dimensions of pixel data.
      img_xoff / img_yoff / img_zoff / img_woff - name of parameters used
@@ -83,14 +83,14 @@ param:
         pixel data should hardcode 0.
      img_send_null - boolean flag to determine if blank pixel data should
         be sent when a NULL pointer is passed.  This is only used by
-	TexImage1D and TexImage2D.
+        TexImage1D and TexImage2D.
      img_null_flag - boolean flag to determine if an extra flag is used to
         determine if a NULL pixel pointer was passed.  This is used by
-	TexSubImage1D, TexSubImage2D, TexImage3D and others.
+        TexSubImage1D, TexSubImage2D, TexImage3D and others.
      img_pad_dimensions - boolean flag to determine if dimension data and
         offset data should be padded to the next even number of dimensions.
-	For example, this will insert an empty "height" field after the
-	"width" field in the protocol for TexImage1D.
+        For example, this will insert an empty "height" field after the
+        "width" field in the protocol for TexImage1D.
 
 glx:
      rop - Opcode value for "render" commands
@@ -110,8 +110,8 @@ glx:
          (e.g., glVertexPointer) and must be handcoded.
      ignore - some functions have an entry in the dispatch table, but aren't
          suitable for protocol implementation (e.g., glLockArraysEXT).  This
-	 also applies to functions that don't have any GLX protocol specified
-	 (e.g., glGetFogFuncSGIS).
+         also applies to functions that don't have any GLX protocol specified
+         (e.g., glGetFogFuncSGIS).
 -->
 
 <OpenGLAPI>
@@ -9521,7 +9521,7 @@ glx:
         <size name="PointParameterivNV"/>
     </enum>
 
-    <enum name="POINT_SPRITE_R_MODE_NV"        count="1"  value="0x8863	">
+    <enum name="POINT_SPRITE_R_MODE_NV"        count="1"  value="0x8863        ">
         <size name="PointParameterfvEXT"/>
         <size name="PointParameterivNV"/>
     </enum>
@@ -9553,7 +9553,7 @@ glx:
     <function name="DrawBuffersATI" alias="DrawBuffersARB">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="bufs" type="const GLenum *" count="n"/>
-	<!-- GLX protocol is not fully defined for this extension. -->
+        <!-- GLX protocol is not fully defined for this extension. -->
     </function>
 </category>
 
