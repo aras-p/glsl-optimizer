@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.12 1999/11/22 18:28:39 brianp Exp $ */
+/* $Id: attrib.c,v 1.13 1999/11/23 21:15:37 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -585,7 +585,7 @@ void gl_PopAttrib( GLcontext* ctx )
                   (*ctx->Driver.Fogfv)( ctx, GL_FOG_INDEX, &index );
                   (*ctx->Driver.Fogfv)( ctx, GL_FOG_COLOR, ctx->Fog.Color );
                }
-	       ctx->Enabled &= ENABLE_FOG;
+	       ctx->Enabled &= ~ENABLE_FOG;
 	       if (ctx->Fog.Enabled) ctx->Enabled |= ENABLE_FOG;
             }
             break;
