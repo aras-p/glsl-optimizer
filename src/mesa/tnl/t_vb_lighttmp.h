@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.18 2001/09/14 21:30:31 brianp Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.19 2001/10/20 00:13:45 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -609,6 +609,7 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 		  ACC_SCALE_SCALAR_3V(sum, spec, light->_MatSpecular[1]);
 	       }
 	       UNCLAMPED_FLOAT_TO_RGB_CHAN(Bcolor[j], sum );
+	       Bcolor[j][3] = basechan[1][3];
 	    }
 	    COPY_CHAN4(Fcolor[j], basechan[0]);
 	 } else {
@@ -623,6 +624,7 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 
 	    }
 	    UNCLAMPED_FLOAT_TO_RGB_CHAN(Fcolor[j], sum );
+	    Fcolor[j][3] = basechan[0][3];
 	    if (IDX & LIGHT_TWOSIDE) COPY_CHAN4(Bcolor[j], basechan[1]);
 	 }
 
