@@ -1,8 +1,8 @@
-# $Id: Makefile.X11,v 1.65 2002/02/02 21:41:58 brianp Exp $
+# $Id: Makefile.X11,v 1.66 2002/04/02 16:20:00 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
-# Copyright (C) 1995-2001  Brian Paul
+# Copyright (C) 1995-2002  Brian Paul
 
 # Makefile for core library
 
@@ -21,9 +21,6 @@ LIBDIR = ../lib
 
 
 CORE_SOURCES = \
-	vpexec.c \
-	vpparse.c \
-	vpstate.c \
 	api_arrayelt.c \
 	api_loopback.c \
 	api_noop.c \
@@ -74,6 +71,9 @@ CORE_SOURCES = \
 	texstore.c \
 	texutil.c \
 	varray.c \
+	vpexec.c \
+	vpparse.c \
+	vpstate.c \
 	vtxfmt.c \
 	X86/x86.c \
 	X86/common_x86.c \
