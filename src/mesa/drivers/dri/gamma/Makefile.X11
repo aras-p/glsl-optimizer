@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.1 2003/10/16 04:50:42 jonsmirl Exp $
+# $Id: Makefile.X11,v 1.2 2003/10/20 02:17:32 jonsmirl Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -22,7 +22,7 @@ DEFINES += \
 	-DGLX_DIRECT_RENDERING 
 
 # Not yet
-# MINIGLX_SOURCES = server/i810_dri.c 
+# MINIGLX_SOURCES = server/gamma_dri.c 
 
 DRIVER_SOURCES = \
 		gamma_context.c \
@@ -90,12 +90,16 @@ INCLUDE_DIRS = \
 
 ##### TARGETS #####
 
-targets: depend i810_dri.so
+targets: depend gamma_dri.so
 
-i810_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
+gamma_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
-	rm -f $(TOP)/lib/i810_dri.so && \
-	install i810_dri.so $(TOP)/lib/i810_dri.so
+	rm -f $(TOP)/lib/gamma_dri.so && \
+	install gamma_dri.so $(TOP)/lib/gamma_dri.so
+
+$(TOP)/lib/gamma_dri.so:	gamma_dri.so
+	rm -f $(TOP)/lib/gamma_dri.so && \
+	install gamma_dri.so $(TOP)/lib/gamma_dri.so
 
 # Run 'make -f Makefile.X11 dep' to update the dependencies if you change
 # what's included by any source file.

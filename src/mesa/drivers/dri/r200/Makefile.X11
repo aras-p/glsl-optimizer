@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.4 2003/10/03 14:03:18 brianp Exp $
+# $Id: Makefile.X11,v 1.5 2003/10/20 02:17:33 jonsmirl Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -115,6 +115,10 @@ targets: depend r200_dri.so
 
 r200_dri.so:  $(SYMLINKS) $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
+	rm -f $(TOP)/lib/r200_dri.so && \
+	install r200_dri.so $(TOP)/lib/r200_dri.so
+
+$(TOP)/lib/r200_dri.so:	r200_dri.so
 	rm -f $(TOP)/lib/r200_dri.so && \
 	install r200_dri.so $(TOP)/lib/r200_dri.so
 

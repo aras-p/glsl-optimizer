@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.1 2003/09/30 10:54:15 alanh Exp $
+# $Id: Makefile.X11,v 1.2 2003/10/20 02:17:32 jonsmirl Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -91,6 +91,10 @@ targets: depend i810_dri.so
 
 i810_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
+	rm -f $(TOP)/lib/i810_dri.so && \
+	install i810_dri.so $(TOP)/lib/i810_dri.so
+
+$(TOP)/lib/i810_dri.so:	i810_dri.so
 	rm -f $(TOP)/lib/i810_dri.so && \
 	install i810_dri.so $(TOP)/lib/i810_dri.so
 

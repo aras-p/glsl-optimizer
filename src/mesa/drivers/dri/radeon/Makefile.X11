@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.1 2003/08/22 20:11:45 brianp Exp $
+# $Id: Makefile.X11,v 1.2 2003/10/20 02:17:33 jonsmirl Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -129,6 +129,10 @@ targets: depend $(TARGET)
 
 $(TARGET):  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc -lm
+	rm -f $(TOP)/lib/$(TARGET) && \
+	install $(TARGET) $(TOP)/lib/$(TARGET)
+
+$(TOP)/lib/$(TARGET):	$(TARGET)
 	rm -f $(TOP)/lib/$(TARGET) && \
 	install $(TARGET) $(TOP)/lib/$(TARGET)
 

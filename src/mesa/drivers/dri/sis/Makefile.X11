@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.1 2003/09/30 11:13:32 alanh Exp $
+# $Id: Makefile.X11,v 1.2 2003/10/20 02:17:33 jonsmirl Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -95,6 +95,10 @@ targets: depend sis_dri.so
 
 sis_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc $(GL_LIB_DEPS)
+	rm -f $(TOP)/lib/sis_dri.so && \
+	install sis_dri.so $(TOP)/lib/sis_dri.so
+
+$(TOP)/lib/sis_dri.so:	sis_dri.so
 	rm -f $(TOP)/lib/sis_dri.so && \
 	install sis_dri.so $(TOP)/lib/sis_dri.so
 

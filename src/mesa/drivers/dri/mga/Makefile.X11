@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.3 2003/08/24 04:44:23 jonsmirl Exp $
+# $Id: Makefile.X11,v 1.4 2003/10/20 02:17:33 jonsmirl Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -96,6 +96,10 @@ targets: depend mga_dri.so
 
 mga_dri.so:  $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile.X11
 	rm -f $@ && gcc -o $@ -shared $(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(WINLIB) -lc -lm
+	rm -f $(TOP)/lib/mga_dri.so && \
+	install mga_dri.so $(TOP)/lib/mga_dri.so
+
+$(TOP)/lib/mga_dri.so:	mga_dri.so
 	rm -f $(TOP)/lib/mga_dri.so && \
 	install mga_dri.so $(TOP)/lib/mga_dri.so
 
