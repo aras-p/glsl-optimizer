@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.4 2000/01/24 20:54:18 brianp Exp $ */
+/* $Id: config.h,v 1.5 2000/02/03 19:40:35 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -91,7 +91,7 @@
 /* Min and Max line widths and granularity */
 #define MIN_LINE_WIDTH 1.0
 #define MAX_LINE_WIDTH 10.0
-#define LINE_WIDTH_GRANULARITY 1.0
+#define LINE_WIDTH_GRANULARITY 0.1
 
 /* Max texture palette size */
 #define MAX_TEXTURE_PALETTE_SIZE 256
@@ -108,6 +108,9 @@
 
 /* Maxmimum size for CVA.  May be overridden by the drivers.  */
 #define MAX_ARRAY_LOCK_SIZE 3000
+
+/* Subpixel precision for antialiasing, window coordinate snapping */
+#define SUB_PIXEL_BITS 4
 
 
 
