@@ -193,9 +193,12 @@ static void gl_ggiSetReadBuffer(GLcontext *ctx, GLframebuffer *buffer, GLenum mo
 }
 
 
-static const char * gl_ggiRendererString(void)
+static const GLubyte * gl_ggiGetString(GLcontext *ctx, GLenum name)
 {
-	return "GGI";
+	if (name == GL_RENDERER)
+        	return (GLubyte *) "Mesa GGI";
+	else
+		return NULL;
 }
 
 static void gl_ggiFlush(GLcontext *ctx)
@@ -208,7 +211,7 @@ static void gl_ggiSetupPointers( GLcontext *ctx )
 	/* Initialize all the pointers in the DD struct.  Do this whenever */
 	/* a new context is made current or we change buffers via set_buffer! */
 
-	ctx->Driver.RendererString = gl_ggiRendererString;
+	ctx->Driver.GetString = gl_ggiGetString;
 	ctx->Driver.UpdateState = gl_ggiUpdateState;
 
 	ctx->Driver.ClearIndex = gl_ggiSetClearIndex; 
