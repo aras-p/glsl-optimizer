@@ -102,7 +102,7 @@ static const GLubyte *radeonGetString( GLcontext *ctx, GLenum name )
       offset = driGetRendererString( buffer, "Radeon", DRIVER_DATE,
 				     agp_mode );
 
-      sprintf( & buffer[ offset ], "%sTCL",
+      sprintf( & buffer[ offset ], " %sTCL",
 	       !(rmesa->TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)
 	       ? "" : "NO-" );
 
