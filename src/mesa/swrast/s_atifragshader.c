@@ -27,6 +27,7 @@
 #include "macros.h"
 #include "program.h"
 
+#include "s_atifragshader.h"
 #include "s_nvfragprog.h"
 #include "s_span.h"
 #include "s_texture.h"
@@ -219,7 +220,7 @@ write_dst_addr(GLuint optype, GLuint mod, GLuint mask, GLfloat * src,
       dst[3] = src[3];
 }
 
-void
+static void
 finish_pass(struct atifs_machine *machine)
 {
    GLint i;
