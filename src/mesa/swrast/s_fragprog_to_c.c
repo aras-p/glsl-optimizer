@@ -1,0 +1,687 @@
+/*
+ * Mesa 3-D graphics library
+ * Version:  6.1
+ *
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* An amusing little utility to print ARB fragment programs out as a C
+ * function.   Resulting code not tested except visually.
+ */
+
+
+#include "glheader.h"
+#include "colormac.h"
+#include "context.h"
+#include "nvfragprog.h"
+#include "macros.h"
+#include "program.h"
+
+#include "s_nvfragprog.h"
+#include "s_span.h"
+#include "s_texture.h"
+
+
+/* UREG - a way of representing an FP source register including
+ * swizzling and negation in a single GLuint.  Major flaw is the
+ * limitiation to source->Index < 32.  Secondary flaw is the fact that
+ * it's overkill & we could probably just pass around the original
+ * datatypes instead.
+ */
+
+#define UREG_TYPE_TEMP              0
+#define UREG_TYPE_INTERP            1
+#define UREG_TYPE_LOCAL_CONST       2
+#define UREG_TYPE_ENV_CONST         3
+#define UREG_TYPE_STATE_CONST       4
+#define UREG_TYPE_PARAM             5
+#define UREG_TYPE_OUTPUT            6
+#define UREG_TYPE_MASK              0x7
+
+#define UREG_TYPE_SHIFT               29
+#define UREG_NR_SHIFT                 24
+#define UREG_NR_MASK                  0x1f /* 31 */
+#define UREG_CHANNEL_X_NEGATE_SHIFT   23
+#define UREG_CHANNEL_X_SHIFT          20
+#define UREG_CHANNEL_Y_NEGATE_SHIFT   19
+#define UREG_CHANNEL_Y_SHIFT          16
+#define UREG_CHANNEL_Z_NEGATE_SHIFT   15
+#define UREG_CHANNEL_Z_SHIFT          12
+#define UREG_CHANNEL_W_NEGATE_SHIFT   11
+#define UREG_CHANNEL_W_SHIFT          8
+#define UREG_CHANNEL_ZERO_NEGATE_MBZ  5
+#define UREG_CHANNEL_ZERO_SHIFT       4      
+#define UREG_CHANNEL_ONE_NEGATE_MBZ   1
+#define UREG_CHANNEL_ONE_SHIFT        0      
+
+#define UREG_BAD          0xffffffff /* not a valid ureg */
+
+#define _X    0
+#define _Y    1
+#define _Z    2
+#define _W    3
+#define _ZERO 4			/* NOTE! */
+#define _ONE  5			/* NOTE! */
+
+
+/* Construct a ureg:
+ */
+#define UREG( type, nr ) (((type)<< UREG_TYPE_SHIFT) |		\
+			  ((nr)  << UREG_NR_SHIFT) |		\
+			  (_X     << UREG_CHANNEL_X_SHIFT) |	\
+			  (_Y     << UREG_CHANNEL_Y_SHIFT) |	\
+			  (_Z     << UREG_CHANNEL_Z_SHIFT) |	\
+			  (_W     << UREG_CHANNEL_W_SHIFT) |	\
+			  (_ZERO  << UREG_CHANNEL_ZERO_SHIFT) |	\
+			  (_ONE   << UREG_CHANNEL_ONE_SHIFT))
+
+#define GET_CHANNEL_SRC( reg, channel ) ((reg<<(channel*4)) & \
+                                         (0xf<<UREG_CHANNEL_X_SHIFT))
+#define CHANNEL_SRC( src, channel ) (src>>(channel*4))
+
+#define GET_UREG_TYPE(reg) (((reg)>>UREG_TYPE_SHIFT)&UREG_TYPE_MASK)
+#define GET_UREG_NR(reg)   (((reg)>>UREG_NR_SHIFT)&UREG_NR_MASK)
+
+
+
+#define UREG_XYZW_CHANNEL_MASK 0x00ffff00
+
+#define deref(reg,pos) swizzle(reg, pos, pos, pos, pos)
+
+
+static __inline int is_swizzled( int reg )
+{
+   return ((reg & UREG_XYZW_CHANNEL_MASK) != 
+	   (UREG(0,0) & UREG_XYZW_CHANNEL_MASK));
+}
+
+
+/* One neat thing about the UREG representation:  
+ */
+static __inline int swizzle( int reg, int x, int y, int z, int w )
+{
+   return ((reg & ~UREG_XYZW_CHANNEL_MASK) |
+	   CHANNEL_SRC( GET_CHANNEL_SRC( reg, x ), 0 ) |
+	   CHANNEL_SRC( GET_CHANNEL_SRC( reg, y ), 1 ) |
+	   CHANNEL_SRC( GET_CHANNEL_SRC( reg, z ), 2 ) |
+	   CHANNEL_SRC( GET_CHANNEL_SRC( reg, w ), 3 ));
+}
+
+/* Another neat thing about the UREG representation:  
+ */
+static __inline int negate( int reg, int x, int y, int z, int w )
+{
+   return reg ^ (((x&1)<<UREG_CHANNEL_X_NEGATE_SHIFT)|
+		 ((y&1)<<UREG_CHANNEL_Y_NEGATE_SHIFT)|
+		 ((z&1)<<UREG_CHANNEL_Z_NEGATE_SHIFT)|
+		 ((w&1)<<UREG_CHANNEL_W_NEGATE_SHIFT));
+}
+
+
+
+static GLuint src_reg_file( GLuint file )
+{
+   switch (file) {
+   case PROGRAM_TEMPORARY: return UREG_TYPE_TEMP;
+   case PROGRAM_INPUT: return UREG_TYPE_INTERP;
+   case PROGRAM_LOCAL_PARAM: return UREG_TYPE_LOCAL_CONST;
+   case PROGRAM_ENV_PARAM: return UREG_TYPE_ENV_CONST;
+
+   case PROGRAM_STATE_VAR: return UREG_TYPE_STATE_CONST;
+   case PROGRAM_NAMED_PARAM: return UREG_TYPE_PARAM; 
+   default: return UREG_BAD;
+   }
+}
+
+
+/**
+ * Retrieve a ureg for the given source register.  Will emit
+ * constants, apply swizzling and negation as needed.
+ */
+static GLuint src_vector( const struct fp_src_register *source )
+{
+   GLuint src;
+
+/*    fprintf(stderr, "%s File %d, Index %d\n", */
+/* 	   __FUNCTION__, source->File, source->Index); */
+
+   assert(source->Index < 32);	/* limitiation of UREG representation */
+
+   src = UREG( src_reg_file( source->File ), source->Index );
+
+   src = swizzle(src, 
+		 _X + source->Swizzle[0],
+		 _X + source->Swizzle[1],
+		 _X + source->Swizzle[2],
+		 _X + source->Swizzle[3]);
+
+   if (source->NegateBase)
+      src = negate( src, 1,1,1,1 );
+
+   return src;
+}
+
+static void print_header( void )
+{
+   printf("static void run_program( const GLfloat (*local_param)[4], \n"
+	  "                         const GLfloat (*env_param)[4], \n"
+	  "                         const GLfloat (*state_param)[4], \n"
+	  "                         const GLfloat (*interp)[4], \n"
+	  "                         GLfloat *outputs)\n"
+	  "{\n"
+	  "   GLfloat temp[32][4];\n"
+      );
+}
+
+static void print_footer( void )
+{
+   printf("}\n");
+}
+
+static void print_dest_reg( const struct fp_instruction *inst )
+{
+   switch (inst->DstReg.File) {
+   case PROGRAM_OUTPUT:
+      printf("outputs[%d]", inst->DstReg.Index);
+      break;
+   case PROGRAM_TEMPORARY:
+      printf("temp[%d]", inst->DstReg.Index);
+      break;
+   default:
+      break;
+   }
+}
+
+static void print_dest( const struct fp_instruction *inst,
+			GLuint idx )
+{
+   print_dest_reg(inst);
+   printf("[%d]", idx);
+}
+
+
+#define UREG_SRC0(reg) (((reg)>>UREG_CHANNEL_X_SHIFT) & 0x7)
+
+static void print_reg( GLuint arg )
+{
+   switch (GET_UREG_TYPE(arg)) {
+   case UREG_TYPE_TEMP: printf("temp"); break;
+   case UREG_TYPE_INTERP: printf("interp"); break;
+   case UREG_TYPE_LOCAL_CONST: printf("local_const"); break;
+   case UREG_TYPE_ENV_CONST: printf("env_const"); break;
+   case UREG_TYPE_STATE_CONST: printf("state_const"); break;
+   case UREG_TYPE_PARAM: printf("param"); break;
+   };
+   
+   printf("[%d]", GET_UREG_NR(arg));
+}
+
+
+static void print_arg( const struct fragment_program *p,
+		       GLuint arg )
+{
+   GLuint src = UREG_SRC0(arg);
+
+   if (src == _ZERO) {
+      printf("0");
+      return;
+   }
+
+   if (arg & (1<<UREG_CHANNEL_X_NEGATE_SHIFT))
+      printf("-");
+
+   if (src == _ONE) {
+      printf("1");
+      return;
+   }
+
+   if (GET_UREG_TYPE(arg) == UREG_TYPE_STATE_CONST) {
+      printf("%g", p->Parameters->Parameters[GET_UREG_NR(arg)].Values[src]);
+      return;
+   }
+
+   print_reg( arg );
+
+   switch (src){
+   case _X: printf("[0]"); break;
+   case _Y: printf("[1]"); break;
+   case _Z: printf("[2]"); break;
+   case _W: printf("[3]"); break;
+   }   
+}
+
+
+/* This is where the handling of expressions breaks down into string
+ * processing:
+ */
+static void print_expression( const struct fragment_program *p,
+			      GLuint i,
+			      const char *fmt,
+			      va_list ap )
+{
+   while (*fmt) {
+      if (*fmt == '%' && *(fmt+1) == 's') {
+	 int reg = va_arg(ap, int);
+
+	 /* Use of deref() is a bit of a hack:
+	  */
+	 print_arg( p, deref(reg, i) );
+	 fmt += 2;
+      }
+      else { 
+	 putchar(*fmt); 
+	 fmt++;
+      }
+   }
+
+   printf(";\n");
+}
+
+static void do_tex_simple( const struct fragment_program *p,
+			   const struct fp_instruction *inst,
+			   const char *fn, GLuint texunit, GLuint arg )
+{
+   printf("   %s( ctx, ", fn);
+   print_reg(arg);
+   printf(", %d, ", texunit );
+   print_dest_reg(inst);
+   printf(");\n");
+}
+
+
+static void do_tex( const struct fragment_program *p,
+		    const struct fp_instruction *inst,
+		    const char *fn, GLuint texunit, GLuint arg )
+{
+   GLuint i;
+   GLboolean need_tex = GL_FALSE, need_result = GL_FALSE;
+
+   for (i = 0; i < 4; i++) 
+      if (!inst->DstReg.WriteMask[i]) 
+	 need_result = GL_TRUE;
+
+   if (is_swizzled(arg))
+      need_tex = GL_TRUE;
+
+   if (!need_tex && !need_result) {
+      do_tex_simple( p, inst, fn, texunit, arg );
+      return;
+   }
+
+   printf("   {\n");
+   printf("       GLfloat texcoord[4];\n");
+   printf("       GLfloat result[4];\n");
+
+   for (i = 0; i < 4; i++) {
+      printf("      texcoord[%d] = ", i);
+      print_arg( p, deref(arg, i) );
+      printf(";\n");
+   }
+
+   printf("       %s( ctx, texcoord, %d, result);\n", fn, texunit );
+
+   for (i = 0; i < 4; i++) {
+      if (inst->DstReg.WriteMask[i]) {
+	 printf("      ");
+	 print_dest(inst, i);
+	 printf(" = result[%d];\n", i);
+      }
+   }
+
+   printf("   }\n");
+}
+		     
+static void assign_single( GLuint i,
+			   const struct fragment_program *p,
+			   const struct fp_instruction *inst,
+			   const char *fmt,
+			   ... )
+{
+   va_list ap;
+   va_start( ap, fmt );  
+
+   if (inst->DstReg.WriteMask[i]) {
+      printf("   ");
+      print_dest(inst, i);
+      printf(" = ");
+      print_expression( p, i, fmt, ap);
+   }
+
+   va_end( ap );
+}
+
+static void assign4( const struct fragment_program *p,
+		     const struct fp_instruction *inst,
+		     const char *fmt,
+		     ... )
+{
+   GLuint i;
+   va_list ap;
+   va_start( ap, fmt );  
+
+   for (i = 0; i < 4; i++)
+      if (inst->DstReg.WriteMask[i]) {
+	 printf("   ");
+	 print_dest(inst, i);
+	 printf(" = ");
+	 print_expression( p, i, fmt, ap);
+      }
+
+   va_end( ap );
+}
+
+static void assign4_replicate( const struct fragment_program *p,
+			       const struct fp_instruction *inst,
+			       const char *fmt,
+			       ... )
+{
+   GLuint i;
+   GLboolean ok = 0;
+   va_list ap;
+
+   for (i = 0; i < 4; i++)
+      if (inst->DstReg.WriteMask[i]) 
+	 ok = 1;
+
+   if (!ok) return;
+
+   va_start( ap, fmt );  
+
+   printf("   ");
+
+   for (i = 0; i < 4; i++)
+      if (inst->DstReg.WriteMask[i]) {
+	 print_dest(inst, i);
+	 printf(" = ");
+      }
+
+   print_expression( p, 0, fmt, ap);
+
+   va_end( ap );
+}
+
+		    
+
+
+
+
+static GLuint nr_args( GLuint opcode )
+{
+   switch (opcode) {
+   case FP_OPCODE_ABS: return 1;
+   case FP_OPCODE_ADD: return 2;
+   case FP_OPCODE_CMP: return 3;
+   case FP_OPCODE_COS: return 1;
+   case FP_OPCODE_DP3: return 2;
+   case FP_OPCODE_DP4: return 2;
+   case FP_OPCODE_DPH: return 2;
+   case FP_OPCODE_DST: return 2;
+   case FP_OPCODE_EX2: return 1;
+   case FP_OPCODE_FLR: return 1;
+   case FP_OPCODE_FRC: return 1;
+   case FP_OPCODE_KIL: return 1;
+   case FP_OPCODE_LG2: return 1;
+   case FP_OPCODE_LIT: return 1;
+   case FP_OPCODE_LRP: return 3;
+   case FP_OPCODE_MAD: return 3;
+   case FP_OPCODE_MAX: return 2;
+   case FP_OPCODE_MIN: return 2;
+   case FP_OPCODE_MOV: return 1;
+   case FP_OPCODE_MUL: return 2;
+   case FP_OPCODE_POW: return 2;
+   case FP_OPCODE_RCP: return 1;
+   case FP_OPCODE_RSQ: return 1;
+   case FP_OPCODE_SCS: return 1;
+   case FP_OPCODE_SGE: return 2;
+   case FP_OPCODE_SIN: return 1;
+   case FP_OPCODE_SLT: return 2;
+   case FP_OPCODE_SUB: return 2;
+   case FP_OPCODE_SWZ: return 1;
+   case FP_OPCODE_TEX: return 1;
+   case FP_OPCODE_TXB: return 1;
+   case FP_OPCODE_TXP: return 1;
+   case FP_OPCODE_XPD: return 2;
+   default: return 0;
+   }
+}
+
+
+
+static void upload_program( const struct fragment_program *p )
+{
+   const struct fp_instruction *inst = p->Instructions;
+
+   for (; inst->Opcode != FP_OPCODE_END; inst++) {
+
+      GLuint src[3], i;
+      GLuint nr = nr_args( inst->Opcode );
+      
+      for (i = 0; i < nr; i++) 
+	 src[i] = src_vector( &inst->SrcReg[i] );
+
+      switch (inst->Opcode) {
+      case FP_OPCODE_ABS: 
+	 assign4(p, inst, "FABSF(%s)", src[0]);
+	 break;
+
+      case FP_OPCODE_ADD: 
+	 assign4(p, inst, "%s + %s", src[0], src[1]);
+	 break;
+
+      case FP_OPCODE_CMP: 
+	 assign4(p, inst, "%s < 0.0F ? %s : %s", src[0], src[1], src[2]);
+	 break;
+
+      case FP_OPCODE_COS:
+	 assign4_replicate(p, inst, "COS(%s)", src[0]);
+	 break;
+
+      case FP_OPCODE_DP3: 
+	 assign4_replicate(p, inst, 
+			   "%s*%s + %s*%s + %s*%s", 
+			   deref(src[0],_X),
+			   deref(src[1],_X),
+			   deref(src[0],_Y),
+			   deref(src[1],_Y),
+			   deref(src[0],_Z),
+			   deref(src[1],_Z));
+	 break;
+
+      case FP_OPCODE_DP4: 
+	 assign4_replicate(p, inst, 
+			   "%s*%s + %s*%s + %s*%s + %s*%s", 
+			   deref(src[0],_X),
+			   deref(src[1],_X),
+			   deref(src[0],_Y),
+			   deref(src[1],_Y),
+			   deref(src[0],_Z),
+			   deref(src[1],_Z));
+	 break;
+
+      case FP_OPCODE_DPH:  
+	 assign4_replicate(p, inst, 
+			   "%s*%s + %s*%s + %s*%s + %s", 
+			   deref(src[0],_X),
+			   deref(src[1],_X),
+			   deref(src[0],_Y),
+			   deref(src[1],_Y),
+			   deref(src[1],_Z));
+	 break;
+
+      case FP_OPCODE_DST: 
+	 /* result[0] = 1    * 1;
+	  * result[1] = a[1] * b[1];
+	  * result[2] = a[2] * 1;
+	  * result[3] = 1    * b[3];
+	  *
+	  * Here we hope that the compiler can optimize away "x*1" to "x".
+	  */
+	 assign4(p, inst, 
+		 "%s*%s", 
+		 swizzle(src[0], _ONE, _Y, _Z,   _ONE), 
+		 swizzle(src[1], _ONE, _Y, _ONE, _W  ));
+	 break;
+
+      case FP_OPCODE_EX2: 
+	 assign4_replicate(p, inst, "EX2(%s)", src[0]);
+	 break;
+
+      case FP_OPCODE_FLR: 
+	 assign4_replicate(p, inst, "FLR(%s)", src[0]);
+	 break;
+
+      case FP_OPCODE_FRC: 
+	 assign4_replicate(p, inst, "FRC(%s)", src[0]);
+	 break;
+
+      case FP_OPCODE_KIL:
+	 /* TODO */
+	 break;
+
+      case FP_OPCODE_LG2: 
+	 assign4_replicate(p, inst, "LOG(%s)", deref(src[0], _X));
+	 break;
+
+      case FP_OPCODE_LIT: 
+	 assign_single(0, p, inst, "1.0");
+	 assign_single(1, p, inst, "MIN2(%s, 0)", deref(src[0], _X));
+	 assign_single(2, p, inst, "(%s > 0.0) ? EXP(%s * MIN2(%s, 0)) : 0.0",
+		       deref(src[0], _X),
+		       deref(src[0], _Z),
+		       deref(src[0], _Y));
+	 assign_single(3, p, inst, "1.0");
+	 break;
+
+      case FP_OPCODE_LRP: 
+	 assign4(p, inst, 
+		 "%s * %s + (1.0 - %s) * %s", 
+		 src[0], src[1], src[0], src[2]);
+	 break;
+
+      case FP_OPCODE_MAD:
+	 assign4(p, inst, "%s * %s + %s", src[0], src[1], src[2]);
+	 break;
+
+      case FP_OPCODE_MAX:
+	 assign4(p, inst, "MAX2(%s, %s)", src[0], src[1]);
+	 break;
+
+      case FP_OPCODE_MIN: 
+	 assign4(p, inst, "MIN2(%s, %s)", src[0], src[1]);
+	 break;
+
+      case FP_OPCODE_MOV: 
+	 assign4(p, inst, "%s", src[0]);
+	 break;
+
+      case FP_OPCODE_MUL: 
+	 assign4(p, inst, "%s * %s", src[0], src[1]);
+	 break;
+
+      case FP_OPCODE_POW: 
+	 assign4_replicate(p, inst, "POW(%s, %s)", 
+			   deref(src[0], _X), 
+			   deref(src[1], _X));
+	 break;
+
+      case FP_OPCODE_RCP: 
+	 assign4_replicate(p, inst, "1.0/%s", deref(src[0], _X));
+	 break;
+
+      case FP_OPCODE_RSQ: 
+	 assign4_replicate(p, inst, "INV_SQRTF(%s)", deref(src[0], _X));
+	 break;
+	 
+      case FP_OPCODE_SCS:
+	 if (inst->DstReg.WriteMask[0]) {
+	    assign_single(0, p, inst, "COS(%s)", deref(src[0], _X));
+	 }
+
+	 if (inst->DstReg.WriteMask[1]) {
+	    assign_single(1, p, inst, "SIN(%s)", deref(src[0], _X));
+	 }
+	 break;
+
+      case FP_OPCODE_SGE: 
+	 assign4(p, inst, "%s >= %s ? 1.0 : 0.0", src[0], src[1]);
+	 break;
+
+      case FP_OPCODE_SIN:
+	 assign4_replicate(p, inst, "SIN(%s)", deref(src[0], _X));
+	 break;
+
+      case FP_OPCODE_SLT: 
+	 assign4(p, inst, "%s < %s ? 1.0 : 0.0", src[0], src[1]);
+	 break;
+
+      case FP_OPCODE_SUB: 
+	 assign4(p, inst, "%s - %s", src[0], src[1]);
+	 break;
+
+      case FP_OPCODE_SWZ: 	/* same implementation as MOV: */
+	 assign4(p, inst, "%s", src[0]);
+	 break;
+
+      case FP_OPCODE_TEX: 
+	 do_tex(p, inst, "TEX", inst->TexSrcUnit, src[0]);
+	 break;
+
+      case FP_OPCODE_TXB:
+	 do_tex(p, inst, "TXB", inst->TexSrcUnit, src[0]);
+	 break;
+
+      case FP_OPCODE_TXP:
+	 do_tex(p, inst, "TXP", inst->TexSrcUnit, src[0]);
+	 break;
+
+      case FP_OPCODE_X2D:
+	 /* Cross product:
+	  *      result.x = src[0].y * src[1].z - src[0].z * src[1].y;
+	  *      result.y = src[0].z * src[1].x - src[0].x * src[1].z;
+	  *      result.z = src[0].x * src[1].y - src[0].y * src[1].x;
+	  *      result.w = undef;
+	  */
+	 assign4(p, inst, 
+		 "%s * %s - %s * %s",
+		 swizzle(src[0], _Y, _Z, _X, _ONE),
+		 swizzle(src[1], _Z, _X, _Y, _ONE),
+		 swizzle(src[0], _Z, _X, _Y, _ONE),
+		 swizzle(src[1], _Y, _Z, _X, _ONE));
+	 break;
+
+      default:
+	 return;
+      }
+   }
+}
+
+
+
+
+
+void _swrast_translate_program( GLcontext *ctx )
+{
+   if (ctx->FragmentProgram.Current) {
+      print_header();
+      upload_program( ctx->FragmentProgram.Current );
+      print_footer();
+   }
+}
+
