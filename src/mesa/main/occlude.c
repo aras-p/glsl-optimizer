@@ -274,11 +274,13 @@ void GLAPIENTRY
 _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct occlusion_query *q;
+   struct occlusion_query *q = NULL;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   q = (struct occlusion_query *)
-      _mesa_HashLookup(ctx->Occlusion.QueryObjects, id);
+   if (id)
+      q = (struct occlusion_query *)
+         _mesa_HashLookup(ctx->Occlusion.QueryObjects, id);
+
    if (!q || q->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetQueryObjectivARB");
       return;
@@ -303,11 +305,12 @@ void GLAPIENTRY
 _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct occlusion_query *q;
+   struct occlusion_query *q = NULL;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   q = (struct occlusion_query *)
-      _mesa_HashLookup(ctx->Occlusion.QueryObjects, id);
+   if (id)
+      q = (struct occlusion_query *)
+         _mesa_HashLookup(ctx->Occlusion.QueryObjects, id);
    if (!q || q->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetQueryObjectuivARB");
       return;
