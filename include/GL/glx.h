@@ -293,7 +293,7 @@ extern void glXGetSelectedEvent( Display *dpy, GLXDrawable drawable,
 
 
 /* GLX 1.4 and later */
-extern void (*glXGetProcAddress(const GLubyte *procname))();
+extern void (*glXGetProcAddress(const GLubyte *procname))( void );
 
 
 #ifndef GLX_GLXEXT_LEGACY
