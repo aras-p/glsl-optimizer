@@ -47,8 +47,8 @@ GL_NV_blend_square
 
 
 
-Device Driver Changes
----------------------
+Device Driver Changes / Core Mesa Changes
+-----------------------------------------
 
 The ctx->Driver.LogicOp() function has been removed.  It used to
 be called during state update in order to determine if the driver
@@ -59,6 +59,8 @@ or fall back to software rendering.  The Xlib driver was the only driver
 to use this function.  And since the Xlib driver no longer draws
 points, lines or triangles using Xlib, the LogicOp function isn't needed.
 
+The ctx->Driver.Dither() function has been removed.  Drivers should
+detect dither enable/disable via ctx->Driver.Enable() instead.
 
 The ctx->Driver.IndexMask() and ctx->Driver.ColorMask() functions
 are now just called from glIndexMask and glColorMask like the other
@@ -66,7 +68,9 @@ GL state-changing functions.  They are no longer called from inside
 gl_update_state().  Also, they now return void.  The change was made
 mostly for sake of uniformity.
 
+The NEW_DRVSTATE[0123] flags have been removed.  They weren't being used
+and are obsolete w.r.t. the way state updates are done in DRI drivers.
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-3.5,v 1.3 2000/09/07 15:46:05 brianp Exp $
+$Id: RELNOTES-3.5,v 1.4 2000/09/08 22:39:09 brianp Exp $
