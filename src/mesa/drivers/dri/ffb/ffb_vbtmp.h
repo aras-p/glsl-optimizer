@@ -37,21 +37,15 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end)
 #endif
 
 #if (IND & (FFB_VB_RGBA_BIT))
-	if (VB->ColorPtr[0]->Type != GL_FLOAT)
-		ffbImportColors(fmesa, ctx, 0);
+	col0 = VB->ColorPtr[0]->data;
+	col0_stride = VB->ColorPtr[0]->stride;
 #if (IND & (FFB_VB_TWOSIDE_BIT))
-	if (VB->ColorPtr[1]->Type != GL_FLOAT)
-		ffbImportColors(fmesa, ctx, 1);
-#endif
-	col0 = (GLfloat (*)[4]) VB->ColorPtr[0]->Ptr;
-	col0_stride = VB->ColorPtr[0]->StrideB;
-#if (IND & (FFB_VB_TWOSIDE_BIT))
-	col1 = (GLfloat (*)[4]) VB->ColorPtr[1]->Ptr;
-	col1_stride = VB->ColorPtr[1]->StrideB;
+	col1 = VB->ColorPtr[1]->data;
+	col1_stride = VB->ColorPtr[1]->stride;
 #endif
 #endif
 
-	if (VB->importable_data) {
+        {
 		if (start) {
 #if (IND & (FFB_VB_XYZ_BIT))
 			proj = (GLfloat (*)[4])((GLubyte *)proj + start * proj_stride);
@@ -84,28 +78,6 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end)
 			v->color[1].green = CLAMP(col1[0][1], 0.0f, 1.0f);
 			v->color[1].blue  = CLAMP(col1[0][2], 0.0f, 1.0f);
 			col1 = (GLfloat (*)[4])((GLubyte *)col1 + col1_stride);
-#endif
-#endif
-		}
-	} else {
-		for (i = start; i < end; i++, v++) {
-#if (IND & (FFB_VB_XYZ_BIT))
-			if (mask[i] == 0) {
-				v->x = proj[i][0];
-				v->y = proj[i][1];
-				v->z = proj[i][2];
-			}
-#endif
-#if (IND & (FFB_VB_RGBA_BIT))
-			v->color[0].alpha = CLAMP(col0[i][3], 0.0f, 1.0f);
-			v->color[0].red   = CLAMP(col0[i][0], 0.0f, 1.0f);
-			v->color[0].green = CLAMP(col0[i][1], 0.0f, 1.0f);
-			v->color[0].blue  = CLAMP(col0[i][2], 0.0f, 1.0f);
-#if (IND & (FFB_VB_TWOSIDE_BIT))
-			v->color[1].alpha = CLAMP(col1[i][3], 0.0f, 1.0f);
-			v->color[1].red   = CLAMP(col1[i][0], 0.0f, 1.0f);
-			v->color[1].green = CLAMP(col1[i][1], 0.0f, 1.0f);
-			v->color[1].blue  = CLAMP(col1[i][2], 0.0f, 1.0f);
 #endif
 #endif
 		}

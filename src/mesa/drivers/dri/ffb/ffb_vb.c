@@ -81,37 +81,6 @@ static struct {
 	interp_func	interp;
 } setup_tab[FFB_VB_MAX];
 
-static void do_import(struct vertex_buffer *VB,
-		      struct gl_client_array *to,
-		      struct gl_client_array *from)
-{
-	GLuint count = VB->Count;
-
-	if (!to->Ptr) {
-		to->Ptr = ALIGN_MALLOC( VB->Size * 4 * sizeof(GLfloat), 32 );
-		to->Type = GL_FLOAT;
-	}
-
-	/* No need to transform the same value 3000 times. */
-	if (!from->StrideB) {
-		to->StrideB = 0;
-		count = 1;
-	} else
-		to->StrideB = 4 * sizeof(GLfloat);
-   
-	_math_trans_4f((GLfloat (*)[4]) to->Ptr,
-		       from->Ptr, from->StrideB,
-		       from->Type, from->Size,
-		       0, count);
-}
-
-static __inline__ void ffbImportColors(ffbContextPtr fmesa, GLcontext *ctx, int index)
-{
-	struct gl_client_array *to = &fmesa->FloatColor;
-	struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-	do_import(VB, to, VB->ColorPtr[index]);
-	VB->ColorPtr[index] = to;
-}
 
 #define IND	(FFB_VB_XYZ_BIT)
 #define TAG(x)	x##_w
@@ -175,7 +144,7 @@ static void ffbDDBuildVertices(GLcontext *ctx, GLuint start, GLuint count,
 	if (!newinputs)
 		return;
 
-	if (newinputs & VERT_BIT_CLIP) {
+	if (newinputs & VERT_BIT_POS) {
 		setup_tab[fmesa->setupindex].emit(ctx, start, count);
 	} else {
 		GLuint ind = 0;

@@ -107,10 +107,6 @@ typedef struct ffb_context_t {
 	GLcontext		*glCtx;
 	GLframebuffer		*glBuffer;
 
-        /* Temporaries for translating to float colors. */
-        struct gl_client_array FloatColor;
-        struct gl_client_array FloatSecondaryColor;
-
 	ffb_fbcPtr		regs;
 	volatile char		*sfb32;
 
