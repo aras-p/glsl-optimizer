@@ -1320,8 +1320,18 @@ static void viaChooseColorState(GLcontext *ctx)
     else
         vmesa->regHROP = HC_HROP_P;
 
-    vmesa->regHFBBMSKL = (*(GLuint *)&ctx->Color.ColorMask[0]) & 0xFFFFFF;
-    vmesa->regHROP |= ctx->Color.ColorMask[3];
+    if (vmesa->viaScreen->bitsPerPixel == 32) {
+    	vmesa->regHFBBMSKL = PACK_COLOR_888(ctx->Color.ColorMask[0],
+			 		    ctx->Color.ColorMask[1],
+			 		    ctx->Color.ColorMask[2]);
+    	vmesa->regHROP |= ctx->Color.ColorMask[3];
+    } else {
+    	GLushort color = PACK_COLOR_565(ctx->Color.ColorMask[0],
+			 		ctx->Color.ColorMask[1],
+			 		ctx->Color.ColorMask[2]);
+    	vmesa->regHFBBMSKL = (color & 0xFF) << 16;
+    	vmesa->regHROP |= (color & 0xFF00) >> 8;
+    }
 
     if (ctx->Color.ColorMask[3])
         vmesa->regEnable |= HC_HenAW_MASK;
@@ -1607,12 +1617,14 @@ void viaValidateState( GLcontext *ctx )
      * are incorrectly writen to the z buffer.  This is a pretty big
      * slowdown, it would be good to find out this wasn't necessary:
      */
+#if 0
     if (vmesa->viaScreen->deviceID == VIA_CLE266) {
        GLboolean fallback = (ctx->Color.AlphaEnabled && 
 			     ctx->Color.AlphaFunc != GL_ALWAYS &&
 			     ctx->Depth.Mask);
        FALLBACK( vmesa, VIA_FALLBACK_ALPHATEST, fallback );
     }
+#endif
 
     vmesa->newEmitState |= vmesa->newState;
     vmesa->newState = 0;
