@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.58 2001/04/28 08:39:17 keithw Exp $ */
+/* $Id: get.c,v 1.59 2001/05/03 23:55:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,6 +95,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
    if (!params)
       return;
+
+   /* We need this in order to get correct results for
+    * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
+    */
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glGetBooleanv %s\n", _mesa_lookup_enum_by_nr(pname));
@@ -1296,6 +1301,11 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
    if (!params)
       return;
 
+   /* We need this in order to get correct results for
+    * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
+    */
+   FLUSH_VERTICES(ctx, 0);
+
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glGetDoublev %s\n", _mesa_lookup_enum_by_nr(pname));
 
@@ -2495,6 +2505,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
    if (!params)
       return;
 
+   /* We need this in order to get correct results for
+    * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
+    */
+   FLUSH_VERTICES(ctx, 0);
+
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glGetFloatv %s\n", _mesa_lookup_enum_by_nr(pname));
 
@@ -3667,6 +3682,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
    if (!params)
       return;
+
+   /* We need this in order to get correct results for
+    * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
+    */
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glGetIntegerv %s\n", _mesa_lookup_enum_by_nr(pname));
