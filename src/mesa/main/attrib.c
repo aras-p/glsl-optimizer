@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.72 2002/10/04 19:10:06 brianp Exp $ */
+/* $Id: attrib.c,v 1.73 2002/10/11 21:42:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -976,12 +976,16 @@ _mesa_PopAttrib(void)
                point = (const struct gl_point_attrib *) attr->data;
                _mesa_PointSize(point->Size);
                _mesa_set_enable(ctx, GL_POINT_SMOOTH, point->SmoothFlag);
-               _mesa_PointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT,
-                                         point->Params);
-               _mesa_PointParameterfEXT(GL_POINT_SIZE_MIN_EXT, point->MinSize);
-               _mesa_PointParameterfEXT(GL_POINT_SIZE_MAX_EXT, point->MaxSize);
-               _mesa_PointParameterfEXT(GL_POINT_FADE_THRESHOLD_SIZE_EXT,
-                                        point->Threshold);
+               if (ctx->Extensions.EXT_point_parameters) {
+                  _mesa_PointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT,
+                                            point->Params);
+                  _mesa_PointParameterfEXT(GL_POINT_SIZE_MIN_EXT,
+                                           point->MinSize);
+                  _mesa_PointParameterfEXT(GL_POINT_SIZE_MAX_EXT,
+                                           point->MaxSize);
+                  _mesa_PointParameterfEXT(GL_POINT_FADE_THRESHOLD_SIZE_EXT,
+                                           point->Threshold);
+               }
                if (ctx->Extensions.NV_point_sprite) {
                   GLuint u;
                   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
