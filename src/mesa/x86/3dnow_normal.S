@@ -1,4 +1,4 @@
-/* $Id: 3dnow_normal.S,v 1.5 2003/01/30 14:30:24 brianp Exp $ */
+/* $Id: 3dnow_normal.S,v 1.6 2003/11/26 08:32:35 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,17 +50,17 @@ GLNAME(_mesa_3dnow_transform_normalize_normals):
     MOV_L      ( ARG_LENGTHS, EDI )
     MOV_L      ( ARG_IN, ESI )
     MOV_L      ( ARG_DEST, EAX )
-    MOV_L      ( REGOFF(V3F_COUNT, ESI), EBP ) /*  dest->count = in->count   */
-    MOV_L      ( EBP, REGOFF(V3F_COUNT, EAX) )
-    MOV_L      ( REGOFF(V3F_START, ESI), EDX ) /*  in->start    */
-    MOV_L      ( REGOFF(V3F_START, EAX), EAX ) /*  dest->start  */
+    MOV_L      ( REGOFF(V4F_COUNT, ESI), EBP ) /*  dest->count = in->count   */
+    MOV_L      ( EBP, REGOFF(V4F_COUNT, EAX) )
+    MOV_L      ( REGOFF(V4F_START, ESI), EDX ) /*  in->start    */
+    MOV_L      ( REGOFF(V4F_START, EAX), EAX ) /*  dest->start  */
     MOV_L      ( ARG_MAT, ECX )
     MOV_L      ( REGOFF(MATRIX_INV, ECX), ECX ) /*  mat->inv     */
 
     CMP_L      ( CONST(0), EBP )        /*   count > 0 ??  */
     JE         ( LLBL (G3TN_end) )
 
-    MOV_L      ( REGOFF (V3F_COUNT, ESI), EBP )
+    MOV_L      ( REGOFF (V4F_COUNT, ESI), EBP )
     FEMMS
 
     PUSH_L     ( EBP )
@@ -228,12 +228,12 @@ GLNAME(_mesa_3dnow_transform_normalize_normals_no_rot):
     MOV_L      ( ARG_LENGTHS, EDI )
     MOV_L      ( ARG_IN, ESI )
     MOV_L      ( ARG_DEST, EAX )
-    MOV_L      ( REGOFF(V3F_COUNT, ESI), EBP ) /*  dest->count = in->count   */
-    MOV_L      ( EBP, REGOFF(V3F_COUNT, EAX) )
+    MOV_L      ( REGOFF(V4F_COUNT, ESI), EBP ) /*  dest->count = in->count   */
+    MOV_L      ( EBP, REGOFF(V4F_COUNT, EAX) )
     MOV_L      ( ARG_MAT, ECX )
-    MOV_L      ( REGOFF(V3F_START, EAX), EAX ) /*  dest->start  */
+    MOV_L      ( REGOFF(V4F_START, EAX), EAX ) /*  dest->start  */
     MOV_L      ( REGOFF(MATRIX_INV, ECX), ECX ) /*  mat->inv     */
-    MOV_L      ( REGOFF(V3F_START, ESI), EDX ) /*  in->start    */
+    MOV_L      ( REGOFF(V4F_START, ESI), EDX ) /*  in->start    */
 
     CMP_L      ( CONST(0), EBP ) /*   count > 0 ??  */
     JE         ( LLBL (G3TNNR_end) )
@@ -366,13 +366,13 @@ GLNAME(_mesa_3dnow_transform_rescale_normals_no_rot):
 
     MOV_L      ( ARG_IN, EAX )
     MOV_L      ( ARG_DEST, EDX )
-    MOV_L      ( REGOFF(V3F_COUNT, EAX), EBP ) /*  dest->count = in->count   */
-    MOV_L      ( EBP, REGOFF(V3F_COUNT, EDX) )
+    MOV_L      ( REGOFF(V4F_COUNT, EAX), EBP ) /*  dest->count = in->count   */
+    MOV_L      ( EBP, REGOFF(V4F_COUNT, EDX) )
     MOV_L      ( ARG_IN, ESI )
     MOV_L      ( ARG_MAT, ECX )
     MOV_L      ( REGOFF(MATRIX_INV, ECX), ECX ) /*  mat->inv     */
-    MOV_L      ( REGOFF(V3F_START, EDX), EAX ) /*  dest->start  */
-    MOV_L      ( REGOFF(V3F_START, ESI), EDX ) /*  in->start    */
+    MOV_L      ( REGOFF(V4F_START, EDX), EAX ) /*  dest->start  */
+    MOV_L      ( REGOFF(V4F_START, ESI), EDX ) /*  in->start    */
 
     CMP_L      ( CONST(0), EBP )
     JE         ( LLBL (G3TRNR_end) )
@@ -437,10 +437,10 @@ GLNAME(_mesa_3dnow_transform_rescale_normals):
     MOV_L      ( ARG_IN, ESI )
     MOV_L      ( ARG_DEST, EAX )
     MOV_L      ( ARG_MAT, ECX )
-    MOV_L      ( REGOFF(V3F_COUNT, ESI), EDI ) /*  dest->count = in->count   */
-    MOV_L      ( EDI, REGOFF(V3F_COUNT, EAX) )
-    MOV_L      ( REGOFF(V3F_START, EAX), EAX ) /*  dest->start  */
-    MOV_L      ( REGOFF(V3F_START, ESI), EDX ) /*  in->start    */
+    MOV_L      ( REGOFF(V4F_COUNT, ESI), EDI ) /*  dest->count = in->count   */
+    MOV_L      ( EDI, REGOFF(V4F_COUNT, EAX) )
+    MOV_L      ( REGOFF(V4F_START, EAX), EAX ) /*  dest->start  */
+    MOV_L      ( REGOFF(V4F_START, ESI), EDX ) /*  in->start    */
     MOV_L      ( REGOFF(MATRIX_INV, ECX), ECX ) /*  mat->inv     */
 
     CMP_L      ( CONST(0), EDI )
@@ -534,10 +534,10 @@ GLNAME(_mesa_3dnow_transform_normals_no_rot):
     MOV_L      ( ARG_IN, ESI )
     MOV_L      ( ARG_DEST, EAX )
     MOV_L      ( ARG_MAT, ECX )
-    MOV_L      ( REGOFF(V3F_COUNT, ESI), EDI ) /*  dest->count = in->count   */
-    MOV_L      ( EDI, REGOFF(V3F_COUNT, EAX) )
-    MOV_L      ( REGOFF(V3F_START, EAX), EAX ) /*  dest->start  */
-    MOV_L      ( REGOFF(V3F_START, ESI), EDX ) /*  in->start    */
+    MOV_L      ( REGOFF(V4F_COUNT, ESI), EDI ) /*  dest->count = in->count   */
+    MOV_L      ( EDI, REGOFF(V4F_COUNT, EAX) )
+    MOV_L      ( REGOFF(V4F_START, EAX), EAX ) /*  dest->start  */
+    MOV_L      ( REGOFF(V4F_START, ESI), EDX ) /*  in->start    */
     MOV_L      ( REGOFF(MATRIX_INV, ECX), ECX ) /*  mat->inv     */
 
     CMP_L      ( CONST(0), EDI )
@@ -600,10 +600,10 @@ GLNAME(_mesa_3dnow_transform_normals):
     MOV_L      ( ARG_IN, ESI )
     MOV_L      ( ARG_DEST, EAX )
     MOV_L      ( ARG_MAT, ECX )
-    MOV_L      ( REGOFF(V3F_COUNT, ESI), EDI ) /*  dest->count = in->count   */
-    MOV_L      ( EDI, REGOFF(V3F_COUNT, EAX) )
-    MOV_L      ( REGOFF(V3F_START, EAX), EAX ) /*  dest->start  */
-    MOV_L      ( REGOFF(V3F_START, ESI), EDX ) /*  in->start    */
+    MOV_L      ( REGOFF(V4F_COUNT, ESI), EDI ) /*  dest->count = in->count   */
+    MOV_L      ( EDI, REGOFF(V4F_COUNT, EAX) )
+    MOV_L      ( REGOFF(V4F_START, EAX), EAX ) /*  dest->start  */
+    MOV_L      ( REGOFF(V4F_START, ESI), EDX ) /*  in->start    */
     MOV_L      ( REGOFF(MATRIX_INV, ECX), ECX ) /*  mat->inv     */
 
     CMP_L      ( CONST(0), EDI )        /* count > 0 ??                       */
@@ -684,10 +684,10 @@ GLNAME(_mesa_3dnow_normalize_normals):
 
     MOV_L      ( ARG_IN, ESI )
     MOV_L      ( ARG_DEST, EAX )
-    MOV_L      ( REGOFF(V3F_COUNT, ESI), EBP ) /*  dest->count = in->count   */
-    MOV_L      ( EBP, REGOFF(V3F_COUNT, EAX) )
-    MOV_L      ( REGOFF(V3F_START, EAX), EAX ) /*  dest->start  */
-    MOV_L      ( REGOFF(V3F_START, ESI), ECX ) /*  in->start    */
+    MOV_L      ( REGOFF(V4F_COUNT, ESI), EBP ) /*  dest->count = in->count   */
+    MOV_L      ( EBP, REGOFF(V4F_COUNT, EAX) )
+    MOV_L      ( REGOFF(V4F_START, EAX), EAX ) /*  dest->start  */
+    MOV_L      ( REGOFF(V4F_START, ESI), ECX ) /*  in->start    */
     MOV_L      ( ARG_LENGTHS, EDX )
 
     CMP_L      ( CONST(0), EBP ) /* count > 0 ?? */
@@ -793,10 +793,10 @@ GLNAME(_mesa_3dnow_rescale_normals):
 
     MOV_L      ( ARG_IN, ESI )
     MOV_L      ( ARG_DEST, EAX )
-    MOV_L      ( REGOFF(V3F_COUNT, ESI), EDX ) /*  dest->count = in->count   */
-    MOV_L      ( EDX, REGOFF(V3F_COUNT, EAX) )
-    MOV_L      ( REGOFF(V3F_START, EAX), EAX ) /*  dest->start  */
-    MOV_L      ( REGOFF(V3F_START, ESI), ECX ) /*  in->start    */
+    MOV_L      ( REGOFF(V4F_COUNT, ESI), EDX ) /*  dest->count = in->count   */
+    MOV_L      ( EDX, REGOFF(V4F_COUNT, EAX) )
+    MOV_L      ( REGOFF(V4F_START, EAX), EAX ) /*  dest->start  */
+    MOV_L      ( REGOFF(V4F_START, ESI), ECX ) /*  in->start    */
 
     CMP_L      ( CONST(0), EDX )
     JE         ( LLBL (G3R_end) )

@@ -1,4 +1,4 @@
-/* $Id: norm_args.h,v 1.3 2002/10/29 20:28:58 brianp Exp $ */
+/* $Id: norm_args.h,v 1.4 2003/11/26 08:32:36 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,9 +39,9 @@
  *
  * typedef void (*normal_func)( CONST GLmatrix *mat,
  *                              GLfloat scale,
- *                              CONST GLvector3f *in,
+ *                              CONST GLvector4f *in,
  *                              CONST GLfloat lengths[],
- *                              GLvector3f *dest );
+ *                              GLvector4f *dest );
  */
 #define OFFSET_MAT	4
 #define OFFSET_SCALE	8

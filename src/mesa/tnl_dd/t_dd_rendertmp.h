@@ -186,9 +186,6 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
    GLuint parity = 0;
    LOCAL_VARS;
 
-   if (TEST_PRIM_PARITY(flags))
-      parity = 1;
-
    INIT(GL_TRIANGLE_STRIP);
    if (NEED_EDGEFLAG_SETUP) {
       for (j=start+2;j<count;j++,parity^=1) {

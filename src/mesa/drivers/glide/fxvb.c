@@ -24,7 +24,8 @@
  */
 
 /* Authors:
- *   Keith Whitwell
+ *    Keith Whitwell <keith@tungstengraphics.com>
+ *    Daniel Borca <dborca@users.sourceforge.net>
  */
 
 #ifdef HAVE_CONFIG_H
@@ -67,41 +68,7 @@ static struct {
 } setup_tab[MAX_SETUP];
 
 
-static void import_float_colors( GLcontext *ctx )
-{
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   struct gl_client_array *from = VB->ColorPtr[0];
-   struct gl_client_array *to = &FX_CONTEXT(ctx)->UbyteColor;
-   GLuint count = VB->Count;
-
-   if (!to->Ptr) {
-      to->Ptr = ALIGN_MALLOC( VB->Size * 4 * sizeof(GLubyte), 32 );
-      to->Type = GL_UNSIGNED_BYTE;
-   }
-
-   /* No need to transform the same value 3000 times.
-    */
-   if (!from->StrideB) {
-      to->StrideB = 0;
-      count = 1;
-   }
-   else
-      to->StrideB = 4 * sizeof(GLubyte);
-   
-   _math_trans_4ub( (GLubyte (*)[4]) to->Ptr,
-		    from->Ptr,
-		    from->StrideB,
-		    from->Type,
-		    from->Size,
-		    0,
-		    count);
-
-   VB->ColorPtr[0] = to;
-}
-
-
-/* Hack alert: assume chan is 8 bits */
-#define GET_COLOR(ptr, idx) (((GLchan (*)[4])((ptr)->Ptr))[idx])
+#define GET_COLOR(ptr, idx) ((ptr)->data[idx])
 
 
 static void interp_extras( GLcontext *ctx,
@@ -112,13 +79,15 @@ static void interp_extras( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-      INTERP_4CHAN( t,
+      assert(VB->ColorPtr[1]->stride == 4 * sizeof(GLfloat));
+
+      INTERP_4F( t,
 		 GET_COLOR(VB->ColorPtr[1], dst),
 		 GET_COLOR(VB->ColorPtr[1], out),
 		 GET_COLOR(VB->ColorPtr[1], in) );
 #if 1 /* [dBorca] GL_EXT_separate_specular_color */
       if (VB->SecondaryColorPtr[1]) {
-	 INTERP_3CHAN( t,
+	 INTERP_3F( t,
 		    GET_COLOR(VB->SecondaryColorPtr[1], dst),
 		    GET_COLOR(VB->SecondaryColorPtr[1], out),
 		    GET_COLOR(VB->SecondaryColorPtr[1], in) );
@@ -139,11 +108,11 @@ static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
    if (VB->ColorPtr[1]) {
-	 COPY_CHAN4( GET_COLOR(VB->ColorPtr[1], dst),
+	 COPY_4FV( GET_COLOR(VB->ColorPtr[1], dst),
 		   GET_COLOR(VB->ColorPtr[1], src) );
 #if 1 /* [dBorca] GL_EXT_separate_specular_color */
 	 if (VB->SecondaryColorPtr[1]) {
-	    COPY_CHAN4( GET_COLOR(VB->SecondaryColorPtr[1], dst),
+	    COPY_4FV( GET_COLOR(VB->SecondaryColorPtr[1], dst),
 		      GET_COLOR(VB->SecondaryColorPtr[1], src) );
 	 }
 #endif

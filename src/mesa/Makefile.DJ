@@ -216,16 +216,10 @@ TNL_SOURCES = \
 	tnl/t_array_api.c \
 	tnl/t_array_import.c \
 	tnl/t_context.c \
-	tnl/t_eval_api.c \
-	tnl/t_imm_alloc.c \
-	tnl/t_imm_api.c \
-	tnl/t_imm_debug.c \
-	tnl/t_imm_dlist.c \
-	tnl/t_imm_elt.c \
-	tnl/t_imm_eval.c \
-	tnl/t_imm_exec.c \
-	tnl/t_imm_fixup.c \
 	tnl/t_pipeline.c \
+	tnl/t_save_api.c \
+	tnl/t_save_loopback.c \
+	tnl/t_save_playback.c \
 	tnl/t_vb_fog.c \
 	tnl/t_vb_light.c \
 	tnl/t_vb_normals.c \
@@ -234,7 +228,10 @@ TNL_SOURCES = \
 	tnl/t_vb_render.c \
 	tnl/t_vb_texgen.c \
 	tnl/t_vb_texmat.c \
-	tnl/t_vb_vertex.c
+	tnl/t_vb_vertex.c \
+	tnl/t_vtx_api.c \
+	tnl/t_vtx_eval.c \
+	tnl/t_vtx_exec.c 
 
 X86_SOURCES = \
 	x86/x86.c \
@@ -268,9 +265,9 @@ CORE_SOURCES = \
 	$(GLAPI_SOURCES) \
 	$(MATH_SOURCES) \
 	$(ARRAY_CACHE_SOURCES) \
+	$(TNL_SOURCES) \
 	$(SWRAST_SOURCES) \
-	$(SWRAST_SETUP_SOURCES) \
-	$(TNL_SOURCES)
+	$(SWRAST_SETUP_SOURCES)
 
 ifeq ($(HAVE_MMX),1)
 X86_SOURCES += $(MMX_SOURCES)

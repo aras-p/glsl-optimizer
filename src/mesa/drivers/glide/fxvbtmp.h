@@ -24,6 +24,7 @@
 
 /* Authors:
  *    Keith Whitwell <keith@tungstengraphics.com>
+ *    Daniel Borca <dborca@users.sourceforge.net>
  */
 
 
@@ -40,7 +41,7 @@ static void TAG(emit)( GLcontext *ctx,
    GLuint tmu0_source = fxMesa->tmu_source[0];
    GLuint tmu1_source = fxMesa->tmu_source[1];
    GLfloat (*tc0)[4], (*tc1)[4];
-   GLubyte (*col)[4];
+   GLfloat (*col)[4];
    GLuint tc0_stride, tc1_stride, col_stride;
    GLuint tc0_size, tc1_size;
    GLfloat (*proj)[4] = VB->NdcPtr->data; 
@@ -71,10 +72,8 @@ static void TAG(emit)( GLcontext *ctx,
    }
    
    if (IND & SETUP_RGBA) {
-      if (VB->ColorPtr[0]->Type != GL_UNSIGNED_BYTE)
-	 import_float_colors( ctx );
-      col = VB->ColorPtr[0]->Ptr;
-      col_stride = VB->ColorPtr[0]->StrideB;
+      col = VB->ColorPtr[0]->data;
+      col_stride = VB->ColorPtr[0]->stride;
    }
 
    if (start) {
@@ -84,7 +83,7 @@ static void TAG(emit)( GLcontext *ctx,
       if (IND & SETUP_TMU1) 
 	 tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 + start * tc1_stride);
       if (IND & SETUP_RGBA) 
-	 STRIDE_4UB(col, start * col_stride);
+	 STRIDE_4F(col, start * col_stride);
    }
 
    for (i=start; i < end; i++, v++) {
@@ -116,11 +115,11 @@ static void TAG(emit)( GLcontext *ctx,
 	 proj =  (GLfloat (*)[4])((GLubyte *)proj +  proj_stride);
       }
       if (IND & SETUP_RGBA) {
-	 v->pargb[2] = col[0][0];
-	 v->pargb[1] = col[0][1];
-	 v->pargb[0] = col[0][2];
-	 v->pargb[3] = col[0][3];
-	 STRIDE_4UB(col, col_stride);
+	 v->pargb[2] = col[0][0] * 255.;
+	 v->pargb[1] = col[0][1] * 255.;
+	 v->pargb[0] = col[0][2] * 255.;
+	 v->pargb[3] = col[0][3] * 255.;
+	 STRIDE_4F(col, col_stride);
       }
       if (IND & SETUP_TMU0) {
 	 GLfloat w = v->oow;

@@ -120,9 +120,6 @@ int main( int argc, char **argv )
    OFFSET( "VB_SIZE                ", struct vertex_buffer, Size );
    OFFSET( "VB_COUNT               ", struct vertex_buffer, Count );
    printf( "\n" );
-   OFFSET( "VB_FIRST_CLIPPED       ", struct vertex_buffer, FirstClipped );
-   OFFSET( "VB_FIRST_PRIMITIVE     ", struct vertex_buffer, FirstPrimitive );
-   printf( "\n" );
    OFFSET( "VB_ELTS                ", struct vertex_buffer, Elts );
    OFFSET( "VB_OBJ_PTR             ", struct vertex_buffer, ObjPtr );
    OFFSET( "VB_EYE_PTR             ", struct vertex_buffer, EyePtr );
@@ -141,13 +138,7 @@ int main( int argc, char **argv )
    OFFSET( "VB_SECONDARY_COLOR_PTR ", struct vertex_buffer, SecondaryColorPtr );
    OFFSET( "VB_FOG_COORD_PTR       ", struct vertex_buffer, FogCoordPtr );
    OFFSET( "VB_POINT_SIZE_PTR      ", struct vertex_buffer, PointSizePtr );
-   OFFSET( "VB_MATERIAL            ", struct vertex_buffer, Material );
-   OFFSET( "VB_MATERIAL_MASK       ", struct vertex_buffer, MaterialMask );
-   OFFSET( "VB_FLAG                ", struct vertex_buffer, Flag );
    OFFSET( "VB_PRIMITIVE           ", struct vertex_buffer, Primitive );
-   OFFSET( "VB_PRIMITIVE_LENGTH    ", struct vertex_buffer, PrimitiveLength );
-   printf( "\n" );
-   OFFSET( "VB_IMPORTABLE_DATA     ", struct vertex_buffer, importable_data );
    printf( "\n" );
    OFFSET( "VB_LAST_CLIPPED        ", struct vertex_buffer, LastClipped );
 
@@ -159,39 +150,10 @@ int main( int argc, char **argv )
    DEFINE( "VERT_BIT_RGBA          ", VERT_BIT_COLOR0 );
    DEFINE( "VERT_BIT_SPEC_RGB      ", VERT_BIT_COLOR1 );
    DEFINE( "VERT_BIT_FOG_COORD     ", VERT_BIT_FOG );
-   DEFINE( "VERT_BIT_INDEX         ", VERT_BIT_INDEX );
-   DEFINE( "VERT_BIT_EDGE          ", VERT_BIT_EDGEFLAG );
    DEFINE( "VERT_BIT_TEX0          ", VERT_BIT_TEX0 );
    DEFINE( "VERT_BIT_TEX1          ", VERT_BIT_TEX1 );
    DEFINE( "VERT_BIT_TEX2          ", VERT_BIT_TEX2 );
    DEFINE( "VERT_BIT_TEX3          ", VERT_BIT_TEX3 );
-   DEFINE( "VERT_BIT_EVAL_C1       ", VERT_BIT_EVAL_C1 );
-   DEFINE( "VERT_BIT_EVAL_C2       ", VERT_BIT_EVAL_C2 );
-   DEFINE( "VERT_BIT_EVAL_P1       ", VERT_BIT_EVAL_P1 );
-   DEFINE( "VERT_BIT_EVAL_P2       ", VERT_BIT_EVAL_P2 );
-   DEFINE( "VERT_BIT_OBJ_3         ", VERT_BIT_OBJ_3 );
-   DEFINE( "VERT_BIT_OBJ_4         ", VERT_BIT_OBJ_4 );
-   DEFINE( "VERT_BIT_MATERIAL      ", VERT_BIT_MATERIAL );
-   DEFINE( "VERT_BIT_ELT           ", VERT_BIT_ELT );
-   DEFINE( "VERT_BIT_BEGIN         ", VERT_BIT_BEGIN );
-   DEFINE( "VERT_BIT_END           ", VERT_BIT_END );
-   DEFINE( "VERT_BIT_END_VB        ", VERT_BIT_END_VB );
-   DEFINE( "VERT_BIT_POINT_SIZE    ", VERT_BIT_POINT_SIZE );
-   DEFINE( "VERT_BIT_EYE           ", VERT_BIT_EYE );
-   printf( "\n" );
-   DEFINE( "VERT_BIT_OBJ_23        ", VERT_BIT_OBJ_3 );
-   DEFINE( "VERT_BIT_OBJ_234       ", VERT_BIT_OBJ_4 );
-
-
-   /* GLvector3f offsets:
-    */
-   OFFSET_HEADER( "GLvector3f" );
-
-   OFFSET( "V3F_DATA          ", GLvector3f, data );
-   OFFSET( "V3F_START         ", GLvector3f, start );
-   OFFSET( "V3F_COUNT         ", GLvector3f, count );
-   OFFSET( "V3F_STRIDE        ", GLvector3f, stride );
-   OFFSET( "V3F_FLAGS         ", GLvector3f, flags );
 
 
    /* GLvector4f offsets:

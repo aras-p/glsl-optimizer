@@ -1,4 +1,4 @@
-/* $Id: sse_normal.S,v 1.2 2002/08/07 16:40:18 brianp Exp $ */
+/* $Id: sse_normal.S,v 1.3 2003/11/26 08:32:36 dborca Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,18 +56,18 @@ GLNAME(_mesa_sse_transform_rescale_normals_no_rot):
 	MOV_L	( ARG_MAT, EDX )			/* ptr to matrix */
 	MOV_L	( REGOFF(MATRIX_INV, EDX), EDX)		/* matrix->inv */
 
-	MOV_L	( REGOFF(V3F_COUNT, ESI), ECX ) 	/* source count */
+	MOV_L	( REGOFF(V4F_COUNT, ESI), ECX ) 	/* source count */
 
 	TEST_L	( ECX, ECX )
 	JZ( LLBL(K_G3TRNNRR_finish) )			/* count was zero; go to finish */
 
 	MOV_L	( STRIDE, EAX )				/* stride */
-	MOV_L	( ECX, REGOFF(V3F_COUNT, EDI) )		/* set dest-count */
+	MOV_L	( ECX, REGOFF(V4F_COUNT, EDI) )		/* set dest-count */
 
 	IMUL_L( CONST(16), ECX )			/* count *= 16 */
-	MOV_L( REGOFF(V3F_START, ESI), ESI )		/* ptr to first source vertex */
+	MOV_L( REGOFF(V4F_START, ESI), ESI )		/* ptr to first source vertex */
 
-	MOV_L( REGOFF(V3F_START, EDI), EDI )		/* ptr to first dest vertex */
+	MOV_L( REGOFF(V4F_START, EDI), EDI )		/* ptr to first dest vertex */
 	ADD_L( EDI, ECX ) 				/* count += dest ptr */
 
 ALIGNTEXT32
@@ -117,18 +117,18 @@ GLNAME(_mesa_sse_transform_rescale_normals):
 	MOV_L	( ARG_MAT, EDX )			/* ptr to matrix */
 	MOV_L	( REGOFF(MATRIX_INV, EDX), EDX)		/* matrix->inv */
 
-	MOV_L	( REGOFF(V3F_COUNT, ESI), ECX ) 	/* source count */
+	MOV_L	( REGOFF(V4F_COUNT, ESI), ECX ) 	/* source count */
 
 	TEST_L	( ECX, ECX )
 	JZ( LLBL(K_G3TRNR_finish) )			/* count was zero; go to finish */
 
 	MOV_L	( STRIDE, EAX )				/* stride */
-	MOV_L	( ECX, REGOFF(V3F_COUNT, EDI) )		/* set dest-count */
+	MOV_L	( ECX, REGOFF(V4F_COUNT, EDI) )		/* set dest-count */
 
 	IMUL_L( CONST(16), ECX )			/* count *= 16 */
-	MOV_L( REGOFF(V3F_START, ESI), ESI )		/* ptr to first source vertex */
+	MOV_L( REGOFF(V4F_START, ESI), ESI )		/* ptr to first source vertex */
 
-	MOV_L( REGOFF(V3F_START, EDI), EDI )		/* ptr to first dest vertex */
+	MOV_L( REGOFF(V4F_START, EDI), EDI )		/* ptr to first dest vertex */
 	ADD_L( EDI, ECX ) 				/* count += dest ptr */
 
 ALIGNTEXT32
@@ -209,18 +209,18 @@ GLNAME(_mesa_sse_transform_normals_no_rot):
 	MOV_L	( ARG_MAT, EDX )			/* ptr to matrix */
 	MOV_L	( REGOFF(MATRIX_INV, EDX), EDX)		/* matrix->inv */
 
-	MOV_L	( REGOFF(V3F_COUNT, ESI), ECX ) 	/* source count */
+	MOV_L	( REGOFF(V4F_COUNT, ESI), ECX ) 	/* source count */
 
 	TEST_L	( ECX, ECX )
 	JZ( LLBL(K_G3TNNRR_finish) )			/* count was zero; go to finish */
 
 	MOV_L	( STRIDE, EAX )				/* stride */
-	MOV_L	( ECX, REGOFF(V3F_COUNT, EDI) )		/* set dest-count */
+	MOV_L	( ECX, REGOFF(V4F_COUNT, EDI) )		/* set dest-count */
 
 	IMUL_L( CONST(16), ECX )			/* count *= 16 */
-	MOV_L( REGOFF(V3F_START, ESI), ESI )		/* ptr to first source vertex */
+	MOV_L( REGOFF(V4F_START, ESI), ESI )		/* ptr to first source vertex */
 
-	MOV_L( REGOFF(V3F_START, EDI), EDI )		/* ptr to first dest vertex */
+	MOV_L( REGOFF(V4F_START, EDI), EDI )		/* ptr to first dest vertex */
 	ADD_L( EDI, ECX ) 				/* count += dest ptr */
 
 ALIGNTEXT32

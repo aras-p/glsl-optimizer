@@ -119,7 +119,8 @@ typedef struct {
         float oow;		/* 1/W (used for W-buffering, texturing) */
         unsigned char pargb[4];	/* B, G, R, A [0..255] */
         GrTmuVertex tmuvtx[GLIDE_NUM_TMU];
-        long pad[16 - 11];	/* future use; also ensure 64b structure */
+        float fog;		/* fog coordinate */
+        long pad[16 - 12];	/* ensure 64b structure */
 } GrVertex;
 
 #define GR_VERTEX_X_OFFSET              0
@@ -133,6 +134,7 @@ typedef struct {
 #define GR_VERTEX_SOW_TMU1_OFFSET       8
 #define GR_VERTEX_TOW_TMU1_OFFSET       9
 #define GR_VERTEX_OOW_TMU1_OFFSET       10
+#define GR_VERTEX_FOG_OFFSET            11
 
 
 
