@@ -4,309 +4,168 @@
 
 <BODY text="#000000" bgcolor="#55bbff" link="#111188">
 
-<H1>Compilation and Installation for Unix/X11</H1>
+
+<H1>Compilation and Installation</H1>
+
+<ol>
+<li><a href="#unix-x11">Unix / X11</a>
+<li><a href="#windows">Windows</a>
+<li><a href="#vms">VMS</a>
+<li><a href="#other">Other</a>
+</ol>
+
+
+
+<a name="unix-x11">
+<H2>1. Unix/X11 Compilation and Installation</H1>
 
 <p>
-If you're not using a variant of Unix with X11, see the
-<a href="systems.html">Supported Systems and Drivers</a> section
-for instructions.
+Mesa uses a rather conventional Makefile system.
+A GNU autoconf/automake system used to be included, but was discarded
+in Mesa 5.1 because:
 </p>
-
-<p>
-There are two methods for building Mesa on Unix/X11 systems:
-</p>
-
-<dl>
-<dt><a href="#new">NEW-STYLE</a><dt>
-<dd>
-Basically, type "./configure" followed by "make"
-This <em>should</em> work on most Unix-like operating systems.
-Unfortunately, autoconf/automake seems to seldom work reliably on non-Linux
-systems.  For that reason, the old-style make system is still supported
-(and is the preferred method of the Mesa developers).
-</dd>
-<br>
-<dt><a href="#old">OLD-STYLE</a><dt>
-<dd>
-Simply type <code>make</code> and you'll see a list of supported
-system configurations.  Pick one and type <code>make</code> <em>config</em>.
-More details below.
-<br>
-</dd>
-</dl>
-
-<p>
-<B>NOTE</b>: The GLUT library and demonstrations programs are in the
-MesaDemos-x.y.z.tar.gz file.  If you don't have GLUT or you want to
-run some demos, download the MesaDemos package too.
-</p>
-
-<p>
-In either case, building Mesa entails the following:
-<p>
 <ul>
-<li>Compiling libGL, the OpenGL-replacement library.
-<li>Compiling libGLU, the OpenGL Utility library.
-<li>Compiling libglut, the GLUT library (if you downloaded the Mesa demos
-package)
-<li>Compiling the demonstration programs in the directories:
-<code>demos, xdemos, samples</code> and <code>book</code>
-(if you downloaded the Mesa demos package.)
+<li>It seldom worked on IRIX, Solaris, AIX, etc.
+<li>It was very compilicated
+<li>Nobody maintained it
+<li>libtool was just too weird
 </ul>
-
-
-<a name="new">
-<H2>NEW-STYLE compilation and installation</H2>
-
 <p>
-<b> 0.</b> If you've downloaded Mesa via CVS there will not be a "configure"
-   script.  You'll have to run the "bootstrap" script first.  This script
-   may not work on any OS other than Linux.  You'll need these programs
-   to run the bootstrap script:
+If someone strongly feels that Mesa should have a autoconf/automake
+system and wants to contribute one and maintain it, we'll consider
+adding it again.
 </p>
 
+
+<h3>1.1 Compilation</h3>
+
+<p>
+If you've obtained Mesa through CVS, do this to first:
+</p>
 <pre>
-	autoconf 2.50
-	automake 1.4-p2
-	libtool 1.4
+    cd Mesa-newtree
+    cp Makefile.X11 Makefile
 </pre>
 
 <p>
-<b>1.</b> Run the configure script
-</p>
-
-<pre>
-	./configure [options]
-</pre>
-
-<p>
-For Linux, it is recommended that you use:
-</p>
-<pre>
-	./configure --prefix=/usr
-</pre>
-
-So that the headers and libs are located according to the Linux/OpenGL
-standard spec at http://oss.sgi.com/projects/ogl-sample/ABI/
-</p>
-<p>
-For Red Hat 8.0, Mandrake 9.1 and other Linux distros, you may have to use
-the following:
-</p>
-<pre>
-	export LDFLAGS="-lstdc++" ; ./configure --prefix=/usr
-    or
-        setenv LDFLAGS -lstdc++ ; ./configure --prefix=/usr
-</pre>
-<p>
-This works around a problem when building the GLU library.  It needs to
-be linked with the C++ runtime library, but libtool (for some reason)
-doesn't do this.
-</p>
-<pre>
-Possible options are:
-
---prefix=DIR
-	The toplevel directory of the hierachy in which Mesa
-	will be installed (DIR/include,DIR/lib etc.).
-	The default is "/usr/local".
-
---sysconfdir=DIR
-	The directory where Mesa configuration files
-	will be stored.	The default is "$prefix/etc".
-	You may want to overwrite the default with --sysconfdir=/etc.
-
---enable-static
-	Enable building of static libraries.
-	Static libraries are NOT built by default.
-	
---disable-shared
-	Disable building of shared libraries.
-	Shared libraries are built by default.
-
---with-pic
---without-pic
-	In normal operation, libtool will build shared libraries from
-	PIC objects and static archives from non-PIC objects, except where one
-	or the other is not provided by the target host.  By specifying
-	--with-pic you are asking libtool to build static archives from
-	PIC objects, and similarly by specifying --without-pic you are asking
-	libtool to build shared	libraries from non-PIC objects.
-	libtool will only honour this flag where it will produce a
-	working library, otherwise it reverts to the default.
-	
---enable-debug
-	Enable debugging messages (disabled by default).
-	
---enable-profile
-	Enable profiling (disabled by default).
-	
---disable-optimize
-	Disable extra optimizations (enabled by default,
-	i.e., optimize for maximum performance).
-	
---enable-warn
-	Enable extended compiler warnings (disabled by default).
-	
---enable-x86[=ARG]
---disable-x86
-	Enable/disable x86 assembler support to speed up Mesa
-	(autodetected by default). You may set `on' or `off'.
-	
---enable-3dnow[=ARG]
---disable-3dnow
-	Enable/disable 3Dnow support to speed up Mesa
-	(autodetected by default). You may set `on' or `off'.
-	
---enable-mmx[=ARG]
---disable-mmx
-	Enable/disable MMX support to speed up Mesa
-	(autodetected by default). You may set `on' or `off'.
-	
---enable-sse[=ARG]
---disable-sse
-	Enable/disable SSE support to speed up Mesa
-	(autodetected by default). You may set `on' or `off'.
-	If you have a PentiumIII and want to use SSE make sure you have the
-	PIII Linux kernel-patch installed or things will fail!
-	You can get the patch from http://www.redhat.com/~dledford/linux_kernel.html
-	
---with-glide[=DIR]
---without-glide
-	Enable/disable support for Glide (disabled by default).
-	DIR is the installation directory of Glide.
-	If Glide cannot be found, the driver won't be built.
-	
---with-glut[=DIR]
---without-glut
-	Don't/use already-installed GLUT (autodetected by default).
-	DIR is the installation directory of Glut.
-	If GLUT cannot be found, the version shipped with Mesa will be built.
-	
---with-ggi[=DIR]
---without-ggi
-	Enable/disable support for GGI (autodetected by default).
-	DIR is the installation directory of GGI.
-	If GGI cannot be found, the driver won't be built.
-
---disable-ggi-fbdev
-	Don't build the GGI fbdev target (autodetected by default).
-	
---disable-ggi-genkgi
-	Don't build the GGI generic KGI driver (autodetected by default).
-	
---disable-ggi-savage4
-	Don't build the GGI Savage4 KGI driver (autodetected by default).
-	
---disable-osmesa
-	Disable OSmesa (offscreen rendering) support (enabled by default).
-
---with-svga[=DIR]
---without-svga
-	Enable/disable support for SVGALib (autodetected by default).
-	DIR is the installation directory of SVGALib.
-	If SVGALib cannot be found, the driver won't be built.
-
---x-includes=DIR
-	Search for the X include files in DIR.
-	
---x-libraries=DIR
-	Search for the X library files in DIR.
-</pre>
-
-<p>
-User specific compiler options can be set using the shell variable
-CFLAGS. For instance,
-</p>
-<pre>
-	CFLAGS="-g -O2" ./configure
-</pre>
-<p>
-(on some systems: env CFLAGS="-g -O2" ./configure)
-sets the compiler flags to "-g -O2".
-</p>
-<p>
-For more options run "./configure --help" and read INSTALL.GNU.
-</p>
-
-<p>
-<b>2.</b> To build the Mesa libraries run:
-</p>
-<pre>
-	make
-</pre>
-<p>(on some systems you may need to run <code>gmake</code> or
-<code>gnumake</code> instead)
-</p>
-<p>
-When finished, libGL.so will be in src/.libs/ and libGLU.so will be in
-si-glu/.libs/, etc.
-</p>
-<p>
-Optionally, you can strip the libraries using
-</p>
-<pre>
-	make strip
-</pre>
-<p>
-Now make sure that you have the permissions to install Mesa in the 
-specified directories, for example, by becoming super user ("su")
-Then run:
-</p>
-<pre>
-	make install
-</pre>
-<p>
-Mesa is now installed.
-Please don't move the installed files but rerun all installation
-steps if you want to use other directories.
-</p>
-
-<p>
-<b>3.</b>To test whether Mesa works properly you might want to run the
-Mesa demos:
-</p>
-<pre>
-	make check
-</pre>
-<p>
-Builds all demos.
-</p>
-<pre>
-	make exec
-</pre>
-<p>
-Builds and executes all demos.	
-</p>
-
-
-<a name="old">
-<H2>OLD-STYLE compilation and installation</H2>
-
-<p>
-This procedure usually works when <code>./configure ; make</code> fails.
-</p>
-
-<p>
-<b>Note</b>: If you tried <code>./configure ; make</code> but it failed,
-first copy the top-level <code>Makefile.X11</code> file over
-<code>Makefile</code>.
-</p>
-
-<p>
-<B>Also Note</B>: if you've obtained Mesa directly from CVS you'll have
-to copy the top-level Makefile.X11 to Makefile.
-</p>
-
-<p>
-Just type <code>make</code> alone.
+Now, just type <b>make</b>.
 You'll see a list of supported system configurations.
-Choose one and type <code>make</code> <em>config</em>
-(for example <code>make linux-x86</code>).
-The Mesa libraries and demo programs will be compiled.
+Choose one from the list (such as linux-x86), and type:
+</p>
+<pre>
+    make linux-x86
+</pre>
+<p>
+That's it.
 </p>
 
-<H3>Header and library files</H3>
+<h3>1.2 The libraries</h3>
+
+<p>
+When compilation has finished, look in the top-level <b>lib/</b> directory.
+You'll see a set of library files similar to this:
+</p>
+<pre>
+lrwxrwxrwx    1 brian    users          10 Sep  4 17:55 libGL.so -> libGL.so.1*
+lrwxrwxrwx    1 brian    users          19 Sep  4 17:55 libGL.so.1 -> libGL.so.1.4.050100*
+-rwxr-xr-x    1 brian    users    13940317 Sep  4 17:55 libGL.so.1.4.050100*
+lrwxrwxrwx    1 brian    users          11 Sep  4 17:54 libGLU.so -> libGLU.so.1*
+lrwxrwxrwx    1 brian    users          20 Sep  4 17:54 libGLU.so.1 -> libGLU.so.1.3.050100*
+-rwxr-xr-x    1 brian    users      324746 Sep  3 13:54 libGLU.so.1.1*
+-rwxr-xr-x    1 brian    users     2830539 Sep  4 17:54 libGLU.so.1.3.050100*
+lrwxrwxrwx    1 brian    users          12 Sep  4 17:53 libglut.so -> libglut.so.3*
+lrwxrwxrwx    1 brian    users          16 Sep  4 17:53 libglut.so.3 -> libglut.so.3.7.1*
+-rwxr-xr-x    1 brian    users     2426683 Sep  4 17:53 libglut.so.3.7.1*
+</pre>
+
+<p>
+<b>libGL</b> is the main OpenGL library (i.e. Mesa).
+<br>
+<b>libGLU</b> is the OpenGL Utility library.
+<br>
+<b>libglut</b> is the GLUT library.
+</p>
+
+
+<h3>1.3 Running the demos</h3>
+
+<p>
+If you downloaded/unpacked the MesaDemos-x.y.z.tar.gz archive or
+obtained Mesa from CVS, the <b>progs/</b> directory will contain a
+bunch of demonstration programs.
+</p>
+
+<p>
+Before running a demo, you may have to set an environment variable
+(such as <b>LD_LIBRARY_PATH</b> on Linux) to indicate where the
+libraries are located.  For example:
+<p>
+<blockquote>
+<b>cd</b> into the Mesa <b>lib/</b> directory.
+<br>
+<b>setenv LD_LIBRARY_PATH ${cwd}</b>   (if using csh or tcsh shell)
+<br>
+or,
+<br>
+<b>export LD_LIBRARY_PATH=${PWD}</b>   (if using bash or sh shell)
+</blockquote>
+
+<p>
+Next, change to the Mesa/demos/ directory:
+</p>
+<blockquote>
+<b>cd ../progs/demos</b>
+</blockquote>
+
+<p>
+Run a demo such as gears:
+</p>
+<blockquote>
+<b>./gears</b>
+</blockquote>
+
+<p>
+If this doesn't work, try the <b>Mesa/progs/xdemos/glxinfo</b> program
+and see that it prints the expected Mesa version number.
+</p>
+
+<p>
+If you're using Linux or a similar OS, verify that the demo program is
+being linked with the proper library files:
+</p>
+<blockquote>
+<b>ldd gears</b>
+</blockquote>
+
+<p>
+You should see something like this:
+</p>
+<pre>
+        libglut.so.3 => /home/brian/Mesa/lib/libglut.so.3 (0x40013000)
+        libGLU.so.1 => /home/brian/Mesa/lib/libGLU.so.1 (0x40051000)
+        libGL.so.1 => /home/brian/Mesa/lib/libGL.so.1 (0x400e0000)
+        libc.so.6 => /lib/i686/libc.so.6 (0x42000000)
+        libm.so.6 => /lib/i686/libm.so.6 (0x403da000)
+        libX11.so.6 => /usr/X11R6/lib/libX11.so.6 (0x403fc000)
+        libXmu.so.6 => /usr/X11R6/lib/libXmu.so.6 (0x404da000)
+        libXt.so.6 => /usr/X11R6/lib/libXt.so.6 (0x404f1000)
+        libXi.so.6 => /usr/X11R6/lib/libXi.so.6 (0x40543000)
+        libstdc++.so.5 => /usr/lib/libstdc++.so.5 (0x4054b000)
+        libgcc_s.so.1 => /lib/libgcc_s.so.1 (0x405fd000)
+        libXext.so.6 => /usr/X11R6/lib/libXext.so.6 (0x40605000)
+        libpthread.so.0 => /lib/i686/libpthread.so.0 (0x40613000)
+        /lib/ld-linux.so.2 => /lib/ld-linux.so.2 (0x40000000)
+        libdl.so.2 => /lib/libdl.so.2 (0x40644000)
+        libSM.so.6 => /usr/X11R6/lib/libSM.so.6 (0x40647000)
+        libICE.so.6 => /usr/X11R6/lib/libICE.so.6 (0x40650000)
+</pre>
+
+<p>
+Retrace your steps if this doesn't look right.
+</p>
+
+
+<H3>1.4 Installing the header and library files</H3>
 
 <p>
 The standard location for the OpenGL header files on Unix-type systems is
@@ -325,29 +184,72 @@ already installed, you'll have to choose different directories, like
 
 <p>
 To install the Mesa headers, do this:
-<pre>
-	cp -r include/GL /usr/include
-</pre>
+<blockquote>
+<b>cp -r include/GL /usr/include</b>
+</blockquote>
 
 <p>
 To install the Mesa libraries, do this:
 </p>
-<pre>
-	cp -pd lib/* /usr/lib
-
-	(The -pd options preserve symbolic links)
-</pre>
-
-<H3>LD_LIBRARY_PATH</H3>
+<blockquote>
+<b>cp -pd lib/* /usr/lib</b>
+<br>
+(The -pd options preserve symbolic links)
+</blockquote>
 
 <p>
-On Linux and similar operating systems the <code>LD_LIBRARY_PATH</code>
-environment variable can be used to indicate a list of directories to
-search for shared libraries.
-If you don't install Mesa in <code>/usr/lib/</code> you may have to
-set the <code>LD_LIBRARY_PATH</code> variable in order to use the Mesa
-libraries.
+If you install the libraries in a non-standard location you can use
+LD_LIBRARY_PATH (on Linux) to switch between the Mesa libs and another
+vendor libs whenever you want.
+This is a handy way to compare multiple OpenGL implementations.
 </p>
+
+
+
+<a name="windows">
+<H2>2. Windows Compilation and Installation</H1>
+
+<p>
+Please see the <a href="README.WIN32">README.WIN32</a> file.
+</p>
+
+
+
+
+<a name="vms">
+<H2>3. VMS Compilation and Installation</H1>
+
+<p>
+Please see the <a href="README.VMS">README.VMS</a> file.
+</p>
+
+
+
+
+<a name="other">
+<H2>4. Other systems</H1>
+
+<p>
+Documentation for other environments (some may be very out of date):
+</p>
+
+<UL>
+<LI><A HREF="README.GGI">README.GGI</A> - GGI
+<LI><A HREF="README.3DFX">README.3DFX</A> - 3Dfx/Glide driver
+<LI><A HREF="README.AMIWIN">README.AMIWIN</A> - Amiga Amiwin
+<LI><A HREF="README.BEOS">README.BEOS</A> - BeOS
+<LI><A HREF="README.D3D">README.D3D</A> - Direct3D driver
+<LI><A HREF="README.DJ">README.DJ</A> - DJGPP
+<LI><A HREF="README.LYNXOS">README.LYNXOS</A> - LynxOS
+<LI><A HREF="README.MINGW32">README.MINGW32</A> - Mingw32
+<LI><A HREF="README.NeXT">README.NeXT</A> - NeXT
+<LI><A HREF="README.OpenStep">README.OpenStep</A> - OpenStep
+<LI><A HREF="README.OS2">README.OS2</A> - OS/2
+<LI><A HREF="README.WINDML">README.WINDML</A> - WindML
+</UL>
+
+
+
 
 </body>
 </html>
