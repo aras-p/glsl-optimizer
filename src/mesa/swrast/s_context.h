@@ -1,4 +1,4 @@
-/* $Id: s_context.h,v 1.25 2003/02/28 15:09:02 brianp Exp $ */
+/* $Id: s_context.h,v 1.26 2003/03/16 22:02:36 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -133,6 +133,9 @@ struct sw_span {
     */
    GLuint interpMask;
 
+   /* For horizontal spans, step is the partial derivative wrt X.
+    * For lines, step is the delta from one fragment to the next.
+    */
 #if CHAN_TYPE == GL_FLOAT
    GLfloat red, redStep;
    GLfloat green, greenStep;
@@ -157,6 +160,18 @@ struct sw_span {
    GLfloat texStepX[MAX_TEXTURE_COORD_UNITS][4];
    GLfloat texStepY[MAX_TEXTURE_COORD_UNITS][4];
    GLfixed intTex[2], intTexStep[2];  /* s, t only */
+
+   /* partial derivatives wrt X and Y. */
+   GLfloat dzdx, dzdy;
+   GLfloat w, dwdx, dwdy;
+   GLfloat drdx, drdy;
+   GLfloat dgdx, dgdy;
+   GLfloat dbdx, dbdy;
+   GLfloat dadx, dady;
+   GLfloat dsrdx, dsrdy;
+   GLfloat dsgdx, dsgdy;
+   GLfloat dsbdx, dsbdy;
+   GLfloat dfogdx, dfogdy;
 
    /**
     * This bitmask (of \link SpanFlags SPAN_* flags\endlink) indicates

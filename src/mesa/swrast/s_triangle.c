@@ -1,4 +1,4 @@
-/* $Id: s_triangle.c,v 1.68 2003/03/14 15:41:00 brianp Exp $ */
+/* $Id: s_triangle.c,v 1.69 2003/03/16 22:02:38 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -870,6 +870,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
  */
 #define NAME general_textured_triangle
 #define INTERP_Z 1
+#define INTERP_W 1
 #define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
@@ -888,6 +889,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
  */
 #define NAME multitextured_triangle
 #define INTERP_Z 1
+#define INTERP_W 1
 #define INTERP_FOG 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1

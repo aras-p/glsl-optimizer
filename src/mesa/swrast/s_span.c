@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.58 2003/03/15 17:33:27 brianp Exp $ */
+/* $Id: s_span.c,v 1.59 2003/03/16 22:02:37 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,7 +76,7 @@ void
 _mesa_span_default_fog( GLcontext *ctx, struct sw_span *span )
 {
    span->fog = _mesa_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
-   span->fogStep = 0;
+   span->fogStep = span->dfogdx = span->dfogdy = 0.0F;
    span->interpMask |= SPAN_FOG;
 }
 
