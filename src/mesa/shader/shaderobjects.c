@@ -78,11 +78,13 @@ _mesa_LinkProgramARB (GLhandleARB programObj)
 {
 }
 
+#if 0
 GLboolean
 _mesa_use_program_object( GLcontext *ctx, struct gl_program_object *pobj )
 {
    return GL_FALSE;
 }
+#endif
 
 void GLAPIENTRY
 _mesa_UseProgramObjectARB (GLhandleARB programObj)

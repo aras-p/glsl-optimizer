@@ -176,7 +176,7 @@ _mesa_init_vp_per_primitive_registers(GLcontext *ctx)
  * For debugging.  Dump the current vertex program machine registers.
  */
 void
-_mesa_dump_vp_state( const struct vertex_program_state *state )
+_mesa_dump_vp_state( const struct gl_vertex_program_state *state )
 {
    int i;
    _mesa_printf("VertexIn:\n");
@@ -228,7 +228,7 @@ _mesa_dump_vp_state( const struct vertex_program_state *state )
  */
 static INLINE const GLfloat *
 get_register_pointer( const struct vp_src_register *source,
-                      const struct vertex_program_state *state )
+                      const struct gl_vertex_program_state *state )
 {
    if (source->RelAddr) {
       const GLint reg = source->Index + state->AddressReg[0];
@@ -274,7 +274,7 @@ get_register_pointer( const struct vp_src_register *source,
  */
 static INLINE void
 fetch_vector4( const struct vp_src_register *source,
-               const struct vertex_program_state *state,
+               const struct gl_vertex_program_state *state,
                GLfloat result[4] )
 {
    const GLfloat *src = get_register_pointer(source, state);
@@ -300,7 +300,7 @@ fetch_vector4( const struct vp_src_register *source,
  */
 static INLINE void
 fetch_vector1( const struct vp_src_register *source,
-               const struct vertex_program_state *state,
+               const struct gl_vertex_program_state *state,
                GLfloat result[4] )
 {
    const GLfloat *src = get_register_pointer(source, state);
@@ -319,7 +319,7 @@ fetch_vector1( const struct vp_src_register *source,
  */
 static void
 store_vector4( const struct vp_dst_register *dest,
-               struct vertex_program_state *state,
+               struct gl_vertex_program_state *state,
                const GLfloat value[4] )
 {
    GLfloat *dst;
@@ -377,7 +377,7 @@ store_vector4( const struct vp_dst_register *dest,
 void
 _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
 {
-   struct vertex_program_state *state = &ctx->VertexProgram;
+   struct gl_vertex_program_state *state = &ctx->VertexProgram;
    const struct vp_instruction *inst;
 
    ctx->_CurrentProgram = GL_VERTEX_PROGRAM_ARB; /* or NV, doesn't matter */
