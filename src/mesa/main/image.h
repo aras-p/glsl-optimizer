@@ -1,3 +1,7 @@
+/**
+ * \file image.h
+ * Image handling.
+ */
 
 /*
  * Mesa 3-D graphics library

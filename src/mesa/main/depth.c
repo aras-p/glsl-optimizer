@@ -140,3 +140,45 @@ _mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
    ctx->Depth.BoundsMax = zmax;
 }
 
+
+/**********************************************************************/
+/*****                      Initialization                        *****/
+/**********************************************************************/
+
+void _mesa_init_depth( GLcontext * ctx )
+{
+   /* Depth buffer group */
+   ctx->Depth.Test = GL_FALSE;
+   ctx->Depth.Clear = 1.0;
+   ctx->Depth.Func = GL_LESS;
+   ctx->Depth.Mask = GL_TRUE;
+   ctx->Depth.OcclusionTest = GL_FALSE;
+
+   /* Z buffer stuff */
+   if (ctx->Visual.depthBits == 0) {
+      /* Special case.  Even if we don't have a depth buffer we need
+       * good values for DepthMax for Z vertex transformation purposes
+       * and for per-fragment fog computation.
+       */
+      ctx->DepthMax = 1 << 16;
+      ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
+   }
+   else if (ctx->Visual.depthBits < 32) {
+      ctx->DepthMax = (1 << ctx->Visual.depthBits) - 1;
+      ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
+   }
+   else {
+      /* Special case since shift values greater than or equal to the
+       * number of bits in the left hand expression's type are undefined.
+       */
+      ctx->DepthMax = 0xffffffff;
+      ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
+   }
+   ctx->MRD = 1.0;  /* Minimum resolvable depth value, for polygon offset */
+
+#if FEATURE_ARB_occlusion_query
+   ctx->Occlusion.QueryObjects = _mesa_NewHashTable();
+#endif
+   ctx->OcclusionResult = GL_FALSE;
+   ctx->OcclusionResultSaved = GL_FALSE;
+}

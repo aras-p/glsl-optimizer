@@ -1,3 +1,7 @@
+/**
+ * \file stencil.c
+ * Stencil operations.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +38,17 @@
 #include "enable.h"
 
 
+/**
+ * Set the clear value for the stencil buffer.
+ *
+ * \param s clear value.
+ *
+ * \sa glClearStencil().
+ *
+ * Updates gl_stencil_attrib::Clear. On change
+ * flushes the vertices and notifies the driver via
+ * the dd_function_table::ClearStencil callback.
+ */
 void
 _mesa_ClearStencil( GLint s )
 {
@@ -52,7 +67,19 @@ _mesa_ClearStencil( GLint s )
 }
 
 
-
+/**
+ * Set the function and reference value for stencil testing.
+ *
+ * \param func test function.
+ * \param ref reference value.
+ * \param mask bitmask.
+ *
+ * \sa glStencilFunc().
+ *
+ * Verifies the parameters and updates the respective values in
+ * __GLcontextRec::Stencil. On change flushes the vertices and notifies the
+ * driver via the dd_function_table::StencilFunc callback.
+ */
 void
 _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
 {
@@ -95,7 +122,17 @@ _mesa_StencilFunc( GLenum func, GLint ref, GLuint mask )
 }
 
 
-
+/**
+ * Set the stencil writing mask.
+ *
+ * \param mask bit-mask to enable/disable writing of individual bits in the
+ * stencil planes.
+ *
+ * \sa glStencilMask().
+ *
+ * Updates gl_stencil_attrib::WriteMask. On change flushes the vertices and
+ * notifies the driver via the dd_function_table::StencilMask callback.
+ */
 void
 _mesa_StencilMask( GLuint mask )
 {
@@ -115,7 +152,20 @@ _mesa_StencilMask( GLuint mask )
 }
 
 
-
+/**
+ * Set the stencil test actions.
+ *
+ * \param fail action to take when stencil test fails.
+ * \param zfail action to take when stencil test passes, but the depth test fails.
+ * \param zpass action to take when stencil test passes and the depth test
+ * passes (or depth testing is not enabled).
+ * 
+ * \sa glStencilOp().
+ * 
+ * Verifies the parameters and updates the respective fields in
+ * __GLcontextRec::Stencil. On change flushes the vertices and notifies the
+ * driver via the dd_function_table::StencilOp callback.
+ */
 void
 _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 {
@@ -194,6 +244,7 @@ _mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass)
 }
 
 
+#if _HAVE_FULL_GL
 /* GL_EXT_stencil_two_side */
 void
 _mesa_ActiveStencilFaceEXT(GLenum face)
@@ -210,4 +261,36 @@ _mesa_ActiveStencilFaceEXT(GLenum face)
       (*ctx->Driver.ActiveStencilFace)( ctx, (GLuint) ctx->Stencil.ActiveFace );
    }
 }
+#endif
 
+
+/**
+ * Initialize the context stipple state.
+ *
+ * \param ctx GL context.
+ *
+ * Initializes __GLcontextRec::Stencil attribute group.
+ */
+void _mesa_init_stencil( GLcontext * ctx )
+{
+
+   /* Stencil group */
+   ctx->Stencil.Enabled = GL_FALSE;
+   ctx->Stencil.TestTwoSide = GL_FALSE;
+   ctx->Stencil.ActiveFace = 0;  /* 0 = GL_FRONT, 1 = GL_BACK */
+   ctx->Stencil.Function[0] = GL_ALWAYS;
+   ctx->Stencil.Function[1] = GL_ALWAYS;
+   ctx->Stencil.FailFunc[0] = GL_KEEP;
+   ctx->Stencil.FailFunc[1] = GL_KEEP;
+   ctx->Stencil.ZPassFunc[0] = GL_KEEP;
+   ctx->Stencil.ZPassFunc[1] = GL_KEEP;
+   ctx->Stencil.ZFailFunc[0] = GL_KEEP;
+   ctx->Stencil.ZFailFunc[1] = GL_KEEP;
+   ctx->Stencil.Ref[0] = 0;
+   ctx->Stencil.Ref[1] = 0;
+   ctx->Stencil.ValueMask[0] = STENCIL_MAX;
+   ctx->Stencil.ValueMask[1] = STENCIL_MAX;
+   ctx->Stencil.WriteMask[0] = STENCIL_MAX;
+   ctx->Stencil.WriteMask[1] = STENCIL_MAX;
+   ctx->Stencil.Clear = 0;
+}

@@ -157,7 +157,7 @@ components_in_intformat( GLint format )
  * apply pixel transfer ops into a temporary image buffer.  Then,
  * convert the temporary image into the special hardware format.
  *
- * Input:
+ * \param
  *   dimensions - 1, 2, or 3
  *   texDestFormat - GL_LUMINANCE, GL_INTENSITY, GL_LUMINANCE_ALPHA, GL_ALPHA,
  *                   GL_RGB or GL_RGBA (the destination format)
@@ -435,7 +435,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
  * Transfer a texture image from user space to <destAddr> applying all
  * needed image transfer operations and storing the result in the format
  * specified by <dstFormat>.  <dstFormat> may be any format from texformat.h.
- * Input:
+ * \param
  *   dimensions - 1, 2 or 3
  *   baseInternalFormat - base format of the internal texture format
  *       specified by the user.  This is very important, see below.
@@ -445,7 +445,7 @@ transfer_teximage(GLcontext *ctx, GLuint dimensions,
  *   dstX/Y/Zoffset - as specified by glTexSubImage
  *   dstRowStride - stride between dest rows in bytes
  *   dstImageStride - stride between dest images in bytes
- *   srcFormat, srcType - incoming image format and datatype
+ *   srcFormat, srcType - incoming image format and data type
  *   srcAddr - source image address
  *   srcPacking - packing params of source image
  *

@@ -1,3 +1,10 @@
+/**
+ * \file texformat.c
+ * Texture formats.
+ *
+ * \author Gareth Hughes
+ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -20,10 +27,8 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * Author:
- *    Gareth Hughes
  */
+
 
 #include "glheader.h"
 #include "colormac.h"
@@ -36,7 +41,7 @@
 #include "texstate.h"
 
 
-/* Texel fetch routines for all supported formats:
+/* Texel fetch routines for all supported formats
  */
 #define DIM 1
 #include "texformat_tmp.h"
@@ -47,7 +52,10 @@
 #define DIM 3
 #include "texformat_tmp.h"
 
-/* Have to have this so the FetchTexel function pointer is never NULL.
+/**
+ * Null texel fetch function.
+ *
+ * Have to have this so the FetchTexel function pointer is never NULL.
  */
 static void fetch_null_texel( const struct gl_texture_image *texImage,
 			      GLint i, GLint j, GLint k, GLvoid *texel )
@@ -60,9 +68,9 @@ static void fetch_null_texel( const struct gl_texture_image *texImage,
 }
 
 
-/* =============================================================
- * Default GLchan-based formats:
- */
+/***************************************************************/
+/** \name Default GLchan-based formats */
+/*@{*/
 
 const struct gl_texture_format _mesa_texformat_rgba = {
    MESA_FORMAT_RGBA,			/* MesaFormat */
@@ -200,10 +208,12 @@ const struct gl_texture_format _mesa_texformat_depth_component = {
    fetch_3d_texel_depth_component,	/* FetchTexel3D */
 };
 
+/*@}*/
 
-/* =============================================================
- * Hardware formats:
- */
+
+/***************************************************************/
+/** \name Hardware formats */
+/*@{*/
 
 const struct gl_texture_format _mesa_texformat_rgba8888 = {
    MESA_FORMAT_RGBA8888,		/* MesaFormat */
@@ -659,9 +669,12 @@ const struct gl_texture_format _mesa_texformat_bgr233 = {
 };
 #endif
 
-/* =============================================================
- * Null format (useful for proxy textures):
- */
+/*@}*/
+
+
+/***************************************************************/
+/** \name Null format (useful for proxy textures) */
+/*@{*/
 
 const struct gl_texture_format _mesa_null_texformat = {
    -1,					/* MesaFormat */
@@ -680,7 +693,21 @@ const struct gl_texture_format _mesa_null_texformat = {
    fetch_null_texel,			/* FetchTexel3D */
 };
 
+/*@}*/
 
+
+/**
+ * Determine whether a given texture format is a hardware texture
+ * format.
+ *
+ * \param format texture format.
+ * 
+ * \return GL_TRUE if \p format is a hardware texture format, or GL_FALSE
+ * otherwise.
+ *
+ * \p format is a hardware texture format if gl_texture_format::MesaFormat is
+ * lower than _format::MESA_FORMAT_RGBA.
+ */
 GLboolean
 _mesa_is_hardware_tex_format( const struct gl_texture_format *format )
 {
@@ -688,11 +715,19 @@ _mesa_is_hardware_tex_format( const struct gl_texture_format *format )
 }
 
 
-/* Given an internal texture format (or 1, 2, 3, 4) return a pointer
- * to a gl_texture_format which which to store the texture.
- * This is called via ctx->Driver.ChooseTextureFormat().
- * Hardware drivers typically override this function with a specialized
- * version.
+/**
+ * Choose an appropriate texture format.
+ *
+ * \param ctx GL context.
+ * \param internalFormat internal texture format.
+ * \param format pixel format.
+ * \param type data type.
+ *
+ * \return a pointer to a gl_texture_format in which to store the texture on
+ * success, or NULL on failure.
+ * 
+ * This is called via dd_function_table::ChooseTextureFormat.  Hardware drivers
+ * typically override this function with a specialized version.
  */
 const struct gl_texture_format *
 _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
@@ -849,11 +884,10 @@ _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
 }
 
 
-
-
-/*
+/**
  * Return the base texture format for the given compressed format
- * Called via ctx->Driver.BaseCompressedTexFormat().
+ * 
+ * Called via dd_function_table::Driver.BaseCompressedTexFormat.
  * This function is used by software rasterizers.  Hardware drivers
  * which support texture compression should not use this function but
  * a specialized function instead.

@@ -1,3 +1,13 @@
+/**
+ * \file extensions.h
+ * Extension handling.
+ * 
+ * \if subset
+ * (No-op)
+ *
+ * \endif
+ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -28,6 +38,7 @@
 
 #include "mtypes.h"
 
+#if _HAVE_FULL_GL
 
 extern void _mesa_enable_sw_extensions(GLcontext *ctx);
 
@@ -48,5 +59,24 @@ extern GLboolean _mesa_extension_is_enabled(GLcontext *ctx, const char *name);
 extern void _mesa_init_extensions(GLcontext *ctx);
 
 extern GLubyte *_mesa_make_extension_string(GLcontext *ctx);
+
+#else
+
+/** No-op */
+#define _mesa_extensions_dtr( ctx ) ((void)0)
+
+/** No-op */
+#define _mesa_extensions_ctr( ctx ) ((void)0)
+
+/** No-op */
+#define _mesa_extensions_get_string( ctx ) "GL_EXT_texture_object"
+
+/** No-op */
+#define _mesa_enable_imaging_extensions( c ) ((void)0)
+
+/** No-op */
+#define _mesa_enable_extension( c, n ) ((void)0)
+
+#endif
 
 #endif

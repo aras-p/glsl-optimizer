@@ -1,3 +1,8 @@
+/**
+ * \file get.c
+ * State query functions.
+ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -107,6 +112,18 @@ pixel_texgen_mode(const GLcontext *ctx)
 }
 
 
+/**
+ * Get the value(s) of a selected parameter.
+ *
+ * \param pname parameter to be returned.
+ * \param params will hold the value(s) of the speficifed parameter.
+ *
+ * \sa glGetBooleanv().
+ *
+ * Tries to get the specified parameter via dd_function_table::GetBooleanv,
+ * otherwise gets the specified parameter from the current context, converting
+ * it value into GLboolean.
+ */
 void
 _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 {
@@ -1619,6 +1636,18 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 }
 
 
+/**
+ * Get the value(s) of a selected parameter.
+ *
+ * \param pname parameter to be returned.
+ * \param params will hold the value(s) of the speficifed parameter.
+ *
+ * \sa glGetDoublev().
+ *
+ * Tries to get the specified parameter via dd_function_table::GetDoublev,
+ * otherwise gets the specified parameter from the current context, converting
+ * it value into GLdouble.
+ */
 void
 _mesa_GetDoublev( GLenum pname, GLdouble *params )
 {
@@ -3125,6 +3154,18 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 }
 
 
+/**
+ * Get the value(s) of a selected parameter.
+ *
+ * \param pname parameter to be returned.
+ * \param params will hold the value(s) of the speficifed parameter.
+ *
+ * \sa glGetFloatv().
+ *
+ * Tries to get the specified parameter via dd_function_table::GetFloatv,
+ * otherwise gets the specified parameter from the current context, converting
+ * it value into GLfloat.
+ */
 void
 _mesa_GetFloatv( GLenum pname, GLfloat *params )
 {
@@ -4607,6 +4648,18 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 }
 
 
+/**
+ * Get the value(s) of a selected parameter.
+ *
+ * \param pname parameter to be returned.
+ * \param params will hold the value(s) of the speficifed parameter.
+ *
+ * \sa glGetIntegerv().
+ *
+ * Tries to get the specified parameter via dd_function_table::GetIntegerv,
+ * otherwise gets the specified parameter from the current context, converting
+ * it value into GLinteger.
+ */
 void
 _mesa_GetIntegerv( GLenum pname, GLint *params )
 {
@@ -6127,7 +6180,17 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 }
 
 
-
+/**
+ * Get the address of a selected pointer.
+ *
+ * \param pname array or buffer to be returned.
+ * \param params will hold the pointer speficifed by \p pname.
+ *
+ * \sa glGetPointerv().
+ *
+ * Tries to get the specified pointer via dd_function_table::GetPointerv,
+ * otherwise gets the specified pointer from the current context.
+ */
 void
 _mesa_GetPointerv( GLenum pname, GLvoid **params )
 {
@@ -6183,7 +6246,16 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
 }
 
 
-
+/**
+ * Get a string describing the current GL connection.
+ *
+ * \param name name symbolic constant.
+ *
+ * \sa glGetString().
+ *
+ * Tries to get the string from dd_function_table::GetString, otherwise returns
+ * the hardcoded strings.
+ */
 const GLubyte *
 _mesa_GetString( GLenum name )
 {
@@ -6261,8 +6333,12 @@ _mesa_GetString( GLenum name )
 }
 
 
-/*
- * Execute a glGetError command
+/**
+ * Execute a glGetError() command.
+ *
+ * \return error number.
+ *
+ * Returns __GLcontextRec::ErrorValue.
  */
 GLenum
 _mesa_GetError( void )

@@ -1,3 +1,7 @@
+/**
+ * \file enable.h
+ * Enable/disable/query GL capabilities.
+ */
 
 /*
  * Mesa 3-D graphics library

@@ -1,3 +1,7 @@
+/**
+ * \file lines.c
+ * Line operations.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -33,6 +37,19 @@
 #include "mtypes.h"
 
 
+/**
+ * Set the line width.
+ *
+ * \param width line width in pixels.
+ *
+ * \sa glLineWidth().
+ *
+ * Verifies the parameter and updates gl_line_attrib::Width. On a change,
+ * flushes the vertices, updates the clamped line width and marks the
+ * DD_LINE_WIDTH flag in __GLcontextRec::_TriangleCaps for the drivers if the
+ * width is different from one. Notifies the driver via the
+ * dd_function_table::LineWidth callback.
+ */
 void
 _mesa_LineWidth( GLfloat width )
 {
@@ -64,7 +81,18 @@ _mesa_LineWidth( GLfloat width )
 }
 
 
-
+/**
+ * Set the line stipple pattern.
+ *
+ * \param factor pattern scale factor.
+ * \param pattern bit pattern.
+ * 
+ * \sa glLineStipple().
+ *
+ * Updates gl_line_attrib::StippleFactor and gl_line_attrib::StipplePattern. On
+ * change flushes the vertices and notifies the driver via
+ * the dd_function_table::LineStipple callback.
+ */
 void
 _mesa_LineStipple( GLint factor, GLushort pattern )
 {
@@ -83,4 +111,24 @@ _mesa_LineStipple( GLint factor, GLushort pattern )
 
    if (ctx->Driver.LineStipple)
       ctx->Driver.LineStipple( ctx, factor, pattern );
+}
+
+
+/**
+ * Initialize the context line state.
+ *
+ * \param ctx GL context.
+ *
+ * Initializes __GLcontextRec::Line and line related constants in
+ * __GLcontextRec::Const.
+ */
+void _mesa_init_line( GLcontext * ctx )
+{
+   /* Line group */
+   ctx->Line.SmoothFlag = GL_FALSE;
+   ctx->Line.StippleFlag = GL_FALSE;
+   ctx->Line.Width = 1.0;
+   ctx->Line._Width = 1.0;
+   ctx->Line.StipplePattern = 0xffff;
+   ctx->Line.StippleFactor = 1;
 }

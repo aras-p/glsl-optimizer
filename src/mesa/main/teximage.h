@@ -1,3 +1,8 @@
+/**
+ * \file teximage.h
+ * Texture images manipulation functions.
+ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -30,8 +35,8 @@
 #include "mtypes.h"
 
 
-/*** Internal functions ***/
-
+/** \name Internal functions */
+/*@{*/
 
 extern GLint
 _mesa_base_tex_format( GLcontext *ctx, GLint format );
@@ -86,8 +91,11 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
                          GLint internalFormat, GLenum format, GLenum type,
                          GLint width, GLint height, GLint depth, GLint border);
 
-/*** API entry point functions ***/
+/*@}*/
 
+
+/** \name API entry point functions */
+/*@{*/
 
 extern void
 _mesa_TexImage1D( GLenum target, GLint level, GLint internalformat,
@@ -214,5 +222,6 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
 extern void
 _mesa_GetCompressedTexImageARB(GLenum target, GLint lod, GLvoid *img);
 
+/*@}*/
 
 #endif

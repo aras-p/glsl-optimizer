@@ -1,3 +1,11 @@
+/**
+ * \file imports.h
+ * Standard C library function wrappers.
+ * 
+ * This file provides wrappers for all the standard C library functions
+ * like malloc(), free(), printf(), getenv(), etc.
+ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -23,12 +31,6 @@
  */
 
 
-/*
- * This file provides wrappers for all the standard C library functions
- * like malloc, free, printf, getenv, etc.
- */
-
-
 #ifndef IMPORTS_H
 #define IMPORTS_H
 
@@ -43,46 +45,91 @@ extern "C" {
 #endif
 
 
-/**********************************************************************
- * General macros
- */
+/**********************************************************************/
+/** \name General macros */
+/*@{*/
 
 #ifndef NULL
 #define NULL 0
 #endif
 
+/*@}*/
 
 
-/**********************************************************************
- * Memory macros
- */
+/**********************************************************************/
+/** Memory macros */
+/*@{*/
 
+/** Allocate \p BYTES bytes */
 #define MALLOC(BYTES)      _mesa_malloc(BYTES)
+/** Allocate and zero \p BYTES bytes */
 #define CALLOC(BYTES)      _mesa_calloc(BYTES)
+/** Allocate a structure of type \p T */
 #define MALLOC_STRUCT(T)   (struct T *) _mesa_malloc(sizeof(struct T))
+/** Allocate and zero a structure of type \p T */
 #define CALLOC_STRUCT(T)   (struct T *) _mesa_calloc(sizeof(struct T))
+/** Free memory */
 #define FREE(PTR)          _mesa_free(PTR)
 
+/** Allocate \p BYTES aligned at \p N bytes */
 #define ALIGN_MALLOC(BYTES, N)     _mesa_align_malloc(BYTES, N)
+/** Allocate and zero \p BYTES bytes aligned at \p N bytes */
 #define ALIGN_CALLOC(BYTES, N)     _mesa_align_calloc(BYTES, N)
+/** Allocate a structure of type \p T aligned at \p N bytes */
 #define ALIGN_MALLOC_STRUCT(T, N)  (struct T *) _mesa_align_malloc(sizeof(struct T), N)
+/** Allocate and zero a structure of type \p T aligned at \p N bytes */
 #define ALIGN_CALLOC_STRUCT(T, N)  (struct T *) _mesa_align_calloc(sizeof(struct T), N)
+/** Free aligned memory */
 #define ALIGN_FREE(PTR)            _mesa_align_free(PTR)
 
+/** Copy \p BYTES bytes from \p SRC into \p DST */
 #define MEMCPY( DST, SRC, BYTES)   _mesa_memcpy(DST, SRC, BYTES)
+/** Set \p N bytes in \p DST to \p VAL */
 #define MEMSET( DST, VAL, N )      _mesa_memset(DST, VAL, N)
 
 #define MEMSET16( DST, VAL, N )   _mesa_memset16( (DST), (VAL), (size_t) (N) )
 
+/*@}*/
 
-/* MACs and BeOS don't support static larger than 32kb, so... */
+
+/**********************************************************************/
+/** \name [Pseudo] static array declaration.
+ * 
+ * MACs and BeOS don't support static larger than 32kb, so ... 
+ */
+/*@{*/
+
+/** 
+ * \def DEFARRAY
+ * Define a [static] unidimensional array 
+ */
+
+/** 
+ * \def DEFMARRAY
+ * Define a [static] bi-dimensional array 
+ */
+
+/** 
+ * \def DEFMNARRAY
+ * Define a [static] tri-dimensional array 
+ */
+
+/**
+ * \def CHECKARRAY
+ * Verifies a [static] array was properly allocated.
+ */
+
+/**
+ * \def UNDEFARRAY
+ * Undefine (free) a [static] array.
+ */
+
 #if defined(macintosh) && !defined(__MRC__)
 /*extern char *AGLAlloc(int size);*/
 /*extern void AGLFree(char* ptr);*/
 #  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE *NAME = (TYPE*)_mesa_alloc(sizeof(TYPE)*(SIZE))
 #  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)		TYPE (*NAME)[SIZE2] = (TYPE(*)[SIZE2])_mesa_alloc(sizeof(TYPE)*(SIZE1)*(SIZE2))
 #  define DEFMNARRAY(TYPE,NAME,SIZE1,SIZE2,SIZE3)	TYPE (*NAME)[SIZE2][SIZE3] = (TYPE(*)[SIZE2][SIZE3])_mesa_alloc(sizeof(TYPE)*(SIZE1)*(SIZE2)*(SIZE3))
-
 #  define CHECKARRAY(NAME,CMD)				do {if (!(NAME)) {CMD;}} while (0)
 #  define UNDEFARRAY(NAME)          			do {if ((NAME)) {_mesa_free((char*)NAME);}  }while (0)
 #elif defined(__BEOS__)
@@ -99,14 +146,33 @@ extern "C" {
 #  define UNDEFARRAY(NAME)
 #endif
 
+/*@}*/
 
-#ifdef MESA_EXTERNAL_BUFFERALLOC
-/*
- * If you want Mesa's depth/stencil/accum/etc buffers to be allocated
- * with a specialized allocator you can define MESA_EXTERNAL_BUFFERALLOC
- * and implement _ext_mesa_alloc/free_pixelbuffer() in your app.
+
+/**********************************************************************/
+/** \name External pixel buffer allocation.
+ *
+ * If you want Mesa's depth/stencil/accum/etc buffers to be allocated with a
+ * specialized allocator you can define MESA_EXTERNAL_BUFFERALLOC and implement
+ * _ext_mesa_alloc_pixelbuffer() _ext_mesa_free_pixelbuffer() in your
+ * application.
+ * 
+ * \author
  * Contributed by Gerk Huisma (gerk@five-d.demon.nl).
  */
+/*@{*/
+
+/** 
+ * \def MESA_PBUFFER_ALLOC
+ * Allocate a pixel buffer.
+ */
+
+/** 
+ * \def MESA_PBUFFER_FREE
+ * Free a pixel buffer.
+ */
+
+#ifdef MESA_EXTERNAL_BUFFERALLOC
 extern void *_ext_mesa_alloc_pixelbuffer( unsigned int size );
 extern void _ext_mesa_free_pixelbuffer( void *pb );
 
@@ -117,6 +183,8 @@ extern void _ext_mesa_free_pixelbuffer( void *pb );
 #define MESA_PBUFFER_ALLOC(BYTES)  (void *) _mesa_align_malloc(BYTES, 512)
 #define MESA_PBUFFER_FREE(PTR)     _mesa_align_free(PTR)
 #endif
+
+/*@}*/
 
 
 

@@ -1,3 +1,20 @@
+/**
+ * \file texformat_tmp.h
+ * Texel fetch functions template.
+ * 
+ * This template file is used by texformat.c to generate texel fetch functions
+ * for 1-D, 2-D and 3-D texture images. 
+ *
+ * It should be expanded by definining \p DIM as the number texture dimensions
+ * (1, 2 or 3).  According to the value of \p DIM a serie of macros is defined
+ * for the texel lookup in the gl_texture_image::Data.
+ * 
+ * \sa texformat.c and FetchTexel.
+ * 
+ * \author Gareth Hughes
+ * \author Brian Paul
+ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -20,16 +37,6 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * Authors:
- *    Gareth Hughes
- *    Brian Paul
- */
-
-
-/*
- * This template file generates texel fetch functions for 1-D, 2-D and 3-D
- * texture images.
  */
 
 

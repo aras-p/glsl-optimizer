@@ -1,3 +1,7 @@
+/**
+ * \file blend.h
+ * Blending functions operations.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -22,6 +26,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 
 
 #ifndef BLEND_H
@@ -63,5 +68,7 @@ extern void
 _mesa_ColorMask( GLboolean red, GLboolean green,
                  GLboolean blue, GLboolean alpha );
 
+extern void 
+_mesa_init_color( GLcontext * ctx );
 
 #endif

@@ -85,3 +85,10 @@ _mesa_Accum( GLenum op, GLfloat value )
 
    ctx->Driver.Accum( ctx, op, value, xpos, ypos, width, height );
 }
+
+void 
+_mesa_init_accum( GLcontext *ctx )
+{
+   /* Accumulate buffer group */
+   ASSIGN_4V( ctx->Accum.ClearColor, 0.0, 0.0, 0.0, 0.0 );
+}

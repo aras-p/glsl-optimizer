@@ -23,6 +23,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
+/**
+ * \mainpage Mesa Math Module
+ *
+ * This module contains math-related utility functions for transforming
+ * vertices, translating arrays of numbers from one data type to another,
+ * evaluating curved surfaces, etc.
+ */
+
+
 #ifndef _MESA_MATH_H_
 #define _MESA_MATH_H_
 

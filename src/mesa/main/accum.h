@@ -1,3 +1,12 @@
+/**
+ * \file accum.h
+ * Accumulation buffer operations.
+ * 
+ * \if subset
+ * (No-op)
+ *
+ * \endif
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,12 +33,14 @@
  */
 
 
+
 #ifndef ACCUM_H
 #define ACCUM_H
 
 
 #include "mtypes.h"
 
+#if _HAVE_FULL_GL
 
 extern void
 _mesa_Accum( GLenum op, GLfloat value );
@@ -38,5 +49,14 @@ _mesa_Accum( GLenum op, GLfloat value );
 extern void
 _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha );
 
+extern void 
+_mesa_init_accum( GLcontext *ctx );
+
+#else
+
+/** No-op */
+#define _mesa_init_accum( c ) ((void)0)
+
+#endif
 
 #endif

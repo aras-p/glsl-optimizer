@@ -116,3 +116,4 @@ _mesa_GetClipPlane( GLenum plane, GLdouble *equation )
    equation[2] = (GLdouble) ctx->Transform.EyeUserPlane[p][2];
    equation[3] = (GLdouble) ctx->Transform.EyeUserPlane[p][3];
 }
+

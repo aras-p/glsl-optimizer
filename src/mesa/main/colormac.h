@@ -1,3 +1,7 @@
+/**
+ * \file colormac.h
+ * Color-related macros
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,10 +29,6 @@
 
 
 
-/*
- * Color-related macros
- */
-
 #ifndef COLORMAC_H
 #define COLORMAC_H
 
@@ -37,6 +37,42 @@
 #include "config.h"
 #include "macros.h"
 
+
+/** \def BYTE_TO_CHAN
+ * Convert from GLbyte to GLchan */
+
+/** \def UBYTE_TO_CHAN
+ * Convert from GLubyte to GLchan */
+
+/** \def SHORT_TO_CHAN
+ * Convert from GLshort to GLchan */
+
+/** \def USHORT_TO_CHAN
+ * Convert from GLushort to GLchan */
+
+/** \def INT_TO_CHAN
+ * Convert from GLint to GLchan */
+
+/** \def UINT_TO_CHAN
+ * Convert from GLuint to GLchan */
+
+/** \def CHAN_TO_UBYTE
+ * Convert from GLchan to GLubyte */
+
+/** \def CHAN_TO_FLOAT
+ * Convert from GLchan to GLfloat */
+
+/** \def CLAMPED_FLOAT_TO_CHAN
+ * Convert from GLclampf to GLchan */
+
+/** \def UNCLAMPED_FLOAT_TO_CHAN
+ * Convert from GLfloat to GLchan */
+
+/** \def COPY_CHAN4
+ * Copy a GLchan[4] array */
+
+/** \def CHAN_PRODUCT
+ * Scaled product (usually approximated) between two GLchan arguments */
 
 #if CHAN_BITS == 8
 
@@ -57,7 +93,6 @@
 
 #define CHAN_PRODUCT(a, b)  ((GLubyte) (((GLint)(a) * ((GLint)(b) + 1)) >> 8))
 
-
 #elif CHAN_BITS == 16
 
 #define BYTE_TO_CHAN(b)   ((b) < 0 ? 0 : (((GLchan) (b)) * 516))
@@ -76,7 +111,6 @@
 #define COPY_CHAN4(DST, SRC)  COPY_4V(DST, SRC)
 
 #define CHAN_PRODUCT(a, b) ((GLchan) ((((GLuint) (a)) * ((GLuint) (b))) / 65535))
-
 
 #elif CHAN_BITS == 32
 
@@ -105,9 +139,13 @@
 #endif
 
 
-
-/*
+/**
  * Convert 3 channels at once.
+ *
+ * \param dst pointer to destination GLchan[3] array.
+ * \param f pointer to source GLfloat[3] array.
+ *
+ * \sa #UNCLAMPED_FLOAT_TO_CHAN.
  */
 #define UNCLAMPED_FLOAT_TO_RGB_CHAN(dst, f)	\
 do {						\
@@ -117,8 +155,13 @@ do {						\
 } while (0)
 
 
-/*
+/**
  * Convert 4 channels at once.
+ *
+ * \param dst pointer to destination GLchan[4] array.
+ * \param f pointer to source GLfloat[4] array.
+ *
+ * \sa #UNCLAMPED_FLOAT_TO_CHAN.
  */
 #define UNCLAMPED_FLOAT_TO_RGBA_CHAN(dst, f)	\
 do {						\
@@ -130,9 +173,12 @@ do {						\
 
 
 
-/* Generic color packing macros
- * XXX We may move these into texutil.h at some point.
+/**
+ * \name Generic color packing macros
+ *
+ * \todo We may move these into texutil.h at some point.
  */
+/*@{*/
 
 #define PACK_COLOR_8888( a, b, c, d )					\
    (((a) << 24) | ((b) << 16) | ((c) << 8) | (d))
@@ -186,6 +232,8 @@ do {						\
 #define PACK_COLOR_88_LE( a, b )		PACK_COLOR_88( a, b )
 
 #endif	/* endianness */
+
+/*@}*/
 
 
 #endif /* COLORMAC_H */

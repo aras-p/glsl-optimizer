@@ -1,3 +1,12 @@
+/**
+ * \file enums.h
+ * Enumeration name/number lookup functions.
+ * 
+ * \if subset
+ * (No-op)
+ *
+ * \endif
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,7 +36,20 @@
 #ifndef _ENUMS_H_
 #define _ENUMS_H_
 
+
+#if _HAVE_FULL_GL
+
 extern const char *_mesa_lookup_enum_by_nr( int nr );
 extern int _mesa_lookup_enum_by_name( const char *symbol );
+
+#else
+
+/** No-op */
+#define _mesa_lookup_enum_by_name( s ) 0
+
+/** No-op */
+#define _mesa_lookup_enum_by_nr( n ) "unknown"
+
+#endif
 
 #endif

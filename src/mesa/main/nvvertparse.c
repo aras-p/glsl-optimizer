@@ -24,7 +24,7 @@
 
 /**
  * \file nvvertparse.c
- * \brief NVIDIA vertex program parser.
+ * NVIDIA vertex program parser.
  * \author Brian Paul
  */
 

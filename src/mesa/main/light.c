@@ -610,7 +610,7 @@ void _mesa_update_material( GLcontext *ctx,
    if (ctx->Light.ColorMaterialEnabled)
       bitmask &= ~ctx->Light.ColorMaterialBitmask;
 
-   if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
+   if (MESA_VERBOSE&VERBOSE_IMMEDIATE) 
       _mesa_debug(ctx, "_mesa_update_material, mask 0x%x\n", bitmask);
 
    if (!bitmask)
@@ -1119,7 +1119,7 @@ _mesa_validate_all_lighting_tables( GLcontext *ctx )
 {
    GLint i;
    GLfloat shininess;
-
+   
    shininess = ctx->Light.Material[0].Shininess;
    if (!ctx->_ShineTable[0] || ctx->_ShineTable[0]->shininess != shininess)
       validate_shine_table( ctx, 0, shininess );
@@ -1146,14 +1146,11 @@ void
 _mesa_update_lighting( GLcontext *ctx )
 {
    struct gl_light *light;
-   ctx->_NeedEyeCoords &= ~NEED_EYE_LIGHT;
-   ctx->_NeedNormals &= ~NEED_NORMALS_LIGHT;
+   ctx->Light._NeedEyeCoords = 0;
    ctx->Light._Flags = 0;
 
    if (!ctx->Light.Enabled)
       return;
-
-   ctx->_NeedNormals |= NEED_NORMALS_LIGHT;
 
    foreach(light, &ctx->Light.EnabledList) {
       ctx->Light._Flags |= light->_Flags;
@@ -1164,9 +1161,9 @@ _mesa_update_lighting( GLcontext *ctx )
        ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ||
        ctx->Light.Model.LocalViewer);
 
-   if ((ctx->Light._Flags & LIGHT_POSITIONAL) ||
-       ctx->Light.Model.LocalViewer)
-      ctx->_NeedEyeCoords |= NEED_EYE_LIGHT;
+   ctx->Light._NeedEyeCoords = ((ctx->Light._Flags & LIGHT_POSITIONAL) ||
+				ctx->Light.Model.LocalViewer);
+
 
 
    /* XXX: This test is overkill & needs to be fixed both for software and
@@ -1174,7 +1171,7 @@ _mesa_update_lighting( GLcontext *ctx )
     * be tested to verify this.
     */
    if (ctx->Light._NeedVertices)
-      ctx->_NeedEyeCoords |= NEED_EYE_LIGHT;
+      ctx->Light._NeedEyeCoords = GL_TRUE;
 
 
    /* Precompute some shading values.  Although we reference
@@ -1221,7 +1218,7 @@ _mesa_update_lighting( GLcontext *ctx )
  * Update on (_NEW_MODELVIEW | _NEW_LIGHT) when lighting is enabled.
  * Also update on lighting space changes.
  */
-void
+static void
 _mesa_compute_light_positions( GLcontext *ctx )
 {
    struct gl_light *light;
@@ -1289,4 +1286,202 @@ _mesa_compute_light_positions( GLcontext *ctx )
 	 }
       }
    }
+}
+
+
+
+
+
+static void
+update_modelview_scale( GLcontext *ctx )
+{
+   ctx->_ModelViewInvScale = 1.0F;
+   if (ctx->ModelviewMatrixStack.Top->flags & (MAT_FLAG_UNIFORM_SCALE |
+			       MAT_FLAG_GENERAL_SCALE |
+			       MAT_FLAG_GENERAL_3D |
+			       MAT_FLAG_GENERAL) ) {
+      const GLfloat *m = ctx->ModelviewMatrixStack.Top->inv;
+      GLfloat f = m[2] * m[2] + m[6] * m[6] + m[10] * m[10];
+      if (f < 1e-12) f = 1.0;
+      if (ctx->_NeedEyeCoords)
+	 ctx->_ModelViewInvScale = (GLfloat) INV_SQRTF(f);
+      else
+	 ctx->_ModelViewInvScale = (GLfloat) SQRTF(f);
+   }
+}
+
+
+/* Bring uptodate any state that relies on _NeedEyeCoords.
+ */
+void _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state )
+{
+   const GLuint oldneedeyecoords = ctx->_NeedEyeCoords;
+
+   ctx->_NeedEyeCoords = (ctx->_ForceEyeCoords ||
+			  (ctx->Texture._GenFlags & TEXGEN_NEED_EYE_COORD) ||
+			  ctx->Point._Attenuated ||
+			  ctx->Light._NeedEyeCoords);
+      
+   /* Check if the truth-value interpretations of the bitfields have
+    * changed:
+    */
+   if ((oldneedeyecoords == 0) != (ctx->_NeedEyeCoords == 0)) {
+      /* Recalculate all state that depends on _NeedEyeCoords.
+       */
+      update_modelview_scale(ctx);
+      _mesa_compute_light_positions( ctx );
+
+      if (ctx->Driver.LightingSpaceChange)
+	 ctx->Driver.LightingSpaceChange( ctx );
+   }
+   else {
+      GLuint new_state = ctx->NewState;
+
+      /* Recalculate that same state only if it has been invalidated
+       * by other statechanges.
+       */
+      if (new_state & _NEW_MODELVIEW)
+	 update_modelview_scale(ctx);
+
+      if (new_state & (_NEW_LIGHT|_NEW_MODELVIEW))
+	 _mesa_compute_light_positions( ctx );
+   }
+}
+
+
+/* Drivers may need this if the hardware tnl unit doesn't support the
+ * light-in-modelspace optimization.  It's also useful for debugging.
+ */
+void
+_mesa_allow_light_in_model( GLcontext *ctx, GLboolean flag )
+{
+   ctx->_ForceEyeCoords = flag;
+   ctx->NewState |= _NEW_POINT;	/* one of the bits from
+				 * _MESA_NEW_NEED_EYE_COORDS.
+				 */
+}
+
+
+
+/**********************************************************************/
+/*****                      Initialization                        *****/
+/**********************************************************************/
+
+/**
+ * Initialize the n-th light data structure.
+ *
+ * \param l pointer to the gl_light structure to be initialized.
+ * \param n number of the light. 
+ * \note The defaults for light 0 are different than the other lights.
+ */
+static void
+init_light( struct gl_light *l, GLuint n )
+{
+   make_empty_list( l );
+
+   ASSIGN_4V( l->Ambient, 0.0, 0.0, 0.0, 1.0 );
+   if (n==0) {
+      ASSIGN_4V( l->Diffuse, 1.0, 1.0, 1.0, 1.0 );
+      ASSIGN_4V( l->Specular, 1.0, 1.0, 1.0, 1.0 );
+   }
+   else {
+      ASSIGN_4V( l->Diffuse, 0.0, 0.0, 0.0, 1.0 );
+      ASSIGN_4V( l->Specular, 0.0, 0.0, 0.0, 1.0 );
+   }
+   ASSIGN_4V( l->EyePosition, 0.0, 0.0, 1.0, 0.0 );
+   ASSIGN_3V( l->EyeDirection, 0.0, 0.0, -1.0 );
+   l->SpotExponent = 0.0;
+   _mesa_invalidate_spot_exp_table( l );
+   l->SpotCutoff = 180.0;
+   l->_CosCutoff = 0.0;		/* KW: -ve values not admitted */
+   l->ConstantAttenuation = 1.0;
+   l->LinearAttenuation = 0.0;
+   l->QuadraticAttenuation = 0.0;
+   l->Enabled = GL_FALSE;
+}
+
+/**
+ * Initialize the light model data structure.
+ *
+ * \param lm pointer to the gl_lightmodel structure to be initialized.
+ */
+static void
+init_lightmodel( struct gl_lightmodel *lm )
+{
+   ASSIGN_4V( lm->Ambient, 0.2F, 0.2F, 0.2F, 1.0F );
+   lm->LocalViewer = GL_FALSE;
+   lm->TwoSide = GL_FALSE;
+   lm->ColorControl = GL_SINGLE_COLOR;
+}
+
+/**
+ * Initialize the material data structure.
+ * 
+ * \param m pointer to the gl_material structure to be initialized.
+ */
+static void
+init_material( struct gl_material *m )
+{
+   ASSIGN_4V( m->Ambient,  0.2F, 0.2F, 0.2F, 1.0F );
+   ASSIGN_4V( m->Diffuse,  0.8F, 0.8F, 0.8F, 1.0F );
+   ASSIGN_4V( m->Specular, 0.0F, 0.0F, 0.0F, 1.0F );
+   ASSIGN_4V( m->Emission, 0.0F, 0.0F, 0.0F, 1.0F );
+   m->Shininess = 0.0;
+   m->AmbientIndex = 0;
+   m->DiffuseIndex = 1;
+   m->SpecularIndex = 1;
+}
+
+
+void _mesa_init_lighting( GLcontext *ctx )
+{
+   int i;
+
+   /* Lighting group */
+   for (i=0;i<MAX_LIGHTS;i++) {
+      init_light( &ctx->Light.Light[i], i );
+   }
+   make_empty_list( &ctx->Light.EnabledList );
+
+   init_lightmodel( &ctx->Light.Model );
+   init_material( &ctx->Light.Material[0] );
+   init_material( &ctx->Light.Material[1] );
+   ctx->Light.ShadeModel = GL_SMOOTH;
+   ctx->Light.Enabled = GL_FALSE;
+   ctx->Light.ColorMaterialFace = GL_FRONT_AND_BACK;
+   ctx->Light.ColorMaterialMode = GL_AMBIENT_AND_DIFFUSE;
+   ctx->Light.ColorMaterialBitmask = _mesa_material_bitmask( ctx,
+                                               GL_FRONT_AND_BACK,
+                                               GL_AMBIENT_AND_DIFFUSE, ~0, 0 );
+
+   ctx->Light.ColorMaterialEnabled = GL_FALSE;
+
+   /* Lighting miscellaneous */
+   ctx->_ShineTabList = MALLOC_STRUCT( gl_shine_tab );
+   make_empty_list( ctx->_ShineTabList );
+   for (i = 0 ; i < 10 ; i++) {
+      struct gl_shine_tab *s = MALLOC_STRUCT( gl_shine_tab );
+      s->shininess = -1;
+      s->refcount = 0;
+      insert_at_tail( ctx->_ShineTabList, s );
+   }
+
+   
+
+   /* Miscellaneous */
+   ctx->Light._NeedEyeCoords = 0;
+   ctx->_NeedEyeCoords = 0;
+   ctx->_ModelViewInvScale = 1.0;
+}
+
+
+void _mesa_free_lighting_data( GLcontext *ctx )
+{
+   struct gl_shine_tab *s, *tmps;
+
+   /* Free lighting shininess exponentiation table */
+   foreach_s( s, tmps, ctx->_ShineTabList ) {
+      FREE( s );
+   }
+   FREE( ctx->_ShineTabList );
 }

@@ -22,6 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
 #include "glheader.h"
 #include "imports.h"
 #include "context.h"
@@ -425,4 +426,11 @@ _mesa_make_extension_string( GLcontext *ctx )
    s[extStrLen - 1] = 0;
 
    return s;
+}
+
+void 
+_mesa_extensions_dtr( GLcontext *ctx ) 
+{
+   if (ctx->Extensions.String)
+      FREE((void *) ctx->Extensions.String);
 }

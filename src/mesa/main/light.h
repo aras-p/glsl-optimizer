@@ -1,3 +1,7 @@
+/**
+ * \file light.h
+ * Lighting.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,10 +34,10 @@
 
 #include "mtypes.h"
 
-
 extern void
 _mesa_ShadeModel( GLenum mode );
 
+#if _HAVE_FULL_GL
 extern void
 _mesa_ColorMaterial( GLenum face, GLenum mode );
 
@@ -91,7 +95,6 @@ do {									\
 } while (0)
 
 
-
 extern GLuint _mesa_material_bitmask( GLcontext *ctx,
                                       GLenum face, GLenum pname,
                                       GLuint legal,
@@ -105,7 +108,7 @@ extern void _mesa_validate_all_lighting_tables( GLcontext *ctx );
 
 extern void _mesa_update_lighting( GLcontext *ctx );
 
-extern void _mesa_compute_light_positions( GLcontext *ctx );
+extern void _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state );
 
 extern void _mesa_update_material( GLcontext *ctx,
                                    const struct gl_material src[2],
@@ -118,5 +121,22 @@ extern void _mesa_copy_material_pairs( struct gl_material dst[2],
 extern void _mesa_update_color_material( GLcontext *ctx,
                                          const GLfloat rgba[4] );
 
+extern void _mesa_init_lighting( GLcontext *ctx );
+
+extern void _mesa_free_lighting_data( GLcontext *ctx );
+
+extern void _mesa_allow_light_in_model( GLcontext *ctx, GLboolean flag );
+
+#else
+#define _mesa_update_color_material( c, r ) ((void)0)
+#define _mesa_validate_all_lighting_tables( c ) ((void)0)
+#define _mesa_invalidate_spot_exp_table( l ) ((void)0)
+#define _mesa_material_bitmask( c, f, p, l, s ) 0
+#define _mesa_init_lighting( c ) ((void)0)
+#define _mesa_free_lighting_data( c ) ((void)0)
+#define _mesa_update_lighting( c ) ((void)0)
+#define _mesa_update_tnl_spaces( c, n ) ((void)0)
+#define GET_SHINE_TAB_ENTRY( table, dp, result )  ((result)=0)
+#endif
 
 #endif

@@ -24,7 +24,7 @@
 
 /**
  * \file nvprogram.c
- * \brief NVIDIA vertex/fragment program state management functions.
+ * NVIDIA vertex/fragment program state management functions.
  * \author Brian Paul
  */
 

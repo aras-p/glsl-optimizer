@@ -31,6 +31,7 @@
 #include "mtypes.h"
 
 
+#if _HAVE_FULL_GL
 extern void
 _mesa_ConvolutionFilter1D(GLenum target, GLenum internalformat, GLsizei width,
                           GLenum format, GLenum type, const GLvoid *image);
@@ -103,5 +104,11 @@ extern void
 _mesa_adjust_image_for_convolution(const GLcontext *ctx, GLuint dimensions,
                                    GLsizei *width, GLsizei *height);
 
+#else
+#define _mesa_adjust_image_for_convolution(c, d, w, h) ((void)0)
+#define _mesa_convolve_1d_image(c,w,s,d) ((void)0)
+#define _mesa_convolve_2d_image(c,w,h,s,d) ((void)0)
+#define _mesa_convolve_sep_image(c,w,h,s,d) ((void)0)
+#endif
 
 #endif

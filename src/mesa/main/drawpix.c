@@ -33,6 +33,7 @@
 #include "state.h"
 #include "mtypes.h"
 
+#if _HAVE_FULL_GL
 
 /*
  * Execute glDrawPixels
@@ -86,35 +87,6 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
    }
 }
 
-
-
-void
-_mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
-		  GLenum format, GLenum type, GLvoid *pixels )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   if (width < 0 || height < 0) {
-      _mesa_error( ctx, GL_INVALID_VALUE,
-                   "glReadPixels(width=%d height=%d)", width, height );
-      return;
-   }
-
-   if (!pixels) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glReadPixels(pixels)" );
-      return;
-   }
-
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
-   ctx->Driver.ReadPixels(ctx, x, y, width, height,
-			  format, type, &ctx->Pack, pixels);
-}
-
-
-
 void
 _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
                   GLenum type )
@@ -163,6 +135,37 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
    }
 }
 
+#endif
+
+
+
+void
+_mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
+		  GLenum format, GLenum type, GLvoid *pixels )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (width < 0 || height < 0) {
+      _mesa_error( ctx, GL_INVALID_VALUE,
+                   "glReadPixels(width=%d height=%d)", width, height );
+      return;
+   }
+
+   if (!pixels) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glReadPixels(pixels)" );
+      return;
+   }
+
+   if (ctx->NewState)
+      _mesa_update_state(ctx);
+
+   ctx->Driver.ReadPixels(ctx, x, y, width, height,
+			  format, type, &ctx->Pack, pixels);
+}
+
+
+
 
 
 void
@@ -196,6 +199,7 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
 	 ctx->Driver.Bitmap( ctx, x, y, width, height, &ctx->Unpack, bitmap );
       }
    }
+#if _HAVE_FULL_GL
    else if (ctx->RenderMode==GL_FEEDBACK) {
       if (ctx->Current.RasterPosValid) {
 	 FLUSH_CURRENT(ctx, 0);
@@ -210,6 +214,7 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
    else if (ctx->RenderMode==GL_SELECT) {
       /* Bitmaps don't generate selection hits.  See appendix B of 1.1 spec. */
    }
+#endif
 
    /* update raster position */
    ctx->Current.RasterPos[0] += xmove;

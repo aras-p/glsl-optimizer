@@ -1233,3 +1233,11 @@ _mesa_PopClientAttrib(void)
       attr = next;
    }
 }
+
+
+void _mesa_init_attrib( GLcontext *ctx )
+{
+   /* Renderer and client attribute stacks */
+   ctx->AttribStackDepth = 0;
+   ctx->ClientAttribStackDepth = 0;
+}

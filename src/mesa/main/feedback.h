@@ -1,3 +1,7 @@
+/**
+ * \file feedback.h
+ * Selection and feedback modes functions.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,6 +41,8 @@
 	}							\
 	CTX->Feedback.Count++;
 
+
+extern void _mesa_init_feedback( GLcontext * ctx );
 
 extern void _mesa_feedback_vertex( GLcontext *ctx,
                                 const GLfloat win[4],

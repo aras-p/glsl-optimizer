@@ -1,3 +1,7 @@
+/**
+ * \file rastpos.h
+ * Raster position operations.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -105,8 +109,9 @@ _mesa_RasterPos4sv(const GLshort *v);
 
 
 /**********************************************************************/
-/***                     GL_MESA_window_pos                         ***/
+/** \name GL_MESA_window_pos                                          */
 /**********************************************************************/
+/*@{*/
 
 extern void
 _mesa_WindowPos2dMESA(GLdouble x, GLdouble y);
@@ -180,5 +185,9 @@ _mesa_WindowPos4ivMESA(const GLint *v);
 extern void
 _mesa_WindowPos4svMESA(const GLshort *v);
 
+extern void 
+_mesa_init_rastpos( GLcontext * ctx );
+
+/*@}*/
 
 #endif

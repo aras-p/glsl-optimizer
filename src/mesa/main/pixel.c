@@ -776,8 +776,6 @@ _mesa_PixelTransferi( GLenum pname, GLint param )
    _mesa_PixelTransferf( pname, (GLfloat) param );
 }
 
-
-
 /**********************************************************************/
 /*****                  Pixel processing functions               ******/
 /**********************************************************************/
@@ -1325,4 +1323,200 @@ _mesa_chan_to_float_span(const GLcontext *ctx, GLuint n,
       rgbaf[i][ACOMP] = (GLfloat) a * aScale;
    }
 #endif
+}
+
+/**********************************************************************/
+/*****                    State Management                        *****/
+/**********************************************************************/
+
+/*
+ * Return a bitmask of IMAGE_*_BIT flags which to indicate which
+ * pixel transfer operations are enabled.
+ */
+static void
+update_image_transfer_state(GLcontext *ctx)
+{
+   GLuint mask = 0;
+
+   if (ctx->Pixel.RedScale   != 1.0F || ctx->Pixel.RedBias   != 0.0F ||
+       ctx->Pixel.GreenScale != 1.0F || ctx->Pixel.GreenBias != 0.0F ||
+       ctx->Pixel.BlueScale  != 1.0F || ctx->Pixel.BlueBias  != 0.0F ||
+       ctx->Pixel.AlphaScale != 1.0F || ctx->Pixel.AlphaBias != 0.0F)
+      mask |= IMAGE_SCALE_BIAS_BIT;
+
+   if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset)
+      mask |= IMAGE_SHIFT_OFFSET_BIT;
+
+   if (ctx->Pixel.MapColorFlag)
+      mask |= IMAGE_MAP_COLOR_BIT;
+
+   if (ctx->Pixel.ColorTableEnabled)
+      mask |= IMAGE_COLOR_TABLE_BIT;
+
+   if (ctx->Pixel.Convolution1DEnabled ||
+       ctx->Pixel.Convolution2DEnabled ||
+       ctx->Pixel.Separable2DEnabled) {
+      mask |= IMAGE_CONVOLUTION_BIT;
+      if (ctx->Pixel.PostConvolutionScale[0] != 1.0F ||
+          ctx->Pixel.PostConvolutionScale[1] != 1.0F ||
+          ctx->Pixel.PostConvolutionScale[2] != 1.0F ||
+          ctx->Pixel.PostConvolutionScale[3] != 1.0F ||
+          ctx->Pixel.PostConvolutionBias[0] != 0.0F ||
+          ctx->Pixel.PostConvolutionBias[1] != 0.0F ||
+          ctx->Pixel.PostConvolutionBias[2] != 0.0F ||
+          ctx->Pixel.PostConvolutionBias[3] != 0.0F) {
+         mask |= IMAGE_POST_CONVOLUTION_SCALE_BIAS;
+      }
+   }
+
+   if (ctx->Pixel.PostConvolutionColorTableEnabled)
+      mask |= IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT;
+
+   if (ctx->ColorMatrixStack.Top->type != MATRIX_IDENTITY ||
+       ctx->Pixel.PostColorMatrixScale[0] != 1.0F ||
+       ctx->Pixel.PostColorMatrixBias[0]  != 0.0F ||
+       ctx->Pixel.PostColorMatrixScale[1] != 1.0F ||
+       ctx->Pixel.PostColorMatrixBias[1]  != 0.0F ||
+       ctx->Pixel.PostColorMatrixScale[2] != 1.0F ||
+       ctx->Pixel.PostColorMatrixBias[2]  != 0.0F ||
+       ctx->Pixel.PostColorMatrixScale[3] != 1.0F ||
+       ctx->Pixel.PostColorMatrixBias[3]  != 0.0F)
+      mask |= IMAGE_COLOR_MATRIX_BIT;
+
+   if (ctx->Pixel.PostColorMatrixColorTableEnabled)
+      mask |= IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT;
+
+   if (ctx->Pixel.HistogramEnabled)
+      mask |= IMAGE_HISTOGRAM_BIT;
+
+   if (ctx->Pixel.MinMaxEnabled)
+      mask |= IMAGE_MIN_MAX_BIT;
+
+   ctx->_ImageTransferState = mask;
+}
+
+
+void _mesa_update_pixel( GLcontext *ctx, GLuint new_state )
+{
+   if (new_state & _NEW_COLOR_MATRIX)
+      _math_matrix_analyse( ctx->ColorMatrixStack.Top );
+
+   /* References ColorMatrix.type (derived above).
+    */
+   if (new_state & _IMAGE_NEW_TRANSFER_STATE)
+      update_image_transfer_state(ctx);
+}
+
+
+/**********************************************************************/
+/*****                      Initialization                        *****/
+/**********************************************************************/
+
+void _mesa_init_pixel( GLcontext * ctx )
+{
+   int i;
+
+   /* Pixel group */
+   ctx->Pixel.RedBias = 0.0;
+   ctx->Pixel.RedScale = 1.0;
+   ctx->Pixel.GreenBias = 0.0;
+   ctx->Pixel.GreenScale = 1.0;
+   ctx->Pixel.BlueBias = 0.0;
+   ctx->Pixel.BlueScale = 1.0;
+   ctx->Pixel.AlphaBias = 0.0;
+   ctx->Pixel.AlphaScale = 1.0;
+   ctx->Pixel.DepthBias = 0.0;
+   ctx->Pixel.DepthScale = 1.0;
+   ctx->Pixel.IndexOffset = 0;
+   ctx->Pixel.IndexShift = 0;
+   ctx->Pixel.ZoomX = 1.0;
+   ctx->Pixel.ZoomY = 1.0;
+   ctx->Pixel.MapColorFlag = GL_FALSE;
+   ctx->Pixel.MapStencilFlag = GL_FALSE;
+   ctx->Pixel.MapStoSsize = 1;
+   ctx->Pixel.MapItoIsize = 1;
+   ctx->Pixel.MapItoRsize = 1;
+   ctx->Pixel.MapItoGsize = 1;
+   ctx->Pixel.MapItoBsize = 1;
+   ctx->Pixel.MapItoAsize = 1;
+   ctx->Pixel.MapRtoRsize = 1;
+   ctx->Pixel.MapGtoGsize = 1;
+   ctx->Pixel.MapBtoBsize = 1;
+   ctx->Pixel.MapAtoAsize = 1;
+   ctx->Pixel.MapStoS[0] = 0;
+   ctx->Pixel.MapItoI[0] = 0;
+   ctx->Pixel.MapItoR[0] = 0.0;
+   ctx->Pixel.MapItoG[0] = 0.0;
+   ctx->Pixel.MapItoB[0] = 0.0;
+   ctx->Pixel.MapItoA[0] = 0.0;
+   ctx->Pixel.MapItoR8[0] = 0;
+   ctx->Pixel.MapItoG8[0] = 0;
+   ctx->Pixel.MapItoB8[0] = 0;
+   ctx->Pixel.MapItoA8[0] = 0;
+   ctx->Pixel.MapRtoR[0] = 0.0;
+   ctx->Pixel.MapGtoG[0] = 0.0;
+   ctx->Pixel.MapBtoB[0] = 0.0;
+   ctx->Pixel.MapAtoA[0] = 0.0;
+   ctx->Pixel.HistogramEnabled = GL_FALSE;
+   ctx->Pixel.MinMaxEnabled = GL_FALSE;
+   ctx->Pixel.PixelTextureEnabled = GL_FALSE;
+   ctx->Pixel.FragmentRgbSource = GL_PIXEL_GROUP_COLOR_SGIS;
+   ctx->Pixel.FragmentAlphaSource = GL_PIXEL_GROUP_COLOR_SGIS;
+   ASSIGN_4V(ctx->Pixel.PostColorMatrixScale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Pixel.PostColorMatrixBias, 0.0, 0.0, 0.0, 0.0);
+   ASSIGN_4V(ctx->Pixel.ColorTableScale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Pixel.ColorTableBias, 0.0, 0.0, 0.0, 0.0);
+   ASSIGN_4V(ctx->Pixel.PCCTscale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Pixel.PCCTbias, 0.0, 0.0, 0.0, 0.0);
+   ASSIGN_4V(ctx->Pixel.PCMCTscale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Pixel.PCMCTbias, 0.0, 0.0, 0.0, 0.0);
+   ctx->Pixel.ColorTableEnabled = GL_FALSE;
+   ctx->Pixel.PostConvolutionColorTableEnabled = GL_FALSE;
+   ctx->Pixel.PostColorMatrixColorTableEnabled = GL_FALSE;
+   ctx->Pixel.Convolution1DEnabled = GL_FALSE;
+   ctx->Pixel.Convolution2DEnabled = GL_FALSE;
+   ctx->Pixel.Separable2DEnabled = GL_FALSE;
+   for (i = 0; i < 3; i++) {
+      ASSIGN_4V(ctx->Pixel.ConvolutionBorderColor[i], 0.0, 0.0, 0.0, 0.0);
+      ctx->Pixel.ConvolutionBorderMode[i] = GL_REDUCE;
+      ASSIGN_4V(ctx->Pixel.ConvolutionFilterScale[i], 1.0, 1.0, 1.0, 1.0);
+      ASSIGN_4V(ctx->Pixel.ConvolutionFilterBias[i], 0.0, 0.0, 0.0, 0.0);
+   }
+   for (i = 0; i < MAX_CONVOLUTION_WIDTH * MAX_CONVOLUTION_WIDTH * 4; i++) {
+      ctx->Convolution1D.Filter[i] = 0.0;
+      ctx->Convolution2D.Filter[i] = 0.0;
+      ctx->Separable2D.Filter[i] = 0.0;
+   }
+   ASSIGN_4V(ctx->Pixel.PostConvolutionScale, 1.0, 1.0, 1.0, 1.0);
+   ASSIGN_4V(ctx->Pixel.PostConvolutionBias, 0.0, 0.0, 0.0, 0.0);
+
+   /* Pixel transfer */
+   ctx->Pack.Alignment = 4;
+   ctx->Pack.RowLength = 0;
+   ctx->Pack.ImageHeight = 0;
+   ctx->Pack.SkipPixels = 0;
+   ctx->Pack.SkipRows = 0;
+   ctx->Pack.SkipImages = 0;
+   ctx->Pack.SwapBytes = GL_FALSE;
+   ctx->Pack.LsbFirst = GL_FALSE;
+   ctx->Unpack.Alignment = 4;
+   ctx->Unpack.RowLength = 0;
+   ctx->Unpack.ImageHeight = 0;
+   ctx->Unpack.SkipPixels = 0;
+   ctx->Unpack.SkipRows = 0;
+   ctx->Unpack.SkipImages = 0;
+   ctx->Unpack.SwapBytes = GL_FALSE;
+   ctx->Unpack.LsbFirst = GL_FALSE;
+
+   if (ctx->Visual.doubleBufferMode) {
+      ctx->Pixel.ReadBuffer = GL_BACK;
+      ctx->Pixel._ReadSrcMask = BACK_LEFT_BIT;
+   }
+   else {
+      ctx->Pixel.ReadBuffer = GL_FRONT;
+      ctx->Pixel._ReadSrcMask = FRONT_LEFT_BIT;
+   }
+
+   /* Miscellaneous */
+   ctx->_ImageTransferState = 0;
 }

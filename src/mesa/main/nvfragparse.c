@@ -24,7 +24,7 @@
 
 /**
  * \file nvfragparse.c
- * \brief NVIDIA fragment program parser.
+ * NVIDIA fragment program parser.
  * \author Brian Paul
  */
 

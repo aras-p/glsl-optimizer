@@ -1,3 +1,7 @@
+/**
+ * \file points.c
+ * Point operations.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +36,19 @@
 #include "mtypes.h"
 
 
-
+/**
+ * Set the point size.
+ *
+ * \param size pointer diameter.
+ *
+ * \sa glPointSize().
+ *
+ * Verifies the parameter and updates gl_point_attrib::Size. On a change,
+ * flushes the vertices, updates the clamped point size and marks the
+ * DD_POINT_SIZE flag in __GLcontextRec::_TriangleCaps for the drivers if the
+ * size is different from one. Notifies the driver via
+ * the dd_function_table::PointSize callback.
+ */
 void
 _mesa_PointSize( GLfloat size )
 {
@@ -63,6 +79,7 @@ _mesa_PointSize( GLfloat size )
 }
 
 
+#if _HAVE_FULL_GL
 
 /*
  * Added by GL_NV_point_sprite
@@ -127,7 +144,6 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
 
             if (tmp != ctx->Point._Attenuated) {
                ctx->_TriangleCaps ^= DD_POINT_ATTEN;
-	       ctx->_NeedEyeCoords ^= NEED_EYE_POINT_ATTEN;
             }
          }
          else {
@@ -217,4 +233,36 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
 
    if (ctx->Driver.PointParameterfv)
       (*ctx->Driver.PointParameterfv)(ctx, pname, params);
+}
+#endif
+
+
+/**
+ * Initialize the context point state.
+ *
+ * \param ctx GL context.
+ *
+ * Initializes __GLcontextRec::Point and point related constants in
+ * __GLcontextRec::Const.
+ */
+void _mesa_init_point( GLcontext * ctx )
+{
+   int i;
+   
+   /* Point group */
+   ctx->Point.SmoothFlag = GL_FALSE;
+   ctx->Point.Size = 1.0;
+   ctx->Point._Size = 1.0;
+   ctx->Point.Params[0] = 1.0;
+   ctx->Point.Params[1] = 0.0;
+   ctx->Point.Params[2] = 0.0;
+   ctx->Point._Attenuated = GL_FALSE;
+   ctx->Point.MinSize = 0.0;
+   ctx->Point.MaxSize = ctx->Const.MaxPointSize;
+   ctx->Point.Threshold = 1.0;
+   ctx->Point.PointSprite = GL_FALSE; /* GL_NV_point_sprite */
+   ctx->Point.SpriteRMode = GL_ZERO; /* GL_NV_point_sprite */
+   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+      ctx->Point.CoordReplace[i] = GL_FALSE; /* GL_NV_point_sprite */
+   }
 }

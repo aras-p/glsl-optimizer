@@ -1,3 +1,12 @@
+/**
+ * \file varray.h
+ * Vertex arrays.
+ *
+ * \if subset
+ * (No-op)
+ *
+ * \endif
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +39,7 @@
 
 #include "mtypes.h"
 
+#if _HAVE_FULL_GL
 
 extern void
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride,
@@ -124,5 +134,14 @@ extern void
 _mesa_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
                             const GLvoid **indices, GLsizei primcount );
 
+extern void
+_mesa_init_varray( GLcontext * ctx );
+
+#else
+
+/** No-op */
+#define _mesa_init_varray( c )  ((void)0)
+
+#endif
 
 #endif

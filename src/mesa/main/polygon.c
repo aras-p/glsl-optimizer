@@ -1,3 +1,7 @@
+/**
+ * \file polygon.c
+ * Polygon operations.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -34,6 +38,17 @@
 #include "mtypes.h"
 
 
+/**
+ * Specify whether to cull front- or back-facing facets.
+ *
+ * \param mode culling mode.
+ *
+ * \sa glCullFace().
+ *
+ * Verifies the parameter and updates gl_polygon_attrib::CullFaceMode. On
+ * change, flushes the vertices and notifies the driver via
+ * the dd_function_table::CullFace callback.
+ */
 void
 _mesa_CullFace( GLenum mode )
 {
@@ -59,7 +74,17 @@ _mesa_CullFace( GLenum mode )
 }
 
 
-
+/**
+ * Define front- and back-facing 
+ *
+ * \param mode orientation of front-facing polygons.
+ *
+ * \sa glFrontFace().
+ *
+ * Verifies the parameter and updates gl_polygon_attrib::FrontFace. On change
+ * flushes the vertices and notifies the driver via
+ * the dd_function_table::FrontFace callback.
+ */
 void
 _mesa_FrontFace( GLenum mode )
 {
@@ -87,7 +112,18 @@ _mesa_FrontFace( GLenum mode )
 }
 
 
-
+/**
+ * Set the polygon rasterization mode.
+ *
+ * \param face the polygons which \p mode applies to.
+ * \param mode how polygons should be rasterized.
+ *
+ * \sa glPolygonMode(). 
+ * 
+ * Verifies the parameters and updates gl_polygon_attrib::FrontMode and
+ * gl_polygon_attrib::BackMode. On change flushes the vertices and notifies the
+ * driver via the dd_function_table::PolygonMode callback.
+ */
 void
 _mesa_PolygonMode( GLenum face, GLenum mode )
 {
@@ -139,7 +175,7 @@ _mesa_PolygonMode( GLenum face, GLenum mode )
    }
 }
 
-
+#if _HAVE_FULL_GL
 
 void
 _mesa_PolygonStipple( const GLubyte *pattern )
@@ -172,7 +208,6 @@ _mesa_GetPolygonStipple( GLubyte *dest )
 }
 
 
-
 void
 _mesa_PolygonOffset( GLfloat factor, GLfloat units )
 {
@@ -202,3 +237,68 @@ _mesa_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
    GET_CURRENT_CONTEXT(ctx);
    _mesa_PolygonOffset(factor, bias * ctx->DepthMaxF );
 }
+
+#endif
+
+
+/**********************************************************************/
+/** \name State Management */
+/*@{*/
+
+/*
+ * Check polygon state and set DD_TRI_CULL_FRONT_BACK and/or DD_TRI_OFFSET
+ * in ctx->_TriangleCaps if needed.
+ */
+void _mesa_update_polygon( GLcontext *ctx )
+{
+   ctx->_TriangleCaps &= ~(DD_TRI_CULL_FRONT_BACK | DD_TRI_OFFSET);
+
+   if (ctx->Polygon.CullFlag && ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
+      ctx->_TriangleCaps |= DD_TRI_CULL_FRONT_BACK;
+
+   /* Any Polygon offsets enabled? */
+   if (ctx->Polygon.OffsetPoint ||
+       ctx->Polygon.OffsetLine ||
+       ctx->Polygon.OffsetFill) {
+      ctx->_TriangleCaps |= DD_TRI_OFFSET;
+   }
+}
+
+/*@}*/
+
+
+/**********************************************************************/
+/** \name Initialization */
+/*@{*/
+
+/**
+ * Initialize the context polygon state.
+ *
+ * \param ctx GL context.
+ *
+ * Initializes __GLcontextRec::Polygon and __GLcontextRec::PolygonStipple
+ * attribute groups.
+ */
+void _mesa_init_polygon( GLcontext * ctx )
+{
+   /* Polygon group */
+   ctx->Polygon.CullFlag = GL_FALSE;
+   ctx->Polygon.CullFaceMode = GL_BACK;
+   ctx->Polygon.FrontFace = GL_CCW;
+   ctx->Polygon._FrontBit = 0;
+   ctx->Polygon.FrontMode = GL_FILL;
+   ctx->Polygon.BackMode = GL_FILL;
+   ctx->Polygon.SmoothFlag = GL_FALSE;
+   ctx->Polygon.StippleFlag = GL_FALSE;
+   ctx->Polygon.OffsetFactor = 0.0F;
+   ctx->Polygon.OffsetUnits = 0.0F;
+   ctx->Polygon.OffsetPoint = GL_FALSE;
+   ctx->Polygon.OffsetLine = GL_FALSE;
+   ctx->Polygon.OffsetFill = GL_FALSE;
+
+
+   /* Polygon Stipple group */
+   MEMSET( ctx->PolygonStipple, 0xff, 32*sizeof(GLuint) );
+}
+
+/*@}*/

@@ -1,3 +1,12 @@
+/**
+ * \file fog.h
+ * Fog operations.
+ * 
+ * \if subset
+ * (No-op)
+ *
+ * \endif
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,21 +40,27 @@
 #include "mtypes.h"
 
 
+#if _HAVE_FULL_GL
 
 extern void
 _mesa_Fogf(GLenum pname, GLfloat param);
 
-
 extern void
 _mesa_Fogi(GLenum pname, GLint param );
-
 
 extern void
 _mesa_Fogfv(GLenum pname, const GLfloat *params );
 
-
 extern void
 _mesa_Fogiv(GLenum pname, const GLint *params );
 
+extern void _mesa_init_fog( GLcontext * ctx );
+
+#else
+
+/** No-op */
+#define _mesa_init_fog( c ) ((void)0)
+
+#endif
 
 #endif

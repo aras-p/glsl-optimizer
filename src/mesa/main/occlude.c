@@ -24,7 +24,7 @@
 
 
 /*
- * \brief Functions to implement the GL_ARB_occlusion_query extension.
+ * Functions to implement the GL_ARB_occlusion_query extension.
  */
 
 

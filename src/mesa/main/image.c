@@ -1,3 +1,7 @@
+/**
+ * \file image.c
+ * Image handling.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +27,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
 #include "glheader.h"
 #include "colormac.h"
 #include "context.h"
@@ -34,18 +39,16 @@
 #include "mtypes.h"
 
 
-
-/* Compute ceiling of integer quotient of A divided by B: */
+/** Compute ceiling of integer quotient of A divided by B. */
 #define CEILING( A, B )  ( (A) % (B) == 0 ? (A)/(B) : (A)/(B)+1 )
 
 
-
-/*
- * These are the image packing parameters for Mesa's internal images.
- * That is, _mesa_unpack_image() returns image data in this format.
- * When we execute image commands (glDrawPixels, glTexImage, etc)
- * from within display lists we have to be sure to set the current
- * unpacking params to these values!
+/**
+ * Image packing parameters for Mesa's internal images.
+ * 
+ * _mesa_unpack_image() returns image data in this format.  When we execute
+ * image commands (glDrawPixels(), glTexImage(), etc) from within display lists
+ * we have to be sure to set the current unpacking parameters to these values!
  */
 const struct gl_pixelstore_attrib _mesa_native_packing = {
    1,            /* Alignment */
@@ -61,14 +64,18 @@ const struct gl_pixelstore_attrib _mesa_native_packing = {
 };
 
 
-
-/*
+/**
  * Flip the 8 bits in each byte of the given array.
  *
- * XXX try this trick to flip bytes someday:
+ * \param p array.
+ * \param n number of bytes.
+ *
+ * \todo try this trick to flip bytes someday:
+ * \code
  *  v = ((v & 0x55555555) << 1) | ((v >> 1) & 0x55555555);
  *  v = ((v & 0x33333333) << 2) | ((v >> 2) & 0x33333333);
  *  v = ((v & 0x0f0f0f0f) << 4) | ((v >> 4) & 0x0f0f0f0f);
+ * \endcode
  */
 static void
 flip_bytes( GLubyte *p, GLuint n )
@@ -90,8 +97,11 @@ flip_bytes( GLubyte *p, GLuint n )
 }
 
 
-/*
+/**
  * Flip the order of the 2 bytes in each word in the given array.
+ *
+ * \param p array.
+ * \param n number of words.
  */
 void
 _mesa_swap2( GLushort *p, GLuint n )
@@ -124,12 +134,13 @@ _mesa_swap4( GLuint *p, GLuint n )
 }
 
 
-
-
-/*
- * Return the size, in bytes, of the given GL datatype.
- * Return 0 if GL_BITMAP.
- * Return -1 if invalid type enum.
+/**
+ * Get the size of a GL data type.
+ *
+ * \param type GL data type.
+ *
+ * \return the size, in bytes, of the given data type, 0 if a GL_BITMAP, or -1
+ * if an invalid type enum.
  */
 GLint _mesa_sizeof_type( GLenum type )
 {
@@ -156,9 +167,9 @@ GLint _mesa_sizeof_type( GLenum type )
 }
 
 
-/*
- * Same as _mesa_sizeof_packed_type() but we also accept the
- * packed pixel format datatypes.
+/**
+ * Same as _mesa_sizeof_type() but also accepting the packed pixel
+ * format data types.
  */
 GLint _mesa_sizeof_packed_type( GLenum type )
 {
@@ -212,10 +223,12 @@ GLint _mesa_sizeof_packed_type( GLenum type )
 }
 
 
-
-/*
- * Return the number of components in a GL enum pixel type.
- * Return -1 if bad format.
+/**
+ * Get the number of components in a pixel format.
+ *
+ * \param format pixel format.
+ *
+ * \return the number of components in the given format, or -1 if a bad format.
  */
 GLint _mesa_components_in_format( GLenum format )
 {
@@ -256,9 +269,13 @@ GLint _mesa_components_in_format( GLenum format )
 }
 
 
-/*
- * Return bytes per pixel for given format and type
- * Return -1 if bad format or type.
+/**
+ * Get the bytes per pixel of pixel format type pair.
+ *
+ * \param format pixel format.
+ * \param type pixel type.
+ *
+ * \return bytes per pixel, or -1 if a bad format or type was given.
  */
 GLint _mesa_bytes_per_pixel( GLenum format, GLenum type )
 {
@@ -320,9 +337,14 @@ GLint _mesa_bytes_per_pixel( GLenum format, GLenum type )
 }
 
 
-/*
- * Test if the given pixel format and type are legal.
- * Return GL_TRUE for legal, GL_FALSE for illegal.
+/**
+ * Test for a legal pixel format and type.
+ *
+ * \param format pixel format.
+ * \param type pixel type.
+ *
+ * \return GL_TRUE if the given pixel format and type are legal, or GL_FALSE
+ * otherwise.
  */
 GLboolean
 _mesa_is_legal_format_and_type( GLenum format, GLenum type )
@@ -417,18 +439,27 @@ _mesa_is_legal_format_and_type( GLenum format, GLenum type )
 }
 
 
-
-/*
- * Return the address of a pixel in an image (actually a volume).
- * Pixel unpacking/packing parameters are observed according to 'packing'.
- * Input:  image - start of image data
- *         width, height - size of image
- *         format - image format
- *         type - pixel component type
- *         packing - the pixelstore attributes
- *         img - which image in the volume (0 for 1D or 2D images)
- *         row, column - location of pixel in the image
- * Return:  address of pixel at (image,row,column) in image or NULL if error.
+/**
+ * Get the address of a pixel in an image (actually a volume).
+ *
+ * Pixel unpacking/packing parameters are observed according to \p packing.
+ *
+ * \param image start of image data.
+ * \param width image width.
+ * \param height image height.
+ * \param format pixel format.
+ * \param type pixel data type.
+ * \param packing the pixelstore attributes
+ * \param img which image in the volume (0 for 1D or 2D images)
+ * \param row of pixel in the image
+ * \param column of pixel in the image
+ * 
+ * \return address of pixel on success, or NULL on error.
+ *
+ * According to the \p packing information calculates the number of pixel/bytes
+ * per row/image and refers it.
+ *
+ * \sa gl_pixelstore_attrib.
  */
 GLvoid *
 _mesa_image_address( const struct gl_pixelstore_attrib *packing,
@@ -530,10 +561,19 @@ _mesa_image_address( const struct gl_pixelstore_attrib *packing,
 }
 
 
-
-/*
- * Compute the stride between image rows (in bytes) for the given
- * pixel packing parameters and image width, format and type.
+/**
+ * Compute the stride between image rows.
+ *
+ * \param packing the pixelstore attributes
+ * \param width image width.
+ * \param format pixel format.
+ * \param type pixel data type.
+ * 
+ * \return the stride in bytes for the given parameters.
+ *
+ * Computes the number of bytes per pixel and row and compensates for alignment.
+ *
+ * \sa gl_pixelstore_attrib.
  */
 GLint
 _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
@@ -577,6 +617,7 @@ _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
 }
 
 
+#if _HAVE_FULL_GL
 
 /*
  * Compute the stride between images in a 3D texture (in bytes) for the given
@@ -616,8 +657,6 @@ _mesa_image_image_stride( const struct gl_pixelstore_attrib *packing,
 }
 
 
-
-
 /*
  * Unpack a 32x32 pixel polygon stipple from user memory using the
  * current pixel unpack settings.
@@ -643,7 +682,6 @@ _mesa_unpack_polygon_stipple( const GLubyte *pattern, GLuint dest[32],
       FREE(ptrn);
    }
 }
-
 
 
 /*
@@ -863,7 +901,6 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
 }
 
 
-
 /*
  * Used to pack an array [][4] of RGBA GLchan colors as specified
  * by the dstFormat, dstType and dstPacking.  Used by glReadPixels,
@@ -942,11 +979,11 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
       }
       /* update histogram count */
       if (transferOps & IMAGE_HISTOGRAM_BIT) {
-         _mesa_update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba);
+/*          _mesa_update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba); */
       }
       /* min/max here */
       if (transferOps & IMAGE_MIN_MAX_BIT) {
-         _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
+/*          _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba); */
          if (ctx->MinMax.Sink) {
             UNDEFARRAY(rgbaCopy);  /* mac 32k limitation */
             return;
@@ -1779,18 +1816,17 @@ _mesa_pack_float_rgba_span( GLcontext *ctx,
 }
 
 
-
 /*
  * Pack the given RGBA span into client memory at 'dest' address
  * in the given pixel format and type.
  * Optionally apply the enabled pixel transfer ops.
  * Pack into memory using the given packing params struct.
  * This is used by glReadPixels and glGetTexImage?D()
- * Input:  ctx - the context
+ * \param ctx - the context
  *         n - number of pixels in the span
  *         rgba - the pixels
  *         format - dest packing format
- *         type - dest packing datatype
+ *         type - dest packing data type
  *         destination - destination packing address
  *         packing - pixel packing parameters
  *         transferOps - bitmask of IMAGE_*_BIT operations to apply
@@ -2033,7 +2069,6 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
 }
 
 
-
 /*
  * This function extracts floating point RGBA values from arbitrary
  * image data.  srcFormat and srcType are the format and type parameters
@@ -2046,7 +2081,7 @@ extract_uint_indexes(GLuint n, GLuint indexes[],
  * Args:  n - number of pixels
  *        rgba - output colors
  *        srcFormat - format of incoming data
- *        srcType - datatype of incoming data
+ *        srcType - data type of incoming data
  *        src - source data pointer
  *        swapBytes - perform byteswapping of incoming data?
  */
@@ -2537,18 +2572,17 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 }
 
 
-
 /*
  * Unpack a row of color image data from a client buffer according to
  * the pixel unpacking parameters.
  * Return GLubyte values in the specified dest image format.
  * This is (or will be) used by glDrawPixels and glTexImage?D().
- * Input:  ctx - the context
+ * \param ctx - the context
  *         n - number of pixels in the span
  *         dstFormat - format of destination color array
  *         dest - the destination color array
  *         srcFormat - source image format
- *         srcType - source image  datatype
+ *         srcType - source image  data type
  *         source - source image pointer
  *         srcPacking - pixel unpacking parameters
  *         transferOps - bitmask of IMAGE_*_BIT values of operations to apply
@@ -2818,11 +2852,11 @@ _mesa_unpack_chan_color_span( GLcontext *ctx,
          }
          /* update histogram count */
          if (transferOps & IMAGE_HISTOGRAM_BIT) {
-            _mesa_update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba);
+/*             _mesa_update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba); */
          }
          /* min/max here */
          if (transferOps & IMAGE_MIN_MAX_BIT) {
-            _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
+/*             _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba); */
          }
       }
 
@@ -3095,11 +3129,11 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
          }
          /* update histogram count */
          if (transferOps & IMAGE_HISTOGRAM_BIT) {
-            _mesa_update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba);
+/*             _mesa_update_histogram(ctx, n, (CONST GLfloat (*)[4]) rgba); */
          }
          /* min/max here */
          if (transferOps & IMAGE_MIN_MAX_BIT) {
-            _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba);
+/*             _mesa_update_minmax(ctx, n, (CONST GLfloat (*)[4]) rgba); */
          }
       }
 
@@ -3223,8 +3257,6 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
 }
 
 
-
-
 /*
  * Unpack a row of color index data from a client buffer according to
  * the pixel unpacking parameters.
@@ -3232,7 +3264,7 @@ _mesa_unpack_float_color_span( GLcontext *ctx,
  *
  * Args:  ctx - the context
  *        n - number of pixels
- *        dstType - destination datatype
+ *        dstType - destination data type
  *        dest - destination array
  *        srcType - source pixel type
  *        source - source data pointer
@@ -3431,7 +3463,6 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
 }
 
 
-
 /*
  * Unpack a row of stencil data from a client buffer according to
  * the pixel unpacking parameters.
@@ -3439,7 +3470,7 @@ _mesa_pack_index_span( const GLcontext *ctx, GLuint n,
  *
  * Args:  ctx - the context
  *        n - number of pixels
- *        dstType - destination datatype
+ *        dstType - destination data type
  *        dest - destination array
  *        srcType - source pixel type
  *        source - source data pointer
@@ -3684,7 +3715,6 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
 }
 
 
-
 void
 _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
                          GLenum srcType, const GLvoid *source,
@@ -3763,7 +3793,6 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n, GLfloat *dest,
       }
    }
 }
-
 
 
 /*
@@ -3875,8 +3904,6 @@ _mesa_pack_depth_span( const GLcontext *ctx, GLuint n, GLvoid *dest,
 }
 
 
-
-
 /*
  * Unpack image data.  Apply byteswapping, byte flipping (bitmap).
  * Return all image data in a contiguous block.
@@ -3945,3 +3972,5 @@ _mesa_unpack_image( GLsizei width, GLsizei height, GLsizei depth,
       return destBuffer;
    }
 }
+
+#endif

@@ -1,3 +1,8 @@
+/**
+ * \file rastpos.c
+ * Raster position operations.
+ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -24,7 +29,7 @@
 
 
 #include "glheader.h"
-#include "clip.h"
+/*#include "clip.h"*/
 #include "colormac.h"
 #include "context.h"
 #include "feedback.h"
@@ -36,13 +41,14 @@
 #include "mtypes.h"
 
 #include "math/m_matrix.h"
-#include "math/m_xform.h"
 
 
 /**
  * Clip a point against the view volume.
- * \param v  vertex-vector describing the point to clip
- * \return  0 = outside view volume, 1 = inside view volume
+ *
+ * \param v vertex vector describing the point to clip.
+ * 
+ * \return zero if outside view volume, or one if inside.
  */
 static GLuint
 viewclip_point( const GLfloat v[] )
@@ -58,7 +64,13 @@ viewclip_point( const GLfloat v[] )
 }
 
 
-/* As above, but only clip test against far/near Z planes */
+/**
+ * Clip a point against the far/near Z clipping planes.
+ *
+ * \param v vertex vector describing the point to clip.
+ * 
+ * \return zero if outside view volume, or one if inside.
+ */
 static GLuint
 viewclip_point_z( const GLfloat v[] )
 {
@@ -71,11 +83,13 @@ viewclip_point_z( const GLfloat v[] )
 }
 
 
-
 /**
  * Clip a point against the user clipping planes.
- * \param v  vertex-vector describing the point to clip.
- * \return  0 = point was clipped, 1 = point not clipped
+ * 
+ * \param ctx GL context.
+ * \param v vertex vector describing the point to clip.
+ * 
+ * \return zero if the point was clipped, or one otherwise.
  */
 static GLuint
 userclip_point( GLcontext *ctx, const GLfloat v[] )
@@ -102,12 +116,12 @@ userclip_point( GLcontext *ctx, const GLfloat v[] )
  * This has been split off to allow the normal shade routines to
  * get a little closer to the vertex buffer, and to use the
  * GLvector objects directly.
- * Input: ctx - the context
- *        vertex - vertex location
- *        normal - normal vector
- * Output: Rcolor - returned color
- *         Rspec  - returned specular color (if separate specular enabled)
- *         Rindex - returned color index
+ * \param ctx the context
+ * \param vertex vertex location
+ * \param normal normal vector
+ * \param Rcolor returned color
+ * \param Rspec returned specular color (if separate specular enabled)
+ * \param Rindex returned color index
  */
 static void
 shade_rastpos(GLcontext *ctx,
@@ -265,8 +279,23 @@ shade_rastpos(GLcontext *ctx,
 
 
 /**
+ * Set the raster position for pixel operations.
+ *
  * All glRasterPos command call this function to update the current
  * raster position.
+ * 
+ * \param ctx GL context.
+ * \param x x coordinate for the raster position.
+ * \param y y coordinate for the raster position.
+ * \param z z coordinate for the raster position.
+ * \param w w coordinate for the raster position.
+ * 
+ * \sa Called by _mesa_RasterPos4f().
+ *
+ * Flushes the vertices, transforms and clips the vertex coordinates, and
+ * finally sets the current raster position and associated data in
+ * __GLcontextRec::Current.  When in selection mode calls
+ * _mesa_update_hitflag() with the current raster position.
  */
 static void
 raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
@@ -305,7 +334,6 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
                         ctx->Current.RasterColor,
                         ctx->Current.RasterSecondaryColor,
                         &ctx->Current.RasterIndex );
-
       }
       else {
          /* use current color or index */
@@ -382,60 +410,70 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 }
 
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos2d(GLdouble x, GLdouble y)
 {
    _mesa_RasterPos4f((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos2f(GLfloat x, GLfloat y)
 {
    _mesa_RasterPos4f(x, y, 0.0F, 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos2i(GLint x, GLint y)
 {
    _mesa_RasterPos4f((GLfloat) x, (GLfloat) y, 0.0F, 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos2s(GLshort x, GLshort y)
 {
    _mesa_RasterPos4f(x, y, 0.0F, 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 {
    _mesa_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 {
    _mesa_RasterPos4f(x, y, z, 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos3i(GLint x, GLint y, GLint z)
 {
    _mesa_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos3s(GLshort x, GLshort y, GLshort z)
 {
    _mesa_RasterPos4f(x, y, z, 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
    _mesa_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
+/** Calls raster_pos4f() */
 void
 _mesa_RasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
@@ -443,66 +481,77 @@ _mesa_RasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    raster_pos4f(ctx, x, y, z, w);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos4i(GLint x, GLint y, GLint z, GLint w)
 {
    _mesa_RasterPos4f((GLfloat) x, (GLfloat) y, (GLfloat) z, (GLfloat) w);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
 {
    _mesa_RasterPos4f(x, y, z, w);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos2dv(const GLdouble *v)
 {
    _mesa_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos2fv(const GLfloat *v)
 {
    _mesa_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos2iv(const GLint *v)
 {
    _mesa_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], 0.0F, 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos2sv(const GLshort *v)
 {
    _mesa_RasterPos4f(v[0], v[1], 0.0F, 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos3dv(const GLdouble *v)
 {
    _mesa_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos3fv(const GLfloat *v)
 {
    _mesa_RasterPos4f(v[0], v[1], v[2], 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos3iv(const GLint *v)
 {
    _mesa_RasterPos4f((GLfloat) v[0], (GLfloat) v[1], (GLfloat) v[2], 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos3sv(const GLshort *v)
 {
    _mesa_RasterPos4f(v[0], v[1], v[2], 1.0F);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos4dv(const GLdouble *v)
 {
@@ -510,12 +559,14 @@ _mesa_RasterPos4dv(const GLdouble *v)
 		     (GLfloat) v[2], (GLfloat) v[3]);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos4fv(const GLfloat *v)
 {
    _mesa_RasterPos4f(v[0], v[1], v[2], v[3]);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos4iv(const GLint *v)
 {
@@ -523,6 +574,7 @@ _mesa_RasterPos4iv(const GLint *v)
 		     (GLfloat) v[2], (GLfloat) v[3]);
 }
 
+/** Calls _mesa_RasterPos4f() */
 void
 _mesa_RasterPos4sv(const GLshort *v)
 {
@@ -534,7 +586,7 @@ _mesa_RasterPos4sv(const GLshort *v)
 /***           GL_ARB_window_pos / GL_MESA_window_pos               ***/
 /**********************************************************************/
 
-
+#if FEATURE_windowpos
 /**
  * All glWindowPosMESA and glWindowPosARB commands call this function to
  * update the current raster position.
@@ -758,7 +810,7 @@ _mesa_WindowPos4svMESA(const GLshort *v)
    window_pos4f(v[0], v[1], v[2], v[3]);
 }
 
-
+#endif
 
 #if 0
 
@@ -797,3 +849,57 @@ void glWindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 }
 
 #endif
+
+
+/**********************************************************************/
+/** \name Initialization                                              */
+/**********************************************************************/
+/*@{*/
+
+/**
+ * Initialize the context current raster position information.
+ *
+ * \param ctx GL context.
+ *
+ * Initialize the current raster position information in
+ * __GLcontextRec::Current, and adds the extension entry points to the
+ * dispatcher.
+ */
+void _mesa_init_rastpos( GLcontext * ctx )
+{
+   int i;
+
+   ASSIGN_4V( ctx->Current.RasterPos, 0.0, 0.0, 0.0, 1.0 );
+   ctx->Current.RasterDistance = 0.0;
+   ASSIGN_4V( ctx->Current.RasterColor, 1.0, 1.0, 1.0, 1.0 );
+   ctx->Current.RasterIndex = 1;
+   for (i=0; i<MAX_TEXTURE_UNITS; i++)
+      ASSIGN_4V( ctx->Current.RasterTexCoords[i], 0.0, 0.0, 0.0, 1.0 );
+   ctx->Current.RasterPosValid = GL_TRUE;
+
+  /*
+    * For XFree86/DRI: tell libGL to add these functions to the dispatcher.
+    * Basically, we should add all extension functions above offset 577.
+    * This enables older libGL libraries to work with newer drivers that
+    * have newer extensions.
+    */
+   /* GL_ARB_window_pos aliases with GL_MESA_window_pos */
+   _glapi_add_entrypoint("glWindowPos2dARB", 513);
+   _glapi_add_entrypoint("glWindowPos2dvARB", 514);
+   _glapi_add_entrypoint("glWindowPos2fARB", 515);
+   _glapi_add_entrypoint("glWindowPos2fvARB", 516);
+   _glapi_add_entrypoint("glWindowPos2iARB", 517);
+   _glapi_add_entrypoint("glWindowPos2ivARB", 518);
+   _glapi_add_entrypoint("glWindowPos2sARB", 519);
+   _glapi_add_entrypoint("glWindowPos2svARB", 520);
+   _glapi_add_entrypoint("glWindowPos3dARB", 521);
+   _glapi_add_entrypoint("glWindowPos3dvARB", 522);
+   _glapi_add_entrypoint("glWindowPos3fARB", 523);
+   _glapi_add_entrypoint("glWindowPos3fvARB", 524);
+   _glapi_add_entrypoint("glWindowPos3iARB", 525);
+   _glapi_add_entrypoint("glWindowPos3ivARB", 526);
+   _glapi_add_entrypoint("glWindowPos3sARB", 527);
+   _glapi_add_entrypoint("glWindowPos3svARB", 528);
+}
+
+/*@}*/

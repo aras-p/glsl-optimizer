@@ -105,7 +105,7 @@ static int *templates[7] = {
    m_2d_no_rot,
    m_3d
 };
-static enum matrix_type mtypes[7] = {
+static enum GLmatrixtype mtypes[7] = {
    MATRIX_GENERAL,
    MATRIX_IDENTITY,
    MATRIX_3D_NO_ROT,

@@ -1,3 +1,7 @@
+/**
+ * \file buffers.h
+ * Frame buffer management functions declarations.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -22,6 +26,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 
 
 #ifndef BUFFERS_H
@@ -56,5 +61,10 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height );
 extern void
 _mesa_SampleCoverageARB(GLclampf value, GLboolean invert);
 
+extern void 
+_mesa_init_buffers( GLcontext * ctx );
+
+extern void 
+_mesa_update_buffers( GLcontext *ctx );
 
 #endif

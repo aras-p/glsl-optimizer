@@ -1,3 +1,7 @@
+/**
+ * \file matrix.h
+ * Matrix operations.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -103,6 +107,25 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei hei
 
 extern void
 _mesa_DepthRange( GLclampd nearval, GLclampd farval );
+
+
+extern void 
+_mesa_init_matrix( GLcontext * ctx );
+
+extern void 
+_mesa_init_transform( GLcontext *ctx );
+
+extern void 
+_mesa_init_viewport( GLcontext *ctx );
+
+extern void
+_mesa_free_matrix_data( GLcontext *ctx );
+
+extern void 
+_mesa_free_viewport_data( GLcontext *ctx );
+
+extern void 
+_mesa_update_modelview_project( GLcontext *ctx, GLuint newstate );
 
 
 #endif

@@ -1,3 +1,7 @@
+/**
+ * \file get.h
+ * State query functions.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,7 +55,5 @@ _mesa_GetString( GLenum name );
 
 extern GLenum
 _mesa_GetError( void );
-
-
 
 #endif

@@ -1,3 +1,7 @@
+/**
+ * \file texobj.h
+ * Texture object management.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,10 +35,10 @@
 #include "mtypes.h"
 
 
-
-/*
- * Internal functions
+/**
+ * \name Internal functions
  */
+/*@{*/
 
 extern struct gl_texture_object *
 _mesa_new_texture_object( GLcontext *ctx, GLuint name, GLenum target );
@@ -60,10 +64,13 @@ extern void
 _mesa_test_texobj_completeness( const GLcontext *ctx,
                                 struct gl_texture_object *obj );
 
+/*@}*/
 
-/*
- * API functions
+
+/**
+ * \name API functions
  */
+/*@{*/
 
 extern void
 _mesa_GenTextures( GLsizei n, GLuint *textures );
@@ -86,9 +93,9 @@ extern GLboolean
 _mesa_AreTexturesResident( GLsizei n, const GLuint *textures,
                            GLboolean *residences );
 
-
 extern GLboolean
 _mesa_IsTexture( GLuint texture );
 
+/*@}*/
 
 #endif

@@ -1099,3 +1099,38 @@ _mesa_ResetMinmax(GLenum target)
    ctx->MinMax.Min[ACOMP] = 1000;    ctx->MinMax.Max[ACOMP] = -1000;
    ctx->NewState |= _NEW_PIXEL;
 }
+
+
+
+/**********************************************************************/
+/*****                      Initialization                        *****/
+/**********************************************************************/
+
+void _mesa_init_histogram( GLcontext * ctx )
+{
+   int i;
+
+   /* Histogram group */
+   ctx->Histogram.Width = 0;
+   ctx->Histogram.Format = GL_RGBA;
+   ctx->Histogram.Sink = GL_FALSE;
+   ctx->Histogram.RedSize       = 0;
+   ctx->Histogram.GreenSize     = 0;
+   ctx->Histogram.BlueSize      = 0;
+   ctx->Histogram.AlphaSize     = 0;
+   ctx->Histogram.LuminanceSize = 0;
+   for (i = 0; i < HISTOGRAM_TABLE_SIZE; i++) {
+      ctx->Histogram.Count[i][0] = 0;
+      ctx->Histogram.Count[i][1] = 0;
+      ctx->Histogram.Count[i][2] = 0;
+      ctx->Histogram.Count[i][3] = 0;
+   }
+
+   /* Min/Max group */
+   ctx->MinMax.Format = GL_RGBA;
+   ctx->MinMax.Sink = GL_FALSE;
+   ctx->MinMax.Min[RCOMP] = 1000;    ctx->MinMax.Max[RCOMP] = -1000;
+   ctx->MinMax.Min[GCOMP] = 1000;    ctx->MinMax.Max[GCOMP] = -1000;
+   ctx->MinMax.Min[BCOMP] = 1000;    ctx->MinMax.Max[BCOMP] = -1000;
+   ctx->MinMax.Min[ACOMP] = 1000;    ctx->MinMax.Max[ACOMP] = -1000;
+}

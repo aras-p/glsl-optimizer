@@ -1,3 +1,7 @@
+/**
+ * \file polygon.h
+ * Polygon operations.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,5 +56,10 @@ _mesa_PolygonStipple( const GLubyte *mask );
 extern void
 _mesa_GetPolygonStipple( GLubyte *mask );
 
+extern void 
+_mesa_update_polygon( GLcontext *ctx );
+
+extern void 
+_mesa_init_polygon( GLcontext * ctx );
 
 #endif

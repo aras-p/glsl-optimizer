@@ -1,3 +1,12 @@
+/**
+ * \file hint.h
+ * Hints operations.
+ * 
+ * \if subset
+ * (No-op)
+ *
+ * \endif
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,9 +39,19 @@
 
 #include "mtypes.h"
 
+#if _HAVE_FULL_GL
 
 extern void
 _mesa_Hint( GLenum target, GLenum mode );
 
+extern void 
+_mesa_init_hint( GLcontext * ctx );
+
+#else
+
+/** No-op */
+#define _mesa_init_hint( c ) ((void) 0)
+
+#endif
 
 #endif

@@ -254,7 +254,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
 
 /*     _tnl_print_vert_flags("copy-orflag", IM->CopyOrFlag); */
 /*     _tnl_print_vert_flags("orflag", IM->OrFlag); */
-/*     _tnl_print_vert_flags("inputs", inputs); */
+/*      _tnl_print_vert_flags("inputs", inputs);  */
 
    /* Setup the initial values of array pointers in the vb.
     */

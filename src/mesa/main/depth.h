@@ -1,3 +1,8 @@
+/**
+ * \file depth.h
+ * Depth buffer operations.
+ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -30,24 +35,28 @@
 #include "mtypes.h"
 
 
-/*
- * Immediate-mode API entrpoints
- */
+#if _HAVE_FULL_GL
 
 extern void
 _mesa_ClearDepth( GLclampd depth );
 
-
 extern void
 _mesa_DepthFunc( GLenum func );
-
 
 extern void
 _mesa_DepthMask( GLboolean flag );
 
+extern void 
+_mesa_init_depth( GLcontext * ctx );
 
 extern void
 _mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax );
 
+#else
+
+/** No-op */
+#define _mesa_init_depth( c ) ((void)0)
+
+#endif
 
 #endif

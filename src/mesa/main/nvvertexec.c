@@ -24,7 +24,7 @@
 
 /**
  * \file nvvertexec.c
- * \brief Code to execute vertex programs.
+ * Code to execute vertex programs.
  * \author Brian Paul
  */
 

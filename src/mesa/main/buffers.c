@@ -1,3 +1,8 @@
+/**
+ * \file buffers.c
+ * Frame buffer management.
+ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -25,7 +30,6 @@
 
 #include "glheader.h"
 #include "imports.h"
-#include "accum.h"
 #include "buffers.h"
 #include "colormac.h"
 #include "context.h"
@@ -36,7 +40,7 @@
 #include "mtypes.h"
 
 
-
+#if _HAVE_FULL_GL
 void
 _mesa_ClearIndex( GLfloat c )
 {
@@ -54,9 +58,23 @@ _mesa_ClearIndex( GLfloat c )
       (*ctx->Driver.ClearIndex)( ctx, ctx->Color.ClearIndex );
    }
 }
+#endif
 
 
-
+/**
+ * Specify the clear values for the color buffers.
+ *
+ * \param red red color component.
+ * \param green green color component.
+ * \param blue blue color component.
+ * \param alpha alpha component.
+ *
+ * \sa glClearColor().
+ *
+ * Clamps the parameters and updates gl_colorbuffer_attrib::ClearColor.  On a
+ * change, flushes the vertices and notifies the driver via the
+ * dd_function_table::ClearColor callback.
+ */
 void
 _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 {
@@ -82,7 +100,16 @@ _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 }
 
 
-
+/**
+ * Clear buffers.
+ * 
+ * \param mask bit-mask indicating the buffers to be cleared.
+ *
+ * Flushes the vertices and verifies the parameter. If __GLcontextRec::NewState
+ * is set then calls _mesa_update_state() to update gl_frame_buffer::_Xmin,
+ * etc. If the rasterization mode is set to GL_RENDER then requests the driver
+ * to clear the buffers, via the dd_function_table::Clear callback.
+ */ 
 void
 _mesa_Clear( GLbitfield mask )
 {
@@ -137,6 +164,18 @@ _mesa_Clear( GLbitfield mask )
 }
 
 
+/**
+ * Specify which color buffers to draw into.
+ *
+ * \param mode color buffer combination.
+ *
+ * \sa glDrawBuffer().
+ *
+ * Flushes the vertices and verifies the parameter and updates the
+ * gl_colorbuffer_attrib::_DrawDestMask bitfield. Marks new color state in
+ * __GLcontextRec::NewState and notifies the driver via the
+ * dd_function_table::DrawBuffer callback.
+ */
 void
 _mesa_DrawBuffer( GLenum mode )
 {
@@ -150,6 +189,28 @@ _mesa_DrawBuffer( GLenum mode )
     * Do error checking and compute the _DrawDestMask bitfield.
     */
    switch (mode) {
+      case GL_FRONT:
+         /* never an error */
+         if (ctx->Visual.stereoMode)
+            ctx->Color._DrawDestMask = FRONT_LEFT_BIT | FRONT_RIGHT_BIT;
+         else
+            ctx->Color._DrawDestMask = FRONT_LEFT_BIT;
+         break;
+      case GL_BACK:
+         if (!ctx->Visual.doubleBufferMode) {
+            _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
+            return;
+         }
+         if (ctx->Visual.stereoMode)
+            ctx->Color._DrawDestMask = BACK_LEFT_BIT | BACK_RIGHT_BIT;
+         else
+            ctx->Color._DrawDestMask = BACK_LEFT_BIT;
+         break;
+      case GL_NONE:
+         /* never an error */
+         ctx->Color._DrawDestMask = 0;
+         break;
+#if _HAVE_FULL_GL
       case GL_RIGHT:
          if (!ctx->Visual.stereoMode) {
             _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
@@ -191,16 +252,6 @@ _mesa_DrawBuffer( GLenum mode )
          else
             ctx->Color._DrawDestMask = FRONT_LEFT_BIT | BACK_LEFT_BIT;
          break;
-      case GL_BACK:
-         if (!ctx->Visual.doubleBufferMode) {
-            _mesa_error( ctx, GL_INVALID_OPERATION, "glDrawBuffer" );
-            return;
-         }
-         if (ctx->Visual.stereoMode)
-            ctx->Color._DrawDestMask = BACK_LEFT_BIT | BACK_RIGHT_BIT;
-         else
-            ctx->Color._DrawDestMask = BACK_LEFT_BIT;
-         break;
       case GL_LEFT:
          /* never an error */
          if (ctx->Visual.doubleBufferMode)
@@ -211,17 +262,6 @@ _mesa_DrawBuffer( GLenum mode )
       case GL_FRONT_LEFT:
          /* never an error */
          ctx->Color._DrawDestMask = FRONT_LEFT_BIT;
-         break;
-      case GL_FRONT:
-         /* never an error */
-         if (ctx->Visual.stereoMode)
-            ctx->Color._DrawDestMask = FRONT_LEFT_BIT | FRONT_RIGHT_BIT;
-         else
-            ctx->Color._DrawDestMask = FRONT_LEFT_BIT;
-         break;
-      case GL_NONE:
-         /* never an error */
-         ctx->Color._DrawDestMask = 0;
          break;
       case GL_AUX0:
          if (ctx->Const.NumAuxBuffers >= 1) {
@@ -259,6 +299,7 @@ _mesa_DrawBuffer( GLenum mode )
             return;
          }
          break;
+#endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glDrawBuffer" );
          return;
@@ -275,7 +316,17 @@ _mesa_DrawBuffer( GLenum mode )
 }
 
 
-
+/**
+ * Set the color buffer source for reading pixels.
+ *
+ * \param mode color buffer.
+ *
+ * \sa glReadBuffer().
+ *
+ * Verifies the parameter and updates gl_pixel_attrib::_ReadSrcMask.  Marks
+ * new pixel state in __GLcontextRec::NewState and notifies the driver via
+ * dd_function_table::ReadBuffer.
+ */
 void
 _mesa_ReadBuffer( GLenum mode )
 {
@@ -304,6 +355,7 @@ _mesa_ReadBuffer( GLenum mode )
          }
          ctx->Pixel._ReadSrcMask = BACK_LEFT_BIT;
          break;
+#if _HAVE_FULL_GL
       case GL_FRONT_RIGHT:
       case GL_RIGHT:
          if (!ctx->Visual.stereoMode) {
@@ -355,6 +407,7 @@ _mesa_ReadBuffer( GLenum mode )
             return;
          }
          break;
+#endif
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glReadBuffer" );
          return;
@@ -370,8 +423,11 @@ _mesa_ReadBuffer( GLenum mode )
       (*ctx->Driver.ReadBuffer)(ctx, mode);
 }
 
+#if _HAVE_FULL_GL
 
 /**
+ * GL_MESA_resize_buffers extension.
+ *
  * When this function is called, we'll ask the window system how large
  * the current window is.  If it's a new size, we'll call the driver's
  * ResizeBuffers function.  The driver will then resize its color buffers
@@ -429,7 +485,41 @@ _mesa_ResizeBuffersMESA( void )
    }
 }
 
+/*
+ * XXX move somewhere else someday?
+ */
+void
+_mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
+{
+   GLcontext *ctx = _mesa_get_current_context();
 
+   if (!ctx->Extensions.ARB_multisample) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glSampleCoverageARB");
+      return;
+   }
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
+   ctx->Multisample.SampleCoverageValue = (GLfloat) CLAMP(value, 0.0, 1.0);
+   ctx->Multisample.SampleCoverageInvert = invert;
+   ctx->NewState |= _NEW_MULTISAMPLE;
+}
+
+#endif
+
+
+/**
+ * Define the scissor box.
+ *
+ * \param x, y coordinates of the scissor box lower-left corner.
+ * \param width width of the scissor box.
+ * \param height height of the scissor box.
+ *
+ * \sa glScissor().
+ *
+ * Verifies the parameters and updates __GLcontextRec::Scissor. On a
+ * change flushes the vertices and notifies the driver via
+ * the dd_function_table::Scissor callback.
+ */
 void
 _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
 {
@@ -460,23 +550,71 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
       ctx->Driver.Scissor( ctx, x, y, width, height );
 }
 
+/**********************************************************************/
+/** \name State management */
+/*@{*/
 
-/*
- * XXX move somewhere else someday?
+/**
+ * Update screen bounds.
+ *
+ * \param ctx GL context.
+ *
+ * Update gl_frame_buffer::_Xmin, and etc.
  */
-void
-_mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
+void _mesa_update_buffers( GLcontext *ctx )
 {
-   GLcontext *ctx = _mesa_get_current_context();
-
-   if (!ctx->Extensions.ARB_multisample) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glSampleCoverageARB");
-      return;
+   ctx->DrawBuffer->_Xmin = 0;
+   ctx->DrawBuffer->_Ymin = 0;
+   ctx->DrawBuffer->_Xmax = ctx->DrawBuffer->Width;
+   ctx->DrawBuffer->_Ymax = ctx->DrawBuffer->Height;
+   if (ctx->Scissor.Enabled) {
+      if (ctx->Scissor.X > ctx->DrawBuffer->_Xmin) {
+	 ctx->DrawBuffer->_Xmin = ctx->Scissor.X;
+      }
+      if (ctx->Scissor.Y > ctx->DrawBuffer->_Ymin) {
+	 ctx->DrawBuffer->_Ymin = ctx->Scissor.Y;
+      }
+      if (ctx->Scissor.X + ctx->Scissor.Width < ctx->DrawBuffer->_Xmax) {
+	 ctx->DrawBuffer->_Xmax = ctx->Scissor.X + ctx->Scissor.Width;
+      }
+      if (ctx->Scissor.Y + ctx->Scissor.Height < ctx->DrawBuffer->_Ymax) {
+	 ctx->DrawBuffer->_Ymax = ctx->Scissor.Y + ctx->Scissor.Height;
+      }
    }
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx );
-   ctx->Multisample.SampleCoverageValue = (GLfloat) CLAMP(value, 0.0, 1.0);
-   ctx->Multisample.SampleCoverageInvert = invert;
-   ctx->NewState |= _NEW_MULTISAMPLE;
 }
+
+/*@}*/
+
 			   
+/**********************************************************************/
+/** \name Initialization */
+/*@{*/
+
+/**
+ * Initialize the context scissor data.
+ *
+ * \param ctx GL context.
+ * 
+ * Initializes the __GLcontextRec::Scissor and __GLcontextRec::Multisample
+ * attribute groups, and related constants in __GLcontextRec::Const.
+ */
+void _mesa_init_buffers( GLcontext * ctx )
+{
+   /* Scissor group */
+   ctx->Scissor.Enabled = GL_FALSE;
+   ctx->Scissor.X = 0;
+   ctx->Scissor.Y = 0;
+   ctx->Scissor.Width = 0;
+   ctx->Scissor.Height = 0;
+
+   /* Multisample */
+   ctx->Multisample.Enabled = GL_FALSE;
+   ctx->Multisample.SampleAlphaToCoverage = GL_FALSE;
+   ctx->Multisample.SampleAlphaToOne = GL_FALSE;
+   ctx->Multisample.SampleCoverage = GL_FALSE;
+   ctx->Multisample.SampleCoverageValue = 1.0;
+   ctx->Multisample.SampleCoverageInvert = GL_FALSE;
+
+}
+
+/*@}*/

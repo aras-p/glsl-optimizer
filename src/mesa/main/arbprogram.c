@@ -24,7 +24,7 @@
 
 /**
  * \file arbprogram.c
- * \brief ARB_vertex/fragment_program state management functions.
+ * ARB_vertex/fragment_program state management functions.
  * \author Brian Paul
  */
 

@@ -1,3 +1,7 @@
+/**
+ * \file blend.c
+ * Blending operations.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,6 +28,7 @@
  */
 
 
+
 #include "glheader.h"
 #include "blend.h"
 #include "colormac.h"
@@ -33,6 +38,18 @@
 #include "mtypes.h"
 
 
+/**
+ * Specify the blending operation.
+ *
+ * \param sfactor source factor operator.
+ * \param dfactor destination factor operator.
+ *
+ * \sa glBlendFunc().
+ * 
+ * Verifies the parameters and updates gl_colorbuffer_attrib.  On a change,
+ * flushes the vertices and notifies the driver via
+ * dd_function_table::BlendFunc callback.
+ */
 void
 _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
 {
@@ -113,7 +130,20 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
 }
 
 
-/* GL_EXT_blend_func_separate */
+#if _HAVE_FULL_GL
+
+/**
+ * Process GL_EXT_blend_func_separate().
+ *
+ * \param sfactorRGB RGB source factor operator.
+ * \param dfactorRGB RGB destination factor operator.
+ * \param sfactorA alpha source factor operator.
+ * \param dfactorA alpha destination factor operator.
+ *
+ * Verifies the parameters and updates gl_colorbuffer_attrib.
+ * On a change, flush the vertices and notify the driver via
+ * dd_function_table::BlendFuncSeparate.
+ */
 void
 _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
                             GLenum sfactorA, GLenum dfactorA )
@@ -254,7 +284,6 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
 }
 
 
-
 /* This is really an extension function! */
 void
 _mesa_BlendEquation( GLenum mode )
@@ -312,8 +341,23 @@ _mesa_BlendEquation( GLenum mode )
       (*ctx->Driver.BlendEquation)( ctx, mode );
 }
 
+#endif
 
 
+/**
+ * Set the blending color.
+ *
+ * \param red red color component.
+ * \param green green color component.
+ * \param blue blue color component.
+ * \param alpha alpha color component.
+ *
+ * \sa glBlendColor().
+ *
+ * Clamps the parameters and updates gl_colorbuffer_attrib::BlendColor.  On a
+ * change, flushes the vertices and notifies the driver via
+ * dd_function_table::BlendColor callback.
+ */
 void
 _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 {
@@ -337,6 +381,16 @@ _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 }
 
 
+/**
+ * Specify the alpha test function.
+ *
+ * \param func alpha comparison function.
+ * \param ref reference value.
+ *
+ * Verifies the parameters and updates gl_colorbuffer_attrib. 
+ * On a change, flushes the vertices and notifies the driver via
+ * dd_function_table::AlphaFunc callback.
+ */
 void
 _mesa_AlphaFunc( GLenum func, GLclampf ref )
 {
@@ -372,6 +426,16 @@ _mesa_AlphaFunc( GLenum func, GLclampf ref )
 }
 
 
+/**
+ * Specify a logic pixel operation for color index rendering.
+ *
+ * \param opcode operation.
+ *
+ * Verifies that \p opcode is a valid enum and updates
+gl_colorbuffer_attrib::LogicOp.
+ * On a change, flushes the vertices and notifies the driver via the
+ * dd_function_table::LogicOpcode callback.
+ */
 void
 _mesa_LogicOp( GLenum opcode )
 {
@@ -411,7 +475,7 @@ _mesa_LogicOp( GLenum opcode )
       ctx->Driver.LogicOpcode( ctx, opcode );
 }
 
-
+#if _HAVE_FULL_GL
 void
 _mesa_IndexMask( GLuint mask )
 {
@@ -427,8 +491,23 @@ _mesa_IndexMask( GLuint mask )
    if (ctx->Driver.IndexMask)
       ctx->Driver.IndexMask( ctx, mask );
 }
+#endif
 
 
+/**
+ * Enable or disable writing of frame buffer color components.
+ *
+ * \param red whether to mask writing of the red color component.
+ * \param green whether to mask writing of the green color component.
+ * \param blue whether to mask writing of the blue color component.
+ * \param alpha whether to mask writing of the alpha color component.
+ *
+ * \sa glColorMask().
+ *
+ * Sets the appropriate value of gl_colorbuffer_attrib::ColorMask.  On a
+ * change, flushes the vertices and notifies the driver via the
+ * dd_function_table::ColorMask callback.
+ */
 void
 _mesa_ColorMask( GLboolean red, GLboolean green,
                  GLboolean blue, GLboolean alpha )
@@ -457,3 +536,53 @@ _mesa_ColorMask( GLboolean red, GLboolean green,
    if (ctx->Driver.ColorMask)
       ctx->Driver.ColorMask( ctx, red, green, blue, alpha );
 }
+
+/**********************************************************************/
+/** \name Initialization */
+/*@{*/
+
+/**
+ * Initialization of the context color data.
+ *
+ * \param ctx GL context.
+ *
+ * Initializes the related fields in the context color attribute group,
+ * __GLcontextRec::Color.
+ */
+void _mesa_init_color( GLcontext * ctx )
+{
+   /* Color buffer group */
+   ctx->Color.IndexMask = 0xffffffff;
+   ctx->Color.ColorMask[0] = 0xff;
+   ctx->Color.ColorMask[1] = 0xff;
+   ctx->Color.ColorMask[2] = 0xff;
+   ctx->Color.ColorMask[3] = 0xff;
+   ctx->Color.ClearIndex = 0;
+   ASSIGN_4V( ctx->Color.ClearColor, 0, 0, 0, 0 );
+   ctx->Color.DrawBuffer = GL_FRONT;
+   ctx->Color.AlphaEnabled = GL_FALSE;
+   ctx->Color.AlphaFunc = GL_ALWAYS;
+   ctx->Color.AlphaRef = 0;
+   ctx->Color.BlendEnabled = GL_FALSE;
+   ctx->Color.BlendSrcRGB = GL_ONE;
+   ctx->Color.BlendDstRGB = GL_ZERO;
+   ctx->Color.BlendSrcA = GL_ONE;
+   ctx->Color.BlendDstA = GL_ZERO;
+   ctx->Color.BlendEquation = GL_FUNC_ADD_EXT;
+   ASSIGN_4V( ctx->Color.BlendColor, 0.0, 0.0, 0.0, 0.0 );
+   ctx->Color.IndexLogicOpEnabled = GL_FALSE;
+   ctx->Color.ColorLogicOpEnabled = GL_FALSE;
+   ctx->Color.LogicOp = GL_COPY;
+   ctx->Color.DitherFlag = GL_TRUE;
+
+   if (ctx->Visual.doubleBufferMode) {
+      ctx->Color.DrawBuffer = GL_BACK;
+      ctx->Color._DrawDestMask = BACK_LEFT_BIT;
+   }
+   else {
+      ctx->Color.DrawBuffer = GL_FRONT;
+      ctx->Color._DrawDestMask = FRONT_LEFT_BIT;
+   }
+}
+
+/*@}*/

@@ -1,3 +1,22 @@
+/**
+ * \file glheader.h
+ * Top-most include file.
+ * 
+ * This is the top-most include file of the Mesa sources.
+ * It includes gl.h and all system headers which are needed.
+ * Other Mesa source files should \e not directly include any system
+ * headers.  This allows Mesa to be integrated into XFree86 and
+ * allows system-dependent hacks/workarounds to be collected in one place.
+ *
+ * \note Actually, a lot of system-dependent stuff is now in imports.[ch].
+ * 
+ * If you touch this file, everything gets recompiled!
+ *
+ * This file should be included before any other header in the .c files.
+ *
+ * Put compiler/OS/assembly pragmas and macros here to avoid
+ * cluttering other source files.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,22 +45,6 @@
 
 #ifndef GLHEADER_H
 #define GLHEADER_H
-
-
-/*
- * This is the top-most include file of the Mesa sources.
- * It includes gl.h and all system headers which are needed.
- * Other Mesa source files should _not_ directly include any system
- * headers.  This allows Mesa to be integrated into XFree86 and
- * allows system-dependent hacks/work-arounds to be collected in one place.
- * XXX actually, a lot of system-dependent stuff is now in imports.[ch].
- *
- * If you touch this file, everything gets recompiled!
- *
- * Put compiler/OS/assembly pragmas and macros here to avoid
- * cluttering other source files.
- */
-
 
 
 #if defined(XFree86LOADER) && defined(IN_MODULE)
@@ -122,7 +125,7 @@
 #  define GLWINAPIV
 #endif /* WIN32 / CYGWIN bracket */
 
-/* compatability guard so we don't need to change client code */
+/* compatibility guard so we don't need to change client code */
 
 #if defined(_WIN32) && !defined(_WINDEF_) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP) && !defined(__CYGWIN__)
 #if 0
@@ -280,9 +283,9 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #endif
 
 
-/*
+/**
  * Sometimes we treat GLfloats as GLints.  On x86 systems, moving a float
- * as a int (thereby using integer registers instead of fp registers) is
+ * as a int (thereby using integer registers instead of FP registers) is
  * a performance win.  Typically, this can be done with ordinary casts.
  * But with gcc's -fstrict-aliasing flag (which defaults to on in gcc 3.0)
  * these casts generate warnings.
@@ -290,5 +293,7 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
  */
 typedef union { GLfloat f; GLint i; } fi_type;
 
+
+#include "config.h"
 
 #endif /* GLHEADER_H */

@@ -1,3 +1,7 @@
+/**
+ * \file dlist.h
+ * Display lists management.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,6 +28,7 @@
  */
 
 
+
 #ifndef DLIST_H
 #define DLIST_H
 
@@ -31,6 +36,13 @@
 #include "mtypes.h"
 
 
+/**
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair, with return value.
+ * 
+ * \param ctx GL context.
+ * \param retval value to return value in case the assertion fails.
+ */
 #define ASSERT_OUTSIDE_SAVE_BEGIN_END_WITH_RETVAL(ctx, retval)		\
 do {									\
    if (ctx->Driver.CurrentSavePrimitive <= GL_POLYGON ||		\
@@ -40,6 +52,12 @@ do {									\
    }									\
 } while (0)
 
+/**
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair.
+ * 
+ * \param ctx GL context.
+ */
 #define ASSERT_OUTSIDE_SAVE_BEGIN_END(ctx)				\
 do {									\
    if (ctx->Driver.CurrentSavePrimitive <= GL_POLYGON ||		\
@@ -49,18 +67,33 @@ do {									\
    }									\
 } while (0)
 
+/**
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair and flush the vertices.
+ * 
+ * \param ctx GL context.
+ */
 #define ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx)			\
 do {									\
    ASSERT_OUTSIDE_SAVE_BEGIN_END(ctx);					\
    FLUSH_VERTICES(ctx, 0);						\
 } while (0)
 
+/**
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair and flush the vertices, with return value.
+ * 
+ * \param ctx GL context.
+ * \param retval value to return value in case the assertion fails.
+ */
 #define ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, retval)\
 do {									\
    ASSERT_OUTSIDE_SAVE_BEGIN_END_WITH_RETVAL(ctx, retval);		\
    FLUSH_VERTICES(ctx, 0);						\
 } while (0)
 
+
+#if _HAVE_FULL_GL
 
 extern void _mesa_init_lists( void );
 
@@ -102,7 +135,22 @@ extern void _mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2,
 extern void _mesa_save_EvalMesh1( GLenum mode, GLint i1, GLint i2 );
 extern void _mesa_save_CallLists( GLsizei n, GLenum type, const GLvoid *lists );
 extern void _mesa_save_CallList( GLuint list );
+extern void _mesa_init_display_list( GLcontext * ctx );
 
+#else
 
+/** No-op */
+#define _mesa_init_lists() ((void)0)
+
+/** No-op */
+#define _mesa_destroy_list(c,l) ((void)0)
+
+/** No-op */
+#define _mesa_init_dlist_table(t,ts) ((void)0)
+
+/** No-op */
+#define _mesa_init_display_list(c) ((void)0)
+
+#endif
 
 #endif

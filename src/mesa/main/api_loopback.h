@@ -1,4 +1,3 @@
-
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
@@ -23,10 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
+
 #ifndef API_LOOPBACK_H
 #define API_LOOPBACK_H
 
 #include "glheader.h"
+
 
 struct _glapi_table;
 

@@ -156,3 +156,22 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
       (*ctx->Driver.Fogfv)( ctx, pname, params );
    }
 }
+
+
+/**********************************************************************/
+/*****                      Initialization                        *****/
+/**********************************************************************/
+
+void _mesa_init_fog( GLcontext * ctx )
+{
+   /* Fog group */
+   ctx->Fog.Enabled = GL_FALSE;
+   ctx->Fog.Mode = GL_EXP;
+   ASSIGN_4V( ctx->Fog.Color, 0.0, 0.0, 0.0, 0.0 );
+   ctx->Fog.Index = 0.0;
+   ctx->Fog.Density = 1.0;
+   ctx->Fog.Start = 0.0;
+   ctx->Fog.End = 1.0;
+   ctx->Fog.ColorSumEnabled = GL_FALSE;
+   ctx->Fog.FogCoordinateSource = GL_FRAGMENT_DEPTH_EXT;
+}

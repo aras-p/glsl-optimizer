@@ -25,7 +25,7 @@
 
 /**
  * \file bufferobj.c
- * \brief Functions for the GL_ARB_vertex_buffer_object extension.
+ * Functions for the GL_ARB_vertex_buffer_object extension.
  * \author Brian Paul
  */
 

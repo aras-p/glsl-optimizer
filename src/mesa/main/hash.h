@@ -1,3 +1,7 @@
+/**
+ * \file hash.h
+ * Generic hash table. 
+ */
 
 /*
  * Mesa 3-D graphics library

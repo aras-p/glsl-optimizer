@@ -1,3 +1,12 @@
+/**
+ * \file eval.h
+ * Eval operations.
+ * 
+ * \if subset
+ * (No-op)
+ *
+ * \endif
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,8 +39,10 @@
 
 #include "mtypes.h"
 
+#if _HAVE_FULL_GL
 
-extern void _mesa_init_eval( void );
+extern void _mesa_init_eval( GLcontext *ctx );
+extern void _mesa_free_eval_data( GLcontext *ctx );
 
 
 extern GLuint _mesa_evaluator_components( GLenum target );
@@ -104,5 +115,14 @@ _mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v );
 extern void
 _mesa_GetMapiv( GLenum target, GLenum query, GLint *v );
 
+#else
+
+/** No-op */
+#define _mesa_init_eval( c ) ((void)0)
+
+/** No-op */
+#define _mesa_free_eval_data( c ) ((void)0)
+
+#endif
 
 #endif

@@ -1,3 +1,13 @@
+/**
+ * \file attrib.h
+ * Attribute stacks.
+ * 
+ * \if subset
+ * (No-op)
+ *
+ * \endif
+ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -23,11 +33,15 @@
  */
 
 
+
 #ifndef ATTRIB_H
 #define ATTRIB_H
 
 
 #include "mtypes.h"
+
+
+#if _HAVE_FULL_GL
 
 extern void
 _mesa_PushAttrib( GLbitfield mask );
@@ -41,5 +55,14 @@ _mesa_PushClientAttrib( GLbitfield mask );
 extern void
 _mesa_PopClientAttrib( void );
 
+extern void 
+_mesa_init_attrib( GLcontext *ctx );
+
+#else
+
+/** No-op */
+#define _mesa_init_attrib( c ) ((void)0)
+
+#endif
 
 #endif

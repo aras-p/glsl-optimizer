@@ -92,26 +92,6 @@ base_colortab_format( GLenum format )
 }
 
 
-void
-_mesa_init_colortable( struct gl_color_table *p )
-{
-   p->FloatTable = GL_FALSE;
-   p->Table = NULL;
-   p->Size = 0;
-   p->IntFormat = GL_RGBA;
-}
-
-
-
-void
-_mesa_free_colortable_data( struct gl_color_table *p )
-{
-   if (p->Table) {
-      FREE(p->Table);
-      p->Table = NULL;
-   }
-}
-
 
 /*
  * Examine table's format and set the component sizes accordingly.
@@ -1344,4 +1324,50 @@ _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameteriv(pname)" );
          return;
    }
+}
+
+/**********************************************************************/
+/*****                      Initialization                        *****/
+/**********************************************************************/
+
+
+void
+_mesa_init_one_colortable( struct gl_color_table *p )
+{
+   p->FloatTable = GL_FALSE;
+   p->Table = NULL;
+   p->Size = 0;
+   p->IntFormat = GL_RGBA;
+}
+
+
+
+void
+_mesa_free_one_colortable( struct gl_color_table *p )
+{
+   if (p->Table) {
+      FREE(p->Table);
+      p->Table = NULL;
+   }
+}
+
+void _mesa_init_colortable( GLcontext * ctx )
+{
+   /* Color tables */
+   _mesa_init_one_colortable(&ctx->ColorTable);
+   _mesa_init_one_colortable(&ctx->ProxyColorTable);
+   _mesa_init_one_colortable(&ctx->PostConvolutionColorTable);
+   _mesa_init_one_colortable(&ctx->ProxyPostConvolutionColorTable);
+   _mesa_init_one_colortable(&ctx->PostColorMatrixColorTable);
+   _mesa_init_one_colortable(&ctx->ProxyPostColorMatrixColorTable);
+}
+
+void _mesa_free_colortable_data( GLcontext *ctx )
+{
+   _mesa_free_one_colortable( &ctx->ColorTable );
+   _mesa_free_one_colortable( &ctx->ProxyColorTable );
+   _mesa_free_one_colortable( &ctx->PostConvolutionColorTable );
+   _mesa_free_one_colortable( &ctx->ProxyPostConvolutionColorTable );
+   _mesa_free_one_colortable( &ctx->PostColorMatrixColorTable );
+   _mesa_free_one_colortable( &ctx->ProxyPostColorMatrixColorTable );
 }

@@ -868,7 +868,7 @@ _mesa_convert_texsubimage1d( GLint mesaFormat,
  * with the _mesa_transfer_teximage() function.  That function will also
  * do image transfer operations such as scale/bias and convolution.
  *
- * Input:
+ * \param
  *   mesaFormat - one of the MESA_FORMAT_* values from texformat.h
  *   xoffset, yoffset - position in dest image to put data
  *   width, height - incoming image size, also size of dest region.

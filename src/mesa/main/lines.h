@@ -1,3 +1,7 @@
+/**
+ * \file lines.h
+ * Line operations.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,6 +28,7 @@
  */
 
 
+
 #ifndef LINES_H
 #define LINES_H
 
@@ -37,5 +42,7 @@ _mesa_LineWidth( GLfloat width );
 extern void
 _mesa_LineStipple( GLint factor, GLushort pattern );
 
+extern void 
+_mesa_init_line( GLcontext * ctx );
 
 #endif

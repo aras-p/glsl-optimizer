@@ -1,3 +1,12 @@
+/**
+ * \file histogram.h
+ * Histogram.
+ * 
+ * \if subset
+ * (No-op)
+ *
+ * \endif
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +39,7 @@
 #include "glheader.h"
 #include "mtypes.h"
 
+#if _HAVE_FULL_GL
 
 extern void
 _mesa_update_minmax(GLcontext *ctx, GLuint n, const GLfloat rgba[][4]);
@@ -57,5 +67,20 @@ extern void _mesa_Minmax(GLenum target, GLenum internalformat, GLboolean sink);
 extern void _mesa_ResetHistogram(GLenum target);
 
 extern void _mesa_ResetMinmax(GLenum target);
+
+extern void
+_mesa_update_minmax(GLcontext *ctx, GLuint n, const GLfloat rgba[][4]);
+
+extern void
+_mesa_update_histogram(GLcontext *ctx, GLuint n, const GLfloat rgba[][4]);
+
+extern void _mesa_init_histogram( GLcontext * ctx );
+
+#else
+
+/** No-op */
+#define _mesa_init_histogram( c ) ((void) 0)
+
+#endif
 
 #endif

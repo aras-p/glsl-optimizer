@@ -1,3 +1,8 @@
+/**
+ * \file texcompress.c
+ * Compressed textures functions.
+ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -33,7 +38,10 @@
 
 /**
  * Get the list of supported internal compression formats.
- * \param formats - the results list (may be NULL)
+ * 
+ * \param ctx GL context.
+ * \param formats the resulting format list (may be NULL).
+ *
  * \return number of formats.
  */
 GLuint
@@ -70,13 +78,16 @@ _mesa_get_compressed_formats( GLcontext *ctx, GLint *formats )
 }
 
 
-
 /**
- * Return bytes of storage needed for the given texture size and compressed
- * format.
- * \param width, height, depth  the texture size in texels
- * \param texFormat   one of the specific compressed format enums
- * \return size in bytes, or zero if bad texFormat
+ * Return bytes of storage needed for the given texture size and
+ * compressed format.
+ * 
+ * \param width texture width in texels.
+ * \param height texture height in texels.
+ * \param depth texture depth in texels.
+ * \param texFormat one of the compressed format enums
+ * 
+ * \return size in bytes, or zero if bad \p texFormat.
  */
 GLuint
 _mesa_compressed_texture_size( GLcontext *ctx,
@@ -159,11 +170,15 @@ _mesa_compressed_row_stride(GLenum format, GLsizei width)
 /**
  * Return the address of the pixel at (col, row, img) in a
  * compressed texture image.
- * \param col, row, img - image position (3D)
- * \param format - compressed image format
- * \param width - image width
- * \param image - the image address
- * \return address of pixel at (row, col)
+ * 
+ * \param col image position.
+ * \param row image position.
+ * \param img image position.
+ * \param format compressed image format.
+ * \param width image width.
+ * \param image the image address.
+ * 
+ * \return address of pixel at (row, col).
  */
 GLubyte *
 _mesa_compressed_image_address(GLint col, GLint row, GLint img,
@@ -197,9 +212,8 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
 }
 
 
-
-/*
- * \param srcRowStride - source stride, in pixels
+/**
+ * \param srcRowStride source stride, in pixels
  */
 void
 _mesa_compress_teximage( GLcontext *ctx, GLsizei width, GLsizei height,

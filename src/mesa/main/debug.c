@@ -27,7 +27,26 @@
 #include "context.h"
 #include "imports.h"
 #include "debug.h"
+#include "get.h"
 
+/**
+ * Primitive names
+ */
+const char *_mesa_prim_name[GL_POLYGON+4] = {
+   "GL_POINTS",
+   "GL_LINES",
+   "GL_LINE_LOOP",
+   "GL_LINE_STRIP",
+   "GL_TRIANGLES",
+   "GL_TRIANGLE_STRIP",
+   "GL_TRIANGLE_FAN",
+   "GL_QUADS",
+   "GL_QUAD_STRIP",
+   "GL_POLYGON",
+   "outside begin/end",
+   "inside unkown primitive",
+   "unknown state"
+};
 
 void
 _mesa_print_state( const char *msg, GLuint state )
@@ -87,3 +106,147 @@ _mesa_print_tri_caps( const char *name, GLuint flags )
 	   (flags & DD_TRI_CULL_FRONT_BACK) ? "cull-all, " : ""
       );
 }
+
+
+void
+_mesa_check_driver_hooks( GLcontext *ctx )
+{
+   ASSERT(ctx->Driver.GetString);
+   ASSERT(ctx->Driver.UpdateState);
+   ASSERT(ctx->Driver.Clear);
+   ASSERT(ctx->Driver.GetBufferSize);
+   if (ctx->Visual.accumRedBits > 0) {
+      ASSERT(ctx->Driver.Accum);
+   }
+   ASSERT(ctx->Driver.DrawPixels);
+   ASSERT(ctx->Driver.ReadPixels);
+   ASSERT(ctx->Driver.CopyPixels);
+   ASSERT(ctx->Driver.Bitmap);
+   ASSERT(ctx->Driver.ResizeBuffers);
+   ASSERT(ctx->Driver.TexImage1D);
+   ASSERT(ctx->Driver.TexImage2D);
+   ASSERT(ctx->Driver.TexImage3D);
+   ASSERT(ctx->Driver.TexSubImage1D);
+   ASSERT(ctx->Driver.TexSubImage2D);
+   ASSERT(ctx->Driver.TexSubImage3D);
+   ASSERT(ctx->Driver.CopyTexImage1D);
+   ASSERT(ctx->Driver.CopyTexImage2D);
+   ASSERT(ctx->Driver.CopyTexSubImage1D);
+   ASSERT(ctx->Driver.CopyTexSubImage2D);
+   ASSERT(ctx->Driver.CopyTexSubImage3D);
+   if (ctx->Extensions.ARB_texture_compression) {
+#if 0  /* HW drivers need these, but not SW rasterizers */
+      ASSERT(ctx->Driver.CompressedTexImage1D);
+      ASSERT(ctx->Driver.CompressedTexImage2D);
+      ASSERT(ctx->Driver.CompressedTexImage3D);
+      ASSERT(ctx->Driver.CompressedTexSubImage1D);
+      ASSERT(ctx->Driver.CompressedTexSubImage2D);
+      ASSERT(ctx->Driver.CompressedTexSubImage3D);
+#endif
+   }
+}
+
+/**
+ * Print information about this Mesa version and build options.
+ */
+void _mesa_print_info( void )
+{
+   _mesa_debug(NULL, "Mesa GL_VERSION = %s\n",
+	   (char *) _mesa_GetString(GL_VERSION));
+   _mesa_debug(NULL, "Mesa GL_RENDERER = %s\n",
+	   (char *) _mesa_GetString(GL_RENDERER));
+   _mesa_debug(NULL, "Mesa GL_VENDOR = %s\n",
+	   (char *) _mesa_GetString(GL_VENDOR));
+   _mesa_debug(NULL, "Mesa GL_EXTENSIONS = %s\n",
+	   (char *) _mesa_GetString(GL_EXTENSIONS));
+#if defined(THREADS)
+   _mesa_debug(NULL, "Mesa thread-safe: YES\n");
+#else
+   _mesa_debug(NULL, "Mesa thread-safe: NO\n");
+#endif
+#if defined(USE_X86_ASM)
+   _mesa_debug(NULL, "Mesa x86-optimized: YES\n");
+#else
+   _mesa_debug(NULL, "Mesa x86-optimized: NO\n");
+#endif
+#if defined(USE_SPARC_ASM)
+   _mesa_debug(NULL, "Mesa sparc-optimized: YES\n");
+#else
+   _mesa_debug(NULL, "Mesa sparc-optimized: NO\n");
+#endif
+}
+
+
+/**
+ * Set the debugging flags.
+ *
+ * \param debug debug string
+ *
+ * If compiled with debugging support then search for keywords in \p debug and
+ * enables the verbose debug output of the respective feature.
+ */
+static void add_debug_flags( const char *debug )
+{
+#ifdef MESA_DEBUG
+   if (_mesa_strstr(debug, "varray")) 
+      MESA_VERBOSE |= VERBOSE_VARRAY;
+
+   if (_mesa_strstr(debug, "tex")) 
+      MESA_VERBOSE |= VERBOSE_TEXTURE;
+
+   if (_mesa_strstr(debug, "imm")) 
+      MESA_VERBOSE |= VERBOSE_IMMEDIATE;
+
+   if (_mesa_strstr(debug, "pipe")) 
+      MESA_VERBOSE |= VERBOSE_PIPELINE;
+
+   if (_mesa_strstr(debug, "driver")) 
+      MESA_VERBOSE |= VERBOSE_DRIVER;
+
+   if (_mesa_strstr(debug, "state")) 
+      MESA_VERBOSE |= VERBOSE_STATE;
+
+   if (_mesa_strstr(debug, "api")) 
+      MESA_VERBOSE |= VERBOSE_API;
+
+   if (_mesa_strstr(debug, "list")) 
+      MESA_VERBOSE |= VERBOSE_DISPLAY_LIST;
+
+   if (_mesa_strstr(debug, "lighting")) 
+      MESA_VERBOSE |= VERBOSE_LIGHTING;
+   
+   /* Debug flag:
+    */
+   if (_mesa_strstr(debug, "flush")) 
+      MESA_DEBUG_FLAGS |= DEBUG_ALWAYS_FLUSH;
+#endif
+}
+
+
+void 
+_mesa_init_debug( GLcontext *ctx )
+{
+   char *c;
+
+   /* For debug/development only */
+   ctx->NoRaster = _mesa_getenv("MESA_NO_RASTER") ? GL_TRUE : GL_FALSE;
+   ctx->FirstTimeCurrent = GL_TRUE;
+
+   /* Dither disable */
+   ctx->NoDither = _mesa_getenv("MESA_NO_DITHER") ? GL_TRUE : GL_FALSE;
+   if (ctx->NoDither) {
+      if (_mesa_getenv("MESA_DEBUG")) {
+         _mesa_debug(ctx, "MESA_NO_DITHER set - dithering disabled\n");
+      }
+      ctx->Color.DitherFlag = GL_FALSE;
+   }
+
+   c = _mesa_getenv("MESA_DEBUG");
+   if (c)
+      add_debug_flags(c);
+
+   c = _mesa_getenv("MESA_VERBOSE");
+   if (c)
+      add_debug_flags(c);
+}
+

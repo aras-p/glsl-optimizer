@@ -1,3 +1,23 @@
+/**
+ * \file context.h
+ * Mesa context/visual/framebuffer management functions.
+ *
+ * There are three Mesa data types which are meant to be used by device
+ * drivers:
+ * - GLcontext: this contains the Mesa rendering state
+ * - GLvisual:  this describes the color buffer (RGB vs. ci), whether or not
+ *   there's a depth buffer, stencil buffer, etc.
+ * - GLframebuffer:  contains pointers to the depth buffer, stencil buffer,
+ *   accum buffer and alpha buffers.
+ *
+ * These types should be encapsulated by corresponding device driver
+ * data types.  See xmesa.h and xmesaP.h for an example.
+ *
+ * In OOP terms, GLcontext, GLvisual, and GLframebuffer are base classes
+ * which the device driver must derive from.
+ *
+ * The following functions create and destroy these data types.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,28 +52,10 @@
 #include "mtypes.h"
 
 
-/*
- * There are three Mesa datatypes which are meant to be used by device
- * drivers:
- *   GLcontext:  this contains the Mesa rendering state
- *   GLvisual:  this describes the color buffer (rgb vs. ci), whether
- *              or not there's a depth buffer, stencil buffer, etc.
- *   GLframebuffer:  contains pointers to the depth buffer, stencil
- *                   buffer, accum buffer and alpha buffers.
- *
- * These types should be encapsulated by corresponding device driver
- * datatypes.  See xmesa.h and xmesaP.h for an example.
- *
- * In OOP terms, GLcontext, GLvisual, and GLframebuffer are base classes
- * which the device driver must derive from.
- *
- * The following functions create and destroy these datatypes.
- */
-
-
-/*
- * Create/destroy a GLvisual.
- */
+/**********************************************************************/
+/** \name Create/destroy a GLvisual. */
+/*@{*/
+ 
 extern GLvisual *
 _mesa_create_visual( GLboolean rgbFlag,
                      GLboolean dbFlag,
@@ -92,11 +94,13 @@ _mesa_initialize_visual( GLvisual *v,
 extern void
 _mesa_destroy_visual( GLvisual *vis );
 
+/*@}*/
 
 
-/*
- * Create/destroy a GLframebuffer.
- */
+/**********************************************************************/
+/** \name Create/destroy a GLframebuffer. */
+/*@{*/
+ 
 extern GLframebuffer *
 _mesa_create_framebuffer( const GLvisual *visual,
                           GLboolean softwareDepth,
@@ -118,11 +122,13 @@ _mesa_free_framebuffer_data( GLframebuffer *buffer );
 extern void
 _mesa_destroy_framebuffer( GLframebuffer *buffer );
 
+/*@}*/
 
 
-/*
- * Create/destroy a GLcontext.
- */
+/**********************************************************************/
+/** \name Create/destroy a GLcontext. */
+/*@{*/
+
 extern GLcontext *
 _mesa_create_context( const GLvisual *visual,
                       GLcontext *share_list,
@@ -159,10 +165,21 @@ _mesa_make_current2( GLcontext *ctx, GLframebuffer *drawBuffer,
 extern GLcontext *
 _mesa_get_current_context(void);
 
+/*@}*/
 
 
-/*
- * Macros for fetching current context.
+/**
+ * Macro for declaration and fetching the current context.
+ *
+ * \param C local variable which will hold the current context.
+ *
+ * It should be used in the variable declaration area of a function:
+ * \code
+ * ...
+ * {
+ *   GET_CURRENT_CONTEXT(ctx);
+ *   ...
+ * \endcode
  */
 #ifdef THREADS
 
@@ -176,7 +193,9 @@ _mesa_get_current_context(void);
 
 
 
-/* OpenGL SI-style export functions. */
+/**********************************************************************/
+/** \name OpenGL SI-style export functions. */
+/*@{*/
 
 extern GLboolean
 _mesa_destroyContext(__GLcontext *gc);
@@ -214,6 +233,7 @@ _mesa_beginDispatchOverride(__GLcontext *gc);
 extern void
 _mesa_endDispatchOverride(__GLcontext *gc);
 
+/*@}*/
 
 
 extern struct _glapi_table *
@@ -221,9 +241,9 @@ _mesa_get_dispatch(GLcontext *ctx);
 
 
 
-/*
- * Miscellaneous
- */
+/**********************************************************************/
+/** \name Miscellaneous */
+/*@{*/
 
 extern void
 _mesa_record_error( GLcontext *ctx, GLenum error );
@@ -235,5 +255,6 @@ _mesa_Finish( void );
 extern void
 _mesa_Flush( void );
 
+/*@}*/
 
 #endif

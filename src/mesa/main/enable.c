@@ -1,3 +1,8 @@
+/**
+ * \file enable.c
+ * Enable/disable/query GL capabilities.
+ */
+
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -135,7 +140,16 @@ client_state( GLcontext *ctx, GLenum cap, GLboolean state )
 }
 
 
-
+/**
+ * Enable GL capability.
+ *
+ * \param cap capability.
+ *
+ * \sa glEnable().
+ *
+ * Get's the current context, assures that we're outside glBegin()/glEnd() and
+ * calls client_state().
+ */
 void
 _mesa_EnableClientState( GLenum cap )
 {
@@ -145,7 +159,16 @@ _mesa_EnableClientState( GLenum cap )
 }
 
 
-
+/**
+ * Disable GL capability.
+ *
+ * \param cap capability.
+ *
+ * \sa glDisable().
+ *
+ * Get's the current context, assures that we're outside glBegin()/glEnd() and
+ * calls client_state().
+ */
 void
 _mesa_DisableClientState( GLenum cap )
 {
@@ -164,8 +187,17 @@ _mesa_DisableClientState( GLenum cap )
    }
 
 
-/*
- * Perform glEnable and glDisable calls.
+/**
+ * Perform glEnable() and glDisable() calls.
+ *
+ * \param ctx GL context.
+ * \param cap capability.
+ * \param state whether to enable or disable the specified capability.
+ *
+ * Updates the current context and flushes the vertices as needed. For
+ * capabilities associated with extensions it verifies that those extensions
+ * are effectivly present before updating. Notifies the driver via
+ * dd_function_table::Enable.
  */
 void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 {
@@ -197,6 +229,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Color.ColorLogicOpEnabled =
             (ctx->Color.BlendEquation == GL_LOGIC_OP && state);
          break;
+#if FEATURE_userclip
       case GL_CLIP_PLANE0:
       case GL_CLIP_PLANE1:
       case GL_CLIP_PLANE2:
@@ -230,6 +263,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
             }               
          }
          break;
+#endif
       case GL_COLOR_MATERIAL:
          if (ctx->Light.ColorMaterialEnabled == state)
             return;
@@ -949,6 +983,16 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 }
 
 
+/**
+ * Enable GL capability.
+ *
+ * \param cap capability.
+ *
+ * \sa glEnable().
+ *
+ * Get's the current context, assures that we're outside glBegin()/glEnd() and
+ * calls _mesa_set_enable().
+ */
 void
 _mesa_Enable( GLenum cap )
 {
@@ -959,6 +1003,16 @@ _mesa_Enable( GLenum cap )
 }
 
 
+/**
+ * Disable GL capability.
+ *
+ * \param cap capability.
+ *
+ * \sa glDisable().
+ *
+ * Get's the current context, assures that we're outside glBegin()/glEnd() and
+ * calls _mesa_set_enable().
+ */
 void
 _mesa_Disable( GLenum cap )
 {
@@ -977,6 +1031,15 @@ _mesa_Disable( GLenum cap )
    }
 
 
+/**
+ * Test whether a capability is enabled.
+ *
+ * \param cap capability.
+ *
+ * Returns the state of the specified capability from the current GL context.
+ * For the capabilities associated with extensions verifies that those
+ * extensions are effectively present before reporting.
+ */
 GLboolean
 _mesa_IsEnabled( GLenum cap )
 {

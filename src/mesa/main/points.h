@@ -1,3 +1,7 @@
+/**
+ * \file points.h
+ * Point operations.
+ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,6 +49,9 @@ _mesa_PointParameterfEXT( GLenum pname, GLfloat param );
 
 extern void
 _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params );
+
+extern void 
+_mesa_init_point( GLcontext * ctx );
 
 
 #endif
