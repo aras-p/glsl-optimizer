@@ -63,14 +63,12 @@ CORE_SRCS = \
 	glapi.c \
 	glthread.c \
 	hash.c \
-	highpc.c \
 	hint.c \
 	histogram.c \
 	image.c \
 	imports.c \
 	light.c \
 	lines.c \
-	lowpc.c \
 	matrix.c \
 	mem.c \
 	mmath.c \
