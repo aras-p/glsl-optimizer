@@ -1,6 +1,6 @@
 # Makefile for core library for VMS
-# contributed by Jouk Jansen  joukj@crys.chem.uva.nl
-# Last revision : 22 August 2000
+# contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
+# Last revision : 1 November 2000
 
 .first
 	define gl [-.include.gl]
@@ -15,17 +15,18 @@ INCDIR = [-.include]
 LIBDIR = [-.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(FBIND=1)/name=(as_is,short)
 
-CORE_SOURCES = aatriangle.c accum.c alpha.c alphabuf.c attrib.c \
+CORE_SOURCES = accum.c alpha.c attrib.c \
 bitmap.c blend.c buffers.c clip.c colortab.c context.c copypix.c depth.c \
 dispatch.c convolve.c \
 dlist.c drawpix.c enable.c eval.c feedback.c fog.c \
-get.c hash.c hint.c image.c imaging.c light.c lines.c logic.c masking.c matrix.c \
+get.c hash.c highpc.c hint.c image.c imaging.c light.c lines.c logic.c\
+lowpc.c masking.c matrix.c \
 mem.c glapi.c glapinoop.c imports.c\
-mmath.c pb.c pixel.c points.c polygon.c \
-quads.c rastpos.c readpix.c rect.c scissor.c shade.c span.c \
-stencil.c teximage.c texobj.c texstate.c texture.c translate.c triangle.c \
+mmath.c pixel.c points.c polygon.c \
+rastpos.c readpix.c rect.c scissor.c shade.c \
+stencil.c teximage.c texobj.c texstate.c texture.c translate.c \
 varray.c winpos.c vb.c vbcull.c vbfill.c vbrender.c vbxform.c xform.c \
-zoom.c bbox.c cva.c vector.c vbindirect.c config.c enums.c extensions.c \
+bbox.c cva.c vector.c vbindirect.c config.c enums.c extensions.c \
 pipeline.c stages.c state.c vertices.c [.x86]x86.c
 
 DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]xfonts.c \
@@ -34,29 +35,57 @@ DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]xfonts.c \
 [.svga]svgamesa.c \
 [.fx]fxapi.c [.fx]fxdd.c [.fx]fxddtex.c [.fx]fxvsetup.c [.fx]fxsetup.c \
 [.fx]fxtrifuncs.c [.fx]fxclip.c [.fx]fxfastpath.c [.fx]fxpipeline.c\
-[.fx]fxrender.c [.fx]fxtexman.c [.fx]fxddspan.c [.fx]fxcva.c [.fx]fxsanity.c\
+[.fx]fxrender.c [.fx]fxtexman.c [.fx]fxddspan.c [.fx]fxsanity.c\
 [.fx]fxglidew.c
+
+RASTER_SOURCES = [.swrast]s_aatriangle.c \
+[.swrast]s_accum.c \
+[.swrast]s_alpha.c \
+[.swrast]s_alphabuf.c \
+[.swrast]s_bitmap.c \
+[.swrast]s_blend.c \
+[.swrast]s_buffers.c \
+[.swrast]s_copypix.c \
+[.swrast]s_context.c \
+[.swrast]s_depth.c \
+[.swrast]s_drawpix.c \
+[.swrast]s_fog.c \
+[.swrast]s_imaging.c \
+[.swrast]s_lines.c \
+[.swrast]s_logic.c \
+[.swrast]s_masking.c \
+[.swrast]s_pb.c \
+[.swrast]s_pixeltex.c \
+[.swrast]s_points.c \
+[.swrast]s_quads.c \
+[.swrast]s_readpix.c \
+[.swrast]s_scissor.c \
+[.swrast]s_span.c \
+[.swrast]s_stencil.c \
+[.swrast]s_texture.c \
+[.swrast]s_triangle.c \
+[.swrast]s_zoom.c
 
 ASM_SOURCES =
 
-OBJECTS =aatriangle.obj,\
-accum.obj,alpha.obj,alphabuf.obj,attrib.obj,\
+OBJECTS =\
+accum.obj,alpha.obj,attrib.obj,\
 bitmap.obj,blend.obj,buffers.obj,clip.obj,colortab.obj,context.obj,copypix.obj,depth.obj,\
 dlist.obj,drawpix.obj,enable.obj,eval.obj,feedback.obj,fog.obj
 
 
 OBJECTS3=get.obj,hash.obj,hint.obj,image.obj,light.obj,lines.obj,logic.obj,masking.obj,\
-matrix.obj,glapi.obj,glapinoop.obj,dispatch.obj,imaging.obj,mem.obj,\
-mmath.obj,pb.obj,pixel.obj,points.obj
+matrix.obj,glapi.obj,glapinoop.obj,dispatch.obj,highpc.obj,imaging.obj,mem.obj,\
+mmath.obj,pixel.obj,points.obj
 
 OBJECTS7=polygon.obj,imports.obj,\
-quads.obj,rastpos.obj,readpix.obj,rect.obj,scissor.obj,shade.obj,span.obj,\
-pixeltex.obj,convolve.obj
+rastpos.obj,readpix.obj,rect.obj,scissor.obj,shade.obj,\
+pixeltex.obj,convolve.obj,lowpc.obj
 
 OBJECTS4=stencil.obj,teximage.obj,texobj.obj,texstate.obj,texture.obj,translate.obj,\
-triangle.obj,varray.obj,winpos.obj,vb.obj,vbcull.obj,vbfill.obj,vbrender.obj
+varray.obj,winpos.obj,vb.obj,vbcull.obj,vbfill.obj,vbrender.obj
 
-OBJECTS6=vbxform.obj,xform.obj,zoom.obj,bbox.obj,cva.obj,vector.obj,vbindirect.obj,\
+OBJECTS6=vbxform.obj,xform.obj,bbox.obj,cva.obj,vector.obj,vbindirect.obj,\
 	config.obj,enums.obj,extensions.obj,pipeline.obj,stages.obj,state.obj,\
 	vertices.obj,[.x86]x86.obj
 
@@ -69,16 +98,47 @@ OBJECTS5=[.fx]fxapi.obj,[.fx]fxdd.obj,[.fx]fxddtex.obj,[.fx]fxvsetup.obj,\
 [.fx]fxsetup.obj,[.fx]fxclip.obj,[.fx]fxfastpath.obj,[.fx]fxpipeline.obj
 
 OBJECTS8=[.fx]fxtrifuncs.obj,[.fx]fxsanity.obj,[.fx]fxglidew.obj,\
-[.fx]fxrender.obj,[.fx]fxtexman.obj,[.fx]fxddspan.obj,[.fx]fxcva.obj
+[.fx]fxrender.obj,[.fx]fxtexman.obj,[.fx]fxddspan.obj
+
+OBJECTS9=[.swrast]s_aatriangle.obj,\
+[.swrast]s_accum.obj,\
+[.swrast]s_alpha.obj,\
+[.swrast]s_alphabuf.obj,\
+[.swrast]s_bitmap.obj,\
+[.swrast]s_blend.obj,\
+[.swrast]s_buffers.obj,\
+[.swrast]s_copypix.obj,\
+[.swrast]s_context.obj,\
+[.swrast]s_depth.obj
+
+OBJECTS10=[.swrast]s_drawpix.obj,\
+[.swrast]s_fog.obj,\
+[.swrast]s_imaging.obj,\
+[.swrast]s_lines.obj,\
+[.swrast]s_logic.obj,\
+[.swrast]s_masking.obj,\
+[.swrast]s_pb.obj,\
+[.swrast]s_pixeltex.obj,\
+[.swrast]s_points.obj,\
+[.swrast]s_quads.obj
+
+OBJECTS11=[.swrast]s_readpix.obj,\
+[.swrast]s_scissor.obj,\
+[.swrast]s_span.obj,\
+[.swrast]s_stencil.obj,\
+[.swrast]s_texture.obj,\
+[.swrast]s_triangle.obj,\
+[.swrast]s_zoom.obj
 
 ##### RULES #####
 
-VERSION=Mesa V3.1
+VERSION=Mesa V3.4
 
 ##### TARGETS #####
 # Make the library
 $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
-	$(OBJECTS5) $(OBJECTS8) $(OBJECTS7) $(OBJECTS6)
+	$(OBJECTS5) $(OBJECTS8) $(OBJECTS7) $(OBJECTS6) $(OBJECTS9)\
+	$(OBJECTS10) $(OBJECTS11)
 .ifdef SHARE
   @ WRITE_ SYS$OUTPUT "  generating mesagl1.opt"
   @ OPEN_/WRITE FILE  mesagl1.opt
@@ -86,7 +146,7 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
   @ WRITE_ FILE "! mesagl1.opt generated by DESCRIP.$(MMS_EXT)" 
   @ WRITE_ FILE "!"
   @ WRITE_ FILE "IDENTIFICATION=""$(VERSION)"""
-  @ WRITE_ FILE "GSMATCH=LEQUAL,3,1
+  @ WRITE_ FILE "GSMATCH=LEQUAL,3,4
   @ WRITE_ FILE "$(OBJECTS)"
   @ WRITE_ FILE "$(OBJECTS3)"
   @ WRITE_ FILE "$(OBJECTS4)"
@@ -95,6 +155,9 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
   @ WRITE_ FILE "$(OBJECTS2)"
   @ WRITE_ FILE "$(OBJECTS5)"
   @ WRITE_ FILE "$(OBJECTS8)"
+  @ WRITE_ FILE "$(OBJECTS9)"
+  @ WRITE_ FILE "$(OBJECTS10)"
+  @ WRITE_ FILE "$(OBJECTS11)"
   @ WRITE_ FILE "SYS$SHARE:DECW$XEXTLIBSHR/SHARE"
   @ WRITE_ FILE "SYS$SHARE:DECW$XLIBSHR/SHARE"
   @ CLOSE_ FILE
@@ -113,16 +176,15 @@ $(LIBDIR)$(GL_LIB) : $(OBJECTS),$(OBJECTS2) $(OBJECTS3) $(OBJECTS4)\
   @ library $(GL_LIB) $(OBJECTS8)
   @ library $(GL_LIB) $(OBJECTS7)
   @ library $(GL_LIB) $(OBJECTS6)
+  @ library $(GL_LIB) $(OBJECTS9)
+  @ library $(GL_LIB) $(OBJECTS10)
+  @ library $(GL_LIB) $(OBJECTS11)
 .endif
   @ rename $(GL_LIB)* $(LIBDIR)
 
 clean :
 	purge
 	delete *.obj;*
-
-aatriangle.obj : aatriangle.c
-
-triangle.obj : triangle.c
 
 pixeltex.obj : pixeltex.c
 
@@ -154,8 +216,6 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxapi.obj [.fx]fxapi.c
 [.fx]fxclip.obj : [.fx]fxclip.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxclip.obj [.fx]fxclip.c
-[.fx]fxcva.obj : [.fx]fxcva.c
-	$(CC) $(CFLAGS) /obj=[.fx]fxcva.obj [.fx]fxcva.c
 [.fx]fxdd.obj : [.fx]fxdd.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxdd.obj [.fx]fxdd.c
 [.fx]fxddtex.obj : [.fx]fxddtex.c
@@ -180,5 +240,60 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxddspan.obj [.fx]fxddspan.c
 [.fx]fxglidew.obj : [.fx]fxglidew.c
 	$(CC) $(CFLAGS) /obj=[.fx]fxglidew.obj [.fx]fxglidew.c
+
+[.swrast]s_aatriangle.obj : [.swrast]s_aatriangle.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_aatriangle.obj [.swrast]s_aatriangle.c
+[.swrast]s_accum.obj : [.swrast]s_accum.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_accum.obj [.swrast]s_accum.c
+[.swrast]s_alpha.obj : [.swrast]s_alpha.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_alpha.obj [.swrast]s_alpha.c
+[.swrast]s_alphabuf.obj : [.swrast]s_alphabuf.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_alphabuf.obj [.swrast]s_alphabuf.c
+[.swrast]s_bitmap.obj : [.swrast]s_bitmap.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_bitmap.obj [.swrast]s_bitmap.c
+[.swrast]s_blend.obj : [.swrast]s_blend.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_blend.obj [.swrast]s_blend.c
+[.swrast]s_buffers.obj : [.swrast]s_buffers.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_buffers.obj [.swrast]s_buffers.c
+[.swrast]s_copypix.obj : [.swrast]s_copypix.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_copypix.obj [.swrast]s_copypix.c
+[.swrast]s_context.obj : [.swrast]s_context.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_context.obj [.swrast]s_context.c
+[.swrast]s_depth.obj : [.swrast]s_depth.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_depth.obj [.swrast]s_depth.c
+[.swrast]s_drawpix.obj : [.swrast]s_drawpix.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_drawpix.obj [.swrast]s_drawpix.c
+[.swrast]s_fog.obj : [.swrast]s_fog.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_fog.obj [.swrast]s_fog.c
+[.swrast]s_imaging.obj : [.swrast]s_imaging.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_imaging.obj [.swrast]s_imaging.c
+[.swrast]s_lines.obj : [.swrast]s_lines.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_lines.obj [.swrast]s_lines.c
+[.swrast]s_logic.obj : [.swrast]s_logic.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_logic.obj [.swrast]s_logic.c
+[.swrast]s_masking.obj : [.swrast]s_masking.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_masking.obj [.swrast]s_masking.c
+[.swrast]s_pb.obj : [.swrast]s_pb.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_pb.obj [.swrast]s_pb.c
+[.swrast]s_pixeltex.obj : [.swrast]s_pixeltex.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_pixeltex.obj [.swrast]s_pixeltex.c
+[.swrast]s_points.obj : [.swrast]s_points.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_points.obj [.swrast]s_points.c
+[.swrast]s_quads.obj : [.swrast]s_quads.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_quads.obj [.swrast]s_quads.c
+[.swrast]s_readpix.obj : [.swrast]s_readpix.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_readpix.obj [.swrast]s_readpix.c
+[.swrast]s_scissor.obj : [.swrast]s_scissor.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_scissor.obj [.swrast]s_scissor.c
+[.swrast]s_span.obj : [.swrast]s_span.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_span.obj [.swrast]s_span.c
+[.swrast]s_stencil.obj : [.swrast]s_stencil.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_stencil.obj [.swrast]s_stencil.c
+[.swrast]s_texture.obj : [.swrast]s_texture.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_texture.obj [.swrast]s_texture.c
+[.swrast]s_triangle.obj : [.swrast]s_triangle.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_triangle.obj [.swrast]s_triangle.c
+[.swrast]s_zoom.obj : [.swrast]s_zoom.c
+	$(CC) $(CFLAGS) /obj=[.swrast]s_zoom.obj [.swrast]s_zoom.c
 
 .include mms_depend.
