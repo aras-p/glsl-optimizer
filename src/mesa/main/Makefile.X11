@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.69 2002/09/27 02:45:37 brianp Exp $
+# $Id: Makefile.X11,v 1.70 2002/10/16 17:57:03 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -253,28 +253,3 @@ dep: $(CORE_SOURCES) $(DRIVER_SOURCES) $(OSMESA_SOURCES)
 
 tags:
 	etags `find . -name \*.[ch]` `find ../include`
-
-
-
-# XXX temporary for NV_vertex_program
-VPFILES = \
-	include/GL/glext.h \
-	src/Makefile.X11 \
-	src/vpparse.[ch] \
-	src/vpexec.[ch] \
-	src/vpstate.[ch] \
-	src/attrib.c \
-	src/context.c \
-	src/enable.c \
-	src/extensions.c \
-	src/get.c \
-	src/matrix.c \
-	src/mtypes.h \
-	src/varray.c \
-	src/tnl/t_vb_program.c \
-	tests/vptest1.c \
-	tests/vptest2.c
-
-vptar:
-	cd .. ; tar cvf vpfiles.tar $(VPFILES) ; gzip vpfiles.tar
-
