@@ -54,6 +54,17 @@ int vl_current_offset, vl_current_delta;
 
 
 
+#if HUGE_LOOKUP
+/* These lookup tables are used to extract RGB values in [0,255]
+ * from 15/16-bit pixel values.
+ */
+static unsigned char pix15r[0x10000];
+static unsigned char pix15g[0x10000];
+static unsigned char pix15b[0x10000];
+static unsigned char pix16r[0x10000];
+static unsigned char pix16g[0x10000];
+static unsigned char pix16b[0x10000];
+#else
 /* lookup table for scaling 5 bit colors up to 8 bits */
 static int _rgb_scale_5[32] = {
    0,   8,   16,  25,  33,  41,  49,  58,
@@ -61,6 +72,7 @@ static int _rgb_scale_5[32] = {
    132, 140, 148, 156, 165, 173, 181, 189,
    197, 206, 214, 222, 230, 239, 247, 255
 };
+#endif
 
 /* lookup table for scaling 6 bit colors up to 8 bits */
 static int _rgb_scale_6[64] = {
@@ -213,17 +225,29 @@ static void v_getrgba8fake8 (unsigned int offset, unsigned char rgba[])
 static void v_getrgba15 (unsigned int offset, unsigned char rgba[4])
 {
  word32 c = ((word16 *)vl_current_read_buffer)[offset];
+#if HUGE_LOOKUP
+ rgba[0] = pix15r[c];
+ rgba[1] = pix15g[c];
+ rgba[2] = pix15b[c];
+#else
  rgba[0] = _rgb_scale_5[(c >> 10) & 0x1F];
  rgba[1] = _rgb_scale_5[(c >> 5) & 0x1F];
  rgba[2] = _rgb_scale_5[c & 0x1F];
+#endif
  rgba[3] = 255;
 }
 static void v_getrgba16 (unsigned int offset, unsigned char rgba[4])
 {
  word32 c = ((word16 *)vl_current_read_buffer)[offset];
+#if HUGE_LOOKUP
+ rgba[0] = pix16r[c];
+ rgba[1] = pix16g[c];
+ rgba[2] = pix16b[c];
+#else
  rgba[0] = _rgb_scale_5[(c >> 11) & 0x1F];
  rgba[1] = _rgb_scale_6[(c >> 5) & 0x3F];
  rgba[2] = _rgb_scale_5[c & 0x1F];
+#endif
  rgba[3] = 255;
 }
 static void v_getrgba24 (unsigned int offset, unsigned char rgba[4])
@@ -336,6 +360,52 @@ static void fake_buildpalette (int bits)
      array_b[color] = (int)c_b;
  }
 }
+
+
+
+#if HUGE_LOOKUP
+/* Desc: initialize lookup arrays
+ *
+ * In  : -
+ * Out : -
+ *
+ * Note: -
+ */
+void v_init_pixeltables (void)
+{
+ unsigned int pixel;
+
+ for (pixel = 0; pixel <= 0xffff; pixel++) {
+     unsigned int r, g, b;
+
+     /* 15bit */
+     r = (pixel & 0x7c00) >> 8;
+     g = (pixel & 0x03E0) >> 3;
+     b = (pixel & 0x001F) << 2;
+
+     r = (unsigned int)(((double)r * 255. / 0x7c) + 0.5);
+     g = (unsigned int)(((double)g * 255. / 0x7c) + 0.5);
+     b = (unsigned int)(((double)b * 255. / 0x7c) + 0.5);
+
+     pix15r[pixel] = r;
+     pix15g[pixel] = g;
+     pix15b[pixel] = b;
+
+     /* 16bit */
+     r = (pixel & 0xF800) >> 8;
+     g = (pixel & 0x07E0) >> 3;
+     b = (pixel & 0x001F) << 3;
+
+     r = (unsigned int)(((double)r * 255. / 0xF8) + 0.5);
+     g = (unsigned int)(((double)g * 255. / 0xFC) + 0.5);
+     b = (unsigned int)(((double)b * 255. / 0xF8) + 0.5);
+
+     pix16r[pixel] = r;
+     pix16g[pixel] = g;
+     pix16b[pixel] = b;
+ }
+}
+#endif
 
 
 
@@ -487,6 +557,11 @@ int vl_video_init (int width, int height, int bpp, int rgb, int refresh)
  } else if (bpp == 8) {
     fake = 1;
  }
+#if HUGE_LOOKUP
+ else if (bpp < 24) {
+    v_init_pixeltables();
+ }
+#endif
 
  /* initialize hardware */
  drv = &VESA;

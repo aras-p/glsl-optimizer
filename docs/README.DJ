@@ -67,7 +67,7 @@ Available options:
 
 
 Tested on:
-	CPU:		AMD Duron @800 MHz
+	CPU:		AMD Athlon XP 1800+
 	Mainboard:	EP-8KTA3 w/ 128 MB SDRAM
 	Video card:	Voodoo5 5500 AGP w/ 64 MB SDRAM
 	DJGPP:		djdev 2.04 + gcc v3.2.2 + make v3.79.1
