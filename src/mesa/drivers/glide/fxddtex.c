@@ -407,7 +407,7 @@ convertPalette(const fxMesaContext fxMesa, FxU32 data[256], const struct gl_colo
    FxU32 r, g, b, a;
    GLint i;
 
-   ASSERT(!table->FloatTable);
+   ASSERT(table->Type == GL_UNSIGNED_BYTE);
 
    switch (table->Format) {
    case GL_INTENSITY:

@@ -252,8 +252,8 @@ struct gl_color_table {
    GLenum Format;         /**< GL_ALPHA, GL_RGB, GL_RGB, etc */
    GLenum IntFormat;
    GLuint Size;           /**< number of entries (rows) in table */
-   GLvoid *Table;         /**< either GLfloat * or GLchan * */
-   GLboolean FloatTable;  /**< are entries stored as floats? */
+   GLvoid *Table;         /**< points to data of <Type> */
+   GLenum Type;           /**< GL_UNSIGNED_BYTE or GL_FLOAT */
    GLubyte RedSize;
    GLubyte GreenSize;
    GLubyte BlueSize;

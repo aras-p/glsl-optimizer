@@ -877,6 +877,7 @@ _mesa_transform_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4])
 
 /*
  * Apply a color table lookup to an array of colors.
+ * XXX merge with _swrast_texture_table_lookup in s_texture.c
  */
 void
 _mesa_lookup_rgba(const struct gl_color_table *table,
@@ -888,7 +889,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
    switch (table->Format) {
       case GL_INTENSITY:
          /* replace RGBA with I */
-         if (!table->FloatTable) {
+         if (table->Type != GL_FLOAT) {
             const GLint max = table->Size - 1;
             const GLfloat scale = (GLfloat) max;
             const GLchan *lut = (const GLchan *) table->Table;
@@ -915,7 +916,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          break;
       case GL_LUMINANCE:
          /* replace RGB with L */
-         if (!table->FloatTable) {
+         if (table->Type != GL_FLOAT) {
             const GLint max = table->Size - 1;
             const GLfloat scale = (GLfloat) max;
             const GLchan *lut = (const GLchan *) table->Table;
@@ -940,7 +941,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          break;
       case GL_ALPHA:
          /* replace A with A */
-         if (!table->FloatTable) {
+         if (table->Type != GL_FLOAT) {
             const GLint max = table->Size - 1;
             const GLfloat scale = (GLfloat) max;
             const GLchan *lut = (const GLchan *) table->Table;
@@ -963,7 +964,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          break;
       case GL_LUMINANCE_ALPHA:
          /* replace RGBA with LLLA */
-         if (!table->FloatTable) {
+         if (table->Type != GL_FLOAT) {
             const GLint max = table->Size - 1;
             const GLfloat scale = (GLfloat) max;
             const GLchan *lut = (const GLchan *) table->Table;
@@ -1000,7 +1001,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          break;
       case GL_RGB:
          /* replace RGB with RGB */
-         if (!table->FloatTable) {
+         if (table->Type != GL_FLOAT) {
             const GLint max = table->Size - 1;
             const GLfloat scale = (GLfloat) max;
             const GLchan *lut = (const GLchan *) table->Table;
@@ -1037,7 +1038,7 @@ _mesa_lookup_rgba(const struct gl_color_table *table,
          break;
       case GL_RGBA:
          /* replace RGBA with RGBA */
-         if (!table->FloatTable) {
+         if (table->Type != GL_FLOAT) {
             const GLint max = table->Size - 1;
             const GLfloat scale = (GLfloat) max;
             const GLchan *lut = (const GLchan *) table->Table;

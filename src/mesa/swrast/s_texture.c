@@ -346,6 +346,7 @@ repeat_remainder(GLint a, GLint b)
 
 /*
  * Do the lookup for GL_SGI_texture_color_table.
+ * XXX merge with _mesa_lookup_rgba in pixel.c
  */
 void
 _swrast_texture_table_lookup(const struct gl_color_table *table,
@@ -357,7 +358,7 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
    switch (table->Format) {
       case GL_INTENSITY:
          /* replace RGBA with I */
-         if (table->FloatTable) {
+         if (table->Type == GL_FLOAT) {
             const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
@@ -397,7 +398,7 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
          break;
       case GL_LUMINANCE:
          /* replace RGB with L */
-         if (table->FloatTable) {
+         if (table->Type == GL_FLOAT) {
             const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
@@ -434,7 +435,7 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
          break;
       case GL_ALPHA:
          /* replace A with A */
-         if (table->FloatTable) {
+         if (table->Type == GL_FLOAT) {
             const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
@@ -470,7 +471,7 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
          break;
       case GL_LUMINANCE_ALPHA:
          /* replace RGBA with LLLA */
-         if (table->FloatTable) {
+         if (table->Type == GL_FLOAT) {
             const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
@@ -516,7 +517,7 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
          break;
       case GL_RGB:
          /* replace RGB with RGB */
-         if (table->FloatTable) {
+         if (table->Type == GL_FLOAT) {
             const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
@@ -560,7 +561,7 @@ _swrast_texture_table_lookup(const struct gl_color_table *table,
          break;
       case GL_RGBA:
          /* replace RGBA with RGBA */
-         if (table->FloatTable) {
+         if (table->Type == GL_FLOAT) {
             const GLfloat scale = (GLfloat) (table->Size - 1) / CHAN_MAXF;
             const GLfloat *lut = (const GLfloat *) table->Table;
             GLuint i;
@@ -627,12 +628,12 @@ palette_sample(const GLcontext *ctx,
    GLenum format;
 
    if (ctx->Texture.SharedPalette) {
-      ASSERT(!ctx->Texture.Palette.FloatTable);
+      ASSERT(ctx->Texture.Palette.Type != GL_FLOAT);
       palette = (const GLchan *) ctx->Texture.Palette.Table;
       format = ctx->Texture.Palette.Format;
    }
    else {
-      ASSERT(!tObj->Palette.FloatTable);
+      ASSERT(tObj->Palette.Type != GL_FLOAT);
       palette = (const GLchan *) tObj->Palette.Table;
       format = tObj->Palette.Format;
    }
