@@ -1,4 +1,4 @@
-/* $Id: m_xform_tmp.h,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_xform_tmp.h,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -457,10 +457,7 @@ TAG(transform_points2_3d_no_rot)( GLvector4f *to_vec,
    to_vec->count = from_vec->count;
 }
 
-/* This may not be called too often, but I wouldn't say it was dead
- * code.  It's also hard to remove any of these functions if you are
- * attached to the assertions that have appeared in them.
- */
+
 static void _XFORMAPI
 TAG(transform_points2_perspective)( GLvector4f *to_vec,
 				    const GLfloat m[16],

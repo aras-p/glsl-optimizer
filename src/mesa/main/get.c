@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.47 2000/12/09 20:35:32 brianp Exp $ */
+/* $Id: get.c,v 1.48 2000/12/26 05:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -91,8 +91,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
    GLuint texUnit = ctx->Texture.CurrentUnit;
    GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetBooleanv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!params)
       return;
@@ -228,18 +227,18 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ENUM_TO_BOOL(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = INT_TO_BOOL(ctx->Current.Color[0]);
          params[1] = INT_TO_BOOL(ctx->Current.Color[1]);
          params[2] = INT_TO_BOOL(ctx->Current.Color[2]);
          params[3] = INT_TO_BOOL(ctx->Current.Color[3]);
          break;
       case GL_CURRENT_INDEX:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          *params = INT_TO_BOOL(ctx->Current.Index);
          break;
       case GL_CURRENT_NORMAL:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_BOOL(ctx->Current.Normal[0]);
          params[1] = FLOAT_TO_BOOL(ctx->Current.Normal[1]);
          params[2] = FLOAT_TO_BOOL(ctx->Current.Normal[2]);
@@ -272,7 +271,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ctx->Current.RasterPosValid;
 	 break;
       case GL_CURRENT_TEXTURE_COORDS:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texTransformUnit][0]);
          params[1] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texTransformUnit][1]);
          params[2] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texTransformUnit][2]);
@@ -313,7 +312,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = ENUM_TO_BOOL(ctx->Color.DrawBuffer);
 	 break;
       case GL_EDGE_FLAG:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
 	 *params = ctx->Current.EdgeFlag;
 	 break;
       case GL_FEEDBACK_BUFFER_SIZE:
@@ -554,10 +553,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(ctx->Const.MaxClipPlanes);
 	 break;
       case GL_MAX_ELEMENTS_VERTICES:  /* GL_VERSION_1_2 */
-         *params = INT_TO_BOOL(VB_MAX);
+         *params = INT_TO_BOOL(ctx->Const.MaxArrayLockSize);
          break;
       case GL_MAX_ELEMENTS_INDICES:   /* GL_VERSION_1_2 */
-         *params = INT_TO_BOOL(VB_MAX);
+         *params = INT_TO_BOOL(ctx->Const.MaxArrayLockSize);
          break;
       case GL_MAX_EVAL_ORDER:
 	 *params = INT_TO_BOOL(MAX_EVAL_ORDER);
@@ -1271,7 +1270,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = ctx->Fog.ColorSumEnabled;
 	 break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = INT_TO_BOOL(ctx->Current.SecondaryColor[0]);
          params[1] = INT_TO_BOOL(ctx->Current.SecondaryColor[1]);
          params[2] = INT_TO_BOOL(ctx->Current.SecondaryColor[2]);
@@ -1291,7 +1290,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
       /* GL_EXT_fog_coord */
       case GL_CURRENT_FOG_COORDINATE_EXT:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
 	 *params = FLOAT_TO_BOOL(ctx->Current.FogCoord);
 	 break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
@@ -1331,8 +1330,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
    GLuint texUnit = ctx->Texture.CurrentUnit;
    GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetDoublev");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!params)
       return;
@@ -1467,18 +1465,18 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = ENUM_TO_DOUBLE(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = CHAN_TO_FLOAT(ctx->Current.Color[0]);
          params[1] = CHAN_TO_FLOAT(ctx->Current.Color[1]);
          params[2] = CHAN_TO_FLOAT(ctx->Current.Color[2]);
          params[3] = CHAN_TO_FLOAT(ctx->Current.Color[3]);
          break;
       case GL_CURRENT_INDEX:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          *params = (GLdouble) ctx->Current.Index;
          break;
       case GL_CURRENT_NORMAL:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = (GLdouble) ctx->Current.Normal[0];
          params[1] = (GLdouble) ctx->Current.Normal[1];
          params[2] = (GLdouble) ctx->Current.Normal[2];
@@ -1511,7 +1509,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Current.RasterPosValid;
 	 break;
       case GL_CURRENT_TEXTURE_COORDS:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
 	 params[0] = (GLdouble) ctx->Current.Texcoord[texTransformUnit][0];
 	 params[1] = (GLdouble) ctx->Current.Texcoord[texTransformUnit][1];
 	 params[2] = (GLdouble) ctx->Current.Texcoord[texTransformUnit][2];
@@ -1552,7 +1550,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = ENUM_TO_DOUBLE(ctx->Color.DrawBuffer);
 	 break;
       case GL_EDGE_FLAG:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
 	 *params = (GLdouble) ctx->Current.EdgeFlag;
 	 break;
       case GL_FEEDBACK_BUFFER_SIZE:
@@ -1793,10 +1791,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Const.MaxClipPlanes;
 	 break;
       case GL_MAX_ELEMENTS_VERTICES:  /* GL_VERSION_1_2 */
-         *params = (GLdouble) VB_MAX;
+         *params = (GLdouble) ctx->Const.MaxArrayLockSize;
          break;
       case GL_MAX_ELEMENTS_INDICES:   /* GL_VERSION_1_2 */
-         *params = (GLdouble) VB_MAX;
+         *params = (GLdouble) ctx->Const.MaxArrayLockSize;
          break;
       case GL_MAX_EVAL_ORDER:
 	 *params = (GLdouble) MAX_EVAL_ORDER;
@@ -2510,7 +2508,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Fog.ColorSumEnabled;
 	 break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[0]);
          params[1] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[1]);
          params[2] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[2]);
@@ -2530,7 +2528,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
       /* GL_EXT_fog_coord */
       case GL_CURRENT_FOG_COORDINATE_EXT:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
 	 *params = (GLdouble) ctx->Current.FogCoord;
 	 break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
@@ -2570,8 +2568,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
    GLuint texUnit = ctx->Texture.CurrentUnit;
    GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetFloatv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!params)
       return;
@@ -2706,18 +2703,18 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = ENUM_TO_FLOAT(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = CHAN_TO_FLOAT(ctx->Current.Color[0]);
          params[1] = CHAN_TO_FLOAT(ctx->Current.Color[1]);
          params[2] = CHAN_TO_FLOAT(ctx->Current.Color[2]);
          params[3] = CHAN_TO_FLOAT(ctx->Current.Color[3]);
          break;
       case GL_CURRENT_INDEX:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          *params = (GLfloat) ctx->Current.Index;
          break;
       case GL_CURRENT_NORMAL:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = ctx->Current.Normal[0];
          params[1] = ctx->Current.Normal[1];
          params[2] = ctx->Current.Normal[2];
@@ -2750,7 +2747,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->Current.RasterPosValid;
 	 break;
       case GL_CURRENT_TEXTURE_COORDS:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
 	 params[0] = (GLfloat) ctx->Current.Texcoord[texTransformUnit][0];
 	 params[1] = (GLfloat) ctx->Current.Texcoord[texTransformUnit][1];
 	 params[2] = (GLfloat) ctx->Current.Texcoord[texTransformUnit][2];
@@ -2791,7 +2788,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = ENUM_TO_FLOAT(ctx->Color.DrawBuffer);
 	 break;
       case GL_EDGE_FLAG:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
 	 *params = (GLfloat) ctx->Current.EdgeFlag;
 	 break;
       case GL_FEEDBACK_BUFFER_SIZE:
@@ -3032,10 +3029,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->Const.MaxClipPlanes;
 	 break;
       case GL_MAX_ELEMENTS_VERTICES:  /* GL_VERSION_1_2 */
-         *params = (GLfloat) VB_MAX;
+         *params = (GLfloat) ctx->Const.MaxArrayLockSize;
          break;
       case GL_MAX_ELEMENTS_INDICES:   /* GL_VERSION_1_2 */
-         *params = (GLfloat) VB_MAX;
+         *params = (GLfloat) ctx->Const.MaxArrayLockSize;
          break;
       case GL_MAX_EVAL_ORDER:
 	 *params = (GLfloat) MAX_EVAL_ORDER;
@@ -3723,7 +3720,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->Fog.ColorSumEnabled;
 	 break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[0]);
          params[1] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[1]);
          params[2] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.SecondaryColor[2]);
@@ -3743,7 +3740,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
       /* GL_EXT_fog_coord */
       case GL_CURRENT_FOG_COORDINATE_EXT:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
 	 *params = (GLfloat) ctx->Current.FogCoord;
 	 break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
@@ -3783,8 +3780,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
    GLuint texUnit = ctx->Texture.CurrentUnit;
    GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetIntegerv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!params)
       return;
@@ -3921,18 +3917,18 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Polygon.CullFaceMode;
          break;
       case GL_CURRENT_COLOR:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.Color[0] ) );
          params[1] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.Color[1] ) );
          params[2] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.Color[2] ) );
          params[3] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.Color[3] ) );
          break;
       case GL_CURRENT_INDEX:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          *params = (GLint) ctx->Current.Index;
          break;
       case GL_CURRENT_NORMAL:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_INT( ctx->Current.Normal[0] );
          params[1] = FLOAT_TO_INT( ctx->Current.Normal[1] );
          params[2] = FLOAT_TO_INT( ctx->Current.Normal[2] );
@@ -3965,7 +3961,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = (GLint) ctx->Current.RasterPosValid;
 	 break;
       case GL_CURRENT_TEXTURE_COORDS:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = (GLint) ctx->Current.Texcoord[texTransformUnit][0];
          params[1] = (GLint) ctx->Current.Texcoord[texTransformUnit][1];
          params[2] = (GLint) ctx->Current.Texcoord[texTransformUnit][2];
@@ -4006,7 +4002,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = (GLint) ctx->Color.DrawBuffer;
 	 break;
       case GL_EDGE_FLAG:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
 	 *params = (GLint) ctx->Current.EdgeFlag;
 	 break;
       case GL_FEEDBACK_BUFFER_SIZE:
@@ -4247,10 +4243,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Const.MaxClipPlanes;
          break;
       case GL_MAX_ELEMENTS_VERTICES:  /* GL_VERSION_1_2 */
-         *params = VB_MAX;
+         *params = (GLint) ctx->Const.MaxArrayLockSize;
          break;
       case GL_MAX_ELEMENTS_INDICES:   /* GL_VERSION_1_2 */
-         *params = VB_MAX;
+         *params = (GLint) ctx->Const.MaxArrayLockSize;
          break;
       case GL_MAX_EVAL_ORDER:
 	 *params = (GLint) MAX_EVAL_ORDER;
@@ -4965,7 +4961,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = (GLint) ctx->Fog.ColorSumEnabled;
 	 break;
       case GL_CURRENT_SECONDARY_COLOR_EXT:
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.SecondaryColor[0] ) );
          params[1] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.SecondaryColor[1] ) );
          params[2] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.SecondaryColor[2] ) );
@@ -4986,7 +4982,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       /* GL_EXT_fog_coord */
       case GL_CURRENT_FOG_COORDINATE_EXT:
          if (ctx->Extensions.EXT_fog_coord) {
-            FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+            FLUSH_CURRENT(ctx, 0);
             *params = (GLint) ctx->Current.FogCoord;
          }
          else {
@@ -5041,8 +5037,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint texUnit = ctx->Texture.CurrentUnit;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetPointerv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!params)
       return;
@@ -5100,8 +5095,7 @@ _mesa_GetString( GLenum name )
    static const char *vendor = "Brian Paul";
    static const char *renderer = "Mesa";
    static const char *version = "1.2 Mesa 3.5 beta";
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glGetString", 0);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
    /* this is a required driver function */
    assert(ctx->Driver.GetString);
@@ -5134,10 +5128,8 @@ GLenum
 _mesa_GetError( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-
    GLenum e = ctx->ErrorValue;
-
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL( ctx, "glGetError", (GLenum) 0);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glGetError <-- %s\n", gl_lookup_enum_by_nr(e));

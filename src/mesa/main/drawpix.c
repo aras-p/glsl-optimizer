@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.46 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: drawpix.c,v 1.47 2000/12/26 05:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -53,7 +53,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
                   GLenum format, GLenum type, const GLvoid *pixels )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "_mesa_DrawPixels" );
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->RenderMode==GL_RENDER) {
       GLint x, y;
@@ -88,8 +88,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
          GLfloat color[4];
 	 GLfloat texcoord[4], invq;
 
-	 FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
-
+	 FLUSH_CURRENT(ctx, 0);
          color[0] = CHAN_TO_FLOAT(ctx->Current.Color[0]);
          color[1] = CHAN_TO_FLOAT(ctx->Current.Color[1]);
          color[2] = CHAN_TO_FLOAT(ctx->Current.Color[2]);

@@ -333,11 +333,6 @@ void fxDDTexDel(GLcontext *ctx, struct gl_texture_object *tObj)
 
   FREE(ti);
   tObj->DriverData = NULL;
-
-/* Pushed into core: Set _NEW_TEXTURE whenever a bound texture is
- * deleted (changes bound texture id).
- */
-/*    ctx->NewState |= _NEW_TEXTURE; */
 }
 
 
@@ -824,6 +819,23 @@ static GLboolean fxIsTexSupported(GLenum target, GLint internalFormat,
 /**** NEW TEXTURE IMAGE FUNCTIONS                                  ****/
 /**********************************************************************/
 
+
+static void PrintTexture(int w, int h, int c, const GLubyte *data)
+{
+  int i, j;
+  for (i = 0; i < h; i++) {
+    for (j = 0; j < w; j++) {
+      if (c==2)
+        printf("%02x %02x  ", data[0], data[1]);
+      else if (c==3)
+        printf("%02x %02x %02x  ", data[0], data[1], data[2]);
+      data += c;
+    }
+    printf("\n");
+  }
+}
+
+
 GLboolean fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
                          GLenum format, GLenum type, const GLvoid *pixels,
                          const struct gl_pixelstore_attrib *packing,
@@ -960,6 +972,7 @@ GLboolean fxDDTexImage2D(GLcontext *ctx, GLenum target, GLint level,
       return GL_FALSE;
     }
     
+
     if (ti->validated && ti->isInTM) {
       /*printf("reloadmipmaplevels\n");*/
       fxTMReloadMipMapLevel(fxMesa, texObj, level);
@@ -1081,21 +1094,6 @@ GLboolean fxDDTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
   return GL_TRUE;
 }
 
-
-static void PrintTexture(int w, int h, int c, const GLubyte *data)
-{
-  int i, j;
-  for (i = 0; i < h; i++) {
-    for (j = 0; j < w; j++) {
-      if (c==2)
-        printf("%02x %02x  ", data[0], data[1]);
-      else if (c==3)
-        printf("%02x %02x %02x  ", data[0], data[1], data[2]);
-      data += c;
-    }
-    printf("\n");
-  }
-}
 
 
 GLvoid *fxDDGetTexImage(GLcontext *ctx, GLenum target, GLint level,

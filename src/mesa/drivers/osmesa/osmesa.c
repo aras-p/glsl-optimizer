@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.34 2000/11/22 08:55:52 joukj Exp $ */
+/* $Id: osmesa.c,v 1.35 2000/12/26 05:09:30 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -87,7 +87,7 @@ struct osmesa_context {
 
 
 /* A forward declaration: */
-static void osmesa_update_state( GLcontext *ctx );
+static void osmesa_update_state( GLcontext *ctx, GLuint newstate );
 static void osmesa_register_swrast_functions( GLcontext *ctx );
 
 
@@ -311,11 +311,9 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       {
 	 GLcontext *ctx = &osmesa->gl_ctx;
 
-	 ctx->Driver.RegisterVB = _swsetup_RegisterVB;
-
 	 _swrast_CreateContext( ctx );
-	 _swsetup_CreateContext( ctx );
 	 _tnl_CreateContext( ctx );
+	 _swsetup_CreateContext( ctx );
 	
 	 osmesa_register_swrast_functions( ctx );
       }
@@ -439,7 +437,7 @@ OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
       return GL_FALSE;
    }
 
-   osmesa_update_state( &ctx->gl_ctx );
+   osmesa_update_state( &ctx->gl_ctx, 0 );
    _mesa_make_current( &ctx->gl_ctx, ctx->gl_buffer );
 
    ctx->buffer = buffer;
@@ -1687,7 +1685,7 @@ static const GLubyte *get_string( GLcontext *ctx, GLenum name )
 }
 
 
-static void osmesa_update_state( GLcontext *ctx )
+static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
 
@@ -1709,7 +1707,7 @@ static void osmesa_update_state( GLcontext *ctx )
    ctx->Driver.LineFunc = _swsetup_Line;
    ctx->Driver.TriangleFunc = _swsetup_Triangle;
    ctx->Driver.QuadFunc = _swsetup_Quad;
-   ctx->Driver.RasterSetup = _swsetup_RasterSetup;
+   ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
 
 
    /* RGB(A) span/pixel functions */
@@ -1751,7 +1749,7 @@ static void osmesa_update_state( GLcontext *ctx )
    ctx->Driver.ReadCI32Span = read_index_span;
    ctx->Driver.ReadCI32Pixels = read_index_pixels;
 
-   _swrast_InvalidateState( ctx, ctx->NewState );
-   _swsetup_InvalidateState( ctx, ctx->NewState );
-   _tnl_InvalidateState( ctx, ctx->NewState );
+   _swrast_InvalidateState( ctx, new_state );
+   _swsetup_InvalidateState( ctx, new_state );
+   _tnl_InvalidateState( ctx, new_state );
 }

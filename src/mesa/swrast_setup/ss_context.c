@@ -1,4 +1,4 @@
-/* $Id: ss_context.c,v 1.4 2000/11/16 21:05:42 keithw Exp $ */
+/* $Id: ss_context.c,v 1.5 2000/12/26 05:09:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,20 +77,19 @@ _swsetup_validate_points( GLcontext *ctx, GLuint first, GLuint last )
 
 
 static void 
-_swsetup_validate_rastersetup( struct vertex_buffer *VB,
-			       GLuint start, GLuint end )
+_swsetup_validate_buildprojverts( GLcontext *ctx,
+				  GLuint start, GLuint end, GLuint new_inputs )
 {
-   GLcontext *ctx = VB->ctx;
    _swsetup_choose_rastersetup_func( ctx );
-   SWSETUP_CONTEXT(ctx)->RasterSetup( VB, start, end );
+   SWSETUP_CONTEXT(ctx)->BuildProjVerts( ctx, start, end, new_inputs );
 }
 
 
-#define _SWSETUP_NEW_RASTERSETUP (_NEW_RENDERMODE|	\
-			          _NEW_TEXTURE|		\
-			          _NEW_COLOR|		\
-			          _NEW_FOG|		\
-			          _NEW_POINT)
+#define _SWSETUP_NEW_VERTS (_NEW_RENDERMODE|	\
+			    _NEW_TEXTURE|	\
+			    _NEW_COLOR|		\
+			    _NEW_FOG|		\
+			    _NEW_POINT)
 
 #define _SWSETUP_NEW_RENDERINDEX (_NEW_POLYGON|_NEW_LIGHT)
 
@@ -118,8 +117,8 @@ _swsetup_invalidate_state( GLcontext *ctx, GLuint new_state )
       swsetup->Quad = _swsetup_validate_quad;
    }
 
-   if (new_state & _SWSETUP_NEW_RASTERSETUP) {
-      swsetup->RasterSetup = _swsetup_validate_rastersetup;
+   if (new_state & _SWSETUP_NEW_VERTS) {
+      swsetup->BuildProjVerts = _swsetup_validate_buildprojverts;
    }
 }
 
@@ -156,9 +155,10 @@ _swsetup_Points( GLcontext *ctx, GLuint first, GLuint last )
 }
 
 void 
-_swsetup_RasterSetup( struct vertex_buffer *VB, GLuint start, GLuint end )
+_swsetup_BuildProjectedVertices( GLcontext *ctx, GLuint start, GLuint end,
+				 GLuint new_inputs )
 {
-   SWSETUP_CONTEXT(VB->ctx)->RasterSetup( VB, start, end );
+   SWSETUP_CONTEXT(ctx)->BuildProjVerts( ctx, start, end, new_inputs );
 }
 
 void
@@ -171,10 +171,17 @@ _swsetup_InvalidateState( GLcontext *ctx, GLuint new_state )
 GLboolean
 _swsetup_CreateContext( GLcontext *ctx )
 {
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
    SScontext *swsetup = (SScontext *)CALLOC(sizeof(SScontext));
-
+   
    if (!swsetup) 
       return GL_FALSE;
+
+   swsetup->verts = ALIGN_MALLOC( sizeof(SWvertex) * tnl->vb.Size, 32);
+   if (!swsetup->verts) {
+      FREE(swsetup);
+      return GL_FALSE;
+   }
 
    ctx->swsetup_context = swsetup;
 
@@ -184,11 +191,11 @@ _swsetup_CreateContext( GLcontext *ctx )
    swsetup->Triangle = _swsetup_validate_triangle;
    swsetup->Line = _swsetup_validate_line;
    swsetup->Points = _swsetup_validate_points;
-   swsetup->RasterSetup = _swsetup_validate_rastersetup;
+   swsetup->BuildProjVerts = _swsetup_validate_buildprojverts;
    
    _swsetup_vb_init( ctx );
    _swsetup_trifuncs_init( ctx );
-   
+
    return GL_TRUE;
 }
 
@@ -196,35 +203,12 @@ void
 _swsetup_DestroyContext( GLcontext *ctx )
 {
    if (SWSETUP_CONTEXT(ctx)) {
+      if (SWSETUP_CONTEXT(ctx)->verts) 
+	 ALIGN_FREE(SWSETUP_CONTEXT(ctx)->verts);
+
       FREE(SWSETUP_CONTEXT(ctx));
       ctx->swsetup_context = 0;
    }
 }
 
-void
-_swsetup_RegisterVB( struct vertex_buffer *VB )
-{
-   SSvertexbuffer *ssvb = (SSvertexbuffer *)CALLOC(sizeof(SSvertexbuffer) );
 
-   ssvb->verts = ALIGN_MALLOC( sizeof(SWvertex) * VB->Size, 32);
-   if (!ssvb->verts) {
-      FREE(ssvb);
-      /*return GL_FALSE;*/
-   }
-
-   VB->swsetup_vb = ssvb;
-   /*return GL_TRUE;*/
-}
-
-
-void 
-_swsetup_UnregisterVB( struct vertex_buffer *VB )
-{
-   SSvertexbuffer *ssvb = SWSETUP_VB(VB);
-   
-   if (ssvb) {
-      if (ssvb->verts) ALIGN_FREE(ssvb->verts);
-      FREE(ssvb);
-      VB->swsetup_vb = 0;
-   }      
-}

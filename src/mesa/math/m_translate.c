@@ -1,4 +1,4 @@
-/* $Id: m_translate.c,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_translate.c,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,22 +36,67 @@
 
 #include "m_translate.h"
 
+
+
+typedef void (*trans_1f_func)(GLfloat *to,
+			      CONST void *ptr,
+			      GLuint stride,
+			      GLuint start, 
+			      GLuint n );
+
+typedef void (*trans_1ui_func)(GLuint *to,
+			       CONST void *ptr,
+			       GLuint stride,
+			       GLuint start, 
+			       GLuint n );
+
+typedef void (*trans_1ub_func)(GLubyte *to,
+			       CONST void *ptr,
+			       GLuint stride,
+			       GLuint start,
+			       GLuint n );
+
+typedef void (*trans_4ub_func)(GLubyte (*to)[4],
+			       CONST void *ptr,
+			       GLuint stride,
+			       GLuint start,
+			       GLuint n );
+
+typedef void (*trans_4f_func)(GLfloat (*to)[4],
+			      CONST void *ptr,
+			      GLuint stride,
+			      GLuint start, 
+			      GLuint n );
+
+typedef void (*trans_3f_func)(GLfloat (*to)[3],
+			      CONST void *ptr,
+			      GLuint stride,
+			      GLuint start, 
+			      GLuint n );
+
+
+
+
+#define TYPE_IDX(t) ((t) & 0xf)
+#define MAX_TYPES TYPE_IDX(GL_DOUBLE)+1      /* 0xa + 1 */
+
+
 /* This macro is used on other systems, so undefine it for this module */
 
 #undef	CHECK
 
-trans_1f_func gl_trans_1f_tab[MAX_TYPES];
-trans_1ui_func gl_trans_1ui_tab[MAX_TYPES];
-trans_1ub_func gl_trans_1ub_tab[MAX_TYPES];
-trans_3f_func  gl_trans_3f_tab[MAX_TYPES];
-trans_4ub_func gl_trans_4ub_tab[5][MAX_TYPES];
-trans_4f_func  gl_trans_4f_tab[5][MAX_TYPES];
+static trans_1f_func  _math_trans_1f_tab[MAX_TYPES];
+static trans_1ui_func _math_trans_1ui_tab[MAX_TYPES];
+static trans_1ub_func _math_trans_1ub_tab[MAX_TYPES];
+static trans_3f_func  _math_trans_3f_tab[MAX_TYPES];
+static trans_4ub_func _math_trans_4ub_tab[5][MAX_TYPES];
+static trans_4f_func  _math_trans_4f_tab[5][MAX_TYPES];
 
 
 #define PTR_ELT(ptr, elt) (((SRC *)ptr)[elt])
 
 
-#define TAB(x) gl_trans##x##_tab
+#define TAB(x) _math_trans##x##_tab
 #define ARGS   GLuint start, GLuint n
 #define SRC_START  start
 #define DST_START  0
@@ -471,8 +516,73 @@ static void init_translate_raw(void)
 
 
 
-void 
-_math_init_translate( void )
+void _math_init_translate( void )
 {
    init_translate_raw();
 }
+
+
+
+void _math_trans_1f(GLfloat *to,
+		    CONST void *ptr,
+		    GLuint stride,
+		    GLenum type,
+		    GLuint start,
+		    GLuint n )
+{
+   _math_trans_1f_tab[TYPE_IDX(type)]( to, ptr, stride, start, n );
+}
+
+void _math_trans_1ui(GLuint *to,
+		     CONST void *ptr,
+		     GLuint stride,
+		     GLenum type,
+		     GLuint start,
+		     GLuint n )
+{
+   _math_trans_1ui_tab[TYPE_IDX(type)]( to, ptr, stride, start, n ); 
+}
+
+void _math_trans_1ub(GLubyte *to,
+		     CONST void *ptr,
+		     GLuint stride,
+		     GLenum type,
+		     GLuint start,
+		     GLuint n )
+{
+   _math_trans_1ub_tab[TYPE_IDX(type)]( to, ptr, stride, start, n ); 
+}
+
+
+void _math_trans_4ub(GLubyte (*to)[4],
+		     CONST void *ptr,
+		     GLuint stride,
+		     GLenum type,
+		     GLuint size,
+		     GLuint start,
+		     GLuint n )
+{
+   _math_trans_4ub_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n ); 
+}
+
+void _math_trans_4f(GLfloat (*to)[4],
+		    CONST void *ptr,
+		    GLuint stride,
+		    GLenum type,
+		    GLuint size,
+		    GLuint start,
+		    GLuint n )
+{
+   _math_trans_4f_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n ); 
+}
+
+void _math_trans_3f(GLfloat (*to)[3],
+		    CONST void *ptr,
+		    GLuint stride,
+		    GLenum type,
+		    GLuint start,
+		    GLuint n )
+{
+   _math_trans_3f_tab[TYPE_IDX(type)]( to, ptr, stride, start, n ); 
+}
+

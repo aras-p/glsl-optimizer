@@ -30,8 +30,8 @@ static void TAG(triangle)(GLcontext *ctx,
 			  GLuint e0, GLuint e1, GLuint e2,
 			  GLuint pv)
 {
-   struct vertex_buffer *VB = TNL_VB(ctx);
-   SWvertex *verts = SWSETUP_VB(VB)->verts;
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   SWvertex *verts = SWSETUP_CONTEXT(ctx)->verts;
    SWvertex *v[3];
    GLfloat offset;
    GLfloat z[3];
@@ -44,22 +44,22 @@ static void TAG(triangle)(GLcontext *ctx,
    v[2] = &verts[e2];
 
    if (IND & (SS_TWOSIDE_BIT | SS_FLAT_BIT)) {
-      SS_COLOR(c[0], v[0]->color);
-      
-      if (IND & SS_TWOSIDE_BIT) {
-	 SS_COLOR(c[1], v[1]->color);
-	 SS_COLOR(c[2], v[2]->color);
-      }
-      
-      if (IND & SS_COPY_EXTRAS) {
+      if (IND & SS_RGBA_BIT) {
+	 SS_COLOR(c[0], v[0]->color);
 	 SS_SPEC(s[0], v[0]->specular);
+      
+	 if (IND & SS_TWOSIDE_BIT) {
+	    SS_COLOR(c[1], v[1]->color);
+	    SS_COLOR(c[2], v[2]->color);
+
+	    SS_SPEC(s[1], v[1]->specular);
+	    SS_SPEC(s[2], v[2]->specular);
+	 }
+      } else {
 	 SS_IND(i[0], v[0]->index);
 
 	 if (IND & SS_TWOSIDE_BIT) {
-	    SS_SPEC(s[1], v[1]->specular);
 	    SS_IND(i[1], v[1]->index);
-
-	    SS_SPEC(s[2], v[2]->specular);
 	    SS_IND(i[2], v[2]->index);
 	 }
       }
@@ -75,39 +75,45 @@ static void TAG(triangle)(GLcontext *ctx,
 
       if (IND & (SS_TWOSIDE_BIT | SS_UNFILLED_BIT))
       {
-	 GLuint  facing = (cc < 0.0) ^ ctx->Polygon.FrontBit;
+	 GLuint  facing = (cc < 0.0) ^ ctx->Polygon._FrontBit;
 	
 	 if (IND & SS_UNFILLED_BIT)
 	    mode = facing ? ctx->Polygon.BackMode : ctx->Polygon.FrontMode;
  
 	 if (IND & SS_TWOSIDE_BIT) {
-	    GLubyte (*vbcolor)[4] = VB->Color[facing]->data;
-	    GLubyte (*vbspec)[4] = VB->SecondaryColor[facing]->data;
-	    GLuint *vbindex = VB->Index[facing]->data;
-
 	    if (IND & SS_FLAT_BIT) {
-	       SS_COLOR(v[0]->color, vbcolor[pv]);
-	       SS_COLOR(v[1]->color, vbcolor[pv]);
-	       SS_COLOR(v[2]->color, vbcolor[pv]);
+	       if (IND & SS_RGBA_BIT) {
+		  GLubyte (*vbcolor)[4] = VB->ColorPtr[facing]->data;
+		  GLubyte (*vbspec)[4] = VB->SecondaryColorPtr[facing]->data;
 
-	       if (IND & SS_COPY_EXTRAS) {
+		  SS_COLOR(v[0]->color, vbcolor[pv]);
+		  SS_COLOR(v[1]->color, vbcolor[pv]);
+		  SS_COLOR(v[2]->color, vbcolor[pv]);
+
 		  SS_SPEC(v[0]->specular, vbspec[pv]);
 		  SS_SPEC(v[1]->specular, vbspec[pv]);
 		  SS_SPEC(v[2]->specular, vbspec[pv]);
-		  
+	       } else {
+		  GLuint *vbindex = VB->IndexPtr[facing]->data;
+
 		  SS_IND(v[0]->index, vbindex[pv]);
 		  SS_IND(v[1]->index, vbindex[pv]);
 		  SS_IND(v[2]->index, vbindex[pv]);
 	       }
 	    } else {
-	       SS_COLOR(v[0]->color, vbcolor[e0]);
-	       SS_COLOR(v[1]->color, vbcolor[e1]);
-	       SS_COLOR(v[2]->color, vbcolor[e2]);
+	       if (IND & SS_RGBA_BIT) {
+		  GLubyte (*vbcolor)[4] = VB->ColorPtr[facing]->data;
+		  GLubyte (*vbspec)[4] = VB->SecondaryColorPtr[facing]->data;
 
-	       if (IND & SS_COPY_EXTRAS) {
+		  SS_COLOR(v[0]->color, vbcolor[e0]);
+		  SS_COLOR(v[1]->color, vbcolor[e1]);
+		  SS_COLOR(v[2]->color, vbcolor[e2]);
+
 		  SS_SPEC(v[0]->specular, vbspec[e0]);
 		  SS_SPEC(v[1]->specular, vbspec[e1]);
 		  SS_SPEC(v[2]->specular, vbspec[e2]);
+	       } else {
+		  GLuint *vbindex = VB->IndexPtr[facing]->data;
 
 		  SS_IND(v[0]->index, vbindex[e0]);
 		  SS_IND(v[1]->index, vbindex[e1]);
@@ -139,14 +145,15 @@ static void TAG(triangle)(GLcontext *ctx,
    }
    else if (IND & SS_FLAT_BIT)
    {
-      GLubyte *color = VB->Color[0]->data[pv];
-      GLubyte *spec = VB->SecondaryColor[0]->data[pv];
-      GLuint index = VB->Index[0]->data[pv];
+      if (IND & SS_RGBA_BIT) {
+	 GLubyte *color = VB->ColorPtr[0]->data[pv];
+	 GLubyte *spec = VB->SecondaryColorPtr[0]->data[pv];
 
-      SS_COLOR(v[0]->color, color);
-      
-      if (IND & SS_COPY_EXTRAS) {
+	 SS_COLOR(v[0]->color, color);
 	 SS_SPEC(v[0]->specular, spec);
+      }
+      else {
+	 GLuint index = VB->IndexPtr[0]->data[pv];
 	 SS_IND(v[0]->index, index);
       }
    }
@@ -158,9 +165,9 @@ static void TAG(triangle)(GLcontext *ctx,
 	 v[1]->win[2] += offset;
 	 v[2]->win[2] += offset;
       }
-      if (ef[e0]&0x1) { ef[e0] &= ~0x1; _swrast_Point( ctx, v[0] ); }
-      if (ef[e1]&0x1) { ef[e1] &= ~0x1; _swrast_Point( ctx, v[1] ); }
-      if (ef[e2]&0x2) { ef[e2] &= ~0x2; _swrast_Point( ctx, v[2] ); }
+      if (ef[e0]) _swrast_Point( ctx, v[0] ); 
+      if (ef[e1]) _swrast_Point( ctx, v[1] ); 
+      if (ef[e2]) _swrast_Point( ctx, v[2] ); 
    } else if (mode == GL_LINE) {
       GLubyte *ef = VB->EdgeFlagPtr->data;
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetLine) {
@@ -168,9 +175,9 @@ static void TAG(triangle)(GLcontext *ctx,
 	 v[1]->win[2] += offset;
 	 v[2]->win[2] += offset;
       }
-      if (ef[e0]&0x1) { ef[e0] &= ~0x1; _swrast_Line( ctx, v[0], v[1] ); }
-      if (ef[e1]&0x1) { ef[e1] &= ~0x1; _swrast_Line( ctx, v[1], v[2] ); }
-      if (ef[e2]&0x2) { ef[e2] &= ~0x2; _swrast_Line( ctx, v[2], v[0] ); }
+      if (ef[e0]) _swrast_Line( ctx, v[0], v[1] ); 
+      if (ef[e1]) _swrast_Line( ctx, v[1], v[2] ); 
+      if (ef[e2]) _swrast_Line( ctx, v[2], v[0] ); 
    } else {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetFill) {
 	 v[0]->win[2] += offset;
@@ -187,22 +194,22 @@ static void TAG(triangle)(GLcontext *ctx,
    }
 
    if (IND & (SS_FLAT_BIT | SS_TWOSIDE_BIT)) {
-      SS_COLOR(v[0]->color, c[0]);
-
-      if (IND & SS_TWOSIDE_BIT) {
-	 SS_COLOR(v[1]->color, c[1]);
-	 SS_COLOR(v[2]->color, c[2]);
-      }
-
-      if (IND & SS_COPY_EXTRAS) {
+      if (IND & SS_RGBA_BIT) {
+	 SS_COLOR(v[0]->color, c[0]);
 	 SS_SPEC(v[0]->specular, s[0]);
+
+	 if (IND & SS_TWOSIDE_BIT) {
+	    SS_COLOR(v[1]->color, c[1]);
+	    SS_COLOR(v[2]->color, c[2]);
+	    SS_SPEC(v[1]->specular, s[1]);
+	    SS_SPEC(v[2]->specular, s[2]);
+	 }
+      }
+      else {
 	 SS_IND(v[0]->index, i[0]);
 
 	 if (IND & SS_TWOSIDE_BIT) {
-	    SS_SPEC(v[1]->specular, s[1]);
 	    SS_IND(v[1]->index, i[1]);
-
-	    SS_SPEC(v[2]->specular, s[2]);
 	    SS_IND(v[2]->index, i[2]);
 	 }
       }
@@ -217,15 +224,27 @@ static void TAG(quad)( GLcontext *ctx, GLuint v0,
 		       GLuint v1, GLuint v2, GLuint v3, 
 		       GLuint pv )
 {
-   TAG(triangle)( ctx, v0, v1, v3, pv );
-   TAG(triangle)( ctx, v1, v2, v3, pv );
+   if (IND & SS_UNFILLED_BIT) {
+      struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+      GLubyte ef1 = VB->EdgeFlagPtr->data[v1];
+      GLubyte ef3 = VB->EdgeFlagPtr->data[v3];
+      VB->EdgeFlagPtr->data[v1] = 0;      
+      TAG(triangle)( ctx, v0, v1, v3, pv );
+      VB->EdgeFlagPtr->data[v1] = ef1;
+      VB->EdgeFlagPtr->data[v3] = 0;      
+      TAG(triangle)( ctx, v1, v2, v3, pv );      
+      VB->EdgeFlagPtr->data[v3] = ef3;      
+   } else {
+      TAG(triangle)( ctx, v0, v1, v3, pv );
+      TAG(triangle)( ctx, v1, v2, v3, pv );
+   }
 }
 
 
 static void TAG(line)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv )
 {
-   struct vertex_buffer *VB = TNL_VB(ctx);
-   SWvertex *verts = SWSETUP_VB(VB)->verts;
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   SWvertex *verts = SWSETUP_CONTEXT(ctx)->verts;
    GLubyte c[2][4], s[2][4];
    GLuint i[2];
    SWvertex *vert0 = &verts[v0];
@@ -233,16 +252,18 @@ static void TAG(line)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv )
 
 
    if (IND & SS_FLAT_BIT) {
-      GLubyte *color = VB->Color[0]->data[pv];
-      GLubyte *spec = VB->SecondaryColor[0]->data[pv];
-      GLuint index = VB->Index[0]->data[pv];
+      if (IND & SS_RGBA_BIT) {
+	 GLubyte *color = VB->ColorPtr[0]->data[pv];
+	 GLubyte *spec = VB->SecondaryColorPtr[0]->data[pv];
 
-      SS_COLOR(c[0], vert0->color);
-      SS_COLOR(vert0->color, color);
+	 SS_COLOR(c[0], vert0->color);
+	 SS_COLOR(vert0->color, color);
 
-      if (IND & SS_COPY_EXTRAS) {
 	 SS_SPEC(s[0], vert0->specular);
 	 SS_SPEC(vert0->specular, spec);
+      } 
+      else {
+	 GLuint index = VB->IndexPtr[0]->data[pv];
 	 
 	 SS_IND(i[0], vert0->index);
 	 SS_IND(vert0->index, index);
@@ -252,27 +273,15 @@ static void TAG(line)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv )
    _swrast_Line( ctx, vert0, vert1 );
 
    if (IND & SS_FLAT_BIT) {
-      SS_COLOR(vert0->color, c[0]);
-      
-      if (IND & SS_COPY_EXTRAS) {
+      if (IND & SS_RGBA_BIT) {
+	 SS_COLOR(vert0->color, c[0]);
 	 SS_SPEC(vert0->specular, s[0]);
+      } 
+      else {
 	 SS_IND(vert0->index, i[0]);
       }
    }
 }
-
-
-static void TAG(points)( GLcontext *ctx, GLuint first, GLuint last )
-{
-   struct vertex_buffer *VB = TNL_VB(ctx);
-   SWvertex *verts = SWSETUP_VB(VB)->verts;
-   int i;
-   
-   for(i=first;i<=last;i++) 
-      if(VB->ClipMask[i]==0)
-	 _swrast_Point( ctx, &verts[i] );
-}
-
 
 
 
@@ -281,7 +290,6 @@ static void TAG(init)( void )
    tri_tab[IND] = TAG(triangle);
    quad_tab[IND] = TAG(quad);
    line_tab[IND] = TAG(line);
-   points_tab[IND] = TAG(points);
 }
 
 

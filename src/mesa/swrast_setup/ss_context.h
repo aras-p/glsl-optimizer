@@ -40,7 +40,8 @@ typedef struct {
     */
    void (*InvalidateState)( GLcontext *ctx, GLuint new_state );
 
-   void (*RasterSetup)( struct vertex_buffer *VB, GLuint start, GLuint end );
+   void (*BuildProjVerts)( GLcontext *ctx, 
+			   GLuint start, GLuint end, GLuint new_inputs );
 
    void (*Quad)( GLcontext *ctx, GLuint v0, GLuint v1,
 		 GLuint v2, GLuint v3, GLuint pv );
@@ -52,17 +53,10 @@ typedef struct {
 
    void (*Points)( GLcontext *ctx, GLuint first, GLuint last );
 
-} SScontext;
-
-typedef struct {
-
    SWvertex *verts;
 
-} SSvertexbuffer;
-
+} SScontext;
 
 #define SWSETUP_CONTEXT(ctx) ((SScontext *)ctx->swsetup_context)
-#define SWSETUP_VB(VB) ((SSvertexbuffer *)VB->swsetup_vb)
-
 
 #endif

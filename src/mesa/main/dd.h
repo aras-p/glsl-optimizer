@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.43 2000/11/24 10:25:05 keithw Exp $ */
+/* $Id: dd.h,v 1.44 2000/12/26 05:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,12 +31,7 @@
 
 /* THIS FILE ONLY INCLUDED BY mtypes.h !!!!! */
 
-
 struct gl_pixelstore_attrib;
-struct vertex_buffer;
-struct gl_pipeline;
-struct gl_pipeline_stage;
-
 
 
 /*
@@ -139,11 +134,6 @@ typedef void (*triangle_func)( GLcontext *ctx,
 typedef void (*quad_func)( GLcontext *ctx, GLuint v1, GLuint v2,
                            GLuint v3, GLuint v4, GLuint pv );
 
-typedef void (*render_func)( struct vertex_buffer *VB, 
-			     GLuint start,
-			     GLuint count,
-			     GLuint parity );
-
 
 /*
  * Device Driver function table.
@@ -161,7 +151,7 @@ struct dd_function_table {
     * NULL can be returned.
     */
 
-   void (*UpdateState)( GLcontext *ctx );
+   void (*UpdateState)( GLcontext *ctx, GLuint new_state );
    /*
     * UpdateState() is called whenver Mesa thinks the device driver should
     * update its state and/or the other pointers (such as PointsFunc,
@@ -752,49 +742,39 @@ struct dd_function_table {
     */
 
 
-
-   /***
-    *** Accelerated point, line, polygon and quad functions:
-    ***/
-
-   points_func   PointsFunc;
-   line_func     LineFunc;
-   triangle_func TriangleFunc;
-   quad_func     QuadFunc;
-   
-
-   /***
-    *** Transformation/Rendering functions
-    ***/
-
    void (*RenderStart)( GLcontext *ctx );
    void (*RenderFinish)( GLcontext *ctx );
-    /* KW: These replace Begin and End, and have more relaxed semantics.
-     * They are called prior-to and after one or more vb flush, and are
-     * thus decoupled from the gl_begin/gl_end pairs, which are possibly 
-     * more frequent.  If a begin/end pair covers >1 vertex buffer, these
-     * are called at most once for the pair. (a bit broken at present)
-     */
+   /* Wrap around all rendering functions.  Suitable for
+    * grabbing/releasing hardware locks.
+    */
 
-   void (*RasterSetup)( struct vertex_buffer *VB, GLuint start, GLuint end );
-   /* This function, if not NULL, is called whenever new window coordinates
-    * are put in the vertex buffer.  The vertices in question are those n
-    * such that start <= n < end.
-    * The device driver can convert the window coords to its own specialized
-    * format.  The 3Dfx driver uses this.
+
+
+   /***
+    *** Parameters for _tnl_render_stage
+    ***/
+   points_func           PointsFunc; /* must now respect vb->elts */
+   line_func             LineFunc;
+   triangle_func         TriangleFunc;
+   quad_func             QuadFunc;
+
+   void (*ResetLineStipple)( GLcontext *ctx );
+   
+
+   void (*BuildProjectedVertices)( GLcontext *ctx, 
+				   GLuint start, GLuint end,
+				   GLuint new_inputs);
+   /* This function, if not NULL, is called whenever new vertices are
+    * required for rendering.  The vertices in question are those n
+    * such that start <= n < end.  The new_inputs parameter indicates
+    * those fields of the vertex which need to be updated, if only a
+    * partial repair of the vertex is required.
     *
-    * Note: Deprecated in favour of RegisterPipelineStages, below.
+    * This function is called only from _tnl_render_stage in tnl/t_render.c.
     */
 
-   render_func *RenderVBClippedTab;
-   render_func *RenderVBCulledTab;
-   render_func *RenderVBRawTab;
-   /* These function tables allow the device driver to rasterize an
-    * entire begin/end group of primitives at once.  See the
-    * gl_render_vb() function in vbrender.c for more details.  
-    */
 
-   GLboolean (*MultipassFunc)( struct vertex_buffer *VB, GLuint passno );
+   GLboolean (*MultipassFunc)( GLcontext *ctx, GLuint passno );
    /* Driver may request additional render passes by returning GL_TRUE
     * when this function is called.  This function will be called
     * after the first pass, and passes will be made until the function
@@ -804,51 +784,41 @@ struct dd_function_table {
     * This function will be first invoked with passno == 1.
     */
 
-   /***
-    *** NEW in Mesa 3.x
-    ***/
-   
-   void (*RegisterVB)( struct vertex_buffer *VB );
-   void (*UnregisterVB)( struct vertex_buffer *VB );
-   /* When Mesa creates a new vertex buffer it calls Driver.RegisterVB()
-    * so the device driver can allocate its own vertex buffer data and
-    * hook it to the VB->driver_data pointer.
-    * When Mesa destroys a vertex buffer it calls Driver.UnegisterVB()
-    * so the driver can deallocate its own data attached to VB->driver_data.
-    */
-
-
-
-   GLboolean (*BuildPrecalcPipeline)( GLcontext *ctx );
-   GLboolean (*BuildEltPipeline)( GLcontext *ctx );
-   /* Perform the full pipeline build, or return false.
-    */
-
 
    /***
     *** Support for multiple t&l engines
     ***/
-
-#define FLUSH_INSIDE_BEGIN_END 0x1
-#define FLUSH_STORED_VERTICES  0x2
-#define FLUSH_UPDATE_CURRENT   0x4
-
-   GLuint NeedFlush;
-   /* Set by the driver-supplied t&l engine.  
-    * Bitflags defined above are set whenever 
-    *     - the engine *might* be inside a begin/end object.
-    *     - there *might* be buffered vertices to be flushed.
-    *     - the ctx->Current values *might* not be uptodate.
-    *
-    * The FlushVertices() call below may be used to resolve 
-    * these conditions.
+#define PRIM_OUTSIDE_BEGIN_END   GL_POLYGON+1
+#define PRIM_INSIDE_UNKNOWN_PRIM GL_POLYGON+2
+#define PRIM_UNKNOWN             GL_POLYGON+3
+   
+   GLuint CurrentExecPrimitive;
+   /* Set by the driver-supplied t&l engine.  Set to GL_POLYGON+1 when
+    * outside begin/end.
     */
 
-   GLboolean (*FlushVertices)( GLcontext *ctx, GLuint flags );
-   /* If inside begin/end, returns GL_FALSE.  
+   GLuint CurrentSavePrimitive;
+   /* Current state of an inprogress compilation.
+    */
+
+   
+
+#define FLUSH_STORED_VERTICES 0x1
+#define FLUSH_UPDATE_CURRENT  0x2
+   GLuint NeedFlush;
+   /* Set by the driver-supplied t&l engine whenever vertices are
+    * buffered between begin/end objects or ctx->Current is not uptodate.
+    *
+    * The FlushVertices() call below may be used to resolve 
+    * these conditions.  
+    */
+
+   void (*FlushVertices)( GLcontext *ctx, GLuint flags );
+   /* If inside begin/end, ASSERT(0).  
     * Otherwise, 
     *   if (flags & FLUSH_STORED_VERTICES) flushes any buffered vertices,
-    *   if (flags & FLUSH_UPDATE_CURRENT) updates ctx->Current,
+    *   if (flags & FLUSH_UPDATE_CURRENT) updates ctx->Current 
+    *                                     and ctx->Light.Material
     *   returns GL_TRUE. 
     *
     * Note that the default t&l engine never clears the
@@ -864,6 +834,11 @@ struct dd_function_table {
    void (*EndList)( GLcontext *ctx );
    /* Let the t&l component know what is going on with display lists
     * in time to make changes to dispatch tables, etc.
+    */
+
+   void (*BeginCallList)( GLcontext *ctx, GLuint list );
+   void (*EndCallList)( GLcontext *ctx );
+   /* Notify the t&l component before and after calling a display list.
     */
 
    void (*MakeCurrent)( GLcontext *ctx, GLframebuffer *drawBuffer, 
@@ -973,7 +948,7 @@ typedef struct {
    void (*EdgeFlag)( GLboolean );
    void (*EdgeFlagv)( const GLboolean * );
    void (*EvalCoord1f)( GLfloat );          /* NOTE */
-   void (*EvalCoord1fv)( const GLfloat * );          /* NOTE */
+   void (*EvalCoord1fv)( const GLfloat * ); /* NOTE */
    void (*EvalCoord2f)( GLfloat, GLfloat ); /* NOTE */
    void (*EvalCoord2fv)( const GLfloat * ); /* NOTE */
    void (*EvalPoint1)( GLint );             /* NOTE */
@@ -1053,7 +1028,10 @@ typedef struct {
     * provide partial t&l acceleration.
     *
     * Mesa will provide a set of helper functions to do eval within
-    * accelerated vertex formats, eventually...
+    * accelerated vertex formats, eventually...  
+    * 
+    * Update: There seem to be issues re. maintaining correct values
+    * for 'ctx->Current' in the face of Eval and T&L fallbacks...  
     */
 
    GLboolean prefer_float_colors;

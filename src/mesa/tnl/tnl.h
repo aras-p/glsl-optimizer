@@ -32,8 +32,9 @@
 
 
 
-/* These are the public-access functions exported from tnl.  (Many
- * more are currently hooked into dispatch directly by core code.)
+/* These are the public-access functions exported from tnl.  (A few
+ * more are currently hooked into dispatch directly by the module
+ * itself.)
  */
 extern GLboolean
 _tnl_CreateContext( GLcontext *ctx );
@@ -57,6 +58,18 @@ _tnl_wakeup_exec( GLcontext *ctx );
  */
 extern void
 _tnl_wakeup_save_exec( GLcontext *ctx );
+
+
+/* Functions to assist driver t&l modules which have to fallback to
+ * this module in the middle of a begin/end pair.  Use this instead of
+ * glBegin() to identify the primitive as wrapped:
+ *
+ * Even with this it's difficult to see how the drivers are going to
+ * replay any glMaterial commands received in the few vertices before
+ * the fallback.
+ */
+extern void
+_tnl_fallback_begin( GLcontext *ctx, GLenum mode );
 
 
 #endif

@@ -98,4 +98,15 @@ extern void _mesa_noop_TexCoord4fv( GLfloat *v );
  */
 extern void _mesa_noop_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 );
 
+
+extern void _mesa_noop_DrawArrays(GLenum mode, GLint start, GLsizei count);
+extern void _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type, 
+				    const GLvoid *indices);
+extern void _mesa_noop_DrawRangeElements(GLenum mode, 
+					 GLuint start, GLuint end, 
+					 GLsizei count, GLenum type, 
+					 const GLvoid *indices);
+
+
+
 #endif

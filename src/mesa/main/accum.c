@@ -1,4 +1,4 @@
-/* $Id: accum.c,v 1.32 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: accum.c,v 1.33 2000/12/26 05:09:27 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,24 +44,30 @@
 void
 _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
 {
+   GLfloat tmp[4];
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glAccum");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   ctx->Accum.ClearColor[0] = CLAMP( red, -1.0, 1.0 );
-   ctx->Accum.ClearColor[1] = CLAMP( green, -1.0, 1.0 );
-   ctx->Accum.ClearColor[2] = CLAMP( blue, -1.0, 1.0 );
-   ctx->Accum.ClearColor[3] = CLAMP( alpha, -1.0, 1.0 );
-   ctx->NewState |= _NEW_ACCUM;
+   tmp[0] = CLAMP( red, -1.0, 1.0 );
+   tmp[1] = CLAMP( green, -1.0, 1.0 );
+   tmp[2] = CLAMP( blue, -1.0, 1.0 );
+   tmp[3] = CLAMP( alpha, -1.0, 1.0 );
+
+   if (TEST_EQ_4V(tmp, ctx->Accum.ClearColor))
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_ACCUM);
+   COPY_4FV( ctx->Accum.ClearColor, tmp );
 }
 
-
+/* Should really be a driver-supplied function?
+ */
 void
 _mesa_Accum( GLenum op, GLfloat value )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint xpos, ypos, width, height;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glAccum");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->Visual.AccumRedBits == 0 || ctx->DrawBuffer != ctx->ReadBuffer) {
       gl_error(ctx, GL_INVALID_OPERATION, "glAccum");

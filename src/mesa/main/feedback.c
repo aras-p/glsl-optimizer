@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.17 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: feedback.c,v 1.18 2000/12/26 05:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,7 +52,7 @@ void
 _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "glFeedbackBuffer" );
+   ASSERT_OUTSIDE_BEGIN_END(ctx); 
 
    if (ctx->RenderMode==GL_FEEDBACK) {
       gl_error( ctx, GL_INVALID_OPERATION, "glFeedbackBuffer" );
@@ -65,45 +65,41 @@ _mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
    }
    if (!buffer) {
       gl_error( ctx, GL_INVALID_VALUE, "glFeedbackBuffer(buffer==NULL)" );
-      ctx->Feedback.BufferSize = 0;
+      ctx->Feedback.BufferSize = 0; /* XXX -- Sould this be here??? */
       return;
    }
 
    switch (type) {
       case GL_2D:
-	 ctx->Feedback.Mask = 0;
-         ctx->Feedback.Type = type;
+	 ctx->Feedback._Mask = 0;
 	 break;
       case GL_3D:
-	 ctx->Feedback.Mask = FB_3D;
-         ctx->Feedback.Type = type;
+	 ctx->Feedback._Mask = FB_3D;
 	 break;
       case GL_3D_COLOR:
-	 ctx->Feedback.Mask = FB_3D
-                           | (ctx->Visual.RGBAflag ? FB_COLOR : FB_INDEX);
-         ctx->Feedback.Type = type;
+	 ctx->Feedback._Mask = (FB_3D | 
+				(ctx->Visual.RGBAflag ? FB_COLOR : FB_INDEX));
 	 break;
       case GL_3D_COLOR_TEXTURE:
-	 ctx->Feedback.Mask = FB_3D
-                           | (ctx->Visual.RGBAflag ? FB_COLOR : FB_INDEX)
-	                   | FB_TEXTURE;
-         ctx->Feedback.Type = type;
+	 ctx->Feedback._Mask = (FB_3D | 
+				(ctx->Visual.RGBAflag ? FB_COLOR : FB_INDEX) | 
+				FB_TEXTURE);
 	 break;
       case GL_4D_COLOR_TEXTURE:
-	 ctx->Feedback.Mask = FB_3D | FB_4D
-                           | (ctx->Visual.RGBAflag ? FB_COLOR : FB_INDEX)
-	                   | FB_TEXTURE;
-         ctx->Feedback.Type = type;
+	 ctx->Feedback._Mask = (FB_3D | FB_4D | 
+				(ctx->Visual.RGBAflag ? FB_COLOR : FB_INDEX) |
+				FB_TEXTURE);
 	 break;
       default:
-	 ctx->Feedback.Mask = 0;
          gl_error( ctx, GL_INVALID_ENUM, "glFeedbackBuffer" );
+	 return;
    }
 
+   FLUSH_VERTICES(ctx, _NEW_RENDERMODE); /* Always flush */
+   ctx->Feedback.Type = type;
    ctx->Feedback.BufferSize = size;
    ctx->Feedback.Buffer = buffer;
-   ctx->Feedback.Count = 0;
-   ctx->NewState |= _NEW_FEEDBACK_SELECT;
+   ctx->Feedback.Count = 0;	              /* Becaues of this. */
 }
 
 
@@ -112,9 +108,10 @@ void
 _mesa_PassThrough( GLfloat token )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPassThrough");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->RenderMode==GL_FEEDBACK) {
+      FLUSH_VERTICES(ctx, 0);
       FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_PASS_THROUGH_TOKEN );
       FEEDBACK_TOKEN( ctx, token );
    }
@@ -133,22 +130,22 @@ void gl_feedback_vertex( GLcontext *ctx,
 {
    FEEDBACK_TOKEN( ctx, win[0] );
    FEEDBACK_TOKEN( ctx, win[1] );
-   if (ctx->Feedback.Mask & FB_3D) {
+   if (ctx->Feedback._Mask & FB_3D) {
       FEEDBACK_TOKEN( ctx, win[2] );
    }
-   if (ctx->Feedback.Mask & FB_4D) {
+   if (ctx->Feedback._Mask & FB_4D) {
       FEEDBACK_TOKEN( ctx, win[3] );
    }
-   if (ctx->Feedback.Mask & FB_INDEX) {
+   if (ctx->Feedback._Mask & FB_INDEX) {
       FEEDBACK_TOKEN( ctx, (GLfloat) index );
    }
-   if (ctx->Feedback.Mask & FB_COLOR) {
+   if (ctx->Feedback._Mask & FB_COLOR) {
       FEEDBACK_TOKEN( ctx, color[0] );
       FEEDBACK_TOKEN( ctx, color[1] );
       FEEDBACK_TOKEN( ctx, color[2] );
       FEEDBACK_TOKEN( ctx, color[3] );
    }
-   if (ctx->Feedback.Mask & FB_TEXTURE) {
+   if (ctx->Feedback._Mask & FB_TEXTURE) {
       FEEDBACK_TOKEN( ctx, texcoord[0] );
       FEEDBACK_TOKEN( ctx, texcoord[1] );
       FEEDBACK_TOKEN( ctx, texcoord[2] );
@@ -168,19 +165,20 @@ void
 _mesa_SelectBuffer( GLsizei size, GLuint *buffer )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glSelectBuffer");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    if (ctx->RenderMode==GL_SELECT) {
       gl_error( ctx, GL_INVALID_OPERATION, "glSelectBuffer" );
+      return;			/* KW: added return */
    }
+
+   FLUSH_VERTICES(ctx, _NEW_RENDERMODE); /* why bother? */
    ctx->Select.Buffer = buffer;
    ctx->Select.BufferSize = size;
    ctx->Select.BufferCount = 0;
-
    ctx->Select.HitFlag = GL_FALSE;
    ctx->Select.HitMinZ = 1.0;
    ctx->Select.HitMaxZ = 0.0;
-
-   ctx->NewState |= _NEW_FEEDBACK_SELECT;
 }
 
 
@@ -235,7 +233,8 @@ void
 _mesa_InitNames( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glInitNames");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
    /* Record the hit before the HitFlag is wiped out again. */
    if (ctx->RenderMode == GL_SELECT) {
       if (ctx->Select.HitFlag) {
@@ -246,7 +245,7 @@ _mesa_InitNames( void )
    ctx->Select.HitFlag = GL_FALSE;
    ctx->Select.HitMinZ = 1.0;
    ctx->Select.HitMaxZ = 0.0;
-   ctx->NewState |= _NEW_FEEDBACK_SELECT;
+   ctx->NewState |= _NEW_RENDERMODE;
 }
 
 
@@ -255,7 +254,8 @@ void
 _mesa_LoadName( GLuint name )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glLoadName");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    if (ctx->RenderMode != GL_SELECT) {
       return;
    }
@@ -263,6 +263,9 @@ _mesa_LoadName( GLuint name )
       gl_error( ctx, GL_INVALID_OPERATION, "glLoadName" );
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_RENDERMODE);
+
    if (ctx->Select.HitFlag) {
       write_hit_record( ctx );
    }
@@ -272,7 +275,6 @@ _mesa_LoadName( GLuint name )
    else {
       ctx->Select.NameStack[MAX_NAME_STACK_DEPTH-1] = name;
    }
-   ctx->NewState |= _NEW_FEEDBACK_SELECT;
 }
 
 
@@ -280,20 +282,21 @@ void
 _mesa_PushName( GLuint name )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPushName");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    if (ctx->RenderMode != GL_SELECT) {
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_RENDERMODE);
    if (ctx->Select.HitFlag) {
       write_hit_record( ctx );
    }
-   if (ctx->Select.NameStackDepth < MAX_NAME_STACK_DEPTH) {
-      ctx->Select.NameStack[ctx->Select.NameStackDepth++] = name;
-   }
-   else {
+   if (ctx->Select.NameStackDepth >= MAX_NAME_STACK_DEPTH) {
       gl_error( ctx, GL_STACK_OVERFLOW, "glPushName" );
    }
-   ctx->NewState |= _NEW_FEEDBACK_SELECT;
+   else
+      ctx->Select.NameStack[ctx->Select.NameStackDepth++] = name;
 }
 
 
@@ -302,20 +305,21 @@ void
 _mesa_PopName( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPopName");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    if (ctx->RenderMode != GL_SELECT) {
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_RENDERMODE);
    if (ctx->Select.HitFlag) {
       write_hit_record( ctx );
    }
-   if (ctx->Select.NameStackDepth > 0) {
-      ctx->Select.NameStackDepth--;
-   }
-   else {
+   if (ctx->Select.NameStackDepth == 0) {
       gl_error( ctx, GL_STACK_UNDERFLOW, "glPopName" );
    }
-   ctx->NewState |= _NEW_FEEDBACK_SELECT;
+   else
+      ctx->Select.NameStackDepth--;
 }
 
 
@@ -334,12 +338,12 @@ _mesa_RenderMode( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint result;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glRenderMode", 0);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glRenderMode %s\n", gl_lookup_enum_by_nr(mode));
 
+   FLUSH_VERTICES(ctx, _NEW_RENDERMODE);
    ctx->_TriangleCaps &= ~(DD_FEEDBACK|DD_SELECT);
 
    switch (ctx->RenderMode) {
@@ -363,7 +367,6 @@ _mesa_RenderMode( GLenum mode )
 	 ctx->Select.BufferCount = 0;
 	 ctx->Select.Hits = 0;
 	 ctx->Select.NameStackDepth = 0;
-	 ctx->NewState |= _NEW_FEEDBACK_SELECT;
 	 break;
       case GL_FEEDBACK:
 	 if (ctx->Feedback.Count > ctx->Feedback.BufferSize) {
@@ -374,7 +377,6 @@ _mesa_RenderMode( GLenum mode )
 	    result = ctx->Feedback.Count;
 	 }
 	 ctx->Feedback.Count = 0;
-	 ctx->NewState |= _NEW_FEEDBACK_SELECT;
 	 break;
       default:
 	 gl_error( ctx, GL_INVALID_ENUM, "glRenderMode" );
@@ -404,8 +406,6 @@ _mesa_RenderMode( GLenum mode )
    }
 
    ctx->RenderMode = mode;
-   ctx->NewState |= _NEW_RENDERMODE;
-
    return result;
 }
 

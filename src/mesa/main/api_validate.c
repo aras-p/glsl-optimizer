@@ -1,0 +1,137 @@
+
+/* $Id: api_validate.c,v 1.1 2000/12/26 05:09:27 keithw Exp $ */
+
+/*
+ * Mesa 3-D graphics library
+ * Version:  3.5
+ *
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "glheader.h"
+#include "context.h"
+#include "mtypes.h"
+#include "api_validate.h"
+
+GLboolean
+_mesa_validate_DrawElements(GLcontext *ctx,
+			    GLenum mode, GLsizei count, GLenum type, 
+			    const GLvoid *indices)
+{
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx,  GL_FALSE); 
+
+   if (count <= 0) {
+      if (count < 0)
+	 gl_error(ctx, GL_INVALID_VALUE, "glDrawElements(count)" );
+      return GL_FALSE;
+   }
+
+   if (mode < 0 || 
+       mode > GL_POLYGON) {
+      gl_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
+      return GL_FALSE;
+   }
+
+   if (type != GL_UNSIGNED_INT && 
+       type != GL_UNSIGNED_BYTE && 
+       type != GL_UNSIGNED_SHORT)
+   {
+      gl_error(ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
+      return GL_FALSE;
+   }
+
+   if (ctx->NewState)
+      gl_update_state( ctx );
+
+   if (!ctx->Array.Vertex.Enabled)
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
+
+
+GLboolean
+_mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode, 
+				 GLuint start, GLuint end, 
+				 GLsizei count, GLenum type, 
+				 const GLvoid *indices)
+{
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE); 
+
+   if (count <= 0) {
+      if (count < 0)
+	 gl_error(ctx, GL_INVALID_VALUE, "glDrawElements(count)" );
+      return GL_FALSE;
+   }
+
+   if (mode < 0 || mode > GL_POLYGON) {
+      gl_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
+      return GL_FALSE;
+   }
+
+   if (end < start) {
+      gl_error(ctx, GL_INVALID_VALUE, "glDrawRangeElements(end<start)");
+      return GL_FALSE;
+   }
+
+   if (type != GL_UNSIGNED_INT && 
+       type != GL_UNSIGNED_BYTE && 
+       type != GL_UNSIGNED_SHORT)
+   {
+      gl_error(ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
+      return GL_FALSE;
+   }
+
+   if (ctx->NewState)
+      gl_update_state( ctx );
+
+   if (!ctx->Array.Vertex.Enabled)
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
+
+
+
+GLboolean
+_mesa_validate_DrawArrays(GLcontext *ctx, 
+			  GLenum mode, GLint start, GLsizei count)
+{
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE); 
+
+   if (count<0) {
+      gl_error(ctx, GL_INVALID_VALUE, "glDrawArrays(count)" );
+      return GL_FALSE;
+   }
+
+   if (mode < 0 || mode > GL_POLYGON) {
+      gl_error(ctx, GL_INVALID_ENUM, "glDrawArrays(mode)" );
+      return GL_FALSE;
+   }
+
+   if (ctx->NewState)
+      gl_update_state( ctx );
+
+   if (!ctx->Array.Vertex.Enabled) 
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
+

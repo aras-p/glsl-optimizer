@@ -1,4 +1,4 @@
-/* $Id: m_copy_tmp.h,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_copy_tmp.h,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,24 +51,6 @@ static void TAG2(copy, BITS)(GLvector4f *to, const GLvector4f *f,	\
       }									\
 }
 
-
-
-/* static void TAG2(clean, BITS)(GLvector4f *to ) */
-/* { */
-/*    GLfloat (*t)[4] = to->data; */
-/*    GLuint i; */
-
-/*    if (BITS) */
-/*       for (i = 0 ; i < VB_SIZE ; i++) { */
-/*          if (BITS&1) t[i][0] = 0; */
-/* 	 if (BITS&2) t[i][1] = 0; */
-/* 	 if (BITS&4) t[i][2] = 0; */
-/* 	 if (BITS&8) t[i][3] = 1; */
-/*       } */
-/*    to->flags &= ~BITS; */
-/* } */
-
-
 /* We got them all here:
  */
 COPY_FUNC( 0x0 )		/* noop */
@@ -106,21 +88,4 @@ static void TAG2(init_copy, 0 ) ( void )
    gl_copy_tab[IDX][0xd] = TAG2(copy, 0xd);
    gl_copy_tab[IDX][0xe] = TAG2(copy, 0xe);
    gl_copy_tab[IDX][0xf] = TAG2(copy, 0xf);
-
-/*    gl_clean_tab[IDX][0x0] = TAG2(clean, 0x0); */
-/*    gl_clean_tab[IDX][0x1] = TAG2(clean, 0x1); */
-/*    gl_clean_tab[IDX][0x2] = TAG2(clean, 0x2); */
-/*    gl_clean_tab[IDX][0x3] = TAG2(clean, 0x3); */
-/*    gl_clean_tab[IDX][0x4] = TAG2(clean, 0x4); */
-/*    gl_clean_tab[IDX][0x5] = TAG2(clean, 0x5); */
-/*    gl_clean_tab[IDX][0x6] = TAG2(clean, 0x6); */
-/*    gl_clean_tab[IDX][0x7] = TAG2(clean, 0x7); */
-/*    gl_clean_tab[IDX][0x8] = TAG2(clean, 0x8); */
-/*    gl_clean_tab[IDX][0x9] = TAG2(clean, 0x9); */
-/*    gl_clean_tab[IDX][0xa] = TAG2(clean, 0xa); */
-/*    gl_clean_tab[IDX][0xb] = TAG2(clean, 0xb); */
-/*    gl_clean_tab[IDX][0xc] = TAG2(clean, 0xc); */
-/*    gl_clean_tab[IDX][0xd] = TAG2(clean, 0xd); */
-/*    gl_clean_tab[IDX][0xe] = TAG2(clean, 0xe); */
-/*    gl_clean_tab[IDX][0xf] = TAG2(clean, 0xf); */
 }

@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.24 2000/11/20 18:06:11 brianp Exp $ */
+/* $Id: config.h,v 1.25 2000/12/26 05:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -173,28 +173,6 @@
 #define BCOMP 2
 #define ACOMP 3
 
-
-
-/* Vertex buffer size.  KW: no restrictions on the divisibility of
- * this number, though things may go better for you if you choose a
- * value of 12n + 3.  
- */
-#define VB_START  3
-
-#define VB_MAX (216 + VB_START)
-
-
-
-/*
- * Actual vertex buffer size.
- *
- * Arrays must also accomodate new vertices from clipping, and
- * potential overflow from primitives which don't fit into neatly into
- * VB_MAX vertices.  (This only happens when mixed primitives are
- * sharing the vb).  
- */
-#define VB_MAX_CLIPPED_VERTS ((2 * (6 + MAX_CLIP_PLANES))+1)
-#define VB_SIZE  (VB_MAX + VB_MAX_CLIPPED_VERTS)
 
 
 /*

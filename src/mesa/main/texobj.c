@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.36 2000/12/14 20:25:56 brianp Exp $ */
+/* $Id: texobj.c,v 1.37 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -420,8 +420,8 @@ _mesa_GenTextures( GLsizei n, GLuint *texName )
    GET_CURRENT_CONTEXT(ctx);
    GLuint first;
    GLint i;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGenTextures");
    if (n < 0) {
       gl_error( ctx, GL_INVALID_VALUE, "glGenTextures" );
       return;
@@ -462,8 +462,7 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *texName)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glDeleteTextures");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* too complex */
 
    if (!texName)
       return;
@@ -525,12 +524,11 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    struct gl_texture_object *oldTexObj;
    struct gl_texture_object *newTexObj;
    GLuint targetDim;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glBindTexture %s %d\n",
 	      gl_lookup_enum_by_nr(target), (GLint) texName);
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glBindTexture");
 
    switch (target) {
       case GL_TEXTURE_1D:
@@ -607,7 +605,11 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 
    newTexObj->RefCount++;
 
-   /* do the actual binding */
+   
+   /* do the actual binding, but first flush outstanding vertices:
+    */
+   FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+
    switch (target) {
       case GL_TEXTURE_1D:
          texUnit->Current1D = newTexObj;
@@ -624,8 +626,6 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       default:
          gl_problem(ctx, "bad target in BindTexture");
    }
-
-   ctx->NewState |= _NEW_TEXTURE;
 
    /* Pass BindTexture call to device driver */
    if (ctx->Driver.BindTexture)
@@ -654,8 +654,8 @@ _mesa_PrioritizeTextures( GLsizei n, const GLuint *texName,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPrioritizeTextures");
    if (n < 0) {
       gl_error( ctx, GL_INVALID_VALUE, "glPrioritizeTextures" );
       return;
@@ -691,9 +691,8 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
    GET_CURRENT_CONTEXT(ctx);
    GLboolean allResident = GL_TRUE;
    GLint i;
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx,
-                                            "glAreTexturesResident", GL_FALSE);
    if (n < 0) {
       gl_error(ctx, GL_INVALID_VALUE, "glAreTexturesResident(n)");
       return GL_FALSE;
@@ -737,13 +736,7 @@ GLboolean
 _mesa_IsTexture( GLuint texture )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glIsTextures",
-						  GL_FALSE);
-   if (texture > 0 && _mesa_HashLookup(ctx->Shared->TexObjects, texture)) {
-      return GL_TRUE;
-   }
-   else {
-      return GL_FALSE;
-   }
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+   return texture > 0 && _mesa_HashLookup(ctx->Shared->TexObjects, texture);
 }
 

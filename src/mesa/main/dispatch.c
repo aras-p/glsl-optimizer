@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.16 2000/09/05 20:17:37 brianp Exp $ */
+/* $Id: dispatch.c,v 1.17 2000/12/26 05:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -97,6 +97,8 @@ trace(void)
 
 #else
 
+#ifdef THREADS
+
 #define DISPATCH(FUNC, ARGS, MESSAGE)					\
    const struct _glapi_table *dispatch;					\
    dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
@@ -107,6 +109,19 @@ trace(void)
    dispatch = _glapi_Dispatch ? _glapi_Dispatch : _glapi_get_dispatch();\
    return (dispatch->FUNC) ARGS
 
+#else
+
+
+#define DISPATCH(FUNC, ARGS, MESSAGE) \
+__asm__  ("jmp    *(%%eax) ;" : : "a" (&(_glapi_Dispatch->FUNC)) )
+
+#define RETURN_DISPATCH(FUNC, ARGS, MESSAGE)				\
+   const struct _glapi_table *dispatch;					\
+   dispatch = _glapi_Dispatch;\
+   return (dispatch->FUNC) ARGS
+
+#endif
+
 #endif
 
 
@@ -114,5 +129,6 @@ trace(void)
 #define GLAPIENTRY
 #endif
 
+#define DO_GEOMETRY
 #include "glapitemp.h"
 

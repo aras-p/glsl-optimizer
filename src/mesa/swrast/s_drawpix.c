@@ -1,4 +1,4 @@
-/* $Id: s_drawpix.c,v 1.4 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_drawpix.c,v 1.5 2000/12/26 05:09:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -103,10 +103,6 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
    const struct gl_pixelstore_attrib *unpack = &ctx->Unpack;
    GLchan rgb[MAX_WIDTH][3];
    GLchan rgba[MAX_WIDTH][4];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glDrawPixels", 
-						  GL_FALSE);
-
 
    if (!ctx->Current.RasterPosValid) {
       return GL_TRUE;      /* no-op */

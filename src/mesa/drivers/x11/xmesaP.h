@@ -1,4 +1,4 @@
-/* $Id: xmesaP.h,v 1.17 2000/11/22 08:55:53 joukj Exp $ */
+/* $Id: xmesaP.h,v 1.18 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -519,7 +519,7 @@ xmesa_color_to_pixel( XMesaContext xmesa,
 extern void xmesa_alloc_back_buffer( XMesaBuffer b );
 
 extern void xmesa_init_pointers( GLcontext *ctx );
-extern void xmesa_update_state( GLcontext *ctx );
+extern void xmesa_update_state( GLcontext *ctx, GLuint new_state );
 
 extern void xmesa_update_span_funcs( GLcontext *ctx );
 

@@ -71,7 +71,7 @@ static void fxSetupScissor(GLcontext *ctx);
 static void fxSetupCull(GLcontext *ctx);
 static void fx_print_state_flags( const char *msg, GLuint flags);
 /*static GLboolean fxMultipassBlend(struct vertex_buffer *, GLuint);*/
-static GLboolean fxMultipassTexture( struct vertex_buffer *, GLuint );
+static GLboolean fxMultipassTexture( GLcontext *, GLuint );
 
 static void fxTexValidate(GLcontext *ctx, struct gl_texture_object *tObj)
 {
@@ -1671,7 +1671,7 @@ static GLboolean fxMultipassBlend(struct vertex_buffer *VB, GLuint pass)
   case 2:
     /* Reset everything back to normal */
     fxMesa->unitsState = fxMesa->restoreUnitsState;
-    fxMesa->setupdone &= XXX;
+    fxMesa->setup_gone |= XXX;
     fxSetupTextureSingleTMU(ctx, XXX);
     fxSetupBlend(ctx);
     fxSetupDepthTest(ctx);
@@ -1694,12 +1694,12 @@ static GLboolean fxMultipassBlend(struct vertex_buffer *VB, GLuint pass)
  * voodoo 1.  In all other cases for both voodoo 1 and 2, we fall back
  * to software rendering, satisfying the spec if not the user.  
  */
-static GLboolean fxMultipassTexture( struct vertex_buffer *VB, GLuint pass )
+static GLboolean fxMultipassTexture( GLcontext *ctx, GLuint pass )
 {
-   GLcontext *ctx = VB->ctx;
-   fxVertex *v = FX_DRIVER_DATA(VB)->verts;
-   fxVertex *last = FX_DRIVER_DATA(VB)->last_vert;
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   fxVertex *v = fxMesa->verts;
+   fxVertex *last = fxMesa->verts + tnl->vb.Count;
 
    switch (pass) {
    case 1:
@@ -1742,7 +1742,7 @@ static GLboolean fxMultipassTexture( struct vertex_buffer *VB, GLuint pass )
        */
       fxMesa->tmu_source[0] = 0;
       fxMesa->unitsState = fxMesa->restoreUnitsState;
-      fxMesa->setupdone &= ~SETUP_TMU0;
+      fxMesa->setup_gone |= SETUP_TMU0;
       fxSetupTextureSingleTMU( ctx, 0 ); 
       fxSetupBlend( ctx );
       fxSetupDepthTest( ctx );

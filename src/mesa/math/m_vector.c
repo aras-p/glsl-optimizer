@@ -1,4 +1,4 @@
-/* $Id: m_vector.c,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_vector.c,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -85,7 +85,7 @@ void gl_vector4f_init( GLvector4f *v, GLuint flags, GLfloat (*storage)[4] )
    v->data = storage;
    v->start = (GLfloat *) storage;
    v->count = 0;
-   v->flags = size_bits[4] | flags | VEC_GOOD_STRIDE;
+   v->flags = size_bits[4] | flags ;
 }
 
 void gl_vector3f_init( GLvector3f *v, GLuint flags, GLfloat (*storage)[3] )
@@ -94,7 +94,7 @@ void gl_vector3f_init( GLvector3f *v, GLuint flags, GLfloat (*storage)[3] )
    v->data = storage;
    v->start = (GLfloat *) storage;
    v->count = 0;
-   v->flags = flags | VEC_GOOD_STRIDE;
+   v->flags = flags ;
 }
 
 void gl_vector1f_init( GLvector1f *v, GLuint flags, GLfloat *storage )
@@ -103,7 +103,7 @@ void gl_vector1f_init( GLvector1f *v, GLuint flags, GLfloat *storage )
    v->data = storage;
    v->start = (GLfloat *)storage;
    v->count = 0;
-   v->flags = flags | VEC_GOOD_STRIDE;
+   v->flags = flags ;
 }
 
 void gl_vector4ub_init( GLvector4ub *v, GLuint flags, GLubyte (*storage)[4] )
@@ -112,7 +112,7 @@ void gl_vector4ub_init( GLvector4ub *v, GLuint flags, GLubyte (*storage)[4] )
    v->data = storage;
    v->start = (GLubyte *) storage;
    v->count = 0;
-   v->flags = flags | VEC_GOOD_STRIDE;
+   v->flags = flags ;
 }
 
 void gl_vector1ub_init( GLvector1ub *v, GLuint flags, GLubyte *storage )
@@ -121,7 +121,7 @@ void gl_vector1ub_init( GLvector1ub *v, GLuint flags, GLubyte *storage )
    v->data = storage;
    v->start = (GLubyte *) storage;
    v->count = 0;
-   v->flags = flags | VEC_GOOD_STRIDE;
+   v->flags = flags ;
 }
 
 void gl_vector1ui_init( GLvector1ui *v, GLuint flags, GLuint *storage )
@@ -130,7 +130,7 @@ void gl_vector1ui_init( GLvector1ui *v, GLuint flags, GLuint *storage )
    v->data = storage;
    v->start = (GLuint *) storage;
    v->count = 0;
-   v->flags = flags | VEC_GOOD_STRIDE;
+   v->flags = flags ;
 }
 
 
@@ -153,7 +153,7 @@ void gl_vector4f_alloc( GLvector4f *v, GLuint flags, GLuint count,
    v->start = (GLfloat *) v->storage;
    v->data = (GLfloat (*)[4]) v->storage;
    v->count = 0;
-   v->flags = size_bits[4] | flags | VEC_MALLOC | VEC_GOOD_STRIDE;
+   v->flags = size_bits[4] | flags | VEC_MALLOC ;
 }
 
 void gl_vector3f_alloc( GLvector3f *v, GLuint flags, GLuint count,
@@ -164,7 +164,7 @@ void gl_vector3f_alloc( GLvector3f *v, GLuint flags, GLuint count,
    v->start = (GLfloat *) v->storage;
    v->data = (GLfloat (*)[3]) v->storage;
    v->count = 0;
-   v->flags = flags | VEC_MALLOC | VEC_GOOD_STRIDE;
+   v->flags = flags | VEC_MALLOC ;
 }
 
 void gl_vector1f_alloc( GLvector1f *v, GLuint flags, GLuint count,
@@ -175,7 +175,7 @@ void gl_vector1f_alloc( GLvector1f *v, GLuint flags, GLuint count,
       ALIGN_MALLOC( count * sizeof(GLfloat), alignment );
    v->data = v->start;
    v->count = 0;
-   v->flags = flags | VEC_MALLOC | VEC_GOOD_STRIDE;
+   v->flags = flags | VEC_MALLOC ;
 }
 
 void gl_vector4ub_alloc( GLvector4ub *v, GLuint flags, GLuint count,
@@ -186,7 +186,7 @@ void gl_vector4ub_alloc( GLvector4ub *v, GLuint flags, GLuint count,
    v->start = (GLubyte *) v->storage;
    v->data = (GLubyte (*)[4]) v->storage;
    v->count = 0;
-   v->flags = flags | VEC_MALLOC | VEC_GOOD_STRIDE;
+   v->flags = flags | VEC_MALLOC ;
 }
 
 void gl_vector1ub_alloc( GLvector1ub *v, GLuint flags, GLuint count,
@@ -197,7 +197,7 @@ void gl_vector1ub_alloc( GLvector1ub *v, GLuint flags, GLuint count,
    v->start = (GLubyte *) v->storage;      
    v->data = (GLubyte *) v->storage;
    v->count = 0;
-   v->flags = flags | VEC_MALLOC | VEC_GOOD_STRIDE;
+   v->flags = flags | VEC_MALLOC ;
 }
 
 void gl_vector1ui_alloc( GLvector1ui *v, GLuint flags, GLuint count,
@@ -208,7 +208,7 @@ void gl_vector1ui_alloc( GLvector1ui *v, GLuint flags, GLuint count,
    v->start = (GLuint *) v->storage;      
    v->data = (GLuint *) v->storage;
    v->count = 0;
-   v->flags = flags | VEC_MALLOC | VEC_GOOD_STRIDE;
+   v->flags = flags | VEC_MALLOC ;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.15 2000/11/24 10:25:05 keithw Exp $ */
+/* $Id: macros.h,v 1.16 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -72,12 +72,30 @@
  */
 #define STRIDE_F(p, i)  (p = (GLfloat *)((GLubyte *)p + i))
 #define STRIDE_UI(p, i)  (p = (GLuint *)((GLubyte *)p + i))
+#define STRIDE_4UB(p, i)  (p = (GLubyte (*)[4])((GLubyte *)p + i))
 #define STRIDE_T(p, t, i)  (p = (t *)((GLubyte *)p + i))
 
 
 #define ZERO_2V( DST )	(DST)[0] = (DST)[1] = 0
 #define ZERO_3V( DST )	(DST)[0] = (DST)[1] = (DST)[2] = 0
 #define ZERO_4V( DST )	(DST)[0] = (DST)[1] = (DST)[2] = (DST)[3] = 0
+
+
+#define TEST_EQ_4V(a,b)  ((a)[0] == (b)[0] && 	\
+			  (a)[1] == (b)[1] &&	\
+			  (a)[2] == (b)[2] &&	\
+			  (a)[3] == (b)[3])
+
+#define TEST_EQ_3V(a,b)  ((a)[0] == (b)[0] && 	\
+			  (a)[1] == (b)[1] &&	\
+			  (a)[2] == (b)[2])
+
+#if defined(__i386__)
+#define TEST_EQ_4UBV(DST, SRC) *((GLuint*)(DST)) == *((GLuint*)(SRC))	
+#else
+#define TEST_EQ_4UBV(DST, SRC) TEST_EQ_4V(DST, SRC)
+#endif
+
 
 
 /* Copy short vectors: */

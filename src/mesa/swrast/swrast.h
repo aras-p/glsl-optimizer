@@ -124,6 +124,10 @@ _swrast_Accum( GLcontext *ctx, GLenum op,
 extern GLuint *
 _swrast_get_stipple_counter_ref( GLcontext *ctx );
 
+/* Reset the stipple pointer via a function call
+ */
+extern void
+_swrast_ResetLineStipple( GLcontext *ctx );
 
 /* These will always render the correct point/line/triangle for the
  * current state.
@@ -159,5 +163,8 @@ _swrast_allow_vertex_fog( GLcontext *ctx, GLboolean value );
 
 extern void
 _swrast_allow_pixel_fog( GLcontext *ctx, GLboolean value );
+
+extern void
+_swrast_print_vertex( GLcontext *ctx, const SWvertex *v );
 
 #endif

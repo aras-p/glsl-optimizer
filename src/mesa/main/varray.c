@@ -1,4 +1,4 @@
-/* $Id: varray.c,v 1.33 2000/11/24 10:25:06 keithw Exp $ */
+/* $Id: varray.c,v 1.34 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -48,6 +48,7 @@ void
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (size<2 || size>4) {
       gl_error( ctx, GL_INVALID_VALUE, "glVertexPointer(size)" );
@@ -87,8 +88,8 @@ _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.Vertex.Type = type;
    ctx->Array.Vertex.Stride = stride;
    ctx->Array.Vertex.Ptr = (void *) ptr;
-   ctx->Array._VertexFunc = gl_trans_4f_tab[size][TYPE_IDX(type)];
    ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
 
    if (ctx->Driver.VertexPointer)
       ctx->Driver.VertexPointer( ctx, size, type, stride, ptr );
@@ -101,6 +102,7 @@ void
 _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (stride<0) {
       gl_error( ctx, GL_INVALID_VALUE, "glNormalPointer(stride)" );
@@ -138,8 +140,8 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
    ctx->Array.Normal.Type = type;
    ctx->Array.Normal.Stride = stride;
    ctx->Array.Normal.Ptr = (void *) ptr;
-   ctx->Array._NormalFunc = gl_trans_3f_tab[TYPE_IDX(type)];
    ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
 
    if (ctx->Driver.NormalPointer)
       ctx->Driver.NormalPointer( ctx, type, stride, ptr );
@@ -151,6 +153,7 @@ void
 _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (size<3 || size>4) {
       gl_error( ctx, GL_INVALID_VALUE, "glColorPointer(size)" );
@@ -202,8 +205,8 @@ _mesa_ColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.Color.Type = type;
    ctx->Array.Color.Stride = stride;
    ctx->Array.Color.Ptr = (void *) ptr;
-   ctx->Array._ColorFunc = gl_trans_4ub_tab[size][TYPE_IDX(type)];
    ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
 
    if (ctx->Driver.ColorPointer)
       ctx->Driver.ColorPointer( ctx, size, type, stride, ptr );
@@ -215,6 +218,7 @@ void
 _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (stride<0) {
       gl_error( ctx, GL_INVALID_VALUE, "glFogCoordPointer(stride)" );
@@ -238,8 +242,8 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.FogCoord.Type = type;
    ctx->Array.FogCoord.Stride = stride;
    ctx->Array.FogCoord.Ptr = (void *) ptr;
-   ctx->Array._FogCoordFunc = gl_trans_1f_tab[TYPE_IDX(type)];
    ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
 
    if (ctx->Driver.FogCoordPointer)
       ctx->Driver.FogCoordPointer( ctx, type, stride, ptr );
@@ -250,6 +254,7 @@ void
 _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (stride<0) {
       gl_error( ctx, GL_INVALID_VALUE, "glIndexPointer(stride)" );
@@ -282,8 +287,8 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
    ctx->Array.Index.Type = type;
    ctx->Array.Index.Stride = stride;
    ctx->Array.Index.Ptr = (void *) ptr;
-   ctx->Array._IndexFunc = gl_trans_1ui_tab[TYPE_IDX(type)];
    ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
 
    if (ctx->Driver.IndexPointer)
       ctx->Driver.IndexPointer( ctx, type, stride, ptr );
@@ -295,6 +300,7 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
 			       GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (size != 3 && size != 4) {
       gl_error( ctx, GL_INVALID_VALUE, "glColorPointer(size)" );
@@ -346,8 +352,8 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
    ctx->Array.SecondaryColor.Type = type;
    ctx->Array.SecondaryColor.Stride = stride;
    ctx->Array.SecondaryColor.Ptr = (void *) ptr;
-   ctx->Array._SecondaryColorFunc = gl_trans_4ub_tab[size][TYPE_IDX(type)];
    ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
 
    if (ctx->Driver.SecondaryColorPointer)
       ctx->Driver.SecondaryColorPointer( ctx, size, type, stride, ptr );
@@ -359,9 +365,8 @@ void
 _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint texUnit;
-
-   texUnit = ctx->Array.ActiveTexture;
+   GLuint texUnit = ctx->Array.ActiveTexture;
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (size<1 || size>4) {
       gl_error( ctx, GL_INVALID_VALUE, "glTexCoordPointer(size)" );
@@ -403,8 +408,8 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *ptr
    ctx->Array.TexCoord[texUnit].Type = type;
    ctx->Array.TexCoord[texUnit].Stride = stride;
    ctx->Array.TexCoord[texUnit].Ptr = (void *) ptr;
-   ctx->Array._TexCoordFunc[texUnit] = gl_trans_4f_tab[size][TYPE_IDX(type)];
    ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
 
    if (ctx->Driver.TexCoordPointer)
       ctx->Driver.TexCoordPointer( ctx, size, type, stride, ptr );
@@ -418,6 +423,7 @@ _mesa_EdgeFlagPointer(GLsizei stride, const void *vptr)
 {
    GET_CURRENT_CONTEXT(ctx);
    const GLboolean *ptr = (GLboolean *)vptr;
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (stride<0) {
       gl_error( ctx, GL_INVALID_VALUE, "glEdgeFlagPointer(stride)" );
@@ -426,12 +432,8 @@ _mesa_EdgeFlagPointer(GLsizei stride, const void *vptr)
    ctx->Array.EdgeFlag.Stride = stride;
    ctx->Array.EdgeFlag.StrideB = stride ? stride : sizeof(GLboolean);
    ctx->Array.EdgeFlag.Ptr = (GLboolean *) ptr;
-   if (stride != sizeof(GLboolean)) {
-      ctx->Array._EdgeFlagFunc = gl_trans_1ub_tab[TYPE_IDX(GL_UNSIGNED_BYTE)];
-   } else {
-      ctx->Array._EdgeFlagFunc = 0;
-   }
    ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_VERTEX;
 
    if (ctx->Driver.EdgeFlagPointer)
       ctx->Driver.EdgeFlagPointer( ctx, stride, ptr );
@@ -510,6 +512,8 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    GLint defstride;                /* default stride */
    GLint c, f;
    GLint coordUnitSave;
+
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    f = sizeof(GLfloat);
    c = f * ((4*sizeof(GLubyte) + (f-1)) / f);
@@ -645,8 +649,8 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
       for (i = 0; i < factor; i++) {
          _mesa_ClientActiveTextureARB( (GLenum) (GL_TEXTURE0_ARB + i) );
          _mesa_EnableClientState( GL_TEXTURE_COORD_ARRAY );
-         glTexCoordPointer( tcomps, GL_FLOAT, stride,
-                             (GLubyte *) pointer + i * coffset );
+         _mesa_TexCoordPointer( tcomps, GL_FLOAT, stride,
+				(GLubyte *) pointer + i * coffset );
       }
       for (i = factor; i < ctx->Const.MaxTextureUnits; i++) {
          _mesa_ClientActiveTextureARB( (GLenum) (GL_TEXTURE0_ARB + i) );
@@ -667,8 +671,8 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    /* Color */
    if (cflag) {
       _mesa_EnableClientState( GL_COLOR_ARRAY );
-      glColorPointer( ccomps, ctype, stride,
-                       (GLubyte*) pointer + coffset );
+      _mesa_ColorPointer( ccomps, ctype, stride,
+			  (GLubyte*) pointer + coffset );
    }
    else {
       _mesa_DisableClientState( GL_COLOR_ARRAY );
@@ -678,29 +682,25 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    /* Normals */
    if (nflag) {
       _mesa_EnableClientState( GL_NORMAL_ARRAY );
-      glNormalPointer( GL_FLOAT, stride,
-                        (GLubyte*) pointer + noffset );
+      _mesa_NormalPointer( GL_FLOAT, stride,
+			   (GLubyte*) pointer + noffset );
    }
    else {
       _mesa_DisableClientState( GL_NORMAL_ARRAY );
    }
 
    _mesa_EnableClientState( GL_VERTEX_ARRAY );
-   glVertexPointer( vcomps, GL_FLOAT, stride,
-                     (GLubyte *) pointer + voffset );
+   _mesa_VertexPointer( vcomps, GL_FLOAT, stride,
+			(GLubyte *) pointer + voffset );
 }
 
 
 
-/* Transform the array components now, upto the setup call.  When
- * actual draw commands arrive, the data will be merged prior to
- * calling render_vb.  
- */
 void
 _mesa_LockArraysEXT(GLint first, GLsizei count)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "glLockArraysEXT" );
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glLockArrays %d %d\n", first, count);
@@ -715,6 +715,7 @@ _mesa_LockArraysEXT(GLint first, GLsizei count)
    }
 
    ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_ALL;
 
    if (ctx->Driver.LockArraysEXT)
       ctx->Driver.LockArraysEXT( ctx, first, count );
@@ -725,7 +726,7 @@ void
 _mesa_UnlockArraysEXT( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "glUnlockArraysEXT" );
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glUnlockArrays\n");
@@ -733,6 +734,7 @@ _mesa_UnlockArraysEXT( void )
    ctx->Array.LockFirst = 0;
    ctx->Array.LockCount = 0;
    ctx->NewState |= _NEW_ARRAY;
+   ctx->Array.NewState |= _NEW_ARRAY_ALL;
 
    if (ctx->Driver.UnlockArraysEXT)
       ctx->Driver.UnlockArraysEXT( ctx );

@@ -1,4 +1,4 @@
-/* $Id: light.h,v 1.7 2000/11/24 10:25:05 keithw Exp $ */
+/* $Id: light.h,v 1.8 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -101,10 +101,11 @@ extern GLuint gl_material_bitmask( GLcontext *ctx,
 extern void gl_set_material( GLcontext *ctx, GLuint bitmask,
                              const GLfloat *params);
 
-extern void gl_compute_spot_exp_table( struct gl_light *l );
 
-extern void gl_compute_shine_table( GLcontext *ctx, GLuint i,
-				    GLfloat shininess );
+extern void gl_invalidate_spot_exp_table( struct gl_light *l );
+extern void gl_invalidate_shine_table( GLcontext *ctx, GLuint i );
+extern void gl_validate_all_lighting_tables( GLcontext *ctx );
+
 
 extern void gl_update_lighting( GLcontext *ctx );
 

@@ -1,0 +1,104 @@
+/* $Id: t_imm_alloc.c,v 1.1 2000/12/26 05:09:32 keithw Exp $ */
+
+/*
+ * Mesa 3-D graphics library
+ * Version:  3.5
+ *
+ * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
+ */
+
+#include "glheader.h"
+#include "mem.h"
+#include "mtypes.h"
+
+#include "t_imm_alloc.h"
+
+
+
+struct immediate *_tnl_alloc_immediate( GLcontext *ctx )
+{
+   static int id = 0;
+   struct immediate *IM = ALIGN_MALLOC_STRUCT( immediate, 32 );
+   GLuint j;
+
+   if (!IM)
+      return 0;
+
+   IM->id = id++;
+   IM->ref_count = 0;
+   IM->backref = ctx;
+   IM->NormalLengths = 0;
+   IM->FlushElt = 0;
+   IM->LastPrimitive = IMM_MAX_COPIED_VERTS;
+   IM->Count = IMM_MAX_COPIED_VERTS;
+   IM->Start = IMM_MAX_COPIED_VERTS;	
+   IM->Material = 0;
+   IM->MaterialMask = 0;
+   IM->MaxTextureUnits = ctx->Const.MaxTextureUnits;
+   IM->TexSize = 0;
+
+   IM->CopyTexSize = 0;
+   IM->CopyStart = IM->Start;
+
+
+   /* TexCoord0 is special.
+    */
+   IM->TexCoord[0] = IM->TexCoord0;
+
+   for (j = 1; j < ctx->Const.MaxTextureUnits; j++) 
+      IM->TexCoord[j] = ALIGN_MALLOC( IMM_SIZE * sizeof(GLfloat) * 4, 32 );
+
+   /* KW: Removed initialization of normals as these are now treated
+    * identically to all other data types.
+    */
+
+   MEMSET(IM->Flag, 0, sizeof(IM->Flag));
+
+   return IM;
+}
+
+
+void _tnl_free_immediate( struct immediate *IM )
+{
+   GLuint j;
+
+   if (IM->NormalLengths) {
+      FREE( IM->NormalLengths );
+      IM->NormalLengths = 0;
+   }
+
+   if (IM->Material) {
+      FREE( IM->Material );
+      FREE( IM->MaterialMask );
+      IM->Material = 0;
+      IM->MaterialMask = 0;
+
+      for (j = 1; j < IM->MaxTextureUnits; j++) 
+	 ALIGN_FREE( IM->TexCoord[j] );
+   }
+
+   ALIGN_FREE( IM );
+}
+
+
+

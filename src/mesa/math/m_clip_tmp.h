@@ -1,4 +1,4 @@
-/* $Id: m_clip_tmp.h,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_clip_tmp.h,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,16 +78,16 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points4)( GLvector4f *clip_vec,
 	 c++;
 	 tmpAndMask &= mask;
 	 tmpOrMask |= mask;
-	 vProj[i][0] = 0;	/* no longer required? */
+	 vProj[i][0] = 0;
 	 vProj[i][1] = 0;
 	 vProj[i][2] = 0;
 	 vProj[i][3] = 1;
       } else {
 	 GLfloat oow = 1.0F / cw;	 
-	 vProj[i][3] = oow;
 	 vProj[i][0] = cx * oow;
 	 vProj[i][1] = cy * oow;
 	 vProj[i][2] = cz * oow;      
+	 vProj[i][3] = oow;
       }	 
    }
 
@@ -95,7 +95,7 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points4)( GLvector4f *clip_vec,
    *andMask = (GLubyte) (c < count ? 0 : tmpAndMask);
 
    proj_vec->flags |= VEC_SIZE_4;
-   proj_vec->size = 3;
+   proj_vec->size = 4;
    proj_vec->count = clip_vec->count;
    return proj_vec;
 }
@@ -127,8 +127,6 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points3)( GLvector4f *clip_vec,
       tmpAndMask &= mask;
    }
 
-   gl_vector4f_clean_elem(proj_vec, count, 3);
-      
    *orMask = tmpOrMask;
    *andMask = tmpAndMask;
    return clip_vec;
@@ -158,8 +156,6 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points2)( GLvector4f *clip_vec,
       tmpOrMask |= mask;
       tmpAndMask &= mask;
    }
-
-   gl_vector4f_clean_elem(proj_vec, count, 3);
 
    *orMask = tmpOrMask;
    *andMask = tmpAndMask;

@@ -1,4 +1,4 @@
-/* $Id: hint.c,v 1.5 2000/10/30 13:32:00 keithw Exp $ */
+/* $Id: hint.c,v 1.6 2000/12/26 05:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,6 +41,7 @@ void
 _mesa_Hint( GLenum target, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
    (void) _mesa_try_Hint( ctx, target, mode );
 }
 
@@ -48,8 +49,6 @@ _mesa_Hint( GLenum target, GLenum mode )
 GLboolean
 _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
 {
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glHint", GL_FALSE);
-
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glHint %s %d\n", gl_lookup_enum_by_nr(target), mode);
 
@@ -60,24 +59,42 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
 
    switch (target) {
       case GL_FOG_HINT:
+         if (ctx->Hint.Fog == mode)
+	    return GL_TRUE;
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.Fog = mode;
          break;
       case GL_LINE_SMOOTH_HINT:
+         if (ctx->Hint.LineSmooth == mode)
+	    return GL_TRUE;
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.LineSmooth = mode;
          break;
       case GL_PERSPECTIVE_CORRECTION_HINT:
+         if (ctx->Hint.PerspectiveCorrection == mode)
+	    return GL_TRUE;
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.PerspectiveCorrection = mode;
          break;
       case GL_POINT_SMOOTH_HINT:
+         if (ctx->Hint.PointSmooth == mode)
+	    return GL_TRUE;
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.PointSmooth = mode;
          break;
       case GL_POLYGON_SMOOTH_HINT:
+         if (ctx->Hint.PolygonSmooth == mode)
+	    return GL_TRUE;
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.PolygonSmooth = mode;
          break;
       case GL_PREFER_DOUBLEBUFFER_HINT_PGI:
       case GL_STRICT_DEPTHFUNC_HINT_PGI:
          break;
       case GL_STRICT_LIGHTING_HINT_PGI:
+         if (ctx->Hint.StrictLighting == mode)
+	    return GL_TRUE;
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.StrictLighting = mode;
          break;
       case GL_STRICT_SCISSOR_HINT_PGI:
@@ -88,6 +105,7 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
       case GL_RECLAIM_MEMORY_HINT_PGI:
          break;
       case GL_ALWAYS_FAST_HINT_PGI:
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
          if (mode) {
             ctx->Hint.AllowDrawWin = GL_TRUE;
             ctx->Hint.AllowDrawFrg = GL_FALSE;
@@ -99,6 +117,7 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
          } 
          break;
       case GL_ALWAYS_SOFT_HINT_PGI:
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.AllowDrawWin = GL_TRUE;
          ctx->Hint.AllowDrawFrg = GL_TRUE;
          ctx->Hint.AllowDrawMem = GL_TRUE;
@@ -106,12 +125,21 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
       case GL_ALLOW_DRAW_OBJ_HINT_PGI:
          break;
       case GL_ALLOW_DRAW_WIN_HINT_PGI:
+         if (ctx->Hint.AllowDrawWin == mode)
+	    return GL_TRUE;
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.AllowDrawWin = mode;
          break;
       case GL_ALLOW_DRAW_FRG_HINT_PGI:
+         if (ctx->Hint.AllowDrawFrg == mode)
+	    return GL_TRUE;
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.AllowDrawFrg = mode;
          break;
       case GL_ALLOW_DRAW_MEM_HINT_PGI:
+         if (ctx->Hint.AllowDrawMem == mode)
+	    return GL_TRUE;
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.AllowDrawMem = mode;
          break;
       case GL_CLIP_NEAR_HINT_PGI:
@@ -123,25 +151,28 @@ _mesa_try_Hint( GLcontext *ctx, GLenum target, GLenum mode )
 
       /* GL_EXT_clip_volume_hint */
       case GL_CLIP_VOLUME_CLIPPING_HINT_EXT:
+         if (ctx->Hint.ClipVolumeClipping == mode)
+	    return GL_TRUE;
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
          ctx->Hint.ClipVolumeClipping = mode;
          break;
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
          if (ctx->Extensions.ARB_texture_compression) {
-            ctx->Hint.TextureCompression = mode;
-         }
-         else {
             gl_error(ctx, GL_INVALID_ENUM, "glHint(target)");
+	    return GL_TRUE;
          }
+	 if (ctx->Hint.TextureCompression == mode)
+	    return GL_TRUE;
+	 FLUSH_VERTICES(ctx, _NEW_HINT);
+	 ctx->Hint.TextureCompression = mode;
          break;
 
       default:
          gl_error(ctx, GL_INVALID_ENUM, "glHint(target)");
          return GL_FALSE;
    }
-
-   ctx->NewState |= _NEW_HINT;
 
    if (ctx->Driver.Hint) {
       (*ctx->Driver.Hint)( ctx, target, mode );
@@ -155,7 +186,7 @@ void
 _mesa_HintPGI( GLenum target, GLint mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glHintPGI");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glHintPGI %s %d\n", gl_lookup_enum_by_nr(target), mode);

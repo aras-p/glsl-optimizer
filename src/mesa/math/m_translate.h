@@ -1,4 +1,4 @@
-/* $Id: m_translate.h,v 1.2 2000/11/17 21:01:49 brianp Exp $ */
+/* $Id: m_translate.h,v 1.3 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,66 +31,52 @@
 #include "config.h"
 
 
-typedef void (*trans_1f_func)(GLfloat *to,
-			      CONST void *ptr,
-			      GLuint stride,
-			      GLuint start, 
-			      GLuint n );
 
-typedef void (*trans_1ui_func)(GLuint *to,
-			       CONST void *ptr,
-			       GLuint stride,
-			       GLuint start, 
-			       GLuint n );
+extern void _math_trans_1f(GLfloat *to,
+			   CONST void *ptr,
+			   GLuint stride,
+			   GLenum type,
+			   GLuint start,
+			   GLuint n );
 
-typedef void (*trans_1ub_func)(GLubyte *to,
-			       CONST void *ptr,
-			       GLuint stride,
-			       GLuint start,
-			       GLuint n );
+extern void _math_trans_1ui(GLuint *to,
+			    CONST void *ptr,
+			    GLuint stride,
+			    GLenum type,
+			    GLuint start,
+			    GLuint n );
 
-typedef void (*trans_4ub_func)(GLubyte (*to)[4],
-			       CONST void *ptr,
-			       GLuint stride,
-			       GLuint start,
-			       GLuint n );
+extern void _math_trans_1ub(GLubyte *to,
+			    CONST void *ptr,
+			    GLuint stride,
+			    GLenum type,
+			    GLuint start,
+			    GLuint n );
 
-typedef void (*trans_4f_func)(GLfloat (*to)[4],
-			      CONST void *ptr,
-			      GLuint stride,
-			      GLuint start, 
-			      GLuint n );
+extern void _math_trans_4ub(GLubyte (*to)[4],
+			    CONST void *ptr,
+			    GLuint stride,
+			    GLenum type,
+			    GLuint size,
+			    GLuint start,
+			    GLuint n );
 
-typedef void (*trans_3f_func)(GLfloat (*to)[3],
-			      CONST void *ptr,
-			      GLuint stride,
-			      GLuint start, 
-			      GLuint n );
+extern void _math_trans_4f(GLfloat (*to)[4],
+			   CONST void *ptr,
+			   GLuint stride,
+			   GLenum type,
+			   GLuint size,
+			   GLuint start,
+			   GLuint n );
 
+extern void _math_trans_3f(GLfloat (*to)[3],
+			   CONST void *ptr,
+			   GLuint stride,
+			   GLenum type,
+			   GLuint start,
+			   GLuint n );
 
-
-
-/* Translate GL_UNSIGNED_BYTE, etc to the indexes used in the arrays
- * below.
- */
-#define TYPE_IDX(t) ((t) & 0xf)
-
-#define MAX_TYPES TYPE_IDX(GL_DOUBLE)+1      /* 0xa + 1 */
-
-/* Only useful combinations are defined, thus there is no function to
- * translate eg, ubyte->float or ubyte->ubyte, which are never used.  
- */
-extern trans_1f_func gl_trans_1f_tab[MAX_TYPES];
-extern trans_1ui_func gl_trans_1ui_tab[MAX_TYPES];
-extern trans_1ub_func gl_trans_1ub_tab[MAX_TYPES];
-extern trans_3f_func  gl_trans_3f_tab[MAX_TYPES];
-extern trans_4ub_func gl_trans_4ub_tab[5][MAX_TYPES];
-extern trans_4f_func  gl_trans_4f_tab[5][MAX_TYPES];
-
-
-
-extern void 
-_math_init_translate( void );
+extern void _math_init_translate( void );
 
 
 #endif

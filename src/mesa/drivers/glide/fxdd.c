@@ -59,6 +59,7 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
+#include "array_cache/acache.h"
 
 /* These lookup table are used to extract RGB values in [0,255] from
  * 16-bit pixel values.
@@ -644,9 +645,38 @@ static const GLubyte *fxDDGetString(GLcontext *ctx, GLenum name)
   }
 }
 
+#if 0
+static const struct gl_pipeline_stage * const fx_pipeline[] = {
+   &_tnl_update_material_stage, 
+   &_tnl_vertex_transform_stage, 
+   &_tnl_normal_transform_stage, 
+   &_tnl_lighting_stage,	/* OMIT: fog coordinate stage */
+   &_tnl_texgen_stage, 
+   &_tnl_texture_transform_stage, 
+   &_tnl_point_attenuation_stage, 
+   &_fx_fast_render_stage,	/* ADD: the fastpath as a render stage */
+   &_tnl_render_stage,		/* KEEP: the old render stage for fallbacks */
+   0
+};
+#else
+/* Need to turn off tnl fogging, both the stage and the clipping in
+ * _tnl_render_stage.  Could insert a dummy stage that did nothing but
+ * provided storage that clipping could spin on?
+ */
+#endif
+
+
 
 int fxDDInitFxMesaContext( fxMesaContext fxMesa )
 {
+   static int firsttime = 1;
+
+   if (firsttime) {
+      fxDDSetupInit();
+      fxDDTrifuncInit();
+/*     fxDDFastPathInit(); */
+      firsttime = 0;
+   }
 
    FX_setupGrVertexLayout();
 
@@ -734,18 +764,14 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
    fxMesa->glCtx->Const.MaxTextureUnits=fxMesa->emulateTwoTMUs ? 2 : 1;
    fxMesa->new_state = _NEW_ALL;
 
-   fxDDSetupInit();
-   fxDDTrifuncInit();
-   fxDDFastPathInit();
-
-
    /* Initialize the software rasterizer and helper modules.
     */
-   fxMesa->glCtx->Driver.RegisterVB = fxDDRegisterVB;
-
    _swrast_CreateContext( fxMesa->glCtx );
-   _swsetup_CreateContext( fxMesa->glCtx );
+   _ac_CreateContext( fxMesa->glCtx );
    _tnl_CreateContext( fxMesa->glCtx );
+   _swsetup_CreateContext( fxMesa->glCtx );
+
+   fxAllocVB( fxMesa->glCtx );
 
    fxSetupDDPointers(fxMesa->glCtx);
 
@@ -755,20 +781,34 @@ int fxDDInitFxMesaContext( fxMesaContext fxMesa )
    _swrast_allow_pixel_fog( fxMesa->glCtx, GL_TRUE );
 
    fxDDInitExtensions(fxMesa->glCtx);  
+
+#ifdef FXVTXFMT
    fxDDInitVtxfmt(fxMesa->glCtx);
+#endif
 
    FX_grGlideGetState((GrState*)fxMesa->state);
-
-   /* XXX Fix me too: need to have the 'struct dd' prepared prior to
-    * creating the context... The below is broken if you try to insert
-    * new stages.
-    */
-   fxDDRegisterPipelineStages( fxMesa->glCtx );
 
    /* Run the config file */
    _mesa_context_initialize( fxMesa->glCtx );
 
    return 1;
+}
+
+/* Undo the above.
+ */
+void fxDDDestroyFxMesaContext( fxMesaContext fxMesa )
+{
+   _swsetup_DestroyContext( fxMesa->glCtx );
+   _tnl_DestroyContext( fxMesa->glCtx );
+   _ac_DestroyContext( fxMesa->glCtx );
+   _swrast_DestroyContext( fxMesa->glCtx );
+
+   if (fxMesa->state)  
+      free(fxMesa->state);
+   if (fxMesa->fogTable)
+      free(fxMesa->fogTable);
+   fxTMClose(fxMesa);
+   fxFreeVB(fxMesa->glCtx);
 }
 
 
@@ -783,6 +823,9 @@ void fxDDInitExtensions( GLcontext *ctx )
    gl_extensions_disable(ctx, "GL_EXT_blend_subtract");
    gl_extensions_disable(ctx, "GL_EXT_blend_color");
    gl_extensions_disable(ctx, "GL_EXT_fog_coord");
+
+   if (1)
+      gl_extensions_disable(ctx, "GL_EXT_point_parameters"); 
 
    gl_extensions_add(ctx, GL_TRUE, "3DFX_set_global_palette", 0);
 
@@ -922,14 +965,14 @@ static void update_texture_scales( GLcontext *ctx )
    }
 }
 
-static void fxDDUpdateDDPointers(GLcontext *ctx)
+static void fxDDUpdateDDPointers(GLcontext *ctx, GLuint new_state)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   GLuint new_state = ctx->NewState;
 
    _swrast_InvalidateState( ctx, new_state );
-   _swsetup_InvalidateState( ctx, new_state );
+   _ac_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
+   _swsetup_InvalidateState( ctx, new_state );
 
    /* Recalculate fog table on projection matrix changes.  This used to
     * be triggered by the NearFar callback.
@@ -954,22 +997,22 @@ static void fxDDUpdateDDPointers(GLcontext *ctx)
 	 fxDDChooseRenderState( ctx );
     
       if (new_state & _FX_NEW_SETUP_FUNCTION)
-	 ctx->Driver.RasterSetup = fxDDChooseSetupFunction(ctx);      
+	 ctx->Driver.BuildProjectedVertices = fx_validate_BuildProjVerts;     
 
       if (new_state & _NEW_TEXTURE) 
 	 update_texture_scales( ctx );
 
    }
 
+#ifdef FXVTXFMT
    if (fxMesa->allow_vfmt) {
       if (new_state & _NEW_LIGHT)
 	 fx_update_lighting( ctx );
 
       if (new_state & _FX_NEW_VTXFMT)
 	 fxDDCheckVtxfmt( ctx );
-      else if (fxMesa->vtxfmt_fallback_count > 1)
-	 fxMesa->vtxfmt_fallback_count--;
    }
+#endif
 }
 
 
@@ -1006,6 +1049,7 @@ void fxSetupDDPointers(GLcontext *ctx)
 
   ctx->Driver.RenderStart=fxSetupFXUnits;
   ctx->Driver.RenderFinish=_swrast_flush;
+  ctx->Driver.ResetLineStipple=_swrast_ResetLineStipple;
 
   ctx->Driver.TexImage2D = fxDDTexImage2D;
   ctx->Driver.TexSubImage2D = fxDDTexSubImage2D;
@@ -1028,14 +1072,10 @@ void fxSetupDDPointers(GLcontext *ctx)
   ctx->Driver.ShadeModel=fxDDShadeModel;
   ctx->Driver.Enable=fxDDEnable;
 
-  ctx->Driver.RegisterVB=fxDDRegisterVB;
-  ctx->Driver.UnregisterVB=fxDDUnregisterVB;
-
-  if (!getenv("FX_NO_FAST"))
-      ctx->Driver.BuildPrecalcPipeline = fxDDBuildPrecalcPipeline;
+  
 
   fxSetupDDSpanPointers(ctx);
-  fxDDUpdateDDPointers(ctx);
+  fxDDUpdateDDPointers(ctx,~0);
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: m_xform.c,v 1.4 2000/11/24 10:25:11 keithw Exp $ */
+/* $Id: m_xform.c,v 1.5 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,6 +41,7 @@
 #include "macros.h"
 #include "mmath.h"
 
+#include "m_eval.h"
 #include "m_matrix.h"
 #include "m_translate.h"
 #include "m_xform.h"
@@ -250,4 +251,5 @@ _math_init( void )
    _math_init_transformation();
    _math_init_translate();
    _math_init_vertices();
+   _math_init_eval();
 }

@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.7 2000/11/28 22:34:46 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.8 2000/12/26 05:09:32 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -244,7 +244,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
          MEMCPY(primary_rgba, rgba, 4 * width * sizeof(GLchan));
 
-         for (unit = 0; unit < MAX_TEXTURE_UNITS; unit++) {
+         for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
             _mesa_pixeltexgen(ctx, width, (const GLchan (*)[4]) rgba,
                               s, t, r, q);
             gl_texture_pixels(ctx, unit, width, s, t, r, NULL,
@@ -490,7 +490,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
          MEMCPY(primary_rgba, rgba, 4 * width * sizeof(GLchan));
 
-         for (unit = 0; unit < MAX_TEXTURE_UNITS; unit++) {
+         for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
             _mesa_pixeltexgen(ctx, width, (const GLchan (*)[4]) rgba,
                               s, t, r, q);
             gl_texture_pixels(ctx, unit, width, s, t, r, NULL,

@@ -37,18 +37,14 @@ _swsetup_CreateContext( GLcontext *ctx );
 extern void 
 _swsetup_DestroyContext( GLcontext *ctx );
 
-extern void
-_swsetup_RegisterVB( struct vertex_buffer *VB );
-
-extern void 
-_swsetup_UnregisterVB( struct vertex_buffer *VB );
-
 extern void 
 _swsetup_InvalidateState( GLcontext *ctx, GLuint new_state );
 
 extern void 
-_swsetup_RasterSetup( struct vertex_buffer *VB, 
-		     GLuint start, GLuint end );
+_swsetup_BuildProjectedVertices( GLcontext *ctx, 
+				 GLuint start, 
+				 GLuint end,
+				 GLuint new_inputs );
 
 extern void 
 _swsetup_Quad( GLcontext *ctx, GLuint v0, GLuint v1, 
@@ -65,6 +61,9 @@ _swsetup_Line( GLcontext *ctx, GLuint v0, GLuint v1, GLuint pv );
 
 extern void 
 _swsetup_Points( GLcontext *ctx, GLuint first, GLuint last );
+
+extern void 
+_swsetup_IndexedPoints( GLcontext *ctx, GLuint first, GLuint last );
 
 
 #endif

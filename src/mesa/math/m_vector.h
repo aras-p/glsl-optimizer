@@ -1,4 +1,4 @@
-/* $Id: m_vector.h,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_vector.h,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,18 +35,13 @@
 #include "glheader.h"
 
 
-#define VEC_DIRTY_0        0x1	/* dirty flags not really used any more */
+#define VEC_DIRTY_0        0x1	
 #define VEC_DIRTY_1        0x2
 #define VEC_DIRTY_2        0x4
 #define VEC_DIRTY_3        0x8
 #define VEC_MALLOC         0x10 /* storage field points to self-allocated mem*/
-#define VEC_WRITABLE       0x20	/* keep both + and - bits for easy testing */
-#define VEC_NOT_WRITABLE   0x40
-#define VEC_GOOD_STRIDE    0x80	
-#define VEC_BAD_STRIDE     0x100
-
-#define VEC_WRITABLE_FLAGS (VEC_WRITABLE|VEC_NOT_WRITABLE)
-#define VEC_STRIDE_FLAGS   (VEC_GOOD_STRIDE|VEC_BAD_STRIDE)
+#define VEC_NOT_WRITEABLE  0x40	/* writable elements to hold clipped data */
+#define VEC_BAD_STRIDE     0x100 /* matches tnl's prefered stride */
 
 
 #define VEC_SIZE_1   VEC_DIRTY_0

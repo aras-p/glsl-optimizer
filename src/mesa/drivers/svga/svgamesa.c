@@ -1,4 +1,4 @@
-/* $Id: svgamesa.c,v 1.10 2000/11/22 08:55:53 joukj Exp $ */
+/* $Id: svgamesa.c,v 1.11 2000/12/26 05:09:30 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -274,7 +274,7 @@ static void set_read_buffer( GLcontext *ctx, GLframebuffer *colorBuffer,
 /*****                                                            *****/
 /**********************************************************************/
 
-static void svgamesa_update_state( GLcontext *ctx )
+static void svgamesa_update_state( GLcontext *ctx, GLuint new_state )
 {
    /* Initialize all the pointers in the DD struct.  Do this whenever */
    /* a new context is made current or we change buffers via set_buffer! */
@@ -457,7 +457,7 @@ void SVGAMesaMakeCurrent( SVGAMesaContext ctx )
 {
 #ifndef DEV
    SVGAMesa = ctx;
-   svgamesa_update_state( ctx->gl_ctx );
+   svgamesa_update_state( ctx->gl_ctx, ~0 );
    _mesa_make_current( ctx->gl_ctx, ctx->gl_buffer );
 
    if (ctx->width==0 || ctx->height==0) {

@@ -1,4 +1,4 @@
-/* $Id: depth.c,v 1.24 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: depth.c,v 1.25 2000/12/26 05:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,11 +49,16 @@ void
 _mesa_ClearDepth( GLclampd depth )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glClearDepth");
-   ctx->Depth.Clear = (GLfloat) CLAMP( depth, 0.0, 1.0 );
+   GLfloat tmp = (GLfloat) CLAMP( depth, 0.0, 1.0 );
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (ctx->Depth.Clear == tmp)
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_DEPTH);
+   ctx->Depth.Clear = tmp;
    if (ctx->Driver.ClearDepth)
       (*ctx->Driver.ClearDepth)( ctx, ctx->Depth.Clear );
-   ctx->NewState |= _NEW_DEPTH;
 }
 
 
@@ -62,41 +67,39 @@ void
 _mesa_DepthFunc( GLenum func )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glDepthFunc");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glDepthFunc %s\n", gl_lookup_enum_by_nr(func));
 
    switch (func) {
-      case GL_LESS:    /* (default) pass if incoming z < stored z */
-      case GL_GEQUAL:
-      case GL_LEQUAL:
-      case GL_GREATER:
-      case GL_NOTEQUAL:
-      case GL_EQUAL:
-      case GL_ALWAYS:
-	 if (ctx->Depth.Func != func) {
-	    ctx->Depth.Func = func;
-	    ctx->NewState |= _NEW_DEPTH;
-	    ctx->_TriangleCaps &= ~DD_Z_NEVER;
-	    if (ctx->Driver.DepthFunc) {
-	       (*ctx->Driver.DepthFunc)( ctx, func );
-	    }
-	 }
-         break;
-      case GL_NEVER:
-	 if (ctx->Depth.Func != func) {
-	    ctx->Depth.Func = func;
-	    ctx->NewState |= _NEW_DEPTH;
-	    ctx->_TriangleCaps |= DD_Z_NEVER;
-	    if (ctx->Driver.DepthFunc) {
-	       (*ctx->Driver.DepthFunc)( ctx, func );
-	    }
-	 }
-         break;
-      default:
-         gl_error( ctx, GL_INVALID_ENUM, "glDepth.Func" );
+   case GL_LESS:    /* (default) pass if incoming z < stored z */
+   case GL_GEQUAL:
+   case GL_LEQUAL:
+   case GL_GREATER:
+   case GL_NOTEQUAL:
+   case GL_EQUAL:
+   case GL_ALWAYS:
+   case GL_NEVER:
+      break;
+   default:
+      gl_error( ctx, GL_INVALID_ENUM, "glDepth.Func" );
+      return;
    }
+
+   if (ctx->Depth.Func == func) 
+      return;
+   
+   FLUSH_VERTICES(ctx, _NEW_DEPTH);
+   ctx->Depth.Func = func;
+
+   if (func == GL_NEVER)
+      ctx->_TriangleCaps |= DD_Z_NEVER;
+   else
+      ctx->_TriangleCaps &= ~DD_Z_NEVER;
+
+   if (ctx->Driver.DepthFunc) 
+      ctx->Driver.DepthFunc( ctx, func );
 }
 
 
@@ -105,7 +108,7 @@ void
 _mesa_DepthMask( GLboolean flag )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glDepthMask");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glDepthMask %d\n", flag);
@@ -114,13 +117,14 @@ _mesa_DepthMask( GLboolean flag )
     * GL_TRUE indicates depth buffer writing is enabled (default)
     * GL_FALSE indicates depth buffer writing is disabled
     */
-   if (ctx->Depth.Mask != flag) {
-      ctx->Depth.Mask = flag;
-      ctx->NewState |= _NEW_DEPTH;
-      if (ctx->Driver.DepthMask) {
-	 (*ctx->Driver.DepthMask)( ctx, flag );
-      }
-   }
+   if (ctx->Depth.Mask == flag) 
+      return;
+   
+   FLUSH_VERTICES(ctx, _NEW_DEPTH);
+   ctx->Depth.Mask = flag;
+
+   if (ctx->Driver.DepthMask) 
+      ctx->Driver.DepthMask( ctx, flag );
 }
 
 

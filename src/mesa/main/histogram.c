@@ -1,4 +1,4 @@
-/* $Id: histogram.c,v 1.4 2000/12/13 23:13:45 brianp Exp $ */
+/* $Id: histogram.c,v 1.5 2000/12/26 05:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -600,7 +600,7 @@ void
 _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetMinmax");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (!ctx->Extensions.EXT_histogram) {
       gl_error(ctx, GL_INVALID_OPERATION, "glGetMinmax");
@@ -614,6 +614,17 @@ _mesa_GetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvo
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
       gl_error(ctx, GL_INVALID_OPERATION, "glGetMinmax(format or type)");
+      return;
+   }
+
+   if (type != GL_UNSIGNED_BYTE &&
+       type != GL_BYTE &&
+       type != GL_UNSIGNED_SHORT &&
+       type != GL_SHORT &&
+       type != GL_UNSIGNED_INT &&
+       type != GL_INT &&
+       type != GL_FLOAT) {
+      gl_error(ctx, GL_INVALID_ENUM, "glGetMinmax(type)");
       return;
    }
 
@@ -644,7 +655,7 @@ void
 _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetHistogram");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (!ctx->Extensions.EXT_histogram) {
       gl_error(ctx, GL_INVALID_OPERATION, "glGetHistogram");
@@ -658,6 +669,17 @@ _mesa_GetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum type, G
 
    if (!_mesa_is_legal_format_and_type(format, type)) {
       gl_error(ctx, GL_INVALID_OPERATION, "glGetHistogram(format or type)");
+      return;
+   }
+
+   if (type != GL_UNSIGNED_BYTE &&
+       type != GL_BYTE &&
+       type != GL_UNSIGNED_SHORT &&
+       type != GL_SHORT &&
+       type != GL_UNSIGNED_INT &&
+       type != GL_INT &&
+       type != GL_FLOAT) {
+      gl_error(ctx, GL_INVALID_ENUM, "glGetHistogram(type)");
       return;
    }
 
@@ -684,7 +706,7 @@ void
 _mesa_GetHistogramParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetHistogramParameterfv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.EXT_histogram) {
       gl_error(ctx, GL_INVALID_OPERATION, "glGetHistogramParameterfv");
@@ -731,7 +753,7 @@ void
 _mesa_GetHistogramParameteriv(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetHistogramParameteriv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.EXT_histogram) {
       gl_error(ctx, GL_INVALID_OPERATION, "glGetHistogramParameteriv");
@@ -778,7 +800,7 @@ void
 _mesa_GetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetMinmaxParameterfv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.EXT_histogram) {
       gl_error(ctx, GL_INVALID_OPERATION, "glGetMinmaxParameterfv");
@@ -804,7 +826,7 @@ void
 _mesa_GetMinmaxParameteriv(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetMinmaxParameteriv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.EXT_histogram) {
       gl_error(ctx, GL_INVALID_OPERATION, "glGetMinmaxParameteriv");
@@ -832,7 +854,7 @@ _mesa_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean s
    GLuint i;
    GLboolean error = GL_FALSE;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glHistogram");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* sideeffects */
 
    if (!ctx->Extensions.EXT_histogram) {
       gl_error(ctx, GL_INVALID_OPERATION, "glHistogram");
@@ -913,7 +935,7 @@ void
 _mesa_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glMinmax");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!ctx->Extensions.EXT_histogram) {
       gl_error(ctx, GL_INVALID_OPERATION, "glMinmax");
@@ -929,9 +951,11 @@ _mesa_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
       gl_error(ctx, GL_INVALID_ENUM, "glMinMax(internalFormat)");
       return;
    }
-
+   
+   if (ctx->MinMax.Sink == sink)
+      return;
+   FLUSH_VERTICES(ctx, _NEW_PIXEL);
    ctx->MinMax.Sink = sink;
-   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -940,7 +964,7 @@ _mesa_ResetHistogram(GLenum target)
 {
    GLuint i;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glResetHistogram");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* sideeffects */
 
    if (!ctx->Extensions.EXT_histogram) {
       gl_error(ctx, GL_INVALID_OPERATION, "glResetHistogram");
@@ -967,7 +991,7 @@ void
 _mesa_ResetMinmax(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glResetMinmax");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (!ctx->Extensions.EXT_histogram) {
       gl_error(ctx, GL_INVALID_OPERATION, "glResetMinmax");

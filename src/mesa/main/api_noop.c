@@ -1,5 +1,6 @@
 #include "glheader.h"
 #include "api_noop.h"
+#include "api_validate.h"
 #include "context.h"
 #include "colormac.h"
 #include "light.h"
@@ -468,7 +469,7 @@ void _mesa_noop_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
 {
    {
       GET_CURRENT_CONTEXT(ctx);
-      ASSERT_OUTSIDE_BEGIN_END(ctx, "_mesa_noop_Rectf"); 
+      ASSERT_OUTSIDE_BEGIN_END(ctx); 
    }
    
    glBegin( GL_QUADS );
@@ -480,32 +481,22 @@ void _mesa_noop_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
 }
 
 
-#if 0
-
 /* Some very basic support for arrays.  Drivers without explicit array
- * support can hook these in, but it may be more efficient to fall
- * back to swtnl.  Particularly if the driver is implementing a
- * software fastpath rather than driving a hardware t&l unit.  
+ * support can hook these in, but still need to supply an array-elt
+ * implementation.
  */
-
-/* A codegen implementation of this which hardwires the multiplies and
- * inlines the called functions would fly:
- */
-void _mesa_noop_ArrayElement( GLint elt )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   int i;
-   for (i = 0 ; i < ctx->Array._nr_enabled ; i++) {
-      struct gl_client_array *a = ctx->Array._enabled[i];
-      a->_EltFunc( a->Data + elt * a->StrideB );
-   }
-}
-
 void _mesa_noop_DrawArrays(GLenum mode, GLint start, GLsizei count)
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLint i;
+
+   if (!_mesa_validate_DrawArrays( ctx, mode, start, count ))
+      return;
+
+   glBegin(mode);
    for (i = start ; i <= count ; i++)
       glArrayElement( i );
+   glEnd();
 }
 
 
@@ -515,12 +506,10 @@ void _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type,
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
 
-   if (count <= 0) {
-      if (count < 0) {
-	 gl_error( ctx, GL_INVALID_VALUE, "glDrawElements(count)" );
-      }
+   if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices ))
       return;
-   }
+
+   glBegin(mode);
 
    switch (type) {
    case GL_UNSIGNED_BYTE:
@@ -539,13 +528,20 @@ void _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type,
       gl_error( ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
       break;
    }
+
+   glEnd();
 }
 
-void _mesa_noop_DrawRangeElements(GLenum mode, GLuint start,
-				  GLuint end, GLsizei count,
-				  GLenum type, const GLvoid *indices)
+void _mesa_noop_DrawRangeElements(GLenum mode, 
+				  GLuint start, GLuint end, 
+				  GLsizei count, GLenum type, 
+				  const GLvoid *indices)
 {
-   glDrawElements( mode, count, type, indices );
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (_mesa_validate_DrawRangeElements( ctx, mode,
+					 start, end, 
+					 count, type, indices ))
+      glDrawElements( mode, count, type, indices );
 }
 
-#endif

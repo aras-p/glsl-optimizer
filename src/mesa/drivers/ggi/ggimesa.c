@@ -580,7 +580,7 @@ void GGIMesaSwapBuffers(void)
 	}
 }
 
-static void gl_ggiUpdateState(GLcontext *ctx)
+static void gl_ggiUpdateState(GLcontext *ctx, GLuint new_state)
 {
 	void *func;
 
@@ -589,9 +589,9 @@ static void gl_ggiUpdateState(GLcontext *ctx)
 	/* Propogate statechange information to swrast and swrast_setup
 	 * modules.  The GGI driver has no internal GL-dependent state.
 	 */
-	_swrast_InvalidateState(ctx, ctx->NewState);
-	_swsetup_InvalidateState(ctx, ctx->NewState);
-	_tnl_InvalidateState(ctx, ctx->NewState);
+	_swrast_InvalidateState(ctx, new_state);
+	_swsetup_InvalidateState(ctx, new_state);
+	_tnl_InvalidateState(ctx, new_state);
 	
 	func = (void *)CTX_OPMESA(ctx)->update_state;
 

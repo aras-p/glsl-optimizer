@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.54 2000/11/24 15:21:59 keithw Exp $ */
+/* $Id: dlist.c,v 1.55 2000/12/26 05:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,6 +42,7 @@
 #include "convolve.h"
 #include "copypix.h"
 #include "depth.h"
+#include "dlist.h"
 #include "enable.h"
 #include "enums.h"
 #include "eval.h"
@@ -82,7 +83,7 @@ Functions which aren't compiled but executed immediately:
 	glIsList
 	glGenLists
 	glDeleteLists
-	glEndList
+	glEndList  --- BUT:  call ctx->Driver.EndList at end of list execution?
 	glFeedbackBuffer
 	glSelectBuffer
 	glRenderMode
@@ -725,7 +726,7 @@ static void save_Accum( GLenum op, GLfloat value )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   FLUSH_VERTICES(ctx, 0);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_ACCUM, 2 );
    if (n) {
       n[1].e = op;
@@ -741,7 +742,7 @@ static void save_AlphaFunc( GLenum func, GLclampf ref )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_ALPHA_FUNC, 2 );
    if (n) {
       n[1].e = func;
@@ -757,7 +758,7 @@ static void save_BindTexture( GLenum target, GLuint texture )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_BIND_TEXTURE, 2 );
    if (n) {
       n[1].e = target;
@@ -777,7 +778,7 @@ static void save_Bitmap( GLsizei width, GLsizei height,
    GET_CURRENT_CONTEXT(ctx);
    GLvoid *image = _mesa_unpack_bitmap( width, height, pixels, &ctx->Unpack );
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_BITMAP, 7 );
    if (n) {
       n[1].i = (GLint) width;
@@ -802,7 +803,7 @@ static void save_BlendEquation( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_BLEND_EQUATION, 1 );
    if (n) {
       n[1].e = mode;
@@ -817,7 +818,7 @@ static void save_BlendFunc( GLenum sfactor, GLenum dfactor )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_BLEND_FUNC, 2 );
    if (n) {
       n[1].e = sfactor;
@@ -834,7 +835,7 @@ static void save_BlendFuncSeparateEXT(GLenum sfactorRGB, GLenum dfactorRGB,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_BLEND_FUNC_SEPARATE, 4 );
    if (n) {
       n[1].e = sfactorRGB;
@@ -854,7 +855,7 @@ static void save_BlendColor( GLfloat red, GLfloat green,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_BLEND_COLOR, 4 );
    if (n) {
       n[1].f = red;
@@ -872,7 +873,7 @@ static void save_CallList( GLuint list )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CALL_LIST, 1 );
    if (n) {
       n[1].ui = list;
@@ -887,7 +888,7 @@ static void save_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    for (i=0;i<n;i++) {
       GLuint list = translate_id( i, type, lists );
@@ -906,7 +907,7 @@ static void save_Clear( GLbitfield mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CLEAR, 1 );
    if (n) {
       n[1].bf = mask;
@@ -922,7 +923,7 @@ static void save_ClearAccum( GLfloat red, GLfloat green,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CLEAR_ACCUM, 4 );
    if (n) {
       n[1].f = red;
@@ -941,7 +942,7 @@ static void save_ClearColor( GLclampf red, GLclampf green,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CLEAR_COLOR, 4 );
    if (n) {
       n[1].f = red;
@@ -959,7 +960,7 @@ static void save_ClearDepth( GLclampd depth )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CLEAR_DEPTH, 1 );
    if (n) {
       n[1].f = (GLfloat) depth;
@@ -974,7 +975,7 @@ static void save_ClearIndex( GLfloat c )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CLEAR_INDEX, 1 );
    if (n) {
       n[1].f = c;
@@ -989,7 +990,7 @@ static void save_ClearStencil( GLint s )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CLEAR_STENCIL, 1 );
    if (n) {
       n[1].i = s;
@@ -1004,7 +1005,7 @@ static void save_ClipPlane( GLenum plane, const GLdouble *equ )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CLIP_PLANE, 5 );
    if (n) {
       n[1].e = plane;
@@ -1025,7 +1026,7 @@ static void save_ColorMask( GLboolean red, GLboolean green,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_MASK, 4 );
    if (n) {
       n[1].b = red;
@@ -1043,7 +1044,7 @@ static void save_ColorMaterial( GLenum face, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_MATERIAL, 2 );
    if (n) {
       n[1].e = face;
@@ -1071,7 +1072,7 @@ static void save_ColorTable( GLenum target, GLenum internalFormat,
       GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type, table,
                                          &ctx->Unpack);
       Node *n;
-      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+      ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_TABLE, 6 );
       if (n) {
          n[1].e = target;
@@ -1099,8 +1100,7 @@ save_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx, "glColorTableParameterfv");
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_TABLE_PARAMETER_FV, 6 );
    if (n) {
@@ -1128,8 +1128,7 @@ save_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
 
-   ASSERT_OUTSIDE_BEGIN_END(ctx, "glColorTableParameterfv");
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_TABLE_PARAMETER_IV, 6 );
    if (n) {
@@ -1160,7 +1159,7 @@ static void save_ColorSubTable( GLenum target, GLsizei start, GLsizei count,
    GLvoid *image = _mesa_unpack_image(count, 1, 1, format, type, table,
                                       &ctx->Unpack);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COLOR_SUB_TABLE, 6 );
    if (n) {
       n[1].e = target;
@@ -1186,7 +1185,7 @@ save_CopyColorSubTable(GLenum target, GLsizei start,
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
 
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_COLOR_SUB_TABLE, 6 );
    if (n) {
       n[1].e = target;
@@ -1208,7 +1207,7 @@ save_CopyColorTable(GLenum target, GLenum internalformat,
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
 
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_COLOR_TABLE, 6 );
    if (n) {
       n[1].e = target;
@@ -1231,7 +1230,7 @@ save_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width,
    GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type, filter,
                                       &ctx->Unpack);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_FILTER_1D, 6 );
    if (n) {
       n[1].e = target;
@@ -1260,7 +1259,7 @@ save_ConvolutionFilter2D(GLenum target, GLenum internalFormat,
    GLvoid *image = _mesa_unpack_image(width, height, 1, format, type, filter,
                                       &ctx->Unpack);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_FILTER_2D, 7 );
    if (n) {
       n[1].e = target;
@@ -1286,7 +1285,7 @@ save_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_PARAMETER_I, 3 );
    if (n) {
       n[1].e = target;
@@ -1304,7 +1303,7 @@ save_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_PARAMETER_IV, 6 );
    if (n) {
       n[1].e = target;
@@ -1332,7 +1331,7 @@ save_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_PARAMETER_F, 3 );
    if (n) {
       n[1].e = target;
@@ -1350,7 +1349,7 @@ save_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CONVOLUTION_PARAMETER_IV, 6 );
    if (n) {
       n[1].e = target;
@@ -1378,7 +1377,7 @@ static void save_CopyPixels( GLint x, GLint y,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_PIXELS, 5 );
    if (n) {
       n[1].i = x;
@@ -1400,7 +1399,7 @@ save_CopyTexImage1D( GLenum target, GLint level, GLenum internalformat,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_TEX_IMAGE1D, 7 );
    if (n) {
       n[1].e = target;
@@ -1426,7 +1425,7 @@ save_CopyTexImage2D( GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_TEX_IMAGE2D, 8 );
    if (n) {
       n[1].e = target;
@@ -1453,7 +1452,7 @@ save_CopyTexSubImage1D( GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_TEX_SUB_IMAGE1D, 6 );
    if (n) {
       n[1].e = target;
@@ -1477,7 +1476,7 @@ save_CopyTexSubImage2D( GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_TEX_SUB_IMAGE2D, 8 );
    if (n) {
       n[1].e = target;
@@ -1504,7 +1503,7 @@ save_CopyTexSubImage3D( GLenum target, GLint level,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_COPY_TEX_SUB_IMAGE3D, 9 );
    if (n) {
       n[1].e = target;
@@ -1529,7 +1528,7 @@ static void save_CullFace( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CULL_FACE, 1 );
    if (n) {
       n[1].e = mode;
@@ -1544,7 +1543,7 @@ static void save_DepthFunc( GLenum func )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_DEPTH_FUNC, 1 );
    if (n) {
       n[1].e = func;
@@ -1559,7 +1558,7 @@ static void save_DepthMask( GLboolean mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_DEPTH_MASK, 1 );
    if (n) {
       n[1].b = mask;
@@ -1574,7 +1573,7 @@ static void save_DepthRange( GLclampd nearval, GLclampd farval )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_DEPTH_RANGE, 2 );
    if (n) {
       n[1].f = (GLfloat) nearval;
@@ -1590,7 +1589,7 @@ static void save_Disable( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_DISABLE, 1 );
    if (n) {
       n[1].e = cap;
@@ -1605,7 +1604,7 @@ static void save_DrawBuffer( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_DRAW_BUFFER, 1 );
    if (n) {
       n[1].e = mode;
@@ -1624,7 +1623,7 @@ static void save_DrawPixels( GLsizei width, GLsizei height,
    GLvoid *image = _mesa_unpack_image(width, height, 1, format, type,
                                       pixels, &ctx->Unpack);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_DRAW_PIXELS, 5 );
    if (n) {
       n[1].i = width;
@@ -1647,7 +1646,7 @@ static void save_Enable( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_ENABLE, 1 );
    if (n) {
       n[1].e = cap;
@@ -1663,7 +1662,7 @@ void _mesa_save_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_EVALMESH1, 3 );
    if (n) {
       n[1].e = mode;
@@ -1680,7 +1679,7 @@ void _mesa_save_EvalMesh2(GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_EVALMESH2, 5 );
    if (n) {
       n[1].e = mode;
@@ -1701,7 +1700,7 @@ static void save_Fogfv( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_FOG, 5 );
    if (n) {
       n[1].e = pname;
@@ -1757,7 +1756,7 @@ static void save_FrontFace( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_FRONT_FACE, 1 );
    if (n) {
       n[1].e = mode;
@@ -1774,7 +1773,7 @@ static void save_Frustum( GLdouble left, GLdouble right,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_FRUSTUM, 6 );
    if (n) {
       n[1].f = left;
@@ -1794,7 +1793,7 @@ static void save_Hint( GLenum target, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_HINT, 2 );
    if (n) {
       n[1].e = target;
@@ -1811,7 +1810,7 @@ static void save_HintPGI( GLenum target, GLint mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_HINT_PGI, 2 );
    if (n) {
       n[1].e = target;
@@ -1829,7 +1828,7 @@ save_Histogram(GLenum target, GLsizei width, GLenum internalFormat, GLboolean si
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
 
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_HISTOGRAM, 4 );
    if (n) {
       n[1].e = target;
@@ -1847,7 +1846,7 @@ static void save_IndexMask( GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_INDEX_MASK, 1 );
    if (n) {
       n[1].ui = mask;
@@ -1861,7 +1860,7 @@ static void save_IndexMask( GLuint mask )
 static void save_InitNames( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    (void) ALLOC_INSTRUCTION( ctx, OPCODE_INIT_NAMES, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->InitNames)();
@@ -1873,7 +1872,7 @@ static void save_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_LIGHT, 6 );
    if (OPCODE_LIGHT) {
       GLint i, nParams;
@@ -1977,7 +1976,7 @@ static void save_LightModelfv( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_LIGHT_MODEL, 5 );
    if (n) {
       n[1].e = pname;
@@ -2031,7 +2030,7 @@ static void save_LineStipple( GLint factor, GLushort pattern )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_LINE_STIPPLE, 2 );
    if (n) {
       n[1].i = factor;
@@ -2047,7 +2046,7 @@ static void save_LineWidth( GLfloat width )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_LINE_WIDTH, 1 );
    if (n) {
       n[1].f = width;
@@ -2062,7 +2061,7 @@ static void save_ListBase( GLuint base )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_LIST_BASE, 1 );
    if (n) {
       n[1].ui = base;
@@ -2076,7 +2075,7 @@ static void save_ListBase( GLuint base )
 static void save_LoadIdentity( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    (void) ALLOC_INSTRUCTION( ctx, OPCODE_LOAD_IDENTITY, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->LoadIdentity)();
@@ -2088,7 +2087,7 @@ static void save_LoadMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_LOAD_MATRIX, 16 );
    if (n) {
       GLuint i;
@@ -2117,7 +2116,7 @@ static void save_LoadName( GLuint name )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_LOAD_NAME, 1 );
    if (n) {
       n[1].ui = name;
@@ -2132,7 +2131,7 @@ static void save_LogicOp( GLenum opcode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_LOGIC_OP, 1 );
    if (n) {
       n[1].e = opcode;
@@ -2148,7 +2147,7 @@ static void save_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_MAP1, 6 );
    if (n) {
       GLfloat *pnts = gl_copy_map_points1d( target, stride, order, points );
@@ -2169,7 +2168,7 @@ static void save_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_MAP1, 6 );
    if (n) {
       GLfloat *pnts = gl_copy_map_points1f( target, stride, order, points );
@@ -2193,7 +2192,7 @@ static void save_Map2d( GLenum target,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_MAP2, 10 );
    if (n) {
       GLfloat *pnts = gl_copy_map_points2d( target, ustride, uorder,
@@ -2225,7 +2224,7 @@ static void save_Map2f( GLenum target,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_MAP2, 10 );
    if (n) {
       GLfloat *pnts = gl_copy_map_points2f( target, ustride, uorder,
@@ -2253,7 +2252,7 @@ static void save_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_MAPGRID1, 3 );
    if (n) {
       n[1].i = un;
@@ -2277,7 +2276,7 @@ static void save_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_MAPGRID2, 6 );
    if (n) {
       n[1].i = un;
@@ -2305,7 +2304,7 @@ static void save_MatrixMode( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_MATRIX_MODE, 1 );
    if (n) {
       n[1].e = mode;
@@ -2322,7 +2321,7 @@ save_Minmax(GLenum target, GLenum internalFormat, GLboolean sink)
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
 
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_MIN_MAX, 3 );
    if (n) {
       n[1].e = target;
@@ -2339,7 +2338,7 @@ static void save_MultMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_MULT_MATRIX, 16 );
    if (n) {
       GLuint i;
@@ -2381,7 +2380,7 @@ static void save_Ortho( GLdouble left, GLdouble right,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_ORTHO, 6 );
    if (n) {
       n[1].f = left;
@@ -2401,7 +2400,7 @@ static void save_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_PIXEL_MAP, 3 );
    if (n) {
       n[1].e = map;
@@ -2455,7 +2454,7 @@ static void save_PixelTransferf( GLenum pname, GLfloat param )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_PIXEL_TRANSFER, 2 );
    if (n) {
       n[1].e = pname;
@@ -2477,7 +2476,7 @@ static void save_PixelZoom( GLfloat xfactor, GLfloat yfactor )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_PIXEL_ZOOM, 2 );
    if (n) {
       n[1].f = xfactor;
@@ -2493,7 +2492,7 @@ static void save_PointParameterfvEXT( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_POINT_PARAMETERS, 4 );
    if (n) {
       n[1].e = pname;
@@ -2517,7 +2516,7 @@ static void save_PointSize( GLfloat size )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_POINT_SIZE, 1 );
    if (n) {
       n[1].f = size;
@@ -2532,7 +2531,7 @@ static void save_PolygonMode( GLenum face, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_POLYGON_MODE, 2 );
    if (n) {
       n[1].e = face;
@@ -2551,7 +2550,7 @@ static void save_PolygonStipple( const GLubyte *pattern )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_POLYGON_STIPPLE, 1 );
    if (n) {
       void *data;
@@ -2569,7 +2568,7 @@ static void save_PolygonOffset( GLfloat factor, GLfloat units )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_POLYGON_OFFSET, 2 );
    if (n) {
       n[1].f = factor;
@@ -2591,7 +2590,7 @@ static void save_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
 static void save_PopAttrib( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    (void) ALLOC_INSTRUCTION( ctx, OPCODE_POP_ATTRIB, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->PopAttrib)();
@@ -2602,7 +2601,7 @@ static void save_PopAttrib( void )
 static void save_PopMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    (void) ALLOC_INSTRUCTION( ctx, OPCODE_POP_MATRIX, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->PopMatrix)();
@@ -2613,7 +2612,7 @@ static void save_PopMatrix( void )
 static void save_PopName( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    (void) ALLOC_INSTRUCTION( ctx, OPCODE_POP_NAME, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->PopName)();
@@ -2626,7 +2625,7 @@ static void save_PrioritizeTextures( GLsizei num, const GLuint *textures,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    for (i=0;i<num;i++) {
       Node *n;
@@ -2646,7 +2645,7 @@ static void save_PushAttrib( GLbitfield mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_PUSH_ATTRIB, 1 );
    if (n) {
       n[1].bf = mask;
@@ -2660,7 +2659,7 @@ static void save_PushAttrib( GLbitfield mask )
 static void save_PushMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    (void) ALLOC_INSTRUCTION( ctx, OPCODE_PUSH_MATRIX, 0 );
    if (ctx->ExecuteFlag) {
       (*ctx->Exec->PushMatrix)();
@@ -2672,7 +2671,7 @@ static void save_PushName( GLuint name )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_PUSH_NAME, 1 );
    if (n) {
       n[1].ui = name;
@@ -2687,7 +2686,7 @@ static void save_RasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_RASTER_POS, 4 );
    if (n) {
       n[1].f = x;
@@ -2820,7 +2819,7 @@ static void save_PassThrough( GLfloat token )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_PASSTHROUGH, 1 );
    if (n) {
       n[1].f = token;
@@ -2835,7 +2834,7 @@ static void save_ReadBuffer( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_READ_BUFFER, 1 );
    if (n) {
       n[1].e = mode;
@@ -2851,7 +2850,7 @@ save_ResetHistogram(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_RESET_HISTOGRAM, 1 );
    if (n) {
       n[1].e = target;
@@ -2867,7 +2866,7 @@ save_ResetMinmax(GLenum target)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_RESET_MIN_MAX, 1 );
    if (n) {
       n[1].e = target;
@@ -2882,7 +2881,7 @@ static void save_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_ROTATE, 4 );
    if (n) {
       n[1].f = angle;
@@ -2906,7 +2905,7 @@ static void save_Scalef( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_SCALE, 3 );
    if (n) {
       n[1].f = x;
@@ -2929,7 +2928,7 @@ static void save_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_SCISSOR, 4 );
    if (n) {
       n[1].i = x;
@@ -2947,7 +2946,7 @@ static void save_ShadeModel( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_SHADE_MODEL, 1 );
    if (n) {
       n[1].e = mode;
@@ -2962,7 +2961,7 @@ static void save_StencilFunc( GLenum func, GLint ref, GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_STENCIL_FUNC, 3 );
    if (n) {
       n[1].e = func;
@@ -2979,7 +2978,7 @@ static void save_StencilMask( GLuint mask )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_STENCIL_MASK, 1 );
    if (n) {
       n[1].ui = mask;
@@ -2994,7 +2993,7 @@ static void save_StencilOp( GLenum fail, GLenum zfail, GLenum zpass )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_STENCIL_OP, 3 );
    if (n) {
       n[1].e = fail;
@@ -3011,7 +3010,7 @@ static void save_TexEnvfv( GLenum target, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_TEXENV, 6 );
    if (n) {
       n[1].e = target;
@@ -3057,7 +3056,7 @@ static void save_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_TEXGEN, 6 );
    if (n) {
       n[1].e = coord;
@@ -3119,7 +3118,7 @@ static void save_TexParameterfv( GLenum target,
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_TEXPARAMETER, 6 );
    if (n) {
       n[1].e = target;
@@ -3175,7 +3174,7 @@ static void save_TexImage1D( GLenum target,
       GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type,
                                          pixels, &ctx->Unpack);
       Node *n;
-      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+      ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_IMAGE1D, 8 );
       if (n) {
          n[1].e = target;
@@ -3214,7 +3213,7 @@ static void save_TexImage2D( GLenum target,
       GLvoid *image = _mesa_unpack_image(width, height, 1, format, type,
                                          pixels, &ctx->Unpack);
       Node *n;
-      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+      ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_IMAGE2D, 9 );
       if (n) {
          n[1].e = target;
@@ -3255,7 +3254,7 @@ static void save_TexImage3D( GLenum target,
       Node *n;
       GLvoid *image = _mesa_unpack_image(width, height, depth, format, type,
                                          pixels, &ctx->Unpack);
-      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+      ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_IMAGE3D, 10 );
       if (n) {
          n[1].e = target;
@@ -3288,7 +3287,7 @@ static void save_TexSubImage1D( GLenum target, GLint level, GLint xoffset,
    Node *n;
    GLvoid *image = _mesa_unpack_image(width, 1, 1, format, type,
                                       pixels, &ctx->Unpack);
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_SUB_IMAGE1D, 7 );
    if (n) {
       n[1].e = target;
@@ -3319,7 +3318,7 @@ static void save_TexSubImage2D( GLenum target, GLint level,
    Node *n;
    GLvoid *image = _mesa_unpack_image(width, height, 1, format, type,
                                       pixels, &ctx->Unpack);
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_SUB_IMAGE2D, 9 );
    if (n) {
       n[1].e = target;
@@ -3352,7 +3351,7 @@ static void save_TexSubImage3D( GLenum target, GLint level,
    Node *n;
    GLvoid *image = _mesa_unpack_image(width, height, depth, format, type,
                                       pixels, &ctx->Unpack);
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_TEX_SUB_IMAGE3D, 11 );
    if (n) {
       n[1].e = target;
@@ -3382,7 +3381,7 @@ static void save_Translatef( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx,  OPCODE_TRANSLATE, 3 );
    if (n) {
       n[1].f = x;
@@ -3406,7 +3405,7 @@ static void save_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx,  OPCODE_VIEWPORT, 4 );
    if (n) {
       n[1].i = x;
@@ -3424,7 +3423,7 @@ static void save_WindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx,  OPCODE_WINDOW_POS, 4 );
    if (n) {
       n[1].f = x;
@@ -3559,7 +3558,7 @@ static void save_ActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_ACTIVE_TEXTURE, 1 );
    if (n) {
       n[1].e = target;
@@ -3575,7 +3574,7 @@ static void save_ClientActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_CLIENT_ACTIVE_TEXTURE, 1 );
    if (n) {
       n[1].e = target;
@@ -3625,7 +3624,7 @@ static void save_PixelTexGenSGIX(GLenum mode)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_PIXEL_TEXGEN_SGIX, 1 );
    if (n) {
       n[1].e = mode;
@@ -3652,7 +3651,7 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
    else {
       Node *n;
       GLvoid *image;
-      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+      ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       /* make copy of image */
       image = MALLOC(imageSize);
       if (!image) {
@@ -3696,7 +3695,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
    else {
       Node *n;
       GLvoid *image;
-      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+      ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       /* make copy of image */
       image = MALLOC(imageSize);
       if (!image) {
@@ -3741,7 +3740,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
    else {
       Node *n;
       GLvoid *image;
-      FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+      ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
       /* make copy of image */
       image = MALLOC(imageSize);
       if (!image) {
@@ -3781,7 +3780,7 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
    GLvoid *image;
 
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    /* make copy of image */
    image = MALLOC(imageSize);
@@ -3820,7 +3819,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
    GLvoid *image;
 
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    /* make copy of image */
    image = MALLOC(imageSize);
@@ -3861,7 +3860,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
    GLvoid *image;
 
    GET_CURRENT_CONTEXT(ctx);
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
    /* make copy of image */
    image = MALLOC(imageSize);
@@ -3900,7 +3899,7 @@ static void save_PixelTexGenParameteriSGIS(GLenum target, GLint value)
 {
    GET_CURRENT_CONTEXT(ctx);
    Node *n;
-   FLUSH_TNL( ctx, FLUSH_STORED_VERTICES );
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
    n = ALLOC_INSTRUCTION( ctx, OPCODE_PIXEL_TEXGEN_PARAMETER_SGIS, 2 );
    if (n) {
       n[1].e = target;
@@ -3978,6 +3977,9 @@ static void execute_list( GLcontext *ctx, GLuint list )
 
    if (!islist(ctx,list))
       return;
+
+   if (ctx->Driver.BeginCallList)
+      ctx->Driver.BeginCallList( ctx, list );
 
 /*     mesa_print_display_list( list );  */
 
@@ -4630,6 +4632,9 @@ static void execute_list( GLcontext *ctx, GLuint list )
       }
    }
    ctx->CallDepth--;
+
+   if (ctx->Driver.EndCallList)
+      ctx->Driver.EndCallList( ctx );
 }
 
 
@@ -4650,6 +4655,8 @@ GLboolean
 _mesa_IsList( GLuint list )
 {
    GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);	/* must be called before assert */
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
    return islist(ctx, list);
 }
 
@@ -4662,8 +4669,9 @@ _mesa_DeleteLists( GLuint list, GLsizei range )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
+   FLUSH_VERTICES(ctx, 0);	/* must be called before assert */
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glDeleteLists");
    if (range<0) {
       gl_error( ctx, GL_INVALID_VALUE, "glDeleteLists" );
       return;
@@ -4684,8 +4692,9 @@ _mesa_GenLists(GLsizei range )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint base;
+   FLUSH_VERTICES(ctx, 0);	/* must be called before assert */
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glGenLists", 0);
    if (range<0) {
       gl_error( ctx, GL_INVALID_VALUE, "glGenLists" );
       return 0;
@@ -4722,8 +4731,8 @@ void
 _mesa_NewList( GLuint list, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glNewList");
-   FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+   FLUSH_CURRENT(ctx, 0);	/* must be called before assert */
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glNewList %u %s\n", list, gl_lookup_enum_by_nr(mode));
@@ -4769,12 +4778,12 @@ void
 _mesa_EndList( void )
 {
    GET_CURRENT_CONTEXT(ctx);
+   FLUSH_CURRENT(ctx, 0);	/* must be called before assert */
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glEndList\n");
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx, "glEndList" );
-   FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
-
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH( ctx ); /* ??? */
 
    /* Check that a list is under construction */
    if (!ctx->CurrentListPtr) {
@@ -4800,10 +4809,6 @@ _mesa_EndList( void )
 
    ctx->Driver.EndList( ctx );
 
-   /* Haven't tracked down why this is needed.
-    */
-   ctx->NewState = ~0;
-
    ctx->CurrentDispatch = ctx->Exec;
    _glapi_set_dispatch( ctx->CurrentDispatch );
 }
@@ -4824,9 +4829,10 @@ _mesa_CallList( GLuint list )
    }
 
    save_compile_flag = ctx->CompileFlag;
-   ctx->CompileFlag = GL_FALSE;
+   if (save_compile_flag) {
+      ctx->CompileFlag = GL_FALSE;
+   }
 
-   FLUSH_TNL( ctx, (FLUSH_STORED_VERTICES | FLUSH_UPDATE_CURRENT) );
    execute_list( ctx, list );
    ctx->CompileFlag = save_compile_flag;
 
@@ -4856,8 +4862,6 @@ _mesa_CallLists( GLsizei n, GLenum type, const GLvoid *lists )
    save_compile_flag = ctx->CompileFlag;
    ctx->CompileFlag = GL_FALSE;
 
-   FLUSH_TNL( ctx, (FLUSH_STORED_VERTICES | FLUSH_UPDATE_CURRENT) );
-
    for (i=0;i<n;i++) {
       list = translate_id( i, type, lists );
       execute_list( ctx, ctx->List.ListBase + list );
@@ -4881,11 +4885,634 @@ void
 _mesa_ListBase( GLuint base )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glListBase");
+   FLUSH_VERTICES(ctx, 0);	/* must be called before assert */
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
    ctx->List.ListBase = base;
 }
 
 
+/* Can no longer assume ctx->Exec->Func is equal to _mesa_Func.
+ */
+static void exec_Finish( void )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->Finish();
+}
+
+static void exec_Flush( void )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->Flush( );
+}
+
+static void exec_GetBooleanv( GLenum pname, GLboolean *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetBooleanv( pname, params );
+}
+
+static void exec_GetClipPlane( GLenum plane, GLdouble *equation )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetClipPlane( plane, equation );
+}
+
+static void exec_GetDoublev( GLenum pname, GLdouble *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetDoublev(  pname, params );
+}
+
+static GLenum exec_GetError( void )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   return ctx->Exec->GetError( );
+}
+
+static void exec_GetFloatv( GLenum pname, GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetFloatv( pname, params );
+}
+
+static void exec_GetIntegerv( GLenum pname, GLint *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetIntegerv( pname, params );
+}
+
+static void exec_GetLightfv( GLenum light, GLenum pname, GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetLightfv( light, pname, params );
+}
+
+static void exec_GetLightiv( GLenum light, GLenum pname, GLint *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetLightiv( light, pname, params );
+}
+
+static void exec_GetMapdv( GLenum target, GLenum query, GLdouble *v )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetMapdv( target, query, v );
+}
+
+static void exec_GetMapfv( GLenum target, GLenum query, GLfloat *v )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetMapfv( target, query, v );
+}
+
+static void exec_GetMapiv( GLenum target, GLenum query, GLint *v )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetMapiv( target, query, v );
+}
+
+static void exec_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetMaterialfv( face, pname, params );
+}
+
+static void exec_GetMaterialiv( GLenum face, GLenum pname, GLint *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetMaterialiv( face, pname, params );
+}
+
+static void exec_GetPixelMapfv( GLenum map, GLfloat *values )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetPixelMapfv( map,  values );
+}
+
+static void exec_GetPixelMapuiv( GLenum map, GLuint *values )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetPixelMapuiv( map, values );
+}
+
+static void exec_GetPixelMapusv( GLenum map, GLushort *values )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetPixelMapusv( map, values );
+}
+
+static void exec_GetPolygonStipple( GLubyte *dest )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetPolygonStipple( dest );
+}
+
+static const GLubyte *exec_GetString( GLenum name )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   return ctx->Exec->GetString( name );
+}
+
+static void exec_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetTexEnvfv( target, pname, params );
+}
+
+static void exec_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetTexEnviv( target, pname, params );
+}
+
+static void exec_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetTexGendv( coord, pname, params );
+}
+
+static void exec_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetTexGenfv( coord, pname, params );
+}
+
+static void exec_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetTexGeniv( coord, pname, params );
+}
+
+static void exec_GetTexImage( GLenum target, GLint level, GLenum format,
+                   GLenum type, GLvoid *pixels )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetTexImage( target, level, format, type, pixels );
+}
+
+static void exec_GetTexLevelParameterfv( GLenum target, GLint level,
+                              GLenum pname, GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetTexLevelParameterfv( target, level, pname, params );
+}
+
+static void exec_GetTexLevelParameteriv( GLenum target, GLint level,
+                              GLenum pname, GLint *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetTexLevelParameteriv( target, level, pname, params );
+}
+
+static void exec_GetTexParameterfv( GLenum target, GLenum pname, 
+				    GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetTexParameterfv( target, pname, params );
+}
+
+static void exec_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetTexParameteriv( target, pname, params );
+}
+
+static GLboolean exec_IsEnabled( GLenum cap )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   return ctx->Exec->IsEnabled( cap );
+}
+
+static void exec_PixelStoref( GLenum pname, GLfloat param )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->PixelStoref( pname, param );
+}
+
+static void exec_PixelStorei( GLenum pname, GLint param )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->PixelStorei( pname, param );
+}
+
+static void exec_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
+		  GLenum format, GLenum type, GLvoid *pixels )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->ReadPixels( x, y, width, height, format, type, pixels );
+}
+
+static GLint exec_RenderMode( GLenum mode )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   return ctx->Exec->RenderMode( mode );
+}
+
+static void exec_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->FeedbackBuffer( size, type, buffer );
+}
+
+static void exec_SelectBuffer( GLsizei size, GLuint *buffer )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->SelectBuffer( size, buffer );
+}
+
+static GLboolean exec_AreTexturesResident(GLsizei n, const GLuint *texName,
+					  GLboolean *residences)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   return ctx->Exec->AreTexturesResident( n, texName, residences);
+}
+
+static void exec_ColorPointer(GLint size, GLenum type, GLsizei stride, 
+			      const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->ColorPointer( size, type, stride, ptr);
+}
+
+static void exec_DeleteTextures( GLsizei n, const GLuint *texName)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->DeleteTextures( n, texName);
+}
+
+static void exec_DisableClientState( GLenum cap )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->DisableClientState( cap );
+}
+
+static void exec_EdgeFlagPointer(GLsizei stride, const void *vptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->EdgeFlagPointer( stride, vptr);
+}
+
+static void exec_EnableClientState( GLenum cap )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->EnableClientState( cap );
+}
+
+static void exec_GenTextures( GLsizei n, GLuint *texName )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GenTextures( n, texName );
+}
+
+static void exec_GetPointerv( GLenum pname, GLvoid **params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetPointerv( pname, params );
+}
+
+static void exec_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->IndexPointer( type, stride, ptr);
+}
+
+static void exec_InterleavedArrays(GLenum format, GLsizei stride, 
+				   const GLvoid *pointer)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->InterleavedArrays( format, stride, pointer);
+}
+
+static GLboolean exec_IsTexture( GLuint texture )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   return ctx->Exec->IsTexture( texture );
+}
+
+static void exec_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->NormalPointer( type, stride, ptr );
+}
+
+static void exec_PopClientAttrib(void)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->PopClientAttrib();
+}
+
+static void exec_PushClientAttrib(GLbitfield mask)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->PushClientAttrib( mask);
+}
+
+static void exec_TexCoordPointer(GLint size, GLenum type, GLsizei stride, 
+				 const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->TexCoordPointer( size,  type,  stride, ptr);
+}
+
+static void exec_GetCompressedTexImageARB(GLenum target, GLint level, 
+					  GLvoid *img)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetCompressedTexImageARB( target, level, img);
+}
+
+static void exec_VertexPointer(GLint size, GLenum type, GLsizei stride, 
+			       const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->VertexPointer( size, type, stride, ptr);
+}
+
+static void exec_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, 
+					 GLint x, GLint y, GLsizei width)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->CopyConvolutionFilter1D( target, internalFormat, x, y, width);
+}
+
+static void exec_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat,
+					 GLint x, GLint y, GLsizei width,
+					 GLsizei height)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->CopyConvolutionFilter2D( target, internalFormat, x, y, width,
+				       height);
+}
+
+static void exec_GetColorTable( GLenum target, GLenum format,
+				GLenum type, GLvoid *data )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetColorTable( target, format, type, data );
+}
+
+static void exec_GetColorTableParameterfv( GLenum target, GLenum pname, 
+					   GLfloat *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetColorTableParameterfv( target, pname, params );
+}
+
+static void exec_GetColorTableParameteriv( GLenum target, GLenum pname, 
+					   GLint *params )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetColorTableParameteriv( target, pname, params );
+}
+
+static void exec_GetConvolutionFilter(GLenum target, GLenum format, GLenum type,
+				      GLvoid *image)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetConvolutionFilter( target, format, type, image);
+}
+
+static void exec_GetConvolutionParameterfv(GLenum target, GLenum pname, 
+					   GLfloat *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetConvolutionParameterfv( target, pname, params);
+}
+
+static void exec_GetConvolutionParameteriv(GLenum target, GLenum pname,
+					   GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetConvolutionParameteriv( target, pname, params);
+}
+
+static void exec_GetHistogram(GLenum target, GLboolean reset, GLenum format, 
+			      GLenum type, GLvoid *values)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetHistogram( target, reset, format, type, values);
+}
+
+static void exec_GetHistogramParameterfv(GLenum target, GLenum pname, 
+					 GLfloat *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetHistogramParameterfv( target, pname, params);
+}
+
+static void exec_GetHistogramParameteriv(GLenum target, GLenum pname, 
+					 GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetHistogramParameteriv( target, pname, params);
+}
+
+static void exec_GetMinmax(GLenum target, GLboolean reset, GLenum format, 
+			   GLenum type, GLvoid *values)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetMinmax( target, reset, format, type, values);
+}
+
+static void exec_GetMinmaxParameterfv(GLenum target, GLenum pname,
+				      GLfloat *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetMinmaxParameterfv( target, pname, params);
+}
+
+static void exec_GetMinmaxParameteriv(GLenum target, GLenum pname,
+				      GLint *params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetMinmaxParameteriv( target, pname, params);
+}
+
+static void exec_GetSeparableFilter(GLenum target, GLenum format, GLenum type, 
+				    GLvoid *row, GLvoid *column, GLvoid *span)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetSeparableFilter( target, format, type, row, column, span);
+}
+
+static void exec_SeparableFilter2D(GLenum target, GLenum internalFormat,
+				   GLsizei width, GLsizei height, GLenum format,
+				   GLenum type, const GLvoid *row,
+				   const GLvoid *column)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->SeparableFilter2D( target, internalFormat, width, height, format,
+				 type, row, column);
+}
+
+static void exec_GetPixelTexGenParameterivSGIS(GLenum target, GLint *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetPixelTexGenParameterivSGIS( target, value);
+}
+
+static void exec_GetPixelTexGenParameterfvSGIS(GLenum target, GLfloat *value)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->GetPixelTexGenParameterfvSGIS( target, value);
+}
+
+static void exec_ColorPointerEXT(GLint size, GLenum type, GLsizei stride,
+				 GLsizei count, const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->ColorPointerEXT( size, type, stride, count, ptr);
+}
+
+static void exec_EdgeFlagPointerEXT(GLsizei stride, GLsizei count,
+				    const GLboolean *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->EdgeFlagPointerEXT( stride, count, ptr);
+}
+
+static void exec_IndexPointerEXT(GLenum type, GLsizei stride, GLsizei count,
+                      const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->IndexPointerEXT( type, stride, count, ptr);
+}
+
+static void exec_NormalPointerEXT(GLenum type, GLsizei stride, GLsizei count,
+                       const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->NormalPointerEXT( type, stride, count, ptr);
+}
+
+static void exec_TexCoordPointerEXT(GLint size, GLenum type, GLsizei stride,
+				    GLsizei count, const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->TexCoordPointerEXT( size, type, stride, count, ptr);
+}
+
+static void exec_VertexPointerEXT(GLint size, GLenum type, GLsizei stride,
+                       GLsizei count, const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->VertexPointerEXT( size, type, stride, count, ptr);
+}
+
+static void exec_LockArraysEXT(GLint first, GLsizei count)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->LockArraysEXT( first, count);
+}
+
+static void exec_UnlockArraysEXT( void )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->UnlockArraysEXT( );
+}
+
+static void exec_ResizeBuffersMESA( void )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->ResizeBuffersMESA( );
+}
+
+static void exec_SecondaryColorPointerEXT(GLint size, GLenum type,
+			       GLsizei stride, const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->SecondaryColorPointerEXT( size, type, stride, ptr);
+}
+
+static void exec_FogCoordPointerEXT(GLenum type, GLsizei stride, 
+				    const GLvoid *ptr)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   ctx->Exec->FogCoordPointerEXT( type, stride, ptr);
+}
 
 
 /*
@@ -4932,8 +5559,8 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->EndList = _mesa_EndList;
    table->EvalMesh1 = _mesa_save_EvalMesh1;
    table->EvalMesh2 = _mesa_save_EvalMesh2;
-   table->Finish = _mesa_Finish;
-   table->Flush = _mesa_Flush;
+   table->Finish = exec_Finish;
+   table->Flush = exec_Flush;
    table->Fogf = save_Fogf;
    table->Fogfv = save_Fogfv;
    table->Fogi = save_Fogi;
@@ -4941,38 +5568,38 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->FrontFace = save_FrontFace;
    table->Frustum = save_Frustum;
    table->GenLists = _mesa_GenLists;
-   table->GetBooleanv = _mesa_GetBooleanv;
-   table->GetClipPlane = _mesa_GetClipPlane;
-   table->GetDoublev = _mesa_GetDoublev;
-   table->GetError = _mesa_GetError;
-   table->GetFloatv = _mesa_GetFloatv;
-   table->GetIntegerv = _mesa_GetIntegerv;
-   table->GetLightfv = _mesa_GetLightfv;
-   table->GetLightiv = _mesa_GetLightiv;
-   table->GetMapdv = _mesa_GetMapdv;
-   table->GetMapfv = _mesa_GetMapfv;
-   table->GetMapiv = _mesa_GetMapiv;
-   table->GetMaterialfv = _mesa_GetMaterialfv;
-   table->GetMaterialiv = _mesa_GetMaterialiv;
-   table->GetPixelMapfv = _mesa_GetPixelMapfv;
-   table->GetPixelMapuiv = _mesa_GetPixelMapuiv;
-   table->GetPixelMapusv = _mesa_GetPixelMapusv;
-   table->GetPolygonStipple = _mesa_GetPolygonStipple;
-   table->GetString = _mesa_GetString;
-   table->GetTexEnvfv = _mesa_GetTexEnvfv;
-   table->GetTexEnviv = _mesa_GetTexEnviv;
-   table->GetTexGendv = _mesa_GetTexGendv;
-   table->GetTexGenfv = _mesa_GetTexGenfv;
-   table->GetTexGeniv = _mesa_GetTexGeniv;
-   table->GetTexImage = _mesa_GetTexImage;
-   table->GetTexLevelParameterfv = _mesa_GetTexLevelParameterfv;
-   table->GetTexLevelParameteriv = _mesa_GetTexLevelParameteriv;
-   table->GetTexParameterfv = _mesa_GetTexParameterfv;
-   table->GetTexParameteriv = _mesa_GetTexParameteriv;
+   table->GetBooleanv = exec_GetBooleanv;
+   table->GetClipPlane = exec_GetClipPlane;
+   table->GetDoublev = exec_GetDoublev;
+   table->GetError = exec_GetError;
+   table->GetFloatv = exec_GetFloatv;
+   table->GetIntegerv = exec_GetIntegerv;
+   table->GetLightfv = exec_GetLightfv;
+   table->GetLightiv = exec_GetLightiv;
+   table->GetMapdv = exec_GetMapdv;
+   table->GetMapfv = exec_GetMapfv;
+   table->GetMapiv = exec_GetMapiv;
+   table->GetMaterialfv = exec_GetMaterialfv;
+   table->GetMaterialiv = exec_GetMaterialiv;
+   table->GetPixelMapfv = exec_GetPixelMapfv;
+   table->GetPixelMapuiv = exec_GetPixelMapuiv;
+   table->GetPixelMapusv = exec_GetPixelMapusv;
+   table->GetPolygonStipple = exec_GetPolygonStipple;
+   table->GetString = exec_GetString;
+   table->GetTexEnvfv = exec_GetTexEnvfv;
+   table->GetTexEnviv = exec_GetTexEnviv;
+   table->GetTexGendv = exec_GetTexGendv;
+   table->GetTexGenfv = exec_GetTexGenfv;
+   table->GetTexGeniv = exec_GetTexGeniv;
+   table->GetTexImage = exec_GetTexImage;
+   table->GetTexLevelParameterfv = exec_GetTexLevelParameterfv;
+   table->GetTexLevelParameteriv = exec_GetTexLevelParameteriv;
+   table->GetTexParameterfv = exec_GetTexParameterfv;
+   table->GetTexParameteriv = exec_GetTexParameteriv;
    table->Hint = save_Hint;
    table->IndexMask = save_IndexMask;
    table->InitNames = save_InitNames;
-   table->IsEnabled = _mesa_IsEnabled;
+   table->IsEnabled = exec_IsEnabled;
    table->IsList = _mesa_IsList;
    table->LightModelf = save_LightModelf;
    table->LightModelfv = save_LightModelfv;
@@ -5007,8 +5634,8 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->PixelMapfv = save_PixelMapfv;
    table->PixelMapuiv = save_PixelMapuiv;
    table->PixelMapusv = save_PixelMapusv;
-   table->PixelStoref = _mesa_PixelStoref;
-   table->PixelStorei = _mesa_PixelStorei;
+   table->PixelStoref = exec_PixelStoref;
+   table->PixelStorei = exec_PixelStorei;
    table->PixelTransferf = save_PixelTransferf;
    table->PixelTransferi = save_PixelTransferi;
    table->PixelZoom = save_PixelZoom;
@@ -5047,15 +5674,15 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->RasterPos4s = save_RasterPos4s;
    table->RasterPos4sv = save_RasterPos4sv;
    table->ReadBuffer = save_ReadBuffer;
-   table->ReadPixels = _mesa_ReadPixels;
-   table->RenderMode = _mesa_RenderMode;
+   table->ReadPixels = exec_ReadPixels;
+   table->RenderMode = exec_RenderMode;
    table->Rotated = save_Rotated;
    table->Rotatef = save_Rotatef;
    table->Scaled = save_Scaled;
    table->Scalef = save_Scalef;
    table->Scissor = save_Scissor;
-   table->FeedbackBuffer = _mesa_FeedbackBuffer;
-   table->SelectBuffer = _mesa_SelectBuffer;
+   table->FeedbackBuffer = exec_FeedbackBuffer;
+   table->SelectBuffer = exec_SelectBuffer;
    table->ShadeModel = save_ShadeModel;
    table->StencilFunc = save_StencilFunc;
    table->StencilMask = save_StencilMask;
@@ -5081,30 +5708,30 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->Viewport = save_Viewport;
 
    /* GL 1.1 */
-   table->AreTexturesResident = _mesa_AreTexturesResident;
+   table->AreTexturesResident = exec_AreTexturesResident;
    table->BindTexture = save_BindTexture;
-   table->ColorPointer = _mesa_ColorPointer;
+   table->ColorPointer = exec_ColorPointer;
    table->CopyTexImage1D = save_CopyTexImage1D;
    table->CopyTexImage2D = save_CopyTexImage2D;
    table->CopyTexSubImage1D = save_CopyTexSubImage1D;
    table->CopyTexSubImage2D = save_CopyTexSubImage2D;
-   table->DeleteTextures = _mesa_DeleteTextures;
-   table->DisableClientState = _mesa_DisableClientState;
-   table->EdgeFlagPointer = _mesa_EdgeFlagPointer;
-   table->EnableClientState = _mesa_EnableClientState;
-   table->GenTextures = _mesa_GenTextures;
-   table->GetPointerv = _mesa_GetPointerv;
-   table->IndexPointer = _mesa_IndexPointer;
-   table->InterleavedArrays = _mesa_InterleavedArrays;
-   table->IsTexture = _mesa_IsTexture;
-   table->NormalPointer = _mesa_NormalPointer;
-   table->PopClientAttrib = _mesa_PopClientAttrib;
+   table->DeleteTextures = exec_DeleteTextures;
+   table->DisableClientState = exec_DisableClientState;
+   table->EdgeFlagPointer = exec_EdgeFlagPointer;
+   table->EnableClientState = exec_EnableClientState;
+   table->GenTextures = exec_GenTextures;
+   table->GetPointerv = exec_GetPointerv;
+   table->IndexPointer = exec_IndexPointer;
+   table->InterleavedArrays = exec_InterleavedArrays;
+   table->IsTexture = exec_IsTexture;
+   table->NormalPointer = exec_NormalPointer;
+   table->PopClientAttrib = exec_PopClientAttrib;
    table->PrioritizeTextures = save_PrioritizeTextures;
-   table->PushClientAttrib = _mesa_PushClientAttrib;
-   table->TexCoordPointer = _mesa_TexCoordPointer;
+   table->PushClientAttrib = exec_PushClientAttrib;
+   table->TexCoordPointer = exec_TexCoordPointer;
    table->TexSubImage1D = save_TexSubImage1D;
    table->TexSubImage2D = save_TexSubImage2D;
-   table->VertexPointer = _mesa_VertexPointer;
+   table->VertexPointer = exec_VertexPointer;
 
    /* GL 1.2 */
    table->CopyTexSubImage3D = save_CopyTexSubImage3D;
@@ -5127,26 +5754,26 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->ConvolutionParameteriv = save_ConvolutionParameteriv;
    table->CopyColorSubTable = save_CopyColorSubTable;
    table->CopyColorTable = save_CopyColorTable;
-   table->CopyConvolutionFilter1D = _mesa_CopyConvolutionFilter1D;
-   table->CopyConvolutionFilter2D = _mesa_CopyConvolutionFilter2D;
-   table->GetColorTable = _mesa_GetColorTable;
-   table->GetColorTableParameterfv = _mesa_GetColorTableParameterfv;
-   table->GetColorTableParameteriv = _mesa_GetColorTableParameteriv;
-   table->GetConvolutionFilter = _mesa_GetConvolutionFilter;
-   table->GetConvolutionParameterfv = _mesa_GetConvolutionParameterfv;
-   table->GetConvolutionParameteriv = _mesa_GetConvolutionParameteriv;
-   table->GetHistogram = _mesa_GetHistogram;
-   table->GetHistogramParameterfv = _mesa_GetHistogramParameterfv;
-   table->GetHistogramParameteriv = _mesa_GetHistogramParameteriv;
-   table->GetMinmax = _mesa_GetMinmax;
-   table->GetMinmaxParameterfv = _mesa_GetMinmaxParameterfv;
-   table->GetMinmaxParameteriv = _mesa_GetMinmaxParameteriv;
-   table->GetSeparableFilter = _mesa_GetSeparableFilter;
+   table->CopyConvolutionFilter1D = exec_CopyConvolutionFilter1D;
+   table->CopyConvolutionFilter2D = exec_CopyConvolutionFilter2D;
+   table->GetColorTable = exec_GetColorTable;
+   table->GetColorTableParameterfv = exec_GetColorTableParameterfv;
+   table->GetColorTableParameteriv = exec_GetColorTableParameteriv;
+   table->GetConvolutionFilter = exec_GetConvolutionFilter;
+   table->GetConvolutionParameterfv = exec_GetConvolutionParameterfv;
+   table->GetConvolutionParameteriv = exec_GetConvolutionParameteriv;
+   table->GetHistogram = exec_GetHistogram;
+   table->GetHistogramParameterfv = exec_GetHistogramParameterfv;
+   table->GetHistogramParameteriv = exec_GetHistogramParameteriv;
+   table->GetMinmax = exec_GetMinmax;
+   table->GetMinmaxParameterfv = exec_GetMinmaxParameterfv;
+   table->GetMinmaxParameteriv = exec_GetMinmaxParameteriv;
+   table->GetSeparableFilter = exec_GetSeparableFilter;
    table->Histogram = save_Histogram;
    table->Minmax = save_Minmax;
    table->ResetHistogram = save_ResetHistogram;
    table->ResetMinmax = save_ResetMinmax;
-   table->SeparableFilter2D = _mesa_SeparableFilter2D;
+   table->SeparableFilter2D = exec_SeparableFilter2D;
 
    /* 2. GL_EXT_blend_color */
 #if 0
@@ -5171,16 +5798,16 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->PixelTexGenParameterfSGIS = save_PixelTexGenParameterfSGIS;
    table->PixelTexGenParameterivSGIS = save_PixelTexGenParameterivSGIS;
    table->PixelTexGenParameterfvSGIS = save_PixelTexGenParameterfvSGIS;
-   table->GetPixelTexGenParameterivSGIS = _mesa_GetPixelTexGenParameterivSGIS;
-   table->GetPixelTexGenParameterfvSGIS = _mesa_GetPixelTexGenParameterfvSGIS;
+   table->GetPixelTexGenParameterivSGIS = exec_GetPixelTexGenParameterivSGIS;
+   table->GetPixelTexGenParameterfvSGIS = exec_GetPixelTexGenParameterfvSGIS;
 
    /* 30. GL_EXT_vertex_array */
-   table->ColorPointerEXT = _mesa_ColorPointerEXT;
-   table->EdgeFlagPointerEXT = _mesa_EdgeFlagPointerEXT;
-   table->IndexPointerEXT = _mesa_IndexPointerEXT;
-   table->NormalPointerEXT = _mesa_NormalPointerEXT;
-   table->TexCoordPointerEXT = _mesa_TexCoordPointerEXT;
-   table->VertexPointerEXT = _mesa_VertexPointerEXT;
+   table->ColorPointerEXT = exec_ColorPointerEXT;
+   table->EdgeFlagPointerEXT = exec_EdgeFlagPointerEXT;
+   table->IndexPointerEXT = exec_IndexPointerEXT;
+   table->NormalPointerEXT = exec_NormalPointerEXT;
+   table->TexCoordPointerEXT = exec_TexCoordPointerEXT;
+   table->VertexPointerEXT = exec_VertexPointerEXT;
 
    /* 37. GL_EXT_blend_minmax */
 #if 0
@@ -5199,13 +5826,13 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->ColorTableEXT = save_ColorTable;
    table->ColorSubTableEXT = save_ColorSubTable;
 #endif
-   table->GetColorTableEXT = _mesa_GetColorTable;
-   table->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfv;
-   table->GetColorTableParameterivEXT = _mesa_GetColorTableParameteriv;
+   table->GetColorTableEXT = exec_GetColorTable;
+   table->GetColorTableParameterfvEXT = exec_GetColorTableParameterfv;
+   table->GetColorTableParameterivEXT = exec_GetColorTableParameteriv;
 
    /* 97. GL_EXT_compiled_vertex_array */
-   table->LockArraysEXT = _mesa_LockArraysEXT;
-   table->UnlockArraysEXT = _mesa_UnlockArraysEXT;
+   table->LockArraysEXT = exec_LockArraysEXT;
+   table->UnlockArraysEXT = exec_UnlockArraysEXT;
 
    /* GL_ARB_multitexture */
    table->ActiveTextureARB = save_ActiveTextureARB;
@@ -5241,7 +5868,7 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->WindowPos4svMESA = save_WindowPos4svMESA;
 
    /* GL_MESA_resize_buffers */
-   table->ResizeBuffersMESA = _mesa_ResizeBuffersMESA;
+   table->ResizeBuffersMESA = exec_ResizeBuffersMESA;
 
    /* GL_ARB_transpose_matrix */
    table->LoadTransposeMatrixdARB = save_LoadTransposeMatrixdARB;
@@ -5256,13 +5883,13 @@ _mesa_init_dlist_table( struct _glapi_table *table, GLuint tableSize )
    table->CompressedTexSubImage3DARB = save_CompressedTexSubImage3DARB;
    table->CompressedTexSubImage2DARB = save_CompressedTexSubImage2DARB;
    table->CompressedTexSubImage1DARB = save_CompressedTexSubImage1DARB;
-   table->GetCompressedTexImageARB = _mesa_GetCompressedTexImageARB;
+   table->GetCompressedTexImageARB = exec_GetCompressedTexImageARB;
 
    /* GL_EXT_secondary_color */
-   table->SecondaryColorPointerEXT = _mesa_SecondaryColorPointerEXT;
+   table->SecondaryColorPointerEXT = exec_SecondaryColorPointerEXT;
 
    /* GL_EXT_fog_coord */
-   table->FogCoordPointerEXT = _mesa_FogCoordPointerEXT;
+   table->FogCoordPointerEXT = exec_FogCoordPointerEXT;
 }
 
 

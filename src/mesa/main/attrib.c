@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.38 2000/12/14 20:25:56 brianp Exp $ */
+/* $Id: attrib.c,v 1.39 2000/12/26 05:09:27 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -100,7 +100,7 @@ _mesa_PushAttrib(GLbitfield mask)
    struct gl_attrib_node *head;
 
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPushAttrib");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glPushAttrib %x\n", (int)mask);
@@ -136,9 +136,7 @@ _mesa_PushAttrib(GLbitfield mask)
 
    if (mask & GL_CURRENT_BIT) {
       struct gl_current_attrib *attr;
-
-      FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
-
+      FLUSH_CURRENT( ctx, 0 );
       attr = MALLOC_STRUCT( gl_current_attrib );
       MEMCPY( attr, &ctx->Current, sizeof(struct gl_current_attrib) );
       newnode = new_attrib_node( GL_CURRENT_BIT );
@@ -257,6 +255,7 @@ _mesa_PushAttrib(GLbitfield mask)
 
    if (mask & GL_LIGHTING_BIT) {
       struct gl_light_attrib *attr;
+      FLUSH_CURRENT(ctx, 0);	/* flush material changes */
       attr = MALLOC_STRUCT( gl_light_attrib );
       MEMCPY( attr, &ctx->Light, sizeof(struct gl_light_attrib) );
       newnode = new_attrib_node( GL_LIGHTING_BIT );
@@ -546,9 +545,7 @@ _mesa_PopAttrib(void)
 {
    struct gl_attrib_node *attr, *next;
    GET_CURRENT_CONTEXT(ctx);
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPopAttrib");
-
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->AttribStackDepth==0) {
       gl_error( ctx, GL_STACK_UNDERFLOW, "glPopAttrib" );
@@ -616,7 +613,7 @@ _mesa_PopAttrib(void)
             }
             break;
          case GL_CURRENT_BIT:
-	    FLUSH_TNL( ctx, FLUSH_UPDATE_CURRENT );
+	    FLUSH_CURRENT( ctx, 0 );
             MEMCPY( &ctx->Current, attr->data,
 		    sizeof(struct gl_current_attrib) );
             break;
@@ -872,7 +869,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
    struct gl_attrib_node *head;
 
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPushClientAttrib");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (ctx->ClientAttribStackDepth>=MAX_CLIENT_ATTRIB_STACK_DEPTH) {
       gl_error( ctx, GL_STACK_OVERFLOW, "glPushClientAttrib" );
@@ -923,7 +920,7 @@ _mesa_PopClientAttrib(void)
    struct gl_attrib_node *attr, *next;
 
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPopClientAttrib");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->ClientAttribStackDepth==0) {
       gl_error( ctx, GL_STACK_UNDERFLOW, "glPopClientAttrib" );
@@ -938,14 +935,17 @@ _mesa_PopClientAttrib(void)
          case GL_CLIENT_PACK_BIT:
             MEMCPY( &ctx->Pack, attr->data,
                     sizeof(struct gl_pixelstore_attrib) );
+	    ctx->NewState = _NEW_PACKUNPACK;
             break;
          case GL_CLIENT_UNPACK_BIT:
             MEMCPY( &ctx->Unpack, attr->data,
                     sizeof(struct gl_pixelstore_attrib) );
+	    ctx->NewState = _NEW_PACKUNPACK;
             break;
          case GL_CLIENT_VERTEX_ARRAY_BIT:
             MEMCPY( &ctx->Array, attr->data,
 		    sizeof(struct gl_array_attrib) );
+	    ctx->NewState = _NEW_ARRAY;
             break;
          default:
             gl_problem( ctx, "Bad attrib flag in PopClientAttrib");
@@ -958,7 +958,6 @@ _mesa_PopClientAttrib(void)
       attr = next;
    }
 
-   ctx->NewState = _NEW_ARRAY;
 }
 
 

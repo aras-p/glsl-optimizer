@@ -1,4 +1,4 @@
-/* $Id: pixel.c,v 1.21 2000/12/13 00:46:21 brianp Exp $ */
+/* $Id: pixel.c,v 1.22 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,11 +49,14 @@ void
 _mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPixelZoom");
 
+   if (ctx->Pixel.ZoomX == xfactor &&
+       ctx->Pixel.ZoomY == yfactor)
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_PIXEL);
    ctx->Pixel.ZoomX = xfactor;
    ctx->Pixel.ZoomY = yfactor;
-   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -68,118 +71,162 @@ _mesa_PixelStorei( GLenum pname, GLint param )
 {
    /* NOTE: this call can't be compiled into the display list */
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPixelStore");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (pname) {
       case GL_PACK_SWAP_BYTES:
+	 if (param == (GLint)ctx->Pack.SwapBytes) 
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
          ctx->Pack.SwapBytes = param ? GL_TRUE : GL_FALSE;
 	 break;
       case GL_PACK_LSB_FIRST:
+	 if (param == (GLint)ctx->Pack.LsbFirst) 
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
          ctx->Pack.LsbFirst = param ? GL_TRUE : GL_FALSE;
 	 break;
       case GL_PACK_ROW_LENGTH:
 	 if (param<0) {
 	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    return;
 	 }
-	 else {
-	    ctx->Pack.RowLength = param;
-	 }
+	 if (ctx->Pack.RowLength == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
+	 ctx->Pack.RowLength = param;
 	 break;
       case GL_PACK_IMAGE_HEIGHT:
-         if (param<0)
+         if (param<0) {
             gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
-         else
-            ctx->Pack.ImageHeight = param;
+	    return;
+	 }
+	 if (ctx->Pack.ImageHeight == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
+	 ctx->Pack.ImageHeight = param;
          break;
       case GL_PACK_SKIP_PIXELS:
 	 if (param<0) {
 	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    return;
 	 }
-	 else {
-	    ctx->Pack.SkipPixels = param;
-	 }
+	 if (ctx->Pack.SkipPixels == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
+	 ctx->Pack.SkipPixels = param;
 	 break;
       case GL_PACK_SKIP_ROWS:
 	 if (param<0) {
 	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    return;
 	 }
-	 else {
-	    ctx->Pack.SkipRows = param;
-	 }
+	 if (ctx->Pack.SkipRows == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
+	 ctx->Pack.SkipRows = param;
 	 break;
       case GL_PACK_SKIP_IMAGES:
 	 if (param<0) {
 	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    return;
 	 }
-	 else {
-	    ctx->Pack.SkipImages = param;
-	 }
+	 if (ctx->Pack.SkipImages == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
+	 ctx->Pack.SkipImages = param;
 	 break;
       case GL_PACK_ALIGNMENT:
-         if (param==1 || param==2 || param==4 || param==8) {
-	    ctx->Pack.Alignment = param;
-	 }
-	 else {
+         if (param!=1 && param!=2 && param!=4 && param!=8) {
 	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    return;
 	 }
+	 if (ctx->Pack.Alignment == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
+	 ctx->Pack.Alignment = param;
 	 break;
       case GL_UNPACK_SWAP_BYTES:
+	 if (param == (GLint)ctx->Unpack.SwapBytes) 
+	    return;
+	 if ((GLint)ctx->Unpack.SwapBytes == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Unpack.SwapBytes = param ? GL_TRUE : GL_FALSE;
          break;
       case GL_UNPACK_LSB_FIRST:
+	 if (param == (GLint)ctx->Unpack.LsbFirst) 
+	    return;
+	 if ((GLint)ctx->Unpack.LsbFirst == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
 	 ctx->Unpack.LsbFirst = param ? GL_TRUE : GL_FALSE;
 	 break;
       case GL_UNPACK_ROW_LENGTH:
 	 if (param<0) {
 	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    return;
 	 }
-	 else {
-	    ctx->Unpack.RowLength = param;
-	 }
+	 if (ctx->Unpack.RowLength == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
+	 ctx->Unpack.RowLength = param;
 	 break;
       case GL_UNPACK_IMAGE_HEIGHT:
-         if (param<0)
+         if (param<0) {
             gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
-         else
-            ctx->Unpack.ImageHeight = param;
+	    return;
+	 }
+	 if (ctx->Unpack.ImageHeight == param)
+	    return;
+
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
+	 ctx->Unpack.ImageHeight = param;
          break;
       case GL_UNPACK_SKIP_PIXELS:
 	 if (param<0) {
 	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    return;
 	 }
-	 else {
-	    ctx->Unpack.SkipPixels = param;
-	 }
+	 if (ctx->Unpack.SkipPixels == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
+	 ctx->Unpack.SkipPixels = param;
 	 break;
       case GL_UNPACK_SKIP_ROWS:
 	 if (param<0) {
 	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    return;
 	 }
-	 else {
-	    ctx->Unpack.SkipRows = param;
-	 }
+	 if (ctx->Unpack.SkipRows == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
+	 ctx->Unpack.SkipRows = param;
 	 break;
       case GL_UNPACK_SKIP_IMAGES:
 	 if (param < 0) {
 	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore(param)" );
+	    return;
 	 }
-	 else {
-	    ctx->Unpack.SkipImages = param;
-	 }
+	 if (ctx->Unpack.SkipImages == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
+	 ctx->Unpack.SkipImages = param;
 	 break;
       case GL_UNPACK_ALIGNMENT:
-         if (param==1 || param==2 || param==4 || param==8) {
-	    ctx->Unpack.Alignment = param;
-	 }
-	 else {
+         if (param!=1 && param!=2 && param!=4 && param!=8) {
 	    gl_error( ctx, GL_INVALID_VALUE, "glPixelStore" );
+	    return;
 	 }
+	 if (ctx->Unpack.Alignment == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PACKUNPACK);
+	 ctx->Unpack.Alignment = param;
 	 break;
       default:
 	 gl_error( ctx, GL_INVALID_ENUM, "glPixelStore" );
+	 return;
    }
-
-   ctx->NewState |= _NEW_PACKUNPACK;
 }
 
 
@@ -202,8 +249,7 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
 {
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPixelMapfv");
-
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (mapsize<0 || mapsize>MAX_PIXEL_MAP_TABLE) {
       gl_error( ctx, GL_INVALID_VALUE, "glPixelMapfv(mapsize)" );
@@ -225,6 +271,8 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
          return;
       }
    }
+
+   FLUSH_VERTICES(ctx, _NEW_PIXEL);
 
    switch (map) {
       case GL_PIXEL_MAP_S_TO_S:
@@ -298,7 +346,6 @@ _mesa_PixelMapfv( GLenum map, GLint mapsize, const GLfloat *values )
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glPixelMapfv(map)" );
    }
-   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -348,8 +395,7 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetPixelMapfv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (map) {
       case GL_PIXEL_MAP_I_TO_I:
@@ -397,8 +443,7 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetPixelMapfv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (map) {
       case GL_PIXEL_MAP_I_TO_I:
@@ -458,8 +503,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint i;
-
-   ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetPixelMapfv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (map) {
       case GL_PIXEL_MAP_I_TO_I:
@@ -532,107 +576,193 @@ void
 _mesa_PixelTransferf( GLenum pname, GLfloat param )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPixelTransfer");
-
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (pname) {
       case GL_MAP_COLOR:
+         if (ctx->Pixel.MapColorFlag == param ? GL_TRUE : GL_FALSE)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.MapColorFlag = param ? GL_TRUE : GL_FALSE;
 	 break;
       case GL_MAP_STENCIL:
+         if (ctx->Pixel.MapStencilFlag == param ? GL_TRUE : GL_FALSE)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.MapStencilFlag = param ? GL_TRUE : GL_FALSE;
 	 break;
       case GL_INDEX_SHIFT:
+         if (ctx->Pixel.IndexShift == (GLint) param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.IndexShift = (GLint) param;
 	 break;
       case GL_INDEX_OFFSET:
+         if (ctx->Pixel.IndexOffset == (GLint) param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.IndexOffset = (GLint) param;
 	 break;
       case GL_RED_SCALE:
+         if (ctx->Pixel.RedScale == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.RedScale = param;
 	 break;
       case GL_RED_BIAS:
+         if (ctx->Pixel.RedBias == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.RedBias = param;
 	 break;
       case GL_GREEN_SCALE:
+         if (ctx->Pixel.GreenScale == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.GreenScale = param;
 	 break;
       case GL_GREEN_BIAS:
+         if (ctx->Pixel.GreenBias == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.GreenBias = param;
 	 break;
       case GL_BLUE_SCALE:
+         if (ctx->Pixel.BlueScale == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.BlueScale = param;
 	 break;
       case GL_BLUE_BIAS:
+         if (ctx->Pixel.BlueBias == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.BlueBias = param;
 	 break;
       case GL_ALPHA_SCALE:
+         if (ctx->Pixel.AlphaScale == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.AlphaScale = param;
 	 break;
       case GL_ALPHA_BIAS:
+         if (ctx->Pixel.AlphaBias == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.AlphaBias = param;
 	 break;
       case GL_DEPTH_SCALE:
+         if (ctx->Pixel.DepthScale == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.DepthScale = param;
 	 break;
       case GL_DEPTH_BIAS:
+         if (ctx->Pixel.DepthBias == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.DepthBias = param;
 	 break;
       case GL_POST_COLOR_MATRIX_RED_SCALE:
+         if (ctx->Pixel.PostColorMatrixScale[0] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostColorMatrixScale[0] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_RED_BIAS:
+         if (ctx->Pixel.PostColorMatrixBias[0] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostColorMatrixBias[0] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_GREEN_SCALE:
+         if (ctx->Pixel.PostColorMatrixScale[1] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostColorMatrixScale[1] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_GREEN_BIAS:
+         if (ctx->Pixel.PostColorMatrixBias[1] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostColorMatrixBias[1] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_BLUE_SCALE:
+         if (ctx->Pixel.PostColorMatrixScale[2] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostColorMatrixScale[2] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_BLUE_BIAS:
+         if (ctx->Pixel.PostColorMatrixBias[2] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostColorMatrixBias[2] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_ALPHA_SCALE:
+         if (ctx->Pixel.PostColorMatrixScale[3] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostColorMatrixScale[3] = param;
 	 break;
       case GL_POST_COLOR_MATRIX_ALPHA_BIAS:
+         if (ctx->Pixel.PostColorMatrixBias[3] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostColorMatrixBias[3] = param;
 	 break;
       case GL_POST_CONVOLUTION_RED_SCALE:
+         if (ctx->Pixel.PostConvolutionScale[0] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostConvolutionScale[0] = param;
 	 break;
       case GL_POST_CONVOLUTION_RED_BIAS:
+         if (ctx->Pixel.PostConvolutionBias[0] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostConvolutionBias[0] = param;
 	 break;
       case GL_POST_CONVOLUTION_GREEN_SCALE:
+         if (ctx->Pixel.PostConvolutionScale[1] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostConvolutionScale[1] = param;
 	 break;
       case GL_POST_CONVOLUTION_GREEN_BIAS:
+         if (ctx->Pixel.PostConvolutionBias[1] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostConvolutionBias[1] = param;
 	 break;
       case GL_POST_CONVOLUTION_BLUE_SCALE:
+         if (ctx->Pixel.PostConvolutionScale[2] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostConvolutionScale[2] = param;
 	 break;
       case GL_POST_CONVOLUTION_BLUE_BIAS:
+         if (ctx->Pixel.PostConvolutionBias[2] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostConvolutionBias[2] = param;
 	 break;
       case GL_POST_CONVOLUTION_ALPHA_SCALE:
+         if (ctx->Pixel.PostConvolutionScale[2] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostConvolutionScale[2] = param;
 	 break;
       case GL_POST_CONVOLUTION_ALPHA_BIAS:
+         if (ctx->Pixel.PostConvolutionBias[2] == param)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
          ctx->Pixel.PostConvolutionBias[2] = param;
 	 break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glPixelTransfer(pname)" );
          return;
    }
-
-   /* signal to recompute the bitmask */
-   ctx->NewState |= _NEW_PIXEL;
 }
 
 

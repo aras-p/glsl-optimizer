@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.7 2000/11/22 07:32:18 joukj Exp $ */
+/* $Id: xm_dd.c,v 1.8 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -38,6 +38,7 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
+#include "array_cache/acache.h"
 
 /*
  * Return the size (width,height of the current color buffer.
@@ -862,16 +863,17 @@ enable( GLcontext *ctx, GLenum pname, GLboolean state )
 }
 
 
-void xmesa_update_state( GLcontext *ctx )
+void xmesa_update_state( GLcontext *ctx, GLuint new_state )
 {
    const XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 
    /* Propogate statechange information to swrast and swrast_setup
     * modules.  The X11 driver has no internal GL-dependent state.
     */
-   _swrast_InvalidateState( ctx, ctx->NewState );
-   _swsetup_InvalidateState( ctx, ctx->NewState );
-   _tnl_InvalidateState( ctx, ctx->NewState );
+   _swrast_InvalidateState( ctx, new_state );
+   _ac_InvalidateState( ctx, new_state );
+   _tnl_InvalidateState( ctx, new_state );
+   _swsetup_InvalidateState( ctx, new_state );
 
 
    /* setup pointers to front and back buffer clear functions */
@@ -937,9 +939,7 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.LineFunc = _swsetup_Line;
    ctx->Driver.TriangleFunc = _swsetup_Triangle;
    ctx->Driver.QuadFunc = _swsetup_Quad;
-   ctx->Driver.RasterSetup = _swsetup_RasterSetup;
-   ctx->Driver.RegisterVB = _swsetup_RegisterVB;
-   ctx->Driver.UnregisterVB = _swsetup_UnregisterVB;
-
+   ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
+   ctx->Driver.ResetLineStipple = _swrast_ResetLineStipple;
    (void) DitherValues;  /* silenced unused var warning */
 }

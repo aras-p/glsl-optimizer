@@ -1,4 +1,4 @@
-/* $Id: polygon.c,v 1.16 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: polygon.c,v 1.17 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,7 +44,7 @@ void
 _mesa_CullFace( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCullFace");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glCullFace %s\n", gl_lookup_enum_by_nr(mode));
@@ -54,8 +54,11 @@ _mesa_CullFace( GLenum mode )
       return;
    }
 
+   if (ctx->Polygon.CullFaceMode == mode)
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_POLYGON);
    ctx->Polygon.CullFaceMode = mode;
-   ctx->NewState |= _NEW_POLYGON;
 
    if (ctx->Driver.CullFace)
       ctx->Driver.CullFace( ctx, mode );
@@ -67,7 +70,7 @@ void
 _mesa_FrontFace( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glFrontFace");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glFrontFace %s\n", gl_lookup_enum_by_nr(mode));
@@ -77,9 +80,13 @@ _mesa_FrontFace( GLenum mode )
       return;
    }
 
+   if (ctx->Polygon.FrontFace == mode)
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_POLYGON);
    ctx->Polygon.FrontFace = mode;
-   ctx->Polygon.FrontBit = (GLboolean) (mode == GL_CW);
-   ctx->NewState |= _NEW_POLYGON;
+
+   ctx->Polygon._FrontBit = (GLboolean) (mode == GL_CW);
 
    if (ctx->Driver.FrontFace)
       ctx->Driver.FrontFace( ctx, mode );
@@ -91,39 +98,47 @@ void
 _mesa_PolygonMode( GLenum face, GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPolygonMode");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glPolygonMode %s %s\n",
 	      gl_lookup_enum_by_nr(face),
 	      gl_lookup_enum_by_nr(mode));
 
-   if (face!=GL_FRONT && face!=GL_BACK && face!=GL_FRONT_AND_BACK) {
-      gl_error( ctx, GL_INVALID_ENUM, "glPolygonMode(face)" );
-      return;
-   }
-   else if (mode!=GL_POINT && mode!=GL_LINE && mode!=GL_FILL) {
+   if (mode!=GL_POINT && mode!=GL_LINE && mode!=GL_FILL) {
       gl_error( ctx, GL_INVALID_ENUM, "glPolygonMode(mode)" );
       return;
    }
 
-   if (face==GL_FRONT || face==GL_FRONT_AND_BACK) {
+   switch (face) {
+   case GL_FRONT:
+      if (ctx->Polygon.FrontMode == mode)
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_POLYGON);
       ctx->Polygon.FrontMode = mode;
-   }
-   if (face==GL_BACK || face==GL_FRONT_AND_BACK) {
+      break;
+   case GL_FRONT_AND_BACK:
+      if (ctx->Polygon.FrontMode == mode &&
+	  ctx->Polygon.BackMode == mode)
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_POLYGON);
+      ctx->Polygon.FrontMode = mode;
       ctx->Polygon.BackMode = mode;
+      break;
+   case GL_BACK:
+      if (ctx->Polygon.BackMode == mode)
+	 return;
+      FLUSH_VERTICES(ctx, _NEW_POLYGON);
+      ctx->Polygon.BackMode = mode;
+      break;
+   default:
+      gl_error( ctx, GL_INVALID_ENUM, "glPolygonMode(face)" );
+      return;
    }
 
-   /* Compute a handy "shortcut" value: */
    ctx->_TriangleCaps &= ~DD_TRI_UNFILLED;
-   ctx->Polygon._Unfilled = GL_FALSE;
-
-   if (ctx->Polygon.FrontMode!=GL_FILL || ctx->Polygon.BackMode!=GL_FILL) {
-      ctx->Polygon._Unfilled = GL_TRUE;
+   if (ctx->Polygon.FrontMode!=GL_FILL || ctx->Polygon.BackMode!=GL_FILL) 
       ctx->_TriangleCaps |= DD_TRI_UNFILLED;
-   }
-
-   ctx->NewState |= _NEW_POLYGON;
 
    if (ctx->Driver.PolygonMode) {
       (*ctx->Driver.PolygonMode)( ctx, face, mode );
@@ -136,14 +151,13 @@ void
 _mesa_PolygonStipple( const GLubyte *pattern )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPolygonStipple");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glPolygonStipple\n");
 
+   FLUSH_VERTICES(ctx, _NEW_POLYGONSTIPPLE);
    _mesa_unpack_polygon_stipple(pattern, ctx->PolygonStipple, &ctx->Unpack);
-
-   ctx->NewState |= _NEW_POLYGONSTIPPLE;
 
    if (ctx->Driver.PolygonStipple)
       ctx->Driver.PolygonStipple( ctx, (const GLubyte *) ctx->PolygonStipple );
@@ -155,7 +169,7 @@ void
 _mesa_GetPolygonStipple( GLubyte *dest )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPolygonOffset");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glGetPolygonStipple\n");
@@ -169,15 +183,19 @@ void
 _mesa_PolygonOffset( GLfloat factor, GLfloat units )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPolygonOffset");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glPolygonOffset %f %f\n", factor, units);
 
+   if (ctx->Polygon.OffsetFactor == factor &&
+       ctx->Polygon.OffsetUnits == units)
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_POLYGON);
    ctx->Polygon.OffsetFactor = factor;
    ctx->Polygon.OffsetUnits = units;
    ctx->Polygon.OffsetMRD = units * ctx->Visual.MRD;
-   ctx->NewState |= _NEW_POLYGON;
 }
 
 
@@ -186,6 +204,5 @@ void
 _mesa_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPolygonOffsetEXT");
    _mesa_PolygonOffset(factor, bias * ctx->Visual.DepthMaxF );
 }

@@ -34,16 +34,15 @@
 #include "ss_triangle.h"
 #include "ss_context.h"
 
-#define SS_FLAT_BIT	    0x1
+#define SS_FLAT_BIT         0x1
 #define SS_OFFSET_BIT	    0x2	
 #define SS_TWOSIDE_BIT	    0x4	
 #define SS_UNFILLED_BIT	    0x10	
-#define SS_COPY_EXTRAS	    0x20 /* optimization */
-#define SS_MAX_TRIFUNC      0x40
+#define SS_RGBA_BIT         0x20 
+#define SS_MAX_TRIFUNC      0x80
 
 static triangle_func tri_tab[SS_MAX_TRIFUNC];
 static line_func     line_tab[SS_MAX_TRIFUNC];
-static points_func   points_tab[SS_MAX_TRIFUNC];
 static quad_func     quad_tab[SS_MAX_TRIFUNC];
 
 
@@ -115,68 +114,68 @@ static quad_func     quad_tab[SS_MAX_TRIFUNC];
 #define TAG(x) x##_flat_offset_twoside_unfilled
 #include "ss_tritmp.h"
 
-#define IND (0|SS_COPY_EXTRAS)
-#define TAG(x) x##_spec
+#define IND (0|SS_RGBA_BIT)
+#define TAG(x) x##_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_flat_spec
+#define IND (SS_FLAT_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_flat_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_OFFSET_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_offset_spec
+#define IND (SS_OFFSET_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_offset_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_flat_offset_spec
+#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_flat_offset_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_TWOSIDE_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_twoside_spec
+#define IND (SS_TWOSIDE_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_twoside_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_TWOSIDE_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_flat_twoside_spec
+#define IND (SS_FLAT_BIT|SS_TWOSIDE_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_flat_twoside_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_offset_twoside_spec
+#define IND (SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_offset_twoside_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_flat_offset_twoside_spec
+#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_flat_offset_twoside_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_UNFILLED_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_unfilled_spec
+#define IND (SS_UNFILLED_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_unfilled_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_flat_unfilled_spec
+#define IND (SS_FLAT_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_flat_unfilled_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_OFFSET_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_offset_unfilled_spec
+#define IND (SS_OFFSET_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_offset_unfilled_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_flat_offset_unfilled_spec
+#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_flat_offset_unfilled_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_twoside_unfilled_spec
+#define IND (SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_twoside_unfilled_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_flat_twoside_unfilled_spec
+#define IND (SS_FLAT_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_flat_twoside_unfilled_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_offset_twoside_unfilled_spec
+#define IND (SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_offset_twoside_unfilled_rgba
 #include "ss_tritmp.h"
 
-#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_COPY_EXTRAS)
-#define TAG(x) x##_flat_offset_twoside_unfilled_spec
+#define IND (SS_FLAT_BIT|SS_OFFSET_BIT|SS_TWOSIDE_BIT|SS_UNFILLED_BIT|SS_RGBA_BIT)
+#define TAG(x) x##_flat_offset_twoside_unfilled_rgba
 #include "ss_tritmp.h"
 
 
@@ -201,24 +200,41 @@ void _swsetup_trifuncs_init( GLcontext *ctx )
    init_offset_twoside_unfilled();
    init_flat_offset_twoside_unfilled();
 
-   init_spec();
-   init_flat_spec();
-   init_offset_spec();
-   init_flat_offset_spec();
-   init_twoside_spec();
-   init_flat_twoside_spec();
-   init_offset_twoside_spec();
-   init_flat_offset_twoside_spec();
-   init_unfilled_spec();
-   init_flat_unfilled_spec();
-   init_offset_unfilled_spec();
-   init_flat_offset_unfilled_spec();
-   init_twoside_unfilled_spec();
-   init_flat_twoside_unfilled_spec();
-   init_offset_twoside_unfilled_spec();
-   init_flat_offset_twoside_unfilled_spec();
+   init_rgba();
+   init_flat_rgba();
+   init_offset_rgba();
+   init_flat_offset_rgba();
+   init_twoside_rgba();
+   init_flat_twoside_rgba();
+   init_offset_twoside_rgba();
+   init_flat_offset_twoside_rgba();
+   init_unfilled_rgba();
+   init_flat_unfilled_rgba();
+   init_offset_unfilled_rgba();
+   init_flat_offset_unfilled_rgba();
+   init_twoside_unfilled_rgba();
+   init_flat_twoside_unfilled_rgba();
+   init_offset_twoside_unfilled_rgba();
+   init_flat_offset_twoside_unfilled_rgba();
 }
 
+
+static void swsetup_points( GLcontext *ctx, GLuint first, GLuint last )
+{
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   SWvertex *verts = SWSETUP_CONTEXT(ctx)->verts;
+   int i;
+   
+   if (VB->Elts) {
+      for(i=first;i<=last;i++) 
+	 if(VB->ClipMask[VB->Elts[i]]==0)
+	    _swrast_Point( ctx, &verts[VB->Elts[i]] );
+   } else {
+      for(i=first;i<=last;i++) 
+	 if(VB->ClipMask[i]==0)
+	    _swrast_Point( ctx, &verts[i] );
+   }
+}
 
 void _swsetup_choose_trifuncs( GLcontext *ctx )
 {
@@ -234,17 +250,15 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
    if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
       ind |= SS_TWOSIDE_BIT;
 
-   if (ctx->Polygon._Unfilled)
+   if (ctx->_TriangleCaps & DD_TRI_UNFILLED)
       ind |= SS_UNFILLED_BIT;
 
-   if ((ctx->_TriangleCaps & DD_SEPERATE_SPECULAR) ||
-       ctx->RenderMode == GL_SELECT ||
-       !ctx->Visual.RGBAflag)
-      ind |= SS_COPY_EXTRAS;
+   if (ctx->Visual.RGBAflag) 
+      ind |= SS_RGBA_BIT;
 
    swsetup->Triangle = tri_tab[ind];
    swsetup->Line = line_tab[ind];
-   swsetup->Points = points_tab[ind];
    swsetup->Quad = quad_tab[ind];
+   swsetup->Points = swsetup_points;
 }
 

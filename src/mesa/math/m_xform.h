@@ -1,4 +1,4 @@
-/* $Id: m_xform.h,v 1.2 2000/11/17 21:01:49 brianp Exp $ */
+/* $Id: m_xform.h,v 1.3 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -75,8 +75,8 @@ do {								\
 
 
 extern void gl_transform_vector( GLfloat u[4],
-				 const GLfloat v[4],
-                                 const GLfloat m[16] );
+				 CONST GLfloat v[4],
+                                 CONST GLfloat m[16] );
 
 
 extern void 
@@ -132,37 +132,36 @@ _math_init_transformation( void );
 #define CLIP_NEAR_BIT    0x10
 #define CLIP_FAR_BIT     0x20
 #define CLIP_USER_BIT    0x40
-#define CLIP_CULLED_BIT  0x80	/* Vertex has been culled */
 #define CLIP_ALL_BITS    0x3f
 
 
 typedef GLvector4f * (_XFORMAPIP clip_func)( GLvector4f *vClip,
-				  GLvector4f *vProj, 
-				  GLubyte clipMask[],
-				  GLubyte *orMask, 
-				  GLubyte *andMask );
+					     GLvector4f *vProj, 
+					     GLubyte clipMask[],
+					     GLubyte *orMask, 
+					     GLubyte *andMask );
 
-typedef void (*dotprod_func)( GLvector4f *out_vec, 
-			      GLuint elt,
-			      const GLvector4f *coord_vec, 
-			      const GLfloat plane[4], 
-			      const GLubyte mask[]);
+typedef void (*dotprod_func)( GLfloat *out, 
+			      GLuint out_stride,
+			      CONST GLvector4f *coord_vec, 
+			      CONST GLfloat plane[4], 
+			      CONST GLubyte mask[]);
 
 typedef void (*vec_copy_func)( GLvector4f *to, 
-			       const GLvector4f *from, 
-			       const GLubyte mask[]);
+			       CONST GLvector4f *from, 
+			       CONST GLubyte mask[]);
 
 
 
 /*
  * Functions for transformation of normals in the VB.
  */
-typedef void (_NORMAPIP normal_func)( const GLmatrix *mat,
-			     GLfloat scale,
-			     const GLvector3f *in,
-			     const GLfloat lengths[],
-			     const GLubyte mask[],
-			     GLvector3f *dest );
+typedef void (_NORMAPIP normal_func)( CONST GLmatrix *mat,
+				      GLfloat scale,
+				      CONST GLvector3f *in,
+				      CONST GLfloat lengths[],
+				      CONST GLubyte mask[],
+				      GLvector3f *dest );
 
 
 /* Flags for selecting a normal transformation function. 
@@ -181,26 +180,27 @@ typedef void (_NORMAPIP normal_func)( const GLmatrix *mat,
  *     parameter, to allow a unified interface.  
  */
 typedef void (_XFORMAPIP transform_func)( GLvector4f *to_vec,
-					  const GLfloat m[16],
-				const GLvector4f *from_vec, 
-				const GLubyte *clipmask,
-				const GLubyte flag );
+					  CONST GLfloat m[16],
+					  CONST GLvector4f *from_vec, 
+					  CONST GLubyte *clipmask,
+					  CONST GLubyte flag );
 
 
 extern GLvector4f *gl_project_points( GLvector4f *to,
-			       const GLvector4f *from );
+				      CONST GLvector4f *from );
 
 extern void gl_transform_bounds3( GLubyte *orMask, GLubyte *andMask,
-				  const GLfloat m[16],
-			   CONST GLfloat src[][3] );
+				  CONST GLfloat m[16],
+				  CONST GLfloat src[][3] );
 
 extern void gl_transform_bounds2( GLubyte *orMask, GLubyte *andMask,
-				  const GLfloat m[16],
-			   CONST GLfloat src[][3] );
+				  CONST GLfloat m[16],
+				  CONST GLfloat src[][3] );
 
 
 extern dotprod_func  gl_dotprod_tab[2][5];
 extern vec_copy_func gl_copy_tab[2][0x10];
+extern vec_copy_func gl_copy_clean_tab[2][5];
 extern clip_func     gl_clip_tab[5];
 extern normal_func   gl_normal_tab[0xf][0x4];
 
@@ -210,17 +210,13 @@ extern normal_func   gl_normal_tab[0xf][0x4];
 extern transform_func **(gl_transform_tab[2]);
 
 
-extern void gl_transform_point_sz( GLfloat Q[4], const GLfloat M[16],
-				   const GLfloat P[4], GLuint sz );
+extern void gl_transform_point_sz( GLfloat Q[4], CONST GLfloat M[16],
+				   CONST GLfloat P[4], GLuint sz );
 
 
 #define TransformRaw( to, mat, from ) \
       ( (*gl_transform_tab[0][(from)->size][(mat)->type])( to, (mat)->m, from, 0, 0 ), \
         (to) )
-
-#define Transform( to, mat, from, mask, cull ) \
-      ( (*gl_transform_tab[cull!=0][(from)->size][(mat)->type])( to, (mat)->m, from, mask, cull ), \
-	(to) )
 
 
 #endif

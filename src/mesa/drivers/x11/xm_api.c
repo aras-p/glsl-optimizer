@@ -1,4 +1,4 @@
-/* $Id: xm_api.c,v 1.12 2000/12/13 00:47:10 brianp Exp $ */
+/* $Id: xm_api.c,v 1.13 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -78,6 +78,7 @@
 #include "macros.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
+#include "array_cache/acache.h"
 #include "tnl/tnl.h"
 
 #ifndef GLX_NONE_EXT
@@ -1665,8 +1666,9 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    /* Initialize the software rasterizer and helper modules.
     */
    _swrast_CreateContext( ctx );
-   _swsetup_CreateContext( ctx );
+   _ac_CreateContext( ctx );
    _tnl_CreateContext( ctx );
+   _swsetup_CreateContext( ctx );
 
    xmesa_register_swrast_functions( ctx );
 

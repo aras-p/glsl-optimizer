@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.68 2000/12/14 20:25:56 brianp Exp $ */
+/* $Id: teximage.c,v 1.69 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1612,7 +1612,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
 {
    GLsizei postConvWidth = width;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexImage1D");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    adjust_texture_size_for_convolution(ctx, 1, &postConvWidth, NULL);
 
@@ -1743,7 +1743,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
 {
    GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexImage2D");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    adjust_texture_size_for_convolution(ctx, 2, &postConvWidth,&postConvHeight);
 
@@ -1884,7 +1884,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
                   const GLvoid *pixels )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexImage3D");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (target==GL_TEXTURE_3D_EXT) {
       struct gl_texture_unit *texUnit;
@@ -2169,7 +2169,7 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
    struct gl_texture_image *texImage;
    GLboolean discardImage;
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexImage");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
       gl_error( ctx, GL_INVALID_VALUE, "glGetTexImage(level)" );
@@ -2648,7 +2648,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
 {
    GLsizei postConvWidth = width;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexImage1D");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
@@ -2691,7 +2691,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
 {
    GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexImage2D");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
@@ -2733,7 +2733,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
 {
    GLsizei postConvWidth = width;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage1D");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
@@ -2783,7 +2783,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
 {
    GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage2D");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
@@ -2833,7 +2833,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
 {
    GLsizei postConvWidth = width, postConvHeight = height;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCopyTexSubImage3D");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState & _NEW_PIXEL)
       gl_update_state(ctx);
@@ -2883,7 +2883,7 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
                               const GLvoid *data)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCompressedTexImage1DARB");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    switch (internalFormat) {
       case GL_COMPRESSED_ALPHA_ARB:
@@ -3010,7 +3010,7 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
                               const GLvoid *data)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCompressedTexImage2DARB");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    switch (internalFormat) {
       case GL_COMPRESSED_ALPHA_ARB:
@@ -3145,7 +3145,7 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
                               GLsizei imageSize, const GLvoid *data)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glCompressedTexImage3DARB");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    switch (internalFormat) {
       case GL_COMPRESSED_ALPHA_ARB:
@@ -3386,7 +3386,7 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
    const struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetCompressedTexImageARB");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
       gl_error( ctx, GL_INVALID_VALUE, "glGetCompressedTexImageARB(level)" );

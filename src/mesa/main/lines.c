@@ -1,4 +1,4 @@
-/* $Id: lines.c,v 1.23 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: lines.c,v 1.24 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,22 +45,26 @@ void
 _mesa_LineWidth( GLfloat width )
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    if (width<=0.0) {
       gl_error( ctx, GL_INVALID_VALUE, "glLineWidth" );
       return;
    }
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glLineWidth");
 
-   if (ctx->Line.Width != width) {
-      ctx->Line.Width = width;
+   if (ctx->Line.Width == width) 
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_LINE);
+   ctx->Line.Width = width;
+
+   if (width != 1.0) 
+      ctx->_TriangleCaps |= DD_LINE_WIDTH;
+   else
       ctx->_TriangleCaps &= ~DD_LINE_WIDTH;
-      if (width != 1.0) ctx->_TriangleCaps |= DD_LINE_WIDTH;
 
-      ctx->NewState |= _NEW_LINE;
-
-      if (ctx->Driver.LineWidth)
-         (*ctx->Driver.LineWidth)(ctx, width);
-   }
+   if (ctx->Driver.LineWidth)
+      (*ctx->Driver.LineWidth)(ctx, width);
 }
 
 
@@ -69,11 +73,15 @@ void
 _mesa_LineStipple( GLint factor, GLushort pattern )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glLineStipple");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (ctx->Line.StippleFactor == CLAMP( factor, 1, 256 ) &&
+       ctx->Line.StipplePattern == pattern)
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_LINE);
    ctx->Line.StippleFactor = CLAMP( factor, 1, 256 );
    ctx->Line.StipplePattern = pattern;
-
-   ctx->NewState |= _NEW_LINE;
 
    if (ctx->Driver.LineStipple)
       ctx->Driver.LineStipple( ctx, factor, pattern );

@@ -1,4 +1,4 @@
-/* $Id: blend.c,v 1.26 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: blend.c,v 1.27 2000/12/26 05:09:27 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -41,8 +41,9 @@
 void
 _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
 {
+   
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glBlendFunc");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glBlendFunc %s %s\n",
@@ -70,7 +71,6 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
       case GL_ONE_MINUS_CONSTANT_COLOR:
       case GL_CONSTANT_ALPHA:
       case GL_ONE_MINUS_CONSTANT_ALPHA:
-         ctx->Color.BlendSrcRGB = ctx->Color.BlendSrcA = sfactor;
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glBlendFunc(sfactor)" );
@@ -97,18 +97,24 @@ _mesa_BlendFunc( GLenum sfactor, GLenum dfactor )
       case GL_ONE_MINUS_CONSTANT_COLOR:
       case GL_CONSTANT_ALPHA:
       case GL_ONE_MINUS_CONSTANT_ALPHA:
-         ctx->Color.BlendDstRGB = ctx->Color.BlendDstA = dfactor;
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glBlendFunc(dfactor)" );
          return;
    }
 
-   if (ctx->Driver.BlendFunc) {
-      (*ctx->Driver.BlendFunc)( ctx, sfactor, dfactor );
-   }
+   if (ctx->Color.BlendDstRGB == dfactor &&
+       ctx->Color.BlendSrcRGB == sfactor &&
+       ctx->Color.BlendDstA == dfactor &&
+       ctx->Color.BlendSrcA == sfactor)
+      return;
 
-   ctx->NewState |= _NEW_COLOR;
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+   ctx->Color.BlendDstRGB = ctx->Color.BlendDstA = dfactor;
+   ctx->Color.BlendSrcRGB = ctx->Color.BlendSrcA = sfactor;
+
+   if (ctx->Driver.BlendFunc) 
+      ctx->Driver.BlendFunc( ctx, sfactor, dfactor );
 }
 
 
@@ -118,7 +124,7 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
                             GLenum sfactorA, GLenum dfactorA )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glBlendFuncSeparate");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glBlendFuncSeperate %s %s %s %s\n",
@@ -148,7 +154,6 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
       case GL_ONE_MINUS_CONSTANT_COLOR:
       case GL_CONSTANT_ALPHA:
       case GL_ONE_MINUS_CONSTANT_ALPHA:
-         ctx->Color.BlendSrcRGB = sfactorRGB;
          break;
       default:
          gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(sfactorRGB)");
@@ -175,7 +180,6 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
       case GL_ONE_MINUS_CONSTANT_COLOR:
       case GL_CONSTANT_ALPHA:
       case GL_ONE_MINUS_CONSTANT_ALPHA:
-         ctx->Color.BlendDstRGB = dfactorRGB;
          break;
       default:
          gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(dfactorRGB)");
@@ -203,7 +207,6 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
       case GL_ONE_MINUS_CONSTANT_COLOR:
       case GL_CONSTANT_ALPHA:
       case GL_ONE_MINUS_CONSTANT_ALPHA:
-         ctx->Color.BlendSrcA = sfactorA;
          break;
       default:
          gl_error(ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(sfactorA)");
@@ -230,14 +233,24 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
       case GL_ONE_MINUS_CONSTANT_COLOR:
       case GL_CONSTANT_ALPHA:
       case GL_ONE_MINUS_CONSTANT_ALPHA:
-         ctx->Color.BlendDstA = dfactorA;
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glBlendFuncSeparate(dfactorA)" );
          return;
    }
 
-   ctx->NewState |= _NEW_COLOR;
+   if (ctx->Color.BlendSrcRGB == sfactorRGB &&
+       ctx->Color.BlendDstRGB == dfactorRGB &&
+       ctx->Color.BlendSrcA == sfactorA &&
+       ctx->Color.BlendDstA == dfactorA)
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+
+   ctx->Color.BlendSrcRGB = sfactorRGB;
+   ctx->Color.BlendDstRGB = dfactorRGB;
+   ctx->Color.BlendSrcA = sfactorA;
+   ctx->Color.BlendDstA = dfactorA;
 
    if (ctx->Driver.BlendFuncSeparate) {
       (*ctx->Driver.BlendFuncSeparate)( ctx, sfactorRGB, dfactorRGB,
@@ -252,7 +265,7 @@ void
 _mesa_BlendEquation( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glBlendEquation");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glBlendEquation %s\n",
@@ -262,22 +275,15 @@ _mesa_BlendEquation( GLenum mode )
       case GL_MIN_EXT:
       case GL_MAX_EXT:
       case GL_FUNC_ADD_EXT:
-         if (ctx->Extensions.EXT_blend_minmax) {
-            ctx->Color.BlendEquation = mode;
-         }
-         else {
+         if (!ctx->Extensions.EXT_blend_minmax) {
             gl_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
             return;
          }
       case GL_LOGIC_OP:
-         ctx->Color.BlendEquation = mode;
          break;
       case GL_FUNC_SUBTRACT_EXT:
       case GL_FUNC_REVERSE_SUBTRACT_EXT:
-         if (ctx->Extensions.EXT_blend_subtract) {
-            ctx->Color.BlendEquation = mode;
-         }
-         else {
+         if (!ctx->Extensions.EXT_blend_subtract) {
             gl_error(ctx, GL_INVALID_ENUM, "glBlendEquation");
             return;
          }
@@ -287,17 +293,17 @@ _mesa_BlendEquation( GLenum mode )
          return;
    }
 
+   if (ctx->Color.BlendEquation == mode)
+      return;
+   
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+   ctx->Color.BlendEquation = mode;
+
    /* This is needed to support 1.1's RGB logic ops AND
     * 1.0's blending logicops.
     */
-   if (mode==GL_LOGIC_OP && ctx->Color.BlendEnabled) {
-      ctx->Color.ColorLogicOpEnabled = GL_TRUE;
-   }
-   else {
-      ctx->Color.ColorLogicOpEnabled = GL_FALSE;
-   }
-
-   ctx->NewState |= _NEW_COLOR;
+   ctx->Color.ColorLogicOpEnabled = (mode==GL_LOGIC_OP && 
+				     ctx->Color.BlendEnabled);
 
    if (ctx->Driver.BlendEquation)
       ctx->Driver.BlendEquation( ctx, mode );
@@ -308,11 +314,19 @@ _mesa_BlendEquation( GLenum mode )
 void
 _mesa_BlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
 {
+   GLfloat tmp[4];
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Color.BlendColor[0] = CLAMP( red,   0.0F, 1.0F );
-   ctx->Color.BlendColor[1] = CLAMP( green, 0.0F, 1.0F );
-   ctx->Color.BlendColor[2] = CLAMP( blue,  0.0F, 1.0F );
-   ctx->Color.BlendColor[3] = CLAMP( alpha, 0.0F, 1.0F );
-   ctx->NewState |= _NEW_COLOR;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   tmp[0] = CLAMP( red,   0.0, 1.0 );
+   tmp[1] = CLAMP( green, 0.0, 1.0 );
+   tmp[2] = CLAMP( blue,  0.0, 1.0 );
+   tmp[3] = CLAMP( alpha, 0.0, 1.0 );
+
+   if (TEST_EQ_4V(tmp, ctx->Color.BlendColor))
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+   COPY_4FV( ctx->Color.BlendColor, tmp );
 }
 

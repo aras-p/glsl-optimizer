@@ -1,4 +1,4 @@
-/* $Id: points.c,v 1.25 2000/12/08 00:20:15 brianp Exp $ */
+/* $Id: points.c,v 1.26 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -44,21 +44,22 @@ void
 _mesa_PointSize( GLfloat size )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPointSize");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (size <= 0.0) {
       gl_error( ctx, GL_INVALID_VALUE, "glPointSize" );
       return;
    }
 
-   if (ctx->Point.Size != size) {
-      ctx->Point.Size = size;
-      ctx->Point._Size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
-      ctx->_TriangleCaps &= ~DD_POINT_SIZE;
-      if (size != 1.0)
-         ctx->_TriangleCaps |= DD_POINT_SIZE;
-      ctx->NewState |= _NEW_POINT;
-   }
+   if (ctx->Point.Size == size) 
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_POINT);
+   ctx->Point.Size = size;
+   ctx->Point._Size = CLAMP(size, 
+			    ctx->Const.MinPointSize,
+			    ctx->Const.MaxPointSize);
+   ctx->_TriangleCaps ^= DD_POINT_SIZE;
 }
 
 
@@ -74,13 +75,22 @@ void
 _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPointParameterfvEXT");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (pname) {
       case GL_DISTANCE_ATTENUATION_EXT:
          {
             const GLboolean tmp = ctx->Point._Attenuated;
+            if (TEST_EQ_3V(ctx->Point.Params, params))
+	       return;
+
+	    FLUSH_VERTICES(ctx, _NEW_POINT);
             COPY_3V(ctx->Point.Params, params);
+
+	    /* Update several derived values now.  This likely to be
+	     * more efficient than trying to catch this statechange in
+	     * state.c.
+	     */
             ctx->Point._Attenuated = (params[0] != 1.0 ||
 				      params[1] != 0.0 ||
 				      params[2] != 0.0);
@@ -88,7 +98,6 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
             if (tmp != ctx->Point._Attenuated) {
                ctx->_Enabled ^= ENABLE_POINT_ATTEN;
                ctx->_TriangleCaps ^= DD_POINT_ATTEN;
-               /* XXX why is this here and not in state.c? */
 	       ctx->_NeedEyeCoords ^= NEED_EYE_POINT_ATTEN;
             }
          }
@@ -98,6 +107,9 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
             gl_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
             return;
          }
+         if (ctx->Point.MinSize == *params)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_POINT);
          ctx->Point.MinSize = *params;
          break;
       case GL_POINT_SIZE_MAX_EXT:
@@ -105,6 +117,9 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
             gl_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
             return;
          }
+         if (ctx->Point.MaxSize == *params)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_POINT);
          ctx->Point.MaxSize = *params;
          break;
       case GL_POINT_FADE_THRESHOLD_SIZE_EXT:
@@ -112,13 +127,14 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
             gl_error( ctx, GL_INVALID_VALUE, "glPointParameterfvEXT" );
             return;
          }
+         if (ctx->Point.Threshold == *params)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_POINT);
          ctx->Point.Threshold = *params;
          break;
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glPointParameterfvEXT" );
          return;
    }
-
-   ctx->NewState |= _NEW_POINT;
 }
 

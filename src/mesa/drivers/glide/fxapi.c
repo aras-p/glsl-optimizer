@@ -581,55 +581,52 @@ void GLAPIENTRY fxMesaUpdateScreenSize(fxMesaContext fxMesa)
  */
 void GLAPIENTRY fxMesaDestroyContext(fxMesaContext fxMesa)
 {
-  if (MESA_VERBOSE&VERBOSE_DRIVER) {
-    fprintf(stderr,"fxmesa: fxMesaDestroyContext()\n");
-  }
+   if (MESA_VERBOSE&VERBOSE_DRIVER) {
+      fprintf(stderr,"fxmesa: fxMesaDestroyContext()\n");
+   }
 
-  if(fxMesa) {
-    _mesa_destroy_visual(fxMesa->glVis);
-    _mesa_destroy_context(fxMesa->glCtx);
-    _mesa_destroy_framebuffer(fxMesa->glBuffer);
+   if(!fxMesa) 
+      return;
 
-    glbTotNumCtx--;
-
-    fxCloseHardware();
-    FX_grSstWinClose(fxMesa->glideContext);
-
-    if(fxMesa->verbose) {
+   if(fxMesa->verbose) {
       fprintf(stderr,"Misc Stats:\n");
       fprintf(stderr,"  # swap buffer: %u\n",fxMesa->stats.swapBuffer);
 
       if(!fxMesa->stats.swapBuffer)
-        fxMesa->stats.swapBuffer=1;
+	 fxMesa->stats.swapBuffer=1;
 
       fprintf(stderr,"Textures Stats:\n");
       fprintf(stderr,"  Free texture memory on TMU0: %d:\n",fxMesa->freeTexMem[FX_TMU0]);
       if(fxMesa->haveTwoTMUs)
-        fprintf(stderr,"  Free texture memory on TMU1: %d:\n",fxMesa->freeTexMem[FX_TMU1]);
+	 fprintf(stderr,"  Free texture memory on TMU1: %d:\n",fxMesa->freeTexMem[FX_TMU1]);
       fprintf(stderr,"  # request to TMM to upload a texture objects: %u\n",
-              fxMesa->stats.reqTexUpload);
+	      fxMesa->stats.reqTexUpload);
       fprintf(stderr,"  # request to TMM to upload a texture objects per swapbuffer: %.2f\n",
-              fxMesa->stats.reqTexUpload/(float)fxMesa->stats.swapBuffer);
+	      fxMesa->stats.reqTexUpload/(float)fxMesa->stats.swapBuffer);
       fprintf(stderr,"  # texture objects uploaded: %u\n",
-              fxMesa->stats.texUpload);
+	      fxMesa->stats.texUpload);
       fprintf(stderr,"  # texture objects uploaded per swapbuffer: %.2f\n",
-              fxMesa->stats.texUpload/(float)fxMesa->stats.swapBuffer);
+	      fxMesa->stats.texUpload/(float)fxMesa->stats.swapBuffer);
       fprintf(stderr,"  # MBs uploaded to texture memory: %.2f\n",
-              fxMesa->stats.memTexUpload/(float)(1<<20));
+	      fxMesa->stats.memTexUpload/(float)(1<<20));
       fprintf(stderr,"  # MBs uploaded to texture memory per swapbuffer: %.2f\n",
-              (fxMesa->stats.memTexUpload/(float)fxMesa->stats.swapBuffer)/(float)(1<<20));
-    }
-    if (fxMesa->state)  
-       free(fxMesa->state);
-    if (fxMesa->fogTable)
-       free(fxMesa->fogTable);
-    fxTMClose(fxMesa);
-    
-    free(fxMesa);
-  }
+	      (fxMesa->stats.memTexUpload/(float)fxMesa->stats.swapBuffer)/(float)(1<<20));
+   }
 
-  if(fxMesa==fxMesaCurrentCtx)
-    fxMesaCurrentCtx=NULL;
+   glbTotNumCtx--;
+   
+   fxDDDestroyFxMesaContext(fxMesa);
+   _mesa_destroy_visual(fxMesa->glVis);
+   _mesa_destroy_context(fxMesa->glCtx);
+   _mesa_destroy_framebuffer(fxMesa->glBuffer);
+
+   fxCloseHardware();
+   FX_grSstWinClose(fxMesa->glideContext);
+
+   free(fxMesa);
+
+   if(fxMesa==fxMesaCurrentCtx)
+      fxMesaCurrentCtx=NULL;
 }
 
 

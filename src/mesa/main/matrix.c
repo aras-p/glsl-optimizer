@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.28 2000/11/24 10:25:05 keithw Exp $ */
+/* $Id: matrix.c,v 1.29 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -59,7 +59,6 @@
 
 #define GET_ACTIVE_MATRIX(ctx, mat, flags, where)		\
 do {									\
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, where);			\
    if (MESA_VERBOSE&VERBOSE_API) fprintf(stderr, "%s\n", where);	\
    switch (ctx->Transform.MatrixMode) {					\
       case GL_MODELVIEW:						\
@@ -91,6 +90,7 @@ _mesa_Frustum( GLdouble left, GLdouble right,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLmatrix *mat = 0;
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    GET_ACTIVE_MATRIX( ctx,  mat, ctx->NewState, "glFrustrum" );
 
@@ -115,6 +115,7 @@ _mesa_Ortho( GLdouble left, GLdouble right,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLmatrix *mat = 0;
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    GET_ACTIVE_MATRIX( ctx,  mat, ctx->NewState, "glOrtho" );
 
@@ -134,13 +135,17 @@ void
 _mesa_MatrixMode( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glMatrixMode");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    switch (mode) {
       case GL_MODELVIEW:
       case GL_PROJECTION:
       case GL_TEXTURE:
       case GL_COLOR:
+	 if (ctx->Transform.MatrixMode == mode)
+	    return;
          ctx->Transform.MatrixMode = mode;
+	 FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
          break;
       default:
          gl_error( ctx,  GL_INVALID_ENUM, "glMatrixMode" );
@@ -153,7 +158,7 @@ void
 _mesa_PushMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPushMatrix");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glPushMatrix %s\n",
@@ -206,7 +211,7 @@ void
 _mesa_PopMatrix( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glPopMatrix");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glPopMatrix %s\n",
@@ -265,6 +270,7 @@ _mesa_LoadIdentity( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLmatrix *mat = 0;
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    GET_ACTIVE_MATRIX(ctx, mat, ctx->NewState, "glLoadIdentity");
    _math_matrix_set_identity( mat );
 }
@@ -275,6 +281,7 @@ _mesa_LoadMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLmatrix *mat = 0;
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    GET_ACTIVE_MATRIX(ctx, mat, ctx->NewState, "glLoadMatrix");
    _math_matrix_loadf( mat, m );
 }
@@ -300,6 +307,7 @@ _mesa_MultMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLmatrix *mat = 0;
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    GET_ACTIVE_MATRIX( ctx,  mat, ctx->NewState, "glMultMatrix" );
    _math_matrix_mul_floats( mat, m );
 }
@@ -328,6 +336,7 @@ void
 _mesa_Rotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    if (angle != 0.0F) {
       GLmatrix *mat = 0;
       GET_ACTIVE_MATRIX( ctx,  mat, ctx->NewState, "glRotate" );
@@ -350,6 +359,7 @@ _mesa_Scalef( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLmatrix *mat = 0;
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    GET_ACTIVE_MATRIX(ctx, mat, ctx->NewState, "glScale");
    _math_matrix_scale( mat, x, y, z );
 }
@@ -370,6 +380,7 @@ _mesa_Translatef( GLfloat x, GLfloat y, GLfloat z )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLmatrix *mat = 0;
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    GET_ACTIVE_MATRIX(ctx, mat, ctx->NewState, "glTranslate");
    _math_matrix_translate( mat, x, y, z );
 }
@@ -425,6 +436,7 @@ void
 _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    gl_Viewport(ctx, x, y, width, height);
 }
 
@@ -441,8 +453,6 @@ _mesa_Viewport( GLint x, GLint y, GLsizei width, GLsizei height )
 void
 gl_Viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height )
 {
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glViewport");
-
    if (width<0 || height<0) {
       gl_error( ctx,  GL_INVALID_VALUE, "glViewport" );
       return;
@@ -461,7 +471,9 @@ gl_Viewport( GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height )
    ctx->Viewport.Y = y;
    ctx->Viewport.Height = height;
 
-   /* compute scale and bias values */
+   /* compute scale and bias values :: This is really driver-specific
+    * and should be maintained elsewhere if at all.
+    */
    ctx->Viewport._WindowMap.m[MAT_SX] = (GLfloat) width / 2.0F;
    ctx->Viewport._WindowMap.m[MAT_TX] = ctx->Viewport._WindowMap.m[MAT_SX] + x;
    ctx->Viewport._WindowMap.m[MAT_SY] = (GLfloat) height / 2.0F;
@@ -500,7 +512,7 @@ _mesa_DepthRange( GLclampd nearval, GLclampd farval )
     */
    GLfloat n, f;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glDepthRange");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE&VERBOSE_API)
       fprintf(stderr, "glDepthRange %f %f\n", nearval, farval);

@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.25 2000/11/24 10:25:06 keithw Exp $ */
+/* $Id: texstate.c,v 1.26 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -69,259 +69,294 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexEnv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target==GL_TEXTURE_ENV) {
       switch (pname) {
-         case GL_TEXTURE_ENV_MODE:
-            {
-               GLenum mode = (GLenum) (GLint) *param;
-               switch (mode) {
-                  case GL_MODULATE:
-                  case GL_BLEND:
-                  case GL_DECAL:
-                  case GL_REPLACE:
-                  case GL_ADD:
-                  case GL_COMBINE_EXT:
-                     if (mode == GL_ADD &&
-                         !ctx->Extensions.EXT_texture_env_add) {
-                        gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(param)");
-                        return;
-                     }
-                     if (mode == GL_COMBINE_EXT &&
-                         !ctx->Extensions.EXT_texture_env_combine) {
-                        gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(param)");
-                        return;
-                     }
-                     if (texUnit->EnvMode == mode)
-                        return;  /* no change */
-                     texUnit->EnvMode = mode;
-                     break;
-                  default:
-                     gl_error( ctx, GL_INVALID_VALUE, "glTexEnv(param)" );
-                     return;
-               }
-            }
-            break;
-         case GL_TEXTURE_ENV_COLOR:
-            texUnit->EnvColor[0] = CLAMP( param[0], 0.0F, 1.0F );
-            texUnit->EnvColor[1] = CLAMP( param[1], 0.0F, 1.0F );
-            texUnit->EnvColor[2] = CLAMP( param[2], 0.0F, 1.0F );
-            texUnit->EnvColor[3] = CLAMP( param[3], 0.0F, 1.0F );
-            break;
-         case GL_COMBINE_RGB_EXT:
-            if (ctx->Extensions.EXT_texture_env_combine) {
-               GLenum mode = (GLenum) (GLint) *param;
-               switch (mode) {
-                  case GL_REPLACE:
-                  case GL_MODULATE:
-                  case GL_ADD:
-                  case GL_ADD_SIGNED_EXT:
-                  case GL_INTERPOLATE_EXT:
-                     if (texUnit->CombineModeRGB == mode)
-                        return;  /* no change */
-                     texUnit->CombineModeRGB = mode;
-                     break;
-                  default:
-                     gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
-                     return;
-               }
-            }
-            else {
-               gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
-               return;
-            }
-            break;
-         case GL_COMBINE_ALPHA_EXT:
-            if (ctx->Extensions.EXT_texture_env_combine) {
-               GLenum mode = (GLenum) (GLint) *param;
-               switch (mode) {
-                  case GL_REPLACE:
-                  case GL_MODULATE:
-                  case GL_ADD:
-                  case GL_ADD_SIGNED_EXT:
-                  case GL_INTERPOLATE_EXT:
-                     if (texUnit->CombineModeA == mode)
-                        return;  /* no change */
-                     texUnit->CombineModeA = mode;
-                     break;
-                  default:
-                     gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
-                     return;
-               }
-            }
-            else {
-               gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
-               return;
-            }
-            break;
-         case GL_SOURCE0_RGB_EXT:
-         case GL_SOURCE1_RGB_EXT:
-         case GL_SOURCE2_RGB_EXT:
-            if (ctx->Extensions.EXT_texture_env_combine) {
-               GLenum source = (GLenum) (GLint) *param;
-               GLuint s = pname - GL_SOURCE0_RGB_EXT;
-               switch (source) {
-                  case GL_TEXTURE:
-                  case GL_CONSTANT_EXT:
-                  case GL_PRIMARY_COLOR_EXT:
-                  case GL_PREVIOUS_EXT:
-                     if (texUnit->CombineSourceRGB[s] == source)
-                        return;  /* no change */
-                     texUnit->CombineSourceRGB[s] = source;
-                     break;
-                  default:
-                     gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
-                     return;
-               }
-            }
-            else {
-               gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
-               return;
-            }
-            break;
-         case GL_SOURCE0_ALPHA_EXT:
-         case GL_SOURCE1_ALPHA_EXT:
-         case GL_SOURCE2_ALPHA_EXT:
-            if (ctx->Extensions.EXT_texture_env_combine) {
-               GLenum source = (GLenum) (GLint) *param;
-               GLuint s = pname - GL_SOURCE0_ALPHA_EXT;
-               switch (source) {
-                  case GL_TEXTURE:
-                  case GL_CONSTANT_EXT:
-                  case GL_PRIMARY_COLOR_EXT:
-                  case GL_PREVIOUS_EXT:
-                     if (texUnit->CombineSourceA[s] == source) return;
-                     texUnit->CombineSourceA[s] = source;
-                     break;
-                  default:
-                     gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
-                     return;
-               }
-            }
-            else {
-               gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
-               return;
-            }
-            break;
-         case GL_OPERAND0_RGB_EXT:
-         case GL_OPERAND1_RGB_EXT:
-            if (ctx->Extensions.EXT_texture_env_combine) {
-               GLenum operand = (GLenum) (GLint) *param;
-               GLuint s = pname - GL_OPERAND0_RGB_EXT;
-               switch (operand) {
-                  case GL_SRC_COLOR:
-                  case GL_ONE_MINUS_SRC_COLOR:
-                  case GL_SRC_ALPHA:
-                  case GL_ONE_MINUS_SRC_ALPHA:
-                     texUnit->CombineOperandRGB[s] = operand;
-                     break;
-                  default:
-                     gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
-                     return;
-               }
-            }
-            else {
-               gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
-               return;
-            }
-            break;
-         case GL_OPERAND0_ALPHA_EXT:
-         case GL_OPERAND1_ALPHA_EXT:
-            if (ctx->Extensions.EXT_texture_env_combine) {
-               GLenum operand = (GLenum) (GLint) *param;
-               switch (operand) {
-                  case GL_SRC_ALPHA:
-                  case GL_ONE_MINUS_SRC_ALPHA:
-                     texUnit->CombineOperandA[pname-GL_OPERAND0_ALPHA_EXT]
-                        = operand;
-                     break;
-                  default:
-                     gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
-                     return;
-               }
-            }
-            else {
-               gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
-               return;
-            }
-            break;
-         case GL_OPERAND2_RGB_EXT:
-            if (ctx->Extensions.EXT_texture_env_combine) {
-               if ((GLenum) (GLint) *param == GL_SRC_ALPHA) {
-                  texUnit->CombineOperandRGB[2] = (GLenum) (GLint) *param;
-               }
-               else {
-                  gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
-                  return;
-               }
-            }
-            else {
-               gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
-               return;
-            }
-            break;
-         case GL_OPERAND2_ALPHA_EXT:
-            if (ctx->Extensions.EXT_texture_env_combine) {
-               if ((GLenum) (GLint) *param == GL_SRC_ALPHA) {
-                  texUnit->CombineOperandA[2] = (GLenum) (GLint) *param;
-               }
-               else {
-                  gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
-                  return;
-               }
-            }
-            else {
-               gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
-               return;
-            }
-            break;
-         case GL_RGB_SCALE_EXT:
-            if (ctx->Extensions.EXT_texture_env_combine) {
-               if (*param == 1.0) {
-                  texUnit->CombineScaleShiftRGB = 0;
-               }
-               else if (*param == 2.0) {
-                  texUnit->CombineScaleShiftRGB = 1;
-               }
-               else if (*param == 4.0) {
-                  texUnit->CombineScaleShiftRGB = 2;
-               }
-               else {
-                  gl_error( ctx, GL_INVALID_VALUE, "glTexEnv(param)" );
-                  return;
-               }
-            }
-            else {
-               gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
-               return;
-            }
-            break;
-         case GL_ALPHA_SCALE:
-            if (ctx->Extensions.EXT_texture_env_combine) {
-               if (*param == 1.0) {
-                  texUnit->CombineScaleShiftA = 0;
-               }
-               else if (*param == 2.0) {
-                  texUnit->CombineScaleShiftA = 1;
-               }
-               else if (*param == 4.0) {
-                  texUnit->CombineScaleShiftA = 2;
-               }
-               else {
-                  gl_error( ctx, GL_INVALID_VALUE, "glTexEnv(param)" );
-                  return;
-               }
-            }
-            else {
-               gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
-               return;
-            }
-            break;
-         default:
-            gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname)" );
-            return;
+      case GL_TEXTURE_ENV_MODE: {
+	 GLenum mode = (GLenum) (GLint) *param;
+
+	 switch (mode) {
+	 case GL_ADD:
+	    if (!ctx->Extensions.EXT_texture_env_add) {
+	       gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(param)");
+	       return;
+	    }
+	    break;
+	 case GL_COMBINE_EXT:
+	    if (!ctx->Extensions.EXT_texture_env_combine) {
+	       gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(param)");
+	       return;
+	    }
+	    break;
+	 case GL_MODULATE:
+	 case GL_BLEND:
+	 case GL_DECAL:
+	 case GL_REPLACE:
+	    break;
+	 default:
+	    gl_error( ctx, GL_INVALID_VALUE, "glTexEnv(param)" );
+	    return;
+	 }
+
+	 if (texUnit->EnvMode == mode)
+	    return;  
+	 FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	 texUnit->EnvMode = mode;
+	 break;
+      }
+      case GL_TEXTURE_ENV_COLOR: {
+	 GLfloat tmp[4];
+	 tmp[0] = CLAMP( param[0], 0.0F, 1.0F );
+	 tmp[1] = CLAMP( param[1], 0.0F, 1.0F );
+	 tmp[2] = CLAMP( param[2], 0.0F, 1.0F );
+	 tmp[3] = CLAMP( param[3], 0.0F, 1.0F );
+	 if (TEST_EQ_4V(tmp, texUnit->EnvColor))
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	 COPY_4FV(texUnit->EnvColor, tmp);
+	 break;
+      }
+      case GL_COMBINE_RGB_EXT: 
+	 if (ctx->Extensions.EXT_texture_env_combine) {
+	    GLenum mode = (GLenum) (GLint) *param;
+	    switch (mode) {
+	    case GL_REPLACE:
+	    case GL_MODULATE:
+	    case GL_ADD:
+	    case GL_ADD_SIGNED_EXT:
+	    case GL_INTERPOLATE_EXT:
+	       break;
+	    default:
+	       gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
+	       return;
+	    }
+	    if (texUnit->CombineModeRGB == mode)
+	       return; 
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    texUnit->CombineModeRGB = mode;
+	 }
+	 else {
+	    gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
+	    return;
+	 }
+      case GL_COMBINE_ALPHA_EXT: 
+	 if (ctx->Extensions.EXT_texture_env_combine) {
+	    GLenum mode = (GLenum) (GLint) *param;
+	    switch (mode) {
+	    case GL_REPLACE:
+	    case GL_MODULATE:
+	    case GL_ADD:
+	    case GL_ADD_SIGNED_EXT:
+	    case GL_INTERPOLATE_EXT:
+	       if (texUnit->CombineModeA == mode)
+		  return;  
+	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	       texUnit->CombineModeA = mode;
+	       break;
+	    default:
+	       gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
+	       return;
+	    }
+	 }
+	 else {
+	    gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
+	    return;
+	 }
+	 break;
+      case GL_SOURCE0_RGB_EXT:
+      case GL_SOURCE1_RGB_EXT:
+      case GL_SOURCE2_RGB_EXT:
+	 if (ctx->Extensions.EXT_texture_env_combine) {
+	    GLenum source = (GLenum) (GLint) *param;
+	    GLuint s = pname - GL_SOURCE0_RGB_EXT;
+	    switch (source) {
+	    case GL_TEXTURE:
+	    case GL_CONSTANT_EXT:
+	    case GL_PRIMARY_COLOR_EXT:
+	    case GL_PREVIOUS_EXT:
+	       if (texUnit->CombineSourceRGB[s] == source)
+		  return;
+	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	       texUnit->CombineSourceRGB[s] = source;
+	       break;
+	    default:
+	       gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
+	       return;
+	    }
+	 }
+	 else {
+	    gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
+	    return;
+	 }
+	 break;
+      case GL_SOURCE0_ALPHA_EXT:
+      case GL_SOURCE1_ALPHA_EXT:
+      case GL_SOURCE2_ALPHA_EXT:
+	 if (ctx->Extensions.EXT_texture_env_combine) {
+	    GLenum source = (GLenum) (GLint) *param;
+	    GLuint s = pname - GL_SOURCE0_ALPHA_EXT;
+	    switch (source) {
+	    case GL_TEXTURE:
+	    case GL_CONSTANT_EXT:
+	    case GL_PRIMARY_COLOR_EXT:
+	    case GL_PREVIOUS_EXT:
+	       if (texUnit->CombineSourceA[s] == source) return;
+	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	       texUnit->CombineSourceA[s] = source;
+	       break;
+	    default:
+	       gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
+	       return;
+	    }
+	 }
+	 else {
+	    gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
+	    return;
+	 }
+	 break;
+      case GL_OPERAND0_RGB_EXT:
+      case GL_OPERAND1_RGB_EXT:
+	 if (ctx->Extensions.EXT_texture_env_combine) {
+	    GLenum operand = (GLenum) (GLint) *param;
+	    GLuint s = pname - GL_OPERAND0_RGB_EXT;
+	    switch (operand) {
+	    case GL_SRC_COLOR:
+	    case GL_ONE_MINUS_SRC_COLOR:
+	    case GL_SRC_ALPHA:
+	    case GL_ONE_MINUS_SRC_ALPHA:
+	       if (texUnit->CombineOperandRGB[s] == operand)
+		  return;
+	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	       texUnit->CombineOperandRGB[s] = operand;
+	       break;
+	    default:
+	       gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
+	       return;
+	    }
+	 }
+	 else {
+	    gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
+	    return;
+	 }
+	 break;
+      case GL_OPERAND0_ALPHA_EXT:
+      case GL_OPERAND1_ALPHA_EXT:
+	 if (ctx->Extensions.EXT_texture_env_combine) {
+	    GLenum operand = (GLenum) (GLint) *param;
+	    switch (operand) {
+	    case GL_SRC_ALPHA:
+	    case GL_ONE_MINUS_SRC_ALPHA:
+	       if (texUnit->CombineOperandA[pname-GL_OPERAND0_ALPHA_EXT] ==
+		   operand)
+		  return;
+	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	       texUnit->CombineOperandA[pname-GL_OPERAND0_ALPHA_EXT] = operand;
+	       break;
+	    default:
+	       gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
+	       return;
+	    }
+	 }
+	 else {
+	    gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
+	    return;
+	 }
+	 break;
+      case GL_OPERAND2_RGB_EXT:
+	 if (ctx->Extensions.EXT_texture_env_combine) {
+	    GLenum operand = (GLenum) (GLint) *param;
+	    switch (operand) {
+	    case GL_SRC_ALPHA:
+	       if (texUnit->CombineOperandRGB[2] == operand)
+		  return;
+	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	       texUnit->CombineOperandRGB[2] = operand;
+	    default:
+	       gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
+	       return;
+	    }
+	 }
+	 else {
+	    gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
+	    return;
+	 }
+	 break;
+      case GL_OPERAND2_ALPHA_EXT:
+	 if (ctx->Extensions.EXT_texture_env_combine) {
+	    GLenum operand = (GLenum) (GLint) *param;
+	    switch (operand) {
+	    case GL_SRC_ALPHA:
+	       if (texUnit->CombineOperandA[2] == operand)
+		  return;
+	       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	       texUnit->CombineOperandA[2] = operand;
+	       break;
+	    default:
+	       gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
+	       return;
+	    }
+	 }
+	 else {
+	    gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
+	    return;
+	 }
+	 break;
+      case GL_RGB_SCALE_EXT:
+	 if (ctx->Extensions.EXT_texture_env_combine) {
+	    GLuint newshift;
+	    if (*param == 1.0) {
+	       newshift = 0;
+	    }
+	    else if (*param == 2.0) {
+	       newshift = 1;
+	    }
+	    else if (*param == 4.0) {
+	       newshift = 2;
+	    }
+	    else {
+	       gl_error( ctx, GL_INVALID_VALUE, "glTexEnv(param)" );
+	       return;
+	    }
+	    if (texUnit->CombineScaleShiftRGB == newshift)
+	       return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    texUnit->CombineScaleShiftRGB = newshift;
+	 }
+	 else {
+	    gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
+	    return;
+	 }
+	 break;
+      case GL_ALPHA_SCALE:
+	 if (ctx->Extensions.EXT_texture_env_combine) {
+	    GLuint newshift;
+	    if (*param == 1.0) {
+	       newshift = 0;
+	    }
+	    else if (*param == 2.0) {
+	       newshift = 1;
+	    }
+	    else if (*param == 4.0) {
+	       newshift = 2;
+	    }
+	    else {
+	       gl_error( ctx, GL_INVALID_VALUE, "glTexEnv(param)" );
+	       return;
+	    }
+	    if (texUnit->CombineScaleShiftA == newshift)
+	       return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    texUnit->CombineScaleShiftA = newshift;
+	 }
+	 else {
+	    gl_error(ctx, GL_INVALID_ENUM, "glTexEnv(pname)");
+	    return;
+	 }
+	 break;
+      default:
+	 gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname)" );
+	 return;
       }
    }
    else if (target==GL_TEXTURE_FILTER_CONTROL_EXT) {
@@ -329,10 +364,14 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(param)" );
 	 return;
       }
-      if (pname == GL_TEXTURE_LOD_BIAS_EXT) {
+      switch (pname) {
+      case GL_TEXTURE_LOD_BIAS_EXT:
+	 if (texUnit->LodBias == param[0])
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	 texUnit->LodBias = param[0];
-      }
-      else {
+	 break;
+      default:
 	 gl_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname)" );
 	 return;
       }
@@ -353,8 +392,6 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
    if (ctx->Driver.TexEnv) {
       (*ctx->Driver.TexEnv)( ctx, target, pname, param );
    }
-
-   ctx->NewState |= _NEW_TEXTURE;
 }
 
 
@@ -393,8 +430,7 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexEnvfv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target!=GL_TEXTURE_ENV) {
       gl_error( ctx, GL_INVALID_ENUM, "glGetTexEnvfv(target)" );
@@ -447,8 +483,7 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexEnviv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target != GL_TEXTURE_ENV) {
       gl_error( ctx, GL_INVALID_ENUM, "glGetTexEnviv(target)" );
@@ -604,8 +639,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    GLenum eparam = (GLenum) (GLint) params[0];
    struct gl_texture_object *texObj;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexParameterfv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&(VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "texPARAM %s %s %d...\n",
@@ -806,8 +840,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    const struct gl_texture_image *img = NULL;
    GLuint dimensions;
    GLboolean isProxy;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexLevelParameter");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (level < 0 || level >= ctx->Const.MaxTextureLevels) {
       gl_error( ctx, GL_INVALID_VALUE, "glGetTexLevelParameter[if]v" );
@@ -919,8 +952,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_object *obj;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexParameterfv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    obj = _mesa_select_tex_object(ctx, texUnit, target);
    if (!obj) {
@@ -987,8 +1019,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_object *obj;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexParameteriv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    obj = _mesa_select_tex_object(ctx, texUnit, target);
    if (!obj) {
@@ -1069,7 +1100,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
    GET_CURRENT_CONTEXT(ctx);
    GLuint tUnit = ctx->Texture.CurrentTransformUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[tUnit];
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glTexGenfv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE&(VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "texGEN %s %s %x...\n",
@@ -1081,45 +1112,54 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
       case GL_S:
          if (pname==GL_TEXTURE_GEN_MODE) {
 	    GLenum mode = (GLenum) (GLint) *params;
+	    GLuint bits;
 	    switch (mode) {
 	    case GL_OBJECT_LINEAR:
-	       texUnit->GenModeS = mode;
-	       texUnit->_GenBitS = TEXGEN_OBJ_LINEAR;
+	       bits = TEXGEN_OBJ_LINEAR;
 	       break;
 	    case GL_EYE_LINEAR:
-	       texUnit->GenModeS = mode;
-	       texUnit->_GenBitS = TEXGEN_EYE_LINEAR;
+	       bits = TEXGEN_EYE_LINEAR;
 	       break;
 	    case GL_REFLECTION_MAP_NV:
-	       texUnit->GenModeS = mode;
-	       texUnit->_GenBitS = TEXGEN_REFLECTION_MAP_NV;
+	       bits = TEXGEN_REFLECTION_MAP_NV;
 	       break;
 	    case GL_NORMAL_MAP_NV:
-	       texUnit->GenModeS = mode;
-	       texUnit->_GenBitS = TEXGEN_NORMAL_MAP_NV;
+	       bits = TEXGEN_NORMAL_MAP_NV;
 	       break;
 	    case GL_SPHERE_MAP:
-	       texUnit->GenModeS = mode;
-	       texUnit->_GenBitS = TEXGEN_SPHERE_MAP;
+	       bits = TEXGEN_SPHERE_MAP;
 	       break;
 	    default:
 	       gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
 	       return;
 	    }
+	    if (texUnit->GenModeS == mode)
+	       return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    texUnit->GenModeS = mode;
+	    texUnit->_GenBitS = bits;
 	 }
 	 else if (pname==GL_OBJECT_PLANE) {
+	    if (TEST_EQ_4V(texUnit->ObjectPlaneS, params))
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	    texUnit->ObjectPlaneS[0] = params[0];
 	    texUnit->ObjectPlaneS[1] = params[1];
 	    texUnit->ObjectPlaneS[2] = params[2];
 	    texUnit->ObjectPlaneS[3] = params[3];
 	 }
 	 else if (pname==GL_EYE_PLANE) {
+	    GLfloat tmp[4];
+
             /* Transform plane equation by the inverse modelview matrix */
             if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
                _math_matrix_analyse( &ctx->ModelView );
             }
-            gl_transform_vector( texUnit->EyePlaneS, params,
-                                 ctx->ModelView.inv );
+            gl_transform_vector( tmp, params, ctx->ModelView.inv );
+	    if (TEST_EQ_4V(texUnit->EyePlaneS, tmp))
+	       return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    COPY_4FV(texUnit->EyePlaneS, tmp);
 	 }
 	 else {
 	    gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(pname)" );
@@ -1129,45 +1169,53 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
       case GL_T:
          if (pname==GL_TEXTURE_GEN_MODE) {
 	    GLenum mode = (GLenum) (GLint) *params;
+	    GLuint bitt;
 	    switch (mode) {
                case GL_OBJECT_LINEAR:
-                  texUnit->GenModeT = GL_OBJECT_LINEAR;
-                  texUnit->_GenBitT = TEXGEN_OBJ_LINEAR;
+                  bitt = TEXGEN_OBJ_LINEAR;
                   break;
                case GL_EYE_LINEAR:
-                  texUnit->GenModeT = GL_EYE_LINEAR;
-                  texUnit->_GenBitT = TEXGEN_EYE_LINEAR;
+                  bitt = TEXGEN_EYE_LINEAR;
                   break;
                case GL_REFLECTION_MAP_NV:
-                  texUnit->GenModeT = GL_REFLECTION_MAP_NV;
-                  texUnit->_GenBitT = TEXGEN_REFLECTION_MAP_NV;
+                  bitt = TEXGEN_REFLECTION_MAP_NV;
                   break;
                case GL_NORMAL_MAP_NV:
-                  texUnit->GenModeT = GL_NORMAL_MAP_NV;
-                  texUnit->_GenBitT = TEXGEN_NORMAL_MAP_NV;
+                  bitt = TEXGEN_NORMAL_MAP_NV;
                   break;
                case GL_SPHERE_MAP:
-                  texUnit->GenModeT = GL_SPHERE_MAP;
-                  texUnit->_GenBitT = TEXGEN_SPHERE_MAP;
+                  bitt = TEXGEN_SPHERE_MAP;
                   break;
                default:
                   gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
                   return;
 	    }
+	    if (texUnit->GenModeT == mode)
+	       return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    texUnit->GenModeT = mode;
+	    texUnit->_GenBitT = bitt;
 	 }
 	 else if (pname==GL_OBJECT_PLANE) {
+	    if (TEST_EQ_4V(texUnit->ObjectPlaneT, params))
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	    texUnit->ObjectPlaneT[0] = params[0];
 	    texUnit->ObjectPlaneT[1] = params[1];
 	    texUnit->ObjectPlaneT[2] = params[2];
 	    texUnit->ObjectPlaneT[3] = params[3];
 	 }
 	 else if (pname==GL_EYE_PLANE) {
+	    GLfloat tmp[4];
             /* Transform plane equation by the inverse modelview matrix */
-            if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
+	    if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
                _math_matrix_analyse( &ctx->ModelView );
             }
-            gl_transform_vector( texUnit->EyePlaneT, params,
-                                 ctx->ModelView.inv );
+            gl_transform_vector( tmp, params, ctx->ModelView.inv );
+	    if (TEST_EQ_4V(texUnit->EyePlaneT, tmp))
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    COPY_4FV(texUnit->EyePlaneT, tmp);
 	 }
 	 else {
 	    gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(pname)" );
@@ -1177,41 +1225,50 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
       case GL_R:
          if (pname==GL_TEXTURE_GEN_MODE) {
 	    GLenum mode = (GLenum) (GLint) *params;
+	    GLuint bitr;
 	    switch (mode) {
 	    case GL_OBJECT_LINEAR:
-	       texUnit->GenModeR = GL_OBJECT_LINEAR;
-	       texUnit->_GenBitR = TEXGEN_OBJ_LINEAR;
+	       bitr = TEXGEN_OBJ_LINEAR;
 	       break;
 	    case GL_REFLECTION_MAP_NV:
-	       texUnit->GenModeR = GL_REFLECTION_MAP_NV;
-	       texUnit->_GenBitR = TEXGEN_REFLECTION_MAP_NV;
+	       bitr = TEXGEN_REFLECTION_MAP_NV;
 	       break;
 	    case GL_NORMAL_MAP_NV:
-	       texUnit->GenModeR = GL_NORMAL_MAP_NV;
-	       texUnit->_GenBitR = TEXGEN_NORMAL_MAP_NV;
+	       bitr = TEXGEN_NORMAL_MAP_NV;
 	       break;
 	    case GL_EYE_LINEAR:
-	       texUnit->GenModeR = GL_EYE_LINEAR;
-	       texUnit->_GenBitR = TEXGEN_EYE_LINEAR;
+	       bitr = TEXGEN_EYE_LINEAR;
 	       break;
 	    default:
 	       gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
 	       return;
 	    }
+	    if (texUnit->GenModeR == mode)
+	       return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    texUnit->GenModeR = mode;
+	    texUnit->_GenBitR = bitr;
 	 }
 	 else if (pname==GL_OBJECT_PLANE) {
+	    if (TEST_EQ_4V(texUnit->ObjectPlaneR, params))
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	    texUnit->ObjectPlaneR[0] = params[0];
 	    texUnit->ObjectPlaneR[1] = params[1];
 	    texUnit->ObjectPlaneR[2] = params[2];
 	    texUnit->ObjectPlaneR[3] = params[3];
 	 }
 	 else if (pname==GL_EYE_PLANE) {
+	    GLfloat tmp[4];
             /* Transform plane equation by the inverse modelview matrix */
             if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
                _math_matrix_analyse( &ctx->ModelView );
             }
-            gl_transform_vector( texUnit->EyePlaneR, params,
-                                 ctx->ModelView.inv );
+            gl_transform_vector( tmp, params, ctx->ModelView.inv );
+	    if (TEST_EQ_4V(texUnit->EyePlaneR, tmp))
+	       return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    COPY_4FV(texUnit->EyePlaneR, tmp);
 	 }
 	 else {
 	    gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(pname)" );
@@ -1221,33 +1278,44 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
       case GL_Q:
          if (pname==GL_TEXTURE_GEN_MODE) {
 	    GLenum mode = (GLenum) (GLint) *params;
+	    GLuint bitq;
 	    switch (mode) {
 	    case GL_OBJECT_LINEAR:
-	       texUnit->GenModeQ = GL_OBJECT_LINEAR;
-	       texUnit->_GenBitQ = TEXGEN_OBJ_LINEAR;
+	       bitq = TEXGEN_OBJ_LINEAR;
 	       break;
 	    case GL_EYE_LINEAR:
-	       texUnit->GenModeQ = GL_EYE_LINEAR;
-	       texUnit->_GenBitQ = TEXGEN_EYE_LINEAR;
+	       bitq = TEXGEN_EYE_LINEAR;
 	       break;
 	    default:
 	       gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(param)" );
 	       return;
 	    }
+	    if (texUnit->GenModeQ == mode)
+	       return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    texUnit->GenModeQ = mode;
+	    texUnit->_GenBitQ = bitq;
 	 }
 	 else if (pname==GL_OBJECT_PLANE) {
+	    if (TEST_EQ_4V(texUnit->ObjectPlaneQ, params))
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
 	    texUnit->ObjectPlaneQ[0] = params[0];
 	    texUnit->ObjectPlaneQ[1] = params[1];
 	    texUnit->ObjectPlaneQ[2] = params[2];
 	    texUnit->ObjectPlaneQ[3] = params[3];
 	 }
 	 else if (pname==GL_EYE_PLANE) {
+	    GLfloat tmp[4];
             /* Transform plane equation by the inverse modelview matrix */
             if (ctx->ModelView.flags & MAT_DIRTY_INVERSE) {
                _math_matrix_analyse( &ctx->ModelView );
             }
-            gl_transform_vector( texUnit->EyePlaneQ, params,
-                                 ctx->ModelView.inv );
+            gl_transform_vector( tmp, params, ctx->ModelView.inv );
+	    if (TEST_EQ_4V(texUnit->EyePlaneQ, tmp))
+	       return;
+	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+	    COPY_4FV(texUnit->EyePlaneQ, tmp);
 	 }
 	 else {
 	    gl_error( ctx, GL_INVALID_ENUM, "glTexGenfv(pname)" );
@@ -1261,8 +1329,6 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
    
    if (ctx->Driver.TexGen)
       ctx->Driver.TexGen( ctx, coord, pname, params );
-
-   ctx->NewState |= _NEW_TEXTURE;
 }
 
 
@@ -1319,8 +1385,7 @@ _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
    GET_CURRENT_CONTEXT(ctx);
    GLuint tUnit = ctx->Texture.CurrentTransformUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[tUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexGendv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (coord) {
       case GL_S:
@@ -1397,8 +1462,7 @@ _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
    GET_CURRENT_CONTEXT(ctx);
    GLuint tUnit = ctx->Texture.CurrentTransformUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[tUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexGenfv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (coord) {
       case GL_S:
@@ -1475,8 +1539,7 @@ _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
    GET_CURRENT_CONTEXT(ctx);
    GLuint tUnit = ctx->Texture.CurrentTransformUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[tUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetTexGeniv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (coord) {
       case GL_S:
@@ -1575,25 +1638,23 @@ void
 _mesa_ActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLint maxUnits = ctx->Const.MaxTextureUnits;
-
-   ASSERT_OUTSIDE_BEGIN_END( ctx, "glActiveTextureARB" );
+   GLuint texUnit = target - GL_TEXTURE0_ARB;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
       fprintf(stderr, "glActiveTexture %s\n",
 	      gl_lookup_enum_by_nr(target));
 
-   if (target >= GL_TEXTURE0_ARB && target < GL_TEXTURE0_ARB + maxUnits) {
-      GLint texUnit = target - GL_TEXTURE0_ARB;
-      ctx->Texture.CurrentUnit = texUnit;
-      ctx->Texture.CurrentTransformUnit = texUnit;
-      if (ctx->Driver.ActiveTexture) {
-         (*ctx->Driver.ActiveTexture)( ctx, (GLuint) texUnit );
-      }
-      ctx->NewState |= _NEW_TEXTURE;
-   }
-   else {
+   if (texUnit > ctx->Const.MaxTextureUnits) {
       gl_error(ctx, GL_INVALID_OPERATION, "glActiveTextureARB(target)");
+      return;
+   }
+
+   FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+   ctx->Texture.CurrentUnit = texUnit;
+   ctx->Texture.CurrentTransformUnit = texUnit;
+   if (ctx->Driver.ActiveTexture) {
+      (*ctx->Driver.ActiveTexture)( ctx, (GLuint) texUnit );
    }
 }
 
@@ -1603,16 +1664,14 @@ void
 _mesa_ClientActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLint maxUnits = ctx->Const.MaxTextureUnits;
+   GLuint texUnit = target - GL_TEXTURE0_ARB;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   ASSERT_OUTSIDE_BEGIN_END( ctx, "glClientActiveTextureARB" );
-
-   if (target >= GL_TEXTURE0_ARB && target < GL_TEXTURE0_ARB + maxUnits) {
-      GLint texUnit = target - GL_TEXTURE0_ARB;
-      ctx->Array.ActiveTexture = texUnit;
-      ctx->NewState |= _NEW_ARRAY;
-   }
-   else {
+   if (texUnit > ctx->Const.MaxTextureUnits) {
       gl_error(ctx, GL_INVALID_OPERATION, "glActiveTextureARB(target)");
+      return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_ARRAY);
+   ctx->Array.ActiveTexture = texUnit;
 }

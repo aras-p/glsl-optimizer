@@ -1,4 +1,4 @@
-/* $Id: eval.c,v 1.16 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: eval.c,v 1.17 2000/12/26 05:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -234,104 +234,6 @@ GLfloat *gl_copy_map_points2d(GLenum target,
 }
 
 
-#if 00
-/*
- * This function is called by the display list deallocator function to
- * specify that a given set of control points are no longer needed.
- */
-void gl_free_control_points( GLcontext* ctx, GLenum target, GLfloat *data )
-{
-   struct gl_1d_map *map1 = NULL;
-   struct gl_2d_map *map2 = NULL;
-
-   switch (target) {
-      case GL_MAP1_VERTEX_3:
-         map1 = &ctx->EvalMap.Map1Vertex3;
-         break;
-      case GL_MAP1_VERTEX_4:
-         map1 = &ctx->EvalMap.Map1Vertex4;
-	 break;
-      case GL_MAP1_INDEX:
-         map1 = &ctx->EvalMap.Map1Index;
-         break;
-      case GL_MAP1_COLOR_4:
-         map1 = &ctx->EvalMap.Map1Color4;
-         break;
-      case GL_MAP1_NORMAL:
-         map1 = &ctx->EvalMap.Map1Normal;
-	 break;
-      case GL_MAP1_TEXTURE_COORD_1:
-         map1 = &ctx->EvalMap.Map1Texture1;
-	 break;
-      case GL_MAP1_TEXTURE_COORD_2:
-         map1 = &ctx->EvalMap.Map1Texture2;
-	 break;
-      case GL_MAP1_TEXTURE_COORD_3:
-         map1 = &ctx->EvalMap.Map1Texture3;
-	 break;
-      case GL_MAP1_TEXTURE_COORD_4:
-         map1 = &ctx->EvalMap.Map1Texture4;
-	 break;
-      case GL_MAP2_VERTEX_3:
-         map2 = &ctx->EvalMap.Map2Vertex3;
-	 break;
-      case GL_MAP2_VERTEX_4:
-         map2 = &ctx->EvalMap.Map2Vertex4;
-	 break;
-      case GL_MAP2_INDEX:
-         map2 = &ctx->EvalMap.Map2Index;
-	 break;
-      case GL_MAP2_COLOR_4:
-         map2 = &ctx->EvalMap.Map2Color4;
-         break;
-      case GL_MAP2_NORMAL:
-         map2 = &ctx->EvalMap.Map2Normal;
-	 break;
-      case GL_MAP2_TEXTURE_COORD_1:
-         map2 = &ctx->EvalMap.Map2Texture1;
-	 break;
-      case GL_MAP2_TEXTURE_COORD_2:
-         map2 = &ctx->EvalMap.Map2Texture2;
-	 break;
-      case GL_MAP2_TEXTURE_COORD_3:
-         map2 = &ctx->EvalMap.Map2Texture3;
-	 break;
-      case GL_MAP2_TEXTURE_COORD_4:
-         map2 = &ctx->EvalMap.Map2Texture4;
-	 break;
-      default:
-	 gl_error( ctx, GL_INVALID_ENUM, "gl_free_control_points" );
-         return;
-   }
-
-   if (map1) {
-      if (data==map1->Points) {
-         /* The control points in the display list are currently */
-         /* being used so we can mark them as discard-able. */
-         map1->Retain = GL_FALSE;
-      }
-      else {
-         /* The control points in the display list are not currently */
-         /* being used. */
-         FREE( data );
-      }
-   }
-   if (map2) {
-      if (data==map2->Points) {
-         /* The control points in the display list are currently */
-         /* being used so we can mark them as discard-able. */
-         map2->Retain = GL_FALSE;
-      }
-      else {
-         /* The control points in the display list are not currently */
-         /* being used. */
-         FREE( data );
-      }
-   }
-
-}
-#endif
-
 
 
 /**********************************************************************/
@@ -349,8 +251,8 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
    GET_CURRENT_CONTEXT(ctx);
    GLint k;
    GLfloat *pnts;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glMap1");
+   struct gl_1d_map *map = 0;
+   ASSERT_OUTSIDE_BEGIN_END(ctx); 
 
    assert(type == GL_FLOAT || type == GL_DOUBLE);
 
@@ -377,99 +279,54 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
       return;
    }
 
+   switch (target) {
+      case GL_MAP1_VERTEX_3:
+         map = &ctx->EvalMap.Map1Vertex3;
+	 break;
+      case GL_MAP1_VERTEX_4:
+         map = &ctx->EvalMap.Map1Vertex4;
+	 break;
+      case GL_MAP1_INDEX:
+         map = &ctx->EvalMap.Map1Index;
+	 break;
+      case GL_MAP1_COLOR_4:
+         map = &ctx->EvalMap.Map1Color4;
+	 break;
+      case GL_MAP1_NORMAL:
+         map = &ctx->EvalMap.Map1Normal;
+	 break;
+      case GL_MAP1_TEXTURE_COORD_1:
+         map = &ctx->EvalMap.Map1Texture1;
+	 break;
+      case GL_MAP1_TEXTURE_COORD_2:
+         map = &ctx->EvalMap.Map1Texture2;
+	 break;
+      case GL_MAP1_TEXTURE_COORD_3:
+         map = &ctx->EvalMap.Map1Texture3;
+	 break;
+      case GL_MAP1_TEXTURE_COORD_4:
+         map = &ctx->EvalMap.Map1Texture4;
+	 break;
+      default:
+         gl_error( ctx, GL_INVALID_ENUM, "glMap1(target)" );
+	 return;
+   }
+
    /* make copy of the control points */
    if (type == GL_FLOAT)
       pnts = gl_copy_map_points1f(target, ustride, uorder, (GLfloat*) points);
    else
       pnts = gl_copy_map_points1d(target, ustride, uorder, (GLdouble*) points);
 
-   switch (target) {
-      case GL_MAP1_VERTEX_3:
-         ctx->EvalMap.Map1Vertex3.Order = uorder;
-	 ctx->EvalMap.Map1Vertex3.u1 = u1;
-	 ctx->EvalMap.Map1Vertex3.u2 = u2;
-	 ctx->EvalMap.Map1Vertex3.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Vertex3.Points)
-	    FREE( ctx->EvalMap.Map1Vertex3.Points );
-	 ctx->EvalMap.Map1Vertex3.Points = pnts;
-	 break;
-      case GL_MAP1_VERTEX_4:
-         ctx->EvalMap.Map1Vertex4.Order = uorder;
-	 ctx->EvalMap.Map1Vertex4.u1 = u1;
-	 ctx->EvalMap.Map1Vertex4.u2 = u2;
-	 ctx->EvalMap.Map1Vertex4.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Vertex4.Points)
-	    FREE( ctx->EvalMap.Map1Vertex4.Points );
-	 ctx->EvalMap.Map1Vertex4.Points = pnts;
-	 break;
-      case GL_MAP1_INDEX:
-         ctx->EvalMap.Map1Index.Order = uorder;
-	 ctx->EvalMap.Map1Index.u1 = u1;
-	 ctx->EvalMap.Map1Index.u2 = u2;
-	 ctx->EvalMap.Map1Index.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Index.Points)
-	    FREE( ctx->EvalMap.Map1Index.Points );
-	 ctx->EvalMap.Map1Index.Points = pnts;
-	 break;
-      case GL_MAP1_COLOR_4:
-         ctx->EvalMap.Map1Color4.Order = uorder;
-	 ctx->EvalMap.Map1Color4.u1 = u1;
-	 ctx->EvalMap.Map1Color4.u2 = u2;
-	 ctx->EvalMap.Map1Color4.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Color4.Points)
-	    FREE( ctx->EvalMap.Map1Color4.Points );
-	 ctx->EvalMap.Map1Color4.Points = pnts;
-	 break;
-      case GL_MAP1_NORMAL:
-         ctx->EvalMap.Map1Normal.Order = uorder;
-	 ctx->EvalMap.Map1Normal.u1 = u1;
-	 ctx->EvalMap.Map1Normal.u2 = u2;
-	 ctx->EvalMap.Map1Normal.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Normal.Points)
-	    FREE( ctx->EvalMap.Map1Normal.Points );
-	 ctx->EvalMap.Map1Normal.Points = pnts;
-	 break;
-      case GL_MAP1_TEXTURE_COORD_1:
-         ctx->EvalMap.Map1Texture1.Order = uorder;
-	 ctx->EvalMap.Map1Texture1.u1 = u1;
-	 ctx->EvalMap.Map1Texture1.u2 = u2;
-	 ctx->EvalMap.Map1Texture1.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Texture1.Points)
-	    FREE( ctx->EvalMap.Map1Texture1.Points );
-	 ctx->EvalMap.Map1Texture1.Points = pnts;
-	 break;
-      case GL_MAP1_TEXTURE_COORD_2:
-         ctx->EvalMap.Map1Texture2.Order = uorder;
-	 ctx->EvalMap.Map1Texture2.u1 = u1;
-	 ctx->EvalMap.Map1Texture2.u2 = u2;
-	 ctx->EvalMap.Map1Texture2.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Texture2.Points)
-	    FREE( ctx->EvalMap.Map1Texture2.Points );
-	 ctx->EvalMap.Map1Texture2.Points = pnts;
-	 break;
-      case GL_MAP1_TEXTURE_COORD_3:
-         ctx->EvalMap.Map1Texture3.Order = uorder;
-	 ctx->EvalMap.Map1Texture3.u1 = u1;
-	 ctx->EvalMap.Map1Texture3.u2 = u2;
-	 ctx->EvalMap.Map1Texture3.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Texture3.Points)
-	    FREE( ctx->EvalMap.Map1Texture3.Points );
-	 ctx->EvalMap.Map1Texture3.Points = pnts;
-	 break;
-      case GL_MAP1_TEXTURE_COORD_4:
-         ctx->EvalMap.Map1Texture4.Order = uorder;
-	 ctx->EvalMap.Map1Texture4.u1 = u1;
-	 ctx->EvalMap.Map1Texture4.u2 = u2;
-	 ctx->EvalMap.Map1Texture4.du = 1.0 / (u2 - u1);
-	 if (ctx->EvalMap.Map1Texture4.Points)
-	    FREE( ctx->EvalMap.Map1Texture4.Points );
-	 ctx->EvalMap.Map1Texture4.Points = pnts;
-	 break;
-      default:
-         gl_error( ctx, GL_INVALID_ENUM, "glMap1(target)" );
-   }
 
-   ctx->NewState |= _NEW_EVAL;
+   FLUSH_VERTICES(ctx, _NEW_EVAL);
+   map->Order = uorder;
+   map->u1 = u1;
+   map->u2 = u2;
+   map->du = 1.0 / (u2 - u1);
+   if (map->Points)
+      FREE( map->Points );
+   map->Points = pnts;
 }
 
 
@@ -498,8 +355,8 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
    GET_CURRENT_CONTEXT(ctx);
    GLint k;
    GLfloat *pnts;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glMap2");
+   struct gl_2d_map *map = 0;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (u1==u2) {
       gl_error( ctx, GL_INVALID_VALUE, "glMap2(u1,u2)" );
@@ -535,6 +392,39 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
       return;
    }
 
+   switch (target) {
+      case GL_MAP2_VERTEX_3:
+         map = &ctx->EvalMap.Map2Vertex3;
+	 break;
+      case GL_MAP2_VERTEX_4:
+         map = &ctx->EvalMap.Map2Vertex4;
+	 break;
+      case GL_MAP2_INDEX:
+         map = &ctx->EvalMap.Map2Index;
+	 break;
+      case GL_MAP2_COLOR_4:
+         map = &ctx->EvalMap.Map2Color4;
+	 break;
+      case GL_MAP2_NORMAL:
+         map = &ctx->EvalMap.Map2Normal;
+	 break;
+      case GL_MAP2_TEXTURE_COORD_1:
+         map = &ctx->EvalMap.Map2Texture1;
+	 break;
+      case GL_MAP2_TEXTURE_COORD_2:
+         map = &ctx->EvalMap.Map2Texture2;
+	 break;
+      case GL_MAP2_TEXTURE_COORD_3:
+         map = &ctx->EvalMap.Map2Texture3;
+	 break;
+      case GL_MAP2_TEXTURE_COORD_4:
+         map = &ctx->EvalMap.Map2Texture4;
+	 break;
+      default:
+         gl_error( ctx, GL_INVALID_ENUM, "glMap2(target)" );
+	 return;
+   }
+
    /* make copy of the control points */
    if (type == GL_FLOAT)
       pnts = gl_copy_map_points2f(target, ustride, uorder,
@@ -542,130 +432,20 @@ map2( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
    else
       pnts = gl_copy_map_points2d(target, ustride, uorder,
                                   vstride, vorder, (GLdouble*) points);
-
-   switch (target) {
-      case GL_MAP2_VERTEX_3:
-         ctx->EvalMap.Map2Vertex3.Uorder = uorder;
-	 ctx->EvalMap.Map2Vertex3.u1 = u1;
-	 ctx->EvalMap.Map2Vertex3.u2 = u2;
-	 ctx->EvalMap.Map2Vertex3.du = 1.0 / (u2 - u1);
-         ctx->EvalMap.Map2Vertex3.Vorder = vorder;
-	 ctx->EvalMap.Map2Vertex3.v1 = v1;
-	 ctx->EvalMap.Map2Vertex3.v2 = v2;
-	 ctx->EvalMap.Map2Vertex3.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Vertex3.Points)
-	    FREE( ctx->EvalMap.Map2Vertex3.Points );
-	 ctx->EvalMap.Map2Vertex3.Points = pnts;
-	 break;
-      case GL_MAP2_VERTEX_4:
-         ctx->EvalMap.Map2Vertex4.Uorder = uorder;
-	 ctx->EvalMap.Map2Vertex4.u1 = u1;
-	 ctx->EvalMap.Map2Vertex4.u2 = u2;
-	 ctx->EvalMap.Map2Vertex4.du = 1.0 / (u2 - u1);
-         ctx->EvalMap.Map2Vertex4.Vorder = vorder;
-	 ctx->EvalMap.Map2Vertex4.v1 = v1;
-	 ctx->EvalMap.Map2Vertex4.v2 = v2;
-	 ctx->EvalMap.Map2Vertex4.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Vertex4.Points)
-	    FREE( ctx->EvalMap.Map2Vertex4.Points );
-	 ctx->EvalMap.Map2Vertex4.Points = pnts;
-	 break;
-      case GL_MAP2_INDEX:
-         ctx->EvalMap.Map2Index.Uorder = uorder;
-	 ctx->EvalMap.Map2Index.u1 = u1;
-	 ctx->EvalMap.Map2Index.u2 = u2;
-	 ctx->EvalMap.Map2Index.du = 1.0 / (u2 - u1);
-         ctx->EvalMap.Map2Index.Vorder = vorder;
-	 ctx->EvalMap.Map2Index.v1 = v1;
-	 ctx->EvalMap.Map2Index.v2 = v2;
-	 ctx->EvalMap.Map2Index.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Index.Points)
-	    FREE( ctx->EvalMap.Map2Index.Points );
-	 ctx->EvalMap.Map2Index.Points = pnts;
-	 break;
-      case GL_MAP2_COLOR_4:
-         ctx->EvalMap.Map2Color4.Uorder = uorder;
-	 ctx->EvalMap.Map2Color4.u1 = u1;
-	 ctx->EvalMap.Map2Color4.u2 = u2;
-	 ctx->EvalMap.Map2Color4.du = 1.0 / (u2 - u1);
-         ctx->EvalMap.Map2Color4.Vorder = vorder;
-	 ctx->EvalMap.Map2Color4.v1 = v1;
-	 ctx->EvalMap.Map2Color4.v2 = v2;
-	 ctx->EvalMap.Map2Color4.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Color4.Points)
-	    FREE( ctx->EvalMap.Map2Color4.Points );
-	 ctx->EvalMap.Map2Color4.Points = pnts;
-	 break;
-      case GL_MAP2_NORMAL:
-         ctx->EvalMap.Map2Normal.Uorder = uorder;
-	 ctx->EvalMap.Map2Normal.u1 = u1;
-	 ctx->EvalMap.Map2Normal.u2 = u2;
-	 ctx->EvalMap.Map2Normal.du = 1.0 / (u2 - u1);
-         ctx->EvalMap.Map2Normal.Vorder = vorder;
-	 ctx->EvalMap.Map2Normal.v1 = v1;
-	 ctx->EvalMap.Map2Normal.v2 = v2;
-	 ctx->EvalMap.Map2Normal.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Normal.Points)
-	    FREE( ctx->EvalMap.Map2Normal.Points );
-	 ctx->EvalMap.Map2Normal.Points = pnts;
-	 break;
-      case GL_MAP2_TEXTURE_COORD_1:
-         ctx->EvalMap.Map2Texture1.Uorder = uorder;
-	 ctx->EvalMap.Map2Texture1.u1 = u1;
-	 ctx->EvalMap.Map2Texture1.u2 = u2;
-	 ctx->EvalMap.Map2Texture1.du = 1.0 / (u2 - u1);
-         ctx->EvalMap.Map2Texture1.Vorder = vorder;
-	 ctx->EvalMap.Map2Texture1.v1 = v1;
-	 ctx->EvalMap.Map2Texture1.v2 = v2;
-	 ctx->EvalMap.Map2Texture1.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Texture1.Points)
-	    FREE( ctx->EvalMap.Map2Texture1.Points );
-	 ctx->EvalMap.Map2Texture1.Points = pnts;
-	 break;
-      case GL_MAP2_TEXTURE_COORD_2:
-         ctx->EvalMap.Map2Texture2.Uorder = uorder;
-	 ctx->EvalMap.Map2Texture2.u1 = u1;
-	 ctx->EvalMap.Map2Texture2.u2 = u2;
-	 ctx->EvalMap.Map2Texture2.du = 1.0 / (u2 - u1);
-         ctx->EvalMap.Map2Texture2.Vorder = vorder;
-	 ctx->EvalMap.Map2Texture2.v1 = v1;
-	 ctx->EvalMap.Map2Texture2.v2 = v2;
-	 ctx->EvalMap.Map2Texture2.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Texture2.Points)
-	    FREE( ctx->EvalMap.Map2Texture2.Points );
-	 ctx->EvalMap.Map2Texture2.Points = pnts;
-	 break;
-      case GL_MAP2_TEXTURE_COORD_3:
-         ctx->EvalMap.Map2Texture3.Uorder = uorder;
-	 ctx->EvalMap.Map2Texture3.u1 = u1;
-	 ctx->EvalMap.Map2Texture3.u2 = u2;
-	 ctx->EvalMap.Map2Texture3.du = 1.0 / (u2 - u1);
-         ctx->EvalMap.Map2Texture3.Vorder = vorder;
-	 ctx->EvalMap.Map2Texture3.v1 = v1;
-	 ctx->EvalMap.Map2Texture3.v2 = v2;
-	 ctx->EvalMap.Map2Texture3.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Texture3.Points)
-	    FREE( ctx->EvalMap.Map2Texture3.Points );
-	 ctx->EvalMap.Map2Texture3.Points = pnts;
-	 break;
-      case GL_MAP2_TEXTURE_COORD_4:
-         ctx->EvalMap.Map2Texture4.Uorder = uorder;
-	 ctx->EvalMap.Map2Texture4.u1 = u1;
-	 ctx->EvalMap.Map2Texture4.u2 = u2;
-	 ctx->EvalMap.Map2Texture4.du = 1.0 / (u2 - u1);
-         ctx->EvalMap.Map2Texture4.Vorder = vorder;
-	 ctx->EvalMap.Map2Texture4.v1 = v1;
-	 ctx->EvalMap.Map2Texture4.v2 = v2;
-	 ctx->EvalMap.Map2Texture4.dv = 1.0 / (v2 - v1);
-	 if (ctx->EvalMap.Map2Texture4.Points)
-	    FREE( ctx->EvalMap.Map2Texture4.Points );
-	 ctx->EvalMap.Map2Texture4.Points = pnts;
-	 break;
-      default:
-         gl_error( ctx, GL_INVALID_ENUM, "glMap2(target)" );
-   }
-
-   ctx->NewState |= _NEW_EVAL;
+   
+   
+   FLUSH_VERTICES(ctx, _NEW_EVAL);
+   map->Uorder = uorder;
+   map->u1 = u1;
+   map->u2 = u2;
+   map->du = 1.0 / (u2 - u1);
+   map->Vorder = vorder;
+   map->v1 = v1;
+   map->v2 = v2;
+   map->dv = 1.0 / (v2 - v1);
+   if (map->Points)
+      FREE( map->Points );
+   map->Points = pnts;
 }
 
 
@@ -698,6 +478,7 @@ _mesa_GetMapdv( GLenum target, GLenum query, GLdouble *v )
    GET_CURRENT_CONTEXT(ctx);
    GLint i, n;
    GLfloat *data;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (query) {
       case GL_COEFF:
@@ -971,6 +752,7 @@ _mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v )
    GET_CURRENT_CONTEXT(ctx);
    GLint i, n;
    GLfloat *data;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (query) {
       case GL_COEFF:
@@ -1244,6 +1026,7 @@ _mesa_GetMapiv( GLenum target, GLenum query, GLint *v )
    GET_CURRENT_CONTEXT(ctx);
    GLuint i, n;
    GLfloat *data;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (query) {
       case GL_COEFF:
@@ -1516,18 +1299,17 @@ void
 _mesa_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glMapGrid1f");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (un<1) {
       gl_error( ctx, GL_INVALID_VALUE, "glMapGrid1f" );
       return;
    }
+   FLUSH_VERTICES(ctx, _NEW_EVAL);
    ctx->Eval.MapGrid1un = un;
    ctx->Eval.MapGrid1u1 = u1;
    ctx->Eval.MapGrid1u2 = u2;
    ctx->Eval.MapGrid1du = (u2 - u1) / (GLfloat) un;
-
-   ctx->NewState |= _NEW_EVAL;
 }
 
 
@@ -1543,7 +1325,8 @@ _mesa_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
                  GLint vn, GLfloat v1, GLfloat v2 )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glMapGrid2f");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    if (un<1) {
       gl_error( ctx, GL_INVALID_VALUE, "glMapGrid2f(un)" );
       return;
@@ -1552,6 +1335,8 @@ _mesa_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
       gl_error( ctx, GL_INVALID_VALUE, "glMapGrid2f(vn)" );
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_EVAL);
    ctx->Eval.MapGrid2un = un;
    ctx->Eval.MapGrid2u1 = u1;
    ctx->Eval.MapGrid2u2 = u2;
@@ -1560,8 +1345,6 @@ _mesa_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
    ctx->Eval.MapGrid2v1 = v1;
    ctx->Eval.MapGrid2v2 = v2;
    ctx->Eval.MapGrid2dv = (v2 - v1) / (GLfloat) vn;
-
-   ctx->NewState |= _NEW_EVAL;
 }
 
 

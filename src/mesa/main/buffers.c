@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.20 2000/11/22 07:32:16 joukj Exp $ */
+/* $Id: buffers.c,v 1.21 2000/12/26 05:09:27 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -49,9 +49,14 @@ void
 _mesa_ClearIndex( GLfloat c )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glClearIndex");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (ctx->Color.ClearIndex == (GLuint)c)
+      return;
+   
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
    ctx->Color.ClearIndex = (GLuint) c;
-   ctx->NewState |= _NEW_COLOR;
 
    if (!ctx->Visual.RGBAflag) {
       /* it's OK to call glClearIndex in RGBA mode but it should be a NOP */
@@ -65,14 +70,20 @@ void
 _mesa_ClearColor( GLclampf red, GLclampf green,
                   GLclampf blue, GLclampf alpha )
 {
+   GLfloat tmp[4];
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glClearColor");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   ctx->Color.ClearColor[0] = CLAMP( red,   0.0F, 1.0F );
-   ctx->Color.ClearColor[1] = CLAMP( green, 0.0F, 1.0F );
-   ctx->Color.ClearColor[2] = CLAMP( blue,  0.0F, 1.0F );
-   ctx->Color.ClearColor[3] = CLAMP( alpha, 0.0F, 1.0F );
-   ctx->NewState |= _NEW_COLOR;
+   tmp[0] = CLAMP( red,   0.0, 1.0 );
+   tmp[1] = CLAMP( green, 0.0, 1.0 );
+   tmp[2] = CLAMP( blue,  0.0, 1.0 );
+   tmp[3] = CLAMP( alpha, 0.0, 1.0 );
+
+   if (TEST_EQ_4V(tmp, ctx->Color.ClearColor))
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_COLOR);
+   COPY_4FV( ctx->Color.ClearColor, tmp );
 
    if (ctx->Visual.RGBAflag) {
       GLchan r = (GLint) (ctx->Color.ClearColor[0] * CHAN_MAXF);
@@ -92,7 +103,7 @@ void
 _mesa_Clear( GLbitfield mask )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glClear");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glClear 0x%x\n", mask);
@@ -149,7 +160,8 @@ void
 _mesa_DrawBuffer( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glDrawBuffer");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* too complex... */
+
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glDrawBuffer %s\n", gl_lookup_enum_by_nr(mode));
@@ -301,7 +313,7 @@ void
 _mesa_ReadBuffer( GLenum mode )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glReadBuffer");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       fprintf(stderr, "glReadBuffer %s\n", gl_lookup_enum_by_nr(mode));

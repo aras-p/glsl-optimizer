@@ -1,4 +1,4 @@
-/* $Id: m_dotprod_tmp.h,v 1.1 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: m_dotprod_tmp.h,v 1.2 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,18 +31,16 @@
 
 /* Note - respects the stride of the output vector.
  */
-static void TAG(dotprod_vec2)( GLvector4f *out_vec, 
-			     GLuint elt,
-			     const GLvector4f *coord_vec, 
-			     const GLfloat plane[4], 
-			     const GLubyte mask[])
+static void TAG(dotprod_vec2)( GLfloat *out, 
+			       GLuint outstride,
+			       const GLvector4f *coord_vec, 
+			       const GLfloat plane[4], 
+			       const GLubyte mask[])
 {
    GLuint stride = coord_vec->stride;
    GLfloat *coord = coord_vec->start;
    GLuint count = coord_vec->count;
 
-   GLuint outstride = out_vec->stride;
-   GLfloat *out = out_vec->start + elt;
    GLuint i;
    
    const GLfloat plane0 = plane[0], plane1 = plane[1], plane3 = plane[3];
@@ -56,21 +54,18 @@ static void TAG(dotprod_vec2)( GLvector4f *out_vec,
 		            plane3);
       }
    }   
-   out_vec->count = coord_vec->count;
 }
 
-static void TAG(dotprod_vec3)( GLvector4f *out_vec, 
-			     GLuint elt,
-			     const GLvector4f *coord_vec, 
-			     const GLfloat plane[4], 
-			     const GLubyte mask[])
+static void TAG(dotprod_vec3)( GLfloat *out, 
+			       GLuint outstride,
+			       const GLvector4f *coord_vec, 
+			       const GLfloat plane[4], 
+			       const GLubyte mask[])
 {
    GLuint stride = coord_vec->stride;
    GLfloat *coord = coord_vec->start;
    GLuint count = coord_vec->count;
 
-   GLuint outstride = out_vec->stride;
-   GLfloat *out = out_vec->start + elt;
    GLuint i;
 
    const GLfloat plane0 = plane[0], plane1 = plane[1], plane2 = plane[2];
@@ -86,21 +81,17 @@ static void TAG(dotprod_vec3)( GLvector4f *out_vec,
 		            plane3);
       }
    }   
-   out_vec->count = coord_vec->count;
 }
 
-static void TAG(dotprod_vec4)( GLvector4f *out_vec, 
-			     GLuint elt,
-			     const GLvector4f *coord_vec, 
-			     const GLfloat plane[4], 
-			     const GLubyte mask[])
+static void TAG(dotprod_vec4)( GLfloat *out, 
+			       GLuint outstride,
+			       const GLvector4f *coord_vec, 
+			       const GLfloat plane[4], 
+			       const GLubyte mask[])
 {
    GLuint stride = coord_vec->stride;
    GLfloat *coord = coord_vec->start;
    GLuint count = coord_vec->count;
-
-   GLuint outstride = out_vec->stride;
-   GLfloat *out = out_vec->start + elt;
    GLuint i;
 
    const GLfloat plane0 = plane[0], plane1 = plane[1], plane2 = plane[2];
@@ -116,7 +107,6 @@ static void TAG(dotprod_vec4)( GLvector4f *out_vec,
 		 coord[3] * plane3);
       }
    }   
-   out_vec->count = coord_vec->count;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: texutil.c,v 1.10 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: texutil.c,v 1.11 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -135,6 +135,10 @@ _mesa_convert_teximage(MesaIntTexFormat dstFormat,
                GLubyte *dst = (GLubyte *) dstImage;
                GLint row;
                for (row = 0; row < dstHeight; row++) {
+		  GLuint i;
+		  for (i = 0 ; i < dstWidth ; i++)
+		     fprintf(stderr, "%02x ", src[i]);
+		  fprintf(stderr, "\n");
                   MEMCPY(dst, src, dstWidth * sizeof(GLubyte));
                   dst += dstRowStride;
                   src += srcStride;

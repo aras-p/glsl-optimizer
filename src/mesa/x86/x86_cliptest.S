@@ -1,4 +1,4 @@
-/* $Id: x86_cliptest.S,v 1.2 2000/10/23 00:16:28 gareth Exp $ */
+/* $Id: x86_cliptest.S,v 1.3 2000/12/26 05:09:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -132,7 +132,7 @@ LLBL( ctp4_clip_table_ready ):
 	OR_L( CONST(VEC_SIZE_4), REGOFF(V4F_FLAGS, EDI) )
 	MOV_L( EAX, ARG_SOURCE )	/* put stride in ARG_SOURCE */
 
-	MOV_L( CONST(3), REGOFF(V4F_SIZE, EDI) )
+	MOV_L( CONST(4), REGOFF(V4F_SIZE, EDI) )
 	MOV_L( ECX, REGOFF(V4F_COUNT, EDI) )
 
 	MOV_L( REGOFF(V4F_START, EDI), EDI )

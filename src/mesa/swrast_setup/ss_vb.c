@@ -31,7 +31,6 @@
 #include "swrast/swrast.h"
 
 #include "tnl/t_context.h"
-#include "tnl/t_stages.h"
 
 #include "math/m_vector.h"
 #include "ss_context.h"
@@ -44,8 +43,8 @@
  * in this module, but not the rest of the swrast module.
  */
 
-typedef void (*SetupFunc)( struct vertex_buffer *VB, 
-				 GLuint start, GLuint end );
+typedef void (*SetupFunc)( GLcontext *ctx,
+			   GLuint start, GLuint end, GLuint newinputs );
 
 #define COLOR         0x1
 #define INDEX         0x2
@@ -59,47 +58,145 @@ typedef void (*SetupFunc)( struct vertex_buffer *VB,
 static SetupFunc setup_func[MAX_SETUPFUNC];
 
 
+#define IND (0)
+#define TAG(x) x##_none
+#include "ss_vbtmp.h"
+
 #define IND (COLOR)
 #define TAG(x) x##_color
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|SPEC)
+#define TAG(x) x##_color_spec
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|FOG)
+#define TAG(x) x##_color_fog
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|SPEC|FOG)
+#define TAG(x) x##_color_spec_fog
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|TEX0)
+#define TAG(x) x##_color_tex0
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|TEX0|SPEC)
+#define TAG(x) x##_color_tex0_spec
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|TEX0|FOG)
+#define TAG(x) x##_color_tex0_fog
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|TEX0|SPEC|FOG)
+#define TAG(x) x##_color_tex0_spec_fog
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|MULTITEX)
+#define TAG(x) x##_color_multitex
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|MULTITEX|SPEC)
+#define TAG(x) x##_color_multitex_spec
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|MULTITEX|FOG)
+#define TAG(x) x##_color_multitex_fog
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|MULTITEX|SPEC|FOG)
+#define TAG(x) x##_color_multitex_spec_fog
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|POINT)
+#define TAG(x) x##_color_point
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|SPEC|POINT)
+#define TAG(x) x##_color_spec_point
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|FOG|POINT)
+#define TAG(x) x##_color_fog_point
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|SPEC|FOG|POINT)
+#define TAG(x) x##_color_spec_fog_point
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|TEX0|POINT)
+#define TAG(x) x##_color_tex0_point
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|TEX0|SPEC|POINT)
+#define TAG(x) x##_color_tex0_spec_point
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|TEX0|FOG|POINT)
+#define TAG(x) x##_color_tex0_fog_point
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|TEX0|SPEC|FOG|POINT)
+#define TAG(x) x##_color_tex0_spec_fog_point
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|MULTITEX|POINT)
+#define TAG(x) x##_color_multitex_point
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|MULTITEX|SPEC|POINT)
+#define TAG(x) x##_color_multitex_spec_point
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|MULTITEX|FOG|POINT)
+#define TAG(x) x##_color_multitex_fog_point
+#include "ss_vbtmp.h"
+
+#define IND (COLOR|MULTITEX|SPEC|FOG|POINT)
+#define TAG(x) x##_color_multitex_spec_fog_point
 #include "ss_vbtmp.h"
 
 #define IND (INDEX)
 #define TAG(x) x##_index
 #include "ss_vbtmp.h"
 
-#define IND (TEX0|COLOR)
-#define TAG(x) x##_tex0_color
+#define IND (INDEX|TEX0)
+#define TAG(x) x##_index_tex0
 #include "ss_vbtmp.h"
 
-#define IND (TEX0|COLOR|SPEC)
-#define TAG(x) x##_tex0_color_spec
+#define IND (INDEX|FOG)
+#define TAG(x) x##_index_fog
 #include "ss_vbtmp.h"
 
-#define IND (TEX0|COLOR|SPEC|FOG)
-#define TAG(x) x##_tex0_color_spec_fog
+#define IND (INDEX|TEX0|FOG)
+#define TAG(x) x##_index_tex0_fog
 #include "ss_vbtmp.h"
 
-#define IND (MULTITEX|COLOR)
-#define TAG(x) x##_multitex_color
+#define IND (INDEX|POINT)
+#define TAG(x) x##_index_point
 #include "ss_vbtmp.h"
 
-#define IND (MULTITEX|COLOR|SPEC|FOG)
-#define TAG(x) x##_multitex_color_spec_fog
+#define IND (INDEX|TEX0|POINT)
+#define TAG(x) x##_index_tex0_point
 #include "ss_vbtmp.h"
 
-#define IND (TEX0|COLOR|POINT)
-#define TAG(x) x##_tex0_color_point
+#define IND (INDEX|FOG|POINT)
+#define TAG(x) x##_index_fog_point
 #include "ss_vbtmp.h"
 
-#define IND (MULTITEX|COLOR|SPEC|INDEX|POINT|FOG)
-#define TAG(x) x##_multitex_color_spec_index_point_fog
-#include "ss_vbtmp.h"
-
-#define IND (COLOR|INDEX|TEX0)
-#define TAG(x) x##_selection_feedback
+#define IND (INDEX|TEX0|FOG|POINT)
+#define TAG(x) x##_index_tex0_fog_point
 #include "ss_vbtmp.h"
 
 
+static void
+rs_invalid( GLcontext *ctx, GLuint start, GLuint end, GLuint newinputs )
+{
+   fprintf(stderr, "swrast_setup: invalid setup function\n");
+   (void) (ctx && start && end && newinputs);
+}
 
 void 
 _swsetup_vb_init( GLcontext *ctx )
@@ -108,45 +205,41 @@ _swsetup_vb_init( GLcontext *ctx )
    (void) ctx;
 
    for (i = 0 ; i < Elements(setup_func) ; i++)
-      setup_func[i] = rs_multitex_color_spec_index_point_fog;
+      setup_func[i] = rs_invalid;
 
-   /* Some specialized cases:
-    */
-   setup_func[0]     = rs_color;
+   setup_func[0] = rs_none;
    setup_func[COLOR] = rs_color;
-
+   setup_func[COLOR|SPEC] = rs_color_spec;
+   setup_func[COLOR|FOG] = rs_color_fog;
+   setup_func[COLOR|SPEC|FOG] = rs_color_spec_fog;
+   setup_func[COLOR|TEX0] = rs_color_tex0;
+   setup_func[COLOR|TEX0|SPEC] = rs_color_tex0_spec;
+   setup_func[COLOR|TEX0|FOG] = rs_color_tex0_fog;
+   setup_func[COLOR|TEX0|SPEC|FOG] = rs_color_tex0_spec_fog;
+   setup_func[COLOR|MULTITEX] = rs_color_multitex;
+   setup_func[COLOR|MULTITEX|SPEC] = rs_color_multitex_spec;
+   setup_func[COLOR|MULTITEX|FOG] = rs_color_multitex_fog;
+   setup_func[COLOR|MULTITEX|SPEC|FOG] = rs_color_multitex_spec_fog;
+   setup_func[COLOR|POINT] = rs_color_point;
+   setup_func[COLOR|SPEC|POINT] = rs_color_spec_point;
+   setup_func[COLOR|FOG|POINT] = rs_color_fog_point;
+   setup_func[COLOR|SPEC|FOG|POINT] = rs_color_spec_fog_point;
+   setup_func[COLOR|TEX0|POINT] = rs_color_tex0_point;
+   setup_func[COLOR|TEX0|SPEC|POINT] = rs_color_tex0_spec_point;
+   setup_func[COLOR|TEX0|FOG|POINT] = rs_color_tex0_fog_point;
+   setup_func[COLOR|TEX0|SPEC|FOG|POINT] = rs_color_tex0_spec_fog_point;
+   setup_func[COLOR|MULTITEX|POINT] = rs_color_multitex_point;
+   setup_func[COLOR|MULTITEX|SPEC|POINT] = rs_color_multitex_spec_point;
+   setup_func[COLOR|MULTITEX|FOG|POINT] = rs_color_multitex_fog_point;
+   setup_func[COLOR|MULTITEX|SPEC|FOG|POINT] = rs_color_multitex_spec_fog_point;
    setup_func[INDEX] = rs_index;
-   
-   setup_func[TEX0]       = rs_tex0_color;
-   setup_func[TEX0|COLOR] = rs_tex0_color;
-
-   setup_func[SPEC]            = rs_tex0_color_spec;
-   setup_func[COLOR|SPEC]      = rs_tex0_color_spec;
-   setup_func[TEX0|SPEC]       = rs_tex0_color_spec;
-   setup_func[TEX0|COLOR|SPEC] = rs_tex0_color_spec;
-
-   setup_func[MULTITEX]       = rs_multitex_color;
-   setup_func[MULTITEX|COLOR] = rs_multitex_color;
-
-   setup_func[FOG]                      = rs_tex0_color_spec_fog;
-   setup_func[COLOR|FOG]                = rs_tex0_color_spec_fog;
-   setup_func[SPEC|FOG]                 = rs_tex0_color_spec_fog;
-   setup_func[COLOR|SPEC|FOG]           = rs_tex0_color_spec_fog;
-   setup_func[TEX0|FOG]                 = rs_tex0_color_spec_fog;
-   setup_func[TEX0|COLOR|FOG]           = rs_tex0_color_spec_fog;
-   setup_func[TEX0|SPEC|FOG]            = rs_tex0_color_spec_fog;
-   setup_func[TEX0|COLOR|SPEC|FOG]      = rs_tex0_color_spec_fog;
-
-   setup_func[MULTITEX|SPEC]            = rs_multitex_color_spec_fog;
-   setup_func[MULTITEX|COLOR|SPEC]      = rs_multitex_color_spec_fog;
-   setup_func[MULTITEX|FOG]             = rs_multitex_color_spec_fog;
-   setup_func[MULTITEX|SPEC|FOG]        = rs_multitex_color_spec_fog;
-   setup_func[MULTITEX|COLOR|SPEC|FOG]  = rs_multitex_color_spec_fog;
-
-   setup_func[TEX0|POINT]       = rs_tex0_color_point;
-   setup_func[TEX0|COLOR|POINT] = rs_tex0_color_point;
-
-   setup_func[COLOR|INDEX|TEX0] = rs_selection_feedback;
+   setup_func[INDEX|TEX0] = rs_index_tex0;
+   setup_func[INDEX|FOG] = rs_index_fog;
+   setup_func[INDEX|TEX0|FOG] = rs_index_tex0_fog;
+   setup_func[INDEX|POINT] = rs_index_point;
+   setup_func[INDEX|TEX0|POINT] = rs_index_tex0_point;
+   setup_func[INDEX|FOG|POINT] = rs_index_fog_point;
+   setup_func[INDEX|TEX0|FOG|POINT] = rs_index_tex0_fog_point;
 }
 
 
@@ -154,7 +247,7 @@ void
 _swsetup_choose_rastersetup_func(GLcontext *ctx)
 {
    SScontext *swsetup = SWSETUP_CONTEXT(ctx);
-   int funcindex;
+   int funcindex = 0;
 
    if (ctx->RenderMode == GL_RENDER) {
       if (ctx->Visual.RGBAflag) {
@@ -179,11 +272,16 @@ _swsetup_choose_rastersetup_func(GLcontext *ctx)
       if (ctx->Fog.Enabled)
 	 funcindex |= FOG;
    }
-   else {
-      /* feedback or section */
-      funcindex = (COLOR | INDEX | TEX0);
-   }
+   else if (ctx->RenderMode == GL_FEEDBACK) {
+      if (ctx->Visual.RGBAflag) 
+	 funcindex = (COLOR | TEX0); /* is feedback color subject to fogging? */
+      else
+	 funcindex = (INDEX | TEX0);
+   } 
+   else
+      funcindex = 0;
 
-   swsetup->RasterSetup = setup_func[funcindex];
+   swsetup->BuildProjVerts = setup_func[funcindex];
+   ASSERT(setup_func[funcindex] != rs_invalid);
 }
 

@@ -1,4 +1,4 @@
-/* $Id: api_loopback.c,v 1.3 2000/11/27 18:17:09 brianp Exp $ */
+/* $Id: api_loopback.c,v 1.4 2000/12/26 05:09:27 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -548,7 +548,7 @@ loopback_Indexd( GLdouble c )
 static void
 loopback_Indexf( GLfloat c )
 {
-   INDEX( (GLint) c );
+   INDEX( (GLuint) (GLint) c );
 }
 
 static void
@@ -1360,6 +1360,7 @@ loopback_SecondaryColor3usvEXT_f( const GLushort *v )
                    USHORT_TO_FLOAT(v[1]),
                    USHORT_TO_FLOAT(v[2]));
 }
+
 
 
 void

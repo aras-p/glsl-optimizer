@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.17 2000/11/27 18:22:13 brianp Exp $ */
+/* $Id: rastpos.c,v 1.18 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -241,14 +241,8 @@ static void raster_pos4f( GLcontext *ctx,
                           GLfloat x, GLfloat y, GLfloat z, GLfloat w )
 {
    GLfloat v[4], eye[4], clip[4], ndc[3], d;
-
-   /* KW: Added this test, which is in the spec.  We can't do this
-    *     inside begin/end any more because the ctx->Current values
-    *     aren't uptodate during that period.
-    */
-   FLUSH_TNL_RETURN(ctx, (FLUSH_INSIDE_BEGIN_END|
-			  FLUSH_STORED_VERTICES|
-			  FLUSH_UPDATE_CURRENT), "raster_pos4f");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT(ctx, 0);
 
    if (ctx->NewState)
       gl_update_state( ctx );

@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.30 2000/11/22 07:32:17 joukj Exp $ */
+/* $Id: fog.c,v 1.31 2000/12/26 05:09:28 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -84,39 +84,57 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLenum m;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glFog");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    switch (pname) {
       case GL_FOG_MODE:
          m = (GLenum) (GLint) *params;
-	 if (m==GL_LINEAR || m==GL_EXP || m==GL_EXP2) {
-	    ctx->Fog.Mode = m;
-	 }
-	 else {
+	 if (ctx->Fog.Mode == m)
+	    return;
+	 switch (m) {
+	 case GL_LINEAR:
+	 case GL_EXP:
+	 case GL_EXP2:
+	    break;
+	 default:
 	    gl_error( ctx, GL_INVALID_ENUM, "glFog" );
             return;
 	 }
+	 FLUSH_VERTICES(ctx, _NEW_FOG);
+	 ctx->Fog.Mode = m;
 	 break;
       case GL_FOG_DENSITY:
 	 if (*params<0.0) {
 	    gl_error( ctx, GL_INVALID_VALUE, "glFog" );
             return;
 	 }
-	 else {
-	    ctx->Fog.Density = *params;
-	 }
+	 if (ctx->Fog.Density == *params)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_FOG);
+	 ctx->Fog.Density = *params;
 	 break;
       case GL_FOG_START:
+	 if (ctx->Fog.Start == *params)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_FOG);
 	 ctx->Fog.Start = *params;
 	 break;
       case GL_FOG_END:
+	 if (ctx->Fog.End == *params)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_FOG);
 	 ctx->Fog.End = *params;
 	 break;
       case GL_FOG_INDEX:
-	 ctx->Fog.Index = *params;
+ 	 if (ctx->Fog.Index == *params)
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_FOG);
+ 	 ctx->Fog.Index = *params;
 	 break;
       case GL_FOG_COLOR:
+	 if (TEST_EQ_4V(ctx->Fog.Color, params))
+	    return;
+	 FLUSH_VERTICES(ctx, _NEW_FOG);
 	 ctx->Fog.Color[0] = params[0];
 	 ctx->Fog.Color[1] = params[1];
 	 ctx->Fog.Color[2] = params[2];
@@ -124,10 +142,14 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
          break;
       case GL_FOG_COORDINATE_SOURCE_EXT: {
 	 GLenum p = (GLenum)(GLint) *params;
-	 if (p == GL_FOG_COORDINATE_EXT || p == GL_FRAGMENT_DEPTH_EXT)
-	    ctx->Fog.FogCoordinateSource = p;
-	 else
+	 if (ctx->Fog.FogCoordinateSource == p)
+	    return;
+	 if (p != GL_FOG_COORDINATE_EXT && p != GL_FRAGMENT_DEPTH_EXT) {
 	    gl_error( ctx, GL_INVALID_ENUM, "glFog" );
+	    return;
+	 }
+	 FLUSH_VERTICES(ctx, _NEW_FOG);
+	 ctx->Fog.FogCoordinateSource = p;
 	 break;
       }
       default:

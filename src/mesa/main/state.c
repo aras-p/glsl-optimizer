@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.52 2000/12/16 00:19:12 brianp Exp $ */
+/* $Id: state.c,v 1.53 2000/12/26 05:09:29 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,8 +26,7 @@
 
 
 /*
- * This file initializes the immediate-mode dispatch table (which may
- * be state-dependant) and manages internal Mesa state update.
+ * This file manages internal Mesa state update.
  */
 
 
@@ -80,11 +79,9 @@
 #include "varray.h"
 #include "winpos.h"
 
-#include "swrast/swrast.h"
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
 #endif
-
 
 
 static int
@@ -110,6 +107,7 @@ _mesa_init_no_op_table(struct _glapi_table *table, GLuint tableSize)
       dispatch[i] = (void *) generic_noop;
    }
 }
+
 
 
 /*
@@ -501,27 +499,10 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 static void
 update_polygon( GLcontext *ctx )
 {
-   ctx->_TriangleCaps &= ~DD_TRI_CULL_FRONT_BACK;
+   ctx->_TriangleCaps &= ~(DD_TRI_CULL_FRONT_BACK | DD_TRI_OFFSET);
 
-   /* Setup CullBits bitmask */
-   if (ctx->Polygon.CullFlag) {
-      switch(ctx->Polygon.CullFaceMode) {
-      case GL_BACK:
-	 ctx->Polygon._CullBits = 1;
-	 break;
-      case GL_FRONT:
-	 ctx->Polygon._CullBits = 2;
-	 break;
-      default:
-      case GL_FRONT_AND_BACK:
-	 ctx->Polygon._CullBits = 0;
-	 ctx->_TriangleCaps |= DD_TRI_CULL_FRONT_BACK;
-	 break;
-      }
-   }
-   else {
-      ctx->Polygon._CullBits = 3;
-   }
+/*     if (ctx->Polygon.CullFlag && ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) */
+/*        ctx->_TriangleCaps |= DD_TRI_CULL_FRONT_BACK; */
 
    /* Any Polygon offsets enabled? */
    ctx->Polygon._OffsetAny = GL_FALSE;
@@ -587,8 +568,8 @@ update_tnl_spaces( GLcontext *ctx, GLuint oldneedeyecoords )
    else {
       GLuint new_state = ctx->NewState;
 
-      /* Recalculate that same state if and only if it has been
-       * invalidated by other statechanges.
+      /* Recalculate that same state only if it has been invalidated
+       * by other statechanges. 
        */
       if (new_state & _NEW_MODELVIEW)
 	 update_modelview_scale(ctx);
@@ -650,7 +631,6 @@ update_projection( GLcontext *ctx )
       }
    }
 }
-
 
 
 /*
@@ -725,13 +705,17 @@ update_image_transfer_state(GLcontext *ctx)
  * rendering any primitive.  Basically, function pointers and miscellaneous
  * flags are updated to reflect the current state of the state machine.
  *
- * Special care is taken with the derived value _NeedEyeCoords.  These
+ * The above constraint is now maintained largely by the two Exec
+ * dispatch tables, which trigger the appropriate flush on transition
+ * between State and Geometry modes.
+ *
+ * Special care is taken with the derived value _NeedEyeCoords.  This
  * is a bitflag which is updated with information from a number of
  * attribute groups (MODELVIEW, LIGHT, TEXTURE).  A lot of derived
  * state references this value, and must be treated with care to
  * ensure that updates are done correctly.  All state dependent on
  * _NeedEyeCoords is calculated from within _mesa_update_tnl_spaces(),
- * and from nowhere else.
+ * and from nowhere else.  
  */
 void gl_update_state( GLcontext *ctx )
 {
@@ -755,7 +739,7 @@ void gl_update_state( GLcontext *ctx )
 
    /* References ColorMatrix.type (derived above).
     */
-   if (new_state & (_NEW_PIXEL|_NEW_COLOR_MATRIX))
+   if (new_state & _IMAGE_NEW_TRANSFER_STATE)
       update_image_transfer_state(ctx);
 
    /* Contributes to NeedEyeCoords, NeedNormals.
@@ -784,27 +768,20 @@ void gl_update_state( GLcontext *ctx )
 	    ctx->_NeedEyeCoords |= NEED_EYE_LIGHT_MODELVIEW;
    }
 
-   /* point attenuation requires eye coords */
-   if (new_state & _NEW_POINT) {
-      if (ctx->Point._Attenuated) {
-         ctx->_NeedEyeCoords |= NEED_EYE_POINT_ATTEN;
-      }
-   }
 
-   /* ctx->_NeedEyeCoords and ctx->_NeedEyeNormals are now uptodate.
+   /* ctx->_NeedEyeCoords is now uptodate.
     *
-    * If the truth value of either has changed, update for the new
-    * lighting space and recompute the positions of lights and the
+    * If the truth value of this variable has changed, update for the
+    * new lighting space and recompute the positions of lights and the
     * normal transform.
     *
     * If the lighting space hasn't changed, may still need to recompute
-    * light positions & normal transforms for other reasons.
+    * light positions & normal transforms for other reasons. 
     */
    if (new_state & (_NEW_MODELVIEW |
 		    _NEW_PROJECTION |
-		    _TNL_NEW_NORMAL_TRANSFORM |
 		    _NEW_LIGHT |
-		    _TNL_NEW_NEED_EYE_COORDS))
+		    _MESA_NEW_NEED_EYE_COORDS))
       update_tnl_spaces( ctx, oldneedeyecoords );
 
    /*
@@ -812,7 +789,12 @@ void gl_update_state( GLcontext *ctx )
     * to it's specific, private functions, and performs any
     * internal state management necessary, including invalidating
     * state of active modules.
+    *
+    * Set ctx->NewState to zero to avoid recursion if
+    * Driver.UpdateState() has to call FLUSH_VERTICES().  (fixed?)
     */
-   ctx->Driver.UpdateState(ctx);
    ctx->NewState = 0;
+   ctx->Driver.UpdateState(ctx, new_state);
+   
+   ctx->Array.NewState = 0;
 }
