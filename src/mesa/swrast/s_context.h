@@ -274,7 +274,7 @@ typedef struct
     */
    GLuint _RasterMask;
    GLfloat _MinMagThresh[MAX_TEXTURE_IMAGE_UNITS];
-   GLfloat _backface_sign;
+   GLfloat _BackfaceSign;
    GLboolean _PreferPixelFog;
    GLboolean _AnyTextureCombine;
 

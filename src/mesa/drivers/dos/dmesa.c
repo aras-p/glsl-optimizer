@@ -605,7 +605,7 @@ static void tri_rgb_flat (GLcontext *ctx,
  m2.win[0] = v2->win[0];
  m2.win[1] = FLIP2(v2->win[1]);
  *(unsigned long *)m2.color = *(unsigned long *)v2->color;
- mga_draw_tri_rgb_flat((int)SWRAST_CONTEXT(ctx)->_backface_sign, &m0, &m1, &m2);
+ mga_draw_tri_rgb_flat((int)SWRAST_CONTEXT(ctx)->_BackfaceSign, &m0, &m1, &m2);
 }
 #endif /* MATROX */
 
@@ -660,7 +660,7 @@ static void tri_rgb_flat_zless (GLcontext *ctx,
  m2.win[1] = FLIP2(v2->win[1]);
  m2.win[2] = v2->win[2];
  *(unsigned long *)m2.color = *(unsigned long *)v2->color;
- mga_draw_tri_rgb_flat_zless((int)SWRAST_CONTEXT(ctx)->_backface_sign, &m0, &m1, &m2);
+ mga_draw_tri_rgb_flat_zless((int)SWRAST_CONTEXT(ctx)->_BackfaceSign, &m0, &m1, &m2);
 }
 #endif /* MATROX */
 
@@ -710,7 +710,7 @@ static void tri_rgb_iter (GLcontext *ctx,
  *(unsigned long *)m0.color = *(unsigned long *)v0->color;
  *(unsigned long *)m1.color = *(unsigned long *)v1->color;
  *(unsigned long *)m2.color = *(unsigned long *)v2->color;
- mga_draw_tri_rgb_iter((int)SWRAST_CONTEXT(ctx)->_backface_sign, &m0, &m1, &m2);
+ mga_draw_tri_rgb_iter((int)SWRAST_CONTEXT(ctx)->_BackfaceSign, &m0, &m1, &m2);
 }
 #endif /* MATROX */
 
@@ -770,7 +770,7 @@ static void tri_rgb_iter_zless (GLcontext *ctx,
  *(unsigned long *)m0.color = *(unsigned long *)v0->color;
  *(unsigned long *)m1.color = *(unsigned long *)v1->color;
  *(unsigned long *)m2.color = *(unsigned long *)v2->color;
- mga_draw_tri_rgb_iter_zless((int)SWRAST_CONTEXT(ctx)->_backface_sign, &m0, &m1, &m2);
+ mga_draw_tri_rgb_iter_zless((int)SWRAST_CONTEXT(ctx)->_BackfaceSign, &m0, &m1, &m2);
 }
 #endif /* MATROX */
 

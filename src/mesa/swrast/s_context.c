@@ -135,7 +135,7 @@ _swrast_update_polygon( GLcontext *ctx )
       backface_sign = 0;
    }
 
-   SWRAST_CONTEXT(ctx)->_backface_sign = backface_sign;
+   SWRAST_CONTEXT(ctx)->_BackfaceSign = backface_sign;
 }
 
 

@@ -123,7 +123,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
    EdgeT eMaj, eTop, eBot;
    GLfloat oneOverArea;
    const SWvertex *vMin, *vMid, *vMax;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
-   float bf = SWRAST_CONTEXT(ctx)->_backface_sign;
+   GLfloat bf = SWRAST_CONTEXT(ctx)->_BackfaceSign;
    const GLint snapMask = ~((FIXED_ONE / (1 << SUB_PIXEL_BITS)) - 1); /* for x/y coord snapping */
    GLfixed vMin_fx, vMin_fy, vMid_fx, vMid_fy, vMax_fx, vMax_fy;
 

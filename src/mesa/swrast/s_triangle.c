@@ -60,7 +60,7 @@ GLboolean _swrast_culltriangle( GLcontext *ctx,
    GLfloat fy = v2->win[1] - v0->win[1];
    GLfloat c = ex*fy-ey*fx;
 
-   if (c * SWRAST_CONTEXT(ctx)->_backface_sign > 0)
+   if (c * SWRAST_CONTEXT(ctx)->_BackfaceSign > 0)
       return 0;
 
    return 1;

@@ -82,7 +82,7 @@
    GLfloat texWidth[MAX_TEXTURE_COORD_UNITS];
    GLfloat texHeight[MAX_TEXTURE_COORD_UNITS];
 #endif
-   GLfloat bf = SWRAST_CONTEXT(ctx)->_backface_sign;
+   GLfloat bf = SWRAST_CONTEXT(ctx)->_BackfaceSign;
    
    
    INIT_SPAN(span, GL_POLYGON, 0, 0, SPAN_COVERAGE);
