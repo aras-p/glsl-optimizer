@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.92 2003/10/16 19:25:24 brianp Exp $
+# $Id: Makefile.X11,v 1.93 2003/10/16 19:30:22 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -348,6 +348,10 @@ GLUT_NAME = GLUT-3.7
 LIB_FILES =	\
 	$(DIRECTORY)/Makefile*						\
 	$(DIRECTORY)/Make-config					\
+	$(DIRECTORY)/descrip.mms					\
+	$(DIRECTORY)/mms-config.					\
+	$(DIRECTORY)/Mesa.dsw						\
+	$(DIRECTORY)/bin/mklib*						\
 	$(DIRECTORY)/docs/*.html					\
 	$(DIRECTORY)/docs/COPYING					\
 	$(DIRECTORY)/docs/INSTALL.GNU					\
@@ -355,8 +359,6 @@ LIB_FILES =	\
 	$(DIRECTORY)/docs/RELNOTES*					\
 	$(DIRECTORY)/docs/VERSIONS					\
 	$(DIRECTORY)/docs/*.spec					\
-	$(DIRECTORY)/bin/mklib*						\
-	$(DIRECTORY)/descrip.mms					\
 	$(DIRECTORY)/include/GL/internal/glcore.h			\
 	$(DIRECTORY)/include/GL/dmesa.h					\
 	$(DIRECTORY)/include/GL/amesa.h					\
@@ -386,10 +388,15 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/main/*.[chS]				\
 	$(DIRECTORY)/src/mesa/glapi/*.[chS]				\
 	$(DIRECTORY)/src/mesa/array_cache/*.[ch]			\
+	$(DIRECTORY)/src/mesa/array_cache/array_cache.dsp		\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
+	$(DIRECTORY)/src/mesa/math/math.dsp				\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
+	$(DIRECTORY)/src/mesa/swrast/swrast.dsp				\
 	$(DIRECTORY)/src/mesa/swrast_setup/*.[ch]			\
+	$(DIRECTORY)/src/mesa/swrast_setup/swrast_setup.dsp		\
 	$(DIRECTORY)/src/mesa/tnl/*.[ch]				\
+	$(DIRECTORY)/src/mesa/tnl/tnl.dsp				\
 	$(DIRECTORY)/src/mesa/tnl_dd/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/NOTES.imm			\
@@ -420,6 +427,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/glu/sgi/Makefile.win				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.DJ				\
 	$(DIRECTORY)/src/glu/sgi/glu.def				\
+	$(DIRECTORY)/src/glu/sgi/glu.dsp				\
 	$(DIRECTORY)/src/glu/sgi/dummy.cc				\
 	$(DIRECTORY)/src/glu/sgi/descrip.mms				\
 	$(DIRECTORY)/src/glu/sgi/mesaglu.opt				\
@@ -460,6 +468,7 @@ DEMO_FILES =	\
 	$(DIRECTORY)/src/glut/glx/*def			\
 	$(DIRECTORY)/src/glut/glx/descrip.mms		\
 	$(DIRECTORY)/src/glut/glx/mms_depend		\
+	$(DIRECTORY)/src/glut/glx/glut.dsp		\
 	$(DIRECTORY)/src/glut/glx/*.[ch]		\
 	$(DIRECTORY)/src/glut/dos/*.[ch]		\
 	$(DIRECTORY)/src/glut/dos/Makefile.DJ		\
