@@ -118,7 +118,7 @@ static void reset_secondarycolor( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
-   if (ctx->Array.SecondaryColor.Enabled & _NEW_ARRAY_COLOR1) {
+   if (ctx->Array.SecondaryColor.Enabled) {
       ac->Raw.SecondaryColor = ctx->Array.SecondaryColor;
       STRIDE_ARRAY(ac->Raw.SecondaryColor, ac->start);
    }
@@ -134,7 +134,7 @@ static void reset_index( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
-   if (ctx->Array.Index.Enabled & _NEW_ARRAY_INDEX) {
+   if (ctx->Array.Index.Enabled) {
       ac->Raw.Index = ctx->Array.Index;
       STRIDE_ARRAY(ac->Raw.Index, ac->start);
    }
@@ -150,7 +150,7 @@ static void reset_fogcoord( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
-   if (ctx->Array.FogCoord.Enabled & _NEW_ARRAY_FOGCOORD) {
+   if (ctx->Array.FogCoord.Enabled) {
       ac->Raw.FogCoord = ctx->Array.FogCoord;
       STRIDE_ARRAY(ac->Raw.FogCoord, ac->start);
    }
@@ -166,7 +166,7 @@ static void reset_edgeflag( GLcontext *ctx )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
 
-   if (ctx->Array.EdgeFlag.Enabled & _NEW_ARRAY_EDGEFLAG) {
+   if (ctx->Array.EdgeFlag.Enabled) {
       ac->Raw.EdgeFlag = ctx->Array.EdgeFlag;
       STRIDE_ARRAY(ac->Raw.EdgeFlag, ac->start);
    }
