@@ -1515,7 +1515,7 @@ void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 	int i;
 
 	/* Allocate parameters */
-	r300->state.vap_param.transform_offset=0x0;  /* transform matrix */
+	//r300->state.vap_param.transform_offset=0x0;  /* transform matrix */
 	r300->state.vertex_shader.param_offset=0x0;
 	r300->state.vertex_shader.param_count=0x4;  /* 4 vector values - 4x4 matrix */
 	
@@ -1674,6 +1674,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	GLcontext* ctx = rmesa->radeon.glCtx;
 	int inst_count;
 	int param_count;
+	LOCAL_VARS
 
 	/* Reset state, in case we don't use something */
 	((drm_r300_cmd_header_t*)rmesa->hw.vpp.cmd)->vpu.count = 0;
@@ -1752,7 +1753,7 @@ void r300GenerateTexturePixelShader(r300ContextPtr r300)
 
 				break;
 			default:
-				fprintf(stderr, "ModeRGB=%s is not implemented yet !\n",
+				WARN_ONCE("ModeRGB=%s is not implemented yet !\n",
 					 _mesa_lookup_enum_by_nr(r300->radeon.glCtx->Texture.Unit[i]._CurrentCombine->ModeRGB));
 				/* PFS_NOP */
 				r300->state.pixel_shader.program.alu.inst[alu_inst].inst0=
@@ -1788,7 +1789,7 @@ void r300GenerateTexturePixelShader(r300ContextPtr r300)
 
 				break;
 			default:
-				fprintf(stderr, "ModeA=%s is not implemented yet !\n",
+				WARN_ONCE("ModeA=%s is not implemented yet !\n",
 					 _mesa_lookup_enum_by_nr(r300->radeon.glCtx->Texture.Unit[i]._CurrentCombine->ModeA));
 				/* PFS_NOP */
 				r300->state.pixel_shader.program.alu.inst[alu_inst].inst2=

@@ -816,7 +816,7 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 	 */
 	switch (pname) {
 	case GL_TEXTURE_ENV_COLOR:{
-		fprintf(stderr, "%s:%s I am broken - Fixme !\n", __FILE__, __FUNCTION__);
+		WARN_ONCE("I am broken - Fixme !\n");
 		/*
 			GLubyte c[4];
 			GLuint envColor;

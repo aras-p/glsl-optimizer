@@ -122,11 +122,16 @@ struct r300_dma_region {
     int aos_reg;        /* VAP register assignment */
 };
 
+#define DUMP_DMA(rmesa) fprintf(stderr, "start=%d, end=%d, prt=%d, offset=%d, stride=%d, size=%d, format=%d, reg=%d\n",\
+rmesa->dma.current.start, rmesa->dma.current.end, rmesa->dma.current.ptr, rmesa->dma.current.aos_offset, \
+rmesa->dma.current.aos_stride, rmesa->dma.current.aos_size, rmesa->dma.current.aos_format, rmesa->dma.current.aos_reg);
+
 struct r300_dma {
 	/* Active dma region.  Allocations for vertices and retained
 	 * regions come from here.  Also used for emitting random vertices,
 	 * these may be flushed by calling flush_current();
 	 */
+	int dummy; /* move this below current to make arbvptorus work */
 	struct r300_dma_region current;
 
 	void (*flush) (r300ContextPtr);
@@ -671,10 +676,11 @@ struct r300_state {
 	
 	GLuint render_inputs; /* actual render inputs that R300 was configured for. 
 				 They are the same as tnl->render_inputs for fixed pipeline */	
+#if 0
 	struct {
 		int transform_offset;  /* Transform matrix offset, -1 if none */
 		} vap_param;  /* vertex processor parameter allocation - tells where to write parameters */
-
+#endif
 	int hw_stencil;
 };
 

@@ -310,6 +310,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 
 		vic_1 |= R300_INPUT_CNTL_POS;
 	}
+	//DUMP_DMA(rmesa);
 
 	if (inputs & _TNL_BIT_NORMAL) {
 		CONFIGURE_AOS(i_normal,	AOS_FORMAT_FLOAT,
@@ -321,7 +322,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	}
 
 	if (inputs & _TNL_BIT_COLOR0) {
-		int emitsize;
+		int emitsize=4;
 
 		if (!immd) {
 			if (VB->ColorPtr[0]->size == 4 &&

@@ -376,7 +376,7 @@ void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 	int size = 0;
 	drmDMAReq dma;
 	int ret;
-
+	
 	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA))
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
