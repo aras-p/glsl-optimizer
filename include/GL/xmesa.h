@@ -1,4 +1,4 @@
-/* $Id: xmesa.h,v 1.5 2000/02/25 20:30:23 brianp Exp $ */
+/* $Id: xmesa.h,v 1.6 2000/03/31 01:04:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -159,6 +159,23 @@ extern XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
 				      GLint stencil_size,
 				      GLint accum_size,
 				      GLint level );
+
+extern XMesaVisual XMesaCreateVisual2( XMesaDisplay *display,
+                                       XMesaVisualInfo visinfo,
+                                       GLboolean rgb_flag,
+                                       GLboolean alpha_flag,
+                                       GLboolean db_flag,
+                                       GLboolean stereo_flag,
+                                       GLboolean ximage_flag,
+                                       GLint depth_size,
+                                       GLint stencil_size,
+                                       GLint accum_red_size,
+                                       GLint accum_green_size,
+                                       GLint accum_blue_size,
+                                       GLint accum_alpha_size,
+                                       GLint num_samples,
+                                       GLint level,
+                                       GLint visualCaveat );
 
 /*
  * Destroy an XMesaVisual, but not the associated XVisualInfo.
