@@ -45,7 +45,7 @@
 #if defined(WIN32)
 #define KEYWORD1 GLAPI
 #else
-#define KEYWORD1
+#define KEYWORD1 PUBLIC
 #endif
 
 #define KEYWORD2 GLAPIENTRY
