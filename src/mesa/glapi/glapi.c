@@ -100,17 +100,15 @@ warn(void)
 
 #define F NULL
 
-#define DISPATCH(func, args, msg)					\
-   if (warn()) {							\
-      warning_func(NULL, "GL User Error: called without context:");	\
-      warning_func msg;							\
+#define DISPATCH(func, args, msg)					      \
+   if (warn()) {							      \
+      warning_func(NULL, "GL User Error: called without context: %s", #func); \
    }
 
-#define RETURN_DISPATCH(func, args, msg)				\
-   if (warn()) {							\
-      warning_func(NULL, "GL User Error: called without context:");	\
-      warning_func msg;							\
-   }									\
+#define RETURN_DISPATCH(func, args, msg)				      \
+   if (warn()) {							      \
+      warning_func(NULL, "GL User Error: called without context: %s", #func); \
+   }									      \
    return 0
 
 #define DISPATCH_TABLE_NAME __glapi_noop_table
