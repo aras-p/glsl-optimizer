@@ -1280,11 +1280,11 @@ static void GLAPIENTRY _save_OBE_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfl
 {
    GET_CURRENT_CONTEXT(ctx);
    _save_NotifyBegin( ctx, GL_QUADS | PRIM_WEAK );
-   glVertex2f( x1, y1 );
-   glVertex2f( x2, y1 );
-   glVertex2f( x2, y2 );
-   glVertex2f( x1, y2 );
-   glEnd();
+   _glapi_Dispatch->Vertex2f( x1, y1 );
+   _glapi_Dispatch->Vertex2f( x2, y1 );
+   _glapi_Dispatch->Vertex2f( x2, y2 );
+   _glapi_Dispatch->Vertex2f( x1, y2 );
+   _glapi_Dispatch->End();
 }
 
 
@@ -1298,8 +1298,8 @@ static void GLAPIENTRY _save_OBE_DrawArrays(GLenum mode, GLint start, GLsizei co
 
    _save_NotifyBegin( ctx, mode | PRIM_WEAK );
    for (i = start ; i < count ; i++)
-      glArrayElement( i );
-   glEnd();
+      _glapi_Dispatch->ArrayElement( i );
+   _glapi_Dispatch->End();
 }
 
 
@@ -1317,22 +1317,22 @@ static void GLAPIENTRY _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum
    switch (type) {
    case GL_UNSIGNED_BYTE:
       for (i = 0 ; i < count ; i++)
-	 glArrayElement( ((GLubyte *)indices)[i] );
+	 _glapi_Dispatch->ArrayElement( ((GLubyte *)indices)[i] );
       break;
    case GL_UNSIGNED_SHORT:
       for (i = 0 ; i < count ; i++)
-	 glArrayElement( ((GLushort *)indices)[i] );
+	 _glapi_Dispatch->ArrayElement( ((GLushort *)indices)[i] );
       break;
    case GL_UNSIGNED_INT:
       for (i = 0 ; i < count ; i++)
-	 glArrayElement( ((GLuint *)indices)[i] );
+	 _glapi_Dispatch->ArrayElement( ((GLuint *)indices)[i] );
       break;
    default:
       _mesa_error( ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
       break;
    }
 
-   glEnd();
+   _glapi_Dispatch->End();
 }
 
 static void GLAPIENTRY _save_OBE_DrawRangeElements(GLenum mode,
