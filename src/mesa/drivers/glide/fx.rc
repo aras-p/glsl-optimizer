@@ -2,12 +2,12 @@
 
 #define PRODNAME                "Mesa 6.x"
 #define CONTACTSTR              "http://www.mesa3d.org"
-#define HWSTR                   "3dfx Voodoo Graphics, Voodoo^2, Voodoo Banshee, Velocity 100/200, Voodoo3, Voodoo4, Voodoo5"
+#define HWSTR                   "3dfx Voodoo Graphics, Voodoo Rush, Voodoo^2, Voodoo Banshee, Velocity 100/200, Voodoo3, Voodoo4, Voodoo5"
 #define COPYRIGHTSTR            "Copyright \251 Brian E. Paul"
 
-#define VERSIONSTR              "6.2.0.1"
+#define VERSIONSTR              "6.3.0.1"
 #define MANVERSION              6
-#define MANREVISION             2
+#define MANREVISION             3
 #define BUILD_NUMBER            1
 
 VS_VERSION_INFO VERSIONINFO
