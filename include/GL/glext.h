@@ -49,9 +49,9 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glext.h last updated 2002/03/22 */
+/* glext.h last updated 2002/04/12 */
 /* Current version at http://oss.sgi.com/projects/ogl-sample/registry/ */
-#define GL_GLEXT_VERSION 11
+#define GL_GLEXT_VERSION 13
 
 #ifndef GL_VERSION_1_2
 #define GL_CONSTANT_COLOR                 0x8001
@@ -459,9 +459,7 @@ extern "C" {
 
 #ifndef GL_ARB_texture_env_dot3
 #define GL_DOT3_RGB_ARB                   0x86AE
-#define GL_DOT3_RGB_EXT                   0x86AE
 #define GL_DOT3_RGBA_ARB                  0x86AF
-#define GL_DOT3_RGBA_EXT                  0x86AF
 #endif
 
 #ifndef GL_ARB_texture_mirrored_repeat
@@ -1688,6 +1686,16 @@ extern "C" {
 #define GL_TEXTURE_COLOR_WRITEMASK_SGIS   0x81EF
 #endif
 
+#ifndef GL_EXT_texture_env_dot3
+#define GL_DOT3_RGB_EXT                   0x8740
+#define GL_DOT3_RGBA_EXT                  0x8741
+#endif
+
+#ifndef GL_ATI_texture_mirror_once
+#define GL_MIRROR_CLAMP_ATI               0x8742
+#define GL_MIRROR_CLAMP_TO_EDGE_ATI       0x8743
+#endif
+
 #ifndef GL_NV_fence
 #define GL_ALL_COMPLETED_NV               0x84F2
 #define GL_FENCE_STATUS_NV                0x84F3
@@ -2272,6 +2280,9 @@ extern "C" {
 #endif
 
 #ifndef GL_NV_vertex_program1_1
+#endif
+
+#ifndef GL_EXT_shadow_funcs
 #endif
 
 
@@ -4035,6 +4046,14 @@ GLAPI void APIENTRY glIglooInterfaceSGIX (GLenum, const GLvoid *);
 typedef void (APIENTRY * PFNGLIGLOOINTERFACESGIXPROC) (GLenum pname, const GLvoid *params);
 #endif
 
+#ifndef GL_EXT_texture_env_dot3
+#define GL_EXT_texture_env_dot3 1
+#endif
+
+#ifndef GL_ATI_texture_mirror_once
+#define GL_ATI_texture_mirror_once 1
+#endif
+
 #ifndef GL_NV_fence
 #define GL_NV_fence 1
 #ifdef GL_GLEXT_PROTOTYPES
@@ -4613,6 +4632,10 @@ typedef void (APIENTRY * PFNGLPOINTPARAMETERIVNVPROC) (GLenum pname, const GLint
 
 #ifndef GL_NV_vertex_program1_1
 #define GL_NV_vertex_program1_1 1
+#endif
+
+#ifndef GL_EXT_shadow_funcs
+#define GL_EXT_shadow_funcs 1
 #endif
 
 
