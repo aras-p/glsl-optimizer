@@ -1286,6 +1286,7 @@ static void savageDDEnable_s3d(GLcontext *ctx, GLenum cap, GLboolean state)
             else
             {
                 imesa->LcsCullMode = BCM_None;
+		imesa->new_state |= SAVAGE_NEW_CULL;
             }
 #endif
             break;
