@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.34 2000/11/16 21:05:34 keithw Exp $ */
+/* $Id: attrib.c,v 1.35 2000/11/19 23:10:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -350,17 +350,18 @@ _mesa_PushAttrib(GLbitfield mask)
       GLuint u;
       /* Take care of texture object reference counters */
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-	 ctx->Texture.Unit[u].CurrentD[1]->RefCount++;
-	 ctx->Texture.Unit[u].CurrentD[2]->RefCount++;
-	 ctx->Texture.Unit[u].CurrentD[3]->RefCount++;
+	 ctx->Texture.Unit[u].Current1D->RefCount++;
+	 ctx->Texture.Unit[u].Current2D->RefCount++;
+	 ctx->Texture.Unit[u].Current3D->RefCount++;
+	 ctx->Texture.Unit[u].CurrentCubeMap->RefCount++;
       }
       attr = MALLOC_STRUCT( gl_texture_attrib );
       MEMCPY( attr, &ctx->Texture, sizeof(struct gl_texture_attrib) );
       /* copy state of the currently bound texture objects */
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-         copy_texobj_state(&attr->Unit[u].Saved1D, attr->Unit[u].CurrentD[1]);
-         copy_texobj_state(&attr->Unit[u].Saved2D, attr->Unit[u].CurrentD[2]);
-         copy_texobj_state(&attr->Unit[u].Saved3D, attr->Unit[u].CurrentD[3]);
+         copy_texobj_state(&attr->Unit[u].Saved1D, attr->Unit[u].Current1D);
+         copy_texobj_state(&attr->Unit[u].Saved2D, attr->Unit[u].Current2D);
+         copy_texobj_state(&attr->Unit[u].Saved3D, attr->Unit[u].Current3D);
          copy_texobj_state(&attr->Unit[u].SavedCubeMap, attr->Unit[u].CurrentCubeMap);
       }
       newnode = new_attrib_node( GL_TEXTURE_BIT );
@@ -811,29 +812,29 @@ _mesa_PopAttrib(void)
             {
                GLuint u;
                for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-		  ctx->Texture.Unit[u].CurrentD[1]->RefCount--;
-		  ctx->Texture.Unit[u].CurrentD[2]->RefCount--;
-		  ctx->Texture.Unit[u].CurrentD[3]->RefCount--;
+		  ctx->Texture.Unit[u].Current1D->RefCount--;
+		  ctx->Texture.Unit[u].Current2D->RefCount--;
+		  ctx->Texture.Unit[u].Current3D->RefCount--;
+		  ctx->Texture.Unit[u].CurrentCubeMap->RefCount--;
                }
                MEMCPY( &ctx->Texture, attr->data,
                        sizeof(struct gl_texture_attrib) );
 	       ctx->NewState |= _NEW_TEXTURE;
                /* restore state of the currently bound texture objects */
                for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-                  copy_texobj_state( ctx->Texture.Unit[u].CurrentD[1],
+                  copy_texobj_state( ctx->Texture.Unit[u].Current1D,
                                      &(ctx->Texture.Unit[u].Saved1D) );
-                  copy_texobj_state( ctx->Texture.Unit[u].CurrentD[2],
+                  copy_texobj_state( ctx->Texture.Unit[u].Current2D,
                                      &(ctx->Texture.Unit[u].Saved2D) );
-                  copy_texobj_state( ctx->Texture.Unit[u].CurrentD[3],
+                  copy_texobj_state( ctx->Texture.Unit[u].Current3D,
                                      &(ctx->Texture.Unit[u].Saved3D) );
                   copy_texobj_state( ctx->Texture.Unit[u].CurrentCubeMap,
                                      &(ctx->Texture.Unit[u].SavedCubeMap) );
 
-                  gl_put_texobj_on_dirty_list( ctx, ctx->Texture.Unit[u].CurrentD[1] );
-                  gl_put_texobj_on_dirty_list( ctx, ctx->Texture.Unit[u].CurrentD[2] );
-                  gl_put_texobj_on_dirty_list( ctx, ctx->Texture.Unit[u].CurrentD[3] );
-                  gl_put_texobj_on_dirty_list( ctx, ctx->Texture.Unit[u].CurrentCubeMap );
-
+                  ctx->Texture.Unit[u].Current1D->Complete = GL_FALSE;
+                  ctx->Texture.Unit[u].Current2D->Complete = GL_FALSE;
+                  ctx->Texture.Unit[u].Current3D->Complete = GL_FALSE;
+                  ctx->Texture.Unit[u].CurrentCubeMap->Complete = GL_FALSE;
                }
             }
             break;

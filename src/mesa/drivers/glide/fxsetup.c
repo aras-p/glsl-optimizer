@@ -456,7 +456,7 @@ static void fxSetupTextureSingleTMU_NoLock(GLcontext *ctx, GLuint textureset)
   GLuint unitsmode;
   GLint ifmt;
   tfxTexInfo *ti;
-  struct gl_texture_object *tObj=ctx->Texture.Unit[textureset].CurrentD[2];
+  struct gl_texture_object *tObj=ctx->Texture.Unit[textureset].Current2D;
   int tmu;
 
   if (MESA_VERBOSE&VERBOSE_DRIVER) {
@@ -747,8 +747,8 @@ static void fxSetupTextureDoubleTMU_NoLock(GLcontext *ctx)
   fxMesaContext fxMesa=(fxMesaContext)ctx->DriverCtx;
   GrCombineLocal_t localc,locala;
   tfxTexInfo *ti0,*ti1;
-  struct gl_texture_object *tObj0=ctx->Texture.Unit[0].CurrentD[2];
-  struct gl_texture_object *tObj1=ctx->Texture.Unit[1].CurrentD[2];
+  struct gl_texture_object *tObj0=ctx->Texture.Unit[0].Current2D;
+  struct gl_texture_object *tObj1=ctx->Texture.Unit[1].Current2D;
   GLuint envmode,ifmt,unitsmode;
   int tmu0=0, tmu1=1;
 

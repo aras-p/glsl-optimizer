@@ -1,4 +1,4 @@
-/* $Id: texstate.h,v 1.3 2000/11/16 21:05:35 keithw Exp $ */
+/* $Id: texstate.h,v 1.4 2000/11/19 23:10:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -125,21 +125,6 @@ _mesa_ActiveTextureARB( GLenum target );
 
 extern void
 _mesa_ClientActiveTextureARB( GLenum target );
-
-
-
-/*** Internal functions ***/
-
-extern void 
-gl_put_texobj_on_dirty_list( GLcontext *ctx, struct gl_texture_object *t );
-
-#ifdef VMS
-#define gl_remove_texobj_from_dirty_list gl_remove_texobj_from_dirty_lis
-#endif
-extern void
-gl_remove_texobj_from_dirty_list( struct gl_shared_state *shared,
-                                  struct gl_texture_object *tObj );
-
 
 
 #endif

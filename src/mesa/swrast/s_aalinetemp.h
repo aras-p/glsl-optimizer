@@ -1,4 +1,4 @@
-/* $Id: s_aalinetemp.h,v 1.1 2000/11/05 23:15:16 brianp Exp $ */
+/* $Id: s_aalinetemp.h,v 1.2 2000/11/19 23:10:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -148,7 +148,7 @@ NAME(plot)(GLcontext *ctx, const struct LineInfo *line,
  * Line setup
  */
 static void
-NAME(line)(GLcontext *ctx, SWvertex *v0, SWvertex *v1)
+NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct pixel_buffer *pb = SWRAST_CONTEXT(ctx)->PB;

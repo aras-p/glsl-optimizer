@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.41 2000/11/16 21:05:35 keithw Exp $ */
+/* $Id: get.c,v 1.42 2000/11/19 23:10:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -811,13 +811,13 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = _mesa_IsEnabled(GL_TEXTURE_3D);
 	 break;
       case GL_TEXTURE_BINDING_1D:
-         *params = INT_TO_BOOL(textureUnit->CurrentD[1]->Name);
+         *params = INT_TO_BOOL(textureUnit->Current1D->Name);
           break;
       case GL_TEXTURE_BINDING_2D:
-         *params = INT_TO_BOOL(textureUnit->CurrentD[2]->Name);
+         *params = INT_TO_BOOL(textureUnit->Current2D->Name);
           break;
       case GL_TEXTURE_BINDING_3D:
-         *params = INT_TO_BOOL(textureUnit->CurrentD[3]->Name);
+         *params = INT_TO_BOOL(textureUnit->Current3D->Name);
          break;
       case GL_TEXTURE_ENV_COLOR:
          {
@@ -2009,13 +2009,13 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = _mesa_IsEnabled(GL_TEXTURE_3D) ? 1.0 : 0.0;
 	 break;
       case GL_TEXTURE_BINDING_1D:
-         *params = (GLdouble) textureUnit->CurrentD[1]->Name;
+         *params = (GLdouble) textureUnit->Current1D->Name;
           break;
       case GL_TEXTURE_BINDING_2D:
-         *params = (GLdouble) textureUnit->CurrentD[2]->Name;
+         *params = (GLdouble) textureUnit->Current2D->Name;
           break;
       case GL_TEXTURE_BINDING_3D:
-         *params = (GLdouble) textureUnit->CurrentD[3]->Name;
+         *params = (GLdouble) textureUnit->Current3D->Name;
           break;
       case GL_TEXTURE_ENV_COLOR:
 	 params[0] = (GLdouble) textureUnit->EnvColor[0];
@@ -3210,13 +3210,13 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = _mesa_IsEnabled(GL_TEXTURE_3D) ? 1.0 : 0.0;
 	 break;
       case GL_TEXTURE_BINDING_1D:
-         *params = (GLfloat) textureUnit->CurrentD[1]->Name;
+         *params = (GLfloat) textureUnit->Current1D->Name;
           break;
       case GL_TEXTURE_BINDING_2D:
-         *params = (GLfloat) textureUnit->CurrentD[2]->Name;
+         *params = (GLfloat) textureUnit->Current2D->Name;
           break;
       case GL_TEXTURE_BINDING_3D:
-         *params = (GLfloat) textureUnit->CurrentD[2]->Name;
+         *params = (GLfloat) textureUnit->Current2D->Name;
           break;
       case GL_TEXTURE_ENV_COLOR:
 	 params[0] = textureUnit->EnvColor[0];
@@ -4383,13 +4383,13 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = _mesa_IsEnabled(GL_TEXTURE_3D) ? 1 : 0;
 	 break;
       case GL_TEXTURE_BINDING_1D:
-         *params = textureUnit->CurrentD[1]->Name;
+         *params = textureUnit->Current1D->Name;
           break;
       case GL_TEXTURE_BINDING_2D:
-         *params = textureUnit->CurrentD[2]->Name;
+         *params = textureUnit->Current2D->Name;
           break;
       case GL_TEXTURE_BINDING_3D:
-         *params = textureUnit->CurrentD[3]->Name;
+         *params = textureUnit->Current3D->Name;
           break;
       case GL_TEXTURE_ENV_COLOR:
 	 params[0] = FLOAT_TO_INT( textureUnit->EnvColor[0] );

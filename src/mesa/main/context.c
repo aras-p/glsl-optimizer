@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.106 2000/11/16 21:05:34 keithw Exp $ */
+/* $Id: context.c,v 1.107 2000/11/19 23:10:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -479,7 +479,6 @@ one_time_init( void )
 static struct gl_shared_state *
 alloc_shared_state( void )
 {
-   GLuint d;
    struct gl_shared_state *ss;
    GLboolean outOfMemory;
 
@@ -494,16 +493,32 @@ alloc_shared_state( void )
 
    /* Default Texture objects */
    outOfMemory = GL_FALSE;
-   for (d = 1 ; d <= 3 ; d++) {
-      ss->DefaultD[d] = gl_alloc_texture_object(ss, 0, d);
-      if (!ss->DefaultD[d]) {
-         outOfMemory = GL_TRUE;
-         break;
-      }
-      ss->DefaultD[d]->RefCount++; /* don't free if not in use */
+
+   ss->Default1D = _mesa_alloc_texture_object(ss, 0, 1);
+   if (!ss->Default1D) {
+      outOfMemory = GL_TRUE;
+   }
+   else {
+      ss->Default1D->RefCount++;
    }
 
-   ss->DefaultCubeMap = gl_alloc_texture_object(ss, 0, 6);
+   ss->Default2D = _mesa_alloc_texture_object(ss, 0, 2);
+   if (!ss->Default2D) {
+      outOfMemory = GL_TRUE;
+   }
+   else {
+      ss->Default2D->RefCount++;
+   }
+
+   ss->Default3D = _mesa_alloc_texture_object(ss, 0, 3);
+   if (!ss->Default3D) {
+      outOfMemory = GL_TRUE;
+   }
+   else {
+      ss->Default1D->RefCount++;
+   }
+
+   ss->DefaultCubeMap = _mesa_alloc_texture_object(ss, 0, 6);
    if (!ss->DefaultCubeMap) {
       outOfMemory = GL_TRUE;
    }
@@ -517,14 +532,14 @@ alloc_shared_state( void )
          _mesa_DeleteHashTable(ss->DisplayList);
       if (ss->TexObjects)
          _mesa_DeleteHashTable(ss->TexObjects);
-      if (ss->DefaultD[1])
-         gl_free_texture_object(ss, ss->DefaultD[1]);
-      if (ss->DefaultD[2])
-         gl_free_texture_object(ss, ss->DefaultD[2]);
-      if (ss->DefaultD[3])
-         gl_free_texture_object(ss, ss->DefaultD[3]);
+      if (ss->Default1D)
+         _mesa_free_texture_object(ss, ss->Default1D);
+      if (ss->Default2D)
+         _mesa_free_texture_object(ss, ss->Default2D);
+      if (ss->Default3D)
+         _mesa_free_texture_object(ss, ss->Default3D);
       if (ss->DefaultCubeMap)
-         gl_free_texture_object(ss, ss->DefaultCubeMap);
+         _mesa_free_texture_object(ss, ss->DefaultCubeMap);
       FREE(ss);
       return NULL;
    }
@@ -558,7 +573,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
       if (ctx->Driver.DeleteTexture)
          (*ctx->Driver.DeleteTexture)( ctx, ss->TexObjectList );
       /* this function removes from linked list too! */
-      gl_free_texture_object(ss, ss->TexObjectList);
+      _mesa_free_texture_object(ss, ss->TexObjectList);
    }
    _mesa_DeleteHashTable(ss->TexObjects);
 
@@ -668,9 +683,9 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    ASSIGN_4V( texUnit->EyePlaneR, 0.0, 0.0, 0.0, 0.0 );
    ASSIGN_4V( texUnit->EyePlaneQ, 0.0, 0.0, 0.0, 0.0 );
 
-   texUnit->CurrentD[1] = ctx->Shared->DefaultD[1];
-   texUnit->CurrentD[2] = ctx->Shared->DefaultD[2];
-   texUnit->CurrentD[3] = ctx->Shared->DefaultD[3];
+   texUnit->Current1D = ctx->Shared->Default1D;
+   texUnit->Current2D = ctx->Shared->Default2D;
+   texUnit->Current3D = ctx->Shared->Default3D;
    texUnit->CurrentCubeMap = ctx->Shared->DefaultCubeMap;
 }
 
@@ -1352,21 +1367,29 @@ alloc_proxy_textures( GLcontext *ctx )
    GLboolean out_of_memory;
    GLint i;
 
-   ctx->Texture.Proxy1D = gl_alloc_texture_object(NULL, 0, 1);
+   ctx->Texture.Proxy1D = _mesa_alloc_texture_object(NULL, 0, 1);
    if (!ctx->Texture.Proxy1D) {
       return GL_FALSE;
    }
 
-   ctx->Texture.Proxy2D = gl_alloc_texture_object(NULL, 0, 2);
+   ctx->Texture.Proxy2D = _mesa_alloc_texture_object(NULL, 0, 2);
    if (!ctx->Texture.Proxy2D) {
-      gl_free_texture_object(NULL, ctx->Texture.Proxy1D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
       return GL_FALSE;
    }
 
-   ctx->Texture.Proxy3D = gl_alloc_texture_object(NULL, 0, 3);
+   ctx->Texture.Proxy3D = _mesa_alloc_texture_object(NULL, 0, 3);
    if (!ctx->Texture.Proxy3D) {
-      gl_free_texture_object(NULL, ctx->Texture.Proxy1D);
-      gl_free_texture_object(NULL, ctx->Texture.Proxy2D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy2D);
+      return GL_FALSE;
+   }
+
+   ctx->Texture.ProxyCubeMap = _mesa_alloc_texture_object(NULL, 0, 6);
+   if (!ctx->Texture.ProxyCubeMap) {
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy2D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy3D);
       return GL_FALSE;
    }
 
@@ -1393,9 +1416,9 @@ alloc_proxy_textures( GLcontext *ctx )
             _mesa_free_texture_image(ctx->Texture.Proxy3D->Image[i]);
          }
       }
-      gl_free_texture_object(NULL, ctx->Texture.Proxy1D);
-      gl_free_texture_object(NULL, ctx->Texture.Proxy2D);
-      gl_free_texture_object(NULL, ctx->Texture.Proxy3D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy2D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy3D);
       return GL_FALSE;
    }
    else {
@@ -1609,9 +1632,9 @@ _mesa_free_context_data( GLcontext *ctx )
    FREE( ctx->_ShineTabList );
 
    /* Free proxy texture objects */
-   gl_free_texture_object( NULL, ctx->Texture.Proxy1D );
-   gl_free_texture_object( NULL, ctx->Texture.Proxy2D );
-   gl_free_texture_object( NULL, ctx->Texture.Proxy3D );
+   _mesa_free_texture_object( NULL, ctx->Texture.Proxy1D );
+   _mesa_free_texture_object( NULL, ctx->Texture.Proxy2D );
+   _mesa_free_texture_object( NULL, ctx->Texture.Proxy3D );
 
    /* Free evaluator data */
    if (ctx->EvalMap.Map1Vertex3.Points)

@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.4 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_context.c,v 1.5 2000/11/19 23:10:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -190,7 +190,8 @@ _swrast_update_hint( GLcontext *ctx )
  */
 static void
 _swrast_validate_quad( GLcontext *ctx, 
-		       SWvertex *v0, SWvertex *v1, SWvertex *v2, SWvertex *v3 )
+		       const SWvertex *v0, const SWvertex *v1,
+                       const SWvertex *v2, const SWvertex *v3 )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -202,7 +203,9 @@ _swrast_validate_quad( GLcontext *ctx,
 
 static void
 _swrast_validate_triangle( GLcontext *ctx, 
-			   SWvertex *v0, SWvertex *v1, SWvertex *v2 )
+			   const SWvertex *v0,
+                           const SWvertex *v1,
+                           const SWvertex *v2 )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -213,7 +216,7 @@ _swrast_validate_triangle( GLcontext *ctx,
 }
 
 static void
-_swrast_validate_line( GLcontext *ctx, SWvertex *v0, SWvertex *v1 )
+_swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -224,7 +227,7 @@ _swrast_validate_line( GLcontext *ctx, SWvertex *v0, SWvertex *v1 )
 }
 
 static void
-_swrast_validate_point( GLcontext *ctx, SWvertex *v0 )
+_swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
@@ -344,25 +347,27 @@ _swrast_validate_derived( GLcontext *ctx )
  */
 void
 _swrast_Quad( GLcontext *ctx, 
-	      SWvertex *v0, SWvertex *v1, SWvertex *v2, SWvertex *v3 )
+	      const SWvertex *v0, const SWvertex *v1,
+              const SWvertex *v2, const SWvertex *v3 )
 {
    SWRAST_CONTEXT(ctx)->Quad( ctx, v0, v1, v2, v3 );
 }
 
 void
-_swrast_Triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2 )
+_swrast_Triangle( GLcontext *ctx, const SWvertex *v0,
+                  const SWvertex *v1, const SWvertex *v2 )
 {
    SWRAST_CONTEXT(ctx)->Triangle( ctx, v0, v1, v2 );
 }
 
 void
-_swrast_Line( GLcontext *ctx, SWvertex *v0, SWvertex *v1 )
+_swrast_Line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
    SWRAST_CONTEXT(ctx)->Line( ctx, v0, v1 );
 }
 
 void
-_swrast_Point( GLcontext *ctx, SWvertex *v0 )
+_swrast_Point( GLcontext *ctx, const SWvertex *v0 )
 {
    SWRAST_CONTEXT(ctx)->Point( ctx, v0 );
 }

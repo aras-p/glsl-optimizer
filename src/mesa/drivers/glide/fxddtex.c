@@ -462,7 +462,7 @@ void fxDDTexUseGlbPalette(GLcontext *ctx, GLboolean state)
   else {
     fxMesa->haveGlobalPaletteTexture = 0;
 
-    if ((ctx->Texture.Unit[0]._Current == ctx->Texture.Unit[0].CurrentD[2]) &&
+    if ((ctx->Texture.Unit[0]._Current == ctx->Texture.Unit[0].Current2D) &&
         (ctx->Texture.Unit[0]._Current != NULL)) {
       struct gl_texture_object *tObj = ctx->Texture.Unit[0]._Current;
 

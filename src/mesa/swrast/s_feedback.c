@@ -1,4 +1,4 @@
-/* $Id: s_feedback.c,v 1.2 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_feedback.c,v 1.3 2000/11/19 23:10:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -46,7 +46,8 @@
 
 
 
-static void feedback_vertex( GLcontext *ctx, SWvertex *v, SWvertex *pv )
+static void feedback_vertex( GLcontext *ctx,
+                             const SWvertex *v, const SWvertex *pv )
 {
    GLfloat win[4];
    GLfloat color[4];
@@ -85,8 +86,10 @@ static void feedback_vertex( GLcontext *ctx, SWvertex *v, SWvertex *pv )
 /*
  * Put triangle in feedback buffer.
  */
-void gl_feedback_triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1,
-			   SWvertex *v2)
+void gl_feedback_triangle( GLcontext *ctx,
+                           const SWvertex *v0,
+                           const SWvertex *v1,
+			   const SWvertex *v2)
 {
    if (gl_cull_triangle( ctx, v0, v1, v2 )) {
       FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POLYGON_TOKEN );
@@ -105,7 +108,7 @@ void gl_feedback_triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1,
 }
 
 
-void gl_feedback_line( GLcontext *ctx, SWvertex *v0, SWvertex *v1 )
+void gl_feedback_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
    GLenum token = GL_LINE_TOKEN;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -127,15 +130,17 @@ void gl_feedback_line( GLcontext *ctx, SWvertex *v0, SWvertex *v1 )
 }
 
 
-void gl_feedback_point( GLcontext *ctx, SWvertex *v )
+void gl_feedback_point( GLcontext *ctx, const SWvertex *v )
 {
    FEEDBACK_TOKEN( ctx, (GLfloat) (GLint) GL_POINT_TOKEN );
    feedback_vertex( ctx, v, v );
 }
 
 
-void gl_select_triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1,
-			 SWvertex *v2)
+void gl_select_triangle( GLcontext *ctx,
+                         const SWvertex *v0,
+                         const SWvertex *v1,
+			 const SWvertex *v2)
 {
    if (gl_cull_triangle( ctx, v0, v1, v2 )) {
       const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
@@ -147,7 +152,7 @@ void gl_select_triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1,
 }
 
 
-void gl_select_line( GLcontext *ctx, SWvertex *v0, SWvertex *v1 )
+void gl_select_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 {
    const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
    gl_update_hitflag( ctx, v0->win[2] * zs );
@@ -155,7 +160,7 @@ void gl_select_line( GLcontext *ctx, SWvertex *v0, SWvertex *v1 )
 }
 
 
-void gl_select_point( GLcontext *ctx, SWvertex *v )
+void gl_select_point( GLcontext *ctx, const SWvertex *v )
 {
    const GLfloat zs = 1.0F / ctx->Visual.DepthMaxF;
    gl_update_hitflag( ctx, v->win[2] * zs );

@@ -1,4 +1,4 @@
-/* $Id: s_lines.c,v 1.6 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: s_lines.c,v 1.7 2000/11/19 23:10:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,8 +54,8 @@
 
 /* Flat, color index line */
 static void flat_ci_line( GLcontext *ctx,
-                          SWvertex *vert0,
-			  SWvertex *vert1 )
+                          const SWvertex *vert0,
+			  const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
 
@@ -73,8 +73,8 @@ static void flat_ci_line( GLcontext *ctx,
 
 /* Flat, color index line with Z interpolation/testing */
 static void flat_ci_z_line( GLcontext *ctx,
-                            SWvertex *vert0,
-			    SWvertex *vert1 )
+                            const SWvertex *vert0,
+			    const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    PB_SET_INDEX( PB, vert0->index );
@@ -92,8 +92,8 @@ static void flat_ci_z_line( GLcontext *ctx,
 
 /* Flat-shaded, RGBA line */
 static void flat_rgba_line( GLcontext *ctx,
-                            SWvertex *vert0,
-			    SWvertex *vert1 )
+                            const SWvertex *vert0,
+			    const SWvertex *vert1 )
 {
    const GLchan *color = vert0->color;
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
@@ -111,8 +111,8 @@ static void flat_rgba_line( GLcontext *ctx,
 
 /* Flat-shaded, RGBA line with Z interpolation/testing */
 static void flat_rgba_z_line( GLcontext *ctx,
-                              SWvertex *vert0,
-			      SWvertex *vert1 )
+                              const SWvertex *vert0,
+			      const SWvertex *vert1 )
 {
    const GLchan *color = vert0->color;
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
@@ -131,8 +131,8 @@ static void flat_rgba_z_line( GLcontext *ctx,
 
 /* Smooth shaded, color index line */
 static void smooth_ci_line( GLcontext *ctx,
-                            SWvertex *vert0,
-			    SWvertex *vert1 )
+                            const SWvertex *vert0,
+			    const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint count = PB->count;
@@ -161,8 +161,8 @@ static void smooth_ci_line( GLcontext *ctx,
 
 /* Smooth shaded, color index line with Z interpolation/testing */
 static void smooth_ci_z_line( GLcontext *ctx,
-                              SWvertex *vert0,
-			      SWvertex *vert1 )
+                              const SWvertex *vert0,
+			      const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint count = PB->count;
@@ -194,8 +194,8 @@ static void smooth_ci_z_line( GLcontext *ctx,
 
 /* Smooth-shaded, RGBA line */
 static void smooth_rgba_line( GLcontext *ctx,
-                       	      SWvertex *vert0,
-			      SWvertex *vert1 )
+                       	      const SWvertex *vert0,
+			      const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint count = PB->count;
@@ -228,8 +228,8 @@ static void smooth_rgba_line( GLcontext *ctx,
 
 /* Smooth-shaded, RGBA line with Z interpolation/testing */
 static void smooth_rgba_z_line( GLcontext *ctx,
-                       	        SWvertex *vert0,
-				SWvertex *vert1 )
+                       	        const SWvertex *vert0,
+				const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint count = PB->count;
@@ -276,8 +276,8 @@ static void smooth_rgba_z_line( GLcontext *ctx,
 
 /* Smooth shaded, color index, any width, maybe stippled */
 static void general_smooth_ci_line( GLcontext *ctx,
-                           	    SWvertex *vert0,
-				    SWvertex *vert1 )
+                           	    const SWvertex *vert0,
+				    const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint count = PB->count;
@@ -356,8 +356,8 @@ static void general_smooth_ci_line( GLcontext *ctx,
 
 /* Flat shaded, color index, any width, maybe stippled */
 static void general_flat_ci_line( GLcontext *ctx,
-                                  SWvertex *vert0,
-				  SWvertex *vert1 )
+                                  const SWvertex *vert0,
+				  const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint count;
@@ -428,8 +428,8 @@ static void general_flat_ci_line( GLcontext *ctx,
 
 
 static void general_smooth_rgba_line( GLcontext *ctx,
-                                      SWvertex *vert0,
-				      SWvertex *vert1 )
+                                      const SWvertex *vert0,
+				      const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint count = PB->count;
@@ -530,8 +530,8 @@ static void general_smooth_rgba_line( GLcontext *ctx,
 
 
 static void general_flat_rgba_line( GLcontext *ctx,
-                                    SWvertex *vert0,
-				    SWvertex *vert1 )
+                                    const SWvertex *vert0,
+				    const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    const GLchan *color = vert0->color;
@@ -574,8 +574,8 @@ static void general_flat_rgba_line( GLcontext *ctx,
 
 /* Flat-shaded, textured, any width, maybe stippled */
 static void flat_textured_line( GLcontext *ctx,
-                                SWvertex *vert0,
-				SWvertex *vert1 )
+                                const SWvertex *vert0,
+				const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint count;
@@ -640,8 +640,8 @@ static void flat_textured_line( GLcontext *ctx,
 
 /* Smooth-shaded, textured, any width, maybe stippled */
 static void smooth_textured_line( GLcontext *ctx,
-                                  SWvertex *vert0,
-				  SWvertex *vert1 )
+                                  const SWvertex *vert0,
+				  const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint count = PB->count;
@@ -719,8 +719,8 @@ static void smooth_textured_line( GLcontext *ctx,
  * color interpolation.
  */
 static void smooth_multitextured_line( GLcontext *ctx,
-				       SWvertex *vert0,
-				       SWvertex *vert1 )
+				       const SWvertex *vert0,
+				       const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint count = PB->count;
@@ -816,8 +816,8 @@ static void smooth_multitextured_line( GLcontext *ctx,
  * color interpolation.
  */
 static void flat_multitextured_line( GLcontext *ctx,
-                                     SWvertex *vert0,
-				     SWvertex *vert1 )
+                                     const SWvertex *vert0,
+				     const SWvertex *vert1 )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint count = PB->count;

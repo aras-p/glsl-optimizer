@@ -1,8 +1,8 @@
-/* $Id: s_points.c,v 1.6 2000/11/16 21:05:41 keithw Exp $ */
+/* $Id: s_points.c,v 1.7 2000/11/19 23:10:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -59,7 +59,7 @@
  * CI points with size == 1.0
  */
 static void
-size1_ci_point( GLcontext *ctx, SWvertex *vert )
+size1_ci_point( GLcontext *ctx, const SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint *pbx = PB->x, *pby = PB->y;
@@ -84,7 +84,7 @@ size1_ci_point( GLcontext *ctx, SWvertex *vert )
  * RGBA points with size == 1.0
  */
 static void
-size1_rgba_point( GLcontext *ctx, SWvertex *vert )
+size1_rgba_point( GLcontext *ctx, const SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
 
@@ -107,7 +107,7 @@ size1_rgba_point( GLcontext *ctx, SWvertex *vert )
  * General CI points.
  */
 static void
-general_ci_point( GLcontext *ctx, SWvertex *vert )
+general_ci_point( GLcontext *ctx, const SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    const GLint isize = (GLint) (ctx->Point._Size + 0.5F);
@@ -152,7 +152,7 @@ general_ci_point( GLcontext *ctx, SWvertex *vert )
  * General RGBA points.
  */
 static void
-general_rgba_point( GLcontext *ctx, SWvertex *vert )
+general_rgba_point( GLcontext *ctx, const SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    GLint isize = (GLint) (ctx->Point._Size + 0.5F);
@@ -203,7 +203,7 @@ general_rgba_point( GLcontext *ctx, SWvertex *vert )
  * Textured RGBA points.
  */
 static void
-textured_rgba_point( GLcontext *ctx, SWvertex *vert )
+textured_rgba_point( GLcontext *ctx, const SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
 
@@ -270,7 +270,7 @@ textured_rgba_point( GLcontext *ctx, SWvertex *vert )
  * Multitextured RGBA points.
  */
 static void
-multitextured_rgba_point( GLcontext *ctx, SWvertex *vert )
+multitextured_rgba_point( GLcontext *ctx, const SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
 
@@ -359,7 +359,7 @@ multitextured_rgba_point( GLcontext *ctx, SWvertex *vert )
  * Antialiased points with or without texture mapping.
  */
 static void
-antialiased_rgba_point( GLcontext *ctx, SWvertex *vert )
+antialiased_rgba_point( GLcontext *ctx, const SWvertex *vert )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct pixel_buffer *PB = swrast->PB;
@@ -501,7 +501,7 @@ static GLfloat attenuation_distance(const GLcontext *ctx, const GLfloat *pos)
  * Distance Attenuated General CI points.
  */
 static void
-dist_atten_general_ci_point( GLcontext *ctx, SWvertex *vert )
+dist_atten_general_ci_point( GLcontext *ctx, const SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    const GLfloat psize = ctx->Point._Size;
@@ -553,7 +553,7 @@ dist_atten_general_ci_point( GLcontext *ctx, SWvertex *vert )
  * Distance Attenuated General RGBA points.
  */
 static void
-dist_atten_general_rgba_point( GLcontext *ctx, SWvertex *vert )
+dist_atten_general_rgba_point( GLcontext *ctx, const SWvertex *vert )
 {
    struct pixel_buffer *PB = SWRAST_CONTEXT(ctx)->PB;
    const GLfloat psize = ctx->Point._Size;
@@ -612,7 +612,7 @@ dist_atten_general_rgba_point( GLcontext *ctx, SWvertex *vert )
  *  Distance Attenuated Textured RGBA points.
  */
 static void
-dist_atten_textured_rgba_point( GLcontext *ctx, SWvertex *vert )
+dist_atten_textured_rgba_point( GLcontext *ctx, const SWvertex *vert )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct pixel_buffer *PB = swrast->PB;
@@ -705,7 +705,7 @@ dist_atten_textured_rgba_point( GLcontext *ctx, SWvertex *vert )
  * Distance Attenuated Antialiased points with or without texture mapping.
  */
 static void
-dist_atten_antialiased_rgba_point( GLcontext *ctx, SWvertex *vert )
+dist_atten_antialiased_rgba_point( GLcontext *ctx, const SWvertex *vert )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct pixel_buffer *PB = swrast->PB;

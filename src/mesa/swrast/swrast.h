@@ -129,17 +129,19 @@ _swrast_get_stipple_counter_ref( GLcontext *ctx );
  * current state.
  */
 extern void
-_swrast_Point( GLcontext *ctx, SWvertex *v );
+_swrast_Point( GLcontext *ctx, const SWvertex *v );
 
 extern void
-_swrast_Line( GLcontext *ctx, SWvertex *v0, SWvertex *v1 );
+_swrast_Line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 );
 
 extern void
-_swrast_Triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2 );
+_swrast_Triangle( GLcontext *ctx, const SWvertex *v0,
+                  const SWvertex *v1, const SWvertex *v2 );
 
 extern void
-_swrast_Quad( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2, 
-	      SWvertex *v3);
+_swrast_Quad( GLcontext *ctx,
+              const SWvertex *v0, const SWvertex *v1,
+	      const SWvertex *v2,  const SWvertex *v3);
 
 extern void 
 _swrast_flush( GLcontext *ctx );

@@ -1,4 +1,4 @@
-/* $Id: s_aatriangle.c,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_aatriangle.c,v 1.4 2000/11/19 23:10:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -299,9 +299,9 @@ compute_coveragei(const GLfloat v0[3], const GLfloat v1[3],
 
 static void
 rgba_aa_tri(GLcontext *ctx,
-	    SWvertex *v0,
-	    SWvertex *v1,
-	    SWvertex *v2)
+	    const SWvertex *v0,
+	    const SWvertex *v1,
+	    const SWvertex *v2)
 {
 #define DO_Z
 #define DO_RGBA
@@ -311,9 +311,9 @@ rgba_aa_tri(GLcontext *ctx,
 
 static void
 index_aa_tri(GLcontext *ctx,
-	     SWvertex *v0,
-	     SWvertex *v1,
-	     SWvertex *v2)
+	     const SWvertex *v0,
+	     const SWvertex *v1,
+	     const SWvertex *v2)
 {
 #define DO_Z
 #define DO_INDEX
@@ -342,9 +342,9 @@ compute_lambda(const GLfloat sPlane[4], const GLfloat tPlane[4],
 
 static void
 tex_aa_tri(GLcontext *ctx,
-	   SWvertex *v0,
-	   SWvertex *v1,
-	   SWvertex *v2)
+	   const SWvertex *v0,
+	   const SWvertex *v1,
+	   const SWvertex *v2)
 {
 #define DO_Z
 #define DO_RGBA
@@ -355,9 +355,9 @@ tex_aa_tri(GLcontext *ctx,
 
 static void
 spec_tex_aa_tri(GLcontext *ctx,
-		SWvertex *v0,
-		SWvertex *v1,
-		SWvertex *v2)
+		const SWvertex *v0,
+		const SWvertex *v1,
+		const SWvertex *v2)
 {
 #define DO_Z
 #define DO_RGBA
@@ -369,9 +369,9 @@ spec_tex_aa_tri(GLcontext *ctx,
 
 static void
 multitex_aa_tri(GLcontext *ctx,
-		SWvertex *v0,
-		SWvertex *v1,
-		SWvertex *v2)
+		const SWvertex *v0,
+		const SWvertex *v1,
+		const SWvertex *v2)
 {
 #define DO_Z
 #define DO_RGBA
@@ -381,9 +381,9 @@ multitex_aa_tri(GLcontext *ctx,
 
 static void
 spec_multitex_aa_tri(GLcontext *ctx,
-		     SWvertex *v0,
-		     SWvertex *v1,
-		     SWvertex *v2)
+		     const SWvertex *v0,
+		     const SWvertex *v1,
+		     const SWvertex *v2)
 {
 #define DO_Z
 #define DO_RGBA

@@ -1,10 +1,10 @@
-/* $Id: texobj.h,v 1.3 2000/05/23 17:14:49 brianp Exp $ */
+/* $Id: texobj.h,v 1.4 2000/11/19 23:10:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,12 +38,13 @@
  */
 
 extern struct gl_texture_object *
-gl_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
-                         GLuint dimensions );
+_mesa_alloc_texture_object( struct gl_shared_state *shared, GLuint name,
+                            GLuint dimensions );
 
 
-extern void gl_free_texture_object( struct gl_shared_state *shared,
-                                    struct gl_texture_object *t );
+extern void
+_mesa_free_texture_object( struct gl_shared_state *shared,
+                           struct gl_texture_object *t );
 
 
 extern void

@@ -1,4 +1,4 @@
-/* $Id: state.h,v 1.3 2000/08/21 14:22:24 brianp Exp $ */
+/* $Id: state.h,v 1.4 2000/11/19 23:10:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -45,9 +45,6 @@ gl_print_state( const char *msg, GLuint state );
 
 extern void
 gl_print_enable_flags( const char *msg, GLuint flags );
-
-extern void
-_mesa_update_image_transfer_state(GLcontext *ctx);
 
 
 #endif

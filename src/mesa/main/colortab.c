@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.26 2000/11/10 17:45:15 brianp Exp $ */
+/* $Id: colortab.c,v 1.27 2000/11/19 23:10:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -217,15 +217,15 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
 
    switch (target) {
       case GL_TEXTURE_1D:
-         texObj = texUnit->CurrentD[1];
+         texObj = texUnit->Current1D;
          table = &texObj->Palette;
          break;
       case GL_TEXTURE_2D:
-         texObj = texUnit->CurrentD[2];
+         texObj = texUnit->Current2D;
          table = &texObj->Palette;
          break;
       case GL_TEXTURE_3D:
-         texObj = texUnit->CurrentD[3];
+         texObj = texUnit->Current3D;
          table = &texObj->Palette;
          break;
       case GL_PROXY_TEXTURE_1D:
@@ -458,15 +458,15 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
 
    switch (target) {
       case GL_TEXTURE_1D:
-         texObj = texUnit->CurrentD[1];
+         texObj = texUnit->Current1D;
          table = &texObj->Palette;
          break;
       case GL_TEXTURE_2D:
-         texObj = texUnit->CurrentD[2];
+         texObj = texUnit->Current2D;
          table = &texObj->Palette;
          break;
       case GL_TEXTURE_3D:
-         texObj = texUnit->CurrentD[3];
+         texObj = texUnit->Current3D;
          table = &texObj->Palette;
          break;
       case GL_SHARED_TEXTURE_PALETTE_EXT:
@@ -687,13 +687,13 @@ _mesa_GetColorTable( GLenum target, GLenum format,
 
    switch (target) {
       case GL_TEXTURE_1D:
-         table = &texUnit->CurrentD[1]->Palette;
+         table = &texUnit->Current1D->Palette;
          break;
       case GL_TEXTURE_2D:
-         table = &texUnit->CurrentD[2]->Palette;
+         table = &texUnit->Current2D->Palette;
          break;
       case GL_TEXTURE_3D:
-         table = &texUnit->CurrentD[3]->Palette;
+         table = &texUnit->Current3D->Palette;
          break;
       case GL_SHARED_TEXTURE_PALETTE_EXT:
          table = &ctx->Texture.Palette;
@@ -950,13 +950,13 @@ _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
 
    switch (target) {
       case GL_TEXTURE_1D:
-         table = &texUnit->CurrentD[1]->Palette;
+         table = &texUnit->Current1D->Palette;
          break;
       case GL_TEXTURE_2D:
-         table = &texUnit->CurrentD[2]->Palette;
+         table = &texUnit->Current2D->Palette;
          break;
       case GL_TEXTURE_3D:
-         table = &texUnit->CurrentD[3]->Palette;
+         table = &texUnit->Current3D->Palette;
          break;
       case GL_PROXY_TEXTURE_1D:
          table = &ctx->Texture.Proxy1D->Palette;
@@ -1081,13 +1081,13 @@ _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
 
    switch (target) {
       case GL_TEXTURE_1D:
-         table = &texUnit->CurrentD[1]->Palette;
+         table = &texUnit->Current1D->Palette;
          break;
       case GL_TEXTURE_2D:
-         table = &texUnit->CurrentD[2]->Palette;
+         table = &texUnit->Current2D->Palette;
          break;
       case GL_TEXTURE_3D:
-         table = &texUnit->CurrentD[3]->Palette;
+         table = &texUnit->Current3D->Palette;
          break;
       case GL_PROXY_TEXTURE_1D:
          table = &ctx->Texture.Proxy1D->Palette;

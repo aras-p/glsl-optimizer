@@ -1,4 +1,4 @@
-/* $Id: xm_line.c,v 1.10 2000/11/16 21:05:40 keithw Exp $ */
+/* $Id: xm_line.c,v 1.11 2000/11/19 23:10:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -54,7 +54,7 @@
 /*
  * Render an array of points into a pixmap, any pixel format.
  */
-static void draw_points_ANY_pixmap( GLcontext *ctx, SWvertex *vert )
+static void draw_points_ANY_pixmap( GLcontext *ctx, const SWvertex *vert )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
@@ -117,7 +117,7 @@ void xmesa_choose_point( GLcontext *ctx )
  * Draw a flat-shaded, PF_TRUECOLOR line into an XImage.
  */
 static void flat_TRUECOLOR_line( GLcontext *ctx,
-                                 SWvertex *vert0, SWvertex *vert1 )
+                                 const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -138,7 +138,7 @@ static void flat_TRUECOLOR_line( GLcontext *ctx,
  * Draw a flat-shaded, PF_8A8B8G8R line into an XImage.
  */
 static void flat_8A8B8G8R_line( GLcontext *ctx,
-                                SWvertex *vert0, SWvertex *vert1 )
+                                const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -158,7 +158,7 @@ static void flat_8A8B8G8R_line( GLcontext *ctx,
  * Draw a flat-shaded, PF_8R8G8B line into an XImage.
  */
 static void flat_8R8G8B_line( GLcontext *ctx,
-                              SWvertex *vert0, SWvertex *vert1 )
+                              const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -178,7 +178,7 @@ static void flat_8R8G8B_line( GLcontext *ctx,
  * Draw a flat-shaded, PF_8R8G8B24 line into an XImage.
  */
 static void flat_8R8G8B24_line( GLcontext *ctx,
-                              SWvertex *vert0, SWvertex *vert1 )
+                              const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -201,7 +201,7 @@ static void flat_8R8G8B24_line( GLcontext *ctx,
  * Draw a flat-shaded, PF_5R6G5B line into an XImage.
  */
 static void flat_5R6G5B_line( GLcontext *ctx,
-                              SWvertex *vert0, SWvertex *vert1 )
+                              const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -221,7 +221,7 @@ static void flat_5R6G5B_line( GLcontext *ctx,
  * Draw a flat-shaded, PF_DITHER_5R6G5B line into an XImage.
  */
 static void flat_DITHER_5R6G5B_line( GLcontext *ctx,
-                                     SWvertex *vert0, SWvertex *vert1 )
+                                     const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -241,7 +241,7 @@ static void flat_DITHER_5R6G5B_line( GLcontext *ctx,
  * Draw a flat-shaded, PF_DITHER 8-bit line into an XImage.
  */
 static void flat_DITHER8_line( GLcontext *ctx,
-                               SWvertex *vert0, SWvertex *vert1 )
+                               const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -263,7 +263,7 @@ static void flat_DITHER8_line( GLcontext *ctx,
  * Draw a flat-shaded, PF_LOOKUP 8-bit line into an XImage.
  */
 static void flat_LOOKUP8_line( GLcontext *ctx,
-                               SWvertex *vert0, SWvertex *vert1 )
+                               const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -285,7 +285,7 @@ static void flat_LOOKUP8_line( GLcontext *ctx,
  * Draw a flat-shaded, PF_HPCR line into an XImage.
  */
 static void flat_HPCR_line( GLcontext *ctx,
-                            SWvertex *vert0, SWvertex *vert1 )
+                            const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -307,7 +307,7 @@ static void flat_HPCR_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, PF_TRUECOLOR line into an XImage.
  */
 static void flat_TRUECOLOR_z_line( GLcontext *ctx,
-                                   SWvertex *vert0, SWvertex *vert1 )
+                                   const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -333,7 +333,7 @@ static void flat_TRUECOLOR_z_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, PF_8A8B8G8R line into an XImage.
  */
 static void flat_8A8B8G8R_z_line( GLcontext *ctx,
-                                  SWvertex *vert0, SWvertex *vert1 )
+                                  const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -359,7 +359,7 @@ static void flat_8A8B8G8R_z_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, PF_8R8G8B line into an XImage.
  */
 static void flat_8R8G8B_z_line( GLcontext *ctx,
-                                SWvertex *vert0, SWvertex *vert1 )
+                                const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -385,7 +385,7 @@ static void flat_8R8G8B_z_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, PF_8R8G8B24 line into an XImage.
  */
 static void flat_8R8G8B24_z_line( GLcontext *ctx,
-                                    SWvertex *vert0, SWvertex *vert1 )
+                                    const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -412,7 +412,7 @@ static void flat_8R8G8B24_z_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, PF_5R6G5B line into an XImage.
  */
 static void flat_5R6G5B_z_line( GLcontext *ctx,
-                                SWvertex *vert0, SWvertex *vert1 )
+                                const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -437,7 +437,7 @@ static void flat_5R6G5B_z_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, PF_DITHER_5R6G5B line into an XImage.
  */
 static void flat_DITHER_5R6G5B_z_line( GLcontext *ctx,
-                                       SWvertex *vert0, SWvertex *vert1 )
+                                       const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -461,7 +461,7 @@ static void flat_DITHER_5R6G5B_z_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, PF_DITHER 8-bit line into an XImage.
  */
 static void flat_DITHER8_z_line( GLcontext *ctx,
-                                 SWvertex *vert0, SWvertex *vert1 )
+                                 const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -488,7 +488,7 @@ static void flat_DITHER8_z_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, PF_LOOKUP 8-bit line into an XImage.
  */
 static void flat_LOOKUP8_z_line( GLcontext *ctx,
-                                 SWvertex *vert0, SWvertex *vert1 )
+                                 const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;
@@ -516,7 +516,7 @@ static void flat_LOOKUP8_z_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, PF_HPCR line into an XImage.
  */
 static void flat_HPCR_z_line( GLcontext *ctx,
-                              SWvertex *vert0, SWvertex *vert1 )
+                              const SWvertex *vert0, const SWvertex *vert1 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = vert0->color;

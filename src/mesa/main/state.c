@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.45 2000/11/16 21:05:35 keithw Exp $ */
+/* $Id: state.c,v 1.46 2000/11/19 23:10:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -692,7 +692,7 @@ _mesa_init_exec_table(struct _glapi_table *exec, GLuint tableSize)
 
 
 static void
-_mesa_update_polygon( GLcontext *ctx )
+update_polygon( GLcontext *ctx )
 {
    ctx->_TriangleCaps &= ~DD_TRI_CULL_FRONT_BACK;
 
@@ -726,7 +726,7 @@ _mesa_update_polygon( GLcontext *ctx )
 }
 
 static void 
-_mesa_calculate_model_project_matrix( GLcontext *ctx )
+calculate_model_project_matrix( GLcontext *ctx )
 {
    if (!ctx->_NeedEyeCoords) {
       _math_matrix_mul_matrix( &ctx->_ModelProjectMatrix,
@@ -738,7 +738,7 @@ _mesa_calculate_model_project_matrix( GLcontext *ctx )
 }
 
 static void
-_mesa_update_modelview_scale( GLcontext *ctx )
+update_modelview_scale( GLcontext *ctx )
 {
    ctx->_ModelViewInvScale = 1.0F;
    if (ctx->ModelView.flags & (MAT_FLAG_UNIFORM_SCALE |
@@ -759,34 +759,32 @@ _mesa_update_modelview_scale( GLcontext *ctx )
 /* Bring uptodate any state that relies on _NeedEyeCoords.  
  */
 static void
-_mesa_update_tnl_spaces( GLcontext *ctx, GLuint oldneedeyecoords )
+update_tnl_spaces( GLcontext *ctx, GLuint oldneedeyecoords )
 {   
    /* Check if the truth-value interpretations of the bitfields have
     * changed: 
     */
-   if ((oldneedeyecoords == 0) != (ctx->_NeedEyeCoords == 0))
-   {
+   if ((oldneedeyecoords == 0) != (ctx->_NeedEyeCoords == 0)) {
       /* Recalculate all state that depends on _NeedEyeCoords.
        */
-      _mesa_update_modelview_scale(ctx);
-      _mesa_calculate_model_project_matrix(ctx);
+      update_modelview_scale(ctx);
+      calculate_model_project_matrix(ctx);
       gl_compute_light_positions( ctx );
 
       if (ctx->Driver.LightingSpaceChange)
 	 ctx->Driver.LightingSpaceChange( ctx );
    }
-   else 
-   {
+   else {
       GLuint new_state = ctx->NewState;
 
       /* Recalculate that same state if and only if it has been
        * invalidated by other statechanges.
        */
       if (new_state & _NEW_MODELVIEW) 
-	 _mesa_update_modelview_scale(ctx);
+	 update_modelview_scale(ctx);
 
       if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION)) 
-	 _mesa_calculate_model_project_matrix(ctx);
+	 calculate_model_project_matrix(ctx);
 	    
       if (new_state & (_NEW_LIGHT|_NEW_MODELVIEW))
 	 gl_compute_light_positions( ctx );
@@ -795,7 +793,7 @@ _mesa_update_tnl_spaces( GLcontext *ctx, GLuint oldneedeyecoords )
 
 
 static void
-_mesa_update_drawbuffer( GLcontext *ctx )
+update_drawbuffer( GLcontext *ctx )
 {
    ctx->DrawBuffer->_Xmin = 0;
    ctx->DrawBuffer->_Ymin = 0;
@@ -824,7 +822,7 @@ _mesa_update_drawbuffer( GLcontext *ctx )
  * uptodate across changes to the Transform attributes.
  */
 static void
-_mesa_update_projection( GLcontext *ctx )
+update_projection( GLcontext *ctx )
 {
    _math_matrix_analyze( &ctx->ProjectionMatrix );
       
@@ -845,106 +843,12 @@ _mesa_update_projection( GLcontext *ctx )
 
 
 
-
-/*
- * If ctx->NewState is non-zero then this function MUST be called before
- * rendering any primitive.  Basically, function pointers and miscellaneous
- * flags are updated to reflect the current state of the state machine.
- *
- * Special care is taken with the derived value _NeedEyeCoords.  These
- * is a bitflag which is updated with information from a number of
- * attribute groups (MODELVIEW, LIGHT, TEXTURE).  A lot of derived
- * state references this value, and must be treated with care to
- * ensure that updates are done correctly.  All state dependent on
- * _NeedEyeCoords is calculated from within _mesa_update_tnl_spaces(),
- * and from nowhere else.  
- */
-void gl_update_state( GLcontext *ctx )
-{
-   GLuint new_state = ctx->NewState;
-   GLuint oldneedeyecoords = ctx->_NeedEyeCoords;
-
-   if (MESA_VERBOSE & VERBOSE_STATE)
-      gl_print_state("", new_state);
-
-   if (new_state & _NEW_MODELVIEW) 
-      _math_matrix_analyze( &ctx->ModelView );
-
-   if (new_state & _NEW_PROJECTION) 
-      _mesa_update_projection( ctx );
-
-   if (new_state & _NEW_TEXTURE_MATRIX) 
-      _mesa_update_texture_matrices( ctx );
-
-   if (new_state & _NEW_COLOR_MATRIX) 
-      _math_matrix_analyze( &ctx->ColorMatrix );
-   
-   /* References ColorMatrix.type (derived above).
-    */
-   if (new_state & (_NEW_PIXEL|_NEW_COLOR_MATRIX))
-      _mesa_update_image_transfer_state(ctx);
-
-   /* Contributes to NeedEyeCoords, NeedNormals.
-    */
-   if (new_state & _NEW_TEXTURE) 
-      _mesa_update_textures( ctx );
-
-   if (new_state & (_NEW_BUFFERS|_NEW_SCISSOR)) 
-      _mesa_update_drawbuffer( ctx );
-
-   if (new_state & _NEW_POLYGON) 
-      _mesa_update_polygon( ctx );
-
-   /* Contributes to NeedEyeCoords, NeedNormals.
-    */
-   if (new_state & _NEW_LIGHT) 
-      gl_update_lighting( ctx );
-
-   /* We can light in object space if the modelview matrix preserves
-    * lengths and relative angles.
-    */
-   if (new_state & (_NEW_MODELVIEW|_NEW_LIGHT)) {
-      ctx->_NeedEyeCoords &= ~NEED_EYE_LIGHT_MODELVIEW;
-      if (ctx->Light.Enabled &&
-	  !TEST_MAT_FLAGS( &ctx->ModelView, MAT_FLAGS_LENGTH_PRESERVING))
-	    ctx->_NeedEyeCoords |= NEED_EYE_LIGHT_MODELVIEW;
-   }
-
-   /* ctx->_NeedEyeCoords and ctx->_NeedEyeNormals are now uptodate.
-    *
-    * If the truth value of either has changed, update for the new
-    * lighting space and recompute the positions of lights and the
-    * normal transform.
-    * 
-    * If the lighting space hasn't changed, may still need to recompute
-    * light positions & normal transforms for other reasons.  
-    */
-   if (new_state & (_NEW_MODELVIEW |
-		    _NEW_PROJECTION |
-		    _TNL_NEW_NORMAL_TRANSFORM |
-		    _NEW_LIGHT |
-		    _TNL_NEW_NEED_EYE_COORDS)) 
-      _mesa_update_tnl_spaces( ctx, oldneedeyecoords );
-
-   /*
-    * Here the driver sets up all the ctx->Driver function pointers
-    * to it's specific, private functions, and performs any
-    * internal state management necessary, including invalidating
-    * state of active modules.
-    */
-   ctx->Driver.UpdateState(ctx);
-   ctx->NewState = 0;
-}
-
-
-
-
 /*
  * Return a bitmask of IMAGE_*_BIT flags which to indicate which
  * pixel transfer operations are enabled.
  */
-void
-_mesa_update_image_transfer_state(GLcontext *ctx)
+static void
+update_image_transfer_state(GLcontext *ctx)
 {
    GLuint mask = 0;
 
@@ -992,4 +896,95 @@ _mesa_update_image_transfer_state(GLcontext *ctx)
       mask |= IMAGE_MIN_MAX_BIT;
 
    ctx->_ImageTransferState = mask;
+}
+
+
+/*
+ * If ctx->NewState is non-zero then this function MUST be called before
+ * rendering any primitive.  Basically, function pointers and miscellaneous
+ * flags are updated to reflect the current state of the state machine.
+ *
+ * Special care is taken with the derived value _NeedEyeCoords.  These
+ * is a bitflag which is updated with information from a number of
+ * attribute groups (MODELVIEW, LIGHT, TEXTURE).  A lot of derived
+ * state references this value, and must be treated with care to
+ * ensure that updates are done correctly.  All state dependent on
+ * _NeedEyeCoords is calculated from within _mesa_update_tnl_spaces(),
+ * and from nowhere else.  
+ */
+void gl_update_state( GLcontext *ctx )
+{
+   GLuint new_state = ctx->NewState;
+   GLuint oldneedeyecoords = ctx->_NeedEyeCoords;
+
+   if (MESA_VERBOSE & VERBOSE_STATE)
+      gl_print_state("", new_state);
+
+   if (new_state & _NEW_MODELVIEW) 
+      _math_matrix_analyze( &ctx->ModelView );
+
+   if (new_state & _NEW_PROJECTION) 
+      update_projection( ctx );
+
+   if (new_state & _NEW_TEXTURE_MATRIX) 
+      _mesa_update_texture_matrices( ctx );
+
+   if (new_state & _NEW_COLOR_MATRIX) 
+      _math_matrix_analyze( &ctx->ColorMatrix );
+   
+   /* References ColorMatrix.type (derived above).
+    */
+   if (new_state & (_NEW_PIXEL|_NEW_COLOR_MATRIX))
+      update_image_transfer_state(ctx);
+
+   /* Contributes to NeedEyeCoords, NeedNormals.
+    */
+   if (new_state & _NEW_TEXTURE) 
+      _mesa_update_texture_state( ctx );
+
+   if (new_state & (_NEW_BUFFERS|_NEW_SCISSOR)) 
+      update_drawbuffer( ctx );
+
+   if (new_state & _NEW_POLYGON) 
+      update_polygon( ctx );
+
+   /* Contributes to NeedEyeCoords, NeedNormals.
+    */
+   if (new_state & _NEW_LIGHT) 
+      gl_update_lighting( ctx );
+
+   /* We can light in object space if the modelview matrix preserves
+    * lengths and relative angles.
+    */
+   if (new_state & (_NEW_MODELVIEW|_NEW_LIGHT)) {
+      ctx->_NeedEyeCoords &= ~NEED_EYE_LIGHT_MODELVIEW;
+      if (ctx->Light.Enabled &&
+	  !TEST_MAT_FLAGS( &ctx->ModelView, MAT_FLAGS_LENGTH_PRESERVING))
+	    ctx->_NeedEyeCoords |= NEED_EYE_LIGHT_MODELVIEW;
+   }
+
+   /* ctx->_NeedEyeCoords and ctx->_NeedEyeNormals are now uptodate.
+    *
+    * If the truth value of either has changed, update for the new
+    * lighting space and recompute the positions of lights and the
+    * normal transform.
+    * 
+    * If the lighting space hasn't changed, may still need to recompute
+    * light positions & normal transforms for other reasons.  
+    */
+   if (new_state & (_NEW_MODELVIEW |
+		    _NEW_PROJECTION |
+		    _TNL_NEW_NORMAL_TRANSFORM |
+		    _NEW_LIGHT |
+		    _TNL_NEW_NEED_EYE_COORDS)) 
+      update_tnl_spaces( ctx, oldneedeyecoords );
+
+   /*
+    * Here the driver sets up all the ctx->Driver function pointers
+    * to it's specific, private functions, and performs any
+    * internal state management necessary, including invalidating
+    * state of active modules.
+    */
+   ctx->Driver.UpdateState(ctx);
+   ctx->NewState = 0;
 }

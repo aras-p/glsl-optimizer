@@ -1,4 +1,4 @@
-/* $Id: s_aatritemp.h,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_aatritemp.h,v 1.4 2000/11/19 23:10:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,7 +47,7 @@
    const GLfloat *p0 = v0->win;
    const GLfloat *p1 = v1->win;
    const GLfloat *p2 = v2->win;
-   SWvertex *vMin, *vMid, *vMax;
+   const SWvertex *vMin, *vMid, *vMax;
    GLint iyMin, iyMax;
    GLfloat yMin, yMax;
    GLboolean ltor;

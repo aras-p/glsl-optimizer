@@ -1,4 +1,4 @@
-/* $Id: s_linetemp.h,v 1.2 2000/11/05 18:24:40 keithw Exp $ */
+/* $Id: s_linetemp.h,v 1.3 2000/11/19 23:10:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -73,7 +73,7 @@
  */
 
 
-/*void line( GLcontext *ctx, SWvertex *vert0, SWvertex *vert1 )*/
+/*void line( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )*/
 {
    GLint x0 = (GLint) vert0->win[0];
    GLint x1 = (GLint) vert1->win[0];

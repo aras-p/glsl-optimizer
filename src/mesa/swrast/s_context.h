@@ -55,10 +55,19 @@ typedef void (*blend_func)( GLcontext *ctx, GLuint n, const GLubyte mask[],
                             GLchan src[][4], CONST GLchan dst[][4] );
 #endif
 
-typedef void (*swrast_tri_func)( GLcontext *ctx, 
-				 SWvertex *, SWvertex *, SWvertex *);
-typedef void (*swrast_line_func)( GLcontext *ctx, SWvertex *, SWvertex *);
-typedef void (*swrast_point_func)( GLcontext *ctx, SWvertex *);
+typedef void (*swrast_point_func)( GLcontext *ctx, const SWvertex *);
+
+typedef void (*swrast_line_func)( GLcontext *ctx,
+                                  const SWvertex *, const SWvertex *);
+
+typedef void (*swrast_tri_func)( GLcontext *ctx, const SWvertex *,
+                                 const SWvertex *, const SWvertex *);
+
+typedef void (*swrast_quad_func)( GLcontext *ctx,
+                                  const SWvertex *, const SWvertex *,
+                                  const SWvertex *, const SWvertex *);
+
+
 
 /*
  * Bitmasks to indicate which rasterization options are enabled (RasterMask)
@@ -138,11 +147,11 @@ typedef struct
    /* Function pointers for dispatch behind public entrypoints.
     */
    void (*InvalidateState)( GLcontext *ctx, GLuint new_state );
-   void (*Point)( GLcontext *ctx, SWvertex *v );
-   void (*Line)( GLcontext *ctx, SWvertex *v0, SWvertex *v1 );
-   void (*Triangle)( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2 );
-   void (*Quad)( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2, 
-		 SWvertex *v3);
+
+   swrast_point_func Point;
+   swrast_line_func Line;
+   swrast_tri_func Triangle;
+   swrast_quad_func Quad;
 
    /* Internal hooks, kept uptodate by the same mechanism as above.
     */

@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.32 2000/11/17 21:01:40 brianp Exp $ */
+/* $Id: osmesa.c,v 1.33 2000/11/19 23:10:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1239,7 +1239,7 @@ static void read_index_pixels( const GLcontext *ctx,
  * Draw a flat-shaded, RGB line into an osmesa buffer.
  */
 static void flat_rgba_line( GLcontext *ctx,
-                            SWvertex *vert0, SWvertex *vert1 )
+                            const SWvertex *vert0, const SWvertex *vert1 )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    GLubyte *color = vert0->color;
@@ -1261,7 +1261,7 @@ static void flat_rgba_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, RGB line into an osmesa buffer.
  */
 static void flat_rgba_z_line( GLcontext *ctx,
-			      SWvertex *vert0, SWvertex *vert1 )
+			      const SWvertex *vert0, const SWvertex *vert1 )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    GLubyte *color = vert0->color;
@@ -1290,7 +1290,7 @@ static void flat_rgba_z_line( GLcontext *ctx,
  * Draw a flat-shaded, alpha-blended, RGB line into an osmesa buffer.
  */
 static void flat_blend_rgba_line( GLcontext *ctx,
-				  SWvertex *vert0, SWvertex *vert1 )
+				  const SWvertex *vert0, const SWvertex *vert1 )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    GLint rshift = osmesa->rshift;
@@ -1325,7 +1325,7 @@ static void flat_blend_rgba_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, alpha-blended, RGB line into an osmesa buffer.
  */
 static void flat_blend_rgba_z_line( GLcontext *ctx,
-				    SWvertex *vert0, SWvertex *vert1 )
+				    const SWvertex *vert0, const SWvertex *vert1 )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    GLint rshift = osmesa->rshift;
@@ -1363,7 +1363,7 @@ static void flat_blend_rgba_z_line( GLcontext *ctx,
  * Draw a flat-shaded, Z-less, alpha-blended, RGB line into an osmesa buffer.
  */
 static void flat_blend_rgba_z_line_write( GLcontext *ctx,
-					  SWvertex *vert0, SWvertex *vert1 )
+					  const SWvertex *vert0, const SWvertex *vert1 )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    GLint rshift = osmesa->rshift;
@@ -1509,7 +1509,9 @@ osmesa_choose_line_function( GLcontext *ctx )
  * Smooth-shaded, z-less triangle, RGBA color.
  */
 static void smooth_rgba_z_triangle( GLcontext *ctx, 
-				    SWvertex *v0, SWvertex *v1, SWvertex *v2 )
+				    const SWvertex *v0,
+                                    const SWvertex *v1,
+                                    const SWvertex *v2 )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    GLint rshift = osmesa->rshift;
@@ -1551,7 +1553,9 @@ static void smooth_rgba_z_triangle( GLcontext *ctx,
  * Flat-shaded, z-less triangle, RGBA color.
  */
 static void flat_rgba_z_triangle( GLcontext *ctx, 
-				  SWvertex *v0, SWvertex *v1, SWvertex *v2 )
+				  const SWvertex *v0,
+                                  const SWvertex *v1,
+                                  const SWvertex *v2 )
 {
    OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
 #define INTERP_Z 1

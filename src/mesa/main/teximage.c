@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.62 2000/11/13 15:25:26 brianp Exp $ */
+/* $Id: teximage.c,v 1.63 2000/11/19 23:10:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -544,15 +544,15 @@ _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
 {
    switch (target) {
       case GL_TEXTURE_1D:
-         return texUnit->CurrentD[1];
+         return texUnit->Current1D;
       case GL_PROXY_TEXTURE_1D:
          return ctx->Texture.Proxy1D;
       case GL_TEXTURE_2D:
-         return texUnit->CurrentD[2];
+         return texUnit->Current2D;
       case GL_PROXY_TEXTURE_2D:
          return ctx->Texture.Proxy2D;
       case GL_TEXTURE_3D:
-         return texUnit->CurrentD[3];
+         return texUnit->Current3D;
       case GL_PROXY_TEXTURE_3D:
          return ctx->Texture.Proxy3D;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
@@ -584,15 +584,15 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
    ASSERT(texUnit);
    switch (target) {
       case GL_TEXTURE_1D:
-         return texUnit->CurrentD[1]->Image[level];
+         return texUnit->Current1D->Image[level];
       case GL_PROXY_TEXTURE_1D:
          return ctx->Texture.Proxy1D->Image[level];
       case GL_TEXTURE_2D:
-         return texUnit->CurrentD[2]->Image[level];
+         return texUnit->Current2D->Image[level];
       case GL_PROXY_TEXTURE_2D:
          return ctx->Texture.Proxy2D->Image[level];
       case GL_TEXTURE_3D:
-         return texUnit->CurrentD[3]->Image[level];
+         return texUnit->Current3D->Image[level];
       case GL_PROXY_TEXTURE_3D:
          return ctx->Texture.Proxy3D->Image[level];
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
@@ -1247,7 +1247,7 @@ subtexture_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   destTex = texUnit->CurrentD[2]->Image[level];
+   destTex = texUnit->Current2D->Image[level];
    if (!destTex) {
       gl_error(ctx, GL_INVALID_OPERATION, "glTexSubImage2D");
       return GL_TRUE;
@@ -1442,7 +1442,7 @@ copytexsubimage_error_check( GLcontext *ctx, GLuint dimensions,
       return GL_TRUE;
    }
 
-   teximage = texUnit->CurrentD[dimensions]->Image[level];
+   teximage = _mesa_select_tex_image(ctx, texUnit, target, level);
    if (!teximage) {
       char message[100];
       sprintf(message, "glCopyTexSubImage%dD(undefined texture)", dimensions);
@@ -1639,7 +1639,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       }
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-      texObj = texUnit->CurrentD[1];
+      texObj = texUnit->Current1D;
       texImage = texObj->Image[level];
 
       if (!texImage) {
@@ -1700,7 +1700,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       }
 
       /* state update */
-      gl_put_texobj_on_dirty_list( ctx, texObj );
+      texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
    }
    else if (target == GL_PROXY_TEXTURE_1D) {
@@ -1839,7 +1839,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       }
 
       /* state update */
-      gl_put_texobj_on_dirty_list( ctx, texObj );
+      texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
    }
    else if (target == GL_PROXY_TEXTURE_2D) {
@@ -1911,7 +1911,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       }
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-      texObj = texUnit->CurrentD[3];
+      texObj = texUnit->Current3D;
       texImage = texObj->Image[level];
 
       if (!texImage) {
@@ -1973,7 +1973,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       }
 
       /* state update */
-      gl_put_texobj_on_dirty_list( ctx, texObj );
+      texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
    }
    else if (target == GL_PROXY_TEXTURE_3D) {
@@ -2403,7 +2403,7 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
    }
 
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   texObj = texUnit->CurrentD[1];
+   texObj = texUnit->Current1D;
    texImage = texObj->Image[level];
    assert(texImage);
 
@@ -2544,7 +2544,7 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
    }
 
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   texObj = texUnit->CurrentD[3];
+   texObj = texUnit->Current3D;
    texImage = texObj->Image[level];
    assert(texImage);
 
@@ -2741,7 +2741,7 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
       GLchan *image;
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-      teximage = texUnit->CurrentD[1]->Image[level];
+      teximage = texUnit->Current1D->Image[level];
       assert(teximage);
 
       /* get image from frame buffer */
@@ -2788,7 +2788,7 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
       GLchan *image;
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-      teximage = texUnit->CurrentD[2]->Image[level];
+      teximage = texUnit->Current2D->Image[level];
       assert(teximage);
 
       /* get image from frame buffer */
@@ -2835,7 +2835,7 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
       GLchan *image;
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-      teximage = texUnit->CurrentD[3]->Image[level];
+      teximage = texUnit->Current3D->Image[level];
       assert(teximage);
 
       /* get image from frame buffer */
@@ -2893,7 +2893,7 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
       }
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-      texObj = texUnit->CurrentD[1];
+      texObj = texUnit->Current1D;
       texImage = texObj->Image[level];
 
       if (!texImage) {
@@ -2954,7 +2954,7 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
       }
 
       /* state update */
-      gl_put_texobj_on_dirty_list( ctx, texObj );
+      texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
    }
    else if (target == GL_PROXY_TEXTURE_1D) {
@@ -3023,7 +3023,7 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
       }
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-      texObj = texUnit->CurrentD[2];
+      texObj = texUnit->Current2D;
       texImage = texObj->Image[level];
 
       if (!texImage) {
@@ -3089,7 +3089,7 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
       }
 
       /* state update */
-      gl_put_texobj_on_dirty_list( ctx, texObj );
+      texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
    }
    else if (target == GL_PROXY_TEXTURE_2D) {
@@ -3155,7 +3155,7 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
       }
 
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-      texObj = texUnit->CurrentD[3];
+      texObj = texUnit->Current3D;
       texImage = texObj->Image[level];
 
       if (!texImage) {
@@ -3218,7 +3218,7 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
       }
 
       /* state update */
-      gl_put_texobj_on_dirty_list( ctx, texObj );
+      texObj->Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
    }
    else if (target == GL_PROXY_TEXTURE_3D) {
@@ -3377,11 +3377,11 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
 
    switch (target) {
       case GL_TEXTURE_1D:
-         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentD[1];
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current1D;
          texImage = texObj->Image[level];
          break;
       case GL_TEXTURE_2D:
-         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentD[2];
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current2D;
          texImage = texObj->Image[level];
          break;
       case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
@@ -3409,7 +3409,7 @@ _mesa_GetCompressedTexImageARB(GLenum target, GLint level, GLvoid *img)
          texImage = texObj->NegZ[level];
          break;
       case GL_TEXTURE_3D:
-         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].CurrentD[3];
+         texObj = ctx->Texture.Unit[ctx->Texture.CurrentUnit].Current3D;
          texImage = texObj->Image[level];
          break;
       default:

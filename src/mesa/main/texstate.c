@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.22 2000/11/16 21:05:35 keithw Exp $ */
+/* $Id: texstate.c,v 1.23 2000/11/19 23:10:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -616,13 +616,13 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
 
    switch (target) {
       case GL_TEXTURE_1D:
-         texObj = texUnit->CurrentD[1];
+         texObj = texUnit->Current1D;
          break;
       case GL_TEXTURE_2D:
-         texObj = texUnit->CurrentD[2];
+         texObj = texUnit->Current2D;
          break;
       case GL_TEXTURE_3D_EXT:
-         texObj = texUnit->CurrentD[3];
+         texObj = texUnit->Current3D;
          break;
       case GL_TEXTURE_CUBE_MAP_ARB:
          if (ctx->Extensions.ARB_texture_cube_map) {
@@ -737,7 +737,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
    }
 
    ctx->NewState |= _NEW_TEXTURE;
-   gl_put_texobj_on_dirty_list( ctx, texObj );
+   texObj->Complete = GL_FALSE;
 
    if (ctx->Driver.TexParameter) {
       (*ctx->Driver.TexParameter)( ctx, target, texObj, pname, params );
@@ -1613,64 +1613,3 @@ _mesa_ClientActiveTextureARB( GLenum target )
       gl_error(ctx, GL_INVALID_OPERATION, "glActiveTextureARB(target)");
    }
 }
-
-
-
-/*
- * Put the given texture object into the list of dirty texture objects.
- * When a texture object is dirty we have to reexamine it for completeness
- * and perhaps choose a different texture sampling function.
- */
-void gl_put_texobj_on_dirty_list( GLcontext *ctx, struct gl_texture_object *t )
-{
-   ASSERT(ctx);
-   ASSERT(t);
-   /* Only insert if not already in the dirty list.
-    * The Dirty flag is only set iff the texture object is in the dirty list.
-    */
-   if (!t->Dirty) {
-      ASSERT(t->NextDirty == NULL);
-      t->Dirty = GL_TRUE;
-      t->NextDirty = ctx->Shared->DirtyTexObjList;
-      ctx->Shared->DirtyTexObjList = t;
-   }
-#ifdef DEBUG
-   else {
-      /* make sure t is in the list */
-      struct gl_texture_object *obj = ctx->Shared->DirtyTexObjList;
-      while (obj) {
-         if (obj == t) {
-            return;
-         }
-         obj = obj->NextDirty;
-      }
-      gl_problem(ctx, "Error in gl_put_texobj_on_dirty_list");
-   }
-#endif
-}
-
-
-/*
- * Remove a texture object from the dirty texture list.
- */
-void gl_remove_texobj_from_dirty_list( struct gl_shared_state *shared,
-                                       struct gl_texture_object *tObj )
-{
-   struct gl_texture_object *t, *prev = NULL;
-   ASSERT(shared);
-   ASSERT(tObj);
-   for (t = shared->DirtyTexObjList; t; t = t->NextDirty) {
-      if (t == tObj) {
-         if (prev) {
-            prev->NextDirty = t->NextDirty;
-         }
-         else {
-            shared->DirtyTexObjList = t->NextDirty;
-         }
-         return;
-      }
-      prev = t;
-   }
-}
-
-

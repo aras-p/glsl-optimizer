@@ -1,4 +1,4 @@
-/* $Id: s_tritemp.h,v 1.3 2000/11/13 20:02:57 keithw Exp $ */
+/* $Id: s_tritemp.h,v 1.4 2000/11/19 23:10:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,7 +76,7 @@
 /*void triangle( GLcontext *ctx, SWvertex *v0, SWvertex *v1, SWvertex *v2 )*/
 {
    typedef struct {
-        SWvertex *v0, *v1;   /* Y(v0) < Y(v1) */
+        const SWvertex *v0, *v1;   /* Y(v0) < Y(v1) */
 	GLfloat dx;	/* X(v1) - X(v0) */
 	GLfloat dy;	/* Y(v1) - Y(v0) */
 	GLfixed fdxdy;	/* dx/dy in fixed-point */
@@ -95,7 +95,7 @@
 #endif
    EdgeT eMaj, eTop, eBot;
    GLfloat oneOverArea;
-   SWvertex *vMin, *vMid, *vMax;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
+   const SWvertex *vMin, *vMid, *vMax;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
    float bf = SWRAST_CONTEXT(ctx)->_backface_sign;
 
    /* find the order of the 3 vertices along the Y axis */
@@ -650,7 +650,7 @@
             }
 
             if (setupLeft && eLeft->lines > 0) {
-               SWvertex *vLower;
+               const SWvertex *vLower;
                GLfixed fsx = eLeft->fsx;
                fx = FixedCeil(fsx);
                fError = fx - fsx - FIXED_ONE;

@@ -1,4 +1,4 @@
-/* $Id: xm_tri.c,v 1.10 2000/11/16 21:05:40 keithw Exp $ */
+/* $Id: xm_tri.c,v 1.11 2000/11/19 23:10:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,9 +56,9 @@
  * XImage, smooth, depth-buffered, PF_TRUECOLOR triangle.
  */
 static void smooth_TRUECOLOR_z_triangle( GLcontext *ctx,
-                                         SWvertex *v0,
-					 SWvertex *v1,
-					 SWvertex *v2 )
+                                         const SWvertex *v0,
+					 const SWvertex *v1,
+					 const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
@@ -91,9 +91,9 @@ static void smooth_TRUECOLOR_z_triangle( GLcontext *ctx,
  * XImage, smooth, depth-buffered, PF_8A8B8G8R triangle.
  */
 static void smooth_8A8B8G8R_z_triangle( GLcontext *ctx,
-					SWvertex *v0,
-					SWvertex *v1,
-					SWvertex *v2 )
+					const SWvertex *v0,
+					const SWvertex *v1,
+					const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -125,9 +125,9 @@ static void smooth_8A8B8G8R_z_triangle( GLcontext *ctx,
  * XImage, smooth, depth-buffered, PF_8R8G8B triangle.
  */
 static void smooth_8R8G8B_z_triangle( GLcontext *ctx,
-				      SWvertex *v0,
-				      SWvertex *v1,
-				      SWvertex *v2 )
+				      const SWvertex *v0,
+				      const SWvertex *v1,
+				      const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -159,9 +159,9 @@ static void smooth_8R8G8B_z_triangle( GLcontext *ctx,
  * XImage, smooth, depth-buffered, PF_8R8G8B24 triangle.
  */
 static void smooth_8R8G8B24_z_triangle( GLcontext *ctx,
-                                        SWvertex *v0,
-					SWvertex *v1,
-					SWvertex *v2 )
+                                        const SWvertex *v0,
+					const SWvertex *v1,
+					const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -195,9 +195,9 @@ static void smooth_8R8G8B24_z_triangle( GLcontext *ctx,
  * XImage, smooth, depth-buffered, PF_TRUEDITHER triangle.
  */
 static void smooth_TRUEDITHER_z_triangle( GLcontext *ctx,
-					  SWvertex *v0,
-					  SWvertex *v1,
-					  SWvertex *v2 )
+					  const SWvertex *v0,
+					  const SWvertex *v1,
+					  const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
@@ -229,9 +229,9 @@ static void smooth_TRUEDITHER_z_triangle( GLcontext *ctx,
  * XImage, smooth, depth-buffered, PF_5R6G5B triangle.
  */
 static void smooth_5R6G5B_z_triangle( GLcontext *ctx,
-                                      SWvertex *v0,
-				      SWvertex *v1,
-				      SWvertex *v2 )
+                                      const SWvertex *v0,
+				      const SWvertex *v1,
+				      const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -263,9 +263,9 @@ static void smooth_5R6G5B_z_triangle( GLcontext *ctx,
  * XImage, smooth, depth-buffered, PF_DITHER_5R6G5B triangle.
  */
 static void smooth_DITHER_5R6G5B_z_triangle( GLcontext *ctx,
-                                             SWvertex *v0,
-					     SWvertex *v1,
-					     SWvertex *v2 )
+                                             const SWvertex *v0,
+					     const SWvertex *v1,
+					     const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -297,9 +297,9 @@ static void smooth_DITHER_5R6G5B_z_triangle( GLcontext *ctx,
  * XImage, smooth, depth-buffered, 8-bit, PF_DITHER8 triangle.
  */
 static void smooth_DITHER8_z_triangle( GLcontext *ctx,
-                                       SWvertex *v0,
-				       SWvertex *v1,
-				       SWvertex *v2 )
+                                       const SWvertex *v0,
+				       const SWvertex *v1,
+				       const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -332,9 +332,9 @@ static void smooth_DITHER8_z_triangle( GLcontext *ctx,
  * XImage, smooth, depth-buffered, PF_DITHER triangle.
  */
 static void smooth_DITHER_z_triangle( GLcontext *ctx,
-				      SWvertex *v0,
-				      SWvertex *v1,
-				      SWvertex *v2 )
+				      const SWvertex *v0,
+				      const SWvertex *v1,
+				      const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
@@ -369,9 +369,9 @@ static void smooth_DITHER_z_triangle( GLcontext *ctx,
  * XImage, smooth, depth-buffered, 8-bit PF_LOOKUP triangle.
  */
 static void smooth_LOOKUP8_z_triangle( GLcontext *ctx, 
-				       SWvertex *v0,
-				       SWvertex *v1,
-				       SWvertex *v2 )
+				       const SWvertex *v0,
+				       const SWvertex *v1,
+				       const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -405,9 +405,9 @@ static void smooth_LOOKUP8_z_triangle( GLcontext *ctx,
  * XImage, smooth, depth-buffered, 8-bit PF_HPCR triangle.
  */
 static void smooth_HPCR_z_triangle( GLcontext *ctx, 
-				    SWvertex *v0,
-				    SWvertex *v1,
-				    SWvertex *v2 )
+				    const SWvertex *v0,
+				    const SWvertex *v1,
+				    const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -439,9 +439,9 @@ static void smooth_HPCR_z_triangle( GLcontext *ctx,
  * XImage, flat, depth-buffered, PF_TRUECOLOR triangle.
  */
 static void flat_TRUECOLOR_z_triangle( GLcontext *ctx,
-                        	       SWvertex *v0,
-				       SWvertex *v1,
-				       SWvertex *v2 )
+                        	       const SWvertex *v0,
+				       const SWvertex *v1,
+				       const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
@@ -472,9 +472,9 @@ static void flat_TRUECOLOR_z_triangle( GLcontext *ctx,
  * XImage, flat, depth-buffered, PF_8A8B8G8R triangle.
  */
 static void flat_8A8B8G8R_z_triangle( GLcontext *ctx, 
-				      SWvertex *v0,
-				      SWvertex *v1,
-				      SWvertex *v2 )
+				      const SWvertex *v0,
+				      const SWvertex *v1,
+				      const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -506,9 +506,9 @@ static void flat_8A8B8G8R_z_triangle( GLcontext *ctx,
  * XImage, flat, depth-buffered, PF_8R8G8B triangle.
  */
 static void flat_8R8G8B_z_triangle( GLcontext *ctx, 
-				    SWvertex *v0,
-				    SWvertex *v1,
-				    SWvertex *v2 )
+				    const SWvertex *v0,
+				    const SWvertex *v1,
+				    const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -540,9 +540,9 @@ static void flat_8R8G8B_z_triangle( GLcontext *ctx,
  * XImage, flat, depth-buffered, PF_8R8G8B24 triangle.
  */
 static void flat_8R8G8B24_z_triangle( GLcontext *ctx, 
-				      SWvertex *v0,
-				      SWvertex *v1,
-				      SWvertex *v2 )
+				      const SWvertex *v0,
+				      const SWvertex *v1,
+				      const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = v0->color;
@@ -575,9 +575,9 @@ static void flat_8R8G8B24_z_triangle( GLcontext *ctx,
  * XImage, flat, depth-buffered, PF_TRUEDITHER triangle.
  */
 static void flat_TRUEDITHER_z_triangle( GLcontext *ctx, 
-					SWvertex *v0,
-					SWvertex *v1,
-					SWvertex *v2 )
+					const SWvertex *v0,
+					const SWvertex *v1,
+					const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
@@ -607,9 +607,9 @@ static void flat_TRUEDITHER_z_triangle( GLcontext *ctx,
  * XImage, flat, depth-buffered, PF_5R6G5B triangle.
  */
 static void flat_5R6G5B_z_triangle( GLcontext *ctx, 
-				    SWvertex *v0,
-				    SWvertex *v1,
-				    SWvertex *v2 )
+				    const SWvertex *v0,
+				    const SWvertex *v1,
+				    const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -641,9 +641,9 @@ static void flat_5R6G5B_z_triangle( GLcontext *ctx,
  * XImage, flat, depth-buffered, PF_DITHER_5R6G5B triangle.
  */
 static void flat_DITHER_5R6G5B_z_triangle( GLcontext *ctx, 
-					   SWvertex *v0,
-					   SWvertex *v1,
-					   SWvertex *v2 )
+					   const SWvertex *v0,
+					   const SWvertex *v1,
+					   const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = v0->color;
@@ -674,9 +674,9 @@ static void flat_DITHER_5R6G5B_z_triangle( GLcontext *ctx,
  * XImage, flat, depth-buffered, 8-bit PF_DITHER triangle.
  */
 static void flat_DITHER8_z_triangle( GLcontext *ctx, 
-				     SWvertex *v0,
-				     SWvertex *v1,
-				     SWvertex *v2 )
+				     const SWvertex *v0,
+				     const SWvertex *v1,
+				     const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -709,9 +709,9 @@ static void flat_DITHER8_z_triangle( GLcontext *ctx,
  * XImage, flat, depth-buffered, PF_DITHER triangle.
  */
 static void flat_DITHER_z_triangle( GLcontext *ctx, 
-				    SWvertex *v0,
-				    SWvertex *v1,
-				    SWvertex *v2 )
+				    const SWvertex *v0,
+				    const SWvertex *v1,
+				    const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
@@ -743,9 +743,9 @@ static void flat_DITHER_z_triangle( GLcontext *ctx,
  * XImage, flat, depth-buffered, 8-bit PF_HPCR triangle.
  */
 static void flat_HPCR_z_triangle( GLcontext *ctx, 
-				  SWvertex *v0,
-				  SWvertex *v1,
-				  SWvertex *v2 )
+				  const SWvertex *v0,
+				  const SWvertex *v1,
+				  const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -778,9 +778,9 @@ static void flat_HPCR_z_triangle( GLcontext *ctx,
  * XImage, flat, depth-buffered, 8-bit PF_LOOKUP triangle.
  */
 static void flat_LOOKUP8_z_triangle( GLcontext *ctx, 
-				     SWvertex *v0,
-				     SWvertex *v1,
-				     SWvertex *v2 )
+				     const SWvertex *v0,
+				     const SWvertex *v1,
+				     const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_Z 1
@@ -816,9 +816,9 @@ static void flat_LOOKUP8_z_triangle( GLcontext *ctx,
  * XImage, smooth, NON-depth-buffered, PF_TRUECOLOR triangle.
  */
 static void smooth_TRUECOLOR_triangle( GLcontext *ctx, 
-				       SWvertex *v0,
-				       SWvertex *v1,
-				       SWvertex *v2 )
+				       const SWvertex *v0,
+				       const SWvertex *v1,
+				       const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
@@ -841,9 +841,9 @@ static void smooth_TRUECOLOR_triangle( GLcontext *ctx,
  * XImage, smooth, NON-depth-buffered, PF_8A8B8G8R triangle.
  */
 static void smooth_8A8B8G8R_triangle( GLcontext *ctx, 
-				      SWvertex *v0,
-				      SWvertex *v1,
-				      SWvertex *v2 )
+				      const SWvertex *v0,
+				      const SWvertex *v1,
+				      const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_RGB 1
@@ -868,9 +868,9 @@ static void smooth_8A8B8G8R_triangle( GLcontext *ctx,
  * XImage, smooth, NON-depth-buffered, PF_8R8G8B triangle.
  */
 static void smooth_8R8G8B_triangle( GLcontext *ctx, 
-				    SWvertex *v0,
-				    SWvertex *v1,
-				    SWvertex *v2 )
+				    const SWvertex *v0,
+				    const SWvertex *v1,
+				    const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_RGB 1
@@ -895,9 +895,9 @@ static void smooth_8R8G8B_triangle( GLcontext *ctx,
  * XImage, smooth, NON-depth-buffered, PF_8R8G8B triangle.
  */
 static void smooth_8R8G8B24_triangle( GLcontext *ctx, 
-				      SWvertex *v0,
-				      SWvertex *v1,
-				      SWvertex *v2 )
+				      const SWvertex *v0,
+				      const SWvertex *v1,
+				      const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_RGB 1
@@ -924,9 +924,9 @@ static void smooth_8R8G8B24_triangle( GLcontext *ctx,
  * XImage, smooth, NON-depth-buffered, PF_TRUEDITHER triangle.
  */
 static void smooth_TRUEDITHER_triangle( GLcontext *ctx, 
-					SWvertex *v0,
-					SWvertex *v1,
-					SWvertex *v2 )
+					const SWvertex *v0,
+					const SWvertex *v1,
+					const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
@@ -950,9 +950,9 @@ static void smooth_TRUEDITHER_triangle( GLcontext *ctx,
  * XImage, smooth, NON-depth-buffered, PF_5R6G5B triangle.
  */
 static void smooth_5R6G5B_triangle( GLcontext *ctx, 
-				    SWvertex *v0,
-				    SWvertex *v1,
-				    SWvertex *v2 )
+				    const SWvertex *v0,
+				    const SWvertex *v1,
+				    const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_RGB 1
@@ -977,9 +977,9 @@ static void smooth_5R6G5B_triangle( GLcontext *ctx,
  * XImage, smooth, NON-depth-buffered, PF_DITHER_5R6G5B triangle.
  */
 static void smooth_DITHER_5R6G5B_triangle( GLcontext *ctx, 
-					   SWvertex *v0,
-					   SWvertex *v1,
-					   SWvertex *v2 )
+					   const SWvertex *v0,
+					   const SWvertex *v1,
+					   const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_RGB 1
@@ -1004,9 +1004,9 @@ static void smooth_DITHER_5R6G5B_triangle( GLcontext *ctx,
  * XImage, smooth, NON-depth-buffered, 8-bit PF_DITHER triangle.
  */
 static void smooth_DITHER8_triangle( GLcontext *ctx, 
-				     SWvertex *v0,
-				     SWvertex *v1,
-				     SWvertex *v2 )
+				     const SWvertex *v0,
+				     const SWvertex *v1,
+				     const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define INTERP_RGB 1
@@ -1032,9 +1032,9 @@ static void smooth_DITHER8_triangle( GLcontext *ctx,
  * XImage, smooth, NON-depth-buffered, PF_DITHER triangle.
  */
 static void smooth_DITHER_triangle( GLcontext *ctx, 
-				    SWvertex *v0,
-				    SWvertex *v1,
-				    SWvertex *v2 )
+				    const SWvertex *v0,
+				    const SWvertex *v1,
+				    const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
@@ -1059,9 +1059,9 @@ static void smooth_DITHER_triangle( GLcontext *ctx,
  * XImage, smooth, NON-depth-buffered, 8-bit PF_LOOKUP triangle.
  */
 static void smooth_LOOKUP8_triangle( GLcontext *ctx, 
-				     SWvertex *v0,
-				     SWvertex *v1,
-				     SWvertex *v2 )
+				     const SWvertex *v0,
+				     const SWvertex *v1,
+				     const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 
@@ -1089,9 +1089,9 @@ static void smooth_LOOKUP8_triangle( GLcontext *ctx,
  * XImage, smooth, NON-depth-buffered, 8-bit PF_HPCR triangle.
  */
 static void smooth_HPCR_triangle( GLcontext *ctx, 
-				  SWvertex *v0,
-				  SWvertex *v1,
-				  SWvertex *v2 )
+				  const SWvertex *v0,
+				  const SWvertex *v1,
+				  const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 
@@ -1117,9 +1117,9 @@ static void smooth_HPCR_triangle( GLcontext *ctx,
  * XImage, flat, NON-depth-buffered, PF_TRUECOLOR triangle.
  */
 static void flat_TRUECOLOR_triangle( GLcontext *ctx, 
-				     SWvertex *v0,
-				     SWvertex *v1,
-				     SWvertex *v2 )
+				     const SWvertex *v0,
+				     const SWvertex *v1,
+				     const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
@@ -1142,9 +1142,9 @@ static void flat_TRUECOLOR_triangle( GLcontext *ctx,
  * XImage, flat, NON-depth-buffered, PF_8A8B8G8R triangle.
  */
 static void flat_8A8B8G8R_triangle( GLcontext *ctx, 
-				    SWvertex *v0,
-				    SWvertex *v1,
-				    SWvertex *v2 )
+				    const SWvertex *v0,
+				    const SWvertex *v1,
+				    const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define PIXEL_ADDRESS(X,Y) PIXELADDR4(xmesa->xm_buffer,X,Y)
@@ -1169,9 +1169,9 @@ static void flat_8A8B8G8R_triangle( GLcontext *ctx,
  * XImage, flat, NON-depth-buffered, PF_8R8G8B triangle.
  */
 static void flat_8R8G8B_triangle( GLcontext *ctx, 
-				  SWvertex *v0,
-				  SWvertex *v1,
-				  SWvertex *v2 )
+				  const SWvertex *v0,
+				  const SWvertex *v1,
+				  const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define PIXEL_ADDRESS(X,Y) PIXELADDR4(xmesa->xm_buffer,X,Y)
@@ -1196,9 +1196,9 @@ static void flat_8R8G8B_triangle( GLcontext *ctx,
  * XImage, flat, NON-depth-buffered, PF_8R8G8B24 triangle.
  */
 static void flat_8R8G8B24_triangle( GLcontext *ctx, 
-				    SWvertex *v0,
-				    SWvertex *v1,
-				    SWvertex *v2 )
+				    const SWvertex *v0,
+				    const SWvertex *v1,
+				    const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = v0->color;
@@ -1223,9 +1223,9 @@ static void flat_8R8G8B24_triangle( GLcontext *ctx,
  * XImage, flat, NON-depth-buffered, PF_TRUEDITHER triangle.
  */
 static void flat_TRUEDITHER_triangle( GLcontext *ctx, 
-				      SWvertex *v0,
-				      SWvertex *v1,
-				      SWvertex *v2 )
+				      const SWvertex *v0,
+				      const SWvertex *v1,
+				      const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
@@ -1248,9 +1248,9 @@ static void flat_TRUEDITHER_triangle( GLcontext *ctx,
  * XImage, flat, NON-depth-buffered, PF_5R6G5B triangle.
  */
 static void flat_5R6G5B_triangle( GLcontext *ctx, 
-				  SWvertex *v0,
-				  SWvertex *v1,
-				  SWvertex *v2 )
+				  const SWvertex *v0,
+				  const SWvertex *v1,
+				  const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define PIXEL_ADDRESS(X,Y) PIXELADDR2(xmesa->xm_buffer,X,Y)
@@ -1275,9 +1275,9 @@ static void flat_5R6G5B_triangle( GLcontext *ctx,
  * XImage, flat, NON-depth-buffered, PF_DITHER_5R6G5B triangle.
  */
 static void flat_DITHER_5R6G5B_triangle( GLcontext *ctx, 
-					 SWvertex *v0,
-					 SWvertex *v1,
-					 SWvertex *v2 )
+					 const SWvertex *v0,
+					 const SWvertex *v1,
+					 const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    const GLubyte *color = v0->color;
@@ -1301,9 +1301,9 @@ static void flat_DITHER_5R6G5B_triangle( GLcontext *ctx,
  * XImage, flat, NON-depth-buffered, 8-bit PF_DITHER triangle.
  */
 static void flat_DITHER8_triangle( GLcontext *ctx, 
-				   SWvertex *v0,
-				   SWvertex *v1,
-				   SWvertex *v2 )
+				   const SWvertex *v0,
+				   const SWvertex *v1,
+				   const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define PIXEL_ADDRESS(X,Y) PIXELADDR1(xmesa->xm_buffer,X,Y)
@@ -1329,9 +1329,9 @@ static void flat_DITHER8_triangle( GLcontext *ctx,
  * XImage, flat, NON-depth-buffered, PF_DITHER triangle.
  */
 static void flat_DITHER_triangle( GLcontext *ctx, 
-				  SWvertex *v0,
-				  SWvertex *v1,
-				  SWvertex *v2 )
+				  const SWvertex *v0,
+				  const SWvertex *v1,
+				  const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
    XMesaImage *img = xmesa->xm_buffer->backimage;
@@ -1355,9 +1355,9 @@ static void flat_DITHER_triangle( GLcontext *ctx,
  * XImage, flat, NON-depth-buffered, 8-bit PF_HPCR triangle.
  */
 static void flat_HPCR_triangle( GLcontext *ctx, 
-				SWvertex *v0,
-				SWvertex *v1,
-				SWvertex *v2 )
+				const SWvertex *v0,
+				const SWvertex *v1,
+				const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define PIXEL_ADDRESS(X,Y) PIXELADDR1(xmesa->xm_buffer,X,Y)
@@ -1383,9 +1383,9 @@ static void flat_HPCR_triangle( GLcontext *ctx,
  * XImage, flat, NON-depth-buffered, 8-bit PF_LOOKUP triangle.
  */
 static void flat_LOOKUP8_triangle( GLcontext *ctx, 
-				   SWvertex *v0,
-				   SWvertex *v1,
-				   SWvertex *v2 )
+				   const SWvertex *v0,
+				   const SWvertex *v1,
+				   const SWvertex *v2 )
 {
    XMesaContext xmesa = (XMesaContext) ctx->DriverCtx;
 #define PIXEL_ADDRESS(X,Y) PIXELADDR1(xmesa->xm_buffer,X,Y)
