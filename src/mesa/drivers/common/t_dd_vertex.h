@@ -1,4 +1,4 @@
-/* $Id: t_dd_vertex.h,v 1.6 2001/03/13 17:39:56 gareth Exp $ */
+/* $Id: t_dd_vertex.h,v 1.7 2001/03/14 08:51:09 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,7 +29,7 @@
 
 typedef struct {
    GLfloat x, y, z, w;
-} TAG(_coord);
+} TAG(_coord_t);
 
 #ifdef COLOR_IS_RGBA
 typedef struct {
