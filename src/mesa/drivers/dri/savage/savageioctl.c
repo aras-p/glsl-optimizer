@@ -32,6 +32,7 @@
 #include "dd.h"
 #include "context.h"
 #include "swrast/swrast.h"
+#include "colormac.h"
 
 #include "mm.h"
 #include "savagecontext.h"
@@ -346,8 +347,21 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	   clearDepth = (GLuint) ((1.0 - ctx->Depth.Clear) * DEPTH_SCALE_24);
    }
 
-   colorMask = *((GLuint *) &ctx->Color.ColorMask);
+   colorMask = 0;
    depthMask = 0;
+   switch (imesa->savageScreen->cpp) {
+   case 2:
+       colorMask = PACK_COLOR_565(ctx->Color.ColorMask[0],
+				  ctx->Color.ColorMask[1],
+				  ctx->Color.ColorMask[2]);
+       break;
+   case 4:
+       colorMask = PACK_COLOR_8888(ctx->Color.ColorMask[3],
+				   ctx->Color.ColorMask[2],
+				   ctx->Color.ColorMask[1],
+				   ctx->Color.ColorMask[0]);
+       break;
+   }
 
    flags = 0;
 
