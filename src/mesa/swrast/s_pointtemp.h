@@ -47,7 +47,6 @@
  *
  * Notes: LARGE and ATTENUATE are exclusive of each other.
  *        TEXTURE requires RGBA
- *        SPECULAR requires TEXTURE
  */
 
 
