@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.7 2000/12/26 05:09:29 keithw Exp $ */
+/* $Id: mtypes.h,v 1.8 2000/12/27 22:52:45 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1652,10 +1652,10 @@ do {								\
       gl_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
       return retval;						\
    }								\
-} while (0); FLUSH_VERTICES(ctx, 0)
+} while (0)
 
 #define ASSERT_OUTSIDE_BEGIN_END(ctx) \
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx,); FLUSH_VERTICES(ctx, 0)
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx,)
 
 #define ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx)	\
 do {						\

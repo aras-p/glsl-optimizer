@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.55 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: dlist.c,v 1.56 2000/12/27 22:52:45 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4811,6 +4811,7 @@ _mesa_EndList( void )
 
    ctx->CurrentDispatch = ctx->Exec;
    _glapi_set_dispatch( ctx->CurrentDispatch );
+
 }
 
 

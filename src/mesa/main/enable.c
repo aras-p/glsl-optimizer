@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.37 2000/12/26 05:09:28 keithw Exp $ */
+/* $Id: enable.c,v 1.38 2000/12/27 22:52:45 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -755,6 +755,8 @@ void
 _mesa_Enable( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    _mesa_set_enable( ctx, cap, GL_TRUE );
 }
 
@@ -764,6 +766,8 @@ void
 _mesa_Disable( GLenum cap )
 {
    GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
    _mesa_set_enable( ctx, cap, GL_FALSE );
 }
 

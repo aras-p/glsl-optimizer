@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.2 2000/12/27 21:49:40 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.3 2000/12/27 22:52:45 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -411,6 +411,8 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
    ASSERT(tnl->ExecCopySource == IM);
 
    _tnl_compute_orflag( IM );
+
+/*     _tnl_print_cassette( IM ); */
 
    /* Mark the last primitive:
     */
