@@ -1,4 +1,4 @@
-/* $Id: tess.c,v 1.4 1999/09/13 22:20:13 gareth Exp $ */
+/* $Id: tess.c,v 1.5 1999/09/14 05:37:58 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,9 @@
 
 /*
  * $Log: tess.c,v $
+ * Revision 1.5  1999/09/14 05:37:58  gareth
+ * Fixed legacy gluNextContour impact on gluTessEndContour.
+ *
  * Revision 1.4  1999/09/13 22:20:13  gareth
  * Fixed file headers.  Tracking down macro bugs.
  *
@@ -289,6 +292,10 @@ void GLAPIENTRY gluTessEndContour( GLUtesselator *tobj )
     if ( tobj->current_contour->vertex_count > 0 )
     {
 	inspect_current_contour( tobj );
+    }
+    else
+    {
+	delete_current_contour( tobj );
     }
 
  cleanup:
