@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.7 1999/10/13 18:42:50 brianp Exp $ */
+/* $Id: extensions.c,v 1.8 1999/10/13 22:09:09 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,7 +76,7 @@ static struct { int enabled; const char *name; } default_extensions[] = {
 int gl_extensions_add( GLcontext *ctx, 
 		       int state, 
 		       const char *name, 
-		       void (*notify)() )
+		       void (*notify)(void) )
 {
    (void) notify;
 
