@@ -44,8 +44,10 @@ extern "C" {
  *      Now have all extenions up to number 197
  *   5. Brian Paul, 27 Mar 2000
  *      Added GL_ARB_texture_compression
+ *   6. Brian Paul, 5 Apr 2000
+ *      Added GL_ARB_multisample tokens, added GL_ARB_texture_env_add
  */
-#define GL_GLEXT_VERSION_EXT 5
+#define GL_GLEXT_VERSION_EXT 6
 
 
 /*
@@ -2879,7 +2881,7 @@ typedef void (APIENTRY * PFNGLWINDOWPOS4DVMESAPROC) (const GLdouble *p);
 
 
 /*
- * ARB 0. GL_ARB_multitexture
+ * ARB 1. GL_ARB_multitexture
  */
 #ifndef GL_ARB_multitexture
 #define GL_ARB_multitexture 1
@@ -2995,7 +2997,12 @@ typedef void (APIENTRY * PFNGLMULTITEXCOORD4SVARBPROC) (GLenum target, const GLs
 
 
 /*
- * ARB 2. GL_ARB_tranpose_matrix
+ * ARB 2. GLX_ARB_get_proc_address
+ */
+
+
+/*
+ * ARB 3. GL_ARB_tranpose_matrix
  */
 #ifndef GL_ARB_transpose_matrix
 #define GL_ARB_transpose_matrix 1
@@ -3020,10 +3027,36 @@ typedef void (APIENTRY * PFNGLMULTTRANSPOSEMATRIXFARBPROC) ( const GLfloat m[16]
 
 
 /*
- * ARB 4. GL_ARB_multisample
+ * ARB 4. WGL_ARB_buffer_region
+ */
+
+
+
+/*
+ * ARB 5. GL_ARB_multisample
  */
 #ifndef GL_ARB_multisample
 #define GL_ARB_multisample 1
+
+#define GL_MULTISAMPLE_ARBfunda			0x809D
+#define GL_SAMPLE_ALPHA_TO_COVERAGE_ARB		0x809E
+#define GL_SAMPLE_ALPHA_TO_ONE_ARB		0x809F
+#define GL_SAMPLE_COVERAGE_ARB			0x80A0
+#define GL_MULTISAMPLE_BIT_ARB			0x20000000
+#define GL_1PASS_ARB				0x80A1
+#define GL_2PASS_0_ARB				0x80A2
+#define GL_2PASS_1_ARB				0x80A3
+#define GL_4PASS_0_ARB				0x80A4
+#define GL_4PASS_1_ARB				0x80A5
+#define GL_4PASS_2_ARB				0x80A6
+#define GL_4PASS_3_ARB				0x80A7
+#define GL_SAMPLE_BUFFERS_ARB			0x80A8
+#define GL_SAMPLES_ARB				0x80A9
+#define GL_SAMPLE_MAX_PASSES_ARB		0x84E7
+#define GL_SAMPLE_PASS_ARB			0x84E8
+#define GL_SAMPLE_COVERAGE_VALUE_ARB		0x80AA
+#define GL_SAMPLE_COVERAGE_INVERT_ARB		0x80AB
+/* Note: there are more tokens for GLX and WGL */
 
 GLAPI void APIENTRY glSamplePassARB(GLenum pass);
 GLAPI void APIENTRY glSampleCoverageARB(GLclampf value, GLboolean invert);
@@ -3032,6 +3065,18 @@ typedef void (APIENTRY * PFNGLSAMPLEPASSARBPROC) (GLenum pass);
 typedef void (APIENTRY * PFNGLSAMPLECOVERAGEARBPROC) (GLclampf value, GLboolean invert);
 
 #endif /* GL_ARB_multisample */
+
+
+
+/*
+ * ARB 6. GL_ARB_texture_env_add
+ */
+#ifndef GL_ARB_texture_env_add
+#define GL_ARB_texture_env_add 1
+
+/* No new tokens or functions */
+
+#endif /* GL_ARB_texture_env_add */
 
 
 
