@@ -1,4 +1,4 @@
-/* $Id: s_span.c,v 1.50 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: s_span.c,v 1.51 2002/10/30 19:49:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -588,7 +588,7 @@ clip_span( GLcontext *ctx, struct sw_span *span )
       if (x < xmin) {
          ASSERT(x + n > xmin);
          span->writeAll = GL_FALSE;
-         BZERO(span->array->mask, (xmin - x) * sizeof(GLubyte));
+         _mesa_bzero(span->array->mask, (xmin - x) * sizeof(GLubyte));
       }
 
       /* Clip to right */
@@ -1320,7 +1320,7 @@ _mesa_read_rgba_span( GLcontext *ctx, GLframebuffer *buffer,
    if (y < 0 || y >= bufHeight || x + (GLint) n < 0 || x >= bufWidth) {
       /* completely above, below, or right */
       /* XXX maybe leave undefined? */
-      BZERO(rgba, 4 * n * sizeof(GLchan));
+      _mesa_bzero(rgba, 4 * n * sizeof(GLchan));
    }
    else {
       GLint skip, length;
@@ -1373,7 +1373,7 @@ _mesa_read_index_span( GLcontext *ctx, GLframebuffer *buffer,
 
    if (y < 0 || y >= bufHeight || x + (GLint) n < 0 || x >= bufWidth) {
       /* completely above, below, or right */
-      BZERO(indx, n * sizeof(GLuint));
+      _mesa_bzero(indx, n * sizeof(GLuint));
    }
    else {
       GLint skip, length;

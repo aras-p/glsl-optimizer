@@ -1,8 +1,8 @@
-/* $Id: imports.h,v 1.7 2002/10/25 21:06:29 brianp Exp $ */
+/* $Id: imports.h,v 1.8 2002/10/30 19:49:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -49,7 +49,6 @@
 
 #define MEMCPY( DST, SRC, BYTES)   _mesa_memcpy(DST, SRC, BYTES)
 #define MEMSET( DST, VAL, N )      _mesa_memset(DST, VAL, N)
-#define BZERO( ADDR, N )           _mesa_bzero(ADDR, N)
 
 
 /* MACs and BeOS don't support static larger than 32kb, so... */

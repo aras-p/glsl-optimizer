@@ -1,4 +1,4 @@
-/* $Id: s_depth.c,v 1.24 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: s_depth.c,v 1.25 2002/10/30 19:49:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -290,7 +290,7 @@ depth_test_span16( GLcontext *ctx, GLuint n,
 	 }
 	 break;
       case GL_NEVER:
-         BZERO(mask, n * sizeof(GLubyte));
+         _mesa_bzero(mask, n * sizeof(GLubyte));
 	 break;
       default:
          _mesa_problem(ctx, "Bad depth func in depth_test_span16");
@@ -519,7 +519,7 @@ depth_test_span32( GLcontext *ctx, GLuint n,
 	 }
 	 break;
       case GL_NEVER:
-         BZERO(mask, n * sizeof(GLubyte));
+         _mesa_bzero(mask, n * sizeof(GLubyte));
 	 break;
       default:
          _mesa_problem(ctx, "Bad depth func in depth_test_span32");
@@ -829,7 +829,7 @@ software_depth_test_pixels16( GLcontext *ctx, GLuint n,
 	 break;
       case GL_NEVER:
 	 /* depth test never passes */
-         BZERO(mask, n * sizeof(GLubyte));
+         _mesa_bzero(mask, n * sizeof(GLubyte));
 	 break;
       default:
          _mesa_problem(ctx, "Bad depth func in software_depth_test_pixels");
@@ -1075,7 +1075,7 @@ software_depth_test_pixels32( GLcontext *ctx, GLuint n,
 	 break;
       case GL_NEVER:
 	 /* depth test never passes */
-         BZERO(mask, n * sizeof(GLubyte));
+         _mesa_bzero(mask, n * sizeof(GLubyte));
 	 break;
       default:
          _mesa_problem(ctx, "Bad depth func in software_depth_test_pixels");
@@ -1309,7 +1309,7 @@ hardware_depth_test_pixels( GLcontext *ctx, GLuint n, GLdepth zbuffer[],
 	 break;
       case GL_NEVER:
 	 /* depth test never passes */
-         BZERO(mask, n * sizeof(GLubyte));
+         _mesa_bzero(mask, n * sizeof(GLubyte));
 	 break;
       default:
          _mesa_problem(ctx, "Bad depth func in hardware_depth_test_pixels");
@@ -1432,7 +1432,7 @@ _mesa_read_depth_span( GLcontext *ctx,
    }
    else {
       /* no depth buffer */
-      BZERO(depth, n * sizeof(GLfloat));
+      _mesa_bzero(depth, n * sizeof(GLfloat));
    }
 
 }
@@ -1511,7 +1511,7 @@ _mesa_read_depth_span_float( GLcontext *ctx,
    }
    else {
       /* no depth buffer */
-      BZERO(depth, n * sizeof(GLfloat));
+      _mesa_bzero(depth, n * sizeof(GLfloat));
    }
 }
 
@@ -1620,7 +1620,7 @@ _mesa_clear_depth_buffer( GLcontext *ctx )
          const GLushort clearValue = (GLushort) (ctx->Depth.Clear * ctx->DepthMax);
          if ((clearValue & 0xff) == (clearValue >> 8)) {
             if (clearValue == 0) {
-               BZERO(ctx->DrawBuffer->DepthBuffer,
+               _mesa_bzero(ctx->DrawBuffer->DepthBuffer,
                      2*ctx->DrawBuffer->Width*ctx->DrawBuffer->Height);
             }
             else {
@@ -1654,7 +1654,7 @@ _mesa_clear_depth_buffer( GLcontext *ctx )
          /* >16 bit depth buffer */
          const GLuint clearValue = (GLuint) (ctx->Depth.Clear * ctx->DepthMax);
          if (clearValue == 0) {
-            BZERO(ctx->DrawBuffer->DepthBuffer,
+            _mesa_bzero(ctx->DrawBuffer->DepthBuffer,
                 ctx->DrawBuffer->Width*ctx->DrawBuffer->Height*sizeof(GLuint));
          }
          else {

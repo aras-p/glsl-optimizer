@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.187 2002/10/29 15:04:35 brianp Exp $ */
+/* $Id: context.c,v 1.188 2002/10/30 19:49:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -451,7 +451,7 @@ _mesa_initialize_framebuffer( GLframebuffer *buffer,
    assert(buffer);
    assert(visual);
 
-   BZERO(buffer, sizeof(GLframebuffer));
+   _mesa_bzero(buffer, sizeof(GLframebuffer));
 
    /* sanity checks */
    if (softwareDepth ) {

@@ -1,4 +1,4 @@
-/* $Id: s_accum.c,v 1.19 2002/10/24 23:57:24 brianp Exp $ */
+/* $Id: s_accum.c,v 1.20 2002/10/30 19:49:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -195,7 +195,8 @@ _mesa_clear_accum_buffer( GLcontext *ctx )
 	     ctx->Accum.ClearColor[2]==0.0 &&
 	     ctx->Accum.ClearColor[3]==0.0) {
 	    /* Black */
-	    BZERO( ctx->DrawBuffer->Accum, buffersize * 4 * sizeof(GLaccum) );
+	    _mesa_bzero( ctx->DrawBuffer->Accum,
+                         buffersize * 4 * sizeof(GLaccum) );
 	 }
 	 else {
 	    /* Not black */

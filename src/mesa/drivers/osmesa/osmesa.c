@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.95 2002/10/29 22:32:50 brianp Exp $ */
+/* $Id: osmesa.c,v 1.96 2002/10/30 19:49:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -868,7 +868,7 @@ static void clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 		  }
 	       }
 	       else {
-		  BZERO(ptr4, n * sizeof(GLuint));
+		  _mesa_bzero(ptr4, n * sizeof(GLuint));
 	       }
 	    }
 	    else {
