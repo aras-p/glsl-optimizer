@@ -1,4 +1,4 @@
-/* $Id: api_arrayelt.c,v 1.2 2001/03/12 00:48:37 gareth Exp $ */
+/* $Id: api_arrayelt.c,v 1.3 2001/06/01 22:22:10 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -25,175 +25,193 @@
  */
 
 #include "glheader.h"
-#include "api_noop.h"
+#include "api_arrayelt.h"
 #include "context.h"
-#include "colormac.h"
-#include "light.h"
+#include "mem.h"
 #include "macros.h"
-#include "mmath.h"
 #include "mtypes.h"
 
 
 typedef struct {
    GLint unit;
    struct gl_client_array *array;
-   void *func;
-} AAtexarray;
+   void (*func)( GLenum, const void * );
+} AEtexarray;
 
 
 typedef struct {
    struct gl_client_array *array;
-   void *func;
-} AAarray;
+   void (*func)( const void * );
+} AEarray;
 
 typedef struct {
-   AAtexarray texarrays[MAX_TEXTURE_UNITS+1];
-   AAarray arrays[10];
+   AEtexarray texarrays[MAX_TEXTURE_UNITS+1];
+   AEarray arrays[32];
    GLuint NewState;
-} AAcontext;
+} AEcontext;
 
+#define AE_CONTEXT(ctx) ((AEcontext *)(ctx)->aelt_context)
+#define TYPE_IDX(t) ((t) & 0xf)
 
-static void *colorfuncs[2][7] = {
-   { glColor3bv,
-     glColor3ub,
-     glColor3sv,
-     glColor3usv,
-     glColor3iv,
-     glColor3fv,
-     glColor3dv },
+static void (*colorfuncs[2][8])( const void * ) = {
+   { (void (*)( const void * ))glColor3bv,
+     (void (*)( const void * ))glColor3ub,
+     (void (*)( const void * ))glColor3sv,
+     (void (*)( const void * ))glColor3usv,
+     (void (*)( const void * ))glColor3iv,
+     (void (*)( const void * ))glColor3uiv,
+     (void (*)( const void * ))glColor3fv,
+     (void (*)( const void * ))glColor3dv },
 
-   { glColor4bv,
-     glColor4ub,
-     glColor4sv,
-     glColor4usv,
-     glColor4iv,
-     glColor4fv,
-     glColor4dv }
+   { (void (*)( const void * ))glColor4bv,
+     (void (*)( const void * ))glColor4ub,
+     (void (*)( const void * ))glColor4sv,
+     (void (*)( const void * ))glColor4usv,
+     (void (*)( const void * ))glColor4iv,
+     (void (*)( const void * ))glColor4uiv,
+     (void (*)( const void * ))glColor4fv,
+     (void (*)( const void * ))glColor4dv }
 };
 
-static void *vertexfuncs[3][7] = {
-   { glVertex3bv,
-     glVertex3ub,
-     glVertex3sv,
-     glVertex3usv,
-     glVertex3iv,
-     glVertex3fv,
-     glVertex3dv },
+static void (*vertexfuncs[3][8])( const void * ) = {
+   { 0,
+     0,
+     (void (*)( const void * ))glVertex2sv,
+     0,
+     (void (*)( const void * ))glVertex2iv,
+     0,
+     (void (*)( const void * ))glVertex2fv,
+     (void (*)( const void * ))glVertex2dv },
 
-   { glVertex3bv,
-     glVertex3ub,
-     glVertex3sv,
-     glVertex3usv,
-     glVertex3iv,
-     glVertex3fv,
-     glVertex3dv },
+   { 0,
+     0,
+     (void (*)( const void * ))glVertex3sv,
+     0,
+     (void (*)( const void * ))glVertex3iv,
+     0,
+     (void (*)( const void * ))glVertex3fv,
+     (void (*)( const void * ))glVertex3dv },
 
-   { glVertex4bv,
-     glVertex4ub,
-     glVertex4sv,
-     glVertex4usv,
-     glVertex4iv,
-     glVertex4fv,
-     glVertex4dv }
-};
-
-
-static void *multitexfuncs[4][7] = {
-   { glMultiTexCoord1bv,
-     glMultiTexCoord1ub,
-     glMultiTexCoord1sv,
-     glMultiTexCoord1usv,
-     glMultiTexCoord1iv,
-     glMultiTexCoord1fv,
-     glMultiTexCoord1dv },
-
-   { glMultiTexCoord2bv,
-     glMultiTexCoord2ub,
-     glMultiTexCoord2sv,
-     glMultiTexCoord2usv,
-     glMultiTexCoord2iv,
-     glMultiTexCoord2fv,
-     glMultiTexCoord2dv },
-
-   { glMultiTexCoord3bv,
-     glMultiTexCoord3ub,
-     glMultiTexCoord3sv,
-     glMultiTexCoord3usv,
-     glMultiTexCoord3iv,
-     glMultiTexCoord3fv,
-     glMultiTexCoord3dv },
-
-   { glMultiTexCoord4bv,
-     glMultiTexCoord4ub,
-     glMultiTexCoord4sv,
-     glMultiTexCoord4usv,
-     glMultiTexCoord4iv,
-     glMultiTexCoord4fv,
-     glMultiTexCoord4dv }
-};
-
-static void *indexfuncs[7] = {
-   { glIndexbv,
-     glIndexub,
-     glIndexsv,
-     glIndexusv,
-     glIndexiv,
-     glIndexfv,
-     glIndexdv },
-};
-
-static void *edgeflagfuncs[7] = {
-   { glEdgeFlagbv,
-     glEdgeFlagub,
-     glEdgeFlagsv,
-     glEdgeFlagusv,
-     glEdgeFlagiv,
-     glEdgeFlagfv,
-     glEdgeFlagdv },
-};
-
-static void *normalfuncs[7] = {
-   { glNormal3bv,
-     glNormal3ub,
-     glNormal3sv,
-     glNormal3usv,
-     glNormal3iv,
-     glNormal3fv,
-     glNormal3dv },
-};
-
-static void *fogcoordfuncs[7] = {
-   { glFogCoordbv,
-     glFogCoordub,
-     glFogCoordsv,
-     glFogCoordusv,
-     glFogCoordiv,
-     glFogCoordfv,
-     glFogCoorddv },
-};
-
-static void *secondarycolorfuncs[7] = {
-   { glSecondaryColor3bv,
-     glSecondaryColor3ub,
-     glSecondaryColor3sv,
-     glSecondaryColor3usv,
-     glSecondaryColor3iv,
-     glSecondaryColor3fv,
-     glSecondaryColor3dv },
+   { 0,
+     0,
+     (void (*)( const void * ))glVertex4sv,
+     0,
+     (void (*)( const void * ))glVertex4iv,
+     0,
+     (void (*)( const void * ))glVertex4fv,
+     (void (*)( const void * ))glVertex4dv }
 };
 
 
-void _aa_create_context( GLcontext *ctx )
+static void (*multitexfuncs[4][8])( GLenum, const void * ) = {
+   { 0,
+     0,
+     (void (*)( GLenum, const void * ))glMultiTexCoord1svARB,
+     0,
+     (void (*)( GLenum, const void * ))glMultiTexCoord1ivARB,
+     0,
+     (void (*)( GLenum, const void * ))glMultiTexCoord1fvARB,
+     (void (*)( GLenum, const void * ))glMultiTexCoord1dvARB },
+
+   { 0,
+     0,
+     (void (*)( GLenum, const void * ))glMultiTexCoord2svARB,
+     0,
+     (void (*)( GLenum, const void * ))glMultiTexCoord2ivARB,
+     0,
+     (void (*)( GLenum, const void * ))glMultiTexCoord2fvARB,
+     (void (*)( GLenum, const void * ))glMultiTexCoord2dvARB },
+
+   { 0,
+     0,
+     (void (*)( GLenum, const void * ))glMultiTexCoord3svARB,
+     0,
+     (void (*)( GLenum, const void * ))glMultiTexCoord3ivARB,
+     0,
+     (void (*)( GLenum, const void * ))glMultiTexCoord3fvARB,
+     (void (*)( GLenum, const void * ))glMultiTexCoord3dvARB },
+
+   { 0,
+     0,
+     (void (*)( GLenum, const void * ))glMultiTexCoord4svARB,
+     0,
+     (void (*)( GLenum, const void * ))glMultiTexCoord4ivARB,
+     0,
+     (void (*)( GLenum, const void * ))glMultiTexCoord4fvARB,
+     (void (*)( GLenum, const void * ))glMultiTexCoord4dvARB }
+};
+
+static void (*indexfuncs[8])( const void * ) = {
+   0,
+   (void (*)( const void * ))glIndexubv,
+   (void (*)( const void * ))glIndexsv,
+   0,
+   (void (*)( const void * ))glIndexiv,
+   0,
+   (void (*)( const void * ))glIndexfv,
+   (void (*)( const void * ))glIndexdv
+};
+
+
+static void (*normalfuncs[8])( const void * ) = {
+   (void (*)( const void * ))glNormal3bv,
+   0,
+   (void (*)( const void * ))glNormal3sv,
+   0,
+   (void (*)( const void * ))glNormal3iv,
+   0,
+   (void (*)( const void * ))glNormal3fv,
+   (void (*)( const void * ))glNormal3dv,
+};
+
+static void (*fogcoordfuncs[8])( const void * ) = {
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   (void (*)( const void * ))glFogCoordfvEXT,
+   (void (*)( const void * ))glFogCoorddvEXT,
+};
+
+static void (*secondarycolorfuncs[8])( const void * ) = {
+   (void (*)( const void * ))glSecondaryColor3bvEXT,
+   (void (*)( const void * ))glSecondaryColor3ubvEXT,
+   (void (*)( const void * ))glSecondaryColor3svEXT,
+   (void (*)( const void * ))glSecondaryColor3usvEXT,
+   (void (*)( const void * ))glSecondaryColor3ivEXT,
+   (void (*)( const void * ))glSecondaryColor3uivEXT,
+   (void (*)( const void * ))glSecondaryColor3fvEXT,
+   (void (*)( const void * ))glSecondaryColor3dvEXT,
+};
+
+
+GLboolean _ae_create_context( GLcontext *ctx )
 {
-   ctx->aa_context = MALLOC( sizeof(AAcontext) );
-   AA_CONTEXT(ctx)->NewState = ~0;
+   ctx->aelt_context = MALLOC( sizeof(AEcontext) );
+   if (!ctx->aelt_context) 
+      return GL_FALSE;
+
+   AE_CONTEXT(ctx)->NewState = ~0;
+   return GL_TRUE;
 }
 
-static void _aa_update_state( GLcontext *ctx )
+
+void _ae_destroy_context( GLcontext *ctx )
 {
-   AAcontext *actx = AA_CONTEXT(ctx);
-   AAtexarray *ta = actx->texarrays;
-   AAarray *aa = actx->arrays;
+   if ( AE_CONTEXT( ctx ) ) {
+      FREE( ctx->aelt_context );
+      ctx->aelt_context = 0;
+   }
+}
+
+
+static void _ae_update_state( GLcontext *ctx )
+{
+   AEcontext *actx = AE_CONTEXT(ctx);
+   AEtexarray *ta = actx->texarrays;
+   AEarray *aa = actx->arrays;
    int i;
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
@@ -225,13 +243,13 @@ static void _aa_update_state( GLcontext *ctx )
    }
 
    if (ctx->Array.EdgeFlag.Enabled) {
-      aa->array = &ctx->Array.Edgeflag;
-      aa->func = edgeflagfuncs[TYPE_IDX(aa->array->Type)];
+      aa->array = &ctx->Array.EdgeFlag;
+      aa->func = (void (*)( const void * ))glEdgeFlagv;
       aa++;
    }
 
    if (ctx->Array.FogCoord.Enabled) {
-      aa->array = &ctx->Array.Fogcoord;
+      aa->array = &ctx->Array.FogCoord;
       aa->func = fogcoordfuncs[TYPE_IDX(aa->array->Type)];
       aa++;
    }
@@ -255,56 +273,30 @@ static void _aa_update_state( GLcontext *ctx )
 }
 
 
-static void _aa_loopback_array_elt( GLint elt )
+void _ae_loopback_array_elt( GLint elt )
 {
    GET_CURRENT_CONTEXT(ctx);
-   AAcontext *actx = AA_CONTEXT(ctx);
-   AAtexarray *ta;
-   AAarray *aa;
+   AEcontext *actx = AE_CONTEXT(ctx);
+   AEtexarray *ta;
+   AEarray *aa;
+
+   if (actx->NewState)
+      _ae_update_state( ctx );
 
    for (ta = actx->texarrays ; ta->func ; ta++) {
-      void (*func)( GLint, const void * ) =
-	 (void (*)( GLint, const void * )) ta->func;
-      func( ta->unit, (char *)ta->array->Ptr + elt * ta->array->SizeB );
+      ta->func( ta->unit, (char *)ta->array->Ptr + elt * ta->array->StrideB );
    }
 
+   /* Must be last
+    */
    for (aa = actx->arrays ; aa->func ; aa++) {
-      void (*func)( GLint, const void * ) =
-	 (void (*)( GLint, const void * )) aa->func;
-      func( (char *)aa->array->Ptr + elt * aa->array->SizeB );
+      aa->func( (char *)aa->array->Ptr + elt * aa->array->StrideB );
    }
 }
 
 
-void _aa_exec_array_elt( GLint elt )
+
+void _ae_invalidate_state( GLcontext *ctx, GLuint new_state )
 {
-   GET_CURRENT_CONTEXT(ctx);
-   AAcontext *actx = AA_CONTEXT(ctx);
-
-   if (actx->NewState)
-      _aa_update_state( ctx );
-
-   ctx->Exec->ArrayElement = _aa_loopback_array_elt;
-   _aa_loopback_array_elt( elt );
-}
-
-/* This works for save as well:
- */
-void _aa_save_array_elt( GLint elt )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   AAcontext *actx = AA_CONTEXT(ctx);
-
-   if (actx->NewState)
-      _aa_update_state( ctx );
-
-   ctx->Save->ArrayElement = _aa_loopback_array_elt;
-   _aa_loopback_array_elt( elt );
-}
-
-
-void aa_invalidate_state( GLcontext *ctx, GLuint new_state )
-{
-   if (AA_CONTEXT(ctx))
-      AA_CONTEXT(ctx)->NewState |= new_state;
+   AE_CONTEXT(ctx)->NewState |= new_state;
 }
