@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.92 2002/06/30 15:49:03 brianp Exp $
+$Id: VERSIONS,v 1.93 2002/06/30 16:16:03 brianp Exp $
 
 
 Mesa Version History
@@ -1007,5 +1007,7 @@ Mesa Version History
 	- OSMesaMakeCurrent() didn't recognize buffer size changes
 	- assorted conformance fixes for 16-bit/channel rendering
 	- texcombine alpha subtraction mode was broken
+	- fixed some blend problems when GLchan==GLfloat (Gerk Huisma)
+	- clamp colors to [0,1] in OSMesa if GLchan==GLfloat (Gerk Huisma)
     Changes:
 	- New spec file and Python code to generate some GL dispatch files
