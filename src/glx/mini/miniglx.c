@@ -911,24 +911,6 @@ static int __read_config_file( Display *dpy )
 
 static int InitDriver( Display *dpy )
 {
-   char * str;
-   char * srvLibname = NULL;
-
-   srvLibname = strdup(dpy->clientDriverName);
-   if (!srvLibname) {
-      goto failed;
-   }
-
-   /*
-    * Construct server library name. Assume clientDriverName ends
-    * with dri.so. Replace dri.so with srv.so.
-    */
-   str = strstr(srvLibname, "dri.so");
-   if (!str) {
-       goto failed;
-   }
-   strcpy(str, "srv.so");
-
    /*
     * Begin DRI setup.
     * We're kind of combining the per-display and per-screen information
@@ -941,16 +923,9 @@ static int InitDriver( Display *dpy )
       goto failed;
    }
 
-   dpy->dlHandleSrv = dlopen(srvLibname, RTLD_NOW | RTLD_GLOBAL);
-   if (!dpy->dlHandleSrv) {
-      fprintf(stderr, "Unable to open %s: %s\n", dpy->clientDriverName,
-	      dlerror());
-      goto failed;
-   }
-
    /* Pull in Mini GLX specific hooks:
     */
-   dpy->driver = (struct DRIDriverRec *) dlsym(dpy->dlHandleSrv,
+   dpy->driver = (struct DRIDriverRec *) dlsym(dpy->dlHandle,
                                                "__driDriver");
    if (!dpy->driver) {
       fprintf(stderr, "Couldn't find __driDriver in %s\n",
@@ -971,13 +946,6 @@ static int InitDriver( Display *dpy )
    return GL_TRUE;
 
 failed:
-   if (srvLibname) {
-       free(srvLibname);
-   }
-   if (dpy->dlHandleSrv) {
-       dlclose(dpy->dlHandleSrv);
-       dpy->dlHandleSrv = 0;
-   }
    if (dpy->dlHandle) {
        dlclose(dpy->dlHandle);
        dpy->dlHandle = 0;

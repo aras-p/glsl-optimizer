@@ -767,7 +767,7 @@ static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
    }
 
    info->registerSize = ctx->MMIOSize;
-   ctx->shared.SAREASize = DRM_PAGE_SIZE;
+   ctx->shared.SAREASize = SAREA_MAX;
 
    /* Note that drmOpen will try to load the kernel module, if needed. */
    ctx->drmFD = drmOpen("radeon", NULL );

@@ -166,10 +166,6 @@ struct MiniGLXDisplayRec {
 				   * \brief handle to the client dynamic
 				   * library 
 				   */
-   void *dlHandleSrv;             /**<
-				   * \brief handle to the server dynamic
-				   * library 
-				   */
    /*@}*/
 
    /**

@@ -657,7 +657,7 @@ __driInitFBDev( struct DRIDriverContextRec *ctx )
    ctx->shared.hFrameBuffer = ctx->FBStart;
    ctx->shared.fbSize = ctx->FBSize;
    ctx->shared.hSAREA = 0xB37D;
-   ctx->shared.SAREASize = DRM_PAGE_SIZE;
+   ctx->shared.SAREASize = SAREA_MAX;
    id = shmget(ctx->shared.hSAREA, ctx->shared.SAREASize, IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR);
    if (id == -1) {
        /* segment will already exist if previous server segfaulted */
@@ -672,7 +672,7 @@ __driInitFBDev( struct DRIDriverContextRec *ctx )
        fprintf(stderr, "fb: shmat failed\n");
        return 0;
    }
-   memset(ctx->pSAREA, 0, DRM_PAGE_SIZE);
+   memset(ctx->pSAREA, 0, SAREA_MAX);
    return 1;
 }
 
