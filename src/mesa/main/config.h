@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.29 2001/04/26 22:27:09 brianp Exp $ */
+/* $Id: config.h,v 1.30 2001/05/14 16:25:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -107,7 +107,7 @@
 
 /* Maximum viewport/image size: */
 #define MAX_WIDTH 2048
-#define MAX_HEIGHT 1200
+#define MAX_HEIGHT 2048
 
 /* Maxmimum size for CVA.  May be overridden by the drivers.  */
 #define MAX_ARRAY_LOCK_SIZE 3000
