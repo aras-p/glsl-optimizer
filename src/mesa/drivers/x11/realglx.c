@@ -1,4 +1,4 @@
-/* $Id: realglx.c,v 1.4 2001/05/30 14:39:47 brianp Exp $ */
+/* $Id: realglx.c,v 1.5 2002/08/22 21:10:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -169,6 +169,10 @@ _real_GetGLXDispatchTable(void)
 
    /*** GLX_MESA_set_3dfx_mode ***/
    glx.Set3DfxModeMESA = _real_glXSet3DfxModeMESA;
+
+   /*** GLX AGP memory allocation ***/
+   glx.AllocateMemoryNV = _real_glXAllocateMemoryNV;
+   glx.FreeMemoryNV = _real_glXFreeMemoryNV;
 
    return &glx;
 }

@@ -1,4 +1,4 @@
-/* $Id: glxapi.c,v 1.29 2002/03/15 18:33:12 brianp Exp $ */
+/* $Id: glxapi.c,v 1.30 2002/08/22 21:10:01 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -988,6 +988,35 @@ Bool glXSet3DfxModeMESA(int mode)
 
 
 
+/*** AGP memory allocation ***/
+
+void *
+glXAllocateMemoryNV( GLsizei size,
+                     GLfloat readFrequency,
+                     GLfloat writeFrequency,
+                     GLfloat priority )
+{
+   struct _glxapi_table *t;
+   Display *dpy = glXGetCurrentDisplay();
+   GET_DISPATCH(dpy, t);
+   if (!t)
+      return NULL;
+   return (t->AllocateMemoryNV)(size, readFrequency, writeFrequency, priority);
+}
+
+
+void 
+glXFreeMemoryNV( GLvoid *pointer )
+{
+   struct _glxapi_table *t;
+   Display *dpy = glXGetCurrentDisplay();
+   GET_DISPATCH(dpy, t);
+   if (!t)
+      return;
+   (t->FreeMemoryNV)(pointer);
+}
+
+
 
 /**********************************************************************/
 /* GLX API management functions                                       */
@@ -1197,6 +1226,10 @@ static struct name_address_pair GLX_functions[] = {
 
    /*** GLX_ARB_get_proc_address ***/
    { "glXGetProcAddressARB", (GLvoid *) glXGetProcAddressARB },
+
+   /*** GLX AGP memory allocation ***/
+   { "glXAllocateMemoryNV", (GLvoid *) glXAllocateMemoryNV },
+   { "glXFreeMemoryNV", (GLvoid *) glXFreeMemoryNV },
 
    { NULL, NULL }   /* end of list */
 };
