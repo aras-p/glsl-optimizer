@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.5 2001/04/03 16:25:54 brianp Exp $ */
+/* $Id: wgl.c,v 1.6 2001/05/09 20:45:00 brianp Exp $ */
 
 /*
 * This library is free software; you can redistribute it and/or
@@ -313,7 +313,7 @@ GLAPI BOOL GLWINAPI wglUseFontBitmapsA(HDC hdc, DWORD first,
       }
 
       glBitmap(gm.gmBlackBoxX,gm.gmBlackBoxY,
-               gm.gmptGlyphOrigin.x,
+               -gm.gmptGlyphOrigin.x,
                gm.gmptGlyphOrigin.y,
                gm.gmCellIncX,gm.gmCellIncY,
                (const GLubyte * )lpBits);
