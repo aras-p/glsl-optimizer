@@ -684,6 +684,26 @@ static void viaClearColor(GLcontext *ctx, const GLfloat color[4])
 	
 }
 
+#define WRITEMASK_ALPHA_SHIFT 31
+#define WRITEMASK_RED_SHIFT   30
+#define WRITEMASK_GREEN_SHIFT 29
+#define WRITEMASK_BLUE_SHIFT  28
+
+static void viaColorMask(GLcontext *ctx,
+			 GLboolean r, GLboolean g,
+			 GLboolean b, GLboolean a)
+{
+   viaContextPtr vmesa = VIA_CONTEXT( ctx );
+
+   if (VIA_DEBUG)
+      fprintf(stderr, "%s r(%d) g(%d) b(%d) a(%d)\n", __FUNCTION__, r, g, b, a);
+
+   vmesa->ClearMask = (((!r) << WRITEMASK_RED_SHIFT) |
+		       ((!g) << WRITEMASK_GREEN_SHIFT) |
+		       ((!b) << WRITEMASK_BLUE_SHIFT) |
+		       ((!a) << WRITEMASK_ALPHA_SHIFT));
+}
+
 
 /* =============================================================
  */
@@ -1256,12 +1276,13 @@ static void viaChooseColorState(GLcontext *ctx)
         vmesa->regHROP = HC_HROP_P;
 
     vmesa->regHFBBMSKL = (*(GLuint *)&ctx->Color.ColorMask[0]) & 0xFFFFFF;
-    vmesa->regHROP |= ((*(GLuint *)&ctx->Color.ColorMask[0]) >> 24) & 0xFF;
+    vmesa->regHROP |= ctx->Color.ColorMask[3];
 
-    if ((GLuint)((GLuint *)&ctx->Color.ColorMask[0]) & 0xFF000000)
+    if (ctx->Color.ColorMask[3])
         vmesa->regEnable |= HC_HenAW_MASK;
     else
-        vmesa->regEnable &= (~HC_HenAW_MASK);
+        vmesa->regEnable &= ~HC_HenAW_MASK;
+
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
 }
 
@@ -1585,6 +1606,7 @@ void viaInitStateFuncs(GLcontext *ctx)
     ctx->Driver.BlendEquationSeparate = viaBlendEquationSeparate;
     ctx->Driver.BlendFuncSeparate = viaBlendFuncSeparate;
     ctx->Driver.ClearColor = viaClearColor;
+    ctx->Driver.ColorMask = viaColorMask;
     ctx->Driver.DrawBuffer = viaDrawBuffer;
     ctx->Driver.RenderMode = viaRenderMode;
     ctx->Driver.Scissor = viaScissor;

@@ -212,6 +212,8 @@ struct via_context_t {
 
     GLenum TexEnvImageFmt[2];
     GLuint ClearColor;
+    GLuint ClearMask;
+
     /* DRI stuff
      */
     GLuint needClip;

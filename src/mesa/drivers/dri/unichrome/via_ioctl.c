@@ -90,77 +90,61 @@ void viaCheckDma(viaContextPtr vmesa, GLuint bytes)
 } while (0)
 
 
-static void viaBlit(viaContextPtr vmesa, GLuint bpp,GLuint srcBase,
-		    GLuint srcPitch,GLuint dstBase,GLuint dstPitch,
-		    GLuint w,GLuint h,int xdir,int ydir, GLuint blitMode, 
+static void viaBlit(viaContextPtr vmesa, GLuint bpp,
+		    GLuint srcBase, GLuint srcPitch, 
+		    GLuint dstBase, GLuint dstPitch,
+		    GLuint w, GLuint h, 
+		    GLuint blitMode, 
 		    GLuint color, GLuint nMask ) 
 {
 
-    GLuint dwGEMode = 0, srcY=0, srcX, dstY=0, dstX;
-    GLuint cmd;
+    GLuint dwGEMode, srcX, dstX, cmd;
     RING_VARS;
 
     if (VIA_DEBUG)
-       fprintf(stderr, "%s bpp %d src %x/%x dst %x/%x w %d h %d dir %d,%d mode: %x color: 0x%08x mask 0x%08x\n",
-	       __FUNCTION__, bpp, srcBase, srcPitch, dstBase, dstPitch, w,h, xdir, ydir, blitMode, color, nMask);
+       fprintf(stderr, "%s bpp %d src %x/%x dst %x/%x w %d h %d  mode: %x color: 0x%08x mask 0x%08x\n",
+	       __FUNCTION__, bpp, srcBase, srcPitch, dstBase, dstPitch, w,h, blitMode, color, nMask);
 
 
     if (!w || !h)
         return;
 
-    srcX = srcBase & 31;
-    dstX = dstBase & 31;
     switch (bpp) {
     case 16:
-        dwGEMode |= VIA_GEM_16bpp;
-	srcX >>= 1;
-	dstX >>= 1;
+        dwGEMode = VIA_GEM_16bpp;
+	srcX = (srcBase & 0x1f) >> 1;
+	dstX = (dstBase & 0x1f) >> 1;
         break;
     case 32:
-        dwGEMode |= VIA_GEM_32bpp;
-	srcX >>= 2;
-	dstX >>= 2;
+        dwGEMode = VIA_GEM_32bpp;
+	srcX = (srcBase & 0x1f) >> 2;
+	dstX = (dstBase & 0x1f) >> 2;
 	break;
     default:
-        dwGEMode |= VIA_GEM_8bpp;
-        break;
-    }
-
-
-    cmd = 0; 
-
-    if (xdir < 0) {
-        cmd |= VIA_GEC_DECX;
-        srcX += (w - 1);
-        dstX += (w - 1);
-    }
-    if (ydir < 0) {
-        cmd |= VIA_GEC_DECY;
-        srcY += (h - 1);
-        dstY += (h - 1);
+        return;
     }
 
     switch(blitMode) {
     case VIA_BLIT_FILL:
-        BEGIN_RING((2 + 9) * 2);
-	SetReg2DAGP(VIA_REG_GEMODE, dwGEMode);
-	SetReg2DAGP( VIA_REG_FGCOLOR, color);
-	cmd |= VIA_GEC_BLT | VIA_GEC_FIXCOLOR_PAT | (VIA_BLIT_FILL << 24);
+	cmd = VIA_GEC_BLT | VIA_GEC_FIXCOLOR_PAT | (VIA_BLIT_FILL << 24);
 	break;
     case VIA_BLIT_COPY:
-        BEGIN_RING((2 + 9) * 2);
-	SetReg2DAGP(VIA_REG_GEMODE, dwGEMode);
-	SetReg2DAGP( VIA_REG_KEYCONTROL, 0x0);
-	cmd |= VIA_GEC_BLT | (VIA_BLIT_COPY << 24);
+	cmd = VIA_GEC_BLT | (VIA_BLIT_COPY << 24);
+	break;
+    default:
+        return;
     }	
 
+    BEGIN_RING(22);
+    SetReg2DAGP( VIA_REG_GEMODE, dwGEMode);
+    SetReg2DAGP( VIA_REG_FGCOLOR, color);
     SetReg2DAGP( 0x2C, nMask);
-    SetReg2DAGP( VIA_REG_SRCBASE, (srcBase & ~31) >> 3);
-    SetReg2DAGP( VIA_REG_DSTBASE, (dstBase & ~31) >> 3);
+    SetReg2DAGP( VIA_REG_SRCBASE, (srcBase & ~0x1f) >> 3);
+    SetReg2DAGP( VIA_REG_DSTBASE, (dstBase & ~0x1f) >> 3);
     SetReg2DAGP( VIA_REG_PITCH, VIA_PITCH_ENABLE |
-	       (srcPitch >> 3) | (((dstPitch) >> 3) << 16));
-    SetReg2DAGP( VIA_REG_SRCPOS, ((srcY << 16) | srcX));
-    SetReg2DAGP( VIA_REG_DSTPOS, ((dstY << 16) | dstX));
+	       (srcPitch >> 3) | ((dstPitch >> 3) << 16));
+    SetReg2DAGP( VIA_REG_SRCPOS, srcX);
+    SetReg2DAGP( VIA_REG_DSTPOS, dstX);
     SetReg2DAGP( VIA_REG_DIMENSION, (((h - 1) << 16) | (w - 1)));
     SetReg2DAGP( VIA_REG_GECMD, cmd);
     SetReg2DAGP( 0x2C, 0x00000000);
@@ -192,7 +176,6 @@ static void viaFillBuffer(viaContextPtr vmesa,
 	      offset, buffer->pitch,
 	      offset, buffer->pitch, 
 	      w, h,
-	      0, 0, 
 	      VIA_BLIT_FILL, pixel, mask); 
    }
 }
@@ -204,7 +187,6 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 {
    viaContextPtr vmesa = VIA_CONTEXT(ctx);
    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
-   const GLuint colorMask = *((GLuint *)&ctx->Color.ColorMask);
    int flag = 0;
    GLuint i = 0;
    GLuint clear_depth_mask = 0xf << 28;
@@ -212,12 +194,12 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 
    VIA_FLUSH_DMA(vmesa);
 
-   if ((mask & DD_FRONT_LEFT_BIT) && colorMask == ~0) {
+   if (mask & DD_FRONT_LEFT_BIT) {
       flag |= VIA_FRONT;
       mask &= ~DD_FRONT_LEFT_BIT;
    }
 
-   if ((mask & DD_BACK_LEFT_BIT) && colorMask == ~0) {
+   if (mask & DD_BACK_LEFT_BIT) {
       flag |= VIA_BACK;	
       mask &= ~DD_BACK_LEFT_BIT;
    }
@@ -239,9 +221,9 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 	    mask &= ~DD_STENCIL_BIT;
 	 }
 	 else {
-	    fprintf(stderr, "XXX: Clear stencil writemask %x -- need triangles (or a ROP?)\n", 
-		    ctx->Stencil.WriteMask[0]);
-	    /* Fixme - clear with triangles */
+	    if (VIA_DEBUG)
+	       fprintf(stderr, "XXX: Clear stencil writemask %x -- need triangles (or a ROP?)\n", 
+		       ctx->Stencil.WriteMask[0]);
 	 }
       }
    }
@@ -293,11 +275,11 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
       }
 	    
       if (flag & VIA_FRONT) {
-	 viaFillBuffer(vmesa, &vmesa->front, boxes, nr, vmesa->ClearColor, 0);
+	 viaFillBuffer(vmesa, &vmesa->front, boxes, nr, vmesa->ClearColor, vmesa->ClearMask);
       } 
 		
       if (flag & VIA_BACK) {
-	 viaFillBuffer(vmesa, &vmesa->back, boxes, nr, vmesa->ClearColor, 0); /* FIXME: masks */
+	 viaFillBuffer(vmesa, &vmesa->back, boxes, nr, vmesa->ClearColor, vmesa->ClearMask);
       }
 
       if (flag & VIA_DEPTH) {
@@ -341,7 +323,7 @@ static void viaDoSwapBuffers(viaContextPtr vmesa,
 	      src, back->pitch,
 	      dest, front->pitch,
 	      w, h,
-	      0,0,VIA_BLIT_COPY, 0, 0); 
+	      VIA_BLIT_COPY, 0, 0); 
    }
 }
 
