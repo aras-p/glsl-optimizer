@@ -3202,42 +3202,46 @@ glx:
     <enum name="COLOR_TABLE_SCALE"             count="4"  value="0x80D6">
         <size name="ColorTableParameterfv"/>
         <size name="ColorTableParameteriv"/>
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
     </enum>
     <enum name="COLOR_TABLE_BIAS"              count="4"  value="0x80D7">
         <size name="ColorTableParameterfv"/>
         <size name="ColorTableParameteriv"/>
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
     </enum>
     <enum name="COLOR_TABLE_FORMAT"            count="1"  value="0x80D8">
-        <size name="ColorTableParameterfv"/>
-        <size name="ColorTableParameteriv"/>
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
     </enum>
     <enum name="COLOR_TABLE_WIDTH"             count="1"  value="0x80D9">
-        <size name="ColorTableParameterfv"/>
-        <size name="ColorTableParameteriv"/>
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
     </enum>
     <enum name="COLOR_TABLE_RED_SIZE"          count="1"  value="0x80DA">
-        <size name="ColorTableParameterfv"/>
-        <size name="ColorTableParameteriv"/>
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
     </enum>
     <enum name="COLOR_TABLE_GREEN_SIZE"        count="1"  value="0x80DB">
-        <size name="ColorTableParameterfv"/>
-        <size name="ColorTableParameteriv"/>
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
     </enum>
     <enum name="COLOR_TABLE_BLUE_SIZE"         count="1"  value="0x80DC">
-        <size name="ColorTableParameterfv"/>
-        <size name="ColorTableParameteriv"/>
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
     </enum>
     <enum name="COLOR_TABLE_ALPHA_SIZE"        count="1"  value="0x80DD">
-        <size name="ColorTableParameterfv"/>
-        <size name="ColorTableParameteriv"/>
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
     </enum>
     <enum name="COLOR_TABLE_LUMINANCE_SIZE"    count="1"  value="0x80DE">
-        <size name="ColorTableParameterfv"/>
-        <size name="ColorTableParameteriv"/>
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
     </enum>
     <enum name="COLOR_TABLE_INTENSITY_SIZE"    count="1"  value="0x80DF">
-        <size name="ColorTableParameterfv"/>
-        <size name="ColorTableParameteriv"/>
+        <size name="GetColorTableParameterfv" mode="get"/>
+        <size name="GetColorTableParameteriv" mode="get"/>
     </enum>
 
 

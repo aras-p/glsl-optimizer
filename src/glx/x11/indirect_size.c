@@ -302,15 +302,6 @@ INTERNAL PURE FASTCALL GLint
 __glColorTableParameterfv_size( GLenum e )
 {
     switch( e ) {
-        case GL_COLOR_TABLE_FORMAT:
-        case GL_COLOR_TABLE_WIDTH:
-        case GL_COLOR_TABLE_RED_SIZE:
-        case GL_COLOR_TABLE_GREEN_SIZE:
-        case GL_COLOR_TABLE_BLUE_SIZE:
-        case GL_COLOR_TABLE_ALPHA_SIZE:
-        case GL_COLOR_TABLE_LUMINANCE_SIZE:
-        case GL_COLOR_TABLE_INTENSITY_SIZE:
-            return 1;
         case GL_COLOR_TABLE_SCALE:
         case GL_COLOR_TABLE_BIAS:
             return 4;
