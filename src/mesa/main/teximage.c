@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.43 2000/08/31 15:24:39 brianp Exp $ */
+/* $Id: teximage.c,v 1.44 2000/09/01 22:01:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -887,6 +887,7 @@ make_texture_image( GLcontext *ctx, GLuint dimensions,
       }
       else {
          /* no convolution */
+         destBytesPerRow = width * components * sizeof(GLubyte);
          for (img = 0; img < depth; img++) {
             for (row = 0; row < height; row++) {
                const GLvoid *srcAddr = _mesa_image_address(srcPacking,
