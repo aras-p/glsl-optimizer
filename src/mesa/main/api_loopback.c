@@ -1,3 +1,35 @@
+/* $Id: api_loopback.c,v 1.3 2000/11/27 18:17:09 brianp Exp $ */
+
+/*
+ * Mesa 3-D graphics library
+ * Version:  3.5
+ * 
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/*
+ * Authors:
+ *   Keith Whitwell <keithw@valinux.com>
+ */
+
+
 #include "glheader.h"
 #include "glapitable.h"
 #include "macros.h"
@@ -25,7 +57,7 @@
 #define TEXCOORD2(s,t)              DRIVER(TexCoord2f)(s,t)
 #define TEXCOORD3(s,t,u)            DRIVER(TexCoord3f)(s,t,u)
 #define TEXCOORD4(s,t,u,v)          DRIVER(TexCoord4f)(s,t,u,v)
-#define INDEX(c)		    DRIVER(Indexub)(c)	
+#define INDEX(c)		    DRIVER(Indexi)(c)	
 #define MULTI_TEXCOORD1(z,s)	    DRIVER(MultiTexCoord1fARB)(z,s)	
 #define MULTI_TEXCOORD2(z,s,t)	    DRIVER(MultiTexCoord2fARB)(z,s,t)
 #define MULTI_TEXCOORD3(z,s,t,u)    DRIVER(MultiTexCoord3fARB)(z,s,t,u)       
@@ -510,43 +542,37 @@ loopback_FogCoorddvEXT( const GLdouble *v )
 static void
 loopback_Indexd( GLdouble c )
 {
-   INDEX( ( GLuint) (GLint) c );
+   INDEX( (GLint) c );
 }
 
 static void
 loopback_Indexf( GLfloat c )
 {
-   INDEX( (GLuint) (GLint) c );
-}
-
-static void
-loopback_Indexi( GLint c )
-{
-   INDEX( (GLuint) c );
+   INDEX( (GLint) c );
 }
 
 static void
 loopback_Indexs( GLshort c )
 {
-   INDEX( (GLuint) c );
+   INDEX( (GLint) c );
 }
 
 static void
 loopback_Indexub( GLubyte c )
 {
-   INDEX( (GLuint) c );
+   INDEX( (GLint) c );
 }
 
 static void
 loopback_Indexdv( const GLdouble *c )
 {
-   INDEX( (GLuint) (GLint) *c );
+   INDEX( (GLint) (GLint) *c );
 }
 
 static void
 loopback_Indexfv( const GLfloat *c )
 {
-   INDEX( (GLuint) (GLint) *c );
+   INDEX( (GLint) (GLint) *c );
 }
 
 static void
@@ -558,13 +584,13 @@ loopback_Indexiv( const GLint *c )
 static void
 loopback_Indexsv( const GLshort *c )
 {
-   INDEX( (GLuint) (GLint) *c );
+   INDEX( (GLint) *c );
 }
 
 static void
 loopback_Indexubv( const GLubyte *c )
 {
-   INDEX( (GLuint) *c );
+   INDEX( (GLint) *c );
 }
 
 static void
@@ -1433,7 +1459,6 @@ _mesa_loopback_init_api_table( struct _glapi_table *dest,
 
    dest->Indexd = loopback_Indexd;
    dest->Indexf = loopback_Indexf;
-   dest->Indexi = loopback_Indexi;
    dest->Indexs = loopback_Indexs;
    dest->Indexub = loopback_Indexub;
    dest->Indexdv = loopback_Indexdv;
