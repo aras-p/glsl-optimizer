@@ -34,17 +34,17 @@
 #include "array_cache/ac_context.h"
 #include "math/m_translate.h"
 
-#define STRIDE_ARRAY( array, offset ) 		\
-do {						\
-   GLubyte *tmp = (array).Ptr;			\
-   tmp += (offset) * (array).StrideB;		\
-   (array).Ptr = tmp;				\
+#define STRIDE_ARRAY( array, offset ) 					\
+do {									\
+   GLubyte *tmp = ADD_POINTERS( (array).BufferObj->Data, (array).Ptr )	\
+                + (offset) * (array).StrideB;				\
+   (array).Ptr = tmp;							\
 } while (0)
+
 
 /* Set the array pointer back to its source when the cached data is
  * invalidated:
  */
-
 static void reset_texcoord( GLcontext *ctx, GLuint unit )
 {
    ACcontext *ac = AC_CONTEXT(ctx);
@@ -202,15 +202,23 @@ static void import( GLcontext *ctx,
 		    struct gl_client_array *to,
 		    struct gl_client_array *from )
 {
+   GLubyte *dest;
+   const GLubyte *src;
    ACcontext *ac = AC_CONTEXT(ctx);
 
    if (type == 0) 
       type = from->Type;
 
+   /* The dest and source data addresses are the sum of the buffer
+    * object's start plus the vertex array pointer/offset.
+    */
+   dest = ADD_POINTERS(to->BufferObj->Data, to->Ptr);
+   src = ADD_POINTERS(from->BufferObj->Data, from->Ptr);
+
    switch (type) {
    case GL_FLOAT:
-      _math_trans_4fc( (GLfloat (*)[4]) to->Ptr,
-		       from->Ptr,
+      _math_trans_4fc( (GLfloat (*)[4]) dest,
+                       src,
 		       from->StrideB,
 		       from->Type,
 		       from->Size,
@@ -222,8 +230,8 @@ static void import( GLcontext *ctx,
       break;
       
    case GL_UNSIGNED_BYTE:
-      _math_trans_4ub( (GLubyte (*)[4]) to->Ptr,
-		       from->Ptr,
+      _math_trans_4ub( (GLubyte (*)[4]) dest,
+                       src,
 		       from->StrideB,
 		       from->Type,
 		       from->Size,
@@ -235,8 +243,8 @@ static void import( GLcontext *ctx,
       break;
 
    case GL_UNSIGNED_SHORT:
-      _math_trans_4us( (GLushort (*)[4]) to->Ptr,
-		       from->Ptr,
+      _math_trans_4us( (GLushort (*)[4]) dest,
+                       src,
 		       from->StrideB,
 		       from->Type,
 		       from->Size,

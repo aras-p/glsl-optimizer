@@ -1262,7 +1262,7 @@ struct gl_buffer_object {
    GLenum Access;
    GLvoid *Pointer;   /**< Only valid while buffer is mapped */
    GLuint Size;       /**< Size of data array in bytes */
-   GLubyte *Data;        /**< The storage */
+   GLubyte *Data;     /**< The storage */
 };
 
 

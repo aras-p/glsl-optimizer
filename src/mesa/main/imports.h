@@ -92,6 +92,16 @@ extern "C" {
 /*@}*/
 
 
+/*
+ * For GL_ARB_vertex_buffer_object we need to treat vertex array pointers
+ * as offsets into buffer stores.  Since the vertex array pointer and
+ * buffer store pointer are both pointers and we need to add them, we use
+ * this macro.
+ * Both pointers/offsets are expressed in bytes.
+ */
+#define ADD_POINTERS(A, B)  ( (A) + (unsigned long) (B) )
+
+
 /**********************************************************************/
 /** \name [Pseudo] static array declaration.
  *

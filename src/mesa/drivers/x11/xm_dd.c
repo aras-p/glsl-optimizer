@@ -24,6 +24,7 @@
 
 
 #include "glxheader.h"
+#include "bufferobj.h"
 #include "context.h"
 #include "colormac.h"
 #include "depth.h"
@@ -92,7 +93,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 
 
 static void
-finish( GLcontext *ctx )
+finish_or_flush( GLcontext *ctx )
 {
 #ifdef XFree86Server
       /* NOT_NEEDED */
@@ -101,22 +102,6 @@ finish( GLcontext *ctx )
    if (xmesa) {
       _glthread_LOCK_MUTEX(_xmesa_lock);
       XSync( xmesa->display, False );
-      _glthread_UNLOCK_MUTEX(_xmesa_lock);
-   }
-#endif
-}
-
-
-static void
-flush( GLcontext *ctx )
-{
-#ifdef XFree86Server
-      /* NOT_NEEDED */
-#else
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   if (xmesa) {
-      _glthread_LOCK_MUTEX(_xmesa_lock);
-      XFlush( xmesa->display );
       _glthread_UNLOCK_MUTEX(_xmesa_lock);
    }
 #endif
@@ -832,7 +817,10 @@ drawpixels_8R8G8B( GLcontext *ctx,
 #endif
 
 
-
+/*
+ * Every driver should implement a GetString function in order to
+ * return a meaningful GL_RENDERER string.
+ */
 static const GLubyte *
 get_string( GLcontext *ctx, GLenum name )
 {
@@ -856,6 +844,10 @@ get_string( GLcontext *ctx, GLenum name )
 }
 
 
+/*
+ * We implement the glEnable function only because we care about
+ * dither enable/disable.
+ */
 static void
 enable( GLcontext *ctx, GLenum pname, GLboolean state )
 {
@@ -970,11 +962,17 @@ void xmesa_init_pointers( GLcontext *ctx )
    TNLcontext *tnl;
    struct swrast_device_driver *dd = _swrast_GetDeviceDriverReference( ctx );
 
+   /* Plug in our driver-specific functions here */
    ctx->Driver.GetString = get_string;
    ctx->Driver.GetBufferSize = get_buffer_size;
-   ctx->Driver.Flush = flush;
-   ctx->Driver.Finish = finish;
-    
+   ctx->Driver.Flush = finish_or_flush;
+   ctx->Driver.Finish = finish_or_flush;
+   ctx->Driver.ClearIndex = clear_index;
+   ctx->Driver.ClearColor = clear_color;
+   ctx->Driver.IndexMask = index_mask;
+   ctx->Driver.ColorMask = color_mask;
+   ctx->Driver.Enable = enable;
+
    /* Software rasterizer pixel paths:
     */
    ctx->Driver.Accum = _swrast_Accum;
@@ -1017,15 +1015,15 @@ void xmesa_init_pointers( GLcontext *ctx )
    ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 
-
-   /* Statechange callbacks:
-    */
-   ctx->Driver.ClearIndex = clear_index;
-   ctx->Driver.ClearColor = clear_color;
-   ctx->Driver.IndexMask = index_mask;
-   ctx->Driver.ColorMask = color_mask;
-   ctx->Driver.Enable = enable;
-
+#if FEATURE_ARB_vertex_buffer_object
+   ctx->Driver.NewBufferObject = _mesa_new_buffer_object;
+   ctx->Driver.DeleteBuffer = _mesa_delete_buffer_object;
+   ctx->Driver.BindBuffer = NULL;
+   ctx->Driver.BufferData = _mesa_buffer_data;
+   ctx->Driver.BufferSubData = _mesa_buffer_subdata;
+   ctx->Driver.MapBuffer = _mesa_buffer_map;
+   ctx->Driver.UnmapBuffer = NULL;
+#endif
 
    /* Initialize the TNL driver interface:
     */

@@ -538,6 +538,7 @@ void _tnl_imm_init( GLcontext *ctx )
    tmp->Color.Stride = 0;
    tmp->Color.StrideB = 4 * sizeof(GLfloat);
    tmp->Color.Flags = 0;
+   tmp->Color.BufferObj = ctx->Array.NullBufferObj;
 
    tmp->SecondaryColor.Ptr = NULL;
    tmp->SecondaryColor.Type = GL_FLOAT;
@@ -545,6 +546,7 @@ void _tnl_imm_init( GLcontext *ctx )
    tmp->SecondaryColor.Stride = 0;
    tmp->SecondaryColor.StrideB = 4 * sizeof(GLfloat);
    tmp->SecondaryColor.Flags = 0;
+   tmp->SecondaryColor.BufferObj = ctx->Array.NullBufferObj;
 
    _mesa_vector4f_init( &tmp->FogCoord, 0, 0 );
    _mesa_vector1ui_init( &tmp->Index, 0, 0 );

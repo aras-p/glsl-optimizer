@@ -328,28 +328,40 @@ GLboolean _ac_CreateContext( GLcontext *ctx )
 
 void _ac_DestroyContext( GLcontext *ctx )
 {
+   struct gl_buffer_object *nullObj = ctx->Array.NullBufferObj;
    ACcontext *ac = AC_CONTEXT(ctx);
    GLint i;
 
-   if (ac->Cache.Vertex.Ptr) FREE( ac->Cache.Vertex.Ptr );
-   if (ac->Cache.Normal.Ptr) FREE( ac->Cache.Normal.Ptr );
-   if (ac->Cache.Color.Ptr) FREE( ac->Cache.Color.Ptr );
-   if (ac->Cache.SecondaryColor.Ptr) FREE( ac->Cache.SecondaryColor.Ptr );
-   if (ac->Cache.EdgeFlag.Ptr) FREE( ac->Cache.EdgeFlag.Ptr );
-   if (ac->Cache.Index.Ptr) FREE( ac->Cache.Index.Ptr );
-   if (ac->Cache.FogCoord.Ptr) FREE( ac->Cache.FogCoord.Ptr );
+   /* only free vertex data if it's really a pointer to vertex data and
+    * not an offset into a buffer object.
+    */
+   if (ac->Cache.Vertex.Ptr && ac->Cache.Vertex.BufferObj == nullObj)
+      FREE( ac->Cache.Vertex.Ptr );
+   if (ac->Cache.Normal.Ptr && ac->Cache.Normal.BufferObj == nullObj)
+      FREE( ac->Cache.Normal.Ptr );
+   if (ac->Cache.Color.Ptr && ac->Cache.Color.BufferObj == nullObj)
+      FREE( ac->Cache.Color.Ptr );
+   if (ac->Cache.SecondaryColor.Ptr && ac->Cache.SecondaryColor.BufferObj == nullObj)
+      FREE( ac->Cache.SecondaryColor.Ptr );
+   if (ac->Cache.EdgeFlag.Ptr && ac->Cache.EdgeFlag.BufferObj == nullObj)
+      FREE( ac->Cache.EdgeFlag.Ptr );
+   if (ac->Cache.Index.Ptr && ac->Cache.Index.BufferObj == nullObj)
+      FREE( ac->Cache.Index.Ptr );
+   if (ac->Cache.FogCoord.Ptr && ac->Cache.FogCoord.BufferObj == nullObj)
+      FREE( ac->Cache.FogCoord.Ptr );
 
    for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
-      if (ac->Cache.TexCoord[i].Ptr)
+      if (ac->Cache.TexCoord[i].Ptr && ac->Cache.TexCoord[i].BufferObj == nullObj)
 	 FREE( ac->Cache.TexCoord[i].Ptr );
    }
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      if (ac->Cache.Attrib[i].Ptr)
+      if (ac->Cache.Attrib[i].Ptr && ac->Cache.Attrib[i].BufferObj == nullObj)
 	 FREE( ac->Cache.Attrib[i].Ptr );
    }
 
-   if (ac->Elts) FREE( ac->Elts );
+   if (ac->Elts)
+      FREE( ac->Elts );
 
    /* Free the context structure itself */
    FREE(ac);

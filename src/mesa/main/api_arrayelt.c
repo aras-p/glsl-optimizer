@@ -1,4 +1,3 @@
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -346,13 +345,19 @@ void _ae_loopback_array_elt( GLint elt )
       _ae_update_state( ctx );
 
    for (ta = actx->texarrays ; ta->func ; ta++) {
-      ta->func( ta->unit + GL_TEXTURE0_ARB, (char *)ta->array->Ptr + elt * ta->array->StrideB );
+      GLubyte *src = ta->array->BufferObj->Data
+                   + (GLuint) ta->array->Ptr
+                   + elt * ta->array->StrideB;
+      ta->func( ta->unit + GL_TEXTURE0_ARB, src);
    }
 
    /* Must be last
     */
    for (aa = actx->arrays ; aa->func ; aa++) {
-      aa->func( (char *)aa->array->Ptr + elt * aa->array->StrideB );
+      GLubyte *src = aa->array->BufferObj->Data
+                   + (GLuint) aa->array->Ptr
+                   + elt * aa->array->StrideB;
+      aa->func( src );
    }
 }
 

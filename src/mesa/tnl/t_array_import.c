@@ -1,4 +1,3 @@
-
 /*
  * Mesa 3-D graphics library
  * Version:  5.1
@@ -48,6 +47,7 @@ static void _tnl_import_vertex( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
+   GLubyte *data;
 
    tmp = _ac_import_vertex(ctx,
 			   GL_FLOAT,
@@ -56,8 +56,9 @@ static void _tnl_import_vertex( GLcontext *ctx,
 			   writeable,
 			   &is_writeable);
 
-   inputs->Obj.data = (GLfloat (*)[4]) tmp->Ptr;
-   inputs->Obj.start = (GLfloat *) tmp->Ptr;
+   data = ADD_POINTERS(tmp->Ptr, tmp->BufferObj->Data);
+   inputs->Obj.data = (GLfloat (*)[4]) data;
+   inputs->Obj.start = (GLfloat *) data;
    inputs->Obj.stride = tmp->StrideB;
    inputs->Obj.size = tmp->Size;
    inputs->Obj.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
@@ -74,13 +75,15 @@ static void _tnl_import_normal( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
+   GLubyte *data;
 
    tmp = _ac_import_normal(ctx, GL_FLOAT,
 			   stride ? 3*sizeof(GLfloat) : 0, writeable,
 			   &is_writeable);
 
-   inputs->Normal.data = (GLfloat (*)[4]) tmp->Ptr;
-   inputs->Normal.start = (GLfloat *) tmp->Ptr;
+   data = ADD_POINTERS(tmp->Ptr, tmp->BufferObj->Data);
+   inputs->Normal.data = (GLfloat (*)[4]) data;
+   inputs->Normal.start = (GLfloat *) data;
    inputs->Normal.stride = tmp->StrideB;
    inputs->Normal.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
    if (inputs->Normal.stride != 3*sizeof(GLfloat))
@@ -134,15 +137,17 @@ static void _tnl_import_fogcoord( GLcontext *ctx,
 				  GLboolean stride )
 {
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
-    struct gl_client_array *tmp;
+   struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
+   GLubyte *data;
 
    tmp = _ac_import_fogcoord(ctx, GL_FLOAT,
 			     stride ? sizeof(GLfloat) : 0, writeable,
 			     &is_writeable);
 
-   inputs->FogCoord.data = (GLfloat (*)[4]) tmp->Ptr;
-   inputs->FogCoord.start = (GLfloat *) tmp->Ptr;
+   data = ADD_POINTERS(tmp->Ptr, tmp->BufferObj->Data);
+   inputs->FogCoord.data = (GLfloat (*)[4]) data;
+   inputs->FogCoord.start = (GLfloat *) data;
    inputs->FogCoord.stride = tmp->StrideB;
    inputs->FogCoord.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
    if (inputs->FogCoord.stride != sizeof(GLfloat))
@@ -158,13 +163,15 @@ static void _tnl_import_index( GLcontext *ctx,
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
+   GLubyte *data;
 
    tmp = _ac_import_index(ctx, GL_UNSIGNED_INT,
 			  stride ? sizeof(GLuint) : 0, writeable,
 			  &is_writeable);
 
-   inputs->Index.data = (GLuint *) tmp->Ptr;
-   inputs->Index.start = (GLuint *) tmp->Ptr;
+   data = ADD_POINTERS(tmp->Ptr, tmp->BufferObj->Data);
+   inputs->Index.data = (GLuint *) data;
+   inputs->Index.start = (GLuint *) data;
    inputs->Index.stride = tmp->StrideB;
    inputs->Index.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
    if (inputs->Index.stride != sizeof(GLuint))
@@ -182,6 +189,7 @@ static void _tnl_import_texcoord( GLcontext *ctx,
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
+   GLubyte *data;
 
    tmp = _ac_import_texcoord(ctx, unit, GL_FLOAT,
 			     stride ? 4 * sizeof(GLfloat) : 0,
@@ -189,8 +197,9 @@ static void _tnl_import_texcoord( GLcontext *ctx,
 			     writeable,
 			     &is_writeable);
 
-   inputs->TexCoord[unit].data = (GLfloat (*)[4]) tmp->Ptr;
-   inputs->TexCoord[unit].start = (GLfloat *) tmp->Ptr;
+   data = ADD_POINTERS(tmp->Ptr, tmp->BufferObj->Data);
+   inputs->TexCoord[unit].data = (GLfloat (*)[4]) data;
+   inputs->TexCoord[unit].start = (GLfloat *) data;
    inputs->TexCoord[unit].stride = tmp->StrideB;
    inputs->TexCoord[unit].size = tmp->Size;
    inputs->TexCoord[unit].flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
@@ -208,14 +217,16 @@ static void _tnl_import_edgeflag( GLcontext *ctx,
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
+   GLubyte *data;
 
    tmp = _ac_import_edgeflag(ctx, GL_UNSIGNED_BYTE,
 			     stride ? sizeof(GLubyte) : 0,
 			     0,
 			     &is_writeable);
 
-   inputs->EdgeFlag.data = (GLubyte *) tmp->Ptr;
-   inputs->EdgeFlag.start = (GLubyte *) tmp->Ptr;
+   data = ADD_POINTERS(tmp->Ptr, tmp->BufferObj->Data);
+   inputs->EdgeFlag.data = (GLubyte *) data;
+   inputs->EdgeFlag.start = (GLubyte *) data;
    inputs->EdgeFlag.stride = tmp->StrideB;
    inputs->EdgeFlag.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
    if (inputs->EdgeFlag.stride != sizeof(GLubyte))
@@ -234,6 +245,7 @@ static void _tnl_import_attrib( GLcontext *ctx,
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
+   GLubyte *data;
 
    tmp = _ac_import_attrib(ctx, index, GL_FLOAT,
                            stride ? 4 * sizeof(GLfloat) : 0,
@@ -241,8 +253,9 @@ static void _tnl_import_attrib( GLcontext *ctx,
                            writeable,
                            &is_writeable);
 
-   inputs->Attribs[index].data = (GLfloat (*)[4]) tmp->Ptr;
-   inputs->Attribs[index].start = (GLfloat *) tmp->Ptr;
+   data = ADD_POINTERS(tmp->Ptr, tmp->BufferObj->Data);
+   inputs->Attribs[index].data = (GLfloat (*)[4]) data;
+   inputs->Attribs[index].start = (GLfloat *) data;
    inputs->Attribs[index].stride = tmp->StrideB;
    inputs->Attribs[index].size = tmp->Size;
    inputs->Attribs[index].flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);

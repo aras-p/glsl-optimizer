@@ -516,14 +516,15 @@ static void _tnl_trans_elt_1ui(GLuint *to,
 			GLuint start,
 			GLuint n )
 {
+   GLubyte *fromData = ADD_POINTERS( from->Ptr, from->BufferObj->Data );
    _tnl_trans_elt_1ui_tab[TYPE_IDX(from->Type)]( to,
-					       from->Ptr,
-					       from->StrideB,
-					       flags,
-					       elts,
-					       match,
-					       start,
-					       n );
+                                                 fromData,
+                                                 from->StrideB,
+                                                 flags,
+                                                 elts,
+                                                 match,
+                                                 start,
+                                                 n );
 
 }
 
@@ -536,8 +537,9 @@ static void _tnl_trans_elt_1ub(GLubyte *to,
 			GLuint start,
 			GLuint n )
 {
+   GLubyte *fromData = ADD_POINTERS( from->Ptr, from->BufferObj->Data );
    _tnl_trans_elt_1ub_tab[TYPE_IDX(from->Type)]( to,
-                                                 from->Ptr,
+                                                 fromData,
                                                  from->StrideB,
                                                  flags,
                                                  elts,
@@ -555,8 +557,9 @@ static void _tnl_trans_elt_4f(GLfloat (*to)[4],
                               GLuint start,
                               GLuint n )
 {
+   GLubyte *fromData = ADD_POINTERS( from->Ptr, from->BufferObj->Data );
    _tnl_trans_elt_4f_tab[from->Size][TYPE_IDX(from->Type)]( to,
-					      from->Ptr,
+					      fromData,
 					      from->StrideB,
 					      flags,
 					      elts,
@@ -575,8 +578,9 @@ static void _tnl_trans_elt_4fc(GLfloat (*to)[4],
 			       GLuint start,
 			       GLuint n )
 {
+   GLubyte *fromData = ADD_POINTERS( from->Ptr, from->BufferObj->Data );
    _tnl_trans_elt_4fc_tab[from->Size][TYPE_IDX(from->Type)]( to,
-					      from->Ptr,
+					      fromData,
 					      from->StrideB,
 					      flags,
 					      elts,
