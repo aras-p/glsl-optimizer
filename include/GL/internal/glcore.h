@@ -268,7 +268,11 @@ struct __GLdrawableBufferRec {
 
     /* exported */
     void (*freePrivate)(__GLdrawableBuffer *buf, __GLdrawablePrivate *glPriv);
+#ifdef __cplusplus
+    void *privatePtr;
+#else
     void *private;
+#endif
 
     /* private */
     void *other;	/* implementation private data */
@@ -359,7 +363,11 @@ struct __GLdrawablePrivateRec {
     void (*unlockDP)(__GLdrawablePrivate *glPriv);
 
     /* exported */
+#ifdef __cplusplus
+    void *privatePtr;
+#else
     void *private;
+#endif
     void (*freePrivate)(__GLdrawablePrivate *);
 
     /* client data */
