@@ -831,7 +831,7 @@ void MesaDriver::UpdateState( GLcontext *ctx, GLuint new_state )
 	_ac_InvalidateState( ctx, new_state );
 	_tnl_InvalidateState( ctx, new_state );
 
-	if (ctx->Color.DrawBuffer == GL_FRONT) {
+	if (ctx->Color.DrawBuffer[0] == GL_FRONT) {
       /* read/write front buffer */
       swdd->WriteRGBASpan = MesaDriver::WriteRGBASpanFront;
       swdd->WriteRGBSpan = MesaDriver::WriteRGBSpanFront;
