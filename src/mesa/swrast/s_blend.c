@@ -1,4 +1,4 @@
-/* $Id: s_blend.c,v 1.13 2002/02/12 16:45:22 kschultz Exp $ */
+/* $Id: s_blend.c,v 1.14 2002/03/27 15:49:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -677,7 +677,7 @@ _mesa_blend_span( GLcontext *ctx, const struct sw_span *span,
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLchan framebuffer[MAX_WIDTH][4];
 
-   ASSERT(span->end < MAX_WIDTH);
+   ASSERT(span->end <= MAX_WIDTH);
    ASSERT(span->arrayMask & SPAN_RGBA);
    ASSERT(!ctx->Color.ColorLogicOpEnabled);
 
