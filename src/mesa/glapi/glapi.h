@@ -1,4 +1,4 @@
-/* $Id: glapi.h,v 1.1 1999/11/11 01:22:26 brianp Exp $ */
+/* $Id: glapi.h,v 1.2 1999/11/12 18:57:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -50,8 +50,8 @@
 
 /* And which extensions: */
 #define _GLAPI_ARB_imaging  1
-#define _GLAPI_ARB_multitexture 1
-#define _GLAPI_EXT_color_table  1
+#define _GLAPI_ARB_multitexture  1
+#define _GLAPI_EXT_paletted_texture  1
 #define _GLAPI_EXT_compiled_vertex_array  1
 #define _GLAPI_EXT_point_parameters  1
 #define _GLAPI_EXT_polygon_offset  1
@@ -472,7 +472,7 @@ struct _glapi_table
     * Extensions
     */
 
-#ifdef _GLAPI_EXT_color_table
+#ifdef _GLAPI_EXT_paletted_texture
    void (*ColorTableEXT)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
    void (*ColorSubTableEXT)(GLenum, GLsizei, GLsizei, GLenum, GLenum, const GLvoid *);
    void (*GetColorTableEXT)(GLenum, GLenum, GLenum, GLvoid *);

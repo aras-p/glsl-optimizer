@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.6 1999/11/12 18:27:27 brianp Exp $ */
+/* $Id: glapi.c,v 1.7 1999/11/12 18:57:50 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2078,7 +2078,7 @@ void GLAPIENTRY glCopyTexSubImage3DEXT(GLenum target, GLint level, GLint xoffset
 
 
 
-#ifdef _GLAPI_EXT_color_table
+#ifdef _GLAPI_EXT_paletted_texture
 
 void GLAPIENTRY glColorTableEXT(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table)
 {
@@ -2105,7 +2105,7 @@ void GLAPIENTRY glGetColorTableParameterivEXT(GLenum target, GLenum pname, GLint
    DISPATCH(GetColorTableParameterivEXT)(target, pname, params);
 }
 
-#endif  /* GL_EXT_color_table */
+#endif  /* GL_EXT_paletted_texture */
 
 
 
@@ -2854,7 +2854,7 @@ static struct _glapi_table completeness_test = {
     * Extensions
     */
 
-#ifdef _GLAPI_EXT_color_table
+#ifdef _GLAPI_EXT_paletted_texture
    glColorTableEXT,
    glColorSubTableEXT,
    glGetColorTableEXT,
@@ -3433,7 +3433,7 @@ _glapi_check_table(const struct _glapi_table *table)
 #endif
 
 
-#ifdef _GLAPI_EXT_color_table
+#ifdef _GLAPI_EXT_paletted_texture
    assert(table->ColorTableEXT);
    assert(table->ColorSubTableEXT);
    assert(table->GetColorTableEXT);
