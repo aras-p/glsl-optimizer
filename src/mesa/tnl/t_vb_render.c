@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.22 2001/07/12 22:09:22 keithw Exp $ */
+/* $Id: t_vb_render.c,v 1.23 2001/11/19 10:22:41 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -318,7 +318,7 @@ static GLboolean run_render( GLcontext *ctx,
    do
    {
       GLuint i, length, flags = 0;
-      for (i = 0 ; !(flags & PRIM_LAST) ; i += length)
+      for (i = VB->FirstPrimitive ; !(flags & PRIM_LAST) ; i += length)
       {
 	 flags = VB->Primitive[i];
 	 length= VB->PrimitiveLength[i];
