@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.17 2000/05/10 14:39:53 brianp Exp $ */
+/* $Id: colortab.c,v 1.18 2000/05/24 14:03:04 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,9 +36,67 @@
 #include "mem.h"
 #include "mmath.h"
 #include "span.h"
-#include "teximage.h"
 #endif
 
+
+
+/*
+ * Given an internalFormat token passed to glColorTable,
+ * return the corresponding base format.
+ * Return -1 if invalid token.
+ */
+static GLint
+base_colortab_format( GLenum format )
+{
+   switch (format) {
+      case GL_ALPHA:
+      case GL_ALPHA4:
+      case GL_ALPHA8:
+      case GL_ALPHA12:
+      case GL_ALPHA16:
+         return GL_ALPHA;
+      case GL_LUMINANCE:
+      case GL_LUMINANCE4:
+      case GL_LUMINANCE8:
+      case GL_LUMINANCE12:
+      case GL_LUMINANCE16:
+         return GL_LUMINANCE;
+      case GL_LUMINANCE_ALPHA:
+      case GL_LUMINANCE4_ALPHA4:
+      case GL_LUMINANCE6_ALPHA2:
+      case GL_LUMINANCE8_ALPHA8:
+      case GL_LUMINANCE12_ALPHA4:
+      case GL_LUMINANCE12_ALPHA12:
+      case GL_LUMINANCE16_ALPHA16:
+         return GL_LUMINANCE_ALPHA;
+      case GL_INTENSITY:
+      case GL_INTENSITY4:
+      case GL_INTENSITY8:
+      case GL_INTENSITY12:
+      case GL_INTENSITY16:
+         return GL_INTENSITY;
+      case GL_RGB:
+      case GL_R3_G3_B2:
+      case GL_RGB4:
+      case GL_RGB5:
+      case GL_RGB8:
+      case GL_RGB10:
+      case GL_RGB12:
+      case GL_RGB16:
+         return GL_RGB;
+      case GL_RGBA:
+      case GL_RGBA2:
+      case GL_RGBA4:
+      case GL_RGB5_A1:
+      case GL_RGBA8:
+      case GL_RGB10_A2:
+      case GL_RGBA12:
+      case GL_RGBA16:
+         return GL_RGBA;
+      default:
+         return -1;  /* error */
+   }
+}
 
 
 void
@@ -248,7 +306,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
       return;
    }
 
-   baseFormat = _mesa_base_tex_format(internalFormat);
+   baseFormat = base_colortab_format(internalFormat);
    if (baseFormat < 0 || baseFormat == GL_COLOR_INDEX) {
       gl_error(ctx, GL_INVALID_ENUM, "glColorTable(internalFormat)");
       return;
