@@ -91,10 +91,6 @@ SOURCE=.\ss_context.c
 
 SOURCE=.\ss_triangle.c
 # End Source File
-# Begin Source File
-
-SOURCE=.\ss_vb.c
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
