@@ -1,4 +1,4 @@
-/* $Id: gloss.c,v 1.6 2000/12/24 22:53:54 pesco Exp $ */
+/* $Id: gloss.c,v 1.7 2002/11/28 15:51:55 brianp Exp $ */
 
 /*
  * Specular reflection demo.  The specular highlight is modulated by
@@ -85,9 +85,9 @@ static void Display( void )
    glCallList(Object);
 
    /* Second pass: specular lighting with reflection texture */
+   glEnable(GL_POLYGON_OFFSET_FILL);
    glBlendFunc(GL_ONE, GL_ONE);  /* add */
    glEnable(GL_BLEND);
-   glDepthFunc(GL_LEQUAL);
    glMaterialfv(GL_FRONT, GL_DIFFUSE, Black);
    glMaterialfv(GL_FRONT, GL_SPECULAR, White);
    if (DoSpecTexture) {
@@ -102,6 +102,7 @@ static void Display( void )
    glDisable(GL_TEXTURE_GEN_S);
    glDisable(GL_TEXTURE_GEN_T);
    glDisable(GL_BLEND);
+   glDisable(GL_POLYGON_OFFSET_FILL);
 
    glPopMatrix();
 
@@ -340,6 +341,8 @@ static void Init( int argc, char *argv[] )
    glEnable(GL_TEXTURE_2D);
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_NORMALIZE);
+
+   glPolygonOffset( -1, -1 );
 
    if (argc > 1 && strcmp(argv[1], "-info")==0) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
