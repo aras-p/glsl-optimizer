@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.4 2000/03/23 16:57:14 brianp Exp $ */
+/* $Id: texobj.c,v 1.5 2000/07/19 23:57:24 brianp Exp $ */
 
 /*
  * Example of using the 1.1 texture object functions.
@@ -240,6 +240,7 @@ static void init( void )
 
 int main( int argc, char *argv[] )
 {
+   glutInit(&argc, argv);
    glutInitWindowPosition(0, 0);
    glutInitWindowSize(300, 300);
    glutInitDisplayMode( GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
