@@ -574,5 +574,8 @@ extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa,
 				struct gl_texture_object *tObj, GLint where);
 extern void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder);
 
+extern void fxCheckIsInHardware(GLcontext *ctx);
+
+extern GLboolean fx_check_IsInHardware(GLcontext *ctx);
 
 #endif

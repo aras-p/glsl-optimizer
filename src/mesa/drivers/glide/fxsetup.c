@@ -563,6 +563,7 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
    }
 }
 
+#if 00
 static void
 fxSetupTextureSingleTMU(GLcontext * ctx, GLuint textureset)
 {
@@ -570,6 +571,8 @@ fxSetupTextureSingleTMU(GLcontext * ctx, GLuint textureset)
    fxSetupTextureSingleTMU_NoLock(ctx, textureset);
    END_BOARD_LOCK();
 }
+#endif
+
 
 /************************* Double Texture Set ***************************/
 

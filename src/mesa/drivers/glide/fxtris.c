@@ -646,7 +646,7 @@ static void fxFastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 
 
 
-static void fxChooseRenderState(GLcontext *ctx)
+void fxDDChooseRenderState(GLcontext *ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
@@ -704,6 +704,7 @@ static void fxChooseRenderState(GLcontext *ctx)
       tnl->Driver.Render.ClippedPolygon = fxRenderClippedPoly;
    }
 }
+
 
 /**********************************************************************/
 /*                Runtime render state and callbacks                  */
@@ -773,7 +774,7 @@ void fxCheckIsInHardware( GLcontext *ctx )
    GLuint oldfallback = !fxMesa->is_in_hardware;
    GLuint newfallback;
 
-   fxMesa->is_in_hardware = check_IsInHardware( ctx );
+   fxMesa->is_in_hardware = fx_check_IsInHardware( ctx );
    newfallback = !fxMesa->is_in_hardware;
 
    if (newfallback) {
@@ -794,12 +795,15 @@ void fxCheckIsInHardware( GLcontext *ctx )
 	 tnl->Driver.Render.ResetLineStipple = _swrast_ResetLineStipple;
 	 tnl->Driver.Render.BuildVertices = fxBuildVertices;
 	 tnl->Driver.Render.Multipass = 0;
+#if 000
 	 fxDDChooseSetupState(ctx);
+#endif
 	 fxDDChooseRenderState(ctx);
       }
    }
 }
 
+#if 00
 void fxDDInitTriFuncs( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -824,6 +828,8 @@ void fxDDInitTriFuncs( GLcontext *ctx )
    
    (void) fx_print_vertex;
 }
+#endif
+
 
 #else
 

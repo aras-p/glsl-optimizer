@@ -664,8 +664,10 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    }
 
    if (firsttime) {
+#if 00
       fxDDSetupInit();
       fxDDTrifuncInit();
+#endif
       firsttime = 0;
    }
 
@@ -932,7 +934,6 @@ fx_check_IsInHardware(GLcontext * ctx)
 
 
 
-
 static void
 update_texture_scales(GLcontext * ctx)
 {
@@ -958,7 +959,7 @@ update_texture_scales(GLcontext * ctx)
 static void
 fxDDUpdateDDPointers(GLcontext * ctx, GLuint new_state)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   /*   TNLcontext *tnl = TNL_CONTEXT(ctx);*/
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
    _swrast_InvalidateState(ctx, new_state);
@@ -986,9 +987,10 @@ fxDDUpdateDDPointers(GLcontext * ctx, GLuint new_state)
       if (fxMesa->is_in_hardware) {
 	 if (new_state & _FX_NEW_RENDERSTATE)
 	    fxDDChooseRenderState(ctx);
-
+#if 000
 	 if (new_state & _FX_NEW_SETUP_FUNCTION)
 	    fxDDChooseSetupState(ctx);
+#endif
       }
 
       if (new_state & _NEW_TEXTURE)
@@ -1002,6 +1004,8 @@ fxDDUpdateDDPointers(GLcontext * ctx, GLuint new_state)
 void
 fxSetupDDPointers(GLcontext * ctx)
 {
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+
    if (MESA_VERBOSE & VERBOSE_DRIVER) {
       fprintf(stderr, "fxmesa: fxSetupDDPointers()\n");
    }
@@ -1054,6 +1058,13 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.CullFace = fxDDCullFace;
    ctx->Driver.ShadeModel = fxDDShadeModel;
    ctx->Driver.Enable = fxDDEnable;
+
+   tnl->Driver.RunPipeline = _tnl_run_pipeline;
+
+   /* XXX is this right? (BP) */
+   /* Install swsetup for tnl->Driver.Render.*:
+    */
+   _swsetup_Wakeup(ctx);
 
    fxSetupDDSpanPointers(ctx);
    fxDDUpdateDDPointers(ctx, ~0);

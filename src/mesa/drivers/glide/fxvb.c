@@ -245,7 +245,7 @@ static void init_setup_tab( void )
 
 void fxPrintSetupFlags(char *msg, GLuint flags )
 {
-   fprintf(stderr, "%s(%x): %s%s%s%s\n",
+   fprintf(stderr, "%s(%x): %s%s%s%s%s\n",
 	   msg,
 	   (int)flags,
 	   (flags & SETUP_XYZW)     ? " xyzw," : "", 
