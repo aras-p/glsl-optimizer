@@ -2067,6 +2067,10 @@ void r300ResetHwState(r300ContextPtr r300)
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] = R300_GB_TILE_ENABLE
 							| R300_GB_TILE_PIPE_COUNT_R300
 							| R300_GB_TILE_SIZE_16;
+	else if (GET_CHIP(r300->radeon.radeonScreen) == RADEON_CHIP_R420)
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] = R300_GB_TILE_ENABLE
+							| R300_GB_TILE_PIPE_COUNT_R420
+							| R300_GB_TILE_SIZE_16;
 	else
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] = R300_GB_TILE_ENABLE
 							| R300_GB_TILE_PIPE_COUNT_RV300

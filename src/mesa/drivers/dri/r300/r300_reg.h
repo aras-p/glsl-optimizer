@@ -336,6 +336,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #	define R300_GB_TILE_ENABLE	(1<<0)
 #	define R300_GB_TILE_PIPE_COUNT_RV300	0
 #	define R300_GB_TILE_PIPE_COUNT_R300	(3<<1)
+#	define R300_GB_TILE_PIPE_COUNT_R420	(7<<1)
 #	define R300_GB_TILE_SIZE_8		0
 #	define R300_GB_TILE_SIZE_16		(1<<4)
 #	define R300_GB_TILE_SIZE_32		(2<<4)
