@@ -524,6 +524,7 @@ struct tnl_pipeline {
    GLuint nr_stages;
 };
 
+struct tnl_clipspace;
 struct tnl_clipspace_attr;
 
 typedef void (*extract_func)( const struct tnl_clipspace_attr *a, GLfloat *out, 
@@ -531,6 +532,9 @@ typedef void (*extract_func)( const struct tnl_clipspace_attr *a, GLfloat *out,
 
 typedef void (*insert_func)( const struct tnl_clipspace_attr *a, GLubyte *v, 
 			     const GLfloat *in );
+
+typedef void (*emit_func)( GLcontext *ctx, GLuint start, 
+			   GLuint end, void *dest );
 
 
 /**
@@ -540,6 +544,7 @@ typedef void (*insert_func)( const struct tnl_clipspace_attr *a, GLubyte *v,
 struct tnl_clipspace_attr
 {
    GLuint attrib;          /* which vertex attrib (0=position, etc) */
+   GLuint format;
    GLuint vertoffset;      /* position of the attrib in the vertex struct */
    GLuint vertattrsize;    /* size of the attribute in bytes */
    GLubyte *inputptr;
@@ -548,6 +553,40 @@ struct tnl_clipspace_attr
    insert_func emit;
    extract_func extract;
    const GLfloat *vp;   /* NDC->Viewport mapping matrix */
+};
+
+
+struct tnl_clipspace_codegen {
+   GLboolean (*emit_header)( struct tnl_clipspace_codegen *,
+			     struct tnl_clipspace *);
+   GLboolean (*emit_footer)( struct tnl_clipspace_codegen * );
+   GLboolean (*emit_attr_header)( struct tnl_clipspace_codegen *,
+				  struct tnl_clipspace_attr *,
+				  GLint j, GLenum out_type, 
+				  GLboolean need_vp );
+   GLboolean (*emit_attr_footer)( struct tnl_clipspace_codegen * );
+   GLboolean (*emit_mov)( struct tnl_clipspace_codegen *, 
+			  GLint, GLint );
+   GLboolean (*emit_const)( struct tnl_clipspace_codegen *, 
+			    GLint, GLfloat );
+   GLboolean (*emit_mad)( struct tnl_clipspace_codegen *,
+			  GLint, GLint, GLint, GLint );
+   GLboolean (*emit_float_to_chan)( struct tnl_clipspace_codegen *, 
+				    GLint, GLint );
+   GLboolean (*emit_const_chan)( struct tnl_clipspace_codegen *, 
+				 GLint, GLchan );
+   GLboolean (*emit_float_to_ubyte)( struct tnl_clipspace_codegen *, 
+				     GLint, GLint );
+   GLboolean (*emit_const_ubyte)( struct tnl_clipspace_codegen *, 
+				  GLint, GLubyte );
+   emit_func (*emit_store_func)( struct tnl_clipspace_codegen * );
+   
+   struct _tnl_dynfn codegen_list;
+   
+   char *buf;
+   int buf_size;
+   int buf_used;
+   int out_offset;
 };
 
 
@@ -586,9 +625,11 @@ struct tnl_clipspace
    struct tnl_clipspace_attr attr[_TNL_ATTRIB_MAX];
    GLuint attr_count;
 
-   void (*emit)( GLcontext *ctx, GLuint start, GLuint end, void *dest );
+   emit_func emit;
    interp_func interp;
    copy_pv_func copy_pv;
+
+   struct tnl_clipspace_codegen codegen;
 };
 
 

@@ -125,6 +125,8 @@ TNL_SOURCES = \
 	tnl/t_vb_texmat.c \
 	tnl/t_vb_vertex.c \
 	tnl/t_vertex.c \
+	tnl/t_vertex_c.c \
+	tnl/t_vertex_codegen.c \
 	tnl/t_vtx_api.c \
 	tnl/t_vtx_generic.c \
 	tnl/t_vtx_x86.c \

@@ -124,5 +124,24 @@ extern void _tnl_invalidate_vertices( GLcontext *ctx, GLuint newinputs );
 
 extern void _tnl_invalidate_vertex_state( GLcontext *ctx, GLuint new_state );
 
+extern emit_func _tnl_codegen_emit( GLcontext *ctx );
+
+#define REG_IN   (0<<16)
+#define REG_OUT  (1<<16)
+#define REG_VP   (2<<16)
+#define REG_TMP  (3<<16)
+#define REG_MASK (3<<16)
+
+#define REG_OFFSET_MASK  0xffff
+
+#define in( offset )  (REG_IN  | (offset))
+#define out( offset ) (REG_OUT | (offset))
+#define vp( offset )  (REG_VP  | (offset))
+#define tmp( offset ) (REG_TMP | (offset))
+
+
+extern void _tnl_init_c_codegen( struct tnl_clipspace_codegen *p );
+
+#define GET_VERTEX_STATE(ctx)  &(TNL_CONTEXT(ctx)->clipspace)
 
 #endif

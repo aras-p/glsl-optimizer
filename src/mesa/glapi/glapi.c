@@ -291,8 +291,8 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
    /* Use the no-op functions if a NULL dispatch table was requested.
     */
 
-   old_style_dispatch = (struct _glapi_table *) (dispatch == NULL)
-     ? __glapi_noop_table : dispatch;
+   old_style_dispatch = (dispatch == NULL)
+     ? (struct _glapi_table *) __glapi_noop_table : dispatch;
 
 #ifdef DEBUG
    if (dispatch != NULL) {
