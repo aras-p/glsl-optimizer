@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.63 2002/01/14 16:07:33 brianp Exp $
+# $Id: Makefile.X11,v 1.64 2002/01/15 18:30:58 kschultz Exp $
 
 # Mesa 3-D graphics library
 # Version:  4.1
@@ -278,7 +278,7 @@ VPFILES = \
 	src/tnl/t_vb_program.c \
 	tests/vptest1.c \
 	tests/vptest2.c
-	
+
 vptar:
 	cd .. ; tar cvf vpfiles.tar $(VPFILES) ; gzip vpfiles.tar
 
