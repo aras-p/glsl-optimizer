@@ -149,7 +149,14 @@ SHADER_SOURCES = \
 	shader/nvvertparse.c \
 	shader/program.c \
 	shader/shaderobjects.c \
-	shader/shaderobjects_3dlabs.c 
+	shader/shaderobjects_3dlabs.c \
+	shader/slang/MachineIndependent/preprocessor/atom.c \
+	shader/slang/MachineIndependent/preprocessor/cpp.c \
+	shader/slang/MachineIndependent/preprocessor/cppstruct.c \
+	shader/slang/MachineIndependent/preprocessor/memory.c \
+	shader/slang/MachineIndependent/preprocessor/scanner.c \
+	shader/slang/MachineIndependent/preprocessor/symbols.c \
+	shader/slang/MachineIndependent/preprocessor/tokens.c 
 
 ASM_C_SOURCES =	\
 	x86/common_x86.c \
@@ -266,5 +273,7 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/tnl \
 	-I$(TOP)/src/mesa/shader \
 	-I$(TOP)/src/mesa/shader/slang \
+	-I$(TOP)/src/mesa/shader/slang/OSDependent/Linux \
+	-I$(TOP)/src/mesa/shader/slang/OGLCompilersDLL \
 	-I$(TOP)/src/mesa/swrast \
 	-I$(TOP)/src/mesa/swrast_setup
