@@ -1,4 +1,4 @@
-/* $Id: m_trans_tmp.h,v 1.4 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_trans_tmp.h,v 1.5 2001/03/12 02:02:36 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -39,7 +39,7 @@
 static void DEST_4F( GLfloat (*t)[4],
 		     CONST void *ptr,
 		     GLuint stride,
-		     ARGS)
+		     ARGS )
 {
    const GLubyte *f = (GLubyte *) ptr + SRC_START * stride;
    const GLubyte *first = f;
@@ -64,7 +64,7 @@ static void DEST_4F( GLfloat (*t)[4],
 static void DEST_3F( GLfloat (*t)[3],
 		     CONST void *ptr,
 		     GLuint stride,
-		     ARGS)
+		     ARGS )
 {
    const GLubyte *f = (GLubyte *) ptr + SRC_START * stride;
    const GLubyte *first = f;
@@ -86,7 +86,7 @@ static void DEST_3F( GLfloat (*t)[3],
 static void DEST_1F( GLfloat *t,
 		     CONST void *ptr,
 		     GLuint stride,
-		     ARGS)
+		     ARGS )
 {
    const GLubyte *f = (GLubyte *) ptr + SRC_START * stride;
    const GLubyte *first = f;
@@ -106,7 +106,7 @@ static void DEST_1F( GLfloat *t,
 static void DEST_4UB( GLubyte (*t)[4],
                       CONST void *ptr,
                       GLuint stride,
-                      ARGS)
+                      ARGS )
 {
    const GLubyte *f = (GLubyte *) ptr + SRC_START * stride;
    const GLubyte *first = f;
@@ -130,7 +130,7 @@ static void DEST_4UB( GLubyte (*t)[4],
 static void DEST_4US( GLushort (*t)[4],
                       CONST void *ptr,
                       GLuint stride,
-                      ARGS)
+                      ARGS )
 {
    const GLushort *f = (GLushort *) ptr + SRC_START * stride;
    const GLushort *first = f;
@@ -154,7 +154,7 @@ static void DEST_4US( GLushort (*t)[4],
 static void DEST_1UB( GLubyte *t,
 		      CONST void *ptr,
 		      GLuint stride,
-		      ARGS)
+		      ARGS )
 {
    const GLubyte *f = (GLubyte *) ptr + SRC_START * stride;
    const GLubyte *first = f;
@@ -175,7 +175,7 @@ static void DEST_1UB( GLubyte *t,
 static void DEST_1UI( GLuint *t,
 		      CONST void *ptr,
 		      GLuint stride,
-		      ARGS)
+		      ARGS )
 {
    const GLubyte *f = (GLubyte *) ptr + SRC_START * stride;
    const GLubyte *first = f;

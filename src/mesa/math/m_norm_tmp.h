@@ -1,4 +1,4 @@
-/* $Id: m_norm_tmp.h,v 1.5 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_norm_tmp.h,v 1.6 2001/03/12 02:02:36 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -245,12 +245,12 @@ TAG(transform_rescale_normals)( const GLmatrix *mat,
 
 
 static void _XFORMAPI
-TAG(transform_normals_no_rot)(const GLmatrix *mat,
-                              GLfloat scale,
-                              const GLvector3f *in,
-                              const GLfloat *lengths,
-                              const GLubyte mask[],
-                              GLvector3f *dest )
+TAG(transform_normals_no_rot)( const GLmatrix *mat,
+			       GLfloat scale,
+			       const GLvector3f *in,
+			       const GLfloat *lengths,
+			       const GLubyte mask[],
+			       GLvector3f *dest )
 {
    GLuint i;
    const GLfloat *from = in->start;

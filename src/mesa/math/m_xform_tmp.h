@@ -1,4 +1,4 @@
-/* $Id: m_xform_tmp.h,v 1.4 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_xform_tmp.h,v 1.5 2001/03/12 02:02:36 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -68,9 +68,9 @@
 static void _XFORMAPI
 TAG(transform_points1_general)( GLvector4f *to_vec,
 				const GLfloat m[16],
-					    const GLvector4f *from_vec,
-					    const GLubyte *mask,
-					    const GLubyte flag )
+				const GLvector4f *from_vec,
+				const GLubyte *mask,
+				const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -101,9 +101,9 @@ TAG(transform_points1_general)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points1_identity)( GLvector4f *to_vec,
 				 const GLfloat m[16],
-					     const GLvector4f *from_vec,
-					     const GLubyte *mask,
-					     const GLubyte flag )
+				 const GLvector4f *from_vec,
+				 const GLubyte *mask,
+				 const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -127,9 +127,9 @@ TAG(transform_points1_identity)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points1_2d)( GLvector4f *to_vec,
 			   const GLfloat m[16],
-				       const GLvector4f *from_vec,
-				       const GLubyte *mask,
-				       const GLubyte flag )
+			   const GLvector4f *from_vec,
+			   const GLubyte *mask,
+			   const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -155,9 +155,9 @@ TAG(transform_points1_2d)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points1_2d_no_rot)( GLvector4f *to_vec,
 				  const GLfloat m[16],
-					      const GLvector4f *from_vec,
-					      const GLubyte *mask,
-					      const GLubyte flag )
+				  const GLvector4f *from_vec,
+				  const GLubyte *mask,
+				  const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -183,9 +183,9 @@ TAG(transform_points1_2d_no_rot)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points1_3d)( GLvector4f *to_vec,
 			   const GLfloat m[16],
-				       const GLvector4f *from_vec,
-				       const GLubyte *mask,
-				       const GLubyte flag )
+			   const GLvector4f *from_vec,
+			   const GLubyte *mask,
+			   const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -213,9 +213,9 @@ TAG(transform_points1_3d)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points1_3d_no_rot)( GLvector4f *to_vec,
 				  const GLfloat m[16],
-					      const GLvector4f *from_vec,
-					      const GLubyte *mask,
-					      const GLubyte flag )
+				  const GLvector4f *from_vec,
+				  const GLubyte *mask,
+				  const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -242,9 +242,9 @@ TAG(transform_points1_3d_no_rot)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points1_perspective)( GLvector4f *to_vec,
 				    const GLfloat m[16],
-						const GLvector4f *from_vec,
-						const GLubyte *mask,
-						const GLubyte flag )
+				    const GLvector4f *from_vec,
+				    const GLubyte *mask,
+				    const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -278,9 +278,9 @@ TAG(transform_points1_perspective)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points2_general)( GLvector4f *to_vec,
 				const GLfloat m[16],
-					    const GLvector4f *from_vec,
-					    const GLubyte *mask,
-					    const GLubyte flag )
+				const GLvector4f *from_vec,
+				const GLubyte *mask,
+				const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -310,9 +310,9 @@ TAG(transform_points2_general)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points2_identity)( GLvector4f *to_vec,
 				 const GLfloat m[16],
-					     const GLvector4f *from_vec,
-					     const GLubyte *mask,
-					     const GLubyte flag )
+				 const GLvector4f *from_vec,
+				 const GLubyte *mask,
+				 const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -336,9 +336,9 @@ TAG(transform_points2_identity)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points2_2d)( GLvector4f *to_vec,
 			   const GLfloat m[16],
-				       const GLvector4f *from_vec,
-				       const GLubyte *mask,
-				       const GLubyte flag )
+			   const GLvector4f *from_vec,
+			   const GLubyte *mask,
+			   const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -365,9 +365,9 @@ TAG(transform_points2_2d)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points2_2d_no_rot)( GLvector4f *to_vec,
 				  const GLfloat m[16],
-					      const GLvector4f *from_vec,
-					      const GLubyte *mask,
-					      const GLubyte flag )
+				  const GLvector4f *from_vec,
+				  const GLubyte *mask,
+				  const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -393,9 +393,9 @@ TAG(transform_points2_2d_no_rot)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points2_3d)( GLvector4f *to_vec,
 			   const GLfloat m[16],
-				       const GLvector4f *from_vec,
-				       const GLubyte *mask,
-				       const GLubyte flag )
+			   const GLvector4f *from_vec,
+			   const GLubyte *mask,
+			   const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -426,9 +426,9 @@ TAG(transform_points2_3d)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points2_3d_no_rot)( GLvector4f *to_vec,
 				  const GLfloat m[16],
-					      const GLvector4f *from_vec,
-					      const GLubyte *mask,
-					      const GLubyte flag )
+				  const GLvector4f *from_vec,
+				  const GLubyte *mask,
+				  const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -461,9 +461,9 @@ TAG(transform_points2_3d_no_rot)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points2_perspective)( GLvector4f *to_vec,
 				    const GLfloat m[16],
-						const GLvector4f *from_vec,
-						const GLubyte *mask,
-						const GLubyte flag )
+				    const GLvector4f *from_vec,
+				    const GLubyte *mask,
+				    const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -492,9 +492,9 @@ TAG(transform_points2_perspective)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points3_general)( GLvector4f *to_vec,
 				const GLfloat m[16],
-					    const GLvector4f *from_vec,
-					    const GLubyte *mask,
-					    const GLubyte flag )
+				const GLvector4f *from_vec,
+				const GLubyte *mask,
+				const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -524,9 +524,9 @@ TAG(transform_points3_general)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points3_identity)( GLvector4f *to_vec,
 				 const GLfloat m[16],
-					     const GLvector4f *from_vec,
-					     const GLubyte *mask,
-					     const GLubyte flag )
+				 const GLvector4f *from_vec,
+				 const GLubyte *mask,
+				 const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -551,9 +551,9 @@ TAG(transform_points3_identity)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points3_2d)( GLvector4f *to_vec,
 			   const GLfloat m[16],
-				       const GLvector4f *from_vec,
-				       const GLubyte *mask,
-				       const GLubyte flag )
+			   const GLvector4f *from_vec,
+			   const GLubyte *mask,
+			   const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -580,9 +580,9 @@ TAG(transform_points3_2d)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points3_2d_no_rot)( GLvector4f *to_vec,
 				  const GLfloat m[16],
-					      const GLvector4f *from_vec,
-					      const GLubyte *mask,
-					      const GLubyte flag )
+				  const GLvector4f *from_vec,
+				  const GLubyte *mask,
+				  const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -608,9 +608,9 @@ TAG(transform_points3_2d_no_rot)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points3_3d)( GLvector4f *to_vec,
 			   const GLfloat m[16],
-				       const GLvector4f *from_vec,
-				       const GLubyte *mask,
-				       const GLubyte flag )
+			   const GLvector4f *from_vec,
+			   const GLubyte *mask,
+			   const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -640,9 +640,9 @@ TAG(transform_points3_3d)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points3_3d_no_rot)( GLvector4f *to_vec,
 				  const GLfloat m[16],
-					      const GLvector4f *from_vec,
-					      const GLubyte *mask,
-					      const GLubyte flag )
+				  const GLvector4f *from_vec,
+				  const GLubyte *mask,
+				  const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -669,9 +669,9 @@ TAG(transform_points3_3d_no_rot)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points3_perspective)( GLvector4f *to_vec,
 				    const GLfloat m[16],
-						const GLvector4f *from_vec,
-						const GLubyte *mask,
-						const GLubyte flag )
+				    const GLvector4f *from_vec,
+				    const GLubyte *mask,
+				    const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -701,9 +701,9 @@ TAG(transform_points3_perspective)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points4_general)( GLvector4f *to_vec,
 				const GLfloat m[16],
-					    const GLvector4f *from_vec,
-					    const GLubyte *mask,
-					    const GLubyte flag )
+				const GLvector4f *from_vec,
+				const GLubyte *mask,
+				const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -733,9 +733,9 @@ TAG(transform_points4_general)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points4_identity)( GLvector4f *to_vec,
 				 const GLfloat m[16],
-					     const GLvector4f *from_vec,
-					     const GLubyte *mask,
-					     const GLubyte flag )
+				 const GLvector4f *from_vec,
+				 const GLubyte *mask,
+				 const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -761,9 +761,9 @@ TAG(transform_points4_identity)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points4_2d)( GLvector4f *to_vec,
 			   const GLfloat m[16],
-				       const GLvector4f *from_vec,
-				       const GLubyte *mask,
-				       const GLubyte flag )
+			   const GLvector4f *from_vec,
+			   const GLubyte *mask,
+			   const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -791,9 +791,9 @@ TAG(transform_points4_2d)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points4_2d_no_rot)( GLvector4f *to_vec,
 				  const GLfloat m[16],
-					      const GLvector4f *from_vec,
-					      const GLubyte *mask,
-					      const GLubyte flag )
+				  const GLvector4f *from_vec,
+				  const GLubyte *mask,
+				  const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -820,9 +820,9 @@ TAG(transform_points4_2d_no_rot)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points4_3d)( GLvector4f *to_vec,
 			   const GLfloat m[16],
-				       const GLvector4f *from_vec,
-				       const GLubyte *mask,
-				       const GLubyte flag )
+			   const GLvector4f *from_vec,
+			   const GLubyte *mask,
+			   const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -851,9 +851,9 @@ TAG(transform_points4_3d)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points4_3d_no_rot)( GLvector4f *to_vec,
 				  const GLfloat m[16],
-					      const GLvector4f *from_vec,
-					      const GLubyte *mask,
-					      const GLubyte flag )
+				  const GLvector4f *from_vec,
+				  const GLubyte *mask,
+				  const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;
@@ -881,9 +881,9 @@ TAG(transform_points4_3d_no_rot)( GLvector4f *to_vec,
 static void _XFORMAPI
 TAG(transform_points4_perspective)( GLvector4f *to_vec,
 				    const GLfloat m[16],
-						const GLvector4f *from_vec,
-						const GLubyte *mask,
-						const GLubyte flag )
+				    const GLvector4f *from_vec,
+				    const GLubyte *mask,
+				    const GLubyte flag )
 {
    const GLuint stride = from_vec->stride;
    GLfloat *from = from_vec->start;

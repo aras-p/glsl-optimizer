@@ -1,4 +1,4 @@
-/* $Id: m_debug_xform.c,v 1.5 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_debug_xform.c,v 1.6 2001/03/12 02:02:36 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -155,7 +155,7 @@ static void ref_transform( GLvector4f *dst,
  * Vertex transformation tests
  */
 
-static GLfloat s[TEST_COUNT][5] ALIGN16;
+static GLfloat s[TEST_COUNT][4] ALIGN16;
 static GLfloat d[TEST_COUNT][4] ALIGN16;
 static GLfloat r[TEST_COUNT][4] ALIGN16;
 
@@ -182,6 +182,7 @@ static int test_transform_function( transform_func func, int psize, int mtype,
    mat->type = mtypes[mtype];
 
    m = mat->m;
+   ASSERT( ((GLuint)m & 15) == 0 );
 
    init_matrix( m );
 

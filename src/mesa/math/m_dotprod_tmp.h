@@ -1,4 +1,4 @@
-/* $Id: m_dotprod_tmp.h,v 1.4 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_dotprod_tmp.h,v 1.5 2001/03/12 02:02:36 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,7 +35,7 @@ static void TAG(dotprod_vec2)( GLfloat *out,
 			       GLuint outstride,
 			       const GLvector4f *coord_vec,
 			       const GLfloat plane[4],
-			       const GLubyte mask[])
+			       const GLubyte mask[] )
 {
    GLuint stride = coord_vec->stride;
    GLfloat *coord = coord_vec->start;
@@ -60,7 +60,7 @@ static void TAG(dotprod_vec3)( GLfloat *out,
 			       GLuint outstride,
 			       const GLvector4f *coord_vec,
 			       const GLfloat plane[4],
-			       const GLubyte mask[])
+			       const GLubyte mask[] )
 {
    GLuint stride = coord_vec->stride;
    GLfloat *coord = coord_vec->start;
@@ -87,7 +87,7 @@ static void TAG(dotprod_vec4)( GLfloat *out,
 			       GLuint outstride,
 			       const GLvector4f *coord_vec,
 			       const GLfloat plane[4],
-			       const GLubyte mask[])
+			       const GLubyte mask[] )
 {
    GLuint stride = coord_vec->stride;
    GLfloat *coord = coord_vec->start;

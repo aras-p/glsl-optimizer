@@ -1,4 +1,4 @@
-/* $Id: m_copy_tmp.h,v 1.4 2001/03/12 00:48:41 gareth Exp $ */
+/* $Id: m_copy_tmp.h,v 1.5 2001/03/12 02:02:36 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,8 +30,8 @@
 
 
 #define COPY_FUNC( BITS )						\
-static void TAG2(copy, BITS)(GLvector4f *to, const GLvector4f *f,	\
-			     const GLubyte mask[] )			\
+static void TAG2(copy, BITS)( GLvector4f *to, const GLvector4f *f,	\
+			      const GLubyte mask[] )			\
 {									\
    GLfloat (*t)[4] = (GLfloat (*)[4])to->start;				\
    GLfloat *from = f->start;						\
