@@ -1645,4 +1645,12 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define XORPS(a, b)	xorps P_ARG2(a, b)
 
 
+/* Added by BrianP for FreeBSD (per David Dawes) */
+#if !defined(NASM_ASSEMBLER) && !defined(MASM_ASSEMBLER)
+#define LLBL(a) CONCAT(.L,a)
+#else
+#define LLBL(a) a
+#endif
+
+
 #endif /* __ASSYNTAX_H__ */

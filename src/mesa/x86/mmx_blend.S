@@ -1,13 +1,6 @@
 #include "assyntax.h"
 
 
-#if !defined(NASM_ASSEMBLER) && !defined(MASM_ASSEMBLER)
-#define LLBL(a) .L ## a
-#else
-#define LLBL(a) a
-#endif
-
-
 SEG_TEXT
 
 
@@ -123,13 +116,13 @@ GLNAME( gl_mmx_blend_transparency ):
     ADD_L     ( CONST(4), REGOFF(20, EBP) )
     ADD_L     ( CONST(4), REGOFF(24, EBP) )
     DEC_L     ( REGOFF(12, EBP) )
-LLBL( GMBT_2 ):
+LLBL(GMBT_2):
 
     CMP_L     ( CONST(0), REGOFF(12, EBP) )
     JE        ( LLBL(GMBT_3) )
     MOV_L     ( CONST(0), REGOFF(-28, EBP) )
 ALIGNTEXT4
-LLBL( GMBT_4 ):
+LLBL(GMBT_4):
 
     MOV_L     ( REGOFF(12, EBP), EDX )
     MOV_L     ( EDX, EAX )
@@ -138,7 +131,7 @@ LLBL( GMBT_4 ):
     JB        ( LLBL(GMBT_7) )
     JMP       ( LLBL(GMBT_5) )
 ALIGNTEXT16
-LLBL( GMBT_7 ):
+LLBL(GMBT_7):
 
     MOV_L     ( REGOFF(-28, EBP), EAX )
     LEA_L     ( REGDIS(0,EAX,2), EDX )
@@ -203,19 +196,19 @@ LLBL( GMBT_7 ):
     MOVQ      ( MM4, REGIND(EAX) )
 
 
-LLBL( GMBT_8 ):
+LLBL(GMBT_8):
 
-LLBL( GMBT_6 ):
+LLBL(GMBT_6):
 
     INC_L     ( REGOFF(-28, EBP) )
     JMP       ( LLBL(GMBT_4) )
 ALIGNTEXT16
-LLBL( GMBT_5 ):
+LLBL(GMBT_5):
 
 
     EMMS
 
-LLBL( GMBT_3 ):
+LLBL(GMBT_3):
 
     MOV_L     ( REGOFF(12, EBP), EAX )
     AND_L     ( CONST(1), EAX )
@@ -349,9 +342,9 @@ LLBL( GMBT_3 ):
     LEA_L     ( REGOFF(-1, EAX), EDX )
     MOV_B     ( REGOFF(-32, EBP), AL )
     MOV_B     ( AL, REGIND(EDX) )
-LLBL( GMBT_9 ):
+LLBL(GMBT_9):
 
-LLBL( GMBT_1 ):
+LLBL(GMBT_1):
 
     MOV_L     ( REGOFF(-56, EBP), EBX )
     MOV_L     ( EBP, ESP )
