@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.98 2003/12/12 15:32:25 brianp Exp $
+# $Id: Makefile.X11,v 1.99 2003/12/12 15:39:30 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.1
@@ -362,7 +362,7 @@ linux-solo:
 	cd src/mesa/drivers/dri/i830   ; touch depend ; $(MAKE) -f Makefile.solo $@
 	cd src/mesa/drivers/dri/sis    ; touch depend ; $(MAKE) -f Makefile.solo $@
 	cd src/mesa/drivers/dri/gamma  ; touch depend ; $(MAKE) -f Makefile.solo $@
-#	cd src/mesa/drivers/dri/tdfx   ; touch depend ; $(MAKE) -f Makefile.solo $@
+	cd src/mesa/drivers/dri/tdfx   ; touch depend ; $(MAKE) -f Makefile.solo $@
 	cd src/mesa/drivers/dri/fb     ; touch depend ; $(MAKE) -f Makefile.solo $@
 	cd src/glx/mini                ; touch depend ; $(MAKE) -f Makefile.solo $@
 	if [ -d src/glu/sgi ] ; then \
