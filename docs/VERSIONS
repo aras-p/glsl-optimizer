@@ -1173,6 +1173,7 @@ Mesa Version History
 	- fixed wglMakeCurrent(NULL, NULL) bug (#835861)
 	- fixed glTexSubImage3D z-offset bug (Cedric Gautier)
 	- fixed RGBA blend enable bug (Ville Syrjala)
+	- glAccum is supposed to be a no-op in selection/feedback mode
     Changes:
 	- dropped API trace feature (src/Trace/)
 	- documentation overhaul.  merged with website content.  more html.
