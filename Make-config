@@ -9,7 +9,7 @@
 
 
 MESA_MAJOR=6
-MESA_MINOR=0
+MESA_MINOR=1
 MESA_TINY=0
 VERSION=$(MESA_MAJOR).$(MESA_MINOR)
 
@@ -739,7 +739,7 @@ linux-solo:
 	"GLUT_LIB = libglut.so" \
 	"CC = gcc" \
 	"CXX = g++" \
-	"CFLAGS = -g -std=c99 -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
+	"CFLAGS = -g -std=c99 -pedantic -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"CXXFLAGS = -g -Wall -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE" \
 	"GLUT_CFLAGS = -fexceptions" \
 	"GL_LIB_DEPS = -lm -lpthread -lexpat" \

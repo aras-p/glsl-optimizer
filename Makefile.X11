@@ -1,7 +1,7 @@
-# $Id: Makefile.X11,v 1.107 2004/01/11 17:15:03 brianp Exp $
+# $Id: Makefile.X11,v 1.108 2004/01/19 16:56:50 brianp Exp $
 
 # Mesa 3-D graphics library
-# Version:  6.0
+# Version:  6.1
 # 
 # Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
 # 
@@ -473,10 +473,10 @@ cvsclean: realclean
 
 
 
-DIRECTORY = Mesa-6.0
-LIB_NAME = MesaLib-6.0
-DEMO_NAME = MesaDemos-6.0
-GLU_NAME = MesaGLU-6.0
+DIRECTORY = Mesa-6.1
+LIB_NAME = MesaLib-6.1
+DEMO_NAME = MesaDemos-6.1
+GLU_NAME = MesaGLU-6.1
 GLUT_NAME = GLUT-3.7
 
 
@@ -631,14 +631,16 @@ DEMO_FILES =	\
 	$(DIRECTORY)/src/glut/dos/*.[ch]		\
 	$(DIRECTORY)/src/glut/dos/Makefile.DJ		\
 	$(DIRECTORY)/src/glut/dos/PC_HW/*.[chS]		\
-	$(DIRECTORY)/progs/images/*			\
+	$(DIRECTORY)/progs/images/*.rgb			\
+	$(DIRECTORY)/progs/images/*.rgba		\
 	$(DIRECTORY)/progs/demos/Makefile*		\
 	$(DIRECTORY)/progs/demos/descrip.mms		\
 	$(DIRECTORY)/progs/demos/*.[ch]			\
 	$(DIRECTORY)/progs/demos/*.cxx			\
 	$(DIRECTORY)/progs/demos/*.dat			\
 	$(DIRECTORY)/progs/demos/README			\
-	$(DIRECTORY)/progs/demos/Windows/*		\
+	$(DIRECTORY)/progs/demos/Windows/*.dsp		\
+	$(DIRECTORY)/progs/demos/Windows/*.dsw		\
 	$(DIRECTORY)/progs/xdemos/Makefile*		\
 	$(DIRECTORY)/progs/xdemos/descrip.mms		\
 	$(DIRECTORY)/progs/xdemos/*.[chf]		\
