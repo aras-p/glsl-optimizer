@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.42 2001/11/19 01:18:28 brianp Exp $ */
+/* $Id: s_texture.c,v 1.43 2001/12/04 23:44:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2722,6 +2722,9 @@ sample_depth_texture(const GLcontext *ctx,
    const GLuint height = texImage->Height;
    const GLchan ambient = texObj->ShadowAmbient;
    GLboolean lequal, gequal;
+   GLchan result;
+
+   ASSERT(texObj->Image[texObj->BaseLevel]->Format == GL_DEPTH_COMPONENT);
 
    if (texObj->Dimensions != 2) {
       _mesa_problem(ctx, "only 2-D depth textures supported at this time");
@@ -2733,22 +2736,36 @@ sample_depth_texture(const GLcontext *ctx,
       return;
    }
 
-   /* XXX the GL_SGIX_shadow extension spec doesn't say what to do if
-    * GL_TEXTURE_COMPARE_SGIX == GL_TRUE but the current texture object
-    * isn't a depth texture.
-    */
-   if (texImage->Format != GL_DEPTH_COMPONENT) {
-      _mesa_problem(ctx,"GL_TEXTURE_COMPARE_SGIX enabled with non-depth texture");
-      return;
+   /* XXX this could be precomputed */
+   if (texObj->CompareFlag) {
+      /* GL_SGIX_shadow */
+      if (texObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
+         lequal = GL_TRUE;
+         gequal = GL_FALSE;
+      }
+      else {
+         ASSERT(texObj->CompareOperator == GL_TEXTURE_GEQUAL_R_SGIX);
+         lequal = GL_FALSE;
+         gequal = GL_TRUE;
+      }
    }
-
-   if (texObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
-      lequal = GL_TRUE;
-      gequal = GL_FALSE;
+   else if (texObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+      /* GL_ARB_shadow */
+      if (texObj->CompareFunc == GL_LEQUAL) {
+         lequal = GL_TRUE;
+         gequal = GL_FALSE;
+      }
+      else {
+         ASSERT(texObj->CompareFunc == GL_GEQUAL);
+         lequal = GL_FALSE;
+         gequal = GL_TRUE;
+      }
    }
    else {
-      lequal = GL_FALSE;
-      gequal = GL_TRUE;
+      /* Treat this depth texture as a luminance texture */
+      _mesa_warning(ctx,
+         "Treating GL_DEPTH_COMPONENT as GL_LUMINANCE not implemented yet");
+      return;
    }
 
    if (texObj->MagFilter == GL_NEAREST) {
@@ -2761,16 +2778,33 @@ sample_depth_texture(const GLcontext *ctx,
          depthSample = *((const GLfloat *) texImage->Data + row * width + col);
          if ((r[i] <= depthSample && lequal) ||
              (r[i] >= depthSample && gequal)) {
-            texel[i][RCOMP] = CHAN_MAX;
-            texel[i][GCOMP] = CHAN_MAX;
-            texel[i][BCOMP] = CHAN_MAX;
-            texel[i][ACOMP] = CHAN_MAX;
+            result = CHAN_MAX;
          }
          else {
-            texel[i][RCOMP] = ambient;
-            texel[i][GCOMP] = ambient;
-            texel[i][BCOMP] = ambient;
+            result = ambient;
+         }
+
+         switch (texObj->CompareResult) {
+         case GL_LUMINANCE:
+            texel[i][RCOMP] = result;
+            texel[i][GCOMP] = result;
+            texel[i][BCOMP] = result;
             texel[i][ACOMP] = CHAN_MAX;
+            break;
+         case GL_INTENSITY:
+            texel[i][RCOMP] = result;
+            texel[i][GCOMP] = result;
+            texel[i][BCOMP] = result;
+            texel[i][ACOMP] = result;
+            break;
+         case GL_ALPHA:
+            texel[i][RCOMP] = 0;
+            texel[i][GCOMP] = 0;
+            texel[i][BCOMP] = 0;
+            texel[i][ACOMP] = result;
+            break;
+         default:
+            _mesa_problem(ctx, "Bad texture compare result value");
          }
       }
    }
@@ -2838,16 +2872,10 @@ sample_depth_texture(const GLcontext *ctx,
                                       + w01 * depth01 + w11 * depth11;
             if ((depthSample <= r[i] && lequal) ||
                 (depthSample >= r[i] && gequal)) {
-               texel[i][RCOMP] = ambient;
-               texel[i][GCOMP] = ambient;
-               texel[i][BCOMP] = ambient;
-               texel[i][ACOMP] = CHAN_MAX;
+               result  = ambient;
             }
             else {
-               texel[i][RCOMP] = CHAN_MAX;
-               texel[i][GCOMP] = CHAN_MAX;
-               texel[i][BCOMP] = CHAN_MAX;
-               texel[i][ACOMP] = CHAN_MAX;
+               result = CHAN_MAX;
             }
          }
          else {
@@ -2857,7 +2885,6 @@ sample_depth_texture(const GLcontext *ctx,
              */
             const GLfloat d = (CHAN_MAXF - (GLfloat) ambient) * 0.25F;
             GLfloat luminance = CHAN_MAXF;
-            GLchan lum;
             if (lequal) {
                if (depth00 <= r[i])   luminance -= d;
                if (depth01 <= r[i])   luminance -= d;
@@ -2870,14 +2897,33 @@ sample_depth_texture(const GLcontext *ctx,
                if (depth10 >= r[i])   luminance -= d;
                if (depth11 >= r[i])   luminance -= d;
             }
-            lum = (GLchan) luminance;
-            texel[i][RCOMP] = lum;
-            texel[i][GCOMP] = lum;
-            texel[i][BCOMP] = lum;
-            texel[i][ACOMP] = CHAN_MAX;
+            result = (GLchan) luminance;
          }
-      }
-   }
+
+         switch (texObj->CompareResult) {
+         case GL_LUMINANCE:
+            texel[i][RCOMP] = result;
+            texel[i][GCOMP] = result;
+            texel[i][BCOMP] = result;
+            texel[i][ACOMP] = CHAN_MAX;
+            break;
+         case GL_INTENSITY:
+            texel[i][RCOMP] = result;
+            texel[i][GCOMP] = result;
+            texel[i][BCOMP] = result;
+            texel[i][ACOMP] = result;
+            break;
+         case GL_ALPHA:
+            texel[i][RCOMP] = 0;
+            texel[i][GCOMP] = 0;
+            texel[i][BCOMP] = 0;
+            texel[i][ACOMP] = result;
+            break;
+         default:
+            _mesa_problem(ctx, "Bad texture compare result value");
+         }
+      }  /* for */
+   }  /* if filter */
 }
 
 
@@ -2990,6 +3036,7 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
       const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
 
       if (textureUnit->_Current) {   /* XXX need this? */
+         const struct gl_texture_object *curObj = textureUnit->_Current;
          GLchan texel[PB_SIZE][4];
 
 	 if (textureUnit->LodBias != 0.0F) {
@@ -3000,12 +3047,11 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
 	    }
 	 }
 
-         if ((textureUnit->_Current->MinLod != -1000.0
-              || textureUnit->_Current->MaxLod != 1000.0)
+         if ((curObj->MinLod != -1000.0 || curObj->MaxLod != 1000.0)
              && lambda) {
             /* apply LOD clamping to lambda */
-            const GLfloat min = textureUnit->_Current->MinLod;
-            const GLfloat max = textureUnit->_Current->MaxLod;
+            const GLfloat min = curObj->MinLod;
+            const GLfloat max = curObj->MaxLod;
             GLuint i;
             for (i=0;i<n;i++) {
                GLfloat l = lambda[i];
@@ -3014,7 +3060,7 @@ _swrast_texture_fragments( GLcontext *ctx, GLuint texUnit, GLuint n,
          }
 
          /* Sample the texture. */
-         if (textureUnit->_Current->CompareFlag) {
+         if (curObj->Image[curObj->BaseLevel]->Format == GL_DEPTH_COMPONENT) {
             /* depth texture */
             sample_depth_texture(ctx, textureUnit, n, s, t, r, texel);
          }

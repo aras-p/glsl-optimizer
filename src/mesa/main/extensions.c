@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.66 2001/11/19 00:41:32 brianp Exp $ */
+/* $Id: extensions.c,v 1.67 2001/12/04 23:44:55 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,9 +56,12 @@ static struct {
    const char *name;
    int flag_offset;
 } default_extensions[] = {
+   { OFF, "GL_ARB_depth_texture",              F(SGIX_depth_texture) },
    { OFF, "GL_ARB_imaging",                    F(ARB_imaging) },
    { OFF, "GL_ARB_multisample",                F(ARB_multisample) },
    { OFF, "GL_ARB_multitexture",               F(ARB_multitexture) },
+   { OFF, "GL_ARB_shadow",                     F(ARB_shadow) },
+   { OFF, "GL_ARB_shadow_ambient",             F(SGIX_shadow_ambient) },
    { OFF, "GL_ARB_texture_border_clamp",       F(ARB_texture_border_clamp) },
    { OFF, "GL_ARB_texture_compression",        F(ARB_texture_compression) },
    { OFF, "GL_ARB_texture_cube_map",           F(ARB_texture_cube_map) },
@@ -133,8 +136,11 @@ void
 _mesa_enable_sw_extensions(GLcontext *ctx)
 {
    const char *extensions[] = {
+      "GL_ARB_depth_texture",
       "GL_ARB_imaging",
       "GL_ARB_multitexture",
+      "GL_ARB_shadow",
+      "GL_ARB_shadow_ambient",
       "GL_ARB_texture_border_clamp",
       "GL_ARB_texture_cube_map",
       "GL_ARB_texture_env_add",

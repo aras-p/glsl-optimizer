@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.59 2001/11/06 15:53:00 brianp Exp $ */
+/* $Id: texstate.c,v 1.60 2001/12/04 23:44:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,6 +42,13 @@
 #include "math/m_matrix.h"
 #endif
 
+/* TEMPORARY! */
+#ifndef GL_TEXTURE_COMPARE_MODE_ARB
+#define GL_TEXTURE_COMPARE_MODE_ARB    0x9990
+#define GL_TEXTURE_COMPARE_FUNC_ARB    0x9991
+#define GL_TEXTURE_COMPARE_RESULT_ARB  0x9992
+#define GL_COMPARE_R_TO_TEXTURE_ARB    0x9993
+#endif
 
 
 #ifdef SPECIALCAST
@@ -967,11 +974,26 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             _mesa_error( ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
          }
          break;
-      case GL_TEXTURE_BORDER_COLOR:
+#if 0 /* someday */
+      case GL_TEXTUER_BORDER_VALUES_NV:
+         /* don't clamp */
+         COPY_4V(texObj->BorderValues, params);
          UNCLAMPED_FLOAT_TO_CHAN(texObj->BorderColor[0], params[0]);
          UNCLAMPED_FLOAT_TO_CHAN(texObj->BorderColor[1], params[1]);
          UNCLAMPED_FLOAT_TO_CHAN(texObj->BorderColor[2], params[2]);
          UNCLAMPED_FLOAT_TO_CHAN(texObj->BorderColor[3], params[3]);
+         break;
+#endif
+      case GL_TEXTURE_BORDER_COLOR:
+         /* clamp */
+         texObj->BorderValues[0] = CLAMP(params[0], 0.0F, 1.0F);
+         texObj->BorderValues[1] = CLAMP(params[1], 0.0F, 1.0F);
+         texObj->BorderValues[2] = CLAMP(params[2], 0.0F, 1.0F);
+         texObj->BorderValues[3] = CLAMP(params[3], 0.0F, 1.0F);
+         UNCLAMPED_FLOAT_TO_CHAN(texObj->BorderColor[0], texObj->BorderValues[0]);
+         UNCLAMPED_FLOAT_TO_CHAN(texObj->BorderColor[1], texObj->BorderValues[1]);
+         UNCLAMPED_FLOAT_TO_CHAN(texObj->BorderColor[2], texObj->BorderValues[2]);
+         UNCLAMPED_FLOAT_TO_CHAN(texObj->BorderColor[3], texObj->BorderValues[3]);
          break;
       case GL_TEXTURE_MIN_LOD:
          texObj->MinLod = params[0];
@@ -1038,7 +1060,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             return;
          }
          break;
-      case GL_SHADOW_AMBIENT_SGIX:
+      case GL_SHADOW_AMBIENT_SGIX: /* aka GL_TEXTURE_COMPARE_FAIL_VALUE_ARB */
          if (ctx->Extensions.SGIX_shadow_ambient) {
             UNCLAMPED_FLOAT_TO_CHAN(texObj->ShadowAmbient, params[0]);
          }
@@ -1058,6 +1080,62 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             return;
          }
          break;
+      case GL_TEXTURE_COMPARE_MODE_ARB:
+         if (ctx->Extensions.ARB_shadow) {
+            const GLenum mode = (GLenum) params[0];
+            if (mode == GL_LUMINANCE || mode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+               texObj->CompareMode = params[0];
+            }
+            else {
+               _mesa_error(ctx, GL_INVALID_ENUM,
+                           "glTexParameter(bad GL_TEXTURE_COMPARE_MODE_ARB)");
+               return;
+            }
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glTexParameter(pname=GL_TEXTURE_COMPARE_MODE_ARB)");
+            return;
+         }
+         break;
+      case GL_TEXTURE_COMPARE_FUNC_ARB:
+         if (ctx->Extensions.ARB_shadow) {
+            const GLenum func = (GLenum) params[0];
+            if (func == GL_LEQUAL || func == GL_GEQUAL) {
+               texObj->CompareFunc = params[0];
+            }
+            else {
+               _mesa_error(ctx, GL_INVALID_ENUM,
+                           "glTexParameter(bad GL_TEXTURE_COMPARE_FUNC_ARB)");
+               return;
+            }
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glTexParameter(pname=GL_TEXTURE_COMPARE_FUNC_ARB)");
+            return;
+         }
+         break;
+      case GL_TEXTURE_COMPARE_RESULT_ARB:
+         if (ctx->Extensions.ARB_shadow) {
+            const GLenum result = (GLenum) params[0];
+            if (result == GL_LUMINANCE || result == GL_INTENSITY
+                || result == GL_ALPHA) {
+               texObj->CompareResult = params[0];
+            }
+            else {
+               _mesa_error(ctx, GL_INVALID_ENUM,
+                          "glTexParameter(bad GL_TEXTURE_COMPARE_RESULT_ARB)");
+               return;
+            }
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glTexParameter(pname=GL_TEXTURE_COMPARE_RESULT_ARB)");
+            return;
+         }
+         break;
+
       default:
          {
             char s[100];
@@ -1321,7 +1399,17 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
       case GL_TEXTURE_WRAP_R_EXT:
          *params = ENUM_TO_FLOAT(obj->WrapR);
          return;
+#if 0 /* someday */
+      case GL_TEXTURE_BORDER_VALUES_NV:
+         /* unclamped */
+         params[0] = obj->BorderValues[0];
+         params[1] = obj->BorderValues[1];
+         params[2] = obj->BorderValues[2];
+         params[3] = obj->BorderValues[3];
+         return;
+#endif
       case GL_TEXTURE_BORDER_COLOR:
+         /* clamped */
          params[0] = obj->BorderColor[0] / CHAN_MAXF;
          params[1] = obj->BorderColor[1] / CHAN_MAXF;
          params[2] = obj->BorderColor[2] / CHAN_MAXF;
@@ -1364,7 +1452,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
             return;
          }
          break;
-      case GL_SHADOW_AMBIENT_SGIX:
+      case GL_SHADOW_AMBIENT_SGIX: /* aka GL_TEXTURE_COMPARE_FAIL_VALUE_ARB */
          if (ctx->Extensions.SGIX_shadow_ambient) {
             *params = CHAN_TO_FLOAT(obj->ShadowAmbient);
             return;
@@ -1373,6 +1461,24 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
       case GL_GENERATE_MIPMAP_SGIS:
          if (ctx->Extensions.SGIS_generate_mipmap) {
             *params = (GLfloat) obj->GenerateMipmap;
+            return;
+         }
+         break;
+      case GL_TEXTURE_COMPARE_MODE_ARB:
+         if (ctx->Extensions.ARB_shadow) {
+            *params = (GLfloat) obj->CompareMode;
+            return;
+         }
+         break;
+      case GL_TEXTURE_COMPARE_FUNC_ARB:
+         if (ctx->Extensions.ARB_shadow) {
+            *params = (GLfloat) obj->CompareFunc;
+            return;
+         }
+         break;
+      case GL_TEXTURE_COMPARE_RESULT_ARB:
+         if (ctx->Extensions.ARB_shadow) {
+            *params = (GLfloat) obj->CompareResult;
             return;
          }
          break;
@@ -1414,17 +1520,27 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
       case GL_TEXTURE_WRAP_R_EXT:
          *params = (GLint) obj->WrapR;
          return;
+#if 0 /* someday */
+      case GL_TEXTURE_BORDER_VALUES_NV:
+         /* unclamped */
+         params[0] = FLOAT_TO_INT(obj->BorderValues[0]);
+         params[1] = FLOAT_TO_INT(obj->BorderValues[1]);
+         params[2] = FLOAT_TO_INT(obj->BorderValues[2]);
+         params[3] = FLOAT_TO_INT(obj->BorderValues[3]);
+         return;
+#endif
       case GL_TEXTURE_BORDER_COLOR:
+         /* clamped */
          {
-            GLfloat color[4];
-            color[0] = obj->BorderColor[0] / CHAN_MAXF;
-            color[1] = obj->BorderColor[1] / CHAN_MAXF;
-            color[2] = obj->BorderColor[2] / CHAN_MAXF;
-            color[3] = obj->BorderColor[3] / CHAN_MAXF;
-            params[0] = FLOAT_TO_INT( color[0] );
-            params[1] = FLOAT_TO_INT( color[1] );
-            params[2] = FLOAT_TO_INT( color[2] );
-            params[3] = FLOAT_TO_INT( color[3] );
+            GLfloat b[4];
+            b[0] = CLAMP(obj->BorderValues[0], 0.0F, 1.0F);
+            b[1] = CLAMP(obj->BorderValues[1], 0.0F, 1.0F);
+            b[2] = CLAMP(obj->BorderValues[2], 0.0F, 1.0F);
+            b[3] = CLAMP(obj->BorderValues[3], 0.0F, 1.0F);
+            params[0] = FLOAT_TO_INT(b[0]);
+            params[1] = FLOAT_TO_INT(b[1]);
+            params[2] = FLOAT_TO_INT(b[2]);
+            params[3] = FLOAT_TO_INT(b[3]);
          }
          return;
       case GL_TEXTURE_RESIDENT:
@@ -1464,16 +1580,34 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
             return;
          }
          break;
-      case GL_SHADOW_AMBIENT_SGIX:
+      case GL_SHADOW_AMBIENT_SGIX: /* aka GL_TEXTURE_COMPARE_FAIL_VALUE_ARB */
          if (ctx->Extensions.SGIX_shadow_ambient) {
-            /* XXX range? */
-            *params = (GLint) CHAN_TO_FLOAT(obj->ShadowAmbient);
+            GLfloat a = CHAN_TO_FLOAT(obj->ShadowAmbient);
+            *params = (GLint) FLOAT_TO_INT(a);
             return;
          }
          break;
       case GL_GENERATE_MIPMAP_SGIS:
          if (ctx->Extensions.SGIS_generate_mipmap) {
             *params = (GLint) obj->GenerateMipmap;
+            return;
+         }
+         break;
+      case GL_TEXTURE_COMPARE_MODE_ARB:
+         if (ctx->Extensions.ARB_shadow) {
+            *params = (GLint) obj->CompareMode;
+            return;
+         }
+         break;
+      case GL_TEXTURE_COMPARE_FUNC_ARB:
+         if (ctx->Extensions.ARB_shadow) {
+            *params = (GLint) obj->CompareFunc;
+            return;
+         }
+         break;
+      case GL_TEXTURE_COMPARE_RESULT_ARB:
+         if (ctx->Extensions.ARB_shadow) {
+            *params = (GLint) obj->CompareResult;
             return;
          }
          break;

@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.53 2001/11/18 23:52:37 brianp Exp $ */
+/* $Id: mtypes.h,v 1.54 2001/12/04 23:44:56 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -269,7 +269,7 @@ struct gl_colorbuffer_attrib {
 
    GLenum DrawBuffer;			/* Which buffer to draw into */
    GLenum DriverDrawBuffer;		/* Current device driver dest buffer */
-   GLboolean MultiDrawBuffer;		/* Drawing to mutliple buffers? */
+   GLboolean MultiDrawBuffer;		/* Drawing to multiple buffers? */
    GLubyte DrawDestMask;		/* bitwise-OR of bitflags above */
 
    /* alpha testing */
@@ -556,6 +556,7 @@ struct gl_pixel_attrib {
    GLboolean MapColorFlag;
    GLboolean MapStencilFlag;
    GLfloat ZoomX, ZoomY;
+   /* XXX move these out of gl_pixel_attrib */
    GLint MapStoSsize;		/* Size of each pixel map */
    GLint MapItoIsize;
    GLint MapItoRsize;
@@ -827,7 +828,8 @@ struct gl_texture_object {
    GLuint Name;			/* an unsigned integer */
    GLuint Dimensions;		/* 1 or 2 or 3 or 6 (cube map) */
    GLfloat Priority;		/* in [0,1] */
-   GLchan BorderColor[4];
+   GLfloat BorderValues[4];     /* unclamped */
+   GLchan BorderColor[4];       /* clamped, as GLchan */
    GLenum WrapS;		/* Wrap modes are: GL_CLAMP, REPEAT */
    GLenum WrapT;		/*   GL_CLAMP_TO_EDGE, and          */
    GLenum WrapR;		/*   GL_CLAMP_TO_BORDER_ARB         */
@@ -840,7 +842,10 @@ struct gl_texture_object {
    GLfloat MaxAnisotropy;	/* GL_EXT_texture_filter_anisotropic */
    GLboolean CompareFlag;	/* GL_SGIX_shadow */
    GLenum CompareOperator;	/* GL_SGIX_shadow */
-   GLchan ShadowAmbient;	/* GL_SGIX_shadow_ambient */
+   GLchan ShadowAmbient;	/* GL_SGIX/ARB_shadow_ambient */
+   GLenum CompareMode;		/* GL_ARB_shadow */
+   GLenum CompareFunc;		/* GL_ARB_shadow */
+   GLenum CompareResult;	/* GL_ARB_shadow */
    GLint _MaxLevel;		/* actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/* = _MaxLevel - BaseLevel (q - b in spec) */
    GLboolean GenerateMipmap;    /* GL_SGIS_generate_mipmap */
@@ -1198,6 +1203,7 @@ struct gl_extensions {
    GLboolean ARB_imaging;
    GLboolean ARB_multisample;
    GLboolean ARB_multitexture;
+   GLboolean ARB_shadow;
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_compression;
    GLboolean ARB_texture_cube_map;
@@ -1245,10 +1251,10 @@ struct gl_extensions {
    GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_pixel_texture;
    GLboolean SGIS_texture_edge_clamp;
-   GLboolean SGIX_depth_texture;
+   GLboolean SGIX_depth_texture;  /* or GL_ARB_depth_texture */
    GLboolean SGIX_pixel_texture;
    GLboolean SGIX_shadow;
-   GLboolean SGIX_shadow_ambient;
+   GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
    GLboolean _3DFX_texture_compression_FXT1;
 };
 
