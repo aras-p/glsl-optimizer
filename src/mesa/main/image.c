@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.11 1999/11/03 17:27:05 brianp Exp $ */
+/* $Id: image.c,v 1.12 1999/11/03 18:24:05 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3247,7 +3247,6 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
    ASSERT(ctx->Visual->RGBAflag);
 
    applyTransferOps &= (ctx->Pixel.ScaleOrBiasRGBA ||
-                        ctx->Pixel.MapColorFlag ||
                         ctx->Pixel.MapColorFlag);
 
    /* Try simple cases first */
@@ -3291,8 +3290,10 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
             return;
          }
       }
-      else if (dstFormat == GL_ALPHA && srcFormat == GL_ALPHA) {
-         MEMCPY( dest, source, n * sizeof(GLubyte) );
+      else if (dstFormat == srcFormat) {
+         GLint comps = gl_components_in_format(srcFormat);
+         assert(comps > 0);
+         MEMCPY( dest, source, n * comps * sizeof(GLubyte) );
          return;
       }
    }
@@ -3363,8 +3364,10 @@ _mesa_unpack_ubyte_color_span( const GLcontext *ctx,
 
 
       /*
-       * XXX this is where more color table lookups, convolution and
-       * histogram would take place, if implemented.
+       * XXX This is where more color table lookups, convolution,
+       * histograms, minmax, color matrix, etc would take place if
+       * implemented.
+       * See figure 3.7 in the OpenGL 1.2 specification for more info.
        */
 
 
