@@ -5996,16 +5996,42 @@ execute_list( GLcontext *ctx, GLuint list )
 	    (*ctx->Exec->VertexAttrib1fNV)(n[1].e, n[2].f);
 	    break;
 	 case OPCODE_ATTR_2F:
-	    (*ctx->Exec->VertexAttrib2fvNV)(n[1].e, &n[2].f);
+	    /* Really shouldn't have to do this - the Node structure
+	     * is convenient, but it would be better to store the data
+	     * packed appropriately so that it can be sent directly
+	     * on.  With x86_64 becoming common, this will start to
+	     * matter more.
+	     */
+	    if (sizeof(Node)==sizeof(GLfloat)) 
+	       (*ctx->Exec->VertexAttrib2fvNV)(n[1].e, &n[2].f);
+	    else
+	       (*ctx->Exec->VertexAttrib2fNV)(n[1].e, n[2].f, n[3].f);
 	    break;
 	 case OPCODE_ATTR_3F:
-	    (*ctx->Exec->VertexAttrib3fvNV)(n[1].e, &n[2].f);
+	    if (sizeof(Node)==sizeof(GLfloat)) 
+	       (*ctx->Exec->VertexAttrib3fvNV)(n[1].e, &n[2].f);
+	    else
+	       (*ctx->Exec->VertexAttrib3fNV)(n[1].e, n[2].f, n[3].f,
+					      n[4].f);
 	    break;
 	 case OPCODE_ATTR_4F:
-	    (*ctx->Exec->VertexAttrib4fvNV)(n[1].e, &n[2].f);
+	    if (sizeof(Node)==sizeof(GLfloat)) 
+	       (*ctx->Exec->VertexAttrib4fvNV)(n[1].e, &n[2].f);
+	    else
+	       (*ctx->Exec->VertexAttrib4fNV)(n[1].e, n[2].f, n[3].f,
+					      n[4].f, n[5].f);
 	    break;
 	 case OPCODE_MATERIAL:
-	    (*ctx->Exec->Materialfv)(n[1].e, n[2].e, &n[3].f);
+	    if (sizeof(Node)==sizeof(GLfloat)) 
+	       (*ctx->Exec->Materialfv)(n[1].e, n[2].e, &n[3].f);
+	    else {
+	       GLfloat f[4];
+	       f[0] = n[3].f;
+	       f[1] = n[4].f;
+	       f[2] = n[5].f;
+	       f[3] = n[6].f;
+	       (*ctx->Exec->Materialfv)(n[1].e, n[2].e, f);
+	    }
 	    break;
 	 case OPCODE_INDEX:
 	    (*ctx->Exec->Indexi)(n[1].i);
@@ -6026,7 +6052,7 @@ execute_list( GLcontext *ctx, GLuint list )
 	    (*ctx->Exec->EvalCoord1f)(n[1].f);
 	    break;
 	 case OPCODE_EVAL_C2:
-	    (*ctx->Exec->EvalCoord2fv)(&n[1].f);
+	    (*ctx->Exec->EvalCoord2f)(n[1].f, n[2].f);
 	    break;
 	 case OPCODE_EVAL_P1:
 	    (*ctx->Exec->EvalPoint1)(n[1].i);
