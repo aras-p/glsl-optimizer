@@ -38,6 +38,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "context.h"
 #include "matrix.h"
 #include "simple_list.h"
+#include "utils.h"
 
 #include "i810screen.h"
 #include "i810_dri.h"
@@ -88,27 +89,8 @@ i810InitDriver(__DRIscreenPrivate *sPriv)
    i810ScreenPrivate *i810Screen;
    I810DRIPtr         gDRIPriv = (I810DRIPtr)sPriv->pDevPriv;
 
-   /* Check the DRI externsion version */
-   if ( sPriv->driMajor != 4 || sPriv->driMinor < 0 ) {
-      __driUtilMessage( "i810 DRI driver expected DRI version 4.0.x "
-                        "but got version %d.%d.%d",
-                        sPriv->driMajor, sPriv->driMinor, sPriv->driPatch );
-      return GL_FALSE;
-   }
-
-   /* Check that the DDX driver version is compatible */
-   if (sPriv->ddxMajor != 1 ||
-       sPriv->ddxMinor < 0) {
-      __driUtilMessage("i810 DRI driver expected DDX driver version 1.0.x but got version %d.%d.%d", sPriv->ddxMajor, sPriv->ddxMinor, sPriv->ddxPatch);
-      return GL_FALSE;
-   }
-
-   /* Check that the DRM driver version is compatible */
-   if (sPriv->drmMajor != 1 ||
-       sPriv->drmMinor < 2) {
-      __driUtilMessage("i810 DRI driver expected DRM driver version 1.2.x but got version %d.%d.%d", sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch);
-      return GL_FALSE;
-   }
+   if ( ! driCheckDriDdxDrmVersions( sPriv, "i810", 4, 0, 1, 0, 1, 2 ) )
+     return GL_FALSE;
 
    /* Allocate the private area */
    i810Screen = (i810ScreenPrivate *)CALLOC(sizeof(i810ScreenPrivate));
