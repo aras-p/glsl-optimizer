@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.7 2000/09/26 20:53:53 brianp Exp $ */
+/* $Id: rastpos.c,v 1.8 2000/09/30 18:42:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -140,7 +140,7 @@ static void raster_pos4f( GLcontext *ctx,
 
    {
       GLuint texSet;
-      for (texSet=0; texSet<MAX_TEXTURE_UNITS; texSet++) {
+      for (texSet = 0; texSet < ctx->Const.MaxTextureUnits; texSet++) {
          COPY_4FV( ctx->Current.RasterMultiTexCoord[texSet],
                   ctx->Current.Texcoord[texSet] );
       }

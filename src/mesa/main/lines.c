@@ -1,10 +1,10 @@
-/* $Id: lines.c,v 1.14 2000/09/29 16:58:44 brianp Exp $ */
+/* $Id: lines.c,v 1.15 2000/09/30 18:42:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -614,7 +614,7 @@ static void flat_textured_line( GLcontext *ctx,
       /* stippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
-#define INTERP_STUV0 1
+#define INTERP_TEX 1
 #define WIDE 1
 #define STIPPLE 1
 #define PLOT(X,Y)			\
@@ -622,9 +622,9 @@ static void flat_textured_line( GLcontext *ctx,
 	   pbx[count] = X;		\
 	   pby[count] = Y;		\
 	   pbz[count] = Z;		\
-	   pbs[count] = s;		\
-	   pbt[count] = t;		\
-	   pbu[count] = u;		\
+	   pbs[count] = fragTexcoord[0];\
+	   pbt[count] = fragTexcoord[1];\
+	   pbu[count] = fragTexcoord[2];\
 	   count++;			\
 	   CHECK_FULL(count);		\
 	}
@@ -634,16 +634,16 @@ static void flat_textured_line( GLcontext *ctx,
       /* unstippled */
 #define INTERP_XY 1
 #define INTERP_Z 1
-#define INTERP_STUV0 1
+#define INTERP_TEX 1
 #define WIDE 1
 #define PLOT(X,Y)			\
 	{				\
 	   pbx[count] = X;		\
 	   pby[count] = Y;		\
 	   pbz[count] = Z;		\
-	   pbs[count] = s;		\
-	   pbt[count] = t;		\
-	   pbu[count] = u;		\
+	   pbs[count] = fragTexcoord[0];\
+	   pbt[count] = fragTexcoord[1];\
+	   pbu[count] = fragTexcoord[2];\
 	   count++;			\
 	   CHECK_FULL(count);		\
 	}
@@ -678,7 +678,7 @@ static void smooth_textured_line( GLcontext *ctx,
 #define INTERP_Z 1
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
-#define INTERP_STUV0 1
+#define INTERP_TEX 1
 #define WIDE 1
 #define STIPPLE 1
 #define PLOT(X,Y)					\
@@ -686,9 +686,9 @@ static void smooth_textured_line( GLcontext *ctx,
 	   pbx[count] = X;				\
 	   pby[count] = Y;				\
 	   pbz[count] = Z;				\
-	   pbs[count] = s;				\
-	   pbt[count] = t;				\
-	   pbu[count] = u;				\
+	   pbs[count] = fragTexcoord[0];		\
+	   pbt[count] = fragTexcoord[1];		\
+	   pbu[count] = fragTexcoord[2];		\
 	   pbrgba[count][RCOMP] = FixedToInt(r0);	\
 	   pbrgba[count][GCOMP] = FixedToInt(g0);	\
 	   pbrgba[count][BCOMP] = FixedToInt(b0);	\
@@ -704,16 +704,16 @@ static void smooth_textured_line( GLcontext *ctx,
 #define INTERP_Z 1
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
-#define INTERP_STUV0 1
+#define INTERP_TEX 1
 #define WIDE 1
 #define PLOT(X,Y)					\
 	{						\
 	   pbx[count] = X;				\
 	   pby[count] = Y;				\
 	   pbz[count] = Z;				\
-	   pbs[count] = s;				\
-	   pbt[count] = t;				\
-	   pbu[count] = u;				\
+	   pbs[count] = fragTexcoord[0];		\
+	   pbt[count] = fragTexcoord[1];		\
+	   pbu[count] = fragTexcoord[2];		\
 	   pbrgba[count][RCOMP] = FixedToInt(r0);	\
 	   pbrgba[count][GCOMP] = FixedToInt(g0);	\
 	   pbrgba[count][BCOMP] = FixedToInt(b0);	\
@@ -739,12 +739,6 @@ static void smooth_multitextured_line( GLcontext *ctx,
    GLint *pbx = ctx->PB->x;
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
-   GLfloat *pbs = ctx->PB->s[0];
-   GLfloat *pbt = ctx->PB->t[0];
-   GLfloat *pbu = ctx->PB->u[0];
-   GLfloat *pbs1 = ctx->PB->s[1];
-   GLfloat *pbt1 = ctx->PB->t[1];
-   GLfloat *pbu1 = ctx->PB->u[1];
    GLubyte (*pbrgba)[4] = ctx->PB->rgba;
    GLubyte (*pbspec)[3] = ctx->PB->spec;
    (void) pvert;
@@ -758,30 +752,32 @@ static void smooth_multitextured_line( GLcontext *ctx,
 #define INTERP_RGB 1
 #define INTERP_SPEC 1
 #define INTERP_ALPHA 1
-#define INTERP_STUV0 1
-#define INTERP_STUV1 1
+#define INTERP_MULTITEX 1
 #define WIDE 1
 #define STIPPLE 1
-#define PLOT(X,Y)					\
-	{						\
-	   pbx[count] = X;				\
-	   pby[count] = Y;				\
-	   pbz[count] = Z;				\
-	   pbs[count] = s;				\
-	   pbt[count] = t;				\
-	   pbu[count] = u;				\
-	   pbs1[count] = s1;				\
-	   pbt1[count] = t1;				\
-	   pbu1[count] = u1;				\
-	   pbrgba[count][RCOMP] = FixedToInt(r0);	\
-	   pbrgba[count][GCOMP] = FixedToInt(g0);	\
-	   pbrgba[count][BCOMP] = FixedToInt(b0);	\
-	   pbrgba[count][ACOMP] = FixedToInt(a0);	\
-	   pbspec[count][RCOMP] = FixedToInt(sr0);	\
-	   pbspec[count][GCOMP] = FixedToInt(sg0);	\
-	   pbspec[count][BCOMP] = FixedToInt(sb0);	\
-	   count++;					\
-	   CHECK_FULL(count);				\
+#define PLOT(X,Y)						\
+	{							\
+	   GLuint u;						\
+	   pbx[count] = X;					\
+	   pby[count] = Y;					\
+	   pbz[count] = Z;					\
+	   pbrgba[count][RCOMP] = FixedToInt(r0);		\
+	   pbrgba[count][GCOMP] = FixedToInt(g0);		\
+	   pbrgba[count][BCOMP] = FixedToInt(b0);		\
+	   pbrgba[count][ACOMP] = FixedToInt(a0);		\
+	   pbspec[count][RCOMP] = FixedToInt(sr0);		\
+	   pbspec[count][GCOMP] = FixedToInt(sg0);		\
+	   pbspec[count][BCOMP] = FixedToInt(sb0);		\
+	   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
+	      if (ctx->Texture.Unit[u].ReallyEnabled) {		\
+	         ctx->PB->s[u][0] = fragTexcoord[u][0];		\
+	         ctx->PB->s[u][1] = fragTexcoord[u][1];		\
+	         ctx->PB->s[u][2] = fragTexcoord[u][2];		\
+	         ctx->PB->s[u][3] = fragTexcoord[u][3];		\
+	      }							\
+	   }							\
+	   count++;						\
+	   CHECK_FULL(count);					\
 	}
 #include "linetemp.h"
    }
@@ -792,29 +788,31 @@ static void smooth_multitextured_line( GLcontext *ctx,
 #define INTERP_RGB 1
 #define INTERP_SPEC 1
 #define INTERP_ALPHA 1
-#define INTERP_STUV0 1
-#define INTERP_STUV1 1
+#define INTERP_MULTITEX 1
 #define WIDE 1
-#define PLOT(X,Y)					\
-	{						\
-	   pbx[count] = X;				\
-	   pby[count] = Y;				\
-	   pbz[count] = Z;				\
-	   pbs[count] = s;				\
-	   pbt[count] = t;				\
-	   pbu[count] = u;				\
-	   pbs1[count] = s1;				\
-	   pbt1[count] = t1;				\
-	   pbu1[count] = u1;				\
-	   pbrgba[count][RCOMP] = FixedToInt(r0);	\
-	   pbrgba[count][GCOMP] = FixedToInt(g0);	\
-	   pbrgba[count][BCOMP] = FixedToInt(b0);	\
-	   pbrgba[count][ACOMP] = FixedToInt(a0);	\
-	   pbspec[count][RCOMP] = FixedToInt(sr0);	\
-	   pbspec[count][GCOMP] = FixedToInt(sg0);	\
-	   pbspec[count][BCOMP] = FixedToInt(sb0);	\
-	   count++;					\
-	   CHECK_FULL(count);				\
+#define PLOT(X,Y)						\
+	{							\
+	   GLuint u;						\
+	   pbx[count] = X;					\
+	   pby[count] = Y;					\
+	   pbz[count] = Z;					\
+	   pbrgba[count][RCOMP] = FixedToInt(r0);		\
+	   pbrgba[count][GCOMP] = FixedToInt(g0);		\
+	   pbrgba[count][BCOMP] = FixedToInt(b0);		\
+	   pbrgba[count][ACOMP] = FixedToInt(a0);		\
+	   pbspec[count][RCOMP] = FixedToInt(sr0);		\
+	   pbspec[count][GCOMP] = FixedToInt(sg0);		\
+	   pbspec[count][BCOMP] = FixedToInt(sb0);		\
+	   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
+	      if (ctx->Texture.Unit[u].ReallyEnabled) {		\
+	         ctx->PB->s[u][0] = fragTexcoord[u][0];		\
+	         ctx->PB->s[u][1] = fragTexcoord[u][1];		\
+	         ctx->PB->s[u][2] = fragTexcoord[u][2];		\
+	         ctx->PB->s[u][3] = fragTexcoord[u][3];		\
+	      }							\
+	   }							\
+	   count++;						\
+	   CHECK_FULL(count);					\
 	}
 #include "linetemp.h"
    }
@@ -834,12 +832,6 @@ static void flat_multitextured_line( GLcontext *ctx,
    GLint *pbx = ctx->PB->x;
    GLint *pby = ctx->PB->y;
    GLdepth *pbz = ctx->PB->z;
-   GLfloat *pbs = ctx->PB->s[0];
-   GLfloat *pbt = ctx->PB->t[0];
-   GLfloat *pbu = ctx->PB->u[0];
-   GLfloat *pbs1 = ctx->PB->s[1];
-   GLfloat *pbt1 = ctx->PB->t[1];
-   GLfloat *pbu1 = ctx->PB->u[1];
    GLubyte (*pbrgba)[4] = ctx->PB->rgba;
    GLubyte (*pbspec)[3] = ctx->PB->spec;
    GLubyte *color = ctx->VB->ColorPtr->data[pvert];
@@ -856,30 +848,32 @@ static void flat_multitextured_line( GLcontext *ctx,
 #define INTERP_XY 1
 #define INTERP_Z 1
 #define INTERP_ALPHA 1
-#define INTERP_STUV0 1
-#define INTERP_STUV1 1
+#define INTERP_MULTITEX 1
 #define WIDE 1
 #define STIPPLE 1
-#define PLOT(X,Y)					\
-	{						\
-	   pbx[count] = X;				\
-	   pby[count] = Y;				\
-	   pbz[count] = Z;				\
-	   pbs[count] = s;				\
-	   pbt[count] = t;				\
-	   pbu[count] = u;				\
-	   pbs1[count] = s1;				\
-	   pbt1[count] = t1;				\
-	   pbu1[count] = u1;				\
-	   pbrgba[count][RCOMP] = color[0];		\
-	   pbrgba[count][GCOMP] = color[1];		\
-	   pbrgba[count][BCOMP] = color[2];		\
-	   pbrgba[count][ACOMP] = color[3];		\
-	   pbspec[count][RCOMP] = sRed;			\
-	   pbspec[count][GCOMP] = sGreen;		\
-	   pbspec[count][BCOMP] = sBlue;		\
-	   count++;					\
-	   CHECK_FULL(count);				\
+#define PLOT(X,Y)						\
+	{							\
+	   GLuint u;						\
+	   pbx[count] = X;					\
+	   pby[count] = Y;					\
+	   pbz[count] = Z;					\
+	   pbrgba[count][RCOMP] = color[0];			\
+	   pbrgba[count][GCOMP] = color[1];			\
+	   pbrgba[count][BCOMP] = color[2];			\
+	   pbrgba[count][ACOMP] = color[3];			\
+	   pbspec[count][RCOMP] = sRed;				\
+	   pbspec[count][GCOMP] = sGreen;			\
+	   pbspec[count][BCOMP] = sBlue;			\
+	   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
+	      if (ctx->Texture.Unit[u].ReallyEnabled) {		\
+	         ctx->PB->s[u][0] = fragTexcoord[u][0];		\
+	         ctx->PB->s[u][1] = fragTexcoord[u][1];		\
+	         ctx->PB->s[u][2] = fragTexcoord[u][2];		\
+	         ctx->PB->s[u][3] = fragTexcoord[u][3];		\
+	      }							\
+	   }							\
+	   count++;						\
+	   CHECK_FULL(count);					\
 	}
 #include "linetemp.h"
    }
@@ -888,29 +882,31 @@ static void flat_multitextured_line( GLcontext *ctx,
 #define INTERP_XY 1
 #define INTERP_Z 1
 #define INTERP_ALPHA 1
-#define INTERP_STUV0 1
-#define INTERP_STUV1 1
+#define INTERP_MULTITEX 1
 #define WIDE 1
-#define PLOT(X,Y)					\
-	{						\
-	   pbx[count] = X;				\
-	   pby[count] = Y;				\
-	   pbz[count] = Z;				\
-	   pbs[count] = s;				\
-	   pbt[count] = t;				\
-	   pbu[count] = u;				\
-	   pbs1[count] = s1;				\
-	   pbt1[count] = t1;				\
-	   pbu1[count] = u1;				\
-	   pbrgba[count][RCOMP] = color[0];		\
-	   pbrgba[count][GCOMP] = color[1];		\
-	   pbrgba[count][BCOMP] = color[2];		\
-	   pbrgba[count][ACOMP] = color[3];		\
-	   pbspec[count][RCOMP] = sRed;			\
-	   pbspec[count][GCOMP] = sGreen;		\
-	   pbspec[count][BCOMP] = sBlue;		\
-	   count++;					\
-	   CHECK_FULL(count);				\
+#define PLOT(X,Y)						\
+	{							\
+	   GLuint u;						\
+	   pbx[count] = X;					\
+	   pby[count] = Y;					\
+	   pbz[count] = Z;					\
+	   pbrgba[count][RCOMP] = color[0];			\
+	   pbrgba[count][GCOMP] = color[1];			\
+	   pbrgba[count][BCOMP] = color[2];			\
+	   pbrgba[count][ACOMP] = color[3];			\
+	   pbspec[count][RCOMP] = sRed;				\
+	   pbspec[count][GCOMP] = sGreen;			\
+	   pbspec[count][BCOMP] = sBlue;			\
+	   for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
+	      if (ctx->Texture.Unit[u].ReallyEnabled) {		\
+	         ctx->PB->s[u][0] = fragTexcoord[u][0];		\
+	         ctx->PB->s[u][1] = fragTexcoord[u][1];		\
+	         ctx->PB->s[u][2] = fragTexcoord[u][2];		\
+	         ctx->PB->s[u][3] = fragTexcoord[u][3];		\
+	      }							\
+	   }							\
+	   count++;						\
+	   CHECK_FULL(count);					\
 	}
 #include "linetemp.h"
    }
@@ -933,7 +929,11 @@ static void aa_rgba_line( GLcontext *ctx,
                           GLuint vert0, GLuint vert1, GLuint pvert )
 {
 #define INTERP_RGBA 1
-#define PLOT(x, y)  { PB_WRITE_RGBA_PIXEL( pb, (x), (y), z, red, green, blue, coverage ); }
+#define PLOT(x, y)						\
+   {								\
+      PB_WRITE_RGBA_PIXEL( pb, (x), (y), z,			\
+			   red, green, blue, coverage );	\
+   }
 #include "lnaatemp.h"
 }
 
@@ -948,11 +948,11 @@ static void aa_tex_rgba_line( GLcontext *ctx,
                               GLuint vert0, GLuint vert1, GLuint pvert )
 {
 #define INTERP_RGBA 1
-#define INTERP_STUV0 1
+#define INTERP_TEX 1
 #define PLOT(x, y)							\
    {									\
       PB_WRITE_TEX_PIXEL( pb, (x), (y), z, red, green, blue, coverage,	\
-                          s, t, u );					\
+                 fragTexcoord[0], fragTexcoord[1], fragTexcoord[2] );	\
    }
 #include "lnaatemp.h"
 }
@@ -970,20 +970,12 @@ static void aa_multitex_rgba_line( GLcontext *ctx,
 {
 #define INTERP_RGBA 1
 #define INTERP_SPEC 1
-#define INTERP_STUV0 1
-#define INTERP_STUV1 1
+#define INTERP_MULTITEX 1
 #define PLOT(x, y)							\
    {									\
-      GLfloat texcoord[MAX_TEXTURE_UNITS][4];				\
-      texcoord[0][0] = s;						\
-      texcoord[0][1] = t;						\
-      texcoord[0][2] = u;						\
-      texcoord[1][0] = s1;						\
-      texcoord[1][1] = t1;						\
-      texcoord[1][2] = u1;						\
       PB_WRITE_MULTITEX_SPEC_PIXEL( pb, (x), (y), z,			\
             red, green, blue, coverage, specRed, specGreen, specBlue,	\
-            texcoord );							\
+            fragTexcoord );						\
    }
 #include "lnaatemp.h"
 }
