@@ -31,6 +31,7 @@ SOURCES = antialias.c \
 	getprocaddress.c \
 	manytex.c \
 	multipal.c \
+	packedpixels.c \
 	pbo.c \
 	projtex.c \
 	seccolor.c \
