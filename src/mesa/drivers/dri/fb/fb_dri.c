@@ -1,4 +1,3 @@
-/* $Id: fb_dri.c,v 1.2 2003/10/08 01:53:30 kendallb Exp $ */
 
 /*
  * Mesa 3-D graphics library

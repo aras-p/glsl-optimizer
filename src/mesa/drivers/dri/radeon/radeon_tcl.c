@@ -277,7 +277,7 @@ void radeonTclPrimitive( GLcontext *ctx,
 /* TCL render.
  */
 static GLboolean radeon_run_tcl_render( GLcontext *ctx,
-					struct gl_pipeline_stage *stage )
+					struct tnl_pipeline_stage *stage )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -297,24 +297,19 @@ static GLboolean radeon_run_tcl_render( GLcontext *ctx,
 
    rmesa->tcl.Elts = VB->Elts;
 
-   for (i = VB->FirstPrimitive ; !(flags & PRIM_LAST) ; i += length)
+   for (i = 0 ; i < VB->PrimitiveCount ; i++)
    {
-      flags = VB->Primitive[i];
-      length = VB->PrimitiveLength[i];
-
-      if (RADEON_DEBUG & DEBUG_PRIMS)
-	 fprintf(stderr, "%s: prim %s %d..%d\n", 
-		 __FUNCTION__,
-		 _mesa_lookup_enum_by_nr(flags & PRIM_MODE_MASK), 
-		 i, i+length);
+      GLuint prim = VB->Primitive[i].mode;
+      GLuint start = VB->Primitive[i].start;
+      GLuint length = VB->Primitive[i].count;
 
       if (!length)
 	 continue;
 
       if (rmesa->tcl.Elts)
-	 radeonEmitEltPrimitive( ctx, i, i+length, flags );
+	 radeonEmitEltPrimitive( ctx, start, start+length, prim );
       else
-	 radeonEmitPrimitive( ctx, i, i+length, flags );
+	 radeonEmitPrimitive( ctx, start, start+length, prim );
    }
 
    return GL_FALSE;		/* finished the pipe */
@@ -323,7 +318,7 @@ static GLboolean radeon_run_tcl_render( GLcontext *ctx,
 
 
 static void radeon_check_tcl_render( GLcontext *ctx,
-				     struct gl_pipeline_stage *stage )
+				     struct tnl_pipeline_stage *stage )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    GLuint inputs = VERT_BIT_POS;
@@ -374,13 +369,13 @@ static void radeon_check_tcl_render( GLcontext *ctx,
 }
 
 static void radeon_init_tcl_render( GLcontext *ctx,
-				    struct gl_pipeline_stage *stage )
+				    struct tnl_pipeline_stage *stage )
 {
    stage->check = radeon_check_tcl_render;
    stage->check( ctx, stage );
 }
 
-static void dtr( struct gl_pipeline_stage *stage )
+static void dtr( struct tnl_pipeline_stage *stage )
 {
    (void)stage;
 }
@@ -388,7 +383,7 @@ static void dtr( struct gl_pipeline_stage *stage )
 
 /* Initial state for tcl stage.  
  */
-const struct gl_pipeline_stage _radeon_tcl_stage =
+const struct tnl_pipeline_stage _radeon_tcl_stage =
 {
    "radeon render",
    (_DD_NEW_SEPARATE_SPECULAR |

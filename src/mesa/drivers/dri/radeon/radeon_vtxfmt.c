@@ -973,13 +973,14 @@ void radeonVtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
    vfmt->FogCoordfEXT = _mesa_noop_FogCoordfEXT;
    vfmt->EdgeFlag = _mesa_noop_EdgeFlag;
    vfmt->EdgeFlagv = _mesa_noop_EdgeFlagv;
-   vfmt->Indexi = _mesa_noop_Indexi;
-   vfmt->Indexiv = _mesa_noop_Indexiv;
+   vfmt->Indexf = _mesa_noop_Indexf;
+   vfmt->Indexfv = _mesa_noop_Indexfv;
 
 
    /* Active but unsupported -- fallback if we receive these:
     */
    vfmt->CallList = radeon_fallback_CallList;
+   vfmt->CallLists = radeon_fallback_CallLists;
    vfmt->EvalCoord1f = radeon_fallback_EvalCoord1f;
    vfmt->EvalCoord1fv = radeon_fallback_EvalCoord1fv;
    vfmt->EvalCoord2f = radeon_fallback_EvalCoord2f;

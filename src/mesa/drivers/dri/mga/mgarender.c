@@ -101,7 +101,7 @@ static void VERT_FALLBACK( GLcontext *ctx, GLuint start, GLuint count,
    tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
    tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
    tnl->Driver.Render.PrimTabVerts[flags&PRIM_MODE_MASK]( ctx, start, count, flags );
-   MGA_CONTEXT(ctx)->SetupNewInputs |= VERT_BIT_CLIP;
+   MGA_CONTEXT(ctx)->SetupNewInputs |= VERT_BIT_POS;
 }
 
 #define LOCAL_VARS mgaContextPtr mmesa = MGA_CONTEXT(ctx) 
@@ -131,12 +131,12 @@ static void VERT_FALLBACK( GLcontext *ctx, GLuint start, GLuint count,
 
 
 static GLboolean mga_run_render( GLcontext *ctx,
-				  struct gl_pipeline_stage *stage )
+				  struct tnl_pipeline_stage *stage )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb; 
-   GLuint i, length, flags = 0;
+   GLuint i;
 
    /* Don't handle clipping or indexed vertices or vertex manipulations.
     */
@@ -147,13 +147,17 @@ static GLboolean mga_run_render( GLcontext *ctx,
    tnl->Driver.Render.Start( ctx );
    mmesa->SetupNewInputs = ~0;      
 
-   for (i = VB->FirstPrimitive ; !(flags & PRIM_LAST) ; i += length)
+   for (i = 0 ; i < VB->PrimitiveCount ; i++)
    {
-      flags = VB->Primitive[i];
-      length= VB->PrimitiveLength[i];	
-      if (length)
-	 mga_render_tab_verts[flags & PRIM_MODE_MASK]( ctx, i, i + length,
-						       flags );
+      GLuint prim = VB->Primitive[i].mode;
+      GLuint start = VB->Primitive[i].start;
+      GLuint length = VB->Primitive[i].count;
+
+      if (!length)
+	 continue;
+
+      mga_render_tab_verts[prim & PRIM_MODE_MASK]( ctx, start, start + length, 
+						   prim);
    } 
 
    tnl->Driver.Render.Finish( ctx );
@@ -162,9 +166,9 @@ static GLboolean mga_run_render( GLcontext *ctx,
 }
 
 
-static void mga_check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
+static void mga_check_render( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 {
-   GLuint inputs = VERT_BIT_CLIP | VERT_BIT_COLOR0;
+   GLuint inputs = VERT_BIT_POS | VERT_BIT_COLOR0;
 
    if (ctx->RenderMode == GL_RENDER) {
       if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) 
@@ -184,13 +188,13 @@ static void mga_check_render( GLcontext *ctx, struct gl_pipeline_stage *stage )
 }
 
 
-static void dtr( struct gl_pipeline_stage *stage )
+static void dtr( struct tnl_pipeline_stage *stage )
 {
    (void)stage;
 }
 
 
-const struct gl_pipeline_stage _mga_render_stage = 
+const struct tnl_pipeline_stage _mga_render_stage = 
 { 
    "mga render",
    (_DD_NEW_SEPARATE_SPECULAR |

@@ -2115,10 +2115,30 @@ static void radeonInvalidateState( GLcontext *ctx, GLuint new_state )
    radeonVtxfmtInvalidate( ctx );
 }
 
+
+/* A hack.  Need a faster way to find this out.
+ */
+static GLboolean check_material( GLcontext *ctx )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   GLint i;
+
+   for (i = _TNL_ATTRIB_MAT_FRONT_AMBIENT; 
+	i < _TNL_ATTRIB_MAT_BACK_INDEXES; 
+	i++)
+      if (tnl->vb.AttribPtr[i] &&
+	  tnl->vb.AttribPtr[i]->stride)
+	 return GL_TRUE;
+
+   return GL_FALSE;
+}
+      
+
 static void radeonWrapRunPipeline( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   GLboolean has_material;
 
    if (0)
       fprintf(stderr, "%s, newstate: %x\n", __FUNCTION__, rmesa->NewGLState);
@@ -2128,7 +2148,9 @@ static void radeonWrapRunPipeline( GLcontext *ctx )
    if (rmesa->NewGLState)
       radeonValidateState( ctx );
 
-   if (tnl->vb.Material) {
+   has_material = (ctx->Light.Enabled && check_material( ctx ));
+
+   if (has_material) {
       TCL_FALLBACK( ctx, RADEON_TCL_FALLBACK_MATERIAL, GL_TRUE );
    }
 
@@ -2136,7 +2158,7 @@ static void radeonWrapRunPipeline( GLcontext *ctx )
     */ 
    _tnl_run_pipeline( ctx );
 
-   if (tnl->vb.Material) {
+   if (has_material) {
       TCL_FALLBACK( ctx, RADEON_TCL_FALLBACK_MATERIAL, GL_FALSE );
       radeonUpdateMaterial( ctx ); /* not needed any more? */
    }

@@ -299,7 +299,7 @@ void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
    if (!newinputs)
       return;
 
-   if (newinputs & VERT_BIT_CLIP) {
+   if (newinputs & VERT_BIT_POS) {
       setup_tab[fxMesa->SetupIndex].emit( ctx, start, count, v );   
    } else {
       GLuint ind = 0;

@@ -74,10 +74,10 @@ static void count_funcs( r200ContextPtr rmesa )
    count_func( "Vertex2fv", &rmesa->vb.dfn_cache.Vertex2fv );
    count_func( "Vertex3f", &rmesa->vb.dfn_cache.Vertex3f );
    count_func( "Vertex3fv", &rmesa->vb.dfn_cache.Vertex3fv );
-   count_func( "Color4ub", &rmesa->vb.dfn_cache.Color4ub );
-   count_func( "Color4ubv", &rmesa->vb.dfn_cache.Color4ubv );
-   count_func( "Color3ub", &rmesa->vb.dfn_cache.Color3ub );
-   count_func( "Color3ubv", &rmesa->vb.dfn_cache.Color3ubv );
+   count_func( "Color4ub", &rmesa->vb.dfn_cache.Color4ub ); 
+   count_func( "Color4ubv", &rmesa->vb.dfn_cache.Color4ubv ); 
+   count_func( "Color3ub", &rmesa->vb.dfn_cache.Color3ub ); 
+   count_func( "Color3ubv", &rmesa->vb.dfn_cache.Color3ubv ); 
    count_func( "Color4f", &rmesa->vb.dfn_cache.Color4f );
    count_func( "Color4fv", &rmesa->vb.dfn_cache.Color4fv );
    count_func( "Color3f", &rmesa->vb.dfn_cache.Color3f );
@@ -467,7 +467,10 @@ static void VFMT_FALLBACK( const char *caller )
       glNormal3fv( rmesa->vb.normalptr );
 
    if (VTX_COLOR(ind0, 0) == R200_VTX_PK_RGBA) 
-         glColor4ub( rmesa->vb.colorptr->red, rmesa->vb.colorptr->green, rmesa->vb.colorptr->blue, rmesa->vb.colorptr->alpha );
+         glColor4ub( rmesa->vb.colorptr->red,
+		     rmesa->vb.colorptr->green,
+		     rmesa->vb.colorptr->blue,
+		     rmesa->vb.colorptr->alpha );
    else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGBA) 
       glColor4fv( rmesa->vb.floatcolorptr );
    else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGB) {
@@ -481,7 +484,9 @@ static void VFMT_FALLBACK( const char *caller )
    }
 
    if (VTX_COLOR(ind0, 1) == R200_VTX_PK_RGBA) 
-      _glapi_Dispatch->SecondaryColor3ubEXT( rmesa->vb.specptr->red, rmesa->vb.specptr->green, rmesa->vb.specptr->blue ); 
+      _glapi_Dispatch->SecondaryColor3ubEXT( rmesa->vb.specptr->red, 
+					     rmesa->vb.specptr->green,
+					     rmesa->vb.specptr->blue ); 
 
    if (ind1 & (7 << R200_VTX_TEX0_COMP_CNT_SHIFT)) 
       glTexCoord2fv( rmesa->vb.texcoordptr[0] );
@@ -1005,13 +1010,14 @@ void r200VtxfmtInit( GLcontext *ctx, GLboolean useCodegen )
    vfmt->FogCoordfEXT = _mesa_noop_FogCoordfEXT;
    vfmt->EdgeFlag = _mesa_noop_EdgeFlag;
    vfmt->EdgeFlagv = _mesa_noop_EdgeFlagv;
-   vfmt->Indexi = _mesa_noop_Indexi;
-   vfmt->Indexiv = _mesa_noop_Indexiv;
+   vfmt->Indexf = _mesa_noop_Indexf;
+   vfmt->Indexfv = _mesa_noop_Indexfv;
 
 
    /* Active but unsupported -- fallback if we receive these:
     */
    vfmt->CallList = r200_fallback_CallList;
+   vfmt->CallLists = r200_fallback_CallLists;
    vfmt->EvalCoord1f = r200_fallback_EvalCoord1f;
    vfmt->EvalCoord1fv = r200_fallback_EvalCoord1fv;
    vfmt->EvalCoord2f = r200_fallback_EvalCoord2f;

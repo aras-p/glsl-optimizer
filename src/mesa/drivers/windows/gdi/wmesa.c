@@ -1,4 +1,3 @@
-/* $Id: wmesa.c,v 1.2 2003/11/04 23:37:53 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4

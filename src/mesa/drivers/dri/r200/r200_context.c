@@ -169,10 +169,10 @@ static const char * const card_extensions[] =
     NULL
 };
 
-extern const struct gl_pipeline_stage _r200_render_stage;
-extern const struct gl_pipeline_stage _r200_tcl_stage;
+extern const struct tnl_pipeline_stage _r200_render_stage;
+extern const struct tnl_pipeline_stage _r200_tcl_stage;
 
-static const struct gl_pipeline_stage *r200_pipeline[] = {
+static const struct tnl_pipeline_stage *r200_pipeline[] = {
 
    /* Try and go straight to t&l
     */

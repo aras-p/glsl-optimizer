@@ -47,7 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "math/m_translate.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
-#include "tnl/t_imm_exec.h"
 #include "tnl/t_pipeline.h"
 
 #include "r200_context.h"
@@ -537,7 +536,7 @@ static void VERT_FALLBACK( GLcontext *ctx,
    tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
    tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
    tnl->Driver.Render.PrimTabVerts[flags&PRIM_MODE_MASK]( ctx, start, count, flags );
-   R200_CONTEXT(ctx)->swtcl.SetupNewInputs = VERT_BIT_CLIP;
+   R200_CONTEXT(ctx)->swtcl.SetupNewInputs = _TNL_BIT_POS;
 }
 
 static void ELT_FALLBACK( GLcontext *ctx,
@@ -549,7 +548,7 @@ static void ELT_FALLBACK( GLcontext *ctx,
    tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
    tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
    tnl->Driver.Render.PrimTabElts[flags&PRIM_MODE_MASK]( ctx, start, count, flags );
-   R200_CONTEXT(ctx)->swtcl.SetupNewInputs = VERT_BIT_CLIP;
+   R200_CONTEXT(ctx)->swtcl.SetupNewInputs = _TNL_BIT_POS;
 }
 
 
@@ -631,7 +630,7 @@ do {									\
 
 
 static GLboolean r200_run_render( GLcontext *ctx,
-				    struct gl_pipeline_stage *stage )
+				    struct tnl_pipeline_stage *stage )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -659,18 +658,21 @@ static GLboolean r200_run_render( GLcontext *ctx,
 
    tnl->Driver.Render.Start( ctx );
 
-   for (i = 0 ; !(flags & PRIM_LAST) ; i += length)
+   for (i = 0 ; i < VB->PrimitiveCount ; i++)
    {
-      flags = VB->Primitive[i];
-      length = VB->PrimitiveLength[i];
+      GLuint prim = VB->Primitive[i].mode;
+      GLuint start = VB->Primitive[i].start;
+      GLuint length = VB->Primitive[i].count;
+
+      if (!length)
+	 continue;
 
       if (R200_DEBUG & DEBUG_PRIMS)
 	 fprintf(stderr, "r200_render.c: prim %s %d..%d\n", 
-		 _mesa_lookup_enum_by_nr(flags & PRIM_MODE_MASK), 
-		 i, i+length);
+		 _mesa_lookup_enum_by_nr(prim & PRIM_MODE_MASK), 
+		 start, start+length);
 
-      if (length)
-	 tab[flags & PRIM_MODE_MASK]( ctx, i, i + length, flags );
+      tab[prim & PRIM_MODE_MASK]( ctx, start, start + length, flags );
    }
 
    tnl->Driver.Render.Finish( ctx );
@@ -681,35 +683,35 @@ static GLboolean r200_run_render( GLcontext *ctx,
 
 
 static void r200_check_render( GLcontext *ctx,
-				 struct gl_pipeline_stage *stage )
+				 struct tnl_pipeline_stage *stage )
 {
-   GLuint inputs = VERT_BIT_POS | VERT_BIT_CLIP | VERT_BIT_COLOR0;
+   GLuint inputs = _TNL_BIT_POS | _TNL_BIT_COLOR0;
 
    if (ctx->RenderMode == GL_RENDER) {
       if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
-	 inputs |= VERT_BIT_COLOR1;
+	 inputs |= _TNL_BIT_COLOR1;
 
       if (ctx->Texture.Unit[0]._ReallyEnabled)
-	 inputs |= VERT_BIT_TEX0;
+	 inputs |= _TNL_BIT_TEX0;
 
       if (ctx->Texture.Unit[1]._ReallyEnabled)
-	 inputs |= VERT_BIT_TEX1;
+	 inputs |= _TNL_BIT_TEX1;
 
       if (ctx->Fog.Enabled)
-	 inputs |= VERT_BIT_FOG;
+	 inputs |= _TNL_BIT_FOG;
    }
 
    stage->inputs = inputs;
 }
 
 
-static void dtr( struct gl_pipeline_stage *stage )
+static void dtr( struct tnl_pipeline_stage *stage )
 {
    (void)stage;
 }
 
 
-const struct gl_pipeline_stage _r200_render_stage =
+const struct tnl_pipeline_stage _r200_render_stage =
 {
    "r200 render",
    (_DD_NEW_SEPARATE_SPECULAR |
@@ -1230,7 +1232,7 @@ r200PointsBitmap( GLcontext *ctx, GLint px, GLint py,
 
 void r200FlushVertices( GLcontext *ctx, GLuint flags )
 {
-   _tnl_flush_vertices( ctx, flags );
+   _tnl_FlushVertices( ctx, flags );
 
    if (flags & FLUSH_STORED_VERTICES)
       R200_NEWPRIM( R200_CONTEXT( ctx ) );

@@ -2089,10 +2089,30 @@ static void r200InvalidateState( GLcontext *ctx, GLuint new_state )
    r200VtxfmtInvalidate( ctx );
 }
 
+/* A hack.  The r200 can actually cope just fine with materials
+ * between begin/ends, so fix this.
+ */
+static GLboolean check_material( GLcontext *ctx )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   GLint i;
+
+   for (i = _TNL_ATTRIB_MAT_FRONT_AMBIENT; 
+	i < _TNL_ATTRIB_MAT_BACK_INDEXES; 
+	i++)
+      if (tnl->vb.AttribPtr[i] &&
+	  tnl->vb.AttribPtr[i]->stride)
+	 return GL_TRUE;
+
+   return GL_FALSE;
+}
+      
+
 static void r200WrapRunPipeline( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   GLboolean has_material;
 
    if (0)
       fprintf(stderr, "%s, newstate: %x\n", __FUNCTION__, rmesa->NewGLState);
@@ -2102,7 +2122,9 @@ static void r200WrapRunPipeline( GLcontext *ctx )
    if (rmesa->NewGLState)
       r200ValidateState( ctx );
 
-   if (tnl->vb.Material) {
+   has_material = (ctx->Light.Enabled && check_material( ctx ));
+
+   if (has_material) {
       TCL_FALLBACK( ctx, R200_TCL_FALLBACK_MATERIAL, GL_TRUE );
    }
 
@@ -2110,7 +2132,7 @@ static void r200WrapRunPipeline( GLcontext *ctx )
     */ 
    _tnl_run_pipeline( ctx );
 
-   if (tnl->vb.Material) {
+   if (has_material) {
       TCL_FALLBACK( ctx, R200_TCL_FALLBACK_MATERIAL, GL_FALSE );
       r200UpdateMaterial( ctx ); /* not needed any more? */
    }

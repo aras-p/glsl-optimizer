@@ -167,9 +167,9 @@ static const char * const card_extensions[] =
 };
 
 
-extern const struct gl_pipeline_stage _i830_render_stage;
+extern const struct tnl_pipeline_stage _i830_render_stage;
 
-static const struct gl_pipeline_stage *i830_pipeline[] = {
+static const struct tnl_pipeline_stage *i830_pipeline[] = {
    &_tnl_vertex_transform_stage,
    &_tnl_normal_transform_stage,
    &_tnl_lighting_stage,

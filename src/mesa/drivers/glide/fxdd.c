@@ -1242,7 +1242,7 @@ fxDDGetString(GLcontext * ctx, GLenum name)
  }
 }
 
-static const struct gl_pipeline_stage *fx_pipeline[] = {
+static const struct tnl_pipeline_stage *fx_pipeline[] = {
    &_tnl_vertex_transform_stage,	/* TODO: Add the fastpath here */
    &_tnl_normal_transform_stage,
    &_tnl_lighting_stage,

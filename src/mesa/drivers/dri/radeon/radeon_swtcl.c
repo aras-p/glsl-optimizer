@@ -44,8 +44,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "math/m_translate.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
-#include "tnl/t_imm_exec.h"
 #include "tnl/t_pipeline.h"
+#include "tnl/t_vtx_api.h"	/* for _tnl_FlushVertices */
 
 #include "radeon_context.h"
 #include "radeon_ioctl.h"
@@ -521,7 +521,7 @@ static void VERT_FALLBACK( GLcontext *ctx,
    tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
    tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
    tnl->Driver.Render.PrimTabVerts[flags&PRIM_MODE_MASK]( ctx, start, count, flags );
-   RADEON_CONTEXT(ctx)->swtcl.SetupNewInputs = VERT_BIT_CLIP;
+   RADEON_CONTEXT(ctx)->swtcl.SetupNewInputs = VERT_BIT_POS;
 }
 
 static void ELT_FALLBACK( GLcontext *ctx,
@@ -533,7 +533,7 @@ static void ELT_FALLBACK( GLcontext *ctx,
    tnl->Driver.Render.PrimitiveNotify( ctx, flags & PRIM_MODE_MASK );
    tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
    tnl->Driver.Render.PrimTabElts[flags&PRIM_MODE_MASK]( ctx, start, count, flags );
-   RADEON_CONTEXT(ctx)->swtcl.SetupNewInputs = VERT_BIT_CLIP;
+   RADEON_CONTEXT(ctx)->swtcl.SetupNewInputs = VERT_BIT_POS;
 }
 
 
@@ -621,7 +621,7 @@ do {									\
 
 
 static GLboolean radeon_run_render( GLcontext *ctx,
-				    struct gl_pipeline_stage *stage )
+				    struct tnl_pipeline_stage *stage )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -646,18 +646,22 @@ static GLboolean radeon_run_render( GLcontext *ctx,
 	    return GL_TRUE;	/* too many vertices */
    }
 
-   for (i = 0 ; !(flags & PRIM_LAST) ; i += length)
+   for (i = 0 ; i < VB->PrimitiveCount ; i++)
    {
-      flags = VB->Primitive[i];
-      length = VB->PrimitiveLength[i];
+      GLuint prim = VB->Primitive[i].mode;
+      GLuint start = VB->Primitive[i].start;
+      GLuint length = VB->Primitive[i].count;
+
+      if (!length)
+	 continue;
 
       if (RADEON_DEBUG & DEBUG_PRIMS)
-	 fprintf(stderr, "radeon_render.c: prim %s %d..%d\n", 
-		 _mesa_lookup_enum_by_nr(flags & PRIM_MODE_MASK), 
-		 i, i+length);
+	 fprintf(stderr, "r200_render.c: prim %s %d..%d\n", 
+		 _mesa_lookup_enum_by_nr(prim & PRIM_MODE_MASK), 
+		 start, start+length);
 
       if (length)
-	 tab[flags & PRIM_MODE_MASK]( ctx, i, i + length, flags );
+	 tab[prim & PRIM_MODE_MASK]( ctx, start, start + length, flags );
    }
 
    tnl->Driver.Render.Finish( ctx );
@@ -668,9 +672,9 @@ static GLboolean radeon_run_render( GLcontext *ctx,
 
 
 static void radeon_check_render( GLcontext *ctx,
-				 struct gl_pipeline_stage *stage )
+				 struct tnl_pipeline_stage *stage )
 {
-   GLuint inputs = VERT_BIT_POS | VERT_BIT_CLIP | VERT_BIT_COLOR0;
+   GLuint inputs = VERT_BIT_POS | VERT_BIT_COLOR0;
 
    if (ctx->RenderMode == GL_RENDER) {
       if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
@@ -690,13 +694,13 @@ static void radeon_check_render( GLcontext *ctx,
 }
 
 
-static void dtr( struct gl_pipeline_stage *stage )
+static void dtr( struct tnl_pipeline_stage *stage )
 {
    (void)stage;
 }
 
 
-const struct gl_pipeline_stage _radeon_render_stage =
+const struct tnl_pipeline_stage _radeon_render_stage =
 {
    "radeon render",
    (_DD_NEW_SEPARATE_SPECULAR |
@@ -729,7 +733,7 @@ struct texrect_stage_data {
 
 
 static GLboolean run_texrect_stage( GLcontext *ctx,
-				    struct gl_pipeline_stage *stage )
+				    struct tnl_pipeline_stage *stage )
 {
    struct texrect_stage_data *store = TEXRECT_STAGE_DATA(stage);
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
@@ -771,7 +775,7 @@ static GLboolean run_texrect_stage( GLcontext *ctx,
 /* Called the first time stage->run() is invoked.
  */
 static GLboolean alloc_texrect_data( GLcontext *ctx,
-				     struct gl_pipeline_stage *stage )
+				     struct tnl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct texrect_stage_data *store;
@@ -793,7 +797,7 @@ static GLboolean alloc_texrect_data( GLcontext *ctx,
 
 
 static void check_texrect( GLcontext *ctx,
-			   struct gl_pipeline_stage *stage )
+			   struct tnl_pipeline_stage *stage )
 {
    GLuint flags = 0;
 
@@ -809,7 +813,7 @@ static void check_texrect( GLcontext *ctx,
 }
 
 
-static void free_texrect_data( struct gl_pipeline_stage *stage )
+static void free_texrect_data( struct tnl_pipeline_stage *stage )
 {
    struct texrect_stage_data *store = TEXRECT_STAGE_DATA(stage);
    GLuint i;
@@ -824,7 +828,7 @@ static void free_texrect_data( struct gl_pipeline_stage *stage )
 }
 
 
-const struct gl_pipeline_stage _radeon_texrect_stage =
+const struct tnl_pipeline_stage _radeon_texrect_stage =
 {
    "radeon texrect stage",			/* name */
    _NEW_TEXTURE,	/* check_state */
@@ -1193,7 +1197,7 @@ void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 
 void radeonFlushVertices( GLcontext *ctx, GLuint flags )
 {
-   _tnl_flush_vertices( ctx, flags );
+   _tnl_FlushVertices( ctx, flags );
 
    if (flags & FLUSH_STORED_VERTICES)
       RADEON_NEWPRIM( RADEON_CONTEXT( ctx ) );
@@ -1242,13 +1246,4 @@ void radeonDestroySwtcl( GLcontext *ctx )
       rmesa->swtcl.verts = 0;
    }
 
-   if (rmesa->UbyteSecondaryColor.Ptr) {
-      ALIGN_FREE(rmesa->UbyteSecondaryColor.Ptr);
-      rmesa->UbyteSecondaryColor.Ptr = 0;
-   }
-
-   if (rmesa->UbyteColor.Ptr) {
-      ALIGN_FREE(rmesa->UbyteColor.Ptr);
-      rmesa->UbyteColor.Ptr = 0;
-   }
 }

@@ -40,7 +40,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "array_cache/acache.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
-#include "tnl/t_imm_debug.h"
 
 #include "radeon_context.h"
 #include "radeon_state.h"
@@ -53,7 +52,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define RADEON_TCL_MAX_SETUP 13
 
-union emit_union { float f; GLuint ui; radeon_color_t specular; };
+union emit_union { float f; GLuint ui; radeon_color_t rgba; };
 
 static struct {
    void   (*emit)( GLcontext *, GLuint, GLuint, void * );
@@ -307,6 +306,41 @@ void radeonEmitArrays( GLcontext *ctx, GLuint inputs )
 			      VB->Count,
 			      setup_tab[i].vertex_size * 4, 
 			      4);
+
+   /* The vertex code expects Obj to be clean to element 3.  To fix
+    * this, add more vertex code (for obj-2, obj-3) or preferably move
+    * to maos.  
+    */
+   if (VB->ObjPtr->size < 3 || 
+       (VB->ObjPtr->size == 3 && 
+	(setup_tab[i].vertex_format & RADEON_CP_VC_FRMT_W0))) {
+
+      _math_trans_4f( rmesa->tcl.ObjClean.data,
+		      VB->ObjPtr->data,
+		      VB->ObjPtr->stride,
+		      GL_FLOAT,
+		      VB->ObjPtr->size,
+		      0,
+		      VB->Count );
+
+      switch (VB->ObjPtr->size) {
+      case 1:
+	    _mesa_vector4f_clean_elem(&rmesa->tcl.ObjClean, VB->Count, 1);
+      case 2:
+	    _mesa_vector4f_clean_elem(&rmesa->tcl.ObjClean, VB->Count, 2);
+      case 3:
+	 if (setup_tab[i].vertex_format & RADEON_CP_VC_FRMT_W0) {
+	    _mesa_vector4f_clean_elem(&rmesa->tcl.ObjClean, VB->Count, 3);
+	 }
+      case 4:
+      default:
+	 break;
+      }
+
+      VB->ObjPtr = &rmesa->tcl.ObjClean;
+   }
+
+
 
    setup_tab[i].emit( ctx, 0, VB->Count, 
 		      rmesa->tcl.indexed_verts.address + 

@@ -383,7 +383,7 @@ void i810BuildVertices( GLcontext *ctx,
    if (!newinputs)
       return;
 
-   if (newinputs & VERT_BIT_CLIP) {
+   if (newinputs & VERT_BIT_POS) {
       setup_tab[imesa->SetupIndex].emit( ctx, start, count, v, stride );
    } else {
       GLuint ind = 0;

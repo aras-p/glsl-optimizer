@@ -362,7 +362,7 @@ void mgaBuildVertices( GLcontext *ctx,
    if (!newinputs)
       return;
 
-   if (newinputs & VERT_BIT_CLIP) {
+   if (newinputs & VERT_BIT_POS) {
       setup_tab[mmesa->SetupIndex].emit( ctx, start, count, v, stride );   
    } else {
       GLuint ind = 0;

@@ -261,9 +261,9 @@ mgaDestroyScreen(__DRIscreenPrivate *sPriv)
 }
 
 
-extern const struct gl_pipeline_stage _mga_render_stage;
+extern const struct tnl_pipeline_stage _mga_render_stage;
 
-static const struct gl_pipeline_stage *mga_pipeline[] = {
+static const struct tnl_pipeline_stage *mga_pipeline[] = {
    &_tnl_vertex_transform_stage, 
    &_tnl_normal_transform_stage, 
    &_tnl_lighting_stage,	
@@ -683,7 +683,7 @@ void mgaGetLock( mgaContextPtr mmesa, GLuint flags )
 
    if (*(dPriv->pStamp) != mmesa->lastStamp) {
       mmesa->lastStamp = *(dPriv->pStamp);
-      mmesa->SetupNewInputs |= VERT_BIT_CLIP;
+      mmesa->SetupNewInputs |= VERT_BIT_POS;
       mmesa->dirty_cliprects = (MGA_FRONT|MGA_BACK);
       mgaUpdateRects( mmesa, (MGA_FRONT|MGA_BACK) );
    }

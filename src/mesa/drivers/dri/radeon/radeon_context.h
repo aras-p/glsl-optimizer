@@ -57,6 +57,8 @@ typedef struct radeon_context *radeonContextPtr;
 #include "radeon_screen.h"
 #include "mm.h"
 
+#include "math/m_vector.h"
+
 /* Flags for software fallback cases */
 /* See correponding strings in radeon_swtcl.c */
 #define RADEON_FALLBACK_TEXTURE		0x0001
@@ -503,6 +505,11 @@ struct radeon_tcl_info {
    GLint last_offset;
    GLuint hw_primitive;
 
+   /* Temporary for cases where incoming vertex data is incompatible
+    * with maos code.
+    */
+   GLvector4f ObjClean;
+
    struct radeon_dma_region *aos_components[8];
    GLuint nr_aos_components;
 
@@ -698,12 +705,6 @@ struct radeon_context {
    GLuint TclFallback;
    GLuint Fallback;
    GLuint NewGLState;
-
-   
-   /* Temporaries for translating away float colors:
-    */
-   struct gl_client_array UbyteColor;
-   struct gl_client_array UbyteSecondaryColor;
 
    /* Vertex buffers
     */

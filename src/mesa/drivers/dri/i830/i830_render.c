@@ -122,7 +122,7 @@ static void VERT_FALLBACK( GLcontext *ctx,
    tnl->Driver.Render.BuildVertices( ctx, start, count, ~0 );
    tnl->Driver.Render.PrimTabVerts[flags&PRIM_MODE_MASK]( ctx, start, 
 							  count, flags );
-   I830_CONTEXT(ctx)->SetupNewInputs = VERT_BIT_CLIP;
+   I830_CONTEXT(ctx)->SetupNewInputs = VERT_BIT_POS;
 }
 
 
@@ -159,24 +159,27 @@ static GLboolean choose_render( struct vertex_buffer *VB, int bufsz )
    int nr_rprims = 0;
    int nr_rverts = 0;
    int rprim = 0;
-   int i = 0, length, flags = 0;
+   int i;
 
    
-   for (i = VB->FirstPrimitive ; !(flags & PRIM_LAST) ; i += length) {
-      flags = VB->Primitive[i];
-      length = VB->PrimitiveLength[i];
+   for (i = 0 ; i < VB->PrimitiveCount ; i++)
+   {
+      GLuint prim = VB->Primitive[i].mode;
+      GLuint start = VB->Primitive[i].start;
+      GLuint length = VB->Primitive[i].count;
+
       if (!length)
 	 continue;
 
-      if (!hw_prim[flags & PRIM_MODE_MASK])
+      if (!hw_prim[prim & PRIM_MODE_MASK])
 	 return GL_FALSE;
 
       nr_prims++;
-      nr_rverts += length * scale_prim[flags & PRIM_MODE_MASK];
+      nr_rverts += length * scale_prim[prim & PRIM_MODE_MASK];
 
-      if (reduced_prim[flags&PRIM_MODE_MASK] != rprim) {
+      if (reduced_prim[prim&PRIM_MODE_MASK] != rprim) {
 	 nr_rprims++;
-	 rprim = reduced_prim[flags&PRIM_MODE_MASK];
+	 rprim = reduced_prim[prim&PRIM_MODE_MASK];
       }
    }
 
@@ -192,7 +195,7 @@ static GLboolean choose_render( struct vertex_buffer *VB, int bufsz )
 
 
 static GLboolean i830_run_render( GLcontext *ctx, 
-				 struct gl_pipeline_stage *stage )
+				 struct tnl_pipeline_stage *stage )
 {
    i830ContextPtr imesa = I830_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -205,16 +208,21 @@ static GLboolean i830_run_render( GLcontext *ctx,
       return GL_TRUE;
    }
 
-   imesa->SetupNewInputs = VERT_BIT_CLIP;
+   imesa->SetupNewInputs = VERT_BIT_POS;
 
    tnl->Driver.Render.Start( ctx );
    
-   for (i = VB->FirstPrimitive ; !(flags & PRIM_LAST) ; i += length) {
-      flags = VB->Primitive[i];
-      length= VB->PrimitiveLength[i];
-      if (length)
-	 i830_render_tab_verts[flags & PRIM_MODE_MASK]( ctx, i, i + length,
-						        flags );
+   for (i = 0 ; i < VB->PrimitiveCount ; i++)
+   {
+      GLuint prim = VB->Primitive[i].mode;
+      GLuint start = VB->Primitive[i].start;
+      GLuint length = VB->Primitive[i].count;
+
+      if (!length)
+	 continue;
+
+      i830_render_tab_verts[prim & PRIM_MODE_MASK]( ctx, start, start + length,
+						    prim );
    }
       
    tnl->Driver.Render.Finish( ctx );
@@ -224,9 +232,9 @@ static GLboolean i830_run_render( GLcontext *ctx,
 
 
 static void i830_check_render( GLcontext *ctx, 
-			       struct gl_pipeline_stage *stage )
+			       struct tnl_pipeline_stage *stage )
 {
-   GLuint inputs = VERT_BIT_CLIP | VERT_BIT_COLOR0;
+   GLuint inputs = VERT_BIT_POS | VERT_BIT_COLOR0;
    if (ctx->RenderMode == GL_RENDER) {
       if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
 	 inputs |= VERT_BIT_COLOR1;
@@ -244,13 +252,13 @@ static void i830_check_render( GLcontext *ctx,
    stage->inputs = inputs;
 }
 
-static void dtr( struct gl_pipeline_stage *stage )
+static void dtr( struct tnl_pipeline_stage *stage )
 {
    (void)stage;
 }
 
 
-const struct gl_pipeline_stage _i830_render_stage =
+const struct tnl_pipeline_stage _i830_render_stage =
 {
    "i830 render",
    (_DD_NEW_SEPARATE_SPECULAR |

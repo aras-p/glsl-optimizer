@@ -43,7 +43,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "math/m_translate.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
-#include "tnl/t_imm_debug.h"
 
 #include "r200_context.h"
 #include "r200_ioctl.h"
@@ -341,9 +340,6 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
    GLuint vfmt0 = 0, vfmt1 = 0;
    GLuint count = VB->Count;
    
-   if (R200_DEBUG & DEBUG_VERTS) 
-      _tnl_print_vert_flags( __FUNCTION__, inputs );
-
    if (1) {
       if (!rmesa->tcl.obj.buf) 
 	 emit_vector( ctx, 
@@ -358,7 +354,7 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
       case 3: vfmt0 |= R200_VTX_Z0;
       case 2: 
       default:
-	break;
+	 break;
       }
       component[nr++] = &rmesa->tcl.obj;
    }
@@ -378,39 +374,26 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
    }
 
    if (inputs & VERT_BIT_COLOR0) {
-      if (VB->ColorPtr[0]->Type == GL_UNSIGNED_BYTE) {
-	 if (!rmesa->tcl.rgba.buf)
-	    emit_ubyte_rgba( ctx, 
-			     &rmesa->tcl.rgba, 
-			     (char *)VB->ColorPtr[0]->Ptr,
-			     VB->ColorPtr[0]->Size,
-			     VB->ColorPtr[0]->StrideB,
-			     count);
+      int emitsize;
 
-	 vfmt0 |= R200_VTX_PK_RGBA << R200_VTX_COLOR_0_SHIFT; 
+      if (VB->ColorPtr[0]->size == 4 &&
+	  (VB->ColorPtr[0]->stride != 0 ||
+	   VB->ColorPtr[0]->data[0][3] != 1.0)) { 
+	 vfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT; 
+	 emitsize = 4;
       }
-      else {
-	 int emitsize;
-
-	 if (VB->ColorPtr[0]->Size == 4 &&
-	     (VB->ColorPtr[0]->StrideB != 0 ||
-	      ((GLfloat *)VB->ColorPtr[0]->Ptr)[3] != 1.0)) { 
-	    vfmt0 |= R200_VTX_FP_RGBA << R200_VTX_COLOR_0_SHIFT; 
-	    emitsize = 4;
-	 }
-	 else { 
-	    vfmt0 |= R200_VTX_FP_RGB << R200_VTX_COLOR_0_SHIFT; 
-	    emitsize = 3;
-	 }
-
-	 if (!rmesa->tcl.rgba.buf)
-	    emit_vector( ctx, 
-			 &(rmesa->tcl.rgba), 
-			 (char *)VB->ColorPtr[0]->Ptr,
-			 emitsize,
-			 VB->ColorPtr[0]->StrideB,
-			 count);
+      else { 
+	 vfmt0 |= R200_VTX_FP_RGB << R200_VTX_COLOR_0_SHIFT; 
+	 emitsize = 3;
       }
+
+      if (!rmesa->tcl.rgba.buf)
+	 emit_vector( ctx, 
+		      &(rmesa->tcl.rgba), 
+		      (char *)VB->ColorPtr[0]->data,
+		      emitsize,
+		      VB->ColorPtr[0]->stride,
+		      count);
 
       component[nr++] = &rmesa->tcl.rgba;
    }
@@ -418,20 +401,17 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
 
    if (inputs & VERT_BIT_COLOR1) {
       if (!rmesa->tcl.spec.buf) {
-	 if (VB->SecondaryColorPtr[0]->Type != GL_UNSIGNED_BYTE)
-	    r200_import_float_spec_colors( ctx );
-
-	 emit_ubyte_rgba( ctx, 
-			  &rmesa->tcl.spec, 
-			  (char *)VB->SecondaryColorPtr[0]->Ptr,
-			  3,
-			  VB->SecondaryColorPtr[0]->StrideB,
-			  count);
+	 emit_vector( ctx, 
+		      &rmesa->tcl.spec, 
+		      (char *)VB->SecondaryColorPtr[0]->data,
+		      3,
+		      VB->SecondaryColorPtr[0]->stride,
+		      count);
       }
 
       /* How does this work?
        */
-      vfmt0 |= R200_VTX_PK_RGBA << R200_VTX_COLOR_1_SHIFT; 
+      vfmt0 |= R200_VTX_FP_RGB << R200_VTX_COLOR_1_SHIFT; 
       component[nr++] = &rmesa->tcl.spec;
    }
 
@@ -480,8 +460,8 @@ void r200ReleaseArrays( GLcontext *ctx, GLuint newinputs )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
 
-   if (R200_DEBUG & DEBUG_VERTS) 
-      _tnl_print_vert_flags( __FUNCTION__, newinputs );
+/*    if (R200_DEBUG & DEBUG_VERTS)  */
+/*       _tnl_print_vert_flags( __FUNCTION__, newinputs ); */
 
    if (newinputs & VERT_BIT_POS) 
      r200ReleaseDmaRegion( rmesa, &rmesa->tcl.obj, __FUNCTION__ );

@@ -254,7 +254,7 @@ void r200TclPrimitive( GLcontext *ctx,
 /* TCL render.
  */
 static GLboolean r200_run_tcl_render( GLcontext *ctx,
-					struct gl_pipeline_stage *stage )
+				      struct tnl_pipeline_stage *stage )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -277,24 +277,19 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 
    rmesa->tcl.Elts = VB->Elts;
 
-   for (i = VB->FirstPrimitive ; !(flags & PRIM_LAST) ; i += length)
+   for (i = 0 ; i < VB->PrimitiveCount ; i++)
    {
-      flags = VB->Primitive[i];
-      length = VB->PrimitiveLength[i];
-
-      if (R200_DEBUG & DEBUG_PRIMS)
-	 fprintf(stderr, "%s: prim %s %d..%d\n", 
-		 __FUNCTION__,
-		 _mesa_lookup_enum_by_nr(flags & PRIM_MODE_MASK), 
-		 i, i+length);
+      GLuint prim = VB->Primitive[i].mode;
+      GLuint start = VB->Primitive[i].start;
+      GLuint length = VB->Primitive[i].count;
 
       if (!length)
 	 continue;
 
       if (rmesa->tcl.Elts)
-	 r200EmitEltPrimitive( ctx, i, i+length, flags );
+	 r200EmitEltPrimitive( ctx, start, start+length, prim );
       else
-	 r200EmitPrimitive( ctx, i, i+length, flags );
+	 r200EmitPrimitive( ctx, start, start+length, prim );
    }
 
    return GL_FALSE;		/* finished the pipe */
@@ -303,7 +298,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 
 
 static void r200_check_tcl_render( GLcontext *ctx,
-				     struct gl_pipeline_stage *stage )
+				   struct tnl_pipeline_stage *stage )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    GLuint inputs = VERT_BIT_POS;
@@ -359,13 +354,13 @@ static void r200_check_tcl_render( GLcontext *ctx,
 }
 
 static void r200_init_tcl_render( GLcontext *ctx,
-				    struct gl_pipeline_stage *stage )
+				    struct tnl_pipeline_stage *stage )
 {
    stage->check = r200_check_tcl_render;
    stage->check( ctx, stage );
 }
 
-static void dtr( struct gl_pipeline_stage *stage )
+static void dtr( struct tnl_pipeline_stage *stage )
 {
    (void)stage;
 }
@@ -373,7 +368,7 @@ static void dtr( struct gl_pipeline_stage *stage )
 
 /* Initial state for tcl stage.  
  */
-const struct gl_pipeline_stage _r200_tcl_stage =
+const struct tnl_pipeline_stage _r200_tcl_stage =
 {
    "r200 render",
    (_DD_NEW_SEPARATE_SPECULAR |

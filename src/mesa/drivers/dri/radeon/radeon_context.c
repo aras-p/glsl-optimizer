@@ -165,11 +165,11 @@ static const char * const card_extensions[] =
     NULL
 };
 
-extern const struct gl_pipeline_stage _radeon_texrect_stage;
-extern const struct gl_pipeline_stage _radeon_render_stage;
-extern const struct gl_pipeline_stage _radeon_tcl_stage;
+extern const struct tnl_pipeline_stage _radeon_texrect_stage;
+extern const struct tnl_pipeline_stage _radeon_render_stage;
+extern const struct tnl_pipeline_stage _radeon_tcl_stage;
 
-static const struct gl_pipeline_stage *radeon_pipeline[] = {
+static const struct tnl_pipeline_stage *radeon_pipeline[] = {
 
    /* Try and go straight to t&l
     */
@@ -412,6 +412,9 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    radeonInitState( rmesa );
    radeonInitSwtcl( ctx );
 
+   _mesa_vector4f_alloc( &rmesa->tcl.ObjClean, 0, 
+			 ctx->Const.MaxArrayLockSize, 32 );
+
    fthrottle_mode = driQueryOptioni(&rmesa->optionCache, "fthrottle_mode");
    rmesa->iw.irq_seq = -1;
    rmesa->irqsEmitted = 0;
@@ -504,6 +507,8 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
       /* free the Mesa context */
       rmesa->glCtx->DriverCtx = NULL;
       _mesa_destroy_context( rmesa->glCtx );
+
+      _mesa_vector4f_free( &rmesa->tcl.ObjClean );
 
       if (rmesa->state.scissor.pClipRects) {
 	 FREE(rmesa->state.scissor.pClipRects);

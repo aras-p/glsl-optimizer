@@ -826,16 +826,10 @@ void r200VtxfmtInitChoosers( GLvertexformat *vfmt )
 {
    vfmt->Color3f = choose_Color3f;
    vfmt->Color3fv = choose_Color3fv;
-   vfmt->Color3ub = choose_Color3ub;
-   vfmt->Color3ubv = choose_Color3ubv;
    vfmt->Color4f = choose_Color4f;
    vfmt->Color4fv = choose_Color4fv;
-   vfmt->Color4ub = choose_Color4ub;
-   vfmt->Color4ubv = choose_Color4ubv;
    vfmt->SecondaryColor3fEXT = choose_SecondaryColor3fEXT;
    vfmt->SecondaryColor3fvEXT = choose_SecondaryColor3fvEXT;
-   vfmt->SecondaryColor3ubEXT = choose_SecondaryColor3ubEXT;
-   vfmt->SecondaryColor3ubvEXT = choose_SecondaryColor3ubvEXT;
    vfmt->MultiTexCoord1fARB = choose_MultiTexCoord1fARB;
    vfmt->MultiTexCoord1fvARB = choose_MultiTexCoord1fvARB;
    vfmt->MultiTexCoord2fARB = choose_MultiTexCoord2fARB;
@@ -850,6 +844,17 @@ void r200VtxfmtInitChoosers( GLvertexformat *vfmt )
    vfmt->Vertex2fv = choose_Vertex2fv;
    vfmt->Vertex3f = choose_Vertex3f;
    vfmt->Vertex3fv = choose_Vertex3fv;
+
+   /* TODO: restore ubyte colors to vtxfmt.
+    */
+#if 0
+   vfmt->Color3ub = choose_Color3ub;
+   vfmt->Color3ubv = choose_Color3ubv;
+   vfmt->Color4ub = choose_Color4ub;
+   vfmt->Color4ubv = choose_Color4ubv;
+   vfmt->SecondaryColor3ubEXT = choose_SecondaryColor3ubEXT;
+   vfmt->SecondaryColor3ubvEXT = choose_SecondaryColor3ubvEXT;
+#endif
 }
 
 
