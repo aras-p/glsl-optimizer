@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.39 2002/02/15 16:24:37 brianp Exp $ */
+/* $Id: matrix.c,v 1.40 2002/04/22 20:00:16 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -209,6 +209,7 @@ void
 _mesa_LoadMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
+   if (!m) return;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    _math_matrix_loadf( ctx->CurrentStack->Top, m );
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
@@ -220,6 +221,7 @@ _mesa_LoadMatrixd( const GLdouble *m )
 {
    GLint i;
    GLfloat f[16];
+   if (!m) return;
    for (i = 0; i < 16; i++)
       f[i] = (GLfloat) m[i];
    _mesa_LoadMatrixf(f);
@@ -234,6 +236,7 @@ void
 _mesa_MultMatrixf( const GLfloat *m )
 {
    GET_CURRENT_CONTEXT(ctx);
+   if (!m) return;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    _math_matrix_mul_floats( ctx->CurrentStack->Top, m );
    ctx->NewState |= ctx->CurrentStack->DirtyFlag;
@@ -248,6 +251,7 @@ _mesa_MultMatrixd( const GLdouble *m )
 {
    GLint i;
    GLfloat f[16];
+   if (!m) return;
    for (i = 0; i < 16; i++)
       f[i] = (GLfloat) m[i];
    _mesa_MultMatrixf( f );
@@ -321,6 +325,7 @@ void
 _mesa_LoadTransposeMatrixfARB( const GLfloat *m )
 {
    GLfloat tm[16];
+   if (!m) return;
    _math_transposef(tm, m);
    _mesa_LoadMatrixf(tm);
 }
@@ -330,6 +335,7 @@ void
 _mesa_LoadTransposeMatrixdARB( const GLdouble *m )
 {
    GLfloat tm[16];
+   if (!m) return;
    _math_transposefd(tm, m);
    _mesa_LoadMatrixf(tm);
 }
@@ -339,6 +345,7 @@ void
 _mesa_MultTransposeMatrixfARB( const GLfloat *m )
 {
    GLfloat tm[16];
+   if (!m) return;
    _math_transposef(tm, m);
    _mesa_MultMatrixf(tm);
 }
@@ -348,6 +355,7 @@ void
 _mesa_MultTransposeMatrixdARB( const GLdouble *m )
 {
    GLfloat tm[16];
+   if (!m) return;
    _math_transposefd(tm, m);
    _mesa_MultMatrixf(tm);
 }
