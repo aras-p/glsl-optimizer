@@ -29,6 +29,52 @@
 #define BUFFEROBJ_H
 
 
+/*
+ * Internal functions
+ */
+
+extern void
+_mesa_initialize_buffer_object( struct gl_buffer_object *obj,
+                                GLuint name, GLenum target );
+
+extern struct gl_buffer_object *
+_mesa_new_buffer_object( GLcontext *ctx, GLuint name, GLenum target );
+
+extern void
+_mesa_initialize_buffer_object( struct gl_buffer_object *obj,
+				GLuint name, GLenum target );
+
+extern void
+_mesa_save_buffer_object( GLcontext *ctx, struct gl_buffer_object *obj );
+
+extern void
+_mesa_remove_buffer_object( GLcontext *ctx, struct gl_buffer_object *bufObj );
+
+extern void
+_mesa_buffer_data( GLcontext *ctx, GLenum target, GLsizeiptrARB size,
+		   const GLvoid * data, GLenum usage,
+		   struct gl_buffer_object * bufObj );
+
+extern void
+_mesa_buffer_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
+		      GLsizeiptrARB size, const GLvoid * data,
+		      struct gl_buffer_object * bufObj );
+
+extern void
+_mesa_buffer_get_subdata( GLcontext *ctx, GLenum target, GLintptrARB offset,
+			  GLsizeiptrARB size, GLvoid * data,
+			  struct gl_buffer_object * bufObj );
+
+extern void *
+_mesa_buffer_map( GLcontext *ctx, GLenum target, GLenum access,
+		  struct gl_buffer_object * bufObj );
+
+
+
+/*
+ * API functions
+ */
+
 extern void
 _mesa_BindBufferARB(GLenum target, GLuint buffer);
 
