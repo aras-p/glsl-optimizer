@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.59 2002/01/05 21:53:20 brianp Exp $ */
+/* $Id: attrib.c,v 1.60 2002/02/13 00:53:19 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -52,6 +52,7 @@
 #include "texobj.h"
 #include "texstate.h"
 #include "mtypes.h"
+#include "math/m_xform.h"
 #endif
 
 
@@ -917,11 +918,30 @@ _mesa_PopAttrib(void)
                /* lighting enable */
                _mesa_set_enable(ctx, GL_LIGHTING, light->Enabled);
                /* per-light state */
+
+	       if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) 
+		  _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
+	       
                for (i = 0; i < MAX_LIGHTS; i++) {
                   GLenum lgt = (GLenum) (GL_LIGHT0 + i);
-                  _mesa_set_enable(ctx, lgt, light->Light[i].Enabled);
-                  MEMCPY(&ctx->Light.Light[i], &light->Light[i],
-                         sizeof(struct gl_light));
+		  const struct gl_light *l = &light->Light[i];
+		  GLfloat tmp[4];
+                  _mesa_set_enable(ctx, lgt, l->Enabled);
+		  _mesa_Lightfv( lgt, GL_AMBIENT, l->Ambient );
+		  _mesa_Lightfv( lgt, GL_DIFFUSE, l->Diffuse );
+		  _mesa_Lightfv( lgt, GL_SPECULAR, l->Specular );
+		  TRANSFORM_POINT( tmp, ctx->ModelviewMatrixStack.Top->inv, l->EyePosition );
+		  _mesa_Lightfv( lgt, GL_POSITION, tmp );
+		  TRANSFORM_POINT( tmp, ctx->ModelviewMatrixStack.Top->m, l->EyeDirection );
+		  _mesa_Lightfv( lgt, GL_SPOT_DIRECTION, tmp );
+		  _mesa_Lightfv( lgt, GL_SPOT_EXPONENT, &l->SpotExponent );
+		  _mesa_Lightfv( lgt, GL_SPOT_CUTOFF, &l->SpotCutoff );
+		  _mesa_Lightfv( lgt, GL_CONSTANT_ATTENUATION, 
+				 &l->ConstantAttenuation );
+		  _mesa_Lightfv( lgt, GL_LINEAR_ATTENUATION, 
+				 &l->LinearAttenuation );
+		  _mesa_Lightfv( lgt, GL_QUADRATIC_ATTENUATION, 
+				 &l->QuadraticAttenuation );
                }
                /* light model */
                _mesa_LightModelfv(GL_LIGHT_MODEL_AMBIENT,
@@ -1030,15 +1050,16 @@ _mesa_PopAttrib(void)
                const struct gl_transform_attrib *xform;
                xform = (const struct gl_transform_attrib *) attr->data;
                _mesa_MatrixMode(xform->MatrixMode);
-               /* clip planes */
-               MEMCPY(ctx->Transform.EyeUserPlane, xform->EyeUserPlane,
-                      sizeof(xform->EyeUserPlane));
-               MEMCPY(ctx->Transform._ClipUserPlane, xform->_ClipUserPlane,
-                      sizeof(xform->EyeUserPlane));
-               /* clip plane enable flags */
                for (i = 0; i < MAX_CLIP_PLANES; i++) {
+		  GLdouble equation[4];
+		  const GLfloat *eq = xform->EyeUserPlane[i];
                   _mesa_set_enable(ctx, GL_CLIP_PLANE0 + i,
                                    xform->ClipEnabled[i]);
+		  equation[0] = (GLdouble) eq[0];
+		  equation[1] = (GLdouble) eq[1];
+		  equation[2] = (GLdouble) eq[2];
+		  equation[3] = (GLdouble) eq[3];
+		  _mesa_ClipPlane( GL_CLIP_PLANE0 + i, equation );
                }
                /* normalize/rescale */
                _mesa_set_enable(ctx, GL_NORMALIZE, ctx->Transform.Normalize);

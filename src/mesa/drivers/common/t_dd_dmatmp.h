@@ -1,4 +1,4 @@
-/* $Id: t_dd_dmatmp.h,v 1.11 2001/12/11 15:13:57 keithw Exp $ */
+/* $Id: t_dd_dmatmp.h,v 1.12 2002/02/13 00:53:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -201,7 +201,7 @@ static void TAG(render_line_strip_verts)( GLcontext *ctx,
       if (currentsz < 8)
 	 currentsz = dmasz;
 
-      for (j = start; j < count - 1; j += nr - 1 ) {
+      for (j = start; j + 1 < count; j += nr - 1 ) {
 	 nr = MIN2( currentsz, count - j );
 	 EMIT_VERTS( ctx, j, nr );
 	 currentsz = dmasz;
@@ -242,7 +242,7 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
       if (currentsz < 8)
 	 currentsz = dmasz;
 
-      for ( ; j < count - 1; j += nr - 1 ) {
+      for ( ; j + 1 < count; j += nr - 1 ) {
 	 nr = MIN2( currentsz, count - j );
 	 EMIT_VERTS( ctx, j, nr );
 	 currentsz = dmasz;
@@ -306,7 +306,7 @@ static void TAG(render_tri_strip_verts)( GLcontext *ctx,
       currentsz = GET_CURRENT_VB_MAX_VERTS();
 
       if (currentsz < 8) {
-	 FIRE_VERTICES();
+	 NEW_BUFFER();
 	 currentsz = dmasz;
       }
 
@@ -323,7 +323,7 @@ static void TAG(render_tri_strip_verts)( GLcontext *ctx,
       dmasz -= (dmasz & 1);
       currentsz -= (currentsz & 1);
 
-      for (j = start ; j < count - 2; j += nr - 2 ) {
+      for (j = start ; j + 2 < count; j += nr - 2 ) {
 	 nr = MIN2( currentsz, count - j );
 	 EMIT_VERTS( ctx, j, nr );
 	 currentsz = dmasz;
@@ -351,11 +351,11 @@ static void TAG(render_tri_fan_verts)( GLcontext *ctx,
       INIT(GL_TRIANGLE_FAN);
 
       if (currentsz < 8) {
-	 FIRE_VERTICES();
+	 NEW_BUFFER();
 	 currentsz = dmasz;
       }
 
-      for (j = start + 1 ; j < count - 1; j += nr - 1 ) {
+      for (j = start + 1 ; j + 1 < count; j += nr - 1 ) {
 	 nr = MIN2( currentsz, count - j + 1 );
 	 EMIT_VERTS( ctx, start, 1 );
 	 EMIT_VERTS( ctx, j, nr - 1 );
@@ -389,11 +389,11 @@ static void TAG(render_poly_verts)( GLcontext *ctx,
       INIT(GL_POLYGON);
 
       if (currentsz < 8) {
-	 FIRE_VERTICES();
+	 NEW_BUFFER();
 	 currentsz = dmasz;
       }
 
-      for (j = start + 1 ; j < count - 1 ; j += nr - 1 ) {
+      for (j = start + 1 ; j + 1 < count ; j += nr - 1 ) {
 	 nr = MIN2( currentsz, count - j + 1 );
 	 EMIT_VERTS( ctx, start, 1 );
 	 EMIT_VERTS( ctx, j, nr - 1 );
@@ -429,14 +429,14 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
       currentsz = GET_CURRENT_VB_MAX_VERTS();
 
       if (currentsz < 8) {
-	 FIRE_VERTICES();
+	 NEW_BUFFER();
 	 currentsz = dmasz;
       }
 
       dmasz -= (dmasz & 2);
       currentsz -= (currentsz & 2);
 
-      for (j = start ; j < count - 3; j += nr - 2 ) {
+      for (j = start ; j + 3 < count; j += nr - 2 ) {
 	 nr = MIN2( currentsz, count - j );
 	 EMIT_VERTS( ctx, j, nr );
 	 currentsz = dmasz;
@@ -444,7 +444,7 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
 
       FINISH;
 
-   } else if (HAVE_TRI_STRIPS && ctx->_TriangleCaps & DD_FLATSHADE) {
+   } else if (HAVE_TRI_STRIPS && (ctx->_TriangleCaps & DD_FLATSHADE)) {
       if (TAG(emit_elt_verts)( ctx, start, count )) {
 	 LOCAL_VARS;
 	 int dmasz = GET_SUBSEQUENT_VB_MAX_ELTS();
@@ -470,7 +470,7 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
 	 currentsz = currentsz/6*2;
 	 dmasz = dmasz/6*2;
 
-	 for (j = start; j < count - 3; j += nr - 2 ) {
+	 for (j = start; j + 3 < count; j += nr - 2 ) {
 	    nr = MIN2( currentsz, count - j );
 	    if (nr >= 4) {
 	       GLint quads = (nr/2)-1;
@@ -518,11 +518,11 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
       count -= (count-start) & 1;
 
       if (currentsz < 8) {
-	 FIRE_VERTICES();
+	 NEW_BUFFER();
 	 currentsz = dmasz;
       }
 
-      for (j = start; j < count - 3; j += nr - 2 ) {
+      for (j = start; j + 3 < count; j += nr - 2 ) {
 	 nr = MIN2( currentsz, count - j );
 	 EMIT_VERTS( ctx, j, nr );
 	 currentsz = dmasz;
@@ -739,7 +739,7 @@ static void TAG(render_line_strip_elts)( GLcontext *ctx,
       if (currentsz < 8)
 	 currentsz = dmasz;
 
-      for (j = start; j < count - 1; j += nr - 1 ) {
+      for (j = start; j + 1 < count; j += nr - 1 ) {
 	 nr = MIN2( currentsz, count - j );
 	 TAG(emit_elts)( ctx, elts+j, nr );
 	 NEW_PRIMITIVE();
@@ -775,7 +775,7 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
 
       currentsz = GET_CURRENT_VB_MAX_ELTS();
       if (currentsz < 8) {
-	 FIRE_VERTICES();
+	 NEW_BUFFER();
 	 currentsz = dmasz;
       }
 
@@ -784,7 +784,7 @@ static void TAG(render_line_loop_elts)( GLcontext *ctx,
       currentsz--;
       dmasz--;
 
-      for ( ; j < count - 1; j += nr - 1 ) {
+      for ( ; j + 1 < count; j += nr - 1 ) {
 	 nr = MIN2( currentsz, count - j );
 /*  	 NEW_PRIMITIVE(); */
 	 TAG(emit_elts)( ctx, elts+j, nr );
@@ -857,7 +857,7 @@ static void TAG(render_tri_strip_elts)( GLcontext *ctx,
 
       currentsz = GET_CURRENT_VB_MAX_ELTS();
       if (currentsz < 8) {
-	 FIRE_VERTICES();
+	 NEW_BUFFER();
 	 currentsz = dmasz;
       }
 
@@ -870,7 +870,7 @@ static void TAG(render_tri_strip_elts)( GLcontext *ctx,
       dmasz -= (dmasz & 1);
       currentsz -= (currentsz & 1);
 
-      for (j = start ; j < count - 2; j += nr - 2 ) {
+      for (j = start ; j + 2 < count; j += nr - 2 ) {
 	 nr = MIN2( currentsz, count - j );
 	 TAG(emit_elts)( ctx, elts+j, nr );
 	 NEW_PRIMITIVE();
@@ -899,11 +899,11 @@ static void TAG(render_tri_fan_elts)( GLcontext *ctx,
 
       currentsz = GET_CURRENT_VB_MAX_ELTS();
       if (currentsz < 8) {
-	 FIRE_VERTICES();
+	 NEW_BUFFER();
 	 currentsz = dmasz;
       }
 
-      for (j = start + 1 ; j < count - 1; j += nr - 1 ) {
+      for (j = start + 1 ; j + 1 < count; j += nr - 1 ) {
 	 nr = MIN2( currentsz, count - j + 1 );
 	 TAG(emit_elts)( ctx, elts+start, 1 );
 	 TAG(emit_elts)( ctx, elts+j, nr - 1 );
@@ -935,11 +935,11 @@ static void TAG(render_poly_elts)( GLcontext *ctx,
 
       currentsz = GET_CURRENT_VB_MAX_ELTS();
       if (currentsz < 8) {
-	 FIRE_VERTICES();
+	 NEW_BUFFER();
 	 currentsz = dmasz;
       }
 
-      for (j = start + 1 ; j < count - 1 ; j += nr - 1 ) {
+      for (j = start + 1 ; j + 1 < count ; j += nr - 1 ) {
 	 nr = MIN2( currentsz, count - j + 1 );
 	 TAG(emit_elts)( ctx, elts+start, 1 );
 	 TAG(emit_elts)( ctx, elts+j, nr - 1 );
@@ -983,7 +983,7 @@ static void TAG(render_quad_strip_elts)( GLcontext *ctx,
 	 currentsz = currentsz/6*2;
 	 dmasz = dmasz/6*2;
 
-	 for (j = start; j < count - 3; j += nr - 2 ) {
+	 for (j = start; j + 3 < count; j += nr - 2 ) {
 	    nr = MIN2( currentsz, count - j );
 
 	    if (nr >= 4)
@@ -1012,7 +1012,7 @@ static void TAG(render_quad_strip_elts)( GLcontext *ctx,
       else {
 	 ELT_INIT( GL_TRIANGLE_STRIP );
 
-	 for (j = start; j < count - 3; j += nr - 2 ) {
+	 for (j = start; j + 3 < count; j += nr - 2 ) {
 	    nr = MIN2( currentsz, count - j );
 	    TAG(emit_elts)( ctx, elts+j, nr );
 	    NEW_PRIMITIVE();
@@ -1053,7 +1053,7 @@ static void TAG(render_quads_elts)( GLcontext *ctx,
       if (currentsz < 8)
 	 currentsz = dmasz;
 
-      for (j = start; j < count - 3; j += nr - 2 ) {
+      for (j = start; j + 3 < count; j += nr - 2 ) {
 	 nr = MIN2( currentsz, count - j );
 
 	 if (nr >= 4)

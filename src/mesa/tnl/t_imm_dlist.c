@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.37 2002/01/22 14:35:16 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.38 2002/02/13 00:53:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -339,6 +339,7 @@ execute_compiled_cassette( GLcontext *ctx, void *data )
    }
 
    if (tnl->LoopbackDListCassettes) {
+/*        (tnl->IsolateMaterials && (IM->OrFlag & VERT_MATERIAL)) ) { */
       fixup_compiled_primitives( ctx, IM );
       loopback_compiled_cassette( ctx, IM );
       restore_compiled_primitives( ctx, IM );

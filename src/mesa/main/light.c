@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.48 2001/12/18 04:06:45 brianp Exp $ */
+/* $Id: light.c,v 1.49 2002/02/13 00:53:19 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -407,6 +407,11 @@ _mesa_LightModelfv( GLenum pname, const GLfloat *params )
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_LIGHT);
 	 ctx->Light.Model.TwoSide = newbool;
+
+	 if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
+	    ctx->_TriangleCaps |= DD_TRI_LIGHT_TWOSIDE;
+	 else
+	    ctx->_TriangleCaps &= ~DD_TRI_LIGHT_TWOSIDE;
          break;
       case GL_LIGHT_MODEL_COLOR_CONTROL:
          if (params[0] == (GLfloat) GL_SINGLE_COLOR)
@@ -883,6 +888,9 @@ _mesa_ColorMaterial( GLenum face, GLenum mode )
       FLUSH_CURRENT( ctx, 0 );
       _mesa_update_color_material(ctx,ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
    }
+
+   if (ctx->Driver.ColorMaterial)
+      (*ctx->Driver.ColorMaterial)( ctx, face, mode );
 }
 
 
@@ -1162,7 +1170,6 @@ void
 _mesa_update_lighting( GLcontext *ctx )
 {
    struct gl_light *light;
-   ctx->_TriangleCaps &= ~DD_TRI_LIGHT_TWOSIDE;
    ctx->_NeedEyeCoords &= ~NEED_EYE_LIGHT;
    ctx->_NeedNormals &= ~NEED_NORMALS_LIGHT;
    ctx->Light._Flags = 0;
@@ -1171,9 +1178,6 @@ _mesa_update_lighting( GLcontext *ctx )
       return;
 
    ctx->_NeedNormals |= NEED_NORMALS_LIGHT;
-
-   if (ctx->Light.Model.TwoSide)
-      ctx->_TriangleCaps |= DD_TRI_LIGHT_TWOSIDE;
 
    foreach(light, &ctx->Light.EnabledList) {
       ctx->Light._Flags |= light->_Flags;

@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.65 2001/12/14 02:50:01 brianp Exp $ */
+/* $Id: dd.h,v 1.66 2002/02/13 00:53:19 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -474,10 +474,11 @@ struct dd_function_table {
    void (*ClearDepth)(GLcontext *ctx, GLclampd d);
    void (*ClearIndex)(GLcontext *ctx, GLuint index);
    void (*ClearStencil)(GLcontext *ctx, GLint s);
+   void (*ClipPlane)(GLcontext *ctx, GLenum plane, const GLfloat *equation );
    void (*ColorMask)(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
                      GLboolean bmask, GLboolean amask );
+   void (*ColorMaterial)(GLcontext *ctx, GLenum face, GLenum mode);
    void (*CullFace)(GLcontext *ctx, GLenum mode);
-   void (*ClipPlane)(GLcontext *ctx, GLenum plane, const GLfloat *equation );
    void (*FrontFace)(GLcontext *ctx, GLenum mode);
    void (*DepthFunc)(GLcontext *ctx, GLenum func);
    void (*DepthMask)(GLcontext *ctx, GLboolean flag);
@@ -634,7 +635,6 @@ struct dd_function_table {
    void (*UnlockArraysEXT)( GLcontext *ctx );
    /* Called by glLockArraysEXT() and glUnlockArraysEXT(), respectively.
     */
-
 };
 
 

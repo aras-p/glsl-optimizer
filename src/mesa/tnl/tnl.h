@@ -1,4 +1,4 @@
-/* $Id: tnl.h,v 1.8 2001/06/28 17:34:14 keithw Exp $ */
+/* $Id: tnl.h,v 1.9 2002/02/13 00:53:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,5 +71,8 @@ _tnl_need_dlist_loopback( GLcontext *ctx, GLboolean flag );
 
 extern void
 _tnl_need_dlist_norm_lengths( GLcontext *ctx, GLboolean flag );
+
+extern void
+_tnl_isolate_materials( GLcontext *ctx, GLboolean flag );
 
 #endif

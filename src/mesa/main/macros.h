@@ -1,4 +1,4 @@
-/* $Id: macros.h,v 1.24 2001/06/11 07:52:51 joukj Exp $ */
+/* $Id: macros.h,v 1.25 2002/02/13 00:53:19 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -268,6 +268,13 @@ do {						\
       (DST)[0] = (SRCA)[0] * (SRCB)[0];		\
       (DST)[1] = (SRCA)[1] * (SRCB)[1];		\
       (DST)[2] = (SRCA)[2] * (SRCB)[2];		\
+} while (0)
+
+#define SELF_SCALE_3V( DST, SRC )		\
+do {						\
+      (DST)[0] *= (SRC)[0];			\
+      (DST)[1] *= (SRC)[1];			\
+      (DST)[2] *= (SRC)[2];			\
 } while (0)
 
 #define ACC_3V( DST, SRC )			\

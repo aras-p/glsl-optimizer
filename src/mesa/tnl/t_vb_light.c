@@ -1,4 +1,4 @@
-/* $Id: t_vb_light.c,v 1.17 2002/01/22 14:35:17 brianp Exp $ */
+/* $Id: t_vb_light.c,v 1.18 2002/02/13 00:53:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -232,7 +232,7 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
 
    /* This and the above should only be done on _NEW_LIGHT:
     */
-   _mesa_validate_all_lighting_tables( ctx );
+   TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
 
    /* Now run the stage...
     */

@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.35 2002/01/22 14:35:16 brianp Exp $ */
+/* $Id: t_imm_exec.c,v 1.36 2002/02/13 00:53:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -149,7 +149,7 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
       if (ctx->Light.ColorMaterialEnabled) {
 	 _mesa_update_color_material( ctx,
                                    ctx->Current.Attrib[VERT_ATTRIB_COLOR0] );
-	 _mesa_validate_all_lighting_tables( ctx );
+ 	 TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
       }
    }
 
@@ -175,7 +175,7 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
 			  IM->Material[IM->LastMaterial],
 			  IM->MaterialOrMask );
 
-      _mesa_validate_all_lighting_tables( ctx );
+      TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
    }
 }
 
@@ -356,7 +356,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
       }
    }
 
-   if ((inputs & VERT_BIT_MATERIAL) && IM->Material) {
+   if ((inputs & IM->OrFlag & VERT_BIT_MATERIAL) && IM->Material) {
       VB->MaterialMask = IM->MaterialMask + start;
       VB->Material = IM->Material + start;
    }
@@ -482,7 +482,7 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
 
-   if (IM->CopyStart == IM->Count) {
+   if (0 && IM->CopyStart == IM->Count) {
       exec_empty_cassette( ctx, IM );
    }
    else if ((IM->CopyOrFlag & VERT_BITS_DATA) == VERT_BIT_ELT &&

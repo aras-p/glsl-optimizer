@@ -1,4 +1,4 @@
-/* $Id: t_vb_rendertmp.h,v 1.8 2001/03/12 00:48:44 gareth Exp $ */
+/* $Id: t_vb_rendertmp.h,v 1.9 2002/02/13 00:53:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -90,8 +90,8 @@ static void TAG(render_lines)( GLcontext *ctx,
    RESET_OCCLUSION;
    INIT(GL_LINES);
    for (j=start+1; j<count; j+=2 ) {
-      RENDER_LINE( ELT(j-1), ELT(j) );
       RESET_STIPPLE;
+      RENDER_LINE( ELT(j-1), ELT(j) );
    }
    POSTFIX;
 }
@@ -109,11 +109,12 @@ static void TAG(render_line_strip)( GLcontext *ctx,
    RESET_OCCLUSION;
    INIT(GL_LINE_STRIP);
 
+   if (TEST_PRIM_BEGIN(flags)) {
+      RESET_STIPPLE;
+   }
+
    for (j=start+1; j<count; j++ )
       RENDER_LINE( ELT(j-1), ELT(j) );
-
-   if (TEST_PRIM_END(flags))
-      RESET_STIPPLE;
 
    POSTFIX;
 }
@@ -134,6 +135,7 @@ static void TAG(render_line_loop)( GLcontext *ctx,
 
    if (start+1 < count) {
       if (TEST_PRIM_BEGIN(flags)) {
+	 RESET_STIPPLE;
 	 RENDER_LINE( ELT(start), ELT(start+1) );
       }
 
@@ -143,7 +145,6 @@ static void TAG(render_line_loop)( GLcontext *ctx,
 
       if ( TEST_PRIM_END(flags)) {
 	 RENDER_LINE( ELT(count-1), ELT(start) );
-	 RESET_STIPPLE;
       }
    }
 
@@ -165,8 +166,8 @@ static void TAG(render_triangles)( GLcontext *ctx,
       for (j=start+2; j<count; j+=3) {
 	 /* Leave the edgeflags as supplied by the user.
 	  */
-	 RENDER_TRI( ELT(j-2), ELT(j-1), ELT(j) );
 	 RESET_STIPPLE;
+	 RENDER_TRI( ELT(j-2), ELT(j-1), ELT(j) );
       }
    } else {
       for (j=start+2; j<count; j+=3) {
@@ -199,6 +200,9 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
 	 GLboolean ef2 = EDGEFLAG_GET( ej2 );
 	 GLboolean ef1 = EDGEFLAG_GET( ej1 );
 	 GLboolean ef = EDGEFLAG_GET( ej );
+	 if (TEST_PRIM_BEGIN(flags)) {
+	    RESET_STIPPLE;
+	 }
 	 EDGEFLAG_SET( ej2, GL_TRUE );
 	 EDGEFLAG_SET( ej1, GL_TRUE );
 	 EDGEFLAG_SET( ej, GL_TRUE );
@@ -206,7 +210,6 @@ static void TAG(render_tri_strip)( GLcontext *ctx,
 	 EDGEFLAG_SET( ej2, ef2 );
 	 EDGEFLAG_SET( ej1, ef1 );
 	 EDGEFLAG_SET( ej, ef );
-	 RESET_STIPPLE;
       }
    } else {
       for (j=start+2; j<count ; j++, parity^=1) {
@@ -237,6 +240,9 @@ static void TAG(render_tri_fan)( GLcontext *ctx,
 	 GLboolean efs = EDGEFLAG_GET( ejs );
 	 GLboolean ef1 = EDGEFLAG_GET( ej1 );
 	 GLboolean ef = EDGEFLAG_GET( ej );
+	 if (TEST_PRIM_BEGIN(flags)) {
+	    RESET_STIPPLE;
+	 }
 	 EDGEFLAG_SET( ejs, GL_TRUE );
 	 EDGEFLAG_SET( ej1, GL_TRUE );
 	 EDGEFLAG_SET( ej, GL_TRUE );
@@ -244,7 +250,6 @@ static void TAG(render_tri_fan)( GLcontext *ctx,
 	 EDGEFLAG_SET( ejs, efs );
 	 EDGEFLAG_SET( ej1, ef1 );
 	 EDGEFLAG_SET( ej, ef );
-	 RESET_STIPPLE;
       }
    } else {
       for (j=start+2;j<count;j++) {
@@ -275,6 +280,9 @@ static void TAG(render_poly)( GLcontext *ctx,
        */
       if (!TEST_PRIM_BEGIN(flags))
 	 EDGEFLAG_SET( ELT(start), GL_FALSE );
+      else {
+	 RESET_STIPPLE;
+      }
 
       /* If the primitive does not end here, the final edge is
        * non-boundary.
@@ -284,7 +292,7 @@ static void TAG(render_poly)( GLcontext *ctx,
 
       /* Draw the first triangles (possibly zero)
        */
-      if (j<count-1) {
+      if (j+1<count) {
 	 GLboolean ef = EDGEFLAG_GET( ELT(j) );
 	 EDGEFLAG_SET( ELT(j), GL_FALSE );
 	 RENDER_TRI( ELT(j-1), ELT(j), ELT(start) );
@@ -295,7 +303,7 @@ static void TAG(render_poly)( GLcontext *ctx,
 	  */
 	 EDGEFLAG_SET( ELT(start), GL_FALSE );
 
-	 for (;j<count-1;j++) {
+	 for (;j+1<count;j++) {
 	    GLboolean efj = EDGEFLAG_GET( ELT(j) );
 	    EDGEFLAG_SET( ELT(j), GL_FALSE );
 	    RENDER_TRI( ELT(j-1), ELT(j), ELT(start) );
@@ -313,9 +321,6 @@ static void TAG(render_poly)( GLcontext *ctx,
       EDGEFLAG_SET( ELT(count-1), efcount );
       EDGEFLAG_SET( ELT(start), efstart );
 
-      if (TEST_PRIM_END(flags)) {
-	 RESET_STIPPLE;
-      }
    }
    else {
       for (j=start+2;j<count;j++) {
@@ -339,8 +344,8 @@ static void TAG(render_quads)( GLcontext *ctx,
       for (j=start+3; j<count; j+=4) {
 	 /* Use user-specified edgeflags for quads.
 	  */
-	 RENDER_QUAD( ELT(j-3), ELT(j-2), ELT(j-1), ELT(j) );
 	 RESET_STIPPLE;
+	 RENDER_QUAD( ELT(j-3), ELT(j-2), ELT(j-1), ELT(j) );
       }
    } else {
       for (j=start+3; j<count; j+=4) {
@@ -369,6 +374,9 @@ static void TAG(render_quad_strip)( GLcontext *ctx,
 	 GLboolean ef2 = EDGEFLAG_GET( ELT(j-2) );
 	 GLboolean ef1 = EDGEFLAG_GET( ELT(j-1) );
 	 GLboolean ef = EDGEFLAG_GET( ELT(j) );
+	 if (TEST_PRIM_BEGIN(flags)) {
+	    RESET_STIPPLE;
+	 }
 	 EDGEFLAG_SET( ELT(j-3), GL_TRUE );
 	 EDGEFLAG_SET( ELT(j-2), GL_TRUE );
 	 EDGEFLAG_SET( ELT(j-1), GL_TRUE );
@@ -378,7 +386,6 @@ static void TAG(render_quad_strip)( GLcontext *ctx,
 	 EDGEFLAG_SET( ELT(j-2), ef2 );
 	 EDGEFLAG_SET( ELT(j-1), ef1 );
 	 EDGEFLAG_SET( ELT(j), ef );
-	 RESET_STIPPLE;
       }
    } else {
       for (j=start+3;j<count;j+=2) {

@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.37 2002/01/22 14:35:16 brianp Exp $ */
+/* $Id: t_context.h,v 1.38 2002/02/13 00:53:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -386,6 +386,12 @@ struct tnl_device_driver {
     * and grab/release hardware locks.  
     */
 
+   void (*NotifyMaterialChange)(GLcontext *ctx);
+   /* Alert tnl-aware drivers of changes to material, especially in
+    * exec_empty_cassette, which doesn't otherwise reach the driver.
+    * --> Need to be able to disable exec_empty_cassette???
+    */
+
    /***
     *** Rendering -- These functions called only from t_vb_render.c
     ***/
@@ -524,6 +530,7 @@ typedef struct {
    GLboolean NeedNdcCoords;
    GLboolean LoopbackDListCassettes;
    GLboolean CalcDListNormalLengths;
+   GLboolean IsolateMaterials;
 
    /* Derived state and storage for _tnl_eval_vb:
     */

@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.24 2002/01/22 14:35:16 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.25 2002/02/13 00:53:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -553,6 +553,8 @@ static void
 _tnl_Normal3fv( const GLfloat *v )
 {
    NORMALF( v[0], v[1], v[2] );
+/*     struct immediate *IM = (struct immediate *)(((GLcontext *) _glapi_Context)->swtnl_im); */
+/*     IM->Flag[IM->Count] = VERT_NORM; */
 }
 
 
@@ -1154,6 +1156,7 @@ static void
 _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct immediate *IM = TNL_CURRENT_IM(ctx);
    GLuint count = IM->Count;
    struct gl_material *mat;
@@ -1161,6 +1164,14 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
 
    if (bitmask == 0)
       return;
+
+   if (tnl->IsolateMaterials &&
+       !(IM->BeginState & VERT_BEGIN_1)) /* heuristic */
+   {
+      _tnl_flush_immediate( IM );      
+      IM = TNL_CURRENT_IM(ctx);
+      count = IM->Count;
+   }
 
    if (!(IM->Flag[count] & VERT_BIT_MATERIAL)) {
       if (!IM->Material) {
@@ -1226,6 +1237,12 @@ _tnl_Materialfv( GLenum face, GLenum pname, const GLfloat *params )
       mat[1].AmbientIndex = params[0];
       mat[1].DiffuseIndex = params[1];
       mat[1].SpecularIndex = params[2];
+   }
+
+   if (tnl->IsolateMaterials && 
+       !(IM->BeginState & VERT_BEGIN_1)) /* heuristic */
+   {
+      _tnl_flush_immediate( IM );
    }
 }
 

@@ -1,4 +1,4 @@
-/* $Id: t_dd_vbtmp.h,v 1.15 2001/12/20 09:54:20 keithw Exp $ */
+/* $Id: t_dd_vbtmp.h,v 1.16 2002/02/13 00:53:20 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -136,6 +136,9 @@ static void TAG(emit)( GLcontext *ctx,
    const GLubyte *mask = VB->ClipMask;
    int i;
 
+/*     fprintf(stderr, "%s(big) importable %d %d..%d\n",  */
+/*  	   __FUNCTION__, VB->importable_data, start, end); */
+
    if (HAVE_HW_VIEWPORT && HAVE_HW_DIVIDE && CHECK_HW_DIVIDE) {
       (void) s;
       coord = VB->ClipPtr->data;
@@ -226,6 +229,8 @@ static void TAG(emit)( GLcontext *ctx,
 	       VIEWPORT_Z(v->v.z, coord[0][2]);
 	       v->v.w = coord[0][3];
 	    }
+/*  	    fprintf(stderr, "vert %d: %.2f %.2f %.2f %.2f\n",  */
+/*  		    i, v->v.x, v->v.y, v->v.z, v->v.w); */
 	    coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);
 	 }
 	 if (DO_RGBA) {
@@ -417,8 +422,8 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
    col_stride = VB->ColorPtr[0]->StrideB;
    ASSERT(VB->ColorPtr[0]->Type == GL_UNSIGNED_BYTE);
 
-/*     fprintf(stderr, "%s stride %d importable %d\n",  */
-/*  	   __FUNCTION__, col_stride, VB->importable_data); */
+/*     fprintf(stderr, "%s(small) importable %x\n",  */
+/*  	   __FUNCTION__, VB->importable_data); */
 
    /* Pack what's left into a 4-dword vertex.  Color is in a different
     * place, and there is no 'w' coordinate.
@@ -449,6 +454,8 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 	    }
 	    STRIDE_4UB( col, col_stride );
 	 }
+/*  	 fprintf(stderr, "vert %d: %.2f %.2f %.2f %x\n",  */
+/*  		 i, v[0], v[1], v[2], *(int *)&v[3]); */
       }
    }
    else {
@@ -470,6 +477,9 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 	       b[3] = col[i][3];
 	    }
 	 }
+/*  	 fprintf(stderr, "vert %d: %.2f %.2f %.2f %x\n",  */
+/*  		 i, v[0], v[1], v[2], *(int *)&v[3]); */
+
       }
    }
 }
