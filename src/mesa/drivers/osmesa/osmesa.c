@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.37 2001/01/05 02:26:48 keithw Exp $ */
+/* $Id: osmesa.c,v 1.38 2001/01/12 22:34:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1711,7 +1711,7 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    ctx->Driver.TriangleFunc = _swsetup_Triangle;
    ctx->Driver.QuadFunc = _swsetup_Quad;
    ctx->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
-
+   ctx->Driver.RenderPrimitive = _swsetup_RenderPrimNoop;
 
    /* RGB(A) span/pixel functions */
    if ((osmesa->format==OSMESA_RGB) || (osmesa->format==OSMESA_BGR)) {
