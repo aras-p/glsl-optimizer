@@ -1,10 +1,10 @@
-/* $Id: enable.c,v 1.54 2002/01/06 20:39:19 brianp Exp $ */
+/* $Id: enable.c,v 1.55 2002/01/11 17:26:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -55,7 +55,7 @@ static void
 client_state( GLcontext *ctx, GLenum cap, GLboolean state )
 {
    GLuint flag;
-   GLboolean *var;
+   GLuint *var;
 
    switch (cap) {
       case GL_VERTEX_ARRAY:
@@ -1058,17 +1058,17 @@ _mesa_IsEnabled( GLenum cap )
        * CLIENT STATE!!!
        */
       case GL_VERTEX_ARRAY:
-         return ctx->Array.Vertex.Enabled;
+         return (ctx->Array.Vertex.Enabled != 0);
       case GL_NORMAL_ARRAY:
-         return ctx->Array.Normal.Enabled;
+         return (ctx->Array.Normal.Enabled != 0);
       case GL_COLOR_ARRAY:
-         return ctx->Array.Color.Enabled;
+         return (ctx->Array.Color.Enabled != 0);
       case GL_INDEX_ARRAY:
-         return ctx->Array.Index.Enabled;
+         return (ctx->Array.Index.Enabled != 0);
       case GL_TEXTURE_COORD_ARRAY:
-         return ctx->Array.TexCoord[ctx->Array.ActiveTexture].Enabled;
+         return (ctx->Array.TexCoord[ctx->Array.ActiveTexture].Enabled != 0);
       case GL_EDGE_FLAG_ARRAY:
-         return ctx->Array.EdgeFlag.Enabled;
+         return (ctx->Array.EdgeFlag.Enabled != 0);
 
       /* GL_EXT_histogram */
       case GL_HISTOGRAM:
@@ -1179,7 +1179,7 @@ _mesa_IsEnabled( GLenum cap )
          CHECK_EXTENSION(NV_vertex_program);
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
-            return ctx->Array.VertexAttrib[n].Enabled;
+            return (ctx->Array.VertexAttrib[n].Enabled != 0);
          }
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:
       case GL_MAP1_VERTEX_ATTRIB1_4_NV:
