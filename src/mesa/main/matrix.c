@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.33 2001/03/03 20:33:27 brianp Exp $ */
+/* $Id: matrix.c,v 1.34 2001/03/19 22:45:52 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -449,6 +449,9 @@ void
 _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
                     GLsizei width, GLsizei height )
 {
+   const GLfloat n = ctx->Viewport.Near;
+   const GLfloat f = ctx->Viewport.Far;
+
    if (width < 0 || height < 0) {
       _mesa_error( ctx,  GL_INVALID_VALUE, "glViewport" );
       return;
@@ -474,8 +477,8 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
    ctx->Viewport._WindowMap.m[MAT_TX] = ctx->Viewport._WindowMap.m[MAT_SX] + x;
    ctx->Viewport._WindowMap.m[MAT_SY] = (GLfloat) height / 2.0F;
    ctx->Viewport._WindowMap.m[MAT_TY] = ctx->Viewport._WindowMap.m[MAT_SY] + y;
-   ctx->Viewport._WindowMap.m[MAT_SZ] = 0.5 * ctx->DepthMaxF;
-   ctx->Viewport._WindowMap.m[MAT_TZ] = 0.5 * ctx->DepthMaxF;
+   ctx->Viewport._WindowMap.m[MAT_SZ] = ctx->DepthMaxF * ((f - n) / 2.0);
+   ctx->Viewport._WindowMap.m[MAT_TZ] = ctx->DepthMaxF * ((f - n) / 2.0 + n);
    ctx->Viewport._WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
    ctx->Viewport._WindowMap.type = MATRIX_3D_NO_ROT;
    ctx->NewState |= _NEW_VIEWPORT;
