@@ -373,16 +373,6 @@ static unsigned long t_src_index(struct r300_vertex_program *vp, struct vp_src_r
 	int max_reg=-1;
 	
 	if(src->File == PROGRAM_INPUT){
-		/*
-		switch(src->Index){
-			case 0: return 0;
-			case 3: return 1;
-			
-			case 2: return 2;
-			case 8: return 8;
-			
-		default: printf("unknown input index %d\n", src->Index); exit(0); break;
-		}*/
 		if(vp->inputs[src->Index] != -1)
 			return vp->inputs[src->Index];
 		
@@ -487,6 +477,23 @@ static void translate_program(struct r300_vertex_program *vp)
 	for(i=0; i < VERT_ATTRIB_MAX; i++)
 		vp->inputs[i]=-1;
 	
+	vp->outputs = 0;
+	/* FIXME: hardcoded values in arbprogparse.c:parse_result_binding ()
+	   We might want to use these constants for VAP output in general as well once they have been added to
+	   mesa headers.
+	 */
+	if(mesa_vp->OutputsWritten & (1<<0))
+		vp->outputs |= _TNL_BIT_POS;
+	if(mesa_vp->OutputsWritten & (1<<1))
+		vp->outputs |= _TNL_BIT_COLOR0;
+	if(mesa_vp->OutputsWritten & (1<<2))
+		vp->outputs |= _TNL_BIT_COLOR1;
+	for(i=0; i < 8/*ctx->Const.MaxTextureUnits*/; i++)
+		if(mesa_vp->OutputsWritten & (1<<(7+i)))
+			vp->outputs |= _TNL_BIT_TEX(i);
+	if(mesa_vp->OutputsWritten & ~(0x7 | 0x3f80))
+		fprintf(stderr, "%s:Odd bits(0x%08x)\n", __FUNCTION__, mesa_vp->OutputsWritten);
+			
 	o_inst=vp->program.body.i;
 	for(vpi=mesa_vp->Instructions; vpi->Opcode != VP_OPCODE_END; vpi++, o_inst++){
 		

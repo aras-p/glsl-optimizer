@@ -1356,7 +1356,8 @@ void r300_setup_textures(GLcontext *ctx)
 		/*if(ctx->Texture.Unit[i].Enabled == 0)
 			continue;*/
 		if( ((r300->state.render_inputs & (_TNL_BIT_TEX0<<i))!=0) != ((ctx->Texture.Unit[i].Enabled)!=0) ) {
-			WARN_ONCE("Mismatch between render_inputs and ctx->Texture.Unit[i].Enabled value.\n");
+			WARN_ONCE("Mismatch between render_inputs and ctx->Texture.Unit[i].Enabled value(%d vs %d).\n",
+					((r300->state.render_inputs & (_TNL_BIT_TEX0<<i))!=0), ((ctx->Texture.Unit[i].Enabled)!=0));
 		}
 		
 		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i)) {
@@ -1422,6 +1423,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 		0x00,
 		0x00
 	};
+	GLuint vap_outputs;
 	
 	/* This needs to be rewritten - it is a hack at best */
 
@@ -1432,6 +1434,11 @@ void r300_setup_rs_unit(GLcontext *ctx)
 #if 1
 	cur_reg = 0;
 	r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0;
+
+	if (r300->current_vp != NULL)
+		vap_outputs = r300->current_vp->outputs;
+	else
+		vap_outputs = r300->state.render_inputs;
 
 	for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
 		r300->hw.ri.cmd[R300_RI_INTERP_0+i] = 0
@@ -1450,7 +1457,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 			cur_reg++;
 		} 
 	}
-	if (r300->state.render_inputs & _TNL_BIT_COLOR0)
+	if (vap_outputs & _TNL_BIT_COLOR0)
 		r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0
 				| R300_RS_ROUTE_0_COLOR
 				| (cur_reg << R300_RS_ROUTE_0_COLOR_DEST_SHIFT);

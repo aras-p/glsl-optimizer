@@ -579,6 +579,7 @@ struct r300_vertex_program {
 	int t2rs;
 	unsigned long num_temporaries; /* Number of temp vars used by program */
 	int inputs[VERT_ATTRIB_MAX];
+	GLuint outputs;
 };
 
 /* 64 appears to be the maximum */
