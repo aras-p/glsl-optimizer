@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.1 2000/02/02 19:15:19 brianp Exp $ */
+/* $Id: state.c,v 1.2 2000/02/02 19:34:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -24,6 +24,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
+/*
+ * This file initializes the immediate-mode dispatch table (which may
+ * be state-dependant) and manages internal Mesa state update.
+ */
 
 
 #ifdef PC_HEADER

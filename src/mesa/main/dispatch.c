@@ -1,4 +1,4 @@
-/* $Id: dispatch.c,v 1.14 2000/02/02 19:18:19 brianp Exp $ */
+/* $Id: dispatch.c,v 1.15 2000/02/02 19:34:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,23 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+
+/*
+ * This file generates all the gl* function entyrpoints.
+ * But if we're using X86-optimized dispatch (X86/glapi_x86.S) then
+ * each of the entrypoints will be prefixed with _glapi_fallback_*
+ * and will be called by the glapi_x86.S code when we're in thread-
+ * safe mode.
+ *
+ * Eventually this file may be replaced by automatically generated
+ * code from an API spec file.
+ *
+ * NOTE: This file should _not_ be used when compiling Mesa for a DRI-
+ * based device driver.
+ *
+ */
+
 
 
 #ifdef PC_HEADER
