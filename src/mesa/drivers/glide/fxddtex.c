@@ -1267,6 +1267,7 @@ adjust2DRatio (GLcontext *ctx,
             + xoffset * mml->wScale) * texelBytes;
 
       _mesa_rescale_teximage2d(texelBytes,
+                               width,
                                dstRowStride, /* dst stride */
                                width, height,
                                newWidth, newHeight,
@@ -1290,6 +1291,7 @@ adjust2DRatio (GLcontext *ctx,
                               width, height, 1,
                               format, type, pixels, packing);
       _mesa_rescale_teximage2d(rawBytes,
+                               width,
                                newWidth * rawBytes, /* dst stride */
                                width, height, /* src */
                                newWidth, newHeight, /* dst */

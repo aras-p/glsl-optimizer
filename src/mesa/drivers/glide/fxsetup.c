@@ -69,11 +69,13 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
 
 #if FX_RESCALE_BIG_TEXURES_HACK
 {
-   extern void _mesa_rescale_teximage2d( GLuint bytesPerPixel,
-                                         GLuint dstRowStride,
-                                         GLint srcWidth, GLint srcHeight,
-                                         GLint dstWidth, GLint dstHeight,
-                                         const GLvoid *srcImage, GLvoid *dstImage );
+extern void
+_mesa_rescale_teximage2d (GLuint bytesPerPixel,
+			  GLuint srcStrideInPixels,
+			  GLuint dstRowStride,
+			  GLint srcWidth, GLint srcHeight,
+			  GLint dstWidth, GLint dstHeight,
+			  const GLvoid *srcImage, GLvoid *dstImage);
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
    /* [dBorca]
     * Fake textures larger than HW supports:
@@ -111,6 +113,7 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
          _h *= mml->hScale;
          texImage->Data = MESA_PBUFFER_ALLOC(_w * _h * texelBytes);
          _mesa_rescale_teximage2d(texelBytes,
+                                  mml->width,
                                   _w * texelBytes, /* dst stride */
                                   mml->width, mml->height, /* src */
                                   _w, _h, /* dst */
