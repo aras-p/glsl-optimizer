@@ -49,7 +49,7 @@
 
 
 /* no borders! can't halve 1x1! (stride > width * comp) not allowed */
-void
+static void
 _mesa_halve2x2_teximage2d ( GLcontext *ctx,
 			    struct gl_texture_image *texImage,
 			    GLuint bytesPerPixel,
@@ -1360,7 +1360,7 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 
 #if FX_COMPRESS_S3TC_AS_FXT1_HACK
    /* [koolsmoky] substitute FXT1 for DXTn and Legacy S3TC */
-   if (texImage->IsCompressed) {
+   if (!ctx->Mesa_DXTn && texImage->IsCompressed) {
      switch (internalFormat) {
      case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
      case GL_RGB_S3TC:
