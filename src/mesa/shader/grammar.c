@@ -297,7 +297,7 @@ static void set_last_error (const byte *msg, byte *param, int pos)
     /* error message can only be set only once */
     if (error_message != NULL)
     {
-        mem_free (&param);
+        mem_free ((void **) &param);
         return;
     }
 
@@ -413,7 +413,7 @@ static void map_byte_append (map_byte **ma, map_byte **nm)
     returns pointer to the element with the specified key if it exists
     returns NULL otherwise
 */
-map_byte *map_byte_locate (map_byte **ma, const byte *key)
+static map_byte *map_byte_locate (map_byte **ma, const byte *key)
 {
     while (*ma)
     {
@@ -928,12 +928,12 @@ static int barray_push (barray **ba, emit *em, byte c, unsigned int pos, regbyte
 
     while (temp)
     {
-        if (temp->m_emit_dest == ed_output)
+		if (temp->m_emit_dest == ed_output) {
             if (temp->m_emit_type == et_position)
                 count += 4;     /* position is a 32-bit unsigned integer */
             else
                 count++;
-
+		}
         temp = temp->m_next;
     }
 
@@ -948,7 +948,7 @@ static int barray_push (barray **ba, emit *em, byte c, unsigned int pos, regbyte
                 (**ba).data[(**ba).len - count--] = em->m_byte;
             else if (em->m_emit_type == et_stream)
                 (**ba).data[(**ba).len - count--] = c;
-            else // em->type == et_position
+            else /* em->type == et_position */
                 (**ba).data[(**ba).len - count--] = (byte) pos,
                 (**ba).data[(**ba).len - count--] = (byte) (pos >> 8),
                 (**ba).data[(**ba).len - count--] = (byte) (pos >> 16),
@@ -1131,7 +1131,7 @@ static int eat_space (const byte **text)
 }
 
 /*
-    returns 1 if text points to C-style comment start string "/*",
+    returns 1 if text points to C-style comment start string,
     returns 0 otherwise
 */
 static int is_comment_start (const byte *text)
