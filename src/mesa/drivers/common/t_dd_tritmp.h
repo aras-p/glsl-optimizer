@@ -637,7 +637,7 @@ static void TAG(line)( GLcontext *ctx, GLuint e0, GLuint e1 )
 }
 #endif
 
-#if DO_POINT
+#if DO_POINTS
 static void TAG(points)( GLcontext *ctx, GLuint first, GLuint last )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT( ctx )->vb;
@@ -674,7 +674,7 @@ static void TAG(init)( void )
 #if DO_LINE
    TAB[IND].line = TAG(line);
 #endif
-#if DO_POINT
+#if DO_POINTS
    TAB[IND].points = TAG(points);
 #endif
 }
