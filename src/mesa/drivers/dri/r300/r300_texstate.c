@@ -119,7 +119,7 @@ static const struct {
 	    {R300_EASY_TX_FORMAT(Y, Y, Y, X, Y8X8), 0},
 	    {0xffffff13, 0},
 	    {0xffffff14, 0},
-	    {0xffffff15,  0},
+	    {R300_EASY_TX_FORMAT(X, X, X, X, X8),  0},
 	    {0xffffff16,  0},
 	    {0xffffff17, 0},
 	    };
@@ -139,7 +139,7 @@ static const struct {
 	    {R300_EASY_TX_FORMAT(Y, Y, Y, X, Y8X8), 0},
 	    {0xffffff13, 0},
 	    {0xffffff14, 0},
-	    {0xffffff15,  0},
+	    {R300_EASY_TX_FORMAT(X, X, X, X, X8),  0},
 	    {0xffffff16,  0},
 	    {0xffffff17, 0},
 	    };
