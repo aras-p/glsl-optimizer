@@ -323,7 +323,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 	 DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
    rmesa->swtcl.RenderIndex = ~0;
-   rmesa->lost_context = 1;
+   rmesa->hw.all_dirty = 1;
 
    /* Set the maximum texture size small enough that we can guarentee that
     * all texture units can bind a maximal texture and have them both in

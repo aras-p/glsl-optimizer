@@ -116,4 +116,6 @@ void r200GetLock( r200ContextPtr rmesa, GLuint flags )
    for ( i = 0 ; i < rmesa->nr_heaps ; i++ ) {
       DRI_AGE_TEXTURES( rmesa->texture_heaps[ i ] );
    }
+
+   rmesa->lost_context = GL_TRUE;
 }

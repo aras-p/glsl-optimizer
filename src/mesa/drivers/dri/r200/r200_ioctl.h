@@ -117,6 +117,9 @@ extern GLboolean r200IsGartMemory( r200ContextPtr rmesa, const GLvoid *pointer,
 extern GLuint r200GartOffsetFromVirtual( r200ContextPtr rmesa, 
 					 const GLvoid *pointer );
 
+void r200SaveHwState( r200ContextPtr rmesa );
+void r200SetUpAtomList( r200ContextPtr rmesa );
+
 /* ================================================================
  * Helper macros:
  */
@@ -135,7 +138,8 @@ do {						\
 #define R200_STATECHANGE( rmesa, ATOM )			\
 do {								\
    R200_NEWPRIM( rmesa );					\
-   move_to_head( &(rmesa->hw.dirty), &(rmesa->hw.ATOM));	\
+   rmesa->hw.ATOM.dirty = GL_TRUE;				\
+   rmesa->hw.is_dirty = GL_TRUE;				\
 } while (0)
 
 #define R200_DB_STATE( ATOM )			        \
@@ -149,7 +153,8 @@ static __inline int R200_DB_STATECHANGE(
    if (memcmp(atom->cmd, atom->lastcmd, atom->cmd_size*4)) {
       int *tmp;
       R200_NEWPRIM( rmesa );
-      move_to_head( &(rmesa->hw.dirty), atom );
+      atom->dirty = GL_TRUE;
+      rmesa->hw.is_dirty = GL_TRUE;
       tmp = atom->cmd; 
       atom->cmd = atom->lastcmd;
       atom->lastcmd = tmp;

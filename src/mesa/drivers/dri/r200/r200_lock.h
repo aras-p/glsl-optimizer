@@ -104,6 +104,10 @@ extern int prevLockLine;
 		  rmesa->dri.hwLock,					\
 		  rmesa->dri.hwContext );				\
       DEBUG_RESET();							\
+      if (rmesa->save_on_next_unlock) {					\
+	 r200SaveHwState( rmesa );					\
+	 rmesa->save_on_next_unlock = GL_FALSE;				\
+      }									\
    } while (0)
 
 #endif

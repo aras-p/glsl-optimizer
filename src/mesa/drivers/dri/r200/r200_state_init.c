@@ -65,8 +65,9 @@ void r200PrintDirty( r200ContextPtr rmesa, const char *msg )
    fprintf(stderr, msg);
    fprintf(stderr, ": ");
 
-   foreach(l, &(rmesa->hw.dirty)) {
-      fprintf(stderr, "%s, ", l->name);
+   foreach(l, &rmesa->hw.atomlist) {
+      if (l->dirty || rmesa->hw.all_dirty)
+	 fprintf(stderr, "%s, ", l->name);
    }
 
    fprintf(stderr, "\n");
@@ -200,11 +201,6 @@ void r200InitState( r200ContextPtr rmesa )
    rmesa->state.pixel.readOffset = rmesa->state.color.drawOffset;
    rmesa->state.pixel.readPitch  = rmesa->state.color.drawPitch;
 
-   /* Initialize lists:
-    */
-   make_empty_list(&(rmesa->hw.dirty)); rmesa->hw.dirty.name = "DIRTY";
-   make_empty_list(&(rmesa->hw.clean)); rmesa->hw.clean.name = "CLEAN";
-
    rmesa->hw.max_state_size = 0;
 
 #define ALLOC_STATE( ATOM, CHK, SZ, NM, IDX )				\
@@ -212,10 +208,11 @@ void r200InitState( r200ContextPtr rmesa )
       rmesa->hw.ATOM.cmd_size = SZ;				\
       rmesa->hw.ATOM.cmd = (int *)CALLOC(SZ * sizeof(int));	\
       rmesa->hw.ATOM.lastcmd = (int *)CALLOC(SZ * sizeof(int));	\
+      rmesa->hw.ATOM.savedcmd = (int *)CALLOC(SZ * sizeof(int)); \
       rmesa->hw.ATOM.name = NM;					\
       rmesa->hw.ATOM.idx = IDX;					\
-      rmesa->hw.ATOM.check = check_##CHK;				\
-      insert_at_head(&(rmesa->hw.dirty), &(rmesa->hw.ATOM));	\
+      rmesa->hw.ATOM.check = check_##CHK;			\
+      rmesa->hw.ATOM.dirty = GL_FALSE;				\
       rmesa->hw.max_state_size += SZ * sizeof(int);		\
    } while (0)
       
@@ -308,6 +305,7 @@ void r200InitState( r200ContextPtr rmesa )
    ALLOC_STATE( pix[4], tex, PIX_STATE_SIZE, "PIX/pixstage-4", 4 );
    ALLOC_STATE( pix[5], tex, PIX_STATE_SIZE, "PIX/pixstage-5", 5 );
 
+   r200SetUpAtomList( rmesa );
 
    /* Fill in the packet headers:
     */
@@ -772,5 +770,6 @@ void r200InitState( r200ContextPtr rmesa )
 
    r200LightingSpaceChange( ctx );
    
-   rmesa->lost_context = 1;
+   r200SaveHwState( rmesa );
+   rmesa->hw.all_dirty = GL_TRUE;
 }

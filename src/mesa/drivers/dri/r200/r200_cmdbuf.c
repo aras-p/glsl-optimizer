@@ -58,113 +58,105 @@ static void print_state_atom( struct r200_state_atom *state )
 
 }
 
-static void r200_emit_state_list( r200ContextPtr rmesa, 
-				    struct r200_state_atom *list )
+/* The state atoms will be emitted in the order they appear in the atom list,
+ * so this step is important.
+ */
+void r200SetUpAtomList( r200ContextPtr rmesa )
 {
-   struct r200_state_atom *state, *tmp;
-   char *dest;
-   int i, size, mtu;
+   int i, mtu;
 
-   size = 0;
-   foreach_s( state, tmp, list ) {
-      if (state->check( rmesa->glCtx, state->idx )) {
-/*	 dest = r200AllocCmdBuf( rmesa, state->cmd_size * 4, __FUNCTION__);
-	 memcpy( dest, state->cmd, state->cmd_size * 4);*/
-         size += state->cmd_size;
-         state->dirty = GL_TRUE;
-	 move_to_head( &(rmesa->hw.clean), state );
-	 if (R200_DEBUG & DEBUG_STATE) 
-	    print_state_atom( state );
-      }
-      else if (R200_DEBUG & DEBUG_STATE)
-	 fprintf(stderr, "skip state %s\n", state->name);
-   }
-
-   if (!size)
-      return;
-
-   dest = r200AllocCmdBuf( rmesa, size * 4, __FUNCTION__);
    mtu = rmesa->glCtx->Const.MaxTextureUnits;
 
-#define EMIT_ATOM(ATOM) \
-do { \
-   if (rmesa->hw.ATOM.dirty) { \
-      rmesa->hw.ATOM.dirty = GL_FALSE; \
-      memcpy( dest, rmesa->hw.ATOM.cmd, rmesa->hw.ATOM.cmd_size * 4); \
-      dest += rmesa->hw.ATOM.cmd_size * 4; \
-   } \
-} while (0)
+   make_empty_list(&rmesa->hw.atomlist);
+   rmesa->hw.atomlist.name = "atom-list";
 
-   EMIT_ATOM (ctx);
-   EMIT_ATOM (set);
-   EMIT_ATOM (lin);
-   EMIT_ATOM (msk);
-   EMIT_ATOM (vpt);
-   EMIT_ATOM (vtx);
-   EMIT_ATOM (vap);
-   EMIT_ATOM (vte);
-   EMIT_ATOM (msc);
-   EMIT_ATOM (cst);
-   EMIT_ATOM (zbs);
-   EMIT_ATOM (tcl);
-   EMIT_ATOM (msl);
-   EMIT_ATOM (tcg);
-   EMIT_ATOM (grd);
-   EMIT_ATOM (fog);
-   EMIT_ATOM (tam);
-   EMIT_ATOM (tf);
-   for (i = 0; i < mtu; ++i) {
-       EMIT_ATOM (tex[i]);
-   }
-   for (i = 0; i < mtu; ++i) {
-       EMIT_ATOM (cube[i]);
-   }
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.ctx );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.set );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.lin );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.msk );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vpt );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vtx );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vap );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.vte );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.msc );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.cst );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.zbs );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tcl );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.msl );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tcg );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.grd );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.fog );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tam );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tf );
+   for (i = 0; i < mtu; ++i)
+       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.tex[i] );
+   for (i = 0; i < mtu; ++i)
+       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.cube[i] );
    for (i = 0; i < 3 + mtu; ++i)
-       EMIT_ATOM (mat[i]);
-   EMIT_ATOM (eye);
-   EMIT_ATOM (glt);
-   for (i = 0; i < 2; ++i) {
-      EMIT_ATOM (mtl[i]);
-   }
+       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.mat[i] );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.eye );
+   insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.glt );
+   for (i = 0; i < 2; ++i)
+      insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.mtl[i] );
    for (i = 0; i < 8; ++i)
-       EMIT_ATOM (lit[i]);
+       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.lit[i] );
    for (i = 0; i < 6; ++i)
-       EMIT_ATOM (ucp[i]);
+       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.ucp[i] );
    for (i = 0; i < 6; ++i)
-       EMIT_ATOM (pix[i]);
-
-#undef EMIT_ATOM
-
+       insert_at_tail( &rmesa->hw.atomlist, &rmesa->hw.pix[i] );
 }
-
 
 void r200EmitState( r200ContextPtr rmesa )
 {
-   struct r200_state_atom *state, *tmp;
+   char *dest;
+   int i, mtu;
+   struct r200_state_atom *atom;
 
    if (R200_DEBUG & (DEBUG_STATE|DEBUG_PRIMS))
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   /* Somewhat overkill:
+   if (!rmesa->hw.is_dirty && !rmesa->hw.all_dirty)
+      return;
+
+   mtu = rmesa->glCtx->Const.MaxTextureUnits;
+
+   /* To avoid going across the entire set of states multiple times, just check
+    * for enough space for the case of emitting all state, and inline the
+    * r200AllocCmdBuf code here without all the checks.
     */
-   if ( rmesa->lost_context) {
-      if (R200_DEBUG & (DEBUG_STATE|DEBUG_PRIMS|DEBUG_IOCTL))
-	 fprintf(stderr, "%s - lost context\n", __FUNCTION__); 
+   dest = rmesa->store.cmd_buf + rmesa->store.cmd_used;
+   r200EnsureCmdBufSpace( rmesa, rmesa->hw.max_state_size );
 
-      foreach_s( state, tmp, &(rmesa->hw.clean) ) 
-	 move_to_tail(&(rmesa->hw.dirty), state );
-
-      rmesa->lost_context = 0;
+   if (R200_DEBUG & DEBUG_STATE) {
+      foreach( atom, &rmesa->hw.atomlist ) {
+	 if ( atom->dirty || rmesa->hw.all_dirty ) {
+	    if ( atom->check( rmesa->glCtx, atom->idx ) )
+	       print_state_atom( atom );
+	    else
+	       fprintf(stderr, "skip state %s\n", atom->name);
+	 }
+      }
    }
-/*   else {
-      move_to_tail( &rmesa->hw.dirty, &rmesa->hw.mtl[0] );*/
-      /* odd bug? -- isosurf, cycle between reflect & lit */
-/*   }*/
 
-   r200_emit_state_list( rmesa, &rmesa->hw.dirty );
+   foreach( atom, &rmesa->hw.atomlist ) {
+      if ( rmesa->hw.all_dirty )
+	 atom->dirty = GL_TRUE;
+      if ( atom->dirty ) {
+	 if ( atom->check( rmesa->glCtx, atom->idx ) ) {
+	    int size = atom->cmd_size * 4;
+	    memcpy( dest, atom->cmd, size);
+	    dest += size;
+	    rmesa->store.cmd_used += size;
+	    atom->dirty = GL_FALSE;
+	 }
+      }
+   }
+
+   assert( rmesa->store.cmd_used <= R200_CMD_BUF_SZ );
+
+   rmesa->hw.is_dirty = GL_FALSE;
+   rmesa->hw.all_dirty = GL_FALSE;
 }
-
-
 
 /* Fire a section of the retained (indexed_verts) buffer as a regular
  * primtive.  
