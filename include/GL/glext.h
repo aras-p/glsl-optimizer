@@ -2712,6 +2712,12 @@ extern void APIENTRY glCombinerOutputNV (GLenum, GLenum, GLenum, GLenum, GLenum,
 extern void APIENTRY glFinalCombinerInputNV (GLenum, GLenum, GLenum, GLenum);
 extern void APIENTRY glGetCombinerInputParameterfvNV (GLenum, GLenum, GLenum, GLenum, GLfloat *);
 extern void APIENTRY glGetCombinerInputParameterivNV (GLenum, GLenum, GLenum, GLenum, GLint *);
+#ifdef VMS
+   #define glGetCombinerOutputParameterfvNV glGetCombinerOutputParameterfvN
+   #define glGetCombinerOutputParameterivNV glGetCombinerOutputParameterivN
+   #define glGetFinalCombinerInputParameterfvNV glGetFinalCombinerInputParafvNV
+   #define glGetFinalCombinerInputParameterivNV glGetFinalCombinerInputParaivNV
+#endif
 extern void APIENTRY glGetCombinerOutputParameterfvNV (GLenum, GLenum, GLenum, GLfloat *);
 extern void APIENTRY glGetCombinerOutputParameterivNV (GLenum, GLenum, GLenum, GLint *);
 extern void APIENTRY glGetFinalCombinerInputParameterfvNV (GLenum, GLenum, GLfloat *);
