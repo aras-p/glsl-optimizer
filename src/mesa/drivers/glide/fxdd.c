@@ -543,8 +543,12 @@ static GLboolean fxDDReadPixels( GLcontext *ctx, GLint x, GLint y,
                   &info)) {
       const GLint winX = fxMesa->x_offset;
       const GLint winY = fxMesa->y_offset + fxMesa->height - 1;
+#ifdef XF86DRI
       const GLint srcStride = (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT)
-                            ? (fxMesa->screen_width) : (info.strideInBytes / 2);
+                          ? (fxMesa->screen_width) : (info.strideInBytes / 2);
+#else
+      const GLint srcStride = info.strideInBytes / 2; /* stride in GLushorts */
+#endif
       const GLushort *src = (const GLushort *) info.lfbPtr
                           + (winY - y) * srcStride + (winX + x);
       GLubyte *dst = (GLubyte *) _mesa_image_address(packing, dstImage,
