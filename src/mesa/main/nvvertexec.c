@@ -309,7 +309,7 @@ store_vector4( const struct vp_dst_register *dest, struct vp_machine *machine,
 /**
  * Set x to positive or negative infinity.
  */
-#ifdef USE_IEEE
+#if defined(USE_IEEE) || defined(_WIN32)
 #define SET_POS_INFINITY(x)  ( *((GLuint *) &x) = 0x7F800000 )
 #define SET_NEG_INFINITY(x)  ( *((GLuint *) &x) = 0xFF800000 )
 #elif defined(VMS)
