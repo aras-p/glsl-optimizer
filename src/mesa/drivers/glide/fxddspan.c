@@ -42,38 +42,64 @@
 
 #if !defined(FXMESA_USE_ARGB) 
 
-    #define LFB_WRITE_SPAN_MESA(dst_buffer,dst_x,dst_y,src_width,src_stride,src_data)	\
-	  grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_width,1,GR_LFB_SRC_FMT_8888,src_stride,src_data)
+/* KW: Rearranged the args in the call to grLfbWriteRegion().
+ */
+#define LFB_WRITE_SPAN_MESA(dst_buffer,		\
+			    dst_x,		\
+			    dst_y,		\
+			    src_width,		\
+			    src_stride,		\
+			    src_data)		\
+  grLfbWriteRegion(dst_buffer,			\
+		   dst_x,			\
+		   dst_y,			\
+		   GR_LFB_SRC_FMT_8888,		\
+		   src_width,			\
+		   1,				\
+		   src_stride,			\
+		   src_data)			\
+
+
 #else /* defined(FXMESA_USE_RGBA) */
 
-       #define MESACOLOR_TO_ARGB(c) (       \
-             ( ((unsigned int)(c[ACOMP]))<<24 ) | \
-             ( ((unsigned int)(c[RCOMP]))<<16 ) | \
-             ( ((unsigned int)(c[GCOMP]))<<8 )  | \
+#define MESACOLOR_TO_ARGB(c) (				\
+             ( ((unsigned int)(c[ACOMP]))<<24 ) |	\
+             ( ((unsigned int)(c[RCOMP]))<<16 ) |	\
+             ( ((unsigned int)(c[GCOMP]))<<8 )  |	\
              (  (unsigned int)(c[BCOMP])) )
   
-      /* inline */ void LFB_WRITE_SPAN_MESA(GrBuffer_t dst_buffer, 
-                  		  FxU32 dst_x, FxU32 dst_y, 
-                  		  /* GrLfbSrcFmt_t src_format, format is GR_LFB_SRC_FMT_8888 */
-                  		  FxU32 src_width,/* FxU32 src_height,  height is 1 */
-                  		  FxI32 src_stride, void *src_data )
-       {
-             /* Covert to ARGB */
-             GLubyte (*rgba)[4] = src_data;
-             GLuint argb[MAX_WIDTH];
-             int i;
+void LFB_WRITE_SPAN_MESA(GrBuffer_t dst_buffer, 
+			 FxU32 dst_x, 
+			 FxU32 dst_y, 
+			 FxU32 src_width,
+			 FxI32 src_stride, 
+			 void *src_data )
+{
+   /* Covert to ARGB */
+   GLubyte (*rgba)[4] = src_data;
+   GLuint argb[MAX_WIDTH];
+   int i;
    
-             for (i = 0; i < src_width; i++)
-             {
-                argb[i] = MESACOLOR_TO_ARGB(rgba[i]);
-             }
-           FX_grLfbWriteRegion(dst_buffer,dst_x,dst_y,GR_LFB_SRC_FMT_8888,src_width,1,src_stride,(void*)argb);
-       }
+   for (i = 0; i < src_width; i++)
+   {
+      argb[i] = MESACOLOR_TO_ARGB(rgba[i]);
+   }
+   FX_grLfbWriteRegion(dst_buffer,
+		       dst_x,
+		       dst_y,
+		       GR_LFB_SRC_FMT_8888,
+		       src_width,
+		       1,
+		       src_stride,
+		       (void*)argb);
+}
+
 #endif
 
 /************************************************************************/
 /*****                    Span functions                            *****/
 /************************************************************************/
+
 
 static void fxDDWriteRGBASpan(const GLcontext *ctx, 
                               GLuint n, GLint x, GLint y,
