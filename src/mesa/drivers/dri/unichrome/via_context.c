@@ -297,7 +297,7 @@ static const struct dri_debug_control debug_control[] =
 
 
 static GLboolean
-AllocateDmaBuffer(const GLvisual *visual, struct via_context *vmesa)
+AllocateDmaBuffer(struct via_context *vmesa)
 {
     if (vmesa->dma)
         via_free_dma_buffer(vmesa);
@@ -337,7 +337,7 @@ get_ust_nop( int64_t * ust )
 }
 
 GLboolean
-viaCreateContext(const __GLcontextModes *mesaVis,
+viaCreateContext(const __GLcontextModes *visual,
                  __DRIcontextPrivate *driContextPriv,
                  void *sharedContextPrivate)
 {
@@ -361,9 +361,9 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 			 sPriv->myNum, "via");
 
     /* pick back buffer */
-    vmesa->hasBack = mesaVis->doubleBufferMode;
+    vmesa->hasBack = visual->doubleBufferMode;
 
-    switch(mesaVis->depthBits) {
+    switch(visual->depthBits) {
     case 0:			
        vmesa->hasDepth = GL_FALSE;
        vmesa->depthBits = 0; 
@@ -371,7 +371,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
        break;
     case 16:
        vmesa->hasDepth = GL_TRUE;
-       vmesa->depthBits = mesaVis->depthBits;
+       vmesa->depthBits = visual->depthBits;
        vmesa->have_hw_stencil = GL_FALSE;
        vmesa->depth_max = (GLfloat)0xffff;
        vmesa->depth_clear_mask = 0xf << 28;
@@ -380,23 +380,23 @@ viaCreateContext(const __GLcontextModes *mesaVis,
        break;
     case 24:
        vmesa->hasDepth = GL_TRUE;
-       vmesa->depthBits = mesaVis->depthBits;
+       vmesa->depthBits = visual->depthBits;
        vmesa->depth_max = (GLfloat) 0xffffff;
        vmesa->depth_clear_mask = 0xe << 28;
        vmesa->ClearDepth = 0xffffff00;
 
-       assert(mesaVis->haveStencilBuffer);
-       assert(mesaVis->stencilBits == 8);
+       assert(visual->haveStencilBuffer);
+       assert(visual->stencilBits == 8);
 
        vmesa->have_hw_stencil = GL_TRUE;
-       vmesa->stencilBits = mesaVis->stencilBits;
+       vmesa->stencilBits = visual->stencilBits;
        vmesa->stencil_clear_mask = 0x1 << 28;
        vmesa->polygon_offset_scale = 2.0 / vmesa->depth_max;
        break;
     case 32:
        vmesa->hasDepth = GL_TRUE;
-       vmesa->depthBits = mesaVis->depthBits;
-       assert(!mesaVis->haveStencilBuffer);
+       vmesa->depthBits = visual->depthBits;
+       assert(!visual->haveStencilBuffer);
        vmesa->have_hw_stencil = GL_FALSE;
        vmesa->depth_max = (GLfloat)0xffffffff;
        vmesa->depth_clear_mask = 0xf << 28;
@@ -422,7 +422,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     else
         shareCtx = NULL;
 
-    vmesa->glCtx = _mesa_create_context(mesaVis, shareCtx, &functions,
+    vmesa->glCtx = _mesa_create_context(visual, shareCtx, &functions,
 					(void*) vmesa);
     
     vmesa->shareCtx = shareCtx;
@@ -503,7 +503,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 
     /* Do this early, before VIA_FLUSH_DMA can be called:
      */
-    if (!AllocateDmaBuffer(mesaVis, vmesa)) {
+    if (!AllocateDmaBuffer(vmesa)) {
 	fprintf(stderr ,"AllocateDmaBuffer fail\n");
 	FreeBuffer(vmesa);
         FREE(vmesa);
