@@ -754,7 +754,7 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
    /* Texcoords */
    coordUnitSave = ctx->Array.ActiveTexture;
    if (tflag) {
-      GLuint i;
+      GLuint i=0;
       /* enable unit 0 texcoord array */
       _mesa_ClientActiveTextureARB( GL_TEXTURE0_ARB );
       _mesa_EnableClientState( GL_TEXTURE_COORD_ARRAY );
