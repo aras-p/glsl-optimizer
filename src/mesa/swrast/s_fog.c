@@ -1,4 +1,4 @@
-/* $Id: s_fog.c,v 1.3 2000/11/15 00:26:01 brianp Exp $ */
+/* $Id: s_fog.c,v 1.4 2000/12/13 17:35:43 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -80,7 +80,7 @@ _mesa_fog_ci_pixels( const GLcontext *ctx,
    GLuint i;
 
    for (i=0;i<n;i++) {
-      GLfixed f = FixedToFloat(CLAMP(fog[i], 0, FIXED_ONE));
+      GLfloat f = FixedToFloat(CLAMP(fog[i], 0, FIXED_ONE));
       index[i] = (GLuint) ((GLfloat) index[i] + (1.0F-f) * idx);
    }
 }
