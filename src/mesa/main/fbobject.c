@@ -177,6 +177,7 @@ remove_attachment(GLcontext *ctx, struct gl_render_buffer_attachment *att)
       att->Renderbuffer = NULL;
    }
    att->Type = GL_NONE;
+   att->Complete = GL_TRUE;
 }
 
 
@@ -197,6 +198,7 @@ set_texture_attachment(GLcontext *ctx,
       att->CubeMapFace = 0;
    }
    att->Zoffset = zoffset;
+   att->Complete = GL_FALSE;
    texObj->RefCount++;
 }
 
@@ -209,14 +211,219 @@ set_renderbuffer_attachment(GLcontext *ctx,
    remove_attachment(ctx, att);
    att->Type = GL_RENDERBUFFER_EXT;
    att->Renderbuffer = rb;
+   att->Complete = GL_FALSE;
    rb->RefCount++;
 }
+
+
+/**
+ * Test if an attachment point is complete and update its Complete field.
+ * \param format if GL_COLOR, this is a color attachment point,
+ *               if GL_DEPTH, this is a depth component attachment point,
+ *               if GL_STENCIL, this is a stencil component attachment point.
+ */
+static void
+test_attachment_completeness(const GLcontext *ctx, GLenum format,
+                             struct gl_render_buffer_attachment *att)
+{
+   assert(format == GL_COLOR || format == GL_DEPTH || format == GL_STENCIL);
+
+   /* assume complete */
+   att->Complete = GL_TRUE;
+
+   if (att->Type == GL_NONE)
+      return; /* complete */
+
+   /* Look for reasons why the attachment might be incomplete */
+   if (att->Type == GL_TEXTURE) {
+      struct gl_texture_object *texObj = att->Texture;
+      struct gl_texture_image *texImage;
+
+      assert(texObj);
+
+      texImage = texObj->Image[att->CubeMapFace][att->TextureLevel];
+      if (!texImage) {
+         att->Complete = GL_FALSE;
+         return;
+      }
+      if (texImage->Width < 1 || texImage->Height < 1) {
+         att->Complete = GL_FALSE;
+         return;
+      }
+      if (texObj->Target == GL_TEXTURE_3D && att->Zoffset >= texImage->Depth) {
+         att->Complete = GL_FALSE;
+         return;
+      }
+
+      if (format == GL_COLOR) {
+         if (texImage->Format != GL_RGB && texImage->Format != GL_RGBA) {
+            att->Complete = GL_FALSE;
+            return;
+         }
+      }
+      else if (format == GL_DEPTH) {
+         if (texImage->Format != GL_DEPTH_COMPONENT) {
+            att->Complete = GL_FALSE;
+            return;
+         }
+      }
+      else {
+         /* no such thing as stencil textures */
+         att->Complete = GL_FALSE;
+         return;
+      }
+   }
+   else {
+      assert(att->Type == GL_RENDERBUFFER_EXT);
+
+      if (att->Renderbuffer->Width < 1 || att->Renderbuffer->Height < 1) {
+         att->Complete = GL_FALSE;
+         return;
+      }
+      if (format == GL_COLOR) {
+         if (att->Renderbuffer->_BaseFormat != GL_RGB &&
+             att->Renderbuffer->_BaseFormat != GL_RGBA) {
+            att->Complete = GL_FALSE;
+            return;
+         }
+      }
+      else if (format == GL_DEPTH) {
+         if (att->Renderbuffer->_BaseFormat != GL_DEPTH_COMPONENT) {
+            att->Complete = GL_FALSE;
+            return;
+         }
+      }
+      else {
+         assert(format == GL_STENCIL);
+         if (att->Renderbuffer->_BaseFormat != GL_STENCIL_INDEX) {
+            att->Complete = GL_FALSE;
+            return;
+         }
+      }
+   }
+}
+
+
+/**
+ * Test if the given framebuffer object is complete and update its
+ * Status field with the results.
+ */
+static void
+test_framebuffer_completeness(GLcontext *ctx,
+                              struct gl_frame_buffer_object *fb)
+{
+   GLint i;
+   GLuint numImages, width, height;
+   GLenum intFormat;
+
+   /* Set to COMPLETE status, then try to find reasons for being incomplete */
+   fb->Status = GL_FRAMEBUFFER_COMPLETE_EXT;
+
+   numImages = 0;
+
+   /* Start at -2 to more easily loop over all attachment points */
+   for (i = -2; i < ctx->Const.MaxColorAttachments; i++) {
+      struct gl_render_buffer_attachment *att;
+      GLuint w, h;
+      GLenum f;
+
+      if (i == -2) {
+         att = &fb->DepthAttachment;
+         test_attachment_completeness(ctx, GL_DEPTH, att);
+         if (!att->Complete) {
+            fb->Status = GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT;
+            return;
+         }
+      }
+      else if (i == -1) {
+         att = &fb->StencilAttachment;
+         test_attachment_completeness(ctx, GL_STENCIL, att);
+         if (!att->Complete) {
+            fb->Status = GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT;
+            return;
+         }
+      }
+      else {
+         att = &fb->ColorAttachment[i];
+         test_attachment_completeness(ctx, GL_COLOR, att);
+         if (!att->Complete) {
+            fb->Status = GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT;
+            return;
+         }
+      }
+
+      if (att->Type == GL_TEXTURE) {
+         w = att->Texture->Image[att->CubeMapFace][att->TextureLevel]->Width;
+         h = att->Texture->Image[att->CubeMapFace][att->TextureLevel]->Height;
+         f = att->Texture->Image[att->CubeMapFace][att->TextureLevel]->Format;
+         numImages++;
+      }
+      else if (att->Type == GL_RENDERBUFFER_EXT) {
+         w = att->Renderbuffer->Width;
+         h = att->Renderbuffer->Height;
+         f = att->Renderbuffer->InternalFormat;
+         numImages++;
+      }
+      else {
+         assert(att->Type == GL_NONE);
+         continue;
+      }
+
+      if (numImages == 1) {
+         /* set required width, height and format */
+         width = w;
+         height = h;
+         if (i >= 0)
+            intFormat = f;
+      }
+      else {
+         /* check that width, height, format are same */
+         if (w != width || h != height) {
+            fb->Status = GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT;
+            return;
+         }
+         if (i >= 0 && f != intFormat) {
+            fb->Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
+            return;
+         }
+
+      }
+   }
+
+   /* Check that all DrawBuffers are present */
+   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+      if (fb->DrawBuffer[i] != GL_NONE) {
+         struct gl_render_buffer_attachment *att
+            = get_attachment(ctx, fb->DrawBuffer[i]);
+         if (att->Type == GL_NONE) {
+            fb->Status = GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT;
+            return;
+         }
+      }
+   }
+
+   /* Check that the ReadBuffer is present */
+   if (fb->ReadBuffer != GL_NONE) {
+      struct gl_render_buffer_attachment *att
+         = get_attachment(ctx, fb->ReadBuffer);
+      if (att->Type == GL_NONE) {
+         fb->Status = GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT;
+         return;
+      }
+   }
+
+   if (numImages == 0) {
+      fb->Status = GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT;
+      return;
+   }
+}
+
 
 
 GLboolean GLAPIENTRY
 _mesa_IsRenderbufferEXT(GLuint renderbuffer)
 {
-   struct gl_render_buffer_object *rb;
+   const struct gl_render_buffer_object *rb;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
@@ -327,13 +534,11 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
 
    for (i = 0; i < n; i++) {
       GLuint name = first + i;
-
+      renderbuffers[i] = name;
       /* insert dummy placeholder into hash table */
       _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
       _mesa_HashInsert(ctx->Shared->RenderBuffers, name, &DummyRenderbuffer);
       _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
-
-      renderbuffers[i] = name;
    }
 }
 
@@ -342,72 +547,38 @@ static GLenum
 base_internal_format(GLcontext *ctx, GLenum internalFormat)
 {
    switch (internalFormat) {
-      /*case GL_ALPHA:*/
-      case GL_ALPHA4:
-      case GL_ALPHA8:
-      case GL_ALPHA12:
-      case GL_ALPHA16:
-         return GL_ALPHA;
-      /*case GL_LUMINANCE:*/
-      case GL_LUMINANCE4:
-      case GL_LUMINANCE8:
-      case GL_LUMINANCE12:
-      case GL_LUMINANCE16:
-         return GL_LUMINANCE;
-      /*case GL_LUMINANCE_ALPHA:*/
-      case GL_LUMINANCE4_ALPHA4:
-      case GL_LUMINANCE6_ALPHA2:
-      case GL_LUMINANCE8_ALPHA8:
-      case GL_LUMINANCE12_ALPHA4:
-      case GL_LUMINANCE12_ALPHA12:
-      case GL_LUMINANCE16_ALPHA16:
-         return GL_LUMINANCE_ALPHA;
-      /*case GL_INTENSITY:*/
-      case GL_INTENSITY4:
-      case GL_INTENSITY8:
-      case GL_INTENSITY12:
-      case GL_INTENSITY16:
-         return GL_INTENSITY;
-      /*case GL_RGB:*/
-      case GL_R3_G3_B2:
-      case GL_RGB4:
-      case GL_RGB5:
-      case GL_RGB8:
-      case GL_RGB10:
-      case GL_RGB12:
-      case GL_RGB16:
-         return GL_RGB;
-      /*case GL_RGBA:*/
-      case GL_RGBA2:
-      case GL_RGBA4:
-      case GL_RGB5_A1:
-      case GL_RGBA8:
-      case GL_RGB10_A2:
-      case GL_RGBA12:
-      case GL_RGBA16:
-         return GL_RGBA;
-      case GL_STENCIL_INDEX1_EXT:
-      case GL_STENCIL_INDEX4_EXT:
-      case GL_STENCIL_INDEX8_EXT:
-      case GL_STENCIL_INDEX16_EXT:
-         return GL_STENCIL_INDEX;
-      default:
-         ; /* fallthrough */
+   case GL_RGB:
+   case GL_R3_G3_B2:
+   case GL_RGB4:
+   case GL_RGB5:
+   case GL_RGB8:
+   case GL_RGB10:
+   case GL_RGB12:
+   case GL_RGB16:
+      return GL_RGB;
+   case GL_RGBA:
+   case GL_RGBA2:
+   case GL_RGBA4:
+   case GL_RGB5_A1:
+   case GL_RGBA8:
+   case GL_RGB10_A2:
+   case GL_RGBA12:
+   case GL_RGBA16:
+      return GL_RGBA;
+   case GL_STENCIL_INDEX:
+   case GL_STENCIL_INDEX1_EXT:
+   case GL_STENCIL_INDEX4_EXT:
+   case GL_STENCIL_INDEX8_EXT:
+   case GL_STENCIL_INDEX16_EXT:
+      return GL_STENCIL_INDEX;
+   case GL_DEPTH_COMPONENT:
+   case GL_DEPTH_COMPONENT16_SGIX:
+   case GL_DEPTH_COMPONENT24_SGIX:
+   case GL_DEPTH_COMPONENT32_SGIX:
+      return GL_DEPTH_COMPONENT;
+   default:
+      return 0;
    }
-
-   if (ctx->Extensions.SGIX_depth_texture) {
-      switch (internalFormat) {
-         /*case GL_DEPTH_COMPONENT:*/
-         case GL_DEPTH_COMPONENT16_SGIX:
-         case GL_DEPTH_COMPONENT24_SGIX:
-         case GL_DEPTH_COMPONENT32_SGIX:
-            return GL_DEPTH_COMPONENT;
-         default:
-            ; /* fallthrough */
-      }
-   }
-
-   return 0;
 }
 
 
@@ -462,6 +633,7 @@ _mesa_RenderbufferStorageEXT(GLenum target, GLenum internalFormat,
    ctx->CurrentRenderbuffer->InternalFormat = internalFormat;
    ctx->CurrentRenderbuffer->Width = width;
    ctx->CurrentRenderbuffer->Height = height;
+   ctx->CurrentRenderbuffer->_BaseFormat = baseFormat;
 }
 
 
@@ -505,7 +677,7 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
 GLboolean GLAPIENTRY
 _mesa_IsFramebufferEXT(GLuint framebuffer)
 {
-   struct gl_frame_buffer_object *fb;
+   const struct gl_frame_buffer_object *fb;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
@@ -616,13 +788,11 @@ _mesa_GenFramebuffersEXT(GLsizei n, GLuint *framebuffers)
 
    for (i = 0; i < n; i++) {
       GLuint name = first + i;
-
-      /* insert into hash table */
+      framebuffers[i] = name;
+      /* insert dummy placeholder into hash table */
       _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
       _mesa_HashInsert(ctx->Shared->FrameBuffers, name, &DummyFramebuffer);
       _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
-
-      framebuffers[i] = name;
    }
 }
 
@@ -636,24 +806,17 @@ _mesa_CheckFramebufferStatusEXT(GLenum target)
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FRAMEBUFFER_STATUS_ERROR_EXT);
 
    if (target != GL_FRAMEBUFFER_EXT) {
-      _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glCheckFramebufferStatus(target)");
+      _mesa_error(ctx, GL_INVALID_ENUM, "glCheckFramebufferStatus(target)");
       return GL_FRAMEBUFFER_STATUS_ERROR_EXT;
    }
 
-   /* return one of:
-      GL_FRAMEBUFFER_COMPLETE_EXT
-      GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT
-      GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT
-      GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT_EXT
-      GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT
-      GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT
-      GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT
-      GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT
-      GL_FRAMEBUFFER_UNSUPPORTED_EXT
-      GL_FRAMEBUFFER_STATUS_ERROR_EXT
-   */
-   return GL_FRAMEBUFFER_STATUS_ERROR_EXT;
+   if (!ctx->CurrentFramebuffer) {
+      /* The window system / default framebuffer is always complete */
+      return GL_FRAMEBUFFER_COMPLETE_EXT;
+   }
+
+   test_framebuffer_completeness(ctx, ctx->CurrentFramebuffer);
+   return ctx->CurrentFramebuffer->Status;
 }
 
 

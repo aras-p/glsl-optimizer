@@ -33,6 +33,8 @@ struct gl_render_buffer_object
    GLuint Name;
    GLuint Width, Height;
    GLenum InternalFormat;
+   GLenum _BaseFormat;  /* Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or */
+                        /* GL_STENCIL_INDEX. */
    GLvoid *Data;
 };
 
@@ -45,8 +47,9 @@ struct gl_render_buffer_attachment
    /* IF Type == GL_TEXTURE: */
    struct gl_texture_object *Texture;
    GLuint TextureLevel;
-   GLuint CubeMapFace;  /* 0 .. 5, for Cube map textures */
+   GLuint CubeMapFace;  /* 0 .. 5, for cube map textures */
    GLuint Zoffset;      /* for 3D textures */
+   GLboolean Complete;
 };
 
 
@@ -55,9 +58,17 @@ struct gl_frame_buffer_object
    GLint RefCount;
    GLuint Name;
 
+   GLenum Status;
+
    struct gl_render_buffer_attachment ColorAttachment[MAX_COLOR_ATTACHMENTS];
    struct gl_render_buffer_attachment DepthAttachment;
    struct gl_render_buffer_attachment StencilAttachment;
+
+   /* In unextended OpenGL, these vars are part of the GL_COLOR_BUFFER
+    * attribute group and GL_PIXEL attribute group, respectively.
+    */
+   GLenum DrawBuffer[MAX_DRAW_BUFFERS];
+   GLenum ReadBuffer;
 };
 
 
