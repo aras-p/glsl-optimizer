@@ -722,7 +722,7 @@ fxTMRestoreTextures_NoLock(fxMesaContext ctx) {
 	if (ctx->glCtx->Texture.Unit[i].Current==tObj) {
 	  /* Force the texture onto the board, as it could be in use */
 	  where=ti->whichTMU;
-	  ti->whichTMU=FX_TMU_NONE;
+	  fxTMMoveOutTM_NoLock(ctx, tObj);
 	  fxTMMoveInTM_NoLock(ctx, tObj, where);
 	  break;
 	}

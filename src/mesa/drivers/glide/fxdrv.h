@@ -443,6 +443,7 @@ struct tfxMesaContext {
   GrColor_t clearC;
   GrAlpha_t clearA;
   GLuint constColor;
+  GrCullMode_t cullMode;
 
   tfxUnitsState unitsState;
   tfxUnitsState restoreUnitsState; /* saved during multipass */

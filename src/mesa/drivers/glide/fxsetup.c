@@ -407,10 +407,11 @@ static void fxSelectSingleTMUSrc_NoLock(fxMesaContext fxMesa, GLint tmu,
 			   GR_COMBINE_FACTOR_ONE_MINUS_LOD_FRACTION,
 			   FXFALSE,FXFALSE);
 
-    FX_grTexCombine_NoLock(GR_TMU1,
-			   GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
-			   GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
-			   FXFALSE,FXFALSE);
+    if (fxMesa->haveTwoTMUs)
+      FX_grTexCombine_NoLock(GR_TMU1,
+			     GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
+			     GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
+			     FXFALSE,FXFALSE);
     fxMesa->tmuSrc=FX_TMU_SPLIT;
   }
   else {
@@ -1561,28 +1562,28 @@ void fxDDFrontFace(GLcontext *ctx, GLenum mode)
 
 static void fxSetupCull(GLcontext *ctx)
 {
-   if(ctx->Polygon.CullFlag) {
-      switch(ctx->Polygon.CullFaceMode) {
-      case GL_BACK:
-	 if(ctx->Polygon.FrontFace==GL_CCW)
-	    FX_grCullMode(GR_CULL_NEGATIVE);
-	 else
-	    FX_grCullMode(GR_CULL_POSITIVE);
-	 break;
-      case GL_FRONT:
-	 if(ctx->Polygon.FrontFace==GL_CCW)
-	    FX_grCullMode(GR_CULL_POSITIVE);
-	 else
-	    FX_grCullMode(GR_CULL_NEGATIVE);
-	 break;
-      case GL_FRONT_AND_BACK:
-	 FX_grCullMode(GR_CULL_DISABLE);
-	 break;
-      default:
-	 break;
-      }
-   } else
-      FX_grCullMode(GR_CULL_DISABLE);
+  if (ctx->Polygon.CullFlag) {
+    switch (ctx->Polygon.CullFaceMode) {
+    case GL_BACK:
+      if (ctx->Polygon.FrontFace==GL_CCW)
+	FX_CONTEXT(ctx)->cullMode=GR_CULL_NEGATIVE;
+      else
+	FX_CONTEXT(ctx)->cullMode=GR_CULL_POSITIVE;
+      break;
+    case GL_FRONT:
+      if(ctx->Polygon.FrontFace==GL_CCW)
+	FX_CONTEXT(ctx)->cullMode=GR_CULL_POSITIVE;
+      else
+	FX_CONTEXT(ctx)->cullMode=GR_CULL_NEGATIVE;
+      break;
+    case GL_FRONT_AND_BACK:
+      FX_CONTEXT(ctx)->cullMode=GR_CULL_DISABLE;
+      break;
+    default:
+      break;
+    }
+  } else FX_CONTEXT(ctx)->cullMode=GR_CULL_DISABLE;
+  FX_grCullMode(FX_CONTEXT(ctx)->cullMode);
 }
 
 

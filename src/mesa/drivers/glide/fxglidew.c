@@ -55,7 +55,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static FxI32 FX_grGetInteger_NoLock(FxU32 pname)
+FxI32 FX_grGetInteger_NoLock(FxU32 pname)
 {
 #if !defined(FX_GLIDE3)
   switch (pname) 
@@ -241,6 +241,13 @@ void FX_grAADrawPoint(GrVertex *a)
 {
   BEGIN_CLIP_LOOP();
   grDrawPoint(a);
+  END_CLIP_LOOP();
+}
+
+void FX_grDrawPolygonVertexList(int n, GrVertex *verts) 
+{
+  BEGIN_CLIP_LOOP();
+  grDrawVertexArrayContiguous(GR_POLYGON, n, verts, sizeof(GrVertex));
   END_CLIP_LOOP();
 }
 
