@@ -1,4 +1,4 @@
-/* $Id: vtxfmt.c,v 1.5 2001/03/12 00:48:39 gareth Exp $ */
+/* $Id: vtxfmt.c,v 1.6 2001/03/12 01:06:44 gareth Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,6 +32,7 @@
 #include "api_loopback.h"
 #include "context.h"
 #include "mtypes.h"
+#include "state.h"
 #include "vtxfmt.h"
 
 
