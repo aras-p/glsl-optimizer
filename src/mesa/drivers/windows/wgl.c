@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.4 2000/11/22 08:55:53 joukj Exp $ */
+/* $Id: wgl.c,v 1.5 2001/04/03 16:25:54 brianp Exp $ */
 
 /*
 * This library is free software; you can redistribute it and/or
@@ -247,7 +247,6 @@ static FIXED FixedFromDouble(double d)
    return *(FIXED *)&l;
 }
 
-
 GLAPI BOOL GLWINAPI wglUseFontBitmapsA(HDC hdc, DWORD first,
                                        DWORD count, DWORD listBase)
 {
@@ -266,46 +265,45 @@ GLAPI BOOL GLWINAPI wglUseFontBitmapsA(HDC hdc, DWORD first,
    if (listBase<0)
       return FALSE;
 
-   font_list = glGenLists( count );
-   if(font_list == 0)
-      return FALSE;
+   font_list = listBase;
 
    mat.eM11 = FixedFromDouble(1);
    mat.eM12 = FixedFromDouble(0);
    mat.eM21 = FixedFromDouble(0);
-   mat.eM22 = FixedFromDouble(1);
+   mat.eM22 = FixedFromDouble(-1);
 
    memset(&gm,0,sizeof(gm));
 
    for (i = 0; i < count; i++)
    {
+       DWORD err;
+       
       glNewList( font_list+i, GL_COMPILE );
 
       /* allocate space for the bitmap/outline */
       size = GetGlyphOutline(hdc, first + i, GGO_BITMAP, &gm, 0, NULL, &mat);
       if (size == GDI_ERROR)
       {
-         DWORD err;
          err = GetLastError();
          return(FALSE);
       }
 
-      hBits  = GlobalAlloc(GHND, size);
+      hBits  = GlobalAlloc(GHND, size+1);
       lpBits = GlobalLock(hBits);
 
+      err = 
       GetGlyphOutline(hdc,    /* handle to device context */
                       first + i,          /* character to query */
                       GGO_BITMAP,         /* format of data to return */
-                      &gm,                /* pointer to structure for metrics */
+                      &gm,                /* pointer to structure for metrics*/
                       size,               /* size of buffer for data */
                       lpBits,             /* pointer to buffer for data */
                       &mat                /* pointer to transformation */
                                           /* matrix structure */
                   );
 
-      if (*lpBits == GDI_ERROR)
+      if (err == GDI_ERROR)
       {
-         DWORD err;
          err = GetLastError();
 
          GlobalUnlock(hBits);
@@ -326,7 +324,7 @@ GLAPI BOOL GLWINAPI wglUseFontBitmapsA(HDC hdc, DWORD first,
       glEndList( );
    }
 
-    return TRUE;
+   return TRUE;
 }
 
 GLAPI BOOL GLWINAPI wglUseFontBitmapsW(HDC hdc,DWORD first,DWORD count,DWORD listBase)
