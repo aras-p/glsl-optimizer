@@ -1701,8 +1701,8 @@ static void radeonEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 					    ctx->Color.BlendEquationA );
 	 ctx->Driver.BlendFuncSeparate( ctx, ctx->Color.BlendSrcRGB,
 					ctx->Color.BlendDstRGB,
-					ctx->Color.BlendSrcRGB,
-					ctx->Color.BlendDstRGB );
+					ctx->Color.BlendSrcA,
+					ctx->Color.BlendDstA );
       }
       else {
 	 FALLBACK( rmesa, RADEON_FALLBACK_BLEND_FUNC, GL_FALSE );
