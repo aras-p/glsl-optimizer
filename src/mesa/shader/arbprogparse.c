@@ -555,7 +555,7 @@ var_cache_append (struct var_cache **va, struct var_cache *nv)
 static struct var_cache *
 var_cache_find (struct var_cache *va, GLubyte * name)
 {
-   struct var_cache *first = va;
+   /*struct var_cache *first = va;*/
 
    while (va) {
       if (!strcmp ( (const char*) name, (const char*) va->name)) {
