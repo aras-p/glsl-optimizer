@@ -1317,11 +1317,12 @@ Mesa Version History
 6.3  Month day, 2004
     New:
 	- GL_ARB_draw_buffers extension
+	- GL_ARB_pixel_buffer_object extension
 	- GL_OES_read_format extension (Ian Romanick)
-	- full support for GL_EXT_pixel_buffer_object (convolution filters,
-	  polygon stipple, colormaps, etc)
+	- DirectFB driver (Claudio Ciccani)
     Changes:
 	- added -stereo option for glxgears demo (Jacek Rosik)
     Bug fixes:
-	fixes from 6.2.1, plus:
-	- 
+	- some functions didn't support PBO functionality
+	- glGetTexImage didn't convert color index images to RGBA as required
+
