@@ -68,23 +68,18 @@ static GLboolean run_normal_stage( GLcontext *ctx,
       else
          lengths = VB->NormalLengthPtr;
 
-      /* If there is only one normal, don't transform it multiple times:
-       */
-      if (VB->NormalPtr->stride == 0)
-	 VB->NormalPtr->count = 1;
-
       store->NormalTransform( ctx->ModelviewMatrixStack.Top,
 			      ctx->_ModelViewInvScale,
 			      VB->NormalPtr,  /* input normals */
 			      lengths,
 			      &store->normal ); /* resulting normals */
 
-      if (VB->NormalPtr->stride == 0) {
-	 VB->NormalPtr->count = VB->Count;
+      if (VB->NormalPtr->count > 1) {
+	 store->normal.stride = 16;
+      }
+      else {
 	 store->normal.stride = 0;
       }
-      else
-	 store->normal.stride = 16;	
    }
 
    VB->NormalPtr = &store->normal;

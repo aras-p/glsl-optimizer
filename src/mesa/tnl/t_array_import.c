@@ -332,7 +332,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
     */
    if (inputs & _TNL_BITS_MAT_ANY) {
       for (i = _TNL_ATTRIB_MAT_FRONT_AMBIENT; i < _TNL_ATTRIB_INDEX; i++) {
-	 tmp->Attribs[i].count = VB->Count;
+	 tmp->Attribs[i].count = 1;
 	 tmp->Attribs[i].data = (GLfloat (*)[4]) tnl->vtx.current[i];
 	 tmp->Attribs[i].start = tnl->vtx.current[i];
 	 tmp->Attribs[i].size = 4; 

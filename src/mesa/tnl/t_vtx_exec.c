@@ -139,7 +139,7 @@ static void _tnl_vb_bind_vtx( GLcontext *ctx )
 /* 	 VB->AttribPtr[attr] = &tnl->current.Attribs[attr]; */
 
 
-	 tmp->Attribs[attr].count = count;
+	 tmp->Attribs[attr].count = 1;
 	 tmp->Attribs[attr].data = (GLfloat (*)[4]) tnl->vtx.current[attr];
 	 tmp->Attribs[attr].start = tnl->vtx.current[attr];
 	 tmp->Attribs[attr].size = get_size( tnl->vtx.current[attr] );

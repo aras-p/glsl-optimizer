@@ -77,7 +77,7 @@ static void _tnl_bind_vertex_list( GLcontext *ctx,
 	 data += node->attrsz[attr];
       }
       else {
-	 tmp->Attribs[attr].count = node->count;
+	 tmp->Attribs[attr].count = 1;
 	 tmp->Attribs[attr].data = (GLfloat (*)[4]) tnl->vtx.current[attr];
 	 tmp->Attribs[attr].start = tnl->vtx.current[attr];
 	 tmp->Attribs[attr].size = get_size( tnl->vtx.current[attr] );

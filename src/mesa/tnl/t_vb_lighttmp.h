@@ -68,9 +68,6 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
 
    const GLuint nr = VB->Count;
 
-   (void) nstride;
-   (void) vstride;
-
 #ifdef TRACE
    fprintf(stderr, "%s\n", __FUNCTION__ );
 #endif
@@ -89,6 +86,9 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
     */
    if (stage->changed_inputs == 0)
       return;
+
+   store->LitColor[0].stride = 16;
+   store->LitColor[1].stride = 16;
 
    for (j = 0; j < nr; j++,STRIDE_F(vertex,vstride),STRIDE_F(normal,nstride)) {
       GLfloat sum[2][3], spec[2][3];
@@ -263,9 +263,6 @@ static void TAG(light_rgba)( GLcontext *ctx,
    fprintf(stderr, "%s\n", __FUNCTION__ );
 #endif
 
-   (void) nstride;
-   (void) vstride;
-
    VB->ColorPtr[0] = &store->LitColor[0];
    sumA[0] = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3];
 
@@ -276,6 +273,9 @@ static void TAG(light_rgba)( GLcontext *ctx,
 
    if (stage->changed_inputs == 0)
       return;
+
+   store->LitColor[0].stride = 16;
+   store->LitColor[1].stride = 16;
 
    for (j = 0; j < nr; j++,STRIDE_F(vertex,vstride),STRIDE_F(normal,nstride)) {
       GLfloat sum[2][3];
@@ -444,15 +444,17 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
    const struct gl_light *light = ctx->Light.EnabledList.next;
    GLuint j = 0;
    GLfloat base[2][4];
+#if IDX & LIGHT_MATERIAL
    const GLuint nr = VB->Count;
+#else
+   const GLuint nr = VB->NormalPtr->count;
+#endif
 
 #ifdef TRACE
    fprintf(stderr, "%s\n", __FUNCTION__ );
 #endif
 
    (void) input;		/* doesn't refer to Eye or Obj */
-   (void) nr;
-   (void) nstride;
 
    VB->ColorPtr[0] = &store->LitColor[0];
 #if IDX & LIGHT_TWOSIDE
@@ -461,6 +463,15 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
 
    if (stage->changed_inputs == 0)
       return;
+
+   if (nr > 1) {
+      store->LitColor[0].stride = 16;
+      store->LitColor[1].stride = 16;
+   }
+   else {
+      store->LitColor[0].stride = 0;
+      store->LitColor[1].stride = 0;
+   }
 
    for (j = 0; j < nr; j++, STRIDE_F(normal,nstride)) {
 
@@ -542,7 +553,11 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
    GLfloat (*Bcolor)[4] = (GLfloat (*)[4]) store->LitColor[1].data;
 #endif
    GLuint j = 0;
+#if IDX & LIGHT_MATERIAL
    const GLuint nr = VB->Count;
+#else
+   const GLuint nr = VB->NormalPtr->count;
+#endif
    const struct gl_light *light;
 
 #ifdef TRACE
@@ -550,8 +565,6 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 #endif
 
    (void) input;
-   (void) nr;
-   (void) nstride;
 
    sumA[0] = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3];
    sumA[1] = ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3];
@@ -563,6 +576,15 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
 
    if (stage->changed_inputs == 0)
       return;
+
+   if (nr > 1) {
+      store->LitColor[0].stride = 16;
+      store->LitColor[1].stride = 16;
+   }
+   else {
+      store->LitColor[0].stride = 0;
+      store->LitColor[1].stride = 0;
+   }
 
    for (j = 0; j < nr; j++, STRIDE_F(normal,nstride)) {
 
@@ -655,9 +677,6 @@ static void TAG(light_ci)( GLcontext *ctx,
 #ifdef TRACE
    fprintf(stderr, "%s\n", __FUNCTION__ );
 #endif
-
-   (void) nstride;
-   (void) vstride;
 
    VB->IndexPtr[0] = &store->LitIndex[0];
 #if IDX & LIGHT_TWOSIDE
