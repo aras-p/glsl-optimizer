@@ -56,6 +56,8 @@
 #include "tnl/t_pipeline.h"
 #include "drivers/common/driverfuncs.h"
 
+#define SWTC 0 /* SW texture compression */
+
 /* Dither not tested for Mesa 4.0 */ 
 #ifdef DITHER
 #ifdef USE_WING
@@ -1057,6 +1059,21 @@ static void read_rgba_pixels( const GLcontext* ctx,
 /**********************************************************************/
 
 
+static const struct gl_texture_format *
+choose_tex_format( GLcontext *ctx, GLint internalFormat,
+                   GLenum format, GLenum type )
+{
+   switch (internalFormat) {
+      case GL_COMPRESSED_RGB_ARB:
+         return &_mesa_texformat_rgb;
+      case GL_COMPRESSED_RGBA_ARB:
+         return &_mesa_texformat_rgba;
+      default:
+         return _mesa_choose_tex_format(ctx, internalFormat, format, type);
+   }
+}
+
+
 static const GLubyte *get_string(GLcontext *ctx, GLenum name)
 {
   (void) ctx;
@@ -1076,13 +1093,17 @@ static void SetFunctionPointers( struct dd_function_table *functions )
   functions->UpdateState = wmesa_update_state;
   functions->ResizeBuffers = _swrast_alloc_buffers;
   functions->GetBufferSize = buffer_size;
-  
+
   functions->Clear = clear;
-  
+
   functions->Flush = flush;
   functions->ClearIndex = clear_index;
   functions->ClearColor = clear_color;
   functions->Enable = enable;
+
+#if SWTC
+  functions->ChooseTextureFormat = choose_tex_format;
+#endif
 }
 
 
@@ -1377,6 +1398,15 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
   _mesa_enable_sw_extensions(c->gl_ctx);
   _mesa_enable_1_3_extensions(c->gl_ctx);
   _mesa_enable_1_4_extensions(c->gl_ctx);
+  _mesa_enable_1_5_extensions(c->gl_ctx);
+  _mesa_enable_2_0_extensions(c->gl_ctx);
+#if SWTC
+    if (c->gl_ctx->Mesa_DXTn) {
+       _mesa_enable_extension(c->gl_ctx, "GL_EXT_texture_compression_s3tc");
+       _mesa_enable_extension(c->gl_ctx, "GL_S3_s3tc");
+    }
+    _mesa_enable_extension(c->gl_ctx, "GL_3DFX_texture_compression_FXT1");
+#endif
 
   c->gl_buffer = _mesa_create_framebuffer( c->gl_visual,
 					   c->gl_visual->depthBits > 0,
