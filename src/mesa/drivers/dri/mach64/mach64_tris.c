@@ -1673,6 +1673,7 @@ static void mach64FastRenderClippedPoly( GLcontext *ctx, const GLuint *elts,
 					 GLuint n )
 {
    mach64ContextPtr mmesa = MACH64_CONTEXT( ctx );
+   const GLuint vertsize = mmesa->vertex_size;
    GLubyte *mach64verts = (GLubyte *)mmesa->verts;
    const GLuint *start = (const GLuint *)VERT(elts[0]);
    int i;

@@ -127,8 +127,10 @@ static void TAG(emit)( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLfloat (*tc0)[4], (*tc1)[4], (*fog)[4];
    GLfloat (*tc2)[4], (*tc3)[4];
-   GLubyte (*col)[4], (*spec)[4];
-   GLuint tc0_stride, tc1_stride, col_stride, spec_stride, fog_stride;
+   GLfloat (*spec)[4];
+   GLfloat (*col)[4];
+   GLuint col_stride;
+   GLuint tc0_stride, tc1_stride, spec_stride, fog_stride;
    GLuint tc2_stride, tc3_stride;
    GLuint tc0_size, tc1_size;
    GLuint tc2_size, tc3_size;
@@ -185,17 +187,16 @@ static void TAG(emit)( GLcontext *ctx,
    }
 
    if (DO_RGBA) {
-      if (VB->ColorPtr[0]->Type != GL_UNSIGNED_BYTE)
-	 IMPORT_FLOAT_COLORS( ctx );
-      col = (GLubyte (*)[4])VB->ColorPtr[0]->Ptr;
-      col_stride = VB->ColorPtr[0]->StrideB;
+      col = VB->ColorPtr[0]->data;
+      col_stride = VB->ColorPtr[0]->stride;
    }
 
    if (DO_SPEC) {
-      if (VB->SecondaryColorPtr[0]->Type != GL_UNSIGNED_BYTE)
-	 IMPORT_FLOAT_SPEC_COLORS( ctx );
-      spec = (GLubyte (*)[4])VB->SecondaryColorPtr[0]->Ptr;
-      spec_stride = VB->SecondaryColorPtr[0]->StrideB;
+      spec = VB->SecondaryColorPtr[0]->data;
+      spec_stride = VB->SecondaryColorPtr[0]->stride;
+   } else {
+      spec = (GLfloat (*)[4])ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
+      spec_stride = 0;
    }
 
    if (DO_FOG) {
@@ -209,244 +210,155 @@ static void TAG(emit)( GLcontext *ctx,
       }
    }
 
-   if (VB->importable_data || (DO_SPEC && !spec_stride) || (DO_FOG && !fog_stride)) {
-      /* May have nonstandard strides:
-       */
-      if (start) {
-	 coord =  (GLfloat (*)[4])((GLubyte *)coord + start * coord_stride);
-	 if (DO_TEX0)
-	    tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 + start * tc0_stride);
-	 if (DO_TEX1) 
-	    tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 + start * tc1_stride);
-	 if (DO_TEX2) 
-	    tc2 =  (GLfloat (*)[4])((GLubyte *)tc2 + start * tc2_stride);
-	 if (DO_TEX3) 
-	    tc3 =  (GLfloat (*)[4])((GLubyte *)tc3 + start * tc3_stride);
-	 if (DO_RGBA) 
-	    STRIDE_4UB(col, start * col_stride);
-	 if (DO_SPEC)
-	    STRIDE_4UB(spec, start * spec_stride);
-	 if (DO_FOG)
-	    fog =  (GLfloat (*)[4])((GLubyte *)fog + start * fog_stride);
-	    /*  STRIDE_F(fog, start * fog_stride); */
-      }
-
-      for (i=start; i < end; i++, v = (VERTEX *)((GLubyte *)v + stride)) {
-	 if (DO_XYZW) {
-	    if (HAVE_HW_VIEWPORT || mask[i] == 0) {
-	       /* unclipped */
-	       VIEWPORT_X(v->v.x, coord[0][0]);
-	       VIEWPORT_Y(v->v.y, coord[0][1]);
-	       VIEWPORT_Z(v->v.z, coord[0][2]);
-	       v->v.w = coord[0][3];
-	    } else {
-	       /* clipped */
-	       v->v.w = 1.0;
-	    }
-	    if (MACH64_DEBUG & DEBUG_VERBOSE_PRIMS) {
-	       fprintf(stderr, "%s: vert (importable) %d: %.2f %.2f %.2f %f\n", 
-		       __FUNCTION__, i, v->v.x, v->v.y, v->v.z, v->v.w);
-	    }
-	    coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);
-	 }
-	 if (DO_RGBA) {
-	    if (HAVE_RGBA_COLOR) {
-	       *(GLuint *)&v->v.color = *(GLuint *)&col[0];
-	       STRIDE_4UB(col, col_stride);
-	    } else {
-	       v->v.color.blue  = col[0][2];
-	       v->v.color.green = col[0][1];
-	       v->v.color.red   = col[0][0];
-	       v->v.color.alpha = col[0][3];
-	       STRIDE_4UB(col, col_stride);
-	    }
-	 }
-	 if (DO_SPEC) {
-	    v->v.specular.red = spec[0][0];
-	    v->v.specular.green = spec[0][1];
-	    v->v.specular.blue = spec[0][2];
-	    STRIDE_4UB(spec, spec_stride);
-	 }
-	 if (DO_FOG) {
-	    v->v.specular.alpha = fog[0][0] * 255.0;
-	    /*  STRIDE_F(fog, fog_stride); */
-	    fog =  (GLfloat (*)[4])((GLubyte *)fog + fog_stride);
-	 }
-	 if (DO_TEX0) {
-	    v->v.u0 = tc0[0][0];
-	    v->v.v0 = tc0[0][1];
-	    if (MACH64_DEBUG & DEBUG_VERBOSE_PRIMS) {
-	       fprintf(stderr, "%s: vert (importable) %d: u0: %.2f, v0: %.2f, w: %f\n", 
-		       __FUNCTION__, i, v->v.u0, v->v.v0, v->v.w);
-	    }
-#ifdef MACH64_PREMULT_TEXCOORDS
-	    v->v.u0 *= v->v.w;
-	    v->v.v0 *= v->v.w;
-#endif
-	    if (DO_PTEX) {
-	       if (HAVE_PTEX_VERTICES) {
-		  if (tc0_size == 4) 
-		     v->pv.q0 = tc0[0][3];
-		  else
-		     v->pv.q0 = 1.0;
-	       } 
-	       else if (tc0_size == 4) {
-#ifdef MACH64_PREMULT_TEXCOORDS
-		  v->v.w *= tc0[0][3];
-#else
-		  float rhw = 1.0 / tc0[0][3];
-		  v->v.w *= tc0[0][3];
-		  v->v.u0 *= rhw;
-		  v->v.v0 *= rhw;
-#endif
-	       } 
-	    } 
-	    tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 +  tc0_stride);
-	 }
-	 if (DO_TEX1) {
-	    if (DO_PTEX) {
-	       v->pv.u1 = tc1[0][0];
-	       v->pv.v1 = tc1[0][1];
-	       if (tc1_size == 4) 
-		  v->pv.q1 = tc1[0][3];
-	       else
-		  v->pv.q1 = 1.0;
-	    } 
-	    else {
-	       v->v.u1 = tc1[0][0];
-	       v->v.v1 = tc1[0][1];
-	    }
-#ifdef MACH64_PREMULT_TEXCOORDS
-	    v->v.u1 *= v->v.w;
-	    v->v.v1 *= v->v.w;
-#endif
-	    tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 +  tc1_stride);
-	 } 
-	 else if (DO_PTEX) {
-	    *(GLuint *)&v->pv.q1 = 0;	/* avoid culling on radeon */
-	 }
-	 if (DO_TEX2) {
-	    if (DO_PTEX) {
-	       v->pv.u2 = tc2[0][0];
-	       v->pv.v2 = tc2[0][1];
-	       if (tc2_size == 4) 
-		  v->pv.q2 = tc2[0][3];
-	       else
-		  v->pv.q2 = 1.0;
-	    } 
-	    else {
-	       v->v.u2 = tc2[0][0];
-	       v->v.v2 = tc2[0][1];
-	    }
-	    tc2 =  (GLfloat (*)[4])((GLubyte *)tc2 +  tc2_stride);
-	 } 
-	 if (DO_TEX3) {
-	    if (DO_PTEX) {
-	       v->pv.u3 = tc3[0][0];
-	       v->pv.v3 = tc3[0][1];
-	       if (tc3_size == 4) 
-		  v->pv.q3 = tc3[0][3];
-	       else
-		  v->pv.q3 = 1.0;
-	    } 
-	    else {
-	       v->v.u3 = tc3[0][0];
-	       v->v.v3 = tc3[0][1];
-	    }
-	    tc3 =  (GLfloat (*)[4])((GLubyte *)tc3 +  tc3_stride);
-	 } 
-      }
+   /* May have nonstandard strides:
+    */
+   if (start) {
+      coord =  (GLfloat (*)[4])((GLubyte *)coord + start * coord_stride);
+      if (DO_TEX0)
+	 tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 + start * tc0_stride);
+      if (DO_TEX1) 
+	 tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 + start * tc1_stride);
+      if (DO_TEX2) 
+	 tc2 =  (GLfloat (*)[4])((GLubyte *)tc2 + start * tc2_stride);
+      if (DO_TEX3) 
+	 tc3 =  (GLfloat (*)[4])((GLubyte *)tc3 + start * tc3_stride);
+      if (DO_RGBA) 
+	 STRIDE_4F(col, start * col_stride);
+      if (DO_SPEC)
+	 STRIDE_4F(spec, start * spec_stride);
+      if (DO_FOG)
+	 STRIDE_4F(fog, start * fog_stride);
+      //	 fog =  (GLfloat (*)[4])((GLubyte *)fog + start * fog_stride);
+      /*  STRIDE_F(fog, start * fog_stride); */
    }
-   else {
-      for (i=start; i < end; i++, v = (VERTEX *)((GLubyte *)v + stride)) {
-	 if (DO_XYZW) {
-	    if (HAVE_HW_VIEWPORT || mask[i] == 0) {
-	       /* unclipped */
-	       VIEWPORT_X(v->v.x, coord[i][0]);
-	       VIEWPORT_Y(v->v.y, coord[i][1]);
-	       VIEWPORT_Z(v->v.z, coord[i][2]);
-	       v->v.w = coord[i][3];
-	    } else {
-	       /* clipped */
-	       v->v.w = 1.0;
-	    }
-	    if (MACH64_DEBUG & DEBUG_VERBOSE_PRIMS) {
-	       fprintf(stderr, "%s: vert %d: %.2f %.2f %.2f %f\n", 
-		       __FUNCTION__, i, v->v.x, v->v.y, v->v.z, v->v.w);
-	    }
+   
+   for (i=start; i < end; i++, v = (VERTEX *)((GLubyte *)v + stride)) {
+      if (DO_XYZW) {
+	 if (HAVE_HW_VIEWPORT || mask[i] == 0) {
+	    /* unclipped */
+	    VIEWPORT_X(v->v.x, coord[0][0]);
+	    VIEWPORT_Y(v->v.y, coord[0][1]);
+	    VIEWPORT_Z(v->v.z, coord[0][2]);
+	    v->v.w = coord[0][3];
+	 } else {
+	    /* clipped */
+	    v->v.w = 1.0;
 	 }
-	 if (DO_RGBA) {
-	    if (HAVE_RGBA_COLOR) {
-	       *(GLuint *)&v->v.color = *(GLuint *)&col[i];
-	    }
-	    else {
-	       v->v.color.blue  = col[i][2];
-	       v->v.color.green = col[i][1];
-	       v->v.color.red   = col[i][0];
-	       v->v.color.alpha = col[i][3];
-	    }
+	 if (MACH64_DEBUG & DEBUG_VERBOSE_PRIMS) {
+	    fprintf(stderr, "%s: vert (importable) %d: %.2f %.2f %.2f %f\n", 
+		    __FUNCTION__, i, v->v.x, v->v.y, v->v.z, v->v.w);
 	 }
-	 if (DO_SPEC) {
-	    v->v.specular.red   = spec[i][0];
-	    v->v.specular.green = spec[i][1];
-	    v->v.specular.blue  = spec[i][2];
-	 }
-	 if (DO_FOG) {
-	    v->v.specular.alpha = fog[i][0] * 255.0;
-	 }
-	 if (DO_TEX0) {
-	    v->v.u0 = tc0[i][0];
-	    v->v.v0 = tc0[i][1];
-	    if (MACH64_DEBUG & DEBUG_VERBOSE_PRIMS) {
-	       fprintf(stderr, "%s: vert %d: u0: %.2f, v0: %.2f, w: %f\n", 
-		       __FUNCTION__, i, v->v.u0, v->v.v0, v->v.w);
-	    }
-#ifdef MACH64_PREMULT_TEXCOORDS
-	    v->v.u0 *= v->v.w;
-	    v->v.v0 *= v->v.w;
-#endif
-	    if (DO_PTEX) {
-	       if (HAVE_PTEX_VERTICES) {
-		  if (tc0_size == 4) 
-		     v->pv.q0 = tc0[i][3];
-		  else
-		     v->pv.q0 = 1.0;
-
-		  v->pv.q1 = 0;	/* radeon */
-	       } 
-	       else if (tc0_size == 4) {
-#ifdef MACH64_PREMULT_TEXCOORDS
-		  v->v.w *= tc0[i][3];
-#else
-		  float rhw = 1.0 / tc0[i][3];
-		  v->v.w *= tc0[i][3];
-		  v->v.u0 *= rhw;
-		  v->v.v0 *= rhw;
-#endif
-	       } 
-	    } 
-	 }
-	 if (DO_TEX1) {
-	    if (DO_PTEX) {
-	       v->pv.u1 = tc1[i][0];
-	       v->pv.v1 = tc1[i][1];
-	       if (tc1_size == 4) 
-		  v->pv.q1 = tc1[i][3];
-	       else
-		  v->pv.q1 = 1.0;
-	    } 
-	    else {
-	       v->v.u1 = tc1[i][0];
-	       v->v.v1 = tc1[i][1];
-	    }
-#ifdef MACH64_PREMULT_TEXCOORDS
-	    v->v.u1 *= v->v.w;
-	    v->v.v1 *= v->v.w;
-#endif
+	 coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);
+      }
+      if (DO_RGBA) {
+	 if (HAVE_RGBA_COLOR) {
+	    *(GLuint *)&v->v.color = *(GLuint *)&col[0];
+	    STRIDE_4F(col, col_stride);
+	 } else {
+	    v->v.color.blue  = col[0][2];
+	    v->v.color.green = col[0][1];
+	    v->v.color.red   = col[0][0];
+	    v->v.color.alpha = col[0][3];
+	    STRIDE_4F(col, col_stride);
 	 }
       }
+      if (DO_SPEC) {
+	 v->v.specular.red = spec[0][0];
+	 v->v.specular.green = spec[0][1];
+	 v->v.specular.blue = spec[0][2];
+	 STRIDE_4F(spec, spec_stride);
+      }
+      if (DO_FOG) {
+	 v->v.specular.alpha = fog[0][0] * 255.0;
+	 /*  STRIDE_F(fog, fog_stride); */
+	 fog =  (GLfloat (*)[4])((GLubyte *)fog + fog_stride);
+      }
+      if (DO_TEX0) {
+	 v->v.u0 = tc0[0][0];
+	 v->v.v0 = tc0[0][1];
+	 if (MACH64_DEBUG & DEBUG_VERBOSE_PRIMS) {
+	    fprintf(stderr, "%s: vert (importable) %d: u0: %.2f, v0: %.2f, w: %f\n", 
+		    __FUNCTION__, i, v->v.u0, v->v.v0, v->v.w);
+	 }
+#ifdef MACH64_PREMULT_TEXCOORDS
+	 v->v.u0 *= v->v.w;
+	 v->v.v0 *= v->v.w;
+#endif
+	 if (DO_PTEX) {
+	    if (HAVE_PTEX_VERTICES) {
+	       if (tc0_size == 4) 
+		  v->pv.q0 = tc0[0][3];
+	       else
+		  v->pv.q0 = 1.0;
+	    } 
+	    else if (tc0_size == 4) {
+#ifdef MACH64_PREMULT_TEXCOORDS
+	       v->v.w *= tc0[0][3];
+#else
+	       float rhw = 1.0 / tc0[0][3];
+	       v->v.w *= tc0[0][3];
+	       v->v.u0 *= rhw;
+	       v->v.v0 *= rhw;
+#endif
+	    } 
+	 } 
+	 tc0 =  (GLfloat (*)[4])((GLubyte *)tc0 +  tc0_stride);
+      }
+      if (DO_TEX1) {
+	 if (DO_PTEX) {
+	    v->pv.u1 = tc1[0][0];
+	    v->pv.v1 = tc1[0][1];
+	    if (tc1_size == 4) 
+	       v->pv.q1 = tc1[0][3];
+	    else
+	       v->pv.q1 = 1.0;
+	 } 
+	 else {
+	    v->v.u1 = tc1[0][0];
+	    v->v.v1 = tc1[0][1];
+	 }
+#ifdef MACH64_PREMULT_TEXCOORDS
+	 v->v.u1 *= v->v.w;
+	 v->v.v1 *= v->v.w;
+#endif
+	 tc1 =  (GLfloat (*)[4])((GLubyte *)tc1 +  tc1_stride);
+      } 
+      else if (DO_PTEX) {
+	 *(GLuint *)&v->pv.q1 = 0;	/* avoid culling on radeon */
+      }
+      if (DO_TEX2) {
+	 if (DO_PTEX) {
+	    v->pv.u2 = tc2[0][0];
+	    v->pv.v2 = tc2[0][1];
+	    if (tc2_size == 4) 
+	       v->pv.q2 = tc2[0][3];
+	    else
+	       v->pv.q2 = 1.0;
+	 } 
+	 else {
+	    v->v.u2 = tc2[0][0];
+	    v->v.v2 = tc2[0][1];
+	 }
+	 tc2 =  (GLfloat (*)[4])((GLubyte *)tc2 +  tc2_stride);
+      } 
+      if (DO_TEX3) {
+	 if (DO_PTEX) {
+	    v->pv.u3 = tc3[0][0];
+	    v->pv.v3 = tc3[0][1];
+	    if (tc3_size == 4) 
+	       v->pv.q3 = tc3[0][3];
+	    else
+	       v->pv.q3 = 1.0;
+	    } 
+	 else {
+	    v->v.u3 = tc3[0][0];
+	    v->v.v3 = tc3[0][1];
+	 }
+	 tc3 =  (GLfloat (*)[4])((GLubyte *)tc3 +  tc3_stride);
+      } 
    }
 }
+
 #else
 #if DO_XYZW
 
@@ -459,7 +371,7 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 {
    LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLubyte (*col)[4];
+   GLfloat (*col)[4];
    GLuint col_stride;
    GLfloat (*coord)[4] = VB->NdcPtr->data;
    GLuint coord_stride = VB->NdcPtr->stride;
@@ -472,74 +384,40 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 
    ASSERT(stride == 4);
 
-   if (VB->ColorPtr[0]->Type != GL_UNSIGNED_BYTE)
-      IMPORT_FLOAT_COLORS( ctx );
-
-   col = (GLubyte (*)[4])VB->ColorPtr[0]->Ptr;
-   col_stride = VB->ColorPtr[0]->StrideB;
-   ASSERT(VB->ColorPtr[0]->Type == GL_UNSIGNED_BYTE);
-
-/*     fprintf(stderr, "%s(small) importable %x\n",  */
-/*  	   __FUNCTION__, VB->importable_data); */
+   col = VB->ColorPtr[0]->data;
+   col_stride = VB->ColorPtr[0]->stride;
 
    /* Pack what's left into a 4-dword vertex.  Color is in a different
     * place, and there is no 'w' coordinate.
     */
-   if (VB->importable_data) {
-      if (start) {
-	 coord =  (GLfloat (*)[4])((GLubyte *)coord + start * coord_stride);
-	 STRIDE_4UB(col, start * col_stride);
-      }
-
-      for (i=start; i < end; i++, v+=4) {
-	 if (HAVE_HW_VIEWPORT || mask[i] == 0) {
-	    VIEWPORT_X(v[0], coord[0][0]);
-	    VIEWPORT_Y(v[1], coord[0][1]);
-	    VIEWPORT_Z(v[2], coord[0][2]);
-	 }
-	 coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);
-	 if (DO_RGBA) {
-	    if (HAVE_RGBA_COLOR) {
-	       *(GLuint *)&v[3] = *(GLuint *)col;
-	    }
-	    else {
-	       GLubyte *b = (GLubyte *)&v[3];
-	       b[0] = col[0][2];
-	       b[1] = col[0][1];
-	       b[2] = col[0][0];
-	       b[3] = col[0][3];
-	    }
-	    STRIDE_4UB( col, col_stride );
-	 }
-	 if (MACH64_DEBUG & DEBUG_VERBOSE_PRIMS) {
-	    fprintf(stderr, "vert (importable) %d: %.2f %.2f %.2f %x\n",
-		    i, v[0], v[1], v[2], *(int *)&v[3]);
-	 }
-      }
+   if (start) {
+      coord =  (GLfloat (*)[4])((GLubyte *)coord + start * coord_stride);
+      STRIDE_4F(col, start * col_stride);
    }
-   else {
-      for (i=start; i < end; i++, v+=4) {
-	 if (HAVE_HW_VIEWPORT || mask[i] == 0) {
-	    VIEWPORT_X(v[0], coord[i][0]);
-	    VIEWPORT_Y(v[1], coord[i][1]);
-	    VIEWPORT_Z(v[2], coord[i][2]);
+   
+   for (i=start; i < end; i++, v+=4) {
+      if (HAVE_HW_VIEWPORT || mask[i] == 0) {
+	 VIEWPORT_X(v[0], coord[0][0]);
+	 VIEWPORT_Y(v[1], coord[0][1]);
+	 VIEWPORT_Z(v[2], coord[0][2]);
+      }
+      coord =  (GLfloat (*)[4])((GLubyte *)coord +  coord_stride);
+      if (DO_RGBA) {
+	 if (HAVE_RGBA_COLOR) {
+	    *(GLuint *)&v[3] = *(GLuint *)col;
 	 }
-	 if (DO_RGBA) {
-	    if (HAVE_RGBA_COLOR) {
-	       *(GLuint *)&v[3] = *(GLuint *)&col[i];
-	    }
-	    else {
-	       GLubyte *b = (GLubyte *)&v[3];
-	       b[0] = col[i][2];
-	       b[1] = col[i][1];
-	       b[2] = col[i][0];
-	       b[3] = col[i][3];
-	    }
+	 else {
+	    GLubyte *b = (GLubyte *)&v[3];
+	    UNCLAMPED_FLOAT_TO_UBYTE(b[0], col[0][2]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(b[1], col[0][1]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(b[2], col[0][0]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(b[3], col[0][3]);
 	 }
-	 if (MACH64_DEBUG & DEBUG_VERBOSE_PRIMS) {
-	    fprintf(stderr, "vert %d: %.2f %.2f %.2f %x\n",
-		    i, v[0], v[1], v[2], *(int *)&v[3]);
-	 }
+	 STRIDE_4F( col, col_stride );
+      }
+      if (MACH64_DEBUG & DEBUG_VERBOSE_PRIMS) {
+	 fprintf(stderr, "vert (importable) %d: %.2f %.2f %.2f %x\n",
+		 i, v[0], v[1], v[2], *(int *)&v[3]);
       }
    }
 }
@@ -549,19 +427,16 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
 {
    LOCALVARS
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   GLubyte (*col)[4];
+   GLfloat (*col)[4];
    GLuint col_stride;
    GLfloat *v = (GLfloat *)dest;
    int i;
 
-   if (VB->ColorPtr[0]->Type != GL_UNSIGNED_BYTE)
-      IMPORT_FLOAT_COLORS( ctx );
-
-   col = VB->ColorPtr[0]->Ptr;
-   col_stride = VB->ColorPtr[0]->StrideB;
+   col = VB->ColorPtr[0]->data;
+   col_stride = VB->ColorPtr[0]->stride;
 
    if (start)
-      STRIDE_4UB(col, col_stride * start);
+      STRIDE_4F(col, col_stride * start);
 
    /* Need to figure out where color is:
     */
@@ -576,12 +451,12 @@ static void TAG(emit)( GLcontext *ctx, GLuint start, GLuint end,
       }
       else {
 	 GLubyte *b = (GLubyte *)v;
-	 b[0] = col[0][2];
-	 b[1] = col[0][1];
-	 b[2] = col[0][0];
-	 b[3] = col[0][3];
+	 UNCLAMPED_FLOAT_TO_UBYTE(b[0], col[0][2]);
+	 UNCLAMPED_FLOAT_TO_UBYTE(b[1], col[0][1]);
+	 UNCLAMPED_FLOAT_TO_UBYTE(b[2], col[0][0]);
+	 UNCLAMPED_FLOAT_TO_UBYTE(b[3], col[0][3]);
       }
-      STRIDE_4UB( col, col_stride );
+      STRIDE_4F( col, col_stride );
    }
 }
 #endif /* emit */
