@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.38 2002/10/04 19:10:07 brianp Exp $ */
+/* $Id: buffers.c,v 1.39 2002/10/11 00:02:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -144,9 +144,11 @@ _mesa_DrawBuffer( GLenum mode )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx); /* too complex... */
 
-
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glDrawBuffer %s\n", _mesa_lookup_enum_by_nr(mode));
+
+   if (ctx->Color.DrawBuffer == mode)
+      return; /* no change */
 
    /*
     * Do error checking and compute the _DrawDestMask bitfield.
@@ -261,6 +263,9 @@ _mesa_ReadBuffer( GLenum mode )
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(mode));
+
+   if (ctx->Pixel.ReadBuffer == mode)
+      return; /* no change */
 
    switch (mode) {
       case GL_AUX0:
