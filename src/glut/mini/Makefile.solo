@@ -49,7 +49,7 @@ LIBS = -L$(TOP)/lib -lGL -lGLU -lm
 
 targets: depend libglut.so.3.7 install 
 
-libglut.so.3.7: $(OBJS) Makefile.X11
+libglut.so.3.7: $(OBJS) Makefile.solo
 	gcc -shared -Wl,-soname,libglut.so -Wl,-Bsymbolic $(OBJS) $(LIBS) -o $@ 
 
 install: libglut.so.3.7
@@ -58,7 +58,7 @@ install: libglut.so.3.7
 	ln -s libglut.so.3.7 $(TOP)/lib/libglut.so.3
 	ln -s libglut.so.3 $(TOP)/lib/libglut.so
 
-# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
 depend: $(SOURCES) 
 	makedepend -fdepend -Y $(INCLUDES) \

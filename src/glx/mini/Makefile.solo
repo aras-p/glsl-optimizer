@@ -44,7 +44,7 @@ INCLUDE_DIRS = \
 
 targets: depend libGL.so.1.2
 
-libGL.so.1.2:  $(OBJECTS) Makefile.X11
+libGL.so.1.2:  $(OBJECTS) Makefile.solo
 	rm -f $@ && gcc -shared -Wl,-soname,libGL.so -Wl,-Bsymbolic $(OBJECTS) $(LIBS) -o $@ 
 	rm -f $(TOP)/lib/libGL.so* 
 	rm -f $(TOP)/lib/miniglx.conf
@@ -56,7 +56,7 @@ libGL.so.1.2:  $(OBJECTS) Makefile.X11
 drmtest: xf86drm.o drmtest.o
 	rm -f drmtest && $(CC) -o drmtest xf86drm.o drmtest.o
 
-# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
 depend: $(C_SOURCES) $(ASM_SOURCES)
 	makedepend -fdepend -Y $(INCLUDES) \

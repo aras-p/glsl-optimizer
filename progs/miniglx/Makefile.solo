@@ -1,6 +1,4 @@
-# Simple makefile for compiling test programs on Linux
-# These programs aren't intended to be included with the normal
-# distro.  They're not too interesting but they're good for testing.
+# Makefile for miniglx demo programs
 
 TOP = ../..
 
@@ -47,7 +45,7 @@ clean:
 	rm -f *.o
 
 
-# Run 'make -f Makefile.X11 dep' to update the dependencies if you change
+# Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.
 depend: $(SOURCES)
 	makedepend -fdepend -Y $(INCLUDES) \
