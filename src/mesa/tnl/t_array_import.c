@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.14 2001/04/28 08:39:18 keithw Exp $ */
+/* $Id: t_array_import.c,v 1.15 2001/05/11 08:11:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,6 +40,7 @@
 
 #include "t_array_import.h"
 #include "t_context.h"
+#include "t_imm_debug.h"
 
 
 static void _tnl_import_vertex( GLcontext *ctx,
@@ -99,8 +100,6 @@ static void _tnl_import_color( GLcontext *ctx,
    struct gl_client_array *tmp;
    GLboolean is_writeable = 0;
    struct vertex_arrays *inputs = &TNL_CONTEXT(ctx)->array_inputs;
-
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
    tmp = _ac_import_color(ctx,
 			  type,
@@ -306,118 +305,96 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint inputs = tnl->pipeline.inputs;
-   GLuint imports;
    struct vertex_arrays *tmp = &tnl->array_inputs;
+   GLuint i;
 
-/*     fprintf(stderr, "_tnl_vb_bind_arrays %d..%d // %d..%d\n", */
-/*    	   start, count, ctx->Array.LockFirst, ctx->Array.LockCount);  */
+   if (0) {
+      fprintf(stderr, "%s %d..%d // %d..%d\n", __FUNCTION__,
+	      start, count, ctx->Array.LockFirst, ctx->Array.LockCount); 
+      _tnl_print_vert_flags("    inputs", inputs); 
+      _tnl_print_vert_flags("    _Enabled", ctx->Array._Enabled);
+      _tnl_print_vert_flags("    importable", inputs & VERT_FIXUP);
+   }
+
+   VB->Count = count - start;
+   VB->FirstClipped = VB->Count;
+   VB->Elts = 0;
+   VB->MaterialMask = 0;
+   VB->Material = 0;
+   VB->Flag = 0;
+   VB->Primitive = tnl->tmp_primitive;
+   VB->PrimitiveLength = tnl->tmp_primitive_length;
+   VB->import_data = _tnl_upgrade_client_data;
+   VB->importable_data = inputs & VERT_FIXUP;
 
    if (ctx->Array.LockCount) {
       ASSERT(start == (GLint) ctx->Array.LockFirst);
       ASSERT(count == (GLint) ctx->Array.LockCount);
    }
 
-   imports = tnl->pipeline.inputs;
-
    _ac_import_range( ctx, start, count );
 
-   VB->Count = count - start;
-   VB->FirstClipped = VB->Count;
-
-   VB->Elts = 0;
-   VB->MaterialMask = 0;
-   VB->Material = 0;
-   VB->Flag = 0;
-
-/*     _tnl_print_vert_flags("_tnl_vb_bind_arrays: inputs", inputs); */
-/*     _tnl_print_vert_flags("_tnl_vb_bind_arrays: imports", imports); */
-/*     _tnl_print_vert_flags("_tnl_vb_bind_arrays: _Enabled", ctx->Array._Enabled); */
-
    if (inputs & VERT_OBJ) {
-      if (imports & VERT_OBJ) {
-	 _tnl_import_vertex( ctx, 0, 0 );
-	 tmp->Obj.count = VB->Count;
-      }
+      _tnl_import_vertex( ctx, 0, 0 );
+      tmp->Obj.count = VB->Count;
       VB->ObjPtr = &tmp->Obj;
    }
 
    if (inputs & VERT_NORM) {
-      if (imports & VERT_NORM) {
-	 _tnl_import_normal( ctx, 0, 0 );
-	 tmp->Normal.count = VB->Count;
-      }
+      _tnl_import_normal( ctx, 0, 0 );
+      tmp->Normal.count = VB->Count;
       VB->NormalPtr = &tmp->Normal;
    }
 
    if (inputs & VERT_RGBA) {
-      if (imports & VERT_RGBA) {
-	 _tnl_import_color( ctx, 0, 0, 0 );
-      }
+      _tnl_import_color( ctx, 0, 0, 0 );
       VB->ColorPtr[0] = &tmp->Color;
       VB->ColorPtr[1] = 0;
-/*        fprintf(stderr, "VB->ColorPtr[0]->StrideB %d Type %s\n",  */
-/*  	      VB->ColorPtr[0]->StrideB, */
-/*  	      _mesa_lookup_enum_by_nr(VB->ColorPtr[0]->Type)); */
-   }
-
-   if (inputs & VERT_INDEX) {
-      if (imports & VERT_INDEX) {
-	 _tnl_import_index( ctx, 0, 0 );
-	 tmp->Index.count = VB->Count;
-      }
-      VB->IndexPtr[0] = &tmp->Index;
-      VB->IndexPtr[1] = 0;
-   }
-
-
-   if (inputs & VERT_FOG_COORD) {
-      if (imports & VERT_FOG_COORD) {
-	 _tnl_import_fogcoord( ctx, 0, 0 );
-	 tmp->FogCoord.count = VB->Count;
-      }
-      VB->FogCoordPtr = &tmp->FogCoord;
-   }
-
-   if (inputs & VERT_EDGE) {
-      _tnl_import_edgeflag( ctx, GL_TRUE, sizeof(GLboolean) );
-      VB->EdgeFlag = (GLboolean *) tmp->EdgeFlag.data;
-   }
-
-   if (inputs & VERT_SPEC_RGB) {
-      if (imports & VERT_SPEC_RGB) {
-	 _tnl_import_secondarycolor( ctx, 0, 0, 0 );
-      }
-
-      VB->SecondaryColorPtr[0] = &tmp->SecondaryColor;
-      VB->SecondaryColorPtr[1] = 0;
    }
 
    if (inputs & VERT_TEX_ANY) {
-      GLuint i;
-      for (i = 0; i < ctx->Const.MaxTextureUnits ; i++)
+      for (i = 0; i < ctx->Const.MaxTextureUnits ; i++) {
 	 if (inputs & VERT_TEX(i)) {
-	    if (imports & VERT_TEX(i)) {
-	       _tnl_import_texcoord( ctx, i, 0, 0 );
-	       tmp->TexCoord[i].count = VB->Count;
-	    }
+	    _tnl_import_texcoord( ctx, i, 0, 0 );
+	    tmp->TexCoord[i].count = VB->Count;
 	    VB->TexCoordPtr[i] = &tmp->TexCoord[i];
 	 }
+      }
    }
 
-   VB->Primitive = tnl->tmp_primitive;
-   VB->PrimitiveLength = tnl->tmp_primitive_length;
-   VB->import_data = _tnl_upgrade_client_data;
-   VB->importable_data = inputs & VERT_FIXUP;
+   if (inputs & (VERT_INDEX|VERT_FOG_COORD|VERT_EDGE|VERT_SPEC_RGB)) {
+      if (inputs & VERT_INDEX) {
+	 _tnl_import_index( ctx, 0, 0 );
+	 tmp->Index.count = VB->Count;
+	 VB->IndexPtr[0] = &tmp->Index;
+	 VB->IndexPtr[1] = 0;
+      }
 
-/*     _tnl_print_vert_flags("_tnl_vb_bind_arrays: importable",  */
-/*  			 VB->importable_data); */
+      if (inputs & VERT_FOG_COORD) {
+	 _tnl_import_fogcoord( ctx, 0, 0 );
+	 tmp->FogCoord.count = VB->Count;
+	 VB->FogCoordPtr = &tmp->FogCoord;
+      }
+
+      if (inputs & VERT_EDGE) {
+	 _tnl_import_edgeflag( ctx, GL_TRUE, sizeof(GLboolean) );
+	 VB->EdgeFlag = (GLboolean *) tmp->EdgeFlag.data;
+      }
+
+      if (inputs & VERT_SPEC_RGB) {
+	 _tnl_import_secondarycolor( ctx, 0, 0, 0 );
+	 VB->SecondaryColorPtr[0] = &tmp->SecondaryColor;
+	 VB->SecondaryColorPtr[1] = 0;
+      }
+   }
 }
 
 
 
 
 /* Function to fill an immediate struct with the effects of
- * consecutive calls to ArrayElement with consecutive indices.
+ * consecutive calls to ArrayElement with consecutive indices.  Used
+ * for display lists and very large fan-like primitives only.
  */
 void _tnl_fill_immediate_drawarrays( GLcontext *ctx, struct immediate *IM,
 				     GLuint start, GLuint count )

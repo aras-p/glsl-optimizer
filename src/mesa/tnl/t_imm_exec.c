@@ -1,4 +1,4 @@
-/* $Id: t_imm_exec.c,v 1.23 2001/05/10 12:18:38 keithw Exp $ */
+/* $Id: t_imm_exec.c,v 1.24 2001/05/11 08:11:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -117,10 +117,6 @@ void _tnl_reset_compile_input( GLcontext *ctx,
 }
   
 
-
-
-
-
 void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
 			   GLuint flag )
 {
@@ -172,7 +168,7 @@ void _tnl_copy_to_current( GLcontext *ctx, struct immediate *IM,
 
 
 
-void _tnl_compute_orflag( struct immediate *IM )
+void _tnl_compute_orflag( struct immediate *IM, GLuint start )
 {
    GLuint count = IM->Count;
    GLuint orflag = 0;
@@ -184,7 +180,7 @@ void _tnl_compute_orflag( struct immediate *IM )
 
    /* Compute the flags for the whole buffer.
     */
-   for (i = IM->CopyStart ; i < count ; i++) {
+   for (i = start ; i < count ; i++) {
       andflag &= IM->Flag[i];
       orflag |= IM->Flag[i];
    }
@@ -352,7 +348,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
 
 
 
-/* Called by exec_cassette execute_compiled_cassette, but not
+/* Called by exec_vert_cassette, execute_compiled_cassette, but not
  * exec_elt_cassette.
  */
 void _tnl_run_cassette( GLcontext *ctx, struct immediate *IM )
@@ -373,26 +369,20 @@ void _tnl_run_cassette( GLcontext *ctx, struct immediate *IM )
    _tnl_copy_to_current( ctx, IM, IM->OrFlag );
 }
 
+
 /* Called for regular vertex cassettes.
  */
 static void exec_vert_cassette( GLcontext *ctx, struct immediate *IM )
 {
-   if (IM->OrFlag & VERT_ELT) {
-      GLuint andflag = ~0;
-      GLuint i;
-      GLuint start = IM->FlushElt ? IM->LastPrimitive : IM->CopyStart;
-      _tnl_translate_array_elts( ctx, IM, start, IM->Count );
-
-      /* Need to recompute andflag and orflag for fixup.
+   if (IM->FlushElt) {
+      /* Orflag is computed twice, but only reach this code if app is
+       * using a mixture of glArrayElement() and glVertex() while
+       * arrays are locked.
        */
-      if (IM->CopyAndFlag & VERT_ELT)
-	 IM->CopyAndFlag |= ctx->Array._Enabled;
-      else {
-	 for (i = IM->CopyStart ; i < IM->Count ; i++)
-	    andflag &= IM->Flag[i];
-	 IM->CopyAndFlag = andflag;
-      }
-      IM->CopyOrFlag |= ctx->Array._Enabled;
+      ASSERT(ctx->Array.LockCount);
+      ASSERT(IM->FlushElt == FLUSH_ELT_LAZY);
+      _tnl_translate_array_elts( ctx, IM, IM->CopyStart, IM->Count );
+      _tnl_compute_orflag( IM, IM->CopyStart ); 
    }
 
    _tnl_fixup_input( ctx, IM );
@@ -422,8 +412,7 @@ static void exec_elt_cassette( GLcontext *ctx, struct immediate *IM )
     */
    tnl->Driver.RunPipeline( ctx );
 
-   /* Still need to update current values:  (TODO - copy from VB)
-    * TODO: delay this until FlushVertices
+   /* Still need to update current values:  
     */
    if (ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1) {
       _tnl_translate_array_elts( ctx, IM, IM->LastData, IM->LastData );
@@ -435,7 +424,7 @@ static void exec_elt_cassette( GLcontext *ctx, struct immediate *IM )
 static void
 exec_empty_cassette( GLcontext *ctx, struct immediate *IM )
 {
-   if (IM->OrFlag & VERT_ELT)
+   if (IM->FlushElt)
       _tnl_translate_array_elts( ctx, IM, IM->CopyStart, IM->CopyStart );
 
    _tnl_copy_to_current( ctx, IM, IM->OrFlag );
@@ -450,7 +439,7 @@ void _tnl_execute_cassette( GLcontext *ctx, struct immediate *IM )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-   _tnl_compute_orflag( IM );
+   _tnl_compute_orflag( IM, IM->Start );
    _tnl_copy_immediate_vertices( ctx, IM ); /* ?? flags, orflag above */
    _tnl_get_exec_copy_verts( ctx, IM );
 

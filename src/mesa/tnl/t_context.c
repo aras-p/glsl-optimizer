@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.17 2001/05/09 13:53:36 keithw Exp $ */
+/* $Id: t_context.c,v 1.18 2001/05/11 08:11:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -149,7 +149,8 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    if (new_state & _NEW_ARRAY) {
       struct immediate *IM = TNL_CURRENT_IM(ctx);
       IM->ArrayEltFlags = ~ctx->Array._Enabled;
-      IM->ArrayEltFlush = !ctx->Array.LockCount;
+      IM->ArrayEltFlush = (ctx->Array.LockCount 
+			   ? FLUSH_ELT_LAZY : FLUSH_ELT_EAGER);
       IM->ArrayEltIncr = ctx->Array.Vertex.Enabled ? 1 : 0;
       tnl->pipeline.run_input_changes |= ctx->Array.NewState; /* overkill */
    }

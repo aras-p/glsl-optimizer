@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.23 2001/05/10 12:18:38 keithw Exp $ */
+/* $Id: t_context.h,v 1.24 2001/05/11 08:11:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -176,6 +176,9 @@ struct immediate
    GLuint ArrayEltFlags;	/* precalc'ed for glArrayElt */
    GLuint ArrayEltIncr;
    GLuint ArrayEltFlush;
+
+#define FLUSH_ELT_EAGER 0x1
+#define FLUSH_ELT_LAZY 0x2
    GLuint FlushElt;
 
    GLuint MaxTextureUnits;	/* precalc'ed for glMultiTexCoordARB */

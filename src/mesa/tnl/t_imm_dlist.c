@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.16 2001/05/03 16:49:27 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.17 2001/05/11 08:11:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -76,33 +76,14 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
    TNLvertexcassette *node;
    GLuint new_beginstate;
 
-   _tnl_compute_orflag( IM );
-
-   IM->CopyStart = IM->Start;
-
-   if (IM->OrFlag & VERT_ELT) {
-      GLuint andflag = ~0;
-      GLuint i;
-      GLuint start = IM->FlushElt ? IM->LastPrimitive : IM->CopyStart;
-      _tnl_translate_array_elts( ctx, IM, start, IM->Count );
-
-      /* Need to recompute andflag.
-       */
-      if (IM->AndFlag & VERT_ELT)
-	 IM->CopyAndFlag = IM->AndFlag |= ctx->Array._Enabled;
-      else {
-	 for (i = IM->CopyStart ; i < IM->Count ; i++)
-	    andflag &= IM->Flag[i];
-	 IM->CopyAndFlag = IM->AndFlag = andflag;
-      }
-      IM->CopyOrFlag |= ctx->Array._Enabled;
+   if (IM->FlushElt) {
+      ASSERT (IM->FlushElt == FLUSH_ELT_LAZY); 
+      _tnl_translate_array_elts( ctx, IM, IM->Start, IM->Count );
    }
 
+   _tnl_compute_orflag( IM, IM->Start );
    _tnl_fixup_input( ctx, IM );
-
-   
 /*     _tnl_print_cassette( IM ); */
-
 
    node = (TNLvertexcassette *)
       _mesa_alloc_instruction(ctx,
@@ -128,7 +109,6 @@ _tnl_compile_cassette( GLcontext *ctx, struct immediate *IM )
    if (ctx->ExecuteFlag) {
       execute_compiled_cassette( ctx, (void *)node );
    }
-
 
    /* Discard any errors raised in the last cassette.
     */

@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.12 2001/04/30 21:08:52 keithw Exp $ */
+/* $Id: t_imm_api.c,v 1.13 2001/05/11 08:11:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -51,6 +51,10 @@
 void _tnl_flush_immediate( struct immediate *IM )
 {
    GLcontext *ctx = IM->backref;
+
+   if (IM->FlushElt == FLUSH_ELT_EAGER) {
+      _tnl_translate_array_elts( ctx, IM, IM->LastPrimitive, IM->Count );
+   }
 
    /* Mark the last primitive:
     */
@@ -122,9 +126,8 @@ _tnl_begin( GLcontext *ctx, GLenum p )
        * when not known to be inside begin/end and arrays are
        * unlocked.  
        */
-      if (IM->FlushElt) {
+      if (IM->FlushElt == FLUSH_ELT_EAGER) {
 	 _tnl_translate_array_elts( ctx, IM, last, count );
-	 IM->FlushElt = 0;
       }
    }
 
@@ -229,7 +232,7 @@ _tnl_hard_begin( GLcontext *ctx, GLenum p )
       IM->PrimitiveLength[last] = count - last;
       IM->LastPrimitive = count;
 
-      ASSERT (!IM->FlushElt);
+      ASSERT (IM->FlushElt != FLUSH_ELT_EAGER);
 
       /* This is necessary as this immediate will not be flushed in
        * _tnl_end() -- we leave it active, hoping to pick up more
@@ -305,9 +308,8 @@ _tnl_end( GLcontext *ctx )
       IM->Primitive[count] = PRIM_OUTSIDE_BEGIN_END;
       IM->LastPrimitive = count;
 
-      if (IM->FlushElt) {
+      if (IM->FlushElt == FLUSH_ELT_EAGER) {
 	 _tnl_translate_array_elts( ctx, IM, last, count );
-	 IM->FlushElt = 0;
       }
    }
 
@@ -1053,7 +1055,7 @@ _tnl_EvalPoint2( GLint i, GLint j )
    IM->Elt[count] = i;				\
    IM->Flag[count] &= IM->ArrayEltFlags;	\
    IM->Flag[count] |= VERT_ELT;			\
-   IM->FlushElt |= IM->ArrayEltFlush;		\
+   IM->FlushElt = IM->ArrayEltFlush;		\
    IM->Count += IM->ArrayEltIncr;		\
    if (IM->Count == IMM_MAXDATA)			\
       _tnl_flush_immediate( IM );		\

@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.13 2001/05/10 12:18:38 keithw Exp $ */
+/* $Id: t_array_api.c,v 1.14 2001/05/11 08:11:31 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -104,7 +104,7 @@ static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
 	 GLuint start = IM->Start;
 	 GLint nr = MIN2( (GLint) (IMM_MAXDATA - start), count - j ) + start;
 	 GLuint sf = IM->Flag[start];
-	 IM->FlushElt |= 1;
+	 IM->FlushElt = IM->ArrayEltFlush;
 
 	 for (i = start ; i < nr ; i++) {
 	    IM->Elt[i] = (GLuint) *indices++;
