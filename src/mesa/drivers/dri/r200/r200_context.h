@@ -845,6 +845,7 @@ struct r200_context {
    GLuint TclFallback;
    GLuint Fallback;
    GLuint NewGLState;
+   GLuint tnl_index;	/* index of bits for last tnl_install_attrs */
 
    /* Vertex buffers
     */
@@ -889,7 +890,6 @@ struct r200_context {
    GLuint TexMatEnabled;
    GLuint TexMatCompSel;
    GLuint TexGenEnabled;
-   GLuint TexGenInputs;
    GLuint TexGenCompSel;
    GLmatrix tmpmat;
 

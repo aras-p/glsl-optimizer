@@ -2138,9 +2138,9 @@ static void update_texturematrix( GLcontext *ctx )
 	    /* Need to preconcatenate any active texgen 
 	     * obj/eyeplane matrices:
 	     */
-	    _math_matrix_mul_matrix( &rmesa->tmpmat, 
-				     &rmesa->TexGenMatrix[unit],
-				     ctx->TextureMatrixStack[unit].Top );
+	    _math_matrix_mul_matrix( &rmesa->tmpmat,
+				     ctx->TextureMatrixStack[unit].Top, 
+				     &rmesa->TexGenMatrix[unit] );
 	    upload_matrix( rmesa, rmesa->tmpmat.m, R200_MTX_TEX0+unit );
 	 } 
 	 else {
@@ -2155,11 +2155,9 @@ static void update_texturematrix( GLcontext *ctx )
    }
 
    tpc = (rmesa->TexMatEnabled | rmesa->TexGenEnabled);
-   if (tpc != rmesa->hw.tcg.cmd[TCG_TEX_PROC_CTL_0] ||
-       rmesa->TexGenInputs != rmesa->hw.tcg.cmd[TCG_TEX_PROC_CTL_1]) {
+   if (tpc != rmesa->hw.tcg.cmd[TCG_TEX_PROC_CTL_0]) {
       R200_STATECHANGE(rmesa, tcg);
       rmesa->hw.tcg.cmd[TCG_TEX_PROC_CTL_0] = tpc;
-      rmesa->hw.tcg.cmd[TCG_TEX_PROC_CTL_1] = rmesa->TexGenInputs;
    }
 
    compsel &= ~R200_OUTPUT_TEX_MASK;

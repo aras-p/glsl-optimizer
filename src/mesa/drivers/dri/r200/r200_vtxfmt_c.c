@@ -515,66 +515,118 @@ static void r200_Normal3fv( const GLfloat *v )
 /* TexCoord
  */
 
-#define TEX_to_nF(N, P, S, T, R)					\
-   static void r200_TexCoord ## N P					\
-   { 									\
-      GET_CURRENT_CONTEXT(ctx); r200ContextPtr rmesa = R200_CONTEXT(ctx); \
-      GLfloat * const dest = rmesa->vb.texcoordptr[0];			\
-      switch( ctx->Texture.Unit[0]._ReallyEnabled ) {			\
-      case TEXTURE_CUBE_BIT:						\
-      case TEXTURE_3D_BIT:						\
-	 dest[2] = R; 							\
-      case TEXTURE_2D_BIT:						\
-      case TEXTURE_RECT_BIT:						\
-	 dest[1] = T; 							\
-      case TEXTURE_1D_BIT:						\
-	 dest[0] = S; 							\
-      }									\
-   }
-
-TEX_to_nF( 1f,  (GLfloat s),                       s,    0.0,  0.0 )
-TEX_to_nF( 2f,  (GLfloat s, GLfloat t),            s,    t,    0.0 )
-TEX_to_nF( 3f,  (GLfloat s, GLfloat t, GLfloat r), s,    t,    r )
-TEX_to_nF( 1fv, (const GLfloat * v),               v[0], 0.0,  0.0 )
-TEX_to_nF( 2fv, (const GLfloat * v),               v[0], v[1], 0.0 )
-TEX_to_nF( 3fv, (const GLfloat * v),               v[0], v[1], v[2] )
-
-
-/* MultiTexcoord
- * 
- * Technically speaking, these functions should subtract GL_TEXTURE0 from
- * \c target before masking and using it.  The value of GL_TEXTURE0 is 0x84C0,
- * which has the low-order 5 bits 0.  For all possible valid values of 
- * \c target.  Subtracting GL_TEXTURE0 has the net effect of masking \c target
- * with 0x1F.  Masking with 0x1F and then masking with 0x07 is redundant, so
- * the subtraction has been omitted.
- */
-
-#define MTEX_to_nF(N, P, U, S, T, R)					\
-   static void r200_MultiTexCoord ## N ## ARB P				\
-   { 									\
-      GET_CURRENT_CONTEXT(ctx); r200ContextPtr rmesa = R200_CONTEXT(ctx); \
-      GLfloat * const dest = rmesa->vb.texcoordptr[U];			\
-      switch( ctx->Texture.Unit[U]._ReallyEnabled ) {			\
-      case TEXTURE_CUBE_BIT:						\
-      case TEXTURE_3D_BIT:						\
-	 dest[2] = R; 							\
-      case TEXTURE_2D_BIT:						\
-      case TEXTURE_RECT_BIT:						\
-	 dest[1] = T; 							\
-      case TEXTURE_1D_BIT:						\
-	 dest[0] = S; 							\
-      }									\
-   }
-
 /* \todo maybe (target & 4 ? target & 5 : target & 3) is more save than (target & 7) */
-MTEX_to_nF( 1f, (GLenum target, GLfloat s), (target & 7), s, 0.0, 0.0 )
-MTEX_to_nF( 2f, (GLenum target, GLfloat s, GLfloat t), (target & 7), s, t, 0.0 )
-MTEX_to_nF( 3f, (GLenum target, GLfloat s, GLfloat t, GLfloat r), (target & 7), s, t, r )
+static void r200_MultiTexCoord1fARB(GLenum target, GLfloat s)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   GLint unit = (target & 7);
+   GLfloat * const dest = rmesa->vb.texcoordptr[unit];
 
-MTEX_to_nF( 1fv, (GLenum target, const GLfloat *v), (target & 7), v[0], 0.0, 0.0 )
-MTEX_to_nF( 2fv, (GLenum target, const GLfloat *v), (target & 7), v[0], v[1], 0.0 )
-MTEX_to_nF( 3fv, (GLenum target, const GLfloat *v), (target & 7), v[0], v[1], v[2] )
+   switch( ctx->Texture.Unit[unit]._ReallyEnabled ) {
+   case TEXTURE_CUBE_BIT:
+   case TEXTURE_3D_BIT:
+      dest[2] = 0.0;
+      /* FALLTHROUGH */
+   case TEXTURE_2D_BIT:
+   case TEXTURE_RECT_BIT:
+      dest[1] = 0.0;
+      /* FALLTHROUGH */
+   case TEXTURE_1D_BIT:
+      dest[0] = s;
+   }
+}
+
+static void r200_MultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   GLint unit = (target & 7);
+   GLfloat * const dest = rmesa->vb.texcoordptr[unit];
+
+   switch( ctx->Texture.Unit[unit]._ReallyEnabled ) {
+   case TEXTURE_CUBE_BIT:
+   case TEXTURE_3D_BIT:
+      dest[2] = 0.0;
+      /* FALLTHROUGH */
+   case TEXTURE_2D_BIT:
+   case TEXTURE_RECT_BIT:
+      dest[1] = t;
+      dest[0] = s;
+      break;
+   default:
+      VFMT_FALLBACK(__FUNCTION__);
+      GL_CALL(MultiTexCoord2fARB)(target, s, t);
+      return;	
+   }
+}
+
+static void r200_MultiTexCoord3fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   GLint unit = (target & 7);
+   GLfloat * const dest = rmesa->vb.texcoordptr[unit];
+
+   switch( ctx->Texture.Unit[unit]._ReallyEnabled ) {
+   case TEXTURE_CUBE_BIT:
+   case TEXTURE_3D_BIT:
+      dest[2] = r;
+      dest[1] = t;
+      dest[0] = s;
+      break;
+   default:
+      VFMT_FALLBACK(__FUNCTION__);
+      GL_CALL(MultiTexCoord3fARB)(target, s, t, r);
+      return;	
+   }
+}
+
+static void r200_TexCoord1f(GLfloat s)
+{
+   r200_MultiTexCoord1fARB(GL_TEXTURE0, s);
+}
+
+static void r200_TexCoord2f(GLfloat s, GLfloat t)
+{
+   r200_MultiTexCoord2fARB(GL_TEXTURE0, s, t);
+}
+
+static void r200_TexCoord3f(GLfloat s, GLfloat t, GLfloat r)
+{
+   r200_MultiTexCoord3fARB(GL_TEXTURE0, s, t, r);
+}
+
+static void r200_TexCoord1fv(const GLfloat *v)
+{
+   r200_MultiTexCoord1fARB(GL_TEXTURE0, v[0]);
+}
+
+static void r200_TexCoord2fv(const GLfloat *v)
+{
+   r200_MultiTexCoord2fARB(GL_TEXTURE0, v[0], v[1]);
+}
+
+static void r200_TexCoord3fv(const GLfloat *v)
+{
+   r200_MultiTexCoord3fARB(GL_TEXTURE0, v[0], v[1], v[2]);
+}
+
+static void r200_MultiTexCoord1fvARB(GLenum target, const GLfloat *v)
+{
+   r200_MultiTexCoord1fARB(target, v[0]);
+}
+
+static void r200_MultiTexCoord2fvARB(GLenum target, const GLfloat *v)
+{
+   r200_MultiTexCoord2fARB(target, v[0], v[1]);
+}
+
+static void r200_MultiTexCoord3fvARB(GLenum target, const GLfloat *v)
+{
+   r200_MultiTexCoord3fARB(target, v[0], v[1], v[2]);
+}
+
 
 static struct dynfn *lookup( struct dynfn *l, const int *key )
 {

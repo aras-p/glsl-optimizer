@@ -575,6 +575,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define     R200_LIGHT_7_SHIFT                   (16)
 /* gap */
 #define R200_SE_TCL_TEX_PROC_CTL_2        0x22a8 
+#define     R200_TEXGEN_COMP_MASK                (0xf)
+#define     R200_TEXGEN_COMP_S                   (0x1)
+#define     R200_TEXGEN_COMP_T                   (0x2)
+#define     R200_TEXGEN_COMP_R                   (0x4)
+#define     R200_TEXGEN_COMP_Q                   (0x8)
 #define     R200_TEXGEN_0_COMP_MASK_SHIFT        (0)
 #define     R200_TEXGEN_1_COMP_MASK_SHIFT        (4)
 #define     R200_TEXGEN_2_COMP_MASK_SHIFT        (8)

@@ -52,6 +52,7 @@ extern void r200VtxfmtMakeCurrent( GLcontext *ctx );
 extern void r200VtxfmtUnbindContext( GLcontext *ctx );
 
 extern void r200_copy_to_current( GLcontext *ctx );
+extern void VFMT_FALLBACK( const char *caller );
 
 #define DFN( FUNC, CACHE)				\
 do {							\

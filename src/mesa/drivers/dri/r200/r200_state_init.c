@@ -699,7 +699,7 @@ void r200InitState( r200ContextPtr rmesa )
        R200_CULL_FRONT_IS_CCW);
 
    /* Texgen/Texmat state */
-   rmesa->hw.tcg.cmd[TCG_TEX_PROC_CTL_2] = 0x0; /* masks??? */
+   rmesa->hw.tcg.cmd[TCG_TEX_PROC_CTL_2] = 0x00ffffff;
    rmesa->hw.tcg.cmd[TCG_TEX_PROC_CTL_3] = 
       ((0 << R200_TEXGEN_0_INPUT_TEX_SHIFT) |
        (1 << R200_TEXGEN_1_INPUT_TEX_SHIFT) |
@@ -716,8 +716,6 @@ void r200InitState( r200ContextPtr rmesa )
        (4 << R200_TEXGEN_4_INPUT_SHIFT) |
        (5 << R200_TEXGEN_5_INPUT_SHIFT)); 
    rmesa->hw.tcg.cmd[TCG_TEX_CYL_WRAP_CTL] = 0;
-
-   rmesa->TexGenInputs = rmesa->hw.tcg.cmd[TCG_TEX_PROC_CTL_1];
 
 
    for (i = 0 ; i < 8; i++) {

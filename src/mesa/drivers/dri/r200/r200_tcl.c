@@ -351,13 +351,10 @@ static void r200_check_tcl_render( GLcontext *ctx,
 
       for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
 	 if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-	    if (ctx->Texture.Unit[unit].TexGenEnabled) {
-	       if (rmesa->TexGenNeedNormals[unit]) {
-		  inputs |= VERT_BIT_NORMAL;
-	       }
-	    } else {
-	       inputs |= VERT_BIT_TEX(unit);
+	    if (rmesa->TexGenNeedNormals[unit]) {
+	       inputs |= VERT_BIT_NORMAL;
 	    }
+	    inputs |= VERT_BIT_TEX(unit);
 	 }
       }
 
@@ -434,18 +431,6 @@ static void transition_to_swtnl( GLcontext *ctx )
     */
    R200_STATECHANGE( rmesa, vap );
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] &= ~R200_VAP_TCL_ENABLE;
-   rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] |= R200_VAP_D3D_TEX_DEFAULT;
-
-   R200_STATECHANGE( rmesa, vte );
-   rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL] &= ~R200_VTX_W0_FMT;
-
-   R200_STATECHANGE( rmesa, set );
-   rmesa->hw.set.cmd[SET_RE_CNTL] |= (R200_VTX_STQ0_D3D |
-				      R200_VTX_STQ1_D3D |
-				      R200_VTX_STQ2_D3D |
-				      R200_VTX_STQ3_D3D |
-				      R200_VTX_STQ4_D3D |
-				      R200_VTX_STQ5_D3D);
 }
 
 static void transition_to_hwtnl( GLcontext *ctx )
@@ -470,21 +455,10 @@ static void transition_to_hwtnl( GLcontext *ctx )
 
    R200_STATECHANGE( rmesa, vap );
    rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] |= R200_VAP_TCL_ENABLE;
-   rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] &= ~(R200_VAP_FORCE_W_TO_ONE |
-					   R200_VAP_D3D_TEX_DEFAULT);
+   rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL] &= ~R200_VAP_FORCE_W_TO_ONE;
 
    R200_STATECHANGE( rmesa, vte );
    rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL] &= ~(R200_VTX_XY_FMT|R200_VTX_Z_FMT);
-   rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL] |= R200_VTX_W0_FMT;
-
-   R200_STATECHANGE( rmesa, set );
-   rmesa->hw.set.cmd[SET_RE_CNTL] &= ~(R200_VTX_STQ0_D3D |
-				       R200_VTX_STQ1_D3D |
-				       R200_VTX_STQ2_D3D |
-				       R200_VTX_STQ3_D3D |
-				       R200_VTX_STQ4_D3D |
-				       R200_VTX_STQ5_D3D);
-
 
    if (R200_DEBUG & DEBUG_FALLBACKS) 
       fprintf(stderr, "R200 end tcl fallback\n");

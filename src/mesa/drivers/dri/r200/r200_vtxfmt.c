@@ -401,24 +401,6 @@ static void VFMT_FALLBACK_OUTSIDE_BEGIN_END( const char *caller )
  * to look-up the table, and a specialized version of GL_CALL that used the
  * offset number instead of the name.
  */
-static void dispatch_texcoord( GLuint count, GLfloat * f )
-{
-   switch( count ) {
-   case 3:
-      GL_CALL(TexCoord3fv)( f );
-      break;
-   case 2:
-      GL_CALL(TexCoord2fv)( f );
-      break;
-   case 1:
-      GL_CALL(TexCoord1fv)( f );
-      break;
-   default:
-      assert( count == 0 );
-      break;
-   }
-}
-
 static void dispatch_multitexcoord( GLuint count, GLuint unit, GLfloat * f )
 {
    switch( count ) {
@@ -437,7 +419,7 @@ static void dispatch_multitexcoord( GLuint count, GLuint unit, GLfloat * f )
    }
 }
 
-static void VFMT_FALLBACK( const char *caller )
+void VFMT_FALLBACK( const char *caller )
 {
    GET_CURRENT_CONTEXT(ctx);
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -663,8 +645,6 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
    GLuint ind1 = 0;
    GLuint i;
    GLuint count[R200_MAX_TEXTURE_UNITS];
-   GLuint re_cntl;
-
 
    if (rmesa->TclFallback || rmesa->vb.fell_back || ctx->CompileFlag)
       return GL_FALSE;
@@ -692,26 +672,16 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
       }
    }
 
-   re_cntl = rmesa->hw.set.cmd[SET_RE_CNTL] & ~(R200_VTX_STQ0_D3D |
-						R200_VTX_STQ1_D3D |
-						R200_VTX_STQ2_D3D |
-						R200_VTX_STQ3_D3D |
-						R200_VTX_STQ4_D3D |
-						R200_VTX_STQ5_D3D );
    for ( i = 0 ; i < ctx->Const.MaxTextureUnits ; i++ ) {
       count[i] = 0;
 
       if (ctx->Texture.Unit[i]._ReallyEnabled) {
-	 if (ctx->Texture.Unit[i].TexGenEnabled) {
-	    if (rmesa->TexGenNeedNormals[i]) {
-	       ind0 |= R200_VTX_N0;
-	    }
+	 if (rmesa->TexGenNeedNormals[i]) {
+	    ind0 |= R200_VTX_N0;
 	 }
 	 else {
 	    switch( ctx->Texture.Unit[i]._ReallyEnabled ) {
 	    case TEXTURE_CUBE_BIT:
-	       re_cntl |= R200_VTX_STQ0_D3D << (2 * i);
-	       /* FALLTHROUGH */
 	    case TEXTURE_3D_BIT:
 	       count[i] = 3;
 	       break;
@@ -727,11 +697,6 @@ static GLboolean check_vtx_fmt( GLcontext *ctx )
 	    ind1 |= count[i] << (3 * i);
 	 }
       }
-   }
-
-   if ( re_cntl != rmesa->hw.set.cmd[SET_RE_CNTL] ) {
-      R200_STATECHANGE( rmesa, set );
-      rmesa->hw.set.cmd[SET_RE_CNTL] = re_cntl;
    }
 
    if (R200_DEBUG & (DEBUG_VFMT|DEBUG_STATE))
