@@ -282,6 +282,10 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
    else
       comparePointers = GL_FALSE;
 
+   /* Force the visual to have an alpha channel */
+   if (rgbFlag && _mesa_getenv("MESA_GLX_FORCE_ALPHA"))
+      alphaFlag = GL_TRUE;
+
    /* First check if a matching visual is already in the list */
    for (i=0; i<NumVisuals; i++) {
       XMesaVisual v = VisualTable[i];
