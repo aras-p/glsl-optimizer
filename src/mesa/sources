@@ -162,8 +162,8 @@ SLANG_SOURCES = \
 	shader/slang/MachineIndependent/preprocessor/tokens.c
 
 SLANG_CPP_SOURCES = \
-	shader/slang/slang_mesa.cpp 
-
+	shader/slang/slang_mesa.cpp	\
+	shader/slang/MachineIndependent/Gen_glslang.cpp
 
 ASM_C_SOURCES =	\
 	x86/common_x86.c \
@@ -255,14 +255,13 @@ CORE_SOURCES = \
 	$(SHADER_SOURCES)	\
 	$(SWRAST_SOURCES)	\
 	$(SWRAST_SETUP_SOURCES)	\
-	$(ASM_C_SOURCES)
-#	$(SLANG_SOURCES)	\
+	$(ASM_C_SOURCES)	\
+	$(SLANG_SOURCES)
 
 
 ### Object files
 
-CORE_OBJECTS = $(CORE_SOURCES:.c=.o)
-# $(SLANG_CPP_SOURCES:.cpp=.o)
+CORE_OBJECTS = $(CORE_SOURCES:.c=.o) $(SLANG_CPP_SOURCES:.cpp=.o)
 
 OSMESA_DRIVER_OBJECTS = $(OSMESA_DRIVER_SOURCES:.c=.o)
 
