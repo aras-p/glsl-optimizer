@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.54 2000/04/07 00:19:41 brianp Exp $ */
+/* $Id: context.c,v 1.55 2000/04/07 16:27:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1115,6 +1115,11 @@ static void init_attrib_groups( GLcontext *ctx )
    ctx->Pixel.MapGtoG[0] = 0.0;
    ctx->Pixel.MapBtoB[0] = 0.0;
    ctx->Pixel.MapAtoA[0] = 0.0;
+   ctx->Pixel.HistogramEnabled = GL_FALSE;
+   ctx->Pixel.MinMaxEnabled = GL_FALSE;
+   ctx->Pixel.PixelTextureEnabled = GL_FALSE;
+   ctx->Pixel.FragmentRgbSource = GL_PIXEL_GROUP_COLOR_SGIS;
+   ctx->Pixel.FragmentAlphaSource = GL_PIXEL_GROUP_COLOR_SGIS;
 
    /* Point group */
    ctx->Point.SmoothFlag = GL_FALSE;

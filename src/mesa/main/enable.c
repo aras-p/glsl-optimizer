@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.13 2000/04/04 15:14:10 brianp Exp $ */
+/* $Id: enable.c,v 1.14 2000/04/07 16:27:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -467,6 +467,16 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          }
          break;
 
+      /* GL_SGIS_pixel_texture */
+      case GL_PIXEL_TEXTURE_SGIS:
+         ctx->Pixel.PixelTextureEnabled = state;
+         break;
+
+      /* GL_SGIX_pixel_texture */
+      case GL_PIXEL_TEX_GEN_SGIX:
+         ctx->Pixel.PixelTextureEnabled = state;
+         break;
+
       default:
 	 if (state) {
 	    gl_error( ctx, GL_INVALID_ENUM, "glEnable" );
@@ -670,6 +680,16 @@ _mesa_IsEnabled( GLenum cap )
             gl_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );
             return GL_FALSE;
          }
+
+      /* GL_SGIS_pixel_texture */
+      case GL_PIXEL_TEXTURE_SGIS:
+         return ctx->Pixel.PixelTextureEnabled;
+         break;
+
+      /* GL_SGIX_pixel_texture */
+      case GL_PIXEL_TEX_GEN_SGIX:
+         return ctx->Pixel.PixelTextureEnabled;
+         break;
 
       default:
 	 gl_error( ctx, GL_INVALID_ENUM, "glIsEnabled" );

@@ -1,4 +1,4 @@
-/* $Id: attrib.c,v 1.20 2000/03/19 01:10:11 brianp Exp $ */
+/* $Id: attrib.c,v 1.21 2000/04/07 16:27:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -177,6 +177,8 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->Lighting = ctx->Light.Enabled;
       attr->LineSmooth = ctx->Line.SmoothFlag;
       attr->LineStipple = ctx->Line.StippleFlag;
+      attr->Histogram = ctx->Pixel.HistogramEnabled;
+      attr->MinMax = ctx->Pixel.MinMaxEnabled;
       attr->IndexLogicOp = ctx->Color.IndexLogicOpEnabled;
       attr->ColorLogicOp = ctx->Color.ColorLogicOpEnabled;
       attr->Map1Color4 = ctx->Eval.Map1Color4;
@@ -198,6 +200,7 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->Map2Vertex3 = ctx->Eval.Map2Vertex3;
       attr->Map2Vertex4 = ctx->Eval.Map2Vertex4;
       attr->Normalize = ctx->Transform.Normalize;
+      attr->PixelTexture = ctx->Pixel.PixelTextureEnabled;
       attr->PointSmooth = ctx->Point.SmoothFlag;
       attr->PolygonOffsetPoint = ctx->Polygon.OffsetPoint;
       attr->PolygonOffsetLine = ctx->Polygon.OffsetLine;
@@ -531,6 +534,7 @@ _mesa_PopAttrib(void)
                TEST_AND_UPDATE(ctx->Eval.Map2Vertex4, enable->Map2Vertex4, GL_MAP2_VERTEX_4);
                TEST_AND_UPDATE(ctx->Transform.Normalize, enable->Normalize, GL_NORMALIZE);
                TEST_AND_UPDATE(ctx->Transform.RescaleNormals, enable->RescaleNormals, GL_RESCALE_NORMAL_EXT);
+               TEST_AND_UPDATE(ctx->Pixel.PixelTextureEnabled, enable->PixelTexture, GL_POINT_SMOOTH);
                TEST_AND_UPDATE(ctx->Point.SmoothFlag, enable->PointSmooth, GL_POINT_SMOOTH);
                TEST_AND_UPDATE(ctx->Polygon.OffsetPoint, enable->PolygonOffsetPoint, GL_POLYGON_OFFSET_POINT);
                TEST_AND_UPDATE(ctx->Polygon.OffsetLine, enable->PolygonOffsetLine, GL_POLYGON_OFFSET_LINE);

@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.6 2000/04/01 05:42:06 brianp Exp $ */
+/* $Id: state.c,v 1.7 2000/04/07 16:27:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,6 +64,7 @@
 #include "mmath.h"
 #include "pipeline.h"
 #include "pixel.h"
+#include "pixeltex.h"
 #include "points.h"
 #include "polygon.h"
 #include "quads.h"
@@ -524,6 +525,17 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->GetColorTableEXT = _mesa_GetColorTable;
    exec->GetColorTableParameterfvEXT = _mesa_GetColorTableParameterfv;
    exec->GetColorTableParameterivEXT = _mesa_GetColorTableParameteriv;
+
+   /* GL_SGIX_pixel_texture */
+   exec->PixelTexGenSGIX = _mesa_PixelTexGenSGIX;
+
+   /* GL_SGIS_pixel_texture */
+   exec->PixelTexGenParameteriSGIS = _mesa_PixelTexGenParameteriSGIS;
+   exec->PixelTexGenParameterivSGIS = _mesa_PixelTexGenParameterivSGIS;
+   exec->PixelTexGenParameterfSGIS = _mesa_PixelTexGenParameterfSGIS;
+   exec->PixelTexGenParameterfvSGIS = _mesa_PixelTexGenParameterfvSGIS;
+   exec->GetPixelTexGenParameterivSGIS = _mesa_GetPixelTexGenParameterivSGIS;
+   exec->GetPixelTexGenParameterfvSGIS = _mesa_GetPixelTexGenParameterfvSGIS;
 
    /* GL_EXT_compiled_vertex_array */
    exec->LockArraysEXT = _mesa_LockArraysEXT;

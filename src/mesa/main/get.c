@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.17 2000/04/04 15:14:10 brianp Exp $ */
+/* $Id: get.c,v 1.18 2000/04/07 16:27:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -56,6 +56,28 @@
 #define ENUM_TO_FLOAT(X) ((GLfloat)(X))
 #define ENUM_TO_DOUBLE(X) ((GLdouble)(X))
 #endif
+
+
+static GLenum
+pixel_texgen_mode(const GLcontext *ctx)
+{
+   if (ctx->Pixel.FragmentRgbSource == GL_CURRENT_RASTER_POSITION) {
+      if (ctx->Pixel.FragmentAlphaSource == GL_CURRENT_RASTER_POSITION) {
+         return GL_RGBA;
+      }
+      else {
+         return GL_RGB;
+      }
+   }
+   else {
+      if (ctx->Pixel.FragmentAlphaSource == GL_CURRENT_RASTER_POSITION) {
+         return GL_ALPHA;
+      }
+      else {
+         return GL_NONE;
+      }
+   }
+}
 
 
 
@@ -1041,6 +1063,19 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
          }
          return;
+
+      /* GL_SGIS_pixel_texture */
+      case GL_PIXEL_TEXTURE_SGIS:
+         *params = ctx->Pixel.PixelTextureEnabled;
+         break;
+
+      /* GL_SGIX_pixel_texture */
+      case GL_PIXEL_TEX_GEN_SGIX:
+         *params = ctx->Pixel.PixelTextureEnabled;
+         break;
+      case GL_PIXEL_TEX_GEN_MODE_SGIX:
+         *params = (GLboolean) pixel_texgen_mode(ctx);
+         break;
 
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
@@ -2034,6 +2069,19 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          }
          return;
 
+      /* GL_SGIS_pixel_texture */
+      case GL_PIXEL_TEXTURE_SGIS:
+         *params = (GLdouble) ctx->Pixel.PixelTextureEnabled;
+         break;
+
+      /* GL_SGIX_pixel_texture */
+      case GL_PIXEL_TEX_GEN_SGIX:
+         *params = (GLdouble) ctx->Pixel.PixelTextureEnabled;
+         break;
+      case GL_PIXEL_TEX_GEN_MODE_SGIX:
+         *params = (GLdouble) pixel_texgen_mode(ctx);
+         break;
+
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
    }
@@ -3002,6 +3050,19 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
          }
          return;
+
+      /* GL_SGIS_pixel_texture */
+      case GL_PIXEL_TEXTURE_SGIS:
+         *params = (GLfloat) ctx->Pixel.PixelTextureEnabled;
+         break;
+
+      /* GL_SGIX_pixel_texture */
+      case GL_PIXEL_TEX_GEN_SGIX:
+         *params = (GLfloat) ctx->Pixel.PixelTextureEnabled;
+         break;
+      case GL_PIXEL_TEX_GEN_MODE_SGIX:
+         *params = (GLfloat) pixel_texgen_mode(ctx);
+         break;
 
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
@@ -3994,6 +4055,19 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
          }
          return;
+
+      /* GL_SGIS_pixel_texture */
+      case GL_PIXEL_TEXTURE_SGIS:
+         *params = (GLint) ctx->Pixel.PixelTextureEnabled;
+         break;
+
+      /* GL_SGIX_pixel_texture */
+      case GL_PIXEL_TEX_GEN_SGIX:
+         *params = (GLint) ctx->Pixel.PixelTextureEnabled;
+         break;
+      case GL_PIXEL_TEX_GEN_MODE_SGIX:
+         *params = (GLint) pixel_texgen_mode(ctx);
+         break;
 
       default:
          gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );

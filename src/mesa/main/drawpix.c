@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.16 2000/04/01 05:42:06 brianp Exp $ */
+/* $Id: drawpix.c,v 1.17 2000/04/07 16:27:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,9 +37,11 @@
 #include "mem.h"
 #include "mmath.h"
 #include "pixel.h"
+#include "pixeltex.h"
 #include "span.h"
 #include "state.h"
 #include "stencil.h"
+#include "texture.h"
 #include "types.h"
 #include "zoom.h"
 #endif
@@ -125,6 +127,7 @@ simple_DrawPixels( GLcontext *ctx, GLint x, GLint y,
        && ctx->Pixel.AlphaBias==0.0 && ctx->Pixel.AlphaScale==1.0
        && ctx->Pixel.IndexShift==0 && ctx->Pixel.IndexOffset==0
        && ctx->Pixel.MapColorFlag==0
+       && ctx->Texture.ReallyEnabled == 0
        && unpack->Alignment==1
        && !unpack->SwapBytes
        && !unpack->LsbFirst) {
@@ -644,6 +647,17 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                   pixels, width, height, format, type, 0, row, 0);
          _mesa_unpack_ubyte_color_span(ctx, width, GL_RGBA, (void*) rgba,
                    format, type, source, unpack, GL_TRUE);
+
+         if (ctx->Texture.ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
+            GLfloat s[MAX_WIDTH], t[MAX_WIDTH], r[MAX_WIDTH], q[MAX_WIDTH];
+            GLuint unit;
+            /* XXX not sure how multitexture is supposed to work here */
+            for (unit = 0; unit < MAX_TEXTURE_UNITS; unit++) {
+               _mesa_pixeltexgen(ctx, width, (const GLubyte (*)[4]) rgba,
+                                 s, t, r, q);
+               gl_texture_pixels(ctx, unit, width, s, t, r, NULL, rgba);
+            }
+         }
 
          if (quickDraw) {
             (*ctx->Driver.WriteRGBASpan)( ctx, width, x, y,
