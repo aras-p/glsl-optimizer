@@ -240,6 +240,12 @@ static BITMAPINFO *dibBMI;
 static HBITMAP dibHBM;
 static HWND dibWnd;
 
+static int env_check (const char *var, int val)
+{
+ const char *env = getenv(var);
+ return (env && (env[0] == val));
+}
+
 static LRESULT APIENTRY 
 __wglMonitor(HWND hwnd, UINT message, UINT wParam, LONG lParam)
  {
@@ -331,10 +337,8 @@ wglCreateContext(HDC hdc)
       SetWindowLong(hWnd, GWL_WNDPROC, (LONG) __wglMonitor);
    }
 
-   {
-    char *env;
-    /* always log when debugging, or if user demands */
-    if (TDFX_DEBUG || ((env = getenv("MESA_FX_INFO")) && env[0] == 'r'))
+   /* always log when debugging, or if user demands */
+   if (TDFX_DEBUG || env_check("MESA_FX_INFO", 'r')) {
       freopen("MESA.LOG", "w", stderr);
    }
 
@@ -343,7 +347,7 @@ wglCreateContext(HDC hdc)
      ShowWindow(hWnd, SW_SHOWNORMAL);
      SetForegroundWindow(hWnd);
      Sleep(100); /* a hack for win95 */
-     if (0 && !(GetWindowLong (hWnd, GWL_STYLE) & WS_POPUP)) {
+     if (env_check("MESA_GLX_FX", 'w') && !(GetWindowLong (hWnd, GWL_STYLE) & WS_POPUP)) {
 	/* [dBorca] Hack alert: unfinished business! */
         error = !(ctx = fxMesaCreateContext((GLuint) hWnd, GR_RESOLUTION_NONE, GR_REFRESH_NONE, pix[curPFD - 1].mesaAttr));
      } else {

@@ -185,6 +185,15 @@ MESA_FX_MAXLOD
 	    "9"  - 512x512 textures
 	    "10" - 1024x1024 textures
 	    "11" - 2048x2048 textures
+MESA_GLX_FX
+	OS: win32, linux
+	HW: selective
+	Desc: force display mode
+	Note: (!) experimental!
+	Value:
+	    "w" - windowed mode (linux: V1/2/Rush, win32: all except V1/V2)
+	    "f" - fullscreen mode (linux: V1/V2/Rush)
+	    "d" - disable glide driver (linux: V1/V2/Rush)
 
 
 

@@ -176,15 +176,19 @@ static struct _tnl_dynfn *makeX86Vertex3fv( GLcontext *ctx, int vertex_size )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    DFN ( _tnl_x86_Vertex3fv, tnl->vtx.cache.Vertex[3-1], vertex_size );
 
-   FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
-   FIXUP(dfn->code, 0, 1, vertex_size - 3);
-   FIXUP(dfn->code, 0, 2, (int)&tnl->vtx.vertex[3]);
-   FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
-   FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
-   FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
-   FIXUP(dfn->code, 0, 4, (int)ctx);
-   FIXUPREL(dfn->code, 0, 5, (int)&_tnl_wrap_filled_vertex);
-   return dfn;
+   switch (vertex_size) {
+      default: {
+         FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
+         FIXUP(dfn->code, 0, 1, vertex_size - 3);
+         FIXUP(dfn->code, 0, 2, (int)&tnl->vtx.vertex[3]);
+         FIXUP(dfn->code, 0, 0, (int)&tnl->vtx.vbptr);
+         FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
+         FIXUP(dfn->code, 0, 3, (int)&tnl->vtx.counter);
+         FIXUP(dfn->code, 0, 4, (int)ctx);
+         FIXUPREL(dfn->code, 0, 5, (int)&_tnl_wrap_filled_vertex);
+         return dfn;
+      }
+   }
 }
 
 static struct _tnl_dynfn *makeX86Vertex4fv( GLcontext *ctx, int vertex_size )
