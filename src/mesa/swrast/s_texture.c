@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.22 2001/04/10 15:25:45 brianp Exp $ */
+/* $Id: s_texture.c,v 1.23 2001/04/12 15:18:07 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -199,6 +199,15 @@
 
 
 
+/*
+ * Note, the FRAC macro has to work perfectly.  Otherwise you'll sometimes
+ * see 1-pixel bands of improperly weighted linear-sampled texels.
+ * In particular, #define FRAC(f) ((f) - IFLOOR(f)) doesn't work.
+ * Also note, FRAC(x) doesn't truly return the fractional part of x for x < 0.
+ * Instead, if x < 0 then FRAC(x) = 1 - true_frac(x).
+ */
+#define FRAC(f)  ((f) - floor(f))
+
 
 /*
  * Bitflags for texture border color sampling.
@@ -285,9 +294,15 @@ sample_1d_nearest(GLcontext *ctx,
    /* skip over the border, if any */
    i += img->Border;
 
-   (*img->FetchTexel)(img, i, 0, 0, (GLvoid *) rgba);
-   if (img->Format == GL_COLOR_INDEX) {
-      palette_sample(ctx, tObj, rgba[0], rgba);
+   if (i < 0 || i >= img->Width) {
+      /* Need this test for GL_CLAMP_TO_BORDER_ARB mode */
+      COPY_CHAN4(rgba, tObj->BorderColor);
+   }
+   else {
+      (*img->FetchTexel)(img, i, 0, 0, (GLvoid *) rgba);
+      if (img->Format == GL_COLOR_INDEX) {
+         palette_sample(ctx, tObj, rgba[0], rgba);
+      }
    }
 }
 
@@ -569,9 +584,15 @@ sample_2d_nearest(GLcontext *ctx,
    i += img->Border;
    j += img->Border;
 
-   (*img->FetchTexel)(img, i, j, 0, (GLvoid *) rgba);
-   if (img->Format == GL_COLOR_INDEX) {
-      palette_sample(ctx, tObj, rgba[0], rgba);
+   if (i < 0 || i >= img->Width || j < 0 || j >= img->Height) {
+      /* Need this test for GL_CLAMP_TO_BORDER_ARB mode */
+      COPY_CHAN4(rgba, tObj->BorderColor);
+   }
+   else {
+      (*img->FetchTexel)(img, i, j, 0, (GLvoid *) rgba);
+      if (img->Format == GL_COLOR_INDEX) {
+         palette_sample(ctx, tObj, rgba[0], rgba);
+      }
    }
 }
 
@@ -612,8 +633,8 @@ sample_2d_linear(GLcontext *ctx,
    }
 
    {
-      const GLfloat a = FRAC(u + 1.0F); /* add one in case u is just below 0 */
-      const GLfloat b = FRAC(v + 1.0F);
+      const GLfloat a = FRAC(u - 1.0);
+      const GLfloat b = FRAC(v - 1.0);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
       const GLint w00 = IROUND_POS((1.0F-a) * (1.0F-b) * WEIGHT_SCALE);
       const GLint w10 = IROUND_POS(      a  * (1.0F-b) * WEIGHT_SCALE);
@@ -983,9 +1004,17 @@ sample_3d_nearest(GLcontext *ctx,
    COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, t, height, j);
    COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapR, r, depth,  k);
 
-   (*img->FetchTexel)(img, i, j, k, (GLvoid *) rgba);
-   if (img->Format == GL_COLOR_INDEX) {
-      palette_sample(ctx, tObj, rgba[0], rgba);
+   if (i < 0 || i >= img->Width ||
+       j < 0 || j >= img->Height ||
+       k < 0 || k >= img->Depth) {
+      /* Need this test for GL_CLAMP_TO_BORDER_ARB mode */
+      COPY_CHAN4(rgba, tObj->BorderColor);
+   }
+   else {
+      (*img->FetchTexel)(img, i, j, k, (GLvoid *) rgba);
+      if (img->Format == GL_COLOR_INDEX) {
+         palette_sample(ctx, tObj, rgba[0], rgba);
+      }
    }
 }
 
