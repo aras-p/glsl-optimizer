@@ -1,4 +1,4 @@
-/* $Id: texobj.c,v 1.40 2001/02/20 16:42:25 brianp Exp $ */
+/* $Id: texobj.c,v 1.41 2001/02/26 18:25:25 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -405,7 +405,7 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       }
       else {
          /* Dimensions = ??? */
-         gl_problem(NULL, "Bug in gl_test_texture_object_completeness\n");
+         gl_problem(ctx, "Bug in gl_test_texture_object_completeness\n");
       }
    }
 }
