@@ -47,7 +47,7 @@ static void i810SetTexImages( i810ContextPtr imesa,
    GLuint height, width, pitch, i, textureFormat, log_pitch;
    i810TextureObjectPtr t = (i810TextureObjectPtr) tObj->DriverData;
    const struct gl_texture_image *baseImage = tObj->Image[tObj->BaseLevel];
-   GLint firstLevel, lastLevel, numLevels;
+   GLint numLevels;
    GLint log2Width, log2Height;
 
 /*     fprintf(stderr, "%s\n", __FUNCTION__); */
@@ -80,38 +80,18 @@ static void i810SetTexImages( i810ContextPtr imesa,
       return;
    }
 
-   /* Compute which mipmap levels we really want to send to the hardware.
-    * This depends on the base image size, GL_TEXTURE_MIN_LOD,
-    * GL_TEXTURE_MAX_LOD, GL_TEXTURE_BASE_LEVEL, and GL_TEXTURE_MAX_LEVEL.
-    * Yes, this looks overly complicated, but it's all needed.
-    */
-   if (tObj->MinFilter == GL_LINEAR || tObj->MinFilter == GL_NEAREST) {
-      firstLevel = lastLevel = tObj->BaseLevel;
-   }
-   else {
-      firstLevel = tObj->BaseLevel + (GLint) (tObj->MinLod + 0.5);
-      firstLevel = MAX2(firstLevel, tObj->BaseLevel);
-      lastLevel = tObj->BaseLevel + (GLint) (tObj->MaxLod + 0.5);
-      lastLevel = MAX2(lastLevel, tObj->BaseLevel);
-      lastLevel = MIN2(lastLevel, tObj->BaseLevel + baseImage->MaxLog2);
-      lastLevel = MIN2(lastLevel, tObj->MaxLevel);
-      lastLevel = MAX2(firstLevel, lastLevel); /* need at least one level */
-   }
+   driCalculateTextureFirstLastLevel( (driTextureObject *) t );
 
-   /* save these values */
-   t->base.firstLevel = firstLevel;
-   t->base.lastLevel = lastLevel;
+   numLevels = t->base.lastLevel - t->base.firstLevel + 1;
 
-   numLevels = lastLevel - firstLevel + 1;
-
-   log2Width = tObj->Image[firstLevel]->WidthLog2;
-   log2Height = tObj->Image[firstLevel]->HeightLog2;
+   log2Width = tObj->Image[t->base.firstLevel]->WidthLog2;
+   log2Height = tObj->Image[t->base.firstLevel]->HeightLog2;
 
    /* Figure out the amount of memory required to hold all the mipmap
     * levels.  Choose the smallest pitch to accomodate the largest
     * mipmap:
     */
-   width = tObj->Image[firstLevel]->Width * t->texelBytes;
+   width = tObj->Image[t->base.firstLevel]->Width * t->texelBytes;
    for (pitch = 32, log_pitch=2 ; pitch < width ; pitch *= 2 )
       log_pitch++;
    
@@ -119,7 +99,7 @@ static void i810SetTexImages( i810ContextPtr imesa,
     * lines required:
     */
    for ( height = i = 0 ; i < numLevels ; i++ ) {
-      t->image[i].image = tObj->Image[firstLevel + i];
+      t->image[i].image = tObj->Image[t->base.firstLevel + i];
       t->image[i].offset = height * pitch;
       t->image[i].internalFormat = baseImage->Format;
       height += t->image[i].image->Height;
