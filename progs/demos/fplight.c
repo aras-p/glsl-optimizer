@@ -53,7 +53,6 @@ static void Display( void )
    glRotatef(Xrot, 1, 0, 0);
    glRotatef(Yrot, 0, 1, 0);
 
-   glTexCoord2f(0, 0);
 #if 1
    glutSolidSphere(2.0, 10, 5);
 #else
@@ -218,7 +217,9 @@ static void Init( void )
    }
          
    glGenProgramsNV(1, &FragProg);
+   assert(FragProg > 0);
    glGenProgramsNV(1, &VertProg);
+   assert(VertProg > 0);
 
    /*
     * Fragment program
@@ -247,7 +248,6 @@ static void Init( void )
     * Misc init
     */
    glClearColor(0.3, 0.3, 0.3, 0.0);
-   glEnable(GL_ALPHA_TEST); /* temporary hack */
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_LIGHT0);
    glEnable(GL_LIGHTING);
