@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.34 2001/12/20 15:30:46 keithw Exp $ */
+/* $Id: t_imm_dlist.c,v 1.35 2002/01/05 20:51:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -71,7 +71,7 @@ static void build_normal_lengths( struct immediate *IM )
 {
    GLuint i;
    GLfloat len;
-   GLfloat (*data)[3] = IM->Normal + IM->Start;
+   GLfloat (*data)[4] = IM->Attrib[VERT_ATTRIB_NORMAL] + IM->Start;
    GLfloat *dest = IM->NormalLengthPtr;
    GLuint *flags = IM->Flag + IM->Start;
    GLuint count = IM->Count - IM->Start;
@@ -98,7 +98,7 @@ static void fixup_normal_lengths( struct immediate *IM )
 {
    GLuint i;
    GLfloat len = 1.0F;  /* just to silence warnings */
-   GLfloat (*data)[3] = IM->Normal;
+   GLfloat (*data)[4] = IM->Attrib[VERT_ATTRIB_NORMAL];
    GLfloat *dest = IM->NormalLengthPtr;
    GLuint *flags = IM->Flag;
 
@@ -606,22 +606,23 @@ static void loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	    GLuint k;
 	    for (k = 0 ; k < maxtex ; k++) {
 	       if (flags[i] & VERT_TEX(k)) {
-		  texcoordfv[k]( GL_TEXTURE0_ARB + k, IM->TexCoord[k][i] );
+		  texcoordfv[k]( GL_TEXTURE0_ARB + k,
+                                 IM->Attrib[VERT_ATTRIB_TEX0 + k][i] );
 	       }
 	    }
 	 }
 
 	 if (flags[i] & VERT_NORMAL_BIT) 
-	    glNormal3fv(IM->Normal[i]);
+	    glNormal3fv(IM->Attrib[VERT_ATTRIB_NORMAL][i]);
 
 	 if (flags[i] & VERT_COLOR0_BIT) 
-	    glColor4fv( IM->Color[i] );
+	    glColor4fv( IM->Attrib[VERT_ATTRIB_COLOR0][i] );
 
 	 if (flags[i] & VERT_COLOR1_BIT)
-	    _compat_SecondaryColor3fvEXT( IM->SecondaryColor[i] );
+	    _compat_SecondaryColor3fvEXT( IM->Attrib[VERT_ATTRIB_COLOR1][i] );
 
 	 if (flags[i] & VERT_FOG_BIT)
-	    _compat_FogCoordfEXT( IM->FogCoord[i] );
+	    _compat_FogCoordfEXT( IM->Attrib[VERT_ATTRIB_FOG][i][0] );
 
 	 if (flags[i] & VERT_INDEX_BIT)
 	    glIndexi( IM->Index[i] );
@@ -633,15 +634,17 @@ static void loopback_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 	    emit_material( IM->Material[i], IM->MaterialMask[i] );
 
 	 if (flags[i]&VERT_OBJ_234) 
-	    vertex( IM->Obj[i] );
+	    vertex( IM->Attrib[VERT_ATTRIB_POS][i] );
 	 else if (flags[i] & VERT_EVAL_C1)
-	    glEvalCoord1f( IM->Obj[i][0] );
+	    glEvalCoord1f( IM->Attrib[VERT_ATTRIB_POS][i][0] );
 	 else if (flags[i] & VERT_EVAL_P1)
-	    glEvalPoint1( (GLint) IM->Obj[i][0] );
+	    glEvalPoint1( (GLint) IM->Attrib[VERT_ATTRIB_POS][i][0] );
 	 else if (flags[i] & VERT_EVAL_C2)
-	    glEvalCoord2f( IM->Obj[i][0], IM->Obj[i][1] );
+	    glEvalCoord2f( IM->Attrib[VERT_ATTRIB_POS][i][0],
+                           IM->Attrib[VERT_ATTRIB_POS][i][1] );
 	 else if (flags[i] & VERT_EVAL_P2)
-	    glEvalPoint2( (GLint) IM->Obj[i][0], (GLint) IM->Obj[i][1] );
+	    glEvalPoint2( (GLint) IM->Attrib[VERT_ATTRIB_POS][i][0],
+                          (GLint) IM->Attrib[VERT_ATTRIB_POS][i][1] );
       }
 
       if (prim & PRIM_END) {

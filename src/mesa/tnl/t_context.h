@@ -1,10 +1,10 @@
-/* $Id: t_context.h,v 1.34 2001/12/18 04:06:46 brianp Exp $ */
+/* $Id: t_context.h,v 1.35 2002/01/05 20:51:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -114,11 +114,11 @@
 
 /* Shorthands.
  */
-#define VERT_EVAL_ANY      (VERT_EVAL_C1|VERT_EVAL_P1|	\
-                            VERT_EVAL_C2|VERT_EVAL_P2)
+#define VERT_EVAL_ANY      (VERT_EVAL_C1 | VERT_EVAL_P1 | \
+                            VERT_EVAL_C2 | VERT_EVAL_P2)
 
-#define VERT_OBJ_23       (VERT_OBJ_3|VERT_OBJ_BIT)
-#define VERT_OBJ_234      (VERT_OBJ_4|VERT_OBJ_23)
+#define VERT_OBJ_23        (VERT_OBJ_3 | VERT_OBJ_BIT)
+#define VERT_OBJ_234       (VERT_OBJ_4 | VERT_OBJ_23)
 
 #define VERT_TEX0_BIT_SHIFT 11
 
@@ -133,27 +133,27 @@
                             VERT_TEX6_BIT |		\
                             VERT_TEX7_BIT)
 
-#define VERT_FIXUP        (VERT_TEX_ANY |	\
+#define VERT_FIXUP        (VERT_TEX_ANY |		\
                            VERT_COLOR0_BIT |		\
-                           VERT_COLOR1_BIT |	\
-                           VERT_FOG_BIT |	\
+                           VERT_COLOR1_BIT |		\
+                           VERT_FOG_BIT |		\
 			   VERT_INDEX_BIT |		\
                            VERT_EDGEFLAG_BIT |		\
                            VERT_NORMAL_BIT)
 
-#define VERT_CURRENT_DATA  (VERT_FIXUP |	\
+#define VERT_CURRENT_DATA  (VERT_FIXUP |		\
 			    VERT_MATERIAL)
 
-#define VERT_DATA          (VERT_TEX_ANY |	\
+#define VERT_DATA          (VERT_TEX_ANY |		\
 			    VERT_COLOR0_BIT |		\
-			    VERT_COLOR1_BIT |	\
-			    VERT_FOG_BIT |	\
-                            VERT_INDEX_BIT |	\
+			    VERT_COLOR1_BIT |		\
+			    VERT_FOG_BIT |		\
+                            VERT_INDEX_BIT |		\
                             VERT_EDGEFLAG_BIT |		\
                             VERT_NORMAL_BIT |		\
-	                    VERT_OBJ_BIT |	\
-                            VERT_MATERIAL |	\
-                            VERT_ELT |		\
+	                    VERT_OBJ_BIT |		\
+                            VERT_MATERIAL |		\
+                            VERT_ELT |			\
 	                    VERT_EVAL_ANY)
 
 
@@ -206,35 +206,34 @@ struct immediate
    GLuint  PrimitiveLength[IMM_SIZE]; /* BEGIN/END */
    GLuint  Flag[IMM_SIZE];	    /* VERT_* flags */
 
-   GLfloat Obj[IMM_SIZE][4];             /* attrib 0 */
-   GLfloat Normal[IMM_SIZE][3];          /* attrib 2 */
-   GLfloat *NormalLengthPtr;
-   GLfloat Color[IMM_SIZE][4];           /* attrib 3 */
-   GLfloat SecondaryColor[IMM_SIZE][4];  /* attrib 4 */
-   GLfloat FogCoord[IMM_SIZE];           /* attrib 5 */
-   GLfloat TexCoord0[IMM_SIZE][4];  /* just VERT_TEX0_BIT */
-   GLfloat (*TexCoord[MAX_TEXTURE_UNITS])[4];  /* attribs 8..15 */
+   /* All vertex attributes (position, normal, color, secondary color,
+    * texcoords, fog coord) are stored in the Attrib[] arrays instead
+    * of individual arrays as we did prior to Mesa 4.1.
+    *
+    * XXX may need to use 32-byte aligned allocation for this!!!
+    */
+   GLfloat Attrib[VERT_ATTRIB_MAX][IMM_SIZE][4];  /* GL_NV_vertex_program */
+
+   GLfloat *NormalLengthPtr; /* length of normal vectors (display list only) */
 
    GLuint  Elt[IMM_SIZE];
    GLubyte EdgeFlag[IMM_SIZE];
    GLuint  Index[IMM_SIZE];
-
-   GLfloat Attrib[16][IMM_SIZE][4];  /* GL_NV_vertex_program */
 };
 
 
 struct vertex_arrays
 {
    GLvector4f  Obj;
-   GLvector3f  Normal;
+   GLvector4f  Normal;
    struct gl_client_array Color;
    struct gl_client_array SecondaryColor;
    GLvector1ui Index;
    GLvector1ub EdgeFlag;
    GLvector4f  TexCoord[MAX_TEXTURE_UNITS];
    GLvector1ui Elt;
-   GLvector1f  FogCoord;
-   GLvector4f  Attribs[16];
+   GLvector4f  FogCoord;
+   GLvector4f  Attribs[VERT_ATTRIB_MAX];
 };
 
 
@@ -255,6 +254,7 @@ typedef struct vertex_buffer
    GLuint     FirstPrimitive;	              /* usually zero */
 
    /* Pointers to current data.
+    * XXX Replace ObjPtr, NormalPtr, TexCoordPtr, etc with AttribPtr[] arrays.
     */
    GLuint      *Elts;		                /* VERT_ELT */
    GLvector4f  *ObjPtr;		                /* VERT_OBJ_BIT */
@@ -263,14 +263,13 @@ typedef struct vertex_buffer
    GLvector4f  *NdcPtr;                         /* VERT_CLIP (2) */
    GLubyte     ClipOrMask;	                /* VERT_CLIP (3) */
    GLubyte     *ClipMask;		        /* VERT_CLIP (4) */
-   GLvector3f  *NormalPtr;	                /* VERT_NORMAL_BIT */
+   GLvector4f  *NormalPtr;	                /* VERT_NORMAL_BIT */
    GLfloat     *NormalLengthPtr;	        /* VERT_NORMAL_BIT */
    GLboolean   *EdgeFlag;	                /* VERT_EDGEFLAG_BIT */
    GLvector4f  *TexCoordPtr[MAX_TEXTURE_UNITS];	/* VERT_TEX_0..n */
    GLvector1ui *IndexPtr[2];	                /* VERT_INDEX_BIT */
    struct gl_client_array *ColorPtr[2];	        /* VERT_COLOR0_BIT */
    struct gl_client_array *SecondaryColorPtr[2];/* VERT_COLOR1_BIT */
-   GLvector1f  *FogCoordPtr;	                /* VERT_FOG_BIT */
    GLvector1f  *PointSizePtr;	                /* VERT_POINT_SIZE */
    GLmaterial (*Material)[2];                   /* VERT_MATERIAL, optional */
    GLuint      *MaterialMask;	                /* VERT_MATERIAL, optional */
@@ -278,7 +277,7 @@ typedef struct vertex_buffer
    GLuint      *Primitive;	                /* GL_(mode)|PRIM_* flags */
    GLuint      *PrimitiveLength;	        /* integers */
 
-   GLvector4f *AttribPtr[16];                   /* GL_NV_vertex_program */
+   GLvector4f *AttribPtr[VERT_ATTRIB_MAX];      /* GL_NV_vertex_program */
 
    GLuint importable_data;
    void *import_source;

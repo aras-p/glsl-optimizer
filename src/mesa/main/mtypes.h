@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.56 2001/12/18 04:06:45 brianp Exp $ */
+/* $Id: mtypes.h,v 1.57 2002/01/05 20:51:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -314,11 +314,12 @@ struct gl_colorbuffer_attrib {
 #define VERT_ATTRIB_TEX5     13
 #define VERT_ATTRIB_TEX6     14
 #define VERT_ATTRIB_TEX7     15
+#define VERT_ATTRIB_MAX      16
 
 struct gl_current_attrib {
    /* These values valid only when FLUSH_VERTICES has been called.
     */
-   GLfloat Attrib[8 + MAX_TEXTURE_UNITS][4];	/* Current vertex attributes */
+   GLfloat Attrib[VERT_ATTRIB_MAX][4];		/* Current vertex attributes */
 						/* indexed by VERT_ATTRIB_* */
    GLuint Index;				/* Current color index */
    GLboolean EdgeFlag;				/* Current edge flag */
@@ -1132,7 +1133,7 @@ struct gl_evaluators {
 
 #define VP_MAX_INSTRUCTIONS 128
 
-#define VP_NUM_INPUT_REGS 16
+#define VP_NUM_INPUT_REGS VERT_ATTRIB_MAX
 #define VP_NUM_OUTPUT_REGS 15
 #define VP_NUM_TEMP_REGS 12
 #define VP_NUM_PROG_REGS 96

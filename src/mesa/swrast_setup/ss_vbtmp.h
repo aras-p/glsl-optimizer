@@ -1,4 +1,4 @@
-/* $Id: ss_vbtmp.h,v 1.18 2001/12/18 04:06:46 brianp Exp $ */
+/* $Id: ss_vbtmp.h,v 1.19 2002/01/05 20:51:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -77,8 +77,8 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
    proj_stride = VB->NdcPtr->stride;
 
    if (IND & FOG) {
-      fog = VB->FogCoordPtr->data;
-      fog_stride = VB->FogCoordPtr->stride;
+      fog = (GLfloat *) VB->AttribPtr[VERT_ATTRIB_FOG]->data;
+      fog_stride = VB->AttribPtr[VERT_ATTRIB_FOG]->stride;
    }
    if (IND & COLOR) {
       if (VB->ColorPtr[0]->Type != CHAN_TYPE)

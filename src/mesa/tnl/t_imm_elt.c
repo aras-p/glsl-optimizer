@@ -1,4 +1,4 @@
-/* $Id: t_imm_elt.c,v 1.13 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_imm_elt.c,v 1.14 2002/01/05 20:51:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -597,6 +597,7 @@ void _tnl_imm_elt_init( void )
 }
 
 
+#if 00
 static void _tnl_trans_elt_1f(GLfloat *to,
 		       const struct gl_client_array *from,
 		       GLuint *flags,
@@ -615,6 +616,7 @@ static void _tnl_trans_elt_1f(GLfloat *to,
 					      n );
 
 }
+#endif
 
 static void _tnl_trans_elt_1ui(GLuint *to,
 			const struct gl_client_array *from,
@@ -758,7 +760,7 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
       fprintf(stderr, "exec_array_elements %d .. %d\n", start, count);
 
    if (translate & VERT_OBJ_BIT) {
-      _tnl_trans_elt_4f( IM->Obj,
+      _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_POS],
 			 &ctx->Array.Vertex,
 			 flags, elts, (VERT_ELT|VERT_OBJ_BIT),
 			 start, count);
@@ -771,7 +773,7 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
 
 
    if (translate & VERT_NORMAL_BIT)
-      _tnl_trans_elt_3f( IM->Normal,
+      _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_NORMAL],
 			 &ctx->Array.Normal,
 			 flags, elts, (VERT_ELT|VERT_NORMAL_BIT),
 			 start, count);
@@ -783,21 +785,21 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
 			  start, count);
 
    if (translate & VERT_COLOR0_BIT) {
-      _tnl_trans_elt_4f( IM->Color,
+      _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_COLOR0],
 			 &ctx->Array.Color,
 			 flags, elts, (VERT_ELT|VERT_COLOR0_BIT),
 			 start, count);
    }
 
    if (translate & VERT_COLOR1_BIT) {
-      _tnl_trans_elt_4f( IM->SecondaryColor,
+      _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_COLOR1],
 			 &ctx->Array.SecondaryColor,
 			 flags, elts, (VERT_ELT|VERT_COLOR1_BIT),
 			 start, count);
    }
 
    if (translate & VERT_FOG_BIT)
-      _tnl_trans_elt_1f( IM->FogCoord,
+      _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_FOG],
 			 &ctx->Array.FogCoord,
 			 flags, elts, (VERT_ELT|VERT_FOG_BIT),
 			 start, count);
@@ -811,7 +813,7 @@ void _tnl_translate_array_elts( GLcontext *ctx, struct immediate *IM,
    if (translate & VERT_TEX_ANY) {
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
 	 if (translate & VERT_TEX(i)) {
-	    _tnl_trans_elt_4f( IM->TexCoord[i],
+	    _tnl_trans_elt_4f( IM->Attrib[VERT_ATTRIB_TEX0 + i],
 			       &ctx->Array.TexCoord[i],
 			       flags, elts, (VERT_ELT|VERT_TEX(i)),
 			       start, count);

@@ -1,4 +1,4 @@
-/* $Id: t_vb_fog.c,v 1.14 2001/12/18 04:06:46 brianp Exp $ */
+/* $Id: t_vb_fog.c,v 1.15 2002/01/05 20:51:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -43,8 +43,8 @@
 
 
 struct fog_stage_data {
-   GLvector1f fogcoord;		/* has actual storage allocated */
-   GLvector1f input;		/* points into VB->EyePtr Z values */
+   GLvector4f fogcoord;		/* has actual storage allocated */
+   GLvector4f input;		/* points into VB->EyePtr Z values */
 };
 
 #define FOG_STAGE_DATA(stage) ((struct fog_stage_data *)stage->privatePtr)
@@ -85,14 +85,14 @@ static void init_static_data( void )
 }
 
 
-static void make_win_fog_coords( GLcontext *ctx, GLvector1f *out,
-				 const GLvector1f *in )
+static void make_win_fog_coords( GLcontext *ctx, GLvector4f *out,
+				 const GLvector4f *in )
 {
    GLfloat end  = ctx->Fog.End;
    GLfloat *v = in->start;
    GLuint stride = in->stride;
    GLuint n = in->count;
-   GLfloat *data = out->data;
+   GLfloat (*data)[4] = out->data;
    GLfloat d;
    GLuint i;
 
@@ -106,19 +106,19 @@ static void make_win_fog_coords( GLcontext *ctx, GLvector1f *out,
          d = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
       for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
          GLfloat f = (end - ABSF(*v)) * d;
-	 data[i] = CLAMP(f, 0.0F, 1.0F);
+	 data[i][0] = CLAMP(f, 0.0F, 1.0F);
       }
       break;
    case GL_EXP:
       d = ctx->Fog.Density;
       for ( i = 0 ; i < n ; i++, STRIDE_F(v,stride))
-         NEG_EXP( data[i], d * ABSF(*v) );
+         NEG_EXP( data[i][0], d * ABSF(*v) );
       break;
    case GL_EXP2:
       d = ctx->Fog.Density*ctx->Fog.Density;
       for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
          GLfloat z = *v;
-         NEG_EXP( data[i], d * z * z );
+         NEG_EXP( data[i][0], d * z * z );
       }
       break;
    default:
@@ -133,7 +133,7 @@ static GLboolean run_fog_stage( GLcontext *ctx,
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct fog_stage_data *store = FOG_STAGE_DATA(stage);
-   GLvector1f *input;
+   GLvector4f *input;
 
    if (stage->changed_inputs == 0)
       return GL_TRUE;
@@ -142,7 +142,7 @@ static GLboolean run_fog_stage( GLcontext *ctx,
       /* fog computed from Z depth */
       /* source = VB->ObjPtr or VB->EyePtr coords */
       /* dest = VB->FogCoordPtr = fog stage private storage */
-      VB->FogCoordPtr = &store->fogcoord;
+      VB->AttribPtr[VERT_ATTRIB_FOG] = &store->fogcoord;
 
       if (!ctx->_NeedEyeCoords) {
 	 const GLfloat *m = ctx->ModelviewMatrixStack.Top->m;
@@ -160,8 +160,8 @@ static GLboolean run_fog_stage( GLcontext *ctx,
 	 /* Full eye coords weren't required, just calculate the
 	  * eye Z values.
 	  */
-	 _mesa_dotprod_tab[VB->ObjPtr->size]( input->data,
-					      sizeof(GLfloat),
+	 _mesa_dotprod_tab[VB->ObjPtr->size]( (GLfloat *) input->data,
+					      4 * sizeof(GLfloat),
 					      VB->ObjPtr, plane );
 
 	 input->count = VB->ObjPtr->count;
@@ -172,7 +172,7 @@ static GLboolean run_fog_stage( GLcontext *ctx,
 	 if (VB->EyePtr->size < 2)
 	    _mesa_vector4f_clean_elem( VB->EyePtr, VB->Count, 2 );
 
-	 input->data = &(VB->EyePtr->data[0][2]);
+	 input->data = (GLfloat (*)[4]) &(VB->EyePtr->data[0][2]);
 	 input->start = VB->EyePtr->start+2;
 	 input->stride = VB->EyePtr->stride;
 	 input->count = VB->EyePtr->count;
@@ -181,12 +181,12 @@ static GLboolean run_fog_stage( GLcontext *ctx,
    else {
       /* use glFogCoord() coordinates */
       /* source = VB->FogCoordPtr */
-      input = VB->FogCoordPtr;
+      input = VB->AttribPtr[VERT_ATTRIB_FOG];
       /* dest = fog stage private storage */
-      VB->FogCoordPtr = &store->fogcoord;
+      VB->AttribPtr[VERT_ATTRIB_FOG] = &store->fogcoord;
    }
 
-   make_win_fog_coords( ctx, VB->FogCoordPtr, input );
+   make_win_fog_coords( ctx, VB->AttribPtr[VERT_ATTRIB_FOG], input );
    return GL_TRUE;
 }
 
@@ -214,8 +214,8 @@ static GLboolean alloc_fog_data( GLcontext *ctx,
    if (!store)
       return GL_FALSE;
 
-   _mesa_vector1f_alloc( &store->fogcoord, 0, tnl->vb.Size, 32 );
-   _mesa_vector1f_init( &store->input, 0, 0 );
+   _mesa_vector4f_alloc( &store->fogcoord, 0, tnl->vb.Size, 32 );
+   _mesa_vector4f_init( &store->input, 0, 0 );
 
    if (!inited)
       init_static_data();
@@ -231,7 +231,7 @@ static void free_fog_data( struct gl_pipeline_stage *stage )
 {
    struct fog_stage_data *store = FOG_STAGE_DATA(stage);
    if (store) {
-      _mesa_vector1f_free( &store->fogcoord );
+      _mesa_vector4f_free( &store->fogcoord );
       FREE( store );
       stage->privatePtr = NULL;
    }

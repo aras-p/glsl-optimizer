@@ -1,4 +1,4 @@
-/* $Id: t_vb_lighttmp.h,v 1.22 2002/01/05 14:03:33 brianp Exp $ */
+/* $Id: t_vb_lighttmp.h,v 1.23 2002/01/05 20:51:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -32,7 +32,7 @@
 
 #if (IDX & LIGHT_FLAGS)
 #  define VSTRIDE (4 * sizeof(GLfloat))
-#  define NSTRIDE (3 * sizeof(GLfloat))
+#  define NSTRIDE nstride /*(3 * sizeof(GLfloat))*/
 #  define CHECK_MATERIAL(x)  (flags[x] & VERT_MATERIAL)
 #  define CHECK_END_VB(x)    (flags[x] & VERT_END_VB)
 #  if (IDX & LIGHT_COLORMATERIAL)

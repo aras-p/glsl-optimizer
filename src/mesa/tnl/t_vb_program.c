@@ -1,10 +1,10 @@
-/* $Id: t_vb_program.c,v 1.5 2001/12/18 04:06:46 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.6 2002/01/05 20:51:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -99,610 +99,13 @@
 
 
 
-static void
-_vp_ArrayElement( GLint i )
-{
-   /* XXX to do */
-}
-
-static void
-_vp_Color3f( GLfloat r, GLfloat g, GLfloat b )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_COLOR0][IM->Count];
-   ASSIGN_4V(attrib, r, g, b, 1.0F);
-   IM->Flag[IM->Count] |= VERT_COLOR0_BIT;
-}
-
-static void
-_vp_Color3fv( const GLfloat *color )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_COLOR0][IM->Count];
-   ASSIGN_4V(attrib, color[0], color[1], color[2], 1.0F);
-   IM->Flag[IM->Count] |= VERT_COLOR0_BIT;
-}
-
-static void
-_vp_Color3ub( GLubyte r, GLubyte g, GLubyte b )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_COLOR0][IM->Count];
-   attrib[0] = UBYTE_TO_FLOAT(r);
-   attrib[1] = UBYTE_TO_FLOAT(g);
-   attrib[2] = UBYTE_TO_FLOAT(b);
-   attrib[3] = 1.0F;
-   IM->Flag[IM->Count] |= VERT_COLOR0_BIT;
-}
-
-static void
-_vp_Color3ubv( const GLubyte *color )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_COLOR0][IM->Count];
-   attrib[0] = UBYTE_TO_FLOAT(color[0]);
-   attrib[1] = UBYTE_TO_FLOAT(color[1]);
-   attrib[2] = UBYTE_TO_FLOAT(color[2]);
-   attrib[3] = 1.0F;
-   IM->Flag[IM->Count] |= VERT_COLOR0_BIT;
-}
-
-static void
-_vp_Color4f( GLfloat r, GLfloat g, GLfloat b, GLfloat a )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_COLOR0][IM->Count];
-   ASSIGN_4V(attrib, r, g, b, a);
-   IM->Flag[IM->Count] |= VERT_COLOR0_BIT;
-}
-
-static void
-_vp_Color4fv( const GLfloat *color )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_COLOR0][IM->Count];
-   COPY_4V(attrib, color);
-   IM->Flag[IM->Count] |= VERT_COLOR0_BIT;
-}
-
-static void
-_vp_Color4ub( GLubyte r, GLubyte g, GLubyte b, GLubyte a )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_COLOR0][IM->Count];
-   attrib[0] = UBYTE_TO_FLOAT(r);
-   attrib[1] = UBYTE_TO_FLOAT(g);
-   attrib[2] = UBYTE_TO_FLOAT(b);
-   attrib[3] = UBYTE_TO_FLOAT(a);
-   IM->Flag[IM->Count] |= VERT_COLOR0_BIT;
-}
-
-static void
-_vp_Color4ubv( const GLubyte *color )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_COLOR0][IM->Count];
-   attrib[0] = UBYTE_TO_FLOAT(color[0]);
-   attrib[1] = UBYTE_TO_FLOAT(color[1]);
-   attrib[2] = UBYTE_TO_FLOAT(color[2]);
-   attrib[3] = UBYTE_TO_FLOAT(color[3]);
-   IM->Flag[IM->Count] |= VERT_COLOR0_BIT;
-}
-
-static void
-_vp_EdgeFlag( GLboolean flag )
-{
-   GET_IMMEDIATE;
-   IM->EdgeFlag[IM->Count] = flag;
-   IM->Flag[IM->Count] |= VERT_EDGEFLAG_BIT;
-}
-
-static void
-_vp_EdgeFlagv( const GLboolean *flag )
-{
-   GET_IMMEDIATE;
-   IM->EdgeFlag[IM->Count] = *flag;
-   IM->Flag[IM->Count] |= VERT_EDGEFLAG_BIT;
-}
-
-static void
-_vp_EvalCoord1f( GLfloat s )
-{
-   (void) s;
-   /* XXX no-op? */
-}
-
-static void
-_vp_EvalCoord1fv( const GLfloat *v )
-{
-   (void) v;
-   /* XXX no-op? */
-}
-
-static void
-_vp_EvalCoord2f( GLfloat s, GLfloat t )
-{
-   (void) s;
-   (void )t;
-   /* XXX no-op? */
-}
-
-static void
-_vp_EvalCoord2fv( const GLfloat *v )
-{
-   (void) v;
-   /* XXX no-op? */
-}
-
-static void
-_vp_EvalPoint1( GLint i )
-{
-   (void) i;
-}
-
-static void
-_vp_EvalPoint2( GLint i, GLint j )
-{
-   (void) i;
-   (void) j;
-}
-
-static void
-_vp_FogCoordf( GLfloat f )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_FOG][IM->Count];
-   ASSIGN_4V(attrib, f, 0.0F, 0.0F, 1.0F);
-   IM->Flag[IM->Count] |= VERT_FOG_BIT;
-}
-
-static void
-_vp_FogCoordfv( const GLfloat *f )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_FOG][IM->Count];
-   ASSIGN_4V(attrib, f[0], 0.0F, 0.0F, 1.0F);
-   IM->Flag[IM->Count] |= VERT_FOG_BIT;
-}
-
-static void
-_vp_Indexi( GLint i )
-{
-   (void) i;
-}
-
-static void
-_vp_Indexiv( const GLint *i )
-{
-   (void) i;
-}
-
-static void
-_vp_Materialfv( GLenum face, GLenum pname, const GLfloat *v)
-{
-   /* XXX no-op? */
-}
-
-static void
-_vp_MultiTexCoord1f( GLenum unit, GLfloat s )
-{
-   const GLint u = (GLint) unit - GL_TEXTURE0_ARB;
-   if (u >=0 && u < 8) {
-      GET_IMMEDIATE;
-      GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0 + u][IM->Count];
-      ASSIGN_4V(attrib, s, 0.0F, 0.0F, 1.0F);
-      IM->Flag[IM->Count] |= (VERT_TEX0_BIT << u);
-   }
-}
-
-static void
-_vp_MultiTexCoord1fv( GLenum unit, const GLfloat *c )
-{
-   const GLint u = unit - GL_TEXTURE0_ARB;
-   if (u >=0 && u < 8) {
-      GET_IMMEDIATE;
-      GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0 + u][IM->Count];
-      ASSIGN_4V(attrib, c[0], 0.0F, 0.0F, 1.0F);
-      IM->Flag[IM->Count] |= (VERT_TEX0_BIT << u);
-   }
-}
-
-static void
-_vp_MultiTexCoord2f( GLenum unit, GLfloat s, GLfloat t )
-{
-   const GLint u = unit - GL_TEXTURE0_ARB;
-   if (u >=0 && u < 8) {
-      GET_IMMEDIATE;
-      GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0 + u][IM->Count];
-      ASSIGN_4V(attrib, s, t, 0.0F, 1.0F);
-      IM->Flag[IM->Count] |= (VERT_TEX0_BIT << u);
-   }
-}
-
-static void
-_vp_MultiTexCoord2fv( GLenum unit, const GLfloat *c )
-{
-   const GLint u = unit - GL_TEXTURE0_ARB;
-   if (u >=0 && u < 8) {
-      GET_IMMEDIATE;
-      GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0 + u][IM->Count];
-      ASSIGN_4V(attrib, c[0], c[1], 0.0F, 1.0F);
-      IM->Flag[IM->Count] |= (VERT_TEX0_BIT << u);
-   }
-}
-
-static void
-_vp_MultiTexCoord3f( GLenum unit, GLfloat s, GLfloat t, GLfloat r )
-{
-   const GLint u = unit - GL_TEXTURE0_ARB;
-   if (u >=0 && u < 8) {
-      GET_IMMEDIATE;
-      GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0 + u][IM->Count];
-      ASSIGN_4V(attrib, s, t, r, 1.0F);
-      IM->Flag[IM->Count] |= (VERT_TEX0_BIT << u);
-   }
-}
-
-static void
-_vp_MultiTexCoord3fv( GLenum unit, const GLfloat *c )
-{
-   const GLint u = unit - GL_TEXTURE0_ARB;
-   if (u >=0 && u < 8) {
-      GET_IMMEDIATE;
-      GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0 + u][IM->Count];
-      ASSIGN_4V(attrib, c[0], c[1], c[2], 1.0F);
-      IM->Flag[IM->Count] |= (VERT_TEX0_BIT << u);
-   }
-}
-
-static void
-_vp_MultiTexCoord4f( GLenum unit, GLfloat s, GLfloat t, GLfloat r, GLfloat q )
-{
-   const GLint u = unit - GL_TEXTURE0_ARB;
-   if (u >=0 && u < 8) {
-      GET_IMMEDIATE;
-      GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0 + u][IM->Count];
-      ASSIGN_4V(attrib, s, t, r, q);
-      IM->Flag[IM->Count] |= (VERT_TEX0_BIT << u);
-   }
-}
-
-static void
-_vp_MultiTexCoord4fv( GLenum unit, const GLfloat *c )
-{
-   const GLint u = unit - GL_TEXTURE0_ARB;
-   if (u >=0 && u < 8) {
-      GET_IMMEDIATE;
-      GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0 + u][IM->Count];
-      COPY_4V(attrib, c);
-      IM->Flag[IM->Count] |= (VERT_TEX0_BIT << u);
-   }
-}
-
-static void
-_vp_Normal3f( GLfloat x, GLfloat y, GLfloat z )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_NORMAL][IM->Count];
-   ASSIGN_4V(attrib, x, y, z, 1.0F);
-   IM->Flag[IM->Count] |= VERT_NORMAL_BIT;
-}
-
-static void
-_vp_Normal3fv( const GLfloat *n )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_NORMAL][IM->Count];
-   ASSIGN_4V(attrib, n[0], n[1], n[2], 1.0F);
-   IM->Flag[IM->Count] |= VERT_NORMAL_BIT;
-}
-
-static void
-_vp_SecondaryColor3f( GLfloat r, GLfloat g, GLfloat b )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_COLOR1][IM->Count];
-   ASSIGN_4V(attrib, r, g, b, 1.0F);
-   IM->Flag[IM->Count] |= VERT_COLOR1_BIT;
-}
-
-static void
-_vp_SecondaryColor3fv( const GLfloat *color )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_COLOR1][IM->Count];
-   ASSIGN_4V(attrib, color[0], color[1], color[2], 1.0F);
-   IM->Flag[IM->Count] |= VERT_COLOR1_BIT;
-}
-
-static void
-_vp_SecondaryColor3ub( GLubyte r, GLubyte g, GLubyte b )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_COLOR1][IM->Count];
-   attrib[0] = UBYTE_TO_FLOAT(r);
-   attrib[1] = UBYTE_TO_FLOAT(g);
-   attrib[2] = UBYTE_TO_FLOAT(b);
-   attrib[3] = 1.0F;
-   IM->Flag[IM->Count] |= VERT_COLOR1_BIT;
-}
-
-static void
-_vp_SecondaryColor3ubv( const GLubyte *color )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_COLOR1][IM->Count];
-   attrib[0] = UBYTE_TO_FLOAT(color[0]);
-   attrib[1] = UBYTE_TO_FLOAT(color[1]);
-   attrib[2] = UBYTE_TO_FLOAT(color[2]);
-   attrib[3] = 1.0F;
-   IM->Flag[IM->Count] |= VERT_COLOR1_BIT;
-}
-
-static void
-_vp_TexCoord1f( GLfloat s )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0][IM->Count];
-   ASSIGN_4V(attrib, s, 0.0F, 0.0F, 1.0F);
-   IM->Flag[IM->Count] |= VERT_TEX0_BIT;
-}
-
-static void
-_vp_TexCoord1fv( const GLfloat *c )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0][IM->Count];
-   ASSIGN_4V(attrib, c[0], 0.0F, 0.0F, 1.0F);
-   IM->Flag[IM->Count] |= VERT_TEX0_BIT;
-}
-
-static void
-_vp_TexCoord2f( GLfloat s, GLfloat t )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0][IM->Count];
-   ASSIGN_4V(attrib, s, t, 0.0F, 1.0F);
-   IM->Flag[IM->Count] |= VERT_TEX0_BIT;
-}
-
-static void
-_vp_TexCoord2fv( const GLfloat *c )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0][IM->Count];
-   ASSIGN_4V(attrib, c[0], c[1], 0.0F, 1.0F);
-   IM->Flag[IM->Count] |= VERT_TEX0_BIT;
-}
-
-static void
-_vp_TexCoord3f( GLfloat s, GLfloat t, GLfloat r )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0][IM->Count];
-   ASSIGN_4V(attrib, s, t, r, 1.0F);
-   IM->Flag[IM->Count] |= VERT_TEX0_BIT;
-}
-
-static void
-_vp_TexCoord3fv( const GLfloat *c )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0][IM->Count];
-   ASSIGN_4V(attrib, c[0], c[1], c[2], 1.0F);
-   IM->Flag[IM->Count] |= VERT_TEX0_BIT;
-}
-
-static void
-_vp_TexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0][IM->Count];
-   ASSIGN_4V(attrib, s, t, r, 1.0F);
-   IM->Flag[IM->Count] |= VERT_TEX0_BIT;
-}
-
-static void
-_vp_TexCoord4fv( const GLfloat *c )
-{
-   GET_IMMEDIATE;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_TEX0][IM->Count];
-   COPY_4V(attrib, c);
-   IM->Flag[IM->Count] |= VERT_TEX0_BIT;
-}
-
-static void
-_vp_Vertex2f( GLfloat x, GLfloat y )
-{
-   GET_IMMEDIATE;
-   const GLuint count = IM->Count++;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_POS][count];
-   ASSIGN_4V(attrib, x, y, 0.0F, 1.0F);
-   IM->Flag[count] |= VERT_OBJ_BIT;
-   if (count == IMM_MAXDATA - 1)
-      _tnl_flush_immediate( IM );
-}
-
-static void
-_vp_Vertex2fv( const GLfloat *v )
-{
-   GET_IMMEDIATE;
-   const GLuint count = IM->Count++;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_POS][count];
-   ASSIGN_4V(attrib, v[0], v[1], 0.0F, 1.0F);
-   IM->Flag[count] |= VERT_OBJ_BIT;
-   if (count == IMM_MAXDATA - 1)
-      _tnl_flush_immediate( IM );
-}
-
-static void
-_vp_Vertex3f( GLfloat x, GLfloat y, GLfloat z )
-{
-   GET_IMMEDIATE;
-   const GLuint count = IM->Count++;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_POS][count];
-   ASSIGN_4V(attrib, x, y, z, 1.0F);
-   IM->Flag[count] |= VERT_OBJ_BIT;
-   if (count == IMM_MAXDATA - 1)
-      _tnl_flush_immediate( IM );
-}
-
-static void
-_vp_Vertex3fv( const GLfloat *v )
-{
-   GET_IMMEDIATE;
-   const GLuint count = IM->Count++;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_POS][count];
-   ASSIGN_4V(attrib, v[0], v[1], v[2], 1.0F);
-   IM->Flag[count] |= VERT_OBJ_BIT;
-   if (count == IMM_MAXDATA - 1)
-      _tnl_flush_immediate( IM );
-}
-
-static void
-_vp_Vertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
-{
-   GET_IMMEDIATE;
-   const GLuint count = IM->Count++;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_POS][count];
-   ASSIGN_4V(attrib, x, y, z, w);
-   IM->Flag[count] |= VERT_OBJ_BIT;
-   if (count == IMM_MAXDATA - 1)
-      _tnl_flush_immediate( IM );
-}
-
-static void
-_vp_Vertex4fv( const GLfloat *v )
-{
-   GET_IMMEDIATE;
-   const GLuint count = IM->Count++;
-   GLfloat *attrib = IM->Attrib[VERT_ATTRIB_POS][count];
-   COPY_4V(attrib, v);
-   IM->Flag[count] |= VERT_OBJ_BIT;
-   if (count == IMM_MAXDATA - 1)
-      _tnl_flush_immediate( IM );
-}
-
-static void
-_vp_VertexAttrib4f( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
-{
-   if (index < 16) {
-      GET_IMMEDIATE;
-      const GLuint count = IM->Count;
-      GLfloat *attrib = IM->Attrib[index][count];
-      ASSIGN_4V(attrib, x, y, z, w);
-      IM->Flag[count] |= (1 << index);
-      if (index == 0) {
-         IM->Count++;
-         if (count == IMM_MAXDATA - 1)
-            _tnl_flush_immediate( IM );
-      }
-   }
-}   
-
-static void
-_vp_VertexAttrib4fv( GLuint index, const GLfloat *v )
-{
-   if (index < 16) {
-      GET_IMMEDIATE;
-      const GLuint count = IM->Count;
-      GLfloat *attrib = IM->Attrib[index][count];
-      COPY_4V(attrib, v);
-      IM->Flag[count] |= (1 << index);
-      if (index == 0) {
-         IM->Count++;
-         if (count == IMM_MAXDATA - 1)
-            _tnl_flush_immediate( IM );
-      }
-   }
-}   
-
-
-/*
- * When vertex program mode is enabled we hook in different per-vertex
- * functions.
- */
-void _tnl_vprog_vtxfmt_init( GLcontext *ctx )
-{
-   GLvertexformat *vfmt = &(TNL_CONTEXT(ctx)->vtxfmt);
-
-   /* All begin/end operations are handled by this vertex format:
-    */
-   vfmt->ArrayElement = _vp_ArrayElement;
-   vfmt->Begin = _tnl_Begin;
-   vfmt->Color3f = _vp_Color3f;
-   vfmt->Color3fv = _vp_Color3fv;
-   vfmt->Color3ub = _vp_Color3ub;
-   vfmt->Color3ubv = _vp_Color3ubv;
-   vfmt->Color4f = _vp_Color4f;
-   vfmt->Color4fv = _vp_Color4fv;
-   vfmt->Color4ub = _vp_Color4ub;
-   vfmt->Color4ubv = _vp_Color4ubv;
-   vfmt->EdgeFlag = _vp_EdgeFlag;
-   vfmt->EdgeFlagv = _vp_EdgeFlagv;
-   vfmt->End = _tnl_End;
-   vfmt->EvalCoord1f = _vp_EvalCoord1f;
-   vfmt->EvalCoord1fv = _vp_EvalCoord1fv;
-   vfmt->EvalCoord2f = _vp_EvalCoord2f;
-   vfmt->EvalCoord2fv = _vp_EvalCoord2fv;
-   vfmt->EvalPoint1 = _vp_EvalPoint1;
-   vfmt->EvalPoint2 = _vp_EvalPoint2;
-   vfmt->FogCoordfEXT = _vp_FogCoordf;
-   vfmt->FogCoordfvEXT = _vp_FogCoordfv;
-   vfmt->Indexi = _vp_Indexi;
-   vfmt->Indexiv = _vp_Indexiv;
-   vfmt->Materialfv = _vp_Materialfv;
-   vfmt->MultiTexCoord1fARB = _vp_MultiTexCoord1f;
-   vfmt->MultiTexCoord1fvARB = _vp_MultiTexCoord1fv;
-   vfmt->MultiTexCoord2fARB = _vp_MultiTexCoord2f;
-   vfmt->MultiTexCoord2fvARB = _vp_MultiTexCoord2fv;
-   vfmt->MultiTexCoord3fARB = _vp_MultiTexCoord3f;
-   vfmt->MultiTexCoord3fvARB = _vp_MultiTexCoord3fv;
-   vfmt->MultiTexCoord4fARB = _vp_MultiTexCoord4f;
-   vfmt->MultiTexCoord4fvARB = _vp_MultiTexCoord4fv;
-   vfmt->Normal3f = _vp_Normal3f;
-   vfmt->Normal3fv = _vp_Normal3fv;
-   vfmt->SecondaryColor3fEXT = _vp_SecondaryColor3f;
-   vfmt->SecondaryColor3fvEXT = _vp_SecondaryColor3fv;
-   vfmt->SecondaryColor3ubEXT = _vp_SecondaryColor3ub;
-   vfmt->SecondaryColor3ubvEXT = _vp_SecondaryColor3ubv;
-   vfmt->TexCoord1f = _vp_TexCoord1f;
-   vfmt->TexCoord1fv = _vp_TexCoord1fv;
-   vfmt->TexCoord2f = _vp_TexCoord2f;
-   vfmt->TexCoord2fv = _vp_TexCoord2fv;
-   vfmt->TexCoord3f = _vp_TexCoord3f;
-   vfmt->TexCoord3fv = _vp_TexCoord3fv;
-   vfmt->TexCoord4f = _vp_TexCoord4f;
-   vfmt->TexCoord4fv = _vp_TexCoord4fv;
-   vfmt->Vertex2f = _vp_Vertex2f;
-   vfmt->Vertex2fv = _vp_Vertex2fv;
-   vfmt->Vertex3f = _vp_Vertex3f;
-   vfmt->Vertex3fv = _vp_Vertex3fv;
-   vfmt->Vertex4f = _vp_Vertex4f;
-   vfmt->Vertex4fv = _vp_Vertex4fv;
-   vfmt->VertexAttrib4fNV = _vp_VertexAttrib4f;
-   vfmt->VertexAttrib4fvNV = _vp_VertexAttrib4fv;
-
-   /* Outside begin/end functions (from t_varray.c, t_eval.c, ...):
-    */
-   vfmt->Rectf = _mesa_noop_Rectf;
-
-   /* Just use the core function:
-    */
-   vfmt->CallList = _mesa_CallList;
-
-   vfmt->prefer_float_colors = GL_TRUE;
-}
-
-
-
 struct vp_stage_data {
    GLvector4f clipCoords;             /* post-modelview/projection coords */
    GLvector4f ndcCoords;              /* normalized device coords */
    struct gl_client_array color0[2];  /* front and back */
    struct gl_client_array color1[2];  /* front and back */
    GLvector4f texCoord[MAX_TEXTURE_UNITS];
-   GLvector1f fogCoord;
+   GLvector4f fogCoord;
    GLvector1f pointSize;
    GLubyte *clipmask;
    GLubyte ormask, andmask;
@@ -726,7 +129,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    GLfloat (*color1)[4] = (GLfloat (*)[4]) store->color1[0].Ptr;
    GLfloat (*bfcolor0)[4] = (GLfloat (*)[4]) store->color0[1].Ptr;
    GLfloat (*bfcolor1)[4] = (GLfloat (*)[4]) store->color1[1].Ptr;
-   GLfloat *fog = (GLfloat *) store->fogCoord.data;
+   GLfloat (*fog)[4] = (GLfloat (*)[4]) store->fogCoord.data;
    GLfloat *pointSize = (GLfloat *) store->pointSize.data;
    GLfloat (*texture0)[4] = (GLfloat (*)[4]) store->texCoord[0].data;
    GLfloat (*texture1)[4] = (GLfloat (*)[4]) store->texCoord[1].data;
@@ -758,7 +161,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
 #endif
 
       /* load the input attribute registers */
-      for (attr = 0; attr < 16; attr++) {
+      for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
          if (VB->Flag[i] & (1 << attr)) {
             COPY_4V(machine->Registers[VP_INPUT_REG_START + attr],
                     VB->AttribPtr[attr]->data[i]);
@@ -788,7 +191,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
       COPY_4V(color1[i], machine->Registers[VP_OUT_COL1]);
       COPY_4V(bfcolor0[i], machine->Registers[VP_OUT_BFC0]);
       COPY_4V(bfcolor1[i], machine->Registers[VP_OUT_BFC1]);
-      fog[i] = machine->Registers[VP_OUT_FOGC][0];
+      fog[i][0] = machine->Registers[VP_OUT_FOGC][0];
       pointSize[i] = machine->Registers[VP_OUT_PSIZ][0];
       COPY_4V(texture0[i], machine->Registers[VP_OUT_TEX0]);
       COPY_4V(texture1[i], machine->Registers[VP_OUT_TEX0]);
@@ -803,7 +206,7 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    VB->ColorPtr[1] = &store->color0[1];
    VB->SecondaryColorPtr[0] = &store->color1[0];
    VB->SecondaryColorPtr[1] = &store->color1[1];
-   VB->FogCoordPtr = &store->fogCoord;
+   VB->AttribPtr[VERT_ATTRIB_FOG] = &store->fogCoord;
    VB->PointSizePtr = &store->pointSize;
    VB->TexCoordPtr[0] = &store->texCoord[0];
    VB->TexCoordPtr[1] = &store->texCoord[1];
@@ -860,6 +263,7 @@ static GLboolean run_validate_program( GLcontext *ctx,
 					struct gl_pipeline_stage *stage )
 {
 #if 000
+   /* XXX do we need any validation for vertex programs? */
    GLuint ind = 0;
    light_func *tab;
 
@@ -952,7 +356,7 @@ static GLboolean run_init_vp( GLcontext *ctx,
    alloc_4float( &store->color1[1], size );
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
       _mesa_vector4f_alloc( &store->texCoord[i], 0, VB->Size, 32 );
-   _mesa_vector1f_alloc( &store->fogCoord, 0, size, 32 );
+   _mesa_vector4f_alloc( &store->fogCoord, 0, size, 32 );
    _mesa_vector1f_alloc( &store->pointSize, 0, size, 32 );
    store->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
 
@@ -1006,7 +410,7 @@ static void dtr( struct gl_pipeline_stage *stage )
       for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
 	 if (store->texCoord[i].data)
             _mesa_vector4f_free( &store->texCoord[i] );
-      _mesa_vector1f_free( &store->fogCoord );
+      _mesa_vector4f_free( &store->fogCoord );
       _mesa_vector1f_free( &store->pointSize );
       ALIGN_FREE( store->clipmask );
 

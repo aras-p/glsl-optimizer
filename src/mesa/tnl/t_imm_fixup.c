@@ -1,10 +1,10 @@
-/* $Id: t_imm_fixup.c,v 1.30 2001/12/15 02:13:32 brianp Exp $ */
+/* $Id: t_imm_fixup.c,v 1.31 2002/01/05 20:51:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -171,6 +171,7 @@ fixup_first_1ui( GLuint data[], GLuint flag[], GLuint match,
       data[i] = dflt;
 }
 
+#if 00
 static void
 fixup_first_1f( GLfloat data[], GLuint flag[], GLuint match,
 		GLuint start, GLfloat dflt )
@@ -181,7 +182,7 @@ fixup_first_1f( GLfloat data[], GLuint flag[], GLuint match,
    while ((flag[++i]&match) == 0)
       data[i] = dflt;
 }
-
+#endif
 
 static void
 fixup_first_1ub( GLubyte data[], GLuint flag[], GLuint match,
@@ -201,36 +202,50 @@ fixup_first_1ub( GLubyte data[], GLuint flag[], GLuint match,
 static void copy_from_current( GLcontext *ctx, struct immediate *IM, 
 			      GLuint pos, GLuint copyMask )
 {
+   GLuint attrib, attribBit;
+
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
       _tnl_print_vert_flags("copy from current", copyMask); 
 
+#if 0
    if (copyMask & VERT_NORMAL_BIT) {
-      COPY_3V(IM->Normal[pos], ctx->Current.Attrib[VERT_ATTRIB_NORMAL]);
+      COPY_4V(IM->Attrib[VERT_ATTRIB_NORMAL][pos],
+              ctx->Current.Attrib[VERT_ATTRIB_NORMAL]);
    }
 
    if (copyMask & VERT_COLOR0_BIT) {
-      COPY_4FV( IM->Color[pos], ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
+      COPY_4FV( IM->Attrib[VERT_ATTRIB_COLOR0][pos],
+                ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
    }
 
    if (copyMask & VERT_COLOR1_BIT)
-      COPY_4FV( IM->SecondaryColor[pos], ctx->Current.Attrib[VERT_ATTRIB_COLOR1]);
+      COPY_4FV( IM->Attrib[VERT_ATTRIB_COLOR1][pos],
+                ctx->Current.Attrib[VERT_ATTRIB_COLOR1]);
 
    if (copyMask & VERT_FOG_BIT)
-      IM->FogCoord[pos] = ctx->Current.Attrib[VERT_ATTRIB_FOG][0];
+      IM->Attrib[VERT_ATTRIB_FOG][pos][0] = ctx->Current.Attrib[VERT_ATTRIB_FOG][0];
+
+   if (copyMask & VERT_TEX_ANY) {
+      GLuint i;
+      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
+	 if (copyMask & VERT_TEX(i))
+            COPY_4FV(IM->Attrib[VERT_ATTRIB_TEX0 + i][pos],
+                     ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i]);
+      }
+   }
+#else
+   for (attrib = 0, attribBit = 1; attrib < 16; attrib++, attribBit <<= 1) {
+      if (copyMask & attribBit) {
+         COPY_4FV( IM->Attrib[attrib][pos], ctx->Current.Attrib[attrib]);
+      }
+   }
+#endif
 
    if (copyMask & VERT_INDEX_BIT)
       IM->Index[pos] = ctx->Current.Index;
 
    if (copyMask & VERT_EDGEFLAG_BIT)
       IM->EdgeFlag[pos] = ctx->Current.EdgeFlag;
-
-   if (copyMask & VERT_TEX_ANY) {
-      GLuint i;
-      for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-	 if (copyMask & VERT_TEX(i))
-            COPY_4FV(IM->TexCoord[i][pos], ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i]);
-      }
-   }
 }
 
 
@@ -274,16 +289,21 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
       if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
   	 _tnl_print_vert_flags("fixup", fixup); 
 
+      /* XXX replace these conditionals with a loop over the 16
+       * vertex attributes.
+       */
+
       if (fixup & VERT_TEX_ANY) {
 	 GLuint i;
 	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
 	    if (fixup & VERT_TEX(i)) {
 	       if (orflag & VERT_TEX(i))
-		  _tnl_fixup_4f( IM->TexCoord[i], IM->Flag, start,
-				 VERT_TEX(i) );
+		  _tnl_fixup_4f( IM->Attrib[VERT_ATTRIB_TEX0 + i], IM->Flag,
+                                 start, VERT_TEX(i) );
 	       else
-		  fixup_first_4f( IM->TexCoord[i], IM->Flag, VERT_END_VB, start,
-				  IM->TexCoord[i][start]);
+		  fixup_first_4f( IM->Attrib[VERT_ATTRIB_TEX0 + i], IM->Flag,
+                                  VERT_END_VB, start,
+				  IM->Attrib[VERT_ATTRIB_TEX0 + i][start]);
 	    }
 	 }
       }
@@ -307,7 +327,8 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
 
       if (fixup & VERT_COLOR0_BIT) {
 	 if (orflag & VERT_COLOR0_BIT)
-	    _tnl_fixup_4f( IM->Color, IM->Flag, start, VERT_COLOR0_BIT );
+	    _tnl_fixup_4f( IM->Attrib[VERT_ATTRIB_COLOR0], IM->Flag, start,
+                           VERT_COLOR0_BIT );
 	 /* No need for else case as the drivers understand stride
 	  * zero here.  (TODO - propogate this)
 	  */
@@ -315,27 +336,30 @@ void _tnl_fixup_input( GLcontext *ctx, struct immediate *IM )
       
       if (fixup & VERT_COLOR1_BIT) {
 	 if (orflag & VERT_COLOR1_BIT)
-	    _tnl_fixup_4f( IM->SecondaryColor, IM->Flag, start, 
+	    _tnl_fixup_4f( IM->Attrib[VERT_ATTRIB_COLOR1], IM->Flag, start, 
 			   VERT_COLOR1_BIT );
 	 else
-	    fixup_first_4f( IM->SecondaryColor, IM->Flag, VERT_END_VB, start,
-			    IM->SecondaryColor[start] );
+	    fixup_first_4f( IM->Attrib[VERT_ATTRIB_COLOR1], IM->Flag, VERT_END_VB, start,
+			    IM->Attrib[VERT_ATTRIB_COLOR1][start] );
       }
       
       if (fixup & VERT_FOG_BIT) {
 	 if (orflag & VERT_FOG_BIT)
-	    _tnl_fixup_1f( IM->FogCoord, IM->Flag, start, VERT_FOG_BIT );
+	    _tnl_fixup_4f( IM->Attrib[VERT_ATTRIB_FOG], IM->Flag,
+                           start, VERT_FOG_BIT );
 	 else
-	    fixup_first_1f( IM->FogCoord, IM->Flag, VERT_END_VB, start,
-			    IM->FogCoord[start] );
+	    fixup_first_4f( IM->Attrib[VERT_ATTRIB_FOG], IM->Flag, VERT_END_VB,
+                            start, IM->Attrib[VERT_ATTRIB_FOG][start] );
       }
 
       if (fixup & VERT_NORMAL_BIT) {
 	 if (orflag & VERT_NORMAL_BIT)
-	    _tnl_fixup_3f( IM->Normal, IM->Flag, start, VERT_NORMAL_BIT );
+	    _tnl_fixup_4f( IM->Attrib[VERT_ATTRIB_NORMAL], IM->Flag, start,
+                           VERT_NORMAL_BIT );
 	 else
-	    fixup_first_3f( IM->Normal, IM->Flag, VERT_END_VB, start,
-			    IM->Normal[start] );
+	    fixup_first_4f( IM->Attrib[VERT_ATTRIB_NORMAL], IM->Flag,
+                            VERT_END_VB, start,
+			    IM->Attrib[VERT_ATTRIB_NORMAL][start] );
       }
    }
       
@@ -474,7 +498,8 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
 	  *
 	  * Note these pointers are null when inactive.
 	  */
-	 COPY_4FV( next->Obj[dst], inputs->Obj.data[isrc] );
+	 COPY_4FV( next->Attrib[VERT_ATTRIB_POS][dst],
+                   inputs->Obj.data[isrc] );
 
 	 if (copy & VERT_NORMAL_BIT) {
 /*  	    fprintf(stderr, "copy vert norm %d to %d (%p): %f %f %f\n", */
@@ -483,11 +508,11 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
 /*  		    inputs->Normal.data[isrc][0], */
 /*  		    inputs->Normal.data[isrc][1], */
 /*  		    inputs->Normal.data[isrc][2]); */
-	    COPY_3FV( next->Normal[dst], inputs->Normal.data[isrc] );
+	    COPY_3FV( next->Attrib[VERT_ATTRIB_NORMAL][dst], inputs->Normal.data[isrc] );
 	 }
 
 	 if (copy & VERT_COLOR0_BIT)
-	    COPY_4FV( next->Color[dst], 
+	    COPY_4FV( next->Attrib[VERT_ATTRIB_COLOR0][dst], 
 		      ((GLfloat (*)[4])inputs->Color.Ptr)[isrc] );
 
 	 if (copy & VERT_INDEX_BIT)
@@ -497,7 +522,7 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
 	    GLuint i;
 	    for (i = 0 ; i < prev->MaxTextureUnits ; i++) {
 	       if (copy & VERT_TEX(i))
-		  COPY_4FV( next->TexCoord[i][dst], 
+		  COPY_4FV( next->Attrib[VERT_ATTRIB_TEX0 + i][dst], 
 			    inputs->TexCoord[i].data[isrc] );
 	    }
 	 }
@@ -513,8 +538,10 @@ void _tnl_copy_immediate_vertices( GLcontext *ctx, struct immediate *next )
 
 	    next->Elt[dst] = prev->Elt[src];
 	    next->EdgeFlag[dst] = prev->EdgeFlag[src];
-	    COPY_4FV( next->SecondaryColor[dst], prev->SecondaryColor[src] );
-	    next->FogCoord[dst] = prev->FogCoord[src];
+	    COPY_4FV( next->Attrib[VERT_ATTRIB_COLOR1][dst],
+                      prev->Attrib[VERT_ATTRIB_COLOR1][src] );
+	    COPY_4FV( next->Attrib[VERT_ATTRIB_FOG][dst],
+                      prev->Attrib[VERT_ATTRIB_FOG][src] );
 	 }
 
 	 next->Flag[dst] = flag;
@@ -579,11 +606,42 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
 /*     _tnl_print_vert_flags("fixup compiled", fixup); */
 
    if (fixup) {
+
+      /* XXX try to replace this code with a loop over the 16 vertex
+       * attributes.
+       */
+
+      if (fixup & VERT_NORMAL_BIT) {
+	 fixup_first_4f(IM->Attrib[VERT_ATTRIB_NORMAL], IM->Flag,
+                        VERT_NORMAL_BIT, start,
+			ctx->Current.Attrib[VERT_ATTRIB_NORMAL] );
+      }
+
+      if (fixup & VERT_COLOR0_BIT) {
+	 if (IM->CopyOrFlag & VERT_COLOR0_BIT)
+	    fixup_first_4f(IM->Attrib[VERT_ATTRIB_COLOR0], IM->Flag,
+                           VERT_COLOR0_BIT, start,
+			   ctx->Current.Attrib[VERT_ATTRIB_COLOR0] );
+	 else
+	    fixup &= ~VERT_COLOR0_BIT;
+      }
+
+      if (fixup & VERT_COLOR1_BIT)
+	 fixup_first_4f(IM->Attrib[VERT_ATTRIB_COLOR1], IM->Flag,
+                        VERT_COLOR1_BIT, start,
+			ctx->Current.Attrib[VERT_ATTRIB_COLOR1] );
+
+      if (fixup & VERT_FOG_BIT)
+	 fixup_first_4f( IM->Attrib[VERT_ATTRIB_FOG], IM->Flag,
+                         VERT_FOG_BIT, start,
+                         ctx->Current.Attrib[VERT_ATTRIB_FOG] );
+
       if (fixup & VERT_TEX_ANY) {
 	 GLuint i;
 	 for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
 	    if (fixup & VERT_TEX(i))
-	       fixup_first_4f( IM->TexCoord[i], IM->Flag, VERT_TEX(i), start,
+	       fixup_first_4f( IM->Attrib[VERT_ATTRIB_TEX0 + i], IM->Flag,
+                               VERT_TEX(i), start,
 			       ctx->Current.Attrib[VERT_ATTRIB_TEX0 + i] );
 	 }
       }
@@ -595,27 +653,6 @@ void _tnl_fixup_compiled_cassette( GLcontext *ctx, struct immediate *IM )
       if (fixup & VERT_INDEX_BIT)
 	 fixup_first_1ui(IM->Index, IM->Flag, VERT_INDEX_BIT, start,
 			 ctx->Current.Index );
-
-      if (fixup & VERT_COLOR0_BIT) {
-	 if (IM->CopyOrFlag & VERT_COLOR0_BIT)
-	    fixup_first_4f(IM->Color, IM->Flag, VERT_COLOR0_BIT, start,
-			   ctx->Current.Attrib[VERT_ATTRIB_COLOR0] );
-	 else
-	    fixup &= ~VERT_COLOR0_BIT;
-      }
-
-      if (fixup & VERT_COLOR1_BIT)
-	 fixup_first_4f(IM->SecondaryColor, IM->Flag, VERT_COLOR1_BIT, start,
-			ctx->Current.Attrib[VERT_ATTRIB_COLOR1] );
-
-      if (fixup & VERT_FOG_BIT)
-	 fixup_first_1f(IM->FogCoord, IM->Flag, VERT_FOG_BIT, start,
-			 ctx->Current.Attrib[VERT_ATTRIB_FOG][0] );
-
-      if (fixup & VERT_NORMAL_BIT) {
-	 fixup_first_3f(IM->Normal, IM->Flag, VERT_NORMAL_BIT, start,
-			ctx->Current.Attrib[VERT_ATTRIB_NORMAL] );
-      }
 
       IM->CopyOrFlag |= fixup;
    }
@@ -803,18 +840,19 @@ void _tnl_upgrade_current_data( GLcontext *ctx,
       struct gl_client_array *tmp = &tnl->imm_inputs.Color;
       GLuint start = IM->CopyStart;
 
-      tmp->Ptr = IM->Color + start;
+      tmp->Ptr = IM->Attrib[VERT_ATTRIB_COLOR0] + start;
       tmp->StrideB = 4 * sizeof(GLfloat);
       tmp->Flags = 0;
 
-      COPY_4FV( IM->Color[start], ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);   
+      COPY_4FV( IM->Attrib[VERT_ATTRIB_COLOR0][start],
+                ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);   
 
       /*
       ASSERT(IM->Flag[IM->LastData+1] & VERT_END_VB);
       */
 
-      fixup_first_4f( IM->Color, IM->Flag, VERT_END_VB, start, 
-		      IM->Color[start] );
+      fixup_first_4f( IM->Attrib[VERT_ATTRIB_COLOR0], IM->Flag, VERT_END_VB,
+                      start, IM->Attrib[VERT_ATTRIB_COLOR0][start] );
 
       VB->importable_data &= ~VERT_COLOR0_BIT;
    }

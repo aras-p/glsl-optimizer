@@ -1,10 +1,10 @@
-/* $Id: t_imm_alloc.c,v 1.12 2001/12/15 00:49:00 brianp Exp $ */
+/* $Id: t_imm_alloc.c,v 1.13 2002/01/05 20:51:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.0.1
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,7 +39,6 @@ static int id = 0;  /* give each struct immediate a unique ID number */
 static struct immediate *real_alloc_immediate( GLcontext *ctx )
 {
    struct immediate *IM = ALIGN_MALLOC_STRUCT( immediate, 32 );
-   GLuint j;
 
    if (!IM)
       return 0;
@@ -62,22 +61,14 @@ static struct immediate *real_alloc_immediate( GLcontext *ctx )
    IM->CopyTexSize = 0;
    IM->CopyStart = IM->Start;
 
-
-   /* TexCoord0 is special.
-    */
-   IM->TexCoord[0] = IM->TexCoord0;
-
-   for (j = 1; j < ctx->Const.MaxTextureUnits; j++) {
-      IM->TexCoord[j] = (GLfloat (*)[4])
-         ALIGN_MALLOC( IMM_SIZE * sizeof(GLfloat) * 4, 32 );
-   }
-
    /* KW: Removed initialization of normals as these are now treated
     * identically to all other data types.
     */
 
    MEMSET(IM->Flag, 0, sizeof(IM->Flag));
+#if 0
    MEMSET(IM->Normal, 0.0 , sizeof(IM->Normal));
+#endif
 
    return IM;
 }
@@ -86,7 +77,6 @@ static struct immediate *real_alloc_immediate( GLcontext *ctx )
 static void real_free_immediate( struct immediate *IM )
 {
    static int freed = 0;
-   GLuint j;
 
    if (IM->Material) {
       FREE( IM->Material );
@@ -94,9 +84,6 @@ static void real_free_immediate( struct immediate *IM )
       IM->Material = 0;
       IM->MaterialMask = 0;
    }
-
-   for (j = 1; j < IM->MaxTextureUnits; j++)
-      ALIGN_FREE( IM->TexCoord[j] );
 
    if (IM->NormalLengthPtr)
       ALIGN_FREE( IM->NormalLengthPtr );

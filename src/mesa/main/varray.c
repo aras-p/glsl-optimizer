@@ -1,10 +1,10 @@
-/* $Id: varray.c,v 1.39 2001/03/12 00:48:39 gareth Exp $ */
+/* $Id: varray.c,v 1.40 2002/01/05 20:51:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -137,6 +137,7 @@ _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr )
          return;
       }
    }
+   ctx->Array.Normal.Size = 3;
    ctx->Array.Normal.Type = type;
    ctx->Array.Normal.Stride = stride;
    ctx->Array.Normal.Ptr = (void *) ptr;
@@ -239,6 +240,7 @@ _mesa_FogCoordPointerEXT(GLenum type, GLsizei stride, const GLvoid *ptr)
          return;
       }
    }
+   ctx->Array.FogCoord.Size = 1;
    ctx->Array.FogCoord.Type = type;
    ctx->Array.FogCoord.Stride = stride;
    ctx->Array.FogCoord.Ptr = (void *) ptr;
@@ -284,6 +286,7 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr)
          return;
       }
    }
+   ctx->Array.Index.Size = 1;
    ctx->Array.Index.Type = type;
    ctx->Array.Index.Stride = stride;
    ctx->Array.Index.Ptr = (void *) ptr;

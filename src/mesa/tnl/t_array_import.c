@@ -1,4 +1,4 @@
-/* $Id: t_array_import.c,v 1.19 2001/12/14 02:51:42 brianp Exp $ */
+/* $Id: t_array_import.c,v 1.20 2002/01/05 20:51:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -81,7 +81,7 @@ static void _tnl_import_normal( GLcontext *ctx,
 			   stride ? 3*sizeof(GLfloat) : 0, writeable,
 			   &is_writeable);
 
-   inputs->Normal.data = (GLfloat (*)[3]) tmp->Ptr;
+   inputs->Normal.data = tmp->Ptr;
    inputs->Normal.start = (GLfloat *) tmp->Ptr;
    inputs->Normal.stride = tmp->StrideB;
    inputs->Normal.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
@@ -143,7 +143,7 @@ static void _tnl_import_fogcoord( GLcontext *ctx,
 			     stride ? sizeof(GLfloat) : 0, writeable,
 			     &is_writeable);
 
-   inputs->FogCoord.data = (GLfloat *) tmp->Ptr;
+   inputs->FogCoord.data = (GLfloat (*)[4]) tmp->Ptr;
    inputs->FogCoord.start = (GLfloat *) tmp->Ptr;
    inputs->FogCoord.stride = tmp->StrideB;
    inputs->FogCoord.flags &= ~(VEC_BAD_STRIDE|VEC_NOT_WRITEABLE);
@@ -276,8 +276,9 @@ static void _tnl_upgrade_client_data( GLcontext *ctx,
       VB->importable_data &= ~VERT_COLOR1_BIT;
    }
 
-   if ((required & VERT_FOG_BIT) && (VB->FogCoordPtr->flags & flags)) {
-      ASSERT(VB->FogCoordPtr == &inputs->FogCoord);
+   if ((required & VERT_FOG_BIT)
+       && (VB->AttribPtr[VERT_ATTRIB_FOG]->flags & flags)) {
+      ASSERT(VB->AttribPtr[VERT_ATTRIB_FOG] == &inputs->FogCoord);
       _tnl_import_fogcoord( ctx, writeable, stride );
       VB->importable_data &= ~VERT_FOG_BIT;
    }
@@ -371,7 +372,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
       if (inputs & VERT_FOG_BIT) {
 	 _tnl_import_fogcoord( ctx, 0, 0 );
 	 tmp->FogCoord.count = VB->Count;
-	 VB->FogCoordPtr = &tmp->FogCoord;
+	 VB->AttribPtr[VERT_ATTRIB_FOG] = &tmp->FogCoord;
       }
 
       if (inputs & VERT_EDGEFLAG_BIT) {

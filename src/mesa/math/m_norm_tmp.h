@@ -1,4 +1,4 @@
-/* $Id: m_norm_tmp.h,v 1.9 2002/01/05 14:12:24 brianp Exp $ */
+/* $Id: m_norm_tmp.h,v 1.10 2002/01/05 20:51:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -47,11 +47,11 @@
 static void _XFORMAPI
 TAG(transform_normalize_normals)( const GLmatrix *mat,
                                   GLfloat scale,
-                                  const GLvector3f *in,
+                                  const GLvector4f *in,
                                   const GLfloat *lengths,
-                                  GLvector3f *dest )
+                                  GLvector4f *dest )
 {
-   GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
+   GLfloat (*out)[4] = (GLfloat (*)[4])dest->start;
    const GLfloat *from = in->start;
    const GLuint stride = in->stride;
    const GLuint count = in->count;
@@ -114,11 +114,11 @@ TAG(transform_normalize_normals)( const GLmatrix *mat,
 static void _XFORMAPI
 TAG(transform_normalize_normals_no_rot)( const GLmatrix *mat,
                                          GLfloat scale,
-                                         const GLvector3f *in,
+                                         const GLvector4f *in,
                                          const GLfloat *lengths,
-                                         GLvector3f *dest )
+                                         GLvector4f *dest )
 {
-   GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
+   GLfloat (*out)[4] = (GLfloat (*)[4])dest->start;
    const GLfloat *from = in->start;
    const GLuint stride = in->stride;
    const GLuint count = in->count;
@@ -179,11 +179,11 @@ TAG(transform_normalize_normals_no_rot)( const GLmatrix *mat,
 static void _XFORMAPI
 TAG(transform_rescale_normals_no_rot)( const GLmatrix *mat,
                                        GLfloat scale,
-                                       const GLvector3f *in,
+                                       const GLvector4f *in,
                                        const GLfloat *lengths,
-                                       GLvector3f *dest )
+                                       GLvector4f *dest )
 {
-   GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
+   GLfloat (*out)[4] = (GLfloat (*)[4])dest->start;
    const GLfloat *from = in->start;
    const GLuint stride = in->stride;
    const GLuint count = in->count;
@@ -208,11 +208,11 @@ TAG(transform_rescale_normals_no_rot)( const GLmatrix *mat,
 static void _XFORMAPI
 TAG(transform_rescale_normals)( const GLmatrix *mat,
                                 GLfloat scale,
-                                const GLvector3f *in,
+                                const GLvector4f *in,
                                 const GLfloat *lengths,
-                                GLvector3f *dest )
+                                GLvector4f *dest )
 {
-   GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
+   GLfloat (*out)[4] = (GLfloat (*)[4])dest->start;
    const GLfloat *from = in->start;
    const GLuint stride = in->stride;
    const GLuint count = in->count;
@@ -240,11 +240,11 @@ TAG(transform_rescale_normals)( const GLmatrix *mat,
 static void _XFORMAPI
 TAG(transform_normals_no_rot)( const GLmatrix *mat,
 			       GLfloat scale,
-			       const GLvector3f *in,
+			       const GLvector4f *in,
 			       const GLfloat *lengths,
-			       GLvector3f *dest )
+			       GLvector4f *dest )
 {
-   GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
+   GLfloat (*out)[4] = (GLfloat (*)[4])dest->start;
    const GLfloat *from = in->start;
    const GLuint stride = in->stride;
    const GLuint count = in->count;
@@ -270,11 +270,11 @@ TAG(transform_normals_no_rot)( const GLmatrix *mat,
 static void _XFORMAPI
 TAG(transform_normals)( const GLmatrix *mat,
                         GLfloat scale,
-                        const GLvector3f *in,
+                        const GLvector4f *in,
                         const GLfloat *lengths,
-                        GLvector3f *dest )
+                        GLvector4f *dest )
 {
-   GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
+   GLfloat (*out)[4] = (GLfloat (*)[4])dest->start;
    const GLfloat *from = in->start;
    const GLuint stride = in->stride;
    const GLuint count = in->count;
@@ -300,11 +300,11 @@ TAG(transform_normals)( const GLmatrix *mat,
 static void _XFORMAPI
 TAG(normalize_normals)( const GLmatrix *mat,
                         GLfloat scale,
-                        const GLvector3f *in,
+                        const GLvector4f *in,
                         const GLfloat *lengths,
-                        GLvector3f *dest )
+                        GLvector4f *dest )
 {
-   GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
+   GLfloat (*out)[4] = (GLfloat (*)[4])dest->start;
    const GLfloat *from = in->start;
    const GLuint stride = in->stride;
    const GLuint count = in->count;
@@ -346,11 +346,11 @@ TAG(normalize_normals)( const GLmatrix *mat,
 static void _XFORMAPI
 TAG(rescale_normals)( const GLmatrix *mat,
                       GLfloat scale,
-                      const GLvector3f *in,
+                      const GLvector4f *in,
                       const GLfloat *lengths,
-                      GLvector3f *dest )
+                      GLvector4f *dest )
 {
-   GLfloat (*out)[3] = (GLfloat (*)[3])dest->start;
+   GLfloat (*out)[4] = (GLfloat (*)[4])dest->start;
    const GLfloat *from = in->start;
    const GLuint stride = in->stride;
    const GLuint count = in->count;

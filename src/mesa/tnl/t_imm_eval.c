@@ -1,4 +1,4 @@
-/* $Id: t_imm_eval.c,v 1.19 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_imm_eval.c,v 1.20 2002/01/05 20:51:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -158,14 +158,14 @@ static void eval1_1ui( GLvector1ui *dest,
 
 }
 
-static void eval1_norm( GLvector3f *dest,
+static void eval1_norm( GLvector4f *dest,
 			GLfloat coord[][4],
 			const GLuint *flags,
 			struct gl_1d_map *map )
 {
    const GLfloat u1 = map->u1;
    const GLfloat du = map->du;
-   GLfloat (*to)[3] = dest->data;
+   GLfloat (*to)[4] = dest->data;
    GLuint i;
 
    for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
@@ -180,7 +180,7 @@ static void eval1_norm( GLvector3f *dest,
 
 
 static void eval2_obj_norm( GLvector4f *obj_ptr,
-			    GLvector3f *norm_ptr,
+			    GLvector4f *norm_ptr,
 			    GLfloat coord[][4],
 			    GLuint *flags,
 			    GLuint dimension,
@@ -191,7 +191,7 @@ static void eval2_obj_norm( GLvector4f *obj_ptr,
    const GLfloat v1 = map->v1;
    const GLfloat dv = map->dv;
    GLfloat (*obj)[4] = obj_ptr->data;
-   GLfloat (*normal)[3] = norm_ptr->data;
+   GLfloat (*normal)[4] = norm_ptr->data;
    GLuint i;
 
 /*     fprintf(stderr, "%s\n", __FUNCTION__); */
@@ -280,7 +280,7 @@ static void eval2_4f_ca( struct gl_client_array *dest,
 }
 
 
-static void eval2_norm( GLvector3f *dest,
+static void eval2_norm( GLvector4f *dest,
 			GLfloat coord[][4],
 			GLuint *flags,
 			struct gl_2d_map *map )
@@ -289,17 +289,17 @@ static void eval2_norm( GLvector3f *dest,
    const GLfloat du = map->du;
    const GLfloat v1 = map->v1;
    const GLfloat dv = map->dv;
-   GLfloat (*to)[3] = dest->data;
+   GLfloat (*to)[4] = dest->data;
    GLuint i;
 
-   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++)
+   for (i = 0 ; !(flags[i] & VERT_END_VB) ; i++) {
       if (flags[i] & (VERT_EVAL_C2|VERT_EVAL_P2)) {
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 GLfloat v = (coord[i][1] - v1) * dv;
 	 _math_horner_bezier_surf(map->Points, to[i], u, v, 3,
 				  map->Uorder, map->Vorder);
-     }
-
+      }
+   }
 }
 
 
@@ -351,7 +351,7 @@ static void copy_4f_stride( GLfloat to[][4], GLfloat *from,
    }
 }
 
-static void copy_3f( GLfloat to[][3], GLfloat from[][3], GLuint count )
+static void copy_3f( GLfloat to[][4], GLfloat from[][4], GLuint count )
 {
    GLuint i;
 /*     MEMCPY( to, from, (count) * sizeof(to[0])); */
@@ -452,7 +452,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
    GLuint any_eval2 = orflag & (VERT_EVAL_C2|VERT_EVAL_P2);
    GLuint req = 0;
    GLuint purge_flags = 0;
-   GLfloat (*coord)[4] = IM->Obj + IM->CopyStart;
+   GLfloat (*coord)[4] = IM->Attrib[VERT_ATTRIB_POS] + IM->CopyStart;
 
    if (IM->AndFlag & VERT_EVAL_ANY)
       copycount = IM->Start - IM->CopyStart; /* just copy copied vertices */
@@ -475,12 +475,12 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 	 purge_flags = (VERT_EVAL_P1|VERT_EVAL_C1);
 
       if (orflag & VERT_EVAL_P1) {
-	 eval_points1( store->Obj + IM->CopyStart, 
+	 eval_points1( store->Attrib[VERT_ATTRIB_POS] + IM->CopyStart, 
 		       coord, flags,
 		       ctx->Eval.MapGrid1du,
 		       ctx->Eval.MapGrid1u1);
 	 
-	 coord = store->Obj + IM->CopyStart;
+	 coord = store->Attrib[VERT_ATTRIB_POS] + IM->CopyStart;
       }
    }
 
@@ -491,14 +491,14 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 	 purge_flags |= (VERT_EVAL_P2|VERT_EVAL_C2);
 
       if (orflag & VERT_EVAL_P2) {
-	 eval_points2( store->Obj + IM->CopyStart, 
+	 eval_points2( store->Attrib[VERT_ATTRIB_POS] + IM->CopyStart, 
 		       coord, flags,
 		       ctx->Eval.MapGrid2du,
 		       ctx->Eval.MapGrid2u1,
 		       ctx->Eval.MapGrid2dv,
 		       ctx->Eval.MapGrid2v1 );
 
-	 coord = store->Obj + IM->CopyStart;
+	 coord = store->Attrib[VERT_ATTRIB_POS] + IM->CopyStart;
       }
    }
 
@@ -533,12 +533,12 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       GLuint generated = 0;
 
       if (copycount) 
-	 copy_4f_stride( store->Color + IM->CopyStart, 
+	 copy_4f_stride( store->Attrib[VERT_ATTRIB_COLOR0] + IM->CopyStart, 
 			 (GLfloat *)tmp->Color.Ptr, 
 			 tmp->Color.StrideB,
 			 copycount );
 
-      tmp->Color.Ptr = store->Color + IM->CopyStart;
+      tmp->Color.Ptr = store->Attrib[VERT_ATTRIB_COLOR0] + IM->CopyStart;
       tmp->Color.StrideB = 4 * sizeof(GLfloat);
       tmp->Color.Flags = 0;
       tnl->vb.importable_data &= ~VERT_COLOR0_BIT;
@@ -560,12 +560,12 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       GLuint generated = 0;
 
       if (copycount)
-	 copy_4f( store->TexCoord[0] + IM->CopyStart, 
+	 copy_4f( store->Attrib[VERT_ATTRIB_TEX0] + IM->CopyStart, 
 		  tmp->TexCoord[0].data, copycount );
       else
 	 tmp->TexCoord[0].size = 0;
 
-      tmp->TexCoord[0].data = store->TexCoord[0] + IM->CopyStart;
+      tmp->TexCoord[0].data = store->Attrib[VERT_ATTRIB_TEX0] + IM->CopyStart;
       tmp->TexCoord[0].start = (GLfloat *)tmp->TexCoord[0].data;
 
       if (any_eval1) {
@@ -622,22 +622,20 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 
       if (copycount) {
 /*    	 fprintf(stderr, "%s: Copy normals\n", __FUNCTION__);  */
-	 copy_3f( store->Normal + IM->CopyStart, tmp->Normal.data, 
-		  copycount );
+	 copy_3f( store->Attrib[VERT_ATTRIB_NORMAL] + IM->CopyStart,
+                  tmp->Normal.data, copycount );
       }
 
-      tmp->Normal.data = store->Normal + IM->CopyStart;
+      tmp->Normal.data = store->Attrib[VERT_ATTRIB_NORMAL] + IM->CopyStart;
       tmp->Normal.start = (GLfloat *)tmp->Normal.data;
 
       if (ctx->Eval.Map1Normal && any_eval1) {
-	 eval1_norm( &tmp->Normal, coord, flags,
-		     &ctx->EvalMap.Map1Normal );
+	 eval1_norm( &tmp->Normal, coord, flags, &ctx->EvalMap.Map1Normal );
 	 generated |= VERT_EVAL_C1|VERT_EVAL_P1;
       }
 
       if (ctx->Eval.Map2Normal && any_eval2) {
-	 eval2_norm( &tmp->Normal, coord, flags,
-		     &ctx->EvalMap.Map2Normal );
+	 eval2_norm( &tmp->Normal, coord, flags, &ctx->EvalMap.Map2Normal );
 	 generated |= VERT_EVAL_C2|VERT_EVAL_P2;
       }
    }
@@ -653,12 +651,16 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 	 /* This copy may already have occurred when eliminating
 	  * glEvalPoint calls:
 	  */
-	 if  (coord != store->Obj + IM->CopyStart)
-	    copy_4f( store->Obj + IM->CopyStart, tmp->Obj.data, copycount );
-      } else
+	 if (coord != store->Attrib[VERT_ATTRIB_POS] + IM->CopyStart) {
+	    copy_4f( store->Attrib[VERT_ATTRIB_POS] + IM->CopyStart,
+                     tmp->Obj.data, copycount );
+         }
+      }
+      else {
 	 tmp->Obj.size = 0;
+      }
 
-      tmp->Obj.data = store->Obj + IM->CopyStart;
+      tmp->Obj.data = store->Attrib[VERT_ATTRIB_POS] + IM->CopyStart;
       tmp->Obj.start = (GLfloat *)tmp->Obj.data;
 
       /* Note: Normal data is already prepared above.
@@ -676,8 +678,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
       }
 
       if (any_eval2) {
-	 if (ctx->Eval.Map2Vertex4)
-	 {
+	 if (ctx->Eval.Map2Vertex4) {
 	    if (ctx->Eval.AutoNormal && (req & VERT_NORMAL_BIT))
 	       eval2_obj_norm( &tmp->Obj, &tmp->Normal, coord, flags, 4,
 			       &ctx->EvalMap.Map2Vertex4 );
@@ -685,8 +686,7 @@ void _tnl_eval_immediate( GLcontext *ctx, struct immediate *IM )
 	       eval2_4f( &tmp->Obj, coord, flags, 4,
 			 &ctx->EvalMap.Map2Vertex4 );
 	 }
-	 else if (ctx->Eval.Map2Vertex3)
-	 {
+	 else if (ctx->Eval.Map2Vertex3) {
 	    if (ctx->Eval.AutoNormal && (req & VERT_NORMAL_BIT))
 	       eval2_obj_norm( &tmp->Obj, &tmp->Normal, coord, flags, 3,
 			       &ctx->EvalMap.Map2Vertex3 );

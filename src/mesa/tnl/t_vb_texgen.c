@@ -1,4 +1,4 @@
-/* $Id: t_vb_texgen.c,v 1.10 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_vb_texgen.c,v 1.11 2002/01/05 20:51:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -95,7 +95,7 @@ static GLuint all_bits[5] = {
 
 
 static void build_m3( GLfloat f[][3], GLfloat m[],
-		      const GLvector3f *normal,
+		      const GLvector4f *normal,
 		      const GLvector4f *eye )
 {
    GLuint stride = eye->stride;
@@ -122,7 +122,7 @@ static void build_m3( GLfloat f[][3], GLfloat m[],
 
 
 static void build_m2( GLfloat f[][3], GLfloat m[],
-		      const GLvector3f *normal,
+		      const GLvector4f *normal,
 		      const GLvector4f *eye )
 {
    GLuint stride = eye->stride;
@@ -152,7 +152,7 @@ static void build_m2( GLfloat f[][3], GLfloat m[],
 
 typedef void (*build_m_func)( GLfloat f[][3],
 			      GLfloat m[],
-			      const GLvector3f *normal,
+			      const GLvector4f *normal,
 			      const GLvector4f *eye );
 
 
@@ -171,7 +171,7 @@ static build_m_func build_m_tab[5] = {
  */
 static void build_f3( GLfloat *f,
 		      GLuint fstride,
-		      const GLvector3f *normal,
+		      const GLvector4f *normal,
 		      const GLvector4f *eye )
 {
    GLuint stride = eye->stride;
@@ -198,7 +198,7 @@ static void build_f3( GLfloat *f,
 
 static void build_f2( GLfloat *f,
 		      GLuint fstride,
-		      const GLvector3f *normal,
+		      const GLvector4f *normal,
 		      const GLvector4f *eye )
 {
    GLuint stride = eye->stride;
@@ -226,7 +226,7 @@ static void build_f2( GLfloat *f,
 
 typedef void (*build_f_func)( GLfloat *f,
 			      GLuint fstride,
-			      const GLvector3f *normal_vec,
+			      const GLvector4f *normal_vec,
 			      const GLvector4f *eye );
 
 
@@ -281,7 +281,7 @@ static void texgen_normal_map_nv( GLcontext *ctx,
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    GLvector4f *in = VB->TexCoordPtr[unit];
    GLvector4f *out = &store->texcoord[unit];
-   GLvector3f *normal = VB->NormalPtr;
+   GLvector4f *normal = VB->NormalPtr;
    GLfloat (*texcoord)[4] = (GLfloat (*)[4])out->start;
    GLuint count = VB->Count;
    GLuint i;
@@ -362,7 +362,7 @@ static void texgen( GLcontext *ctx,
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    const GLvector4f *obj = VB->ObjPtr;
    const GLvector4f *eye = VB->EyePtr;
-   const GLvector3f *normal = VB->NormalPtr;
+   const GLvector4f *normal = VB->NormalPtr;
    GLfloat (*texcoord)[4] = (GLfloat (*)[4])out->data;
    GLfloat *indata;
    GLuint count = VB->Count;
