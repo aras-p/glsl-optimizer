@@ -792,22 +792,6 @@ static int inline translate_src(int src)
 	}
 }
 	   
-static int known_formats[]={
-	0x0,
-	0xAA06,
-	0xA60E,
-	0xA60E,
-	0xA60A,
-	0x8860C,
-	0x88A0C,
-	0xA00,
-	0xA61D,
-	0xA61D,
-	0xA61A,
-	0xA61A,
-	-1
-	};
-	   
 /* I think 357 and 457 are prime numbers.. wiggle them if you get coincidences */
 #define FORMAT_HASH(opRGB, srcRGB, modeRGB, opA, srcA, modeA, format, intFormat)	( \
 	(\
@@ -827,10 +811,12 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 	int i=0; /* number of alpha args .. */
 	GLuint fmt;
 	
+	#if 0
 	fprintf(stderr, "_ReallyEnabled=%d EnvMode=%s\n", 
 		texUnit->_ReallyEnabled, 
 		_mesa_lookup_enum_by_nr(texUnit->EnvMode));
-	
+	#endif
+		
 	switch(IntFormat){
 		case 4:
 		case GL_RGBA:
@@ -869,31 +855,27 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 		/* tested with:
 			kfiresaver.kss 
 			*/
-		return 0x760c; /* kfiresaver.kss */
+		return R300_EASY_TX_FORMAT(X, X, CUT_W, W, W8Z8Y8X8);
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x0008847, GL_RGBA8):
 		/* tested with:
 			Quake3demo 
 			*/
+		/* Quake3demo -small font on the bottom */
 		return fmt;
-		return 0x860c; /* Quake3demo -small font on the bottom */
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00005547, GL_RGBA8):
+		/* Quake3demo - mouse cursor*/
 		return fmt;
-		return 0x4860c;
-		return 0;
-		return 0x8a0c; /* Quake3demo - mouse cursor*/
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00007747, 4):
 		/* tested with:
 			kfiresaver.kss 
 			*/
 		return R300_EASY_TX_FORMAT(Y, Z, W, ONE, W8Z8Y8X8);
-		return 0x4b60c;
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00005547, 4):
 		/* tested with:
 			kfiresaver.kss
 			kfountain.kss
 			*/
 		return R300_EASY_TX_FORMAT(Y, Z, W, ONE, W8Z8Y8X8);
-		return 0x51a0c;	
 	case FORMAT_HASH(0, 1, 0x2100, 0, 4, 0x1e01, 0x00008847, 3):
 		/* tested with
 			lesson 06
@@ -913,7 +895,6 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 			Quake3demo
 			*/
 		return R300_EASY_TX_FORMAT(Y, Z, W, ONE, W8Z8Y8X8);
-		return 0x53a0c;	
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00007847, GL_RGBA8):
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00006747, GL_RGBA8):
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00006647, GL_RGBA8):
@@ -922,14 +903,12 @@ static GLuint translate_texture_format(GLcontext *ctx, GLint tex_unit, GLuint fo
 			Quake3demo
 			*/
 		return R300_EASY_TX_FORMAT(Y, Z, W, W, W8Z8Y8X8);
-		return 0x5360c;	
 	case FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x00007747, GL_RGBA8):
 		return R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8) ;
 	case  FORMAT_HASH(0, 1, 0x2100, 0, 1, 0x2100, 0x0008845, 0x00008056):
 		//return 0;
 		fprintf(stderr, "***\n");
 		return R300_EASY_TX_FORMAT(Y, Z, W, W, W8Z8Y8X8);
-		return 0x53a23;
 	}
 		
 	
@@ -1008,6 +987,7 @@ void r300_setup_textures(GLcontext *ctx)
 			 	r300->state.texture.unit[i].texobj!=NULL?t->base.tObj->Image[0][0]->IntFormat:3);
 			
 			
+			#if 0
 			fprintf(stderr, "Format=%s IntFormat=%08x MesaFormat=%08x BaseFormat=%s IsCompressed=%d Target=%s\n",
 				_mesa_lookup_enum_by_nr(t->base.tObj->Image[0][0]->Format), 
 				t->base.tObj->Image[0][0]->IntFormat, 
@@ -1016,7 +996,6 @@ void r300_setup_textures(GLcontext *ctx)
 				t->base.tObj->Image[0][0]->IsCompressed,
 				_mesa_lookup_enum_by_nr(t->base.tObj->Target));
 			
-			#if 0
 			fprintf(stderr, "pitch=%08x filter=%08x format=%08x\n", t->pitch, t->filter, r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]);
 			fprintf(stderr, "unknown1=%08x size=%08x\n", r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i],
 				r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]);
@@ -1056,7 +1035,7 @@ void r300_setup_textures(GLcontext *ctx)
 						}
 					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=known_formats[fmt];
 					r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=
-						R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)  | (fmt<<21);
+						R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)  | (fmt<<24);
 					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x08a0c | (fmt<<16);
 					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x58a00 | (fmt);
 					//r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=0x53a0c | (fmt<<24);
@@ -1094,7 +1073,12 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	r300->hw.ri.cmd[R300_RI_INTERP_1] |= R300_RS_INTERP_1_UNKNOWN;
 	r300->hw.ri.cmd[R300_RI_INTERP_2] |= R300_RS_INTERP_2_UNKNOWN;
 	r300->hw.ri.cmd[R300_RI_INTERP_3] |= R300_RS_INTERP_3_UNKNOWN;
-	
+
+	#if 1
+	for(i = 2; i <= 8; ++i)
+		r300->hw.ri.cmd[i] |= 4;
+	#endif
+		
 	for(i = 1; i <= 8; ++i)
 		r300->hw.rr.cmd[i] = 0;
 	/* textures enabled ? */
