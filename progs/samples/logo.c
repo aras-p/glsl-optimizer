@@ -1,4 +1,4 @@
-/* $Id: logo.c,v 1.2 1999/12/15 13:02:09 brianp Exp $ */
+/* $Id: logo.c,v 1.3 2002/11/05 20:59:16 brianp Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993 Silicon Graphics, Inc.
@@ -1397,12 +1397,15 @@ static void Key(unsigned char key, int x, int y)
 	switch (polyMode) {
 	  case GL_BACK:
 	    polyMode = GL_FRONT;
+            printf("PolygonMode GL_FRONT\n");
 	    break;
 	  case GL_FRONT:
 	    polyMode = GL_FRONT_AND_BACK;
+            printf("PolygonMode GL_FRONT_AND_BACK\n");
 	    break;
 	  case GL_FRONT_AND_BACK:
 	    polyMode = GL_BACK;
+            printf("PolygonMode GL_BACK\n");
 	    break;
           default:
             break;
@@ -1455,14 +1458,17 @@ static void Key(unsigned char key, int x, int y)
 
       case 'q':
 	glDisable(GL_CULL_FACE);
+        printf("disable culling\n");
 	break;
       case 'w':
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
+        printf("enable front face culling\n");
 	break;
       case 'e':
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
+        printf("enable back face culling\n");
 	break;
 
       case 'r':
