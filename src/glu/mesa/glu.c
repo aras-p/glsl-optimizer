@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.12 1999/09/17 03:07:28 tjump Exp $ */
+/* $Id: glu.c,v 1.13 1999/09/17 03:17:18 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.c,v $
+ * Revision 1.13  1999/09/17 03:17:18  tjump
+ * Patch error fixup
+ *
  * Revision 1.12  1999/09/17 03:07:28  tjump
  * Win32 build req't updates
  *
@@ -376,11 +379,7 @@ const GLubyte* GLAPIENTRY gluGetString( GLenum name )
 /* for BeOS R4.5 */
 gluProcAddress GLAPIENTRY gluGetProcAddressEXT(const GLubyte *procName)
 #else
-<<<<<<< glu.c
 gluProcAddress GLAPIENTRY gluGetProcAddressEXT(const GLubyte *procName)
-=======
-void GLAPIENTRY (*gluGetProcAddressEXT(const GLubyte *procName))()
->>>>>>> 1.11
 #endif
 {
    struct proc {
