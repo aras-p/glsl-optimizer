@@ -243,10 +243,7 @@
 #endif /* ACK_ASSEMBLER */
 
 
-#if (defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) \
- || (defined(linux) || defined(__OS2ELF__)) && defined(__ELF__) \
- || defined(__FreeBSD__) && __FreeBSD__ >= 3) \
- || (defined(__NetBSD__) && defined(__ELF__))
+#if defined(__QNX__) || defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) || defined(__ELF__) || defined(__GNU__)
 #define GLNAME(a)       a
 #else
 #define GLNAME(a)       CONCAT(_,a)
