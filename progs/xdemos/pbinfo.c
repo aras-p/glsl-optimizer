@@ -23,29 +23,10 @@ PrintConfigs(Display *dpy, int screen, Bool horizFormat)
    FBCONFIG *fbConfigs;
    int nConfigs;
    int i;
-   /* Note: you may want to tweek the attribute list to select a different
-    * set of fbconfigs.
-    */
-   int fbAttribs[] = {
-                      GLX_RENDER_TYPE, 0,
-		      GLX_DRAWABLE_TYPE, 0,
-#if 0
-                      GLX_RENDER_TYPE, GLX_RGBA_BIT,
-		      GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT,
-		      GLX_RED_SIZE, 1,
-		      GLX_GREEN_SIZE, 1,
-		      GLX_BLUE_SIZE, 1,
-		      GLX_DEPTH_SIZE, 1,
-		      GLX_DOUBLEBUFFER, 0,
-		      GLX_STENCIL_SIZE, 0,
-#endif
-		      None};
 
-
-   /* Get list of possible frame buffer configurations */
-   fbConfigs = ChooseFBConfig(dpy, screen, fbAttribs, &nConfigs);
+   fbConfigs = GetAllFBConfigs(dpy, screen, &nConfigs);
    if (!nConfigs || !fbConfigs) {
-      printf("Error: glxChooseFBConfig failed\n");
+      printf("Error: glxGetFBConfigs failed\n");
       return;
    }
 
@@ -57,7 +38,7 @@ PrintConfigs(Display *dpy, int screen, Bool horizFormat)
    }
 
    /* Print config info */
-   for (i=0;i<nConfigs;i++) {
+   for (i = 0; i < nConfigs; i++) {
       PrintFBConfigInfo(dpy, screen, fbConfigs[i], horizFormat);
    }
 

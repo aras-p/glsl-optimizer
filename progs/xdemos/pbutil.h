@@ -38,6 +38,10 @@ extern FBCONFIG *
 ChooseFBConfig(Display *dpy, int screen, const int attribs[], int *nConfigs);
 
 
+extern FBCONFIG *
+GetAllFBConfigs(Display *dpy, int screen, int *nConfigs);
+
+
 extern XVisualInfo *
 GetVisualFromFBConfig(Display *dpy, int screen, FBCONFIG config);
 
