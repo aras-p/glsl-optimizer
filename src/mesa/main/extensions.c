@@ -1,4 +1,4 @@
-/* $Id: extensions.c,v 1.69 2002/02/15 16:32:06 brianp Exp $ */
+/* $Id: extensions.c,v 1.70 2002/03/13 04:33:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -113,6 +113,7 @@ static struct {
    { OFF, "GL_NV_blend_square",                F(NV_blend_square) },
    { ON,  "GL_NV_texgen_reflection",           F(NV_texgen_reflection) },
    { OFF, "GL_NV_vertex_program",              F(NV_vertex_program) },
+   { OFF, "GL_NV_vertex_program1_1",           F(NV_vertex_program1_1) },
    { OFF, "GL_SGI_color_matrix",               F(SGI_color_matrix) },
    { OFF, "GL_SGI_color_table",                F(SGI_color_table) },
    { OFF, "GL_SGIS_generate_mipmap",           F(SGIS_generate_mipmap) },
@@ -172,6 +173,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
       "GL_NV_blend_square",
       "GL_NV_texgen_reflection",
       "GL_NV_vertex_program",
+      "GL_NV_vertex_program1_1",
       "GL_SGI_color_matrix",
       "GL_SGI_color_table",
       "GL_SGIS_generate_mipmap",

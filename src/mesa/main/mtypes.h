@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.65 2002/02/15 16:37:36 brianp Exp $ */
+/* $Id: mtypes.h,v 1.66 2002/03/13 04:33:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1212,6 +1212,10 @@ enum vp_opcode
    SGE,
    MAD,
    ARL,
+   DPH,
+   RCC,
+   SUB,
+   ABS,
    END
 };
 
@@ -1251,6 +1255,7 @@ struct vp_program
    GLenum Target;      /* GL_VERTEX_PROGRAM_NV or GL_VERTEX_STATE_PROGRAM_NV */
    GLint ErrorPos;            /* Position in string where error was detected */
    GLint RefCount;            /* Since programs can be shared among contexts */
+   GLboolean IsPositionInvariant;  /* GL_NV_vertex_program1_1 */
    GLboolean Resident;
    GLuint InputsRead;     /* Bitmask of which input regs are read */
    GLuint OutputsWritten; /* Bitmask of which output regs are written to */
@@ -1424,6 +1429,7 @@ struct gl_extensions {
    GLboolean NV_blend_square;
    GLboolean NV_texgen_reflection;
    GLboolean NV_vertex_program;
+   GLboolean NV_vertex_program1_1;
    GLboolean SGI_color_matrix;
    GLboolean SGI_color_table;
    GLboolean SGIS_generate_mipmap;
