@@ -1,4 +1,4 @@
-/* $Id: t_dd_dmatmp.h,v 1.7 2001/03/18 00:46:04 keithw Exp $ */
+/* $Id: t_dd_dmatmp.h,v 1.8 2001/04/06 16:26:41 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -64,6 +64,10 @@ do { 						\
    EMIT_ELT( offset, elt0 ); 			\
    EMIT_ELT( offset+1, elt1 ); 			\
 } while (0)
+#endif
+
+#ifndef FINISH
+#define FINISH
 #endif
 
 /**********************************************************************/
@@ -136,6 +140,9 @@ static void TAG(render_points_verts)( GLcontext *ctx,
 	 EMIT_VERTS( ctx, j, nr );
 	 currentsz = dmasz;
       }
+
+      FINISH;
+
    } else {
       VERT_FALLBACK( ctx, start, count, flags );
    }
@@ -168,6 +175,9 @@ static void TAG(render_lines_verts)( GLcontext *ctx,
 	 EMIT_VERTS( ctx, j, nr );
 	 currentsz = dmasz;
       }
+
+      FINISH;
+
    } else {
       VERT_FALLBACK( ctx, start, count, flags );
    }
@@ -196,6 +206,9 @@ static void TAG(render_line_strip_verts)( GLcontext *ctx,
 	 EMIT_VERTS( ctx, j, nr );
 	 currentsz = dmasz;
       }
+ 
+      FINISH;
+
    } else {
       VERT_FALLBACK( ctx, start, count, flags );
    }
@@ -238,6 +251,8 @@ static void TAG(render_line_loop_verts)( GLcontext *ctx,
       if (start < count - 1 && (flags & PRIM_END))
 	 EMIT_VERTS( ctx, start, 1 );
 
+      FINISH;
+
    } else {
       VERT_FALLBACK( ctx, start, count, flags );
    }
@@ -269,6 +284,7 @@ static void TAG(render_triangles_verts)( GLcontext *ctx,
       EMIT_VERTS( ctx, j, nr );
       currentsz = dmasz;
    }
+   FINISH;
 }
 
 
@@ -312,6 +328,9 @@ static void TAG(render_tri_strip_verts)( GLcontext *ctx,
 	 EMIT_VERTS( ctx, j, nr );
 	 currentsz = dmasz;
       }
+
+      FINISH;
+
    } else {
       VERT_FALLBACK( ctx, start, count, flags );
    }
@@ -342,6 +361,9 @@ static void TAG(render_tri_fan_verts)( GLcontext *ctx,
 	 EMIT_VERTS( ctx, j, nr - 1 );
 	 currentsz = dmasz;
       }
+
+      FINISH;
+
    }
    else {
       /* Could write code to emit these as indexed vertices (for the
@@ -377,6 +399,9 @@ static void TAG(render_poly_verts)( GLcontext *ctx,
 	 EMIT_VERTS( ctx, j, nr - 1 );
 	 currentsz = dmasz;
       }
+
+      FINISH;
+
    }
    else if (HAVE_TRI_FANS && !(ctx->_TriangleCaps & DD_FLATSHADE)) {
       TAG(render_tri_fan_verts)( ctx, start, count, flags );
@@ -478,6 +503,9 @@ static void TAG(render_quad_strip_verts)( GLcontext *ctx,
 	 EMIT_VERTS( ctx, j, nr );
 	 currentsz = dmasz;
       }
+
+      FINISH;
+
    } else {
       VERT_FALLBACK( ctx, start, count, flags );
    }

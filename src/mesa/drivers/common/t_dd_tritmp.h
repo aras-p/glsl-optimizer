@@ -1,11 +1,10 @@
-/* $Id: t_dd_tritmp.h,v 1.7 2001/03/13 17:39:56 gareth Exp $ */
+/* $Id: t_dd_tritmp.h,v 1.8 2001/04/06 16:26:41 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.5
  *
- * Copyright (C) 1999-2001
-Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
