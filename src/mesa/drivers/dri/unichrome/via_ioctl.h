@@ -29,18 +29,12 @@
 
 
 void viaFinishPrimitive(viaContextPtr vmesa);
-void viaFlushPrims(viaContextPtr vmesa);
-void viaFlushPrimsLocked(viaContextPtr vmesa);
+void viaFlushDma(viaContextPtr vmesa);
+void viaFlushDmaLocked(viaContextPtr vmesa, GLuint flags);
 
 void viaInitIoctlFuncs(GLcontext *ctx);
 void viaCopyBuffer(const __DRIdrawablePrivate *dpriv);
 void viaPageFlip(const __DRIdrawablePrivate *dpriv);
-void viaFillFrontBuffer(viaContextPtr vmesa);
-void viaFillFrontPBuffer(viaContextPtr vmesa);
-void viaFillBackBuffer(viaContextPtr vmesa);
-void viaFillDepthBuffer(viaContextPtr vmesa, GLuint pixel, GLuint mask);
-void viaDoSwapBuffers(viaContextPtr vmesa);
-void viaDoSwapPBuffers(viaContextPtr vmesa);
 void viaCheckDma(viaContextPtr vmesa, GLuint bytes);
 
 #define VIA_FINISH_PRIM(vmesa) do {		\
@@ -50,20 +44,14 @@ void viaCheckDma(viaContextPtr vmesa, GLuint bytes);
 
 #define VIA_FLUSH_DMA(vmesa) do {		\
    VIA_FINISH_PRIM(vmesa);			\
-   if (vmesa->dmaLow != DMA_OFFSET) 		\
-      viaFlushPrims(vmesa);			\
+   if (vmesa->dmaLow) 		\
+      viaFlushDma(vmesa);			\
 } while (0)
     
 
 GLuint *viaAllocDmaFunc(viaContextPtr vmesa, int bytes, const char *func, int line);
 #define viaAllocDma( v, b ) viaAllocDmaFunc(v, b, __FUNCTION__, __LINE__)
 
-
-
-/* Room for the cliprect and other preamble at the head of each dma
- * buffer:   (What about buffers which only contain blits?)
- */
-#define DMA_OFFSET 32
 
 #define RING_VARS GLuint *_vb = 0, _nr, _x;
 
@@ -76,7 +64,7 @@ GLuint *viaAllocDmaFunc(viaContextPtr vmesa, int bytes, const char *func, int li
 
 #define BEGIN_RING_NOCHECK(n) do {			\
    if (_vb != 0) abort();				\
-   _vb = (GLuint *)(vmesa->dmaAddr + vmesa->dmaLow);	\
+   _vb = (GLuint *)(vmesa->dma + vmesa->dmaLow);	\
    vmesa->dmaLow += (n) * sizeof(GLuint);		\
    _nr = (n);						\
    _x = 0;						\

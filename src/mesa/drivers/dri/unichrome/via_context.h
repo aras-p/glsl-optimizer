@@ -52,8 +52,11 @@ typedef struct via_texture_object_t *viaTextureObjectPtr;
 #define VIA_FALLBACK_BLEND_FUNC        	0x400
 #define VIA_FALLBACK_USER_DISABLE      	0x800
 
-#define VIA_DMA_BUFSIZ                  500000
+#define VIA_DMA_BUFSIZ                  5000
 #define VIA_DMA_HIGHWATER               (VIA_DMA_BUFSIZ - 256)
+
+#define VIA_NO_CLIPRECTS 0x1
+
 
 /* Use the templated vertex formats:
  */
@@ -74,6 +77,10 @@ typedef struct {
     GLuint pitch;
     GLuint bpp;
     char *map;
+    GLuint orig;		/* The drawing origin, 
+				 * at (drawX,drawY) in screen space.
+				 */
+    char *origMap;
 } viaBuffer, *viaBufferPtr;
 
 
@@ -81,7 +88,6 @@ struct via_context_t {
     GLint refcount;   
     GLcontext *glCtx;
     GLcontext *shareCtx;
-    unsigned char* front_base;
     viaBuffer front;
     viaBuffer back;
     viaBuffer depth;
@@ -98,7 +104,7 @@ struct via_context_t {
    GLuint stencil_clear_mask;
    GLfloat depth_max;
 
-    GLuint    *dma;
+    GLubyte    *dma;
     viaRegion tex;
     
     GLuint isAGP;
@@ -127,8 +133,8 @@ struct via_context_t {
 
     /* drmBufPtr dma_buffer;
     */
-    unsigned char* dmaAddr;
     GLuint dmaLow;
+    GLuint dmaCliprectAddr;
     GLuint dmaLastPrim;
     GLboolean useAgp;
    
@@ -202,7 +208,6 @@ struct via_context_t {
     int vertexSize;
     int vertexFormat;
     GLint lastStamp;
-    GLboolean stippleInHw;
 
     GLenum TexEnvImageFmt[2];
     GLuint ClearColor;
@@ -213,16 +218,15 @@ struct via_context_t {
     GLboolean doPageFlip;
     /*=* John Sheng [2003.5.31] flip *=*/
     GLuint currentPage;
-    char *drawMap;               /* draw buffer address in virtual mem */
-    char *readMap;       
+
+    viaBuffer *drawBuffer;
+    viaBuffer *readBuffer;
     int drawX;                   /* origin of drawable in draw buffer */
     int drawY;
     
     int drawW;                  
     int drawH;
     
-    int drawPitch;
-    int readPitch;
     int drawXoff;
     GLuint numClipRects;         /* cliprects for that buffer */
     drm_clip_rect_t *pClipRects;
@@ -325,6 +329,8 @@ extern void viaXMesaWindowMoved(viaContextPtr vmesa);
 extern void viaTexCombineState(viaContextPtr vmesa,
     const struct gl_tex_env_combine_state * combine, unsigned unit );
 
+/* Via hw already adjusted for GL pixel centers:
+ */
 #define SUBPIXEL_X 0
 #define SUBPIXEL_Y 0
 

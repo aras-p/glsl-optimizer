@@ -68,39 +68,7 @@
 #ifdef DEBUG
 GLuint VIA_DEBUG = 0;
 #endif
-#define DMA_SIZE 2
 
-/*=* John Sheng [2003.5.31]  agp tex *=*/
-
-static GLboolean
-AllocateBuffer(viaContextPtr vmesa)
-{
-    vmesa->front_base = vmesa->driScreen->pFB;
-    if (vmesa->drawType == GLX_PBUFFER_BIT) {
-        if (vmesa->front.map)
-            via_free_front_buffer(vmesa);
-        if (!via_alloc_front_buffer(vmesa))
-            return GL_FALSE;
-    }
-    
-    if (vmesa->hasBack) {
-        if (vmesa->back.map)
-            via_free_back_buffer(vmesa);
-        if (!via_alloc_back_buffer(vmesa))
-            return GL_FALSE;
-    }
-
-    if (vmesa->hasDepth || vmesa->hasStencil) {
-        if (vmesa->depth.map)
-            via_free_depth_buffer(vmesa);
-        if (!via_alloc_depth_buffer(vmesa)) {
-            via_free_depth_buffer(vmesa);
-            return GL_FALSE;
-        }
-    }
-
-    return GL_TRUE;
-}
 
 /**
  * Return various strings for \c glGetString.
@@ -169,79 +137,92 @@ buffer_align( unsigned width )
 static GLboolean
 calculate_buffer_parameters( viaContextPtr vmesa )
 {
-    const unsigned shift = vmesa->viaScreen->bitsPerPixel / 16;
-    const unsigned extra = (vmesa->drawType == GLX_PBUFFER_BIT) ? 0 : 32;
-    unsigned w;
-    unsigned h;
+   const unsigned shift = vmesa->viaScreen->bitsPerPixel / 16;
+   const unsigned extra = 32;
+   unsigned w;
+   unsigned h;
 
-    if (vmesa->drawType == GLX_PBUFFER_BIT) {
-	w = vmesa->driDrawable->w;
-	h = vmesa->driDrawable->h;
-    }
-    else { 
-	w = vmesa->viaScreen->width;
-	h = vmesa->viaScreen->height;
+   /* Allocate front-buffer */
+   if (vmesa->drawType == GLX_PBUFFER_BIT) {
+      w = vmesa->driDrawable->w;
+      h = vmesa->driDrawable->h;
 
-	vmesa->front.offset = 0;
-	vmesa->front.map = (char *) vmesa->driScreen->pFB;
-    }
+      vmesa->front.bpp = vmesa->viaScreen->bitsPerPixel;
+      vmesa->front.pitch = buffer_align( w ) << shift;
+      vmesa->front.size = vmesa->front.pitch * h;
 
-    vmesa->front.pitch = buffer_align( w ) << shift;
-    vmesa->front.size = vmesa->front.pitch * h;
+      if (vmesa->front.map)
+	 via_free_draw_buffer(vmesa, &vmesa->front);
+      if (!via_alloc_draw_buffer(vmesa, &vmesa->front))
+	 return GL_FALSE;
+
+   }
+   else { 
+      w = vmesa->viaScreen->width;
+      h = vmesa->viaScreen->height;
+
+      vmesa->front.bpp = vmesa->viaScreen->bitsPerPixel;
+      vmesa->front.pitch = buffer_align( w ) << shift;
+      vmesa->front.size = vmesa->front.pitch * h;
+      vmesa->front.offset = 0;
+      vmesa->front.map = (char *) vmesa->driScreen->pFB;
+   }
 
 
-    /* Allocate back-buffer */
+   /* Allocate back-buffer */
+   if (vmesa->hasBack) {
+      vmesa->back.bpp = vmesa->viaScreen->bitsPerPixel;
+      vmesa->back.pitch = (buffer_align( vmesa->driDrawable->w ) << shift) + extra;
+      vmesa->back.size = vmesa->back.pitch * vmesa->driDrawable->h;
+      if (vmesa->back.map)
+	 via_free_draw_buffer(vmesa, &vmesa->back);
+      if (!via_alloc_draw_buffer(vmesa, &vmesa->back))
+	 return GL_FALSE;
+   }
+   else {
+      /* KW: mem leak if vmesa->hasBack ever changes:
+       */
+      (void) memset( &vmesa->back, 0, sizeof( vmesa->back ) );
+   }
 
-    vmesa->back.pitch = (buffer_align( vmesa->driDrawable->w ) << shift) 
-      + extra;
-    vmesa->back.size = vmesa->back.pitch * vmesa->driDrawable->h;
 
-    if (VIA_DEBUG) fprintf(stderr, "%s backbuffer: w = %d h = %d bpp = %d sizs = %d\n",
-			   __FUNCTION__,
-			   vmesa->back.pitch, 
-			   vmesa->driDrawable->h,
-			   8 << shift,
-			   vmesa->back.size);
+   /* Allocate depth-buffer */
+   if ( vmesa->hasStencil || vmesa->hasDepth ) {
+      vmesa->depth.bpp = vmesa->depthBits;
+      if (vmesa->depth.bpp == 24)
+	 vmesa->depth.bpp = 32;
 
-    /* Allocate depth-buffer */
-    if ( vmesa->hasStencil || vmesa->hasDepth ) {
-       vmesa->depth.bpp = vmesa->depthBits;
-       if (vmesa->depth.bpp == 24)
-	  vmesa->depth.bpp = 32;
+      vmesa->depth.pitch = (buffer_align( vmesa->driDrawable->w ) * (vmesa->depth.bpp/8)) + extra;
+      vmesa->depth.size = vmesa->depth.pitch * vmesa->driDrawable->h;
 
-	vmesa->depth.pitch = (buffer_align( vmesa->driDrawable->w ) * (vmesa->depth.bpp/8)) + extra;
-	vmesa->depth.size = vmesa->depth.pitch * vmesa->driDrawable->h;
-    }
-    else {
-	(void) memset( & vmesa->depth, 0, sizeof( vmesa->depth ) );
-    }
+      if (vmesa->depth.map)
+	 via_free_draw_buffer(vmesa, &vmesa->depth);
+      if (!via_alloc_draw_buffer(vmesa, &vmesa->depth)) {
+	 return GL_FALSE;
+      }
+   }
+   else {
+      /* KW: mem leak if vmesa->hasStencil/hasDepth ever changes:
+       */
+      (void) memset( & vmesa->depth, 0, sizeof( vmesa->depth ) );
+   }
 
-    if (VIA_DEBUG) fprintf(stderr, "%s depthbuffer: w = %d h = %d bpp = %d sizs = %d\n", 
-			   __FUNCTION__,
-			   vmesa->depth.pitch,
-			   vmesa->driDrawable->h,
-			   vmesa->depth.bpp,
-			   vmesa->depth.size);
-
-    /*=* John Sheng [2003.5.31] flip *=*/
-    if( vmesa->viaScreen->width == vmesa->driDrawable->w && 
-	vmesa->viaScreen->height == vmesa->driDrawable->h ) {
+   /*=* John Sheng [2003.5.31] flip *=*/
+   if( vmesa->viaScreen->width == vmesa->driDrawable->w && 
+       vmesa->viaScreen->height == vmesa->driDrawable->h ) {
 #define ALLOW_EXPERIMENTAL_PAGEFLIP 0
 #if ALLOW_EXPERIMENTAL_PAGEFLIP
-	vmesa->doPageFlip = GL_TRUE;
+      vmesa->doPageFlip = GL_TRUE;
 #else
-	vmesa->doPageFlip = GL_FALSE;
+      vmesa->doPageFlip = GL_FALSE;
 #endif
-	vmesa->currentPage = 0;
-	vmesa->back.pitch = vmesa->front.pitch;
-    }
+      /* vmesa->currentPage = 0; */
+      assert(vmesa->back.pitch == vmesa->front.pitch);
+   }
+   else
+      vmesa->doPageFlip = GL_FALSE;
 
-    if (!AllocateBuffer(vmesa)) {
-	FREE(vmesa);
-	return GL_FALSE;
-    }
-    
-    return GL_TRUE;
+   return GL_TRUE;
 }
 
 
@@ -250,20 +231,8 @@ void viaReAllocateBuffers(GLframebuffer *drawbuffer)
     GET_CURRENT_CONTEXT(ctx);
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
 
-    ctx->DrawBuffer->Width = drawbuffer->Width;
-    ctx->DrawBuffer->Height = drawbuffer->Height;
-
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-    ctx->DrawBuffer->Accum = 0;
-     
-    vmesa->driDrawable->w = ctx->DrawBuffer->Width;
-    vmesa->driDrawable->h = ctx->DrawBuffer->Height;
-
-    LOCK_HARDWARE(vmesa);
+    _swrast_alloc_buffers( drawbuffer );
     calculate_buffer_parameters( vmesa );
-    UNLOCK_HARDWARE(vmesa);
-
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
 }
 
 static void viaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
@@ -303,9 +272,7 @@ static const struct tnl_pipeline_stage *via_pipeline[] = {
     &_tnl_texgen_stage,
     &_tnl_texture_transform_stage,
     /* REMOVE: point attenuation stage */
-#if 0
     &_via_fastrender_stage,     /* ADD: unclipped rastersetup-to-dma */
-#endif
     &_tnl_render_stage,
     0,
 };
@@ -314,39 +281,14 @@ static const struct tnl_pipeline_stage *via_pipeline[] = {
 static GLboolean
 AllocateDmaBuffer(const GLvisual *visual, viaContextPtr vmesa)
 {
-    GLuint *addr;
-
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
     if (vmesa->dma)
         via_free_dma_buffer(vmesa);
     
-    if (!via_alloc_dma_buffer(vmesa)) {
-	if (vmesa->front.map)
-	    via_free_front_buffer(vmesa);
-        if (vmesa->back.map) 
-	    via_free_back_buffer(vmesa);
-        if (vmesa->depth.map)
-	    via_free_depth_buffer(vmesa);
-	    
+    if (!via_alloc_dma_buffer(vmesa))
         return GL_FALSE;
-    }   
 
-    /* Insert placeholder for a cliprect:
-     */
-    addr = (GLuint *)vmesa->dma;
-    addr[0] = HC_HEADER2;
-    addr[1] = (HC_ParaType_NotTex << 16);
-    addr[2] = HC_DUMMY;
-    addr[3] = HC_DUMMY;
-    addr[4] = HC_DUMMY;
-    addr[5] = HC_DUMMY;
-    addr[6] = HC_DUMMY;
-    addr[7] = HC_DUMMY;
-
-    vmesa->dmaLow = DMA_OFFSET;
-    vmesa->dmaAddr = (unsigned char *)vmesa->dma;
-
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
+    vmesa->dmaLow = 0;
+    vmesa->dmaCliprectAddr = 0;
     return GL_TRUE;
 }
 
@@ -354,13 +296,13 @@ static void
 FreeBuffer(viaContextPtr vmesa)
 {
     if (vmesa->front.map)
-	via_free_front_buffer(vmesa);
+	via_free_draw_buffer(vmesa, &vmesa->front);
 
     if (vmesa->back.map)
-        via_free_back_buffer(vmesa);
+        via_free_draw_buffer(vmesa, &vmesa->back);
 
     if (vmesa->depth.map)
-        via_free_depth_buffer(vmesa);
+        via_free_draw_buffer(vmesa, &vmesa->depth);
 
     if (vmesa->dma)
         via_free_dma_buffer(vmesa);
@@ -536,6 +478,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
      */
     if (!AllocateDmaBuffer(mesaVis, vmesa)) {
 	fprintf(stderr ,"AllocateDmaBuffer fail\n");
+	FreeBuffer(vmesa);
         FREE(vmesa);
         return GL_FALSE;
     }
@@ -576,7 +519,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
     if ( vmesa->get_ust == NULL ) {
        vmesa->get_ust = get_ust_nop;
     }
-    (*vmesa->get_ust)( & vmesa->swap_ust );
+    vmesa->get_ust( &vmesa->swap_ust );
 
 
     vmesa->regMMIOBase = (GLuint *)((GLuint)viaScreen->reg);
@@ -620,64 +563,59 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
     if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
 }
 
-void viaXMesaSetFrontClipRects(viaContextPtr vmesa)
-{
-    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
 
-    if (!dPriv)
-       return;
-
-    vmesa->numClipRects = dPriv->numClipRects;
-    vmesa->pClipRects = dPriv->pClipRects;
-    vmesa->drawX = dPriv->x;
-    vmesa->drawY = dPriv->y;
-    vmesa->drawW = dPriv->w;
-    vmesa->drawH = dPriv->h;
-
-    {
-       GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
-       vmesa->drawXoff = (GLuint)(((vmesa->drawX * bytePerPixel) & 0x1f) / bytePerPixel);  
-    }
-
-    viaCalcViewport(vmesa->glCtx);
-}
-
-void viaXMesaSetBackClipRects(viaContextPtr vmesa)
+void viaXMesaWindowMoved(viaContextPtr vmesa)
 {
    __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
+   GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
 
    if (!dPriv)
       return;
 
-   /*=* John Sheng [2003.6.9] fix glxgears dirty screen */
-   vmesa->numClipRects = dPriv->numClipRects;
-   vmesa->pClipRects = dPriv->pClipRects;
-   vmesa->drawX = dPriv->x;
+   switch (vmesa->glCtx->Color._DrawDestMask[0]) {
+   case DD_FRONT_LEFT_BIT: 
+      if (dPriv->numBackClipRects == 0) {
+	 vmesa->numClipRects = dPriv->numClipRects;
+	 vmesa->pClipRects = dPriv->pClipRects;
+      } 
+      else {
+	 vmesa->numClipRects = dPriv->numBackClipRects;
+	 vmesa->pClipRects = dPriv->pBackClipRects;
+      }
+      break;
+   case DD_BACK_LEFT_BIT:
+      vmesa->numClipRects = dPriv->numClipRects;
+      vmesa->pClipRects = dPriv->pClipRects;
+      break;
+   default:
+      vmesa->numClipRects = 0;
+      break;
+   }
+
+   if (vmesa->drawW != dPriv->w ||
+       vmesa->drawH != dPriv->h) 
+      calculate_buffer_parameters( vmesa );
+
+   vmesa->drawXoff = (GLuint)(((dPriv->x * bytePerPixel) & 0x1f) / bytePerPixel);  
+   vmesa->drawX = dPriv->x - vmesa->drawXoff;
    vmesa->drawY = dPriv->y;
    vmesa->drawW = dPriv->w;
    vmesa->drawH = dPriv->h;
 
+   vmesa->front.orig = (vmesa->front.offset + 
+			vmesa->drawY * vmesa->front.pitch + 
+			vmesa->drawX * bytePerPixel);
 
-   vmesa->drawXoff = 0; 
+   vmesa->front.origMap = (vmesa->front.map + 
+			   vmesa->drawY * vmesa->front.pitch + 
+			   vmesa->drawX * bytePerPixel);
 
-    viaCalcViewport(vmesa->glCtx);
-}
+   vmesa->back.orig = vmesa->back.offset;
+   vmesa->depth.orig = vmesa->depth.offset;   
+   vmesa->back.origMap = vmesa->back.map;
+   vmesa->depth.origMap = vmesa->depth.map;
 
-void viaXMesaWindowMoved(viaContextPtr vmesa)
-{
-
-    switch (vmesa->glCtx->Color._DrawDestMask[0]) {
-    case DD_FRONT_LEFT_BIT: 
-        viaXMesaSetFrontClipRects(vmesa);
-        break;
-    case DD_BACK_LEFT_BIT:
-        viaXMesaSetBackClipRects(vmesa);
-        break;
-    default:
-        viaXMesaSetFrontClipRects(vmesa);
-        break;
-    }
-
+   viaCalcViewport(vmesa->glCtx);
 }
 
 GLboolean
@@ -736,30 +674,20 @@ void viaGetLock(viaContextPtr vmesa, GLuint flags)
 {
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
     __DRIscreenPrivate *sPriv = vmesa->driScreen;
-    drm_via_sarea_t *sarea = vmesa->sarea;
-    int me = vmesa->hHWContext;
-    __DRIdrawablePrivate *pdp;
-    __DRIscreenPrivate *psp;
-    pdp = dPriv;
-    psp = sPriv;
-    if (VIA_DEBUG) {
-       fprintf(stderr, "%s - in\n", __FUNCTION__);  
-       fprintf(stderr, "is: %x non-contend: %x want: %x\n",
-	       *(GLuint *)vmesa->driHwLock, vmesa->hHWContext, 
-	       (DRM_LOCK_HELD|vmesa->hHWContext));
-    }
 
     drmGetLock(vmesa->driFd, vmesa->hHWContext, flags);
 
     DRI_VALIDATE_DRAWABLE_INFO( sPriv, dPriv );
 
-    if (sarea->ctxOwner != me) {
-        sarea->ctxOwner = me;
-	vmesa->newState = ~0;
+    if (vmesa->sarea->ctxOwner != vmesa->hHWContext) {
+       vmesa->sarea->ctxOwner = vmesa->hHWContext;
+       vmesa->newState = ~0;
     }
 
-    viaXMesaWindowMoved(vmesa);
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
+    if (vmesa->lastStamp != dPriv->lastStamp) {
+       viaXMesaWindowMoved(vmesa);
+       vmesa->lastStamp = dPriv->lastStamp;
+    }
 }
 
 
@@ -768,7 +696,7 @@ viaSwapBuffers(__DRIdrawablePrivate *drawablePrivate)
 {
     __DRIdrawablePrivate *dPriv = (__DRIdrawablePrivate *)drawablePrivate;
     if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);	
-    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
+    if (dPriv && dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
         viaContextPtr vmesa;
         GLcontext *ctx;
 	

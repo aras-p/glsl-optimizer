@@ -36,9 +36,9 @@
 #define LOCAL_DEPTH_VARS                                \
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
     viaScreenPrivate *viaScreen = vmesa->viaScreen;     \
-    GLuint pitch = viaScreen->backPitch;                \
+    GLuint depth_pitch = vmesa->depth.pitch;                \
     GLuint height = dPriv->h;                           \
-    char *buf = (char *)(vmesa->depth.map)
+    char *buf = (char *)(vmesa->depth.map + (vmesa->drawXoff * vmesa->depth.bpp/8))
 
 #define CLIPPIXEL(_x,_y) (_x >= minx && _x < maxx &&    \
                           _y >= miny && _y < maxy)
@@ -63,10 +63,10 @@
         __DRIdrawablePrivate *dPriv = vmesa->driDrawable;			\
         int _nc = dPriv->numClipRects;						\
         while (_nc--) {								\
-		int minx = dPriv->pClipRects[_nc].x1 - dPriv->x;		\
-        	int miny = dPriv->pClipRects[_nc].y1 - dPriv->y;		\
-        	int maxx = dPriv->pClipRects[_nc].x2 - dPriv->x;		\
-        	int maxy = dPriv->pClipRects[_nc].y2 - dPriv->y;        
+		int minx = dPriv->pClipRects[_nc].x1 - vmesa->drawX;		\
+        	int miny = dPriv->pClipRects[_nc].y1 - vmesa->drawY;		\
+        	int maxx = dPriv->pClipRects[_nc].x2 - vmesa->drawX;		\
+        	int maxy = dPriv->pClipRects[_nc].y2 - vmesa->drawY;        
 
 
 #define HW_ENDCLIPLOOP()                                            \
@@ -81,38 +81,28 @@
 #define LOCAL_VARS                                                   	\
     viaContextPtr vmesa = VIA_CONTEXT(ctx);             \
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;                	\
-    GLuint pitch = vmesa->drawPitch;                                 	\
+    GLuint draw_pitch = vmesa->drawBuffer->pitch;                                 	\
+    GLuint read_pitch = vmesa->readBuffer->pitch;                                 	\
     GLuint height = dPriv->h;                                        	\
-    GLushort p;                                                      	\
-    char *buf, *read_buf;                                            	\
-    p = 0;							     	\
-    if (vmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {	\
-	buf = (char *)(vmesa->drawMap);                              	\
-	read_buf = (char *)(vmesa->readMap);                         	\
-    }                                                                	\
-    else {                                                           	\
-	buf = (char *)(vmesa->drawMap +                              	\
-                         dPriv->x * 2 +                              	\
-                         dPriv->y * pitch);                          	\
-	read_buf = (char *)(vmesa->readMap +                         	\
-                              dPriv->x * 2 +                         	\
-                              dPriv->y * pitch);                     	\
-    }
+    GLushort p = 0;                                                   	\
+    char *buf = (char *)(vmesa->drawBuffer->origMap + vmesa->drawXoff * 2); \
+    char *read_buf = (char *)(vmesa->readBuffer->origMap + vmesa->drawXoff * 2); \
+    (void) (read_pitch && draw_pitch && buf && read_buf && p);
 
 #define INIT_MONO_PIXEL(p, color)                       \
     p = PACK_COLOR_565(color[0], color[1], color[2])
     
 #define WRITE_RGBA(_x, _y, r, g, b, a)                                      \
-    *(GLushort *)(buf + _x * 2 + _y * pitch) = ((((int)r & 0xf8) << 8) |    \
+    *(GLushort *)(buf + _x * 2 + _y * draw_pitch) = ((((int)r & 0xf8) << 8) |    \
                                                 (((int)g & 0xfc) << 3) |    \
                                                 (((int)b & 0xf8) >> 3))
 
 #define WRITE_PIXEL(_x, _y, p)                      \
-    *(GLushort *)(buf + _x * 2 + _y * pitch) = p
+    *(GLushort *)(buf + _x * 2 + _y * draw_pitch) = p
 
 #define READ_RGBA(rgba, _x, _y)                                             \
     do {                                                                    \
-        GLushort p = *(GLushort *)(read_buf + _x * 2 + _y * pitch);         \
+        GLushort p = *(GLushort *)(read_buf + _x * 2 + _y * read_pitch);         \
         rgba[0] = ((p >> 8) & 0xf8) * 255 / 0xf8;                           \
         rgba[1] = ((p >> 3) & 0xfc) * 255 / 0xfc;                           \
         rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;                           \
@@ -133,26 +123,16 @@
 #define LOCAL_VARS                                                   	\
     viaContextPtr vmesa = VIA_CONTEXT(ctx);             \
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;                	\
-    GLuint pitch = vmesa->drawPitch;                                 	\
+    GLuint draw_pitch = vmesa->drawBuffer->pitch;                                 	\
+    GLuint read_pitch = vmesa->readBuffer->pitch;                                 	\
     GLuint height = dPriv->h;                                        	\
-    GLuint p;                                                        	\
-    char *buf, *read_buf;                                            	\
-    p = 0;	                                                        \
-    if (vmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {	\
-	buf = (char *)(vmesa->drawMap);                              	\
-	read_buf = (char *)(vmesa->readMap);                         	\
-    }                                                                	\
-    else {                                                           	\
-	buf = (char *)(vmesa->drawMap +                              	\
-                         dPriv->x * 4 +                              	\
-                         dPriv->y * pitch);                          	\
-	read_buf = (char *)(vmesa->readMap +                         	\
-                              dPriv->x * 4 +                         	\
-                              dPriv->y * pitch);                     	\
-    }
+    GLuint p = 0;                                                      	\
+    char *buf = (char *)(vmesa->drawBuffer->origMap + vmesa->drawXoff * 4); \
+    char *read_buf = (char *)(vmesa->readBuffer->origMap + vmesa->drawXoff * 4); \
+    (void) (read_pitch && draw_pitch && buf && read_buf && p);
 
-#define GET_SRC_PTR(_x, _y) (read_buf + _x * 4 + _y * pitch)
-#define GET_DST_PTR(_x, _y) (     buf + _x * 4 + _y * pitch)
+#define GET_SRC_PTR(_x, _y) (read_buf + _x * 4 + _y * read_pitch)
+#define GET_DST_PTR(_x, _y) (     buf + _x * 4 + _y * draw_pitch)
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 
@@ -166,7 +146,7 @@
 #define LOCAL_DEPTH_VARS                                \
     viaContextPtr vmesa = VIA_CONTEXT(ctx);             \
     __DRIdrawablePrivate *dPriv = vmesa->driDrawable;   \
-    GLuint pitch = vmesa->depth.pitch;                  \
+    GLuint depth_pitch = vmesa->depth.pitch;                  \
     GLuint height = dPriv->h;                           \
     char *buf = (char *)(vmesa->depth.map)   
 
@@ -174,10 +154,10 @@
 
 
 #define WRITE_DEPTH(_x, _y, d)                      \
-    *(GLushort *)(buf + _x * 2 + _y * pitch) = d;
+    *(GLushort *)(buf + _x * 2 + _y * depth_pitch) = d;
 
 #define READ_DEPTH(d, _x, _y)                       \
-    d = *(GLushort *)(buf + _x * 2 + _y * pitch);
+    d = *(GLushort *)(buf + _x * 2 + _y * depth_pitch);
 
 #define TAG(x) via##x##_16
 #include "depthtmp.h"
@@ -185,10 +165,10 @@
 /* 32 bit depthbuffer functions.
  */
 #define WRITE_DEPTH(_x, _y, d)                      \
-    *(GLuint *)(buf + _x * 4 + _y * pitch) = d;
+    *(GLuint *)(buf + _x * 4 + _y * depth_pitch) = d;
 
 #define READ_DEPTH(d, _x, _y)                       \
-    d = *(GLuint *)(buf + _x * 4 + _y * pitch);
+    d = *(GLuint *)(buf + _x * 4 + _y * depth_pitch);
 
 #define TAG(x) via##x##_32
 #include "depthtmp.h"
@@ -198,28 +178,28 @@
 /* 24/8 bit interleaved depth/stencil functions
  */
 #define WRITE_DEPTH( _x, _y, d ) {			\
-   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*pitch);	\
+   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*depth_pitch);	\
    tmp &= 0x000000ff;					\
    tmp |= ((d)<<8);				\
-   *(GLuint *)(buf + (_x)*4 + (_y)*pitch) = tmp;		\
+   *(GLuint *)(buf + (_x)*4 + (_y)*depth_pitch) = tmp;		\
 }
 
 #define READ_DEPTH( d, _x, _y )		\
-   d = (*(GLuint *)(buf + (_x)*4 + (_y)*pitch)) >> 8;
+   d = (*(GLuint *)(buf + (_x)*4 + (_y)*depth_pitch)) >> 8;
 
 
 #define TAG(x) via##x##_24_8
 #include "depthtmp.h"
 
 #define WRITE_STENCIL( _x, _y, d ) {			\
-   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*pitch);	\
+   GLuint tmp = *(GLuint *)(buf + (_x)*4 + (_y)*depth_pitch);	\
    tmp &= 0xffffff00;					\
    tmp |= (d);					\
-   *(GLuint *)(buf + (_x)*4 + (_y)*pitch) = tmp;		\
+   *(GLuint *)(buf + (_x)*4 + (_y)*depth_pitch) = tmp;		\
 }
 
 #define READ_STENCIL( d, _x, _y )			\
-   d = *(GLuint *)(buf + (_x)*4 + (_y)*pitch) & 0xff;
+   d = *(GLuint *)(buf + (_x)*4 + (_y)*depth_pitch) & 0xff;
 
 #define TAG(x) via##x##_24_8
 #include "stenciltmp.h"
@@ -230,23 +210,16 @@ static void viaSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
                       GLuint bufferBit)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
+
     if (bufferBit == DD_FRONT_LEFT_BIT) {
-	vmesa->drawMap = (char *)vmesa->driScreen->pFB;
-        vmesa->readMap = (char *)vmesa->driScreen->pFB;
-	vmesa->drawPitch = vmesa->front.pitch;
-	vmesa->readPitch = vmesa->front.pitch;
+	vmesa->drawBuffer = vmesa->readBuffer = &vmesa->front;
     }
     else if (bufferBit == DD_BACK_LEFT_BIT) {
-	vmesa->drawMap = vmesa->back.map;
-        vmesa->readMap = vmesa->back.map;
-	vmesa->drawPitch = vmesa->back.pitch;
-	vmesa->readPitch = vmesa->back.pitch;	
+	vmesa->drawBuffer = vmesa->readBuffer = &vmesa->back;
     }
     else {
         ASSERT(0);
     }
-    if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);
 }
 
 /* Move locking out to get reasonable span performance.
@@ -256,7 +229,7 @@ void viaSpanRenderStart( GLcontext *ctx )
    viaContextPtr vmesa = VIA_CONTEXT(ctx);     
    VIA_FINISH_PRIM(vmesa);
    LOCK_HARDWARE(vmesa);
-   viaFlushPrimsLocked(vmesa);
+   viaFlushDmaLocked(vmesa, 0);
    WAIT_IDLE(vmesa);
 }
 

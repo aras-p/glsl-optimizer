@@ -31,126 +31,37 @@
 #include <sys/ioctl.h>
 
 GLboolean
-via_alloc_back_buffer(viaContextPtr vmesa)
+via_alloc_draw_buffer(viaContextPtr vmesa, viaBuffer *buf)
 {
-    drm_via_mem_t fb;
-    unsigned char *pFB;
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-    fb.context = vmesa->hHWContext;
-    fb.size = vmesa->back.size;
-    fb.type = VIDEO;
-    if (VIA_DEBUG) fprintf(stderr, "context = %d, size =%d, type = %d\n", fb.context, fb.size, fb.type);
-    if (ioctl(vmesa->driFd, DRM_IOCTL_VIA_ALLOCMEM, &fb))
-        return GL_FALSE;
-    
-    pFB = vmesa->driScreen->pFB;
-    
-    vmesa->back.offset = fb.offset;
-    vmesa->back.map = (char *)(fb.offset + (GLuint)pFB);
-    vmesa->back.index = fb.index;
-    if (VIA_DEBUG) {
-	fprintf(stderr, "back offset = %08x\n", vmesa->back.offset);
-	fprintf(stderr, "back index = %d\n", vmesa->back.index);
-    }
+   drm_via_mem_t mem;
+   mem.context = vmesa->hHWContext;
+   mem.size = buf->size;
+   mem.type = VIDEO;
 
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-    return GL_TRUE;
-}
-
-GLboolean
-via_alloc_front_buffer(viaContextPtr vmesa)
-{
-    drm_via_mem_t fb;
-    unsigned char *pFB;
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-    fb.context = vmesa->hHWContext;
-    fb.size = vmesa->back.size;
-    fb.type = VIDEO;
-    if (VIA_DEBUG) fprintf(stderr, "context = %d, size =%d, type = %d\n", fb.context, fb.size, fb.type);
-    if (ioctl(vmesa->driFd, DRM_IOCTL_VIA_ALLOCMEM, &fb))
-        return GL_FALSE;
+   if (ioctl(vmesa->driFd, DRM_IOCTL_VIA_ALLOCMEM, &mem)) 
+      return GL_FALSE;
     
-    pFB = vmesa->driScreen->pFB;
     
-    vmesa->front.offset = fb.offset;
-    vmesa->front.map = (char *)(fb.offset + (GLuint)pFB);
-    vmesa->front.index = fb.index;
-    if (VIA_DEBUG) {
-	fprintf(stderr, "front offset = %08x\n", vmesa->front.offset);
-	fprintf(stderr, "front index = %d\n", vmesa->front.index);
-    }
-
-
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);
-    return GL_TRUE;
+   buf->offset = mem.offset;
+   buf->map = (char *)vmesa->driScreen->pFB + mem.offset;
+   buf->index = mem.index;
+   return GL_TRUE;
 }
 
 void
-via_free_back_buffer(viaContextPtr vmesa)
+via_free_draw_buffer(viaContextPtr vmesa, viaBuffer *buf)
 {
-    drm_via_mem_t fb;
+   drm_via_mem_t mem;
 
-    if (!vmesa) return;
-    fb.context = vmesa->hHWContext;
-    fb.index = vmesa->back.index;
-    fb.type = VIDEO;
-    ioctl(vmesa->driFd, DRM_IOCTL_VIA_FREEMEM, &fb);
-    vmesa->back.map = NULL;
+   if (!vmesa) return;
+
+   mem.context = vmesa->hHWContext;
+   mem.index = buf->index;
+   mem.type = VIDEO;
+   ioctl(vmesa->driFd, DRM_IOCTL_VIA_FREEMEM, &mem);
+   buf->map = NULL;
 }
 
-void
-via_free_front_buffer(viaContextPtr vmesa)
-{
-    drm_via_mem_t fb;
-
-    if (!vmesa) return;
-    fb.context = vmesa->hHWContext;
-    fb.index = vmesa->front.index;
-    fb.type = VIDEO;
-    ioctl(vmesa->driFd, DRM_IOCTL_VIA_FREEMEM, &fb);
-    vmesa->front.map = NULL;
-}
-
-GLboolean
-via_alloc_depth_buffer(viaContextPtr vmesa)
-{
-    drm_via_mem_t fb;
-    unsigned char *pFB;
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);    
-    fb.context = vmesa->hHWContext;
-    fb.size = vmesa->depth.size;
-    fb.type = VIDEO;
-
-    if (ioctl(vmesa->driFd, DRM_IOCTL_VIA_ALLOCMEM, &fb)) {
-	return GL_FALSE;
-    }
-
-    pFB = vmesa->driScreen->pFB;
-    
-    vmesa->depth.offset = fb.offset;
-    vmesa->depth.map = (char *)(fb.offset + (GLuint)pFB);
-    vmesa->depth.index = fb.index;
-    if (VIA_DEBUG) {
-	fprintf(stderr, "depth offset = %08x\n", vmesa->depth.offset);
-	fprintf(stderr, "depth index = %d\n", vmesa->depth.index);    
-    }	
-
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);    
-    return GL_TRUE;
-}
-
-void
-via_free_depth_buffer(viaContextPtr vmesa)
-{
-    drm_via_mem_t fb;
-	
-    if (!vmesa) return;
-    fb.context = vmesa->hHWContext;
-    fb.index = vmesa->depth.index;
-    fb.type = VIDEO;
-    ioctl(vmesa->driFd, DRM_IOCTL_VIA_FREEMEM, &fb);
-    vmesa->depth.map = NULL;
-}
 
 GLboolean
 via_alloc_dma_buffer(viaContextPtr vmesa)
@@ -158,7 +69,7 @@ via_alloc_dma_buffer(viaContextPtr vmesa)
    drmVIADMAInit init;
 
    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);
-   vmesa->dma = (GLuint *) malloc(VIA_DMA_BUFSIZ);
+   vmesa->dma = (GLubyte *) malloc(VIA_DMA_BUFSIZ);
     
    /*
     * Check whether AGP DMA has been initialized.

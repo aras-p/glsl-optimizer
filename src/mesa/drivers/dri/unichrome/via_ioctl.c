@@ -73,591 +73,14 @@ v * copy of this software and associated documentation files (the "Software"),
 #define VIA_BLIT_SET 0xFF
 
  
-#define DEPTH_SCALE ((1 << 16) - 1)
-
 void viaCheckDma(viaContextPtr vmesa, GLuint bytes)
 {
     VIA_FINISH_PRIM( vmesa );
     if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
-	viaFlushPrims(vmesa);
+	viaFlushDma(vmesa);
     }
 }
 
-
-
-static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
-                     GLint cx, GLint cy, GLint cw, GLint ch)
-{
-   viaContextPtr vmesa = VIA_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
-   const GLuint colorMask = *((GLuint *)&ctx->Color.ColorMask);
-   int flag = 0;
-   GLuint i = 0;
-   GLuint clear_depth_mask = 0xf << 28;
-   GLuint clear_depth = 0;
-
-   VIA_FLUSH_DMA(vmesa);
-
-   if ((mask & DD_FRONT_LEFT_BIT) && colorMask == ~0) {
-      flag |= VIA_FRONT;
-      mask &= ~DD_FRONT_LEFT_BIT;
-   }
-
-   if ((mask & DD_BACK_LEFT_BIT) && colorMask == ~0) {
-      flag |= VIA_BACK;	
-      mask &= ~DD_BACK_LEFT_BIT;
-   }
-
-   if (mask & DD_DEPTH_BIT) {
-      flag |= VIA_DEPTH;
-      clear_depth = (GLuint)(ctx->Depth.Clear * vmesa->ClearDepth);
-      clear_depth_mask &= ~vmesa->depth_clear_mask;
-      mask &= ~DD_DEPTH_BIT;
-   }
-    
-   if (mask & DD_STENCIL_BIT) {
-      if (vmesa->have_hw_stencil) {
-	 if (ctx->Stencil.WriteMask[0] == 0xff) {
-	    flag |= VIA_DEPTH;
-	    clear_depth &= ~0xff;
-	    clear_depth |= (ctx->Stencil.Clear & 0xff);
-	    clear_depth_mask &= ~vmesa->stencil_clear_mask;
-	    mask &= ~DD_STENCIL_BIT;
-	 }
-	 else {
-	    fprintf(stderr, "XXX: Clear stencil writemask %x -- need triangles (or a ROP?)\n", 
-		    ctx->Stencil.WriteMask[0]);
-	    /* Fixme - clear with triangles */
-	 }
-      }
-   }
-    
-   if (flag) {
-      LOCK_HARDWARE(vmesa);
-      /* flip top to bottom */
-      cy = dPriv->h - cy - ch;
-      cx += vmesa->drawX;
-      cy += vmesa->drawY;
-        
-      if (vmesa->numClipRects) {
-	 int nr = MIN2(i + VIA_NR_SAREA_CLIPRECTS, vmesa->numClipRects);
-	 drm_clip_rect_t *box = vmesa->pClipRects;
-	 drm_clip_rect_t *b = vmesa->sarea->boxes;
-	 int n = 0;
-	    
-	 if (!all) {
-	    for (; i < nr; i++) {
-	       GLint x = box[i].x1;
-	       GLint y = box[i].y1;
-	       GLint w = box[i].x2 - x;
-	       GLint h = box[i].y2 - y;
-
-	       if (x < cx) w -= cx - x, x = cx;
-	       if (y < cy) h -= cy - y, y = cy;
-	       if (x + w > cx + cw) w = cx + cw - x;
-	       if (y + h > cy + ch) h = cy + ch - y;
-	       if (w <= 0) continue;
-	       if (h <= 0) continue;
-
-	       b->x1 = x;
-	       b->y1 = y;
-	       b->x2 = x + w;
-	       b->y2 = y + h;
-	       b++;
-	       n++;
-	    }
-	 }
-	 else {
-	    for (; i < nr; i++) {
-	       *b++ = *(drm_clip_rect_t *)&box[i];
-	       n++;
-	    }
-	 }
-	 vmesa->sarea->nbox = n;		
-
-      }
-	    
-      if (flag & VIA_FRONT) {
-	 if (vmesa->drawType == GLX_PBUFFER_BIT)
-	    viaFillFrontPBuffer(vmesa);
-	 else
-	    viaFillFrontBuffer(vmesa);
-      } 
-		
-      if (flag & VIA_BACK) {
-	 viaFillBackBuffer(vmesa);
-      }
-
-      if (flag & VIA_DEPTH) {
-	 viaFillDepthBuffer(vmesa, clear_depth, clear_depth_mask);
-      }		
-
-      UNLOCK_HARDWARE(vmesa);
-   }
-   
-   if (mask)
-      _swrast_Clear(ctx, mask, all, cx, cy, cw, ch);
-   if (VIA_DEBUG) fprintf(stderr, "%s out\n", __FUNCTION__);    
-}
-
-/*
- * Copy the back buffer to the front buffer. 
- */
-void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
-{
-   viaContextPtr vmesa = (viaContextPtr)dPriv->driContextPriv->driverPrivate;
-   GLboolean missed_target;
-   int64_t ust;
-
-   VIA_FLUSH_DMA(vmesa);
-
-   driWaitForVBlank( dPriv, & vmesa->vbl_seq, vmesa->vblank_flags, & missed_target );
-
-   LOCK_HARDWARE(vmesa);
-   if (vmesa->drawType == GLX_PBUFFER_BIT) {
-      viaDoSwapPBuffers(vmesa);
-   }
-   else {
-      viaDoSwapBuffers(vmesa);
-   }
-   UNLOCK_HARDWARE(vmesa);
-
-   vmesa->swap_count++;
-   (*vmesa->get_ust)( & ust );
-   if ( missed_target ) {
-      vmesa->swap_missed_count++;
-      vmesa->swap_missed_ust = ust - vmesa->swap_ust;
-   }
-    
-   vmesa->swap_ust = ust;
-}
-
-/*
- * XXX implement when full-screen extension is done.
- */
-void viaPageFlip(const __DRIdrawablePrivate *dPriv)
-{
-    /*=* John Sheng [2003.5.31] flip *=*/
-    viaContextPtr vmesa = (viaContextPtr)dPriv->driContextPriv->driverPrivate;
-    GLcontext *ctx = vmesa->glCtx;
-    GLuint nBackBase;
-    viaBuffer buffer_tmp;
-    GLboolean missed_target;
-    int retcode;
-
-    if (VIA_DEBUG) fprintf(stderr, "%s - in\n", __FUNCTION__);        
-    assert(dPriv);
-    assert(dPriv->driContextPriv);
-    assert(dPriv->driContextPriv->driverPrivate);
-
-
-    VIA_FLUSH_DMA(vmesa);
-
-    /* Now wait for the vblank:
-     */
-    retcode = driWaitForVBlank( dPriv, &vmesa->vbl_seq, 
-				vmesa->vblank_flags, &missed_target );
-    if ( missed_target ) {
-       vmesa->swap_missed_count++;
-       (void) (*vmesa->get_ust)( &vmesa->swap_missed_ust );
-    }
-
-    LOCK_HARDWARE(vmesa);
-
-    {
-        RING_VARS;
-
-	if (!vmesa->nDoneFirstFlip) {
-    	    vmesa->nDoneFirstFlip = GL_FALSE; /* XXX: FIXME LATER!!! */
-	    BEGIN_RING(4);
-    	    OUT_RING(HALCYON_HEADER2);
-    	    OUT_RING(0x00fe0000);
-    	    OUT_RING(0x0000000e);
-    	    OUT_RING(0x0000000e);
-	    ADVANCE_RING();
-	}
-	nBackBase = (vmesa->back.offset );
-
-	BEGIN_RING(4);
-	OUT_RING( HALCYON_HEADER2 );
-	OUT_RING( 0x00fe0000 );
-	OUT_RING((HC_SubA_HFBBasL << 24) | (nBackBase & 0xFFFFF8) | 0x2);
-	OUT_RING((HC_SubA_HFBDrawFirst << 24) |
-		 ((nBackBase & 0xFF000000) >> 24) | 0x0100);
-	ADVANCE_RING();
-
-	viaFlushPrimsLocked(vmesa);
-    }
-    
-    UNLOCK_HARDWARE(vmesa);
-
-    vmesa->swap_count++;
-    (void) (*vmesa->get_ust)( &vmesa->swap_ust );
-   
-    memcpy(&buffer_tmp, &vmesa->back, sizeof(viaBuffer));
-    memcpy(&vmesa->back, &vmesa->front, sizeof(viaBuffer));
-    memcpy(&vmesa->front, &buffer_tmp, sizeof(viaBuffer));
-    
-    /* KW: BOGUS BOGUS BOGUS: The first time an app calls glDrawBuffer
-     * while pageflipping, this will blow up:  FIXME
-     */
-    if(vmesa->currentPage) {
-	vmesa->currentPage = 0;
-	if (vmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {
-		ctx->Driver.DrawBuffer(ctx, GL_BACK);
-	}
-	else {
-		ctx->Driver.DrawBuffer(ctx, GL_FRONT);
-	}
-    }
-    else {
-	vmesa->currentPage = 1;
-	if (vmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {
-		ctx->Driver.DrawBuffer(ctx, GL_BACK);
-	}
-	else {
-		ctx->Driver.DrawBuffer(ctx, GL_FRONT);
-	}
-    }
-    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);        
-}
-
-
-
-
-#define VIA_CMDBUF_MAX_LAG 50000
-
-static int fire_buffer(viaContextPtr vmesa, drm_via_flush_sys_t *buf)
-{
-   drmVIACommandBuffer bufI;
-   int ret;
-
-   bufI.buf = (char *) (buf->index + buf->offset);
-   bufI.size = buf->size;
-
-   if (vmesa->useAgp) {
-      drmVIACmdBufSize bSiz;
-
-      /* Do the CMDBUF_SIZE ioctl:
-       */
-      bSiz.func = VIA_CMDBUF_LAG;
-      bSiz.wait = 1;
-      bSiz.size = VIA_CMDBUF_MAX_LAG;
-      do {
-	 ret = drmCommandWriteRead(vmesa->driFd, DRM_VIA_CMDBUF_SIZE, 
-				   &bSiz, sizeof(bSiz));
-      } while (ret == -EAGAIN);
-      if (ret) {
-	 fprintf(stderr, "%s: DRM_VIA_CMDBUF_SIZE returned %d\n", __FUNCTION__, ret);
-	 abort();
-	 return ret;
-      }
-
-      /* Acutally fire the buffer:
-       */
-      do {
-	 ret = drmCommandWrite(vmesa->driFd, DRM_VIA_CMDBUFFER, 
-			       &bufI, sizeof(bufI));
-      } while (ret == -EAGAIN);
-      if (ret) {
-	 fprintf(stderr, "%s: DRM_VIA_CMDBUFFER returned %d\n", __FUNCTION__, ret);
-	 abort();
-	 /* If this fails, the original code fell back to the PCI path. 
-	  */
-      }
-      else 
-	 return 0;
-
-      /* Fall through to PCI handling?!?
-       */
-      WAIT_IDLE(vmesa);
-   }
-	    
-   ret = drmCommandWrite(vmesa->driFd, DRM_VIA_PCICMD, &bufI, sizeof(bufI));
-   if (ret) {
-      fprintf(stderr, "%s: DRM_VIA_PCICMD returned %d\n", __FUNCTION__, ret);
-      abort();
-   }
-
-   return ret;
-}
-
-
-/* Inserts the surface addresss and active cliprects one at a time
- * into the head of the DMA buffer being flushed.  Fires the buffer
- * for each cliprect.
- */
-static int via_flush_sys(viaContextPtr vmesa, drm_via_flush_sys_t* buf) 
-{
-   GLuint *vb = (GLuint *)vmesa->dmaAddr;
-   GLuint format = (vmesa->viaScreen->bitsPerPixel == 0x20 
-		    ? HC_HDBFM_ARGB8888 
-		    : HC_HDBFM_RGB565);
-
-   if (vmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {
-      GLuint offset = vmesa->back.offset;
-      GLuint pitch = vmesa->back.pitch;
-
-      vb[0] = HC_HEADER2;
-      vb[1] = HC_ParaType_NotTex << 16;
-	  
-      if (vmesa->driDrawable->w == 0 || vmesa->driDrawable->h == 0) {
-	 vb[2] = (HC_SubA_HClipTB << 24) | 0x0;
-	 vb[3] = (HC_SubA_HClipLR << 24) | 0x0;
-      }
-      else {
-	 vb[2] = (HC_SubA_HClipTB << 24) | vmesa->driDrawable->h;
-	 vb[3] = (HC_SubA_HClipLR << 24) | vmesa->driDrawable->w; 
-      }
-	
-      vb[4] = ((HC_SubA_HDBBasL << 24) | (offset & 0xFFFFFF));
-      vb[5] = ((HC_SubA_HDBBasH << 24) | ((offset & 0xFF000000)) >> 24); 
-      vb[6] = ((HC_SubA_HDBFM << 24) | HC_HDBLoc_Local | format | pitch); 
-      vb[7] = 0xcccccccc;
-
-      return fire_buffer( vmesa, buf );
-   }
-   else {
-      GLuint i, ret;
-      drm_clip_rect_t *b = vmesa->sarea->boxes;
-		
-      for (i = 0; i < vmesa->sarea->nbox; i++, b++) {        
-	 GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
-	 GLuint pitch = vmesa->front.pitch;
-	 GLuint offset = (vmesa->viaScreen->fbOffset + (vmesa->drawY * pitch + vmesa->drawX * bytePerPixel)) & ~0x1f;
-
-	 GLuint clipL = b->x1 + vmesa->drawXoff;
-	 GLuint clipR = b->x2 + vmesa->drawXoff;
-	 GLuint clipT = b->y1;
-	 GLuint clipB = b->y2;
-	    
-	 vb[0] = HC_HEADER2;
-	 vb[1] = (HC_ParaType_NotTex << 16);
-
-	 if (vmesa->driDrawable->w == 0 || vmesa->driDrawable->h == 0) {
-	    vb[2] = (HC_SubA_HClipTB << 24) | 0x0;
-	    vb[3] = (HC_SubA_HClipLR << 24) | 0x0;
-	 }
-	 else {
-	    vb[2] = (HC_SubA_HClipTB << 24) | (clipT << 12) | clipB;
-	    vb[3] = (HC_SubA_HClipLR << 24) | (clipL << 12) | clipR;
-	 }
-	    
-	 vb[4] = ((HC_SubA_HDBBasL << 24) | (offset & 0xFFFFFF));
-	 vb[5] = ((HC_SubA_HDBBasH << 24) | ((offset & 0xFF000000)) >> 24); 
-	 vb[6] = ((HC_SubA_HDBFM << 24) | HC_HDBLoc_Local | format | pitch);            
-	 vb[7] = 0xcccccccc;
-
-	 ret = fire_buffer( vmesa, buf );
-	 if (ret)
-	    return ret;
-      }
-   }
-
-   return 0;
-}
-
-
-
-static int intersect_rect(drm_clip_rect_t *out,
-                          drm_clip_rect_t *a,
-                          drm_clip_rect_t *b)
-{
-    *out = *a;
-
-    if (b->x1 > out->x1) out->x1 = b->x1;
-    if (b->x2 < out->x2) out->x2 = b->x2;
-    if (out->x1 >= out->x2) return 0;
-
-    if (b->y1 > out->y1) out->y1 = b->y1;
-    if (b->y2 < out->y2) out->y2 = b->y2;
-    if (out->y1 >= out->y2) return 0;
-
-    return 1;
-}
-
-void viaFlushPrimsLocked(viaContextPtr vmesa)
-{
-   drm_clip_rect_t *pbox = (drm_clip_rect_t *)vmesa->pClipRects;
-   int nbox = vmesa->numClipRects;
-   drm_via_sarea_t *sarea = vmesa->sarea;
-   drm_via_flush_sys_t sysCmd;
-   int i;
-   RING_VARS;
-
-   if (*(GLuint *)vmesa->driHwLock != (DRM_LOCK_HELD|vmesa->hHWContext) &&
-       *(GLuint *)vmesa->driHwLock != (DRM_LOCK_HELD|DRM_LOCK_CONT|vmesa->hHWContext)) {
-      fprintf(stderr, "%s called without lock held\n", __FUNCTION__);
-      abort();
-   }
-
-   if (vmesa->dmaLow == DMA_OFFSET) {
-      return;
-   }
-
-   assert(vmesa->dmaLastPrim == 0);
-
-   /* viaFinishPrimitive can add up to 8 bytes beyond VIA_DMA_HIGHWATER:
-    */
-   if (vmesa->dmaLow > VIA_DMA_HIGHWATER + 8) {
-      fprintf(stderr, "buffer overflow in Flush Prims = %d\n",vmesa->dmaLow);
-      abort();
-   }
-
-   switch (vmesa->dmaLow & 0x1F) {	
-   case 8:
-      BEGIN_RING_NOCHECK( 6 );
-      OUT_RING( HC_HEADER2 );
-      OUT_RING( (HC_ParaType_NotTex << 16) );
-      OUT_RING( HC_DUMMY );
-      OUT_RING( HC_DUMMY );
-      OUT_RING( HC_DUMMY );
-      OUT_RING( HC_DUMMY );
-      ADVANCE_RING();
-      break;
-   case 16:
-      BEGIN_RING_NOCHECK( 4 );
-      OUT_RING( HC_HEADER2 );
-      OUT_RING( (HC_ParaType_NotTex << 16) );
-      OUT_RING( HC_DUMMY );
-      OUT_RING( HC_DUMMY );
-      ADVANCE_RING();
-      break;    
-   case 24:
-      BEGIN_RING_NOCHECK( 10 );
-      OUT_RING( HC_HEADER2 );
-      OUT_RING( (HC_ParaType_NotTex << 16) );
-      OUT_RING( HC_DUMMY );
-      OUT_RING( HC_DUMMY );
-      OUT_RING( HC_DUMMY );
-      OUT_RING( HC_DUMMY );
-      OUT_RING( HC_DUMMY );
-      OUT_RING( HC_DUMMY );
-      OUT_RING( HC_DUMMY );
-      OUT_RING( HC_DUMMY );	
-      ADVANCE_RING();
-      break;    
-   case 0:
-      break;
-   default:
-      if (VIA_DEBUG)
-	 fprintf(stderr, "%s: unaligned value for vmesa->dmaLow: %x\n",
-		 __FUNCTION__, vmesa->dmaLow);
-/*       abort(); */
-/*       goto done; */
-   }
-
-/*    assert((vmesa->dmaLow & 0x1f) == 0); */
-
-   sysCmd.offset = 0x0;
-   sysCmd.size = vmesa->dmaLow;
-   sysCmd.index = (GLuint)vmesa->dma;
-   sysCmd.discard = 0;
-    
-   if (!nbox) {
-      sysCmd.size = 0;		/* KW: FIXME bogus if we ever start emitting partial state */
-      sarea->nbox = 0;
-      sysCmd.discard = 1;
-      via_flush_sys(vmesa, &sysCmd);
-   }
-   else {
-      for (i = 0; i < nbox; ) {
-	 int nr = MIN2(i + VIA_NR_SAREA_CLIPRECTS, nbox);
-	 drm_clip_rect_t *b = sarea->boxes;
-
-	 if (vmesa->glCtx->Scissor.Enabled) {
-	    sarea->nbox = 0;
-
-	    for (; i < nr; i++) {
-	       b->x1 = pbox[i].x1 - vmesa->drawX;
-	       b->y1 = pbox[i].y1 - vmesa->drawY;
-	       b->x2 = pbox[i].x2 - vmesa->drawX;
-	       b->y2 = pbox[i].y2 - vmesa->drawY;
-	       if (intersect_rect(b, b, &vmesa->scissorRect)) {
-		  sarea->nbox++;
-		  b++;
-	       }
-	    }
-	    if (!sarea->nbox) {
-	       if (nr < nbox) continue;
-	       sysCmd.size = 0;
-	    }
-	 }
-	 else {
-	    sarea->nbox = nr - i;
-	    for (; i < nr; i++, b++) {
-	       b->x1 = pbox[i].x1 - vmesa->drawX;
-	       b->y1 = pbox[i].y1 - vmesa->drawY;
-	       b->x2 = pbox[i].x2 - vmesa->drawX;
-	       b->y2 = pbox[i].y2 - vmesa->drawY;
-	    }
-	 }
-
-	 if (nr == nbox) {
-	    sysCmd.discard = 1;
-	 }
-
-	 via_flush_sys(vmesa, &sysCmd);
-      }
-   }
-
-   if (VIA_DEBUG) {
-      GLuint i;
-      GLuint *data = (GLuint *)vmesa->dmaAddr;
-      for (i = 0; i < vmesa->dmaLow; i += 16) {
-	 fprintf(stderr, "%04x:   ", i);
-	 fprintf(stderr, "%08x  ", *data++);
-	 fprintf(stderr, "%08x  ", *data++);
-	 fprintf(stderr, "%08x  ", *data++);
-	 fprintf(stderr, "%08x\n", *data++);
-      }
-      fprintf(stderr, "******************************************\n");
-   }  
-
- done:
-   /* Reset vmesa vars:
-    */
-   vmesa->dmaLow = DMA_OFFSET;
-   vmesa->dmaAddr = (unsigned char *)vmesa->dma;
-}
-
-void viaFlushPrims(viaContextPtr vmesa)
-{
-   if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-
-   if (vmesa->dmaLow != DMA_OFFSET) {
-      LOCK_HARDWARE(vmesa); 
-      viaFlushPrimsLocked(vmesa);
-      UNLOCK_HARDWARE(vmesa);
-   }
-   if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
-}
-
-static void viaFlush(GLcontext *ctx)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    VIA_FLUSH_DMA(vmesa);
-}
-
-static void viaFinish(GLcontext *ctx)
-{
-    viaContextPtr vmesa = VIA_CONTEXT(ctx);
-    VIA_FLUSH_DMA(vmesa);
-    WAIT_IDLE(vmesa);
-}
-
-static void viaClearStencil(GLcontext *ctx,  int s)
-{
-    return;
-}
-
-void viaInitIoctlFuncs(GLcontext *ctx)
-{
-    ctx->Driver.Flush = viaFlush;
-    ctx->Driver.Clear = viaClear;
-    ctx->Driver.Finish = viaFinish;
-    ctx->Driver.ClearStencil = viaClearStencil;
-}
 
 
 #define SetReg2DAGP(nReg, nData) do {		\
@@ -743,212 +166,572 @@ static void viaBlit(viaContextPtr vmesa, GLuint bpp,GLuint srcBase,
     ADVANCE_RING();
 }
 
-void viaFillFrontBuffer(viaContextPtr vmesa)
+static void viaFillBuffer(viaContextPtr vmesa,
+			  viaBuffer *buffer,
+			  drm_clip_rect_t *pbox,
+			  int nboxes,
+			  GLuint pixel,
+			  GLuint mask)
 {
-    GLuint nDestBase, nDestPitch, nDestWidth, nDestHeight,i; 
-    drm_clip_rect_t *b = vmesa->sarea->boxes;
-    GLuint pixel = (GLuint)vmesa->ClearColor;
-    GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
-    nDestPitch = vmesa->front.pitch;
+   GLuint bytePerPixel = buffer->bpp >> 3;
+   GLuint i;
 
-    for (i = 0; i < vmesa->sarea->nbox ; i++) {        
-        nDestWidth = b->x2 - b->x1;
-	nDestHeight = b->y2 - b->y1;
-	nDestBase = vmesa->viaScreen->fbOffset + 
-	    (b->y1* nDestPitch + b->x1 * bytePerPixel);
-	viaBlit(vmesa,vmesa->viaScreen->bitsPerPixel, nDestBase, nDestPitch,
-		nDestBase , nDestPitch, nDestWidth, nDestHeight,
-		0,0,VIA_BLIT_FILL, pixel, 0x0); 
-	b++;
-    }
+   for (i = 0; i < nboxes ; i++) {        
+      int x = pbox[i].x1 - vmesa->drawX;
+      int y = pbox[i].y1 - vmesa->drawY;
+      int w = pbox[i].x2 - pbox[i].x1;
+      int h = pbox[i].y2 - pbox[i].y1;
 
-    viaFlushPrimsLocked(vmesa);
+      int offset = (buffer->orig + 
+		    y * buffer->pitch + 
+		    x * bytePerPixel);
+
+      viaBlit(vmesa,
+	      buffer->bpp, 
+	      offset, buffer->pitch,
+	      offset, buffer->pitch, 
+	      w, h,
+	      0, 0, 
+	      VIA_BLIT_FILL, pixel, mask); 
+   }
 }
 
-void viaFillFrontPBuffer(viaContextPtr vmesa)
+
+
+static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
+                     GLint cx, GLint cy, GLint cw, GLint ch)
 {
-    GLuint nDestBase, nDestPitch, nDestWidth, nDestHeight, offset; 
-    GLuint pixel = (GLuint)vmesa->ClearColor;
+   viaContextPtr vmesa = VIA_CONTEXT(ctx);
+   __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
+   const GLuint colorMask = *((GLuint *)&ctx->Color.ColorMask);
+   int flag = 0;
+   GLuint i = 0;
+   GLuint clear_depth_mask = 0xf << 28;
+   GLuint clear_depth = 0;
 
-    offset = vmesa->front.offset;
-    if (VIA_DEBUG) fprintf(stderr, "Fill PFront offset = %08x\n", offset);
-    nDestBase = offset;
-    nDestPitch = vmesa->front.pitch;
+   VIA_FLUSH_DMA(vmesa);
 
-    nDestWidth = vmesa->driDrawable->w;
-    nDestHeight = vmesa->driDrawable->h;
+   if ((mask & DD_FRONT_LEFT_BIT) && colorMask == ~0) {
+      flag |= VIA_FRONT;
+      mask &= ~DD_FRONT_LEFT_BIT;
+   }
 
-    viaBlit(vmesa,vmesa->viaScreen->bitsPerPixel, nDestBase, nDestPitch,
-	    nDestBase , nDestPitch, nDestWidth, nDestHeight,
-	    0,0,VIA_BLIT_FILL, pixel, 0x0); 
-	
-    viaFlushPrimsLocked(vmesa);
-}
+   if ((mask & DD_BACK_LEFT_BIT) && colorMask == ~0) {
+      flag |= VIA_BACK;	
+      mask &= ~DD_BACK_LEFT_BIT;
+   }
 
-void viaFillBackBuffer(viaContextPtr vmesa)
-{
-    GLuint nDestBase, nDestPitch, nDestWidth, nDestHeight, offset; 
-    GLcontext *ctx = vmesa->glCtx;
-    GLuint pixel = (GLuint)vmesa->ClearColor;
-    GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
-
-    offset = vmesa->back.offset;
-    if (VIA_DEBUG) fprintf(stderr, "Fill Back offset = %08x\n", offset);
-    nDestBase = offset;
-    nDestPitch = vmesa->back.pitch;
+   if (mask & DD_DEPTH_BIT) {
+      flag |= VIA_DEPTH;
+      clear_depth = (GLuint)(ctx->Depth.Clear * vmesa->ClearDepth);
+      clear_depth_mask &= ~vmesa->depth_clear_mask;
+      mask &= ~DD_DEPTH_BIT;
+   }
     
-    if (!ctx->Scissor.Enabled) {
-	nDestWidth = (vmesa->back.pitch / bytePerPixel);
-	nDestHeight = vmesa->driDrawable->h;
-	viaBlit(vmesa,vmesa->viaScreen->bitsPerPixel, nDestBase, nDestPitch,
-		nDestBase , nDestPitch, nDestWidth, nDestHeight,
-		0,0,VIA_BLIT_FILL, pixel, 0x0); 
+   if (mask & DD_STENCIL_BIT) {
+      if (vmesa->have_hw_stencil) {
+	 if (ctx->Stencil.WriteMask[0] == 0xff) {
+	    flag |= VIA_DEPTH;
+	    clear_depth &= ~0xff;
+	    clear_depth |= (ctx->Stencil.Clear & 0xff);
+	    clear_depth_mask &= ~vmesa->stencil_clear_mask;
+	    mask &= ~DD_STENCIL_BIT;
+	 }
+	 else {
+	    fprintf(stderr, "XXX: Clear stencil writemask %x -- need triangles (or a ROP?)\n", 
+		    ctx->Stencil.WriteMask[0]);
+	    /* Fixme - clear with triangles */
+	 }
+      }
+   }
+    
+   if (flag) {
+      drm_clip_rect_t *boxes, *tmp_boxes = 0;
+      int nr = 0;
+
+      LOCK_HARDWARE(vmesa);
+	    
+      /* flip top to bottom */
+      cy = dPriv->h - cy - ch;
+      cx += vmesa->drawX + vmesa->drawXoff;
+      cy += vmesa->drawY;
+        
+      if (!all) {
+	 drm_clip_rect_t *b = vmesa->pClipRects;	 
+	 
+	 boxes = tmp_boxes = (drm_clip_rect_t *)malloc(vmesa->numClipRects * 
+						       sizeof(drm_clip_rect_t)); 
+	 if (!boxes) {
+	    UNLOCK_HARDWARE(vmesa);
+	    return;
+	 }
+
+	 for (; i < vmesa->numClipRects; i++) {
+	    GLint x = b[i].x1;
+	    GLint y = b[i].y1;
+	    GLint w = b[i].x2 - x;
+	    GLint h = b[i].y2 - y;
+
+	    if (x < cx) w -= cx - x, x = cx;
+	    if (y < cy) h -= cy - y, y = cy;
+	    if (x + w > cx + cw) w = cx + cw - x;
+	    if (y + h > cy + ch) h = cy + ch - y;
+	    if (w <= 0) continue;
+	    if (h <= 0) continue;
+
+	    boxes[nr].x1 = x;
+	    boxes[nr].y1 = y;
+	    boxes[nr].x2 = x + w;
+	    boxes[nr].y2 = y + h;
+	    nr++;
+	 }
+      }
+      else {
+	 boxes = vmesa->pClipRects;
+	 nr = vmesa->numClipRects;
+      }
+	    
+      if (flag & VIA_FRONT) {
+	 viaFillBuffer(vmesa, &vmesa->front, boxes, nr, vmesa->ClearColor, 0);
+      } 
+		
+      if (flag & VIA_BACK) {
+	 viaFillBuffer(vmesa, &vmesa->back, boxes, nr, vmesa->ClearColor, 0); /* FIXME: masks */
+      }
+
+      if (flag & VIA_DEPTH) {
+	 viaFillBuffer(vmesa, &vmesa->depth, boxes, nr, clear_depth, clear_depth_mask);
+      }		
+
+      viaFlushDmaLocked(vmesa, VIA_NO_CLIPRECTS);
+      UNLOCK_HARDWARE(vmesa);
+
+      if (tmp_boxes)
+	 free(tmp_boxes);
+   }
+   
+   if (mask)
+      _swrast_Clear(ctx, mask, all, cx, cy, cw, ch);
+}
+
+
+
+
+static void viaDoSwapBuffers(viaContextPtr vmesa,
+			     drm_clip_rect_t *b,
+			     GLuint nbox)
+{    
+   GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
+   viaBuffer *front = &vmesa->front;
+   viaBuffer *back = &vmesa->back;
+   GLuint i;
+        
+   for (i = 0; i < nbox; i++, b++) {        
+      GLint x = b->x1 - vmesa->drawX;
+      GLint y = b->y1 - vmesa->drawY;
+      GLint w = b->x2 - b->x1;
+      GLint h = b->y2 - b->y1;
 	
+      GLuint src = back->orig + y * back->pitch + x * bytePerPixel;
+      GLuint dest = front->orig + y * front->pitch + x * bytePerPixel;
+
+      viaBlit(vmesa, 
+	      bytePerPixel << 3, 
+	      src, back->pitch,
+	      dest, front->pitch,
+	      w, h,
+	      0,0,VIA_BLIT_COPY, 0, 0); 
+   }
+}
+
+
+
+
+/*
+ * Copy the back buffer to the front buffer. 
+ */
+void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
+{
+   viaContextPtr vmesa = (viaContextPtr)dPriv->driContextPriv->driverPrivate;
+   GLboolean missed_target;
+
+   VIA_FLUSH_DMA(vmesa);
+   driWaitForVBlank( dPriv, & vmesa->vbl_seq, vmesa->vblank_flags, & missed_target );
+   if ( missed_target ) {
+      vmesa->swap_missed_count++;
+      vmesa->get_ust( &vmesa->swap_missed_ust );
+   }
+   LOCK_HARDWARE(vmesa);
+
+   viaDoSwapBuffers(vmesa, dPriv->pClipRects, dPriv->numClipRects);
+   viaFlushDmaLocked(vmesa, VIA_NO_CLIPRECTS);
+
+   UNLOCK_HARDWARE(vmesa);
+   vmesa->swap_count++;
+   vmesa->get_ust( &vmesa->swap_ust );
+}
+
+/*
+ * XXX implement when full-screen extension is done.
+ */
+void viaPageFlip(const __DRIdrawablePrivate *dPriv)
+{
+    viaContextPtr vmesa = (viaContextPtr)dPriv->driContextPriv->driverPrivate;
+    viaBuffer buffer_tmp;
+    GLboolean missed_target;
+
+
+    VIA_FLUSH_DMA(vmesa);
+    driWaitForVBlank( dPriv, &vmesa->vbl_seq, vmesa->vblank_flags, &missed_target );
+    if ( missed_target ) {
+       vmesa->swap_missed_count++;
+       vmesa->get_ust( &vmesa->swap_missed_ust );
     }
-    /*=* John Sheng [2003.7.18] texenv *=*/
-    else {
-	int i;
-	drm_clip_rect_t *b = vmesa->sarea->boxes;
-	for (i = 0; i < vmesa->sarea->nbox ; i++) {        
-	    nDestWidth = b->x2 - b->x1;
-	    nDestHeight = b->y2 - b->y1;
-	    nDestBase = offset + ((b->y1 - vmesa->drawY) * nDestPitch) + 
-		(b->x1 - vmesa->drawX + vmesa->drawXoff) * bytePerPixel;
-	    viaBlit(vmesa,vmesa->viaScreen->bitsPerPixel, nDestBase, nDestPitch,
-		    nDestBase , nDestPitch, nDestWidth, nDestHeight,
-		    0,0,VIA_BLIT_FILL, pixel, 0x0); 
-	    b++;
+    LOCK_HARDWARE(vmesa);
+
+    {
+        RING_VARS;
+
+	if (!vmesa->nDoneFirstFlip) {
+    	    vmesa->nDoneFirstFlip = GL_FALSE; /* XXX: FIXME LATER!!! */
+	    BEGIN_RING(4);
+    	    OUT_RING(HALCYON_HEADER2);
+    	    OUT_RING(0x00fe0000);
+    	    OUT_RING(0x0000000e);
+    	    OUT_RING(0x0000000e);
+	    ADVANCE_RING();
 	}
+
+	BEGIN_RING(4);
+	OUT_RING( HALCYON_HEADER2 );
+	OUT_RING( 0x00fe0000 );
+	OUT_RING((HC_SubA_HFBBasL << 24) | (vmesa->back.offset & 0xFFFFF8) | 0x2);
+	OUT_RING((HC_SubA_HFBDrawFirst << 24) |
+		 ((vmesa->back.offset & 0xFF000000) >> 24) | 0x0100);
+	ADVANCE_RING();
+
     }
-    if (VIA_DEBUG) {
-	fprintf(stderr," width = %08x\n", nDestWidth);	
-	fprintf(stderr," height = %08x\n", nDestHeight);	
-    }	     
+
+    viaFlushDmaLocked(vmesa, VIA_NO_CLIPRECTS);    
+    UNLOCK_HARDWARE(vmesa);
+    vmesa->swap_count++;
+    vmesa->get_ust( &vmesa->swap_ust );
+
+    /* KW: FIXME: When buffers are freed, could free frontbuffer by
+     * accident:
+     */
+    memcpy(&buffer_tmp, &vmesa->back, sizeof(viaBuffer));
+    memcpy(&vmesa->back, &vmesa->front, sizeof(viaBuffer));
+    memcpy(&vmesa->front, &buffer_tmp, sizeof(viaBuffer));
+    
+    if(vmesa->currentPage) {
+	vmesa->currentPage = 0;
+    }
+    else {
+	vmesa->currentPage = 1;
+    }
+
+    if (VIA_DEBUG) fprintf(stderr, "%s - out\n", __FUNCTION__);        
 }
 
 
-void viaFillDepthBuffer(viaContextPtr vmesa, GLuint pixel, GLuint mask)
+
+
+#define VIA_CMDBUF_MAX_LAG 50000
+
+static int fire_buffer(viaContextPtr vmesa)
 {
-    GLuint nDestBase, nDestPitch, nDestWidth, nDestHeight, offsetX, offset;
+   drmVIACommandBuffer bufI;
+   int ret;
 
-    offset = vmesa->depth.offset;
-    if (VIA_DEBUG)
-       fprintf(stderr, "Fill Depth offset = %08x, pixel %x, mask %x\n", offset, pixel, mask);
-    nDestBase = offset;
-    nDestPitch = vmesa->depth.pitch;
-    
-    offsetX = vmesa->drawXoff;
-    nDestWidth = (vmesa->depth.pitch / vmesa->depth.bpp * 8) - offsetX;
-    nDestHeight = vmesa->driDrawable->h;
+   bufI.buf = (char *)vmesa->dma;
+   bufI.size = vmesa->dmaLow;
 
-    viaBlit(vmesa, vmesa->depth.bpp , nDestBase, nDestPitch,
-	    nDestBase , nDestPitch, nDestWidth, nDestHeight,
-	    0,0,VIA_BLIT_FILL, pixel, mask); 
+   if (vmesa->useAgp) {
+      drmVIACmdBufSize bSiz;
 
-    
-    if (vmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT) {
-	viaFlushPrimsLocked(vmesa);
-    }
-}
+      /* Do the CMDBUF_SIZE ioctl:
+       */
+      bSiz.func = VIA_CMDBUF_LAG;
+      bSiz.wait = 1;
+      bSiz.size = VIA_CMDBUF_MAX_LAG;
+      do {
+	 ret = drmCommandWriteRead(vmesa->driFd, DRM_VIA_CMDBUF_SIZE, 
+				   &bSiz, sizeof(bSiz));
+      } while (ret == -EAGAIN);
+      if (ret) {
+	 fprintf(stderr, "%s: DRM_VIA_CMDBUF_SIZE returned %d\n", __FUNCTION__, ret);
+	 abort();
+	 return ret;
+      }
 
-void viaDoSwapBuffers(viaContextPtr vmesa)
-{    
-    GLuint nFrontPitch;
-    GLuint nBackPitch;
-    GLuint nFrontWidth, nFrontHeight;
-    GLuint nFrontBase, nBackBase;
-    drm_clip_rect_t *b = vmesa->pClipRects;
-    GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
-    GLuint i;
-    
-    nFrontPitch = vmesa->front.pitch;
-    nBackPitch = vmesa->back.pitch;
-    
-    for (i = 0; i < vmesa->numClipRects; i++) {        
+      /* Acutally fire the buffer:
+       */
+      do {
+	 ret = drmCommandWrite(vmesa->driFd, DRM_VIA_CMDBUFFER, 
+			       &bufI, sizeof(bufI));
+      } while (ret == -EAGAIN);
+      if (ret) {
+	 fprintf(stderr, "%s: DRM_VIA_CMDBUFFER returned %d\n", __FUNCTION__, ret);
+	 abort();
+	 /* If this fails, the original code fell back to the PCI path. 
+	  */
+      }
+      else 
+	 return 0;
 
-	/* Width, Height */
-        nFrontWidth = b->x2 - b->x1;
-	nFrontHeight = b->y2 - b->y1;
-	
-	nFrontBase = vmesa->viaScreen->fbOffset + (b->y1* nFrontPitch + 
-						   b->x1 * bytePerPixel);
-	nBackBase = vmesa->back.offset + ((b->y1 - vmesa->drawY) * nBackPitch) + 
-	    (b->x1 - vmesa->drawX + vmesa->drawXoff) * bytePerPixel;
-	
-	viaBlit(vmesa, bytePerPixel << 3 , nBackBase, nBackPitch,
-		nFrontBase , nFrontPitch, nFrontWidth, nFrontHeight,
-		0,0,VIA_BLIT_COPY, 0, 0); 
-	b++;
-    }
+      /* Fall through to PCI handling?!?
+       */
+      WAIT_IDLE(vmesa);
+   }
+	    
+   ret = drmCommandWrite(vmesa->driFd, DRM_VIA_PCICMD, &bufI, sizeof(bufI));
+   if (ret) {
+      fprintf(stderr, "%s: DRM_VIA_PCICMD returned %d\n", __FUNCTION__, ret);
+      abort();
+   }
 
-    viaFlushPrimsLocked(vmesa);
-    if (VIA_DEBUG) fprintf(stderr, "Do Swap Buffer\n");
+   return ret;
 }
 
 
-void viaDoSwapPBuffers(viaContextPtr vmesa)
-{    
-    GLuint nFrontPitch;
-    GLuint nBackPitch;
-    GLuint nFrontWidth, nFrontHeight;
-    GLuint nFrontBase, nBackBase;
-    GLuint nFrontOffsetX, nFrontOffsetY, nBackOffsetX, nBackOffsetY;
-    GLuint bytePerPixel = vmesa->viaScreen->bitsPerPixel >> 3;
-    GLuint EngStatus = *(vmesa->pnGEMode);
-    GLuint blitMode; 
-    RING_VARS;
+/* Inserts the surface addresss and active cliprects one at a time
+ * into the head of the DMA buffer being flushed.  Fires the buffer
+ * for each cliprect.
+ */
+static void via_emit_cliprect(viaContextPtr vmesa,
+			      drm_clip_rect_t *b) 
+{
+   viaBuffer *buffer = vmesa->drawBuffer;
+   GLuint *vb = (GLuint *)(vmesa->dma + vmesa->dmaCliprectAddr);
 
-    switch(bytePerPixel) {
-    case 4:
-	blitMode = 0x300;
-	break;
-    case 2:
-	blitMode = 0x100;
-	break;
-    default:
-	blitMode = 0x000;
-	break;
-    }
+   GLuint format = (vmesa->viaScreen->bitsPerPixel == 0x20 
+		    ? HC_HDBFM_ARGB8888 
+		    : HC_HDBFM_RGB565);
 
-    nFrontPitch = vmesa->front.pitch;
-    nBackPitch = vmesa->back.pitch;
-    
-    /* Caculate Base */
-    nFrontBase = vmesa->front.offset;
-    nBackBase = vmesa->back.offset;
-    
-    /* Width, Height */
-    nFrontWidth = nFrontPitch / bytePerPixel;
-    nFrontHeight = nBackPitch / bytePerPixel;
-    
-    /* Offset */
-    nFrontOffsetX = 0;
-    nFrontOffsetY = 0;
-    nBackOffsetX = nFrontOffsetX;
-    nBackOffsetY = nFrontOffsetY;
+   GLuint pitch = buffer->pitch;
+   GLuint offset = buffer->orig;
 
-    BEGIN_RING(8 * 2);
-    /* Restore mode */
-    SetReg2DAGP(0x04, (EngStatus & 0xFFFFFCFF) | blitMode);
-    /* GEWD */
-    SetReg2DAGP(0x10, nFrontWidth | (nFrontHeight << 16));
-    /* GEDST */
-    SetReg2DAGP(0x0C, nFrontOffsetX | (nFrontOffsetY << 16));
-    /* GESRC */
-    SetReg2DAGP(0x08, nBackOffsetX | (nBackOffsetY << 16));
-    /* GEDSTBASE */
-    SetReg2DAGP(0x34, (nFrontBase >> 3));
-    /* GESCRBASE */
-    SetReg2DAGP(0x30, (nBackBase >> 3));
-    /* GEPITCH */
-    SetReg2DAGP(0x38, (((nFrontPitch >> 3) << 16) & 0x7FF0000) | 0x80000000 |
-                      ((nBackPitch >> 3) & 0x7FF));
-    /* BITBLT */
-    SetReg2DAGP(0x0, 0x1 | 0xCC000000);
-    ADVANCE_RING();
+   GLuint clipL = b->x1 - vmesa->drawX;
+   GLuint clipR = b->x2 - vmesa->drawX;
+   GLuint clipT = b->y1 - vmesa->drawY;
+   GLuint clipB = b->y2 - vmesa->drawY;
+	    
+   vb[0] = HC_HEADER2;
+   vb[1] = (HC_ParaType_NotTex << 16);
 
-    viaFlushPrimsLocked(vmesa);
-    if (VIA_DEBUG) fprintf(stderr, "Do Swap PBuffer\n");
+   if (vmesa->driDrawable->w == 0 || vmesa->driDrawable->h == 0) {
+      vb[2] = (HC_SubA_HClipTB << 24) | 0x0;
+      vb[3] = (HC_SubA_HClipLR << 24) | 0x0;
+   }
+   else {
+      vb[2] = (HC_SubA_HClipTB << 24) | (clipT << 12) | clipB;
+      vb[3] = (HC_SubA_HClipLR << 24) | (clipL << 12) | clipR;
+   }
+	    
+   vb[4] = ((HC_SubA_HDBBasL << 24) | (offset & 0xFFFFFF));
+   vb[5] = ((HC_SubA_HDBBasH << 24) | ((offset & 0xFF000000)) >> 24); 
+   vb[6] = ((HC_SubA_HDBFM << 24) | HC_HDBLoc_Local | format | pitch);            
+   vb[7] = 0xcccccccc;
+}
+
+
+
+static int intersect_rect(drm_clip_rect_t *out,
+                          drm_clip_rect_t *a,
+                          drm_clip_rect_t *b)
+{
+    *out = *a;
+
+    if (b->x1 > out->x1) out->x1 = b->x1;
+    if (b->x2 < out->x2) out->x2 = b->x2;
+    if (out->x1 >= out->x2) return 0;
+
+    if (b->y1 > out->y1) out->y1 = b->y1;
+    if (b->y2 < out->y2) out->y2 = b->y2;
+    if (out->y1 >= out->y2) return 0;
+
+    return 1;
+}
+
+static void dump_dma( viaContextPtr vmesa )
+{
+   GLuint i;
+   GLuint *data = (GLuint *)vmesa->dma;
+   for (i = 0; i < vmesa->dmaLow; i += 16) {
+      fprintf(stderr, "%04x:   ", i);
+      fprintf(stderr, "%08x  ", *data++);
+      fprintf(stderr, "%08x  ", *data++);
+      fprintf(stderr, "%08x  ", *data++);
+      fprintf(stderr, "%08x\n", *data++);
+   }
+   fprintf(stderr, "******************************************\n");
+}
+
+
+void viaFlushDmaLocked(viaContextPtr vmesa, GLuint flags)
+{
+   int i;
+   RING_VARS;
+
+   if (*(GLuint *)vmesa->driHwLock != (DRM_LOCK_HELD|vmesa->hHWContext) &&
+       *(GLuint *)vmesa->driHwLock != (DRM_LOCK_HELD|DRM_LOCK_CONT|vmesa->hHWContext)) {
+      fprintf(stderr, "%s called without lock held\n", __FUNCTION__);
+      abort();
+   }
+
+   if (vmesa->dmaLow == 0) {
+      return;
+   }
+
+   assert(vmesa->dmaLastPrim == 0);
+
+   /* viaFinishPrimitive can add up to 8 bytes beyond VIA_DMA_HIGHWATER:
+    */
+   if (vmesa->dmaLow > VIA_DMA_HIGHWATER + 8) {
+      fprintf(stderr, "buffer overflow in Flush Prims = %d\n",vmesa->dmaLow);
+      abort();
+   }
+
+   switch (vmesa->dmaLow & 0x1F) {	
+   case 8:
+      BEGIN_RING_NOCHECK( 6 );
+      OUT_RING( HC_HEADER2 );
+      OUT_RING( (HC_ParaType_NotTex << 16) );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      ADVANCE_RING();
+      break;
+   case 16:
+      BEGIN_RING_NOCHECK( 4 );
+      OUT_RING( HC_HEADER2 );
+      OUT_RING( (HC_ParaType_NotTex << 16) );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      ADVANCE_RING();
+      break;    
+   case 24:
+      BEGIN_RING_NOCHECK( 10 );
+      OUT_RING( HC_HEADER2 );
+      OUT_RING( (HC_ParaType_NotTex << 16) );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );
+      OUT_RING( HC_DUMMY );	
+      ADVANCE_RING();
+      break;    
+   case 0:
+      break;
+   default:
+      if (VIA_DEBUG)
+	 fprintf(stderr, "%s: unaligned value for vmesa->dmaLow: %x\n",
+		 __FUNCTION__, vmesa->dmaLow);
+   }
+
+
+   if (VIA_DEBUG)
+      dump_dma( vmesa );
+
+   if (flags & VIA_NO_CLIPRECTS) {
+      assert(vmesa->dmaCliprectAddr == 0);
+      fire_buffer( vmesa );
+   }
+   else if (!vmesa->dmaCliprectAddr) {
+      /* Contains only state.  Could just dump the packet?
+       */
+      if (0) fprintf(stderr, "no dmaCliprectAddr\n");
+      if (0) fire_buffer( vmesa );
+   }
+   else if (vmesa->numClipRects) {
+      int ret;
+      drm_clip_rect_t *pbox = vmesa->pClipRects;
+      
+      for (i = 0; i < vmesa->numClipRects; i++) {
+	 if (vmesa->glCtx->Scissor.Enabled) {
+	    drm_clip_rect_t b;
+	    if (!intersect_rect(&b, &pbox[i], &vmesa->scissorRect)) 
+	       continue;
+	    via_emit_cliprect(vmesa, &b);	 
+	 }
+	 else {
+	    via_emit_cliprect(vmesa, &pbox[i]);
+	 }
+	 
+	 ret = fire_buffer(vmesa);
+	 if (ret)
+	    goto done;
+      }
+   } else {
+      UNLOCK_HARDWARE(vmesa);
+      sched_yield();
+      LOCK_HARDWARE(vmesa);
+   }
+
+ done:
+   /* Reset vmesa vars:
+    */
+   vmesa->dmaLow = 0;
+   vmesa->dmaCliprectAddr = 0;
+   viaValidateState(vmesa->glCtx);
+}
+
+void viaWrapPrimitive( viaContextPtr vmesa )
+{
+   if (VIA_DEBUG) fprintf(stderr, "%s\n", __FUNCTION__);
+   viaFinishPrimitive( vmesa );
+   
+   LOCK_HARDWARE(vmesa); 
+   viaFlushDmaLocked(vmesa, 0);
+   UNLOCK_HARDWARE(vmesa);
+
+   viaRasterPrimitive( vmesa->glCtx,
+		       vmesa->renderPrimitive,
+		       vmesa->hwPrimitive );
+}
+
+void viaFlushDma(viaContextPtr vmesa)
+{
+   if (vmesa->dmaLow) {
+      if (vmesa->dmaLastPrim)
+	 viaWrapPrimitive(vmesa); 
+      else {      
+	 LOCK_HARDWARE(vmesa); 
+	 viaFlushDmaLocked(vmesa, 0);
+	 UNLOCK_HARDWARE(vmesa);
+      }
+   }
+}
+
+static void viaFlush(GLcontext *ctx)
+{
+    viaContextPtr vmesa = VIA_CONTEXT(ctx);
+    VIA_FLUSH_DMA(vmesa);
+}
+
+static void viaFinish(GLcontext *ctx)
+{
+    viaContextPtr vmesa = VIA_CONTEXT(ctx);
+    VIA_FLUSH_DMA(vmesa);
+    WAIT_IDLE(vmesa);
+}
+
+static void viaClearStencil(GLcontext *ctx,  int s)
+{
+    return;
+}
+
+void viaInitIoctlFuncs(GLcontext *ctx)
+{
+    ctx->Driver.Flush = viaFlush;
+    ctx->Driver.Clear = viaClear;
+    ctx->Driver.Finish = viaFinish;
+    ctx->Driver.ClearStencil = viaClearStencil;
 }
 
 
@@ -956,19 +739,19 @@ void viaDoSwapPBuffers(viaContextPtr vmesa)
 
 GLuint *viaAllocDmaFunc(viaContextPtr vmesa, int bytes, const char *func, int line)
 {
-    if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
-	if (VIA_DEBUG) fprintf(stderr, "buffer overflow in check dma = %d + %d = %d\n", 
-			       vmesa->dmaLow, bytes, vmesa->dmaLow + bytes);
-	viaFlushPrims(vmesa);
-    }
+   if (vmesa->dmaLow + bytes > VIA_DMA_HIGHWATER) {
+      if (VIA_DEBUG) fprintf(stderr, "buffer overflow in check dma = %d + %d = %d\n", 
+			     vmesa->dmaLow, bytes, vmesa->dmaLow + bytes);
+      viaFlushDma(vmesa);
+   }
 
-    {
-        GLuint *start = (GLuint *)(vmesa->dmaAddr + vmesa->dmaLow);
-	vmesa->dmaLow += bytes;
-	if (VIA_DEBUG && (vmesa->dmaLow & 0x4))
-	   fprintf(stderr, "%s/%d: alloc 0x%x --> dmaLow 0x%x\n", func, line, bytes, vmesa->dmaLow);
-        return start;
-    }
+   {
+      GLuint *start = (GLuint *)(vmesa->dma + vmesa->dmaLow);
+      vmesa->dmaLow += bytes;
+      if (VIA_DEBUG && (vmesa->dmaLow & 0x4))
+	 fprintf(stderr, "%s/%d: alloc 0x%x --> dmaLow 0x%x\n", func, line, bytes, vmesa->dmaLow);
+      return start;
+   }
 }
 
 

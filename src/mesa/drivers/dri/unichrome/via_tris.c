@@ -555,7 +555,7 @@ static void viaFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
 #define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK)
 #define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
 
-static void viaChooseRenderState(GLcontext *ctx)
+void viaChooseRenderState(GLcontext *ctx)
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
@@ -633,11 +633,6 @@ static void viaRunPipeline(GLcontext *ctx)
     
     if (vmesa->newState) {
        viaValidateState( ctx );
-
-       if (!vmesa->Fallback) {
-	  viaChooseVertexState(ctx);
-	  viaChooseRenderState(ctx);
-       }
     }
 
     _tnl_run_pipeline(ctx);
@@ -677,9 +672,8 @@ void viaRasterPrimitive(GLcontext *ctx,
 	       _mesa_lookup_enum_by_nr(hwprim));
 
     VIA_FINISH_PRIM(vmesa);
+    viaCheckDma( vmesa, 1024 );	/* Ensure no wrapping inside this function  */
 
-    vmesa->renderPrimitive = glprim;
-    
     regCmdB = vmesa->regCmdB;
 
     switch (hwprim) {
@@ -738,7 +732,24 @@ void viaRasterPrimitive(GLcontext *ctx,
         return;
     }
     
-    assert((vmesa->dmaLow & 0x4) == 0);
+/*     assert((vmesa->dmaLow & 0x4) == 0); */
+
+    if (vmesa->dmaCliprectAddr == 0) {
+       if (VIA_DEBUG) fprintf(stderr, "reserve cliprect space at %x\n", vmesa->dmaLow);
+       assert(vmesa->dmaLow);
+       vmesa->dmaCliprectAddr = vmesa->dmaLow;
+       BEGIN_RING(8);
+       OUT_RING( HC_HEADER2 );    
+       OUT_RING( (HC_ParaType_NotTex << 16) );
+       OUT_RING( 0xCCCCCCCC );
+       OUT_RING( 0xCCCCCCCC );
+       OUT_RING( 0xCCCCCCCC );
+       OUT_RING( 0xCCCCCCCC );
+       OUT_RING( 0xCCCCCCCC );
+       OUT_RING( 0xCCCCCCCC );
+       ADVANCE_RING();
+    }
+
 
     BEGIN_RING(8);
     OUT_RING( HC_HEADER2 );    
@@ -752,8 +763,10 @@ void viaRasterPrimitive(GLcontext *ctx,
     OUT_RING( vmesa->regCmdA_End );
     ADVANCE_RING();
 
+
+    vmesa->renderPrimitive = glprim;
+    vmesa->hwPrimitive = hwprim;        
     vmesa->dmaLastPrim = vmesa->dmaLow;
-    vmesa->hwPrimitive = hwprim;    
 }
 
 /* Callback for mesa:
@@ -766,36 +779,46 @@ static void viaRenderPrimitive( GLcontext *ctx, GLuint prim )
 
 void viaFinishPrimitive(viaContextPtr vmesa)
 {
-    if (!vmesa->dmaLastPrim) {
-       return;
-    }
-    else if (vmesa->dmaLow != vmesa->dmaLastPrim) {
-	GLuint cmdA = vmesa->regCmdA_End | HC_HPLEND_MASK | HC_HPMValidN_MASK | HC_HE3Fire_MASK;    
-	RING_VARS;
+   if (VIA_DEBUG) fprintf(stderr, "%s\n", __FUNCTION__);
 
-	/* KW: modified 0x1 to 0x4 below:
-	 */
-	if ((vmesa->dmaLow & 0x1) || !vmesa->useAgp) {
-	   BEGIN_RING_NOCHECK( 1 );
-	   OUT_RING( cmdA );
-	   ADVANCE_RING();
-	}   
-	else {      
-	   BEGIN_RING_NOCHECK( 2 );
-	   OUT_RING( cmdA );
-	   OUT_RING( cmdA );
-	   ADVANCE_RING();
-        }   
-	vmesa->dmaLastPrim = 0;
+   if (!vmesa->dmaLastPrim) {
+      return;
+   }
+   else if (vmesa->dmaLow != vmesa->dmaLastPrim) {
+      GLuint cmdA = vmesa->regCmdA_End | HC_HPLEND_MASK | HC_HPMValidN_MASK | HC_HE3Fire_MASK;    
+      RING_VARS;
 
-	if (1 || vmesa->dmaLow > VIA_DMA_HIGHWATER)
-	   viaFlushPrims( vmesa );
-    }
-    else {
-       assert(vmesa->dmaLow >= (32 + DMA_OFFSET));
-       vmesa->dmaLow -= 32;
-       vmesa->dmaLastPrim = 0;
-    }
+      /* KW: modified 0x1 to 0x4 below:
+       */
+      if ((vmesa->dmaLow & 0x1) || !vmesa->useAgp) {
+	 BEGIN_RING_NOCHECK( 1 );
+	 OUT_RING( cmdA );
+	 ADVANCE_RING();
+      }   
+      else {      
+	 BEGIN_RING_NOCHECK( 2 );
+	 OUT_RING( cmdA );
+	 OUT_RING( cmdA );
+	 ADVANCE_RING();
+      }   
+      vmesa->dmaLastPrim = 0;
+
+      if (vmesa->dmaLow > VIA_DMA_HIGHWATER)
+	 viaFlushDma( vmesa );
+   }
+   else {
+      /* Remove the primitive header:
+       */
+      vmesa->dmaLastPrim = 0;
+      vmesa->dmaLow -= 8 * sizeof(GLuint);
+
+      /* Maybe remove the cliprect as well:
+       */
+      if (vmesa->dmaCliprectAddr == vmesa->dmaLow - 8 * sizeof(GLuint)) {
+	 vmesa->dmaLow -= 8 * sizeof(GLuint);
+	 vmesa->dmaCliprectAddr = 0;
+      }
+   }
 }
 
 

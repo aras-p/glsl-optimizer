@@ -25,18 +25,14 @@
 #ifndef _VIAFB_INC
 #define _VIAFB_INC
 
-#include "mtypes.h"
-#include "swrast/swrast.h"
-extern GLboolean via_alloc_front_buffer(viaContextPtr vmesa);
-extern GLboolean via_alloc_back_buffer(viaContextPtr vmesa);
-extern void via_free_back_buffer(viaContextPtr vmesa);
-extern void via_free_front_buffer(viaContextPtr vmesa);
-extern GLboolean via_alloc_depth_buffer(viaContextPtr vmesa);
-extern void via_free_depth_buffer(viaContextPtr vmesa);
+#include "via_context.h"
+
+extern GLboolean via_alloc_draw_buffer(viaContextPtr vmesa, viaBuffer *buf);
 extern GLboolean via_alloc_dma_buffer(viaContextPtr vmesa);
-extern void via_free_dma_buffer(viaContextPtr vmesa);
 extern GLboolean via_alloc_texture(viaContextPtr vmesa, viaTextureObjectPtr t);
-/*=* John Sheng [2003.5.31]  agp tex *=*/
 extern GLboolean via_alloc_texture_agp(viaContextPtr vmesa, viaTextureObjectPtr t);
+
+extern void via_free_draw_buffer(viaContextPtr vmesa, viaBuffer *buf);
+extern void via_free_dma_buffer(viaContextPtr vmesa);
 extern void via_free_texture(viaContextPtr vmesa, viaTextureObjectPtr t);
 #endif

@@ -642,21 +642,13 @@ static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
     if (VIA_DEBUG) fprintf(stderr, "%s in\n", __FUNCTION__);
     if (mode == GL_FRONT) {
         VIA_FLUSH_DMA(vmesa);
-        vmesa->drawMap = (char *)vmesa->driScreen->pFB;
-        vmesa->readMap = (char *)vmesa->driScreen->pFB;
-	vmesa->drawPitch = vmesa->front.pitch;
-	vmesa->readPitch = vmesa->front.pitch;
-        viaXMesaSetFrontClipRects(vmesa);
+	vmesa->drawBuffer = vmesa->readBuffer = &vmesa->front;
         FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_FALSE);
         return;
     }
     else if (mode == GL_BACK) {
         VIA_FLUSH_DMA(vmesa);
-        vmesa->drawMap = vmesa->back.map;
-        vmesa->readMap = vmesa->back.map;
-	vmesa->drawPitch = vmesa->back.pitch;
-	vmesa->readPitch = vmesa->back.pitch;	
-        viaXMesaSetBackClipRects(vmesa);
+	vmesa->drawBuffer = vmesa->readBuffer = &vmesa->back;
         FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_FALSE);
         return;
     }
@@ -664,6 +656,8 @@ static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
         FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_TRUE);
         return;
     }
+
+    viaXMesaWindowMoved(vmesa);
 
    /* We want to update the s/w rast state too so that r200SetBuffer()
     * gets called.
@@ -693,6 +687,10 @@ static void viaClearColor(GLcontext *ctx, const GLfloat color[4])
  */
 
 
+/* Using drawXoff like this is incorrect outside of locked regions.
+ * This hardware just isn't capable of private back buffers without
+ * glitches and/or a hefty locking scheme.
+ */
 void viaCalcViewport(GLcontext *ctx)
 {
     viaContextPtr vmesa = VIA_CONTEXT(ctx);
@@ -1550,6 +1548,8 @@ void viaValidateState( GLcontext *ctx )
         viaChooseStencilState(ctx);
     
     if (!vmesa->Fallback) {
+       viaChooseVertexState(ctx);
+       viaChooseRenderState(ctx);
        via_emit_state(vmesa);
        vmesa->newState = 0;
     }
