@@ -27,7 +27,8 @@ static int fullscreen=1;
 static int WIDTH=640;
 static int HEIGHT=480;
 
-#define FRAME 50
+static GLint T0 = 0;
+static GLint Frames = 0;
 
 #define BASESIZE 10.0
 
@@ -64,20 +65,6 @@ static int joyactive=0;
 
 static GLuint t1id,t2id;
 static GLuint teapotdlist,basedlist,lightdlist;
-
-static float gettime(void)
-{
-  static clock_t told=0;
-  clock_t tnew,ris;
-
-  tnew=clock();
-
-  ris=tnew-told;
-
-  told=tnew;
-
-  return(ris/(float)CLOCKS_PER_SEC);
-}
 
 static void calcposobs(void)
 {
@@ -339,9 +326,7 @@ static void dojoy(void)
 
 static void draw(void)
 {
-  static int count=0;
-  static char frbuf[80];
-  float fr;
+  static char frbuf[80] = "";
 
   dojoy();
 
@@ -375,11 +360,6 @@ static void draw(void)
   drawlight2();
   glPopMatrix();
   
-  if((count % FRAME)==0) {
-    fr=gettime();
-    sprintf(frbuf,"Frame rate: %f",FRAME/fr);
-  }
-
   glDisable(GL_LIGHTING);
   glDisable(GL_TEXTURE_2D);
   glDisable(GL_DEPTH_TEST);
@@ -405,7 +385,18 @@ static void draw(void)
 
   glutSwapBuffers();
 
-  count++;
+   Frames++;
+
+   {
+      GLint t = glutGet(GLUT_ELAPSED_TIME);
+      if (t - T0 >= 2000) {
+         GLfloat seconds = (t - T0) / 1000.0;
+         GLfloat fps = Frames / seconds;
+         sprintf(frbuf, "Frame rate: %f", fps);
+         T0 = t;
+         Frames = 0;
+      }
+   }
 }
 
 static void inittextures(void)

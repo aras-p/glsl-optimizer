@@ -40,7 +40,8 @@ static int HEIGHTC0 = 480;
 static int WIDTHC1 = 640;
 static int HEIGHTC1 = 480;
 
-#define FRAME 50
+static GLint T0 = 0;
+static GLint Frames = 0;
 
 #define NUMBLOC 5
 
@@ -165,21 +166,6 @@ drawobjs(int *l, float *f)
 	 }
 	 glEnd();
       }
-}
-
-static float
-gettime(void)
-{
-   static clock_t told = 0;
-   clock_t tnew, ris;
-
-   tnew = clock();
-
-   ris = tnew - told;
-
-   told = tnew;
-
-   return (ris / (float) CLOCKS_PER_SEC);
 }
 
 static void
@@ -409,10 +395,9 @@ dojoy(void)
 static void
 draw(void)
 {
-   static int count = 0;
-   static char frbuf[80];
+   static char frbuf[80] = "";
    int i;
-   float fr, base, offset;
+   float base, offset;
 
    dojoy();
 
@@ -461,11 +446,6 @@ draw(void)
    glPopMatrix();
    glPopMatrix();
 
-   if ((count % FRAME) == 0) {
-      fr = gettime();
-      sprintf(frbuf, "Frame rate: %f", FRAME / fr);
-   }
-
    glDisable(GL_TEXTURE_2D);
    glDisable(GL_FOG);
    glShadeModel(GL_FLAT);
@@ -492,7 +472,17 @@ draw(void)
    glPopMatrix();
    glMatrixMode(GL_MODELVIEW);
 
-   count++;
+   Frames++;
+   {
+      GLint t = glutGet(GLUT_ELAPSED_TIME);
+      if (t - T0 >= 2000) {
+         GLfloat seconds = (t - T0) / 1000.0;
+         GLfloat fps = Frames / seconds;
+         sprintf(frbuf, "Frame rate: %f", fps);
+         T0 = t;
+         Frames = 0;
+      }
+   }
 }
 
 static void
@@ -564,7 +554,7 @@ main(int ac, char **av)
    glutInitWindowSize(WIDTHC0, HEIGHTC0);
    glutInit(&ac, av);
 
-   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_ALPHA);
+   glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 
 #ifdef FX
    if (!fxMesaSelectCurrentBoard(0)) {

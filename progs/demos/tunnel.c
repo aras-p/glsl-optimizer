@@ -155,21 +155,6 @@ drawobjs(int *l, float *f)
       }
 }
 
-static float
-gettime(void)
-{
-   static clock_t told = 0;
-   clock_t tnew, ris;
-
-   tnew = clock();
-
-   ris = tnew - told;
-
-   told = tnew;
-
-   return (ris / (float) CLOCKS_PER_SEC);
-}
-
 static void
 calcposobs(void)
 {
@@ -369,7 +354,7 @@ draw(void)
 {
    static char frbuf[80] = "";
    int i;
-   float fr, base, offset;
+   float base, offset;
 
    dojoy();
 
@@ -445,7 +430,6 @@ draw(void)
    glutSwapBuffers();
 
    Frames++;
-
    {
       GLint t = glutGet(GLUT_ELAPSED_TIME);
       if (t - T0 >= 2000) {

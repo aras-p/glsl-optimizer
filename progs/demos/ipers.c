@@ -28,6 +28,9 @@ static int fullscreen = 1;
 static int WIDTH = 640;
 static int HEIGHT = 480;
 
+static GLint T0;
+static GLint Frames;
+
 #define MAX_LOD 9
 
 #define TEX_SKY_WIDTH 256
@@ -193,21 +196,6 @@ inittextures(void)
    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
 		   GL_LINEAR_MIPMAP_LINEAR);
    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-}
-
-static float
-gettime(void)
-{
-   static clock_t told = 0;
-   clock_t tnew, ris;
-
-   tnew = clock();
-
-   ris = tnew - told;
-
-   told = tnew;
-
-   return (ris / (float) CLOCKS_PER_SEC);
 }
 
 static void
@@ -544,11 +532,10 @@ drawipers(int depth, int from)
 static void
 draw(void)
 {
-   static int count = 0;
-   static char frbuf[80];
+   static char frbuf[80] = "";
    static GLfloat alpha = 0.0f;
    static GLfloat beta = 0.0f;
-   float fr;
+   static float fr = 0.0;
 
    dojoy();
 
@@ -610,10 +597,9 @@ draw(void)
 
    /* Help Screen */
 
-   fr = gettime();
    sprintf(frbuf,
 	   "Frame rate: %0.2f   LOD: %d   Tot. poly.: %d   Poly/sec: %.1f",
-	   1.0 / fr, LODbias, totpoly, totpoly / fr);
+	   fr, LODbias, totpoly, totpoly * fr);
 
    glDisable(GL_TEXTURE_2D);
    glDisable(GL_FOG);
@@ -644,7 +630,16 @@ draw(void)
 
    glutSwapBuffers();
 
-   count++;
+   Frames++;
+   {
+      GLint t = glutGet(GLUT_ELAPSED_TIME);
+      if (t - T0 >= 2000) {
+         GLfloat seconds = (t - T0) / 1000.0;
+         fr = Frames / seconds;
+         T0 = t;
+         Frames = 0;
+      }
+   }
 }
 
 int

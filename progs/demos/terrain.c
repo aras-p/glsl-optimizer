@@ -38,9 +38,10 @@ static int fullscreen = 1;
 #define WIDTH 640
 #define HEIGHT 480
 
-#define TSCALE 4
+static GLint T0 = 0;
+static GLint Frames = 0;
 
-#define	FRAME 50
+#define TSCALE 4
 
 #define FOV 85
 
@@ -70,21 +71,6 @@ static float dir[3], v1[2], v2[2];
 static float v = 15.0;
 static float alpha = 75.0;
 static float beta = 90.0;
-
-static float
-gettime(void)
-{
-   static clock_t told = 0;
-   clock_t tnew, ris;
-
-   tnew = clock();
-
-   ris = tnew - told;
-
-   told = tnew;
-
-   return (ris / (float) CLOCKS_PER_SEC);
-}
 
 static void
 calcposobs(void)
@@ -360,9 +346,7 @@ dojoy(void)
 static void
 drawscene(void)
 {
-   static int count = 0;
-   static char frbuf[80];
-   float fr;
+   static char frbuf[80] = "";
 
    dojoy();
 
@@ -390,11 +374,6 @@ drawscene(void)
 
    drawterrain();
    glPopMatrix();
-
-   if ((count % FRAME) == 0) {
-      fr = gettime();
-      sprintf(frbuf, "Frame rate: %.3f", FRAME / fr);
-   }
 
    glDisable(GL_TEXTURE_2D);
    glDisable(GL_DEPTH_TEST);
@@ -424,7 +403,17 @@ drawscene(void)
 
    glutSwapBuffers();
 
-   count++;
+   Frames++;
+   {
+      GLint t = glutGet(GLUT_ELAPSED_TIME);
+      if (t - T0 >= 2000) {
+         GLfloat seconds = (t - T0) / 1000.0;
+         GLfloat fps = Frames / seconds;
+         sprintf(frbuf, "Frame rate: %f", fps);
+         T0 = t;
+         Frames = 0;
+      }
+   }
 }
 
 static void
@@ -558,7 +547,7 @@ loadpic(void)
    GLenum gluerr;
 
    if ((FilePic = fopen("terrain.dat", "r")) == NULL) {
-      fprintf(stderr, "Error loading Mnt.bin\n");
+      fprintf(stderr, "Error loading terrain.dat\n");
       exit(-1);
    }
    fread(bufferter, 256 * 256, 1, FilePic);

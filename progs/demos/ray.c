@@ -24,7 +24,8 @@ static int fullscreen = 1;
 static int WIDTH = 640;
 static int HEIGHT = 480;
 
-#define FRAME 50
+static GLint T0 = 0;
+static GLint Frames = 0;
 
 #define BASESIZE 7.5f
 #define SPHERE_RADIUS 0.75f
@@ -93,21 +94,6 @@ static int showcheckmap = 1;
 static int showreflectmap = 1;
 static int joyavailable = 0;
 static int joyactive = 0;
-
-static float
-gettime(void)
-{
-   static float told = 0.0f;
-   float tnew, ris;
-
-   tnew = glutGet(GLUT_ELAPSED_TIME);
-
-   ris = tnew - told;
-
-   told = tnew;
-
-   return ris / 1000.0;
-}
 
 static void
 calcposobs(void)
@@ -622,9 +608,7 @@ updatemaps(void)
 static void
 draw(void)
 {
-   static int count = 0;
-   static char frbuf[80];
-   float fr;
+   static char frbuf[80] = "";
 
    dojoy();
 
@@ -656,11 +640,6 @@ draw(void)
    glPopMatrix();
 
    glPopMatrix();
-
-   if ((count % FRAME) == 0) {
-      fr = gettime();
-      sprintf(frbuf, "Frame rate: %f", FRAME / fr);
-   }
 
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_FOG);
@@ -746,7 +725,17 @@ draw(void)
 
    glutSwapBuffers();
 
-   count++;
+   Frames++;
+   {
+      GLint t = glutGet(GLUT_ELAPSED_TIME);
+      if (t - T0 >= 2000) {
+         GLfloat seconds = (t - T0) / 1000.0;
+         GLfloat fps = Frames / seconds;
+         sprintf(frbuf, "Frame rate: %f", fps);
+         T0 = t;
+         Frames = 0;
+      }
+   }
 }
 
 static void
