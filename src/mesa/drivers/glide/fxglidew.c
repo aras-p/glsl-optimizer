@@ -154,7 +154,17 @@ extern FxU32 FX_grTexMaxAddress(GrChipID_t tmu) {
 FxBool FX_grSstControl(FxU32 code)
 {
 #if defined(FX_GLIDE3)
-  (void) code;
+  /* The glide 3 sources call for grEnable/grDisable to be called in exchange
+   * for grSstControl. */
+  switch(code) {
+    case GR_CONTROL_ACTIVATE:
+      grEnable(GR_PASSTHRU);
+      break;
+    case GR_CONTROL_DEACTIVATE:
+      grDisable(GR_PASSTHRU);
+      break;
+  }
+  /* Appearently GR_CONTROL_RESIZE can be ignored. */
   return 1;  /* OK? */
 #else
   FxU32 result;
@@ -385,6 +395,10 @@ int FX_grSstQueryHardware(GrHwConfiguration *c)
    return i;
 } 
 
+
+#endif  /* FX_GLIDE3 */
+
+/* It appears to me that this function is needed either way. */
 FX_GrContext_t FX_grSstWinOpen( FxU32                hWnd,
                                 GrScreenResolution_t screen_resolution,
                                 GrScreenRefresh_t    refresh_rate,
@@ -423,7 +437,6 @@ FX_GrContext_t FX_grSstWinOpen( FxU32                hWnd,
 
 
 
-#endif 
 #else
 
 /*
