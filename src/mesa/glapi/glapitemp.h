@@ -1,4 +1,4 @@
-/* $Id: glapitemp.h,v 1.18 2000/05/18 18:13:15 brianp Exp $ */
+/* $Id: glapitemp.h,v 1.19 2000/05/18 22:02:24 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -3143,6 +3143,13 @@ KEYWORD1 void KEYWORD2 NAME(WindowPos4dvMESA)(const GLdouble *p)
 }
 
 
+/* 208. GL_3DFX_tbuffer */
+KEYWORD1 void KEYWORD2 NAME(TbufferMask3DFX)(GLuint mask)
+{
+   DISPATCH(TbufferMask3DFX, (mask), (F, "glTbufferMask3DFX(0x%x);", mask));
+}
+
+
 /* 209. WGL_EXT_multisample */
 
 KEYWORD1 void KEYWORD2 NAME(SampleMaskEXT)(GLclampf value, GLboolean invert)
@@ -3365,7 +3372,7 @@ KEYWORD1 void KEYWORD2 NAME(SamplePassARB)(GLenum pass)
 }
 
 
-#if 00
+
 /* ARB 12. GL_ARB_texture_compression */
 KEYWORD1 void KEYWORD2 NAME(CompressedTexImage3DARB)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, GLvoid *data)
 {
@@ -3401,7 +3408,6 @@ KEYWORD1 void KEYWORD2 NAME(GetCompressedTexImageARB)(GLenum target, GLint lod, 
 {
    DISPATCH(GetCompressedTexImageARB, (target, lod, img), (F, "glGetCompressedTexImageARB();"));
 }
-#endif
 
 
 
