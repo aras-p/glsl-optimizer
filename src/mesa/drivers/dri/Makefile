@@ -25,4 +25,4 @@ clean:
 	@for dir in $(DRI_DIRS) ; do \
 		(cd $$dir ; $(MAKE) clean) ; \
 	done
-	rm common/*.o
+	-rm -f common/*.o
