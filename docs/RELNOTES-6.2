@@ -20,6 +20,16 @@ See the VERSIONS file for details.
 
 
 
+Known Issues
+------------
+
+The GL_EXT_pixel_buffer_object extension isn't fully implemented for
+functions like glPolygonStipple, glConvolutionFilter, glColorTable,
+etc.  The important functions like glRead/DrawPixels, glTex[Sub]Image,
+and glBitmap work with PBOs.
+
+
+
 Driver			Status
 ----------------------	---------------------
 XMesa (Xlib)		implements OpenGL 1.5
@@ -36,4 +46,4 @@ D3D			needs updating
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-6.2,v 3.2 2004/10/02 14:56:17 brianp Exp $
+$Id: RELNOTES-6.2,v 3.3 2004/10/02 14:59:29 brianp Exp $
