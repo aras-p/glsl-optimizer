@@ -1,4 +1,4 @@
-/* $Id: glapi.c,v 1.61 2002/03/07 21:50:41 brianp Exp $ */
+/* $Id: glapi.c,v 1.62 2002/05/29 15:23:16 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -853,6 +853,14 @@ _glapi_check_table(const struct _glapi_table *table)
       assert(secondaryColor3fOffset == _gloffset_SecondaryColor3fEXT);
       assert(secondaryColor3fOffset == offset);
       assert(_glapi_get_proc_address("glSecondaryColor3fEXT") == (void *) &glSecondaryColor3fEXT);
+   }
+   {
+      GLuint pointParameterivOffset = _glapi_get_proc_offset("glPointParameterivNV");
+      char *pointParameterivFunc = (char*) &table->PointParameterivNV;
+      GLuint offset = (pointParameterivFunc - (char *) table) / sizeof(void *);
+      assert(pointParameterivOffset == _gloffset_PointParameterivNV);
+      assert(pointParameterivOffset == offset);
+      assert(_glapi_get_proc_address("glPointParameterivNV") == (void *) &glPointParameterivNV);
    }
 #endif
 }
