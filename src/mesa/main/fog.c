@@ -1,10 +1,8 @@
-/* $Id: fog.c,v 1.36 2002/10/24 23:57:20 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  5.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -131,10 +129,10 @@ _mesa_Fogfv( GLenum pname, const GLfloat *params )
 	 if (TEST_EQ_4V(ctx->Fog.Color, params))
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_FOG);
-	 ctx->Fog.Color[0] = params[0];
-	 ctx->Fog.Color[1] = params[1];
-	 ctx->Fog.Color[2] = params[2];
-	 ctx->Fog.Color[3] = params[3];
+	 ctx->Fog.Color[0] = CLAMP(params[0], 0.0F, 1.0F);
+	 ctx->Fog.Color[1] = CLAMP(params[1], 0.0F, 1.0F);
+	 ctx->Fog.Color[2] = CLAMP(params[2], 0.0F, 1.0F);
+	 ctx->Fog.Color[3] = CLAMP(params[3], 0.0F, 1.0F);
          break;
       case GL_FOG_COORDINATE_SOURCE_EXT: {
 	 GLenum p = (GLenum) (GLint) *params;
