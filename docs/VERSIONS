@@ -1257,3 +1257,4 @@ Mesa Version History
 	- fp TEX instruction no longer incorrectly divides s,t,r by q
 	- ARB fp TEX and TEXP instructions now use LOD=0
 	- glTexEnviv in display lists didn't work
+	- glRasterPos didn't do texgen or apply texture matrix
