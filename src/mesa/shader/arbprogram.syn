@@ -36,7 +36,7 @@
    compares the value with its REVISION value. If they do not match, the loader is not up
    to date.
 */
-.emtcode REVISION                                   0x08
+.emtcode REVISION                                   0x09
 
 /* program type */
 .emtcode FRAGMENT_PROGRAM                           0x01

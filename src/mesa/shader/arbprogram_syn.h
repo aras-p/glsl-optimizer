@@ -1,5 +1,5 @@
 ".syntax program;\n"
-".emtcode REVISION 0x08\n"
+".emtcode REVISION 0x09\n"
 ".emtcode FRAGMENT_PROGRAM 0x01\n"
 ".emtcode VERTEX_PROGRAM 0x02\n"
 ".emtcode OPTION 0x01\n"
