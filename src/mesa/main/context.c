@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.21 1999/11/19 22:26:52 brianp Exp $ */
+/* $Id: context.c,v 1.22 1999/11/19 22:51:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -544,7 +544,7 @@ static void init_2d_map( struct gl_2d_map *map, int n, const float *initial )
 }
 
 
-static void init_palette( struct gl_palette *p )
+static void init_color_table( struct gl_color_table *p )
 {
    p->Table[0] = 255;
    p->Table[1] = 255;
@@ -883,7 +883,7 @@ static void initialize_context( GLcontext *ctx )
       for (i=0; i<MAX_TEXTURE_UNITS; i++)
          init_texture_unit( ctx, i );
 
-      init_palette(&ctx->Texture.Palette);
+      init_color_table(&ctx->Texture.Palette);
 
       /* Transformation group */
       ctx->Transform.MatrixMode = GL_MODELVIEW;

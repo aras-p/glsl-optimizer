@@ -1,4 +1,4 @@
-/* $Id: colortab.c,v 1.6 1999/11/11 17:53:14 brianp Exp $ */
+/* $Id: colortab.c,v 1.7 1999/11/19 22:51:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -119,7 +119,7 @@ _mesa_ColorTableEXT( GLenum target, GLenum internalFormat,
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_object *texObj;
-   struct gl_palette *palette;
+   struct gl_color_table *palette;
    GLboolean proxy = GL_FALSE;
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glColorTableEXT");
@@ -216,7 +216,7 @@ _mesa_ColorSubTableEXT( GLenum target, GLsizei start,
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    struct gl_texture_object *texObj;
-   struct gl_palette *palette;
+   struct gl_color_table *palette;
    GLint comps;
    GLubyte *dest;
 
@@ -290,7 +290,7 @@ _mesa_GetColorTableEXT( GLenum target, GLenum format,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_palette *palette;
+   struct gl_color_table *palette;
    GLubyte rgba[MAX_TEXTURE_PALETTE_SIZE][4];
    GLint i;
 
@@ -395,7 +395,7 @@ _mesa_GetColorTableParameterivEXT( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_palette *palette;
+   struct gl_color_table *palette;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx, "glGetColorTableParameterEXT");
 
