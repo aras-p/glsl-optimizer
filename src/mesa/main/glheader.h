@@ -1,4 +1,4 @@
-/* $Id: glheader.h,v 1.2 1999/11/12 16:46:56 kendallb Exp $ */
+/* $Id: glheader.h,v 1.3 1999/11/12 18:23:47 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -61,11 +61,49 @@
 
 #include <GL/gl.h>
 
-/* Disable unreachable code warnings for Watcom C++ */
 
+/*
+ * Put compiler/OS/assembly pragmas and macros here to avoid
+ * cluttering other source files.
+ */
+
+
+/* Disable unreachable code warnings for Watcom C++ */
 #ifdef	__WATCOMC__
 #pragma disable_message(201)
 #endif
 
 
+/* Turn off macro checking systems used by other libraries */
+#ifdef CHECK
+#undef CHECK
 #endif
+
+
+/* Create a macro so that asm functions can be linked into compilers other
+ * than GNU C
+ */
+#ifndef _ASMAPI
+#if !defined( __GNUC__ ) && !defined( VMS )
+#define _ASMAPI __cdecl
+#else
+#define _ASMAPI
+#endif
+#ifdef	PTR_DECL_IN_FRONT
+#define	_ASMAPIP * _ASMAPI
+#else
+#define	_ASMAPIP _ASMAPI *
+#endif
+#endif
+
+#ifdef USE_X86_ASM
+#define _NORMAPI _ASMAPI
+#define _NORMAPIP _ASMAPIP
+#else
+#define _NORMAPI
+#define _NORMAPIP *
+#endif
+
+
+
+#endif /* GLHEADER_H */
