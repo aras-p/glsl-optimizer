@@ -444,10 +444,10 @@ static int RADEONDRIPciInit(const DRIDriverContext *ctx, RADEONInfoPtr info)
    
    /* Initialize the CP ring buffer data */
    info->ringStart       = info->gartOffset;
-   info->ringMapSize     = info->ringSize*1024*1024 + DRM_PAGE_SIZE;
+   info->ringMapSize     = info->ringSize*1024*1024 + radeon_drm_page_size;
 
    info->ringReadOffset  = info->ringStart + info->ringMapSize;
-   info->ringReadMapSize = DRM_PAGE_SIZE;
+   info->ringReadMapSize = radeon_drm_page_size;
 
    /* Reserve space for vertex/indirect buffers */
    info->bufStart        = info->ringReadOffset + info->ringReadMapSize;
