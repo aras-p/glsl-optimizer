@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.0
+ * Version:  6.0.1
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,8 +31,7 @@
  * new Katmai functions.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
+/* XXX these includes should probably go into imports.h or glheader.h */
 #if defined(USE_SSE_ASM) && defined(__linux__)
 #include <signal.h>
 #endif
@@ -63,7 +61,7 @@ static void message( const char *msg )
 #ifdef DEBUG
    debug = GL_TRUE;
 #else
-   if ( getenv( "MESA_DEBUG" ) ) {
+   if ( _mesa_getenv( "MESA_DEBUG" ) ) {
       debug = GL_TRUE;
    } else {
       debug = GL_FALSE;
@@ -320,7 +318,7 @@ void _mesa_init_all_x86_transform_asm( void )
 
    }
    
-   if ( getenv( "MESA_NO_ASM" ) ) {
+   if ( _mesa_getenv( "MESA_NO_ASM" ) ) {
       _mesa_x86_cpu_features = 0;
    }
 
@@ -330,7 +328,7 @@ void _mesa_init_all_x86_transform_asm( void )
 
 #ifdef USE_MMX_ASM
    if ( cpu_has_mmx ) {
-      if ( getenv( "MESA_NO_MMX" ) == 0 ) {
+      if ( _mesa_getenv( "MESA_NO_MMX" ) == 0 ) {
          message( "MMX cpu detected.\n" );
       } else {
          _mesa_x86_cpu_features &= ~(X86_FEATURE_MMX);
@@ -340,7 +338,7 @@ void _mesa_init_all_x86_transform_asm( void )
 
 #ifdef USE_3DNOW_ASM
    if ( cpu_has_3dnow ) {
-      if ( getenv( "MESA_NO_3DNOW" ) == 0 ) {
+      if ( _mesa_getenv( "MESA_NO_3DNOW" ) == 0 ) {
          message( "3DNow! cpu detected.\n" );
          _mesa_init_3dnow_transform_asm();
       } else {
@@ -350,11 +348,11 @@ void _mesa_init_all_x86_transform_asm( void )
 #endif
 
 #ifdef USE_SSE_ASM
-   if ( cpu_has_xmm && getenv( "MESA_FORCE_SSE" ) == 0 ) {
+   if ( cpu_has_xmm && _mesa_getenv( "MESA_FORCE_SSE" ) == 0 ) {
       check_os_sse_support();
    }
    if ( cpu_has_xmm ) {
-      if (getenv( "MESA_NO_SSE" ) == 0 ) {
+      if (_mesa_getenv( "MESA_NO_SSE" ) == 0 ) {
          message( "SSE cpu detected.\n" );
          _mesa_init_sse_transform_asm();
       } else {
