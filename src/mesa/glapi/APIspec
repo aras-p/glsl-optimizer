@@ -1,4 +1,4 @@
-# $Id: APIspec,v 1.14 2002/11/08 15:38:48 brianp Exp $
+# $Id: APIspec,v 1.15 2003/03/29 16:35:09 brianp Exp $
 
 # This file describes all the OpenGL functions.
 # We use a number of Python scripts to parse this file and
@@ -6562,57 +6562,6 @@ category	GL_SGIX_igloo_interface
 offset		?
 
 
-# GL_NV_fence
-
-name		DeleteFencesNV
-return		void
-param		n		GLsizei
-param		fences		const GLuint *
-category	GL_NV_fence
-offset		647
-
-name		GenFencesNV
-return		void
-param		n		GLsizei
-param		fences		GLuint *
-category	GL_NV_fence
-offset		648
-
-name		IsFenceNV
-return		GLboolean
-param		fence		GLuint
-category	GL_NV_fence
-offset		649
-
-name		TestFenceNV
-return		GLboolean
-param		fence		GLuint
-category	GL_NV_fence
-offset		650
-
-name		GetFenceivNV
-return		void
-param		fence		GLuint
-param		pname		GLenum
-param		params		GLint *
-category	GL_NV_fence
-offset		651
-
-name		FinishFenceNV
-return		void
-param		fence		GLuint
-category	GL_NV_fence
-offset		652
-
-name		SetFenceNV
-return		void
-param		fence		GLuint
-param		condition	GLenum
-category	GL_NV_fence
-offset		653
-
-
-
 # GL_NV_evaluators
 
 name		MapControlPointsNV
@@ -7687,13 +7636,701 @@ alias		WindowPos3svMESA
 
 # GL_EXT_stencil_two_side
 
-name ActiveStencilFaceEXT
+name		ActiveStencilFaceEXT
 return		void
 param		face		GLenum
 category	EXT_stencil_two_side
 offset		646
 
 
+# GL_NV_fence
+
+name		DeleteFencesNV
+return		void
+param		n		GLsizei
+param		fences		const GLuint *
+category	GL_NV_fence
+offset		647
+
+name		GenFencesNV
+return		void
+param		n		GLsizei
+param		fences		GLuint *
+category	GL_NV_fence
+offset		648
+
+name		IsFenceNV
+return		GLboolean
+param		fence		GLuint
+category	GL_NV_fence
+offset		649
+
+name		TestFenceNV
+return		GLboolean
+param		fence		GLuint
+category	GL_NV_fence
+offset		650
+
+name		GetFenceivNV
+return		void
+param		fence		GLuint
+param		pname		GLenum
+param		params		GLint *
+category	GL_NV_fence
+offset		651
+
+name		FinishFenceNV
+return		void
+param		fence		GLuint
+category	GL_NV_fence
+offset		652
+
+name		SetFenceNV
+return		void
+param		fence		GLuint
+param		condition	GLenum
+category	GL_NV_fence
+offset		653
+
+
+# GL_ARB_vertex_program
+
+name		VertexAttrib1sARB
+return		void
+param		index		GLuint
+param		x		GLshort
+category	GL_ARB_vertex_program
+offset		654
+
+name		VertexAttrib1fARB
+return		void
+param		index		GLuint
+param		x		GLfloat
+category	GL_ARB_vertex_program
+offset		655
+
+name		VertexAttrib1dARB
+return		void
+param		index		GLuint
+param		x		GLdouble
+category	GL_ARB_vertex_program
+offset		656
+
+name		VertexAttrib2sARB
+return		void
+param		index		GLuint
+param		x		GLshort
+param		y		GLshort
+category	GL_ARB_vertex_program
+offset		657
+
+name		VertexAttrib2fARB
+return		void
+param		index		GLuint
+param		x		GLfloat
+param		y		GLfloat
+category	GL_ARB_vertex_program
+offset		658
+
+name		VertexAttrib2dARB
+return		void
+param		index		GLuint
+param		x		GLdouble
+param		y		GLdouble
+category	GL_ARB_vertex_program
+offset		659
+
+name		VertexAttrib3sARB
+return		void
+param		index		GLuint
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+category	GL_ARB_vertex_program
+offset		660
+
+name		VertexAttrib3fARB
+return		void
+param		index		GLuint
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+category	GL_ARB_vertex_program
+offset		661
+
+name		VertexAttrib3dARB
+return		void
+param		index		GLuint
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+category	GL_ARB_vertex_program
+offset		662
+
+name		VertexAttrib4sARB
+return		void
+param		index		GLuint
+param		x		GLshort
+param		y		GLshort
+param		z		GLshort
+param		w		GLshort
+category	GL_ARB_vertex_program
+offset		663
+
+name		VertexAttrib4fARB
+return		void
+param		index		GLuint
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	GL_ARB_vertex_program
+offset		664
+
+name		VertexAttrib4dARB
+return		void
+param		index		GLuint
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	GL_ARB_vertex_program
+offset		665
+
+name		VertexAttrib4NubARB
+return		void
+param		index		GLuint
+param		x		GLubyte
+param		y		GLubyte
+param		z		GLubyte
+param		w		GLubyte
+category	GL_ARB_vertex_program
+offset		666
+
+name		VertexAttrib1svARB
+return		void
+param		index		GLuint
+param		v		const GLshort *
+category	GL_ARB_vertex_program
+offset		667
+
+name		VertexAttrib1fvARB
+return		void
+param		index		GLuint
+param		v		const GLfloat *
+category	GL_ARB_vertex_program
+offset		668
+
+name		VertexAttrib1dvARB
+return		void
+param		index		GLuint
+param		v		const GLdouble *
+category	GL_ARB_vertex_program
+offset		669
+
+name		VertexAttrib2svARB
+return		void
+param		index		GLuint
+param		v		const GLshort *
+category	GL_ARB_vertex_program
+offset		670
+
+name		VertexAttrib2fvARB
+return		void
+param		index		GLuint
+param		v		const GLfloat *
+category	GL_ARB_vertex_program
+offset		671
+
+name		VertexAttrib2dvARB
+return		void
+param		index		GLuint
+param		v		const GLdouble *
+category	GL_ARB_vertex_program
+offset		672
+
+name		VertexAttrib3svARB
+return		void
+param		index		GLuint
+param		v		const GLshort *
+category	GL_ARB_vertex_program
+offset		673
+
+name		VertexAttrib3fvARB
+return		void
+param		index		GLuint
+param		v		const GLfloat *
+category	GL_ARB_vertex_program
+offset		674
+
+name		VertexAttrib3dvARB
+return		void
+param		index		GLuint
+param		v		const GLdouble *
+category	GL_ARB_vertex_program
+offset		675
+
+name		VertexAttrib4bvARB
+return		void
+param		index		GLuint
+param		v		const GLbyte *
+category	GL_ARB_vertex_program
+offset		676
+
+name		VertexAttrib4svARB
+return		void
+param		index		GLuint
+param		v		const GLshort *
+category	GL_ARB_vertex_program
+offset		677
+
+name		VertexAttrib4ivARB
+return		void
+param		index		GLuint
+param		v		const GLint *
+category	GL_ARB_vertex_program
+offset		678
+
+name		VertexAttrib4ubvARB
+return		void
+param		index		GLuint
+param		v		const GLubyte *
+category	GL_ARB_vertex_program
+offset		679
+
+name		VertexAttrib4usvARB
+return		void
+param		index		GLuint
+param		v		const GLushort *
+category	GL_ARB_vertex_program
+offset		680
+
+name		VertexAttrib4uivARB
+return		void
+param		index		GLuint
+param		v		const GLuint *
+category	GL_ARB_vertex_program
+offset		681
+
+name		VertexAttrib4fvARB
+return		void
+param		index		GLuint
+param		v		const GLfloat *
+category	GL_ARB_vertex_program
+offset		682
+
+name		VertexAttrib4dvARB
+return		void
+param		index		GLuint
+param		v		const GLdouble *
+category	GL_ARB_vertex_program
+offset		683
+
+name		VertexAttrib4NbvARB
+return		void
+param		index		GLuint
+param		v		const GLbyte *
+category	GL_ARB_vertex_program
+offset		684
+
+name		VertexAttrib4NsvARB
+return		void
+param		index		GLuint
+param		v		const GLshort *
+category	GL_ARB_vertex_program
+offset		685
+
+name		VertexAttrib4NivARB
+return		void
+param		index		GLuint
+param		v		const GLint *
+category	GL_ARB_vertex_program
+offset		686
+
+name		VertexAttrib4NubvARB
+return		void
+param		index		GLuint
+param		v		const GLubyte *
+category	GL_ARB_vertex_program
+offset		687
+
+name		VertexAttrib4NusvARB
+return		void
+param		index		GLuint
+param		v		const GLushort *
+category	GL_ARB_vertex_program
+offset		688
+
+name		VertexAttrib4NuivARB
+return		void
+param		index		GLuint
+param		v		const GLuint *
+category	GL_ARB_vertex_program
+offset		689
+
+name		VertexAttribPointerARB
+return		void
+param		index		GLuint
+param		size		GLint
+param		type		GLenum
+param		normalized	GLboolean
+param		stride		GLsizei
+param		pointer		const GLvoid *
+category	GL_ARB_vertex_program
+offset		690
+
+name		EnableVertexAttribArrayARB
+return		void
+param		index		GLuint
+category	GL_ARB_vertex_program
+offset		691
+
+name		DisableVertexAttribArrayARB
+return		void
+param		index		GLuint
+category	GL_ARB_vertex_program
+offset		692
+
+name		ProgramStringARB
+return		void
+param		target		GLenum
+param		format		GLenum
+param		len		GLsizei
+param		string		const GLvoid *
+category	GL_ARB_vertex_program
+offset		693
+
+name		BindProgramARB
+return		void
+param		target		GLenum
+param		program		GLuint
+category	GL_ARB_vertex_program
+offset		694
+
+name		DeleteProgramsARB
+return		void
+param		n		GLsizei
+param		programs	const GLuint *
+category	GL_ARB_vertex_program
+offset		695
+
+name		GenProgramsARB
+return		void
+param		n		GLsizei
+param		programs	GLuint *
+category	GL_ARB_vertex_program
+offset		696
+
+name		ProgramEnvParameter4dARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	GL_ARB_vertex_program
+offset		697
+
+name		ProgramEnvParameter4dvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		const GLdouble *
+category	GL_ARB_vertex_program
+offset		698
+
+name		ProgramEnvParameter4fARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	GL_ARB_vertex_program
+offset		699
+
+name		ProgramEnvParameter4fvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		const GLfloat *
+category	GL_ARB_vertex_program
+offset		700
+
+name		ProgramLocalParameter4dARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	GL_ARB_vertex_program
+offset		701
+
+name		ProgramLocalParameter4dvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		const GLdouble *
+category	GL_ARB_vertex_program
+offset		702
+
+name		ProgramLocalParameter4fARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	GL_ARB_vertex_program
+offset		703
+
+name		ProgramLocalParameter4fvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		const GLfloat *
+category	GL_ARB_vertex_program
+offset		704
+
+name		GetProgramEnvParameterdvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		GLdouble *
+category	GL_ARB_vertex_program
+offset		705
+
+name		GetProgramEnvParameterfvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		GLfloat *
+category	GL_ARB_vertex_program
+offset		706
+
+name		GetProgramLocalParameterdvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		GLdouble *
+category	GL_ARB_vertex_program
+offset		707
+
+name		GetProgramLocalParameterfvARB
+return		void
+param		target		GLenum
+param		index		GLuint
+param		params		GLfloat *
+category	GL_ARB_vertex_program
+offset		708
+
+name		GetProgramivARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	GL_ARB_vertex_program
+offset		709
+
+name		GetProgramStringARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		string		GLvoid *
+category	GL_ARB_vertex_program
+offset		710
+
+name		GetVertexAttribdvARB
+return		void
+param		index		GLuint
+param		pname		GLenum
+param		params		GLdouble *
+category	GL_ARB_vertex_program
+offset		711
+
+name		GetVertexAttribfvARB
+return		void
+param		index		GLuint
+param		pname		GLenum
+param		params		GLfloat *
+category	GL_ARB_vertex_program
+offset		712
+
+name		GetVertexAttribivARB
+return		void
+param		index		GLuint
+param		pname		GLenum
+param		params		GLint *
+category	GL_ARB_vertex_program
+offset		713
+
+name		GetVertexAttribPointervARB
+return		void
+param		index		GLuint
+param		pname		GLenum
+param		params		GLvoid **
+category	GL_ARB_vertex_program
+offset		714
+
+name		IsProgramARB
+return		GLboolean
+param		program		GLuint
+category	GL_ARB_vertex_program
+offset		715
+
+
+# GL_NV_fragment_program
+
+name		ProgramNamedParameter4fNV
+return		void
+param		id		GLuint
+param		len		GLsizei
+param		name		const GLubyte *
+param		x		GLfloat
+param		y		GLfloat
+param		z		GLfloat
+param		w		GLfloat
+category	GL_NV_fragment_program
+offset		716
+
+name		ProgramNamedParameter4dNV
+return		void
+param		id		GLuint
+param		len		GLsizei
+param		name		const GLubyte *
+param		x		GLdouble
+param		y		GLdouble
+param		z		GLdouble
+param		w		GLdouble
+category	GL_NV_fragment_program
+offset		717
+
+name		ProgramNamedParameter4fvNV
+return		void
+param		id		GLuint
+param		len		GLsizei
+param		name		const GLubyte *
+param		v		const GLfloat *
+category	GL_NV_fragment_program
+offset		718
+
+name		ProgramNamedParameter4dvNV
+return		void
+param		id		GLuint
+param		len		GLsizei
+param		name		const GLubyte *
+param		v		const GLdouble *
+category	GL_NV_fragment_program
+offset		719
+
+name		GetProgramNamedParameterfvNV
+return		void
+param		id		GLuint
+param		len		GLsizei
+param		name		const GLubyte *
+param		params		GLfloat *
+category	GL_NV_fragment_program
+offset		720
+
+name		GetProgramNamedParameterdvNV
+return		void
+param		id		GLuint
+param		len		GLsizei
+param		name		const GLubyte *
+param		params		GLdouble *
+category	GL_NV_fragment_program
+offset		721
+
+
+# GL_ARB_vertex_buffer_object
+
+name		BindBufferARB
+return		void
+param		target		GLenum
+param		buffer		GLuint
+category	GL_ARB_vertex_buffer_object
+offset		722
+
+name		DeleteBuffersARB
+return		void
+param		n		GLsizei
+param		buffer		const GLuint *
+category	GL_ARB_vertex_buffer_object
+offset		723
+
+name		GenBuffersARB
+return		void
+param		n		GLsizei
+param		buffer		GLuint *
+category	GL_ARB_vertex_buffer_object
+offset		724
+
+name		IsBufferARB
+return		GLboolean
+param		buffer		GLuint
+category	GL_ARB_vertex_buffer_object
+offset		725
+
+name		BufferDataARB
+return		void
+param		target		GLenum
+param		size		GLsizeiptrARB
+param		data		const GLvoid *
+param		usage		GLenum
+category	GL_ARB_vertex_buffer_object
+offset		726
+
+name		BufferSubDataARB
+return		void
+param		target		GLenum
+param		offset		GLintptrARB
+param		size		GLsizeiptrARB
+param		data		const GLvoid *
+category	GL_ARB_vertex_buffer_object
+offset		727
+
+name		GetBufferSubDataARB
+return		void
+param		target		GLenum
+param		offset		GLintptrARB
+param		size		GLsizeiptrARB
+param		data		void *
+category	GL_ARB_vertex_buffer_object
+offset		728
+
+name		MapBufferARB
+return		void
+param		target		GLenum
+param		access		GLenum
+category	GL_ARB_vertex_buffer_object
+offset		729
+
+name		UnmapBufferARB
+return		GLboolean
+param		target		GLenum
+category	GL_ARB_vertex_buffer_object
+offset		730
+
+name		GetBufferParameterivARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLint *
+category	GL_ARB_vertex_buffer_object
+offset		731
+
+name		GetBufferPointervARB
+return		void
+param		target		GLenum
+param		pname		GLenum
+param		params		GLvoid **
+category	GL_ARB_vertex_buffer_object
+offset		732
 
 
 # end of file sentinal
