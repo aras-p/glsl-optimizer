@@ -1,4 +1,4 @@
-/* $Id: dd.h,v 1.12 2000/02/27 20:38:15 keithw Exp $ */
+/* $Id: dd.h,v 1.13 2000/03/03 15:38:57 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -476,6 +476,25 @@ struct dd_function_table {
     * 'unpack' describes how to unpack the source image data.
     * Return GL_TRUE if the driver succeeds, return GL_FALSE if core Mesa
     * must do the job.
+    */
+
+   GLboolean (*ReadPixels)( GLcontext *ctx,
+                            GLint x, GLint y, GLsizei width, GLsizei height,
+                            GLenum format, GLenum type,
+                            const struct gl_pixelstore_attrib *unpack,
+                            GLvoid *dest );
+   /* Called by glReadPixels.
+    * Return GL_TRUE if operation completed, else return GL_FALSE.
+    * This function must respect all glPixelTransfer settings.
+    */
+
+   GLboolean (*CopyPixels)( GLcontext *ctx,
+                            GLint srcx, GLint srcy,
+                            GLsizei width, GLsizei height,
+                            GLint dstx, GLint dsty, GLenum type );
+   /* Do a glCopyPixels.  Return GL_TRUE if operation completed, else
+    * return GL_FALSE.  This function must respect all rasterization
+    * state, glPixelTransfer, glPixelZoom, etc.
     */
 
    GLboolean (*Bitmap)( GLcontext *ctx,
