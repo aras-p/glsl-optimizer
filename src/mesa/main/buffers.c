@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -645,51 +645,62 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
 /** \name State management */
 /*@{*/
 
+
 /**
- * Update screen bounds.
- *
- * \param ctx GL context.
- *
- * Update gl_frame_buffer::_Xmin, and etc.
+ * Update the context's current drawing buffer's Xmin, Xmax, Ymin, Ymax fields.
+ * These values are computed from the buffer's width and height and
+ * the scissor box, if it's enabled.
+ * \param ctx  the GL context.
  */
-void _mesa_update_buffers( GLcontext *ctx )
+void
+_mesa_update_draw_buffer_bounds(GLcontext *ctx)
 {
-   ctx->DrawBuffer->_Xmin = 0;
-   ctx->DrawBuffer->_Ymin = 0;
-   ctx->DrawBuffer->_Xmax = ctx->DrawBuffer->Width;
-   ctx->DrawBuffer->_Ymax = ctx->DrawBuffer->Height;
+   GLframebuffer *buffer = ctx->DrawBuffer;
+
+   buffer->_Xmin = 0;
+   buffer->_Ymin = 0;
+   buffer->_Xmax = buffer->Width;
+   buffer->_Ymax = buffer->Height;
+
    if (ctx->Scissor.Enabled) {
-      if (ctx->Scissor.X > ctx->DrawBuffer->_Xmin) {
-	 ctx->DrawBuffer->_Xmin = ctx->Scissor.X;
+      if (ctx->Scissor.X > buffer->_Xmin) {
+	 buffer->_Xmin = ctx->Scissor.X;
       }
-      if (ctx->Scissor.Y > ctx->DrawBuffer->_Ymin) {
-	 ctx->DrawBuffer->_Ymin = ctx->Scissor.Y;
+      if (ctx->Scissor.Y > buffer->_Ymin) {
+	 buffer->_Ymin = ctx->Scissor.Y;
       }
-      if (ctx->Scissor.X + ctx->Scissor.Width < ctx->DrawBuffer->_Xmax) {
-	 ctx->DrawBuffer->_Xmax = ctx->Scissor.X + ctx->Scissor.Width;
+      if (ctx->Scissor.X + ctx->Scissor.Width < buffer->_Xmax) {
+	 buffer->_Xmax = ctx->Scissor.X + ctx->Scissor.Width;
       }
-      if (ctx->Scissor.Y + ctx->Scissor.Height < ctx->DrawBuffer->_Ymax) {
-	 ctx->DrawBuffer->_Ymax = ctx->Scissor.Y + ctx->Scissor.Height;
+      if (ctx->Scissor.Y + ctx->Scissor.Height < buffer->_Ymax) {
+	 buffer->_Ymax = ctx->Scissor.Y + ctx->Scissor.Height;
+      }
+      /* finally, check for empty region */
+      if (buffer->_Xmin > buffer->_Xmax) {
+         buffer->_Xmin = buffer->_Xmax;
+      }
+      if (buffer->_Ymin > buffer->_Ymax) {
+         buffer->_Ymin = buffer->_Ymax;
       }
    }
+
+   ASSERT(buffer->_Xmin <= buffer->_Xmax);
+   ASSERT(buffer->_Ymin <= buffer->_Ymax);
 }
 
 /*@}*/
 
-			   
+
 /**********************************************************************/
 /** \name Initialization */
 /*@{*/
 
 /**
- * Initialize the context scissor data.
- *
- * \param ctx GL context.
- * 
- * Initializes the __GLcontextRec::Scissor and __GLcontextRec::Multisample
- * attribute groups, and related constants in __GLcontextRec::Const.
+ * Initialize the context's scissor state.
+ * \param ctx  the GL context.
  */
-void _mesa_init_buffers( GLcontext * ctx )
+void
+_mesa_init_scissor(GLcontext *ctx)
 {
    /* Scissor group */
    ctx->Scissor.Enabled = GL_FALSE;
@@ -697,15 +708,22 @@ void _mesa_init_buffers( GLcontext * ctx )
    ctx->Scissor.Y = 0;
    ctx->Scissor.Width = 0;
    ctx->Scissor.Height = 0;
+}
 
-   /* Multisample */
+
+/**
+ * Initialize the context's multisample state.
+ * \param ctx  the GL context.
+ */
+void
+_mesa_init_multisample(GLcontext *ctx)
+{
    ctx->Multisample.Enabled = GL_FALSE;
    ctx->Multisample.SampleAlphaToCoverage = GL_FALSE;
    ctx->Multisample.SampleAlphaToOne = GL_FALSE;
    ctx->Multisample.SampleCoverage = GL_FALSE;
    ctx->Multisample.SampleCoverageValue = 1.0;
    ctx->Multisample.SampleCoverageInvert = GL_FALSE;
-
 }
 
 /*@}*/

@@ -1194,7 +1194,6 @@ init_attrib_groups( GLcontext *ctx )
    /* Attribute Groups */
    _mesa_init_accum( ctx );
    _mesa_init_attrib( ctx );
-   _mesa_init_buffers( ctx );
    _mesa_init_buffer_objects( ctx );
    _mesa_init_color( ctx );
    _mesa_init_colortables( ctx );
@@ -1210,12 +1209,14 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_line( ctx );
    _mesa_init_lighting( ctx );
    _mesa_init_matrix( ctx );
+   _mesa_init_multisample( ctx );
    _mesa_init_occlude( ctx );
    _mesa_init_pixel( ctx );
    _mesa_init_point( ctx );
    _mesa_init_polygon( ctx );
    _mesa_init_program( ctx );
    _mesa_init_rastpos( ctx );
+   _mesa_init_scissor( ctx );
    _mesa_init_shaderobjects (ctx);
    _mesa_init_stencil( ctx );
    _mesa_init_transform( ctx );
