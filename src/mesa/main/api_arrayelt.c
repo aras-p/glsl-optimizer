@@ -60,9 +60,9 @@ typedef struct {
 /*
  * Convert GL_BYTE, GL_UNSIGNED_BYTE, .. GL_DOUBLE into an integer
  * in the range [0, 7].  Luckily these type tokens are sequentially
- * numbered in gl.h
+ * numbered in gl.h, except for GL_DOUBLE.
  */
-#define TYPE_IDX(t) ((t) & 0xf)
+#define TYPE_IDX(t) ( (t) == GL_DOUBLE ? 7 : (t) & 7 )
 
 
 static array_func ColorFuncs[2][8] = {
