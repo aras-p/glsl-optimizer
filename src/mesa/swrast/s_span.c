@@ -126,7 +126,17 @@ _swrast_span_default_texcoords( GLcontext *ctx, struct sw_span *span )
 {
    GLuint i;
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-      COPY_4V(span->tex[i], ctx->Current.RasterTexCoords[i]);
+      const GLfloat *tc = ctx->Current.RasterTexCoords[i];
+      if (tc[3] > 0.0F) {
+         /* use (s/q, t/q, r/q, 1) */
+         span->tex[i][0] = tc[0] / tc[3];
+         span->tex[i][1] = tc[1] / tc[3];
+         span->tex[i][2] = tc[2] / tc[3];
+         span->tex[i][3] = 1.0;
+      }
+      else {
+         ASSIGN_4V(span->tex[i], 0.0F, 0.0F, 0.0F, 1.0F);
+      }
       ASSIGN_4V(span->texStepX[i], 0.0F, 0.0F, 0.0F, 0.0F);
       ASSIGN_4V(span->texStepY[i], 0.0F, 0.0F, 0.0F, 0.0F);
    }
