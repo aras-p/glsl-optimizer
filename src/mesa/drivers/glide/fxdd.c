@@ -657,18 +657,9 @@ int
 fxDDInitFxMesaContext(fxMesaContext fxMesa)
 {
    int i;
-   static int firsttime = 1;
 
    for (i = 0; i < 256; i++) {
       gl_ubyte_to_float_255_color_tab[i] = (float) i;
-   }
-
-   if (firsttime) {
-#if 00
-      fxDDSetupInit();
-      fxDDTrifuncInit();
-#endif
-      firsttime = 0;
    }
 
    FX_setupGrVertexLayout();
@@ -767,6 +758,7 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    fxAllocVB(fxMesa->glCtx);
 
    fxSetupDDPointers(fxMesa->glCtx);
+   fxDDInitTriFuncs(fxMesa->glCtx);
 
    /* Tell the software rasterizer to use pixel fog always.
     */
@@ -987,10 +979,9 @@ fxDDUpdateDDPointers(GLcontext * ctx, GLuint new_state)
       if (fxMesa->is_in_hardware) {
 	 if (new_state & _FX_NEW_RENDERSTATE)
 	    fxDDChooseRenderState(ctx);
-#if 000
+
 	 if (new_state & _FX_NEW_SETUP_FUNCTION)
-	    fxDDChooseSetupState(ctx);
-#endif
+	    fxChooseVertexState(ctx);
       }
 
       if (new_state & _NEW_TEXTURE)
@@ -1060,11 +1051,6 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.Enable = fxDDEnable;
 
    tnl->Driver.RunPipeline = _tnl_run_pipeline;
-
-   /* XXX is this right? (BP) */
-   /* Install swsetup for tnl->Driver.Render.*:
-    */
-   _swsetup_Wakeup(ctx);
 
    fxSetupDDSpanPointers(ctx);
    fxDDUpdateDDPointers(ctx, ~0);

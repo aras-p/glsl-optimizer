@@ -474,7 +474,7 @@ extern void fxChooseVertexState( GLcontext *ctx );
 
 /* fxtrifuncs:
  */
-extern void fxDDTrifuncInit(void);
+extern void fxDDInitTriFuncs(GLcontext *);
 extern void fxDDChooseRenderState(GLcontext * ctx);
 
 

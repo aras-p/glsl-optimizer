@@ -174,6 +174,8 @@ fx_fallback_tri( fxMesaContext fxMesa,
 {
    GLcontext *ctx = fxMesa->glCtx;
    SWvertex v[3];
+   fprintf(stderr, "%s\n", __FUNCTION__);
+
    fx_translate_vertex( ctx, v0, &v[0] );
    fx_translate_vertex( ctx, v1, &v[1] );
    fx_translate_vertex( ctx, v2, &v[2] );
@@ -653,7 +655,7 @@ void fxDDChooseRenderState(GLcontext *ctx)
    GLuint flags = ctx->_TriangleCaps;
    GLuint index = 0;
 
-/*     fprintf(stderr, "%s\n", __FUNCTION__); */
+   fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (flags & (ANY_FALLBACK_FLAGS|ANY_RASTER_FLAGS)) {
       if (flags & ANY_RASTER_FLAGS) {
@@ -681,12 +683,16 @@ void fxDDChooseRenderState(GLcontext *ctx)
 	 if (flags & LINE_FALLBACK)
 	    fxMesa->draw_line = fx_fallback_line;
 
-	 if (flags & TRI_FALLBACK)
+	 if (flags & TRI_FALLBACK) {
+	    fprintf(stderr, "tri fallback\n");
 	    fxMesa->draw_tri = fx_fallback_tri;
+	 }
 
 	 index |= FX_FALLBACK_BIT;
       }
    }
+
+   fprintf(stderr, "render index %x\n", index);
 
    tnl->Driver.Render.Points = rast_tab[index].points;
    tnl->Driver.Render.Line = rast_tab[index].line;
@@ -779,11 +785,13 @@ void fxCheckIsInHardware( GLcontext *ctx )
 
    if (newfallback) {
       if (oldfallback == 0) {
+	 fprintf(stderr, "goint to fallback\n");
 	 _swsetup_Wakeup( ctx );
       }
    }
    else {
       if (oldfallback) {
+	 fprintf(stderr, "leaving fallback\n");
 	 _swrast_flush( ctx );
 	 tnl->Driver.Render.Start = fxCheckTexSizes;
 	 tnl->Driver.Render.Finish = _swrast_flush;
@@ -795,19 +803,15 @@ void fxCheckIsInHardware( GLcontext *ctx )
 	 tnl->Driver.Render.ResetLineStipple = _swrast_ResetLineStipple;
 	 tnl->Driver.Render.BuildVertices = fxBuildVertices;
 	 tnl->Driver.Render.Multipass = 0;
-#if 000
-	 fxDDChooseSetupState(ctx);
-#endif
+	 fxChooseVertexState(ctx);
 	 fxDDChooseRenderState(ctx);
       }
    }
 }
 
-#if 00
 void fxDDInitTriFuncs( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    static int firsttime = 1;
 
    if (firsttime) {
@@ -828,7 +832,6 @@ void fxDDInitTriFuncs( GLcontext *ctx )
    
    (void) fx_print_vertex;
 }
-#endif
 
 
 #else
