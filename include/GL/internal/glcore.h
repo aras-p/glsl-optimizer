@@ -314,7 +314,9 @@ struct __GLdrawablePrivateRec {
     void (*unlockDP)(__GLdrawablePrivate *glPriv);
 
     /* exported */
+#if 0 /* disable, just like in __GLimportsRec */
     void *wsPriv;	/* pointer to the window system DrawablePrivate */
+#endif
 #ifdef __cplusplus
     void *privatePtr;
 #else
