@@ -1,4 +1,4 @@
-/* $Id: common_x86_asm.S,v 1.14 2003/01/09 14:56:25 brianp Exp $ */
+/* $Id: common_x86_asm.S,v 1.15 2003/01/09 18:03:20 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -231,7 +231,7 @@ GLNAME( _mesa_test_os_sse_exception_support ):
 	 */
 	LDMXCSR	( REGOFF( -4, EBP ) )
 
-	ADD_L	( CONST( 32 ), ESP )
+	ADD_L	( CONST( 16 ), ESP )
 
 	LEAVE
 	RET
