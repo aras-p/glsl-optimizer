@@ -1,8 +1,8 @@
-/* $Id: gl_mangle.h,v 1.3 1999/11/04 00:43:09 miklos Exp $ */
+/* $Id: gl_mangle.h,v 1.4 2000/01/04 08:07:09 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.1
+ * Version:  3.3
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -396,6 +396,8 @@
 #define glTexSubImage3DEXT mglTexSubImage3DEXT
 #define glCopyTexSubImage3DEXT mglCopyTexSubImage3DEXT
 #define glColorTable mglColorTable
+#define glColorTableParameteriv mglColorTableParameteriv
+#define glColorTableParameterfv mglColorTableParameterfv
 #define glColorSubTable mglColorSubTable
 #define glGetColorTable mglGetColorTable
 #define glGetColorTableParameteriv mglGetColorTableParameteriv 
