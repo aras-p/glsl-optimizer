@@ -1,4 +1,4 @@
-/* $Id: wmesa.c,v 1.15 2001/04/26 19:14:35 brianp Exp $ */
+/* $Id: wmesa.c,v 1.16 2001/05/09 20:42:37 brianp Exp $ */
 
 /*
  * Windows (Win32) device driver for Mesa 3.4
@@ -1050,7 +1050,8 @@ static void read_rgba_pixels( const GLcontext* ctx,
    assert(Current->rgb_flag==GL_TRUE);
    for (i=0; i<n; i++) {
       if (mask[i]) {
-         Color=GetPixel(DC,x[i],FLIP(y[i]));
+         GLint y2 = Current->Height - y[i] - 1;
+         Color=GetPixel(DC,x[i],y2);
          rgba[i][RCOMP] = GetRValue(Color);
          rgba[i][GCOMP] = GetGValue(Color);
          rgba[i][BCOMP] = GetBValue(Color);
