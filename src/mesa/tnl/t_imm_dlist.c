@@ -1,4 +1,4 @@
-/* $Id: t_imm_dlist.c,v 1.29 2001/09/14 21:30:31 brianp Exp $ */
+/* $Id: t_imm_dlist.c,v 1.30 2001/12/03 17:19:14 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -425,12 +425,18 @@ _tnl_BeginCallList( GLcontext *ctx, GLuint list )
 }
 
 
-/* Called at the tail of a CallList.  Nothing to do.
+/* Called at the tail of a CallList.  Make current immediate aware of
+ * any new to-be-copied vertices.
  */
 void
 _tnl_EndCallList( GLcontext *ctx )
 {
-   (void) ctx;
+   GLuint beginstate = 0;
+
+   if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END)
+      beginstate = VERT_BEGIN_0|VERT_BEGIN_1;
+
+   _tnl_reset_exec_input( ctx, IMM_MAX_COPIED_VERTS, beginstate, 0 );
 }
 
 
