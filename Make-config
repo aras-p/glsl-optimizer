@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.18 2000/01/17 19:00:52 brianp Exp $
+# $Id: Make-config,v 1.19 2000/02/11 20:44:00 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=3
@@ -468,9 +468,9 @@ linux-386:
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = gcc" \
-	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -I/usr/X11R6/include" \
+	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -I/usr/X11R6/include -DPTHREADS" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm -lpthread" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S X86/vertex.S"
 
 linux-386-static:
@@ -701,7 +701,7 @@ linux-386-pthread:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"CC = gcc" \
-	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/us\r/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS" \
+	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/us\r/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -D_REENTRANT -DPTHREADS" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S X86/vertex.S"
@@ -713,7 +713,7 @@ linux-386-pthread-glide:
 	"GLU_LIB = libGLU.so" \
 	"GLUT_LIB = libglut.so" \
 	"CC = gcc" \
-	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS -DFX -I/usr/include/glide -I/usr/local/glide/include" \
+	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DUSE_X86_ASM -D_REENTRANT -DPTHREADS -DFX -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.glide" \
 	"XLIBS = -L/usr/X11/lib -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/glapi_x86.S \
@@ -1103,7 +1103,7 @@ sunos5-pthread:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"CC = cc" \
-	"CFLAGS = -mt -Xa -fast -xO4 -native -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM -DSOLARIS_2_4\_BUG -DTHREADS -DPTHREADS" \
+	"CFLAGS = -mt -Xa -fast -xO4 -native -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM -DSOLARIS_2_4\_BUG -DPTHREADS" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lpthread -lm"
 
@@ -1114,7 +1114,7 @@ sunos5-thread:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"CC = cc" \
-	"CFLAGS = -mt -Xa -fast -xO4 -native -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM -DSOLARIS_2_4\_BUG -DTHREADS -DSOLARIS_THREADS" \
+	"CFLAGS = -mt -Xa -fast -xO4 -native -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM -DSOLARIS_2_4\_BUG -DSOLARIS_THREADS" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lthread -lm"
 
@@ -1125,7 +1125,7 @@ sunos5-gcc-thread:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"CC = gcc" \
-	"CFLAGS = -O3 -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG -D_REENTRANT -DTHREADS -DSOLARIS_THREADS" \
+	"CFLAGS = -O3 -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG -D_REENTRANT -DSOLARIS_THREADS" \
       	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lthread -lm"
 
@@ -1136,7 +1136,7 @@ sunos5-gcc-pthread:
 	"GLU_LIB = libGLU.a" \
 	"GLUT_LIB = libglut.a" \
 	"CC = gcc" \
-	"CFLAGS = -O3 -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG -D_REENTRANT -DTHREADS -DPTHREADS" \
+	"CFLAGS = -O3 -I/usr/openwin/include -DUSE_XSHM -DSOLARIS_2_4_BUG -D_REENTRANT -DPTHREADS" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
 	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lpthread -lm"
 
@@ -1280,9 +1280,9 @@ linux-elf-debug:
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = gcc" \
-	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DTHREADS -DPTHREADS -DDEBUG" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG -DSVGA" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -lm -lpthread"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -lm -lpthread -lvga"
 
 linux-glide-debug:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1291,7 +1291,7 @@ linux-glide-debug:
 	"GLUT_LIB = libglut.so" \
 	"GLW_LIB = libGLw.so" \
 	"CC = gcc" \
-	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DTHREADS -DPTHREADS -DFX -DDEBUG -I/usr/local/glide/include -I/usr/include/glide" \
+	"CFLAGS = -g -ansi -pedantic -Wall -Wmissing-prototypes -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DFX -DDEBUG -I/usr/local/glide/include -I/usr/include/glide" \
 	"MAKELIB = ../bin/mklib.linux" \
 	"XLIBS = -L/usr/local/glide/lib -lglide2x -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -lm -lpthread"
 
