@@ -981,6 +981,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       _mesa_enable_sw_extensions(&(osmesa->mesa));
       _mesa_enable_1_3_extensions(&(osmesa->mesa));
       _mesa_enable_1_4_extensions(&(osmesa->mesa));
+      _mesa_enable_1_5_extensions(&(osmesa->mesa));
 
       osmesa->gl_buffer = _mesa_create_framebuffer( osmesa->gl_visual,
                            (GLboolean) ( osmesa->gl_visual->depthBits > 0 ),

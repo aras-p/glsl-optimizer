@@ -1626,6 +1626,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    _mesa_enable_sw_extensions(mesaCtx);
    _mesa_enable_1_3_extensions(mesaCtx);
    _mesa_enable_1_4_extensions(mesaCtx);
+   _mesa_enable_1_5_extensions(mesaCtx);
 
    if (CHECK_BYTE_ORDER(v)) {
       c->swapbytes = GL_FALSE;
