@@ -97,7 +97,7 @@ stand-alone: depend subdirs $(LIB_DIR)/$(GL_LIB_NAME) $(LIB_DIR)/$(OSMESA_LIB_NA
 osmesa-only: depend subdirs $(LIB_DIR)/$(OSMESA_LIB_NAME)
 
 subdirs:
-	(cd x86 ; make)
+	@ (cd x86 ; make)
 
 # Make the GL library
 $(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS)
