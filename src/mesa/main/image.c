@@ -1,4 +1,4 @@
-/* $Id: image.c,v 1.26 2000/04/12 18:54:48 brianp Exp $ */
+/* $Id: image.c,v 1.27 2000/04/15 23:05:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1212,9 +1212,9 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
             if (format == GL_RGB) {
                GLubyte *dst = (GLubyte *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLint) (rgba[i][RCOMP]   * 7.0F)) << 5)
+                  dst[i] = (((GLint) (rgba[i][RCOMP] * 7.0F)) << 5)
                          | (((GLint) (rgba[i][GCOMP] * 7.0F)) << 2)
-                         | (((GLint) (rgba[i][BCOMP]  * 3.0F))     );
+                         | (((GLint) (rgba[i][BCOMP] * 3.0F))     );
                }
             }
             break;
@@ -1222,9 +1222,9 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
             if (format == GL_RGB) {
                GLubyte *dst = (GLubyte *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLint) (rgba[i][RCOMP]   * 7.0F))     )
+                  dst[i] = (((GLint) (rgba[i][RCOMP] * 7.0F))     )
                          | (((GLint) (rgba[i][GCOMP] * 7.0F)) << 3)
-                         | (((GLint) (rgba[i][BCOMP]  * 3.0F)) << 5);
+                         | (((GLint) (rgba[i][BCOMP] * 3.0F)) << 5);
                }
             }
             break;
@@ -1232,9 +1232,9 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
             if (format == GL_RGB) {
                GLushort *dst = (GLushort *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLint) (rgba[i][RCOMP]   * 31.0F)) << 11)
+                  dst[i] = (((GLint) (rgba[i][RCOMP] * 31.0F)) << 11)
                          | (((GLint) (rgba[i][GCOMP] * 63.0F)) <<  5)
-                         | (((GLint) (rgba[i][BCOMP]  * 31.0F))      );
+                         | (((GLint) (rgba[i][BCOMP] * 31.0F))      );
                }
             }
             break;
@@ -1242,9 +1242,9 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
             if (format == GL_RGB) {
                GLushort *dst = (GLushort *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLint) (rgba[i][RCOMP]   * 31.0F))      )
+                  dst[i] = (((GLint) (rgba[i][RCOMP] * 31.0F))      )
                          | (((GLint) (rgba[i][GCOMP] * 63.0F)) <<  5)
-                         | (((GLint) (rgba[i][BCOMP]  * 31.0F)) << 11);
+                         | (((GLint) (rgba[i][BCOMP] * 31.0F)) << 11);
                }
             }
             break;
@@ -1252,9 +1252,9 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
             if (format == GL_RGB) {
                GLushort *dst = (GLushort *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLint) (rgba[i][RCOMP]   * 15.0F)) << 12)
+                  dst[i] = (((GLint) (rgba[i][RCOMP] * 15.0F)) << 12)
                          | (((GLint) (rgba[i][GCOMP] * 15.0F)) <<  8)
-                         | (((GLint) (rgba[i][BCOMP]  * 15.0F)) <<  4)
+                         | (((GLint) (rgba[i][BCOMP] * 15.0F)) <<  4)
                          | (((GLint) (rgba[i][ACOMP] * 15.0F))      );
                }
             }
@@ -1263,9 +1263,9 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
             if (format == GL_RGB) {
                GLushort *dst = (GLushort *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLint) (rgba[i][RCOMP]   * 15.0F))      )
+                  dst[i] = (((GLint) (rgba[i][RCOMP] * 15.0F))      )
                          | (((GLint) (rgba[i][GCOMP] * 15.0F)) <<  4)
-                         | (((GLint) (rgba[i][BCOMP]  * 15.0F)) <<  8)
+                         | (((GLint) (rgba[i][BCOMP] * 15.0F)) <<  8)
                          | (((GLint) (rgba[i][ACOMP] * 15.0F)) << 12);
                }
             }
@@ -1274,9 +1274,9 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
             if (format == GL_RGB) {
                GLushort *dst = (GLushort *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLint) (rgba[i][RCOMP]   * 31.0F)) << 11)
+                  dst[i] = (((GLint) (rgba[i][RCOMP] * 31.0F)) << 11)
                          | (((GLint) (rgba[i][GCOMP] * 31.0F)) <<  6)
-                         | (((GLint) (rgba[i][BCOMP]  * 31.0F)) <<  1)
+                         | (((GLint) (rgba[i][BCOMP] * 31.0F)) <<  1)
                          | (((GLint) (rgba[i][ACOMP] *  1.0F))      );
                }
             }
@@ -1285,9 +1285,9 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
             if (format == GL_RGB) {
                GLushort *dst = (GLushort *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLint) (rgba[i][RCOMP]   * 31.0F))      )
+                  dst[i] = (((GLint) (rgba[i][RCOMP] * 31.0F))      )
                          | (((GLint) (rgba[i][GCOMP] * 31.0F)) <<  5)
-                         | (((GLint) (rgba[i][BCOMP]  * 31.0F)) << 10)
+                         | (((GLint) (rgba[i][BCOMP] * 31.0F)) << 10)
                          | (((GLint) (rgba[i][ACOMP] *  1.0F)) << 15);
                }
             }
@@ -1296,18 +1296,18 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
             if (format == GL_RGBA) {
                GLuint *dst = (GLuint *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLuint) (rgba[i][RCOMP]   * 255.0F)) << 24)
+                  dst[i] = (((GLuint) (rgba[i][RCOMP] * 255.0F)) << 24)
                          | (((GLuint) (rgba[i][GCOMP] * 255.0F)) << 16)
-                         | (((GLuint) (rgba[i][BCOMP]  * 255.0F)) <<  8)
+                         | (((GLuint) (rgba[i][BCOMP] * 255.0F)) <<  8)
                          | (((GLuint) (rgba[i][ACOMP] * 255.0F))      );
                }
             }
             else if (format == GL_BGRA) {
                GLuint *dst = (GLuint *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLuint) (rgba[i][BCOMP]  * 255.0F)) << 24)
+                  dst[i] = (((GLuint) (rgba[i][BCOMP] * 255.0F)) << 24)
                          | (((GLuint) (rgba[i][GCOMP] * 255.0F)) << 16)
-                         | (((GLuint) (rgba[i][RCOMP]   * 255.0F)) <<  8)
+                         | (((GLuint) (rgba[i][RCOMP] * 255.0F)) <<  8)
                          | (((GLuint) (rgba[i][ACOMP] * 255.0F))      );
                }
             }
@@ -1315,9 +1315,9 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
                GLuint *dst = (GLuint *) destination;
                for (i=0;i<n;i++) {
                   dst[i] = (((GLuint) (rgba[i][ACOMP] * 255.0F)) << 24)
-                         | (((GLuint) (rgba[i][BCOMP]  * 255.0F)) << 16)
+                         | (((GLuint) (rgba[i][BCOMP] * 255.0F)) << 16)
                          | (((GLuint) (rgba[i][GCOMP] * 255.0F)) <<  8)
-                         | (((GLuint) (rgba[i][RCOMP]   * 255.0F))      );
+                         | (((GLuint) (rgba[i][RCOMP] * 255.0F))      );
                }
             }
             break;
@@ -1325,18 +1325,18 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
             if (format == GL_RGBA) {
                GLuint *dst = (GLuint *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLuint) (rgba[i][RCOMP]   * 255.0F))      )
+                  dst[i] = (((GLuint) (rgba[i][RCOMP] * 255.0F))      )
                          | (((GLuint) (rgba[i][GCOMP] * 255.0F)) <<  8)
-                         | (((GLuint) (rgba[i][BCOMP]  * 255.0F)) << 16)
+                         | (((GLuint) (rgba[i][BCOMP] * 255.0F)) << 16)
                          | (((GLuint) (rgba[i][ACOMP] * 255.0F)) << 24);
                }
             }
             else if (format == GL_BGRA) {
                GLuint *dst = (GLuint *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLuint) (rgba[i][BCOMP]  * 255.0F))      )
+                  dst[i] = (((GLuint) (rgba[i][BCOMP] * 255.0F))      )
                          | (((GLuint) (rgba[i][GCOMP] * 255.0F)) <<  8)
-                         | (((GLuint) (rgba[i][RCOMP]   * 255.0F)) << 16)
+                         | (((GLuint) (rgba[i][RCOMP] * 255.0F)) << 16)
                          | (((GLuint) (rgba[i][ACOMP] * 255.0F)) << 24);
                }
             }
@@ -1344,9 +1344,9 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
                GLuint *dst = (GLuint *) destination;
                for (i=0;i<n;i++) {
                   dst[i] = (((GLuint) (rgba[i][ACOMP] * 255.0F))      )
-                         | (((GLuint) (rgba[i][BCOMP]  * 255.0F)) <<  8)
+                         | (((GLuint) (rgba[i][BCOMP] * 255.0F)) <<  8)
                          | (((GLuint) (rgba[i][GCOMP] * 255.0F)) << 16)
-                         | (((GLuint) (rgba[i][RCOMP]   * 255.0F)) << 24);
+                         | (((GLuint) (rgba[i][RCOMP] * 255.0F)) << 24);
                }
             }
             break;
@@ -1354,18 +1354,18 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
             if (format == GL_RGBA) {
                GLuint *dst = (GLuint *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLuint) (rgba[i][RCOMP]   * 1023.0F)) << 22)
+                  dst[i] = (((GLuint) (rgba[i][RCOMP] * 1023.0F)) << 22)
                          | (((GLuint) (rgba[i][GCOMP] * 1023.0F)) << 12)
-                         | (((GLuint) (rgba[i][BCOMP]  * 1023.0F)) <<  2)
+                         | (((GLuint) (rgba[i][BCOMP] * 1023.0F)) <<  2)
                          | (((GLuint) (rgba[i][ACOMP] *    3.0F))      );
                }
             }
             else if (format == GL_BGRA) {
                GLuint *dst = (GLuint *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLuint) (rgba[i][BCOMP]  * 1023.0F)) << 22)
+                  dst[i] = (((GLuint) (rgba[i][BCOMP] * 1023.0F)) << 22)
                          | (((GLuint) (rgba[i][GCOMP] * 1023.0F)) << 12)
-                         | (((GLuint) (rgba[i][RCOMP]   * 1023.0F)) <<  2)
+                         | (((GLuint) (rgba[i][RCOMP] * 1023.0F)) <<  2)
                          | (((GLuint) (rgba[i][ACOMP] *    3.0F))      );
                }
             }
@@ -1373,9 +1373,9 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
                GLuint *dst = (GLuint *) destination;
                for (i=0;i<n;i++) {
                   dst[i] = (((GLuint) (rgba[i][ACOMP] * 1023.0F)) << 22)
-                         | (((GLuint) (rgba[i][BCOMP]  * 1023.0F)) << 12)
+                         | (((GLuint) (rgba[i][BCOMP] * 1023.0F)) << 12)
                          | (((GLuint) (rgba[i][GCOMP] * 1023.0F)) <<  2)
-                         | (((GLuint) (rgba[i][RCOMP]   *    3.0F))      );
+                         | (((GLuint) (rgba[i][RCOMP] *    3.0F))      );
                }
             }
             break;
@@ -1383,18 +1383,18 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
             if (format == GL_RGBA) {
                GLuint *dst = (GLuint *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLuint) (rgba[i][RCOMP]   * 1023.0F))      )
+                  dst[i] = (((GLuint) (rgba[i][RCOMP] * 1023.0F))      )
                          | (((GLuint) (rgba[i][GCOMP] * 1023.0F)) << 10)
-                         | (((GLuint) (rgba[i][BCOMP]  * 1023.0F)) << 20)
+                         | (((GLuint) (rgba[i][BCOMP] * 1023.0F)) << 20)
                          | (((GLuint) (rgba[i][ACOMP] *    3.0F)) << 30);
                }
             }
             else if (format == GL_BGRA) {
                GLuint *dst = (GLuint *) destination;
                for (i=0;i<n;i++) {
-                  dst[i] = (((GLuint) (rgba[i][BCOMP]  * 1023.0F))      )
+                  dst[i] = (((GLuint) (rgba[i][BCOMP] * 1023.0F))      )
                          | (((GLuint) (rgba[i][GCOMP] * 1023.0F)) << 10)
-                         | (((GLuint) (rgba[i][RCOMP]   * 1023.0F)) << 20)
+                         | (((GLuint) (rgba[i][RCOMP] * 1023.0F)) << 20)
                          | (((GLuint) (rgba[i][ACOMP] *    3.0F)) << 30);
                }
             }
@@ -1402,9 +1402,9 @@ _mesa_pack_rgba_span( const GLcontext *ctx,
                GLuint *dst = (GLuint *) destination;
                for (i=0;i<n;i++) {
                   dst[i] = (((GLuint) (rgba[i][ACOMP] * 1023.0F))      )
-                         | (((GLuint) (rgba[i][BCOMP]  * 1023.0F)) << 10)
+                         | (((GLuint) (rgba[i][BCOMP] * 1023.0F)) << 10)
                          | (((GLuint) (rgba[i][GCOMP] * 1023.0F)) << 20)
-                         | (((GLuint) (rgba[i][RCOMP]   *    3.0F)) << 30);
+                         | (((GLuint) (rgba[i][RCOMP] *    3.0F)) << 30);
                }
             }
             break;
