@@ -1,4 +1,4 @@
-/* $Id: genkgi_visual.c,v 1.4 1999/08/22 08:56:50 jtaylor Exp $
+/* $Id: genkgi_visual.c,v 1.5 1999/09/21 00:46:26 jtaylor Exp $
 ******************************************************************************
 
    genkgi_visual.c: visual handling for the generic KGI helper
@@ -49,15 +49,6 @@
 #endif
 #include <linux/tty.h>
 
-
-//static int refcount = 0;
-//static int vtnum;
-//static void *_ggi_fbdev_lock = NULL;
-//#ifdef FBIOGET_CON2FBMAP
-//static struct fb_con2fbmap origconmap;
-//#endif
-
-//#define MAX_DEV_LEN	63
 #define DEFAULT_FBNUM	0
 
 static char accel_prefix[] = "tgt-fbdev-kgicon-";
@@ -70,7 +61,7 @@ typedef struct {
 
 static accel_info accel_strings[] = 
 {
-	{ 0, "d3dim" },		/* Direct3D Immedaite Mode     		*/
+	{ 0, "d3dim" },		/* Direct3D Immediate Mode     		*/
 };
 
 #define NUM_ACCELS	(sizeof(accel_strings)/sizeof(accel_info))
@@ -135,7 +126,7 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 	err = ggLoadConfig(conffile, &_configHandle);
 	if (err != GGI_OK)
 	{
-		gl_ggiPrint("display-fbdev: Couldn't open %s\n", conffile);
+		gl_ggiPrint("display-fbdev-kgicon-mesa: Couldn't open %s\n", conffile);
 		return err;
 	}
 
@@ -143,7 +134,7 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 	 * suggest-strings to discover the acceleration type(s).
 	 */
 	priv->have_accel = 0;
-#if 1
+
 	if (stat("/proc/gfx0", &junk) == 0)
 	{
 		sprintf(priv->accel, "%s%s", accel_prefix, "d3dim");
@@ -154,7 +145,6 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 	/* Mode management */
 	vis->opdisplay->getapi = GGIMesa_genkgi_getapi;	
 	ggiIndicateChange(vis, GGI_CHG_APILIST);
-#endif
 	
 	/* Give the accel sublibs a chance to set up a driver */
 	if (priv->have_accel == 1)
@@ -168,11 +158,10 @@ int GGIdlinit(ggi_visual *vis, const char *args, void *argptr)
 		    (LIBGGI_MESAEXT(vis)->setup_driver == NULL))
 		  vis->opdisplay->getapi = oldgetapi;
 	}
-#endif
 	
 	LIBGGI_MESAEXT(vis)->update_state = genkgi_update_state;
 	LIBGGI_MESAEXT(vis)->setup_driver = genkgi_setup_driver;
-	
+#endif	
 	gl_ggiDEBUG("display-fbdev-kgicon-mesa: GGIdlinit finished\n");
 
 	return 0;
