@@ -398,6 +398,46 @@ static void insert_4ub_4f_bgra_1( const struct tnl_clipspace_attr *a, GLubyte *v
    v[3] = 0xff;
 }
 
+static void insert_4ub_4f_argb_4( const struct tnl_clipspace_attr *a, GLubyte *v, 
+				const GLfloat *in )
+{
+   (void) a;
+   UNCLAMPED_FLOAT_TO_UBYTE(v[1], in[0]);
+   UNCLAMPED_FLOAT_TO_UBYTE(v[2], in[1]);
+   UNCLAMPED_FLOAT_TO_UBYTE(v[3], in[2]);
+   UNCLAMPED_FLOAT_TO_UBYTE(v[0], in[3]);
+}
+
+static void insert_4ub_4f_argb_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
+				const GLfloat *in )
+{
+   (void) a;
+   UNCLAMPED_FLOAT_TO_UBYTE(v[1], in[0]);
+   UNCLAMPED_FLOAT_TO_UBYTE(v[2], in[1]);
+   UNCLAMPED_FLOAT_TO_UBYTE(v[3], in[2]);
+   v[0] = 0xff;
+}
+
+static void insert_4ub_4f_argb_2( const struct tnl_clipspace_attr *a, GLubyte *v, 
+				const GLfloat *in )
+{
+   (void) a;
+   UNCLAMPED_FLOAT_TO_UBYTE(v[1], in[0]);
+   UNCLAMPED_FLOAT_TO_UBYTE(v[2], in[1]);
+   v[3] = 0x00;
+   v[0] = 0xff;
+}
+
+static void insert_4ub_4f_argb_1( const struct tnl_clipspace_attr *a, GLubyte *v, 
+				const GLfloat *in )
+{
+   (void) a;
+   UNCLAMPED_FLOAT_TO_UBYTE(v[1], in[0]);
+   v[2] = 0x00;
+   v[3] = 0x00;
+   v[0] = 0xff;
+}
+
 static void insert_3ub_3f_rgb_3( const struct tnl_clipspace_attr *a, GLubyte *v, 
 			       const GLfloat *in )
 {
@@ -598,6 +638,16 @@ static void extract_4ub_4f_bgra( const struct tnl_clipspace_attr *a, GLfloat *ou
    out[3] = UBYTE_TO_FLOAT(v[3]);
 }
 
+static void extract_4ub_4f_argb( const struct tnl_clipspace_attr *a, GLfloat *out, 
+				 const GLubyte *v )
+{
+   (void) a;
+   out[3] = UBYTE_TO_FLOAT(v[0]);
+   out[0] = UBYTE_TO_FLOAT(v[1]);
+   out[1] = UBYTE_TO_FLOAT(v[2]);
+   out[2] = UBYTE_TO_FLOAT(v[3]);
+}
+
 static void extract_3ub_3f_rgb( const struct tnl_clipspace_attr *a, GLfloat *out, 
 				const GLubyte *v )
 {
@@ -706,6 +756,12 @@ static struct {
      extract_4ub_4f_bgra,
      { insert_4ub_4f_bgra_1, insert_4ub_4f_bgra_2, insert_4ub_4f_bgra_3,
        insert_4ub_4f_bgra_4 },
+     4 * sizeof(GLubyte) },
+
+   { "4ub_4f_argb",
+     extract_4ub_4f_argb,
+     { insert_4ub_4f_argb_1, insert_4ub_4f_argb_2, insert_4ub_4f_argb_3,
+       insert_4ub_4f_argb_4 },
      4 * sizeof(GLubyte) },
 
    { "4chan_4f_rgba",
