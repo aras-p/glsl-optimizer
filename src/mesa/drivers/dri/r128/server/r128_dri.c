@@ -728,6 +728,7 @@ static GLboolean R128DRIScreenInit(DRIDriverContext *ctx)
     R128DRIPtr    pR128DRI;
     int           err, major, minor, patch;
     drmVersionPtr version;
+    drm_r128_sarea_t *pSAREAPriv;
 
     switch (ctx->bpp) {
     case 8:
@@ -884,7 +885,6 @@ static GLboolean R128DRIScreenInit(DRIDriverContext *ctx)
 	  0,
 	  info->backPitch * ctx->cpp * ctx->shared.virtualHeight );
     
-    drm_r128_sarea_t *pSAREAPriv;
     pSAREAPriv = (drm_r128_sarea_t *)(((char*)ctx->pSAREA) + 
 					sizeof(drm_sarea_t));
     memset(pSAREAPriv, 0, sizeof(*pSAREAPriv));
