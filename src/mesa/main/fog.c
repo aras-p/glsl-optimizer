@@ -1,4 +1,4 @@
-/* $Id: fog.c,v 1.24 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: fog.c,v 1.25 2000/10/28 20:41:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "colormac.h"
 #include "context.h"
 #include "fog.h"
 #include "macros.h"

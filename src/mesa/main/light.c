@@ -1,4 +1,4 @@
-/* $Id: light.c,v 1.19 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: light.c,v 1.20 2000/10/28 20:41:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "colormac.h"
 #include "context.h"
 #include "enums.h"
 #include "light.h"
@@ -591,7 +592,7 @@ void gl_update_material( GLcontext *ctx,
 	 ACC_SCALE_3V( light->MatDiffuse[0], light->Diffuse, tmp );
       }
       COPY_4FV( mat->Diffuse, src[0].Diffuse );
-      FLOAT_COLOR_TO_UBYTE_COLOR(ctx->Light.BaseAlpha[0], mat->Diffuse[3]);
+      FLOAT_COLOR_TO_CHAN(ctx->Light.BaseAlpha[0], mat->Diffuse[3]);
    }
    if (bitmask & BACK_DIFFUSE_BIT) {
       struct gl_material *mat = &ctx->Light.Material[1];
@@ -601,7 +602,7 @@ void gl_update_material( GLcontext *ctx,
 	 ACC_SCALE_3V( light->MatDiffuse[1], light->Diffuse, tmp );
       }
       COPY_4FV( mat->Diffuse, src[1].Diffuse );
-      FLOAT_COLOR_TO_UBYTE_COLOR(ctx->Light.BaseAlpha[1], mat->Diffuse[3]);
+      FLOAT_COLOR_TO_CHAN(ctx->Light.BaseAlpha[1], mat->Diffuse[3]);
    }
 
    /* update material specular values */
@@ -691,8 +692,11 @@ void gl_update_color_material( GLcontext *ctx,
    GLuint bitmask = ctx->Light.ColorMaterialBitmask;
    GLfloat color[4];
 
-   UBYTE_RGBA_TO_FLOAT_RGBA( color, rgba );
-   
+   color[0] = CHAN_TO_FLOAT(rgba[0]);
+   color[1] = CHAN_TO_FLOAT(rgba[1]);
+   color[2] = CHAN_TO_FLOAT(rgba[2]);
+   color[3] = CHAN_TO_FLOAT(rgba[3]);
+
    if (MESA_VERBOSE&VERBOSE_IMMEDIATE)
       fprintf(stderr, "gl_update_color_material, mask 0x%x\n", bitmask);
 
@@ -746,7 +750,7 @@ void gl_update_color_material( GLcontext *ctx,
 	 ACC_SCALE_3V( light->MatDiffuse[0], light->Diffuse, tmp );
       }
       COPY_4FV( mat->Diffuse, color );
-      FLOAT_COLOR_TO_UBYTE_COLOR(ctx->Light.BaseAlpha[0], mat->Diffuse[3]);
+      FLOAT_COLOR_TO_CHAN(ctx->Light.BaseAlpha[0], mat->Diffuse[3]);
    }
 
    if (bitmask & BACK_DIFFUSE_BIT) {
@@ -757,7 +761,7 @@ void gl_update_color_material( GLcontext *ctx,
 	 ACC_SCALE_3V( light->MatDiffuse[1], light->Diffuse, tmp );
       }
       COPY_4FV( mat->Diffuse, color );
-      FLOAT_COLOR_TO_UBYTE_COLOR(ctx->Light.BaseAlpha[1], mat->Diffuse[3]);
+      FLOAT_COLOR_TO_CHAN(ctx->Light.BaseAlpha[1], mat->Diffuse[3]);
    }
 
    /* update light->MatSpecular = light's specular * material's specular */
@@ -1280,8 +1284,8 @@ gl_update_lighting( GLcontext *ctx )
 		      ctx->Light.Model.Ambient,
 		      mat->Ambient);
 
-	 FLOAT_COLOR_TO_UBYTE_COLOR(ctx->Light.BaseAlpha[side],
-				    ctx->Light.Material[side].Diffuse[3] );
+	 FLOAT_COLOR_TO_CHAN(ctx->Light.BaseAlpha[side],
+                             ctx->Light.Material[side].Diffuse[3] );
       }
       
       foreach (light, &ctx->Light.EnabledList) {	 

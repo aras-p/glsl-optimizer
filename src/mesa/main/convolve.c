@@ -1,4 +1,4 @@
-/* $Id: convolve.c,v 1.6 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: convolve.c,v 1.7 2000/10/28 20:41:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -37,6 +37,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "colormac.h"
 #include "convolve.h"
 #include "context.h"
 #include "image.h"

@@ -1,4 +1,4 @@
-/* $Id: drawpix.c,v 1.39 2000/10/27 16:44:40 keithw Exp $ */
+/* $Id: drawpix.c,v 1.40 2000/10/28 20:41:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "colormac.h"
 #include "context.h"
 #include "convolve.h"
 #include "drawpix.h"
@@ -916,7 +917,10 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       if (ctx->Current.RasterPosValid) {
          GLfloat color[4];
 	 GLfloat texcoord[4], invq;
-	 UBYTE_RGBA_TO_FLOAT_RGBA(color, ctx->Current.ByteColor);
+         color[0] = CHAN_TO_FLOAT(ctx->Current.ByteColor[0]);
+         color[1] = CHAN_TO_FLOAT(ctx->Current.ByteColor[1]);
+         color[2] = CHAN_TO_FLOAT(ctx->Current.ByteColor[2]);
+         color[3] = CHAN_TO_FLOAT(ctx->Current.ByteColor[3]);
          invq = 1.0F / ctx->Current.Texcoord[0][3];
          texcoord[0] = ctx->Current.Texcoord[0][0] * invq;
          texcoord[1] = ctx->Current.Texcoord[0][1] * invq;

@@ -1,4 +1,4 @@
-/* $Id: rastpos.c,v 1.9 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: rastpos.c,v 1.10 2000/10/28 20:41:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,7 @@
 #else
 #include "glheader.h"
 #include "clip.h"
+#include "colormac.h"
 #include "context.h"
 #include "feedback.h"
 #include "light.h"
@@ -91,8 +92,10 @@ static void raster_pos4f( GLcontext *ctx,
    else {
       /* use current color or index */
       if (ctx->Visual.RGBAflag) {
-	 CHAN_RGBA_TO_FLOAT_RGBA(ctx->Current.RasterColor, 
-                                 ctx->Current.ByteColor);
+         ctx->Current.RasterColor[0] = CHAN_TO_FLOAT(ctx->Current.ByteColor[0]);
+         ctx->Current.RasterColor[1] = CHAN_TO_FLOAT(ctx->Current.ByteColor[1]);
+         ctx->Current.RasterColor[2] = CHAN_TO_FLOAT(ctx->Current.ByteColor[2]);
+         ctx->Current.RasterColor[3] = CHAN_TO_FLOAT(ctx->Current.ByteColor[3]);
       }
       else {
 	 ctx->Current.RasterIndex = ctx->Current.Index;

@@ -1,4 +1,4 @@
-/* $Id: dlist.c,v 1.48 2000/10/27 18:31:21 brianp Exp $ */
+/* $Id: dlist.c,v 1.49 2000/10/28 20:41:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,6 +36,7 @@
 #include "blend.h"
 #include "buffers.h"
 #include "clip.h"
+#include "colormac.h"
 #include "colortab.h"
 #include "context.h"
 #include "convolve.h"

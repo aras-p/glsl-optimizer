@@ -1,4 +1,4 @@
-/* $Id: clip.c,v 1.10 2000/10/27 16:44:40 keithw Exp $ */
+/* $Id: clip.c,v 1.11 2000/10/28 20:41:13 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,7 @@
 #else
 #include "glheader.h"
 #include "clip.h"
+#include "colormac.h"
 #include "context.h"
 #include "macros.h"
 #include "matrix.h"

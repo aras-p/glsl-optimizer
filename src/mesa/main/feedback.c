@@ -1,4 +1,4 @@
-/* $Id: feedback.c,v 1.12 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: feedback.c,v 1.13 2000/10/28 20:41:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "colormac.h"
 #include "context.h"
 #include "enums.h"
 #include "feedback.h"
@@ -174,7 +175,10 @@ static void feedback_vertex( GLcontext *ctx, GLuint v, GLuint pv )
    if (ctx->Light.ShadeModel == GL_SMOOTH)
       pv = v;
 
-   CHAN_RGBA_TO_FLOAT_RGBA( color, VB->ColorPtr->data[pv] );
+   color[0] = CHAN_TO_FLOAT(VB->ColorPtr->data[pv][0]);
+   color[1] = CHAN_TO_FLOAT(VB->ColorPtr->data[pv][1]);
+   color[2] = CHAN_TO_FLOAT(VB->ColorPtr->data[pv][2]);
+   color[3] = CHAN_TO_FLOAT(VB->ColorPtr->data[pv][3]);
 
    if (VB->TexCoordPtr[texUnit]->size == 4 &&     
        VB->TexCoordPtr[texUnit]->data[v][3] != 0.0) {

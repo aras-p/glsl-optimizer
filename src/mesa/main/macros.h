@@ -1,10 +1,10 @@
-/* $Id: macros.h,v 1.10 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: macros.h,v 1.11 2000/10/28 20:41:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -122,6 +122,19 @@ do {						\
    (DST)[1] = (SRC)[1];				\
    (DST)[2] = (SRC)[2];				\
    (DST)[3] = (SRC)[3];				\
+} while (0)
+
+#define COPY_4UBV(DST, SRC)			\
+do {						\
+   if (sizeof(GLuint)==4*sizeof(GLubyte)) {	\
+      *((GLuint*)(DST)) = *((GLuint*)(SRC));	\
+   }						\
+   else {					\
+      (DST)[0] = (SRC)[0];			\
+      (DST)[1] = (SRC)[1];			\
+      (DST)[2] = (SRC)[2];			\
+      (DST)[3] = (SRC)[3];			\
+   }						\
 } while (0)
 
 
@@ -351,26 +364,6 @@ do {						\
 
 
 
-/*
- * Copy a vector of 4 GLubytes from SRC to DST.
- */
-#define COPY_4UBV(DST, SRC)			\
-do {						\
-   if (sizeof(GLuint)==4*sizeof(GLubyte)) {	\
-      *((GLuint*)(DST)) = *((GLuint*)(SRC));	\
-   }						\
-   else {					\
-      (DST)[0] = (SRC)[0];			\
-      (DST)[1] = (SRC)[1];			\
-      (DST)[2] = (SRC)[2];			\
-      (DST)[3] = (SRC)[3];			\
-   }						\
-} while (0)
-
-
-#define COPY_CHAN4(DST, SRC)  COPY_4UBV(DST, SRC)
-
-
 /* Assign scalers to short vectors: */
 #define ASSIGN_2V( V, V0, V1 )	\
 do { 				\
@@ -436,7 +429,7 @@ do { 						\
 #define DOT4( a, b )  ( (a)[0]*(b)[0] + (a)[1]*(b)[1] + \
 			(a)[2]*(b)[2] + (a)[3]*(b)[3] )
 
-#define DOT4V(v,a,b,c,d) (v[0]*a + v[1]*b + v[2]*c + v[3]*d)
+#define DOT4V(v,a,b,c,d) (v[0]*(a) + v[1]*(b) + v[2]*(c) + v[3]*(d))
 
 
 #define CROSS3(n, u, v) 			\
@@ -446,64 +439,5 @@ do {						\
    (n)[2] = (u)[0]*(v)[1] - (u)[1]*(v)[0];	\
 } while (0)
 
-
-/*
- * Integer / float conversion for colors, normals, etc.
- */
-
-#define BYTE_TO_UBYTE(b)   (b < 0 ? 0 : (GLubyte) b)
-#define SHORT_TO_UBYTE(s)  (s < 0 ? 0 : (GLubyte) (s >> 7))
-#define USHORT_TO_UBYTE(s)              (GLubyte) (s >> 8)
-#define INT_TO_UBYTE(i)    (i < 0 ? 0 : (GLubyte) (i >> 23))
-#define UINT_TO_UBYTE(i)                (GLubyte) (i >> 24)
-
-/* Convert GLubyte in [0,255] to GLfloat in [0.0,1.0] */
-#define UBYTE_TO_FLOAT(B)	((GLfloat) (B) * (1.0F / 255.0F))
-
-/* Convert GLfloat in [0.0,1.0] to GLubyte in [0,255] */
-#define FLOAT_TO_UBYTE(X)	((GLubyte) (GLint) (((X)) * 255.0F))
-
-
-/* Convert GLbyte in [-128,127] to GLfloat in [-1.0,1.0] */
-#define BYTE_TO_FLOAT(B)	((2.0F * (B) + 1.0F) * (1.0F/255.0F))
-
-/* Convert GLfloat in [-1.0,1.0] to GLbyte in [-128,127] */
-#define FLOAT_TO_BYTE(X)	( (((GLint) (255.0F * (X))) - 1) / 2 )
-
-
-/* Convert GLushort in [0,65536] to GLfloat in [0.0,1.0] */
-#define USHORT_TO_FLOAT(S)	((GLfloat) (S) * (1.0F / 65535.0F))
-
-/* Convert GLfloat in [0.0,1.0] to GLushort in [0,65536] */
-#define FLOAT_TO_USHORT(X)	((GLushort) (GLint) ((X) * 65535.0F))
-
-
-/* Convert GLshort in [-32768,32767] to GLfloat in [-1.0,1.0] */
-#define SHORT_TO_FLOAT(S)	((2.0F * (S) + 1.0F) * (1.0F/65535.0F))
-
-/* Convert GLfloat in [0.0,1.0] to GLshort in [-32768,32767] */
-#define FLOAT_TO_SHORT(X)	( (((GLint) (65535.0F * (X))) - 1) / 2 )
-
-
-/* Convert GLuint in [0,4294967295] to GLfloat in [0.0,1.0] */
-#define UINT_TO_FLOAT(U)	((GLfloat) (U) * (1.0F / 4294967295.0F))
-
-/* Convert GLfloat in [0.0,1.0] to GLuint in [0,4294967295] */
-#define FLOAT_TO_UINT(X)	((GLuint) ((X) * 4294967295.0))
-
-
-/* Convert GLint in [-2147483648,2147483647] to GLfloat in [-1.0,1.0] */
-#define INT_TO_FLOAT(I)		((2.0F * (I) + 1.0F) * (1.0F/4294967294.0F))
-
-/* Convert GLfloat in [-1.0,1.0] to GLint in [-2147483648,2147483647] */
-/* causes overflow:
-#define FLOAT_TO_INT(X)		( (((GLint) (4294967294.0F * (X))) - 1) / 2 )
-*/
-/* a close approximation: */
-#define FLOAT_TO_INT(X)		( (GLint) (2147483647.0 * (X)) )
-
-
-/* XXX chan fix me */
-#define CHAN_TO_FLOAT(C)        ( (GLfloat) ((C) * (1.0 / CHAN_MAXF)) )
 
 #endif

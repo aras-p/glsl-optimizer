@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.36 2000/10/28 18:34:48 brianp Exp $ */
+/* $Id: get.c,v 1.37 2000/10/28 20:41:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -29,6 +29,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "colormac.h"
 #include "context.h"
 #include "enable.h"
 #include "enums.h"
@@ -1418,10 +1419,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = ENUM_TO_DOUBLE(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-         params[0] = CHAN_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[0]);
-         params[1] = CHAN_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[1]);
-         params[2] = CHAN_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[2]);
-         params[3] = CHAN_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[3]);
+         params[0] = CHAN_TO_FLOAT(ctx->Current.ByteColor[0]);
+         params[1] = CHAN_TO_FLOAT(ctx->Current.ByteColor[1]);
+         params[2] = CHAN_TO_FLOAT(ctx->Current.ByteColor[2]);
+         params[3] = CHAN_TO_FLOAT(ctx->Current.ByteColor[3]);
          break;
       case GL_CURRENT_INDEX:
          *params = (GLdouble) ctx->Current.Index;
@@ -2610,7 +2611,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = ENUM_TO_FLOAT(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-	 CHAN_RGBA_TO_FLOAT_RGBA(params, ctx->Current.ByteColor);
+         params[0] = CHAN_TO_FLOAT(ctx->Current.ByteColor[0]);
+         params[1] = CHAN_TO_FLOAT(ctx->Current.ByteColor[1]);
+         params[2] = CHAN_TO_FLOAT(ctx->Current.ByteColor[2]);
+         params[3] = CHAN_TO_FLOAT(ctx->Current.ByteColor[3]);
          break;
       case GL_CURRENT_INDEX:
          *params = (GLfloat) ctx->Current.Index;
@@ -3775,10 +3779,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Polygon.CullFaceMode;
          break;
       case GL_CURRENT_COLOR:
-         params[0] = FLOAT_TO_INT( CHAN_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[0] ) );
-         params[1] = FLOAT_TO_INT( CHAN_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[1] ) );
-         params[2] = FLOAT_TO_INT( CHAN_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[2] ) );
-         params[3] = FLOAT_TO_INT( CHAN_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[3] ) );
+         params[0] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.ByteColor[0] ) );
+         params[1] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.ByteColor[1] ) );
+         params[2] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.ByteColor[2] ) );
+         params[3] = FLOAT_TO_INT( CHAN_TO_FLOAT( ctx->Current.ByteColor[3] ) );
          break;
       case GL_CURRENT_INDEX:
          *params = (GLint) ctx->Current.Index;

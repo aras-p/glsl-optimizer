@@ -1,8 +1,8 @@
-/* $Id: eval.c,v 1.11 2000/09/11 18:49:06 brianp Exp $ */
+/* $Id: eval.c,v 1.12 2000/10/28 20:41:14 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -42,6 +42,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "colormac.h"
 #include "context.h"
 #include "eval.h"
 #include "macros.h"
@@ -2110,7 +2111,7 @@ static GLvector4ub *eval1_color( GLvector4ub *dest,
 	 GLfloat u = (coord[i][0] - u1) * du;
 	 GLfloat fcolor[4];
 	 horner_bezier_curve(map->Points, fcolor, u, 4, map->Order);
-	 FLOAT_RGBA_TO_UBYTE_RGBA(to[i], fcolor);
+	 FLOAT_RGBA_TO_CHAN_RGBA(to[i], fcolor);
 	 flags[i+1] |= VERT_RGBA; /* reset */
       }
 
@@ -2270,7 +2271,7 @@ static GLvector4ub *eval2_color( GLvector4ub *dest,
 	 GLfloat fcolor[4];
 	 horner_bezier_surf(map->Points, fcolor, u, v, 4,
 			    map->Uorder, map->Vorder);
-	 FLOAT_RGBA_TO_UBYTE_RGBA(to[i], fcolor);
+	 FLOAT_RGBA_TO_CHAN_RGBA(to[i], fcolor);
 	 flags[i+1] |= VERT_RGBA; /* reset */
       }
 
