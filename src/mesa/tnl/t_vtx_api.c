@@ -52,32 +52,47 @@ static void init_attrfv( TNLcontext *tnl );
 static void _tnl_wrap_buffers( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   GLuint last_prim = tnl->vtx.prim[tnl->vtx.prim_count-1].mode;
-   GLuint last_count = tnl->vtx.prim[tnl->vtx.prim_count-1].count;
+   
 
-   if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {
-      GLint i = tnl->vtx.prim_count - 1;
-      assert(i >= 0);
-      tnl->vtx.prim[i].count = ((tnl->vtx.initial_counter - tnl->vtx.counter) - 
-				tnl->vtx.prim[i].start);
+   if (tnl->vtx.prim_count == 0) {
+      tnl->vtx.copied.nr = 0;
+      tnl->vtx.counter = tnl->vtx.initial_counter;
+      tnl->vtx.vbptr = tnl->vtx.buffer;
    }
+   else {
+      GLuint last_prim = tnl->vtx.prim[tnl->vtx.prim_count-1].mode;
+      GLuint last_count = tnl->vtx.prim[tnl->vtx.prim_count-1].count;
 
-   /* Execute the buffer and save copied vertices.
-    */
-   _tnl_flush_vtx( ctx );
+      if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {
+	 GLint i = tnl->vtx.prim_count - 1;
+	 assert(i >= 0);
+	 tnl->vtx.prim[i].count = ((tnl->vtx.initial_counter - 
+				    tnl->vtx.counter) - 
+				   tnl->vtx.prim[i].start);
+      }
 
-   /* Emit a glBegin to start the new list.
-    */
-   assert(tnl->vtx.prim_count == 0);
+      /* Execute the buffer and save copied vertices.
+       */
+      if (tnl->vtx.counter != tnl->vtx.initial_counter)
+	 _tnl_flush_vtx( ctx );
+      else {
+	 tnl->vtx.prim_count = 0;
+	 tnl->vtx.copied.nr = 0;
+      }
 
-   if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {
-      tnl->vtx.prim[0].mode = ctx->Driver.CurrentExecPrimitive;
-      tnl->vtx.prim[0].start = 0;
-      tnl->vtx.prim[0].count = 0;
-      tnl->vtx.prim_count++;
+      /* Emit a glBegin to start the new list.
+       */
+      assert(tnl->vtx.prim_count == 0);
+
+      if (ctx->Driver.CurrentExecPrimitive != GL_POLYGON+1) {
+	 tnl->vtx.prim[0].mode = ctx->Driver.CurrentExecPrimitive;
+	 tnl->vtx.prim[0].start = 0;
+	 tnl->vtx.prim[0].count = 0;
+	 tnl->vtx.prim_count++;
       
-      if (tnl->vtx.copied.nr == last_count)
-	 tnl->vtx.prim[0].mode |= last_prim & PRIM_BEGIN;
+	 if (tnl->vtx.copied.nr == last_count)
+	    tnl->vtx.prim[0].mode |= last_prim & PRIM_BEGIN;
+      }
    }
 }
 
@@ -98,7 +113,8 @@ static void _tnl_wrap_filled_vertex( GLcontext *ctx )
    assert(tnl->vtx.counter > tnl->vtx.copied.nr);
 
    for (i = 0 ; i < tnl->vtx.copied.nr ; i++) {
-      _mesa_memcpy( tnl->vtx.vbptr, data, tnl->vtx.vertex_size * sizeof(GLfloat));
+      _mesa_memcpy( tnl->vtx.vbptr, data, 
+		    tnl->vtx.vertex_size * sizeof(GLfloat));
       tnl->vtx.vbptr += tnl->vtx.vertex_size;
       data += tnl->vtx.vertex_size;
       tnl->vtx.counter--;
@@ -190,6 +206,7 @@ static void _tnl_wrap_upgrade_vertex( GLcontext *ctx,
     * to tnl->vtx.copied.
     */
    _tnl_wrap_buffers( ctx );
+
 
    /* Do a COPY_TO_CURRENT to ensure back-copying works for the case
     * when the attribute already exists in the vertex and is having
