@@ -56,6 +56,7 @@
 #endif
 #include "glxextensions.h"
 #include "glcontextmodes.h"
+#include "glheader.h"
 
 #ifdef GLX_DIRECT_RENDERING
 #include <inttypes.h>
@@ -1556,9 +1557,8 @@ static Bool UnbindContextWrapper( Display *dpy, GLXContext gc )
 ** Make a particular context current.
 ** NOTE: this is in this file so that it can access dummyContext.
 */
-static Bool MakeContextCurrent(Display *dpy, 
-			       GLXDrawable draw, GLXDrawable read,
-			       GLXContext gc)
+USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
+                                    GLXDrawable read, GLXContext gc)
 {
     xGLXMakeCurrentReply reply;
     GLXContext oldGC;
@@ -1775,16 +1775,17 @@ static Bool MakeContextCurrent(Display *dpy,
 }
 
 
-Bool GLX_PREFIX(glXMakeCurrent)(Display *dpy, GLXDrawable draw, GLXContext gc)
+PUBLIC Bool GLX_PREFIX(glXMakeCurrent)(Display *dpy, GLXDrawable draw,
+                                       GLXContext gc)
 {
     return MakeContextCurrent( dpy, draw, draw, gc );
 }
 
-GLX_ALIAS(Bool, glXMakeCurrentReadSGI,
+PUBLIC GLX_ALIAS(Bool, glXMakeCurrentReadSGI,
 	  (Display *dpy, GLXDrawable d, GLXDrawable r, GLXContext ctx),
 	  (dpy, d, r, ctx), MakeContextCurrent)
 
-GLX_ALIAS(Bool, glXMakeContextCurrent,
+PUBLIC GLX_ALIAS(Bool, glXMakeContextCurrent,
 	  (Display *dpy, GLXDrawable d, GLXDrawable r, GLXContext ctx),
 	  (dpy, d, r, ctx), MakeContextCurrent)
 

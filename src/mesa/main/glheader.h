@@ -281,11 +281,16 @@ typedef GLushort GLhalfARB;
 
 /* If we build the library with gcc's -fvisibility=hidden flag, we'll
  * use the PUBLIC macro to mark functions that are to be exported.
+ *
+ * We also need to define a USED attribute, so the optimizer doesn't 
+ * inline a static function that we later use in an alias. - ajax
  */
 #if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
 #  define PUBLIC __attribute__((visibility("default")))
+#  define USED __attribute__((used))
 #else
 #  define PUBLIC
+#  define USED
 #endif
 
 

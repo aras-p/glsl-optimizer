@@ -52,6 +52,7 @@
 #endif
 #include "glxextensions.h"
 #include "glcontextmodes.h"
+#include "glheader.h"
 #include <sys/time.h>
 
 #ifdef IN_DOXYGEN
@@ -540,9 +541,9 @@ CreateContext(Display *dpy, XVisualInfo *vis,
     return gc;
 }
 
-
-GLXContext GLX_PREFIX(glXCreateContext)(Display *dpy, XVisualInfo *vis,
-			    GLXContext shareList, Bool allowDirect)
+PUBLIC GLXContext GLX_PREFIX(glXCreateContext)(Display *dpy, XVisualInfo *vis,
+                                               GLXContext shareList,
+                                               Bool allowDirect)
 {
    return CreateContext(dpy, vis, NULL, shareList, allowDirect, None,
 			False, 0);
@@ -616,7 +617,8 @@ DestroyContext(Display *dpy, GLXContext gc)
 	SyncHandle();
     }
 }
-void GLX_PREFIX(glXDestroyContext)(Display *dpy, GLXContext gc)
+
+PUBLIC void GLX_PREFIX(glXDestroyContext)(Display *dpy, GLXContext gc)
 {
     DestroyContext(dpy, gc);
 }
@@ -624,7 +626,7 @@ void GLX_PREFIX(glXDestroyContext)(Display *dpy, GLXContext gc)
 /*
 ** Return the major and minor version #s for the GLX extension
 */
-Bool GLX_PREFIX(glXQueryVersion)(Display *dpy, int *major, int *minor)
+PUBLIC Bool GLX_PREFIX(glXQueryVersion)(Display *dpy, int *major, int *minor)
 {
     __GLXdisplayPrivate *priv;
 
@@ -640,7 +642,8 @@ Bool GLX_PREFIX(glXQueryVersion)(Display *dpy, int *major, int *minor)
 /*
 ** Query the existance of the GLX extension
 */
-Bool GLX_PREFIX(glXQueryExtension)(Display *dpy, int *errorBase, int *eventBase)
+PUBLIC Bool GLX_PREFIX(glXQueryExtension)(Display *dpy, int *errorBase,
+                                          int *eventBase)
 {
     int major_op, erb, evb;
     Bool rv;
@@ -657,7 +660,7 @@ Bool GLX_PREFIX(glXQueryExtension)(Display *dpy, int *errorBase, int *eventBase)
 ** Put a barrier in the token stream that forces the GL to finish its
 ** work before X can proceed.
 */
-void GLX_PREFIX(glXWaitGL)(void)
+PUBLIC void GLX_PREFIX(glXWaitGL)(void)
 {
     xGLXWaitGLReq *req;
     GLXContext gc = __glXGetCurrentContext();
@@ -693,7 +696,7 @@ void GLX_PREFIX(glXWaitGL)(void)
 ** Put a barrier in the token stream that forces X to finish its
 ** work before GL can proceed.
 */
-void GLX_PREFIX(glXWaitX)(void)
+PUBLIC void GLX_PREFIX(glXWaitX)(void)
 {
     xGLXWaitXReq *req;
     GLXContext gc = __glXGetCurrentContext();
@@ -723,7 +726,8 @@ void GLX_PREFIX(glXWaitX)(void)
     SyncHandle();
 }
 
-void GLX_PREFIX(glXUseXFont)(Font font, int first, int count, int listBase)
+PUBLIC void GLX_PREFIX(glXUseXFont)(Font font, int first, int count,
+                                    int listBase)
 {
     xGLXUseXFontReq *req;
     GLXContext gc = __glXGetCurrentContext();
@@ -761,8 +765,8 @@ void GLX_PREFIX(glXUseXFont)(Font font, int first, int count, int listBase)
 ** Copy the source context to the destination context using the
 ** attribute "mask".
 */
-void GLX_PREFIX(glXCopyContext)(Display *dpy, GLXContext source, GLXContext dest,
-		    unsigned long mask)
+PUBLIC void GLX_PREFIX(glXCopyContext)(Display *dpy, GLXContext source,
+                                       GLXContext dest, unsigned long mask)
 {
     xGLXCopyContextReq *req;
     GLXContext gc = __glXGetCurrentContext();
@@ -836,7 +840,7 @@ static Bool __glXIsDirect(Display *dpy, GLXContextID contextID)
     return reply.isDirect;
 }
 
-Bool GLX_PREFIX(glXIsDirect)(Display *dpy, GLXContext gc)
+PUBLIC Bool GLX_PREFIX(glXIsDirect)(Display *dpy, GLXContext gc)
 {
     if (!gc) {
 	return GL_FALSE;
@@ -848,7 +852,8 @@ Bool GLX_PREFIX(glXIsDirect)(Display *dpy, GLXContext gc)
     return __glXIsDirect(dpy, gc->xid);
 }
 
-GLXPixmap GLX_PREFIX(glXCreateGLXPixmap)(Display *dpy, XVisualInfo *vis, Pixmap pixmap)
+PUBLIC GLXPixmap GLX_PREFIX(glXCreateGLXPixmap)(Display *dpy, XVisualInfo *vis,
+                                                Pixmap pixmap)
 {
     xGLXCreateGLXPixmapReq *req;
     GLXPixmap xid;
@@ -876,7 +881,7 @@ GLXPixmap GLX_PREFIX(glXCreateGLXPixmap)(Display *dpy, XVisualInfo *vis, Pixmap 
 /*
 ** Destroy the named pixmap
 */
-void GLX_PREFIX(glXDestroyGLXPixmap)(Display *dpy, GLXPixmap glxpixmap)
+PUBLIC void GLX_PREFIX(glXDestroyGLXPixmap)(Display *dpy, GLXPixmap glxpixmap)
 {
     xGLXDestroyGLXPixmapReq *req;
     CARD8 opcode;
@@ -896,7 +901,7 @@ void GLX_PREFIX(glXDestroyGLXPixmap)(Display *dpy, GLXPixmap glxpixmap)
     SyncHandle();
 }
 
-void GLX_PREFIX(glXSwapBuffers)(Display *dpy, GLXDrawable drawable)
+PUBLIC void GLX_PREFIX(glXSwapBuffers)(Display *dpy, GLXDrawable drawable)
 {
     xGLXSwapBuffersReq *req;
     GLXContext gc;
@@ -945,8 +950,8 @@ void GLX_PREFIX(glXSwapBuffers)(Display *dpy, GLXDrawable drawable)
 ** Return configuration information for the given display, screen and
 ** visual combination.
 */
-int GLX_PREFIX(glXGetConfig)(Display *dpy, XVisualInfo *vis, int attribute,
-		 int *value_return)
+PUBLIC int GLX_PREFIX(glXGetConfig)(Display *dpy, XVisualInfo *vis,
+                                    int attribute, int *value_return)
 {
     __GLXdisplayPrivate *priv;
     __GLXscreenConfigs *psc;
@@ -1302,7 +1307,8 @@ choose_visual( __GLcontextModes ** configs, int num_configs,
 ** Return the visual that best matches the template.  Return None if no
 ** visual matches the template.
 */
-XVisualInfo *GLX_PREFIX(glXChooseVisual)(Display *dpy, int screen, int *attribList)
+PUBLIC XVisualInfo *GLX_PREFIX(glXChooseVisual)(Display *dpy, int screen,
+                                                int *attribList)
 {
     XVisualInfo *visualList = NULL;
     __GLXdisplayPrivate *priv;
@@ -1360,7 +1366,8 @@ XVisualInfo *GLX_PREFIX(glXChooseVisual)(Display *dpy, int screen, int *attribLi
 }
 
 
-const char *GLX_PREFIX(glXQueryExtensionsString)( Display *dpy, int screen )
+PUBLIC const char *GLX_PREFIX(glXQueryExtensionsString)( Display *dpy,
+                                                         int screen )
 {
     __GLXscreenConfigs *psc;
     __GLXdisplayPrivate *priv;
@@ -1388,7 +1395,7 @@ const char *GLX_PREFIX(glXQueryExtensionsString)( Display *dpy, int screen )
     return psc->effectiveGLXexts;
 }
 
-const char *GLX_PREFIX(glXGetClientString)( Display *dpy, int name )
+PUBLIC const char *GLX_PREFIX(glXGetClientString)( Display *dpy, int name )
 {
     switch(name) {
 	case GLX_VENDOR:
@@ -1402,7 +1409,8 @@ const char *GLX_PREFIX(glXGetClientString)( Display *dpy, int name )
     }
 }
 
-const char *GLX_PREFIX(glXQueryServerString)( Display *dpy, int screen, int name )
+PUBLIC const char *GLX_PREFIX(glXQueryServerString)( Display *dpy, int screen,
+                                                     int name )
 {
     __GLXscreenConfigs *psc;
     __GLXdisplayPrivate *priv;
@@ -1465,14 +1473,14 @@ void __glXClientInfo (  Display *dpy, int opcode  )
 ** EXT_import_context
 */
 
-Display *glXGetCurrentDisplay(void)
+PUBLIC Display *glXGetCurrentDisplay(void)
 {
     GLXContext gc = __glXGetCurrentContext();
     if (NULL == gc) return NULL;
     return gc->currentDpy;
 }
 
-GLX_ALIAS(Display *, glXGetCurrentDisplayEXT, (void), (),
+PUBLIC GLX_ALIAS(Display *, glXGetCurrentDisplayEXT, (void), (),
 	  glXGetCurrentDisplay)
 
 /**
@@ -1582,7 +1590,7 @@ static int __glXQueryContextInfo(Display *dpy, GLXContext ctx)
     return retval;
 }
 
-int
+PUBLIC int
 GLX_PREFIX(glXQueryContext)(Display *dpy, GLXContext ctx,
 			    int attribute, int *value)
 {
@@ -1615,17 +1623,18 @@ GLX_PREFIX(glXQueryContext)(Display *dpy, GLXContext ctx,
     return Success;
 }
 
-GLX_ALIAS( int, glXQueryContextInfoEXT,
+PUBLIC GLX_ALIAS( int, glXQueryContextInfoEXT,
 	   (Display *dpy, GLXContext ctx, int attribute, int *value),
 	   (dpy, ctx, attribute, value),
 	   glXQueryContext )
 
-GLXContextID glXGetContextIDEXT(const GLXContext ctx)
+PUBLIC GLXContextID glXGetContextIDEXT(const GLXContext ctx)
 {
     return ctx->xid;
 }
 
-GLXContext GLX_PREFIX(glXImportContextEXT)(Display *dpy, GLXContextID contextID)
+PUBLIC GLXContext GLX_PREFIX(glXImportContextEXT)(Display *dpy,
+                                                  GLXContextID contextID)
 {
     GLXContext ctx;
 
@@ -1645,7 +1654,7 @@ GLXContext GLX_PREFIX(glXImportContextEXT)(Display *dpy, GLXContextID contextID)
     return ctx;
 }
 
-void GLX_PREFIX(glXFreeContextEXT)(Display *dpy, GLXContext ctx)
+PUBLIC void GLX_PREFIX(glXFreeContextEXT)(Display *dpy, GLXContext ctx)
 {
     DestroyContext(dpy, ctx);
 }
@@ -1656,7 +1665,9 @@ void GLX_PREFIX(glXFreeContextEXT)(Display *dpy, GLXContext ctx)
  * GLX 1.3 functions - these are just stubs for now!
  */
 
-GLXFBConfig *GLX_PREFIX(glXChooseFBConfig)(Display *dpy, int screen, const int *attribList, int *nitems)
+PUBLIC GLXFBConfig *GLX_PREFIX(glXChooseFBConfig)(Display *dpy, int screen,
+                                                  const int *attribList,
+                                                  int *nitems)
 {
     __GLcontextModes ** config_list;
     int   list_size;
@@ -1679,21 +1690,26 @@ GLXFBConfig *GLX_PREFIX(glXChooseFBConfig)(Display *dpy, int screen, const int *
 }
 
 
-GLXContext GLX_PREFIX(glXCreateNewContext)(Display *dpy, GLXFBConfig config, int renderType, GLXContext shareList, Bool allowDirect)
+PUBLIC GLXContext GLX_PREFIX(glXCreateNewContext)(Display *dpy,
+                                                  GLXFBConfig config,
+                                                  int renderType,
+                                                  GLXContext shareList,
+                                                  Bool allowDirect)
 {
     return CreateContext( dpy, NULL, (__GLcontextModes *) config, shareList,
 			  allowDirect, None, True, renderType );
 }
 
 
-GLXDrawable GLX_PREFIX(glXGetCurrentReadDrawable)(void)
+PUBLIC GLXDrawable GLX_PREFIX(glXGetCurrentReadDrawable)(void)
 {
     GLXContext gc = __glXGetCurrentContext();
     return gc->currentReadable;
 }
 
 
-GLXFBConfig *GLX_PREFIX(glXGetFBConfigs)(Display *dpy, int screen, int *nelements)
+PUBLIC GLXFBConfig *GLX_PREFIX(glXGetFBConfigs)(Display *dpy, int screen,
+                                                int *nelements)
 {
     __GLXdisplayPrivate *priv = __glXInitialize(dpy);
     __GLcontextModes ** config = NULL;
@@ -1732,7 +1748,8 @@ GLXFBConfig *GLX_PREFIX(glXGetFBConfigs)(Display *dpy, int screen, int *nelement
 }
 
 
-int GLX_PREFIX(glXGetFBConfigAttrib)(Display *dpy, GLXFBConfig config, int attribute, int *value)
+PUBLIC int GLX_PREFIX(glXGetFBConfigAttrib)(Display *dpy, GLXFBConfig config,
+                                            int attribute, int *value)
 {
     __GLcontextModes * const modes = ValidateGLXFBConfig( dpy, config );
 
@@ -1742,7 +1759,8 @@ int GLX_PREFIX(glXGetFBConfigAttrib)(Display *dpy, GLXFBConfig config, int attri
 }
 
 
-XVisualInfo *GLX_PREFIX(glXGetVisualFromFBConfig)(Display *dpy, GLXFBConfig config)
+PUBLIC XVisualInfo *GLX_PREFIX(glXGetVisualFromFBConfig)(Display *dpy,
+                                                         GLXFBConfig config)
 {
     XVisualInfo visualTemplate;
     __GLcontextModes * fbconfig = (__GLcontextModes *) config;
@@ -1760,14 +1778,14 @@ XVisualInfo *GLX_PREFIX(glXGetVisualFromFBConfig)(Display *dpy, GLXFBConfig conf
 ** GLX_SGI_make_current_read
 */
 
-GLX_ALIAS(GLXDrawable, glXGetCurrentReadDrawableSGI, (void), (),
+PUBLIC GLX_ALIAS(GLXDrawable, glXGetCurrentReadDrawableSGI, (void), (),
 	  glXGetCurrentReadDrawable)
 
 
 /*
 ** GLX_SGI_swap_control
 */
-int GLX_PREFIX(glXSwapIntervalSGI)(int interval)
+PUBLIC int GLX_PREFIX(glXSwapIntervalSGI)(int interval)
 {
    xGLXVendorPrivateReq *req;
    GLXContext gc = __glXGetCurrentContext();
@@ -1828,7 +1846,7 @@ int GLX_PREFIX(glXSwapIntervalSGI)(int interval)
 /*
 ** GLX_MESA_swap_control
 */
-GLint GLX_PREFIX(glXSwapIntervalMESA)(unsigned interval)
+PUBLIC GLint GLX_PREFIX(glXSwapIntervalMESA)(unsigned interval)
 {
 #ifdef GLX_DIRECT_RENDERING
    GLXContext gc = __glXGetCurrentContext();
@@ -1860,7 +1878,7 @@ GLint GLX_PREFIX(glXSwapIntervalMESA)(unsigned interval)
    return GLX_BAD_CONTEXT;
 }
  
-GLint GLX_PREFIX(glXGetSwapIntervalMESA)( void )
+PUBLIC GLint GLX_PREFIX(glXGetSwapIntervalMESA)( void )
 {
 #ifdef GLX_DIRECT_RENDERING
    GLXContext gc = __glXGetCurrentContext();
@@ -1890,7 +1908,8 @@ GLint GLX_PREFIX(glXGetSwapIntervalMESA)( void )
 ** GLX_MESA_swap_frame_usage
 */
 
-GLint GLX_PREFIX(glXBeginFrameTrackingMESA)(Display *dpy, GLXDrawable drawable)
+PUBLIC GLint GLX_PREFIX(glXBeginFrameTrackingMESA)(Display *dpy,
+                                                   GLXDrawable drawable)
 {
    int   status = GLX_BAD_CONTEXT;
 #ifdef GLX_DIRECT_RENDERING
@@ -1910,7 +1929,8 @@ GLint GLX_PREFIX(glXBeginFrameTrackingMESA)(Display *dpy, GLXDrawable drawable)
 }
 
     
-GLint GLX_PREFIX(glXEndFrameTrackingMESA)(Display *dpy, GLXDrawable drawable)
+PUBLIC GLint GLX_PREFIX(glXEndFrameTrackingMESA)(Display *dpy,
+                                                 GLXDrawable drawable)
 {
    int   status = GLX_BAD_CONTEXT;
 #ifdef GLX_DIRECT_RENDERING
@@ -1930,8 +1950,9 @@ GLint GLX_PREFIX(glXEndFrameTrackingMESA)(Display *dpy, GLXDrawable drawable)
 }
 
 
-GLint GLX_PREFIX(glXGetFrameUsageMESA)(Display *dpy, GLXDrawable drawable,
-				       GLfloat *usage)
+PUBLIC GLint GLX_PREFIX(glXGetFrameUsageMESA)(Display *dpy,
+                                              GLXDrawable drawable,
+                                              GLfloat *usage)
 {
    int   status = GLX_BAD_CONTEXT;
 #ifdef GLX_DIRECT_RENDERING
@@ -1957,9 +1978,11 @@ GLint GLX_PREFIX(glXGetFrameUsageMESA)(Display *dpy, GLXDrawable drawable,
 }
 
 
-GLint GLX_PREFIX(glXQueryFrameTrackingMESA)(Display *dpy, GLXDrawable drawable,
-					    int64_t *sbc, int64_t *missedFrames,
-					    GLfloat *lastMissedUsage)
+PUBLIC GLint GLX_PREFIX(glXQueryFrameTrackingMESA)(Display *dpy,
+                                                   GLXDrawable drawable,
+                                                   int64_t *sbc,
+                                                   int64_t *missedFrames,
+                                                   GLfloat *lastMissedUsage)
 {
    int   status = GLX_BAD_CONTEXT;
 #ifdef GLX_DIRECT_RENDERING
@@ -1989,7 +2012,7 @@ GLint GLX_PREFIX(glXQueryFrameTrackingMESA)(Display *dpy, GLXDrawable drawable,
 /*
 ** GLX_SGI_video_sync
 */
-int GLX_PREFIX(glXGetVideoSyncSGI)(unsigned int *count)
+PUBLIC int GLX_PREFIX(glXGetVideoSyncSGI)(unsigned int *count)
 {
    /* FIXME: Looking at the GLX_SGI_video_sync spec in the extension registry,
     * FIXME: there should be a GLX encoding for this call.  I can find no
@@ -2018,7 +2041,8 @@ int GLX_PREFIX(glXGetVideoSyncSGI)(unsigned int *count)
    return GLX_BAD_CONTEXT;
 }
 
-int GLX_PREFIX(glXWaitVideoSyncSGI)(int divisor, int remainder, unsigned int *count)
+PUBLIC int GLX_PREFIX(glXWaitVideoSyncSGI)(int divisor, int remainder,
+                                           unsigned int *count)
 {
 #ifdef GLX_DIRECT_RENDERING
    GLXContext gc = __glXGetCurrentContext();
@@ -2060,7 +2084,9 @@ int GLX_PREFIX(glXWaitVideoSyncSGI)(int divisor, int remainder, unsigned int *co
 */
 #if defined(_VL_H)
 
-GLXVideoSourceSGIX GLX_PREFIX(glXCreateGLXVideoSourceSGIX)(Display *dpy, int screen, VLServer server, VLPath path, int nodeClass, VLNode drainNode)
+PUBLIC GLXVideoSourceSGIX GLX_PREFIX(glXCreateGLXVideoSourceSGIX)(Display *dpy,
+                                     int screen, VLServer server, VLPath path,
+                                     int nodeClass, VLNode drainNode)
 {
    (void) dpy;
    (void) screen;
@@ -2071,7 +2097,8 @@ GLXVideoSourceSGIX GLX_PREFIX(glXCreateGLXVideoSourceSGIX)(Display *dpy, int scr
    return 0;
 }
 
-void GLX_PREFIX(glXDestroyGLXVideoSourceSGIX)(Display *dpy, GLXVideoSourceSGIX src)
+PUBLIC void GLX_PREFIX(glXDestroyGLXVideoSourceSGIX)(Display *dpy,
+                                                     GLXVideoSourceSGIX src)
 {
    (void) dpy;
    (void) src;
@@ -2086,22 +2113,23 @@ void GLX_PREFIX(glXDestroyGLXVideoSourceSGIX)(Display *dpy, GLXVideoSourceSGIX s
 ** GLX_functions table.
 */
 
-GLX_ALIAS(int, glXGetFBConfigAttribSGIX,
+PUBLIC GLX_ALIAS(int, glXGetFBConfigAttribSGIX,
 	  (Display *dpy, GLXFBConfigSGIX config, int attribute, int *value),
 	  (dpy, config, attribute, value),
 	  glXGetFBConfigAttrib)
 
-GLX_ALIAS(GLXFBConfigSGIX *, glXChooseFBConfigSGIX,
+PUBLIC GLX_ALIAS(GLXFBConfigSGIX *, glXChooseFBConfigSGIX,
 	  (Display *dpy, int screen, int *attrib_list, int *nelements),
 	  (dpy, screen, attrib_list, nelements),
 	  glXChooseFBConfig)
 
-GLX_ALIAS(XVisualInfo *, glXGetVisualFromFBConfigSGIX,
+PUBLIC GLX_ALIAS(XVisualInfo *, glXGetVisualFromFBConfigSGIX,
 	  (Display * dpy, GLXFBConfigSGIX config),
 	  (dpy, config),
 	  glXGetVisualFromFBConfig)
 
-GLXPixmap GLX_PREFIX(glXCreateGLXPixmapWithConfigSGIX)(Display *dpy, GLXFBConfigSGIX config, Pixmap pixmap)
+PUBLIC GLXPixmap GLX_PREFIX(glXCreateGLXPixmapWithConfigSGIX)(Display *dpy,
+                            GLXFBConfigSGIX config, Pixmap pixmap)
 {
     xGLXVendorPrivateWithReplyReq *vpreq;
     xGLXCreateGLXPixmapWithConfigSGIXReq *req;
@@ -2142,7 +2170,9 @@ GLXPixmap GLX_PREFIX(glXCreateGLXPixmapWithConfigSGIX)(Display *dpy, GLXFBConfig
     return xid;
 }
 
-GLXContext GLX_PREFIX(glXCreateContextWithConfigSGIX)(Display *dpy, GLXFBConfigSGIX config, int renderType, GLXContext shareList, Bool allowDirect)
+PUBLIC GLXContext GLX_PREFIX(glXCreateContextWithConfigSGIX)(Display *dpy,
+                             GLXFBConfigSGIX config, int renderType,
+                             GLXContext shareList, Bool allowDirect)
 {
     GLXContext gc = NULL;
     const __GLcontextModes * const fbconfig = (__GLcontextModes *) config;
@@ -2164,7 +2194,8 @@ GLXContext GLX_PREFIX(glXCreateContextWithConfigSGIX)(Display *dpy, GLXFBConfigS
 }
 
 
-GLXFBConfigSGIX GLX_PREFIX(glXGetFBConfigFromVisualSGIX)(Display *dpy, XVisualInfo *vis)
+PUBLIC GLXFBConfigSGIX GLX_PREFIX(glXGetFBConfigFromVisualSGIX)(Display *dpy,
+                                                            XVisualInfo *vis)
 {
     __GLXdisplayPrivate *priv;
     __GLXscreenConfigs *psc;
@@ -2183,7 +2214,7 @@ GLXFBConfigSGIX GLX_PREFIX(glXGetFBConfigFromVisualSGIX)(Display *dpy, XVisualIn
 /*
 ** GLX_SGI_cushion
 */
-void GLX_PREFIX(glXCushionSGI)(Display *dpy, Window win, float cushion)
+PUBLIC void GLX_PREFIX(glXCushionSGI)(Display *dpy, Window win, float cushion)
 {
    (void) dpy;
    (void) win;
@@ -2194,7 +2225,8 @@ void GLX_PREFIX(glXCushionSGI)(Display *dpy, Window win, float cushion)
 /*
 ** GLX_SGIX_video_resize
 */
-int GLX_PREFIX(glXBindChannelToWindowSGIX)(Display *dpy, int screen, int channel , Window window)
+PUBLIC int GLX_PREFIX(glXBindChannelToWindowSGIX)(Display *dpy, int screen,
+                                                  int channel , Window window)
 {
    (void) dpy;
    (void) screen;
@@ -2203,7 +2235,8 @@ int GLX_PREFIX(glXBindChannelToWindowSGIX)(Display *dpy, int screen, int channel
    return 0;
 }
 
-int GLX_PREFIX(glXChannelRectSGIX)(Display *dpy, int screen, int channel, int x, int y, int w, int h)
+PUBLIC int GLX_PREFIX(glXChannelRectSGIX)(Display *dpy, int screen, int channel,
+                                          int x, int y, int w, int h)
 {
    (void) dpy;
    (void) screen;
@@ -2215,7 +2248,9 @@ int GLX_PREFIX(glXChannelRectSGIX)(Display *dpy, int screen, int channel, int x,
    return 0;
 }
 
-int GLX_PREFIX(glXQueryChannelRectSGIX)(Display *dpy, int screen, int channel, int *x, int *y, int *w, int *h)
+PUBLIC int GLX_PREFIX(glXQueryChannelRectSGIX)(Display *dpy, int screen,
+                                               int channel, int *x, int *y,
+                                               int *w, int *h)
 {
    (void) dpy;
    (void) screen;
@@ -2227,7 +2262,8 @@ int GLX_PREFIX(glXQueryChannelRectSGIX)(Display *dpy, int screen, int channel, i
    return 0;
 }
 
-int GLX_PREFIX(glXQueryChannelDeltasSGIX)(Display *dpy, int screen, int channel, int *dx, int *dy, int *dw, int *dh)
+int GLX_PREFIX(glXQueryChannelDeltasSGIX)(Display *dpy, int screen, int channel,
+                                          int *dx, int *dy, int *dw, int *dh)
 {
    (void) dpy;
    (void) screen;
@@ -2239,7 +2275,8 @@ int GLX_PREFIX(glXQueryChannelDeltasSGIX)(Display *dpy, int screen, int channel,
    return 0;
 }
 
-int GLX_PREFIX(glXChannelRectSyncSGIX)(Display *dpy, int screen, int channel, GLenum synctype)
+PUBLIC int GLX_PREFIX(glXChannelRectSyncSGIX)(Display *dpy, int screen,
+                                              int channel, GLenum synctype)
 {
    (void) dpy;
    (void) screen;
@@ -2251,7 +2288,10 @@ int GLX_PREFIX(glXChannelRectSyncSGIX)(Display *dpy, int screen, int channel, GL
 
 #if defined(_DM_BUFFER_H_)
 
-Bool GLX_PREFIX(glXAssociateDMPbufferSGIX)(Display *dpy, GLXPbufferSGIX pbuffer, DMparams *params, DMbuffer dmbuffer)
+PUBLIC Bool GLX_PREFIX(glXAssociateDMPbufferSGIX)(Display *dpy,
+                                                  GLXPbufferSGIX pbuffer,
+                                                  DMparams *params,
+                                                  DMbuffer dmbuffer)
 {
    (void) dpy;
    (void) pbuffer;
@@ -2266,7 +2306,8 @@ Bool GLX_PREFIX(glXAssociateDMPbufferSGIX)(Display *dpy, GLXPbufferSGIX pbuffer,
 /*
 ** GLX_SGIX_swap_group
 */
-void GLX_PREFIX(glXJoinSwapGroupSGIX)(Display *dpy, GLXDrawable drawable, GLXDrawable member)
+PUBLIC void GLX_PREFIX(glXJoinSwapGroupSGIX)(Display *dpy, GLXDrawable drawable,
+                                             GLXDrawable member)
 {
    (void) dpy;
    (void) drawable;
@@ -2277,14 +2318,17 @@ void GLX_PREFIX(glXJoinSwapGroupSGIX)(Display *dpy, GLXDrawable drawable, GLXDra
 /*
 ** GLX_SGIX_swap_barrier
 */
-void GLX_PREFIX(glXBindSwapBarrierSGIX)(Display *dpy, GLXDrawable drawable, int barrier)
+PUBLIC void GLX_PREFIX(glXBindSwapBarrierSGIX)(Display *dpy,
+                                               GLXDrawable drawable,
+                                               int barrier)
 {
    (void) dpy;
    (void) drawable;
    (void) barrier;
 }
 
-Bool GLX_PREFIX(glXQueryMaxSwapBarriersSGIX)(Display *dpy, int screen, int *max)
+PUBLIC Bool GLX_PREFIX(glXQueryMaxSwapBarriersSGIX)(Display *dpy, int screen,
+                                                    int *max)
 {
    (void) dpy;
    (void) screen;
@@ -2296,7 +2340,10 @@ Bool GLX_PREFIX(glXQueryMaxSwapBarriersSGIX)(Display *dpy, int screen, int *max)
 /*
 ** GLX_SUN_get_transparent_index
 */
-Status GLX_PREFIX(glXGetTransparentIndexSUN)(Display *dpy, Window overlay, Window underlay, long *pTransparent)
+PUBLIC Status GLX_PREFIX(glXGetTransparentIndexSUN)(Display *dpy,
+                                                    Window overlay,
+                                                    Window underlay,
+                                                    long *pTransparent)
 {
    (void) dpy;
    (void) overlay;
@@ -2309,7 +2356,7 @@ Status GLX_PREFIX(glXGetTransparentIndexSUN)(Display *dpy, Window overlay, Windo
 /*
 ** GLX_OML_sync_control
 */
-Bool GLX_PREFIX(glXGetSyncValuesOML)(Display *dpy, GLXDrawable drawable,
+PUBLIC Bool GLX_PREFIX(glXGetSyncValuesOML)(Display *dpy, GLXDrawable drawable,
 				     int64_t *ust, int64_t *msc, int64_t *sbc)
 {
 #ifdef GLX_DIRECT_RENDERING
@@ -2354,7 +2401,7 @@ Bool GLX_PREFIX(glXGetSyncValuesOML)(Display *dpy, GLXDrawable drawable,
  *       when GLX_OML_sync_control appears in the client extension string.
  */
 
-Bool GLX_PREFIX(glXGetMscRateOML)(Display * dpy, GLXDrawable drawable,
+PUBLIC Bool GLX_PREFIX(glXGetMscRateOML)(Display * dpy, GLXDrawable drawable,
 				  int32_t * numerator, int32_t * denominator)
 {
 #if defined( GLX_DIRECT_RENDERING ) && defined( XF86VIDMODE )
@@ -2428,9 +2475,11 @@ Bool GLX_PREFIX(glXGetMscRateOML)(Display * dpy, GLXDrawable drawable,
 }
 
 
-int64_t GLX_PREFIX(glXSwapBuffersMscOML)(Display *dpy, GLXDrawable drawable,
-					 int64_t target_msc,
-					 int64_t divisor, int64_t remainder)
+PUBLIC int64_t GLX_PREFIX(glXSwapBuffersMscOML)(Display *dpy,
+                                                GLXDrawable drawable,
+                                                int64_t target_msc,
+                                                int64_t divisor,
+                                                int64_t remainder)
 {
 #ifdef GLX_DIRECT_RENDERING
    int screen;
@@ -2463,10 +2512,10 @@ int64_t GLX_PREFIX(glXSwapBuffersMscOML)(Display *dpy, GLXDrawable drawable,
 }
 
 
-Bool GLX_PREFIX(glXWaitForMscOML)(Display * dpy, GLXDrawable drawable,
-				  int64_t target_msc,
-				  int64_t divisor, int64_t remainder,
-				  int64_t *ust, int64_t *msc, int64_t *sbc)
+PUBLIC Bool GLX_PREFIX(glXWaitForMscOML)(Display * dpy, GLXDrawable drawable,
+                                         int64_t target_msc, int64_t divisor,
+                                         int64_t remainder, int64_t *ust,
+                                         int64_t *msc, int64_t *sbc)
 {
 #ifdef GLX_DIRECT_RENDERING
    int screen;
@@ -2506,9 +2555,9 @@ Bool GLX_PREFIX(glXWaitForMscOML)(Display * dpy, GLXDrawable drawable,
 }
 
 
-Bool GLX_PREFIX(glXWaitForSbcOML)(Display * dpy, GLXDrawable drawable,
-				  int64_t target_sbc,
-				  int64_t *ust, int64_t *msc, int64_t *sbc )
+PUBLIC Bool GLX_PREFIX(glXWaitForSbcOML)(Display * dpy, GLXDrawable drawable,
+                                         int64_t target_sbc, int64_t *ust,
+                                         int64_t *msc, int64_t *sbc )
 {
 #ifdef GLX_DIRECT_RENDERING
    int screen;
@@ -2548,11 +2597,9 @@ Bool GLX_PREFIX(glXWaitForSbcOML)(Display * dpy, GLXDrawable drawable,
  */
 /*@{*/
 
-void *GLX_PREFIX(glXAllocateMemoryMESA)(Display *dpy, int scrn,
-					size_t size,
-					float readFreq,
-					float writeFreq,
-					float priority)
+PUBLIC void *GLX_PREFIX(glXAllocateMemoryMESA)(Display *dpy, int scrn,
+                                               size_t size, float readFreq,
+                                               float writeFreq, float priority)
 {
 #ifdef GLX_DIRECT_RENDERING
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, scrn );
@@ -2577,7 +2624,7 @@ void *GLX_PREFIX(glXAllocateMemoryMESA)(Display *dpy, int scrn,
 }
 
 
-void GLX_PREFIX(glXFreeMemoryMESA)(Display *dpy, int scrn, void *pointer)
+PUBLIC void GLX_PREFIX(glXFreeMemoryMESA)(Display *dpy, int scrn, void *pointer)
 {
 #ifdef GLX_DIRECT_RENDERING
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, scrn );
@@ -2595,8 +2642,8 @@ void GLX_PREFIX(glXFreeMemoryMESA)(Display *dpy, int scrn, void *pointer)
 }
 
 
-GLuint GLX_PREFIX(glXGetMemoryOffsetMESA)( Display *dpy, int scrn,
-					   const void *pointer )
+PUBLIC GLuint GLX_PREFIX(glXGetMemoryOffsetMESA)( Display *dpy, int scrn,
+                                                  const void *pointer )
 {
 #ifdef GLX_DIRECT_RENDERING
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, scrn );
@@ -2644,7 +2691,7 @@ GLuint GLX_PREFIX(glXGetMemoryOffsetMESA)( Display *dpy, int scrn,
  *     glXDestroyPbuffer glXDestroyPixmap glXDestroyWindow
  *     glXDestroyGLXPbufferSGIX glXDestroyGLXVideoSourceSGIX
  */
-Bool GLX_PREFIX(glXReleaseBuffersMESA)( Display *dpy, GLXDrawable d )
+PUBLIC Bool GLX_PREFIX(glXReleaseBuffersMESA)( Display *dpy, GLXDrawable d )
 {
    (void) dpy;
    (void) d;
@@ -2652,9 +2699,10 @@ Bool GLX_PREFIX(glXReleaseBuffersMESA)( Display *dpy, GLXDrawable d )
 }
 
 
-GLXPixmap GLX_PREFIX(glXCreateGLXPixmapMESA)( Display *dpy,
-                                              XVisualInfo *visual,
-                                              Pixmap pixmap, Colormap cmap )
+PUBLIC GLXPixmap GLX_PREFIX(glXCreateGLXPixmapMESA)( Display *dpy,
+                                                     XVisualInfo *visual,
+                                                     Pixmap pixmap,
+                                                     Colormap cmap )
 {
    (void) dpy;
    (void) visual;
@@ -2664,8 +2712,9 @@ GLXPixmap GLX_PREFIX(glXCreateGLXPixmapMESA)( Display *dpy,
 }
 
 
-void GLX_PREFIX(glXCopySubBufferMESA)( Display *dpy, GLXDrawable drawable,
-                                       int x, int y, int width, int height )
+PUBLIC void GLX_PREFIX(glXCopySubBufferMESA)(Display *dpy, GLXDrawable drawable,
+                                             int x, int y,
+                                             int width, int height)
 {
    (void) dpy;
    (void) drawable;
@@ -2676,7 +2725,7 @@ void GLX_PREFIX(glXCopySubBufferMESA)( Display *dpy, GLXDrawable drawable,
 }
 
 
-Bool GLX_PREFIX(glXSet3DfxModeMESA)( int mode )
+PUBLIC Bool GLX_PREFIX(glXSet3DfxModeMESA)( int mode )
 {
    (void) mode;
    return GL_FALSE;
@@ -2919,7 +2968,7 @@ get_glx_proc_address(const char *funcName)
  *
  * \sa glXGetProcAddress
  */
-void (*glXGetProcAddressARB(const GLubyte *procName))( void )
+PUBLIC void (*glXGetProcAddressARB(const GLubyte *procName))( void )
 {
    typedef void (*gl_function)( void );
    gl_function f;
@@ -2950,7 +2999,7 @@ void (*glXGetProcAddressARB(const GLubyte *procName))( void )
  *
  * \sa glXGetProcAddressARB
  */
-void (*glXGetProcAddress(const GLubyte *procName))( void )
+PUBLIC void (*glXGetProcAddress(const GLubyte *procName))( void )
 #if defined(__GNUC__) && !defined(GLX_ALIAS_UNSUPPORTED)
     __attribute__ ((alias ("glXGetProcAddressARB")));
 #else

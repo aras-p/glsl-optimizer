@@ -35,6 +35,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef GLX_USE_APPLEGL
 
 #include <GL/gl.h>
+#include "glheader.h"
 #include "glapi.h"
 #include "glapitable.h"
 
@@ -49,7 +50,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #if !(defined(USE_X86_ASM) || defined(USE_SPARC_ASM))
 
-#define KEYWORD1
+#define KEYWORD1 PUBLIC
 
 #define KEYWORD2
 

@@ -38,6 +38,7 @@
 #include "glapi.h"
 #include "glxextensions.h"
 #include "glcontextmodes.h"
+#include "glheader.h"
 
 #ifdef IN_DOXYGEN
 #define GLX_PREFIX(x) x
@@ -414,7 +415,7 @@ CreatePbuffer( Display *dpy, const __GLcontextModes * fbconfig,
 /**
  * Create a new pbuffer.
  */
-GLXPbufferSGIX
+PUBLIC GLXPbufferSGIX
 GLX_PREFIX(glXCreateGLXPbufferSGIX)(Display *dpy, GLXFBConfigSGIX config,
 				    unsigned int width, unsigned int height,
 				    int *attrib_list)
@@ -428,7 +429,7 @@ GLX_PREFIX(glXCreateGLXPbufferSGIX)(Display *dpy, GLXFBConfigSGIX config,
 /**
  * Create a new pbuffer.
  */
-GLXPbuffer
+PUBLIC GLXPbuffer
 GLX_PREFIX(glXCreatePbuffer)(Display *dpy, GLXFBConfig config,
 			     const int *attrib_list)
 {
@@ -441,7 +442,7 @@ GLX_PREFIX(glXCreatePbuffer)(Display *dpy, GLXFBConfig config,
 /**
  * Destroy an existing pbuffer.
  */
-void
+PUBLIC void
 GLX_PREFIX(glXDestroyPbuffer)(Display *dpy, GLXPbuffer pbuf)
 {
    DestroyPbuffer( dpy, pbuf );
@@ -451,7 +452,7 @@ GLX_PREFIX(glXDestroyPbuffer)(Display *dpy, GLXPbuffer pbuf)
 /**
  * Query an attribute of a drawable.
  */
-void
+PUBLIC void
 GLX_PREFIX(glXQueryDrawable)(Display *dpy, GLXDrawable drawable,
 				   int attribute, unsigned int *value)
 {
@@ -462,7 +463,7 @@ GLX_PREFIX(glXQueryDrawable)(Display *dpy, GLXDrawable drawable,
 /**
  * Query an attribute of a pbuffer.
  */
-int
+PUBLIC int
 GLX_PREFIX(glXQueryGLXPbufferSGIX)(Display *dpy, GLXPbufferSGIX drawable,
 				   int attribute, unsigned int *value)
 {
@@ -473,7 +474,7 @@ GLX_PREFIX(glXQueryGLXPbufferSGIX)(Display *dpy, GLXPbufferSGIX drawable,
 /**
  * Select the event mask for a drawable.
  */
-void
+PUBLIC void
 GLX_PREFIX(glXSelectEvent)(Display *dpy, GLXDrawable drawable,
 			   unsigned long mask)
 {
@@ -489,7 +490,7 @@ GLX_PREFIX(glXSelectEvent)(Display *dpy, GLXDrawable drawable,
 /**
  * Get the selected event mask for a drawable.
  */
-void
+PUBLIC void
 GLX_PREFIX(glXGetSelectedEvent)(Display *dpy, GLXDrawable drawable,
 				unsigned long *mask)
 {
@@ -506,7 +507,7 @@ GLX_PREFIX(glXGetSelectedEvent)(Display *dpy, GLXDrawable drawable,
 }
 
 
-GLXPixmap
+PUBLIC GLXPixmap
 GLX_PREFIX(glXCreatePixmap)( Display *dpy, GLXFBConfig config, Pixmap pixmap,
 			     const int *attrib_list )
 {
@@ -516,7 +517,7 @@ GLX_PREFIX(glXCreatePixmap)( Display *dpy, GLXFBConfig config, Pixmap pixmap,
 }
 
 
-GLXWindow
+PUBLIC GLXWindow
 GLX_PREFIX(glXCreateWindow)( Display *dpy, GLXFBConfig config, Window win,
 			     const int *attrib_list )
 {
@@ -526,31 +527,31 @@ GLX_PREFIX(glXCreateWindow)( Display *dpy, GLXFBConfig config, Window win,
 }
 
 
-void
+PUBLIC void
 GLX_PREFIX(glXDestroyPixmap)(Display *dpy, GLXPixmap pixmap)
 {
    DestroyDrawable( dpy, (GLXDrawable) pixmap, X_GLXDestroyPixmap );
 }
 
 
-void
+PUBLIC void
 GLX_PREFIX(glXDestroyWindow)(Display *dpy, GLXWindow win)
 {
    DestroyDrawable( dpy, (GLXDrawable) win, X_GLXDestroyWindow );
 }
 
 
-GLX_ALIAS_VOID(glXDestroyGLXPbufferSGIX,
+PUBLIC GLX_ALIAS_VOID(glXDestroyGLXPbufferSGIX,
 	  (Display *dpy, GLXPbufferSGIX pbuf),
 	  (dpy, pbuf),
 	  glXDestroyPbuffer)
 
-GLX_ALIAS_VOID(glXSelectEventSGIX,
+PUBLIC GLX_ALIAS_VOID(glXSelectEventSGIX,
 	  (Display *dpy, GLXDrawable drawable, unsigned long mask),
 	  (dpy, drawable, mask),
 	  glXSelectEvent)
 
-GLX_ALIAS_VOID(glXGetSelectedEventSGIX,
+PUBLIC GLX_ALIAS_VOID(glXGetSelectedEventSGIX,
 	  (Display *dpy, GLXDrawable drawable, unsigned long *mask),
 	  (dpy, drawable, mask),
 	  glXGetSelectedEvent)
