@@ -11,6 +11,8 @@ CFLAGS = -64 -O3 -ansi -woff 1068,1069,1174,1185,1209,1474,1552 -DUSE_XSHM
 CXXFLAGS = -64 -O3 -ansi -woff 1174
 MKLIB_OPTIONS = -archopt 64 -static
 
+GLW_SOURCES = GLwDrawA.c GLwMDrawA.c
+
 LIB_DIR = $(TOP)/lib64
 
 APP_LIB_DEPS = -L$(LIB_DIR) -64 -lglut -lGLU -lGL -lX11 -lXext -lXmu -lXi -lm

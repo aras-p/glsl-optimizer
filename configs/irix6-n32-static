@@ -11,6 +11,8 @@ CFLAGS = -n32 -mips2 -O2 -ansi -woff 1521,1552 -DUSE_XSHM
 CXXFLAGS = -n32 -mips2 -O2 -ansi -woff 3262,3666
 MKLIB_OPTIONS = -archopt n32 -static
 
+GLW_SOURCES = GLwDrawA.c GLwMDrawA.c
+
 LIB_DIR = $(TOP)/lib32
 
 APP_LIB_DEPS = -L$(LIB_DIR) -n32 -glut -lGLU -lGL -lX11 -lXext -lXmu -lXi -lm
