@@ -1,4 +1,4 @@
-/* $Id: context.c,v 1.3 1999/08/29 10:26:31 keithw Exp $ */
+/* $Id: context.c,v 1.4 1999/09/02 13:16:17 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -2212,6 +2212,7 @@ void gl_update_state( GLcontext *ctx )
 
    if (ctx->NewState & (NEW_POLYGON | NEW_LIGHTING)) {
 
+      ctx->TriangleCaps &= ~DD_TRI_CULL_FRONT_BACK;
 
       if (ctx->NewState & NEW_POLYGON) {
 	 /* Setup CullBits bitmask */
@@ -2231,7 +2232,8 @@ void gl_update_state( GLcontext *ctx )
 	    default:
 	    case GL_FRONT_AND_BACK:
 	       ctx->backface_sign = 0;
-	       ctx->Polygon.CullBits = 3;
+	       ctx->Polygon.CullBits = 0;
+	       ctx->TriangleCaps |= DD_TRI_CULL_FRONT_BACK;
 	       break;
 	    }
 	 }
