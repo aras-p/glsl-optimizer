@@ -572,26 +572,26 @@ void __indirect_glSamplePatternSGIS( GLenum pass );
 
 /* ARB 12. GL_ARB_texture_compression / GL 1.3 */
 
-void __indirect_glGetCompressedTexImage( GLenum target, GLint level,
+void __indirect_glGetCompressedTexImageARB( GLenum target, GLint level,
     GLvoid * img );
-void __indirect_glCompressedTexImage1D( GLenum target, GLint level,
+void __indirect_glCompressedTexImage1DARB( GLenum target, GLint level,
     GLenum internalformat, GLsizei width,
     GLint border, GLsizei image_size, const GLvoid *data );
-void __indirect_glCompressedTexImage2D( GLenum target, GLint level,
+void __indirect_glCompressedTexImage2DARB( GLenum target, GLint level,
     GLenum internalformat, GLsizei width, GLsizei height,
     GLint border, GLsizei image_size, const GLvoid *data );
-void __indirect_glCompressedTexImage3D( GLenum target, GLint level,
+void __indirect_glCompressedTexImage3DARB( GLenum target, GLint level,
     GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth,
     GLint border, GLsizei image_size, const GLvoid *data );
-void __indirect_glCompressedTexSubImage1D( GLenum target, GLint level,
+void __indirect_glCompressedTexSubImage1DARB( GLenum target, GLint level,
     GLint xoffset,
     GLsizei width,
     GLenum format, GLsizei image_size, const GLvoid *data );
-void __indirect_glCompressedTexSubImage2D( GLenum target, GLint level,
+void __indirect_glCompressedTexSubImage2DARB( GLenum target, GLint level,
     GLint xoffset, GLint yoffset,
     GLsizei width, GLsizei height,
     GLenum format, GLsizei image_size, const GLvoid *data );
-void __indirect_glCompressedTexSubImage3D( GLenum target, GLint level,
+void __indirect_glCompressedTexSubImage3DARB( GLenum target, GLint level,
     GLint xoffset, GLint yoffset, GLint zoffset,
     GLsizei width, GLsizei height, GLsizei depth,
     GLenum format, GLsizei image_size, const GLvoid *data );
