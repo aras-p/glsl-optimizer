@@ -229,46 +229,46 @@ glx:
     <enum name="CULL_FACE_MODE"                           value="0x0B45"/>
     <enum name="FRONT_FACE"                               value="0x0B46"/>
     <enum name="LIGHTING"                                 value="0x0B50"/>
-    <enum name="LIGHT_MODEL_LOCAL_VIEWER"                 value="0x0B51">
-        <size name="LightModelfv" count="1"/>
-        <size name="LightModeliv" count="1"/>
+    <enum name="LIGHT_MODEL_LOCAL_VIEWER"      count="1"  value="0x0B51">
+        <size name="LightModelfv"/>
+        <size name="LightModeliv"/>
     </enum>
-    <enum name="LIGHT_MODEL_TWO_SIDE"                     value="0x0B52">
-        <size name="LightModelfv" count="1"/>
-        <size name="LightModeliv" count="1"/>
+    <enum name="LIGHT_MODEL_TWO_SIDE"          count="1"  value="0x0B52">
+        <size name="LightModelfv"/>
+        <size name="LightModeliv"/>
     </enum>
-    <enum name="LIGHT_MODEL_AMBIENT"                      value="0x0B53">
-        <size name="LightModelfv" count="4"/>
-        <size name="LightModeliv" count="4"/>
+    <enum name="LIGHT_MODEL_AMBIENT"           count="4"  value="0x0B53">
+        <size name="LightModelfv"/>
+        <size name="LightModeliv"/>
     </enum>
     <enum name="SHADE_MODEL"                              value="0x0B54"/>
     <enum name="COLOR_MATERIAL_FACE"                      value="0x0B55"/>
     <enum name="COLOR_MATERIAL_PARAMETER"                 value="0x0B56"/>
     <enum name="COLOR_MATERIAL"                           value="0x0B57"/>
     <enum name="FOG"                                      value="0x0B60"/>
-    <enum name="FOG_INDEX"                                value="0x0B61">
-        <size name="Fogfv" count="1"/>
-        <size name="Fogiv" count="1"/>
+    <enum name="FOG_INDEX"                     count="1"  value="0x0B61">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
     </enum>
-    <enum name="FOG_DENSITY"                              value="0x0B62">
-        <size name="Fogfv" count="1"/>
-        <size name="Fogiv" count="1"/>
+    <enum name="FOG_DENSITY"                   count="1"  value="0x0B62">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
     </enum>
-    <enum name="FOG_START"                                value="0x0B63">
-        <size name="Fogfv" count="1"/>
-        <size name="Fogiv" count="1"/>
+    <enum name="FOG_START"                     count="1"  value="0x0B63">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
     </enum>
-    <enum name="FOG_END"                                  value="0x0B64">
-        <size name="Fogfv" count="1"/>
-        <size name="Fogiv" count="1"/>
+    <enum name="FOG_END"                       count="1"  value="0x0B64">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
     </enum>
-    <enum name="FOG_MODE"                                 value="0x0B65">
-        <size name="Fogfv" count="1"/>
-        <size name="Fogiv" count="1"/>
+    <enum name="FOG_MODE"                      count="1"  value="0x0B65">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
     </enum>
-    <enum name="FOG_COLOR"                                value="0x0B66">
-        <size name="Fogfv" count="4"/>
-        <size name="Fogiv" count="4"/>
+    <enum name="FOG_COLOR"                     count="4"  value="0x0B66">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
     </enum>
     <enum name="DEPTH_RANGE"                              value="0x0B70"/>
     <enum name="DEPTH_TEST"                               value="0x0B71"/>
@@ -372,9 +372,9 @@ glx:
     <enum name="GREEN_BIAS"                               value="0x0D19"/>
     <enum name="BLUE_SCALE"                               value="0x0D1A"/>
     <enum name="BLUE_BIAS"                                value="0x0D1B"/>
-    <enum name="ALPHA_SCALE"                              value="0x0D1C">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="ALPHA_SCALE"                   count="1"  value="0x0D1C">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
     <enum name="ALPHA_BIAS"                               value="0x0D1D"/>
     <enum name="DEPTH_SCALE"                              value="0x0D1E"/>
@@ -405,77 +405,77 @@ glx:
     <enum name="ACCUM_ALPHA_BITS"                         value="0x0D5B"/>
     <enum name="NAME_STACK_DEPTH"                         value="0x0D70"/>
     <enum name="AUTO_NORMAL"                              value="0x0D80"/>
-    <enum name="MAP1_COLOR_4"                             value="0x0D90">
-        <size name="Map1d" count="4"/>
-        <size name="Map1f" count="4"/>
+    <enum name="MAP1_COLOR_4"                  count="4"  value="0x0D90">
+        <size name="Map1d"/>
+        <size name="Map1f"/>
     </enum>
-    <enum name="MAP1_INDEX"                               value="0x0D91">
-        <size name="Map1d" count="1"/>
-        <size name="Map1f" count="1"/>
+    <enum name="MAP1_INDEX"                    count="1"  value="0x0D91">
+        <size name="Map1d"/>
+        <size name="Map1f"/>
     </enum>
-    <enum name="MAP1_NORMAL"                              value="0x0D92">
-        <size name="Map1d" count="3"/>
-        <size name="Map1f" count="3"/>
+    <enum name="MAP1_NORMAL"                   count="3"  value="0x0D92">
+        <size name="Map1d"/>
+        <size name="Map1f"/>
     </enum>
-    <enum name="MAP1_TEXTURE_COORD_1"                     value="0x0D93">
-        <size name="Map1d" count="1"/>
-        <size name="Map1f" count="1"/>
+    <enum name="MAP1_TEXTURE_COORD_1"          count="1"  value="0x0D93">
+        <size name="Map1d"/>
+        <size name="Map1f"/>
     </enum>
-    <enum name="MAP1_TEXTURE_COORD_2"                     value="0x0D94">
-        <size name="Map1d" count="2"/>
-        <size name="Map1f" count="2"/>
+    <enum name="MAP1_TEXTURE_COORD_2"          count="2"  value="0x0D94">
+        <size name="Map1d"/>
+        <size name="Map1f"/>
     </enum>
-    <enum name="MAP1_TEXTURE_COORD_3"                     value="0x0D95">
-        <size name="Map1d" count="3"/>
-        <size name="Map1f" count="3"/>
+    <enum name="MAP1_TEXTURE_COORD_3"          count="3"  value="0x0D95">
+        <size name="Map1d"/>
+        <size name="Map1f"/>
     </enum>
-    <enum name="MAP1_TEXTURE_COORD_4"                     value="0x0D96">
-        <size name="Map1d" count="4"/>
-        <size name="Map1f" count="4"/>
+    <enum name="MAP1_TEXTURE_COORD_4"          count="4"  value="0x0D96">
+        <size name="Map1d"/>
+        <size name="Map1f"/>
     </enum>
-    <enum name="MAP1_VERTEX_3"                            value="0x0D97">
-        <size name="Map1d" count="3"/>
-        <size name="Map1f" count="3"/>
+    <enum name="MAP1_VERTEX_3"                 count="3"  value="0x0D97">
+        <size name="Map1d"/>
+        <size name="Map1f"/>
     </enum>
-    <enum name="MAP1_VERTEX_4"                            value="0x0D98">
-        <size name="Map1d" count="4"/>
-        <size name="Map1f" count="4"/>
+    <enum name="MAP1_VERTEX_4"                 count="4"  value="0x0D98">
+        <size name="Map1d"/>
+        <size name="Map1f"/>
     </enum>
-    <enum name="MAP2_COLOR_4"                             value="0x0DB0">
-        <size name="Map2d" count="4"/>
-        <size name="Map2f" count="4"/>
+    <enum name="MAP2_COLOR_4"                  count="4"  value="0x0DB0">
+        <size name="Map2d"/>
+        <size name="Map2f"/>
     </enum>
-    <enum name="MAP2_INDEX"                               value="0x0DB1">
-        <size name="Map2d" count="1"/>
-        <size name="Map2f" count="1"/>
+    <enum name="MAP2_INDEX"                    count="1"  value="0x0DB1">
+        <size name="Map2d"/>
+        <size name="Map2f"/>
     </enum>
-    <enum name="MAP2_NORMAL"                              value="0x0DB2">
-        <size name="Map2d" count="3"/>
-        <size name="Map2f" count="3"/>
+    <enum name="MAP2_NORMAL"                   count="3"  value="0x0DB2">
+        <size name="Map2d"/>
+        <size name="Map2f"/>
     </enum>
-    <enum name="MAP2_TEXTURE_COORD_1"                     value="0x0DB3">
-        <size name="Map2d" count="1"/>
-        <size name="Map2f" count="1"/>
+    <enum name="MAP2_TEXTURE_COORD_1"          count="1"  value="0x0DB3">
+        <size name="Map2d"/>
+        <size name="Map2f"/>
     </enum>
-    <enum name="MAP2_TEXTURE_COORD_2"                     value="0x0DB4">
-        <size name="Map2d" count="2"/>
-        <size name="Map2f" count="2"/>
+    <enum name="MAP2_TEXTURE_COORD_2"          count="2"  value="0x0DB4">
+        <size name="Map2d"/>
+        <size name="Map2f"/>
     </enum>
-    <enum name="MAP2_TEXTURE_COORD_3"                     value="0x0DB5">
-        <size name="Map2d" count="3"/>
-        <size name="Map2f" count="3"/>
+    <enum name="MAP2_TEXTURE_COORD_3"          count="3"  value="0x0DB5">
+        <size name="Map2d"/>
+        <size name="Map2f"/>
     </enum>
-    <enum name="MAP2_TEXTURE_COORD_4"                     value="0x0DB6">
-        <size name="Map2d" count="4"/>
-        <size name="Map2f" count="4"/>
+    <enum name="MAP2_TEXTURE_COORD_4"          count="4"  value="0x0DB6">
+        <size name="Map2d"/>
+        <size name="Map2f"/>
     </enum>
-    <enum name="MAP2_VERTEX_3"                            value="0x0DB7">
-        <size name="Map2d" count="3"/>
-        <size name="Map2f" count="3"/>
+    <enum name="MAP2_VERTEX_3"                 count="3"  value="0x0DB7">
+        <size name="Map2d"/>
+        <size name="Map2f"/>
     </enum>
-    <enum name="MAP2_VERTEX_4"                            value="0x0DB8">
-        <size name="Map2d" count="4"/>
-        <size name="Map2f" count="4"/>
+    <enum name="MAP2_VERTEX_4"                 count="4"  value="0x0DB8">
+        <size name="Map2d"/>
+        <size name="Map2f"/>
     </enum>
     <enum name="MAP1_GRID_DOMAIN"                         value="0x0DD0"/>
     <enum name="MAP1_GRID_SEGMENTS"                       value="0x0DD1"/>
@@ -492,90 +492,90 @@ glx:
     <enum name="TEXTURE_HEIGHT"                           value="0x1001"/>
     <enum name="TEXTURE_BORDER"                           value="0x1005"/>
     <enum name="TEXTURE_COMPONENTS"                       value="0x1003"/>
-    <enum name="TEXTURE_BORDER_COLOR"                     value="0x1004">
-        <size name="TexParameterfv" count="4"/>
-        <size name="TexParameteriv" count="4"/>
+    <enum name="TEXTURE_BORDER_COLOR"          count="4"  value="0x1004">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="DONT_CARE"                                value="0x1100"/>
     <enum name="FASTEST"                                  value="0x1101"/>
     <enum name="NICEST"                                   value="0x1102"/>
-    <enum name="AMBIENT"                                  value="0x1200">
-        <size name="Materialfv" count="4"/>
-        <size name="Materialiv" count="4"/>
-        <size name="Lightfv" count="4"/>
-        <size name="Lightiv" count="4"/>
+    <enum name="AMBIENT"                       count="4"  value="0x1200">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
     </enum>
-    <enum name="DIFFUSE"                                  value="0x1201">
-        <size name="Materialfv" count="4"/>
-        <size name="Materialiv" count="4"/>
-        <size name="Lightfv" count="4"/>
-        <size name="Lightiv" count="4"/>
+    <enum name="DIFFUSE"                       count="4"  value="0x1201">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
     </enum>
-    <enum name="SPECULAR"                                 value="0x1202">
-        <size name="Materialfv" count="4"/>
-        <size name="Materialiv" count="4"/>
-        <size name="Lightfv" count="4"/>
-        <size name="Lightiv" count="4"/>
+    <enum name="SPECULAR"                      count="4"  value="0x1202">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
     </enum>
-    <enum name="POSITION"                                 value="0x1203">
-        <size name="Lightfv" count="4"/>
-        <size name="Lightiv" count="4"/>
+    <enum name="POSITION"                      count="4"  value="0x1203">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
     </enum>
-    <enum name="SPOT_DIRECTION"                           value="0x1204">
-        <size name="Lightfv" count="3"/>
-        <size name="Lightiv" count="3"/>
+    <enum name="SPOT_DIRECTION"                count="3"  value="0x1204">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
     </enum>
-    <enum name="SPOT_EXPONENT"                            value="0x1205">
-        <size name="Lightfv" count="1"/>
-        <size name="Lightiv" count="1"/>
+    <enum name="SPOT_EXPONENT"                 count="1"  value="0x1205">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
     </enum>
-    <enum name="SPOT_CUTOFF"                              value="0x1206">
-        <size name="Lightfv" count="1"/>
-        <size name="Lightiv" count="1"/>
+    <enum name="SPOT_CUTOFF"                   count="1"  value="0x1206">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
     </enum>
-    <enum name="CONSTANT_ATTENUATION"                     value="0x1207">
-        <size name="Lightfv" count="1"/>
-        <size name="Lightiv" count="1"/>
+    <enum name="CONSTANT_ATTENUATION"          count="1"  value="0x1207">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
     </enum>
-    <enum name="LINEAR_ATTENUATION"                       value="0x1208">
-        <size name="Lightfv" count="1"/>
-        <size name="Lightiv" count="1"/>
+    <enum name="LINEAR_ATTENUATION"            count="1"  value="0x1208">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
     </enum>
-    <enum name="QUADRATIC_ATTENUATION"                    value="0x1209">
-        <size name="Lightfv" count="1"/>
-        <size name="Lightiv" count="1"/>
+    <enum name="QUADRATIC_ATTENUATION"         count="1"  value="0x1209">
+        <size name="Lightfv"/>
+        <size name="Lightiv"/>
     </enum>
     <enum name="COMPILE"                                  value="0x1300"/>
     <enum name="COMPILE_AND_EXECUTE"                      value="0x1301"/>
-    <enum name="BYTE"                                     value="0x1400">
-        <size name="CallLists" count="1"/>
+    <enum name="BYTE"                          count="1"  value="0x1400">
+        <size name="CallLists"/>
     </enum>
-    <enum name="UNSIGNED_BYTE"                            value="0x1401">
-        <size name="CallLists" count="1"/>
+    <enum name="UNSIGNED_BYTE"                 count="1"  value="0x1401">
+        <size name="CallLists"/>
     </enum>
-    <enum name="SHORT"                                    value="0x1402">
-        <size name="CallLists" count="2"/>
+    <enum name="SHORT"                         count="2"  value="0x1402">
+        <size name="CallLists"/>
     </enum>
-    <enum name="UNSIGNED_SHORT"                           value="0x1403">
-        <size name="CallLists" count="2"/>
+    <enum name="UNSIGNED_SHORT"                count="2"  value="0x1403">
+        <size name="CallLists"/>
     </enum>
-    <enum name="INT"                                      value="0x1404">
-        <size name="CallLists" count="4"/>
+    <enum name="INT"                           count="4"  value="0x1404">
+        <size name="CallLists"/>
     </enum>
-    <enum name="UNSIGNED_INT"                             value="0x1405">
-        <size name="CallLists" count="4"/>
+    <enum name="UNSIGNED_INT"                  count="4"  value="0x1405">
+        <size name="CallLists"/>
     </enum>
-    <enum name="FLOAT"                                    value="0x1406">
-        <size name="CallLists" count="4"/>
+    <enum name="FLOAT"                         count="4"  value="0x1406">
+        <size name="CallLists"/>
     </enum>
-    <enum name="2_BYTES"                                  value="0x1407">
-        <size name="CallLists" count="2"/>
+    <enum name="2_BYTES"                       count="2"  value="0x1407">
+        <size name="CallLists"/>
     </enum>
-    <enum name="3_BYTES"                                  value="0x1408">
-        <size name="CallLists" count="3"/>
+    <enum name="3_BYTES"                       count="3"  value="0x1408">
+        <size name="CallLists"/>
     </enum>
-    <enum name="4_BYTES"                                  value="0x1409">
-        <size name="CallLists" count="4"/>
+    <enum name="4_BYTES"                       count="4"  value="0x1409">
+        <size name="CallLists"/>
     </enum>
     <enum name="CLEAR"                                    value="0x1500"/>
     <enum name="AND"                                      value="0x1501"/>
@@ -593,21 +593,21 @@ glx:
     <enum name="OR_INVERTED"                              value="0x150D"/>
     <enum name="NAND"                                     value="0x150E"/>
     <enum name="SET"                                      value="0x150F"/>
-    <enum name="EMISSION"                                 value="0x1600">
-        <size name="Materialfv" count="4"/>
-        <size name="Materialiv" count="4"/>
+    <enum name="EMISSION"                      count="4"  value="0x1600">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
     </enum>
-    <enum name="SHININESS"                                value="0x1601">
-        <size name="Materialfv" count="1"/>
-        <size name="Materialiv" count="1"/>
+    <enum name="SHININESS"                     count="1"  value="0x1601">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
     </enum>
-    <enum name="AMBIENT_AND_DIFFUSE"                      value="0x1602">
-        <size name="Materialfv" count="4"/>
-        <size name="Materialiv" count="4"/>
+    <enum name="AMBIENT_AND_DIFFUSE"           count="4"  value="0x1602">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
     </enum>
-    <enum name="COLOR_INDEXES"                            value="0x1603">
-        <size name="Materialfv" count="3"/>
-        <size name="Materialiv" count="3"/>
+    <enum name="COLOR_INDEXES"                 count="3"  value="0x1603">
+        <size name="Materialfv"/>
+        <size name="Materialiv"/>
     </enum>
     <enum name="MODELVIEW"                                value="0x1700"/>
     <enum name="PROJECTION"                               value="0x1701"/>
@@ -649,32 +649,32 @@ glx:
     <enum name="Q"                                        value="0x2003"/>
     <enum name="MODULATE"                                 value="0x2100"/>
     <enum name="DECAL"                                    value="0x2101"/>
-    <enum name="TEXTURE_ENV_MODE"                         value="0x2200">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="TEXTURE_ENV_MODE"              count="1"  value="0x2200">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="TEXTURE_ENV_COLOR"                        value="0x2201">
-        <size name="TexEnvfv" count="4"/>
-        <size name="TexEnviv" count="4"/>
+    <enum name="TEXTURE_ENV_COLOR"             count="4"  value="0x2201">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
     <enum name="TEXTURE_ENV"                              value="0x2300"/>
     <enum name="EYE_LINEAR"                               value="0x2400"/>
     <enum name="OBJECT_LINEAR"                            value="0x2401"/>
     <enum name="SPHERE_MAP"                               value="0x2402"/>
-    <enum name="TEXTURE_GEN_MODE"                         value="0x2500">
-        <size name="TexGendv" count="1"/>
-        <size name="TexGenfv" count="1"/>
-        <size name="TexGeniv" count="1"/>
+    <enum name="TEXTURE_GEN_MODE"              count="1"  value="0x2500">
+        <size name="TexGendv"/>
+        <size name="TexGenfv"/>
+        <size name="TexGeniv"/>
     </enum>
-    <enum name="OBJECT_PLANE"                             value="0x2501">
-        <size name="TexGendv" count="4"/>
-        <size name="TexGenfv" count="4"/>
-        <size name="TexGeniv" count="4"/>
+    <enum name="OBJECT_PLANE"                  count="4"  value="0x2501">
+        <size name="TexGendv"/>
+        <size name="TexGenfv"/>
+        <size name="TexGeniv"/>
     </enum>
-    <enum name="EYE_PLANE"                                value="0x2502">
-        <size name="TexGendv" count="4"/>
-        <size name="TexGenfv" count="4"/>
-        <size name="TexGeniv" count="4"/>
+    <enum name="EYE_PLANE"                    count="4"   value="0x2502">
+        <size name="TexGendv"/>
+        <size name="TexGenfv"/>
+        <size name="TexGeniv"/>
     </enum>
     <enum name="NEAREST"                                  value="0x2600"/>
     <enum name="LINEAR"                                   value="0x2601"/>
@@ -682,21 +682,21 @@ glx:
     <enum name="LINEAR_MIPMAP_NEAREST"                    value="0x2701"/>
     <enum name="NEAREST_MIPMAP_LINEAR"                    value="0x2702"/>
     <enum name="LINEAR_MIPMAP_LINEAR"                     value="0x2703"/>
-    <enum name="TEXTURE_MAG_FILTER"                       value="0x2800">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_MAG_FILTER"            count="1"  value="0x2800">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_MIN_FILTER"                       value="0x2801">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_MIN_FILTER"            count="1"  value="0x2801">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_WRAP_S"                           value="0x2802">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_WRAP_S"                count="1"  value="0x2802">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_WRAP_T"                           value="0x2803">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_WRAP_T"                count="1"  value="0x2803">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="CLAMP"                                    value="0x2900"/>
     <enum name="REPEAT"                                   value="0x2901"/>
@@ -2667,13 +2667,13 @@ glx:
     <enum name="TEXTURE_INTENSITY_SIZE"                   value="0x8061"/>
     <enum name="PROXY_TEXTURE_1D"                         value="0x8063"/>
     <enum name="PROXY_TEXTURE_2D"                         value="0x8064"/>
-    <enum name="TEXTURE_PRIORITY"                         value="0x8066">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_PRIORITY"              count="1"  value="0x8066">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_RESIDENT"                         value="0x8067">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_RESIDENT"              count="1"  value="0x8067">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="TEXTURE_BINDING_1D"                       value="0x8068"/>
     <enum name="TEXTURE_BINDING_2D"                       value="0x8069"/>
@@ -2949,9 +2949,9 @@ glx:
     <enum name="TEXTURE_3D"                               value="0x806F"/>
     <enum name="PROXY_TEXTURE_3D"                         value="0x8070"/>
     <enum name="TEXTURE_DEPTH"                            value="0x8071"/>
-    <enum name="TEXTURE_WRAP_R"                           value="0x8072">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_WRAP_R"                count="1"  value="0x8072">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="MAX_3D_TEXTURE_SIZE"                      value="0x8073"/>
     <enum name="UNSIGNED_BYTE_2_3_3_REV"                  value="0x8362"/>
@@ -2966,25 +2966,25 @@ glx:
     <enum name="MAX_ELEMENTS_VERTICES"                    value="0x80E8"/>
     <enum name="MAX_ELEMENTS_INDICES"                     value="0x80E9"/>
     <enum name="CLAMP_TO_EDGE"                            value="0x812F"/>
-    <enum name="TEXTURE_MIN_LOD"                          value="0x813A">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_MIN_LOD"               count="1"  value="0x813A">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_MAX_LOD"                          value="0x813B">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_MAX_LOD"               count="1"  value="0x813B">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_BASE_LEVEL"                       value="0x813C">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_BASE_LEVEL"            count="1"  value="0x813C">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_MAX_LEVEL"                        value="0x813D">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_MAX_LEVEL"             count="1"  value="0x813D">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="LIGHT_MODEL_COLOR_CONTROL"                value="0x81F8">
-        <size name="LightModelfv" count="1"/>
-        <size name="LightModeliv" count="1"/>
+    <enum name="LIGHT_MODEL_COLOR_CONTROL"     count="1"  value="0x81F8">
+        <size name="LightModelfv"/>
+        <size name="LightModeliv"/>
     </enum>
     <enum name="SINGLE_COLOR"                             value="0x81F9"/>
     <enum name="SEPARATE_SPECULAR_COLOR"                  value="0x81FA"/>
@@ -2997,45 +2997,45 @@ glx:
 
     <!-- These enums are actually part of the ARB_imaging subset. -->
     
-    <enum name="COLOR_TABLE_SCALE"                        value="0x80D6">
-        <size name="ColorTableParameterfv" count="4"/>
-        <size name="ColorTableParameteriv" count="4"/>
+    <enum name="COLOR_TABLE_SCALE"             count="4"  value="0x80D6">
+        <size name="ColorTableParameterfv"/>
+        <size name="ColorTableParameteriv"/>
     </enum>
-    <enum name="COLOR_TABLE_BIAS"                         value="0x80D7">
-        <size name="ColorTableParameterfv" count="4"/>
-        <size name="ColorTableParameteriv" count="4"/>
+    <enum name="COLOR_TABLE_BIAS"              count="4"  value="0x80D7">
+        <size name="ColorTableParameterfv"/>
+        <size name="ColorTableParameteriv"/>
     </enum>
-    <enum name="COLOR_TABLE_FORMAT"                       value="0x80D8">
-        <size name="ColorTableParameterfv" count="1"/>
-        <size name="ColorTableParameteriv" count="1"/>
+    <enum name="COLOR_TABLE_FORMAT"            count="1"  value="0x80D8">
+        <size name="ColorTableParameterfv"/>
+        <size name="ColorTableParameteriv"/>
     </enum>
-    <enum name="COLOR_TABLE_WIDTH"                        value="0x80D9">
-        <size name="ColorTableParameterfv" count="1"/>
-        <size name="ColorTableParameteriv" count="1"/>
+    <enum name="COLOR_TABLE_WIDTH"             count="1"  value="0x80D9">
+        <size name="ColorTableParameterfv"/>
+        <size name="ColorTableParameteriv"/>
     </enum>
-    <enum name="COLOR_TABLE_RED_SIZE"                     value="0x80DA">
-        <size name="ColorTableParameterfv" count="1"/>
-        <size name="ColorTableParameteriv" count="1"/>
+    <enum name="COLOR_TABLE_RED_SIZE"          count="1"  value="0x80DA">
+        <size name="ColorTableParameterfv"/>
+        <size name="ColorTableParameteriv"/>
     </enum>
-    <enum name="COLOR_TABLE_GREEN_SIZE"                   value="0x80DB">
-        <size name="ColorTableParameterfv" count="1"/>
-        <size name="ColorTableParameteriv" count="1"/>
+    <enum name="COLOR_TABLE_GREEN_SIZE"        count="1"  value="0x80DB">
+        <size name="ColorTableParameterfv"/>
+        <size name="ColorTableParameteriv"/>
     </enum>
-    <enum name="COLOR_TABLE_BLUE_SIZE"                    value="0x80DC">
-        <size name="ColorTableParameterfv" count="1"/>
-        <size name="ColorTableParameteriv" count="1"/>
+    <enum name="COLOR_TABLE_BLUE_SIZE"         count="1"  value="0x80DC">
+        <size name="ColorTableParameterfv"/>
+        <size name="ColorTableParameteriv"/>
     </enum>
-    <enum name="COLOR_TABLE_ALPHA_SIZE"                   value="0x80DD">
-        <size name="ColorTableParameterfv" count="1"/>
-        <size name="ColorTableParameteriv" count="1"/>
+    <enum name="COLOR_TABLE_ALPHA_SIZE"        count="1"  value="0x80DD">
+        <size name="ColorTableParameterfv"/>
+        <size name="ColorTableParameteriv"/>
     </enum>
-    <enum name="COLOR_TABLE_LUMINANCE_SIZE"               value="0x80DE">
-        <size name="ColorTableParameterfv" count="1"/>
-        <size name="ColorTableParameteriv" count="1"/>
+    <enum name="COLOR_TABLE_LUMINANCE_SIZE"    count="1"  value="0x80DE">
+        <size name="ColorTableParameterfv"/>
+        <size name="ColorTableParameteriv"/>
     </enum>
-    <enum name="COLOR_TABLE_INTENSITY_SIZE"               value="0x80DF">
-        <size name="ColorTableParameterfv" count="1"/>
-        <size name="ColorTableParameteriv" count="1"/>
+    <enum name="COLOR_TABLE_INTENSITY_SIZE"    count="1"  value="0x80DF">
+        <size name="ColorTableParameterfv"/>
+        <size name="ColorTableParameteriv"/>
     </enum>
 
 
@@ -3437,65 +3437,65 @@ glx:
     <enum name="CLAMP_TO_BORDER"                          value="0x812D"/>
     <enum name="CLAMP_TO_BORDER_SGIS"                     value="0x812D"/>
     <enum name="COMBINE"                                  value="0x8570"/>
-    <enum name="COMBINE_RGB"                              value="0x8571">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="COMBINE_RGB"                   count="1"  value="0x8571">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="COMBINE_ALPHA"                            value="0x8572">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="COMBINE_ALPHA"                 count="1"  value="0x8572">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="SOURCE0_RGB"                              value="0x8580">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="SOURCE0_RGB"                   count="1"  value="0x8580">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="SOURCE1_RGB"                              value="0x8581">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="SOURCE1_RGB"                   count="1"  value="0x8581">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="SOURCE2_RGB"                              value="0x8582">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="SOURCE2_RGB"                   count="1"  value="0x8582">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="SOURCE0_ALPHA"                            value="0x8588">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="SOURCE0_ALPHA"                 count="1"  value="0x8588">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="SOURCE1_ALPHA"                            value="0x8589">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="SOURCE1_ALPHA"                 count="1"  value="0x8589">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="SOURCE2_ALPHA"                            value="0x858A">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="SOURCE2_ALPHA"                 count="1"  value="0x858A">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="OPERAND0_RGB"                             value="0x8590">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="OPERAND0_RGB"                  count="1"  value="0x8590">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="OPERAND1_RGB"                             value="0x8591">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="OPERAND1_RGB"                  count="1"  value="0x8591">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="OPERAND2_RGB"                             value="0x8592">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="OPERAND2_RGB"                  count="1"  value="0x8592">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="OPERAND0_ALPHA"                           value="0x8598">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="OPERAND0_ALPHA"                count="1"  value="0x8598">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="OPERAND1_ALPHA"                           value="0x8599">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="OPERAND1_ALPHA"                count="1"  value="0x8599">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="OPERAND2_ALPHA"                           value="0x859A">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="OPERAND2_ALPHA"                count="1"  value="0x859A">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="RGB_SCALE"                                value="0x8573">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="RGB_SCALE"                     count="1"  value="0x8573">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
     <enum name="ADD_SIGNED"                               value="0x8574"/>
     <enum name="INTERPOLATE"                              value="0x8575"/>
@@ -3800,21 +3800,21 @@ glx:
     <enum name="BLEND_SRC_RGB"                            value="0x80C9"/>
     <enum name="BLEND_DST_ALPHA"                          value="0x80CA"/>
     <enum name="BLEND_SRC_ALPHA"                          value="0x80CB"/>
-    <enum name="POINT_SIZE_MIN"                           value="0x8126">
-        <size name="PointParameterfvEXT" count="1"/>
+    <enum name="POINT_SIZE_MIN"                count="1"  value="0x8126">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="POINT_SIZE_MAX"                           value="0x8127">
-        <size name="PointParameterfvEXT" count="1"/>
+    <enum name="POINT_SIZE_MAX"                count="1"  value="0x8127">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="POINT_FADE_THRESHOLD_SIZE"                value="0x8128">
-        <size name="PointParameterfvEXT" count="1"/>
+    <enum name="POINT_FADE_THRESHOLD_SIZE"     count="1"  value="0x8128">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="POINT_DISTANCE_ATTENUATION"               value="0x8129">
-        <size name="PointParameterfvEXT" count="3"/>
+    <enum name="POINT_DISTANCE_ATTENUATION"    count="3"  value="0x8129">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="GENERATE_MIPMAP"                          value="0x8191">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="GENERATE_MIPMAP"               count="1"  value="0x8191">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="GENERATE_MIPMAP_HINT"                     value="0x8192"/>
     <enum name="DEPTH_COMPONENT16"                        value="0x81A5"/>
@@ -3838,26 +3838,26 @@ glx:
     <enum name="SECONDARY_COLOR_ARRAY"                    value="0x845E"/>
     <enum name="MAX_TEXTURE_LOD_BIAS"                     value="0x84FD"/>
     <enum name="TEXTURE_FILTER_CONTROL"                   value="0x8500"/>
-    <enum name="TEXTURE_LOD_BIAS"                         value="0x8501">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_LOD_BIAS"              count="1"  value="0x8501">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="INCR_WRAP"                                value="0x8507"/>
     <enum name="DECR_WRAP"                                value="0x8508"/>
     <enum name="TEXTURE_DEPTH_SIZE"                       value="0x884A"/>
-    <enum name="DEPTH_TEXTURE_MODE"                       value="0x884B">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="DEPTH_TEXTURE_MODE"            count="1"  value="0x884B">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_COMPARE_MODE"                     value="0x884C">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_COMPARE_MODE"          count="1"  value="0x884C">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_COMPARE_FUNC"                     value="0x884D">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_COMPARE_FUNC"          count="1"  value="0x884D">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="COMPARE_R_TO_TEXTURE"                     value="0x884E"/>
 
@@ -4701,17 +4701,17 @@ glx:
 </category>
 
 <category name="GL_ARB_point_parameters" number="14">
-    <enum name="POINT_SIZE_MIN_ARB"                       value="0x8126">
-        <size name="PointParameterfvEXT" count="1"/>
+    <enum name="POINT_SIZE_MIN_ARB"            count="1"  value="0x8126">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="POINT_SIZE_MAX_ARB"                       value="0x8127">
-        <size name="PointParameterfvEXT" count="1"/>
+    <enum name="POINT_SIZE_MAX_ARB"            count="1"  value="0x8127">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="POINT_FADE_THRESHOLD_SIZE_ARB"            value="0x8128">
-        <size name="PointParameterfvEXT" count="1"/>
+    <enum name="POINT_FADE_THRESHOLD_SIZE_ARB" count="1"  value="0x8128">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="POINT_DISTANCE_ATTENUATION_ARB"           value="0x8129">
-        <size name="PointParameterfvEXT" count="3"/>
+    <enum name="POINT_DISTANCE_ATTENUATION_ARB" count="3" value="0x8129">
+        <size name="PointParameterfvEXT"/>
     </enum>
 
     <function name="PointParameterfARB" alias="PointParameterfEXT">
@@ -4909,28 +4909,28 @@ glx:
     <enum name="DEPTH_COMPONENT24_ARB"                    value="0x81A6"/>
     <enum name="DEPTH_COMPONENT32_ARB"                    value="0x81A7"/>
     <enum name="TEXTURE_DEPTH_SIZE_ARB"                   value="0x884A"/>
-    <enum name="DEPTH_TEXTURE_MODE_ARB"                   value="0x884B">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="DEPTH_TEXTURE_MODE_ARB"        count="1"  value="0x884B">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
 </category>
 
 <category name="GL_ARB_shadow" number="23">
-    <enum name="TEXTURE_COMPARE_MODE_ARB"                 value="0x884C">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_COMPARE_MODE_ARB"      count="1"  value="0x884C">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_COMPARE_FUNC_ARB"                 value="0x884D">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_COMPARE_FUNC_ARB"      count="1"  value="0x884D">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="COMPARE_R_TO_TEXTURE_ARB"                 value="0x884E"/>
 </category>
 
 <category name="GL_ARB_shadow_ambient" number="24">
-    <enum name="TEXTURE_COMPARE_FAIL_VALUE_ARB"           value="0x80BF">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_COMPARE_FAIL_VALUE_ARB" count="1" value="0x80BF">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
 </category>
 
@@ -6064,9 +6064,9 @@ glx:
 
 <category name="GL_ARB_point_sprite" number="35">
     <enum name="POINT_SPRITE_ARB"                         value="0x8861"/>
-    <enum name="COORD_REPLACE_ARB"                        value="0x8862">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="COORD_REPLACE_ARB"             count="1"  value="0x8862">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
 </category>
 
@@ -6377,22 +6377,22 @@ glx:
 </category>
 
 <category name="GL_EXT_convolution" number="12">
-    <enum name="CONVOLUTION_BORDER_MODE_EXT"              value="0x8013">
-        <size name="ConvolutionParameterfv" count="1"/>
-        <size name="ConvolutionParameteriv" count="1"/>
+    <enum name="CONVOLUTION_BORDER_MODE_EXT"    count="1" value="0x8013">
+        <size name="ConvolutionParameterfv"/>
+        <size name="ConvolutionParameteriv"/>
     </enum>
     <!-- FIXME: Should this be in a section for HP_convolution_border_modes? -->
-    <enum name="CONVOLUTION_BORDER_COLOR_HP"              value="0x8154">
-        <size name="ConvolutionParameterfv" count="4"/>
-        <size name="ConvolutionParameteriv" count="4"/>
+    <enum name="CONVOLUTION_BORDER_COLOR_HP"    count="4" value="0x8154">
+        <size name="ConvolutionParameterfv"/>
+        <size name="ConvolutionParameteriv"/>
     </enum>
-    <enum name="CONVOLUTION_FILTER_SCALE_EXT"             value="0x8014">
-        <size name="ConvolutionParameterfv" count="4"/>
-        <size name="ConvolutionParameteriv" count="4"/>
+    <enum name="CONVOLUTION_FILTER_SCALE_EXT"   count="4" value="0x8014">
+        <size name="ConvolutionParameterfv"/>
+        <size name="ConvolutionParameteriv"/>
     </enum>
-    <enum name="CONVOLUTION_FILTER_BIAS_EXT"              value="0x8015">
-        <size name="ConvolutionParameterfv" count="4"/>
-        <size name="ConvolutionParameteriv" count="4"/>
+    <enum name="CONVOLUTION_FILTER_BIAS_EXT"    count="4" value="0x8015">
+        <size name="ConvolutionParameterfv"/>
+        <size name="ConvolutionParameteriv"/>
     </enum>
 
     <function name="ConvolutionFilter1DEXT" alias="ConvolutionFilter1D">
@@ -6781,27 +6781,27 @@ glx:
 </category>
 
 <category name="GL_SGIS_generate_mipmap" number="33">
-    <enum name="GENERATE_MIPMAP_SGIS"                     value="0x8191">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="GENERATE_MIPMAP_SGIS"          count="1"  value="0x8191">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="GENERATE_MIPMAP_HINT_SGIS"                value="0x8192"/>
 </category>
 
 <category name="GL_SGIX_clipmap" number="33">
     <enum name="LINEAR_CLIPMAP_LINEAR_SGIX"               value="0x8170"/>
-    <enum name="TEXTURE_CLIPMAP_CENTER_SGIX"              value="0x8171">
-        <size name="TexParameterfv" count="2"/>
-        <size name="TexParameteriv" count="2"/>
+    <enum name="TEXTURE_CLIPMAP_CENTER_SGIX"   count="2"  value="0x8171">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="TEXTURE_CLIPMAP_FRAME_SGIX"               value="0x8172"/>
-    <enum name="TEXTURE_CLIPMAP_OFFSET_SGIX"              value="0x8173">
-        <size name="TexParameterfv" count="2"/>
-        <size name="TexParameteriv" count="2"/>
+    <enum name="TEXTURE_CLIPMAP_OFFSET_SGIX"   count="2"  value="0x8173">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_CLIPMAP_VIRTUAL_DEPTH_SGIX"       value="0x8174">
-        <size name="TexParameterfv" count="3"/>
-        <size name="TexParameteriv" count="3"/>
+    <enum name="TEXTURE_CLIPMAP_VIRTUAL_DEPTH_SGIX" count="3" value="0x8174">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="TEXTURE_CLIPMAP_LOD_OFFSET_SGIX"          value="0x8175"/>
     <enum name="TEXTURE_CLIPMAP_DEPTH_SGIX"               value="0x8176"/>
@@ -6813,13 +6813,13 @@ glx:
 </category>
 
 <category name="GL_SGIX_shadow" number="34">
-    <enum name="TEXTURE_COMPARE_SGIX"                     value="0x819A">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_COMPARE_SGIX"          count="1"  value="0x819A">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_COMPARE_OPERATOR_SGIX"            value="0x819B">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_COMPARE_OPERATOR_SGIX" count="1"  value="0x819B">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="TEXTURE_LEQUAL_R_SGIX"                    value="0x819C"/>
     <enum name="TEXTURE_GEQUAL_R_SGIX"                    value="0x819D"/>
@@ -6869,17 +6869,17 @@ glx:
 </category>
 
 <category name="GL_EXT_point_parameters" number="54">
-    <enum name="POINT_SIZE_MIN_EXT"                       value="0x8126">
-        <size name="PointParameterfvEXT" count="1"/>
+    <enum name="POINT_SIZE_MIN_EXT"            count="1"  value="0x8126">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="POINT_SIZE_MAX_EXT"                       value="0x8127">
-        <size name="PointParameterfvEXT" count="1"/>
+    <enum name="POINT_SIZE_MAX_EXT"            count="1"  value="0x8127">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="POINT_FADE_THRESHOLD_SIZE_EXT"            value="0x8128">
-        <size name="PointParameterfvEXT" count="1"/>
+    <enum name="POINT_FADE_THRESHOLD_SIZE_EXT" count="1"  value="0x8128">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="POINT_DISTANCE_ATTENUATION_EXT"           value="0x8129">
-        <size name="PointParameterfvEXT" count="3"/>
+    <enum name="POINT_DISTANCE_ATTENUATION_EXT" count="3" value="0x8129">
+        <size name="PointParameterfvEXT"/>
     </enum>
 
     <function name="PointParameterfEXT" offset="458">
@@ -6929,13 +6929,13 @@ glx:
 </category>
 
 <category name="GL_SGIX_texture_scale_bias" number="56">
-    <enum name="POST_TEXTURE_FILTER_BIAS_SGIX"            value="0x8179">
-        <size name="TexParameterfv" count="4"/>
-        <size name="TexParameteriv" count="4"/>
+    <enum name="POST_TEXTURE_FILTER_BIAS_SGIX"  count="4" value="0x8179">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="POST_TEXTURE_FILTER_SCALE_SGIX"           value="0x817A">
-        <size name="TexParameterfv" count="4"/>
-        <size name="TexParameteriv" count="4"/>
+    <enum name="POST_TEXTURE_FILTER_SCALE_SGIX" count="4" value="0x817A">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="POST_TEXTURE_FILTER_BIAS_RANGE_SGIX"      value="0x817B"/>
     <enum name="POST_TEXTURE_FILTER_SCALE_RANGE_SGIX"     value="0x817C"/>
@@ -6992,9 +6992,9 @@ glx:
 
 <category name="GL_SGIX_fog_offset" number="65">
     <enum name="FOG_OFFSET_SGIX"                          value="0x8198"/>
-    <enum name="FOG_OFFSET_VALUE_SGIX"                    value="0x8199">
-        <size name="Fogfv" count="1"/>
-        <size name="Fogiv" count="1"/>
+    <enum name="FOG_OFFSET_VALUE_SGIX"         count="1"  value="0x8199">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
     </enum>
 </category>
 
@@ -7152,17 +7152,17 @@ glx:
 <!-- Extension number 83 is a GLX extension. -->
 
 <category name="GL_SGIX_texture_lod_bias" number="84">
-    <enum name="TEXTURE_LOD_BIAS_S_SGIX"                  value="0x818E">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_LOD_BIAS_S_SGIX"      count="1"  value="0x818E">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_LOD_BIAS_T_SGIX"                  value="0x818F">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_LOD_BIAS_T_SGIX"      count="1"  value="0x818F">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_LOD_BIAS_R_SGIX"                  value="0x8190">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_LOD_BIAS_R_SGIX"      count="1"  value="0x8190">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
 </category>
 
@@ -7174,9 +7174,9 @@ glx:
 
 
 <category name="GL_SGIX_shadow_ambient" number="90">
-    <enum name="SHADOW_AMBIENT_SGIX"                      value="0x80BF">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="SHADOW_AMBIENT_SGIX"           count="1"  value="0x80BF">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
 </category>
 
@@ -7213,13 +7213,13 @@ glx:
 
 <category name="GL_EXT_cull_vertex" number="98">
     <enum name="CULL_VERTEX_EXT"                          value="0x81AA"/>
-    <enum name="CULL_VERTEX_OBJECT_POSITION_EXT"          value="0x81AB">
-        <size name="CullParameterfv" count="4"/>
-        <size name="CullParameterdv" count="4"/>
+    <enum name="CULL_VERTEX_OBJECT_POSITION_EXT" count="4" value="0x81AB">
+        <size name="CullParameterfv"/>
+        <size name="CullParameterdv"/>
     </enum>
-    <enum name="CULL_VERTEX_EYE_POSITION_EXT"             value="0x81AC">
-        <size name="CullParameterfv" count="4"/>
-        <size name="CullParameterdv" count="4"/>
+    <enum name="CULL_VERTEX_EYE_POSITION_EXT"  count="4"  value="0x81AC">
+        <size name="CullParameterfv"/>
+        <size name="CullParameterdv"/>
     </enum>
 
     <function name="CullParameterdvEXT" offset="542">
@@ -8223,16 +8223,16 @@ glx:
 <!-- Extension number 184 is not listed in the extension registry. -->
 
 <category name="GL_EXT_texture_lod_bias" number="186">
-    <enum name="TEXTURE_LOD_BIAS_EXT"                     value="0x8501">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_LOD_BIAS_EXT"          count="1"  value="0x8501">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
 </category>
 
 <category name="GL_EXT_texture_filter_anisotropic" number="187">
-    <enum name="TEXTURE_MAX_ANISOTROPY_EXT"               value="0x84FE">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_MAX_ANISOTROPY_EXT"    count="1"  value="0x84FE">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
     <enum name="MAX_TEXTURE_MAX_ANISOTROPY_EXT"           value="0x84FF"/>
 </category>
@@ -8376,9 +8376,9 @@ glx:
 </category>
 
 <category name="GL_NV_fog_distance" number="192">
-    <enum name="FOG_DISTANCE_MODE_NV"                     value="0x855A">
-        <size name="Fogfv" count="1"/>
-        <size name="Fogiv" count="1"/>
+    <enum name="FOG_DISTANCE_MODE_NV"          count="1"  value="0x855A">
+        <size name="Fogfv"/>
+        <size name="Fogiv"/>
     </enum>
     <enum name="EYE_RADIAL_NV"                            value="0x855B"/>
     <enum name="EYE_PLANE_ABSOLUTE_NV"                    value="0x855C"/>
@@ -8386,21 +8386,21 @@ glx:
 
 <category name="GL_NV_texture_env_combine4" number="195">
     <enum name="COMBINE4"                                 value="0x8503"/>
-    <enum name="SOURCE3_RGB_NV"                           value="0x8583">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="SOURCE3_RGB_NV"                count="1"  value="0x8583">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="SOURCE3_ALPHA_NV"                         value="0x858B">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="SOURCE3_ALPHA_NV"              count="1"  value="0x858B">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="OPERAND3_RGB_NV"                          value="0x8593">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="OPERAND3_RGB_NV"               count="1"  value="0x8593">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
-    <enum name="OPERAND3_ALPHA_NV"                        value="0x859B">
-        <size name="TexEnvfv" count="1"/>
-        <size name="TexEnviv" count="1"/>
+    <enum name="OPERAND3_ALPHA_NV"             count="1"  value="0x859B">
+        <size name="TexEnvfv"/>
+        <size name="TexEnviv"/>
     </enum>
 </category>
 
@@ -9339,17 +9339,17 @@ glx:
 <!-- Extension number 234 is a GLX extension. -->
 
 <category name="GL_SGIX_texture_coordinate_clamp" number="235">
-    <enum name="TEXTURE_MAX_CLAMP_S_SGIX"                 value="0x8369">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_MAX_CLAMP_S_SGIX"      count="1"  value="0x8369">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_MAX_CLAMP_T_SGIX"                 value="0x836A">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_MAX_CLAMP_T_SGIX"      count="1"  value="0x836A">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
-    <enum name="TEXTURE_MAX_CLAMP_R_SGIX"                 value="0x836B">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_MAX_CLAMP_R_SGIX"      count="1"  value="0x836B">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
 </category>
 
@@ -9508,22 +9508,22 @@ glx:
     <!-- These existing enums can be passed as a parameter to the function
          added for this extension. -->
 
-    <enum name="POINT_SIZE_MIN_EXT"                       value="0x8126">
-        <size name="PointParameterivNV" count="1"/>
+    <enum name="POINT_SIZE_MIN_EXT"            count="1"  value="0x8126">
+        <size name="PointParameterivNV"/>
     </enum>
-    <enum name="POINT_SIZE_MAX_EXT"                       value="0x8127">
-        <size name="PointParameterivNV" count="1"/>
+    <enum name="POINT_SIZE_MAX_EXT"            count="1"  value="0x8127">
+        <size name="PointParameterivNV"/>
     </enum>
-    <enum name="POINT_FADE_THRESHOLD_SIZE_EXT"            value="0x8128">
-        <size name="PointParameterivNV" count="1"/>
+    <enum name="POINT_FADE_THRESHOLD_SIZE_EXT" count="1"  value="0x8128">
+        <size name="PointParameterivNV"/>
     </enum>
-    <enum name="POINT_DISTANCE_ATTENUATION_EXT"           value="0x8129">
-        <size name="PointParameterivNV" count="3"/>
+    <enum name="POINT_DISTANCE_ATTENUATION_EXT" count="3" value="0x8129">
+        <size name="PointParameterivNV"/>
     </enum>
 
-    <enum name="POINT_SPRITE_R_MODE_NV"                   value="0x8863	">
-        <size name="PointParameterfvEXT" count="1"/>
-        <size name="PointParameterivNV" count="1"/>
+    <enum name="POINT_SPRITE_R_MODE_NV"        count="1"  value="0x8863	">
+        <size name="PointParameterfvEXT"/>
+        <size name="PointParameterivNV"/>
     </enum>
 
     <function name="PointParameteriNV" offset="642">
@@ -9616,9 +9616,9 @@ glx:
 </category>
 
 <category name="GL_NV_expand_normal" number="286">
-    <enum name="TEXTURE_UNSIGNED_REMAP_MODE_NV"           value="0x888F">
-        <size name="TexParameterfv" count="1"/>
-        <size name="TexParameteriv" count="1"/>
+    <enum name="TEXTURE_UNSIGNED_REMAP_MODE_NV" count="1" value="0x888F">
+        <size name="TexParameterfv"/>
+        <size name="TexParameteriv"/>
     </enum>
 </category>
 
@@ -9675,17 +9675,17 @@ glx:
 </category>
 
 <category name="GL_SGIS_point_parameters">
-    <enum name="POINT_SIZE_MIN_SGIS"                      value="0x8126">
-        <size name="PointParameterfvEXT" count="1"/>
+    <enum name="POINT_SIZE_MIN_SGIS"           count="1"  value="0x8126">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="POINT_SIZE_MAX_SGIS"                      value="0x8127">
-        <size name="PointParameterfvEXT" count="1"/>
+    <enum name="POINT_SIZE_MAX_SGIS"           count="1"  value="0x8127">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="POINT_FADE_THRESHOLD_SIZE_SGIS"           value="0x8128">
-        <size name="PointParameterfvEXT" count="1"/>
+    <enum name="POINT_FADE_THRESHOLD_SIZE_SGIS" count="1" value="0x8128">
+        <size name="PointParameterfvEXT"/>
     </enum>
-    <enum name="POINT_DISTANCE_ATTENUATION_SGIS"          value="0x8129">
-        <size name="PointParameterfvEXT" count="3"/>
+    <enum name="POINT_DISTANCE_ATTENUATION_SGIS" count="3" value="0x8129">
+        <size name="PointParameterfvEXT"/>
     </enum>
 
     <function name="PointParameterfSGIS" alias="PointParameterfEXT">

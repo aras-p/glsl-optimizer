@@ -244,7 +244,7 @@ class glXEnum(gl_XML.glEnum):
 
 	def startElement(self, name, attrs):
 		if name == "size":
-			[n, c] = self.process_attributes(attrs)
+			[n, c, mode] = self.process_attributes(attrs)
 
 			if not self.context.glx_enum_functions.has_key( n ):
 				f = glXEnumFunction( n )

@@ -90,17 +90,40 @@ class glEnum( glItem ):
 		enum_name = "GL_" + attrs.get('name', None)
 		glItem.__init__(self, name, enum_name, context)
 
+		temp = attrs.get('count', None)
+		if temp == None:
+			self.default_count = 0
+		else:
+			try:
+				c = int(temp)
+			except Exception,e:
+				raise RuntimeError('Invalid count value "%s" for enum "%s" in function "%s" when an integer was expected.' % (temp, self.name, n))
+
+			self.default_count = c
+		return
+
 
 	def process_attributes(self, attrs):
 		name = attrs.get('name', None)
 
 		temp = attrs.get('count', None)
-		try:
-			c = int(temp)
-		except Exception,e:
-			raise RuntimeError('Invalid count value "%s" for enum "%s" in function "%s" when an integer was expected.' % (temp, self.name, n))
+		if temp == None:
+			c = self.default_count
+		else:
+			try:
+				c = int(temp)
+			except Exception,e:
+				raise RuntimeError('Invalid count value "%s" for enum "%s" in function "%s" when an integer was expected.' % (temp, self.name, n))
 
-		return [name, c]
+		mode_str = attrs.get('mode', "set")
+		if mode_str == "set":
+			mode = 1
+		elif mode_str == "get":
+			mode = 0
+		else:
+			raise RuntimeError("Invalid mode '%s' for function '%s' in enum '%s'." % (mode_str, self.context.name, self.name))
+
+		return [name, c, mode]
 
 
 class glType( glItem ):
