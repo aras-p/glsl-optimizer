@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.39 2002/10/04 17:37:46 brianp Exp $ */
+/* $Id: s_context.c,v 1.40 2002/10/11 17:50:59 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -506,6 +506,11 @@ _swrast_CreateContext( GLcontext *ctx )
 
    swrast->AllowVertexFog = GL_TRUE;
    swrast->AllowPixelFog = GL_TRUE;
+
+   if (ctx->Visual.doubleBufferMode)
+      swrast->CurrentBuffer = BACK_LEFT_BIT;
+   else
+      swrast->CurrentBuffer = FRONT_LEFT_BIT;
 
    /* Optimized Accum buffer */
    swrast->_IntegerAccumMode = GL_TRUE;
