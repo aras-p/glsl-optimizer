@@ -1,4 +1,4 @@
-/* $Id: mtypes.h,v 1.44 2001/05/30 15:22:04 brianp Exp $ */
+/* $Id: mtypes.h,v 1.45 2001/06/12 22:08:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -920,7 +920,6 @@ struct gl_texture_unit {
 struct gl_texture_attrib {
    /* multitexture */
    GLuint CurrentUnit;	          /* Active texture unit */
-   GLuint CurrentTransformUnit;	  /* Client active texture xform unit */
 
    GLuint _ReallyEnabled;     /* enables for all texture units: */
                              /* = (Unit[0]._ReallyEnabled << 0) | */

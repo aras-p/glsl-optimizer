@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.61 2001/05/29 15:23:49 brianp Exp $ */
+/* $Id: get.c,v 1.62 2001/06/12 22:08:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -82,14 +82,12 @@ pixel_texgen_mode(const GLcontext *ctx)
 }
 
 
-
 void
 _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    GLuint texUnit = ctx->Texture.CurrentUnit;
-   GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -267,20 +265,20 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 params[3] = FLOAT_TO_BOOL(ctx->Current.RasterPos[3]);
 	 break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
-         params[0] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texTransformUnit][0]);
-         params[1] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texTransformUnit][1]);
-         params[2] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texTransformUnit][2]);
-         params[3] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texTransformUnit][3]);
+         params[0] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texUnit][0]);
+         params[1] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texUnit][1]);
+         params[2] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texUnit][2]);
+         params[3] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texUnit][3]);
 	 break;
       case GL_CURRENT_RASTER_POSITION_VALID:
          *params = ctx->Current.RasterPosValid;
 	 break;
       case GL_CURRENT_TEXTURE_COORDS:
 	 FLUSH_CURRENT(ctx, 0);
-         params[0] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texTransformUnit][0]);
-         params[1] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texTransformUnit][1]);
-         params[2] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texTransformUnit][2]);
-         params[3] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texTransformUnit][3]);
+         params[0] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texUnit][0]);
+         params[1] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texUnit][1]);
+         params[2] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texUnit][2]);
+         params[3] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texUnit][3]);
 	 break;
       case GL_DEPTH_BIAS:
          *params = FLOAT_TO_BOOL(ctx->Pixel.DepthBias);
@@ -852,11 +850,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_TEXTURE_MATRIX:
 	 for (i=0;i<16;i++) {
 	    params[i] =
-	       FLOAT_TO_BOOL(ctx->TextureMatrix[texTransformUnit].m[i]);
+	       FLOAT_TO_BOOL(ctx->TextureMatrix[texUnit].m[i]);
 	 }
 	 break;
       case GL_TEXTURE_STACK_DEPTH:
-	 *params = INT_TO_BOOL(ctx->TextureStackDepth[texTransformUnit] + 1);
+	 *params = INT_TO_BOOL(ctx->TextureStackDepth[texUnit] + 1);
 	 break;
       case GL_UNPACK_ALIGNMENT:
 	 *params = INT_TO_BOOL(ctx->Unpack.Alignment);
@@ -1069,7 +1067,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->TextureMatrix[texTransformUnit].m);
+            _math_transposef(tm, ctx->TextureMatrix[texUnit].m);
             for (i=0;i<16;i++) {
                params[i] = FLOAT_TO_BOOL(tm[i]);
             }
@@ -1363,15 +1361,12 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 }
 
 
-
-
 void
 _mesa_GetDoublev( GLenum pname, GLdouble *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    GLuint texUnit = ctx->Texture.CurrentUnit;
-   GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -1548,20 +1543,20 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 params[3] = (GLdouble) ctx->Current.RasterPos[3];
 	 break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
-	 params[0] = (GLdouble) ctx->Current.RasterMultiTexCoord[texTransformUnit][0];
-	 params[1] = (GLdouble) ctx->Current.RasterMultiTexCoord[texTransformUnit][1];
-	 params[2] = (GLdouble) ctx->Current.RasterMultiTexCoord[texTransformUnit][2];
-	 params[3] = (GLdouble) ctx->Current.RasterMultiTexCoord[texTransformUnit][3];
+	 params[0] = (GLdouble) ctx->Current.RasterMultiTexCoord[texUnit][0];
+	 params[1] = (GLdouble) ctx->Current.RasterMultiTexCoord[texUnit][1];
+	 params[2] = (GLdouble) ctx->Current.RasterMultiTexCoord[texUnit][2];
+	 params[3] = (GLdouble) ctx->Current.RasterMultiTexCoord[texUnit][3];
 	 break;
       case GL_CURRENT_RASTER_POSITION_VALID:
 	 *params = (GLdouble) ctx->Current.RasterPosValid;
 	 break;
       case GL_CURRENT_TEXTURE_COORDS:
 	 FLUSH_CURRENT(ctx, 0);
-	 params[0] = (GLdouble) ctx->Current.Texcoord[texTransformUnit][0];
-	 params[1] = (GLdouble) ctx->Current.Texcoord[texTransformUnit][1];
-	 params[2] = (GLdouble) ctx->Current.Texcoord[texTransformUnit][2];
-	 params[3] = (GLdouble) ctx->Current.Texcoord[texTransformUnit][3];
+	 params[0] = (GLdouble) ctx->Current.Texcoord[texUnit][0];
+	 params[1] = (GLdouble) ctx->Current.Texcoord[texUnit][1];
+	 params[2] = (GLdouble) ctx->Current.Texcoord[texUnit][2];
+	 params[3] = (GLdouble) ctx->Current.Texcoord[texUnit][3];
 	 break;
       case GL_DEPTH_BIAS:
 	 *params = (GLdouble) ctx->Pixel.DepthBias;
@@ -2130,11 +2125,11 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 break;
       case GL_TEXTURE_MATRIX:
          for (i=0;i<16;i++) {
-	    params[i] = (GLdouble) ctx->TextureMatrix[texTransformUnit].m[i];
+	    params[i] = (GLdouble) ctx->TextureMatrix[texUnit].m[i];
 	 }
 	 break;
       case GL_TEXTURE_STACK_DEPTH:
-	 *params = (GLdouble) (ctx->TextureStackDepth[texTransformUnit] + 1);
+	 *params = (GLdouble) (ctx->TextureStackDepth[texUnit] + 1);
 	 break;
       case GL_UNPACK_ALIGNMENT:
 	 *params = (GLdouble) ctx->Unpack.Alignment;
@@ -2350,7 +2345,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->TextureMatrix[texTransformUnit].m);
+            _math_transposef(tm, ctx->TextureMatrix[texUnit].m);
             for (i=0;i<16;i++) {
                params[i] = (GLdouble) tm[i];
             }
@@ -2644,15 +2639,12 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 }
 
 
-
-
 void
 _mesa_GetFloatv( GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    GLuint texUnit = ctx->Texture.CurrentUnit;
-   GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -2829,20 +2821,20 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 params[3] = ctx->Current.RasterPos[3];
 	 break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
-	 params[0] = ctx->Current.RasterMultiTexCoord[texTransformUnit][0];
-	 params[1] = ctx->Current.RasterMultiTexCoord[texTransformUnit][1];
-	 params[2] = ctx->Current.RasterMultiTexCoord[texTransformUnit][2];
-	 params[3] = ctx->Current.RasterMultiTexCoord[texTransformUnit][3];
+	 params[0] = ctx->Current.RasterMultiTexCoord[texUnit][0];
+	 params[1] = ctx->Current.RasterMultiTexCoord[texUnit][1];
+	 params[2] = ctx->Current.RasterMultiTexCoord[texUnit][2];
+	 params[3] = ctx->Current.RasterMultiTexCoord[texUnit][3];
 	 break;
       case GL_CURRENT_RASTER_POSITION_VALID:
 	 *params = (GLfloat) ctx->Current.RasterPosValid;
 	 break;
       case GL_CURRENT_TEXTURE_COORDS:
 	 FLUSH_CURRENT(ctx, 0);
-	 params[0] = (GLfloat) ctx->Current.Texcoord[texTransformUnit][0];
-	 params[1] = (GLfloat) ctx->Current.Texcoord[texTransformUnit][1];
-	 params[2] = (GLfloat) ctx->Current.Texcoord[texTransformUnit][2];
-	 params[3] = (GLfloat) ctx->Current.Texcoord[texTransformUnit][3];
+	 params[0] = (GLfloat) ctx->Current.Texcoord[texUnit][0];
+	 params[1] = (GLfloat) ctx->Current.Texcoord[texUnit][1];
+	 params[2] = (GLfloat) ctx->Current.Texcoord[texUnit][2];
+	 params[3] = (GLfloat) ctx->Current.Texcoord[texUnit][3];
 	 break;
       case GL_DEPTH_BIAS:
 	 *params = (GLfloat) ctx->Pixel.DepthBias;
@@ -3413,11 +3405,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 break;
       case GL_TEXTURE_MATRIX:
          for (i=0;i<16;i++) {
-	    params[i] = ctx->TextureMatrix[texTransformUnit].m[i];
+	    params[i] = ctx->TextureMatrix[texUnit].m[i];
 	 }
 	 break;
       case GL_TEXTURE_STACK_DEPTH:
-	 *params = (GLfloat) (ctx->TextureStackDepth[texTransformUnit] + 1);
+	 *params = (GLfloat) (ctx->TextureStackDepth[texUnit] + 1);
 	 break;
       case GL_UNPACK_ALIGNMENT:
 	 *params = (GLfloat) ctx->Unpack.Alignment;
@@ -3609,7 +3601,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          _math_transposef(params, ctx->ProjectionMatrix.m);
          break;
       case GL_TRANSPOSE_TEXTURE_MATRIX_ARB:
-         _math_transposef(params, ctx->TextureMatrix[texTransformUnit].m);
+         _math_transposef(params, ctx->TextureMatrix[texUnit].m);
          break;
 
       /* GL_HP_occlusion_test */
@@ -3899,15 +3891,12 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 }
 
 
-
-
 void
 _mesa_GetIntegerv( GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    GLuint texUnit = ctx->Texture.CurrentUnit;
-   GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -4086,20 +4075,20 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 params[3] = (GLint) ctx->Current.RasterPos[3];
 	 break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
-	 params[0] = (GLint) ctx->Current.RasterMultiTexCoord[texTransformUnit][0];
-	 params[1] = (GLint) ctx->Current.RasterMultiTexCoord[texTransformUnit][1];
-	 params[2] = (GLint) ctx->Current.RasterMultiTexCoord[texTransformUnit][2];
-	 params[3] = (GLint) ctx->Current.RasterMultiTexCoord[texTransformUnit][3];
+	 params[0] = (GLint) ctx->Current.RasterMultiTexCoord[texUnit][0];
+	 params[1] = (GLint) ctx->Current.RasterMultiTexCoord[texUnit][1];
+	 params[2] = (GLint) ctx->Current.RasterMultiTexCoord[texUnit][2];
+	 params[3] = (GLint) ctx->Current.RasterMultiTexCoord[texUnit][3];
 	 break;
       case GL_CURRENT_RASTER_POSITION_VALID:
 	 *params = (GLint) ctx->Current.RasterPosValid;
 	 break;
       case GL_CURRENT_TEXTURE_COORDS:
 	 FLUSH_CURRENT(ctx, 0);
-         params[0] = (GLint) ctx->Current.Texcoord[texTransformUnit][0];
-         params[1] = (GLint) ctx->Current.Texcoord[texTransformUnit][1];
-         params[2] = (GLint) ctx->Current.Texcoord[texTransformUnit][2];
-         params[3] = (GLint) ctx->Current.Texcoord[texTransformUnit][3];
+         params[0] = (GLint) ctx->Current.Texcoord[texUnit][0];
+         params[1] = (GLint) ctx->Current.Texcoord[texUnit][1];
+         params[2] = (GLint) ctx->Current.Texcoord[texUnit][2];
+         params[3] = (GLint) ctx->Current.Texcoord[texUnit][3];
 	 break;
       case GL_DEPTH_BIAS:
          *params = (GLint) ctx->Pixel.DepthBias;
@@ -4668,11 +4657,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 break;
       case GL_TEXTURE_MATRIX:
          for (i=0;i<16;i++) {
-	    params[i] = (GLint) ctx->TextureMatrix[texTransformUnit].m[i];
+	    params[i] = (GLint) ctx->TextureMatrix[texUnit].m[i];
 	 }
 	 break;
       case GL_TEXTURE_STACK_DEPTH:
-	 *params = (GLint) (ctx->TextureStackDepth[texTransformUnit] + 1);
+	 *params = (GLint) (ctx->TextureStackDepth[texUnit] + 1);
 	 break;
       case GL_UNPACK_ALIGNMENT:
 	 *params = ctx->Unpack.Alignment;
@@ -4888,7 +4877,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          {
             GLfloat tm[16];
             GLuint i;
-            _math_transposef(tm, ctx->TextureMatrix[texTransformUnit].m);
+            _math_transposef(tm, ctx->TextureMatrix[texUnit].m);
             for (i=0;i<16;i++) {
                params[i] = (GLint) tm[i];
             }

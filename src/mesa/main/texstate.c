@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.51 2001/05/21 16:41:03 brianp Exp $ */
+/* $Id: texstate.c,v 1.52 2001/06/12 22:08:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1469,7 +1469,7 @@ void
 _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint tUnit = ctx->Texture.CurrentTransformUnit;
+   GLuint tUnit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[tUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -1754,7 +1754,7 @@ void
 _mesa_GetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint tUnit = ctx->Texture.CurrentTransformUnit;
+   GLuint tUnit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[tUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -1831,7 +1831,7 @@ void
 _mesa_GetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint tUnit = ctx->Texture.CurrentTransformUnit;
+   GLuint tUnit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[tUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -1908,7 +1908,7 @@ void
 _mesa_GetTexGeniv( GLenum coord, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint tUnit = ctx->Texture.CurrentTransformUnit;
+   GLuint tUnit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[tUnit];
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -2023,7 +2023,6 @@ _mesa_ActiveTextureARB( GLenum target )
 
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
    ctx->Texture.CurrentUnit = texUnit;
-   ctx->Texture.CurrentTransformUnit = texUnit;
    if (ctx->Driver.ActiveTexture) {
       (*ctx->Driver.ActiveTexture)( ctx, (GLuint) texUnit );
    }

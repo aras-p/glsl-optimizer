@@ -1,4 +1,4 @@
-/* $Id: matrix.c,v 1.34 2001/03/19 22:45:52 brianp Exp $ */
+/* $Id: matrix.c,v 1.35 2001/06/12 22:08:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -70,7 +70,7 @@ do {									\
 	 flags |= _NEW_PROJECTION;					\
 	 break;								\
       case GL_TEXTURE:							\
-	 mat = &ctx->TextureMatrix[ctx->Texture.CurrentTransformUnit];	\
+	 mat = &ctx->TextureMatrix[ctx->Texture.CurrentUnit];		\
 	 flags |= _NEW_TEXTURE_MATRIX;					\
 	 break;								\
       case GL_COLOR:							\
@@ -183,7 +183,7 @@ _mesa_PushMatrix( void )
          break;
       case GL_TEXTURE:
          {
-            GLuint t = ctx->Texture.CurrentTransformUnit;
+            GLuint t = ctx->Texture.CurrentUnit;
             if (ctx->TextureStackDepth[t] >= MAX_TEXTURE_STACK_DEPTH - 1) {
                _mesa_error( ctx,  GL_STACK_OVERFLOW, "glPushMatrix");
                return;
@@ -239,7 +239,7 @@ _mesa_PopMatrix( void )
          break;
       case GL_TEXTURE:
          {
-            GLuint t = ctx->Texture.CurrentTransformUnit;
+            GLuint t = ctx->Texture.CurrentUnit;
             if (ctx->TextureStackDepth[t]==0) {
                _mesa_error( ctx,  GL_STACK_UNDERFLOW, "glPopMatrix");
                return;
