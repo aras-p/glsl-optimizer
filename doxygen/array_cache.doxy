@@ -145,7 +145,6 @@ SKIP_FUNCTION_MACROS   = YES
 # Configuration::addtions related to external references   
 #---------------------------------------------------------------------------
 TAGFILES               = core.tag=../core \
-			 array_cahe.tag=../array_cache \
 			 tnl.tag=../tnl \
 			 swrast_setup.tag=../swrast_setup \
 			 swrast.tag=../swrast \
