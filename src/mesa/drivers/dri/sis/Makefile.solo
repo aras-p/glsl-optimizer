@@ -38,6 +38,7 @@ DRIVER_SOURCES = \
 		sis_texstate.c \
 		sis_tris.c \
 		sis_vb.c \
+		../../common/driverfuncs.c \
                 ../common/mm.c \
                 ../common/utils.c \
                 ../common/texmem.c \

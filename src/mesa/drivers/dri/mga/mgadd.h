@@ -31,6 +31,6 @@
 
 #include "context.h"
 
-void mgaDDInitDriverFuncs( GLcontext *ctx );
+extern void mgaInitDriverFuncs( struct dd_function_table *functions );
 
 #endif

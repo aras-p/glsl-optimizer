@@ -257,6 +257,7 @@ fxMesaCreateContext(GLuint win,
 {
  fxMesaContext fxMesa = NULL;
  GLcontext *ctx = NULL, *shareCtx = NULL;
+ struct dd_function_table functions;
 
  int i;
  const char *str;
@@ -651,9 +652,10 @@ fxMesaCreateContext(GLuint win,
       goto errorhandler;
    }
 
-   ctx = fxMesa->glCtx = _mesa_create_context(fxMesa->glVis,
-                                              shareCtx,
-					      (void *) fxMesa, GL_TRUE);
+   _mesa_init_driver_functions(&functions);
+   ctx->Driver.
+   ctx = fxMesa->glCtx = _mesa_create_context(fxMesa->glVis, shareCtx,
+					      &functions, (void *) fxMesa);
    if (!ctx) {
       str = "_mesa_create_context";
       goto errorhandler;

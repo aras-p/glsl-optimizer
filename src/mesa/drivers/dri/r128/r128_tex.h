@@ -44,7 +44,7 @@ extern void r128UploadTexImages( r128ContextPtr rmesa, r128TexObjPtr t );
 
 extern void r128DestroyTexObj( r128ContextPtr rmesa, r128TexObjPtr t );
 
-extern void r128DDInitTextureFuncs( GLcontext *ctx );
+extern void r128InitTextureFuncs( struct dd_function_table *functions );
 
 
 /* ================================================================

@@ -40,12 +40,12 @@
 #include "tdfx_dd.h"
 #include "tdfx_state.h"
 #include "tdfx_vb.h"
+#include "tdfx_tex.h"
 #include "tdfx_tris.h"
 #include "tdfx_render.h"
 #include "tdfx_span.h"
 #include "tdfx_texman.h"
 #include "extensions.h"
-
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -53,6 +53,8 @@
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
+
+#include "drivers/common/driverfuncs.h"
 
 const char __driConfigOptions[] = { 0 };
 const GLuint __driNConfigOptions = 0;
@@ -115,11 +117,20 @@ GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
    tdfxScreenPrivate *fxScreen = (tdfxScreenPrivate *) sPriv->private;
    TDFXSAREAPriv *saPriv = (TDFXSAREAPriv *) ((char *) sPriv->pSAREA +
 					      sizeof(XF86DRISAREARec));
+   struct dd_function_table functions;
 
    /* Allocate tdfx context */
    fxMesa = (tdfxContextPtr) CALLOC( sizeof(tdfxContextRec) );
    if (!fxMesa)
       return GL_FALSE;
+
+   /* Init default driver functions then plug in our tdfx-specific functions
+    * (the texture functions are especially important)
+    */
+   _mesa_init_driver_functions(&functions);
+   tdfxDDInitDriverFuncs(mesaVis, &functions);
+   tdfxInitTextureFuncs(&functions);
+   tdfxInitRenderFuncs(&functions);
 
    /* Allocate the Mesa context */
    if (sharedContextPrivate)
@@ -127,7 +138,8 @@ GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
    else 
       shareCtx = NULL;
 
-   fxMesa->glCtx = _mesa_create_context(mesaVis, shareCtx, (void *) fxMesa, GL_TRUE);
+   fxMesa->glCtx = _mesa_create_context(mesaVis, shareCtx,
+                                        &functions, (void *) fxMesa);
    if (!fxMesa->glCtx) {
       FREE(fxMesa);
       return GL_FALSE;
@@ -246,10 +258,9 @@ GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
    _swrast_allow_vertex_fog( ctx, GL_FALSE );
 
    tdfxDDInitExtensions( ctx );
-   tdfxDDInitDriverFuncs( ctx );
-   tdfxDDInitStateFuncs( ctx );
-   tdfxDDInitRenderFuncs( ctx );
+   /* XXX these should really go right after _mesa_init_driver_functions() */
    tdfxDDInitSpanFuncs( ctx ); 
+   tdfxDDInitStateFuncs( ctx );
    tdfxDDInitTriFuncs( ctx );
    tdfxInitVB( ctx );
    tdfxInitState( fxMesa );

@@ -53,7 +53,7 @@ void i830WaitAgeLocked( i830ContextPtr imesa, int age );
 void i830WaitAge( i830ContextPtr imesa, int age );
 void i830DmaFinish( i830ContextPtr imesa );
 void i830RegetLockQuiescent( i830ContextPtr imesa );
-void i830DDInitIoctlFuncs( GLcontext *ctx );
+void i830InitIoctlFuncs( struct dd_function_table *functions );
 void i830CopyBuffer( const __DRIdrawablePrivate *dpriv );
 void i830PageFlip( const __DRIdrawablePrivate *dpriv );
 int i830_check_copy(int fd);

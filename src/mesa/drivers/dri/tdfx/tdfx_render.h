@@ -41,7 +41,7 @@
 
 #include "tdfx_context.h"
 
-extern void tdfxDDInitRenderFuncs( GLcontext *ctx );
+extern void tdfxInitRenderFuncs( struct dd_function_table *functions );
 
 extern void tdfxEmitHwStateLocked( tdfxContextPtr fxMesa );
 

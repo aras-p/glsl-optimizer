@@ -554,6 +554,7 @@ static void r200TexImage1D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
+   assert(t);
    if ( t ) {
       driSwapOutTextureObject( t );
    }
@@ -615,6 +616,8 @@ static void r200TexImage2D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
    GLuint face;
+
+   assert(t);
 
    /* which cube face or ordinary 2D image */
    switch (target) {
@@ -683,7 +686,6 @@ static void r200TexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
    GLuint face;
 
-
    /* which cube face or ordinary 2D image */
    switch (target) {
    case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
@@ -730,6 +732,8 @@ static void r200TexImage3D( GLcontext *ctx, GLenum target, GLint level,
                             struct gl_texture_image *texImage )
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
+
+   assert(t);
 
    if ( t ) {
       driSwapOutTextureObject( t );
@@ -934,6 +938,8 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
 
 
 
+#if 0
+/* not needed anymore */
 static void r200BindTexture( GLcontext *ctx, GLenum target,
 			       struct gl_texture_object *texObj )
 {
@@ -948,12 +954,16 @@ static void r200BindTexture( GLcontext *ctx, GLenum target,
       }
    }
 }
+#endif
+
 
 static void r200DeleteTexture( GLcontext *ctx,
 				 struct gl_texture_object *texObj )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
+
+   assert(t);
 
    if ( R200_DEBUG & (DEBUG_STATE|DEBUG_TEXTURE) ) {
       fprintf( stderr, "%s( %p (target = %s) )\n", __FUNCTION__, (void *)texObj,
@@ -991,59 +1001,65 @@ static void r200TexGen( GLcontext *ctx,
    rmesa->recheck_texgen[unit] = GL_TRUE;
 }
 
-/* Fixup MaxAnisotropy according to user preference.
+
+/**
+ * Allocate a new texture object.
+ * Called via ctx->Driver.NewTextureObject.
+ * Note: this function will be called during context creation to
+ * allocate the default texture objects.
+ * Fixup MaxAnisotropy according to user preference.
  */
-static struct gl_texture_object *r200NewTextureObject ( GLcontext *ctx,
-							GLuint name,
-							GLenum target ) {
-    struct gl_texture_object *obj;
-    obj = _mesa_new_texture_object (ctx, name, target);
-    obj->MaxAnisotropy = driQueryOptionf (&R200_CONTEXT(ctx)->optionCache,
-					  "def_max_anisotropy");
-    return obj;
+static struct gl_texture_object *
+r200NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
+{
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);
+   struct gl_texture_object *obj;
+   driTextureObject *t;
+   obj = _mesa_new_texture_object(ctx, name, target);
+   if (!obj)
+      return NULL;
+   obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
+   t = (driTextureObject *) r200AllocTexObj( obj );
+   if (!t) {
+      _mesa_delete_texture_object(ctx, obj);
+      return NULL;
+   }
+   return obj;
 }
 
 
-void r200InitTextureFuncs( GLcontext *ctx )
+void r200InitTextureFuncs( struct dd_function_table *functions )
 {
+   /* Note: we only plug in the functions we implement in the driver
+    * since _mesa_init_driver_functions() was already called.
+    */
+   functions->ChooseTextureFormat	= r200ChooseTextureFormat;
+   functions->TexImage1D		= r200TexImage1D;
+   functions->TexImage2D		= r200TexImage2D;
+#if ENABLE_HW_3D_TEXTURE
+   functions->TexImage3D		= r200TexImage3D;
+#else
+   functions->TexImage3D		= _mesa_store_teximage3d;
+#endif
+   functions->TexSubImage1D		= r200TexSubImage1D;
+   functions->TexSubImage2D		= r200TexSubImage2D;
+#if ENABLE_HW_3D_TEXTURE
+   functions->TexSubImage3D		= r200TexSubImage3D;
+#else
+   functions->TexSubImage3D		= _mesa_store_texsubimage3d;
+#endif
+   functions->NewTextureObject		= r200NewTextureObject;
+   /*functions->BindTexture		= r200BindTexture;*/
+   functions->DeleteTexture		= r200DeleteTexture;
+   functions->IsTextureResident		= driIsTextureResident;
+
+   functions->TexEnv			= r200TexEnv;
+   functions->TexParameter		= r200TexParameter;
+   functions->TexGen			= r200TexGen;
+
+#if 000
+   /* moved or obsolete code */
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-
-
-   ctx->Driver.ChooseTextureFormat	= r200ChooseTextureFormat;
-   ctx->Driver.TexImage1D		= r200TexImage1D;
-   ctx->Driver.TexImage2D		= r200TexImage2D;
-#if ENABLE_HW_3D_TEXTURE
-   ctx->Driver.TexImage3D		= r200TexImage3D;
-#else
-   ctx->Driver.TexImage3D		= _mesa_store_teximage3d;
-#endif
-   ctx->Driver.TexSubImage1D		= r200TexSubImage1D;
-   ctx->Driver.TexSubImage2D		= r200TexSubImage2D;
-#if ENABLE_HW_3D_TEXTURE
-   ctx->Driver.TexSubImage3D		= r200TexSubImage3D;
-#else
-   ctx->Driver.TexSubImage3D		= _mesa_store_texsubimage3d;
-#endif
-   ctx->Driver.CopyTexImage1D		= _swrast_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D		= _swrast_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D	= _swrast_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D	= _swrast_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D 	= _swrast_copy_texsubimage3d;
-   ctx->Driver.TestProxyTexImage	= _mesa_test_proxy_teximage;
-
-   ctx->Driver.NewTextureObject         = r200NewTextureObject;
-   ctx->Driver.BindTexture		= r200BindTexture;
-   ctx->Driver.CreateTexture		= NULL; /* FIXME: Is this used??? */
-   ctx->Driver.DeleteTexture		= r200DeleteTexture;
-   ctx->Driver.IsTextureResident	= driIsTextureResident;
-   ctx->Driver.PrioritizeTexture	= NULL;
-   ctx->Driver.ActiveTexture		= NULL;
-   ctx->Driver.UpdateTexturePalette	= NULL;
-
-   ctx->Driver.TexEnv			= r200TexEnv;
-   ctx->Driver.TexParameter		= r200TexParameter;
-   ctx->Driver.TexGen                   = r200TexGen;
-
    driInitTextureObjects( ctx, & rmesa->swapped,
 			  DRI_TEXMGR_DO_TEXTURE_1D
 			  | DRI_TEXMGR_DO_TEXTURE_2D );
@@ -1053,4 +1069,5 @@ void r200InitTextureFuncs( GLcontext *ctx )
     * default 2D texture now. */
    ctx->Shared->Default2D->MaxAnisotropy = driQueryOptionf (&rmesa->optionCache,
 							    "def_max_anisotropy");
+#endif
 }

@@ -44,7 +44,7 @@ extern int r200UploadTexImages( r200ContextPtr rmesa, r200TexObjPtr t, GLuint fa
 
 extern void r200DestroyTexObj( r200ContextPtr rmesa, r200TexObjPtr t );
 
-extern void r200InitTextureFuncs( GLcontext *ctx );
+extern void r200InitTextureFuncs( struct dd_function_table *functions );
 
 #endif
 #endif /* __R200_TEX_H__ */

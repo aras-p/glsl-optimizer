@@ -347,18 +347,6 @@ _mesa_init_buffer_objects( GLcontext *ctx )
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       ctx->Array.VertexAttrib[i].BufferObj = ctx->Array.NullBufferObj;
    }
-
-   /* Device drivers might override these assignments after the Mesa
-    * context is initialized.
-    */
-   ctx->Driver.NewBufferObject = _mesa_new_buffer_object;
-   ctx->Driver.DeleteBuffer = _mesa_delete_buffer_object;
-   ctx->Driver.BindBuffer = NULL;
-   ctx->Driver.BufferData = _mesa_buffer_data;
-   ctx->Driver.BufferSubData = _mesa_buffer_subdata;
-   ctx->Driver.GetBufferSubData = _mesa_buffer_get_subdata;
-   ctx->Driver.MapBuffer = _mesa_buffer_map;
-   ctx->Driver.UnmapBuffer = NULL;
 }
 
 

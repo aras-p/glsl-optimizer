@@ -50,6 +50,8 @@
 
 #include "tnl/t_pipeline.h"
 
+#include "drivers/common/driverfuncs.h"
+
 #include "i830_screen.h"
 #include "i830_dri.h"
 
@@ -211,17 +213,27 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    i830ScreenPrivate *screen = (i830ScreenPrivate *)sPriv->private;
    I830SAREAPtr saPriv=(I830SAREAPtr)
        (((GLubyte *)sPriv->pSAREA)+screen->sarea_priv_offset);
+   struct dd_function_table functions;
 
    /* Allocate i830 context */
    imesa = (i830ContextPtr) CALLOC_STRUCT(i830_context_t);
-   if (!imesa) return GL_FALSE;
+   if (!imesa)
+      return GL_FALSE;
+
+   /* Init default driver functions then plug in our I830-specific functions
+    * (the texture functions are especially important)
+    */
+   _mesa_init_driver_functions(&functions);
+   i830InitIoctlFuncs(&functions);
+   i830InitTextureFuncs(&functions);
 
    /* Allocate the Mesa context */
    if (sharedContextPrivate)
      shareCtx = ((i830ContextPtr) sharedContextPrivate)->glCtx;
    else
      shareCtx = NULL;
-   imesa->glCtx = _mesa_create_context(mesaVis, shareCtx, (void*) imesa, GL_TRUE);
+   imesa->glCtx = _mesa_create_context(mesaVis, shareCtx,
+                                       &functions, (void*) imesa);
    if (!imesa->glCtx) {
       FREE(imesa);
       return GL_FALSE;
@@ -260,7 +272,7 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxTextureImageUnits = 2;
    ctx->Const.MaxTextureCoordUnits = 2;
 
-   /* FIXME: driCalcualteMaxTextureLevels assumes that mipmaps are tightly
+   /* FIXME: driCalculateMaxTextureLevels assumes that mipmaps are tightly
     * FIXME: packed, but they're not in Intel graphics hardware.
     */
    driCalculateMaxTextureLevels( imesa->texture_heaps,
@@ -352,12 +364,15 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    _math_matrix_ctr (&imesa->ViewportMatrix);
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
+   /* XXX these should really go right after _mesa_init_driver_functions() */
    i830DDInitStateFuncs( ctx );
-   i830DDInitTextureFuncs( ctx );
    i830InitTriFuncs (ctx);
    i830DDInitSpanFuncs( ctx );
-   i830DDInitIoctlFuncs( ctx );
    i830DDInitState (ctx);
+
+   driInitTextureObjects( ctx, & imesa->swapped,
+			  DRI_TEXMGR_DO_TEXTURE_2D
+			  | DRI_TEXMGR_DO_TEXTURE_RECT );
 
 #if DO_DEBUG
    I830_DEBUG  = driParseDebugString( getenv( "I830_DEBUG" ),
@@ -371,7 +386,6 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
       fprintf(stderr, "disabling 3D rasterization\n");
       FALLBACK(imesa, I830_FALLBACK_USER, 1); 
    }
-
 
    return GL_TRUE;
 }

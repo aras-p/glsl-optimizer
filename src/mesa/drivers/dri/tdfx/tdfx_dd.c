@@ -243,47 +243,38 @@ static GLboolean tdfxDDGetIntegerv( GLcontext *ctx, GLenum pname,
 
 
 #define VISUAL_EQUALS_RGBA(vis, r, g, b, a)        \
-   ((vis.redBits == r) &&                         \
-    (vis.greenBits == g) &&                       \
-    (vis.blueBits == b) &&                        \
-    (vis.alphaBits == a))
+   ((vis->redBits == r) &&                         \
+    (vis->greenBits == g) &&                       \
+    (vis->blueBits == b) &&                        \
+    (vis->alphaBits == a))
 
-void tdfxDDInitDriverFuncs( GLcontext *ctx )
+void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
+                            struct dd_function_table *functions )
 {
    if ( MESA_VERBOSE & VERBOSE_DRIVER ) {
       fprintf( stderr, "tdfx: %s()\n", __FUNCTION__ );
    }
 
-   ctx->Driver.GetString		= tdfxDDGetString;
-   ctx->Driver.GetBufferSize		= tdfxDDGetBufferSize;
-   ctx->Driver.ResizeBuffers            = _swrast_alloc_buffers;
-   ctx->Driver.Error			= NULL;
-
-   /* Pixel path fallbacks.
-    */
-   ctx->Driver.Accum                    = _swrast_Accum;
-   ctx->Driver.Bitmap                   = _swrast_Bitmap;
-   ctx->Driver.CopyPixels               = _swrast_CopyPixels;
-   ctx->Driver.DrawPixels               = _swrast_DrawPixels;
-   ctx->Driver.ReadPixels               = _swrast_ReadPixels;
+   functions->GetString		= tdfxDDGetString;
+   functions->GetBufferSize	= tdfxDDGetBufferSize;
+   functions->ResizeBuffers     = _swrast_alloc_buffers;
 
    /* Accelerated paths
     */
-   if ( VISUAL_EQUALS_RGBA(ctx->Visual, 8, 8, 8, 8) )
+   if ( VISUAL_EQUALS_RGBA(visual, 8, 8, 8, 8) )
    {
-      ctx->Driver.DrawPixels		= tdfx_drawpixels_R8G8B8A8;
-      ctx->Driver.ReadPixels		= tdfx_readpixels_R8G8B8A8;
+      functions->DrawPixels	= tdfx_drawpixels_R8G8B8A8;
+      functions->ReadPixels	= tdfx_readpixels_R8G8B8A8;
    }
-   else if ( VISUAL_EQUALS_RGBA(ctx->Visual, 5, 6, 5, 0) )
+   else if ( VISUAL_EQUALS_RGBA(visual, 5, 6, 5, 0) )
    {
-      ctx->Driver.ReadPixels		= tdfx_readpixels_R5G6B5;
+      functions->ReadPixels	= tdfx_readpixels_R5G6B5;
    }
 
-   ctx->Driver.GetBooleanv		= tdfxDDGetBooleanv;
-   ctx->Driver.GetDoublev		= tdfxDDGetDoublev;
-   ctx->Driver.GetFloatv		= tdfxDDGetFloatv;
-   ctx->Driver.GetIntegerv		= tdfxDDGetIntegerv;
-   ctx->Driver.GetPointerv		= NULL;
+   functions->GetBooleanv	= tdfxDDGetBooleanv;
+   functions->GetDoublev	= tdfxDDGetDoublev;
+   functions->GetFloatv		= tdfxDDGetFloatv;
+   functions->GetIntegerv	= tdfxDDGetIntegerv;
 }
 
 

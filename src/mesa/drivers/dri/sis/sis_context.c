@@ -48,6 +48,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "extensions.h"
 #include "utils.h"
 
+#include "drivers/common/driverfuncs.h"
+
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "array_cache/acache.h"
@@ -108,19 +110,26 @@ sisCreateContext( const __GLcontextModes *glVisual,
    sisContextPtr smesa;
    sisScreenPtr sisScreen;
    int i;
+   struct dd_function_table functions;
 
    smesa = (sisContextPtr)CALLOC( sizeof(*smesa) );
-   if ( smesa == NULL )
+   if (smesa == NULL)
       return GL_FALSE;
+
+   /* Init default driver functions then plug in our SIS-specific functions
+    * (the texture functions are especially important)
+    */
+   _mesa_init_driver_functions(&functions);
+   sisInitTextureFuncs(&functions);
 
    /* Allocate the Mesa context */
    if (sharedContextPrivate)
       shareCtx = ((sisContextPtr)sharedContextPrivate)->glCtx;
    else 
       shareCtx = NULL;
-   smesa->glCtx = _mesa_create_context( glVisual, shareCtx, (void *) smesa,
-      GL_TRUE);
-   if (smesa->glCtx == NULL) {
+   smesa->glCtx = _mesa_create_context( glVisual, shareCtx,
+                                        &functions, (void *) smesa);
+   if (!smesa->glCtx) {
       FREE(smesa);
       return GL_FALSE;
    }
@@ -217,14 +226,13 @@ sisCreateContext( const __GLcontextModes *glVisual,
    _swrast_allow_pixel_fog( ctx, GL_TRUE );
    _swrast_allow_vertex_fog( ctx, GL_FALSE );
 
+   /* XXX these should really go right after _mesa_init_driver_functions() */
    sisDDInitStateFuncs( ctx );
    sisDDInitState( smesa );	/* Initializes smesa->zFormat, important */
    sisInitVB( ctx );
    sisInitTriFuncs( ctx );
-   sisDDInitDriverFuncs( ctx );
    sisDDInitSpanFuncs( ctx );
    sisDDInitStencilFuncs( ctx );
-   sisDDInitTextureFuncs( ctx );
 
    driInitExtensions( ctx, card_extensions, GL_FALSE );
 

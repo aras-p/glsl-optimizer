@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.0.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -513,10 +512,14 @@ xmesa_color_to_pixel( XMesaContext xmesa,
 
 extern void xmesa_alloc_back_buffer( XMesaBuffer b );
 
-extern void xmesa_init_pointers( GLcontext *ctx );
+extern void xmesa_init_driver_functions( XMesaVisual xmvisual,
+                                         struct dd_function_table *driver );
 extern void xmesa_update_state( GLcontext *ctx, GLuint new_state );
 
 extern void xmesa_update_span_funcs( GLcontext *ctx );
+
+extern void xmesa_set_buffer( GLcontext *ctx, GLframebuffer *buffer,
+                              GLuint bufferBit );
 
 /* Plugged into the software rasterizer.  Try to use internal
  * swrast-style point, line and triangle functions.

@@ -191,7 +191,7 @@ void gammaDDInitSpanFuncs( GLcontext *ctx );
 void gammaDDInitState( gammaContextPtr gmesa );
 void gammaInitHW( gammaContextPtr gmesa );
 void gammaDDInitStateFuncs( GLcontext *ctx );
-void gammaDDInitTextureFuncs( GLcontext *ctx );
+void gammaDDInitTextureFuncs( struct dd_function_table *table );
 void gammaDDInitTriFuncs( GLcontext *ctx );
 
 void gammaUpdateWindow( GLcontext *ctx );

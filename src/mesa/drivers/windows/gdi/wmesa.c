@@ -53,6 +53,7 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
+#include "drivers/common/driverfuncs.h"
 
 /* Dither not tested for Mesa 4.0 */ 
 #ifdef DITHER
@@ -1031,54 +1032,25 @@ static const GLubyte *get_string(GLcontext *ctx, GLenum name)
 
 static void wmesa_update_state( GLcontext *ctx, GLuint new_state );
 
-static void SetFunctionPointers(GLcontext *ctx)
+static void SetFunctionPointers( struct dd_function_table *functions )
+{
+  functions->GetString = get_string;
+  functions->UpdateState = wmesa_update_state;
+  functions->ResizeBuffers = _swrast_alloc_buffers;
+  functions->GetBufferSize = buffer_size;
+  
+  functions->Clear = clear;
+  
+  functions->Flush = flush;
+  functions->ClearIndex = clear_index;
+  functions->ClearColor = clear_color;
+  functions->Enable = enable;
+}
+
+
+static void SetSWrastPointers(GLcontext *ctx)
 {
   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
-  ctx->Driver.GetString = get_string;
-  ctx->Driver.UpdateState = wmesa_update_state;
-  ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
-  ctx->Driver.GetBufferSize = buffer_size;
-  
-  ctx->Driver.Accum = _swrast_Accum;
-  ctx->Driver.Bitmap = _swrast_Bitmap;
-  ctx->Driver.Clear = clear;
-  
-  ctx->Driver.Flush = flush;
-  ctx->Driver.ClearIndex = clear_index;
-  ctx->Driver.ClearColor = clear_color;
-  ctx->Driver.Enable = enable;
-  
-  ctx->Driver.CopyPixels = _swrast_CopyPixels;
-  ctx->Driver.DrawPixels = _swrast_DrawPixels;
-  ctx->Driver.ReadPixels = _swrast_ReadPixels;
-  ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
-  
-  ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
-  ctx->Driver.TexImage1D = _mesa_store_teximage1d;
-  ctx->Driver.TexImage2D = _mesa_store_teximage2d;
-  ctx->Driver.TexImage3D = _mesa_store_teximage3d;
-  ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
-  ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
-  ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-  ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
-  
-  ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
-  ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
-  ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
-  ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
-  ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
-  ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
-
-  ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
-  ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
-  ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-  ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-  ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-  ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
-  ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
-  ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-  ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
-
   swdd->SetBuffer = set_buffer;
 
   /* Pixel/span writing functions: */
@@ -1097,8 +1069,8 @@ static void SetFunctionPointers(GLcontext *ctx)
   swdd->ReadRGBASpan        = read_rgba_span;
   swdd->ReadCI32Pixels      = read_ci32_pixels;
   swdd->ReadRGBAPixels      = read_rgba_pixels;
- 
 }
+ 
 
 static void wmesa_update_state( GLcontext *ctx, GLuint new_state )
 {
@@ -1112,7 +1084,8 @@ static void wmesa_update_state( GLcontext *ctx, GLuint new_state )
    * would be good to minimize setting all this when not needed.
    */
 #ifndef SET_FPOINTERS_ONCE  
-  SetFunctionPointers(ctx);
+  SetFunctionPointers(&ctx->Driver);
+  SetSWrastPointers(ctx);
 #if 0
   ctx->Driver.GetString = get_string;
   ctx->Driver.UpdateState = wmesa_update_state;
@@ -1262,6 +1235,7 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
   RECT CR;
   WMesaContext c;
   GLboolean true_color_flag;
+  struct dd_function_table functions;
 
   c = (struct wmesa_context * ) calloc(1,sizeof(struct wmesa_context));
   if (!c)
@@ -1348,9 +1322,13 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
   if (!c->gl_visual) {
     return NULL;
   }
+
+  _mesa_init_driver_functions(&functions);
+  SetFunctionPointers(&functions);
   
   /* allocate a new Mesa context */
-  c->gl_ctx = _mesa_create_context( c->gl_visual, NULL, (void *) c, GL_FALSE );
+  c->gl_ctx = _mesa_create_context( c->gl_visual, NULL,
+                                    &functions, (void *) c );
   
   if (!c->gl_ctx) {
     _mesa_destroy_visual( c->gl_visual );
@@ -1384,7 +1362,8 @@ WMesaContext WMesaCreateContext( HWND hWnd, HPALETTE* Pal,
     _swsetup_CreateContext( ctx );
     
 #ifdef SET_FPOINTERS_ONCE
-    SetFunctionPointers(ctx);
+    /*SetFunctionPointers(ctx);*/
+    SetSWrastPointers(ctx);
 #endif // SET_FPOINTERS_ONCE
     _swsetup_Wakeup( ctx );
   }

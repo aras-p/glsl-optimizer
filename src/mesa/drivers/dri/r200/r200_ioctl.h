@@ -103,7 +103,7 @@ extern void r200Flush( GLcontext *ctx );
 extern void r200Finish( GLcontext *ctx );
 extern void r200WaitForIdleLocked( r200ContextPtr rmesa );
 extern void r200WaitForVBlank( r200ContextPtr rmesa );
-extern void r200InitIoctlFuncs( GLcontext *ctx );
+extern void r200InitIoctlFuncs( struct dd_function_table *functions );
 
 extern void *r200AllocateMemoryMESA( GLsizei size, GLfloat readfreq,
 				   GLfloat writefreq, GLfloat priority );

@@ -57,7 +57,7 @@ int mgaFlushDMA( int fd, drmLockFlags flags );
 void mgaDDFlush( GLcontext *ctx );
 void mgaDDFinish( GLcontext *ctx );
 
-void mgaDDInitIoctlFuncs( GLcontext *ctx );
+void mgaInitIoctlFuncs( struct dd_function_table *functions );
 
 #define FLUSH_BATCH(mmesa) do {						\
         if (MGA_DEBUG&DEBUG_VERBOSE_IOCTL)  				\

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,7 +47,6 @@
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
-#include "tnl/t_pipeline.h"
 
 
 /*
@@ -114,8 +113,8 @@ finish_or_flush( GLcontext *ctx )
  * This chooses the color buffer for reading and writing spans, points,
  * lines, and triangles.
  */
-static void
-set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
+void
+xmesa_set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
 {
    /* We can make this cast since the XMesaBuffer wraps GLframebuffer.
     * GLframebuffer is the first member in a XMesaBuffer struct.
@@ -1099,100 +1098,37 @@ test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
 }
 
 
-
-
-/* Setup pointers and other driver state that is constant for the life
- * of a context.
+/**
+ * Initialize the device driver function table with the functions
+ * we implement in this driver.
  */
-void xmesa_init_pointers( GLcontext *ctx )
+void xmesa_init_driver_functions( XMesaVisual xmvisual,
+                                  struct dd_function_table *driver )
 {
-   TNLcontext *tnl;
-   struct swrast_device_driver *dd = _swrast_GetDeviceDriverReference( ctx );
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-
-   /* Plug in our driver-specific functions here */
-   ctx->Driver.GetString = get_string;
-   ctx->Driver.GetBufferSize = get_buffer_size;
-   ctx->Driver.Flush = finish_or_flush;
-   ctx->Driver.Finish = finish_or_flush;
-   ctx->Driver.ClearIndex = clear_index;
-   ctx->Driver.ClearColor = clear_color;
-   ctx->Driver.IndexMask = index_mask;
-   ctx->Driver.ColorMask = color_mask;
-   ctx->Driver.Enable = enable;
-
-   /* Software rasterizer pixel paths:
-    */
-   ctx->Driver.Accum = _swrast_Accum;
-   ctx->Driver.Bitmap = _swrast_Bitmap;
-   ctx->Driver.Clear = clear_buffers;
-   ctx->Driver.ResizeBuffers = xmesa_resize_buffers;
-#ifdef XFree86Server
-   ctx->Driver.DrawPixels = _swrast_DrawPixels;
-   ctx->Driver.CopyPixels = _swrast_CopyPixels;
-#else
-   ctx->Driver.CopyPixels = /*_swrast_CopyPixels;*/xmesa_CopyPixels;
-   if (xmesa->xm_visual->undithered_pf == PF_8R8G8B &&
-       xmesa->xm_visual->dithered_pf == PF_8R8G8B) {
-      ctx->Driver.DrawPixels = xmesa_DrawPixels_8R8G8B;
+   driver->GetString = get_string;
+   driver->UpdateState = xmesa_update_state;
+   driver->GetBufferSize = get_buffer_size;
+   driver->Flush = finish_or_flush;
+   driver->Finish = finish_or_flush;
+   driver->ClearIndex = clear_index;
+   driver->ClearColor = clear_color;
+   driver->IndexMask = index_mask;
+   driver->ColorMask = color_mask;
+   driver->Enable = enable;
+   driver->Clear = clear_buffers;
+   driver->ResizeBuffers = xmesa_resize_buffers;
+#ifndef XFree86Server
+   driver->CopyPixels = /*_swrast_CopyPixels;*/xmesa_CopyPixels;
+   if (xmvisual->undithered_pf == PF_8R8G8B &&
+       xmvisual->dithered_pf == PF_8R8G8B) {
+      driver->DrawPixels = xmesa_DrawPixels_8R8G8B;
    }
-   else if (xmesa->xm_visual->undithered_pf == PF_5R6G5B) {
-      ctx->Driver.DrawPixels = xmesa_DrawPixels_5R6G5B;
-   }
-   else {
-      ctx->Driver.DrawPixels = _swrast_DrawPixels;
+   else if (xmvisual->undithered_pf == PF_5R6G5B) {
+      driver->DrawPixels = xmesa_DrawPixels_5R6G5B;
    }
 #endif
-   ctx->Driver.ReadPixels = _swrast_ReadPixels;
-   ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
-
-   /* Software texture functions:
-    */
-   ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
-   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
-   ctx->Driver.TexImage2D = _mesa_store_teximage2d;
-   ctx->Driver.TexImage3D = _mesa_store_teximage3d;
-   ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
-   ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
-   ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-   ctx->Driver.TestProxyTexImage = test_proxy_teximage;
-
-   ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-
-   ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
-   ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
-   ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
-   ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
-   ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
-   ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
-
-   /* Swrast hooks for imaging extensions:
-    */
-   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
-   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
-   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
-
-   /* Initialize the TNL driver interface:
-    */
-   tnl = TNL_CONTEXT(ctx);
-   tnl->Driver.RunPipeline = _tnl_run_pipeline;
-   
-   dd->SetBuffer = set_buffer;
-
-   /* Install swsetup for tnl->Driver.Render.*:
-    */
-   _swsetup_Wakeup(ctx);
-
-   (void) DitherValues;  /* silenced unused var warning */
+   driver->TestProxyTexImage = test_proxy_teximage;
 }
-
-
-
 
 
 #define XMESA_NEW_POINT  (_NEW_POINT | \
@@ -1220,6 +1156,9 @@ void xmesa_init_pointers( GLcontext *ctx )
 void xmesa_register_swrast_functions( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT( ctx );
+   struct swrast_device_driver *dd = _swrast_GetDeviceDriverReference(ctx);
+
+   dd->SetBuffer = xmesa_set_buffer;
 
    swrast->choose_point = xmesa_choose_point;
    swrast->choose_line = xmesa_choose_line;

@@ -781,7 +781,7 @@ struct r200_context {
    driTexHeap          * texture_heaps[ R200_NR_TEX_HEAPS ];
    driTextureObject      swapped;
    int                   texture_depth;
-
+   float                 initialMaxAnisotropy;
 
    /* Rasterization and vertex state:
     */

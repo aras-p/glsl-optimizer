@@ -2146,57 +2146,61 @@ static void r200WrapRunPipeline( GLcontext *ctx )
 
 /* Initialize the driver's state functions.
  */
-void r200InitStateFuncs( GLcontext *ctx )
+void r200InitStateFuncs( struct dd_function_table *functions )
 {
-   ctx->Driver.UpdateState		= r200InvalidateState;
-   ctx->Driver.LightingSpaceChange      = r200LightingSpaceChange;
+   functions->UpdateState		= r200InvalidateState;
+   functions->LightingSpaceChange	= r200LightingSpaceChange;
 
-   ctx->Driver.DrawBuffer		= r200DrawBuffer;
-   ctx->Driver.ReadBuffer		= r200ReadBuffer;
+   functions->DrawBuffer		= r200DrawBuffer;
+   functions->ReadBuffer		= r200ReadBuffer;
 
-   ctx->Driver.AlphaFunc		= r200AlphaFunc;
-   ctx->Driver.BlendEquation		= r200BlendEquation;
-   ctx->Driver.BlendFunc		= r200BlendFunc;
-   ctx->Driver.BlendFuncSeparate	= r200BlendFuncSeparate;
-   ctx->Driver.ClearColor		= r200ClearColor;
-   ctx->Driver.ClearDepth		= NULL;
-   ctx->Driver.ClearIndex		= NULL;
-   ctx->Driver.ClearStencil		= r200ClearStencil;
-   ctx->Driver.ClipPlane		= r200ClipPlane;
-   ctx->Driver.ColorMask		= r200ColorMask;
-   ctx->Driver.CullFace			= r200CullFace;
-   ctx->Driver.DepthFunc		= r200DepthFunc;
-   ctx->Driver.DepthMask		= r200DepthMask;
-   ctx->Driver.DepthRange		= r200DepthRange;
-   ctx->Driver.Enable			= r200Enable;
-   ctx->Driver.Fogfv			= r200Fogfv;
-   ctx->Driver.FrontFace		= r200FrontFace;
-   ctx->Driver.Hint			= NULL;
-   ctx->Driver.IndexMask		= NULL;
-   ctx->Driver.LightModelfv		= r200LightModelfv;
-   ctx->Driver.Lightfv			= r200Lightfv;
-   ctx->Driver.LineStipple              = r200LineStipple;
-   ctx->Driver.LineWidth                = r200LineWidth;
-   ctx->Driver.LogicOpcode		= r200LogicOpCode;
-   ctx->Driver.PolygonMode		= r200PolygonMode;
-   ctx->Driver.PolygonOffset		= r200PolygonOffset;
-   ctx->Driver.PolygonStipple		= r200PolygonStipple;
-   ctx->Driver.PointSize                = r200PointSize;
-   ctx->Driver.RenderMode		= r200RenderMode;
-   ctx->Driver.Scissor			= r200Scissor;
-   ctx->Driver.ShadeModel		= r200ShadeModel;
-   ctx->Driver.StencilFunc		= r200StencilFunc;
-   ctx->Driver.StencilMask		= r200StencilMask;
-   ctx->Driver.StencilOp		= r200StencilOp;
-   ctx->Driver.Viewport			= r200Viewport;
+   functions->AlphaFunc			= r200AlphaFunc;
+   functions->BlendEquation		= r200BlendEquation;
+   functions->BlendFunc			= r200BlendFunc;
+   functions->BlendFuncSeparate		= r200BlendFuncSeparate;
+   functions->ClearColor		= r200ClearColor;
+   functions->ClearDepth		= NULL;
+   functions->ClearIndex		= NULL;
+   functions->ClearStencil		= r200ClearStencil;
+   functions->ClipPlane			= r200ClipPlane;
+   functions->ColorMask			= r200ColorMask;
+   functions->CullFace			= r200CullFace;
+   functions->DepthFunc			= r200DepthFunc;
+   functions->DepthMask			= r200DepthMask;
+   functions->DepthRange		= r200DepthRange;
+   functions->Enable			= r200Enable;
+   functions->Fogfv			= r200Fogfv;
+   functions->FrontFace			= r200FrontFace;
+   functions->Hint			= NULL;
+   functions->IndexMask			= NULL;
+   functions->LightModelfv		= r200LightModelfv;
+   functions->Lightfv			= r200Lightfv;
+   functions->LineStipple		= r200LineStipple;
+   functions->LineWidth			= r200LineWidth;
+   functions->LogicOpcode		= r200LogicOpCode;
+   functions->PolygonMode		= r200PolygonMode;
+   functions->PolygonOffset		= r200PolygonOffset;
+   functions->PolygonStipple		= r200PolygonStipple;
+   functions->PointSize			= r200PointSize;
+   functions->RenderMode		= r200RenderMode;
+   functions->Scissor			= r200Scissor;
+   functions->ShadeModel		= r200ShadeModel;
+   functions->StencilFunc		= r200StencilFunc;
+   functions->StencilMask		= r200StencilMask;
+   functions->StencilOp			= r200StencilOp;
+   functions->Viewport			= r200Viewport;
 
    /* Swrast hooks for imaging extensions:
     */
-   ctx->Driver.CopyColorTable		= _swrast_CopyColorTable;
-   ctx->Driver.CopyColorSubTable	= _swrast_CopyColorSubTable;
-   ctx->Driver.CopyConvolutionFilter1D	= _swrast_CopyConvolutionFilter1D;
-   ctx->Driver.CopyConvolutionFilter2D	= _swrast_CopyConvolutionFilter2D;
+   functions->CopyColorTable		= _swrast_CopyColorTable;
+   functions->CopyColorSubTable		= _swrast_CopyColorSubTable;
+   functions->CopyConvolutionFilter1D	= _swrast_CopyConvolutionFilter1D;
+   functions->CopyConvolutionFilter2D	= _swrast_CopyConvolutionFilter2D;
+}
 
+
+void r200InitTnlFuncs( GLcontext *ctx )
+{
    TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange = r200UpdateMaterial;
    TNL_CONTEXT(ctx)->Driver.RunPipeline = r200WrapRunPipeline;
 }

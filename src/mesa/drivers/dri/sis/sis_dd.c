@@ -48,7 +48,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Return the width and height of the given buffer.
  */
 static void
-sisDDGetBufferSize( GLframebuffer *buffer,
+sisGetBufferSize( GLframebuffer *buffer,
 			      GLuint *width, GLuint *height )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -63,7 +63,7 @@ sisDDGetBufferSize( GLframebuffer *buffer,
 /* Return various strings for glGetString().
  */
 static const GLubyte *
-sisDDGetString( GLcontext *ctx, GLenum name )
+sisGetString( GLcontext *ctx, GLenum name )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    static char buffer[128];
@@ -88,7 +88,7 @@ sisDDGetString( GLcontext *ctx, GLenum name )
 /* Send all commands to the hardware.  No-op, due to mmio.
  */
 static void
-sisDDFlush( GLcontext *ctx )
+sisFlush( GLcontext *ctx )
 {
    /* Do nothing */
 }
@@ -97,11 +97,11 @@ sisDDFlush( GLcontext *ctx )
  * completed processing.
  */
 static void
-sisDDFinish( GLcontext *ctx )
+sisFinish( GLcontext *ctx )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
-   sisDDFlush( ctx );
+   sisFlush( ctx );
    WaitEngIdle( smesa );
 }
 
@@ -165,12 +165,11 @@ sisUpdateBufferSize( sisContextPtr smesa )
 /* Initialize the driver's misc functions.
  */
 void
-sisDDInitDriverFuncs( GLcontext *ctx )
+sisInitDriverFuncs( struct dd_function_table *functions )
 {
-   ctx->Driver.GetBufferSize	= sisDDGetBufferSize;
-   ctx->Driver.ResizeBuffers    = _swrast_alloc_buffers;
-   ctx->Driver.GetString	= sisDDGetString;
-   ctx->Driver.Finish		= sisDDFinish;
-   ctx->Driver.Flush		= sisDDFlush;
-   ctx->Driver.Error		= NULL;
+   functions->GetBufferSize	= sisGetBufferSize;
+   functions->ResizeBuffers    = _swrast_alloc_buffers;
+   functions->GetString	= sisGetString;
+   functions->Finish		= sisFinish;
+   functions->Flush		= sisFlush;
 }

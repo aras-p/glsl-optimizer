@@ -24,6 +24,7 @@ DEFINES += \
 # MINIGLX_SOURCES = server/ffb_dri.c 
 
 DRIVER_SOURCES = ffb_bitmap.c \
+		 ../../common/driverfuncs.c \
 		 ../common/mm.c \
 		 ../common/utils.c \
 		 ../common/texmem.c \

@@ -299,7 +299,8 @@ static void gammaTexSubImage2D( GLcontext *ctx,
 			     texImage);
 }
 
-
+#if 0
+/* no longer needed */
 static void gammaBindTexture( GLcontext *ctx, GLenum target,
 			     struct gl_texture_object *tObj )
 {
@@ -352,7 +353,7 @@ static void gammaBindTexture( GLcontext *ctx, GLenum target,
 	 gammaSetTexBorderColor( gmesa, t, tObj->_BorderChan );
       }
 }
-
+#endif
 
 static void gammaDeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
 {
@@ -378,7 +379,79 @@ static GLboolean gammaIsTextureResident( GLcontext *ctx,
    return t && t->MemBlock;
 }
 
-static void gammaInitTextureObjects( GLcontext *ctx )
+/**
+ * Allocate a new texture object.
+ * Called via ctx->Driver.NewTextureObject.
+ * Note: this function will be called during context creation to
+ * allocate the default texture objects.
+ */
+static struct gl_texture_object *
+gammaNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
+{
+   gammaContextPtr gmesa = GAMMA_CONTEXT( ctx );
+   struct gl_texture_object *obj;
+   gammaTextureObjectPtr t;
+
+   obj = _mesa_new_texture_object(ctx, name, target);
+   if (!obj)
+      return NULL;
+
+   t = CALLOC_STRUCT(gamma_texture_object_t);
+   if (!t) {
+      _mesa_delete_texture_object(ctx, obj);
+      return NULL;
+   }
+
+   /* Initialize non-image-dependent parts of the state:
+    */
+   t->globj = obj;
+   obj->DriverData = t;
+
+   t->TextureAddressMode = TextureAddressModeEnable | TAM_Operation_3D |
+      TAM_DY_Enable | TAM_LODEnable;
+   t->TextureReadMode = TextureReadModeEnable | TRM_PrimaryCacheEnable |
+      TRM_MipMapEnable | TRM_BorderClamp | TRM_Border;
+   t->TextureColorMode = TextureColorModeEnable;
+   t->TextureFilterMode = TextureFilterModeEnable;
+
+   if (target == GL_TEXTURE_2D) {
+      t->TextureAddressMode |= TAM_TexMapType_2D;
+      t->TextureReadMode |= TRM_TexMapType_2D;
+   }
+   else if (target == GL_TEXTURE_1D) {
+      t->TextureAddressMode |= TAM_TexMapType_1D;
+      t->TextureReadMode |= TRM_TexMapType_1D;
+   }
+
+   t->TextureColorMode = TextureColorModeEnable;
+
+   t->TextureFilterMode = TextureFilterModeEnable;
+
+#ifdef MESA_LITTLE_ENDIAN
+   t->TextureFormat = (TF_LittleEndian |
+#else
+   t->TextureFormat = (TF_BigEndian |
+#endif
+                       TF_ColorOrder_RGB |
+                       TF_OutputFmt_Texel);
+
+   t->dirty_images = ~0;
+
+   make_empty_list( t );
+
+   gammaSetTexWrapping( t, obj->WrapS, obj->WrapT );
+   gammaSetTexFilter( gmesa, t, obj->MinFilter, obj->MagFilter,
+                      ctx->Texture.Unit[ctx->Texture.CurrentUnit].LodBias);
+
+   gammaSetTexBorderColor( gmesa, t, obj->_BorderChan );
+
+   return obj;
+}
+
+
+#if 0
+/* no longer needed */
+void gammaInitTextureObjects( GLcontext *ctx )
 {
    struct gl_texture_object *texObj;
    GLuint tmp = ctx->Texture.CurrentUnit;
@@ -403,29 +476,16 @@ static void gammaInitTextureObjects( GLcontext *ctx )
 
    ctx->Texture.CurrentUnit = tmp;
 }
+#endif
 
 
-void gammaDDInitTextureFuncs( GLcontext *ctx )
+void gammaDDInitTextureFuncs( struct dd_function_table *functions )
 {
-   ctx->Driver.TexEnv = gammaTexEnv;
-   ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
-   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
-   ctx->Driver.TexImage2D = gammaTexImage2D;
-   ctx->Driver.TexImage3D = _mesa_store_teximage3d;
-   ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
-   ctx->Driver.TexSubImage2D = gammaTexSubImage2D;
-   ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-   ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-   ctx->Driver.BindTexture = gammaBindTexture;
-   ctx->Driver.DeleteTexture = gammaDeleteTexture;
-   ctx->Driver.TexParameter = gammaTexParameter;
-   ctx->Driver.UpdateTexturePalette = 0;
-   ctx->Driver.IsTextureResident = gammaIsTextureResident;
-   ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
-
-   gammaInitTextureObjects( ctx );
+   functions->TexEnv = gammaTexEnv;
+   functions->TexImage2D = gammaTexImage2D;
+   functions->TexSubImage2D = gammaTexSubImage2D;
+   /*functions->BindTexture = gammaBindTexture;*/
+   functions->DeleteTexture = gammaDeleteTexture;
+   functions->TexParameter = gammaTexParameter;
+   functions->IsTextureResident = gammaIsTextureResident;
 }

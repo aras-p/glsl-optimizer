@@ -166,6 +166,9 @@ SPARC_SOURCES =			\
 	sparc/norm.S		\
 	sparc/xform.S
 
+COMMON_DRIVER_SOURCES =		\
+	drivers/common/driverfuncs.c
+
 X11_DRIVER_SOURCES =		\
 	drivers/x11/glxapi.c	\
 	drivers/x11/fakeglx.c	\

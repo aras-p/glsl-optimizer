@@ -48,7 +48,7 @@
  ***************************************/
 
 
-static const GLubyte *mgaDDGetString( GLcontext *ctx, GLenum name )
+static const GLubyte *mgaGetString( GLcontext *ctx, GLenum name )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    static char buffer[128];
@@ -73,7 +73,6 @@ static const GLubyte *mgaDDGetString( GLcontext *ctx, GLenum name )
 }
 
 
-
 static void mgaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -89,9 +88,10 @@ static void mgaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
    UNLOCK_HARDWARE( mmesa );
 }
 
-void mgaDDInitDriverFuncs( GLcontext *ctx )
+
+void mgaInitDriverFuncs( struct dd_function_table *functions )
 {
-   ctx->Driver.GetBufferSize = mgaBufferSize;
-   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
-   ctx->Driver.GetString = mgaDDGetString;
+   functions->GetBufferSize = mgaBufferSize;
+   functions->ResizeBuffers = _swrast_alloc_buffers;
+   functions->GetString = mgaGetString;
 }

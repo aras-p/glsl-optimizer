@@ -44,7 +44,7 @@ int mgaUploadTexImages( mgaContextPtr mmesa, mgaTextureObjectPtr t );
 
 void mgaDestroyTexObj( mgaContextPtr mmesa, mgaTextureObjectPtr t );
 
-void mgaDDInitTextureFuncs( GLcontext *ctx );
+void mgaInitTextureFuncs( struct dd_function_table *functions );
 
 GLboolean mgaUpdateTextureEnvCombine( GLcontext *ctx, int unit );
 

@@ -160,13 +160,16 @@ static void i810SetTexFilter(i810ContextPtr imesa,
 }
 
 
-static void i810SetTexBorderColor(i810TextureObjectPtr t, 
-				  GLubyte color[4])
+static void
+i810SetTexBorderColor( i810TextureObjectPtr t, GLubyte color[4] )
 {
    /* Need a fallback.
     */
 }
-static i810TextureObjectPtr i810AllocTexObj( GLcontext *ctx, struct gl_texture_object *texObj )
+
+
+static i810TextureObjectPtr
+i810AllocTexObj( GLcontext *ctx, struct gl_texture_object *texObj )
 {
    i810TextureObjectPtr t;
    i810ContextPtr imesa = I810_CONTEXT(ctx);
@@ -220,8 +223,8 @@ static void i810TexParameter( GLcontext *ctx, GLenum target,
 {
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    i810TextureObjectPtr t = (i810TextureObjectPtr) tObj->DriverData;
-   if (!t)
-      return;
+
+   assert(t);
 
    if ( target != GL_TEXTURE_2D )
       return;
@@ -338,6 +341,7 @@ static void i810TexImage1D( GLcontext *ctx, GLenum target, GLint level,
 			    struct gl_texture_image *texImage )
 {
    i810TextureObjectPtr t = (i810TextureObjectPtr) texObj->DriverData;
+   assert(t);
    if (t) {
       i810SwapOutTexObj( imesa, t );
    }
@@ -367,6 +371,7 @@ static void i810TexImage2D( GLcontext *ctx, GLenum target, GLint level,
 			    struct gl_texture_image *texImage )
 {
    driTextureObject *t = (driTextureObject *) texObj->DriverData;
+   assert(t);
    if (t) {
       I810_FIREVERTICES( I810_CONTEXT(ctx) );
       driSwapOutTextureObject( t );
@@ -381,7 +386,6 @@ static void i810TexImage2D( GLcontext *ctx, GLenum target, GLint level,
    _mesa_store_teximage2d( ctx, target, level, internalFormat,
 			   width, height, border, format, type,
 			   pixels, packing, texObj, texImage );
-
 }
 
 static void i810TexSubImage2D( GLcontext *ctx, 
@@ -396,7 +400,7 @@ static void i810TexSubImage2D( GLcontext *ctx,
 			       struct gl_texture_image *texImage )
 {
    driTextureObject *t = (driTextureObject *)texObj->DriverData;
-
+   assert(t);
    if (t) {
      I810_FIREVERTICES( I810_CONTEXT(ctx) );
      driSwapOutTextureObject( t );
@@ -404,22 +408,26 @@ static void i810TexSubImage2D( GLcontext *ctx,
    _mesa_store_texsubimage2d(ctx, target, level, xoffset, yoffset, width, 
 			     height, format, type, pixels, packing, texObj,
 			     texImage);
-
 }
 
 
+#if 0
+/* not needed anymore */
 static void i810BindTexture( GLcontext *ctx, GLenum target,
 			     struct gl_texture_object *tObj )
 {
-  if (!tObj->DriverData) {
+   assert(t);
+   if (!tObj->DriverData) {
       i810AllocTexObj( ctx, tObj );
   }
 }
+#endif
 
 
 static void i810DeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
 {
-  driTextureObject * t = (driTextureObject *) tObj->DriverData;
+   driTextureObject * t = (driTextureObject *) tObj->DriverData;
+   assert(t);
    if (t) {
       i810ContextPtr imesa = I810_CONTEXT( ctx );
       if (imesa)
@@ -517,30 +525,37 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    return NULL; /* never get here */
 }
 
-void i810InitTextureFuncs( GLcontext *ctx )
+/**
+ * Allocate a new texture object.
+ * Called via ctx->Driver.NewTextureObject.
+ * Note: this function will be called during context creation to
+ * allocate the default texture objects.
+ */
+static struct gl_texture_object *
+i810NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
-   i810ContextPtr imesa = I810_CONTEXT(ctx);
+   struct gl_texture_object *obj;
+   driTextureObject *t;
+   obj = _mesa_new_texture_object(ctx, name, target);
+   if (!obj)
+      return NULL;
+   t = (driTextureObject *) i810AllocTexObj( ctx, obj );
+   if (!t) {
+      _mesa_delete_texture_object(ctx, obj);
+      return NULL;
+   }
+   return obj;
+}
 
-   ctx->Driver.TexEnv = i810TexEnv;
-   ctx->Driver.ChooseTextureFormat = i810ChooseTextureFormat;
-   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
-   ctx->Driver.TexImage2D = i810TexImage2D;
-   ctx->Driver.TexImage3D = _mesa_store_teximage3d;
-   ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
-   ctx->Driver.TexSubImage2D = i810TexSubImage2D;
-   ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-   ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-   ctx->Driver.BindTexture = i810BindTexture;
-   ctx->Driver.DeleteTexture = i810DeleteTexture;
-   ctx->Driver.TexParameter = i810TexParameter;
-   ctx->Driver.UpdateTexturePalette = 0;
-   ctx->Driver.IsTextureResident = driIsTextureResident;
-   ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
-
-   driInitTextureObjects( ctx, &imesa->swapped, DRI_TEXMGR_DO_TEXTURE_2D);
-
+void i810InitTextureFuncs( struct dd_function_table *functions )
+{
+   functions->ChooseTextureFormat = i810ChooseTextureFormat;
+   functions->TexImage2D = i810TexImage2D;
+   functions->TexSubImage2D = i810TexSubImage2D;
+   /*functions->BindTexture = i810BindTexture;*/
+   functions->NewTextureObject = i810NewTextureObject;
+   functions->DeleteTexture = i810DeleteTexture;
+   functions->TexParameter = i810TexParameter;
+   functions->TexEnv = i810TexEnv;
+   functions->IsTextureResident = driIsTextureResident;
 }

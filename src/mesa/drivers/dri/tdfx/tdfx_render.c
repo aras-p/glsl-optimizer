@@ -43,7 +43,7 @@
 
 /* Clear the color and/or depth buffers.
  */
-static void tdfxDDClear( GLcontext *ctx,
+static void tdfxClear( GLcontext *ctx,
 			 GLbitfield mask, GLboolean all,
 			 GLint x, GLint y, GLint width, GLint height )
 {
@@ -315,7 +315,7 @@ static void tdfxDDClear( GLcontext *ctx,
 
 
 
-static void tdfxDDFinish( GLcontext *ctx )
+static void tdfxFinish( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -326,7 +326,7 @@ static void tdfxDDFinish( GLcontext *ctx )
    UNLOCK_HARDWARE( fxMesa );
 }
 
-static void tdfxDDFlush( GLcontext *ctx )
+static void tdfxFlush( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -794,9 +794,9 @@ void tdfxEmitHwStateLocked( tdfxContextPtr fxMesa )
 
 
 
-void tdfxDDInitRenderFuncs( GLcontext *ctx )
+void tdfxInitRenderFuncs( struct dd_function_table *functions )
 {
-   ctx->Driver.Clear		= tdfxDDClear;
-   ctx->Driver.Finish		= tdfxDDFinish;
-   ctx->Driver.Flush		= tdfxDDFlush;
+   functions->Clear	= tdfxClear;
+   functions->Finish	= tdfxFinish;
+   functions->Flush	= tdfxFlush;
 }

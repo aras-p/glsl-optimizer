@@ -34,7 +34,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifdef GLX_DIRECT_RENDERING
 
-extern void sisDDInitTextureFuncs( GLcontext *ctx );
+extern void sisInitTextureFuncs( struct dd_function_table *table );
 extern void sisUpdateTextureState( GLcontext *ctx );
 
 #endif /* GLX_DIRECT_RENDERING */

@@ -47,6 +47,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 
+#include "drivers/common/driverfuncs.h"
+
 #include "r128_context.h"
 #include "r128_ioctl.h"
 #include "r128_dd.h"
@@ -97,6 +99,7 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
 {
    GLcontext *ctx, *shareCtx;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   struct dd_function_table functions;
    r128ContextPtr rmesa;
    r128ScreenPtr r128scrn;
    int i;
@@ -106,12 +109,21 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
    if ( !rmesa )
       return GL_FALSE;
 
+   /* Init default driver functions then plug in our Radeon-specific functions
+    * (the texture functions are especially important)
+    */
+   _mesa_init_driver_functions( &functions );
+   r128InitDriverFuncs( &functions );
+   r128InitIoctlFuncs( &functions );
+   r128InitTextureFuncs( &functions );
+
    /* Allocate the Mesa context */
    if (sharedContextPrivate)
       shareCtx = ((r128ContextPtr) sharedContextPrivate)->glCtx;
    else 
       shareCtx = NULL;
-   rmesa->glCtx = _mesa_create_context(glVisual, shareCtx, (void *) rmesa, GL_TRUE);
+   rmesa->glCtx = _mesa_create_context(glVisual, shareCtx,
+                                       &functions, (void *) rmesa);
    if (!rmesa->glCtx) {
       FREE(rmesa);
       return GL_FALSE;
@@ -229,12 +241,13 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
 
    r128InitVB( ctx );
    r128InitTriFuncs( ctx );
-   r128DDInitDriverFuncs( ctx );
-   r128DDInitIoctlFuncs( ctx );
    r128DDInitStateFuncs( ctx );
    r128DDInitSpanFuncs( ctx );
-   r128DDInitTextureFuncs( ctx );
    r128DDInitState( rmesa );
+
+   driInitTextureObjects( ctx, & rmesa->swapped,
+			  DRI_TEXMGR_DO_TEXTURE_1D
+			  | DRI_TEXMGR_DO_TEXTURE_2D );
 
    rmesa->vblank_flags = (rmesa->r128Screen->irq != 0)
        ? driGetDefaultVBlankFlags(&rmesa->optionCache) : VBLANK_FLAG_NO_IRQ;

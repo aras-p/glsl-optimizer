@@ -47,6 +47,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "tnl/t_pipeline.h"
 
+#include "drivers/common/driverfuncs.h"
+
 #include "i810screen.h"
 #include "i810_dri.h"
 
@@ -152,6 +154,7 @@ i810CreateContext( const __GLcontextModes *mesaVis,
    i810ScreenPrivate *i810Screen = (i810ScreenPrivate *)sPriv->private;
    I810SAREAPtr saPriv = (I810SAREAPtr)
       (((GLubyte *)sPriv->pSAREA) + i810Screen->sarea_priv_offset);
+   struct dd_function_table functions;
 
    /* Allocate i810 context */
    imesa = (i810ContextPtr) CALLOC_STRUCT(i810_context_t);
@@ -159,12 +162,20 @@ i810CreateContext( const __GLcontextModes *mesaVis,
       return GL_FALSE;
    }
 
+   /* Init default driver functions then plug in our I810-specific functions
+    * (the texture functions are especially important)
+    */
+   _mesa_init_driver_functions( &functions );
+   i810InitTextureFuncs( &functions );
+   i810InitIoctlFuncs( &functions );
+
    /* Allocate the Mesa context */
    if (sharedContextPrivate)
       shareCtx = ((i810ContextPtr) sharedContextPrivate)->glCtx;
    else
       shareCtx = NULL;
-   imesa->glCtx = _mesa_create_context(mesaVis, shareCtx, (void*) imesa, GL_TRUE);
+   imesa->glCtx = _mesa_create_context(mesaVis, shareCtx,
+                                       &functions, (void*) imesa);
    if (!imesa->glCtx) {
       FREE(imesa);
       return GL_FALSE;
@@ -274,13 +285,14 @@ i810CreateContext( const __GLcontextModes *mesaVis,
    _math_matrix_ctr( &imesa->ViewportMatrix );
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
+   /* XXX these should really go right after _mesa_init_driver_functions() */
    i810InitStateFuncs( ctx );
-   i810InitTextureFuncs( ctx );
    i810InitTriFuncs( ctx );
    i810InitSpanFuncs( ctx );
-   i810InitIoctlFuncs( ctx );
    i810InitVB( ctx );
    i810InitState( ctx );
+
+   driInitTextureObjects( ctx, &imesa->swapped, DRI_TEXMGR_DO_TEXTURE_2D);
 
 #if DO_DEBUG
    I810_DEBUG  = driParseDebugString( getenv( "I810_DEBUG" ),

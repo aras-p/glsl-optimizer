@@ -299,6 +299,7 @@ static void r128TexImage1D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
+   assert(t);
    if ( t ) {
       driSwapOutTextureObject( t );
    }
@@ -362,6 +363,7 @@ static void r128TexImage2D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
+   assert(t);
    if ( t ) {
       driSwapOutTextureObject( (driTextureObject *) t );
    }
@@ -414,7 +416,7 @@ static void r128TexSubImage2D( GLcontext *ctx,
 }
 
 
-static void r128DDTexEnv( GLcontext *ctx, GLenum target,
+static void r128TexEnv( GLcontext *ctx, GLenum target,
 			  GLenum pname, const GLfloat *param )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
@@ -502,9 +504,9 @@ static void r128DDTexEnv( GLcontext *ctx, GLenum target,
 }
 
 
-static void r128DDTexParameter( GLcontext *ctx, GLenum target,
-				struct gl_texture_object *tObj,
-				GLenum pname, const GLfloat *params )
+static void r128TexParameter( GLcontext *ctx, GLenum target,
+                              struct gl_texture_object *tObj,
+                              GLenum pname, const GLfloat *params )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    r128TexObjPtr t = (r128TexObjPtr)tObj->DriverData;
@@ -553,7 +555,9 @@ static void r128DDTexParameter( GLcontext *ctx, GLenum target,
    }
 }
 
-static void r128DDBindTexture( GLcontext *ctx, GLenum target,
+#if 00
+/* note needed */
+static void r128BindTexture( GLcontext *ctx, GLenum target,
 			       struct gl_texture_object *tObj )
 {
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
@@ -567,13 +571,15 @@ static void r128DDBindTexture( GLcontext *ctx, GLenum target,
       }
    }
 }
+#endif
 
-static void r128DDDeleteTexture( GLcontext *ctx,
+static void r128DeleteTexture( GLcontext *ctx,
 				 struct gl_texture_object *tObj )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    driTextureObject * t = (driTextureObject *) tObj->DriverData;
 
+   assert(t);
    if ( t ) {
       if ( t->bound && rmesa ) {
 	 FLUSH_BATCH( rmesa );
@@ -585,34 +591,39 @@ static void r128DDDeleteTexture( GLcontext *ctx,
    _mesa_delete_texture_object(ctx, tObj);
 }
 
-void r128DDInitTextureFuncs( GLcontext *ctx )
+/**
+ * Allocate a new texture object.
+ * Called via ctx->Driver.NewTextureObject.
+ */
+static struct gl_texture_object *
+r128NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
-
-
-   ctx->Driver.TexEnv			= r128DDTexEnv;
-   ctx->Driver.ChooseTextureFormat	= r128ChooseTextureFormat;
-   ctx->Driver.TexImage1D		= r128TexImage1D;
-   ctx->Driver.TexSubImage1D		= r128TexSubImage1D;
-   ctx->Driver.TexImage2D		= r128TexImage2D;
-   ctx->Driver.TexSubImage2D		= r128TexSubImage2D;
-   ctx->Driver.TexImage3D               = _mesa_store_teximage3d;
-   ctx->Driver.TexSubImage3D            = _mesa_store_texsubimage3d;
-   ctx->Driver.CopyTexImage1D           = _swrast_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D           = _swrast_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D        = _swrast_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D        = _swrast_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D        = _swrast_copy_texsubimage3d;
-   ctx->Driver.TestProxyTexImage        = _mesa_test_proxy_teximage;
-   ctx->Driver.TexParameter		= r128DDTexParameter;
-   ctx->Driver.BindTexture		= r128DDBindTexture;
-   ctx->Driver.DeleteTexture		= r128DDDeleteTexture;
-   ctx->Driver.UpdateTexturePalette	= NULL;
-   ctx->Driver.ActiveTexture		= NULL;
-   ctx->Driver.IsTextureResident	= driIsTextureResident;
-   ctx->Driver.PrioritizeTexture	= NULL;
-
-   driInitTextureObjects( ctx, & rmesa->swapped,
-			  DRI_TEXMGR_DO_TEXTURE_1D
-			  | DRI_TEXMGR_DO_TEXTURE_2D );
+   struct gl_texture_object *obj;
+   driTextureObject *t;
+   obj = _mesa_new_texture_object(ctx, name, target);
+   if (!obj)
+      return NULL;
+   t = (driTextureObject *) r128AllocTexObj(obj);
+   if (!t) {
+      _mesa_delete_texture_object(ctx, obj);
+      return NULL;
+   }
+   return obj;
 }
+
+void r128InitTextureFuncs( struct dd_function_table *functions )
+{
+   functions->TexEnv			= r128TexEnv;
+   functions->ChooseTextureFormat	= r128ChooseTextureFormat;
+   functions->TexImage1D		= r128TexImage1D;
+   functions->TexSubImage1D		= r128TexSubImage1D;
+   functions->TexImage2D		= r128TexImage2D;
+   functions->TexSubImage2D		= r128TexSubImage2D;
+   functions->TexParameter		= r128TexParameter;
+   /*functions->BindTexture		= r128BindTexture;*/
+   functions->NewTextureObject		= r128NewTextureObject;
+   functions->DeleteTexture		= r128DeleteTexture;
+   functions->IsTextureResident		= driIsTextureResident;
+}
+

@@ -133,15 +133,15 @@ _mesa_destroy_framebuffer( GLframebuffer *buffer );
 extern GLcontext *
 _mesa_create_context( const GLvisual *visual,
                       GLcontext *share_list,
-                      void *driver_ctx,
-                      GLboolean direct );
+                      const struct dd_function_table *driverFunctions,
+                      void *driverContext );
 
 extern GLboolean
 _mesa_initialize_context( GLcontext *ctx,
                           const GLvisual *visual,
                           GLcontext *share_list,
-                          void *driver_ctx,
-                          GLboolean direct );
+                          const struct dd_function_table *driverFunctions,
+                          void *driverContext );
 
 extern void
 _mesa_free_context_data( GLcontext *ctx );

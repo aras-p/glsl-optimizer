@@ -33,6 +33,8 @@
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 
+#include "drivers/common/driverfuncs.h"
+
 #include "context.h"
 #include "simple_list.h"
 #include "imports.h"
@@ -75,9 +77,17 @@ GLboolean gammaCreateContext( const __GLcontextModes *glVisual,
    gammaScreenPtr gammascrn;
    GLINTSAREADRIPtr saPriv=(GLINTSAREADRIPtr)(((char*)sPriv->pSAREA)+
 						 sizeof(XF86DRISAREARec));
+   struct dd_function_table functions;
 
    gmesa = (gammaContextPtr) CALLOC( sizeof(*gmesa) );
-   if ( !gmesa ) return GL_FALSE;
+   if (!gmesa)
+      return GL_FALSE;
+
+   /* Init default driver functions then plug in our gamma-specific functions
+    * (the texture functions are especially important)
+    */
+   _mesa_init_driver_functions( &functions );
+   gammaDDInitTextureFuncs( &functions );
 
    /* Allocate the Mesa context */
    if (sharedContextPrivate)
@@ -85,7 +95,8 @@ GLboolean gammaCreateContext( const __GLcontextModes *glVisual,
    else
       shareCtx = NULL;
 
-   gmesa->glCtx = _mesa_create_context(glVisual, shareCtx, (void *) gmesa, GL_TRUE);
+   gmesa->glCtx = _mesa_create_context(glVisual, shareCtx,
+                                       &functions, (void *) gmesa);
    if (!gmesa->glCtx) {
       FREE(gmesa);
       return GL_FALSE;
@@ -152,10 +163,10 @@ GLboolean gammaCreateContext( const __GLcontextModes *glVisual,
 
    gammaInitVB( ctx );
    gammaDDInitExtensions( ctx );
+   /* XXX these should really go right after _mesa_init_driver_functions() */
    gammaDDInitDriverFuncs( ctx );
    gammaDDInitStateFuncs( ctx );
    gammaDDInitSpanFuncs( ctx );
-   gammaDDInitTextureFuncs( ctx );
    gammaDDInitTriFuncs( ctx );
    gammaDDInitState( gmesa );
 

@@ -401,6 +401,7 @@ static void radeonTexImage1D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
+   assert(t);
    if ( t ) {
       driSwapOutTextureObject( t );
    }
@@ -463,6 +464,8 @@ static void radeonTexImage2D( GLcontext *ctx, GLenum target, GLint level,
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
    GLuint face;
 
+   assert(t);
+
    /* which cube face or ordinary 2D image */
    switch (target) {
    case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
@@ -509,7 +512,6 @@ static void radeonTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
    GLuint face;
-
 
    /* which cube face or ordinary 2D image */
    switch (target) {
@@ -667,7 +669,8 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
 }
 
 
-
+#if 00
+/* not needed anymore */
 static void radeonBindTexture( GLcontext *ctx, GLenum target,
 			       struct gl_texture_object *texObj )
 {
@@ -682,6 +685,7 @@ static void radeonBindTexture( GLcontext *ctx, GLenum target,
       }
    }
 }
+#endif
 
 static void radeonDeleteTexture( GLcontext *ctx,
 				 struct gl_texture_object *texObj )
@@ -694,6 +698,7 @@ static void radeonDeleteTexture( GLcontext *ctx,
 	       _mesa_lookup_enum_by_nr( texObj->Target ) );
    }
 
+   assert(t);
    if ( t != NULL ) {
       if ( rmesa ) {
          RADEON_FIREVERTICES( rmesa );
@@ -726,58 +731,43 @@ static void radeonTexGen( GLcontext *ctx,
    rmesa->recheck_texgen[unit] = GL_TRUE;
 }
 
-/* Fixup MaxAnisotropy according to user preference.
+/**
+ * Allocate a new texture object.
+ * Called via ctx->Driver.NewTextureObject.
  */
-static struct gl_texture_object *radeonNewTextureObject ( GLcontext *ctx,
-							  GLuint name,
-							  GLenum target ) {
-    struct gl_texture_object *obj;
-    obj = _mesa_new_texture_object (ctx, name, target);
-    obj->MaxAnisotropy = driQueryOptionf (&RADEON_CONTEXT(ctx)->optionCache,
-					  "def_max_anisotropy");
-    return obj;
+static struct gl_texture_object *
+radeonNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
+{
+   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   struct gl_texture_object *obj;
+   driTextureObject *t;
+   obj = _mesa_new_texture_object(ctx, name, target);
+   if (!obj)
+      return NULL;
+   obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
+   t = (driTextureObject *) radeonAllocTexObj(obj);
+   if (!t) {
+      _mesa_delete_texture_object(ctx, obj);
+      return NULL;
+   }
+   return obj;
 }
 
 
-void radeonInitTextureFuncs( GLcontext *ctx )
+void radeonInitTextureFuncs( struct dd_function_table *functions )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   functions->ChooseTextureFormat	= radeonChooseTextureFormat;
+   functions->TexImage1D		= radeonTexImage1D;
+   functions->TexImage2D		= radeonTexImage2D;
+   functions->TexSubImage1D		= radeonTexSubImage1D;
+   functions->TexSubImage2D		= radeonTexSubImage2D;
 
+   functions->NewTextureObject		= radeonNewTextureObject;
+   /*functions->BindTexture		= radeonBindTexture;*/
+   functions->DeleteTexture		= radeonDeleteTexture;
+   functions->IsTextureResident		= driIsTextureResident;
 
-   ctx->Driver.ChooseTextureFormat	= radeonChooseTextureFormat;
-   ctx->Driver.TexImage1D		= radeonTexImage1D;
-   ctx->Driver.TexImage2D		= radeonTexImage2D;
-   ctx->Driver.TexImage3D		= _mesa_store_teximage3d;
-   ctx->Driver.TexSubImage1D		= radeonTexSubImage1D;
-   ctx->Driver.TexSubImage2D		= radeonTexSubImage2D;
-   ctx->Driver.TexSubImage3D		= _mesa_store_texsubimage3d;
-   ctx->Driver.CopyTexImage1D		= _swrast_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D		= _swrast_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D	= _swrast_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D	= _swrast_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D 	= _swrast_copy_texsubimage3d;
-   ctx->Driver.TestProxyTexImage	= _mesa_test_proxy_teximage;
-
-   ctx->Driver.NewTextureObject         = radeonNewTextureObject;
-   ctx->Driver.BindTexture		= radeonBindTexture;
-   ctx->Driver.CreateTexture		= NULL; /* FIXME: Is this used??? */
-   ctx->Driver.DeleteTexture		= radeonDeleteTexture;
-   ctx->Driver.IsTextureResident	= driIsTextureResident;
-   ctx->Driver.PrioritizeTexture	= NULL;
-   ctx->Driver.ActiveTexture		= NULL;
-   ctx->Driver.UpdateTexturePalette	= NULL;
-
-   ctx->Driver.TexEnv			= radeonTexEnv;
-   ctx->Driver.TexParameter		= radeonTexParameter;
-   ctx->Driver.TexGen                   = radeonTexGen;
-
-   driInitTextureObjects( ctx, & rmesa->swapped,
-			  DRI_TEXMGR_DO_TEXTURE_1D
-			  | DRI_TEXMGR_DO_TEXTURE_2D );
-
-   /* Hack: radeonNewTextureObject is not yet installed when the
-    * default textures are created. Therefore set MaxAnisotropy of the
-    * default 2D texture now. */
-   ctx->Shared->Default2D->MaxAnisotropy = driQueryOptionf (&rmesa->optionCache,
-							    "def_max_anisotropy");
+   functions->TexEnv			= radeonTexEnv;
+   functions->TexParameter		= radeonTexParameter;
+   functions->TexGen			= radeonTexGen;
 }

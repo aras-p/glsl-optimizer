@@ -157,7 +157,7 @@ drmBufPtr mga_get_buffer_ioctl( mgaContextPtr mmesa )
 
 
 static void
-mgaDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
+mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
             GLint cx, GLint cy, GLint cw, GLint ch )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
@@ -390,7 +390,7 @@ void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv )
 
 /* This is overkill
  */
-void mgaDDFinish( GLcontext *ctx  )
+void mgaFinish( GLcontext *ctx  )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
@@ -600,7 +600,7 @@ drmBufPtr mgaGetBufferLocked( mgaContextPtr mmesa )
 
 
 
-void mgaDDFlush( GLcontext *ctx )
+void mgaFlush( GLcontext *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 
@@ -670,9 +670,9 @@ int mgaFlushDMA( int fd, drmLockFlags flags )
    }
 }
 
-void mgaDDInitIoctlFuncs( GLcontext *ctx )
+void mgaInitIoctlFuncs( struct dd_function_table *functions )
 {
-   ctx->Driver.Clear = mgaDDClear;
-   ctx->Driver.Flush = mgaDDFlush;
-   ctx->Driver.Finish = mgaDDFinish;
+   functions->Clear = mgaClear;
+   functions->Flush = mgaFlush;
+   functions->Finish = mgaFinish;
 }

@@ -820,22 +820,22 @@ int i830_check_copy(int fd)
    return drmCommandNone(fd, DRM_I830_DOCOPY);
 }
 
-static void i830DDFlush( GLcontext *ctx )
+static void i830Flush( GLcontext *ctx )
 {
    i830ContextPtr imesa = I830_CONTEXT( ctx );
    I830_FIREVERTICES( imesa );
 }
 
-static void i830DDFinish( GLcontext *ctx  ) 
+static void i830Finish( GLcontext *ctx  ) 
 {
    i830ContextPtr imesa = I830_CONTEXT( ctx );
    i830DmaFinish( imesa );
 }
 
-void i830DDInitIoctlFuncs( GLcontext *ctx )
+void i830InitIoctlFuncs( struct dd_function_table *functions )
 {
-   ctx->Driver.Flush = i830DDFlush;
-   ctx->Driver.Clear = i830Clear;
-   ctx->Driver.Finish = i830DDFinish;
+   functions->Flush = i830Flush;
+   functions->Clear = i830Clear;
+   functions->Finish = i830Finish;
 }
 

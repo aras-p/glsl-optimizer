@@ -24,6 +24,7 @@ ASM_SOURCES =
 
 # This should get set in Make-config someday:
 DRIVER_SOURCES = \
+	$(COMMON_DRIVER_SOURCES) \
 	$(X11_DRIVER_SOURCES) \
 	$(GLIDE_DRIVER_SOURCES) \
 	$(SVGA_DRIVER_SOURCES) \

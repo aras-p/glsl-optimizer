@@ -1,4 +1,4 @@
-# $Id: Makefile.solo,v 1.1 2003/12/12 15:30:52 brianp Exp $
+# $Id: Makefile.solo,v 1.2 2004/01/20 02:49:27 brianp Exp $
 
 # Mesa 3-D graphics library
 # Version:  5.0
@@ -39,6 +39,7 @@ DRIVER_SOURCES = \
 		gamma_tris.c \
 		gamma_vb.c \
 		gamma_xmesa.c \
+		../../common/driverfuncs.c \
 		../common/mm.c \
 		../common/utils.c \
 		../common/texmem.c \

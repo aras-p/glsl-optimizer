@@ -36,7 +36,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern void sisUpdateBufferSize( sisContextPtr smesa );
 
-extern void sisDDInitDriverFuncs( GLcontext *ctx );
+extern void sisInitDriverFuncs( struct dd_function_table *functions );
 
 #endif
 #endif

@@ -94,7 +94,7 @@ void r128WaitForVBlank( r128ContextPtr rmesa );
 extern void r128WaitForIdleLocked( r128ContextPtr rmesa );
 
 
-extern void r128DDInitIoctlFuncs( GLcontext *ctx );
+extern void r128InitIoctlFuncs( struct dd_function_table *functions );
 
 
 /* ================================================================

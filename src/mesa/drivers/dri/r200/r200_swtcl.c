@@ -1226,7 +1226,7 @@ void r200InitSwtcl( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint size = TNL_CONTEXT(ctx)->vb.Size;
+   GLuint size = tnl->vb.Size;
    static int firsttime = 1;
 
    if (firsttime) {

@@ -45,6 +45,7 @@ DRIVER_SOURCES = radeon_context.c \
 		 radeon_screen.c \
 		 radeon_state.c \
 		 radeon_state_init.c \
+		 ../../common/driverfuncs.c \
 		 ../common/mm.c \
 		 ../common/utils.c \
 		 ../common/texmem.c \

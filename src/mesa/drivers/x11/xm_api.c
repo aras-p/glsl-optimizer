@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -77,6 +77,10 @@
 #include "swrast_setup/swrast_setup.h"
 #include "array_cache/acache.h"
 #include "tnl/tnl.h"
+#include "tnl/t_context.h"
+#include "tnl/t_pipeline.h"
+#include "drivers/common/driverfuncs.h"
+
 
 #ifndef GLX_NONE_EXT
 #define GLX_NONE_EXT 0x8000
@@ -1583,43 +1587,39 @@ void XMesaDestroyVisual( XMesaVisual v )
 
 
 
-/*
+/**
  * Create a new XMesaContext.
- * Input:  v - XMesaVisual
- *         share_list - another XMesaContext with which to share display
- *                      lists or NULL if no sharing is wanted.
- * Return:  an XMesaContext or NULL if error.
+ * \param v  the XMesaVisual
+ * \param share_list  another XMesaContext with which to share display
+ *                    lists or NULL if no sharing is wanted.
+ * \return an XMesaContext or NULL if error.
  */
 XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    static GLboolean firstTime = GL_TRUE;
    XMesaContext c;
-   GLboolean direct = GL_TRUE; /* not really */
    GLcontext *mesaCtx;
+   struct dd_function_table functions;
+   TNLcontext *tnl;
 
    if (firstTime) {
       _glthread_INIT_MUTEX(_xmesa_lock);
       firstTime = GL_FALSE;
    }
 
+   /* Note: the XMesaContext contains a Mesa GLcontext struct (inheritance) */
    c = (XMesaContext) CALLOC_STRUCT(xmesa_context);
-   if (!c) {
+   if (!c)
       return NULL;
-   }
 
    mesaCtx = &(c->mesa);
 
-   /* Setup these pointers here since they're using for making the default
-    * and proxy texture objects.  Actually, we don't really need to do
-    * this since we're using the default fallback functions which
-    * _mesa_initialize_context() would plug in if needed.
-    */
-   mesaCtx->Driver.NewTextureObject = _mesa_new_texture_object;
-   mesaCtx->Driver.DeleteTexture = _mesa_delete_texture_object;
-
+   /* initialize with default driver functions, then plug in XMesa funcs */
+   _mesa_init_driver_functions(&functions);
+   xmesa_init_driver_functions(v, &functions);
    if (!_mesa_initialize_context(mesaCtx, &v->mesa_visual,
                       share_list ? &(share_list->mesa) : (GLcontext *) NULL,
-                      (void *) c, direct)) {
+                      &functions, (void *) c)) {
       FREE(c);
       return NULL;
    }
@@ -1629,21 +1629,14 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    _mesa_enable_1_4_extensions(mesaCtx);
    _mesa_enable_1_5_extensions(mesaCtx);
 
-   if (CHECK_BYTE_ORDER(v)) {
-      c->swapbytes = GL_FALSE;
-   }
-   else {
-      c->swapbytes = GL_TRUE;
-   }
-
+   /* finish up xmesa context initializations */
+   c->swapbytes = CHECK_BYTE_ORDER(v) ? GL_FALSE : GL_TRUE;
    c->xm_visual = v;
    c->xm_draw_buffer = NULL;   /* set later by XMesaMakeCurrent */
    c->xm_read_buffer = NULL;   /* set later by XMesaMakeCurrent */
    c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */
    c->display = v->display;
    c->pixelformat = v->dithered_pf;      /* Dithering is enabled by default */
-
-   mesaCtx->Driver.UpdateState = xmesa_update_state;
 
    /* Initialize the software rasterizer and helper modules.
     */
@@ -1652,15 +1645,15 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    _tnl_CreateContext( mesaCtx );
    _swsetup_CreateContext( mesaCtx );
 
+   /* tnl setup */
+   tnl = TNL_CONTEXT(mesaCtx);
+   tnl->Driver.RunPipeline = _tnl_run_pipeline;
+   /* swrast setup */
    xmesa_register_swrast_functions( mesaCtx );
-
-   /* Set up some constant pointers:
-    */
-   xmesa_init_pointers( mesaCtx );
+   _swsetup_Wakeup(mesaCtx);
 
    return c;
 }
-
 
 
 

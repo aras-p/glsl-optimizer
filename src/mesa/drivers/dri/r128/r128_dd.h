@@ -38,7 +38,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifdef GLX_DIRECT_RENDERING
 
-extern void r128DDInitDriverFuncs( GLcontext *ctx );
+extern void r128InitDriverFuncs( struct dd_function_table *functions );
 
 #endif
 #endif

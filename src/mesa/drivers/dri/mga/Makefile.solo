@@ -27,6 +27,7 @@ DRIVER_SOURCES = mgadd.c \
 		 mgarender.c \
 		 mgastate.c \
 		 mgatris.c \
+		 ../../common/driverfuncs.c \
 		 ../common/mm.c \
 		 ../common/utils.c \
 		 ../common/texmem.c \

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,6 +57,7 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
+#include "drivers/common/driverfuncs.h"
 
 
 #define PF_B8G8R8     1
@@ -167,50 +168,6 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
    default:
       _mesa_problem(ctx, "bad bufferBit in set_buffer()");
    }
-}
-
-
-static void
-init_core_functions( GLcontext *ctx )
-{
-   ctx->Driver.GetString = get_string;
-   ctx->Driver.UpdateState = update_state;
-   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
-   ctx->Driver.GetBufferSize = get_buffer_size;
-
-   ctx->Driver.Accum = _swrast_Accum;
-   ctx->Driver.Bitmap = _swrast_Bitmap;
-   ctx->Driver.Clear = _swrast_Clear;  /* would be good to optimize */
-   ctx->Driver.CopyPixels = _swrast_CopyPixels;
-   ctx->Driver.DrawPixels = _swrast_DrawPixels;
-   ctx->Driver.ReadPixels = _swrast_ReadPixels;
-   ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
-
-   ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
-   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
-   ctx->Driver.TexImage2D = _mesa_store_teximage2d;
-   ctx->Driver.TexImage3D = _mesa_store_teximage3d;
-   ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
-   ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
-   ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-   ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
-
-   ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
-   ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
-   ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
-   ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
-   ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
-   ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
-
-   ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
-   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
-   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 }
 
 
@@ -669,6 +626,7 @@ glFBDevCreateContext( const GLFBDevVisualPtr visual, GLFBDevContextPtr share )
 {
    GLFBDevContextPtr ctx;
    GLcontext *glctx;
+   struct dd_function_table functions;
 
    ASSERT(visual);
 
@@ -676,9 +634,15 @@ glFBDevCreateContext( const GLFBDevVisualPtr visual, GLFBDevContextPtr share )
    if (!ctx)
       return NULL;
 
+   /* build table of device driver functions */
+   _mesa_init_driver_functions(&functions);
+   functions.GetString = get_string;
+   functions.UpdateState = update_state;
+   functions.GetBufferSize = get_buffer_size;
+
    if (!_mesa_initialize_context(&ctx->glcontext, &visual->glvisual,
                                  share ? &share->glcontext : NULL,
-                                 (void *) ctx, GL_FALSE)) {
+                                 &functions, (void *) ctx)) {
       _mesa_free(ctx);
       return NULL;
    }
@@ -687,7 +651,6 @@ glFBDevCreateContext( const GLFBDevVisualPtr visual, GLFBDevContextPtr share )
 
    /* Create module contexts */
    glctx = (GLcontext *) &ctx->glcontext;
-   init_core_functions( glctx );
    _swrast_CreateContext( glctx );
    _ac_CreateContext( glctx );
    _tnl_CreateContext( glctx );

@@ -77,6 +77,7 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
+#include "drivers/common/driverfuncs.h"
 
 
 
@@ -118,6 +119,10 @@ update_state( GLcontext *ctx, GLuint new_state )
 }
 
 
+/**
+ * Called by ctx->Driver.GetBufferSize from in core Mesa to query the
+ * current framebuffer size.
+ */
 static void
 get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 {
@@ -156,46 +161,14 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
 
 
 static void
-init_core_functions( GLcontext *ctx )
+init_core_functions( struct dd_function_table *functions )
 {
-   ctx->Driver.GetString = get_string;
-   ctx->Driver.UpdateState = update_state;
-   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
-   ctx->Driver.GetBufferSize = get_buffer_size;
+   functions->GetString = get_string;
+   functions->UpdateState = update_state;
+   functions->ResizeBuffers = _swrast_alloc_buffers;
+   functions->GetBufferSize = get_buffer_size;
 
-   ctx->Driver.Accum = _swrast_Accum;
-   ctx->Driver.Bitmap = _swrast_Bitmap;
-   ctx->Driver.Clear = _swrast_Clear;  /* could accelerate with blits */
-   ctx->Driver.CopyPixels = _swrast_CopyPixels;
-   ctx->Driver.DrawPixels = _swrast_DrawPixels;
-   ctx->Driver.ReadPixels = _swrast_ReadPixels;
-   ctx->Driver.DrawBuffer = _swrast_DrawBuffer;
-
-   ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
-   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
-   ctx->Driver.TexImage2D = _mesa_store_teximage2d;
-   ctx->Driver.TexImage3D = _mesa_store_teximage3d;
-   ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
-   ctx->Driver.TexSubImage2D = _mesa_store_texsubimage2d;
-   ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
-   ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
-
-   ctx->Driver.CompressedTexImage1D = _mesa_store_compressed_teximage1d;
-   ctx->Driver.CompressedTexImage2D = _mesa_store_compressed_teximage2d;
-   ctx->Driver.CompressedTexImage3D = _mesa_store_compressed_teximage3d;
-   ctx->Driver.CompressedTexSubImage1D = _mesa_store_compressed_texsubimage1d;
-   ctx->Driver.CompressedTexSubImage2D = _mesa_store_compressed_texsubimage2d;
-   ctx->Driver.CompressedTexSubImage3D = _mesa_store_compressed_texsubimage3d;
-
-   ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
-   ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
-   ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
-   ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
-   ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
-   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
-   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
-   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
+   functions->Clear = _swrast_Clear;  /* could accelerate with blits */
 }
 
 
@@ -294,7 +267,7 @@ init_core_functions( GLcontext *ctx )
 #define FETCH_CI_PIXEL(CI, P) \
    CI = P[0]
 
-#include "swrast/s_spantemp.h"
+ #include "swrast/s_spantemp.h"
 
 
 
@@ -321,6 +294,7 @@ fbCreateContext( const __GLcontextModes *glVisual,
 {
    fbContextPtr fbmesa;
    GLcontext *ctx, *shareCtx;
+   struct dd_function_table functions;
 
    assert(glVisual);
    assert(driContextPriv);
@@ -330,6 +304,11 @@ fbCreateContext( const __GLcontextModes *glVisual,
    if ( !fbmesa )
       return GL_FALSE;
 
+   /* Init default driver functions then plug in our FBdev-specific functions
+    */
+   _mesa_init_driver_functions(&functions);
+   init_core_functions(&functions);
+
    /* Allocate the Mesa context */
    if (sharedContextPrivate)
       shareCtx = ((fbContextPtr) sharedContextPrivate)->glCtx;
@@ -337,8 +316,7 @@ fbCreateContext( const __GLcontextModes *glVisual,
       shareCtx = NULL;
 
    ctx = fbmesa->glCtx = _mesa_create_context(glVisual, shareCtx, 
-					      (void *) fbmesa, 
-					      GL_TRUE);
+					      &functions, (void *) fbmesa);
    if (!fbmesa->glCtx) {
       FREE(fbmesa);
       return GL_FALSE;
@@ -346,13 +324,11 @@ fbCreateContext( const __GLcontextModes *glVisual,
    driContextPriv->driverPrivate = fbmesa;
 
    /* Create module contexts */
-   init_core_functions( ctx );
    _swrast_CreateContext( ctx );
    _ac_CreateContext( ctx );
    _tnl_CreateContext( ctx );
    _swsetup_CreateContext( ctx );
    _swsetup_Wakeup( ctx );
-
 
 
    /* swrast init -- need to verify these tests - I just plucked the
@@ -496,8 +472,6 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 }
 
 
-
-
 static void
 fbDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
@@ -610,20 +584,20 @@ __driRegisterExtensions( void )
 }
 
 
-
-
 /*
  * This is the bootstrap function for the driver.
  * The __driCreateScreen name is the symbol that libGL.so fetches.
  * Return:  pointer to a __DRIscreenPrivate.
  */
-void *__driCreateScreen(struct DRIDriverRec *driver,
-                        struct DRIDriverContextRec *driverContext)
+void *
+__driCreateScreen(struct DRIDriverRec *driver,
+                  struct DRIDriverContextRec *driverContext)
 {
    __DRIscreenPrivate *psp;
    psp = __driUtilCreateScreenNoDRM(driver, driverContext, &fbAPI);
    return (void *) psp;
 }
+
 
 
 /**
@@ -661,8 +635,11 @@ const __GLcontextModes __glModes[] = {
      .depthBits = 16, .stencilBits = 0,
      .numAuxBuffers= 0, .level = 0, .pixmapMode = GL_FALSE, },
 };
-static int __driInitScreenModes( const DRIDriverContext *ctx,
-				   int *numModes, const __GLcontextModes **modes)
+
+
+static int
+__driInitScreenModes( const DRIDriverContext *ctx,
+                      int *numModes, const __GLcontextModes **modes)
 {
    *numModes = sizeof(__glModes)/sizeof(__GLcontextModes *);
    *modes = &__glModes[0];
@@ -671,7 +648,8 @@ static int __driInitScreenModes( const DRIDriverContext *ctx,
 
 
 
-static int __driValidateMode(const DRIDriverContext *ctx )
+static int
+__driValidateMode(const DRIDriverContext *ctx )
 {
    return 1;
 }
@@ -685,9 +663,10 @@ static int __driValidateMode(const DRIDriverContext *ctx )
 #else
 # define DRM_PAGE_SIZE 4096
 #endif
-                                                                                                                    
 
-static int __driInitFBDev( struct DRIDriverContextRec *ctx )
+
+static int
+__driInitFBDev( struct DRIDriverContextRec *ctx )
 {
    int id;
    ctx->shared.hFrameBuffer = ctx->FBStart;
@@ -712,7 +691,8 @@ static int __driInitFBDev( struct DRIDriverContextRec *ctx )
    return 1;
 }
 
-static void __driHaltFBDev( struct DRIDriverContextRec *ctx )
+static void
+__driHaltFBDev( struct DRIDriverContextRec *ctx )
 {
 }
 

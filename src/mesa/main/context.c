@@ -387,7 +387,8 @@ __glCoreCreateContext(__GLimports *imports, __GLcontextModes *modes)
 	return NULL;
     }
 
-    _mesa_initialize_context(ctx, modes, NULL, imports, GL_FALSE);
+    /* XXX doesn't work at this time */
+    _mesa_initialize_context(ctx, modes, NULL, NULL, NULL);
     ctx->imports = *imports;
 
     return ctx;
@@ -858,14 +859,6 @@ alloc_shared_state( GLcontext *ctx )
    if (!ss->DefaultRect)
       goto cleanup;
 
-#if 0
-   _mesa_save_texture_object(ctx, ss->Default1D);
-   _mesa_save_texture_object(ctx, ss->Default2D);
-   _mesa_save_texture_object(ctx, ss->Default3D);
-   _mesa_save_texture_object(ctx, ss->DefaultCubeMap);
-   _mesa_save_texture_object(ctx, ss->DefaultRect);
-#endif
-
    /* Effectively bind the default textures to all texture units */
    ss->Default1D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
    ss->Default2D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
@@ -1335,12 +1328,15 @@ add_newer_entrypoints(void)
 
 
 /**
- * Initialize a GLcontext struct. 
+ * Initialize a GLcontext struct (rendering context).
  *
  * This includes allocating all the other structs and arrays which hang off of
  * the context by pointers.
+ * Note that the driver needs to pass in its dd_function_table here since
+ * we need to at least call driverFunctions->NewTextureObject to create the
+ * default texture objects.
  * 
- * \sa _mesa_create_context() for the parameter description.
+ * Called by _mesa_create_context().
  *
  * Performs the imports and exports callback tables initialization, and
  * miscellaneous one-time initializations. If no shared context is supplied one
@@ -1349,23 +1345,30 @@ add_newer_entrypoints(void)
  * Finally queries the \c MESA_DEBUG and \c MESA_VERBOSE environment variables
  * for debug flags.
  *
- * \note the direct parameter is ignored (obsolete).
+ * \param ctx the context to initialize
+ * \param visual describes the visual attributes for this context
+ * \param share_list points to context to share textures, display lists,
+ *        etc with, or NULL
+ * \param driverFunctions table of device driver functions for this context
+ *        to use
+ * \param driverContext pointer to driver-specific context data
  */
 GLboolean
 _mesa_initialize_context( GLcontext *ctx,
                           const GLvisual *visual,
                           GLcontext *share_list,
-                          void *driver_ctx,
-                          GLboolean direct )
+                          const struct dd_function_table *driverFunctions,
+                          void *driverContext )
 {
    GLuint dispatchSize;
 
-   ASSERT(driver_ctx);
+   ASSERT(driverContext);
+   assert(driverFunctions->NewTextureObject);
 
    /* If the driver wants core Mesa to use special imports, it'll have to
     * override these defaults.
     */
-   _mesa_init_default_imports( &(ctx->imports), driver_ctx );
+   _mesa_init_default_imports( &(ctx->imports), driverContext );
 
    /* initialize the exports (Mesa functions called by the window system) */
    _mesa_init_default_exports( &(ctx->exports) );
@@ -1373,20 +1376,17 @@ _mesa_initialize_context( GLcontext *ctx,
    /* misc one-time initializations */
    one_time_init(ctx);
 
-   ctx->DriverCtx = driver_ctx;
    ctx->Visual = *visual;
    ctx->DrawBuffer = NULL;
    ctx->ReadBuffer = NULL;
 
-   /* Set these pointers to defaults now in case they're not set since
-    * we need them while creating the default textures.
+   /* Plug in driver functions and context pointer here.
+    * This is important because when we call alloc_shared_state() below
+    * we'll call ctx->Driver.NewTextureObject() to create the default
+    * textures.
     */
-   if (!ctx->Driver.NewTextureObject)
-      ctx->Driver.NewTextureObject = _mesa_new_texture_object;
-   if (!ctx->Driver.DeleteTexture)
-      ctx->Driver.DeleteTexture = _mesa_delete_texture_object;
-   if (!ctx->Driver.NewTextureImage)
-      ctx->Driver.NewTextureImage = _mesa_new_texture_image;
+   ctx->Driver = *driverFunctions;
+   ctx->DriverCtx = driverContext;
 
    if (share_list) {
       /* share state with another context */
@@ -1443,33 +1443,39 @@ _mesa_initialize_context( GLcontext *ctx,
    return GL_TRUE;
 }
 
+
 /**
  * Allocate and initialize a GLcontext structure.
+ * Note that the driver needs to pass in its dd_function_table here since
+ * we need to at least call driverFunctions->NewTextureObject to initialize
+ * the rendering context.
  *
  * \param visual a GLvisual pointer (we copy the struct contents)
  * \param share_list another context to share display lists with or NULL
- * \param driver_ctx pointer to device driver's context state struct
- * \param direct obsolete, ignored
+ * \param driverFunctions points to the dd_function_table into which the
+ *        driver has plugged in all its special functions.
+ * \param driverCtx points to the device driver's private context state
  * 
  * \return pointer to a new __GLcontextRec or NULL if error.
  */
 GLcontext *
 _mesa_create_context( const GLvisual *visual,
                       GLcontext *share_list,
-                      void *driver_ctx,
-                      GLboolean direct )
+                      const struct dd_function_table *driverFunctions,
+                      void *driverContext )
 
 {
    GLcontext *ctx;
 
    ASSERT(visual);
-   ASSERT(driver_ctx);
+   ASSERT(driverContext);
 
    ctx = (GLcontext *) _mesa_calloc(sizeof(GLcontext));
    if (!ctx)
       return NULL;
 
-   if (_mesa_initialize_context(ctx, visual, share_list, driver_ctx, direct)) {
+   if (_mesa_initialize_context(ctx, visual, share_list,
+                                driverFunctions, driverContext)) {
       return ctx;
    }
    else {
@@ -1477,6 +1483,7 @@ _mesa_create_context( const GLvisual *visual,
       return NULL;
    }
 }
+
 
 /**
  * Free the data associated with the given context.
@@ -1531,12 +1538,13 @@ _mesa_free_context_data( GLcontext *ctx )
    FREE(ctx->Save);
 }
 
+
 /**
  * Destroy a GLcontext structure.
  *
  * \param ctx GL context.
  * 
- * Calls _mesa_free_context_data() and free the structure.
+ * Calls _mesa_free_context_data() and frees the GLcontext structure itself.
  */
 void
 _mesa_destroy_context( GLcontext *ctx )
@@ -1546,6 +1554,7 @@ _mesa_destroy_context( GLcontext *ctx )
       FREE( (void *) ctx );
    }
 }
+
 
 #if _HAVE_FULL_GL
 /**

@@ -59,6 +59,8 @@
 
 #include "math/m_vector.h"
 
+#include "drivers/common/driverfuncs.h"
+
 
 /* Define some shorter names for these things.
  */
@@ -611,6 +613,7 @@ extern void fxDDTexEnv(GLcontext *, GLenum, GLenum, const GLfloat *);
 extern void fxDDTexParam(GLcontext *, GLenum, struct gl_texture_object *,
 			 GLenum, const GLfloat *);
 extern void fxDDTexBind(GLcontext *, GLenum, struct gl_texture_object *);
+extern struct gl_texture_object *fxDDNewTextureObject( GLcontext *ctx, GLuint name, GLenum target );
 extern void fxDDTexDel(GLcontext *, struct gl_texture_object *);
 extern GLboolean fxDDIsTextureResident(GLcontext *, struct gl_texture_object *);
 extern void fxDDTexPalette(GLcontext *, struct gl_texture_object *);

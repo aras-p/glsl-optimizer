@@ -35,6 +35,7 @@ DRIVER_SOURCES = \
 		r128_span.c \
 		r128_texmem.c \
 		r128_vb.c \
+		../../common/driverfuncs.c \
 		../common/mm.c \
 		../common/utils.c \
 		../common/texmem.c \

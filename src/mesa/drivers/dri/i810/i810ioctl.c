@@ -502,9 +502,9 @@ static void i810Finish( GLcontext *ctx  )
    i810DmaFinish( imesa );
 }
 
-void i810InitIoctlFuncs( GLcontext *ctx )
+void i810InitIoctlFuncs( struct dd_function_table *functions )
 {
-   ctx->Driver.Flush = i810Flush;
-   ctx->Driver.Clear = i810Clear;
-   ctx->Driver.Finish = i810Finish;
+   functions->Flush = i810Flush;
+   functions->Clear = i810Clear;
+   functions->Finish = i810Finish;
 }
