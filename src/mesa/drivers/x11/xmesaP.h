@@ -521,4 +521,7 @@ extern GLboolean XMesaLoseCurrent(XMesaContext c);
 extern void XMesaReset( void );
 
 
+#define SWTC 0 /* SW texture compression */
+
+
 #endif

@@ -1149,6 +1149,24 @@ test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
 
 
 /**
+ * In SW, we don't really compress GL_COMPRESSED_RGB[A] textures!
+ */
+static const struct gl_texture_format *
+choose_tex_format( GLcontext *ctx, GLint internalFormat,
+                   GLenum format, GLenum type )
+{
+   switch (internalFormat) {
+      case GL_COMPRESSED_RGB_ARB:
+         return &_mesa_texformat_rgb;
+      case GL_COMPRESSED_RGBA_ARB:
+         return &_mesa_texformat_rgba;
+      default:
+         return _mesa_choose_tex_format(ctx, internalFormat, format, type);
+   }
+}
+
+
+/**
  * Initialize the device driver function table with the functions
  * we implement in this driver.
  */
@@ -1178,6 +1196,9 @@ void xmesa_init_driver_functions( XMesaVisual xmvisual,
    }
 #endif
    driver->TestProxyTexImage = test_proxy_teximage;
+#if SWTC
+   driver->ChooseTextureFormat = choose_tex_format;
+#endif
 }
 
 
