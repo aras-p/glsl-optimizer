@@ -1,4 +1,4 @@
-$Id: VERSIONS,v 1.46 2000/10/27 18:32:55 brianp Exp $
+$Id: VERSIONS,v 1.47 2000/12/13 00:48:02 brianp Exp $
 
 
 Mesa Version History
@@ -765,6 +765,9 @@ Mesa Version History
 	- libOSMesa.so now created, contains the OSMesa driver interface
 	- GL_EXT_fog_coord extension (Keith Whitwell)
 	- GL_EXT_secondary_color extension (Keith Whitwell)
+	- GL/glxext.h header file for GLX extensions
+	- Improved precision in glReadPixels, improves conformance for 16bpp
+	- somewhat faster software texturing, fogging, depth testing
     Bug Fixes:
 	- fbiRev and tmuRev were unitialized when using Glide3
     Changes:
