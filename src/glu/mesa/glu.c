@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.3 1999/09/10 04:32:10 gareth Exp $ */
+/* $Id: glu.c,v 1.4 1999/09/11 11:36:26 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.c,v $
+ * Revision 1.4  1999/09/11 11:36:26  brianp
+ * added GLU_EXT_get_proc_address
+ *
  * Revision 1.3  1999/09/10 04:32:10  gareth
  * Fixed triangle output, recovery process termination.
  *
@@ -325,7 +328,7 @@ const GLubyte* GLAPIENTRY gluErrorString( GLenum errorCode )
 
 const GLubyte* GLAPIENTRY gluGetString( GLenum name )
 {
-   static char *extensions = "GL_EXT_abgr";
+   static char *extensions = "GL_EXT_abgr GLU_EXT_get_proc_address";
    static char *version = "1.1 Mesa 3.1";
 
    switch (name) {
@@ -337,4 +340,30 @@ const GLubyte* GLAPIENTRY gluGetString( GLenum name )
 	 return NULL;
    }
 }
+
+
+
+#ifdef GLU_EXT_get_proc_address
+
+GLfunction GLAPIENTRY gluGetProcAddressEXT( const GLubyte *procName )
+{
+   struct proc {
+      const char *name;
+      void *address;
+   };
+   static struct proc procTable[] = {
+      { "gluGetProcAddressEXT", (void *) gluGetProcAddressEXT },  /* myself! */
+      { NULL, NULL }
+   };
+   GLuint i;
+
+   for (i = 0; procTable[i].address; i++) {
+      if (strcmp((const char *) procName, procTable[i].name) == 0)
+	 return (GLfunction) procTable[i].address;
+   }
+
+   return NULL;
+}
+
+#endif
 

@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.2 1999/09/10 02:08:18 gareth Exp $ */
+/* $Id: glu.h,v 1.3 1999/09/11 11:34:21 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,9 @@
 
 /*
  * $Log: glu.h,v $
+ * Revision 1.3  1999/09/11 11:34:21  brianp
+ * added GLU_EXT_get_proc_address
+ *
  * Revision 1.2  1999/09/10 02:08:18  gareth
  * Added GLU 1.3 tessellation (except winding rule code).
  *
@@ -479,6 +482,22 @@ GLUAPI void GLAPIENTRY gluEndPolygon( GLUtesselator *tobj );
  */
 
 GLUAPI const GLubyte* GLAPIENTRY gluGetString( GLenum name );
+
+
+
+/*
+ * GLU_EXT_get_proc_address extensions
+ */
+
+#ifdef GL_EXT_get_proc_address
+/* This extension requires GL_EXT_get_proc_address */
+
+GLUAPI GLfunction GLAPIENTRY gluGetProcAddressEXT( const GLubyte *procName );
+
+#define GLU_EXT_get_proc_address 1
+
+#endif /* GL_EXT_get_proc_address */
+
 
 
 #if defined(__BEOS__) || defined(__QUICKDRAW__)
