@@ -501,7 +501,7 @@ static void uploadTextureParams( tdfxContextPtr fxMesa )
       fxMesa->Glide.grTexClampMode(GR_TMU0 + unit, p->sClamp, p->tClamp);
       fxMesa->Glide.grTexFilterMode(GR_TMU0 + unit, p->minFilt, p->magFilt);
       fxMesa->Glide.grTexMipMapMode(GR_TMU0 + unit, p->mmMode, p->LODblend);
-      fxMesa->Glide.grTexLodBiasValue(GR_TMU0 + unit, p->LodBias);
+      fxMesa->Glide.grTexLodBiasValue(GR_TMU0 + unit, CLAMP(p->LodBias, -8, 7.75));
    }
 }
 
