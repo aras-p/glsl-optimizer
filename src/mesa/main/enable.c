@@ -1,4 +1,4 @@
-/* $Id: enable.c,v 1.1 1999/08/19 00:55:41 jtg Exp $ */
+/* $Id: enable.c,v 1.2 1999/08/19 13:24:27 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -603,7 +603,7 @@ GLboolean gl_IsEnabled( GLcontext* ctx, GLenum cap )
       case GL_TEXTURE_3D:
          {
             const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-            return (texUnit->Enabled & TEXTURE0_2D) ? GL_TRUE : GL_FALSE;
+            return (texUnit->Enabled & TEXTURE0_3D) ? GL_TRUE : GL_FALSE;
          }
       case GL_TEXTURE_GEN_Q:
          {
