@@ -1,27 +1,95 @@
-                README for port of Mesa to XFree86 on OS/2
-                           (as of 19980802)
+            README for port of Mesa 3.x to XFree86 on OS/2 (X/2)
+                          (as of 19990514)
 
 
-Instructions to build Mesa for XFree86/OS2:
+                           Contents:
 
-You need a recent version of XFree86 (3.3x or above) installed including
-the supplied programming libraries and tools as well as EMX 0.9c (and above).
-
-Beginning after beta 7 there's again support for creating DLLs.
-The details are handled in "mklib-emx.cmd" a small REXX script.
-By now it does ensure compatiblity by using the function names as
-entry points instead of ordinals. This will cost performance and
-might be fixed in a future patch.
-
-We switched to the usual build method
-(based on Makefile and make-config) beginning with Mesa 3.0 beta 5.
-To use most of the standard files (including shell scripts) you should
-have a un*x shell (sh) in path.
-
-To actually build the (static) libraries and demos type
-  make os2
+                           1) Binary release
+                           2) Building from sources
+                           3) History
+                           4) Mesa Home Page
 
 
+1) Binary release
+
+   Though Mesa 3.0 should build in a quite reasonable time on
+   a 585 class machine (or better) a binary relase is available
+   (check item 4) for an URL)
+   This package includes:
+
+     - lib/MesaGL.dll,  MesaGL.a
+     - lib/MesaGLU.dll, MesaGLU.a
+     - lib/glut.dll,    glut.a
+     - include/GL/*.h
+
+    Installing this in your XFree86 tree will enable you to build and
+    run all applications compatible with Mesa (and the current DLL
+    interface, of course ;-)
+    As usual the OMF-style libraries can be created using emxomf.
+    (e.g. "emxomf foo.a"  creates the foo.lib omf-style library).
+    The static libraries are rarely used and you have to rebuild
+    Mesa to get them. They're a supported target, so you get
+    them in a straightforward way (see below).
+
+    The testing of these libraries was limited to the supplied
+    demos/examples and very few small third-party apps.
+    No warranty ... as usual ...  ;-)
+
+
+2)  Instructions to build Mesa 3.x for XFree86/OS2 from sources:
+
+    Except the official Mesa source distribution you need:
+      - a recent version of XFree86 (3.3.x or above) including
+        the programming libraries
+      - EMX 0.9c (0.9d might work, never checked)
+      - GNU make
+      - REXX (!)
+
+    The creation of the DLLs as well as of the static libraries
+    (if you want to have them) is handled in "mklib-emx.cmd",
+    a small REXX script. Perhaps not the best idea, but this
+    way it fits best in the scheme used to build libraries
+    on all platforms in Mesa 3.0.
+    By now binary compatiblity is ensured by using the function names
+    as entry points instead of ordinals. This might cost performance and
+    is subject to change in future. We might consider this release
+    therefore as a "demo release" to get them feedback about 
+    remaining bugs.
+
+    To actually build the libraries and demos, check mklib-emx.cmd
+    and modify it as desired. Then type
+      make os2-x11
+    and wait for completion ;-)
+
+
+3)  History
+
+    Initially Darren Abbott (abbott@hiwaay.net) ported Mesa versions 2.x
+    to XFree86 OS/2. This port might still be available from 
+       http://fly.HiWAAY.net/~abbott/xfree86-os2/xfree86.html
+
+    The current port picked up things during the beta test for 3.0. 
+    No major changes in the source were done. The build mechanism under OS/2
+    has been made very similar to other platforms (if you treat mklib-emx.cmd
+    as a "black box").
+    Advantage is that X/2 is now a valid target and all files are
+    integrated in the official source distribution.
+    Disadvantage is that this port (i.e. the DLLs' interface itself) is
+    definitly NOT COMPATIBLE to those of version 2.x. 
+    It's uncertain whether this would be at all possible but since there
+    a _very_ few those apps it's not worth to find out anyway.
+    Also some libs (MesaTK, MesaAUX) are withdrawn from the Mesa distribution,
+    and accordingly from the OS/2 port.
+
+
+4)  Mesa Home Page
+
+    You can get the source code and more information about Mesa from
+       http://www.mesa3d.org/
+
+    The OS/2 ports should in future be found on
+       http://r350.ee.ntu.edu.tw/~hcchu/os2/ports 
+
+--
 Alexander Mai
-am@os-2.de
 st002279@hrzpub.tu-darmstadt.de
