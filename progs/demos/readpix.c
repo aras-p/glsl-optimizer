@@ -1,4 +1,4 @@
-/* $Id: readpix.c,v 1.3 2000/03/31 01:01:31 brianp Exp $ */
+/* $Id: readpix.c,v 1.4 2000/10/16 21:24:39 brianp Exp $ */
 
 /*
  * glReadPixels and glCopyPixels test
@@ -8,6 +8,9 @@
 
 /*
  * $Log: readpix.c,v $
+ * Revision 1.4  2000/10/16 21:24:39  brianp
+ * use gray background, memset TempImage to white to help with debugging
+ *
  * Revision 1.3  2000/03/31 01:01:31  brianp
  * tweaks to allow different read formats/types
  *
@@ -43,17 +46,29 @@ static GLboolean ScaleAndBias = GL_FALSE;
 static GLboolean Benchmark = GL_FALSE;
 static GLubyte *TempImage = NULL;
 
-#if 1
+#if 0
 #define ReadFormat ImgFormat
 #define ReadType GL_UNSIGNED_BYTE
 #endif
-#if 0
+#if 1
 static GLenum ReadFormat = GL_RGBA;
 static GLenum ReadType = GL_UNSIGNED_BYTE;
 #endif
 #if 0
 static GLenum ReadFormat = GL_RGB;
 static GLenum ReadType = GL_UNSIGNED_SHORT_5_6_5;
+#endif
+#if 0
+static GLenum ReadFormat = GL_RGBA;
+static GLenum ReadType = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+#endif
+#if 0
+static GLenum ReadFormat = GL_BGRA;
+static GLenum ReadType = GL_UNSIGNED_SHORT_5_5_5_1;
+#endif
+#if 0
+static GLenum ReadFormat = GL_BGRA;
+static GLenum ReadType = GL_UNSIGNED_SHORT_4_4_4_4_REV;
 #endif
 
 
@@ -101,6 +116,7 @@ SetupPixelTransfer(GLboolean invert)
 static void
 Display( void )
 {
+   glClearColor(.3, .3, .3, 1);
    glClear( GL_COLOR_BUFFER_BIT );
 
    glRasterPos2i(5, ImgHeight+25);
@@ -137,6 +153,8 @@ Display( void )
       Benchmark = GL_FALSE;
    }
    else {
+      /* clear the temporary image to white (helpful for debugging */
+      memset(TempImage, 255, ImgWidth * ImgHeight * 4);
       glReadPixels(APosX, APosY, ImgWidth, ImgHeight,
                    ReadFormat, ReadType, TempImage);
    }
