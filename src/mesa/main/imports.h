@@ -128,7 +128,7 @@ extern void _ext_mesa_free_pixelbuffer( void *pb );
 #define MAX_GLUINT	0xffffffff
 
 #ifndef M_PI
-#define M_PI (3.1415926)
+#define M_PI (3.1415926536)              
 #endif
 
 /* Degrees to radians conversion: */
