@@ -71,7 +71,7 @@ static void tdfxUpdateAlphaMode( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    GrCmpFnc_t func;
-   GrAlphaBlendFnc_t srcRGB, dstRGB = GR_BLEND_ZERO, srcA, dstA;
+   GrAlphaBlendFnc_t srcRGB, dstRGB, srcA, dstA;
    GrAlphaBlendOp_t eqRGB, eqA;
    GrAlpha_t ref = (GLint) (ctx->Color.AlphaRef * 255.0);
    
@@ -190,12 +190,12 @@ static void tdfxUpdateAlphaMode( GLcontext *ctx )
 	 break;
       case GL_DST_COLOR:
          if (isNapalm) {
-	    srcRGB = GR_BLEND_SAME_COLOR_EXT;
+	    dstRGB = GR_BLEND_SAME_COLOR_EXT;
 	    break;
          }
       case GL_ONE_MINUS_DST_COLOR:
          if (isNapalm) {
-	    srcRGB = GR_BLEND_ONE_MINUS_SAME_COLOR_EXT;
+	    dstRGB = GR_BLEND_ONE_MINUS_SAME_COLOR_EXT;
 	    break;
          }
       default:
