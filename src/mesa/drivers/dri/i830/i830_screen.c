@@ -544,8 +544,8 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 			     
 {
    __DRIscreenPrivate *psp;
-   static const __DRIversion ddx_expected = { 4, 0, 0 };
-   static const __DRIversion dri_expected = { 1, 0, 0 };
+   static const __DRIversion ddx_expected = { 1, 0, 0 };
+   static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 3, 0 };
 
    if ( ! driCheckDriDdxDrmVersions2( "i830",
