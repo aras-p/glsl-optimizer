@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
  * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
@@ -1141,7 +1141,8 @@ OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
 
 
 
-GLAPI OSMesaContext GLAPIENTRY OSMesaGetCurrentContext( void )
+GLAPI OSMesaContext GLAPIENTRY
+OSMesaGetCurrentContext( void )
 {
    GLcontext *ctx = _mesa_get_current_context();
    if (ctx)
@@ -1152,7 +1153,8 @@ GLAPI OSMesaContext GLAPIENTRY OSMesaGetCurrentContext( void )
 
 
 
-GLAPI void GLAPIENTRY OSMesaPixelStore( GLint pname, GLint value )
+GLAPI void GLAPIENTRY
+OSMesaPixelStore( GLint pname, GLint value )
 {
    OSMesaContext osmesa = OSMesaGetCurrentContext();
 
@@ -1178,7 +1180,8 @@ GLAPI void GLAPIENTRY OSMesaPixelStore( GLint pname, GLint value )
 }
 
 
-GLAPI void GLAPIENTRY OSMesaGetIntegerv( GLint pname, GLint *value )
+GLAPI void GLAPIENTRY
+OSMesaGetIntegerv( GLint pname, GLint *value )
 {
    OSMesaContext osmesa = OSMesaGetCurrentContext();
 
@@ -1273,23 +1276,25 @@ OSMesaGetColorBuffer( OSMesaContext c, GLint *width,
 }
 
 
+typedef void (*generic_function)();
 
-struct name_address {
+struct name_function
+{
    const char *Name;
-   GLvoid *Address;
+   generic_function Function;
 };
 
-static struct name_address functions[] = {
-   { "OSMesaCreateContext", (void *) OSMesaCreateContext },
-   { "OSMesaCreateContextExt", (void *) OSMesaCreateContextExt },
-   { "OSMesaDestroyContext", (void *) OSMesaDestroyContext },
-   { "OSMesaMakeCurrent", (void *) OSMesaMakeCurrent },
-   { "OSMesaGetCurrentContext", (void *) OSMesaGetCurrentContext },
-   { "OSMesaPixelsStore", (void *) OSMesaPixelStore },
-   { "OSMesaGetIntegerv", (void *) OSMesaGetIntegerv },
-   { "OSMesaGetDepthBuffer", (void *) OSMesaGetDepthBuffer },
-   { "OSMesaGetColorBuffer", (void *) OSMesaGetColorBuffer },
-   { "OSMesaGetProcAddress", (void *) OSMesaGetProcAddress },
+static struct name_function functions[] = {
+   { "OSMesaCreateContext", (generic_function) OSMesaCreateContext },
+   { "OSMesaCreateContextExt", (generic_function) OSMesaCreateContextExt },
+   { "OSMesaDestroyContext", (generic_function) OSMesaDestroyContext },
+   { "OSMesaMakeCurrent", (generic_function) OSMesaMakeCurrent },
+   { "OSMesaGetCurrentContext", (generic_function) OSMesaGetCurrentContext },
+   { "OSMesaPixelsStore", (generic_function) OSMesaPixelStore },
+   { "OSMesaGetIntegerv", (generic_function) OSMesaGetIntegerv },
+   { "OSMesaGetDepthBuffer", (generic_function) OSMesaGetDepthBuffer },
+   { "OSMesaGetColorBuffer", (generic_function) OSMesaGetColorBuffer },
+   { "OSMesaGetProcAddress", (generic_function) OSMesaGetProcAddress },
    { NULL, NULL }
 };
 
@@ -1299,7 +1304,7 @@ OSMesaGetProcAddress( const char *funcName )
    int i;
    for (i = 0; functions[i].Name; i++) {
       if (_mesa_strcmp(functions[i].Name, funcName) == 0)
-         return (void *) functions[i].Address;
+         return (void *) functions[i].Function;
    }
    return (void *) _glapi_get_proc_address(funcName);
 }
