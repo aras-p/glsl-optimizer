@@ -1,4 +1,4 @@
-/* $Id: isosurf.c,v 1.9 2001/04/19 13:12:40 keithw Exp $ */
+/* $Id: isosurf.c,v 1.10 2001/05/11 12:08:15 keithw Exp $ */
 
 /*
  * Display an isosurface of 3-D wind speed volume.
@@ -38,17 +38,17 @@
 
 #define LIT		0x1
 #define UNLIT		0x2
-#define TEXTURE		0x4
-#define NO_TEXTURE	0x8
 #define REFLECT		0x10
-#define NO_REFLECT	0x20
 #define POINT_FILTER	0x40
 #define LINEAR_FILTER	0x80
 #define GLVERTEX	0x100
-#define DRAW_ARRAYS	0x200 /* or draw_elts, if compiled */
+#define DRAW_ELTS	0x4 
+#define DRAW_ARRAYS	0x200 
 #define ARRAY_ELT	0x400
-#define COMPILED	0x800
+#define LOCKED	        0x800
+#define UNLOCKED	0x8 
 #define IMMEDIATE	0x1000
+#define DISPLAYLIST	0x2000000
 #define SHADE_SMOOTH	0x2000
 #define SHADE_FLAT	0x4000
 #define TRIANGLES	0x8000
@@ -61,17 +61,15 @@
 #define FOG		0x400000
 #define NO_FOG		0x800000
 #define QUIT		0x1000000
-#define DISPLAYLIST	0x2000000
 #define GLINFO		0x4000000
 #define STIPPLE		0x8000000
-#define NO_STIPPLE	0x10000000
+#define NO_STIPPLE	0x20
 
-#define LIGHT_MASK		(LIT|UNLIT)
-#define TEXTURE_MASK		(TEXTURE|NO_TEXTURE)
-#define REFLECT_MASK		(REFLECT|NO_REFLECT)
+#define LIGHT_MASK		(LIT|UNLIT|REFLECT)
 #define FILTER_MASK		(POINT_FILTER|LINEAR_FILTER)
-#define RENDER_STYLE_MASK	(GLVERTEX|DRAW_ARRAYS|ARRAY_ELT)
-#define COMPILED_MASK		(COMPILED|IMMEDIATE|DISPLAYLIST)
+#define RENDER_STYLE_MASK	(GLVERTEX|DRAW_ARRAYS|DRAW_ELTS|ARRAY_ELT)
+#define DLIST_MASK		(IMMEDIATE|DISPLAYLIST)
+#define LOCK_MASK		(LOCKED|UNLOCKED)
 #define MATERIAL_MASK		(MATERIALS|NO_MATERIALS)
 #define PRIMITIVE_MASK		(TRIANGLES|STRIPS|POINTS)
 #define CLIP_MASK		(USER_CLIP|NO_USER_CLIP)
@@ -83,6 +81,7 @@
 static GLuint maxverts = MAXVERTS;
 static float data[MAXVERTS][6];
 static float compressed_data[MAXVERTS][6];
+static float expanded_data[MAXVERTS*3][6];
 static GLuint indices[MAXVERTS];
 static GLuint tri_indices[MAXVERTS*3];
 static GLfloat col[100][4];
@@ -90,11 +89,11 @@ static GLint numverts, num_tri_verts, numuniq;
 
 static GLfloat xrot;
 static GLfloat yrot;
-static GLfloat dist = -6;
+static GLfloat dist;
 static GLint state, allowed = ~0;
 static GLboolean doubleBuffer = GL_TRUE;
-static GLdouble plane[4] = {1.0, 0.0, -1.0, 0.0};
-static GLuint surf1, surf2, surf3;
+static GLdouble plane[4];
+static GLuint surf1, dlist_state;
 
 static GLboolean PrintInfo = GL_FALSE;
 
@@ -111,11 +110,6 @@ static GLubyte halftone[] = {
    0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA,
    0x55, 0x55, 0x55, 0x55, 0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
    0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55};
-
-/* forward decl */
-int BuildVertexList( int mode );
-int BuildArrayEltList( int mode );
-int BuildDrawArraysList( int mode );
 
 
 static void read_surface( char *filename )
@@ -141,6 +135,31 @@ static void read_surface( char *filename )
    fclose(f);
 }
 
+
+
+static void print_flags( const char *msg, GLuint flags ) 
+{
+   fprintf(stderr, 
+	   "%s (0x%x): %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   msg, flags,
+	   (flags & GLVERTEX) ? "glVertex, " : "",
+	   (flags & DRAW_ARRAYS) ? "glDrawArrays, " : "",
+	   (flags & DRAW_ELTS) ? "glDrawElements, " : "",
+	   (flags & ARRAY_ELT) ? "glArrayElement, " : "",
+	   (flags & LOCKED) ? "locked arrays, " : "",
+	   (flags & TRIANGLES) ? "GL_TRIANGLES, " : "",
+	   (flags & STRIPS) ? "GL_TRIANGLE_STRIP, " : "",
+	   (flags & POINTS) ? "GL_POINTS, " : "",
+	   (flags & DISPLAYLIST) ? "as a displaylist, " : "",
+	   (flags & LIT) ? "lit, " : "",
+	   (flags & UNLIT) ? "unlit, " : "",
+	   (flags & REFLECT) ? "reflect, " : "",
+	   (flags & SHADE_FLAT) ? "flat-shaded, " : "",
+	   (flags & USER_CLIP) ? "user_clip, " : "",
+	   (flags & MATERIALS) ? "materials, " : "",
+	   (flags & FOG) ? "fog, " : "",
+	   (flags & STIPPLE) ? "stipple, " : "");
+}
 
 
 
@@ -286,6 +305,20 @@ static void compactify_arrays(void)
    free( ind );
 }
 
+static void expand_arrays(void) 
+{
+   int i;
+   int parity = 0;
+   for (i = 2 ; i < numverts ; i++, parity ^= 1) {
+      int v0 = i-2+parity;
+      int v1 = i-1-parity;
+      int v2 = i;
+      memcpy( expanded_data[(i-2)*3+0], data[v0], sizeof(data[0]) );
+      memcpy( expanded_data[(i-2)*3+1], data[v1], sizeof(data[0]) );
+      memcpy( expanded_data[(i-2)*3+2], data[v2], sizeof(data[0]) );
+   }
+}
+
 static float myrand( float max )
 {
    return max*rand()/(RAND_MAX+1.0);
@@ -326,12 +359,33 @@ static void make_tri_indices( void )
 static void draw_surface( int with_state )
 {
    GLuint i, j;
+   
+   if (with_state & DISPLAYLIST) {
+      if ((with_state & (RENDER_STYLE_MASK|PRIMITIVE_MASK|MATERIAL_MASK)) != 
+	  dlist_state) {
+	 /* 
+	  */
+	 fprintf(stderr, "rebuilding displaylist\n");
 
-   switch (with_state & (COMPILED_MASK|RENDER_STYLE_MASK|PRIMITIVE_MASK)) {
+	 if (dlist_state)
+	    glDeleteLists( surf1, 1 );
+
+	 dlist_state = with_state & (RENDER_STYLE_MASK|PRIMITIVE_MASK|
+				     MATERIAL_MASK);
+	 surf1 = glGenLists(1);
+	 glNewList(surf1, GL_COMPILE);
+	 draw_surface( dlist_state );
+	 glEndList();
+      }
+
+      glCallList( surf1 );
+      return;
+   }
+
+   switch (with_state & (RENDER_STYLE_MASK|PRIMITIVE_MASK)) {
 #ifdef GL_EXT_vertex_array
 
-   case (IMMEDIATE|DRAW_ARRAYS|TRIANGLES):
-   case (COMPILED|DRAW_ARRAYS|TRIANGLES):
+   case (DRAW_ELTS|TRIANGLES):
       if (with_state & MATERIALS) {
 	 for (j = i = 0 ; i < num_tri_verts ; i += 600, j++) {
 	    GLuint nr = MIN(num_tri_verts-i, 600);
@@ -345,8 +399,11 @@ static void draw_surface( int with_state )
       }
       break;
 
-   case (IMMEDIATE|ARRAY_ELT|TRIANGLES):
-   case (COMPILED|ARRAY_ELT|TRIANGLES):
+   case (DRAW_ARRAYS|TRIANGLES):
+      glDrawArraysEXT( GL_TRIANGLES, 0, (numverts-2)*3 );
+      break;
+
+   case (ARRAY_ELT|TRIANGLES):
       if (with_state & MATERIALS) {
 	 for (j = i = 0 ; i < num_tri_verts ; i += 600, j++) {
 	    GLuint nr = MIN(num_tri_verts-i, 600);
@@ -370,48 +427,29 @@ static void draw_surface( int with_state )
 
       /* Uses the original arrays (including duplicate elements):
        */
-   case (IMMEDIATE|DRAW_ARRAYS|STRIPS):
+   case (DRAW_ARRAYS|STRIPS):
       glDrawArraysEXT( GL_TRIANGLE_STRIP, 0, numverts );
       break;
-   case (COMPILED|DRAW_ARRAYS|STRIPS):
+   case (DRAW_ELTS|STRIPS):
       glDrawElements( GL_TRIANGLE_STRIP, numverts, GL_UNSIGNED_INT, indices );
       break;
 
       /* Uses the original arrays (including duplicate elements):
        */
-   case (IMMEDIATE|ARRAY_ELT|STRIPS):
+   case (ARRAY_ELT|STRIPS):
       glBegin( GL_TRIANGLE_STRIP );
       for (i = 0 ; i < numverts ; i++)
 	 glArrayElement( i );
       glEnd();
       break;
 
-   case (COMPILED|ARRAY_ELT|STRIPS):
-      glBegin( GL_TRIANGLE_STRIP );
-      for (i = 0 ; i < numverts ; i++)
-	 glArrayElement( indices[i] );
-      glEnd();
-      break;
-
-   case (DISPLAYLIST|GLVERTEX|STRIPS):
-      glCallList(surf1);
-      break;
-   case (DISPLAYLIST|ARRAY_ELT|STRIPS):
-      glCallList(surf2);
-      break;
-   case (DISPLAYLIST|DRAW_ARRAYS|STRIPS):
-      glCallList(surf3);
-      break;
-
-
-   case (IMMEDIATE|DRAW_ARRAYS|POINTS):
+   case (DRAW_ARRAYS|POINTS):
       glDrawArraysEXT( GL_POINTS, 0, numverts );
       break;
-   case (COMPILED|DRAW_ARRAYS|POINTS):
+   case (DRAW_ELTS|POINTS):
       glDrawElements( GL_POINTS, numverts, GL_UNSIGNED_INT, indices );
       break;
-   case (IMMEDIATE|ARRAY_ELT|POINTS):
-   case (COMPILED|ARRAY_ELT|POINTS):
+   case (ARRAY_ELT|POINTS):
       glBegin( GL_POINTS );
       for (i = 0 ; i < numverts ; i++)
 	 glArrayElement( indices[i] );
@@ -419,7 +457,7 @@ static void draw_surface( int with_state )
       break;
 #endif
 
-   case (IMMEDIATE|GLVERTEX|TRIANGLES):
+   case (GLVERTEX|TRIANGLES):
       if (with_state & MATERIALS) {
 	 for (j = i = 0 ; i < num_tri_verts ; i += 600, j++) {
 	    GLuint nr = MIN(num_tri_verts-i, 600);
@@ -443,7 +481,7 @@ static void draw_surface( int with_state )
       }
       break;
 
-   case (IMMEDIATE|GLVERTEX|POINTS):
+   case (GLVERTEX|POINTS):
       glBegin( GL_POINTS );
       for ( i = 0 ; i < numverts ; i++ ) {
          glNormal3fv( &data[i][3] );
@@ -452,15 +490,19 @@ static void draw_surface( int with_state )
       glEnd();
       break;
 
-      /* Uses the original arrays (including duplicate elements):
-       */
-   default:
+   case (GLVERTEX|STRIPS):
       glBegin( GL_TRIANGLE_STRIP );
       for (i=0;i<numverts;i++) {
          glNormal3fv( &data[i][3] );
          glVertex3fv( &data[i][0] );
       }
       glEnd();
+      break;
+
+   default:
+      fprintf(stderr, "unimplemented mode %x...\n", 
+	      (with_state & (RENDER_STYLE_MASK|PRIMITIVE_MASK)));
+      break;
    }
 }
 
@@ -474,32 +516,6 @@ static void Display(void)
     if (doubleBuffer) glutSwapBuffers();
 }
 
-int BuildVertexList( int mode )
-{
-   int rv = glGenLists(1);
-   glNewList(rv, mode );
-   draw_surface( IMMEDIATE|GLVERTEX|STRIPS );
-   glEndList();
-   return rv;
-}
-
-int BuildArrayEltList( int mode )
-{
-   int rv = glGenLists(1);
-   glNewList(rv, mode );
-   draw_surface( IMMEDIATE|ARRAY_ELT|STRIPS );
-   glEndList();
-   return rv;
-}
-
-int BuildDrawArraysList( int mode )
-{
-   int rv = glGenLists(1);
-   glNewList(rv, mode );
-   draw_surface( IMMEDIATE|DRAW_ARRAYS|STRIPS );
-   glEndList();
-   return rv;
-}
 
 /* KW: only do this when necessary, so CVA can re-use results.
  */
@@ -580,8 +596,7 @@ static void InitMaterials(void)
 
 
 #define UPDATE(o,n,mask) (o&=~mask, o|=n&mask)
-#define CHANGED(o,n,mask) ((n&mask) && \
-                           (n&mask) != (o&mask) ? UPDATE(o,n,mask) : 0)
+#define CHANGED(o,n,mask) ((n&mask) && (n&mask) != (o&mask) )
 
 static void ModeMenu(int m)
 {
@@ -600,6 +615,7 @@ static void ModeMenu(int m)
    }
 
    if (CHANGED(state, m, FILTER_MASK)) {
+      UPDATE(state, m, FILTER_MASK);
       if (m & LINEAR_FILTER) {
 	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -610,13 +626,29 @@ static void ModeMenu(int m)
    }
 
    if (CHANGED(state, m, LIGHT_MASK)) {
-      if (m & LIT)
+      UPDATE(state, m, LIGHT_MASK);
+      if (m & LIT) {
 	 glEnable(GL_LIGHTING);
-      else
+	 glDisable(GL_TEXTURE_GEN_S);
+	 glDisable(GL_TEXTURE_GEN_T);
+	 glDisable(GL_TEXTURE_2D);
+      }
+      else if (m & UNLIT) {
 	 glDisable(GL_LIGHTING);
+	 glDisable(GL_TEXTURE_GEN_S);
+	 glDisable(GL_TEXTURE_GEN_T);
+	 glDisable(GL_TEXTURE_2D);
+      }
+      else if (m & REFLECT) {
+	 glDisable(GL_LIGHTING);
+	 glEnable(GL_TEXTURE_GEN_S);
+	 glEnable(GL_TEXTURE_GEN_T);
+	 glEnable(GL_TEXTURE_2D);
+      }
    }
 
    if (CHANGED(state, m, SHADE_MASK)) {
+      UPDATE(state, m, SHADE_MASK);
       if (m & SHADE_SMOOTH)
 	 glShadeModel(GL_SMOOTH);
       else
@@ -624,24 +656,8 @@ static void ModeMenu(int m)
    }
 
 
-   if (CHANGED(state, m, TEXTURE_MASK)) {
-      if (m & TEXTURE)
-	 glEnable(GL_TEXTURE_2D);
-      else
-	 glDisable(GL_TEXTURE_2D);
-   }
-
-   if (CHANGED(state, m, REFLECT_MASK)) {
-      if (m & REFLECT) {
-	 glEnable(GL_TEXTURE_GEN_S);
-	 glEnable(GL_TEXTURE_GEN_T);
-      } else {
-	 glDisable(GL_TEXTURE_GEN_S);
-	 glDisable(GL_TEXTURE_GEN_T);
-      }
-   }
-
    if (CHANGED(state, m, CLIP_MASK)) {
+      UPDATE(state, m, CLIP_MASK);
       if (m & USER_CLIP) {
 	 glEnable(GL_CLIP_PLANE0);
       } else {
@@ -650,65 +666,113 @@ static void ModeMenu(int m)
    }
 
    if (CHANGED(state, m, FOG_MASK)) {
+      UPDATE(state, m, FOG_MASK);
       if (m & FOG)
       {
 	 glEnable(GL_FOG);
-	 printf("FOG enable\n");
       }
       else
       {
 	 glDisable(GL_FOG);
-	 printf("FOG disable\n");
       }
    }
 
    if (CHANGED(state, m, STIPPLE_MASK)) {
+      UPDATE(state, m, STIPPLE_MASK);
       if (m & STIPPLE)
       {
 	 glEnable(GL_POLYGON_STIPPLE);
-	 printf("STIPPLE enable\n");
       }
       else
       {
 	 glDisable(GL_POLYGON_STIPPLE);
-	 printf("STIPPLE disable\n");
       }
    }
 
 #ifdef GL_EXT_vertex_array
-   if (CHANGED(state, m, (COMPILED_MASK|RENDER_STYLE_MASK|PRIMITIVE_MASK)))
+   if (CHANGED(state, m, (LOCK_MASK|RENDER_STYLE_MASK|PRIMITIVE_MASK)))
    {
-      if ((m & (COMPILED_MASK|PRIMITIVE_MASK)) == (IMMEDIATE|STRIPS))
+      if (m & (PRIMITIVE_MASK)) {
+	 UPDATE(state, m, (PRIMITIVE_MASK));
+      }
+
+      if (m & (RENDER_STYLE_MASK)) {
+	 UPDATE(state, m, (RENDER_STYLE_MASK));
+      }
+
+      if (m & LOCK_MASK) {
+	 UPDATE(state, m, (LOCK_MASK));
+      }
+
+
+      print_flags("primitive", state & PRIMITIVE_MASK);
+      print_flags("render style", state & RENDER_STYLE_MASK);
+
+      if ((state & PRIMITIVE_MASK) != TRIANGLES)
       {
+	 fprintf(stderr, "enabling normal arrays\n");
 	 glVertexPointerEXT( 3, GL_FLOAT, sizeof(data[0]), numverts, data );
 	 glNormalPointerEXT( GL_FLOAT, sizeof(data[0]), numverts, &data[0][3]);
+#ifdef GL_EXT_compiled_vertex_array
+	 if (allowed & LOCKED) {
+	    if (state & LOCKED) {
+	       glLockArraysEXT( 0, numverts );
+	    } else {
+	       glUnlockArraysEXT();
+	    }
+	 }
+#endif
       }
-      else
+      else if ((state & RENDER_STYLE_MASK) != DRAW_ARRAYS) 
       {
+	 fprintf(stderr, "enabling small arrays\n");
 	 glVertexPointerEXT( 3, GL_FLOAT, sizeof(data[0]), numuniq,
 			     compressed_data );
 	 glNormalPointerEXT( GL_FLOAT, sizeof(data[0]), numuniq,
 			     &compressed_data[0][3]);
-      }
 #ifdef GL_EXT_compiled_vertex_array
-      if (allowed & COMPILED) {
-	 if (m & COMPILED) {
-	    glLockArraysEXT( 0, numuniq );
-	 } else {
-	    glUnlockArraysEXT();
+	 if (allowed & LOCKED) {
+	    if (state & LOCKED) {
+	       glLockArraysEXT( 0, numuniq );
+	    } else {
+	       glUnlockArraysEXT();
+	    }
 	 }
-      }
 #endif
+      }
+      else {
+	 fprintf(stderr, "enabling big arrays\n");
+	 /* Only get here for DRAW_ARRAYS + TRIANGLES
+	  */
+	 glVertexPointerEXT( 3, GL_FLOAT, sizeof(data[0]), (numverts-2) * 3,
+			     expanded_data );
+	 glNormalPointerEXT( GL_FLOAT, sizeof(data[0]), (numverts-2) * 3,
+			     &expanded_data[0][3]);
+
+#ifdef GL_EXT_compiled_vertex_array
+	 if (allowed & LOCKED) {
+	    if (state & LOCKED) {
+	       glLockArraysEXT( 0, (numverts-2)*3 );
+	    } else {
+	       glUnlockArraysEXT();
+	    }
+	 }
+#endif
+      }
+
    }
 #endif
 
-   if (m & (RENDER_STYLE_MASK|PRIMITIVE_MASK)) {
-      UPDATE(state, m, (RENDER_STYLE_MASK|PRIMITIVE_MASK));
+
+   if (m & DLIST_MASK) {
+      UPDATE(state, m, DLIST_MASK);
    }
 
    if (m & MATERIAL_MASK) {
       UPDATE(state, m, MATERIAL_MASK);
    }
+
+   print_flags("new flags", state);
 
    glutPostRedisplay();
 }
@@ -718,6 +782,14 @@ static void ModeMenu(int m)
 static void Init(int argc, char *argv[])
 {
    GLfloat fogColor[4] = {0.5,1.0,0.5,1.0};
+
+   xrot = 0;
+   yrot = 0;
+   dist = -6;
+   plane[0] = 1.0;
+   plane[1] = 0.0;
+   plane[2] = -1.0;
+   plane[3] = 0.0;
 
    glClearColor(0.0, 0.0, 1.0, 0.0);
    glEnable( GL_DEPTH_TEST );
@@ -742,10 +814,6 @@ static void Init(int argc, char *argv[])
    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
 
-   if (!LoadRGBMipmaps(TEXTURE_FILE, GL_RGB)) {
-      printf("Error: couldn't load texture image\n");
-      exit(1);
-   }
 
    /* Green fog is easy to see */
    glFogi(GL_FOG_MODE,GL_EXP2);
@@ -753,25 +821,32 @@ static void Init(int argc, char *argv[])
    glFogf(GL_FOG_DENSITY,0.15);
    glHint(GL_FOG_HINT,GL_DONT_CARE);
 
+   {
+      static int firsttime = 1;
+      if (firsttime) {
+	 firsttime = 0;
+	 compactify_arrays();
+	 expand_arrays();
+	 make_tri_indices();
 
-   compactify_arrays();
-   make_tri_indices();
+	 if (!LoadRGBMipmaps(TEXTURE_FILE, GL_RGB)) {
+	    printf("Error: couldn't load texture image\n");
+	    exit(1);
+	 }
+      }
+   }
 
    ModeMenu(SHADE_SMOOTH|
 	    LIT|
-	    NO_TEXTURE|
-	    NO_REFLECT|
 	    POINT_FILTER|
-	    IMMEDIATE|
 	    NO_USER_CLIP|
 	    NO_MATERIALS|
 	    NO_FOG|
 	    NO_STIPPLE|
+	    IMMEDIATE|
+	    STRIPS|
+	    UNLOCKED|
 	    GLVERTEX);
-
-   surf1 = BuildVertexList( GL_COMPILE );
-   surf2 = BuildArrayEltList( GL_COMPILE );
-   surf3 = BuildDrawArraysList( GL_COMPILE );
 
    if (PrintInfo) {
       printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
@@ -807,7 +882,7 @@ static void Key( unsigned char key, int x, int y )
       ModeMenu((state ^ STIPPLE_MASK) & STIPPLE_MASK);
       break;
    case 'l':
-      ModeMenu((state ^ LIGHT_MASK) & LIGHT_MASK);
+      ModeMenu((state ^ LIGHT_MASK) & (LIT|UNLIT));
       break;
    case 'm':
       ModeMenu((state ^ MATERIAL_MASK) & MATERIAL_MASK);
@@ -816,11 +891,10 @@ static void Key( unsigned char key, int x, int y )
       ModeMenu((state ^ CLIP_MASK) & CLIP_MASK);
       break;
    case 'v':
-      if (allowed&COMPILED)
-	 ModeMenu(COMPILED|DRAW_ARRAYS|TRIANGLES);
+      ModeMenu((LOCKED|IMMEDIATE|DRAW_ELTS|TRIANGLES) & allowed);
       break;
    case 'V':
-      ModeMenu(IMMEDIATE|GLVERTEX|STRIPS);
+      ModeMenu(UNLOCKED|IMMEDIATE|GLVERTEX|STRIPS);
       break;
    case 'b':
       Benchmark(5.0, 0);
@@ -856,7 +930,9 @@ static void Key( unsigned char key, int x, int y )
       set_matrix();
       glutPostRedisplay();
       break;
-
+   case ' ':
+      Init(0,0);
+      break;
    }
 }
 
@@ -950,12 +1026,12 @@ int main(int argc, char **argv)
    if (!strstr( extensions, "GL_EXT_vertex_array" ))
    {
       printf("Vertex arrays not supported by this renderer\n");
-      allowed &= ~(COMPILED|DRAW_ARRAYS|ARRAY_ELT);
+      allowed &= ~(LOCKED|DRAW_ARRAYS|DRAW_ELTS|ARRAY_ELT);
    }
    else if (!strstr( extensions, "GL_EXT_compiled_vertex_array" ))
    {
       printf("Compiled vertex arrays not supported by this renderer\n");
-      allowed &= ~COMPILED;
+      allowed &= ~LOCKED;
    }
 
    Init(argc, argv);
@@ -964,10 +1040,9 @@ int main(int argc, char **argv)
    glutCreateMenu(ModeMenu);
    glutAddMenuEntry("GL info",               GLINFO);
    glutAddMenuEntry("", 0);
-   glutAddMenuEntry("Lit",                   LIT|NO_TEXTURE|NO_REFLECT);
-   glutAddMenuEntry("Unlit",                 UNLIT|NO_TEXTURE|NO_REFLECT);
-/*    glutAddMenuEntry("Textured", TEXTURE); */
-   glutAddMenuEntry("Reflect",               TEXTURE|REFLECT);
+   glutAddMenuEntry("Lit",                   LIT);
+   glutAddMenuEntry("Unlit",                 UNLIT);
+   glutAddMenuEntry("Reflect",               REFLECT);
    glutAddMenuEntry("", 0);
    glutAddMenuEntry("Smooth",                SHADE_SMOOTH);
    glutAddMenuEntry("Flat",                  SHADE_FLAT);
@@ -981,49 +1056,26 @@ int main(int argc, char **argv)
    glutAddMenuEntry("Point Filtered",        POINT_FILTER);
    glutAddMenuEntry("Linear Filtered",       LINEAR_FILTER);
    glutAddMenuEntry("", 0);
-   glutAddMenuEntry("glVertex (TRIANGLES)",  IMMEDIATE|GLVERTEX|TRIANGLES);
-   glutAddMenuEntry("glVertex (STRIPS)",     IMMEDIATE|GLVERTEX|STRIPS);
-   glutAddMenuEntry("glVertex (POINTS)",     IMMEDIATE|GLVERTEX|POINTS);
+   glutAddMenuEntry("GL_TRIANGLES",          TRIANGLES);
+   glutAddMenuEntry("GL_TRIANGLE_STRIPS",    STRIPS);
+   glutAddMenuEntry("GL_POINTS",             POINTS);
    glutAddMenuEntry("", 0);
-   glutAddMenuEntry("glVertex display list (STRIPS)",
-		    DISPLAYLIST|GLVERTEX|STRIPS);
-   glutAddMenuEntry("glArrayElement display list (STRIPS)",
-		    DISPLAYLIST|GLVERTEX|STRIPS);
-   glutAddMenuEntry("glDrawArrays display list (STRIPS)",
-		    DISPLAYLIST|GLVERTEX|STRIPS);
+   glutAddMenuEntry("Displaylist",           DISPLAYLIST);
+   glutAddMenuEntry("Immediate",             IMMEDIATE);
    glutAddMenuEntry("", 0);
+   if (allowed & LOCKED) {
+      glutAddMenuEntry("Locked Arrays (CVA)", LOCKED);
+      glutAddMenuEntry("Unlocked Arrays",     UNLOCKED);
+      glutAddMenuEntry("", 0);
+   }
+   glutAddMenuEntry("glVertex",               GLVERTEX);
    if (allowed & DRAW_ARRAYS) {
-      glutAddMenuEntry("DrawElements (TRIANGLES)",
-		       IMMEDIATE|DRAW_ARRAYS|TRIANGLES);
-      glutAddMenuEntry("DrawArrays (STRIPS)",
-		       IMMEDIATE|DRAW_ARRAYS|STRIPS);
-      glutAddMenuEntry("DrawArrays (POINTS)",
-		       IMMEDIATE|DRAW_ARRAYS|POINTS);
-      glutAddMenuEntry("ArrayElement (TRIANGLES)",
-		       IMMEDIATE|ARRAY_ELT|TRIANGLES);
-      glutAddMenuEntry("ArrayElement (STRIPS)",
-		       IMMEDIATE|ARRAY_ELT|STRIPS);
-      glutAddMenuEntry("ArrayElement (POINTS)",
-		       IMMEDIATE|ARRAY_ELT|POINTS);
-      glutAddMenuEntry("", 0);
-
+      glutAddMenuEntry("glDrawElements",      DRAW_ELTS);
+      glutAddMenuEntry("glDrawArrays",	      DRAW_ARRAYS);
+      glutAddMenuEntry("glArrayElement",      ARRAY_ELT);
    }
-   if (allowed & COMPILED) {
-      glutAddMenuEntry("Compiled DrawElements (TRIANGLES)",
-		       COMPILED|DRAW_ARRAYS|TRIANGLES);
-      glutAddMenuEntry("Compiled DrawElements (STRIPS)",
-		       COMPILED|DRAW_ARRAYS|STRIPS);
-      glutAddMenuEntry("Compiled DrawElements (POINTS)",
-		       COMPILED|DRAW_ARRAYS|POINTS);
-      glutAddMenuEntry("Compiled ArrayElement (TRIANGLES)",
-		       COMPILED|ARRAY_ELT|TRIANGLES);
-      glutAddMenuEntry("Compiled ArrayElement (STRIPS)",
-		       COMPILED|ARRAY_ELT|STRIPS);
-      glutAddMenuEntry("Compiled ArrayElement (POINTS)",
-		       COMPILED|ARRAY_ELT|POINTS);
-      glutAddMenuEntry("", 0);
-   }
-   glutAddMenuEntry("Quit",                  QUIT);
+   glutAddMenuEntry("", 0);
+   glutAddMenuEntry("Quit",                   QUIT);
    glutAttachMenu(GLUT_RIGHT_BUTTON);
 
    glutReshapeFunc(Reshape);
