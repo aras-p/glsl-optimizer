@@ -1,4 +1,4 @@
-/* $Id: glu.h,v 1.9 1999/09/19 02:03:18 tjump Exp $ */
+/* $Id: glu.h,v 1.10 1999/09/19 10:04:01 tjump Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,8 +23,8 @@
 
 /*
  * $Log: glu.h,v $
- * Revision 1.9  1999/09/19 02:03:18  tjump
- * More Win32 build compliance fixups
+ * Revision 1.10  1999/09/19 10:04:01  tjump
+ * Changed name 'glGetProcAddressEXT' to 'gluGetProcAddressEXT'
  *
  * Revision 1.8  1999/09/17 12:21:36  brianp
  * glGetProcAddressEXT changes to accomodate Win32 and non-Win32
@@ -515,7 +515,7 @@ GLUAPI const GLubyte* GLAPIENTRY gluGetString( GLenum name );
  */
 #define GLU_EXT_get_proc_address 1
 #ifdef GLU_EXT_get_proc_address
-GLUAPI void (GLAPIENTRY *glGetProcAddressEXT(const GLubyte *procName))();
+GLUAPI void (GLAPIENTRY *gluGetProcAddressEXT(const GLubyte *procName))();
 #endif
 
 
