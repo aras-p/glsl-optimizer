@@ -80,5 +80,8 @@ _tnl_isolate_materials( GLcontext *ctx, GLboolean flag );
 extern void
 _tnl_allow_vertex_fog( GLcontext *ctx, GLboolean value );
 
+extern void
+_tnl_allow_pixel_fog( GLcontext *ctx, GLboolean value );
+
 
 #endif

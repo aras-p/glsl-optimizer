@@ -705,6 +705,7 @@ typedef struct
    GLboolean CalcDListNormalLengths;
    GLboolean IsolateMaterials;
    GLboolean AllowVertexFog;
+   GLboolean AllowPixelFog;
 
    GLboolean _DoVertexFog;  /* eval fog function at each vertex? */
 
