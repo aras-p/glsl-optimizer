@@ -1,4 +1,4 @@
-/* $Id: texstate.c,v 1.64 2002/02/15 16:32:06 brianp Exp $ */
+/* $Id: texstate.c,v 1.65 2002/03/23 01:48:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -42,12 +42,6 @@
 #include "math/m_matrix.h"
 #endif
 
-/* TEMPORARY! */
-#ifndef GL_TEXTURE_COMPARE_MODE_ARB
-#define GL_TEXTURE_COMPARE_MODE_ARB    0x9990
-#define GL_TEXTURE_COMPARE_FUNC_ARB    0x9991
-#define GL_COMPARE_R_TO_TEXTURE_ARB    0x9993
-#endif
 
 
 #ifdef SPECIALCAST
