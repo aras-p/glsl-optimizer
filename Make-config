@@ -1,4 +1,4 @@
-# $Id: Make-config,v 1.8 1999/10/22 10:46:06 brianp Exp $
+# $Id: Make-config,v 1.9 1999/10/27 10:09:27 brianp Exp $
 
 MESA_MAJOR=3
 MESA_MINOR=1
@@ -67,7 +67,7 @@ aix:
 	"CC = cc" \
 	"CFLAGS = -O -DAIXV3" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lm"
 
 aix-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -78,7 +78,7 @@ aix-sl:
 	"CC = cc" \
 	"CFLAGS = -O -DAIXV3" \
 	"MAKELIB = ../bin/mklib.aix" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lm"
 
 # Make-config additions for the Amiga 3000 UX
 # Carlyn Voss Iuzzolino   5/8/95: 
@@ -96,7 +96,7 @@ amix:
 	"CC = cc" \
 	"CFLAGS =" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lX11 -lsocket -lnsl "
+	"XLIBS = -lX11 -lsocket -lnsl -lm"
 
 beos-r4:
 	$(MAKE) -f Makefile.BeOS-R4 targets \
@@ -118,7 +118,7 @@ bsdos:
 	"CC = gcc" \
 	"CFLAGS = -I/usr/X11/include -O2" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/X11/lib -lX11 -lipc"
+	"XLIBS = -L/usr/X11/lib -lX11 -lipc -lm"
 
 bsdos4:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -129,7 +129,7 @@ bsdos4:
 	"CC = gcc" \
 	"CFLAGS = -I/usr/X11/include -O2 -fPIC" \
 	"MAKELIB = ../bin/mklib.bsdos4" \
-	"XLIBS = -L/usr/X11/lib -lX11 -lipc"
+	"XLIBS = -L/usr/X11/lib -lX11 -lipc -lm"
 
 cygnus:
 	$(MAKE) -f Makefile.cygnus $(MFLAGS) -f Makefile.X11 targets \
@@ -174,7 +174,7 @@ dgux:
 	"CC = gcc" \
 	"CFLAGS = -O" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lX11"
+	"XLIBS = -lX11 -lm"
 
 freebsd:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -185,7 +185,7 @@ freebsd:
 	"CC = gcc" \
 	"CFLAGS = -O2 -fPIC -pedantic -I/usr/X11R6/include -DSHM -DHZ=100" \
 	"MAKELIB = ../bin/mklib.freebsd" \
-	"XLIBS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11"
+	"XLIBS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
 freebsd-386:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -196,7 +196,7 @@ freebsd-386:
 	"CC = gcc" \
 	"CFLAGS = -O3 -ffast-math -fPIC -pedantic -I/usr/X11R6/include -DSHM -DHZ=100 -DUSE_X86_ASM -DFREEBSD" \
 	"MAKELIB = ../bin/mklib.freebsd" \
-	"XLIBS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11" \
+	"XLIBS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S"
 
 gcc:
@@ -208,7 +208,7 @@ gcc:
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lX11"
+	"XLIBS = -lX11 -lm"
 
 hpux9:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -219,7 +219,7 @@ hpux9:
 	"CC = cc" \
 	"CFLAGS = +O3 -Aa -D_HPUX_SOURCE -I/usr/include/X11R5 -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11"
+	"XLIBS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11 -lm"
 
 hpux9-gcc:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -230,7 +230,7 @@ hpux9-gcc:
 	"CC = gcc" \
 	"CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R5 -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11"
+	"XLIBS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11 -lm"
 
 hpux9-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -241,7 +241,7 @@ hpux9-sl:
 	"CC = cc" \
 	"CFLAGS = +z +O3 +Olibcalls +ESlit -Aa +Onolimit -D_HPUX_SOURCE -I/usr/include/X11R5 -DSHM" \
 	"MAKELIB = ../bin/mklib.hpux" \
-	"XLIBS = -L/usr/lib/X11R5 -s -Wl,+s,-B,nonfatal,-B,immediate -lXext -lXmu -lXi -lX11"
+	"XLIBS = -L/usr/lib/X11R5 -s -Wl,+s,-B,nonfatal,-B,immediate -lXext -lXmu -lXi -lX11 -lm"
 
 hpux9-gcc-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -252,7 +252,7 @@ hpux9-gcc-sl:
 	"CC = gcc" \
 	"CFLAGS = -fPIC -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R5 -DSHM" \
 	"MAKELIB = ../bin/mklib.hpux" \
-	"XLIBS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11"
+	"XLIBS = -L/usr/lib/X11R5 -lXext -lXmu -lXi -lX11 -lm"
 
 hpux10:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -263,7 +263,7 @@ hpux10:
 	"CC = cc" \
 	"CFLAGS = +O3 +DAportable -Aa -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11"
+	"XLIBS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
 hpux10-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -274,7 +274,7 @@ hpux10-sl:
 	"CC = cc" \
 	"CFLAGS = +z -Ae +O2 +Onolimit +Oaggressive -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DSHM" \
 	"MAKELIB = ../bin/mklib.hpux" \
-	"XLIBS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11"
+	"XLIBS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
 hpux10-gcc:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -285,7 +285,7 @@ hpux10-gcc:
 	"CC = gcc" \
 	"CFLAGS = -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include  -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11"
+	"XLIBS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
 hpux10-gcc-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -296,7 +296,7 @@ hpux10-gcc-sl:
 	"CC = gcc" \
 	"CFLAGS = -fPIC -ansi -O3 -D_HPUX_SOURCE -I/usr/include/X11R6 -I/usr/contrib/X11R6/include -DSHM" \
 	"MAKELIB = ../bin/mklib.hpux" \
-	"XLIBS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11"
+	"XLIBS = -L/usr/lib/X11R6 -L/usr/contrib/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
 
 # For IRIX 4: don't use -fullwarn because it causes too much garbage
@@ -309,7 +309,7 @@ irix4:
 	"CC = cc" \
 	"CFLAGS = -O2 -ansi -prototypes -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
-	"XLIBS = -lXext -lXmu -lXi -lX11"
+	"XLIBS = -lXext -lXmu -lXi -lX11 -lm"
 
 # On IRIX 5.3 -sopt causes a problem in drawpixels.c so we don't use it
 irix5:
@@ -321,7 +321,7 @@ irix5:
 	"CC = cc" \
 	"CFLAGS = -O2 -ansi -fullwarn -DSHM -DNO_CONST" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lm"
 
 # On IRIX 5.2+gcc
 irix5-gcc:
@@ -333,7 +333,7 @@ irix5-gcc:
 	"CC = gcc" \
 	"CFLAGS = -O2 -pedantic -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lm"
 
 # IRIX 5 using Dynamic Shared Objects (DSO)
 irix5-dso:
@@ -345,7 +345,7 @@ irix5-dso:
 	"CC = cc" \
 	"CFLAGS = -O2 -ansi -fullwarn -DSHM -DNO_CONST" \
 	"MAKELIB = ../bin/mklib.irix5" \
-	"XLIBS = -rpath ../lib -lX11 -lXmu -lXi"
+	"XLIBS = -rpath ../lib -lX11 -lXmu -lXi -lm"
 
 irix6-o32:
 	pmake $(MFLAGS) -f Makefile.X11 targets \
@@ -356,7 +356,7 @@ irix6-o32:
 	"CC = cc" \
 	"CFLAGS = -32 -mips2 -O2 -ansi -DSHM -DNO_CONST" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lm"
 
 irix6-o32-dso:
 	pmake $(MFLAGS) -f Makefile.X11 targets \
@@ -367,7 +367,7 @@ irix6-o32-dso:
 	"CC = cc" \
 	"CFLAGS = -32 -mips2 -O2 -ansi -DSHM -DNO_CONST" \
 	"MAKELIB = ../bin/mklib.irix6-32" \
-	"XLIBS = -rpath ../lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -rpath ../lib -lX11 -lXext -lXmu -lXi -lm"
 
 # For IRIX 6: -woff:
 #   1209 - controlling expression is constant
@@ -381,7 +381,7 @@ irix6-n32:
 	"CC = cc" \
 	"CFLAGS = -n32 -mips3 -O3 -ansi -woff 1209,1521" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lm"
 
 irix6-n32-dso:
 	pmake $(MFLAGS) -f Makefile.X11 targets \
@@ -393,7 +393,7 @@ irix6-n32-dso:
 	"CC = cc" \
 	"CFLAGS = -n32 -mips3 -O3 -ansi -DSHM -woff 1185,1521" \
 	"MAKELIB = ../bin/mklib.irix6-n32" \
-	"XLIBS = -rpath ../lib32 -lX11 -lXmu -lXi -lfpe"
+	"XLIBS = -rpath ../lib32 -lX11 -lXmu -lXi -lfpe -lm"
 
 irix6-gcc-n32-sl:
 	make $(MFLAGS) -f Makefile.X11 targets \
@@ -405,7 +405,7 @@ irix6-gcc-n32-sl:
 	"CC = gcc" \
 	"CFLAGS = -mabi=n32 -mips3 -O3 -DSHM" \
 	"MAKELIB = ../bin/mklib.irix6-n32" \
-	"XLIBS = -rpath ../lib32 -lX11 -lXmu -lXi"
+	"XLIBS = -rpath ../lib32 -lX11 -lXmu -lXi -lm"
 
 # For IRIX 6-64: -woff:
 #   1068 - integer conversion resulted in a change of sign
@@ -425,7 +425,7 @@ irix6-64:
 	"CC = cc" \
 	"CFLAGS = -64 -O3 -ansi -woff 1068,1069,1174,1185,1209,1474,1552 -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lm"
 
 irix6-64-dso:
 	pmake $(MFLAGS) -f Makefile.X11 targets \
@@ -437,7 +437,7 @@ irix6-64-dso:
 	"CC = cc" \
 	"CFLAGS = -64 -O3 -ansi -woff 1068,1069,1174,1185,1209,1474,1552 -DSHM" \
 	"MAKELIB = ../bin/mklib.irix6-64" \
-	"XLIBS = -rpath ../lib64 -lX11 -lXmu -lXi"
+	"XLIBS = -rpath ../lib64 -lX11 -lXmu -lXi -lm"
 
 # May want to try these CFLAGS for better performance under Linux and GCC:
 # -fPIC -O2 -ansi -pedantic -mieee-fp -DSHM -funroll-loops
@@ -453,7 +453,7 @@ linux:
 	"CC = gcc" \
 	"CFLAGS = -O2 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm"
 
 # One Linux user reports having to use these XLIBS:
 #    -lMrm -lXmu -lXi -lXt -lXext -lXmu -lXi -lSM -lICE -lX11
@@ -467,7 +467,7 @@ linux-elf:
 	"CC = gcc" \
 	"CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm"
 
 linux-glide:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -562,7 +562,7 @@ linux-3dnow:
 	"CC = gcc -malign-loops=2 -malign-jumps=2 -malign-functions=2" \
 	"CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -ffast-math -funroll-loops -fomit-frame-pointer -D_SVID_SOURCE -D_BSD_SOURCE -DSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -I/usr/X11R6/include" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S \
 	X86/mmx_blend.S \
 	X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
@@ -600,7 +600,7 @@ linux-386-pthread-shared-glide:
 	"CC = gcc" \
 	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS -DFX -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../mklib.glide" \
-	"XLIBS = -L/usr/X11/lib -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread" \
+	"XLIBS = -L/usr/X11/lib -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S \
 	X86/mmx_blend.S X86/vertex.S"
 
@@ -614,7 +614,7 @@ linux-ggi:
 	"CC = gcc"  \
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DGGI -DCDECL=" \
 	"MAKELIB = ../bin/mklib.ggi" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lggi"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lggi -lm"
 
 # Contributed by Emmanuel marty core@ggi-project.org
 linux-386-ggi:
@@ -626,7 +626,7 @@ linux-386-ggi:
 	"CC = gcc"  \
 	"CFLAGS = -O3 -fPIC -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM -DUSE_X86_ASM -DGGI -DCDECL=" \
 	"MAKELIB = ../bin/mklib.ggi" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lggi" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lggi -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 # Linux on Alpha (based on email from John Ferguson ferguson@viz.tamu.edu)
@@ -639,7 +639,7 @@ linux-alpha:
 	"CC = gcc" \
 	"CFLAGS = -O2 -mieee -pedantic -L/usr/X11R6/lib -D_XOPEN_SOURCE -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/X11R6/lib -lX11"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lm"
 
 linux-alpha-elf:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -650,7 +650,7 @@ linux-alpha-elf:
 	"CC = gcc" \
 	"CFLAGS = -ansi -mieee -pedantic -fPIC -D_XOPEN_SOURCE -DSHM" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXi -lm"
 
 # Not tested, but should be okay on any RedHat-based linux for PowerPC machines
 # If your linux supports shared libraries, you might want to build with the 
@@ -666,7 +666,7 @@ linux-ppc:
 	"CC = gcc" \
 	"CFLAGS = -O3 -mcpu=603 -ansi -pedantic -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm"
 
 # -O5 and -fexpensive-optimizations causes a compiler crash for Linux PPC R4
 linux-ppc-so:
@@ -678,7 +678,7 @@ linux-ppc-so:
 	"CC = gcc" \
 	"CFLAGS = -O3 -mcpu=603 -ansi -pedantic -fPIC -fsigned-char -ffast-math -funroll-loops -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm"
 
 # Contributed by John Stone
 linux-386-pthread:
@@ -689,7 +689,7 @@ linux-386-pthread:
 	"CC = gcc" \
 	"CFLAGS = -O2 -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R\6/include -DSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 # Contributed by John Gotts
@@ -701,7 +701,7 @@ linux-386-pthread-shared:
 	"CC = gcc" \
 	"CFLAGS = -O3 -fPIC -funroll-loops -ansi -pedantic -ffast-math -D_SVID_SOURCE -D_BSD_SOURCE -I/us\r/X11R6/include -DSHM -DUSE_X86_ASM -D_REENTRANT -DTHREADS -DPTHREADS" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread" \
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lpthread -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-sparc:
@@ -713,7 +713,7 @@ linux-sparc:
 	"CC = gcc" \
 	"CFLAGS = -pedantic -funroll-loops -O3 -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXt -lSM -lICE -lXmu -lXi"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXt -lSM -lICE -lXmu -lXi -lm"
 
 # Replace -mv8 with -mcypress, -msupersparc or -msparclite as appropriate.
 linux-sparc5-elf:
@@ -725,7 +725,7 @@ linux-sparc5-elf:
 	"CC = gcc" \
 	"CFLAGS = -mv8 -O2 -ffast-math -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm"
 
 # 32-bit Sparc ELF userland, on UltraSparc
 linux-sparc-ultra:
@@ -737,7 +737,7 @@ linux-sparc-ultra:
 	"CC = gcc" \
 	"CFLAGS = -mv8 -O2 -mtune=ultrasparc -ansi -pedantic -fPIC -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DSHM" \
 	"MAKELIB = ../bin/mklib.linux" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm"
 
 # May want to add these CFLAGS for better performance under LynxOS and GCC:
 # -fPIC -O2 -ansi -pedantic -mieee-fp -DSHM -funroll-loops
@@ -753,7 +753,7 @@ lynxos:
 	"CC = gcc" \
 	"CFLAGS = -O2 -ansi -pedantic -funroll-loops -ffast-math -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/X11/lib -lXext -lXi -lXmu -lX11 -lbsd"
+	"XLIBS = -L/usr/X11/lib -lXext -lXi -lXmu -lX11 -lbsd -lm"
 
 machten-2.2:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -764,7 +764,7 @@ machten-2.2:
 	"CC = gcc" \
 	"CFLAGS = -DTENON -D__MACHTEN__ -fstrength-reduce -m68881 -O2" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
-	"XLIBS = -L/usr/lib/X11 -lX11"
+	"XLIBS = -L/usr/lib/X11 -lX11 -lm"
 
 machten-4.0:
 	$(MAKE) targets \
@@ -775,7 +775,7 @@ machten-4.0:
 	"CC = gcc" \
 	"CFLAGS = -DTENON -D__MACHTEN__ -fstrength-reduce -O2" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
-	"XLIBS = -L/usr/X11R5/lib -lX11"
+	"XLIBS = -L/usr/X11R5/lib -lX11 -lm"
 
 mklinux:
 	$(MAKE) targets \
@@ -786,7 +786,7 @@ mklinux:
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lmoto -L/usr/X11/lib -lXmu -lX11"
+	"XLIBS = -lmoto -L/usr/X11/lib -lXmu -lX11 -lm"
 
 netbsd:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -797,7 +797,7 @@ netbsd:
 	"CC = gcc" \
 	"CFLAGS = -O2 -fPIC -DSHM -I/usr/X11R6/include -DHZ=100"  \
 	"MAKELIB = ../bin/mklib.netbsd" \
-	"XLIBS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11"
+	"XLIBS = -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm"
 
 next:	
 	$(MAKE)	$(MFLAGS) -f Makefile.X11 targets \
@@ -817,7 +817,7 @@ openbsd:
 	"CC = cc" \
 	"CFLAGS = -O2 -fPIC -I/usr/X11R6/include -DSHM -DHZ=100" \
 	"MAKELIB = ../bin/mklib.openbsd" \
-	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXi -lm"
 
 openstep:	
 	$(MAKE)	$(MFLAGS) -f Makefile.X11 targets \
@@ -846,7 +846,7 @@ os2-x11:
 	"CC = gcc" \
 	"CFLAGS = -Zmt -O3 -m486 -funroll-loops -Wall -Wno-unused -ansi -pedantic -ffast-math -DUSE_X86_ASM -D_SVID_SOURCE -D_BSD_SOURCE -I$(X11ROOT)/XFree86/include" \
 	"MAKELIB = ..\\bin\\mklib-emx.cmd " \
-	"XLIBS = -Zmt -Zcrtdll -Zexe -L$(X11ROOT)/XFree86/lib -lXt -lX11" \
+	"XLIBS = -Zmt -Zcrtdll -Zexe -L$(X11ROOT)/XFree86/lib -lXt -lX11 -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 osf1:
@@ -858,7 +858,7 @@ osf1:
 	"CC = cc" \
 	"CFLAGS = -O2 -std1 -ieee_with_no_inexact -DSHM -DNO_CONST" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lm"
 
 osf1-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -869,7 +869,7 @@ osf1-sl:
 	"CC = cc" \
 	"CFLAGS = -O2 -std1 -ieee_with_no_inexact -DSHM -DNO_CONST" \
 	"MAKELIB = ../bin/mklib.osf1" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lm"
 
 pgi-cygnus:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -880,7 +880,7 @@ pgi-cygnus:
 	"CC = pgcc" \
 	"CFLAGS = -fast -cyglibs -Munix -I. -DWIN32 -D__WIN32__ -D_WINDOWS " \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lX11"
+	"XLIBS = -lX11 -lm"
 
 pgi-mingw32:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -891,7 +891,7 @@ pgi-mingw32:
 	"CC = pgcc" \
 	"CFLAGS = -fast -msvcrt -Munix -I. -DWIN32 -D__WIN32__ -D_WINDOWS " \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lX11"
+	"XLIBS = -lX11 -lm"
 
 # QNX V4 & Watcom Compiler
 qnx:
@@ -903,7 +903,7 @@ qnx:
 	"CC = cc" \
 	"CFLAGS = -O" \
 	"MAKELIB = ../bin/mklib.qnx" \
-	"XLIBS = -L/usr/X11/lib -lX11"
+	"XLIBS = -L/usr/X11/lib -lX11 -lm"
 
 sco:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -914,7 +914,7 @@ sco:
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2 -mieee-fp" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/X11/lib -lX11"
+	"XLIBS = -L/usr/X11/lib -lX11 -lm"
 
 sco5:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -925,7 +925,7 @@ sco5:
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2 -mieee-fp" \
 	"MAKELIB = ../mklib.ar-ruv" \
-	"XLIBS = -lXm -lXt -lX11 -lXmu -lXext -lsocket -lx"
+	"XLIBS = -lXm -lXt -lX11 -lXmu -lXext -lsocket -lx -lm"
 
 solaris-x86:
 	$(MAKE) -f Makefile.X11 targets \
@@ -936,7 +936,7 @@ solaris-x86:
 	"CC = cc" \
 	"CFLAGS = -Xa -xO3 -xpentium -KPIC -I/usr/openwin/include -DSHM" \
 	"MAKELIB = ../bin/mklib.solaris" \
-	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 solaris-x86-gcc:
 	$(MAKE) -f Makefile.X11 targets \
@@ -947,7 +947,7 @@ solaris-x86-gcc:
 	"CC = gcc" \
 	"CFLAGS = -O3 -m486 -fPIC -I/usr/openwin/include -DSHM" \
 	"MAKELIB = ../bin/mklib.solaris" \
-	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 sunos4:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -958,7 +958,7 @@ sunos4:
 	"CC = acc" \
 	"CFLAGS = -O -DSHM -DSUNOS4" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lm"
 
 sunos4-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -969,7 +969,7 @@ sunos4-sl:
 	"CC = acc" \
 	"CFLAGS = -Kpic -O -I/usr/include/X11R5 -DSHM -DSUNOS4" \
 	"MAKELIB = ld -assert pure-text -o" \
-	"XLIBS = -L/usr/lib/X11R5 -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/lib/X11R5 -lX11 -lXext -lXmu -lXi -lm"
 
 sunos4-gcc:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -980,7 +980,7 @@ sunos4-gcc:
 	"CC = gcc" \
 	"CFLAGS = -O3 -DSHM -DSUNOS4 -I/usr/openwin/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 sunos4-gcc-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -991,7 +991,7 @@ sunos4-gcc-sl:
 	"CC = gcc" \
 	"CFLAGS = -fPIC -O3 -I/usr/openwin/include -I/usr/include/X11R5 -I/usr/include/X11R5 -DSHM -DSUNOS4 -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.sunos4" \
-	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 sunos4-gcc-x11r6-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1002,7 +1002,7 @@ sunos4-gcc-x11r6-sl:
 	"CC = gcc" \
 	"CFLAGS = -fPIC -O3 -I/usr/X11R6.3/include -DSHM -DSUNOS4 -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.sunos4" \
-	"XLIBS = -L/usr/X11R6.3/lib/X11 -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/X11R6.3/lib/X11 -lX11 -lXext -lXmu -lXi -lm"
 
 sunos5:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1013,7 +1013,7 @@ sunos5:
 	"CC = cc" \
 	"CFLAGS = -Xa -fast -xO4 -native -I/usr/openwin/include -I/usr/dt/include -DSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 sunos5-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1024,7 +1024,7 @@ sunos5-sl:
 	"CC = cc" \
 	"CFLAGS = -KPIC -Xa -O -I/usr/openwin/include -I/usr/dt/include -DSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.sunos5" \
-	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 sunos5-ultra:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1035,7 +1035,7 @@ sunos5-ultra:
 	"CC = cc" \
 	"CFLAGS = -Xa -fast -xO5 -xtarget=ultra -I/usr/openwin/include -I/usr/dt/include -DSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 sunos5-ultra-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1046,7 +1046,7 @@ sunos5-ultra-sl:
 	"CC = cc" \
 	"CFLAGS = -KPIC -Xa -fast -xO5 -xtarget=ultra -I/usr/openwin/include -I/usr/dt/include -DSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.sunos5" \
-	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 sunos5-gcc:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1057,7 +1057,7 @@ sunos5-gcc:
 	"CC = gcc" \
 	"CFLAGS = -O3 -I/usr/openwin/include -DSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 sunos5-gcc-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1068,7 +1068,7 @@ sunos5-gcc-sl:
 	"CC = gcc" \
 	"CFLAGS = -fPIC -O3 -I/usr/openwin/include -DSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.sunos5" \
-	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 sunos5-x11r6-gcc-sl:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1079,7 +1079,7 @@ sunos5-x11r6-gcc-sl:
 	"CC = gcc" \
 	"CFLAGS = -fPIC -O3 -DSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.sunos5" \
-	"XLIBS = -lSM -lICE -lX11 -lXext -lXmu -lXi -lnsl -lsocket"
+	"XLIBS = -lSM -lICE -lX11 -lXext -lXmu -lXi -lnsl -lsocket -lm"
 
 # Contributed by John Stone
 sunos5-pthread:
@@ -1090,7 +1090,7 @@ sunos5-pthread:
 	"CC = cc" \
 	"CFLAGS = -mt -Xa -fast -xO4 -native -I/usr/openwin/include -I/usr/dt/include -DSHM -DSOLARIS_2_4\_BUG -DTHREADS -DPTHREADS" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lpthread"
+	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lpthread -lm"
 
 # Contributed by John Stone
 sunos5-thread:
@@ -1101,7 +1101,7 @@ sunos5-thread:
 	"CC = cc" \
 	"CFLAGS = -mt -Xa -fast -xO4 -native -I/usr/openwin/include -I/usr/dt/include -DSHM -DSOLARIS_2_4\_BUG -DTHREADS -DSOLARIS_THREADS" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lthread"
+	"XLIBS = -L/usr/openwin/lib -L/usr/dt/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lthread -lm"
 
 # Contributed by John Stone
 sunos5-gcc-thread:
@@ -1112,7 +1112,7 @@ sunos5-gcc-thread:
 	"CC = gcc" \
 	"CFLAGS = -O3 -I/usr/openwin/include -DSHM -DSOLARIS_2_4_BUG -D_REENTRANT -DTHREADS -DSOLARIS_THR\EADS" \
       	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lthread"
+	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lthread -lm"
 
 # Contributed by John Stone
 sunos5-gcc-pthread:
@@ -1123,7 +1123,7 @@ sunos5-gcc-pthread:
 	"CC = gcc" \
 	"CFLAGS = -O3 -I/usr/openwin/include -DSHM -DSOLARIS_2_4_BUG -D_REENTRANT -DTHREADS -DPTHREADS" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lpthread"
+	"XLIBS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lpthread -lm"
 
 # from Ron Metoyer (metoyer@iexist.flw.lucent.com)
 sunSolaris-CC:
@@ -1135,7 +1135,7 @@ sunSolaris-CC:
 	"CC = CC" \
 	"CFLAGS = -O -I/usr/openwin/include -DSHM -DSOLARIS_2_4_BUG" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm"
 
 #This config doesn't work, Ultrix C compiler isn't ANSI compliant
 ultrix:
@@ -1147,7 +1147,7 @@ ultrix:
 	"CC = cc" \
 	"CFLAGS = -O -Dconst=/**/" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lXmu -lX11 -lXi"
+	"XLIBS = -lXmu -lX11 -lXi -lm"
 
 ultrix-gcc:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1158,7 +1158,7 @@ ultrix-gcc:
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lXmu -lX11 -lXi"
+	"XLIBS = -lXmu -lX11 -lXi -lm"
 
 # tested on Cray C90 running UNICOS 8.0.4
 unicos:
@@ -1170,7 +1170,7 @@ unicos:
 	"CC = cc" \
 	"CFLAGS =" \
 	"MAKELIB = ../bin/mklib/ar-rcv" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lm"
 
 unixware:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1181,7 +1181,7 @@ unixware:
 	"CC = cc" \
 	"CFLAGS = -O -I/usr/X/include -DSHM" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi -lsocket -lnsl"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lsocket -lnsl -lm"
 
 unixware-shared:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1192,7 +1192,7 @@ unixware-shared:
 	"CC = cc" \
 	"CFLAGS = -O -I/usr/X/include -KPIC,inline -DSHM" \
 	"MAKELIB = ../bin/mklib.solaris" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi -lsocket -lnsl"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lsocket -lnsl -lm"
 
 uwin:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1202,7 +1202,7 @@ uwin:
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2 -I/usr/X11/include " \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/X11/lib -lX11"
+	"XLIBS = -L/usr/X11/lib -lX11 -lm"
 
 vistra:
 	$(MAKE) $(MFLAGS) -f Makefile.X11 targets \
@@ -1213,7 +1213,7 @@ vistra:
 	"CC = gcc" \
 	"CFLAGS = -pedantic -O2" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -lX11 -lsocket -lnsl -lgen"
+	"XLIBS = -lX11 -lsocket -lnsl -lgen -lm"
 
 
 # for debugging on IRIX 5.x systems
@@ -1232,7 +1232,7 @@ irix-debug:
 	"CC = cc" \
 	"CFLAGS = -g -n32 -ansi -fullwarn -DSHM -DDEBUG -woff 1209,1210,1506,1521,3496" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
-	"XLIBS = -rpath ../lib32 -lX11 -lXext -lXmu -lXi -lfpe -lXext -lXmu -lXi"
+	"XLIBS = -rpath ../lib32 -lX11 -lXext -lXmu -lXi -lfpe -lXext -lXmu -lXi -lm"
 
 DEBUG:
 	pmake $(MFLAGS) -f Makefile.X11 targets \
@@ -1243,7 +1243,7 @@ DEBUG:
 	"CC = cc" \
 	"CFLAGS = -g -ansi -prototypes -fullwarn -DSHM -DDEBUG" \
 	"MAKELIB = ../bin/mklib.ar-rcv" \
-	"XLIBS = -lX11 -lXext -lXmu -lXi -lfpe"
+	"XLIBS = -lX11 -lXext -lXmu -lXi -lfpe -lm"
 
 # for debugging on Linux systems
 linux-debug:
@@ -1255,7 +1255,7 @@ linux-debug:
 	"CC = gcc" \
 	"CFLAGS = -g -ansi -pedantic -Wall -DSHM -DDEBUG -DSVGA -DFX -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM_not -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/local/glide/lib -lglide2x -ltexus -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga" \
+	"XLIBS = -L/usr/local/glide/lib -lglide2x -ltexus -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lvga -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S X86/vertex.S"
 
 linux-elf-debug:
@@ -1280,7 +1280,7 @@ linux-prof:
 	"CC = gcc" \
 	"CFLAGS = -O2 -pg -ansi -pedantic -Wall -DSHM -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -I/usr/include/glide -I/usr/local/glide/include" \
 	"MAKELIB = ../bin/mklib.ar-ruv" \
-	"XLIBS = -L/usr/local/glide/lib -lglide2x -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE" \
+	"XLIBS = -L/usr/local/glide/lib -lglide2x -L/usr/X11/lib -lX11 -lXext -lXmu -lXt -lXi -lSM -lICE -lm" \
 	"ASM_SOURCES = X86/x86a.S X86/common_x86asm.S \
 	X86/mmx_blend.S \
 	X86/3dnow_xform_raw1.S X86/3dnow_xform_raw2.S \
