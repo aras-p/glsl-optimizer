@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,10 +49,11 @@
 /*
  * Just used for feedback mode.
  */
-GLboolean _swrast_culltriangle( GLcontext *ctx,
-			    const SWvertex *v0,
-			    const SWvertex *v1,
-			    const SWvertex *v2 )
+GLboolean
+_swrast_culltriangle( GLcontext *ctx,
+                      const SWvertex *v0,
+                      const SWvertex *v1,
+                      const SWvertex *v2 )
 {
    GLfloat ex = v1->win[0] - v0->win[0];
    GLfloat ey = v1->win[1] - v0->win[1];
@@ -156,7 +157,7 @@ GLboolean _swrast_culltriangle( GLcontext *ctx,
    const GLint b = obj->BaseLevel;					\
    const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
    const GLfloat theight = (GLfloat) obj->Image[0][b]->Height;		\
-   const GLint twidth_log2 = obj->Image[0][b]->WidthLog2;			\
+   const GLint twidth_log2 = obj->Image[0][b]->WidthLog2;		\
    const GLchan *texture = (const GLchan *) obj->Image[0][b]->Data;	\
    const GLint smask = obj->Image[0][b]->Width - 1;			\
    const GLint tmask = obj->Image[0][b]->Height - 1;			\
@@ -207,7 +208,7 @@ GLboolean _swrast_culltriangle( GLcontext *ctx,
    const GLint b = obj->BaseLevel;					\
    const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
    const GLfloat theight = (GLfloat) obj->Image[0][b]->Height;		\
-   const GLint twidth_log2 = obj->Image[0][b]->WidthLog2;			\
+   const GLint twidth_log2 = obj->Image[0][b]->WidthLog2;		\
    const GLchan *texture = (const GLchan *) obj->Image[0][b]->Data;	\
    const GLint smask = obj->Image[0][b]->Width - 1;			\
    const GLint tmask = obj->Image[0][b]->Height - 1;			\
@@ -540,11 +541,11 @@ affine_span(GLcontext *ctx, struct sw_span *span,
    const GLint b = obj->BaseLevel;					\
    const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
    const GLfloat theight = (GLfloat) obj->Image[0][b]->Height;		\
-   info.texture = (const GLchan *) obj->Image[0][b]->Data;			\
-   info.twidth_log2 = obj->Image[0][b]->WidthLog2;				\
+   info.texture = (const GLchan *) obj->Image[0][b]->Data;		\
+   info.twidth_log2 = obj->Image[0][b]->WidthLog2;			\
    info.smask = obj->Image[0][b]->Width - 1;				\
    info.tmask = obj->Image[0][b]->Height - 1;				\
-   info.format = obj->Image[0][b]->Format;					\
+   info.format = obj->Image[0][b]->Format;				\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
    span.arrayMask |= SPAN_RGBA;						\
@@ -565,7 +566,7 @@ affine_span(GLcontext *ctx, struct sw_span *span,
    case GL_ALPHA:							\
    case GL_LUMINANCE:							\
    case GL_INTENSITY:							\
-      info.tbytesline = obj->Image[0][b]->Width;				\
+      info.tbytesline = obj->Image[0][b]->Width;			\
       break;								\
    case GL_LUMINANCE_ALPHA:						\
       info.tbytesline = obj->Image[0][b]->Width * 2;			\
@@ -808,11 +809,11 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    const struct gl_texture_unit *unit = ctx->Texture.Unit+0;		\
    const struct gl_texture_object *obj = unit->Current2D;		\
    const GLint b = obj->BaseLevel;					\
-   info.texture = (const GLchan *) obj->Image[0][b]->Data;			\
-   info.twidth_log2 = obj->Image[0][b]->WidthLog2;				\
+   info.texture = (const GLchan *) obj->Image[0][b]->Data;		\
+   info.twidth_log2 = obj->Image[0][b]->WidthLog2;			\
    info.smask = obj->Image[0][b]->Width - 1;				\
    info.tmask = obj->Image[0][b]->Height - 1;				\
-   info.format = obj->Image[0][b]->Format;					\
+   info.format = obj->Image[0][b]->Format;				\
    info.filter = obj->MinFilter;					\
    info.envmode = unit->EnvMode;					\
 									\
@@ -832,7 +833,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    case GL_ALPHA:							\
    case GL_LUMINANCE:							\
    case GL_INTENSITY:							\
-      info.tbytesline = obj->Image[0][b]->Width;				\
+      info.tbytesline = obj->Image[0][b]->Width;			\
       break;								\
    case GL_LUMINANCE_ALPHA:						\
       info.tbytesline = obj->Image[0][b]->Width * 2;			\
