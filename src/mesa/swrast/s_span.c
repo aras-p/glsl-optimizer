@@ -1,8 +1,8 @@
-/* $Id: s_span.c,v 1.51 2002/10/30 19:49:30 brianp Exp $ */
+/* $Id: s_span.c,v 1.52 2002/11/09 21:28:41 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  4.1
+ * Version:  5.0
  *
  * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
@@ -60,9 +60,9 @@ void
 _mesa_span_default_z( GLcontext *ctx, struct sw_span *span )
 {
    if (ctx->Visual.depthBits <= 16)
-      span->z = FloatToFixed(ctx->Current.RasterPos[2] * ctx->DepthMax);
+      span->z = FloatToFixed(ctx->Current.RasterPos[2] * ctx->DepthMax + 0.5F);
    else
-      span->z = (GLint) (ctx->Current.RasterPos[2] * ctx->DepthMax);
+      span->z = (GLint) (ctx->Current.RasterPos[2] * ctx->DepthMax + 0.5F);
    span->zStep = 0;
    span->interpMask |= SPAN_Z;
 }
@@ -267,7 +267,7 @@ _mesa_span_interpolate_z( const GLcontext *ctx, struct sw_span *span )
    if (ctx->Visual.depthBits <= 16) {
       GLfixed zval = span->z;
       GLdepth *z = span->array->z; 
-     for (i = 0; i < n; i++) {
+      for (i = 0; i < n; i++) {
          z[i] = FixedToInt(zval);
          zval += span->zStep;
       }
