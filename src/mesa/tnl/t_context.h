@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.35 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_context.h,v 1.36 2002/01/06 03:54:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -254,7 +254,6 @@ typedef struct vertex_buffer
    GLuint     FirstPrimitive;	              /* usually zero */
 
    /* Pointers to current data.
-    * XXX Replace ObjPtr, NormalPtr, TexCoordPtr, etc with AttribPtr[] arrays.
     */
    GLuint      *Elts;		                /* VERT_ELT */
    GLvector4f  *ObjPtr;		                /* VERT_OBJ_BIT */
@@ -270,13 +269,15 @@ typedef struct vertex_buffer
    GLvector1ui *IndexPtr[2];	                /* VERT_INDEX_BIT */
    struct gl_client_array *ColorPtr[2];	        /* VERT_COLOR0_BIT */
    struct gl_client_array *SecondaryColorPtr[2];/* VERT_COLOR1_BIT */
-   GLvector1f  *PointSizePtr;	                /* VERT_POINT_SIZE */
+   GLvector4f  *PointSizePtr;	                /* VERT_POINT_SIZE */
+   GLvector4f  *FogCoordPtr;	                /* VERT_FOG_BIT */
    GLmaterial (*Material)[2];                   /* VERT_MATERIAL, optional */
    GLuint      *MaterialMask;	                /* VERT_MATERIAL, optional */
    GLuint      *Flag;		                /* VERT_* flags, optional */
    GLuint      *Primitive;	                /* GL_(mode)|PRIM_* flags */
    GLuint      *PrimitiveLength;	        /* integers */
 
+   /* Inputs to the vertex program stage */
    GLvector4f *AttribPtr[VERT_ATTRIB_MAX];      /* GL_NV_vertex_program */
 
    GLuint importable_data;

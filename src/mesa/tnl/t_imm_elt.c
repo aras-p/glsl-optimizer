@@ -1,10 +1,10 @@
-/* $Id: t_imm_elt.c,v 1.14 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_imm_elt.c,v 1.15 2002/01/06 03:54:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -721,6 +721,7 @@ static void _tnl_trans_elt_4f(GLfloat (*to)[4],
 
 
 
+#if 0
 static void _tnl_trans_elt_3f(GLfloat (*to)[3],
 		       const struct gl_client_array *from,
 		       GLuint *flags,
@@ -738,7 +739,7 @@ static void _tnl_trans_elt_3f(GLfloat (*to)[3],
 					      start,
 					      n );
 }
-
+#endif
 
 
 

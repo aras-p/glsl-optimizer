@@ -1,10 +1,10 @@
-/* $Id: mtypes.h,v 1.58 2002/01/05 21:53:20 brianp Exp $ */
+/* $Id: mtypes.h,v 1.59 2002/01/06 03:54:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1155,40 +1155,6 @@ struct gl_evaluators {
 #define VP_TEMP_REG_END     (VP_TEMP_REG_START + VP_NUM_TEMP_REGS - 1)
 #define VP_PROG_REG_START   (VP_TEMP_REG_END + 1)
 #define VP_PROG_REG_END     (VP_PROG_REG_START + VP_NUM_PROG_REGS - 1)
-
-/* Input register names */
-#define VP_IN_OPOS (VP_INPUT_REG_START + 0)
-#define VP_IN_WGHT (VP_INPUT_REG_START + 1)
-#define VP_IN_NRML (VP_INPUT_REG_START + 2)
-#define VP_IN_COL0 (VP_INPUT_REG_START + 3)
-#define VP_IN_COL1 (VP_INPUT_REG_START + 4)
-#define VP_IN_FOGC (VP_INPUT_REG_START + 5)
-#define VP_IN_TEX0 (VP_INPUT_REG_START + 8)
-#define VP_IN_TEX1 (VP_INPUT_REG_START + 9)
-#define VP_IN_TEX2 (VP_INPUT_REG_START + 10)
-#define VP_IN_TEX3 (VP_INPUT_REG_START + 11)
-#define VP_IN_TEX4 (VP_INPUT_REG_START + 12)
-#define VP_IN_TEX5 (VP_INPUT_REG_START + 13)
-#define VP_IN_TEX6 (VP_INPUT_REG_START + 14)
-#define VP_IN_TEX7 (VP_INPUT_REG_START + 15)
-
-/* Output register names */
-#define VP_OUT_HPOS (VP_OUTPUT_REG_START + 0)
-#define VP_OUT_COL0 (VP_OUTPUT_REG_START + 1)
-#define VP_OUT_COL1 (VP_OUTPUT_REG_START + 2)
-#define VP_OUT_BFC0 (VP_OUTPUT_REG_START + 3)
-#define VP_OUT_BFC1 (VP_OUTPUT_REG_START + 4)
-#define VP_OUT_FOGC (VP_OUTPUT_REG_START + 5)
-#define VP_OUT_PSIZ (VP_OUTPUT_REG_START + 6)
-#define VP_OUT_TEX0 (VP_OUTPUT_REG_START + 7)
-#define VP_OUT_TEX1 (VP_OUTPUT_REG_START + 8)
-#define VP_OUT_TEX2 (VP_OUTPUT_REG_START + 9)
-#define VP_OUT_TEX3 (VP_OUTPUT_REG_START + 10)
-#define VP_OUT_TEX4 (VP_OUTPUT_REG_START + 11)
-#define VP_OUT_TEX5 (VP_OUTPUT_REG_START + 12)
-#define VP_OUT_TEX6 (VP_OUTPUT_REG_START + 13)
-#define VP_OUT_TEX7 (VP_OUTPUT_REG_START + 14)
-
 
 
 /* Machine state (i.e. the register file) */

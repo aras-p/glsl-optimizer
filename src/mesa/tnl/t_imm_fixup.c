@@ -1,4 +1,4 @@
-/* $Id: t_imm_fixup.c,v 1.31 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_imm_fixup.c,v 1.32 2002/01/06 03:54:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -145,6 +145,7 @@ fixup_first_4f( GLfloat data[][4], GLuint flag[], GLuint match,
       COPY_4FV(data[i], dflt);
 }
 
+#if 0
 static void
 fixup_first_3f( GLfloat data[][3], GLuint flag[], GLuint match,
 		GLuint start, GLfloat *dflt )
@@ -158,7 +159,7 @@ fixup_first_3f( GLfloat data[][3], GLuint flag[], GLuint match,
    while ((flag[++i]&match) == 0)
       COPY_3FV(data[i], dflt);
 }
-
+#endif
 
 static void
 fixup_first_1ui( GLuint data[], GLuint flag[], GLuint match,

@@ -1,10 +1,10 @@
-/* $Id: ss_vbtmp.h,v 1.19 2002/01/05 20:51:12 brianp Exp $ */
+/* $Id: ss_vbtmp.h,v 1.20 2002/01/06 03:54:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -77,8 +77,8 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
    proj_stride = VB->NdcPtr->stride;
 
    if (IND & FOG) {
-      fog = (GLfloat *) VB->AttribPtr[VERT_ATTRIB_FOG]->data;
-      fog_stride = VB->AttribPtr[VERT_ATTRIB_FOG]->stride;
+      fog = (GLfloat *) VB->FogCoordPtr->data;
+      fog_stride = VB->FogCoordPtr->stride;
    }
    if (IND & COLOR) {
       if (VB->ColorPtr[0]->Type != CHAN_TYPE)
@@ -99,7 +99,7 @@ static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end,
       index_stride = VB->IndexPtr[0]->stride;
    }
    if (IND & POINT) {
-      pointSize = VB->PointSizePtr->data;
+      pointSize = (GLfloat *) VB->PointSizePtr->data;
       pointSize_stride = VB->PointSizePtr->stride;
    }
 
@@ -215,6 +215,7 @@ static void TAG(interp)( GLcontext *ctx,
       INTERP_UI( t, dst->index, out->index, in->index );
    }
 
+   /* XXX Point size interpolation??? */
    if (IND & POINT) {
       INTERP_F( t, dst->pointSize, out->pointSize, in->pointSize );
    }

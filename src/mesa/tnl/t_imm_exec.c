@@ -1,10 +1,10 @@
-/* $Id: t_imm_exec.c,v 1.33 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_imm_exec.c,v 1.34 2002/01/06 03:54:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -232,7 +232,6 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
    GLuint inputs = tnl->pipeline.inputs; /* for copy-to-current */
    const GLuint start = IM->CopyStart;
    const GLuint count = IM->Count - start;
-   GLuint i;
 
    /* TODO: optimize the case where nothing has changed.  (Just bind
     * tmp to vb).
@@ -267,8 +266,6 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
    VB->Elts = 0;
    VB->MaterialMask = 0;
    VB->Material = 0;
-   for (i = 0; i < 16; i++)
-      VB->AttribPtr[i] = NULL;
 
 /*     _tnl_print_vert_flags("copy-orflag", IM->CopyOrFlag); */
 /*     _tnl_print_vert_flags("orflag", IM->OrFlag); */
@@ -309,7 +306,7 @@ static void _tnl_vb_bind_immediate( GLcontext *ctx, struct immediate *IM )
       tmp->FogCoord.data = IM->Attrib[VERT_ATTRIB_FOG] + start;
       tmp->FogCoord.start = (GLfloat *) (IM->Attrib[VERT_ATTRIB_FOG] + start);
       tmp->FogCoord.count = count;
-      VB->AttribPtr[VERT_ATTRIB_FOG] = &tmp->FogCoord;
+      VB->FogCoordPtr = &tmp->FogCoord;
    }
 
    if (inputs & VERT_COLOR1_BIT) {

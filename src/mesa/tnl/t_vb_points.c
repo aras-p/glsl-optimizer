@@ -1,10 +1,10 @@
-/* $Id: t_vb_points.c,v 1.5 2001/12/14 02:51:45 brianp Exp $ */
+/* $Id: t_vb_points.c,v 1.6 2002/01/06 03:54:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,7 +34,7 @@
 
 
 struct point_stage_data {
-   GLvector1f PointSize;
+   GLvector4f PointSize;
 };
 
 #define POINT_STAGE_DATA(stage) ((struct point_stage_data *)stage->privatePtr)
@@ -53,7 +53,7 @@ static GLboolean run_point_stage( GLcontext *ctx,
    const GLfloat p1 = ctx->Point.Params[1];
    const GLfloat p2 = ctx->Point.Params[2];
    const GLfloat pointSize = ctx->Point._Size;
-   GLfloat *size = store->PointSize.data;
+   GLfloat (*size)[4] = store->PointSize.data;
    GLuint i;
 
    if (stage->changed_inputs) {
@@ -61,7 +61,7 @@ static GLboolean run_point_stage( GLcontext *ctx,
       for (i = 0; i < VB->Count; i++) {
 	 const GLfloat dist = -eye[i][2];
 	 /* GLfloat dist = GL_SQRT(pos[0]*pos[0]+pos[1]*pos[1]+pos[2]*pos[2]);*/
-	 size[i] = pointSize / (p0 + dist * (p1 + dist * p2));
+	 size[i][0] = pointSize / (p0 + dist * (p1 + dist * p2));
       }
    }
 
@@ -89,7 +89,7 @@ static GLboolean alloc_point_data( GLcontext *ctx,
    if (!store)
       return GL_FALSE;
 
-   _mesa_vector1f_alloc( &store->PointSize, 0, VB->Size, 32 );
+   _mesa_vector4f_alloc( &store->PointSize, 0, VB->Size, 32 );
 
    /* Now run the stage.
     */
@@ -102,7 +102,7 @@ static void free_point_data( struct gl_pipeline_stage *stage )
 {
    struct point_stage_data *store = POINT_STAGE_DATA(stage);
    if (store) {
-      _mesa_vector1f_free( &store->PointSize );
+      _mesa_vector4f_free( &store->PointSize );
       FREE( store );
       stage->privatePtr = 0;
    }

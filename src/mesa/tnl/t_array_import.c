@@ -1,10 +1,10 @@
-/* $Id: t_array_import.c,v 1.20 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_array_import.c,v 1.21 2002/01/06 03:54:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -277,8 +277,8 @@ static void _tnl_upgrade_client_data( GLcontext *ctx,
    }
 
    if ((required & VERT_FOG_BIT)
-       && (VB->AttribPtr[VERT_ATTRIB_FOG]->flags & flags)) {
-      ASSERT(VB->AttribPtr[VERT_ATTRIB_FOG] == &inputs->FogCoord);
+       && (VB->FogCoordPtr->flags & flags)) {
+      ASSERT(VB->FogCoordPtr == &inputs->FogCoord);
       _tnl_import_fogcoord( ctx, writeable, stride );
       VB->importable_data &= ~VERT_FOG_BIT;
    }
@@ -372,7 +372,7 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLsizei count )
       if (inputs & VERT_FOG_BIT) {
 	 _tnl_import_fogcoord( ctx, 0, 0 );
 	 tmp->FogCoord.count = VB->Count;
-	 VB->AttribPtr[VERT_ATTRIB_FOG] = &tmp->FogCoord;
+	 VB->FogCoordPtr = &tmp->FogCoord;
       }
 
       if (inputs & VERT_EDGEFLAG_BIT) {

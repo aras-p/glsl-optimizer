@@ -1,4 +1,4 @@
-/* $Id: t_vb_program.c,v 1.6 2002/01/05 20:51:13 brianp Exp $ */
+/* $Id: t_vb_program.c,v 1.7 2002/01/06 03:54:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -98,16 +98,36 @@
 #include "t_imm_exec.h"
 
 
+/* WARNING: these values _MUST_ match the values in the OutputRegisters[]
+ * array in vpparse.c!!!
+ */
+#define VERT_RESULT_HPOS 0
+#define VERT_RESULT_COL0 1
+#define VERT_RESULT_COL1 2
+#define VERT_RESULT_BFC0 3
+#define VERT_RESULT_BFC1 4
+#define VERT_RESULT_FOGC 5
+#define VERT_RESULT_PSIZ 6
+#define VERT_RESULT_TEX0 7
+#define VERT_RESULT_TEX1 8
+#define VERT_RESULT_TEX2 9
+#define VERT_RESULT_TEX3 10
+#define VERT_RESULT_TEX4 11
+#define VERT_RESULT_TEX5 12
+#define VERT_RESULT_TEX6 13
+#define VERT_RESULT_TEX7 14
+
 
 struct vp_stage_data {
-   GLvector4f clipCoords;             /* post-modelview/projection coords */
-   GLvector4f ndcCoords;              /* normalized device coords */
+   /* The results of running the vertex program go into these arrays. */
+   GLvector4f attribs[15];
+
+   /* These point to the attribs[VERT_RESULT_COL0, COL1, BFC0, BFC1] arrays */
    struct gl_client_array color0[2];  /* front and back */
    struct gl_client_array color1[2];  /* front and back */
-   GLvector4f texCoord[MAX_TEXTURE_UNITS];
-   GLvector4f fogCoord;
-   GLvector1f pointSize;
-   GLubyte *clipmask;
+
+   GLvector4f ndcCoords;              /* normalized device coords */
+   GLubyte *clipmask;                 /* clip flags */
    GLubyte ormask, andmask;
 };
 
@@ -123,21 +143,8 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
    struct vp_machine *machine = &(ctx->VertexProgram.Machine);
    GLint i;
 
-   /* convenience pointers */
-   GLfloat (*clip)[4] = (GLfloat (*)[4]) store->clipCoords.data;
-   GLfloat (*color0)[4] = (GLfloat (*)[4]) store->color0[0].Ptr;
-   GLfloat (*color1)[4] = (GLfloat (*)[4]) store->color1[0].Ptr;
-   GLfloat (*bfcolor0)[4] = (GLfloat (*)[4]) store->color0[1].Ptr;
-   GLfloat (*bfcolor1)[4] = (GLfloat (*)[4]) store->color1[1].Ptr;
-   GLfloat (*fog)[4] = (GLfloat (*)[4]) store->fogCoord.data;
-   GLfloat *pointSize = (GLfloat *) store->pointSize.data;
-   GLfloat (*texture0)[4] = (GLfloat (*)[4]) store->texCoord[0].data;
-   GLfloat (*texture1)[4] = (GLfloat (*)[4]) store->texCoord[1].data;
-   GLfloat (*texture2)[4] = (GLfloat (*)[4]) store->texCoord[2].data;
-   GLfloat (*texture3)[4] = (GLfloat (*)[4]) store->texCoord[3].data;
-
    _mesa_init_tracked_matrices(ctx);
-   _mesa_init_vp_registers(ctx);  /* sets temp regs to (0,0,0,1) */
+   _mesa_init_vp_registers(ctx);  /* init temp and result regs */
 
    for (i = 0; i < VB->Count; i++) {
       GLuint attr;
@@ -185,33 +192,28 @@ static GLboolean run_vp( GLcontext *ctx, struct gl_pipeline_stage *stage )
              machine->Registers[VP_OUT_COL0][3]);
 #endif
 
-      /* store the attribute output registers into the VB arrays */
-      COPY_4V(clip[i], machine->Registers[VP_OUT_HPOS]);
-      COPY_4V(color0[i], machine->Registers[VP_OUT_COL0]);
-      COPY_4V(color1[i], machine->Registers[VP_OUT_COL1]);
-      COPY_4V(bfcolor0[i], machine->Registers[VP_OUT_BFC0]);
-      COPY_4V(bfcolor1[i], machine->Registers[VP_OUT_BFC1]);
-      fog[i][0] = machine->Registers[VP_OUT_FOGC][0];
-      pointSize[i] = machine->Registers[VP_OUT_PSIZ][0];
-      COPY_4V(texture0[i], machine->Registers[VP_OUT_TEX0]);
-      COPY_4V(texture1[i], machine->Registers[VP_OUT_TEX0]);
-      COPY_4V(texture2[i], machine->Registers[VP_OUT_TEX0]);
-      COPY_4V(texture3[i], machine->Registers[VP_OUT_TEX0]);
+      /* copy the output registers into the VB->attribs arrays */
+      /* XXX (optimize) could use a conditional and smaller loop limit here */
+      for (attr = 0; attr < 15; attr++) {
+         COPY_4V( store->attribs[attr].data[i],
+                  machine->Registers[VP_OUTPUT_REG_START + attr] );
+      }
    }
 
-   VB->ClipPtr = &store->clipCoords;
+   /* Setup the VB pointers so that the next pipeline stages get
+    * their data from the right place (the program output arrays).
+    */
+   VB->ClipPtr = &store->attribs[VERT_RESULT_HPOS];
    VB->ClipPtr->size = 4;
    VB->ClipPtr->count = VB->Count;
    VB->ColorPtr[0] = &store->color0[0];
    VB->ColorPtr[1] = &store->color0[1];
    VB->SecondaryColorPtr[0] = &store->color1[0];
    VB->SecondaryColorPtr[1] = &store->color1[1];
-   VB->AttribPtr[VERT_ATTRIB_FOG] = &store->fogCoord;
-   VB->PointSizePtr = &store->pointSize;
-   VB->TexCoordPtr[0] = &store->texCoord[0];
-   VB->TexCoordPtr[1] = &store->texCoord[1];
-   VB->TexCoordPtr[2] = &store->texCoord[2];
-   VB->TexCoordPtr[3] = &store->texCoord[3];
+   VB->FogCoordPtr = &store->attribs[VERT_RESULT_FOGC];
+   VB->PointSizePtr = &store->attribs[VERT_RESULT_PSIZ];
+   for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+      VB->TexCoordPtr[i] = &store->attribs[VERT_RESULT_TEX0 + i];
 
    /* Cliptest and perspective divide.  Clip functions must clear
     * the clipmask.
@@ -304,23 +306,9 @@ static GLboolean run_validate_program( GLcontext *ctx,
 }
 
 
-
-#if 0
-static void alloc_4chan( struct gl_client_array *a, GLuint sz )
+static void init_client_array( struct gl_client_array *a, GLvector4f *vec )
 {
-   a->Ptr = ALIGN_MALLOC( sz * sizeof(GLchan) * 4, 32 );
-   a->Size = 4;
-   a->Type = CHAN_TYPE;
-   a->Stride = 0;
-   a->StrideB = sizeof(GLchan) * 4;
-   a->Enabled = 0;
-   a->Flags = 0;
-}
-#endif
-
-static void alloc_4float( struct gl_client_array *a, GLuint sz )
-{
-   a->Ptr = ALIGN_MALLOC( sz * sizeof(GLfloat) * 4, 32 );
+   a->Ptr = vec->data;
    a->Size = 4;
    a->Type = GL_FLOAT;
    a->Stride = 0;
@@ -347,19 +335,19 @@ static GLboolean run_init_vp( GLcontext *ctx,
    if (!store)
       return GL_FALSE;
 
-   /* The output of a vertex program is: */
-   _mesa_vector4f_alloc( &store->clipCoords, 0, size, 32 );
-   _mesa_vector4f_alloc( &store->ndcCoords, 0, size, 32 );
-   alloc_4float( &store->color0[0], size );
-   alloc_4float( &store->color0[1], size );
-   alloc_4float( &store->color1[0], size );
-   alloc_4float( &store->color1[1], size );
-   for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
-      _mesa_vector4f_alloc( &store->texCoord[i], 0, VB->Size, 32 );
-   _mesa_vector4f_alloc( &store->fogCoord, 0, size, 32 );
-   _mesa_vector1f_alloc( &store->pointSize, 0, size, 32 );
-   store->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
+   /* Allocate arrays of vertex output values */
+   for (i = 0; i < 15; i++)
+      _mesa_vector4f_alloc( &store->attribs[i], 0, size, 32 );
 
+   /* Make the color0[] and color1[] arrays point into the attribs[] arrays */
+   init_client_array( &store->color0[0], &store->attribs[VERT_RESULT_COL0] );
+   init_client_array( &store->color0[1], &store->attribs[VERT_RESULT_COL1] );
+   init_client_array( &store->color1[0], &store->attribs[VERT_RESULT_BFC0] );
+   init_client_array( &store->color1[1], &store->attribs[VERT_RESULT_BFC1] );
+
+   /* a few other misc allocations */
+   _mesa_vector4f_alloc( &store->ndcCoords, 0, size, 32 );
+   store->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
 
    /* Now validate the stage derived data...
     */
@@ -401,17 +389,13 @@ static void dtr( struct gl_pipeline_stage *stage )
 
    if (store) {
       GLuint i;
-      _mesa_vector4f_free( &store->clipCoords );
+
+      /* free the vertex program result arrays */
+      for (i = 0; i < 15; i++)
+         _mesa_vector4f_free( &store->attribs[i] );
+
+      /* free misc arrays */
       _mesa_vector4f_free( &store->ndcCoords );
-      ALIGN_FREE( store->color0[0].Ptr );
-      ALIGN_FREE( store->color0[1].Ptr );
-      ALIGN_FREE( store->color1[0].Ptr );
-      ALIGN_FREE( store->color1[1].Ptr );
-      for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++)
-	 if (store->texCoord[i].data)
-            _mesa_vector4f_free( &store->texCoord[i] );
-      _mesa_vector4f_free( &store->fogCoord );
-      _mesa_vector1f_free( &store->pointSize );
       ALIGN_FREE( store->clipmask );
 
       FREE( store );
