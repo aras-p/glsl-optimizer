@@ -1,4 +1,4 @@
-/* $Id: s_texture.c,v 1.15 2001/03/08 15:23:46 brianp Exp $ */
+/* $Id: s_texture.c,v 1.16 2001/03/15 16:45:30 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -65,11 +65,12 @@
       I1 = (I0 + 1) & (SIZE - 1);					\
    }									\
    else {								\
-      U = S * SIZE;							\
-      if (U < 0.0F)							\
+      if (S <= 0.0F)							\
          U = 0.0F;							\
-      else if (U >= SIZE)						\
+      else if (S >= 1.0F)						\
          U = SIZE;							\
+      else							        \
+         U = S * SIZE;						        \
       U -= 0.5F;							\
       I0 = IFLOOR(U);							\
       I1 = I0 + 1;							\
@@ -272,8 +273,8 @@ sample_1d_linear(GLcontext *ctx,
    {
       const GLfloat a = FRAC(u);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
-      const GLint w0 = (GLint) ((1.0F-a) * WEIGHT_SCALE + 0.5F);
-      const GLint w1 = (GLint) (      a  * WEIGHT_SCALE + 0.5F);
+      const GLint w0 = IROUND((1.0F-a) * WEIGHT_SCALE);
+      const GLint w1 = IROUND(      a  * WEIGHT_SCALE);
 
       GLchan t0[4], t1[4];  /* texels */
 
@@ -565,10 +566,10 @@ sample_2d_linear(GLcontext *ctx,
       const GLfloat a = FRAC(u);
       const GLfloat b = FRAC(v);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
-      const GLint w00 = (GLint) ((1.0F-a)*(1.0F-b) * WEIGHT_SCALE + 0.5F);
-      const GLint w10 = (GLint) (      a *(1.0F-b) * WEIGHT_SCALE + 0.5F);
-      const GLint w01 = (GLint) ((1.0F-a)*      b  * WEIGHT_SCALE + 0.5F);
-      const GLint w11 = (GLint) (      a *      b  * WEIGHT_SCALE + 0.5F);
+      const GLint w00 = IROUND((1.0F-a) * (1.0F-b) * WEIGHT_SCALE);
+      const GLint w10 = IROUND(      a  * (1.0F-b) * WEIGHT_SCALE);
+      const GLint w01 = IROUND((1.0F-a) *       b  * WEIGHT_SCALE);
+      const GLint w11 = IROUND(      a  *       b  * WEIGHT_SCALE);
       GLchan t00[4];
       GLchan t10[4];
       GLchan t01[4];
@@ -752,22 +753,20 @@ sample_lambda_2d( GLcontext *ctx, GLuint texUnit,
    GLuint i;
    (void) u;
 
-   /* check if lambda is monotonous-array */
+   /* since lambda is monotonous-array use this check first */
    if (lambda[0] <= minMagThresh && lambda[n-1] <= minMagThresh) {
-      /* magnification */
+      /* magnification for whole span */
       switch (tObj->MagFilter) {
       case GL_NEAREST:
-         for (i = 0; i < n; i++)
-            sample_2d_nearest(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                              s[i], t[i], rgba[i] );
+	 sample_nearest_2d(ctx, texUnit, tObj, n, s, t, u,
+                           lambda, rgba);
          break;
       case GL_LINEAR:
-         for (i = 0; i < n; i++)
-            sample_2d_linear(ctx, tObj, tObj->Image[tObj->BaseLevel],
-                             s[i], t[i], rgba[i] );
+	 sample_linear_2d(ctx, texUnit, tObj, n, s, t, u,
+                         lambda, rgba);
          break;
       default:
-         _mesa_problem(NULL, "Bad mag filter in sample_2d_texture");
+         _mesa_problem(NULL, "Bad mag filter in sample_lambda_2d");
       }
    }
    else {
@@ -988,14 +987,14 @@ sample_3d_linear(GLcontext *ctx,
       const GLfloat b = FRAC(v);
       const GLfloat c = FRAC(w);
       /* compute sample weights in fixed point in [0,WEIGHT_SCALE] */
-      GLint w000 = (GLint) ((1.0F-a)*(1.0F-b)*(1.0F-c) * WEIGHT_SCALE + 0.5F);
-      GLint w100 = (GLint) (      a *(1.0F-b)*(1.0F-c) * WEIGHT_SCALE + 0.5F);
-      GLint w010 = (GLint) ((1.0F-a)*      b *(1.0F-c) * WEIGHT_SCALE + 0.5F);
-      GLint w110 = (GLint) (      a *      b *(1.0F-c) * WEIGHT_SCALE + 0.5F);
-      GLint w001 = (GLint) ((1.0F-a)*(1.0F-b)*      c  * WEIGHT_SCALE + 0.5F);
-      GLint w101 = (GLint) (      a *(1.0F-b)*      c  * WEIGHT_SCALE + 0.5F);
-      GLint w011 = (GLint) ((1.0F-a)*      b *      c  * WEIGHT_SCALE + 0.5F);
-      GLint w111 = (GLint) (      a *      b *      c  * WEIGHT_SCALE + 0.5F);
+      GLint w000 = IROUND((1.0F-a) * (1.0F-b) * (1.0F-c) * WEIGHT_SCALE);
+      GLint w100 = IROUND(      a  * (1.0F-b) * (1.0F-c) * WEIGHT_SCALE);
+      GLint w010 = IROUND((1.0F-a) *       b  * (1.0F-c) * WEIGHT_SCALE);
+      GLint w110 = IROUND(      a  *       b  * (1.0F-c) * WEIGHT_SCALE);
+      GLint w001 = IROUND((1.0F-a) * (1.0F-b) *       c  * WEIGHT_SCALE);
+      GLint w101 = IROUND(      a  * (1.0F-b) *       c  * WEIGHT_SCALE);
+      GLint w011 = IROUND((1.0F-a) *       b  *       c  * WEIGHT_SCALE);
+      GLint w111 = IROUND(      a  *       b  *       c  * WEIGHT_SCALE);
 
       GLchan t000[4], t010[4], t001[4], t011[4];
       GLchan t100[4], t110[4], t101[4], t111[4];
