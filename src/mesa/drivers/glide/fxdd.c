@@ -674,11 +674,6 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
    if (getenv("FX_EMULATE_SINGLE_TMU"))
       fxMesa->haveTwoTMUs = GL_FALSE;
 
-   fxMesa->emulateTwoTMUs = fxMesa->haveTwoTMUs;
-
-   if (!getenv("FX_DONT_FAKE_MULTITEX"))
-      fxMesa->emulateTwoTMUs = GL_TRUE;
-
    if (getenv("FX_GLIDE_SWAPINTERVAL"))
       fxMesa->swapInterval = atoi(getenv("FX_GLIDE_SWAPINTERVAL"));
    else
@@ -754,7 +749,7 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
 
    fxMesa->textureAlign = FX_grGetInteger(FX_TEXTURE_ALIGN);
    fxMesa->glCtx->Const.MaxTextureLevels = 9;
-   fxMesa->glCtx->Const.MaxTextureUnits = fxMesa->emulateTwoTMUs ? 2 : 1;
+   fxMesa->glCtx->Const.MaxTextureUnits = fxMesa->haveTwoTMUs ? 2 : 1;
    fxMesa->new_state = _NEW_ALL;
 
    /* Initialize the software rasterizer and helper modules.
@@ -782,10 +777,6 @@ fxDDInitFxMesaContext(fxMesaContext fxMesa)
 /*     _tnl_calculate_vertex_fog( fxMesa->glCtx, GL_FALSE ); */
 
    fxDDInitExtensions(fxMesa->glCtx);
-
-#ifdef FXVTXFMT
-   fxDDInitVtxfmt(fxMesa->glCtx);
-#endif
 
    FX_grGlideGetState((GrState *) fxMesa->state);
 
@@ -830,7 +821,7 @@ fxDDInitExtensions(GLcontext * ctx)
    if (fxMesa->haveTwoTMUs)
       _mesa_enable_extension(ctx, "GL_EXT_texture_env_add");
 
-   if (fxMesa->emulateTwoTMUs)
+   if (fxMesa->haveTwoTMUs)
       _mesa_enable_extension(ctx, "GL_ARB_multitexture");
 }
 
@@ -843,8 +834,8 @@ fxDDInitExtensions(GLcontext * ctx)
  *
  * Performs similar work to fxDDChooseRenderState() - should be merged.
  */
-static GLboolean
-fxIsInHardware(GLcontext * ctx)
+GLboolean
+fx_check_IsInHardware(GLcontext * ctx)
 {
    fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
 
@@ -868,7 +859,7 @@ fxIsInHardware(GLcontext * ctx)
    }
    /* Unsupported texture/multitexture cases */
 
-   if (fxMesa->emulateTwoTMUs) {
+   if (fxMesa->haveTwoTMUs) {
       if (ctx->Texture._ReallyEnabled & (TEXTURE0_3D | TEXTURE1_3D))
 	 return GL_FALSE;	/* can't do 3D textures */
       if (ctx->Texture._ReallyEnabled & (TEXTURE0_1D | TEXTURE1_1D))
@@ -939,6 +930,9 @@ fxIsInHardware(GLcontext * ctx)
    return GL_TRUE;
 }
 
+
+
+
 static void
 update_texture_scales(GLcontext * ctx)
 {
@@ -980,79 +974,34 @@ fxDDUpdateDDPointers(GLcontext * ctx, GLuint new_state)
 
    if (new_state & (_FX_NEW_IS_IN_HARDWARE |
 		    _FX_NEW_RENDERSTATE |
-		    _FX_NEW_SETUP_FUNCTION | _NEW_TEXTURE)) {
+		    _FX_NEW_SETUP_FUNCTION | 
+		    _NEW_TEXTURE)) {
 
       if (new_state & _FX_NEW_IS_IN_HARDWARE)
-	 fxMesa->is_in_hardware = fxIsInHardware(ctx);
+	 fxCheckIsInHardware(ctx);
 
       if (fxMesa->new_state)
 	 fxSetupFXUnits(ctx);
 
-      if (new_state & _FX_NEW_RENDERSTATE)
-	 fxDDChooseRenderState(ctx);
+      if (fxMesa->is_in_hardware) {
+	 if (new_state & _FX_NEW_RENDERSTATE)
+	    fxDDChooseRenderState(ctx);
 
-      if (new_state & _FX_NEW_SETUP_FUNCTION)
-	 tnl->Driver.BuildProjectedVertices = fx_validate_BuildProjVerts;
+	 if (new_state & _FX_NEW_SETUP_FUNCTION)
+	    fxDDChooseSetupState(ctx);
+      }
 
       if (new_state & _NEW_TEXTURE)
 	 update_texture_scales(ctx);
-
-   }
-
-#ifdef FXVTXFMT
-   if (fxMesa->allow_vfmt) {
-      if (new_state & _NEW_LIGHT)
-	 fx_update_lighting(ctx);
-
-      if (new_state & _FX_NEW_VTXFMT)
-	 fxDDCheckVtxfmt(ctx);
-   }
-#endif
-}
-
-static void
-fxDDRenderPrimitive(GLcontext * ctx, GLenum mode)
-{
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
-
-   if (!fxMesa->is_in_hardware) {
-      _swsetup_RenderPrimitive(ctx, mode);
-   }
-   else {
-      fxMesa->render_prim = mode;
    }
 }
 
-
-static void
-fxDDRenderStart(GLcontext * ctx)
-{
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
-
-   _swsetup_RenderStart(ctx);
-
-   if (fxMesa->new_state) {
-      fxSetupFXUnits(ctx);
-   }
-}
-
-static void
-fxDDRenderFinish(GLcontext * ctx)
-{
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
-
-   if (!fxMesa->is_in_hardware) {
-      _swsetup_RenderFinish(ctx);
-   }
-}
 
 
 
 void
 fxSetupDDPointers(GLcontext * ctx)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-
    if (MESA_VERBOSE & VERBOSE_DRIVER) {
       fprintf(stderr, "fxmesa: fxSetupDDPointers()\n");
    }
@@ -1105,16 +1054,6 @@ fxSetupDDPointers(GLcontext * ctx)
    ctx->Driver.CullFace = fxDDCullFace;
    ctx->Driver.ShadeModel = fxDDShadeModel;
    ctx->Driver.Enable = fxDDEnable;
-
-   tnl->Driver.RunPipeline = _tnl_run_pipeline;
-   tnl->Driver.RenderStart = fxDDRenderStart;
-   tnl->Driver.RenderFinish = fxDDRenderFinish;
-   tnl->Driver.ResetLineStipple = _swrast_ResetLineStipple;
-   tnl->Driver.RenderPrimitive = fxDDRenderPrimitive;
-   tnl->Driver.RenderInterp = _swsetup_RenderInterp;
-   tnl->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
-   tnl->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
-   tnl->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
 
    fxSetupDDSpanPointers(ctx);
    fxDDUpdateDDPointers(ctx, ~0);

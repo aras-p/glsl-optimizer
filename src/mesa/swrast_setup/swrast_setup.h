@@ -1,4 +1,4 @@
-/* $Id: swrast_setup.h,v 1.8 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: swrast_setup.h,v 1.9 2001/07/12 22:09:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +30,10 @@
 /* Public interface to the swrast_setup module.  This module provides
  * an implementation of the driver interface to t_vb_render.c, and uses
  * the software rasterizer (swrast) to perform actual rasterization.
+ *
+ * The internals of the implementation are private, but can be hooked
+ * into tnl at any time (except between RenderStart/RenderEnd) by
+ * calling _swsetup_Wakeup(). 
  */
 
 #ifndef SWRAST_SETUP_H
@@ -45,48 +49,6 @@ extern void
 _swsetup_InvalidateState( GLcontext *ctx, GLuint new_state );
 
 extern void
-_swsetup_BuildProjectedVertices( GLcontext *ctx,
-				 GLuint start,
-				 GLuint end,
-				 GLuint new_inputs );
-
-extern void
-_swsetup_Quad( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3 );
-
-extern void
-_swsetup_Triangle( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2 );
-
-extern void
-_swsetup_Line( GLcontext *ctx, GLuint v0, GLuint v1 );
-
-extern void
-_swsetup_Points( GLcontext *ctx, GLuint first, GLuint last );
-
-extern void
-_swsetup_RenderPrimitive( GLcontext *ctx, GLenum mode );
-
-extern void
-_swsetup_RenderStart( GLcontext *ctx );
-
-extern void
-_swsetup_RenderFinish( GLcontext *ctx );
-
-extern void
-_swsetup_RenderProjectInterpVerts( GLcontext *ctx );
-
-extern void
-_swsetup_RenderInterp( GLcontext *ctx, GLfloat t,
-		       GLuint dst, GLuint out, GLuint in,
-		       GLboolean force_boundary );
-extern void
-_swsetup_RenderCopyPV( GLcontext *ctx, GLuint dst, GLuint src );
-
-extern void
-_swsetup_RenderClippedPolygon( GLcontext *ctx, const GLuint *elts, GLuint n );
-
-extern void
-_swsetup_RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj );
-
-
+_swsetup_Wakeup( GLcontext *ctx );
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: t_vb_render.c,v 1.21 2001/06/15 15:22:08 brianp Exp $ */
+/* $Id: t_vb_render.c,v 1.22 2001/07/12 22:09:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -35,17 +35,8 @@
  * This file makes calls to project vertices and to the point, line
  * and triangle rasterizers via the function pointers:
  *
- *    context->Driver.BuildProjectedVertices()
+ *    context->Driver.Render.*
  *
- *    context->Driver.PointsFunc()
- *    context->Driver.LineFunc()
- *    context->Driver.TriangleFunc()
- *    context->Driver.QuadFunc()
- *
- *    context->Driver.RenderTabVerts[]
- *    context->Driver.RenderTabElts[]
- *
- * None of these may be null.
  */
 
 
@@ -102,7 +93,7 @@
 /* Vertices, with the possibility of clipping.
  */
 #define RENDER_POINTS( start, count ) \
-   tnl->Driver.PointsFunc( ctx, start, count )
+   tnl->Driver.Render.Points( ctx, start, count )
 
 #define RENDER_LINE( v1, v2 )			\
 do {						\
@@ -142,16 +133,16 @@ do {							\
    const GLuint * const elt = VB->Elts;				\
    const GLubyte *mask = VB->ClipMask;				\
    const GLuint sz = VB->ClipPtr->size;				\
-   const line_func LineFunc = tnl->Driver.LineFunc;		\
-   const triangle_func TriangleFunc = tnl->Driver.TriangleFunc;	\
-   const quad_func QuadFunc = tnl->Driver.QuadFunc;		\
+   const line_func LineFunc = tnl->Driver.Render.Line;		\
+   const triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
+   const quad_func QuadFunc = tnl->Driver.Render.Quad;		\
    const GLboolean stipple = ctx->Line.StippleFlag;		\
    (void) (LineFunc && TriangleFunc && QuadFunc);		\
    (void) elt; (void) mask; (void) sz; (void) stipple;
 
 #define TAG(x) clip_##x##_verts
-#define INIT(x) tnl->Driver.RenderPrimitive( ctx, x )
-#define RESET_STIPPLE if (stipple) tnl->Driver.ResetLineStipple( ctx )
+#define INIT(x) tnl->Driver.Render.PrimitiveNotify( ctx, x )
+#define RESET_STIPPLE if (stipple) tnl->Driver.Render.ResetLineStipple( ctx )
 #define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE
 #define PRESERVE_VB_DEFS
 #include "t_vb_rendertmp.h"
@@ -174,7 +165,7 @@ static void clip_elt_triangles( GLcontext *ctx,
 				GLuint flags )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   render_func render_tris = tnl->Driver.RenderTabElts[GL_TRIANGLES];
+   render_func render_tris = tnl->Driver.Render.PrimTabElts[GL_TRIANGLES];
    struct vertex_buffer *VB = &tnl->vb;
    const GLuint * const elt = VB->Elts;
    GLubyte *mask = VB->ClipMask;
@@ -182,7 +173,7 @@ static void clip_elt_triangles( GLcontext *ctx,
    GLuint j;
    (void) flags;
 
-   tnl->Driver.RenderPrimitive( ctx, GL_TRIANGLES );
+   tnl->Driver.Render.PrimitiveNotify( ctx, GL_TRIANGLES );
 
    for (j=start; j < last; j+=3 ) {
       GLubyte c1 = mask[elt[j]];
@@ -214,7 +205,7 @@ static void clip_elt_triangles( GLcontext *ctx,
 /* Vertices, no clipping.
  */
 #define RENDER_POINTS( start, count ) \
-   tnl->Driver.PointsFunc( ctx, start, count )
+   tnl->Driver.Render.Points( ctx, start, count )
 
 #define RENDER_LINE( v1, v2 ) \
    LineFunc( ctx, v1, v2 )
@@ -231,15 +222,15 @@ static void clip_elt_triangles( GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);				\
    struct vertex_buffer *VB = &tnl->vb;				\
    const GLuint * const elt = VB->Elts;				\
-   const line_func LineFunc = tnl->Driver.LineFunc;		\
-   const triangle_func TriangleFunc = tnl->Driver.TriangleFunc;	\
-   const quad_func QuadFunc = tnl->Driver.QuadFunc;		\
+   const line_func LineFunc = tnl->Driver.Render.Line;		\
+   const triangle_func TriangleFunc = tnl->Driver.Render.Triangle;	\
+   const quad_func QuadFunc = tnl->Driver.Render.Quad;		\
    (void) (LineFunc && TriangleFunc && QuadFunc);		\
    (void) elt;
 
-#define RESET_STIPPLE tnl->Driver.ResetLineStipple( ctx )
+#define RESET_STIPPLE tnl->Driver.Render.ResetLineStipple( ctx )
 #define RESET_OCCLUSION ctx->OcclusionResult = GL_TRUE
-#define INIT(x) tnl->Driver.RenderPrimitive( ctx, x )
+#define INIT(x) tnl->Driver.Render.PrimitiveNotify( ctx, x )
 #define RENDER_TAB_QUALIFIER
 #define PRESERVE_VB_DEFS
 #include "t_vb_rendertmp.h"
@@ -252,6 +243,27 @@ static void clip_elt_triangles( GLcontext *ctx,
 #define ELT(x) elt[x]
 #include "t_vb_rendertmp.h"
 
+
+/**********************************************************************/
+/*              Helper functions for drivers                  */
+/**********************************************************************/
+
+void _tnl_RenderClippedPolygon( GLcontext *ctx, const GLuint *elts, GLuint n )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint *tmp = VB->Elts;
+
+   VB->Elts = (GLuint *)elts;
+   tnl->Driver.Render.PrimTabElts[GL_POLYGON]( ctx, 0, n, PRIM_BEGIN|PRIM_END );
+   VB->Elts = tmp;
+}
+
+void _tnl_RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   tnl->Driver.Render.Line( ctx, ii, jj );
+}
 
 
 
@@ -274,31 +286,33 @@ static GLboolean run_render( GLcontext *ctx,
     * that window coordinates are guarenteed not to change before
     * rendering.
     */
-   ASSERT(tnl->Driver.RenderStart);
+   ASSERT(tnl->Driver.Render.Start);
 
-   tnl->Driver.RenderStart( ctx );
+   tnl->Driver.Render.Start( ctx );
 
-   ASSERT(tnl->Driver.BuildProjectedVertices);
-   ASSERT(tnl->Driver.RenderPrimitive);
-   ASSERT(tnl->Driver.PointsFunc);
-   ASSERT(tnl->Driver.LineFunc);
-   ASSERT(tnl->Driver.TriangleFunc);
-   ASSERT(tnl->Driver.QuadFunc);
-   ASSERT(tnl->Driver.ResetLineStipple);
-   ASSERT(tnl->Driver.RenderInterp);
-   ASSERT(tnl->Driver.RenderCopyPV);
-   ASSERT(tnl->Driver.RenderClippedLine);
-   ASSERT(tnl->Driver.RenderClippedPolygon);
-   ASSERT(tnl->Driver.RenderFinish);
+   ASSERT(tnl->Driver.Render.BuildVertices);
+   ASSERT(tnl->Driver.Render.PrimitiveNotify);
+   ASSERT(tnl->Driver.Render.Points);
+   ASSERT(tnl->Driver.Render.Line);
+   ASSERT(tnl->Driver.Render.Triangle);
+   ASSERT(tnl->Driver.Render.Quad);
+   ASSERT(tnl->Driver.Render.ResetLineStipple);
+   ASSERT(tnl->Driver.Render.Interp);
+   ASSERT(tnl->Driver.Render.CopyPV);
+   ASSERT(tnl->Driver.Render.ClippedLine);
+   ASSERT(tnl->Driver.Render.ClippedPolygon);
+   ASSERT(tnl->Driver.Render.Finish);
 
-   tnl->Driver.BuildProjectedVertices( ctx, 0, VB->Count, new_inputs );
+   tnl->Driver.Render.BuildVertices( ctx, 0, VB->Count, new_inputs );
 
    if (VB->ClipOrMask) {
       tab = VB->Elts ? clip_render_tab_elts : clip_render_tab_verts;
       clip_render_tab_elts[GL_TRIANGLES] = clip_elt_triangles;
    }
    else {
-      tab = VB->Elts ? tnl->Driver.RenderTabElts : tnl->Driver.RenderTabVerts;
+      tab = (VB->Elts ? 
+	     tnl->Driver.Render.PrimTabElts : 
+	     tnl->Driver.Render.PrimTabVerts);
    }
 
    do
@@ -313,11 +327,11 @@ static GLboolean run_render( GLcontext *ctx,
 	 if (length)
 	    tab[flags & PRIM_MODE_MASK]( ctx, i, i + length, flags );
       }
-   } while (tnl->Driver.MultipassFunc &&
-	    tnl->Driver.MultipassFunc( ctx, ++pass ));
+   } while (tnl->Driver.Render.Multipass &&
+	    tnl->Driver.Render.Multipass( ctx, ++pass ));
 
 
-   tnl->Driver.RenderFinish( ctx );
+   tnl->Driver.Render.Finish( ctx );
 /*     _swrast_flush(ctx); */
 /*     usleep(1000000); */
    return GL_FALSE;		/* finished the pipe */

@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.55 2001/06/27 12:52:12 keithw Exp $
+# $Id: Makefile.X11,v 1.56 2001/07/12 22:09:21 keithw Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -21,6 +21,9 @@ LIBDIR = ../lib
 
 
 CORE_SOURCES = \
+	swrast_setup/ss_context.c \
+	swrast_setup/ss_triangle.c \
+	swrast_setup/ss_vb.c \
 	api_arrayelt.c \
 	api_loopback.c \
 	api_noop.c \
@@ -118,10 +121,6 @@ CORE_SOURCES = \
 	swrast/s_texstore.c \
 	swrast/s_triangle.c \
 	swrast/s_zoom.c \
-	swrast_setup/ss_context.c \
-	swrast_setup/ss_triangle.c \
-	swrast_setup/ss_vb.c \
-	swrast_setup/ss_interp.c \
 	tnl/t_array_api.c \
 	tnl/t_array_import.c \
 	tnl/t_context.c \

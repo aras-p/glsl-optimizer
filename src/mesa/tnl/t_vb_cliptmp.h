@@ -1,4 +1,4 @@
-/* $Id: t_vb_cliptmp.h,v 1.12 2001/05/09 12:25:40 keithw Exp $ */
+/* $Id: t_vb_cliptmp.h,v 1.13 2001/07/12 22:09:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -124,7 +124,7 @@ static __inline void TAG(clip_line)( GLcontext *ctx,
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   interp_func interp = tnl->Driver.RenderInterp;
+   interp_func interp = tnl->Driver.Render.Interp;
    GLfloat (*coord)[4] = VB->ClipPtr->data;
    GLuint ii = i, jj = j, p;
 
@@ -152,9 +152,9 @@ static __inline void TAG(clip_line)( GLcontext *ctx,
    }
 
    if ((ctx->_TriangleCaps & DD_FLATSHADE) && j != jj)
-      tnl->Driver.RenderCopyPV( ctx, jj, j );
+      tnl->Driver.Render.CopyPV( ctx, jj, j );
 
-   tnl->Driver.RenderClippedLine( ctx, ii, jj );
+   tnl->Driver.Render.ClippedLine( ctx, ii, jj );
 }
 
 
@@ -166,7 +166,7 @@ static __inline void TAG(clip_tri)( GLcontext *ctx,
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   interp_func interp = tnl->Driver.RenderInterp;
+   interp_func interp = tnl->Driver.Render.Interp;
    GLfloat (*coord)[4] = VB->ClipPtr->data;
    GLuint pv = v2;
    GLuint vlist[2][MAX_CLIPPED_VERTICES];
@@ -203,11 +203,11 @@ static __inline void TAG(clip_tri)( GLcontext *ctx,
    if (ctx->_TriangleCaps & DD_FLATSHADE) {
       if (pv != inlist[0]) {
 	 ASSERT( inlist[0] >= VB->FirstClipped );
-	 tnl->Driver.RenderCopyPV( ctx, inlist[0], pv );
+	 tnl->Driver.Render.CopyPV( ctx, inlist[0], pv );
       }
    }
 
-   tnl->Driver.RenderClippedPolygon( ctx, inlist, n );
+   tnl->Driver.Render.ClippedPolygon( ctx, inlist, n );
 }
 
 
@@ -219,7 +219,7 @@ static __inline void TAG(clip_quad)( GLcontext *ctx,
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   interp_func interp = tnl->Driver.RenderInterp;
+   interp_func interp = tnl->Driver.Render.Interp;
    GLfloat (*coord)[4] = VB->ClipPtr->data;
    GLuint pv = v3;
    GLuint vlist[2][MAX_CLIPPED_VERTICES];
@@ -256,11 +256,11 @@ static __inline void TAG(clip_quad)( GLcontext *ctx,
    if (ctx->_TriangleCaps & DD_FLATSHADE) {
       if (pv != inlist[0]) {
 	 ASSERT( inlist[0] >= VB->FirstClipped );
-	 tnl->Driver.RenderCopyPV( ctx, inlist[0], pv );
+	 tnl->Driver.Render.CopyPV( ctx, inlist[0], pv );
       }
    }
 
-   tnl->Driver.RenderClippedPolygon( ctx, inlist, n );
+   tnl->Driver.Render.ClippedPolygon( ctx, inlist, n );
 }
 
 #undef W

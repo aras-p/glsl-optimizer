@@ -1,4 +1,4 @@
-/* $Id: osmesa.c,v 1.60 2001/07/05 15:12:13 brianp Exp $ */
+/* $Id: osmesa.c,v 1.61 2001/07/12 22:09:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -346,6 +346,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
 	 _tnl_CreateContext( ctx );
 	 _swsetup_CreateContext( ctx );
 	
+	 _swsetup_Wakeup( ctx );
 	 osmesa_register_swrast_functions( ctx );
       }
    }
@@ -2072,20 +2073,6 @@ static void osmesa_update_state( GLcontext *ctx, GLuint new_state )
    swdd->SetReadBuffer = set_read_buffer;
 
    tnl->Driver.RunPipeline = _tnl_run_pipeline;
-   tnl->Driver.RenderStart = _swsetup_RenderStart;
-   tnl->Driver.RenderFinish = _swsetup_RenderFinish;
-   tnl->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
-   tnl->Driver.RenderPrimitive = _swsetup_RenderPrimitive;
-   tnl->Driver.PointsFunc = _swsetup_Points;
-   tnl->Driver.LineFunc = _swsetup_Line;
-   tnl->Driver.TriangleFunc = _swsetup_Triangle;
-   tnl->Driver.QuadFunc = _swsetup_Quad;
-   tnl->Driver.ResetLineStipple = _swrast_ResetLineStipple;
-   tnl->Driver.RenderInterp = _swsetup_RenderInterp;
-   tnl->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
-   tnl->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
-   tnl->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
-
 
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );

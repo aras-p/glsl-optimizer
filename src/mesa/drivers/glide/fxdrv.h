@@ -94,37 +94,6 @@ extern float gl_ubyte_to_float_255_color_tab[256];
 
 
 
-/* Should have size == 16 * sizeof(float).
- */
-typedef union
-{
-   GrVertex v;
-   GLfloat f[16];
-   GLuint ui[16];
-}
-fxVertex;
-
-/* Used in the fxvtxfmt t&l engine.
- */
-typedef struct
-{
-   GrVertex v;
-   GLfloat clip[4];
-   GLfloat texcoord[2][2];
-   GLubyte mask;
-   GLfloat normal[3];		/* for replay & fallback */
-}
-fxClipVertex;
-
-
-
-typedef void (*vfmt_project_func) (GLcontext * ctx, fxClipVertex * v);
-typedef void (*vfmt_interpolate_func) (GLfloat t,
-				       fxClipVertex * O,
-				       const fxClipVertex * I,
-				       const fxClipVertex * J);
-
-
 
 #if defined(FXMESA_USE_ARGB)
 #define FXCOLOR4( c ) (      \
@@ -147,14 +116,15 @@ typedef void (*vfmt_interpolate_func) (GLfloat t,
 
 
 
-/* fastpath/vtxfmt flags first
+/* fastpath flags first
  */
 #define SETUP_TMU0 0x1
 #define SETUP_TMU1 0x2
 #define SETUP_RGBA 0x4
 #define SETUP_SNAP 0x8
 #define SETUP_XYZW 0x10
-#define MAX_SETUP  0x20
+#define SETUP_PTEX 0x20
+#define MAX_SETUP  0x40
 
 
 #define FX_NUM_TMU 2
@@ -356,24 +326,13 @@ tfxUnitsState;
 			     _DD_NEW_POINT_SIZE |	\
 			     _NEW_LINE)
 
+
 /* Covers the state referenced by fxDDChooseSetupFunction.
  */
 #define _FX_NEW_SETUP_FUNCTION (_NEW_LIGHT|	\
 			        _NEW_FOG|	\
 			        _NEW_TEXTURE|	\
 			        _NEW_COLOR)	\
-
-
-/* Covers the state referenced in fxDDCheckVtxfmt.
- */
-#define _FX_NEW_VTXFMT (_NEW_TEXTURE |			\
-			_NEW_TEXTURE_MATRIX |		\
-			_NEW_TRANSFORM |		\
-			_NEW_LIGHT |			\
-			_NEW_PROJECTION |		\
-			_NEW_MODELVIEW |		\
-			_TNL_NEW_NEED_EYE_COORDS |	\
-			_FX_NEW_RENDERSTATE)
 
 
 /* These lookup table are used to extract RGB values in [0,255] from
@@ -384,11 +343,9 @@ extern GLubyte FX_PixelToG[0x10000];
 extern GLubyte FX_PixelToB[0x10000];
 
 
-typedef void (*fx_tri_func) (GLcontext *, const fxVertex *,
-			     const fxVertex *, const fxVertex *);
-typedef void (*fx_line_func) (GLcontext *, const fxVertex *,
-			      const fxVertex *);
-typedef void (*fx_point_func) (GLcontext *, const fxVertex *);
+typedef void (*fx_tri_func) (fxMesaContext, GrVertex *, GrVertex *, GrVertex *);
+typedef void (*fx_line_func) (fxMesaContext, GrVertex *, GrVertex *);
+typedef void (*fx_point_func) (fxMesaContext, GrVertex *);
 
 struct tfxMesaContext
 {
@@ -434,19 +391,18 @@ struct tfxMesaContext
    /* Vertex building and storage:
     */
    GLuint tmu_source[FX_NUM_TMU];
-   GLuint tex_dest[MAX_TEXTURE_UNITS];
-   GLuint setupindex;
-   GLuint setup_gone;		/* for multipass */
+   GLuint SetupIndex;
    GLuint stw_hint_state;	/* for grHints */
-   fxVertex *verts;
+   GrVertex *verts;
    GLboolean snapVertices;      /* needed for older Voodoo hardware */
+   struct gl_client_array UbyteColor;
 
    /* Rasterization:
     */
    GLuint render_index;
-   GLuint passes, multipass;
    GLuint is_in_hardware;
-   GLenum render_prim;
+   GLenum render_primitive;
+   GLenum raster_primitive;
 
    /* Current rasterization functions 
     */
@@ -454,15 +410,6 @@ struct tfxMesaContext
    fx_line_func draw_line;
    fx_tri_func draw_tri;
 
-   /* System to turn culling on/off for tris/lines/points.
-    */
-   fx_point_func initial_point;
-   fx_line_func initial_line;
-   fx_tri_func initial_tri;
-
-   fx_point_func subsequent_point;
-   fx_line_func subsequent_line;
-   fx_tri_func subsequent_tri;
 
    /* Keep texture scales somewhere handy:
     */
@@ -485,7 +432,6 @@ struct tfxMesaContext
 
    GLboolean verbose;
    GLboolean haveTwoTMUs;	/* True if we really have 2 tmu's  */
-   GLboolean emulateTwoTMUs;	/* True if we present 2 tmu's to mesa.  */
    GLboolean haveAlphaBuffer;
    GLboolean haveZBuffer;
    GLboolean haveDoubleBuffer;
@@ -502,37 +448,8 @@ struct tfxMesaContext
    int clipMaxX;
    int clipMinY;
    int clipMaxY;
-
-   /* fxvtxfmt
-    */
-   GLboolean allow_vfmt;
-   GLvertexformat vtxfmt;
-   fxClipVertex current;
-   fxClipVertex *vert;		/* points into verts[] */
-   void (*fire_on_vertex) (GLcontext *);
-   void (*fire_on_end) (GLcontext *);
-   void (*fire_on_fallback) (GLcontext *);
-
-   vfmt_project_func project_vertex;
-   vfmt_interpolate_func interpolate_vertices;
-
-   int vtxfmt_fallback_count;
-   int vtxfmt_installed;
-   void (*old_begin) (GLenum);
-   GLenum prim;
-
-   GLuint accel_light;
-   GLfloat basecolor[4];
-
-
-   /* Projected vertices, fastpath data:
-    */
-   GLvector1ui clipped_elements;
-   fxVertex *last_vert;
-   GLuint size;
 };
 
-typedef void (*tfxSetupFunc) (GLcontext * ctx, GLuint, GLuint);
 
 extern GrHwConfiguration glbHWConfig;
 extern int glbCurrentBoard;
@@ -540,17 +457,20 @@ extern int glbCurrentBoard;
 extern void fxSetupFXUnits(GLcontext *);
 extern void fxSetupDDPointers(GLcontext *);
 
-/* fxvsetup:
+/* fxvb.c:
  */
-extern void fxDDSetupInit(void);
 extern void fxAllocVB(GLcontext * ctx);
 extern void fxFreeVB(GLcontext * ctx);
-extern void fxPrintSetupFlags(const char *msg, GLuint flags);
-extern void fx_BuildProjVerts(GLcontext * ctx,
-			      GLuint start, GLuint count, GLuint newinputs);
-extern void fx_validate_BuildProjVerts(GLcontext * ctx,
-				       GLuint start, GLuint count,
-				       GLuint newinputs);
+extern void fxPrintSetupFlags(char *msg, GLuint flags );
+extern void fxCheckTexSizes( GLcontext *ctx );
+extern void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
+			     GLuint newinputs );
+extern void fxChooseVertexState( GLcontext *ctx );
+
+
+
+
+
 
 /* fxtrifuncs:
  */
@@ -654,15 +574,5 @@ extern void fxTMMoveInTM_NoLock(fxMesaContext fxMesa,
 				struct gl_texture_object *tObj, GLint where);
 extern void fxInitPixelTables(fxMesaContext fxMesa, GLboolean bgrOrder);
 
-
-/* fxvtxfmt:
- */
-extern void fxDDCheckVtxfmt(GLcontext * ctx);
-extern void fx_update_lighting(GLcontext * ctx);
-extern void fxDDInitVtxfmt(GLcontext * ctx);
-
-/* fxsimplerender
- */
-extern const struct gl_pipeline_stage fx_render_stage;
 
 #endif

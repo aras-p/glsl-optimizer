@@ -1,4 +1,4 @@
-/* $Id: ss_context.h,v 1.7 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: ss_context.h,v 1.8 2001/07/12 22:09:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -36,35 +36,14 @@
 
 typedef struct {
    GLuint NewState;
-   GLuint StateChanges;
-
-   /* Function hooks, trigger lazy state updates.
-    */
-   void (*InvalidateState)( GLcontext *ctx, GLuint new_state );
-
-   void (*BuildProjVerts)( GLcontext *ctx,
-			   GLuint start, GLuint end, GLuint new_inputs );
-
-   void (*Quad)( GLcontext *ctx, GLuint v0, GLuint v1,
-		 GLuint v2, GLuint v3 );
-
-   void (*Triangle)( GLcontext *ctx, GLuint v0, GLuint v1,
-		     GLuint v2 );
-
-   void (*Line)( GLcontext *ctx, GLuint v0, GLuint v1 );
-
-   void (*Points)( GLcontext *ctx, GLuint first, GLuint last );
-
-   void (*RenderCopyPV)( GLcontext *ctx, GLuint dst, GLuint src );
-
-   void (*RenderInterp)( GLcontext *ctx, GLfloat t,
-			 GLuint dst, GLuint out, GLuint in,
-			 GLboolean force_boundary );
-
-
    SWvertex *verts;
    GLenum render_prim;
+   GLuint SetupIndex;
 
+   struct {
+      void (*Start)( GLcontext * );
+      void (*Finish)( GLcontext * );
+   } Driver;
 } SScontext;
 
 #define SWSETUP_CONTEXT(ctx) ((SScontext *)ctx->swsetup_context)

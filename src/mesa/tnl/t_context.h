@@ -1,4 +1,4 @@
-/* $Id: t_context.h,v 1.29 2001/06/28 17:34:14 keithw Exp $ */
+/* $Id: t_context.h,v 1.30 2001/07/12 22:09:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -376,6 +376,9 @@ typedef void (*interp_func)( GLcontext *ctx,
 			     GLfloat t, GLuint dst, GLuint out, GLuint in,
 			     GLboolean force_boundary );
 typedef void (*copy_pv_func)( GLcontext *ctx, GLuint dst, GLuint src );
+typedef void (*setup_func)( GLcontext *ctx,
+			    GLuint start, GLuint end,
+			    GLuint new_inputs);
 
 
 struct tnl_device_driver {
@@ -390,87 +393,86 @@ struct tnl_device_driver {
     */
 
    /***
-    *** Rendering
+    *** Rendering -- These functions called only from t_vb_render.c
     ***/
+   struct {
+      void (*Start)(GLcontext *ctx);
+      void (*Finish)(GLcontext *ctx);
+      /* Called before and after all rendering operations, including DrawPixels,
+       * ReadPixels, Bitmap, span functions, and CopyTexImage, etc commands.
+       * These are a suitable place for grabbing/releasing hardware locks.
+       */
 
-   void (*RenderStart)(GLcontext *ctx);
-   void (*RenderFinish)(GLcontext *ctx);
-   /* Called before and after all rendering operations, including DrawPixels,
-    * ReadPixels, Bitmap, span functions, and CopyTexImage, etc commands.
-    * These are a suitable place for grabbing/releasing hardware locks.
-    */
+      void (*PrimitiveNotify)(GLcontext *ctx, GLenum mode);
+      /* Called between RenderStart() and RenderFinish() to indicate the
+       * type of primitive we're about to draw.  Mode will be one of the
+       * modes accepted by glBegin().
+       */
 
-   void (*RenderPrimitive)(GLcontext *ctx, GLenum mode);
-   /* Called between RednerStart() and RenderFinish() to indicate the
-    * type of primitive we're about to draw.  Mode will be one of the
-    * modes accepted by glBegin().
-    */
+      interp_func Interp;
+      /* The interp function is called by the clipping routines when we need
+       * to generate an interpolated vertex.  All pertinant vertex ancilliary
+       * data should be computed by interpolating between the 'in' and 'out'
+       * vertices.
+       */
 
-   interp_func RenderInterp;
-   /* The interp function is called by the clipping routines when we need
-    * to generate an interpolated vertex.  All pertinant vertex ancilliary
-    * data should be computed by interpolating between the 'in' and 'out'
-    * vertices.
-    */
+      copy_pv_func CopyPV;
+      /* The copy function is used to make a copy of a vertex.  All pertinant
+       * vertex attributes should be copied.
+       */
 
-   copy_pv_func RenderCopyPV;
-   /* The copy function is used to make a copy of a vertex.  All pertinant
-    * vertex attributes should be copied.
-    */
+      void (*ClippedPolygon)( GLcontext *ctx, const GLuint *elts, GLuint n );
+      /* Render a polygon with <n> vertices whose indexes are in the <elts>
+       * array.
+       */
 
-   void (*RenderClippedPolygon)( GLcontext *ctx, const GLuint *elts, GLuint n );
-   /* Render a polygon with <n> vertices whose indexes are in the <elts>
-    * array.
-    */
+      void (*ClippedLine)( GLcontext *ctx, GLuint v0, GLuint v1 );
+      /* Render a line between the two vertices given by indexes v0 and v1. */
 
-   void (*RenderClippedLine)( GLcontext *ctx, GLuint v0, GLuint v1 );
-   /* Render a line between the two vertices given by indexes v0 and v1. */
+      points_func           Points; /* must now respect vb->elts */
+      line_func             Line;
+      triangle_func         Triangle;
+      quad_func             Quad;
+      /* These functions are called in order to render points, lines,
+       * triangles and quads.  These are only called via the T&L module.
+       */
 
-   points_func           PointsFunc; /* must now respect vb->elts */
-   line_func             LineFunc;
-   triangle_func         TriangleFunc;
-   quad_func             QuadFunc;
-   /* These functions are called in order to render points, lines,
-    * triangles and quads.  These are only called via the T&L module.
-    */
+      render_func          *PrimTabVerts;
+      render_func          *PrimTabElts;
+      /* Render whole unclipped primitives (points, lines, linestrips,
+       * lineloops, etc).  The tables are indexed by the GL enum of the
+       * primitive to be rendered.  RenderTabVerts is used for non-indexed
+       * arrays of vertices.  RenderTabElts is used for indexed arrays of
+       * vertices.
+       */
 
-   render_func          *RenderTabVerts;
-   render_func          *RenderTabElts;
-   /* Render whole unclipped primitives (points, lines, linestrips,
-    * lineloops, etc).  The tables are indexed by the GL enum of the
-    * primitive to be rendered.  RenderTabVerts is used for non-indexed
-    * arrays of vertices.  RenderTabElts is used for indexed arrays of
-    * vertices.
-    */
+      void (*ResetLineStipple)( GLcontext *ctx );
+      /* Reset the hardware's line stipple counter.
+       */
 
-   void (*ResetLineStipple)( GLcontext *ctx );
-   /* Reset the hardware's line stipple counter.
-    */
+      setup_func BuildVertices;
+      /* This function is called whenever new vertices are required for
+       * rendering.  The vertices in question are those n such that start
+       * <= n < end.  The new_inputs parameter indicates those fields of
+       * the vertex which need to be updated, if only a partial repair of
+       * the vertex is required.
+       *
+       * This function is called only from _tnl_render_stage in tnl/t_render.c.
+       */
+      
 
-   void (*BuildProjectedVertices)( GLcontext *ctx,
-				   GLuint start, GLuint end,
-				   GLuint new_inputs);
-   /* This function is called whenever new vertices are required for
-    * rendering.  The vertices in question are those n such that start
-    * <= n < end.  The new_inputs parameter indicates those fields of
-    * the vertex which need to be updated, if only a partial repair of
-    * the vertex is required.
-    *
-    * This function is called only from _tnl_render_stage in tnl/t_render.c.
-    */
-
-
-   GLboolean (*MultipassFunc)( GLcontext *ctx, GLuint passno );
-   /* Driver may request additional render passes by returning GL_TRUE
-    * when this function is called.  This function will be called
-    * after the first pass, and passes will be made until the function
-    * returns GL_FALSE.  If no function is registered, only one pass
-    * is made.
-    *
-    * This function will be first invoked with passno == 1.
-    */
+      GLboolean (*Multipass)( GLcontext *ctx, GLuint passno );
+      /* Driver may request additional render passes by returning GL_TRUE
+       * when this function is called.  This function will be called
+       * after the first pass, and passes will be made until the function
+       * returns GL_FALSE.  If no function is registered, only one pass
+       * is made.
+       *
+       * This function will be first invoked with passno == 1.
+       */
+   } Render;
 };
-
+   
 
 typedef struct {
 

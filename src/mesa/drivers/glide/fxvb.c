@@ -1,9 +1,6 @@
-
 /*
- * Mesa 3-D graphics library
- * Version:  3.3
- *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * GLX Hardware Device Driver for Intel i810
+ * Copyright (C) 1999 Keith Whitwell
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -18,400 +15,379 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * KEITH WHITWELL, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM, 
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  *
- * Original Mesa / 3Dfx device driver (C) 1999 David Bucciarelli, by the
- * terms stated above.
- *
- * Author:
- *   Keith Whitwell <keith@precisioninsight.com>
  */
-
-
-/* fxvsetup.c - 3Dfx VooDoo vertices setup functions */
-
-
-#ifdef HAVE_CONFIG_H
-#include "conf.h"
-#endif
-
-#if defined(FX)
-
-#include "fxdrv.h"
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfxvb.c,v 1.7 2000/11/08 05:02:43 dawes Exp $ */
+ 
+#include "glheader.h"
+#include "mtypes.h"
+#include "mem.h"
+#include "macros.h"
+#include "colormac.h"
 #include "mmath.h"
+
+#include "math/m_translate.h"
 #include "swrast_setup/swrast_setup.h"
 
+#include "tnl/tnl.h"
 #include "tnl/t_context.h"
-#include "tnl/t_pipeline.h"
+
+#include "fxdrv.h"
 
 
-void
-fxPrintSetupFlags(const char *msg, GLuint flags)
+static void copy_pv( GLcontext *ctx, GLuint edst, GLuint esrc )
 {
-   fprintf(stderr, "%s: %d %s%s%s%s%s\n",
-	   msg,
-	   flags,
-	   (flags & SETUP_XYZW) ? " xyzw," : "",
-	   (flags & SETUP_SNAP) ? " snap," : "",
-	   (flags & SETUP_RGBA) ? " rgba," : "",
-	   (flags & SETUP_TMU0) ? " tmu0," : "",
-	   (flags & SETUP_TMU1) ? " tmu1," : "");
+   fxMesaContext fxMesa = FX_CONTEXT( ctx );
+   GrVertex *dst = fxMesa->verts + edst;
+   GrVertex *src = fxMesa->verts + esrc;
+
+   dst->r = src->r;
+   dst->g = src->g;
+   dst->b = src->b;
+   dst->a = src->a;
 }
 
-static void
-project_texcoords(fxVertex * v,
-		  struct vertex_buffer *VB,
-		  GLuint tmu_nr, GLuint tc_nr, GLuint start, GLuint count)
+typedef void (*emit_func)( GLcontext *, GLuint, GLuint, void * );
+
+static struct {
+   emit_func	        emit;
+   interp_func		interp;
+   GLboolean           (*check_tex_sizes)( GLcontext *ctx );
+   GLuint               vertex_format;
+} setup_tab[MAX_SETUP];
+
+
+static void import_float_colors( GLcontext *ctx )
 {
-   GrTmuVertex *tmu = &(v->v.tmuvtx[tmu_nr]);
-   GLvector4f *vec = VB->TexCoordPtr[tc_nr];
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   struct gl_client_array *from = VB->ColorPtr[0];
+   struct gl_client_array *to = &FX_CONTEXT(ctx)->UbyteColor;
+   GLuint count = VB->Count;
 
-   GLuint i;
-   GLuint stride = vec->stride;
-   GLfloat *data = VEC_ELT(vec, GLfloat, start);
-
-   for (i = start; i < count; i++, STRIDE_F(data, stride), v++) {
-      tmu->oow = v->v.oow * data[3];
-      tmu = (GrTmuVertex *) ((char *) tmu + sizeof(fxVertex));
+   if (!to->Ptr) {
+      to->Ptr = ALIGN_MALLOC( VB->Size * 4 * sizeof(GLubyte), 32 );
+      to->Type = GL_UNSIGNED_BYTE;
    }
-}
 
-
-static void
-copy_w(fxVertex * v,
-       struct vertex_buffer *VB, GLuint tmu_nr, GLuint start, GLuint count)
-{
-   GrTmuVertex *tmu = &(v->v.tmuvtx[tmu_nr]);
-   GLuint i;
-
-   for (i = start; i < count; i++, v++) {
-      tmu->oow = v->v.oow;
-      tmu = (GrTmuVertex *) ((char *) tmu + sizeof(fxVertex));
+   /* No need to transform the same value 3000 times.
+    */
+   if (!from->StrideB) {
+      to->StrideB = 0;
+      count = 1;
    }
+   else
+      to->StrideB = 4 * sizeof(GLubyte);
+   
+   _math_trans_4ub( (GLubyte (*)[4]) to->Ptr,
+		    from->Ptr,
+		    from->StrideB,
+		    from->Type,
+		    from->Size,
+		    0,
+		    count);
+
+   VB->ColorPtr[0] = to;
 }
 
-/* need to compute W values for fogging purposes 
- */
-static void
-fx_fake_fog_w(GLcontext * ctx,
-	      fxVertex * verts,
-	      struct vertex_buffer *VB, GLuint start, GLuint end)
-{
-   const GLfloat m10 = ctx->ProjectionMatrix.m[10];
-   const GLfloat m14 = ctx->ProjectionMatrix.m[14];
-   GLfloat(*clip)[4] = VB->ClipPtr->data;
-   GLubyte *clipmask = VB->ClipMask;
-   GLuint i;
 
-   for (i = start; i < end; i++) {
-      if (clipmask[i] == 0) {
-	 verts[i].v.oow = -m10 / (clip[i][2] - m14);	/* -1/zEye */
+#define GET_COLOR(ptr, idx) (((GLfloat (*)[4])((ptr)->Ptr))[idx])
+
+
+static void interp_extras( GLcontext *ctx,
+			   GLfloat t,
+			   GLuint dst, GLuint out, GLuint in,
+			   GLboolean force_boundary )
+{
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+
+   /*fprintf(stderr, "%s\n", __FUNCTION__);*/
+
+   if (VB->ColorPtr[1]) {
+      INTERP_4F( t,
+		 GET_COLOR(VB->ColorPtr[1], dst),
+		 GET_COLOR(VB->ColorPtr[1], out),
+		 GET_COLOR(VB->ColorPtr[1], in) );
+
+      if (VB->SecondaryColorPtr[1]) {
+	 INTERP_3F( t,
+		    GET_COLOR(VB->SecondaryColorPtr[1], dst),
+		    GET_COLOR(VB->SecondaryColorPtr[1], out),
+		    GET_COLOR(VB->SecondaryColorPtr[1], in) );
       }
    }
+
+   if (VB->EdgeFlag) {
+      VB->EdgeFlag[dst] = VB->EdgeFlag[out] || force_boundary;
+   }
+
+   setup_tab[FX_CONTEXT(ctx)->SetupIndex].interp(ctx, t, dst, out, in,
+						   force_boundary);
+}
+
+static void copy_pv_extras( GLcontext *ctx, GLuint dst, GLuint src )
+{
+   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+
+   if (VB->ColorPtr[1]) {
+	 COPY_4FV( GET_COLOR(VB->ColorPtr[1], dst), 
+		   GET_COLOR(VB->ColorPtr[1], src) );
+
+	 if (VB->SecondaryColorPtr[1]) {
+	    COPY_4FV( GET_COLOR(VB->SecondaryColorPtr[1], dst), 
+		      GET_COLOR(VB->SecondaryColorPtr[1], src) );
+	 }
+   }
+
+   copy_pv(ctx, dst, src);
 }
 
 
-
-static tfxSetupFunc setupfuncs[MAX_SETUP];
-
-
-#define IND (SETUP_XYZW)
-#define INPUTS (VERT_CLIP)
-#define NAME fxsetupXYZW
-#include "fxvbtmp.h"
-
 #define IND (SETUP_XYZW|SETUP_RGBA)
-#define INPUTS (VERT_CLIP|VERT_RGBA)
-#define NAME fxsetupXYZWRGBA
+#define TAG(x) x##_wg
 #include "fxvbtmp.h"
 
-#define IND (SETUP_XYZW|SETUP_TMU0)
-#define INPUTS (VERT_CLIP|VERT_TEX_ANY)
-#define NAME fxsetupXYZWT0
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0)
+#define TAG(x) x##_wgt0
 #include "fxvbtmp.h"
 
-#define IND (SETUP_XYZW|SETUP_TMU1)
-#define INPUTS (VERT_CLIP|VERT_TEX_ANY)
-#define NAME fxsetupXYZWT1
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_TMU1)
+#define TAG(x) x##_wgt0t1
 #include "fxvbtmp.h"
 
-#define IND (SETUP_XYZW|SETUP_TMU1|SETUP_TMU0)
-#define INPUTS (VERT_CLIP|VERT_TEX_ANY)
-#define NAME fxsetupXYZWT0T1
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_PTEX)
+#define TAG(x) x##_wgpt0
 #include "fxvbtmp.h"
 
-#define IND (SETUP_XYZW|SETUP_TMU0|SETUP_RGBA)
-#define INPUTS (VERT_CLIP|VERT_RGBA|VERT_TEX_ANY)
-#define NAME fxsetupXYZWRGBAT0
-#include "fxvbtmp.h"
-
-#define IND (SETUP_XYZW|SETUP_TMU1|SETUP_RGBA)
-#define INPUTS (VERT_CLIP|VERT_RGBA|VERT_TEX_ANY)
-#define NAME fxsetupXYZWRGBAT1
-#include "fxvbtmp.h"
-
-#define IND (SETUP_XYZW|SETUP_TMU1|SETUP_TMU0|SETUP_RGBA)
-#define INPUTS (VERT_CLIP|VERT_RGBA|VERT_TEX_ANY)
-#define NAME fxsetupXYZWRGBAT0T1
+#define IND (SETUP_XYZW|SETUP_RGBA|SETUP_TMU0|SETUP_TMU1|\
+             SETUP_PTEX)
+#define TAG(x) x##_wgpt0t1
 #include "fxvbtmp.h"
 
 
-#define IND (SETUP_XYZW|SETUP_SNAP)
-#define INPUTS (VERT_CLIP)
-#define NAME fxsetupXYZW_SNAP
-#include "fxvbtmp.h"
-
+/* Snapping for voodoo-1
+ */
 #define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA)
-#define INPUTS (VERT_CLIP|VERT_RGBA)
-#define NAME fxsetupXYZW_SNAP_RGBA
+#define TAG(x) x##_wsg
 #include "fxvbtmp.h"
 
-#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_TMU0)
-#define INPUTS (VERT_CLIP|VERT_TEX_ANY)
-#define NAME fxsetupXYZW_SNAP_T0
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0)
+#define TAG(x) x##_wsgt0
 #include "fxvbtmp.h"
 
-#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_TMU1)
-#define INPUTS (VERT_CLIP|VERT_TEX_ANY)
-#define NAME fxsetupXYZW_SNAP_T1
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
+             SETUP_TMU1)
+#define TAG(x) x##_wsgt0t1
 #include "fxvbtmp.h"
 
-#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_TMU1|SETUP_TMU0)
-#define INPUTS (VERT_CLIP|VERT_TEX_ANY)
-#define NAME fxsetupXYZW_SNAP_T0T1
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
+             SETUP_PTEX)
+#define TAG(x) x##_wsgpt0
 #include "fxvbtmp.h"
 
-#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_TMU0|SETUP_RGBA)
-#define INPUTS (VERT_CLIP|VERT_RGBA|VERT_TEX_ANY)
-#define NAME fxsetupXYZW_SNAP_RGBAT0
-#include "fxvbtmp.h"
-
-#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_TMU1|SETUP_RGBA)
-#define INPUTS (VERT_CLIP|VERT_RGBA|VERT_TEX_ANY)
-#define NAME fxsetupXYZW_SNAP_RGBAT1
-#include "fxvbtmp.h"
-
-#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_TMU1|SETUP_TMU0|SETUP_RGBA)
-#define INPUTS (VERT_CLIP|VERT_RGBA|VERT_TEX_ANY)
-#define NAME fxsetupXYZW_SNAP_RGBAT0T1
+#define IND (SETUP_XYZW|SETUP_SNAP|SETUP_RGBA|SETUP_TMU0|\
+	     SETUP_TMU1|SETUP_PTEX)
+#define TAG(x) x##_wsgpt0t1
 #include "fxvbtmp.h"
 
 
-
+/* Vertex repair (multipass rendering)
+ */
 #define IND (SETUP_RGBA)
-#define INPUTS (VERT_RGBA)
-#define NAME fxsetupRGBA
+#define TAG(x) x##_g
 #include "fxvbtmp.h"
 
 #define IND (SETUP_TMU0)
-#define INPUTS (VERT_TEX_ANY)
-#define NAME fxsetupT0
+#define TAG(x) x##_t0
 #include "fxvbtmp.h"
 
-#define IND (SETUP_TMU1)
-#define INPUTS (VERT_TEX_ANY)
-#define NAME fxsetupT1
+#define IND (SETUP_TMU0|SETUP_TMU1)
+#define TAG(x) x##_t0t1
 #include "fxvbtmp.h"
 
-#define IND (SETUP_TMU1|SETUP_TMU0)
-#define INPUTS (VERT_TEX_ANY)
-#define NAME fxsetupT0T1
+#define IND (SETUP_RGBA|SETUP_TMU0)
+#define TAG(x) x##_gt0
 #include "fxvbtmp.h"
 
-#define IND (SETUP_TMU0|SETUP_RGBA)
-#define INPUTS (VERT_RGBA|VERT_TEX_ANY)
-#define NAME fxsetupRGBAT0
-#include "fxvbtmp.h"
-
-#define IND (SETUP_TMU1|SETUP_RGBA)
-#define INPUTS (VERT_RGBA|VERT_TEX_ANY)
-#define NAME fxsetupRGBAT1
-#include "fxvbtmp.h"
-
-#define IND (SETUP_TMU1|SETUP_TMU0|SETUP_RGBA)
-#define INPUTS (VERT_RGBA|VERT_TEX_ANY)
-#define NAME fxsetupRGBAT0T1
+#define IND (SETUP_RGBA|SETUP_TMU0|SETUP_TMU1)
+#define TAG(x) x##_gt0t1
 #include "fxvbtmp.h"
 
 
-static void
-fxsetup_invalid(GLcontext * ctx, GLuint start, GLuint end)
+
+static void init_setup_tab( void )
 {
-   fprintf(stderr, "fxMesa: invalid setup function\n");
-   (void) (ctx && start && end);
+   init_wg();
+   init_wgt0();
+   init_wgt0t1();
+   init_wgpt0();
+   init_wgpt0t1();
+
+   init_wsg();
+   init_wsgt0();
+   init_wsgt0t1();
+   init_wsgpt0();
+   init_wsgpt0t1();
+
+   init_g();
+   init_t0();
+   init_t0t1();
+   init_gt0();
+   init_gt0t1();
 }
 
 
-void
-fxDDSetupInit(void)
+void fxPrintSetupFlags(char *msg, GLuint flags )
 {
-   GLuint i;
-   for (i = 0; i < Elements(setupfuncs); i++)
-      setupfuncs[i] = fxsetup_invalid;
-
-   setupfuncs[SETUP_XYZW] = fxsetupXYZW;
-   setupfuncs[SETUP_XYZW | SETUP_RGBA] = fxsetupXYZWRGBA;
-   setupfuncs[SETUP_XYZW | SETUP_TMU0] = fxsetupXYZWT0;
-   setupfuncs[SETUP_XYZW | SETUP_TMU1] = fxsetupXYZWT1;
-   setupfuncs[SETUP_XYZW | SETUP_TMU0 | SETUP_RGBA] = fxsetupXYZWRGBAT0;
-   setupfuncs[SETUP_XYZW | SETUP_TMU1 | SETUP_RGBA] = fxsetupXYZWRGBAT1;
-   setupfuncs[SETUP_XYZW | SETUP_TMU1 | SETUP_TMU0] = fxsetupXYZWT0T1;
-   setupfuncs[SETUP_XYZW | SETUP_TMU1 | SETUP_TMU0 | SETUP_RGBA] =
-      fxsetupXYZWRGBAT0T1;
-
-   setupfuncs[SETUP_XYZW | SETUP_SNAP] = fxsetupXYZW_SNAP;
-   setupfuncs[SETUP_XYZW | SETUP_SNAP | SETUP_RGBA] = fxsetupXYZW_SNAP_RGBA;
-   setupfuncs[SETUP_XYZW | SETUP_SNAP | SETUP_TMU0] = fxsetupXYZW_SNAP_T0;
-   setupfuncs[SETUP_XYZW | SETUP_SNAP | SETUP_TMU1] = fxsetupXYZW_SNAP_T1;
-   setupfuncs[SETUP_XYZW | SETUP_SNAP | SETUP_TMU0 | SETUP_RGBA] =
-      fxsetupXYZW_SNAP_RGBAT0;
-   setupfuncs[SETUP_XYZW | SETUP_SNAP | SETUP_TMU1 | SETUP_RGBA] =
-      fxsetupXYZW_SNAP_RGBAT1;
-   setupfuncs[SETUP_XYZW | SETUP_SNAP | SETUP_TMU1 | SETUP_TMU0] =
-      fxsetupXYZW_SNAP_T0T1;
-   setupfuncs[SETUP_XYZW | SETUP_SNAP | SETUP_TMU1 | SETUP_TMU0 | SETUP_RGBA]
-      = fxsetupXYZW_SNAP_RGBAT0T1;
-
-   setupfuncs[SETUP_RGBA] = fxsetupRGBA;
-   setupfuncs[SETUP_TMU0] = fxsetupT0;
-   setupfuncs[SETUP_TMU1] = fxsetupT1;
-   setupfuncs[SETUP_TMU1 | SETUP_TMU0] = fxsetupT0T1;
-   setupfuncs[SETUP_TMU0 | SETUP_RGBA] = fxsetupRGBAT0;
-   setupfuncs[SETUP_TMU1 | SETUP_RGBA] = fxsetupRGBAT1;
-   setupfuncs[SETUP_TMU1 | SETUP_TMU0 | SETUP_RGBA] = fxsetupRGBAT0T1;
+   fprintf(stderr, "%s(%x): %s%s%s%s\n",
+	   msg,
+	   (int)flags,
+	   (flags & SETUP_XYZW)     ? " xyzw," : "", 
+	   (flags & SETUP_SNAP)     ? " snap," : "", 
+	   (flags & SETUP_RGBA)     ? " rgba," : "",
+	   (flags & SETUP_TMU0)     ? " tex-0," : "",
+	   (flags & SETUP_TMU1)     ? " tex-1," : "");
 }
 
 
 
-void
-fx_validate_BuildProjVerts(GLcontext * ctx, GLuint start, GLuint count,
-			   GLuint newinputs)
+void fxCheckTexSizes( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   fxMesaContext fxMesa = (fxMesaContext) ctx->DriverCtx;
+   fxMesaContext fxMesa = FX_CONTEXT( ctx );
 
-   if (!fxMesa->is_in_hardware)
-      tnl->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
-   else {
-      GLuint setupindex = SETUP_XYZW;
+   if (!setup_tab[fxMesa->SetupIndex].check_tex_sizes(ctx)) {
+      GLuint ind = fxMesa->SetupIndex |= (SETUP_PTEX|SETUP_RGBA);
 
-      if (fxMesa->snapVertices)
-         setupindex |= SETUP_SNAP;
-
-      fxMesa->tmu_source[0] = 0;
-      fxMesa->tmu_source[1] = 1;
-      fxMesa->tex_dest[0] = SETUP_TMU0;
-      fxMesa->tex_dest[1] = SETUP_TMU1;
-
-      /* For flat and two-side-lit triangles, colors will always be added
-       * to vertices in the triangle functions.  Vertices will *always*
-       * have rbga values, but only sometimes will they come from here.
+      /* Tdfx handles projective textures nicely; just have to change
+       * up to the new vertex format.
        */
-      if ((ctx->_TriangleCaps & (DD_FLATSHADE | DD_TRI_LIGHT_TWOSIDE)) == 0)
-	 setupindex |= SETUP_RGBA;
+      if (setup_tab[ind].vertex_format != fxMesa->stw_hint_state) {
 
-      if (ctx->Texture._ReallyEnabled & TEXTURE0_2D)
-	 setupindex |= SETUP_TMU0;
+	 fxMesa->stw_hint_state = setup_tab[ind].vertex_format;
+	 FX_grHints(GR_HINT_STWHINT, fxMesa->stw_hint_state);
 
-      if (ctx->Texture._ReallyEnabled & TEXTURE1_2D) {
-	 if ((ctx->Texture._ReallyEnabled & TEXTURE0_2D) == 0) {
-	    fxMesa->tmu_source[0] = 1;
-	    fxMesa->tex_dest[0] = SETUP_TMU1;
-	    fxMesa->tmu_source[1] = 0;
-	    fxMesa->tex_dest[1] = SETUP_TMU0;
-	    setupindex |= SETUP_TMU0;
-	 }
-	 else {
-	    setupindex |= SETUP_TMU1;
+	 /* This is required as we have just changed the vertex
+	  * format, so the interp routines must also change.
+	  * In the unfilled and twosided cases we are using the
+	  * Extras ones anyway, so leave them in place.
+	  */
+	 if (!(ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED))) {
+	    tnl->Driver.Render.Interp = setup_tab[fxMesa->SetupIndex].interp;
 	 }
       }
-
-      if (MESA_VERBOSE & (VERBOSE_DRIVER | VERBOSE_PIPELINE | VERBOSE_STATE))
-	 fxPrintSetupFlags("fxmesa: vertex setup function", setupindex);
-
-      fxMesa->setupindex = setupindex;
-      tnl->Driver.BuildProjectedVertices = fx_BuildProjVerts;
    }
-   tnl->Driver.BuildProjectedVertices(ctx, start, count, newinputs);
 }
 
 
-void
-fx_BuildProjVerts(GLcontext * ctx, GLuint start, GLuint count,
-		  GLuint newinputs)
+void fxBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
+			GLuint newinputs )
 {
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   fxMesaContext fxMesa = FX_CONTEXT( ctx );
+   GrVertex *v = (fxMesa->verts + start);
 
-   if (newinputs == ~0) {
-      /* build interpolated vertices */
-      setupfuncs[fxMesa->setupindex] (ctx, start, count);
-   }
-   else {
-      GLuint ind = fxMesa->setup_gone;
-      fxMesa->setup_gone = 0;
+   if (!newinputs)
+      return;
 
-      if (newinputs & VERT_CLIP)
-	 ind = fxMesa->setupindex;	/* clipmask has potentially changed */
-      else {
-	 if (newinputs & VERT_TEX0)
-	    ind |= fxMesa->tex_dest[0];
+   if (newinputs & VERT_CLIP) {
+      setup_tab[fxMesa->SetupIndex].emit( ctx, start, count, v );   
+   } else {
+      GLuint ind = 0;
 
-	 if (newinputs & VERT_TEX1)
-	    ind |= fxMesa->tex_dest[1];
+      if (newinputs & VERT_RGBA)
+	 ind |= SETUP_RGBA;
+      
+      if (newinputs & VERT_TEX0) 
+	 ind |= SETUP_TMU0;
 
-	 if (newinputs & VERT_RGBA)
-	    ind |= SETUP_RGBA;
+      if (newinputs & VERT_TEX1)
+	 ind |= SETUP_TMU0|SETUP_TMU1;
 
-	 ind &= fxMesa->setupindex;
-      }
+      if (fxMesa->SetupIndex & SETUP_PTEX)
+	 ind = ~0;
+
+      ind &= fxMesa->SetupIndex;
 
       if (ind) {
-	 if (fxMesa->new_state)
-	    fxSetupFXUnits(ctx);	/* why? */
-
-	 if (VB->importable_data & newinputs)
-	    VB->import_data(ctx, VB->importable_data & newinputs,
-			    VEC_BAD_STRIDE);
-
-	 setupfuncs[ind] (ctx, start, count);
+	 setup_tab[ind].emit( ctx, start, count, v );   
       }
    }
 }
 
-void
-fxAllocVB(GLcontext * ctx)
+
+void fxChooseVertexState( GLcontext *ctx )
 {
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   fxMesa->verts = ALIGN_MALLOC(tnl->vb.Size * sizeof(fxMesa->verts[0]), 32);
+   fxMesaContext fxMesa = FX_CONTEXT( ctx );
+   GLuint ind = SETUP_XYZW|SETUP_RGBA;
+
+   if (fxMesa->snapVertices)
+      ind |= SETUP_SNAP;
+
+   fxMesa->tmu_source[0] = 0;
+   fxMesa->tmu_source[1] = 1;
+
+   if (ctx->Texture._ReallyEnabled & 0xf0) {
+      if (ctx->Texture._ReallyEnabled & 0xf) {
+	 ind |= SETUP_TMU1|SETUP_TMU0;
+      }
+      else {
+	 fxMesa->tmu_source[0] = 1;
+	 fxMesa->tmu_source[1] = 0;
+	 ind |= SETUP_TMU0;
+      }
+   }
+   else if (ctx->Texture._ReallyEnabled & 0xf) {
+      ind |= SETUP_TMU0;
+   }
+   
+   fxMesa->SetupIndex = ind;
+
+   if (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED)) {
+      tnl->Driver.Render.Interp = interp_extras;
+      tnl->Driver.Render.CopyPV = copy_pv_extras;
+   } else {
+      tnl->Driver.Render.Interp = setup_tab[ind].interp;
+      tnl->Driver.Render.CopyPV = copy_pv;
+   }
+
+   if (setup_tab[ind].vertex_format != fxMesa->stw_hint_state) {
+      fxMesa->stw_hint_state = setup_tab[ind].vertex_format;
+      FX_grHints(GR_HINT_STWHINT, fxMesa->stw_hint_state);
+   }
 }
 
-void
-fxFreeVB(GLcontext * ctx)
+
+
+void fxAllocVB( GLcontext *ctx )
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   if (fxMesa->verts)
-      ALIGN_FREE(fxMesa->verts);
-   fxMesa->verts = 0;
+   GLuint size = TNL_CONTEXT(ctx)->vb.Size;
+   static int firsttime = 1;
+   if (firsttime) {
+      init_setup_tab();
+      firsttime = 0;
+   }
+
+   fxMesa->verts = (GrVertex *)ALIGN_MALLOC(size * sizeof(GrVertex), 32);
+   fxMesa->SetupIndex = SETUP_XYZW|SETUP_RGBA;
 }
 
 
-#else
-
-
-/*
- * Need this to provide at least one external definition.
- */
-
-extern int gl_fx_dummy_function_vsetup(void);
-int
-gl_fx_dummy_function_vsetup(void)
+void fxFreeVB( GLcontext *ctx )
 {
-   return 0;
-}
+   fxMesaContext fxMesa = FX_CONTEXT(ctx);
+   if (fxMesa->verts) {
+      ALIGN_FREE(fxMesa->verts);
+      fxMesa->verts = 0;
+   }
 
-#endif /* FX */
+   if (fxMesa->UbyteColor.Ptr) {
+      ALIGN_FREE(fxMesa->UbyteColor.Ptr);
+      fxMesa->UbyteColor.Ptr = 0;
+   }
+}

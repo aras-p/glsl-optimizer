@@ -1,4 +1,4 @@
-/* $Id: t_pipeline.h,v 1.7 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_pipeline.h,v 1.8 2001/07/12 22:09:22 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -65,5 +65,11 @@ extern const struct gl_pipeline_stage *_tnl_default_pipeline[];
  */
 extern render_func _tnl_render_tab_elts[];
 extern render_func _tnl_render_tab_verts[];
+
+extern void _tnl_RenderClippedPolygon( GLcontext *ctx, 
+				       const GLuint *elts, GLuint n );
+
+extern void _tnl_RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj );
+
 
 #endif

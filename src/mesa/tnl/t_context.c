@@ -1,4 +1,4 @@
-/* $Id: t_context.c,v 1.20 2001/06/28 17:34:14 keithw Exp $ */
+/* $Id: t_context.c,v 1.21 2001/07/12 22:09:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -123,8 +123,8 @@ _tnl_CreateContext( GLcontext *ctx )
    ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
 
-   tnl->Driver.RenderTabElts = _tnl_render_tab_elts;
-   tnl->Driver.RenderTabVerts = _tnl_render_tab_verts;
+   tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
+   tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
 
    
    return GL_TRUE;

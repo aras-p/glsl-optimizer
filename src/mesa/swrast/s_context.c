@@ -1,4 +1,4 @@
-/* $Id: s_context.c,v 1.21 2001/05/17 09:32:17 keithw Exp $ */
+/* $Id: s_context.c,v 1.22 2001/07/12 22:09:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -529,7 +529,7 @@ _swrast_GetDeviceDriverReference( GLcontext *ctx )
    return &swrast->Driver;
 }
 
-#define SWRAST_DEBUG_VERTICES 0
+#define SWRAST_DEBUG_VERTICES 1
 
 void
 _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
@@ -539,6 +539,8 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
    if (SWRAST_DEBUG_VERTICES) {
       fprintf(stderr, "win %f %f %f %f\n",
 	      v->win[0], v->win[1], v->win[2], v->win[3]);
+
+      return;
 
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
 	 fprintf(stderr, "texcoord[%d] %f %f %f %f\n", i,

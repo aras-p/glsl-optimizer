@@ -55,8 +55,6 @@
 #include "enums.h"
 #include "tnl/t_context.h"
 
-/*static GLboolean fxMultipassTexture(GLcontext *, GLuint);*/
-
 static void
 fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
 {
@@ -531,23 +529,8 @@ fxSetupTextureSingleTMU_NoLock(GLcontext * ctx, GLuint textureset)
 				  localc, GR_COMBINE_OTHER_TEXTURE, FXFALSE);
       break;
    case GL_BLEND:
-#if 0
-      FX_grAlphaCombine_NoLock(GR_COMBINE_FUNCTION_SCALE_OTHER,
-			       GR_COMBINE_FACTOR_LOCAL,
-			       locala, GR_COMBINE_OTHER_TEXTURE, FXFALSE);
-      if (ifmt == GL_ALPHA)
-	 FX_grColorCombine_NoLock(GR_COMBINE_FUNCTION_LOCAL,
-				  GR_COMBINE_FACTOR_NONE,
-				  localc, GR_COMBINE_OTHER_NONE, FXFALSE);
-      else
-	 FX_grColorCombine_NoLock(GR_COMBINE_FUNCTION_SCALE_OTHER_ADD_LOCAL,
-				  GR_COMBINE_FACTOR_LOCAL,
-				  localc, GR_COMBINE_OTHER_TEXTURE, FXTRUE);
-      ctx->Driver.MultipassFunc = fxMultipassBlend;
-#else
       if (MESA_VERBOSE & VERBOSE_DRIVER)
 	 fprintf(stderr, "fx Driver: GL_BLEND not yet supported\n");
-#endif
       break;
    case GL_REPLACE:
       if ((ifmt == GL_RGB) || (ifmt == GL_LUMINANCE))
@@ -1037,7 +1020,7 @@ fxSetupTexture_NoLock(GLcontext * ctx)
     */
    tex2Denabled = (ctx->Texture._ReallyEnabled & TEXTURE0_2D);
 
-   if (fxMesa->emulateTwoTMUs)
+   if (fxMesa->haveTwoTMUs)
       tex2Denabled |= (ctx->Texture._ReallyEnabled & TEXTURE1_2D);
 
    switch (tex2Denabled) {
@@ -1055,7 +1038,6 @@ fxSetupTexture_NoLock(GLcontext * ctx)
 	    fprintf(stderr, "fxmesa: enabling fake multitexture\n");
 
 	 fxSetupTextureSingleTMU_NoLock(ctx, 0);
-	 /*ctx->Driver.MultipassFunc = fxMultipassTexture;*/
       }
       break;
    default:
@@ -1547,7 +1529,8 @@ fxSetupCull(GLcontext * ctx)
    else
       FX_CONTEXT(ctx)->cullMode = GR_CULL_DISABLE;
 
-   FX_grCullMode(FX_CONTEXT(ctx)->cullMode);
+   if (FX_CONTEXT(ctx)->raster_primitive == GL_TRIANGLES)
+      FX_grCullMode(FX_CONTEXT(ctx)->cullMode);
 }
 
 
@@ -1616,129 +1599,7 @@ fxDDEnable(GLcontext * ctx, GLenum cap, GLboolean state)
    }
 }
 
-#if 0
-/*
-  Multipass to do GL_BLEND texture functions
-  Cf*(1-Ct) has already been written to the buffer during the first pass
-  Cc*Ct gets written during the second pass (in this function)
-  Everything gets reset in the third call (in this function)
-*/
-static GLboolean
-fxMultipassBlend(struct vertex_buffer *VB, GLuint pass)
-{
-   GLcontext *ctx = VB->ctx;
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
 
-   switch (pass) {
-   case 1:
-      /* Add Cc*Ct */
-      fxMesa->restoreUnitsState = fxMesa->unitsState;
-      if (ctx->Depth.Mask) {
-	 /* We don't want to check or change the depth buffers */
-	 switch (ctx->Depth.Func) {
-	 case GL_NEVER:
-	 case GL_ALWAYS:
-	    break;
-	 default:
-	    fxDDDepthFunc(ctx, GL_EQUAL);
-	    break;
-	 }
-	 fxDDDepthMask(ctx, FALSE);
-      }
-      /* Enable Cc*Ct mode */
-      /* XXX Set the Constant Color ? */
-      fxDDEnable(ctx, GL_BLEND, GL_TRUE);
-      fxDDBlendFunc(ctx, XXX, XXX);
-      fxSetupTextureSingleTMU(ctx, XXX);
-      fxSetupBlend(ctx);
-      fxSetupDepthTest(ctx);
-      break;
-
-   case 2:
-      /* Reset everything back to normal */
-      fxMesa->unitsState = fxMesa->restoreUnitsState;
-      fxMesa->setup_gone |= XXX;
-      fxSetupTextureSingleTMU(ctx, XXX);
-      fxSetupBlend(ctx);
-      fxSetupDepthTest(ctx);
-      break;
-   }
-
-   return pass == 1;
-}
-#endif
-
-/************************************************************************/
-/******************** Fake Multitexture Support *************************/
-/************************************************************************/
-
-/* Its considered cheeky to try to fake ARB multitexture by doing
- * multipass rendering, because it is not possible to emulate the full
- * spec in this way.  The fact is that the voodoo 2 supports only a
- * subset of the possible multitexturing modes, and it is possible to
- * support almost the same subset using multipass blending on the
- * voodoo 1.  In all other cases for both voodoo 1 and 2, we fall back
- * to software rendering, satisfying the spec if not the user.  
- */
-static GLboolean
-fxMultipassTexture(GLcontext * ctx, GLuint pass)
-{
-   fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   fxVertex *v = fxMesa->verts;
-   fxVertex *last = fxMesa->verts + tnl->vb.Count;
-
-   switch (pass) {
-   case 1:
-      if (MESA_VERBOSE &
-	  (VERBOSE_DRIVER | VERBOSE_PIPELINE | VERBOSE_TEXTURE))
-	    fprintf(stderr, "fxmesa: Second texture pass\n");
-
-      for (; v != last; v++) {
-	 v->f[S0COORD] = v->f[S1COORD];
-	 v->f[T0COORD] = v->f[T1COORD];
-      }
-
-      fxMesa->restoreUnitsState = fxMesa->unitsState;
-      fxMesa->tmu_source[0] = 1;
-
-      if (ctx->Depth.Mask) {
-	 switch (ctx->Depth.Func) {
-	 case GL_NEVER:
-	 case GL_ALWAYS:
-	    break;
-	 default:
-	    fxDDDepthFunc(ctx, GL_EQUAL);
-	    break;
-	 }
-
-	 fxDDDepthMask(ctx, GL_FALSE);
-      }
-
-      if (ctx->Texture.Unit[1].EnvMode == GL_MODULATE) {
-	 fxDDEnable(ctx, GL_BLEND, GL_TRUE);
-	 fxDDBlendFunc(ctx, GL_DST_COLOR, GL_ZERO);
-      }
-
-      fxSetupTextureSingleTMU(ctx, 1);
-      fxSetupBlend(ctx);
-      fxSetupDepthTest(ctx);
-      break;
-
-   case 2:
-      /* Restore original state.  
-       */
-      fxMesa->tmu_source[0] = 0;
-      fxMesa->unitsState = fxMesa->restoreUnitsState;
-      fxMesa->setup_gone |= SETUP_TMU0;
-      fxSetupTextureSingleTMU(ctx, 0);
-      fxSetupBlend(ctx);
-      fxSetupDepthTest(ctx);
-      break;
-   }
-
-   return pass == 1;
-}
 
 
 /************************************************************************/
@@ -1809,9 +1670,6 @@ fxSetupFXUnits(GLcontext * ctx)
       if (newstate & FX_NEW_CULL)
 	 fxSetupCull(ctx);
 
-      fxMesa->draw_point = fxMesa->initial_point;
-      fxMesa->draw_line = fxMesa->initial_line;
-      fxMesa->draw_tri = fxMesa->initial_tri;
       fxMesa->new_state = 0;
    }
 }

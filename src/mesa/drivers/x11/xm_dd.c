@@ -1,4 +1,4 @@
-/* $Id: xm_dd.c,v 1.24 2001/05/10 12:22:32 keithw Exp $ */
+/* $Id: xm_dd.c,v 1.25 2001/07/12 22:09:21 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -992,19 +992,10 @@ void xmesa_init_pointers( GLcontext *ctx )
     */
    tnl = TNL_CONTEXT(ctx);
    tnl->Driver.RunPipeline = _tnl_run_pipeline;
-   tnl->Driver.RenderStart = _swsetup_RenderStart;
-   tnl->Driver.RenderFinish = _swsetup_RenderFinish;
-   tnl->Driver.BuildProjectedVertices = _swsetup_BuildProjectedVertices;
-   tnl->Driver.RenderPrimitive = _swsetup_RenderPrimitive;
-   tnl->Driver.PointsFunc = _swsetup_Points;
-   tnl->Driver.LineFunc = _swsetup_Line;
-   tnl->Driver.TriangleFunc = _swsetup_Triangle;
-   tnl->Driver.QuadFunc = _swsetup_Quad;
-   tnl->Driver.ResetLineStipple = _swrast_ResetLineStipple;
-   tnl->Driver.RenderInterp = _swsetup_RenderInterp;
-   tnl->Driver.RenderCopyPV = _swsetup_RenderCopyPV;
-   tnl->Driver.RenderClippedLine = _swsetup_RenderClippedLine;
-   tnl->Driver.RenderClippedPolygon = _swsetup_RenderClippedPolygon;
+   
+   /* Install swsetup for tnl->Driver.Render.*:
+    */
+   _swsetup_Wakeup(ctx);
 
    (void) DitherValues;  /* silenced unused var warning */
 }
