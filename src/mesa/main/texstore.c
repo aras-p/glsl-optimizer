@@ -1,4 +1,4 @@
-/* $Id: texstore.c,v 1.19 2001/03/27 19:18:02 gareth Exp $ */
+/* $Id: texstore.c,v 1.20 2001/03/27 20:26:10 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -486,14 +486,13 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
                        struct gl_texture_object *texObj,
                        struct gl_texture_image *texImage)
 {
-   const struct gl_texture_format *texFormat;
    GLint texelBytes;
 
    /* setup the teximage struct's fields */
    _mesa_init_tex_format( ctx, internalFormat, texImage );
-   texImage->FetchTexel = texFormat->FetchTexel3D;
+   texImage->FetchTexel = texImage->TexFormat->FetchTexel3D;
 
-   texelBytes = texFormat->TexelBytes;
+   texelBytes = texImage->TexFormat->TexelBytes;
 
    /* allocate memory */
    texImage->Data = (GLchan *) MALLOC(width * height * depth * texelBytes);
