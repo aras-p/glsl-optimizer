@@ -115,7 +115,7 @@ static void mgaUploadSubImage( mgaContextPtr mmesa,
 
    if (texImage->Data == NULL) {
       fprintf(stderr, "null texture image data tObj %p level %d\n",
-	      t->base.tObj, level);
+	      (void *) t->base.tObj, level);
       return;
    }
 

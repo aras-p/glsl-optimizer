@@ -390,7 +390,7 @@ void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv )
 
 /* This is overkill
  */
-void mgaFinish( GLcontext *ctx  )
+static void mgaFinish( GLcontext *ctx  )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
@@ -588,7 +588,7 @@ void mgaGetILoadBufferLocked( mgaContextPtr mmesa )
 {
    if (MGA_DEBUG&DEBUG_VERBOSE_IOCTL)
       fprintf(stderr, "mgaGetIloadBuffer (buffer now %p)\n",
-	   mmesa->iload_buffer);
+              (void *) mmesa->iload_buffer);
 
    mmesa->iload_buffer = mga_get_buffer_ioctl( mmesa );
 }
@@ -600,7 +600,7 @@ drmBufPtr mgaGetBufferLocked( mgaContextPtr mmesa )
 
 
 
-void mgaFlush( GLcontext *ctx )
+static void mgaFlush( GLcontext *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
 
