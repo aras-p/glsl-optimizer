@@ -1,10 +1,10 @@
-/* $Id: s_span.c,v 1.20 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: s_span.c,v 1.21 2002/01/10 16:54:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1796,7 +1796,7 @@ _old_add_colors(GLuint n, GLchan rgba[][4], GLchan specular[][4] )
 void
 _old_write_texture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 			 const GLdepth z[], const GLfloat fog[],
-			 GLfloat texcoord[][3],
+			 GLfloat texcoord[][4],
 			 GLfloat lambda[],
 			 GLchan rgbaIn[][4], GLchan spec[][4],
 			 const GLfloat coverage[], GLenum primitive )
@@ -1945,7 +1945,7 @@ _old_write_texture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 void
 _old_write_multitexture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 			      const GLdepth z[], const GLfloat fog[],
-			      GLfloat texcoord[MAX_TEXTURE_UNITS][MAX_WIDTH][3],
+			      GLfloat texcoord[MAX_TEXTURE_UNITS][MAX_WIDTH][4],
 			      GLfloat lambda[][MAX_WIDTH],
 			      GLchan rgbaIn[MAX_TEXTURE_UNITS][4],
 			      GLchan spec[MAX_TEXTURE_UNITS][4],

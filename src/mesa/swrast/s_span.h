@@ -1,10 +1,10 @@
-/* $Id: s_span.h,v 1.8 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: s_span.h,v 1.9 2002/01/10 16:54:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -69,18 +69,18 @@ _mesa_rasterize_span(GLcontext *ctx, struct sw_span *span);
 extern void
 _old_write_texture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
 			 const GLdepth z[], const GLfloat fog[],
-			 GLfloat texcoord[][3], GLfloat lambda[],
+			 GLfloat texcoord[][4], GLfloat lambda[],
 			 GLchan rgba[][4], GLchan spec[][4],
 			 const GLfloat coverage[], GLenum primitive );
 
 
 extern void
 _old_write_multitexture_span( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                               const GLdepth z[], const GLfloat fog[],
-                               GLfloat texcoord[MAX_TEXTURE_UNITS][MAX_WIDTH][3],
-                               GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH],
-                               GLchan rgba[][4], GLchan spec[][4],
-                               const GLfloat coverage[],  GLenum primitive );
+                              const GLdepth z[], const GLfloat fog[],
+                              GLfloat texcoord[MAX_TEXTURE_UNITS][MAX_WIDTH][4],
+                              GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH],
+                              GLchan rgba[][4], GLchan spec[][4],
+                              const GLfloat coverage[],  GLenum primitive );
 
 
 extern void

@@ -1,10 +1,10 @@
-/* $Id: s_context.c,v 1.26 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: s_context.c,v 1.27 2002/01/10 16:54:28 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -263,7 +263,7 @@ _swrast_validate_blend_func( GLcontext *ctx, GLuint n,
 static void
 _swrast_validate_texture_sample( GLcontext *ctx, GLuint texUnit,
 				 const struct gl_texture_object *tObj,
-				 GLuint n, GLfloat texcoords[][3],
+				 GLuint n, GLfloat texcoords[][4],
 				 const GLfloat lambda[], GLchan rgba[][4] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);

@@ -1,10 +1,10 @@
-/* $Id: s_drawpix.c,v 1.23 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: s_drawpix.c,v 1.24 2002/01/10 16:54:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -839,42 +839,24 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
          if (ctx->Texture._ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
             GLchan primary_rgba[MAX_WIDTH][4];
             GLuint unit;
-	    GLfloat texcoord[MAX_WIDTH][3];
-            DEFARRAY(GLfloat, s, MAX_WIDTH);  /* mac 32k limitation */
-            DEFARRAY(GLfloat, t, MAX_WIDTH);
-            DEFARRAY(GLfloat, r, MAX_WIDTH);
-            DEFARRAY(GLfloat, q, MAX_WIDTH);
-            CHECKARRAY(s, return);  /* mac 32k limitation */
-            CHECKARRAY(t, return);
-            CHECKARRAY(r, return);
-            CHECKARRAY(q, return);
+
+	    DEFMARRAY(GLfloat, texcoord, MAX_WIDTH, 4);/* mac 32k limitation */
+	    CHECKARRAY(texcoord, return); /* mac 32k limitation */
 
             /* XXX not sure how multitexture is supposed to work here */
             MEMCPY(primary_rgba, rgba, 4 * width * sizeof(GLchan));
 
             for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
                if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-		  GLint i;
                   _mesa_pixeltexgen(ctx, width, (const GLchan (*)[4]) rgba,
-                                    s, t, r, q);
-		  /* this is an ugly work-around. s,t,r has to be
-		     copied to texcoords, because the functions need
-		     different input. */
-		  for (i=0; i<width; i++) {
-		    texcoord[i][0] = s[i],
-		      texcoord[i][1] = t[i],
-		      texcoord[i][2] = r[i];
-		  }
+                                    texcoord);
                   _old_swrast_texture_fragments( ctx, unit, width,
 					     texcoord, NULL,
 					     (CONST GLchan (*)[4]) primary_rgba,
 					     rgba);
                }
             }
-            UNDEFARRAY(s);  /* mac 32k limitation */
-            UNDEFARRAY(t);
-            UNDEFARRAY(r);
-            UNDEFARRAY(q);
+	    UNDEFARRAY(texcoord);  /* mac 32k limitation */
          }
 
          if (quickDraw) {

@@ -1,4 +1,4 @@
-/* $Id: s_copypix.c,v 1.26 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: s_copypix.c,v 1.27 2002/01/10 16:54:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -267,30 +267,23 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
 
       if (ctx->Texture._ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
-         GLfloat s[MAX_WIDTH], t[MAX_WIDTH], r[MAX_WIDTH], q[MAX_WIDTH];
-	 GLfloat texcoord[MAX_WIDTH][3];
          GLchan primary_rgba[MAX_WIDTH][4];
          GLuint unit;
+         DEFMARRAY(GLfloat, texcoord, MAX_WIDTH, 4);  /* mac 32k limitation */
+         CHECKARRAY(texcoord, return); /* mac 32k limitation */
+
          /* XXX not sure how multitexture is supposed to work here */
 
          MEMCPY(primary_rgba, rgba, 4 * width * sizeof(GLchan));
 
          for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-	    GLint i;
             _mesa_pixeltexgen(ctx, width, (const GLchan (*)[4]) rgba,
-                              s, t, r, q);
-	    /* this is an ugly work-around. s,t,r has to be copied to
-               texcoords, because the functions need different
-               input. */
-	    for (i=0; i<width; i++) {
-	      texcoord[i][0] = s[i],
-		texcoord[i][1] = t[i],
-		texcoord[i][2] = r[i];
-	    }
+                              texcoord);
             _old_swrast_texture_fragments( ctx, unit, width, texcoord, NULL,
-				       (CONST GLchan (*)[4]) primary_rgba,
-				       rgba);
+                                           (CONST GLchan (*)[4]) primary_rgba,
+                                           rgba);
          }
+         UNDEFARRAY(texcoord);  /* mac 32k limitation */
       }
 
       /* write row to framebuffer */
@@ -540,39 +533,21 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       if (ctx->Texture._ReallyEnabled && ctx->Pixel.PixelTextureEnabled) {
          GLuint unit;
          GLchan primary_rgba[MAX_WIDTH][4];
-	 GLfloat texcoord[MAX_WIDTH][3];
-         DEFARRAY(GLfloat, s, MAX_WIDTH);  /* mac 32k limitation */
-         DEFARRAY(GLfloat, t, MAX_WIDTH);  /* mac 32k limitation */
-         DEFARRAY(GLfloat, r, MAX_WIDTH);  /* mac 32k limitation */
-         DEFARRAY(GLfloat, q, MAX_WIDTH);  /* mac 32k limitation */
-         CHECKARRAY(s, return); /* mac 32k limitation */
-         CHECKARRAY(t, return);
-         CHECKARRAY(r, return);
-         CHECKARRAY(q, return);
+         DEFMARRAY(GLfloat, texcoord, MAX_WIDTH, 4);  /* mac 32k limitation */
+         CHECKARRAY(texcoord, return); /* mac 32k limitation */
 
          /* XXX not sure how multitexture is supposed to work here */
          MEMCPY(primary_rgba, rgba, 4 * width * sizeof(GLchan));
 
          for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
             _mesa_pixeltexgen(ctx, width, (const GLchan (*)[4]) rgba,
-                              s, t, r, q);
-	    /* this is an ugly work-around. s,t,r has to be copied to
-               texcoords, because the functions need different
-               input. */
-	    for (i=0; i<width; i++) {
-	      texcoord[i][0] = s[i],
-		texcoord[i][1] = t[i],
-		texcoord[i][2] = r[i];
-	    }
+                              texcoord);
             _old_swrast_texture_fragments( ctx, unit, width, texcoord, NULL,
-				       (CONST GLchan (*)[4]) primary_rgba,
-				       rgba);
+                                           (CONST GLchan (*)[4]) primary_rgba,
+                                           rgba);
          }
 
-         UNDEFARRAY(s);  /* mac 32k limitation */
-         UNDEFARRAY(t);
-         UNDEFARRAY(r);
-         UNDEFARRAY(q);
+         UNDEFARRAY(texcoord);  /* mac 32k limitation */
       }
 
       if (quick_draw && dy >= 0 && dy < ctx->DrawBuffer->Height) {

@@ -1,10 +1,10 @@
-/* $Id: s_pixeltex.c,v 1.3 2001/03/12 00:48:42 gareth Exp $ */
+/* $Id: s_pixeltex.c,v 1.4 2002/01/10 16:54:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,37 +45,37 @@
  */
 void
 _mesa_pixeltexgen(GLcontext *ctx, GLuint n, const GLchan rgba[][4],
-                  GLfloat s[], GLfloat t[], GLfloat r[], GLfloat q[])
+                  GLfloat texcoord[][4])
 {
    if (ctx->Pixel.FragmentRgbSource == GL_CURRENT_RASTER_COLOR) {
       GLuint i;
       for (i = 0; i < n; i++) {
-         s[i] = ctx->Current.RasterColor[RCOMP];
-         t[i] = ctx->Current.RasterColor[GCOMP];
-         r[i] = ctx->Current.RasterColor[BCOMP];
+         texcoord[i][0] = ctx->Current.RasterColor[RCOMP];
+         texcoord[i][1] = ctx->Current.RasterColor[GCOMP];
+         texcoord[i][2] = ctx->Current.RasterColor[BCOMP];
       }
    }
    else {
       GLuint i;
       ASSERT(ctx->Pixel.FragmentRgbSource == GL_PIXEL_GROUP_COLOR_SGIS);
       for (i = 0; i < n; i++) {
-         s[i] = CHAN_TO_FLOAT(rgba[i][RCOMP]);
-         t[i] = CHAN_TO_FLOAT(rgba[i][GCOMP]);
-         r[i] = CHAN_TO_FLOAT(rgba[i][BCOMP]);
+         texcoord[i][0] = CHAN_TO_FLOAT(rgba[i][RCOMP]);
+         texcoord[i][1] = CHAN_TO_FLOAT(rgba[i][GCOMP]);
+         texcoord[i][2] = CHAN_TO_FLOAT(rgba[i][BCOMP]);
       }
    }
 
    if (ctx->Pixel.FragmentAlphaSource == GL_CURRENT_RASTER_COLOR) {
       GLuint i;
       for (i = 0; i < n; i++) {
-         q[i] = ctx->Current.RasterColor[ACOMP];
+         texcoord[i][3] = ctx->Current.RasterColor[ACOMP];
       }
    }
    else {
       GLuint i;
       ASSERT(ctx->Pixel.FragmentAlphaSource == GL_PIXEL_GROUP_COLOR_SGIS);
       for (i = 0; i < n; i++) {
-         q[i] = CHAN_TO_FLOAT(rgba[i][ACOMP]);
+         texcoord[i][3] = CHAN_TO_FLOAT(rgba[i][ACOMP]);
       }
    }
 }

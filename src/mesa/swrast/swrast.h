@@ -1,10 +1,10 @@
-/* $Id: swrast.h,v 1.13 2001/12/17 04:54:35 brianp Exp $ */
+/* $Id: swrast.h,v 1.14 2002/01/10 16:54:29 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  4.1
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -144,7 +144,7 @@ struct sw_span {
    } color;
    GLchan specular[MAX_WIDTH][4];
    GLint   itexcoords[MAX_WIDTH][2];                       /* s, t    */
-   GLfloat texcoords[MAX_TEXTURE_UNITS][MAX_WIDTH][3];     /* s, t, r */
+   GLfloat texcoords[MAX_TEXTURE_UNITS][MAX_WIDTH][4];     /* s, t, r */
    GLfloat lambda[MAX_TEXTURE_UNITS][MAX_WIDTH];
    GLfloat coverage[MAX_WIDTH];
    GLubyte mask[MAX_WIDTH];
