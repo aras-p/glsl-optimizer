@@ -7,7 +7,7 @@ CONFIG_NAME = default
 
 # Version info
 MESA_MAJOR=6
-MESA_MINOR=2
+MESA_MINOR=3
 MESA_TINY=0
 
 # external projects
