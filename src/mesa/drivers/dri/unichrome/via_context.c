@@ -22,6 +22,14 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * \file via_context.c
+ * 
+ * \author John Sheng (presumably of either VIA Technologies or S3 Graphics)
+ * \author Others at VIA Technologies?
+ * \author Others at S3 Graphics?
+ */
+
 #include "glheader.h"
 #include "context.h"
 #include "matrix.h"
@@ -53,6 +61,10 @@
 #endif
 #include <stdio.h>
 #include "macros.h"
+
+#define DRIVER_DATE	"20020221"
+
+#include "utils.h"
 
 viaContextPtr current_mesa;
 GLuint VIA_DEBUG = 0;
@@ -97,16 +109,34 @@ AllocateBuffer(viaContextPtr vmesa)
     return GL_TRUE;
 }
 
+/**
+ * Return various strings for \c glGetString.
+ * 
+ * \todo
+ * This function should look at the PCI ID of the chipset to determine what
+ * name to use.  Users with a KM400, for example, might get confused when
+ * the driver says "CLE266".  Having the correct information may also help
+ * folks on the DRI mailing lists debug problems for people.
+ *
+ * \sa glGetString
+ */
 static const GLubyte *viaGetString(GLcontext *ctx, GLenum name)
 {
-    switch (name) {
-    case GL_VENDOR:
-        return (GLubyte *)"VIA Technology";
-    case GL_RENDERER:
-        return (GLubyte *)"Mesa DRI VIA CLE266 20020221";
-    default:
-        return 0;
-    }
+   static char buffer[128];
+   unsigned   offset;
+
+
+   switch (name) {
+   case GL_VENDOR:
+      return (GLubyte *)"VIA Technology";
+
+   case GL_RENDERER:
+      offset = driGetRendererString( buffer, "CLE266", DRIVER_DATE, 0 );
+      return (GLubyte *)buffer;
+
+   default:
+      return NULL;
+   }
 }
 
 void viaReAllocateBuffers(GLframebuffer *drawbuffer)
@@ -227,24 +257,23 @@ static void viaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
     *height = vmesa->driDrawable->h;
 }
 
-static void viaInitExtensions(GLcontext *ctx)
+/* Extension strings exported by the Unichrome driver.
+ */
+static const char * const card_extensions[] = 
 {
-    _mesa_enable_imaging_extensions(ctx);
-    _mesa_enable_extension(ctx, "GL_ARB_multitexture");
-    _mesa_enable_extension(ctx, "GL_ARB_texture_env_add");
-    _mesa_enable_extension(ctx, "GL_EXT_texture_env_add");
-    _mesa_enable_extension(ctx, "GL_EXT_stencil_wrap");
-    _mesa_enable_extension(ctx, "GL_EXT_texture_lod_bias");
-    /*=* John Sheng [2003.7.18] texture combine *=*/
-    _mesa_enable_extension(ctx, "GL_ARB_texture_env_combine");
-    _mesa_enable_extension(ctx, "GL_EXT_texture_env_combine");
-    /*=* John Sheng [2003.7.18] texture dot3 *=*/
-    _mesa_enable_extension(ctx, "GL_ARB_texture_env_dot3");
-    _mesa_enable_extension(ctx, "GL_EXT_texture_env_dot3");
-    /*=* John Sheng [2003.7.18] point parameters */
-    _mesa_enable_extension(ctx, "GL_ARB_point_parameters");
-    _mesa_enable_extension(ctx, "GL_EXT_point_parameters");
-}
+   "GL_ARB_multitexture",
+   "GL_ARB_point_parameters",        /* John Sheng [2003.7.18] point param. */
+   "GL_ARB_texture_env_add",
+   "GL_ARB_texture_env_combine",     /* John Sheng [2003.7.18] tex combine */
+   "GL_ARB_texture_env_dot3",        /* John Sheng [2003.7.18] tex dot3 */
+   "GL_EXT_point_parameters",        /* John Sheng [2003.7.18] point param. */
+   "GL_EXT_stencil_wrap",
+   "GL_EXT_texture_env_add",
+   "GL_EXT_texture_env_combine",     /* John Sheng [2003.7.18] tex combine */
+   "GL_EXT_texture_env_dot3",        /* John Sheng [2003.7.18] tex dot3 */
+   "GL_EXT_texture_lod_bias",
+   NULL
+};
 
 extern const struct tnl_pipeline_stage _via_fastrender_stage;
 extern const struct tnl_pipeline_stage _via_render_stage;
@@ -485,7 +514,7 @@ viaCreateContext(const __GLcontextModes *mesaVis,
 
     _math_matrix_ctr(&vmesa->ViewportMatrix);
 
-    viaInitExtensions(ctx);
+   driInitExtensions( ctx, card_extensions, GL_TRUE );
     viaInitStateFuncs(ctx);
     viaInitTextures(ctx);
     viaInitTriFuncs(ctx);
