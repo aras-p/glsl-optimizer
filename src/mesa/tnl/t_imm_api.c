@@ -1,4 +1,4 @@
-/* $Id: t_imm_api.c,v 1.21 2001/12/15 02:13:32 brianp Exp $ */
+/* $Id: t_imm_api.c,v 1.22 2001/12/17 09:02:55 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -1121,7 +1121,9 @@ static void
 _tnl_VertexAttrib4fNV(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
    /* no-op? */
+#ifndef __VMS
    printf("%s(%d, %f, %f, %f, %f)\n", __FUNCTION__, index, x, y, z, w);
+#endif
    (void) index;
    (void) x;
    (void) y;

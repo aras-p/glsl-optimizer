@@ -67,6 +67,9 @@ CORE_SOURCES =accum.c \
 	texutil.c \
 	varray.c \
 	vtxfmt.c \
+	vpstate.c \
+	vpexec.c \
+	vtparse.c \
 	[.x86]x86.c
 
 DRIVER_SOURCES = [.x]glxapi.c [.x]fakeglx.c [.x]xfonts.c \
@@ -134,6 +137,7 @@ TNL_SOURCES=[.tnl]t_array_api.c \
 [.tnl]t_vb_light.c \
 [.tnl]t_vb_normals.c \
 [.tnl]t_vb_points.c \
+[.tnl]t_vb_program.c \
 [.tnl]t_vb_render.c \
 [.tnl]t_vb_texgen.c \
 [.tnl]t_vb_texmat.c \
@@ -209,6 +213,9 @@ texstore.obj,\
 texutil.obj,\
 varray.obj,\
 vtxfmt.obj,\
+vpstate.obj,\
+vpexec.obj,\
+vpparse.obj,\
 [.x86]x86.obj
 
 OBJECTS4=[.x]glxapi.obj,[.x]fakeglx.obj,[.x]xfonts.obj,\
@@ -280,6 +287,7 @@ OBJECTS12=[.tnl]t_imm_fixup.obj,\
 [.tnl]t_vb_light.obj,\
 [.tnl]t_vb_normals.obj,\
 [.tnl]t_vb_points.obj,\
+[.tnl]t_vb_program.obj,\
 [.tnl]t_vb_render.obj,\
 [.tnl]t_vb_texgen.obj,\
 [.tnl]t_vb_texmat.obj,\
@@ -505,6 +513,8 @@ imports.obj : imports.c
 	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_normals.obj [.tnl]t_vb_normals.c
 [.tnl]t_vb_points.obj : [.tnl]t_vb_points.c
 	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_points.obj [.tnl]t_vb_points.c
+[.tnl]t_vb_program.obj : [.tnl]t_vb_program.c
+	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_program.obj [.tnl]t_vb_program.c
 [.tnl]t_vb_render.obj : [.tnl]t_vb_render.c
 	$(CC) $(CFLAGS) /obj=[.tnl]t_vb_render.obj [.tnl]t_vb_render.c
 [.tnl]t_vb_texgen.obj : [.tnl]t_vb_texgen.c
