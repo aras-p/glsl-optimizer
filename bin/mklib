@@ -225,11 +225,11 @@ case $ARCH in
 
     'IRIX')
 	LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
-	if [ $ARCHOPTS = "64" ] ; then
+	if [ $ARCHOPT = "64" ] ; then
 	    # 64-bit ABI
 	    OPTS="-64 -shared -all"
 	    echo "mklib: Making IRIX 64-bit shared library: " ${LIBNAME}
-	elif [ $ARCHOPTS = "o32" ] ; then
+	elif [ $ARCHOPT = "o32" ] ; then
 	    # old 32-bit ABI
 	    OPTS="-32 -shared -all"
 	    echo "mklib: Making IRIX o32-bit shared library: " ${LIBNAME}
