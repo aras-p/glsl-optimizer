@@ -1,4 +1,4 @@
-/* $Id: get.c,v 1.32 2000/08/30 18:21:06 brianp Exp $ */
+/* $Id: get.c,v 1.33 2000/09/15 19:57:51 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -4750,10 +4750,10 @@ _mesa_GetString( GLenum name )
           case GL_VERSION:
              return (const GLubyte *) version;
           case GL_EXTENSIONS:
-             return (GLubyte *) gl_extensions_get_string( ctx );
+             return (const GLubyte *) gl_extensions_get_string( ctx );
           default:
              gl_error( ctx, GL_INVALID_ENUM, "glGetString" );
-             return (GLubyte *) 0;
+             return (const GLubyte *) 0;
        }
    }
 }
