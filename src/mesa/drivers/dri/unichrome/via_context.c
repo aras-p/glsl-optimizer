@@ -54,7 +54,6 @@
 #include "via_tris.h"
 #include "via_ioctl.h"
 #include "via_fb.h"
-#include "via_regs.h"
 
 #include <stdio.h>
 #include "macros.h"
@@ -380,9 +379,8 @@ viaCreateContext(const __GLcontextModes *mesaVis,
        assert(!mesaVis->haveStencilBuffer);
        vmesa->have_hw_stencil = GL_FALSE;
        vmesa->depth_max = (GLfloat)0xffffffff;
-       vmesa->depth_clear_mask = 0;
-       vmesa->ClearDepth = 0xffffffff;
        vmesa->depth_clear_mask = 0xf << 28;
+       vmesa->ClearDepth = 0xffffffff;
        vmesa->polygon_offset_scale = 2.0 / vmesa->depth_max;
        break;
     default:

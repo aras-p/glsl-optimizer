@@ -469,9 +469,8 @@ void viaEmitState(viaContextPtr vmesa)
       }
    }
     
-    
    if (ctx->Polygon.StippleFlag) {
-      GLuint *stipple = &ctx->PolygonStipple[0];
+      GLuint *stipple = &vmesa->stipple[0];
         
       BEGIN_RING(38);
       OUT_RING( HC_HEADER2 );             
@@ -675,7 +674,7 @@ static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
 
     viaXMesaWindowMoved(vmesa);
 
-   /* We want to update the s/w rast state too so that r200SetBuffer()
+   /* We want to update the s/w rast state too so that viaSetBuffer()
     * gets called.
     */
    _swrast_DrawBuffer(ctx, mode);
@@ -758,6 +757,41 @@ static void viaDepthRange(GLcontext *ctx,
     viaCalcViewport(ctx);
 }
 
+#if 0
+static void
+flip_bytes( GLubyte *p, GLuint n )
+{
+   register GLuint i, a, b;
+
+   for (i=0;i<n;i++) {
+      b = (GLuint) p[i];        /* words are often faster than bytes */
+      a = ((b & 0x01) << 7) |
+	  ((b & 0x02) << 5) |
+	  ((b & 0x04) << 3) |
+	  ((b & 0x08) << 1) |
+	  ((b & 0x10) >> 1) |
+	  ((b & 0x20) >> 3) |
+	  ((b & 0x40) >> 5) |
+	  ((b & 0x80) >> 7);
+      p[i] = (GLubyte) a;
+   }
+}
+#endif
+
+static void viaPolygonStipple( GLcontext *ctx, const GLubyte *mask )
+{
+    viaContextPtr vmesa = VIA_CONTEXT(ctx);
+    GLubyte *s = (GLubyte *)vmesa->stipple;
+    int i;
+
+    /* Fallback for the CLE266 case as it doesn't seem to work */
+    if (vmesa->viaScreen->deviceID == VIA_CLE266) {
+   	FALLBACK( vmesa, VIA_FALLBACK_STIPPLE, GL_TRUE);
+    } else {
+    	for (i=0;i<128;i++) 
+       	    s[i] = mask[i];
+    }
+}
 
 void viaInitState(GLcontext *ctx)
 {
@@ -1557,7 +1591,7 @@ void viaValidateState( GLcontext *ctx )
 	viaChooseTriangle(ctx);
     }
 
-    if (vmesa->newState & _NEW_STENCIL)
+    if ((vmesa->newState & _NEW_STENCIL) && vmesa->have_hw_stencil)
         viaChooseStencilState(ctx);
     
     if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
@@ -1600,6 +1634,7 @@ void viaInitStateFuncs(GLcontext *ctx)
     ctx->Driver.DepthRange = viaDepthRange;
     ctx->Driver.Viewport = viaViewport;
     ctx->Driver.Enable = viaEnable;
+    ctx->Driver.PolygonStipple = viaPolygonStipple;
 
     /* Pixel path fallbacks.
      */
