@@ -1326,14 +1326,6 @@ static GLboolean enable_tex_common( GLcontext *ctx, GLuint unit )
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *tObj = texUnit->_Current;
    i830TextureObjectPtr t = (i830TextureObjectPtr)tObj->DriverData;
-   GLuint mcs = t->Setup[I830_TEXREG_MCS] & TEXCOORDTYPE_MASK;
-
-   /* Handle projective texturing */
-   if (imesa->vertex_format & (1<<31)) {
-      mcs |= TEXCOORDTYPE_HOMOGENEOUS;
-   } else {
-      mcs |= TEXCOORDTYPE_CARTESIAN;
-   }
 
    /* Fallback if there's a texture border */
    if ( tObj->Image[tObj->BaseLevel]->Border > 0 ) {
@@ -1352,8 +1344,7 @@ static GLboolean enable_tex_common( GLcontext *ctx, GLuint unit )
    /* Update state if this is a different texture object to last
     * time.
     */
-   if (imesa->CurrentTexObj[unit] != t ||
-       mcs != t->Setup[I830_TEXREG_MCS]) {
+   if (imesa->CurrentTexObj[unit] != t) {
 
       if ( imesa->CurrentTexObj[unit] != NULL ) {
 	 /* The old texture is no longer bound to this texture unit.
@@ -1364,7 +1355,6 @@ static GLboolean enable_tex_common( GLcontext *ctx, GLuint unit )
       }
 
       I830_STATECHANGE(imesa, (I830_UPLOAD_TEX0<<unit));
-      t->Setup[I830_TEXREG_MCS] = mcs;
       imesa->CurrentTexObj[unit] = t;
       i830TexSetUnit(t, unit);
    }
@@ -1509,43 +1499,6 @@ static GLboolean i830UpdateTexUnit( GLcontext *ctx, GLuint unit )
 }
 
 
-/* Called from vb code to update projective texturing properly */
-void i830UpdateTexUnitProj( GLcontext *ctx, GLuint unit, GLboolean state )
-{
-   i830ContextPtr imesa = I830_CONTEXT(ctx);
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   struct gl_texture_object *tObj = texUnit->_Current;
-   i830TextureObjectPtr t; 
-   GLuint mcs;
-
-   if (!tObj) return;
-
-   t = (i830TextureObjectPtr)tObj->DriverData;
-   mcs = (t->Setup[I830_TEXREG_MCS] & 
-		 TEXCOORDTYPE_MASK &
-		 ~TEXCOORDS_ARE_NORMAL);
-
-   /* Handle projective texturing */
-   if (state) {
-      mcs |= TEXCOORDTYPE_HOMOGENEOUS;
-   } else {
-      mcs |= TEXCOORDTYPE_CARTESIAN;
-   }
-   
-   if (texUnit->_ReallyEnabled == TEXTURE_2D_BIT) {
-      mcs |= TEXCOORDS_ARE_NORMAL;
-   }
-   else if (texUnit->_ReallyEnabled == TEXTURE_RECT_BIT) {
-      mcs |= TEXCOORDS_ARE_IN_TEXELUNITS;
-   }
-   else
-      return;
-
-   if (mcs != t->Setup[I830_TEXREG_MCS]) {
-      I830_STATECHANGE(imesa, (I830_UPLOAD_TEX0<<unit));
-      t->Setup[I830_TEXREG_MCS] = mcs;
-   }
-}
 
 /* Only deal with unit 0 and 1 for right now */
 void i830UpdateTextureState( GLcontext *ctx )

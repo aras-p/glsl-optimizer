@@ -46,7 +46,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "i830_context.h"
 #include "i830_state.h"
 #include "i830_tex.h"
-#include "i830_vb.h"
 #include "i830_tris.h"
 #include "i830_ioctl.h"
 #include "i830_debug.h"

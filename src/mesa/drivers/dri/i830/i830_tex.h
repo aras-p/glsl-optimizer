@@ -63,7 +63,6 @@ struct i830_texture_object_t
 
 void i830UpdateTextureState( GLcontext *ctx );
 void i830DDInitTextureFuncs( GLcontext *ctx );
-void i830UpdateTexUnitProj( GLcontext *ctx, GLuint unit, GLboolean state );
 
 void i830DestroyTexObj( i830ContextPtr imesa, i830TextureObjectPtr t );
 int i830UploadTexImagesLocked( i830ContextPtr imesa, i830TextureObjectPtr t );

@@ -35,7 +35,6 @@ DRIVER_SOURCES = \
 		i830_texmem.c \
 		i830_texstate.c \
 		i830_tris.c \
-		i830_vb.c \
                 ../common/mm.c \
                 ../common/utils.c \
                 ../common/texmem.c \

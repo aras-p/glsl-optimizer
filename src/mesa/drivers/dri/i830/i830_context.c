@@ -57,7 +57,6 @@
 #include "i830_tex.h"
 #include "i830_span.h"
 #include "i830_tris.h"
-#include "i830_vb.h"
 #include "i830_ioctl.h"
 
 
@@ -315,8 +314,6 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    imesa->hHWContext = driContextPriv->hHWContext;
    imesa->driFd = sPriv->fd;
    imesa->driHwLock = &sPriv->pSAREA->lock;
-   imesa->vertex_format = 0;
-
    imesa->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
 
    switch(mesaVis->depthBits) {
@@ -360,7 +357,6 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    i830InitTriFuncs (ctx);
    i830DDInitSpanFuncs( ctx );
    i830DDInitIoctlFuncs( ctx );
-   i830InitVB (ctx);
    i830DDInitState (ctx);
 
 #if DO_DEBUG
@@ -394,8 +390,6 @@ void i830DestroyContext(__DRIcontextPrivate *driContextPriv)
       _tnl_DestroyContext (imesa->glCtx);
       _ac_DestroyContext (imesa->glCtx);
       _swrast_DestroyContext (imesa->glCtx);
-
-      i830FreeVB (imesa->glCtx);
 
       /* free the Mesa context */
       imesa->glCtx->DriverCtx = NULL;

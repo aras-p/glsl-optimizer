@@ -38,6 +38,7 @@ typedef struct i830_texture_object_t *i830TextureObjectPtr;
 #include "mtypes.h"
 #include "drm.h"
 #include "mm.h"
+#include "tnl/t_vertex.h"
 
 #include "i830_screen.h"
 #include "i830_tex.h"
@@ -130,17 +131,21 @@ struct i830_context_t
    GLuint Fallback;
    GLuint NewGLState;
 
-   /* State for i830vb.c and i830tris.c.
+   /* Vertex state 
     */
-   GLuint SetupNewInputs;
-   GLuint SetupIndex;
+   GLuint vertex_size;
+   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
+   GLuint vertex_attr_count;
+   char *verts;			/* points to tnl->clipspace.vertex_buf */
+
+   
+   /* State for i830tris.c.
+    */
    GLuint RenderIndex;
    GLmatrix ViewportMatrix;
    GLenum render_primitive;
    GLenum reduced_primitive;
    GLuint hw_primitive;
-   GLuint vertex_format;
-   char *verts;
 
    drmBufPtr  vertex_buffer;
    char *vertex_addr;
@@ -163,8 +168,6 @@ struct i830_context_t
    GLuint Setup[I830_CTX_SETUP_SIZE];
    GLuint BufferSetup[I830_DEST_SETUP_SIZE];
    GLuint StippleSetup[I830_STP_SETUP_SIZE];
-   int vertex_size;
-   int vertex_stride_shift;
    unsigned int lastStamp;
    GLboolean hw_stipple;
 

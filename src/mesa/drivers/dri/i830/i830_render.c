@@ -48,7 +48,6 @@
 #include "i830_context.h"
 #include "i830_tris.h"
 #include "i830_state.h"
-#include "i830_vb.h"
 #include "i830_ioctl.h"
 
 /*
@@ -127,7 +126,7 @@ static const int scale_prim[GL_POLYGON+1] = {
 #define ALLOC_VERTS( nr ) \
   i830AllocDmaLow( imesa, nr * imesa->vertex_size * 4)
 #define EMIT_VERTS( ctx, j, nr, buf ) \
-  i830_emit_contiguous_verts(ctx, j, (j)+(nr), buf)
+  _tnl_emit_vertices_to_buffer(ctx, j, (j)+(nr), buf)
   
 #define TAG(x) i830_##x
 #include "tnl_dd/t_dd_dmatmp.h"
@@ -191,11 +190,9 @@ static GLboolean i830_run_render( GLcontext *ctx,
     */
    if (imesa->RenderIndex != 0 || 
        !i830_validate_render( ctx, VB ) ||
-       !choose_render( VB, GET_SUBSEQUENT_VB_MAX_VERTS() )) {
+       !choose_render( VB, 200 )) { /* 200 is estimate of nr verts/buf */
       return GL_TRUE;
    }
-
-   imesa->SetupNewInputs = VERT_BIT_POS;
 
    tnl->Driver.Render.Start( ctx );
    

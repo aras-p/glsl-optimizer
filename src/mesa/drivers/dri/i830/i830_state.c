@@ -49,7 +49,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "i830_context.h"
 #include "i830_state.h"
 #include "i830_tex.h"
-#include "i830_vb.h"
 #include "i830_tris.h"
 #include "i830_ioctl.h"
 
@@ -1549,17 +1548,8 @@ void i830DDInitState( GLcontext *ctx )
 
    memset(imesa->Setup, 0, sizeof(imesa->Setup));
 
-   imesa->Setup[I830_CTXREG_VF] =  (STATE3D_VERTEX_FORMAT_CMD |
-				    VRTX_TEX_COORD_COUNT(1) |
-				    VRTX_HAS_DIFFUSE |
-				    VRTX_HAS_SPEC |
-				    VRTX_HAS_XYZW);
-   imesa->vertex_format = 0;
-   imesa->Setup[I830_CTXREG_VF2] = (STATE3D_VERTEX_FORMAT_2_CMD |
-				    VRTX_TEX_SET_0_FMT(TEXCOORDFMT_2D) |
-				    VRTX_TEX_SET_1_FMT(TEXCOORDFMT_2D) | 
-				    VRTX_TEX_SET_2_FMT(TEXCOORDFMT_2D) |
-				    VRTX_TEX_SET_3_FMT(TEXCOORDFMT_2D));
+   imesa->Setup[I830_CTXREG_VF] =  0;
+   imesa->Setup[I830_CTXREG_VF2] = 0;
 
    imesa->Setup[I830_CTXREG_AA] = (STATE3D_AA_CMD |
 				   AA_LINE_ECAAR_WIDTH_ENABLE |

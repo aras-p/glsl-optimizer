@@ -49,7 +49,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "i830_tris.h"
 #include "i830_state.h"
-#include "i830_vb.h"
 #include "i830_ioctl.h"
 #include "i830_span.h"
 
@@ -403,9 +402,9 @@ i830_fallback_tri( i830ContextPtr imesa,
    if (0)
       fprintf(stderr, "\n%s\n", __FUNCTION__);
 
-   i830_translate_vertex( ctx, v0, &v[0] );
-   i830_translate_vertex( ctx, v1, &v[1] );
-   i830_translate_vertex( ctx, v2, &v[2] );
+   _swsetup_Translate( ctx, v0, &v[0] );
+   _swsetup_Translate( ctx, v1, &v[1] );
+   _swsetup_Translate( ctx, v2, &v[2] );
    i830SpanRenderStart( ctx );
    _swrast_Triangle( ctx, &v[0], &v[1], &v[2] );
    i830SpanRenderFinish( ctx );
@@ -423,8 +422,8 @@ i830_fallback_line( i830ContextPtr imesa,
    if (0)
       fprintf(stderr, "\n%s\n", __FUNCTION__);
 
-   i830_translate_vertex( ctx, v0, &v[0] );
-   i830_translate_vertex( ctx, v1, &v[1] );
+   _swsetup_Translate( ctx, v0, &v[0] );
+   _swsetup_Translate( ctx, v1, &v[1] );
    i830SpanRenderStart( ctx );
    _swrast_Line( ctx, &v[0], &v[1] );
    i830SpanRenderFinish( ctx );
@@ -441,7 +440,7 @@ i830_fallback_point( i830ContextPtr imesa,
    if (0)
       fprintf(stderr, "\n%s\n", __FUNCTION__);
 
-   i830_translate_vertex( ctx, v0, &v[0] );
+   _swsetup_Translate( ctx, v0, &v[0] );
    i830SpanRenderStart( ctx );
    _swrast_Point( ctx, &v[0] );
    i830SpanRenderFinish( ctx );
@@ -673,9 +672,6 @@ static void i830RunPipeline( GLcontext *ctx )
       }
 
       if (!imesa->Fallback) {
-	 if (imesa->NewGLState & _I830_NEW_VERTEX)
-	    i830ChooseVertexState( ctx );
-
 	 if (imesa->NewGLState & _I830_NEW_RENDERSTATE)
 	    i830ChooseRenderState( ctx );
       }
@@ -686,14 +682,125 @@ static void i830RunPipeline( GLcontext *ctx )
    _tnl_run_pipeline( ctx );
 }
 
+
+#define TEXCOORDTYPE_MASK		(3<<11)
+
+
+
+static void set_projective_texturing( i830ContextPtr imesa, 
+				      GLuint i,
+				      GLuint sz)
+{
+   GLuint mcs = (imesa->CurrentTexObj[i]->Setup[I830_TEXREG_MCS] & 
+		 ~TEXCOORDTYPE_MASK);
+
+   if (sz == 4) {
+      mcs |= TEXCOORDTYPE_HOMOGENEOUS;
+   } else {
+      mcs |= TEXCOORDTYPE_CARTESIAN;
+   }
+
+   if (mcs != imesa->CurrentTexObj[i]->Setup[I830_TEXREG_MCS]) {
+      I830_STATECHANGE(imesa, I830_UPLOAD_TEX_N(i));
+      imesa->CurrentTexObj[i]->Setup[I830_TEXREG_MCS] = mcs;
+   }
+}
+
+
+#define SZ_TO_HW(sz)  ((sz-2)&0x3)
+#define EMIT_SZ(sz)   (EMIT_1F + (sz) - 1)
+#define EMIT_ATTR( ATTR, STYLE, V0 )					\
+do {									\
+   imesa->vertex_attrs[imesa->vertex_attr_count].attrib = (ATTR);	\
+   imesa->vertex_attrs[imesa->vertex_attr_count].format = (STYLE);	\
+   imesa->vertex_attr_count++;						\
+   v0 |= V0;								\
+} while (0)
+
+
+#define VRTX_TEX_SET_FMT(n, x)          ((x)<<((n)*2))
+
+/* Make sure hardware vertex format is appropriate for VB state.
+ */
 static void i830RenderStart( GLcontext *ctx )
 {
-   /* Check for projective textureing.  Make sure all texcoord
-    * pointers point to something.  (fix in mesa?)
-    */
+   i830ContextPtr imesa = I830_CONTEXT(ctx);
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint index = tnl->render_inputs;
+   GLuint v0 = STATE3D_VERTEX_FORMAT_CMD;
+   GLuint v2 = STATE3D_VERTEX_FORMAT_2_CMD;
 
-   i830CheckTexSizes( ctx );
+   /* Important:
+    */
+   VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
+   imesa->vertex_attr_count = 0;
+
+   /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
+    * build up a hardware vertex.
+    */
+   if (index & _TNL_BITS_TEX_ANY) {
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, VRTX_HAS_XYZW );
+   }
+   else {
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, VRTX_HAS_XYZ );
+   }
+
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, VRTX_HAS_DIFFUSE );
+      
+   if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
+      EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB, VRTX_HAS_SPEC );
+      EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, VRTX_HAS_SPEC );
+   }
+
+   if (index & _TNL_BITS_TEX_ANY) {
+      int i, last_stage = 0;
+
+      /* Still using 2 as max tex units, but this code is fine for all
+       * 8 units supported by mesa:
+       */
+      for (i = 0; i < 2 ; i++) 
+	 if (index & _TNL_BIT_TEX(i))
+	    last_stage = i+1;
+	 
+
+      for (i = 0; i < last_stage; i++) {
+	 GLuint sz = VB->TexCoordPtr[i]->size;
+	
+	 v2 |= VRTX_TEX_SET_FMT(i, SZ_TO_HW(sz));
+	 EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_SZ(sz), 0 );
+
+	 if (imesa->CurrentTexObj[i])
+	    set_projective_texturing( imesa, i, sz );
+      }
+
+      v0 |= VRTX_TEX_COORD_COUNT(last_stage);
+   }
+
+   /* Only need to change the vertex emit code if there has been a
+    * statechange to a new hardware vertex format:
+    */
+   if (v0 != imesa->Setup[I830_CTXREG_VF] ||
+       v2 != imesa->Setup[I830_CTXREG_VF2] ) {
+    
+      I830_STATECHANGE( imesa, I830_UPLOAD_CTX );
+
+      /* Must do this *after* statechange, so as not to affect
+       * buffered vertices reliant on the old state:
+       */
+      imesa->vertex_size = 
+	 _tnl_install_attrs( ctx, 
+			     imesa->vertex_attrs, 
+			     imesa->vertex_attr_count,
+			     imesa->ViewportMatrix.m, 0 );
+
+      imesa->vertex_size >>= 2;
+
+      imesa->Setup[I830_CTXREG_VF] = v0;
+      imesa->Setup[I830_CTXREG_VF2] = v2;
+   }
 }
+
 
 static void i830RenderFinish( GLcontext *ctx )
 {
@@ -850,8 +957,19 @@ void i830Fallback( i830ContextPtr imesa, GLuint bit, GLboolean mode )
 	 tnl->Driver.Render.Start = i830RenderStart;
 	 tnl->Driver.Render.PrimitiveNotify = i830RenderPrimitive;
 	 tnl->Driver.Render.Finish = i830RenderFinish;
-	 tnl->Driver.Render.BuildVertices = i830BuildVertices;
-	 imesa->NewGLState |= (_I830_NEW_RENDERSTATE|_I830_NEW_VERTEX);
+
+	 tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
+	 tnl->Driver.Render.CopyPV = _tnl_copy_pv;
+	 tnl->Driver.Render.Interp = _tnl_interp;
+
+	 _tnl_invalidate_vertex_state( ctx, ~0 );
+	 _tnl_invalidate_vertices( ctx, ~0 );
+	 _tnl_install_attrs( ctx, 
+			     imesa->vertex_attrs, 
+			     imesa->vertex_attr_count,
+			     imesa->ViewportMatrix.m, 0 ); 
+
+	 imesa->NewGLState |= _I830_NEW_RENDERSTATE;
       }
    }
 }
@@ -879,5 +997,12 @@ void i830InitTriFuncs( GLcontext *ctx )
    tnl->Driver.Render.Finish = i830RenderFinish;
    tnl->Driver.Render.PrimitiveNotify = i830RenderPrimitive;
    tnl->Driver.Render.ResetLineStipple = _swrast_ResetLineStipple;
-   tnl->Driver.Render.BuildVertices = i830BuildVertices;
+   tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
+   tnl->Driver.Render.CopyPV = _tnl_copy_pv;
+   tnl->Driver.Render.Interp = _tnl_interp;
+
+   _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
+		       22 * sizeof(GLfloat) );
+   
+   I830_CONTEXT(ctx)->verts = (char *)tnl->clipspace.vertex_buf;
 }
