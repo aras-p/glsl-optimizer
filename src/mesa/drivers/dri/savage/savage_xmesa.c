@@ -57,6 +57,19 @@
 
 #include "xmlpool.h"
 
+/* Driver-specific options
+ */
+#define SAVAGE_ENABLE_VDMA(def) \
+DRI_CONF_OPT_BEGIN(enable_vdma,bool,def) \
+	DRI_CONF_DESC(en,"Use DMA for vertex transfers") \
+	DRI_CONF_DESC(de,"Benutze DMA für Vertextransfers") \
+DRI_CONF_OPT_END
+#define SAVAGE_ENABLE_FASTPATH(def) \
+DRI_CONF_OPT_BEGIN(enable_fastpath,bool,def) \
+	DRI_CONF_DESC(en,"Use fast path for unclipped primitives") \
+	DRI_CONF_DESC(de,"Schneller Codepfad für ungeschnittene Polygone") \
+DRI_CONF_OPT_END
+
 /* Configuration
  */
 PUBLIC const char __driConfigOptions[] =
@@ -68,12 +81,14 @@ DRI_CONF_BEGIN
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_PERFORMANCE
         DRI_CONF_MAX_TEXTURE_UNITS(2,1,2)
+        SAVAGE_ENABLE_VDMA(true)
+        SAVAGE_ENABLE_FASTPATH(true)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_DEBUG
         DRI_CONF_NO_RAST(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 5;
+static const GLuint __driNConfigOptions = 7;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -470,13 +485,15 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    /* DRM versions before 2.1.3 would only render triangle lists. ELTS
     * support was added in 2.2.0. */
    if (sPriv->drmMinor < 2) {
-      _savage_render_stage.active = GL_FALSE;
+      imesa->enable_fastpath = GL_FALSE;
       fprintf (stderr,
 	       "*** Disabling fast path because your DRM version is buggy "
 	       "or doesn't\n*** support ELTS. You need at least Savage DRM "
 	       "version 2.2.\n");
-   }
-
+   } else
+      imesa->enable_fastpath = driQueryOptionb(&imesa->optionCache,
+					       "enable_fastpath");
+   imesa->enable_vdma = driQueryOptionb(&imesa->optionCache, "enable_vdma");
 
    /* Configure swrast to match hardware characteristics:
     */
@@ -520,6 +537,7 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
       savageFlushVertices(imesa);
       savageReleaseIndexedVerts(imesa);
       savageFlushCmdBuf(imesa, GL_TRUE); /* release DMA buffer */
+      WAIT_IDLE_EMPTY;
 
       /* update for multi-tex*/ 
       {

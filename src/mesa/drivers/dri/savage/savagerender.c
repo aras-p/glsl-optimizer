@@ -215,6 +215,7 @@ static void savage_check_render( GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage )
 {
    stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
+   stage->active = SAVAGE_CONTEXT(ctx)->enable_fastpath;
 }
 
 static void dtr( struct tnl_pipeline_stage *stage )

@@ -304,6 +304,8 @@ struct savage_context_t {
     GLint texture_depth;
     GLboolean no_rast;
     GLboolean float_depth;
+    GLboolean enable_fastpath;
+    GLboolean enable_vdma;
 };
 
 #define SAVAGE_CONTEXT(ctx) ((savageContextPtr)(ctx->DriverCtx))

@@ -738,6 +738,10 @@ static void savageChooseRenderState(GLcontext *ctx)
 	 if (flags & LINE_FALLBACK)  imesa->draw_line = savage_fallback_line;
 	 if (flags & TRI_FALLBACK)   imesa->draw_tri = savage_fallback_tri;
 	 index |= SAVAGE_FALLBACK_BIT;
+	 if (SAVAGE_DEBUG & DEBUG_FALLBACKS) {
+	    fprintf (stderr, "Per-primitive fallback, TriangleCaps=0x%x\n",
+		     ctx->_TriangleCaps);
+	 }
       }
    }
 
@@ -1032,17 +1036,19 @@ static __inline__ GLuint savageChooseVertexFormat_s4( GLcontext *ctx )
    if (setupIndex == imesa->SetupIndex && imesa->vertex_size != 0)
       return setupIndex;
 
-   mask = SAVAGE_SKIP_W;
-   size = 10 - (skip & 1) - (skip >> 1 & 1) -
-      (skip >> 2 & 1) - (skip >> 3 & 1) - (skip >> 4 & 1) -
-      (skip >> 5 & 1) - (skip >> 6 & 1) - (skip >> 7 & 1);
+   if (imesa->enable_vdma) {
+      mask = SAVAGE_SKIP_W;
+      size = 10 - (skip & 1) - (skip >> 1 & 1) -
+	 (skip >> 2 & 1) - (skip >> 3 & 1) - (skip >> 4 & 1) -
+	 (skip >> 5 & 1) - (skip >> 6 & 1) - (skip >> 7 & 1);
 
-   while (size < 8) {
-      if (skip & mask) {
-	 skip &= ~mask;
-	 size++;
+      while (size < 8) {
+	 if (skip & mask) {
+	    skip &= ~mask;
+	    size++;
+	 }
+	 mask <<= 1;
       }
-      mask <<= 1;
    }
 
    imesa->vertex_attr_count = 0;
@@ -1167,7 +1173,7 @@ static void savageRenderStart( GLcontext *ctx )
 	  * discard the DMA buffer, if we were using one. */
 	 savageFlushVertices(imesa);
 	 savageFlushCmdBuf(imesa, GL_TRUE);
-	 if (hwVertexSize == 8) {
+	 if (hwVertexSize == 8 && imesa->enable_vdma) {
 	    if (SAVAGE_DEBUG & DEBUG_DMA)
 	       fprintf (stderr, "Using DMA, skip=0x%02x\n", imesa->skip);
 	    /* we can use vertex dma */
