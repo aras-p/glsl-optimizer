@@ -6,4 +6,5 @@ See http://www.doxygen.org/ for more info.
 Either run 'make' (Unix) or 'doxy.bat' (Windows) to run doxygen
 and generate souce code documentation.
 
-Then, load doxy/core.index.html into your web browser.
+Then, load either doxy/core/index.html or doxy/core_subset/index.html into
+your web browser.

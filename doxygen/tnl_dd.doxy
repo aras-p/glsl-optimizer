@@ -51,8 +51,8 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ../src/tnl_dd/
-FILE_PATTERNS          = *.h
+INPUT                  = ../src/mesa/tnl_dd/
+FILE_PATTERNS          = *.c *.h
 RECURSIVE              = YES
 EXCLUDE                = 
 EXCLUDE_PATTERNS       = 

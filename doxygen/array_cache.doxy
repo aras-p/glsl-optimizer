@@ -5,9 +5,9 @@
 #---------------------------------------------------------------------------
 PROJECT_NAME           = "Mesa array_cache"
 PROJECT_NUMBER         = 5.1
-OUTPUT_DIRECTORY       = .
+OUTPUT_DIRECTORY       = 
 OUTPUT_LANGUAGE        = English
-EXTRACT_ALL            = YES
+EXTRACT_ALL            = NO
 EXTRACT_PRIVATE        = NO
 EXTRACT_STATIC         = NO
 EXTRACT_LOCAL_CLASSES  = YES
@@ -38,20 +38,20 @@ GENERATE_BUGLIST       = YES
 ALIASES                = 
 ENABLED_SECTIONS       = 
 MAX_INITIALIZER_LINES  = 30
-OPTIMIZE_OUTPUT_FOR_C  = YES
+OPTIMIZE_OUTPUT_FOR_C  = NO
 SHOW_USED_FILES        = YES
 #---------------------------------------------------------------------------
 # configuration options related to warning and progress messages
 #---------------------------------------------------------------------------
 QUIET                  = YES
 WARNINGS               = YES
-WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_UNDOCUMENTED   = NO
 WARN_FORMAT            = 
 WARN_LOGFILE           = 
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ../src/array_cache/
+INPUT                  = ../src/mesa/array_cache/
 FILE_PATTERNS          = *.c \
                          *.h
 RECURSIVE              = NO
