@@ -1,4 +1,4 @@
-/* $Id: glx.h,v 1.38 2002/10/14 13:52:27 brianp Exp $ */
+/* $Id: glx.h,v 1.39 2003/01/14 04:49:31 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -483,6 +483,19 @@ extern GLuint glXGetAGPOffsetMESA(const GLvoid *pointer);
 typedef GLuint (* PFNGLXGETAGPOFFSETMESAPROC) (const GLvoid *pointer);
 
 #endif /* GLX_MESA_agp_offset */
+
+
+/*
+ * ARB ?. GLX_ARB_render_texture
+ */
+#ifndef GLX_ARB_render_texture
+#define GLX_ARB_render_texture 1
+
+extern Bool glXBindTexImageARB(Display *dpy, GLXPbuffer pbuffer, int buffer);
+extern Bool glXReleaseTexImageARB(Display *dpy, GLXPbuffer pbuffer, int buffer);
+extern Bool glXDrawableAttribARB(Display *dpy, GLXDrawable draw, const int *attribList);
+
+#endif /* GLX_ARB_render_texture */
 
 
 
