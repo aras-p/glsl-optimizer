@@ -224,7 +224,8 @@ static void i810TexParameter( GLcontext *ctx, GLenum target,
    i810ContextPtr imesa = I810_CONTEXT(ctx);
    i810TextureObjectPtr t = (i810TextureObjectPtr) tObj->DriverData;
 
-   assert(t);
+   if (!t)
+      return;
 
    if ( target != GL_TEXTURE_2D )
       return;
@@ -341,7 +342,6 @@ static void i810TexImage1D( GLcontext *ctx, GLenum target, GLint level,
 			    struct gl_texture_image *texImage )
 {
    i810TextureObjectPtr t = (i810TextureObjectPtr) texObj->DriverData;
-   assert(t);
    if (t) {
       i810SwapOutTexObj( imesa, t );
    }
@@ -371,7 +371,6 @@ static void i810TexImage2D( GLcontext *ctx, GLenum target, GLint level,
 			    struct gl_texture_image *texImage )
 {
    driTextureObject *t = (driTextureObject *) texObj->DriverData;
-   assert(t);
    if (t) {
       I810_FIREVERTICES( I810_CONTEXT(ctx) );
       driSwapOutTextureObject( t );
@@ -400,7 +399,6 @@ static void i810TexSubImage2D( GLcontext *ctx,
 			       struct gl_texture_image *texImage )
 {
    driTextureObject *t = (driTextureObject *)texObj->DriverData;
-   assert(t);
    if (t) {
      I810_FIREVERTICES( I810_CONTEXT(ctx) );
      driSwapOutTextureObject( t );
@@ -411,17 +409,13 @@ static void i810TexSubImage2D( GLcontext *ctx,
 }
 
 
-#if 0
-/* not needed anymore */
 static void i810BindTexture( GLcontext *ctx, GLenum target,
 			     struct gl_texture_object *tObj )
 {
-   assert(t);
    if (!tObj->DriverData) {
       i810AllocTexObj( ctx, tObj );
-  }
+   }
 }
-#endif
 
 
 static void i810DeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
@@ -530,20 +524,14 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
  * Called via ctx->Driver.NewTextureObject.
  * Note: this function will be called during context creation to
  * allocate the default texture objects.
+ * Note: we could use containment here to 'derive' the driver-specific
+ * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
 i810NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
-   driTextureObject *t;
    obj = _mesa_new_texture_object(ctx, name, target);
-   if (!obj)
-      return NULL;
-   t = (driTextureObject *) i810AllocTexObj( ctx, obj );
-   if (!t) {
-      _mesa_delete_texture_object(ctx, obj);
-      return NULL;
-   }
    return obj;
 }
 
@@ -552,7 +540,7 @@ void i810InitTextureFuncs( struct dd_function_table *functions )
    functions->ChooseTextureFormat = i810ChooseTextureFormat;
    functions->TexImage2D = i810TexImage2D;
    functions->TexSubImage2D = i810TexSubImage2D;
-   /*functions->BindTexture = i810BindTexture;*/
+   functions->BindTexture = i810BindTexture;
    functions->NewTextureObject = i810NewTextureObject;
    functions->DeleteTexture = i810DeleteTexture;
    functions->TexParameter = i810TexParameter;

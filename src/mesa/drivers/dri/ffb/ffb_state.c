@@ -1061,7 +1061,6 @@ void ffbDDInitStateFuncs(GLcontext *ctx)
 	ctx->Driver.UpdateState = ffbDDUpdateState;
 
 	ctx->Driver.Enable = ffbDDEnable;
-	ctx->Driver.LightModelfv = NULL;
 	ctx->Driver.AlphaFunc = ffbDDAlphaFunc;
 	ctx->Driver.BlendEquation = ffbDDBlendEquation;
 	ctx->Driver.BlendFunc = ffbDDBlendFunc;
@@ -1072,8 +1071,6 @@ void ffbDDInitStateFuncs(GLcontext *ctx)
 	ctx->Driver.LineStipple = ffbDDLineStipple;
 	ctx->Driver.PolygonStipple = ffbDDPolygonStipple;
 	ctx->Driver.Scissor = ffbDDScissor;
-	ctx->Driver.CullFace = NULL;
-	ctx->Driver.FrontFace = NULL;
 	ctx->Driver.ColorMask = ffbDDColorMask;
 	ctx->Driver.LogicOpcode = ffbDDLogicOp;
 	ctx->Driver.Viewport = ffbDDViewport;
@@ -1083,10 +1080,6 @@ void ffbDDInitStateFuncs(GLcontext *ctx)
 		ctx->Driver.StencilFunc = ffbDDStencilFunc;
 		ctx->Driver.StencilMask = ffbDDStencilMask;
 		ctx->Driver.StencilOp = ffbDDStencilOp;
-	} else {
-		ctx->Driver.StencilFunc = NULL;
-		ctx->Driver.StencilMask = NULL;
-		ctx->Driver.StencilOp = NULL;
 	}
 
 	ctx->Driver.DrawBuffer = ffbDDDrawBuffer;
@@ -1096,25 +1089,10 @@ void ffbDDInitStateFuncs(GLcontext *ctx)
 	ctx->Driver.ClearStencil = ffbDDClearStencil;
 
 	/* We will support color index modes later... -DaveM */
+        /*
 	ctx->Driver.ClearIndex = 0;
 	ctx->Driver.IndexMask = 0;
-
-
-
-	/* Pixel path fallbacks.
-	 */
-	ctx->Driver.Accum = _swrast_Accum;
-	ctx->Driver.CopyPixels = _swrast_CopyPixels;
-	ctx->Driver.DrawPixels = _swrast_DrawPixels;
-	ctx->Driver.ReadPixels = _swrast_ReadPixels;
-	ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
-
-	/* Swrast hooks for imaging extensions:
-	 */
-	ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
-	ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
-	ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-	ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
+        */
 
 	{
 		struct swrast_device_driver *swdd = 

@@ -277,7 +277,8 @@ static void i830TexParameter( GLcontext *ctx, GLenum target,
    i830TextureObjectPtr t = (i830TextureObjectPtr) tObj->DriverData;
    GLuint unit = ctx->Texture.CurrentUnit;
 
-   assert(t);
+   if (!t)
+      return;
 
    if ( target != GL_TEXTURE_2D )
       return;
@@ -376,7 +377,6 @@ static void i830TexImage2D( GLcontext *ctx, GLenum target, GLint level,
 			    struct gl_texture_image *texImage )
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
-   assert(t);
    if (t) {
       I830_FIREVERTICES( I830_CONTEXT(ctx) );
       driSwapOutTextureObject( t );
@@ -406,7 +406,6 @@ static void i830TexSubImage2D( GLcontext *ctx,
 			       struct gl_texture_image *texImage )
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
-   assert(t);
    if (t) {
       I830_FIREVERTICES( I830_CONTEXT(ctx) );
       driSwapOutTextureObject( t );
@@ -418,8 +417,6 @@ static void i830TexSubImage2D( GLcontext *ctx,
 }
 
 
-#if 0
-/* no longer needed */
 static void i830BindTexture( GLcontext *ctx, GLenum target,
 			     struct gl_texture_object *tObj )
 {
@@ -427,7 +424,6 @@ static void i830BindTexture( GLcontext *ctx, GLenum target,
       i830AllocTexObj( tObj );
    }
 }
-#endif
 
 
 static void i830DeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
@@ -561,20 +557,14 @@ i830ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
  * Called via ctx->Driver.NewTextureObject.
  * Note: this function will be called during context creation to
  * allocate the default texture objects.
+ * Note: we could use containment here to 'derive' the driver-specific
+ * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
 i830NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
-   driTextureObject *t;
    obj = _mesa_new_texture_object(ctx, name, target);
-   if (!obj)
-      return NULL;
-   t = (driTextureObject *) i830AllocTexObj( obj );
-   if (!t) {
-      _mesa_delete_texture_object(ctx, obj);
-      return NULL;
-   }
    return obj;
 }
 
@@ -585,7 +575,7 @@ void i830InitTextureFuncs( struct dd_function_table *functions )
    functions->ChooseTextureFormat       = i830ChooseTextureFormat;
    functions->TexImage2D                = i830TexImage2D;
    functions->TexSubImage2D             = i830TexSubImage2D;
-   /*functions->BindTexture               = i830BindTexture;*/
+   functions->BindTexture               = i830BindTexture;
    functions->TexParameter              = i830TexParameter;
    functions->TexEnv                    = i830TexEnv;
    functions->IsTextureResident         = driIsTextureResident;

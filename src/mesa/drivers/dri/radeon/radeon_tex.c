@@ -401,7 +401,6 @@ static void radeonTexImage1D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
-   assert(t);
    if ( t ) {
       driSwapOutTextureObject( t );
    }
@@ -463,8 +462,6 @@ static void radeonTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
    GLuint face;
-
-   assert(t);
 
    /* which cube face or ordinary 2D image */
    switch (target) {
@@ -669,8 +666,6 @@ static void radeonTexParameter( GLcontext *ctx, GLenum target,
 }
 
 
-#if 00
-/* not needed anymore */
 static void radeonBindTexture( GLcontext *ctx, GLenum target,
 			       struct gl_texture_object *texObj )
 {
@@ -685,7 +680,7 @@ static void radeonBindTexture( GLcontext *ctx, GLenum target,
       }
    }
 }
-#endif
+
 
 static void radeonDeleteTexture( GLcontext *ctx,
 				 struct gl_texture_object *texObj )
@@ -734,22 +729,18 @@ static void radeonTexGen( GLcontext *ctx,
 /**
  * Allocate a new texture object.
  * Called via ctx->Driver.NewTextureObject.
+ * Note: we could use containment here to 'derive' the driver-specific
+ * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
 radeonNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    struct gl_texture_object *obj;
-   driTextureObject *t;
    obj = _mesa_new_texture_object(ctx, name, target);
    if (!obj)
       return NULL;
    obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
-   t = (driTextureObject *) radeonAllocTexObj(obj);
-   if (!t) {
-      _mesa_delete_texture_object(ctx, obj);
-      return NULL;
-   }
    return obj;
 }
 
@@ -763,7 +754,7 @@ void radeonInitTextureFuncs( struct dd_function_table *functions )
    functions->TexSubImage2D		= radeonTexSubImage2D;
 
    functions->NewTextureObject		= radeonNewTextureObject;
-   /*functions->BindTexture		= radeonBindTexture;*/
+   functions->BindTexture		= radeonBindTexture;
    functions->DeleteTexture		= radeonDeleteTexture;
    functions->IsTextureResident		= driIsTextureResident;
 

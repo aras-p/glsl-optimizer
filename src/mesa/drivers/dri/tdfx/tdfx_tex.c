@@ -200,6 +200,36 @@ static void RevalidateTexture(GLcontext *ctx, struct gl_texture_object *tObj)
 }
 
 
+static tdfxTexInfo *
+fxAllocTexObjData(tdfxContextPtr fxMesa)
+{
+    tdfxTexInfo *ti;
+
+    if (!(ti = CALLOC(sizeof(tdfxTexInfo)))) {
+        _mesa_problem(NULL, "tdfx driver: out of memory");
+        return NULL;
+    }
+
+    ti->isInTM = GL_FALSE;
+
+    ti->whichTMU = TDFX_TMU_NONE;
+
+    ti->tm[TDFX_TMU0] = NULL;
+    ti->tm[TDFX_TMU1] = NULL;
+
+    ti->minFilt = GR_TEXTUREFILTER_POINT_SAMPLED;
+    ti->magFilt = GR_TEXTUREFILTER_BILINEAR;
+
+    ti->sClamp = GR_TEXTURECLAMP_WRAP;
+    ti->tClamp = GR_TEXTURECLAMP_WRAP;
+
+    ti->mmMode = GR_MIPMAP_NEAREST;
+    ti->LODblend = FXFALSE;
+
+    return ti;
+}
+
+
 /*
  * Called via glBindTexture.
  */
@@ -218,8 +248,11 @@ tdfxBindTexture(GLcontext * ctx, GLenum target,
     if (target != GL_TEXTURE_2D)
         return;
 
+    if (!tObj->DriverData) {
+        tObj->DriverData = fxAllocTexObjData(fxMesa);
+    }
+
     ti = TDFX_TEXTURE_DATA(tObj);
-    assert(ti);
     ti->lastTimeUsed = fxMesa->texBindNumber++;
 
     fxMesa->new_state |= TDFX_NEW_TEXTURE;
@@ -272,8 +305,10 @@ tdfxTexParameter(GLcontext * ctx, GLenum target,
     if (target != GL_TEXTURE_2D)
         return;
 
+    if (!tObj->DriverData)
+        tObj->DriverData = fxAllocTexObjData(fxMesa);
+
     ti = TDFX_TEXTURE_DATA(tObj);
-    assert(ti);
 
     switch (pname) {
     case GL_TEXTURE_MIN_FILTER:
@@ -514,6 +549,8 @@ tdfxTexturePalette(GLcontext * ctx, struct gl_texture_object *tObj)
         if (!tObj->Palette.Table)
             return;
             
+        if (!tObj->DriverData)
+            tObj->DriverData = fxAllocTexObjData(fxMesa);
         ti = TDFX_TEXTURE_DATA(tObj);
         assert(ti);
         convertPalette(ti->palette.data, &tObj->Palette);
@@ -880,6 +917,14 @@ tdfxTexImage2D(GLcontext *ctx, GLenum target, GLint level,
     */
 
     ti = TDFX_TEXTURE_DATA(texObj);
+    if (!ti) {
+        texObj->DriverData = fxAllocTexObjData(fxMesa);
+        if (!texObj->DriverData) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+            return;
+        }
+        ti = TDFX_TEXTURE_DATA(texObj);
+    }
     assert(ti);
 
     mml = TDFX_TEXIMAGE_DATA(texImage);
@@ -985,6 +1030,11 @@ tdfxTexSubImage2D(GLcontext *ctx, GLenum target, GLint level,
     tdfxTexInfo *ti;
     tdfxMipMapLevel *mml;
     GLint texelBytes;
+
+    if (!texObj->DriverData) {
+        _mesa_problem(ctx, "problem in fxDDTexSubImage2D");
+        return;
+    }
 
     ti = TDFX_TEXTURE_DATA(texObj);
     assert(ti);
@@ -1234,6 +1284,8 @@ tdfxTestProxyTexImage(GLcontext *ctx, GLenum target,
             int memNeeded;
 
             tObj = ctx->Texture.Proxy2D;
+            if (!tObj->DriverData)
+                tObj->DriverData = fxAllocTexObjData(fxMesa);
             ti = TDFX_TEXTURE_DATA(tObj);
             assert(ti);
 
@@ -1306,6 +1358,9 @@ tdfxGetCompressedTexImage( GLcontext *ctx, GLenum target,
     tdfxMipMapLevel *mml;
 
     if (target != GL_TEXTURE_2D)
+        return;
+
+    if (!texObj->DriverData)
         return;
 
     ti = TDFX_TEXTURE_DATA(texObj);
@@ -1428,39 +1483,14 @@ tdfxDDCompressedImageSize(GLcontext *ctx,
  * Called via ctx->Driver.NewTextureObject.
  * Note: this function will be called during context creation to
  * allocate the default texture objects.
+ * Note: we could use containment here to 'derive' the driver-specific
+ * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
 tdfxNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
-   tdfxTexInfo *ti;
    obj = _mesa_new_texture_object(ctx, name, target);
-   if (!obj)
-      return NULL;
-
-   if (!(ti = CALLOC(sizeof(tdfxTexInfo)))) {
-      _mesa_delete_texture_object(ctx, obj);
-      return NULL;
-   }
-
-   ti->isInTM = GL_FALSE;
-
-   ti->whichTMU = TDFX_TMU_NONE;
-
-   ti->tm[TDFX_TMU0] = NULL;
-   ti->tm[TDFX_TMU1] = NULL;
-
-   ti->minFilt = GR_TEXTUREFILTER_POINT_SAMPLED;
-   ti->magFilt = GR_TEXTUREFILTER_BILINEAR;
-
-   ti->sClamp = GR_TEXTURECLAMP_WRAP;
-   ti->tClamp = GR_TEXTURECLAMP_WRAP;
-
-   ti->mmMode = GR_MIPMAP_NEAREST;
-   ti->LODblend = FXFALSE;
-
-   obj->DriverData = ti;
-
    return obj;
 }
 

@@ -554,7 +554,6 @@ static void r200TexImage1D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
-   assert(t);
    if ( t ) {
       driSwapOutTextureObject( t );
    }
@@ -616,8 +615,6 @@ static void r200TexImage2D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
    GLuint face;
-
-   assert(t);
 
    /* which cube face or ordinary 2D image */
    switch (target) {
@@ -732,8 +729,6 @@ static void r200TexImage3D( GLcontext *ctx, GLenum target, GLint level,
                             struct gl_texture_image *texImage )
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
-
-   assert(t);
 
    if ( t ) {
       driSwapOutTextureObject( t );
@@ -938,8 +933,6 @@ static void r200TexParameter( GLcontext *ctx, GLenum target,
 
 
 
-#if 0
-/* not needed anymore */
 static void r200BindTexture( GLcontext *ctx, GLenum target,
 			       struct gl_texture_object *texObj )
 {
@@ -954,7 +947,6 @@ static void r200BindTexture( GLcontext *ctx, GLenum target,
       }
    }
 }
-#endif
 
 
 static void r200DeleteTexture( GLcontext *ctx,
@@ -1007,6 +999,8 @@ static void r200TexGen( GLcontext *ctx,
  * Called via ctx->Driver.NewTextureObject.
  * Note: this function will be called during context creation to
  * allocate the default texture objects.
+ * Note: we could use containment here to 'derive' the driver-specific
+ * texture object from the core mesa gl_texture_object.  Not done at this time.
  * Fixup MaxAnisotropy according to user preference.
  */
 static struct gl_texture_object *
@@ -1014,16 +1008,10 @@ r200NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    struct gl_texture_object *obj;
-   driTextureObject *t;
    obj = _mesa_new_texture_object(ctx, name, target);
    if (!obj)
       return NULL;
    obj->MaxAnisotropy = rmesa->initialMaxAnisotropy;
-   t = (driTextureObject *) r200AllocTexObj( obj );
-   if (!t) {
-      _mesa_delete_texture_object(ctx, obj);
-      return NULL;
-   }
    return obj;
 }
 
@@ -1049,7 +1037,7 @@ void r200InitTextureFuncs( struct dd_function_table *functions )
    functions->TexSubImage3D		= _mesa_store_texsubimage3d;
 #endif
    functions->NewTextureObject		= r200NewTextureObject;
-   /*functions->BindTexture		= r200BindTexture;*/
+   functions->BindTexture		= r200BindTexture;
    functions->DeleteTexture		= r200DeleteTexture;
    functions->IsTextureResident		= driIsTextureResident;
 

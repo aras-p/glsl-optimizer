@@ -170,6 +170,8 @@ GLboolean gammaCreateContext( const __GLcontextModes *glVisual,
    gammaDDInitTriFuncs( ctx );
    gammaDDInitState( gmesa );
 
+   gammaInitTextureObjects( ctx );
+
    driContextPriv->driverPrivate = (void *)gmesa;
 
    GET_FIRST_DMA(gmesa->driFd, gmesa->hHWContext,

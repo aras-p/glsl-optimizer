@@ -299,8 +299,6 @@ static void gammaTexSubImage2D( GLcontext *ctx,
 			     texImage);
 }
 
-#if 0
-/* no longer needed */
 static void gammaBindTexture( GLcontext *ctx, GLenum target,
 			     struct gl_texture_object *tObj )
 {
@@ -325,8 +323,8 @@ static void gammaBindTexture( GLcontext *ctx, GLenum target,
          if (target == GL_TEXTURE_2D) {
             t->TextureAddressMode |= TAM_TexMapType_2D;
             t->TextureReadMode |= TRM_TexMapType_2D;
-         } else
-         if (target == GL_TEXTURE_1D) {
+         }
+         else if (target == GL_TEXTURE_1D) {
             t->TextureAddressMode |= TAM_TexMapType_1D;
             t->TextureReadMode |= TRM_TexMapType_1D;
          }
@@ -353,7 +351,6 @@ static void gammaBindTexture( GLcontext *ctx, GLenum target,
 	 gammaSetTexBorderColor( gmesa, t, tObj->_BorderChan );
       }
 }
-#endif
 
 static void gammaDeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
 {
@@ -384,73 +381,17 @@ static GLboolean gammaIsTextureResident( GLcontext *ctx,
  * Called via ctx->Driver.NewTextureObject.
  * Note: this function will be called during context creation to
  * allocate the default texture objects.
+ * Note: we could use containment here to 'derive' the driver-specific
+ * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
 gammaNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
-   gammaContextPtr gmesa = GAMMA_CONTEXT( ctx );
    struct gl_texture_object *obj;
-   gammaTextureObjectPtr t;
-
    obj = _mesa_new_texture_object(ctx, name, target);
-   if (!obj)
-      return NULL;
-
-   t = CALLOC_STRUCT(gamma_texture_object_t);
-   if (!t) {
-      _mesa_delete_texture_object(ctx, obj);
-      return NULL;
-   }
-
-   /* Initialize non-image-dependent parts of the state:
-    */
-   t->globj = obj;
-   obj->DriverData = t;
-
-   t->TextureAddressMode = TextureAddressModeEnable | TAM_Operation_3D |
-      TAM_DY_Enable | TAM_LODEnable;
-   t->TextureReadMode = TextureReadModeEnable | TRM_PrimaryCacheEnable |
-      TRM_MipMapEnable | TRM_BorderClamp | TRM_Border;
-   t->TextureColorMode = TextureColorModeEnable;
-   t->TextureFilterMode = TextureFilterModeEnable;
-
-   if (target == GL_TEXTURE_2D) {
-      t->TextureAddressMode |= TAM_TexMapType_2D;
-      t->TextureReadMode |= TRM_TexMapType_2D;
-   }
-   else if (target == GL_TEXTURE_1D) {
-      t->TextureAddressMode |= TAM_TexMapType_1D;
-      t->TextureReadMode |= TRM_TexMapType_1D;
-   }
-
-   t->TextureColorMode = TextureColorModeEnable;
-
-   t->TextureFilterMode = TextureFilterModeEnable;
-
-#ifdef MESA_LITTLE_ENDIAN
-   t->TextureFormat = (TF_LittleEndian |
-#else
-   t->TextureFormat = (TF_BigEndian |
-#endif
-                       TF_ColorOrder_RGB |
-                       TF_OutputFmt_Texel);
-
-   t->dirty_images = ~0;
-
-   make_empty_list( t );
-
-   gammaSetTexWrapping( t, obj->WrapS, obj->WrapT );
-   gammaSetTexFilter( gmesa, t, obj->MinFilter, obj->MagFilter,
-                      ctx->Texture.Unit[ctx->Texture.CurrentUnit].LodBias);
-
-   gammaSetTexBorderColor( gmesa, t, obj->_BorderChan );
-
    return obj;
 }
 
-
-#if 0
-/* no longer needed */
 void gammaInitTextureObjects( GLcontext *ctx )
 {
    struct gl_texture_object *texObj;
@@ -476,7 +417,6 @@ void gammaInitTextureObjects( GLcontext *ctx )
 
    ctx->Texture.CurrentUnit = tmp;
 }
-#endif
 
 
 void gammaDDInitTextureFuncs( struct dd_function_table *functions )
@@ -484,7 +424,7 @@ void gammaDDInitTextureFuncs( struct dd_function_table *functions )
    functions->TexEnv = gammaTexEnv;
    functions->TexImage2D = gammaTexImage2D;
    functions->TexSubImage2D = gammaTexSubImage2D;
-   /*functions->BindTexture = gammaBindTexture;*/
+   functions->BindTexture = gammaBindTexture;
    functions->DeleteTexture = gammaDeleteTexture;
    functions->TexParameter = gammaTexParameter;
    functions->IsTextureResident = gammaIsTextureResident;

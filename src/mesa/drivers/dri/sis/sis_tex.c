@@ -161,9 +161,17 @@ sisBindTexture( GLcontext *ctx, GLenum target,
                 struct gl_texture_object *texObj )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
-   sisTexObjPtr t = texObj->DriverData;
+   sisTexObjPtr t;
 
-   assert(t);
+   if ( target == GL_TEXTURE_2D || target == GL_TEXTURE_1D ) {
+      if ( texObj->DriverData == NULL ) {
+         sisAllocTexObj( texObj );
+      }
+   }
+
+   t = texObj->DriverData;
+   if (!t)
+      return;
 
    if (smesa->PrevTexFormat[ctx->Texture.CurrentUnit] != t->format) {
       smesa->TexStates[ctx->Texture.CurrentUnit] |= NEW_TEXTURE_ENV;
@@ -182,7 +190,6 @@ sisDeleteTexture( GLcontext * ctx, struct gl_texture_object *texObj )
    smesa->clearTexCache = GL_TRUE;
 
    t = texObj->DriverData;
-   assert(t);
    if (t == NULL) {
       /* 
        * this shows the texture is default object and never be a 
@@ -276,9 +283,12 @@ static void sisTexImage1D( GLcontext *ctx, GLenum target, GLint level,
 			     struct gl_texture_image *texImage )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
-   sisTexObjPtr t = texObj->DriverData;
+   sisTexObjPtr t;
 
-   assert(t);
+   if ( texObj->DriverData == NULL )
+      sisAllocTexObj( texObj );
+   t = texObj->DriverData;
+
    /* Note, this will call sisChooseTextureFormat */
    _mesa_store_teximage1d( ctx, target, level, internalFormat,
 			   width, border, format, type,
@@ -312,13 +322,15 @@ static void sisTexSubImage1D( GLcontext *ctx,
 				struct gl_texture_image *texImage )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
-   sisTexObjPtr t = texObj->DriverData;
+   sisTexObjPtr t;
    GLuint copySize;
    GLint texelBytes;
    const char *src;
    GLubyte *dst;
 
-   assert(t);
+   if ( texObj->DriverData == NULL )
+      sisAllocTexObj( texObj );
+   t = texObj->DriverData;
 
    _mesa_store_texsubimage1d(ctx, target, level, xoffset, width,
 			     format, type, pixels, packing, texObj,
@@ -356,9 +368,11 @@ static void sisTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 			     struct gl_texture_image *texImage )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
-   sisTexObjPtr t = texObj->DriverData;
+   sisTexObjPtr t;
 
-   assert(t);
+   if ( texObj->DriverData == NULL )
+      sisAllocTexObj( texObj );
+   t = texObj->DriverData;
 
    /* Note, this will call sisChooseTextureFormat */
    _mesa_store_teximage2d(ctx, target, level, internalFormat,
@@ -392,7 +406,7 @@ static void sisTexSubImage2D( GLcontext *ctx,
 				struct gl_texture_image *texImage )
 {
    sisContextPtr smesa = SIS_CONTEXT(ctx);
-   sisTexObjPtr t = texObj->DriverData;
+   sisTexObjPtr t;
    GLuint copySize;
    GLint texelBytes;
    const char *src;
@@ -400,7 +414,9 @@ static void sisTexSubImage2D( GLcontext *ctx,
    int j;
    GLuint soffset;
 
-   assert(t);
+   if ( texObj->DriverData == NULL )
+      sisAllocTexObj( texObj );
+   t = texObj->DriverData;
 
    _mesa_store_texsubimage2d(ctx, target, level, xoffset, yoffset, width,
 			     height, format, type, pixels, packing, texObj,
@@ -442,20 +458,14 @@ static void sisTexSubImage2D( GLcontext *ctx,
  * Called via ctx->Driver.NewTextureObject.
  * Note: this function will be called during context creation to
  * allocate the default texture objects.
+ * Note: we could use containment here to 'derive' the driver-specific
+ * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
 sisNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
-   sisTexObjPtr t;
    obj = _mesa_new_texture_object(ctx, name, target);
-   if (!obj)
-      return NULL;
-   t = (sisTexObjPtr) sisAllocTexObj( obj );
-   if (!t) {
-      _mesa_delete_texture_object(ctx, obj);
-      return NULL;
-   }
    return obj;
 }
 

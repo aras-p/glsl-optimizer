@@ -366,7 +366,6 @@ static void mgaTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
-   assert(t);
    if ( t != NULL ) {
       driSwapOutTextureObject( t );
    } 
@@ -437,7 +436,6 @@ mgaTexParameter( GLcontext *ctx, GLenum target,
     * created with current state before it is used, so we don't have
     * to do anything now 
     */
-   assert(t);
    if ( (t == NULL) ||
         (target != GL_TEXTURE_2D &&
          target != GL_TEXTURE_RECTANGLE_NV) ) {
@@ -482,8 +480,6 @@ mgaTexParameter( GLcontext *ctx, GLenum target,
 }
 
 
-#if 0
-/* no longer needed */
 static void
 mgaBindTexture( GLcontext *ctx, GLenum target,
 		  struct gl_texture_object *tObj )
@@ -495,7 +491,6 @@ mgaBindTexture( GLcontext *ctx, GLenum target,
       }
    }
 }
-#endif
 
 
 static void
@@ -520,22 +515,14 @@ mgaDeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
  * Called via ctx->Driver.NewTextureObject.
  * Note: this function will be called during context creation to
  * allocate the default texture objects.
- * Fixup MaxAnisotropy according to user preference.
+ * Note: we could use containment here to 'derive' the driver-specific
+ * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
 mgaNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
-   mgaContextPtr rmesa = MGA_CONTEXT(ctx);
    struct gl_texture_object *obj;
-   driTextureObject *t;
    obj = _mesa_new_texture_object(ctx, name, target);
-   if (!obj)
-      return NULL;
-   t = (driTextureObject *) mgaAllocTexObj( obj );
-   if (!t) {
-      _mesa_delete_texture_object(ctx, obj);
-      return NULL;
-   }
    return obj;
 }
 
@@ -546,10 +533,10 @@ mgaInitTextureFuncs( struct dd_function_table *functions )
    functions->ChooseTextureFormat	= mgaChooseTextureFormat;
    functions->TexImage2D		= mgaTexImage2D;
    functions->TexSubImage2D		= mgaTexSubImage2D;
-   /*ctx->Driver.BindTexture		= mgaBindTexture;*/
+   functions->BindTexture		= mgaBindTexture;
    functions->NewTextureObject		= mgaNewTextureObject;
    functions->DeleteTexture		= mgaDeleteTexture;
-   functions->IsTextureResident	= driIsTextureResident;
+   functions->IsTextureResident		= driIsTextureResident;
    functions->TexEnv			= mgaTexEnv;
    functions->TexParameter		= mgaTexParameter;
 }

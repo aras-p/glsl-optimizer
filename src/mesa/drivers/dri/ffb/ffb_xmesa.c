@@ -38,6 +38,7 @@
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 #include "array_cache/acache.h"
+#include "drivers/common/driverfuncs.h"
 
 #include "ffb_context.h"
 #include "ffb_dd.h"
@@ -178,18 +179,22 @@ ffbCreateContext(const __GLcontextModes *mesaVis,
 	__DRIscreenPrivate *sPriv;
 	ffbScreenPrivate *ffbScreen;
 	char *debug;
+	struct dd_function_table functions;
 
         /* Allocate ffb context */
 	fmesa = (ffbContextPtr) CALLOC(sizeof(ffbContextRec));
 	if (!fmesa)
 		return GL_FALSE;
 
+	_mesa_init_driver_functions(&functions);
+
         /* Allocate Mesa context */
         if (sharedContextPrivate)
            shareCtx = ((ffbContextPtr) sharedContextPrivate)->glCtx;
         else 
            shareCtx = NULL;
-        fmesa->glCtx = _mesa_create_context(mesaVis, shareCtx, fmesa, GL_TRUE);
+        fmesa->glCtx = _mesa_create_context(mesaVis, shareCtx,
+                                            &functions, fmesa);
         if (!fmesa->glCtx) {
            FREE(fmesa);
            return GL_FALSE;
@@ -265,6 +270,9 @@ ffbCreateContext(const __GLcontextModes *mesaVis,
 	_swsetup_CreateContext( ctx );
 
 	/* All of this need only be done once for a new context. */
+	/* XXX these should be moved right after the
+	 *  _mesa_init_driver_functions() call above.
+	 */
 	ffbDDExtensionsInit(ctx);
 	ffbDDInitDriverFuncs(ctx);
 	ffbDDInitStateFuncs(ctx);
@@ -272,7 +280,7 @@ ffbCreateContext(const __GLcontextModes *mesaVis,
 	ffbDDInitDepthFuncs(ctx);
 	ffbDDInitStencilFuncs(ctx);
 	ffbDDInitRenderFuncs(ctx);
-	ffbDDInitTexFuncs(ctx);
+	/*ffbDDInitTexFuncs(ctx); not needed */
 	ffbDDInitBitmapFuncs(ctx);
 	ffbInitVB(ctx);
 

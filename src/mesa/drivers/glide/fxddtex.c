@@ -90,13 +90,45 @@ static void
 fxTexInvalidate(GLcontext * ctx, struct gl_texture_object *tObj)
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   tfxTexInfo *ti = fxTMGetTexInfo(tObj);
-   assert(ti);
+   tfxTexInfo *ti;
+
+   ti = fxTMGetTexInfo(tObj);
    if (ti->isInTM)
       fxTMMoveOutTM(fxMesa, tObj);	/* TO DO: SLOW but easy to write */
 
    ti->validated = GL_FALSE;
    fxMesa->new_state |= FX_NEW_TEXTURING;
+}
+
+static tfxTexInfo *
+fxAllocTexObjData(fxMesaContext fxMesa)
+{
+   tfxTexInfo *ti;
+
+   if (!(ti = CALLOC(sizeof(tfxTexInfo)))) {
+      fprintf(stderr, "fxAllocTexObjData: ERROR: out of memory !\n");
+      fxCloseHardware();
+      exit(-1);
+   }
+
+   ti->validated = GL_FALSE;
+   ti->isInTM = GL_FALSE;
+
+   ti->whichTMU = FX_TMU_NONE;
+
+   ti->tm[FX_TMU0] = NULL;
+   ti->tm[FX_TMU1] = NULL;
+
+   ti->minFilt = GR_TEXTUREFILTER_POINT_SAMPLED;
+   ti->maxFilt = GR_TEXTUREFILTER_BILINEAR;
+
+   ti->sClamp = GR_TEXTURECLAMP_WRAP;
+   ti->tClamp = GR_TEXTURECLAMP_WRAP;
+
+   ti->mmMode = GR_MIPMAP_NEAREST;
+   ti->LODblend = FXFALSE;
+
+   return ti;
 }
 
 void
@@ -112,6 +144,9 @@ fxDDTexBind(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj)
    if (target != GL_TEXTURE_2D)
       return;
 
+   if (!tObj->DriverData) {
+      tObj->DriverData = fxAllocTexObjData(fxMesa);
+   }
    ti = fxTMGetTexInfo(tObj);
    assert(ti);
 
@@ -165,6 +200,8 @@ fxDDTexParam(GLcontext * ctx, GLenum target, struct gl_texture_object *tObj,
    if (target != GL_TEXTURE_2D)
       return;
 
+   if (!tObj->DriverData)
+      tObj->DriverData = fxAllocTexObjData(fxMesa);
    ti = fxTMGetTexInfo(tObj);
    assert(ti);
 
@@ -321,7 +358,8 @@ fxDDTexDel(GLcontext * ctx, struct gl_texture_object *tObj)
       fprintf(stderr, "fxDDTexDel(%d, %p)\n", tObj->Name, (void *) ti);
    }
 
-   assert(ti);
+   if (!ti)
+      return;
 
    fxTMFreeTexture(fxMesa, tObj);
 
@@ -343,37 +381,7 @@ struct gl_texture_object *
 fxDDNewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
    struct gl_texture_object *obj;
-   fxTexInfo *ti;
-
    obj = _mesa_new_texture_object(ctx, name, target);
-   if (!obj)
-      return NULL;
-
-   ti = CALLOC(sizeof(tfxTexInfo));
-   if (!ti) {
-      _mesa_delete_texture_object(ctx, obj);
-      return NULL;
-   }
-
-   ti->validated = GL_FALSE;
-   ti->isInTM = GL_FALSE;
-
-   ti->whichTMU = FX_TMU_NONE;
-
-   ti->tm[FX_TMU0] = NULL;
-   ti->tm[FX_TMU1] = NULL;
-
-   ti->minFilt = GR_TEXTUREFILTER_POINT_SAMPLED;
-   ti->maxFilt = GR_TEXTUREFILTER_BILINEAR;
-
-   ti->sClamp = GR_TEXTURECLAMP_WRAP;
-   ti->tClamp = GR_TEXTURECLAMP_WRAP;
-
-   ti->mmMode = GR_MIPMAP_NEAREST;
-   ti->LODblend = FXFALSE;
-
-   obj->DriverData = ti;
-
    return obj;
 }
 
@@ -471,6 +479,8 @@ fxDDTexPalette(GLcontext * ctx, struct gl_texture_object *tObj)
 	 fprintf(stderr, "fxDDTexPalette(%d, %x)\n",
 		 tObj->Name, (GLuint) tObj->DriverData);
       }
+      if (!tObj->DriverData)
+         tObj->DriverData = fxAllocTexObjData(fxMesa);
       ti = fxTMGetTexInfo(tObj);
       assert(ti);
       ti->paltype = convertPalette(fxMesa, ti->palette.data, &tObj->Palette);
@@ -507,6 +517,8 @@ fxDDTexUseGlbPalette(GLcontext * ctx, GLboolean state)
       if ((ctx->Texture.Unit[0]._Current == ctx->Texture.Unit[0].Current2D) &&
 	  (ctx->Texture.Unit[0]._Current != NULL)) {
 	 struct gl_texture_object *tObj = ctx->Texture.Unit[0]._Current;
+         if (!tObj->DriverData)
+           tObj->DriverData = fxAllocTexObjData(fxMesa);
 	 assert(tObj->DriverData);
 	 fxTexInvalidate(ctx, tObj);
       }
@@ -1221,8 +1233,13 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
       return;
    }
 
-   ti = fxTMGetTexInfo(texObj);
-   assert(ti);
+   if (!texObj->DriverData) {
+      texObj->DriverData = fxAllocTexObjData(fxMesa);
+      if (!texObj->DriverData) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
+         return;
+      }
+   }
 
    if (!texImage->DriverData) {
       texImage->DriverData = CALLOC(sizeof(tfxMipMapLevel));
@@ -1231,6 +1248,8 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
          return;
       }
    }
+   ti = fxTMGetTexInfo(texObj);
+
    mml = FX_MIPMAP_DATA(texImage);
 
    fxTexGetInfo(width, height, NULL, NULL, NULL, NULL,
@@ -1420,6 +1439,11 @@ fxDDTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
        fprintf(stderr, "fxDDTexSubImage2D: id=%d\n", texObj->Name);
    }
 
+   if (!texObj->DriverData) {
+      _mesa_problem(ctx, "problem in fxDDTexSubImage2D");
+      return;
+   }
+
    ti = fxTMGetTexInfo(texObj);
    assert(ti);
    mml = FX_MIPMAP_DATA(texImage);
@@ -1512,8 +1536,13 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
       return;
    }
 
-   ti = fxTMGetTexInfo(texObj);
-   assert(ti);
+   if (!texObj->DriverData) {
+      texObj->DriverData = fxAllocTexObjData(fxMesa);
+      if (!texObj->DriverData) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
+         return;
+      }
+   }
 
    if (!texImage->DriverData) {
       texImage->DriverData = CALLOC(sizeof(tfxMipMapLevel));
@@ -1522,6 +1551,7 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
          return;
       }
    }
+   ti = fxTMGetTexInfo(texObj);
    mml = FX_MIPMAP_DATA(texImage);
 
    fxTexGetInfo(width, height, NULL, NULL, NULL, NULL,

@@ -299,7 +299,6 @@ static void r128TexImage1D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
-   assert(t);
    if ( t ) {
       driSwapOutTextureObject( t );
    }
@@ -363,7 +362,6 @@ static void r128TexImage2D( GLcontext *ctx, GLenum target, GLint level,
 {
    driTextureObject * t = (driTextureObject *) texObj->DriverData;
 
-   assert(t);
    if ( t ) {
       driSwapOutTextureObject( (driTextureObject *) t );
    }
@@ -555,8 +553,6 @@ static void r128TexParameter( GLcontext *ctx, GLenum target,
    }
 }
 
-#if 00
-/* note needed */
 static void r128BindTexture( GLcontext *ctx, GLenum target,
 			       struct gl_texture_object *tObj )
 {
@@ -571,7 +567,7 @@ static void r128BindTexture( GLcontext *ctx, GLenum target,
       }
    }
 }
-#endif
+
 
 static void r128DeleteTexture( GLcontext *ctx,
 				 struct gl_texture_object *tObj )
@@ -594,21 +590,14 @@ static void r128DeleteTexture( GLcontext *ctx,
 /**
  * Allocate a new texture object.
  * Called via ctx->Driver.NewTextureObject.
+ * Note: we could use containment here to 'derive' the driver-specific
+ * texture object from the core mesa gl_texture_object.  Not done at this time.
  */
 static struct gl_texture_object *
 r128NewTextureObject( GLcontext *ctx, GLuint name, GLenum target )
 {
-   r128ContextPtr rmesa = R128_CONTEXT(ctx);
    struct gl_texture_object *obj;
-   driTextureObject *t;
    obj = _mesa_new_texture_object(ctx, name, target);
-   if (!obj)
-      return NULL;
-   t = (driTextureObject *) r128AllocTexObj(obj);
-   if (!t) {
-      _mesa_delete_texture_object(ctx, obj);
-      return NULL;
-   }
    return obj;
 }
 
@@ -621,7 +610,7 @@ void r128InitTextureFuncs( struct dd_function_table *functions )
    functions->TexImage2D		= r128TexImage2D;
    functions->TexSubImage2D		= r128TexSubImage2D;
    functions->TexParameter		= r128TexParameter;
-   /*functions->BindTexture		= r128BindTexture;*/
+   functions->BindTexture		= r128BindTexture;
    functions->NewTextureObject		= r128NewTextureObject;
    functions->DeleteTexture		= r128DeleteTexture;
    functions->IsTextureResident		= driIsTextureResident;

@@ -25,17 +25,16 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#include <GL/gl.h>
-#include "texformat.h"
-#include "texstore.h"
-#include "teximage.h"
-#include "swrast/swrast.h"
-
-#include "ffb_tex.h"
+#include "glheader.h"
+#include "mtypes.h"
 
 /* No texture unit, all software. */
+/* XXX this function isn't needed since _mesa_init_driver_functions()
+ * will make all these assignments.
+ */
 void ffbDDInitTexFuncs(GLcontext *ctx)
 {
+        /*
 	ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
 	ctx->Driver.TexImage1D = _mesa_store_teximage1d;
 	ctx->Driver.TexImage2D = _mesa_store_teximage2d;
@@ -49,4 +48,5 @@ void ffbDDInitTexFuncs(GLcontext *ctx)
 	ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
 	ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
 	ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
+	*/
 }
