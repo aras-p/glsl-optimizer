@@ -1646,7 +1646,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 
 
 /* Added by BrianP for FreeBSD (per David Dawes) */
-#if !defined(NASM_ASSEMBLER) && !defined(MASM_ASSEMBLER)
+#if !defined(NASM_ASSEMBLER) && !defined(MASM_ASSEMBLER) && !defined(__bsdi__)
 #define LLBL(a) CONCAT(.L,a)
 #else
 #define LLBL(a) a
