@@ -1,4 +1,4 @@
-/* $Id: svgamesa8.c,v 1.2 2000/01/22 20:08:36 brianp Exp $ */
+/* $Id: svgamesa8.c,v 1.3 2000/01/23 17:49:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -26,6 +26,8 @@
  * Original author:  Brian Paul
  * Additional authors:  Slawomir Szczyrba <steev@hot.pl>  (Mesa 3.2)
  */
+
+#ifdef SVGA
 
 
 #include "svgapix.h"
@@ -157,3 +159,5 @@ void __read_ci32_pixels8( const GLcontext *ctx,
    }
 }
 
+
+#endif

@@ -1,4 +1,4 @@
-/* $Id: svgamesa32.c,v 1.2 2000/01/22 20:08:36 brianp Exp $ */
+/* $Id: svgamesa32.c,v 1.3 2000/01/23 17:49:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,11 +27,13 @@
  * Additional authors:  Slawomir Szczyrba <steev@hot.pl>  (Mesa 3.2)
  */
 
+#ifdef SVGA
 
 #include "svgapix.h"
 
 GLint * intBuffer;
 
+#if 0
 inline int RGB2BGR32(int c)
 {
 	asm("rorw  $8, %0\n"	 
@@ -41,6 +43,13 @@ inline int RGB2BGR32(int c)
       : "=q"(c):"0"(c));
     return c;
 }
+#else
+int RGB2BGR32(int c)
+{
+   /* XXX this isn't right */
+   return c;
+}
+#endif
 
 int __svga_drawpixel32(int x, int y, unsigned long c)
 {
@@ -174,3 +183,6 @@ void __read_rgba_pixels32( const GLcontext *ctx,
     *((GLint*)rgba[i]) = RGB2BGR32(__svga_getpixel32( x[i], y[i] ));
    }
 }
+
+#endif
+

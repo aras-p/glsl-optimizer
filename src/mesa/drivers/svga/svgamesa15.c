@@ -1,4 +1,4 @@
-/* $Id: svgamesa15.c,v 1.2 2000/01/22 20:08:36 brianp Exp $ */
+/* $Id: svgamesa15.c,v 1.3 2000/01/23 17:49:54 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -27,6 +27,7 @@
  * Additional authors:  Slawomir Szczyrba <steev@hot.pl>  (Mesa 3.2)
  */
 
+#ifdef SVGA
 
 #include "svgapix.h"
 
@@ -176,3 +177,5 @@ void __read_rgba_pixels15( const GLcontext *ctx,
     rgba[i][BCOMP] = ((pix    )<<3) & 0xff;
    }
 }
+
+#endif
