@@ -240,7 +240,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
     * the default textures.
     */
    driParseConfigFiles (&rmesa->optionCache, &screen->optionCache,
-			screen->driScreen->myNum, "r200");
+			screen->driScreen->myNum, "radeon");
    rmesa->initialMaxAnisotropy = driQueryOptionf(&rmesa->optionCache,
                                                  "def_max_anisotropy");
 
