@@ -1,5 +1,3 @@
-# $Id: Makefile.X11,v 1.79 2003/04/17 02:33:11 brianp Exp $
-
 # Mesa 3-D graphics library
 # Version:  5.1
 # Copyright (C) 1995-2003  Brian Paul
@@ -9,77 +7,81 @@
 
 ##### MACROS #####
 
+TOP = ../..
+
 GL_MAJOR = 1
 GL_MINOR = 4
 GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
+GL_LIB_NAME = "GL"  # may be overridden in Make-config
+OSMESA_LIB_NAME = "OSMesa"  # may be overridden in Make-config
+
 VPATH = RCS
 
-INCDIR = ../include
-LIBDIR = ../lib
+LIBDIR = $(TOP)/lib
 
 
 
 CORE_SOURCES = \
-	api_arrayelt.c \
-	api_loopback.c \
-	api_noop.c \
-	api_validate.c \
-	accum.c \
-	arbprogram.c \
-	attrib.c \
-	blend.c \
-	bufferobj.c \
-	buffers.c \
-	clip.c \
-	colortab.c \
-	context.c \
-	convolve.c \
-	debug.c \
-	depth.c \
-	dispatch.c \
-	dlist.c \
-	drawpix.c \
-	enable.c \
-	enums.c \
-	eval.c \
-	extensions.c \
-	feedback.c \
-	fog.c \
-	get.c \
-	glapi.c \
-	glthread.c \
-	hash.c \
-	hint.c \
-	histogram.c \
-	image.c \
-	imports.c \
-	light.c \
-	lines.c \
-	matrix.c \
-	nvprogram.c \
-	nvfragparse.c \
-	nvvertexec.c \
-	nvvertparse.c \
-	pixel.c \
-	points.c \
-	polygon.c \
-	rastpos.c \
-	state.c \
-	stencil.c \
-	texcompress.c \
-	texformat.c \
-	teximage.c \
-	texobj.c \
-	texstate.c \
-	texstore.c \
-	texutil.c \
-	varray.c \
-	vtxfmt.c \
-	X86/x86.c \
-	X86/common_x86.c \
-	X86/3dnow.c \
-	X86/sse.c \
+	glapi/glapi.c \
+	glapi/glthread.c \
+	main/api_arrayelt.c \
+	main/api_loopback.c \
+	main/api_noop.c \
+	main/api_validate.c \
+	main/accum.c \
+	main/arbprogram.c \
+	main/attrib.c \
+	main/blend.c \
+	main/bufferobj.c \
+	main/buffers.c \
+	main/clip.c \
+	main/colortab.c \
+	main/context.c \
+	main/convolve.c \
+	main/debug.c \
+	main/depth.c \
+	main/dispatch.c \
+	main/dlist.c \
+	main/drawpix.c \
+	main/enable.c \
+	main/enums.c \
+	main/eval.c \
+	main/extensions.c \
+	main/feedback.c \
+	main/fog.c \
+	main/get.c \
+	main/hash.c \
+	main/hint.c \
+	main/histogram.c \
+	main/image.c \
+	main/imports.c \
+	main/light.c \
+	main/lines.c \
+	main/matrix.c \
+	main/nvprogram.c \
+	main/nvfragparse.c \
+	main/nvvertexec.c \
+	main/nvvertparse.c \
+	main/pixel.c \
+	main/points.c \
+	main/polygon.c \
+	main/rastpos.c \
+	main/state.c \
+	main/stencil.c \
+	main/texcompress.c \
+	main/texformat.c \
+	main/teximage.c \
+	main/texobj.c \
+	main/texstate.c \
+	main/texstore.c \
+	main/texutil.c \
+	main/varray.c \
+	main/vtxfmt.c \
+	x86/x86.c \
+	x86/common_x86.c \
+	x86/3dnow.c \
+	x86/sse.c \
 	math/m_debug_clip.c \
 	math/m_debug_norm.c \
 	math/m_debug_xform.c \
@@ -146,29 +148,29 @@ CORE_SOURCES = \
 
 
 DRIVER_SOURCES = \
-	FX/fxapi.c \
-	FX/fxdd.c \
-	FX/fxddspan.c \
-	FX/fxddtex.c \
-	FX/fxsetup.c \
-	FX/fxtexman.c \
-	FX/fxtris.c \
-	FX/fxvb.c \
-	FX/fxglidew.c \
-	X/glxapi.c \
-	X/fakeglx.c \
-	X/xfonts.c \
-	X/xm_api.c \
-	X/xm_dd.c \
-	X/xm_line.c \
-	X/xm_span.c \
-	X/xm_tri.c \
-	SVGA/svgamesa.c \
-	SVGA/svgamesa8.c \
-	SVGA/svgamesa15.c \
-	SVGA/svgamesa16.c \
-	SVGA/svgamesa24.c \
-	SVGA/svgamesa32.c
+	drivers/glide/fxapi.c \
+	drivers/glide/fxdd.c \
+	drivers/glide/fxddspan.c \
+	drivers/glide/fxddtex.c \
+	drivers/glide/fxsetup.c \
+	drivers/glide/fxtexman.c \
+	drivers/glide/fxtris.c \
+	drivers/glide/fxvb.c \
+	drivers/glide/fxglidew.c \
+	drivers/x11/glxapi.c \
+	drivers/x11/fakeglx.c \
+	drivers/x11/xfonts.c \
+	drivers/x11/xm_api.c \
+	drivers/x11/xm_dd.c \
+	drivers/x11/xm_line.c \
+	drivers/x11/xm_span.c \
+	drivers/x11/xm_tri.c \
+	drivers/svga/svgamesa.c \
+	drivers/svga/svgamesa8.c \
+	drivers/svga/svgamesa15.c \
+	drivers/svga/svgamesa16.c \
+	drivers/svga/svgamesa24.c \
+	drivers/svga/svgamesa32.c
 
 
 ASM_SOURCES =
@@ -182,18 +184,28 @@ OBJECTS = $(ASM_SOURCES:.S=.o) \
 
 CORE_OBJECTS = $(CORE_SOURCES:.c=.o)
 
-OSMESA_SOURCES = OSmesa/osmesa.c
-OSMESA_OBJECTS = OSmesa/osmesa.o
+OSMESA_SOURCES = drivers/osmesa/osmesa.c
+OSMESA_OBJECTS = drivers/osmesa/osmesa.o
+
+INCLUDE_DIRS = \
+	-I$(TOP)/include \
+	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mesa/main \
+	-I$(TOP)/src/mesa/glapi \
+	-I$(TOP)/src/mesa/math \
+	-I$(TOP)/src/mesa/transform \
+	-I$(TOP)/src/mesa/swrast \
+	-I$(TOP)/src/mesa/swrast_setup
 
 
 
 ##### RULES #####
 
 .c.o:
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 .S.o:
-	$(CC) -c -I. $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 
 X86/x86.o: X86/x86.c
@@ -228,16 +240,17 @@ targets: $(LIBDIR)/$(GL_LIB) $(LIBDIR)/$(OSMESA_LIB)
 
 # Make the GL library
 $(LIBDIR)/$(GL_LIB): $(OBJECTS)
-	$(MAKELIB) $(GL_LIB) $(GL_MAJOR) $(GL_MINOR) $(GL_TINY) $(OBJECTS)
-	rm -f $(LIBDIR)/$(GL_LIB)*
-	mv $(GL_LIB)* $(LIBDIR)
+	$(TOP)/bin/mklib -o $(GL_LIB_NAME) -major $(GL_MAJOR) \
+		-minor $(GL_MINOR) -patch $(GL_TINY) -install $(LIBDIR) \
+		$(GL_LIB_DEPS) $(OBJECTS)
 
 
 # Make the OSMesa library
 $(LIBDIR)/$(OSMESA_LIB): $(OSMESA_OBJECTS)
-	if [ ${OSMESA_LIB} ] ; then $(MAKELIB) $(OSMESA_LIB) $(MESA_MAJOR) $(MESA_MINOR) $(GL_TINY) $(OSMESA_OBJECTS) ; fi
-	if [ ${OSMESA_LIB} ] ; then rm -f $(LIBDIR)/$(OSMESA_LIB)* ; fi
-	if [ ${OSMESA_LIB} ] ; then mv $(OSMESA_LIB)* $(LIBDIR) ; fi
+	if [ ${OSMESA_LIB} ] ; then $(TOP)/bin/mklib -o $(OSMESA_LIB_NAME) \
+		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(GL_TINY) \
+		-L$(LIBDIR) -l$(GL_LIB_NAME) -install $(LIBDIR) \
+		$(OSMESA_OBJECTS) ; fi
 
 # Make an optional library with _just_ core objects
 libmesa:	$(LIBDIR)/$(MESA_LIB)
@@ -245,9 +258,10 @@ libmesa:	$(LIBDIR)/$(MESA_LIB)
 	if [ ${MESA_LIB} ] ; then rm -f $(LIBDIR)/$(MESA_LIB)* ; fi
 	if [ ${MESA_LIB} ] ; then mv $(MESA_LIB)* $(LIBDIR) ; fi
 
+
 $(LIBDIR)/$(MESA_LIB):	$(CORE_OBJECTS)
 
-include ../Make-config
+include $(TOP)/Make-config
 
 include depend
 

@@ -10,7 +10,7 @@ GLU_LIB_NAME = "GLU"  # may be overridden in Make-config
 
 VPATH = RCS
 
-TOP = ..
+TOP = ../../..
 INCDIR = $(TOP)/include
 LIBDIR = $(TOP)/lib
 

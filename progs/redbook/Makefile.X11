@@ -3,7 +3,7 @@
 
 ##### MACROS #####
 
-TOP = ..
+TOP = ../..
 INCDIR = $(TOP)/include
 LIBDIR = $(TOP)/lib
 

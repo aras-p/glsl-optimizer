@@ -12,7 +12,7 @@ GLU_LIB_NAME = "GLU"  # may be overridden in Make-config
 
 VPATH = RCS
 
-TOP = ..
+TOP = ../../..
 INCDIRS = -I$(TOP)/include -Iinclude -Iinternals -Ilibnurbs/internals -Ilibnurbs/interface -Ilibnurbs/nurbtess
 LIBDIR = $(TOP)/lib
 

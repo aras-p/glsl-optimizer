@@ -7,10 +7,12 @@ MAJOR = 1
 MINOR = 0
 TINY = 0
 
+TOP = ../..
+
 VPATH = RCS
 
-INCDIRS = -I../include -I/usr/include/Motif1.2 -I/usr/contrib/X11R6/include -I/usr/X11R6/include
-LIBDIR = ../lib
+INCDIRS = -I$(TOP)/include -I/usr/include/Motif1.2 -I/usr/contrib/X11R6/include -I/usr/X11R6/include
+LIBDIR = $(TOP)/lib
 
 # Use these sources for Motif (and Xt) support.  Requires Motif header files.
 #SOURCES = GLwDrawA.c GLwMDrawA.c
@@ -43,9 +45,8 @@ targets: $(LIBDIR)/$(GLW_LIB) message
 
 # Make the library
 $(LIBDIR)/$(GLW_LIB): $(OBJECTS)
-	$(MAKELIB) $(GLW_LIB) $(MAJOR) $(MINOR) $(TINY) $(OBJECTS)
-	mv $(GLW_LIB)* $(LIBDIR)
-	-mv *.a $(LIBDIR)
+	$(TOP)/bin/mklib -o GLw -major $(MAJOR) -minor $(MINOR) \
+		-patch $(TINY) $(GLW_LIB_DEPS) -install $(LIBDIR) $(OBJECTS)
 
 
 message:
@@ -56,7 +57,7 @@ message:
 	@echo
 
 
-include ../Make-config
+include $(TOP)/Make-config
 
 include depend
 
@@ -67,4 +68,4 @@ include depend
 # by any source file.
 # 
 dep: $(SOURCES)
-	makedepend -fdepend -Y -I../include $(SOURCES)
+	makedepend -fdepend -Y -I$(TOP)/include $(SOURCES)

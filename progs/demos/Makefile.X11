@@ -3,7 +3,7 @@
 
 ##### MACROS #####
 
-TOP = ..
+TOP = ../..
 INCDIR = $(TOP)/include
 LIBDIR = $(TOP)/lib
 
@@ -90,10 +90,10 @@ targets: readtex.c readtex.h $(PROGS)
 
 
 readtex.c:
-	cp $(TOP)/util/readtex.c .
+	cp $(TOP)/progs/util/readtex.c .
 
 readtex.h:
-	cp $(TOP)/util/readtex.h .
+	cp $(TOP)/progs/util/readtex.h .
 
 
 include $(TOP)/Make-config
