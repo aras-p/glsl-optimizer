@@ -1,4 +1,4 @@
-# $Id: Makefile.X11,v 1.52 2001/05/21 16:33:41 gareth Exp $
+# $Id: Makefile.X11,v 1.53 2001/06/01 22:22:41 keithw Exp $
 
 # Mesa 3-D graphics library
 # Version:  3.5
@@ -21,6 +21,7 @@ LIBDIR = ../lib
 
 
 CORE_SOURCES = \
+	api_arrayelt.c \
 	tnl/t_array_api.c \
 	tnl/t_array_import.c \
 	tnl/t_context.c \
