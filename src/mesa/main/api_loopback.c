@@ -6,9 +6,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,24 +45,24 @@
  * listed in dd.h.  The easiest way for a driver to do this is to
  * install the supplied software t&l module.
  */
-#define COLORF(r,g,b,a)             glColor4f(r,g,b,a)
-#define VERTEX2(x,y)	            glVertex2f(x,y)
-#define VERTEX3(x,y,z)	            glVertex3f(x,y,z)
-#define VERTEX4(x,y,z,w)            glVertex4f(x,y,z,w)
-#define NORMAL(x,y,z)               glNormal3f(x,y,z)
-#define TEXCOORD1(s)                glTexCoord1f(s)
-#define TEXCOORD2(s,t)              glTexCoord2f(s,t)
-#define TEXCOORD3(s,t,u)            glTexCoord3f(s,t,u)
-#define TEXCOORD4(s,t,u,v)          glTexCoord4f(s,t,u,v)
-#define INDEX(c)		    glIndexf(c)
-#define MULTI_TEXCOORD1(z,s)	    glMultiTexCoord1fARB(z,s)
-#define MULTI_TEXCOORD2(z,s,t)	    glMultiTexCoord2fARB(z,s,t)
-#define MULTI_TEXCOORD3(z,s,t,u)    glMultiTexCoord3fARB(z,s,t,u)
-#define MULTI_TEXCOORD4(z,s,t,u,v)  glMultiTexCoord4fARB(z,s,t,u,v)
-#define EVALCOORD1(x)               glEvalCoord1f(x)
-#define EVALCOORD2(x,y)             glEvalCoord2f(x,y)
-#define MATERIALFV(a,b,c)           glMaterialfv(a,b,c)
-#define RECTF(a,b,c,d)              glRectf(a,b,c,d)
+#define COLORF(r,g,b,a)             _glapi_Dispatch->Color4f(r,g,b,a)
+#define VERTEX2(x,y)	            _glapi_Dispatch->Vertex2f(x,y)
+#define VERTEX3(x,y,z)	            _glapi_Dispatch->Vertex3f(x,y,z)
+#define VERTEX4(x,y,z,w)            _glapi_Dispatch->Vertex4f(x,y,z,w)
+#define NORMAL(x,y,z)               _glapi_Dispatch->Normal3f(x,y,z)
+#define TEXCOORD1(s)                _glapi_Dispatch->TexCoord1f(s)
+#define TEXCOORD2(s,t)              _glapi_Dispatch->TexCoord2f(s,t)
+#define TEXCOORD3(s,t,u)            _glapi_Dispatch->TexCoord3f(s,t,u)
+#define TEXCOORD4(s,t,u,v)          _glapi_Dispatch->TexCoord4f(s,t,u,v)
+#define INDEX(c)		    _glapi_Dispatch->Indexf(c)
+#define MULTI_TEXCOORD1(z,s)	    _glapi_Dispatch->MultiTexCoord1fARB(z,s)
+#define MULTI_TEXCOORD2(z,s,t)	    _glapi_Dispatch->MultiTexCoord2fARB(z,s,t)
+#define MULTI_TEXCOORD3(z,s,t,u)    _glapi_Dispatch->MultiTexCoord3fARB(z,s,t,u)
+#define MULTI_TEXCOORD4(z,s,t,u,v)  _glapi_Dispatch->MultiTexCoord4fARB(z,s,t,u,v)
+#define EVALCOORD1(x)               _glapi_Dispatch->EvalCoord1f(x)
+#define EVALCOORD2(x,y)             _glapi_Dispatch->EvalCoord2f(x,y)
+#define MATERIALFV(a,b,c)           _glapi_Dispatch->Materialfv(a,b,c)
+#define RECTF(a,b,c,d)              _glapi_Dispatch->Rectf(a,b,c,d)
 
 /* Extension functions must be dereferenced through _glapi_Dispatch as
  * not all libGL.so's will have all the uptodate entrypoints.
