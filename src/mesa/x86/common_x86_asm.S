@@ -1,10 +1,8 @@
-/* $Id: common_x86_asm.S,v 1.17 2003/01/21 16:13:58 brianp Exp $ */
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -148,6 +146,12 @@ GLNAME(_mesa_x86_cpuid_edx):
  * supports SSE.  A signal handler for SIGILL should have been set
  * before calling this function, otherwise this could kill the client
  * application.
+ *
+ *        -----> !!!! ATTENTION DEVELOPERS !!!! <-----
+ *
+ * If you're debugging with gdb and you get stopped in this function,
+ * just type 'continue'!  Execution will proceed normally.
+ * See freedesktop.org bug #1709 for more info.
  */
 ALIGNTEXT4
 GLOBL GLNAME( _mesa_test_os_sse_support )
