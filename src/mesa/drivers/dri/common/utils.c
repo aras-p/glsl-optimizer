@@ -64,17 +64,33 @@ driParseDebugString( const char * debug,
 
 
 
-
+/**
+ * Create the \c GL_RENDERER string for DRI drivers.
+ * 
+ * Almost all DRI drivers use a \c GL_RENDERER string of the form:
+ *
+ *    "Mesa DRI <chip> <driver date> <AGP speed) <CPU information>"
+ *
+ * Using the supplied chip name, driver data, and AGP speed, this function
+ * creates the string.
+ * 
+ * \param buffer         Buffer to hold the \c GL_RENDERER string.
+ * \param hardware_name  Name of the hardware.
+ * \param driver_date    Driver date.
+ * \param agp_mode       AGP mode (speed).
+ * 
+ * \returns
+ * The length of the string stored in \c buffer.  This does \b not include
+ * the terminating \c NUL character.
+ */
 unsigned
 driGetRendererString( char * buffer, const char * hardware_name,
 		      const char * driver_date, GLuint agp_mode )
 {
-#ifdef USE_X86_ASM
-   char * x86_str = "";
-   char * mmx_str = "";
-   char * tdnow_str = "";
-   char * sse_str = "";
-#endif
+#define MAX_INFO   4
+   const char * cpu[MAX_INFO];
+   unsigned   next = 0;
+   unsigned   i;
    unsigned   offset;
 
 
@@ -98,32 +114,41 @@ driGetRendererString( char * buffer, const char * hardware_name,
     */
 #ifdef USE_X86_ASM
    if ( _mesa_x86_cpu_features ) {
-      x86_str = " x86";
+      cpu[next] = " x86";
+      next++;
    }
 # ifdef USE_MMX_ASM
    if ( cpu_has_mmx ) {
-      mmx_str = (cpu_has_mmxext) ? "/MMX+" : "/MMX";
+      cpu[next] = (cpu_has_mmxext) ? "/MMX+" : "/MMX";
+      next++;
    }
 # endif
 # ifdef USE_3DNOW_ASM
    if ( cpu_has_3dnow ) {
-      tdnow_str = (cpu_has_3dnowext) ? "/3DNow!+" : "/3DNow!";
+      cpu[next] = (cpu_has_3dnowext) ? "/3DNow!+" : "/3DNow!";
+      next++;
    }
 # endif
 # ifdef USE_SSE_ASM
    if ( cpu_has_xmm ) {
-      sse_str = (cpu_has_xmm2) ? "/SSE2" : "/SSE";
+      cpu[next] = (cpu_has_xmm2) ? "/SSE2" : "/SSE";
+      next++;
    }
 # endif
 
-   offset += sprintf( & buffer[ offset ], "%s%s%s%s", 
-		      x86_str, mmx_str, tdnow_str, sse_str );
-
 #elif defined(USE_SPARC_ASM)
 
-   offset += sprintf( & buffer[ offset ], " Sparc" );
+   cpu[0] = " SPARC";
+   next = 1;
 
 #endif
+
+   for ( i = 0 ; i < next ; i++ ) {
+      const size_t len = strlen( cpu[i] );
+
+      strncpy( & buffer[ offset ], cpu[i], len );
+      offset += len;
+   }
 
    return offset;
 }
