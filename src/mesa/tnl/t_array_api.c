@@ -1,4 +1,4 @@
-/* $Id: t_array_api.c,v 1.10 2001/03/12 00:48:43 gareth Exp $ */
+/* $Id: t_array_api.c,v 1.11 2001/04/26 14:51:06 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -90,8 +90,8 @@ static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
 }
 
 
-static void _tnl_draw_elements( GLcontext *ctx, GLenum mode, GLsizei count,
-				const GLuint *indices)
+static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
+				   const GLuint *indices)
 {
 #if 1
    /* Optimized code that fakes the effect of calling
@@ -179,7 +179,13 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
    if (tnl->pipeline.build_state_changes)
       _tnl_validate_pipeline( ctx );
 
-   if (!ctx->CompileFlag && count - start < (GLint) ctx->Const.MaxArrayLockSize) {
+   if (ctx->CompileFlag) {
+      fallback_drawarrays( ctx, mode, start, count );
+   }    
+   else if (count - start < (GLint) ctx->Const.MaxArrayLockSize) {
+
+      /* Small primitives which can fit in a single vertex buffer:
+       */
       FLUSH_CURRENT( ctx, 0 );
 
       if (ctx->Array.LockCount)
@@ -214,26 +220,80 @@ _tnl_DrawArrays(GLenum mode, GLint start, GLsizei count)
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
       }
    }
-   else if (!ctx->CompileFlag && mode == GL_TRIANGLE_STRIP) {
-      int bufsz = (ctx->Const.MaxArrayLockSize - 2) & ~1;
+   else {
+      int bufsz = (ctx->Const.MaxArrayLockSize - 4) & ~3;
       int j, nr;
+      int minimum, modulo, skip;
+
+      /* Large primitives requiring decomposition to multiple vertex
+       * buffers:
+       */
+      switch (mode) {
+      case GL_POINTS:
+	 minimum = 0;
+	 modulo = 1;
+	 skip = 0;
+      case GL_LINES:
+	 minimum = 1;
+	 modulo = 2;
+	 skip = 1;
+      case GL_LINE_STRIP:
+	 minimum = 1;
+	 modulo = 1;
+	 skip = 0;
+	 break;
+      case GL_TRIANGLES:
+	 minimum = 2;
+	 modulo = 3;
+	 skip = 2;
+	 break;
+      case GL_TRIANGLE_STRIP:
+	 minimum = 2;
+	 modulo = 1;
+	 skip = 0;
+	 break;
+      case GL_QUADS:
+	 minimum = 3;
+	 modulo = 4;
+	 skip = 3;
+	 break;
+      case GL_QUAD_STRIP:
+	 minimum = 3;
+	 modulo = 2;
+	 skip = 0;
+	 break;
+      case GL_LINE_LOOP:
+      case GL_TRIANGLE_FAN:
+      case GL_POLYGON:
+      default:
+	 /* Primitives requiring a copied vertex (fan-like primitives)
+	  * must use the slow path:
+	  */
+	 fallback_drawarrays( ctx, mode, start, count );
+	 return;
+      }
 
       FLUSH_CURRENT( ctx, 0 );
 
-      /* TODO: other non-fan primitives.
-       */
-      for (j = start ; j < count - 2; j += nr - 2 ) {
+/*        fprintf(stderr, "start %d count %d min %d modulo %d skip %d\n", */
+/*  	      start, count, minimum, modulo, skip); */
+      
+      for (j = start + minimum ; j < count ; j += nr + skip ) {
+
 	 nr = MIN2( bufsz, count - j );
-	 _tnl_vb_bind_arrays( ctx, j, j + nr );
+	 nr -= nr % modulo;
+
+/*  	 fprintf(stderr, "%d..%d\n", j - minimum, j+nr); */
+
+	 _tnl_vb_bind_arrays( ctx, j - minimum, j + nr );
+
 	 VB->FirstPrimitive = 0;
 	 VB->Primitive[0] = mode | PRIM_BEGIN | PRIM_END | PRIM_LAST;
-	 VB->PrimitiveLength[0] = nr;
+	 VB->PrimitiveLength[0] = nr + minimum;
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
 	 _tnl_run_pipeline( ctx );
 	 tnl->pipeline.run_input_changes |= ctx->Array._Enabled;
       }
-   } else {
-      fallback_drawarrays( ctx, mode, start, count );
    }
 }
 
@@ -293,7 +353,7 @@ _tnl_DrawRangeElements(GLenum mode,
    } else {
       /* Range is too big to optimize:
        */
-      _tnl_draw_elements( ctx, mode, count, ui_indices );
+      fallback_drawelements( ctx, mode, count, ui_indices );
    }
 }
 
@@ -338,7 +398,7 @@ _tnl_DrawElements(GLenum mode, GLsizei count, GLenum type,
 	  max_elt < (GLuint) count) 	           /* do we want to use it? */
 	 _tnl_draw_range_elements( ctx, mode, 0, max_elt+1, count, ui_indices );
       else
-	 _tnl_draw_elements( ctx, mode, count, ui_indices );
+	 fallback_drawelements( ctx, mode, count, ui_indices );
    }
 }
 
