@@ -1,4 +1,4 @@
-/* $Id: glu.c,v 1.5 1999/09/11 12:04:54 brianp Exp $ */
+/* $Id: glu.c,v 1.6 1999/09/13 14:31:32 joukj Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -23,6 +23,10 @@
 
 /*
  * $Log: glu.c,v $
+ * Revision 1.6  1999/09/13 14:31:32  joukj
+ *
+ * strcmp needs the string.h
+ *
  * Revision 1.5  1999/09/11 12:04:54  brianp
  * added 1.2 function to gluGetProcAddressEXT()
  *
@@ -86,6 +90,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "gluP.h"
 #endif
 
