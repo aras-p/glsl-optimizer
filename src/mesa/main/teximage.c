@@ -1,4 +1,4 @@
-/* $Id: teximage.c,v 1.101 2001/07/16 15:54:23 brianp Exp $ */
+/* $Id: teximage.c,v 1.102 2001/07/23 16:18:18 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -508,6 +508,7 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_unit *texUnit,
 
 
 
+#if 000 /* not used anymore */
 /*
  * glTexImage[123]D can accept a NULL image pointer.  In this case we
  * create a texture image with unspecified image contents per the OpenGL
@@ -557,6 +558,7 @@ make_null_texture(GLint width, GLint height, GLint depth, GLenum format)
 
    return data;
 }
+#endif
 
 
 
@@ -1359,6 +1361,8 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
          _mesa_update_state(ctx);
 
       ASSERT(ctx->Driver.TexImage1D);
+
+#if 0 /* don't make default teximage anymore */
       if (pixels) {
          (*ctx->Driver.TexImage1D)(ctx, target, level, internalFormat,
                                    width, border, format, type, pixels,
@@ -1374,6 +1378,12 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
             FREE(dummy);
          }
       }
+#else
+      /* <pixels> may be null! */
+      (*ctx->Driver.TexImage1D)(ctx, target, level, internalFormat,
+                                width, border, format, type, pixels,
+                                &ctx->Unpack, texObj, texImage);
+#endif
 
       ASSERT(texImage->TexFormat);
       if (!texImage->FetchTexel) {
@@ -1476,6 +1486,8 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
          _mesa_update_state(ctx);
 
       ASSERT(ctx->Driver.TexImage2D);
+
+#if 0 /* don't make default teximage anymore */
       if (pixels) {
          (*ctx->Driver.TexImage2D)(ctx, target, level, internalFormat,
                                    width, height, border, format, type, pixels,
@@ -1491,6 +1503,12 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
             FREE(dummy);
          }
       }
+#else
+      /* <pixels> may be null! */
+      (*ctx->Driver.TexImage2D)(ctx, target, level, internalFormat,
+                                width, height, border, format, type, pixels,
+                                &ctx->Unpack, texObj, texImage);
+#endif
 
       ASSERT(texImage->TexFormat);
       if (!texImage->FetchTexel) {
@@ -1587,6 +1605,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLenum internalFormat,
          _mesa_update_state(ctx);
 
       ASSERT(ctx->Driver.TexImage3D);
+
+#if 0 /* don't make default teximage anymore */
       if (pixels) {
          (*ctx->Driver.TexImage3D)(ctx, target, level, (GLint) internalFormat,
                                    width, height, depth, border,
@@ -1604,6 +1624,12 @@ _mesa_TexImage3D( GLenum target, GLint level, GLenum internalFormat,
             FREE(dummy);
          }
       }
+#else
+      /* <pixels> may be null! */
+      (*ctx->Driver.TexImage3D)(ctx, target, level, internalFormat,
+                                width, height, depth, border, format, type,
+                                pixels, &ctx->Unpack, texObj, texImage);
+#endif
 
       ASSERT(texImage->TexFormat);
       if (!texImage->FetchTexel) {
