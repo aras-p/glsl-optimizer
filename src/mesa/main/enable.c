@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -43,13 +43,6 @@
 
 #define CHECK_EXTENSION(EXTNAME, CAP)					\
    if (!ctx->Extensions.EXTNAME) {					\
-      _mesa_error(ctx, GL_INVALID_ENUM, "gl%sClientState(0x%x)",	\
-                  state ? "Enable" : "Disable", CAP);			\
-      return;								\
-   }
-
-#define CHECK_EXTENSION2(EXT1, EXT2, CAP)				\
-   if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2) {		\
       _mesa_error(ctx, GL_INVALID_ENUM, "gl%sClientState(0x%x)",	\
                   state ? "Enable" : "Disable", CAP);			\
       return;								\
@@ -191,6 +184,14 @@ _mesa_DisableClientState( GLenum cap )
                   state ? "Enable" : "Disable", CAP);			\
       return;								\
    }
+
+#define CHECK_EXTENSION2(EXT1, EXT2, CAP)				\
+   if (!ctx->Extensions.EXT1 && !ctx->Extensions.EXT2) {		\
+      _mesa_error(ctx, GL_INVALID_ENUM, "gl%s(0x%x)",			\
+                  state ? "Enable" : "Disable", CAP);			\
+      return;								\
+   }
+
 
 
 /**
@@ -852,21 +853,21 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
 
 #if FEATURE_NV_vertex_program
       case GL_VERTEX_PROGRAM_NV:
-         CHECK_EXTENSION(NV_vertex_program, cap);
+         CHECK_EXTENSION2(NV_vertex_program, ARB_vertex_program, cap);
          if (ctx->VertexProgram.Enabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_PROGRAM); 
          ctx->VertexProgram.Enabled = state;
          break;
       case GL_VERTEX_PROGRAM_POINT_SIZE_NV:
-         CHECK_EXTENSION(NV_vertex_program, cap);
+         CHECK_EXTENSION2(NV_vertex_program, ARB_vertex_program, cap);
          if (ctx->VertexProgram.PointSizeEnabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_PROGRAM);
          ctx->VertexProgram.PointSizeEnabled = state;
          break;
       case GL_VERTEX_PROGRAM_TWO_SIDE_NV:
-         CHECK_EXTENSION(NV_vertex_program, cap);
+         CHECK_EXTENSION2(NV_vertex_program, ARB_vertex_program, cap);
          if (ctx->VertexProgram.TwoSideEnabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_PROGRAM); 
