@@ -1,4 +1,4 @@
-/* $Id: state.c,v 1.29 2000/09/28 22:44:30 brianp Exp $ */
+/* $Id: state.c,v 1.30 2000/10/02 15:45:12 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -721,9 +721,9 @@ static void update_rasterflags( GLcontext *ctx )
        && ctx->Color.DrawBuffer != GL_NONE)
       ctx->RasterMask |= ALPHABUF_BIT;
 
-   if (   ctx->Viewport.X<0
+   if (   ctx->Viewport.X < 0
        || ctx->Viewport.X + ctx->Viewport.Width > ctx->DrawBuffer->Width
-       || ctx->Viewport.Y<0
+       || ctx->Viewport.Y < 0
        || ctx->Viewport.Y + ctx->Viewport.Height > ctx->DrawBuffer->Height) {
       ctx->RasterMask |= WINCLIP_BIT;
    }
@@ -823,16 +823,24 @@ void gl_update_state( GLcontext *ctx )
 
    if (ctx->NewState & NEW_TEXTURE_ENV) {
       if (ctx->Texture.Unit[0].EnvMode == ctx->Texture.Unit[0].LastEnvMode &&
-	  ctx->Texture.Unit[1].EnvMode == ctx->Texture.Unit[1].LastEnvMode)
+	  ctx->Texture.Unit[1].EnvMode == ctx->Texture.Unit[1].LastEnvMode
+#if MAX_TEXTURE_UNITS > 2
+	  && ctx->Texture.Unit[2].EnvMode == ctx->Texture.Unit[2].LastEnvMode)
+#endif
+         ) {
 	 ctx->NewState &= ~NEW_TEXTURE_ENV;
+      }
       ctx->Texture.Unit[0].LastEnvMode = ctx->Texture.Unit[0].EnvMode;
       ctx->Texture.Unit[1].LastEnvMode = ctx->Texture.Unit[1].EnvMode;
+#if MAX_TEXTURE_UNITS > 2
+      ctx->Texture.Unit[2].LastEnvMode = ctx->Texture.Unit[2].EnvMode;
+#endif
    }
 
    if (ctx->NewState & NEW_TEXTURE_MATRIX) {
-      ctx->Enabled &= ~(ENABLE_TEXMAT0|ENABLE_TEXMAT1);
+      ctx->Enabled &= ~(ENABLE_TEXMAT0 | ENABLE_TEXMAT1 | ENABLE_TEXMAT2);
 
-      for (i=0; i < MAX_TEXTURE_UNITS; i++) {
+      for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
 	 if (ctx->TextureMatrix[i].flags & MAT_DIRTY_ALL_OVER) {
 	    gl_matrix_analyze( &ctx->TextureMatrix[i] );
 	    ctx->TextureMatrix[i].flags &= ~MAT_DIRTY_DEPENDENTS;
@@ -847,10 +855,10 @@ void gl_update_state( GLcontext *ctx )
    if (ctx->NewState & (NEW_TEXTURING | NEW_TEXTURE_ENABLE)) {
       ctx->Texture.NeedNormals = GL_FALSE;
       gl_update_dirty_texobjs(ctx);
-      ctx->Enabled &= ~(ENABLE_TEXGEN0 | ENABLE_TEXGEN1);
+      ctx->Enabled &= ~(ENABLE_TEXGEN0 | ENABLE_TEXGEN1 | ENABLE_TEXGEN2);
       ctx->Texture.ReallyEnabled = 0;
 
-      for (i=0; i < MAX_TEXTURE_UNITS; i++) {
+      for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
 	 if (ctx->Texture.Unit[i].Enabled) {
 	    gl_update_texture_unit( ctx, &ctx->Texture.Unit[i] );
 
@@ -1041,7 +1049,7 @@ void gl_update_state( GLcontext *ctx )
     * can, find the current positions of the lights in object space
     */
    if ((ctx->Enabled & (ENABLE_POINT_ATTEN | ENABLE_LIGHT | ENABLE_FOG |
-			ENABLE_TEXGEN0 | ENABLE_TEXGEN1)) &&
+			ENABLE_TEXGEN0 | ENABLE_TEXGEN1 | ENABLE_TEXGEN2)) &&
        (ctx->NewState & (NEW_LIGHTING | 
                          NEW_FOG |
 			 NEW_MODELVIEW | 
