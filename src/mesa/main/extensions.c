@@ -1,8 +1,8 @@
-/* $Id: extensions.c,v 1.65 2001/10/17 13:31:07 brianp Exp $ */
+/* $Id: extensions.c,v 1.66 2001/11/19 00:41:32 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.5.1
+ * Version:  4.1
  *
  * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
@@ -67,6 +67,7 @@ static struct {
    { OFF, "GL_ARB_texture_env_dot3",           F(ARB_texture_env_dot3) },
    { OFF, "GL_ARB_texture_mirrored_repeat",    F(ARB_texture_mirrored_repeat)},
    { ON,  "GL_ARB_transpose_matrix",           0 },
+   { ON,  "GL_ARB_window_pos",                 F(ARB_window_pos) },
    { ON,  "GL_EXT_abgr",                       0 },
    { ON,  "GL_EXT_bgra",                       0 },
    { OFF, "GL_EXT_blend_color",                F(EXT_blend_color) },
