@@ -1442,4 +1442,6 @@ void _tnl_free_vertices( GLcontext *ctx )
       ALIGN_FREE(vtx->vertex_buf);
       vtx->vertex_buf = 0;
    }
+   
+   _tnl_free_c_codegen( &vtx->codegen );
 }

@@ -257,3 +257,11 @@ void _tnl_init_c_codegen( struct tnl_clipspace_codegen *p )
    p->buf_size = 2048;
    p->buf = (char *) MALLOC(p->buf_size);
 }
+
+void _tnl_free_c_codegen( struct tnl_clipspace_codegen *p )
+{
+   if (p->buf) {
+      FREE(p->buf);
+      p->buf = 0;
+   }
+}

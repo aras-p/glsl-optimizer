@@ -144,6 +144,7 @@ extern tnl_emit_func _tnl_codegen_emit( GLcontext *ctx );
 
 
 extern void _tnl_init_c_codegen( struct tnl_clipspace_codegen *p );
+extern void _tnl_free_c_codegen( struct tnl_clipspace_codegen *p );
 
 #define GET_VERTEX_STATE(ctx)  &(TNL_CONTEXT(ctx)->clipspace)
 
