@@ -86,6 +86,9 @@ default: depend $(LIB_DIR)/$(GL_LIB_NAME)
 glcontextmodes.c:
 	ln -s $(TOP)/src/mesa/drivers/dri/common/glcontextmodes.c .
 
+dispatch.c:
+	ln -s $(TOP)/src/mesa/main/dispatch.c .
+
 # Make libGL
 $(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
 	CC="$(CC)" CXX="$(CXX)" $(TOP)/bin/mklib -o $(GL_LIB) -major 1 -minor 2 $(MKLIB_OPTIONS) \

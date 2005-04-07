@@ -23,16 +23,21 @@
  */
 
 
-/*
- * This file generates all the gl* function entrypoints.
- * But if we're using X86-optimized dispatch (X86/glapi_x86.S) then
- * we don't use this code.
+/**
+ * \file dispatch.c
  *
- * NOTE: This file should _not_ be used when compiling Mesa for a DRI-
- * based device driver.
+ * This file generates all the gl* function entrypoints.  This code is not
+ * used if optimized assembly stubs are available (e.g., using x86/glapi_x86.S
+ * on IA32 or sparc/glapi_sparc.S on SPARC).
  *
+ * \note
+ * This file is also used to build the client-side libGL that loads DRI-based
+ * device drivers.  At build-time it is symlinked to src/glx/x11.
+ *
+ * \author Brian Paul <brian@precisioninsight.com>
  */
 
+#ifndef GLX_USE_APPLEGL
 
 #include "glheader.h"
 #include "glapi.h"
@@ -84,5 +89,6 @@
 
 #include "glapitemp.h"
 
-
 #endif /* USE_X86_ASM */
+
+#endif /* !GLX_USE_APPLEGL */
