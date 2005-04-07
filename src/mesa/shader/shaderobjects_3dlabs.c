@@ -411,10 +411,14 @@ struct gl2_3dlabs_shhandle_impl
 static void
 _3dlabs_shhandle_destructor (struct gl2_unknown_intf **intf)
 {
+#if FEATURE_shading_language
 	struct gl2_3dlabs_shhandle_impl *impl = (struct gl2_3dlabs_shhandle_impl *) intf;
 
 	ShDestruct (impl->_obj.handle);
 	_unkinner_destructor (intf);
+#else
+	(void) _unkinner_destructor;
+#endif
 }
 
 static GLvoid *
@@ -524,6 +528,7 @@ _shader_GetSource (struct gl2_shader_intf **intf)
 static GLvoid
 _shader_Compile (struct gl2_shader_intf **intf)
 {
+#if FEATURE_shading_language
 	struct gl2_shader_impl *impl = (struct gl2_shader_impl *) intf;
 	char **strings;
 	TBuiltInResource res;
@@ -584,7 +589,6 @@ _shader_Compile (struct gl2_shader_intf **intf)
 	if (ShCompile (impl->_obj._3dlabs_shhandle._obj.handle, strings, impl->_obj.offset_count,
 			EShOptFull, &res, 0))
 		impl->_obj.compile_status = GL_TRUE;
-
 	if (impl->_obj.offset_count > 1)
 	{
 		GLsizei i;
@@ -596,6 +600,7 @@ _shader_Compile (struct gl2_shader_intf **intf)
 
 	impl->_obj._generic.info_log = _mesa_strdup (ShGetInfoLog (
 		impl->_obj._3dlabs_shhandle._obj.handle));
+#endif
 }
 
 static struct gl2_shader_intf _shader_vftbl = {
@@ -650,10 +655,12 @@ struct gl2_program_impl
 static void
 _program_destructor (struct gl2_unknown_intf **intf)
 {
+#if FEATURE_shading_language
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
 
 	ShDestruct (impl->_obj.linker);
 	ShDestruct (impl->_obj.uniforms);
+#endif
 	_container_destructor (intf);
 }
 
@@ -710,6 +717,7 @@ _program_GetValidateStatus (struct gl2_program_intf **intf)
 static GLvoid
 _program_Link (struct gl2_program_intf **intf)
 {
+#if FEATURE_shading_language
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
 	ShHandle *handles;
 	GLuint i;
@@ -746,6 +754,7 @@ _program_Link (struct gl2_program_intf **intf)
 		impl->_obj.link_status = GL_TRUE;
 
 	impl->_obj._container._generic.info_log = _mesa_strdup (ShGetInfoLog (impl->_obj.linker));
+#endif
 }
 
 static GLvoid
@@ -788,6 +797,7 @@ static struct gl2_program_intf _program_vftbl = {
 static void
 _program_constructor (struct gl2_program_impl *impl)
 {
+#if FEATURE_shading_language
 	_container_constructor ((struct gl2_container_impl *) impl);
 	impl->_vftbl = &_program_vftbl;
 	impl->_obj._container._generic._unknown._destructor = _program_destructor;
@@ -795,6 +805,11 @@ _program_constructor (struct gl2_program_impl *impl)
 	impl->_obj.validate_status = GL_FALSE;
 	impl->_obj.linker = ShConstructLinker (EShExVertexFragment, 0);
 	impl->_obj.uniforms = ShConstructUniformMap ();
+#else
+        (void) _container_constructor;
+        (void) _program_destructor;
+        (void) _program_vftbl;
+#endif
 }
 
 struct gl2_fragment_shader_obj
@@ -861,10 +876,16 @@ static struct gl2_fragment_shader_intf _fragment_shader_vftbl = {
 static void
 _fragment_shader_constructor (struct gl2_fragment_shader_impl *impl)
 {
+#if FEATURE_shading_language
 	_shader_constructor ((struct gl2_shader_impl *) impl);
 	impl->_vftbl = &_fragment_shader_vftbl;
 	impl->_obj._shader._generic._unknown._destructor = _fragment_shader_destructor;
 	impl->_obj._shader._3dlabs_shhandle._obj.handle = ShConstructCompiler (EShLangFragment, 0);
+#else
+        (void) _shader_constructor;
+        (void) _fragment_shader_vftbl;
+        (void) _fragment_shader_destructor;
+#endif
 }
 
 struct gl2_vertex_shader_obj
@@ -931,10 +952,15 @@ static struct gl2_vertex_shader_intf _vertex_shader_vftbl = {
 static void
 _vertex_shader_constructor (struct gl2_vertex_shader_impl *impl)
 {
+#if FEATURE_shading_language
 	_shader_constructor ((struct gl2_shader_impl *) impl);
 	impl->_vftbl = &_vertex_shader_vftbl;
 	impl->_obj._shader._generic._unknown._destructor = _vertex_shader_destructor;
 	impl->_obj._shader._3dlabs_shhandle._obj.handle = ShConstructCompiler (EShLangVertex, 0);
+#else
+        (void) _vertex_shader_vftbl;
+        (void) _vertex_shader_destructor;
+#endif
 }
 
 GLhandleARB
@@ -989,7 +1015,9 @@ _mesa_3dlabs_create_program_object (void)
 void
 _mesa_init_shaderobjects_3dlabs (GLcontext *ctx)
 {
+#if FEATURE_shading_language
 	_glslang_3dlabs_InitProcess ();
 	_glslang_3dlabs_ShInitialize ();
+#endif
 }
 
