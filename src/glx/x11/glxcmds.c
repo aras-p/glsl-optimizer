@@ -1678,7 +1678,7 @@ PUBLIC GLXFBConfig *GLX_PREFIX(glXChooseFBConfig)(Display *dpy, int screen,
     config_list = (__GLcontextModes **) 
 	GLX_PREFIX(glXGetFBConfigs)( dpy, screen, & list_size );
 
-    if ( (config_list != NULL) && (list_size > 0) ) {
+    if ( (config_list != NULL) && (list_size > 0) && (attribList != NULL) ) {
 	list_size = choose_visual( config_list, list_size, attribList,
 				   GL_TRUE );
 	if ( list_size == 0 ) {
