@@ -41,7 +41,7 @@
 #include "hash.h"
 
 
-#define TABLE_SIZE 1023  /**< Size of lookup table/array */
+#define TABLE_SIZE 1024  /**< Size of lookup table/array */
 
 /**
  * An entry in the hash table.  
