@@ -41,7 +41,10 @@
 #include "hash.h"
 
 
-#define TABLE_SIZE 1024  /**< Size of lookup table/array */
+#define TABLE_SIZE 1023  /**< Size of lookup table/array */
+
+#define HASH_FUNC(K)  ((K) % TABLE_SIZE)
+
 
 /**
  * An entry in the hash table.  
@@ -127,7 +130,7 @@ _mesa_HashLookup(const struct _mesa_HashTable *table, GLuint key)
    assert(table);
    assert(key);
 
-   pos = key & (TABLE_SIZE-1);
+   pos = HASH_FUNC(key);
    entry = table->Table[pos];
    while (entry) {
       if (entry->Key == key) {
@@ -163,7 +166,7 @@ _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
    if (key > table->MaxKey)
       table->MaxKey = key;
 
-   pos = key & (TABLE_SIZE-1);
+   pos = HASH_FUNC(key);
    entry = table->Table[pos];
    while (entry) {
       if (entry->Key == key) {
@@ -207,7 +210,7 @@ _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
 
    _glthread_LOCK_MUTEX(table->Mutex);
 
-   pos = key & (TABLE_SIZE-1);
+   pos = HASH_FUNC(key);
    prev = NULL;
    entry = table->Table[pos];
    while (entry) {
@@ -278,7 +281,7 @@ _mesa_HashNextEntry(const struct _mesa_HashTable *table, GLuint key)
    assert(key);
 
    /* Find the entry with given key */
-   pos = key & (TABLE_SIZE - 1);
+   pos = HASH_FUNC(key);
    entry = table->Table[pos];
    while (entry) {
       if (entry->Key == key) {
