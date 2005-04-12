@@ -74,7 +74,8 @@ enum pixel_format {
    PF_1Bit,		/**< monochrome dithering of RGB */
    PF_Grayscale,	/**< Grayscale or StaticGray */
    PF_8R8G8B24,		/**< 24-bit TrueColor: 8-R, 8-G, 8-B bits */
-   PF_Dither_5R6G5B	/**< 16-bit dithered TrueColor: 5-R, 6-G, 5-B */
+   PF_Dither_5R6G5B,	/**< 16-bit dithered TrueColor: 5-R, 6-G, 5-B */
+   PF_8A8R8G8B		/**< 32-bit TrueColor:  8-A, 8-R, 8-G, 8-B */
 };
 
 
@@ -302,6 +303,12 @@ struct xmesa_buffer {
  */
 #define PACK_5R6G5B( R, G, B)	 ( (((R) & 0xf8) << 8) | (((G) & 0xfc) << 3) | ((B) >> 3) )
 
+
+/*
+ * If pixelformat==PF_8A8R8G8B:
+ */
+#define PACK_8A8R8G8B( R, G, B, A )	\
+	( ((A) << 24) | ((R) << 16) | ((G) << 8) | (B) )
 
 
 

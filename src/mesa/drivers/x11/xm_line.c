@@ -151,6 +151,23 @@ void xmesa_choose_point( GLcontext *ctx )
 
 
 /*
+ * Draw a flat-shaded, PF_8A8R8G8B line into an XImage.
+ */
+#define NAME flat_8A8R8G8B_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
+   const GLubyte *color = vert1->color;				\
+   GLuint pixel = PACK_8R8G8B( color[0], color[1], color[2] );
+#define PIXEL_TYPE GLuint
+#define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
+#define PIXEL_ADDRESS(X,Y) PIXELADDR4(xmesa->xm_buffer,X,Y)
+#define CLIP_HACK 1
+#define PLOT(X,Y) *pixelPtr = pixel;
+#include "swrast/s_linetemp.h"
+
+
+
+/*
  * Draw a flat-shaded, PF_8R8G8B line into an XImage.
  */
 #define NAME flat_8R8G8B_line
@@ -306,6 +323,29 @@ void xmesa_choose_point( GLcontext *ctx )
    XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
    const GLubyte *color = vert1->color;				\
    GLuint pixel = PACK_8B8G8R( color[0], color[1], color[2] );
+#define INTERP_Z 1
+#define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
+#define PIXEL_TYPE GLuint
+#define BYTES_PER_ROW (xmesa->xm_buffer->backimage->bytes_per_line)
+#define PIXEL_ADDRESS(X,Y) PIXELADDR4(xmesa->xm_buffer,X,Y)
+#define CLIP_HACK 1
+#define PLOT(X,Y)		\
+	if (Z < *zPtr) {	\
+	   *zPtr = Z;		\
+	   *pixelPtr = pixel;	\
+	}
+#include "swrast/s_linetemp.h"
+
+
+
+/*
+ * Draw a flat-shaded, Z-less, PF_8A8R8G8B line into an XImage.
+ */
+#define NAME flat_8A8R8G8B_z_line
+#define SETUP_CODE						\
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);			\
+   const GLubyte *color = vert1->color;				\
+   GLuint pixel = PACK_8R8G8B( color[0], color[1], color[2] );
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define PIXEL_TYPE GLuint
@@ -511,6 +551,8 @@ static swrast_line_func get_line_func( GLcontext *ctx )
             return flat_TRUECOLOR_z_line;
          case PF_8A8B8G8R:
             return flat_8A8B8G8R_z_line;
+         case PF_8A8R8G8B:
+            return flat_8A8R8G8B_z_line;
          case PF_8R8G8B:
             return flat_8R8G8B_z_line;
          case PF_8R8G8B24:
@@ -537,6 +579,8 @@ static swrast_line_func get_line_func( GLcontext *ctx )
             return flat_TRUECOLOR_line;
          case PF_8A8B8G8R:
             return flat_8A8B8G8R_line;
+         case PF_8A8R8G8B:
+            return flat_8A8R8G8B_line;
          case PF_8R8G8B:
             return flat_8R8G8B_line;
          case PF_8R8G8B24:

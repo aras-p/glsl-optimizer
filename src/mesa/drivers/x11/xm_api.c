@@ -1100,7 +1100,10 @@ static void setup_truecolor( XMesaVisual v, XMesaBuffer buffer,
        && sizeof(GLuint)==4
        && v->RedGamma==1.0 && v->GreenGamma==1.0 && v->BlueGamma==1.0) {
       /* common 32 bpp config used on Linux, HP, IBM */
-      v->undithered_pf = v->dithered_pf = PF_8R8G8B;
+      if (GET_VISUAL_DEPTH(v)==32)
+	  v->undithered_pf = v->dithered_pf = PF_8A8R8G8B;
+      else
+	  v->undithered_pf = v->dithered_pf = PF_8R8G8B;
    }
    else if (GET_REDMASK(v)  ==0xff0000
        &&   GET_GREENMASK(v)==0x00ff00
@@ -1349,6 +1352,8 @@ xmesa_color_to_pixel( XMesaContext xmesa, GLubyte r, GLubyte g, GLubyte b, GLuby
          }
       case PF_8A8B8G8R:
          return PACK_8A8B8G8R( r, g, b, a );
+      case PF_8A8R8G8B:
+         return PACK_8A8R8G8B( r, g, b, a );
       case PF_8R8G8B:
          /* fall through */
       case PF_8R8G8B24:
@@ -2616,6 +2621,8 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
          }
       case PF_8A8B8G8R:
          return PACK_8A8B8G8R( r, g, b, a );
+      case PF_8A8R8G8B:
+         return PACK_8A8R8G8B( r, g, b, a );
       case PF_8R8G8B:
          return PACK_8R8G8B( r, g, b );
       case PF_5R6G5B:

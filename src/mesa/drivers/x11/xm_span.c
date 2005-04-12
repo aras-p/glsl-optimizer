@@ -374,6 +374,69 @@ static void write_span_rgb_8A8B8G8R_pixmap( RGB_SPAN_ARGS )
    }
 }
 
+/*
+ * Write a span of PF_8A8R8G8B pixels to a pixmap.
+ */
+static void write_span_8A8R8G8B_pixmap( RGBA_SPAN_ARGS )
+{
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   XMesaDisplay *dpy = xmesa->xm_visual->display;
+   XMesaDrawable buffer = xmesa->xm_buffer->buffer;
+   XMesaGC gc = xmesa->xm_buffer->gc;
+   register GLuint i;
+   y = FLIP(xmesa->xm_buffer, y);
+   if (mask) {
+      for (i=0;i<n;i++,x++) {
+         if (mask[i]) {
+            XMesaSetForeground( dpy, gc,
+                         PACK_8A8R8G8B(rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP], rgba[i][ACOMP]) );
+            XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
+         }
+      }
+   }
+   else {
+      /* draw all pixels */
+      XMesaImage *rowimg = xmesa->xm_buffer->rowimage;
+      register GLuint *ptr4 = (GLuint *) rowimg->data;
+      for (i=0;i<n;i++) {
+         *ptr4++ = PACK_8A8R8G8B( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP], rgba[i][ACOMP] );
+      }
+      XMesaPutImage( dpy, buffer, gc, rowimg, 0, 0, x, y, n, 1 );
+   }
+}
+
+
+/*
+ * Write a span of PF_8A8R8G8B pixels to a pixmap (no alpha).
+ */
+static void write_span_rgb_8A8R8G8B_pixmap( RGB_SPAN_ARGS )
+{
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   XMesaDisplay *dpy = xmesa->xm_visual->display;
+   XMesaDrawable buffer = xmesa->xm_buffer->buffer;
+   XMesaGC gc = xmesa->xm_buffer->gc;
+   register GLuint i;
+   y = FLIP(xmesa->xm_buffer, y);
+   if (mask) {
+      for (i=0;i<n;i++,x++) {
+         if (mask[i]) {
+            XMesaSetForeground( dpy, gc,
+                   PACK_8R8G8B(rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP]) );
+            XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
+         }
+      }
+   }
+   else {
+      /* draw all pixels */
+      XMesaImage *rowimg = xmesa->xm_buffer->rowimage;
+      register GLuint *ptr4 = (GLuint *) rowimg->data;
+      for (i=0;i<n;i++) {
+         *ptr4++ = PACK_8R8G8B(rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP]);
+      }
+      XMesaPutImage( dpy, buffer, gc, rowimg, 0, 0, x, y, n, 1 );
+   }
+}
+
 
 /*
  * Write a span of PF_8R8G8B pixels to a pixmap.
@@ -1227,6 +1290,53 @@ static void write_span_rgb_8A8B8G8R_ximage( RGB_SPAN_ARGS )
       /* draw all pixels */
       for (i=0;i<n;i++) {
          ptr[i] = PACK_8A8B8G8R( rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP], 255 );
+      }
+   }
+}
+
+/*
+ * Write a span of PF_8A8R8G8B-format pixels to an ximage.
+ */
+static void write_span_8A8R8G8B_ximage( RGBA_SPAN_ARGS )
+{
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   register GLuint i;
+   register GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
+   if (mask) {
+      for (i=0;i<n;i++) {
+         if (mask[i]) {
+            ptr[i] = PACK_8A8R8G8B( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP], rgba[i][ACOMP] );
+         }
+      }
+   }
+   else {
+      /* draw all pixels */
+      for (i=0;i<n;i++) {
+         ptr[i] = PACK_8A8R8G8B( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP], rgba[i][ACOMP] );
+      }
+   }
+}
+
+
+/*
+ * Write a span of PF_8A8R8G8B-format pixels to an ximage (no alpha).
+ */
+static void write_span_rgb_8A8R8G8B_ximage( RGB_SPAN_ARGS )
+{
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   register GLuint i;
+   register GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
+   if (mask) {
+      for (i=0;i<n;i++) {
+         if (mask[i]) {
+            ptr[i] = PACK_8A8R8G8B( rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP], 255 );
+         }
+      }
+   }
+   else {
+      /* draw all pixels */
+      for (i=0;i<n;i++) {
+         ptr[i] = PACK_8A8R8G8B( rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP], 255 );
       }
    }
 }
@@ -2091,6 +2201,24 @@ static void write_pixels_8A8B8G8R_pixmap( RGBA_PIXEL_ARGS )
    }
 }
 
+/*
+ * Write an array of PF_8A8R8G8B pixels to a pixmap.
+ */
+static void write_pixels_8A8R8G8B_pixmap( RGBA_PIXEL_ARGS )
+{
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   XMesaDisplay *dpy = xmesa->xm_visual->display;
+   XMesaDrawable buffer = xmesa->xm_buffer->buffer;
+   XMesaGC gc = xmesa->xm_buffer->gc;
+   register GLuint i;
+   for (i=0;i<n;i++) {
+      if (mask[i]) {
+	 XMesaSetForeground( dpy, gc,
+                         PACK_8A8R8G8B( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP], rgba[i][ACOMP] ));
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+      }
+   }
+}
 
 /*
  * Write an array of PF_8R8G8B pixels to a pixmap.
@@ -2318,6 +2446,21 @@ static void write_pixels_8A8B8G8R_ximage( RGBA_PIXEL_ARGS )
       if (mask[i]) {
 	 GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x[i], y[i] );
          *ptr = PACK_8A8B8G8R( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP], rgba[i][ACOMP] );
+      }
+   }
+}
+
+/*
+ * Write an array of PF_8A8R8G8B pixels to an ximage.
+ */
+static void write_pixels_8A8R8G8B_ximage( RGBA_PIXEL_ARGS )
+{
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   register GLuint i;
+   for (i=0;i<n;i++) {
+      if (mask[i]) {
+	 GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x[i], y[i] );
+         *ptr = PACK_8A8R8G8B( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP], rgba[i][ACOMP] );
       }
    }
 }
@@ -2750,6 +2893,23 @@ static void write_span_mono_8A8B8G8R_ximage( MONO_SPAN_ARGS )
    }
 }
 
+/*
+ * Write a span of identical 8A8R8G8B pixels to an XImage.
+ */
+static void write_span_mono_8A8R8G8B_ximage( MONO_SPAN_ARGS )
+{
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   GLuint i, *ptr;
+   const unsigned long pixel = xmesa_color_to_pixel(xmesa, color[RCOMP],
+               color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
+   ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
+   for (i=0;i<n;i++) {
+      if (mask[i]) {
+	 ptr[i] = pixel;
+      }
+   }
+}
+
 
 /*
  * Write a span of identical 8R8G8B pixels to an XImage.
@@ -3105,6 +3265,22 @@ static void write_pixels_mono_8A8B8G8R_ximage( MONO_PIXEL_ARGS )
    }
 }
 
+/*
+ * Write an array of identical 8A8R8G8B pixels to an XImage
+ */
+static void write_pixels_mono_8A8R8G8B_ximage( MONO_PIXEL_ARGS )
+{
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   const GLuint p = PACK_8A8R8G8B(color[RCOMP], color[GCOMP],
+                                  color[BCOMP], color[ACOMP]);
+   register GLuint i;
+   for (i=0;i<n;i++) {
+      if (mask[i]) {
+	 GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x[i], y[i] );
+	 *ptr = p;
+      }
+   }
+}
 
 /*
  * Write an array of identical 8R8G8B pixels to an XImage.
@@ -3648,6 +3824,19 @@ static void read_color_span( const GLcontext *ctx,
                   }
 	       }
 	       break;
+            case PF_8A8R8G8B:
+               {
+                  const GLuint *ptr4 = (GLuint *) span->data;
+                  GLuint i;
+                  for (i=0;i<n;i++) {
+                     GLuint p4 = *ptr4++;
+                     rgba[i][RCOMP] = (GLubyte) ((p4 >> 16) & 0xff);
+                     rgba[i][GCOMP] = (GLubyte) ((p4 >> 8)  & 0xff);
+                     rgba[i][BCOMP] = (GLubyte) ( p4        & 0xff);
+                     rgba[i][ACOMP] = (GLubyte) ((p4 >> 24) & 0xff);
+                  }
+	       }
+	       break;
             case PF_8R8G8B:
                {
                   const GLuint *ptr4 = (GLuint *) span->data;
@@ -3835,6 +4024,19 @@ static void read_color_span( const GLcontext *ctx,
                }
             }
 	    break;
+	 case PF_8A8R8G8B:
+            {
+               const GLuint *ptr4 = PIXELADDR4( source, x, y );
+               GLuint i;
+               for (i=0;i<n;i++) {
+                  GLuint p4 = *ptr4++;
+                  rgba[i][RCOMP] = (GLubyte) ((p4 >> 16) & 0xff);
+                  rgba[i][GCOMP] = (GLubyte) ((p4 >> 8)  & 0xff);
+                  rgba[i][BCOMP] = (GLubyte) ( p4        & 0xff);
+                  rgba[i][ACOMP] = (GLint)   ((p4 >> 24) & 0xff);
+               }
+            }
+	    break;
 	 case PF_8R8G8B:
             {
                const GLuint *ptr4 = PIXELADDR4( source, x, y );
@@ -4012,6 +4214,18 @@ static void read_color_pixels( const GLcontext *ctx,
                }
 	    }
 	    break;
+	 case PF_8A8R8G8B:
+	    for (i=0;i<n;i++) {
+               if (mask[i]) {
+                  unsigned long p = read_pixel( dpy, buffer,
+                                                x[i], FLIP(source, y[i]) );
+                  rgba[i][RCOMP] = (GLubyte) ((p >> 16) & 0xff);
+                  rgba[i][GCOMP] = (GLubyte) ((p >> 8)  & 0xff);
+                  rgba[i][BCOMP] = (GLubyte) ( p        & 0xff);
+                  rgba[i][ACOMP] = (GLubyte) ((p >> 24) & 0xff);
+               }
+	    }
+	    break;
 	 case PF_8R8G8B:
 	    for (i=0;i<n;i++) {
                if (mask[i]) {
@@ -4126,6 +4340,18 @@ static void read_color_pixels( const GLcontext *ctx,
                   rgba[i][RCOMP] = (GLubyte) ( p4        & 0xff);
                   rgba[i][GCOMP] = (GLubyte) ((p4 >> 8)  & 0xff);
                   rgba[i][BCOMP] = (GLubyte) ((p4 >> 16) & 0xff);
+                  rgba[i][ACOMP] = (GLubyte) ((p4 >> 24) & 0xff);
+               }
+	    }
+	    break;
+	 case PF_8A8R8G8B:
+	    for (i=0;i<n;i++) {
+	       if (mask[i]) {
+                  GLuint *ptr4 = PIXELADDR4( source, x[i], y[i] );
+                  GLuint p4 = *ptr4;
+                  rgba[i][RCOMP] = (GLubyte) ((p4 >> 16) & 0xff);
+                  rgba[i][GCOMP] = (GLubyte) ((p4 >> 8)  & 0xff);
+                  rgba[i][BCOMP] = (GLubyte) ( p4        & 0xff);
                   rgba[i][ACOMP] = (GLubyte) ((p4 >> 24) & 0xff);
                }
 	    }
@@ -4324,6 +4550,13 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 	    dd->WriteRGBAPixels     = write_pixels_8A8B8G8R_pixmap;
 	    dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
 	    break;
+	 case PF_8A8R8G8B:
+	    dd->WriteRGBASpan       = write_span_8A8R8G8B_pixmap;
+	    dd->WriteRGBSpan        = write_span_rgb_8A8R8G8B_pixmap;
+	    dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+	    dd->WriteRGBAPixels     = write_pixels_8A8R8G8B_pixmap;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+	    break;
 	 case PF_8R8G8B:
 	    dd->WriteRGBASpan       = write_span_8R8G8B_pixmap;
 	    dd->WriteRGBSpan        = write_span_rgb_8R8G8B_pixmap;
@@ -4430,7 +4663,14 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 	    dd->WriteRGBAPixels     = write_pixels_8A8B8G8R_ximage;
 	    dd->WriteMonoRGBAPixels = write_pixels_mono_8A8B8G8R_ximage;
 	    break;
-	 case PF_8R8G8B:
+	 case PF_8A8R8G8B:
+	    dd->WriteRGBASpan       = write_span_8A8R8G8B_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_8A8R8G8B_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_8A8R8G8B_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_8A8R8G8B_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_8A8R8G8B_ximage;
+	    break;
+	case PF_8R8G8B:
 	    dd->WriteRGBASpan       = write_span_8R8G8B_ximage;
 	    dd->WriteRGBSpan        = write_span_rgb_8R8G8B_ximage;
 	    dd->WriteMonoRGBASpan   = write_span_mono_8R8G8B_ximage;
