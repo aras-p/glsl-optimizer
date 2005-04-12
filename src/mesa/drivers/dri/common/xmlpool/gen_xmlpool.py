@@ -10,21 +10,25 @@ languages = sys.argv[1:]
 # Escape special characters in C strings
 def escapeCString (s):
     escapeSeqs = {'\a' : '\\a', '\b' : '\\b', '\f' : '\\f', '\n' : '\\n',
-                  '\r' : '\\r', '\t' : '\\t', '\v' : '\\v',
-                  '"' : "''", '\\' : '\\\\'}
+                  '\r' : '\\r', '\t' : '\\t', '\v' : '\\v', '\\' : '\\\\'}
     # " -> '' is a hack. Quotes (") aren't possible in XML attributes.
     # Better use Unicode characters for typographic quotes in option
     # descriptions and translations.
     i = 0
     r = ''
     while i < len(s):
-        if escapeSeqs.has_key(s[i]):
-            if s[i] == '"':
-                sys.stderr.write (
-                    "Warning: Double quotes don't work in XML attributes. "
-                    "Escaping with ''.\n"
-                    "Consider using typographic quotes (\\u201c-\\u201f) "
-                    "instead.\n%s\n" % repr(s))
+        # Special case: escape double quote with \u201c or \u201d, depending
+        # on whether it's an open or close quote. This is needed because plain
+        # double quotes are not possible in XML attributes.
+        if s[i] == '"':
+            if i == len(s)-1 or s[i+1].isspace():
+                # close quote
+                q = u'\u201c'
+            else:
+                # open quote
+                q = u'\u201d'
+            r = r + q
+        elif escapeSeqs.has_key(s[i]):
             r = r + escapeSeqs[s[i]]
         else:
             r = r + s[i]
