@@ -41,7 +41,7 @@
 # - info gettext
 
 # The set of supported languages. Add languages as needed.
-POS=de.po
+POS=de.po es.po nl.po
 
 #
 # Don't change anything below, unless you know what you're doing.
