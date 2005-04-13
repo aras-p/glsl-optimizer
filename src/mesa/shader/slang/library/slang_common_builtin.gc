@@ -209,14 +209,14 @@ uniform gl_FogParameters gl_Fog;
 // 
 // The built-in functions basically fall into three categories:
 // 
-// • They expose some necessary hardware functionality in a convenient way such as accessing
+// * They expose some necessary hardware functionality in a convenient way such as accessing
 //   a texture map. There is no way in the language for these functions to be emulated by a shader.
 // 
-// • They represent a trivial operation (clamp, mix, etc.) that is very simple for the user
+// * They represent a trivial operation (clamp, mix, etc.) that is very simple for the user
 //   to write, but they are very common and may have direct hardware support. It is a very hard
 //   problem for the compiler to map expressions to complex assembler instructions.
 // 
-// • They represent an operation graphics hardware is likely to accelerate at some point. The
+// * They represent an operation graphics hardware is likely to accelerate at some point. The
 //   trigonometry functions fall into this category.
 // 
 // Many of the functions are similar to the same named ones in common C libraries, but they support
@@ -928,6 +928,7 @@ vec4 faceforward (vec4 N, vec4 I, vec4 Nref) {
 // For the incident vector I and surface orientation N, returns the reflection direction:
 // result = I - 2 * dot (N, I) * N
 // N must already be normalized in order to achieve the desired result.
+//
 
 float reflect (float I, float N) {
     return I - 2.0 * dot (N, I) * N;
@@ -1146,16 +1147,16 @@ bvec3 notEqual (vec3 x, vec3 y) {
     return bvec3 (x.x != y.x, x.y != y.y, x.z != y.z);
 }
 bvec4 notEqual (vec4 x, vec4 y) {
-    return (bvec4 (x.x != y.x, x.y != y.y, x.z != y.z, x.w != y.w);
+    return bvec4 (x.x != y.x, x.y != y.y, x.z != y.z, x.w != y.w);
 }
 bvec2 notEqual (ivec2 x, ivec2 y) {
-    return (bvec2 (x.x != y.x, x.y != y.y);
+    return bvec2 (x.x != y.x, x.y != y.y);
 }
 bvec3 notEqual (ivec3 x, ivec3 y) {
-    return (bvec3 (x.x != y.x, x.y != y.y, x.z != y.z);
+    return bvec3 (x.x != y.x, x.y != y.y, x.z != y.z);
 }
 bvec4 notEqual (ivec4 x, ivec4 y) {
-    return (bvec4 (x.x != y.x, x.y != y.y, x.z != y.z, x.w != y.w);
+    return bvec4 (x.x != y.x, x.y != y.y, x.z != y.z, x.w != y.w);
 }
 
 // 
@@ -1225,13 +1226,13 @@ bvec4 not (bvec4 x) {
 // running in a fragment shader, the LOD computed by the implementation is used to do the texture
 // lookup. If it is mip-mapped and running on the vertex shader, then the base texture is used.
 // 
-// The built-ins suffixed with “Lod” are allowed only in a vertex shader. For the “Lod” functions,
+// The built-ins suffixed with "Lod" are allowed only in a vertex shader. For the "Lod" functions,
 // lod is directly used as the level of detail.
 // 
 
 // 
 // Use the texture coordinate coord to do a texture lookup in the 1D texture currently bound
-// to sampler. For the projective (“Proj”) versions, the texture coordinate coord.s is divided by
+// to sampler. For the projective ("Proj") versions, the texture coordinate coord.s is divided by
 // the last component of coord.
 // 
 // XXX
@@ -1247,7 +1248,7 @@ vec4 texture1DProj (sampler1D sampler, vec4 coord) {
 
 // 
 // Use the texture coordinate coord to do a texture lookup in the 2D texture currently bound
-// to sampler. For the projective (“Proj”) versions, the texture coordinate (coord.s, coord.t) is
+// to sampler. For the projective ("Proj") versions, the texture coordinate (coord.s, coord.t) is
 // divided by the last component of coord. The third component of coord is ignored for the vec4
 // coord variant.
 // 
@@ -1264,7 +1265,7 @@ vec4 texture2DProj (sampler2D sampler, vec4 coord) {
 
 // 
 // Use the texture coordinate coord to do a texture lookup in the 3D texture currently bound
-// to sampler. For the projective (“Proj”) versions, the texture coordinate is divided by coord.q.
+// to sampler. For the projective ("Proj") versions, the texture coordinate is divided by coord.q.
 // 
 // XXX
 vec4 texture3D (sampler3D sampler, vec3 coord) {
@@ -1288,9 +1289,9 @@ vec4 textureCube (samplerCube sampler, vec3 coord) {
 // Use texture coordinate coord to do a depth comparison lookup on the depth texture bound
 // to sampler, as described in section 3.8.14 of version 1.4 of the OpenGL specification. The 3rd
 // component of coord (coord.p) is used as the R value. The texture bound to sampler must be a
-// depth texture, or results are undefined. For the projective (“Proj”) version of each built-in,
+// depth texture, or results are undefined. For the projective ("Proj") version of each built-in,
 // the texture coordinate is divide by coord.q, giving a depth value R of coord.p/coord.q. The
-// second component of coord is ignored for the “1D” variants.
+// second component of coord is ignored for the "1D" variants.
 // 
 // XXX
 vec4 shadow1D (sampler1DShadow sampler, vec3 coord) {
@@ -1317,13 +1318,13 @@ vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord) {
 // 
 // - The return value(s) are always in the range [-1,1], and cover at least the range [-0.6, 0.6],
 //   with a gaussian-like distribution.
-// • The return value(s) have an overall average of 0.0
-// • They are repeatable, in that a particular input value will always produce the same return value
-// • They are statistically invariant under rotation (i.e., no matter how the domain is rotated, it
+// * The return value(s) have an overall average of 0.0
+// * They are repeatable, in that a particular input value will always produce the same return value
+// * They are statistically invariant under rotation (i.e., no matter how the domain is rotated, it
 //   has the same statistical character)
-// • They have a statistical invariance under translation (i.e., no matter how the domain is
+// * They have a statistical invariance under translation (i.e., no matter how the domain is
 //   translated, it has the same statistical character)
-// • They typically give different results under translation.
+// * They typically give different results under translation.
 // - The spatial frequency is narrowly concentrated, centered somewhere between 0.5 to 1.0.
 // 
 
