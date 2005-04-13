@@ -179,6 +179,9 @@ SLANG_CPP_SOURCES = \
 	shader/slang/MachineIndependent/SymbolTable.cpp	\
 	shader/slang/OGLCompilersDLL/Initialisation.cpp	\
 	shader/slang/OSDependent/Linux/ossource.cpp
+	
+SLANG_SOURCES =	\
+	shader/slang/slang_compile.c
 
 ASM_C_SOURCES =	\
 	x86/common_x86.c \
@@ -270,7 +273,8 @@ CORE_SOURCES = \
 	$(SHADER_SOURCES)	\
 	$(SWRAST_SOURCES)	\
 	$(SWRAST_SETUP_SOURCES)	\
-	$(ASM_C_SOURCES)	
+	$(ASM_C_SOURCES)	\
+	$(SLANG_SOURCES)
 
 #	$(SLANG_C_SOURCES)
 
