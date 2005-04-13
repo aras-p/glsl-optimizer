@@ -28,6 +28,8 @@
  * \author Michal Krol
  */
 
+/* Set this to 1 when we are ready to use 3dlabs' front-end */
+#define USE_3DLABS_FRONTEND 0
 
 #include "glheader.h"
 #include "shaderobjects.h"
@@ -35,8 +37,11 @@
 #include "context.h"
 #include "macros.h"
 #include "hash.h"
+
+#if USE_3DLABS_FRONTEND
 #include "slang_mesa.h"
 #include "Public/ShaderLang.h"
+#endif
 
 struct gl2_unknown_obj
 {
@@ -399,7 +404,9 @@ _container_constructor (struct gl2_container_impl *impl)
 struct gl2_3dlabs_shhandle_obj
 {
 	struct gl2_unkinner_obj _unknown;
+#if USE_3DLABS_FRONTEND
 	ShHandle handle;
+#endif
 };
 
 struct gl2_3dlabs_shhandle_impl
@@ -411,22 +418,22 @@ struct gl2_3dlabs_shhandle_impl
 static void
 _3dlabs_shhandle_destructor (struct gl2_unknown_intf **intf)
 {
-#if FEATURE_shading_language
+#if USE_3DLABS_FRONTEND
 	struct gl2_3dlabs_shhandle_impl *impl = (struct gl2_3dlabs_shhandle_impl *) intf;
-
 	ShDestruct (impl->_obj.handle);
-	_unkinner_destructor (intf);
-#else
-	(void) _unkinner_destructor;
 #endif
+	_unkinner_destructor (intf);
 }
 
 static GLvoid *
 _3dlabs_shhandle_GetShHandle (struct gl2_3dlabs_shhandle_intf **intf)
 {
+#if USE_3DLABS_FRONTEND
 	struct gl2_3dlabs_shhandle_impl *impl = (struct gl2_3dlabs_shhandle_impl *) intf;
-
 	return impl->_obj.handle;
+#else
+	return NULL;
+#endif
 }
 
 static struct gl2_3dlabs_shhandle_intf _3dlabs_shhandle_vftbl = {
@@ -443,7 +450,9 @@ _3dlabs_shhandle_constructor (struct gl2_3dlabs_shhandle_impl *impl, struct gl2_
 {
 	_unkinner_constructor ((struct gl2_unkinner_impl *) impl, outer);
 	impl->_vftbl = &_3dlabs_shhandle_vftbl;
+#if USE_3DLABS_FRONTEND
 	impl->_obj.handle = NULL;
+#endif
 }
 
 struct gl2_shader_obj
@@ -476,18 +485,22 @@ _shader_destructor (struct gl2_unknown_intf **intf)
 static struct gl2_unknown_intf **
 _shader_QueryInterface (struct gl2_unknown_intf **intf, enum gl2_uiid uiid)
 {
+#if USE_3DLABS_FRONTEND
 	struct gl2_shader_impl *impl = (struct gl2_shader_impl *) intf;
+#endif
 
 	if (uiid == UIID_SHADER)
 	{
 		(**intf).AddRef (intf);
 		return intf;
 	}
+#if USE_3DLABS_FRONTEND
 	if (uiid == UIID_3DLABS_SHHANDLE)
 	{
 		(**intf).AddRef (intf);
 		return (struct gl2_unknown_intf **) &impl->_obj._3dlabs_shhandle._vftbl;
 	}
+#endif
 	return _generic_QueryInterface (intf, uiid);
 }
 
@@ -528,15 +541,17 @@ _shader_GetSource (struct gl2_shader_intf **intf)
 static GLvoid
 _shader_Compile (struct gl2_shader_intf **intf)
 {
-#if FEATURE_shading_language
 	struct gl2_shader_impl *impl = (struct gl2_shader_impl *) intf;
+#if USE_3DLABS_FRONTEND
 	char **strings;
 	TBuiltInResource res;
+#endif
 
 	impl->_obj.compile_status = GL_FALSE;
 	_mesa_free ((void *) impl->_obj._generic.info_log);
 	impl->_obj._generic.info_log = NULL;
 
+#if USE_3DLABS_FRONTEND
 	/* 3dlabs compiler expects us to feed it with null-terminated string array,
 	we've got only one big string with offsets, so we must split it; but when
 	there's only one string to deal with, we pass its address directly */
@@ -642,8 +657,10 @@ struct gl2_program_obj
 	struct gl2_container_obj _container;
 	GLboolean link_status;
 	GLboolean validate_status;
+#if USE_3DLABS_FRONTEND
 	ShHandle linker;
 	ShHandle uniforms;
+#endif
 };
 
 struct gl2_program_impl
@@ -655,7 +672,7 @@ struct gl2_program_impl
 static void
 _program_destructor (struct gl2_unknown_intf **intf)
 {
-#if FEATURE_shading_language
+#if USE_3DLABS_FRONTEND
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
 
 	ShDestruct (impl->_obj.linker);
@@ -717,15 +734,17 @@ _program_GetValidateStatus (struct gl2_program_intf **intf)
 static GLvoid
 _program_Link (struct gl2_program_intf **intf)
 {
-#if FEATURE_shading_language
 	struct gl2_program_impl *impl = (struct gl2_program_impl *) intf;
+#if USE_3DLABS_FRONTEND
 	ShHandle *handles;
 	GLuint i;
+#endif
 
 	impl->_obj.link_status = GL_FALSE;
 	_mesa_free ((void *) impl->_obj._container._generic.info_log);
 	impl->_obj._container._generic.info_log = NULL;
 
+#if USE_3DLABS_FRONTEND
 	handles = (ShHandle *) _mesa_malloc (impl->_obj._container.attached_count * sizeof (ShHandle));
 	if (handles == NULL)
 		return;
@@ -797,18 +816,14 @@ static struct gl2_program_intf _program_vftbl = {
 static void
 _program_constructor (struct gl2_program_impl *impl)
 {
-#if FEATURE_shading_language
 	_container_constructor ((struct gl2_container_impl *) impl);
 	impl->_vftbl = &_program_vftbl;
 	impl->_obj._container._generic._unknown._destructor = _program_destructor;
 	impl->_obj.link_status = GL_FALSE;
 	impl->_obj.validate_status = GL_FALSE;
+#if USE_3DLABS_FRONTEND
 	impl->_obj.linker = ShConstructLinker (EShExVertexFragment, 0);
 	impl->_obj.uniforms = ShConstructUniformMap ();
-#else
-        (void) _container_constructor;
-        (void) _program_destructor;
-        (void) _program_vftbl;
 #endif
 }
 
@@ -876,15 +891,11 @@ static struct gl2_fragment_shader_intf _fragment_shader_vftbl = {
 static void
 _fragment_shader_constructor (struct gl2_fragment_shader_impl *impl)
 {
-#if FEATURE_shading_language
 	_shader_constructor ((struct gl2_shader_impl *) impl);
 	impl->_vftbl = &_fragment_shader_vftbl;
 	impl->_obj._shader._generic._unknown._destructor = _fragment_shader_destructor;
+#if USE_3DLABS_FRONTEND
 	impl->_obj._shader._3dlabs_shhandle._obj.handle = ShConstructCompiler (EShLangFragment, 0);
-#else
-        (void) _shader_constructor;
-        (void) _fragment_shader_vftbl;
-        (void) _fragment_shader_destructor;
 #endif
 }
 
@@ -952,14 +963,11 @@ static struct gl2_vertex_shader_intf _vertex_shader_vftbl = {
 static void
 _vertex_shader_constructor (struct gl2_vertex_shader_impl *impl)
 {
-#if FEATURE_shading_language
 	_shader_constructor ((struct gl2_shader_impl *) impl);
 	impl->_vftbl = &_vertex_shader_vftbl;
 	impl->_obj._shader._generic._unknown._destructor = _vertex_shader_destructor;
+#if USE_3DLABS_FRONTEND
 	impl->_obj._shader._3dlabs_shhandle._obj.handle = ShConstructCompiler (EShLangVertex, 0);
-#else
-        (void) _vertex_shader_vftbl;
-        (void) _vertex_shader_destructor;
 #endif
 }
 
@@ -1015,7 +1023,7 @@ _mesa_3dlabs_create_program_object (void)
 void
 _mesa_init_shaderobjects_3dlabs (GLcontext *ctx)
 {
-#if FEATURE_shading_language
+#if USE_3DLABS_FRONTEND
 	_glslang_3dlabs_InitProcess ();
 	_glslang_3dlabs_ShInitialize ();
 #endif
