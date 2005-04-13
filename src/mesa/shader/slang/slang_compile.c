@@ -1,0 +1,1826 @@
+/*
+ * Mesa 3-D graphics library
+ * Version:  6.3
+ *
+ * Copyright (C) 2005  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * \file slang_compile.c
+ * slang front-end compiler
+ * \author Michal Krol
+ */
+
+#include "imports.h" 
+#include "slang_compile.h"
+#include "grammar_mesa.h"
+
+/*
+	This is a straightforward implementation of the slang front-end compiler.
+	Lots of error-checking functionality is missing but every well-formed shader source should
+	compile successfully and execute as expected. However, some semantically ill-formed shaders
+	may be accepted resulting in undefined behaviour.
+*/
+
+void slang_alloc_free (void *ptr)
+{
+	_mesa_free (ptr);
+}
+
+void *slang_alloc_malloc (unsigned int size)
+{
+	return _mesa_malloc (size);
+}
+
+void *slang_alloc_realloc (void *ptr, unsigned int old_size, unsigned int size)
+{
+	return _mesa_realloc (ptr, old_size, size);
+}
+
+int slang_string_compare (const char *str1, const char *str2)
+{
+	return _mesa_strcmp (str1, str2);
+}
+
+char *slang_string_copy (char *dst, const char *src)
+{
+	return _mesa_strcpy (dst, src);
+}
+
+char *slang_string_concat (char *dst, const char *src)
+{
+	return _mesa_strcpy (dst + _mesa_strlen (dst), src);
+}
+
+char *slang_string_duplicate (const char *src)
+{
+	return _mesa_strdup (src);
+}
+
+static void slang_variable_construct (slang_variable *);
+static int slang_variable_copy (slang_variable *, const slang_variable *);
+static void slang_struct_construct (slang_struct *);
+static void slang_struct_destruct (slang_struct *);
+static int slang_struct_copy (slang_struct *, const slang_struct *);
+static int slang_struct_equal (const slang_struct *, const slang_struct *);
+static void slang_variable_destruct (slang_variable *);
+
+/* slang_type_specifier */
+
+static void slang_type_specifier_construct (slang_type_specifier *spec)
+{
+	spec->type = slang_spec_void;
+	spec->_struct = NULL;
+	spec->_array = NULL;
+}
+
+static void slang_type_specifier_destruct (slang_type_specifier *spec)
+{
+	if (spec->_struct != NULL)
+	{
+		slang_struct_destruct (spec->_struct);
+		slang_alloc_free (spec->_struct);
+	}
+	if (spec->_array != NULL)
+	{
+		slang_type_specifier_destruct (spec->_array);
+		slang_alloc_free (spec->_array);
+	}
+}
+
+static int slang_type_specifier_copy (slang_type_specifier *x, const slang_type_specifier *y)
+{
+	slang_type_specifier_destruct (x);
+	slang_type_specifier_construct (x);
+	x->type = y->type;
+	if (x->type == slang_spec_struct)
+	{
+		x->_struct = (slang_struct *) slang_alloc_malloc (sizeof (slang_struct));
+		slang_struct_construct (x->_struct);
+		return slang_struct_copy (x->_struct, y->_struct);
+	}
+	if (x->type == slang_spec_array)
+	{
+		x->_array = (slang_type_specifier *) slang_alloc_malloc (sizeof (slang_type_specifier));
+		slang_type_specifier_construct (x->_array);
+		return slang_type_specifier_copy (x->_array, y->_array);
+	}
+	return 1;
+}
+
+static int slang_type_specifier_equal (const slang_type_specifier *x, const slang_type_specifier *y)
+{
+	if (x->type != y->type)
+		return 0;
+	if (x->type == slang_spec_struct)
+		return slang_struct_equal (x->_struct, y->_struct);
+	if (x->type == slang_spec_array)
+		return slang_type_specifier_equal (x->_array, y->_array);
+	return 1;
+}
+
+/* slang_fully_specified_type */
+
+static void slang_fully_specified_type_construct (slang_fully_specified_type *type)
+{
+	type->qualifier = slang_qual_none;
+	slang_type_specifier_construct (&type->specifier);
+}
+
+static void slang_fully_specified_type_destruct (slang_fully_specified_type *type)
+{
+	slang_type_specifier_destruct (&type->specifier);
+}
+
+static int slang_fully_specified_type_copy (slang_fully_specified_type *x,
+	const slang_fully_specified_type *y)
+{
+	slang_fully_specified_type_construct (x);
+	slang_fully_specified_type_destruct (x);
+	x->qualifier = y->qualifier;
+	return slang_type_specifier_copy (&x->specifier, &y->specifier);
+}
+
+/* slang_variable_scope */
+
+static void slang_variable_scope_construct (slang_variable_scope *scope)
+{
+	scope->variables = NULL;
+	scope->num_variables = 0;
+	scope->outer_scope = NULL;
+}
+
+static void slang_variable_scope_destruct (slang_variable_scope *scope)
+{
+	unsigned int i;
+	for (i = 0; i < scope->num_variables; i++)
+		slang_variable_destruct (scope->variables + i);
+	slang_alloc_free (scope->variables);
+}
+
+static int slang_variable_scope_copy (slang_variable_scope *x, const slang_variable_scope *y)
+{
+	unsigned int i;
+	slang_variable_scope_destruct (x);
+	slang_variable_scope_construct (x);
+	x->variables = (slang_variable *) slang_alloc_malloc (y->num_variables * sizeof (
+		slang_variable));
+	if (x->variables == NULL)
+		return 0;
+	x->num_variables = y->num_variables;
+	for (i = 0; i < x->num_variables; i++)
+		slang_variable_construct (x->variables + i);
+	for (i = 0; i < x->num_variables; i++)
+		if (!slang_variable_copy (x->variables + i, y->variables + i))
+			return 0;
+	x->outer_scope = y->outer_scope;
+	return 1;
+}
+
+/* slang_operation */
+/* XXX mem! */
+static void slang_operation_construct (slang_operation *oper)
+{
+	oper->type = slang_oper_none;
+	oper->children = NULL;
+	oper->num_children = 0;
+	oper->literal = (float) 0;
+	oper->identifier = NULL;
+	oper->locals = (slang_variable_scope *) slang_alloc_malloc (sizeof (slang_variable_scope));
+	slang_variable_scope_construct (oper->locals);
+}
+
+static void slang_operation_destruct (slang_operation *oper)
+{
+	unsigned int i;
+	for (i = 0; i < oper->num_children; i++)
+		slang_operation_destruct (oper->children + i);
+	slang_alloc_free (oper->children);
+	slang_alloc_free (oper->identifier);
+	slang_variable_scope_destruct (oper->locals);
+	slang_alloc_free (oper->locals);
+}
+
+static int slang_operation_copy (slang_operation *x, const slang_operation *y)
+{
+	unsigned int i;
+	slang_operation_destruct (x);
+	slang_operation_construct (x);
+	x->type = y->type;
+	x->children = (slang_operation *) slang_alloc_malloc (y->num_children * sizeof (
+		slang_operation));
+	if (x->children == NULL)
+		return 0;
+	x->num_children = y->num_children;
+	for (i = 0; i < x->num_children; i++)
+		slang_operation_construct (x->children + i);
+	for (i = 0; i < x->num_children; i++)
+		if (!slang_operation_copy (x->children + i, y->children + i))
+			return 0;
+	x->literal = y->literal;
+	if (y->identifier != NULL)
+	{
+		x->identifier = slang_string_duplicate (y->identifier);
+		if (x->identifier == NULL)
+			return 0;
+	}
+	if (!slang_variable_scope_copy (x->locals, y->locals))
+		return 0;
+	return 1;
+}
+
+/* slang_variable */
+
+static void slang_variable_construct (slang_variable *var)
+{
+	slang_fully_specified_type_construct (&var->type);
+	var->name = NULL;
+	var->array_size = NULL;
+	var->initializer = NULL;
+}
+
+static void slang_variable_destruct (slang_variable *var)
+{
+	slang_fully_specified_type_destruct (&var->type);
+	slang_alloc_free (var->name);
+	if (var->array_size != NULL)
+	{
+		slang_operation_destruct (var->array_size);
+		slang_alloc_free (var->array_size);
+	}
+	if (var->initializer != NULL)
+	{
+		slang_operation_destruct (var->initializer);
+		slang_alloc_free (var->initializer);
+	}
+}
+
+static int slang_variable_copy (slang_variable *x, const slang_variable *y)
+{
+	slang_variable_destruct (x);
+	slang_variable_construct (x);
+	if (!slang_fully_specified_type_copy (&x->type, &y->type))
+		return 0;
+	if (y->name != NULL)
+	{
+		x->name = slang_string_duplicate (y->name);
+		if (x->name == NULL)
+			return 0;
+	}
+	if (y->array_size != NULL)
+		if (!slang_operation_copy (x->array_size, y->array_size))
+			return 0;
+	if (y->initializer != NULL)
+		if (!slang_operation_copy (x->initializer, y->initializer))
+			return 0;
+	return 1;
+}
+
+/* slang_struct_scope */
+
+static void slang_struct_scope_construct (slang_struct_scope *scope)
+{
+	scope->structs = NULL;
+	scope->num_structs = 0;
+	scope->outer_scope = NULL;
+}
+
+static void slang_struct_scope_destruct (slang_struct_scope *scope)
+{
+	unsigned int i;
+	for (i = 0; i < scope->num_structs; i++)
+		slang_struct_destruct (scope->structs + i);
+	slang_alloc_free (scope->structs);
+}
+
+static int slang_struct_scope_copy (slang_struct_scope *x, const slang_struct_scope *y)
+{
+	unsigned int i;
+	slang_struct_scope_destruct (x);
+	slang_struct_scope_construct (x);
+	x->structs = (slang_struct *) slang_alloc_malloc (y->num_structs * sizeof (slang_struct));
+	if (x->structs == NULL)
+		return 0;
+	x->num_structs = y->num_structs;
+	for (i = 0; i < x->num_structs; i++)
+		slang_struct_construct (x->structs + i);
+	for (i = 0; i < x->num_structs; i++)
+		if (!slang_struct_copy (x->structs + i, y->structs + i))
+			return 0;
+	x->outer_scope = y->outer_scope;
+	return 1;
+}
+
+static slang_struct *slang_struct_scope_find (slang_struct_scope *stru, const char *name,
+	int all_scopes)
+{
+	unsigned int i;
+	for (i = 0; i < stru->num_structs; i++)
+		if (slang_string_compare (name, stru->structs[i].name) == 0)
+			return stru->structs + i;
+	if (all_scopes && stru->outer_scope != NULL)
+		return slang_struct_scope_find (stru->outer_scope, name, 1);
+	return NULL;
+}
+
+/* slang_struct */
+/* XXX mem! */
+static void slang_struct_construct (slang_struct *stru)
+{
+	stru->name = NULL;
+	stru->fields = (slang_variable_scope *) slang_alloc_malloc (sizeof (slang_variable_scope));
+	slang_variable_scope_construct (stru->fields);
+	stru->structs = (slang_struct_scope *) slang_alloc_malloc (sizeof (slang_struct_scope));
+	slang_struct_scope_construct (stru->structs);
+}
+
+static void slang_struct_destruct (slang_struct *stru)
+{
+	slang_alloc_free (stru->name);
+	slang_variable_scope_destruct (stru->fields);
+	slang_alloc_free (stru->fields);
+	slang_struct_scope_destruct (stru->structs);
+	slang_alloc_free (stru->structs);
+}
+
+static int slang_struct_copy (slang_struct *x, const slang_struct *y)
+{
+	slang_struct_destruct (x);
+	slang_struct_construct (x);
+	if (y->name != NULL)
+	{
+		x->name = slang_string_duplicate (y->name);
+		if (x->name == NULL)
+			return 0;
+	}
+	if (!slang_variable_scope_copy (x->fields, y->fields))
+		return 0;
+	if (!slang_struct_scope_copy (x->structs, y->structs))
+		return 0;
+	return 1;
+}
+
+static int slang_struct_equal (const slang_struct *x, const slang_struct *y)
+{
+	unsigned int i;
+	if (x->fields->num_variables != y->fields->num_variables)
+		return 0;
+	for (i = 0; i < x->fields->num_variables; i++)
+	{
+		slang_variable *varx = x->fields->variables + i;
+		slang_variable *vary = y->fields->variables + i;
+		if (slang_string_compare (varx->name, vary->name) != 0)
+			return 0;
+		if (!slang_type_specifier_equal (&varx->type.specifier, &vary->type.specifier))
+			return 0;
+		if (varx->type.specifier.type == slang_spec_array)
+		{
+			/* TODO compare array sizes */
+		}
+	}
+	return 1;
+}
+
+/* slang_function */
+/* XXX mem! */
+static void slang_function_construct (slang_function *func)
+{
+	func->kind = slang_func_ordinary;
+	slang_variable_construct (&func->header);
+	func->parameters = (slang_variable_scope *) slang_alloc_malloc (sizeof (slang_variable_scope));
+	slang_variable_scope_construct (func->parameters);
+	func->body = NULL;
+}
+
+static void slang_function_destruct (slang_function *func)
+{
+	slang_variable_destruct (&func->header);
+	slang_variable_scope_destruct (func->parameters);
+	slang_alloc_free (func->parameters);
+	if (func->body != NULL)
+	{
+		slang_operation_destruct (func->body);
+		slang_alloc_free (func->body);
+	}
+}
+
+/* slang_function_scope */
+
+static void slang_function_scope_construct (slang_function_scope *scope)
+{
+	scope->functions = NULL;
+	scope->num_functions = 0;
+	scope->outer_scope = NULL;
+}
+
+static void slang_function_scope_destruct (slang_function_scope *scope)
+{
+	unsigned int i;
+	for (i = 0; i < scope->num_functions; i++)
+		slang_function_destruct (scope->functions + i);
+	slang_alloc_free (scope->functions);
+}
+
+static slang_function *slang_function_scope_find (slang_function_scope *funcs, slang_function *fun,
+	int all_scopes)
+{
+	unsigned int i;
+	for (i = 0; i < funcs->num_functions; i++)
+	{
+		slang_function *f = funcs->functions + i;
+		unsigned int j;
+		if (slang_string_compare (fun->header.name, f->header.name) != 0)
+			continue;
+		if (fun->param_count != f->param_count)
+			continue;
+		for (j = 0; j < fun->param_count; j++)
+		{
+			if (!slang_type_specifier_equal (&fun->parameters->variables[j].type.specifier,
+				&f->parameters->variables[j].type.specifier))
+			{
+				break;
+			}
+		}
+		if (j == fun->param_count)
+			return f;
+	}
+	if (all_scopes && funcs->outer_scope != NULL)
+		return slang_function_scope_find (funcs->outer_scope, fun, 1);
+	return NULL;
+}
+
+/* slang_translation_unit */
+/* XXX mem! */
+static void slang_translation_unit_construct (slang_translation_unit *unit)
+{
+	unit->globals = (slang_variable_scope *) slang_alloc_malloc (sizeof (slang_variable_scope));
+	slang_variable_scope_construct (unit->globals);
+	slang_function_scope_construct (&unit->functions);
+	unit->structs = (slang_struct_scope *) slang_alloc_malloc (sizeof (slang_struct_scope));
+	slang_struct_scope_construct (unit->structs);
+}
+
+static void slang_translation_unit_destruct (slang_translation_unit *unit)
+{
+	slang_variable_scope_destruct (unit->globals);
+	slang_alloc_free (unit->globals);
+	slang_function_scope_destruct (&unit->functions);
+	slang_struct_scope_destruct (unit->structs);
+	slang_alloc_free (unit->structs);
+}
+
+static int parse_identifier (const byte **I, char **id)
+{
+	*id = slang_string_duplicate ((const char *) *I);
+	if (*id == NULL)
+		return 0;
+	*I += strlen ((const char *) *I) + 1;
+	return 1;
+}
+
+static int parse_number (const byte **I, int *number)
+{
+	const int radix = (int) (*(*I)++);
+	*number = 0;
+	while (**I != '\0')
+	{
+		int digit;
+		if (**I >= '0' && **I <= '9')
+			digit = (int) (**I - '0');
+		else if (**I >= 'A' && **I <= 'Z')
+			digit = (int) (**I - 'A') + 10;
+		else
+			digit = (int) (**I - 'a') + 10;
+		*number = *number * radix + digit;
+		(*I)++;
+	}
+	(*I)++;
+	return 1;
+}
+
+static int parse_float (const byte **I, float *number)
+{
+	char *integral = NULL;
+	char *fractional = NULL;
+	char *exponent = NULL;
+	char *whole = NULL;
+
+	if (!parse_identifier (I, &integral))
+		return 0;
+
+	if (!parse_identifier (I, &fractional))
+	{
+		slang_alloc_free (integral);
+		return 0;
+	}
+
+	if (!parse_identifier (I, &exponent))
+	{
+		slang_alloc_free (fractional);
+		slang_alloc_free (integral);
+		return 0;
+	}
+
+	whole = (char *) (slang_alloc_malloc ((strlen (integral) + strlen (fractional) + strlen (
+		exponent) + 3) * sizeof (char)));
+	if (whole == NULL)
+	{
+		slang_alloc_free (exponent);
+		slang_alloc_free (fractional);
+		slang_alloc_free (integral);
+		return 0;
+	}
+
+	slang_string_copy (whole, integral);
+	slang_string_concat (whole, ".");
+	slang_string_concat (whole, fractional);
+	slang_string_concat (whole, "E");
+	slang_string_concat (whole, exponent);
+
+	*number = (float) (atof (whole));
+
+	slang_alloc_free (whole);
+	slang_alloc_free (exponent);
+	slang_alloc_free (fractional);
+	slang_alloc_free (integral);
+	return 1;
+}
+
+/* revision number - increment after each change affecting emitted output */
+#define REVISION 2
+
+static int check_revision (const byte **I)
+{
+	if (**I != REVISION)
+		return 0;
+	(*I)++;
+	return 1;
+}
+
+static int parse_statement (const byte **, slang_operation *, slang_variable_scope *,
+	slang_struct_scope *);
+static int parse_expression (const byte **, slang_operation *, slang_variable_scope *,
+	slang_struct_scope *);
+
+/* type qualifier */
+#define TYPE_QUALIFIER_NONE 0
+#define TYPE_QUALIFIER_CONST 1
+#define TYPE_QUALIFIER_ATTRIBUTE 2
+#define TYPE_QUALIFIER_VARYING 3
+#define TYPE_QUALIFIER_UNIFORM 4
+#define TYPE_QUALIFIER_FIXEDOUTPUT 5
+#define TYPE_QUALIFIER_FIXEDINPUT 6
+
+static int parse_type_qualifier (const byte **I, slang_type_qualifier *qual)
+{
+	switch (*(*I)++)
+	{
+	case TYPE_QUALIFIER_NONE:
+		*qual = slang_qual_none;
+		break;
+	case TYPE_QUALIFIER_CONST:
+		*qual = slang_qual_const;
+		break;
+	case TYPE_QUALIFIER_ATTRIBUTE:
+		*qual = slang_qual_attribute;
+		break;
+	case TYPE_QUALIFIER_VARYING:
+		*qual = slang_qual_varying;
+		break;
+	case TYPE_QUALIFIER_UNIFORM:
+		*qual = slang_qual_uniform;
+		break;
+	case TYPE_QUALIFIER_FIXEDOUTPUT:
+		*qual = slang_qual_fixedoutput;
+		break;
+	case TYPE_QUALIFIER_FIXEDINPUT:
+		*qual = slang_qual_fixedinput;
+		break;
+	default:
+		return 0;
+	}
+	return 1;
+}
+
+/* type specifier */
+#define TYPE_SPECIFIER_VOID 0
+#define TYPE_SPECIFIER_BOOL 1
+#define TYPE_SPECIFIER_BVEC2 2
+#define TYPE_SPECIFIER_BVEC3 3
+#define TYPE_SPECIFIER_BVEC4 4
+#define TYPE_SPECIFIER_INT 5
+#define TYPE_SPECIFIER_IVEC2 6
+#define TYPE_SPECIFIER_IVEC3 7
+#define TYPE_SPECIFIER_IVEC4 8
+#define TYPE_SPECIFIER_FLOAT 9
+#define TYPE_SPECIFIER_VEC2 10
+#define TYPE_SPECIFIER_VEC3 11
+#define TYPE_SPECIFIER_VEC4 12
+#define TYPE_SPECIFIER_MAT2 13
+#define TYPE_SPECIFIER_MAT3 14
+#define TYPE_SPECIFIER_MAT4 15
+#define TYPE_SPECIFIER_SAMPLER1D 16
+#define TYPE_SPECIFIER_SAMPLER2D 17
+#define TYPE_SPECIFIER_SAMPLER3D 18
+#define TYPE_SPECIFIER_SAMPLERCUBE 19
+#define TYPE_SPECIFIER_SAMPLER1DSHADOW 20
+#define TYPE_SPECIFIER_SAMPLER2DSHADOW 21
+#define TYPE_SPECIFIER_STRUCT 22
+#define TYPE_SPECIFIER_TYPENAME 23
+
+/* structure field */
+#define FIELD_NONE 0
+#define FIELD_NEXT 1
+#define FIELD_ARRAY 2
+
+static int parse_type_specifier (const byte **I, slang_type_specifier *spec,
+	slang_struct_scope *structs, slang_variable_scope *scope)
+{
+	switch (*(*I)++)
+	{
+	case TYPE_SPECIFIER_VOID:
+		spec->type = slang_spec_void;
+		break;
+	case TYPE_SPECIFIER_BOOL:
+		spec->type = slang_spec_bool;
+		break;
+	case TYPE_SPECIFIER_BVEC2:
+		spec->type = slang_spec_bvec2;
+		break;
+	case TYPE_SPECIFIER_BVEC3:
+		spec->type = slang_spec_bvec3;
+		break;
+	case TYPE_SPECIFIER_BVEC4:
+		spec->type = slang_spec_bvec4;
+		break;
+	case TYPE_SPECIFIER_INT:
+		spec->type = slang_spec_int;
+		break;
+	case TYPE_SPECIFIER_IVEC2:
+		spec->type = slang_spec_ivec2;
+		break;
+	case TYPE_SPECIFIER_IVEC3:
+		spec->type = slang_spec_ivec3;
+		break;
+	case TYPE_SPECIFIER_IVEC4:
+		spec->type = slang_spec_ivec4;
+		break;
+	case TYPE_SPECIFIER_FLOAT:
+		spec->type = slang_spec_float;
+		break;
+	case TYPE_SPECIFIER_VEC2:
+		spec->type = slang_spec_vec2;
+		break;
+	case TYPE_SPECIFIER_VEC3:
+		spec->type = slang_spec_vec3;
+		break;
+	case TYPE_SPECIFIER_VEC4:
+		spec->type = slang_spec_vec4;
+		break;
+	case TYPE_SPECIFIER_MAT2:
+		spec->type = slang_spec_mat2;
+		break;
+	case TYPE_SPECIFIER_MAT3:
+		spec->type = slang_spec_mat3;
+		break;
+	case TYPE_SPECIFIER_MAT4:
+		spec->type = slang_spec_mat4;
+		break;
+	case TYPE_SPECIFIER_SAMPLER1D:
+		spec->type = slang_spec_sampler1D;
+		break;
+	case TYPE_SPECIFIER_SAMPLER2D:
+		spec->type = slang_spec_sampler2D;
+		break;
+	case TYPE_SPECIFIER_SAMPLER3D:
+		spec->type = slang_spec_sampler3D;
+		break;
+	case TYPE_SPECIFIER_SAMPLERCUBE:
+		spec->type = slang_spec_samplerCube;
+		break;
+	case TYPE_SPECIFIER_SAMPLER1DSHADOW:
+		spec->type = slang_spec_sampler1DShadow;
+		break;
+	case TYPE_SPECIFIER_SAMPLER2DSHADOW:
+		spec->type = slang_spec_sampler2DShadow;
+		break;
+	case TYPE_SPECIFIER_STRUCT:
+		spec->type = slang_spec_struct;
+		{
+			char *name;
+			if (!parse_identifier (I, &name))
+				return 0;
+			if (*name != '\0' && slang_struct_scope_find (structs, name, 0) != NULL)
+			{
+				slang_alloc_free (name);
+				return 0;		/* error: duplicate names */
+			}
+			spec->_struct = (slang_struct *) slang_alloc_malloc (sizeof (slang_struct));
+			if (spec->_struct == NULL)
+			{
+				slang_alloc_free (name);
+				return 0;
+			}
+			slang_struct_construct (spec->_struct);
+			spec->_struct->name = name;
+			spec->_struct->structs->outer_scope = structs;
+		}
+		do
+		{
+			slang_type_specifier sp;
+			slang_type_specifier_construct (&sp);
+			if (!parse_type_specifier (I, &sp, spec->_struct->structs, scope))
+			{
+				slang_type_specifier_destruct (&sp);
+				return 0;
+			}
+			do
+			{
+				slang_variable *var;
+				spec->_struct->fields->variables = (slang_variable *) slang_alloc_realloc (
+					spec->_struct->fields->variables,
+					spec->_struct->fields->num_variables * sizeof (slang_variable),
+					(spec->_struct->fields->num_variables + 1) * sizeof (slang_variable));
+				if (spec->_struct->fields->variables == NULL)
+				{
+					slang_type_specifier_destruct (&sp);
+					return 0;
+				}
+				var = spec->_struct->fields->variables + spec->_struct->fields->num_variables;
+				spec->_struct->fields->num_variables++;
+				slang_variable_construct (var);
+				if (!slang_type_specifier_copy (&var->type.specifier, &sp))
+				{
+					slang_type_specifier_destruct (&sp);
+					return 0;
+				}
+				if (!parse_identifier (I, &var->name))
+				{
+					slang_type_specifier_destruct (&sp);
+					return 0;
+				}
+				switch (*(*I)++)
+				{
+				case FIELD_NONE:
+					break;
+				case FIELD_ARRAY:
+					var->array_size = (slang_operation *) slang_alloc_malloc (sizeof (
+						slang_operation));
+					if (var->array_size == NULL)
+					{
+						slang_type_specifier_destruct (&sp);
+						return 0;
+					}
+					slang_operation_construct (var->array_size);
+					if (!parse_expression (I, var->array_size, scope, structs))
+					{
+						slang_type_specifier_destruct (&sp);
+						return 0;
+					}
+					break;
+				default:
+					slang_type_specifier_destruct (&sp);
+					return 0;
+				}
+			}
+			while (*(*I)++ != FIELD_NONE);
+		}
+		while (*(*I)++ != FIELD_NONE);
+		if (*spec->_struct->name != '\0')
+		{
+			slang_struct *s;
+			structs->structs = (slang_struct *) slang_alloc_realloc (structs->structs,
+				structs->num_structs * sizeof (slang_struct),
+				(structs->num_structs + 1) * sizeof (slang_struct));
+			if (structs->structs == NULL)
+				return 0;
+			s = structs->structs + structs->num_structs;
+			structs->num_structs++;
+			slang_struct_construct (s);
+			if (!slang_struct_copy (s, spec->_struct))
+				return 0;
+		}
+		break;
+	case TYPE_SPECIFIER_TYPENAME:
+		spec->type = slang_spec_struct;
+		{
+			char *name;
+			slang_struct *stru;
+			if (!parse_identifier (I, &name))
+				return 0;
+			stru = slang_struct_scope_find (structs, name, 1);
+			slang_alloc_free (name);
+			if (stru == NULL)
+				return 0;
+			spec->_struct = (slang_struct *) slang_alloc_malloc (sizeof (slang_struct));
+			if (spec->_struct == NULL)
+				return 0;
+			slang_struct_construct (spec->_struct);
+			if (!slang_struct_copy (spec->_struct, stru))
+				return 0;
+		}
+		break;
+	default:
+		return 0;
+	}
+	return 1;
+}
+
+static int parse_fully_specified_type (const byte **I, slang_fully_specified_type *type,
+	slang_struct_scope *structs, slang_variable_scope *scope)
+{
+	if (!parse_type_qualifier (I, &type->qualifier))
+		return 0;
+	return parse_type_specifier (I, &type->specifier, structs, scope);
+}
+
+/* operation */
+#define OP_END 0
+#define OP_BLOCK_BEGIN_NO_NEW_SCOPE 1
+#define OP_BLOCK_BEGIN_NEW_SCOPE 2
+#define OP_DECLARE 3
+#define OP_ASM 4
+#define OP_BREAK 5
+#define OP_CONTINUE 6
+#define OP_DISCARD 7
+#define OP_RETURN 8
+#define OP_EXPRESSION 9
+#define OP_IF 10
+#define OP_WHILE 11
+#define OP_DO 12
+#define OP_FOR 13
+#define OP_PUSH_VOID 14
+#define OP_PUSH_BOOL 15
+#define OP_PUSH_INT 16
+#define OP_PUSH_FLOAT 17
+#define OP_PUSH_IDENTIFIER 18
+#define OP_SEQUENCE 19
+#define OP_ASSIGN 20
+#define OP_ADDASSIGN 21
+#define OP_SUBASSIGN 22
+#define OP_MULASSIGN 23
+#define OP_DIVASSIGN 24
+/*#define OP_MODASSIGN 25*/
+/*#define OP_LSHASSIGN 26*/
+/*#define OP_RSHASSIGN 27*/
+/*#define OP_ORASSIGN 28*/
+/*#define OP_XORASSIGN 29*/
+/*#define OP_ANDASSIGN 30*/
+#define OP_SELECT 31
+#define OP_LOGICALOR 32
+#define OP_LOGICALXOR 33
+#define OP_LOGICALAND 34
+/*#define OP_BITOR 35*/
+/*#define OP_BITXOR 36*/
+/*#define OP_BITAND 37*/
+#define OP_EQUAL 38
+#define OP_NOTEQUAL 39
+#define OP_LESS 40
+#define OP_GREATER 41
+#define OP_LESSEQUAL 42
+#define OP_GREATEREQUAL 43
+/*#define OP_LSHIFT 44*/
+/*#define OP_RSHIFT 45*/
+#define OP_ADD 46
+#define OP_SUBTRACT 47
+#define OP_MULTIPLY 48
+#define OP_DIVIDE 49
+/*#define OP_MODULUS 50*/
+#define OP_PREINCREMENT 51
+#define OP_PREDECREMENT 52
+#define OP_PLUS 53
+#define OP_MINUS 54
+/*#define OP_COMPLEMENT 55*/
+#define OP_NOT 56
+#define OP_SUBSCRIPT 57
+#define OP_CALL 58
+#define OP_FIELD 59
+#define OP_POSTINCREMENT 60
+#define OP_POSTDECREMENT 61
+
+static int parse_child_operation (const byte **I, slang_operation *oper, int statement,
+	slang_variable_scope *scope, slang_struct_scope *structs)
+{
+	oper->children = (slang_operation *) slang_alloc_realloc (oper->children,
+		oper->num_children * sizeof (slang_operation),
+		(oper->num_children + 1) * sizeof (slang_operation));
+	if (oper->children == NULL)
+		return 0;
+	slang_operation_construct (oper->children + oper->num_children);
+	oper->num_children++;
+	if (statement)
+		return parse_statement (I, oper->children + oper->num_children - 1, scope, structs);
+	return parse_expression (I, oper->children + oper->num_children - 1, scope, structs);
+}
+
+static int parse_declaration (const byte **, slang_variable_scope *, slang_struct_scope *,
+	slang_function_scope *);
+
+static int parse_statement (const byte **I, slang_operation *oper, slang_variable_scope *scope,
+	slang_struct_scope *structs)
+{
+	oper->locals->outer_scope = scope;
+	switch (*(*I)++)
+	{
+	case OP_BLOCK_BEGIN_NO_NEW_SCOPE:
+		oper->type = slang_oper_block_no_new_scope;
+		while (**I != OP_END)
+			if (!parse_child_operation (I, oper, 1, scope, structs))
+				return 0;
+		(*I)++;
+		break;
+	case OP_BLOCK_BEGIN_NEW_SCOPE:
+		oper->type = slang_oper_block_new_scope;
+		while (**I != OP_END)
+			if (!parse_child_operation (I, oper, 1, oper->locals, structs))
+				return 0;
+		(*I)++;
+		break;
+	case OP_DECLARE:
+		oper->type = slang_oper_variable_decl;
+		{
+			const unsigned int first_var = scope->num_variables;
+			if (!parse_declaration (I, scope, structs, NULL))
+				return 0;
+			if (first_var < scope->num_variables)
+			{
+				const unsigned int num_vars = scope->num_variables - first_var;
+				unsigned int i;
+				oper->children = (slang_operation *) slang_alloc_malloc (num_vars * sizeof (
+					slang_operation));
+				if (oper->children == NULL)
+					return 0;
+				for (i = 0; i < num_vars; i++)
+					slang_operation_construct (oper->children + i);
+				oper->num_children = num_vars;
+				for (i = first_var; i < scope->num_variables; i++)
+				{
+					slang_operation *o = oper->children + i - first_var;
+					o->type = slang_oper_identifier;
+					o->locals->outer_scope = scope;
+					o->identifier = slang_string_duplicate (scope->variables[i].name);
+					if (o->identifier == NULL)
+						return 0;
+				}
+			}
+		}
+		break;
+	case OP_ASM:
+		oper->type = slang_oper_asm;
+		if (!parse_identifier (I, &oper->identifier))
+			return 0;
+		while (**I != OP_END)
+			if (!parse_child_operation (I, oper, 0, scope, structs))
+				return 0;
+		(*I)++;
+		break;
+	case OP_BREAK:
+		oper->type = slang_oper_break;
+		break;
+	case OP_CONTINUE:
+		oper->type = slang_oper_continue;
+		break;
+	case OP_DISCARD:
+		oper->type = slang_oper_discard;
+		break;
+	case OP_RETURN:
+		oper->type = slang_oper_return;
+		if (!parse_child_operation (I, oper, 0, scope, structs))
+			return 0;
+		break;
+	case OP_EXPRESSION:
+		oper->type = slang_oper_expression;
+		if (!parse_child_operation (I, oper, 0, scope, structs))
+			return 0;
+		break;
+	case OP_IF:
+		oper->type = slang_oper_if;
+		if (!parse_child_operation (I, oper, 0, scope, structs))
+			return 0;
+		if (!parse_child_operation (I, oper, 1, scope, structs))
+			return 0;
+		if (!parse_child_operation (I, oper, 1, scope, structs))
+			return 0;
+		break;
+	case OP_WHILE:
+		oper->type = slang_oper_while;
+		if (!parse_child_operation (I, oper, 1, oper->locals, structs))
+			return 0;
+		if (!parse_child_operation (I, oper, 1, oper->locals, structs))
+			return 0;
+		break;
+	case OP_DO:
+		oper->type = slang_oper_do;
+		if (!parse_child_operation (I, oper, 1, scope, structs))
+			return 0;
+		if (!parse_child_operation (I, oper, 0, scope, structs))
+			return 0;
+		break;
+	case OP_FOR:
+		oper->type = slang_oper_for;
+		if (!parse_child_operation (I, oper, 1, oper->locals, structs))
+			return 0;
+		if (!parse_child_operation (I, oper, 1, oper->locals, structs))
+			return 0;
+		if (!parse_child_operation (I, oper, 0, oper->locals, structs))
+			return 0;
+		if (!parse_child_operation (I, oper, 1, oper->locals, structs))
+			return 0;
+		break;
+	default:
+		return 0;
+	}
+	return 1;
+}
+
+static int handle_trinary_expression (slang_operation *op, slang_operation **ops,
+	unsigned int *num_ops)
+{
+	op->num_children = 3;
+	op->children = (slang_operation *) slang_alloc_malloc (3 * sizeof (slang_operation));
+	if (op->children == NULL)
+		return 0;
+	op->children[0] = (*ops)[*num_ops - 4];
+	op->children[1] = (*ops)[*num_ops - 3];
+	op->children[2] = (*ops)[*num_ops - 2];
+	(*ops)[*num_ops - 4] = (*ops)[*num_ops - 1];
+	*num_ops -= 3;
+	*ops = (slang_operation *) slang_alloc_realloc (*ops, (*num_ops + 3) * sizeof (slang_operation),
+		*num_ops * sizeof (slang_operation));
+	if (*ops == NULL)
+		return 0;
+	return 1;
+}
+
+static int handle_binary_expression (slang_operation *op, slang_operation **ops,
+	unsigned int *num_ops)
+{
+	op->num_children = 2;
+	op->children = (slang_operation *) slang_alloc_malloc (2 * sizeof (slang_operation));
+	if (op->children == NULL)
+		return 0;
+	op->children[0] = (*ops)[*num_ops - 3];
+	op->children[1] = (*ops)[*num_ops - 2];
+	(*ops)[*num_ops - 3] = (*ops)[*num_ops - 1];
+	*num_ops -= 2;
+	*ops = (slang_operation *) slang_alloc_realloc (*ops, (*num_ops + 2) * sizeof (slang_operation),
+		*num_ops * sizeof (slang_operation));
+	if (*ops == NULL)
+		return 0;
+	return 1;
+}
+
+static int handle_unary_expression (slang_operation *op, slang_operation **ops, 
+	unsigned int *num_ops)
+{
+	op->num_children = 1;
+	op->children = (slang_operation *) slang_alloc_malloc (sizeof (slang_operation));
+	if (op->children == NULL)
+		return 0;
+	op->children[0] = (*ops)[*num_ops - 2];
+	(*ops)[*num_ops - 2] = (*ops)[*num_ops - 1];
+	(*num_ops)--;
+	*ops = (slang_operation *) slang_alloc_realloc (*ops, (*num_ops + 1) * sizeof (slang_operation),
+		*num_ops * sizeof (slang_operation));
+	if (*ops == NULL)
+		return 0;
+	return 1;
+}
+
+static int parse_expression (const byte **I, slang_operation *oper, slang_variable_scope *scope,
+	slang_struct_scope *structs)
+{
+	slang_operation *ops = NULL;
+	unsigned int num_ops = 0;
+	int number;
+
+	while (**I != OP_END)
+	{
+		slang_operation *op;
+		const unsigned int op_code = *(*I)++;
+		ops = (slang_operation *) slang_alloc_realloc (ops,
+			num_ops * sizeof (slang_operation), (num_ops + 1) * sizeof (slang_operation));
+		if (ops == NULL)
+			return 0;
+		op = ops + num_ops;
+		num_ops++;
+		slang_operation_construct (op);
+		op->locals->outer_scope = scope;
+		switch (op_code)
+		{
+		case OP_PUSH_VOID:
+			op->type = slang_oper_void;
+			break;
+		case OP_PUSH_BOOL:
+			op->type = slang_oper_literal_bool;
+			if (!parse_number (I, &number))
+				return 0;
+			op->literal = (float) number;
+			break;
+		case OP_PUSH_INT:
+			op->type = slang_oper_literal_int;
+			if (!parse_number (I, &number))
+				return 0;
+			op->literal = (float) number;
+			break;
+		case OP_PUSH_FLOAT:
+			op->type = slang_oper_literal_float;
+			if (!parse_float (I, &op->literal))
+				return 0;
+			break;
+		case OP_PUSH_IDENTIFIER:
+			op->type = slang_oper_identifier;
+			if (!parse_identifier (I, &op->identifier))
+				return 0;
+			break;
+		case OP_SEQUENCE:
+			op->type = slang_oper_sequence;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_ASSIGN:
+			op->type = slang_oper_assign;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_ADDASSIGN:
+			op->type = slang_oper_addassign;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_SUBASSIGN:
+			op->type = slang_oper_subassign;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_MULASSIGN:
+			op->type = slang_oper_mulassign;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_DIVASSIGN:
+			op->type = slang_oper_divassign;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		/*case OP_MODASSIGN:*/
+		/*case OP_LSHASSIGN:*/
+		/*case OP_RSHASSIGN:*/
+		/*case OP_ORASSIGN:*/
+		/*case OP_XORASSIGN:*/
+		/*case OP_ANDASSIGN:*/
+		case OP_SELECT:
+			op->type = slang_oper_select;
+			if (!handle_trinary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_LOGICALOR:
+			op->type = slang_oper_logicalor;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_LOGICALXOR:
+			op->type = slang_oper_logicalxor;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_LOGICALAND:
+			op->type = slang_oper_logicaland;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		/*case OP_BITOR:*/
+		/*case OP_BITXOR:*/
+		/*case OP_BITAND:*/
+		case OP_EQUAL:
+			op->type = slang_oper_equal;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_NOTEQUAL:
+			op->type = slang_oper_notequal;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_LESS:
+			op->type = slang_oper_less;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_GREATER:
+			op->type = slang_oper_greater;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_LESSEQUAL:
+			op->type = slang_oper_lessequal;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_GREATEREQUAL:
+			op->type = slang_oper_greaterequal;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		/*case OP_LSHIFT:*/
+		/*case OP_RSHIFT:*/
+		case OP_ADD:
+			op->type = slang_oper_add;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_SUBTRACT:
+			op->type = slang_oper_subtract;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_MULTIPLY:
+			op->type = slang_oper_multiply;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_DIVIDE:
+			op->type = slang_oper_divide;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		/*case OP_MODULUS:*/
+		case OP_PREINCREMENT:
+			op->type = slang_oper_preincrement;
+			if (!handle_unary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_PREDECREMENT:
+			op->type = slang_oper_predecrement;
+			if (!handle_unary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_PLUS:
+			op->type = slang_oper_plus;
+			if (!handle_unary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_MINUS:
+			op->type = slang_oper_minus;
+			if (!handle_unary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_NOT:
+			op->type = slang_oper_not;
+			if (!handle_unary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		/*case OP_COMPLEMENT:*/
+		case OP_SUBSCRIPT:
+			op->type = slang_oper_subscript;
+			if (!handle_binary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_CALL:
+			op->type = slang_oper_call;
+			if (!parse_identifier (I, &op->identifier))
+				return 0;
+			while (**I != OP_END)
+				if (!parse_child_operation (I, op, 0, scope, structs))
+					return 0;
+			(*I)++;
+			break;
+		case OP_FIELD:
+			op->type = slang_oper_field;
+			if (!parse_identifier (I, &op->identifier))
+				return 0;
+			if (!handle_unary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_POSTINCREMENT:
+			op->type = slang_oper_postincrement;
+			if (!handle_unary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		case OP_POSTDECREMENT:
+			op->type = slang_oper_postdecrement;
+			if (!handle_unary_expression (op, &ops, &num_ops))
+				return 0;
+			break;
+		default:
+			return 0;
+		}
+	}
+	(*I)++;
+	*oper = *ops;
+	slang_alloc_free (ops);
+	return 1;
+}
+
+/* parameter qualifier */
+#define PARAM_QUALIFIER_IN 0
+#define PARAM_QUALIFIER_OUT 1
+#define PARAM_QUALIFIER_INOUT 2
+
+/* function parameter array presence */
+#define PARAMETER_ARRAY_NOT_PRESENT 0
+#define PARAMETER_ARRAY_PRESENT 1
+
+static int parse_parameter_declaration (const byte **I, slang_variable *param,
+	slang_struct_scope *structs, slang_variable_scope *scope)
+{
+	if (!parse_type_qualifier (I, &param->type.qualifier))
+		return 0;
+	switch (*(*I)++)
+	{
+	case PARAM_QUALIFIER_IN:
+		if (param->type.qualifier != slang_qual_const && param->type.qualifier != slang_qual_none)
+			return 0;	/* error: type qualifier is invalid */
+		break;
+	case PARAM_QUALIFIER_OUT:
+		if (param->type.qualifier == slang_qual_none)
+			param->type.qualifier = slang_qual_out;
+		else
+			return 0;	/* error: type qualifier is invalid */
+		break;
+	case PARAM_QUALIFIER_INOUT:
+		if (param->type.qualifier == slang_qual_none)
+			param->type.qualifier = slang_qual_inout;
+		else
+			return 0;	/* error: type qualifier is invalid */
+		break;
+	default:
+		return 0;
+	}
+	if (!parse_type_specifier (I, &param->type.specifier, structs, scope))
+		return 0;
+	if (!parse_identifier (I, &param->name))
+		return 0;
+	if (*(*I)++ == PARAMETER_ARRAY_PRESENT)
+	{
+		param->array_size = (slang_operation *) slang_alloc_malloc (sizeof (slang_operation));
+		slang_operation_construct (param->array_size);
+		if (!parse_expression (I, param->array_size, scope, structs))
+			return 0;
+	}
+	return 1;
+}
+
+/* function type */
+#define FUNCTION_ORDINARY 0
+#define FUNCTION_CONSTRUCTOR 1
+#define FUNCTION_OPERATOR 2
+
+/* function parameter */
+#define PARAMETER_NONE 0
+#define PARAMETER_NEXT 1
+
+/* operator type */
+#define OPERATOR_ASSIGN 1
+#define OPERATOR_ADDASSIGN 2
+#define OPERATOR_SUBASSIGN 3
+#define OPERATOR_MULASSIGN 4
+#define OPERATOR_DIVASSIGN 5
+/*#define OPERATOR_MODASSIGN 6*/
+/*#define OPERATOR_LSHASSIGN 7*/
+/*#define OPERATOR_RSHASSIGN 8*/
+/*#define OPERATOR_ANDASSIGN 9*/
+/*#define OPERATOR_XORASSIGN 10*/
+/*#define OPERATOR_ORASSIGN 11*/
+#define OPERATOR_LOGICALXOR 12
+/*#define OPERATOR_BITOR 13*/
+/*#define OPERATOR_BITXOR 14*/
+/*#define OPERATOR_BITAND 15*/
+#define OPERATOR_EQUAL 16
+#define OPERATOR_NOTEQUAL 17
+#define OPERATOR_LESS 18
+#define OPERATOR_GREATER 19
+#define OPERATOR_LESSEQUAL 20
+#define OPERATOR_GREATEREQUAL 21
+/*#define OPERATOR_LSHIFT 22*/
+/*#define OPERATOR_RSHIFT 23*/
+#define OPERATOR_MULTIPLY 24
+#define OPERATOR_DIVIDE 25
+/*#define OPERATOR_MODULUS 26*/
+#define OPERATOR_INCREMENT 27
+#define OPERATOR_DECREMENT 28
+#define OPERATOR_PLUS 29
+#define OPERATOR_MINUS 30
+/*#define OPERATOR_COMPLEMENT 31*/
+#define OPERATOR_NOT 32
+
+/* these must match with slang_type_specifier_type enum */
+static const char *type_specifier_names[] = {
+	"void",
+	"bool",
+	"bvec2",
+	"bvec3",
+	"bvec4",
+	"int",
+	"ivec2",
+	"ivec3",
+	"ivec4",
+	"float",
+	"vec2",
+	"vec3",
+	"vec4",
+	"mat2",
+	"mat3",
+	"mat4",
+	"sampler1D",
+	"sampler2D",
+	"sampler3D",
+	"samplerCube",
+	"sampler1DShadow",
+	"sampler2DShadow"
+};
+
+static const struct {
+	unsigned int o_code;
+	const char *o_name;
+} operator_names[] = {
+	{ OPERATOR_INCREMENT, "++" },
+	{ OPERATOR_ADDASSIGN, "+=" },
+	{ OPERATOR_PLUS, "+" },
+	{ OPERATOR_DECREMENT, "--" },
+	{ OPERATOR_SUBASSIGN, "-=" },
+	{ OPERATOR_MINUS, "-" },
+	{ OPERATOR_NOTEQUAL, "!=" },
+	{ OPERATOR_NOT, "!" },
+	{ OPERATOR_MULASSIGN, "*=" },
+	{ OPERATOR_MULTIPLY, "*" },
+	{ OPERATOR_DIVASSIGN, "/=" },
+	{ OPERATOR_DIVIDE, "/" },
+	{ OPERATOR_LESSEQUAL, "<=" },
+	/*{ OPERATOR_LSHASSIGN, "<<=" },*/
+	/*{ OPERATOR_LSHIFT, "<<" },*/
+	{ OPERATOR_LESS, "<" },
+	{ OPERATOR_GREATEREQUAL, ">=" },
+	/*{ OPERATOR_RSHASSIGN, ">>=" },*/
+	/*{ OPERATOR_RSHIFT, ">>" },*/
+	{ OPERATOR_GREATER, ">" },
+	{ OPERATOR_EQUAL, "==" },
+	{ OPERATOR_ASSIGN, "=" },
+	/*{ OPERATOR_MODASSIGN, "%=" },*/
+	/*{ OPERATOR_MODULUS, "%" },*/
+	/*{ OPERATOR_ANDASSIGN, "&=" },*/
+	/*{ OPERATOR_BITAND, "&" },*/
+	/*{ OPERATOR_ORASSIGN, "|=" },*/
+	/*{ OPERATOR_BITOR, "|" },*/
+	/*{ OPERATOR_COMPLEMENT, "~" },*/
+	/*{ OPERATOR_XORASSIGN, "^=" },*/
+	{ OPERATOR_LOGICALXOR, "^^" }/*,*/
+	/*{ OPERATOR_BITXOR, "^" }*/
+};
+
+static int parse_operator_name (const byte **I, char **pname)
+{
+	unsigned int i;
+	for (i = 0; i < sizeof (operator_names) / sizeof (*operator_names); i++)
+		if (operator_names[i].o_code == (unsigned int) (**I))
+		{
+			*pname = slang_string_duplicate (operator_names[i].o_name);
+			if (*pname == NULL)
+				return 0;
+			(*I)++;
+			return 1;
+		}
+	return 0;
+}
+
+static int parse_function_prototype (const byte **I, slang_function *func,
+	slang_struct_scope *structs, slang_variable_scope *scope)
+{
+	if (!parse_fully_specified_type (I, &func->header.type, structs, scope))
+		return 0;
+	switch (*(*I)++)
+	{
+	case FUNCTION_ORDINARY:
+		func->kind = slang_func_ordinary;
+		if (!parse_identifier (I, &func->header.name))
+			return 0;
+		break;
+	case FUNCTION_CONSTRUCTOR:
+		func->kind = slang_func_constructor;
+		if (func->header.type.specifier.type == slang_spec_struct)
+			return 0;
+		func->header.name = slang_string_duplicate (
+			type_specifier_names[func->header.type.specifier.type]);
+		if (func->header.name == NULL)
+			return 0;
+		break;
+	case FUNCTION_OPERATOR:
+		func->kind = slang_func_operator;
+		if (!parse_operator_name (I, &func->header.name))
+			return 0;
+		break;
+	default:
+		return 0;
+	}
+	func->parameters->outer_scope = scope;
+	while (*(*I)++ == PARAMETER_NEXT)
+	{
+		func->parameters->variables = (slang_variable *) slang_alloc_realloc (
+			func->parameters->variables,
+			func->parameters->num_variables * sizeof (slang_variable),
+			(func->parameters->num_variables + 1) * sizeof (slang_variable));
+		if (func->parameters->variables == NULL)
+			return 0;
+		slang_variable_construct (func->parameters->variables + func->parameters->num_variables);
+		func->parameters->num_variables++;
+		if (!parse_parameter_declaration (I, func->parameters->variables +
+			func->parameters->num_variables - 1, structs, scope))
+			return 0;
+	}
+	func->param_count = func->parameters->num_variables;
+	return 1;
+}
+
+static int parse_function_definition (const byte **I, slang_function *func,
+	slang_struct_scope *structs, slang_variable_scope *scope)
+{
+	if (!parse_function_prototype (I, func, structs, scope))
+		return 0;
+	func->body = (slang_operation *) slang_alloc_malloc (sizeof (slang_operation));
+	if (func->body == NULL)
+		return 0;
+	slang_operation_construct (func->body);
+	if (!parse_statement (I, func->body, func->parameters, structs))
+		return 0;
+	return 1;
+}
+
+/* init declarator list */
+#define DECLARATOR_NONE 0
+#define DECLARATOR_NEXT 1
+
+/* variable declaration */
+#define VARIABLE_NONE 0
+#define VARIABLE_IDENTIFIER 1
+#define VARIABLE_INITIALIZER 2
+#define VARIABLE_ARRAY_EXPLICIT 3
+#define VARIABLE_ARRAY_UNKNOWN 4
+
+static int parse_init_declarator (const byte **I, const slang_fully_specified_type *type,
+	slang_variable_scope *vars, slang_struct_scope *structs)
+{
+	slang_variable *var;
+
+	if (*(*I)++ == VARIABLE_NONE)
+		return 1;
+	vars->variables = (slang_variable *) slang_alloc_realloc (vars->variables,
+		vars->num_variables * sizeof (slang_variable),
+		(vars->num_variables + 1) * sizeof (slang_variable));
+	if (vars->variables == NULL)
+		return 0;
+	var = vars->variables + vars->num_variables;
+	vars->num_variables++;
+	slang_variable_construct (var);
+	var->type.qualifier = type->qualifier;
+	if (!parse_identifier (I, &var->name))
+		return 0;
+	switch (*(*I)++)
+	{
+	case VARIABLE_NONE:
+		if (!slang_type_specifier_copy (&var->type.specifier, &type->specifier))
+			return 0;
+		break;
+	case VARIABLE_INITIALIZER:
+		if (!slang_type_specifier_copy (&var->type.specifier, &type->specifier))
+			return 0;
+		var->initializer = (slang_operation *) slang_alloc_malloc (sizeof (slang_operation));
+		if (var->initializer == NULL)
+			return 0;
+		slang_operation_construct (var->initializer);
+		if (!parse_expression (I, var->initializer, vars, structs))
+			return 0;
+		break;
+	case VARIABLE_ARRAY_UNKNOWN:
+		var->type.specifier.type = slang_spec_array;
+		var->type.specifier._array = (slang_type_specifier *) slang_alloc_malloc (sizeof (
+			slang_type_specifier));
+		if (var->type.specifier._array == NULL)
+			return 0;
+		slang_type_specifier_construct (var->type.specifier._array);
+		if (!slang_type_specifier_copy (var->type.specifier._array, &type->specifier))
+			return 0;
+		break;
+	case VARIABLE_ARRAY_EXPLICIT:
+		var->type.specifier.type = slang_spec_array;
+		var->type.specifier._array = (slang_type_specifier *) slang_alloc_malloc (sizeof (
+			slang_type_specifier));
+		if (var->type.specifier._array == NULL)
+			return 0;
+		slang_type_specifier_construct (var->type.specifier._array);
+		if (!slang_type_specifier_copy (var->type.specifier._array, &type->specifier))
+			return 0;
+		var->array_size = (slang_operation *) slang_alloc_malloc (sizeof (slang_operation));
+		if (var->array_size == NULL)
+			return 0;
+		slang_operation_construct (var->array_size);
+		if (!parse_expression (I, var->array_size, vars, structs))
+			return 0;
+		break;
+	default:
+		return 0;
+	}
+	return 1;
+}
+
+static int parse_init_declarator_list (const byte **I, slang_variable_scope *vars,
+	slang_struct_scope *structs)
+{
+	slang_fully_specified_type type;
+
+	slang_fully_specified_type_construct (&type);
+	if (!parse_fully_specified_type (I, &type, structs, vars))
+	{
+		slang_fully_specified_type_destruct (&type);
+		return 0;
+	}
+	do
+	{
+		if (!parse_init_declarator (I, &type, vars, structs))
+		{
+			slang_fully_specified_type_destruct (&type);
+			return 0;
+		}
+	}
+	while (*(*I)++ == DECLARATOR_NEXT);
+	slang_fully_specified_type_destruct (&type);
+	return 1;
+}
+
+static int parse_function (const byte **I, int definition, slang_struct_scope *structs,
+	slang_function_scope *funcs, slang_variable_scope *scope)
+{
+	slang_function parsed_func, *found_func;
+
+	slang_function_construct (&parsed_func);
+	if (definition)
+	{
+		if (!parse_function_definition (I, &parsed_func, structs, scope))
+		{
+			slang_function_destruct (&parsed_func);
+			return 0;
+		}
+	}
+	else
+	{
+		if (!parse_function_prototype (I, &parsed_func, structs, scope))
+		{
+			slang_function_destruct (&parsed_func);
+			return 0;
+		}
+	}
+	found_func = slang_function_scope_find (funcs, &parsed_func, 0);
+	if (found_func == NULL)
+	{
+		funcs->functions = (slang_function *) slang_alloc_realloc (funcs->functions,
+			funcs->num_functions * sizeof (slang_function), (funcs->num_functions + 1) * sizeof (
+			slang_function));
+		if (funcs->functions == NULL)
+		{
+			slang_function_destruct (&parsed_func);
+			return 0;
+		}
+		funcs->functions[funcs->num_functions] = parsed_func;
+		funcs->num_functions++;
+	}
+	else
+	{
+		/* TODO check function return type qualifiers and specifiers */
+		if (definition)
+		{
+			if (found_func->body != NULL)
+			{
+				slang_function_destruct (&parsed_func);
+				return 0;		/* error: second definition */
+			}
+			slang_function_destruct (found_func);
+			*found_func = parsed_func;
+		}
+		else
+		{
+			slang_function_destruct (&parsed_func);
+		}
+	}
+	return 1;
+}
+
+/* declaration */
+#define DECLARATION_FUNCTION_PROTOTYPE 1
+#define DECLARATION_INIT_DECLARATOR_LIST 2
+
+static int parse_declaration (const byte **I, slang_variable_scope *scope,
+	slang_struct_scope *structs, slang_function_scope *funcs)
+{
+	switch (*(*I)++)
+	{
+	case DECLARATION_INIT_DECLARATOR_LIST:
+		if (!parse_init_declarator_list (I, scope, structs))
+			return 0;
+		break;
+	case DECLARATION_FUNCTION_PROTOTYPE:
+		if (!parse_function (I, 0, structs, funcs, scope))
+			return 0;
+		break;
+	default:
+		return 0;
+	}
+	return 1;
+}
+
+/* external declaration */
+#define EXTERNAL_NULL 0
+#define EXTERNAL_FUNCTION_DEFINITION 1
+#define EXTERNAL_DECLARATION 2
+
+static int parse_translation_unit (const byte **I, slang_translation_unit *unit)
+{
+	while (**I != EXTERNAL_NULL)
+	{
+		switch (*(*I)++)
+		{
+		case EXTERNAL_FUNCTION_DEFINITION:
+			if (!parse_function (I, 1, unit->structs, &unit->functions, unit->globals))
+				return 0;
+			break;
+		case EXTERNAL_DECLARATION:
+			if (!parse_declaration (I, unit->globals, unit->structs, &unit->functions))
+				return 0;
+			break;
+		default:
+			return 0;
+		}
+	}
+	(*I)++;
+	return 1;
+}
+
+static int compile_with_grammar (grammar id, const char *source, slang_translation_unit *unit,
+	slang_unit_type type)
+{
+	byte *prod, *I;
+	unsigned int size;
+
+	slang_translation_unit_construct (unit);
+	unit->type = type;
+	if (!grammar_fast_check (id, (const byte *) source, &prod, &size, 65536))
+		return 0;
+	I = prod;
+	if (!check_revision (&I))
+	{
+		grammar_alloc_free (prod);
+		return 0;
+	}
+	if (!parse_translation_unit (&I, unit))
+	{
+		slang_translation_unit_destruct (unit);
+		grammar_alloc_free (prod);
+		return 0;
+	}
+	grammar_alloc_free (prod);
+	return 1;
+}
+
+static const char *slang_shader_syn =
+#include "library/slang_shader_syn.h"
+;
+
+int _slang_compile (const char *source, slang_translation_unit *unit, slang_unit_type type)
+{
+	grammar id;
+
+	id = grammar_load_from_text ((const byte *) slang_shader_syn);
+	if (id == 0)
+		return 0;
+
+	grammar_set_reg8 (id, (const byte *) "parsing_builtin", 1);
+	if (type == slang_unit_fragment_shader)
+		grammar_set_reg8 (id, (const byte *) "shader_type", 1);
+	else
+		grammar_set_reg8 (id, (const byte *) "shader_type", 2);
+
+	if (!compile_with_grammar (id, source, unit, type))
+	{
+		grammar_destroy (id);
+		return 0;
+	}
+
+	grammar_destroy (id);
+	return 1;
+}
+
