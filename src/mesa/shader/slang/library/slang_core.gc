@@ -151,7 +151,7 @@ float __constructor (const float _f) {
 
 // 
 // If there is a single scalar parameter to a vector constructor, it is used to initialize all
-// components of the constructed vector to that scalar’s value.
+// components of the constructed vector to that scalar's value.
 // 
 // If the basic type (bool, int, or float) of a parameter to a constructor does not match the basic
 // type of the object being constructed, the scalar construction rules (above) are used to convert
@@ -268,7 +268,7 @@ bvec4 __constructor (const int _i) {
 
 // 
 // If there is a single scalar parameter to a matrix constructor, it is used to initialize all the
-// components on the matrix’s diagonal, with the remaining components initialized to 0.0.
+// components on the matrix's diagonal, with the remaining components initialized to 0.0.
 // (...) Matrices will be constructed in column major order. It is an error to construct matrices
 // from other matrices. This is reserved for future use.
 // 
@@ -369,68 +369,68 @@ mat4 __constructor (const bool _b) {
 // assignment.
 // 
 
-void __operator = (inout float a, const float b) {
-	__asm float_copy a, b;
+void __operator = (out float a, const float b) {
+    __asm float_copy a, b;
 }
 
-void __operator = (inout int a, const int b) {
-	__asm int_copy a, b;
+void __operator = (out int a, const int b) {
+    __asm int_copy a, b;
 }
 
-void __operator = (inout bool a, const bool b) {
-	__asm bool_copy a, b;
+void __operator = (out bool a, const bool b) {
+    __asm bool_copy a, b;
 }
 
-void __operator = (inout vec2 v, const vec2 u) {
-	v.x = u.x, v.y = u.y;
+void __operator = (out vec2 v, const vec2 u) {
+    v.x = u.x, v.y = u.y;
 }
 
-void __operator = (inout vec3 v, const vec3 u) {
-	v.x = u.x, v.y = u.y, v.z = u.z;
+void __operator = (out vec3 v, const vec3 u) {
+    v.x = u.x, v.y = u.y, v.z = u.z;
 }
 
-void __operator = (inout vec4 v, const vec4 u) {
-	v.x = u.x, v.y = u.y, v.z = u.z, v.w = u.w;
+void __operator = (out vec4 v, const vec4 u) {
+    v.x = u.x, v.y = u.y, v.z = u.z, v.w = u.w;
 }
 
-void __operator = (inout ivec2 v, const ivec2 u) {
-	v.x = u.x, v.y = u.y;
+void __operator = (out ivec2 v, const ivec2 u) {
+    v.x = u.x, v.y = u.y;
 }
 
-void __operator = (inout ivec3 v, const ivec3 u) {
-	v.x = u.x, v.y = u.y, v.z = u.z;
+void __operator = (out ivec3 v, const ivec3 u) {
+    v.x = u.x, v.y = u.y, v.z = u.z;
 }
 
-void __operator = (inout ivec4 v, const ivec4 u) {
-	v.x = u.x, v.y = u.y, v.z = u.z, v.w = u.w;
+void __operator = (out ivec4 v, const ivec4 u) {
+    v.x = u.x, v.y = u.y, v.z = u.z, v.w = u.w;
 }
 
-void __operator = (inout bvec2 v, const bvec2 u) {
-	v.x = u.x, v.y = u.y;
+void __operator = (out bvec2 v, const bvec2 u) {
+    v.x = u.x, v.y = u.y;
 }
 
-void __operator = (inout bvec3 v, const bvec3 u) {
-	v.x = u.x, v.y = u.y, v.z = u.z;
+void __operator = (out bvec3 v, const bvec3 u) {
+    v.x = u.x, v.y = u.y, v.z = u.z;
 }
 
-void __operator = (inout bvec4 v, const bvec4 u) {
-	v.x = u.x, v.y = u.y, v.z = u.z, v.w = u.w;
+void __operator = (out bvec4 v, const bvec4 u) {
+    v.x = u.x, v.y = u.y, v.z = u.z, v.w = u.w;
 }
 
-void __operator = (inout mat2 m, const mat2 n) {
-	m[0] = n[0], m[1] = n[1];
+void __operator = (out mat2 m, const mat2 n) {
+    m[0] = n[0], m[1] = n[1];
 }
 
-void __operator = (inout mat3 m, const mat3 n) {
-	m[0] = n[0], m[1] = n[1], m[2] = n[2];
+void __operator = (out mat3 m, const mat3 n) {
+    m[0] = n[0], m[1] = n[1], m[2] = n[2];
 }
 
-void __operator = (inout mat4 m, const mat4 n) {
-	m[0] = n[0], m[1] = n[1], m[2] = n[2], m[3] = n[3];
+void __operator = (out mat4 m, const mat4 n) {
+    m[0] = n[0], m[1] = n[1], m[2] = n[2], m[3] = n[3];
 }
 
 // 
-// • The arithmetic assignments add into (+=), subtract from (-=), multiply into (*=), and divide
+// * The arithmetic assignments add into (+=), subtract from (-=), multiply into (*=), and divide
 //   into (/=). The variable and expression must be the same floating-point or integer type, ...
 // 
 
@@ -451,7 +451,7 @@ void __operator /= (inout float a, const float b) {
 }
 
 void __operator += (inout int x, const int y) {
-    __asm int_add x, y;
+    x = int (float (x) + float (y));
 }
 
 void __operator -= (inout int x, const int y) {
@@ -459,11 +459,11 @@ void __operator -= (inout int x, const int y) {
 }
 
 void __operator *= (inout int x, const int y) {
-    __asm int_multiply x, y;
+    x = int (float (x) * float (y));
 }
 
 void __operator /= (inout int x, const int y) {
-    __asm int_divide x, y;
+    x = int (float (x) / float (y));
 }
 
 void __operator += (inout vec2 v, const vec2 u) {
@@ -735,7 +735,7 @@ void __operator *= (inout vec4 v, const mat4 m) {
 // 
 
 // 
-// • The arithmetic binary operators add (+), subtract (-), multiply (*), and divide (/), that
+// * The arithmetic binary operators add (+), subtract (-), multiply (*), and divide (/), that
 //   operate on integer and floating-point typed expressions (including vectors and matrices).
 //   The two operands must be the same type, (...) Additionally, for multiply (*) (...) If one
 //   operand is scalar and the other is a vector or matrix, the scalar is applied component-wise
@@ -1154,9 +1154,9 @@ ivec4 __operator / (const ivec4 v, const int b) {
 //   as the expressions they operate on.
 // 
 // [When:]
-// • the left argument is a floating-point vector and the right is a matrix with a compatible
+// * the left argument is a floating-point vector and the right is a matrix with a compatible
 //   dimension in which case the * operator will do a row vector matrix multiplication.
-// • the left argument is a matrix and the right is a floating-point vector with a compatible
+// * the left argument is a matrix and the right is a floating-point vector with a compatible
 //   dimension in which case the * operator will do a column vector matrix multiplication.
 // 
 
@@ -1294,7 +1294,7 @@ mat4 __operator * (const mat4 m, const mat4 n) {
 }
 
 // 
-// • The arithmetic unary operators negate (-), post- and pre-increment and decrement (-- and
+// * The arithmetic unary operators negate (-), post- and pre-increment and decrement (-- and
 //   ++) that operate on integer or floating-point values (including vectors and matrices). These
 //   result with the same type they operated on. For post- and pre-increment and decrement, the
 //   expression must be one that could be assigned to (an l-value). Pre-increment and predecrement
@@ -1302,7 +1302,7 @@ mat4 __operator * (const mat4 m, const mat4 n) {
 //   value of the pre-increment or pre-decrement expression is the resulting value of that
 //   modification. Post-increment and post-decrement expressions add or subtract 1 or 1.0 to
 //   the contents of the expression they operate on, but the resulting expression has the
-//   expression’s value before the post-increment or post-decrement was executed.
+//   expression's value before the post-increment or post-decrement was executed.
 // 
 // [NOTE: postfix increment and decrement operators take additional dummy int parameter to
 //        distinguish their prototypes from prefix ones.]
@@ -1315,9 +1315,7 @@ float __operator - (const float a) {
 }
 
 int __operator - (const int a) {
-    int c = a;
-    __asm int_negate c;
-    return c;
+	return int (-float (a));
 }
 
 vec2 __operator - (const vec2 v) {
@@ -1541,9 +1539,9 @@ mat4 __operator ++ (inout mat4 m, const int) {
 }
 
 // 
-// • The relational operators greater than (>), less than (<), greater than or equal (>=), and less
+// * The relational operators greater than (>), less than (<), greater than or equal (>=), and less
 //   than or equal (<=) operate only on scalar integer and scalar floating-point expressions. The
-//   result is scalar Boolean. The operands’ types must match. To do component-wise
+//   result is scalar Boolean. The operands' types must match. To do component-wise
 //   comparisons on vectors, use the built-in functions lessThan, lessThanEqual,
 //   greaterThan, and greaterThanEqual.
 // 
@@ -1555,9 +1553,7 @@ bool __operator < (const float a, const float b) {
 }
 
 bool __operator < (const int a, const int b) {
-    bool c;
-    __asm int_less c, a, b;
-    return c;
+	return float (a) < float (b);
 }
 
 bool __operator > (const float a, const float b) {
@@ -1585,140 +1581,136 @@ bool __operator <= (const int a, const int b) {
 }
 
 // 
-// • The equality operators equal (==), and not equal (!=) operate on all types except arrays.
+// * The equality operators equal (==), and not equal (!=) operate on all types except arrays.
 //   They result in a scalar Boolean. For vectors, matrices, and structures, all components of the
 //   operands must be equal for the operands to be considered equal. To get component-wise
 //   equality results for vectors, use the built-in functions equal and notEqual.
 // 
 
 bool __operator == (const float a, const float b) {
-	bool c;
-	__asm float_equal c, a, b;
-	return c;
+    bool c;
+    __asm float_equal c, a, b;
+    return c;
 }
 
 bool __operator == (const int a, const int b) {
-	bool c;
-	__asm int_equal c, a, b;
-	return c;
+	return float (a) == float (b);
 }
 
 bool __operator == (const bool a, const bool b) {
-	bool c;
-	__asm bool_equal c, a, b;
-	return c;
+    return float (a) == float (b);
 }
 
 bool __operator == (const vec2 v, const vec2 u) {
-	return v.x == u.x && v.y == u.y;
+    return v.x == u.x && v.y == u.y;
 }
 
 bool __operator == (const vec3 v, const vec3 u) {
-	return v.x == u.x && v.y == u.y && v.z == u.z;
+    return v.x == u.x && v.y == u.y && v.z == u.z;
 }
 
 bool __operator == (const vec4 v, const vec4 u) {
-	return v.x == u.x && v.y == u.y && v.z == u.z && v.w == u.w;
+    return v.x == u.x && v.y == u.y && v.z == u.z && v.w == u.w;
 }
 
 bool __operator == (const ivec2 v, const ivec2 u) {
-	return v.x == u.x && v.y == u.y;
+    return v.x == u.x && v.y == u.y;
 }
 
 bool __operator == (const ivec3 v, const ivec3 u) {
-	return v.x == u.x && v.y == u.y && v.z == u.z;
+    return v.x == u.x && v.y == u.y && v.z == u.z;
 }
 
 bool __operator == (const ivec4 v, const ivec4 u) {
-	return v.x == u.x && v.y == u.y && v.z == u.z && v.w == u.w;
+    return v.x == u.x && v.y == u.y && v.z == u.z && v.w == u.w;
 }
 
 bool __operator == (const bvec2 v, const bvec2 u) {
-	return v.x == u.x && v.y == u.y;
+    return v.x == u.x && v.y == u.y;
 }
 
 bool __operator == (const bvec3 v, const bvec3 u) {
-	return v.x == u.x && v.y == u.y && v.z == u.z;
+    return v.x == u.x && v.y == u.y && v.z == u.z;
 }
 
 bool __operator == (const bvec4 v, const bvec4 u) {
-	return v.x == u.x && v.y == u.y && v.z == u.z && v.w == u.w;
+    return v.x == u.x && v.y == u.y && v.z == u.z && v.w == u.w;
 }
 
 bool __operator == (const mat2 m, const mat2 n) {
-	return m[0] == n[0] && m[1] == n[1];
+    return m[0] == n[0] && m[1] == n[1];
 }
 
 bool __operator == (const mat3 m, const mat3 n) {
-	return m[0] == n[0] && m[1] == n[1] && m[2] == n[2];
+    return m[0] == n[0] && m[1] == n[1] && m[2] == n[2];
 }
 
 bool __operator == (const mat4 m, const mat4 n) {
-	return m[0] == n[0] && m[1] == n[1] && m[2] == n[2] && m[3] == n[3];
+    return m[0] == n[0] && m[1] == n[1] && m[2] == n[2] && m[3] == n[3];
 }
 
 bool __operator != (const float a, const float b) {
-	return !(a == b);
+    return !(a == b);
 }
 
 bool __operator != (const int a, const int b) {
-	return !(a == b);
+    return !(a == b);
 }
 
 bool __operator != (const bool a, const bool b) {
-	return !(a == b);
+    return !(a == b);
 }
 
 bool __operator != (const vec2 v, const vec2 u) {
-	return v.x != u.x || v.y != u.y;
+    return v.x != u.x || v.y != u.y;
 }
 
 bool __operator != (const vec3 v, const vec3 u) {
-	return v.x != u.x || v.y != u.y || v.z != u.z;
+    return v.x != u.x || v.y != u.y || v.z != u.z;
 }
 
 bool __operator != (const vec4 v, const vec4 u) {
-	return v.x != u.x || v.y != u.y || v.z != u.z || v.w != u.w;
+    return v.x != u.x || v.y != u.y || v.z != u.z || v.w != u.w;
 }
 
 bool __operator != (const ivec2 v, const ivec2 u) {
-	return v.x != u.x || v.y != u.y;
+    return v.x != u.x || v.y != u.y;
 }
 
 bool __operator != (const ivec3 v, const ivec3 u) {
-	return v.x != u.x || v.y != u.y || v.z != u.z;
+    return v.x != u.x || v.y != u.y || v.z != u.z;
 }
 
 bool __operator != (const ivec4 v, const ivec4 u) {
-	return v.x != u.x || v.y != u.y || v.z != u.z || v.w != u.w;
+    return v.x != u.x || v.y != u.y || v.z != u.z || v.w != u.w;
 }
 
 bool __operator != (const bvec2 v, const bvec2 u) {
-	return v.x != u.x || v.y != u.y;
+    return v.x != u.x || v.y != u.y;
 }
 
 bool __operator != (const bvec3 v, const bvec3 u) {
-	return v.x != u.x || v.y != u.y || v.z != u.z;
+    return v.x != u.x || v.y != u.y || v.z != u.z;
 }
 
 bool __operator != (const bvec4 v, const bvec4 u) {
-	return v.x != u.x || v.y != u.y || v.z != u.z || v.w != u.w;
+    return v.x != u.x || v.y != u.y || v.z != u.z || v.w != u.w;
 }
 
 bool __operator != (const mat2 m, const mat2 n) {
-	return m[0] != n[0] || m[1] != n[1];
+    return m[0] != n[0] || m[1] != n[1];
 }
 
 bool __operator != (const mat3 m, const mat3 n) {
-	return m[0] != n[0] || m[1] != n[1] || m[2] != n[2];
+    return m[0] != n[0] || m[1] != n[1] || m[2] != n[2];
 }
 
 bool __operator != (const mat4 m, const mat4 n) {
-	return m[0] != n[0] || m[1] != n[1] || m[2] != n[2] || m[3] != n[3];
+    return m[0] != n[0] || m[1] != n[1] || m[2] != n[2] || m[3] != n[3];
 }
 
 // 
-// • The logical binary operators and (&&), or ( | | ), and exclusive or (^^). They operate only
+// * The logical binary operators and (&&), or ( | | ), and exclusive or (^^). They operate only
 //   on two Boolean expressions and result in a Boolean expression. And (&&) will only
 //   evaluate the right hand operand if the left hand operand evaluated to true. Or ( | | ) will
 //   only evaluate the right hand operand if the left hand operand evaluated to false. Exclusive or
@@ -1741,7 +1733,7 @@ bool __operator ^^ (const bool a, const bool b) {
 // 
 
 // 
-// • The logical unary operator not (!). It operates only on a Boolean expression and results in a
+// * The logical unary operator not (!). It operates only on a Boolean expression and results in a
 //   Boolean expression. To operate on a vector, use the built-in function not.
 // 
 
