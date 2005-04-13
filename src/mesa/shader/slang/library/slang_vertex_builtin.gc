@@ -36,9 +36,9 @@
 // intrinsically declared with the following types:
 // 
 
-vec4 gl_Position;                                       // must be written to
-float gl_PointSize;                                     // may be written to
-vec4 gl_ClipVertex;                                     // may be written to
+__fixed_output vec4 gl_Position;                                       // must be written to
+__fixed_output float gl_PointSize;                                     // may be written to
+__fixed_output vec4 gl_ClipVertex;                                     // may be written to
 
 // 
 // If gl_PointSize or gl_ClipVertex are not written to, their values are undefined. Any of these
@@ -74,7 +74,7 @@ attribute vec4 gl_MultiTexCoord7;
 attribute float gl_FogCoord;
 
 // 
-// Unlike user-defined varying variables, the built-in varying variables don’t have a strict
+// Unlike user-defined varying variables, the built-in varying variables don't have a strict
 // one-to-one correspondence between the vertex language and the fragment language. Two sets are
 // provided, one for each language. Their relationship is described below.
 // 
@@ -91,9 +91,9 @@ varying vec4 gl_TexCoord[];                             // at most will be gl_Ma
 varying float gl_FogFragCoord;
 
 // 
-// For gl_FogFragCoord, the value written will be used as the “c” value on page 160 of the
+// For gl_FogFragCoord, the value written will be used as the "c" value on page 160 of the
 // OpenGL 1.4 Specification by the fixed functionality pipeline. For example, if the z-coordinate
-// of the fragment in eye space is desired as “c”, then that's what the vertex shader should write
+// of the fragment in eye space is desired as "c", then that's what the vertex shader should write
 // into gl_FogFragCoord.
 // 
 // As with all arrays, indices used to subscript gl_TexCoord must either be an integral constant
@@ -110,14 +110,14 @@ varying float gl_FogFragCoord;
 // 
 // The built-in functions basically fall into three categories:
 // 
-// • They expose some necessary hardware functionality in a convenient way such as accessing
+// * They expose some necessary hardware functionality in a convenient way such as accessing
 //   a texture map. There is no way in the language for these functions to be emulated by a shader.
 // 
-// • They represent a trivial operation (clamp, mix, etc.) that is very simple for the user
+// * They represent a trivial operation (clamp, mix, etc.) that is very simple for the user
 //   to write, but they are very common and may have direct hardware support. It is a very hard
 //   problem for the compiler to map expressions to complex assembler instructions.
 // 
-// • They represent an operation graphics hardware is likely to accelerate at some point. The
+// * They represent an operation graphics hardware is likely to accelerate at some point. The
 //   trigonometry functions fall into this category.
 // 
 // Many of the functions are similar to the same named ones in common C libraries, but they support
@@ -139,7 +139,7 @@ varying float gl_FogFragCoord;
 
 // 
 // For vertex shaders only. This function will ensure that the incoming vertex value will be
-// transformed in a way that produces exactly the same result as would be produced by OpenGL’s
+// transformed in a way that produces exactly the same result as would be produced by OpenGL's
 // fixed functionality transform. It is intended to be used to compute gl_Position, e.g.,
 // gl_Position = ftransform()
 // This function should be used, for example, when an application is rendering the same geometry in
@@ -176,13 +176,13 @@ vec4 ftransform () {
 // running in a fragment shader, the LOD computed by the implementation is used to do the texture
 // lookup. If it is mip-mapped and running on the vertex shader, then the base texture is used.
 // 
-// The built-ins suffixed with “Lod” are allowed only in a vertex shader. For the “Lod” functions,
+// The built-ins suffixed with "Lod" are allowed only in a vertex shader. For the "Lod" functions,
 // lod is directly used as the level of detail.
 // 
 
 // 
 // Use the texture coordinate coord to do a texture lookup in the 1D texture currently bound
-// to sampler. For the projective (“Proj”) versions, the texture coordinate coord.s is divided by
+// to sampler. For the projective ("Proj") versions, the texture coordinate coord.s is divided by
 // the last component of coord.
 // 
 // XXX
@@ -198,7 +198,7 @@ vec4 texture1DProjLod (sampler1D sampler, vec4 coord, float lod) {
 
 // 
 // Use the texture coordinate coord to do a texture lookup in the 2D texture currently bound
-// to sampler. For the projective (“Proj”) versions, the texture coordinate (coord.s, coord.t) is
+// to sampler. For the projective ("Proj") versions, the texture coordinate (coord.s, coord.t) is
 // divided by the last component of coord. The third component of coord is ignored for the vec4
 // coord variant.
 // 
@@ -215,7 +215,7 @@ vec4 texture2DProjLod (sampler2D sampler, vec4 coord, float lod) {
 
 // 
 // Use the texture coordinate coord to do a texture lookup in the 3D texture currently bound
-// to sampler. For the projective (“Proj”) versions, the texture coordinate is divided by coord.q.
+// to sampler. For the projective ("Proj") versions, the texture coordinate is divided by coord.q.
 // 
 // XXX
 vec4 texture3DLod (sampler3D sampler, vec3 coord, float lod) {
@@ -240,9 +240,9 @@ vec4 textureCubeLod (samplerCube sampler, vec3 coord, float lod) {
 // Use texture coordinate coord to do a depth comparison lookup on the depth texture bound
 // to sampler, as described in section 3.8.14 of version 1.4 of the OpenGL specification. The 3rd
 // component of coord (coord.p) is used as the R value. The texture bound to sampler must be a
-// depth texture, or results are undefined. For the projective (“Proj”) version of each built-in,
+// depth texture, or results are undefined. For the projective ("Proj") version of each built-in,
 // the texture coordinate is divide by coord.q, giving a depth value R of coord.p/coord.q. The
-// second component of coord is ignored for the “1D” variants.
+// second component of coord is ignored for the "1D" variants.
 // 
 // XXX
 vec4 shadow1DLod (sampler1DShadow sampler, vec3 coord, float lod) {
@@ -252,10 +252,10 @@ vec4 shadow1DLod (sampler1DShadow sampler, vec3 coord, float lod) {
 vec4 shadow2DLod (sampler2DShadow sampler, vec3 coord, float lod) {
     return vec4 (0.0);
 }
-vec4 shadow1DProjLod(sampler1DShadow sampler, vec4 coord, float lod) {
+vec4 shadow1DProjLod (sampler1DShadow sampler, vec4 coord, float lod) {
     return shadow1DLod (sampler, vec3 (coord.s / coord.q, 0.0, coord.p / coord.q), lod);
 }
-vec4 shadow2DProjLod(sampler2DShadow sampler, vec4 coord, float lod) {
+vec4 shadow2DProjLod (sampler2DShadow sampler, vec4 coord, float lod) {
     return shadow2DLod (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q),
         lod);
 }

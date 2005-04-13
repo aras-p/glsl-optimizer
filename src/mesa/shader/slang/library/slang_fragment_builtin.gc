@@ -29,7 +29,7 @@
 // 
 // Writing to gl_FragDepth will establish the depth value for the fragment being processed. If
 // depth buffering is enabled, and a shader does not write gl_FragDepth, then the fixed function
-// value for depth will be used as the fragment’s depth value. If a shader statically assigns
+// value for depth will be used as the fragment's depth value. If a shader statically assigns
 // a value to gl_FragDepth, and there is an execution path through the shader that does not set
 // gl_FragDepth, then the value of the fragment's depth may be undefined for executions of the
 // shader that take that path. That is, if a shader statically contains a write gl_FragDepth, then
@@ -56,7 +56,7 @@
 // and it holds the window relative coordinates x, y, z, and 1/w values for the fragment. This
 // value is the result of the fixed functionality that interpolates primitives after vertex
 // processing to generate fragments. The z component is the depth value that would be used for
-// the fragment’s depth if a shader contained no writes to gl_FragDepth. This is useful for
+// the fragment's depth if a shader contained no writes to gl_FragDepth. This is useful for
 // invariance if a shader conditionally computes gl_FragDepth but otherwise wants the fixed
 // functionality fragment depth.
 // 
@@ -68,11 +68,11 @@
 // as follows:
 // 
 
-vec4 gl_FragCoord;
-bool gl_FrontFacing;
-vec4 gl_FragColor;
-vec4 gl_FragData[gl_MaxDrawBuffers];
-float gl_FragDepth;
+__fixed_input vec4 gl_FragCoord;
+__fixed_input bool gl_FrontFacing;
+__fixed_output vec4 gl_FragColor;
+__fixed_output vec4 gl_FragData[gl_MaxDrawBuffers];
+__fixed_output float gl_FragDepth;
 
 // 
 // However, they do not behave like variables with no qualifier; their behavior is as described
@@ -80,7 +80,7 @@ float gl_FragDepth;
 // 
 
 // 
-// Unlike user-defined varying variables, the built-in varying variables don’t have a strict
+// Unlike user-defined varying variables, the built-in varying variables don't have a strict
 // one-to-one correspondence between the vertex language and the fragment language. Two sets are
 // provided, one for each language. Their relationship is described below.
 // 
@@ -116,14 +116,14 @@ varying float gl_FogFragCoord;
 // 
 // The built-in functions basically fall into three categories:
 // 
-// • They expose some necessary hardware functionality in a convenient way such as accessing
+// * They expose some necessary hardware functionality in a convenient way such as accessing
 //   a texture map. There is no way in the language for these functions to be emulated by a shader.
 // 
-// • They represent a trivial operation (clamp, mix, etc.) that is very simple for the user
+// * They represent a trivial operation (clamp, mix, etc.) that is very simple for the user
 //   to write, but they are very common and may have direct hardware support. It is a very hard
 //   problem for the compiler to map expressions to complex assembler instructions.
 // 
-// • They represent an operation graphics hardware is likely to accelerate at some point. The
+// * They represent an operation graphics hardware is likely to accelerate at some point. The
 //   trigonometry functions fall into this category.
 // 
 // Many of the functions are similar to the same named ones in common C libraries, but they support
@@ -162,13 +162,13 @@ varying float gl_FogFragCoord;
 // running in a fragment shader, the LOD computed by the implementation is used to do the texture
 // lookup. If it is mip-mapped and running on the vertex shader, then the base texture is used.
 // 
-// The built-ins suffixed with “Lod” are allowed only in a vertex shader. For the “Lod” functions,
+// The built-ins suffixed with "Lod" are allowed only in a vertex shader. For the "Lod" functions,
 // lod is directly used as the level of detail.
 // 
 
 // 
 // Use the texture coordinate coord to do a texture lookup in the 1D texture currently bound
-// to sampler. For the projective (“Proj”) versions, the texture coordinate coord.s is divided by
+// to sampler. For the projective ("Proj") versions, the texture coordinate coord.s is divided by
 // the last component of coord.
 // 
 // XXX
@@ -184,7 +184,7 @@ vec4 texture1DProj (sampler1D sampler, vec4 coord, float bias) {
 
 // 
 // Use the texture coordinate coord to do a texture lookup in the 2D texture currently bound
-// to sampler. For the projective (“Proj”) versions, the texture coordinate (coord.s, coord.t) is
+// to sampler. For the projective ("Proj") versions, the texture coordinate (coord.s, coord.t) is
 // divided by the last component of coord. The third component of coord is ignored for the vec4
 // coord variant.
 // 
@@ -201,7 +201,7 @@ vec4 texture2DProj (sampler2D sampler, vec4 coord, float bias) {
 
 // 
 // Use the texture coordinate coord to do a texture lookup in the 3D texture currently bound
-// to sampler. For the projective (“Proj”) versions, the texture coordinate is divided by coord.q.
+// to sampler. For the projective ("Proj") versions, the texture coordinate is divided by coord.q.
 // 
 // XXX
 vec4 texture3D (sampler3D sampler, vec3 coord, float bias) {
@@ -226,9 +226,9 @@ vec4 textureCube (samplerCube sampler, vec3 coord, float bias) {
 // Use texture coordinate coord to do a depth comparison lookup on the depth texture bound
 // to sampler, as described in section 3.8.14 of version 1.4 of the OpenGL specification. The 3rd
 // component of coord (coord.p) is used as the R value. The texture bound to sampler must be a
-// depth texture, or results are undefined. For the projective (“Proj”) version of each built-in,
+// depth texture, or results are undefined. For the projective ("Proj") version of each built-in,
 // the texture coordinate is divide by coord.q, giving a depth value R of coord.p/coord.q. The
-// second component of coord is ignored for the “1D” variants.
+// second component of coord is ignored for the "1D" variants.
 // 
 // XXX
 vec4 shadow1D (sampler1DShadow sampler, vec3 coord, float bias) {
