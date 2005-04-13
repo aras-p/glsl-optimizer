@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.2
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2004-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@
 
 /*
  * \file slang_shader.syn
- * slang shader syntax
+ * slang vertex/fragment shader syntax
  * \author Michal Krol
  */
 
@@ -49,7 +49,7 @@
 .syntax translation_unit;
 
 /* revision number - increment after each change affecting emitted output */
-.emtcode REVISION                                   1
+.emtcode REVISION                                   2
 
 /* external declaration */
 .emtcode EXTERNAL_NULL                              0
@@ -116,6 +116,8 @@
 .emtcode TYPE_QUALIFIER_ATTRIBUTE                   2
 .emtcode TYPE_QUALIFIER_VARYING                     3
 .emtcode TYPE_QUALIFIER_UNIFORM                     4
+.emtcode TYPE_QUALIFIER_FIXEDOUTPUT                 5
+.emtcode TYPE_QUALIFIER_FIXEDINPUT                  6
 
 /* type specifier */
 .emtcode TYPE_SPECIFIER_VOID                        0
@@ -237,7 +239,7 @@
 /* the implementation will set it to 1 when compiling internal built-in shaders */
 .regbyte parsing_builtin                            0
 
-/* holds the type of shader that is being parsed, possible values are listed below */
+/* holds the type of the shader being parsed; possible values are listed below */
 /*   FRAGMENT_SHADER            1 */
 /*   VERTEX_SHADER              2 */
 /* shader type is set by the caller before parsing */
@@ -846,12 +848,19 @@ fully_specified_type_2
                                           | "attribute" // Vertex only.
                                           | "varying"
                                           | "uniform"
+										  | "__fixed_output"
+										  | "__fixed_input"
+
+note: this is an extension to the standard language specification - normally slang disallows
+      __fixed_output and __fixed_input type qualifiers
 */
 type_qualifier
     "const" .emit TYPE_QUALIFIER_CONST .or
     .if (shader_type == 2) "attribute" .emit TYPE_QUALIFIER_ATTRIBUTE .or
     "varying" .emit TYPE_QUALIFIER_VARYING .or
-    "uniform" .emit TYPE_QUALIFIER_UNIFORM;
+    "uniform" .emit TYPE_QUALIFIER_UNIFORM .or
+	.if (parsing_builtin != 0) "__fixed_output" .emit TYPE_QUALIFIER_FIXEDOUTPUT .or
+	.if (parsing_builtin != 0) "__fixed_input" .emit TYPE_QUALIFIER_FIXEDINPUT;
 
 /*
     <type_specifier>                    ::= "void"
@@ -1110,7 +1119,7 @@ iteration_statement_3
                                           | <declaration_statement>
 */
 for_init_statement
-    expression_statement .or declaration_statement;
+    expression_statement .emit OP_EXPRESSION .or declaration_statement .emit OP_DECLARE;
 
 /*
     <conditionopt>                      ::= <condition>
