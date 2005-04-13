@@ -51,7 +51,7 @@
 #include "drm_sarea.h"
 #include "glcontextmodes.h"
 
-#ifndef PFNGLXGETMSCRATEOMLPROC
+#ifndef GLX_OML_sync_control
 typedef GLboolean ( * PFNGLXGETMSCRATEOMLPROC) (__DRInativeDisplay *dpy, __DRIid drawable, int32_t *numerator, int32_t *denominator);
 #endif
 
