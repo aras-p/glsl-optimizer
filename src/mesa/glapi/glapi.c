@@ -61,6 +61,10 @@
 static GLboolean WarnFlag = GL_FALSE;
 static _glapi_warning_func warning_func;
 
+static void init_glapi_relocs(void);
+
+static _glapi_proc generate_entrypoint(GLuint functionOffset);
+static void fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset);
 
 /*
  * Enable/disable printing of warning messages.
@@ -133,6 +137,28 @@ static GLint NoOpUnused(void)
 
 #if defined(THREADS)
 
+#if defined(GLX_USE_TLS)
+
+__thread struct _glapi_table * _glapi_tls_Dispatch
+    __attribute__((tls_model("initial-exec")))
+    = (struct _glapi_table *) __glapi_noop_table;
+
+static __thread struct _glapi_table * _glapi_tls_RealDispatch
+    __attribute__((tls_model("initial-exec")))
+    = (struct _glapi_table *) __glapi_noop_table;
+
+__thread void * _glapi_tls_Context
+    __attribute__((tls_model("initial-exec")));
+
+/**
+ * Legacy per-thread dispatch pointer.  This is only needed to support
+ * non-TLS DRI drivers.
+ */
+
+_glthread_TSD _gl_DispatchTSD;
+
+#else
+
 /**
  * \name Multi-threaded control support variables
  *
@@ -166,6 +192,7 @@ static _glthread_TSD RealDispatchTSD;    /**< only when using override */
 static _glthread_TSD ContextTSD;         /**< Per-thread context pointer */
 /*@}*/
 
+#endif /* defined(GLX_USE_TLS) */
 
 #define DISPATCH_TABLE_NAME __glapi_threadsafe_table
 #define UNUSED_TABLE_NAME __unused_threadsafe_functions
@@ -184,6 +211,29 @@ static GLint glUnused(void)
 /***** END THREAD-SAFE DISPATCH *****/
 
 
+#if defined(GLX_USE_TLS)
+
+/**
+ * \name Old dispatch pointers
+ *
+ * Very old DRI based drivers assume that \c _glapi_Dispatch will never be
+ * \c NULL.  Becuase of that, special "thread-safe" dispatch functions are
+ * needed here.  Slightly more recent drivers detect the multi-threaded case
+ * by \c _glapi_DispatchTSD being \c NULL.
+ *
+ * \deprecated
+ * 
+ * \warning
+ * \c _glapi_RealDispatch does not exist in TLS builds.  I don't think it was
+ * ever used outside libGL.so, so this should be safe.
+ */
+/*@{*/
+PUBLIC const struct _glapi_table *_glapi_Dispatch = (struct _glapi_table *) __glapi_threadsafe_table;
+PUBLIC const struct _glapi_table *_glapi_DispatchTSD = NULL;
+PUBLIC const void *_glapi_Context = NULL;
+/*@}*/
+
+#else
 
 PUBLIC struct _glapi_table *_glapi_Dispatch = (struct _glapi_table *) __glapi_noop_table;
 #if defined( THREADS )
@@ -191,9 +241,10 @@ PUBLIC struct _glapi_table *_glapi_DispatchTSD = (struct _glapi_table *) __glapi
 #endif
 PUBLIC struct _glapi_table *_glapi_RealDispatch = (struct _glapi_table *) __glapi_noop_table;
 
-
 /* Used when thread safety disabled */
 PUBLIC void *_glapi_Context = NULL;
+
+#endif /* defined(GLX_USE_TLS) */
 
 
 static GLboolean DispatchOverride = GL_FALSE;
@@ -224,7 +275,7 @@ str_dup(const char *str)
 PUBLIC void
 _glapi_check_multithread(void)
 {
-#if defined(THREADS)
+#if defined(THREADS) && !defined(GLX_USE_TLS)
    if (!ThreadSafe) {
       static unsigned long knownID;
       static GLboolean firstCall = GL_TRUE;
@@ -255,7 +306,9 @@ PUBLIC void
 _glapi_set_context(void *context)
 {
    (void) __unused_noop_functions; /* silence a warning */
-#if defined(THREADS)
+#if defined(GLX_USE_TLS)
+   _glapi_tls_Context = context;
+#elif defined(THREADS)
    (void) __unused_threadsafe_functions; /* silence a warning */
    _glthread_SetTSD(&ContextTSD, context);
    _glapi_Context = (ThreadSafe) ? NULL : context;
@@ -274,7 +327,9 @@ _glapi_set_context(void *context)
 PUBLIC void *
 _glapi_get_context(void)
 {
-#if defined(THREADS)
+#if defined(GLX_USE_TLS)
+   return _glapi_tls_Context;
+#elif defined(THREADS)
    if (ThreadSafe) {
       return _glthread_GetTSD(&ContextTSD);
    }
@@ -294,6 +349,13 @@ _glapi_get_context(void)
 PUBLIC void
 _glapi_set_dispatch(struct _glapi_table *dispatch)
 {
+#if defined(PTHREADS) || defined(GLX_USE_TLS)
+   static pthread_once_t once_control = PTHREAD_ONCE_INIT;
+
+
+   pthread_once( & once_control, init_glapi_relocs );
+#endif
+
    if (!dispatch) {
       /* use the no-op functions */
       dispatch = (struct _glapi_table *) __glapi_noop_table;
@@ -304,7 +366,15 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
    }
 #endif
 
-#if defined(THREADS)
+#if defined(GLX_USE_TLS)
+   if (DispatchOverride) {
+      _glapi_tls_RealDispatch = dispatch;
+   }
+   else {
+      _glthread_SetTSD(&_gl_DispatchTSD, (void *) dispatch);
+      _glapi_tls_Dispatch = dispatch;
+   }	
+#elif defined(THREADS)
    if (DispatchOverride) {
       _glthread_SetTSD(&RealDispatchTSD, (void *) dispatch);
       if (ThreadSafe)
@@ -342,7 +412,13 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 PUBLIC struct _glapi_table *
 _glapi_get_dispatch(void)
 {
-#if defined(THREADS)
+#if defined(GLX_USE_TLS)
+   struct _glapi_table * api = (DispatchOverride)
+     ? _glapi_tls_RealDispatch : _glapi_tls_Dispatch;
+
+   assert( api != NULL );
+   return api;
+#elif defined(THREADS)
    if (ThreadSafe) {
       if (DispatchOverride) {
          return (struct _glapi_table *) _glthread_GetTSD(&RealDispatchTSD);
@@ -399,7 +475,10 @@ _glapi_begin_dispatch_override(struct _glapi_table *override)
 
    _glapi_set_dispatch(real);
 
-#if defined(THREADS)
+#if defined(GLX_USE_TLS)
+   _glthread_SetTSD(&_gl_DispatchTSD, (void *) override);
+   _glapi_tls_Dispatch = override;
+#elif defined(THREADS)
    _glthread_SetTSD(&_gl_DispatchTSD, (void *) override);
    if ( ThreadSafe ) {
       _glapi_Dispatch = (struct _glapi_table *) __glapi_threadsafe_table;
@@ -424,10 +503,14 @@ _glapi_end_dispatch_override(int layer)
    DispatchOverride = GL_FALSE;
    _glapi_set_dispatch(real);
    /* the rest of this isn't needed, just play it safe */
-#if defined(THREADS)
+#if defined(GLX_USE_TLS)
+   _glapi_tls_RealDispatch = NULL;
+#else
+# if defined(THREADS)
    _glthread_SetTSD(&RealDispatchTSD, NULL);
-#endif
+# endif
    _glapi_RealDispatch = NULL;
+#endif
 }
 
 
@@ -439,7 +522,9 @@ _glapi_get_override_dispatch(int layer)
    }
    else {
       if (DispatchOverride) {
-#if defined(THREADS)
+#if defined(GLX_USE_TLS)
+	 return (struct _glapi_table *) _glapi_tls_Dispatch;
+#elif defined(THREADS)
          return (struct _glapi_table *) _glthread_GetTSD(&_gl_DispatchTSD);
 #else
          return _glapi_Dispatch;
@@ -498,9 +583,15 @@ get_static_proc_offset(const char *funcName)
 
 
 #ifdef USE_X86_ASM
-extern const GLubyte gl_dispatch_functions_start[];
 
-# if defined(THREADS)
+#if defined( GLX_USE_TLS )
+extern       GLubyte gl_dispatch_functions_start[];
+extern       GLubyte gl_dispatch_functions_end[];
+#else
+extern const GLubyte gl_dispatch_functions_start[];
+#endif
+
+# if defined(THREADS) && !defined(GLX_USE_TLS)
 #  define X86_DISPATCH_FUNCTION_SIZE  32
 # else
 #  define X86_DISPATCH_FUNCTION_SIZE  16
@@ -603,45 +694,20 @@ static _glapi_proc
 generate_entrypoint(GLuint functionOffset)
 {
 #if defined(USE_X86_ASM)
-   /*
-    * This x86 code contributed by Josh Vanderhoof.
-    *
-    *  0:   a1 10 32 54 76          movl   __glapi_Dispatch,%eax
-    *       00 01 02 03 04
-    *  5:   85 c0                   testl  %eax,%eax
-    *       05 06
-    *  7:   74 06                   je     f <entrypoint+0xf>
-    *       07 08
-    *  9:   ff a0 10 32 54 76       jmp    *0x76543210(%eax)
-    *       09 0a 0b 0c 0d 0e
-    *  f:   e8 fc ff ff ff          call   __glapi_get_dispatch
-    *       0f 10 11 12 13
-    * 14:   ff a0 10 32 54 76       jmp    *0x76543210(%eax)
-    *       14 15 16 17 18 19
+   /* 32 is chosen as something of a magic offset.  For x86, the dispatch
+    * at offset 32 is the first one where the offset in the
+    * "jmp OFFSET*4(%eax)" can't be encoded in a single byte.
     */
-   static const unsigned char insn_template[] = {
-      0xa1, 0x00, 0x00, 0x00, 0x00,
-      0x85, 0xc0,
-      0x74, 0x06,
-      0xff, 0xa0, 0x00, 0x00, 0x00, 0x00,
-      0xe8, 0x00, 0x00, 0x00, 0x00,
-      0xff, 0xa0, 0x00, 0x00, 0x00, 0x00
-   };
-   unsigned char *code = (unsigned char *) malloc(sizeof(insn_template));
-   unsigned int next_insn;
-   if (code) {
-      memcpy(code, insn_template, sizeof(insn_template));
+   const GLubyte * const template_func = gl_dispatch_functions_start 
+     + (X86_DISPATCH_FUNCTION_SIZE * 32);
+   GLubyte * const code = (GLubyte *) malloc( X86_DISPATCH_FUNCTION_SIZE );
 
-#if defined( THREADS )
-      *(unsigned int *)(code + 0x01) = (unsigned int)&_glapi_DispatchTSD;
-#else
-      *(unsigned int *)(code + 0x01) = (unsigned int)&_glapi_Dispatch;
-#endif
-      *(unsigned int *)(code + 0x0b) = (unsigned int)functionOffset * 4;
-      next_insn = (unsigned int)(code + 0x14);
-      *(unsigned int *)(code + 0x10) = (unsigned int)_glapi_get_dispatch - next_insn;
-      *(unsigned int *)(code + 0x16) = (unsigned int)functionOffset * 4;
+
+   if ( code != NULL ) {
+      (void) memcpy( code, template_func, X86_DISPATCH_FUNCTION_SIZE );
+      fill_in_entrypoint_offset( (_glapi_proc) code, functionOffset );
    }
+
    return (_glapi_proc) code;
 #elif defined(USE_SPARC_ASM)
 
@@ -707,10 +773,19 @@ static void
 fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
 {
 #if defined(USE_X86_ASM)
+   GLubyte * const code = (GLubyte *) entrypoint;
 
-   unsigned char *code = (unsigned char *) entrypoint;
-   *(unsigned int *)(code + 0x0b) = offset * 4;
-   *(unsigned int *)(code + 0x16) = offset * 4;
+   
+#if X86_DISPATCH_FUNCTION_SIZE == 32
+   *((unsigned int *)(code + 11)) = 4 * offset;
+   *((unsigned int *)(code + 22)) = 4 * offset;
+#elif X86_DISPATCH_FUNCTION_SIZE == 16 && defined( GLX_USE_TLS )
+   *((unsigned int *)(code +  8)) = 4 * offset;
+#elif X86_DISPATCH_FUNCTION_SIZE == 16
+   *((unsigned int *)(code +  7)) = 4 * offset;
+#else
+# error Invalid X86_DISPATCH_FUNCTION_SIZE!
+#endif
 
 #elif defined(USE_SPARC_ASM)
 
@@ -1027,4 +1102,26 @@ _glapi_check_table(const struct _glapi_table *table)
 #else
    (void) table;
 #endif
+}
+
+
+/**
+ * Perform platform-specific GL API entry-point fixups.
+ * 
+ * 
+ */
+static void
+init_glapi_relocs( void )
+{
+#if defined( USE_X86_ASM ) && defined( GLX_USE_TLS )
+    extern void * _x86_get_dispatch(void);
+    const GLubyte * const get_disp = (const GLubyte *) _x86_get_dispatch;
+    GLubyte * curr_func = (GLubyte *) gl_dispatch_functions_start;
+
+
+    while ( curr_func != (GLubyte *) gl_dispatch_functions_end ) {
+	(void) memcpy( curr_func, get_disp, 6 );
+	curr_func += X86_DISPATCH_FUNCTION_SIZE;
+    }
+#endif /* defined( USE_X86_ASM ) && defined( GLX_USE_TLS ) */
 }

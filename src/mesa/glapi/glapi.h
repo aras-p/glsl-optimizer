@@ -54,10 +54,17 @@ typedef void (*_glapi_warning_func)(void *ctx, const char *str, ...);
 typedef void (*_glapi_proc)(void); /* generic function pointer */
 
 
-extern void *_glapi_Context;
+#if defined (GLX_USE_TLS)
 
+const extern void *_glapi_Context;
+const extern struct _glapi_table *_glapi_Dispatch;
+
+#else
+
+extern void *_glapi_Context;
 extern struct _glapi_table *_glapi_Dispatch;
 
+#endif /* defined (GLX_USE_TLS) */
 
 extern void
 _glapi_noop_enable_warnings(GLboolean enable);

@@ -33,7 +33,10 @@
 * the symbol visibility mode to 'default'.
 */
 #if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
-#pragma GCC visibility push(default)
+#  pragma GCC visibility push(default)
+#  define HIDDEN(x) .hidden x
+#else
+#  define HIDDEN(x)
 #endif
 
 #ifndef __WIN32__
@@ -64,7 +67,17 @@
 #  define THREADS
 #endif
 
-#if defined(PTHREADS)
+#ifdef GLX_USE_TLS
+
+#  define GL_STUB(fn,off,fn_alt)			\
+ALIGNTEXT16;						\
+GLOBL_FN(GL_PREFIX(fn, fn_alt));			\
+GL_PREFIX(fn, fn_alt):					\
+	CALL(_x86_get_dispatch) ;			\
+	NOP ;						\
+	JMP(GL_OFFSET(off))
+
+#elif defined(PTHREADS)
 #  define GL_STUB(fn,off,fn_alt)			\
 ALIGNTEXT16;						\
 GLOBL_FN(GL_PREFIX(fn, fn_alt));			\
@@ -106,7 +119,16 @@ GL_PREFIX(fn, fn_alt):					\
 
 SEG_TEXT
 
-#ifdef PTHREADS
+#ifdef GLX_USE_TLS
+
+	GLOBL	GLNAME(_x86_get_dispatch)
+	HIDDEN(GLNAME(_x86_get_dispatch))
+ALIGNTEXT16
+GLNAME(_x86_get_dispatch):
+	movl	%gs:_glapi_tls_Dispatch@NTPOFF, %eax
+	ret
+
+#elif defined(PTHREADS)
 EXTERN GLNAME(_glapi_Dispatch)
 EXTERN GLNAME(_gl_DispatchTSD)
 EXTERN GLNAME(pthread_getspecific)
@@ -122,7 +144,13 @@ GLNAME(_x86_get_dispatch):
 EXTERN GLNAME(_glapi_get_dispatch)
 #endif
 
-		ALIGNTEXT16 ; GLOBL GLNAME(gl_dispatch_functions_start)
+#if defined( GLX_USE_TLS )
+		.section	wtext, "awx", @progbits
+#endif /* defined( GLX_USE_TLS ) */
+
+		ALIGNTEXT16
+		GLOBL GLNAME(gl_dispatch_functions_start)
+		HIDDEN(GLNAME(gl_dispatch_functions_start))
 GLNAME(gl_dispatch_functions_start):
 
 	GL_STUB(NewList, _gloffset_NewList, NewList@8)
@@ -1119,5 +1147,23 @@ GLNAME(gl_dispatch_functions_start):
 	GL_STUB_ALIAS(BlendFuncSeparateINGR, _gloffset_BlendFuncSeparateEXT, BlendFuncSeparateINGR@16, BlendFuncSeparateEXT, BlendFuncSeparateEXT@16)
 	GL_STUB_ALIAS(PointParameterfSGIS, _gloffset_PointParameterfEXT, PointParameterfSGIS@8, PointParameterfEXT, PointParameterfEXT@8)
 	GL_STUB_ALIAS(PointParameterfvSGIS, _gloffset_PointParameterfvEXT, PointParameterfvSGIS@8, PointParameterfvEXT, PointParameterfvEXT@8)
+
+		GLOBL	GLNAME(gl_dispatch_functions_end)
+		HIDDEN(GLNAME(gl_dispatch_functions_end))
+		ALIGNTEXT16
+GLNAME(gl_dispatch_functions_end):
+
+#if defined(GLX_USE_TLS) && defined(__linux__)
+	.section ".note.ABI-tag", "a"
+	.p2align 2
+	.long	1f - 0f   /* name length */
+	.long	3f - 2f   /* data length */
+	.long	1         /* note length */
+0:	.asciz "GNU"      /* vendor name */
+1:	.p2align 2
+2:	.long	0         /* note data: the ABI tag */
+	.long	2,4,20    /* Minimum kernel version w/TLS */
+3:	.p2align 2        /* pad out section */
+#endif /* GLX_USE_TLS */
 
 #endif  /* __WIN32__ */

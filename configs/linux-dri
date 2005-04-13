@@ -16,6 +16,8 @@ MKDEP = /usr/X11R6/bin/makedepend
 WARN_FLAGS = -Wall
 OPT_FLAGS  = -O -g
 PIC_FLAGS  = -fPIC
+
+# Add '-DGLX_USE_TLS' to ARCH_FLAGS to enable TLS support.
 ARCH_FLAGS ?=
 
 DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \

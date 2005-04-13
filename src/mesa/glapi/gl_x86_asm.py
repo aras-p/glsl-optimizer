@@ -63,7 +63,10 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print "* the symbol visibility mode to 'default'."
 		print '*/'
 		print '#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303'
-		print '#pragma GCC visibility push(default)'
+		print '#  pragma GCC visibility push(default)'
+		print '#  define HIDDEN(x) .hidden x'
+		print '#else'
+		print '#  define HIDDEN(x)'
 		print '#endif'
 		print ''
 		print '#ifndef __WIN32__'
@@ -94,7 +97,17 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print '#  define THREADS'
 		print '#endif'
 		print ''
-		print '#if defined(PTHREADS)'
+		print '#ifdef GLX_USE_TLS'
+		print ''
+		print '#  define GL_STUB(fn,off,fn_alt)\t\t\t\\'
+		print 'ALIGNTEXT16;\t\t\t\t\t\t\\'
+		print 'GLOBL_FN(GL_PREFIX(fn, fn_alt));\t\t\t\\'
+		print 'GL_PREFIX(fn, fn_alt):\t\t\t\t\t\\'
+		print '\tCALL(_x86_get_dispatch) ;\t\t\t\\'
+		print '\tNOP ;\t\t\t\t\t\t\\'
+		print '\tJMP(GL_OFFSET(off))'
+		print ''
+		print '#elif defined(PTHREADS)'
 		print '#  define GL_STUB(fn,off,fn_alt)\t\t\t\\'
 		print 'ALIGNTEXT16;\t\t\t\t\t\t\\'
 		print 'GLOBL_FN(GL_PREFIX(fn, fn_alt));\t\t\t\\'
@@ -136,7 +149,16 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print ''
 		print 'SEG_TEXT'
 		print ''
-		print '#ifdef PTHREADS'
+		print '#ifdef GLX_USE_TLS'
+		print ''
+		print '\tGLOBL\tGLNAME(_x86_get_dispatch)'
+		print '\tHIDDEN(GLNAME(_x86_get_dispatch))'
+		print 'ALIGNTEXT16'
+		print 'GLNAME(_x86_get_dispatch):'
+		print '\tmovl\t%gs:_glapi_tls_Dispatch@NTPOFF, %eax'
+		print '\tret'
+		print ''
+		print '#elif defined(PTHREADS)'
 		print 'EXTERN GLNAME(_glapi_Dispatch)'
 		print 'EXTERN GLNAME(_gl_DispatchTSD)'
 		print 'EXTERN GLNAME(pthread_getspecific)'
@@ -152,12 +174,38 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print 'EXTERN GLNAME(_glapi_get_dispatch)'
 		print '#endif'
 		print ''
-		print '\t\tALIGNTEXT16 ; GLOBL GLNAME(gl_dispatch_functions_start)'
+
+		print '#if defined( GLX_USE_TLS )'
+		print '\t\t.section\twtext, "awx", @progbits'
+		print '#endif /* defined( GLX_USE_TLS ) */'
+
+		print ''
+		print '\t\tALIGNTEXT16'
+		print '\t\tGLOBL GLNAME(gl_dispatch_functions_start)'
+		print '\t\tHIDDEN(GLNAME(gl_dispatch_functions_start))'
 		print 'GLNAME(gl_dispatch_functions_start):'
 		print ''
 		return
 
 	def printRealFooter(self):
+		print ''
+		print '\t\tGLOBL\tGLNAME(gl_dispatch_functions_end)'
+		print '\t\tHIDDEN(GLNAME(gl_dispatch_functions_end))'
+		print '\t\tALIGNTEXT16'
+		print 'GLNAME(gl_dispatch_functions_end):'
+		print ''
+		print '#if defined(GLX_USE_TLS) && defined(__linux__)'
+		print '	.section ".note.ABI-tag", "a"'
+		print '	.p2align 2'
+		print '	.long	1f - 0f   /* name length */'
+		print '	.long	3f - 2f   /* data length */'
+		print '	.long	1         /* note length */'
+		print '0:	.asciz "GNU"      /* vendor name */'
+		print '1:	.p2align 2'
+		print '2:	.long	0         /* note data: the ABI tag */'
+		print '	.long	2,4,20    /* Minimum kernel version w/TLS */'
+		print '3:	.p2align 2        /* pad out section */'
+		print '#endif /* GLX_USE_TLS */'
 		print ''
 		print '#endif  /* __WIN32__ */'
 		return
@@ -167,11 +215,11 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 
 		alt = "%s@%u" % (f.name, stack)
 		if f.fn_alias == None:
-		    print '\tGL_STUB(%s, _gloffset_%s, %s)' % (f.name, f.real_name, alt)
+			print '\tGL_STUB(%s, _gloffset_%s, %s)' % (f.name, f.real_name, alt)
 		else:
-		    alias_alt = "%s@%u" % (f.real_name, stack)
-		    print '\tGL_STUB_ALIAS(%s, _gloffset_%s, %s, %s, %s)' % \
-		        (f.name, f.real_name, alt, f.real_name, alias_alt)
+			alias_alt = "%s@%u" % (f.real_name, stack)
+			print '\tGL_STUB_ALIAS(%s, _gloffset_%s, %s, %s, %s)' % \
+			    (f.name, f.real_name, alt, f.real_name, alias_alt)
 		return
 
 def show_usage():

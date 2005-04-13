@@ -222,6 +222,15 @@ static __DRIdriver *OpenDriver(const char *driverName)
       void *handle = NULL;
 
       
+      /* If TLS support is enabled, try to open the TLS version of the driver
+       * binary first.  If that fails, try the non-TLS version.
+       */
+#ifdef GLX_USE_TLS
+      snprintf(realDriverName, 200, "%s/tls/%s_dri.so", libDir, driverName);
+      InfoMessageF("OpenDriver: trying %s\n", realDriverName);
+      handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
+#endif
+
       if ( handle == NULL ) {
 	 snprintf(realDriverName, 200, "%s/%s_dri.so", libDir, driverName);
 	 InfoMessageF("OpenDriver: trying %s\n", realDriverName);
