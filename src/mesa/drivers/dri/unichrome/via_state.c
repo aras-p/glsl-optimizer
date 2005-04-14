@@ -308,7 +308,7 @@ void viaEmitState(struct via_context *vmesa)
 	    ADVANCE_RING();
 	 }
 
-	 BEGIN_RING(15);
+	 BEGIN_RING(14);
 	 OUT_RING( (HC_SubA_HTXnTB << 24) | vmesa->regHTXnTB[0] );
 	 OUT_RING( (HC_SubA_HTXnMPMD << 24) | vmesa->regHTXnMPMD[0] );
 	 OUT_RING( (HC_SubA_HTXnTBLCsat << 24) | vmesa->regHTXnTBLCsat[0] );
@@ -323,7 +323,7 @@ void viaEmitState(struct via_context *vmesa)
 	 OUT_RING( (HC_SubA_HTXnTBLRCbias << 24) | vmesa->regHTXnTBLRCbias[0] );
 	 OUT_RING( (HC_SubA_HTXnTBC << 24) | vmesa->regHTXnTBC[0] );
 	 OUT_RING( (HC_SubA_HTXnTRAH << 24) | vmesa->regHTXnTRAH[0] );
-	 OUT_RING( (HC_SubA_HTXnCLODu << 24) | vmesa->regHTXnCLOD[0] );
+/* 	 OUT_RING( (HC_SubA_HTXnCLODu << 24) | vmesa->regHTXnCLOD[0] ); */
 	 ADVANCE_RING();
 
 	 /* KW:  This test never succeeds:
@@ -433,7 +433,7 @@ void viaEmitState(struct via_context *vmesa)
 	    ADVANCE_RING();
 	 }
 
-	 BEGIN_RING(15);
+	 BEGIN_RING(14);
 	 OUT_RING( (HC_SubA_HTXnTB << 24) | vmesa->regHTXnTB[1] );
 	 OUT_RING( (HC_SubA_HTXnMPMD << 24) | vmesa->regHTXnMPMD[1] );
 	 OUT_RING( (HC_SubA_HTXnTBLCsat << 24) | vmesa->regHTXnTBLCsat[1] );
@@ -448,7 +448,7 @@ void viaEmitState(struct via_context *vmesa)
 	 OUT_RING( (HC_SubA_HTXnTBLRCbias << 24) | vmesa->regHTXnTBLRCbias[1] );
 	 OUT_RING( (HC_SubA_HTXnTBC << 24) | vmesa->regHTXnTBC[1] );
 	 OUT_RING( (HC_SubA_HTXnTRAH << 24) | vmesa->regHTXnTRAH[1] );
-	 OUT_RING( (HC_SubA_HTXnCLODu << 24) | vmesa->regHTXnCLOD[1] );
+/* 	 OUT_RING( (HC_SubA_HTXnCLODu << 24) | vmesa->regHTXnCLOD[1] ); */
 	 ADVANCE_RING();
 
 	 /* KW:  This test never succeeds:
@@ -913,7 +913,7 @@ static GLboolean viaChooseTextureState(GLcontext *ctx)
 	       GLuint b = viaComputeLodBias(texUnit0->LodBias);
 	       vmesa->regHTXnTB[0] &= ~HC_HTXnFLDs_MASK;
 	       vmesa->regHTXnTB[0] |= HC_HTXnFLDs_ConstLOD;
-	       vmesa->regHTXnCLOD[0] = b | ((~b&0x1f)<<10); /* FIXME */
+	       vmesa->regHTXnCLOD[0] = (b&0x1f) | (((~b)&0x1f)<<10); /* FIXME */
 	    }
 
 	    if (!viaTexCombineState( vmesa, texUnit0->_CurrentCombine, 0 )) {
@@ -947,7 +947,7 @@ static GLboolean viaChooseTextureState(GLcontext *ctx)
 	       GLuint b = viaComputeLodBias(texUnit1->LodBias);
 	       vmesa->regHTXnTB[1] &= ~HC_HTXnFLDs_MASK;
 	       vmesa->regHTXnTB[1] |= HC_HTXnFLDs_ConstLOD;
-	       vmesa->regHTXnCLOD[1] = b | ((~b&0x1f)<<10); /* FIXME */
+	       vmesa->regHTXnCLOD[1] = (b&0x1f) | (((~b)&0x1f)<<10); /* FIXME */
 	    }
 
 	    if (!viaTexCombineState( vmesa, texUnit1->_CurrentCombine, 1 )) {
