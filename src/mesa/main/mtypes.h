@@ -707,6 +707,7 @@ struct gl_hint_attrib
    GLenum ClipVolumeClipping;   /**< GL_EXT_clip_volume_hint */
    GLenum TextureCompression;   /**< GL_ARB_texture_compression */
    GLenum GenerateMipmap;       /**< GL_SGIS_generate_mipmap */
+   GLenum FragmentShaderDerivative; /**< GL_ARB_fragment_shader */
 };
 
 
@@ -2126,6 +2127,7 @@ struct gl_extensions
    GLboolean ARB_occlusion_query;
    GLboolean ARB_point_sprite;
    GLboolean ARB_shader_objects;
+   GLboolean ARB_shading_language_100;
    GLboolean ARB_shadow;
    GLboolean ARB_texture_border_clamp;
    GLboolean ARB_texture_compression;
