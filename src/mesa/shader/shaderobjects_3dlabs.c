@@ -41,6 +41,8 @@
 #if USE_3DLABS_FRONTEND
 #include "slang_mesa.h"
 #include "Public/ShaderLang.h"
+#else
+#include "slang_compile.h"
 #endif
 
 struct gl2_unknown_obj
@@ -545,6 +547,9 @@ _shader_Compile (struct gl2_shader_intf **intf)
 #if USE_3DLABS_FRONTEND
 	char **strings;
 	TBuiltInResource res;
+#else
+	slang_translation_unit unit;
+	slang_unit_type type;
 #endif
 
 	impl->_obj.compile_status = GL_FALSE;
@@ -615,6 +620,19 @@ _shader_Compile (struct gl2_shader_intf **intf)
 
 	impl->_obj._generic.info_log = _mesa_strdup (ShGetInfoLog (
 		impl->_obj._3dlabs_shhandle._obj.handle));
+#else
+	if (impl->_vftbl->GetSubType (intf) == GL_FRAGMENT_SHADER)
+		type = slang_unit_fragment_shader;
+	else
+		type = slang_unit_vertex_shader;
+	if (_slang_compile (impl->_obj.source, &unit, type))
+	{
+		impl->_obj.compile_status = GL_TRUE;
+	}
+	else
+	{
+		impl->_obj._generic.info_log = _mesa_strdup ("error: invalid translation unit");
+	}
 #endif
 }
 
