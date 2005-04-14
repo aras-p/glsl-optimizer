@@ -36,6 +36,7 @@
 
 #include <assert.h>
 #include "glxclient.h"
+#include "indirect.h"
 #include "indirect_vertex_array.h"
 
 /*****************************************************************************/

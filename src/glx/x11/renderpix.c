@@ -60,6 +60,7 @@
  */
 
 #include "packrender.h"
+#include "indirect.h"
 
 /**
  * Send a large image to the server.  If necessary, a buffer is allocated

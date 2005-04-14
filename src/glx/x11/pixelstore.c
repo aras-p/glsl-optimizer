@@ -35,6 +35,7 @@
 */
 
 #include "glxclient.h"
+#include "indirect.h"
 
 /*
 ** Specify parameters that control the storage format of pixel arrays.

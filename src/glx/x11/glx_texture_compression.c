@@ -34,6 +34,7 @@
 
 #include "packrender.h"
 #include "packsingle.h"
+#include "indirect.h"
 
 #include <assert.h>
 

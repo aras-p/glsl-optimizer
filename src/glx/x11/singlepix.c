@@ -35,6 +35,7 @@
 */
 
 #include "packsingle.h"
+#include "indirect.h"
 
 void __indirect_glGetSeparableFilter(GLenum target, GLenum format, GLenum type,
 			  GLvoid *row, GLvoid *column, GLvoid *span)

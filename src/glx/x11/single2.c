@@ -39,6 +39,7 @@
 #include "glxclient.h"
 #include "packsingle.h"
 #include "glxextensions.h"
+#include "indirect.h"
 #include "indirect_vertex_array.h"
 
 /* Used for GL_ARB_transpose_matrix */
