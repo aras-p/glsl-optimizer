@@ -64,9 +64,10 @@
 #define GLTHREAD_H
 
 
-#if defined(PTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || \
-	defined(XTHREADS) || defined(BEOS_THREADS)
-#define THREADS
+#if (defined(PTHREADS) || defined(SOLARIS_THREADS) ||\
+     defined(WIN32_THREADS) || defined(XTHREADS) || defined(BEOS_THREADS)) \
+    && !defined(THREADS)
+# define THREADS
 #endif
 
 #ifdef VMS

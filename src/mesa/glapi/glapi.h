@@ -59,10 +59,34 @@ typedef void (*_glapi_proc)(void); /* generic function pointer */
 const extern void *_glapi_Context;
 const extern struct _glapi_table *_glapi_Dispatch;
 
+extern __thread void * _glapi_tls_Context
+    __attribute__((tls_model("initial-exec")));
+
+# define GET_CURRENT_CONTEXT(C)  GLcontext *C = (GLcontext *) _glapi_tls_Context
+
 #else
 
 extern void *_glapi_Context;
 extern struct _glapi_table *_glapi_Dispatch;
+
+/**
+ * Macro for declaration and fetching the current context.
+ *
+ * \param C local variable which will hold the current context.
+ *
+ * It should be used in the variable declaration area of a function:
+ * \code
+ * ...
+ * {
+ *   GET_CURRENT_CONTEXT(ctx);
+ *   ...
+ * \endcode
+ */
+# ifdef THREADS
+#  define GET_CURRENT_CONTEXT(C)  GLcontext *C = (GLcontext *) (_glapi_Context ? _glapi_Context : _glapi_get_context())
+# else
+#  define GET_CURRENT_CONTEXT(C)  GLcontext *C = (GLcontext *) _glapi_Context
+# endif
 
 #endif /* defined (GLX_USE_TLS) */
 

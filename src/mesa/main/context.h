@@ -169,31 +169,6 @@ _mesa_get_current_context(void);
 /*@}*/
 
 
-/**
- * Macro for declaration and fetching the current context.
- *
- * \param C local variable which will hold the current context.
- *
- * It should be used in the variable declaration area of a function:
- * \code
- * ...
- * {
- *   GET_CURRENT_CONTEXT(ctx);
- *   ...
- * \endcode
- */
-#ifdef THREADS
-
-#define GET_CURRENT_CONTEXT(C)	GLcontext *C = (GLcontext *) (_glapi_Context ? _glapi_Context : _glapi_get_context())
-
-#else
-
-#define GET_CURRENT_CONTEXT(C)  GLcontext *C = (GLcontext *) _glapi_Context
-
-#endif
-
-
-
 /**********************************************************************/
 /** \name OpenGL SI-style export functions. */
 /*@{*/
