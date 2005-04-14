@@ -10,54 +10,53 @@
 <!ELEMENT return EMPTY>
 <!ELEMENT glx EMPTY>
 
-<!ATTLIST category name   CDATA #REQUIRED
-                   number CDATA #IMPLIED>
-<!ATTLIST type     name   CDATA #REQUIRED
-                   size   CDATA #REQUIRED
-                   glx_name CDATA #IMPLIED>
-<!ATTLIST enum     name   CDATA #REQUIRED
-                   count  CDATA #IMPLIED
-                   value  CDATA #REQUIRED>
-<!ATTLIST function name   CDATA #REQUIRED
-                   alias  CDATA #IMPLIED
-                   offset CDATA #IMPLIED
-                   vectorequiv CDATA #IMPLIED>
-<!ATTLIST size     name   CDATA #REQUIRED
-                   count  CDATA #IMPLIED
-                   mode   CDATA #IMPLIED>
-<!ATTLIST param    name   CDATA #REQUIRED
-                   type   CDATA #REQUIRED
-                   count  CDATA #IMPLIED
-                   counter  CDATA #IMPLIED
-                   count_scale  CDATA #IMPLIED
-                   output   CDATA #IMPLIED
-                   img_width     CDATA #IMPLIED
-                   img_height    CDATA #IMPLIED
-                   img_depth     CDATA #IMPLIED
-                   img_extent    CDATA #IMPLIED
-                   img_xoff      CDATA #IMPLIED
-                   img_yoff      CDATA #IMPLIED
-                   img_zoff      CDATA #IMPLIED
-                   img_woff      CDATA #IMPLIED
-                   img_format    CDATA #IMPLIED
-                   img_type      CDATA #IMPLIED
-                   img_target    CDATA #IMPLIED
-                   img_send_null CDATA #IMPLIED
-                   img_null_flag CDATA #IMPLIED
-                   img_pad_dimensions CDATA #IMPLIED
-                   doubles_in_order CDATA #IMPLIED
-                   variable_param  CDATA #IMPLIED>
-<!ATTLIST return   type     CDATA #REQUIRED>
-<!ATTLIST glx      rop      CDATA #IMPLIED
-                   sop      CDATA #IMPLIED
-                   vendorpriv  CDATA #IMPLIED
-                   large    CDATA #IMPLIED
-                   doubles_in_order CDATA #IMPLIED
-                   always_array CDATA #IMPLIED
-                   handcode CDATA #IMPLIED
-                   img_reset CDATA #IMPLIED
-                   dimensions_in_reply CDATA #IMPLIED
-                   ignore   CDATA #IMPLIED>
+<!ATTLIST category name                NMTOKEN #REQUIRED
+                   number              NMTOKEN #IMPLIED>
+<!ATTLIST type     name                NMTOKEN #REQUIRED
+                   size                NMTOKEN #REQUIRED
+                   glx_name            NMTOKEN #IMPLIED>
+<!ATTLIST enum     name                NMTOKEN #REQUIRED
+                   count               CDATA   #IMPLIED
+                   value               NMTOKEN #REQUIRED>
+<!ATTLIST function name                NMTOKEN #REQUIRED
+                   alias               NMTOKEN #IMPLIED
+                   offset              CDATA   #IMPLIED
+                   vectorequiv         NMTOKEN #IMPLIED>
+<!ATTLIST size     name                NMTOKEN #REQUIRED
+                   count               NMTOKEN #IMPLIED
+                   mode                NMTOKEN #IMPLIED>
+<!ATTLIST param    name                NMTOKEN #REQUIRED
+                   type                CDATA   #REQUIRED
+                   count               NMTOKEN #IMPLIED
+                   counter             (true | false) "false"
+                   count_scale         NMTOKEN #IMPLIED
+                   output              (true | false) "false"
+                   img_width           NMTOKEN #IMPLIED
+                   img_height          NMTOKEN #IMPLIED
+                   img_depth           NMTOKEN #IMPLIED
+                   img_extent          NMTOKEN #IMPLIED
+                   img_xoff            NMTOKEN #IMPLIED
+                   img_yoff            NMTOKEN #IMPLIED
+                   img_zoff            NMTOKEN #IMPLIED
+                   img_woff            NMTOKEN #IMPLIED
+                   img_format          NMTOKEN #IMPLIED
+                   img_type            NMTOKEN #IMPLIED
+                   img_target          NMTOKEN #IMPLIED
+                   img_send_null       (true | false) "false"
+                   img_null_flag       (true | false) "false"
+                   img_pad_dimensions  (true | false) "false"
+                   variable_param      CDATA   #IMPLIED>
+<!ATTLIST return   type                CDATA   "void">
+<!ATTLIST glx      rop                 NMTOKEN #IMPLIED
+                   sop                 NMTOKEN #IMPLIED
+                   vendorpriv          NMTOKEN #IMPLIED
+                   large               (true | false) "false"
+                   doubles_in_order    (true | false) "false"
+                   always_array        (true | false) "false"
+                   handcode            (true | false | client | server) "false"
+                   img_reset           NMTOKEN #IMPLIED
+                   dimensions_in_reply (true | false) "false"
+                   ignore              (true | false) "false">
 ]>
 
 <!--
@@ -8044,7 +8043,7 @@ glx:
     <function name="SharpenTexFuncSGIS" offset="444">
         <param name="target" type="GLenum"/>
         <param name="n" type="GLsizei" counter="true"/>
-        <param name="points" type="const GLfloat *" counter="n" count_scale="2"/>
+        <param name="points" type="const GLfloat *" count="n" count_scale="2"/>
         <glx rop="2052" ignore="true"/>
     </function>
 
@@ -8391,7 +8390,7 @@ glx:
 <category name="GL_SGIS_fog_function" number="64">
     <function name="FogFuncSGIS" offset="?">
         <param name="n" type="GLsizei" counter="true"/>
-        <param name="points" type="const GLfloat *" counter="n" count_scale="2"/>
+        <param name="points" type="const GLfloat *" count="n" count_scale="2"/>
         <glx rop="2067" ignore="true"/>
     </function>
 
@@ -10287,7 +10286,7 @@ glx:
 
     <function name="GenFencesNV" offset="648">
         <param name="n" type="GLsizei" counter="true"/>
-        <param name="fences" type="GLuint *" output="true" counter="n"/>
+        <param name="fences" type="GLuint *" output="true" count="n"/>
         <glx ignore="true"/>
     </function>
 
@@ -10959,22 +10958,22 @@ glx:
     <function name="VertexAttribs2dvNV" offset="632">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
-        <param name="v" type="const GLdouble *" doubles_in_order="true" count="n" count_scale="2"/>
-        <glx rop="4211"/>
+        <param name="v" type="const GLdouble *" count="n" count_scale="2"/>
+        <glx rop="4211" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttribs3dvNV" offset="635">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
-        <param name="v" type="const GLdouble *" doubles_in_order="true" count="n" count_scale="3"/>
-        <glx rop="4212"/>
+        <param name="v" type="const GLdouble *" count="n" count_scale="3"/>
+        <glx rop="4212" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttribs4dvNV" offset="638">
         <param name="index" type="GLuint"/>
         <param name="n" type="GLsizei" counter="true"/>
-        <param name="v" type="const GLdouble *" doubles_in_order="true" count="n" count_scale="4"/>
-        <glx rop="4213"/>
+        <param name="v" type="const GLdouble *" count="n" count_scale="4"/>
+        <glx rop="4213" doubles_in_order="true"/>
     </function>
 
     <function name="VertexAttribs4ubvNV" offset="641">
