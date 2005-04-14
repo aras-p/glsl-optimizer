@@ -702,7 +702,7 @@ parse_float_string(GLubyte ** inst, struct arb_program *Program, GLdouble *scale
       (*inst)++;
    }
    else { /* nonempty string-- parse out the digits */
-      while (isdigit(**inst)) {
+      while (**inst >= '0' && **inst <= '9') {
          GLubyte digit = *((*inst)++);
          value = value * 10.0 + (GLint) (digit - '0');
          oscale *= 10.0;
