@@ -1890,6 +1890,30 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          CHECK_EXTENSION_B(EXT_framebuffer_object, pname);
          params[0] = INT_TO_BOOLEAN(ctx->Const.MaxRenderbufferSize);
          break;
+      case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
+         CHECK_EXTENSION_B(ARB_fragment_shader, pname);
+         params[0] = INT_TO_BOOLEAN(MAX_FRAGMENT_UNIFORM_COMPONENTS);
+         break;
+      case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
+         CHECK_EXTENSION_B(ARB_fragment_shader, pname);
+         params[0] = ENUM_TO_BOOLEAN(ctx->Hint.FragmentShaderDerivative);
+         break;
+      case GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_shader, pname);
+         params[0] = INT_TO_BOOLEAN(MAX_VERTEX_UNIFORM_COMPONENTS);
+         break;
+      case GL_MAX_VARYING_FLOATS_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_shader, pname);
+         params[0] = INT_TO_BOOLEAN(MAX_VARYING_FLOATS);
+         break;
+      case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_shader, pname);
+         params[0] = INT_TO_BOOLEAN(MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+         break;
+      case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
+         CHECK_EXTENSION_B(ARB_vertex_shader, pname);
+         params[0] = INT_TO_BOOLEAN(MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -3709,6 +3733,30 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          CHECK_EXTENSION_F(EXT_framebuffer_object, pname);
          params[0] = (GLfloat)(ctx->Const.MaxRenderbufferSize);
          break;
+      case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
+         CHECK_EXTENSION_F(ARB_fragment_shader, pname);
+         params[0] = (GLfloat)(MAX_FRAGMENT_UNIFORM_COMPONENTS);
+         break;
+      case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
+         CHECK_EXTENSION_F(ARB_fragment_shader, pname);
+         params[0] = ENUM_TO_FLOAT(ctx->Hint.FragmentShaderDerivative);
+         break;
+      case GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_shader, pname);
+         params[0] = (GLfloat)(MAX_VERTEX_UNIFORM_COMPONENTS);
+         break;
+      case GL_MAX_VARYING_FLOATS_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_shader, pname);
+         params[0] = (GLfloat)(MAX_VARYING_FLOATS);
+         break;
+      case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_shader, pname);
+         params[0] = (GLfloat)(MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+         break;
+      case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
+         CHECK_EXTENSION_F(ARB_vertex_shader, pname);
+         params[0] = (GLfloat)(MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(pname=0x%x)", pname);
    }
@@ -5527,6 +5575,30 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_MAX_RENDERBUFFER_SIZE_EXT:
          CHECK_EXTENSION_I(EXT_framebuffer_object, pname);
          params[0] = ctx->Const.MaxRenderbufferSize;
+         break;
+      case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB:
+         CHECK_EXTENSION_I(ARB_fragment_shader, pname);
+         params[0] = MAX_FRAGMENT_UNIFORM_COMPONENTS;
+         break;
+      case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
+         CHECK_EXTENSION_I(ARB_fragment_shader, pname);
+         params[0] = ENUM_TO_INT(ctx->Hint.FragmentShaderDerivative);
+         break;
+      case GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_shader, pname);
+         params[0] = MAX_VERTEX_UNIFORM_COMPONENTS;
+         break;
+      case GL_MAX_VARYING_FLOATS_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_shader, pname);
+         params[0] = MAX_VARYING_FLOATS;
+         break;
+      case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_shader, pname);
+         params[0] = MAX_VERTEX_TEXTURE_IMAGE_UNITS;
+         break;
+      case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
+         CHECK_EXTENSION_I(ARB_vertex_shader, pname);
+         params[0] = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
