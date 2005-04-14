@@ -750,12 +750,13 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    exec->GetUniformfvARB = _mesa_GetUniformfvARB;
    exec->GetUniformivARB = _mesa_GetUniformivARB;
    exec->GetShaderSourceARB = _mesa_GetShaderSourceARB;
+#endif    /* FEATURE_ARB_shader_objects */
+
 #if FEATURE_ARB_vertex_shader
    exec->BindAttribLocationARB = _mesa_BindAttribLocationARB;
    exec->GetActiveAttribARB = _mesa_GetActiveAttribARB;
    exec->GetAttribLocationARB = _mesa_GetAttribLocationARB;
-#endif
-#endif    /* FEATURE_ARB_shader_objects */
+#endif    /* FEATURE_ARB_vertex_shader */
 
   /* GL_ATI_fragment_shader */
 #if FEATURE_ATI_fragment_shader
