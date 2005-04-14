@@ -46,10 +46,10 @@
 
 //---------------------------------------------------------------------------
 
-extern struct gl_pipeline_stage _gld_d3d_render_stage;
-extern struct gl_pipeline_stage _gld_mesa_render_stage;
+extern struct tnl_pipeline_stage _gld_d3d_render_stage;
+extern struct tnl_pipeline_stage _gld_mesa_render_stage;
 
-static const struct gl_pipeline_stage *gld_pipeline[] = {
+static const struct tnl_pipeline_stage *gld_pipeline[] = {
 	&_gld_d3d_render_stage,			// Direct3D TnL
 	&_tnl_vertex_transform_stage,
 	&_tnl_normal_transform_stage,

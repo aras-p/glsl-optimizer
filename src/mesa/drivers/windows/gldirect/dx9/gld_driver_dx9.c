@@ -47,9 +47,10 @@
 #include "macros.h"
 #include "matrix.h"
 // #include "mem.h"
-#include "mmath.h"
+//#include "mmath.h"
 #include "mtypes.h"
 #include "texformat.h"
+#include "teximage.h"
 #include "texstore.h"
 #include "array_cache/acache.h"
 #include "swrast_setup/swrast_setup.h"
@@ -1141,7 +1142,7 @@ void gldSetupDriverPointers_DX9(
 
 	// Texture object functions
 	ctx->Driver.BindTexture				= NULL;
-	ctx->Driver.CreateTexture			= NULL; // Not yet implemented by Mesa!;
+	ctx->Driver.NewTextureObject		= NULL; // Not yet implemented by Mesa!;
 	ctx->Driver.DeleteTexture			= gld_DeleteTexture_DX9;
 	ctx->Driver.PrioritizeTexture		= NULL;
 
@@ -1153,7 +1154,7 @@ void gldSetupDriverPointers_DX9(
 
 	// State changing functions
 	ctx->Driver.AlphaFunc				= NULL; //gld_AlphaFunc;
-	ctx->Driver.BlendFunc				= NULL; //gld_BlendFunc;
+	ctx->Driver.BlendFuncSeparate		= NULL; //gld_BlendFunc;
 	ctx->Driver.ClearColor				= NULL; //gld_ClearColor;
 	ctx->Driver.ClearDepth				= NULL; //gld_ClearDepth;
 	ctx->Driver.ClearStencil			= NULL; //gld_ClearStencil;

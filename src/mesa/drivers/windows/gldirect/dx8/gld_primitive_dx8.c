@@ -50,7 +50,7 @@
 #include "macros.h"
 #include "matrix.h"
 // #include "mem.h"
-#include "mmath.h"
+//#include "mmath.h"
 #include "mtypes.h"
 #include "texformat.h"
 #include "texstore.h"
@@ -189,9 +189,9 @@
 		GLfloat		ex,ey,fx,fy,cc;							\
 		/* Get vars for later */							\
 		VB		= &TNL_CONTEXT(ctx)->vb;					\
-		vbcolor	= (GLchan (*)[4])VB->ColorPtr[1]->Ptr;		\
+		vbcolor	= (GLchan (*)[4])VB->ColorPtr[1]->data;		\
 		if (VB->SecondaryColorPtr[1]) {						\
-			vbspec = (GLchan (*)[4])VB->SecondaryColorPtr[1]->Ptr;	\
+			vbspec = (GLchan (*)[4])VB->SecondaryColorPtr[1]->data;	\
 		} else {													\
 			vbspec = NULL;											\
 		}															\
@@ -247,12 +247,12 @@
 	pV->Position.z	= p4f[##v][2];
 
 #define GLD_SETUP_SMOOTH_COLOUR_3D(v)															\
-	p4f			= (GLfloat (*)[4])VB->ColorPtr[0]->Ptr;										\
+	p4f			= (GLfloat (*)[4])VB->ColorPtr[0]->data;										\
 	pV->Diffuse	= D3DCOLOR_COLORVALUE(p4f[##v][0], p4f[##v][1], p4f[##v][2], p4f[##v][3]);
 
 
 #define GLD_SETUP_GET_FLAT_COLOUR_3D(v)													\
-	p4f		= (GLfloat (*)[4])VB->ColorPtr[0]->Ptr;										\
+	p4f		= (GLfloat (*)[4])VB->ColorPtr[0]->data;										\
 	dwColor	= D3DCOLOR_COLORVALUE(p4f[##v][0], p4f[##v][1], p4f[##v][2], p4f[##v][3]);
 
 #define GLD_SETUP_USE_FLAT_COLOUR_3D			\
@@ -286,7 +286,7 @@ __inline DWORD _gldComputeFog(
 	GLchan			rFog, gFog, bFog;
 	GLchan			fR, fG, fB;
 	const GLfloat	f = swv->fog;
-	const GLfloat	g = 1.0 - f;
+	const GLfloat	g = 1.0f - f;
 	
 	UNCLAMPED_FLOAT_TO_CHAN(rFog, ctx->Fog.Color[RCOMP]);
 	UNCLAMPED_FLOAT_TO_CHAN(gFog, ctx->Fog.Color[GCOMP]);

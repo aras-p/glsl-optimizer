@@ -1070,7 +1070,7 @@ void gld_ReadPixels_DX7(
 	// We need to flip the data. Yuck.
 	// Perhaps Mesa has a span packer we can use in future...
 	for (i=0; i<height; i++) {
-		BYTE *pDestRow = (BYTE*)_mesa_image_address(pack, dest, width, height, format, type, 0, i, 0);
+		BYTE *pDestRow = (BYTE*)_mesa_image_address2d(pack, dest, width, height, format, type, 0, i, 0);
 		BYTE *pSrcRow = (BYTE*)d3dLockedRect.pBits + (d3dLockedRect.Pitch * (height-i-1));
 		_mesa_transfer_teximage(
 			ctx,
@@ -1295,8 +1295,8 @@ void gld_Bitmap_DX7(
 	for (i=0; i<height; i++) {
 		GLubyte byte;
 		pBits = (D3DCOLOR*)((BYTE*)ddsd.lpSurface + (i*ddsd.lPitch));
-		src = (const GLubyte *) _mesa_image_address(
-			&_mesa_native_packing, pTempBitmap, width, height, GL_COLOR_INDEX, GL_BITMAP,
+		src = (const GLubyte *) _mesa_image_address2d(
+			&ctx->DefaultPacking, pTempBitmap, width, height, GL_COLOR_INDEX, GL_BITMAP,
 			0, i, 0);
 		for (j=0; j<(width>>3); j++) {
 			byte = *src++;

@@ -1,4 +1,4 @@
-/* $Id: gld_vb_mesa_render_dx8.c,v 1.2 2004/07/01 13:14:07 keithw Exp $ */
+/* $Id: gld_vb_mesa_render_dx8.c,v 1.3 2005/04/14 16:58:25 bencrossman Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -57,7 +57,7 @@
 #include "macros.h"
 // #include "mem.h"
 #include "mtypes.h"
-#include "mmath.h"
+//#include "mmath.h"
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
@@ -71,10 +71,10 @@
 
 #if defined(USE_IEEE)
 #define NEGATIVE(x) (GET_FLOAT_BITS(x) & (1<<31))
-#define DIFFERENT_SIGNS(x,y) ((GET_FLOAT_BITS(x) ^ GET_FLOAT_BITS(y)) & (1<<31))
+//#define DIFFERENT_SIGNS(x,y) ((GET_FLOAT_BITS(x) ^ GET_FLOAT_BITS(y)) & (1<<31))
 #else
 #define NEGATIVE(x) (x < 0)
-#define DIFFERENT_SIGNS(x,y) (x * y <= 0 && x - y != 0)
+//#define DIFFERENT_SIGNS(x,y) (x * y <= 0 && x - y != 0)
 /* Could just use (x*y<0) except for the flatshading requirements.
  * Maybe there's a better way?
  */
@@ -310,7 +310,7 @@ tnl_quad_func _gldSetupQuad[4] = {
 
 static GLboolean _gld_mesa_render_stage_run(
 	GLcontext *ctx,
-	struct gl_pipeline_stage *stage)
+	struct tnl_pipeline_stage *stage)
 {
 	GLD_context				*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx8			*gld	= GLD_GET_DX8_DRIVER(gldCtx);
@@ -393,10 +393,10 @@ static GLboolean _gld_mesa_render_stage_run(
 	
 	do {
 		GLuint i, length, flags = 0;
-		for (i = 0 ; !(flags & PRIM_LAST) ; i += length) {
-			flags = VB->Primitive[i];
-			length= VB->PrimitiveLength[i];
-			ASSERT(length || (flags & PRIM_LAST));
+		for (i = 0 ; !(flags & PRIM_END) ; i += length) {
+			flags = VB->Primitive[i].mode;
+			length= VB->Primitive[i].count;
+			ASSERT(length || (flags & PRIM_END));
 			ASSERT((flags & PRIM_MODE_MASK) <= GL_POLYGON+1);
 			if (length)
 				tab[flags & PRIM_MODE_MASK]( ctx, i, i + length, flags );
@@ -441,7 +441,7 @@ static GLboolean _gld_mesa_render_stage_run(
  */
 static void _gld_mesa_render_stage_check(
 	GLcontext *ctx,
-	struct gl_pipeline_stage *stage)
+	struct tnl_pipeline_stage *stage)
 {
    GLuint inputs = VERT_BIT_CLIP;
    GLuint i;
@@ -483,13 +483,13 @@ static void _gld_mesa_render_stage_check(
 
 // Destructor
 static void _gld_mesa_render_stage_dtr(
-	struct gl_pipeline_stage *stage)
+	struct tnl_pipeline_stage *stage)
 {
 }
 
 //---------------------------------------------------------------------------
 
-const struct gl_pipeline_stage _gld_mesa_render_stage =
+const struct tnl_pipeline_stage _gld_mesa_render_stage =
 {
    "gld_mesa_render_stage",
    (_NEW_BUFFERS |

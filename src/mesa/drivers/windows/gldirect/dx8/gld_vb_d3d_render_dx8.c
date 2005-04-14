@@ -51,7 +51,7 @@
 #include "macros.h"
 // #include "mem.h"
 #include "mtypes.h"
-#include "mmath.h"
+//#include "mmath.h"
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
@@ -117,7 +117,7 @@ __inline void _gldSetVertexShaderConstants(
 
 static GLboolean gld_d3d_render_stage_run(
 	GLcontext *ctx,
-	struct gl_pipeline_stage *stage)
+	struct tnl_pipeline_stage *stage)
 {
 	GLD_context				*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx8			*gld	= GLD_GET_DX8_DRIVER(gldCtx);
@@ -199,11 +199,11 @@ static GLboolean gld_d3d_render_stage_run(
 	
 	do {
 		GLuint i, length, flags = 0;
-		for (i = 0 ; !(flags & PRIM_LAST) ; i += length)
+		for (i = 0 ; !(flags & PRIM_END) ; i += length)
 		{
-			flags = VB->Primitive[i];
-			length= VB->PrimitiveLength[i];
-			ASSERT(length || (flags & PRIM_LAST));
+			flags = VB->Primitive[i].mode;
+			length= VB->Primitive[i].count;
+			ASSERT(length || (flags & PRIM_END));
 			ASSERT((flags & PRIM_MODE_MASK) <= GL_POLYGON+1);
 			if (length)
 				tab[flags & PRIM_MODE_MASK]( ctx, i, i + length, flags );
@@ -240,7 +240,7 @@ static GLboolean gld_d3d_render_stage_run(
 
 static void gld_d3d_render_stage_check(
 	GLcontext *ctx,
-	struct gl_pipeline_stage *stage)
+	struct tnl_pipeline_stage *stage)
 {
 	GLD_context				*gldCtx	= GLD_GET_CONTEXT(ctx);
 	GLD_driver_dx8			*gld	= GLD_GET_DX8_DRIVER(gldCtx);
@@ -251,13 +251,13 @@ static void gld_d3d_render_stage_check(
 
 //---------------------------------------------------------------------------
 
-static void gld_d3d_render_stage_dtr( struct gl_pipeline_stage *stage )
+static void gld_d3d_render_stage_dtr( struct tnl_pipeline_stage *stage )
 {
 }
 
 //---------------------------------------------------------------------------
 
-const struct gl_pipeline_stage _gld_d3d_render_stage =
+const struct tnl_pipeline_stage _gld_d3d_render_stage =
 {
    "gld_d3d_render_stage",
    (_NEW_BUFFERS |
