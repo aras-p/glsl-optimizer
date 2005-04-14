@@ -171,7 +171,7 @@ class glParameter( glItem ):
 
 		temp = attrs.get('variable_param', None)
 		if temp:
-			self.count_parameter_list = temp.replace( ' ', '' ).split( ',' )
+			self.count_parameter_list = temp.split( ' ' )
 		else:
 			self.count_parameter_list = []
 

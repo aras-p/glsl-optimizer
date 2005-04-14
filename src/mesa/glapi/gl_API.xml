@@ -45,7 +45,7 @@
                    img_send_null       (true | false) "false"
                    img_null_flag       (true | false) "false"
                    img_pad_dimensions  (true | false) "false"
-                   variable_param      CDATA   #IMPLIED>
+                   variable_param      NMTOKENS #IMPLIED>
 <!ATTLIST return   type                CDATA   "void">
 <!ATTLIST glx      rop                 NMTOKEN #IMPLIED
                    sop                 NMTOKEN #IMPLIED
@@ -2801,21 +2801,21 @@ glx:
     <function name="GetMapdv" offset="266">
         <param name="target" type="GLenum"/>
         <param name="query" type="GLenum"/>
-        <param name="v" type="GLdouble *" output="true" variable_param="target, query"/>
+        <param name="v" type="GLdouble *" output="true" variable_param="target query"/>
         <glx sop="120"/>
     </function>
 
     <function name="GetMapfv" offset="267">
         <param name="target" type="GLenum"/>
         <param name="query" type="GLenum"/>
-        <param name="v" type="GLfloat *" output="true" variable_param="target, query"/>
+        <param name="v" type="GLfloat *" output="true" variable_param="target query"/>
         <glx sop="121"/>
     </function>
 
     <function name="GetMapiv" offset="268">
         <param name="target" type="GLenum"/>
         <param name="query" type="GLenum"/>
-        <param name="v" type="GLint *" output="true" variable_param="target, query"/>
+        <param name="v" type="GLint *" output="true" variable_param="target query"/>
         <glx sop="122"/>
     </function>
 
