@@ -682,6 +682,8 @@ _mesa_getenv( const char *var )
 {
 #if defined(XFree86LOADER) && defined(IN_MODULE)
    return xf86getenv(var);
+#elif defined(_XBOX)
+   return NULL;
 #else
    return getenv(var);
 #endif

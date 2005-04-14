@@ -87,7 +87,7 @@ _glapi_set_warning_func( _glapi_warning_func func )
 static GLboolean
 warn(void)
 {
-   if ((WarnFlag || getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"))
+   if ((WarnFlag || _mesa_getenv("MESA_DEBUG") || _mesa_getenv("LIBGL_DEBUG"))
        && warning_func) {
       return GL_TRUE;
    }
