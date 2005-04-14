@@ -359,31 +359,11 @@ class glXFunction(gl_XML.glFunction):
 			else:
 				raise RuntimeError('Invalid handcode mode "%s" in function "%s".' % (handcode, self.name))
 
-
-			if attrs.get('ignore', "false") == "true":
-				self.ignore = 1
-			else:
-				self.ignore = 0
-
-			if attrs.get('large', "false") == "true":
-				self.can_be_large = 1
-			else:
-				self.can_be_large = 0
-
-			if attrs.get('doubles_in_order', "false") == "true":
-				self.glx_doubles_in_order = 1
-			else:
-				self.glx_doubles_in_order = 0
-
-			if attrs.get('always_array', "false") == "true":
-				self.reply_always_array = 1
-			else:
-				self.reply_always_array = 0
-
-			if attrs.get('dimensions_in_reply', "false") == "true":
-				self.dimensions_in_reply = 1
-			else:
-				self.dimensions_in_reply = 0
+			self.ignore               = gl_XML.is_attr_true( attrs, 'ignore' )
+			self.can_be_large         = gl_XML.is_attr_true( attrs, 'large' )
+			self.glx_doubles_in_order = gl_XML.is_attr_true( attrs, 'doubles_in_order' )
+			self.reply_always_array   = gl_XML.is_attr_true( attrs, 'always_array' )
+			self.dimensions_in_reply  = gl_XML.is_attr_true( attrs, 'dimensions_in_reply' )
 		else:
 			gl_XML.glFunction.startElement(self, name, attrs)
 

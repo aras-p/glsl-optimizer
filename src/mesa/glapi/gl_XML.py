@@ -31,6 +31,23 @@ from xml.sax.handler import feature_namespaces
 
 import re
 
+def is_attr_true( attrs, name ):
+	"""Read a name value from an element's attributes.
+	
+	The value read from the attribute list must be either 'true' or
+	'false'.  If the value is 'false', zero will be returned.  If the
+	value is 'true', non-zero will be returned.  An exception will be
+	raised for any other value."""
+
+	value = attrs.get(name, "false")
+	if value == "true":
+		return 1
+	elif value == "false":
+		return 0
+	else:
+		raise RuntimeError('Invalid value "%s" for boolean "%s".' % (value, name))
+
+
 class glItem:
 	"""Generic class on which all other API entity types are based."""
 
@@ -178,17 +195,10 @@ class glParameter( glItem ):
 
 		self.count_scale = int(attrs.get('count_scale', "1"))
 			
-		if attrs.get('counter', "false") == "true":
-			self.is_counter = 1
-		else:
-			self.is_counter = 0
+		self.is_counter = is_attr_true( attrs, 'counter' )
+		self.is_output  = is_attr_true( attrs, 'output' )
 
-		if attrs.get('output', "false") == "true":
-			self.is_output = 1
-		else:
-			self.is_output = 0
 
-			
 		# Pixel data has special parameters.
 
 		self.width      = attrs.get('img_width',  None)
@@ -205,26 +215,9 @@ class glParameter( glItem ):
 		self.img_type   = attrs.get('img_type',   None)
 		self.img_target = attrs.get('img_target', None)
 
-		pad = attrs.get('img_pad_dimensions', "false")
-		if pad == "true":
-			self.img_pad_dimensions = 1
-		else:
-			self.img_pad_dimensions = 0
-
-
-		null_flag = attrs.get('img_null_flag', "false")
-		if null_flag == "true":
-			self.img_null_flag = 1
-		else:
-			self.img_null_flag = 0
-
-		send_null = attrs.get('img_send_null', "false")
-		if send_null == "true":
-			self.img_send_null = 1
-		else:
-			self.img_send_null = 0
-
-
+		self.img_pad_dimensions = is_attr_true( attrs, 'img_pad_dimensions' )
+		self.img_null_flag      = is_attr_true( attrs, 'img_null_flag' )
+		self.img_send_null      = is_attr_true( attrs, 'img_send_null' )
 
 		if self.p_count > 0 or self.counter or self.count_parameter_list:
 			has_count = 1
