@@ -256,7 +256,7 @@ HRESULT _gldCreatePrimitiveBuffer(
 	// If CVA (Compiled Vertex Array) is used by an OpenGL app, then we
 	// will need enough vertices to cater for Mesa::Const.MaxArrayLockSize.
 	// We'll use IMM_SIZE if it's larger (which it should not be).
-	dwMaxVertices = (IMM_SIZE < MAX_ARRAY_LOCK_SIZE) ? MAX_ARRAY_LOCK_SIZE : IMM_SIZE;
+	dwMaxVertices = MAX_ARRAY_LOCK_SIZE;
 
     // Max vertex buffer size limited in DX7. (DaveM)
     if (dwMaxVertices*9 > D3DMAXNUMVERTICES)

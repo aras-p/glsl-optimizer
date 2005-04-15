@@ -53,6 +53,7 @@
 #include "mtypes.h"
 #include "texformat.h"
 #include "texstore.h"
+#include "teximage.h"
 #include "array_cache/acache.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -706,7 +707,7 @@ static clear(GLcontext* ctx, GLbitfield mask,
   if ((mask & (DD_FRONT_LEFT_BIT | DD_BACK_RIGHT_BIT)) &&
       ctx->DrawBuffer->UseSoftwareAlphaBuffers &&
       ctx->Color.ColorMask[ACOMP]) {
-      _mesa_clear_alpha_buffers( ctx );
+      _swrast_clear_alpha_buffers( ctx );
   }
   
   if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {

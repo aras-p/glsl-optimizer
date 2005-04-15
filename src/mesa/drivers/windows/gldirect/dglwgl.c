@@ -39,7 +39,7 @@
 #include "gld_driver.h"
 #endif
 
-#include "glu.h"	// MUST USE MICROSOFT'S GLU32!
+#include "gl/glu.h"	// MUST USE MICROSOFT'S GLU32!
 
 #ifndef _USE_GLD3_WGL
 extern DGL_mesaFuncs mesaFuncs;

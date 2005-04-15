@@ -67,10 +67,10 @@
 
 static void gld_fetch_1d_texel_X8R8G8B8(
 	const struct gl_texture_image *texImage,
-	GLint i, GLint j, GLint k, GLvoid *texel )
+	GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLchan *src = CHAN_SRC( texImage, i, j, k, 4 );
-   GLchan *rgba = (GLchan *) texel;
+   GLchan *rgba = (GLchan *)texel;
    rgba[RCOMP] = src[2];
    rgba[GCOMP] = src[1];
    rgba[BCOMP] = src[0];
@@ -79,9 +79,22 @@ static void gld_fetch_1d_texel_X8R8G8B8(
 
 //---------------------------------------------------------------------------
 
+static void gld_fetch_1d_texel_f_X8R8G8B8(
+	const struct gl_texture_image *texImage,
+    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLchan *src = CHAN_SRC( texImage, i, j, k, 4 );
+   texel[RCOMP] = CHAN_TO_FLOAT(src[0]);
+   texel[GCOMP] = CHAN_TO_FLOAT(src[1]);
+   texel[BCOMP] = CHAN_TO_FLOAT(src[2]);
+   texel[ACOMP] = 1.f;
+}
+
+//---------------------------------------------------------------------------
+
 static void gld_fetch_1d_texel_X1R5G5B5(
 	const struct gl_texture_image *texImage,
-	GLint i, GLint j, GLint k, GLvoid *texel )
+	GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
    GLchan *rgba = (GLchan *) texel; GLushort s = *src;
@@ -93,9 +106,23 @@ static void gld_fetch_1d_texel_X1R5G5B5(
 
 //---------------------------------------------------------------------------
 
+static void gld_fetch_1d_texel_f_X1R5G5B5(
+	const struct gl_texture_image *texImage,
+    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLushort *src = USHORT_SRC( texImage, i, j, k );
+   GLushort s = *src;
+   texel[RCOMP] = UBYTE_TO_FLOAT( ((s >> 10) & 0xf8) * 255 / 0xf8 );
+   texel[GCOMP] = UBYTE_TO_FLOAT( ((s >>  5) & 0xf8) * 255 / 0xf8 );
+   texel[BCOMP] = UBYTE_TO_FLOAT( ((s      ) & 0xf8) * 255 / 0xf8 );
+   texel[ACOMP] = 1.f;
+}
+
+//---------------------------------------------------------------------------
+
 static void gld_fetch_1d_texel_X4R4G4B4(
 	const struct gl_texture_image *texImage,
-	GLint i, GLint j, GLint k, GLvoid *texel )
+	GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
    GLchan *rgba = (GLchan *) texel; GLushort s = *src;
@@ -103,6 +130,20 @@ static void gld_fetch_1d_texel_X4R4G4B4(
    rgba[GCOMP] = UBYTE_TO_CHAN( ((s >>  4) & 0xf) * 255 / 0xf );
    rgba[BCOMP] = UBYTE_TO_CHAN( ((s      ) & 0xf) * 255 / 0xf );
    rgba[ACOMP] = CHAN_MAX;
+}
+
+//---------------------------------------------------------------------------
+
+static void gld_fetch_1d_texel_f_X4R4G4B4(
+	const struct gl_texture_image *texImage,
+    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLushort *src = USHORT_SRC( texImage, i, j, k );
+   GLushort s = *src;
+   texel[RCOMP] = UBYTE_TO_FLOAT( ((s >>  8) & 0xf) * 255 / 0xf );
+   texel[GCOMP] = UBYTE_TO_FLOAT( ((s >>  4) & 0xf) * 255 / 0xf );
+   texel[BCOMP] = UBYTE_TO_FLOAT( ((s      ) & 0xf) * 255 / 0xf );
+   texel[ACOMP] = 1.f;
 }
 
 //---------------------------------------------------------------------------
@@ -129,10 +170,10 @@ static void gld_fetch_1d_texel_X4R4G4B4(
 
 static void gld_fetch_2d_texel_X8R8G8B8(
 	const struct gl_texture_image *texImage,
-	GLint i, GLint j, GLint k, GLvoid *texel )
+	GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLchan *src = CHAN_SRC( texImage, i, j, k, 4 );
-   GLchan *rgba = (GLchan *) texel;
+   GLchan *rgba = (GLchan *)texel;
    rgba[RCOMP] = src[2];
    rgba[GCOMP] = src[1];
    rgba[BCOMP] = src[0];
@@ -141,9 +182,22 @@ static void gld_fetch_2d_texel_X8R8G8B8(
 
 //---------------------------------------------------------------------------
 
+static void gld_fetch_2d_texel_f_X8R8G8B8(
+	const struct gl_texture_image *texImage,
+    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLchan *src = CHAN_SRC( texImage, i, j, k, 4 );
+   texel[RCOMP] = CHAN_TO_FLOAT(src[0]);
+   texel[GCOMP] = CHAN_TO_FLOAT(src[1]);
+   texel[BCOMP] = CHAN_TO_FLOAT(src[2]);
+   texel[ACOMP] = 1.f;
+}
+
+//---------------------------------------------------------------------------
+
 static void gld_fetch_2d_texel_X1R5G5B5(
 	const struct gl_texture_image *texImage,
-	GLint i, GLint j, GLint k, GLvoid *texel )
+	GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
    GLchan *rgba = (GLchan *) texel; GLushort s = *src;
@@ -155,9 +209,23 @@ static void gld_fetch_2d_texel_X1R5G5B5(
 
 //---------------------------------------------------------------------------
 
+static void gld_fetch_2d_texel_f_X1R5G5B5(
+	const struct gl_texture_image *texImage,
+    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLushort *src = USHORT_SRC( texImage, i, j, k );
+   GLushort s = *src;
+   texel[RCOMP] = UBYTE_TO_FLOAT( ((s >> 10) & 0xf8) * 255 / 0xf8 );
+   texel[GCOMP] = UBYTE_TO_FLOAT( ((s >>  5) & 0xf8) * 255 / 0xf8 );
+   texel[BCOMP] = UBYTE_TO_FLOAT( ((s      ) & 0xf8) * 255 / 0xf8 );
+   texel[ACOMP] = 1.f;
+}
+
+//---------------------------------------------------------------------------
+
 static void gld_fetch_2d_texel_X4R4G4B4(
 	const struct gl_texture_image *texImage,
-	GLint i, GLint j, GLint k, GLvoid *texel )
+	GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
    GLchan *rgba = (GLchan *) texel; GLushort s = *src;
@@ -165,6 +233,20 @@ static void gld_fetch_2d_texel_X4R4G4B4(
    rgba[GCOMP] = UBYTE_TO_CHAN( ((s >>  4) & 0xf) * 255 / 0xf );
    rgba[BCOMP] = UBYTE_TO_CHAN( ((s      ) & 0xf) * 255 / 0xf );
    rgba[ACOMP] = CHAN_MAX;
+}
+
+//---------------------------------------------------------------------------
+
+static void gld_fetch_2d_texel_f_X4R4G4B4(
+	const struct gl_texture_image *texImage,
+    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLushort *src = USHORT_SRC( texImage, i, j, k );
+   GLushort s = *src;
+   texel[RCOMP] = UBYTE_TO_FLOAT( ((s >>  8) & 0xf) * 255 / 0xf );
+   texel[GCOMP] = UBYTE_TO_FLOAT( ((s >>  4) & 0xf) * 255 / 0xf );
+   texel[BCOMP] = UBYTE_TO_FLOAT( ((s      ) & 0xf) * 255 / 0xf );
+   texel[ACOMP] = 1.f;
 }
 
 //---------------------------------------------------------------------------
@@ -195,10 +277,10 @@ static void gld_fetch_2d_texel_X4R4G4B4(
 
 static void gld_fetch_3d_texel_X8R8G8B8(
 	const struct gl_texture_image *texImage,
-	GLint i, GLint j, GLint k, GLvoid *texel )
+	GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLchan *src = CHAN_SRC( texImage, i, j, k, 4 );
-   GLchan *rgba = (GLchan *) texel;
+   GLchan *rgba = (GLchan *)texel;
    rgba[RCOMP] = src[2];
    rgba[GCOMP] = src[1];
    rgba[BCOMP] = src[0];
@@ -207,9 +289,22 @@ static void gld_fetch_3d_texel_X8R8G8B8(
 
 //---------------------------------------------------------------------------
 
+static void gld_fetch_3d_texel_f_X8R8G8B8(
+	const struct gl_texture_image *texImage,
+    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLchan *src = CHAN_SRC( texImage, i, j, k, 4 );
+   texel[RCOMP] = CHAN_TO_FLOAT(src[0]);
+   texel[GCOMP] = CHAN_TO_FLOAT(src[1]);
+   texel[BCOMP] = CHAN_TO_FLOAT(src[2]);
+   texel[ACOMP] = 1.f;
+}
+
+//---------------------------------------------------------------------------
+
 static void gld_fetch_3d_texel_X1R5G5B5(
 	const struct gl_texture_image *texImage,
-	GLint i, GLint j, GLint k, GLvoid *texel )
+	GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
    GLchan *rgba = (GLchan *) texel; GLushort s = *src;
@@ -221,9 +316,23 @@ static void gld_fetch_3d_texel_X1R5G5B5(
 
 //---------------------------------------------------------------------------
 
+static void gld_fetch_3d_texel_f_X1R5G5B5(
+	const struct gl_texture_image *texImage,
+    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLushort *src = USHORT_SRC( texImage, i, j, k );
+   GLushort s = *src;
+   texel[RCOMP] = UBYTE_TO_FLOAT( ((s >> 10) & 0xf8) * 255 / 0xf8 );
+   texel[GCOMP] = UBYTE_TO_FLOAT( ((s >>  5) & 0xf8) * 255 / 0xf8 );
+   texel[BCOMP] = UBYTE_TO_FLOAT( ((s      ) & 0xf8) * 255 / 0xf8 );
+   texel[ACOMP] = 1.f;
+}
+
+//---------------------------------------------------------------------------
+
 static void gld_fetch_3d_texel_X4R4G4B4(
 	const struct gl_texture_image *texImage,
-	GLint i, GLint j, GLint k, GLvoid *texel )
+	GLint i, GLint j, GLint k, GLchan *texel )
 {
    const GLushort *src = USHORT_SRC( texImage, i, j, k );
    GLchan *rgba = (GLchan *) texel; GLushort s = *src;
@@ -231,6 +340,20 @@ static void gld_fetch_3d_texel_X4R4G4B4(
    rgba[GCOMP] = UBYTE_TO_CHAN( ((s >>  4) & 0xf) * 255 / 0xf );
    rgba[BCOMP] = UBYTE_TO_CHAN( ((s      ) & 0xf) * 255 / 0xf );
    rgba[ACOMP] = CHAN_MAX;
+}
+
+//---------------------------------------------------------------------------
+
+static void gld_fetch_3d_texel_f_X4R4G4B4(
+	const struct gl_texture_image *texImage,
+    GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLushort *src = USHORT_SRC( texImage, i, j, k );
+   GLushort s = *src;
+   texel[RCOMP] = UBYTE_TO_FLOAT( ((s >>  8) & 0xf) * 255 / 0xf );
+   texel[GCOMP] = UBYTE_TO_FLOAT( ((s >>  4) & 0xf) * 255 / 0xf );
+   texel[BCOMP] = UBYTE_TO_FLOAT( ((s      ) & 0xf) * 255 / 0xf );
+   texel[ACOMP] = 1.f;
 }
 
 //---------------------------------------------------------------------------
@@ -247,7 +370,7 @@ static void gld_fetch_3d_texel_X4R4G4B4(
 const struct gl_texture_format _gld_texformat_X8R8G8B8 = {
    MESA_FORMAT_ARGB8888,		/* MesaFormat */
    GL_RGBA,				/* BaseFormat */
-//   GL_UNSIGNED_BYTE,	/* Type */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
    8,					/* RedBits */
    8,					/* GreenBits */
    8,					/* BlueBits */
@@ -257,15 +380,19 @@ const struct gl_texture_format _gld_texformat_X8R8G8B8 = {
    0,					/* IndexBits */
    0,					/* DepthBits */
    4,					/* TexelBytes */
+   _mesa_texstore_argb8888,			/* StoreTexImageFunc */
    gld_fetch_1d_texel_X8R8G8B8,		/* FetchTexel1D */
    gld_fetch_2d_texel_X8R8G8B8,		/* FetchTexel2D */
    gld_fetch_3d_texel_X8R8G8B8,		/* FetchTexel3D */
+   gld_fetch_1d_texel_f_X8R8G8B8,		/* FetchTexel1Df */
+   gld_fetch_2d_texel_f_X8R8G8B8,		/* FetchTexel2Df */
+   gld_fetch_3d_texel_f_X8R8G8B8,		/* FetchTexel3Df */
 };
 
 const struct gl_texture_format _gld_texformat_X1R5G5B5 = {
    MESA_FORMAT_ARGB1555,		/* MesaFormat */
    GL_RGBA,				/* BaseFormat */
-//   GL_UNSIGNED_SHORT_1_5_5_5_REV,	/* Type */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
    5,					/* RedBits */
    5,					/* GreenBits */
    5,					/* BlueBits */
@@ -275,15 +402,19 @@ const struct gl_texture_format _gld_texformat_X1R5G5B5 = {
    0,					/* IndexBits */
    0,					/* DepthBits */
    2,					/* TexelBytes */
+   _mesa_texstore_argb1555,			/* StoreTexImageFunc */
    gld_fetch_1d_texel_X1R5G5B5,		/* FetchTexel1D */
    gld_fetch_2d_texel_X1R5G5B5,		/* FetchTexel2D */
    gld_fetch_3d_texel_X1R5G5B5,		/* FetchTexel3D */
+   gld_fetch_1d_texel_f_X1R5G5B5,		/* FetchTexel1Df */
+   gld_fetch_2d_texel_f_X1R5G5B5,		/* FetchTexel2Df */
+   gld_fetch_3d_texel_f_X1R5G5B5,		/* FetchTexel3Df */
 };
 
 const struct gl_texture_format _gld_texformat_X4R4G4B4 = {
    MESA_FORMAT_ARGB4444,		/* MesaFormat */
    GL_RGBA,				/* BaseFormat */
-//   GL_UNSIGNED_SHORT_4_4_4_4_REV,	/* Type */
+   GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
    4,					/* RedBits */
    4,					/* GreenBits */
    4,					/* BlueBits */
@@ -293,9 +424,13 @@ const struct gl_texture_format _gld_texformat_X4R4G4B4 = {
    0,					/* IndexBits */
    0,					/* DepthBits */
    2,					/* TexelBytes */
+   _mesa_texstore_argb4444,			/* StoreTexImageFunc */
    gld_fetch_1d_texel_X4R4G4B4,		/* FetchTexel1D */
    gld_fetch_2d_texel_X4R4G4B4,		/* FetchTexel2D */
    gld_fetch_3d_texel_X4R4G4B4,		/* FetchTexel3D */
+   gld_fetch_1d_texel_f_X4R4G4B4,		/* FetchTexel1Df */
+   gld_fetch_2d_texel_f_X4R4G4B4,		/* FetchTexel2Df */
+   gld_fetch_3d_texel_f_X4R4G4B4,		/* FetchTexel3Df */
 };
 
 //---------------------------------------------------------------------------
@@ -860,6 +995,8 @@ void gld_DrawPixels_DX8(
 	HRESULT				hr;
 	D3DLOCKED_RECT		d3dLockedRect;
 
+	const struct gl_texture_format	*MesaFormat;
+
 	gldCtx	= GLD_GET_CONTEXT(ctx);
 	gld		= GLD_GET_DX8_DRIVER(gldCtx);
 
@@ -884,8 +1021,10 @@ void gld_DrawPixels_DX8(
 		return;
 	}
 
+	MesaFormat = _mesa_choose_tex_format(ctx, format, format, type);
+
 	// unpack image, apply transfer ops and store directly in texture
-	_mesa_transfer_teximage(
+	MesaFormat->StoreImage(
 		ctx,
 		2,
 		GL_RGBA,
@@ -1031,9 +1170,9 @@ void gld_ReadPixels_DX8(
 	// We need to flip the data. Yuck.
 	// Perhaps Mesa has a span packer we can use in future...
 	for (i=0; i<height; i++) {
-		BYTE *pDestRow = (BYTE*)_mesa_image_address2d(pack, dest, width, height, format, type, 0, i, 0);
+		BYTE *pDestRow = (BYTE*)_mesa_image_address(2,pack, dest, width, height, format, type, 0, i, 0);
 		BYTE *pSrcRow = (BYTE*)d3dLockedRect.pBits + (d3dLockedRect.Pitch * (height-i-1));
-		_mesa_transfer_teximage(
+		MesaFormat->StoreImage(
 			ctx,
 			2,
 			GL_RGBA,				// base format
@@ -1203,7 +1342,7 @@ void gld_Bitmap_DX8(
 	for (i=0; i<height; i++) {
 		GLubyte byte;
 		pBits = (D3DCOLOR*)((BYTE*)d3dLockedRect.pBits + (i*d3dLockedRect.Pitch));
-		src = (const GLubyte *) _mesa_image_address2d(
+		src = (const GLubyte *) _mesa_image_address(2,
 			&ctx->DefaultPacking, pTempBitmap, width, height, GL_COLOR_INDEX, GL_BITMAP,
 			0, i, 0);
 		for (j=0; j<(width>>3); j++) {
@@ -1227,7 +1366,7 @@ void gld_Bitmap_DX8(
 
 /*
 	// unpack image, apply transfer ops and store directly in texture
-	_mesa_transfer_teximage(
+	texImage->TexFormat->StoreImage(
 		ctx,
 		2,
 		GL_BITMAP,
@@ -1432,7 +1571,7 @@ void gld_TexImage2D_DX8(
 		return;
 	}
 	// unpack image, apply transfer ops and store in tempImage
-	_mesa_transfer_teximage(ctx, 2, texImage->Format,
+	texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
 		&_mesa_texformat_argb8888, // dest format
 		tempImage,
 		width, height, 1, 0, 0, 0,
@@ -1520,7 +1659,7 @@ void gld_TexImage2D_DX8(
 	}
 
 	// unpack image, apply transfer ops and store directly in texture
-	_mesa_transfer_teximage(
+	texImage->TexFormat->StoreImage(
 		ctx,
 		2,
 		texImage->Format,
@@ -1592,7 +1731,7 @@ void gld_TexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
 	}
 
 	// unpack image, apply transfer ops and store in tempImage
-	_mesa_transfer_teximage(ctx, 2, texImage->Format,
+	texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
 		&_mesa_texformat_argb8888, // dest format
 		tempImage,
 		width, height, 1, 0, 0, 0,
@@ -1673,7 +1812,7 @@ void gld_TexSubImage2D_DX8( GLcontext *ctx, GLenum target, GLint level,
 	}
 
 	// unpack image, apply transfer ops and store directly in texture
-	_mesa_transfer_teximage(ctx, 2, texImage->Format,
+	texImage->TexFormat->StoreImage(ctx, 2, texImage->Format,
 		_gldMesaFormatForD3DFormat(d3dsd.Format),
 		d3dLockedRect.pBits,
 		width, height, 1,

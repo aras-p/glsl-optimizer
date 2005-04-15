@@ -1,4 +1,4 @@
-/* $Id: gld_vb_mesa_render_dx9.c,v 1.3 2005/04/14 16:58:25 bencrossman Exp $ */
+/* $Id: gld_vb_mesa_render_dx9.c,v 1.4 2005/04/15 17:17:47 bencrossman Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -440,40 +440,7 @@ static void _gld_mesa_render_stage_check(
 	GLcontext *ctx,
 	struct tnl_pipeline_stage *stage)
 {
-   GLuint inputs = VERT_BIT_CLIP;
-   GLuint i;
-
-   if (ctx->Visual.rgbMode) {
-	   inputs |= VERT_BIT_COLOR0;
-	   
-	   if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
-		   inputs |= VERT_BIT_COLOR1; //VERT_BIT_SPEC_RGB;
-	   
-	   //if (ctx->Texture._ReallyEnabled) {
-	   for (i=0; i<ctx->Const.MaxTextureUnits; i++) {
-		   if (ctx->Texture.Unit[i]._ReallyEnabled)
-			   inputs |= VERT_BIT_TEX(i);
-	   }
-	   //}
-   } else {
-	   inputs |= VERT_BIT_INDEX;
-   }
-
-   if (ctx->Point._Attenuated)
-      inputs |= VERT_BIT_POINT_SIZE;
-
-   /* How do drivers turn this off?
-    */
-   if (ctx->Fog.Enabled)
-      inputs |= VERT_BIT_FOG; // VERT_FOG_COORD;
-
-   if (ctx->_TriangleCaps & DD_TRI_UNFILLED)
-      inputs |= VERT_BIT_EDGEFLAG;
-
-   if (ctx->RenderMode==GL_FEEDBACK)
-      inputs |= VERT_BITS_TEX_ANY;
-
-   stage->inputs = inputs;
+   stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
 }
 
 //---------------------------------------------------------------------------

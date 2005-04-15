@@ -258,7 +258,7 @@ HRESULT _gldCreatePrimitiveBuffer(
 	// If CVA (Compiled Vertex Array) is used by an OpenGL app, then we
 	// will need enough vertices to cater for Mesa::Const.MaxArrayLockSize.
 	// We'll use IMM_SIZE if it's larger (which it should not be).
-	dwMaxVertices = (IMM_SIZE < MAX_ARRAY_LOCK_SIZE) ? MAX_ARRAY_LOCK_SIZE : IMM_SIZE;
+	dwMaxVertices = MAX_ARRAY_LOCK_SIZE;
 
 	// Now calculate how many vertices to allow for in total
 	// 1 per point, 2 per line, 6 per quad = 9
