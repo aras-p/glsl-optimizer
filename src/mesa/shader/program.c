@@ -648,20 +648,22 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
       if (state[1] == 0) {
          /* front */
          GLint i;
-         for (i = 0; i < 4; i++) {
+         for (i = 0; i < 3; i++) {
             value[i] = ctx->Light.Model.Ambient[i]
                * ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_AMBIENT][i]
                + ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_EMISSION][i];
          }
+	 value[3] = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3];
       }
       else {
          /* back */
          GLint i;
-         for (i = 0; i < 4; i++) {
+         for (i = 0; i < 3; i++) {
             value[i] = ctx->Light.Model.Ambient[i]
                * ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_AMBIENT][i]
                + ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_EMISSION][i];
          }
+	 value[3] = ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3];
       }
       return;
    case STATE_LIGHTPROD:
@@ -806,7 +808,9 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
          }
          if (modifier == STATE_MATRIX_INVERSE ||
              modifier == STATE_MATRIX_INVTRANS) {
-            /* XXX be sure inverse is up to date */
+            /* Be sure inverse is up to date:
+	     */
+	    _math_matrix_analyse( matrix );
             m = matrix->inv;
          }
          else {
