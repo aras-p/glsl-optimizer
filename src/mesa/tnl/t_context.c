@@ -82,7 +82,7 @@ _tnl_CreateContext( GLcontext *ctx )
       return GL_FALSE;
    }
 
-   if (_mesa_getenv("MESA_CODEGEN"))
+   if (getenv("MESA_CODEGEN"))
       tnl->AllowCodegen = GL_TRUE;
 
    /* Initialize the VB.
