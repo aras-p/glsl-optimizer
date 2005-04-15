@@ -225,7 +225,19 @@ typedef struct slang_translation_unit_
 	slang_unit_type type;
 } slang_translation_unit;
 
-int _slang_compile (const char *, slang_translation_unit *, slang_unit_type type);
+typedef struct slang_info_log_
+{
+	char *text;
+	int dont_free_text;
+} slang_info_log;
+
+void slang_info_log_construct (slang_info_log *);
+void slang_info_log_destruct (slang_info_log *);
+int slang_info_log_error (slang_info_log *, const char *, ...);
+int slang_info_log_warning (slang_info_log *, const char *, ...);
+void slang_info_log_memory (slang_info_log *);
+
+int _slang_compile (const char *, slang_translation_unit *, slang_unit_type type, slang_info_log *);
 
 #ifdef __cplusplus
 }

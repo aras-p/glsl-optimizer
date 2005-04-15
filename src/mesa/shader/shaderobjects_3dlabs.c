@@ -550,6 +550,7 @@ _shader_Compile (struct gl2_shader_intf **intf)
 #else
 	slang_translation_unit unit;
 	slang_unit_type type;
+	slang_info_log info_log;
 #endif
 
 	impl->_obj.compile_status = GL_FALSE;
@@ -625,14 +626,16 @@ _shader_Compile (struct gl2_shader_intf **intf)
 		type = slang_unit_fragment_shader;
 	else
 		type = slang_unit_vertex_shader;
-	if (_slang_compile (impl->_obj.source, &unit, type))
+	slang_info_log_construct (&info_log);
+	if (_slang_compile (impl->_obj.source, &unit, type, &info_log))
 	{
 		impl->_obj.compile_status = GL_TRUE;
 	}
 	else
 	{
-		impl->_obj._generic.info_log = _mesa_strdup ("error: invalid translation unit");
+		impl->_obj._generic.info_log = _mesa_strdup (info_log.text);
 	}
+	slang_info_log_destruct (&info_log);
 #endif
 }
 
