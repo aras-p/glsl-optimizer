@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Mesa 3-D graphics library
 # Version:  6.3
