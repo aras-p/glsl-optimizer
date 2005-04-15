@@ -1,0 +1,29 @@
+# Configuration for profiling on Linux with gprof
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = linux-profile
+
+# Compiler and flags
+CC = gcc
+CXX = g++
+
+CFLAGS = -pg -O -ansi -pedantic -Wall -Wmissing-prototypes -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -I/usr/X11R6/include -DUSE_XSHM -DPTHREADS -DDEBUG -DMESA_DEBUG
+
+CXXFLAGS = -pg -O -ansi -pedantic -Wall -Wundef -fPIC -ffast-math -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -DDEBUG -DMESA_DEBUG
+
+GLUT_CFLAGS = -fexceptions
+
+# Need to have -L/usr/X11R6/lib in these:
+GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
+GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
+GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lXt -L/usr/X11R6/lib -lX11
+
+# Need to make static libs for profiling:
+MKLIB_OPTIONS = -static
+GL_LIB_NAME = lib$(GL_LIB).a
+GLU_LIB_NAME = lib$(GLU_LIB).a
+GLUT_LIB_NAME = lib$(GLUT_LIB).a
+GLW_LIB_NAME = lib$(GLW_LIB).a
+OSMESA_LIB_NAME = lib$(OSMesa).a
+APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm -lpthread
