@@ -2000,6 +2000,32 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
    }
 }
 
+
+/**
+ * Make context 'ctx' share the display lists, textures and programs
+ * that are associated with 'ctxToShare'.
+ * Any display lists, textures or programs associated with 'ctx' will
+ * be deleted if nobody else is sharing them.
+ */
+GLboolean
+_mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare)
+{
+   if (ctx && ctxToShare && ctx->Shared && ctxToShare->Shared) {
+      ctx->Shared->RefCount--;
+      if (ctx->Shared->RefCount == 0) {
+         free_shared_state(ctx, ctx->Shared);
+      }
+      ctx->Shared = ctxToShare->Shared;
+      ctx->Shared->RefCount++;
+      return GL_TRUE;
+   }
+   else {
+      return GL_FALSE;
+   }
+}
+
+
+
 /**
  * Get current context for the calling thread.
  * 

@@ -162,6 +162,8 @@ extern void
 _mesa_make_current2( GLcontext *ctx, GLframebuffer *drawBuffer,
                      GLframebuffer *readBuffer );
 
+extern GLboolean
+_mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare);
 
 extern GLcontext *
 _mesa_get_current_context(void);
