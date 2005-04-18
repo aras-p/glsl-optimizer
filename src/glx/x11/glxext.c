@@ -52,7 +52,9 @@
 #include "indirect_init.h"
 #include "glapi.h"
 #ifdef XTHREADS
-#include "Xthreads.h"
+# include "Xthreads.h"
+#elif defined(PTHREADS)
+# include <pthread.h>
 #endif
 #include "glxextensions.h"
 #include "glcontextmodes.h"
@@ -138,7 +140,7 @@ static __GLapi *IndirectAPI = NULL;
  * Current context management and locking
  */
 
-#if defined(GLX_DIRECT_RENDERING) && defined(XTHREADS)
+#if defined( XTHREADS )
 
 /* thread safe */
 static GLboolean TSDinitialized = GL_FALSE;
@@ -173,6 +175,77 @@ void __glXSetCurrentContext(__GLXcontext *c)
 
 /* Used by the __glXLock() and __glXUnlock() macros */
 xmutex_rec __glXmutex;
+
+#elif defined( PTHREADS )
+
+pthread_mutex_t __glXmutex = PTHREAD_MUTEX_INITIALIZER;
+
+# if defined( GLX_USE_TLS )
+
+/**
+ * Per-thread GLX context pointer.
+ * 
+ * \c __glXSetCurrentContext is written is such a way that this pointer can
+ * \b never be \c NULL.  This is important!  Because of this
+ * \c __glXGetCurrentContext can be implemented as trivial macro.
+ */
+__thread void * __glX_tls_Context __attribute__((tls_model("initial-exec")))
+    = &dummyContext;
+
+void __glXSetCurrentContext( __GLXcontext * c )
+{
+    __glX_tls_Context = (c != NULL) ? c : &dummyContext;
+}
+
+# else
+
+static pthread_once_t once_control = PTHREAD_ONCE_INIT;
+
+/**
+ * Per-thread data key.
+ * 
+ * Once \c init_thread_data has been called, the per-thread data key will
+ * take a value of \c NULL.  As each new thread is created the default
+ * value, in that thread, will be \c NULL.
+ */
+static pthread_key_t ContextTSD;
+
+/**
+ * Initialize the per-thread data key.
+ * 
+ * This function is called \b exactly once per-process (not per-thread!) to
+ * initialize the per-thread data key.  This is ideally done using the
+ * \c pthread_once mechanism.
+ */
+static void init_thread_data( void )
+{
+    if ( pthread_key_create( & ContextTSD, NULL ) != 0 ) {
+	perror( "pthread_key_create" );
+	exit( -1 );
+    }
+}
+
+void __glXSetCurrentContext( __GLXcontext * c )
+{
+    pthread_once( & once_control, init_thread_data );
+    pthread_setspecific( ContextTSD, c );
+}
+
+__GLXcontext * __glXGetCurrentContext( void )
+{
+    void * v;
+
+    pthread_once( & once_control, init_thread_data );
+
+    v = pthread_getspecific( ContextTSD );
+    return (v == NULL) ? & dummyContext : (__GLXcontext *) v;
+}
+
+# endif /* defined( GLX_USE_TLS ) */
+
+#elif defined( THREADS )
+
+#error Unknown threading method specified.
 
 #else
 
@@ -1119,7 +1192,7 @@ __GLXdisplayPrivate *__glXInitialize(Display* dpy)
     XEDataObject dataObj;
     int major, minor;
 
-#if defined(GLX_DIRECT_RENDERING) && defined(XTHREADS)
+#if defined(XTHREADS)
     {
         static int firstCall = 1;
         if (firstCall) {

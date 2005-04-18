@@ -60,8 +60,10 @@
 #include "GL/internal/glcore.h"
 #include "glapitable.h"
 #include "glxextensions.h"
-#ifdef XTHREADS
-#include "Xthreads.h"
+#if defined( XTHREADS )
+# include "Xthreads.h"
+#elif defined( PTHREADS )
+# include <pthread.h>
 #endif
 #ifdef GLX_BUILT_IN_XMESA
 #include "realglx.h"  /* just silences prototype warnings */
@@ -625,24 +627,44 @@ extern __GLXdisplayPrivate *__glXInitialize(Display*);
 extern int __glXDebug;
 
 /* This is per-thread storage in an MT environment */
-#if defined(GLX_DIRECT_RENDERING) && defined(XTHREADS)
-extern __GLXcontext *__glXGetCurrentContext(void);
+#if defined( XTHREADS ) || defined( PTHREADS )
+
 extern void __glXSetCurrentContext(__GLXcontext *c);
+
+# if defined( GLX_USE_TLS )
+
+extern __thread void * __glX_tls_Context
+    __attribute__((tls_model("initial-exec")));
+
+#  define __glXGetCurrentContext()	__glX_tls_Context
+
+# else
+
+extern __GLXcontext *__glXGetCurrentContext(void);
+
+# endif /* defined( GLX_USE_TLS ) */
+
 #else
+
 extern __GLXcontext *__glXcurrentContext;
 #define __glXGetCurrentContext()	__glXcurrentContext
 #define __glXSetCurrentContext(gc)	__glXcurrentContext = gc
-#endif
+
+#endif /* defined( XTHREADS ) || defined( PTHREADS ) */
 
 
 /*
 ** Global lock for all threads in this address space using the GLX
 ** extension
 */
-#if defined(GLX_DIRECT_RENDERING) && defined(XTHREADS)
+#if defined( XTHREADS )
 extern xmutex_rec __glXmutex;
 #define __glXLock()    xmutex_lock(&__glXmutex)
 #define __glXUnlock()  xmutex_unlock(&__glXmutex)
+#elif defined( PTHREADS )
+extern pthread_mutex_t __glXmutex;
+#define __glXLock()    pthread_mutex_lock(&__glXmutex)
+#define __glXUnlock()  pthread_mutex_unlock(&__glXmutex)
 #else
 #define __glXLock()
 #define __glXUnlock()
