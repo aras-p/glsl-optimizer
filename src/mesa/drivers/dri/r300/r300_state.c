@@ -2126,7 +2126,7 @@ void r300ResetHwState(r300ContextPtr r300)
 		/* Initialize magic registers
 		 TODO : learn what they really do, or get rid of
 		 those we don't have to touch */
-	r300->hw.unk2080.cmd[1] = 0x0030045A;
+	r300->hw.unk2080.cmd[1] = 0x0030045A; /* Dangerous */
 
 	r300->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
 				| R300_VPORT_X_OFFSET_ENA

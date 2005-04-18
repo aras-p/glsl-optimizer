@@ -218,15 +218,12 @@ void r300EmitElts(GLcontext * ctx, GLuint *elts, unsigned long n_elts)
 	unsigned short int *out;
 	int i;
 	
-	r300AllocDmaRegion(rmesa, rvb, (n_elts+1)*2 , 0x20);
+	r300AllocDmaRegion(rmesa, rvb, n_elts*sizeof(unsigned short int), 2);
 	
 	out = (unsigned short int *)(rvb->address + rvb->start);
 	
 	for(i=0; i < n_elts; i++)
 		out[i]=(unsigned short int)elts[i];
-	
-	if(n_elts & 1)
-		out[i]=0;
 }
 
 /* Emit vertex data to GART memory (unless immediate mode)

@@ -466,18 +466,22 @@ static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type
 	LOCAL_VARS
 	unsigned long addr_a;
 	
-	addr_a = addr & 0x1c;
+	if(addr & 1){
+		WARN_ONCE("Badly aligned buffer\n");
+		return ;
+	}
+	addr_a = 0; /*addr & 0x1c;*/
 	
 	check_space(6);
 	
 	start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, 0);
-	/* TODO: Check if R300_VAP_VF_CNTL__INDEX_SIZE_32bit works. */
+	/* TODO: R300_VAP_VF_CNTL__INDEX_SIZE_32bit . */
 	e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type);
 
 	start_packet3(RADEON_CP_PACKET3_INDX_BUFFER, 2);
 	e32(R300_EB_UNK1 | (addr_a << 16) | R300_EB_UNK2);
-	e32(addr & 0xffffffe3);
-	e32((vertex_count+1)/2 + addr_a/4);
+	e32(addr /*& 0xffffffe3*/);
+	e32((vertex_count+1)/2 /*+ addr_a/4*/); /* Total number of dwords needed? */
 }
 
 static void r300_render_vb_primitive(r300ContextPtr rmesa,
@@ -500,7 +504,7 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 
    if(rmesa->state.Elts){
 	r300EmitAOS(rmesa, rmesa->state.aos_count, 0);
-#if 1
+#if 0
 	start_index32_packet(num_verts, type);
 	for(i=0; i < num_verts; i++)
 		e32(rmesa->state.Elts[start+i]); /* start ? */
