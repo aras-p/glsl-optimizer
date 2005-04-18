@@ -435,6 +435,28 @@ static void r300UpdateCulling(GLcontext* ctx)
 	r300->hw.cul.cmd[R300_CUL_CULL] = val;
 }
 
+static void update_early_z(GLcontext* ctx)
+{
+	/* updates register 0x4f14 
+	   if depth test is not enabled it should be 0x00000000
+	   if depth is enabled and alpha not it should be 0x00000001
+	   if depth and alpha is enabled it should be 0x00000000
+	*/
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	R300_STATECHANGE(r300, unk4F10);
+	if (ctx->Color.AlphaEnabled)
+		/* disable early Z */
+		r300->hw.unk4F10.cmd[2] = 0x00000000;
+	else {
+		if (ctx->Depth.Test)
+			/* enable early Z */
+			r300->hw.unk4F10.cmd[2] = 0x00000001;
+		else
+			/* disable early Z */
+			r300->hw.unk4F10.cmd[2] = 0x00000000;
+	}
+}
 
 /**
  * Handle glEnable()/glDisable().
@@ -468,6 +490,7 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 			r300->hw.at.cmd[R300_AT_ALPHA_TEST] &=
 			    ~R300_ALPHA_TEST_ENABLE;
 		}
+		update_early_z(ctx);
 		break;
 
 	case GL_BLEND:
@@ -488,6 +511,7 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 
 		r300->hw.zs.cmd[R300_ZS_CNTL_0] &= R300_RB3D_STENCIL_ENABLE;
 		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= newval;
+		update_early_z(ctx);
 		break;
 
 	case GL_STENCIL_TEST:
@@ -2314,12 +2338,12 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4EA0.cmd[2] = 0xffffffff;
 
 	r300->hw.unk4F10.cmd[1] = 0x00000002; // depthbuffer format?
-	r300->hw.unk4F10.cmd[2] = 0x00000000;
+	//r300->hw.unk4F10.cmd[2] = 0x00000000;
 	r300->hw.unk4F10.cmd[3] = 0x00000003;
 	r300->hw.unk4F10.cmd[4] = 0x00000000;
 
 	/* experiment a bit */
-	r300->hw.unk4F10.cmd[2] = 0x00000001; // depthbuffer format?
+	//r300->hw.unk4F10.cmd[2] = 0x00000001; // depthbuffer format?
 
 	r300->hw.zb.cmd[R300_ZB_OFFSET] =
 		r300->radeon.radeonScreen->depthOffset +
