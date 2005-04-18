@@ -30,6 +30,7 @@ from xml.sax import make_parser
 from xml.sax.handler import feature_namespaces
 
 import re
+import sys
 
 def is_attr_true( attrs, name ):
 	"""Read a name value from an element's attributes.
@@ -55,12 +56,17 @@ def parse_GL_API( handler, file_name ):
 	supplied SAX callback, which should be derived from
 	FilterGLAPISpecBase.
 	"""
+
 	parser = make_parser()
 	parser.setFeature(feature_namespaces, 1)
 	parser.setContentHandler( handler )
 
 	handler.printHeader()
-	parser.parse( file_name )
+
+	if not file_name or file_name == "-":
+		parser.parse( sys.stdin )
+	else:
+		parser.parse( file_name )
 
 	handler.printFooter()
 	return
