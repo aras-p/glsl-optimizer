@@ -48,6 +48,24 @@ def is_attr_true( attrs, name ):
 		raise RuntimeError('Invalid value "%s" for boolean "%s".' % (value, name))
 
 
+def parse_GL_API( handler, file_name ):
+	"""Boiler-plate code to create an XML parser and use it.
+
+	Creates an XML parser and uses that parser with the application
+	supplied SAX callback, which should be derived from
+	FilterGLAPISpecBase.
+	"""
+	parser = make_parser()
+	parser.setFeature(feature_namespaces, 1)
+	parser.setContentHandler( handler )
+
+	handler.printHeader()
+	parser.parse( file_name )
+
+	handler.printFooter()
+	return
+	
+
 class glItem:
 	"""Generic class on which all other API entity types are based."""
 

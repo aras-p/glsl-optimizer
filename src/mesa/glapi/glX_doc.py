@@ -25,10 +25,6 @@
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
 
-from xml.sax import saxutils
-from xml.sax import make_parser
-from xml.sax.handler import feature_namespaces
-
 import gl_XML
 import glX_XML
 import license
@@ -266,13 +262,4 @@ if __name__ == '__main__':
 			file_name = val
 
 	dh = PrintGlxProtoText()
-
-	parser = make_parser()
-	parser.setFeature(feature_namespaces, 1)
-	parser.setContentHandler(dh)
-
-	f = open(file_name)
-
-	dh.printHeader()
-	parser.parse(f)
-	dh.printFooter()
+	gl_XML.parse_GL_API( dh, file_name )
