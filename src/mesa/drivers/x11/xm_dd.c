@@ -142,9 +142,12 @@ finish_or_flush( GLcontext *ctx )
 
 
 
-/*
+/**
  * This chooses the color buffer for reading and writing spans, points,
  * lines, and triangles.
+ * Remember that a GLframebuffer has several distinct color buffers:
+ * front/left, front/right, back/left, back/right and aux buffers.
+ * The bufferBit specifies which one to use.
  */
 void
 xmesa_set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
@@ -1101,7 +1104,7 @@ void xmesa_update_state( GLcontext *ctx, GLuint new_state )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
-   /* Propogate statechange information to swrast and swrast_setup
+   /* Propagate statechange information to swrast and swrast_setup
     * modules.  The X11 driver has no internal GL-dependent state.
     */
    _swrast_InvalidateState( ctx, new_state );
@@ -1115,30 +1118,29 @@ void xmesa_update_state( GLcontext *ctx, GLuint new_state )
    if (xmesa->xm_draw_buffer->backpixmap != XIMAGE) {
       xmesa->xm_draw_buffer->back_clear_func = clear_back_pixmap;
    }
-   else if (sizeof(GLushort)!=2 || sizeof(GLuint)!=4) {
-      xmesa->xm_draw_buffer->back_clear_func = clear_nbit_ximage;
-   }
-   else switch (xmesa->xm_visual->BitsPerPixel) {
-   case 8:
-      if (xmesa->xm_visual->hpcr_clear_flag) {
-	 xmesa->xm_draw_buffer->back_clear_func = clear_HPCR_ximage;
+   else {
+      switch (xmesa->xm_visual->BitsPerPixel) {
+      case 8:
+         if (xmesa->xm_visual->hpcr_clear_flag) {
+            xmesa->xm_draw_buffer->back_clear_func = clear_HPCR_ximage;
+         }
+         else {
+            xmesa->xm_draw_buffer->back_clear_func = clear_8bit_ximage;
+         }
+         break;
+      case 16:
+         xmesa->xm_draw_buffer->back_clear_func = clear_16bit_ximage;
+         break;
+      case 24:
+         xmesa->xm_draw_buffer->back_clear_func = clear_24bit_ximage;
+         break;
+      case 32:
+         xmesa->xm_draw_buffer->back_clear_func = clear_32bit_ximage;
+         break;
+      default:
+         xmesa->xm_draw_buffer->back_clear_func = clear_nbit_ximage;
+         break;
       }
-      else {
-	 xmesa->xm_draw_buffer->back_clear_func = clear_8bit_ximage;
-      }
-      break;
-   case 16:
-      xmesa->xm_draw_buffer->back_clear_func = clear_16bit_ximage;
-      break;
-   case 24:
-      xmesa->xm_draw_buffer->back_clear_func = clear_24bit_ximage;
-      break;
-   case 32:
-      xmesa->xm_draw_buffer->back_clear_func = clear_32bit_ximage;
-      break;
-   default:
-      xmesa->xm_draw_buffer->back_clear_func = clear_nbit_ximage;
-      break;
    }
 
    if (ctx->Color._DrawDestMask[0] & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) {
