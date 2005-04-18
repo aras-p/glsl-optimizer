@@ -246,8 +246,9 @@ class PrintGlxReqSize_common(glX_XML.GlxProto):
 		self.size_functions = []
 
 
-	def endElement(self, name):
-		if name == "function":
+	def endElementNS(self, name, qname):
+		[uri, true_name] = name
+		if true_name == "function":
 			f = self.current_object
 			if f.glx_rop and not f.ignore and f.fn_alias == None and f.vectorequiv == None:
 
@@ -259,7 +260,7 @@ class PrintGlxReqSize_common(glX_XML.GlxProto):
 							self.size_functions.append( f )
 							break
 
-		glX_XML.GlxProto.endElement(self, name)
+		glX_XML.GlxProto.endElementNS(self, name, qname)
 
 
 	def functionIterator(self):
@@ -533,7 +534,7 @@ if __name__ == '__main__':
 		show_usage()
 
 	parser = make_parser()
-	parser.setFeature(feature_namespaces, 0)
+	parser.setFeature(feature_namespaces, 1)
 	parser.setContentHandler(dh)
 
 	f = open(file_name)

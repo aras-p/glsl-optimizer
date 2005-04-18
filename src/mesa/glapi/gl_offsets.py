@@ -67,7 +67,7 @@ if __name__ == '__main__':
 	dh = PrintGlOffsets()
 
 	parser = make_parser()
-	parser.setFeature(feature_namespaces, 0)
+	parser.setFeature(feature_namespaces, 1)
 	parser.setContentHandler(dh)
 
 	f = open(file_name)
