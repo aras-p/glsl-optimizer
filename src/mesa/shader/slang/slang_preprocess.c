@@ -49,7 +49,7 @@ int _slang_preprocess_version (const char *text, unsigned int *version, unsigned
 	{
 		char buf[1024];
 		unsigned int pos;
-		grammar_get_last_error (buf, 1024, &pos);
+		grammar_get_last_error ( (unsigned char*) buf, 1024, (int*) &pos);
 		slang_info_log_error (log, buf);
 		return 0;
 	}
@@ -58,7 +58,7 @@ int _slang_preprocess_version (const char *text, unsigned int *version, unsigned
 	{
 		char buf[1024];
 		unsigned int pos;
-		grammar_get_last_error (buf, 1024, &pos);
+		grammar_get_last_error ( (unsigned char*) buf, 1024, (int*) &pos);
 		slang_info_log_error (log, buf);
 		grammar_destroy (id);
 		return 0;

@@ -1,6 +1,6 @@
 # Makefile for core library for VMS
 # contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
-# Last revision : 23 March 2004
+# Last revision : 15 April 2005
 
 .first
 	define gl [---.include.gl]
@@ -54,6 +54,12 @@ OBJECTS = \
 VERSION=Mesa V3.4
 
 ##### TARGETS #####
+all : 
+	$(MMS)$(MMSQUALIFIERS) $(LIBDIR)$(GL_LIB)
+	set def [.slang]
+	$(MMS)$(MMSQUALIFIERS)
+	set def [-]
+
 # Make the library
 $(LIBDIR)$(GL_LIB) : $(OBJECTS)
   @ library $(LIBDIR)$(GL_LIB) $(OBJECTS)
@@ -74,4 +80,5 @@ nvvertexec.obj : nvvertexec.c
 nvvertparse.obj : nvvertparse.c
 program.obj : program.c
 shaderobjects.obj : shaderobjects.c
+	cc$(CFLAGS)/nowarn shaderobjects.c
 shaderobjects_3dlabs.obj : shaderobjects_3dlabs.c

@@ -1978,7 +1978,7 @@ static int compile_with_grammar (grammar id, const char *source, slang_translati
 	{
 		char buf[1024];
 		unsigned int pos;
-		grammar_get_last_error (buf, 1024, &pos);
+		grammar_get_last_error ( (unsigned char*) buf, 1024, (int*) &pos);
 		slang_info_log_error (log, buf);
 		return 0;
 	}
@@ -2013,7 +2013,7 @@ int _slang_compile (const char *source, slang_translation_unit *unit, slang_unit
 	{
 		char buf[1024];
 		unsigned int pos;
-		grammar_get_last_error (buf, 1024, &pos);
+		grammar_get_last_error ( (unsigned char*) buf, 1024, (int*) &pos);
 		slang_info_log_error (log, buf);
 		return 0;
 	}

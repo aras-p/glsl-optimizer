@@ -810,7 +810,7 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
              modifier == STATE_MATRIX_INVTRANS) {
             /* Be sure inverse is up to date:
 	     */
-	    _math_matrix_analyse( matrix );
+	    _math_matrix_analyse( (GLmatrix*) matrix );
             m = matrix->inv;
          }
          else {
