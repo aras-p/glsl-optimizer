@@ -1,3 +1,6 @@
+<?xml version="1.0"?>
+<!DOCTYPE OpenGLAPI SYSTEM "gl_API.dtd">
+
 <OpenGLAPI>
 <category name="GL_EXT_framebuffer_object" number="310">
     <enum name="FRAMEBUFFER_EXT"                          value="0x8D40"/>
@@ -54,112 +57,112 @@
 
     <enum name="INVALID_FRAMEBUFFER_OPERATION_EXT"        value="0x0506"/>
 
-    <function name="IsRenderbufferEXT" offset="?">
+    <function name="IsRenderbufferEXT" offset="796">
         <param name="renderbuffer" type="GLuint"/>
 	<return type="GLboolean"/>
 	<glx vendorpriv="1422"/>
     </function>
 
-    <function name="BindRenderBufferEXT" offset="?">
+    <function name="BindRenderbufferEXT" offset="797">
         <param name="target" type="GLenum"/>
         <param name="renderbuffer" type="GLuint"/>
 	<glx rop="4316"/>
     </function>
 
-    <function name="DeleteRenderbufferEXT" offset="?">
+    <function name="DeleteRenderbuffersEXT" offset="798">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="renderbuffers" type="const GLuint *" count="n"/>
 	<glx rop="4317"/>
     </function>
 
-    <function name="GenRenderbuffersEXT" offset="?">
+    <function name="GenRenderbuffersEXT" offset="799">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="renderbuffers" type="GLuint *" count="n" output="true"/>
 	<glx vendorpriv="1423" always_array="true"/>
     </function>
 
-    <function name="RenderbufferStorageEXT" offset="?">
+    <function name="RenderbufferStorageEXT" offset="800">
         <param name="target" type="GLenum"/>
-        <param name="internalFormat" type="GLenum"/>
+        <param name="internalformat" type="GLenum"/>
         <param name="width" type="GLsizei"/>
         <param name="height" type="GLsizei"/>
 	<glx rop="4318"/>
     </function>
 
-    <function name="GetRenderbufferParameterivEXT" offset="?">
+    <function name="GetRenderbufferParameterivEXT" offset="801">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLint *" output="true"/>
 	<glx vendorpriv="1424"/>
     </function>
 
-    <function name="IsFramebufferEXT" offset="?">
+    <function name="IsFramebufferEXT" offset="802">
         <param name="framebuffer" type="GLuint"/>
 	<return type="GLboolean"/>
 	<glx vendorpriv="1425"/>
     </function>
 
-    <function name="BindFramebufferEXT" offset="?">
+    <function name="BindFramebufferEXT" offset="803">
         <param name="target" type="GLenum"/>
         <param name="framebuffer" type="GLuint"/>
 	<glx rop="4319"/>
     </function>
 
-    <function name="DeleteFramebufferEXT" offset="?">
+    <function name="DeleteFramebuffersEXT" offset="804">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="framebuffers" type="const GLuint *" count="n"/>
 	<glx rop="4320"/>
     </function>
 
-    <function name="GenFramebuffersEXT" offset="?">
+    <function name="GenFramebuffersEXT" offset="805">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="framebuffers" type="GLuint *" count="n" output="true"/>
 	<glx vendorpriv="1426" always_array="true"/>
     </function>
 
-    <function name="CheckFramebufferStatusEXT" offset="?">
+    <function name="CheckFramebufferStatusEXT" offset="806">
         <param name="target" type="GLenum"/>
 	<return type="GLenum"/>
 	<glx vendorpriv="1427"/>
     </function>
 
-    <function name="FramebufferTexture1DEXT" offset="?">
+    <function name="FramebufferTexture1DEXT" offset="807">
         <param name="target" type="GLenum"/>
-        <param name="attachement" type="GLenum"/>
+        <param name="attachment" type="GLenum"/>
         <param name="textarget" type="GLenum"/>
-        <param name="texture" type="GLint"/>
+        <param name="texture" type="GLuint"/>
         <param name="level" type="GLint"/>
 	<glx rop="4321"/>
     </function>
 
-    <function name="FramebufferTexture2DEXT" offset="?">
+    <function name="FramebufferTexture2DEXT" offset="808">
         <param name="target" type="GLenum"/>
-        <param name="attachement" type="GLenum"/>
+        <param name="attachment" type="GLenum"/>
         <param name="textarget" type="GLenum"/>
-        <param name="texture" type="GLint"/>
+        <param name="texture" type="GLuint"/>
         <param name="level" type="GLint"/>
 	<glx rop="4322"/>
     </function>
 
-    <function name="FramebufferTexture3DEXT" offset="?">
+    <function name="FramebufferTexture3DEXT" offset="809">
         <param name="target" type="GLenum"/>
-        <param name="attachement" type="GLenum"/>
+        <param name="attachment" type="GLenum"/>
         <param name="textarget" type="GLenum"/>
-        <param name="texture" type="GLint"/>
+        <param name="texture" type="GLuint"/>
         <param name="level" type="GLint"/>
         <param name="zoffset" type="GLint"/>
 	<glx rop="4323"/>
     </function>
 
-    <function name="FramebufferRenderbufferEXT" offset="?">
+    <function name="FramebufferRenderbufferEXT" offset="810">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="renderbuffertarget" type="GLenum"/>
-        <param name="renderbuffer" type="GLint"/>
+        <param name="renderbuffer" type="GLuint"/>
 	<glx rop="4324"/>
     </function>
 
-    <function name="GetFramebufferAttachementParameterivEXT" offset="?">
+    <function name="GetFramebufferAttachmentParameterivEXT" offset="811">
         <param name="target" type="GLenum"/>
         <param name="attachment" type="GLenum"/>
         <param name="pname" type="GLenum"/>
@@ -167,7 +170,7 @@
 	<glx vendorpriv="1428"/>
     </function>
 
-    <function name="GenerateMipmapEXT" offset="?">
+    <function name="GenerateMipmapEXT" offset="812">
         <param name="target" type="GLenum"/>
 	<glx rop="4325"/>
     </function>
