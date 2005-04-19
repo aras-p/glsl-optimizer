@@ -174,7 +174,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitIoctlFuncs(&functions);
 	r300InitStateFuncs(&functions);
 	r300InitTextureFuncs(&functions);
-	r300InitVertexProgFuncs(&functions);
+	r300InitShaderFuncs(&functions);
 	
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv, sharedContextPrivate)) {
