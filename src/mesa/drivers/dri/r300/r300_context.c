@@ -62,6 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
+int hw_vertprog_on=1;
 
 /* Extension strings exported by the R300 driver.
  */
@@ -118,7 +119,7 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 	&_tnl_fog_coordinate_stage,
 	&_tnl_texgen_stage,
 	&_tnl_texture_transform_stage,
-	//&_tnl_vertex_program_stage,
+	&_tnl_vertex_program_stage,
 
 	/* Try again to go to tcl?
 	 *     - no good for asymmetric-twoside (do with multipass)

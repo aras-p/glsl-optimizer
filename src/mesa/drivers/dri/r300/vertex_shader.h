@@ -14,6 +14,7 @@ typedef struct {
 #define VSF_FLAG_Y	2
 #define VSF_FLAG_Z	4
 #define VSF_FLAG_W	8
+#define VSF_FLAG_XYZ	(VSF_FLAG_X | VSF_FLAG_Y | VSF_FLAG_Z)
 #define VSF_FLAG_ALL  0xf
 #define VSF_FLAG_NONE  0
 

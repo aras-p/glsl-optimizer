@@ -42,7 +42,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define OP_MASK	(0xf)  /* we are unlikely to have more than 15 */
 #define OPN(operator, ip, op) {#operator, VP_OPCODE_##operator, ip, op}
 
-struct{
+static struct{
 	char *name;
 	int opcode;
 	unsigned long ip; /* number of input operands and flags */
@@ -82,7 +82,7 @@ struct{
 #undef OPN
 #define OPN(rf) {#rf, PROGRAM_##rf}
 
-struct{
+static struct{
 	char *name;
 	int id;
 }register_file_names[]={
@@ -97,7 +97,7 @@ struct{
 	OPN(ADDRESS),
 };
 	
-char *dst_mask_names[4]={ "X", "Y", "Z", "W" };
+static char *dst_mask_names[4]={ "X", "Y", "Z", "W" };
 
 /* from vertex program spec:
       Instruction    Inputs  Output   Description
@@ -452,7 +452,7 @@ static unsigned long op_operands(enum vp_opcode opcode)
 	/* Can we trust mesas opcodes to be in order ? */
 	for(i=0; i < sizeof(op_names) / sizeof(*op_names); i++)
 		if(op_names[i].opcode == opcode)
-			return op_names[i].ip & OP_MASK;
+			return op_names[i].ip;
 	
 	fprintf(stderr, "op %d not found in op_names\n", opcode);
 	exit(-1);
@@ -514,7 +514,7 @@ static void translate_program(struct r300_vertex_program *vp)
 		
 		operands=op_operands(vpi->Opcode);
 		are_srcs_scalar=operands & SCALAR_FLAG;
-		operands &= ~SCALAR_FLAG;
+		operands &= OP_MASK;
 		
 		for(i=0; i < operands; i++)
 			src[i]=vpi->SrcReg[i];
@@ -579,7 +579,19 @@ static void translate_program(struct r300_vertex_program *vp)
 
 			o_inst->src3=0;
 			goto next;
-						
+			
+               case VP_OPCODE_MUL: /* HW mul can take third arg but appears to have some other limitations. */
+			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_MAD, vpi->DstReg.Index,
+				t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
+			o_inst->src1=t_src(vp, &src[0]);
+			o_inst->src2=t_src(vp, &src[1]);
+
+			o_inst->src3=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
+					SWIZZLE_ZERO, SWIZZLE_ZERO,
+					SWIZZLE_ZERO, SWIZZLE_ZERO,
+					t_src_class(src[1].File), VSF_FLAG_NONE);
+			goto next;
+			
 		case VP_OPCODE_DP3://DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ZERO} PARAM 0{} {X Y Z ZERO} 
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_DOT, vpi->DstReg.Index,
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
@@ -590,7 +602,7 @@ static void translate_program(struct r300_vertex_program *vp)
 					t_swizzle(src[0].Swizzle[2]),
 					SWIZZLE_ZERO,
 					t_src_class(src[0].File),
-					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					src[0].Negate ? VSF_FLAG_XYZ : VSF_FLAG_NONE);
 			
 			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
 					t_swizzle(src[1].Swizzle[0]),
@@ -598,17 +610,12 @@ static void translate_program(struct r300_vertex_program *vp)
 					t_swizzle(src[1].Swizzle[2]),
 					SWIZZLE_ZERO,
 					t_src_class(src[1].File),
-					src[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					src[1].Negate ? VSF_FLAG_XYZ : VSF_FLAG_NONE);
 
 			o_inst->src3=0;
 			goto next;
 
 		case VP_OPCODE_SUB://ADD RESULT 1.X Y Z W TMP 0{} {X Y Z W} PARAM 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
-#ifdef SRCS_WRITABLE
-			vpi->Opcode=VP_OPCODE_ADD;
-			src[1].Negate=!src[1].Negate;
-			break;
-#else
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, vpi->DstReg.Index,
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
@@ -622,15 +629,8 @@ static void translate_program(struct r300_vertex_program *vp)
 					(!src[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			o_inst->src3=0;
 			goto next;
-#endif						
+			
 		case VP_OPCODE_ABS://MAX RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
-#ifdef SRCS_WRITABLE
-			vpi->Opcode=VP_OPCODE_MAX;
-			src[1]=src[0];
-			src[1].Negate=!src[0].Negate;
-			operands=op_operands(vpi->Opcode);
-			break;
-#else
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_MAX, vpi->DstReg.Index,
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
@@ -641,10 +641,10 @@ static void translate_program(struct r300_vertex_program *vp)
 					t_swizzle(src[0].Swizzle[2]),
 					t_swizzle(src[0].Swizzle[3]),
 					t_src_class(src[0].File),
-					VSF_FLAG_ALL);
+					(!src[0].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			o_inst->src3=0;
 			goto next;
-#endif						
+			
 		case VP_OPCODE_FLR:
 		/* FRC TMP 0.X Y Z W PARAM 0{} {X Y Z W} 
 		   ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} TMP 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W */
@@ -672,6 +672,21 @@ static void translate_program(struct r300_vertex_program *vp)
 
 			o_inst->src3=0;
 			u_temp_i--;
+			goto next;
+			
+		case VP_OPCODE_LG2:// LG2 RESULT 1.X Y Z W PARAM 0{} {X X X X}
+			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_LG2, vpi->DstReg.Index,
+					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
+			
+			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+					t_swizzle(src[0].Swizzle[0]),
+					t_swizzle(src[0].Swizzle[0]),
+					t_swizzle(src[0].Swizzle[0]),
+					t_swizzle(src[0].Swizzle[0]),
+					t_src_class(src[0].File),
+					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+			o_inst->src2=0;
+			o_inst->src3=0;
 			goto next;
 			
 		case VP_OPCODE_LIT://LIT TMP 1.Y Z TMP 1{} {X W Z Y} TMP 1{} {Y W Z X} TMP 1{} {Y X Z W} 
@@ -711,65 +726,69 @@ static void translate_program(struct r300_vertex_program *vp)
 					t_swizzle(src[0].Swizzle[2]),
 					VSF_IN_COMPONENT_ONE,
 					t_src_class(src[0].File),
-					src[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+					src[0].Negate ? VSF_FLAG_XYZ : VSF_FLAG_NONE);
 			o_inst->src2=t_src(vp, &src[1]);
 			o_inst->src3=0;
 			goto next;
 			
-		case VP_OPCODE_XPD: /* Broken due to swizzling */
-		/* ADD TMP 0.X Y Z PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO} 
-		   MUL TMP 1.X Y Z W TMP 0{} {Z X Y ZERO} PARAM 1{} {Y Z X ZERO} 
-		   MAD RESULT 1.X Y Z W TMP 0{} {Y Z X ONE} PARAM 1{} {Z X Y ONE} TMP 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W*/
-				   
-			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, u_temp_i,
+		case VP_OPCODE_XPD:
+			/* mul r0, r1.yzxw, r2.zxyw
+			   mad r0, -r2.yzxw, r1.zxyw, r0 */
+			
+			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_MAD, u_temp_i,
 					t_dst_mask(vpi->DstReg.WriteMask), VSF_OUT_CLASS_TMP);
 			
-			o_inst->src1=t_src(vp, &src[0]);
-			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+					t_swizzle(src[0].Swizzle[1]), // y
+					t_swizzle(src[0].Swizzle[2]), // z
+					t_swizzle(src[0].Swizzle[0]), // x
+					t_swizzle(src[0].Swizzle[3]), // w
+					t_src_class(src[0].File),
+					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+			
+			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
+					t_swizzle(src[1].Swizzle[2]), // z
+					t_swizzle(src[1].Swizzle[0]), // x
+					t_swizzle(src[1].Swizzle[1]), // y
+					t_swizzle(src[1].Swizzle[3]), // w
+					t_src_class(src[1].File),
+					src[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+			
+			o_inst->src3=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
 					SWIZZLE_ZERO, SWIZZLE_ZERO,
 					SWIZZLE_ZERO, SWIZZLE_ZERO,
-					t_src_class(src[0].File), VSF_FLAG_NONE);
-			o_inst->src3=0;
+					t_src_class(src[1].File),
+					VSF_FLAG_NONE);
 			o_inst++;
 			u_temp_i--;
-			
-			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_MUL, u_temp_i,
-					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
-			
-			o_inst->src1=MAKE_VSF_SOURCE(u_temp_i+1,
-					VSF_IN_COMPONENT_X,
-					VSF_IN_COMPONENT_Y,
-					VSF_IN_COMPONENT_Z,
-					SWIZZLE_ZERO,
-					VSF_IN_CLASS_TMP,
-					/* Not 100% sure about this */
-					(!src[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
-			o_inst->src2=t_src(vp, &src[1]);
-			o_inst->src3=0;
-			u_temp_i--;
-			o_inst++;
 			
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_MAD, vpi->DstReg.Index,
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
-			o_inst->src1=MAKE_VSF_SOURCE(u_temp_i+2,
-					VSF_IN_COMPONENT_X,
-					VSF_IN_COMPONENT_Y,
-					VSF_IN_COMPONENT_Z,
-					SWIZZLE_ONE,
-					VSF_IN_CLASS_TMP,
-					/* Not 100% sure about this */
-					src[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
+			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
+					t_swizzle(src[1].Swizzle[1]), // y
+					t_swizzle(src[1].Swizzle[2]), // z
+					t_swizzle(src[1].Swizzle[0]), // x
+					t_swizzle(src[1].Swizzle[3]), // w
+					t_src_class(src[1].File),
+					(!src[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			
-			o_inst->src2=MAKE_VSF_SOURCE(u_temp_i+1,
+			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+					t_swizzle(src[0].Swizzle[2]), // z
+					t_swizzle(src[0].Swizzle[0]), // x
+					t_swizzle(src[0].Swizzle[1]), // y
+					t_swizzle(src[0].Swizzle[3]), // w
+					t_src_class(src[0].File),
+					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
+			
+			o_inst->src3=MAKE_VSF_SOURCE(u_temp_i+1,
 					VSF_IN_COMPONENT_X,
 					VSF_IN_COMPONENT_Y,
 					VSF_IN_COMPONENT_Z,
 					VSF_IN_COMPONENT_W,
 					VSF_IN_CLASS_TMP,
-					/* Not 100% sure about this */
-					(!src[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE/*VSF_FLAG_ALL*/);
-			o_inst->src3=0;
+					VSF_FLAG_NONE);
+		
 			goto next;
 
 		case VP_OPCODE_ARL:

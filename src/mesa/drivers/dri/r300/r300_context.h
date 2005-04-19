@@ -566,8 +566,9 @@ struct r300_vertex_shader_state {
 	int unknown_ptr3;  /* pointer within program space */
 	};
 	
+extern int hw_vertprog_on;
 #define VERTPROG_ACTIVE(ctx) ( ctx->VertexProgram._Enabled && (R300_CONTEXT(ctx)->current_vp != NULL) && \
-	(R300_CONTEXT(ctx)->current_vp->translated) )
+	(R300_CONTEXT(ctx)->current_vp->translated)  && hw_vertprog_on)
 	
 /* r300_vertex_shader_state and r300_vertex_program should probably be merged together someday.
  * Keeping them them seperate for now should ensure fixed pipeline keeps functioning properly.
