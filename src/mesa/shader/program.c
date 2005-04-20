@@ -619,7 +619,8 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
             value[3] = ctx->Light.Light[ln].SpotExponent;
             return;
          case STATE_SPOT_DIRECTION:
-            COPY_4V(value, ctx->Light.Light[ln].EyeDirection);
+            COPY_3V(value, ctx->Light.Light[ln].EyeDirection);
+            value[3] = ctx->Light.Light[ln]._CosCutoff;
             return;
          case STATE_HALF:
             {
