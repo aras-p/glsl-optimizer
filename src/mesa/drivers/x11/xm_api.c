@@ -329,11 +329,47 @@ static GLboolean window_exists( XMesaDisplay *dpy, Window win )
 static XMesaBuffer XMesaBufferList = NULL;
 
 
-/* Allocate a new XMesaBuffer, add to linked list */
-static XMesaBuffer alloc_xmesa_buffer(void)
+/**
+ * Allocate a new XMesaBuffer, initialize basic fields and add to
+ * the list of all buffers.
+ */
+static XMesaBuffer
+alloc_xmesa_buffer(XMesaVisual vis, BufferType type, XMesaColormap cmap)
 {
    XMesaBuffer b = (XMesaBuffer) CALLOC_STRUCT(xmesa_buffer);
    if (b) {
+      b->display = vis->display;
+      b->xm_visual = vis;
+      b->type = type;
+      b->cmap = cmap;
+
+      _mesa_initialize_framebuffer(&b->mesa_buffer,
+                                   &vis->mesa_visual,
+                                   vis->mesa_visual.depthBits > 0,
+                                   vis->mesa_visual.stencilBits > 0,
+                                   vis->mesa_visual.accumRedBits +
+                                   vis->mesa_visual.accumGreenBits +
+                                   vis->mesa_visual.accumBlueBits > 0,
+                                   vis->mesa_visual.alphaBits > 0
+                                   /*v->mesa_visual.numAuxBuffers > 0*/ );
+      /* XXX hack */
+      if (vis->mesa_visual.numAuxBuffers > 0)
+         b->mesa_buffer.UseSoftwareAuxBuffers = GL_TRUE;
+
+      /* determine back buffer implementation */
+      if (vis->mesa_visual.doubleBufferMode) {
+         if (vis->ximage_flag) {
+            b->db_state = BACK_XIMAGE;
+         }
+         else {
+            b->db_state = BACK_PIXMAP;
+         }
+      }
+      else {
+         b->db_state = 0;
+      }
+
+      /* insert into linked list */
       b->Next = XMesaBufferList;
       XMesaBufferList = b;
    }
@@ -618,14 +654,20 @@ void xmesa_alloc_back_buffer( XMesaBuffer b )
    }
    else if (b->db_state==BACK_PIXMAP) {
       XMesaPixmap old_pixmap = b->backpixmap;
+      int width = b->mesa_buffer.Width, height = b->mesa_buffer.Height;
+
+      if (!width)
+         width = 1;
+      if (!height)
+         height = 1;
+
       /* Free the old back pixmap */
       if (b->backpixmap) {
 	 XMesaFreePixmap( b->xm_visual->display, b->backpixmap );
       }
       /* Allocate new back pixmap */
       b->backpixmap = XMesaCreatePixmap( b->xm_visual->display, b->frontbuffer,
-					 b->mesa_buffer.Width,
-                                         b->mesa_buffer.Height,
+					 width, height,
 					 GET_VISUAL_DEPTH(b->xm_visual) );
       b->backimage = NULL;
       /* update other references to backpixmap */
@@ -1719,8 +1761,8 @@ void XMesaDestroyContext( XMesaContext c )
  *         c - the context
  * Return:  new XMesaBuffer or NULL if error
  */
-XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
-                                      XMesaContext c )
+XMesaBuffer
+XMesaCreateWindowBuffer2(XMesaVisual v, XMesaWindow w, XMesaContext c)
 {
 #ifndef XFree86Server
    XWindowAttributes attr;
@@ -1729,21 +1771,16 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
    char *fxEnvVar;
 #endif
    int client = 0;
-
-   XMesaBuffer b = alloc_xmesa_buffer();
-   if (!b) {
-      return NULL;
-   }
-
-   (void) c;
-
-#ifdef XFree86Server
-   client = CLIENT_ID(((XMesaDrawable)w)->id);
-#endif
+   XMesaBuffer b;
+   XMesaColormap cmap;
 
    assert(v);
+   (void) c;
 
+   /* Check that window depth matches visual depth */
 #ifdef XFree86Server
+   client = CLIENT_ID(((XMesaDrawable)w)->id);
+
    if (GET_VISUAL_DEPTH(v) != ((XMesaDrawable)w)->depth) {
       _mesa_warning(NULL, "XMesaCreateWindowBuffer: depth mismatch between visual (%d) and window (%d)!\n",
                     GET_VISUAL_DEPTH(v), ((XMesaDrawable) w)->depth);
@@ -1759,47 +1796,28 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
    }
 #endif
 
-   b->xm_visual = v;
-   b->type = WINDOW;
-   b->display = v->display;
+   /* Find colormap */
 #ifdef XFree86Server
-   b->cmap = (ColormapPtr)LookupIDByType(wColormap(w), RT_COLORMAP);
+   cmap = (ColormapPtr)LookupIDByType(wColormap(w), RT_COLORMAP);
 #else
    if (attr.colormap) {
-      b->cmap = attr.colormap;
+      cmap = attr.colormap;
    }
    else {
       _mesa_warning(NULL, "Window %u has no colormap!\n", (unsigned int) w);
       /* this is weird, a window w/out a colormap!? */
       /* OK, let's just allocate a new one and hope for the best */
-      b->cmap = XCreateColormap(v->display, w, attr.visual, AllocNone);
+      cmap = XCreateColormap(v->display, w, attr.visual, AllocNone);
    }
 #endif
 
-   /* determine back buffer implementation */
-   if (v->mesa_visual.doubleBufferMode) {
-      if (v->ximage_flag) {
-	 b->db_state = BACK_XIMAGE;
-      }
-      else {
-	 b->db_state = BACK_PIXMAP;
-      }
+   b = alloc_xmesa_buffer(v, WINDOW, cmap);
+   if (!b) {
+      return NULL;
    }
-   else {
-      b->db_state = 0;
-   }
-
-   _mesa_initialize_framebuffer(&b->mesa_buffer,
-                                &v->mesa_visual,
-                                v->mesa_visual.depthBits > 0,
-                                v->mesa_visual.stencilBits > 0,
-                                v->mesa_visual.accumRedBits > 0,
-                                v->mesa_visual.alphaBits > 0 );
-   /* XXX hack */
-   b->mesa_buffer.UseSoftwareAuxBuffers = GL_TRUE;
 
    if (!initialize_visual_and_buffer( client, v, b, v->mesa_visual.rgbMode,
-                                      (XMesaDrawable)w, b->cmap )) {
+                                      (XMesaDrawable)w, cmap )) {
       free_xmesa_buffer(client, b);
       return NULL;
    }
@@ -1886,7 +1904,8 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
 }
 
 
-XMesaBuffer XMesaCreateWindowBuffer( XMesaVisual v, XMesaWindow w )
+XMesaBuffer
+XMesaCreateWindowBuffer(XMesaVisual v, XMesaWindow w)
 {
    return XMesaCreateWindowBuffer2( v, w, NULL );
 }
@@ -1901,48 +1920,22 @@ XMesaBuffer XMesaCreateWindowBuffer( XMesaVisual v, XMesaWindow w )
  *             \c GLX_DIRECT_COLOR visual for the pixmap
  * \returns new XMesaBuffer or NULL if error
  */
-XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
-				     XMesaPixmap p, XMesaColormap cmap )
+XMesaBuffer
+XMesaCreatePixmapBuffer(XMesaVisual v, XMesaPixmap p, XMesaColormap cmap)
 {
    int client = 0;
-   XMesaBuffer b = alloc_xmesa_buffer();
+   XMesaBuffer b;
+
+   assert(v);
+
+   b = alloc_xmesa_buffer(v, PIXMAP, cmap);
    if (!b) {
       return NULL;
    }
 
-
 #ifdef XFree86Server
    client = CLIENT_ID(((XMesaDrawable)p)->id);
 #endif
-
-   assert(v);
-
-   b->xm_visual = v;
-   b->type = PIXMAP;
-   b->display = v->display;
-   b->cmap = cmap;
-
-   /* determine back buffer implementation */
-   if (v->mesa_visual.doubleBufferMode) {
-      if (v->ximage_flag) {
-	 b->db_state = BACK_XIMAGE;
-      }
-      else {
-	 b->db_state = BACK_PIXMAP;
-      }
-   }
-   else {
-      b->db_state = 0;
-   }
-
-   _mesa_initialize_framebuffer(&b->mesa_buffer,
-                                &v->mesa_visual,
-                                v->mesa_visual.depthBits > 0,
-                                v->mesa_visual.stencilBits > 0,
-                                v->mesa_visual.accumRedBits +
-                                v->mesa_visual.accumGreenBits +
-                                v->mesa_visual.accumBlueBits > 0,
-                                v->mesa_visual.alphaBits > 0 );
 
    if (!initialize_visual_and_buffer(client, v, b, v->mesa_visual.rgbMode,
 				     (XMesaDrawable)p, cmap)) {
@@ -1955,8 +1948,9 @@ XMesaBuffer XMesaCreatePixmapBuffer( XMesaVisual v,
 
 
 
-XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
-                                unsigned int width, unsigned int height )
+XMesaBuffer
+XMesaCreatePBuffer(XMesaVisual v, XMesaColormap cmap,
+                   unsigned int width, unsigned int height)
 {
 #ifdef XFree86Server
    return 0;
@@ -1964,41 +1958,16 @@ XMesaBuffer XMesaCreatePBuffer( XMesaVisual v, XMesaColormap cmap,
    int client = 0;
    XMesaWindow root;
    XMesaDrawable drawable;  /* X Pixmap Drawable */
-   XMesaBuffer b = alloc_xmesa_buffer();
+   XMesaBuffer b;
+
+   b = alloc_xmesa_buffer(v, PBUFFER, cmap);
    if (!b) {
       return NULL;
    }
 
-   b->xm_visual = v;
-   b->type = PBUFFER;
-   b->display = v->display;
-   b->cmap = cmap;
-
    /* allocate pixmap for front buffer */
    root = RootWindow( v->display, v->visinfo->screen );
    drawable = XCreatePixmap( v->display, root, width, height, v->visinfo->depth );
-
-   /* determine back buffer implementation */
-   if (v->mesa_visual.doubleBufferMode) {
-      if (v->ximage_flag) {
-	 b->db_state = BACK_XIMAGE;
-      }
-      else {
-	 b->db_state = BACK_PIXMAP;
-      }
-   }
-   else {
-      b->db_state = 0;
-   }
-
-   _mesa_initialize_framebuffer(&b->mesa_buffer,
-                                &v->mesa_visual,
-                                v->mesa_visual.depthBits > 0,
-                                v->mesa_visual.stencilBits > 0,
-                                v->mesa_visual.accumRedBits +
-                                v->mesa_visual.accumGreenBits +
-                                v->mesa_visual.accumBlueBits > 0,
-                                v->mesa_visual.alphaBits > 0 );
 
    if (!initialize_visual_and_buffer(client, v, b, v->mesa_visual.rgbMode,
 				     drawable, cmap)) {
