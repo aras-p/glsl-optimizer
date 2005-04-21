@@ -766,7 +766,9 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			
 		case VP_OPCODE_XPD:
 			/* mul r0, r1.yzxw, r2.zxyw
-			   mad r0, -r2.yzxw, r1.zxyw, r0 */
+			   mad r0, -r2.yzxw, r1.zxyw, r0
+			   NOTE: might need MAD_2
+			 */
 			
 			o_inst->op=MAKE_VSF_OP(R300_VPI_OUT_OP_MAD, u_temp_i,
 					t_dst_mask(vpi->DstReg.WriteMask), VSF_OUT_CLASS_TMP);
