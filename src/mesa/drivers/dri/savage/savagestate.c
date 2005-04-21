@@ -1710,8 +1710,8 @@ void savageDDInitState( savageContextPtr imesa ) {
         imesa->regs.s4.destCtrl.ni.dstWidthInTile =
             (imesa->savageScreen->width+31)>>5;
     }
-    imesa->drawMap = (char *)imesa->apertureBase[imesa->toggle];
-    imesa->readMap = (char *)imesa->apertureBase[imesa->toggle];
+    imesa->drawMap = imesa->apertureBase[imesa->toggle];
+    imesa->readMap = imesa->apertureBase[imesa->toggle];
     imesa->NotFirstFrame = GL_FALSE;
 
     imesa->regs.s4.zBufOffset.ni.offset=imesa->savageScreen->depthOffset>>11;

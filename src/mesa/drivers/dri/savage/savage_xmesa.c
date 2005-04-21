@@ -213,7 +213,7 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
        savageScreen->agpTextures.map = NULL;
 
    savageScreen->texVirtual[SAVAGE_CARD_HEAP] = 
-             (drmAddress)(((unsigned int)sPriv->pFB)+gDRIPriv->textureOffset);
+             (drmAddress)(((GLubyte *)sPriv->pFB)+gDRIPriv->textureOffset);
    savageScreen->texVirtual[SAVAGE_AGP_HEAP] = 
                         (drmAddress)(savageScreen->agpTextures.map);
 
@@ -364,8 +364,8 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 
    for(i=0;i<5;i++)
    {
-       imesa->apertureBase[i] = ((GLuint)savageScreen->aperture.map + 
-                                 0x01000000 * i );
+       imesa->apertureBase[i] = (GLubyte *)savageScreen->aperture.map + 
+	   0x01000000 * i;
    }
    
    imesa->aperturePitch = savageScreen->aperturePitch;

@@ -39,9 +39,9 @@
    GLuint cpp   = savageScreen->cpp;			\
    GLuint pitch = imesa->aperturePitch;			\
    GLuint height = dPriv->h;				\
-   char *buf = (char *)(map +				\
-			dPriv->x * cpp +		\
-			dPriv->y * pitch);		\
+   GLubyte *buf = map +					\
+		  dPriv->x * cpp +			\
+		  dPriv->y * pitch;			\
    GLuint p;						\
    (void) p
 
@@ -52,9 +52,9 @@
    GLuint zpp   = savageScreen->zpp;			\
    GLuint pitch = imesa->aperturePitch;			\
    GLuint height = dPriv->h;				\
-   char *buf = (char *)(imesa->apertureBase[TARGET_DEPTH] +	\
-			dPriv->x * zpp +			\
-			dPriv->y * pitch)
+   GLubyte *buf = imesa->apertureBase[TARGET_DEPTH] +	\
+		  dPriv->x * zpp +			\
+		  dPriv->y * pitch
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 
@@ -80,11 +80,11 @@
 
 #define HW_WRITE_LOCK()					\
 	savageContextPtr imesa = SAVAGE_CONTEXT(ctx);	\
-	char *map = imesa->drawMap;
+	GLubyte *map = imesa->drawMap;
 
 #define HW_READ_LOCK()					\
 	savageContextPtr imesa = SAVAGE_CONTEXT(ctx);	\
-	char *map = imesa->readMap;
+	GLubyte *map = imesa->readMap;
 
 #define HW_CLIPLOOP()						\
   do {								\
@@ -233,8 +233,8 @@ static void savageDDSetBuffer(GLcontext *ctx, GLframebuffer *buffer,
    assert((bufferBit == DD_FRONT_LEFT_BIT) || (bufferBit == DD_BACK_LEFT_BIT));
 
    map = (bufferBit == DD_FRONT_LEFT_BIT)
-       ? (char*)imesa->apertureBase[TARGET_FRONT]
-       : (char*)imesa->apertureBase[TARGET_BACK];
+       ? imesa->apertureBase[TARGET_FRONT]
+       : imesa->apertureBase[TARGET_BACK];
 
    imesa->drawMap = map;
    imesa->readMap = map;

@@ -768,7 +768,7 @@ static void savageUploadTexImages( savageContextPtr imesa, savageTexObjPtr t )
 
       ofs = t->base.memBlock->ofs;
       t->setup.physAddr = imesa->savageScreen->textureOffset[heap] + ofs;
-      t->bufAddr = (char *)((GLuint) imesa->savageScreen->texVirtual[heap] + ofs);
+      t->bufAddr = (GLubyte *)imesa->savageScreen->texVirtual[heap] + ofs;
       imesa->dirty |= SAVAGE_UPLOAD_GLOBAL; /* FIXME: really needed? */
    }
 

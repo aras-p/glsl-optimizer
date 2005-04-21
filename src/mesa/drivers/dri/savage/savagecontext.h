@@ -179,7 +179,7 @@ struct savage_context_t {
     struct savage_vtxbuf_t *vtxBuf;
 
     /* aperture base */
-    GLuint apertureBase[5];
+    GLubyte *apertureBase[5];
     GLuint aperturePitch;
     /* Manage hardware state */
     GLuint dirty;
@@ -236,8 +236,8 @@ struct savage_context_t {
 
     /* These refer to the current draw (front vs. back) buffer:
      */
-    char *drawMap;		/* draw buffer address in virtual mem */
-    char *readMap;	
+    GLubyte *drawMap;		/* draw buffer address in virtual mem */
+    GLubyte *readMap;	
     int drawX;   		/* origin of drawable in draw buffer */
     int drawY;
     GLuint numClipRects;		/* cliprects for that buffer */
