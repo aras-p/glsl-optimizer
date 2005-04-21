@@ -424,7 +424,7 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
                t[3] = CLAMP(t[3], -(128.0F - epsilon), (128.0F - epsilon));
                lit[0] = 1.0;
                lit[1] = t[0];
-               lit[2] = (t[0] > 0.0) ? (GLfloat) exp(t[3] * log(t[1])) : 0.0F;
+               lit[2] = (t[0] > 0.0) ? (GLfloat) _mesa_pow(t[1], t[3]) : 0.0F;
                lit[3] = 1.0;
                store_vector4( &inst->DstReg, state, lit );
             }
