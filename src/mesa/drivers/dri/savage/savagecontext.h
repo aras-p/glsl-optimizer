@@ -189,6 +189,7 @@ struct savage_context_t {
      * completely on the fly:
      */
     GLuint LcsCullMode;
+    GLuint texEnvColor;
 
    /* Vertex state 
     */

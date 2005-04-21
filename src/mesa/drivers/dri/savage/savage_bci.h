@@ -367,6 +367,7 @@ typedef enum
 #define TBC_BlendInt0   0x00040004
 #define TBC_BlendInt1   0x01c20e02
 #define TBC_AddAlpha    0x19910c11
+#define TBC_Add         0x18110c11
 
 #define TBC_Decal1      0x00870410
 #define TBC_Modul1      0x00870013
@@ -376,6 +377,7 @@ typedef enum
 #define TBC_Copy1       0x00870400
 #define TBC_CopyAlpha1  0x00900400
 #define TBC_AddAlpha1   0x19930c13
+#define TBC_Add1        0x18130c13
 
 /*
  * derived from TexBlendCtrl

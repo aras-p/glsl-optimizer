@@ -577,7 +577,9 @@ savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
       return !force16bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
-
+#if 0
+   /* TFT_I8 produces garbage on ProSavageDDR and subsequent texture
+    * disable keeps rendering garbage. Disabled for now. */
    case GL_INTENSITY:
    case GL_COMPRESSED_INTENSITY:
       return isSavage4 ? &_mesa_texformat_i8 : (
@@ -589,6 +591,18 @@ savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_INTENSITY16:
       return isSavage4 ? &_mesa_texformat_i8 : (
 	 !force16bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444);
+#else
+   case GL_INTENSITY:
+   case GL_COMPRESSED_INTENSITY:
+      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+   case GL_INTENSITY4:
+      return &_mesa_texformat_argb4444;
+   case GL_INTENSITY8:
+   case GL_INTENSITY12:
+   case GL_INTENSITY16:
+      return !force16bpt ? &_mesa_texformat_argb8888 :
+	  &_mesa_texformat_argb4444;
+#endif
 /*
    case GL_COLOR_INDEX:
    case GL_COLOR_INDEX1_EXT:
@@ -818,12 +832,11 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
    GLuint format;
 
    /* disable */
-   if (ctx->Texture.Unit[0]._ReallyEnabled == 0) {
-      imesa->regs.s4.texDescr.ni.tex0En = GL_FALSE;
-      imesa->regs.s4.texBlendCtrl[0].ui = TBC_NoTexMap;
-      imesa->regs.s4.texCtrl[0].ui = 0x20f040;
+   imesa->regs.s4.texDescr.ni.tex0En = GL_FALSE;
+   imesa->regs.s4.texBlendCtrl[0].ui = TBC_NoTexMap;
+   imesa->regs.s4.texCtrl[0].ui = 0x20f040;
+   if (ctx->Texture.Unit[0]._ReallyEnabled == 0)
       return;
-   }
 
    tObj = ctx->Texture.Unit[0]._Current;
    if ((ctx->Texture.Unit[0]._ReallyEnabled & ~(TEXTURE_1D_BIT|TEXTURE_2D_BIT))
@@ -914,6 +927,7 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
         break;
 
     case GL_BLEND:
+	imesa->regs.s4.texBlendColor.ui = imesa->texEnvColor;
 
         switch (format)
         {
@@ -983,12 +997,28 @@ static void savageUpdateTex0State_s4( GLcontext *ctx )
 				      &imesa->regs.s4.texBlendCtrl[0]);
         break;
 
-        /*
-         GL_ADD
-        */
     case GL_ADD:
         imesa->regs.s4.texCtrl[0].ni.clrArg1Invert = GL_FALSE;
-        imesa->regs.s4.texBlendCtrl[0].ui = TBC_AddAlpha;
+        switch (format)
+        {
+            case GL_ALPHA:
+                imesa->regs.s4.texBlendCtrl[0].ui = TBC_ModulAlpha;
+		break;
+
+            case GL_LUMINANCE:
+            case GL_RGB:
+		imesa->regs.s4.texBlendCtrl[0].ui = TBC_Add;
+		break;
+
+            case GL_LUMINANCE_ALPHA:
+            case GL_RGBA:
+		imesa->regs.s4.texBlendCtrl[0].ui = TBC_Add;
+		break;
+
+            case GL_INTENSITY:
+		imesa->regs.s4.texBlendCtrl[0].ui = TBC_AddAlpha;
+		break;
+	}
         __HWEnvCombineSingleUnitScale(imesa, 0, 0,
 				      &imesa->regs.s4.texBlendCtrl[0]);
         break;
@@ -1083,13 +1113,12 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
        return;
    }
 
-   if (ctx->Texture.Unit[1]._ReallyEnabled == 0) {
-      imesa->regs.s4.texDescr.ni.tex1En = GL_FALSE;
-      imesa->regs.s4.texBlendCtrl[1].ui = TBC_NoTexMap1;
-      imesa->regs.s4.texCtrl[1].ui = 0x20f040;
-      imesa->regs.s4.texDescr.ni.texBLoopEn = GL_FALSE;
+   imesa->regs.s4.texDescr.ni.tex1En = GL_FALSE;
+   imesa->regs.s4.texBlendCtrl[1].ui = TBC_NoTexMap1;
+   imesa->regs.s4.texCtrl[1].ui = 0x20f040;
+   imesa->regs.s4.texDescr.ni.texBLoopEn = GL_FALSE;
+   if (ctx->Texture.Unit[1]._ReallyEnabled == 0)
       return;
-   }
 
    tObj = ctx->Texture.Unit[1]._Current;
 
@@ -1150,13 +1179,30 @@ static void savageUpdateTex1State_s4( GLcontext *ctx )
        __HWEnvCombineSingleUnitScale(imesa, 0, 1, &imesa->regs.s4.texBlendCtrl);
        break;
 
-/*#if GL_EXT_texture_env_add*/
     case GL_ADD:
         imesa->regs.s4.texCtrl[1].ni.clrArg1Invert = GL_FALSE;
-        imesa->regs.s4.texBlendCtrl[1].ui = TBC_AddAlpha1;
+        switch (format)
+        {
+            case GL_ALPHA:
+                imesa->regs.s4.texBlendCtrl[1].ui = TBC_ModulAlpha1;
+		break;
+
+            case GL_LUMINANCE:
+            case GL_RGB:
+		imesa->regs.s4.texBlendCtrl[1].ui = TBC_Add1;
+		break;
+
+            case GL_LUMINANCE_ALPHA:
+            case GL_RGBA:
+		imesa->regs.s4.texBlendCtrl[1].ui = TBC_Add1;
+		break;
+
+            case GL_INTENSITY:
+		imesa->regs.s4.texBlendCtrl[1].ui = TBC_AddAlpha1;
+		break;
+	}
         __HWEnvCombineSingleUnitScale(imesa, 0, 1, &imesa->regs.s4.texBlendCtrl);
         break;
-/*#endif*/
 
 #if GL_ARB_texture_env_combine
     case GL_COMBINE_ARB:
@@ -1497,16 +1543,14 @@ static void savageTexEnv( GLcontext *ctx, GLenum target,
       struct gl_texture_unit *texUnit = 
 	 &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       const GLfloat *fc = texUnit->EnvColor;
-      GLuint r, g, b, a, col;
+      GLuint r, g, b, a;
       CLAMPED_FLOAT_TO_UBYTE(r, fc[0]);
       CLAMPED_FLOAT_TO_UBYTE(g, fc[1]);
       CLAMPED_FLOAT_TO_UBYTE(b, fc[2]);
       CLAMPED_FLOAT_TO_UBYTE(a, fc[3]);
 
-      col = ((a << 24) | 
-	     (r << 16) | 
-	     (g <<  8) | 
-	     (b <<  0));
+      imesa->texEnvColor = ((a << 24) | (r << 16) | 
+			    (g <<  8) | (b <<  0));
     
 
    } 
