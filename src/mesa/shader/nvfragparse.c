@@ -692,11 +692,15 @@ Parse_CondCodeMask(struct parse_state *parseState,
    /* look for optional .xyzw swizzle */
    if (Parse_String(parseState, ".")) {
       GLubyte token[100];
+      GLuint swz[4];
+
       if (!Parse_Token(parseState, token))  /* get xyzw suffix */
          RETURN_ERROR;
 
-      if (!Parse_SwizzleSuffix(token, dstReg->CondSwizzle))
+      if (!Parse_SwizzleSuffix(token, swz))
          RETURN_ERROR1("Invalid swizzle suffix");
+
+      dstReg->CondSwizzle = MAKE_SWIZZLE(swz);
    }
 
    return GL_TRUE;
@@ -864,6 +868,7 @@ Parse_MaskedDstReg(struct parse_state *parseState,
                    struct fp_dst_register *dstReg)
 {
    GLubyte token[100];
+   GLint idx;
 
    /* Dst reg can be R<n>, H<n>, o[n], RC or HC */
    if (!Peek_Token(parseState, token))
@@ -873,20 +878,23 @@ Parse_MaskedDstReg(struct parse_state *parseState,
        _mesa_strcmp((const char *) token, "HC") == 0) {
       /* a write-only register */
       dstReg->File = PROGRAM_WRITE_ONLY;
-      if (!Parse_DummyReg(parseState, &dstReg->Index))
+      if (!Parse_DummyReg(parseState, &idx))
          RETURN_ERROR;
+      dstReg->Index = idx;
    }
    else if (token[0] == 'R' || token[0] == 'H') {
       /* a temporary register */
       dstReg->File = PROGRAM_TEMPORARY;
-      if (!Parse_TempReg(parseState, &dstReg->Index))
+      if (!Parse_TempReg(parseState, &idx))
          RETURN_ERROR;
+      dstReg->Index = idx;
    }
    else if (token[0] == 'o') {
       /* an output register */
       dstReg->File = PROGRAM_OUTPUT;
-      if (!Parse_OutputReg(parseState, &dstReg->Index))
+      if (!Parse_OutputReg(parseState, &idx))
          RETURN_ERROR;
+      dstReg->Index = idx;
    }
    else {
       RETURN_ERROR1("Invalid destination register name");
@@ -900,25 +908,22 @@ Parse_MaskedDstReg(struct parse_state *parseState,
       if (!Parse_Token(parseState, token))  /* get xyzw writemask */
          RETURN_ERROR;
 
-      dstReg->WriteMask[0] = GL_FALSE;
-      dstReg->WriteMask[1] = GL_FALSE;
-      dstReg->WriteMask[2] = GL_FALSE;
-      dstReg->WriteMask[3] = GL_FALSE;
+      dstReg->WriteMask = 0;
 
       if (token[k] == 'x') {
-         dstReg->WriteMask[0] = GL_TRUE;
+         dstReg->WriteMask |= WRITEMASK_X;
          k++;
       }
       if (token[k] == 'y') {
-         dstReg->WriteMask[1] = GL_TRUE;
+         dstReg->WriteMask |= WRITEMASK_Y;
          k++;
       }
       if (token[k] == 'z') {
-         dstReg->WriteMask[2] = GL_TRUE;
+         dstReg->WriteMask |= WRITEMASK_Z;
          k++;
       }
       if (token[k] == 'w') {
-         dstReg->WriteMask[3] = GL_TRUE;
+         dstReg->WriteMask |= WRITEMASK_W;
          k++;
       }
       if (k == 0) {
@@ -927,10 +932,7 @@ Parse_MaskedDstReg(struct parse_state *parseState,
 
    }
    else {
-      dstReg->WriteMask[0] = GL_TRUE;
-      dstReg->WriteMask[1] = GL_TRUE;
-      dstReg->WriteMask[2] = GL_TRUE;
-      dstReg->WriteMask[3] = GL_TRUE;
+      dstReg->WriteMask = WRITEMASK_XYZW;
    }
 
    /* optional condition code mask */
@@ -948,10 +950,7 @@ Parse_MaskedDstReg(struct parse_state *parseState,
    else {
       /* no cond code mask */
       dstReg->CondMask = COND_TR;
-      dstReg->CondSwizzle[0] = 0;
-      dstReg->CondSwizzle[1] = 1;
-      dstReg->CondSwizzle[2] = 2;
-      dstReg->CondSwizzle[3] = 3;
+      dstReg->CondSwizzle = SWIZZLE_NOOP;
       return GL_TRUE;
    }
 }
@@ -969,6 +968,7 @@ Parse_VectorSrc(struct parse_state *parseState,
 {
    GLfloat sign = 1.0F;
    GLubyte token[100];
+   GLint idx;
 
    /*
     * First, take care of +/- and absolute value stuff.
@@ -1004,20 +1004,23 @@ Parse_VectorSrc(struct parse_state *parseState,
     */
    if (token[0] == 'R' || token[0] == 'H') {
       srcReg->File = PROGRAM_TEMPORARY;
-      if (!Parse_TempReg(parseState, &srcReg->Index))
+      if (!Parse_TempReg(parseState, &idx))
          RETURN_ERROR;
+      srcReg->Index = idx;
    }
    else if (token[0] == 'f') {
       /* XXX this might be an identier! */
       srcReg->File = PROGRAM_INPUT;
-      if (!Parse_FragReg(parseState, &srcReg->Index))
+      if (!Parse_FragReg(parseState, &idx))
          RETURN_ERROR;
+      srcReg->Index = idx;
    }
    else if (token[0] == 'p') {
       /* XXX this might be an identier! */
       srcReg->File = PROGRAM_LOCAL_PARAM;
-      if (!Parse_ProgramParamReg(parseState, &srcReg->Index))
+      if (!Parse_ProgramParamReg(parseState, &idx))
          RETURN_ERROR;
+      srcReg->Index = idx;
    }
    else if (IsLetter(token[0])){
       GLubyte ident[100];
@@ -1058,18 +1061,19 @@ Parse_VectorSrc(struct parse_state *parseState,
    }
 
    /* init swizzle fields */
-   srcReg->Swizzle[0] = 0;
-   srcReg->Swizzle[1] = 1;
-   srcReg->Swizzle[2] = 2;
-   srcReg->Swizzle[3] = 3;
+   srcReg->Swizzle = SWIZZLE_NOOP;
 
    /* Look for optional swizzle suffix */
    if (Parse_String(parseState, ".")) {
+      GLuint swz[4];
+
       if (!Parse_Token(parseState, token))
          RETURN_ERROR;
 
-      if (!Parse_SwizzleSuffix(token, srcReg->Swizzle))
+      if (!Parse_SwizzleSuffix(token, swz))
          RETURN_ERROR1("Invalid swizzle suffix");
+
+      srcReg->Swizzle = MAKE_SWIZZLE(swz);
    }
 
    /* Finish absolute value */
@@ -1088,6 +1092,7 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
    GLubyte token[100];
    GLfloat sign = 1.0F;
    GLboolean needSuffix = GL_TRUE;
+   GLint idx;
 
    /*
     * First, take care of +/- and absolute value stuff.
@@ -1120,13 +1125,15 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
    /* Src reg can be R<n>, H<n> or a named fragment attrib */
    if (token[0] == 'R' || token[0] == 'H') {
       srcReg->File = PROGRAM_TEMPORARY;
-      if (!Parse_TempReg(parseState, &srcReg->Index))
+      if (!Parse_TempReg(parseState, &idx))
          RETURN_ERROR;
+      srcReg->Index = idx;
    }
    else if (token[0] == 'f') {
       srcReg->File = PROGRAM_INPUT;
-      if (!Parse_FragReg(parseState, &srcReg->Index))
+      if (!Parse_FragReg(parseState, &idx))
          RETURN_ERROR;
+      srcReg->Index = idx;
    }
    else if (token[0] == '{') {
       /* vector literal */
@@ -1154,6 +1161,7 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       RETURN_ERROR2("Invalid scalar source argument", token);
    }
 
+   srcReg->Swizzle = 0;
    if (needSuffix) {
       /* parse .[xyzw] suffix */
       if (!Parse_String(parseState, "."))
@@ -1163,25 +1171,21 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
          RETURN_ERROR;
 
       if (token[0] == 'x' && token[1] == 0) {
-         srcReg->Swizzle[0] = 0;
+         srcReg->Swizzle = 0;
       }
       else if (token[0] == 'y' && token[1] == 0) {
-         srcReg->Swizzle[0] = 1;
+         srcReg->Swizzle = 1;
       }
       else if (token[0] == 'z' && token[1] == 0) {
-         srcReg->Swizzle[0] = 2;
+         srcReg->Swizzle = 2;
       }
       else if (token[0] == 'w' && token[1] == 0) {
-         srcReg->Swizzle[0] = 3;
+         srcReg->Swizzle = 3;
       }
       else {
          RETURN_ERROR1("Invalid scalar source suffix");
       }
    }
-   else {
-      srcReg->Swizzle[0] = 0;
-   }
-   srcReg->Swizzle[1] = srcReg->Swizzle[2] = srcReg->Swizzle[3] = 0;
 
    /* Finish absolute value */
    if (srcReg->Abs && !Parse_String(parseState, "|")) {
@@ -1199,6 +1203,7 @@ Parse_PrintInstruction(struct parse_state *parseState,
    const GLubyte *str;
    GLubyte *msg;
    GLuint len;
+   GLint idx;
 
    /* The first argument is a literal string 'just like this' */
    if (!Parse_String(parseState, "'"))
@@ -1220,8 +1225,9 @@ Parse_PrintInstruction(struct parse_state *parseState,
       GetToken(parseState, token);
       if (token[0] == 'o') {
          /* dst reg */
-         if (!Parse_OutputReg(parseState, &inst->SrcReg[0].Index))
+         if (!Parse_OutputReg(parseState, &idx))
             RETURN_ERROR;
+	 inst->SrcReg[0].Index = idx;
          inst->SrcReg[0].File = PROGRAM_OUTPUT;
       }
       else {
@@ -1235,10 +1241,7 @@ Parse_PrintInstruction(struct parse_state *parseState,
       inst->SrcReg[0].File = -1;
    }
 
-   inst->SrcReg[0].Swizzle[0] = 0;
-   inst->SrcReg[0].Swizzle[1] = 1;
-   inst->SrcReg[0].Swizzle[2] = 2;
-   inst->SrcReg[0].Swizzle[3] = 3;
+   inst->SrcReg[0].Swizzle = SWIZZLE_NOOP;
    inst->SrcReg[0].NegateBase = GL_FALSE;
    inst->SrcReg[0].Abs = GL_FALSE;
    inst->SrcReg[0].NegateAbs = GL_FALSE;
@@ -1261,10 +1264,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
       inst->SrcReg[1].File = (enum register_file) -1;
       inst->SrcReg[2].File = (enum register_file) -1;
       inst->DstReg.File = (enum register_file) -1;
-      inst->DstReg.CondSwizzle[0] = 0;
-      inst->DstReg.CondSwizzle[1] = 1;
-      inst->DstReg.CondSwizzle[2] = 2;
-      inst->DstReg.CondSwizzle[3] = 3;
+      inst->DstReg.CondSwizzle = SWIZZLE_NOOP;
       inst->Data = NULL;
 
       /* special instructions */
@@ -1400,15 +1400,18 @@ Parse_InstructionSequence(struct parse_state *parseState,
             /* XXX to-do */
          }
          else if (instMatch.inputs == INPUT_1V_T) {
+	    GLubyte unit, idx;
             if (!Parse_VectorSrc(parseState, &inst->SrcReg[0]))
                RETURN_ERROR;
             if (!Parse_String(parseState, ","))
                RETURN_ERROR1("Expected ,");
-            if (!Parse_TextureImageId(parseState, &inst->TexSrcUnit,
-                                      &inst->TexSrcBit))
+            if (!Parse_TextureImageId(parseState, &unit, &idx))
                RETURN_ERROR;
+	    inst->TexSrcUnit = unit;
+	    inst->TexSrcIdx = idx;
          }
          else if (instMatch.inputs == INPUT_3V_T) {
+	    GLubyte unit, idx;
             if (!Parse_VectorSrc(parseState, &inst->SrcReg[0]))
                RETURN_ERROR;
             if (!Parse_String(parseState, ","))
@@ -1421,9 +1424,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
                RETURN_ERROR;
             if (!Parse_String(parseState, ","))
                RETURN_ERROR1("Expected ,");
-            if (!Parse_TextureImageId(parseState, &inst->TexSrcUnit,
-                                      &inst->TexSrcBit))
+            if (!Parse_TextureImageId(parseState, &unit, &idx))
                RETURN_ERROR;
+	    inst->TexSrcUnit = unit;
+	    inst->TexSrcIdx = idx;
          }
          else if (instMatch.inputs == INPUT_1V_S) {
             if (!Parse_PrintInstruction(parseState, inst))
@@ -1586,10 +1590,10 @@ PrintSrcReg(const struct fragment_program *program,
    if (src->File == PROGRAM_NAMED_PARAM) {
       if (program->Parameters->Parameters[src->Index].Type == CONSTANT) {
          printf("{%g, %g, %g, %g}",
-                program->Parameters->Parameters[src->Index].Values[0],
-                program->Parameters->Parameters[src->Index].Values[1],
-                program->Parameters->Parameters[src->Index].Values[2],
-                program->Parameters->Parameters[src->Index].Values[3]);
+                program->Parameters->ParameterValues[src->Index][0],
+                program->Parameters->ParameterValues[src->Index][1],
+                program->Parameters->ParameterValues[src->Index][2],
+                program->Parameters->ParameterValues[src->Index][3]);
       }
       else {
          ASSERT(program->Parameters->Parameters[src->Index].Type
@@ -1619,20 +1623,17 @@ PrintSrcReg(const struct fragment_program *program,
       _mesa_problem(NULL, "Invalid fragment register %d", src->Index);
       return;
    }
-   if (src->Swizzle[0] == src->Swizzle[1] &&
-       src->Swizzle[0] == src->Swizzle[2] &&
-       src->Swizzle[0] == src->Swizzle[3]) {
-      _mesa_printf(".%c", comps[src->Swizzle[0]]);
+   if (GET_SWZ(src->Swizzle, 0) == GET_SWZ(src->Swizzle, 1) &&
+       GET_SWZ(src->Swizzle, 0) == GET_SWZ(src->Swizzle, 2) &&
+       GET_SWZ(src->Swizzle, 0) == GET_SWZ(src->Swizzle, 3)) {
+      _mesa_printf(".%c", comps[GET_SWZ(src->Swizzle, 0)]);
    }
-   else if (src->Swizzle[0] != 0 ||
-            src->Swizzle[1] != 1 ||
-            src->Swizzle[2] != 2 ||
-            src->Swizzle[3] != 3) {
+   else if (src->Swizzle != SWIZZLE_NOOP) {
       _mesa_printf(".%c%c%c%c",
-                   comps[src->Swizzle[0]],
-                   comps[src->Swizzle[1]],
-                   comps[src->Swizzle[2]],
-                   comps[src->Swizzle[3]]);
+                   comps[GET_SWZ(src->Swizzle, 0)],
+                   comps[GET_SWZ(src->Swizzle, 1)],
+                   comps[GET_SWZ(src->Swizzle, 2)],
+                   comps[GET_SWZ(src->Swizzle, 3)]);
    }
    if (src->Abs) {
       _mesa_printf("|");
@@ -1643,20 +1644,20 @@ static void
 PrintTextureSrc(const struct fp_instruction *inst)
 {
    _mesa_printf("TEX%d, ", inst->TexSrcUnit);
-   switch (inst->TexSrcBit) {
-   case TEXTURE_1D_BIT:
+   switch (inst->TexSrcIdx) {
+   case TEXTURE_1D_INDEX:
       _mesa_printf("1D");
       break;
-   case TEXTURE_2D_BIT:
+   case TEXTURE_2D_INDEX:
       _mesa_printf("2D");
       break;
-   case TEXTURE_3D_BIT:
+   case TEXTURE_3D_INDEX:
       _mesa_printf("3D");
       break;
-   case TEXTURE_RECT_BIT:
+   case TEXTURE_RECT_INDEX:
       _mesa_printf("RECT");
       break;
-   case TEXTURE_CUBE_BIT:
+   case TEXTURE_CUBE_INDEX:
       _mesa_printf("CUBE");
       break;
    default:
@@ -1673,20 +1674,17 @@ PrintCondCode(const struct fp_dst_register *dst)
    };
 
    _mesa_printf("%s", ccString[dst->CondMask]);
-   if (dst->CondSwizzle[0] == dst->CondSwizzle[1] &&
-       dst->CondSwizzle[0] == dst->CondSwizzle[2] &&
-       dst->CondSwizzle[0] == dst->CondSwizzle[3]) {
-      _mesa_printf(".%c", comps[dst->CondSwizzle[0]]);
+   if (GET_SWZ(dst->CondSwizzle, 0) == GET_SWZ(dst->CondSwizzle, 1) &&
+       GET_SWZ(dst->CondSwizzle, 0) == GET_SWZ(dst->CondSwizzle, 2) &&
+       GET_SWZ(dst->CondSwizzle, 0) == GET_SWZ(dst->CondSwizzle, 3)) {
+      _mesa_printf(".%c", comps[GET_SWZ(dst->CondSwizzle, 0)]);
    }
-   else if (dst->CondSwizzle[0] != 0 ||
-            dst->CondSwizzle[1] != 1 ||
-            dst->CondSwizzle[2] != 2 ||
-            dst->CondSwizzle[3] != 3) {
+   else if (dst->CondSwizzle != SWIZZLE_NOOP) {
       _mesa_printf(".%c%c%c%c",
-                   comps[dst->CondSwizzle[0]],
-                   comps[dst->CondSwizzle[1]],
-                   comps[dst->CondSwizzle[2]],
-                   comps[dst->CondSwizzle[3]]);
+                   comps[GET_SWZ(dst->CondSwizzle, 0)],
+                   comps[GET_SWZ(dst->CondSwizzle, 1)],
+                   comps[GET_SWZ(dst->CondSwizzle, 2)],
+                   comps[GET_SWZ(dst->CondSwizzle, 3)]);
    }
 }
 
@@ -1694,9 +1692,6 @@ PrintCondCode(const struct fp_dst_register *dst)
 static void
 PrintDstReg(const struct fp_dst_register *dst)
 {
-   GLint w = dst->WriteMask[0] + dst->WriteMask[1]
-           + dst->WriteMask[2] + dst->WriteMask[3];
-
    if (dst->File == PROGRAM_OUTPUT) {
       _mesa_printf("o[%s]", OutputRegisters[dst->Index]);
    }
@@ -1716,23 +1711,20 @@ PrintDstReg(const struct fp_dst_register *dst)
       _mesa_printf("???");
    }
 
-   if (w != 0 && w != 4) {
+   if (dst->WriteMask != 0 && dst->WriteMask != 0xf) {
       _mesa_printf(".");
-      if (dst->WriteMask[0])
+      if (dst->WriteMask & 0x1)
          _mesa_printf("x");
-      if (dst->WriteMask[1])
+      if (dst->WriteMask & 0x2)
          _mesa_printf("y");
-      if (dst->WriteMask[2])
+      if (dst->WriteMask & 0x4)
          _mesa_printf("z");
-      if (dst->WriteMask[3])
+      if (dst->WriteMask & 0x8)
          _mesa_printf("w");
    }
 
    if (dst->CondMask != COND_TR ||
-       dst->CondSwizzle[0] != 0 ||
-       dst->CondSwizzle[1] != 1 ||
-       dst->CondSwizzle[2] != 2 ||
-       dst->CondSwizzle[3] != 3) {
+       dst->CondSwizzle != SWIZZLE_NOOP) {
       _mesa_printf(" (");
       PrintCondCode(dst);
       _mesa_printf(")");

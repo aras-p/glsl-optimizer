@@ -35,6 +35,7 @@
 #include "imports.h"
 #include "macros.h"
 #include "mtypes.h"
+#include "program.h"
 #include "arbprogparse.h"
 #include "arbfragparse.h"
 
@@ -43,9 +44,9 @@ _mesa_debug_fp_inst(GLint num, struct fp_instruction *fp)
 {
    GLint a;
  
-   fprintf(stderr, "PROGRAM_OUTPUT: 0x%x\n",    PROGRAM_OUTPUT);
-   fprintf(stderr, "PROGRAM_INPUT: 0x%x\n",     PROGRAM_INPUT);
-   fprintf(stderr, "PROGRAM_TEMPORARY: 0x%x\n", PROGRAM_TEMPORARY);
+/*    fprintf(stderr, "PROGRAM_OUTPUT: 0x%x\n",    PROGRAM_OUTPUT); */
+/*    fprintf(stderr, "PROGRAM_INPUT: 0x%x\n",     PROGRAM_INPUT); */
+/*    fprintf(stderr, "PROGRAM_TEMPORARY: 0x%x\n", PROGRAM_TEMPORARY); */
 
    for (a=0; a<num; a++) {
       switch (fp[a].Opcode) {
@@ -153,28 +154,30 @@ _mesa_debug_fp_inst(GLint num, struct fp_instruction *fp)
       }
 
       fprintf(stderr, " D(0x%x:%d:%d%d%d%d) ", 
-         fp[a].DstReg.File, fp[a].DstReg.Index,
-         fp[a].DstReg.WriteMask[0], fp[a].DstReg.WriteMask[1], 
-         fp[a].DstReg.WriteMask[2], fp[a].DstReg.WriteMask[3]); 
-						 
+	      fp[a].DstReg.File, fp[a].DstReg.Index,
+	      GET_BIT(fp[a].DstReg.WriteMask, 0), 
+	      GET_BIT(fp[a].DstReg.WriteMask, 1), 
+	      GET_BIT(fp[a].DstReg.WriteMask, 2), 
+	      GET_BIT(fp[a].DstReg.WriteMask, 3));
+      
       fprintf(stderr, "S1(0x%x:%d:%d%d%d%d) ", fp[a].SrcReg[0].File, fp[a].SrcReg[0].Index,
-         fp[a].SrcReg[0].Swizzle[0],
-         fp[a].SrcReg[0].Swizzle[1],
-         fp[a].SrcReg[0].Swizzle[2],
-         fp[a].SrcReg[0].Swizzle[3]);
+	      GET_SWZ(fp[a].SrcReg[0].Swizzle, 0),
+	      GET_SWZ(fp[a].SrcReg[0].Swizzle, 1),
+	      GET_SWZ(fp[a].SrcReg[0].Swizzle, 2),
+	      GET_SWZ(fp[a].SrcReg[0].Swizzle, 3));
 
       fprintf(stderr, "S2(0x%x:%d:%d%d%d%d) ", fp[a].SrcReg[1].File, fp[a].SrcReg[1].Index,
-        fp[a].SrcReg[1].Swizzle[0],
-        fp[a].SrcReg[1].Swizzle[1],
-        fp[a].SrcReg[1].Swizzle[2],
-        fp[a].SrcReg[1].Swizzle[3]);
-
+	      GET_SWZ(fp[a].SrcReg[1].Swizzle, 0),
+	      GET_SWZ(fp[a].SrcReg[1].Swizzle, 1),
+	      GET_SWZ(fp[a].SrcReg[1].Swizzle, 2),
+	      GET_SWZ(fp[a].SrcReg[1].Swizzle, 3));
+       
       fprintf(stderr, "S3(0x%x:%d:%d%d%d%d)",  fp[a].SrcReg[2].File, fp[a].SrcReg[2].Index,
-        fp[a].SrcReg[2].Swizzle[0],
-        fp[a].SrcReg[2].Swizzle[1],
-        fp[a].SrcReg[2].Swizzle[2],
-        fp[a].SrcReg[2].Swizzle[3]);
-
+	      GET_SWZ(fp[a].SrcReg[2].Swizzle, 0),
+	      GET_SWZ(fp[a].SrcReg[2].Swizzle, 1),
+	      GET_SWZ(fp[a].SrcReg[2].Swizzle, 2),
+	      GET_SWZ(fp[a].SrcReg[2].Swizzle, 3));
+      
       fprintf(stderr, "\n");
    }
 }

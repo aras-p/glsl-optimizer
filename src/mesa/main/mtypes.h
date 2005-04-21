@@ -214,6 +214,27 @@ enum
 
 
 /**
+ * Indexes for vertex program result attributes
+ */
+#define VERT_RESULT_HPOS 0
+#define VERT_RESULT_COL0 1
+#define VERT_RESULT_COL1 2
+#define VERT_RESULT_BFC0 3
+#define VERT_RESULT_BFC1 4
+#define VERT_RESULT_FOGC 5
+#define VERT_RESULT_PSIZ 6
+#define VERT_RESULT_TEX0 7
+#define VERT_RESULT_TEX1 8
+#define VERT_RESULT_TEX2 9
+#define VERT_RESULT_TEX3 10
+#define VERT_RESULT_TEX4 11
+#define VERT_RESULT_TEX5 12
+#define VERT_RESULT_TEX6 13
+#define VERT_RESULT_TEX7 14
+#define VERT_RESULT_MAX  15
+
+
+/**
  * Indexes for fragment program input attributes.
  */
 enum
@@ -1679,7 +1700,7 @@ struct atifs_machine
  */
 enum register_file
 {
-   PROGRAM_TEMPORARY = 10,
+   PROGRAM_TEMPORARY,
    PROGRAM_INPUT,
    PROGRAM_OUTPUT,
    PROGRAM_LOCAL_PARAM,

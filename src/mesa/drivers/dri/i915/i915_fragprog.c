@@ -130,7 +130,7 @@ static GLuint src_vector( struct i915_fragment_program *p,
       case PROGRAM_STATE_VAR:
       case PROGRAM_NAMED_PARAM:
          src = i915_emit_param4fv( 
-	    p, program->Parameters->Parameters[source->Index].Values );
+	    p, program->Parameters->ParameterValues[source->Index] );
 	 break;
 
       default:
@@ -139,10 +139,10 @@ static GLuint src_vector( struct i915_fragment_program *p,
    }
 
    src = swizzle(src, 
-		 source->Swizzle[0],
-		 source->Swizzle[1],
-		 source->Swizzle[2],
-		 source->Swizzle[3]);
+		 GET_SWZ(source->Swizzle, 0),
+		 GET_SWZ(source->Swizzle, 1),
+		 GET_SWZ(source->Swizzle, 2),
+		 GET_SWZ(source->Swizzle, 3));
 
    if (source->NegateBase)
       src = negate( src, 1,1,1,1 );
@@ -179,30 +179,30 @@ static GLuint get_result_flags( const struct fp_instruction *inst )
    GLuint flags = 0;
 
    if (inst->Saturate) flags |= A0_DEST_SATURATE;
-   if (inst->DstReg.WriteMask[0]) flags |= A0_DEST_CHANNEL_X;
-   if (inst->DstReg.WriteMask[1]) flags |= A0_DEST_CHANNEL_Y;
-   if (inst->DstReg.WriteMask[2]) flags |= A0_DEST_CHANNEL_Z;
-   if (inst->DstReg.WriteMask[3]) flags |= A0_DEST_CHANNEL_W;
+   if (inst->DstReg.WriteMask & WRITEMASK_X) flags |= A0_DEST_CHANNEL_X;
+   if (inst->DstReg.WriteMask & WRITEMASK_Y) flags |= A0_DEST_CHANNEL_Y;
+   if (inst->DstReg.WriteMask & WRITEMASK_Z) flags |= A0_DEST_CHANNEL_Z;
+   if (inst->DstReg.WriteMask & WRITEMASK_W) flags |= A0_DEST_CHANNEL_W;
 
    return flags;
 }
 
-static GLuint translate_tex_src_bit( struct i915_fragment_program *p,
+static GLuint translate_tex_src_idx( struct i915_fragment_program *p,
 				     GLubyte bit )
 {
    switch (bit) {
-   case TEXTURE_1D_BIT:   return D0_SAMPLE_TYPE_2D;
-   case TEXTURE_2D_BIT:   return D0_SAMPLE_TYPE_2D;
-   case TEXTURE_RECT_BIT: return D0_SAMPLE_TYPE_2D;
-   case TEXTURE_3D_BIT:   return D0_SAMPLE_TYPE_VOLUME;
-   case TEXTURE_CUBE_BIT: return D0_SAMPLE_TYPE_CUBE;
+   case TEXTURE_1D_INDEX:   return D0_SAMPLE_TYPE_2D;
+   case TEXTURE_2D_INDEX:   return D0_SAMPLE_TYPE_2D;
+   case TEXTURE_RECT_INDEX: return D0_SAMPLE_TYPE_2D;
+   case TEXTURE_3D_INDEX:   return D0_SAMPLE_TYPE_VOLUME;
+   case TEXTURE_CUBE_INDEX: return D0_SAMPLE_TYPE_CUBE;
    default: i915_program_error(p, "TexSrcBit"); return 0;
    }
 }
 
 #define EMIT_TEX( OP )						\
 do {								\
-   GLuint dim = translate_tex_src_bit( p, inst->TexSrcBit );	\
+   GLuint dim = translate_tex_src_idx( p, inst->TexSrcIdx );	\
    GLuint sampler = i915_emit_decl(p, REG_TYPE_S,		\
 				  inst->TexSrcUnit, dim);	\
    GLuint coord = src_vector( p, &inst->SrcReg[0], program);	\
@@ -592,10 +592,10 @@ static void upload_program( struct i915_fragment_program *p )
 			 swizzle(tmp, X,Y,X,Y), 
 			 swizzle(tmp, X,X,ONE,ONE), 0);
 
-	 if (inst->DstReg.WriteMask[1]) {
+	 if (inst->DstReg.WriteMask & WRITEMASK_Y) {
 	    GLuint tmp1;
 	    
-	    if (inst->DstReg.WriteMask[0])
+	    if (inst->DstReg.WriteMask & WRITEMASK_X)
 	       tmp1 = i915_get_utemp( p );
 	    else
 	       tmp1 = tmp;
@@ -614,7 +614,7 @@ static void upload_program( struct i915_fragment_program *p )
 			    i915_emit_const4fv( p, sin_constants ), 0);
 	 }
 
-	 if (inst->DstReg.WriteMask[0]) {
+	 if (inst->DstReg.WriteMask & WRITEMASK_X) {
 	    i915_emit_arith( p, 
 			    A0_MUL,
 			    tmp, A0_DEST_CHANNEL_XYZ, 0,

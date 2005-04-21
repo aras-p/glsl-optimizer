@@ -33,7 +33,6 @@
 #endif
 
 /*
-    $Id: grammar.c,v 1.10 2004/12/08 14:00:46 alanh Exp $
 */
 
 /*

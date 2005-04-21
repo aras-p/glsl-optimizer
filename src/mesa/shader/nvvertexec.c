@@ -239,7 +239,7 @@ get_register_pointer( const struct vp_src_register *source,
       else if (source->File == PROGRAM_ENV_PARAM)
          return state->Parameters[reg];
       else
-         return state->Current->Parameters->Parameters[reg].Values;
+         return state->Current->Parameters->ParameterValues[reg];
    }
    else {
       switch (source->File) {
@@ -261,7 +261,7 @@ get_register_pointer( const struct vp_src_register *source,
             return state->Parameters[source->Index];
          case PROGRAM_STATE_VAR:
             ASSERT(source->Index < state->Current->Parameters->NumParameters);
-            return state->Current->Parameters->Parameters[source->Index].Values;
+            return state->Current->Parameters->ParameterValues[source->Index];
          default:
             _mesa_problem(NULL,
                           "Bad source register file in get_register_pointer");
@@ -284,16 +284,16 @@ fetch_vector4( const struct vp_src_register *source,
    const GLfloat *src = get_register_pointer(source, state);
 
    if (source->Negate) {
-      result[0] = -src[source->Swizzle[0]];
-      result[1] = -src[source->Swizzle[1]];
-      result[2] = -src[source->Swizzle[2]];
-      result[3] = -src[source->Swizzle[3]];
+      result[0] = -src[GET_SWZ(source->Swizzle, 0)];
+      result[1] = -src[GET_SWZ(source->Swizzle, 1)];
+      result[2] = -src[GET_SWZ(source->Swizzle, 2)];
+      result[3] = -src[GET_SWZ(source->Swizzle, 3)];
    }
    else {
-      result[0] = src[source->Swizzle[0]];
-      result[1] = src[source->Swizzle[1]];
-      result[2] = src[source->Swizzle[2]];
-      result[3] = src[source->Swizzle[3]];
+      result[0] = src[GET_SWZ(source->Swizzle, 0)];
+      result[1] = src[GET_SWZ(source->Swizzle, 1)];
+      result[2] = src[GET_SWZ(source->Swizzle, 2)];
+      result[3] = src[GET_SWZ(source->Swizzle, 3)];
    }
 }
 
@@ -310,10 +310,10 @@ fetch_vector1( const struct vp_src_register *source,
    const GLfloat *src = get_register_pointer(source, state);
 
    if (source->Negate) {
-      result[0] = -src[source->Swizzle[0]];
+      result[0] = -src[GET_SWZ(source->Swizzle, 0)];
    }
    else {
-      result[0] = src[source->Swizzle[0]];
+      result[0] = src[GET_SWZ(source->Swizzle, 0)];
    }
 }
 
@@ -347,13 +347,13 @@ store_vector4( const struct vp_dst_register *dest,
          return;
    }
 
-   if (dest->WriteMask[0])
+   if (dest->WriteMask & WRITEMASK_X)
       dst[0] = value[0];
-   if (dest->WriteMask[1])
+   if (dest->WriteMask & WRITEMASK_Y)
       dst[1] = value[1];
-   if (dest->WriteMask[2])
+   if (dest->WriteMask & WRITEMASK_Z)
       dst[2] = value[2];
-   if (dest->WriteMask[3])
+   if (dest->WriteMask & WRITEMASK_W)
       dst[3] = value[3];
 }
 
@@ -766,12 +766,12 @@ _mesa_exec_vertex_program(GLcontext *ctx, const struct vertex_program *program)
 
                /* do extended swizzling here */
                for (i = 0; i < 3; i++) {
-                  if (source->Swizzle[i] == SWIZZLE_ZERO)
+                  if (GET_SWZ(source->Swizzle, i) == SWIZZLE_ZERO)
                      result[i] = 0.0;
-                  else if (source->Swizzle[i] == SWIZZLE_ONE)
+                  else if (GET_SWZ(source->Swizzle, i) == SWIZZLE_ONE)
                      result[i] = -1.0;
                   else
-                     result[i] = -src[source->Swizzle[i]];
+                     result[i] = -src[GET_SWZ(source->Swizzle, i)];
                   if (source->Negate)
                      result[i] = -result[i];
                }

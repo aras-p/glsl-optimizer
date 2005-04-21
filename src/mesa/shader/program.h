@@ -51,6 +51,29 @@
 #define SWIZZLE_ZERO 4		/* keep these values together: KW */
 #define SWIZZLE_ONE  5		/* keep these values together: KW */
 
+#define MAKE_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<3) | ((c)<<6) | ((d)<<9))
+#define MAKE_SWIZZLE(x)        MAKE_SWIZZLE4((x)[0], (x)[1], (x)[2], (x)[3])
+#define SWIZZLE_NOOP           MAKE_SWIZZLE4(0,1,2,3)
+#define GET_SWZ(swz, idx)      (((swz) >> ((idx)*3)) & 0x7)
+#define GET_BIT(msk, idx)      (((msk) >> (idx)) & 0x1)
+
+
+#define WRITEMASK_X     0x1
+#define WRITEMASK_Y     0x2
+#define WRITEMASK_XY    0x3
+#define WRITEMASK_Z     0x4
+#define WRITEMASK_XZ    0x5
+#define WRITEMASK_YZ    0x6
+#define WRITEMASK_XYZ   0x7
+#define WRITEMASK_W     0x8
+#define WRITEMASK_XW    0x9
+#define WRITEMASK_YW    0xa
+#define WRITEMASK_XYW   0xb
+#define WRITEMASK_ZW    0xc
+#define WRITEMASK_XZW   0xd
+#define WRITEMASK_YZW   0xe
+#define WRITEMASK_XYZW  0xf
+
 
 extern struct program _mesa_DummyProgram;
 
@@ -158,7 +181,11 @@ enum state_index {
    STATE_FRAGMENT_PROGRAM,
 
    STATE_ENV,
-   STATE_LOCAL
+   STATE_LOCAL,
+
+   STATE_INTERNAL,		/* Mesa additions */
+   STATE_NORMAL_SCALE,
+   STATE_POSITION_NORMALIZED
 };
 
 
@@ -183,7 +210,6 @@ struct program_parameter
    const char *Name;                   /* Null-terminated */
    enum parameter_type Type;
    enum state_index StateIndexes[6];   /* Global state reference */
-   GLfloat Values[4];
 };
 
 
@@ -191,6 +217,7 @@ struct program_parameter_list
 {
    GLuint NumParameters;
    struct program_parameter *Parameters;
+   GLfloat (*ParameterValues)[4];
 };
 
 

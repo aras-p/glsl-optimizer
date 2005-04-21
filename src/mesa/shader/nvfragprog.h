@@ -34,7 +34,7 @@
 #define NVFRAGPROG_H
 
 #include "config.h"
-
+#include "mtypes.h"
 
 /* output registers */
 #define FRAG_OUTPUT_COLR  0
@@ -62,8 +62,7 @@
 
 /* Fragment program instruction opcodes */
 enum fp_opcode {
-   FP_OPCODE_INVALID = -1,   /* Force signed enum */
-   FP_OPCODE_ABS = 1000,     /* ARB_f_p only */
+   FP_OPCODE_ABS,     /* ARB_f_p only */
    FP_OPCODE_ADD,
    FP_OPCODE_CMP,            /* ARB_f_p only */
    FP_OPCODE_COS,
@@ -125,41 +124,44 @@ enum fp_opcode {
 /* Instruction source register */
 struct fp_src_register
 {
-   enum register_file File;
-   GLint Index;
-   GLuint Swizzle[4];
-   GLboolean NegateBase; /* negate before absolute value? */
-   GLboolean Abs;        /* take absolute value? */
-   GLboolean NegateAbs;  /* negate after absolute value? */
+   GLuint File:4;
+   GLuint Index:8;
+   GLuint Swizzle:12;
+   GLuint NegateBase:4; /* ARB: negate/extended negate.
+			   NV: negate before absolute value? */
+   GLuint Abs:1;        /* NV: take absolute value? */
+   GLuint NegateAbs:1;  /* NV: negate after absolute value? */
 };
 
 
 /* Instruction destination register */
 struct fp_dst_register
 {
-   enum register_file File;
-   GLint Index;
-   GLboolean WriteMask[4];
-   GLuint CondMask;
-   GLuint CondSwizzle[4];
+   GLuint File:4;
+   GLuint Index:8;
+   GLuint WriteMask:4;
+   GLuint CondMask:4;		/* NV: enough bits? */
+   GLuint CondSwizzle:12;	/* NV: enough bits? */
 };
 
 
 /* Fragment program instruction */
 struct fp_instruction
 {
-   enum fp_opcode Opcode;
+   GLuint Opcode:6;
+   GLuint Saturate:1;	
+   GLuint UpdateCondRegister:1;	/* NV */
+   GLuint Precision:2;    /* NV: unused/unneeded? */
+   GLuint TexSrcUnit:4;   /* texture unit for TEX, TXD, TXP instructions */
+   GLuint TexSrcIdx:3;    /* TEXTURE_1D,2D,3D,CUBE,RECT_INDEX source target */
+
+#if FEATURE_MESA_program_debug
+   GLint StringPos:15;		/* enough bits? */
+#endif
+
+   void *Data;  /* some arbitrary data, only used for PRINT instruction now */
    struct fp_src_register SrcReg[3];
    struct fp_dst_register DstReg;
-   GLboolean Saturate;
-   GLboolean UpdateCondRegister;
-   GLubyte Precision;    /* FLOAT32, FLOAT16 or FIXED12 */
-   GLubyte TexSrcUnit;   /* texture unit for TEX, TXD, TXP instructions */
-   GLubyte TexSrcBit;    /* TEXTURE_1D,2D,3D,CUBE,RECT_BIT source target */
-#if FEATURE_MESA_program_debug
-   GLint StringPos;
-#endif
-   void *Data;  /* some arbitrary data, only used for PRINT instruction now */
 };
 
 

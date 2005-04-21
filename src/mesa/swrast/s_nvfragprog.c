@@ -137,10 +137,10 @@ get_register_pointer( GLcontext *ctx,
          /* Fallthrough */
       case PROGRAM_NAMED_PARAM:
          ASSERT(source->Index < (GLint) program->Parameters->NumParameters);
-         src = program->Parameters->Parameters[source->Index].Values;
+         src = program->Parameters->ParameterValues[source->Index];
          break;
       default:
-         _mesa_problem(ctx, "Invalid input register file in fetch_vector4");
+         _mesa_problem(ctx, "Invalid input register file %d in fetch_vector4", source->File);
          src = NULL;
    }
    return src;
@@ -161,10 +161,10 @@ fetch_vector4( GLcontext *ctx,
    const GLfloat *src = get_register_pointer(ctx, source, machine, program);
    ASSERT(src);
 
-   result[0] = src[source->Swizzle[0]];
-   result[1] = src[source->Swizzle[1]];
-   result[2] = src[source->Swizzle[2]];
-   result[3] = src[source->Swizzle[3]];
+   result[0] = src[GET_SWZ(source->Swizzle, 0)];
+   result[1] = src[GET_SWZ(source->Swizzle, 1)];
+   result[2] = src[GET_SWZ(source->Swizzle, 2)];
+   result[3] = src[GET_SWZ(source->Swizzle, 3)];
 
    if (source->NegateBase) {
       result[0] = -result[0];
@@ -291,10 +291,10 @@ fetch_vector4_deriv( GLcontext *ctx,
       return GL_FALSE;
    }
 
-   result[0] = src[source->Swizzle[0]];
-   result[1] = src[source->Swizzle[1]];
-   result[2] = src[source->Swizzle[2]];
-   result[3] = src[source->Swizzle[3]];
+   result[0] = src[GET_SWZ(source->Swizzle, 0)];
+   result[1] = src[GET_SWZ(source->Swizzle, 1)];
+   result[2] = src[GET_SWZ(source->Swizzle, 2)];
+   result[3] = src[GET_SWZ(source->Swizzle, 3)];
 
    if (source->NegateBase) {
       result[0] = -result[0];
@@ -331,7 +331,7 @@ fetch_vector1( GLcontext *ctx,
    const GLfloat *src = get_register_pointer(ctx, source, machine, program);
    ASSERT(src);
 
-   result[0] = src[source->Swizzle[0]];
+   result[0] = src[GET_SWZ(source->Swizzle, 0)];
 
    if (source->NegateBase) {
       result[0] = -result[0];
@@ -397,8 +397,8 @@ store_vector4( const struct fp_instruction *inst,
    GLfloat *dstReg;
    GLfloat dummyReg[4];
    GLfloat clampedValue[4];
-   const GLboolean *writeMask = dest->WriteMask;
    GLboolean condWriteMask[4];
+   GLuint writeMask = dest->WriteMask;
 
    switch (dest->File) {
       case PROGRAM_OUTPUT:
@@ -433,33 +433,37 @@ store_vector4( const struct fp_instruction *inst,
    }
 
    if (dest->CondMask != COND_TR) {
-      condWriteMask[0] = writeMask[0]
-         && test_cc(machine->CondCodes[dest->CondSwizzle[0]], dest->CondMask);
-      condWriteMask[1] = writeMask[1]
-         && test_cc(machine->CondCodes[dest->CondSwizzle[1]], dest->CondMask);
-      condWriteMask[2] = writeMask[2]
-         && test_cc(machine->CondCodes[dest->CondSwizzle[2]], dest->CondMask);
-      condWriteMask[3] = writeMask[3]
-         && test_cc(machine->CondCodes[dest->CondSwizzle[3]], dest->CondMask);
-      writeMask = condWriteMask;
+      condWriteMask[0] = GET_BIT(writeMask, 0)
+         && test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 0)], dest->CondMask);
+      condWriteMask[1] = GET_BIT(writeMask, 1)
+         && test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 1)], dest->CondMask);
+      condWriteMask[2] = GET_BIT(writeMask, 2)
+         && test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 2)], dest->CondMask);
+      condWriteMask[3] = GET_BIT(writeMask, 3)
+         && test_cc(machine->CondCodes[GET_SWZ(dest->CondSwizzle, 3)], dest->CondMask);
+
+      writeMask = ((condWriteMask[0] << 0) |
+		   (condWriteMask[1] << 1) |
+		   (condWriteMask[2] << 2) |
+		   (condWriteMask[3] << 3));
    }
 
-   if (writeMask[0]) {
+   if (GET_BIT(writeMask, 0)) {
       dstReg[0] = value[0];
       if (updateCC)
          machine->CondCodes[0] = generate_cc(value[0]);
    }
-   if (writeMask[1]) {
+   if (GET_BIT(writeMask, 1)) {
       dstReg[1] = value[1];
       if (updateCC)
          machine->CondCodes[1] = generate_cc(value[1]);
    }
-   if (writeMask[2]) {
+   if (GET_BIT(writeMask, 2)) {
       dstReg[2] = value[2];
       if (updateCC)
          machine->CondCodes[2] = generate_cc(value[2]);
    }
-   if (writeMask[3]) {
+   if (GET_BIT(writeMask, 3)) {
       dstReg[3] = value[3];
       if (updateCC)
          machine->CondCodes[3] = generate_cc(value[3]);
@@ -779,12 +783,12 @@ execute_program( GLcontext *ctx,
             break;
          case FP_OPCODE_KIL_NV: /* NV_f_p only */
             {
-               const GLuint *swizzle = inst->DstReg.CondSwizzle;
+               const GLuint swizzle = inst->DstReg.CondSwizzle;
                const GLuint condMask = inst->DstReg.CondMask;
-               if (test_cc(machine->CondCodes[swizzle[0]], condMask) ||
-                   test_cc(machine->CondCodes[swizzle[1]], condMask) ||
-                   test_cc(machine->CondCodes[swizzle[2]], condMask) ||
-                   test_cc(machine->CondCodes[swizzle[3]], condMask)) {
+               if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 1)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
+                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
                   return GL_FALSE;
                }
             }
@@ -1154,12 +1158,13 @@ execute_program( GLcontext *ctx,
 
                /* do extended swizzling here */
                for (i = 0; i < 3; i++) {
-                  if (source->Swizzle[i] == SWIZZLE_ZERO)
+                  if (GET_SWZ(source->Swizzle, i) == SWIZZLE_ZERO)
                      result[i] = 0.0;
-                  else if (source->Swizzle[i] == SWIZZLE_ONE)
+                  else if (GET_SWZ(source->Swizzle, i) == SWIZZLE_ONE)
                      result[i] = -1.0;
                   else
-                     result[i] = -src[source->Swizzle[i]];
+                     result[i] = -src[GET_SWZ(source->Swizzle, i)];
+
                   if (source->NegateBase)
                      result[i] = -result[i];
                }
@@ -1224,7 +1229,7 @@ execute_program( GLcontext *ctx,
             {
                GLfloat texcoord[4], color[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
-               if (inst->TexSrcBit != TEXTURE_CUBE_BIT) {
+               if (inst->TexSrcIdx != TEXTURE_CUBE_INDEX) {
                   texcoord[0] /= texcoord[3];
                   texcoord[1] /= texcoord[3];
                   texcoord[2] /= texcoord[3];
