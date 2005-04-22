@@ -1304,6 +1304,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #undef PIXEL_TYPE
 #undef BYTES_PER_ROW
 #undef PIXEL_ADDRESS
+#undef DEPTH_TYPE
 
 #undef INTERP_Z
 #undef INTERP_W
