@@ -272,16 +272,9 @@ void _tnl_flush_vtx( GLcontext *ctx )
 	 if (ctx->NewState)
 	    _mesa_update_state( ctx );
       
-	 if (tnl->pipeline.build_state_changes)
-	    _tnl_validate_pipeline( ctx );
-
 	 _tnl_vb_bind_vtx( ctx );
 
-	 /* Invalidate all stored data before and after run:
-	  */
-	 tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
 	 tnl->Driver.RunPipeline( ctx );
-	 tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
       }
    }
 

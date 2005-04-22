@@ -204,16 +204,9 @@ void _tnl_playback_vertex_list( GLcontext *ctx, void *data )
          return;
       }
 
-      if (tnl->pipeline.build_state_changes)
-	 _tnl_validate_pipeline( ctx );
-
       _tnl_bind_vertex_list( ctx, node );
 
-      /* Invalidate all stored data before and after run:
-       */
-      tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
       tnl->Driver.RunPipeline( ctx );
-      tnl->pipeline.run_input_changes |= tnl->pipeline.inputs;
    }
 
    /* Copy to current?

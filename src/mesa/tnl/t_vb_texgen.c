@@ -480,33 +480,41 @@ static void texgen( GLcontext *ctx,
 
 
 
+
 static GLboolean run_texgen_stage( GLcontext *ctx,
 				   struct tnl_pipeline_stage *stage )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   struct texgen_stage_data *store = TEXGEN_STAGE_DATA( stage );
+   struct texgen_stage_data *store = TEXGEN_STAGE_DATA(stage);
    GLuint i;
 
-   for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
-      if (ctx->Texture._TexGenEnabled & ENABLE_TEXGEN(i)) {
-	 if (stage->changed_inputs & (_TNL_BIT_POS | _TNL_BIT_NORMAL | _TNL_BIT_TEX(i)))
-	    store->TexgenFunc[i]( ctx, store, i );
+   if (!ctx->Texture._TexGenEnabled || ctx->VertexProgram._Enabled) 
+      return GL_TRUE;
+
+   for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++) {
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+
+      if (texUnit->TexGenEnabled) {
+
+	 store->TexgenFunc[i]( ctx, store, i );
 
 	 VB->AttribPtr[VERT_ATTRIB_TEX0+i] = 
 	    VB->TexCoordPtr[i] = &store->texcoord[i];
       }
+   }
 
    return GL_TRUE;
 }
 
 
-
-
-static GLboolean run_validate_texgen_stage( GLcontext *ctx,
-					    struct tnl_pipeline_stage *stage )
+static void validate_texgen_stage( GLcontext *ctx,
+				   struct tnl_pipeline_stage *stage )
 {
    struct texgen_stage_data *store = TEXGEN_STAGE_DATA(stage);
    GLuint i;
+
+   if (!ctx->Texture._TexGenEnabled || ctx->VertexProgram._Enabled) 
+      return;
 
    for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
@@ -541,47 +549,8 @@ static GLboolean run_validate_texgen_stage( GLcontext *ctx,
 	 }
       }
    }
-
-   stage->run = run_texgen_stage;
-   return stage->run( ctx, stage );
 }
 
-
-static void check_texgen( GLcontext *ctx, struct tnl_pipeline_stage *stage )
-{
-   GLuint i;
-   stage->active = 0;
-
-   if (ctx->Texture._TexGenEnabled && !ctx->VertexProgram._Enabled) {
-      GLuint inputs = 0;
-      GLuint outputs = 0;
-
-      if (ctx->Texture._GenFlags & (TEXGEN_OBJ_LINEAR | TEXGEN_NEED_EYE_COORD))
-	 inputs |= _TNL_BIT_POS;
-
-      if (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS)
-	 inputs |= _TNL_BIT_NORMAL;
-
-      for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
-	 if (ctx->Texture._TexGenEnabled & ENABLE_TEXGEN(i))
-	 {
-	    outputs |= _TNL_BIT_TEX(i);
-
-	    /* Need the original input in case it contains a Q coord:
-	     * (sigh)
-	     */
-	    inputs |= _TNL_BIT_TEX(i);
-
-	    /* Something for Feedback? */
-	 }
-
-      if (stage->privatePtr)
-	 stage->run = run_validate_texgen_stage;
-      stage->active = 1;
-      stage->inputs = inputs;
-      stage->outputs = outputs;
-   }
-}
 
 
 
@@ -606,10 +575,7 @@ static GLboolean alloc_texgen_data( GLcontext *ctx,
    store->tmp_f = (GLfloat (*)[3]) MALLOC(VB->Size * sizeof(GLfloat) * 3);
    store->tmp_m = (GLfloat *) MALLOC(VB->Size * sizeof(GLfloat));
 
-   /* Now validate and run the stage.
-    */
-   stage->run = run_validate_texgen_stage;
-   return stage->run( ctx, stage );
+   return GL_TRUE;
 }
 
 
@@ -637,14 +603,9 @@ static void free_texgen_data( struct tnl_pipeline_stage *stage )
 const struct tnl_pipeline_stage _tnl_texgen_stage =
 {
    "texgen",			/* name */
-   _NEW_TEXTURE|_NEW_PROGRAM,	/* when to call check() */
-   _NEW_TEXTURE,		/* when to invalidate stored data */
-   GL_FALSE,			/* active? */
-   0,				/* inputs */
-   0,				/* outputs */
-   0,				/* changed_inputs */
    NULL,			/* private data */
+   alloc_texgen_data,		/* destructor */
    free_texgen_data,		/* destructor */
-   check_texgen,		/* check */
-   alloc_texgen_data		/* run -- initially set to alloc data */
+   validate_texgen_stage,		/* check */
+   run_texgen_stage		/* run -- initially set to alloc data */
 };

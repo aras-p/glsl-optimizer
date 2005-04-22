@@ -2649,6 +2649,9 @@ struct __GLcontextRec
    struct gl_fragment_program_state FragmentProgram;  /**< GL_NV_fragment_program */
    struct gl_ati_fragment_shader_state ATIFragmentShader;  /**< GL_ATI_fragment_shader */
 
+   struct fragment_program _TexEnvProgram;     /**< Texture state as fragment program */
+   struct vertex_program _TnlProgram;          /**< Fixed func TNL state as vertex program */
+
    struct gl_occlusion_state Occlusion;  /**< GL_ARB_occlusion_query */
 
    struct gl_shader_objects_state ShaderObjects;	/* GL_ARB_shader_objects */

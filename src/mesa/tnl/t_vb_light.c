@@ -180,7 +180,7 @@ static light_func _tnl_light_ci_tab[MAX_LIGHT_FUNC];
 #include "t_vb_lighttmp.h"
 
 
-static void init_lighting( void )
+static void init_lighting_tables( void )
 {
    static int done;
 
@@ -203,33 +203,34 @@ static GLboolean run_lighting( GLcontext *ctx,
    GLvector4f *input = ctx->_NeedEyeCoords ? VB->EyePtr : VB->ObjPtr;
    GLuint idx;
 
+   if (!ctx->Light.Enabled || ctx->VertexProgram._Enabled)
+      return GL_TRUE;
+
    /* Make sure we can talk about position x,y and z:
     */
-   if (stage->changed_inputs & _TNL_BIT_POS) {
-      if (input->size <= 2 && input == VB->ObjPtr) {
+   if (input->size <= 2 && input == VB->ObjPtr) {
 
-	 _math_trans_4f( store->Input.data,
-			 VB->ObjPtr->data,
-			 VB->ObjPtr->stride,
-			 GL_FLOAT,
-			 VB->ObjPtr->size,
-			 0,
-			 VB->Count );
+      _math_trans_4f( store->Input.data,
+		      VB->ObjPtr->data,
+		      VB->ObjPtr->stride,
+		      GL_FLOAT,
+		      VB->ObjPtr->size,
+		      0,
+		      VB->Count );
 
-	 if (input->size <= 2) {
-	    /* Clean z.
-	     */
-	    _mesa_vector4f_clean_elem(&store->Input, VB->Count, 2);
-	 }
-	 
-	 if (input->size <= 1) {
-	    /* Clean y.
-	     */
-	    _mesa_vector4f_clean_elem(&store->Input, VB->Count, 1);
-	 }
-
-	 input = &store->Input;
+      if (input->size <= 2) {
+	 /* Clean z.
+	  */
+	 _mesa_vector4f_clean_elem(&store->Input, VB->Count, 2);
       }
+	 
+      if (input->size <= 1) {
+	 /* Clean y.
+	  */
+	 _mesa_vector4f_clean_elem(&store->Input, VB->Count, 1);
+      }
+
+      input = &store->Input;
    }
    
    idx = 0;
@@ -255,10 +256,13 @@ static GLboolean run_lighting( GLcontext *ctx,
 
 /* Called in place of do_lighting when the light table may have changed.
  */
-static GLboolean run_validate_lighting( GLcontext *ctx,
+static void validate_lighting( GLcontext *ctx,
 					struct tnl_pipeline_stage *stage )
 {
    light_func *tab;
+
+   if (!ctx->Light.Enabled || ctx->VertexProgram._Enabled)
+      return;
 
    if (ctx->Visual.rgbMode) {
       if (ctx->Light._NeedVertices) {
@@ -283,11 +287,6 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
    /* This and the above should only be done on _NEW_LIGHT:
     */
    TNL_CONTEXT(ctx)->Driver.NotifyMaterialChange( ctx );
-
-   /* Now run the stage...
-    */
-   stage->run = run_lighting;
-   return stage->run( ctx, stage );
 }
 
 
@@ -295,8 +294,8 @@ static GLboolean run_validate_lighting( GLcontext *ctx,
 /* Called the first time stage->run is called.  In effect, don't
  * allocate data until the first time the stage is run.
  */
-static GLboolean run_init_lighting( GLcontext *ctx,
-				    struct tnl_pipeline_stage *stage )
+static GLboolean init_lighting( GLcontext *ctx,
+				struct tnl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct light_stage_data *store;
@@ -309,7 +308,7 @@ static GLboolean run_init_lighting( GLcontext *ctx,
 
    /* Do onetime init.
     */
-   init_lighting();
+   init_lighting_tables();
 
    _mesa_vector4f_alloc( &store->Input, 0, size, 32 );
    _mesa_vector4f_alloc( &store->LitColor[0], 0, size, 32 );
@@ -329,35 +328,10 @@ static GLboolean run_init_lighting( GLcontext *ctx,
    store->LitIndex[1].size = 1;
    store->LitIndex[1].stride = sizeof(GLfloat);
 
-   /* Now validate the stage derived data...
-    */
-   stage->run = run_validate_lighting;
-   return stage->run( ctx, stage );
+   return GL_TRUE;
 }
 
 
-
-/*
- * Check if lighting is enabled.  If so, configure the pipeline stage's
- * type, inputs, and outputs.
- */
-static void check_lighting( GLcontext *ctx, struct tnl_pipeline_stage *stage )
-{
-   stage->active = ctx->Light.Enabled && !ctx->VertexProgram._Enabled;
-   if (stage->active) {
-      if (stage->privatePtr)
-	 stage->run = run_validate_lighting;
-      stage->inputs = _TNL_BIT_NORMAL|_TNL_BITS_MAT_ANY;
-      if (ctx->Light._NeedVertices)
-	 stage->inputs |= _TNL_BIT_POS; 
-      if (ctx->Light.ColorMaterialEnabled)
-	 stage->inputs |= _TNL_BIT_COLOR0;
-
-      stage->outputs = _TNL_BIT_COLOR0;
-      if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-	 stage->outputs |= _TNL_BIT_COLOR1;
-   }
-}
 
 
 static void dtr( struct tnl_pipeline_stage *stage )
@@ -380,16 +354,9 @@ static void dtr( struct tnl_pipeline_stage *stage )
 const struct tnl_pipeline_stage _tnl_lighting_stage =
 {
    "lighting",			/* name */
-   _NEW_LIGHT|_NEW_PROGRAM,	/* recheck */
-   _NEW_LIGHT|_NEW_MODELVIEW,	/* recalc -- modelview dependency
-				 * otherwise not captured by inputs
-				 * (which may be _TNL_BIT_POS) */
-   GL_FALSE,			/* active? */
-   0,				/* inputs */
-   0,				/* outputs */
-   0,				/* changed_inputs */
    NULL,			/* private_data */
+   init_lighting,
    dtr,				/* destroy */
-   check_lighting,		/* check */
-   run_init_lighting		/* run -- initially set to ctr */
+   validate_lighting,
+   run_lighting
 };

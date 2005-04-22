@@ -82,10 +82,6 @@ static void TAG(light_rgba_spec)( GLcontext *ctx,
    sumA[1] = ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3];
 #endif
 
-   /* Side-effects done, can we finish now?
-    */
-   if (stage->changed_inputs == 0)
-      return;
 
    store->LitColor[0].stride = 16;
    store->LitColor[1].stride = 16;
@@ -270,9 +266,6 @@ static void TAG(light_rgba)( GLcontext *ctx,
    VB->ColorPtr[1] = &store->LitColor[1];
    sumA[1] = ctx->Light.Material.Attrib[MAT_ATTRIB_BACK_DIFFUSE][3];
 #endif
-
-   if (stage->changed_inputs == 0)
-      return;
 
    store->LitColor[0].stride = 16;
    store->LitColor[1].stride = 16;
@@ -461,9 +454,6 @@ static void TAG(light_fast_rgba_single)( GLcontext *ctx,
    VB->ColorPtr[1] = &store->LitColor[1];
 #endif
 
-   if (stage->changed_inputs == 0)
-      return;
-
    if (nr > 1) {
       store->LitColor[0].stride = 16;
       store->LitColor[1].stride = 16;
@@ -574,9 +564,6 @@ static void TAG(light_fast_rgba)( GLcontext *ctx,
    VB->ColorPtr[1] = &store->LitColor[1];
 #endif
 
-   if (stage->changed_inputs == 0)
-      return;
-
    if (nr > 1) {
       store->LitColor[0].stride = 16;
       store->LitColor[1].stride = 16;
@@ -682,9 +669,6 @@ static void TAG(light_ci)( GLcontext *ctx,
 #if IDX & LIGHT_TWOSIDE
    VB->IndexPtr[1] = &store->LitIndex[1];
 #endif
-
-   if (stage->changed_inputs == 0)
-      return;
 
    indexResult[0] = (GLfloat *)VB->IndexPtr[0]->data;
 #if IDX & LIGHT_TWOSIDE

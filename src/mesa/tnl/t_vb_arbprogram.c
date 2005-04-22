@@ -40,6 +40,7 @@
 #include "math/m_translate.h"
 #include "t_context.h"
 #include "t_pipeline.h"
+#include "t_vp_build.h"
 
 
 
@@ -416,7 +417,7 @@ static void do_PAR( struct arb_vp_machine *m, union instruction op )
 }
 
 
-#define RELADDR_MASK MAX_NV_VERTEX_PROGRAM_PARAMS
+#define RELADDR_MASK (MAX_NV_VERTEX_PROGRAM_PARAMS-1)
 
 static void do_PRL( struct arb_vp_machine *m, union instruction op )
 {
@@ -1458,17 +1459,25 @@ static void
 validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 {
    struct arb_vp_machine *m = ARB_VP_MACHINE(stage);
-   struct vertex_program *program = (ctx->VertexProgram._Enabled ?
-				     ctx->VertexProgram.Current :
-				     &ctx->_TnlProgram);
+   struct vertex_program *program = 
+      (ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : 0);
 
-   compile_vertex_program( m, program );
+#if TNL_FIXED_FUNCTION_PROGRAM
+   if (!program) {
+      _tnl_UpdateFixedFunctionProgram( ctx );
+      program = &ctx->_TnlProgram;
+   }
+#endif
 
-   /* Grab the state GL state and put into registers:
-    */
-   m->File[PROGRAM_LOCAL_PARAM] = program->Base.LocalParams;
-   m->File[PROGRAM_ENV_PARAM] = ctx->VertexProgram.Parameters;
-   m->File[PROGRAM_STATE_VAR] = 0;
+   if (program) {
+      compile_vertex_program( m, program );
+      
+      /* Grab the state GL state and put into registers:
+       */
+      m->File[PROGRAM_LOCAL_PARAM] = program->Base.LocalParams;
+      m->File[PROGRAM_ENV_PARAM] = ctx->VertexProgram.Parameters;
+      m->File[PROGRAM_STATE_VAR] = 0;
+   }
 }
 
 
@@ -1481,8 +1490,8 @@ validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
  * Called the first time stage->run is called.  In effect, don't
  * allocate data until the first time the stage is run.
  */
-static void init_vertex_program( GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage )
+static GLboolean init_vertex_program( GLcontext *ctx,
+				      struct tnl_pipeline_stage *stage )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &(tnl->vb);
@@ -1493,7 +1502,7 @@ static void init_vertex_program( GLcontext *ctx,
    stage->privatePtr = MALLOC(sizeof(*m));
    m = ARB_VP_MACHINE(stage);
    if (!m)
-      return;
+      return GL_FALSE;
 
    /* arb_vertex_machine struct should subsume the VB:
     */
@@ -1509,6 +1518,14 @@ static void init_vertex_program( GLcontext *ctx,
    /* a few other misc allocations */
    _mesa_vector4f_alloc( &m->ndcCoords, 0, size, 32 );
    m->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
+
+
+#if TNL_FIXED_FUNCTION_PROGRAM
+   _mesa_allow_light_in_model( ctx, GL_FALSE );
+#endif
+
+
+   return GL_TRUE;
 }
 
 

@@ -55,31 +55,30 @@ static GLboolean run_normal_stage( GLcontext *ctx,
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   const GLfloat *lengths;
 
-   ASSERT(store->NormalTransform);
+   if (!store->NormalTransform)
+      return GL_TRUE;
 
-   if (stage->changed_inputs) {
-      /* We can only use the display list's saved normal lengths if we've
-       * got a transformation matrix with uniform scaling.
-       */
-      const GLfloat *lengths;
-      if (ctx->ModelviewMatrixStack.Top->flags & MAT_FLAG_GENERAL_SCALE)
-         lengths = NULL;
-      else
-         lengths = VB->NormalLengthPtr;
+   /* We can only use the display list's saved normal lengths if we've
+    * got a transformation matrix with uniform scaling.
+    */
+   if (ctx->ModelviewMatrixStack.Top->flags & MAT_FLAG_GENERAL_SCALE)
+      lengths = NULL;
+   else
+      lengths = VB->NormalLengthPtr;
 
-      store->NormalTransform( ctx->ModelviewMatrixStack.Top,
-			      ctx->_ModelViewInvScale,
-			      VB->NormalPtr,  /* input normals */
-			      lengths,
-			      &store->normal ); /* resulting normals */
+   store->NormalTransform( ctx->ModelviewMatrixStack.Top,
+			   ctx->_ModelViewInvScale,
+			   VB->NormalPtr,  /* input normals */
+			   lengths,
+			   &store->normal ); /* resulting normals */
 
-      if (VB->NormalPtr->count > 1) {
-	 store->normal.stride = 16;
-      }
-      else {
-	 store->normal.stride = 0;
-      }
+   if (VB->NormalPtr->count > 1) {
+      store->normal.stride = 16;
+   }
+   else {
+      store->normal.stride = 0;
    }
 
    VB->NormalPtr = &store->normal;
@@ -90,12 +89,19 @@ static GLboolean run_normal_stage( GLcontext *ctx,
 }
 
 
-static GLboolean run_validate_normal_stage( GLcontext *ctx,
+static void validate_normal_stage( GLcontext *ctx,
 					    struct tnl_pipeline_stage *stage )
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
 
-
+   if (ctx->VertexProgram._Enabled ||
+       (!ctx->Light.Enabled &&
+	!(ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS))) {
+      store->NormalTransform = NULL;
+      return;
+   }
+      
+   
    if (ctx->_NeedEyeCoords) {
       GLuint transform = NORM_TRANSFORM_NO_ROT;
 
@@ -129,28 +135,8 @@ static GLboolean run_validate_normal_stage( GLcontext *ctx,
 	 store->NormalTransform = NULL;
       }
    }
-
-   if (store->NormalTransform) {
-      stage->run = run_normal_stage;
-      return stage->run( ctx, stage );
-   } else {
-      stage->active = GL_FALSE;	/* !!! */
-      return GL_TRUE;
-   }
 }
 
-
-static void check_normal_transform( GLcontext *ctx,
-				    struct tnl_pipeline_stage *stage )
-{
-   stage->active = !ctx->VertexProgram._Enabled &&
-      (ctx->Light.Enabled || (ctx->Texture._GenFlags & TEXGEN_NEED_NORMALS));
-
-   /* Don't clobber the initialize function:
-    */
-   if (stage->privatePtr)
-      stage->run = run_validate_normal_stage;
-}
 
 
 static GLboolean alloc_normal_data( GLcontext *ctx,
@@ -164,11 +150,7 @@ static GLboolean alloc_normal_data( GLcontext *ctx,
       return GL_FALSE;
 
    _mesa_vector4f_alloc( &store->normal, 0, tnl->vb.Size, 32 );
-
-   /* Now run the stage.
-    */
-   stage->run = run_validate_normal_stage;
-   return stage->run( ctx, stage );
+   return GL_TRUE;
 }
 
 
@@ -183,25 +165,13 @@ static void free_normal_data( struct tnl_pipeline_stage *stage )
    }
 }
 
-#define _TNL_NEW_NORMAL_TRANSFORM        (_NEW_MODELVIEW| \
-					  _NEW_TRANSFORM| \
-					  _NEW_PROGRAM| \
-                                          _MESA_NEW_NEED_NORMALS| \
-                                          _MESA_NEW_NEED_EYE_COORDS)
-
-
 
 const struct tnl_pipeline_stage _tnl_normal_transform_stage =
 {
    "normal transform",		/* name */
-   _TNL_NEW_NORMAL_TRANSFORM,	/* re-check */
-   _TNL_NEW_NORMAL_TRANSFORM,	/* re-run */
-   GL_FALSE,			/* active? */
-   _TNL_BIT_NORMAL,		/* inputs */
-   _TNL_BIT_NORMAL,		/* outputs */
-   0,				/* changed_inputs */
    NULL,			/* private data */
+   alloc_normal_data,
    free_normal_data,		/* destructor */
-   check_normal_transform,	/* check */
-   alloc_normal_data		/* run -- initially set to alloc */
+   validate_normal_stage,	/* check */
+   run_normal_stage
 };

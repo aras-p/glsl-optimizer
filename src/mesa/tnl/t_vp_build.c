@@ -46,7 +46,7 @@
  * generated program with line/function references for each
  * instruction back into this file:
  */
-#define DISASSEM 1
+#define DISASSEM 0
 
 /* Use uregs to represent registers internally, translate to Mesa's
  * expected formats on emit.  

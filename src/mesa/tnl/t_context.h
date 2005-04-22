@@ -82,18 +82,15 @@
 
 #define MAX_PIPELINE_STAGES     30
 
-
 /*
  * Note: The first attributes match the VERT_ATTRIB_* definitions
  * in mtypes.h.  However, the tnl module has additional attributes
  * for materials, color indexes, edge flags, etc.
  */
-/* Note: These are currently being used to define both inputs and
- * outputs from the tnl pipeline.  A better solution (which would also
- * releive the congestion to slightly prolong the life of the bitmask
- * below) is to have the fixed function pipeline populate a set of
- * arrays named after those produced by the vertex program stage, and
- * have the rest the mesa backend work on those.
+/* Although it's nice to use these as bit indexes in a DWORD flag, we
+ * could manage without if necessary.  Another limit currently is the
+ * number of bits allocated for these numbers in places like vertex
+ * program instruction formats and register layouts.
  */
 enum {
 	_TNL_ATTRIB_POS = 0,
@@ -463,43 +460,23 @@ struct vertex_buffer
 struct tnl_pipeline_stage
 {
    const char *name;
-   GLuint check_state;		/* All state referenced in check() --
-				 * When is the pipeline_stage struct
-				 * itself invalidated?  Must be
-				 * constant.
-				 */
-
-   /* Usually constant or set by the 'check' callback:
-    */
-   GLuint run_state;		/* All state referenced in run() --
-				 * When is the cached output of the
-				 * stage invalidated?
-				 */
-
-   GLboolean active;		/* True if runnable in current state */
-   GLuint inputs;		/* VERT_* inputs to the stage */
-   GLuint outputs;		/* VERT_* outputs of the stage */
-
-   /* Set in _tnl_run_pipeline():
-    */
-   GLuint changed_inputs;	/* Generated value -- inputs to the
-				 * stage that have changed since last
-				 * call to 'run'.
-				 */
-
 
    /* Private data for the pipeline stage:
     */
    void *privatePtr;
 
-   /* Free private data.  May not be null.
+   /* Allocate private data
+    */
+   GLboolean (*create)( GLcontext *ctx, struct tnl_pipeline_stage * );
+
+   /* Free private data.
     */
    void (*destroy)( struct tnl_pipeline_stage * );
 
-   /* Called from _tnl_validate_pipeline().  Must update all fields in
-    * the pipeline_stage struct for the current state.
+   /* Called on any statechange or input array size change or
+    * input array change to/from zero stride.
     */
-   void (*check)( GLcontext *ctx, struct tnl_pipeline_stage * );
+   void (*validate)( GLcontext *ctx, struct tnl_pipeline_stage * );
 
    /* Called from _tnl_run_pipeline().  The stage.changed_inputs value
     * encodes all inputs to thee struct which have changed.  If
@@ -512,15 +489,18 @@ struct tnl_pipeline_stage
    GLboolean (*run)( GLcontext *ctx, struct tnl_pipeline_stage * );
 };
 
+
+
 /** Contains the array of all pipeline stages.
- * The default values are defined at the end of t_pipeline.c */
+ * The default values are defined at the end of t_pipeline.c 
+ */
 struct tnl_pipeline {
-   GLuint build_state_trigger;	  /**< state changes which require build */
-   GLuint build_state_changes;    /**< state changes since last build */
-   GLuint run_state_changes;	  /**< state changes since last run */
-   GLuint run_input_changes;	  /**< VERT_* changes since last run */
-   GLuint inputs;		  /**< VERT_* inputs to pipeline */
-   /** This array has to end with a NULL-pointer. */
+   
+   GLuint last_attrib_stride[_TNL_ATTRIB_MAX];
+   GLuint last_attrib_size[_TNL_ATTRIB_MAX];
+   GLuint input_changes;
+   GLuint new_state;
+
    struct tnl_pipeline_stage stages[MAX_PIPELINE_STAGES+1];
    GLuint nr_stages;
 };

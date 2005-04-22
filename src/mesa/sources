@@ -118,16 +118,18 @@ TNL_SOURCES = \
 	tnl/t_save_api.c \
 	tnl/t_save_loopback.c \
 	tnl/t_save_playback.c \
-	tnl/t_vb_cull.c \
-	tnl/t_vb_fog.c \
-	tnl/t_vb_light.c \
-	tnl/t_vb_normals.c \
-	tnl/t_vb_points.c \
+	tnl/t_vb_arbprogram.c \
 	tnl/t_vb_program.c \
 	tnl/t_vb_render.c \
 	tnl/t_vb_texgen.c \
 	tnl/t_vb_texmat.c \
 	tnl/t_vb_vertex.c \
+	tnl/t_vb_cull.c \
+	tnl/t_vb_fog.c \
+	tnl/t_vb_light.c \
+	tnl/t_vb_normals.c \
+	tnl/t_vb_points.c \
+	tnl/t_vp_build.c \
 	tnl/t_vertex.c \
 	tnl/t_vertex_c.c \
 	tnl/t_vertex_codegen.c \
@@ -136,6 +138,8 @@ TNL_SOURCES = \
 	tnl/t_vtx_x86.c \
 	tnl/t_vtx_eval.c \
 	tnl/t_vtx_exec.c 
+
+
 
 SHADER_SOURCES = \
 	shader/arbfragparse.c \
