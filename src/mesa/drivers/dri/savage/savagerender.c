@@ -151,7 +151,7 @@ static GLboolean savage_run_render( GLcontext *ctx,
    GLboolean valid;
    GLuint i;
 
-   if (savageHaveIndexedVerts(imesa) && (!VB->Elts || stage->changed_inputs))
+   if (savageHaveIndexedVerts(imesa))
       savageReleaseIndexedVerts(imesa);
 
    if (imesa->savageScreen->chipset < S3_SAVAGE4 &&
@@ -211,31 +211,13 @@ static GLboolean savage_run_render( GLcontext *ctx,
    return GL_FALSE;		/* finished the pipe */
 }
 
-static void savage_check_render( GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage )
-{
-   stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
-   stage->active = SAVAGE_CONTEXT(ctx)->enable_fastpath;
-}
-
-static void dtr( struct tnl_pipeline_stage *stage )
-{
-   (void)stage;
-}
-
 struct tnl_pipeline_stage _savage_render_stage = 
 { 
    "savage render",
-   (_DD_NEW_SEPARATE_SPECULAR |
-    _NEW_TEXTURE|
-    _NEW_FOG|
-    _NEW_RENDERMODE),		/* re-check (new inputs) */
-   0,				/* re-run (always runs) */
-   GL_TRUE,			/* active */
-   0, 0,			/* inputs (set in check_render), outputs */
-   0, 0,			/* changed_inputs, private */
-   dtr,				/* destructor */
-   savage_check_render,		/* check - initially set to alloc data */
+   NULL,
+   NULL,
+   NULL,
+   NULL,
    savage_run_render		/* run */
 };
 
@@ -244,6 +226,7 @@ struct tnl_pipeline_stage _savage_render_stage =
 /*         Pipeline stage for texture coordinate normalization        */
 /**********************************************************************/
 struct texnorm_stage_data {
+   GLboolean active;
    GLvector4f texcoord[MAX_TEXTURE_UNITS];
 };
 
@@ -259,12 +242,11 @@ static GLboolean run_texnorm_stage( GLcontext *ctx,
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
 
-   if (imesa->Fallback)
+   if (imesa->Fallback || !store->active)
       return GL_TRUE;
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-      if (!(stage->inputs & stage->changed_inputs & VERT_BIT_TEX(i)) ||
-	  VB->TexCoordPtr[i]->size == 4)
+      if (VB->TexCoordPtr[i]->size == 4)
 	 /* Never try to normalize homogenous tex coords! */
 	 continue;
 
@@ -335,16 +317,14 @@ static GLboolean alloc_texnorm_data( GLcontext *ctx,
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
       _mesa_vector4f_alloc( &store->texcoord[i], 0, VB->Size, 32 );
-
-   /* Now run the stage.
-    */
-   stage->run = run_texnorm_stage;
-   return stage->run( ctx, stage );
+   
+   return GL_TRUE;
 }
 
-static void check_texnorm( GLcontext *ctx,
-			   struct tnl_pipeline_stage *stage )
+static void validate_texnorm( GLcontext *ctx,
+			      struct tnl_pipeline_stage *stage )
 {
+   struct texnorm_stage_data *store = TEXNORM_STAGE_DATA(stage);
    GLuint flags = 0;
 
    if (((ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) &&
@@ -359,9 +339,7 @@ static void check_texnorm( GLcontext *ctx,
 	(ctx->Texture.Unit[1]._Current->WrapT == GL_REPEAT)))
       flags |= VERT_BIT_TEX1;
 
-   stage->inputs = flags;
-   stage->outputs = flags;
-   stage->active = (flags != 0);
+   store->active = (flags != 0);
 }
 
 static void free_texnorm_data( struct tnl_pipeline_stage *stage )
@@ -381,14 +359,9 @@ static void free_texnorm_data( struct tnl_pipeline_stage *stage )
 struct tnl_pipeline_stage _savage_texnorm_stage =
 {
    "savage texture coordinate normalization stage", /* name */
-   _NEW_TEXTURE,	/* check_state */
-   _NEW_TEXTURE,	/* run_state */
-   GL_TRUE,				/* active? */
-   0,					/* inputs */
-   0,					/* outputs */
-   0,					/* changed_inputs */
    NULL,				/* private data */
-   free_texnorm_data,			/* destructor */
-   check_texnorm,			/* check */
    alloc_texnorm_data,			/* run -- initially set to init */
+   free_texnorm_data,			/* destructor */
+   validate_texnorm,
+   run_texnorm_stage
 };

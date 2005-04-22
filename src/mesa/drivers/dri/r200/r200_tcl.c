@@ -384,7 +384,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
       return GL_FALSE;
 
    r200ReleaseArrays( ctx, ~0 /* stage->changed_inputs */ );
-   r200EmitArrays( ctx, stage->inputs );
+   r200EmitArrays( ctx, tnl->render_inputs );
 
    rmesa->tcl.Elts = VB->Elts;
 
@@ -408,85 +408,15 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 
 
 
-static void r200_check_tcl_render( GLcontext *ctx,
-				   struct tnl_pipeline_stage *stage )
-{
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);
-   GLuint inputs = VERT_BIT_POS;
-   GLuint unit;
-
-   /* Validate state:
-    */
-   if (rmesa->NewGLState)
-      r200ValidateState( ctx );
-
-   if (ctx->RenderMode == GL_RENDER) {
-      /* Make all this event-driven:
-       */
-      if (ctx->Light.Enabled) {
-	 inputs |= VERT_BIT_NORMAL;
-
-	 if (1 || ctx->Light.ColorMaterialEnabled) {
-	    inputs |= VERT_BIT_COLOR0;
-	 }
-      }
-      else {
-	 inputs |= VERT_BIT_COLOR0;
-	 
-	 if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
-	    inputs |= VERT_BIT_COLOR1;
-	 }
-      }
-
-      if ( ctx->Fog.FogCoordinateSource == GL_FOG_COORD ) {
-	 inputs |= VERT_BIT_FOG;
-      }
-
-      for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
-	 if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-	    if (rmesa->TexGenNeedNormals[unit]) {
-	       inputs |= VERT_BIT_NORMAL;
-	    }
-	    inputs |= VERT_BIT_TEX(unit);
-	 }
-      }
-
-      stage->inputs = inputs;
-      stage->active = 1;
-   }
-   else
-      stage->active = 0;
-}
-
-static void r200_init_tcl_render( GLcontext *ctx,
-				    struct tnl_pipeline_stage *stage )
-{
-   stage->check = r200_check_tcl_render;
-   stage->check( ctx, stage );
-}
-
-static void dtr( struct tnl_pipeline_stage *stage )
-{
-   (void)stage;
-}
-
-
 /* Initial state for tcl stage.  
  */
 const struct tnl_pipeline_stage _r200_tcl_stage =
 {
    "r200 render",
-   (_DD_NEW_SEPARATE_SPECULAR |
-    _NEW_LIGHT|
-    _NEW_TEXTURE|
-    _NEW_FOG|
-    _NEW_RENDERMODE),		/* re-check (new inputs) */
-   0,				/* re-run (always runs) */
-   GL_TRUE,			/* active */
-   0, 0,			/* inputs (set in check_render), outputs */
-   0, NULL,			/* changed_inputs, private */
-   dtr,				/* destructor */
-   r200_init_tcl_render,	/* check - initially set to alloc data */
+   NULL,			/*  private */
+   NULL,
+   NULL,
+   NULL,
    r200_run_tcl_render	/* run */
 };
 

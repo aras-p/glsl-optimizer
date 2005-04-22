@@ -118,33 +118,13 @@ static GLboolean via_run_fastrender(GLcontext *ctx,
     return GL_FALSE;            /* finished the pipe */
 }
 
-
-static void via_check_fastrender(GLcontext *ctx, 
-				 struct tnl_pipeline_stage *stage)
-{
-   stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
-}
-
-
-static void fastdtr(struct tnl_pipeline_stage *stage)
-{
-    (void)stage;
-}
-
-
 const struct tnl_pipeline_stage _via_fastrender_stage =
 {
     "via fast render",
-    (_DD_NEW_SEPARATE_SPECULAR |
-     _NEW_TEXTURE|
-     _NEW_FOG|
-     _NEW_RENDERMODE),           /* re-check (new inputs) */
-    0,                           /* re-run (always runs) */
-    GL_TRUE,                     /* active */
-    0, 0,                        /* inputs (set in check_render), outputs */
-    0, 0,                        /* changed_inputs, private */
-    fastdtr,                     /* destructor */
-    via_check_fastrender,        /* check - initially set to alloc data */
+    NULL,
+    NULL,
+    NULL,
+    NULL,
     via_run_fastrender           /* run */
 };
 

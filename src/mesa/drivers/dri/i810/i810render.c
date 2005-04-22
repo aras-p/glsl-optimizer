@@ -161,31 +161,13 @@ static GLboolean i810_run_render( GLcontext *ctx,
 }
 
 
-static void i810_check_render( GLcontext *ctx, 
-			       struct tnl_pipeline_stage *stage )
-{
-   stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
-}
-
-
-static void dtr( struct tnl_pipeline_stage *stage )
-{
-   (void)stage;
-}
-
 
 const struct tnl_pipeline_stage _i810_render_stage =
 {
    "i810 render",
-   (_DD_NEW_SEPARATE_SPECULAR |
-    _NEW_TEXTURE|
-    _NEW_FOG|
-    _NEW_RENDERMODE),		/* re-check (new inputs) */
-   0,				/* re-run (always runs) */
-   GL_TRUE,			/* active */
-   0, 0,			/* inputs (set in check_render), outputs */
-   0, 0,			/* changed_inputs, private */
-   dtr,				/* destructor */
-   i810_check_render,		/* check - initially set to alloc data */
+   NULL,
+   NULL,
+   NULL,
+   NULL,
    i810_run_render		/* run */
 };

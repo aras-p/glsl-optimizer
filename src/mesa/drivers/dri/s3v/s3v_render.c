@@ -191,62 +191,13 @@ static GLboolean s3v_run_render( GLcontext *ctx,
 }
 
 
-static void s3v_check_render( GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage )
-{
-	s3vContextPtr vmesa = S3V_CONTEXT(ctx);
-	GLuint inputs = VERT_BIT_POS | VERT_BIT_COLOR0;
-
-	DEBUG(("s3v_check_render\n"));
-
-	if (ctx->RenderMode == GL_RENDER) {
-	
-		if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
-			DEBUG(("DD_SEPARATE_SPECULAR\n"));
-			inputs |= VERT_BIT_COLOR1;
-		}
-		
-		if (ctx->Texture.Unit[0]._ReallyEnabled) {
-			DEBUG(("ctx->Texture.Unit[0]._ReallyEnabled\n"));
-			inputs |= VERT_BIT_TEX(0);
-		}
-
-		if (ctx->Texture.Unit[1]._ReallyEnabled) {
-			DEBUG(("ctx->Texture.Unit[1]._ReallyEnabled\n"));
-			inputs |= VERT_BIT_TEX(1);
-		}
-
-		if (ctx->Fog.Enabled) {
-			DEBUG(("ctx->Fog.Enabled\n"));
-			inputs |= VERT_BIT_FOG;
-		}
-	}
-
-	stage->inputs = inputs;
-	vmesa->SetupNewInputs = inputs;
-}
-
-
-static void dtr( struct tnl_pipeline_stage *stage )
-{
-	(void)stage;
-        /* hack to silence a compiler warning */
-        (void) &s3v_validate_render;
-}
-
 
 const struct tnl_pipeline_stage _s3v_render_stage =
 {
 	"s3v render",
-	(_DD_NEW_SEPARATE_SPECULAR |
-	 _NEW_TEXTURE|
-	 _NEW_FOG|
-	 _NEW_RENDERMODE),	/* re-check (new inputs) */
-	 0,			/* re-run (always runs) */
-	 GL_TRUE,		/* active */
-	 0, 0,			/* inputs (set in check_render), outputs */
-	 0, 0,			/* changed_inputs, private */
-	 dtr,			/* destructor */
-	 s3v_check_render,	/* check - initially set to alloc data */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	 s3v_run_render		/* run */
 };

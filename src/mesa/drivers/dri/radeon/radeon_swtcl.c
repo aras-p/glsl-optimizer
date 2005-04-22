@@ -603,7 +603,7 @@ static GLboolean radeon_run_render( GLcontext *ctx,
    tnl_render_func *tab = TAG(render_tab_verts);
    GLuint i;
 
-   if (rmesa->swtcl.indexed_verts.buf && (!VB->Elts || stage->changed_inputs)) 
+   if (rmesa->swtcl.indexed_verts.buf) 
       RELEASE_ELT_VERTS();
    	
    if (rmesa->swtcl.RenderIndex != 0 ||   
@@ -646,32 +646,14 @@ static GLboolean radeon_run_render( GLcontext *ctx,
 
 
 
-static void radeon_check_render( GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage )
-{
-   stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
-}
-
-
-static void dtr( struct tnl_pipeline_stage *stage )
-{
-   (void)stage;
-}
-
 
 const struct tnl_pipeline_stage _radeon_render_stage =
 {
    "radeon render",
-   (_DD_NEW_SEPARATE_SPECULAR |
-    _NEW_TEXTURE|
-    _NEW_FOG|
-    _NEW_RENDERMODE),		/* re-check (new inputs) */
-   0,				/* re-run (always runs) */
-   GL_TRUE,			/* active */
-   0, 0,			/* inputs (set in check_render), outputs */
-   0, NULL,			/* changed_inputs, private */
-   dtr,				/* destructor */
-   radeon_check_render,		/* check - initially set to alloc data */
+   NULL,
+   NULL,
+   NULL,
+   NULL,
    radeon_run_render		/* run */
 };
 
@@ -704,10 +686,7 @@ static GLboolean run_texrect_stage( GLcontext *ctx,
       return GL_TRUE;
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-      if (!(ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_RECT_BIT))
-	 continue;
-   
-      if (stage->changed_inputs & VERT_BIT_TEX(i)) {
+      if (ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_RECT_BIT) {
 	 struct gl_texture_object *texObj = ctx->Texture.Unit[i].CurrentRect;
 	 struct gl_texture_image *texImage = texObj->Image[0][texObj->BaseLevel];
 	 const GLfloat iw = 1.0/texImage->Width;
@@ -722,9 +701,9 @@ static GLboolean run_texrect_stage( GLcontext *ctx,
 	    out[j][1] = in[1] * ih;
 	    in = (GLfloat *)((GLubyte *)in + instride);
 	 }
-      }
 
-      VB->TexCoordPtr[i] = &store->texcoord[i];
+	 VB->TexCoordPtr[i] = &store->texcoord[i];
+      }
    }
 
    return GL_TRUE;
@@ -748,29 +727,8 @@ static GLboolean alloc_texrect_data( GLcontext *ctx,
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
       _mesa_vector4f_alloc( &store->texcoord[i], 0, VB->Size, 32 );
 
-   /* Now run the stage.
-    */
-   stage->run = run_texrect_stage;
-   return stage->run( ctx, stage );
+   return GL_TRUE;
 }
-
-
-static void check_texrect( GLcontext *ctx,
-			   struct tnl_pipeline_stage *stage )
-{
-   GLuint flags = 0;
-
-   if (ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_RECT_BIT)
-      flags |= VERT_BIT_TEX0;
-
-   if (ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_RECT_BIT)
-      flags |= VERT_BIT_TEX1;
-
-   stage->inputs = flags;
-   stage->outputs = flags;
-   stage->active = (flags != 0);
-}
-
 
 static void free_texrect_data( struct tnl_pipeline_stage *stage )
 {
@@ -786,20 +744,14 @@ static void free_texrect_data( struct tnl_pipeline_stage *stage )
    }
 }
 
-
 const struct tnl_pipeline_stage _radeon_texrect_stage =
 {
    "radeon texrect stage",			/* name */
-   _NEW_TEXTURE,	/* check_state */
-   _NEW_TEXTURE,	/* run_state */
-   GL_TRUE,				/* active? */
-   0,					/* inputs */
-   0,					/* outputs */
-   0,					/* changed_inputs */
-   NULL,				/* private data */
-   free_texrect_data,			/* destructor */
-   check_texrect,			/* check */
-   alloc_texrect_data,			/* run -- initially set to init */
+   NULL,
+   alloc_texrect_data,
+   free_texrect_data,
+   NULL,
+   run_texrect_stage
 };
 
 

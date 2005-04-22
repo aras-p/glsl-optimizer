@@ -303,8 +303,8 @@ static GLboolean radeon_run_tcl_render( GLcontext *ctx,
    if (VB->Count == 0)
       return GL_FALSE;
 
-   radeonReleaseArrays( ctx, stage->changed_inputs );
-   radeonEmitArrays( ctx, stage->inputs );
+   radeonReleaseArrays( ctx, ~0 );
+   radeonEmitArrays( ctx, tnl->render_inputs );
 
    rmesa->tcl.Elts = VB->Elts;
 
@@ -328,86 +328,15 @@ static GLboolean radeon_run_tcl_render( GLcontext *ctx,
 
 
 
-static void radeon_check_tcl_render( GLcontext *ctx,
-				     struct tnl_pipeline_stage *stage )
-{
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLuint inputs = VERT_BIT_POS;
-
-   if (ctx->RenderMode == GL_RENDER) {
-      /* Make all this event-driven:
-       */
-      if (ctx->Light.Enabled) {
-	 inputs |= VERT_BIT_NORMAL;
-
-	 if (1 || ctx->Light.ColorMaterialEnabled) {
-	    inputs |= VERT_BIT_COLOR0;
-	 }
-      }
-      else {
-	 inputs |= VERT_BIT_COLOR0;
-	 
-	 if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
-	    inputs |= VERT_BIT_COLOR1;
-	 }
-      }
-
-      if (ctx->Texture.Unit[0]._ReallyEnabled) {
-	 if (ctx->Texture.Unit[0].TexGenEnabled) {
-	    if (rmesa->TexGenNeedNormals[0]) {
-	       inputs |= VERT_BIT_NORMAL;
-	    }
-	 } else {
-	    inputs |= VERT_BIT_TEX0;
-	 }
-      }
-
-      if (ctx->Texture.Unit[1]._ReallyEnabled) {
-	 if (ctx->Texture.Unit[1].TexGenEnabled) {
-	    if (rmesa->TexGenNeedNormals[1]) {
-	       inputs |= VERT_BIT_NORMAL;
-	    }
-	 } else {
-	    inputs |= VERT_BIT_TEX1;
-	 }
-      }
-
-      stage->inputs = inputs;
-      stage->active = 1;
-   }
-   else
-      stage->active = 0;
-}
-
-static void radeon_init_tcl_render( GLcontext *ctx,
-				    struct tnl_pipeline_stage *stage )
-{
-   stage->check = radeon_check_tcl_render;
-   stage->check( ctx, stage );
-}
-
-static void dtr( struct tnl_pipeline_stage *stage )
-{
-   (void)stage;
-}
-
-
 /* Initial state for tcl stage.  
  */
 const struct tnl_pipeline_stage _radeon_tcl_stage =
 {
    "radeon render",
-   (_DD_NEW_SEPARATE_SPECULAR |
-    _NEW_LIGHT|
-    _NEW_TEXTURE|
-    _NEW_FOG|
-    _NEW_RENDERMODE),		/* re-check (new inputs) */
-   0,				/* re-run (always runs) */
-   GL_TRUE,			/* active */
-   0, 0,			/* inputs (set in check_render), outputs */
-   0, NULL,			/* changed_inputs, private */
-   dtr,				/* destructor */
-   radeon_init_tcl_render,	/* check - initially set to alloc data */
+   NULL,
+   NULL,
+   NULL,
+   NULL,
    radeon_run_tcl_render	/* run */
 };
 
