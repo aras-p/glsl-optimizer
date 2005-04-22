@@ -1464,7 +1464,6 @@ validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 
 #if TNL_FIXED_FUNCTION_PROGRAM
    if (!program) {
-      _tnl_UpdateFixedFunctionProgram( ctx );
       program = &ctx->_TnlProgram;
    }
 #endif

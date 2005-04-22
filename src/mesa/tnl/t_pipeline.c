@@ -126,6 +126,10 @@ void _tnl_run_pipeline( GLcontext *ctx )
     * (ie const or non-const).
     */
    if (check_input_changes( ctx ) || tnl->pipeline.new_state) {
+#if TNL_FIXED_FUNCTION_PROGRAM
+      _tnl_UpdateFixedFunctionProgram( ctx );
+#endif
+
       for (i = 0; i < tnl->pipeline.nr_stages ; i++) {
 	 struct tnl_pipeline_stage *s = &tnl->pipeline.stages[i];
 	 if (s->validate)
