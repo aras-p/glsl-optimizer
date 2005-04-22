@@ -165,7 +165,7 @@
 /*@{*/
 #define MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS 128
 #define MAX_NV_VERTEX_PROGRAM_TEMPS         12
-#define MAX_NV_VERTEX_PROGRAM_PARAMS        96
+#define MAX_NV_VERTEX_PROGRAM_PARAMS        128	/* KW: power of two */
 #define MAX_NV_VERTEX_PROGRAM_INPUTS        16
 #define MAX_NV_VERTEX_PROGRAM_OUTPUTS       15
 /*@}*/
@@ -196,7 +196,7 @@
 
 /** For any program target/extension */
 /*@{*/
-#define MAX_PROGRAM_LOCAL_PARAMS 96
+#define MAX_PROGRAM_LOCAL_PARAMS 128 /* KW: power of two */
 #define MAX_PROGRAM_MATRICES 8
 #define MAX_PROGRAM_MATRIX_STACK_DEPTH 4
 /*@}*/
