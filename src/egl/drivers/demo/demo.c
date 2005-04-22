@@ -1,0 +1,403 @@
+/*
+ * Sample driver: Demo
+ */
+
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "eglconfig.h"
+#include "eglcontext.h"
+#include "egldisplay.h"
+#include "egldriver.h"
+#include "eglglobals.h"
+#include "eglmode.h"
+#include "eglscreen.h"
+#include "eglsurface.h"
+
+
+/**
+ * Demo driver-specific driver class derived from _EGLDriver
+ */
+typedef struct demo_driver
+{
+   _EGLDriver Base;  /* base class/object */
+   GLuint DemoStuff;
+} DemoDriver;
+
+#define DEMO_DRIVER(D) ((DemoDriver *) (D))
+
+
+/**
+ * Demo driver-specific surface class derived from _EGLSurface
+ */
+typedef struct demo_surface
+{
+   _EGLSurface Base;  /* base class/object */
+   GLuint DemoStuff;
+} DemoSurface;
+
+
+/**
+ * Demo driver-specific context class derived from _EGLContext
+ */
+typedef struct demo_context
+{
+   _EGLContext Base;  /* base class/object */
+   GLuint DemoStuff;
+} DemoContext;
+
+
+
+static EGLBoolean
+demoInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
+{
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   _EGLScreen *scrn;
+   EGLint i;
+
+   disp->NumScreens = 1;
+   disp->Screens = (_EGLScreen *) calloc(disp->NumScreens, sizeof(_EGLScreen));
+   scrn = disp->Screens + 0;
+   scrn->NumModes = 4;
+   scrn->Modes = (_EGLMode *) calloc(scrn->NumModes, sizeof(_EGLMode));
+   scrn->Modes[0].Width = 1600;
+   scrn->Modes[0].Height = 1200;
+   scrn->Modes[0].Depth = 32;
+   scrn->Modes[0].RefreshRate = 72 * 1000;
+   scrn->Modes[1].Width = 1280;
+   scrn->Modes[1].Height = 1024;
+   scrn->Modes[1].Depth = 32;
+   scrn->Modes[1].RefreshRate = 72 * 1000;
+   scrn->Modes[2].Width = 1280;
+   scrn->Modes[2].Height = 1024;
+   scrn->Modes[2].Depth = 16;
+   scrn->Modes[2].RefreshRate = 72 * 1000;
+   scrn->Modes[3].Width = 1024;
+   scrn->Modes[3].Height = 768;
+   scrn->Modes[3].Depth = 16;
+   scrn->Modes[3].RefreshRate = 72 * 1000;
+   for (i = 0; i < scrn->NumModes; i++)
+      scrn->Modes[i].Handle = i + 1;
+
+   /* Create list of visual configs - this is a silly example */
+   disp->NumConfigs = 4;
+   disp->Configs = (_EGLConfig *) calloc(disp->NumConfigs, sizeof(_EGLConfig));
+   for (i = 0; i < disp->NumConfigs; i++) {
+      _EGLConfig *config = disp->Configs + i;
+      _eglInitConfig(config, i + 1);
+      SET_CONFIG_ATTRIB(config, EGL_RED_SIZE, 8);
+      SET_CONFIG_ATTRIB(config, EGL_GREEN_SIZE, 8);
+      SET_CONFIG_ATTRIB(config, EGL_BLUE_SIZE, 8);
+      SET_CONFIG_ATTRIB(config, EGL_ALPHA_SIZE, 8);
+      SET_CONFIG_ATTRIB(config, EGL_BUFFER_SIZE, 32);
+
+      if (i & 1) {
+         SET_CONFIG_ATTRIB(config, EGL_DEPTH_SIZE, 32);
+      }
+      if (i & 2) {
+         SET_CONFIG_ATTRIB(config, EGL_STENCIL_SIZE, 8);
+      }
+
+      SET_CONFIG_ATTRIB(config, EGL_SURFACE_TYPE,
+                        (EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT));
+   }
+
+   drv->Initialized = EGL_TRUE;
+
+   *major = 1;
+   *minor = 0;
+
+   return EGL_TRUE;
+}
+
+
+static EGLBoolean
+demoTerminate(_EGLDriver *drv, EGLDisplay dpy)
+{
+   /*DemoDriver *demo = DEMO_DRIVER(dpy);*/
+   free(drv);
+   return EGL_TRUE;
+}
+
+
+static DemoContext *
+LookupDemoContext(EGLContext ctx)
+{
+   _EGLContext *c = _eglLookupContext(ctx);
+   return (DemoContext *) c;
+}
+
+
+static DemoSurface *
+LookupDemoSurface(EGLSurface surf)
+{
+   _EGLSurface *s = _eglLookupSurface(surf);
+   return (DemoSurface *) s;
+}
+
+
+
+static EGLContext
+demoCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext share_list, const EGLint *attrib_list)
+{
+   _EGLConfig *conf;
+   DemoContext *c;
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   int i;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, "eglCreateContext");
+      return EGL_NO_CONTEXT;
+   }
+
+   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
+      switch (attrib_list[i]) {
+         /* no attribs defined for now */
+      default:
+         _eglError(EGL_BAD_ATTRIBUTE, "eglCreateContext");
+         return EGL_NO_CONTEXT;
+      }
+   }
+
+   c = (DemoContext *) calloc(1, sizeof(DemoContext));
+   if (!c)
+      return EGL_NO_CONTEXT;
+
+   _eglInitContext(&c->Base);
+   c->Base.Display = disp;
+   c->Base.Config = conf;
+   c->Base.DrawSurface = EGL_NO_SURFACE;
+   c->Base.ReadSurface = EGL_NO_SURFACE;
+   c->DemoStuff = 1;
+   printf("demoCreateContext\n");
+
+   /* generate handle and insert into hash table */
+   _eglSaveContext(&c->Base);
+   assert(c->Base.Handle);
+
+   return c->Base.Handle;
+}
+
+
+static EGLSurface
+demoCreateWindowSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativeWindowType window, const EGLint *attrib_list)
+{
+   int i;
+   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
+      switch (attrib_list[i]) {
+         /* no attribs at this time */
+      default:
+         _eglError(EGL_BAD_ATTRIBUTE, "eglCreateWindowSurface");
+         return EGL_NO_SURFACE;
+      }
+   }
+   printf("eglCreateWindowSurface()\n");
+   /* XXX unfinished */
+
+   return EGL_NO_SURFACE;
+}
+
+
+static EGLSurface
+demoCreatePixmapSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint *attrib_list)
+{
+   _EGLConfig *conf;
+   EGLint i;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, "eglCreatePixmapSurface");
+      return EGL_NO_SURFACE;
+   }
+
+   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
+      switch (attrib_list[i]) {
+         /* no attribs at this time */
+      default:
+         _eglError(EGL_BAD_ATTRIBUTE, "eglCreatePixmapSurface");
+         return EGL_NO_SURFACE;
+      }
+   }
+
+   if (conf->Attrib[EGL_SURFACE_TYPE - FIRST_ATTRIB] == 0) {
+      _eglError(EGL_BAD_MATCH, "eglCreatePixmapSurface");
+      return EGL_NO_SURFACE;
+   }
+
+   printf("eglCreatePixmapSurface()\n");
+   return EGL_NO_SURFACE;
+}
+
+
+static EGLSurface
+demoCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list)
+{
+   _EGLConfig *conf;
+   EGLint i, width = 0, height = 0, largest, texFormat, texTarget, mipmapTex;
+   DemoSurface *surf;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, "eglCreatePbufferSurface");
+      return EGL_NO_SURFACE;
+   }
+
+   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
+      switch (attrib_list[i]) {
+      case EGL_WIDTH:
+         width = attrib_list[++i];
+         break;
+      case EGL_HEIGHT:
+         height = attrib_list[++i];
+         break;
+      case EGL_LARGEST_PBUFFER:
+         largest = attrib_list[++i];
+         break;
+      case EGL_TEXTURE_FORMAT:
+         texFormat = attrib_list[++i];
+         break;
+      case EGL_TEXTURE_TARGET:
+         texTarget = attrib_list[++i];
+         break;
+      case EGL_MIPMAP_TEXTURE:
+         mipmapTex = attrib_list[++i];
+         break;
+      default:
+         _eglError(EGL_BAD_ATTRIBUTE, "eglCreatePbufferSurface");
+         return EGL_NO_SURFACE;
+      }
+   }
+
+   if (width <= 0 || height <= 0) {
+      _eglError(EGL_BAD_ATTRIBUTE, "eglCreatePbufferSurface(width or height)");
+      return EGL_NO_SURFACE;
+   }
+
+   surf = (DemoSurface *) calloc(1, sizeof(DemoSurface));
+   if (!surf)
+      return EGL_NO_SURFACE;
+
+   surf->Base.Config = conf;
+   surf->Base.Type = EGL_PBUFFER_BIT;
+   surf->Base.Width = width;
+   surf->Base.Height = height;
+   surf->Base.TextureFormat = texFormat;
+   surf->Base.TextureTarget = texTarget;
+   surf->Base.MipmapTexture = mipmapTex;
+   surf->Base.MipmapLevel = 0;
+   surf->Base.SwapInterval = 0;
+
+   printf("eglCreatePbufferSurface()\n");
+
+   /* insert into hash table */
+   _eglSaveSurface(&surf->Base);
+   assert(surf->Base.Handle);
+
+   return surf->Base.Handle;
+}
+
+
+static EGLBoolean
+demoDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
+{
+   DemoSurface *fs = LookupDemoSurface(surface);
+   _eglRemoveSurface(&fs->Base);
+   if (fs->Base.IsBound) {
+      fs->Base.DeletePending = EGL_TRUE;
+   }
+   else {
+      free(fs);
+   }
+   return EGL_TRUE;
+}
+
+
+static EGLBoolean
+demoDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext context)
+{
+   DemoContext *fc = LookupDemoContext(context);
+   _eglRemoveContext(&fc->Base);
+   if (fc->Base.IsBound) {
+      fc->Base.DeletePending = EGL_TRUE;
+   }
+   else {
+      free(fc);
+   }
+   return EGL_TRUE;
+}
+
+
+static EGLBoolean
+demoMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext context)
+{
+   /*DemoDriver *demo = DEMO_DRIVER(dpy);*/
+   DemoSurface *readSurf = LookupDemoSurface(read);
+   DemoSurface *drawSurf = LookupDemoSurface(draw);
+   DemoContext *ctx = LookupDemoContext(context);
+   EGLBoolean b;
+
+   b = _eglMakeCurrent(drv, dpy, draw, read, context);
+   if (!b)
+      return EGL_FALSE;
+
+   /* XXX this is where we'd do the hardware context switch */
+   (void) drawSurf;
+   (void) readSurf;
+   (void) ctx;
+
+   printf("eglMakeCurrent()\n");
+   return EGL_TRUE;
+}
+
+
+static const char *
+demoQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
+{
+   if (name == EGL_EXTENSIONS) {
+      return "EGL_MESA_screen_surface";
+   }
+   else {
+      return _eglQueryString(drv, dpy, name);
+   }
+}
+
+
+
+
+/*
+ * Just to silence warning
+ */
+extern _EGLDriver *
+_eglMain(NativeDisplayType dpy);
+
+
+/**
+ * The bootstrap function.  Return a new DemoDriver object and
+ * plug in API functions.
+ */
+_EGLDriver *
+_eglMain(NativeDisplayType dpy)
+{
+   DemoDriver *demo;
+
+   demo = (DemoDriver *) calloc(1, sizeof(DemoDriver));
+   if (!demo) {
+      return NULL;
+   }
+
+   /* First fill in the dispatch table with defaults */
+   _eglInitDriverFallbacks(&demo->Base);
+   /* then plug in our Demo-specific functions */
+   demo->Base.Initialize = demoInitialize;
+   demo->Base.Terminate = demoTerminate;
+   demo->Base.CreateContext = demoCreateContext;
+   demo->Base.MakeCurrent = demoMakeCurrent;
+   demo->Base.CreateWindowSurface = demoCreateWindowSurface;
+   demo->Base.CreatePixmapSurface = demoCreatePixmapSurface;
+   demo->Base.CreatePbufferSurface = demoCreatePbufferSurface;
+   demo->Base.DestroySurface = demoDestroySurface;
+   demo->Base.DestroyContext = demoDestroyContext;
+   demo->Base.QueryString = demoQueryString;
+   return &demo->Base;
+}
