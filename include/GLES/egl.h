@@ -35,7 +35,11 @@
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
 
+#if 0/*XXX TEMPORARY HACK*/
+#include <GLES/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 #include <GLES/egltypes.h>
 
 /* XXX should go in eglext.h */
@@ -224,6 +228,42 @@ GLAPI EGLBoolean APIENTRY eglWaitGL (void);
 GLAPI EGLBoolean APIENTRY eglWaitNative (EGLint engine);
 GLAPI EGLBoolean APIENTRY eglSwapBuffers (EGLDisplay dpy, EGLSurface draw);
 GLAPI EGLBoolean APIENTRY eglCopyBuffers (EGLDisplay dpy, EGLSurface surface, NativePixmapType target);
+
+
+
+/* EGL_MESA_screen extension  >>> PRELIMINARY <<< */
+#ifndef EGL_MESA_screen_surface
+#define EGL_MESA_screen_surface 1
+
+#define EGL_BAD_SCREEN_MESA        0x4000
+#define EGL_BAD_MODE_MESA          0x4001
+#define EGL_SCREEN_COUNT_MESA      0x4002
+#define EGL_SCREEN_POSITION_MESA   0x4003
+#define EGL_MODE_ID_MESA           0x4004
+#define EGL_REFRESH_RATE_MESA      0x4005
+#define EGL_OPTIMAL_MODE_MESA      0x4006
+#define EGL_SCREEN_BIT_MESA        0x08
+
+GLAPI EGLBoolean APIENTRY eglChooseModeMESA(EGLDisplay dpy, EGLint screen_number, const EGLint *attrib_list, EGLModeMESA *modes, EGLint modes_size, EGLint *num_modes);
+GLAPI EGLBoolean APIENTRY eglGetModesMESA(EGLDisplay dpy, EGLint screen_number, EGLModeMESA *modes, EGLint modes_size, EGLint *num_modes);
+GLAPI EGLBoolean APIENTRY eglGetModeAttribMESA(EGLDisplay dpy, EGLModeMESA mode, EGLint attribute, EGLint *value);
+GLAPI EGLSurface APIENTRY eglCreateScreenSurfaceMESA(EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
+GLAPI EGLBoolean APIENTRY eglShowSurfaceMESA(EGLDisplay dpy, EGLint screen, EGLSurface surface);
+GLAPI EGLBoolean APIENTRY eglScreenModeMESA(EGLDisplay dpy, EGLint screen_number, EGLModeMESA mode);
+GLAPI EGLBoolean APIENTRY eglScreenAttribsMESA(EGLDisplay dpy, EGLint screen, const EGLint *attrib_list);
+GLAPI EGLBoolean APIENTRY eglQueryDisplayMESA(EGLDisplay dpy, EGLint attribute, EGLint *value);
+GLAPI EGLBoolean APIENTRY eglQueryScreenSurfaceMESA(EGLDisplay dpy, EGLint screen_number, EGLSurface *surface);
+GLAPI EGLBoolean APIENTRY eglQueryScreenModeMESA(EGLDisplay dpy, EGLint screen_number, EGLModeMESA *mode);
+GLAPI EGLBoolean APIENTRY eglQueryScreenMESA(EGLDisplay dpy, EGLint screen_number, EGLint attribute, EGLint *value);
+
+#endif /* EGL_MESA_screen_surface */
+
+
+
+
+
+
+
 
 #ifdef __cplusplus
 }
