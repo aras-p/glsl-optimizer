@@ -29,8 +29,9 @@
  */
 
 #include "imports.h" 
-#include "slang_compile.h"
 #include "grammar_mesa.h"
+#include "slang_utility.h"
+#include "slang_compile.h"
 #include "slang_preprocess.h"
 
 /*
@@ -39,46 +40,6 @@
 	compile successfully and execute as expected. However, some semantically ill-formed shaders
 	may be accepted resulting in undefined behaviour.
 */
-
-void slang_alloc_free (void *ptr)
-{
-	_mesa_free (ptr);
-}
-
-void *slang_alloc_malloc (unsigned int size)
-{
-	return _mesa_malloc (size);
-}
-
-void *slang_alloc_realloc (void *ptr, unsigned int old_size, unsigned int size)
-{
-	return _mesa_realloc (ptr, old_size, size);
-}
-
-int slang_string_compare (const char *str1, const char *str2)
-{
-	return _mesa_strcmp (str1, str2);
-}
-
-char *slang_string_copy (char *dst, const char *src)
-{
-	return _mesa_strcpy (dst, src);
-}
-
-char *slang_string_concat (char *dst, const char *src)
-{
-	return _mesa_strcpy (dst + _mesa_strlen (dst), src);
-}
-
-char *slang_string_duplicate (const char *src)
-{
-	return _mesa_strdup (src);
-}
-
-unsigned int slang_string_length (const char *str)
-{
-	return _mesa_strlen (str);
-}
 
 static void slang_variable_construct (slang_variable *);
 static int slang_variable_copy (slang_variable *, const slang_variable *);

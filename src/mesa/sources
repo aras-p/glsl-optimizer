@@ -182,7 +182,8 @@ SLANG_CPP_SOURCES = \
 	
 SLANG_SOURCES =	\
 	shader/slang/slang_compile.c	\
-	shader/slang/slang_preprocess.c
+	shader/slang/slang_preprocess.c	\
+	shader/slang/slang_utility.c
 
 ASM_C_SOURCES =	\
 	x86/common_x86.c \
