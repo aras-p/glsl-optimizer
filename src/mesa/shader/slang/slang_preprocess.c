@@ -28,9 +28,9 @@
  * \author Michal Krol
  */
 
-#include "imports.h" 
-#include "slang_compile.h"
+#include "imports.h"
 #include "grammar_mesa.h"
+#include "slang_compile.h"
 #include "slang_preprocess.h"
 
 static const char *slang_version_syn =
@@ -66,12 +66,18 @@ int _slang_preprocess_version (const char *text, unsigned int *version, unsigned
 
 	grammar_destroy (id);
 
+	/* there can be multiple #version directives - grab the last one */
 	I = prod;
 	while (I < prod + size)
 	{
-		*version = (unsigned int) I[0] + (unsigned int) I[1] * 100;
-		*eaten = (unsigned int) I[2] + ((unsigned int) I[3] << 8) +
-			((unsigned int) I[4] << 16) + ((unsigned int) I[5] << 24);
+		*version =
+			(unsigned int) I[0] +
+			(unsigned int) I[1] * 100;
+		*eaten =
+			((unsigned int) I[2]) +
+			((unsigned int) I[3] << 8) +
+			((unsigned int) I[4] << 16) +
+			((unsigned int) I[5] << 24);
 		I += 6;
 	}
 
