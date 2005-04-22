@@ -214,16 +214,21 @@ typedef struct slang_function_scope_
 typedef enum slang_unit_type_
 {
 	slang_unit_fragment_shader,
-	slang_unit_vertex_shader
+	slang_unit_vertex_shader,
+	slang_unit_fragment_builtin,
+	slang_unit_vertex_builtin
 } slang_unit_type;
 	
 typedef struct slang_translation_unit_
 {
-	slang_variable_scope *globals;
+	slang_variable_scope globals;
 	slang_function_scope functions;
-	slang_struct_scope *structs;
+	slang_struct_scope structs;
 	slang_unit_type type;
 } slang_translation_unit;
+
+void slang_translation_unit_construct (slang_translation_unit *);
+void slang_translation_unit_destruct (slang_translation_unit *);
 
 typedef struct slang_info_log_
 {
