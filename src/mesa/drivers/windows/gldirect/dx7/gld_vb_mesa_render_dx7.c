@@ -1,4 +1,4 @@
-/* $Id: gld_vb_mesa_render_dx7.c,v 1.4 2005/04/15 17:17:47 bencrossman Exp $ */
+/* $Id: gld_vb_mesa_render_dx7.c,v 1.5 2005/04/22 22:47:09 keithw Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -317,7 +317,6 @@ static GLboolean _gld_mesa_render_stage_run(
 		
 	TNLcontext				*tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer	*VB = &tnl->vb;
-	GLuint					new_inputs = stage->changed_inputs;
 	tnl_render_func				*tab;
 	GLint					pass = 0;
 	GLD_pb_dx7				*gldPB;
@@ -358,7 +357,7 @@ static GLboolean _gld_mesa_render_stage_run(
 	ASSERT(tnl->Driver.Render.ClippedPolygon);
 	ASSERT(tnl->Driver.Render.Finish);
 	
-	tnl->Driver.Render.BuildVertices( ctx, 0, VB->Count, new_inputs );
+	tnl->Driver.Render.BuildVertices( ctx, 0, VB->Count, ~0 );
 	
 	if (VB->ClipOrMask) {
 		tab = VB->Elts ? clip_render_tab_elts : clip_render_tab_verts;
@@ -413,44 +412,13 @@ static GLboolean _gld_mesa_render_stage_run(
 
 
 
-/* Quite a bit of work involved in finding out the inputs for the
- * render stage.
- */
-static void _gld_mesa_render_stage_check(
-	GLcontext *ctx,
-	struct tnl_pipeline_stage *stage)
-{
-   stage->inputs = TNL_CONTEXT(ctx)->render_inputs;
-}
-
-//---------------------------------------------------------------------------
-
-// Destructor
-static void _gld_mesa_render_stage_dtr(
-	struct tnl_pipeline_stage *stage)
-{
-}
-
-//---------------------------------------------------------------------------
-
 const struct tnl_pipeline_stage _gld_mesa_render_stage =
 {
    "gld_mesa_render_stage",
-   (_NEW_BUFFERS |
-    _DD_NEW_SEPARATE_SPECULAR |
-    _DD_NEW_FLATSHADE |
-    _NEW_TEXTURE|
-    _NEW_LIGHT|
-    _NEW_POINT|
-    _NEW_FOG|
-    _DD_NEW_TRI_UNFILLED |
-    _NEW_RENDERMODE),		// re-check (new inputs, interp function)
-   0,				/* re-run (always runs) */
-   GL_TRUE,			/* active */
-   0, 0,			/* inputs (set in check_render), outputs */
-   0, 0,			/* changed_inputs, private */
-   _gld_mesa_render_stage_dtr,				/* destructor */
-   _gld_mesa_render_stage_check,		/* check */
+   NULL,
+   NULL,
+   NULL,
+   NULL,
    _gld_mesa_render_stage_run	/* run */
 };
 

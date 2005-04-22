@@ -124,7 +124,6 @@ static GLboolean gld_d3d_render_stage_run(
 
 	TNLcontext				*tnl;
 	struct vertex_buffer	*VB;
-	GLuint					new_inputs;
 	tnl_render_func				*tab;
 	GLint					pass;
 	GLD_pb_dx9				*gldPB = &gld->PB3d;
@@ -138,12 +137,11 @@ static GLboolean gld_d3d_render_stage_run(
 	// but we'll test gld->bUseMesaTnL anyway.
 	if (gld->bUseMesaTnL) {
 		// Do nothing in this stage, but continue pipeline
-		return GL_FALSE;
+		return GL_TRUE;
 	}
 	
 	tnl = TNL_CONTEXT(ctx);
 	VB = &tnl->vb;
-	new_inputs = stage->changed_inputs;
 	pass = 0;
 
    tnl->Driver.Render.Start( ctx );
@@ -249,32 +247,16 @@ static void gld_d3d_render_stage_check(
 	return;
 }
 
-//---------------------------------------------------------------------------
-
-static void gld_d3d_render_stage_dtr( struct tnl_pipeline_stage *stage )
-{
-}
 
 //---------------------------------------------------------------------------
 
 const struct tnl_pipeline_stage _gld_d3d_render_stage =
 {
    "gld_d3d_render_stage",
-   (_NEW_BUFFERS |
-    _DD_NEW_SEPARATE_SPECULAR |
-    _DD_NEW_FLATSHADE |
-    _NEW_TEXTURE|
-    _NEW_LIGHT|
-    _NEW_POINT|
-    _NEW_FOG|
-    _DD_NEW_TRI_UNFILLED |
-    _NEW_RENDERMODE),		/* re-check (new inputs, interp function) */
-   0,				/* re-run (always runs) */
-   GL_TRUE,			/* active */
-   0, 0,			/* inputs (set in check_render), outputs */
-   0, 0,			/* changed_inputs, private */
-   gld_d3d_render_stage_dtr,		/* destructor */
-   gld_d3d_render_stage_check,		/* check */
+   NULL,
+   NULL,
+   NULL,
+   NULL,
    gld_d3d_render_stage_run			/* run */
 };
 
