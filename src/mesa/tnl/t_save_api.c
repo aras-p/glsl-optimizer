@@ -377,12 +377,16 @@ static void _save_copy_to_current( GLcontext *ctx )
       }
    }
 
-   /* Edgeflag requires special treatment:
+   /* Edgeflag requires special treatment: 
+    *
+    * TODO: change edgeflag to GLfloat in Mesa.
     */
    if (tnl->save.attrsz[_TNL_ATTRIB_EDGEFLAG]) {
       ctx->ListState.ActiveEdgeFlag = 1;
+      tnl->save.CurrentFloatEdgeFlag = 
+	 tnl->save.attrptr[_TNL_ATTRIB_EDGEFLAG][0];
       ctx->ListState.CurrentEdgeFlag = 
-	 (tnl->save.attrptr[_TNL_ATTRIB_EDGEFLAG][0] == 1.0);
+	 (tnl->save.CurrentFloatEdgeFlag == 1.0);
    }
 }
 
@@ -403,9 +407,10 @@ static void _save_copy_from_current( GLcontext *ctx )
 
    /* Edgeflag requires special treatment:
     */
-   if (tnl->save.attrsz[_TNL_ATTRIB_EDGEFLAG]) 
-      tnl->save.attrptr[_TNL_ATTRIB_EDGEFLAG][0] = 
-	 (GLfloat)ctx->ListState.CurrentEdgeFlag;
+   if (tnl->save.attrsz[_TNL_ATTRIB_EDGEFLAG]) {
+      tnl->save.CurrentFloatEdgeFlag = (GLfloat)ctx->ListState.CurrentEdgeFlag;
+      tnl->save.attrptr[_TNL_ATTRIB_EDGEFLAG][0] = tnl->save.CurrentFloatEdgeFlag;
+   }
 }
 
 
@@ -480,8 +485,9 @@ static void _save_upgrade_vertex( GLcontext *ctx,
       if (tnl->save.currentsz[attr][0] == 0) {
 	 assert(oldsz == 0);
 	 tnl->save.dangling_attr_ref = GL_TRUE;
-	 _mesa_debug(NULL, "_save_upgrade_vertex: dangling reference attr %d\n", 
-                     attr); 
+
+/* 	 _mesa_debug(NULL, "_save_upgrade_vertex: dangling reference attr %d\n",  */
+/* 		     attr);  */
 
 #if 0
 	 /* The current strategy is to punt these degenerate cases
@@ -1653,7 +1659,8 @@ static void _save_current_init( GLcontext *ctx )
    tnl->save.currentsz[_TNL_ATTRIB_INDEX] = &ctx->ListState.ActiveIndex;
    tnl->save.current[_TNL_ATTRIB_INDEX] = &ctx->ListState.CurrentIndex;
 
-   /* Current edgeflag is handled individually */
+   tnl->save.currentsz[_TNL_ATTRIB_EDGEFLAG] = &ctx->ListState.ActiveEdgeFlag;
+   tnl->save.current[_TNL_ATTRIB_EDGEFLAG] = &tnl->save.CurrentFloatEdgeFlag;
 }
 
 /**

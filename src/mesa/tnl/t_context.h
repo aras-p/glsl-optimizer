@@ -282,6 +282,7 @@ struct tnl_vtx {
    GLfloat vertex[_TNL_ATTRIB_MAX*4]; /* current vertex */
    GLfloat *attrptr[_TNL_ATTRIB_MAX]; /* points into vertex */
    GLfloat *current[_TNL_ATTRIB_MAX]; /* points into ctx->Current, etc */
+   GLfloat CurrentFloatEdgeFlag;
    GLuint counter, initial_counter;
    struct tnl_copied_vtx copied;
 
@@ -379,6 +380,8 @@ struct tnl_save {
    GLuint opcode_vertex_list;
 
    struct tnl_copied_vtx copied;
+   
+   GLfloat CurrentFloatEdgeFlag;
 
    GLfloat *current[_TNL_ATTRIB_MAX]; /* points into ctx->ListState */
    GLubyte *currentsz[_TNL_ATTRIB_MAX];

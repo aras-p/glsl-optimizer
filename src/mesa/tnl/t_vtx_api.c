@@ -142,7 +142,7 @@ static void _tnl_copy_to_current( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
    GLuint i;
 
-   for (i = _TNL_ATTRIB_POS+1 ; i <= _TNL_ATTRIB_INDEX ; i++)
+   for (i = _TNL_ATTRIB_POS+1 ; i <= _TNL_ATTRIB_EDGEFLAG ; i++)
       if (tnl->vtx.attrsz[i]) {
          /* Note: the tnl->vtx.current[i] pointers points to
           * the ctx->Current fields.  The first 16 or so, anyway.
@@ -152,12 +152,12 @@ static void _tnl_copy_to_current( GLcontext *ctx )
 		    tnl->vtx.attrptr[i]);
       }
 
-   /* Edgeflag requires special treatment:
+   /* Edgeflag requires additional treatment:
     */
-   if (tnl->vtx.attrsz[_TNL_ATTRIB_EDGEFLAG]) 
+   if (tnl->vtx.attrsz[_TNL_ATTRIB_EDGEFLAG]) {
       ctx->Current.EdgeFlag = 
-	 (tnl->vtx.attrptr[_TNL_ATTRIB_EDGEFLAG][0] == 1.0);
-
+	 (tnl->vtx.CurrentFloatEdgeFlag == 1.0);
+   }
 
    /* Colormaterial -- this kindof sucks.
     */
@@ -179,7 +179,12 @@ static void _tnl_copy_from_current( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
    GLint i;
 
-   for (i = _TNL_ATTRIB_POS+1 ; i <= _TNL_ATTRIB_INDEX ; i++) 
+   /* Edgeflag requires additional treatment:
+    */
+   tnl->vtx.CurrentFloatEdgeFlag = 
+      (GLfloat)ctx->Current.EdgeFlag;
+   
+   for (i = _TNL_ATTRIB_POS+1 ; i <= _TNL_ATTRIB_MAX ; i++) 
       switch (tnl->vtx.attrsz[i]) {
       case 4: tnl->vtx.attrptr[i][3] = tnl->vtx.current[i][3];
       case 3: tnl->vtx.attrptr[i][2] = tnl->vtx.current[i][2];
@@ -187,13 +192,6 @@ static void _tnl_copy_from_current( GLcontext *ctx )
       case 1: tnl->vtx.attrptr[i][0] = tnl->vtx.current[i][0];
 	 break;
       }
-
-   /* Edgeflag requires special treatment:
-    */
-   if (tnl->vtx.attrsz[_TNL_ATTRIB_EDGEFLAG]) 
-      tnl->vtx.attrptr[_TNL_ATTRIB_EDGEFLAG][0] = 
-	 (GLfloat)ctx->Current.EdgeFlag;
-
 
    ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
 }
@@ -860,6 +858,7 @@ static void _tnl_current_init( GLcontext *ctx )
 	 ctx->Light.Material.Attrib[i];
 
    tnl->vtx.current[_TNL_ATTRIB_INDEX] = &ctx->Current.Index;
+   tnl->vtx.current[_TNL_ATTRIB_EDGEFLAG] = &tnl->vtx.CurrentFloatEdgeFlag;
 }
 
 static struct _tnl_dynfn *no_codegen( GLcontext *ctx, int key )
