@@ -246,7 +246,8 @@ static GLboolean run_texnorm_stage( GLcontext *ctx,
       return GL_TRUE;
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++) {
-      if (VB->TexCoordPtr[i]->size == 4)
+      if (!ctx->Texture.Unit[i]._ReallyEnabled ||
+	  VB->TexCoordPtr[i]->size == 4)
 	 /* Never try to normalize homogenous tex coords! */
 	 continue;
 
