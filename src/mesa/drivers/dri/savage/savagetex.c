@@ -42,6 +42,9 @@
 #include "texstore.h"
 #include "texobj.h"
 
+#include "convolve.h"
+#include "colormac.h"
+
 #include "swrast/swrast.h"
 
 #include "xmlpool.h"
@@ -462,6 +465,170 @@ savageAllocTexObj( struct gl_texture_object *texObj )
    return t;
 }
 
+/* Mesa texture formats for alpha-images on Savage3D/IX/MX
+ *
+ * Promoting texture images to ARGB888 or ARGB4444 doesn't work
+ * because we can't tell the hardware to ignore the color components
+ * and only use the alpha component. So we define our own texture
+ * formats that promote to ARGB8888 or ARGB4444 and set the color
+ * components to white. This way we get the correct result. */
+static GLboolean
+_savage_texstore_a1114444 (GLcontext *ctx, GLuint dims,
+			   GLenum baseInternalFormat,
+			   const struct gl_texture_format *dstFormat,
+			   GLvoid *dstAddr,
+			   GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
+			   GLint dstRowStride, GLint dstImageStride,
+			   GLint srcWidth, GLint srcHeight, GLint srcDepth,
+			   GLenum srcFormat, GLenum srcType,
+			   const GLvoid *srcAddr,
+			   const struct gl_pixelstore_attrib *srcPacking);
+static GLboolean
+_savage_texstore_a1118888 (GLcontext *ctx, GLuint dims,
+			   GLenum baseInternalFormat,
+			   const struct gl_texture_format *dstFormat,
+			   GLvoid *dstAddr,
+			   GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
+			   GLint dstRowStride, GLint dstImageStride,
+			   GLint srcWidth, GLint srcHeight, GLint srcDepth,
+			   GLenum srcFormat, GLenum srcType,
+			   const GLvoid *srcAddr,
+			   const struct gl_pixelstore_attrib *srcPacking);
+
+static struct gl_texture_format _savage_texformat_a1114444 = {
+    MESA_FORMAT_ARGB4444,		/* MesaFormat */
+    GL_RGBA,				/* BaseFormat */
+    GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+    4,					/* RedBits */
+    4,					/* GreenBits */
+    4,					/* BlueBits */
+    4,					/* AlphaBits */
+    0,					/* LuminanceBits */
+    0,					/* IntensityBits */
+    0,					/* IndexBits */
+    0,					/* DepthBits */
+    2,					/* TexelBytes */
+    _savage_texstore_a1114444,		/* StoreTexImageFunc */
+    NULL, NULL, NULL, NULL, NULL, NULL  /* FetchTexel* filled in by 
+					 * savageDDInitTextureFuncs */
+};
+static struct gl_texture_format _savage_texformat_a1118888 = {
+    MESA_FORMAT_ARGB8888,		/* MesaFormat */
+    GL_RGBA,				/* BaseFormat */
+    GL_UNSIGNED_NORMALIZED_ARB,		/* DataType */
+    8,					/* RedBits */
+    8,					/* GreenBits */
+    8,					/* BlueBits */
+    8,					/* AlphaBits */
+    0,					/* LuminanceBits */
+    0,					/* IntensityBits */
+    0,					/* IndexBits */
+    0,					/* DepthBits */
+    4,					/* TexelBytes */
+    _savage_texstore_a1118888,		/* StoreTexImageFunc */
+    NULL, NULL, NULL, NULL, NULL, NULL  /* FetchTexel* filled in by 
+					 * savageDDInitTextureFuncs */
+};
+
+static GLboolean
+_savage_texstore_a1114444 (GLcontext *ctx, GLuint dims,
+			   GLenum baseInternalFormat,
+			   const struct gl_texture_format *dstFormat,
+			   GLvoid *dstAddr,
+			   GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
+			   GLint dstRowStride, GLint dstImageStride,
+			   GLint srcWidth, GLint srcHeight, GLint srcDepth,
+			   GLenum srcFormat, GLenum srcType,
+			   const GLvoid *srcAddr,
+			   const struct gl_pixelstore_attrib *srcPacking)
+{
+    /* general path */
+    const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 baseInternalFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking);
+    const GLchan *src = tempImage;
+    GLubyte *dstImage = (GLubyte *) dstAddr
+	+ dstZoffset * dstImageStride
+	+ dstYoffset * dstRowStride
+	+ dstXoffset * dstFormat->TexelBytes;
+    GLint img, row, col;
+
+    ASSERT(dstFormat == &_savage_texformat_a1114444);
+    ASSERT(baseInternalFormat == GL_ALPHA);
+
+    if (!tempImage)
+	return GL_FALSE;
+    _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
+    for (img = 0; img < srcDepth; img++) {
+	GLubyte *dstRow = dstImage;
+	for (row = 0; row < srcHeight; row++) {
+            GLushort *dstUI = (GLushort *) dstRow;
+	    for (col = 0; col < srcWidth; col++) {
+		dstUI[col] = PACK_COLOR_4444( CHAN_TO_UBYTE(src[0]),
+					      255, 255, 255 );
+		src += 1;
+            }
+            dstRow += dstRowStride;
+	}
+	dstImage += dstImageStride;
+    }
+    _mesa_free((void *) tempImage);
+
+    return GL_TRUE;
+}
+static GLboolean
+_savage_texstore_a1118888 (GLcontext *ctx, GLuint dims,
+			   GLenum baseInternalFormat,
+			   const struct gl_texture_format *dstFormat,
+			   GLvoid *dstAddr,
+			   GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
+			   GLint dstRowStride, GLint dstImageStride,
+			   GLint srcWidth, GLint srcHeight, GLint srcDepth,
+			   GLenum srcFormat, GLenum srcType,
+			   const GLvoid *srcAddr,
+			   const struct gl_pixelstore_attrib *srcPacking)
+{
+    /* general path */
+    const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 baseInternalFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking);
+    const GLchan *src = tempImage;
+    GLubyte *dstImage = (GLubyte *) dstAddr
+	+ dstZoffset * dstImageStride
+	+ dstYoffset * dstRowStride
+	+ dstXoffset * dstFormat->TexelBytes;
+    GLint img, row, col;
+
+    ASSERT(dstFormat == &_savage_texformat_a1118888);
+    ASSERT(baseInternalFormat == GL_ALPHA);
+
+    if (!tempImage)
+	return GL_FALSE;
+    _mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
+    for (img = 0; img < srcDepth; img++) {
+	GLubyte *dstRow = dstImage;
+	for (row = 0; row < srcHeight; row++) {
+            GLuint *dstUI = (GLuint *) dstRow;
+	    for (col = 0; col < srcWidth; col++) {
+		dstUI[col] = PACK_COLOR_8888( CHAN_TO_UBYTE(src[0]),
+					      255, 255, 255 );
+		src += 1;
+            }
+            dstRow += dstRowStride;
+	}
+	dstImage += dstImageStride;
+    }
+    _mesa_free((void *) tempImage);
+
+    return GL_TRUE;
+}
+
 /* Called by the _mesa_store_teximage[123]d() functions. */
 static const struct gl_texture_format *
 savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
@@ -541,14 +708,14 @@ savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_ALPHA:
    case GL_COMPRESSED_ALPHA:
       return isSavage4 ? &_mesa_texformat_a8 : (
-	 do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444);
+	 do32bpt ? &_savage_texformat_a1118888 : &_savage_texformat_a1114444);
    case GL_ALPHA4:
-      return isSavage4 ? &_mesa_texformat_a8 : &_mesa_texformat_argb4444;
+      return isSavage4 ? &_mesa_texformat_a8 : &_savage_texformat_a1114444;
    case GL_ALPHA8:
    case GL_ALPHA12:
    case GL_ALPHA16:
       return isSavage4 ? &_mesa_texformat_a8 : (
-	 !force16bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444);
+	 !force16bpt ? &_savage_texformat_a1118888 : &_savage_texformat_a1114444);
 
    case 1:
    case GL_LUMINANCE:
@@ -1321,13 +1488,12 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
     GLuint format;
 
     /* disable */
-    if (ctx->Texture.Unit[0]._ReallyEnabled == 0) {
-	imesa->regs.s3d.texCtrl.ui = 0;
-	imesa->regs.s3d.texCtrl.ni.texEn = GL_FALSE;
-	imesa->regs.s3d.texCtrl.ni.dBias = 0x08;
-	imesa->regs.s3d.texCtrl.ni.texXprEn = GL_TRUE;
+    imesa->regs.s3d.texCtrl.ui = 0;
+    imesa->regs.s3d.texCtrl.ni.texEn = GL_FALSE;
+    imesa->regs.s3d.texCtrl.ni.dBias = 0x08;
+    imesa->regs.s3d.texCtrl.ni.texXprEn = GL_TRUE;
+    if (ctx->Texture.Unit[0]._ReallyEnabled == 0)
 	return;
-    }
 
     tObj = ctx->Texture.Unit[0]._Current;
     if ((ctx->Texture.Unit[0]._ReallyEnabled & ~(TEXTURE_1D_BIT|TEXTURE_2D_BIT))
@@ -1360,12 +1526,28 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
     /* FIXME: copied from utah-glx, probably needs some tuning */
     switch (ctx->Texture.Unit[0].EnvMode) {
     case GL_DECAL:
-	imesa->regs.s3d.drawCtrl.ni.texBlendCtrl = SAVAGETBC_DECAL_S3D;
+	imesa->regs.s3d.drawCtrl.ni.texBlendCtrl = SAVAGETBC_DECALALPHA_S3D;
 	break;
     case GL_REPLACE:
-	imesa->regs.s3d.drawCtrl.ni.texBlendCtrl = SAVAGETBC_COPY_S3D;
+	switch (format) {
+	case GL_ALPHA: /* FIXME */
+	    imesa->regs.s3d.drawCtrl.ni.texBlendCtrl = 1;
+	    break;
+	case GL_LUMINANCE_ALPHA:
+	case GL_RGBA:
+	    imesa->regs.s3d.drawCtrl.ni.texBlendCtrl = 4;
+	    break;
+	case GL_RGB:
+	case GL_LUMINANCE:
+	    imesa->regs.s3d.drawCtrl.ni.texBlendCtrl = SAVAGETBC_DECAL_S3D;
+	    break;
+	case GL_INTENSITY:
+	    imesa->regs.s3d.drawCtrl.ni.texBlendCtrl = SAVAGETBC_COPY_S3D;
+	}
 	break;
-    case GL_BLEND: /* FIXIT */
+    case GL_BLEND: /* hardware can't do GL_BLEND */
+	FALLBACK (ctx, SAVAGE_FALLBACK_TEXTURE, GL_TRUE);
+	return;
     case GL_MODULATE:
 	imesa->regs.s3d.drawCtrl.ni.texBlendCtrl = SAVAGETBC_MODULATEALPHA_S3D;
 	break;
@@ -1378,14 +1560,16 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
     imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
     imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
 
-    /* FIXME: this is how the utah-driver works. I doubt it's the ultimate 
-       truth. */
+    /* The Savage3D can't handle different wrapping modes in s and t.
+     * If they are not the same, fall back to software. */
+    if (t->setup.sWrapMode != t->setup.tWrapMode) {
+	FALLBACK (ctx, SAVAGE_FALLBACK_TEXTURE, GL_TRUE);
+	return;
+    }
     imesa->regs.s3d.texCtrl.ni.uWrapEn = 0;
     imesa->regs.s3d.texCtrl.ni.vWrapEn = 0;
-    if (t->setup.sWrapMode == GL_CLAMP)
-	imesa->regs.s3d.texCtrl.ni.wrapMode = TAM_Clamp;
-    else
-	imesa->regs.s3d.texCtrl.ni.wrapMode = TAM_Wrap;
+    imesa->regs.s3d.texCtrl.ni.wrapMode =
+	(t->setup.sWrapMode == GL_REPEAT) ? TAM_Wrap : TAM_Clamp;
 
     switch (t->setup.minFilter) {
     case GL_NEAREST:
@@ -1766,4 +1950,20 @@ void savageDDInitTextureFuncs( struct dd_function_table *functions )
    functions->DeleteTexture = savageDeleteTexture;
    functions->IsTextureResident = driIsTextureResident;
    functions->TexParameter = savageTexParameter;
+
+   /* Texel fetching with our custom texture formats works just like
+    * the standard argb formats. */
+   _savage_texformat_a1114444.FetchTexel1D = _mesa_texformat_argb4444.FetchTexel1D;
+   _savage_texformat_a1114444.FetchTexel2D = _mesa_texformat_argb4444.FetchTexel2D;
+   _savage_texformat_a1114444.FetchTexel3D = _mesa_texformat_argb4444.FetchTexel3D;
+   _savage_texformat_a1114444.FetchTexel1Df= _mesa_texformat_argb4444.FetchTexel1Df;
+   _savage_texformat_a1114444.FetchTexel2Df= _mesa_texformat_argb4444.FetchTexel2Df;
+   _savage_texformat_a1114444.FetchTexel3Df= _mesa_texformat_argb4444.FetchTexel3Df;
+
+   _savage_texformat_a1118888.FetchTexel1D = _mesa_texformat_argb8888.FetchTexel1D;
+   _savage_texformat_a1118888.FetchTexel2D = _mesa_texformat_argb8888.FetchTexel2D;
+   _savage_texformat_a1118888.FetchTexel3D = _mesa_texformat_argb8888.FetchTexel3D;
+   _savage_texformat_a1118888.FetchTexel1Df= _mesa_texformat_argb8888.FetchTexel1Df;
+   _savage_texformat_a1118888.FetchTexel2Df= _mesa_texformat_argb8888.FetchTexel2Df;
+   _savage_texformat_a1118888.FetchTexel3Df= _mesa_texformat_argb8888.FetchTexel3Df;
 }

@@ -123,10 +123,14 @@ unsigned long time_sum=0;
 struct timeval tv_s1,tv_f1;
 #endif
 
-static const char *const card_extensions[] =
+static const char *const common_extensions[] =
 {
     "GL_ARB_multitexture",
     "GL_EXT_texture_lod_bias",
+    NULL
+};
+static const char *const s4_extensions[] =
+{
     "GL_EXT_texture_env_add",
     NULL
 };
@@ -522,7 +526,9 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 				       debug_control );
 #endif
 
-   driInitExtensions( ctx, card_extensions, GL_TRUE );
+   driInitExtensions( ctx, common_extensions, GL_TRUE );
+   if (savageScreen->chipset >= S3_SAVAGE4)
+       driInitExtensions( ctx, s4_extensions, GL_FALSE );
 
    savageDDInitStateFuncs( ctx );
    savageDDInitSpanFuncs( ctx );

@@ -1461,6 +1461,13 @@ static void savageUpdateRegister_s4(savageContextPtr imesa)
 }
 static void savageUpdateRegister_s3d(savageContextPtr imesa)
 {
+    /* In case the texture image was changed without changing the
+     * texture address as well, we need to force emitting the texture
+     * address in order to flush texture cashes. */
+    if ((imesa->dirty & SAVAGE_UPLOAD_TEX0) &&
+	imesa->oldRegs.s3d.texAddr.ui == imesa->regs.s3d.texAddr.ui)
+	imesa->oldRegs.s3d.texAddr.ui = 0xffffffff;
+
     /* Some temporary hacks to workaround lockups. Not sure if they are
      * still needed. But they work for now. */
     imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
@@ -1626,12 +1633,15 @@ static void savageDDInitState_s3d( savageContextPtr imesa )
     imesa->regs.s3d.destTexWatermarks.ui = 0x4f000000;
 #endif
 
-    /* clrCmpAlphaBlendCtrl is needed to get alphatest and
-     * alpha blending working properly
-     */
-
     imesa->regs.s3d.texCtrl.ni.dBias          = 0x08;
     imesa->regs.s3d.texCtrl.ni.texXprEn       = GL_TRUE;
+    /* texXprEn is needed to get alphatest and alpha blending working
+     * properly. However, this makes texels with color texXprClr
+     * completely transparent in some texture environment modes. I
+     * couldn't find a way to disable this. So choose an arbitrary and
+     * improbable color. (0 is a bad choice, makes all black texels
+     * transparent.) */
+    imesa->regs.s3d.texXprClr.ui              = 0x26ae26ae;
     /* programm a valid tex address, in case texture state is emitted
      * in wrong order. */
     if (imesa->lastTexHeap == 2 && imesa->savageScreen->textureSize[1]) {
