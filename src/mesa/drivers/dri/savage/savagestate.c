@@ -845,64 +845,45 @@ static void savageUpdateCull( GLcontext *ctx )
  * Color masks
  */
 
-/* Mesa calls this from the wrong place - it is called a very large
- * number of redundant times.
- *
- * Colormask can be simulated by multipass or multitexture techniques.
+/* Savage4 can disable draw updates when all channels are
+ * masked. Savage3D has a bit called drawUpdateEn, but it doesn't seem
+ * to have any effect. If only some channels are masked we need a
+ * software fallback on all chips.
  */
 static void savageDDColorMask_s4(GLcontext *ctx, 
 				 GLboolean r, GLboolean g, 
 				 GLboolean b, GLboolean a )
 {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
-    GLuint enable;
+    GLboolean passAny, passAll;
 
-    if (ctx->Visual.alphaBits)
-    {
-        enable = b | g | r | a;
-    }
-    else
-    {
-        enable = b | g | r;
+    if (ctx->Visual.alphaBits) {
+	passAny = b || g || r || a;
+	passAll = r && g && b && a;
+    } else {
+	passAny = b || g || r;
+	passAll = r && g && b;
     }
 
-    if (enable)
-    {
-	imesa->regs.s4.drawLocalCtrl.ni.drawUpdateEn = GL_TRUE;
-    }
-    else
-    {
+    if (passAny) {
+	if (!imesa->regs.s4.drawLocalCtrl.ni.drawUpdateEn) {
+	    imesa->regs.s4.drawLocalCtrl.ni.drawUpdateEn = GL_TRUE;
+	    imesa->dirty |= SAVAGE_UPLOAD_LOCAL;
+	}
+	FALLBACK (ctx, SAVAGE_FALLBACK_COLORMASK, !passAll);
+    } else if (imesa->regs.s4.drawLocalCtrl.ni.drawUpdateEn) {
 	imesa->regs.s4.drawLocalCtrl.ni.drawUpdateEn = GL_FALSE;
+	imesa->dirty |= SAVAGE_UPLOAD_LOCAL;
     }
-    imesa->dirty |= SAVAGE_UPLOAD_LOCAL;
-    /* TODO: need a software fallback */
 }
 static void savageDDColorMask_s3d(GLcontext *ctx, 
 				  GLboolean r, GLboolean g, 
 				  GLboolean b, GLboolean a )
 {
-    savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
-    GLuint enable;
-
     if (ctx->Visual.alphaBits)
-    {
-        enable = b | g | r | a;
-    }
+	FALLBACK (ctx, SAVAGE_FALLBACK_COLORMASK, !(r && g && b && a));
     else
-    {
-        enable = b | g | r;
-    }
-
-    if (enable)
-    {
-	imesa->regs.s3d.zBufCtrl.ni.drawUpdateEn = GL_TRUE;
-    }
-    else
-    {
-	imesa->regs.s3d.zBufCtrl.ni.drawUpdateEn = GL_FALSE;
-    }
-    imesa->dirty |= SAVAGE_UPLOAD_LOCAL;
-    /* TODO: need a software fallback */
+	FALLBACK (ctx, SAVAGE_FALLBACK_COLORMASK, !(r && g && b));
 }
 
 /* Seperate specular not fully implemented in hardware...  Needs
