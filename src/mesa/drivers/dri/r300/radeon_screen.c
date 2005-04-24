@@ -591,6 +591,7 @@ static radeonScreenPtr radeonCreateScreen(__DRIscreenPrivate * sPriv)
 			(*glx_enable_extension) (psc,
 						 "GLX_MESA_swap_frame_usage");
 
+#if R200_MERGED
 			if (driCompareGLXAPIVersion(20030818) >= 0) {
 				sPriv->psc->allocateMemory =
 				    (void *)r200AllocateMemoryMESA;
@@ -602,6 +603,7 @@ static radeonScreenPtr radeonCreateScreen(__DRIscreenPrivate * sPriv)
 				(*glx_enable_extension) (psc,
 							 "GLX_MESA_allocate_memory");
 			}
+#endif
 
 			if (driCompareGLXAPIVersion(20030915) >= 0) {
 				(*glx_enable_extension) (psc,
@@ -696,8 +698,10 @@ static GLboolean radeonCreateContext(const __GLcontextModes * glVisual,
 
 	if (chip >= RADEON_CHIP_R300)
 		return r300CreateContext(glVisual, driContextPriv, sharedContextPriv);
+#if R200_MERGED
 	else
 		return r200CreateContext(glVisual, driContextPriv, sharedContextPriv);
+#endif
 }
 
 
@@ -711,8 +715,10 @@ static void radeonDestroyContext(__DRIcontextPrivate * driContextPriv)
 
 	if (chip >= RADEON_CHIP_R300)
 		return r300DestroyContext(driContextPriv);
+#if R200_MERGED
 	else
 		return r200DestroyContext(driContextPriv);
+#endif
 }
 
 

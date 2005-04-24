@@ -526,7 +526,9 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 				    ~R300_RB3D_STENCIL_ENABLE;
 			}
 		} else {
+#if R200_MERGED
 			FALLBACK(&r300->radeon, RADEON_FALLBACK_STENCIL, state);
+#endif			
 		}
 		break;
 

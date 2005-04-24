@@ -40,7 +40,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "macros.h"
 #include "context.h"
 #include "swrast/swrast.h"
-
 #include "r200_context.h"
 #include "r300_context.h"
 #include "r200_state.h"
@@ -329,8 +328,10 @@ void radeonFlush(GLcontext * ctx)
 
 	if (IS_FAMILY_R300(radeon))
 		r300Flush(ctx);
+#if R200_MERGED
 	else
 		r200Flush(ctx);
+#endif	
 }
 
 

@@ -38,30 +38,30 @@ DRIVER_SOURCES = \
 		 r300_texprog.c \
 		 r300_vertexprog.c \
 		 r300_shader.c \
-		 r300_maos.c \
-		 \
-		 r200_context.c \
-		 r200_ioctl.c \
-		 r200_state.c \
-		 r200_state_init.c \
-		 r200_cmdbuf.c \
-		 r200_pixel.c \
-		 r200_tex.c \
-		 r200_texmem.c \
-		 r200_texstate.c \
-		 r200_tcl.c \
-		 r200_swtcl.c \
-		 r200_maos.c \
-		 r200_sanity.c \
-		 r200_vtxfmt.c \
-		 r200_vtxfmt_c.c \
-		 r200_vtxfmt_sse.c \
-		 r200_vtxfmt_x86.c
+		 r300_maos.c 
+#		 \
+#		 r200_context.c \
+#		 r200_ioctl.c \
+#		 r200_state.c \
+#		 r200_state_init.c \
+#		 r200_cmdbuf.c \
+#		 r200_pixel.c \
+#		 r200_tex.c \
+#		 r200_texmem.c \
+#		 r200_texstate.c \
+#		 r200_swtcl.c \
+#		 r200_maos.c \
+#		 r200_sanity.c \
+#		 r200_vtxfmt.c \
+#		 r200_vtxfmt_c.c \
+#		 r200_vtxfmt_sse.c \
+#		 r200_vtxfmt_x86.c
 
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
-X86_SOURCES = r200_vtxtmp_x86.S
+X86_SOURCES = 
+#r200_vtxtmp_x86.S
 
 SYMLINKS = \
 	server/radeon_dri.c \

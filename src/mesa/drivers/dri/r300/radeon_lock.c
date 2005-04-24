@@ -68,6 +68,7 @@ static void radeonUpdatePageFlipping(radeonContextPtr radeon)
 /**
  * Called by radeonGetLock() after the lock has been obtained.
  */
+#if R200_MERGED
 static void r200RegainedLock(r200ContextPtr r200)
 {
 	__DRIdrawablePrivate *dPriv = r200->radeon.dri.drawable;
@@ -94,6 +95,7 @@ static void r200RegainedLock(r200ContextPtr r200)
 		DRI_AGE_TEXTURES(r200->texture_heaps[i]);
 	}
 }
+#endif
 
 static void r300RegainedLock(radeonContextPtr radeon)
 {
@@ -111,7 +113,7 @@ static void r300RegainedLock(radeonContextPtr radeon)
 		radeon->lastStamp = dPriv->lastStamp;
 	}
 
-#if 0
+#if R200_MERGED
 	for (i = 0; i < r200->nr_heaps; i++) {
 		DRI_AGE_TEXTURES(r200->texture_heaps[i]);
 	}
@@ -149,8 +151,10 @@ void radeonGetLock(radeonContextPtr radeon, GLuint flags)
 
 	if (IS_FAMILY_R300(radeon))
 		r300RegainedLock(radeon);
+#if R200_MERGED
 	else
 		r200RegainedLock((r200ContextPtr)radeon);
-
+#endif
+	
 	radeon->lost_context = GL_TRUE;
 }

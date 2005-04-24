@@ -109,7 +109,7 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
 	/* Try and go straight to t&l
 	 */
-	&_r300_tcl_stage,
+	//&_r300_tcl_stage,
 
 	/* Catch any t&l fallbacks
 	 */
@@ -293,7 +293,9 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	tcl_mode = driQueryOptioni(&r300->radeon.optionCache, "tcl_mode");
 	if (driQueryOptionb(&r300->radeon.optionCache, "no_rast")) {
 		fprintf(stderr, "disabling 3D acceleration\n");
+#if R200_MERGED
 		FALLBACK(&r300->radeon, RADEON_FALLBACK_DISABLE, 1);
+#endif
 	}
 	if (tcl_mode == DRI_CONF_TCL_SW ||
 	    !(r300->radeon.radeonScreen->chipset & RADEON_CHIPSET_TCL)) {

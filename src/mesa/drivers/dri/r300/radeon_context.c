@@ -270,11 +270,13 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			driDrawableInitVBlank(driDrawPriv,
 					      radeon->vblank_flags);
 			radeon->dri.drawable = driDrawPriv;
-
+			
+#if R200_MERGED
 			if (IS_FAMILY_R200(radeon)) {
 				r200UpdateWindow(radeon->glCtx);
 				r200UpdateViewportOffset(radeon->glCtx);
 			}
+#endif
 		}
 
 		_mesa_make_current2(radeon->glCtx,
@@ -290,9 +292,11 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
 		_mesa_update_state(radeon->glCtx);
 
+#if R200_MERGED
 		if (IS_FAMILY_R200(radeon))
 			r200ValidateState(radeon->glCtx);
-
+#endif
+		
 	} else {
 		if (RADEON_DEBUG & DEBUG_DRI)
 			fprintf(stderr, "%s ctx is null\n", __FUNCTION__);

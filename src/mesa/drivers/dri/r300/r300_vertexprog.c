@@ -174,7 +174,7 @@ void dump_program_params(GLcontext *ctx, struct vertex_program *vp)
 		
 		fprintf(stderr, "{ ");
 		for(i=0; i < 4; i++)
-			fprintf(stderr, "%f ", vp->Parameters->Parameters[pi].Values[i]);
+			fprintf(stderr, "%f ", vp->Parameters->ParameterValues[pi][i]);
 		fprintf(stderr, "}\n");
 		
 	}
@@ -212,7 +212,7 @@ static void debug_vp(GLcontext *ctx, struct vertex_program *vp)
 		fprintf(stderr, "%d.", vpi->DstReg.Index);
 		
 		for(i=0; i < 4; i++)
-			if(vpi->DstReg.WriteMask[i])
+			if(vpi->DstReg.WriteMask & (1<<i))
 				fprintf(stderr, "%s", dst_mask_names[i]);
 		fprintf(stderr, " ");
 		
@@ -230,8 +230,8 @@ static void debug_vp(GLcontext *ctx, struct vertex_program *vp)
 			}
 			fprintf(stderr, "%d.", vpi->SrcReg[operand_index].Index);
 			
-			for(i=0; i < 4; i++)
-				fprintf(stderr, "%s", dst_mask_names[vpi->SrcReg[operand_index].Swizzle[i]]);
+			/*for(i=0; i < 4; i++)
+				fprintf(stderr, "%s", dst_mask_names[vpi->SrcReg[operand_index].Swizzle[i]]);*/
 			
 			if(operand_index+1 < (op_names[operator_index].ip & (~FLAG_MASK)) )
 				fprintf(stderr, ",");
@@ -262,10 +262,10 @@ void r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp)
 		case NAMED_PARAMETER:
 			//fprintf(stderr, "%s", vp->Parameters->Parameters[pi].Name);
 		case CONSTANT:
-			vp->params.body.f[dst_index++]=mesa_vp->Parameters->Parameters[pi].Values[0];
-			vp->params.body.f[dst_index++]=mesa_vp->Parameters->Parameters[pi].Values[1];
-			vp->params.body.f[dst_index++]=mesa_vp->Parameters->Parameters[pi].Values[2];
-			vp->params.body.f[dst_index++]=mesa_vp->Parameters->Parameters[pi].Values[3];
+			vp->params.body.f[dst_index++]=mesa_vp->Parameters->ParameterValues[pi][0];
+			vp->params.body.f[dst_index++]=mesa_vp->Parameters->ParameterValues[pi][1];
+			vp->params.body.f[dst_index++]=mesa_vp->Parameters->ParameterValues[pi][2];
+			vp->params.body.f[dst_index++]=mesa_vp->Parameters->ParameterValues[pi][3];
 		break;
 		
 		default: _mesa_problem(NULL, "Bad param type in %s", __FUNCTION__);
@@ -276,14 +276,14 @@ void r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program *vp)
 	vp->params.length=dst_index;
 }
 		
-static unsigned long t_dst_mask(GLboolean *mask)
+static unsigned long t_dst_mask(GLuint mask)
 {
 	unsigned long flags=0;
 	
-	if(mask[0]) flags |= VSF_FLAG_X;
-	if(mask[1]) flags |= VSF_FLAG_Y;
-	if(mask[2]) flags |= VSF_FLAG_Z;
-	if(mask[3]) flags |= VSF_FLAG_W;
+	if(mask & WRITEMASK_X) flags |= VSF_FLAG_X;
+	if(mask & WRITEMASK_Y) flags |= VSF_FLAG_Y;
+	if(mask & WRITEMASK_Z) flags |= VSF_FLAG_Z;
+	if(mask & WRITEMASK_W) flags |= VSF_FLAG_W;
 	
 	return flags;
 }
@@ -345,13 +345,12 @@ static unsigned long t_src_class(enum register_file file)
 static unsigned long t_swizzle(GLubyte swizzle)
 {
 	switch(swizzle){
-		case 0: return VSF_IN_COMPONENT_X;
-		case 1: return VSF_IN_COMPONENT_Y;
-		case 2: return VSF_IN_COMPONENT_Z;
-		case 3: return VSF_IN_COMPONENT_W;
-		
-		case SWIZZLE_ZERO:
-		case SWIZZLE_ONE:
+		case SWIZZLE_X: return VSF_IN_COMPONENT_X;
+		case SWIZZLE_Y: return VSF_IN_COMPONENT_Y;
+		case SWIZZLE_Z: return VSF_IN_COMPONENT_Z;
+		case SWIZZLE_W: return VSF_IN_COMPONENT_W;
+		case SWIZZLE_ZERO: return VSF_IN_COMPONENT_ZERO;
+		case SWIZZLE_ONE: return VSF_IN_COMPONENT_ONE;
 		default:
 			fprintf(stderr, "problem in %s", __FUNCTION__);
 			exit(0);
@@ -401,10 +400,10 @@ static unsigned long t_src(struct r300_vertex_program *vp, struct vp_src_registe
 {
 	
 	return MAKE_VSF_SOURCE(t_src_index(vp, src),
-				t_swizzle(src->Swizzle[0]),
-				t_swizzle(src->Swizzle[1]),
-				t_swizzle(src->Swizzle[2]),
-				t_swizzle(src->Swizzle[3]),
+				t_swizzle(GET_SWZ(src->Swizzle, 0)),
+				t_swizzle(GET_SWZ(src->Swizzle, 1)),
+				t_swizzle(GET_SWZ(src->Swizzle, 2)),
+				t_swizzle(GET_SWZ(src->Swizzle, 3)),
 				t_src_class(src->File),
 				src->Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 }
@@ -413,10 +412,10 @@ static unsigned long t_src_scalar(struct r300_vertex_program *vp, struct vp_src_
 {
 			
 	return MAKE_VSF_SOURCE(t_src_index(vp, src),
-				t_swizzle(src->Swizzle[0]),
-				t_swizzle(src->Swizzle[0]),
-				t_swizzle(src->Swizzle[0]),
-				t_swizzle(src->Swizzle[0]),
+				t_swizzle(GET_SWZ(src->Swizzle, 0)),
+				t_swizzle(GET_SWZ(src->Swizzle, 0)),
+				t_swizzle(GET_SWZ(src->Swizzle, 0)),
+				t_swizzle(GET_SWZ(src->Swizzle, 0)),
 				t_src_class(src->File),
 				src->Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 }
@@ -630,17 +629,17 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
 			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-					t_swizzle(src[0].Swizzle[0]),
-					t_swizzle(src[0].Swizzle[1]),
-					t_swizzle(src[0].Swizzle[2]),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
 					SWIZZLE_ZERO,
 					t_src_class(src[0].File),
 					src[0].Negate ? VSF_FLAG_XYZ : VSF_FLAG_NONE);
 			
 			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
-					t_swizzle(src[1].Swizzle[0]),
-					t_swizzle(src[1].Swizzle[1]),
-					t_swizzle(src[1].Swizzle[2]),
+					t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
+					t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
+					t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
 					SWIZZLE_ZERO,
 					t_src_class(src[1].File),
 					src[1].Negate ? VSF_FLAG_XYZ : VSF_FLAG_NONE);
@@ -654,10 +653,10 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			
 			o_inst->src1=t_src(vp, &src[0]);
 			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
-					t_swizzle(src[1].Swizzle[0]),
-					t_swizzle(src[1].Swizzle[1]),
-					t_swizzle(src[1].Swizzle[2]),
-					t_swizzle(src[1].Swizzle[3]),
+					t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
+					t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
+					t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
+					t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
 					t_src_class(src[1].File),
 					(!src[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			o_inst->src3=0;
@@ -669,10 +668,10 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			
 			o_inst->src1=t_src(vp, &src[0]);
 			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-					t_swizzle(src[0].Swizzle[0]),
-					t_swizzle(src[0].Swizzle[1]),
-					t_swizzle(src[0].Swizzle[2]),
-					t_swizzle(src[0].Swizzle[3]),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 3)),
 					t_src_class(src[0].File),
 					(!src[0].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			o_inst->src3=0;
@@ -712,10 +711,10 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
 			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-					t_swizzle(src[0].Swizzle[0]),
-					t_swizzle(src[0].Swizzle[0]),
-					t_swizzle(src[0].Swizzle[0]),
-					t_swizzle(src[0].Swizzle[0]),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 					t_src_class(src[0].File),
 					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			o_inst->src2=0;
@@ -727,24 +726,24 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			/* NOTE: Users swizzling might not work. */
 			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-					t_swizzle(src[0].Swizzle[0]), // x
-					t_swizzle(src[0].Swizzle[3]), // w
-					t_swizzle(src[0].Swizzle[2]), // z
-					t_swizzle(src[0].Swizzle[1]), // y
+					t_swizzle(GET_SWZ(src[0].Swizzle, 0)), // x
+					t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
+					t_swizzle(GET_SWZ(src[0].Swizzle, 2)), // z
+					t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
 					t_src_class(src[0].File),
 					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-					t_swizzle(src[0].Swizzle[1]), // y
-					t_swizzle(src[0].Swizzle[3]), // w
-					t_swizzle(src[0].Swizzle[2]), // z
-					t_swizzle(src[0].Swizzle[0]), // x
+					t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
+					t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
+					t_swizzle(GET_SWZ(src[0].Swizzle, 2)), // z
+					t_swizzle(GET_SWZ(src[0].Swizzle, 0)), // x
 					t_src_class(src[0].File),
 					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			o_inst->src3=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-					t_swizzle(src[0].Swizzle[1]), // y
-					t_swizzle(src[0].Swizzle[0]), // x
-					t_swizzle(src[0].Swizzle[2]), // z
-					t_swizzle(src[0].Swizzle[3]), // w
+					t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
+					t_swizzle(GET_SWZ(src[0].Swizzle, 0)), // x
+					t_swizzle(GET_SWZ(src[0].Swizzle, 2)), // z
+					t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
 					t_src_class(src[0].File),
 					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			goto next;
@@ -754,9 +753,9 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
 			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-					t_swizzle(src[0].Swizzle[0]),
-					t_swizzle(src[0].Swizzle[1]),
-					t_swizzle(src[0].Swizzle[2]),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
+					t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
 					VSF_IN_COMPONENT_ONE,
 					t_src_class(src[0].File),
 					src[0].Negate ? VSF_FLAG_XYZ : VSF_FLAG_NONE);
@@ -774,18 +773,18 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 					t_dst_mask(vpi->DstReg.WriteMask), VSF_OUT_CLASS_TMP);
 			
 			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-					t_swizzle(src[0].Swizzle[1]), // y
-					t_swizzle(src[0].Swizzle[2]), // z
-					t_swizzle(src[0].Swizzle[0]), // x
-					t_swizzle(src[0].Swizzle[3]), // w
+					t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
+					t_swizzle(GET_SWZ(src[0].Swizzle, 2)), // z
+					t_swizzle(GET_SWZ(src[0].Swizzle, 0)), // x
+					t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
 					t_src_class(src[0].File),
 					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			
 			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
-					t_swizzle(src[1].Swizzle[2]), // z
-					t_swizzle(src[1].Swizzle[0]), // x
-					t_swizzle(src[1].Swizzle[1]), // y
-					t_swizzle(src[1].Swizzle[3]), // w
+					t_swizzle(GET_SWZ(src[1].Swizzle, 2)), // z
+					t_swizzle(GET_SWZ(src[1].Swizzle, 0)), // x
+					t_swizzle(GET_SWZ(src[1].Swizzle, 1)), // y
+					t_swizzle(GET_SWZ(src[1].Swizzle, 3)), // w
 					t_src_class(src[1].File),
 					src[1].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			
@@ -801,18 +800,18 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 					t_dst_mask(vpi->DstReg.WriteMask), t_dst_class(vpi->DstReg.File));
 			
 			o_inst->src1=MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
-					t_swizzle(src[1].Swizzle[1]), // y
-					t_swizzle(src[1].Swizzle[2]), // z
-					t_swizzle(src[1].Swizzle[0]), // x
-					t_swizzle(src[1].Swizzle[3]), // w
+					t_swizzle(GET_SWZ(src[1].Swizzle, 1)), // y
+					t_swizzle(GET_SWZ(src[1].Swizzle, 2)), // z
+					t_swizzle(GET_SWZ(src[1].Swizzle, 0)), // x
+					t_swizzle(GET_SWZ(src[1].Swizzle, 3)), // w
 					t_src_class(src[1].File),
 					(!src[1].Negate) ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			
 			o_inst->src2=MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-					t_swizzle(src[0].Swizzle[2]), // z
-					t_swizzle(src[0].Swizzle[0]), // x
-					t_swizzle(src[0].Swizzle[1]), // y
-					t_swizzle(src[0].Swizzle[3]), // w
+					t_swizzle(GET_SWZ(src[0].Swizzle, 2)), // z
+					t_swizzle(GET_SWZ(src[0].Swizzle, 0)), // x
+					t_swizzle(GET_SWZ(src[0].Swizzle, 1)), // y
+					t_swizzle(GET_SWZ(src[0].Swizzle, 3)), // w
 					t_src_class(src[0].File),
 					src[0].Negate ? VSF_FLAG_ALL : VSF_FLAG_NONE);
 			

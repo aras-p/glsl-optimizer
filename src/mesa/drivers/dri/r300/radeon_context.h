@@ -80,6 +80,7 @@ static __inline GLuint radeonPackColor(GLuint cpp,
 #define RADEON_FALLBACK_DISABLE		0x40
 #define RADEON_FALLBACK_BORDER_MODE	0x80
 
+#if R200_MERGED
 extern void radeonFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
 
 #define FALLBACK( radeon, bit, mode ) do {			\
@@ -87,7 +88,9 @@ extern void radeonFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
 		     __FUNCTION__, bit, mode );			\
    radeonFallback( (radeon)->glCtx, bit, mode );		\
 } while (0)
-
+#else
+#define FALLBACK( radeon, bit, mode ) fprintf(stderr, "%s:%s\n", __LINE__, __FILE__);
+#endif
 
 /* TCL fallbacks */
 extern void radeonTclFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
@@ -106,7 +109,11 @@ extern void radeonTclFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
 #define RADEON_TCL_FALLBACK_BITMAP		0x0800	/* draw bitmap with points */
 #define RADEON_TCL_FALLBACK_VERTEX_PROGRAM	0x1000	/* vertex program active */
 
+#if R200_MERGED
 #define TCL_FALLBACK( ctx, bit, mode )	radeonTclFallback( ctx, bit, mode )
+#else
+#define TCL_FALLBACK( ctx, bit, mode )	;
+#endif
 
 
 struct radeon_dri_mirror {

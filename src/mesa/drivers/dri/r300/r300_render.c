@@ -658,7 +658,7 @@ do {										\
 		if (1 || RADEON_DEBUG & DEBUG_FALLBACKS)				\
 			fprintf(stderr, "%s: fallback:%s\n",			\
 				__FUNCTION__, #expr);				\
-		stage->active = GL_FALSE;					\
+		/*stage->active = GL_FALSE*/;					\
 		return;								\
 	}									\
 } while(0)
@@ -673,7 +673,7 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 
 	/* We only support rendering in hardware for now */
 	if (ctx->RenderMode != GL_RENDER) {
-		stage->active = GL_FALSE;
+		//stage->active = GL_FALSE;
 		return;
 	}
 		
@@ -724,13 +724,15 @@ static void dtr(struct tnl_pipeline_stage *stage)
 	(void)stage;
 }
 
+GLboolean r300_create_render(GLcontext *ctx, struct tnl_pipeline_stage *stage){
+	return GL_TRUE;	
+}
+
+
 const struct tnl_pipeline_stage _r300_render_stage = {
 	"r300 hw rasterize",
-	_NEW_ALL,		/* re-check (always re-check for now) */
-	0,			/* re-run (always runs) */
-	GL_TRUE,		/* active */
-	0, 0,			/* inputs (set in check_render), outputs */
-	0, 0,			/* changed_inputs, private */
+	NULL,
+	r300_create_render,
 	dtr,			/* destructor */
 	r300_check_render,	/* check */
 	r300_run_render		/* run */
@@ -760,24 +762,21 @@ static void r300_check_tcl_render(GLcontext *ctx, struct tnl_pipeline_stage *sta
 
 	/* We only support rendering in hardware for now */
 	if (ctx->RenderMode != GL_RENDER) {
-		stage->active = GL_FALSE;
+		//stage->active = GL_FALSE;
 		return;
 	}
 	if(VERTPROG_ACTIVE(ctx)) {
-		stage->active = GL_TRUE;
-		stage->inputs = ctx->VertexProgram.Current->InputsRead;
+		//stage->active = GL_TRUE;
+		//stage->inputs = ctx->VertexProgram.Current->InputsRead;
 	} else {
-		stage->active = GL_FALSE;
+		//stage->active = GL_FALSE;
 	}
 }
 
 const struct tnl_pipeline_stage _r300_tcl_stage = {
 	"r300 tcl",
-	_NEW_ALL,		/* re-check (always re-check for now) */
-	0,			/* re-run (always runs) */
-	GL_TRUE,		/* active */
-	0, 0,			/* inputs (set in check_render), outputs */
-	0, 0,			/* changed_inputs, private */
+	NULL,
+	r300_create_render,
 	dtr,			/* destructor */
 	r300_check_tcl_render,	/* check */
 	r300_run_tcl_render	/* run */

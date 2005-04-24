@@ -96,6 +96,7 @@ extern int prevLockLine;
 		DEBUG_LOCK();						\
 	} while (0)
 
+#if R200_MERGED
 #define UNLOCK_HARDWARE( radeon )					\
 	do {								\
 		DRM_UNLOCK( (radeon)->dri.fd,				\
@@ -109,5 +110,13 @@ extern int prevLockLine;
 			__r200->save_on_next_unlock = GL_FALSE;		\
 		}							\
 	} while (0)
-
+#else
+#define UNLOCK_HARDWARE( radeon )					\
+	do {								\
+		DRM_UNLOCK( (radeon)->dri.fd,				\
+			(radeon)->dri.hwLock,				\
+			(radeon)->dri.hwContext );			\
+		DEBUG_RESET();						\
+	} while (0)
+#endif
 #endif				/* __RADEON_LOCK_H__ */

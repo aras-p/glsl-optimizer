@@ -1302,7 +1302,10 @@ static GLboolean update_tex_common(GLcontext * ctx, int unit)
 		}
 	}
 
+#if R200_MERGED
 	FALLBACK(&rmesa->radeon, RADEON_FALLBACK_BORDER_MODE, t->border_fallback);
+#endif
+		
 	return !t->border_fallback;
 }
 
@@ -1351,7 +1354,9 @@ void r300UpdateTextureState(GLcontext * ctx)
 	      r300UpdateTextureUnit(ctx, 7)
 	      );
 
+#if R200_MERGED
 	FALLBACK(&rmesa->radeon, RADEON_FALLBACK_TEXTURE, !ok);
+#endif	
 
 	/* This needs correction, or just be done elsewhere
 	if (rmesa->radeon.TclFallback)
