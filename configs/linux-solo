@@ -14,9 +14,6 @@ CFLAGS = $(DEFINES) -Wmissing-prototypes -g -std=c99 -Wundef -fPIC -ffast-math
 
 CXXFLAGS = $(DEFINES) -Wall -O3 -ansi -pedantic -fPIC
 
-
-ASM_SOURCES = $(X86_SOURCES)
-
 # Library/program dependencies
 DRI_LIB_DEPS = -lm -lpthread -lexpat -ldl
 GL_LIB_DEPS = -lm -lpthread -ldl

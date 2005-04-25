@@ -33,6 +33,8 @@
 #ifndef MMIO_H
 #define MMIO_H
 
+#include "glheader.h"
+
 #if defined( __powerpc__ )
 
 static __inline__ u_int32_t
