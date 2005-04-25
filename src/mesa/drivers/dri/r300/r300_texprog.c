@@ -206,12 +206,12 @@ GLuint emit_texenv(r300ContextPtr r300, GLuint tc_reg, GLuint unit)
 		break;
 	case GL_COMBINE:
 		WARN_ONCE("EnvMode == GL_COMBINE unsupported! Help Me!!\n");
-		return Cf;
+		return get_source(ps, GL_TEXTURE, unit, tc_reg);
 		break;
 	default:
 		WARN_ONCE("Unknown EnvMode == %d, name=%d\n", envmode,
 						_mesa_lookup_enum_by_nr(envmode));
-		return Cf;
+		return get_source(ps, GL_TEXTURE, unit, tc_reg);
 		break;
 	}
 	
