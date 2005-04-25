@@ -238,6 +238,18 @@ static void _tnl_import_attrib( GLcontext *ctx,
 }
 
 
+static void _tnl_constant_attrib( TNLcontext *tnl,
+				  struct tnl_vertex_arrays *tmp,
+				  GLuint i )
+{
+   tmp->Attribs[i].count = 1;
+   tmp->Attribs[i].data = (GLfloat (*)[4]) tnl->vtx.current[i];
+   tmp->Attribs[i].start = tnl->vtx.current[i];
+   tmp->Attribs[i].size = 4; 
+   tmp->Attribs[i].stride = 0;
+   tnl->vb.AttribPtr[i] = &tmp->Attribs[i];
+}
+
 
 
 void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
@@ -299,6 +311,9 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
 	    VB->AttribPtr[_TNL_ATTRIB_TEX0 + i] = &tmp->TexCoord[i];
 	 }
       }
+      else {
+	 _tnl_constant_attrib(tnl, tmp, index);
+      }
    }
 
    /* odd-ball vertex attributes */
@@ -313,16 +328,11 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
       VB->EdgeFlag = (GLboolean *) tmp->EdgeFlag;
    }
 
-   /* These are constant & can be precalculated:
+   /* These are constant & could be precalculated:
     */
    for (i = _TNL_ATTRIB_MAT_FRONT_AMBIENT; i < _TNL_ATTRIB_INDEX; i++) {
-      tmp->Attribs[i].count = 1;
-      tmp->Attribs[i].data = (GLfloat (*)[4]) tnl->vtx.current[i];
-      tmp->Attribs[i].start = tnl->vtx.current[i];
-      tmp->Attribs[i].size = 4; 
-      tmp->Attribs[i].stride = 0;
-      VB->AttribPtr[i] = &tmp->Attribs[i];
-   }      
+      _tnl_constant_attrib(tnl, tmp, i);
+   }
 
 
    /* Legacy pointers -- remove one day.
