@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -546,12 +546,18 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
 }
 
 
-static void swizzle_copy(GLubyte *dst,
-			 GLuint dstComponents,
-			 const GLubyte *src, 
-			 GLuint srcComponents,
-			 GLubyte *map,
-			 GLuint count)
+/**
+ * Copy GLubyte pixels from <src> to <dst> with swizzling.
+ * \param dst  destination pixels
+ * \param dstComponents  number of color components in destination pixels
+ * \param src  source pixels
+ * \param srcComponents  number of color components in source pixels
+ * \param map  the swizzle mapping
+ * \param count  number of pixels to copy/swizzle.
+ */
+static void
+swizzle_copy(GLubyte *dst, GLuint dstComponents, const GLubyte *src, 
+             GLuint srcComponents, const GLubyte *map, GLuint count)
 {
    GLubyte tmp[8];
    GLint i;
@@ -594,6 +600,9 @@ static void swizzle_copy(GLubyte *dst,
 }
 
 
+/**
+ * Transfer a GLubyte texture image with component swizzling.
+ */
 static void
 _mesa_swizzle_ubyte_image(GLcontext *ctx, 
 			  GLuint dimensions,
@@ -612,12 +621,16 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
    GLubyte srcmap[6], map[4];
    GLint i;
 
-   const GLint srcRowStride = _mesa_image_row_stride(srcPacking, srcWidth,
-                                                     srcFormat, GL_UNSIGNED_BYTE);
-   const GLint srcImageStride = _mesa_image_image_stride(srcPacking,
-                                      srcWidth, srcHeight, srcFormat, GL_UNSIGNED_BYTE);
-   const GLubyte *srcImage = (const GLubyte *) _mesa_image_address(dimensions,
-        srcPacking, srcAddr, srcWidth, srcHeight, srcFormat, GL_UNSIGNED_BYTE, 0, 0, 0);
+   const GLint srcRowStride =
+      _mesa_image_row_stride(srcPacking, srcWidth,
+                             srcFormat, GL_UNSIGNED_BYTE);
+   const GLint srcImageStride
+      = _mesa_image_image_stride(srcPacking, srcWidth, srcHeight, srcFormat,
+                                 GL_UNSIGNED_BYTE);
+   const GLubyte *srcImage
+      = (const GLubyte *) _mesa_image_address(dimensions, srcPacking, srcAddr,
+                                              srcWidth, srcHeight, srcFormat,
+                                              GL_UNSIGNED_BYTE, 0, 0, 0);
 
    GLubyte *dstImage = (GLubyte *) dstAddr
                      + dstZoffset * dstImageStride
@@ -650,9 +663,6 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
       }
    }
 }
-
-
-
 
 
 /**
@@ -2139,7 +2149,8 @@ _mesa_validate_pbo_compressed_teximage(GLcontext *ctx,
  * functions.  It unmaps the PBO buffer if it was mapped earlier.
  */
 void
-_mesa_unmap_teximage_pbo(GLcontext *ctx, const struct gl_pixelstore_attrib *unpack)
+_mesa_unmap_teximage_pbo(GLcontext *ctx,
+                         const struct gl_pixelstore_attrib *unpack)
 {
    if (unpack->BufferObj->Name) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
@@ -3530,6 +3541,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
    GLint level, maxLevels;
 
    ASSERT(texObj);
+   /* XXX choose cube map face here??? */
    srcImage = texObj->Image[0][texObj->BaseLevel];
    ASSERT(srcImage);
 
