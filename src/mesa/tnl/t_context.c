@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -175,7 +175,9 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
       tnl->render_inputs |= (_TNL_BIT_POS|_TNL_BIT_INDEX);
    }
     
-   if (ctx->Fog.Enabled || ctx->FragmentProgram.Current->FogOption != GL_NONE)
+   if (ctx->Fog.Enabled ||
+       (ctx->FragmentProgram.Enabled &&
+        ctx->FragmentProgram.Current->FogOption != GL_NONE))
       tnl->render_inputs |= _TNL_BIT_FOG;
 
    if (ctx->Polygon.FrontMode != GL_FILL || 
