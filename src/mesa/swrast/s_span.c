@@ -280,6 +280,26 @@ interpolate_specular(GLcontext *ctx, struct sw_span *span)
 }
 
 
+/* Fill in the span.array.fog values from the interpolation values */
+static void
+interpolate_fog(const GLcontext *ctx, struct sw_span *span)
+{
+   GLfloat *fog = span->array->fog;
+   const GLfloat fogStep = span->fogStep;
+   GLfloat fogCoord = span->fog;
+   const GLuint haveW = (span->interpMask & SPAN_W);
+   const GLfloat wStep = haveW ? span->dwdx : 0.0F;
+   GLfloat w = haveW ? span->w : 1.0F;
+   GLuint i;
+   for (i = 0; i < span->end; i++) {
+      fog[i] = fogCoord / w;
+      fogCoord += fogStep;
+      w += wStep;
+   }
+   span->arrayMask |= SPAN_FOG;
+}
+
+
 /* Fill in the span.zArray array from the interpolation values */
 void
 _swrast_span_interpolate_z( const GLcontext *ctx, struct sw_span *span )
@@ -1150,6 +1170,9 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       if (span->interpMask & SPAN_SPEC)
          interpolate_specular(ctx, span);
 
+      if (span->interpMask & SPAN_FOG)
+         interpolate_fog(ctx, span);
+
       /* Compute fragment colors with fragment program or texture lookups */
       if (ctx->FragmentProgram._Enabled)
          /* XXX interpolate depth values here??? */
@@ -1225,6 +1248,9 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
 
       if (span->interpMask & SPAN_SPEC)
          interpolate_specular(ctx, span);
+
+      if (span->interpMask & SPAN_FOG)
+         interpolate_fog(ctx, span);
 
       if (ctx->FragmentProgram._Enabled)
          _swrast_exec_fragment_program( ctx, span );
