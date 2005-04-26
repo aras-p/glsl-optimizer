@@ -51,20 +51,16 @@ static void Redisplay( void )
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
    if (PixelLight) {
-#if defined(GL_ARB_fragment_program)
       glProgramLocalParameter4fvARB_func(GL_FRAGMENT_PROGRAM_ARB,
                                          LIGHTPOS, LightPos);
       glEnable(GL_FRAGMENT_PROGRAM_ARB);
       glEnable(GL_VERTEX_PROGRAM_ARB);
-#endif
       glDisable(GL_LIGHTING);
    }
    else {
       glLightfv(GL_LIGHT0, GL_POSITION, LightPos);
-#if defined(GL_ARB_fragment_program)
       glDisable(GL_FRAGMENT_PROGRAM_ARB);
       glDisable(GL_VERTEX_PROGRAM_ARB);
-#endif
       glEnable(GL_LIGHTING);
    }
 
@@ -302,7 +298,6 @@ static void Init( void )
    glDeleteProgramsARB_func = (PFNGLDELETEPROGRAMSARBPROC) glutGetProcAddress("glDeleteProgramsARB");
    assert(glDeleteProgramsARB_func);
 
-#if defined(GL_ARB_fragment_program)
    /*
     * Fragment program
     */
@@ -354,7 +349,6 @@ static void Init( void )
       exit(0);
    }
    assert(glIsProgramARB_func(VertProg));
-#endif
 
    /*
     * Misc init
@@ -371,11 +365,9 @@ static void Init( void )
    {
       /* Green-ish fog color */
       static const GLfloat fogColor[4] = {0.5, 1.0, 0.5, 0};
-      glFogi(GL_FOG_MODE, GL_LINEAR);
       glFogfv(GL_FOG_COLOR, fogColor);
       glFogf(GL_FOG_START, 5.0);
       glFogf(GL_FOG_END, 25.0);
-      glEnable(GL_FOG);
    }
 #endif
 
