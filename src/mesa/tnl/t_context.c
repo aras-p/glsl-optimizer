@@ -175,7 +175,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
       tnl->render_inputs |= (_TNL_BIT_POS|_TNL_BIT_INDEX);
    }
     
-   if (ctx->Fog.Enabled)
+   if (ctx->Fog.Enabled || ctx->FragmentProgram.Current->FogOption != GL_NONE)
       tnl->render_inputs |= _TNL_BIT_FOG;
 
    if (ctx->Polygon.FrontMode != GL_FILL || 
