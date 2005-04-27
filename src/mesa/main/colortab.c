@@ -483,7 +483,6 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
    table->Size = width;
    table->IntFormat = internalFormat;
    table->Format = (GLenum) baseFormat;
-   set_component_sizes(table);
 
    comps = _mesa_components_in_format(table->Format);
    assert(comps > 0);  /* error should have been caught sooner */
@@ -519,6 +518,9 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
 				  aScale, aBias);
       }
    } /* proxy */
+
+   /* do this after the table's Type and Format are set */
+   set_component_sizes(table);
 
    if (texObj || target == GL_SHARED_TEXTURE_PALETTE_EXT) {
       /* texture object palette, texObj==NULL means the shared palette */
