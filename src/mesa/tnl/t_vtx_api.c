@@ -142,7 +142,7 @@ static void _tnl_copy_to_current( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx); 
    GLuint i;
 
-   for (i = _TNL_ATTRIB_POS+1 ; i <= _TNL_ATTRIB_EDGEFLAG ; i++)
+   for (i = _TNL_ATTRIB_POS+1 ; i < _TNL_ATTRIB_INDEX ; i++) {
       if (tnl->vtx.attrsz[i]) {
          /* Note: the tnl->vtx.current[i] pointers points to
           * the ctx->Current fields.  The first 16 or so, anyway.
@@ -151,6 +151,14 @@ static void _tnl_copy_to_current( GLcontext *ctx )
 		    tnl->vtx.attrsz[i], 
 		    tnl->vtx.attrptr[i]);
       }
+   }
+
+   /* color index is special (it's not a float[4] so COPY_CLEAN_4V above
+    * will trash adjacent memory!)
+    */
+   if (tnl->vtx.attrsz[_TNL_ATTRIB_INDEX]) {
+      ctx->Current.Index = tnl->vtx.attrptr[_TNL_ATTRIB_INDEX][0];
+   }
 
    /* Edgeflag requires additional treatment:
     */
