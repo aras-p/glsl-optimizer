@@ -2,7 +2,7 @@
 #define EGLTYPEDEFS_INCLUDED
 
 
-#include <GL/egl.h>
+#include <GLES/egl.h>
 
 
 typedef struct _egl_config _EGLConfig;
