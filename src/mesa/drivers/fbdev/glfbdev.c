@@ -40,8 +40,6 @@
  */
 
 
-#ifdef USE_GLFBDEV_DRIVER
-
 #include "glheader.h"
 #include <linux/fb.h>
 #include "GL/glfbdev.h"
@@ -328,7 +326,7 @@ glFBDevGetProcAddress( const char *procName )
          return entry->func;
       }
    }
-   return _glapi_get_proc_address(procName);
+   return (const void *)_glapi_get_proc_address(procName);
 }
 
 
@@ -797,5 +795,4 @@ glFBDevMakeCurrent( GLFBDevContextPtr context,
    return 1;
 }
 
-#endif /* USE_GLFBDEV_DRIVER */
 
