@@ -38,7 +38,7 @@
  * 24 bits |    ?     0x312   0x315    0x318      ?      0x31B     0x31F
  * 32 bits |    ?       ?       ?        ?      0x164      ?
  */
-
+#ifdef USE_GLFBDEV_DRIVER
 
 #include "glheader.h"
 #include <linux/fb.h>
@@ -795,4 +795,4 @@ glFBDevMakeCurrent( GLFBDevContextPtr context,
    return 1;
 }
 
-
+#endif
