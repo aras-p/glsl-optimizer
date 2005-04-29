@@ -42,7 +42,9 @@
 #include "t_pipeline.h"
 #include "t_vp_build.h"
 
-
+/* Define to see the compiled program on stderr:
+ */
+#define DISASSEM 0
 
 
 /* New, internal instructions:
@@ -193,8 +195,6 @@ struct arb_vp_machine {
    GLint AddressReg;
 
    union instruction store[1024];
-/*    GLuint store_size; */
-
    union instruction *instructions;
    GLint nr_instructions;
 
@@ -489,6 +489,21 @@ static void do_DP3( struct arb_vp_machine *m, union instruction op )
    PUFF(result);
 }
 
+#if 0
+static void do_MAT4( struct arb_vp_machine *m, union instruction op )
+{
+   GLfloat *result = m->reg[op.scl.dst];
+   const GLfloat *arg0 = m->reg[op.scl.arg0];
+   const GLfloat *mat[] = m->reg[op.scl.arg1];
+
+   result[0] = (arg0[0] * mat0[0] + arg0[1] * mat0[1] + arg0[2] * mat0[2] + arg0[3] * mat0[3]);
+   result[1] = (arg0[0] * mat1[0] + arg0[1] * mat1[1] + arg0[2] * mat1[2] + arg0[3] * mat1[3]);
+   result[2] = (arg0[0] * mat2[0] + arg0[1] * mat2[1] + arg0[2] * mat2[2] + arg0[3] * mat2[3]);
+   result[3] = (arg0[0] * mat3[0] + arg0[1] * mat3[1] + arg0[2] * mat3[2] + arg0[3] * mat3[3]);
+}
+#endif
+
+
 static void do_DP4( struct arb_vp_machine *m, union instruction op )
 {
    GLfloat *result = m->reg[op.scl.dst];
@@ -546,8 +561,8 @@ static void do_EXP( struct arb_vp_machine *m, union instruction op )
    GLfloat tmp = arg0[0];
    GLfloat flr_tmp = FLOORF(tmp);
 
-   /* KW: previous definition of this instruction was really messed
-    * up...  Maybe the nv instruction is quite different?
+   /* KW: nvvertexec has an optimized version of this which is pretty
+    * hard to understand/validate, but avoids the RoughApproxPow2.
     */
    result[0] = (GLfloat) (1 << (int)flr_tmp);
    result[1] = tmp - flr_tmp;
@@ -1236,7 +1251,7 @@ static void compile_vertex_program( struct arb_vp_machine *m,
 
    /* Print/disassemble:
     */
-   if (0) {
+   if (DISASSEM) {
       for (i = 0; i < m->nr_instructions; i++) {
 	 union instruction insn = m->instructions[i];
 	 const struct opcode_info *info = &opcode_info[insn.vec.opcode];
