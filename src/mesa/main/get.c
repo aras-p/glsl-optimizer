@@ -1082,8 +1082,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          {
          GLint formats[100];
          GLuint i, n = _mesa_get_compressed_formats(ctx, formats);
+         ASSERT(n <= 100);
          for (i = 0; i < n; i++)
-            params[i] = ENUM_TO_BOOLEAN(formats[i]);
+            params[i] = ENUM_TO_INT(formats[i]);
          }
          break;
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
@@ -2925,8 +2926,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          {
          GLint formats[100];
          GLuint i, n = _mesa_get_compressed_formats(ctx, formats);
+         ASSERT(n <= 100);
          for (i = 0; i < n; i++)
-            params[i] = ENUM_TO_BOOLEAN(formats[i]);
+            params[i] = ENUM_TO_INT(formats[i]);
          }
          break;
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
@@ -4768,6 +4770,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          {
          GLint formats[100];
          GLuint i, n = _mesa_get_compressed_formats(ctx, formats);
+         ASSERT(n <= 100);
          for (i = 0; i < n; i++)
             params[i] = ENUM_TO_INT(formats[i]);
          }

@@ -508,8 +508,9 @@ StateVars = [
 	  [],
 	  """GLint formats[100];
          GLuint i, n = _mesa_get_compressed_formats(ctx, formats);
+         ASSERT(n <= 100);
          for (i = 0; i < n; i++)
-            params[i] = ENUM_TO_BOOLEAN(formats[i]);""",
+            params[i] = ENUM_TO_INT(formats[i]);""",
 	  "ARB_texture_compression" ),
 
 	# GL_EXT_compiled_vertex_array
