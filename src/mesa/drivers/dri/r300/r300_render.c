@@ -748,6 +748,12 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
+	if(hw_tcl_on == GL_FALSE)
+		return GL_TRUE;
+	if(ctx->VertexProgram._Enabled == GL_FALSE){
+		_tnl_UpdateFixedFunctionProgram(ctx);
+		r300ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB, &ctx->_TnlProgram);
+	}
 
 	return r300_run_vb_render(ctx, stage);
 }
@@ -764,12 +770,6 @@ static void r300_check_tcl_render(GLcontext *ctx, struct tnl_pipeline_stage *sta
 	if (ctx->RenderMode != GL_RENDER) {
 		//stage->active = GL_FALSE;
 		return;
-	}
-	if(VERTPROG_ACTIVE(ctx)) {
-		//stage->active = GL_TRUE;
-		//stage->inputs = ctx->VertexProgram.Current->InputsRead;
-	} else {
-		//stage->active = GL_FALSE;
 	}
 }
 

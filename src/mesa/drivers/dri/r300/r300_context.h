@@ -566,10 +566,15 @@ struct r300_vertex_shader_state {
 	int unknown_ptr3;  /* pointer within program space */
 	};
 	
-extern int hw_vertprog_on;
-#define VERTPROG_ACTIVE(ctx) ( ctx->VertexProgram._Enabled && (R300_CONTEXT(ctx)->current_vp != NULL) && \
-	(R300_CONTEXT(ctx)->current_vp->translated)  && hw_vertprog_on)
-	
+extern int hw_tcl_on;
+
+#define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : &ctx->_TnlProgram)
+
+//#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && (OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit)))) : \
+//	(r300->state.render_inputs & (_TNL_BIT_TEX0<<(unit))))
+#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit))) : \
+	ctx->Texture.Unit[unit]._ReallyEnabled && r300->state.render_inputs & (_TNL_BIT_TEX0<<(unit)))
+
 /* r300_vertex_shader_state and r300_vertex_program should probably be merged together someday.
  * Keeping them them seperate for now should ensure fixed pipeline keeps functioning properly.
  */	
@@ -583,7 +588,6 @@ struct r300_vertex_program {
 	int t2rs;
 	unsigned long num_temporaries; /* Number of temp vars used by program */
 	int inputs[VERT_ATTRIB_MAX];
-	GLuint outputs;
 };
 
 /* 64 appears to be the maximum */
@@ -738,8 +742,6 @@ struct r300_context {
 	GLuint TexGenInputs;
 	GLuint TexGenCompSel;
 	GLmatrix tmpmat;
-	
-	struct r300_vertex_program *current_vp;
 };
 
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))

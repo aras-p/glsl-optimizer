@@ -240,7 +240,8 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	GLuint vic_1 = 0;	/* R300_VAP_INPUT_CNTL_1 */
 	GLuint aa_vap_reg = 0; /* VAP register assignment */
 	GLuint i;
-	GLuint inputs = 0, outputs = 0;
+	GLuint inputs = 0;
+	GLuint InputsRead = CURRENT_VERTEX_SHADER(ctx)->InputsRead;
 	
 
 #define CONFIGURE_AOS(r, f, v, sz, cn) { \
@@ -251,7 +252,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 			exit(-1); \
 		} \
 		\
-		if (VERTPROG_ACTIVE(ctx) == GL_FALSE) \
+		if (hw_tcl_on == GL_FALSE) \
 			rmesa->state.aos[nr-1].aos_reg = aa_vap_reg++; \
 		rmesa->state.aos[nr-1].aos_format = f; \
 		if (immd) { \
@@ -269,48 +270,41 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 		} \
 }
 
-	if (VERTPROG_ACTIVE(ctx)) {
-		if (rmesa->current_vp->inputs[VERT_ATTRIB_POS] != -1) {
+	if (hw_tcl_on) {
+		struct r300_vertex_program *prog=(struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
+		if (InputsRead & (1<<VERT_ATTRIB_POS)) {
 			inputs |= _TNL_BIT_POS;
-			rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_POS];
+			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_POS];
 		}
-		if (rmesa->current_vp->inputs[VERT_ATTRIB_NORMAL] != -1) {
+		if (InputsRead & (1<<VERT_ATTRIB_NORMAL)) {
 			inputs |= _TNL_BIT_NORMAL;
-			rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_NORMAL];
+			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_NORMAL];
 		}
-		if (rmesa->current_vp->inputs[VERT_ATTRIB_COLOR0] != -1) {
+		if (InputsRead & (1<<VERT_ATTRIB_COLOR0)) {
 			inputs |= _TNL_BIT_COLOR0;
-			rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_COLOR0];
+			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_COLOR0];
 		}
-		if (rmesa->current_vp->inputs[VERT_ATTRIB_COLOR1] != -1) {
+		if (InputsRead & (1<<VERT_ATTRIB_COLOR1)) {
 			inputs |= _TNL_BIT_COLOR1;
-			rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_COLOR1];
+			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_COLOR1];
 		}
-		if (rmesa->current_vp->inputs[VERT_ATTRIB_FOG] != -1) {
+		if (InputsRead & (1<<VERT_ATTRIB_FOG)) {
 			inputs |= _TNL_BIT_FOG;
-			rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_FOG];
+			rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_FOG];
 		}
 		if(ctx->Const.MaxTextureUnits > 8) { /* Not sure if this can even happen... */
 			fprintf(stderr, "%s: Cant handle that many inputs\n", __FUNCTION__);
 			exit(-1);
 		}
 		for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
-			if (rmesa->current_vp->inputs[VERT_ATTRIB_TEX0+i] != -1) {
+			if (InputsRead & (1<<(VERT_ATTRIB_TEX0+i))) {
 				inputs |= _TNL_BIT_TEX0<<i;
-				rmesa->state.aos[nr++].aos_reg = rmesa->current_vp->inputs[VERT_ATTRIB_TEX0+i];
+				rmesa->state.aos[nr++].aos_reg = prog->inputs[VERT_ATTRIB_TEX0+i];
 			}
 		}
 		nr = 0;
 	} else {
 		inputs = TNL_CONTEXT(ctx)->render_inputs;
-		/* Hack to see what would happen if we would enable tex units according to their enabled values. 
-		   Why arent we doing this?
-		   As for vertex programs tex coords should be passed if program wants them as some programs might deliver
-		   some other values to the program with them. Futher more some programs might generate output tex coords
-		   without taking them as inputs. */
-		/*for (i=0;i<ctx->Const.MaxTextureUnits;i++) 
-			if(ctx->Texture.Unit[i].Enabled == 0)
-				inputs &= ~ (_TNL_BIT_TEX0<<i);*/
 	}
 	rmesa->state.render_inputs = inputs;
 
@@ -494,23 +488,40 @@ drm_radeon_cmd_header_t *cmd = NULL;
 #endif
 
 	/* Stage 3: VAP output */
-	if (VERTPROG_ACTIVE(ctx))
-		outputs = rmesa->current_vp->outputs;
-	else
-		outputs = inputs;
 	
 	R300_STATECHANGE(r300, vof);
 	
 	r300->hw.vof.cmd[R300_VOF_CNTL_0]=0;
-	if(outputs & _TNL_BIT_POS)
-		r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
-	if(outputs & _TNL_BIT_COLOR0)
-		r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
-
 	r300->hw.vof.cmd[R300_VOF_CNTL_1]=0;
-	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-		if(outputs & (_TNL_BIT_TEX0<<i))
-			r300->hw.vof.cmd[R300_VOF_CNTL_1]|=(4<<(3*i));
+	if (hw_tcl_on){
+		GLuint OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
+		
+		if(OutputsWritten & (1<<VERT_RESULT_HPOS))
+			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
+		if(OutputsWritten & (1<<VERT_RESULT_COL0))
+			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
+		/*if(OutputsWritten & (1<<VERT_RESULT_COL1))
+			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
+		if(OutputsWritten & (1<<VERT_RESULT_BFC0))
+			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT;
+		if(OutputsWritten & (1<<VERT_RESULT_BFC1))
+			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;*/
+		//if(OutputsWritten & (1<<VERT_RESULT_FOGC))
+		//if(OutputsWritten & (1<<VERT_RESULT_PSIZ))
+
+		for(i=0;i < ctx->Const.MaxTextureUnits;i++)
+			if(OutputsWritten & (1<<(VERT_RESULT_TEX0+i)))
+				r300->hw.vof.cmd[R300_VOF_CNTL_1] |= (4<<(3*i));
+	} else {
+		if(inputs & _TNL_BIT_POS)
+			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
+		if(inputs & _TNL_BIT_COLOR0)
+			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
+
+		for(i=0;i < ctx->Const.MaxTextureUnits;i++)
+			if(inputs & (_TNL_BIT_TEX0<<i))
+				r300->hw.vof.cmd[R300_VOF_CNTL_1]|=(4<<(3*i));
+	}
 
 	rmesa->state.aos_count = nr;
 }

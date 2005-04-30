@@ -13,7 +13,7 @@ static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
 	
 	switch(target){
 		case GL_VERTEX_PROGRAM_ARB:
-			rmesa->current_vp = vp;
+			//rmesa->current_vp = vp;
 		break;
 		default:
 			WARN_ONCE("Target not supported yet!\n");
@@ -59,13 +59,13 @@ static void r300DeleteProgram(GLcontext *ctx, struct program *prog)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_vertex_program *vp=(void *)prog;
 	
-	if(rmesa->current_vp == vp)
-		rmesa->current_vp = NULL;
+	/*if(rmesa->current_vp == vp)
+		rmesa->current_vp = NULL;*/
 	
 	_mesa_delete_program(ctx, prog);
 }
      
-static void r300ProgramStringNotify(GLcontext *ctx, GLenum target, 
+void r300ProgramStringNotify(GLcontext *ctx, GLenum target, 
 				struct program *prog)
 {
 	struct r300_vertex_program *vp=(void *)prog;

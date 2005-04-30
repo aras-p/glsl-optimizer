@@ -223,6 +223,7 @@ void r300GenerateTextureFragmentShader(r300ContextPtr r300)
 	struct r300_pixel_shader_program *p = &ps->program;
 	GLcontext *ctx = r300->radeon.glCtx;
 	int i, tc_reg;
+	GLuint OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
 
 	p->tex.length = 0;
 	p->alu.length = 0;
@@ -235,7 +236,7 @@ void r300GenerateTextureFragmentShader(r300ContextPtr r300)
 		
 	tc_reg = 0;
 	for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
-		if (r300->state.render_inputs & (_TNL_BIT_TEX0<<i)) {
+		if (TMU_ENABLED(ctx, i)) {
 			ps->have_sample = 0;
 			ps->src_previous = emit_texenv(r300, tc_reg, i);
 			tc_reg++;

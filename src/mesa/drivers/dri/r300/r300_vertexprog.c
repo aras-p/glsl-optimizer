@@ -313,6 +313,35 @@ static unsigned long t_dst_class(enum register_file file)
 
 static unsigned long t_dst_index(struct r300_vertex_program *vp, struct vp_dst_register *dst)
 {
+	if(dst->File == PROGRAM_OUTPUT)
+		switch(dst->Index){
+			case VERT_RESULT_HPOS:
+				return 0;
+			case VERT_RESULT_COL0:
+				return 1;
+			case VERT_RESULT_TEX0:
+				return 2;
+			case VERT_RESULT_TEX1:
+				return 3;
+			case VERT_RESULT_TEX2:
+				return 4;
+			case VERT_RESULT_TEX3:
+				return 5;
+			case VERT_RESULT_TEX4:
+				return 6;
+			case VERT_RESULT_TEX5:
+				return 7;
+			case VERT_RESULT_TEX6:
+				return 8;
+			case VERT_RESULT_TEX7:
+				return 9;
+			case VERT_RESULT_COL1:
+			case VERT_RESULT_BFC0:
+			case VERT_RESULT_BFC1:
+			case VERT_RESULT_FOGC:
+			case VERT_RESULT_PSIZ:
+			default: WARN_ONCE("Unknown output\n"); return 1;
+		}
 	return dst->Index;
 }
 
@@ -495,23 +524,6 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 	for(i=0; i < VERT_ATTRIB_MAX; i++)
 		vp->inputs[i]=-1;
 	
-	vp->outputs = 0;
-	/* FIXME: hardcoded values in arbprogparse.c:parse_result_binding ()
-	   We might want to use these constants for VAP output in general as well once they have been added to
-	   mesa headers.
-	 */
-	if(mesa_vp->OutputsWritten & (1<<0))
-		vp->outputs |= _TNL_BIT_POS;
-	if(mesa_vp->OutputsWritten & (1<<1))
-		vp->outputs |= _TNL_BIT_COLOR0;
-	if(mesa_vp->OutputsWritten & (1<<2))
-		vp->outputs |= _TNL_BIT_COLOR1;
-	for(i=0; i < 8/*ctx->Const.MaxTextureUnits*/; i++)
-		if(mesa_vp->OutputsWritten & (1<<(7+i)))
-			vp->outputs |= _TNL_BIT_TEX(i);
-	if(mesa_vp->OutputsWritten & ~(0x7 | 0x3f80))
-		fprintf(stderr, "%s:Odd bits(0x%08x)\n", __FUNCTION__, mesa_vp->OutputsWritten);
-			
 	o_inst=vp->program.body.i;
 	for(vpi=mesa_vp->Instructions; vpi->Opcode != VP_OPCODE_END; vpi++, o_inst++){
 		

@@ -62,7 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
-int hw_vertprog_on=1;
+int hw_tcl_on=1;
 
 /* Extension strings exported by the R300 driver.
  */
@@ -109,7 +109,7 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
 	/* Try and go straight to t&l
 	 */
-	//&_r300_tcl_stage,
+	&_r300_tcl_stage,
 
 	/* Catch any t&l fallbacks
 	 */

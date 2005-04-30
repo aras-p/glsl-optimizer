@@ -1024,7 +1024,7 @@ static void r300PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units)
 }
 
 /* Routing and texture-related */
-
+#if 0
 void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 {
 	int i, count=0,reg=0;
@@ -1241,7 +1241,7 @@ void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
 			r300->hw.vof.cmd[R300_VOF_CNTL_1]|=(4<<(3*i));
 
 }
-
+#endif
 static r300TexObj default_tex_obj={
 	filter:R300_TX_MAG_FILTER_LINEAR | R300_TX_MIN_FILTER_LINEAR,
 	pitch: 0x8000,
@@ -1354,6 +1354,7 @@ void r300_setup_textures(GLcontext *ctx)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int max_texture_unit=-1; /* -1 translates into no setup costs for fields */
 	struct gl_texture_unit *texUnit;
+	GLuint OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
 
 	R300_STATECHANGE(r300, txe);
 	R300_STATECHANGE(r300, tex.filter);
@@ -1379,14 +1380,12 @@ void r300_setup_textures(GLcontext *ctx)
 	}
 	
 	for(i=0; i < mtu; i++) {
-		/*if(ctx->Texture.Unit[i].Enabled == 0)
-			continue;*/
-		if( ((r300->state.render_inputs & (_TNL_BIT_TEX0<<i))!=0) != ((ctx->Texture.Unit[i].Enabled)!=0) ) {
+		/*if( ((r300->state.render_inputs & (_TNL_BIT_TEX0<<i))!=0) != ((ctx->Texture.Unit[i].Enabled)!=0) ) {
 			WARN_ONCE("Mismatch between render_inputs and ctx->Texture.Unit[i].Enabled value(%d vs %d).\n",
 					((r300->state.render_inputs & (_TNL_BIT_TEX0<<i))!=0), ((ctx->Texture.Unit[i].Enabled)!=0));
-		}
+		}*/
 		
-		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i)) {
+		if(TMU_ENABLED(ctx, i)) {
 			t=r300->state.texture.unit[i].texobj;
 			//fprintf(stderr, "format=%08x\n", r300->state.texture.unit[i].format);
 			r300->state.texture.tc_count++;
@@ -1449,7 +1448,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 		0x00,
 		0x00
 	};
-	GLuint vap_outputs;
+	GLuint OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
 	
 	/* This needs to be rewritten - it is a hack at best */
 
@@ -1461,11 +1460,6 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	cur_reg = 0;
 	r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0;
 
-	if (VERTPROG_ACTIVE(ctx))
-		vap_outputs = r300->current_vp->outputs;
-	else
-		vap_outputs = r300->state.render_inputs;
-
 	for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
 		r300->hw.ri.cmd[R300_RI_INTERP_0+i] = 0
 				| R300_RS_INTERP_USED
@@ -1473,7 +1467,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 				| interp_magic[i];
 //		fprintf(stderr, "RS_INTERP[%d] = 0x%x\n", i, r300->hw.ri.cmd[R300_RI_INTERP_0+i]);
 
-		if (r300->state.render_inputs & (_TNL_BIT_TEX0<<i)) {
+		if (TMU_ENABLED(ctx, i)) {
 			assert(r300->state.texture.tc_count != 0);
 			r300->hw.rr.cmd[R300_RR_ROUTE_0 + cur_reg] = 0
 					| R300_RS_ROUTE_ENABLE
@@ -1483,7 +1477,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 			cur_reg++;
 		} 
 	}
-	if (vap_outputs & _TNL_BIT_COLOR0)
+	if (hw_tcl_on ? OutputsWritten & (1<<VERT_RESULT_COL0) : r300->state.render_inputs & _TNL_BIT_COLOR0)
 		r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0
 				| R300_RS_ROUTE_0_COLOR
 				| (cur_reg << R300_RS_ROUTE_0_COLOR_DEST_SHIFT);
@@ -1719,7 +1713,7 @@ void r300SetupVertexShader(r300ContextPtr rmesa)
 	   0x400 area might have something to do with pixel shaders as it appears right after pfs programming.
 	   0x406 is set to { 0.0, 0.0, 1.0, 0.0 } most of the time but should change with smooth points and in other rare cases. */
 	//setup_vertex_shader_fragment(rmesa, 0x406, &unk4);
-	if(VERTPROG_ACTIVE(ctx)){
+	if(hw_tcl_on && ((struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx))->translated){
 		r300SetupVertexProgram(rmesa);
 		return ;
 	}
@@ -1780,6 +1774,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	int inst_count;
 	int param_count;
 	LOCAL_VARS
+	struct r300_vertex_program *prog=(struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 			
 
 	/* Reset state, in case we don't use something */
@@ -1787,19 +1782,19 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	((drm_r300_cmd_header_t*)rmesa->hw.vpi.cmd)->vpu.count = 0;
 	((drm_r300_cmd_header_t*)rmesa->hw.vps.cmd)->vpu.count = 0;
 
-	r300VertexProgUpdateParams(ctx, rmesa->current_vp);
+	r300VertexProgUpdateParams(ctx, prog);
 
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(rmesa->current_vp->program));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(prog->program));
 
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_MATRIX0, &(rmesa->current_vp->params));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_MATRIX0, &(prog->params));
 
 #if 0
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
 #endif
 
-	inst_count=rmesa->current_vp->program.length/4 - 1;
-	param_count=rmesa->current_vp->params.length/4;
+	inst_count=prog->program.length/4 - 1;
+	param_count=prog->params.length/4;
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1]=(0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
@@ -1808,7 +1803,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2]=(0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
 		| (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3]=(0/*rmesa->state.vertex_shader.unknown_ptr2*/ << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT)
-	| ((inst_count-rmesa->current_vp->t2rs) /*rmesa->state.vertex_shader.unknown_ptr3*/ << 0);
+	| (inst_count /*rmesa->state.vertex_shader.unknown_ptr3*/ << 0);
 
 	/* This is done for vertex shader fragments, but also needs to be done for vap_pvs,
 	so I leave it as a reminder */
@@ -1825,12 +1820,13 @@ void r300GenerateTexturePixelShader(r300ContextPtr r300)
 	int i, mtu;
 	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
 	GLenum envMode;
+	GLuint OutputsWritten = CURRENT_VERTEX_SHADER(r300->radeon.glCtx)->OutputsWritten;
 
 	int tex_inst=0, alu_inst=0;
 
 	for(i=0;i<mtu;i++){
 		/* No need to proliferate {} */
-		if(! (r300->state.render_inputs & (_TNL_BIT_TEX0<<i)))continue;
+		if(!TMU_ENABLED(r300->radeon.glCtx, i))continue;
 
 		envMode = r300->radeon.glCtx->Texture.Unit[i].EnvMode;
 		//fprintf(stderr, "envMode=%s\n", _mesa_lookup_enum_by_nr(envMode));
