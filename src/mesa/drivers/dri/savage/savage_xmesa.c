@@ -34,6 +34,8 @@
 
 #include "utils.h"
 
+#include "extensions.h"
+
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
@@ -90,12 +92,13 @@ DRI_CONF_BEGIN
         SAVAGE_SYNC_FRAMES(false)
         DRI_CONF_MAX_TEXTURE_UNITS(2,1,2)
     	DRI_CONF_TEXTURE_HEAPS(DRI_CONF_TEXTURE_HEAPS_ALL)
+        DRI_CONF_FORCE_S3TC_ENABLE(false)
     DRI_CONF_SECTION_END
     DRI_CONF_SECTION_DEBUG
         DRI_CONF_NO_RAST(false)
     DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 9;
+static const GLuint __driNConfigOptions = 10;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -127,6 +130,7 @@ static const char *const common_extensions[] =
 {
     "GL_ARB_multitexture",
     "GL_EXT_texture_lod_bias",
+    "GL_ARB_texture_compression",
     NULL
 };
 static const char *const s4_extensions[] =
@@ -529,6 +533,14 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    driInitExtensions( ctx, common_extensions, GL_TRUE );
    if (savageScreen->chipset >= S3_SAVAGE4)
        driInitExtensions( ctx, s4_extensions, GL_FALSE );
+   if (ctx->Mesa_DXTn ||
+       driQueryOptionb (&imesa->optionCache, "force_s3tc_enable")) {
+       _mesa_enable_extension( ctx, "GL_S3_s3tc" );
+       if (savageScreen->chipset >= S3_SAVAGE4)
+	   /* This extension needs DXT3 and DTX5 support in hardware.
+	    * Not available on Savage3D/MX/IX. */
+	   _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+   }
 
    savageDDInitStateFuncs( ctx );
    savageDDInitSpanFuncs( ctx );

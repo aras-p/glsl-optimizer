@@ -49,10 +49,20 @@
 
 #include "xmlpool.h"
 
+#define TILE_INDEX_DXT1 0
+#define TILE_INDEX_8    1
+#define TILE_INDEX_16   2
+#define TILE_INDEX_DXTn 3
+#define TILE_INDEX_32   4
+
 /* On Savage4 the texure LOD-bias needs an offset of ~ 0.3 to get
  * somewhere close to software rendering.
  */
 #define SAVAGE4_LOD_OFFSET 10
+
+/* Tile info for S3TC formats counts in 4x4 blocks instead of texels.
+ * In DXT1 each block is encoded in 64 bits. In DXT3 and 5 each block is
+ * encoded in 128 bits. */
 
 /* Size 1, 2 and 4 images are packed into the last subtile. Each image
  * is repeated to fill a 4x4 pixel area. The figure below shows the
@@ -64,10 +74,10 @@
  * Yuck! 8-bit texture formats use 4x8 subtiles. See below.
  */
 static const savageTileInfo tileInfo_pro[5] = {
-    {64, 64,  8, 8, 8, 8, {0x12, 0x02}}, /* 4-bit */
+    {16, 16, 16, 8, 1, 2, {0x18, 0x10}}, /* DXT1 */
     {64, 32, 16, 4, 4, 8, {0x30, 0x20}}, /* 8-bit */
     {64, 16,  8, 2, 8, 8, {0x48, 0x08}}, /* 16-bit */
-    { 0,  0,  0, 0, 0, 0, {0x00, 0x00}}, /* 24-bit */
+    {16,  8, 16, 4, 1, 2, {0x30, 0x20}}, /* DXT3, DXT5 */
     {32, 16,  4, 2, 8, 8, {0x90, 0x10}}, /* 32-bit */
 };
 
@@ -79,10 +89,10 @@ static const savageTileInfo tileInfo_pro[5] = {
  *                      x                 1
  */
 static const savageTileInfo tileInfo_s3d_s4[5] = {
-    {64, 64, 16, 8, 4, 8, {0x18, 0x10}}, /* 4-bit */
+    {16, 16, 16, 8, 1, 2, {0x18, 0x10}}, /* DXT1 */
     {64, 32, 16, 4, 4, 8, {0x30, 0x20}}, /* 8-bit */
     {64, 16, 16, 2, 4, 8, {0x60, 0x40}}, /* 16-bit */
-    { 0,  0,  0, 0, 0, 0, {0x00, 0x00}}, /* 24-bit */
+    {16,  8, 16, 4, 1, 2, {0x30, 0x20}}, /* DXT3, DXT5 */
     {32, 16,  8, 2, 4, 8, {0xc0, 0x80}}, /* 32-bit */
 };
 
@@ -108,6 +118,9 @@ SUBTILE_FUNC(4, 8)
 SUBTILE_FUNC(8, 8)
 SUBTILE_FUNC(16, 8)
 SUBTILE_FUNC(32, 8) /* 4 bytes per pixel, 8 pixels wide */
+
+SUBTILE_FUNC(8, 2) /* DXT1 */
+SUBTILE_FUNC(16, 2) /* DXT3 and DXT5 */
 
 /** \brief Upload a complete tile from src (srcStride) to dest
  *
@@ -138,8 +151,10 @@ static void savageUploadTile (const savageTileInfo *tileInfo,
     switch (subStride) {
     case  2: subtileFunc = savageUploadSubtile_2x8; break;
     case  4: subtileFunc = savageUploadSubtile_4x8; break;
-    case  8: subtileFunc = savageUploadSubtile_8x8; break;
-    case 16: subtileFunc = savageUploadSubtile_16x8; break;
+    case  8: subtileFunc = tileInfo->subHeight == 8 ?
+		 savageUploadSubtile_8x8 : savageUploadSubtile_8x2; break;
+    case 16: subtileFunc = tileInfo->subHeight == 8 ?
+		 savageUploadSubtile_16x8 : savageUploadSubtile_16x2; break;
     case 32: subtileFunc = savageUploadSubtile_32x8; break;
     default: assert(0);
     }
@@ -172,9 +187,10 @@ static void savageUploadTile (const savageTileInfo *tileInfo,
  * FIXME: Repeating inside this function would be more efficient.
  */
 static void savageUploadTiny (const savageTileInfo *tileInfo,
+			      GLuint pixWidth, GLuint pixHeight,
 			      GLuint width, GLuint height, GLuint bpp,
 			      GLubyte *src, GLubyte *dest) {
-    GLuint size = MAX2(width, height);
+    GLuint size = MAX2(pixWidth, pixHeight);
 
     if (width > tileInfo->subWidth) { /* assert: height <= subtile height */
 	GLuint wInSub = width / tileInfo->subWidth;
@@ -197,14 +213,15 @@ static void savageUploadTiny (const savageTileInfo *tileInfo,
 	GLuint srcStride = width * bpp;
 	GLuint subStride = tileInfo->subWidth * bpp;
 	/* if the subtile width is 4 we have to skip every other subtile */
-	GLuint subSkip = tileInfo->subWidth == 4 ?
+	GLuint subSkip = tileInfo->subWidth <= 4 ?
 	    subStride * tileInfo->subHeight : 0;
+	GLuint skipRemainder = tileInfo->subHeight - 1;
 	GLuint y;
 	for (y = 0; y < height; ++y) {
 	    memcpy (dest, src, srcStride);
 	    src += srcStride;
 	    dest += subStride;
-	    if ((y & 7) == 7)
+	    if ((y & skipRemainder) == skipRemainder)
 		dest += subSkip;
 	}
     } else { /* the last 3 mipmap levels */
@@ -226,8 +243,9 @@ static void savageUploadTexLevel( savageTexObjPtr t, int level )
 {
     const struct gl_texture_image *image = t->base.tObj->Image[0][level];
     const savageTileInfo *tileInfo = t->tileInfo;
-    GLuint width = image->Width2, height = image->Height2;
+    GLuint pixWidth = image->Width2, pixHeight = image->Height2;
     GLuint bpp = t->texelBytes;
+    GLuint width, height;
 
     /* FIXME: Need triangle (rather than pixel) fallbacks to simulate
      * this using normal textured triangles.
@@ -238,7 +256,16 @@ static void savageUploadTexLevel( savageTexObjPtr t, int level )
 	fprintf (stderr, "Not supported texture border %d.\n",
 		 (int) image->Border);
 
-    if (width >= 8 && height >= tileInfo->subHeight) {
+    if (t->hwFormat == TFT_S3TC4A4Bit || t->hwFormat == TFT_S3TC4CA4Bit ||
+	t->hwFormat == TFT_S3TC4Bit) {
+	width = (pixWidth+3) / 4;
+	height = (pixHeight+3) / 4;
+    } else {
+	width = pixWidth;
+	height = pixHeight;
+    }
+
+    if (pixWidth >= 8 && pixHeight >= 8) {
 	GLuint *dirtyPtr = t->image[level].dirtyTiles;
 	GLuint dirtyMask = 1;
 
@@ -303,19 +330,22 @@ static void savageUploadTexLevel( savageTexObjPtr t, int level )
 	}
     } else {
 	GLuint minHeight, minWidth, hRepeat, vRepeat, x, y;
-	if (width > 4 || height > 4) {
+	if (t->hwFormat == TFT_S3TC4A4Bit || t->hwFormat == TFT_S3TC4CA4Bit ||
+	    t->hwFormat == TFT_S3TC4Bit)
+	    minWidth = minHeight = 1;
+	else
+	    minWidth = minHeight = 4;
+	if (width > minWidth || height > minHeight) {
 	    minWidth = tileInfo->subWidth;
 	    minHeight = tileInfo->subHeight;
-	} else {
-	    minWidth = 4;
-	    minHeight = 4;
 	}
 	hRepeat = width  >= minWidth  ? 1 : minWidth  / width;
 	vRepeat = height >= minHeight ? 1 : minHeight / height;
 	for (y = 0; y < vRepeat; ++y) {
 	    GLuint offset = y * tileInfo->subWidth*height * bpp;
 	    for (x = 0; x < hRepeat; ++x) {
-		savageUploadTiny (tileInfo, width, height, bpp, image->Data,
+		savageUploadTiny (tileInfo, pixWidth, pixHeight,
+				  width, height, bpp, image->Data,
 				  (GLubyte *)(t->bufAddr +
 					      t->image[level].offset+offset));
 		offset += width * bpp;
@@ -343,6 +373,30 @@ static GLuint savageTexImageSize (GLuint width, GLuint height, GLuint bpp) {
 	return 8 * height * bpp;
     else
 	return 64 * bpp;
+}
+
+/** \brief Compute the destination size of a compressed texture image
+ */
+static GLuint savageCompressedTexImageSize (GLuint width, GLuint height,
+					    GLuint bpp) {
+    width = (width+3) / 4;
+    height = (height+3) / 4;
+    /* full subtiles */
+    if (width >= 2 && height >= 2)
+	return width * height * bpp;
+    /* special case for the last three mipmap levels: the hardware computes
+     * the offset internally */
+    else if (width <= 1 && height <= 1)
+	return 0;
+    /* partially filled sub tiles waste memory
+     * on Savage3D and Savage4 with subtile width 4 every other subtile is
+     * skipped if width < 8 so we can assume a uniform subtile width of 8 */
+    else if (width >= 2)
+	return width * 2 * bpp;
+    else if (height >= 2)
+	return 2 * height * bpp;
+    else
+	return 4 * bpp;
 }
 
 /** \brief Compute the number of (partial) tiles of a texture image
@@ -770,6 +824,26 @@ savageChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
       return !force16bpt ? &_mesa_texformat_argb8888 :
 	  &_mesa_texformat_argb4444;
 #endif
+
+   case GL_RGB_S3TC:
+   case GL_RGB4_S3TC:
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+      return &_mesa_texformat_rgb_dxt1;
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+      return &_mesa_texformat_rgba_dxt1;
+
+   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+      return &_mesa_texformat_rgba_dxt3;
+
+   case GL_RGBA_S3TC:
+   case GL_RGBA4_S3TC:
+      if (!isSavage4)
+	 /* Not the best choice but Savage3D/MX/IX don't support DXT3 or DXT5. */
+	 return &_mesa_texformat_rgba_dxt1;
+      /* fall through */
+   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+      return &_mesa_texformat_rgba_dxt5;
+
 /*
    case GL_COLOR_INDEX:
    case GL_COLOR_INDEX1_EXT:
@@ -791,7 +865,7 @@ static void savageSetTexImages( savageContextPtr imesa,
 {
    savageTexObjPtr t = (savageTexObjPtr) tObj->DriverData;
    struct gl_texture_image *image = tObj->Image[0][tObj->BaseLevel];
-   GLuint offset, i, textureFormat, size;
+   GLuint offset, i, textureFormat, tileIndex, size;
    GLint firstLevel, lastLevel;
 
    assert(t);
@@ -800,31 +874,51 @@ static void savageSetTexImages( savageContextPtr imesa,
    switch (image->TexFormat->MesaFormat) {
    case MESA_FORMAT_ARGB8888:
       textureFormat = TFT_ARGB8888;
-      t->texelBytes = 4;
+      t->texelBytes = tileIndex = 4;
       break;
    case MESA_FORMAT_ARGB1555:
       textureFormat = TFT_ARGB1555;
-      t->texelBytes = 2;
+      t->texelBytes = tileIndex = 2;
       break;
    case MESA_FORMAT_ARGB4444:
       textureFormat = TFT_ARGB4444;
-      t->texelBytes = 2;
+      t->texelBytes = tileIndex = 2;
       break;
    case MESA_FORMAT_RGB565:
       textureFormat = TFT_RGB565;
-      t->texelBytes = 2;
+      t->texelBytes = tileIndex = 2;
       break;
    case MESA_FORMAT_L8:
       textureFormat = TFT_L8;
-      t->texelBytes = 1;
+      t->texelBytes = tileIndex = 1;
       break;
    case MESA_FORMAT_I8:
       textureFormat = TFT_I8;
-      t->texelBytes = 1;
+      t->texelBytes = tileIndex = 1;
       break;
    case MESA_FORMAT_A8:
       textureFormat = TFT_A8;
-      t->texelBytes = 1;
+      t->texelBytes = tileIndex = 1;
+      break;
+   case MESA_FORMAT_RGB_DXT1:
+      textureFormat = TFT_S3TC4Bit;
+      tileIndex = TILE_INDEX_DXT1;
+      t->texelBytes = 8;
+      break;
+   case MESA_FORMAT_RGBA_DXT1:
+      textureFormat = TFT_S3TC4Bit;
+      tileIndex = TILE_INDEX_DXT1;
+      t->texelBytes = 8;
+      break;
+   case MESA_FORMAT_RGBA_DXT3:
+      textureFormat =  TFT_S3TC4A4Bit;
+      tileIndex = TILE_INDEX_DXTn;
+      t->texelBytes = 16;
+      break;
+   case MESA_FORMAT_RGBA_DXT5:
+      textureFormat = TFT_S3TC4CA4Bit;
+      tileIndex = TILE_INDEX_DXTn;
+      t->texelBytes = 16;
       break;
    default:
       _mesa_problem(imesa->glCtx, "Bad texture format in %s", __FUNCTION__);
@@ -832,11 +926,11 @@ static void savageSetTexImages( savageContextPtr imesa,
    }
    t->hwFormat = textureFormat;
 
-   /* Select tiling format depending on the chipset and bytes per texel */
+   /* Select tiling format depending on the chipset and texture format */
    if (imesa->savageScreen->chipset <= S3_SAVAGE4)
-       t->tileInfo = &tileInfo_s3d_s4[t->texelBytes];
+       t->tileInfo = &tileInfo_s3d_s4[tileIndex];
    else
-       t->tileInfo = &tileInfo_pro[t->texelBytes];
+       t->tileInfo = &tileInfo_pro[tileIndex];
 
    /* Compute which mipmap levels we really want to send to the hardware.
     */
@@ -868,8 +962,12 @@ static void savageSetTexImages( savageContextPtr imesa,
       t->image[i].offset = offset;
 
       image = tObj->Image[0][i];
-      size = savageTexImageSize (image->Width2, image->Height2,
-				 t->texelBytes);
+      if (t->texelBytes >= 8)
+	 size = savageCompressedTexImageSize (image->Width2, image->Height2,
+					      t->texelBytes);
+      else
+	 size = savageTexImageSize (image->Width2, image->Height2,
+				    t->texelBytes);
       offset += size;
    }
 
@@ -878,7 +976,7 @@ static void savageSetTexImages( savageContextPtr imesa,
    /* the last three mipmap levels don't add to the offset. They are packed
     * into 64 pixels. */
    if (size == 0)
-       t->base.totalSize += 64 * t->texelBytes;
+       t->base.totalSize += (t->texelBytes >= 8 ? 4 : 64) * t->texelBytes;
    /* 2k-aligned (really needed?) */
    t->base.totalSize = (t->base.totalSize + 2047UL) & ~2047UL;
 }
@@ -1868,6 +1966,63 @@ static void savageTexSubImage2D( GLcontext *ctx,
    SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
 }
 
+static void
+savageCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+			    GLint internalFormat,
+			    GLint width, GLint height, GLint border,
+			    GLsizei imageSize, const GLvoid *data,
+			    struct gl_texture_object *texObj,
+			    struct gl_texture_image *texImage )
+{
+   savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
+   if (t) {
+      savageTexImageChanged (t);
+   } else {
+      t = savageAllocTexObj(texObj);
+      if (!t) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
+         return;
+      }
+   }
+   _mesa_store_compressed_teximage2d( ctx, target, level, internalFormat,
+				      width, height, border, imageSize,
+				      data, texObj, texImage );
+   t->base.dirty_images[0] |= (1 << level);
+   SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
+}
+
+static void
+savageCompressedTexSubImage2D( GLcontext *ctx, 
+			       GLenum target,
+			       GLint level,	
+			       GLint xoffset, GLint yoffset,
+			       GLsizei width, GLsizei height,
+			       GLenum format, GLsizei imageSize,
+			       const GLvoid *data,
+			       struct gl_texture_object *texObj,
+			       struct gl_texture_image *texImage )
+{
+   savageTexObjPtr t = (savageTexObjPtr) texObj->DriverData;
+   assert( t ); /* this _should_ be true */
+   if (t) {
+      savageTexImageChanged (t);
+      savageMarkDirtyTiles(t, level, texImage->Width2, texImage->Height2,
+			   xoffset, yoffset, width, height);
+   } else {
+      t = savageAllocTexObj(texObj);
+      if (!t) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage2D");
+         return;
+      }
+      t->base.dirty_images[0] |= (1 << level);
+   }
+   _mesa_store_compressed_texsubimage2d(ctx, target, level, xoffset, yoffset,
+					width, height, format, imageSize,
+					data, texObj, texImage);
+   t->dirtySubImages |= (1 << level);
+   SAVAGE_CONTEXT(ctx)->new_state |= SAVAGE_NEW_TEXTURE;
+}
+
 static void savageTexParameter( GLcontext *ctx, GLenum target,
 			      struct gl_texture_object *tObj,
 			      GLenum pname, const GLfloat *params )
@@ -1945,6 +2100,8 @@ void savageDDInitTextureFuncs( struct dd_function_table *functions )
    functions->TexSubImage1D = savageTexSubImage1D;
    functions->TexImage2D = savageTexImage2D;
    functions->TexSubImage2D = savageTexSubImage2D;
+   functions->CompressedTexImage2D = savageCompressedTexImage2D;
+   functions->CompressedTexSubImage2D = savageCompressedTexSubImage2D;
    functions->BindTexture = savageBindTexture;
    functions->NewTextureObject = savageNewTextureObject;
    functions->DeleteTexture = savageDeleteTexture;
