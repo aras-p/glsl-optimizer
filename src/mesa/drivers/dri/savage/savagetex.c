@@ -1655,9 +1655,6 @@ static void savageUpdateTexState_s3d( GLcontext *ctx )
 	break;			
     }
 
-    imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
-    imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
-
     /* The Savage3D can't handle different wrapping modes in s and t.
      * If they are not the same, fall back to software. */
     if (t->setup.sWrapMode != t->setup.tWrapMode) {

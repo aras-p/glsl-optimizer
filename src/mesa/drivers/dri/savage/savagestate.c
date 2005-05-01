@@ -48,6 +48,32 @@
 
 #include "xmlpool.h"
 
+/* Savage4, ProSavage[DDR], SuperSavage watermarks */
+#define S4_ZRLO 24
+#define S4_ZRHI 24
+#define S4_ZWLO 0
+#define S4_ZWHI 0
+
+#define S4_DRLO 0
+#define S4_DRHI 0
+#define S4_DWLO 0
+#define S4_DWHI 0
+
+#define S4_TR   15
+
+/* Savage3D/MX/IX watermarks */
+#define S3D_ZRLO 8
+#define S3D_ZRHI 24
+#define S3D_ZWLO 0
+#define S3D_ZWHI 24
+
+#define S3D_DRLO 0
+#define S3D_DRHI 0
+#define S3D_DWLO 0
+#define S3D_DWHI 0
+
+#define S3D_TR   15
+
 static void savageBlendFunc_s4(GLcontext *);
 static void savageBlendFunc_s3d(GLcontext *);
 
@@ -105,7 +131,7 @@ static void savageBlendFunc_s4(GLcontext *ctx)
      * test, and shading model)
      */
 
-    imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites = 0;
+    imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites = GL_FALSE;
 
     /*
      * blend modes
@@ -487,10 +513,6 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
 	imesa->regs.s4.zBufCtrl.ni.zCmpFunc = zmode;
 	imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn = ctx->Depth.Mask;
 	imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_TRUE;
-#if 1
-	imesa->regs.s4.zWatermarks.ni.wLow = 0;
-#endif
-
 	imesa->regs.s4.zBufCtrl.ni.zBufEn = GL_TRUE;
     }
     else if (imesa->glCtx->Stencil.Enabled && imesa->hw_stencil)
@@ -500,7 +522,6 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
 	imesa->regs.s4.zBufCtrl.ni.zBufEn   = GL_TRUE;
 	imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn = GL_FALSE;
 	imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_FALSE;
-	imesa->regs.s4.zWatermarks.ni.wLow        = 8;
     }
     else
     {
@@ -518,7 +539,6 @@ static void savageDDDepthFunc_s4(GLcontext *ctx, GLenum func)
         }
 	imesa->regs.s4.drawLocalCtrl.ni.zUpdateEn = GL_FALSE;
 	imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_FALSE;
-	imesa->regs.s4.zWatermarks.ni.wLow        = 8;
     }
 
     if (drawLocalCtrl != imesa->regs.s4.drawLocalCtrl.ui)
@@ -557,9 +577,6 @@ static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
 	imesa->regs.s3d.zBufCtrl.ni.zUpdateEn = ctx->Depth.Mask;
 	
 	imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
-#if 1
-	imesa->regs.s3d.zWatermarks.ni.wLow = 0;
-#endif
     }
     else
     {
@@ -575,7 +592,6 @@ static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
         }
 	imesa->regs.s3d.zBufCtrl.ni.zUpdateEn = GL_FALSE;
 	imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_FALSE;
-	imesa->regs.s3d.zWatermarks.ni.wLow = 8;
     }
   
     if (drawCtrl != imesa->regs.s3d.drawCtrl.ui ||
@@ -587,39 +603,11 @@ static void savageDDDepthFunc_s3d(GLcontext *ctx, GLenum func)
 
 static void savageDDDepthMask_s4(GLcontext *ctx, GLboolean flag)
 {
-    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    u_int32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
-
-    if (flag)
-    {
-	imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_TRUE;
-    }
-    else
-    {
-	imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites = GL_FALSE;
-    }
     savageDDDepthFunc_s4(ctx,ctx->Depth.Func);
-
-    if (drawLocalCtrl != imesa->regs.s4.drawLocalCtrl.ui)
-	imesa->dirty |= SAVAGE_UPLOAD_LOCAL;
 }
 static void savageDDDepthMask_s3d(GLcontext *ctx, GLboolean flag)
 {
-    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    u_int32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
-
-    if (flag)
-    {
-	imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
-    }
-    else
-    {
-	imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_FALSE;
-    }
     savageDDDepthFunc_s3d(ctx,ctx->Depth.Func);
-
-    if (drawCtrl != imesa->regs.s3d.drawCtrl.ui)
-	imesa->dirty |= SAVAGE_UPLOAD_LOCAL;
 }
 
 
@@ -1436,6 +1424,17 @@ static void savageUpdateRegister_s4(savageContextPtr imesa)
 	imesa->oldRegs.s4.texAddr[1].ui == imesa->regs.s4.texAddr[1].ui)
 	imesa->oldRegs.s4.texAddr[1].ui = 0xffffffff;
 
+    /* Fix up watermarks */
+    if (imesa->regs.s4.drawLocalCtrl.ni.flushPdDestWrites) {
+	imesa->regs.s4.destTexWatermarks.ni.destWriteLow = 0;
+	imesa->regs.s4.destTexWatermarks.ni.destFlush = 1;
+    } else
+	imesa->regs.s4.destTexWatermarks.ni.destWriteLow = S4_DWLO;
+    if (imesa->regs.s4.drawLocalCtrl.ni.flushPdZbufWrites)
+	imesa->regs.s4.zWatermarks.ni.wLow = 0;
+    else
+	imesa->regs.s4.zWatermarks.ni.wLow = S4_ZWLO;
+
     savageEmitChangedRegs (imesa, 0x1e, 0x39);
 
     imesa->dirty=0;
@@ -1449,18 +1448,24 @@ static void savageUpdateRegister_s3d(savageContextPtr imesa)
 	imesa->oldRegs.s3d.texAddr.ui == imesa->regs.s3d.texAddr.ui)
 	imesa->oldRegs.s3d.texAddr.ui = 0xffffffff;
 
-    /* Some temporary hacks to workaround lockups. Not sure if they are
-     * still needed. But they work for now. */
-    imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites = GL_TRUE;
-    imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites = GL_TRUE;
+    /* Fix up watermarks */
+    if (imesa->regs.s3d.drawCtrl.ni.flushPdDestWrites) {
+	imesa->regs.s3d.destTexWatermarks.ni.destWriteLow = 0;
+	imesa->regs.s3d.destTexWatermarks.ni.destFlush = 1;
+    } else
+	imesa->regs.s3d.destTexWatermarks.ni.destWriteLow = S3D_DWLO;
+    if (imesa->regs.s3d.drawCtrl.ni.flushPdZbufWrites)
+	imesa->regs.s3d.zWatermarks.ni.wLow = 0;
+    else
+	imesa->regs.s3d.zWatermarks.ni.wLow = S3D_ZWLO;
+
 
     /* the savage3d uses two contiguous ranges of BCI registers:
      * 0x18-0x1c and 0x20-0x38. Some texture registers need to be
      * emitted in one chunk or we get some funky rendering errors. */
-    /* FIXME: watermark registers aren't programmed correctly ATM */
     savageEmitChangedRegs (imesa, 0x18, 0x19);
     savageEmitChangedRegChunk (imesa, 0x1a, 0x1c);
-    savageEmitChangedRegs (imesa, 0x20, 0x36);
+    savageEmitChangedRegs (imesa, 0x20, 0x38);
 
     imesa->dirty=0;
 }
@@ -1473,7 +1478,7 @@ void savageEmitOldState( savageContextPtr imesa )
 	savageEmitOldRegs (imesa, 0x1e, 0x39, GL_TRUE);
     } else {
 	savageEmitOldRegs (imesa, 0x18, 0x1c, GL_TRUE);
-	savageEmitOldRegs (imesa, 0x20, 0x36, GL_FALSE);
+	savageEmitOldRegs (imesa, 0x20, 0x38, GL_FALSE);
     }
 }
 
@@ -1529,8 +1534,18 @@ static void savageDDInitState_s4( savageContextPtr imesa )
     imesa->regs.s4.zWatermarks.ui       = 0x12000C04;
     imesa->regs.s4.destTexWatermarks.ui = 0x40200400;
 #else
-    imesa->regs.s4.zWatermarks.ui       = 0x16001808;
-    imesa->regs.s4.destTexWatermarks.ui = 0x4f000000;
+    /*imesa->regs.s4.zWatermarks.ui       = 0x16001808;*/
+    imesa->regs.s4.zWatermarks.ni.rLow  = S4_ZRLO;
+    imesa->regs.s4.zWatermarks.ni.rHigh = S4_ZRHI;
+    imesa->regs.s4.zWatermarks.ni.wLow  = S4_ZWLO;
+    imesa->regs.s4.zWatermarks.ni.wHigh = S4_ZWHI;
+    /*imesa->regs.s4.destTexWatermarks.ui = 0x4f000000;*/
+    imesa->regs.s4.destTexWatermarks.ni.destReadLow   = S4_DRLO;
+    imesa->regs.s4.destTexWatermarks.ni.destReadHigh  = S4_DRHI;
+    imesa->regs.s4.destTexWatermarks.ni.destWriteLow  = S4_DWLO;
+    imesa->regs.s4.destTexWatermarks.ni.destWriteHigh = S4_DWHI;
+    imesa->regs.s4.destTexWatermarks.ni.texRead       = S4_TR;
+    imesa->regs.s4.destTexWatermarks.ni.destFlush     = 1;
 #endif
     imesa->regs.s4.drawCtrl0.ni.dPerfAccelEn = GL_TRUE;
 
@@ -1610,8 +1625,18 @@ static void savageDDInitState_s3d( savageContextPtr imesa )
     imesa->regs.s3d.zWatermarks.ui       = 0x12000C04;
     imesa->regs.s3d.destTexWatermarks.ui = 0x40200400;
 #else
-    imesa->regs.s3d.zWatermarks.ui       = 0x16001808;
-    imesa->regs.s3d.destTexWatermarks.ui = 0x4f000000;
+    /*imesa->regs.s3d.zWatermarks.ui       = 0x16001808;*/
+    imesa->regs.s3d.zWatermarks.ni.rLow  = S3D_ZRLO;
+    imesa->regs.s3d.zWatermarks.ni.rHigh = S3D_ZRHI;
+    imesa->regs.s3d.zWatermarks.ni.wLow  = S3D_ZWLO;
+    imesa->regs.s3d.zWatermarks.ni.wHigh = S3D_ZWHI;
+    /*imesa->regs.s3d.destTexWatermarks.ui = 0x4f000000;*/
+    imesa->regs.s3d.destTexWatermarks.ni.destReadLow   = S3D_DRLO;
+    imesa->regs.s3d.destTexWatermarks.ni.destReadHigh  = S3D_DRHI;
+    imesa->regs.s3d.destTexWatermarks.ni.destWriteLow  = S3D_DWLO;
+    imesa->regs.s3d.destTexWatermarks.ni.destWriteHigh = S3D_DWHI;
+    imesa->regs.s3d.destTexWatermarks.ni.texRead       = S3D_TR;
+    imesa->regs.s3d.destTexWatermarks.ni.destFlush     = 1;
 #endif
 
     imesa->regs.s3d.texCtrl.ni.dBias          = 0x08;
