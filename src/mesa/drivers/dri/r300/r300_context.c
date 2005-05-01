@@ -62,7 +62,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utils.h"
 #include "xmlpool.h"		/* for symbolic values of enum-type options */
 
-int hw_tcl_on=1;
+/* hw_tcl_on derives from future_hw_tcl_on when its safe to change it. */
+int future_hw_tcl_on=0;
+int hw_tcl_on=0;
 
 /* Extension strings exported by the R300 driver.
  */

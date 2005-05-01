@@ -173,7 +173,8 @@ static void emit_vector(GLcontext * ctx,
 		fprintf(stderr, "%s count %d size %d stride %d\n",
 			__FUNCTION__, count, size, stride);
 
-	assert(!rvb->buf);
+	/* Gets triggered when playing with future_hw_tcl_on ...*/
+	//assert(!rvb->buf);
 
 	if (stride == 0) {
 		r300AllocDmaRegion(rmesa, rvb, size * 4, 4);

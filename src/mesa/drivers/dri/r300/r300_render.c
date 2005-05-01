@@ -58,6 +58,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_maos.h"
 #include "r300_emit.h"
 
+extern int future_hw_tcl_on;
+
 /**********************************************************************
 *                     Hardware rasterization
 *
@@ -459,6 +461,7 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
    return GL_FALSE;
 }
 
+
 /* vertex buffer implementation */
 
 static void inline fire_EB(PREFIX unsigned long addr, int vertex_count, int type)
@@ -737,7 +740,7 @@ const struct tnl_pipeline_stage _r300_render_stage = {
 	r300_check_render,	/* check */
 	r300_run_render		/* run */
 };
-	
+
 static GLboolean r300_run_tcl_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
@@ -745,7 +748,8 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
-
+   	hw_tcl_on=future_hw_tcl_on;
+   
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 	if(hw_tcl_on == GL_FALSE)

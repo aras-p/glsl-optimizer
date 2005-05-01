@@ -180,7 +180,7 @@ void dump_program_params(GLcontext *ctx, struct vertex_program *vp)
 	}
 }
 
-static void debug_vp(GLcontext *ctx, struct vertex_program *vp)
+void debug_vp(GLcontext *ctx, struct vertex_program *vp)
 {
 	struct vp_instruction *vpi;
 	int i, operand_index;
@@ -340,7 +340,7 @@ static unsigned long t_dst_index(struct r300_vertex_program *vp, struct vp_dst_r
 			case VERT_RESULT_BFC1:
 			case VERT_RESULT_FOGC:
 			case VERT_RESULT_PSIZ:
-			default: WARN_ONCE("Unknown output\n"); return 1;
+			default: WARN_ONCE("Unknown output\n"); return 10;
 		}
 	return dst->Index;
 }
