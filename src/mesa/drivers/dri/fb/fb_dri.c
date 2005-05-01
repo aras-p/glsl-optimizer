@@ -22,7 +22,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 /* Minimal swrast-based dri loadable driver.
  *
  * Todo:
@@ -42,35 +41,12 @@
  *      that may not be valid everywhere.
  */
 
-#include <assert.h>
-#include <errno.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <dlfcn.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/shm.h>
-#include <sys/stat.h>
-#include <linux/kd.h>
-#include <linux/vt.h>
-
-#include "GL/miniglx.h"         /* window-system-specific */
-#include "miniglxP.h" 		/* window-system-specific */
-#include "dri_util.h"		/* window-system-specific-ish */
+#include "driver.h"
+#include "drm.h"
+#include "utils.h"
 
 #include "buffers.h"
-#include "context.h"
 #include "extensions.h"
-#include "imports.h"
-#include "matrix.h"
-#include "texformat.h"
-#include "texstore.h"
-#include "teximage.h"
 #include "array_cache/acache.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -78,7 +54,6 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "drivers/common/driverfuncs.h"
-
 
 
 typedef struct {
@@ -89,11 +64,19 @@ typedef struct {
       __DRIscreenPrivate *screen;	
       __DRIdrawablePrivate *drawable; /* drawable bound to this ctx */
    } dri;
+   
+   void *currentBuffer;
+   void *frontBuffer;
+   void *backBuffer;
+   int currentPitch;
 } fbContext, *fbContextPtr;
 
 
 #define FB_CONTEXT(ctx)		((fbContextPtr)(ctx->DriverCtx))
 
+#ifdef USE_NEW_INTERFACE
+static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
+#endif /* USE_NEW_INTERFACE */
 
 static const GLubyte *
 get_string(GLcontext *ctx, GLenum pname)
@@ -155,10 +138,10 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
 
    switch (bufferBit) {
    case DD_FRONT_LEFT_BIT:
-      dPriv->currentBuffer = dPriv->frontBuffer;
+      fbdevctx->currentBuffer = fbdevctx->frontBuffer;
       break;
    case DD_BACK_LEFT_BIT:
-      dPriv->currentBuffer = dPriv->backBuffer;
+      fbdevctx->currentBuffer = fbdevctx->backBuffer;
       break;
    default:
       /* This happens a lot if the client renders to the frontbuffer */
@@ -190,7 +173,7 @@ init_core_functions( struct dd_function_table *functions )
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable; 
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X) * 3
+   GLubyte *P = (GLubyte *)fbdevctx->currentBuffer + (Y) * fbdevctx->currentPitch + (X) * 3
 #define INC_PIXEL_PTR(P) P += 3
 #define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
    P[0] = B;  P[1] = G;  P[2] = R
@@ -208,7 +191,7 @@ init_core_functions( struct dd_function_table *functions )
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable; 
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X) * 4;
+   GLubyte *P = (GLubyte *)fbdevctx->currentBuffer + (Y) * fbdevctx->currentPitch + (X) * 4;
 #define INC_PIXEL_PTR(P) P += 4
 #define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
    P[0] = B;  P[1] = G;  P[2] = R;  P[3] = 255
@@ -226,7 +209,7 @@ init_core_functions( struct dd_function_table *functions )
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLushort *P = (GLushort *) ((char *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X) * 2)
+   GLushort *P = (GLushort *) ((char *)fbdevctx->currentBuffer + (Y) * fbdevctx->currentPitch + (X) * 2)
 #define INC_PIXEL_PTR(P) P += 1
 #define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
    *P = ( (((R) & 0xf8) << 8) | (((G) & 0xfc) << 3) | ((B) >> 3) )
@@ -247,7 +230,7 @@ init_core_functions( struct dd_function_table *functions )
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLushort *P = (GLushort *) ((char *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X) * 2)
+   GLushort *P = (GLushort *) ((char *)fbdevctx->currentBuffer + (Y) * fbdevctx->currentPitch + (X) * 2)
 #define INC_PIXEL_PTR(P) P += 1
 #define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
    *P = ( (((R) & 0xf8) << 7) | (((G) & 0xf8) << 2) | ((B) >> 3) )
@@ -268,7 +251,7 @@ init_core_functions( struct dd_function_table *functions )
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)dPriv->currentBuffer + (Y) * dPriv->currentPitch + (X)
+   GLubyte *P = (GLubyte *)fbdevctx->currentBuffer + (Y) * fbdevctx->currentPitch + (X)
 #define INC_PIXEL_PTR(P) P += 1
 #define STORE_CI_PIXEL(P, CI) \
    P[0] = CI
@@ -451,6 +434,8 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 		const __GLcontextModes *mesaVis,
 		GLboolean isPixmap )
 {
+   fbContextPtr fbmesa = (fbContextPtr) driDrawPriv->driContextPriv->driverPrivate;
+   
    if (isPixmap) {
       return GL_FALSE; /* not implemented */
    }
@@ -472,8 +457,8 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       /* Replace the framebuffer back buffer with a malloc'ed one --
        * big speedup.
        */
-      if (driDrawPriv->backBuffer)
-	 driDrawPriv->backBuffer = _mesa_malloc(driDrawPriv->currentPitch * driDrawPriv->h);
+      if (fbmesa->backBuffer)
+         fbmesa->backBuffer = _mesa_malloc(fbmesa->currentPitch * driDrawPriv->h);
 
       return 1;
    }
@@ -483,8 +468,10 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 static void
 fbDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
+   fbContextPtr fbmesa = (fbContextPtr) driDrawPriv->driContextPriv->driverPrivate;
+   
    _mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate));
-   _mesa_free(driDrawPriv->backBuffer);
+   _mesa_free(fbmesa->backBuffer);
 }
 
 
@@ -503,19 +490,19 @@ fbSwapBuffers( __DRIdrawablePrivate *dPriv )
       if (ctx->Visual.doubleBufferMode) {
 	 int i;
 	 int offset = 0;
-	 char *tmp = _mesa_malloc(dPriv->currentPitch);
+         char *tmp = _mesa_malloc(fbmesa->currentPitch);
 
          _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
 
-	 ASSERT(dPriv->frontBuffer);
-	 ASSERT(dPriv->backBuffer);
+         ASSERT(fbmesa->frontBuffer);
+         ASSERT(fbmesa->backBuffer);
 
 	 for (i = 0; i < dPriv->h; i++) {
-	    _mesa_memcpy(tmp, (char *) dPriv->backBuffer + offset,
-                         dPriv->currentPitch);
-	    _mesa_memcpy((char *) dPriv->frontBuffer + offset, tmp,
-                         dPriv->currentPitch);
-	    offset += dPriv->currentPitch;
+            _mesa_memcpy(tmp, (char *) fbmesa->backBuffer + offset,
+                         fbmesa->currentPitch);
+            _mesa_memcpy((char *) fbmesa->frontBuffer + offset, tmp,
+                          fbmesa->currentPitch);
+            offset += fbmesa->currentPitch;
 	 }
 	    
 	 _mesa_free(tmp);
@@ -562,32 +549,33 @@ fbUnbindContext( __DRIcontextPrivate *driContextPriv )
 }
 
 static struct __DriverAPIRec fbAPI = {
-   fbInitDriver,
-   fbDestroyScreen,
-   fbCreateContext,
-   fbDestroyContext,
-   fbCreateBuffer,
-   fbDestroyBuffer,
-   fbSwapBuffers,
-   fbMakeCurrent,
-   fbUnbindContext
+   .InitDriver      = fbInitDriver,
+   .DestroyScreen   = fbDestroyScreen,
+   .CreateContext   = fbCreateContext,
+   .DestroyContext  = fbDestroyContext,
+   .CreateBuffer    = fbCreateBuffer,
+   .DestroyBuffer   = fbDestroyBuffer,
+   .SwapBuffers     = fbSwapBuffers,
+   .MakeCurrent     = fbMakeCurrent,
+   .UnbindContext   = fbUnbindContext,
 };
 
 
+
+#ifndef DRI_NEW_INTERFACE_ONLY
 /*
  * This is the bootstrap function for the driver.
  * The __driCreateScreen name is the symbol that libGL.so fetches.
  * Return:  pointer to a __DRIscreenPrivate.
  */
-void *
-__driCreateScreen(struct DRIDriverRec *driver,
-                  struct DRIDriverContextRec *driverContext)
+void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
+                        int numConfigs, __GLXvisualConfig *config)
 {
    __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreenNoDRM(driver, driverContext, &fbAPI);
+   psp = __driUtilCreateScreenNoDRM(dpy, scrn, psc, numConfigs, config, &fbAPI);
    return (void *) psp;
 }
-
+#endif /* DRI_NEW_INTERFACE_ONLY */
 
 /**
  * \brief Establish the set of modes available for the display.
@@ -646,6 +634,62 @@ __driValidateMode(const DRIDriverContext *ctx )
 static int
 __driInitFBDev( struct DRIDriverContextRec *ctx )
 {
+   /* Note that drmOpen will try to load the kernel module, if needed. */
+   /* we need a fbdev drm driver - it will only track maps */
+   ctx->drmFD = drmOpen("radeon", NULL );
+   if (ctx->drmFD < 0) {
+      fprintf(stderr, "[drm] drmOpen failed\n");
+      return 0;
+   }
+
+   ctx->shared.SAREASize = SAREA_MAX;
+
+   if (drmAddMap( ctx->drmFD,
+       0,
+       ctx->shared.SAREASize,
+       DRM_SHM,
+       DRM_CONTAINS_LOCK,
+       &ctx->shared.hSAREA) < 0)
+   {
+      fprintf(stderr, "[drm] drmAddMap failed\n");
+      return 0;
+   }
+   fprintf(stderr, "[drm] added %d byte SAREA at 0x%08lx\n",
+           ctx->shared.SAREASize, ctx->shared.hSAREA);
+
+   if (drmMap( ctx->drmFD,
+       ctx->shared.hSAREA,
+       ctx->shared.SAREASize,
+       (drmAddressPtr)(&ctx->pSAREA)) < 0)
+   {
+      fprintf(stderr, "[drm] drmMap failed\n");
+      return 0;
+   }
+   memset(ctx->pSAREA, 0, ctx->shared.SAREASize);
+   fprintf(stderr, "[drm] mapped SAREA 0x%08lx to %p, size %d\n",
+           ctx->shared.hSAREA, ctx->pSAREA, ctx->shared.SAREASize);
+   
+   /* Need to AddMap the framebuffer and mmio regions here:
+   */
+   if (drmAddMap( ctx->drmFD,
+       (drm_handle_t)ctx->FBStart,
+       ctx->FBSize,
+       DRM_FRAME_BUFFER,
+#ifndef _EMBEDDED
+		  0,
+#else
+		  DRM_READ_ONLY,
+#endif
+		  &ctx->shared.hFrameBuffer) < 0)
+   {
+      fprintf(stderr, "[drm] drmAddMap framebuffer failed\n");
+      return 0;
+   }
+
+   fprintf(stderr, "[drm] framebuffer handle = 0x%08lx\n",
+           ctx->shared.hFrameBuffer);
+
+#if 0
    int id;
    ctx->shared.hFrameBuffer = ctx->FBStart;
    ctx->shared.fbSize = ctx->FBSize;
@@ -666,6 +710,7 @@ __driInitFBDev( struct DRIDriverContextRec *ctx )
        return 0;
    }
    memset(ctx->pSAREA, 0, SAREA_MAX);
+#endif   
    return 1;
 }
 
@@ -674,13 +719,148 @@ __driHaltFBDev( struct DRIDriverContextRec *ctx )
 {
 }
 
-
-
 struct DRIDriverRec __driDriver = {
-   __driInitScreenModes,
    __driValidateMode,
    __driValidateMode,
    __driInitFBDev,
    __driHaltFBDev
 };
 
+#ifdef USE_NEW_INTERFACE
+static __GLcontextModes *
+fbFillInModes( unsigned pixel_bits, unsigned depth_bits,
+                 unsigned stencil_bits, GLboolean have_back_buffer )
+{
+   __GLcontextModes * modes;
+   __GLcontextModes * m;
+   unsigned num_modes;
+   unsigned depth_buffer_factor;
+   unsigned back_buffer_factor;
+   GLenum fb_format;
+   GLenum fb_type;
+
+    /* Right now GLX_SWAP_COPY_OML isn't supported, but it would be easy
+   * enough to add support.  Basically, if a context is created with an
+   * fbconfig where the swap method is GLX_SWAP_COPY_OML, pageflipping
+   * will never be used.
+    */
+   static const GLenum back_buffer_modes[] = {
+      GLX_NONE, GLX_SWAP_UNDEFINED_OML /*, GLX_SWAP_COPY_OML */
+   };
+
+   u_int8_t depth_bits_array[2];
+   u_int8_t stencil_bits_array[2];
+
+
+   depth_bits_array[0] = depth_bits;
+   depth_bits_array[1] = depth_bits;
+    
+    /* Just like with the accumulation buffer, always provide some modes
+   * with a stencil buffer.  It will be a sw fallback, but some apps won't
+   * care about that.
+    */
+   stencil_bits_array[0] = 0;
+   stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
+
+   depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
+   back_buffer_factor  = (have_back_buffer) ? 2 : 1;
+
+   num_modes = depth_buffer_factor * back_buffer_factor * 4;
+
+   if ( pixel_bits == 16 ) {
+      fb_format = GL_RGB;
+      fb_type = GL_UNSIGNED_SHORT_5_6_5;
+   }
+   else {
+      fb_format = GL_BGR;
+      fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+   }
+
+   modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
+   m = modes;
+   if ( ! driFillInModes( & m, fb_format, fb_type,
+          depth_bits_array, stencil_bits_array, depth_buffer_factor,
+          back_buffer_modes, back_buffer_factor,
+          GLX_TRUE_COLOR ) ) {
+             fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
+                      __func__, __LINE__ );
+             return NULL;
+          }
+
+          if ( ! driFillInModes( & m, fb_format, fb_type,
+                 depth_bits_array, stencil_bits_array, depth_buffer_factor,
+                 back_buffer_modes, back_buffer_factor,
+                 GLX_DIRECT_COLOR ) ) {
+                    fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
+                             __func__, __LINE__ );
+                    return NULL;
+                 }
+
+    /* Mark the visual as slow if there are "fake" stencil bits.
+    */
+                 for ( m = modes ; m != NULL ; m = m->next ) {
+                    if ( (m->stencilBits != 0) && (m->stencilBits != stencil_bits) ) {
+                       m->visualRating = GLX_SLOW_CONFIG;
+                    }
+                 }
+
+                 return modes;
+}
+
+
+/**
+ * This is the bootstrap function for the driver.  libGL supplies all of the
+ * requisite information about the system, and the driver initializes itself.
+ * This routine also fills in the linked list pointed to by \c driver_modes
+ * with the \c __GLcontextModes that the driver can support for windows or
+ * pbuffers.
+ * 
+ * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
+ *         failure.
+ */
+PUBLIC
+void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+                                   const __GLcontextModes * modes,
+                                   const __DRIversion * ddx_version,
+                                   const __DRIversion * dri_version,
+                                   const __DRIversion * drm_version,
+                                   const __DRIframebuffer * frame_buffer,
+                                   drmAddress pSAREA, int fd, 
+                                   int internal_api_version,
+                                   __GLcontextModes ** driver_modes )
+{
+   __DRIscreenPrivate *psp;
+   static const __DRIversion ddx_expected = { 4, 0, 0 };
+   static const __DRIversion dri_expected = { 4, 0, 0 };
+   static const __DRIversion drm_expected = { 1, 5, 0 };
+
+
+   if ( ! driCheckDriDdxDrmVersions2( "fb",
+          dri_version, & dri_expected,
+          ddx_version, & ddx_expected,
+          drm_version, & drm_expected ) ) {
+             return NULL;
+          }
+      
+          psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
+                                         ddx_version, dri_version, drm_version,
+                                         frame_buffer, pSAREA, fd,
+                                         internal_api_version, &fbAPI);
+          if ( psp != NULL ) {
+             create_context_modes = (PFNGLXCREATECONTEXTMODES)
+                   glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
+             if ( create_context_modes != NULL ) {
+#if 0                
+                fbDRIPtr dri_priv = (fbDRIPtr) psp->pDevPriv;
+                *driver_modes = fbFillInModes( dri_priv->bpp,
+                      (dri_priv->bpp == 16) ? 16 : 24,
+                      (dri_priv->bpp == 16) ? 0  : 8,
+                      (dri_priv->backOffset != dri_priv->depthOffset) );
+#endif
+                *driver_modes = fbFillInModes( 24, 24, 8, 0);
+             }
+          }
+
+          return (void *) psp;
+}
+#endif /* USE_NEW_INTERFACE */
