@@ -305,11 +305,10 @@ void _tnl_vb_bind_arrays( GLcontext *ctx, GLint start, GLint end)
 	 VB->AttribPtr[_TNL_ATTRIB_FOG] = &tmp->FogCoord;
       }
       else if (index >= VERT_ATTRIB_TEX0 && index <= VERT_ATTRIB_TEX7) {
-	 for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-	    _tnl_import_texcoord( ctx, i, GL_FALSE, GL_FALSE );
-	    tmp->TexCoord[i].count = VB->Count;
-	    VB->AttribPtr[_TNL_ATTRIB_TEX0 + i] = &tmp->TexCoord[i];
-	 }
+	 i = index - VERT_ATTRIB_TEX0;
+	 _tnl_import_texcoord( ctx, i, GL_FALSE, GL_FALSE );
+	 tmp->TexCoord[i].count = VB->Count;
+	 VB->AttribPtr[_TNL_ATTRIB_TEX0 + i] = &tmp->TexCoord[i];
       }
       else {
 	 _tnl_constant_attrib(tnl, tmp, index);
