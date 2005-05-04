@@ -241,7 +241,7 @@ X11_DRIVER_SOURCES =		\
 	drivers/x11/xm_buffer.c	\
 	drivers/x11/xm_dd.c	\
 	drivers/x11/xm_line.c	\
-	drivers/x11/xm_span2.c	\
+	drivers/x11/xm_span.c	\
 	drivers/x11/xm_tri.c
 
 OSMESA_DRIVER_SOURCES = \
