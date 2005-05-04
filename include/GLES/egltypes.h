@@ -20,6 +20,7 @@ typedef u_int32_t EGLContext;
 
 /* EGL_MESA_screen_surface */
 typedef u_int32_t EGLModeMESA;
+typedef u_int32_t EGLScreenMESA;
 
 
 /*
