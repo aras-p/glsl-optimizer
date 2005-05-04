@@ -36,6 +36,7 @@
 #include "state.h"
 #include "simple_list.h"
 #include "extensions.h"
+#include "framebuffer.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -220,12 +221,17 @@ calculate_buffer_parameters( struct via_context *vmesa )
 }
 
 
-void viaReAllocateBuffers(GLframebuffer *drawbuffer)
+void viaReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer,
+                          GLuint width, GLuint height)
 {
-    GET_CURRENT_CONTEXT(ctx);
     struct via_context *vmesa = VIA_CONTEXT(ctx);
 
+#if 0
     _swrast_alloc_buffers( drawbuffer );
+#else
+    _mesa_resize_framebuffer(ctx, drawbuffer, width, height);
+#endif
+
     calculate_buffer_parameters( vmesa );
 }
 
@@ -581,7 +587,7 @@ viaDestroyContext(__DRIcontextPrivate *driContextPriv)
     /* check if we're deleting the currently bound context */
     if (vmesa == current) {
       VIA_FLUSH_DMA(vmesa);
-      _mesa_make_current2(NULL, NULL, NULL);
+      _mesa_make_current(NULL, NULL, NULL);
     }
 
     if (vmesa) {
@@ -622,8 +628,8 @@ void viaXMesaWindowMoved(struct via_context *vmesa)
    if (!dPriv)
       return;
 
-   switch (vmesa->glCtx->Color._DrawDestMask[0]) {
-   case DD_FRONT_LEFT_BIT: 
+   switch (vmesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0]) {
+   case BUFFER_BIT_FRONT_LEFT: 
       if (dPriv->numBackClipRects == 0) {
 	 vmesa->numClipRects = dPriv->numClipRects;
 	 vmesa->pClipRects = dPriv->pClipRects;
@@ -633,7 +639,7 @@ void viaXMesaWindowMoved(struct via_context *vmesa)
 	 vmesa->pClipRects = dPriv->pBackClipRects;
       }
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       vmesa->numClipRects = dPriv->numClipRects;
       vmesa->pClipRects = dPriv->pClipRects;
       break;
@@ -700,9 +706,9 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	   ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer[0] );
 	}
 
-        _mesa_make_current2(vmesa->glCtx,
-                            (GLframebuffer *)driDrawPriv->driverPrivate,
-                            (GLframebuffer *)driReadPriv->driverPrivate);
+        _mesa_make_current(vmesa->glCtx,
+                           (GLframebuffer *)driDrawPriv->driverPrivate,
+                           (GLframebuffer *)driReadPriv->driverPrivate);
 	
         viaXMesaWindowMoved(vmesa);
 	ctx->Driver.Scissor(vmesa->glCtx,
@@ -712,7 +718,7 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 			    vmesa->glCtx->Scissor.Height);
     }
     else {
-        _mesa_make_current(0,0);
+        _mesa_make_current(NULL, NULL, NULL);
     }
         
     return GL_TRUE;

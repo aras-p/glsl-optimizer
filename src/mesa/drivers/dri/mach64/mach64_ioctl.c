@@ -683,19 +683,19 @@ static void mach64DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       mmesa->new_state = save_state & ~(MACH64_NEW_MASKS | MACH64_NEW_CLIP);
    }
 
-   if ( mask & DD_FRONT_LEFT_BIT ) {
+   if ( mask & BUFFER_BIT_FRONT_LEFT ) {
       flags |= MACH64_FRONT;
-      mask &= ~DD_FRONT_LEFT_BIT;
+      mask &= ~BUFFER_BIT_FRONT_LEFT;
    }
 
-   if ( mask & DD_BACK_LEFT_BIT ) {
+   if ( mask & BUFFER_BIT_BACK_LEFT ) {
       flags |= MACH64_BACK;
-      mask &= ~DD_BACK_LEFT_BIT;
+      mask &= ~BUFFER_BIT_BACK_LEFT;
    }
 
-   if ( ( mask & DD_DEPTH_BIT ) && ctx->Depth.Mask ) {
+   if ( ( mask & BUFFER_BIT_DEPTH ) && ctx->Depth.Mask ) {
       flags |= MACH64_DEPTH;
-      mask &= ~DD_DEPTH_BIT;
+      mask &= ~BUFFER_BIT_DEPTH;
    }
 
    if ( mask )

@@ -475,7 +475,7 @@ i915ClearWithTris(intelContextPtr intel, GLbitfield mask,
     * The active cliprects will be applied as for any other geometry.
     */
 
-   if (mask & DD_FRONT_LEFT_BIT) { 
+   if (mask & BUFFER_BIT_FRONT_LEFT) { 
       set_no_depth_stencil_write( i915 );
       set_color_mask( i915, GL_TRUE );
       set_draw_offset( i915, screen->frontOffset );
@@ -486,7 +486,7 @@ i915ClearWithTris(intelContextPtr intel, GLbitfield mask,
 		0, 0, 0, 0);
    }
 
-   if(mask & DD_BACK_LEFT_BIT) {
+   if (mask & BUFFER_BIT_BACK_LEFT) {
       set_no_depth_stencil_write( i915 );
       set_color_mask( i915, GL_TRUE );
       set_draw_offset( i915, screen->backOffset );
@@ -497,7 +497,7 @@ i915ClearWithTris(intelContextPtr intel, GLbitfield mask,
 		0, 0, 0, 0);
    }
 
-   if(mask & DD_STENCIL_BIT) {
+   if (mask & BUFFER_BIT_STENCIL) {
       set_stencil_replace( i915, 
 			   intel->ctx.Stencil.WriteMask[0], 
 			   intel->ctx.Stencil.Clear);

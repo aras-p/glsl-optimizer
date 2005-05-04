@@ -119,9 +119,9 @@ sisDDClear( GLcontext * ctx, GLbitfield mask, GLboolean all,
 
    /* Mask out any non-existent buffers */
    if (ctx->Visual.depthBits == 0 || !ctx->Depth.Mask)
-      mask &= ~DD_DEPTH_BIT;
+      mask &= ~BUFFER_BIT_DEPTH;
    if (ctx->Visual.stencilBits == 0)
-      mask &= ~DD_STENCIL_BIT;
+      mask &= ~BUFFER_BIT_STENCIL;
 
    LOCK_HARDWARE();
 
@@ -132,21 +132,21 @@ sisDDClear( GLcontext * ctx, GLbitfield mask, GLboolean all,
    /* XXX: Appears to be broken with stencil. */
    if ((smesa->current.hwCapEnable2 & (MASK_AlphaMaskWriteEnable |
       MASK_ColorMaskWriteEnable) &&
-      (mask & (DD_BACK_LEFT_BIT | DD_FRONT_LEFT_BIT)) != 0) ||
-      (ctx->Stencil.WriteMask[0] < 0xff && (mask & DD_STENCIL_BIT) != 0) )
+      (mask & (BUFFER_BIT_BACK_LEFT | BUFFER_BIT_FRONT_LEFT)) != 0) ||
+      (ctx->Stencil.WriteMask[0] < 0xff && (mask & BUFFER_BIT_STENCIL) != 0) )
    {
       mask = sis_3D_Clear( ctx, mask, x1, y1, width1, height1 );
    }
 
-   if ( mask & DD_FRONT_LEFT_BIT || mask & DD_BACK_LEFT_BIT) {
+   if ( mask & BUFFER_BIT_FRONT_LEFT || mask & BUFFER_BIT_BACK_LEFT) {
       sis_clear_color_buffer( ctx, mask, x1, y1, width1, height1 );
-      mask &= ~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT);
+      mask &= ~(BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT);
    }
 
-   if (mask & (DD_DEPTH_BIT | DD_STENCIL_BIT)) {
+   if (mask & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
       if (smesa->depthbuffer != NULL)
          sis_clear_z_stencil_buffer( ctx, mask, x1, y1, width1, height1 );
-      mask &= ~(DD_DEPTH_BIT | DD_STENCIL_BIT);
+      mask &= ~(BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
    }
 
    UNLOCK_HARDWARE();
@@ -204,9 +204,9 @@ sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
    int count;
    drm_clip_rect_t *pExtents;
 
-   bClrColor = (mask & (DD_BACK_LEFT_BIT | DD_FRONT_LEFT_BIT)) != 0;
-   bClrDepth = (mask & DD_DEPTH_BIT) != 0;
-   bClrStencil = (mask & DD_STENCIL_BIT) != 0;
+   bClrColor = (mask & (BUFFER_BIT_BACK_LEFT | BUFFER_BIT_FRONT_LEFT)) != 0;
+   bClrDepth = (mask & BUFFER_BIT_DEPTH) != 0;
+   bClrStencil = (mask & BUFFER_BIT_STENCIL) != 0;
 
    if (smesa->GlobalFlag & GFLAG_RENDER_STATES)
       sis_update_render_state( smesa );
@@ -252,7 +252,7 @@ sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
       dirtyflags |= GFLAG_STENCILSETTING;
    }
 
-   if (mask & DD_FRONT_LEFT_BIT) {
+   if (mask & BUFFER_BIT_FRONT_LEFT) {
       pExtents = smesa->driDrawable->pClipRects;
       count = smesa->driDrawable->numClipRects;
    } else {
@@ -321,14 +321,14 @@ sis_3D_Clear( GLcontext * ctx, GLbitfield mask,
 
    mEndPrimitive();
 
-   /* If DD_FRONT_LEFT_BIT is set, we've only cleared the front buffer so far */
-   if ((mask & DD_FRONT_LEFT_BIT) != 0 && (mask & DD_BACK_LEFT_BIT) != 0)
-      sis_3D_Clear( ctx, DD_BACK_LEFT_BIT, x, y, width, height );
+   /* If BUFFER_BIT_FRONT_LEFT is set, we've only cleared the front buffer so far */
+   if ((mask & BUFFER_BIT_FRONT_LEFT) != 0 && (mask & BUFFER_BIT_BACK_LEFT) != 0)
+      sis_3D_Clear( ctx, BUFFER_BIT_BACK_LEFT, x, y, width, height );
 
    smesa->GlobalFlag |= dirtyflags;
 
-   return mask & ~(DD_DEPTH_BIT | DD_STENCIL_BIT | DD_BACK_LEFT_BIT |
-      DD_FRONT_LEFT_BIT);
+   return mask & ~(BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL | BUFFER_BIT_BACK_LEFT |
+      BUFFER_BIT_FRONT_LEFT);
 }
 
 static void
@@ -368,7 +368,7 @@ sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
    ENGPACKET stEngPacket;
 
    /* Clear back buffer */
-   if (mask & DD_BACK_LEFT_BIT) {
+   if (mask & BUFFER_BIT_BACK_LEFT) {
       smesa->cbClearPacket.stdwDestPos.wY = y;
       smesa->cbClearPacket.stdwDestPos.wX = x;
       smesa->cbClearPacket.stdwDim.wWidth = (GLshort) width;
@@ -378,7 +378,7 @@ sis_clear_color_buffer( GLcontext *ctx, GLenum mask, GLint x, GLint y,
       sis_bitblt_clear_cmd( smesa, &smesa->cbClearPacket );
    }
   
-   if ((mask & DD_FRONT_LEFT_BIT) == 0)
+   if ((mask & BUFFER_BIT_FRONT_LEFT) == 0)
       return;
 
    /* Clear front buffer */

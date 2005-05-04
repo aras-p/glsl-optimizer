@@ -230,9 +230,9 @@ static void savageDDSetBuffer(GLcontext *ctx, GLframebuffer *buffer,
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
    char *map;
 
-   assert((bufferBit == DD_FRONT_LEFT_BIT) || (bufferBit == DD_BACK_LEFT_BIT));
+   assert((bufferBit == BUFFER_BIT_FRONT_LEFT) || (bufferBit == BUFFER_BIT_BACK_LEFT));
 
-   map = (bufferBit == DD_FRONT_LEFT_BIT)
+   map = (bufferBit == BUFFER_BIT_FRONT_LEFT)
        ? imesa->apertureBase[TARGET_FRONT]
        : imesa->apertureBase[TARGET_BACK];
 
@@ -306,15 +306,18 @@ void savageDDInitSpanFuncs( GLcontext *ctx )
 
    swdd->SetBuffer = savageDDSetBuffer;
    
+#if 0
    switch (imesa->savageScreen->cpp) 
    {
    case 2: savageInitPointers_565( swdd ); break;
    case 4: savageInitPointers_8888( swdd );
    }
+#endif
 
    switch (imesa->savageScreen->zpp)
    {
    case 2:
+#if 0
        if (imesa->float_depth) {
 	   swdd->ReadDepthSpan = savageReadDepthSpan_16f;
 	   swdd->WriteDepthSpan = savageWriteDepthSpan_16f;
@@ -328,9 +331,10 @@ void savageDDInitSpanFuncs( GLcontext *ctx )
 	   swdd->ReadDepthPixels = savageReadDepthPixels_16;
 	   swdd->WriteDepthPixels = savageWriteDepthPixels_16;
        }
-       
+#endif
        break;
-   case 4: 
+   case 4:
+#if 0
        if (imesa->float_depth) {
 	   swdd->ReadDepthSpan = savageReadDepthSpan_8_24f;
 	   swdd->WriteDepthSpan = savageWriteDepthSpan_8_24f;
@@ -348,6 +352,7 @@ void savageDDInitSpanFuncs( GLcontext *ctx )
        swdd->WriteStencilSpan = savageWriteStencilSpan_8_24;
        swdd->ReadStencilPixels = savageReadStencilPixels_8_24;
        swdd->WriteStencilPixels = savageWriteStencilPixels_8_24;
+#endif
        break;   
    
    }
@@ -368,4 +373,65 @@ void savageDDInitSpanFuncs( GLcontext *ctx )
    ctx->Driver.CopyPixels = savageCopyPixels;
    ctx->Driver.DrawPixels = savageDrawPixels;
    ctx->Driver.ReadPixels = savageReadPixels;
+}
+
+
+
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+savageSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis,
+                       GLboolean float_depth)
+{
+   if (drb->Base.InternalFormat == GL_RGBA) {
+      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
+         savageInitPointers_565(&drb->Base);
+      }
+      else {
+         savageInitPointers_8888(&drb->Base);
+      }
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+      if (float_depth) {
+         drb->Base.GetRow        = savageReadDepthSpan_16f;
+         drb->Base.GetValues     = savageReadDepthPixels_16f;
+         drb->Base.PutRow        = savageWriteDepthSpan_16f;
+         drb->Base.PutMonoRow    = savageWriteMonoDepthSpan_16f;
+         drb->Base.PutValues     = savageWriteDepthPixels_16f;
+      }
+      else {
+         drb->Base.GetRow        = savageReadDepthSpan_16;
+         drb->Base.GetValues     = savageReadDepthPixels_16;
+         drb->Base.PutRow        = savageWriteDepthSpan_16;
+         drb->Base.PutMonoRow    = savageWriteMonoDepthSpan_16;
+         drb->Base.PutValues     = savageWriteDepthPixels_16;
+      }
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+      if (float_depth) {
+         drb->Base.GetRow        = savageReadDepthSpan_8_24f;
+         drb->Base.GetValues     = savageReadDepthPixels_8_24f;
+         drb->Base.PutRow        = savageWriteDepthSpan_8_24f;
+         drb->Base.PutMonoRow    = savageWriteMonoDepthSpan_8_24f;
+         drb->Base.PutValues     = savageWriteDepthPixels_8_24f;
+      }
+      else {
+         drb->Base.GetRow        = savageReadDepthSpan_8_24;
+         drb->Base.GetValues     = savageReadDepthPixels_8_24;
+         drb->Base.PutRow        = savageWriteDepthSpan_8_24;
+         drb->Base.PutMonoRow    = savageWriteMonoDepthSpan_8_24;
+         drb->Base.PutValues     = savageWriteDepthPixels_8_24;
+      }
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      drb->Base.GetRow        = savageReadStencilSpan_8_24;
+      drb->Base.GetValues     = savageReadStencilPixels_8_24;
+      drb->Base.PutRow        = savageWriteStencilSpan_8_24;
+      drb->Base.PutMonoRow    = savageWriteMonoStencilSpan_8_24;
+      drb->Base.PutValues     = savageWriteStencilPixels_8_24;
+      drb->Base.PutMonoValues = NULL;
+   }
 }

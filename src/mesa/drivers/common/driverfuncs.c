@@ -27,7 +27,9 @@
 #include "imports.h"
 #include "buffers.h"
 #include "context.h"
+#include "framebuffer.h"
 #include "program.h"
+#include "renderbuffer.h"
 #include "texcompress.h"
 #include "texformat.h"
 #include "teximage.h"
@@ -38,6 +40,7 @@
 #endif
 #if FEATURE_EXT_framebuffer_object
 #include "fbobject.h"
+#include "texrender.h"
 #endif
 
 #include "driverfuncs.h"
@@ -62,7 +65,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->GetString = NULL;  /* REQUIRED! */
    driver->UpdateState = NULL;  /* REQUIRED! */
    driver->GetBufferSize = NULL;  /* REQUIRED! */
-   driver->ResizeBuffers = _swrast_alloc_buffers;
+   driver->ResizeBuffers = _mesa_resize_framebuffer;
    driver->Error = NULL;
 
    driver->Finish = NULL;
@@ -134,7 +137,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->ColorMaterial = NULL;
    driver->CullFace = NULL;
    driver->DrawBuffer = _swrast_DrawBuffer;
-   driver->DrawBuffers = _swrast_DrawBuffers;
+   driver->DrawBuffers = NULL; /***_swrast_DrawBuffers;***/
    driver->FrontFace = NULL;
    driver->DepthFunc = NULL;
    driver->DepthMask = NULL;
@@ -200,7 +203,9 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
 
 #if FEATURE_EXT_framebuffer_object
    driver->NewFramebuffer = _mesa_new_framebuffer;
-   driver->NewRenderbuffer = _mesa_new_renderbuffer;
+   driver->NewRenderbuffer = _mesa_new_soft_renderbuffer;
+   driver->RenderbufferTexture = _mesa_renderbuffer_texture;
+   driver->FramebufferRenderbuffer = _mesa_framebuffer_renderbuffer;
 #endif
 
    /* T&L stuff */

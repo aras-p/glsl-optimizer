@@ -569,8 +569,11 @@ void
 _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
                     GLsizei width, GLsizei height )
 {
+   const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
    const GLfloat n = ctx->Viewport.Near;
    const GLfloat f = ctx->Viewport.Far;
+
+   ASSERT(depthMax > 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glViewport %d %d %d %d\n", x, y, width, height);
@@ -606,8 +609,8 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
    ctx->Viewport._WindowMap.m[MAT_TX] = ctx->Viewport._WindowMap.m[MAT_SX] + x;
    ctx->Viewport._WindowMap.m[MAT_SY] = (GLfloat) height / 2.0F;
    ctx->Viewport._WindowMap.m[MAT_TY] = ctx->Viewport._WindowMap.m[MAT_SY] + y;
-   ctx->Viewport._WindowMap.m[MAT_SZ] = ctx->DepthMaxF * ((f - n) / 2.0F);
-   ctx->Viewport._WindowMap.m[MAT_TZ] = ctx->DepthMaxF * ((f - n) / 2.0F + n);
+   ctx->Viewport._WindowMap.m[MAT_SZ] = depthMax * ((f - n) / 2.0F);
+   ctx->Viewport._WindowMap.m[MAT_TZ] = depthMax * ((f - n) / 2.0F + n);
    ctx->Viewport._WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
    ctx->Viewport._WindowMap.type = MATRIX_3D_NO_ROT;
    ctx->NewState |= _NEW_VIEWPORT;
@@ -636,9 +639,12 @@ _mesa_DepthRange( GLclampd nearval, GLclampd farval )
     * specifies a linear mapping of the normalized z coords in
     * this range to window z coords.
     */
+   GLfloat depthMax;
    GLfloat n, f;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   depthMax = ctx->DrawBuffer->_DepthMaxF;
 
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glDepthRange %f %f\n", nearval, farval);
@@ -648,8 +654,8 @@ _mesa_DepthRange( GLclampd nearval, GLclampd farval )
 
    ctx->Viewport.Near = n;
    ctx->Viewport.Far = f;
-   ctx->Viewport._WindowMap.m[MAT_SZ] = ctx->DepthMaxF * ((f - n) / 2.0F);
-   ctx->Viewport._WindowMap.m[MAT_TZ] = ctx->DepthMaxF * ((f - n) / 2.0F + n);
+   ctx->Viewport._WindowMap.m[MAT_SZ] = depthMax * ((f - n) / 2.0F);
+   ctx->Viewport._WindowMap.m[MAT_TZ] = depthMax * ((f - n) / 2.0F + n);
    ctx->NewState |= _NEW_VIEWPORT;
 
    if (ctx->Driver.DepthRange) {
@@ -919,12 +925,14 @@ void _mesa_init_viewport( GLcontext *ctx )
    ctx->Viewport.Far = 1.0;
    _math_matrix_ctr(&ctx->Viewport._WindowMap);
 
+#if 0000
 #define Sz 10
 #define Tz 14
    ctx->Viewport._WindowMap.m[Sz] = 0.5F * ctx->DepthMaxF;
    ctx->Viewport._WindowMap.m[Tz] = 0.5F * ctx->DepthMaxF;
 #undef Sz
 #undef Tz
+#endif
 
    ctx->Viewport._WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
    ctx->Viewport._WindowMap.type = MATRIX_3D_NO_ROT;

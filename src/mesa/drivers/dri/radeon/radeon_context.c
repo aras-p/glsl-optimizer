@@ -42,6 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "imports.h"
 #include "matrix.h"
 #include "extensions.h"
+#include "framebuffer.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -182,7 +183,7 @@ static const struct tnl_pipeline_stage *radeon_pipeline[] = {
 static void radeonInitDriverFuncs( struct dd_function_table *functions )
 {
     functions->GetBufferSize	= radeonGetBufferSize;
-    functions->ResizeBuffers	= _swrast_alloc_buffers;
+    functions->ResizeBuffers	= _mesa_resize_framebuffer;
     functions->GetString	= radeonGetString;
 }
 
@@ -491,7 +492,7 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
    /* check if we're deleting the currently bound context */
    if (rmesa == current) {
       RADEON_FIREVERTICES( rmesa );
-      _mesa_make_current2(NULL, NULL, NULL);
+      _mesa_make_current(NULL, NULL, NULL);
    }
 
    /* Free radeon context resources */
@@ -603,9 +604,9 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 radeonUpdateViewportOffset( newCtx->glCtx );
       }
   
-      _mesa_make_current2( newCtx->glCtx,
-			   (GLframebuffer *) driDrawPriv->driverPrivate,
-			   (GLframebuffer *) driReadPriv->driverPrivate );
+      _mesa_make_current( newCtx->glCtx,
+			  (GLframebuffer *) driDrawPriv->driverPrivate,
+			  (GLframebuffer *) driReadPriv->driverPrivate );
 
       if (newCtx->vb.enabled)
 	 radeonVtxfmtMakeCurrent( newCtx->glCtx );
@@ -613,7 +614,7 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
    } else {
       if (RADEON_DEBUG & DEBUG_DRI)
 	 fprintf(stderr, "%s ctx is null\n", __FUNCTION__);
-      _mesa_make_current( NULL, NULL );
+      _mesa_make_current( NULL, NULL, NULL );
    }
 
    if (RADEON_DEBUG & DEBUG_DRI)

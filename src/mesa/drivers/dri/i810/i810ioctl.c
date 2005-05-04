@@ -63,20 +63,20 @@ static void i810Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
    I810_FIREVERTICES( imesa );
 	
-   if ((mask & DD_FRONT_LEFT_BIT) && colorMask == ~0U) {
+   if ((mask & BUFFER_BIT_FRONT_LEFT) && colorMask == ~0U) {
       clear.flags |= I810_FRONT;
-      mask &= ~DD_FRONT_LEFT_BIT;
+      mask &= ~BUFFER_BIT_FRONT_LEFT;
    }
 
-   if ((mask & DD_BACK_LEFT_BIT) && colorMask == ~0U) {
+   if ((mask & BUFFER_BIT_BACK_LEFT) && colorMask == ~0U) {
       clear.flags |= I810_BACK;
-      mask &= ~DD_BACK_LEFT_BIT;
+      mask &= ~BUFFER_BIT_BACK_LEFT;
    }
 
-   if (mask & DD_DEPTH_BIT) {
+   if (mask & BUFFER_BIT_DEPTH) {
       if (ctx->Depth.Mask) 
 	 clear.flags |= I810_DEPTH;
-      mask &= ~DD_DEPTH_BIT;
+      mask &= ~BUFFER_BIT_DEPTH;
    }
 
    if (clear.flags) {

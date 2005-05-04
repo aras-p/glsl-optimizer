@@ -214,31 +214,31 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 
    VIA_FLUSH_DMA(vmesa);
 
-   if (mask & DD_FRONT_LEFT_BIT) {
+   if (mask & BUFFER_BIT_FRONT_LEFT) {
       flag |= VIA_FRONT;
-      mask &= ~DD_FRONT_LEFT_BIT;
+      mask &= ~BUFFER_BIT_FRONT_LEFT;
    }
 
-   if (mask & DD_BACK_LEFT_BIT) {
+   if (mask & BUFFER_BIT_BACK_LEFT) {
       flag |= VIA_BACK;	
-      mask &= ~DD_BACK_LEFT_BIT;
+      mask &= ~BUFFER_BIT_BACK_LEFT;
    }
 
-   if (mask & DD_DEPTH_BIT) {
+   if (mask & BUFFER_BIT_DEPTH) {
       flag |= VIA_DEPTH;
       clear_depth = (GLuint)(ctx->Depth.Clear * vmesa->ClearDepth);
       clear_depth_mask &= ~vmesa->depth_clear_mask;
-      mask &= ~DD_DEPTH_BIT;
+      mask &= ~BUFFER_BIT_DEPTH;
    }
     
-   if (mask & DD_STENCIL_BIT) {
+   if (mask & BUFFER_BIT_STENCIL) {
       if (vmesa->have_hw_stencil) {
 	 if (ctx->Stencil.WriteMask[0] == 0xff) {
 	    flag |= VIA_DEPTH;
 	    clear_depth &= ~0xff;
 	    clear_depth |= (ctx->Stencil.Clear & 0xff);
 	    clear_depth_mask &= ~vmesa->stencil_clear_mask;
-	    mask &= ~DD_STENCIL_BIT;
+	    mask &= ~BUFFER_BIT_STENCIL;
 	 }
 	 else {
 	    if (VIA_DEBUG & DEBUG_2D)
@@ -252,9 +252,9 @@ static void viaClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
    if (vmesa->viaScreen->bytesPerPixel == 2 &&
        vmesa->ClearMask & 0xf0000000) {
       if (flag & VIA_FRONT)
-         mask |= DD_FRONT_LEFT_BIT;
+         mask |= BUFFER_BIT_FRONT_LEFT;
       if (flag & VIA_BACK)
-         mask |= DD_BACK_LEFT_BIT;
+         mask |= BUFFER_BIT_BACK_LEFT;
       flag &= ~(VIA_FRONT | VIA_BACK);
    }
     

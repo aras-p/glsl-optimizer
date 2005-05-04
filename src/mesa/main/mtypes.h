@@ -65,16 +65,8 @@
 #endif
 
 
-/**
- * Accumulation buffer data type.
- */
-#if ACCUM_BITS==8
-   typedef GLbyte GLaccum;
-#elif ACCUM_BITS==16
-   typedef GLshort GLaccum;
-#elif ACCUM_BITS==32
-   typedef GLfloat GLaccum;
-#else
+#if ACCUM_BITS != 16
+/* Software accum done with GLshort at this time */
 #  error "illegal number of accumulation bits"
 #endif
 
@@ -139,13 +131,13 @@ typedef int GLfixed;
  */
 /*@{*/
 struct _mesa_HashTable;
+struct gl_pixelstore_attrib;
+struct gl_texture_format;
 struct gl_texture_image;
 struct gl_texture_object;
 typedef struct __GLcontextRec GLcontext;
 typedef struct __GLcontextModesRec GLvisual;
-typedef struct gl_frame_buffer GLframebuffer;
-struct gl_pixelstore_attrib;
-struct gl_texture_format;
+typedef struct gl_framebuffer GLframebuffer;
 /*@}*/
 
 
@@ -282,25 +274,53 @@ enum
 
 
 /**
- * Bits for each basic buffer in a complete framebuffer.
- * When glDrawBuffer(GL_FRONT_AND_BACK) is called (non-stereo),
- * _DrawDestMask will be set to (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT),
- * for example.  Also passed to ctx->Driver.Clear() to indicate which
- * buffers to clear.
+ * Indexes for all renderbuffers
  */
-/*@{*/
-#define DD_FRONT_LEFT_BIT  0x1
-#define DD_FRONT_RIGHT_BIT 0x2
-#define DD_BACK_LEFT_BIT   0x4
-#define DD_BACK_RIGHT_BIT  0x8
-#define DD_AUX0_BIT        0x10
-#define DD_AUX1_BIT        0x20
-#define DD_AUX2_BIT        0x40
-#define DD_AUX3_BIT        0x80
-#define DD_DEPTH_BIT       GL_DEPTH_BUFFER_BIT    /* 0x00000100 */
-#define DD_ACCUM_BIT       GL_ACCUM_BUFFER_BIT    /* 0x00000200 */
-#define DD_STENCIL_BIT     GL_STENCIL_BUFFER_BIT  /* 0x00000400 */
-/*@}*/
+enum {
+   BUFFER_FRONT_LEFT  = 0,  /* the four standard color buffers */
+   BUFFER_BACK_LEFT   = 1,
+   BUFFER_FRONT_RIGHT = 2,
+   BUFFER_BACK_RIGHT  = 3,
+   BUFFER_AUX0        = 4,  /* optional aux buffer */
+   BUFFER_AUX1        = 5,
+   BUFFER_AUX2        = 6,
+   BUFFER_AUX3        = 7,
+   BUFFER_DEPTH       = 8,
+   BUFFER_STENCIL     = 9,
+   BUFFER_ACCUM       = 10,
+   BUFFER_COLOR0      = 11, /* generic renderbuffers */
+   BUFFER_COLOR1      = 12,
+   BUFFER_COLOR2      = 13,
+   BUFFER_COLOR3      = 14,
+   BUFFER_COLOR4      = 15,
+   BUFFER_COLOR5      = 16,
+   BUFFER_COLOR6      = 17,
+   BUFFER_COLOR7      = 18,
+   BUFFER_COUNT       = 19
+};
+
+/**
+ * Bit flags for all renderbuffers
+ */
+#define BUFFER_BIT_FRONT_LEFT   (1 << BUFFER_FRONT_LEFT)
+#define BUFFER_BIT_BACK_LEFT    (1 << BUFFER_BACK_LEFT)
+#define BUFFER_BIT_FRONT_RIGHT  (1 << BUFFER_FRONT_RIGHT)
+#define BUFFER_BIT_BACK_RIGHT   (1 << BUFFER_BACK_RIGHT)
+#define BUFFER_BIT_AUX0         (1 << BUFFER_AUX0)
+#define BUFFER_BIT_AUX1         (1 << BUFFER_AUX1)
+#define BUFFER_BIT_AUX2         (1 << BUFFER_AUX2)
+#define BUFFER_BIT_AUX3         (1 << BUFFER_AUX3)
+#define BUFFER_BIT_DEPTH        (1 << BUFFER_DEPTH)
+#define BUFFER_BIT_STENCIL      (1 << BUFFER_STENCIL)
+#define BUFFER_BIT_ACCUM        (1 << BUFFER_ACCUM)
+#define BUFFER_BIT_COLOR0       (1 << BUFFER_COLOR0)
+#define BUFFER_BIT_COLOR1       (1 << BUFFER_COLOR1)
+#define BUFFER_BIT_COLOR2       (1 << BUFFER_COLOR2)
+#define BUFFER_BIT_COLOR3       (1 << BUFFER_COLOR3)
+#define BUFFER_BIT_COLOR4       (1 << BUFFER_COLOR4)
+#define BUFFER_BIT_COLOR5       (1 << BUFFER_COLOR5)
+#define BUFFER_BIT_COLOR6       (1 << BUFFER_COLOR6)
+#define BUFFER_BIT_COLOR7       (1 << BUFFER_COLOR7)
 
 
 /**
@@ -484,7 +504,6 @@ struct gl_colorbuffer_attrib
    GLubyte ColorMask[4];		/**< Each flag is 0xff or 0x0 */
 
    GLenum DrawBuffer[MAX_DRAW_BUFFERS];	/**< Which buffer to draw into */
-   GLbitfield _DrawDestMask[MAX_DRAW_BUFFERS];/**< bitmask of DD_*_BIT bits */
 
    /** 
     * \name alpha testing
@@ -885,11 +904,7 @@ struct gl_multisample_attrib
  */
 struct gl_pixel_attrib
 {
-   GLenum ReadBuffer;		/**< source buffer for glReadPixels()/glCopyPixels() */
-   GLubyte _ReadSrcMask;	/**< Not really a mask, but like _DrawDestMask
-				  *
-				  * May be: FRONT_LEFT_BIT, BACK_LEFT_BIT,
-				  * FRONT_RIGHT_BIT or BACK_RIGHT_BIT. */
+   GLenum ReadBuffer;		/**< source buffer for glRead/CopyPixels() */
    GLfloat RedBias, RedScale;
    GLfloat GreenBias, GreenScale;
    GLfloat BlueBias, BlueScale;
@@ -973,7 +988,7 @@ struct gl_point_attrib
    GLfloat Threshold;		/**< GL_EXT_point_parameters */
    GLboolean _Attenuated;	/**< True if Params != [1, 0, 0] */
    GLboolean PointSprite;	/**< GL_NV_point_sprite / GL_NV_point_sprite */
-   GLboolean CoordReplace[MAX_TEXTURE_UNITS]; /**< GL_NV_point_sprite / GL_NV_point_sprite */
+   GLboolean CoordReplace[MAX_TEXTURE_UNITS]; /**< GL_NV/ARB_point_sprite */
    GLenum SpriteRMode;		/**< GL_NV_point_sprite (only!) */
    GLenum SpriteOrigin;		/**< GL_ARB_point_sprite */
 };
@@ -1136,6 +1151,10 @@ typedef void (*FetchTexelFuncF)( const struct gl_texture_image *texImage,
                                  GLfloat *texelOut );
 
 
+typedef void (*StoreTexelFunc)(struct gl_texture_image *texImage,
+                               GLint col, GLint row, GLint img,
+                               const void *texel);
+
 /**
  * TexImage store function.  This is called by the glTex[Sub]Image
  * functions and is responsible for converting the user-specified texture
@@ -1191,6 +1210,8 @@ struct gl_texture_format
    FetchTexelFuncF FetchTexel2Df;
    FetchTexelFuncF FetchTexel3Df;
    /*@}*/
+
+   StoreTexelFunc StoreTexel;
 };
 
 
@@ -2001,64 +2022,174 @@ struct gl_shared_state
 };
 
 
+
+
 /**
- * Frame buffer.
+ * A renderbuffer stores colors or depth values or stencil values.
+ * A framebuffer object will have a collection of these.
+ * Data are read/written to the buffer with a handful of Get/Put functions.
  *
- * A "frame buffer" is a color buffer and its optional ancillary buffers:
- * depth, accum, stencil, and software-simulated alpha buffers.
+ * Instances of this object are allocated with the Driver's NewRenderbuffer
+ * hook.  Drivers will likely wrap this class inside a driver-specific
+ * class to simulate inheritance.
+ */
+struct gl_renderbuffer
+{
+   GLuint Name;
+   GLint RefCount;
+   GLuint Width, Height;
+   GLenum InternalFormat; /* The user-specified value */
+   GLenum _BaseFormat;    /* Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or */
+                          /* GL_STENCIL_INDEX. */
+   GLenum DataType;       /* Type of values passed to the Get/Put functions */
+   GLubyte ComponentSizes[4];  /* bits per component or channel */
+   GLvoid *Data;
+
+   /* Delete this renderbuffer */
+   void (*Delete)(struct gl_renderbuffer *rb);
+
+   /* Allocate new storage for this renderbuffer */
+   GLboolean (*AllocStorage)(GLcontext *ctx, struct gl_renderbuffer *rb,
+                             GLenum internalFormat,
+                             GLuint width, GLuint height);
+
+   /* Lock/Unlock are called before/after calling the Get/Put functions.
+    * Not sure this is the right place for these yet.
+   void (*Lock)(GLcontext *ctx, struct gl_renderbuffer *rb);
+   void (*Unlock)(GLcontext *ctx, struct gl_renderbuffer *rb);
+    */
+
+   /* Return a pointer to the element/pixel at (x,y).
+    * Should return NULL if the buffer memory can't be directly addressed.
+    */
+   void *(*GetPointer)(GLcontext *ctx, struct gl_renderbuffer *rb,
+                       GLint x, GLint y);
+
+   /* Get/Read a row of values.
+    * The values will be of format _BaseFormat and type DataType.
+    */
+   void (*GetRow)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+                  GLint x, GLint y, void *values);
+
+   /* Get/Read values at arbitrary locations.
+    * The values will be of format _BaseFormat and type DataType.
+    */
+   void (*GetValues)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+                     const GLint x[], const GLint y[], void *values);
+
+   /* Put/Write a row of values.
+    * The values will be of format _BaseFormat and type DataType.
+    */
+   void (*PutRow)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+                  GLint x, GLint y, const void *values, const GLubyte *mask);
+
+   /* Put/Write a row of RGB values.  This is a special-case routine that's
+    * only used for RGBA renderbuffers when the source data is GL_RGB. That's
+    * a common case for glDrawPixels and some triangle routines.
+    * The values will be of format GL_RGB and type DataType.
+    */
+   void (*PutRowRGB)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+                    GLint x, GLint y, const void *values, const GLubyte *mask);
+
+
+   /* Put/Write a row of identical values.
+    * The values will be of format _BaseFormat and type DataType.
+    */
+   void (*PutMonoRow)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+                     GLint x, GLint y, const void *value, const GLubyte *mask);
+
+   /* Put/Write values at arbitrary locations.
+    * The values will be of format _BaseFormat and type DataType.
+    */
+   void (*PutValues)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+                     const GLint x[], const GLint y[], const void *values,
+                     const GLubyte *mask);
+   /* Put/Write identical values at arbitrary locations.
+    * The values will be of format _BaseFormat and type DataType.
+    */
+   void (*PutMonoValues)(GLcontext *ctx, struct gl_renderbuffer *rb,
+                         GLuint count, const GLint x[], const GLint y[],
+                         const void *value, const GLubyte *mask);
+};
+
+
+/**
+ * A renderbuffer attachment point points to either a texture object
+ * (and specifies a mipmap level, cube face or 3D texture slice) or
+ * points to a renderbuffer.
+ */
+struct gl_renderbuffer_attachment
+{
+   GLenum Type;  /* GL_NONE or GL_TEXTURE or GL_RENDERBUFFER_EXT */
+   GLboolean Complete;
+
+   /* IF Type == GL_RENDERBUFFER_EXT: */
+   struct gl_renderbuffer *Renderbuffer;
+
+   /* IF Type == GL_TEXTURE: */
+   struct gl_texture_object *Texture;
+   GLuint TextureLevel;
+   GLuint CubeMapFace;  /* 0 .. 5, for cube map textures */
+   GLuint Zoffset;      /* for 3D textures */
+};
+
+
+/**
+ * A framebuffer is a collection of renderbuffers (color, depth, stencil, etc).
  * In C++ terms, think of this as a base class from which device drivers
  * will make derived classes.
  */
-struct gl_frame_buffer
+struct gl_framebuffer
 {
-   GLvisual Visual;		/**< The corresponding visual */
+   GLuint Name;      /* if zero, this is a window system framebuffer */
+   GLint RefCount;
 
-   GLuint Width, Height;	/**< size of frame buffer in pixels */
+   GLvisual Visual;		/**< The corresponding visual */
 
    GLboolean Initialized;
 
-   GLboolean UseSoftwareDepthBuffer;
-   GLboolean UseSoftwareAccumBuffer;
-   GLboolean UseSoftwareStencilBuffer;
-   GLboolean UseSoftwareAlphaBuffers;
-   GLboolean UseSoftwareAuxBuffers;
+   GLuint Width, Height;	/**< size of frame buffer in pixels */
 
-   /** \name Software depth (aka Z) buffer */
+   /** \name  Drawing bounds (Intersection of buffer size and scissor box) */
    /*@{*/
-   GLvoid *DepthBuffer;		/**< array [Width*Height] of GLushort or GLuint*/
+   GLint _Xmin, _Xmax;  /**< inclusive */
+   GLint _Ymin, _Ymax;  /**< exclusive */
    /*@}*/
 
-   /** \name Software stencil buffer */
+   /** \name  Derived Z buffer stuff */
    /*@{*/
-   GLstencil *Stencil;		/**< array [Width*Height] of GLstencil values */
+   GLuint _DepthMax;	/**< Max depth buffer value */
+   GLfloat _DepthMaxF;	/**< Float max depth buffer value */
+   GLfloat _MRD;	/**< minimum resolvable difference in Z values */
    /*@}*/
 
-   /** \name Software accumulation buffer */
-   /*@{*/
-   GLaccum *Accum;		/**< array [4*Width*Height] of GLaccum values */
-   /*@}*/
+   GLenum _Status; /* One of the GL_FRAMEBUFFER_(IN)COMPLETE_* tokens */
 
-   /** \name Software alpha planes */
-   /*@{*/
-   GLchan *FrontLeftAlpha;	/**< array [Width*Height] of GLchan */
-   GLchan *BackLeftAlpha;	/**< array [Width*Height] of GLchan */
-   GLchan *FrontRightAlpha;	/**< array [Width*Height] of GLchan */
-   GLchan *BackRightAlpha;	/**< array [Width*Height] of GLchan */
-   /*@}*/
+   /* Array of all renderbuffer attachments, indexed by BUFFER_* tokens. */
+   struct gl_renderbuffer_attachment Attachment[BUFFER_COUNT];
 
-   GLchan *AuxBuffers[MAX_AUX_BUFFERS];
-
-   /** 
-    * \name Drawing bounds
-    *
-    * Intersection of window size and scissor box 
+   /* In unextended OpenGL these vars are part of the GL_COLOR_BUFFER
+    * attribute group and GL_PIXEL attribute group, respectively.
     */
-   /*@{*/
-   GLint _Xmin;  /**< inclusive */
-   GLint _Ymin;  /**< inclusive */
-   GLint _Xmax;  /**< exclusive */
-   GLint _Ymax;  /**< exclusive */
-   /*@}*/
+   GLenum ColorDrawBuffer[MAX_DRAW_BUFFERS];
+   GLenum ColorReadBuffer;
+
+   /* These are computed from ColorDrawBuffer and ColorReadBuffer */
+   GLuint _ColorDrawBufferMask[MAX_DRAW_BUFFERS]; /* Mask of BUFFER_BIT_* flags */
+   GLuint _ColorReadBufferMask; /* Zero or one of BUFFER_BIT_ flags */
+
+   /* These are computed from _Draw/ReadBufferMask, above. */
+   GLuint _NumColorDrawBuffers[MAX_DRAW_BUFFERS];
+   struct gl_renderbuffer *_ColorDrawBuffers[MAX_DRAW_BUFFERS][4];
+   struct gl_renderbuffer *_ColorReadBuffer;
+
+#if OLD_RENDERBUFFER
+   /* XXX THIS IS TEMPORARY */
+   GLuint _ColorDrawBit[MAX_DRAW_BUFFERS][4];
+#endif
+
+   /** Delete this framebuffer */
+   void (*Delete)(struct gl_framebuffer *fb);
 };
 
 
@@ -2545,6 +2676,8 @@ struct __GLcontextRec
    GLvisual Visual;
    GLframebuffer *DrawBuffer;	/**< buffer for writing */
    GLframebuffer *ReadBuffer;	/**< buffer for reading */
+   GLframebuffer *WinSysDrawBuffer;  /**< set with MakeCurrent */
+   GLframebuffer *WinSysReadBuffer;  /**< set with MakeCurrent */
 
    /**
     * Device driver function pointer table
@@ -2663,7 +2796,7 @@ struct __GLcontextRec
    /*@}*/
 
 #if FEATURE_EXT_framebuffer_object
-   struct gl_framebuffer *CurrentFramebuffer;
+   /*struct gl_framebuffer *CurrentFramebuffer;*/
    struct gl_renderbuffer *CurrentRenderbuffer;
 #endif
 
@@ -2695,14 +2828,6 @@ struct __GLcontextRec
 		    *
 		    * We don't have a better way to communicate this value from
 		    * swrast_setup to swrast. */
-
-
-   /** \name Z buffer stuff */
-   /*@{*/
-   GLuint DepthMax;	/**< Max depth buffer value */
-   GLfloat DepthMaxF;	/**< Float max depth buffer value */
-   GLfloat MRD;		/**< minimum resolvable difference in Z values */
-   /*@}*/
 
    /** \name Color clamping (tentative part of GL_ARB_color_clamp_control) */
    /*@{*/

@@ -200,15 +200,15 @@ static void mach64DDSetBuffer( GLcontext *ctx,
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
 
    switch ( bufferBit ) {
-   case DD_FRONT_LEFT_BIT:
+   case BUFFER_BIT_FRONT_LEFT:
       if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
-	 fprintf(stderr,"%s: DD_FRONT_LEFT_BIT\n", __FUNCTION__);
+	 fprintf(stderr,"%s: BUFFER_BIT_FRONT_LEFT\n", __FUNCTION__);
       mmesa->drawOffset = mmesa->readOffset = mmesa->mach64Screen->frontOffset;
       mmesa->drawPitch  = mmesa->readPitch  = mmesa->mach64Screen->frontPitch;
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
-	 fprintf(stderr,"%s: DD_BACK_LEFT_BIT\n", __FUNCTION__);
+	 fprintf(stderr,"%s: BUFFER_BIT_BACK_LEFT\n", __FUNCTION__);
       mmesa->drawOffset = mmesa->readOffset = mmesa->mach64Screen->backOffset;
       mmesa->drawPitch  = mmesa->readPitch  = mmesa->mach64Screen->backPitch;
       break;
@@ -220,12 +220,14 @@ static void mach64DDSetBuffer( GLcontext *ctx,
 
 void mach64DDInitSpanFuncs( GLcontext *ctx )
 {
+#if 0
    mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
+#endif
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
 
    swdd->SetBuffer = mach64DDSetBuffer;
 
-
+#if 0
    switch ( mmesa->mach64Screen->cpp ) {
    case 2:
       swdd->WriteRGBASpan	= mach64WriteRGBASpan_RGB565;
@@ -251,13 +253,15 @@ void mach64DDInitSpanFuncs( GLcontext *ctx )
    default:
       break;
    }
+#endif
 
    /* Depth buffer is always 16 bit */
+#if 0
    swdd->ReadDepthSpan		= mach64ReadDepthSpan_16;
    swdd->WriteDepthSpan		= mach64WriteDepthSpan_16;
    swdd->ReadDepthPixels	= mach64ReadDepthPixels_16;
    swdd->WriteDepthPixels	= mach64WriteDepthPixels_16;
-  
+#endif
    /* No hardware stencil buffer */
    swdd->ReadStencilSpan	= NULL;
    swdd->WriteStencilSpan	= NULL;
@@ -271,4 +275,59 @@ void mach64DDInitSpanFuncs( GLcontext *ctx )
    swdd->WriteMonoCIPixels	= NULL;
    swdd->ReadCI32Span		= NULL;
    swdd->ReadCI32Pixels		= NULL;
+}
+
+
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+mach64SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+{
+   if (drb->Base.InternalFormat == GL_RGBA) {
+      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
+         drb->Base.GetRow        = mach64ReadRGBASpan_RGB565;
+         drb->Base.GetValues     = mach64ReadRGBAPixels_RGB565;
+         drb->Base.PutRow        = mach64WriteRGBASpan_RGB565;
+         drb->Base.PutRowRGB     = mach64WriteRGBSpan_RGB565;
+         drb->Base.PutMonoRow    = mach64WriteMonoRGBASpan_RGB565;
+         drb->Base.PutValues     = mach64WriteRGBAPixels_RGB565;
+         drb->Base.PutMonoValues = mach64WriteMonoRGBAPixels_RGB565;
+      }
+      else {
+         drb->Base.GetRow        = mach64ReadRGBASpan_ARGB8888;
+         drb->Base.GetValues     = mach64ReadRGBAPixels_ARGB8888;
+         drb->Base.PutRow        = mach64WriteRGBASpan_ARGB8888;
+         drb->Base.PutRowRGB     = mach64WriteRGBSpan_ARGB8888;
+         drb->Base.PutMonoRow    = mach64WriteMonoRGBASpan_ARGB8888;
+         drb->Base.PutValues     = mach64WriteRGBAPixels_ARGB8888;
+         drb->Base.PutMonoValues = mach64WriteMonoRGBAPixels_ARGB8888;
+      }
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+      drb->Base.GetRow        = mach64ReadDepthSpan_16;
+      drb->Base.GetValues     = mach64ReadDepthPixels_16;
+      drb->Base.PutRow        = mach64WriteDepthSpan_16;
+      drb->Base.PutMonoRow    = mach64WriteMonoDepthSpan_16;
+      drb->Base.PutValues     = mach64WriteDepthPixels_16;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+      /* never */
+      drb->Base.GetRow        = NULL;
+      drb->Base.GetValues     = NULL;
+      drb->Base.PutRow        = NULL;
+      drb->Base.PutMonoRow    = NULL;
+      drb->Base.PutValues     = NULL;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      /* never */
+      drb->Base.GetRow        = NULL;
+      drb->Base.GetValues     = NULL;
+      drb->Base.PutRow        = NULL;
+      drb->Base.PutMonoRow    = NULL;
+      drb->Base.PutValues     = NULL;
+      drb->Base.PutMonoValues = NULL;
+   }
 }

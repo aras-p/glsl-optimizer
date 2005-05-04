@@ -377,7 +377,7 @@ static void tdfxUpdateZMode( GLcontext *ctx )
       mask = FXFALSE;        /* zbuffer is not touched */
    }
 
-   fxMesa->Depth.Clear = (FxU32) (ctx->DepthMaxF * ctx->Depth.Clear);
+   fxMesa->Depth.Clear = (FxU32) (ctx->DrawBuffer->_DepthMaxF * ctx->Depth.Clear);
 
    if ( fxMesa->Depth.Bias != bias ) {
       fxMesa->Depth.Bias = bias;
@@ -1034,15 +1034,15 @@ static void tdfxDDDrawBuffer( GLcontext *ctx, GLenum mode )
    FLUSH_BATCH( fxMesa );
 
    /*
-    * _DrawDestMask is easier to cope with than <mode>.
+    * _ColorDrawBufferMask is easier to cope with than <mode>.
     */
-   switch ( ctx->Color._DrawDestMask[0] ) {
-   case DD_FRONT_LEFT_BIT:
+   switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
+   case BUFFER_BIT_FRONT_LEFT:
       fxMesa->DrawBuffer = fxMesa->ReadBuffer = GR_BUFFER_FRONTBUFFER;
       fxMesa->new_state |= TDFX_NEW_RENDER;
       FALLBACK( fxMesa, TDFX_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       fxMesa->DrawBuffer = fxMesa->ReadBuffer = GR_BUFFER_BACKBUFFER;
       fxMesa->new_state |= TDFX_NEW_RENDER;
       FALLBACK( fxMesa, TDFX_FALLBACK_DRAW_BUFFER, GL_FALSE );

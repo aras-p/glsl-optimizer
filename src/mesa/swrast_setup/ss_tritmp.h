@@ -101,7 +101,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 
       if (IND & SS_OFFSET_BIT)
       {
-	 offset = ctx->Polygon.OffsetUnits * ctx->MRD;
+	 offset = ctx->Polygon.OffsetUnits * ctx->DrawBuffer->_MRD;
 	 z[0] = v[0]->win[2];
 	 z[1] = v[1]->win[2];
 	 z[2] = v[2]->win[2];

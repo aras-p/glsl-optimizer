@@ -240,7 +240,6 @@ typedef void (*swrast_tri_func)( GLcontext *ctx, const SWvertex *,
 #define CLIP_BIT		0x020	/**< Scissor or window clip pixels */
 #define STENCIL_BIT		0x040	/**< Stencil pixels */
 #define MASKING_BIT		0x080	/**< Do glColorMask or glIndexMask */
-#define ALPHABUF_BIT		0x100	/**< Using software alpha buffer */
 #define MULTI_DRAW_BIT		0x400	/**< Write to more than one color- */
                                         /**< buffer or no buffers. */
 #define OCCLUSION_BIT           0x800   /**< GL_HP_occlusion_test enabled */
@@ -293,8 +292,6 @@ typedef struct
     */
    GLboolean _IntegerAccumMode;	/**< Storing unscaled integers? */
    GLfloat _IntegerAccumScaler;	/**< Implicit scale factor */
-
-   GLchan *CurAuxBuffer;
 
    /* Working values:
     */

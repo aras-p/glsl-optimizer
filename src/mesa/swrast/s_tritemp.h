@@ -169,9 +169,9 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
    } EdgeT;
 
 #ifdef INTERP_Z
-   const GLint depthBits = ctx->Visual.depthBits;
+   const GLint depthBits = ctx->DrawBuffer->Visual.depthBits;
    const GLint fixedToDepthShift = depthBits <= 16 ? FIXED_SHIFT : 0;
-   const GLfloat maxDepth = ctx->DepthMaxF;
+   const GLfloat maxDepth = ctx->DrawBuffer->_DepthMaxF;
 #define FixedToDepth(F)  ((F) >> fixedToDepthShift)
 #endif
    EdgeT eMaj, eTop, eBot;
@@ -688,6 +688,8 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #endif
 #ifdef INTERP_Z
 #  ifdef DEPTH_TYPE
+         struct gl_renderbuffer *zrb
+            = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
          DEPTH_TYPE *zRow = NULL;
          GLint dZRowOuter = 0, dZRowInner;  /* offset in bytes */
 #  endif
@@ -853,7 +855,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   }
 #  ifdef DEPTH_TYPE
                   zRow = (DEPTH_TYPE *)
-                    _swrast_zbuffer_address(ctx, InterpToInt(fxLeftEdge), span.y);
+                    zrb->GetPointer(ctx, zrb, InterpToInt(fxLeftEdge), span.y);
                   dZRowOuter = (ctx->DrawBuffer->Width + idxOuter) * sizeof(DEPTH_TYPE);
 #  endif
                }
@@ -1065,7 +1067,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                /* ff = fixed-pt fragment */
                const GLint right = InterpToInt(fxRightEdge);
                span.x = InterpToInt(fxLeftEdge);
-
                if (right <= span.x)
                   span.end = 0;
                else

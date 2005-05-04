@@ -31,6 +31,7 @@
 #include "depth.h"
 #include "drawpix.h"
 #include "extensions.h"
+#include "framebuffer.h"
 #include "macros.h"
 #include "image.h"
 #include "imports.h"
@@ -43,9 +44,7 @@
 #include "xmesaP.h"
 #include "array_cache/acache.h"
 #include "swrast/swrast.h"
-#include "swrast/s_auxbuffer.h"
 #include "swrast/s_context.h"
-#include "swrast/s_alphabuf.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
@@ -106,8 +105,8 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    unsigned int winwidth, winheight;
 #ifdef XFree86Server
    /* XFree86 GLX renderer */
-   winwidth = MIN2(xmBuffer->frontbuffer->width, MAX_WIDTH);
-   winheight = MIN2(xmBuffer->frontbuffer->height, MAX_HEIGHT);
+   winwidth = MIN2(xmBuffer->frontxrb->pixmap->width, MAX_WIDTH);
+   winheight = MIN2(xmBuffer->frontxrb->pixmap->height, MAX_HEIGHT);
 #else
    Window root;
    int winx, winy;
@@ -115,7 +114,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 
    _glthread_LOCK_MUTEX(_xmesa_lock);
    XSync(xmBuffer->xm_visual->display, 0); /* added for Chromium */
-   XGetGeometry( xmBuffer->xm_visual->display, xmBuffer->frontbuffer, &root,
+   XGetGeometry( xmBuffer->xm_visual->display, xmBuffer->frontxrb->pixmap, &root,
 		 &winx, &winy, &winwidth, &winheight, &bw, &d );
    _glthread_UNLOCK_MUTEX(_xmesa_lock);
 #endif
@@ -152,29 +151,36 @@ finish_or_flush( GLcontext *ctx )
 void
 xmesa_set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
 {
+#if 000
    /* We can make this cast since the XMesaBuffer wraps GLframebuffer.
     * GLframebuffer is the first member in a XMesaBuffer struct.
     */
    XMesaBuffer target = (XMesaBuffer) buffer;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
+#if NEW_RENDERBUFFER
+   if (buffer->Name != 0)
+      return;
+#endif
+
    /* This assignment tells the span/point/line/triangle functions
     * which XMesaBuffer to use.
     */
-   xmesa->xm_buffer = target;
+   /*   xmesa->xm_buffer = target;*/
 
    /*
     * Now determine front vs back color buffer.
     */
-   if (bufferBit == DD_FRONT_LEFT_BIT) {
-      target->buffer = target->frontbuffer;
+   if (bufferBit == BUFFER_BIT_FRONT_LEFT) {
+      target->buffer = target->frontxrb->pixmap;
+      printf("set get/put!\n");
       xmesa_update_span_funcs(ctx);
    }
-   else if (bufferBit == DD_BACK_LEFT_BIT) {
+   else if (bufferBit == BUFFER_BIT_BACK_LEFT) {
       ASSERT(target->db_state);
-      if (target->backpixmap) {
+      if (target->backxrb->pixmap) {
          /* back buffer is a pixmap */
-         target->buffer = (XMesaDrawable) target->backpixmap;
+         target->buffer = (XMesaDrawable) target->backxrb->pixmap;
       }
       else if (target->backimage) {
          /* back buffer is an XImage */
@@ -182,17 +188,19 @@ xmesa_set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
       }
       else {
          /* No back buffer!!!!  Must be out of memory, use front buffer */
-         target->buffer = target->frontbuffer;
+         target->buffer = target->frontxrb->pixmap;
       }
+      printf("set get/put!\n");
       xmesa_update_span_funcs(ctx);
    }
-   else if (bufferBit & (DD_AUX0_BIT | DD_AUX1_BIT | DD_AUX2_BIT | DD_AUX3_BIT)) {
-      _swrast_use_aux_buffer(ctx, buffer, bufferBit);
+   else if (bufferBit & (BUFFER_BIT_AUX0 | BUFFER_BIT_AUX1 | BUFFER_BIT_AUX2 | BUFFER_BIT_AUX3)) {
+      /*_swrast_use_aux_buffer(ctx, buffer, bufferBit);*/
    } 
    else {
       _mesa_problem(ctx, "invalid buffer 0x%x in set_buffer() in xm_dd.c");
       return;
    }
+#endif
 }
 
 
@@ -200,31 +208,37 @@ xmesa_set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
 static void
 clear_index( GLcontext *ctx, GLuint index )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   xmesa->clearpixel = (unsigned long) index;
-   XMesaSetForeground( xmesa->display, xmesa->xm_draw_buffer->cleargc,
-                       (unsigned long) index );
+   if (ctx->DrawBuffer->Name == 0) {
+      const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+      XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
+      xmesa->clearpixel = (unsigned long) index;
+      XMesaSetForeground( xmesa->display, xmbuf->cleargc, (unsigned long) index );
+   }
 }
 
 
 static void
 clear_color( GLcontext *ctx, const GLfloat color[4] )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color[0]);
-   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color[1]);
-   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color[2]);
-   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[3], color[3]);
-   xmesa->clearpixel = xmesa_color_to_pixel( xmesa,
-                                             xmesa->clearcolor[0],
-                                             xmesa->clearcolor[1],
-                                             xmesa->clearcolor[2],
-                                             xmesa->clearcolor[3],
-                                             xmesa->xm_visual->undithered_pf );
-   _glthread_LOCK_MUTEX(_xmesa_lock);
-   XMesaSetForeground( xmesa->display, xmesa->xm_draw_buffer->cleargc,
-                       xmesa->clearpixel );
-   _glthread_UNLOCK_MUTEX(_xmesa_lock);
+   if (ctx->DrawBuffer->Name == 0) {
+      const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+      XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
+
+      CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color[0]);
+      CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color[1]);
+      CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color[2]);
+      CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[3], color[3]);
+      xmesa->clearpixel = xmesa_color_to_pixel( ctx,
+                                                xmesa->clearcolor[0],
+                                                xmesa->clearcolor[1],
+                                                xmesa->clearcolor[2],
+                                                xmesa->clearcolor[3],
+                                                xmesa->xm_visual->undithered_pf );
+      _glthread_LOCK_MUTEX(_xmesa_lock);
+      XMesaSetForeground( xmesa->display, xmbuf->cleargc,
+                          xmesa->clearpixel );
+      _glthread_UNLOCK_MUTEX(_xmesa_lock);
+   }
 }
 
 
@@ -234,7 +248,9 @@ static void
 index_mask( GLcontext *ctx, GLuint mask )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   if (xmesa->xm_draw_buffer->buffer != XIMAGE) {
+   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
+   /* not sure this conditional is really needed */
+   if (xmbuf->backxrb && xmbuf->backxrb->pixmap) {
       unsigned long m;
       if (mask==0xffffffff) {
 	 m = ((unsigned long)~0L);
@@ -242,8 +258,8 @@ index_mask( GLcontext *ctx, GLuint mask )
       else {
          m = (unsigned long) mask;
       }
-      XMesaSetPlaneMask( xmesa->display, xmesa->xm_draw_buffer->cleargc, m );
-      XMesaSetPlaneMask( xmesa->display, xmesa->xm_draw_buffer->gc, m );
+      XMesaSetPlaneMask( xmesa->display, xmbuf->cleargc, m );
+      XMesaSetPlaneMask( xmesa->display, xmbuf->gc, m );
    }
 }
 
@@ -254,6 +270,7 @@ color_mask(GLcontext *ctx,
            GLboolean rmask, GLboolean gmask, GLboolean bmask, GLboolean amask)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
    const int xclass = xmesa->xm_visual->mesa_visual.visualType;
    (void) amask;
 
@@ -268,8 +285,8 @@ color_mask(GLcontext *ctx,
          if (gmask)   m |= GET_GREENMASK(xmesa->xm_visual);
          if (bmask)   m |= GET_BLUEMASK(xmesa->xm_visual);
       }
-      XMesaSetPlaneMask( xmesa->display, xmesa->xm_draw_buffer->cleargc, m );
-      XMesaSetPlaneMask( xmesa->display, xmesa->xm_draw_buffer->gc, m );
+      XMesaSetPlaneMask( xmesa->display, xmbuf->cleargc, m );
+      XMesaSetPlaneMask( xmesa->display, xmbuf->gc, m );
    }
 }
 
@@ -280,62 +297,45 @@ color_mask(GLcontext *ctx,
 /**********************************************************************/
 
 
+/**
+ * Clear the front or back color buffer, if it's implemented with a pixmap.
+ */
 static void
-clear_front_pixmap( GLcontext *ctx, GLboolean all,
-                    GLint x, GLint y, GLint width, GLint height )
+clear_pixmap(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLboolean all,
+             GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
+
+   assert(xrb->pixmap == xmbuf->backxrb->pixmap ||
+          xrb->pixmap == xmbuf->frontxrb->pixmap);
+
    if (all) {
-      XMesaFillRectangle( xmesa->display, xmesa->xm_draw_buffer->frontbuffer,
-                          xmesa->xm_draw_buffer->cleargc,
-                          0, 0,
-                          xmesa->xm_draw_buffer->mesa_buffer.Width + 1,
-                          xmesa->xm_draw_buffer->mesa_buffer.Height + 1 );
+      XMesaFillRectangle( xmesa->display, xrb->pixmap, xmbuf->cleargc,
+                          0, 0, xrb->Base.Width + 1, xrb->Base.Height + 1 );
    }
    else {
-      XMesaFillRectangle( xmesa->display, xmesa->xm_draw_buffer->frontbuffer,
-                          xmesa->xm_draw_buffer->cleargc,
-                          x, xmesa->xm_draw_buffer->mesa_buffer.Height - y - height,
+      XMesaFillRectangle( xmesa->display, xrb->pixmap, xmbuf->cleargc,
+                          x, xrb->Base.Height - y - height,
                           width, height );
    }
 }
 
 
 static void
-clear_back_pixmap( GLcontext *ctx, GLboolean all,
-                   GLint x, GLint y, GLint width, GLint height )
+clear_8bit_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+                   GLboolean all, GLint x, GLint y, GLint width, GLint height )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   if (all) {
-      XMesaFillRectangle( xmesa->display, xmesa->xm_draw_buffer->backpixmap,
-                          xmesa->xm_draw_buffer->cleargc,
-                          0, 0,
-                          xmesa->xm_draw_buffer->mesa_buffer.Width + 1,
-                          xmesa->xm_draw_buffer->mesa_buffer.Height + 1 );
-   }
-   else {
-      XMesaFillRectangle( xmesa->display, xmesa->xm_draw_buffer->backpixmap,
-                          xmesa->xm_draw_buffer->cleargc,
-                          x, xmesa->xm_draw_buffer->mesa_buffer.Height - y - height,
-                          width, height );
-   }
-}
 
-
-static void
-clear_8bit_ximage( GLcontext *ctx, GLboolean all,
-                   GLint x, GLint y, GLint width, GLint height )
-{
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    if (all) {
-      size_t n = xmesa->xm_draw_buffer->backimage->bytes_per_line
-         * xmesa->xm_draw_buffer->backimage->height;
-      MEMSET( xmesa->xm_draw_buffer->backimage->data, xmesa->clearpixel, n );
+      const size_t n = xrb->ximage->bytes_per_line * xrb->Base.Height;
+      MEMSET( xrb->ximage->data, xmesa->clearpixel, n );
    }
    else {
       GLint i;
       for (i=0;i<height;i++) {
-         GLubyte *ptr = PIXELADDR1( xmesa->xm_draw_buffer, x, y+i );
+         GLubyte *ptr = PIXEL_ADDR1(xrb, x, y + i);
          MEMSET( ptr, xmesa->clearpixel, width );
       }
    }
@@ -343,14 +343,15 @@ clear_8bit_ximage( GLcontext *ctx, GLboolean all,
 
 
 static void
-clear_HPCR_ximage( GLcontext *ctx, GLboolean all,
-                   GLint x, GLint y, GLint width, GLint height )
+clear_HPCR_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+                   GLboolean all, GLint x, GLint y, GLint width, GLint height )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+
    if (all) {
-      GLint i, c16 = (xmesa->xm_draw_buffer->backimage->bytes_per_line>>4)<<4;
-      GLubyte *ptr  = (GLubyte *)xmesa->xm_draw_buffer->backimage->data;
-      for (i=0; i<xmesa->xm_draw_buffer->backimage->height; i++) {
+      GLint i, c16 = (xrb->ximage->bytes_per_line>>4)<<4;
+      GLubyte *ptr  = (GLubyte *) xrb->ximage->data;
+      for (i = 0; i < xrb->Base.Height; i++) {
          GLint j;
          GLubyte *sptr = xmesa->xm_visual->hpcr_clear_ximage_pattern[0];
          if (i&1) {
@@ -375,7 +376,7 @@ clear_HPCR_ximage( GLcontext *ctx, GLboolean all,
             ptr[15] = sptr[15];
             ptr += 16;
          }
-         for (; j<xmesa->xm_draw_buffer->backimage->bytes_per_line; j++) {
+         for (; j < xrb->ximage->bytes_per_line; j++) {
             *ptr = sptr[j&15];
             ptr++;
          }
@@ -384,9 +385,9 @@ clear_HPCR_ximage( GLcontext *ctx, GLboolean all,
    else {
       GLint i;
       for (i=y; i<y+height; i++) {
-         GLubyte *ptr = PIXELADDR1( xmesa->xm_draw_buffer, x, i );
+         GLubyte *ptr = PIXEL_ADDR1( xrb, x, i );
          int j;
-         GLubyte *sptr = xmesa->xm_visual->hpcr_clear_ximage_pattern[0];
+         const GLubyte *sptr = xmesa->xm_visual->hpcr_clear_ximage_pattern[0];
          if (i&1) {
             sptr += 16;
          }
@@ -400,41 +401,40 @@ clear_HPCR_ximage( GLcontext *ctx, GLboolean all,
 
 
 static void
-clear_16bit_ximage( GLcontext *ctx, GLboolean all,
-                    GLint x, GLint y, GLint width, GLint height )
+clear_16bit_ximage( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+                    GLboolean all, GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint pixel = (GLuint) xmesa->clearpixel;
+
    if (xmesa->swapbytes) {
       pixel = ((pixel >> 8) & 0x00ff) | ((pixel << 8) & 0xff00);
    }
+
    if (all) {
-      register GLuint n;
-      register GLuint *ptr4 = (GLuint *) xmesa->xm_draw_buffer->backimage->data;
+      GLuint *ptr4 = (GLuint *) xrb->ximage->data;
       if ((pixel & 0xff) == ((pixel >> 8) & 0xff)) {
          /* low and high bytes are equal so use memset() */
-         n = xmesa->xm_draw_buffer->backimage->bytes_per_line
-            * xmesa->xm_draw_buffer->mesa_buffer.Height;
+         const GLuint n = xrb->ximage->bytes_per_line * xrb->Base.Height;
          MEMSET( ptr4, pixel & 0xff, n );
       }
       else {
+         const GLuint n = xrb->ximage->bytes_per_line * xrb->Base.Height / 4;
+         GLuint i;
          pixel = pixel | (pixel<<16);
-         n = xmesa->xm_draw_buffer->backimage->bytes_per_line
-            * xmesa->xm_draw_buffer->mesa_buffer.Height / 4;
-         do {
-            *ptr4++ = pixel;
-               n--;
-         } while (n!=0);
-
-         if ((xmesa->xm_draw_buffer->backimage->bytes_per_line *
-              xmesa->xm_draw_buffer->mesa_buffer.Height) & 0x2)
+         for (i = 0; i < n; i++) {
+            ptr4[i] = pixel;
+         }
+         ptr4 += n;
+         /* might be one last GLushort to set */
+         if ((xrb->ximage->bytes_per_line * xrb->Base.Height) & 0x2)
             *(GLushort *)ptr4 = pixel & 0xffff;
       }
    }
    else {
-      register int i, j;
+      GLint i, j;
       for (j=0;j<height;j++) {
-         register GLushort *ptr2 = PIXELADDR2( xmesa->xm_draw_buffer, x, y+j );
+         GLushort *ptr2 = PIXEL_ADDR2(xrb, x, y + j);
          for (i=0;i<width;i++) {
             *ptr2++ = pixel;
          }
@@ -445,41 +445,32 @@ clear_16bit_ximage( GLcontext *ctx, GLboolean all,
 
 /* Optimized code provided by Nozomi Ytow <noz@xfree86.org> */
 static void
-clear_24bit_ximage( GLcontext *ctx, GLboolean all,
-                    GLint x, GLint y, GLint width, GLint height )
+clear_24bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+                   GLboolean all, GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = xmesa->clearcolor[0];
    const GLubyte g = xmesa->clearcolor[1];
    const GLubyte b = xmesa->clearcolor[2];
-#if 0	/* See below */
-   register GLuint clearPixel;
-   if (xmesa->swapbytes) {
-      clearPixel = (b << 16) | (g << 8) | r;
-   }
-   else {
-      clearPixel = (r << 16) | (g << 8) | b;
-   }
-#endif
 
    if (all) {
-      if (r==g && g==b) {
+      if (r == g && g == b) {
          /* same value for all three components (gray) */
-         const GLint w3 = xmesa->xm_draw_buffer->mesa_buffer.Width * 3;
-         const GLint h = xmesa->xm_draw_buffer->mesa_buffer.Height;
+         const GLint w3 = xrb->Base.Width * 3;
+         const GLint h = xrb->Base.Height;
          GLint i;
          for (i = 0; i < h; i++) {
-            bgr_t *ptr3 = PIXELADDR3(xmesa->xm_draw_buffer, 0, i);
+            bgr_t *ptr3 = PIXEL_ADDR3(xrb, 0, i);
             MEMSET(ptr3, r, w3);
          }
       }
       else {
          /* the usual case */
-         const GLint w = xmesa->xm_draw_buffer->mesa_buffer.Width;
-         const GLint h = xmesa->xm_draw_buffer->mesa_buffer.Height;
+         const GLint w = xrb->Base.Width;
+         const GLint h = xrb->Base.Height;
          GLint i, j;
          for (i = 0; i < h; i++) {
-            bgr_t *ptr3 = PIXELADDR3(xmesa->xm_draw_buffer, 0, i);
+            bgr_t *ptr3 = PIXEL_ADDR3(xrb, 0, i);
             for (j = 0; j < w; j++) {
                ptr3->r = r;
                ptr3->g = g;
@@ -487,83 +478,15 @@ clear_24bit_ximage( GLcontext *ctx, GLboolean all,
                ptr3++;
             }
          }
-#if 0 /* this code doesn't work for all window widths */
-         register GLuint *ptr4 = (GLuint *) ptr3;
-         register GLuint px;
-         GLuint pixel4[3];
-         register GLuint *p = pixel4;
-         pixel4[0] = clearPixel | (clearPixel << 24);
-         pixel4[1] = (clearPixel << 16) | (clearPixel >> 8);
-         pixel4[2] = (clearPixel << 8) | (clearPixel >>  16);
-         switch (3 & (int)(ptr3 - (bgr_t*) ptr4)){
-            case 0:
-               break;
-            case 1:
-               px = *ptr4 & 0x00ffffff;
-               px |= pixel4[0] & 0xff000000;
-               *ptr4++ = px;
-               px = *ptr4 & 0xffff0000;
-               px |= pixel4[2] & 0x0000ffff;
-               *ptr4 = px;
-               if (0 == --n)
-                  break;
-            case 2:
-               px = *ptr4 & 0x0000fffff;
-               px |= pixel4[1] & 0xffff0000;
-               *ptr4++ = px;
-               px = *ptr4 & 0xffffff00;
-               px |= pixel4[2] & 0x000000ff;
-               *ptr4 = px;
-               if (0 == --n)
-                  break;
-            case 3:
-               px = *ptr4 & 0x000000ff;
-               px |= pixel4[2] & 0xffffff00;
-               *ptr4++ = px;
-               --n;
-               break;
-         }
-         while (n > 3) {
-            p = pixel4;
-            *ptr4++ = *p++;
-            *ptr4++ = *p++;
-            *ptr4++ = *p++;
-            n -= 4;
-         }
-         switch (n) {
-            case 3:
-               p = pixel4;
-               *ptr4++ = *p++;
-               *ptr4++ = *p++;
-               px = *ptr4 & 0xffffff00;
-               px |= clearPixel & 0xff;
-               *ptr4 = px;
-               break;
-            case 2:
-               p = pixel4;
-               *ptr4++ = *p++;
-               px = *ptr4 & 0xffff0000;
-               px |= *p & 0xffff;
-               *ptr4 = px;
-               break;
-            case 1:
-               px = *ptr4 & 0xff000000;
-               px |= *p & 0xffffff;
-               *ptr4 = px;
-               break;
-            case 0:
-               break;
-         }
-#endif
       }
    }
    else {
       /* only clear subrect of color buffer */
-      if (r==g && g==b) {
+      if (r == g && g == b) {
          /* same value for all three components (gray) */
          GLint j;
          for (j=0;j<height;j++) {
-            bgr_t *ptr3 = PIXELADDR3( xmesa->xm_draw_buffer, x, y+j );
+            bgr_t *ptr3 = PIXEL_ADDR3(xrb, x, y + j);
             MEMSET(ptr3, r, 3 * width);
          }
       }
@@ -571,7 +494,7 @@ clear_24bit_ximage( GLcontext *ctx, GLboolean all,
          /* non-gray clear color */
          GLint i, j;
          for (j = 0; j < height; j++) {
-            bgr_t *ptr3 = PIXELADDR3( xmesa->xm_draw_buffer, x, y+j );
+            bgr_t *ptr3 = PIXEL_ADDR3(xrb, x, y + j);
             for (i = 0; i < width; i++) {
                ptr3->r = r;
                ptr3->g = g;
@@ -579,115 +502,43 @@ clear_24bit_ximage( GLcontext *ctx, GLboolean all,
                ptr3++;
             }
          }
-#if 0 /* this code might not always (seems ptr3 always == ptr4) */
-         GLint j;
-         GLuint pixel4[3];
-         pixel4[0] = clearPixel | (clearPixel << 24);
-         pixel4[1] = (clearPixel << 16) | (clearPixel >> 8);
-         pixel4[2] = (clearPixel << 8) | (clearPixel >>  16);
-         for (j=0;j<height;j++) {
-            bgr_t *ptr3 = PIXELADDR3( xmesa->xm_draw_buffer, x, y+j );
-            register GLuint *ptr4 = (GLuint *)ptr3;
-            register GLuint *p, px;
-            GLuint w = width;
-            switch (3 & (int)(ptr3 - (bgr_t*) ptr4)){
-               case 0:
-                  break;
-               case 1:
-                  px = *ptr4 & 0x00ffffff;
-                  px |= pixel4[0] & 0xff000000;
-                  *ptr4++ = px;
-                  px = *ptr4 & 0xffff0000;
-                  px |= pixel4[2] & 0x0000ffff;
-                  *ptr4 = px;
-                  if (0 == --w)
-                     break;
-               case 2:
-                  px = *ptr4 & 0x0000fffff;
-                  px |= pixel4[1] & 0xffff0000;
-                  *ptr4++ = px;
-                  px = *ptr4 & 0xffffff00;
-                  px |= pixel4[2] & 0x000000ff;
-                  *ptr4 = px;
-                  if (0 == --w)
-                     break;
-               case 3:
-                  px = *ptr4 & 0x000000ff;
-                  px |= pixel4[2] & 0xffffff00;
-                  *ptr4++ = px;
-                  --w;
-                  break;
-            }
-            while (w > 3){
-               p = pixel4;
-               *ptr4++ = *p++;
-               *ptr4++ = *p++;
-               *ptr4++ = *p++;
-               w -= 4;
-            }
-            switch (w) {
-               case 3:
-                  p = pixel4;
-                  *ptr4++ = *p++;
-                  *ptr4++ = *p++;
-                  px = *ptr4 & 0xffffff00;
-                  px |= *p & 0xff;
-                  *ptr4 = px;
-                  break;
-               case 2:
-                  p = pixel4;
-                  *ptr4++ = *p++;
-                  px = *ptr4 & 0xffff0000;
-                  px |= *p & 0xffff;
-                  *ptr4 = px;
-                  break;
-               case 1:
-                  px = *ptr4 & 0xff000000;
-                  px |= pixel4[0] & 0xffffff;
-                  *ptr4 = px;
-                  break;
-               case 0:
-                  break;
-            }
-         }
-#endif
       }
    }
 }
 
 
 static void
-clear_32bit_ximage( GLcontext *ctx, GLboolean all,
-                    GLint x, GLint y, GLint width, GLint height )
+clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+                   GLboolean all, GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint pixel = (GLuint) xmesa->clearpixel;
+
    if (xmesa->swapbytes) {
       pixel = ((pixel >> 24) & 0x000000ff)
             | ((pixel >> 8)  & 0x0000ff00)
             | ((pixel << 8)  & 0x00ff0000)
             | ((pixel << 24) & 0xff000000);
    }
+
    if (all) {
-      register GLint n = xmesa->xm_draw_buffer->mesa_buffer.Width
-         * xmesa->xm_draw_buffer->mesa_buffer.Height;
-      register GLuint *ptr4 = (GLuint *) xmesa->xm_draw_buffer->backimage->data;
-      if (pixel==0) {
-         MEMSET( ptr4, pixel, 4*n );
+      const GLuint n = xrb->Base.Width * xrb->Base.Height;
+      GLuint *ptr4 = (GLuint *) xrb->ximage->data;
+      if (pixel == 0) {
+         _mesa_memset(ptr4, pixel, 4 * n);
       }
       else {
-         do {
-            *ptr4++ = pixel;
-            n--;
-         } while (n!=0);
+         GLuint i;
+         for (i = 0; i < n; i++)
+            ptr4[i] = pixel;
       }
    }
    else {
-      register int i, j;
-      for (j=0;j<height;j++) {
-         register GLuint *ptr4 = PIXELADDR4( xmesa->xm_draw_buffer, x, y+j );
-         for (i=0;i<width;i++) {
-            *ptr4++ = pixel;
+      GLint i, j;
+      for (j = 0; j < height; j++) {
+         GLuint *ptr4 = PIXEL_ADDR4(xrb, x, y + j);
+         for (i = 0; i < width; i++) {
+            ptr4[i] = pixel;
          }
       }
    }
@@ -695,18 +546,18 @@ clear_32bit_ximage( GLcontext *ctx, GLboolean all,
 
 
 static void
-clear_nbit_ximage( GLcontext *ctx, GLboolean all,
-                   GLint x, GLint y, GLint width, GLint height )
+clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+                  GLboolean all, GLint x, GLint y, GLint width, GLint height)
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   XMesaImage *img = xmesa->xm_draw_buffer->backimage;
-   register int i, j;
+   XMesaImage *img = xrb->ximage;
+   GLint i, j;
 
    /* We can ignore 'all' here - x, y, width, height are always right */
    (void) all;
 
    /* TODO: optimize this */
-   y = FLIP(xmesa->xm_draw_buffer, y);
+   y = YFLIP(xrb, y);
    for (j = 0; j < height; j++) {
       for (i = 0; i < width; i++) {
          XMesaPutPixel(img, x+i, y-j, xmesa->clearpixel);
@@ -720,78 +571,62 @@ static void
 clear_buffers( GLcontext *ctx, GLbitfield mask,
                GLboolean all, GLint x, GLint y, GLint width, GLint height )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
+   if (ctx->DrawBuffer->Name == 0) {
+      /* this is a window system framebuffer */
+      const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
+      XMesaBuffer b = (XMesaBuffer) ctx->DrawBuffer;
 
-   if ((mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) &&
-       xmesa->xm_draw_buffer->mesa_buffer.UseSoftwareAlphaBuffers &&
-       ctx->Color.ColorMask[ACOMP]) {
-      _swrast_clear_alpha_buffers(ctx);
-   }
-
-   /* we can't handle color or index masking */
-   if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
-      if (mask & DD_FRONT_LEFT_BIT) {
-	 ASSERT(xmesa->xm_draw_buffer->front_clear_func);
-	 (*xmesa->xm_draw_buffer->front_clear_func)( ctx, all, x, y, width, height );
-	 mask &= ~DD_FRONT_LEFT_BIT;
+      /* we can't handle color or index masking */
+      if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
+         if (mask & BUFFER_BIT_FRONT_LEFT) {
+            /* clear front color buffer */
+            if (b->frontxrb == (struct xmesa_renderbuffer *)
+                ctx->DrawBuffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer) {
+               /* renderbuffer is not wrapped - great! */
+               b->frontxrb->clearFunc(ctx, b->frontxrb, all, x, y,
+                                      width, height);
+               mask &= ~BUFFER_BIT_FRONT_LEFT;
+            }
+            else {
+               /* we can't directly clear an alpha-wrapped color buffer */
+            }
+         }
+         if (mask & BUFFER_BIT_BACK_LEFT) {
+            /* clear back color buffer */
+            if (b->backxrb == (struct xmesa_renderbuffer *)
+                ctx->DrawBuffer->Attachment[BUFFER_BACK_LEFT].Renderbuffer) {
+               /* renderbuffer is not wrapped - great! */
+               b->backxrb->clearFunc(ctx, b->backxrb, all, x, y,
+                                     width, height);
+               mask &= ~BUFFER_BIT_BACK_LEFT;
+            }
+         }
       }
-      if (mask & DD_BACK_LEFT_BIT) {
-	 ASSERT(xmesa->xm_draw_buffer->back_clear_func);
-	 (*xmesa->xm_draw_buffer->back_clear_func)( ctx, all, x, y, width, height );
-	 mask &= ~DD_BACK_LEFT_BIT;
-      }
    }
-
    if (mask)
       _swrast_Clear( ctx, mask, all, x, y, width, height );
 }
 
 
-/*
- * When we detect that the user has resized the window this function will
- * get called.  Here we'll reallocate the back buffer, depth buffer,
- * stencil buffer etc. to match the new window size.
- * The buffer->Width and buffer->Height values will indicate the new size.
+/**
+ * Called by ctx->Driver.ResizeBuffers()
+ * Resize the front/back colorbuffers to match the latest window size.
  */
 void
-xmesa_resize_buffers( GLframebuffer *buffer )
+xmesa_resize_buffers(GLcontext *ctx, GLframebuffer *buffer,
+                     GLuint width, GLuint height)
 {
-   int height = (int) buffer->Height;
    /* We can do this cast because the first field in the XMesaBuffer
     * struct is a GLframebuffer struct.  If this weren't true, we'd
     * need a pointer from the GLframebuffer to the XMesaBuffer.
     */
    XMesaBuffer xmBuffer = (XMesaBuffer) buffer;
 
-   xmesa_alloc_back_buffer( xmBuffer );
+   xmesa_alloc_back_buffer(xmBuffer, width, height);
 
-   /* Needed by FLIP macro */
-   xmBuffer->bottom = height - 1;
-
-   if (xmBuffer->backimage) {
-      /* Needed by PIXELADDR1 macro */
-      xmBuffer->ximage_width1 = xmBuffer->backimage->bytes_per_line;
-      xmBuffer->ximage_origin1 = (GLubyte *) xmBuffer->backimage->data
-         + xmBuffer->ximage_width1 * (height-1);
-
-      /* Needed by PIXELADDR2 macro */
-      xmBuffer->ximage_width2 = xmBuffer->backimage->bytes_per_line / 2;
-      xmBuffer->ximage_origin2 = (GLushort *) xmBuffer->backimage->data
-         + xmBuffer->ximage_width2 * (height-1);
-
-      /* Needed by PIXELADDR3 macro */
-      xmBuffer->ximage_width3 = xmBuffer->backimage->bytes_per_line;
-      xmBuffer->ximage_origin3 = (GLubyte *) xmBuffer->backimage->data
-         + xmBuffer->ximage_width3 * (height-1);
-
-      /* Needed by PIXELADDR4 macro */
-      xmBuffer->ximage_width4 = xmBuffer->backimage->width;
-      xmBuffer->ximage_origin4 = (GLuint *) xmBuffer->backimage->data
-         + xmBuffer->ximage_width4 * (height-1);
-   }
-
-   _swrast_alloc_buffers( buffer );
+#if NEW_RENDERBUFFER
+   _mesa_resize_framebuffer(ctx, buffer, width, height);
+#endif
 }
 
 
@@ -810,11 +645,14 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
                          const struct gl_pixelstore_attrib *unpack,
                          const GLvoid *pixels )
 {
+   struct xmesa_renderbuffer *xrb
+      = (struct xmesa_renderbuffer *) ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT( ctx );
    XMesaDisplay *dpy = xmesa->xm_visual->display;
-   const XMesaDrawable buffer = xmesa->xm_draw_buffer->buffer;
-   const XMesaGC gc = xmesa->xm_draw_buffer->gc;
+   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
+   const XMesaGC gc = xmbuf->gc;
 
    ASSERT(dpy);
    ASSERT(gc);
@@ -824,7 +662,7 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   if (buffer &&   /* buffer != 0 means it's a Window or Pixmap */
+   if (xrb->pixmap &&
        format == GL_BGRA &&
        type == GL_UNSIGNED_BYTE &&
        (swrast->_RasterMask & ~CLIP_BIT) == 0 && /* no blend, z-test, etc */
@@ -882,8 +720,8 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
          ximage.bits_per_pixel = 32;
          /* it seems we don't need to set the ximage.red/green/blue_mask fields */
          /* flip Y axis for dest position */
-         dstY = FLIP(xmesa->xm_draw_buffer, dstY) - h + 1;
-         XPutImage(dpy, buffer, gc, &ximage, 0, 0, dstX, dstY, w, h);
+         dstY = YFLIP(xrb, dstY) - h + 1;
+         XPutImage(dpy, xrb->pixmap, gc, &ximage, 0, 0, dstX, dstY, w, h);
       }
 
       if (unpack->BufferObj->Name) {
@@ -913,11 +751,13 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
                          const struct gl_pixelstore_attrib *unpack,
                          const GLvoid *pixels )
 {
+   struct xmesa_renderbuffer *xrb
+      = (struct xmesa_renderbuffer *) ctx->DrawBuffer->_ColorDrawBuffers[0][0];
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT( ctx );
    XMesaDisplay *dpy = xmesa->xm_visual->display;
-   const XMesaDrawable buffer = xmesa->xm_draw_buffer->buffer;
-   const XMesaGC gc = xmesa->xm_draw_buffer->gc;
+   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
+   const XMesaGC gc = xmbuf->gc;
 
    ASSERT(dpy);
    ASSERT(gc);
@@ -926,7 +766,7 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   if (buffer &&   /* buffer != 0 means it's a Window or Pixmap */
+   if (xrb->pixmap &&
        format == GL_RGB &&
        type == GL_UNSIGNED_SHORT_5_6_5 &&
        !ctx->Color.DitherFlag &&  /* no dithering */
@@ -985,8 +825,8 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
          ximage.bits_per_pixel = 16;
          /* it seems we don't need to set the ximage.red/green/blue_mask fields */
          /* flip Y axis for dest position */
-         dstY = FLIP(xmesa->xm_draw_buffer, dstY) - h + 1;
-         XPutImage(dpy, buffer, gc, &ximage, 0, 0, dstX, dstY, w, h);
+         dstY = YFLIP(xrb, dstY) - h + 1;
+         XPutImage(dpy, xrb->pixmap, gc, &ximage, 0, 0, dstX, dstY, w, h);
       }
 
       if (unpack->BufferObj->Name) {
@@ -1016,9 +856,11 @@ xmesa_CopyPixels( GLcontext *ctx,
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT( ctx );
    XMesaDisplay *dpy = xmesa->xm_visual->display;
-   const XMesaDrawable drawBuffer = xmesa->xm_draw_buffer->buffer;
-   const XMesaDrawable readBuffer = xmesa->xm_read_buffer->buffer;
-   const XMesaGC gc = xmesa->xm_draw_buffer->gc;
+   const XMesaGC gc = ((XMesaBuffer) ctx->DrawBuffer)->gc;
+   struct xmesa_renderbuffer *srcXrb = (struct xmesa_renderbuffer *)
+      ctx->ReadBuffer->_ColorReadBuffer;
+   struct xmesa_renderbuffer *dstXrb = (struct xmesa_renderbuffer *)
+      ctx->DrawBuffer->_ColorDrawBuffers[0][0];
 
    ASSERT(dpy);
    ASSERT(gc);
@@ -1028,8 +870,8 @@ xmesa_CopyPixels( GLcontext *ctx,
 
    if (ctx->Color.DrawBuffer[0] == GL_FRONT &&
        ctx->Pixel.ReadBuffer == GL_FRONT &&
-       drawBuffer &&  /* buffer != 0 means it's a Window or Pixmap */
-       readBuffer &&
+       srcXrb->pixmap &&
+       dstXrb->pixmap &&
        type == GL_COLOR &&
        (swrast->_RasterMask & ~CLIP_BIT) == 0 && /* no blend, z-test, etc */
        ctx->_ImageTransferState == 0 &&  /* no color tables, scale/bias, etc */
@@ -1038,9 +880,9 @@ xmesa_CopyPixels( GLcontext *ctx,
       /* Note: we don't do any special clipping work here.  We could,
        * but X will do it for us.
        */
-      srcy = FLIP(xmesa->xm_read_buffer, srcy) - height + 1;
-      desty = FLIP(xmesa->xm_draw_buffer, desty) - height + 1;
-      XCopyArea(dpy, readBuffer, drawBuffer, gc,
+      srcy = YFLIP(srcXrb, srcy) - height + 1;
+      desty = YFLIP(dstXrb, desty) - height + 1;
+      XCopyArea(dpy, srcXrb->pixmap, dstXrb->pixmap, gc,
                 srcx, srcy, width, height, destx, desty);
    }
    else {
@@ -1100,9 +942,89 @@ enable( GLcontext *ctx, GLenum pname, GLboolean state )
 }
 
 
-void xmesa_update_state( GLcontext *ctx, GLuint new_state )
+static void
+clear_color_HPCR_ximage( GLcontext *ctx, const GLfloat color[4] )
+{
+   int i;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color[2]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[3], color[3]);
+
+   if (color[0] == 0.0 && color[1] == 0.0 && color[2] == 0.0) {
+      /* black is black */
+      MEMSET( xmesa->xm_visual->hpcr_clear_ximage_pattern, 0x0 ,
+              sizeof(xmesa->xm_visual->hpcr_clear_ximage_pattern));
+   }
+   else {
+      /* build clear pattern */
+      for (i=0; i<16; i++) {
+         xmesa->xm_visual->hpcr_clear_ximage_pattern[0][i] =
+            DITHER_HPCR(i, 0,
+                        xmesa->clearcolor[0],
+                        xmesa->clearcolor[1],
+                        xmesa->clearcolor[2]);
+         xmesa->xm_visual->hpcr_clear_ximage_pattern[1][i]    =
+            DITHER_HPCR(i, 1,
+                        xmesa->clearcolor[0],
+                        xmesa->clearcolor[1],
+                        xmesa->clearcolor[2]);
+      }
+   }
+}
+
+
+static void
+clear_color_HPCR_pixmap( GLcontext *ctx, const GLfloat color[4] )
+{
+   int i;
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color[0]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color[1]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color[2]);
+   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[3], color[3]);
+
+   if (color[0] == 0.0 && color[1] == 0.0 && color[2] == 0.0) {
+      /* black is black */
+      for (i=0; i<16; i++) {
+         XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 0, 0);
+         XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 1, 0);
+      }
+   }
+   else {
+      for (i=0; i<16; i++) {
+         XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 0,
+                       DITHER_HPCR(i, 0,
+                                   xmesa->clearcolor[0],
+                                   xmesa->clearcolor[1],
+                                   xmesa->clearcolor[2]));
+         XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 1,
+                       DITHER_HPCR(i, 1,
+                                   xmesa->clearcolor[0],
+                                   xmesa->clearcolor[1],
+                                   xmesa->clearcolor[2]));
+      }
+   }
+   /* change tile pixmap content */
+   XMesaPutImage(xmesa->display,
+		 (XMesaDrawable)xmesa->xm_visual->hpcr_clear_pixmap,
+		 XMESA_BUFFER(ctx->DrawBuffer)->cleargc,
+		 xmesa->xm_visual->hpcr_clear_ximage, 0, 0, 0, 0, 16, 2);
+}
+
+
+/**
+ * Called when the driver should update it's state, based on the new_state
+ * flags.
+ */
+void
+xmesa_update_state( GLcontext *ctx, GLuint new_state )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *front_xrb, *back_xrb;
 
    /* Propagate statechange information to swrast and swrast_setup
     * modules.  The X11 driver has no internal GL-dependent state.
@@ -1112,39 +1034,75 @@ void xmesa_update_state( GLcontext *ctx, GLuint new_state )
    _tnl_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
 
+   if (ctx->DrawBuffer->Name != 0)
+      return;
 
-   /* setup pointers to front and back buffer clear functions */
-   xmesa->xm_draw_buffer->front_clear_func = clear_front_pixmap;
-   if (xmesa->xm_draw_buffer->backpixmap != XIMAGE) {
-      xmesa->xm_draw_buffer->back_clear_func = clear_back_pixmap;
+   front_xrb = XMESA_BUFFER(ctx->DrawBuffer)->frontxrb;
+   if (front_xrb) {
+      /* XXX check for relevant new_state flags */
+      xmesa_set_renderbuffer_funcs(front_xrb, xmesa->pixelformat,
+                                   xmesa->xm_visual->BitsPerPixel);
+      /* setup pointers to front and back buffer clear functions */
+      front_xrb->clearFunc = clear_pixmap;
    }
-   else {
-      switch (xmesa->xm_visual->BitsPerPixel) {
-      case 8:
-         if (xmesa->xm_visual->hpcr_clear_flag) {
-            xmesa->xm_draw_buffer->back_clear_func = clear_HPCR_ximage;
+
+   back_xrb = XMESA_BUFFER(ctx->DrawBuffer)->backxrb;
+   if (back_xrb) {
+      XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
+
+      /* XXX check for relevant new_state flags */
+      xmesa_set_renderbuffer_funcs(back_xrb, xmesa->pixelformat,
+                                   xmesa->xm_visual->BitsPerPixel);
+
+      if (xmbuf->backxrb->pixmap) {
+         back_xrb->clearFunc = clear_pixmap;
+      }
+      else {
+         switch (xmesa->xm_visual->BitsPerPixel) {
+         case 8:
+            if (xmesa->xm_visual->hpcr_clear_flag) {
+               back_xrb->clearFunc = clear_HPCR_ximage;
+            }
+            else {
+               back_xrb->clearFunc = clear_8bit_ximage;
+            }
+            break;
+         case 16:
+            back_xrb->clearFunc = clear_16bit_ximage;
+            break;
+         case 24:
+            back_xrb->clearFunc = clear_24bit_ximage;
+            break;
+         case 32:
+            back_xrb->clearFunc = clear_32bit_ximage;
+            break;
+         default:
+            back_xrb->clearFunc = clear_nbit_ximage;
+            break;
          }
-         else {
-            xmesa->xm_draw_buffer->back_clear_func = clear_8bit_ximage;
-         }
-         break;
-      case 16:
-         xmesa->xm_draw_buffer->back_clear_func = clear_16bit_ximage;
-         break;
-      case 24:
-         xmesa->xm_draw_buffer->back_clear_func = clear_24bit_ximage;
-         break;
-      case 32:
-         xmesa->xm_draw_buffer->back_clear_func = clear_32bit_ximage;
-         break;
-      default:
-         xmesa->xm_draw_buffer->back_clear_func = clear_nbit_ximage;
-         break;
       }
    }
 
-   if (ctx->Color._DrawDestMask[0] & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) {
+#if OLD_RENDERBUFFER && 0
+   if (ctx->DrawBuffer->_ColorDrawBufferMask[0] & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) {
       xmesa_update_span_funcs(ctx);
+   }
+#endif
+
+   if (xmesa->xm_visual->hpcr_clear_flag) {
+      /* this depends on whether we're drawing to the front or back buffer */
+      /* XXX FIX THIS! */
+#if 0
+      if (pixmap) {
+         ctx->Driver.ClearColor = clear_color_HPCR_pixmap;
+      }
+      else {
+         ctx->Driver.ClearColor = clear_color_HPCR_ximage;
+      }
+#else
+      (void) clear_color_HPCR_pixmap;
+      (void) clear_color_HPCR_ximage;
+#endif
    }
 }
 
@@ -1208,17 +1166,36 @@ choose_tex_format( GLcontext *ctx, GLint internalFormat,
 /**
  * Called by glViewport.
  * This is a good time for us to poll the current X window size and adjust
- * our ancillary (back color, depth, stencil, etc) buffers to match the
- * current window size.  Remember, we have no opportunity to respond to
- * conventional X Resize/StructureNotify events since the X driver has no
- * event loop.  Thus, we poll.
+ * our renderbuffers to match the current window size.
+ * Remember, we have no opportunity to respond to conventional
+ * X Resize/StructureNotify events since the X driver has no event loop.
+ * Thus, we poll.
  * Note that this trick isn't fool-proof.  If the application never calls
  * glViewport, our notion of the current window size may be incorrect.
  */
 static void
 xmesa_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
+#if 1
+   struct gl_framebuffer *fb = ctx->WinSysDrawBuffer;
+   GLuint newWidth, newHeight;
+
+   /*
+   printf("%s before %d x %d\n", __FUNCTION__, fb->Width, fb->Height);
+   */
+
+   get_buffer_size(fb, &newWidth, &newHeight);
+   if (newWidth != fb->Width || newHeight != fb->Height) {
+      xmesa_resize_buffers(ctx, fb, newWidth, newHeight);
+      ctx->NewState |= _NEW_BUFFERS;  /* to update scissor / window bounds */
+   }
+   /*
+   printf("%s after %d x %d\n", __FUNCTION__, fb->Width, fb->Height);
+   */
+#else
+   /* This also works: */
    _mesa_ResizeBuffersMESA();
+#endif
 }
 
 

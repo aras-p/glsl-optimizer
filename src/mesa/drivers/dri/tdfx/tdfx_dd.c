@@ -43,6 +43,7 @@
 
 #include "context.h"
 #include "enums.h"
+#include "framebuffer.h"
 #include "swrast/swrast.h"
 #if defined(USE_X86_ASM)
 #include "x86/common_x86_asm.h"
@@ -257,7 +258,7 @@ void tdfxDDInitDriverFuncs( const __GLcontextModes *visual,
 
    functions->GetString		= tdfxDDGetString;
    functions->GetBufferSize	= tdfxDDGetBufferSize;
-   functions->ResizeBuffers     = _swrast_alloc_buffers;
+   functions->ResizeBuffers     = _mesa_resize_framebuffer;
 
    /* Accelerated paths
     */

@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -71,7 +71,7 @@
 /** Maximum pixel map lookup table size */
 #define MAX_PIXEL_MAP_TABLE 256
 
-/** Maximum Number of auxillary color buffers */
+/** Maximum number of auxillary color buffers */
 #define MAX_AUX_BUFFERS 4
 
 /** Maximum order (degree) of curves */
@@ -223,7 +223,7 @@
 
 /** For GL_EXT_framebuffer_object */
 /*@{*/
-#define MAX_COLOR_ATTACHMENTS 4
+#define MAX_COLOR_ATTACHMENTS 8
 /*@}*/
 
 
@@ -320,6 +320,11 @@
  * Used in array_cache and tnl modules.
  */
 #define MAX_CLIPPED_VERTICES ((2 * (6 + MAX_CLIP_PLANES))+1)
+
+
+/* XXX these are temporary */
+#define NEW_RENDERBUFFER 1
+#define OLD_RENDERBUFFER 1
 
 
 #endif /* CONFIG_H */

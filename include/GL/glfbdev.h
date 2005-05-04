@@ -62,7 +62,10 @@ extern const char *
 glFBDevGetString( int str );
 
 
-extern const void *
+typedef void (*GLFBDevProc)();
+
+
+extern const GLFBDevProc
 glFBDevGetProcAddress( const char *procName );
 
 

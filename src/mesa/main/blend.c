@@ -570,11 +570,9 @@ void _mesa_init_color( GLcontext * ctx )
 
    if (ctx->Visual.doubleBufferMode) {
       ctx->Color.DrawBuffer[0] = GL_BACK;
-      ctx->Color._DrawDestMask[0] = DD_BACK_LEFT_BIT;
    }
    else {
       ctx->Color.DrawBuffer[0] = GL_FRONT;
-      ctx->Color._DrawDestMask[0] = DD_FRONT_LEFT_BIT;
    }
 }
 

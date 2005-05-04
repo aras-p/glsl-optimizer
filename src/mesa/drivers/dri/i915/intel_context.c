@@ -31,6 +31,7 @@
 #include "matrix.h"
 #include "simple_list.h"
 #include "extensions.h"
+#include "framebuffer.h"
 #include "imports.h"
 
 #include "swrast/swrast.h"
@@ -235,7 +236,7 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
    functions->Clear = intelClear;
    functions->Finish = intelFinish;
    functions->GetBufferSize = intelBufferSize;
-   functions->ResizeBuffers = _swrast_alloc_buffers;
+   functions->ResizeBuffers = _mesa_resize_framebuffer;
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
    functions->CopyColorTable = _swrast_CopyColorTable;
@@ -493,11 +494,11 @@ void intelSetBackClipRects( intelContextPtr intel )
 
 void intelWindowMoved( intelContextPtr intel )
 {
-   switch (intel->ctx.Color._DrawDestMask[0]) {
-   case DD_FRONT_LEFT_BIT:
+   switch (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0]) {
+   case BUFFER_BIT_FRONT_LEFT:
       intelSetFrontClipRects( intel );
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       intelSetBackClipRects( intel );
       break;
    default:
@@ -525,11 +526,11 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	 intelWindowMoved( intel );
       }
 
-      _mesa_make_current2(&intel->ctx,
-			  (GLframebuffer *) driDrawPriv->driverPrivate,
-			  (GLframebuffer *) driReadPriv->driverPrivate);
+      _mesa_make_current(&intel->ctx,
+			 (GLframebuffer *) driDrawPriv->driverPrivate,
+			 (GLframebuffer *) driReadPriv->driverPrivate);
    } else {
-      _mesa_make_current(0,0);
+      _mesa_make_current(NULL, NULL, NULL);
    }
 
    return GL_TRUE;

@@ -65,11 +65,13 @@
 #include "xmesaP.h"
 #include "context.h"
 #include "extensions.h"
+#include "framebuffer.h"
 #include "glthread.h"
 #include "imports.h"
 #include "matrix.h"
 #include "mtypes.h"
 #include "macros.h"
+#include "renderbuffer.h"
 #include "texformat.h"
 #include "texobj.h"
 #include "texstore.h"
@@ -278,7 +280,7 @@ static int bits_per_pixel( XMesaVisual xmv )
    /* grab the bits/pixel value */
    bitsPerPixel = img->bits_per_pixel;
    /* free the XImage */
-   FREE( img->data );
+   _mesa_free( img->data );
    img->data = NULL;
    XMesaDestroyImage( img );
    return bitsPerPixel;
@@ -343,18 +345,7 @@ alloc_xmesa_buffer(XMesaVisual vis, BufferType type, XMesaColormap cmap)
       b->type = type;
       b->cmap = cmap;
 
-      _mesa_initialize_framebuffer(&b->mesa_buffer,
-                                   &vis->mesa_visual,
-                                   vis->mesa_visual.depthBits > 0,
-                                   vis->mesa_visual.stencilBits > 0,
-                                   vis->mesa_visual.accumRedBits +
-                                   vis->mesa_visual.accumGreenBits +
-                                   vis->mesa_visual.accumBlueBits > 0,
-                                   vis->mesa_visual.alphaBits > 0
-                                   /*v->mesa_visual.numAuxBuffers > 0*/ );
-      /* XXX hack */
-      if (vis->mesa_visual.numAuxBuffers > 0)
-         b->mesa_buffer.UseSoftwareAuxBuffers = GL_TRUE;
+      _mesa_initialize_framebuffer(&b->mesa_buffer, &vis->mesa_visual);
 
       /* determine back buffer implementation */
       if (vis->mesa_visual.doubleBufferMode) {
@@ -368,6 +359,30 @@ alloc_xmesa_buffer(XMesaVisual vis, BufferType type, XMesaColormap cmap)
       else {
          b->db_state = 0;
       }
+
+      /* Allocate the framebuffer's renderbuffers */
+      assert(!b->mesa_buffer.Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+      assert(!b->mesa_buffer.Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+
+      /* front renderbuffer */
+      b->frontxrb = xmesa_new_renderbuffer(NULL, 0, vis->mesa_visual.rgbMode);
+      _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_FRONT_LEFT,
+                             &b->frontxrb->Base);
+
+      /* back renderbuffer */
+      if (vis->mesa_visual.doubleBufferMode) {
+         b->backxrb =xmesa_new_renderbuffer(NULL, 0, vis->mesa_visual.rgbMode);
+         _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_BACK_LEFT,
+                                &b->backxrb->Base);
+      }
+
+      _mesa_add_soft_renderbuffers(&b->mesa_buffer,
+                                   GL_FALSE,  /* color */
+                                   vis->mesa_visual.haveDepthBuffer,
+                                   vis->mesa_visual.haveStencilBuffer,
+                                   vis->mesa_visual.haveAccumBuffer,
+                                   vis->mesa_visual.alphaBits > 0,
+                                   vis->mesa_visual.numAuxBuffers > 0 );
 
       /* insert into linked list */
       b->Next = XMesaBufferList;
@@ -426,7 +441,11 @@ static void free_xmesa_buffer(int client, XMesaBuffer buffer)
          }
 
          _mesa_free_framebuffer_data(&buffer->mesa_buffer);
-         FREE(buffer);
+         /* delete front/back renderbuffers */
+         buffer->frontxrb->Base.Delete(&(buffer->frontxrb->Base));
+         if (buffer->backxrb)
+            buffer->backxrb->Base.Delete(&(buffer->backxrb->Base));
+         _mesa_free(buffer);
 
          return;
       }
@@ -473,12 +492,13 @@ static int bitcount( unsigned long n )
 
 
 
-/*
+/**
  * Allocate a shared memory XImage back buffer for the given XMesaBuffer.
  * Return:  GL_TRUE if success, GL_FALSE if error
  */
 #ifndef XFree86Server
-static GLboolean alloc_shm_back_buffer( XMesaBuffer b )
+static GLboolean
+alloc_shm_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
 {
 #ifdef USE_XSHM
    /*
@@ -490,40 +510,40 @@ static GLboolean alloc_shm_back_buffer( XMesaBuffer b )
    GC gc;
    int (*old_handler)( XMesaDisplay *, XErrorEvent * );
 
-   if (b->mesa_buffer.Width == 0 || b->mesa_buffer.Height == 0) {
+   if (width == 0 || height == 0) {
       /* this will be true the first time we're called on 'b' */
       return GL_FALSE;
    }
 
-   b->backimage = XShmCreateImage(b->xm_visual->display,
-                                  b->xm_visual->visinfo->visual,
-                                  b->xm_visual->visinfo->depth,
-                                  ZPixmap, NULL, &b->shminfo,
-                                  b->mesa_buffer.Width, b->mesa_buffer.Height);
-   if (b->backimage == NULL) {
+   b->backxrb->ximage = XShmCreateImage(b->xm_visual->display,
+                                        b->xm_visual->visinfo->visual,
+                                        b->xm_visual->visinfo->depth,
+                                        ZPixmap, NULL, &b->shminfo,
+                                        width, height);
+   if (b->backxrb->ximage == NULL) {
       _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (XShmCreateImage), disabling.");
       b->shm = 0;
       return GL_FALSE;
    }
 
-   b->shminfo.shmid = shmget( IPC_PRIVATE, b->backimage->bytes_per_line
-			     * b->backimage->height, IPC_CREAT|0777 );
+   b->shminfo.shmid = shmget( IPC_PRIVATE, b->backxrb->ximage->bytes_per_line
+			     * b->backxrb->ximage->height, IPC_CREAT|0777 );
    if (b->shminfo.shmid < 0) {
       _mesa_warning(NULL, "shmget failed while allocating back buffer");
-      XDestroyImage( b->backimage );
-      b->backimage = NULL;
+      XDestroyImage( b->backxrb->ximage );
+      b->backxrb->ximage = NULL;
       _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (shmget), disabling.");
       b->shm = 0;
       return GL_FALSE;
    }
 
-   b->shminfo.shmaddr = b->backimage->data
+   b->shminfo.shmaddr = b->backxrb->ximage->data
                       = (char*)shmat( b->shminfo.shmid, 0, 0 );
    if (b->shminfo.shmaddr == (char *) -1) {
       _mesa_warning(NULL, "shmat() failed while allocating back buffer");
-      XDestroyImage( b->backimage );
+      XDestroyImage( b->backxrb->ximage );
       shmctl( b->shminfo.shmid, IPC_RMID, 0 );
-      b->backimage = NULL;
+      b->backxrb->ximage = NULL;
       _mesa_warning(NULL, "alloc_back_buffer: Shared memory error (shmat), disabling.");
       b->shm = 0;
       return GL_FALSE;
@@ -540,10 +560,10 @@ static GLboolean alloc_shm_back_buffer( XMesaBuffer b )
       /* we are on a remote display, this error is normal, don't print it */
       XFlush( b->xm_visual->display );
       mesaXErrorFlag = 0;
-      XDestroyImage( b->backimage );
+      XDestroyImage( b->backxrb->ximage );
       shmdt( b->shminfo.shmaddr );
       shmctl( b->shminfo.shmid, IPC_RMID, 0 );
-      b->backimage = NULL;
+      b->backxrb->ximage = NULL;
       b->shm = 0;
       (void) XSetErrorHandler( old_handler );
       return GL_FALSE;
@@ -552,41 +572,21 @@ static GLboolean alloc_shm_back_buffer( XMesaBuffer b )
    shmctl( b->shminfo.shmid, IPC_RMID, 0 ); /* nobody else needs it */
 
    /* Finally, try an XShmPutImage to be really sure the extension works */
-   gc = XCreateGC( b->xm_visual->display, b->frontbuffer, 0, NULL );
-   XShmPutImage( b->xm_visual->display, b->frontbuffer, gc,
-		 b->backimage, 0, 0, 0, 0, 1, 1 /*one pixel*/, False );
+   gc = XCreateGC( b->xm_visual->display, b->frontxrb->pixmap, 0, NULL );
+   XShmPutImage( b->xm_visual->display, b->frontxrb->pixmap, gc,
+		 b->backxrb->ximage, 0, 0, 0, 0, 1, 1 /*one pixel*/, False );
    XSync( b->xm_visual->display, False );
    XFreeGC( b->xm_visual->display, gc );
    (void) XSetErrorHandler( old_handler );
    if (mesaXErrorFlag) {
       XFlush( b->xm_visual->display );
       mesaXErrorFlag = 0;
-      XDestroyImage( b->backimage );
+      XDestroyImage( b->backxrb->ximage );
       shmdt( b->shminfo.shmaddr );
       shmctl( b->shminfo.shmid, IPC_RMID, 0 );
-      b->backimage = NULL;
+      b->backxrb->ximage = NULL;
       b->shm = 0;
       return GL_FALSE;
-   }
-
-   if (b->backimage) {
-      int height = b->backimage->height;
-      /* Needed by PIXELADDR1 macro */
-      b->ximage_width1 = b->backimage->bytes_per_line;
-      b->ximage_origin1 = (GLubyte *) b->backimage->data
-                        + b->ximage_width1 * (height-1);
-      /* Needed by PIXELADDR2 macro */
-      b->ximage_width2 = b->backimage->bytes_per_line / 2;
-      b->ximage_origin2 = (GLushort *) b->backimage->data
-                        + b->ximage_width2 * (height-1);
-      /* Needed by PIXELADDR3 macro */
-      b->ximage_width3 = b->backimage->bytes_per_line;
-      b->ximage_origin3 = (GLubyte *) b->backimage->data
-                        + b->ximage_width3 * (height-1);
-      /* Needed by PIXELADDR4 macro */
-      b->ximage_width4 = b->backimage->width;
-      b->ximage_origin4 = (GLuint *) b->backimage->data
-                        + b->ximage_width4 * (height-1);
    }
 
    return GL_TRUE;
@@ -603,77 +603,73 @@ static GLboolean alloc_shm_back_buffer( XMesaBuffer b )
  * Setup an off-screen pixmap or Ximage to use as the back buffer.
  * Input:  b - the X/Mesa buffer
  */
-void xmesa_alloc_back_buffer( XMesaBuffer b )
+void
+xmesa_alloc_back_buffer( XMesaBuffer b, GLuint width, GLuint height )
 {
-   if (b->db_state==BACK_XIMAGE) {
-      /* Deallocate the old backimage, if any */
-      if (b->backimage) {
+   if (width == 0 || height == 0)
+      return;
+
+   if (b->db_state == BACK_XIMAGE) {
+      /* Deallocate the old backxrb->ximage, if any */
+      if (b->backxrb->ximage) {
 #if defined(USE_XSHM) && !defined(XFree86Server)
 	 if (b->shm) {
 	    XShmDetach( b->xm_visual->display, &b->shminfo );
-	    XDestroyImage( b->backimage );
+	    XDestroyImage( b->backxrb->ximage );
 	    shmdt( b->shminfo.shmaddr );
 	 }
 	 else
 #endif
-	   XMesaDestroyImage( b->backimage );
-	 b->backimage = NULL;
+	   XMesaDestroyImage( b->backxrb->ximage );
+	 b->backxrb->ximage = NULL;
       }
 
       /* Allocate new back buffer */
 #ifdef XFree86Server
       {
 	 /* Allocate a regular XImage for the back buffer. */
-	 b->backimage = XMesaCreateImage(b->xm_visual->BitsPerPixel,
-					 b->mesa_buffer.Width,
-                                         b->mesa_buffer.Height, NULL);
+	 b->backxrb->ximage = XMesaCreateImage(b->xm_visual->BitsPerPixel,
+					 width, height, NULL);
 #else
-      if (b->shm==0 || alloc_shm_back_buffer(b)==GL_FALSE) {
+      if (b->shm == 0 || !alloc_shm_back_buffer(b, width, height)) {
 	 /* Allocate a regular XImage for the back buffer. */
-	 b->backimage = XCreateImage( b->xm_visual->display,
+	 b->backxrb->ximage = XCreateImage( b->xm_visual->display,
                                       b->xm_visual->visinfo->visual,
                                       GET_VISUAL_DEPTH(b->xm_visual),
 				      ZPixmap, 0,   /* format, offset */
 				      NULL,
-                                      b->mesa_buffer.Width,
-                                      b->mesa_buffer.Height,
+                                      width, height,
 				      8, 0 );  /* pad, bytes_per_line */
 #endif
-	 if (!b->backimage) {
+	 if (!b->backxrb->ximage) {
 	    _mesa_warning(NULL, "alloc_back_buffer: XCreateImage failed.");
 	 }
-         b->backimage->data = (char *) MALLOC( b->backimage->height
-                                             * b->backimage->bytes_per_line );
-         if (!b->backimage->data) {
+         b->backxrb->ximage->data = (char *) MALLOC( b->backxrb->ximage->height
+                                             * b->backxrb->ximage->bytes_per_line );
+         if (!b->backxrb->ximage->data) {
             _mesa_warning(NULL, "alloc_back_buffer: MALLOC failed.");
-            XMesaDestroyImage( b->backimage );
-            b->backimage = NULL;
+            XMesaDestroyImage( b->backxrb->ximage );
+            b->backxrb->ximage = NULL;
          }
       }
-      b->backpixmap = None;
+      b->backxrb->pixmap = None;
+      b->backxrb->ximage = b->backxrb->ximage;
    }
    else if (b->db_state==BACK_PIXMAP) {
-      XMesaPixmap old_pixmap = b->backpixmap;
-      int width = b->mesa_buffer.Width, height = b->mesa_buffer.Height;
-
       if (!width)
          width = 1;
       if (!height)
          height = 1;
 
       /* Free the old back pixmap */
-      if (b->backpixmap) {
-	 XMesaFreePixmap( b->xm_visual->display, b->backpixmap );
+      if (b->backxrb->pixmap) {
+	 XMesaFreePixmap( b->xm_visual->display, b->backxrb->pixmap );
       }
       /* Allocate new back pixmap */
-      b->backpixmap = XMesaCreatePixmap( b->xm_visual->display, b->frontbuffer,
+      b->backxrb->pixmap = XMesaCreatePixmap( b->xm_visual->display, b->frontxrb->pixmap,
 					 width, height,
 					 GET_VISUAL_DEPTH(b->xm_visual) );
-      b->backimage = NULL;
-      /* update other references to backpixmap */
-      if (b->buffer==(XMesaDrawable)old_pixmap) {
-	 b->buffer = (XMesaDrawable)b->backpixmap;
-      }
+      b->backxrb->ximage = NULL;
    }
 }
 
@@ -747,7 +743,7 @@ noFaultXAllocColor( int client,
        || prevCmapSize != cmapSize || !ctable) {
       /* free previously cached color table */
       if (ctable)
-         FREE(ctable);
+         _mesa_free(ctable);
       /* Get the color table from X */
       ctable = (XMesaColor *) MALLOC(cmapSize * sizeof(XMesaColor));
       assert(ctable);
@@ -803,8 +799,8 @@ noFaultXAllocColor( int client,
       *alloced = 0;
    }
 #ifdef XFree86Server
-   FREE(ppixIn);
-   FREE(ctable);
+   _mesa_free(ppixIn);
+   _mesa_free(ctable);
 #else
    /* don't free table, save it for next time */
 #endif
@@ -1208,6 +1204,9 @@ static GLboolean initialize_visual_and_buffer( int client,
                                                XMesaDrawable window,
                                                XMesaColormap cmap )
 {
+#if NEW_RENDERBUFFER
+   struct xmesa_renderbuffer *front_xrb, *back_xrb;
+#endif
 #ifndef XFree86Server
    XGCValues gcvalues;
 #endif
@@ -1215,6 +1214,16 @@ static GLboolean initialize_visual_and_buffer( int client,
    if (b) {
       assert(b->xm_visual == v);
    }
+
+#if NEW_RENDERBUFFER
+   if (b) {
+      front_xrb = b->frontxrb;
+      back_xrb = b->backxrb;
+   }
+   else {
+      front_xrb = back_xrb = NULL;
+   }
+#endif
 
    /* Save true bits/pixel */
    v->BitsPerPixel = bits_per_pixel(v);
@@ -1280,7 +1289,7 @@ static GLboolean initialize_visual_and_buffer( int client,
    if (b && window) {
       /* Do window-specific initializations */
 
-      b->frontbuffer = window;
+      b->frontxrb->pixmap = window;
 
       /* Setup for single/double buffering */
       if (v->mesa_visual.doubleBufferMode) {
@@ -1288,17 +1297,7 @@ static GLboolean initialize_visual_and_buffer( int client,
 #ifndef XFree86Server
          b->shm = check_for_xshm( v->display );
 #endif
-         xmesa_alloc_back_buffer( b );
-         if (b->db_state==BACK_PIXMAP) {
-            b->buffer = (XMesaDrawable)b->backpixmap;
-         }
-         else {
-            b->buffer = XIMAGE;
-         }
-      }
-      else {
-         /* Single Buffered */
-         b->buffer = b->frontbuffer;
+         xmesa_alloc_back_buffer(b, b->mesa_buffer.Width, b->mesa_buffer.Height);
       }
 
       /* X11 graphics contexts */
@@ -1340,7 +1339,7 @@ static GLboolean initialize_visual_and_buffer( int client,
        * Initialize whole stuff
        * Patch contributed by Jacques Leroy March 8, 1998.
        */
-      if (v->hpcr_clear_flag && b->buffer!=XIMAGE) {
+      if (v->hpcr_clear_flag && back_xrb->pixmap) {
 	int i;
 	for (i=0; i<16; i++)
         {
@@ -1380,9 +1379,11 @@ static GLboolean initialize_visual_and_buffer( int client,
  * Convert an RGBA color to a pixel value.
  */
 unsigned long
-xmesa_color_to_pixel( XMesaContext xmesa, GLubyte r, GLubyte g, GLubyte b, GLubyte a,
-                      GLuint pixelFormat)
+xmesa_color_to_pixel(GLcontext *ctx,
+                     GLubyte r, GLubyte g, GLubyte b, GLubyte a,
+                     GLuint pixelFormat)
 {
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
    switch (pixelFormat) {
       case PF_Index:
          return 0;
@@ -1428,7 +1429,7 @@ xmesa_color_to_pixel( XMesaContext xmesa, GLubyte r, GLubyte g, GLubyte b, GLuby
             return p;
          }
       default:
-         _mesa_problem(NULL, "Bad pixel format in xmesa_color_to_pixel");
+         _mesa_problem(ctx, "Bad pixel format in xmesa_color_to_pixel");
    }
    return 0;
 }
@@ -1536,14 +1537,14 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
     */
    v->display = display;
 
-   /* Save a copy of the XVisualInfo struct because the user may XFREE()
+   /* Save a copy of the XVisualInfo struct because the user may X_mesa_free()
     * the struct but we may need some of the information contained in it
     * at a later time.
     */
 #ifndef XFree86Server
    v->visinfo = (XVisualInfo *) MALLOC(sizeof(*visinfo));
    if(!v->visinfo) {
-      FREE(v);
+      _mesa_free(v);
       return NULL;
    }
    MEMCPY(v->visinfo, visinfo, sizeof(*visinfo));
@@ -1647,9 +1648,9 @@ void XMesaSetVisualDisplay( XMesaDisplay *dpy, XMesaVisual v )
 void XMesaDestroyVisual( XMesaVisual v )
 {
 #ifndef XFree86Server
-   FREE(v->visinfo);
+   _mesa_free(v->visinfo);
 #endif
-   FREE(v);
+   _mesa_free(v);
 }
 
 
@@ -1687,7 +1688,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    if (!_mesa_initialize_context(mesaCtx, &v->mesa_visual,
                       share_list ? &(share_list->mesa) : (GLcontext *) NULL,
                       &functions, (void *) c)) {
-      FREE(c);
+      _mesa_free(c);
       return NULL;
    }
 
@@ -1707,8 +1708,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    /* finish up xmesa context initializations */
    c->swapbytes = CHECK_BYTE_ORDER(v) ? GL_FALSE : GL_TRUE;
    c->xm_visual = v;
-   c->xm_draw_buffer = NULL;   /* set later by XMesaMakeCurrent */
-   c->xm_read_buffer = NULL;   /* set later by XMesaMakeCurrent */
    c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */
    c->display = v->display;
    c->pixelformat = v->dithered_pf;      /* Dithering is enabled by default */
@@ -1740,8 +1739,10 @@ void XMesaDestroyContext( XMesaContext c )
 {
    GLcontext *mesaCtx = &c->mesa;
 #ifdef FX
-   if (c->xm_draw_buffer && c->xm_buffer->FXctx)
-      fxMesaDestroyContext(c->xm_draw_buffer->FXctx);
+   XMesaBuffer xmbuf = XMESA_BUFFER(mesaCtx->DrawBuffer);
+
+   if (xmbuf && xmbuf->FXctx)
+      fxMesaDestroyContext(xmbuf->FXctx);
 #endif
    _swsetup_DestroyContext( mesaCtx );
    _swrast_DestroyContext( mesaCtx );
@@ -1864,7 +1865,7 @@ XMesaCreateWindowBuffer2(XMesaVisual v, XMesaWindow w, XMesaContext c)
        if ((hw == GR_SSTTYPE_VOODOO) || (hw == GR_SSTTYPE_Voodoo2)) {
          b->FXctx = fxMesaCreateBestContext(0, b->mesa_buffer.Width,
                                             b->mesa_buffer.Height, attribs);
-         if ((v->undithered_pf!=PF_Index) && (b->backimage)) {
+         if ((v->undithered_pf!=PF_Index) && (b->backxrb->ximage)) {
 	   b->FXisHackUsable = b->FXctx ? GL_TRUE : GL_FALSE;
 	   if (b->FXctx && (fxEnvVar[0]=='w' || fxEnvVar[0]=='W')) {
 	     b->FXwindowHack = GL_TRUE;
@@ -1989,27 +1990,27 @@ void XMesaDestroyBuffer( XMesaBuffer b )
    int client = 0;
 
 #ifdef XFree86Server
-   if (b->frontbuffer)
-       client = CLIENT_ID(b->frontbuffer->id);
+   if (b->frontxrb->pixmap)
+       client = CLIENT_ID(b->frontxrb->pixmap->id);
 #endif
 
    if (b->gc)  XMesaFreeGC( b->xm_visual->display, b->gc );
    if (b->cleargc)  XMesaFreeGC( b->xm_visual->display, b->cleargc );
    if (b->swapgc)  XMesaFreeGC( b->xm_visual->display, b->swapgc );
 
-   if (b->backimage) {
+   if (b->backxrb->ximage) {
 #if defined(USE_XSHM) && !defined(XFree86Server)
        if (b->shm) {
 	   XShmDetach( b->xm_visual->display, &b->shminfo );
-	   XDestroyImage( b->backimage );
+	   XDestroyImage( b->backxrb->ximage );
 	   shmdt( b->shminfo.shmaddr );
        }
        else
 #endif
-	   XMesaDestroyImage( b->backimage );
+	   XMesaDestroyImage( b->backxrb->ximage );
    }
-   if (b->backpixmap) {
-      XMesaFreePixmap( b->xm_visual->display, b->backpixmap );
+   if (b->backxrb->pixmap) {
+      XMesaFreePixmap( b->xm_visual->display, b->backxrb->pixmap );
       if (b->xm_visual->hpcr_clear_flag) {
 	XMesaFreePixmap( b->xm_visual->display,
 			 b->xm_visual->hpcr_clear_pixmap );
@@ -2017,7 +2018,7 @@ void XMesaDestroyBuffer( XMesaBuffer b )
       }
    }
    if (b->rowimage) {
-      FREE( b->rowimage->data );
+      _mesa_free( b->rowimage->data );
       b->rowimage->data = NULL;
       XMesaDestroyImage( b->rowimage );
    }
@@ -2050,49 +2051,45 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
       if (drawBuffer->FXctx) {
          fxMesaMakeCurrent(drawBuffer->FXctx);
 
-         c->xm_draw_buffer = drawBuffer;
-         c->xm_read_buffer = readBuffer;
          c->xm_buffer = drawBuffer;
 
          return GL_TRUE;
       }
 #endif
       if (&(c->mesa) == _mesa_get_current_context()
-          && c->xm_draw_buffer == drawBuffer
-          && c->xm_read_buffer == readBuffer
-          && c->xm_draw_buffer->wasCurrent) {
+          && c->mesa.DrawBuffer == &drawBuffer->mesa_buffer
+          && c->mesa.ReadBuffer == &readBuffer->mesa_buffer
+          && ((XMesaBuffer) c->mesa.DrawBuffer)->wasCurrent) {
          /* same context and buffer, do nothing */
          return GL_TRUE;
       }
 
-      c->xm_draw_buffer = drawBuffer;
-      c->xm_read_buffer = readBuffer;
       c->xm_buffer = drawBuffer;
 
-      _mesa_make_current2(&(c->mesa),
-                          &drawBuffer->mesa_buffer,
-                          &readBuffer->mesa_buffer);
+      _mesa_make_current(&(c->mesa),
+                         &drawBuffer->mesa_buffer,
+                         &readBuffer->mesa_buffer);
 
       if (c->xm_visual->mesa_visual.rgbMode) {
          /*
           * Must recompute and set these pixel values because colormap
           * can be different for different windows.
           */
-         c->clearpixel = xmesa_color_to_pixel( c,
+         c->clearpixel = xmesa_color_to_pixel( &c->mesa,
                                                c->clearcolor[0],
                                                c->clearcolor[1],
                                                c->clearcolor[2],
                                                c->clearcolor[3],
                                                c->xm_visual->undithered_pf);
-         XMesaSetForeground(c->display, c->xm_draw_buffer->cleargc, c->clearpixel);
+         XMesaSetForeground(c->display, drawBuffer->cleargc, c->clearpixel);
       }
 
       /* Solution to Stephane Rehel's problem with glXReleaseBuffersMESA(): */
-      c->xm_draw_buffer->wasCurrent = GL_TRUE;
+      drawBuffer->wasCurrent = GL_TRUE;
    }
    else {
       /* Detach */
-      _mesa_make_current2( NULL, NULL, NULL );
+      _mesa_make_current( NULL, NULL, NULL );
    }
    return GL_TRUE;
 }
@@ -2125,8 +2122,8 @@ XMesaBuffer XMesaGetCurrentBuffer( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    if (ctx) {
-      XMesaContext xmesa = XMESA_CONTEXT(ctx);
-      return xmesa->xm_draw_buffer;
+      XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
+      return xmbuf;
    }
    else {
       return 0;
@@ -2139,8 +2136,7 @@ XMesaBuffer XMesaGetCurrentReadBuffer( void )
 {
    GET_CURRENT_CONTEXT(ctx);
    if (ctx) {
-      XMesaContext xmesa = XMESA_CONTEXT(ctx);
-      return xmesa->xm_read_buffer;
+      return (XMesaBuffer) (ctx->ReadBuffer);
    }
    else {
       return 0;
@@ -2152,11 +2148,11 @@ GLboolean XMesaForceCurrent(XMesaContext c)
 {
    if (c) {
       if (&(c->mesa) != _mesa_get_current_context()) {
-	 _mesa_make_current(&(c->mesa), &c->xm_draw_buffer->mesa_buffer);
+	 _mesa_make_current(&c->mesa, c->mesa.DrawBuffer, c->mesa.ReadBuffer);
       }
    }
    else {
-      _mesa_make_current(NULL, NULL);
+      _mesa_make_current(NULL, NULL, NULL);
    }
    return GL_TRUE;
 }
@@ -2165,7 +2161,7 @@ GLboolean XMesaForceCurrent(XMesaContext c)
 GLboolean XMesaLoseCurrent(XMesaContext c)
 {
    (void) c;
-   _mesa_make_current(NULL, NULL);
+   _mesa_make_current(NULL, NULL, NULL);
    return GL_TRUE;
 }
 
@@ -2193,17 +2189,17 @@ GLboolean XMesaSetFXmode( GLint mode )
 	  * oh, this is sooo wrong: ctx above is
 	  * really an fxMesaContext, not an XMesaContext
 	  */
-         XMesaContext xmesa = XMESA_CONTEXT(ctx);
+         XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
          if (mode == XMESA_FX_WINDOW) {
-	    if (xmesa->xm_draw_buffer->FXisHackUsable) {
+	    if (xmbuf->FXisHackUsable) {
 	       FX_grSstControl(GR_CONTROL_DEACTIVATE);
-	       xmesa->xm_draw_buffer->FXwindowHack = GL_TRUE;
+	       xmbuf->FXwindowHack = GL_TRUE;
 	       return GL_TRUE;
 	    }
 	 }
 	 else if (mode == XMESA_FX_FULLSCREEN) {
 	    FX_grSstControl(GR_CONTROL_ACTIVATE);
-	    xmesa->xm_draw_buffer->FXwindowHack = GL_FALSE;
+	    xmbuf->FXwindowHack = GL_FALSE;
 	    return GL_TRUE;
 	 }
 	 else {
@@ -2235,13 +2231,13 @@ static void FXgetImage( XMesaBuffer b )
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
 #ifdef XFree86Server
-   x = b->frontbuffer->x;
-   y = b->frontbuffer->y;
-   width = b->frontbuffer->width;
-   height = b->frontbuffer->height;
-   depth = b->frontbuffer->depth;
+   x = b->frontxrb->pixmap->x;
+   y = b->frontxrb->pixmap->y;
+   width = b->frontxrb->pixmap->width;
+   height = b->frontxrb->pixmap->height;
+   depth = b->frontxrb->pixmap->depth;
 #else
-   XGetGeometry( b->xm_visual->display, b->frontbuffer,
+   XGetGeometry( b->xm_visual->display, b->frontxrb->pixmap,
                  &root, &xpos, &ypos, &width, &height, &bw, &depth);
 #endif
    if (b->mesa_buffer.Width != width || b->mesa_buffer.Height != height) {
@@ -2249,29 +2245,29 @@ static void FXgetImage( XMesaBuffer b )
       b->mesa_buffer.Height = MIN2((int)height, b->FXctx->height);
       if (b->mesa_buffer.Width & 1)
          b->mesa_buffer.Width--;  /* prevent odd width */
-      xmesa_alloc_back_buffer( b );
+      xmesa_alloc_back_buffer(b, b->mesa_buffer.Width, b->mesa_buffer.Height);
    }
 
    /* [dBorca] we're always in the right GR_COLORFORMAT... aren't we? */
    /* grLfbWriteColorFormat(GR_COLORFORMAT_ARGB); */
    if (b->xm_visual->undithered_pf==PF_5R6G5B) {
       /* Special case: 16bpp RGB */
-      grLfbReadRegion( GR_BUFFER_FRONTBUFFER,       /* src buffer */
+      grLfbReadRegion( GR_BUFFER_FRONTXRB->PIXMAP,       /* src buffer */
                        0, b->FXctx->height - b->mesa_buffer.Height,  /*pos*/
                        b->mesa_buffer.Width, b->mesa_buffer.Height,  /* size */
                        b->mesa_buffer.Width * sizeof(GLushort), /* stride */
-                       b->backimage->data);         /* dest buffer */
+                       b->backxrb->ximage->data);         /* dest buffer */
    }
    else if (b->xm_visual->dithered_pf==PF_Dither
 	    && GET_VISUAL_DEPTH(b->xm_visual)==8) {
       /* Special case: 8bpp RGB */
       for (y=0;y<b->mesa_buffer.Height;y++) {
-         GLubyte *ptr = (GLubyte*) b->backimage->data
-                        + b->backimage->bytes_per_line * y;
+         GLubyte *ptr = (GLubyte*) b->backxrb->ximage->data
+                        + b->backxrb->ximage->bytes_per_line * y;
          XDITHER_SETUP(y);
 
          /* read row from 3Dfx frame buffer */
-         grLfbReadRegion( GR_BUFFER_FRONTBUFFER,
+         grLfbReadRegion( GR_BUFFER_FRONTXRB->PIXMAP,
                           0, b->FXctx->height-(b->mesa_buffer.Height-y),
                           b->mesa_buffer.Width, 1,
                           0,
@@ -2290,7 +2286,7 @@ static void FXgetImage( XMesaBuffer b )
       /* General case: slow! */
       for (y=0;y<b->mesa_buffer.Height;y++) {
          /* read row from 3Dfx frame buffer */
-         grLfbReadRegion( GR_BUFFER_FRONTBUFFER,
+         grLfbReadRegion( GR_BUFFER_FRONTXRB->PIXMAP,
                           0, b->FXctx->height-(b->mesa_buffer.Height-y),
                           b->mesa_buffer.Width, 1,
                           0,
@@ -2298,8 +2294,8 @@ static void FXgetImage( XMesaBuffer b )
 
          /* write to XImage back buffer */
          for (x=0;x<b->mesa_buffer.Width;x++) {
-            XMesaPutPixel(b->backimage,x,y,
-			  xmesa_color_to_pixel(xmesa,
+            XMesaPutPixel(b->backxrb->ximage,x,y,
+			  xmesa_color_to_pixel(&c->mesa,
 					       (pixbuf[x] & 0xf800) >> 8,
 					       (pixbuf[x] & 0x07e0) >> 3,
 					       (pixbuf[x] & 0x001f) << 3,
@@ -2338,14 +2334,14 @@ void XMesaSwapBuffers( XMesaBuffer b )
             return;
       }
 #endif
-     if (b->backimage) {
+     if (b->backxrb->ximage) {
 	 /* Copy Ximage from host's memory to server's window */
 #if defined(USE_XSHM) && !defined(XFree86Server)
 	 if (b->shm) {
             /*_glthread_LOCK_MUTEX(_xmesa_lock);*/
-	    XShmPutImage( b->xm_visual->display, b->frontbuffer,
+	    XShmPutImage( b->xm_visual->display, b->frontxrb->pixmap,
 			  b->swapgc,
-			  b->backimage, 0, 0,
+			  b->backxrb->ximage, 0, 0,
 			  0, 0, b->mesa_buffer.Width, b->mesa_buffer.Height,
                           False );
             /*_glthread_UNLOCK_MUTEX(_xmesa_lock);*/
@@ -2354,9 +2350,9 @@ void XMesaSwapBuffers( XMesaBuffer b )
 #endif
          {
             /*_glthread_LOCK_MUTEX(_xmesa_lock);*/
-            XMesaPutImage( b->xm_visual->display, b->frontbuffer,
+            XMesaPutImage( b->xm_visual->display, b->frontxrb->pixmap,
 			   b->swapgc,
-			   b->backimage, 0, 0,
+			   b->backxrb->ximage, 0, 0,
 			   0, 0, b->mesa_buffer.Width, b->mesa_buffer.Height );
             /*_glthread_UNLOCK_MUTEX(_xmesa_lock);*/
          }
@@ -2365,8 +2361,8 @@ void XMesaSwapBuffers( XMesaBuffer b )
 	 /* Copy pixmap to window on server */
          /*_glthread_LOCK_MUTEX(_xmesa_lock);*/
 	 XMesaCopyArea( b->xm_visual->display,
-			b->backpixmap,   /* source drawable */
-			b->frontbuffer,  /* dest. drawable */
+			b->backxrb->pixmap,   /* source drawable */
+			b->frontxrb->pixmap,  /* dest. drawable */
 			b->swapgc,
 			0, 0, b->mesa_buffer.Width, b->mesa_buffer.Height,
 			0, 0                 /* dest region */
@@ -2405,14 +2401,14 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
             return;
       }
 #endif
-      if (b->backimage) {
+      if (b->backxrb->ximage) {
          /* Copy Ximage from host's memory to server's window */
 #if defined(USE_XSHM) && !defined(XFree86Server)
          if (b->shm) {
             /* XXX assuming width and height aren't too large! */
-            XShmPutImage( b->xm_visual->display, b->frontbuffer,
+            XShmPutImage( b->xm_visual->display, b->frontxrb->pixmap,
                           b->swapgc,
-                          b->backimage, x, yTop,
+                          b->backxrb->ximage, x, yTop,
                           x, yTop, width, height, False );
             /* wait for finished event??? */
          }
@@ -2420,17 +2416,17 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
 #endif
          {
             /* XXX assuming width and height aren't too large! */
-            XMesaPutImage( b->xm_visual->display, b->frontbuffer,
+            XMesaPutImage( b->xm_visual->display, b->frontxrb->pixmap,
 			   b->swapgc,
-			   b->backimage, x, yTop,
+			   b->backxrb->ximage, x, yTop,
 			   x, yTop, width, height );
          }
       }
       else {
          /* Copy pixmap to window on server */
          XMesaCopyArea( b->xm_visual->display,
-			b->backpixmap,           /* source drawable */
-			b->frontbuffer,          /* dest. drawable */
+			b->backxrb->pixmap,           /* source drawable */
+			b->frontxrb->pixmap,          /* dest. drawable */
 			b->swapgc,
 			x, yTop, width, height,  /* source region */
 			x, yTop                  /* dest region */
@@ -2454,8 +2450,8 @@ GLboolean XMesaGetBackBuffer( XMesaBuffer b,
                               XMesaImage **ximage )
 {
    if (b->db_state) {
-      if (pixmap)  *pixmap = b->backpixmap;
-      if (ximage)  *ximage = b->backimage;
+      if (pixmap)  *pixmap = b->backxrb->pixmap;
+      if (ximage)  *ximage = b->backxrb->ximage;
       return GL_TRUE;
    }
    else {
@@ -2477,7 +2473,9 @@ GLboolean XMesaGetBackBuffer( XMesaBuffer b,
 GLboolean XMesaGetDepthBuffer( XMesaBuffer b, GLint *width, GLint *height,
                                GLint *bytesPerValue, void **buffer )
 {
-   if (!b->mesa_buffer.DepthBuffer) {
+   struct gl_renderbuffer *rb
+      = b->mesa_buffer.Attachment[BUFFER_DEPTH].Renderbuffer;
+   if (!rb || !rb->Data) {
       *width = 0;
       *height = 0;
       *bytesPerValue = 0;
@@ -2489,7 +2487,7 @@ GLboolean XMesaGetDepthBuffer( XMesaBuffer b, GLint *width, GLint *height,
       *height = b->mesa_buffer.Height;
       *bytesPerValue = b->mesa_buffer.Visual.depthBits <= 16
          ? sizeof(GLushort) : sizeof(GLuint);
-      *buffer = b->mesa_buffer.DepthBuffer;
+      *buffer = rb->Data;
       return GL_TRUE;
    }
 }
@@ -2528,7 +2526,7 @@ XMesaBuffer XMesaFindBuffer( XMesaDisplay *dpy, XMesaDrawable d )
 {
    XMesaBuffer b;
    for (b=XMesaBufferList; b; b=b->Next) {
-      if (b->frontbuffer==d && b->display==dpy) {
+      if (b->frontxrb->pixmap==d && b->display==dpy) {
          return b;
       }
    }
@@ -2546,12 +2544,12 @@ void XMesaGarbageCollect( void )
    XMesaBuffer b, next;
    for (b=XMesaBufferList; b; b=next) {
       next = b->Next;
-      if (b->display && b->frontbuffer && b->type == WINDOW) {
+      if (b->display && b->frontxrb->pixmap && b->type == WINDOW) {
 #ifdef XFree86Server
 	 /* NOT_NEEDED */
 #else
          XSync(b->display, False);
-         if (!window_exists( b->display, b->frontbuffer )) {
+         if (!window_exists( b->display, b->frontxrb->pixmap )) {
             /* found a dead window, free the ancillary info */
             XMesaDestroyBuffer( b );
          }
@@ -2574,6 +2572,7 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
                                 GLfloat red, GLfloat green,
                                 GLfloat blue, GLfloat alpha )
 {
+   GLcontext *ctx = &xmesa->mesa;
    GLint r = (GLint) (red   * 255.0F);
    GLint g = (GLint) (green * 255.0F);
    GLint b = (GLint) (blue  * 255.0F);
@@ -2634,7 +2633,8 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
  */
 void XMesaResizeBuffers( XMesaBuffer b )
 {
-   xmesa_resize_buffers( &(b->mesa_buffer) );
-
+#if OLD_RENDERBUFFER && 0
+   xmesa_resize_buffers(ctx, &(b->mesa_buffer), 0, 0 );
+#endif
 }
 

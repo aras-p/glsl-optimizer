@@ -32,6 +32,7 @@
 
 #include "swrast/swrast.h"
 #include "context.h"
+#include "framebuffer.h"
 
 #define TRIDENT_DATE	"20041223"
 
@@ -115,7 +116,7 @@ void tridentDDInitDriverFuncs( GLcontext *ctx )
    ctx->Driver.CopyPixels               = _swrast_CopyPixels;
    ctx->Driver.DrawPixels               = _swrast_DrawPixels;
    ctx->Driver.ReadPixels               = _swrast_ReadPixels;
-   ctx->Driver.ResizeBuffers            = _swrast_alloc_buffers;
+   ctx->Driver.ResizeBuffers            = _mesa_resize_framebuffer;
 
    /* Swrast hooks for imaging extensions:
     */

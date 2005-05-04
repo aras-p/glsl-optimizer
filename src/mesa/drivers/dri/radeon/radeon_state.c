@@ -1661,12 +1661,12 @@ static void radeonDrawBuffer( GLcontext *ctx, GLenum mode )
    /*
     * _DrawDestMask is easier to cope with than <mode>.
     */
-   switch ( ctx->Color._DrawDestMask[0] ) {
-   case DD_FRONT_LEFT_BIT:
+   switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
+   case BUFFER_BIT_FRONT_LEFT:
       FALLBACK( rmesa, RADEON_FALLBACK_DRAW_BUFFER, GL_FALSE );
       radeonSetCliprects( rmesa, GL_FRONT_LEFT );
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       FALLBACK( rmesa, RADEON_FALLBACK_DRAW_BUFFER, GL_FALSE );
       radeonSetCliprects( rmesa, GL_BACK_LEFT );
       break;

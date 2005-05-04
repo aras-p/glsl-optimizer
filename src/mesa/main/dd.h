@@ -75,12 +75,10 @@ struct dd_function_table {
                           GLuint *width, GLuint *height );
 
    /**
-    * Resize the driver's depth/stencil/accum/back buffers to match the
-    * size given in the GLframebuffer struct.  
-    *
-    * This is typically called when Mesa detects that a window size has changed.
+    * Resize the given framebuffer to the given size.
     */
-   void (*ResizeBuffers)( GLframebuffer *buffer );
+   void (*ResizeBuffers)( GLcontext *ctx, GLframebuffer *fb,
+                          GLuint width, GLuint height);
 
    /**
     * Called whenever an error is generated.  
@@ -795,6 +793,13 @@ struct dd_function_table {
    /*@{*/
    struct gl_framebuffer * (*NewFramebuffer)(GLcontext *ctx, GLuint name);
    struct gl_renderbuffer * (*NewRenderbuffer)(GLcontext *ctx, GLuint name);
+   void (*FramebufferRenderbuffer)(GLcontext *ctx, 
+                                   struct gl_renderbuffer_attachment *att,
+                                   struct gl_renderbuffer *rb);
+   void (*RenderbufferTexture)(GLcontext *ctx,
+                               struct gl_renderbuffer_attachment *att,
+                               struct gl_texture_object *texObj,
+                               GLenum texTarget, GLuint level, GLuint zoffset);
    /*@}*/
 #endif
 

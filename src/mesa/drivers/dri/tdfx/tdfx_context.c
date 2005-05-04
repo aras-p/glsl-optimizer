@@ -634,9 +634,9 @@ tdfxMakeCurrent( __DRIcontextPrivate *driContextPriv,
             /* Need to call _mesa_make_current2() in order to make sure API
              * dispatch is set correctly.
              */
-            _mesa_make_current2( newCtx,
-                                 (GLframebuffer *) driDrawPriv->driverPrivate,
-                                 (GLframebuffer *) driReadPriv->driverPrivate );
+            _mesa_make_current( newCtx,
+                                (GLframebuffer *) driDrawPriv->driverPrivate,
+                                (GLframebuffer *) driReadPriv->driverPrivate );
             return GL_TRUE;
 	 }
 	 /* [dBorca] tunnel2 requires this */
@@ -667,11 +667,11 @@ tdfxMakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 UNLOCK_HARDWARE( newFx );
       }
 
-      _mesa_make_current2( newCtx,
-                           (GLframebuffer *) driDrawPriv->driverPrivate,
-                           (GLframebuffer *) driReadPriv->driverPrivate );
+      _mesa_make_current( newCtx,
+                          (GLframebuffer *) driDrawPriv->driverPrivate,
+                          (GLframebuffer *) driReadPriv->driverPrivate );
    } else {
-      _mesa_make_current( 0, 0 );
+      _mesa_make_current( NULL, NULL, NULL );
    }
 
    return GL_TRUE;

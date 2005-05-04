@@ -175,7 +175,7 @@ tdfx_bitmap_R5G6B5(GLcontext * ctx, GLint px, GLint py,
 			  SCISSOR_BIT |
 			  STENCIL_BIT |
 			  MASKING_BIT |
-			  ALPHABUF_BIT | MULTI_DRAW_BIT)) return GL_FALSE;
+			  MULTI_DRAW_BIT)) return GL_FALSE;
 
    if (ctx->Scissor.Enabled) {
       /* This is a bit tricky, but by carefully adjusting the px, py,
@@ -339,7 +339,7 @@ tdfx_bitmap_R8G8B8A8(GLcontext * ctx, GLint px, GLint py,
 			  SCISSOR_BIT |
 			  STENCIL_BIT |
 			  MASKING_BIT |
-			  ALPHABUF_BIT | MULTI_DRAW_BIT)) return GL_FALSE;
+			  MULTI_DRAW_BIT)) return GL_FALSE;
 
    if (ctx->Scissor.Enabled) {
       /* This is a bit tricky, but by carefully adjusting the px, py,

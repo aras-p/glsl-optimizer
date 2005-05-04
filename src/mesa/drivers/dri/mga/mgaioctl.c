@@ -175,30 +175,30 @@ mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
    FLUSH_BATCH( mmesa );
 
-   if ( mask & DD_FRONT_LEFT_BIT ) {
+   if ( mask & BUFFER_BIT_FRONT_LEFT ) {
       flags |= MGA_FRONT;
       color_mask = mmesa->setup.plnwt;
-      mask &= ~DD_FRONT_LEFT_BIT;
+      mask &= ~BUFFER_BIT_FRONT_LEFT;
    }
 
-   if ( mask & DD_BACK_LEFT_BIT ) {
+   if ( mask & BUFFER_BIT_BACK_LEFT ) {
       flags |= MGA_BACK;
       color_mask = mmesa->setup.plnwt;
-      mask &= ~DD_BACK_LEFT_BIT;
+      mask &= ~BUFFER_BIT_BACK_LEFT;
    }
 
-   if ( (mask & DD_DEPTH_BIT) && ctx->Depth.Mask ) {
+   if ( (mask & BUFFER_BIT_DEPTH) && ctx->Depth.Mask ) {
       flags |= MGA_DEPTH;
       clear_depth = (mmesa->ClearDepth & mmesa->depth_clear_mask);
       depth_mask |= mmesa->depth_clear_mask;
-      mask &= ~DD_DEPTH_BIT;
+      mask &= ~BUFFER_BIT_DEPTH;
    }
 
-   if ( (mask & DD_STENCIL_BIT) && mmesa->hw_stencil ) {
+   if ( (mask & BUFFER_BIT_STENCIL) && mmesa->hw_stencil ) {
       flags |= MGA_DEPTH;
       clear_depth |= (ctx->Stencil.Clear & mmesa->stencil_clear_mask);
       depth_mask |= mmesa->stencil_clear_mask;
-      mask &= ~DD_STENCIL_BIT;
+      mask &= ~BUFFER_BIT_STENCIL;
    }
 
    if ( flags ) {

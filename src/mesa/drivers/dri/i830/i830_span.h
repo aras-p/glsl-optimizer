@@ -38,9 +38,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _I830_SPAN_H
 #define _I830_SPAN_H
 
+#include "drirenderbuffer.h"
+
 extern void i830DDInitSpanFuncs( GLcontext *ctx );
 
 extern void i830SpanRenderFinish( GLcontext *ctx );
 extern void i830SpanRenderStart( GLcontext *ctx );
+
+extern void
+i830SetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
 
 #endif

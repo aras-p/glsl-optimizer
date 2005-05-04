@@ -19,12 +19,13 @@
 #endif
 
 static void TAG(WriteStencilSpan)( GLcontext *ctx,
+                                   struct gl_renderbuffer *rb,
 				   GLuint n, GLint x, GLint y,
-				   const GLstencil *stencil, 
-				   const GLubyte mask[] )
+				   const void *values, const GLubyte mask[] )
 {
    HW_WRITE_LOCK()
       {
+         const GLubyte *stencil = (const GLubyte *) values;
 	 GLint x1;
 	 GLint n1;
 	 LOCAL_STENCIL_VARS;
@@ -57,15 +58,57 @@ static void TAG(WriteStencilSpan)( GLcontext *ctx,
 }
 
 
-static void TAG(WriteStencilPixels)( GLcontext *ctx,
-				     GLuint n, 
-				     const GLint x[], 
-				     const GLint y[],
-				     const GLstencil stencil[], 
-				     const GLubyte mask[] )
+static void TAG(WriteMonoStencilSpan)( GLcontext *ctx,
+                                       struct gl_renderbuffer *rb,
+                                       GLuint n, GLint x, GLint y,
+                                       const void *value,
+                                       const GLubyte mask[] )
 {
    HW_WRITE_LOCK()
       {
+         const GLubyte stencil = *((const GLubyte *) value);
+	 GLint x1;
+	 GLint n1;
+	 LOCAL_STENCIL_VARS;
+
+	 y = Y_FLIP(y);
+
+	 HW_CLIPLOOP() 
+	    {
+	       GLint i = 0;
+	       CLIPSPAN(x,y,n,x1,n1,i);
+
+	       if (DBG) fprintf(stderr, "WriteStencilSpan %d..%d (x1 %d)\n",
+				(int)i, (int)n1, (int)x1);
+
+	       if (mask)
+	       {
+		  for (;n1>0;i++,x1++,n1--)
+		     if (mask[i])
+			WRITE_STENCIL( x1, y, stencil );
+	       }
+	       else
+	       {
+		  for (;n1>0;i++,x1++,n1--)
+		     WRITE_STENCIL( x1, y, stencil );
+	       }
+	    }
+	 HW_ENDCLIPLOOP();
+      }
+   HW_WRITE_UNLOCK();
+}
+
+
+
+static void TAG(WriteStencilPixels)( GLcontext *ctx,
+                                     struct gl_renderbuffer *rb,
+				     GLuint n,
+				     const GLint x[], const GLint y[],
+				     const void *values, const GLubyte mask[] )
+{
+   HW_WRITE_LOCK()
+      {
+         const GLubyte *stencil = (const GLubyte *) values;
 	 GLuint i;
 	 LOCAL_STENCIL_VARS;
 
@@ -91,11 +134,13 @@ static void TAG(WriteStencilPixels)( GLcontext *ctx,
 /* Read stencil spans and pixels
  */
 static void TAG(ReadStencilSpan)( GLcontext *ctx,
+                                  struct gl_renderbuffer *rb,
 				  GLuint n, GLint x, GLint y,
-				  GLstencil stencil[])
+				  void *values)
 {
    HW_READ_LOCK()
       {
+         GLubyte *stencil = (GLubyte *) values;
 	 GLint x1,n1;
 	 LOCAL_STENCIL_VARS;
 
@@ -115,12 +160,14 @@ static void TAG(ReadStencilSpan)( GLcontext *ctx,
    HW_READ_UNLOCK();
 }
 
-static void TAG(ReadStencilPixels)( GLcontext *ctx, GLuint n, 
-				    const GLint x[], const GLint y[],
-				    GLstencil stencil[] )
+static void TAG(ReadStencilPixels)( GLcontext *ctx,
+                                    struct gl_renderbuffer *rb,
+                                    GLuint n, const GLint x[], const GLint y[],
+				    void *values )
 {
    HW_READ_LOCK()
       {
+         GLubyte *stencil = (GLubyte *) values;
 	 GLuint i;
 	 LOCAL_STENCIL_VARS;
 

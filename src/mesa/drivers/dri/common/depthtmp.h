@@ -1,5 +1,13 @@
 /* $XFree86: xc/lib/GL/mesa/src/drv/common/depthtmp.h,v 1.5 2001/03/21 16:14:20 dawes Exp $ */
 
+/*
+ * Notes:
+ * 1. These functions plug into the gl_renderbuffer structure.
+ * 2. The 'values' parameter always points to GLuint values, regardless of
+ *    the actual Z buffer depth.
+ */
+
+
 #ifndef DBG
 #define DBG 0
 #endif
@@ -20,12 +28,14 @@
 #endif
 
 static void TAG(WriteDepthSpan)( GLcontext *ctx,
-                             GLuint n, GLint x, GLint y,
-				 const GLdepth *depth,
+                                 struct gl_renderbuffer *rb,
+                                 GLuint n, GLint x, GLint y,
+				 const void *values,
 				 const GLubyte mask[] )
 {
    HW_WRITE_LOCK()
       {
+         const GLuint *depth = (const GLuint *) values;
 	 GLint x1;
 	 GLint n1;
 	 LOCAL_DEPTH_VARS;
@@ -64,14 +74,31 @@ static void TAG(WriteDepthSpan)( GLcontext *ctx,
    HW_WRITE_UNLOCK();
 }
 
-#if !HAVE_HW_DEPTH_SPANS
+
+#if HAVE_HW_DEPTH_SPANS
+/* implement MonoWriteDepthSpan() in terms of WriteDepthSpan() */
+static void
+TAG(WriteMonoDepthSpan)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                         GLuint n, GLint x, GLint y,
+                         const void *value, const GLubyte mask[] )
+{
+   const GLuint depthVal = *((GLuint *) value);
+   GLuint depths[MAX_WIDTH];
+   GLuint i;
+   for (i = 0; i < n; i++)
+      depths[i] = depthVal;
+   TAG(WriteDepthSpan)(ctx, rb, n, x, y, depths, mask);
+}
+#else
 static void TAG(WriteMonoDepthSpan)( GLcontext *ctx,
-                                 GLuint n, GLint x, GLint y,
-				 const GLdepth depth,
-				 const GLubyte mask[] )
+                                     struct gl_renderbuffer *rb,
+                                     GLuint n, GLint x, GLint y,
+                                     const void *value,
+                                     const GLubyte mask[] )
 {
    HW_WRITE_LOCK()
       {
+         const GLuint depth = *((GLuint *) value);
 	 GLint x1;
 	 GLint n1;
 	 LOCAL_DEPTH_VARS;
@@ -102,15 +129,18 @@ static void TAG(WriteMonoDepthSpan)( GLcontext *ctx,
 }
 #endif
 
+
 static void TAG(WriteDepthPixels)( GLcontext *ctx,
+                                   struct gl_renderbuffer *rb,
 				   GLuint n,
 				   const GLint x[],
 				   const GLint y[],
-				   const GLdepth depth[],
+				   const void *values,
 				   const GLubyte mask[] )
 {
    HW_WRITE_LOCK()
       {
+         const GLuint *depth = (const GLuint *) values;
 	 GLuint i;
 	 LOCAL_DEPTH_VARS;
 
@@ -141,11 +171,13 @@ static void TAG(WriteDepthPixels)( GLcontext *ctx,
 /* Read depth spans and pixels
  */
 static void TAG(ReadDepthSpan)( GLcontext *ctx,
+                                struct gl_renderbuffer *rb,
 				GLuint n, GLint x, GLint y,
-				GLdepth depth[] )
+				void *values )
 {
    HW_READ_LOCK()
       {
+         GLuint *depth = (GLuint *) values;
 	 GLint x1, n1;
 	 LOCAL_DEPTH_VARS;
 
@@ -172,12 +204,15 @@ static void TAG(ReadDepthSpan)( GLcontext *ctx,
    HW_READ_UNLOCK();
 }
 
-static void TAG(ReadDepthPixels)( GLcontext *ctx, GLuint n,
+static void TAG(ReadDepthPixels)( GLcontext *ctx,
+                                  struct gl_renderbuffer *rb,
+                                  GLuint n,
 				  const GLint x[], const GLint y[],
-				  GLdepth depth[] )
+				  void *values )
 {
    HW_READ_LOCK()
       {
+         GLuint *depth = (GLuint *) values;
 	 GLuint i;
 	 LOCAL_DEPTH_VARS;
 

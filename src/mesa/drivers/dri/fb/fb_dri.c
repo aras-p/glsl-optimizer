@@ -44,9 +44,12 @@
 #include "driver.h"
 #include "drm.h"
 #include "utils.h"
+#include "drirenderbuffer.h"
 
 #include "buffers.h"
 #include "extensions.h"
+#include "framebuffer.h"
+#include "renderbuffer.h"
 #include "array_cache/acache.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -153,10 +156,10 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
 
 
    switch (bufferBit) {
-   case DD_FRONT_LEFT_BIT:
+   case BUFFER_BIT_FRONT_LEFT:
       fbdrawable->currentBuffer = fbdrawable->frontBuffer;
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       fbdrawable->currentBuffer = fbdrawable->backBuffer;
       break;
    default:
@@ -171,7 +174,7 @@ init_core_functions( struct dd_function_table *functions )
 {
    functions->GetString = get_string;
    functions->UpdateState = update_state;
-   functions->ResizeBuffers = _swrast_alloc_buffers;
+   functions->ResizeBuffers = _mesa_resize_framebuffer;
    functions->GetBufferSize = get_buffer_size;
    functions->Viewport = viewport;
 
@@ -279,7 +282,67 @@ init_core_functions( struct dd_function_table *functions )
 #define FETCH_CI_PIXEL(CI, P) \
    CI = P[0]
 
- #include "swrast/s_spantemp.h"
+#include "swrast/s_spantemp.h"
+
+
+
+void
+fbSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+{
+   ASSERT(drb->Base.InternalFormat == GL_RGBA);
+   if (drb->Base.InternalFormat == GL_RGBA) {
+      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
+         drb->Base.GetRow = read_rgba_span_B5G6R5;
+         drb->Base.GetValues = read_rgba_pixels_B5G6R5;
+         drb->Base.PutRow = write_rgba_span_B5G6R5;
+         drb->Base.PutMonoRow = write_monorgba_span_B5G6R5;
+         drb->Base.PutRowRGB = write_rgb_span_B5G6R5;
+         drb->Base.PutValues = write_rgba_pixels_B5G6R5;
+         drb->Base.PutMonoValues = write_monorgba_pixels_B5G6R5;
+      }
+      else if (vis->redBits == 5 && vis->greenBits == 5 && vis->blueBits == 5) {
+         drb->Base.GetRow = read_rgba_span_B5G5R5;
+         drb->Base.GetValues = read_rgba_pixels_B5G5R5;
+         drb->Base.PutRow = write_rgba_span_B5G5R5;
+         drb->Base.PutMonoRow = write_monorgba_span_B5G5R5;
+         drb->Base.PutRowRGB = write_rgb_span_B5G5R5;
+         drb->Base.PutValues = write_rgba_pixels_B5G5R5;
+         drb->Base.PutMonoValues = write_monorgba_pixels_B5G5R5;
+      }
+      else if (vis->redBits == 8 && vis->greenBits == 8 && vis->blueBits == 8
+               && vis->alphaBits == 8) {
+         drb->Base.GetRow = read_rgba_span_B8G8R8A8;
+         drb->Base.GetValues = read_rgba_pixels_B8G8R8A8;
+         drb->Base.PutRow = write_rgba_span_B8G8R8A8;
+         drb->Base.PutMonoRow = write_monorgba_span_B8G8R8A8;
+         drb->Base.PutRowRGB = write_rgb_span_B8G8R8A8;
+         drb->Base.PutValues = write_rgba_pixels_B8G8R8A8;
+         drb->Base.PutMonoValues = write_monorgba_pixels_B8G8R8A8;
+      }
+      else if (vis->redBits == 8 && vis->greenBits == 8 && vis->blueBits == 8
+               && vis->alphaBits == 0) {
+         drb->Base.GetRow = read_rgba_span_B8G8R8;
+         drb->Base.GetValues = read_rgba_pixels_B8G8R8;
+         drb->Base.PutRow = write_rgba_span_B8G8R8;
+         drb->Base.PutMonoRow = write_monorgba_span_B8G8R8;
+         drb->Base.PutRowRGB = write_rgb_span_B8G8R8;
+         drb->Base.PutValues = write_rgba_pixels_B8G8R8;
+         drb->Base.PutMonoValues = write_monorgba_pixels_B8G8R8;
+      }
+      else if (vis->indexBits == 8) {
+         drb->Base.GetRow = read_index_span_CI8;
+         drb->Base.GetValues = read_index_pixels_CI8;
+         drb->Base.PutRow = write_index_span_CI8;
+         drb->Base.PutMonoRow = write_monoindex_span_CI8;
+         drb->Base.PutValues = write_index_pixels_CI8;
+         drb->Base.PutMonoValues = write_monoindex_pixels_CI8;
+      }
+   }
+   else {
+      /* hardware z/stencil/etc someday */
+   }
+}
+
 
 
 /* Initialize the driver specific screen private data.
@@ -377,60 +440,6 @@ fbCreateContext( const __GLcontextModes *glVisual,
       struct swrast_device_driver *swdd;
       swdd = _swrast_GetDeviceDriverReference( ctx );
       swdd->SetBuffer = set_buffer;
-      if (!glVisual->rgbMode) {
-         swdd->WriteCI32Span = write_index32_span_CI8;
-         swdd->WriteCI8Span = write_index8_span_CI8;
-         swdd->WriteMonoCISpan = write_monoindex_span_CI8;
-         swdd->WriteCI32Pixels = write_index_pixels_CI8;
-         swdd->WriteMonoCIPixels = write_monoindex_pixels_CI8;
-         swdd->ReadCI32Span = read_index_span_CI8;
-         swdd->ReadCI32Pixels = read_index_pixels_CI8;
-      }
-      else if (glVisual->rgbBits == 24 &&
-	       glVisual->alphaBits == 0) {
-         swdd->WriteRGBASpan = write_rgba_span_B8G8R8;
-         swdd->WriteRGBSpan = write_rgb_span_B8G8R8;
-         swdd->WriteMonoRGBASpan = write_monorgba_span_B8G8R8;
-         swdd->WriteRGBAPixels = write_rgba_pixels_B8G8R8;
-         swdd->WriteMonoRGBAPixels = write_monorgba_pixels_B8G8R8;
-         swdd->ReadRGBASpan = read_rgba_span_B8G8R8;
-         swdd->ReadRGBAPixels = read_rgba_pixels_B8G8R8;
-      }
-      else if (glVisual->rgbBits == 32 &&
-	       glVisual->alphaBits == 8) {
-         swdd->WriteRGBASpan = write_rgba_span_B8G8R8A8;
-         swdd->WriteRGBSpan = write_rgb_span_B8G8R8A8;
-         swdd->WriteMonoRGBASpan = write_monorgba_span_B8G8R8A8;
-         swdd->WriteRGBAPixels = write_rgba_pixels_B8G8R8A8;
-         swdd->WriteMonoRGBAPixels = write_monorgba_pixels_B8G8R8A8;
-         swdd->ReadRGBASpan = read_rgba_span_B8G8R8A8;
-         swdd->ReadRGBAPixels = read_rgba_pixels_B8G8R8A8;
-      }
-      else if (glVisual->rgbBits == 16 &&
-	       glVisual->alphaBits == 0) {
-         swdd->WriteRGBASpan = write_rgba_span_B5G6R5;
-         swdd->WriteRGBSpan = write_rgb_span_B5G6R5;
-         swdd->WriteMonoRGBASpan = write_monorgba_span_B5G6R5;
-         swdd->WriteRGBAPixels = write_rgba_pixels_B5G6R5;
-         swdd->WriteMonoRGBAPixels = write_monorgba_pixels_B5G6R5;
-         swdd->ReadRGBASpan = read_rgba_span_B5G6R5;
-         swdd->ReadRGBAPixels = read_rgba_pixels_B5G6R5;
-      }
-      else if (glVisual->rgbBits == 15 &&
-	       glVisual->alphaBits == 0) {
-         swdd->WriteRGBASpan = write_rgba_span_B5G5R5;
-         swdd->WriteRGBSpan = write_rgb_span_B5G5R5;
-         swdd->WriteMonoRGBASpan = write_monorgba_span_B5G5R5;
-         swdd->WriteRGBAPixels = write_rgba_pixels_B5G5R5;
-         swdd->WriteMonoRGBAPixels = write_monorgba_pixels_B5G5R5;
-         swdd->ReadRGBASpan = read_rgba_span_B5G5R5;
-         swdd->ReadRGBAPixels = read_rgba_pixels_B5G5R5;
-      }
-      else {
-         _mesa_printf("bad pixelformat rgb %d alpha %d\n",
-		      glVisual->rgbBits, 
-		      glVisual->alphaBits );
-      }
    }
 
    /* use default TCL pipeline */
@@ -454,7 +463,7 @@ fbDestroyContext( __DRIcontextPrivate *driContextPriv )
 
    /* check if we're deleting the currently bound context */
    if (fbmesa == current) {
-      _mesa_make_current2(NULL, NULL, NULL);
+      _mesa_make_current(NULL, NULL, NULL);
    }
 
    /* Free fb context resources */
@@ -498,6 +507,7 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       if (!fbdrawable)
          return 0;
       
+#if 0
       fbdrawable->mesa_framebuffer = (void *)
          _mesa_create_framebuffer( mesaVis,
                                    swDepth,
@@ -509,6 +519,42 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
          _mesa_free(fbdrawable);
          return 0;
       }
+#else
+      fbdrawable->mesa_framebuffer = _mesa_create_framebuffer(mesaVis);
+      if (!fbdrawable->mesa_framebuffer) {
+         _mesa_free(fbdrawable);
+         return 0;
+      }
+
+      /* XXX double-check these parameters (bpp vs cpp, etc) */
+      {
+         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, spriv->bpp,
+                                                   spriv->fbOrigin,
+                                                   spriv->fbStride);
+         fbSetSpanFunctions(drb, mesaVis);
+         _mesa_add_renderbuffer(fbdrawable->mesa_framebuffer,
+                                BUFFER_FRONT_LEFT, &drb->Base);
+      }
+      if (mesaVis->doubleBufferMode) {
+         /* XXX what are the correct origin/stride values? */
+         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, spriv->bpp,
+                                                   spriv->fbOrigin,
+                                                   spriv->fbStride);
+         fbSetSpanFunctions(drb, mesaVis);
+         _mesa_add_renderbuffer(fbdrawable->mesa_framebuffer,
+                                BUFFER_BACK_LEFT, &drb->Base);
+      }
+
+      _mesa_add_soft_renderbuffers(fbdrawable->mesa_framebuffer,
+                                   GL_FALSE, /* color */
+                                   swDepth,
+                                   swStencil,
+                                   swAccum,
+                                   swAlpha,
+                                   GL_FALSE /* aux */);
+
+#endif
+
       driDrawPriv->driverPrivate = fbdrawable;
 
       fbdrawable->frontBuffer = fbdrawable->currentBuffer = spriv->fbMap;
@@ -591,11 +637,11 @@ fbMakeCurrent( __DRIcontextPrivate *driContextPriv,
 
       newFbCtx->dri.drawable = driDrawPriv;
 
-      _mesa_make_current2( newFbCtx->glCtx,
-                           ((fbDrawablePtr)driDrawPriv->driverPrivate)->mesa_framebuffer,
-                           ((fbDrawablePtr)driReadPriv->driverPrivate)->mesa_framebuffer);
+      _mesa_make_current( newFbCtx->glCtx,
+                          ((fbDrawablePtr)driDrawPriv->driverPrivate)->mesa_framebuffer,
+                          ((fbDrawablePtr)driReadPriv->driverPrivate)->mesa_framebuffer);
    } else {
-      _mesa_make_current( 0, 0 );
+      _mesa_make_current( NULL, NULL, NULL );
    }
 
    return GL_TRUE;

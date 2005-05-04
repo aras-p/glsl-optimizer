@@ -247,10 +247,10 @@ static void intelSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
                           GLuint bufferBit)
 {
    intelContextPtr intel = INTEL_CONTEXT(ctx);
-   if (bufferBit == DD_FRONT_LEFT_BIT) {
+   if (bufferBit == BUFFER_BIT_FRONT_LEFT) {
       intel->drawMap = (char *)intel->driScreen->pFB;
       intel->readMap = (char *)intel->driScreen->pFB;
-   } else if (bufferBit == DD_BACK_LEFT_BIT) {
+   } else if (bufferBit == BUFFER_BIT_BACK_LEFT) {
       intel->drawMap = intel->intelScreen->back.map;
       intel->readMap = intel->intelScreen->back.map;
    } else {
@@ -288,6 +288,7 @@ void intelInitSpanFuncs( GLcontext *ctx )
 
    switch (intelScreen->fbFormat) {
    case DV_PF_555:
+#if 0
       swdd->WriteRGBASpan = intelWriteRGBASpan_555;
       swdd->WriteRGBSpan = intelWriteRGBSpan_555;
       swdd->WriteMonoRGBASpan = intelWriteMonoRGBASpan_555;
@@ -295,14 +296,15 @@ void intelInitSpanFuncs( GLcontext *ctx )
       swdd->WriteMonoRGBAPixels = intelWriteMonoRGBAPixels_555;
       swdd->ReadRGBASpan = intelReadRGBASpan_555;
       swdd->ReadRGBAPixels = intelReadRGBAPixels_555;
-
       swdd->ReadDepthSpan = intelReadDepthSpan_16;
       swdd->WriteDepthSpan = intelWriteDepthSpan_16;
       swdd->ReadDepthPixels = intelReadDepthPixels_16;
       swdd->WriteDepthPixels = intelWriteDepthPixels_16;
+#endif
       break;
 
    case DV_PF_565:
+#if 0
       swdd->WriteRGBASpan = intelWriteRGBASpan_565;
       swdd->WriteRGBSpan = intelWriteRGBSpan_565;
       swdd->WriteMonoRGBASpan = intelWriteMonoRGBASpan_565;
@@ -310,14 +312,15 @@ void intelInitSpanFuncs( GLcontext *ctx )
       swdd->WriteMonoRGBAPixels = intelWriteMonoRGBAPixels_565; 
       swdd->ReadRGBASpan = intelReadRGBASpan_565;
       swdd->ReadRGBAPixels = intelReadRGBAPixels_565;
-
       swdd->ReadDepthSpan = intelReadDepthSpan_16;
       swdd->WriteDepthSpan = intelWriteDepthSpan_16;
       swdd->ReadDepthPixels = intelReadDepthPixels_16;
       swdd->WriteDepthPixels = intelWriteDepthPixels_16;
+#endif
       break;
 
    case DV_PF_8888:
+#if 0
       swdd->WriteRGBASpan = intelWriteRGBASpan_8888;
       swdd->WriteRGBSpan = intelWriteRGBSpan_8888;
       swdd->WriteMonoRGBASpan = intelWriteMonoRGBASpan_8888;
@@ -325,7 +328,6 @@ void intelInitSpanFuncs( GLcontext *ctx )
       swdd->WriteMonoRGBAPixels = intelWriteMonoRGBAPixels_8888;
       swdd->ReadRGBASpan = intelReadRGBASpan_8888;
       swdd->ReadRGBAPixels = intelReadRGBAPixels_8888;
-
       swdd->ReadDepthSpan = intelReadDepthSpan_24_8;
       swdd->WriteDepthSpan = intelWriteDepthSpan_24_8;
       swdd->ReadDepthPixels = intelReadDepthPixels_24_8;
@@ -335,9 +337,75 @@ void intelInitSpanFuncs( GLcontext *ctx )
       swdd->ReadStencilSpan = intelReadStencilSpan_24_8;
       swdd->WriteStencilPixels = intelWriteStencilPixels_24_8;
       swdd->ReadStencilPixels = intelReadStencilPixels_24_8;
+#endif
       break;
    }
 
    swdd->SpanRenderStart = intelSpanRenderStart;
    swdd->SpanRenderFinish = intelSpanRenderFinish; 
+}
+
+
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+intelSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+{
+   if (drb->Base.InternalFormat == GL_RGBA) {
+      if (vis->redBits == 5 && vis->greenBits == 5 && vis->blueBits == 5) {
+         drb->Base.GetRow        = intelReadRGBASpan_555;
+         drb->Base.GetValues     = intelReadRGBAPixels_555;
+         drb->Base.PutRow        = intelWriteRGBASpan_555;
+         drb->Base.PutRowRGB     = intelWriteRGBSpan_555;
+         drb->Base.PutMonoRow    = intelWriteMonoRGBASpan_555;
+         drb->Base.PutValues     = intelWriteRGBAPixels_555;
+         drb->Base.PutMonoValues = intelWriteMonoRGBAPixels_555;
+      }
+      else if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
+         drb->Base.GetRow        = intelReadRGBASpan_565;
+         drb->Base.GetValues     = intelReadRGBAPixels_565;
+         drb->Base.PutRow        = intelWriteRGBASpan_565;
+         drb->Base.PutRowRGB     = intelWriteRGBSpan_565;
+         drb->Base.PutMonoRow    = intelWriteMonoRGBASpan_565;
+         drb->Base.PutValues     = intelWriteRGBAPixels_565;
+         drb->Base.PutMonoValues = intelWriteMonoRGBAPixels_565;
+      }
+      else {
+         assert(vis->redBits == 8);
+         assert(vis->greenBits == 8);
+         assert(vis->blueBits == 8);
+         drb->Base.GetRow        = intelReadRGBASpan_8888;
+         drb->Base.GetValues     = intelReadRGBAPixels_8888;
+         drb->Base.PutRow        = intelWriteRGBASpan_8888;
+         drb->Base.PutRowRGB     = intelWriteRGBSpan_8888;
+         drb->Base.PutMonoRow    = intelWriteMonoRGBASpan_8888;
+         drb->Base.PutValues     = intelWriteRGBAPixels_8888;
+         drb->Base.PutMonoValues = intelWriteMonoRGBAPixels_8888;
+      }
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+      drb->Base.GetRow        = intelReadDepthSpan_16;
+      drb->Base.GetValues     = intelReadDepthPixels_16;
+      drb->Base.PutRow        = intelWriteDepthSpan_16;
+      drb->Base.PutMonoRow    = intelWriteMonoDepthSpan_16;
+      drb->Base.PutValues     = intelWriteDepthPixels_16;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+      drb->Base.GetRow        = intelReadDepthSpan_24_8;
+      drb->Base.GetValues     = intelReadDepthPixels_24_8;
+      drb->Base.PutRow        = intelWriteDepthSpan_24_8;
+      drb->Base.PutMonoRow    = intelWriteMonoDepthSpan_24_8;
+      drb->Base.PutValues     = intelWriteDepthPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      drb->Base.GetRow        = intelReadStencilSpan_24_8;
+      drb->Base.GetValues     = intelReadStencilPixels_24_8;
+      drb->Base.PutRow        = intelWriteStencilSpan_24_8;
+      drb->Base.PutMonoRow    = intelWriteMonoStencilSpan_24_8;
+      drb->Base.PutValues     = intelWriteStencilPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
 }

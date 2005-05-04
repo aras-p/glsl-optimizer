@@ -38,6 +38,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "matrix.h"
 #include "simple_list.h"
 #include "extensions.h"
+#include "framebuffer.h"
 #include "imports.h"
 
 #include "swrast/swrast.h"
@@ -245,7 +246,7 @@ i810CreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.PointSizeGranularity = 1.0;
 
    ctx->Driver.GetBufferSize = i810BufferSize;
-   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
+   ctx->Driver.ResizeBuffers = _mesa_resize_framebuffer;
    ctx->Driver.GetString = i810GetString;
 
    /* Who owns who?
@@ -384,11 +385,12 @@ void i810XMesaSetBackClipRects( i810ContextPtr imesa )
 
 static void i810XMesaWindowMoved( i810ContextPtr imesa )
 {
-   switch (imesa->glCtx->Color._DrawDestMask[0]) {
-   case DD_FRONT_LEFT_BIT:
+   /* Determine current color drawing buffer */
+   switch (imesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0]) {
+   case BUFFER_BIT_FRONT_LEFT:
       i810XMesaSetFrontClipRects( imesa );
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       i810XMesaSetBackClipRects( imesa );
       break;
    default:
@@ -424,16 +426,16 @@ i810MakeCurrent(__DRIcontextPrivate *driContextPriv,
        */
       imesa->driDrawable = driDrawPriv;
 
-      _mesa_make_current2(imesa->glCtx,
-                          (GLframebuffer *) driDrawPriv->driverPrivate,
-                          (GLframebuffer *) driReadPriv->driverPrivate);
+      _mesa_make_current(imesa->glCtx,
+                         (GLframebuffer *) driDrawPriv->driverPrivate,
+                         (GLframebuffer *) driReadPriv->driverPrivate);
 
       /* Are these necessary?
        */
       i810XMesaWindowMoved( imesa );
    }
    else {
-      _mesa_make_current(0,0);
+      _mesa_make_current(NULL, NULL, NULL);
    }
 
    return GL_TRUE;
@@ -445,11 +447,12 @@ i810UpdatePageFlipping( i810ContextPtr imesa )
    GLcontext *ctx = imesa->glCtx;
    int front = 0;
 
-   switch (ctx->Color._DrawDestMask[0]) {
-   case DD_FRONT_LEFT_BIT:
+   /* Determine current color drawing buffer */
+   switch (ctx->DrawBuffer->_ColorDrawBufferMask[0]) {
+   case BUFFER_BIT_FRONT_LEFT:
       front = 1;
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       front = 0;
       break;
    default:

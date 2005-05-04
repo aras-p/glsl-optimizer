@@ -29,6 +29,12 @@
 #ifndef _MGA_SPAN_H
 #define _MGA_SPAN_H
 
+#include "drirenderbuffer.h"
+
 extern void mgaDDInitSpanFuncs( GLcontext *ctx );
+
+extern void
+mgaSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
+
 
 #endif

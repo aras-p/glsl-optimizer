@@ -230,12 +230,12 @@ static void gammaDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
     VALIDATE_DRAWABLE_INFO_NO_LOCK(gmesa);
 #endif
 
-    if (mask & DD_DEPTH_BIT) {
+    if (mask & BUFFER_BIT_DEPTH) {
 	 /* Turn off writes the FB */
 	 CHECK_DMA_BUFFER(gmesa, 1);
 	 WRITE(gmesa->buf, FBWriteMode, FBWriteModeDisable);
 
-	 mask &= ~DD_DEPTH_BIT;
+	 mask &= ~BUFFER_BIT_DEPTH;
 
 	 /*
 	  * Turn Rectangle2DControl off when the window is not clipped
@@ -349,13 +349,13 @@ static void gammaDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	}
     }
 
-    if (mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) {
+    if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) {
 	int y = gmesa->driScreen->fbHeight - gmesa->driDrawable->y - gmesa->driDrawable->h;
 	int x = gmesa->driDrawable->x;
 	int w = gmesa->driDrawable->w;
 	int h = gmesa->driDrawable->h;
 
-	mask &= ~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT);
+	mask &= ~(BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT);
 
 	if (x < 0) { w -= -x; x = 0; }
 

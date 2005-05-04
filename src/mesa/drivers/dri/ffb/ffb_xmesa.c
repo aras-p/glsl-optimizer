@@ -515,8 +515,8 @@ ffbMakeCurrent(__DRIcontextPrivate *driContextPriv,
 			 * we need to clear all the hw buffers.
 			 */
 			ffbDDClear(fmesa->glCtx,
-				   (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT |
-				    DD_DEPTH_BIT | DD_STENCIL_BIT),
+				   (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT |
+				    BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL),
 				   1, 0, 0, 0, 0);
 		}
 	} else {

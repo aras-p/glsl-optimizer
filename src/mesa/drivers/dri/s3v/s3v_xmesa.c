@@ -7,6 +7,8 @@
 #include "context.h"
 #include "matrix.h"
 #include "s3v_dri.h"
+#include "framebuffer.h"
+#include "renderbuffer.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -57,10 +59,13 @@ s3vCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                    const __GLcontextModes *mesaVis,
                    GLboolean isPixmap )
 {
+   s3vScreenPtr screen = (s3vScreenPtr) driScrnPriv->private;
+
    if (isPixmap) {
       return GL_FALSE; /* not implemented */
    }
    else {
+#if 0
       driDrawPriv->driverPrivate = (void *) 
          _mesa_create_framebuffer(mesaVis,
                                   GL_FALSE,  /* software depth buffer? */
@@ -68,6 +73,58 @@ s3vCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                                   mesaVis->accumRedBits > 0,
                                   mesaVis->alphaBits > 0
                                   );
+#else
+      struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
+
+      {
+         driRenderbuffer *frontRb
+            = driNewRenderbuffer(GL_RGBA, screen->cpp,
+                                 screen->frontOffset, screen->frontPitch);
+         s3vSetSpanFunctions(frontRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
+      }
+
+      if (mesaVis->doubleBufferMode) {
+         driRenderbuffer *backRb
+            = driNewRenderbuffer(GL_RGBA, screen->cpp,
+                                 screen->backOffset, screen->backPitch);
+         s3vSetSpanFunctions(backRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
+      }
+
+      if (mesaVis->depthBits == 16) {
+         driRenderbuffer *depthRb
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, screen->cpp,
+                                 screen->depthOffset, screen->depthPitch);
+         s3vSetSpanFunctions(depthRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+      }
+      else if (mesaVis->depthBits == 24) {
+         driRenderbuffer *depthRb
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, screen->cpp,
+                                 screen->depthOffset, screen->depthPitch);
+         s3vSetSpanFunctions(depthRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+      }
+
+      /* no h/w stencil yet?
+      if (mesaVis->stencilBits > 0) {
+         driRenderbuffer *stencilRb
+            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT);
+         s3vSetSpanFunctions(stencilRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
+      }
+      */
+
+      _mesa_add_soft_renderbuffers(fb,
+                                   GL_FALSE, /* color */
+                                   GL_FALSE, /* depth */
+                                   mesaVis->stencilBits > 0,
+                                   mesaVis->accumRedBits > 0,
+                                   GL_FALSE, /* alpha */
+                                   GL_FALSE /* aux */);
+      driDrawPriv->driverPrivate = (void *) fb;
+#endif
       return (driDrawPriv->driverPrivate != NULL);
    }
 }
@@ -205,7 +262,7 @@ s3vMakeCurrent(__DRIcontextPrivate *driContextPriv,
 */
 
 /*
-	_mesa_make_current2( newVirgeCtx->glCtx,
+	_mesa_make_current( newVirgeCtx->glCtx,
                           (GLframebuffer *) driDrawPriv->driverPrivate,
                           (GLframebuffer *) driReadPriv->driverPrivate );
 
@@ -221,13 +278,11 @@ s3vMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	WRITE(newVirgeCtx->buf, S3VWindow, newVirgeCtx->Window);
 #endif
 
-
-
 	newVirgeCtx->new_state |= S3V_NEW_WINDOW; /* FIXME */
 
-	_mesa_make_current2( newVirgeCtx->glCtx, 
-			  (GLframebuffer *) driDrawPriv->driverPrivate,
-			  (GLframebuffer *) driReadPriv->driverPrivate );
+	_mesa_make_current( newVirgeCtx->glCtx, 
+                            (GLframebuffer *) driDrawPriv->driverPrivate,
+                            (GLframebuffer *) driReadPriv->driverPrivate );
 
 	if (!newVirgeCtx->glCtx->Viewport.Width) {
 	    _mesa_set_viewport(newVirgeCtx->glCtx, 0, 0, 
@@ -245,23 +300,23 @@ s3vMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
 	newVirgeCtx->new_state |= S3V_NEW_CLIP;
 
-    if (1) {
-        cx = dPriv->x;
-        cw = dPriv->w;
-        cy = dPriv->y;
-        ch = dPriv->h;
-    }
+        if (1) {
+           cx = dPriv->x;
+           cw = dPriv->w;
+           cy = dPriv->y;
+           ch = dPriv->h;
+        }
+        
+        x1 = y1 = 0;
+        x2 = cw-1;
+        y2 = ch-1;
 
-    x1 = y1 = 0;
-    x2 = cw-1;
-    y2 = ch-1;
-
-/*  src_stride = vmesa->s3vScreen->w * vmesa->s3vScreen->cpp; 
-    dest_stride = ((x2+31)&~31) * vmesa->s3vScreen->cpp; */
-    src_stride = vmesa->driScreen->fbWidth * 2;
-    dest_stride = ((x2+31)&~31) * 2;
+        /*  src_stride = vmesa->s3vScreen->w * vmesa->s3vScreen->cpp; 
+            dest_stride = ((x2+31)&~31) * vmesa->s3vScreen->cpp; */
+        src_stride = vmesa->driScreen->fbWidth * 2;
+        dest_stride = ((x2+31)&~31) * 2;
     } else {
-    _mesa_make_current( 0, 0 );
+       _mesa_make_current( NULL, NULL, NULL );
     }
 
     return GL_TRUE;

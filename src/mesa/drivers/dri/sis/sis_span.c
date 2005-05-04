@@ -205,11 +205,11 @@ static void sisDDSetBuffer( GLcontext *ctx,
    sisContextPtr smesa = SIS_CONTEXT(ctx);
 
    switch ( bufferBit ) {
-   case DD_FRONT_LEFT_BIT:
+   case BUFFER_BIT_FRONT_LEFT:
       smesa->drawOffset = smesa->readOffset = smesa->frontOffset;
       smesa->drawPitch  = smesa->readPitch  = smesa->frontPitch;
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       smesa->drawOffset = smesa->readOffset = smesa->backOffset;
       smesa->drawPitch  = smesa->readPitch  = smesa->backPitch;
       break;
@@ -246,6 +246,7 @@ sisDDInitSpanFuncs( GLcontext *ctx )
    switch (smesa->zFormat)
    {
    case SiS_ZFORMAT_Z16:
+#if 0
       swdd->ReadDepthSpan = sisReadDepthSpan_16;
       swdd->ReadDepthPixels = sisReadDepthPixels_16;
       swdd->WriteDepthSpan = sisWriteDepthSpan_16;
@@ -255,8 +256,10 @@ sisDDInitSpanFuncs( GLcontext *ctx )
       swdd->ReadStencilPixels = NULL;
       swdd->WriteStencilSpan = NULL;
       swdd->WriteStencilPixels = NULL;
+#endif
       break;
    case SiS_ZFORMAT_Z32:
+#if 0
       swdd->ReadDepthSpan = sisReadDepthSpan_32;
       swdd->ReadDepthPixels = sisReadDepthPixels_32;
       swdd->WriteDepthSpan = sisWriteDepthSpan_32;
@@ -266,8 +269,10 @@ sisDDInitSpanFuncs( GLcontext *ctx )
       swdd->ReadStencilPixels = NULL;
       swdd->WriteStencilSpan = NULL;
       swdd->WriteStencilPixels = NULL;
+#endif
       break;
    case SiS_ZFORMAT_S8Z24:
+#if 0
       swdd->ReadDepthSpan = sisReadDepthSpan_24_8;
       swdd->ReadDepthPixels = sisReadDepthPixels_24_8;
       swdd->WriteDepthSpan = sisWriteDepthSpan_24_8;
@@ -277,9 +282,11 @@ sisDDInitSpanFuncs( GLcontext *ctx )
       swdd->ReadStencilPixels = sisReadStencilPixels_24_8;
       swdd->WriteStencilSpan = sisWriteStencilSpan_24_8;
       swdd->WriteStencilPixels = sisWriteStencilPixels_24_8;
+#endif
       break;
    }
 
+#if 0
    switch ( smesa->bytesPerPixel )
    {
    case 2:
@@ -312,7 +319,70 @@ sisDDInitSpanFuncs( GLcontext *ctx )
    swdd->WriteMonoCIPixels = NULL;
    swdd->ReadCI32Span      = NULL;
    swdd->ReadCI32Pixels    = NULL;
+#endif
 
    swdd->SpanRenderStart   = sisSpanRenderStart;
    swdd->SpanRenderFinish  = sisSpanRenderFinish; 
+}
+
+
+
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+sisSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+{
+   if (drb->Base.InternalFormat == GL_RGBA) {
+      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
+         drb->Base.GetRow        = sisReadRGBASpan_565;
+         drb->Base.GetValues     = sisReadRGBAPixels_565;
+         drb->Base.PutRow        = sisWriteRGBASpan_565;
+         drb->Base.PutRowRGB     = sisWriteRGBSpan_565;
+         drb->Base.PutMonoRow    = sisWriteMonoRGBASpan_565;
+         drb->Base.PutValues     = sisWriteRGBAPixels_565;
+         drb->Base.PutMonoValues = sisWriteMonoRGBAPixels_565;
+      }
+      else {
+         drb->Base.GetRow        = sisReadRGBASpan_8888;
+         drb->Base.GetValues     = sisReadRGBAPixels_8888;
+         drb->Base.PutRow        = sisWriteRGBASpan_8888;
+         drb->Base.PutRowRGB     = sisWriteRGBSpan_8888;
+         drb->Base.PutMonoRow    = sisWriteMonoRGBASpan_8888;
+         drb->Base.PutValues     = sisWriteRGBAPixels_8888;
+         drb->Base.PutMonoValues = sisWriteMonoRGBAPixels_8888;
+      }
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+      drb->Base.GetRow        = sisReadDepthSpan_16;
+      drb->Base.GetValues     = sisReadDepthPixels_16;
+      drb->Base.PutRow        = sisWriteDepthSpan_16;
+      drb->Base.PutMonoRow    = sisWriteMonoDepthSpan_16;
+      drb->Base.PutValues     = sisWriteDepthPixels_16;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+      drb->Base.GetRow        = sisReadDepthSpan_24_8;
+      drb->Base.GetValues     = sisReadDepthPixels_24_8;
+      drb->Base.PutRow        = sisWriteDepthSpan_24_8;
+      drb->Base.PutMonoRow    = sisWriteMonoDepthSpan_24_8;
+      drb->Base.PutValues     = sisWriteDepthPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT32) {
+      drb->Base.GetRow        = sisReadDepthSpan_32;
+      drb->Base.GetValues     = sisReadDepthPixels_32;
+      drb->Base.PutRow        = sisWriteDepthSpan_32;
+      drb->Base.PutMonoRow    = sisWriteMonoDepthSpan_32;
+      drb->Base.PutValues     = sisWriteDepthPixels_32;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      drb->Base.GetRow        = sisReadStencilSpan_24_8;
+      drb->Base.GetValues     = sisReadStencilPixels_24_8;
+      drb->Base.PutRow        = sisWriteStencilSpan_24_8;
+      drb->Base.PutMonoRow    = sisWriteMonoStencilSpan_24_8;
+      drb->Base.PutValues     = sisWriteStencilPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
 }

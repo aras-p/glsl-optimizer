@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -78,9 +78,6 @@ struct swrast_device_driver;
 
 /* These are the public-access functions exported from swrast.
  */
-extern void
-_swrast_alloc_buffers( GLframebuffer *buffer );
-
 extern void
 _swrast_use_read_buffer( GLcontext *ctx );
 
@@ -260,7 +257,7 @@ _swrast_copy_texsubimage3d(GLcontext *ctx,
  * Unless otherwise noted, all functions are mandatory.  
  */
 struct swrast_device_driver {
-
+#if OLD_RENDERBUFFER
    void (*SetBuffer)(GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit);
    /*
     * Specifies the current color buffer for span/pixel writing/reading.
@@ -274,7 +271,7 @@ struct swrast_device_driver {
     *    DD_BACK_RIGHT_BIT - when using stereo and double buffering
     *    DD_AUXn_BIT - if aux buffers are implemented
     */
-
+#endif
 
    /***
     *** Functions for synchronizing access to the framebuffer:
@@ -297,10 +294,10 @@ struct swrast_device_driver {
     *** Functions for writing pixels to the frame buffer:
     ***/
 
-   void (*WriteRGBASpan)( const GLcontext *ctx,
+   void (*WriteRGBASpan)( const GLcontext *ctx, struct gl_renderbuffer *rb,
                           GLuint n, GLint x, GLint y,
                           CONST GLchan rgba[][4], const GLubyte mask[] );
-   void (*WriteRGBSpan)( const GLcontext *ctx,
+   void (*WriteRGBSpan)( const GLcontext *ctx, struct gl_renderbuffer *rb,
                          GLuint n, GLint x, GLint y,
                          CONST GLchan rgb[][3], const GLubyte mask[] );
    /* Write a horizontal run of RGBA or RGB pixels.
@@ -308,28 +305,33 @@ struct swrast_device_driver {
     * If mask is not null, only draw pixel [i] when mask [i] is true.
     */
 
-   void (*WriteMonoRGBASpan)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
+   void (*WriteMonoRGBASpan)( const GLcontext *ctx, struct gl_renderbuffer *rb,
+                              GLuint n, GLint x, GLint y,
                               const GLchan color[4], const GLubyte mask[] );
    /* Write a horizontal run of RGBA pixels all with the same color.
     * If mask is NULL, draw all pixels.
     * If mask is not null, only draw pixel [i] when mask [i] is true.
     */
 
-   void (*WriteRGBAPixels)( const GLcontext *ctx,
+   void (*WriteRGBAPixels)( const GLcontext *ctx, struct gl_renderbuffer *rb,
                             GLuint n, const GLint x[], const GLint y[],
                             CONST GLchan rgba[][4], const GLubyte mask[] );
    /* Write array of RGBA pixels at random locations.
     */
 
    void (*WriteMonoRGBAPixels)( const GLcontext *ctx,
+                                struct gl_renderbuffer *rb,
                                 GLuint n, const GLint x[], const GLint y[],
                                 const GLchan color[4], const GLubyte mask[] );
    /* Write an array of mono-RGBA pixels at random locations.
     */
 
-   void (*WriteCI32Span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
+#if OLD_RENDERBUFFER /* these are obsolete */
+   void (*WriteCI32Span)( const GLcontext *ctx, struct gl_renderbuffer *rb,
+                          GLuint n, GLint x, GLint y,
                           const GLuint index[], const GLubyte mask[] );
-   void (*WriteCI8Span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
+   void (*WriteCI8Span)( const GLcontext *ctx, struct gl_renderbuffer *rb,
+                         GLuint n, GLint x, GLint y,
                          const GLubyte index[], const GLubyte mask[] );
    /* Write a horizontal run of CI pixels.  One function is for 32bpp
     * indexes and the other for 8bpp pixels (the common case).  You mus
@@ -337,8 +339,8 @@ struct swrast_device_driver {
     * If mask is NULL, draw all pixels.
     * If mask is not null, only draw pixel [i] when mask [i] is true.
     */
-
-   void (*WriteMonoCISpan)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
+   void (*WriteMonoCISpan)( const GLcontext *ctx, struct gl_renderbuffer *rb,
+                            GLuint n, GLint x, GLint y,
                             GLuint colorIndex, const GLubyte mask[] );
    /* Write a horizontal run of color index pixels using the color index
     * last specified by the Index() function.
@@ -346,42 +348,40 @@ struct swrast_device_driver {
     * If mask is not null, only draw pixel [i] when mask [i] is true.
     */
 
-   void (*WriteCI32Pixels)( const GLcontext *ctx,
+   void (*WriteCI32Pixels)( const GLcontext *ctx, struct gl_renderbuffer *rb,
                             GLuint n, const GLint x[], const GLint y[],
                             const GLuint index[], const GLubyte mask[] );
    /*
     * Write a random array of CI pixels.
     */
-
-   void (*WriteMonoCIPixels)( const GLcontext *ctx,
-                              GLuint n, const GLint x[], const GLint y[],
+   void (*WriteMonoCIPixels)( const GLcontext *ctx, struct gl_renderbuffer *rb,                              GLuint n, const GLint x[], const GLint y[],
                               GLuint colorIndex, const GLubyte mask[] );
    /* Write a random array of color index pixels using the color index
     * last specified by the Index() function.
     */
 
-
    /***
     *** Functions to read pixels from frame buffer:
     ***/
 
-   void (*ReadCI32Span)( const GLcontext *ctx,
+   void (*ReadCI32Span)( const GLcontext *ctx, struct gl_renderbuffer *rb,
                          GLuint n, GLint x, GLint y, GLuint index[] );
    /* Read a horizontal run of color index pixels.
     */
 
-   void (*ReadRGBASpan)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
-                         GLchan rgba[][4] );
-   /* Read a horizontal run of RGBA pixels.
-    */
-
-   void (*ReadCI32Pixels)( const GLcontext *ctx,
+   void (*ReadCI32Pixels)( const GLcontext *ctx, struct gl_renderbuffer *rb,
                            GLuint n, const GLint x[], const GLint y[],
                            GLuint indx[], const GLubyte mask[] );
    /* Read a random array of CI pixels.
     */
+#endif
 
-   void (*ReadRGBAPixels)( const GLcontext *ctx,
+   void (*ReadRGBASpan)( const GLcontext *ctx, struct gl_renderbuffer *rb,
+                         GLuint n, GLint x, GLint y, GLchan rgba[][4] );
+   /* Read a horizontal run of RGBA pixels.
+    */
+
+   void (*ReadRGBAPixels)( const GLcontext *ctx, struct gl_renderbuffer *rb,
                            GLuint n, const GLint x[], const GLint y[],
                            GLchan rgba[][4], const GLubyte mask[] );
    /* Read a random array of RGBA pixels.
@@ -396,34 +396,36 @@ struct swrast_device_driver {
     *** buffer is less than 32 bits deep then the extra upperbits are zero.
     ***/
 
-   void (*WriteDepthSpan)( GLcontext *ctx, GLuint n, GLint x, GLint y,
+   void (*WriteDepthSpan)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                           GLuint n, GLint x, GLint y,
                            const GLdepth depth[], const GLubyte mask[] );
    /* Write a horizontal span of values into the depth buffer.  Only write
     * depth[i] value if mask[i] is nonzero.
     */
 
-   void (*WriteMonoDepthSpan)( GLcontext *ctx, GLuint n, GLint x, GLint y,
+   void (*WriteMonoDepthSpan)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                               GLuint n, GLint x, GLint y,
                                const GLdepth depth, const GLubyte mask[] );
    /* Write a horizontal run of depth values.
     * If mask is NULL, draw all pixels.
     * If mask is not null, only draw pixel [i] when mask [i] is true.
     */
 
-   void (*ReadDepthSpan)( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                          GLdepth depth[] );
+   void (*ReadDepthSpan)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                          GLuint n, GLint x, GLint y, GLdepth depth[] );
    /* Read a horizontal span of values from the depth buffer.
     */
 
 
-   void (*WriteDepthPixels)( GLcontext *ctx, GLuint n,
-                             const GLint x[], const GLint y[],
+   void (*WriteDepthPixels)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                             GLuint n, const GLint x[], const GLint y[],
                              const GLdepth depth[], const GLubyte mask[] );
    /* Write an array of randomly positioned depth values into the
     * depth buffer.  Only write depth[i] value if mask[i] is nonzero.
     */
 
-   void (*ReadDepthPixels)( GLcontext *ctx, GLuint n,
-                            const GLint x[], const GLint y[],
+   void (*ReadDepthPixels)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                            GLuint n, const GLint x[], const GLint y[],
                             GLdepth depth[] );
    /* Read an array of randomly positioned depth values from the depth buffer.
     */
@@ -435,20 +437,21 @@ struct swrast_device_driver {
     *** Either ALL or NONE of these functions must be implemented!
     ***/
 
-   void (*WriteStencilSpan)( GLcontext *ctx, GLuint n, GLint x, GLint y,
+   void (*WriteStencilSpan)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                             GLuint n, GLint x, GLint y,
                              const GLstencil stencil[], const GLubyte mask[] );
    /* Write a horizontal span of stencil values into the stencil buffer.
     * If mask is NULL, write all stencil values.
     * Else, only write stencil[i] if mask[i] is non-zero.
     */
 
-   void (*ReadStencilSpan)( GLcontext *ctx, GLuint n, GLint x, GLint y,
-                            GLstencil stencil[] );
+   void (*ReadStencilSpan)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                            GLuint n, GLint x, GLint y, GLstencil stencil[] );
    /* Read a horizontal span of stencil values from the stencil buffer.
     */
 
-   void (*WriteStencilPixels)( GLcontext *ctx, GLuint n,
-                               const GLint x[], const GLint y[],
+   void (*WriteStencilPixels)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                               GLuint n, const GLint x[], const GLint y[],
                                const GLstencil stencil[],
                                const GLubyte mask[] );
    /* Write an array of stencil values into the stencil buffer.
@@ -456,8 +459,8 @@ struct swrast_device_driver {
     * Else, only write stencil[i] if mask[i] is non-zero.
     */
 
-   void (*ReadStencilPixels)( GLcontext *ctx, GLuint n,
-                              const GLint x[], const GLint y[],
+   void (*ReadStencilPixels)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                              GLuint n, const GLint x[], const GLint y[],
                               GLstencil stencil[] );
    /* Read an array of stencil values from the stencil buffer.
     */

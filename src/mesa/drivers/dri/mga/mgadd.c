@@ -28,6 +28,7 @@
 
 
 #include "mtypes.h"
+#include "framebuffer.h"
 
 #include "mm.h"
 #include "mgacontext.h"
@@ -92,6 +93,6 @@ static void mgaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 void mgaInitDriverFuncs( struct dd_function_table *functions )
 {
    functions->GetBufferSize = mgaBufferSize;
-   functions->ResizeBuffers = _swrast_alloc_buffers;
+   functions->ResizeBuffers = _mesa_resize_framebuffer;
    functions->GetString = mgaGetString;
 }

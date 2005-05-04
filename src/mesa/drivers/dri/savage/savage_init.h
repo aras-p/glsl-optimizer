@@ -80,6 +80,16 @@ typedef struct {
 } savageScreenPrivate;
 
 
+/**
+ * savageRenderbuffer, derived from Mesa's gl_renderbuffer
+ */
+typedef struct {
+   struct gl_renderbuffer Base;
+   /* XXX per-window info should go here */
+   int foo, bar;
+} savageRenderbuffer;
+
+
 #include "savagecontext.h"
 
 extern void savageGetLock( savageContextPtr imesa, GLuint flags );

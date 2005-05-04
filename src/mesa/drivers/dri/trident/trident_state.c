@@ -30,6 +30,7 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
+#include "framebuffer.h"
 
 #define TRIDENTPACKCOLOR332(r, g, b)					\
    (((r) & 0xe0) | (((g) & 0xe0) >> 3) | (((b) & 0xc0) >> 6))
@@ -165,19 +166,19 @@ static void tridentDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    if ( tmesa->new_state )
       tridentDDUpdateHWState( ctx );
 
-   if ( mask & DD_FRONT_LEFT_BIT ) {
+   if ( mask & BUFFER_BIT_FRONT_LEFT ) {
       flags |= DRM_TRIDENT_FRONT;
-      mask &= ~DD_FRONT_LEFT_BIT;
+      mask &= ~BUFFER_BIT_FRONT_LEFT;
    }
 
-   if ( mask & DD_BACK_LEFT_BIT ) {
+   if ( mask & BUFFER_BIT_BACK_LEFT ) {
       flags |= DRM_TRIDENT_BACK;
-      mask &= ~DD_BACK_LEFT_BIT;
+      mask &= ~BUFFER_BIT_BACK_LEFT;
    }
 
-   if ( ( mask & DD_DEPTH_BIT ) && ctx->Depth.Mask ) {
+   if ( ( mask & BUFFER_BIT_DEPTH ) && ctx->Depth.Mask ) {
       flags |= DRM_TRIDENT_DEPTH;
-      mask &= ~DD_DEPTH_BIT;
+      mask &= ~BUFFER_BIT_DEPTH;
    }
 
    LOCK_HARDWARE(tmesa);
@@ -543,7 +544,7 @@ void tridentDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.CopyPixels = _swrast_CopyPixels;
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.ReadPixels = _swrast_ReadPixels;
-   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
+   ctx->Driver.ResizeBuffers = _mesa_resize_framebuffer;
 
    /* Swrast hooks for imaging extensions:
     */

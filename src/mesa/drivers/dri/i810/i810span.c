@@ -123,13 +123,13 @@ static void i810SetBuffer(GLcontext *ctx, GLframebuffer *buffer,
    (void) buffer;
 
    switch(bufferBit) {
-    case DD_FRONT_LEFT_BIT:
+    case BUFFER_BIT_FRONT_LEFT:
       if ( imesa->sarea->pf_current_page == 1)
         imesa->readMap = imesa->i810Screen->back.map;
       else
         imesa->readMap = (char*)imesa->driScreen->pFB;
       break;
-    case DD_BACK_LEFT_BIT:
+    case BUFFER_BIT_BACK_LEFT:
       if ( imesa->sarea->pf_current_page == 1)
         imesa->readMap =  (char*)imesa->driScreen->pFB;
       else
@@ -165,6 +165,7 @@ void i810InitSpanFuncs( GLcontext *ctx )
 
    swdd->SetBuffer = i810SetBuffer;
 
+#if 0
    swdd->WriteRGBASpan = i810WriteRGBASpan_565;
    swdd->WriteRGBSpan = i810WriteRGBSpan_565;
    swdd->WriteMonoRGBASpan = i810WriteMonoRGBASpan_565;
@@ -172,12 +173,60 @@ void i810InitSpanFuncs( GLcontext *ctx )
    swdd->WriteMonoRGBAPixels = i810WriteMonoRGBAPixels_565;
    swdd->ReadRGBASpan = i810ReadRGBASpan_565;
    swdd->ReadRGBAPixels = i810ReadRGBAPixels_565;
+#endif
 
+#if 0
    swdd->ReadDepthSpan = i810ReadDepthSpan_16;
    swdd->WriteDepthSpan = i810WriteDepthSpan_16;
    swdd->ReadDepthPixels = i810ReadDepthPixels_16;
    swdd->WriteDepthPixels = i810WriteDepthPixels_16;
+#endif
 
    swdd->SpanRenderStart = i810SpanRenderStart;
    swdd->SpanRenderFinish = i810SpanRenderFinish; 
+}
+
+
+
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+i810SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+{
+   if (drb->Base.InternalFormat == GL_RGBA) {
+      /* always 565 RGB */
+      drb->Base.GetRow        = i810ReadRGBASpan_565;
+      drb->Base.GetValues     = i810ReadRGBAPixels_565;
+      drb->Base.PutRow        = i810WriteRGBASpan_565;
+      drb->Base.PutRowRGB     = i810WriteRGBSpan_565;
+      drb->Base.PutMonoRow    = i810WriteMonoRGBASpan_565;
+      drb->Base.PutValues     = i810WriteRGBAPixels_565;
+      drb->Base.PutMonoValues = i810WriteMonoRGBAPixels_565;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+      drb->Base.GetRow        = i810ReadDepthSpan_16;
+      drb->Base.GetValues     = i810ReadDepthPixels_16;
+      drb->Base.PutRow        = i810WriteDepthSpan_16;
+      drb->Base.PutMonoRow    = i810WriteMonoDepthSpan_16;
+      drb->Base.PutValues     = i810WriteDepthPixels_16;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+      /* should never get here */
+      drb->Base.GetRow        = NULL;
+      drb->Base.GetValues     = NULL;
+      drb->Base.PutRow        = NULL;
+      drb->Base.PutMonoRow    = NULL;
+      drb->Base.PutValues     = NULL;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      drb->Base.GetRow        = NULL;
+      drb->Base.GetValues     = NULL;
+      drb->Base.PutRow        = NULL;
+      drb->Base.PutMonoRow    = NULL;
+      drb->Base.PutValues     = NULL;
+      drb->Base.PutMonoValues = NULL;
+   }
 }

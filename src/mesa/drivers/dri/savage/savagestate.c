@@ -644,8 +644,8 @@ static void savageDDDrawBuffer(GLcontext *ctx, GLenum mode )
     /*
      * _DrawDestMask is easier to cope with than <mode>.
      */
-    switch ( ctx->Color._DrawDestMask[0] ) {
-    case DD_FRONT_LEFT_BIT:
+    switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
+    case BUFFER_BIT_FRONT_LEFT:
         imesa->IsDouble = GL_FALSE;
 	imesa->regs.s4.destCtrl.ni.offset = imesa->savageScreen->frontOffset>>11;
 
@@ -653,7 +653,7 @@ static void savageDDDrawBuffer(GLcontext *ctx, GLenum mode )
         savageXMesaSetFrontClipRects( imesa );
 	FALLBACK( ctx, SAVAGE_FALLBACK_DRAW_BUFFER, GL_FALSE );
 	break;
-    case DD_BACK_LEFT_BIT:
+    case BUFFER_BIT_BACK_LEFT:
         imesa->IsDouble = GL_TRUE;
 	imesa->regs.s4.destCtrl.ni.offset = imesa->savageScreen->backOffset>>11;
         imesa->NotFirstFrame = GL_FALSE;

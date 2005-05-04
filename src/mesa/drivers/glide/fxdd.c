@@ -441,7 +441,6 @@ fxDDDrawBitmap2 (GLcontext *ctx, GLint px, GLint py,
 			      /*CLIP_BIT |*/    /* clipping ok, below */
 			      STENCIL_BIT |
 			      MASKING_BIT |
-			      ALPHABUF_BIT |    /* nope! see 565 span kludge */
 			      MULTI_DRAW_BIT |
 			      OCCLUSION_BIT |   /* nope! at least not yet */
 			      TEXTURE_BIT |
@@ -605,7 +604,6 @@ fxDDDrawBitmap4 (GLcontext *ctx, GLint px, GLint py,
 			      /*CLIP_BIT |*/    /* clipping ok, below */
 			      STENCIL_BIT |
 			      /*MASKING_BIT |*/ /* masking ok, we're in 32bpp */
-			      /*ALPHABUF_BIT |*//* alpha ok, we're in 32bpp */
 			      MULTI_DRAW_BIT |
 			      OCCLUSION_BIT |   /* nope! at least not yet */
 			      TEXTURE_BIT |
@@ -1089,7 +1087,6 @@ fxDDDrawPixels555 (GLcontext * ctx, GLint x, GLint y,
 			      /*CLIP_BIT |*/    /* clipping ok, below */
 			      STENCIL_BIT |
 			      MASKING_BIT |
-			      ALPHABUF_BIT |
 			      MULTI_DRAW_BIT |
 			      OCCLUSION_BIT |   /* nope! at least not yet */
 			      TEXTURE_BIT |
@@ -1224,7 +1221,6 @@ fxDDDrawPixels565 (GLcontext * ctx, GLint x, GLint y,
 			      /*CLIP_BIT |*/    /* clipping ok, below */
 			      STENCIL_BIT |
 			      MASKING_BIT |
-			      ALPHABUF_BIT |
 			      MULTI_DRAW_BIT |
 			      OCCLUSION_BIT |   /* nope! at least not yet */
 			      TEXTURE_BIT |
@@ -1359,7 +1355,6 @@ fxDDDrawPixels565_rev (GLcontext * ctx, GLint x, GLint y,
 			      /*CLIP_BIT |*/    /* clipping ok, below */
 			      STENCIL_BIT |
 			      MASKING_BIT |
-			      ALPHABUF_BIT |
 			      MULTI_DRAW_BIT |
 			      OCCLUSION_BIT |   /* nope! at least not yet */
 			      TEXTURE_BIT |
@@ -1494,7 +1489,6 @@ fxDDDrawPixels8888 (GLcontext * ctx, GLint x, GLint y,
 			      /*CLIP_BIT |*/    /* clipping ok, below */
 			      STENCIL_BIT |
 			      /*MASKING_BIT |*/ /* masking ok, we're in 32bpp */
-			      /*ALPHABUF_BIT |*//* alpha ok, we're in 32bpp */
 			      MULTI_DRAW_BIT |
 			      OCCLUSION_BIT |   /* nope! at least not yet */
 			      TEXTURE_BIT |

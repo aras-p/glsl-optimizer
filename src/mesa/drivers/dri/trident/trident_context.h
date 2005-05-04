@@ -117,6 +117,16 @@ typedef struct {
     tridentRegionRec mmio;
 } tridentScreenRec, *tridentScreenPtr;
 
+/**
+ * tridentRenderbuffer, derived from Mesa's gl_renderbuffer
+ */
+typedef struct {
+   struct gl_renderbuffer Base;
+   /* XXX per-window info should go here */
+   int foo, bar;
+} tridentRenderbuffer;
+
+
 struct trident_context {
 	GLcontext 		*glCtx;		/* Mesa context */
 

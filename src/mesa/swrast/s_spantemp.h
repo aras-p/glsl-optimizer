@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,12 +51,14 @@
 #ifdef STORE_RGBA_PIXEL
 
 static void
-NAME(write_rgba_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
-                       CONST GLchan rgba[][4], const GLubyte mask[] )
+NAME(write_rgba_span)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                       GLuint n, GLint x, GLint y,
+                       const void *values, const GLubyte mask[] )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+   const GLubyte (*rgba)[4] = (const GLubyte (*)[4]) values;
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
    if (mask) {
@@ -79,12 +80,14 @@ NAME(write_rgba_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 }
 
 static void
-NAME(write_rgb_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
-                      CONST GLchan rgb[][3], const GLubyte mask[] )
+NAME(write_rgb_span)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                      GLuint n, GLint x, GLint y,
+                      const void *values, const GLubyte mask[] )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+   const GLubyte (*rgb)[3] = (const GLubyte (*)[3]) values;
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
    if (mask) {
@@ -106,12 +109,14 @@ NAME(write_rgb_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 }
 
 static void
-NAME(write_monorgba_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
-                           const GLchan color[4], const GLubyte mask[] )
+NAME(write_monorgba_span)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                           GLuint n, GLint x, GLint y,
+                           const void *value, const GLubyte mask[] )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+   const GLubyte *color = (const GLubyte *) value;
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
    if (mask) {
@@ -133,13 +138,14 @@ NAME(write_monorgba_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 }
 
 static void
-NAME(write_rgba_pixels)( const GLcontext *ctx, GLuint n,
-                         const GLint x[], const GLint y[],
-                         CONST GLchan rgba[][4], const GLubyte mask[] )
+NAME(write_rgba_pixels)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                         GLuint n, const GLint x[], const GLint y[],
+                         const void *values, const GLubyte mask[] )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+   const GLubyte (*rgba)[4] = (const GLubyte (*)[4]) values;
    GLuint i;
    ASSERT(mask);
    for (i = 0; i < n; i++) {
@@ -152,13 +158,14 @@ NAME(write_rgba_pixels)( const GLcontext *ctx, GLuint n,
 }
 
 static void
-NAME(write_monorgba_pixels)( const GLcontext *ctx,
+NAME(write_monorgba_pixels)( GLcontext *ctx, struct gl_renderbuffer *rb,
                              GLuint n, const GLint x[], const GLint y[],
-                             const GLchan color[4], const GLubyte mask[] )
+                             const void *value, const GLubyte mask[] )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+   const GLubyte *color = (const GLubyte *) value;
    GLuint i;
    ASSERT(mask);
    for (i = 0; i < n; i++) {
@@ -171,12 +178,13 @@ NAME(write_monorgba_pixels)( const GLcontext *ctx,
 }
 
 static void
-NAME(read_rgba_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
-                      GLchan rgba[][4] )
+NAME(read_rgba_span)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                      GLuint n, GLint x, GLint y, void *values )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+   GLubyte (*rgba)[4] = (GLubyte (*)[4]) values;
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
    for (i = 0; i < n; i++) {
@@ -187,21 +195,20 @@ NAME(read_rgba_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 }
 
 static void
-NAME(read_rgba_pixels)( const GLcontext *ctx,
+NAME(read_rgba_pixels)( GLcontext *ctx, struct gl_renderbuffer *rb,
                         GLuint n, const GLint x[], const GLint y[],
-                        GLchan rgba[][4], const GLubyte mask[] )
+                        void *values)
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+   GLubyte (*rgba)[4] = (GLubyte (*)[4]) values;
    GLuint i;
    ASSERT(mask);
    for (i = 0; i < n; i++) {
-      if (mask[i]) {
-         INIT_PIXEL_PTR(pixel, x[i], y[i]);
-         FETCH_RGBA_PIXEL(rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP],
-                          rgba[i][ACOMP], pixel);
-      }
+      INIT_PIXEL_PTR(pixel, x[i], y[i]);
+      FETCH_RGBA_PIXEL(rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP],
+                       rgba[i][ACOMP], pixel);
    }
 }
 
@@ -213,12 +220,14 @@ NAME(read_rgba_pixels)( const GLcontext *ctx,
 #ifdef STORE_CI_PIXEL
 
 static void
-NAME(write_index32_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
-                          const GLuint index[], const GLubyte mask[] )
+NAME(write_index_span)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                        GLuint n, GLint x, GLint y,
+                        const void *values, const GLubyte mask[] )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+   const GLuint *index = (const GLuint *) values;
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
    if (mask) {
@@ -239,38 +248,14 @@ NAME(write_index32_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 
 static void
-NAME(write_index8_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
-                         const GLubyte index[], const GLubyte mask[] )
+NAME(write_monoindex_span)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                            GLuint n, GLint x, GLint y,
+                            const void *value, const GLubyte mask[] )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
-   GLuint i;
-   INIT_PIXEL_PTR(pixel, x, y);
-   if (mask) {
-      for (i = 0; i < n; i++) {
-         if (mask[i]) {
-            STORE_CI_PIXEL(pixel, index[i]);
-         }
-         INC_PIXEL_PTR(pixel);
-      }
-   }
-   else {
-      for (i = 0; i < n; i++) {
-         STORE_CI_PIXEL(pixel, index[i]);
-         INC_PIXEL_PTR(pixel);
-      }
-   }
-}
-
-
-static void
-NAME(write_monoindex_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
-                            GLuint colorIndex, const GLubyte mask[] )
-{
-#ifdef SPAN_VARS
-   SPAN_VARS
-#endif
+   GLuint colorIndex = *((GLuint *) value);
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
    if (mask) {
@@ -291,13 +276,14 @@ NAME(write_monoindex_span)( const GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 
 static void
-NAME(write_index_pixels)( const GLcontext *ctx,
+NAME(write_index_pixels)( GLcontext *ctx, struct gl_renderbuffer *rb,
                           GLuint n, const GLint x[], const GLint y[],
-                          const GLuint index[], const GLubyte mask[] )
+                          const void *values, const GLubyte mask[] )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+   const GLuint *index = (const GLuint *) values;
    GLuint i;
    ASSERT(mask);
    for (i = 0; i < n; i++) {
@@ -310,13 +296,14 @@ NAME(write_index_pixels)( const GLcontext *ctx,
 
 
 static void
-NAME(write_monoindex_pixels)( const GLcontext *ctx,
+NAME(write_monoindex_pixels)( GLcontext *ctx, struct gl_renderbuffer *rb,
                               GLuint n, const GLint x[], const GLint y[],
-                              GLuint colorIndex, const GLubyte mask[] )
+                              const void *value, const GLubyte mask[] )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+   GLuint colorIndex = *((GLuint *) value);
    GLuint i;
    ASSERT(mask);
    for (i = 0; i < n; i++) {
@@ -329,12 +316,13 @@ NAME(write_monoindex_pixels)( const GLcontext *ctx,
 
 
 static void
-NAME(read_index_span)( const GLcontext *ctx,
-                       GLuint n, GLint x, GLint y, GLuint index[] )
+NAME(read_index_span)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                       GLuint n, GLint x, GLint y, void *values )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+   GLuint *index = (GLuint *) values;
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
    for (i = 0; i < n; i++) {
@@ -345,20 +333,19 @@ NAME(read_index_span)( const GLcontext *ctx,
 
 
 static void
-NAME(read_index_pixels)( const GLcontext *ctx,
+NAME(read_index_pixels)( GLcontext *ctx, struct gl_renderbuffer *rb,
                          GLuint n, const GLint x[], const GLint y[],
-                         GLuint index[], const GLubyte mask[] )
+                         void *values )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+   GLuint *index = (GLuint *) values;
    GLuint i;
    ASSERT(mask);
    for (i = 0; i < n; i++) {
-      if (mask[i] ) {
-         INIT_PIXEL_PTR(pixel, x[i], y[i]);
-         FETCH_CI_PIXEL(index[i], pixel);
-      }
+      INIT_PIXEL_PTR(pixel, x[i], y[i]);
+      FETCH_CI_PIXEL(index[i], pixel);
    }
 }
 

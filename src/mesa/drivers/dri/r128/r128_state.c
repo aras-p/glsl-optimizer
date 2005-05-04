@@ -714,13 +714,13 @@ static void r128DDDrawBuffer( GLcontext *ctx, GLenum mode )
    FLUSH_BATCH( rmesa );
 
    /*
-    * _DrawDestMask is easier to cope with than <mode>.
+    * _ColorDrawBufferMask is easier to cope with than <mode>.
     */
-   switch ( ctx->Color._DrawDestMask[0] ) {
-   case DD_FRONT_LEFT_BIT:
+   switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
+   case BUFFER_BIT_FRONT_LEFT:
       FALLBACK( rmesa, R128_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       FALLBACK( rmesa, R128_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
    default:

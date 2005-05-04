@@ -466,7 +466,7 @@ raster_pos4f(GLcontext *ctx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
                                    + ctx->Viewport._WindowMap.m[MAT_TY]);
       ctx->Current.RasterPos[2] = (ndc[2] * ctx->Viewport._WindowMap.m[MAT_SZ]
                                    + ctx->Viewport._WindowMap.m[MAT_TZ])
-                                  / ctx->DepthMaxF;
+                                  / ctx->DrawBuffer->_DepthMaxF;
       ctx->Current.RasterPos[3] = clip[3];
 
       /* compute raster distance */

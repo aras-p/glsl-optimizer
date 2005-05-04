@@ -164,10 +164,12 @@ static unsigned long read_pixel( XMesaDisplay *dpy,
 
 
 #define RGBA_SPAN_ARGS	const GLcontext *ctx,				\
+			struct gl_renderbuffer *rb,			\
 			GLuint n, GLint x, GLint y,			\
 			CONST GLubyte rgba[][4], const GLubyte mask[]
 
 #define RGB_SPAN_ARGS	const GLcontext *ctx,				\
+			struct gl_renderbuffer *rb,			\
 			GLuint n, GLint x, GLint y,			\
 			CONST GLubyte rgb[][3], const GLubyte mask[]
 
@@ -181,12 +183,13 @@ static unsigned long read_pixel( XMesaDisplay *dpy,
 static void write_span_TRUECOLOR_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
 
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -216,11 +219,12 @@ static void write_span_TRUECOLOR_pixmap( RGBA_SPAN_ARGS )
 static void write_span_rgb_TRUECOLOR_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -250,11 +254,12 @@ static void write_span_rgb_TRUECOLOR_pixmap( RGB_SPAN_ARGS )
 static void write_span_TRUEDITHER_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -283,11 +288,12 @@ static void write_span_TRUEDITHER_pixmap( RGBA_SPAN_ARGS )
 static void write_span_rgb_TRUEDITHER_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -317,11 +323,12 @@ static void write_span_rgb_TRUEDITHER_pixmap( RGB_SPAN_ARGS )
 static void write_span_8A8B8G8R_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -349,11 +356,12 @@ static void write_span_8A8B8G8R_pixmap( RGBA_SPAN_ARGS )
 static void write_span_rgb_8A8B8G8R_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -380,11 +388,12 @@ static void write_span_rgb_8A8B8G8R_pixmap( RGB_SPAN_ARGS )
 static void write_span_8A8R8G8B_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -412,11 +421,12 @@ static void write_span_8A8R8G8B_pixmap( RGBA_SPAN_ARGS )
 static void write_span_rgb_8A8R8G8B_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -444,11 +454,12 @@ static void write_span_rgb_8A8R8G8B_pixmap( RGB_SPAN_ARGS )
 static void write_span_8R8G8B_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -475,10 +486,11 @@ static void write_span_8R8G8B_pixmap( RGBA_SPAN_ARGS )
 static void write_span_8R8G8B24_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       register GLuint i;
       for (i=0;i<n;i++,x++) {
@@ -569,11 +581,12 @@ static void write_span_8R8G8B24_pixmap( RGBA_SPAN_ARGS )
 static void write_span_rgb_8R8G8B_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -600,10 +613,11 @@ static void write_span_rgb_8R8G8B_pixmap( RGB_SPAN_ARGS )
 static void write_span_rgb_8R8G8B24_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       register GLuint i;
       for (i=0;i<n;i++,x++) {
@@ -699,11 +713,12 @@ static void write_span_rgb_8R8G8B24_pixmap( RGB_SPAN_ARGS )
 static void write_span_5R6G5B_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -730,11 +745,12 @@ static void write_span_5R6G5B_pixmap( RGBA_SPAN_ARGS )
 static void write_span_DITHER_5R6G5B_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -763,11 +779,12 @@ static void write_span_DITHER_5R6G5B_pixmap( RGBA_SPAN_ARGS )
 static void write_span_rgb_5R6G5B_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -794,11 +811,12 @@ static void write_span_rgb_5R6G5B_pixmap( RGB_SPAN_ARGS )
 static void write_span_rgb_DITHER_5R6G5B_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -828,12 +846,13 @@ static void write_span_rgb_DITHER_5R6G5B_pixmap( RGB_SPAN_ARGS )
 static void write_span_DITHER_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
    XDITHER_SETUP(y);
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -859,12 +878,13 @@ static void write_span_DITHER_pixmap( RGBA_SPAN_ARGS )
 static void write_span_rgb_DITHER_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
    XDITHER_SETUP(y);
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -890,12 +910,13 @@ static void write_span_rgb_DITHER_pixmap( RGB_SPAN_ARGS )
 static void write_span_1BIT_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
    SETUP_1BIT;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -923,12 +944,13 @@ static void write_span_1BIT_pixmap( RGBA_SPAN_ARGS )
 static void write_span_rgb_1BIT_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
    SETUP_1BIT;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -956,11 +978,12 @@ static void write_span_rgb_1BIT_pixmap( RGB_SPAN_ARGS )
 static void write_span_HPCR_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -987,11 +1010,12 @@ static void write_span_HPCR_pixmap( RGBA_SPAN_ARGS )
 static void write_span_rgb_HPCR_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1018,12 +1042,13 @@ static void write_span_rgb_HPCR_pixmap( RGB_SPAN_ARGS )
 static void write_span_LOOKUP_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
    LOOKUP_SETUP;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1048,12 +1073,13 @@ static void write_span_LOOKUP_pixmap( RGBA_SPAN_ARGS )
 static void write_span_rgb_LOOKUP_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
    LOOKUP_SETUP;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1079,11 +1105,12 @@ static void write_span_rgb_LOOKUP_pixmap( RGB_SPAN_ARGS )
 static void write_span_GRAYSCALE_pixmap( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1108,11 +1135,12 @@ static void write_span_GRAYSCALE_pixmap( RGBA_SPAN_ARGS )
 static void write_span_rgb_GRAYSCALE_pixmap( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1137,9 +1165,10 @@ static void write_span_rgb_GRAYSCALE_pixmap( RGB_SPAN_ARGS )
 static void write_span_TRUECOLOR_ximage( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1166,9 +1195,10 @@ static void write_span_TRUECOLOR_ximage( RGBA_SPAN_ARGS )
 static void write_span_rgb_TRUECOLOR_ximage( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1195,9 +1225,10 @@ static void write_span_rgb_TRUECOLOR_ximage( RGB_SPAN_ARGS )
 static void write_span_TRUEDITHER_ximage( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1224,9 +1255,10 @@ static void write_span_TRUEDITHER_ximage( RGBA_SPAN_ARGS )
 static void write_span_rgb_TRUEDITHER_ximage( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1252,9 +1284,9 @@ static void write_span_rgb_TRUEDITHER_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_8A8B8G8R_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
-   register GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
+   register GLuint *ptr = PIXEL_ADDR4(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++) {
          if (mask[i]) {
@@ -1276,9 +1308,9 @@ static void write_span_8A8B8G8R_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_8A8B8G8R_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
-   register GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
+   register GLuint *ptr = PIXEL_ADDR4(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++) {
          if (mask[i]) {
@@ -1299,9 +1331,9 @@ static void write_span_rgb_8A8B8G8R_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_8A8R8G8B_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
-   register GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
+   register GLuint *ptr = PIXEL_ADDR4(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++) {
          if (mask[i]) {
@@ -1323,9 +1355,9 @@ static void write_span_8A8R8G8B_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_8A8R8G8B_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
-   register GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
+   register GLuint *ptr = PIXEL_ADDR4(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++) {
          if (mask[i]) {
@@ -1347,9 +1379,9 @@ static void write_span_rgb_8A8R8G8B_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_8R8G8B_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
-   register GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
+   register GLuint *ptr = PIXEL_ADDR4(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++) {
          if (mask[i]) {
@@ -1370,9 +1402,9 @@ static void write_span_8R8G8B_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_8R8G8B24_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
-   register GLubyte *ptr = (GLubyte *) PIXELADDR3( xmesa->xm_buffer, x, y );
+   register GLubyte *ptr = (GLubyte *) PIXEL_ADDR3(xrb, x, y );
    if (mask) {
       for (i=0;i<n;i++) {
          if (mask[i]) {
@@ -1520,9 +1552,9 @@ static void write_span_8R8G8B24_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_8R8G8B_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
-   register GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
+   register GLuint *ptr = PIXEL_ADDR4(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++) {
          if (mask[i]) {
@@ -1544,9 +1576,9 @@ static void write_span_rgb_8R8G8B_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_rgb_8R8G8B24_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
-   register GLubyte *ptr = (GLubyte *) PIXELADDR3( xmesa->xm_buffer, x, y );
+   register GLubyte *ptr = (GLubyte *) PIXEL_ADDR3(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++) {
          if (mask[i]) {
@@ -1575,9 +1607,9 @@ static void write_span_rgb_8R8G8B24_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_5R6G5B_ximage( RGBA_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
-   register GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x, y );
+   register GLushort *ptr = PIXEL_ADDR2(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++) {
          if (mask[i]) {
@@ -1614,10 +1646,12 @@ static void write_span_5R6G5B_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_DITHER_5R6G5B_ximage( RGBA_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
-   register GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x, y );
-   const GLint y2 = FLIP(xmesa->xm_buffer, y);
+   register GLushort *ptr = PIXEL_ADDR2(xrb, x, y);
+   const GLint y2 = YFLIP(xrb, y);
+   ASSERT(xrb->ximage);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1654,9 +1688,9 @@ static void write_span_DITHER_5R6G5B_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_5R6G5B_ximage( RGB_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
-   register GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x, y );
+   register GLushort *ptr = PIXEL_ADDR2(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++) {
          if (mask[i]) {
@@ -1693,9 +1727,10 @@ static void write_span_rgb_5R6G5B_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_rgb_DITHER_5R6G5B_ximage( RGB_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
-   register GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x, y );
+   register GLushort *ptr = PIXEL_ADDR2(xrb, x, y );
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1733,9 +1768,10 @@ static void write_span_rgb_DITHER_5R6G5B_ximage( RGB_SPAN_ARGS )
 static void write_span_DITHER_ximage( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
-   int yy = FLIP(xmesa->xm_buffer, y);
+   int yy = YFLIP(xrb, y);
    XDITHER_SETUP(yy);
    if (mask) {
       for (i=0;i<n;i++,x++) {
@@ -1759,9 +1795,10 @@ static void write_span_DITHER_ximage( RGBA_SPAN_ARGS )
 static void write_span_rgb_DITHER_ximage( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
-   int yy = FLIP(xmesa->xm_buffer, y);
+   int yy = YFLIP(xrb, y);
    XDITHER_SETUP(yy);
    if (mask) {
       for (i=0;i<n;i++,x++) {
@@ -1786,8 +1823,9 @@ static void write_span_rgb_DITHER_ximage( RGB_SPAN_ARGS )
 static void write_span_DITHER8_ximage( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
-   register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
+   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
    XDITHER_SETUP(y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
@@ -1807,8 +1845,9 @@ static void write_span_DITHER8_ximage( RGBA_SPAN_ARGS )
 static void write_span_rgb_DITHER8_ximage( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
-   register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
+   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
    XDITHER_SETUP(y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
@@ -1834,10 +1873,11 @@ static void write_span_rgb_DITHER8_ximage( RGB_SPAN_ARGS )
 static void write_span_1BIT_ximage( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    SETUP_1BIT;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1859,10 +1899,11 @@ static void write_span_1BIT_ximage( RGBA_SPAN_ARGS )
 static void write_span_rgb_1BIT_ximage( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    SETUP_1BIT;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1883,9 +1924,10 @@ static void write_span_rgb_1BIT_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_HPCR_ximage( RGBA_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
-   register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
+   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1907,9 +1949,10 @@ static void write_span_HPCR_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_HPCR_ximage( RGB_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
-   register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
+   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1932,10 +1975,11 @@ static void write_span_rgb_HPCR_ximage( RGB_SPAN_ARGS )
 static void write_span_LOOKUP_ximage( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    LOOKUP_SETUP;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1958,10 +2002,11 @@ static void write_span_LOOKUP_ximage( RGBA_SPAN_ARGS )
 static void write_span_rgb_LOOKUP_ximage( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    LOOKUP_SETUP;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -1983,9 +2028,10 @@ static void write_span_rgb_LOOKUP_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_LOOKUP8_ximage( RGBA_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
-   register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
+   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
    LOOKUP_SETUP;
    if (mask) {
       for (i=0;i<n;i++,x++) {
@@ -2003,14 +2049,12 @@ static void write_span_LOOKUP8_ximage( RGBA_SPAN_ARGS )
 }
 
 
-static void write_rgb_LOOKUP8_ximage( const GLcontext *ctx,
-                                      GLuint n, GLint x, GLint y,
-                                      CONST GLubyte rgb[][3],
-                                      const GLubyte mask[] )
+static void write_rgb_LOOKUP8_ximage( RGB_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
-   register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
+   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
    LOOKUP_SETUP;
    if (mask) {
       for (i=0;i<n;i++,x++) {
@@ -2036,9 +2080,10 @@ static void write_rgb_LOOKUP8_ximage( const GLcontext *ctx,
 static void write_span_GRAYSCALE_ximage( RGBA_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -2061,9 +2106,10 @@ static void write_span_GRAYSCALE_ximage( RGBA_SPAN_ARGS )
 static void write_span_rgb_GRAYSCALE_ximage( RGB_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -2085,9 +2131,10 @@ static void write_span_rgb_GRAYSCALE_ximage( RGB_SPAN_ARGS )
  */
 static void write_span_GRAYSCALE8_ximage( RGBA_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
-   register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
+   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++) {
          if (mask[i]) {
@@ -2109,9 +2156,10 @@ static void write_span_GRAYSCALE8_ximage( RGBA_SPAN_ARGS )
  */
 static void write_span_rgb_GRAYSCALE8_ximage( RGB_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
-   register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x, y );
+   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
    if (mask) {
       for (i=0;i<n;i++) {
          if (mask[i]) {
@@ -2136,6 +2184,7 @@ static void write_span_rgb_GRAYSCALE8_ximage( RGB_SPAN_ARGS )
 
 
 #define RGBA_PIXEL_ARGS   const GLcontext *ctx,				\
+			  struct gl_renderbuffer *rb,			\
 			  GLuint n, const GLint x[], const GLint y[],	\
 			  CONST GLubyte rgba[][4], const GLubyte mask[]
 
@@ -2146,6 +2195,7 @@ static void write_span_rgb_GRAYSCALE8_ximage( RGB_SPAN_ARGS )
 static void write_pixels_TRUECOLOR_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2155,7 +2205,7 @@ static void write_pixels_TRUECOLOR_pixmap( RGBA_PIXEL_ARGS )
          unsigned long p;
          PACK_TRUECOLOR( p, rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
 	 XMesaSetForeground( dpy, gc, p );
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2167,6 +2217,7 @@ static void write_pixels_TRUECOLOR_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_TRUEDITHER_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2176,7 +2227,7 @@ static void write_pixels_TRUEDITHER_pixmap( RGBA_PIXEL_ARGS )
          unsigned long p;
          PACK_TRUEDITHER(p, x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP]);
          XMesaSetForeground( dpy, gc, p );
-         XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+         XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2188,6 +2239,7 @@ static void write_pixels_TRUEDITHER_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_8A8B8G8R_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2196,7 +2248,7 @@ static void write_pixels_8A8B8G8R_pixmap( RGBA_PIXEL_ARGS )
       if (mask[i]) {
 	 XMesaSetForeground( dpy, gc,
                          PACK_8A8B8G8R( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP], rgba[i][ACOMP] ));
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2207,6 +2259,7 @@ static void write_pixels_8A8B8G8R_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_8A8R8G8B_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2215,7 +2268,7 @@ static void write_pixels_8A8R8G8B_pixmap( RGBA_PIXEL_ARGS )
       if (mask[i]) {
 	 XMesaSetForeground( dpy, gc,
                          PACK_8A8R8G8B( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP], rgba[i][ACOMP] ));
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2226,6 +2279,7 @@ static void write_pixels_8A8R8G8B_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_8R8G8B_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2233,7 +2287,7 @@ static void write_pixels_8R8G8B_pixmap( RGBA_PIXEL_ARGS )
    for (i=0;i<n;i++) {
       if (mask[i]) {
 	 XMesaSetForeground( dpy, gc, PACK_8R8G8B( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ) );
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2245,6 +2299,7 @@ static void write_pixels_8R8G8B_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_8R8G8B24_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2252,7 +2307,7 @@ static void write_pixels_8R8G8B24_pixmap( RGBA_PIXEL_ARGS )
    for (i=0;i<n;i++) {
       if (mask[i]) {
 	 XMesaSetForeground( dpy, gc, PACK_8R8G8B( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ) );
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2264,6 +2319,7 @@ static void write_pixels_8R8G8B24_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_5R6G5B_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2271,7 +2327,7 @@ static void write_pixels_5R6G5B_pixmap( RGBA_PIXEL_ARGS )
    for (i=0;i<n;i++) {
       if (mask[i]) {
 	 XMesaSetForeground( dpy, gc, PACK_5R6G5B( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ) );
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2283,6 +2339,7 @@ static void write_pixels_5R6G5B_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_DITHER_5R6G5B_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2292,7 +2349,7 @@ static void write_pixels_DITHER_5R6G5B_pixmap( RGBA_PIXEL_ARGS )
          unsigned long p;
          PACK_TRUEDITHER(p, x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
 	 XMesaSetForeground( dpy, gc, p );
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2304,6 +2361,7 @@ static void write_pixels_DITHER_5R6G5B_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_DITHER_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2313,7 +2371,7 @@ static void write_pixels_DITHER_pixmap( RGBA_PIXEL_ARGS )
       if (mask[i]) {
 	 XMesaSetForeground( dpy, gc,
                          DITHER(x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP]) );
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2325,6 +2383,7 @@ static void write_pixels_DITHER_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_1BIT_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2334,7 +2393,7 @@ static void write_pixels_1BIT_pixmap( RGBA_PIXEL_ARGS )
       if (mask[i]) {
 	 XMesaSetForeground( dpy, gc,
                          DITHER_1BIT( x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ));
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2346,6 +2405,7 @@ static void write_pixels_1BIT_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_HPCR_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2354,7 +2414,7 @@ static void write_pixels_HPCR_pixmap( RGBA_PIXEL_ARGS )
       if (mask[i]) {
          XMesaSetForeground( dpy, gc,
                          DITHER_HPCR( x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ));
-         XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+         XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2366,6 +2426,7 @@ static void write_pixels_HPCR_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_LOOKUP_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2374,7 +2435,7 @@ static void write_pixels_LOOKUP_pixmap( RGBA_PIXEL_ARGS )
    for (i=0;i<n;i++) {
       if (mask[i]) {
          XMesaSetForeground( dpy, gc, LOOKUP( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ) );
-         XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+         XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2386,6 +2447,7 @@ static void write_pixels_LOOKUP_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_GRAYSCALE_pixmap( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2393,7 +2455,7 @@ static void write_pixels_GRAYSCALE_pixmap( RGBA_PIXEL_ARGS )
    for (i=0;i<n;i++) {
       if (mask[i]) {
          XMesaSetForeground( dpy, gc, GRAY_RGB( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ) );
-         XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+         XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -2405,13 +2467,14 @@ static void write_pixels_GRAYSCALE_pixmap( RGBA_PIXEL_ARGS )
 static void write_pixels_TRUECOLOR_ximage( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
          unsigned long p;
          PACK_TRUECOLOR( p, rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
-	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]), p );
+	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]), p );
       }
    }
 }
@@ -2423,13 +2486,14 @@ static void write_pixels_TRUECOLOR_ximage( RGBA_PIXEL_ARGS )
 static void write_pixels_TRUEDITHER_ximage( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
          unsigned long p;
          PACK_TRUEDITHER(p, x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP]);
-	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]), p );
+	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]), p );
       }
    }
 }
@@ -2440,11 +2504,11 @@ static void write_pixels_TRUEDITHER_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_8A8B8G8R_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x[i], y[i] );
+	 GLuint *ptr = PIXEL_ADDR4(xrb, x[i], y[i] );
          *ptr = PACK_8A8B8G8R( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP], rgba[i][ACOMP] );
       }
    }
@@ -2455,11 +2519,11 @@ static void write_pixels_8A8B8G8R_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_8A8R8G8B_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x[i], y[i] );
+	 GLuint *ptr = PIXEL_ADDR4(xrb, x[i], y[i]);
          *ptr = PACK_8A8R8G8B( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP], rgba[i][ACOMP] );
       }
    }
@@ -2471,11 +2535,11 @@ static void write_pixels_8A8R8G8B_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_8R8G8B_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x[i], y[i] );
+	 GLuint *ptr = PIXEL_ADDR4(xrb, x[i], y[i]);
          *ptr = PACK_8R8G8B( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
       }
    }
@@ -2487,11 +2551,11 @@ static void write_pixels_8R8G8B_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_8R8G8B24_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 bgr_t *ptr = PIXELADDR3( xmesa->xm_buffer, x[i], y[i] );
+	 bgr_t *ptr = PIXEL_ADDR3(xrb, x[i], y[i] );
          ptr->r = rgba[i][RCOMP];
          ptr->g = rgba[i][GCOMP];
          ptr->b = rgba[i][BCOMP];
@@ -2505,11 +2569,11 @@ static void write_pixels_8R8G8B24_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_5R6G5B_ximage( RGBA_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x[i], y[i] );
+	 GLushort *ptr = PIXEL_ADDR2(xrb, x[i], y[i] );
          *ptr = PACK_5R6G5B( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
       }
    }
@@ -2521,11 +2585,12 @@ static void write_pixels_5R6G5B_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_DITHER_5R6G5B_ximage( RGBA_PIXEL_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x[i], y[i] );
+	 GLushort *ptr = PIXEL_ADDR2(xrb, x[i], y[i] );
          PACK_TRUEDITHER( *ptr, x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
       }
    }
@@ -2538,12 +2603,13 @@ static void write_pixels_DITHER_5R6G5B_ximage( RGBA_PIXEL_ARGS )
 static void write_pixels_DITHER_ximage( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    DITHER_SETUP;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]),
+	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]),
                     DITHER( x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ) );
       }
    }
@@ -2555,12 +2621,13 @@ static void write_pixels_DITHER_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_DITHER8_ximage( RGBA_PIXEL_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    DITHER_SETUP;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x[i],y[i]);
+	 GLubyte *ptr = PIXEL_ADDR1(xrb, x[i], y[i]);
 	 *ptr = (GLubyte) DITHER( x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
       }
    }
@@ -2573,12 +2640,13 @@ static void write_pixels_DITHER8_ximage( RGBA_PIXEL_ARGS )
 static void write_pixels_1BIT_ximage( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    SETUP_1BIT;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]),
+	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]),
                     DITHER_1BIT( x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ));
       }
    }
@@ -2590,11 +2658,12 @@ static void write_pixels_1BIT_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_HPCR_ximage( RGBA_PIXEL_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-         GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x[i],y[i]);
+         GLubyte *ptr = PIXEL_ADDR1(xrb, x[i], y[i]);
          *ptr = (GLubyte) DITHER_HPCR( x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
       }
    }
@@ -2607,12 +2676,13 @@ static void write_pixels_HPCR_ximage( RGBA_PIXEL_ARGS )
 static void write_pixels_LOOKUP_ximage( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    LOOKUP_SETUP;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]), LOOKUP(rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP]) );
+	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]), LOOKUP(rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP]) );
       }
    }
 }
@@ -2623,12 +2693,13 @@ static void write_pixels_LOOKUP_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_LOOKUP8_ximage( RGBA_PIXEL_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    LOOKUP_SETUP;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x[i],y[i]);
+	 GLubyte *ptr = PIXEL_ADDR1(xrb, x[i], y[i]);
 	 *ptr = (GLubyte) LOOKUP( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
       }
    }
@@ -2641,11 +2712,12 @@ static void write_pixels_LOOKUP8_ximage( RGBA_PIXEL_ARGS )
 static void write_pixels_GRAYSCALE_ximage( RGBA_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]),
+	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]),
                     GRAY_RGB( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ) );
       }
    }
@@ -2657,11 +2729,12 @@ static void write_pixels_GRAYSCALE_ximage( RGBA_PIXEL_ARGS )
  */
 static void write_pixels_GRAYSCALE8_ximage( RGBA_PIXEL_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer, x[i], y[i] );
+	 GLubyte *ptr = PIXEL_ADDR1(xrb, x[i], y[i] );
 	 *ptr = (GLubyte) GRAY_RGB( rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
       }
    }
@@ -2675,6 +2748,7 @@ static void write_pixels_GRAYSCALE8_ximage( RGBA_PIXEL_ARGS )
 /**********************************************************************/
 
 #define MONO_SPAN_ARGS	const GLcontext *ctx,	\
+		 	struct gl_renderbuffer *rb, \
 		 	GLuint n, GLint x, GLint y, const GLchan color[4], \
                         const GLubyte mask[]
 
@@ -2685,6 +2759,7 @@ static void write_pixels_GRAYSCALE8_ximage( RGBA_PIXEL_ARGS )
 static void write_span_mono_pixmap( MONO_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -2692,7 +2767,7 @@ static void write_span_mono_pixmap( MONO_SPAN_ARGS )
                color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
    register GLuint i;
    XMesaSetForeground( xmesa->display, gc, pixel );
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
 
    /* New code contributed by Jeff Epler and cleaned up by Keith
     * Whitwell.  
@@ -2719,17 +2794,19 @@ static void write_span_mono_pixmap( MONO_SPAN_ARGS )
 
 
 
-static void write_span_mono_index_pixmap( const GLcontext *ctx, GLuint n,
-                                          GLint x, GLint y, GLuint colorIndex,
-                                          const GLubyte mask[] )
+static void
+write_span_mono_index_pixmap( const GLcontext *ctx, struct gl_renderbuffer *rb,
+                              GLuint n, GLint x, GLint y, GLuint colorIndex,
+                              const GLubyte mask[] )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
    XMesaSetForeground( xmesa->display, gc, colorIndex );
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
 
    for (i = 0 ; i < n ;) {
       GLuint start = i;
@@ -2759,12 +2836,13 @@ static void write_span_mono_index_pixmap( const GLcontext *ctx, GLuint n,
 static void write_span_mono_TRUEDITHER_pixmap( MONO_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLuint i;
-   int yy = FLIP(xmesa->xm_buffer, y);
+   int yy = YFLIP(xrb, y);
    for (i=0;i<n;i++,x++) {
       if (mask[i]) {
          unsigned long p;
@@ -2782,12 +2860,13 @@ static void write_span_mono_TRUEDITHER_pixmap( MONO_SPAN_ARGS )
 static void write_span_mono_DITHER_pixmap( MONO_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLuint i;
-   int yy = FLIP(xmesa->xm_buffer, y);
+   int yy = YFLIP(xrb, y);
    XDITHER_SETUP(yy);
    for (i=0;i<n;i++,x++) {
       if (mask[i]) {
@@ -2804,13 +2883,14 @@ static void write_span_mono_DITHER_pixmap( MONO_SPAN_ARGS )
 static void write_span_mono_1BIT_pixmap( MONO_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLuint i;
    SETUP_1BIT;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    for (i=0;i<n;i++,x++) {
       if (mask[i]) {
          XMesaSetForeground( dpy, gc, DITHER_1BIT( x, y, r, g, b ) );
@@ -2826,11 +2906,12 @@ static void write_span_mono_1BIT_pixmap( MONO_SPAN_ARGS )
 static void write_span_mono_ximage( MONO_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    const unsigned long pixel = xmesa_color_to_pixel(xmesa, color[RCOMP],
                color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    for (i=0;i<n;i++,x++) {
       if (mask[i]) {
 	 XMesaPutPixel( img, x, y, pixel );
@@ -2839,15 +2920,16 @@ static void write_span_mono_ximage( MONO_SPAN_ARGS )
 }
 
 
-static void write_span_mono_index_ximage( const GLcontext *ctx, GLuint n,
-                                          GLint x, GLint y,
-                                          GLuint colorIndex,
-                                          const GLubyte mask[] )
+static void
+write_span_mono_index_ximage( const GLcontext *ctx, struct gl_renderbuffer *rb,
+                              GLuint n, GLint x, GLint y, GLuint colorIndex,
+                              const GLubyte mask[] )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    for (i=0;i<n;i++,x++) {
       if (mask[i]) {
 	 XMesaPutPixel( img, x, y, colorIndex );
@@ -2862,10 +2944,11 @@ static void write_span_mono_index_ximage( const GLcontext *ctx, GLuint n,
 static void write_span_mono_TRUEDITHER_ximage( MONO_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    const GLint r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    for (i=0;i<n;i++) {
       if (mask[i]) {
          unsigned long p;
@@ -2881,11 +2964,12 @@ static void write_span_mono_TRUEDITHER_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_8A8B8G8R_ximage( MONO_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    GLuint i, *ptr;
    const unsigned long pixel = xmesa_color_to_pixel(xmesa, color[RCOMP],
                color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
-   ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
+   ptr = PIXEL_ADDR4(xrb, x, y );
    for (i=0;i<n;i++) {
       if (mask[i]) {
 	 ptr[i] = pixel;
@@ -2898,11 +2982,12 @@ static void write_span_mono_8A8B8G8R_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_8A8R8G8B_ximage( MONO_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    GLuint i, *ptr;
    const unsigned long pixel = xmesa_color_to_pixel(xmesa, color[RCOMP],
                color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
-   ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
+   ptr = PIXEL_ADDR4(xrb, x, y );
    for (i=0;i<n;i++) {
       if (mask[i]) {
 	 ptr[i] = pixel;
@@ -2916,9 +3001,9 @@ static void write_span_mono_8A8R8G8B_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_8R8G8B_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const GLuint pixel = PACK_8R8G8B(color[RCOMP], color[GCOMP], color[BCOMP]);
-   GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x, y );
+   GLuint *ptr = PIXEL_ADDR4(xrb, x, y );
    GLuint i;
    for (i=0;i<n;i++) {
       if (!mask || mask[i]) {
@@ -2933,12 +3018,12 @@ static void write_span_mono_8R8G8B_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_8R8G8B24_ximage( MONO_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const GLubyte r = color[RCOMP];
    const GLubyte g = color[GCOMP];
    const GLubyte b = color[BCOMP];
    GLuint i;
-   bgr_t *ptr = PIXELADDR3( xmesa->xm_buffer, x, y );
+   bgr_t *ptr = PIXEL_ADDR3(xrb, x, y );
    for (i=0;i<n;i++) {
       if (mask[i]) {
          ptr[i].r = r;
@@ -2955,9 +3040,10 @@ static void write_span_mono_8R8G8B24_ximage( MONO_SPAN_ARGS )
 static void write_span_mono_DITHER_ximage( MONO_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    XMesaImage *img = xmesa->xm_buffer->backimage;
-   int yy = FLIP(xmesa->xm_buffer, y);
+   int yy = YFLIP(xrb, y);
    register GLuint i;
    XDITHER_SETUP(yy);
    for (i=0;i<n;i++,x++) {
@@ -2973,9 +3059,10 @@ static void write_span_mono_DITHER_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_DITHER8_ximage( MONO_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
-   register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x,y);
+   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
    register GLuint i;
    XDITHER_SETUP(y);
    for (i=0;i<n;i++,x++) {
@@ -2991,9 +3078,10 @@ static void write_span_mono_DITHER8_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_LOOKUP8_ximage( MONO_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
-   register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x,y);
+   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
    GLubyte pixel;
    LOOKUP_SETUP;
    pixel = LOOKUP(color[RCOMP], color[GCOMP], color[BCOMP]);
@@ -3011,11 +3099,12 @@ static void write_span_mono_LOOKUP8_ximage( MONO_SPAN_ARGS )
 static void write_span_mono_1BIT_ximage( MONO_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    SETUP_1BIT;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    for (i=0;i<n;i++,x++) {
       if (mask[i]) {
 	 XMesaPutPixel( img, x, y, DITHER_1BIT( x, y, r, g, b ) );
@@ -3029,9 +3118,10 @@ static void write_span_mono_1BIT_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_HPCR_ximage( MONO_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
-   register GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x,y);
+   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
    register GLuint i;
    for (i=0;i<n;i++,x++) {
       if (mask[i]) {
@@ -3046,9 +3136,10 @@ static void write_span_mono_HPCR_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_GRAYSCALE8_ximage( MONO_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte p = GRAY_RGB(color[RCOMP], color[GCOMP], color[BCOMP]);
-   GLubyte *ptr = (GLubyte *) PIXELADDR1( xmesa->xm_buffer,x,y);
+   GLubyte *ptr = (GLubyte *) PIXEL_ADDR1(xrb, x, y);
    GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
@@ -3064,11 +3155,12 @@ static void write_span_mono_GRAYSCALE8_ximage( MONO_SPAN_ARGS )
  */
 static void write_span_mono_DITHER_5R6G5B_ximage( MONO_SPAN_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   register GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x, y );
+   register GLushort *ptr = PIXEL_ADDR2(xrb, x, y );
    const GLint r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    for (i=0;i<n;i++) {
       if (mask[i]) {
          PACK_TRUEDITHER(ptr[i], x+i, y, r, g, b);
@@ -3083,6 +3175,7 @@ static void write_span_mono_DITHER_5R6G5B_ximage( MONO_SPAN_ARGS )
 /**********************************************************************/
 
 #define MONO_PIXEL_ARGS	const GLcontext *ctx,				\
+			struct gl_renderbuffer *rb,			\
 			GLuint n, const GLint x[], const GLint y[],	\
 			const GLchan color[4], const GLubyte mask[]
 
@@ -3092,6 +3185,7 @@ static void write_span_mono_DITHER_5R6G5B_ximage( MONO_SPAN_ARGS )
 static void write_pixels_mono_pixmap( MONO_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -3102,19 +3196,19 @@ static void write_pixels_mono_pixmap( MONO_PIXEL_ARGS )
    for (i=0;i<n;i++) {
       if (mask[i]) {
 	 XMesaDrawPoint( dpy, buffer, gc,
-                         (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+                         (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
 
 
-static void write_pixels_mono_index_pixmap(const GLcontext *ctx,
-                                           GLuint n,
-                                           const GLint x[], const GLint y[],
-                                           GLuint colorIndex,
-                                           const GLubyte mask[] )
+static void
+write_pixels_mono_index_pixmap(const GLcontext *ctx, struct gl_renderbuffer *rb,
+                               GLuint n, const GLint x[], const GLint y[],
+                               GLuint colorIndex, const GLubyte mask[] )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -3123,7 +3217,7 @@ static void write_pixels_mono_index_pixmap(const GLcontext *ctx,
    for (i=0;i<n;i++) {
       if (mask[i]) {
 	 XMesaDrawPoint( dpy, buffer, gc,
-                         (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+                         (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -3135,6 +3229,7 @@ static void write_pixels_mono_index_pixmap(const GLcontext *ctx,
 static void write_pixels_mono_TRUEDITHER_pixmap( MONO_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -3146,7 +3241,7 @@ static void write_pixels_mono_TRUEDITHER_pixmap( MONO_PIXEL_ARGS )
          PACK_TRUEDITHER(p, x[i], y[i], r, g, b);
          XMesaSetForeground( dpy, gc, p );
 	 XMesaDrawPoint( dpy, buffer, gc,
-                         (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+                         (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -3158,6 +3253,7 @@ static void write_pixels_mono_TRUEDITHER_pixmap( MONO_PIXEL_ARGS )
 static void write_pixels_mono_DITHER_pixmap( MONO_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -3167,7 +3263,7 @@ static void write_pixels_mono_DITHER_pixmap( MONO_PIXEL_ARGS )
    for (i=0;i<n;i++) {
       if (mask[i]) {
          XMesaSetForeground( dpy, gc, DITHER( x[i], y[i], r, g, b ) );
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -3179,6 +3275,7 @@ static void write_pixels_mono_DITHER_pixmap( MONO_PIXEL_ARGS )
 static void write_pixels_mono_1BIT_pixmap( MONO_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -3188,7 +3285,7 @@ static void write_pixels_mono_1BIT_pixmap( MONO_PIXEL_ARGS )
    for (i=0;i<n;i++) {
       if (mask[i]) {
          XMesaSetForeground( dpy, gc, DITHER_1BIT( x[i], y[i], r, g, b ) );
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -3200,29 +3297,32 @@ static void write_pixels_mono_1BIT_pixmap( MONO_PIXEL_ARGS )
 static void write_pixels_mono_ximage( MONO_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    const unsigned long pixel = xmesa_color_to_pixel(xmesa, color[RCOMP],
                color[GCOMP], color[BCOMP], color[ACOMP], xmesa->pixelformat);
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]), pixel );
+	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]), pixel );
       }
    }
 }
 
 
-static void write_pixels_mono_index_ximage( const GLcontext *ctx, GLuint n,
-                                            const GLint x[], const GLint y[],
-                                            GLuint colorIndex,
-                                            const GLubyte mask[] )
+static void
+write_pixels_mono_index_ximage(const GLcontext *ctx,
+                               struct gl_renderbuffer *rb,
+                               GLuint n, const GLint x[], const GLint y[],
+                               GLuint colorIndex, const GLubyte mask[] )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]), colorIndex );
+	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]), colorIndex );
       }
    }
 }
@@ -3234,14 +3334,15 @@ static void write_pixels_mono_index_ximage( const GLcontext *ctx, GLuint n,
 static void write_pixels_mono_TRUEDITHER_ximage( MONO_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    const int r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    for (i=0;i<n;i++) {
       if (mask[i]) {
          unsigned long p;
-         PACK_TRUEDITHER(p, x[i], FLIP(xmesa->xm_buffer, y[i]), r, g, b);
-	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]), p );
+         PACK_TRUEDITHER(p, x[i], YFLIP(xrb, y[i]), r, g, b);
+	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]), p );
       }
    }
 }
@@ -3253,13 +3354,13 @@ static void write_pixels_mono_TRUEDITHER_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_8A8B8G8R_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const GLuint p = PACK_8A8B8G8R(color[RCOMP], color[GCOMP],
                                   color[BCOMP], color[ACOMP]);
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x[i], y[i] );
+	 GLuint *ptr = PIXEL_ADDR4(xrb, x[i], y[i] );
 	 *ptr = p;
       }
    }
@@ -3270,13 +3371,13 @@ static void write_pixels_mono_8A8B8G8R_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_8A8R8G8B_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const GLuint p = PACK_8A8R8G8B(color[RCOMP], color[GCOMP],
                                   color[BCOMP], color[ACOMP]);
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x[i], y[i] );
+	 GLuint *ptr = PIXEL_ADDR4(xrb, x[i], y[i] );
 	 *ptr = p;
       }
    }
@@ -3287,12 +3388,12 @@ static void write_pixels_mono_8A8R8G8B_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_8R8G8B_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
    const GLuint p = PACK_8R8G8B(color[RCOMP], color[GCOMP], color[BCOMP]);
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLuint *ptr = PIXELADDR4( xmesa->xm_buffer, x[i], y[i] );
+	 GLuint *ptr = PIXEL_ADDR4(xrb, x[i], y[i] );
 	 *ptr = p;
       }
    }
@@ -3304,12 +3405,12 @@ static void write_pixels_mono_8R8G8B_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_8R8G8B24_ximage( MONO_PIXEL_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 bgr_t *ptr = PIXELADDR3( xmesa->xm_buffer, x[i], y[i] );
+	 bgr_t *ptr = PIXEL_ADDR3(xrb, x[i], y[i] );
          ptr->r = r;
          ptr->g = g;
          ptr->b = b;
@@ -3324,13 +3425,14 @@ static void write_pixels_mono_8R8G8B24_ximage( MONO_PIXEL_ARGS )
 static void write_pixels_mono_DITHER_ximage( MONO_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    DITHER_SETUP;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]), DITHER( x[i], y[i], r, g, b ) );
+	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]), DITHER( x[i], y[i], r, g, b ) );
       }
    }
 }
@@ -3341,13 +3443,14 @@ static void write_pixels_mono_DITHER_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_DITHER8_ximage( MONO_PIXEL_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLuint i;
    DITHER_SETUP;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x[i],y[i]);
+	 GLubyte *ptr = PIXEL_ADDR1(xrb, x[i], y[i]);
 	 *ptr = (GLubyte) DITHER( x[i], y[i], r, g, b );
       }
    }
@@ -3359,6 +3462,7 @@ static void write_pixels_mono_DITHER8_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_LOOKUP8_ximage( MONO_PIXEL_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    GLubyte pixel;
@@ -3366,7 +3470,7 @@ static void write_pixels_mono_LOOKUP8_ximage( MONO_PIXEL_ARGS )
    pixel = LOOKUP(color[RCOMP], color[GCOMP], color[BCOMP]);
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x[i],y[i]);
+	 GLubyte *ptr = PIXEL_ADDR1(xrb, x[i], y[i]);
 	 *ptr = pixel;
       }
    }
@@ -3380,13 +3484,14 @@ static void write_pixels_mono_LOOKUP8_ximage( MONO_PIXEL_ARGS )
 static void write_pixels_mono_1BIT_ximage( MONO_PIXEL_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    SETUP_1BIT;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]),
+	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]),
                         DITHER_1BIT( x[i], y[i], r, g, b ));
       }
    }
@@ -3398,12 +3503,13 @@ static void write_pixels_mono_1BIT_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_HPCR_ximage( MONO_PIXEL_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-         GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x[i],y[i]);
+         GLubyte *ptr = PIXEL_ADDR1(xrb, x[i], y[i]);
          *ptr = DITHER_HPCR( x[i], y[i], r, g, b );
       }
    }
@@ -3415,12 +3521,13 @@ static void write_pixels_mono_HPCR_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_GRAYSCALE8_ximage( MONO_PIXEL_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    register GLuint i;
    register GLubyte p = GRAY_RGB(color[RCOMP], color[GCOMP], color[BCOMP]);
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLubyte *ptr = PIXELADDR1( xmesa->xm_buffer,x[i],y[i]);
+	 GLubyte *ptr = PIXEL_ADDR1(xrb, x[i], y[i]);
 	 *ptr = p;
       }
    }
@@ -3432,12 +3539,13 @@ static void write_pixels_mono_GRAYSCALE8_ximage( MONO_PIXEL_ARGS )
  */
 static void write_pixels_mono_DITHER_5R6G5B_ximage( MONO_PIXEL_ARGS )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const int r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 GLushort *ptr = PIXELADDR2( xmesa->xm_buffer, x[i], y[i] );
+	 GLushort *ptr = PIXEL_ADDR2(xrb, x[i], y[i] );
          PACK_TRUEDITHER(*ptr, x[i], y[i], r, g, b);
       }
    }
@@ -3449,11 +3557,11 @@ static void write_pixels_mono_DITHER_5R6G5B_ximage( MONO_PIXEL_ARGS )
 /*** Write INDEX SPAN functions                                     ***/
 /**********************************************************************/
 
-#define INDEX_SPAN_ARGS	const GLcontext *ctx,				\
+#define INDEX_SPAN_ARGS	const GLcontext *ctx, struct gl_renderbuffer *rb, \
 			GLuint n, GLint x, GLint y, const GLuint index[], \
 			const GLubyte mask[]
 
-#define INDEX8_SPAN_ARGS const GLcontext *ctx,				\
+#define INDEX8_SPAN_ARGS const GLcontext *ctx, struct gl_renderbuffer *rb, \
 			 GLuint n, GLint x, GLint y, const GLubyte index[], \
 			 const GLubyte mask[]
 
@@ -3464,11 +3572,12 @@ static void write_pixels_mono_DITHER_5R6G5B_ximage( MONO_PIXEL_ARGS )
 static void write_span_index_pixmap( INDEX_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -3492,11 +3601,12 @@ static void write_span_index_pixmap( INDEX_SPAN_ARGS )
 static void write_span_index8_pixmap( INDEX8_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -3520,9 +3630,10 @@ static void write_span_index8_pixmap( INDEX8_SPAN_ARGS )
 static void write_span_index_ximage( INDEX_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
-   y = FLIP(xmesa->xm_buffer, y);
+   y = YFLIP(xrb, y);
    if (mask) {
       for (i=0;i<n;i++,x++) {
          if (mask[i]) {
@@ -3544,6 +3655,8 @@ static void write_span_index_ximage( INDEX_SPAN_ARGS )
 static void write_span_index8_ximage( INDEX8_SPAN_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
+   y = YFLIP(xrb, y);
    if (mask) {
       GLuint i;
       for (i=0;i<n;i++) {
@@ -3565,8 +3678,8 @@ static void write_span_index8_ximage( INDEX8_SPAN_ARGS )
  */
 static void write_span_index8_ximage8( INDEX8_SPAN_ARGS )
 {
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GLubyte *dst = PIXELADDR1( xmesa->xm_buffer,x,y);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
+   GLubyte *dst = PIXEL_ADDR1(xrb, x, y);
    if (mask) {
       GLuint i;
       for (i=0;i<n;i++) {
@@ -3587,6 +3700,7 @@ static void write_span_index8_ximage8( INDEX8_SPAN_ARGS )
 /**********************************************************************/
 
 #define INDEX_PIXELS_ARGS	const GLcontext *ctx,			\
+				struct gl_renderbuffer *rb,		\
 				GLuint n, const GLint x[], const GLint y[], \
 				const GLuint index[], const GLubyte mask[]
 
@@ -3597,6 +3711,7 @@ static void write_span_index8_ximage8( INDEX8_SPAN_ARGS )
 static void write_pixels_index_pixmap( INDEX_PIXELS_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaDrawable buffer = xmesa->xm_buffer->buffer;
    XMesaGC gc = xmesa->xm_buffer->gc;
@@ -3604,7 +3719,7 @@ static void write_pixels_index_pixmap( INDEX_PIXELS_ARGS )
    for (i=0;i<n;i++) {
       if (mask[i]) {
 	 XMesaSetForeground( dpy, gc, (unsigned long) index[i] );
-	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) FLIP(xmesa->xm_buffer, y[i]) );
+	 XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
       }
    }
 }
@@ -3616,11 +3731,12 @@ static void write_pixels_index_pixmap( INDEX_PIXELS_ARGS )
 static void write_pixels_index_ximage( INDEX_PIXELS_ARGS )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaImage *img = xmesa->xm_buffer->backimage;
    register GLuint i;
    for (i=0;i<n;i++) {
       if (mask[i]) {
-	 XMesaPutPixel( img, x[i], FLIP(xmesa->xm_buffer, y[i]), (unsigned long) index[i] );
+	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]), (unsigned long) index[i] );
       }
    }
 }
@@ -3651,7 +3767,7 @@ clip_for_xgetimage(XMesaContext xmesa, GLuint *n, GLint *x, GLint *y)
    GLint dx, dy;
    if (source->type == PBUFFER || source->type == PIXMAP)
       return 0;
-   XTranslateCoordinates(xmesa->display, source->buffer, rootWin,
+   XTranslateCoordinates(xmesa->display, source->frontbuffer, rootWin,
                          *x, *y, &dx, &dy, &child);
    if (dx >= screenWidth) {
       /* totally clipped on right */
@@ -3680,14 +3796,16 @@ clip_for_xgetimage(XMesaContext xmesa, GLuint *n, GLint *x, GLint *y)
 /*
  * Read a horizontal span of color-index pixels.
  */
-static void read_index_span( const GLcontext *ctx,
-			     GLuint n, GLint x, GLint y, GLuint index[] )
+static void
+read_index_span(const GLcontext *ctx, struct gl_renderbuffer *rb,
+                GLuint n, GLint x, GLint y, GLuint index[])
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaBuffer source = xmesa->xm_buffer;
    GLuint i;
 
-   y = FLIP(source, y);
+   y = YFLIP(xrb, y);
 
    if (source->buffer) {
 #ifndef XFree86Server
@@ -3735,11 +3853,12 @@ static void read_index_span( const GLcontext *ctx,
 /*
  * Read a horizontal span of color pixels.
  */
-static void read_color_span( const GLcontext *ctx,
-			     GLuint n, GLint x, GLint y,
-                             GLubyte rgba[][4] )
+static void
+read_color_span( const GLcontext *ctx, struct gl_renderbuffer *rb,
+                 GLuint n, GLint x, GLint y, GLubyte rgba[][4] )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    XMesaBuffer source = xmesa->xm_buffer;
 
    if (source->buffer) {
@@ -3751,11 +3870,11 @@ static void read_color_span( const GLcontext *ctx,
       span->data = (char *)MALLOC(span->height * span->bytes_per_line);
       error = (!span->data);
       (*xmesa->display->GetImage)(source->buffer,
-				  x, FLIP(source, y), n, 1, ZPixmap,
+				  x, YFLIP(xrb, y), n, 1, ZPixmap,
 				  ~0L, (pointer)span->data);
 #else
       int k;
-      y = FLIP(source, y);
+      y = YFLIP(xrb, y);
       k = clip_for_xgetimage(xmesa, &n, &x, &y);
       if (k < 0)
          return;
@@ -3952,7 +4071,7 @@ static void read_color_span( const GLcontext *ctx,
                GLint bShift = xmesa->xm_visual->bshift;
                XMesaImage *img = source->backimage;
                GLuint i;
-               y = FLIP(source, y);
+               y = YFLIP(xrb, y);
                for (i=0;i<n;i++) {
                   unsigned long p;
 		  p = XMesaGetPixel( img, x+i, y );
@@ -3969,7 +4088,7 @@ static void read_color_span( const GLcontext *ctx,
                const GLubyte *pixelToR = xmesa->xm_visual->PixelToR;
                const GLubyte *pixelToG = xmesa->xm_visual->PixelToG;
                const GLubyte *pixelToB = xmesa->xm_visual->PixelToB;
-               const GLushort *ptr2 = PIXELADDR2( source, x, y );
+               const GLushort *ptr2 = PIXEL_ADDR2(xrb, x, y);
                GLuint i;
 #if defined(__i386__) /* word stores don't have to be on 4-byte boundaries */
                const GLuint *ptr4 = (const GLuint *) ptr2;
@@ -4013,7 +4132,7 @@ static void read_color_span( const GLcontext *ctx,
             break;
 	 case PF_8A8B8G8R:
             {
-               const GLuint *ptr4 = PIXELADDR4( source, x, y );
+               const GLuint *ptr4 = PIXEL_ADDR4(xrb, x, y);
                GLuint i;
                for (i=0;i<n;i++) {
                   GLuint p4 = *ptr4++;
@@ -4026,7 +4145,7 @@ static void read_color_span( const GLcontext *ctx,
 	    break;
 	 case PF_8A8R8G8B:
             {
-               const GLuint *ptr4 = PIXELADDR4( source, x, y );
+               const GLuint *ptr4 = PIXEL_ADDR4(xrb, x, y);
                GLuint i;
                for (i=0;i<n;i++) {
                   GLuint p4 = *ptr4++;
@@ -4039,7 +4158,7 @@ static void read_color_span( const GLcontext *ctx,
 	    break;
 	 case PF_8R8G8B:
             {
-               const GLuint *ptr4 = PIXELADDR4( source, x, y );
+               const GLuint *ptr4 = PIXEL_ADDR4(xrb, x, y);
                GLuint i;
                for (i=0;i<n;i++) {
                   GLuint p4 = *ptr4++;
@@ -4052,7 +4171,7 @@ static void read_color_span( const GLcontext *ctx,
 	    break;
 	 case PF_8R8G8B24:
             {
-               const bgr_t *ptr3 = PIXELADDR3( source, x, y );
+               const bgr_t *ptr3 = PIXEL_ADDR3(xrb, x, y);
                GLuint i;
                for (i=0;i<n;i++) {
                   rgba[i][RCOMP] = ptr3[i].r;
@@ -4064,7 +4183,7 @@ static void read_color_span( const GLcontext *ctx,
 	    break;
          case PF_HPCR:
             {
-               const GLubyte *ptr1 = PIXELADDR1( source, x, y );
+               const GLubyte *ptr1 = PIXEL_ADDR1(xrb, x, y);
                GLuint i;
                for (i=0;i<n;i++) {
                   GLubyte p = *ptr1++;
@@ -4083,7 +4202,7 @@ static void read_color_span( const GLcontext *ctx,
                const GLubyte *gTable = source->pixel_to_g;
                const GLubyte *bTable = source->pixel_to_b;
                if (GET_VISUAL_DEPTH(xmesa->xm_visual)==8) {
-                  GLubyte *ptr1 = PIXELADDR1( source, x, y );
+                  GLubyte *ptr1 = PIXEL_ADDR1(xrb, x, y);
                   GLuint i;
                   for (i=0;i<n;i++) {
                      unsigned long p = *ptr1++;
@@ -4096,7 +4215,7 @@ static void read_color_span( const GLcontext *ctx,
                else {
                   XMesaImage *img = source->backimage;
                   GLuint i;
-                  y = FLIP(source, y);
+                  y = YFLIP(xrb, y);
                   for (i=0;i<n;i++,x++) {
                      unsigned long p = XMesaGetPixel( img, x, y );
                      rgba[i][RCOMP] = rTable[p];
@@ -4112,7 +4231,7 @@ static void read_color_span( const GLcontext *ctx,
                XMesaImage *img = source->backimage;
                int bitFlip = xmesa->xm_visual->bitFlip;
                GLuint i;
-               y = FLIP(source, y);
+               y = YFLIP(xrb, y);
                for (i=0;i<n;i++,x++) {
                   unsigned long p;
 		  p = XMesaGetPixel( img, x, y ) ^ bitFlip;
@@ -4135,11 +4254,13 @@ static void read_color_span( const GLcontext *ctx,
 /*
  * Read an array of color index pixels.
  */
-static void read_index_pixels( const GLcontext *ctx,
-			       GLuint n, const GLint x[], const GLint y[],
-                               GLuint indx[], const GLubyte mask[] )
+static void
+read_index_pixels( const GLcontext *ctx, struct gl_renderbuffer *rb,
+                   GLuint n, const GLint x[], const GLint y[],
+                   GLuint indx[], const GLubyte mask[] )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    register GLuint i;
    XMesaBuffer source = xmesa->xm_buffer;
 
@@ -4148,7 +4269,7 @@ static void read_index_pixels( const GLcontext *ctx,
          if (mask[i]) {
             indx[i] = (GLuint) read_pixel( xmesa->display,
                                            source->buffer,
-                                           x[i], FLIP(source, y[i]) );
+                                           x[i], YFLIP(xrb, y[i]) );
          }
       }
    }
@@ -4156,7 +4277,7 @@ static void read_index_pixels( const GLcontext *ctx,
       XMesaImage *img = source->backimage;
       for (i=0;i<n;i++) {
          if (mask[i]) {
-            indx[i] = (GLuint) XMesaGetPixel( img, x[i], FLIP(source, y[i]) );
+            indx[i] = (GLuint) XMesaGetPixel( img, x[i], YFLIP(xrb, y[i]) );
          }
       }
    }
@@ -4164,10 +4285,12 @@ static void read_index_pixels( const GLcontext *ctx,
 
 
 
-static void read_color_pixels( const GLcontext *ctx,
-			       GLuint n, const GLint x[], const GLint y[],
-                               GLubyte rgba[][4], const GLubyte mask[] )
+static void
+read_color_pixels( const GLcontext *ctx, struct gl_renderbuffer *rb,
+                   GLuint n, const GLint x[], const GLint y[],
+                   GLubyte rgba[][4], const GLubyte mask[] )
 {
+   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb;
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    register GLuint i;
@@ -4193,7 +4316,7 @@ static void read_color_pixels( const GLcontext *ctx,
                for (i=0;i<n;i++) {
                   if (mask[i]) {
                      unsigned long p = read_pixel( dpy, buffer,
-                                                   x[i], FLIP(source, y[i]) );
+                                                   x[i], YFLIP(xrb, y[i]) );
                      rgba[i][RCOMP] = pixelToR[(p & rMask) >> rShift];
                      rgba[i][GCOMP] = pixelToG[(p & gMask) >> gShift];
                      rgba[i][BCOMP] = pixelToB[(p & bMask) >> bShift];
@@ -4206,7 +4329,7 @@ static void read_color_pixels( const GLcontext *ctx,
 	    for (i=0;i<n;i++) {
                if (mask[i]) {
                   unsigned long p = read_pixel( dpy, buffer,
-                                                x[i], FLIP(source, y[i]) );
+                                                x[i], YFLIP(xrb, y[i]) );
                   rgba[i][RCOMP] = (GLubyte) ( p        & 0xff);
                   rgba[i][GCOMP] = (GLubyte) ((p >> 8)  & 0xff);
                   rgba[i][BCOMP] = (GLubyte) ((p >> 16) & 0xff);
@@ -4218,7 +4341,7 @@ static void read_color_pixels( const GLcontext *ctx,
 	    for (i=0;i<n;i++) {
                if (mask[i]) {
                   unsigned long p = read_pixel( dpy, buffer,
-                                                x[i], FLIP(source, y[i]) );
+                                                x[i], YFLIP(xrb, y[i]) );
                   rgba[i][RCOMP] = (GLubyte) ((p >> 16) & 0xff);
                   rgba[i][GCOMP] = (GLubyte) ((p >> 8)  & 0xff);
                   rgba[i][BCOMP] = (GLubyte) ( p        & 0xff);
@@ -4230,7 +4353,7 @@ static void read_color_pixels( const GLcontext *ctx,
 	    for (i=0;i<n;i++) {
                if (mask[i]) {
                   unsigned long p = read_pixel( dpy, buffer,
-                                                x[i], FLIP(source, y[i]) );
+                                                x[i], YFLIP(xrb, y[i]) );
                   rgba[i][RCOMP] = (GLubyte) ((p >> 16) & 0xff);
                   rgba[i][GCOMP] = (GLubyte) ((p >> 8)  & 0xff);
                   rgba[i][BCOMP] = (GLubyte) ( p        & 0xff);
@@ -4242,7 +4365,7 @@ static void read_color_pixels( const GLcontext *ctx,
 	    for (i=0;i<n;i++) {
                if (mask[i]) {
                   unsigned long p = read_pixel( dpy, buffer,
-                                                x[i], FLIP(source, y[i]) );
+                                                x[i], YFLIP(xrb, y[i]) );
                   rgba[i][RCOMP] = (GLubyte) ((p >> 16) & 0xff);
                   rgba[i][GCOMP] = (GLubyte) ((p >> 8)  & 0xff);
                   rgba[i][BCOMP] = (GLubyte) ( p        & 0xff);
@@ -4255,7 +4378,7 @@ static void read_color_pixels( const GLcontext *ctx,
                for (i=0;i<n;i++) {
                   if (mask[i]) {
                      unsigned long p = read_pixel( dpy, buffer,
-                                                   x[i], FLIP(source, y[i]) );
+                                                   x[i], YFLIP(xrb, y[i]) );
                      rgba[i][RCOMP] = (GLubyte) ( p & 0xE0      );
                      rgba[i][GCOMP] = (GLubyte) ((p & 0x1C) << 3);
                      rgba[i][BCOMP] = (GLubyte) ((p & 0x03) << 6);
@@ -4274,7 +4397,7 @@ static void read_color_pixels( const GLcontext *ctx,
                for (i=0;i<n;i++) {
                   if (mask[i]) {
                      unsigned long p = read_pixel( dpy, buffer,
-                                                   x[i], FLIP(source, y[i]) );
+                                                   x[i], YFLIP(xrb, y[i]) );
                      rgba[i][RCOMP] = rTable[p];
                      rgba[i][GCOMP] = gTable[p];
                      rgba[i][BCOMP] = bTable[p];
@@ -4289,7 +4412,7 @@ static void read_color_pixels( const GLcontext *ctx,
                for (i=0;i<n;i++) {
                   if (mask[i]) {
                      unsigned long p = read_pixel( dpy, buffer,
-                                     x[i], FLIP(source, y[i])) ^ bitFlip;
+                                     x[i], YFLIP(xrb, y[i])) ^ bitFlip;
                      rgba[i][RCOMP] = (GLubyte) (p * 255);
                      rgba[i][GCOMP] = (GLubyte) (p * 255);
                      rgba[i][BCOMP] = (GLubyte) (p * 255);
@@ -4304,6 +4427,7 @@ static void read_color_pixels( const GLcontext *ctx,
       }
    }
    else if (source->backimage) {
+      /* Read from XImage back buffer */
       switch (xmesa->pixelformat) {
 	 case PF_Truecolor:
          case PF_Dither_True:
@@ -4323,7 +4447,7 @@ static void read_color_pixels( const GLcontext *ctx,
                for (i=0;i<n;i++) {
                   if (mask[i]) {
                      unsigned long p;
-                     p = XMesaGetPixel( img, x[i], FLIP(source, y[i]) );
+                     p = XMesaGetPixel( img, x[i], YFLIP(xrb, y[i]) );
                      rgba[i][RCOMP] = pixelToR[(p & rMask) >> rShift];
                      rgba[i][GCOMP] = pixelToG[(p & gMask) >> gShift];
                      rgba[i][BCOMP] = pixelToB[(p & bMask) >> bShift];
@@ -4335,7 +4459,7 @@ static void read_color_pixels( const GLcontext *ctx,
 	 case PF_8A8B8G8R:
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLuint *ptr4 = PIXELADDR4( source, x[i], y[i] );
+                  GLuint *ptr4 = PIXEL_ADDR4(xrb, x[i], y[i]);
                   GLuint p4 = *ptr4;
                   rgba[i][RCOMP] = (GLubyte) ( p4        & 0xff);
                   rgba[i][GCOMP] = (GLubyte) ((p4 >> 8)  & 0xff);
@@ -4347,7 +4471,7 @@ static void read_color_pixels( const GLcontext *ctx,
 	 case PF_8A8R8G8B:
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLuint *ptr4 = PIXELADDR4( source, x[i], y[i] );
+                  GLuint *ptr4 = PIXEL_ADDR4(xrb, x[i], y[i]);
                   GLuint p4 = *ptr4;
                   rgba[i][RCOMP] = (GLubyte) ((p4 >> 16) & 0xff);
                   rgba[i][GCOMP] = (GLubyte) ((p4 >> 8)  & 0xff);
@@ -4359,7 +4483,7 @@ static void read_color_pixels( const GLcontext *ctx,
 	 case PF_8R8G8B:
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  GLuint *ptr4 = PIXELADDR4( source, x[i], y[i] );
+                  GLuint *ptr4 = PIXEL_ADDR4(xrb, x[i], y[i]);
                   GLuint p4 = *ptr4;
                   rgba[i][RCOMP] = (GLubyte) ((p4 >> 16) & 0xff);
                   rgba[i][GCOMP] = (GLubyte) ((p4 >> 8)  & 0xff);
@@ -4371,7 +4495,7 @@ static void read_color_pixels( const GLcontext *ctx,
 	 case PF_8R8G8B24:
 	    for (i=0;i<n;i++) {
 	       if (mask[i]) {
-                  bgr_t *ptr3 = PIXELADDR3( source, x[i], y[i] );
+                  bgr_t *ptr3 = PIXEL_ADDR3(xrb, x[i], y[i]);
                   rgba[i][RCOMP] = ptr3->r;
                   rgba[i][GCOMP] = ptr3->g;
                   rgba[i][BCOMP] = ptr3->b;
@@ -4382,7 +4506,7 @@ static void read_color_pixels( const GLcontext *ctx,
          case PF_HPCR:
             for (i=0;i<n;i++) {
                if (mask[i]) {
-                  GLubyte *ptr1 = PIXELADDR1( source, x[i], y[i] );
+                  GLubyte *ptr1 = PIXEL_ADDR1(xrb, x[i], y[i]);
                   GLubyte p = *ptr1;
                   rgba[i][RCOMP] =  p & 0xE0;
                   rgba[i][GCOMP] = (p & 0x1C) << 3;
@@ -4402,7 +4526,7 @@ static void read_color_pixels( const GLcontext *ctx,
                for (i=0;i<n;i++) {
                   if (mask[i]) {
                      unsigned long p;
-                     p = XMesaGetPixel( img, x[i], FLIP(source, y[i]) );
+                     p = XMesaGetPixel( img, x[i], YFLIP(xrb, y[i]) );
                      rgba[i][RCOMP] = rTable[p];
                      rgba[i][GCOMP] = gTable[p];
                      rgba[i][BCOMP] = bTable[p];
@@ -4418,7 +4542,7 @@ static void read_color_pixels( const GLcontext *ctx,
                for (i=0;i<n;i++) {
                   if (mask[i]) {
                      unsigned long p;
-                     p = XMesaGetPixel( img, x[i], FLIP(source, y[i]) ) ^ bitFlip;
+                     p = XMesaGetPixel( img, x[i], YFLIP(xrb, y[i]) ) ^ bitFlip;
                      rgba[i][RCOMP] = (GLubyte) (p * 255);
                      rgba[i][GCOMP] = (GLubyte) (p * 255);
                      rgba[i][BCOMP] = (GLubyte) (p * 255);
@@ -4515,6 +4639,25 @@ void xmesa_update_span_funcs( GLcontext *ctx )
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
    int depth=GET_VISUAL_DEPTH(xmesa->xm_visual);
    struct swrast_device_driver *dd = _swrast_GetDeviceDriverReference( ctx );
+
+   if (ctx->DrawBuffer->Name != 0) {
+      /* drawing to user framebuffer */
+      dd->WriteCI32Span     = NULL;
+      dd->WriteCI8Span      = NULL;
+      dd->WriteMonoCISpan   = NULL;
+      dd->WriteCI32Pixels   = NULL;
+      dd->WriteMonoCIPixels = NULL;
+      dd->WriteRGBASpan       = NULL;
+      dd->WriteRGBSpan        = NULL;
+      dd->WriteMonoRGBASpan   = NULL;
+      dd->WriteRGBAPixels     = NULL;
+      dd->WriteMonoRGBAPixels = NULL;
+      dd->ReadCI32Span = NULL;
+      dd->ReadRGBASpan = NULL;
+      dd->ReadCI32Pixels = NULL;
+      dd->ReadRGBAPixels = NULL;
+      return;
+   }
 
    /*
     * These drawing functions depend on color buffer config:
@@ -4624,7 +4767,7 @@ void xmesa_update_span_funcs( GLcontext *ctx )
             dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
             break;
 	 default:
-	    _mesa_problem(NULL,"Bad pixel format in xmesa_update_state (1)");
+	    _mesa_problem(ctx, "Bad pixel format in xmesa_update_state (1)");
             return;
       }
    }
@@ -4764,7 +4907,7 @@ void xmesa_update_span_funcs( GLcontext *ctx )
 	    }
 	    break;
 	 default:
-	    _mesa_problem(NULL,"Bad pixel format in xmesa_update_state (2)");
+	    _mesa_problem(ctx, "Bad pixel format in xmesa_update_state (2)");
             return;
       }
    }
@@ -4775,3 +4918,380 @@ void xmesa_update_span_funcs( GLcontext *ctx )
    dd->ReadCI32Pixels = read_index_pixels;
    dd->ReadRGBAPixels = read_color_pixels;
 }
+
+
+#if 000
+/**
+ * Initialize the renderbuffer's PutRow, GetRow, etc. functions
+ */
+static void
+xmesa_set_renderbuffer_funcs(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
+                             GLboolean pixmap, enum pixel_format pixelformat)
+{
+#if 0
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
+
+#endif
+
+   switch (pixelformat) {
+   case PF_Index:
+      if (pixmap) {
+         /*
+         dd->WriteCI32Span     = write_span_index_pixmap;
+         dd->WriteCI8Span      = write_span_index8_pixmap;
+         dd->WriteMonoCISpan   = write_span_mono_index_pixmap;
+         dd->WriteCI32Pixels   = write_pixels_index_pixmap;
+         dd->WriteMonoCIPixels = write_pixels_mono_index_pixmap;
+         */
+      }
+      else {
+      }
+      break;
+   case PF_Truecolor:
+      if (pixmap) {
+         /*
+         dd->WriteRGBASpan       = write_span_TRUECOLOR_pixmap;
+         dd->WriteRGBSpan        = write_span_rgb_TRUECOLOR_pixmap;
+         dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+         dd->WriteRGBAPixels     = write_pixels_TRUECOLOR_pixmap;
+         dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+         */
+      }
+      else {
+      }
+      break;
+   case PF_Dither_True:
+      if (pixmap) {
+         /*
+         dd->WriteRGBASpan       = write_span_TRUEDITHER_pixmap;
+         dd->WriteRGBSpan        = write_span_rgb_TRUEDITHER_pixmap;
+         dd->WriteMonoRGBASpan   = write_span_mono_TRUEDITHER_pixmap;
+         dd->WriteRGBAPixels     = write_pixels_TRUEDITHER_pixmap;
+         dd->WriteMonoRGBAPixels = write_pixels_mono_TRUEDITHER_pixmap;
+         */
+      }
+      else {
+      }
+      break;
+   case PF_8A8B8G8R:
+      if (pixmap) {
+         /*
+         dd->WriteRGBASpan       = write_span_8A8B8G8R_pixmap;
+         dd->WriteRGBSpan        = write_span_rgb_8A8B8G8R_pixmap;
+         dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+         dd->WriteRGBAPixels     = write_pixels_8A8B8G8R_pixmap;
+         dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+         */
+      }
+      else {
+      }
+      break;
+   case PF_8A8R8G8B:
+      if (pixmap) {
+         /*
+         dd->WriteRGBASpan       = write_span_8A8R8G8B_pixmap;
+         dd->WriteRGBSpan        = write_span_rgb_8A8R8G8B_pixmap;
+         dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+         dd->WriteRGBAPixels     = write_pixels_8A8R8G8B_pixmap;
+         dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+         */
+      }
+      else {
+      }
+      break;
+   case PF_8R8G8B:
+      /*
+      dd->WriteRGBASpan       = write_span_8R8G8B_pixmap;
+      dd->WriteRGBSpan        = write_span_rgb_8R8G8B_pixmap;
+      dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+      dd->WriteRGBAPixels     = write_pixels_8R8G8B_pixmap;
+      dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+      */
+      if (pixmap) {
+         xrb->Base.PutRow = put_row_8R8G8B_pixmap;
+         xrb->Base.PutMonoRow = put_mono_row_pixmap;
+         xrb->Base.PutValues = put_values_8R8G8B_pixmap;
+         xrb->Base.PutMonoValues = put_mono_values_pixmap;
+      }
+      break;
+   case PF_8R8G8B24:
+      if (pixmap) {
+         /*
+         dd->WriteRGBASpan       = write_span_8R8G8B24_pixmap;
+         dd->WriteRGBSpan        = write_span_rgb_8R8G8B24_pixmap;
+         dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+         dd->WriteRGBAPixels     = write_pixels_8R8G8B24_pixmap;
+         dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+         */
+      }
+      else {
+      }
+      break;
+   case PF_5R6G5B:
+      if (pixmap) {
+         /*
+         dd->WriteRGBASpan       = write_span_5R6G5B_pixmap;
+         dd->WriteRGBSpan        = write_span_rgb_5R6G5B_pixmap;
+         dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+         dd->WriteRGBAPixels     = write_pixels_5R6G5B_pixmap;
+         dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+         */
+      }
+      else {
+      }
+      break;
+   case PF_Dither_5R6G5B:
+      if (pixmap) {
+         /*
+         dd->WriteRGBASpan       = write_span_DITHER_5R6G5B_pixmap;
+         dd->WriteRGBSpan        = write_span_rgb_DITHER_5R6G5B_pixmap;
+         dd->WriteMonoRGBASpan   = write_span_mono_TRUEDITHER_pixmap;
+         dd->WriteRGBAPixels     = write_pixels_DITHER_5R6G5B_pixmap;
+         dd->WriteMonoRGBAPixels = write_pixels_mono_TRUEDITHER_pixmap;
+         */
+      }
+      else {
+      }
+      break;
+   case PF_Dither:
+      if (pixmap) {
+         /*
+         dd->WriteRGBASpan       = write_span_DITHER_pixmap;
+         dd->WriteRGBSpan        = write_span_rgb_DITHER_pixmap;
+         dd->WriteMonoRGBASpan   = write_span_mono_DITHER_pixmap;
+         dd->WriteRGBAPixels     = write_pixels_DITHER_pixmap;
+         dd->WriteMonoRGBAPixels = write_pixels_mono_DITHER_pixmap;
+         */
+      }
+      else {
+      }
+      break;
+   case PF_1Bit:
+      if (pixmap) {
+         /*
+         dd->WriteRGBASpan       = write_span_1BIT_pixmap;
+         dd->WriteRGBSpan        = write_span_rgb_1BIT_pixmap;
+         dd->WriteMonoRGBASpan   = write_span_mono_1BIT_pixmap;
+         dd->WriteRGBAPixels     = write_pixels_1BIT_pixmap;
+         dd->WriteMonoRGBAPixels = write_pixels_mono_1BIT_pixmap;
+         */
+      }
+      else {
+      }
+      break;
+   case PF_HPCR:
+      if (pixmap) {
+         /*
+         dd->WriteRGBASpan       = write_span_HPCR_pixmap;
+         dd->WriteRGBSpan        = write_span_rgb_HPCR_pixmap;
+         dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+         dd->WriteRGBAPixels     = write_pixels_HPCR_pixmap;
+         dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+         */
+      }
+      else {
+      }
+         ctx->Driver.ClearColor = clear_color_HPCR_pixmap;
+      }
+      break;
+   case PF_Lookup:
+      if (pixmap) {
+         /*
+         dd->WriteRGBASpan       = write_span_LOOKUP_pixmap;
+         dd->WriteRGBSpan        = write_span_rgb_LOOKUP_pixmap;
+         dd->WriteRGBAPixels     = write_pixels_LOOKUP_pixmap;
+         dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+         */
+      }
+      else {
+      }
+      break;
+   case PF_Grayscale:
+      if (pixmap) {
+         /*
+         dd->WriteRGBASpan       = write_span_GRAYSCALE_pixmap;
+         dd->WriteRGBSpan        = write_span_rgb_GRAYSCALE_pixmap;
+         dd->WriteMonoRGBASpan   = write_span_mono_pixmap;
+         dd->WriteRGBAPixels     = write_pixels_GRAYSCALE_pixmap;
+         dd->WriteMonoRGBAPixels = write_pixels_mono_pixmap;
+         */
+      }
+      else {
+      }
+      break;
+   default:
+      _mesa_problem(ctx, "Bad pixel format in xmesa_update_state (1)");
+      return;
+   }
+
+#if 0000
+#if 0
+	    /* Generic RGB */
+	    dd->WriteRGBASpan       = write_span_TRUECOLOR_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_TRUECOLOR_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_TRUECOLOR_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_ximage;
+#endif
+	    break;
+	 case PF_Dither_True:
+#if 0
+	    dd->WriteRGBASpan       = write_span_TRUEDITHER_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_TRUEDITHER_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_TRUEDITHER_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_TRUEDITHER_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_TRUEDITHER_ximage;
+#endif
+	    break;
+	 case PF_8A8B8G8R:
+#if 0
+	    dd->WriteRGBASpan       = write_span_8A8B8G8R_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_8A8B8G8R_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_8A8B8G8R_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_8A8B8G8R_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_8A8B8G8R_ximage;
+#endif
+	    break;
+	 case PF_8A8R8G8B:
+#if 0
+	    dd->WriteRGBASpan       = write_span_8A8R8G8B_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_8A8R8G8B_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_8A8R8G8B_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_8A8R8G8B_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_8A8R8G8B_ximage;
+#endif
+	    break;
+	case PF_8R8G8B:
+#if 0
+	    dd->WriteRGBASpan       = write_span_8R8G8B_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_8R8G8B_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_8R8G8B_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_8R8G8B_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_8R8G8B_ximage;
+#endif
+	    break;
+	 case PF_8R8G8B24:
+#if 0
+	    dd->WriteRGBASpan       = write_span_8R8G8B24_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_8R8G8B24_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_8R8G8B24_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_8R8G8B24_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_8R8G8B24_ximage;
+#endif
+	    break;
+	 case PF_5R6G5B:
+#if 0
+	    dd->WriteRGBASpan       = write_span_5R6G5B_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_5R6G5B_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_5R6G5B_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_ximage;
+#endif
+	    break;
+	 case PF_Dither_5R6G5B:
+#if 0
+	    dd->WriteRGBASpan       = write_span_DITHER_5R6G5B_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_DITHER_5R6G5B_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_DITHER_5R6G5B_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_DITHER_5R6G5B_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_DITHER_5R6G5B_ximage;
+#endif
+	    break;
+	 case PF_Dither:
+#if 0
+	    if (depth==8) {
+	       dd->WriteRGBASpan      = write_span_DITHER8_ximage;
+	       dd->WriteRGBSpan       = write_span_rgb_DITHER8_ximage;
+	       dd->WriteMonoRGBASpan  = write_span_mono_DITHER8_ximage;
+	       dd->WriteRGBAPixels    = write_pixels_DITHER8_ximage;
+	       dd->WriteMonoRGBAPixels = write_pixels_mono_DITHER8_ximage;
+	    }
+	    else {
+	       dd->WriteRGBASpan       = write_span_DITHER_ximage;
+	       dd->WriteRGBSpan        = write_span_rgb_DITHER_ximage;
+	       dd->WriteMonoRGBASpan   = write_span_mono_DITHER_ximage;
+	       dd->WriteRGBAPixels     = write_pixels_DITHER_ximage;
+	       dd->WriteMonoRGBAPixels = write_pixels_mono_DITHER_ximage;
+	    }
+#endif
+	    break;
+	 case PF_1Bit:
+#if 0
+	    dd->WriteRGBASpan       = write_span_1BIT_ximage;
+	    dd->WriteRGBSpan        = write_span_rgb_1BIT_ximage;
+	    dd->WriteMonoRGBASpan   = write_span_mono_1BIT_ximage;
+	    dd->WriteRGBAPixels     = write_pixels_1BIT_ximage;
+	    dd->WriteMonoRGBAPixels = write_pixels_mono_1BIT_ximage;
+#endif
+	    break;
+         case PF_HPCR:
+#if 0
+            dd->WriteRGBASpan       = write_span_HPCR_ximage;
+            dd->WriteRGBSpan        = write_span_rgb_HPCR_ximage;
+            dd->WriteMonoRGBASpan   = write_span_mono_HPCR_ximage;
+            dd->WriteRGBAPixels     = write_pixels_HPCR_ximage;
+            dd->WriteMonoRGBAPixels = write_pixels_mono_HPCR_ximage;
+	    if (xmesa->xm_visual->hpcr_clear_flag) {
+               ctx->Driver.ClearColor = clear_color_HPCR_ximage;
+	    }
+#endif
+            break;
+         case PF_Lookup:
+#if 0
+	    if (depth==8) {
+               dd->WriteRGBASpan       = write_span_LOOKUP8_ximage;
+               dd->WriteRGBSpan        = write_rgb_LOOKUP8_ximage;
+               dd->WriteMonoRGBASpan   = write_span_mono_LOOKUP8_ximage;
+               dd->WriteRGBAPixels     = write_pixels_LOOKUP8_ximage;
+               dd->WriteMonoRGBAPixels = write_pixels_mono_LOOKUP8_ximage;
+            }
+            else {
+               dd->WriteRGBASpan       = write_span_LOOKUP_ximage;
+               dd->WriteRGBSpan        = write_span_rgb_LOOKUP_ximage;
+               dd->WriteMonoRGBASpan   = write_span_mono_ximage;
+               dd->WriteRGBAPixels     = write_pixels_LOOKUP_ximage;
+               dd->WriteMonoRGBAPixels = write_pixels_mono_ximage;
+            }
+#endif
+            break;
+         case PF_Grayscale:
+#if 0
+	    if (depth==8) {
+	       dd->WriteRGBASpan       = write_span_GRAYSCALE8_ximage;
+	       dd->WriteRGBSpan        = write_span_rgb_GRAYSCALE8_ximage;
+	       dd->WriteMonoRGBASpan   = write_span_mono_GRAYSCALE8_ximage;
+	       dd->WriteRGBAPixels     = write_pixels_GRAYSCALE8_ximage;
+	       dd->WriteMonoRGBAPixels = write_pixels_mono_GRAYSCALE8_ximage;
+	    }
+	    else {
+	       dd->WriteRGBASpan       = write_span_GRAYSCALE_ximage;
+	       dd->WriteRGBSpan        = write_span_rgb_GRAYSCALE_ximage;
+	       dd->WriteMonoRGBASpan   = write_span_mono_ximage;
+	       dd->WriteRGBAPixels     = write_pixels_GRAYSCALE_ximage;
+	       dd->WriteMonoRGBAPixels = write_pixels_mono_ximage;
+	    }
+#endif
+	    break;
+	 default:
+	    _mesa_problem(ctx, "Bad pixel format in xmesa_update_state (2)");
+            return;
+      }
+   }
+#endif
+
+
+   /* Pixel/span reading functions: */
+#if 0
+   rb->ReadCI32Span = read_index_span;
+   dd->ReadRGBASpan = read_color_span;
+   dd->ReadCI32Pixels = read_index_pixels;
+   dd->ReadRGBAPixels = read_color_pixels;
+#else
+   rb->GetRow = get_row_color;
+   rb->GetValues = get_values_color;
+#endif
+}
+
+#endif
+

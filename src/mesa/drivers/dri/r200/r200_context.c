@@ -40,6 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "imports.h"
 #include "matrix.h"
 #include "extensions.h"
+#include "framebuffer.h"
 #include "state.h"
 
 #include "swrast/swrast.h"
@@ -192,7 +193,7 @@ static const struct tnl_pipeline_stage *r200_pipeline[] = {
 static void r200InitDriverFuncs( struct dd_function_table *functions )
 {
     functions->GetBufferSize		= r200GetBufferSize;
-    functions->ResizeBuffers           = _swrast_alloc_buffers;
+    functions->ResizeBuffers            = _mesa_resize_framebuffer;
     functions->GetString		= r200GetString;
 
     functions->Error			= NULL;
@@ -455,7 +456,9 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    /* plug in a few more device driver functions */
    /* XXX these should really go right after _mesa_init_driver_functions() */
    r200InitPixelFuncs( ctx );
+#if 0
    r200InitSpanFuncs( ctx );
+#endif
    r200InitTnlFuncs( ctx );
    r200InitState( rmesa );
    r200InitSwtcl( ctx );
@@ -533,7 +536,7 @@ void r200DestroyContext( __DRIcontextPrivate *driContextPriv )
    /* check if we're deleting the currently bound context */
    if (rmesa == current) {
       R200_FIREVERTICES( rmesa );
-      _mesa_make_current2(NULL, NULL, NULL);
+      _mesa_make_current(NULL, NULL, NULL);
    }
 
    /* Free r200 context resources */
@@ -642,9 +645,9 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 r200UpdateViewportOffset( newCtx->glCtx );
       }
 
-      _mesa_make_current2( newCtx->glCtx,
-			   (GLframebuffer *) driDrawPriv->driverPrivate,
-			   (GLframebuffer *) driReadPriv->driverPrivate );
+      _mesa_make_current( newCtx->glCtx,
+			  (GLframebuffer *) driDrawPriv->driverPrivate,
+			  (GLframebuffer *) driReadPriv->driverPrivate );
 
       if (newCtx->vb.enabled)
 	 r200VtxfmtMakeCurrent( newCtx->glCtx );
@@ -655,7 +658,7 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
    } else {
       if (R200_DEBUG & DEBUG_DRI)
 	 fprintf(stderr, "%s ctx is null\n", __FUNCTION__);
-      _mesa_make_current( NULL, NULL );
+      _mesa_make_current( NULL, NULL, NULL );
    }
 
    if (R200_DEBUG & DEBUG_DRI)

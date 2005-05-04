@@ -41,6 +41,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_tris.h"
 
 #include "swrast/swrast.h"
+#include "framebuffer.h"
 
 #include "utils.h"
 
@@ -172,9 +173,9 @@ sisUpdateBufferSize( sisContextPtr smesa )
 void
 sisInitDriverFuncs( struct dd_function_table *functions )
 {
-   functions->GetBufferSize	= sisGetBufferSize;
-   functions->ResizeBuffers    = _swrast_alloc_buffers;
-   functions->GetString	= sisGetString;
-   functions->Finish		= sisFinish;
-   functions->Flush		= sisFlush;
+   functions->GetBufferSize = sisGetBufferSize;
+   functions->ResizeBuffers = _mesa_resize_framebuffer;
+   functions->GetString     = sisGetString;
+   functions->Finish        = sisFinish;
+   functions->Flush         = sisFlush;
 }

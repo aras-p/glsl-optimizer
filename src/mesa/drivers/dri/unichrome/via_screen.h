@@ -72,6 +72,7 @@ typedef struct {
     driOptionCache optionCache;
 } viaScreenPrivate;
 
+
 extern GLboolean
 viaCreateContext(const __GLcontextModes *mesaVis,
                  __DRIcontextPrivate *driContextPriv,

@@ -51,6 +51,9 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                  const struct gl_pixelstore_attrib *unpack,
                  const GLvoid *pixels)
 {
+#if NEW_RENDERBUFFER
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+#endif
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct sw_span span;
 
@@ -59,6 +62,9 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
    if (!ctx->Current.RasterPosValid) {
       return GL_TRUE;      /* no-op */
    }
+   
+   if (swrast->_RasterMask & MULTI_DRAW_BIT)
+      return GL_FALSE;
 
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
@@ -164,8 +170,15 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                /* no zooming */
                GLint row;
                for (row=0; row<drawHeight; row++) {
-                  (*swrast->Driver.WriteRGBASpan)(ctx, drawWidth, destX, destY,
-                                              (CONST GLchan (*)[4]) src, NULL);
+#if OLD_RENDERBUFFER
+                  if (swrast->Driver.WriteRGBASpan)
+                     swrast->Driver.WriteRGBASpan(ctx, rb, drawWidth,
+                                               destX, destY,
+                                               (CONST GLchan (*)[4]) src,
+                                               NULL);
+                  else
+#endif
+                     rb->PutRow(ctx, rb, drawWidth, destX, destY, src, NULL);
                   src += rowLength * 4;
                   destY++;
                }
@@ -175,8 +188,15 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                GLint row;
                for (row=0; row<drawHeight; row++) {
                   destY--;
-                  (*swrast->Driver.WriteRGBASpan)(ctx, drawWidth, destX, destY,
-                                              (CONST GLchan (*)[4]) src, NULL);
+#if OLD_RENDERBUFFER
+                  if (swrast->Driver.WriteRGBASpan)
+                     swrast->Driver.WriteRGBASpan(ctx, rb, drawWidth,
+                                               destX, destY,
+                                               (CONST GLchan (*)[4]) src,
+                                               NULL);
+                  else
+#endif
+                     rb->PutRow(ctx, rb, drawWidth, destX, destY, src, NULL);
                   src += rowLength * 4;
                }
             }
@@ -204,8 +224,15 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                GLint row;
                for (row=0; row<drawHeight; row++) {
-                  (*swrast->Driver.WriteRGBSpan)(ctx, drawWidth, destX, destY,
-                                              (CONST GLchan (*)[3]) src, NULL);
+#if OLD_RENDERBUFFER
+                  if (swrast->Driver.WriteRGBSpan)
+                     (*swrast->Driver.WriteRGBSpan)(ctx, rb, drawWidth,
+                                                 destX, destY,
+                                                 (CONST GLchan (*)[3]) src,
+                                                 NULL);
+                  else
+#endif
+                     rb->PutRowRGB(ctx, rb, drawWidth, destX, destY, src, NULL);
                   src += rowLength * 3;
                   destY++;
                }
@@ -215,8 +242,15 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                GLint row;
                for (row=0; row<drawHeight; row++) {
                   destY--;
-                  (*swrast->Driver.WriteRGBSpan)(ctx, drawWidth, destX, destY,
-                                              (CONST GLchan (*)[3]) src, NULL);
+#if OLD_RENDERBUFFER
+                  if (swrast->Driver.WriteRGBASpan)
+                     (*swrast->Driver.WriteRGBSpan)(ctx, rb, drawWidth,
+                                                 destX, destY,
+                                                 (CONST GLchan (*)[3]) src,
+                                                 NULL);
+                  else
+#endif
+                     rb->PutRowRGB(ctx, rb, drawWidth, destX, destY, src, NULL);
                   src += rowLength * 3;
                }
             }
@@ -252,8 +286,15 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                      span.array->rgb[i][1] = src[i];
                      span.array->rgb[i][2] = src[i];
 		  }
-                  (*swrast->Driver.WriteRGBSpan)(ctx, drawWidth, destX, destY,
+#if OLD_RENDERBUFFER
+                  if (swrast->Driver.WriteRGBSpan)
+                     (*swrast->Driver.WriteRGBSpan)(ctx, rb, drawWidth,
+                                  destX, destY,
                                   (CONST GLchan (*)[3]) span.array->rgb, NULL);
+                  else
+#endif
+                     rb->PutRowRGB(ctx, rb, drawWidth, destX, destY,
+                                span.array->rgb, NULL);
                   src += rowLength;
                   destY++;
                }
@@ -270,8 +311,15 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                      span.array->rgb[i][2] = src[i];
                   }
                   destY--;
-                  (*swrast->Driver.WriteRGBSpan)(ctx, drawWidth, destX, destY,
+#if OLD_RENDERBUFFER
+                  if (swrast->Driver.WriteRGBSpan)
+                     (*swrast->Driver.WriteRGBSpan)(ctx, rb, drawWidth,
+                                  destX, destY,
                                   (CONST GLchan (*)[3]) span.array->rgb, NULL);
+                  else
+#endif
+                     rb->PutRow(ctx, rb, drawWidth, destX, destY,
+                                span.array->rgb, NULL);
                   src += rowLength;
                }
             }
@@ -316,8 +364,14 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                      span.array->rgba[i][2] = *ptr++;
                      span.array->rgba[i][3] = *ptr++;
 		  }
-                  (*swrast->Driver.WriteRGBASpan)(ctx, drawWidth, destX, destY,
+#if OLD_RENDERBUFFER
+                  if (swrast->Driver.WriteRGBASpan)
+                     swrast->Driver.WriteRGBASpan(ctx, rb, drawWidth, destX,destY,
                                  (CONST GLchan (*)[4]) span.array->rgba, NULL);
+                  else
+#endif
+                     rb->PutRow(ctx, rb, drawWidth, destX, destY,
+                                span.array->rgba, NULL);
                   src += rowLength*2;
                   destY++;
                }
@@ -336,8 +390,14 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                      span.array->rgba[i][3] = *ptr++;
                   }
                   destY--;
-                  (*swrast->Driver.WriteRGBASpan)(ctx, drawWidth, destX, destY,
+#if OLD_RENDERBUFFER
+                  if (swrast->Driver.WriteRGBASpan)
+                     swrast->Driver.WriteRGBASpan(ctx, rb, drawWidth, destX,destY,
                                  (CONST GLchan (*)[4]) span.array->rgba, NULL);
+                  else
+#endif
+                     rb->PutRow(ctx, rb, drawWidth, destX, destY,
+                                span.array->rgba, NULL);
                   src += rowLength*2;
                }
             }
@@ -376,8 +436,15 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                for (row=0; row<drawHeight; row++) {
                   ASSERT(drawWidth <= MAX_WIDTH);
                   _mesa_map_ci8_to_rgba(ctx, drawWidth, src, span.array->rgba);
-                  (*swrast->Driver.WriteRGBASpan)(ctx, drawWidth, destX, destY,
+#if OLD_RENDERBUFFER
+                  if (swrast->Driver.WriteRGBASpan)
+                     swrast->Driver.WriteRGBASpan(ctx, rb, drawWidth, destX,destY,
                                  (const GLchan (*)[4]) span.array->rgba, NULL);
+                  else
+#endif
+                     rb->PutRow(ctx, rb, drawWidth, destX, destY,
+                                span.array->rgba, NULL);
+
                   src += rowLength;
                   destY++;
                }
@@ -390,8 +457,14 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                   ASSERT(drawWidth <= MAX_WIDTH);
                   _mesa_map_ci8_to_rgba(ctx, drawWidth, src, span.array->rgba);
                   destY--;
-                  (*swrast->Driver.WriteRGBASpan)(ctx, drawWidth, destX, destY,
+#if OLD_RENDERBUFFER
+                  if (swrast->Driver.WriteRGBASpan)
+                     swrast->Driver.WriteRGBASpan(ctx, rb, drawWidth, destX,destY,
                                  (CONST GLchan (*)[4]) span.array->rgba, NULL);
+                  else
+#endif
+                     rb->PutRow(ctx, rb, drawWidth, destX, destY,
+                                span.array->rgba, NULL);
                   src += rowLength;
                }
                return GL_TRUE;
@@ -419,8 +492,11 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
             if (ctx->Pixel.ZoomX==1.0F && ctx->Pixel.ZoomY==1.0F) {
                /* no zooming */
                for (row=0; row<drawHeight; row++) {
-                  (*swrast->Driver.WriteCI8Span)(ctx, drawWidth, destX, destY,
-                                              src, NULL);
+                  GLuint index32[MAX_WIDTH];
+                  GLint col;
+                  for (col = 0; col < drawWidth; col++)
+                     index32[col] = src[col];
+                  rb->PutRow(ctx, rb, drawWidth, destX, destY, index32, NULL);
                   src += rowLength;
                   destY++;
                }
@@ -656,6 +732,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    }
    else {
       /* General case */
+      const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
       GLint row, skipPixels = 0;
 
       /* in case width > MAX_WIDTH do the copy in chunks */
@@ -683,10 +760,9 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                                     zSrc, unpack);
             /* clamp depth values to [0,1] and convert from floats to ints */
             {
-               const GLfloat zScale = ctx->DepthMaxF;
                GLuint i;
                for (i = 0; i < span.end; i++) {
-                  span.array->z[i] = (GLdepth) (floatSpan[i] * zScale);
+                  span.array->z[i] = (GLdepth) (floatSpan[i] * depthMax);
                }
             }
             if (zoom) {
@@ -717,6 +793,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                   const GLvoid *pixels )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   struct gl_renderbuffer *rb = NULL; /* only used for quickDraw path */
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
    const GLint desty = y;
    GLboolean quickDraw;
@@ -744,11 +821,14 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 
    if (SWRAST_CONTEXT(ctx)->_RasterMask == 0 && !zoom && x >= 0 && y >= 0
        && x + width <= (GLint) ctx->DrawBuffer->Width
-       && y + height <= (GLint) ctx->DrawBuffer->Height) {
+       && y + height <= (GLint) ctx->DrawBuffer->Height
+       && ctx->DrawBuffer->_NumColorDrawBuffers[0] == 1) {
       quickDraw = GL_TRUE;
+      rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
    }
    else {
       quickDraw = GL_FALSE;
+      rb = NULL;
    }
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
@@ -846,8 +926,14 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 
             /* draw the span */
             if (quickDraw) {
-               (*swrast->Driver.WriteRGBASpan)(ctx, span.end, span.x, span.y,
-                                 (CONST GLchan (*)[4]) span.array->rgba, NULL);
+#if OLD_RENDERBUFFER
+               if (swrast->Driver.WriteRGBASpan)
+                  swrast->Driver.WriteRGBASpan(ctx, rb, span.end, span.x, span.y,
+                                               (CONST GLchan (*)[4]) span.array->rgba, NULL);
+               else
+#endif
+                  rb->PutRow(ctx, rb, span.end, span.x, span.y,
+                          span.array->rgba, NULL);
             }
             else if (zoom) {
                _swrast_write_zoomed_rgba_span(ctx, &span,

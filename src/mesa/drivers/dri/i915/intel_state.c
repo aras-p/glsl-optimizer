@@ -170,12 +170,12 @@ static void intelDrawBuffer(GLcontext *ctx, GLenum mode )
    intelScreenPrivate *screen = intel->intelScreen;
    int front = 0;
  
-   switch ( ctx->Color._DrawDestMask[0] ) {
-   case DD_FRONT_LEFT_BIT:
+   switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
+   case BUFFER_BIT_FRONT_LEFT:
       front = 1;
       FALLBACK( intel, INTEL_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       front = 0;
       FALLBACK( intel, INTEL_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;

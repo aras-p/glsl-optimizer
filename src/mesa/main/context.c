@@ -91,6 +91,7 @@
 #include "eval.h"
 #include "enums.h"
 #include "extensions.h"
+#include "fbobject.h"
 #include "feedback.h"
 #include "fog.h"
 #include "get.h"
@@ -492,13 +493,12 @@ _mesa_create_visual( GLboolean rgbFlag,
 
 /**
  * Makes some sanity checks and fills in the fields of the
- * GLvisual structure with the given parameters.
- * 
+ * GLvisual object with the given parameters.  If the caller needs
+ * to set additional fields, he should just probably init the whole GLvisual
+ * object himself.
  * \return GL_TRUE on success, or GL_FALSE on failure.
  *
  * \sa _mesa_create_visual() above for the parameter description.
- *
- * \note Need to add params for level and numAuxBuffers (at least)
  */
 GLboolean
 _mesa_initialize_visual( GLvisual *vis,
@@ -520,28 +520,22 @@ _mesa_initialize_visual( GLvisual *vis,
 {
    assert(vis);
 
-   /* This is to catch bad values from device drivers not updated for
-    * Mesa 3.3.  Some device drivers just passed 1.  That's a REALLY
-    * bad value now (a 1-bit depth buffer!?!).
-    */
-   assert(depthBits == 0 || depthBits > 1);
-
    if (depthBits < 0 || depthBits > 32) {
       return GL_FALSE;
    }
-   if (stencilBits < 0 || stencilBits > (GLint) (8 * sizeof(GLstencil))) {
+   if (stencilBits < 0 || stencilBits > STENCIL_BITS) {
       return GL_FALSE;
    }
-   if (accumRedBits < 0 || accumRedBits > (GLint) (8 * sizeof(GLaccum))) {
+   if (accumRedBits < 0 || accumRedBits > ACCUM_BITS) {
       return GL_FALSE;
    }
-   if (accumGreenBits < 0 || accumGreenBits > (GLint) (8 * sizeof(GLaccum))) {
+   if (accumGreenBits < 0 || accumGreenBits > ACCUM_BITS) {
       return GL_FALSE;
    }
-   if (accumBlueBits < 0 || accumBlueBits > (GLint) (8 * sizeof(GLaccum))) {
+   if (accumBlueBits < 0 || accumBlueBits > ACCUM_BITS) {
       return GL_FALSE;
    }
-   if (accumAlphaBits < 0 || accumAlphaBits > (GLint) (8 * sizeof(GLaccum))) {
+   if (accumAlphaBits < 0 || accumAlphaBits > ACCUM_BITS) {
       return GL_FALSE;
    }
 
@@ -553,14 +547,16 @@ _mesa_initialize_visual( GLvisual *vis,
    vis->greenBits        = greenBits;
    vis->blueBits         = blueBits;
    vis->alphaBits        = alphaBits;
+   vis->rgbBits          = redBits + greenBits + blueBits;
 
    vis->indexBits      = indexBits;
    vis->depthBits      = depthBits;
-   vis->accumRedBits   = (accumRedBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->accumGreenBits = (accumGreenBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->accumBlueBits  = (accumBlueBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->accumAlphaBits = (accumAlphaBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->stencilBits    = (stencilBits > 0) ? (8 * sizeof(GLstencil)) : 0;
+   vis->stencilBits    = stencilBits;
+
+   vis->accumRedBits   = accumRedBits;
+   vis->accumGreenBits = accumGreenBits;
+   vis->accumBlueBits  = accumBlueBits;
+   vis->accumAlphaBits = accumAlphaBits;
 
    vis->haveAccumBuffer   = accumRedBits > 0;
    vis->haveDepthBuffer   = depthBits > 0;
@@ -569,6 +565,7 @@ _mesa_initialize_visual( GLvisual *vis,
    vis->numAuxBuffers = 0;
    vis->level = 0;
    vis->pixmapMode = 0;
+   vis->sampleBuffers = numSamples > 0 ? 1 : 0;
    vis->samples = numSamples;
 
    return GL_TRUE;
@@ -586,160 +583,6 @@ void
 _mesa_destroy_visual( GLvisual *vis )
 {
    FREE(vis);
-}
-
-/*@}*/
-
-
-/**********************************************************************/
-/** \name GL Framebuffer allocation/destruction                       */
-/**********************************************************************/
-/*@{*/
-
-/**
- * Allocate a GLframebuffer structure and initializes it via
- * _mesa_initialize_framebuffer().
- *
- * A GLframebuffer is a structure which encapsulates the depth, stencil and
- * accum buffers and related parameters.
- * 
- * Note that the actual depth/stencil/accum/etc buffers are not allocated
- * at this time.  It's up to the device driver and/or swrast module to
- * allocate them as needed.
- *
- * \param visual a GLvisual pointer (we copy the struct contents)
- * \param softwareDepth create/use a software depth buffer?
- * \param softwareStencil create/use a software stencil buffer?
- * \param softwareAccum create/use a software accum buffer?
- * \param softwareAlpha create/use a software alpha buffer?
- *
- * \return pointer to new GLframebuffer struct or NULL if error.
- *
- * \note Need to add softwareAuxBuffers parameter.
- */
-GLframebuffer *
-_mesa_create_framebuffer( const GLvisual *visual,
-                          GLboolean softwareDepth,
-                          GLboolean softwareStencil,
-                          GLboolean softwareAccum,
-                          GLboolean softwareAlpha )
-{
-   GLframebuffer *buffer = CALLOC_STRUCT(gl_frame_buffer);
-   assert(visual);
-   if (buffer) {
-      _mesa_initialize_framebuffer(buffer, visual,
-                                   softwareDepth, softwareStencil,
-                                   softwareAccum, softwareAlpha );
-   }
-   return buffer;
-}
-
-
-/**
- * Makes some sanity checks and fills in the fields of the
- * GLframebuffer structure with the given parameters.
- * 
- * \sa _mesa_create_framebuffer() above for the parameter description.
- */
-void
-_mesa_initialize_framebuffer( GLframebuffer *buffer,
-                              const GLvisual *visual,
-                              GLboolean softwareDepth,
-                              GLboolean softwareStencil,
-                              GLboolean softwareAccum,
-                              GLboolean softwareAlpha )
-{
-   GLboolean softwareAux = GL_FALSE;
-   assert(buffer);
-   assert(visual);
-
-   _mesa_bzero(buffer, sizeof(GLframebuffer));
-
-   /* sanity checks */
-   if (softwareDepth ) {
-      assert(visual->depthBits > 0);
-   }
-   if (softwareStencil) {
-      assert(visual->stencilBits > 0);
-   }
-   if (softwareAccum) {
-      assert(visual->rgbMode);
-      assert(visual->accumRedBits > 0);
-      assert(visual->accumGreenBits > 0);
-      assert(visual->accumBlueBits > 0);
-   }
-   if (softwareAlpha) {
-      assert(visual->rgbMode);
-      assert(visual->alphaBits > 0);
-   }
-
-   buffer->Visual = *visual;
-   buffer->UseSoftwareDepthBuffer = softwareDepth;
-   buffer->UseSoftwareStencilBuffer = softwareStencil;
-   buffer->UseSoftwareAccumBuffer = softwareAccum;
-   buffer->UseSoftwareAlphaBuffers = softwareAlpha;
-   buffer->UseSoftwareAuxBuffers = softwareAux;
-}
-
-
-/**
- * Free a framebuffer struct and its buffers.
- *
- * Calls _mesa_free_framebuffer_data() and frees the structure.
- */
-void
-_mesa_destroy_framebuffer( GLframebuffer *buffer )
-{
-   if (buffer) {
-      _mesa_free_framebuffer_data(buffer);
-      FREE(buffer);
-   }
-}
-
-
-/**
- * Free the data hanging off of \p buffer, but not \p buffer itself.
- *
- * \param buffer framebuffer.
- *
- * Frees all the buffers associated with the structure.
- */
-void
-_mesa_free_framebuffer_data( GLframebuffer *buffer )
-{
-   if (!buffer)
-      return;
-
-   if (buffer->UseSoftwareDepthBuffer && buffer->DepthBuffer) {
-      MESA_PBUFFER_FREE( buffer->DepthBuffer );
-      buffer->DepthBuffer = NULL;
-   }
-   if (buffer->UseSoftwareAccumBuffer && buffer->Accum) {
-      MESA_PBUFFER_FREE( buffer->Accum );
-      buffer->Accum = NULL;
-   }
-   if (buffer->UseSoftwareStencilBuffer && buffer->Stencil) {
-      MESA_PBUFFER_FREE( buffer->Stencil );
-      buffer->Stencil = NULL;
-   }
-   if (buffer->UseSoftwareAlphaBuffers){
-      if (buffer->FrontLeftAlpha) {
-         MESA_PBUFFER_FREE( buffer->FrontLeftAlpha );
-         buffer->FrontLeftAlpha = NULL;
-      }
-      if (buffer->BackLeftAlpha) {
-         MESA_PBUFFER_FREE( buffer->BackLeftAlpha );
-         buffer->BackLeftAlpha = NULL;
-      }
-      if (buffer->FrontRightAlpha) {
-         MESA_PBUFFER_FREE( buffer->FrontRightAlpha );
-         buffer->FrontRightAlpha = NULL;
-      }
-      if (buffer->BackRightAlpha) {
-         MESA_PBUFFER_FREE( buffer->BackRightAlpha );
-         buffer->BackRightAlpha = NULL;
-      }
-   }
 }
 
 /*@}*/
@@ -1552,6 +1395,8 @@ _mesa_initialize_context( GLcontext *ctx,
    ctx->Visual = *visual;
    ctx->DrawBuffer = NULL;
    ctx->ReadBuffer = NULL;
+   ctx->WinSysDrawBuffer = NULL;
+   ctx->WinSysReadBuffer = NULL;
 
    /* Plug in driver functions and context pointer here.
     * This is important because when we call alloc_shared_state() below
@@ -1662,7 +1507,7 @@ _mesa_free_context_data( GLcontext *ctx )
 {
    /* if we're destroying the current context, unbind it first */
    if (ctx == _mesa_get_current_context()) {
-      _mesa_make_current(NULL, NULL);
+      _mesa_make_current(NULL, NULL, NULL);
    }
 
    _mesa_free_lighting_data( ctx );
@@ -1878,20 +1723,6 @@ check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
 
 
 /**
- * Set the current context, binding the given frame buffer to the context.
- *
- * \param newCtx new GL context.
- * \param buffer framebuffer.
- * 
- * Calls _mesa_make_current2() with \p buffer as read and write framebuffer.
- */
-void
-_mesa_make_current( GLcontext *newCtx, GLframebuffer *buffer )
-{
-   _mesa_make_current2( newCtx, buffer, buffer );
-}
-
-/**
  * Bind the given context to the given draw-buffer and read-buffer and
  * make it the current context for this thread.
  *
@@ -1911,11 +1742,11 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *buffer )
  * troubleshooting.
  */
 void
-_mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
-                     GLframebuffer *readBuffer )
+_mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
+                    GLframebuffer *readBuffer )
 {
    if (MESA_VERBOSE)
-      _mesa_debug(newCtx, "_mesa_make_current2()\n");
+      _mesa_debug(newCtx, "_mesa_make_current()\n");
 
    /* Check that the context's and framebuffer's visuals are compatible.
     */
@@ -1936,7 +1767,6 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
    _glapi_set_context((void *) newCtx);
    ASSERT(_mesa_get_current_context() == newCtx);
 
-
    if (!newCtx) {
       _glapi_set_dispatch(NULL);  /* none current */
    }
@@ -1945,8 +1775,21 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
 
       if (drawBuffer && readBuffer) {
 	 /* TODO: check if newCtx and buffer's visual match??? */
+
+#if NEW_RENDERBUFFER
+         ASSERT(drawBuffer->Name == 0);
+         ASSERT(readBuffer->Name == 0);
+         newCtx->WinSysDrawBuffer = drawBuffer;
+         newCtx->WinSysReadBuffer = readBuffer;
+         /* don't replace user-buffer bindings with window system buffer */
+         if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
+            newCtx->DrawBuffer = drawBuffer;
+            newCtx->ReadBuffer = readBuffer;
+         }
+#else
 	 newCtx->DrawBuffer = drawBuffer;
 	 newCtx->ReadBuffer = readBuffer;
+#endif
 	 newCtx->NewState |= _NEW_BUFFERS;
 
 #if _HAVE_FULL_GL
@@ -1956,9 +1799,9 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
             /* ask device driver for size of the buffer */
             (*newCtx->Driver.GetBufferSize)(drawBuffer, &bufWidth, &bufHeight);
             /* set initial buffer size */
-            drawBuffer->Width = bufWidth;
-            drawBuffer->Height = bufHeight;
-            newCtx->Driver.ResizeBuffers( drawBuffer );
+            if (newCtx->Driver.ResizeBuffers)
+               newCtx->Driver.ResizeBuffers(newCtx, drawBuffer,
+                                            bufWidth, bufHeight);
             drawBuffer->Initialized = GL_TRUE;
          }
 
@@ -1968,9 +1811,9 @@ _mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
             /* ask device driver for size of the buffer */
             (*newCtx->Driver.GetBufferSize)(readBuffer, &bufWidth, &bufHeight);
             /* set initial buffer size */
-            readBuffer->Width = bufWidth;
-            readBuffer->Height = bufHeight;
-            newCtx->Driver.ResizeBuffers( readBuffer );
+            if (newCtx->Driver.ResizeBuffers)
+               newCtx->Driver.ResizeBuffers(newCtx, readBuffer,
+                                            bufWidth, bufHeight);
             readBuffer->Initialized = GL_TRUE;
          }
 #endif

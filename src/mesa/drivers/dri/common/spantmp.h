@@ -56,13 +56,14 @@
 #endif
 
 
-static void TAG(WriteRGBASpan)( const GLcontext *ctx,
+static void TAG(WriteRGBASpan)( GLcontext *ctx,
+                                struct gl_renderbuffer *rb,
 				GLuint n, GLint x, GLint y,
-				const GLubyte rgba[][4],
-				const GLubyte mask[] )
+				const void *values, const GLubyte mask[] )
 {
    HW_WRITE_LOCK()
       {
+         const GLubyte (*rgba)[4] = (const GLubyte (*)[4]) values;
 	 GLint x1;
 	 GLint n1;
 	 LOCAL_VARS;
@@ -98,13 +99,14 @@ static void TAG(WriteRGBASpan)( const GLcontext *ctx,
    HW_WRITE_UNLOCK();
 }
 
-static void TAG(WriteRGBSpan)( const GLcontext *ctx,
+static void TAG(WriteRGBSpan)( GLcontext *ctx,
+                               struct gl_renderbuffer *rb,
 			       GLuint n, GLint x, GLint y,
-			       const GLubyte rgb[][3],
-			       const GLubyte mask[] )
+			       const void *values, const GLubyte mask[] )
 {
    HW_WRITE_LOCK()
       {
+         const GLubyte (*rgb)[3] = (const GLubyte (*)[3]) values;
 	 GLint x1;
 	 GLint n1;
 	 LOCAL_VARS;
@@ -136,15 +138,14 @@ static void TAG(WriteRGBSpan)( const GLcontext *ctx,
    HW_WRITE_UNLOCK();
 }
 
-static void TAG(WriteRGBAPixels)( const GLcontext *ctx,
-			       GLuint n,
-			       const GLint x[],
-			       const GLint y[],
-			       const GLubyte rgba[][4],
-			       const GLubyte mask[] )
+static void TAG(WriteRGBAPixels)( GLcontext *ctx,
+                                  struct gl_renderbuffer *rb,
+                                  GLuint n, const GLint x[], const GLint y[],
+                                  const void *values, const GLubyte mask[] )
 {
    HW_WRITE_LOCK()
       {
+         const GLubyte (*rgba)[4] = (const GLubyte (*)[4]) values;
 	 GLuint i;
 	 LOCAL_VARS;
 
@@ -183,13 +184,15 @@ static void TAG(WriteRGBAPixels)( const GLcontext *ctx,
 }
 
 
-static void TAG(WriteMonoRGBASpan)( const GLcontext *ctx,	
+static void TAG(WriteMonoRGBASpan)( GLcontext *ctx,	
+                                    struct gl_renderbuffer *rb,
 				    GLuint n, GLint x, GLint y, 
-				    const GLchan color[4],
+				    const void *value,
 				    const GLubyte mask[] )
 {
    HW_WRITE_LOCK()
       {
+         const GLubyte *color = (const GLubyte *) value;
 	 GLint x1;
 	 GLint n1;
 	 LOCAL_VARS;
@@ -221,14 +224,16 @@ static void TAG(WriteMonoRGBASpan)( const GLcontext *ctx,
 }
 
 
-static void TAG(WriteMonoRGBAPixels)( const GLcontext *ctx,
+static void TAG(WriteMonoRGBAPixels)( GLcontext *ctx,
+                                      struct gl_renderbuffer *rb,
 				      GLuint n,
-				      const GLint x[], const GLint y[],
-				      const GLchan color[],
-				      const GLubyte mask[] ) 
+                                      const GLint x[], const GLint y[],
+				      const void *value,
+                                      const GLubyte mask[] ) 
 {
    HW_WRITE_LOCK()
       {
+         const GLubyte *color = (const GLubyte *) value;
 	 GLuint i;
 	 LOCAL_VARS;
 	 INIT_MONO_PIXEL(p, color);
@@ -261,12 +266,14 @@ static void TAG(WriteMonoRGBAPixels)( const GLcontext *ctx,
 }
 
 
-static void TAG(ReadRGBASpan)( const GLcontext *ctx,
+static void TAG(ReadRGBASpan)( GLcontext *ctx,
+                               struct gl_renderbuffer *rb,
 			       GLuint n, GLint x, GLint y,
-			       GLubyte rgba[][4])
+			       void *values)
 {
    HW_READ_LOCK()
       {
+         GLubyte (*rgba)[4] = (GLubyte (*)[4]) values;
 	 GLint x1,n1;
 	 LOCAL_VARS;
 
@@ -287,12 +294,15 @@ static void TAG(ReadRGBASpan)( const GLcontext *ctx,
 }
 
 
-static void TAG(ReadRGBAPixels)( const GLcontext *ctx,
+static void TAG(ReadRGBAPixels)( GLcontext *ctx,
+                                 struct gl_renderbuffer *rb,
 				 GLuint n, const GLint x[], const GLint y[],
-				 GLubyte rgba[][4], const GLubyte mask[] )
+				 void *values )
 {
    HW_READ_LOCK()
       {
+         GLubyte (*rgba)[4] = (GLubyte (*)[4]) values;
+         const GLubyte *mask = NULL; /* remove someday */
 	 GLuint i;
 	 LOCAL_VARS;
 

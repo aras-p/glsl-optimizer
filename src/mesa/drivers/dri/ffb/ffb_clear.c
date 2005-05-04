@@ -267,7 +267,7 @@ void ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
-	unsigned int stcmask = DD_STENCIL_BIT;
+	unsigned int stcmask = BUFFER_BIT_STENCIL;
 
 #ifdef CLEAR_TRACE
 	fprintf(stderr, "ffbDDClear: mask(%08x) all(%d) "
@@ -277,7 +277,7 @@ void ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 	if (!(fmesa->ffb_sarea->flags & FFB_DRI_FFB2PLUS))
 		stcmask = 0;
 
-	if (mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT | DD_DEPTH_BIT | stcmask)) {
+	if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT | BUFFER_BIT_DEPTH | stcmask)) {
 		ffb_fbcPtr ffb = fmesa->regs;
 		unsigned int fbc, ppc;
 
@@ -288,20 +288,20 @@ void ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 		       FFB_PPC_ZS_CONST | FFB_PPC_CS_CONST);
 
 		/* Y/X enables must be both on or both off. */
-		if (mask & (DD_DEPTH_BIT | stcmask)) {
+		if (mask & (BUFFER_BIT_DEPTH | stcmask)) {
 			fbc |= (FFB_FBC_ZE_ON | FFB_FBC_YE_ON | FFB_FBC_WB_C);
 		} else
 			fbc |= FFB_FBC_ZE_OFF | FFB_FBC_YE_OFF;
 
 		/* All RGB enables must be both on or both off. */
-		if (mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT)) {
-			if (mask & DD_FRONT_LEFT_BIT) {
+		if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) {
+			if (mask & BUFFER_BIT_FRONT_LEFT) {
 				if (fmesa->back_buffer == 0)
 					fbc |= FFB_FBC_WB_B;
 				else
 					fbc |= FFB_FBC_WB_A;
 			}
-			if (mask & DD_BACK_LEFT_BIT) {
+			if (mask & BUFFER_BIT_BACK_LEFT) {
 				if (fmesa->back_buffer == 0)
 					fbc |= FFB_FBC_WB_A;
 				else
@@ -321,9 +321,9 @@ void ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 			ffb->cmp = 0x80808080;
 			ffb->rop = FFB_ROP_NEW;
 
-			if (mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT))
+			if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT))
 				ffb->fg = fmesa->clear_pixel;
-			if (mask & DD_DEPTH_BIT)
+			if (mask & BUFFER_BIT_DEPTH)
 				ffb->constz = fmesa->clear_depth;
 			if (mask & stcmask)
 				ffb->consty = fmesa->clear_stencil;
@@ -344,8 +344,8 @@ void ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 
 		UNLOCK_HARDWARE(fmesa);
 
-		mask &= ~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT |
-			  DD_DEPTH_BIT | stcmask);
+		mask &= ~(BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT |
+			  BUFFER_BIT_DEPTH | stcmask);
 	}
 
 	if (mask) 

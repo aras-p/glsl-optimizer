@@ -348,41 +348,41 @@ void intelClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
     */
    intelFlush( &intel->ctx );
 
-   if (mask & DD_FRONT_LEFT_BIT) {
+   if (mask & BUFFER_BIT_FRONT_LEFT) {
       if (colorMask == ~0) {
-	 blit_mask |= DD_FRONT_LEFT_BIT;
+	 blit_mask |= BUFFER_BIT_FRONT_LEFT;
       } 
       else {
-	 tri_mask |= DD_FRONT_LEFT_BIT;
+	 tri_mask |= BUFFER_BIT_FRONT_LEFT;
       }
    }
 
-   if (mask & DD_BACK_LEFT_BIT) {
+   if (mask & BUFFER_BIT_BACK_LEFT) {
       if (colorMask == ~0) {
-	 blit_mask |= DD_BACK_LEFT_BIT;
+	 blit_mask |= BUFFER_BIT_BACK_LEFT;
       } 
       else {
-	 tri_mask |= DD_BACK_LEFT_BIT;
+	 tri_mask |= BUFFER_BIT_BACK_LEFT;
       }
    }
 
-   if (mask & DD_DEPTH_BIT) {
-      blit_mask |= DD_DEPTH_BIT;
+   if (mask & BUFFER_BIT_DEPTH) {
+      blit_mask |= BUFFER_BIT_DEPTH;
    }
 
-   if (mask & DD_STENCIL_BIT) {
+   if (mask & BUFFER_BIT_STENCIL) {
       if (!intel->hw_stencil) {
-	 swrast_mask |= DD_STENCIL_BIT;
+	 swrast_mask |= BUFFER_BIT_STENCIL;
       }
       else if (ctx->Stencil.WriteMask[0] != 0xff) {
-	 tri_mask |= DD_STENCIL_BIT;
+	 tri_mask |= BUFFER_BIT_STENCIL;
       } 
       else {
-	 blit_mask |= DD_STENCIL_BIT;
+	 blit_mask |= BUFFER_BIT_STENCIL;
       }
    }
 
-   swrast_mask |= (mask & DD_ACCUM_BIT);
+   swrast_mask |= (mask & BUFFER_BIT_ACCUM);
 
    if (blit_mask) 
       intelClearWithBlit( ctx, blit_mask, all, cx, cy, cw, ch );

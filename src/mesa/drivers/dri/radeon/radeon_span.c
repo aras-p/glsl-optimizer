@@ -313,7 +313,7 @@ static void radeonSetBuffer( GLcontext *ctx,
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 
    switch ( bufferBit ) {
-   case DD_FRONT_LEFT_BIT:
+   case BUFFER_BIT_FRONT_LEFT:
       if ( rmesa->sarea->pfCurrentPage == 1 ) {
         rmesa->state.pixel.readOffset = rmesa->radeonScreen->backOffset;
         rmesa->state.pixel.readPitch  = rmesa->radeonScreen->backPitch;
@@ -326,7 +326,7 @@ static void radeonSetBuffer( GLcontext *ctx,
       	rmesa->state.color.drawPitch  = rmesa->radeonScreen->frontPitch;
       }
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       if ( rmesa->sarea->pfCurrentPage == 1 ) {
       	rmesa->state.pixel.readOffset = rmesa->radeonScreen->frontOffset;
       	rmesa->state.pixel.readPitch  = rmesa->radeonScreen->frontPitch;
@@ -375,6 +375,7 @@ void radeonInitSpanFuncs( GLcontext *ctx )
 
    switch ( rmesa->radeonScreen->cpp ) {
    case 2:
+#if 0
       swdd->WriteRGBASpan	= radeonWriteRGBASpan_RGB565;
       swdd->WriteRGBSpan	= radeonWriteRGBSpan_RGB565;
       swdd->WriteMonoRGBASpan	= radeonWriteMonoRGBASpan_RGB565;
@@ -382,9 +383,11 @@ void radeonInitSpanFuncs( GLcontext *ctx )
       swdd->WriteMonoRGBAPixels	= radeonWriteMonoRGBAPixels_RGB565;
       swdd->ReadRGBASpan	= radeonReadRGBASpan_RGB565;
       swdd->ReadRGBAPixels      = radeonReadRGBAPixels_RGB565;
+#endif
       break;
 
    case 4:
+#if 0
       swdd->WriteRGBASpan	= radeonWriteRGBASpan_ARGB8888;
       swdd->WriteRGBSpan	= radeonWriteRGBSpan_ARGB8888;
       swdd->WriteMonoRGBASpan   = radeonWriteMonoRGBASpan_ARGB8888;
@@ -392,6 +395,7 @@ void radeonInitSpanFuncs( GLcontext *ctx )
       swdd->WriteMonoRGBAPixels = radeonWriteMonoRGBAPixels_ARGB8888;
       swdd->ReadRGBASpan	= radeonReadRGBASpan_ARGB8888;
       swdd->ReadRGBAPixels      = radeonReadRGBAPixels_ARGB8888;
+#endif
       break;
 
    default:
@@ -400,13 +404,16 @@ void radeonInitSpanFuncs( GLcontext *ctx )
 
    switch ( rmesa->glCtx->Visual.depthBits ) {
    case 16:
+#if 0
       swdd->ReadDepthSpan	= radeonReadDepthSpan_16;
       swdd->WriteDepthSpan	= radeonWriteDepthSpan_16;
       swdd->ReadDepthPixels	= radeonReadDepthPixels_16;
       swdd->WriteDepthPixels	= radeonWriteDepthPixels_16;
+#endif
       break;
 
    case 24:
+#if 0
       swdd->ReadDepthSpan	= radeonReadDepthSpan_24_8;
       swdd->WriteDepthSpan	= radeonWriteDepthSpan_24_8;
       swdd->ReadDepthPixels	= radeonReadDepthPixels_24_8;
@@ -416,6 +423,7 @@ void radeonInitSpanFuncs( GLcontext *ctx )
       swdd->WriteStencilSpan	= radeonWriteStencilSpan_24_8;
       swdd->ReadStencilPixels	= radeonReadStencilPixels_24_8;
       swdd->WriteStencilPixels	= radeonWriteStencilPixels_24_8;
+#endif
       break;
 
    default:
@@ -424,4 +432,57 @@ void radeonInitSpanFuncs( GLcontext *ctx )
 
    swdd->SpanRenderStart          = radeonSpanRenderStart;
    swdd->SpanRenderFinish         = radeonSpanRenderFinish; 
+}
+
+
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+radeonSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+{
+   if (drb->Base.InternalFormat == GL_RGBA) {
+      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
+         drb->Base.GetRow        = radeonReadRGBASpan_RGB565;
+         drb->Base.GetValues     = radeonReadRGBAPixels_RGB565;
+         drb->Base.PutRow        = radeonWriteRGBASpan_RGB565;
+         drb->Base.PutRowRGB     = radeonWriteRGBSpan_RGB565;
+         drb->Base.PutMonoRow    = radeonWriteMonoRGBASpan_RGB565;
+         drb->Base.PutValues     = radeonWriteRGBAPixels_RGB565;
+         drb->Base.PutMonoValues = radeonWriteMonoRGBAPixels_RGB565;
+      }
+      else {
+         drb->Base.GetRow        = radeonReadRGBASpan_ARGB8888;
+         drb->Base.GetValues     = radeonReadRGBAPixels_ARGB8888;
+         drb->Base.PutRow        = radeonWriteRGBASpan_ARGB8888;
+         drb->Base.PutRowRGB     = radeonWriteRGBSpan_ARGB8888;
+         drb->Base.PutMonoRow    = radeonWriteMonoRGBASpan_ARGB8888;
+         drb->Base.PutValues     = radeonWriteRGBAPixels_ARGB8888;
+         drb->Base.PutMonoValues = radeonWriteMonoRGBAPixels_ARGB8888;
+      }
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+      drb->Base.GetRow        = radeonReadDepthSpan_16;
+      drb->Base.GetValues     = radeonReadDepthPixels_16;
+      drb->Base.PutRow        = radeonWriteDepthSpan_16;
+      drb->Base.PutMonoRow    = radeonWriteMonoDepthSpan_16;
+      drb->Base.PutValues     = radeonWriteDepthPixels_16;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+      drb->Base.GetRow        = radeonReadDepthSpan_24_8;
+      drb->Base.GetValues     = radeonReadDepthPixels_24_8;
+      drb->Base.PutRow        = radeonWriteDepthSpan_24_8;
+      drb->Base.PutMonoRow    = radeonWriteMonoDepthSpan_24_8;
+      drb->Base.PutValues     = radeonWriteDepthPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      drb->Base.GetRow        = radeonReadStencilSpan_24_8;
+      drb->Base.GetValues     = radeonReadStencilPixels_24_8;
+      drb->Base.PutRow        = radeonWriteStencilSpan_24_8;
+      drb->Base.PutMonoRow    = radeonWriteMonoStencilSpan_24_8;
+      drb->Base.PutValues     = radeonWriteStencilPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
 }

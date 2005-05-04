@@ -429,25 +429,25 @@ static void r128Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       rmesa->new_state = save_state & ~R128_NEW_MASKS;
    }
 
-   if ( mask & DD_FRONT_LEFT_BIT ) {
+   if ( mask & BUFFER_BIT_FRONT_LEFT ) {
       flags |= R128_FRONT;
-      mask &= ~DD_FRONT_LEFT_BIT;
+      mask &= ~BUFFER_BIT_FRONT_LEFT;
    }
 
-   if ( mask & DD_BACK_LEFT_BIT ) {
+   if ( mask & BUFFER_BIT_BACK_LEFT ) {
       flags |= R128_BACK;
-      mask &= ~DD_BACK_LEFT_BIT;
+      mask &= ~BUFFER_BIT_BACK_LEFT;
    }
 
-   if ( ( mask & DD_DEPTH_BIT ) && ctx->Depth.Mask ) {
+   if ( ( mask & BUFFER_BIT_DEPTH ) && ctx->Depth.Mask ) {
       flags |= R128_DEPTH;
-      mask &= ~DD_DEPTH_BIT;
+      mask &= ~BUFFER_BIT_DEPTH;
    }
 #if 0
    /* FIXME: Add stencil support */
-   if ( mask & DD_STENCIL_BIT ) {
+   if ( mask & BUFFER_BIT_STENCIL ) {
       flags |= DRM_R128_DEPTH_BUFFER;
-      mask &= ~DD_STENCIL_BIT;
+      mask &= ~BUFFER_BIT_STENCIL;
    }
 #endif
 

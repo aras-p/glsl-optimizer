@@ -2850,7 +2850,8 @@ static void GLAPIENTRY save_PolygonOffset( GLfloat factor, GLfloat units )
 static void GLAPIENTRY save_PolygonOffsetEXT( GLfloat factor, GLfloat bias )
 {
    GET_CURRENT_CONTEXT(ctx);
-   save_PolygonOffset(factor, ctx->DepthMaxF * bias);
+   /* XXX mult by DepthMaxF here??? */
+   save_PolygonOffset(factor, ctx->DrawBuffer->_DepthMaxF * bias);
 }
 
 
@@ -7422,14 +7423,6 @@ static void GLAPIENTRY exec_UnlockArraysEXT( void )
    ctx->Exec->UnlockArraysEXT( );
 }
 
-static void GLAPIENTRY exec_ResizeBuffersMESA( void )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
-   ctx->Exec->ResizeBuffersMESA( );
-}
-
-
 static void GLAPIENTRY exec_ClientActiveTextureARB( GLenum target )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -7847,7 +7840,7 @@ _mesa_init_dlist_table( struct _glapi_table *table )
    table->BlendFuncSeparateEXT = save_BlendFuncSeparateEXT;
 
    /* 196. GL_MESA_resize_buffers */
-   table->ResizeBuffersMESA = exec_ResizeBuffersMESA;
+   table->ResizeBuffersMESA = _mesa_ResizeBuffersMESA;
 
    /* 197. GL_MESA_window_pos */
    table->WindowPos2dMESA = save_WindowPos2dMESA;

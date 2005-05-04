@@ -40,14 +40,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "glheader.h"
 #include "imports.h"
 #include "context.h"
+#include "framebuffer.h"
+#include "renderbuffer.h"
 
 #define STANDALONE_MMIO
 #include "r200_screen.h"
 #include "r200_context.h"
 #include "r200_ioctl.h"
+#include "r200_span.h"
 #include "radeon_macros.h"
 #include "radeon_reg.h"
 
+#include "drirenderbuffer.h"
 #include "utils.h"
 #include "vblank.h"
 #include "GL/internal/dri_interface.h"
@@ -525,10 +529,9 @@ r200InitDriver( __DRIscreenPrivate *sPriv )
 }
 
 
-
 /**
  * Create and initialize the Mesa and driver specific pixmap buffer
- * data.
+ * data.  This is called to setup rendering to a particular window.
  * 
  * \todo This function (and its interface) will need to be updated to support
  * pbuffers.
@@ -539,6 +542,8 @@ r200CreateBuffer( __DRIscreenPrivate *driScrnPriv,
                   const __GLcontextModes *mesaVis,
                   GLboolean isPixmap )
 {
+   r200ScreenPtr screen = (r200ScreenPtr) driScrnPriv->private;
+
    if (isPixmap) {
       return GL_FALSE; /* not implemented */
    }
@@ -548,12 +553,64 @@ r200CreateBuffer( __DRIscreenPrivate *driScrnPriv,
       const GLboolean swAccum = mesaVis->accumRedBits > 0;
       const GLboolean swStencil = mesaVis->stencilBits > 0 &&
          mesaVis->depthBits != 24;
+#if 0
       driDrawPriv->driverPrivate = (void *)
          _mesa_create_framebuffer( mesaVis,
                                    swDepth,
                                    swStencil,
                                    swAccum,
                                    swAlpha );
+#else
+      struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
+
+      {
+         driRenderbuffer *frontRb
+            = driNewRenderbuffer(GL_RGBA, screen->cpp,
+                                 screen->frontOffset, screen->frontPitch);
+         r200SetSpanFunctions(frontRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
+      }
+
+      if (mesaVis->doubleBufferMode) {
+         driRenderbuffer *backRb
+            = driNewRenderbuffer(GL_RGBA, screen->cpp,
+                                 screen->backOffset, screen->backPitch);
+         r200SetSpanFunctions(backRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
+      }
+
+      if (mesaVis->depthBits == 16) {
+         driRenderbuffer *depthRb
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, screen->cpp,
+                                 screen->depthOffset, screen->depthPitch);
+         r200SetSpanFunctions(depthRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+      }
+      else if (mesaVis->depthBits == 24) {
+         driRenderbuffer *depthRb
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, screen->cpp,
+                                 screen->depthOffset, screen->depthPitch);
+         r200SetSpanFunctions(depthRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+      }
+
+      if (mesaVis->stencilBits > 0 && !swStencil) {
+         driRenderbuffer *stencilRb
+            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, screen->cpp,
+                                 screen->depthOffset, screen->depthPitch);
+         r200SetSpanFunctions(stencilRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
+      }
+
+      _mesa_add_soft_renderbuffers(fb,
+                                   GL_FALSE, /* color */
+                                   swDepth,
+                                   swStencil,
+                                   swAccum,
+                                   swAlpha,
+                                   GL_FALSE /* aux */);
+      driDrawPriv->driverPrivate = (void *) fb;
+#endif
       return (driDrawPriv->driverPrivate != NULL);
    }
 }

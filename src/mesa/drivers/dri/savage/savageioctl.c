@@ -367,28 +367,28 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 
    flags = 0;
 
-   if (mask & DD_FRONT_LEFT_BIT) {
+   if (mask & BUFFER_BIT_FRONT_LEFT) {
       flags |= SAVAGE_FRONT;
-      mask &= ~DD_FRONT_LEFT_BIT;
+      mask &= ~BUFFER_BIT_FRONT_LEFT;
    }
 
-   if (mask & DD_BACK_LEFT_BIT) {
+   if (mask & BUFFER_BIT_BACK_LEFT) {
       flags |= SAVAGE_BACK;
-      mask &= ~DD_BACK_LEFT_BIT;
+      mask &= ~BUFFER_BIT_BACK_LEFT;
    }
 
-   if ((mask & DD_DEPTH_BIT) && ctx->Depth.Mask) {
+   if ((mask & BUFFER_BIT_DEPTH) && ctx->Depth.Mask) {
       flags |= SAVAGE_DEPTH;
       depthMask |=
 	  (imesa->savageScreen->zpp == 2) ? 0xffffffff : 0x00ffffff;
-      mask &= ~DD_DEPTH_BIT;
+      mask &= ~BUFFER_BIT_DEPTH;
    }
    
-   if((mask & DD_STENCIL_BIT) && imesa->hw_stencil)
+   if((mask & BUFFER_BIT_STENCIL) && imesa->hw_stencil)
    {
       flags |= SAVAGE_DEPTH;
       depthMask |= 0xff000000;
-      mask &= ~DD_STENCIL_BIT;
+      mask &= ~BUFFER_BIT_STENCIL;
    }
 
    savageFlushVertices(imesa);

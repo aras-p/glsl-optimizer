@@ -207,13 +207,13 @@ fetch_vector4_deriv( GLcontext *ctx,
       if (xOrY == 'X') {
          src[0] = 1.0;
          src[1] = 0.0;
-         src[2] = span->dzdx / ctx->DepthMaxF;
+         src[2] = span->dzdx / ctx->DrawBuffer->_DepthMaxF;
          src[3] = span->dwdx;
       }
       else {
          src[0] = 0.0;
          src[1] = 1.0;
-         src[2] = span->dzdy / ctx->DepthMaxF;
+         src[2] = span->dzdy / ctx->DrawBuffer->_DepthMaxF;
          src[3] = span->dwdy;
       }
       break;
@@ -1180,6 +1180,8 @@ execute_program( GLcontext *ctx,
                 * while the NV extension says it's implementation dependant.
                 */
                fetch_texel( ctx, texcoord, 0.0F, inst->TexSrcUnit, color );
+               if (color[3])
+                  printf("color[3] = %f\n", color[3]);
                store_vector4( inst, machine, color );
             }
             break;
@@ -1362,7 +1364,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
       GLfloat *wpos = machine->Inputs[FRAG_ATTRIB_WPOS];
       wpos[0] = (GLfloat) span->x + col;
       wpos[1] = (GLfloat) span->y;
-      wpos[2] = (GLfloat) span->array->z[col] / ctx->DepthMaxF;
+      wpos[2] = (GLfloat) span->array->z[col] / ctx->DrawBuffer->_DepthMaxF;
       wpos[3] = span->w + col * span->dwdx;
    }
    if (inputsRead & (1 << FRAG_ATTRIB_COL0)) {
@@ -1444,7 +1446,7 @@ _swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
          }
          /* depth value */
          if (program->OutputsWritten & (1 << FRAG_OUTPUT_DEPR))
-            span->array->z[i] = IROUND(ctx->FragmentProgram.Machine.Outputs[FRAG_OUTPUT_DEPR][0] * ctx->DepthMaxF);
+            span->array->z[i] = IROUND(ctx->FragmentProgram.Machine.Outputs[FRAG_OUTPUT_DEPR][0] * ctx->DrawBuffer->_DepthMaxF);
       }
    }
 

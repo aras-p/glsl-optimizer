@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,8 +52,11 @@ typedef struct {
 } bgr_t;
 
 
+struct xmesa_renderbuffer;
+
+
 /* Function pointer for clearing color buffers */
-typedef void (*clear_func)( GLcontext *ctx,
+typedef void (*ClearFunc)( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
                             GLboolean all, GLint x, GLint y,
                             GLint width, GLint height );
 
@@ -131,8 +134,6 @@ struct xmesa_visual {
 struct xmesa_context {
    GLcontext mesa;		/* the core library context (containment) */
    XMesaVisual xm_visual;	/* Describes the buffers */
-   XMesaBuffer xm_draw_buffer;	/* current draw framebuffer */
-   XMesaBuffer xm_read_buffer;	/* current read framebuffer */
    XMesaBuffer xm_buffer;	/* current span/point/line/triangle buffer */
 
    XMesaDisplay *display;	/* == xm_visual->display */
@@ -155,6 +156,30 @@ typedef enum {
 } BufferType;
 
 
+struct xmesa_renderbuffer
+{
+   struct gl_renderbuffer Base;  /* Base class */
+
+   XMesaDrawable pixmap;	/* Either an X Window ID (front color buf) */
+                                /* or X Pixmap ID (back color buf) */
+
+   XMesaImage *ximage;	/* The back buffer, if not using a Pixmap */
+
+   GLubyte *origin1;	/* used for PIXEL_ADDR1 macro */
+   GLint width1;
+   GLushort *origin2;	/* used for PIXEL_ADDR2 macro */
+   GLint width2;
+   GLubyte *origin3;	/* used for PIXEL_ADDR3 macro */
+   GLint width3;
+   GLuint *origin4;	/* used for PIXEL_ADDR4 macro */
+   GLint width4;
+
+   GLint bottom;	/* used for FLIP macro */
+
+   ClearFunc clearFunc;
+};
+
+
 /*
  * "Derived" from GLframebuffer.  Basically corresponds to a GLXDrawable.
  */
@@ -166,12 +191,9 @@ struct xmesa_buffer {
 
    XMesaDisplay *display;
    BufferType type;             /* window, pixmap, pbuffer or glxwindow */
-   XMesaDrawable frontbuffer;	/* either a window or pixmap */
-   XMesaPixmap backpixmap;	/* back buffer Pixmap */
-   XMesaImage *backimage;	/* back buffer simulated XImage */
 
-   XMesaDrawable buffer;	/* the current buffer, either equal to */
-				/* frontbuffer, backpixmap or XIMAGE (None) */
+   struct xmesa_renderbuffer *frontxrb; /* front color renderbuffer */
+   struct xmesa_renderbuffer *backxrb;  /* back color renderbuffer */
 
    XMesaColormap cmap;		/* the X colormap */
 
@@ -192,17 +214,6 @@ struct xmesa_buffer {
 #endif
 
    XMesaImage *rowimage;	/* Used for optimized span writing */
-
-   GLint bottom;		/* used for FLIP macro below */
-   GLubyte *ximage_origin1;	/* used for PIXELADDR1 macro */
-   GLint ximage_width1;
-   GLushort *ximage_origin2;	/* used for PIXELADDR2 macro */
-   GLint ximage_width2;
-   GLubyte *ximage_origin3;	/* used for PIXELADDR3 macro */
-   GLint ximage_width3;
-   GLuint *ximage_origin4;	/* used for PIXELADDR4 macro */
-   GLint ximage_width4;
-
    XMesaPixmap stipple_pixmap;	/* For polygon stippling */
    XMesaGC stipple_gc;		/* For polygon stippling */
 
@@ -237,22 +248,14 @@ struct xmesa_buffer {
    fxMesaContext FXctx;
 #endif
 
-   /* functions for clearing the front and back color buffers */
-   clear_func front_clear_func;
-   clear_func back_clear_func;
-
    struct xmesa_buffer *Next;	/* Linked list pointer: */
 };
 
 
-
-/* Values for xmesa->dest: */
+/* Values for xmesa->db_state: */
 #define FRONT_PIXMAP	1
 #define BACK_PIXMAP	2
 #define BACK_XIMAGE	4
-
-/* Special value for X Drawable variables to indicate use of XImage instead */
-#define XIMAGE None
 
 
 /*
@@ -341,7 +344,7 @@ extern const int xmesa_kernel8[DITH_DY * DITH_DX];
 /* Dither for random X,Y */
 #define DITHER_SETUP						\
 	int __d;						\
-	unsigned long *ctable = xmesa->xm_buffer->color_table;
+	unsigned long *ctable = XMESA_BUFFER(ctx->DrawBuffer)->color_table;
 
 #define DITHER( X, Y, R, G, B )				\
 	(__d = xmesa_kernel8[(((Y)&3)<<2) | ((X)&3)],	\
@@ -352,7 +355,7 @@ extern const int xmesa_kernel8[DITH_DY * DITH_DX];
 /* Dither for random X, fixed Y */
 #define XDITHER_SETUP(Y)					\
 	int __d;						\
-	unsigned long *ctable = xmesa->xm_buffer->color_table;	\
+	unsigned long *ctable = XMESA_BUFFER(ctx->DrawBuffer)->color_table;	\
 	const int *kernel = &xmesa_kernel8[ ((Y)&3) << 2 ];
 
 #define XDITHER( X, R, G, B )				\
@@ -370,7 +373,7 @@ extern const int xmesa_kernel8[DITH_DY * DITH_DX];
 #define FLAT_DITHER_SETUP( R, G, B )					\
 	GLushort ditherValues[16];					\
 	{								\
-	   unsigned long *ctable = xmesa->xm_buffer->color_table;	\
+	   unsigned long *ctable = XMESA_BUFFER(ctx->DrawBuffer)->color_table;	\
 	   int msdr = (DITH_N*((DITH_R)-1)+1) * (R);			\
 	   int msdg = (DITH_N*((DITH_G)-1)+1) * (G);			\
 	   int msdb = (DITH_N*((DITH_B)-1)+1) * (B);			\
@@ -395,7 +398,7 @@ extern const int xmesa_kernel8[DITH_DY * DITH_DX];
 #define _dither_lookup(C, c)   (((unsigned)((DITH_N * (C - 1) + 1) * c)) >> 12)
 
 #define LOOKUP_SETUP						\
-	unsigned long *ctable = xmesa->xm_buffer->color_table
+	unsigned long *ctable = XMESA_BUFFER(ctx->DrawBuffer)->color_table
 
 #define LOOKUP( R, G, B )				\
 	ctable[DITH_MIX(_dither_lookup(DITH_R, (R)),	\
@@ -438,31 +441,31 @@ extern const int xmesa_kernel1[16];
 /*
  * If pixelformat==PF_GRAYSCALE:
  */
-#define GRAY_RGB( R, G, B )   xmesa->xm_buffer->color_table[((R) + (G) + (B))/3]
+#define GRAY_RGB( R, G, B )   XMESA_BUFFER(ctx->DrawBuffer)->color_table[((R) + (G) + (B))/3]
 
 
 
 /*
  * Converts a GL window Y coord to an X window Y coord:
  */
-#define FLIP(BUFFER, Y)  ((BUFFER)->bottom-(Y))
+#define YFLIP(XRB, Y)  ((XRB)->bottom - (Y))
 
 
 /*
- * Return the address of a 1, 2 or 4-byte pixel in the back XImage:
+ * Return the address of a 1, 2 or 4-byte pixel in the buffer's XImage:
  * X==0 is left, Y==0 is bottom.
  */
-#define PIXELADDR1( BUFFER, X, Y )  \
-   ( (BUFFER)->ximage_origin1 - (Y) * (BUFFER)->ximage_width1 + (X) )
+#define PIXEL_ADDR1(XRB, X, Y)  \
+   ( (XRB)->origin1 - (Y) * (XRB)->width1 + (X) )
 
-#define PIXELADDR2( BUFFER, X, Y )  \
-   ( (BUFFER)->ximage_origin2 - (Y) * (BUFFER)->ximage_width2 + (X) )
+#define PIXEL_ADDR2(XRB, X, Y)  \
+   ( (XRB)->origin2 - (Y) * (XRB)->width2 + (X) )
 
-#define PIXELADDR3( BUFFER, X, Y )  \
-   ( (bgr_t *) ( (BUFFER)->ximage_origin3 - (Y) * (BUFFER)->ximage_width3 + 3 * (X) ))
+#define PIXEL_ADDR3(XRB, X, Y)  \
+   ( (bgr_t *) ( (XRB)->origin3 - (Y) * (XRB)->width3 + 3 * (X) ))
 
-#define PIXELADDR4( BUFFER, X, Y )  \
-   ( (BUFFER)->ximage_origin4 - (Y) * (BUFFER)->ximage_width4 + (X) )
+#define PIXEL_ADDR4(XRB, X, Y)  \
+   ( (XRB)->origin4 - (Y) * (XRB)->width4 + (X) )
 
 
 
@@ -471,7 +474,13 @@ extern const int xmesa_kernel1[16];
  * Return pointer to XMesaContext corresponding to a Mesa GLcontext.
  * Since we're using structure containment, it's just a cast!.
  */
-#define XMESA_CONTEXT(MESACTX)  (XMesaContext) (MESACTX)
+#define XMESA_CONTEXT(MESACTX)  ((XMesaContext) (MESACTX))
+
+/*
+ * Return pointer to XMesaBuffer corresponding to a Mesa GLframebuffer.
+ * Since we're using structure containment, it's just a cast!.
+ */
+#define XMESA_BUFFER(MESABUFF)  ((XMesaBuffer) (MESABUFF))
 
 
 
@@ -479,21 +488,29 @@ extern const int xmesa_kernel1[16];
  * External functions:
  */
 
+extern struct xmesa_renderbuffer *
+xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, GLboolean rgbMode);
+
 extern unsigned long
-xmesa_color_to_pixel( XMesaContext xmesa,
+xmesa_color_to_pixel( GLcontext *ctx,
                       GLubyte r, GLubyte g, GLubyte b, GLubyte a,
                       GLuint pixelFormat );
 
-extern void xmesa_alloc_back_buffer( XMesaBuffer b );
+extern void
+xmesa_alloc_back_buffer(XMesaBuffer b, GLuint width, GLuint height);
 
-extern void xmesa_resize_buffers( GLframebuffer *buffer );
+extern void xmesa_resize_buffers(GLcontext *ctx, GLframebuffer *buffer,
+                                 GLuint width, GLuint height);
 
 extern void xmesa_init_driver_functions( XMesaVisual xmvisual,
                                          struct dd_function_table *driver );
 
 extern void xmesa_update_state( GLcontext *ctx, GLuint new_state );
 
-extern void xmesa_update_span_funcs( GLcontext *ctx );
+extern void
+xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
+                             enum pixel_format pixelformat, GLint depth);
+
 
 extern void xmesa_set_buffer( GLcontext *ctx, GLframebuffer *buffer,
                               GLuint bufferBit );

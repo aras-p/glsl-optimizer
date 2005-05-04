@@ -900,7 +900,7 @@ _mesa_GetBufferParameterivARB(GLenum target, GLenum pname, GLint *params)
 
    switch (pname) {
       case GL_BUFFER_SIZE_ARB:
-         *params = bufObj->Size;
+         *params = (GLint) bufObj->Size;
          break;
       case GL_BUFFER_USAGE_ARB:
          *params = bufObj->Usage;

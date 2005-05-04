@@ -417,11 +417,8 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
                                  GL_TRUE,   /* double */
                                  GL_FALSE,  /* stereo */
                                  zBits,
-                                 8 * sizeof(GLstencil),
-                                 0 * sizeof(GLaccum), /* r */
-                                 0 * sizeof(GLaccum), /* g */
-                                 0 * sizeof(GLaccum), /* b */
-                                 0 * sizeof(GLaccum), /* a */
+                                 STENCIL_BITS,
+                                 0, 0, 0, 0, /* accum bits */
                                  0,         /* level */
                                  0          /* numAux */
                                );
@@ -436,11 +433,11 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
                                  GL_TRUE,   /* double */
                                  GL_FALSE,  /* stereo */
                                  zBits,
-                                 8 * sizeof(GLstencil),
-                                 8 * sizeof(GLaccum), /* r */
-                                 8 * sizeof(GLaccum), /* g */
-                                 8 * sizeof(GLaccum), /* b */
-                                 8 * sizeof(GLaccum), /* a */
+                                 STENCIL_BITS,
+                                 ACCUM_BITS, /* r */
+                                 ACCUM_BITS, /* g */
+                                 ACCUM_BITS, /* b */
+                                 ACCUM_BITS, /* a */
                                  0,         /* level */
                                  0          /* numAux */
                                );
@@ -1231,6 +1228,11 @@ static XVisualInfo *
 Fake_glXChooseVisual( Display *dpy, int screen, int *list )
 {
    XMesaVisual xmvis = choose_visual(dpy, screen, list, GL_FALSE);
+   {
+      int x;
+      glXGetConfig(dpy, xmvis->vishandle, GLX_RED_SIZE, &x);
+   }
+
    if (xmvis) {
 #if 0
       return xmvis->vishandle;
@@ -1418,7 +1420,7 @@ Fake_glXCreateGLXPixmap( Display *dpy, XVisualInfo *visinfo, Pixmap pixmap )
    if (!b) {
       return 0;
    }
-   return b->frontbuffer;
+   return b->frontxrb->pixmap;
 }
 
 
@@ -1444,7 +1446,7 @@ Fake_glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visinfo,
    if (!b) {
       return 0;
    }
-   return b->frontbuffer;
+   return b->frontxrb->pixmap;
 }
 
 
@@ -2096,7 +2098,7 @@ Fake_glXCreatePbuffer( Display *dpy, GLXFBConfig config,
    /* A GLXPbuffer handle must be an X Drawable because that's what
     * glXMakeCurrent takes.
     */
-   return (GLXPbuffer) xmbuf->frontbuffer;
+   return (GLXPbuffer) xmbuf->frontxrb->pixmap;
 }
 
 
@@ -2357,7 +2359,7 @@ Fake_glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, Pixm
 {
    XMesaVisual xmvis = (XMesaVisual) config;
    XMesaBuffer xmbuf = XMesaCreatePixmapBuffer(xmvis, pixmap, 0);
-   return xmbuf->frontbuffer; /* need to return an X ID */
+   return xmbuf->frontxrb->pixmap; /* need to return an X ID */
 }
 
 
@@ -2451,7 +2453,7 @@ Fake_glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
    /* A GLXPbuffer handle must be an X Drawable because that's what
     * glXMakeCurrent takes.
     */
-   return (GLXPbuffer) xmbuf->frontbuffer;
+   return (GLXPbuffer) xmbuf->frontxrb->pixmap;
 }
 
 

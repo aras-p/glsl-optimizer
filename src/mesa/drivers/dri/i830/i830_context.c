@@ -42,6 +42,7 @@
 #include "matrix.h"
 #include "simple_list.h"
 #include "extensions.h"
+#include "framebuffer.h"
 #include "imports.h"
 
 #include "swrast/swrast.h"
@@ -305,7 +306,7 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.PointSizeGranularity = 1.0;
 
    ctx->Driver.GetBufferSize = i830BufferSize;
-   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
+   ctx->Driver.ResizeBuffers = _mesa_resize_framebuffer;
    ctx->Driver.GetString = i830DDGetString;
 
    /* Who owns who? */
@@ -476,11 +477,11 @@ void i830XMesaSetBackClipRects( i830ContextPtr imesa )
 
 static void i830XMesaWindowMoved( i830ContextPtr imesa )
 {
-   switch (imesa->glCtx->Color._DrawDestMask[0]) {
-   case DD_FRONT_LEFT_BIT:
+   switch (imesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0]) {
+   case BUFFER_BIT_FRONT_LEFT:
       i830XMesaSetFrontClipRects( imesa );
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       i830XMesaSetBackClipRects( imesa );
       break;
    default:
@@ -527,11 +528,11 @@ GLboolean i830MakeCurrent(__DRIcontextPrivate *driContextPriv,
 
        imesa->driReadable = driReadPriv;
 
-      _mesa_make_current2(imesa->glCtx,
-			  (GLframebuffer *) driDrawPriv->driverPrivate,
-			  (GLframebuffer *) driReadPriv->driverPrivate);
+      _mesa_make_current(imesa->glCtx,
+			 (GLframebuffer *) driDrawPriv->driverPrivate,
+			 (GLframebuffer *) driReadPriv->driverPrivate);
    } else {
-      _mesa_make_current(0,0);
+      _mesa_make_current(NULL, NULL, NULL);
    }
 
    return GL_TRUE;

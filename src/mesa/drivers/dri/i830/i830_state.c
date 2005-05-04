@@ -802,17 +802,17 @@ static void i830DrawBuffer(GLcontext *ctx, GLenum mode )
    i830ContextPtr imesa = I830_CONTEXT(ctx);
 
    /*
-    * _DrawDestMask is easier to cope with than <mode>.
+    * _ColorDrawBufferMask is easier to cope with than <mode>.
     */
-   switch ( ctx->Color._DrawDestMask[0] ) {
-   case DD_FRONT_LEFT_BIT:
+   switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
+   case BUFFER_BIT_FRONT_LEFT:
       I830_FIREVERTICES(imesa);
       I830_STATECHANGE(imesa, I830_UPLOAD_BUFFERS);
       imesa->BufferSetup[I830_DESTREG_CBUFADDR] = imesa->i830Screen->fbOffset;
       i830XMesaSetFrontClipRects( imesa );
       FALLBACK( imesa, I830_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       I830_FIREVERTICES(imesa);
       I830_STATECHANGE(imesa, I830_UPLOAD_BUFFERS);
       imesa->BufferSetup[I830_DESTREG_CBUFADDR] = 

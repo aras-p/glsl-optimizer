@@ -306,14 +306,14 @@ sisMakeCurrent( __DRIcontextPrivate *driContextPriv,
 
       newSisCtx->driDrawable = driDrawPriv;
 
-      _mesa_make_current2( newSisCtx->glCtx,
-                         (GLframebuffer *) driDrawPriv->driverPrivate,
-                         (GLframebuffer *) driReadPriv->driverPrivate );
+      _mesa_make_current( newSisCtx->glCtx,
+                          (GLframebuffer *) driDrawPriv->driverPrivate,
+                          (GLframebuffer *) driReadPriv->driverPrivate );
 
       sisUpdateBufferSize( newSisCtx );
       sisUpdateClipping( newSisCtx->glCtx );
    } else {
-      _mesa_make_current( 0, 0 );
+      _mesa_make_current( NULL, NULL, NULL );
    }
 
    return GL_TRUE;

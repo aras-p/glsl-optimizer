@@ -178,10 +178,10 @@ static void viaSetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
 
-    if (bufferBit == DD_FRONT_LEFT_BIT) {
+    if (bufferBit == BUFFER_BIT_FRONT_LEFT) {
 	vmesa->drawBuffer = vmesa->readBuffer = &vmesa->front;
     }
-    else if (bufferBit == DD_BACK_LEFT_BIT) {
+    else if (bufferBit == BUFFER_BIT_BACK_LEFT) {
 	vmesa->drawBuffer = vmesa->readBuffer = &vmesa->back;
     }
     else {
@@ -207,10 +207,13 @@ void viaSpanRenderFinish( GLcontext *ctx )
 
 void viaInitSpanFuncs(GLcontext *ctx)
 {
+#if 0
     struct via_context *vmesa = VIA_CONTEXT(ctx);
+#endif
     struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
 
     swdd->SetBuffer = viaSetBuffer;
+#if 0
     if (vmesa->viaScreen->bitsPerPixel == 16) {
 	viaInitPointers_565( swdd );
     }
@@ -220,7 +223,8 @@ void viaInitSpanFuncs(GLcontext *ctx)
     else {
 	assert(0);
     }
-	
+#endif
+#if 0
     if (vmesa->glCtx->Visual.depthBits == 16) {
     	swdd->ReadDepthSpan = viaReadDepthSpan_16;
 	swdd->WriteDepthSpan = viaWriteDepthSpan_16;
@@ -247,11 +251,12 @@ void viaInitSpanFuncs(GLcontext *ctx)
 	swdd->ReadDepthPixels = viaReadDepthPixels_32;
 	swdd->WriteDepthPixels = viaWriteDepthPixels_32;
     }
+#endif
 
     swdd->SpanRenderStart = viaSpanRenderStart;
     swdd->SpanRenderFinish = viaSpanRenderFinish; 
 
-    
+#if 0    
     swdd->WriteCI8Span = NULL;
     swdd->WriteCI32Span = NULL;
     swdd->WriteMonoCISpan = NULL;
@@ -259,4 +264,55 @@ void viaInitSpanFuncs(GLcontext *ctx)
     swdd->WriteMonoCIPixels = NULL;
     swdd->ReadCI32Span = NULL;
     swdd->ReadCI32Pixels = NULL;	
+#endif
+}
+
+
+
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+viaSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+{
+   if (drb->Base.InternalFormat == GL_RGBA) {
+      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
+         viaInitPointers_565(&drb->Base);
+      }
+      else {
+         viaInitPointers_8888(&drb->Base);
+      }
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+      drb->Base.GetRow        = viaReadDepthSpan_16;
+      drb->Base.GetValues     = viaReadDepthPixels_16;
+      drb->Base.PutRow        = viaWriteDepthSpan_16;
+      drb->Base.PutMonoRow    = viaWriteMonoDepthSpan_16;
+      drb->Base.PutValues     = viaWriteDepthPixels_16;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+      drb->Base.GetRow        = viaReadDepthSpan_24_8;
+      drb->Base.GetValues     = viaReadDepthPixels_24_8;
+      drb->Base.PutRow        = viaWriteDepthSpan_24_8;
+      drb->Base.PutMonoRow    = viaWriteMonoDepthSpan_24_8;
+      drb->Base.PutValues     = viaWriteDepthPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT32) {
+      drb->Base.GetRow        = viaReadDepthSpan_32;
+      drb->Base.GetValues     = viaReadDepthPixels_32;
+      drb->Base.PutRow        = viaWriteDepthSpan_32;
+      drb->Base.PutMonoRow    = viaWriteMonoDepthSpan_32;
+      drb->Base.PutValues     = viaWriteDepthPixels_32;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      drb->Base.GetRow        = viaReadStencilSpan_24_8;
+      drb->Base.GetValues     = viaReadStencilPixels_24_8;
+      drb->Base.PutRow        = viaWriteStencilSpan_24_8;
+      drb->Base.PutMonoRow    = viaWriteMonoStencilSpan_24_8;
+      drb->Base.PutValues     = viaWriteStencilPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
 }

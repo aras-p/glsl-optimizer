@@ -386,7 +386,7 @@ extern void viaEmitHwStateLocked(struct via_context *vmesa);
 extern void viaEmitScissorValues(struct via_context *vmesa, int box_nr, int emit);
 extern void viaXMesaSetBackClipRects(struct via_context *vmesa);
 extern void viaXMesaSetFrontClipRects(struct via_context *vmesa);
-extern void viaReAllocateBuffers(GLframebuffer *drawbuffer);
+extern void viaReAllocateBuffers(GLcontext *ctx, GLframebuffer *drawbuffer, GLuint width, GLuint height);
 extern void viaXMesaWindowMoved(struct via_context *vmesa);
 
 extern GLboolean viaTexCombineState(struct via_context *vmesa,

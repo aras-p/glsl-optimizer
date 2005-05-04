@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,6 +63,19 @@ _mesa_Accum( GLenum op, GLfloat value )
       return;
    }
 
+   switch (op) {
+   case GL_ADD:
+   case GL_MULT:
+   case GL_ACCUM:
+   case GL_LOAD:
+   case GL_RETURN:
+      /* OK */
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glAccum(op)");
+      return;
+   }
+
    if (ctx->NewState)
       _mesa_update_state( ctx );
 
@@ -88,6 +101,8 @@ _mesa_Accum( GLenum op, GLfloat value )
 
    ctx->Driver.Accum( ctx, op, value, xpos, ypos, width, height );
 }
+
+
 
 void 
 _mesa_init_accum( GLcontext *ctx )

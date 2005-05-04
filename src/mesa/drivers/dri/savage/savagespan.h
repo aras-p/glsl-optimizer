@@ -25,7 +25,15 @@
 #ifndef _SAVAGE_SPAN_H
 #define _SAVAGE_SPAN_H
 
+#include "drirenderbuffer.h"
+
+
 extern void savageDDInitSpanFuncs( GLcontext *ctx );
+
+extern void
+savageSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis,
+                       GLboolean float_depth);
+
 
 /*
  * Savage 16-bit float depth format with zExpOffset=16:
@@ -124,5 +132,6 @@ static __inline GLdouble savageDecodeFloat24( GLuint x )
     return bias[exp] + pow2[exp]*mant;
 }
 #undef _1
+
 
 #endif

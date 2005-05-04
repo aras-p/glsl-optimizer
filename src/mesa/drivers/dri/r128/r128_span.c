@@ -335,7 +335,7 @@ static void r128DDSetBuffer( GLcontext *ctx,
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    switch ( bufferBit ) {
-   case DD_FRONT_LEFT_BIT:
+   case BUFFER_BIT_FRONT_LEFT:
       if ( rmesa->sarea->pfCurrentPage == 1 ) {
          rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->backOffset;
          rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->backPitch;
@@ -344,7 +344,7 @@ static void r128DDSetBuffer( GLcontext *ctx,
          rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->frontPitch;
       }
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       if ( rmesa->sarea->pfCurrentPage == 1 ) {
          rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->frontOffset;
          rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->frontPitch;
@@ -368,11 +368,15 @@ void r128DDInitSpanFuncs( GLcontext *ctx )
 
    switch ( rmesa->r128Screen->cpp ) {
    case 2:
+#if 0
       r128InitPointers_RGB565( swdd );
+#endif
       break;
 
    case 4:
+#if 0
       r128InitPointers_ARGB8888( swdd );
+#endif
       break;
 
    default:
@@ -381,17 +385,21 @@ void r128DDInitSpanFuncs( GLcontext *ctx )
 
    switch ( rmesa->glCtx->Visual.depthBits ) {
    case 16:
+#if 0
       swdd->ReadDepthSpan	= r128ReadDepthSpan_16;
       swdd->WriteDepthSpan	= r128WriteDepthSpan_16;
       swdd->ReadDepthPixels	= r128ReadDepthPixels_16;
       swdd->WriteDepthPixels	= r128WriteDepthPixels_16;
+#endif
       break;
 
    case 24:
+#if 0
       swdd->ReadDepthSpan	= r128ReadDepthSpan_24_8;
       swdd->WriteDepthSpan	= r128WriteDepthSpan_24_8;
       swdd->ReadDepthPixels	= r128ReadDepthPixels_24_8;
       swdd->WriteDepthPixels	= r128WriteDepthPixels_24_8;
+#endif
       break;
 
    default:
@@ -405,4 +413,45 @@ void r128DDInitSpanFuncs( GLcontext *ctx )
    swdd->WriteMonoCIPixels	= NULL;
    swdd->ReadCI32Span		= NULL;
    swdd->ReadCI32Pixels		= NULL;
+}
+
+
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+r128SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+{
+   if (drb->Base.InternalFormat == GL_RGBA) {
+      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
+         r128InitPointers_RGB565(&drb->Base);
+      }
+      else {
+         r128InitPointers_ARGB8888(&drb->Base);
+      }
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+      drb->Base.GetRow        = r128ReadDepthSpan_16;
+      drb->Base.GetValues     = r128ReadDepthPixels_16;
+      drb->Base.PutRow        = r128WriteDepthSpan_16;
+      drb->Base.PutMonoRow    = r128WriteMonoDepthSpan_16;
+      drb->Base.PutValues     = r128WriteDepthPixels_16;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+      drb->Base.GetRow        = r128ReadDepthSpan_24_8;
+      drb->Base.GetValues     = r128ReadDepthPixels_24_8;
+      drb->Base.PutRow        = r128WriteDepthSpan_24_8;
+      drb->Base.PutMonoRow    = r128WriteMonoDepthSpan_24_8;
+      drb->Base.PutValues     = r128WriteDepthPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      drb->Base.GetRow        = NULL;
+      drb->Base.GetValues     = NULL;
+      drb->Base.PutRow        = NULL;
+      drb->Base.PutMonoRow    = NULL;
+      drb->Base.PutValues     = NULL;
+      drb->Base.PutMonoValues = NULL;
+   }
 }

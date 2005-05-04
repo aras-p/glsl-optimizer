@@ -162,13 +162,15 @@ void _mesa_init_depth( GLcontext * ctx )
    ctx->Depth.Mask = GL_TRUE;
    ctx->Depth.OcclusionTest = GL_FALSE;
 
+   /* XXX this is now per-framebuffer state */
+#if 00
    /* Z buffer stuff */
    if (ctx->Visual.depthBits == 0) {
       /* Special case.  Even if we don't have a depth buffer we need
        * good values for DepthMax for Z vertex transformation purposes
        * and for per-fragment fog computation.
        */
-      ctx->DepthMax = 1 << 16;
+      ctx->DepthMax = (1 << 16) - 1;
       ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
    }
    else if (ctx->Visual.depthBits < 32) {
@@ -183,4 +185,5 @@ void _mesa_init_depth( GLcontext * ctx )
       ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
    }
    ctx->MRD = 1.0;  /* Minimum resolvable depth value, for polygon offset */
+#endif
 }

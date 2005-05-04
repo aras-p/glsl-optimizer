@@ -83,6 +83,17 @@ typedef struct mga_screen_private_s {
 } mgaScreenPrivate;
 
 
+/**
+ * mgaRenderbuffer, derived from Mesa's gl_renderbuffer
+ */
+typedef struct {
+   struct gl_renderbuffer Base;
+   /* XXX per-window info should go here */
+   int foo, bar;
+} mgaRenderbuffer;
+
+
+
 #include "mgacontext.h"
 
 extern void mgaGetLock( mgaContextPtr mmesa, GLuint flags );

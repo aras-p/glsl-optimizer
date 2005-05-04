@@ -61,6 +61,7 @@
 #if FEATURE_EXT_framebuffer_object
 #include "fbobject.h"
 #endif
+#include "framebuffer.h"
 #include "hint.h"
 #include "histogram.h"
 #include "imports.h"
@@ -973,6 +974,9 @@ _mesa_update_state( GLcontext *ctx )
 
    if (new_state & (_NEW_PROGRAM|_NEW_TEXTURE|_NEW_TEXTURE_MATRIX))
       _mesa_update_texture( ctx, new_state );
+
+   if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL))
+      _mesa_update_framebuffer(ctx);
 
    if (new_state & (_NEW_SCISSOR|_NEW_BUFFERS))
       _mesa_update_draw_buffer_bounds( ctx );

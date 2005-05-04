@@ -99,34 +99,6 @@ _mesa_destroy_visual( GLvisual *vis );
 
 
 /**********************************************************************/
-/** \name Create/destroy a GLframebuffer. */
-/*@{*/
- 
-extern GLframebuffer *
-_mesa_create_framebuffer( const GLvisual *visual,
-                          GLboolean softwareDepth,
-                          GLboolean softwareStencil,
-                          GLboolean softwareAccum,
-                          GLboolean softwareAlpha );
-
-extern void
-_mesa_initialize_framebuffer( GLframebuffer *fb,
-                              const GLvisual *visual,
-                              GLboolean softwareDepth,
-                              GLboolean softwareStencil,
-                              GLboolean softwareAccum,
-                              GLboolean softwareAlpha );
-
-extern void
-_mesa_free_framebuffer_data( GLframebuffer *buffer );
-
-extern void
-_mesa_destroy_framebuffer( GLframebuffer *buffer );
-
-/*@}*/
-
-
-/**********************************************************************/
 /** \name Create/destroy a GLcontext. */
 /*@{*/
 
@@ -155,12 +127,8 @@ _mesa_copy_context(const GLcontext *src, GLcontext *dst, GLuint mask);
 
 
 extern void
-_mesa_make_current( GLcontext *ctx, GLframebuffer *buffer );
-
-
-extern void
-_mesa_make_current2( GLcontext *ctx, GLframebuffer *drawBuffer,
-                     GLframebuffer *readBuffer );
+_mesa_make_current( GLcontext *ctx, GLframebuffer *drawBuffer,
+                    GLframebuffer *readBuffer );
 
 extern GLboolean
 _mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare);

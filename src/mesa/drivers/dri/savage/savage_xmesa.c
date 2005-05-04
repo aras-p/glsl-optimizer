@@ -29,7 +29,8 @@
 #include "savagecontext.h"
 #include "context.h"
 #include "matrix.h"
-
+#include "framebuffer.h"
+#include "renderbuffer.h"
 #include "simple_list.h"
 
 #include "utils.h"
@@ -588,25 +589,85 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
    }
 }
 
+
 static GLboolean
 savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 		    __DRIdrawablePrivate *driDrawPriv,
 		    const __GLcontextModes *mesaVis,
 		    GLboolean isPixmap)
 {
+   savageScreenPrivate *screen = (savageScreenPrivate *) driScrnPriv->private;
+
    if (isPixmap) {
       return GL_FALSE; /* not implemented */
    }
    else {
        GLboolean swStencil = mesaVis->stencilBits > 0 && mesaVis->depthBits != 24;
-      driDrawPriv->driverPrivate = (void *) 
+#if 0
+       driDrawPriv->driverPrivate = (void *) 
          _mesa_create_framebuffer(mesaVis,
                                   GL_FALSE,  /* software depth buffer? */
                                   swStencil,
                                   mesaVis->accumRedBits > 0,
                                   mesaVis->alphaBits > 0 );
+#else
+      struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
+      /*
+       * XXX: this value needs to be set according to the config file
+       * setting.  But we don't get that until we create a rendering
+       * context!!!!
+       */
+      GLboolean float_depth = GL_FALSE;
 
-      return (driDrawPriv->driverPrivate != NULL);
+      {
+         driRenderbuffer *frontRb
+            = driNewRenderbuffer(GL_RGBA, screen->cpp,
+                                 screen->frontOffset, screen->aperturePitch);
+         savageSetSpanFunctions(frontRb, mesaVis, float_depth);
+         _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
+      }
+
+      if (mesaVis->doubleBufferMode) {
+         driRenderbuffer *backRb
+            = driNewRenderbuffer(GL_RGBA, screen->cpp,
+                                 screen->backOffset, screen->aperturePitch);
+         savageSetSpanFunctions(backRb, mesaVis, float_depth);
+         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
+      }
+
+      if (mesaVis->depthBits == 16) {
+         driRenderbuffer *depthRb
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, screen->cpp,
+                                 screen->depthOffset, screen->aperturePitch);
+         savageSetSpanFunctions(depthRb, mesaVis, float_depth);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+      }
+      else if (mesaVis->depthBits == 24) {
+         driRenderbuffer *depthRb
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, screen->cpp,
+                                 screen->depthOffset, screen->aperturePitch);
+         savageSetSpanFunctions(depthRb, mesaVis, float_depth);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+      }
+
+      if (mesaVis->stencilBits > 0 && !swStencil) {
+         driRenderbuffer *stencilRb
+            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, screen->cpp,
+                                 screen->depthOffset, screen->aperturePitch);
+         savageSetSpanFunctions(stencilRb, mesaVis, float_depth);
+         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
+      }
+
+      _mesa_add_soft_renderbuffers(fb,
+                                   GL_FALSE, /* color */
+                                   GL_FALSE, /* depth */
+                                   swStencil,
+                                   mesaVis->accumRedBits > 0,
+                                   GL_FALSE, /* alpha */
+                                   GL_FALSE /* aux */);
+      driDrawPriv->driverPrivate = (void *) fb;
+#endif
+       return (driDrawPriv->driverPrivate != NULL);
    }
 }
 
@@ -670,11 +731,11 @@ static void savageXMesaWindowMoved( savageContextPtr imesa )
    if (0)
       fprintf(stderr, "savageXMesaWindowMoved\n\n");
 
-   switch (imesa->glCtx->Color._DrawDestMask[0]) {
-   case DD_FRONT_LEFT_BIT:
+   switch (imesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0]) {
+   case BUFFER_BIT_FRONT_LEFT:
       savageXMesaSetFrontClipRects( imesa );
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       savageXMesaSetBackClipRects( imesa );
       break;
    default:
@@ -742,15 +803,15 @@ savageMakeCurrent(__DRIcontextPrivate *driContextPriv,
       imesa->mesa_drawable = driDrawPriv;
       imesa->dirty = ~0;
       
-      _mesa_make_current2(imesa->glCtx,
-                          (GLframebuffer *) driDrawPriv->driverPrivate,
-                          (GLframebuffer *) driReadPriv->driverPrivate);
+      _mesa_make_current(imesa->glCtx,
+                         (GLframebuffer *) driDrawPriv->driverPrivate,
+                         (GLframebuffer *) driReadPriv->driverPrivate);
       
       savageXMesaWindowMoved( imesa );
    }
    else 
    {
-      _mesa_make_current(NULL, NULL);
+      _mesa_make_current(NULL, NULL, NULL);
    }
    return GL_TRUE;
 }

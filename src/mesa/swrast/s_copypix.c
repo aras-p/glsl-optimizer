@@ -131,6 +131,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                       GLint width, GLint height, GLint destx, GLint desty)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   struct gl_renderbuffer *drawRb = NULL;
    GLboolean quick_draw;
    GLint row;
    GLboolean changeBuffer;
@@ -152,6 +153,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
        && destx >= 0
        && destx + width <= (GLint) ctx->DrawBuffer->Width) {
       quick_draw = GL_TRUE;
+      drawRb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
    }
    else {
       quick_draw = GL_FALSE;
@@ -185,8 +187,8 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    for (row = 0; row < height; row++) {
       GLchan rgba[MAX_WIDTH][4];
       /* Read GLchan and convert to GLfloat */
-      _swrast_read_rgba_span(ctx, ctx->ReadBuffer, width, srcx,
-                             srcy + row, rgba);
+      _swrast_read_rgba_span(ctx, ctx->ReadBuffer->_ColorReadBuffer,
+                             width, srcx, srcy + row, rgba);
       chan_span_to_float(width, (CONST GLchan (*)[4]) rgba,
                          (GLfloat (*)[4]) dest);
       dest += 4 * width;
@@ -240,8 +242,14 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       dy = desty + row;
       if (quick_draw && dy >= 0 && dy < (GLint) ctx->DrawBuffer->Height) {
-         (*swrast->Driver.WriteRGBASpan)( ctx, width, destx, dy,
-		       (const GLchan (*)[4])span.array->rgba, NULL );
+#if OLD_RENDERBUFFER
+         if (swrast->Driver.WriteRGBASpan)
+            swrast->Driver.WriteRGBASpan(ctx, drawRb, width, destx, dy,
+		       (const GLchan (*)[4]) span.array->rgba, NULL);
+         else
+#endif
+            drawRb->PutRow(ctx, drawRb, width, destx, dy,
+                           span.array->rgba, NULL);
       }
       else if (zoom) {
          span.x = destx;
@@ -271,6 +279,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                  GLint width, GLint height, GLint destx, GLint desty)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   struct gl_renderbuffer *drawRb;
    GLchan *tmpImage,*p;
    GLboolean quick_draw;
    GLint sy, dy, stepy, j;
@@ -279,6 +288,11 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLint overlapping;
    const GLuint transferOps = ctx->_ImageTransferState;
    struct sw_span span;
+
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      /* no readbuffer - OK */
+      return;
+   }
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
 
@@ -319,9 +333,11 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
        && destx >= 0
        && destx + width <= (GLint) ctx->DrawBuffer->Width) {
       quick_draw = GL_TRUE;
+      drawRb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
    }
    else {
       quick_draw = GL_FALSE;
+      drawRb = NULL;
    }
 
    /* If read and draw buffer are different we must do buffer switching */
@@ -341,8 +357,8 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* read the source image */
       p = tmpImage;
       for (j = 0; j < height; j++, ssy += stepy) {
-         _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, ssy,
-                            (GLchan (*)[4]) p );
+         _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
+                                 width, srcx, ssy, (GLchan (*)[4]) p );
          p += width * 4;
       }
       p = tmpImage;
@@ -370,8 +386,8 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          if (changeBuffer)
             _swrast_use_read_buffer(ctx);
          ASSERT(width < MAX_WIDTH);
-         _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, srcx, sy,
-                               span.array->rgba );
+         _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
+                                 width, srcx, sy, span.array->rgba );
          if (changeBuffer)
             _swrast_use_draw_buffer(ctx);
       }
@@ -397,8 +413,14 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       /* Write color span */
       if (quick_draw && dy >= 0 && dy < (GLint) ctx->DrawBuffer->Height) {
-         (*swrast->Driver.WriteRGBASpan)( ctx, width, destx, dy,
-                                 (const GLchan (*)[4])span.array->rgba, NULL );
+#if OLD_RENDERBUFFER
+         if (swrast->Driver.WriteRGBASpan)
+            swrast->Driver.WriteRGBASpan(ctx, drawRb, width, destx, dy,
+                                 (const GLchan (*)[4])span.array->rgba, NULL);
+         else
+#endif
+            drawRb->PutRow(ctx, drawRb, width, destx, dy, span.array->rgba, NULL);
+
       }
       else if (zoom) {
          span.x = destx;
@@ -434,6 +456,11 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    const GLboolean shift_or_offset = ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset;
    GLint overlapping;
    struct sw_span span;
+
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      /* no readbuffer - OK */
+      return;
+   }
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_INDEX);
 
@@ -481,7 +508,8 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       /* read the image */
       p = tmpImage;
       for (j = 0; j < height; j++, ssy += stepy) {
-         _swrast_read_index_span( ctx, ctx->ReadBuffer, width, srcx, ssy, p );
+         _swrast_read_index_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
+                                  width, srcx, ssy, p );
          p += width;
       }
       p = tmpImage;
@@ -505,8 +533,8 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       else {
          if (changeBuffer)
             _swrast_use_read_buffer(ctx);
-         _swrast_read_index_span( ctx, ctx->ReadBuffer, width, srcx, sy,
-                                span.array->index );
+         _swrast_read_index_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
+                                  width, srcx, sy, span.array->index );
          if (changeBuffer)
             _swrast_use_draw_buffer(ctx);
       }
@@ -543,12 +571,20 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
                    GLint width, GLint height,
                    GLint destx, GLint desty )
 {
+   const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
+   struct gl_renderbuffer *readRb
+      = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
    GLfloat *p, *tmpImage;
    GLint sy, dy, stepy;
    GLint i, j;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
    struct sw_span span;
+
+   if (!readRb) {
+      /* no readbuffer - OK */
+      return;
+   }
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
 
@@ -592,7 +628,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       }
       p = tmpImage;
       for (j = 0; j < height; j++, ssy += stepy) {
-         _swrast_read_depth_span_float(ctx, width, srcx, ssy, p);
+         _swrast_read_depth_span_float(ctx, readRb, width, srcx, ssy, p);
          p += width;
       }
       p = tmpImage;
@@ -604,20 +640,21 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
    for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
       GLfloat depth[MAX_WIDTH];
-
+      float sum = 0;
       /* get depth values */
       if (overlapping) {
          MEMCPY(depth, p, width * sizeof(GLfloat));
          p += width;
       }
       else {
-         _swrast_read_depth_span_float(ctx, width, srcx, sy, depth);
+         _swrast_read_depth_span_float(ctx, readRb, width, srcx, sy, depth);
       }
 
       /* apply scale and bias */
       for (i = 0; i < width; i++) {
          GLfloat d = depth[i] * ctx->Pixel.DepthScale + ctx->Pixel.DepthBias;
-         span.array->z[i] = (GLdepth) (CLAMP(d, 0.0F, 1.0F) * ctx->DepthMax);
+         sum += d;
+         span.array->z[i] = (GLdepth) (CLAMP(d, 0.0F, 1.0F) * depthMax);
       }
 
       /* write depth values */
@@ -650,6 +687,8 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
                      GLint width, GLint height,
                      GLint destx, GLint desty )
 {
+   struct gl_renderbuffer *rb
+      = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
    GLint sy, dy, stepy;
    GLint j;
    GLstencil *p, *tmpImage;
@@ -659,6 +698,11 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (!ctx->Visual.stencilBits) {
       _mesa_error( ctx, GL_INVALID_OPERATION, "glCopyPixels" );
+      return;
+   }
+
+   if (!rb) {
+      /* no readbuffer - OK */
       return;
    }
 
@@ -693,7 +737,7 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       }
       p = tmpImage;
       for (j = 0; j < height; j++, ssy += stepy) {
-         _swrast_read_stencil_span( ctx, width, srcx, ssy, p );
+         _swrast_read_stencil_span( ctx, rb, width, srcx, ssy, p );
          p += width;
       }
       p = tmpImage;
@@ -712,7 +756,7 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
          p += width;
       }
       else {
-         _swrast_read_stencil_span( ctx, width, srcx, sy, stencil );
+         _swrast_read_stencil_span( ctx, rb, width, srcx, sy, stencil );
       }
 
       /* Apply shift, offset, look-up table */

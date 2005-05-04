@@ -52,7 +52,7 @@ r128UpdatePageFlipping( r128ContextPtr rmesa )
 
    rmesa->doPageFlip = rmesa->sarea->pfAllowPageFlip;
 
-   use_back = (rmesa->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT);
+   use_back = (rmesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT);
    use_back ^= (rmesa->sarea->pfCurrentPage == 1);
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API )

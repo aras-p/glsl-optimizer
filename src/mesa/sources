@@ -26,6 +26,7 @@ MAIN_SOURCES = \
 	main/fbobject.c \
 	main/feedback.c \
 	main/fog.c \
+	main/framebuffer.c \
 	main/get.c \
 	main/getstring.c \
 	main/hash.c \
@@ -41,6 +42,7 @@ MAIN_SOURCES = \
 	main/points.c \
 	main/polygon.c \
 	main/rastpos.c \
+	main/renderbuffer.c \
 	main/state.c \
 	main/stencil.c \
 	main/texcompress.c \
@@ -49,6 +51,7 @@ MAIN_SOURCES = \
 	main/texenvprogram.c \
 	main/texformat.c \
 	main/teximage.c \
+	main/texrender.c \
 	main/texobj.c \
 	main/texstate.c \
 	main/texstore.c \
@@ -79,9 +82,7 @@ SWRAST_SOURCES = \
 	swrast/s_aatriangle.c \
 	swrast/s_accum.c \
 	swrast/s_alpha.c \
-	swrast/s_alphabuf.c \
 	swrast/s_atifragshader.c \
-	swrast/s_auxbuffer.c \
 	swrast/s_bitmap.c \
 	swrast/s_blend.c \
 	swrast/s_buffers.c \
@@ -229,7 +230,7 @@ SPARC_SOURCES =			\
 SPARC_API =			\
 	sparc/glapi_sparc.S
 
-COMMON_DRIVER_SOURCES =		\
+COMMON_DRIVER_SOURCES =			\
 	drivers/common/driverfuncs.c
 
 X11_DRIVER_SOURCES =		\
@@ -237,9 +238,10 @@ X11_DRIVER_SOURCES =		\
 	drivers/x11/fakeglx.c	\
 	drivers/x11/xfonts.c	\
 	drivers/x11/xm_api.c	\
+	drivers/x11/xm_buffer.c	\
 	drivers/x11/xm_dd.c	\
 	drivers/x11/xm_line.c	\
-	drivers/x11/xm_span.c	\
+	drivers/x11/xm_span2.c	\
 	drivers/x11/xm_tri.c
 
 OSMESA_DRIVER_SOURCES = \

@@ -117,8 +117,8 @@ static void s3vDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 		DMAOUT(vmesa->DestXY);
 	DMAFINISH();
 
-	if (mask & DD_DEPTH_BIT) { /* depth */
-		DEBUG(("DD_DEPTH_BIT\n"));
+	if (mask & BUFFER_BIT_DEPTH) { /* depth */
+		DEBUG(("BUFFER_BIT_DEPTH\n"));
 		
 		_stride = ((cw+31)&~31) * 2;
 
@@ -142,7 +142,7 @@ static void s3vDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 		DMAFINISH();		
 
 		DEBUG(("vmesa->ClearDepth = 0x%x\n", vmesa->ClearDepth));
-		mask &= ~DD_DEPTH_BIT;
+		mask &= ~BUFFER_BIT_DEPTH;
 	}
 
 	if (!vmesa->NotClipped) {

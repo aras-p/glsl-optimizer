@@ -40,6 +40,8 @@
 #include "context.h"
 #include "matrix.h"
 #include "simple_list.h"
+#include "framebuffer.h"
+#include "renderbuffer.h"
 
 #include "i830_screen.h"
 #include "i830_dri.h"
@@ -54,6 +56,7 @@
 
 #include "utils.h"
 #include "xmlpool.h"
+#include "drirenderbuffer.h"
 
 PUBLIC const char __driConfigOptions[] =
 DRI_CONF_BEGIN
@@ -310,27 +313,94 @@ static void i830DestroyScreen(__DRIscreenPrivate *sPriv)
    sPriv->private = NULL;
 }
 
+
 static GLboolean i830CreateBuffer(__DRIscreenPrivate *driScrnPriv,
 				  __DRIdrawablePrivate *driDrawPriv,
 				  const __GLcontextModes *mesaVis,
 				  GLboolean isPixmap )
 {
+   i830ScreenPrivate *screen = (i830ScreenPrivate *) driScrnPriv->private;
+
    if (isPixmap) {
       return GL_FALSE; /* not implemented */
-   } else {
+   }
+   else {
 #if 0
       GLboolean swStencil = (mesaVis->stencilBits > 0 && 
 			     mesaVis->depthBits != 24);
 #else
       GLboolean swStencil = mesaVis->stencilBits > 0;
 #endif
+
+#if 0
       driDrawPriv->driverPrivate = (void *) 
 	 _mesa_create_framebuffer(mesaVis,
 				  GL_FALSE,  /* software depth buffer? */
 				  swStencil,
 				  mesaVis->accumRedBits > 0,
 				  GL_FALSE /* s/w alpha planes */);
-      
+#else
+      struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
+
+      {
+         driRenderbuffer *frontRb
+            = driNewRenderbuffer(GL_RGBA, screen->cpp,
+                                 /*screen->frontOffset*/0, screen->backPitch);
+         i830SetSpanFunctions(frontRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
+      }
+
+      if (mesaVis->doubleBufferMode) {
+         driRenderbuffer *backRb
+            = driNewRenderbuffer(GL_RGBA, screen->cpp,
+                                 screen->backOffset, screen->backPitch);
+         i830SetSpanFunctions(backRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
+      }
+
+      if (mesaVis->depthBits == 16) {
+         driRenderbuffer *depthRb
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, screen->cpp,
+                                 screen->depthOffset, screen->backPitch);
+         i830SetSpanFunctions(depthRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+      }
+      else if (mesaVis->depthBits == 24) {
+         if (mesaVis->stencilBits == 8) {
+            driRenderbuffer *depthRb
+               = driNewRenderbuffer(GL_DEPTH_COMPONENT24, screen->cpp,
+                                    screen->depthOffset, screen->backPitch);
+            i830SetSpanFunctions(depthRb, mesaVis);
+            _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+         }
+         else {
+            /* not really 32-bit Z, but use GL_DEPTH_COMPONENT32 anyway */
+            driRenderbuffer *depthRb
+               = driNewRenderbuffer(GL_DEPTH_COMPONENT32, screen->cpp,
+                                    screen->depthOffset, screen->backPitch);
+            i830SetSpanFunctions(depthRb, mesaVis);
+            _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+         }
+      }
+
+      if (mesaVis->stencilBits > 0 && !swStencil) {
+         driRenderbuffer *stencilRb
+            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, screen->cpp,
+                                    screen->depthOffset, screen->backPitch);
+         i830SetSpanFunctions(stencilRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
+      }
+
+      _mesa_add_soft_renderbuffers(fb,
+                                   GL_FALSE, /* color */
+                                   GL_FALSE, /* depth */
+                                   swStencil,
+                                   mesaVis->accumRedBits > 0,
+                                   GL_FALSE, /* alpha */
+                                   GL_FALSE /* aux */);
+      driDrawPriv->driverPrivate = (void *) fb;
+#endif
+
       return (driDrawPriv->driverPrivate != NULL);
    }
 }

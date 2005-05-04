@@ -278,7 +278,8 @@ read_rgba_pixels (const GLcontext *ctx,
  * Index
  ***************************************************************************/
 static void
-write_index_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
+write_index_span (const GLcontext *ctx, struct gl_renderbuffer *rb,
+                  GLuint n, GLint x, GLint y,
                   const GLuint index[], const GLubyte mask[])
 {
    const DMesaContext dmesa = (DMesaContext)ctx;
@@ -302,7 +303,8 @@ write_index_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 
 static void
-write_index8_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
+write_index8_span (const GLcontext *ctx, struct gl_renderbuffer *rb,
+                   GLuint n, GLint x, GLint y,
                    const GLubyte index[], const GLubyte mask[])
 {
    const DMesaContext dmesa = (DMesaContext)ctx;
@@ -326,7 +328,7 @@ write_index8_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 
 static void
-write_mono_index_span (const GLcontext *ctx,
+write_mono_index_span (const GLcontext *ctx, struct gl_renderbuffer *rb,
                        GLuint n, GLint x, GLint y,
                        GLuint colorIndex, const GLubyte mask[])
 {
@@ -351,8 +353,8 @@ write_mono_index_span (const GLcontext *ctx,
 
 
 static void
-read_index_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
-                 GLuint index[])
+read_index_span (const GLcontext *ctx, struct gl_renderbuffer *rb,
+                 GLuint n, GLint x, GLint y, GLuint index[])
 {
    const DMesaContext dmesa = (DMesaContext)ctx;
    GLuint i, offset;
@@ -366,7 +368,7 @@ read_index_span (const GLcontext *ctx, GLuint n, GLint x, GLint y,
 
 
 static void
-write_index_pixels (const GLcontext *ctx,
+write_index_pixels (const GLcontext *ctx, struct gl_renderbuffer *rb,
                     GLuint n, const GLint x[], const GLint y[],
                     const GLuint index[], const GLubyte mask[])
 {
@@ -390,7 +392,7 @@ write_index_pixels (const GLcontext *ctx,
 
 
 static void
-write_mono_index_pixels (const GLcontext *ctx,
+write_mono_index_pixels (const GLcontext *ctx, struct gl_renderbuffer *rb,
                          GLuint n, const GLint x[], const GLint y[],
                          GLuint colorIndex, const GLubyte mask[])
 {
@@ -414,9 +416,9 @@ write_mono_index_pixels (const GLcontext *ctx,
 
 
 static void
-read_index_pixels (const GLcontext *ctx,
+read_index_pixels (const GLcontext *ctx, struct gl_renderbuffer *rb,
                    GLuint n, const GLint x[], const GLint y[],
-                               GLuint index[], const GLubyte mask[])
+                   GLuint index[], const GLubyte mask[])
 {
    const DMesaContext dmesa = (DMesaContext)ctx;
    GLuint i, _w_ = DSTRIDE, _b_ = dmesa->buffer->height - 1;

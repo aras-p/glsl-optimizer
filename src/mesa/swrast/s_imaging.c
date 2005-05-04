@@ -41,6 +41,11 @@ _swrast_CopyColorTable( GLcontext *ctx,
    GLchan data[MAX_WIDTH][4];
    struct gl_buffer_object *bufferSave;
 
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      /* no readbuffer - OK */
+      return;
+   }
+
    /* Select buffer to read from */
    _swrast_use_read_buffer(ctx);
 
@@ -48,7 +53,8 @@ _swrast_CopyColorTable( GLcontext *ctx,
       width = MAX_WIDTH;
 
    /* read the data from framebuffer */
-   _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
+   _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
+                           width, x, y, data );
 
    /* Restore reading from draw buffer (the default) */
    _swrast_use_draw_buffer(ctx);
@@ -71,6 +77,11 @@ _swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
    GLchan data[MAX_WIDTH][4];
    struct gl_buffer_object *bufferSave;
 
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      /* no readbuffer - OK */
+      return;
+   }
+
    /* Select buffer to read from */
    _swrast_use_read_buffer(ctx);
 
@@ -78,7 +89,8 @@ _swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
       width = MAX_WIDTH;
 
    /* read the data from framebuffer */
-   _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y, data );
+   _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
+                           width, x, y, data );
 
    /* Restore reading from draw buffer (the default) */
    _swrast_use_draw_buffer(ctx);
@@ -103,14 +115,19 @@ _swrast_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
    GLchan rgba[MAX_CONVOLUTION_WIDTH][4];
    struct gl_buffer_object *bufferSave;
 
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      /* no readbuffer - OK */
+      return;
+   }
+
    /* Select buffer to read from */
    _swrast_use_read_buffer(ctx);
 
    RENDER_START( swrast, ctx );
 
    /* read the data from framebuffer */
-   _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y,
-				(GLchan (*)[4]) rgba );
+   _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
+                           width, x, y, (GLchan (*)[4]) rgba );
    
    RENDER_FINISH( swrast, ctx );
 
@@ -141,6 +158,11 @@ _swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
    GLint i;
    struct gl_buffer_object *bufferSave;
 
+   if (!ctx->ReadBuffer->_ColorReadBuffer) {
+      /* no readbuffer - OK */
+      return;
+   }
+
    /* Select buffer to read from */
    _swrast_use_read_buffer(ctx);
 
@@ -148,8 +170,8 @@ _swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
    
    /* read pixels from framebuffer */
    for (i = 0; i < height; i++) {
-      _swrast_read_rgba_span( ctx, ctx->ReadBuffer, width, x, y + i,
-				(GLchan (*)[4]) rgba[i] );
+      _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
+                              width, x, y + i, (GLchan (*)[4]) rgba[i] );
    }
 
    RENDER_FINISH(swrast,ctx);

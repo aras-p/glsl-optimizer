@@ -91,16 +91,16 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
-         params[0] = INT_TO_BOOLEAN(ctx->Visual.accumRedBits);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.accumRedBits);
          break;
       case GL_ACCUM_GREEN_BITS:
-         params[0] = INT_TO_BOOLEAN(ctx->Visual.accumGreenBits);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.accumGreenBits);
          break;
       case GL_ACCUM_BLUE_BITS:
-         params[0] = INT_TO_BOOLEAN(ctx->Visual.accumBlueBits);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.accumBlueBits);
          break;
       case GL_ACCUM_ALPHA_BITS:
-         params[0] = INT_TO_BOOLEAN(ctx->Visual.accumAlphaBits);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.accumAlphaBits);
          break;
       case GL_ACCUM_CLEAR_VALUE:
          params[0] = FLOAT_TO_BOOLEAN(ctx->Accum.ClearColor[0]);
@@ -112,7 +112,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.AlphaBias);
          break;
       case GL_ALPHA_BITS:
-         params[0] = INT_TO_BOOLEAN(ctx->Visual.alphaBits);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.alphaBits);
          break;
       case GL_ALPHA_SCALE:
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.AlphaScale);
@@ -133,7 +133,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ctx->Eval.AutoNormal;
          break;
       case GL_AUX_BUFFERS:
-         params[0] = INT_TO_BOOLEAN(ctx->Visual.numAuxBuffers);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.numAuxBuffers);
          break;
       case GL_BLEND:
          params[0] = ctx->Color.BlendEnabled;
@@ -172,7 +172,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.BlueBias);
          break;
       case GL_BLUE_BITS:
-         params[0] = INT_TO_BOOLEAN(ctx->Visual.blueBits);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.blueBits);
          break;
       case GL_BLUE_SCALE:
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.BlueScale);
@@ -291,7 +291,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.DepthBias);
          break;
       case GL_DEPTH_BITS:
-         params[0] = INT_TO_BOOLEAN(ctx->Visual.depthBits);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.depthBits);
          break;
       case GL_DEPTH_CLEAR_VALUE:
          params[0] = FLOAT_TO_BOOLEAN(ctx->Depth.Clear);
@@ -316,7 +316,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ctx->Color.DitherFlag;
          break;
       case GL_DOUBLEBUFFER:
-         params[0] = ctx->Visual.doubleBufferMode;
+         params[0] = ctx->DrawBuffer->Visual.doubleBufferMode;
          break;
       case GL_DRAW_BUFFER:
          params[0] = ENUM_TO_BOOLEAN(ctx->Color.DrawBuffer[0]);
@@ -367,19 +367,19 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.GreenBias);
          break;
       case GL_GREEN_BITS:
-         params[0] = INT_TO_BOOLEAN(ctx->Visual.greenBits);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.greenBits);
          break;
       case GL_GREEN_SCALE:
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.GreenScale);
          break;
       case GL_INDEX_BITS:
-         params[0] = INT_TO_BOOLEAN(ctx->Visual.indexBits);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.indexBits);
          break;
       case GL_INDEX_CLEAR_VALUE:
          params[0] = INT_TO_BOOLEAN(ctx->Color.ClearIndex);
          break;
       case GL_INDEX_MODE:
-         params[0] = !ctx->Visual.rgbMode;
+         params[0] = !ctx->DrawBuffer->Visual.rgbMode;
          break;
       case GL_INDEX_OFFSET:
          params[0] = INT_TO_BOOLEAN(ctx->Pixel.IndexOffset);
@@ -794,7 +794,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.RedBias);
          break;
       case GL_RED_BITS:
-         params[0] = INT_TO_BOOLEAN( ctx->Visual.redBits );
+         params[0] = INT_TO_BOOLEAN( ctx->DrawBuffer->Visual.redBits );
          break;
       case GL_RED_SCALE:
          params[0] = FLOAT_TO_BOOLEAN(ctx->Pixel.RedScale);
@@ -806,7 +806,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ctx->Transform.RescaleNormals;
          break;
       case GL_RGBA_MODE:
-         params[0] = ctx->Visual.rgbMode;
+         params[0] = ctx->DrawBuffer->Visual.rgbMode;
          break;
       case GL_SCISSOR_BOX:
          params[0] = INT_TO_BOOLEAN(ctx->Scissor.X);
@@ -827,7 +827,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = ctx->Texture.SharedPalette;
          break;
       case GL_STENCIL_BITS:
-         params[0] = INT_TO_BOOLEAN(ctx->Visual.stencilBits);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.stencilBits);
          break;
       case GL_STENCIL_CLEAR_VALUE:
          params[0] = INT_TO_BOOLEAN(ctx->Stencil.Clear);
@@ -857,7 +857,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          params[0] = INT_TO_BOOLEAN(ctx->Stencil.WriteMask[ctx->Stencil.ActiveFace]);
          break;
       case GL_STEREO:
-         params[0] = ctx->Visual.stereoMode;
+         params[0] = ctx->DrawBuffer->Visual.stereoMode;
          break;
       case GL_SUBPIXEL_BITS:
          params[0] = INT_TO_BOOLEAN(ctx->Const.SubPixelBits);
@@ -1414,11 +1414,11 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_SAMPLE_BUFFERS_ARB:
          CHECK_EXTENSION_B(ARB_multisample, pname);
-         params[0] = INT_TO_BOOLEAN(0);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.sampleBuffers);
          break;
       case GL_SAMPLES_ARB:
          CHECK_EXTENSION_B(ARB_multisample, pname);
-         params[0] = INT_TO_BOOLEAN(0);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Visual.samples);
          break;
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
          CHECK_EXTENSION_B(IBM_rasterpos_clip, pname);
@@ -1877,7 +1877,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_FRAMEBUFFER_BINDING_EXT:
          CHECK_EXTENSION_B(EXT_framebuffer_object, pname);
-         params[0] = INT_TO_BOOLEAN(ctx->CurrentFramebuffer ? ctx->CurrentFramebuffer->Name : 0);
+         params[0] = INT_TO_BOOLEAN(ctx->DrawBuffer->Name);
          break;
       case GL_RENDERBUFFER_BINDING_EXT:
          CHECK_EXTENSION_B(EXT_framebuffer_object, pname);
@@ -1935,16 +1935,16 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
-         params[0] = (GLfloat)(ctx->Visual.accumRedBits);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.accumRedBits);
          break;
       case GL_ACCUM_GREEN_BITS:
-         params[0] = (GLfloat)(ctx->Visual.accumGreenBits);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.accumGreenBits);
          break;
       case GL_ACCUM_BLUE_BITS:
-         params[0] = (GLfloat)(ctx->Visual.accumBlueBits);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.accumBlueBits);
          break;
       case GL_ACCUM_ALPHA_BITS:
-         params[0] = (GLfloat)(ctx->Visual.accumAlphaBits);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.accumAlphaBits);
          break;
       case GL_ACCUM_CLEAR_VALUE:
          params[0] = ctx->Accum.ClearColor[0];
@@ -1956,7 +1956,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Pixel.AlphaBias;
          break;
       case GL_ALPHA_BITS:
-         params[0] = (GLfloat)(ctx->Visual.alphaBits);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.alphaBits);
          break;
       case GL_ALPHA_SCALE:
          params[0] = ctx->Pixel.AlphaScale;
@@ -1977,7 +1977,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = BOOLEAN_TO_FLOAT(ctx->Eval.AutoNormal);
          break;
       case GL_AUX_BUFFERS:
-         params[0] = (GLfloat)(ctx->Visual.numAuxBuffers);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.numAuxBuffers);
          break;
       case GL_BLEND:
          params[0] = BOOLEAN_TO_FLOAT(ctx->Color.BlendEnabled);
@@ -2016,7 +2016,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Pixel.BlueBias;
          break;
       case GL_BLUE_BITS:
-         params[0] = (GLfloat)(ctx->Visual.blueBits);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.blueBits);
          break;
       case GL_BLUE_SCALE:
          params[0] = ctx->Pixel.BlueScale;
@@ -2135,7 +2135,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Pixel.DepthBias;
          break;
       case GL_DEPTH_BITS:
-         params[0] = (GLfloat)(ctx->Visual.depthBits);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.depthBits);
          break;
       case GL_DEPTH_CLEAR_VALUE:
          params[0] = ctx->Depth.Clear;
@@ -2160,7 +2160,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = BOOLEAN_TO_FLOAT(ctx->Color.DitherFlag);
          break;
       case GL_DOUBLEBUFFER:
-         params[0] = BOOLEAN_TO_FLOAT(ctx->Visual.doubleBufferMode);
+         params[0] = BOOLEAN_TO_FLOAT(ctx->DrawBuffer->Visual.doubleBufferMode);
          break;
       case GL_DRAW_BUFFER:
          params[0] = ENUM_TO_FLOAT(ctx->Color.DrawBuffer[0]);
@@ -2211,19 +2211,19 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Pixel.GreenBias;
          break;
       case GL_GREEN_BITS:
-         params[0] = (GLfloat)(ctx->Visual.greenBits);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.greenBits);
          break;
       case GL_GREEN_SCALE:
          params[0] = ctx->Pixel.GreenScale;
          break;
       case GL_INDEX_BITS:
-         params[0] = (GLfloat)(ctx->Visual.indexBits);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.indexBits);
          break;
       case GL_INDEX_CLEAR_VALUE:
          params[0] = (GLfloat)(ctx->Color.ClearIndex);
          break;
       case GL_INDEX_MODE:
-         params[0] = BOOLEAN_TO_FLOAT(!ctx->Visual.rgbMode);
+         params[0] = BOOLEAN_TO_FLOAT(!ctx->DrawBuffer->Visual.rgbMode);
          break;
       case GL_INDEX_OFFSET:
          params[0] = (GLfloat)(ctx->Pixel.IndexOffset);
@@ -2638,7 +2638,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = ctx->Pixel.RedBias;
          break;
       case GL_RED_BITS:
-         params[0] = (GLfloat)( ctx->Visual.redBits );
+         params[0] = (GLfloat)( ctx->DrawBuffer->Visual.redBits );
          break;
       case GL_RED_SCALE:
          params[0] = ctx->Pixel.RedScale;
@@ -2650,7 +2650,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = BOOLEAN_TO_FLOAT(ctx->Transform.RescaleNormals);
          break;
       case GL_RGBA_MODE:
-         params[0] = BOOLEAN_TO_FLOAT(ctx->Visual.rgbMode);
+         params[0] = BOOLEAN_TO_FLOAT(ctx->DrawBuffer->Visual.rgbMode);
          break;
       case GL_SCISSOR_BOX:
          params[0] = (GLfloat)(ctx->Scissor.X);
@@ -2671,7 +2671,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = BOOLEAN_TO_FLOAT(ctx->Texture.SharedPalette);
          break;
       case GL_STENCIL_BITS:
-         params[0] = (GLfloat)(ctx->Visual.stencilBits);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.stencilBits);
          break;
       case GL_STENCIL_CLEAR_VALUE:
          params[0] = (GLfloat)(ctx->Stencil.Clear);
@@ -2701,7 +2701,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          params[0] = (GLfloat)(ctx->Stencil.WriteMask[ctx->Stencil.ActiveFace]);
          break;
       case GL_STEREO:
-         params[0] = BOOLEAN_TO_FLOAT(ctx->Visual.stereoMode);
+         params[0] = BOOLEAN_TO_FLOAT(ctx->DrawBuffer->Visual.stereoMode);
          break;
       case GL_SUBPIXEL_BITS:
          params[0] = (GLfloat)(ctx->Const.SubPixelBits);
@@ -3258,11 +3258,11 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_SAMPLE_BUFFERS_ARB:
          CHECK_EXTENSION_F(ARB_multisample, pname);
-         params[0] = (GLfloat)(0);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.sampleBuffers);
          break;
       case GL_SAMPLES_ARB:
          CHECK_EXTENSION_F(ARB_multisample, pname);
-         params[0] = (GLfloat)(0);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Visual.samples);
          break;
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
          CHECK_EXTENSION_F(IBM_rasterpos_clip, pname);
@@ -3721,7 +3721,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_FRAMEBUFFER_BINDING_EXT:
          CHECK_EXTENSION_F(EXT_framebuffer_object, pname);
-         params[0] = (GLfloat)(ctx->CurrentFramebuffer ? ctx->CurrentFramebuffer->Name : 0);
+         params[0] = (GLfloat)(ctx->DrawBuffer->Name);
          break;
       case GL_RENDERBUFFER_BINDING_EXT:
          CHECK_EXTENSION_F(EXT_framebuffer_object, pname);
@@ -3779,16 +3779,16 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
-         params[0] = ctx->Visual.accumRedBits;
+         params[0] = ctx->DrawBuffer->Visual.accumRedBits;
          break;
       case GL_ACCUM_GREEN_BITS:
-         params[0] = ctx->Visual.accumGreenBits;
+         params[0] = ctx->DrawBuffer->Visual.accumGreenBits;
          break;
       case GL_ACCUM_BLUE_BITS:
-         params[0] = ctx->Visual.accumBlueBits;
+         params[0] = ctx->DrawBuffer->Visual.accumBlueBits;
          break;
       case GL_ACCUM_ALPHA_BITS:
-         params[0] = ctx->Visual.accumAlphaBits;
+         params[0] = ctx->DrawBuffer->Visual.accumAlphaBits;
          break;
       case GL_ACCUM_CLEAR_VALUE:
          params[0] = FLOAT_TO_INT(ctx->Accum.ClearColor[0]);
@@ -3800,7 +3800,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Pixel.AlphaBias);
          break;
       case GL_ALPHA_BITS:
-         params[0] = ctx->Visual.alphaBits;
+         params[0] = ctx->DrawBuffer->Visual.alphaBits;
          break;
       case GL_ALPHA_SCALE:
          params[0] = IROUND(ctx->Pixel.AlphaScale);
@@ -3821,7 +3821,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = BOOLEAN_TO_INT(ctx->Eval.AutoNormal);
          break;
       case GL_AUX_BUFFERS:
-         params[0] = ctx->Visual.numAuxBuffers;
+         params[0] = ctx->DrawBuffer->Visual.numAuxBuffers;
          break;
       case GL_BLEND:
          params[0] = BOOLEAN_TO_INT(ctx->Color.BlendEnabled);
@@ -3860,7 +3860,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Pixel.BlueBias);
          break;
       case GL_BLUE_BITS:
-         params[0] = ctx->Visual.blueBits;
+         params[0] = ctx->DrawBuffer->Visual.blueBits;
          break;
       case GL_BLUE_SCALE:
          params[0] = IROUND(ctx->Pixel.BlueScale);
@@ -3979,7 +3979,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Pixel.DepthBias);
          break;
       case GL_DEPTH_BITS:
-         params[0] = ctx->Visual.depthBits;
+         params[0] = ctx->DrawBuffer->Visual.depthBits;
          break;
       case GL_DEPTH_CLEAR_VALUE:
          params[0] = IROUND(ctx->Depth.Clear);
@@ -4004,7 +4004,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = BOOLEAN_TO_INT(ctx->Color.DitherFlag);
          break;
       case GL_DOUBLEBUFFER:
-         params[0] = BOOLEAN_TO_INT(ctx->Visual.doubleBufferMode);
+         params[0] = BOOLEAN_TO_INT(ctx->DrawBuffer->Visual.doubleBufferMode);
          break;
       case GL_DRAW_BUFFER:
          params[0] = ENUM_TO_INT(ctx->Color.DrawBuffer[0]);
@@ -4055,19 +4055,19 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Pixel.GreenBias);
          break;
       case GL_GREEN_BITS:
-         params[0] = ctx->Visual.greenBits;
+         params[0] = ctx->DrawBuffer->Visual.greenBits;
          break;
       case GL_GREEN_SCALE:
          params[0] = IROUND(ctx->Pixel.GreenScale);
          break;
       case GL_INDEX_BITS:
-         params[0] = ctx->Visual.indexBits;
+         params[0] = ctx->DrawBuffer->Visual.indexBits;
          break;
       case GL_INDEX_CLEAR_VALUE:
          params[0] = ctx->Color.ClearIndex;
          break;
       case GL_INDEX_MODE:
-         params[0] = BOOLEAN_TO_INT(!ctx->Visual.rgbMode);
+         params[0] = BOOLEAN_TO_INT(!ctx->DrawBuffer->Visual.rgbMode);
          break;
       case GL_INDEX_OFFSET:
          params[0] = ctx->Pixel.IndexOffset;
@@ -4482,7 +4482,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = IROUND(ctx->Pixel.RedBias);
          break;
       case GL_RED_BITS:
-         params[0] =  ctx->Visual.redBits ;
+         params[0] =  ctx->DrawBuffer->Visual.redBits ;
          break;
       case GL_RED_SCALE:
          params[0] = IROUND(ctx->Pixel.RedScale);
@@ -4494,7 +4494,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = BOOLEAN_TO_INT(ctx->Transform.RescaleNormals);
          break;
       case GL_RGBA_MODE:
-         params[0] = BOOLEAN_TO_INT(ctx->Visual.rgbMode);
+         params[0] = BOOLEAN_TO_INT(ctx->DrawBuffer->Visual.rgbMode);
          break;
       case GL_SCISSOR_BOX:
          params[0] = ctx->Scissor.X;
@@ -4515,7 +4515,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = BOOLEAN_TO_INT(ctx->Texture.SharedPalette);
          break;
       case GL_STENCIL_BITS:
-         params[0] = ctx->Visual.stencilBits;
+         params[0] = ctx->DrawBuffer->Visual.stencilBits;
          break;
       case GL_STENCIL_CLEAR_VALUE:
          params[0] = ctx->Stencil.Clear;
@@ -4545,7 +4545,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          params[0] = ctx->Stencil.WriteMask[ctx->Stencil.ActiveFace];
          break;
       case GL_STEREO:
-         params[0] = BOOLEAN_TO_INT(ctx->Visual.stereoMode);
+         params[0] = BOOLEAN_TO_INT(ctx->DrawBuffer->Visual.stereoMode);
          break;
       case GL_SUBPIXEL_BITS:
          params[0] = ctx->Const.SubPixelBits;
@@ -5102,11 +5102,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_SAMPLE_BUFFERS_ARB:
          CHECK_EXTENSION_I(ARB_multisample, pname);
-         params[0] = 0;
+         params[0] = ctx->DrawBuffer->Visual.sampleBuffers;
          break;
       case GL_SAMPLES_ARB:
          CHECK_EXTENSION_I(ARB_multisample, pname);
-         params[0] = 0;
+         params[0] = ctx->DrawBuffer->Visual.samples;
          break;
       case GL_RASTER_POSITION_UNCLIPPED_IBM:
          CHECK_EXTENSION_I(IBM_rasterpos_clip, pname);
@@ -5565,7 +5565,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_FRAMEBUFFER_BINDING_EXT:
          CHECK_EXTENSION_I(EXT_framebuffer_object, pname);
-         params[0] = ctx->CurrentFramebuffer ? ctx->CurrentFramebuffer->Name : 0;
+         params[0] = ctx->DrawBuffer->Name;
          break;
       case GL_RENDERBUFFER_BINDING_EXT:
          CHECK_EXTENSION_I(EXT_framebuffer_object, pname);

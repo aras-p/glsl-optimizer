@@ -186,7 +186,7 @@ static void i830ClearWithTris(GLcontext *ctx, GLbitfield mask,
    old_vertex_prim = imesa->hw_primitive;
    imesa->hw_primitive = PRIM3D_TRIFAN;
 
-   if(mask & DD_FRONT_LEFT_BIT) {
+   if(mask & BUFFER_BIT_FRONT_LEFT) {
       GLuint tmp = sarea->ContextState[I830_CTXREG_ENABLES_2];
 
       sarea->dirty |= (I830_UPLOAD_CTX | I830_UPLOAD_BUFFERS |
@@ -248,7 +248,7 @@ static void i830ClearWithTris(GLcontext *ctx, GLbitfield mask,
       i830FlushPrimsLocked( imesa );
    }
 
-   if(mask & DD_BACK_LEFT_BIT) {
+   if(mask & BUFFER_BIT_BACK_LEFT) {
       GLuint tmp = sarea->ContextState[I830_CTXREG_ENABLES_2];
 
       sarea->dirty |= (I830_UPLOAD_CTX | I830_UPLOAD_BUFFERS |
@@ -311,7 +311,7 @@ static void i830ClearWithTris(GLcontext *ctx, GLbitfield mask,
       i830FlushPrimsLocked( imesa );
    }
 
-   if(mask & DD_STENCIL_BIT) {
+   if(mask & BUFFER_BIT_STENCIL) {
       GLuint s_mask = ctx->Stencil.WriteMask[0];
 
       sarea->dirty |= (I830_UPLOAD_CTX | I830_UPLOAD_BUFFERS |
@@ -433,40 +433,40 @@ static void i830Clear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 
    I830_FIREVERTICES( imesa );
 
-   if (mask & DD_FRONT_LEFT_BIT) {
+   if (mask & BUFFER_BIT_FRONT_LEFT) {
       if(colorMask == ~0) {
 	 clear.flags |= I830_FRONT;
       } else {
-	 tri_mask |= DD_FRONT_LEFT_BIT;
+	 tri_mask |= BUFFER_BIT_FRONT_LEFT;
       }
-      mask &= ~DD_FRONT_LEFT_BIT;
+      mask &= ~BUFFER_BIT_FRONT_LEFT;
    }
 
-   if (mask & DD_BACK_LEFT_BIT) {
+   if (mask & BUFFER_BIT_BACK_LEFT) {
       if(colorMask == ~0) {
 	 clear.flags |= I830_BACK;
       } else {
-	 tri_mask |= DD_BACK_LEFT_BIT;
+	 tri_mask |= BUFFER_BIT_BACK_LEFT;
       }
-      mask &= ~DD_BACK_LEFT_BIT;
+      mask &= ~BUFFER_BIT_BACK_LEFT;
    }
 
-   if (mask & DD_DEPTH_BIT) {
+   if (mask & BUFFER_BIT_DEPTH) {
       clear.flags |= I830_DEPTH;
       clear.clear_depthmask = imesa->depth_clear_mask;
       clear.clear_depth = (GLuint)(ctx->Depth.Clear * imesa->ClearDepth);
-      mask &= ~DD_DEPTH_BIT;
+      mask &= ~BUFFER_BIT_DEPTH;
    }
 
-   if((mask & DD_STENCIL_BIT) && imesa->hw_stencil) {
+   if((mask & BUFFER_BIT_STENCIL) && imesa->hw_stencil) {
       if (ctx->Stencil.WriteMask[0] != 0xff) {
-	 tri_mask |= DD_STENCIL_BIT;
+	 tri_mask |= BUFFER_BIT_STENCIL;
       } else {
 	 clear.flags |= I830_DEPTH;
 	 clear.clear_depthmask |= imesa->stencil_clear_mask;
 	 clear.clear_depth |= (ctx->Stencil.Clear & 0xff) << 24;
       }
-      mask &= ~DD_STENCIL_BIT;
+      mask &= ~BUFFER_BIT_STENCIL;
    }
 
    /* First check for clears that need to happen with triangles */

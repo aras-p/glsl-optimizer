@@ -2108,11 +2108,9 @@ _mesa_init_pixel( GLcontext *ctx )
 
    if (ctx->Visual.doubleBufferMode) {
       ctx->Pixel.ReadBuffer = GL_BACK;
-      ctx->Pixel._ReadSrcMask = DD_BACK_LEFT_BIT;
    }
    else {
       ctx->Pixel.ReadBuffer = GL_FRONT;
-      ctx->Pixel._ReadSrcMask = DD_FRONT_LEFT_BIT;
    }
 
    /* Miscellaneous */

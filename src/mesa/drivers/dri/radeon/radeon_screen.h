@@ -100,7 +100,4 @@ typedef struct {
    driOptionCache optionCache;
 } radeonScreenRec, *radeonScreenPtr;
 
-extern radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv );
-extern void radeonDestroyScreen( __DRIscreenPrivate *sPriv );
-
 #endif /* __RADEON_SCREEN_H__ */

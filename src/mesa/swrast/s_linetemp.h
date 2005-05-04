@@ -82,6 +82,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 #if defined(DEPTH_TYPE)
    const GLint depthBits = ctx->Visual.depthBits;
    const GLint fixedToDepthShift = depthBits <= 16 ? FIXED_SHIFT : 0;
+   struct gl_renderbuffer *zrb = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
 #define FixedToDepth(F)  ((F) >> fixedToDepthShift)
    GLint zPtrXstep, zPtrYstep;
    DEPTH_TYPE *zPtr;
@@ -151,7 +152,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
       return;
 
 #ifdef DEPTH_TYPE
-   zPtr = (DEPTH_TYPE *) _swrast_zbuffer_address(ctx, x0, y0);
+   zPtr = (DEPTH_TYPE *) zrb->GetPointer(ctx, zrb, x0, y0);
 #endif
 #ifdef PIXEL_ADDRESS
    pixelPtr = (PIXEL_TYPE *) PIXEL_ADDRESS(x0,y0);

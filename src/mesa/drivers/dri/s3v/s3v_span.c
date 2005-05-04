@@ -232,10 +232,10 @@ static void s3vSetBuffer( GLcontext *ctx, GLframebuffer *colorBuffer,
    s3vContextPtr vmesa = S3V_CONTEXT(ctx);
 
    switch ( bufferBit ) {
-   case DD_FRONT_LEFT_BIT:
+   case BUFFER_BIT_FRONT_LEFT:
       vmesa->drawOffset = vmesa->readOffset = 0;
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       vmesa->drawOffset = vmesa->readOffset = vmesa->driScreen->fbHeight *
                                               vmesa->driScreen->fbWidth *
                                               vmesa->s3vScreen->cpp; 
@@ -251,6 +251,7 @@ void s3vInitSpanFuncs( GLcontext *ctx )
 
    swdd->SetBuffer = s3vSetBuffer;
 
+#if 0
    switch ( vmesa->s3vScreen->cpp ) {
    case 2:
       swdd->WriteRGBASpan	= s3vWriteRGBASpan_RGB555;
@@ -279,14 +280,17 @@ void s3vInitSpanFuncs( GLcontext *ctx )
    default:
       break;
    }
+#endif
 
    switch ( vmesa->glCtx->Visual.depthBits ) {
    case 15:
    case 16:
+#if 0
       swdd->ReadDepthSpan	= s3vReadDepthSpan_16;
       swdd->WriteDepthSpan	= s3vWriteDepthSpan_16;
       swdd->ReadDepthPixels	= s3vReadDepthPixels_16;
       swdd->WriteDepthPixels	= s3vWriteDepthPixels_16;
+#endif
       break;
 
 #if 0
@@ -305,5 +309,58 @@ void s3vInitSpanFuncs( GLcontext *ctx )
 
    default:
       break;
+   }
+}
+
+
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+s3vSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+{
+   if (drb->Base.InternalFormat == GL_RGBA) {
+      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
+         drb->Base.GetRow        = s3vReadRGBASpan_RGB555;
+         drb->Base.GetValues     = s3vReadRGBAPixels_RGB555;
+         drb->Base.PutRow        = s3vWriteRGBASpan_RGB555;
+         drb->Base.PutRowRGB     = s3vWriteRGBSpan_RGB555;
+         drb->Base.PutMonoRow    = s3vWriteMonoRGBASpan_RGB555;
+         drb->Base.PutValues     = s3vWriteRGBAPixels_RGB555;
+         drb->Base.PutMonoValues = s3vWriteMonoRGBAPixels_RGB555;
+      }
+      else {
+         drb->Base.GetRow        = s3vReadRGBASpan_ARGB8888;
+         drb->Base.GetValues     = s3vReadRGBAPixels_ARGB8888;
+         drb->Base.PutRow        = s3vWriteRGBASpan_ARGB8888;
+         drb->Base.PutRowRGB     = s3vWriteRGBSpan_ARGB8888;
+         drb->Base.PutMonoRow    = s3vWriteMonoRGBASpan_ARGB8888;
+         drb->Base.PutValues     = s3vWriteRGBAPixels_ARGB8888;
+         drb->Base.PutMonoValues = s3vWriteMonoRGBAPixels_ARGB8888;
+      }
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+      drb->Base.GetRow        = s3vReadDepthSpan_16;
+      drb->Base.GetValues     = s3vReadDepthPixels_16;
+      drb->Base.PutRow        = s3vWriteDepthSpan_16;
+      drb->Base.PutMonoRow    = s3vWriteMonoDepthSpan_16;
+      drb->Base.PutValues     = s3vWriteDepthPixels_16;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+      drb->Base.GetRow = NULL;
+      drb->Base.GetValues = NULL;
+      drb->Base.PutRow = NULL;
+      drb->Base.PutMonoRow = NULL;
+      drb->Base.PutValues = NULL;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      drb->Base.GetRow = NULL;
+      drb->Base.GetValues = NULL;
+      drb->Base.PutRow = NULL;
+      drb->Base.PutMonoRow = NULL;
+      drb->Base.PutValues = NULL;
+      drb->Base.PutMonoValues = NULL;
    }
 }

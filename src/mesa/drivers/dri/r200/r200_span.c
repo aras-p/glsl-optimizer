@@ -47,7 +47,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DBG 0
 
 #define LOCAL_VARS							\
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);			\
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);				\
    r200ScreenPtr r200Screen = rmesa->r200Screen;			\
    __DRIscreenPrivate *sPriv = rmesa->dri.screen;			\
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;			\
@@ -55,7 +55,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    GLuint height = dPriv->h;						\
    char *buf = (char *)(sPriv->pFB +					\
 			rmesa->state.color.drawOffset +			\
-			(dPriv->x * r200Screen->cpp) +		\
+			(dPriv->x * r200Screen->cpp) +			\
 			(dPriv->y * pitch));				\
    char *read_buf = (char *)(sPriv->pFB +				\
 			     rmesa->state.pixel.readOffset +		\
@@ -65,14 +65,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    (void) read_buf; (void) buf; (void) p
 
 #define LOCAL_DEPTH_VARS						\
-   r200ContextPtr rmesa = R200_CONTEXT(ctx);			\
+   r200ContextPtr rmesa = R200_CONTEXT(ctx);				\
    r200ScreenPtr r200Screen = rmesa->r200Screen;			\
    __DRIscreenPrivate *sPriv = rmesa->dri.screen;			\
    __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;			\
    GLuint height = dPriv->h;						\
    GLuint xo = dPriv->x;						\
    GLuint yo = dPriv->y;						\
-   char *buf = (char *)(sPriv->pFB + r200Screen->depthOffset);	\
+   char *buf = (char *)(sPriv->pFB + r200Screen->depthOffset);		\
    (void) buf
 
 #define LOCAL_STENCIL_VARS	LOCAL_DEPTH_VARS
@@ -212,6 +212,7 @@ static GLuint r200_mba_z16( r200ContextPtr rmesa, GLint x, GLint y )
 
 /* 16-bit depth buffer functions
  */
+
 #define WRITE_DEPTH( _x, _y, d )					\
    *(GLushort *)(buf + r200_mba_z16( rmesa, _x + xo, _y + yo )) = d;
 
@@ -221,8 +222,10 @@ static GLuint r200_mba_z16( r200ContextPtr rmesa, GLint x, GLint y )
 #define TAG(x) r200##x##_16
 #include "depthtmp.h"
 
+
 /* 24 bit depth, 8 bit stencil depthbuffer functions
  */
+
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint offset = r200_mba_z32( rmesa, _x + xo, _y + yo );		\
@@ -279,7 +282,7 @@ static void r200SetBuffer( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
    switch ( bufferBit ) {
-   case DD_FRONT_LEFT_BIT:
+   case BUFFER_BIT_FRONT_LEFT:
       if ( rmesa->doPageFlip && rmesa->sarea->pfCurrentPage == 1 ) {
         rmesa->state.pixel.readOffset = rmesa->r200Screen->backOffset;
         rmesa->state.pixel.readPitch  = rmesa->r200Screen->backPitch;
@@ -292,7 +295,7 @@ static void r200SetBuffer( GLcontext *ctx,
       	rmesa->state.color.drawPitch  = rmesa->r200Screen->frontPitch;
       }
       break;
-   case DD_BACK_LEFT_BIT:
+   case BUFFER_BIT_BACK_LEFT:
       if ( rmesa->doPageFlip && rmesa->sarea->pfCurrentPage == 1 ) {
       	rmesa->state.pixel.readOffset = rmesa->r200Screen->frontOffset;
       	rmesa->state.pixel.readPitch  = rmesa->r200Screen->frontPitch;
@@ -358,11 +361,15 @@ void r200InitSpanFuncs( GLcontext *ctx )
 
    switch ( rmesa->r200Screen->cpp ) {
    case 2:
+#if 0
       r200InitPointers_RGB565( swdd );
+#endif
       break;
 
    case 4:
+#if 0
       r200InitPointers_ARGB8888( swdd );
+#endif
       break;
 
    default:
@@ -371,22 +378,25 @@ void r200InitSpanFuncs( GLcontext *ctx )
 
    switch ( rmesa->glCtx->Visual.depthBits ) {
    case 16:
+#if 0
       swdd->ReadDepthSpan	= r200ReadDepthSpan_16;
       swdd->WriteDepthSpan	= r200WriteDepthSpan_16;
       swdd->ReadDepthPixels	= r200ReadDepthPixels_16;
       swdd->WriteDepthPixels	= r200WriteDepthPixels_16;
+#endif
       break;
 
    case 24:
+#if 0
       swdd->ReadDepthSpan	= r200ReadDepthSpan_24_8;
       swdd->WriteDepthSpan	= r200WriteDepthSpan_24_8;
       swdd->ReadDepthPixels	= r200ReadDepthPixels_24_8;
       swdd->WriteDepthPixels	= r200WriteDepthPixels_24_8;
-
       swdd->ReadStencilSpan	= r200ReadStencilSpan_24_8;
       swdd->WriteStencilSpan	= r200WriteStencilSpan_24_8;
       swdd->ReadStencilPixels	= r200ReadStencilPixels_24_8;
       swdd->WriteStencilPixels	= r200WriteStencilPixels_24_8;
+#endif
       break;
 
    default:
@@ -395,4 +405,46 @@ void r200InitSpanFuncs( GLcontext *ctx )
 
    swdd->SpanRenderStart          = r200SpanRenderStart;
    swdd->SpanRenderFinish         = r200SpanRenderFinish; 
+}
+
+
+
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+r200SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+{
+   if (drb->Base.InternalFormat == GL_RGBA) {
+      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
+         r200InitPointers_RGB565(&drb->Base);
+      }
+      else {
+         r200InitPointers_ARGB8888(&drb->Base);
+      }
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+      drb->Base.GetRow        = r200ReadDepthSpan_16;
+      drb->Base.GetValues     = r200ReadDepthPixels_16;
+      drb->Base.PutRow        = r200WriteDepthSpan_16;
+      drb->Base.PutMonoRow    = r200WriteMonoDepthSpan_16;
+      drb->Base.PutValues     = r200WriteDepthPixels_16;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+      drb->Base.GetRow        = r200ReadDepthSpan_24_8;
+      drb->Base.GetValues     = r200ReadDepthPixels_24_8;
+      drb->Base.PutRow        = r200WriteDepthSpan_24_8;
+      drb->Base.PutMonoRow    = r200WriteMonoDepthSpan_24_8;
+      drb->Base.PutValues     = r200WriteDepthPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      drb->Base.GetRow        = r200ReadStencilSpan_24_8;
+      drb->Base.GetValues     = r200ReadStencilPixels_24_8;
+      drb->Base.PutRow        = r200WriteStencilSpan_24_8;
+      drb->Base.PutMonoRow    = r200WriteMonoStencilSpan_24_8;
+      drb->Base.PutValues     = r200WriteStencilPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
 }

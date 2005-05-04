@@ -2200,8 +2200,8 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
-   pixels = _mesa_validate_pbo_teximage(ctx, 1, width, 1, 1, format, type, pixels,
-                                  packing, "glTexImage1D");
+   pixels = _mesa_validate_pbo_teximage(ctx, 1, width, 1, 1, format, type,
+                                        pixels, packing, "glTexImage1D");
    if (!pixels) {
       /* Note: we check for a NULL image pointer here, _after_ we allocated
        * memory for the texture.  That's what the GL spec calls for.
@@ -2289,7 +2289,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    }
 
    pixels = _mesa_validate_pbo_teximage(ctx, 2, width, height, 1, format, type,
-                                  pixels, packing, "glTexImage2D");
+                                        pixels, packing, "glTexImage2D");
    if (!pixels) {
       /* Note: we check for a NULL image pointer here, _after_ we allocated
        * memory for the texture.  That's what the GL spec calls for.
@@ -2368,8 +2368,8 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
-   pixels = _mesa_validate_pbo_teximage(ctx, 3, width, height, depth, format, type,
-                                  pixels, packing, "glTexImage3D");
+   pixels = _mesa_validate_pbo_teximage(ctx, 3, width, height, depth, format,
+                                        type, pixels, packing, "glTexImage3D");
    if (!pixels) {
       /* Note: we check for a NULL image pointer here, _after_ we allocated
        * memory for the texture.  That's what the GL spec calls for.
@@ -2425,8 +2425,8 @@ _mesa_store_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
-   pixels = _mesa_validate_pbo_teximage(ctx, 1, width, 1, 1, format, type, pixels,
-                                  packing, "glTexSubImage1D");
+   pixels = _mesa_validate_pbo_teximage(ctx, 1, width, 1, 1, format, type,
+                                        pixels, packing, "glTexSubImage1D");
    if (!pixels)
       return;
 
@@ -2472,7 +2472,7 @@ _mesa_store_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_image *texImage)
 {
    pixels = _mesa_validate_pbo_teximage(ctx, 2, width, height, 1, format, type,
-                                  pixels, packing, "glTexSubImage2D");
+                                        pixels, packing, "glTexSubImage2D");
    if (!pixels)
       return;
 
@@ -2523,8 +2523,9 @@ _mesa_store_texsubimage3d(GLcontext *ctx, GLenum target, GLint level,
                           struct gl_texture_object *texObj,
                           struct gl_texture_image *texImage)
 {
-   pixels = _mesa_validate_pbo_teximage(ctx, 3, width, height, depth, format, type,
-                                  pixels, packing, "glTexSubImage3D");
+   pixels = _mesa_validate_pbo_teximage(ctx, 3, width, height, depth, format,
+                                        type, pixels, packing,
+                                        "glTexSubImage3D");
    if (!pixels)
       return;
 
@@ -2625,8 +2626,9 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       return;
    }
 
-   data = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, data, &ctx->Unpack,
-                                           "glCompressedTexImage2D");
+   data = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, data,
+                                                 &ctx->Unpack,
+                                                 "glCompressedTexImage2D");
    if (!data)
       return;
 
@@ -2719,8 +2721,9 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
    ASSERT((xoffset & 3) == 0);
    ASSERT((yoffset & 3) == 0);
 
-   data = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, data, &ctx->Unpack,
-                                           "glCompressedTexSubImage2D");
+   data = _mesa_validate_pbo_compressed_teximage(ctx, imageSize, data,
+                                                 &ctx->Unpack,
+                                                 "glCompressedTexSubImage2D");
    if (!data)
       return;
 

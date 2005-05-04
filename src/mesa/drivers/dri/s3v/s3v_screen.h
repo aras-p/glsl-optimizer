@@ -2,6 +2,8 @@
  * Author: Max Lingua <sunmax@libero.it>
  */
 
+#include "mtypes.h"
+
 typedef struct _s3vRegion {
     drm_handle_t  handle;
     drmSize    size;
@@ -34,3 +36,4 @@ typedef struct {
     int		textureSize;
     int		logTextureGranularity;
 } s3vScreenRec, *s3vScreenPtr;
+

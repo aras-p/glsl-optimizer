@@ -73,11 +73,6 @@ _swrast_update_rasterflags( GLcontext *ctx )
       if (ctx->Color.IndexLogicOpEnabled)     rasterMask |= LOGIC_OP_BIT;
    }
 
-   if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
-       && ctx->Color.ColorMask[ACOMP]
-       && ctx->Color.DrawBuffer != GL_NONE)
-      rasterMask |= ALPHABUF_BIT;
-
    if (   ctx->Viewport.X < 0
        || ctx->Viewport.X + ctx->Viewport.Width > (GLint) ctx->DrawBuffer->Width
        || ctx->Viewport.Y < 0
@@ -93,7 +88,9 @@ _swrast_update_rasterflags( GLcontext *ctx )
     * MULTI_DRAW_BIT flag.  Also set it if we're drawing to no
     * buffers or the RGBA or CI mask disables all writes.
     */
-   if (_mesa_bitcount(ctx->Color._DrawDestMask[0]) != 1) {
+#if NEW_RENDERBUFFER
+   if (ctx->DrawBuffer->_NumColorDrawBuffers[0] != 1) {
+#endif
       /* more than one color buffer designated for writing (or zero buffers) */
       rasterMask |= MULTI_DRAW_BIT;
    }
@@ -446,26 +443,6 @@ _swrast_invalidate_state( GLcontext *ctx, GLuint new_state )
    if (new_state & _SWRAST_NEW_TEXTURE_SAMPLE_FUNC)
       for (i = 0 ; i < ctx->Const.MaxTextureUnits ; i++)
 	 swrast->TextureSample[i] = _swrast_validate_texture_sample;
-
-   /* Debug checks */
-   if (ctx->Visual.rgbMode) {
-      ASSERT(swrast->Driver.WriteRGBASpan);
-      ASSERT(swrast->Driver.WriteRGBSpan);
-      ASSERT(swrast->Driver.WriteMonoRGBASpan);
-      ASSERT(swrast->Driver.WriteRGBAPixels);
-      ASSERT(swrast->Driver.WriteMonoRGBAPixels);
-      ASSERT(swrast->Driver.ReadRGBASpan);
-      ASSERT(swrast->Driver.ReadRGBAPixels);
-   }
-   else {
-      ASSERT(swrast->Driver.WriteCI32Span);
-      ASSERT(swrast->Driver.WriteCI8Span);
-      ASSERT(swrast->Driver.WriteMonoCISpan);
-      ASSERT(swrast->Driver.WriteCI32Pixels);
-      ASSERT(swrast->Driver.WriteMonoCIPixels);
-      ASSERT(swrast->Driver.ReadCI32Span);
-      ASSERT(swrast->Driver.ReadCI32Pixels);
-   }
 }
 
 
@@ -625,12 +602,12 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->AllowPixelFog = GL_TRUE;
 
    if (ctx->Visual.doubleBufferMode)
-      swrast->CurrentBufferBit = DD_BACK_LEFT_BIT;
+      swrast->CurrentBufferBit = BUFFER_BIT_BACK_LEFT;
    else
-      swrast->CurrentBufferBit = DD_FRONT_LEFT_BIT;
+      swrast->CurrentBufferBit = BUFFER_FRONT_LEFT;
 
    /* Optimized Accum buffer */
-   swrast->_IntegerAccumMode = GL_TRUE;
+   swrast->_IntegerAccumMode = GL_FALSE;
    swrast->_IntegerAccumScaler = 0.0;
 
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)

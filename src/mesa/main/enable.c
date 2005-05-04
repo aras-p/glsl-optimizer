@@ -301,7 +301,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          break;
 
       case GL_DEPTH_TEST:
-         if (state && ctx->Visual.depthBits==0) {
+         if (state && ctx->DrawBuffer->Visual.depthBits == 0) {
             _mesa_warning(ctx,"glEnable(GL_DEPTH_TEST) but no depth buffer");
             return;
          }
@@ -575,7 +575,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          ctx->Texture.SharedPalette = state;
          break;
       case GL_STENCIL_TEST:
-         if (state && ctx->Visual.stencilBits==0) {
+         if (state && ctx->DrawBuffer->Visual.stencilBits == 0) {
             _mesa_warning(ctx,
                           "glEnable(GL_STENCIL_TEST) but no stencil buffer");
             return;
@@ -591,7 +591,8 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          GLuint newenabled = texUnit->Enabled & ~TEXTURE_1D_BIT;
          if (state)
             newenabled |= TEXTURE_1D_BIT;
-         if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
+         if (!ctx->DrawBuffer->Visual.rgbMode
+             || texUnit->Enabled == newenabled)
             return;
          FLUSH_VERTICES(ctx, _NEW_TEXTURE);
          texUnit->Enabled = newenabled;
@@ -603,7 +604,8 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          GLuint newenabled = texUnit->Enabled & ~TEXTURE_2D_BIT;
          if (state)
             newenabled |= TEXTURE_2D_BIT;
-         if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
+         if (!ctx->DrawBuffer->Visual.rgbMode
+             || texUnit->Enabled == newenabled)
             return;
          FLUSH_VERTICES(ctx, _NEW_TEXTURE);
          texUnit->Enabled = newenabled;
@@ -615,7 +617,8 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
          GLuint newenabled = texUnit->Enabled & ~TEXTURE_3D_BIT;
          if (state)
             newenabled |= TEXTURE_3D_BIT;
-         if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
+         if (!ctx->DrawBuffer->Visual.rgbMode
+             || texUnit->Enabled == newenabled)
             return;
          FLUSH_VERTICES(ctx, _NEW_TEXTURE);
          texUnit->Enabled = newenabled;
@@ -777,7 +780,8 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
             CHECK_EXTENSION(ARB_texture_cube_map, cap);
             if (state)
                newenabled |= TEXTURE_CUBE_BIT;
-            if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
+            if (!ctx->DrawBuffer->Visual.rgbMode
+                || texUnit->Enabled == newenabled)
                return;
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texUnit->Enabled = newenabled;
@@ -938,7 +942,8 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
             CHECK_EXTENSION(NV_texture_rectangle, cap);
             if (state)
                newenabled |= TEXTURE_RECT_BIT;
-            if (!ctx->Visual.rgbMode || texUnit->Enabled == newenabled)
+            if (!ctx->DrawBuffer->Visual.rgbMode
+                || texUnit->Enabled == newenabled)
                return;
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texUnit->Enabled = newenabled;
@@ -972,7 +977,7 @@ void _mesa_set_enable( GLcontext *ctx, GLenum cap, GLboolean state )
       /* GL_EXT_depth_bounds_test */
       case GL_DEPTH_BOUNDS_TEST_EXT:
          CHECK_EXTENSION(EXT_depth_bounds_test, cap);
-         if (state && ctx->Visual.depthBits==0) {
+         if (state && ctx->DrawBuffer->Visual.depthBits == 0) {
             _mesa_warning(ctx,
                    "glEnable(GL_DEPTH_BOUNDS_TEST_EXT) but no depth buffer");
             return;

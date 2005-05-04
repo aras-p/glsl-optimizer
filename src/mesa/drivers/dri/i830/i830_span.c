@@ -275,10 +275,10 @@ static void i830SetBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
    imesa->mesa_drawable = (colorBuffer == imesa->driDrawable->driverPrivate)
        ? imesa->driDrawable : imesa->driReadable;
    
-   if (bufferBit == DD_FRONT_LEFT_BIT) {
+   if (bufferBit == BUFFER_BIT_FRONT_LEFT) {
       imesa->drawMap = (char *)imesa->driScreen->pFB;
       imesa->readMap = (char *)imesa->driScreen->pFB;
-   } else if (bufferBit == DD_BACK_LEFT_BIT) {
+   } else if (bufferBit == BUFFER_BIT_BACK_LEFT) {
       imesa->drawMap = imesa->i830Screen->back.map;
       imesa->readMap = imesa->i830Screen->back.map;
    } else {
@@ -316,6 +316,7 @@ void i830DDInitSpanFuncs( GLcontext *ctx )
 
    switch (i830Screen->fbFormat) {
    case DV_PF_555:
+#if 0
       swdd->WriteRGBASpan = i830WriteRGBASpan_555;
       swdd->WriteRGBSpan = i830WriteRGBSpan_555;
       swdd->WriteMonoRGBASpan = i830WriteMonoRGBASpan_555;
@@ -323,14 +324,15 @@ void i830DDInitSpanFuncs( GLcontext *ctx )
       swdd->WriteMonoRGBAPixels = i830WriteMonoRGBAPixels_555;
       swdd->ReadRGBASpan = i830ReadRGBASpan_555;
       swdd->ReadRGBAPixels = i830ReadRGBAPixels_555;
-
       swdd->ReadDepthSpan = i830ReadDepthSpan_16;
       swdd->WriteDepthSpan = i830WriteDepthSpan_16;
       swdd->ReadDepthPixels = i830ReadDepthPixels_16;
       swdd->WriteDepthPixels = i830WriteDepthPixels_16;
+#endif
       break;
 
    case DV_PF_565:
+#if 0
       swdd->WriteRGBASpan = i830WriteRGBASpan_565;
       swdd->WriteRGBSpan = i830WriteRGBSpan_565;
       swdd->WriteMonoRGBASpan = i830WriteMonoRGBASpan_565;
@@ -338,14 +340,15 @@ void i830DDInitSpanFuncs( GLcontext *ctx )
       swdd->WriteMonoRGBAPixels = i830WriteMonoRGBAPixels_565; 
       swdd->ReadRGBASpan = i830ReadRGBASpan_565;
       swdd->ReadRGBAPixels = i830ReadRGBAPixels_565;
-
       swdd->ReadDepthSpan = i830ReadDepthSpan_16;
       swdd->WriteDepthSpan = i830WriteDepthSpan_16;
       swdd->ReadDepthPixels = i830ReadDepthPixels_16;
       swdd->WriteDepthPixels = i830WriteDepthPixels_16;
+#endif
       break;
 
    case DV_PF_8888:
+#if 0
       swdd->WriteRGBASpan = i830WriteRGBASpan_8888;
       swdd->WriteRGBSpan = i830WriteRGBSpan_8888;
       swdd->WriteMonoRGBASpan = i830WriteMonoRGBASpan_8888;
@@ -353,26 +356,104 @@ void i830DDInitSpanFuncs( GLcontext *ctx )
       swdd->WriteMonoRGBAPixels = i830WriteMonoRGBAPixels_8888;
       swdd->ReadRGBASpan = i830ReadRGBASpan_8888;
       swdd->ReadRGBAPixels = i830ReadRGBAPixels_8888;
+#endif
 
       if(imesa->hw_stencil) {
+#if 0
 	 swdd->ReadDepthSpan = i830ReadDepthSpan_24_8;
 	 swdd->WriteDepthSpan = i830WriteDepthSpan_24_8;
 	 swdd->ReadDepthPixels = i830ReadDepthPixels_24_8;
 	 swdd->WriteDepthPixels = i830WriteDepthPixels_24_8;
-
 	 swdd->WriteStencilSpan = i830WriteStencilSpan_24_8;
 	 swdd->ReadStencilSpan = i830ReadStencilSpan_24_8;
 	 swdd->WriteStencilPixels = i830WriteStencilPixels_24_8;
 	 swdd->ReadStencilPixels = i830ReadStencilPixels_24_8;
+#endif
       } else {
+#if 0
 	 swdd->ReadDepthSpan = i830ReadDepthSpan_24;
 	 swdd->WriteDepthSpan = i830WriteDepthSpan_24;
 	 swdd->ReadDepthPixels = i830ReadDepthPixels_24;
 	 swdd->WriteDepthPixels = i830WriteDepthPixels_24;
+#endif
       }
       break;
    }
 
    swdd->SpanRenderStart = i830SpanRenderStart;
    swdd->SpanRenderFinish = i830SpanRenderFinish; 
+}
+
+
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+i830SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+{
+   if (drb->Base.InternalFormat == GL_RGBA) {
+      if (vis->redBits == 5 && vis->greenBits == 5 && vis->blueBits == 5) {
+         drb->Base.GetRow        = i830ReadRGBASpan_555;
+         drb->Base.GetValues     = i830ReadRGBAPixels_555;
+         drb->Base.PutRow        = i830WriteRGBASpan_555;
+         drb->Base.PutRowRGB     = i830WriteRGBSpan_555;
+         drb->Base.PutMonoRow    = i830WriteMonoRGBASpan_555;
+         drb->Base.PutValues     = i830WriteRGBAPixels_555;
+         drb->Base.PutMonoValues = i830WriteMonoRGBAPixels_555;
+      }
+      else if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
+         drb->Base.GetRow        = i830ReadRGBASpan_565;
+         drb->Base.GetValues     = i830ReadRGBAPixels_565;
+         drb->Base.PutRow        = i830WriteRGBASpan_565;
+         drb->Base.PutRowRGB     = i830WriteRGBSpan_565;
+         drb->Base.PutMonoRow    = i830WriteMonoRGBASpan_565;
+         drb->Base.PutValues     = i830WriteRGBAPixels_565;
+         drb->Base.PutMonoValues = i830WriteMonoRGBAPixels_565;
+      }
+      else {
+         assert(vis->redBits == 8);
+         assert(vis->greenBits == 8);
+         assert(vis->blueBits == 8);
+         drb->Base.GetRow        = i830ReadRGBASpan_8888;
+         drb->Base.GetValues     = i830ReadRGBAPixels_8888;
+         drb->Base.PutRow        = i830WriteRGBASpan_8888;
+         drb->Base.PutRowRGB     = i830WriteRGBSpan_8888;
+         drb->Base.PutMonoRow    = i830WriteMonoRGBASpan_8888;
+         drb->Base.PutValues     = i830WriteRGBAPixels_8888;
+         drb->Base.PutMonoValues = i830WriteMonoRGBAPixels_8888;
+      }
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+      drb->Base.GetRow        = i830ReadDepthSpan_16;
+      drb->Base.GetValues     = i830ReadDepthPixels_16;
+      drb->Base.PutRow        = i830WriteDepthSpan_16;
+      drb->Base.PutMonoRow    = i830WriteMonoDepthSpan_16;
+      drb->Base.PutValues     = i830WriteDepthPixels_16;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+      drb->Base.GetRow        = i830ReadDepthSpan_24_8;
+      drb->Base.GetValues     = i830ReadDepthPixels_24_8;
+      drb->Base.PutRow        = i830WriteDepthSpan_24_8;
+      drb->Base.PutMonoRow    = i830WriteMonoDepthSpan_24_8;
+      drb->Base.PutValues     = i830WriteDepthPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT32) {
+      /* not _really_ 32-bit Z */
+      drb->Base.GetRow        = i830ReadDepthSpan_24;
+      drb->Base.GetValues     = i830ReadDepthPixels_24;
+      drb->Base.PutRow        = i830WriteDepthSpan_24;
+      drb->Base.PutMonoRow    = i830WriteMonoDepthSpan_24;
+      drb->Base.PutValues     = i830WriteDepthPixels_24;
+      drb->Base.PutMonoValues = NULL;
+   }
+   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+      drb->Base.GetRow        = i830ReadStencilSpan_24_8;
+      drb->Base.GetValues     = i830ReadStencilPixels_24_8;
+      drb->Base.PutRow        = i830WriteStencilSpan_24_8;
+      drb->Base.PutMonoRow    = i830WriteMonoStencilSpan_24_8;
+      drb->Base.PutValues     = i830WriteStencilPixels_24_8;
+      drb->Base.PutMonoValues = NULL;
+   }
 }

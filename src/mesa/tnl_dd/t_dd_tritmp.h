@@ -1,9 +1,8 @@
-
 /*
  * Mesa 3-D graphics library
- * Version:  3.5
+ * Version:  6.3
  *
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -274,7 +273,7 @@ static void TAG(triangle)( GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	    if ( bc < 0.0f ) bc = -bc;
 	    offset += MAX2( ac, bc ) * ctx->Polygon.OffsetFactor;
 	 }
-	 offset *= REVERSE_DEPTH ? -ctx->MRD : ctx->MRD;
+	 offset *= ctx->DrawBuffer->_MRD * (REVERSE_DEPTH ? -1.0 : 1.0);
       }
    }
 
@@ -550,7 +549,7 @@ static void TAG(quad)( GLcontext *ctx,
 	    if ( bc < 0.0f ) bc = -bc;
 	    offset += MAX2( ac, bc ) * ctx->Polygon.OffsetFactor;
 	 }
-	 offset *= REVERSE_DEPTH ? -ctx->MRD : ctx->MRD;
+	 offset *= ctx->DrawBuffer->_MRD * (REVERSE_DEPTH ? -1.0 : 1.0);
       }
    }
 

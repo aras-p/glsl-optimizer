@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,8 +35,6 @@
 #include "imports.h"
 #include "macros.h"
 #include "texformat.h"
-#include "teximage.h"
-#include "texstate.h"
 
 #include "s_aatriangle.h"
 #include "s_context.h"
@@ -151,6 +149,7 @@ _swrast_culltriangle( GLcontext *ctx,
 
 #define SETUP_CODE							\
    SWcontext *swrast = SWRAST_CONTEXT(ctx);                             \
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];\
    struct gl_texture_object *obj = ctx->Texture.Unit[0].Current2D;	\
    const GLint b = obj->BaseLevel;					\
    const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
@@ -179,9 +178,13 @@ _swrast_culltriangle( GLcontext *ctx,
       span.intTex[0] += span.intTexStep[0];				\
       span.intTex[1] += span.intTexStep[1];				\
    }									\
-   (*swrast->Driver.WriteRGBSpan)(ctx, span.end, span.x, span.y,	\
+   if (swrast->Driver.WriteRGBSpan)					\
+      swrast->Driver.WriteRGBSpan(ctx, rb, span.end, span.x, span.y,	\
                                   (CONST GLchan (*)[3]) span.array->rgb,\
-                                  NULL );
+                                  NULL );				\
+   else 								\
+      rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, span.array->rgb, NULL);
+
 #include "s_tritemp.h"
 
 
@@ -203,6 +206,7 @@ _swrast_culltriangle( GLcontext *ctx,
 
 #define SETUP_CODE							\
    SWcontext *swrast = SWRAST_CONTEXT(ctx);                             \
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];\
    struct gl_texture_object *obj = ctx->Texture.Unit[0].Current2D;	\
    const GLint b = obj->BaseLevel;					\
    const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
@@ -240,9 +244,13 @@ _swrast_culltriangle( GLcontext *ctx,
       span.intTex[1] += span.intTexStep[1];				\
       span.z += span.zStep;						\
    }									\
-   (*swrast->Driver.WriteRGBSpan)(ctx, span.end, span.x, span.y,	\
+   if (swrast->Driver.WriteRGBSpan)					\
+      swrast->Driver.WriteRGBSpan(ctx, rb, span.end, span.x, span.y,	\
                                   (CONST GLchan (*)[3]) span.array->rgb,\
-                                  span.array->mask );
+                                  span.array->mask );			\
+   else 								\
+      rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, span.array->rgb, NULL);
+
 #include "s_tritemp.h"
 
 
@@ -908,6 +916,8 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
 #define NAME occlusion_zless_triangle
 #define INTERP_Z 1
 #define SETUP_CODE						\
+   struct gl_renderbuffer *rb					\
+      = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;	\
    ASSERT(ctx->Depth.Test);					\
    ASSERT(!ctx->Depth.Mask);					\
    ASSERT(ctx->Depth.Func == GL_LESS);				\
@@ -918,7 +928,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    if (ctx->Visual.depthBits <= 16) {					\
       GLuint i;								\
       const GLushort *zRow = (const GLushort *)				\
-         _swrast_zbuffer_address(ctx, span.x, span.y);			\
+         rb->GetPointer(ctx, rb, span.x, span.y);			\
       for (i = 0; i < span.end; i++) {					\
          GLdepth z = FixedToDepth(span.z);				\
          if (z < zRow[i]) {						\
@@ -931,7 +941,7 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
    else {								\
       GLuint i;								\
       const GLuint *zRow = (const GLuint *)				\
-         _swrast_zbuffer_address(ctx, span.x, span.y);			\
+         rb->GetPointer(ctx, rb, span.x, span.y);			\
       for (i = 0; i < span.end; i++) {					\
          if ((GLuint)span.z < zRow[i]) {				\
             ctx->OcclusionResult = GL_TRUE;				\

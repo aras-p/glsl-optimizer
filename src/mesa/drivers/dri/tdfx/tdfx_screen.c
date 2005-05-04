@@ -38,9 +38,11 @@
 #include "tdfx_context.h"
 #include "tdfx_lock.h"
 #include "tdfx_vb.h"
+#include "tdfx_span.h"
 #include "tdfx_tris.h"
 #include "utils.h"
-
+#include "framebuffer.h"
+#include "renderbuffer.h"
 
 #ifdef DEBUG_LOCKING
 char *prevLockFile = 0;
@@ -137,16 +139,70 @@ tdfxCreateBuffer( __DRIscreenPrivate *driScrnPriv,
                   const __GLcontextModes *mesaVis,
                   GLboolean isPixmap )
 {
+   tdfxScreenPrivate *screen = (tdfxScreenPrivate *) driScrnPriv->private;
+
    if (isPixmap) {
       return GL_FALSE; /* not implemented */
    }
    else {
+#if 0
       driDrawPriv->driverPrivate = (void *) 
          _mesa_create_framebuffer( mesaVis,
                                    GL_FALSE, /* software depth buffer? */
                                    mesaVis->stencilBits > 0,
                                    mesaVis->accumRedBits > 0,
                                    GL_FALSE /* software alpha channel? */ );
+#else
+      struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
+
+      {
+         driRenderbuffer *frontRb
+            = driNewRenderbuffer(GL_RGBA, screen->cpp,
+                                 screen->fbOffset, screen->width);
+         tdfxSetSpanFunctions(frontRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
+      }
+
+      if (mesaVis->doubleBufferMode) {
+         driRenderbuffer *backRb
+            = driNewRenderbuffer(GL_RGBA8, screen->cpp,
+                                 screen->backOffset, screen->width);
+         tdfxSetSpanFunctions(backRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
+      }
+
+      if (mesaVis->depthBits == 16) {
+         driRenderbuffer *depthRb
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, screen->cpp,
+                                 screen->depthOffset, screen->width);
+         tdfxSetSpanFunctions(depthRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+      }
+      else if (mesaVis->depthBits == 24) {
+         driRenderbuffer *depthRb
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, screen->cpp,
+                                 screen->depthOffset, screen->width);
+         tdfxSetSpanFunctions(depthRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+      }
+
+      if (mesaVis->stencilBits > 0) {
+         driRenderbuffer *stencilRb
+            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, screen->cpp,
+                                 screen->depthOffset, screen->width);
+         tdfxSetSpanFunctions(stencilRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
+      }
+
+      _mesa_add_soft_renderbuffers(fb,
+                                   GL_FALSE, /* color */
+                                   GL_FALSE, /* depth */
+                                   GL_FALSE, /*swStencil,*/
+                                   mesaVis->accumRedBits > 0,
+                                   GL_FALSE, /* alpha */
+                                   GL_FALSE /* aux */);
+      driDrawPriv->driverPrivate = (void *) fb;
+#endif
       return (driDrawPriv->driverPrivate != NULL);
    }
 }

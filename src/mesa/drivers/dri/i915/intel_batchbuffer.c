@@ -512,11 +512,11 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
    clear_color = intel->ClearColor;
    clear_depth = 0;
 
-   if (flags & DD_DEPTH_BIT) {
+   if (flags & BUFFER_BIT_DEPTH) {
       clear_depth = (GLuint)(ctx->Depth.Clear * intel->ClearDepth);
    }
 
-   if (flags & DD_STENCIL_BIT) {
+   if (flags & BUFFER_BIT_STENCIL) {
       clear_depth |= (ctx->Stencil.Clear & 0xff) << 24;
    }
 
@@ -531,8 +531,8 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 	     XY_COLOR_BLT_WRITE_ALPHA | 
 	     XY_COLOR_BLT_WRITE_RGB);
       D_CMD = XY_COLOR_BLT_CMD;
-      if (flags & DD_DEPTH_BIT) D_CMD |= XY_COLOR_BLT_WRITE_RGB;
-      if (flags & DD_STENCIL_BIT) D_CMD |= XY_COLOR_BLT_WRITE_ALPHA;
+      if (flags & BUFFER_BIT_DEPTH) D_CMD |= XY_COLOR_BLT_WRITE_RGB;
+      if (flags & BUFFER_BIT_STENCIL) D_CMD |= XY_COLOR_BLT_WRITE_ALPHA;
       break;
    default:
       BR13 = (0xF0 << 16) | (pitch * cpp) | (1<<24);
@@ -552,9 +552,9 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
       if ( intel->sarea->pf_current_page == 1 ) {
 	 GLuint tmp = flags;
 
-	 flags &= ~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT);
-	 if ( tmp & DD_FRONT_LEFT_BIT ) flags |= DD_BACK_LEFT_BIT;
-	 if ( tmp & DD_BACK_LEFT_BIT )  flags |= DD_FRONT_LEFT_BIT;
+	 flags &= ~(BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT);
+	 if ( tmp & BUFFER_BIT_FRONT_LEFT ) flags |= BUFFER_BIT_BACK_LEFT;
+	 if ( tmp & BUFFER_BIT_BACK_LEFT )  flags |= BUFFER_BIT_FRONT_LEFT;
       }
 
       for (i = 0 ; i < intel->numClipRects ; i++) 
@@ -590,7 +590,7 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 	     b.y2 > intelScreen->height)
 	    continue;
 
-	 if ( flags & DD_FRONT_LEFT_BIT ) {	    
+	 if ( flags & BUFFER_BIT_FRONT_LEFT ) {	    
 	    BEGIN_BATCH( 6);	    
 	    OUT_BATCH( CMD );
 	    OUT_BATCH( BR13 );
@@ -601,7 +601,7 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 	    ADVANCE_BATCH();
 	 }
 
-	 if ( flags & DD_BACK_LEFT_BIT ) {
+	 if ( flags & BUFFER_BIT_BACK_LEFT ) {
 	    BEGIN_BATCH( 6); 
 	    OUT_BATCH( CMD );
 	    OUT_BATCH( BR13 );
@@ -612,7 +612,7 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags, GLboolean all,
 	    ADVANCE_BATCH();
 	 }
 
-	 if ( flags & (DD_STENCIL_BIT | DD_DEPTH_BIT) ) {
+	 if ( flags & (BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH) ) {
 	    BEGIN_BATCH( 6);
 	    OUT_BATCH( D_CMD );
 	    OUT_BATCH( BR13 );

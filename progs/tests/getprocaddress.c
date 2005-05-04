@@ -288,6 +288,7 @@ check_functions( const char *extensions )
 
    for (entry = functions; entry->name; entry++) {
       if (entry->name[0] == '-') {
+         /* XXX update for OpenGL 2.0 */
          if (entry->name[1] == '1') {
             /* check GL version X.Y */
             const char *version = (const char *) glGetString(GL_VERSION);

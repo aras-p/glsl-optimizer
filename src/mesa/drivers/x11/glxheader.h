@@ -67,5 +67,4 @@ struct timespec;
 struct itimerspec;
 
 
-
 #endif /*GLX_HEADER*/

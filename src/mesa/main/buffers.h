@@ -52,6 +52,10 @@ _mesa_DrawBuffer( GLenum mode );
 extern void GLAPIENTRY
 _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers);
 
+extern void
+_mesa_drawbuffers(GLcontext *ctx, GLsizei n, const GLenum *buffers,
+                  const GLuint *destMask);
+
 extern void GLAPIENTRY
 _mesa_ReadBuffer( GLenum mode );
 
@@ -63,9 +67,6 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height );
 
 extern void GLAPIENTRY
 _mesa_SampleCoverageARB(GLclampf value, GLboolean invert);
-
-extern void 
-_mesa_update_draw_buffer_bounds(GLcontext *ctx);
 
 extern void 
 _mesa_init_scissor(GLcontext *ctx);

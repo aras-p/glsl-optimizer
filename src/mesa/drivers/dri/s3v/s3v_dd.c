@@ -10,6 +10,7 @@
 #endif
 
 #include "context.h"
+#include "framebuffer.h"
 #include "swrast/swrast.h"
 
 #define S3V_DATE "20020207"
@@ -96,7 +97,7 @@ void s3vInitDriverFuncs( GLcontext *ctx )
    ctx->Driver.CopyPixels               = _swrast_CopyPixels;
    ctx->Driver.DrawPixels               = _swrast_DrawPixels;
    ctx->Driver.ReadPixels               = _swrast_ReadPixels;
-   ctx->Driver.ResizeBuffers            = _swrast_alloc_buffers;
+   ctx->Driver.ResizeBuffers            = _mesa_resize_framebuffer;
 
    /* Swrast hooks for imaging extensions:
     */

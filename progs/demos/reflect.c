@@ -389,7 +389,7 @@ static void SpecialKey( int key, int x, int y )
 int main( int argc, char *argv[] )
 {
    glutInit(&argc, argv);
-   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
+   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL | GLUT_ALPHA);
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( Width, Height );
    glutCreateWindow(argv[0]);

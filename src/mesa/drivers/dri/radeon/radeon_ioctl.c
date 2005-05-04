@@ -1048,26 +1048,26 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    
    radeonFlush( ctx ); 
 
-   if ( mask & DD_FRONT_LEFT_BIT ) {
+   if ( mask & BUFFER_BIT_FRONT_LEFT ) {
       flags |= RADEON_FRONT;
       color_mask = rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK];
-      mask &= ~DD_FRONT_LEFT_BIT;
+      mask &= ~BUFFER_BIT_FRONT_LEFT;
    }
 
-   if ( mask & DD_BACK_LEFT_BIT ) {
+   if ( mask & BUFFER_BIT_BACK_LEFT ) {
       flags |= RADEON_BACK;
       color_mask = rmesa->hw.msk.cmd[MSK_RB3D_PLANEMASK];
-      mask &= ~DD_BACK_LEFT_BIT;
+      mask &= ~BUFFER_BIT_BACK_LEFT;
    }
 
-   if ( mask & DD_DEPTH_BIT ) {
+   if ( mask & BUFFER_BIT_DEPTH ) {
       flags |= RADEON_DEPTH;
-      mask &= ~DD_DEPTH_BIT;
+      mask &= ~BUFFER_BIT_DEPTH;
    }
 
-   if ( (mask & DD_STENCIL_BIT) && rmesa->state.stencil.hwBuffer ) {
+   if ( (mask & BUFFER_BIT_STENCIL) && rmesa->state.stencil.hwBuffer ) {
       flags |= RADEON_STENCIL;
-      mask &= ~DD_STENCIL_BIT;
+      mask &= ~BUFFER_BIT_STENCIL;
    }
 
    if ( mask ) {
