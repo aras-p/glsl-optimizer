@@ -370,24 +370,24 @@ void (* APIENTRY eglGetProcAddress(const char *procname))()
  */
 
 EGLBoolean APIENTRY
-eglChooseModeMESA(EGLDisplay dpy, EGLint screen_number,
+eglChooseModeMESA(EGLDisplay dpy, EGLScreenMESA screen,
                   const EGLint *attrib_list, EGLModeMESA *modes,
                   EGLint modes_size, EGLint *num_modes)
 {
    _EGLDriver *drv = _eglLookupDriver(dpy);
    if (drv)
-      return drv->ChooseModeMESA(drv, dpy, screen_number, attrib_list, modes, modes_size, num_modes);
+      return drv->ChooseModeMESA(drv, dpy, screen, attrib_list, modes, modes_size, num_modes);
    else
       return EGL_FALSE;
 }
 
 
 EGLBoolean APIENTRY
-eglGetModesMESA(EGLDisplay dpy, EGLint screen_number, EGLModeMESA *modes, EGLint mode_size, EGLint *num_mode)
+eglGetModesMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *modes, EGLint mode_size, EGLint *num_mode)
 {
    _EGLDriver *drv = _eglLookupDriver(dpy);
    if (drv)
-      return drv->GetModesMESA(drv, dpy, screen_number, modes, mode_size, num_mode);
+      return drv->GetModesMESA(drv, dpy, screen, modes, mode_size, num_mode);
    else
       return EGL_FALSE;
 }
@@ -399,6 +399,17 @@ eglGetModeAttribMESA(EGLDisplay dpy, EGLModeMESA mode, EGLint attribute, EGLint 
    _EGLDriver *drv = _eglLookupDriver(dpy);
    if (drv)
       return drv->GetModeAttribMESA(drv, dpy, mode, attribute, value);
+   else
+      return EGL_FALSE;
+}
+
+
+EGLBoolean
+eglGetScreensMESA(EGLDisplay dpy, EGLScreenMESA *screens, EGLint max_screens, EGLint *num_screens)
+{
+   _EGLDriver *drv = _eglLookupDriver(dpy);
+   if (drv)
+      return drv->GetScreensMESA(drv, dpy, screens, max_screens, num_screens);
    else
       return EGL_FALSE;
 }
@@ -419,42 +430,21 @@ eglShowSurfaceMESA(EGLDisplay dpy, EGLint screen, EGLSurface surface)
 
 
 EGLBoolean
-eglScreenModeMESA(EGLDisplay dpy, EGLint screen_number, EGLModeMESA mode)
+eglScreenModeMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA mode)
 {
    return EGL_FALSE;
 }
 
 
 EGLBoolean
-eglScreenAttribsMESA(EGLDisplay dpy, EGLint screen, const EGLint *attrib_list)
+eglQueryScreenSurfaceMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLSurface *surface)
 {
    return EGL_FALSE;
 }
 
 
 EGLBoolean
-eglQueryDisplayMESA(EGLDisplay dpy, EGLint attribute, EGLint *value)
-{
-   return EGL_FALSE;
-}
-
-
-EGLBoolean
-eglQueryScreenSurfaceMESA(EGLDisplay dpy, EGLint screen_number, EGLSurface *surface)
-{
-   return EGL_FALSE;
-}
-
-
-EGLBoolean
-eglQueryScreenModeMESA(EGLDisplay dpy, EGLint screen_number, EGLModeMESA *mode)
-{
-   return EGL_FALSE;
-}
-
-
-EGLBoolean
-eglQueryScreenMESA( EGLDisplay dpy, EGLint screen_number, EGLint attribute, EGLint *value)
+eglQueryScreenMESA( EGLDisplay dpy, EGLScreenMESA screen, EGLint attribute, EGLint *value)
 {
    return EGL_FALSE;
 }

@@ -16,6 +16,7 @@ _eglInitGlobals(void)
       _eglGlobal.Displays = _eglNewHashTable();
       _eglGlobal.Contexts = _eglNewHashTable();
       _eglGlobal.Surfaces = _eglNewHashTable();
+      _eglGlobal.FreeScreenHandle = 1;
       _eglGlobal.CurrentContext = EGL_NO_CONTEXT;
       _eglGlobal.LastError = EGL_SUCCESS;
       _eglGlobal.Initialized = EGL_TRUE;
@@ -48,4 +49,17 @@ _eglError(EGLint errCode, const char *msg)
       /* XXX temporary */
       fprintf(stderr, "EGL Error 0x%x in %s\n", errCode, msg);
    }
+}
+
+
+/**
+ * Return a new screen handle/ID.
+ * NOTE: we never reuse these!
+ */
+EGLScreenMESA
+_eglAllocScreenHandle(void)
+{
+   EGLScreenMESA s = _eglGlobal.FreeScreenHandle;
+   _eglGlobal.FreeScreenHandle++;
+   return s;
 }

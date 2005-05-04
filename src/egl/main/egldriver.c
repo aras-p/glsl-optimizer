@@ -8,6 +8,7 @@
 #include "egldriver.h"
 #include "eglglobals.h"
 #include "eglmode.h"
+#include "eglscreen.h"
 #include "eglsurface.h"
 
 
@@ -181,8 +182,16 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
    drv->WaitNative = _eglWaitNative;
 
    /* EGL_MESA_screen */
+   drv->ChooseModeMESA = _eglChooseModeMESA; 
    drv->GetModesMESA = _eglGetModesMESA;
    drv->GetModeAttribMESA = _eglGetModeAttribMESA;
+   drv->GetScreensMESA = _eglGetScreensMESA;
+   drv->CreateScreenSurfaceMESA = _eglCreateScreenSurfaceMESA;
+   drv->ShowSurfaceMESA = _eglShowSurfaceMESA;
+   drv->ScreenPositionMESA = _eglScreenPositionMESA;
+   drv->QueryScreenMESA = _eglQueryScreenMESA;
+   drv->QueryScreenSurfaceMESA = _eglQueryScreenSurfaceMESA;
+   drv->QueryScreenModeMESA = _eglQueryScreenModeMESA;
 }
 
 

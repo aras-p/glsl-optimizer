@@ -13,6 +13,8 @@ struct _egl_global
    _EGLHashtable *Contexts;
    _EGLHashtable *Surfaces;
 
+   EGLScreenMESA FreeScreenHandle;
+
    EGLint LastError;
 
    /* XXX this should be per-thread someday */
@@ -33,6 +35,10 @@ _eglDestroyGlobals(void);
 
 extern void
 _eglError(EGLint errCode, const char *msg);
+
+
+extern EGLScreenMESA
+_eglAllocScreenHandle(void);
 
 
 #endif /* EGLGLOBALS_INCLUDED */

@@ -55,51 +55,34 @@ demoInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
    _EGLScreen *scrn;
    EGLint i;
 
-   disp->NumScreens = 1;
-   disp->Screens = (_EGLScreen *) calloc(disp->NumScreens, sizeof(_EGLScreen));
-   scrn = disp->Screens + 0;
-   scrn->NumModes = 4;
-   scrn->Modes = (_EGLMode *) calloc(scrn->NumModes, sizeof(_EGLMode));
-   scrn->Modes[0].Width = 1600;
-   scrn->Modes[0].Height = 1200;
-   scrn->Modes[0].Depth = 32;
-   scrn->Modes[0].RefreshRate = 72 * 1000;
-   scrn->Modes[1].Width = 1280;
-   scrn->Modes[1].Height = 1024;
-   scrn->Modes[1].Depth = 32;
-   scrn->Modes[1].RefreshRate = 72 * 1000;
-   scrn->Modes[2].Width = 1280;
-   scrn->Modes[2].Height = 1024;
-   scrn->Modes[2].Depth = 16;
-   scrn->Modes[2].RefreshRate = 72 * 1000;
-   scrn->Modes[3].Width = 1024;
-   scrn->Modes[3].Height = 768;
-   scrn->Modes[3].Depth = 16;
-   scrn->Modes[3].RefreshRate = 72 * 1000;
-   for (i = 0; i < scrn->NumModes; i++)
-      scrn->Modes[i].Handle = i + 1;
+   /* Create a screen */
+   scrn = _eglNewScreen();
+   _eglAddScreen(disp, scrn);
 
-   /* Create list of visual configs - this is a silly example */
-   disp->NumConfigs = 4;
-   disp->Configs = (_EGLConfig *) calloc(disp->NumConfigs, sizeof(_EGLConfig));
-   for (i = 0; i < disp->NumConfigs; i++) {
-      _EGLConfig *config = disp->Configs + i;
-      _eglInitConfig(config, i + 1);
-      SET_CONFIG_ATTRIB(config, EGL_RED_SIZE, 8);
-      SET_CONFIG_ATTRIB(config, EGL_GREEN_SIZE, 8);
-      SET_CONFIG_ATTRIB(config, EGL_BLUE_SIZE, 8);
-      SET_CONFIG_ATTRIB(config, EGL_ALPHA_SIZE, 8);
-      SET_CONFIG_ATTRIB(config, EGL_BUFFER_SIZE, 32);
+   /* Create the screen's modes - silly example */
+   _eglAddMode(scrn, 1600, 1200, 32, 72 * 1000);
+   _eglAddMode(scrn, 1280, 1024, 32, 72 * 1000);
+   _eglAddMode(scrn, 1280, 1024, 16, 72 * 1000);
+   _eglAddMode(scrn, 1024,  768, 32, 72 * 1000);
 
+   /* Create the display's visual configs - silly example */
+   for (i = 0; i < 4; i++) {
+      _EGLConfig config;
+      _eglInitConfig(&config, i + 1);
+      SET_CONFIG_ATTRIB(&config, EGL_RED_SIZE, 8);
+      SET_CONFIG_ATTRIB(&config, EGL_GREEN_SIZE, 8);
+      SET_CONFIG_ATTRIB(&config, EGL_BLUE_SIZE, 8);
+      SET_CONFIG_ATTRIB(&config, EGL_ALPHA_SIZE, 8);
+      SET_CONFIG_ATTRIB(&config, EGL_BUFFER_SIZE, 32);
       if (i & 1) {
-         SET_CONFIG_ATTRIB(config, EGL_DEPTH_SIZE, 32);
+         SET_CONFIG_ATTRIB(&config, EGL_DEPTH_SIZE, 32);
       }
       if (i & 2) {
-         SET_CONFIG_ATTRIB(config, EGL_STENCIL_SIZE, 8);
+         SET_CONFIG_ATTRIB(&config, EGL_STENCIL_SIZE, 8);
       }
-
-      SET_CONFIG_ATTRIB(config, EGL_SURFACE_TYPE,
+      SET_CONFIG_ATTRIB(&config, EGL_SURFACE_TYPE,
                         (EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT));
+      _eglAddConfig(disp, &config);
    }
 
    drv->Initialized = EGL_TRUE;

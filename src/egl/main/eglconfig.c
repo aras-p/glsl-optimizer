@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include "eglconfig.h"
@@ -48,6 +49,31 @@ _eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config)
       }
    }
    return NULL;
+}
+
+
+/**
+ * Add the given _EGLConifg to the given display.
+ */
+_EGLConfig *
+_eglAddConfig(_EGLDisplay *display, const _EGLConfig *config)
+{
+   _EGLConfig *newConfigs;
+   EGLint n;
+
+   n = display->NumConfigs;
+
+   newConfigs = (_EGLConfig *) realloc(display->Configs,
+                                       (n + 1) * sizeof(_EGLConfig));
+   if (newConfigs) {
+      display->Configs = newConfigs;
+      display->Configs[n] = *config; /* copy struct */
+      display->NumConfigs++;
+      return display->Configs + n;
+   }
+   else {
+      return NULL;
+   }
 }
 
 

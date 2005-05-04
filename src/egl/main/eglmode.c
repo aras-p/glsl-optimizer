@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <stdlib.h>
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglmode.h"
@@ -8,30 +10,76 @@
 #define MIN2(A, B)  (((A) < (B)) ? (A) : (B))
 
 
+/**
+ * Given an EGLModeMESA handle, return the corresponding _EGLMode object
+ * or null if non-existant.
+ */
 _EGLMode *
 _eglLookupMode(EGLDisplay dpy, EGLModeMESA mode)
 {
    const _EGLDisplay *disp = _eglLookupDisplay(dpy);
    EGLint scrnum;
 
+   /* loop over all screens on the display */
    for (scrnum = 0; scrnum < disp->NumScreens; scrnum++) {
-      const _EGLScreen *scrn = disp->Screens + scrnum;
+      const _EGLScreen *scrn = disp->Screens[scrnum];
       EGLint i;
+      /* search list of modes for handle */
       for (i = 0; i < scrn->NumModes; i++) {
          if (scrn->Modes[i].Handle == mode) {
             return scrn->Modes + i;
          }
       }
    }
+
    return NULL;
 }
+
+
+/**
+ * Add a new mode with the given attributes (width, height, depth, refreshRate)
+ * to the given screen.
+ * Assign a new mode ID/handle to the mode as well.
+ * \return pointer to the new _EGLMode
+ */
+_EGLMode *
+_eglAddMode(_EGLScreen *screen, EGLint width, EGLint height,
+            EGLint depth, EGLint refreshRate)
+{
+   EGLint n;
+   _EGLMode *newModes;
+
+   assert(screen);
+   assert(width > 0);
+   assert(height > 0);
+   assert(depth > 0);
+   assert(refreshRate > 0);
+
+   n = screen->NumModes;
+   newModes = (_EGLMode *) realloc(screen->Modes, (n+1) * sizeof(_EGLMode));
+   if (newModes) {
+      screen->Modes = newModes;
+      screen->Modes[n].Handle = n + 1;
+      screen->Modes[n].Width = width;
+      screen->Modes[n].Height = height;
+      screen->Modes[n].Depth = depth;
+      screen->Modes[n].RefreshRate = refreshRate;
+      screen->Modes[n].Stereo = EGL_FALSE;
+      screen->NumModes++;
+      return screen->Modes + n;
+   }
+   else {
+      return NULL;
+   }
+}
+
 
 
 /**
  * Search for the EGLMode that best matches the given attribute list.
  */
 EGLBoolean
-_eglChooseModeMESA(_EGLDriver *drv, EGLDisplay dpy, EGLint screen_number,
+_eglChooseModeMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
                    const EGLint *attrib_list, EGLModeMESA *modes,
                    EGLint modes_size, EGLint *num_modes)
 {
@@ -70,10 +118,10 @@ _eglChooseModeMESA(_EGLDriver *drv, EGLDisplay dpy, EGLint screen_number,
  * Return all possible modes for the given screen
  */
 EGLBoolean
-_eglGetModesMESA(_EGLDriver *drv, EGLDisplay dpy, EGLint screen_number,
+_eglGetModesMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
                  EGLModeMESA *modes, EGLint modes_size, EGLint *num_modes)
 {
-   _EGLScreen *scrn = _eglLookupScreen(dpy, screen_number);
+   _EGLScreen *scrn = _eglLookupScreen(dpy, screen);
    EGLint i;
 
    if (!scrn) {

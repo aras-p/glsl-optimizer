@@ -29,6 +29,10 @@ extern _EGLConfig *
 _eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config);
 
 
+extern _EGLConfig *
+_eglAddConfig(_EGLDisplay *display, const _EGLConfig *config);
+
+
 extern EGLBoolean
 _eglParseConfigAttribs(_EGLConfig *config, const EGLint *attrib_list);
 
