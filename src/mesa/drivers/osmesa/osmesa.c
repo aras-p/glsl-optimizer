@@ -178,7 +178,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[GCOMP] = SRC[1];  \
    DST[BCOMP] = SRC[2];  \
    DST[BCOMP] = SRC[3]
-#include "swrast/s_spantemp2.h"
+#include "swrast/s_spantemp.h"
 
 /* BGRA */
 #define NAME(PREFIX) PREFIX##_BGRA
@@ -198,7 +198,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[GCOMP] = SRC[1];  \
    DST[BCOMP] = SRC[0];  \
    DST[BCOMP] = SRC[3]
-#include "swrast/s_spantemp2.h"
+#include "swrast/s_spantemp.h"
 
 /* ARGB */
 #define NAME(PREFIX) PREFIX##_ARGB
@@ -218,7 +218,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[GCOMP] = SRC[2];  \
    DST[BCOMP] = SRC[3];  \
    DST[BCOMP] = SRC[0]
-#include "swrast/s_spantemp2.h"
+#include "swrast/s_spantemp.h"
 
 /* RGB */
 #define NAME(PREFIX) PREFIX##_RGB
@@ -237,7 +237,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[GCOMP] = SRC[1];  \
    DST[BCOMP] = SRC[2];  \
    DST[BCOMP] = CHAN_MAX
-#include "swrast/s_spantemp2.h"
+#include "swrast/s_spantemp.h"
 
 /* BGR */
 #define NAME(PREFIX) PREFIX##_BGR
@@ -256,7 +256,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[GCOMP] = SRC[1];  \
    DST[BCOMP] = SRC[0];  \
    DST[BCOMP] = CHAN_MAX
-#include "swrast/s_spantemp2.h"
+#include "swrast/s_spantemp.h"
 
 /* 16-bit BGR */
 #if CHAN_TYPE == GL_UNSIGNED_BYTE
@@ -274,7 +274,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[GCOMP] = ( (((*SRC) >> 3) & 0xfc) | (((*SRC) >>  5) & 0x3) ); \
    DST[BCOMP] = ( (((*SRC) << 3) & 0xf8) | (((*SRC)      ) & 0x7) ); \
    DST[ACOMP] = CHAN_MAX
-#include "swrast/s_spantemp2.h"
+#include "swrast/s_spantemp.h"
 #endif /* CHAN_TYPE == GL_UNSIGNED_BYTE */
 
 /* color index */
@@ -289,7 +289,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    *DST = VALUE[0]
 #define FETCH_PIXEL(DST, SRC) \
    DST = SRC[0]
-#include "swrast/s_spantemp2.h"
+#include "swrast/s_spantemp.h"
 
 
 
