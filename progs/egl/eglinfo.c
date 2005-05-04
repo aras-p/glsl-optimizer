@@ -98,12 +98,17 @@ PrintModes(EGLDisplay d)
 #ifdef EGL_MESA_screen_surface
    const char *extensions = eglQueryString(d, EGL_EXTENSIONS);
    if (strstr("EGL_MESA_screen_surface", extensions)) {
-      EGLint scrn, numScreens = 1;
+      EGLScreenMESA screens[20];
+      EGLint numScreens = 1, scrn;
       EGLModeMESA modes[MAX_MODES];
-      EGLint numModes, i;
+
+      eglGetScreensMESA(d, screens, 20, &numScreens);
+      printf("Number of Screens: %d\n\n", numScreens);
 
       for (scrn = 0; scrn < numScreens; scrn++) {
-         eglGetModesMESA(d, scrn, modes, MAX_MODES, &numModes);
+         EGLint numModes, i;
+
+         eglGetModesMESA(d, screens[scrn], modes, MAX_MODES, &numModes);
 
          printf("Screen %d Modes:\n", scrn);
          printf("  id width height refresh\n");

@@ -8,6 +8,25 @@
 #include <stdlib.h>
 
 
+/**
+ * Test EGL_MESA_screen_surface functions
+ */
+static void
+TestScreens(EGLDisplay dpy)
+{
+#define MAX 8
+   EGLScreenMESA screens[MAX];
+   EGLint numScreens;
+   EGLint i;
+
+   eglGetScreensMESA(dpy, screens, MAX, &numScreens);
+   printf("Found %d screens\n", numScreens);
+   for (i = 0; i < numScreens; i++) {
+      printf(" Screen %d handle: %d\n", i, (int) screens[i]);
+   }
+}
+
+
 
 int
 main(int argc, char *argv[])
@@ -67,6 +86,8 @@ main(int argc, char *argv[])
    }
 
    b = eglMakeCurrent(d, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+   TestScreens(d);
 
    eglDestroySurface(d, pbuffer);
    eglDestroyContext(d, ctx);
