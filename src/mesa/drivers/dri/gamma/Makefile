@@ -15,6 +15,7 @@ COMMON_SOURCES = \
 	../common/texmem.c \
 	../common/vblank.c \
 	../common/dri_util.c \
+	../common/drirenderbuffer.c \
 	../common/glcontextmodes.c
 
 DRIVER_SOURCES = \
