@@ -2764,6 +2764,11 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
 
    fp->Data = NULL;
 
+   fp->DstReg.File = 0xf;	/* mark as undef */
+   fp->SrcReg[0].File = 0xf;	/* mark as undef */
+   fp->SrcReg[1].File = 0xf;	/* mark as undef */
+   fp->SrcReg[2].File = 0xf;	/* mark as undef */
+
    /* OP_ALU_INST or OP_TEX_INST */
    instClass = *(*inst)++;
 
@@ -3825,6 +3830,11 @@ parse_arb_program (GLcontext * ctx, GLubyte * inst, struct var_cache **vc_head,
                                                   (Program->Base.NumInstructions+1)*sizeof(struct fp_instruction));
 
       Program->FPInstructions[Program->Base.NumInstructions].Opcode = FP_OPCODE_END;
+      Program->FPInstructions[Program->Base.NumInstructions].Saturate = 0;
+      Program->FPInstructions[Program->Base.NumInstructions].DstReg.File = 0xf;
+      Program->FPInstructions[Program->Base.NumInstructions].SrcReg[0].File = 0xf;
+      Program->FPInstructions[Program->Base.NumInstructions].SrcReg[1].File = 0xf;
+      Program->FPInstructions[Program->Base.NumInstructions].SrcReg[2].File = 0xf;
       /* YYY Wrong Position in program, whatever, at least not random -> crash
 	 Program->Position = parse_position (&inst);
       */
