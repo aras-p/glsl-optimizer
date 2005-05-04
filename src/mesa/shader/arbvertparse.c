@@ -114,8 +114,10 @@ void _mesa_debug_vp_inst(GLint num, struct vp_instruction *vp)
       }
 
       if (vp[a].SrcReg[0].File != 0xf) {
-	 if (vp[a].SrcReg[0].Swizzle != SWIZZLE_NOOP)
-	    _mesa_printf("%s[%d].%c%c%c%c ", file_string[vp[a].SrcReg[0].File], vp[a].SrcReg[0].Index,
+	 if (vp[a].SrcReg[0].Swizzle != SWIZZLE_NOOP ||
+	     vp[a].SrcReg[0].Negate)
+	    _mesa_printf("%s[%d].%s%c%c%c%c ", file_string[vp[a].SrcReg[0].File], vp[a].SrcReg[0].Index,
+			 vp[a].SrcReg[0].Negate ? "-" : "",
 			 swz[GET_SWZ(vp[a].SrcReg[0].Swizzle, 0)],
 			 swz[GET_SWZ(vp[a].SrcReg[0].Swizzle, 1)],
 			 swz[GET_SWZ(vp[a].SrcReg[0].Swizzle, 2)],
@@ -125,8 +127,10 @@ void _mesa_debug_vp_inst(GLint num, struct vp_instruction *vp)
       }
 
       if (vp[a].SrcReg[1].File != 0xf) {
-	 if (vp[a].SrcReg[1].Swizzle != SWIZZLE_NOOP)
-	    _mesa_printf("%s[%d].%c%c%c%c ", file_string[vp[a].SrcReg[1].File], vp[a].SrcReg[1].Index,
+	 if (vp[a].SrcReg[1].Swizzle != SWIZZLE_NOOP ||
+	     vp[a].SrcReg[1].Negate)
+	    _mesa_printf("%s[%d].%s%c%c%c%c ", file_string[vp[a].SrcReg[1].File], vp[a].SrcReg[1].Index,
+			 vp[a].SrcReg[1].Negate ? "-" : "",
 			 swz[GET_SWZ(vp[a].SrcReg[1].Swizzle, 0)],
 			 swz[GET_SWZ(vp[a].SrcReg[1].Swizzle, 1)],
 			 swz[GET_SWZ(vp[a].SrcReg[1].Swizzle, 2)],
@@ -136,8 +140,10 @@ void _mesa_debug_vp_inst(GLint num, struct vp_instruction *vp)
       }
 
       if (vp[a].SrcReg[2].File != 0xf) {
-	 if (vp[a].SrcReg[2].Swizzle != SWIZZLE_NOOP)
-	    _mesa_printf("%s[%d].%c%c%c%c ", file_string[vp[a].SrcReg[2].File], vp[a].SrcReg[2].Index,
+	 if (vp[a].SrcReg[2].Swizzle != SWIZZLE_NOOP ||
+	     vp[a].SrcReg[2].Negate)
+	    _mesa_printf("%s[%d].%s%c%c%c%c ", file_string[vp[a].SrcReg[2].File], vp[a].SrcReg[2].Index,
+			 vp[a].SrcReg[2].Negate ? "-" : "",
 			 swz[GET_SWZ(vp[a].SrcReg[2].Swizzle, 0)],
 			 swz[GET_SWZ(vp[a].SrcReg[2].Swizzle, 1)],
 			 swz[GET_SWZ(vp[a].SrcReg[2].Swizzle, 2)],
