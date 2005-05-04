@@ -62,21 +62,22 @@
 
 /* Fragment program instruction opcodes */
 enum fp_opcode {
-   FP_OPCODE_ABS,     /* ARB_f_p only */
+   FP_OPCODE_ABS,		/* ARB_f_p only */
    FP_OPCODE_ADD,
-   FP_OPCODE_CMP,            /* ARB_f_p only */
+   FP_OPCODE_CMP,		/* ARB_f_p only */
    FP_OPCODE_COS,
-   FP_OPCODE_DDX,            /* NV_f_p only */
-   FP_OPCODE_DDY,            /* NV_f_p only */
+   FP_OPCODE_DDX,		/* NV_f_p only */
+   FP_OPCODE_DDY,		/* NV_f_p only */
    FP_OPCODE_DP3,
    FP_OPCODE_DP4,
-   FP_OPCODE_DPH,            /* ARB_f_p only */
+   FP_OPCODE_DPH,		/* ARB_f_p only */
    FP_OPCODE_DST,
+   FP_OPCODE_END,		/* private opcode */
    FP_OPCODE_EX2,
    FP_OPCODE_FLR,
    FP_OPCODE_FRC,
-   FP_OPCODE_KIL_NV,         /* NV_f_p only */
-   FP_OPCODE_KIL,            /* ARB_f_p only */
+   FP_OPCODE_KIL,		/* ARB_f_p only */
+   FP_OPCODE_KIL_NV,		/* NV_f_p only */
    FP_OPCODE_LG2,
    FP_OPCODE_LIT,
    FP_OPCODE_LRP,
@@ -85,39 +86,38 @@ enum fp_opcode {
    FP_OPCODE_MIN,
    FP_OPCODE_MOV,
    FP_OPCODE_MUL,
-   FP_OPCODE_PK2H,           /* NV_f_p only */
-   FP_OPCODE_PK2US,          /* NV_f_p only */
-   FP_OPCODE_PK4B,           /* NV_f_p only */
-   FP_OPCODE_PK4UB,          /* NV_f_p only */
+   FP_OPCODE_PK2H,		/* NV_f_p only */
+   FP_OPCODE_PK2US,		/* NV_f_p only */
+   FP_OPCODE_PK4B,		/* NV_f_p only */
+   FP_OPCODE_PK4UB,		/* NV_f_p only */
    FP_OPCODE_POW,
+   FP_OPCODE_PRINT,		/* Mesa only */
    FP_OPCODE_RCP,
-   FP_OPCODE_RFL,            /* NV_f_p only */
+   FP_OPCODE_RFL,		/* NV_f_p only */
    FP_OPCODE_RSQ,
-   FP_OPCODE_SCS,            /* ARB_f_p only */
-   FP_OPCODE_SEQ,            /* NV_f_p only */
-   FP_OPCODE_SFL,            /* NV_f_p only */
-   FP_OPCODE_SGE,            /* NV_f_p only */
-   FP_OPCODE_SGT,            /* NV_f_p only */
+   FP_OPCODE_SCS,		/* ARB_f_p only */
+   FP_OPCODE_SEQ,		/* NV_f_p only */
+   FP_OPCODE_SFL,		/* NV_f_p only */
+   FP_OPCODE_SGE,		/* NV_f_p only */
+   FP_OPCODE_SGT,		/* NV_f_p only */
    FP_OPCODE_SIN,
-   FP_OPCODE_SLE,            /* NV_f_p only */
+   FP_OPCODE_SLE,		/* NV_f_p only */
    FP_OPCODE_SLT,
-   FP_OPCODE_SNE,            /* NV_f_p only */
-   FP_OPCODE_STR,            /* NV_f_p only */
+   FP_OPCODE_SNE,		/* NV_f_p only */
+   FP_OPCODE_STR,		/* NV_f_p only */
    FP_OPCODE_SUB,
-   FP_OPCODE_SWZ,            /* ARB_f_p only */
+   FP_OPCODE_SWZ,		/* ARB_f_p only */
    FP_OPCODE_TEX,
-   FP_OPCODE_TXB,            /* ARB_f_p only */
-   FP_OPCODE_TXD,            /* NV_f_p only */
-   FP_OPCODE_TXP,            /* ARB_f_p only */
-   FP_OPCODE_TXP_NV,         /* NV_f_p only */
-   FP_OPCODE_UP2H,           /* NV_f_p only */
-   FP_OPCODE_UP2US,          /* NV_f_p only */
-   FP_OPCODE_UP4B,           /* NV_f_p only */
-   FP_OPCODE_UP4UB,          /* NV_f_p only */
-   FP_OPCODE_X2D,            /* NV_f_p only - 2d mat mul */
-   FP_OPCODE_XPD,            /* ARB_f_p only - cross product */
-   FP_OPCODE_PRINT,          /* Mesa only */
-   FP_OPCODE_END /* private opcode */
+   FP_OPCODE_TXB,		/* ARB_f_p only */
+   FP_OPCODE_TXD,		/* NV_f_p only */
+   FP_OPCODE_TXP,		/* ARB_f_p only */
+   FP_OPCODE_TXP_NV,		/* NV_f_p only */
+   FP_OPCODE_UP2H,		/* NV_f_p only */
+   FP_OPCODE_UP2US,		/* NV_f_p only */
+   FP_OPCODE_UP4B,		/* NV_f_p only */
+   FP_OPCODE_UP4UB,		/* NV_f_p only */
+   FP_OPCODE_X2D,		/* NV_f_p only - 2d mat mul */
+   FP_OPCODE_XPD		/* ARB_f_p only - cross product */
 };
 
 
