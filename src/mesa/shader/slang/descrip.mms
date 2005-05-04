@@ -1,6 +1,6 @@
 # Makefile for core library for VMS
 # contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
-# Last revision : 18 April 2005
+# Last revision : 3 May 2005
 
 .first
 	define gl [----.include.gl]
@@ -22,7 +22,7 @@ SOURCES = \
 	slang_compile.c,slang_preprocess.c
 
 OBJECTS = \
-	slang_compile.obj,slang_preprocess.obj
+	slang_compile.obj,slang_preprocess.obj,slang_utility.obj
 
 ##### RULES #####
 
@@ -39,3 +39,4 @@ clean :
 
 slang_compile.obj : slang_compile.c
 slang_preprocess.obj : slang_preprocess.c
+slang_utility.obj : slang_utility.c
