@@ -1075,7 +1075,7 @@ _swrast_choose_triangle( GLcontext *ctx )
          }
       }
 
-      if (ctx->Texture._EnabledCoordUnits || ctx->FragmentProgram._Enabled) {
+      if (ctx->Texture._EnabledCoordUnits || ctx->FragmentProgram._Active) {
          /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
 	 const struct gl_texture_object *texObj2D;
          const struct gl_texture_image *texImg;
@@ -1090,7 +1090,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 
          /* First see if we can use an optimized 2-D texture function */
          if (ctx->Texture._EnabledCoordUnits == 0x1
-             && !ctx->FragmentProgram._Enabled
+             && !ctx->FragmentProgram._Active
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
              && texObj2D->WrapS == GL_REPEAT
 	     && texObj2D->WrapT == GL_REPEAT

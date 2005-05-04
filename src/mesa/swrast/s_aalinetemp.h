@@ -80,7 +80,7 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
 #ifdef DO_TEX
    {
       GLfloat invQ;
-      if (ctx->FragmentProgram._Enabled) {
+      if (ctx->FragmentProgram._Active) {
          invQ = 1.0F;
       }
       else {
@@ -100,7 +100,7 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
       for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
          if (ctx->Texture.Unit[unit]._ReallyEnabled) {
             GLfloat invQ;
-            if (ctx->FragmentProgram._Enabled) {
+            if (ctx->FragmentProgram._Active) {
                invQ = 1.0F;
             }
             else {

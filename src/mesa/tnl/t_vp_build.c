@@ -367,6 +367,10 @@ static void emit_matrix_transform_vec4( struct tnl_program *p,
    emit_op2(p, VP_OPCODE_DP4, dest, WRITEMASK_W, src, mat[3]);
 }
 
+/* This version is much easier to implement if writemasks are not
+ * supported natively on the target or (like SSE), the target doesn't
+ * have a clean/obvious dotproduct implementation.
+ */
 static void emit_transpose_matrix_transform_vec4( struct tnl_program *p,
 						  struct ureg dest,
 						  const struct ureg *mat,
@@ -692,14 +696,12 @@ static void build_lighting( struct tnl_program *p )
 	 count++;
 
 	 if (light->EyePosition[3] == 0) {
-	    /* Can used precomputed constants in this case:
+	    /* Can used precomputed constants in this case.
+	     * Attenuation never applies to infinite lights.
 	     */
 	    VPpli = register_param3(p, STATE_LIGHT, i, 
 				    STATE_POSITION_NORMALIZED); 
 	    half = register_param3(p, STATE_LIGHT, i, STATE_HALF);
-	    
-	    /* Spot attenuation maybe applies to this case?  Could
-	     * precompute if so? */
 	 } 
 	 else {
 	    struct ureg Ppli = register_param3(p, STATE_LIGHT, i, 
@@ -767,7 +769,7 @@ static void build_lighting( struct tnl_program *p )
 	    if (!is_undef(att)) 
 	       emit_op2(p, VP_OPCODE_MUL, lit, 0, lit, att);
    
-   
+	    
 	    if (count == nr_lights) {
 	       if (separate) {
 		  res0 = register_output( p, VERT_RESULT_COL0 );
@@ -1082,9 +1084,15 @@ static void build_pointsize( struct tnl_program *p )
 }
 
 
+static void build_passthrough( struct tnl_program *p, GLuint inputs )
+{
+}
+
+
 
 void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 {
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct tnl_program p;
 
    if (ctx->VertexProgram._Enabled)
@@ -1135,6 +1143,15 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 
    if (ctx->Point._Attenuated)
       build_pointsize(&p);
+
+   /* Is there a need to copy inputs to outputs?  The software
+    * implementation might do this more efficiently by just assigning
+    * the missing results to point at input arrays.
+    */
+   if (/* tnl->vp_copy_inputs &&  */
+       (tnl->render_inputs & ~p.program->OutputsWritten)) {
+      build_passthrough(&p, tnl->render_inputs);
+   }
 
 
    /* Finish up:

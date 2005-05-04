@@ -1602,6 +1602,9 @@ _mesa_initialize_context( GLcontext *ctx,
    ctx->TnlModule.SwapCount = 0;
 #endif
 
+   ctx->_MaintainTexEnvProgram = (_mesa_getenv("MESA_TEX_PROG") != NULL);
+   ctx->_MaintainTnlProgram = (_mesa_getenv("MESA_TNL_PROG") != NULL);
+
    return GL_TRUE;
 }
 

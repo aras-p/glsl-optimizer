@@ -1410,7 +1410,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
 void
 _swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
 {
-   const struct fragment_program *program = ctx->FragmentProgram.Current;
+   const struct fragment_program *program = ctx->FragmentProgram._Current;
    GLuint i;
 
    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
@@ -1418,7 +1418,7 @@ _swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
    for (i = 0; i < span->end; i++) {
       if (span->array->mask[i]) {
          init_machine(ctx, &ctx->FragmentProgram.Machine,
-                      ctx->FragmentProgram.Current, span, i);
+                      ctx->FragmentProgram._Current, span, i);
 
 #ifdef USE_TCC
          if (!_swrast_execute_codegen_program(ctx, program, ~0,

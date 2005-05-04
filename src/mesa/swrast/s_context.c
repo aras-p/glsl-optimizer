@@ -104,7 +104,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
       rasterMask |= MULTI_DRAW_BIT; /* all color index bits disabled */
    }
 
-   if (ctx->FragmentProgram._Enabled) {
+   if (ctx->FragmentProgram._Active) {
       rasterMask |= FRAGPROG_BIT;
    }
 
@@ -161,7 +161,7 @@ _swrast_update_fog_hint( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    swrast->_PreferPixelFog = (!swrast->AllowVertexFog ||
-                              ctx->FragmentProgram._Enabled ||
+                              ctx->FragmentProgram._Active ||
 			      (ctx->Hint.Fog == GL_NICEST &&
 			       swrast->AllowPixelFog));
 }
@@ -202,10 +202,10 @@ _swrast_update_fog_state( GLcontext *ctx )
 
    /* determine if fog is needed, and if so, which fog mode */
    swrast->_FogEnabled = GL_FALSE;
-   if (ctx->FragmentProgram._Enabled) {
-      if (ctx->FragmentProgram.Current->Base.Target==GL_FRAGMENT_PROGRAM_ARB) {
+   if (ctx->FragmentProgram._Active) {
+      if (ctx->FragmentProgram._Current->Base.Target==GL_FRAGMENT_PROGRAM_ARB) {
          const struct fragment_program *p
-            = (struct fragment_program *) ctx->FragmentProgram.Current;
+            = (struct fragment_program *) ctx->FragmentProgram._Current;
          if (p->FogOption != GL_NONE) {
             swrast->_FogEnabled = GL_TRUE;
             swrast->_FogMode = p->FogOption;
@@ -226,8 +226,8 @@ _swrast_update_fog_state( GLcontext *ctx )
 static void
 _swrast_update_fragment_program( GLcontext *ctx )
 {
-   if (ctx->FragmentProgram._Enabled) {
-      struct fragment_program *program = ctx->FragmentProgram.Current;
+   if (ctx->FragmentProgram._Active) {
+      struct fragment_program *program = ctx->FragmentProgram._Current;
       _mesa_load_state_parameters(ctx, program->Parameters);
    }
 }
@@ -295,7 +295,7 @@ _swrast_validate_triangle( GLcontext *ctx,
 
    if (ctx->Texture._EnabledUnits == 0
        && NEED_SECONDARY_COLOR(ctx)
-       && !ctx->FragmentProgram._Enabled) {
+       && !ctx->FragmentProgram._Active) {
       /* separate specular color, but no texture */
       swrast->SpecTriangle = swrast->Triangle;
       swrast->Triangle = _swrast_add_spec_terms_triangle;
@@ -318,7 +318,7 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
 
    if (ctx->Texture._EnabledUnits == 0
        && NEED_SECONDARY_COLOR(ctx)
-       && !ctx->FragmentProgram._Enabled) {
+       && !ctx->FragmentProgram._Active) {
       swrast->SpecLine = swrast->Line;
       swrast->Line = _swrast_add_spec_terms_line;
    }
@@ -341,7 +341,7 @@ _swrast_validate_point( GLcontext *ctx, const SWvertex *v0 )
 
    if (ctx->Texture._EnabledUnits == 0
        && NEED_SECONDARY_COLOR(ctx)
-       && !ctx->FragmentProgram._Enabled) {
+       && !ctx->FragmentProgram._Active) {
       swrast->SpecPoint = swrast->Point;
       swrast->Point = _swrast_add_spec_terms_point;
    }

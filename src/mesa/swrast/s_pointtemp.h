@@ -120,7 +120,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #endif
 #if FLAGS & TEXTURE
    span->arrayMask |= SPAN_TEXTURE;
-   if (ctx->FragmentProgram._Enabled) {
+   if (ctx->FragmentProgram._Active) {
       /* Don't divide texture s,t,r by q (use TXP to do that) */
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
          if (ctx->Texture._EnabledCoordUnits & (1 << u)) {

@@ -128,7 +128,7 @@ _swrast_span_default_texcoords( GLcontext *ctx, struct sw_span *span )
    GLuint i;
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
       const GLfloat *tc = ctx->Current.RasterTexCoords[i];
-      if (ctx->FragmentProgram._Enabled || ctx->ATIFragmentShader._Enabled) {
+      if (ctx->FragmentProgram._Active || ctx->ATIFragmentShader._Enabled) {
          COPY_4V(span->tex[i], tc);
       }
       else if (tc[3] > 0.0F) {
@@ -406,7 +406,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
             if (obj) {
                const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
                needLambda = (obj->MinFilter != obj->MagFilter)
-                  || ctx->FragmentProgram._Enabled;
+                  || ctx->FragmentProgram._Active;
                texW = img->WidthScale;
                texH = img->HeightScale;
             }
@@ -431,7 +431,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (ctx->FragmentProgram._Enabled) {
+               if (ctx->FragmentProgram._Active) {
                   /* do perspective correction but don't divide s, t, r by q */
                   const GLfloat dwdx = span->dwdx;
                   GLfloat w = span->w;
@@ -482,7 +482,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
                GLfloat r = span->tex[u][2];
                GLfloat q = span->tex[u][3];
                GLuint i;
-               if (ctx->FragmentProgram._Enabled) {
+               if (ctx->FragmentProgram._Active) {
                   /* do perspective correction but don't divide s, t, r by q */
                   const GLfloat dwdx = span->dwdx;
                   GLfloat w = span->w;
@@ -540,7 +540,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
       if (obj) {
          const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
          needLambda = (obj->MinFilter != obj->MagFilter)
-            || ctx->FragmentProgram._Enabled;
+            || ctx->FragmentProgram._Active;
          texW = (GLfloat) img->WidthScale;
          texH = (GLfloat) img->HeightScale;
       }
@@ -565,7 +565,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (ctx->FragmentProgram._Enabled) {
+         if (ctx->FragmentProgram._Active) {
             /* do perspective correction but don't divide s, t, r by q */
             const GLfloat dwdx = span->dwdx;
             GLfloat w = span->w;
@@ -616,7 +616,7 @@ interpolate_texcoords(GLcontext *ctx, struct sw_span *span)
          GLfloat r = span->tex[0][2];
          GLfloat q = span->tex[0][3];
          GLuint i;
-         if (ctx->FragmentProgram._Enabled) {
+         if (ctx->FragmentProgram._Active) {
             /* do perspective correction but don't divide s, t, r by q */
             const GLfloat dwdx = span->dwdx;
             GLfloat w = span->w;
@@ -1174,7 +1174,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          interpolate_fog(ctx, span);
 
       /* Compute fragment colors with fragment program or texture lookups */
-      if (ctx->FragmentProgram._Enabled)
+      if (ctx->FragmentProgram._Active)
          /* XXX interpolate depth values here??? */
          _swrast_exec_fragment_program( ctx, span );
       else if (ctx->ATIFragmentShader._Enabled)
@@ -1252,7 +1252,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       if (span->interpMask & SPAN_FOG)
          interpolate_fog(ctx, span);
 
-      if (ctx->FragmentProgram._Enabled)
+      if (ctx->FragmentProgram._Active)
          _swrast_exec_fragment_program( ctx, span );
       else if (ctx->ATIFragmentShader._Enabled)
          _swrast_exec_fragment_shader( ctx, span );
@@ -1262,7 +1262,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
 
    ASSERT(span->arrayMask & SPAN_RGBA);
 
-   if (!ctx->FragmentProgram._Enabled) {
+   if (!ctx->FragmentProgram._Active) {
       /* Add base and specular colors */
       if (ctx->Fog.ColorSumEnabled ||
           (ctx->Light.Enabled &&

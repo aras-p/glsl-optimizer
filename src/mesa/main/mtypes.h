@@ -1829,7 +1829,9 @@ struct gl_fragment_program_state
 {
    GLboolean Enabled;                    /* GL_VERTEX_PROGRAM_NV */
    GLboolean _Enabled;                   /* Really enabled? */
+   GLboolean _Active;                    /* Really really enabled? */
    struct fragment_program *Current;     /* ptr to currently bound program */
+   struct fragment_program *_Current;    /* ptr to currently active program */
    struct fp_machine Machine;            /* machine state */
    GLfloat Parameters[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4]; /* Env params */
 
@@ -2651,6 +2653,9 @@ struct __GLcontextRec
 
    struct fragment_program _TexEnvProgram;     /**< Texture state as fragment program */
    struct vertex_program _TnlProgram;          /**< Fixed func TNL state as vertex program */
+
+   GLboolean _MaintainTexEnvProgram;
+   GLboolean _MaintainTnlProgram;
 
    struct gl_occlusion_state Occlusion;  /**< GL_ARB_occlusion_query */
 

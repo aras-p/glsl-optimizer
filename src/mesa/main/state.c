@@ -933,6 +933,14 @@ update_program(GLcontext *ctx)
       && ctx->FragmentProgram.Current->Instructions;
    ctx->ATIFragmentShader._Enabled = ctx->ATIFragmentShader.Enabled
       && ctx->ATIFragmentShader.Current->Instructions;
+      
+   ctx->FragmentProgram._Current = ctx->FragmentProgram.Current;
+   ctx->FragmentProgram._Active = ctx->FragmentProgram._Enabled;
+
+   if (ctx->_MaintainTexEnvProgram && !ctx->FragmentProgram._Enabled) {
+      ctx->FragmentProgram._Current = &ctx->_TexEnvProgram;
+      ctx->FragmentProgram._Active = GL_TRUE;
+   }
 }
 
 
@@ -983,6 +991,11 @@ _mesa_update_state( GLcontext *ctx )
 
    if (new_state & (_NEW_ARRAY | _NEW_PROGRAM))
       update_arrays( ctx );
+
+   if (ctx->_MaintainTexEnvProgram) {
+      if (new_state & (_NEW_TEXTURE | _DD_NEW_SEPARATE_SPECULAR))
+	 _mesa_UpdateTexEnvProgram(ctx);
+   }
 
    /* ctx->_NeedEyeCoords is now up to date.
     *

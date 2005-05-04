@@ -46,6 +46,7 @@ MAIN_SOURCES = \
 	main/texcompress.c \
 	main/texcompress_s3tc.c \
 	main/texcompress_fxt1.c \
+	main/texenvprogram.c \
 	main/texformat.c \
 	main/teximage.c \
 	main/texobj.c \
