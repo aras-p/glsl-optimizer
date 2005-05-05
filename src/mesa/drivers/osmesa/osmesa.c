@@ -166,12 +166,22 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[1] = MAX2((VALUE[GCOMP]), 0.0F); \
    DST[2] = MAX2((VALUE[BCOMP]), 0.0F); \
    DST[3] = CLAMP((VALUE[ACOMP]), 0.0F, CHAN_MAXF)
+#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
+   DST[0] = MAX2((VALUE[RCOMP]), 0.0F); \
+   DST[1] = MAX2((VALUE[GCOMP]), 0.0F); \
+   DST[2] = MAX2((VALUE[BCOMP]), 0.0F); \
+   DST[3] = CHAN_MAXF
 #else
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    DST[0] = VALUE[RCOMP];  \
    DST[1] = VALUE[GCOMP];  \
    DST[2] = VALUE[BCOMP];  \
    DST[3] = VALUE[ACOMP]
+#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
+   DST[0] = VALUE[RCOMP];  \
+   DST[1] = VALUE[GCOMP];  \
+   DST[2] = VALUE[BCOMP];  \
+   DST[3] = CHAN_MAX
 #endif
 #define FETCH_PIXEL(DST, SRC) \
    DST[RCOMP] = SRC[0];  \
@@ -193,6 +203,11 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[1] = VALUE[GCOMP];  \
    DST[0] = VALUE[BCOMP];  \
    DST[3] = VALUE[ACOMP]
+#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
+   DST[2] = VALUE[RCOMP];  \
+   DST[1] = VALUE[GCOMP];  \
+   DST[0] = VALUE[BCOMP];  \
+   DST[3] = CHAN_MAX
 #define FETCH_PIXEL(DST, SRC) \
    DST[RCOMP] = SRC[2];  \
    DST[GCOMP] = SRC[1];  \
@@ -213,6 +228,11 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[2] = VALUE[GCOMP];  \
    DST[3] = VALUE[BCOMP];  \
    DST[0] = VALUE[ACOMP]
+#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
+   DST[1] = VALUE[RCOMP];  \
+   DST[2] = VALUE[GCOMP];  \
+   DST[3] = VALUE[BCOMP];  \
+   DST[0] = CHAN_MAX
 #define FETCH_PIXEL(DST, SRC) \
    DST[RCOMP] = SRC[1];  \
    DST[GCOMP] = SRC[2];  \
@@ -609,6 +629,7 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->GetRow = get_row_RGBA;
       rb->GetValues = get_values_RGBA;
       rb->PutRow = put_row_RGBA;
+      rb->PutRowRGB = put_row_rgb_RGBA;
       rb->PutMonoRow = put_mono_row_RGBA;
       rb->PutValues = put_values_RGBA;
       rb->PutMonoValues = put_mono_values_RGBA;
@@ -617,6 +638,7 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->GetRow = get_row_BGRA;
       rb->GetValues = get_values_BGRA;
       rb->PutRow = put_row_BGRA;
+      rb->PutRowRGB = put_row_rgb_BGRA;
       rb->PutMonoRow = put_mono_row_BGRA;
       rb->PutValues = put_values_BGRA;
       rb->PutMonoValues = put_mono_values_BGRA;
@@ -625,6 +647,7 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->GetRow = get_row_ARGB;
       rb->GetValues = get_values_ARGB;
       rb->PutRow = put_row_ARGB;
+      rb->PutRowRGB = put_row_rgb_ARGB;
       rb->PutMonoRow = put_mono_row_ARGB;
       rb->PutValues = put_values_ARGB;
       rb->PutMonoValues = put_mono_values_ARGB;
@@ -633,6 +656,7 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->GetRow = get_row_RGB;
       rb->GetValues = get_values_RGB;
       rb->PutRow = put_row_RGB;
+      rb->PutRowRGB = put_row_rgb_RGB;
       rb->PutMonoRow = put_mono_row_RGB;
       rb->PutValues = put_values_RGB;
       rb->PutMonoValues = put_mono_values_RGB;
@@ -641,6 +665,7 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->GetRow = get_row_BGR;
       rb->GetValues = get_values_BGR;
       rb->PutRow = put_row_BGR;
+      rb->PutRowRGB = put_row_rgb_BGR;
       rb->PutMonoRow = put_mono_row_BGR;
       rb->PutValues = put_values_BGR;
       rb->PutMonoValues = put_mono_values_BGR;
@@ -650,6 +675,7 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->GetRow = get_row_RGB_565;
       rb->GetValues = get_values_RGB_565;
       rb->PutRow = put_row_RGB_565;
+      rb->PutRow = put_row_rgb_RGB_565;
       rb->PutMonoRow = put_mono_row_RGB_565;
       rb->PutValues = put_values_RGB_565;
       rb->PutMonoValues = put_mono_values_RGB_565;

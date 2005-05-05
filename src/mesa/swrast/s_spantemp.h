@@ -124,32 +124,33 @@ NAME(put_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
    }
 }
 
-#if 00
+#if (FORMAT == GL_RGBA) || (FORMAT == GL_RGBA8)
 static void
-NAME(write_rgb_span)( const GLcontext *ctx, struct gl_renderbuffer *rb,
-                      GLuint count, GLint x, GLint y,
-                      CONST GLchan rgb[][3], const GLubyte mask[] )
+NAME(put_row_rgb)( GLcontext *ctx, struct gl_renderbuffer *rb,
+                   GLuint count, GLint x, GLint y,
+                   const void *values, const GLubyte mask[] )
 {
 #ifdef SPAN_VARS
    SPAN_VARS
 #endif
+#if FORMAT == GL_RGBA
+   const GLchan (*src)[3] = (const GLchan (*)[3]) values;
+#elif FORMAT == GL_RGBA8
+   const GLubyte (*src)[3] = (const GLubyte (*)[3]) values;
+#else
+#error bad format
+#endif
    GLuint i;
    INIT_PIXEL_PTR(pixel, x, y);
-   if (mask) {
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-            STORE_RGB_PIXEL(pixel, x+i, y, rgb[i][RCOMP], rgb[i][GCOMP],
-                            rgb[i][BCOMP]);
-         }
-         INC_PIXEL_PTR(pixel);
+   for (i = 0; i < count; i++) {
+      if (!mask || mask[i]) {
+#ifdef STORE_PIXEL_RGB
+         STORE_PIXEL_RGB(pixel, x + i, y, src[i]);
+#else
+         STORE_PIXEL(pixel, x + i, y, src[i]);
+#endif
       }
-   }
-   else {
-      for (i = 0; i < count; i++) {
-         STORE_RGB_PIXEL(pixel, x+i, y, rgb[i][RCOMP], rgb[i][GCOMP],
-                         rgb[i][BCOMP]);
-         INC_PIXEL_PTR(pixel);
-      }
+      INC_PIXEL_PTR(pixel);
    }
 }
 #endif
@@ -245,5 +246,6 @@ NAME(put_mono_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
 #undef INIT_PIXEL_PTR
 #undef INC_PIXEL_PTR
 #undef STORE_PIXEL
+#undef STORE_PIXEL_RGB
 #undef FETCH_PIXEL
 #undef FORMAT

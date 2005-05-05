@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -188,6 +188,7 @@ init_core_functions( struct dd_function_table *functions )
 
 /* 24-bit BGR */
 #define NAME(PREFIX) PREFIX##_B8G8R8
+#define FORMAT GL_RGBA8
 #define SPAN_VARS \
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable; \
@@ -195,18 +196,22 @@ init_core_functions( struct dd_function_table *functions )
 #define INIT_PIXEL_PTR(P, X, Y) \
    GLubyte *P = (GLubyte *)fbdrawable->currentBuffer + (Y) * fbdrawable->currentPitch + (X) * 3
 #define INC_PIXEL_PTR(P) P += 3
-#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
-   P[0] = B;  P[1] = G;  P[2] = R
-#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
-   P[0] = B;  P[1] = G;  P[2] = R
-#define FETCH_RGBA_PIXEL(R, G, B, A, P) \
-   R = P[2];  G = P[1];  B = P[0];  A = CHAN_MAX
+#define STORE_PIXEL(DST, X, Y, VALUE) \
+   DST[0] = VALUE[BCOMP]; \
+   DST[1] = VALUE[GCOMP]; \
+   DST[2] = VALUE[RCOMP]
+#define FETCH_PIXEL(DST, SRC) \
+   DST[RCOMP] = SRC[2]; \
+   DST[GCOMP] = SRC[1]; \
+   DST[BCOMP] = SRC[0]; \
+   DST[ACOMP] = 0xff
 
 #include "swrast/s_spantemp.h"
 
 
 /* 32-bit BGRA */
 #define NAME(PREFIX) PREFIX##_B8G8R8A8
+#define FORMAT GL_RGBA8
 #define SPAN_VARS \
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable; \
@@ -214,18 +219,28 @@ init_core_functions( struct dd_function_table *functions )
 #define INIT_PIXEL_PTR(P, X, Y) \
    GLubyte *P = (GLubyte *)fbdrawable->currentBuffer + (Y) * fbdrawable->currentPitch + (X) * 4;
 #define INC_PIXEL_PTR(P) P += 4
-#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
-   P[0] = B;  P[1] = G;  P[2] = R;  P[3] = 255
-#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
-   P[0] = B;  P[1] = G;  P[2] = R;  P[3] = A
-#define FETCH_RGBA_PIXEL(R, G, B, A, P) \
-   R = P[2];  G = P[1];  B = P[0];  A = P[3]
+#define STORE_PIXEL(DST, X, Y, VALUE) \
+   DST[0] = VALUE[BCOMP]; \
+   DST[1] = VALUE[GCOMP]; \
+   DST[2] = VALUE[RCOMP]; \
+   DST[3] = VALUE[ACOMP]
+#define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
+   DST[0] = VALUE[BCOMP]; \
+   DST[1] = VALUE[GCOMP]; \
+   DST[2] = VALUE[RCOMP]; \
+   DST[3] = 0xff
+#define FETCH_PIXEL(DST, SRC) \
+   DST[RCOMP] = SRC[2]; \
+   DST[GCOMP] = SRC[1]; \
+   DST[BCOMP] = SRC[0]; \
+   DST[ACOMP] = SRC[3]
 
 #include "swrast/s_spantemp.h"
 
 
 /* 16-bit BGR (XXX implement dithering someday) */
 #define NAME(PREFIX) PREFIX##_B5G6R5
+#define FORMAT GL_RGBA8
 #define SPAN_VARS \
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable; \
@@ -233,21 +248,20 @@ init_core_functions( struct dd_function_table *functions )
 #define INIT_PIXEL_PTR(P, X, Y) \
    GLushort *P = (GLushort *) ((char *)fbdrawable->currentBuffer + (Y) * fbdrawable->currentPitch + (X) * 2)
 #define INC_PIXEL_PTR(P) P += 1
-#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
-   *P = ( (((R) & 0xf8) << 8) | (((G) & 0xfc) << 3) | ((B) >> 3) )
-#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
-   *P = ( (((R) & 0xf8) << 8) | (((G) & 0xfc) << 3) | ((B) >> 3) )
-#define FETCH_RGBA_PIXEL(R, G, B, A, P) \
-   R = ( (((*P) >> 8) & 0xf8) | (((*P) >> 11) & 0x7) ); \
-   G = ( (((*P) >> 3) & 0xfc) | (((*P) >>  5) & 0x3) ); \
-   B = ( (((*P) << 3) & 0xf8) | (((*P)      ) & 0x7) ); \
-   A = CHAN_MAX
+#define STORE_PIXEL(DST, X, Y, VALUE) \
+   DST[0] = ( (((VALUE[RCOMP]) & 0xf8) << 8) | (((VALUE[GCOMP]) & 0xfc) << 3) | ((VALUE[BCOMP]) >> 3) )
+#define FETCH_PIXEL(DST, SRC) \
+   DST[RCOMP] = ( (((SRC[0]) >> 8) & 0xf8) | (((SRC[0]) >> 11) & 0x7) ); \
+   DST[GCOMP] = ( (((SRC[0]) >> 3) & 0xfc) | (((SRC[0]) >>  5) & 0x3) ); \
+   DST[BCOMP] = ( (((SRC[0]) << 3) & 0xf8) | (((SRC[0])      ) & 0x7) ); \
+   DST[ACOMP] = 0xff
 
 #include "swrast/s_spantemp.h"
 
 
 /* 15-bit BGR (XXX implement dithering someday) */
 #define NAME(PREFIX) PREFIX##_B5G5R5
+#define FORMAT GL_RGBA8
 #define SPAN_VARS \
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable; \
@@ -255,21 +269,20 @@ init_core_functions( struct dd_function_table *functions )
 #define INIT_PIXEL_PTR(P, X, Y) \
    GLushort *P = (GLushort *) ((char *)fbdrawable->currentBuffer + (Y) * fbdrawable->currentPitch + (X) * 2)
 #define INC_PIXEL_PTR(P) P += 1
-#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
-   *P = ( (((R) & 0xf8) << 7) | (((G) & 0xf8) << 2) | ((B) >> 3) )
-#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
-   *P = ( (((R) & 0xf8) << 7) | (((G) & 0xf8) << 2) | ((B) >> 3) )
-#define FETCH_RGBA_PIXEL(R, G, B, A, P) \
-   R = ( (((*P) >> 7) & 0xf8) | (((*P) >> 10) & 0x7) ); \
-   G = ( (((*P) >> 2) & 0xf8) | (((*P) >>  5) & 0x7) ); \
-   B = ( (((*P) << 3) & 0xf8) | (((*P)      ) & 0x7) ); \
-   A = CHAN_MAX
+#define STORE_PIXEL(DST, X, Y, VALUE) \
+   DST[0] = ( (((VALUE[RCOMP]) & 0xf8) << 7) | (((VALUE[GCOMP]) & 0xf8) << 2) | ((VALUE[BCOMP]) >> 3) )
+#define FETCH_PIXEL(DST, SRC) \
+   DST[RCOMP] = ( (((SRC[0]) >> 7) & 0xf8) | (((SRC[0]) >> 10) & 0x7) ); \
+   DST[GCOMP] = ( (((SRC[0]) >> 2) & 0xf8) | (((SRC[0]) >>  5) & 0x7) ); \
+   DST[BCOMP] = ( (((SRC[0]) << 3) & 0xf8) | (((SRC[0])      ) & 0x7) ); \
+   DST[ACOMP] = 0xff
 
 #include "swrast/s_spantemp.h"
 
 
 /* 8-bit color index */
 #define NAME(PREFIX) PREFIX##_CI8
+#define FORMAT GL_COLOR_INDEX8_EXT
 #define SPAN_VARS \
    const fbContextPtr fbdevctx = FB_CONTEXT(ctx); \
    __DRIdrawablePrivate *dPriv = fbdevctx->dri.drawable; \
@@ -277,10 +290,10 @@ init_core_functions( struct dd_function_table *functions )
 #define INIT_PIXEL_PTR(P, X, Y) \
    GLubyte *P = (GLubyte *)fbdrawable->currentBuffer + (Y) * fbdrawable->currentPitch + (X)
 #define INC_PIXEL_PTR(P) P += 1
-#define STORE_CI_PIXEL(P, CI) \
-   P[0] = CI
-#define FETCH_CI_PIXEL(CI, P) \
-   CI = P[0]
+#define STORE_PIXEL(DST, X, Y, VALUE) \
+   *DST = VALUE[0]
+#define FETCH_PIXEL(DST, SRC) \
+   DST = SRC[0]
 
 #include "swrast/s_spantemp.h"
 
@@ -292,50 +305,50 @@ fbSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
    ASSERT(drb->Base.InternalFormat == GL_RGBA);
    if (drb->Base.InternalFormat == GL_RGBA) {
       if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         drb->Base.GetRow = read_rgba_span_B5G6R5;
-         drb->Base.GetValues = read_rgba_pixels_B5G6R5;
-         drb->Base.PutRow = write_rgba_span_B5G6R5;
-         drb->Base.PutMonoRow = write_monorgba_span_B5G6R5;
-         drb->Base.PutRowRGB = write_rgb_span_B5G6R5;
-         drb->Base.PutValues = write_rgba_pixels_B5G6R5;
-         drb->Base.PutMonoValues = write_monorgba_pixels_B5G6R5;
+         drb->Base.GetRow = get_row_B5G6R5;
+         drb->Base.GetValues = get_values_B5G6R5;
+         drb->Base.PutRow = put_row_B5G6R5;
+         drb->Base.PutMonoRow = put_mono_row_B5G6R5;
+         drb->Base.PutRowRGB = put_row_rgb_B5G6R5;
+         drb->Base.PutValues = put_values_B5G6R5;
+         drb->Base.PutMonoValues = put_mono_values_B5G6R5;
       }
       else if (vis->redBits == 5 && vis->greenBits == 5 && vis->blueBits == 5) {
-         drb->Base.GetRow = read_rgba_span_B5G5R5;
-         drb->Base.GetValues = read_rgba_pixels_B5G5R5;
-         drb->Base.PutRow = write_rgba_span_B5G5R5;
-         drb->Base.PutMonoRow = write_monorgba_span_B5G5R5;
-         drb->Base.PutRowRGB = write_rgb_span_B5G5R5;
-         drb->Base.PutValues = write_rgba_pixels_B5G5R5;
-         drb->Base.PutMonoValues = write_monorgba_pixels_B5G5R5;
+         drb->Base.GetRow = get_row_B5G5R5;
+         drb->Base.GetValues = get_values_B5G5R5;
+         drb->Base.PutRow = put_row_B5G5R5;
+         drb->Base.PutMonoRow = put_mono_row_B5G5R5;
+         drb->Base.PutRowRGB = put_row_rgb_B5G5R5;
+         drb->Base.PutValues = put_values_B5G5R5;
+         drb->Base.PutMonoValues = put_mono_values_B5G5R5;
       }
       else if (vis->redBits == 8 && vis->greenBits == 8 && vis->blueBits == 8
                && vis->alphaBits == 8) {
-         drb->Base.GetRow = read_rgba_span_B8G8R8A8;
-         drb->Base.GetValues = read_rgba_pixels_B8G8R8A8;
-         drb->Base.PutRow = write_rgba_span_B8G8R8A8;
-         drb->Base.PutMonoRow = write_monorgba_span_B8G8R8A8;
-         drb->Base.PutRowRGB = write_rgb_span_B8G8R8A8;
-         drb->Base.PutValues = write_rgba_pixels_B8G8R8A8;
-         drb->Base.PutMonoValues = write_monorgba_pixels_B8G8R8A8;
+         drb->Base.GetRow = get_row_B8G8R8A8;
+         drb->Base.GetValues = get_values_B8G8R8A8;
+         drb->Base.PutRow = put_row_B8G8R8A8;
+         drb->Base.PutMonoRow = put_mono_row_B8G8R8A8;
+         drb->Base.PutRowRGB = put_row_rgb_B8G8R8A8;
+         drb->Base.PutValues = put_values_B8G8R8A8;
+         drb->Base.PutMonoValues = put_mono_values_B8G8R8A8;
       }
       else if (vis->redBits == 8 && vis->greenBits == 8 && vis->blueBits == 8
                && vis->alphaBits == 0) {
-         drb->Base.GetRow = read_rgba_span_B8G8R8;
-         drb->Base.GetValues = read_rgba_pixels_B8G8R8;
-         drb->Base.PutRow = write_rgba_span_B8G8R8;
-         drb->Base.PutMonoRow = write_monorgba_span_B8G8R8;
-         drb->Base.PutRowRGB = write_rgb_span_B8G8R8;
-         drb->Base.PutValues = write_rgba_pixels_B8G8R8;
-         drb->Base.PutMonoValues = write_monorgba_pixels_B8G8R8;
+         drb->Base.GetRow = get_row_B8G8R8;
+         drb->Base.GetValues = get_values_B8G8R8;
+         drb->Base.PutRow = put_row_B8G8R8;
+         drb->Base.PutMonoRow = put_mono_row_B8G8R8;
+         drb->Base.PutRowRGB = put_row_rgb_B8G8R8;
+         drb->Base.PutValues = put_values_B8G8R8;
+         drb->Base.PutMonoValues = put_mono_values_B8G8R8;
       }
       else if (vis->indexBits == 8) {
-         drb->Base.GetRow = read_index_span_CI8;
-         drb->Base.GetValues = read_index_pixels_CI8;
-         drb->Base.PutRow = write_index_span_CI8;
-         drb->Base.PutMonoRow = write_monoindex_span_CI8;
-         drb->Base.PutValues = write_index_pixels_CI8;
-         drb->Base.PutMonoValues = write_monoindex_pixels_CI8;
+         drb->Base.GetRow = get_row_CI8;
+         drb->Base.GetValues = get_values_CI8;
+         drb->Base.PutRow = put_row_CI8;
+         drb->Base.PutMonoRow = put_mono_row_CI8;
+         drb->Base.PutValues = put_values_CI8;
+         drb->Base.PutMonoValues = put_mono_values_CI8;
       }
    }
    else {
