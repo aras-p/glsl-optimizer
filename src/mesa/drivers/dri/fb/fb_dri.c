@@ -299,7 +299,7 @@ init_core_functions( struct dd_function_table *functions )
 
 
 
-void
+static void
 fbSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
    ASSERT(drb->Base.InternalFormat == GL_RGBA);

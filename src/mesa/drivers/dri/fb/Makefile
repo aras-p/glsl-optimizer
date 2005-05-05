@@ -13,6 +13,7 @@ COMMON_SOURCES = \
         ../common/vblank.c \
 	../common/dri_util.c \
 	../common/xmlconfig.c \
+	../common/drirenderbuffer.c \
 	../common/glcontextmodes.c
 
 DRIVER_SOURCES = \
