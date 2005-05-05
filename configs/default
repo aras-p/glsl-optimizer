@@ -56,6 +56,7 @@ INSTALL_PREFIX = /usr/local
 SRC_DIRS = mesa glu glut/glx glw
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
+# Which subdirs under $(TOP)/progs/ to enter:
 PROGRAM_DIRS = demos redbook samples xdemos
 
 
