@@ -1308,7 +1308,7 @@ Mesa Version History
 	- glReadPixels from a clipped front color buffer didn't always work
 	- glTexImage didn't accept GL_RED/GREEN/BLUE as the format
 	- Attempting queries/accesses of VBO 0 weren't detected as errors
-	- paletted textures failed if the palette had fewer that 256 entries
+	- paletted textures failed if the palette had fewer than 256 entries
     Changes:
 	- fixed a bunch of compiler warnings found with gcc 3.4
 	- bug reports should to go bugzilla.freedesktop.org
