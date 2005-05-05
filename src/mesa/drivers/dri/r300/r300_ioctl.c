@@ -184,7 +184,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	R300_STATECHANGE(r300, pvs);
 	r300->hw.pvs.cmd[R300_PVS_CNTL_1] =
 		(0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
-		(0 << R300_PVS_CNTL_1_UNKNOWN_SHIFT) |
+		(0 << R300_PVS_CNTL_1_POS_END_SHIFT) |
 		(1 << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
 	r300->hw.pvs.cmd[R300_PVS_CNTL_2] = 0; /* no parameters */
 	r300->hw.pvs.cmd[R300_PVS_CNTL_3] =

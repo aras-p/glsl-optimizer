@@ -681,7 +681,7 @@ static void r300PointSize(GLcontext * ctx, GLfloat size)
 	size = ctx->Point._Size;
 
 	R300_STATECHANGE(r300, ps);
-	r300->hw.ps.cmd[R300_PS_POINTSIZE] =
+	r300->hw.ps.cmd[R300_PS_POINTSIZE] = 
 		((int)(size * 6) << R300_POINTSIZE_X_SHIFT) |
 		((int)(size * 6) << R300_POINTSIZE_Y_SHIFT);
 
@@ -890,13 +890,13 @@ static void r300ShadeModel(GLcontext * ctx, GLenum mode)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	
-	R300_STATECHANGE(rmesa, sm);
+	R300_STATECHANGE(rmesa, unk4274);
 	switch (mode) {
 	case GL_FLAT:
-		rmesa->hw.sm.cmd[R300_SM] = R300_RE_SHADE_MODEL_FLAT;
+		rmesa->hw.unk4274.cmd[2] = R300_RE_SHADE_MODEL_FLAT;
 		break;
 	case GL_SMOOTH:
-		rmesa->hw.sm.cmd[R300_SM] = R300_RE_SHADE_MODEL_SMOOTH;
+		rmesa->hw.unk4274.cmd[2] = R300_RE_SHADE_MODEL_SMOOTH;
 		break;
 	default:
 		return;
@@ -1770,7 +1770,7 @@ void r300SetupVertexShader(r300ContextPtr rmesa)
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1]=(rmesa->state.vertex_shader.program_start << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
-		| (rmesa->state.vertex_shader.unknown_ptr1 << R300_PVS_CNTL_1_UNKNOWN_SHIFT)
+		| (rmesa->state.vertex_shader.unknown_ptr1 << R300_PVS_CNTL_1_POS_END_SHIFT)
 		| (rmesa->state.vertex_shader.program_end << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2]=(rmesa->state.vertex_shader.param_offset << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
 		| (rmesa->state.vertex_shader.param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
@@ -1815,7 +1815,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1]=(0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
-		| (inst_count/*pos_end*/ << R300_PVS_CNTL_1_UNKNOWN_SHIFT)
+		| (inst_count/*pos_end*/ << R300_PVS_CNTL_1_POS_END_SHIFT)
 		| (inst_count << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2]=(0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
 		| (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
@@ -2115,8 +2115,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300DepthMask(ctx, ctx->Depth.Mask);
 	r300DepthFunc(ctx, ctx->Depth.Func);
 	
-	r300ShadeModel(ctx, ctx->Light.ShadeModel);
-	
 	/* stencil */
 	r300Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
 	r300StencilMask(ctx, ctx->Stencil.WriteMask[0]);
@@ -2200,7 +2198,7 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.gb_enable.cmd[1] = R300_GB_POINT_STUFF_ENABLE
 		| R300_GB_LINE_STUFF_ENABLE
-		| R300_GB_TRIANGLE_STUFF_ENABLE;
+		| R300_GB_TRIANGLE_STUFF_ENABLE /*| R300_GB_UNK30*/;
 
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_0] = 0x66666666;
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_1] = 0x06666666;
@@ -2234,7 +2232,7 @@ void r300ResetHwState(r300ContextPtr r300)
 					     (6 << R300_POINTSIZE_Y_SHIFT);
 #endif
 
-	r300->hw.unk4230.cmd[1] = 0x01800000;
+	r300->hw.unk4230.cmd[1] = 0x01800000;//18000006;
 	r300->hw.unk4230.cmd[2] = 0x00020006;
 	r300->hw.unk4230.cmd[3] = r300PackFloat32(1.0 / 192.0);
 
@@ -2249,7 +2247,7 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4260.cmd[3] = r300PackFloat32(1.0);
 
 	r300->hw.unk4274.cmd[1] = 0x00000002;
-	r300->hw.unk4274.cmd[2] = 0x0003AAAA;
+	r300ShadeModel(ctx, ctx->Light.ShadeModel);
 	r300->hw.unk4274.cmd[3] = 0x00000000;
 	r300->hw.unk4274.cmd[4] = 0x00000000;
 

@@ -232,18 +232,14 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 // experiments so far have shown that both *must* point to an instruction
 // inside the vertex program, otherwise the GPU locks up.
 // fglrx usually sets CNTL_3_UNKNOWN to the end of the program and
-// CNTL_1_UNKNOWN somewhere in the middle, but the criteria are not clear. 
-
-// Some tests would indicate that CNTL_3_UNKNOWN is set to program len - 
-// number of "temp to result instrutions". I havent yet seen a case where 
-// "temp to result instrutions" have not been moved at the end of program.
-// However tests have shown that fgls vertex program implementation is
-// not perfect and im having hard-time trusting
-// it at the time being. -aet
+// CNTL_1_UNKNOWN points to instruction where last write to position takes place. 
+// Most likely this is used to ignore rest of the program in cases where group of verts arent visible.
+// For some reason this "section" is sometimes accepted other instruction that have
+// no relationship with position calculations. 
 */
 #define R300_VAP_PVS_CNTL_1                 0x22D0
 #       define R300_PVS_CNTL_1_PROGRAM_START_SHIFT   0
-#       define R300_PVS_CNTL_1_UNKNOWN_SHIFT         10
+#       define R300_PVS_CNTL_1_POS_END_SHIFT         10
 #       define R300_PVS_CNTL_1_PROGRAM_END_SHIFT     20
 /* Addresses are relative the the vertex program parameters area. */
 #define R300_VAP_PVS_CNTL_2                 0x22D4
@@ -292,11 +288,15 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #	define R300_GB_VAP_RASTER_VTX_FMT_1__TEX_6_COMP_CNT_SHIFT	18
 #	define R300_GB_VAP_RASTER_VTX_FMT_1__TEX_7_COMP_CNT_SHIFT	21
 
+/* UNK30 seems to enables point to quad transformation on textures
+   (or something closely related to that).
+   This bit is rather fatal at the time being due to lackings at pixel shader side */
 #define R300_GB_ENABLE	0x4008
 #	define R300_GB_POINT_STUFF_ENABLE	(1<<0)
 #	define R300_GB_LINE_STUFF_ENABLE	(1<<1)
 #	define R300_GB_TRIANGLE_STUFF_ENABLE	(1<<2)
 #	define R300_GB_STENCIL_AUTO_ENABLE	(1<<4)
+#	define R300_GB_UNK30			(1<<30)
 	/* each of the following is 2 bits wide */
 #define R300_GB_TEX_REPLICATE	0
 #define R300_GB_TEX_ST		1
