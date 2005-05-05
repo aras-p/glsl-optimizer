@@ -387,8 +387,8 @@ static void TAG(ReadRGBASpan)( GLcontext *ctx,
     ((SPANTMP_PIXEL_FMT == GL_RGB) && \
 	(SPANTMP_PIXEL_TYPE == GL_UNSIGNED_SHORT_5_6_5)))
 static void TAG2(ReadRGBASpan,_MMX)( GLcontext *ctx,
-                                     GLuint n, GLint x, GLint y,
-                                     GLubyte rgba[][4])
+                                     struct gl_renderbuffer *rb,
+                                     GLuint n, GLint x, GLint y, void *values)
 {
 #ifndef USE_INNER_EMMS
    /* The EMMS instruction is directly in-lined here because using GCC's
