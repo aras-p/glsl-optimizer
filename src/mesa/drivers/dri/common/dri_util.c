@@ -1290,6 +1290,7 @@ __driUtilCreateNewScreen(__DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
     psp->fbHeight = frame_buffer->height;
     psp->devPrivSize = frame_buffer->dev_priv_size;
     psp->pDevPriv = frame_buffer->dev_priv;
+    psp->fbBPP = psp->fbStride * 8 / frame_buffer->width;
 
     psp->fd = fd;
 

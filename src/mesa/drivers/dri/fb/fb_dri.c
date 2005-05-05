@@ -78,18 +78,6 @@ typedef struct {
    int currentPitch;
 } fbDrawable, *fbDrawablePtr;
 
-typedef struct {
-   unsigned long hFrameBuffer;
-   int fbOrigin;
-   int fbSize;
-   int fbStride;
-   int fbWidth;
-   int fbHeight;
-   int bpp;
-   int drmFD;
-   drmAddress fbMap;
-} fbDRI, *fbDRIPtr;
-
 #define FB_CONTEXT(ctx)		((fbContextPtr)(ctx->DriverCtx))
 
 #ifdef USE_NEW_INTERFACE
@@ -363,41 +351,13 @@ fbSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 static GLboolean
 fbInitDriver( __DRIscreenPrivate *sPriv )
 {
-   fbDRIPtr dri_priv = (fbDRIPtr)sPriv->pDevPriv;
-   fbDRIPtr priv;
-   int drmFD;
-   
-   drmFD = drmOpen("radeon", NULL );
-   if (drmFD < 0) {
-      fprintf(stderr, "[drm] drmOpen failed\n");
-      return GL_FALSE;
-   }
-   
-   priv = _mesa_malloc(sizeof(*priv));
-   if (!priv)
-      return GL_FALSE;
-   
-   *priv = *dri_priv;
-
-   priv->drmFD = drmFD;
-   if (drmMap(drmFD, priv->hFrameBuffer, priv->fbSize, &priv->fbMap) < 0) {
-      fprintf(stderr, "[drm] drmMap framebuffer failed\n");
-      free(priv);
-      return GL_FALSE;
-   }
-   
-   sPriv->private = priv;
+   sPriv->private = NULL;
    return GL_TRUE;
 }
 
 static void
 fbDestroyScreen( __DRIscreenPrivate *sPriv )
 {
-   fbDRIPtr priv = (fbDRIPtr)sPriv->private;
-   
-   drmUnmap(priv->fbMap, priv->fbSize);
-   drmClose(priv->drmFD);
-   _mesa_free(priv);
 }
 
 /* Create the device specific context.
@@ -504,7 +464,6 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 		const __GLcontextModes *mesaVis,
 		GLboolean isPixmap )
 {
-   fbDRIPtr spriv = (fbDRIPtr)driScrnPriv->private;
    fbDrawablePtr fbdrawable;
    
    if (isPixmap) {
@@ -541,18 +500,18 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       /* XXX double-check these parameters (bpp vs cpp, etc) */
       {
-         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, spriv->bpp,
-                                                   spriv->fbOrigin,
-                                                   spriv->fbStride);
+         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, driScrnPriv->fbBPP,
+               driScrnPriv->fbOrigin,
+               driScrnPriv->fbStride);
          fbSetSpanFunctions(drb, mesaVis);
          _mesa_add_renderbuffer(fbdrawable->mesa_framebuffer,
                                 BUFFER_FRONT_LEFT, &drb->Base);
       }
       if (mesaVis->doubleBufferMode) {
          /* XXX what are the correct origin/stride values? */
-         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, spriv->bpp,
-                                                   spriv->fbOrigin,
-                                                   spriv->fbStride);
+         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, driScrnPriv->fbBPP,
+               driScrnPriv->fbOrigin,
+               driScrnPriv->fbStride);
          fbSetSpanFunctions(drb, mesaVis);
          _mesa_add_renderbuffer(fbdrawable->mesa_framebuffer,
                                 BUFFER_BACK_LEFT, &drb->Base);
@@ -570,8 +529,8 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       driDrawPriv->driverPrivate = fbdrawable;
 
-      fbdrawable->frontBuffer = fbdrawable->currentBuffer = spriv->fbMap;
-      fbdrawable->currentPitch = spriv->fbWidth;
+      fbdrawable->frontBuffer = fbdrawable->currentBuffer = driScrnPriv->pFB;
+      fbdrawable->currentPitch = driScrnPriv->fbStride;
       
       /* Replace the framebuffer back buffer with a malloc'ed one --
        * big speedup.
@@ -692,8 +651,6 @@ __driValidateMode(const DRIDriverContext *ctx )
 static int
 __driInitFBDev( struct DRIDriverContextRec *ctx )
 {
-   fbDRIPtr pfbDRI;
-   
    /* Note that drmOpen will try to load the kernel module, if needed. */
    /* we need a fbdev drm driver - it will only track maps */
    ctx->drmFD = drmOpen("radeon", NULL );
@@ -749,18 +706,6 @@ __driInitFBDev( struct DRIDriverContextRec *ctx )
    fprintf(stderr, "[drm] framebuffer handle = 0x%08lx\n",
            ctx->shared.hFrameBuffer);
 
-   pfbDRI = (fbDRIPtr)malloc(sizeof(*pfbDRI));
-   pfbDRI->hFrameBuffer = ctx->shared.hFrameBuffer;
-   pfbDRI->fbOrigin = ctx->shared.fbOrigin;
-   pfbDRI->fbSize = ctx->shared.fbSize;
-   pfbDRI->fbStride = ctx->shared.fbStride;
-   pfbDRI->fbWidth = ctx->shared.virtualWidth;
-   pfbDRI->fbHeight = ctx->shared.virtualHeight;
-   pfbDRI->bpp = ctx->bpp;
-   
-   ctx->driverClientMsg = pfbDRI;
-   ctx->driverClientMsgSize = sizeof(*pfbDRI);
-   
    return 1;
 }
 
@@ -900,14 +845,11 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
              create_context_modes = (PFNGLXCREATECONTEXTMODES)
                    glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
              if ( create_context_modes != NULL ) {
-#if 0                
-                fbDRIPtr dri_priv = (fbDRIPtr) psp->pDevPriv;
-                *driver_modes = fbFillInModes( dri_priv->bpp,
-                      (dri_priv->bpp == 16) ? 16 : 24,
-                      (dri_priv->bpp == 16) ? 0  : 8,
-                      (dri_priv->backOffset != dri_priv->depthOffset) );
-#endif
-                *driver_modes = fbFillInModes( 24, 24, 8, 0);
+                
+                *driver_modes = fbFillInModes( psp->fbBPP,
+                      (psp->fbBPP == 16) ? 16 : 24,
+                      (psp->fbBPP == 16) ? 0  : 8,
+                      1);
              }
           }
 
