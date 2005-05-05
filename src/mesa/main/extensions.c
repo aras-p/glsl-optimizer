@@ -31,7 +31,7 @@
 #include "mtypes.h"
 
 
-#define F(x) (int)(unsigned long)&(((struct gl_extensions *)0)->x)
+#define F(x) (int)(uintptr_t)&(((struct gl_extensions *)0)->x)
 #define ON GL_TRUE
 #define OFF GL_FALSE
 
@@ -489,7 +489,7 @@ _mesa_make_extension_string( GLcontext *ctx )
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
       if (!default_extensions[i].flag_offset ||
           *(base + default_extensions[i].flag_offset)) {
-         extStrLen += _mesa_strlen(default_extensions[i].name) + 1;
+         extStrLen += (GLuint)_mesa_strlen(default_extensions[i].name) + 1;
       }
    }
    s = (GLubyte *) _mesa_malloc(extStrLen);
@@ -499,7 +499,7 @@ _mesa_make_extension_string( GLcontext *ctx )
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
       if (!default_extensions[i].flag_offset ||
           *(base + default_extensions[i].flag_offset)) {
-         GLuint len = _mesa_strlen(default_extensions[i].name);
+         GLuint len = (GLuint)_mesa_strlen(default_extensions[i].name);
          _mesa_memcpy(s + extStrLen, default_extensions[i].name, len);
          extStrLen += len;
          s[extStrLen] = (GLubyte) ' ';

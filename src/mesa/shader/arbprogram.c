@@ -509,7 +509,7 @@ _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
 
    switch (pname) {
       case GL_PROGRAM_LENGTH_ARB:
-         *params = prog->String ? _mesa_strlen((char *) prog->String) : 0;
+         *params = prog->String ? (GLint)_mesa_strlen((char *) prog->String) : 0;
          break;
       case GL_PROGRAM_FORMAT_ARB:
          *params = prog->Format;

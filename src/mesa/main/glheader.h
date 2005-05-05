@@ -76,6 +76,13 @@
 #endif
 
 
+/* Get typedefs for uintptr_t and friends */
+#if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
+#include <BaseTsd.h>
+#else
+#include <inttypes.h>
+#endif
+
 #if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
 #  define __WIN32__
 #  define finite _finite
@@ -117,7 +124,7 @@
  */
 /* compatibility guard so we don't need to change client code */
 #if defined(_WIN32) && !defined(_WINDEF_) && !defined(_WINDEF_H) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
-typedef int (GLAPIENTRY *PROC)();
+typedef INT_PTR (GLAPIENTRY *PROC)();
 typedef unsigned long COLORREF;
 #endif
 

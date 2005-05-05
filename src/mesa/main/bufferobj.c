@@ -449,11 +449,11 @@ _mesa_validate_pbo_access(GLuint dimensions,
                               format, type, depth-1, height-1, width);
 
 
-   if ((const GLubyte *) start > (const GLubyte *) pack->BufferObj->Size) {
+   if ((const GLubyte *) start > (const GLubyte *)(uintptr_t) pack->BufferObj->Size) {
       /* This will catch negative values / wrap-around */
       return GL_FALSE;
    }
-   if ((const GLubyte *) end > (const GLubyte *) pack->BufferObj->Size) {
+   if ((const GLubyte *) end > (const GLubyte *)(uintptr_t) pack->BufferObj->Size) {
       /* Image read goes beyond end of buffer */
       return GL_FALSE;
    }

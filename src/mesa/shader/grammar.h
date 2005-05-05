@@ -36,13 +36,13 @@ extern "C" {
 #endif
 
 void grammar_alloc_free (void *);
-void *grammar_alloc_malloc (unsigned int);
-void *grammar_alloc_realloc (void *, unsigned int, unsigned int);
+void *grammar_alloc_malloc (size_t);
+void *grammar_alloc_realloc (void *, size_t, size_t);
 void *grammar_memory_copy (void *, const void *, unsigned int);
 int grammar_string_compare (const byte *, const byte *);
-int grammar_string_compare_n (const byte *, const byte *, unsigned int);
+int grammar_string_compare_n (const byte *, const byte *, size_t);
 byte *grammar_string_copy (byte *, const byte *);
-byte *grammar_string_copy_n (byte *, const byte *, unsigned int);
+byte *grammar_string_copy_n (byte *, const byte *, size_t);
 byte *grammar_string_duplicate (const byte *);
 unsigned int grammar_string_length (const byte *);
 

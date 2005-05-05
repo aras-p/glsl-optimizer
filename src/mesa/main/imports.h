@@ -100,7 +100,7 @@ extern "C" {
  * this macro.
  * Both pointers/offsets are expressed in bytes.
  */
-#define ADD_POINTERS(A, B)  ( (GLubyte *) (A) + (unsigned long) (B) )
+#define ADD_POINTERS(A, B)  ( (GLubyte *) (A) + (uintptr_t) (B) )
 
 
 /**********************************************************************/

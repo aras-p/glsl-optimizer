@@ -233,7 +233,7 @@ Peek_Token(struct parse_state *parseState, GLubyte *token)
       parseState->pos += (-i);
       return GL_FALSE;
    }
-   len = _mesa_strlen((const char *) token);
+   len = (GLint)_mesa_strlen((const char *) token);
    parseState->pos += (i - len);
    return GL_TRUE;
 }

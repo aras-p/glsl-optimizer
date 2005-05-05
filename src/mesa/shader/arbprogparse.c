@@ -3884,7 +3884,7 @@ static int extension_is_supported (const GLubyte *ext)
 {
    const GLubyte *extensions = GL_CALL(GetString)(GL_EXTENSIONS);
    const GLubyte *end = extensions + _mesa_strlen ((const char *) extensions);
-   const GLint ext_len = _mesa_strlen ((const char *) ext);
+   const GLint ext_len = (GLint)_mesa_strlen ((const char *) ext);
 
    while (extensions < end)
    {

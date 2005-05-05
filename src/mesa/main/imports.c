@@ -124,16 +124,16 @@ _mesa_free(void *ptr)
 void *
 _mesa_align_malloc(size_t bytes, unsigned long alignment)
 {
-   unsigned long ptr, buf;
+   uintptr_t ptr, buf;
 
    ASSERT( alignment > 0 );
 
-   ptr = (unsigned long) _mesa_malloc(bytes + alignment + sizeof(void *));
+   ptr = (uintptr_t) _mesa_malloc(bytes + alignment + sizeof(void *));
    if (!ptr)
       return NULL;
 
-   buf = (ptr + alignment + sizeof(void *)) & ~(unsigned long)(alignment - 1);
-   *(unsigned long *)(buf - sizeof(void *)) = ptr;
+   buf = (ptr + alignment + sizeof(void *)) & ~(uintptr_t)(alignment - 1);
+   *(uintptr_t *)(buf - sizeof(void *)) = ptr;
 
 #ifdef DEBUG
    /* mark the non-aligned area */
@@ -151,16 +151,16 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
 void *
 _mesa_align_calloc(size_t bytes, unsigned long alignment)
 {
-   unsigned long ptr, buf;
+   uintptr_t ptr, buf;
 
    ASSERT( alignment > 0 );
 
-   ptr = (unsigned long) _mesa_calloc(bytes + alignment + sizeof(void *));
+   ptr = (uintptr_t) _mesa_calloc(bytes + alignment + sizeof(void *));
    if (!ptr)
       return NULL;
 
-   buf = (ptr + alignment + sizeof(void *)) & ~(unsigned long)(alignment - 1);
-   *(unsigned long *)(buf - sizeof(void *)) = ptr;
+   buf = (ptr + alignment + sizeof(void *)) & ~(uintptr_t)(alignment - 1);
+   *(uintptr_t *)(buf - sizeof(void *)) = ptr;
 
 #ifdef DEBUG
    /* mark the non-aligned area */
@@ -777,7 +777,7 @@ _mesa_strncmp( const char *s1, const char *s2, size_t n )
 char *
 _mesa_strdup( const char *s )
 {
-   int l = _mesa_strlen(s);
+   size_t l = _mesa_strlen(s);
    char *s2 = (char *) _mesa_malloc(l + 1);
    if (s2)
       _mesa_strcpy(s2, s);
