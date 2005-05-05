@@ -74,6 +74,7 @@ void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 	case GL_VERTEX_PROGRAM_ARB:
 		vp->translated=GL_FALSE;
 		translate_vertex_shader(vp);
+		//debug_vp(ctx, vp);
 	break;
 	
 	case GL_FRAGMENT_PROGRAM_ARB:

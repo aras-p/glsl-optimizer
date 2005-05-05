@@ -886,6 +886,23 @@ static void r300PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
 	}
 }
 
+static void r300ShadeModel(GLcontext * ctx, GLenum mode)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	
+	R300_STATECHANGE(rmesa, sm);
+	switch (mode) {
+	case GL_FLAT:
+		rmesa->hw.sm.cmd[R300_SM] = R300_RE_SHADE_MODEL_FLAT;
+		break;
+	case GL_SMOOTH:
+		rmesa->hw.sm.cmd[R300_SM] = R300_RE_SHADE_MODEL_SMOOTH;
+		break;
+	default:
+		return;
+	}
+}
+
 static void r300StencilFunc(GLcontext * ctx, GLenum func,
 			    GLint ref, GLuint mask)
 {
@@ -2098,6 +2115,8 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300DepthMask(ctx, ctx->Depth.Mask);
 	r300DepthFunc(ctx, ctx->Depth.Func);
 	
+	r300ShadeModel(ctx, ctx->Light.ShadeModel);
+	
 	/* stencil */
 	r300Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
 	r300StencilMask(ctx, ctx->Stencil.WriteMask[0]);
@@ -2441,6 +2460,7 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	functions->DepthMask = r300DepthMask;
 	functions->CullFace = r300CullFace;
 	functions->FrontFace = r300FrontFace;
+	functions->ShadeModel = r300ShadeModel;
 
 	/* Stencil related */
 	functions->ClearStencil = r300ClearStencil;

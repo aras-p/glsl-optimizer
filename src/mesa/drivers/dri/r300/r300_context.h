@@ -271,6 +271,9 @@ struct r300_state_atom {
 #define R300_PS_POINTSIZE	1
 #define R300_PS_CMDSIZE		2
 
+#define R300_SM_CMD_0		0
+#define R300_SM			1
+
 #define R300_ZBS_CMD_0		0
 #define R300_ZBS_T_FACTOR	1
 #define R300_ZBS_T_CONSTANT	2
@@ -420,6 +423,7 @@ struct r300_hw_state {
 #endif
 	struct r300_state_atom unk4260; /* (4260) */
 	struct r300_state_atom unk4274; /* (4274) */
+	struct r300_state_atom sm;	/* shade model (4278) */
 	struct r300_state_atom unk4288; /* (4288) */
 	struct r300_state_atom unk42A0;	/* (42A0) */
 	struct r300_state_atom zbs;	/* zbias (42A4) */

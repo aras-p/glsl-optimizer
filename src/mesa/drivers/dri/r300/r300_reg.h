@@ -440,6 +440,11 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 /* Linestipple factor. 3a088889 == 1.0, 3baaaaa9 == 10.0 */
 #define R300_RE_LINE_STIPPLE_FACTOR           0x4238
 
+#define R300_RE_SHADE_MODEL                   0x4278
+#	define R300_RE_SHADE_MODEL_SMOOTH     0x3aaaa
+#	define R300_RE_SHADE_MODEL_FLAT       0x39595
+
+
 #define R300_RE_POLYGON_MODE                  0x4288
 
 /* Not sure why there are duplicate of factor and constant values. 
@@ -471,20 +476,19 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 
 
 /* BEGIN: Rasterization / Interpolators - many guesses
-// So far, 0_UNKOWN_7 has always been set.
 // 0_UNKNOWN_18 has always been set except for clear operations.
 // TC_CNT is the number of incoming texture coordinate sets (i.e. it depends
 // on the vertex program, *not* the fragment program) */
 #define R300_RS_CNTL_0                      0x4300
 #       define R300_RS_CNTL_TC_CNT_SHIFT         2
 #       define R300_RS_CNTL_TC_CNT_MASK          (7 << 2)
-#       define R300_RS_CNTL_0_UNKNOWN_7          (1 << 7)
+#       define R300_RS_CNTL_0_UNKNOWN_7          (1 << 7) /* Number of color interpolators used (shifted by 7) */
 #       define R300_RS_CNTL_0_UNKNOWN_18         (1 << 18)
 /* Guess: RS_CNTL_1 holds the index of the highest used RS_ROUTE_n register. */
 #define R300_RS_CNTL_1                      0x4304
 
 /* gap */
-/* Only used for texture coordinates (color seems to be always interpolated).
+/* Only used for texture coordinates.
 // Use the source field to route texture coordinate input from the vertex program
 // to the desired interpolator. Note that the source field is relative to the
 // outputs the vertex program *actually* writes. If a vertex program only writes
@@ -1200,14 +1204,15 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_VPI_OUT_OP_MIN                     (8 << 0)
 #define R300_VPI_OUT_OP_SGE                     (9 << 0)
 #define R300_VPI_OUT_OP_SLT                     (10 << 0)
-#define R300_VPI_OUT_OP_UNK1                    (12 << 0) /* Used in GL_POINT_DISTANCE_ATTENUATION_ARB */
+#define R300_VPI_OUT_OP_UNK12                   (12 << 0) /* Used in GL_POINT_DISTANCE_ATTENUATION_ARB, vector(scalar, vector) */
 #define R300_VPI_OUT_OP_EXP                     (65 << 0)
 #define R300_VPI_OUT_OP_LOG                     (66 << 0)
+#define R300_VPI_OUT_OP_UNK67                   (67 << 0) /* Used in fog computations, scalar(scalar) */
 #define R300_VPI_OUT_OP_LIT                     (68 << 0)
 #define R300_VPI_OUT_OP_POW                     (69 << 0)
 #define R300_VPI_OUT_OP_RCP                     (70 << 0)
 #define R300_VPI_OUT_OP_RSQ                     (72 << 0)
-#define R300_VPI_OUT_OP_UNK2                    (73 << 0) /* Used in GL_POINT_DISTANCE_ATTENUATION_ARB */
+#define R300_VPI_OUT_OP_UNK73                   (73 << 0) /* Used in GL_POINT_DISTANCE_ATTENUATION_ARB, scalar(scalar) */
 #define R300_VPI_OUT_OP_EX2                     (75 << 0)
 #define R300_VPI_OUT_OP_LG2                     (76 << 0)
 #define R300_VPI_OUT_OP_MAD_2                   (128 << 0)
