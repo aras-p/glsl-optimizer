@@ -585,9 +585,10 @@ struct r300_vertex_program {
 	struct r300_vertex_shader_fragment program;
 	struct r300_vertex_shader_fragment params;
 	
-	int t2rs;
+	int pos_end;
 	unsigned long num_temporaries; /* Number of temp vars used by program */
 	int inputs[VERT_ATTRIB_MAX];
+	int tex_regs[8];
 };
 
 /* 64 appears to be the maximum */

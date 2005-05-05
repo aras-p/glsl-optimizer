@@ -230,8 +230,8 @@ void debug_vp(GLcontext *ctx, struct vertex_program *vp)
 			}
 			fprintf(stderr, "%d.", vpi->SrcReg[operand_index].Index);
 			
-			/*for(i=0; i < 4; i++)
-				fprintf(stderr, "%s", dst_mask_names[vpi->SrcReg[operand_index].Swizzle[i]]);*/
+			for(i=0; i < 4; i++)
+				fprintf(stderr, "%s", dst_mask_names[GET_SWZ(vpi->SrcReg[operand_index].Swizzle, i)]);
 			
 			if(operand_index+1 < (op_names[operator_index].ip & (~FLAG_MASK)) )
 				fprintf(stderr, ",");
@@ -313,6 +313,7 @@ static unsigned long t_dst_class(enum register_file file)
 
 static unsigned long t_dst_index(struct r300_vertex_program *vp, struct vp_dst_register *dst)
 {
+	int i, high=0;
 	if(dst->File == PROGRAM_OUTPUT)
 		switch(dst->Index){
 			case VERT_RESULT_HPOS:
@@ -320,21 +321,27 @@ static unsigned long t_dst_index(struct r300_vertex_program *vp, struct vp_dst_r
 			case VERT_RESULT_COL0:
 				return 1;
 			case VERT_RESULT_TEX0:
-				return 2;
 			case VERT_RESULT_TEX1:
-				return 3;
 			case VERT_RESULT_TEX2:
-				return 4;
 			case VERT_RESULT_TEX3:
-				return 5;
 			case VERT_RESULT_TEX4:
-				return 6;
 			case VERT_RESULT_TEX5:
-				return 7;
 			case VERT_RESULT_TEX6:
-				return 8;
 			case VERT_RESULT_TEX7:
-				return 9;
+				/* Awful hack to get tex coord results regs correctly packed. 
+				   Wount work if tex coords arent written in logical order! */
+				if(vp->tex_regs[dst->Index - VERT_RESULT_TEX0] != 1){
+					return vp->tex_regs[dst->Index - VERT_RESULT_TEX0];
+				}
+				
+				for(i=0; i < 8; i++)
+					if(vp->tex_regs[i] > high)
+						high = vp->tex_regs[i];
+				
+				high++;
+				vp->tex_regs[dst->Index - VERT_RESULT_TEX0] = high;
+				
+				return high;
 			case VERT_RESULT_COL1:
 			case VERT_RESULT_BFC0:
 			case VERT_RESULT_BFC1:
@@ -517,9 +524,11 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 #else	
 #define src	vpi->SrcReg	
 #endif			
-	vp->t2rs=0;
+	vp->pos_end=0; /* Not supported yet */
 	vp->program.length=0;
 	vp->num_temporaries=mesa_vp->Base.NumTemporaries;
+	for(i=0; i < 8; i++)
+		vp->tex_regs[i]=1;
 	
 	for(i=0; i < VERT_ATTRIB_MAX; i++)
 		vp->inputs[i]=-1;
@@ -593,6 +602,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 					t_src_class(src[0].File), VSF_FLAG_NONE);
 
 			o_inst->src3=0;
+
 			goto next;
 			
 		case VP_OPCODE_ADD:
@@ -906,23 +916,8 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 			}
 		}
 		next: ;
-#if 0				
-		/* If instruction writes to result and one of the inputs is tmp, we move it at the end of program */
-		if(vpi->DstReg.File == PROGRAM_OUTPUT){
-			for(operand_index=0; operand_index < operands; operand_index++)
-				if(src[operand_index].File == PROGRAM_TEMPORARY){
-					t2rs[vp->t2rs++]=*o_inst;
-					o_inst--; /* FIXME */
-					break;
-				}
-		}
-#endif		
 	}
-#if 0	
-	/* Put "tmp to result" instructions in */
-	for(i=0; i < vp->t2rs; i++, o_inst++)
-		*o_inst=t2rs[i];
-#endif		
+	
 	vp->program.length=(o_inst - vp->program.body.i) * 4;
 	
 	if(u_temp_i < vp->num_temporaries)

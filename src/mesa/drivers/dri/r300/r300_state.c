@@ -1798,7 +1798,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1]=(0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
-		| (inst_count/*0*/ << R300_PVS_CNTL_1_UNKNOWN_SHIFT)
+		| (inst_count/*pos_end*/ << R300_PVS_CNTL_1_UNKNOWN_SHIFT)
 		| (inst_count << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2]=(0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
 		| (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
