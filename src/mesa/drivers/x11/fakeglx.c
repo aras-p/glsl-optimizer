@@ -1228,11 +1228,6 @@ static XVisualInfo *
 Fake_glXChooseVisual( Display *dpy, int screen, int *list )
 {
    XMesaVisual xmvis = choose_visual(dpy, screen, list, GL_FALSE);
-   {
-      int x;
-      glXGetConfig(dpy, xmvis->vishandle, GLX_RED_SIZE, &x);
-   }
-
    if (xmvis) {
 #if 0
       return xmvis->vishandle;
