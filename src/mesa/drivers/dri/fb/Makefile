@@ -5,17 +5,6 @@ include $(TOP)/configs/current
 
 LIBNAME = fb_dri.so
 
-COMMON_SOURCES = \
-	../../common/driverfuncs.c \
-        ../common/mm.c \
-        ../common/utils.c \
-        ../common/texmem.c \
-        ../common/vblank.c \
-	../common/dri_util.c \
-	../common/xmlconfig.c \
-	../common/drirenderbuffer.c \
-	../common/glcontextmodes.c
-
 DRIVER_SOURCES = \
 	fb_dri.c
 

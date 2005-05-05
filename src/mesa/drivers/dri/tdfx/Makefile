@@ -8,16 +8,6 @@ LIBNAME = tdfx_dri.so
 # not yet
 # MINIGLX_SOURCES = server/tdfx_dri.c 
 
-COMMON_SOURCES = \
-	../../common/driverfuncs.c \
-	../common/mm.c \
-	../common/utils.c \
-	../common/texmem.c \
-	../common/vblank.c \
-	../common/xmlconfig.c \
-	../common/dri_util.c \
-	../common/glcontextmodes.c
-
 DRIVER_SOURCES = \
 	tdfx_context.c \
 	tdfx_dd.c \

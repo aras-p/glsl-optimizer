@@ -2,6 +2,16 @@
 
 MESA_MODULES = $(TOP)/src/mesa/mesa.a
 
+COMMON_SOURCES = \
+        ../../common/driverfuncs.c \
+        ../common/mm.c \
+        ../common/utils.c \
+        ../common/texmem.c \
+        ../common/vblank.c \
+        ../common/dri_util.c \
+        ../common/xmlconfig.c \
+        ../common/drirenderbuffer.c \
+        ../common/glcontextmodes.c
 
 ifeq ($(WINDOW_SYSTEM),dri)
 WINOBJ=../dri_client/dri.a

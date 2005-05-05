@@ -8,17 +8,6 @@ LIBNAME = ffb_dri.so
 # not yet
 # MINIGLX_SOURCES = server/ffb_dri.c 
 
-COMMON_SOURCES = \
-	../../common/driverfuncs.c \
-	../common/mm.c \
-	../common/utils.c \
-	../common/texmem.c \
-	../common/vblank.c \
-	../common/xmlconfig.c \
-	../common/dri_util.c \
-	../common/drirenderbuffer.c \
-	../common/glcontextmodes.c
-
 DRIVER_SOURCES = \
 	ffb_bitmap.c \
 	ffb_clear.c \

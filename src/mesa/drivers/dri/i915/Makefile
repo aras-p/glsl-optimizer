@@ -4,18 +4,6 @@ include $(TOP)/configs/current
 
 LIBNAME = i915_dri.so
 
-
-COMMON_SOURCES = \
-	../../common/driverfuncs.c \
-	../common/mm.c \
-	../common/utils.c \
-	../common/texmem.c \
-	../common/vblank.c \
-	../common/xmlconfig.c \
-	../common/dri_util.c \
-	../common/drirenderbuffer.c \
-	../common/glcontextmodes.c
-
 DRIVER_SOURCES = \
 	i915_context.c \
 	i915_debug.c \

@@ -7,17 +7,6 @@ LIBNAME = r128_dri.so
 
 MINIGLX_SOURCES = server/r128_dri.c 
 
-COMMON_SOURCES = \
-	../../common/driverfuncs.c \
-	../common/mm.c \
-	../common/utils.c \
-	../common/texmem.c \
-	../common/vblank.c \
-	../common/xmlconfig.c \
-	../common/dri_util.c \
-	../common/drirenderbuffer.c \
-	../common/glcontextmodes.c
-
 DRIVER_SOURCES = \
 	r128_context.c \
 	r128_lock.c \

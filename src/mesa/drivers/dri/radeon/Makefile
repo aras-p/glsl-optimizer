@@ -8,17 +8,6 @@ LIBNAME = radeon_dri.so
 
 MINIGLX_SOURCES = server/radeon_dri.c 
 
-COMMON_SOURCES = \
-	../../common/driverfuncs.c \
-	../common/mm.c \
-	../common/utils.c \
-	../common/texmem.c \
-	../common/vblank.c \
-	../common/xmlconfig.c \
-	../common/dri_util.c \
-	../common/drirenderbuffer.c \
-	../common/glcontextmodes.c
-
 DRIVER_SOURCES = \
 	radeon_context.c \
 	radeon_ioctl.c \
