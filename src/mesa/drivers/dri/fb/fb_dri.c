@@ -500,7 +500,7 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       /* XXX double-check these parameters (bpp vs cpp, etc) */
       {
-         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, driScrnPriv->fbBPP,
+         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, driScrnPriv->fbBPP / 8,
                driScrnPriv->fbOrigin,
                driScrnPriv->fbStride);
          fbSetSpanFunctions(drb, mesaVis);
@@ -509,7 +509,7 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       }
       if (mesaVis->doubleBufferMode) {
          /* XXX what are the correct origin/stride values? */
-         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, driScrnPriv->fbBPP,
+         driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, driScrnPriv->fbBPP /8,
                driScrnPriv->fbOrigin,
                driScrnPriv->fbStride);
          fbSetSpanFunctions(drb, mesaVis);
@@ -767,7 +767,7 @@ fbFillInModes( unsigned pixel_bits, unsigned depth_bits,
       fb_type = GL_UNSIGNED_SHORT_5_6_5;
    }
    else {
-      fb_format = GL_BGR;
+      fb_format = GL_RGBA;
       fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
    }
 
