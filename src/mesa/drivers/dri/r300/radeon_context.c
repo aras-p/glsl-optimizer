@@ -41,6 +41,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "context.h"
 #include "state.h"
 #include "matrix.h"
+#include "framebuffer.h"
 
 #include "drivers/common/driverfuncs.h"
 #include "swrast/swrast.h"
@@ -118,7 +119,7 @@ static void radeonGetBufferSize(GLframebuffer * buffer,
 static void radeonInitDriverFuncs(struct dd_function_table *functions)
 {
 	functions->GetBufferSize = radeonGetBufferSize;
-	functions->ResizeBuffers = _swrast_alloc_buffers;
+	functions->ResizeBuffers = _mesa_resize_framebuffer;
 	functions->GetString = radeonGetString;
 }
 
@@ -279,7 +280,7 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 #endif
 		}
 
-		_mesa_make_current2(radeon->glCtx,
+		_mesa_make_current(radeon->glCtx,
 				    (GLframebuffer *) driDrawPriv->
 				    driverPrivate,
 				    (GLframebuffer *) driReadPriv->
@@ -300,7 +301,7 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	} else {
 		if (RADEON_DEBUG & DEBUG_DRI)
 			fprintf(stderr, "%s ctx is null\n", __FUNCTION__);
-		_mesa_make_current(0, 0);
+		_mesa_make_current(0, 0, 0);
 	}
 
 	if (RADEON_DEBUG & DEBUG_DRI)

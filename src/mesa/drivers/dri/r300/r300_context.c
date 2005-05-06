@@ -324,7 +324,7 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 	/* check if we're deleting the currently bound context */
 	if (&r300->radeon == current) {
 		radeonFlush(r300->radeon.glCtx);
-		_mesa_make_current2(NULL, NULL, NULL);
+		_mesa_make_current(NULL, NULL, NULL);
 	}
 
 	/* Free r300 context resources */

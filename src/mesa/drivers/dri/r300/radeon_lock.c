@@ -53,7 +53,7 @@ static void radeonUpdatePageFlipping(radeonContextPtr radeon)
 
 	radeon->doPageFlip = radeon->sarea->pfState;
 
-	use_back = (radeon->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT);
+	use_back = (radeon->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT);
 	use_back ^= (radeon->sarea->pfCurrentPage == 1);
 
 	if (use_back) {
@@ -83,7 +83,7 @@ static void r200RegainedLock(r200ContextPtr r200)
 		r200->hw.ctx.cmd[CTX_RB3D_COLORPITCH] =
 			r200->radeon.state.color.drawPitch;
 
-		if (r200->radeon.glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT)
+		if (r200->radeon.glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT)
 			radeonSetCliprects(&r200->radeon, GL_BACK_LEFT);
 		else
 			radeonSetCliprects(&r200->radeon, GL_FRONT_LEFT);
@@ -104,7 +104,7 @@ static void r300RegainedLock(radeonContextPtr radeon)
 	if (radeon->lastStamp != dPriv->lastStamp) {
 		radeonUpdatePageFlipping(radeon);
 
-		if (radeon->glCtx->Color._DrawDestMask[0] == DD_BACK_LEFT_BIT)
+		if (radeon->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT)
 			radeonSetCliprects(radeon, GL_BACK_LEFT);
 		else
 			radeonSetCliprects(radeon, GL_FRONT_LEFT);

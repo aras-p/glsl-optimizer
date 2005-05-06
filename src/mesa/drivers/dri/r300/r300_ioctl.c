@@ -323,24 +323,24 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	unk42B4=r300->hw.unk42B4.cmd[1];
 	r300->hw.unk42B4.cmd[1]=0;
 	
-	if (mask & DD_FRONT_LEFT_BIT) {
-		flags |= DD_FRONT_LEFT_BIT;
-		mask &= ~DD_FRONT_LEFT_BIT;
+	if (mask & BUFFER_BIT_FRONT_LEFT) {
+		flags |= BUFFER_BIT_FRONT_LEFT;
+		mask &= ~BUFFER_BIT_FRONT_LEFT;
 	}
 
-	if (mask & DD_BACK_LEFT_BIT) {
-		flags |= DD_BACK_LEFT_BIT;
-		mask &= ~DD_BACK_LEFT_BIT;
+	if (mask & BUFFER_BIT_BACK_LEFT) {
+		flags |= BUFFER_BIT_BACK_LEFT;
+		mask &= ~BUFFER_BIT_BACK_LEFT;
 	}
 
-	if (mask & DD_DEPTH_BIT) {
+	if (mask & BUFFER_BIT_DEPTH) {
 		bits |= CLEARBUFFER_DEPTH;
-		mask &= ~DD_DEPTH_BIT;
+		mask &= ~BUFFER_BIT_DEPTH;
 	}
 	
-	if ( (mask & DD_STENCIL_BIT) && r300->state.stencil.hw_stencil) {
+	if ( (mask & BUFFER_BIT_STENCIL) && r300->state.stencil.hw_stencil) {
 		bits |= CLEARBUFFER_STENCIL;
-		mask &= ~DD_STENCIL_BIT;
+		mask &= ~BUFFER_BIT_STENCIL;
 	}
 
 	if (mask) {
@@ -352,12 +352,12 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 
 	swapped = r300->radeon.doPageFlip && (r300->radeon.sarea->pfCurrentPage == 1);
 
-	if (flags & DD_FRONT_LEFT_BIT) {
+	if (flags & BUFFER_BIT_FRONT_LEFT) {
 		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, swapped);
 		bits = 0;
 	}
 
-	if (flags & DD_BACK_LEFT_BIT) {
+	if (flags & BUFFER_BIT_BACK_LEFT) {
 		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, swapped ^ 1);
 		bits = 0;
 	}
