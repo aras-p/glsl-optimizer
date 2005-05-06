@@ -233,6 +233,7 @@ clear_ci_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_color_buffers(GLcontext *ctx)
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLboolean masking;
    GLuint i;
 
@@ -259,6 +260,11 @@ clear_color_buffers(GLcontext *ctx)
 
    for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers[0]; i++) {
       struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][i];
+#if OLD_RENDERBUFFER /* this is obsolete code */
+      swrast->Driver.SetBuffer(ctx, ctx->DrawBuffer,
+                               ctx->DrawBuffer->_ColorDrawBit[0][i]);
+#endif
+
       if (ctx->Visual.rgbMode) {
          if (masking) {
             clear_rgba_buffer_with_masking(ctx, rb);
@@ -320,13 +326,6 @@ _swrast_Clear(GLcontext *ctx, GLbitfield mask,
    if (mask) {
       if (mask & ctx->DrawBuffer->_ColorDrawBufferMask[0]) {
          clear_color_buffers(ctx);
-         /* clear software-based alpha buffer(s) */
-#if OLD_RENDERBUFFER && 0
-         if (ctx->DrawBuffer->UseSoftwareAlphaBuffers
-             && ctx->Color.ColorMask[ACOMP]) {
-            _swrast_clear_alpha_buffers( ctx );
-         }
-#endif
       }
       if (mask & BUFFER_BIT_DEPTH) {
          struct gl_renderbuffer *rb
