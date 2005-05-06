@@ -307,8 +307,12 @@ clear_pixmap(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLboolean all,
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
 
-   assert(xrb->pixmap == xmbuf->backxrb->pixmap ||
-          xrb->pixmap == xmbuf->frontxrb->pixmap);
+   assert(xmbuf);
+   assert(xrb->pixmap);
+   assert(xmesa);
+   assert(xmesa->display);
+   assert(xrb->pixmap);
+   assert(xmbuf->cleargc);
 
    if (all) {
       XMesaFillRectangle( xmesa->display, xrb->pixmap, xmbuf->cleargc,
