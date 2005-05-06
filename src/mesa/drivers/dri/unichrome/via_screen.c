@@ -121,7 +121,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
     viaScreen->width = gDRIPriv->width;
     viaScreen->height = gDRIPriv->height;
     viaScreen->mem = gDRIPriv->mem;
-    viaScreen->bitsPerPixel = gDRIPriv->bytesPerPixel << 3;
+    viaScreen->bitsPerPixel = gDRIPriv->bytesPerPixel * 8;
     viaScreen->bytesPerPixel = gDRIPriv->bytesPerPixel;
     viaScreen->fbOffset = 0;
     viaScreen->fbSize = gDRIPriv->fbSize;
@@ -256,7 +256,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
       /* XXX check/fix the offset/pitch parameters! */
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA, screen->cpp,
+            = driNewRenderbuffer(GL_RGBA, screen->bytesPerPixel,
                                  0, screen->width);
          viaSetSpanFunctions(frontRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
@@ -264,7 +264,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA, screen->cpp,
+            = driNewRenderbuffer(GL_RGBA, screen->bytesPerPixel,
                                  0, screen->width);
          viaSetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
@@ -272,21 +272,21 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, screen->cpp,
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, screen->bytesPerPixel,
                                  0, screen->width);
          viaSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
       }
       else if (mesaVis->depthBits == 24) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, screen->cpp,
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT24, screen->bytesPerPixel,
                                  0, screen->width);
          viaSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
       }
       else if (mesaVis->depthBits == 32) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT32, screen->cpp,
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT32, screen->bytesPerPixel,
                                  0, screen->width);
          viaSetSpanFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
