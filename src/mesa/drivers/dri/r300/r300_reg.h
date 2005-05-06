@@ -1216,6 +1216,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_VPI_OUT_OP_EX2                     (75 << 0)
 #define R300_VPI_OUT_OP_LG2                     (76 << 0)
 #define R300_VPI_OUT_OP_MAD_2                   (128 << 0)
+#define R300_VPI_OUT_OP_UNK129                  (129 << 0) /* all temps, vector(scalar, vector, vector) */
 
 #define R300_VPI_OUT_REG_CLASS_TEMPORARY        (0 << 8)
 #define R300_VPI_OUT_REG_CLASS_RESULT           (2 << 8)

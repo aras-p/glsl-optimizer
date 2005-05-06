@@ -757,6 +757,11 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 	if(ctx->VertexProgram._Enabled == GL_FALSE){
 		_tnl_UpdateFixedFunctionProgram(ctx);
 		r300ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB, &ctx->_TnlProgram);
+		r300_setup_textures(ctx);
+		r300_setup_rs_unit(ctx);
+
+		r300SetupVertexShader(rmesa);
+		r300SetupPixelShader(rmesa);
 	}
 
 	return r300_run_vb_render(ctx, stage);
