@@ -952,6 +952,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
          return NULL;
       }
 
+      /* create front color buffer in user-provided memory (no back buffer) */
       _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT,
                              new_osmesa_renderbuffer(format));
       _mesa_add_soft_renderbuffers(osmesa->gl_buffer,
@@ -1003,15 +1004,6 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
 
          swdd = _swrast_GetDeviceDriverReference( ctx );
          swdd->SetBuffer = set_buffer;
-
-         /* no longer used */
-         swdd->WriteRGBASpan = NULL;
-         swdd->WriteRGBSpan = NULL;
-         swdd->WriteMonoRGBASpan = NULL;
-         swdd->WriteRGBAPixels = NULL;
-         swdd->WriteMonoRGBAPixels = NULL;
-         swdd->ReadRGBASpan = NULL;
-         swdd->ReadRGBAPixels = NULL;
 
          /* Extend the software rasterizer with our optimized line and triangle
           * drawing functions.
@@ -1157,9 +1149,6 @@ OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
 
    /* this will make ensure we recognize the new buffer size */
    _mesa_resize_framebuffer(&ctx->mesa, ctx->gl_buffer, width, height);
-#if 00
-   _mesa_ResizeBuffersMESA();
-#endif
 
    /* Added by Gerk Huisma: */
    _tnl_MakeCurrent( &ctx->mesa, ctx->mesa.DrawBuffer,
