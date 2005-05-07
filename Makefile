@@ -110,6 +110,7 @@ linux-x86-32 \
 linux-x86-64 \
 linux-x86-64-debug \
 linux-x86-64-static \
+linux-x86-xcb \
 linux-x86-glide \
 linux-x86-static \
 netbsd \
