@@ -1320,11 +1320,13 @@ Mesa Version History
 	- GL_ARB_pixel_buffer_object extension
 	- GL_OES_read_format extension (Ian Romanick)
 	- DirectFB driver (Claudio Ciccani)
+	- x86_64 vertex transformation code (Mikko T.)
     Changes:
 	- added -stereo option for glxgears demo (Jacek Rosik)
 	- updated the PBuffer demo code in xdemos/ directory
 	- glDeleteTextures/Programs/Buffers() now makes the object ID
 	  available for immediate re-use
+	- assorted 64-bit clean-ups fixes (x86_64 and Win64)
     Bug fixes:
 	- some functions didn't support PBO functionality
 	- glGetTexImage didn't convert color index images to RGBA as required
