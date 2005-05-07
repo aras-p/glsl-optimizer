@@ -29,16 +29,6 @@
 #include "assyntax.h"
 #include "glapioffsets.h"
 
-/* If we build with gcc's -fvisibility=hidden flag, we'll need to change
-* the symbol visibility mode to 'default'.
-*/
-#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
-#  pragma GCC visibility push(default)
-#  define HIDDEN(x) .hidden x
-#else
-#  define HIDDEN(x)
-#endif
-
 #ifndef __WIN32__
 
 #if defined(STDCALL_API)

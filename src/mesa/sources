@@ -197,7 +197,8 @@ ASM_C_SOURCES =	\
 	x86/3dnow.c \
 	x86/sse.c \
 	sparc/sparc.c \
-	ppc/common_ppc.c
+	ppc/common_ppc.c \
+	x86-64/x86-64.c
 
 X86_SOURCES =			\
 	x86/common_x86_asm.S	\
@@ -221,6 +222,9 @@ X86_SOURCES =			\
 
 X86_API =			\
 	x86/glapi_x86.S
+
+X86-64_SOURCES =		\
+	x86-64/xform4.S
 
 SPARC_SOURCES =			\
 	sparc/clip.S		\

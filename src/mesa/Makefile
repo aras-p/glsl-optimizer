@@ -146,6 +146,7 @@ osmesa-only: depend subdirs $(LIB_DIR)/$(OSMESA_LIB_NAME)
 
 subdirs:
 	@ (cd x86 ; $(MAKE))
+	@ (cd x86-64 ; $(MAKE))
 
 # Make the GL library
 $(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS)
@@ -223,5 +224,6 @@ clean:
 	-rm -f drivers/*/*.o
 	(cd drivers/dri ; $(MAKE) clean)
 	(cd x86 ; $(MAKE) clean)
+	(cd x86-64 ; $(MAKE) clean)
 
 include depend

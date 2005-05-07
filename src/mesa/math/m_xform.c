@@ -51,6 +51,10 @@
 #include "x86/common_x86_asm.h"
 #endif
 
+#ifdef USE_X86_64_ASM
+#include "x86-64/x86-64.h"
+#endif
+
 #ifdef USE_SPARC_ASM
 #include "sparc/sparc.h"
 #endif
@@ -212,6 +216,8 @@ _math_init_transformation( void )
    _mesa_init_all_sparc_transform_asm();
 #elif defined( USE_PPC_ASM )
    _mesa_init_all_ppc_transform_asm();
+#elif defined( USE_X86_64_ASM )
+   _mesa_init_all_x86_64_transform_asm();
 #endif
 }
 
