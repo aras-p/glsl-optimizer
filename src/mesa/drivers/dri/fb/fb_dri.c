@@ -529,13 +529,14 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       driDrawPriv->driverPrivate = fbdrawable;
 
-      fbdrawable->frontBuffer = fbdrawable->currentBuffer = driScrnPriv->pFB;
+      fbdrawable->frontBuffer = driScrnPriv->pFB;
       fbdrawable->currentPitch = driScrnPriv->fbStride;
+      fbdrawable->currentBuffer = fbdrawable->frontBuffer;
       
       /* Replace the framebuffer back buffer with a malloc'ed one --
        * big speedup.
        */
-      fbdrawable->backBuffer = _mesa_malloc(fbdrawable->currentPitch * driDrawPriv->h);
+      fbdrawable->backBuffer = _mesa_malloc(fbdrawable->currentPitch * driScrnPriv->fbHeight);
 
       return 1;
    }
