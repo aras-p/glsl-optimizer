@@ -360,19 +360,19 @@ init_fbconfig_functions(Display *dpy, int scrnum)
 
    if ( glx_1_3_supported ) {
       choose_fbconfig = (PFNGLXCHOOSEFBCONFIGSGIXPROC) glXGetProcAddressARB( 
-		(GLbyte *) "glXChooseFBConfig");
+		(GLubyte *) "glXChooseFBConfig");
       get_visual_from_fbconfig = (PFNGLXGETVISUALFROMFBCONFIGSGIXPROC) glXGetProcAddressARB( 
-		(GLbyte *) "glXGetVisualFromFBConfig");
+		(GLubyte *) "glXGetVisualFromFBConfig");
       create_new_context = (PFNGLXCREATECONTEXTWITHCONFIGSGIXPROC) glXGetProcAddressARB(
-		(GLbyte *) "glXCreateNewContext");
+		(GLubyte *) "glXCreateNewContext");
    }
    else if ( ext_version_supported ) {
       choose_fbconfig = (PFNGLXCHOOSEFBCONFIGSGIXPROC) glXGetProcAddressARB( 
-		(GLbyte *) "glXChooseFBConfigSGIX");
+		(GLubyte *) "glXChooseFBConfigSGIX");
       get_visual_from_fbconfig = (PFNGLXGETVISUALFROMFBCONFIGSGIXPROC) glXGetProcAddressARB( 
-		(GLbyte *) "glXGetVisualFromFBConfigSGIX");
+		(GLubyte *) "glXGetVisualFromFBConfigSGIX");
       create_new_context = (PFNGLXCREATECONTEXTWITHCONFIGSGIXPROC) glXGetProcAddressARB(
-		(GLbyte *) "glXCreateContextWithConfigSGIX");
+		(GLubyte *) "glXCreateContextWithConfigSGIX");
    }
    else {
       printf( "This demo requires either GLX 1.3 or %s be supported.\n",

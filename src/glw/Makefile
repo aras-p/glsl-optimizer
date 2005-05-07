@@ -27,7 +27,7 @@ default: $(LIB_DIR)/$(GLW_LIB_NAME)
 
 
 clean:
-	-rm depend
+	-rm depend depend.bak
 	-rm -f *.o *~
 
 

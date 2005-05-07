@@ -45,3 +45,4 @@ readtex.o: readtex.c readtex.h
 clean:
 	-rm -f $(PROGS)
 	-rm -f *.o *~
+	-rm -f readtex.c readtex.h

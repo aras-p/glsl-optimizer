@@ -14,7 +14,9 @@
 #include <windows.h>
 #endif
 #define GL_GLEXT_LEGACY
+#define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
+#include <GL/glext.h>
 
 
 GLenum doubleBuffer;

@@ -127,4 +127,4 @@ osdemo32: osdemo32.c
 clean:
 	-rm -f $(PROGS)
 	-rm -f *.o *~
-	-rm -f readtex.[ch]
+	-rm -f readtex.[ch] showbuffer.[ch]

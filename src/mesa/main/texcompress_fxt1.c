@@ -932,7 +932,7 @@ fxt1_quantize_HI (GLuint *cc,
    /* add in texels */
    for (k = N_TEXELS - 1; k >= 0; k--) {
       GLint t = k * 3;
-      GLuint *kk = (GLuint *)((GLuint)cc + t / 8);
+      GLuint *kk = (GLuint *)((char *)cc + t / 8);
       GLint texel = n_vect + 1; /* transparent black */
 
       if (!ISTBLACK(input[k])) {
@@ -1011,7 +1011,7 @@ fxt1_quantize_MIXED1 (GLuint *cc,
    /* left microtile */
    if (maxColL == -1) {
       /* all transparent black */
-      cc[0] = ~0ul;
+      cc[0] = ~0u;
       for (i = 0; i < n_comp; i++) {
          vec[0][i] = 0;
          vec[1][i] = 0;
@@ -1045,7 +1045,7 @@ fxt1_quantize_MIXED1 (GLuint *cc,
    /* right microtile */
    if (maxColR == -1) {
       /* all transparent black */
-      cc[1] = ~0ul;
+      cc[1] = ~0u;
       for (i = 0; i < n_comp; i++) {
          vec[2][i] = 0;
          vec[3][i] = 0;
@@ -1332,7 +1332,7 @@ fxt1_quantize (GLuint *cc, const GLubyte *lines[], GLint comps)
    if (trualpha) {
       fxt1_quantize_ALPHA1(cc, input);
    } else if (l == 0) {
-      cc[0] = cc[1] = cc[2] = ~0ul;
+      cc[0] = cc[1] = cc[2] = ~0u;
       cc[3] = 0;
    } else if (l < N_TEXELS) {
       fxt1_quantize_MIXED1(cc, input);

@@ -101,7 +101,7 @@ clean:
 	-rm -f *.lo
 	-rm -f *.la
 	-rm -rf .libs
-	-rm -rf depend
+	-rm -rf depend depend.bak
 
 
 depend: $(SOURCES)

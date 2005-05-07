@@ -37,7 +37,7 @@ static PPMImage *LoadPPM(const char *filename)
 	exit(1);
     }
 
-    if (fscanf(fp, "%d %d", &result->sizeX, &result->sizeY) != 2)
+    if (fscanf(fp, "%lu %lu", &result->sizeX, &result->sizeY) != 2)
     {
 	fprintf(stderr, "Error loading image `%s'\n", filename);
 	exit(1);

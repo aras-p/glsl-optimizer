@@ -61,7 +61,7 @@ getFullCrosshairCursor(void)
   Atom crosshairAtom, actualType;
   int rc, actualFormat;
   unsigned long n, left;
-  unsigned long *value;
+  unsigned char *value;
 
   if (fullCrosshairCusor == None) {
     crosshairAtom = XInternAtom(__glutDisplay,
@@ -70,9 +70,9 @@ getFullCrosshairCursor(void)
       value = 0;        /* Make compiler happy. */
       rc = XGetWindowProperty(__glutDisplay, __glutRoot,
         crosshairAtom, 0, 1, False, XA_CURSOR, &actualType,
-        &actualFormat, &n, &left, (unsigned char **) &value);
+        &actualFormat, &n, &left, &value);
       if (rc == Success && actualFormat == 32 && n >= 1) {
-        cursor = value[0];
+        cursor = ((unsigned long *)value)[0];
         XFree(value);
         return cursor;
       }
