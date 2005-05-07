@@ -120,6 +120,12 @@ class PrintGlxProtoStubs(glX_XML.GlxProto):
 		print '#include "glxclient.h"'
 		print '#include "indirect_size.h"'
 		print '#include <GL/glxproto.h>'
+		print '#ifdef USE_XCB'
+		print '#include <X11/xcl.h>'
+		print '#include <X11/XCB/xcb.h>'
+		print '#include <X11/XCB/glx.h>'
+		print '#endif /* USE_XCB */'
+		
 		print ''
 		print '#define __GLX_PAD(n) (((n) + 3) & ~3)'
 		print ''
@@ -411,10 +417,57 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 	def printSingleFunction(self, f):
 		self.common_func_print_header(f)
-
+		
 		if self.debug:
 			print '        printf( "Enter %%s...\\n", "gl%s" );' % (f.name)
+		if f.glx_vendorpriv == 0 and f.opcode_name()[-3:] != "ARB" and f.opcode_name()[-2:] != "NV":
 
+			# XCB specific:
+			print '#ifdef USE_XCB'
+			if self.debug:
+				print '        printf("\\tUsing XCB.\\n");'
+			print '        XCBConnection *c = XCBConnectionOfDisplay(dpy);'
+			print '        (void) __glXFlushRenderBuffer(gc, gc->pc);'
+			xcb_name = 'XCBGlx%s' % (f.opcode_name().rsplit("_", 1)[1]);
+			iparams=[]
+			for p in f.fn_parameters:
+				if p.is_output == 0:
+					iparams.append(p.name)
+
+			if f.image and f.image.is_output:
+				if f.image.img_format != "GL_COLOR_INDEX" or f.image.img_type != "GL_BITMAP":
+					iparams.append("state->storePack.swapEndian")
+				else:
+					iparams.append("0")
+					
+				# Hardcode this in.  lsb_first param (apparently always GL_FALSE)
+				# also present in GetPolygonStipple, but taken care of above.
+				if xcb_name == "XCBGlxReadPixels": iparams.append("0")
+			    
+			xcb_request = '%s(%s)' % (xcb_name, ", ".join(["c", "gc->currentContextTag"] + iparams))
+
+			if f.needs_reply():
+				print '        %sRep *reply = %sReply(c, %s, NULL);' % (xcb_name, xcb_name, xcb_request)
+				if f.output and f.reply_always_array:
+					print '        %s = (%s *)%sData(reply);' % (f.output.name, f.output.p_type.name, xcb_name)
+				elif f.output and not f.reply_always_array:
+					if not f.image:
+						print '        if (%sDataLength(reply) == 0)' % (xcb_name)
+						print '            %s = (%s *) &reply->datum;' % (f.output.name, f.output.p_type.name)
+						print '        else'
+						print '            %s = (%s *)%sData(reply);' % (f.output.name, f.output.p_type.name, xcb_name)
+					else:
+						print '        %s = (%s *)%sData(reply);' % (f.output.name, f.output.p_type.name, xcb_name)
+
+
+				if f.fn_return_type != 'void':
+					print '        retval = reply->ret_val;'
+				print '        free(reply);'
+			else:
+				print '        ' + xcb_request + ';'
+			print '#else'
+			# End of XCB specific.
+		
 		if f.fn_parameters != []:
 			pc_decl = "GLubyte const * pc ="
 		else:
@@ -472,11 +525,13 @@ generic_%u_byte( GLint rop, const void * ptr )
 			# that don't already require a reply from the server.
 			print '        __indirect_glFinish();'
 
+		print '        UnlockDisplay(dpy); SyncHandle();'
+		
+		if f.glx_vendorpriv == 0 and f.opcode_name()[-3:] != "ARB" and f.opcode_name()[-2:] != "NV":
+			print '#endif /* USE_XCB */'
+			
 		if self.debug:
 			print '        printf( "Exit %%s.\\n", "gl%s" );' % (f.name)
-
-
-		print '        UnlockDisplay(dpy); SyncHandle();'
 		print '    }'
 		print '    %s' % f.return_string()
 		print '}'
@@ -678,7 +733,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 		# regular.  Since they are so regular and there are so many
 		# of them, special case them with generic functions.  On
 		# x86, this saves about 26KB in the libGL.so binary.
-
+		
 		if f.variable_length_parameter() == None and len(f.fn_parameters) == 1:
 			p = f.fn_parameters[0]
 			if p.is_pointer:

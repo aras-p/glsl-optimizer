@@ -68,6 +68,12 @@
 #include "dri_glx.h"
 #endif
 
+#ifdef USE_XCB
+#include <X11/xcl.h>
+#include <X11/XCB/xcb.h>
+#include <X11/XCB/glx.h>
+#endif
+
 #include <assert.h>
 
 #ifdef DEBUG
@@ -1047,7 +1053,7 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	    fb_req->glxCode = X_GLXGetFBConfigs;
 	    fb_req->screen = i;
 	    break;
-	    
+	   
 	    case 2:
 	    GetReqExtra(GLXVendorPrivateWithReply,
 			sz_xGLXGetFBConfigsSGIXReq-sz_xGLXVendorPrivateWithReplyReq,vpreq);
@@ -1349,10 +1355,17 @@ CARD8 __glXSetupForCommand(Display *dpy)
 GLubyte *__glXFlushRenderBuffer(__GLXcontext *ctx, GLubyte *pc)
 {
     Display * const dpy = ctx->currentDpy;
+#ifdef USE_XCB
+    XCBConnection *c = XCBConnectionOfDisplay(dpy);
+#else
     xGLXRenderReq *req;
+#endif /* USE_XCB */
     const GLint size = pc - ctx->buf;
 
     if ( (dpy != NULL) && (size > 0) ) {
+#ifdef USE_XCB
+	XCBGlxRender(c, ctx->currentContextTag, size, (char *)ctx->buf);
+#else
 	/* Send the entire buffer as an X request */
 	LockDisplay(dpy);
 	GetReq(GLXRender,req); 
@@ -1363,6 +1376,7 @@ GLubyte *__glXFlushRenderBuffer(__GLXcontext *ctx, GLubyte *pc)
 	_XSend(dpy, (char *)ctx->buf, size);
 	UnlockDisplay(dpy);
 	SyncHandle();
+#endif
     }
 
     /* Reset pointer and return it */
@@ -1392,8 +1406,12 @@ void __glXSendLargeChunk(__GLXcontext *gc, GLint requestNumber,
 			 const GLvoid * data, GLint dataLen)
 {
     Display *dpy = gc->currentDpy;
+#ifdef USE_XCB
+    XCBConnection *c = XCBConnectionOfDisplay(dpy);
+    XCBGlxRenderLarge(c, gc->currentContextTag, requestNumber, totalRequests, dataLen, data);
+#else
     xGLXRenderLargeReq *req;
-
+    
     if ( requestNumber == 1 ) {
 	LockDisplay(dpy);
     }
@@ -1412,6 +1430,7 @@ void __glXSendLargeChunk(__GLXcontext *gc, GLint requestNumber,
 	UnlockDisplay(dpy);
 	SyncHandle();
     }
+#endif /* USE_XCB */
 }
 
 
