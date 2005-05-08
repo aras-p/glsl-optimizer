@@ -261,7 +261,8 @@ clear_color_buffers(GLcontext *ctx)
    for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers[0]; i++) {
       struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][i];
 #if OLD_RENDERBUFFER /* this is obsolete code */
-      swrast->Driver.SetBuffer(ctx, ctx->DrawBuffer,
+      if (swrast->Driver.SetBuffer)
+         swrast->Driver.SetBuffer(ctx, ctx->DrawBuffer,
                                ctx->DrawBuffer->_ColorDrawBit[0][i]);
 #endif
 
@@ -426,5 +427,6 @@ _swrast_use_draw_buffer( GLcontext *ctx )
       /* glDrawBuffer(GL_NONE) */
       swrast->CurrentBufferBit = BUFFER_BIT_FRONT_LEFT; /* we always have this buffer */
 
-   swrast->Driver.SetBuffer(ctx, ctx->DrawBuffer, swrast->CurrentBufferBit);
+   if (swrast->Driver.SetBuffer)
+      swrast->Driver.SetBuffer(ctx, ctx->DrawBuffer, swrast->CurrentBufferBit);
 }
