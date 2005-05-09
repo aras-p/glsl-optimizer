@@ -286,6 +286,7 @@ static void do_draw_pix( GLcontext *ctx,
 
    intelFlush( &intel->ctx );
    LOCK_HARDWARE( intel );
+   if (ctx->DrawBuffer)
    {
       y -= height;			/* cope with pixel zoom */
    

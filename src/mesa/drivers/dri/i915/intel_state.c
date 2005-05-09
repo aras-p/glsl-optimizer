@@ -170,6 +170,9 @@ static void intelDrawBuffer(GLcontext *ctx, GLenum mode )
    intelScreenPrivate *screen = intel->intelScreen;
    int front = 0;
  
+   if (!ctx->DrawBuffer)
+      return;
+
    switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
    case BUFFER_BIT_FRONT_LEFT:
       front = 1;

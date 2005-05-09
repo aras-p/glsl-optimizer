@@ -494,16 +494,21 @@ void intelSetBackClipRects( intelContextPtr intel )
 
 void intelWindowMoved( intelContextPtr intel )
 {
-   switch (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0]) {
-   case BUFFER_BIT_FRONT_LEFT:
+   if (!intel->ctx.DrawBuffer) {
       intelSetFrontClipRects( intel );
-      break;
-   case BUFFER_BIT_BACK_LEFT:
-      intelSetBackClipRects( intel );
-      break;
-   default:
-      /* glDrawBuffer(GL_NONE or GL_FRONT_AND_BACK): software fallback */
-      intelSetFrontClipRects( intel );
+   }
+   else {
+      switch (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0]) {
+      case BUFFER_BIT_FRONT_LEFT:
+	 intelSetFrontClipRects( intel );
+	 break;
+      case BUFFER_BIT_BACK_LEFT:
+	 intelSetBackClipRects( intel );
+	 break;
+      default:
+	 /* glDrawBuffer(GL_NONE or GL_FRONT_AND_BACK): software fallback */
+	 intelSetFrontClipRects( intel );
+      }
    }
 }
 
@@ -529,6 +534,8 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
       _mesa_make_current(&intel->ctx,
 			 (GLframebuffer *) driDrawPriv->driverPrivate,
 			 (GLframebuffer *) driReadPriv->driverPrivate);
+
+      intel->ctx.Driver.DrawBuffer( &intel->ctx, intel->ctx.Color.DrawBuffer[0] );
    } else {
       _mesa_make_current(NULL, NULL, NULL);
    }
