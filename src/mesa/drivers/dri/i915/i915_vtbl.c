@@ -46,7 +46,7 @@ static void i915_render_start( intelContextPtr intel )
    GLcontext *ctx = &intel->ctx;
    i915ContextPtr i915 = I915_CONTEXT(intel);
 
-   if (ctx->FragmentProgram.Enabled && ctx->FragmentProgram.Current) 
+   if (ctx->FragmentProgram._Active) 
       i915ValidateFragmentProgram( i915 );
    else 
       i915ValidateTextureProgram( i915 );

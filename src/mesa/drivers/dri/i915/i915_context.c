@@ -72,11 +72,13 @@ static void i915InvalidateState( GLcontext *ctx, GLuint new_state )
     */
    {
       struct i915_fragment_program *p = 
-	 (struct i915_fragment_program *)ctx->FragmentProgram.Current;
-      if (p->nr_params)
+	 (struct i915_fragment_program *)ctx->FragmentProgram._Current;
+      if (p && p->nr_params)
 	 p->params_uptodate = 0;
    }
 
+   if (new_state & (_NEW_FOG|_NEW_HINT|_NEW_PROGRAM))
+      i915_update_fog(ctx);
 }
 
 

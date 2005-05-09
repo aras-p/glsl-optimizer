@@ -521,17 +521,17 @@ static void i915ShadeModel(GLcontext *ctx, GLenum mode)
 /* =============================================================
  * Fog
  */
-static void update_fog( GLcontext *ctx )
+void i915_update_fog( GLcontext *ctx )
 {
    i915ContextPtr i915 = I915_CONTEXT(ctx);
    GLenum mode;
    GLboolean enabled;
    GLboolean try_pixel_fog;
    
-   if (ctx->FragmentProgram.Enabled && ctx->FragmentProgram.Current) {
+   if (ctx->FragmentProgram._Active) {
       /* Pull in static fog state from program */
       
-      mode = ctx->FragmentProgram.Current->FogOption;
+      mode = ctx->FragmentProgram._Current->FogOption;
       enabled = (mode != GL_NONE);
       try_pixel_fog = 1;
    }
@@ -623,7 +623,6 @@ static void i915Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
    case GL_FOG_MODE:
    case GL_FOG_START:
    case GL_FOG_END: 
-      update_fog( ctx );
       break;
 
    case GL_FOG_DENSITY:
@@ -658,7 +657,6 @@ static void i915Hint(GLcontext *ctx, GLenum target, GLenum state)
 {
    switch (target) {
    case GL_FOG_HINT:
-      update_fog( ctx );
       break;
    default:
       break;
@@ -703,7 +701,6 @@ static void i915Enable(GLcontext *ctx, GLenum cap, GLboolean state)
       break;
 
    case GL_FRAGMENT_PROGRAM_ARB:
-      update_fog( ctx );
       break;
 
    case GL_DITHER:
@@ -743,7 +740,6 @@ static void i915Enable(GLcontext *ctx, GLenum cap, GLboolean state)
       break;
 
    case GL_FOG:
-      update_fog( ctx );
       break;
 
    case GL_CULL_FACE:

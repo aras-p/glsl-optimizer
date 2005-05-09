@@ -245,7 +245,7 @@ do {									\
  */
 static void upload_program( struct i915_fragment_program *p )
 {
-   const struct fragment_program *program = p->ctx->FragmentProgram.Current;
+   const struct fragment_program *program = p->ctx->FragmentProgram._Current;
    const struct fp_instruction *inst = program->Instructions;
 
 /*    _mesa_debug_fp_inst(program->Base.NumInstructions, inst); */
@@ -949,7 +949,7 @@ void i915ValidateFragmentProgram( i915ContextPtr i915 )
    struct vertex_buffer *VB = &tnl->vb;
 
    struct i915_fragment_program *p = 
-      (struct i915_fragment_program *)ctx->FragmentProgram.Current;
+      (struct i915_fragment_program *)ctx->FragmentProgram._Current;
 
    GLuint inputsRead = p->FragProg.InputsRead;
    GLuint s4 = i915->state.Ctx[I915_CTXREG_LIS4] & ~S4_VFMT_MASK;

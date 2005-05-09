@@ -309,6 +309,7 @@ extern void i915_print_ureg( const char *msg, GLuint ureg );
  */
 extern void i915InitStateFunctions( struct dd_function_table *functions );
 extern void i915InitState( i915ContextPtr i915 );
+extern void i915_update_fog( GLcontext *ctx );
 
 
 /*======================================================================
