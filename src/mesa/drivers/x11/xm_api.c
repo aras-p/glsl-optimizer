@@ -1889,7 +1889,8 @@ XMesaCreateWindowBuffer2(XMesaVisual v, XMesaWindow w, XMesaContext c)
        /*
        fprintf(stderr,
                "voodoo %d, wid %d height %d hack: usable %d active %d\n",
-               hw, b->width, b->height, b->FXisHackUsable, b->FXwindowHack);
+               hw, b->mesa_buffer.Width, b->mesa_buffer.Height,
+	       b->FXisHackUsable, b->FXwindowHack);
        */
      }
    }
@@ -2252,7 +2253,7 @@ static void FXgetImage( XMesaBuffer b )
    /* grLfbWriteColorFormat(GR_COLORFORMAT_ARGB); */
    if (b->xm_visual->undithered_pf==PF_5R6G5B) {
       /* Special case: 16bpp RGB */
-      grLfbReadRegion( GR_BUFFER_FRONTXRB->PIXMAP,       /* src buffer */
+      grLfbReadRegion( GR_BUFFER_FRONTBUFFER,       /* src buffer */
                        0, b->FXctx->height - b->mesa_buffer.Height,  /*pos*/
                        b->mesa_buffer.Width, b->mesa_buffer.Height,  /* size */
                        b->mesa_buffer.Width * sizeof(GLushort), /* stride */
@@ -2267,7 +2268,7 @@ static void FXgetImage( XMesaBuffer b )
          XDITHER_SETUP(y);
 
          /* read row from 3Dfx frame buffer */
-         grLfbReadRegion( GR_BUFFER_FRONTXRB->PIXMAP,
+         grLfbReadRegion( GR_BUFFER_FRONTBUFFER,
                           0, b->FXctx->height-(b->mesa_buffer.Height-y),
                           b->mesa_buffer.Width, 1,
                           0,
@@ -2286,7 +2287,7 @@ static void FXgetImage( XMesaBuffer b )
       /* General case: slow! */
       for (y=0;y<b->mesa_buffer.Height;y++) {
          /* read row from 3Dfx frame buffer */
-         grLfbReadRegion( GR_BUFFER_FRONTXRB->PIXMAP,
+         grLfbReadRegion( GR_BUFFER_FRONTBUFFER,
                           0, b->FXctx->height-(b->mesa_buffer.Height-y),
                           b->mesa_buffer.Width, 1,
                           0,
@@ -2295,7 +2296,7 @@ static void FXgetImage( XMesaBuffer b )
          /* write to XImage back buffer */
          for (x=0;x<b->mesa_buffer.Width;x++) {
             XMesaPutPixel(b->backxrb->ximage,x,y,
-			  xmesa_color_to_pixel(&c->mesa,
+			  xmesa_color_to_pixel(ctx,
 					       (pixbuf[x] & 0xf800) >> 8,
 					       (pixbuf[x] & 0x07e0) >> 3,
 					       (pixbuf[x] & 0x001f) << 3,
