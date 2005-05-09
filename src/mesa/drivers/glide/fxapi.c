@@ -43,6 +43,7 @@
 #include "fxdrv.h"
 
 #include "drivers/common/driverfuncs.h"
+#include "framebuffer.h"
 
 #ifndef TDFX_DEBUG
 int TDFX_DEBUG = (0
@@ -678,11 +679,17 @@ fxMesaCreateContext(GLuint win,
    }
 
 
-   fxMesa->glBuffer = _mesa_create_framebuffer(fxMesa->glVis,
+   fxMesa->glBuffer = _mesa_create_framebuffer(fxMesa->glVis);
+#if 0
+/* XXX this is a complete mess :(
+ *	_mesa_add_soft_renderbuffers
+ *	driNewRenderbuffer
+ */
 					       GL_FALSE,	/* no software depth */
 					       stencilSize && !fxMesa->haveHwStencil,
 					       fxMesa->glVis->accumRedBits > 0,
 					       alphaSize && !fxMesa->haveHwAlpha);
+#endif
    if (!fxMesa->glBuffer) {
       str = "_mesa_create_framebuffer";
       goto errorhandler;
@@ -838,7 +845,7 @@ void GLAPIENTRY
 fxMesaMakeCurrent(fxMesaContext fxMesa)
 {
    if (!fxMesa) {
-      _mesa_make_current(NULL, NULL);
+      _mesa_make_current(NULL, NULL, NULL);
       fxMesaCurrentCtx = NULL;
 
       if (TDFX_DEBUG & VERBOSE_DRIVER) {
@@ -870,7 +877,7 @@ fxMesaMakeCurrent(fxMesaContext fxMesa)
    grSstSelect(fxMesa->board);
    grGlideSetState((GrState *) fxMesa->state);
 
-   _mesa_make_current(fxMesa->glCtx, fxMesa->glBuffer);
+   _mesa_make_current(fxMesa->glCtx, fxMesa->glBuffer, fxMesa->glBuffer);
 
    fxSetupDDPointers(fxMesa->glCtx);
 }
