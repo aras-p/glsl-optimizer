@@ -886,10 +886,10 @@ static struct program *i915NewProgram( GLcontext *ctx,
 	 return NULL;
    }
 
-   case GL_FRAGMENT_PROGRAM_NV:
    default:
-      _mesa_problem(ctx, "bad target in _mesa_new_program");
-      return NULL;
+      /* Just fallback:
+       */
+      return _mesa_new_program( ctx, target, id );
    }
 }
 
