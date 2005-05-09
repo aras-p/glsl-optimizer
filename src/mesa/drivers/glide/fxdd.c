@@ -159,9 +159,9 @@ static void fxDDClear( GLcontext *ctx,
 			GLint x, GLint y, GLint width, GLint height )
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
-   GLbitfield softwareMask = mask & (DD_ACCUM_BIT);
+   GLbitfield softwareMask = mask & (BUFFER_BIT_ACCUM);
    const GLuint stencil_size = fxMesa->haveHwStencil ? ctx->Visual.stencilBits : 0;
-   const FxU32 clearD = (FxU32) (ctx->DepthMaxF * ctx->Depth.Clear);
+   const FxU32 clearD = (FxU32) (ctx->DrawBuffer->_DepthMaxF * ctx->Depth.Clear);
    const FxU8 clearS = (FxU8) (ctx->Stencil.Clear & 0xff);
 
    if ( TDFX_DEBUG & MESA_VERBOSE ) {
@@ -170,7 +170,7 @@ static void fxDDClear( GLcontext *ctx,
    }
 
    /* we can't clear accum buffers nor stereo */
-   mask &= ~(DD_ACCUM_BIT | DD_FRONT_RIGHT_BIT | DD_BACK_RIGHT_BIT);
+   mask &= ~(BUFFER_BIT_ACCUM | BUFFER_BIT_FRONT_RIGHT | BUFFER_BIT_BACK_RIGHT);
 
    /* Need this check to respond to certain HW updates */
    if (fxMesa->new_state & (FX_NEW_SCISSOR | FX_NEW_COLOR_MASK)) {
@@ -186,8 +186,8 @@ static void fxDDClear( GLcontext *ctx,
       /* can only do color masking if running in 24/32bpp on Napalm */
       if (ctx->Color.ColorMask[RCOMP] != ctx->Color.ColorMask[GCOMP] ||
           ctx->Color.ColorMask[GCOMP] != ctx->Color.ColorMask[BCOMP]) {
-         softwareMask |= (mask & (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT));
-         mask &= ~(DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT);
+         softwareMask |= (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT));
+         mask &= ~(BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT);
       }
    }
 
@@ -198,7 +198,7 @@ static void fxDDClear( GLcontext *ctx,
        * in the OGL state.
        */
       BEGIN_BOARD_LOCK();
-      if (mask & DD_STENCIL_BIT) {
+      if (mask & BUFFER_BIT_STENCIL) {
 	 fxMesa->Glide.grStencilMaskExt(fxMesa->unitsState.stencilWriteMask);
 	 /* set stencil ref value = desired clear value */
 	 fxMesa->Glide.grStencilFuncExt(GR_CMP_ALWAYS, clearS, 0xff);
@@ -210,9 +210,9 @@ static void fxDDClear( GLcontext *ctx,
 	 grDisable(GR_STENCIL_MODE_EXT);
       }
       END_BOARD_LOCK();
-   } else if (mask & DD_STENCIL_BIT) {
-      softwareMask |= (mask & (DD_STENCIL_BIT));
-      mask &= ~(DD_STENCIL_BIT);
+   } else if (mask & BUFFER_BIT_STENCIL) {
+      softwareMask |= (mask & (BUFFER_BIT_STENCIL));
+      mask &= ~(BUFFER_BIT_STENCIL);
    }
 
    /*
@@ -225,8 +225,8 @@ static void fxDDClear( GLcontext *ctx,
        * This could probably be done fancier but doing each possible case
        * explicitly is less error prone.
        */
-      switch (mask & ~DD_STENCIL_BIT) {
-      case DD_BACK_LEFT_BIT | DD_DEPTH_BIT:
+      switch (mask & ~BUFFER_BIT_STENCIL) {
+      case BUFFER_BIT_BACK_LEFT | BUFFER_BIT_DEPTH:
 	 /* back buffer & depth */
          grDepthMask(FXTRUE);
 	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
@@ -240,7 +240,7 @@ static void fxDDClear( GLcontext *ctx,
                           fxMesa->clearA,
                           clearD);
 	 break;
-      case DD_FRONT_LEFT_BIT | DD_DEPTH_BIT:
+      case BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_DEPTH:
 	 /* XXX it appears that the depth buffer isn't cleared when
 	  * glRenderBuffer(GR_BUFFER_FRONTBUFFER) is set.
 	  * This is a work-around/
@@ -270,7 +270,7 @@ static void fxDDClear( GLcontext *ctx,
                           fxMesa->clearA,
                           clearD);
 	 break;
-      case DD_BACK_LEFT_BIT:
+      case BUFFER_BIT_BACK_LEFT:
 	 /* back buffer only */
 	 grDepthMask(FXFALSE);
 	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
@@ -283,7 +283,7 @@ static void fxDDClear( GLcontext *ctx,
                           fxMesa->clearA,
                           clearD);
 	 break;
-      case DD_FRONT_LEFT_BIT:
+      case BUFFER_BIT_FRONT_LEFT:
 	 /* front buffer only */
 	 grDepthMask(FXFALSE);
 	 grRenderBuffer(GR_BUFFER_FRONTBUFFER);
@@ -296,7 +296,7 @@ static void fxDDClear( GLcontext *ctx,
                           fxMesa->clearA,
                           clearD);
 	 break;
-      case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT:
+      case BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT:
 	 /* front and back */
 	 grDepthMask(FXFALSE);
 	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
@@ -318,7 +318,7 @@ static void fxDDClear( GLcontext *ctx,
                           fxMesa->clearA,
                           clearD);
 	 break;
-      case DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT | DD_DEPTH_BIT:
+      case BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT | BUFFER_BIT_DEPTH:
 	 /* clear back and depth */
          grDepthMask(FXTRUE);
 	 grRenderBuffer(GR_BUFFER_BACKBUFFER);
@@ -342,7 +342,7 @@ static void fxDDClear( GLcontext *ctx,
                           fxMesa->clearA,
                           clearD);
 	 break;
-      case DD_DEPTH_BIT:
+      case BUFFER_BIT_DEPTH:
 	 /* just the depth buffer */
          grDepthMask(FXTRUE);
          fxDisableColor(fxMesa);
@@ -359,7 +359,7 @@ static void fxDDClear( GLcontext *ctx,
 	 break;
       default:
          /* clear no color buffers or depth buffer but might clear stencil */
-	 if ((stencil_size > 0) && (mask & DD_STENCIL_BIT)) {
+	 if ((stencil_size > 0) && (mask & BUFFER_BIT_STENCIL)) {
             /* XXX need this RenderBuffer call to work around Glide bug */
             grDepthMask(FXFALSE);
             grRenderBuffer(GR_BUFFER_BACKBUFFER);
@@ -1950,8 +1950,8 @@ fx_check_IsInHardware(GLcontext * ctx)
       return FX_FALLBACK_STENCIL;
    }
 
-   if (ctx->Color._DrawDestMask[0] != DD_FRONT_LEFT_BIT &&
-       ctx->Color._DrawDestMask[0] != DD_BACK_LEFT_BIT) {
+   if (ctx->DrawBuffer->_ColorDrawBufferMask[0] != BUFFER_BIT_FRONT_LEFT &&
+       ctx->DrawBuffer->_ColorDrawBufferMask[0] != BUFFER_BIT_BACK_LEFT) {
       return FX_FALLBACK_DRAW_BUFFER;
    }
 

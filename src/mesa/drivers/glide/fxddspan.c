@@ -331,6 +331,7 @@
  * since OpenGL says obscured pixels have undefined values.
  */
 static void fxReadRGBASpan_ARGB1555 (const GLcontext * ctx,
+                                     struct gl_renderbuffer *rb,
                                      GLuint n,
                                      GLint x, GLint y,
                                      GLubyte rgba[][4])
@@ -378,6 +379,7 @@ static void fxReadRGBASpan_ARGB1555 (const GLcontext * ctx,
  * since OpenGL says obscured pixels have undefined values.
  */
 static void fxReadRGBASpan_RGB565 (const GLcontext * ctx,
+                                   struct gl_renderbuffer *rb,
                                    GLuint n,
                                    GLint x, GLint y,
                                    GLubyte rgba[][4])
@@ -425,6 +427,7 @@ static void fxReadRGBASpan_RGB565 (const GLcontext * ctx,
  * since OpenGL says obscured pixels have undefined values.
  */
 static void fxReadRGBASpan_ARGB8888 (const GLcontext * ctx,
+                                     struct gl_renderbuffer *rb,
                                      GLuint n,
                                      GLint x, GLint y,
                                      GLubyte rgba[][4])
@@ -445,7 +448,7 @@ static void fxReadRGBASpan_ARGB8888 (const GLcontext * ctx,
 /************************************************************************/
 
 static void
-fxReadDepthSpan_Z16(GLcontext * ctx,
+fxReadDepthSpan_Z16(GLcontext * ctx, struct gl_renderbuffer *rb,
 		    GLuint n, GLint x, GLint y, GLdepth depth[])
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
@@ -465,7 +468,7 @@ fxReadDepthSpan_Z16(GLcontext * ctx,
 
 
 static void
-fxReadDepthSpan_Z24(GLcontext * ctx,
+fxReadDepthSpan_Z24(GLcontext * ctx, struct gl_renderbuffer *rb,
 		    GLuint n, GLint x, GLint y, GLdepth depth[])
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
@@ -488,7 +491,8 @@ fxReadDepthSpan_Z24(GLcontext * ctx,
 /************************************************************************/
 
 static void
-fxWriteStencilSpan (GLcontext *ctx, GLuint n, GLint x, GLint y,
+fxWriteStencilSpan (GLcontext *ctx, struct gl_renderbuffer *rb,
+                    GLuint n, GLint x, GLint y,
                     const GLstencil stencil[], const GLubyte mask[])
 {
  /*
@@ -497,7 +501,7 @@ fxWriteStencilSpan (GLcontext *ctx, GLuint n, GLint x, GLint y,
 }
 
 static void
-fxReadStencilSpan(GLcontext * ctx,
+fxReadStencilSpan(GLcontext * ctx, struct gl_renderbuffer *rb,
 		  GLuint n, GLint x, GLint y, GLstencil stencil[])
 {
    fxMesaContext fxMesa = FX_CONTEXT(ctx);
@@ -516,7 +520,7 @@ fxReadStencilSpan(GLcontext * ctx,
 }
 
 static void
-fxWriteStencilPixels (GLcontext *ctx, GLuint n,
+fxWriteStencilPixels (GLcontext *ctx, struct gl_renderbuffer *rb, GLuint n,
                       const GLint x[], const GLint y[],
                       const GLstencil stencil[],
                       const GLubyte mask[])
@@ -527,7 +531,7 @@ fxWriteStencilPixels (GLcontext *ctx, GLuint n,
 }
 
 static void
-fxReadStencilPixels (GLcontext *ctx, GLuint n,
+fxReadStencilPixels (GLcontext *ctx, struct gl_renderbuffer *rb, GLuint n,
                      const GLint x[], const GLint y[],
                      GLstencil stencil[])
 {
@@ -553,11 +557,11 @@ fxDDSetBuffer(GLcontext * ctx, GLframebuffer * buffer, GLuint bufferBit)
       fprintf(stderr, "fxDDSetBuffer(%x)\n", (int)bufferBit);
    }
 
-   if (bufferBit == DD_FRONT_LEFT_BIT) {
+   if (bufferBit == BUFFER_BIT_FRONT_LEFT) {
       fxMesa->currentFB = GR_BUFFER_FRONTBUFFER;
       grRenderBuffer(fxMesa->currentFB);
    }
-   else if (bufferBit == DD_BACK_LEFT_BIT) {
+   else if (bufferBit == BUFFER_BIT_BACK_LEFT) {
       fxMesa->currentFB = GR_BUFFER_BACKBUFFER;
       grRenderBuffer(fxMesa->currentFB);
    }
