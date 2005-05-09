@@ -651,14 +651,19 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    if (ctx->FragmentProgram._Enabled)
       return;
 
+   if (!ctx->_TexEnvProgram)
+      ctx->_TexEnvProgram = (struct fragment_program *)
+	 ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+
    p.ctx = ctx;
-   p.program = &ctx->_TexEnvProgram;
+   p.program = ctx->_TexEnvProgram;
 
    if (p.program->Instructions == NULL) {
       p.program->Instructions = MALLOC(sizeof(struct fp_instruction) * 100);
    }
 
    p.program->Base.NumInstructions = 0;
+   p.program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
    p.program->NumTexIndirections = 1;	/* correct? */
    p.program->NumTexInstructions = 0;
    p.program->NumAluInstructions = 0;
@@ -702,6 +707,10 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
     */
    emit_arith( &p, FP_OPCODE_END, undef, WRITEMASK_XYZW, 0, undef, undef, undef);
 
+   if (ctx->Fog.Enabled)
+      p.program->FogOption = ctx->Fog.Mode;
+   else
+      p.program->FogOption = GL_NONE;
 
    if (p.program->NumTexIndirections > ctx->Const.MaxFragmentProgramTexIndirections) 
       program_error(&p, "Exceeded max nr indirect texture lookups");

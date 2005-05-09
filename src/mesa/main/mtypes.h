@@ -2784,8 +2784,8 @@ struct __GLcontextRec
    struct gl_fragment_program_state FragmentProgram;  /**< GL_NV_fragment_program */
    struct gl_ati_fragment_shader_state ATIFragmentShader;  /**< GL_ATI_fragment_shader */
 
-   struct fragment_program _TexEnvProgram;     /**< Texture state as fragment program */
-   struct vertex_program _TnlProgram;          /**< Fixed func TNL state as vertex program */
+   struct fragment_program *_TexEnvProgram;     /**< Texture state as fragment program */
+   struct vertex_program *_TnlProgram;          /**< Fixed func TNL state as vertex program */
 
    GLboolean _MaintainTexEnvProgram;
    GLboolean _MaintainTnlProgram;

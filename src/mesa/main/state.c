@@ -90,6 +90,7 @@
 #include "nvfragprog.h"
 #include "nvprogram.h"
 #include "program.h"
+#include "texenvprogram.h"
 #endif
 #if FEATURE_ARB_shader_objects
 #include "shaderobjects.h"
@@ -939,7 +940,11 @@ update_program(GLcontext *ctx)
    ctx->FragmentProgram._Active = ctx->FragmentProgram._Enabled;
 
    if (ctx->_MaintainTexEnvProgram && !ctx->FragmentProgram._Enabled) {
-      ctx->FragmentProgram._Current = &ctx->_TexEnvProgram;
+      if (!ctx->_TexEnvProgram)
+	 ctx->_TexEnvProgram = (struct fragment_program *)
+	    ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+
+      ctx->FragmentProgram._Current = ctx->_TexEnvProgram;
       ctx->FragmentProgram._Active = GL_TRUE;
    }
 }
@@ -997,7 +1002,7 @@ _mesa_update_state( GLcontext *ctx )
       update_arrays( ctx );
 
    if (ctx->_MaintainTexEnvProgram) {
-      if (new_state & (_NEW_TEXTURE | _DD_NEW_SEPARATE_SPECULAR))
+      if (new_state & (_NEW_TEXTURE | _DD_NEW_SEPARATE_SPECULAR | _NEW_FOG))
 	 _mesa_UpdateTexEnvProgram(ctx);
    }
 
