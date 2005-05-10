@@ -1091,25 +1091,41 @@ static void build_passthrough( struct tnl_program *p, GLuint inputs )
 }
 
 
+static GLboolean programs_eq( struct vertex_program *a,
+			      struct vertex_program *b )
+{
+   if (!a || !b)
+      return GL_FALSE;
+
+   if (a->Base.NumInstructions != b->Base.NumInstructions ||
+       a->Parameters->NumParameters != b->Parameters->NumParameters)
+      return GL_FALSE;
+
+   if (memcmp(a->Instructions, b->Instructions, 
+	      a->Base.NumInstructions * sizeof(struct vp_instruction)) != 0)
+      return GL_FALSE;
+
+   if (memcmp(a->Parameters->Parameters, b->Parameters->Parameters,
+	      a->Parameters->NumParameters * 
+	      sizeof(struct program_parameter)) != 0)
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
+
 
 void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct tnl_program p;
-   GLuint db_NumInstructions;
-   struct vp_instruction *db_Instructions;
 
    if (ctx->VertexProgram._Enabled)
       return;
    
-   if (!ctx->_TnlProgram)
-      ctx->_TnlProgram = (struct vertex_program *)
-	 ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
 
    memset(&p, 0, sizeof(p));
    p.ctx = ctx;
-   p.program = ctx->_TnlProgram;
-   
+   p.program = (struct vertex_program *)ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
    p.eye_position = undef;
    p.eye_position_normalized = undef;
    p.eye_normal = undef;
@@ -1117,10 +1133,6 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 
    p.temp_flag = 0;
    p.temp_reserved = ~((1<<MAX_NV_VERTEX_PROGRAM_TEMPS)-1);
-
-   db_Instructions = p.program->Instructions;
-   db_NumInstructions = p.program->Base.NumInstructions;
-   
    p.program->Instructions = MALLOC(sizeof(struct vp_instruction) * 100);
 
    /* Initialize the arb_program struct */
@@ -1179,14 +1191,14 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 
    /* Notify driver the fragment program has (actually) changed.
     */
-   if (db_Instructions == NULL ||
-       db_NumInstructions != p.program->Base.NumInstructions ||
-       memcmp(db_Instructions, p.program->Instructions, 
-	      db_NumInstructions * sizeof(*db_Instructions)) != 0) {
-      _mesa_printf("new program string\n");
-      ctx->Driver.ProgramStringNotify( ctx, GL_VERTEX_PROGRAM_ARB, 
-				       &p.program->Base );
+   if (!programs_eq(ctx->_TnlProgram, p.program) != 0) {
+      if (ctx->_TnlProgram)
+	 ctx->Driver.DeleteProgram( ctx, &ctx->_TnlProgram->Base );
+      ctx->_TnlProgram = p.program;
    }
-
-   FREE(db_Instructions);
+   else if (p.program) {
+      /* Nothing changed...
+       */
+      ctx->Driver.DeleteProgram( ctx, &p.program->Base );
+   }
 }
