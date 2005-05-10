@@ -37,7 +37,7 @@
 #include "shader/arbfragparse.h"
 
 
-#define DISASSEM 1
+#define DISASSEM 0
 
 /* Use uregs to represent registers internally, translate to Mesa's
  * expected formats on emit.  
@@ -691,12 +691,10 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    if (ctx->FragmentProgram._Enabled)
       return;
 
-   if (ctx->_TexEnvProgram)
-      ctx->Driver.DeleteProgram(ctx, ctx->_TexEnvProgram);
-   
-   ctx->FragmentProgram._Current = ctx->_TexEnvProgram = 
-      (struct fragment_program *)
-      ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+   if (!ctx->_TexEnvProgram)
+      ctx->FragmentProgram._Current = ctx->_TexEnvProgram = 
+	 (struct fragment_program *) 
+	 ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
 
    p.ctx = ctx;
    p.program = ctx->_TexEnvProgram;
@@ -779,6 +777,11 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 		       p.program->Instructions);
    _mesa_printf("\n");
 #endif
+
+   /* Notify driver the fragment program has (potentially) changed.
+    */
+   ctx->Driver.ProgramStringNotify( ctx, GL_FRAGMENT_PROGRAM_ARB, 
+				    p.program );
 }
 
 
