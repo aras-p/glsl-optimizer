@@ -789,7 +789,6 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
        db_NumInstructions != p.program->Base.NumInstructions ||
        memcmp(db_Instructions, p.program->Instructions, 
 	      db_NumInstructions * sizeof(*db_Instructions)) != 0) {
-      _mesa_printf("new program string\n");
       ctx->Driver.ProgramStringNotify( ctx, GL_FRAGMENT_PROGRAM_ARB, 
 				       &p.program->Base );
    }
