@@ -705,6 +705,16 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    p.program->NumTexIndirections = 1;	/* correct? */
    p.program->NumTexInstructions = 0;
    p.program->NumAluInstructions = 0;
+   p.program->Base.String = 0;
+   p.program->Base.NumInstructions =
+   p.program->Base.NumTemporaries =
+   p.program->Base.NumParameters =
+   p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
+   if (p.program->Parameters)
+      _mesa_free_parameter_list(p.program->Parameters);
+   p.program->Parameters = _mesa_new_parameter_list();
+   p.program->InputsRead = 0;
+   p.program->OutputsWritten = 0;
 
    p.src_texture = undef;
    p.src_previous = undef;
