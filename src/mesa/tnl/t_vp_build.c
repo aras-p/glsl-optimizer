@@ -49,6 +49,8 @@
  */
 #define DISASSEM 0
 
+#define MAX_INSN 200
+
 /* Use uregs to represent registers internally, translate to Mesa's
  * expected formats on emit.  
  *
@@ -315,6 +317,11 @@ static void emit_op3fn(struct tnl_program *p,
 {
    GLuint nr = p->program->Base.NumInstructions++;
    struct vp_instruction *inst = &p->program->Instructions[nr];
+      
+   if (p->program->Base.NumInstructions > MAX_INSN) {
+      _mesa_problem(p->ctx, "Out of instructions in emit_op3fn\n");
+      return;
+   }
       
    inst->Opcode = op; 
    inst->StringPos = 0;
@@ -1133,7 +1140,7 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 
    p.temp_flag = 0;
    p.temp_reserved = ~((1<<MAX_NV_VERTEX_PROGRAM_TEMPS)-1);
-   p.program->Instructions = MALLOC(sizeof(struct vp_instruction) * 100);
+   p.program->Instructions = MALLOC(sizeof(struct vp_instruction) * MAX_INSN);
 
    /* Initialize the arb_program struct */
    p.program->Base.String = 0;
