@@ -352,7 +352,11 @@ void
 _mesa_free_parameter_list(struct program_parameter_list *paramList)
 {
    _mesa_free_parameters(paramList);
+   _mesa_free(paramList->Parameters);
+   _mesa_free(paramList->ParameterValues);
    _mesa_free(paramList);
+   paramList->Parameters = NULL;
+   paramList->ParameterValues = NULL;
 }
 
 
@@ -365,12 +369,10 @@ _mesa_free_parameters(struct program_parameter_list *paramList)
 {
    GLuint i;
    for (i = 0; i < paramList->NumParameters; i++) {
-      _mesa_free((void *) paramList->Parameters[i].Name);
+      if (paramList->Parameters[i].Name)
+	 _mesa_free((void *) paramList->Parameters[i].Name);
    }
-   _mesa_free(paramList->Parameters);
-   _mesa_free(paramList->ParameterValues);
    paramList->NumParameters = 0;
-   paramList->Parameters = NULL;
 }
 
 
@@ -384,24 +386,31 @@ add_parameter(struct program_parameter_list *paramList,
 {
    const GLuint n = paramList->NumParameters;
 
-   paramList->Parameters = (struct program_parameter *)
-      _mesa_realloc(paramList->Parameters,
-                    n * sizeof(struct program_parameter),
-                    (n + 1) * sizeof(struct program_parameter));
-   paramList->ParameterValues = (GLfloat (*)[4])
-      _mesa_realloc(paramList->ParameterValues,
-                    n * 4 * sizeof(GLfloat),
-                    (n + 1) * 4 * sizeof(GLfloat));
+   if (n == paramList->Size) {
+      paramList->Size *= 2;
+      if (!paramList->Size)
+	 paramList->Size = 4;
+
+      paramList->Parameters = (struct program_parameter *)
+	 _mesa_realloc(paramList->Parameters,
+		       n * sizeof(struct program_parameter),
+		       paramList->Size * sizeof(struct program_parameter));
+      paramList->ParameterValues = (GLfloat (*)[4])
+	 _mesa_realloc(paramList->ParameterValues,
+		       n * 4 * sizeof(GLfloat),
+		       paramList->Size * 4 * sizeof(GLfloat));
+   }
 
    if (!paramList->Parameters ||
        !paramList->ParameterValues) {
       /* out of memory */
       paramList->NumParameters = 0;
+      paramList->Size = 0;
       return -1;
    }
    else {
       paramList->NumParameters = n + 1;
-      paramList->Parameters[n].Name = _mesa_strdup(name);
+      paramList->Parameters[n].Name = name ? _mesa_strdup(name) : NULL;
       paramList->Parameters[n].Type = type;
       if (values)
          COPY_4V(paramList->ParameterValues[n], values);
@@ -446,13 +455,7 @@ GLint
 _mesa_add_unnamed_constant(struct program_parameter_list *paramList,
                            const GLfloat values[4])
 {
-   /* generate a new dummy name */
-   static GLuint n = 0;
-   char name[20];
-   _mesa_sprintf(name, "constant%d", n);
-   n++;
-   /* store it */
-   return add_parameter(paramList, name, values, CONSTANT);
+   return add_parameter(paramList, NULL, values, CONSTANT);
 }
 
 
@@ -472,7 +475,7 @@ _mesa_add_state_reference(struct program_parameter_list *paramList,
     */
    GLint a, idx;
 
-   idx = add_parameter(paramList, "Some State", NULL, STATE);
+   idx = add_parameter(paramList, NULL, NULL, STATE);
 	
    for (a=0; a<6; a++)
       paramList->Parameters[idx].StateIndexes[a] = (enum state_index) stateTokens[a];
@@ -497,14 +500,16 @@ _mesa_lookup_parameter_value(struct program_parameter_list *paramList,
    if (nameLen == -1) {
       /* name is null-terminated */
       for (i = 0; i < paramList->NumParameters; i++) {
-         if (_mesa_strcmp(paramList->Parameters[i].Name, name) == 0)
+         if (paramList->Parameters[i].Name &&
+	     _mesa_strcmp(paramList->Parameters[i].Name, name) == 0)
             return paramList->ParameterValues[i];
       }
    }
    else {
       /* name is not null-terminated, use nameLen */
       for (i = 0; i < paramList->NumParameters; i++) {
-         if (_mesa_strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
+         if (paramList->Parameters[i].Name &&
+	     _mesa_strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
              && _mesa_strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
             return paramList->ParameterValues[i];
       }
@@ -529,14 +534,16 @@ _mesa_lookup_parameter_index(struct program_parameter_list *paramList,
    if (nameLen == -1) {
       /* name is null-terminated */
       for (i = 0; i < (GLint) paramList->NumParameters; i++) {
-         if (_mesa_strcmp(paramList->Parameters[i].Name, name) == 0)
+         if (paramList->Parameters[i].Name &&
+	     _mesa_strcmp(paramList->Parameters[i].Name, name) == 0)
             return i;
       }
    }
    else {
       /* name is not null-terminated, use nameLen */
       for (i = 0; i < (GLint) paramList->NumParameters; i++) {
-         if (_mesa_strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
+         if (paramList->Parameters[i].Name &&
+	     _mesa_strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
              && _mesa_strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
             return i;
       }

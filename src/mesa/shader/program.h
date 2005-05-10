@@ -215,6 +215,7 @@ struct program_parameter
 
 struct program_parameter_list
 {
+   GLuint Size;
    GLuint NumParameters;
    struct program_parameter *Parameters;
    GLfloat (*ParameterValues)[4];
