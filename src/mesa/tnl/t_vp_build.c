@@ -1097,10 +1097,14 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 
    if (ctx->VertexProgram._Enabled)
       return;
+   
+   if (!ctx->_TnlProgram)
+      ctx->_TnlProgram = (struct vertex_program *)
+	 ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
 
    memset(&p, 0, sizeof(p));
    p.ctx = ctx;
-   p.program = &ctx->_TnlProgram;
+   p.program = ctx->_TnlProgram;
    
    p.eye_position = undef;
    p.eye_position_normalized = undef;
@@ -1122,7 +1126,7 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
    if (p.program->Parameters)
       _mesa_free_parameter_list(p.program->Parameters);
-   p.program->Parameters = _mesa_new_parameter_list ();
+   p.program->Parameters = _mesa_new_parameter_list();
    p.program->InputsRead = 0;
    p.program->OutputsWritten = 0;
 

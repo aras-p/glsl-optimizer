@@ -1383,7 +1383,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
    struct vertex_program *program = (ctx->VertexProgram._Enabled ?
 				     ctx->VertexProgram.Current :
-				     &ctx->_TnlProgram);
+				     ctx->_TnlProgram);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct arb_vp_machine *m = ARB_VP_MACHINE(stage);
    GLuint i, j, outputs = program->OutputsWritten;
@@ -1479,7 +1479,7 @@ validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 
 #if TNL_FIXED_FUNCTION_PROGRAM
    if (!program) {
-      program = &ctx->_TnlProgram;
+      program = ctx->_TnlProgram;
    }
 #endif
 
