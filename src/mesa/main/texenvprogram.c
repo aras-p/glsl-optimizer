@@ -82,6 +82,10 @@ struct texenv_fragment_program {
    struct fragment_program *program;
    GLcontext *ctx;
 
+   GLuint tex_temp_flag;	/* Temps which have been the result of a texture
+				 * operation.
+				 */
+
    GLuint temp_flag;		/* Tracks temporary regs which are in
 				 * use.
 				 */
@@ -135,15 +139,49 @@ static GLboolean is_undef( struct ureg reg )
    return reg.file == 0xf;
 }
 
+
 static struct ureg get_temp( struct texenv_fragment_program *p )
 {
-   int bit = ffs( ~p->temp_flag );
+   int bit;
+   
+   /* First try and reuse texture results:
+    */
+   bit = ffs( ~(p->temp_flag & p->tex_temp_flag) );
+
+   /* Then any unused temporary:
+    */
+   if (!bit)
+      bit = ffs( ~p->temp_flag );
+
    if (!bit) {
       fprintf(stderr, "%s: out of temporaries\n", __FILE__);
       exit(1);
    }
 
    p->temp_flag |= 1<<(bit-1);
+   return make_ureg(PROGRAM_TEMPORARY, (bit-1));
+}
+
+static struct ureg get_tex_temp( struct texenv_fragment_program *p )
+{
+   int bit;
+   
+   /* First try to find temp not previously used as a texture result:
+    */
+   bit = ffs( ~(p->temp_flag & ~p->tex_temp_flag) );
+
+   /* Then any unused temporary:
+    */
+   if (!bit)
+      bit = ffs( ~p->temp_flag );
+
+   if (!bit) {
+      fprintf(stderr, "%s: out of temporaries\n", __FILE__);
+      exit(1);
+   }
+
+   p->temp_flag |= 1<<(bit-1);
+   p->tex_temp_flag |= 1<<(bit-1);
    return make_ureg(PROGRAM_TEMPORARY, (bit-1));
 }
 
@@ -339,7 +377,7 @@ static struct ureg get_source( struct texenv_fragment_program *p,
 
 	 GLuint dim = translate_tex_src_bit( p, p->ctx->Texture.Unit[unit]._ReallyEnabled);
 	 struct ureg texcoord = register_input(p, FRAG_ATTRIB_TEX0+unit);
-	 struct ureg tmp = get_temp( p );
+	 struct ureg tmp = get_tex_temp( p );
 
 	 /* TODO: Use D0_MASK_XY where possible.
 	  */
