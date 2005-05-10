@@ -37,7 +37,7 @@
 #include "shader/arbfragparse.h"
 
 
-#define DISASSEM 0
+#define DISASSEM 1
 
 /* Use uregs to represent registers internally, translate to Mesa's
  * expected formats on emit.  
@@ -172,8 +172,10 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
 
    /* Then any unused temporary:
     */
-   if (!bit)
+   if (!bit) {
       bit = ffs( ~p->temp_flag );
+      p->program->NumTexIndirections++;
+   }
 
    if (!bit) {
       fprintf(stderr, "%s: out of temporaries\n", __FILE__);
@@ -689,9 +691,12 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    if (ctx->FragmentProgram._Enabled)
       return;
 
-   if (!ctx->_TexEnvProgram)
-      ctx->_TexEnvProgram = (struct fragment_program *)
-	 ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+   if (ctx->_TexEnvProgram)
+      ctx->Driver.DeleteProgram(ctx, ctx->_TexEnvProgram);
+   
+   ctx->FragmentProgram._Current = ctx->_TexEnvProgram = 
+      (struct fragment_program *)
+      ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
 
    p.ctx = ctx;
    p.program = ctx->_TexEnvProgram;
