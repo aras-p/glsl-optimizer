@@ -533,7 +533,7 @@ void i915_update_fog( GLcontext *ctx )
       
       mode = ctx->FragmentProgram._Current->FogOption;
       enabled = (mode != GL_NONE);
-      try_pixel_fog = 1;
+      try_pixel_fog = 0;
    }
    else {
       enabled = ctx->Fog.Enabled;
