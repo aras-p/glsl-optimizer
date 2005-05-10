@@ -687,6 +687,8 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    struct texenv_fragment_program p;
    GLuint unit;
    struct ureg cf, out;
+   GLuint db_NumInstructions;
+   struct fp_instruction *db_Instructions;
 
    if (ctx->FragmentProgram._Enabled)
       return;
@@ -699,10 +701,10 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    p.ctx = ctx;
    p.program = ctx->_TexEnvProgram;
 
-   if (p.program->Instructions == NULL) {
-      p.program->Instructions = MALLOC(sizeof(struct fp_instruction) * 100);
-   }
+   db_Instructions = p.program->Instructions;
+   db_NumInstructions = p.program->Base.NumInstructions;
 
+   p.program->Instructions = MALLOC(sizeof(struct fp_instruction) * 100);
    p.program->Base.NumInstructions = 0;
    p.program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
    p.program->NumTexIndirections = 1;	/* correct? */
@@ -713,9 +715,12 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    p.program->Base.NumTemporaries =
    p.program->Base.NumParameters =
    p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
+
    if (p.program->Parameters)
-      _mesa_free_parameter_list(p.program->Parameters);
-   p.program->Parameters = _mesa_new_parameter_list();
+      _mesa_free_parameters(p.program->Parameters);
+   else
+      p.program->Parameters = _mesa_new_parameter_list();
+
    p.program->InputsRead = 0;
    p.program->OutputsWritten = 0;
 
@@ -778,10 +783,18 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    _mesa_printf("\n");
 #endif
 
-   /* Notify driver the fragment program has (potentially) changed.
+   /* Notify driver the fragment program has (actually) changed.
     */
-   ctx->Driver.ProgramStringNotify( ctx, GL_FRAGMENT_PROGRAM_ARB, 
-				    p.program );
+   if (db_Instructions == NULL ||
+       db_NumInstructions != p.program->Base.NumInstructions ||
+       memcmp(db_Instructions, p.program->Instructions, 
+	      db_NumInstructions * sizeof(*db_Instructions)) != 0) {
+      _mesa_printf("new program string\n");
+      ctx->Driver.ProgramStringNotify( ctx, GL_FRAGMENT_PROGRAM_ARB, 
+				       &p.program->Base );
+   }
+
+   FREE(db_Instructions);
 }
 
 

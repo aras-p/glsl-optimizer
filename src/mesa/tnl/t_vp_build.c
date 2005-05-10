@@ -317,6 +317,8 @@ static void emit_op3fn(struct tnl_program *p,
    struct vp_instruction *inst = &p->program->Instructions[nr];
       
    inst->Opcode = op; 
+   inst->StringPos = 0;
+   inst->Data = 0;
    
    emit_arg( &inst->SrcReg[0], src0 );
    emit_arg( &inst->SrcReg[1], src1 );
@@ -1094,6 +1096,8 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct tnl_program p;
+   GLuint db_NumInstructions;
+   struct vp_instruction *db_Instructions;
 
    if (ctx->VertexProgram._Enabled)
       return;
@@ -1114,9 +1118,10 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    p.temp_flag = 0;
    p.temp_reserved = ~((1<<MAX_NV_VERTEX_PROGRAM_TEMPS)-1);
 
-   if (p.program->Instructions == NULL) {
-      p.program->Instructions = MALLOC(sizeof(struct vp_instruction) * 100);
-   }
+   db_Instructions = p.program->Instructions;
+   db_NumInstructions = p.program->Base.NumInstructions;
+   
+   p.program->Instructions = MALLOC(sizeof(struct vp_instruction) * 100);
 
    /* Initialize the arb_program struct */
    p.program->Base.String = 0;
@@ -1124,9 +1129,12 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    p.program->Base.NumTemporaries =
    p.program->Base.NumParameters =
    p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
+ 
    if (p.program->Parameters)
-      _mesa_free_parameter_list(p.program->Parameters);
-   p.program->Parameters = _mesa_new_parameter_list();
+      _mesa_free_parameters(p.program->Parameters);
+   else
+      p.program->Parameters = _mesa_new_parameter_list();
+
    p.program->InputsRead = 0;
    p.program->OutputsWritten = 0;
 
@@ -1167,4 +1175,18 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    if (DISASSEM) {
       _mesa_printf ("\n");
    }
+
+
+   /* Notify driver the fragment program has (actually) changed.
+    */
+   if (db_Instructions == NULL ||
+       db_NumInstructions != p.program->Base.NumInstructions ||
+       memcmp(db_Instructions, p.program->Instructions, 
+	      db_NumInstructions * sizeof(*db_Instructions)) != 0) {
+      _mesa_printf("new program string\n");
+      ctx->Driver.ProgramStringNotify( ctx, GL_VERTEX_PROGRAM_ARB, 
+				       &p.program->Base );
+   }
+
+   FREE(db_Instructions);
 }
