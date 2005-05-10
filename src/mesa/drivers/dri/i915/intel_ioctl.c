@@ -45,7 +45,7 @@
 static int intelEmitIrqLocked( intelContextPtr intel )
 {
    drmI830IrqEmit ie;
-   int ret, seq;
+   int ret, seq = 0;
       
    assert(((*(int *)intel->driHwLock) & ~DRM_LOCK_CONT) == 
 	  (DRM_LOCK_HELD|intel->hHWContext));
@@ -398,7 +398,7 @@ void intelClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 
 void *intelAllocateAGP( intelContextPtr intel, GLsizei size )
 {
-   int region_offset;
+   int region_offset = 0;
    drmI830MemAlloc alloc;
    int ret;
 

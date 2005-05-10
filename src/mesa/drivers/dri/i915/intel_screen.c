@@ -81,7 +81,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 
 
    /* Allocate the private area */
-   intelScreen = (intelScreenPrivate *)MALLOC(sizeof(intelScreenPrivate));
+   intelScreen = (intelScreenPrivate *)CALLOC(sizeof(intelScreenPrivate));
    if (!intelScreen) {
       fprintf(stderr,"\nERROR!  Allocating private area failed\n");
       return GL_FALSE;
