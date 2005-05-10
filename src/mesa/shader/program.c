@@ -355,8 +355,6 @@ _mesa_free_parameter_list(struct program_parameter_list *paramList)
    _mesa_free(paramList->Parameters);
    _mesa_free(paramList->ParameterValues);
    _mesa_free(paramList);
-   paramList->Parameters = NULL;
-   paramList->ParameterValues = NULL;
 }
 
 

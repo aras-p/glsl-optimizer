@@ -242,13 +242,15 @@ static void _save_compile_vertex_list( GLcontext *ctx )
    _mesa_memcpy(node->attrsz, tnl->save.attrsz, sizeof(node->attrsz));
    node->vertex_size = tnl->save.vertex_size;
    node->buffer = tnl->save.buffer;
-   node->wrap_count = tnl->save.copied.nr;
    node->count = tnl->save.initial_counter - tnl->save.counter;
+   node->wrap_count = tnl->save.copied.nr;
+   node->have_materials = tnl->save.have_materials;
+   node->dangling_attr_ref = tnl->save.dangling_attr_ref;
+   node->normal_lengths = NULL;
    node->prim = tnl->save.prim;
    node->prim_count = tnl->save.prim_count;
    node->vertex_store = tnl->save.vertex_store;
    node->prim_store = tnl->save.prim_store;
-   node->normal_lengths = NULL;
 
    node->vertex_store->refcount++;
    node->prim_store->refcount++;
