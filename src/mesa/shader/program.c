@@ -408,6 +408,10 @@ add_parameter(struct program_parameter_list *paramList,
    }
    else {
       paramList->NumParameters = n + 1;
+
+      _mesa_memset(&paramList->Parameters[n], 0, 
+		   sizeof(struct program_parameter));
+
       paramList->Parameters[n].Name = name ? _mesa_strdup(name) : NULL;
       paramList->Parameters[n].Type = type;
       if (values)
