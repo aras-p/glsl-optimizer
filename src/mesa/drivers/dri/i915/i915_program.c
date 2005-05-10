@@ -380,7 +380,7 @@ void i915_init_program( i915ContextPtr i915, struct i915_fragment_program *p )
    p->decl_t = 0;
    p->temp_flag = 0xffff000;
    p->utemp_flag = ~0x7;
-   p->wpos_tex = 0;
+   p->wpos_tex = -1;
    p->depth_written = 0;
    p->nr_params = 0;
 

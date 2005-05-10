@@ -788,7 +788,7 @@ static void check_wpos( struct i915_fragment_program *p )
    GLuint inputs = p->FragProg.InputsRead;
    GLint i;
 
-   p->wpos_tex = 0;
+   p->wpos_tex = -1;
 
    for (i = 0; i < p->ctx->Const.MaxTextureCoordUnits; i++) {
       if (inputs & FRAG_BIT_TEX(i)) 
