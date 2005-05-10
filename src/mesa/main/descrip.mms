@@ -1,10 +1,11 @@
 # Makefile for core library for VMS
 # contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
-# Last revision : 18 August 2004
+# Last revision : 10 May 2005
 
 .first
 	define gl [---.include.gl]
 	define math [-.math]
+	define shader [-.shader]
 
 .include [---]mms-config.
 
@@ -41,6 +42,7 @@ SOURCES =accum.c \
 	fbobject.c \
 	feedback.c \
 	fog.c \
+	framebuffer.c \
 	get.c \
 	getstring.c \
 	hash.c \
@@ -56,14 +58,17 @@ SOURCES =accum.c \
 	points.c \
 	polygon.c \
 	rastpos.c \
+	renderbuffer.c \
 	state.c \
 	stencil.c \
 	texcompress.c \
 	texcompress_fxt1.c \
 	texcompress_s3tc.c \
+	texenvprogram.c \
 	texformat.c \
 	teximage.c \
 	texobj.c \
+	texrender.c \
 	texstate.c \
 	texstore.c \
 	varray.c \
@@ -94,6 +99,7 @@ extensions.obj,\
 fbobject.obj,\
 feedback.obj,\
 fog.obj,\
+framebuffer.obj,\
 get.obj,\
 getstring.obj,\
 hash.obj,\
@@ -109,14 +115,17 @@ pixel.obj,\
 points.obj,\
 polygon.obj,\
 rastpos.obj,\
+renderbuffer.obj,\
 state.obj,\
 stencil.obj,\
 texcompress.obj,\
 texcompress_fxt1.obj,\
 texcompress_s3tc.obj,\
+texenvprogram.obj,\
 texformat.obj,\
 teximage.obj,\
 texobj.obj,\
+texrender.obj,\
 texstate.obj,\
 texstore.obj,\
 varray.obj,\
@@ -161,6 +170,7 @@ extensions.obj : extensions.c
 fbobject.obj : fbobject.c
 feedback.obj : feedback.c
 fog.obj : fog.c
+framebuffer.obj : framebuffer.c
 get.obj : get.c
 getstring.obj : getstring.c
 hash.obj : hash.c
@@ -176,15 +186,18 @@ pixel.obj : pixel.c
 points.obj : points.c
 polygon.obj : polygon.c
 rastpos.obj : rastpos.c
+renderbuffer.obj : renderbuffer.c
 state.obj : state.c
 stencil.obj : stencil.c
 texcompress.obj : texcompress.c
 texcompress_fxt1.obj : texcompress_fxt1.c
 	cc$(CFLAGS)/warn=(disable=SHIFTCOUNT) texcompress_fxt1.c
 texcompress_s3tc.obj : texcompress_s3tc.c
+texenvprogram.obj : texenvprogram.c
 texformat.obj : texformat.c
 teximage.obj : teximage.c
 texobj.obj : texobj.c
+texrender.obj : texrender.c
 texstate.obj : texstate.c
 texstore.obj : texstore.c
 varray.obj : varray.c
