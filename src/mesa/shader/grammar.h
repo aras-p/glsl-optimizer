@@ -38,7 +38,7 @@ extern "C" {
 void grammar_alloc_free (void *);
 void *grammar_alloc_malloc (size_t);
 void *grammar_alloc_realloc (void *, size_t, size_t);
-void *grammar_memory_copy (void *, const void *, unsigned int);
+void *grammar_memory_copy (void *, const void *, size_t);
 int grammar_string_compare (const byte *, const byte *);
 int grammar_string_compare_n (const byte *, const byte *, size_t);
 byte *grammar_string_copy (byte *, const byte *);
