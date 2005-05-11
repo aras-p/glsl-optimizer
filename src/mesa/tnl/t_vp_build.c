@@ -76,7 +76,7 @@ struct tnl_program {
    GLcontext *ctx;
    struct vertex_program *program;
    
-   GLuint temp_flag;
+   GLuint temp_in_use;
    GLuint temp_reserved;
    
    struct ureg eye_position;
@@ -144,13 +144,13 @@ static struct ureg swizzle1( struct ureg reg, int x )
 
 static struct ureg get_temp( struct tnl_program *p )
 {
-   int bit = ffs( ~p->temp_flag );
+   int bit = ffs( ~p->temp_in_use );
    if (!bit) {
       fprintf(stderr, "%s: out of temporaries\n", __FILE__);
       exit(1);
    }
 
-   p->temp_flag |= 1<<(bit-1);
+   p->temp_in_use |= 1<<(bit-1);
    return make_ureg(PROGRAM_TEMPORARY, bit-1);
 }
 
@@ -164,14 +164,14 @@ static struct ureg reserve_temp( struct tnl_program *p )
 static void release_temp( struct tnl_program *p, struct ureg reg )
 {
    if (reg.file == PROGRAM_TEMPORARY) {
-      p->temp_flag &= ~(1<<reg.idx);
-      p->temp_flag |= p->temp_reserved; /* can't release reserved temps */
+      p->temp_in_use &= ~(1<<reg.idx);
+      p->temp_in_use |= p->temp_reserved; /* can't release reserved temps */
    }
 }
 
 static void release_temps( struct tnl_program *p )
 {
-   p->temp_flag = p->temp_reserved;
+   p->temp_in_use = p->temp_reserved;
 }
 
 
@@ -1138,8 +1138,13 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    p.eye_normal = undef;
    p.identity = undef;
 
-   p.temp_flag = 0;
-   p.temp_reserved = ~((1<<MAX_NV_VERTEX_PROGRAM_TEMPS)-1);
+   p.temp_in_use = 0;
+
+   if (ctx->Const.MaxVertexProgramTemps >= sizeof(int) * 8)
+      p.temp_reserved = 0;
+   else
+      p.temp_reserved = ~((1<<ctx->Const.MaxVertexProgramTemps)-1);
+
    p.program->Instructions = MALLOC(sizeof(struct vp_instruction) * MAX_INSN);
 
    /* Initialize the arb_program struct */
