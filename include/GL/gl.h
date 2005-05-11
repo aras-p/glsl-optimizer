@@ -104,7 +104,7 @@
 #define APIENTRY GLAPIENTRY
 #endif
 
-/* "P" suffix for when function returns a pointer */
+/* "P" suffix to be used for a pointer to a function */
 #ifndef APIENTRYP
 #define APIENTRYP APIENTRY *
 #endif
@@ -853,7 +853,7 @@ GLAPI GLint GLAPIENTRY glRenderMode( GLenum mode );
 
 GLAPI GLenum GLAPIENTRY glGetError( void );
 
-GLAPI const GLubyte GLAPIENTRYP glGetString( GLenum name );
+GLAPI const GLubyte * GLAPIENTRY glGetString( GLenum name );
 
 GLAPI void GLAPIENTRY glFinish( void );
 
