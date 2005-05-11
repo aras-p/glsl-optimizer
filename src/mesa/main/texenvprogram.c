@@ -345,6 +345,7 @@ static struct ureg register_const4f( struct texenv_fragment_program *p,
    return make_ureg(PROGRAM_STATE_VAR, idx);
 }
 
+#define register_scalar_const(p, s0)    register_const4f(p, s0, s0, s0, s0)
 #define register_const1f(p, s0)         register_const4f(p, s0, 0, 0, 1)
 #define register_const2f(p, s0, s1)     register_const4f(p, s0, s1, 0, 1)
 #define register_const3f(p, s0, s1, s2) register_const4f(p, s0, s1, s2, 1)
@@ -439,7 +440,7 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
        * Emit tmp = 1.0 - arg.xyzw
        */
       arg = get_temp( p );
-      one = register_const1f(p, 1.0);
+      one = register_scalar_const(p, 1.0);
       return emit_arith( p, FP_OPCODE_SUB, arg, mask, 0, one, src, undef);
 
    case GL_SRC_ALPHA: 
@@ -452,7 +453,7 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
        * Emit tmp = 1.0 - arg.wwww
        */
       arg = get_temp( p );
-      one = register_const1f(p, 1.0);
+      one = register_scalar_const(p, 1.0);
       return emit_arith( p, FP_OPCODE_SUB, arg, mask, 0,
 			 one, swizzle1(src, W), undef);
    case GL_SRC_COLOR: 
@@ -550,8 +551,7 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
       /* tmp = arg0 + arg1
        * result = tmp + -.5
        */
-      tmp = register_const1f(p, .5);
-      tmp = swizzle1(tmp,X);
+      tmp = register_scalar_const(p, .5);
       emit_arith( p, FP_OPCODE_ADD, dest, mask, 0, src[0], src[1], undef );
       emit_arith( p, FP_OPCODE_SUB, dest, mask, saturate, dest, tmp, undef );
       return dest;
@@ -569,8 +569,8 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
    case GL_DOT3_RGB: {
       struct ureg tmp0 = get_temp( p );
       struct ureg tmp1 = get_temp( p );
-      struct ureg neg1 = register_const1f(p, -1);
-      struct ureg two  = register_const1f(p, 2);
+      struct ureg neg1 = register_scalar_const(p, -1);
+      struct ureg two  = register_scalar_const(p, 2);
 
       /* tmp0 = 2*src0 - 1
        * tmp1 = 2*src1 - 1
@@ -675,8 +675,7 @@ static struct ureg emit_texenv( struct texenv_fragment_program *p, int unit )
     */
    if (alpha_shift || rgb_shift) {
       if (rgb_shift == alpha_shift) {
-	 shift = register_const1f(p, 1<<rgb_shift);
-	 shift = swizzle1(shift,X);
+	 shift = register_scalar_const(p, 1<<rgb_shift);
       }
       else {
 	 shift = register_const2f(p, 1<<rgb_shift, 1<<alpha_shift);
@@ -694,8 +693,8 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    struct texenv_fragment_program p;
    GLuint unit;
    struct ureg cf, out;
-   GLuint db_NumInstructions;
-   struct fp_instruction *db_Instructions;
+   GLuint db_NumInstructions = 0;
+   struct fp_instruction *db_Instructions = NULL;
 
    if (ctx->FragmentProgram._Enabled)
       return;
@@ -705,13 +704,19 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 	 (struct fragment_program *) 
 	 ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
 
+   _mesa_memset(&p, 0, sizeof(p));
    p.ctx = ctx;
    p.program = ctx->_TexEnvProgram;
 
-   db_Instructions = p.program->Instructions;
-   db_NumInstructions = p.program->Base.NumInstructions;
+   if (ctx->Driver.ProgramStringNotify || DISASSEM) {
+      db_Instructions = p.program->Instructions;
+      db_NumInstructions = p.program->Base.NumInstructions;
+      p.program->Instructions = NULL;
+   }
 
-   p.program->Instructions = MALLOC(sizeof(struct fp_instruction) * 100);
+   if (!p.program->Instructions)
+      p.program->Instructions = MALLOC(sizeof(struct fp_instruction) * 100);
+
    p.program->Base.NumInstructions = 0;
    p.program->Base.Target = GL_FRAGMENT_PROGRAM_ARB;
    p.program->NumTexIndirections = 1;	/* correct? */
@@ -786,23 +791,28 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    if (p.program->NumAluInstructions > ctx->Const.MaxFragmentProgramAluInstructions)
       program_error(&p, "Exceeded max ALU instructions");
 
-#if DISASSEM
-   _mesa_debug_fp_inst(p.program->NumTexInstructions + p.program->NumAluInstructions,
-		       p.program->Instructions);
-   _mesa_printf("\n");
-#endif
 
    /* Notify driver the fragment program has (actually) changed.
     */
-   if (db_Instructions == NULL ||
-       db_NumInstructions != p.program->Base.NumInstructions ||
-       memcmp(db_Instructions, p.program->Instructions, 
-	      db_NumInstructions * sizeof(*db_Instructions)) != 0) {
-      ctx->Driver.ProgramStringNotify( ctx, GL_FRAGMENT_PROGRAM_ARB, 
-				       &p.program->Base );
-   }
+   if (ctx->Driver.ProgramStringNotify || DISASSEM) {
+      if (db_Instructions == NULL ||
+	  db_NumInstructions != p.program->Base.NumInstructions ||
+	  memcmp(db_Instructions, p.program->Instructions, 
+		 db_NumInstructions * sizeof(*db_Instructions)) != 0) {
+	 
+	 if (ctx->Driver.ProgramStringNotify)
+	    ctx->Driver.ProgramStringNotify( ctx, GL_FRAGMENT_PROGRAM_ARB, 
+					     &p.program->Base );
 
-   FREE(db_Instructions);
+	 if (DISASSEM) {
+	    _mesa_debug_fp_inst(p.program->NumTexInstructions + p.program->NumAluInstructions,
+				p.program->Instructions);
+	    _mesa_printf("\n");
+	 }
+      }
+      
+      FREE(db_Instructions);
+   }
 }
 
 
