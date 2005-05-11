@@ -1218,9 +1218,15 @@ execute_program( GLcontext *ctx,
             {
                GLfloat texcoord[4], color[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
-               texcoord[0] /= texcoord[3];
-               texcoord[1] /= texcoord[3];
-               texcoord[2] /= texcoord[3];
+	       /* Not so sure about this test - if texcoord[3] is
+		* zero, we'd probably be fine except for an ASSERT in
+		* IROUND_POS() which gets triggered by the inf values created.
+		*/
+	       if (texcoord[3] != 0.0) {
+		  texcoord[0] /= texcoord[3];
+		  texcoord[1] /= texcoord[3];
+		  texcoord[2] /= texcoord[3];
+	       }
                /* Note: LOD=0 */
                fetch_texel( ctx, texcoord, 0.0F, inst->TexSrcUnit, color );
                store_vector4( inst, machine, color );
@@ -1231,7 +1237,8 @@ execute_program( GLcontext *ctx,
             {
                GLfloat texcoord[4], color[4];
                fetch_vector4( ctx, &inst->SrcReg[0], machine, program, texcoord );
-               if (inst->TexSrcIdx != TEXTURE_CUBE_INDEX) {
+               if (inst->TexSrcIdx != TEXTURE_CUBE_INDEX &&
+		   texcoord[3] != 0.0) {
                   texcoord[0] /= texcoord[3];
                   texcoord[1] /= texcoord[3];
                   texcoord[2] /= texcoord[3];
@@ -1416,6 +1423,10 @@ _swrast_exec_fragment_program( GLcontext *ctx, struct sw_span *span )
    GLuint i;
 
    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
+
+   if (program->Parameters) {
+      _mesa_load_state_parameters(ctx, program->Parameters);
+   }   
 
    for (i = 0; i < span->end; i++) {
       if (span->array->mask[i]) {
