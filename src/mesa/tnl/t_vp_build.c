@@ -1130,7 +1130,7 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
       return;
    
 
-   memset(&p, 0, sizeof(p));
+   _mesa_memset(&p, 0, sizeof(p));
    p.ctx = ctx;
    p.program = (struct vertex_program *)ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
    p.eye_position = undef;
