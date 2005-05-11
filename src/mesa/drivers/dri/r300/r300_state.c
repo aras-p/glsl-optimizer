@@ -1371,7 +1371,10 @@ void r300_setup_textures(GLcontext *ctx)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int max_texture_unit=-1; /* -1 translates into no setup costs for fields */
 	struct gl_texture_unit *texUnit;
-	GLuint OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
+	GLuint OutputsWritten;
+	
+	if(hw_tcl_on)
+		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
 
 	R300_STATECHANGE(r300, txe);
 	R300_STATECHANGE(r300, tex.filter);
@@ -1465,7 +1468,10 @@ void r300_setup_rs_unit(GLcontext *ctx)
 		0x00,
 		0x00
 	};
-	GLuint OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
+	GLuint OutputsWritten;
+	
+	if(hw_tcl_on)
+		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
 	
 	/* This needs to be rewritten - it is a hack at best */
 
@@ -2126,12 +2132,14 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300UpdateTextureState(ctx);
 
 //	r300_setup_routing(ctx, GL_TRUE);
-	r300EmitArrays(ctx, GL_TRUE); /* Just do the routing */
-	r300_setup_textures(ctx);
-	r300_setup_rs_unit(ctx);
+	if(hw_tcl_on == GL_FALSE){
+		r300EmitArrays(ctx, GL_TRUE); /* Just do the routing */
+		r300_setup_textures(ctx);
+		r300_setup_rs_unit(ctx);
 
-	r300SetupVertexShader(r300);
-	r300SetupPixelShader(r300);
+		r300SetupVertexShader(r300);
+		r300SetupPixelShader(r300);
+	}
 
 	r300_set_blend_state(ctx);
 

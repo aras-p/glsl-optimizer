@@ -21,11 +21,6 @@ static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
 	}
 }
 
-/* Mesa doesnt seem to have prototype for this */
-struct program *
-_mesa_init_ati_fragment_shader( GLcontext *ctx, struct ati_fragment_shader *prog,
-                           GLenum target, GLuint id);
-
 static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 {
 	struct r300_vertex_program *vp;
@@ -72,8 +67,8 @@ void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 		
 	switch(target) {
 	case GL_VERTEX_PROGRAM_ARB:
-		vp->translated=GL_FALSE;
-		translate_vertex_shader(vp);
+		/*vp->translated=GL_FALSE;
+		translate_vertex_shader(vp);*/
 		//debug_vp(ctx, vp);
 	break;
 	

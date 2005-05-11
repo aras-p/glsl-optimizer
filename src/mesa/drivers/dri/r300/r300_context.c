@@ -140,6 +140,55 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 	0,
 };
 
+void r300BufferData(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
+		const GLvoid *data, GLenum usage, struct gl_buffer_object *obj)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	drm_radeon_mem_alloc_t alloc;
+	int offset, ret;
+
+	alloc.region = RADEON_MEM_REGION_GART;
+	alloc.alignment = 4;
+	alloc.size = size;
+	alloc.region_offset = &offset;
+
+	ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_ALLOC, &alloc, sizeof(alloc));
+   	if(ret){
+		WARN_ONCE("Ran out of GART memory!\n");
+		_mesa_buffer_data(ctx, target, size, data, usage, obj);
+		return ;
+	}
+	obj->Data = ((char *)rmesa->radeon.radeonScreen->gartTextures.map) + offset;
+	memcpy(obj->Data, data, size);
+	obj->Size = size;
+	obj->Usage = usage;
+#if 0
+	fprintf(stderr, "allocated %d bytes at %p, offset=%d\n", size, obj->Data, offset);
+#endif
+}
+
+void r300DeleteBuffer(GLcontext *ctx, struct gl_buffer_object *obj)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	
+	if(r300IsGartMemory(rmesa, obj->Data, obj->Size)){
+		drm_radeon_mem_free_t memfree;
+		int ret;
+		
+		memfree.region = RADEON_MEM_REGION_GART;
+		memfree.region_offset = (char *)obj->Data - (char *)rmesa->radeon.radeonScreen->gartTextures.map;
+
+		ret = drmCommandWrite(rmesa->radeon.radeonScreen->driScreen->fd,
+				      DRM_RADEON_FREE, &memfree, sizeof(memfree));
+
+		if(ret){
+			WARN_ONCE("Failed to free GART memroy!\n");
+		}
+		obj->Data = NULL;
+	}
+	_mesa_delete_buffer_object(ctx, obj);
+}
+
 /* Create the device specific rendering context.
  */
 GLboolean r300CreateContext(const __GLcontextModes * glVisual,
@@ -177,6 +226,10 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitStateFuncs(&functions);
 	r300InitTextureFuncs(&functions);
 	r300InitShaderFuncs(&functions);
+	if(hw_tcl_on){
+		functions.BufferData = r300BufferData;
+		functions.DeleteBuffer = r300DeleteBuffer;
+	}
 	
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv, sharedContextPrivate)) {

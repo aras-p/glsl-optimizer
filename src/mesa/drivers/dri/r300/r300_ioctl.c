@@ -582,7 +582,7 @@ GLuint r300GartOffsetFromVirtual(r300ContextPtr rmesa, const GLvoid * pointer)
 	int offset =
 	    (char *)pointer - (char *)rmesa->radeon.radeonScreen->gartTextures.map;
 
-	fprintf(stderr, "offset=%08x\n", offset);
+	//fprintf(stderr, "offset=%08x\n", offset);
 
 	if (offset < 0 || offset > rmesa->radeon.radeonScreen->gartTextures.size)
 		return ~0;

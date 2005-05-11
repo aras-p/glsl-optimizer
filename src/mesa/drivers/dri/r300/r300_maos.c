@@ -173,6 +173,20 @@ static void emit_vector(GLcontext * ctx,
 		fprintf(stderr, "%s count %d size %d stride %d\n",
 			__FUNCTION__, count, size, stride);
 
+	if(r300IsGartMemory(rmesa, data, size*stride)){
+		rvb->address = rmesa->radeon.radeonScreen->gartTextures.map;
+		rvb->start = data - rvb->address;
+		rvb->aos_offset = r300GartOffsetFromVirtual(rmesa, data);
+		
+		if(stride == 0)
+			rvb->aos_stride	= 0;
+		else
+			rvb->aos_stride	= stride / 4;
+		
+		rvb->aos_size = size;
+		return;
+	}
+	
 	/* Gets triggered when playing with future_hw_tcl_on ...*/
 	//assert(!rvb->buf);
 
@@ -188,7 +202,7 @@ static void emit_vector(GLcontext * ctx,
 		rvb->aos_stride	= size;
 		rvb->aos_size	= size;
 	}
-
+	
 	/* Emit the data
 	 */
 	switch (size) {
@@ -219,6 +233,13 @@ void r300EmitElts(GLcontext * ctx, GLuint *elts, unsigned long n_elts)
 	unsigned short int *out;
 	int i;
 	
+	if(r300IsGartMemory(rmesa, elts, n_elts*sizeof(unsigned short int))){
+		rvb->address = rmesa->radeon.radeonScreen->gartTextures.map;
+		rvb->start = (char *)elts - rvb->address;
+		rvb->aos_offset = rmesa->radeon.radeonScreen->gart_texture_offset + rvb->start;
+		return ;
+	}
+	
 	r300AllocDmaRegion(rmesa, rvb, n_elts*sizeof(unsigned short int), 2);
 	
 	out = (unsigned short int *)(rvb->address + rvb->start);
@@ -242,7 +263,6 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	GLuint aa_vap_reg = 0; /* VAP register assignment */
 	GLuint i;
 	GLuint inputs = 0;
-	GLuint InputsRead = CURRENT_VERTEX_SHADER(ctx)->InputsRead;
 	
 
 #define CONFIGURE_AOS(r, f, v, sz, cn) { \
@@ -272,6 +292,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 }
 
 	if (hw_tcl_on) {
+		GLuint InputsRead = CURRENT_VERTEX_SHADER(ctx)->InputsRead;
 		struct r300_vertex_program *prog=(struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 		if (InputsRead & (1<<VERT_ATTRIB_POS)) {
 			inputs |= _TNL_BIT_POS;

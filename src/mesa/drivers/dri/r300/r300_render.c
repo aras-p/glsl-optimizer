@@ -545,7 +545,7 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 		fprintf(stderr, "%s\n", __FUNCTION__);
 	
 
-	r300ReleaseArrays(ctx);
+   	r300ReleaseArrays(ctx);
 	r300EmitArrays(ctx, GL_FALSE);
 	//dump_inputs(ctx, rmesa->state.render_inputs);
 
@@ -557,6 +557,9 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 	reg_start(0x4f18,0);
 	e32(0x00000003);
 	r300EmitState(rmesa);
+	
+	if(hw_tcl_on) /* FIXME */
+		r300FlushCmdBuf(rmesa, __FUNCTION__);
 
 	rmesa->state.Elts = VB->Elts;
 
@@ -748,6 +751,8 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
    GLuint i;
+   struct r300_vertex_program *vp;
+   
    	hw_tcl_on=future_hw_tcl_on;
    
 	if (RADEON_DEBUG & DEBUG_PRIMS)
@@ -756,13 +761,16 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 		return GL_TRUE;
 	if(ctx->VertexProgram._Enabled == GL_FALSE){
 		_tnl_UpdateFixedFunctionProgram(ctx);
-		r300ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB, &ctx->_TnlProgram);
-		r300_setup_textures(ctx);
-		r300_setup_rs_unit(ctx);
-
-		r300SetupVertexShader(rmesa);
-		r300SetupPixelShader(rmesa);
 	}
+	vp = CURRENT_VERTEX_SHADER(ctx);
+	if(vp->translated == GL_FALSE)
+		translate_vertex_shader(vp);
+		
+	r300_setup_textures(ctx);
+	r300_setup_rs_unit(ctx);
+
+	r300SetupVertexShader(rmesa);
+	r300SetupPixelShader(rmesa);
 
 	return r300_run_vb_render(ctx, stage);
 }
