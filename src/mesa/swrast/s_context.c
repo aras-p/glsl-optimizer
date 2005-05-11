@@ -158,7 +158,7 @@ _swrast_update_fog_hint( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    swrast->_PreferPixelFog = (!swrast->AllowVertexFog ||
-                              ctx->FragmentProgram._Active ||
+                              ctx->FragmentProgram._Enabled || /* not _Active! */
 			      (ctx->Hint.Fog == GL_NICEST &&
 			       swrast->AllowPixelFog));
 }
