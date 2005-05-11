@@ -1280,7 +1280,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
 
    ASSERT(span->arrayMask & SPAN_RGBA);
 
-   if (!ctx->FragmentProgram._Active) {
+   if (!ctx->FragmentProgram._Enabled) {
       /* Add base and specular colors */
       if (ctx->Fog.ColorSumEnabled ||
           (ctx->Light.Enabled &&
