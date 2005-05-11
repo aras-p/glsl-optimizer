@@ -82,11 +82,11 @@ struct texenv_fragment_program {
    struct fragment_program *program;
    GLcontext *ctx;
 
-   GLuint tex_temp_flag;	/* Temps which have been the result of a texture
+   GLuint temp_used_for_txp;	/* Temps which have been the result of a texture
 				 * operation.
 				 */
 
-   GLuint temp_flag;		/* Tracks temporary regs which are in
+   GLuint temp_in_use;		/* Tracks temporary regs which are in
 				 * use.
 				 */
 
@@ -144,21 +144,22 @@ static struct ureg get_temp( struct texenv_fragment_program *p )
 {
    int bit;
    
-   /* First try and reuse texture results:
+   /* First try and reuse temps which have been used for texture
+    * results:
     */
-   bit = ffs( ~(p->temp_flag & p->tex_temp_flag) );
+   bit = ffs( ~p->temp_in_use & p->temp_used_for_txp );
 
    /* Then any unused temporary:
     */
    if (!bit)
-      bit = ffs( ~p->temp_flag );
+      bit = ffs( ~p->temp_in_use );
 
    if (!bit) {
       fprintf(stderr, "%s: out of temporaries\n", __FILE__);
       exit(1);
    }
 
-   p->temp_flag |= 1<<(bit-1);
+   p->temp_in_use |= 1<<(bit-1);
    return make_ureg(PROGRAM_TEMPORARY, (bit-1));
 }
 
@@ -166,14 +167,15 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
 {
    int bit;
    
-   /* First try to find temp not previously used as a texture result:
+   /* First try to find availble temp not previously used as a texture
+    * result:
     */
-   bit = ffs( ~(p->temp_flag & ~p->tex_temp_flag) );
+   bit = ffs( ~p->temp_in_use & ~p->temp_used_for_txp );
 
    /* Then any unused temporary:
     */
    if (!bit) {
-      bit = ffs( ~p->temp_flag );
+      bit = ffs( ~p->temp_in_use );
       p->program->NumTexIndirections++;
    }
 
@@ -182,15 +184,20 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
       exit(1);
    }
 
-   p->temp_flag |= 1<<(bit-1);
-   p->tex_temp_flag |= 1<<(bit-1);
+   p->temp_in_use |= 1<<(bit-1);
+   p->temp_used_for_txp |= 1<<(bit-1);
    return make_ureg(PROGRAM_TEMPORARY, (bit-1));
 }
 
 
 static void release_temps( struct texenv_fragment_program *p )
 {
-   p->temp_flag = ~0x7;
+   GLuint max_temp = p->ctx->Const.MaxFragmentProgramTemps;
+
+   if (max_temp >= sizeof(int) * 8)
+      p->temp_in_use = 0;
+   else
+      p->temp_in_use = ~((1<<max_temp)-1);
 }
 
 
@@ -715,7 +722,7 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    p.program->Base.NumTemporaries =
    p.program->Base.NumParameters =
    p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
-
+   
    if (p.program->Parameters)
       _mesa_free_parameters(p.program->Parameters);
    else
@@ -727,6 +734,7 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    p.src_texture = undef;
    p.src_previous = undef;
    p.last_tex_stage = 0;
+   release_temps(&p);
 
    if (ctx->Texture._EnabledUnits) {
       for (unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++)
@@ -738,8 +746,9 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 	 if (ctx->Texture.Unit[unit]._ReallyEnabled) {
 	    p.src_previous = emit_texenv( &p, unit );
 	    p.src_texture = undef;
-	    p.temp_flag = 0xffff000;
-	    p.temp_flag |= 1 << p.src_previous.idx;
+	    release_temps(&p);	/* release all temps */
+	    if (p.src_previous.file == PROGRAM_TEMPORARY)
+	       p.temp_in_use |= 1 << p.src_previous.idx; /* except for this one */
 	 }
    }
 
