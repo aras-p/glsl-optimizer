@@ -1179,7 +1179,19 @@ execute_program( GLcontext *ctx,
                /* Note: we pass 0 for LOD.  The ARB extension requires it
                 * while the NV extension says it's implementation dependant.
                 */
-               fetch_texel( ctx, texcoord, 0.0F, inst->TexSrcUnit, color );
+               /* KW: Previously lambda was passed as zero, but I
+		* believe this is incorrect, the spec seems to
+		* indicate rather that lambda should not be
+		* changed/biased, unlike TXB where texcoord[3] is
+		* added to the lambda calculations.  The lambda should
+		* still be calculated normally for TEX & TXP though,
+		* not set to zero.  Otherwise it's very difficult to
+		* implement normal GL semantics through the fragment
+		* shader.
+		*/
+               fetch_texel( ctx, texcoord, 
+			    span->array->lambda[inst->TexSrcUnit][column],
+			    inst->TexSrcUnit, color );
                if (color[3])
                   printf("color[3] = %f\n", color[3]);
                store_vector4( inst, machine, color );
@@ -1227,8 +1239,17 @@ execute_program( GLcontext *ctx,
 		  texcoord[1] /= texcoord[3];
 		  texcoord[2] /= texcoord[3];
 	       }
-               /* Note: LOD=0 */
-               fetch_texel( ctx, texcoord, 0.0F, inst->TexSrcUnit, color );
+               /* KW: Previously lambda was passed as zero, but I
+		* believe this is incorrect, the spec seems to
+		* indicate rather that lambda should not be
+		* changed/biased, unlike TXB where texcoord[3] is
+		* added to the lambda calculations.  The lambda should
+		* still be calculated normally for TEX & TXP though,
+		* not set to zero.
+		*/
+               fetch_texel( ctx, texcoord, 
+			    span->array->lambda[inst->TexSrcUnit][column],
+			    inst->TexSrcUnit, color );
                store_vector4( inst, machine, color );
             }
             break;
