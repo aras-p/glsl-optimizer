@@ -47,7 +47,13 @@
  * generated program with line/function references for each
  * instruction back into this file:
  */
-#define DISASSEM 0
+#define DISASSEM 1
+
+/* Should be tunable by the driver - do we want to do matrix
+ * multiplications with DP4's or with MUL/MAD's?  SSE works better
+ * with the latter, drivers may differ.
+ */
+#define PREFER_DP4 1
 
 #define MAX_INSN 200
 
@@ -423,17 +429,34 @@ static void emit_normalize_vec3( struct tnl_program *p,
    release_temp(p, tmp);
 }
 
+static void emit_passthrough( struct tnl_program *p, 
+			      GLuint input,
+			      GLuint output )
+{
+   struct ureg out = register_output(p, output);
+   emit_op1(p, VP_OPCODE_MOV, out, 0, register_input(p, input)); 
+}
+
 static struct ureg get_eye_position( struct tnl_program *p )
 {
    if (is_undef(p->eye_position)) {
       struct ureg pos = register_input( p, VERT_ATTRIB_POS ); 
       struct ureg modelview[4];
 
-      register_matrix_param6( p, STATE_MATRIX, STATE_MODELVIEW, 0, 0, 3, 
-			      STATE_MATRIX_TRANSPOSE, modelview );
       p->eye_position = reserve_temp(p);
 
-      emit_transpose_matrix_transform_vec4(p, p->eye_position, modelview, pos);
+      if (PREFER_DP4) {
+	 register_matrix_param6( p, STATE_MATRIX, STATE_MODELVIEW, 0, 0, 3, 
+				 STATE_MATRIX, modelview );
+
+	 emit_matrix_transform_vec4(p, p->eye_position, modelview, pos);
+      }
+      else {
+	 register_matrix_param6( p, STATE_MATRIX, STATE_MODELVIEW, 0, 0, 3, 
+				 STATE_MATRIX_TRANSPOSE, modelview );
+
+	 emit_transpose_matrix_transform_vec4(p, p->eye_position, modelview, pos);
+      }
    }
    
    return p->eye_position;
@@ -492,9 +515,16 @@ static void build_hpos( struct tnl_program *p )
    struct ureg hpos = register_output( p, VERT_RESULT_HPOS );
    struct ureg mvp[4];
 
-   register_matrix_param6( p, STATE_MATRIX, STATE_MVP, 0, 0, 3, 
-			   STATE_MATRIX_TRANSPOSE, mvp );
-   emit_transpose_matrix_transform_vec4( p, hpos, mvp, pos );
+   if (PREFER_DP4) {
+      register_matrix_param6( p, STATE_MATRIX, STATE_MVP, 0, 0, 3, 
+			      STATE_MATRIX, mvp );
+      emit_matrix_transform_vec4( p, hpos, mvp, pos );
+   }
+   else {
+      register_matrix_param6( p, STATE_MATRIX, STATE_MVP, 0, 0, 3, 
+			      STATE_MATRIX_TRANSPOSE, mvp );
+      emit_transpose_matrix_transform_vec4( p, hpos, mvp, pos );
+   }
 }
 
 
@@ -694,6 +724,35 @@ static void build_lighting( struct tnl_program *p )
       else
 	 _bfc1 = _bfc0;
    }
+
+
+   /* If no lights, still need to emit the scenecolor.
+    */
+   if (nr_lights == 0) {
+      {
+	 struct ureg res0 = register_output( p, VERT_RESULT_COL0 );
+	 emit_op1(p, VP_OPCODE_MOV, res0, 0, _col0);
+      }
+
+      if (separate) {
+	 struct ureg res1 = register_output( p, VERT_RESULT_COL1 );
+	 emit_op1(p, VP_OPCODE_MOV, res1, 0, _col1);
+      }
+
+      if (twoside) {
+	 struct ureg res0 = register_output( p, VERT_RESULT_BFC0 );
+	 emit_op1(p, VP_OPCODE_MOV, res0, 0, _bfc0);
+      }
+      
+      if (twoside && separate) {
+	 struct ureg res1 = register_output( p, VERT_RESULT_BFC1 );
+	 emit_op1(p, VP_OPCODE_MOV, res1, 0, _bfc1);
+      }
+      
+      release_temps(p);
+      return;
+   }
+
 
    for (i = 0; i < MAX_LIGHTS; i++) {
       struct gl_light *light = &ctx->Light.Light[i];
@@ -968,9 +1027,9 @@ static void build_texture_transform( struct tnl_program *p )
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
       GLuint texmat_enabled = ctx->Texture._TexMatEnabled & ENABLE_TEXMAT(i);
-      struct ureg out = register_output(p, VERT_RESULT_TEX0 + i);
 
       if (texUnit->TexGenEnabled || texmat_enabled) {
+	 struct ureg out = register_output(p, VERT_RESULT_TEX0 + i);
 	 struct ureg out_texgen = undef;
 
 	 if (texUnit->TexGenEnabled) {
@@ -1053,12 +1112,25 @@ static void build_texture_transform( struct tnl_program *p )
 	    struct ureg in = (!is_undef(out_texgen) ? 
 			      out_texgen : 
 			      register_input(p, VERT_ATTRIB_TEX0+i));
-	    register_matrix_param6( p, STATE_MATRIX, STATE_TEXTURE, i, 
-				    0, 3, 0, texmat );
-	    emit_matrix_transform_vec4( p, out, texmat, in );
+	    if (PREFER_DP4) {
+	       register_matrix_param6( p, STATE_MATRIX, STATE_TEXTURE, i, 
+				       0, 3, STATE_MATRIX, texmat );
+	       emit_matrix_transform_vec4( p, out, texmat, in );
+	    }
+	    else {
+	       register_matrix_param6( p, STATE_MATRIX, STATE_TEXTURE, i, 
+				       0, 3, STATE_MATRIX_TRANSPOSE, texmat );
+	       emit_matrix_transform_vec4( p, out, texmat, in );
+	    }
 	 }
 
 	 release_temps(p);
+      } 
+      else if (texUnit->_ReallyEnabled) {
+	 /* KW: _ReallyEnabled isn't sufficient?  Need to know whether
+	  * this texture unit is referenced by the fragment shader.  
+	  */
+	 emit_passthrough(p, VERT_ATTRIB_TEX0+i, VERT_RESULT_TEX0+i);
       }
    }
 }
@@ -1093,11 +1165,6 @@ static void build_pointsize( struct tnl_program *p )
 }
 
 
-static void build_passthrough( struct tnl_program *p, GLuint inputs )
-{
-}
-
-
 static GLboolean programs_eq( struct vertex_program *a,
 			      struct vertex_program *b )
 {
@@ -1123,7 +1190,6 @@ static GLboolean programs_eq( struct vertex_program *a,
 
 void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct tnl_program p;
 
    if (ctx->VertexProgram._Enabled)
@@ -1170,6 +1236,8 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
     */
    if (ctx->Light.Enabled)
       build_lighting(&p);
+   else
+      emit_passthrough(&p, VERT_ATTRIB_COLOR0, VERT_RESULT_COL0);
 
    if (ctx->Fog.Enabled)
       build_fog(&p);
@@ -1179,16 +1247,6 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 
    if (ctx->Point._Attenuated)
       build_pointsize(&p);
-
-   /* Is there a need to copy inputs to outputs?  The software
-    * implementation might do this more efficiently by just assigning
-    * the missing results to point at input arrays.
-    */
-   if (/* tnl->vp_copy_inputs &&  */
-       (tnl->render_inputs & ~p.program->OutputsWritten)) {
-      build_passthrough(&p, tnl->render_inputs);
-   }
-
 
    /* Finish up:
     */
