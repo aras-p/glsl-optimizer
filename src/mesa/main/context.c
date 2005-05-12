@@ -1745,7 +1745,7 @@ void
 _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
                     GLframebuffer *readBuffer )
 {
-   if (MESA_VERBOSE)
+   if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(newCtx, "_mesa_make_current()\n");
 
    /* Check that the context's and framebuffer's visuals are compatible.
