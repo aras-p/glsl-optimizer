@@ -47,7 +47,7 @@
  * generated program with line/function references for each
  * instruction back into this file:
  */
-#define DISASSEM 1
+#define DISASSEM 0
 
 /* Should be tunable by the driver - do we want to do matrix
  * multiplications with DP4's or with MUL/MAD's?  SSE works better
