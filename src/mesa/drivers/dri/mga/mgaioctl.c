@@ -283,16 +283,42 @@ mgaClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 }
 
 
+/**
+ * Wait for the previous frame of rendering has completed.
+ * 
+ * \param mmesa  Hardware context pointer.
+ *
+ * \bug
+ * The loop in this function should have some sort of a timeout mechanism.
+ *
+ * \todo
+ * This routine should be modified to wait on a semaphore.  To do this,
+ * the DRM would have to queue an interrupt when the swap command was
+ * put in the DMA buffer.  When the interrupt occured, the DRM would UP
+ * the semaphore.  This function would then just DOWN the semaphore.
+ */
+
 static void mgaWaitForFrameCompletion( mgaContextPtr mmesa )
 {
    unsigned wait = 0;
-   GLuint last_frame, last_wrap;
+   const GLuint last_frame = mmesa->sarea->last_frame.head;
+   const GLuint last_wrap = mmesa->sarea->last_frame.wrap;
 
 
-   last_frame = mmesa->sarea->last_frame.head;
-   last_wrap = mmesa->sarea->last_frame.wrap;
-
-   /* FIXME: Add a timeout to this loop...
+   /* The DMA routines in the kernel track a couple values in the SAREA that
+    * we use here.  The number of times that the primary DMA buffer has
+    * "wrapped" around is tracked in last_wrap.  In addition, the wrap count
+    * and the buffer position at the end of the last frame are stored in
+    * last_frame.wrap and last_frame.head.
+    * 
+    * By comparing the wrap counts and the current DMA pointer value (read
+    * directly from the hardware) to last_frame.head, we can determine when
+    * the graphics processor has processed all of the commands for the last
+    * frame.
+    * 
+    * In this case "last frame" means the frame of the *previous* swap-
+    * buffers call.  This is done to prevent queuing a second buffer swap
+    * before the previous swap is executed.
     */
    while ( 1 ) {
       if ( last_wrap < mmesa->sarea->last_wrap ||

@@ -274,8 +274,6 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 
    mgaScreen->primary.handle = serverInfo->primary.handle;
    mgaScreen->primary.size = serverInfo->primary.size;
-   mgaScreen->buffers.handle = serverInfo->buffers.handle;
-   mgaScreen->buffers.size = serverInfo->buffers.size;
 
 #if 0
    mgaScreen->agp.handle = serverInfo->agp;
@@ -327,7 +325,6 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 
    /* For calculating setupdma addresses.
     */
-   mgaScreen->dmaOffset = serverInfo->buffers.handle;
 
    mgaScreen->bufs = drmMapBufs(sPriv->fd);
    if (!mgaScreen->bufs) {

@@ -20,10 +20,19 @@
  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * \file mgapixel.c
+ * Implement framebuffer pixel operations for MGA.
  *
- * Authors:
- *    Keith Whitwell <keith@tungstengraphics.com>
- *    Gareth Hughes <gareth@valinux.com>
+ * \todo
+ * Someday the accelerated \c glReadPixels and \c glDrawPixels paths need to
+ * be resurrected.  They are currently ifdef'ed out because they don't seem
+ * to work and they only get activated some very rare circumstances.
+ *
+ * \author Keith Whitwell <keith@tungstengraphics.com>
+ * \author Gareth Hughes <gareth@valinux.com>
  */
 /* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgapixel.c,v 1.9 2002/11/05 17:46:08 tsi Exp $ */
 
@@ -38,6 +47,7 @@
 #include "swrast/swrast.h"
 #include "imports.h"
 
+#if 0
 #define IS_AGP_MEM( mmesa, p )						  \
    ((unsigned long)mmesa->mgaScreen->buffers.map <= ((unsigned long)p) && \
     (unsigned long)mmesa->mgaScreen->buffers.map +			  \
@@ -628,7 +638,7 @@ mgaDDDrawPixels( GLcontext *ctx,
       _swrast_DrawPixels( ctx, x, y, width, height, format, type,
 			  unpack, pixels );
 }
-
+#endif
 
 
 /* Stub functions - not a real allocator, always returns pointer to
@@ -645,8 +655,10 @@ void mgaDDInitPixelFuncs( GLcontext *ctx )
    ctx->Driver.DrawPixels = _swrast_DrawPixels;
    ctx->Driver.ReadPixels = _swrast_ReadPixels;
 
+#if 0
    if (getenv("MGA_BLIT_PIXELS")) {
       ctx->Driver.ReadPixels = mgaDDReadPixels; /* requires agp dest */
       ctx->Driver.DrawPixels = mgaDDDrawPixels; /* works with agp/normal mem */
    }
+#endif
 }

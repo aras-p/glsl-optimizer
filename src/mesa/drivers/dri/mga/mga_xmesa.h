@@ -61,8 +61,6 @@ typedef struct mga_screen_private_s {
    unsigned int depthPitch;
    int depthCpp;
 
-   unsigned int dmaOffset;
-
    unsigned int textureOffset[MGA_NR_TEX_HEAPS];
    unsigned int textureSize[MGA_NR_TEX_HEAPS];
    int logTextureGranularity[MGA_NR_TEX_HEAPS];
@@ -73,9 +71,7 @@ typedef struct mga_screen_private_s {
    drmBufMapPtr  bufs;
 
    drmRegion mmio;
-   drmRegion status;
    drmRegion primary;
-   drmRegion buffers;
    unsigned int sarea_priv_offset;
 
    /* Configuration cache with default values for all contexts */
