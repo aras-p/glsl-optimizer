@@ -153,8 +153,17 @@ static void TAG(WriteDepthPixels)( GLcontext *ctx,
 #else
 	 HW_CLIPLOOP()
 	    {
-	       for ( i = 0 ; i < n ; i++ ) {
-		  if ( mask[i] ) {
+	       if ( mask ) {
+		  for ( i = 0 ; i < n ; i++ ) {
+		     if ( mask[i] ) {
+			const int fy = Y_FLIP( y[i] );
+			if ( CLIPPIXEL( x[i], fy ) )
+			   WRITE_DEPTH( x[i], fy, depth[i] );
+		     }
+		  }
+	       }
+	       else {
+		  for ( i = 0 ; i < n ; i++ ) {
 		     const int fy = Y_FLIP( y[i] );
 		     if ( CLIPPIXEL( x[i], fy ) )
 			WRITE_DEPTH( x[i], fy, depth[i] );
