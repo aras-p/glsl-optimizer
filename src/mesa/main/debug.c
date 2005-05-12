@@ -176,6 +176,9 @@ static void add_debug_flags( const char *debug )
 
    if (_mesa_strstr(debug, "lighting")) 
       MESA_VERBOSE |= VERBOSE_LIGHTING;
+
+   if (_mesa_strstr(debug, "disassem")) 
+      MESA_VERBOSE |= VERBOSE_DISASSEM;
    
    /* Debug flag:
     */

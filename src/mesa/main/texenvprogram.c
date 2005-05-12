@@ -37,7 +37,7 @@
 #include "shader/arbfragparse.h"
 
 
-#define DISASSEM 0
+#define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
 /* Use uregs to represent registers internally, translate to Mesa's
  * expected formats on emit.  
