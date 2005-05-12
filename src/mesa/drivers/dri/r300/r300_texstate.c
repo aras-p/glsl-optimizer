@@ -1105,12 +1105,12 @@ static GLboolean enable_tex_2d(GLcontext * ctx, int unit)
 
 	/* Need to load the 2d images associated with this unit.
 	 */
-	#if 0
+#if 0
 	if (t->format & R200_TXFORMAT_NON_POWER2) {
 		t->format &= ~R200_TXFORMAT_NON_POWER2;
 		t->base.dirty_images[0] = ~0;
 	}
-	#endif
+#endif
 
 	ASSERT(tObj->Target == GL_TEXTURE_2D || tObj->Target == GL_TEXTURE_1D);
 
@@ -1211,12 +1211,12 @@ static GLboolean enable_tex_rect(GLcontext * ctx, int unit)
 	struct gl_texture_object *tObj = texUnit->_Current;
 	r300TexObjPtr t = (r300TexObjPtr) tObj->DriverData;
 
-	#if 0
+#if 0
 	if (!(t->format & R200_TXFORMAT_NON_POWER2)) {
 		t->format |= R200_TXFORMAT_NON_POWER2;
 		t->base.dirty_images[0] = ~0;
 	}
-	#endif
+#endif
 
 	ASSERT(tObj->Target == GL_TEXTURE_RECTANGLE_NV);
 
