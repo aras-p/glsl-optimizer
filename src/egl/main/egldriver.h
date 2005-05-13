@@ -45,12 +45,13 @@ typedef EGLBoolean (*GetModesMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenM
 typedef EGLBoolean (*GetModeAttribMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLModeMESA mode, EGLint attribute, EGLint *value);
 typedef EGLBoolean (*GetScreensMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA *screens, EGLint max_screens, EGLint *num_screens);
 typedef EGLSurface (*CreateScreenSurfaceMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
-typedef EGLBoolean (*ShowSurfaceMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLSurface surface);
+typedef EGLBoolean (*ShowSurfaceMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLSurface surface, EGLModeMESA mode);
 typedef EGLBoolean (*ScreenPositionMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLint x, EGLint y);
+typedef EGLBoolean (*QueryDisplayMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLint attrib, EGLint *value);
 typedef EGLBoolean (*QueryScreenMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLint attribute, EGLint *value);
 typedef EGLBoolean (*QueryScreenSurfaceMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLSurface *surface);
 typedef EGLBoolean (*QueryScreenModeMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *mode);
-
+typedef const char * (*QueryModeStringMESA_t)(_EGLDriver *drv, EGLDisplay dpy, EGLModeMESA mode);
 
 
 /**
@@ -106,9 +107,11 @@ struct _egl_driver
    CreateScreenSurfaceMESA_t CreateScreenSurfaceMESA;
    ShowSurfaceMESA_t ShowSurfaceMESA;
    ScreenPositionMESA_t ScreenPositionMESA;
+   QueryDisplayMESA_t QueryDisplayMESA;
    QueryScreenMESA_t QueryScreenMESA;
    QueryScreenSurfaceMESA_t QueryScreenSurfaceMESA;
    QueryScreenModeMESA_t QueryScreenModeMESA;
+   QueryModeStringMESA_t QueryModeStringMESA;
 };
 
 

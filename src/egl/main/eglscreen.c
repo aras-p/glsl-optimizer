@@ -13,9 +13,12 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "egldisplay.h"
 #include "eglglobals.h"
 #include "eglmode.h"
+#include "eglconfig.h"
 #include "eglsurface.h"
 #include "eglscreen.h"
 
@@ -23,10 +26,11 @@
 /**
  * Return a new _EGLScreen object.
  */
-_EGLScreen *
-_eglNewScreen(void)
+void
+_eglInitScreen(_EGLScreen *screen)
 {
-   return (_EGLScreen *) calloc(1, sizeof(_EGLScreen));
+   /* just init to zero for now */
+   memset(screen, 0, sizeof(_EGLScreen));
 }
 
 
@@ -101,14 +105,10 @@ _eglGetScreensMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA *screens,
 }
 
 
-/**
- * Create a drawing surface which can be directly displayed on a screen.
- */
 EGLSurface
-_eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+_eglInitScreenSurfaceMESA(_EGLSurface *surf, _EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
                             const EGLint *attrib_list)
 {
-   _EGLSurface *surf;
    EGLint width = 0, height = 0;
    EGLint i;
 
@@ -132,17 +132,36 @@ _eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
       return EGL_NO_SURFACE;
    }
 
-   surf = (_EGLSurface *) malloc(sizeof(_EGLSurface));
    _eglInitSurface(surf);
    surf->Width = width;
    surf->Height = height;
    surf->Type = EGL_SCREEN_BIT_MESA;
+   surf->Config =  _eglLookupConfig(drv, dpy, config);
 
    /* insert into hash table */
    _eglSaveSurface(surf);
    assert(surf->Handle);
 
    return surf->Handle;
+}
+
+
+/**
+ * Create a drawing surface which can be directly displayed on a screen.
+ */
+EGLSurface
+_eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+                            const EGLint *attrib_list)
+{
+   _EGLSurface *surf;
+   EGLSurface surface;
+   
+   surf = (_EGLSurface *) malloc(sizeof(_EGLSurface));
+   surface = _eglInitScreenSurfaceMESA(surf, drv, dpy, config, attrib_list);
+   if (surface == EGL_NO_SURFACE)
+      free(surf);
+
+   return surface;
 }
 
 
@@ -155,31 +174,23 @@ _eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
  */
 EGLBoolean
 _eglShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
-                    EGLSurface surface)
+                    EGLSurface surface, EGLModeMESA m)
 {
    _EGLScreen *scrn = _eglLookupScreen(dpy, screen);
-   _EGLMode *mode;
+   _EGLMode *mode = _eglLookupMode(dpy, m);
 
    if (!scrn) {
       _eglError(EGL_BAD_SCREEN_MESA, "eglShowSurfaceMESA");
       return EGL_FALSE;
    }
-
-   /*
-    * XXX: Check if the surface's configuration is compatible with the
-    * current screen mode.
-    */
-
-   mode = scrn->CurrentMode;
-   if (mode == EGL_NO_MODE_MESA) {
-      _eglError(EGL_BAD_MODE_MESA, "eglShowSurfaceMESA(no current mode)");
+   if (!mode) {
+      _eglError(EGL_BAD_MODE_MESA, "eglShowSurfaceMESA");
       return EGL_FALSE;
    }
 
    if (surface == EGL_NO_SURFACE) {
       scrn->CurrentSurface = NULL;
-   }
-   else {
+   } else {
       _EGLSurface *surf = _eglLookupSurface(surface);
       if (!surf || surf->Type != EGL_SCREEN_BIT_MESA) {
          _eglError(EGL_BAD_SURFACE, "eglShowSurfaceMESA");
@@ -192,8 +203,8 @@ _eglShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
       }
 
       scrn->CurrentSurface = surf;
+      scrn->CurrentMode = mode;
    }
-
    return EGL_TRUE;
 }
 
@@ -299,11 +310,20 @@ _eglQueryScreenMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
 }
 
 
-
 void
-_eglDeleteScreen(_EGLScreen *scrn)
+_eglDestroyScreenModes(_EGLScreen *scrn)
 {
    free(scrn->Modes);
+}
+
+      
+/**
+ * Default fallback routine - drivers should usually override this.
+ */
+void
+_eglDestroyScreen(_EGLScreen *scrn)
+{
+   _eglDestroyScreenModes(scrn);
    free(scrn);
 }
 

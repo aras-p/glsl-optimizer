@@ -15,7 +15,7 @@
 void
 _eglInitContext(_EGLContext *ctx)
 {
-   /* just init to zer for now */
+   /* just init to zero for now */
    memset(ctx, 0, sizeof(_EGLContext));
 }
 

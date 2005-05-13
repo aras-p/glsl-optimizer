@@ -12,7 +12,7 @@
 #include "eglsurface.h"
 
 
-const char *DefaultDriverName = "demo";
+const char *DefaultDriverName = "demodriver";
 
 
 /**
@@ -75,7 +75,7 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName)
    char driverFilename[1000];
 
    /* XXX also prepend a directory path??? */
-   sprintf(driverFilename, "%sdriver.so", driverName);
+   sprintf(driverFilename, "%s.so", driverName);
 
 #if 1
    lib = dlopen(driverFilename, RTLD_NOW);
@@ -189,9 +189,11 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
    drv->CreateScreenSurfaceMESA = _eglCreateScreenSurfaceMESA;
    drv->ShowSurfaceMESA = _eglShowSurfaceMESA;
    drv->ScreenPositionMESA = _eglScreenPositionMESA;
+   drv->QueryDisplayMESA = _eglQueryDisplayMESA;
    drv->QueryScreenMESA = _eglQueryScreenMESA;
    drv->QueryScreenSurfaceMESA = _eglQueryScreenSurfaceMESA;
    drv->QueryScreenModeMESA = _eglQueryScreenModeMESA;
+   drv->QueryModeStringMESA = _eglQueryModeStringMESA;
 }
 
 

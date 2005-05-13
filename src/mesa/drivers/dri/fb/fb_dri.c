@@ -58,6 +58,7 @@
 #include "tnl/t_pipeline.h"
 #include "drivers/common/driverfuncs.h"
 
+void fbSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis);
 
 typedef struct {
    GLcontext *glCtx;		/* Mesa context */
@@ -242,7 +243,7 @@ init_core_functions( struct dd_function_table *functions )
 
 
 
-static void
+void
 fbSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
    ASSERT(drb->Base.InternalFormat == GL_RGBA);

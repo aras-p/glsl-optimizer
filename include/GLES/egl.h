@@ -249,11 +249,13 @@ GLAPI EGLBoolean APIENTRY eglGetModesMESA(EGLDisplay dpy, EGLScreenMESA screen, 
 GLAPI EGLBoolean APIENTRY eglGetModeAttribMESA(EGLDisplay dpy, EGLModeMESA mode, EGLint attribute, EGLint *value);
 GLAPI EGLBoolean APIENTRY eglGetScreensMESA(EGLDisplay dpy, EGLScreenMESA *screens, EGLint max_screens, EGLint *num_screens);
 GLAPI EGLSurface APIENTRY eglCreateScreenSurfaceMESA(EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
-GLAPI EGLBoolean APIENTRY eglShowSurfaceMESA(EGLDisplay dpy, EGLint screen, EGLSurface surface);
+GLAPI EGLBoolean APIENTRY eglShowSurfaceMESA(EGLDisplay dpy, EGLint screen, EGLSurface surface, EGLModeMESA mode);
 GLAPI EGLBoolean APIENTRY eglScreenPositionMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLint x, EGLint y);
+GLAPI EGLBoolean APIENTRY eglQueryDisplayMESA(EGLDisplay dpy, EGLint attrib, EGLint *value);
 GLAPI EGLBoolean APIENTRY eglQueryScreenMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLint attribute, EGLint *value);
 GLAPI EGLBoolean APIENTRY eglQueryScreenSurfaceMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLSurface *surface);
 GLAPI EGLBoolean APIENTRY eglQueryScreenModeMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *mode);
+GLAPI const char * APIENTRY eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA mode);
 
 #endif /* EGL_MESA_screen_surface */
 

@@ -62,10 +62,17 @@ _eglGetCurrentDisplay(void)
 
 
 void
-_eglDeleteDisplay(_EGLDisplay *disp)
+_eglCleanupDisplay(_EGLDisplay *disp)
 {
    /* XXX incomplete */
    free(disp->Configs);
-   free(disp);
+   free(disp->Name);
+   /* driver deletes _EGLDisplay */
 }
 
+
+EGLBoolean 
+_eglQueryDisplayMESA(_EGLDriver *drv, EGLDisplay dpy, EGLint attrib, EGLint *value)
+{
+   return EGL_FALSE;
+}

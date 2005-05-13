@@ -46,7 +46,7 @@ main(int argc, char *argv[])
    /*
    EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
    */
-   EGLDisplay d = eglGetDisplay("!demo");
+   EGLDisplay d = eglGetDisplay("!fb_dri");
    assert(d);
 
    if (!eglInitialize(d, &maj, &min)) {

@@ -56,14 +56,14 @@ demoInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
    EGLint i;
 
    /* Create a screen */
-   scrn = _eglNewScreen();
+   scrn = calloc(1, sizeof(*scrn));
    _eglAddScreen(disp, scrn);
 
    /* Create the screen's modes - silly example */
-   _eglAddMode(scrn, 1600, 1200, 32, 72 * 1000);
-   _eglAddMode(scrn, 1280, 1024, 32, 72 * 1000);
-   _eglAddMode(scrn, 1280, 1024, 16, 72 * 1000);
-   _eglAddMode(scrn, 1024,  768, 32, 72 * 1000);
+   _eglAddMode(scrn, 1600, 1200, 72 * 1000);
+   _eglAddMode(scrn, 1280, 1024, 72 * 1000);
+   _eglAddMode(scrn, 1280, 1024, 72 * 1000);
+   _eglAddMode(scrn, 1024,  768, 72 * 1000);
 
    /* Create the display's visual configs - silly example */
    for (i = 0; i < 4; i++) {

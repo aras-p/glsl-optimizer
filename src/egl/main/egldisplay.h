@@ -33,7 +33,12 @@ _eglGetCurrentDisplay(void);
 
 
 extern void
-_eglDeleteDisplay(_EGLDisplay *disp);
+_eglCleanupDisplay(_EGLDisplay *disp);
+
+
+extern EGLBoolean 
+_eglQueryDisplayMESA(_EGLDriver *drv, EGLDisplay dpy, EGLint attrib, EGLint *value);
+
 
 
 #endif /* EGLDISPLAY_INCLUDED */

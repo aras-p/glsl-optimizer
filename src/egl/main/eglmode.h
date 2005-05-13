@@ -11,9 +11,9 @@ struct _egl_mode
 {
    EGLModeMESA Handle;     /* the public/opaque handle which names this mode */
    EGLint Width, Height;   /* size in pixels */
-   EGLint Depth;           /* bits per pixel */
    EGLint RefreshRate;     /* rate * 1000.0 */
    EGLBoolean Stereo;
+   char *Name;
 
    /* Other possible attributes */
    /* interlaced */
@@ -27,7 +27,7 @@ _eglLookupMode(EGLDisplay dpy, EGLModeMESA mode);
 
 extern _EGLMode *
 _eglAddMode(_EGLScreen *screen, EGLint width, EGLint height,
-            EGLint depth, EGLint refreshRate);
+            EGLint refreshRate, char *name);
 
 
 extern EGLBoolean
@@ -45,6 +45,9 @@ extern EGLBoolean
 _eglGetModeAttribMESA(_EGLDriver *drv, EGLDisplay dpy, EGLModeMESA mode,
                       EGLint attribute, EGLint *value);
 
+
+extern const char *
+_eglQueryModeStringMESA(_EGLDriver *drv, EGLDisplay dpy, EGLModeMESA mode);
 
 
 #endif /* EGLMODE_INCLUDED */

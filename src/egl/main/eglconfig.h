@@ -3,6 +3,7 @@
 
 
 #include "egltypedefs.h"
+#include "GL/internal/glcore.h"
 
 
 #define MAX_ATTRIBS 100
@@ -13,11 +14,11 @@ struct _egl_config
 {
    EGLConfig Handle;   /* the public/opaque handle which names this config */
    EGLint Attrib[MAX_ATTRIBS];
+   __GLcontextModes glmode;
 };
 
 
 
-#define SET_CONFIG_ATTRIB(CONF, ATTR, VAL) ((CONF)->Attrib[(ATTR) - FIRST_ATTRIB] = VAL)
 #define GET_CONFIG_ATTRIB(CONF, ATTR) ((CONF)->Attrib[(ATTR) - FIRST_ATTRIB])
 
 
@@ -31,6 +32,10 @@ _eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config);
 
 extern _EGLConfig *
 _eglAddConfig(_EGLDisplay *display, const _EGLConfig *config);
+
+
+extern void
+_eglSetConfigAtrib(_EGLConfig *config, EGLint attr, EGLint val);
 
 
 extern EGLBoolean
@@ -57,4 +62,12 @@ extern EGLBoolean
 _eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config);
 
 
+extern GLboolean
+_eglFillInConfigs( _EGLConfig *configs,
+		GLenum fb_format, GLenum fb_type,
+		const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
+		unsigned num_depth_stencil_bits,
+		const GLenum * db_modes, unsigned num_db_modes,
+		int visType );
+                
 #endif /* EGLCONFIG_INCLUDED */

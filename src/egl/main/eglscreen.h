@@ -19,8 +19,8 @@ struct _egl_screen
 };
 
 
-extern _EGLScreen *
-_eglNewScreen(void);
+extern void
+_eglInitScreen(_EGLScreen *screen);
 
 
 extern _EGLScreen *
@@ -36,11 +36,15 @@ _eglGetScreensMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA *screens, EGLi
 
 
 extern EGLSurface
+_eglInitScreenSurfaceMESA(_EGLSurface *surf, _EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+                            const EGLint *attrib_list);
+                            
+extern EGLSurface
 _eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
 
 
 extern EGLBoolean
-_eglShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLSurface surface);
+_eglShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLSurface surface, EGLModeMESA mode);
 
 
 extern EGLBoolean
@@ -69,7 +73,11 @@ _eglQueryScreenMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen, EGLin
 
 
 extern void
-_eglDeleteScreen(_EGLScreen *scrn);
+_eglDestroyScreenModes(_EGLScreen *scrn);
+
+
+extern void
+_eglDestroyScreen(_EGLScreen *scrn);
 
 
 #endif /* EGLSCREEN_INCLUDED */

@@ -1,5 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglmode.h"
@@ -8,6 +10,16 @@
 
 
 #define MIN2(A, B)  (((A) < (B)) ? (A) : (B))
+
+
+static char *
+my_strdup(const char *s)
+{
+   int l = strlen(s);
+   char *s2 = malloc(l + 1);
+   strcpy(s2, s);
+   return s2;
+}
 
 
 /**
@@ -44,7 +56,7 @@ _eglLookupMode(EGLDisplay dpy, EGLModeMESA mode)
  */
 _EGLMode *
 _eglAddMode(_EGLScreen *screen, EGLint width, EGLint height,
-            EGLint depth, EGLint refreshRate)
+            EGLint refreshRate, char *name)
 {
    EGLint n;
    _EGLMode *newModes;
@@ -52,7 +64,6 @@ _eglAddMode(_EGLScreen *screen, EGLint width, EGLint height,
    assert(screen);
    assert(width > 0);
    assert(height > 0);
-   assert(depth > 0);
    assert(refreshRate > 0);
 
    n = screen->NumModes;
@@ -62,9 +73,9 @@ _eglAddMode(_EGLScreen *screen, EGLint width, EGLint height,
       screen->Modes[n].Handle = n + 1;
       screen->Modes[n].Width = width;
       screen->Modes[n].Height = height;
-      screen->Modes[n].Depth = depth;
       screen->Modes[n].RefreshRate = refreshRate;
       screen->Modes[n].Stereo = EGL_FALSE;
+      screen->Modes[n].Name = my_strdup(name);
       screen->NumModes++;
       return screen->Modes + n;
    }
@@ -176,3 +187,13 @@ _eglGetModeAttribMESA(_EGLDriver *drv, EGLDisplay dpy,
    }
    return EGL_TRUE;
 }
+
+
+const char *
+_eglQueryModeStringMESA(_EGLDriver *drv, EGLDisplay dpy, EGLModeMESA mode)
+{
+   _EGLMode *m = _eglLookupMode(dpy, mode);
+   return m->Name;
+}
+
+
