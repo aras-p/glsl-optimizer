@@ -105,8 +105,7 @@ struct fake_glx_context {
 #define DONT_CARE -1
 
 
-#define MAX_VISUALS 100
-static XMesaVisual VisualTable[MAX_VISUALS];
+static XMesaVisual *VisualTable = NULL;
 static int NumVisuals = 0;
 
 
@@ -331,11 +330,6 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
 
    /* Create a new visual and add it to the list. */
 
-   if (NumVisuals >= MAX_VISUALS) {
-      _mesa_problem(NULL, "GLX Error: maximum number of visuals exceeded");
-      return NULL;
-   }
-
    xmvis = XMesaCreateVisual( dpy, vinfo, rgbFlag, alphaFlag, dbFlag,
                               stereoFlag, ximageFlag,
                               depth_size, stencil_size,
@@ -347,6 +341,10 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
        * if we need to search for it in find_glx_visual().
        */
       xmvis->vishandle = vinfo;
+      /* Allocate more space for additional visual */
+      VisualTable = _mesa_realloc( VisualTable, 
+                                   sizeof(XMesaVisual) * NumVisuals, 
+                                   sizeof(XMesaVisual) * NumVisuals + 1);
       /* add xmvis to the list */
       VisualTable[NumVisuals] = xmvis;
       NumVisuals++;
