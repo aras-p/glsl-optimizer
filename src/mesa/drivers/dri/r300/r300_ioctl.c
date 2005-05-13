@@ -247,13 +247,6 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	/* Make sure we have enough space */
 	r300EnsureCmdBufSpace(r300, r300->hw.max_state_size + 9+8, __FUNCTION__);
 
-   /* needed before starting 3d operation .. */
-   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
-	e32(0x0000000a);
-   
-   reg_start(0x4f18,0);
-	e32(0x00000003);
-	
 	r300EmitState(r300);
 
 	cmd2 = (drm_r300_cmd_header_t*)r300AllocCmdBuf(r300, 9, __FUNCTION__);
@@ -267,16 +260,6 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	cmd2[6].u = r300PackFloat32(ctx->Color.ClearColor[1]);
 	cmd2[7].u = r300PackFloat32(ctx->Color.ClearColor[2]);
 	cmd2[8].u = r300PackFloat32(ctx->Color.ClearColor[3]);
-
-    /* This sequence is required after any 3d drawing packet
-      I suspect it work arounds a bug (or deficiency) in hardware */
-  
-   reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
-	e32(0x0000000a);
-   
-   reg_start(0x4f18,0);
-	e32(0x00000003);
-	
 }
 
 
