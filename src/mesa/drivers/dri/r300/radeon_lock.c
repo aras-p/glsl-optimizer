@@ -40,6 +40,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 
+#include "framebuffer.h"
+
 #if DEBUG_LOCKING
 char *prevLockFile = NULL;
 int prevLockLine = 0;
@@ -102,6 +104,10 @@ static void r300RegainedLock(radeonContextPtr radeon)
 	__DRIdrawablePrivate *dPriv = radeon->dri.drawable;
 
 	if (radeon->lastStamp != dPriv->lastStamp) {
+		_mesa_resize_framebuffer(radeon->glCtx,
+			(GLframebuffer*)dPriv->driverPrivate,
+			dPriv->w, dPriv->h);
+
 		radeonUpdatePageFlipping(radeon);
 
 		if (radeon->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT)
