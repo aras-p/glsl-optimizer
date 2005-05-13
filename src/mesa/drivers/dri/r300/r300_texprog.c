@@ -209,7 +209,7 @@ GLuint emit_texenv(r300ContextPtr r300, GLuint tc_reg, GLuint unit)
 		return get_source(ps, GL_TEXTURE, unit, tc_reg);
 		break;
 	default:
-		WARN_ONCE("Unknown EnvMode == %d, name=%d\n", envmode,
+		WARN_ONCE("Unknown EnvMode == %d, name=%s\n", envmode,
 						_mesa_lookup_enum_by_nr(envmode));
 		return get_source(ps, GL_TEXTURE, unit, tc_reg);
 		break;
