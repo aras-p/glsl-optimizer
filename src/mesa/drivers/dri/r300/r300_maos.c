@@ -75,7 +75,7 @@ do {						\
 
 static void emit_vec4(GLcontext * ctx,
 		      struct r300_dma_region *rvb,
-		      char *data, int stride, int count)
+		      GLvoid *data, int stride, int count)
 {
 	int i;
 	int *out = (int *)(rvb->address + rvb->start);
@@ -96,7 +96,7 @@ static void emit_vec4(GLcontext * ctx,
 
 static void emit_vec8(GLcontext * ctx,
 		      struct r300_dma_region *rvb,
-		      char *data, int stride, int count)
+		      GLvoid *data, int stride, int count)
 {
 	int i;
 	int *out = (int *)(rvb->address + rvb->start);
@@ -118,7 +118,7 @@ static void emit_vec8(GLcontext * ctx,
 
 static void emit_vec12(GLcontext * ctx,
 		       struct r300_dma_region *rvb,
-		       char *data, int stride, int count)
+		       GLvoid *data, int stride, int count)
 {
 	int i;
 	int *out = (int *)(rvb->address + rvb->start);
@@ -141,7 +141,7 @@ static void emit_vec12(GLcontext * ctx,
 
 static void emit_vec16(GLcontext * ctx,
 		       struct r300_dma_region *rvb,
-		       char *data, int stride, int count)
+		       GLvoid *data, int stride, int count)
 {
 	int i;
 	int *out = (int *)(rvb->address + rvb->start);
@@ -165,7 +165,7 @@ static void emit_vec16(GLcontext * ctx,
 
 static void emit_vector(GLcontext * ctx,
 			struct r300_dma_region *rvb,
-			char *data, int size, int stride, int count)
+			GLvoid *data, int size, int stride, int count)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
@@ -175,7 +175,7 @@ static void emit_vector(GLcontext * ctx,
 
 	if(r300IsGartMemory(rmesa, data, size*stride)){
 		rvb->address = rmesa->radeon.radeonScreen->gartTextures.map;
-		rvb->start = data - rvb->address;
+		rvb->start = (char *)data - rvb->address;
 		rvb->aos_offset = r300GartOffsetFromVirtual(rmesa, data);
 		
 		if(stride == 0)
