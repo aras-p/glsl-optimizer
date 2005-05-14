@@ -196,7 +196,7 @@ void r300EmitState(r300ContextPtr r300)
 
 	if (r300->cmdbuf.count_used && !r300->hw.is_dirty && !r300->hw.all_dirty)
 		return;
-	
+
 	/* To avoid going across the entire set of states multiple times, just check
 	 * for enough space for the case of emitting all state, and inline the
 	 * r300AllocCmdBuf code here without all the checks.
@@ -543,9 +543,11 @@ void r300InitCmdBuf(r300ContextPtr r300)
 
 	/* Initialize command buffer */
 	size = 256 * driQueryOptioni(&r300->radeon.optionCache, "command_buffer_size");
-	if (size < 2*r300->hw.max_state_size){
+	if (size < 2*r300->hw.max_state_size) {
 		size = 2*r300->hw.max_state_size+65535;
-		}
+	}
+	if (size > 64*256)
+		size = 64*256;
 
 	if (RADEON_DEBUG & (DEBUG_IOCTL|DEBUG_DMA)) {
 		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%d\n",
