@@ -224,3 +224,11 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d, EGLSurface r, EGL
 
    return EGL_TRUE;
 }
+
+
+EGLBoolean
+_eglCopyContextMESA(_EGLDriver *drv, EGLDisplay dpy, EGLContext source, EGLContext dest, unsigned long mask)
+{
+   return EGL_FALSE;
+}
+

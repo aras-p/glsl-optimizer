@@ -349,6 +349,7 @@ void (* APIENTRY eglGetProcAddress(const char *procname))()
       { "eglChooseModeMESA", (_EGLProc) eglChooseModeMESA },
       { "eglGetModesMESA", (_EGLProc) eglGetModesMESA },
       { "eglGetModeAttribMESA", (_EGLProc) eglGetModeAttribMESA },
+      { "eglCopyContextMESA", (_EGLProc) eglCopyContextMESA },
       { "eglGetScreensMESA", (_EGLProc) eglGetScreensMESA },
       { "eglCreateScreenSurfaceMESA", (_EGLProc) eglCreateScreenSurfaceMESA },
       { "eglShowSurfaceMESA", (_EGLProc) eglShowSurfaceMESA },
@@ -409,6 +410,17 @@ eglGetModeAttribMESA(EGLDisplay dpy, EGLModeMESA mode, EGLint attribute, EGLint 
    _EGLDriver *drv = _eglLookupDriver(dpy);
    if (drv)
       return drv->GetModeAttribMESA(drv, dpy, mode, attribute, value);
+   else
+      return EGL_FALSE;
+}
+
+
+EGLBoolean APIENTRY
+eglCopyContextMESA(EGLDisplay dpy, EGLContext source, EGLContext dest, unsigned long mask)
+{
+   _EGLDriver *drv = _eglLookupDriver(dpy);
+   if (drv)
+      return drv->CopyContextMESA(drv, dpy, source, dest, mask);
    else
       return EGL_FALSE;
 }
