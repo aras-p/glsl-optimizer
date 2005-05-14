@@ -286,8 +286,8 @@ do {									\
 do {									\
    GLuint offset = radeon_mba_z32( radeon, _x + xo, _y + yo );		\
    GLuint tmp = *(GLuint *)(buf + offset);				\
-   tmp &= 0x00ffffff;							\
-   tmp |= (((d) & 0xff) << 24);						\
+   tmp &= 0xffffff00;							\
+   tmp |= (d) & 0xff;							\
    *(GLuint *)(buf + offset) = tmp;					\
 } while (0)
 
@@ -295,8 +295,7 @@ do {									\
 do {									\
    GLuint offset = radeon_mba_z32( radeon, _x + xo, _y + yo );		\
    GLuint tmp = *(GLuint *)(buf + offset);				\
-   tmp &= 0xff000000;							\
-   d = tmp >> 24;							\
+   d = tmp & 0x000000ff;						\
 } while (0)
 
 #define TAG(x) radeon##x##_24_8_TILE
@@ -306,19 +305,18 @@ do {									\
  */
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
-   GLuint offset = (_x + xo)*4 + (_y + yo)*pitch;			\
+   GLuint offset = (_x + xo + (_y + yo)*pitch)*4;			\
    GLuint tmp = *(GLuint *)(buf + offset);				\
-   tmp &= 0x00ffffff;							\
-   tmp |= (((d) & 0xff) << 24);						\
+   tmp &= 0xffffff00;							\
+   tmp |= (d) & 0xff;							\
    *(GLuint *)(buf + offset) = tmp;					\
 } while (0)
 
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
-   GLuint offset = (_x + xo)*4 + (_y + yo)*pitch;			\
+   GLuint offset = (_x + xo + (_y + yo)*pitch)*4;			\
    GLuint tmp = *(GLuint *)(buf + offset);				\
-   tmp &= 0xff000000;							\
-   d = tmp >> 24;							\
+   d = tmp & 0x000000ff;						\
 } while (0)
 
 #define TAG(x) radeon##x##_24_8_LINEAR
