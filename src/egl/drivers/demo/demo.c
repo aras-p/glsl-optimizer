@@ -60,27 +60,27 @@ demoInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
    _eglAddScreen(disp, scrn);
 
    /* Create the screen's modes - silly example */
-   _eglAddMode(scrn, 1600, 1200, 72 * 1000);
-   _eglAddMode(scrn, 1280, 1024, 72 * 1000);
-   _eglAddMode(scrn, 1280, 1024, 72 * 1000);
-   _eglAddMode(scrn, 1024,  768, 72 * 1000);
+   _eglAddMode(scrn, 1600, 1200, 72 * 1000, "1600x1200-72");
+   _eglAddMode(scrn, 1280, 1024, 72 * 1000, "1280x1024-70");
+   _eglAddMode(scrn, 1280, 1024, 70 * 1000, "1280x1024-70");
+   _eglAddMode(scrn, 1024,  768, 72 * 1000, "1024x768-72");
 
    /* Create the display's visual configs - silly example */
    for (i = 0; i < 4; i++) {
       _EGLConfig config;
       _eglInitConfig(&config, i + 1);
-      SET_CONFIG_ATTRIB(&config, EGL_RED_SIZE, 8);
-      SET_CONFIG_ATTRIB(&config, EGL_GREEN_SIZE, 8);
-      SET_CONFIG_ATTRIB(&config, EGL_BLUE_SIZE, 8);
-      SET_CONFIG_ATTRIB(&config, EGL_ALPHA_SIZE, 8);
-      SET_CONFIG_ATTRIB(&config, EGL_BUFFER_SIZE, 32);
+      _eglSetConfigAtrib(&config, EGL_RED_SIZE, 8);
+      _eglSetConfigAtrib(&config, EGL_GREEN_SIZE, 8);
+      _eglSetConfigAtrib(&config, EGL_BLUE_SIZE, 8);
+      _eglSetConfigAtrib(&config, EGL_ALPHA_SIZE, 8);
+      _eglSetConfigAtrib(&config, EGL_BUFFER_SIZE, 32);
       if (i & 1) {
-         SET_CONFIG_ATTRIB(&config, EGL_DEPTH_SIZE, 32);
+         _eglSetConfigAtrib(&config, EGL_DEPTH_SIZE, 32);
       }
       if (i & 2) {
-         SET_CONFIG_ATTRIB(&config, EGL_STENCIL_SIZE, 8);
+         _eglSetConfigAtrib(&config, EGL_STENCIL_SIZE, 8);
       }
-      SET_CONFIG_ATTRIB(&config, EGL_SURFACE_TYPE,
+      _eglSetConfigAtrib(&config, EGL_SURFACE_TYPE,
                         (EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT));
       _eglAddConfig(disp, &config);
    }
