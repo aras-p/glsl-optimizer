@@ -975,9 +975,18 @@ static void r300DepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
 static void r300PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	GLfloat constant = units * /*rmesa->state.depth.scale*/4;
+	GLfloat constant = units;
+	
+	switch (ctx->Visual.depthBits) {
+	case 16:
+		constant *= 4.0;
+	break;
+	case 24:
+		constant *= 2.0;
+	break;
+	}
 
-	factor *= 12;
+	factor *= 12.0;
 
 /*    fprintf(stderr, "%s f:%f u:%f\n", __FUNCTION__, factor, constant); */
 
