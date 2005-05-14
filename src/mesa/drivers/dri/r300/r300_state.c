@@ -218,7 +218,7 @@ static int blend_factor(GLenum factor, GLboolean is_src)
  */
 
 /* helper function */
-static void r300_set_blend_cntl(r300ContextPtr rmesa, int func, int eqn, int cbits, int funcA, int eqnA)
+static void r300_set_blend_cntl(r300ContextPtr r300, int func, int eqn, int cbits, int funcA, int eqnA)
 {
 	GLuint new_ablend, new_cblend;
 
@@ -227,28 +227,32 @@ static void r300_set_blend_cntl(r300ContextPtr rmesa, int func, int eqn, int cbi
 #endif
 	new_ablend = eqnA | funcA;
 	new_cblend = eqn | func;
-	if(funcA == func){
+
+	/* Some blend factor combinations don't seem to work when the
+	 * BLEND_NO_SEPARATE bit is set.
+	 *
+	 * Especially problematic candidates are the ONE_MINUS_* flags,
+	 * but I can't see a real pattern.
+	 */
+#if 0
+	if (new_ablend == new_cblend) {
 		new_cblend |=  R300_BLEND_NO_SEPARATE;
-		}
+	}
+#endif
 	new_cblend |= cbits;
 
-	if((new_ablend != rmesa->hw.bld.cmd[R300_BLD_ABLEND])
-		|| (new_cblend != rmesa->hw.bld.cmd[R300_BLD_CBLEND])){
-		R300_STATECHANGE(rmesa, bld);
-		rmesa->hw.bld.cmd[R300_BLD_ABLEND]=new_ablend;
-		rmesa->hw.bld.cmd[R300_BLD_CBLEND]=new_cblend;
-		}
+	if((new_ablend != r300->hw.bld.cmd[R300_BLD_ABLEND]) ||
+	   (new_cblend != r300->hw.bld.cmd[R300_BLD_CBLEND])) {
+		R300_STATECHANGE(r300, bld);
+		r300->hw.bld.cmd[R300_BLD_ABLEND]=new_ablend;
+		r300->hw.bld.cmd[R300_BLD_CBLEND]=new_cblend;
+	}
 }
+
 
 static void r300_set_blend_state(GLcontext * ctx)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-#if 0
-	GLuint cntl = rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] &
-	    ~(R300_ROP_ENABLE | R300_ALPHA_BLEND_ENABLE |
-	      R300_SEPARATE_ALPHA_ENABLE);
-#endif
-
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int func = (R200_BLEND_GL_ONE << R200_SRC_BLEND_SHIFT) |
 	    (R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT);
 	int eqn = R200_COMB_FCN_ADD_CLAMP;
@@ -256,62 +260,15 @@ static void r300_set_blend_state(GLcontext * ctx)
 	    (R200_BLEND_GL_ZERO << R200_DST_BLEND_SHIFT);
 	int eqnA = R200_COMB_FCN_ADD_CLAMP;
 
-
-	if (rmesa->radeon.radeonScreen->drmSupportsBlendColor) {
-		if (ctx->Color._LogicOpEnabled) {
-#if 0
-			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =
-			    cntl | R300_ROP_ENABLE;
-#endif
-			r300_set_blend_cntl(rmesa,
-				func, eqn, 0,
-				func, eqn);
-			return;
-		} else if (ctx->Color.BlendEnabled) {
-#if 0
-			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =
-			    cntl | R300_ALPHA_BLEND_ENABLE |
-			    R300_SEPARATE_ALPHA_ENABLE;
-#endif
-		} else {
-#if 0
-			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = cntl;
-#endif
-			r300_set_blend_cntl(rmesa,
-				func, eqn, 0,
-				func, eqn);
-			return;
-		}
-	} else {
-		if (ctx->Color._LogicOpEnabled) {
-#if 0
-			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =
-			    cntl | R300_ROP_ENABLE;
-			rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
-#endif
-			return;
-		} else if (ctx->Color.BlendEnabled) {
-#if 0
-			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] =
-			    cntl | R300_ALPHA_BLEND_ENABLE;
-#endif
-		} else {
-#if 0
-			rmesa->hw.ctx.cmd[CTX_RB3D_CNTL] = cntl;
-			rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
-#endif
-			r300_set_blend_cntl(rmesa,
-				func, eqn, 0,
-				func, eqn);
-			return;
-		}
+	if (ctx->Color._LogicOpEnabled || !ctx->Color.BlendEnabled) {
+		r300_set_blend_cntl(r300,
+			func, eqn, 0,
+			func, eqn);
+		return;
 	}
 
-	func =
-	    (blend_factor(ctx->Color.BlendSrcRGB, GL_TRUE) <<
-	     R200_SRC_BLEND_SHIFT) | (blend_factor(ctx->Color.BlendDstRGB,
-						   GL_FALSE) <<
-				      R200_DST_BLEND_SHIFT);
+	func = (blend_factor(ctx->Color.BlendSrcRGB, GL_TRUE) << R200_SRC_BLEND_SHIFT) |
+		(blend_factor(ctx->Color.BlendDstRGB, GL_FALSE) << R200_DST_BLEND_SHIFT);
 
 	switch (ctx->Color.BlendEquationRGB) {
 	case GL_FUNC_ADD:
@@ -345,18 +302,9 @@ static void r300_set_blend_state(GLcontext * ctx)
 		return;
 	}
 
-	if (!rmesa->radeon.radeonScreen->drmSupportsBlendColor) {
-#if 0
-		rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCNTL] = eqn | func;
-#endif
-		return;
-	}
 
-	funcA =
-	    (blend_factor(ctx->Color.BlendSrcA, GL_TRUE) <<
-	     R200_SRC_BLEND_SHIFT) | (blend_factor(ctx->Color.BlendDstA,
-						   GL_FALSE) <<
-				      R200_DST_BLEND_SHIFT);
+	funcA = (blend_factor(ctx->Color.BlendSrcA, GL_TRUE) << R200_SRC_BLEND_SHIFT) |
+		(blend_factor(ctx->Color.BlendDstA, GL_FALSE) << R200_DST_BLEND_SHIFT);
 
 	switch (ctx->Color.BlendEquationA) {
 	case GL_FUNC_ADD:
@@ -389,10 +337,7 @@ static void r300_set_blend_state(GLcontext * ctx)
 		return;
 	}
 
-	r300_set_blend_cntl(rmesa,
-		func, eqn, R300_BLEND_UNKNOWN | R300_BLEND_ENABLE,
-		funcA, eqnA);
-	r300_set_blend_cntl(rmesa,
+	r300_set_blend_cntl(r300,
 		func, eqn, R300_BLEND_UNKNOWN | R300_BLEND_ENABLE,
 		funcA, eqnA);
 }
