@@ -196,7 +196,7 @@ GLAPI EGLDisplay APIENTRY eglGetDisplay (NativeDisplayType display);
 GLAPI EGLBoolean APIENTRY eglInitialize (EGLDisplay dpy, EGLint *major, EGLint *minor);
 GLAPI EGLBoolean APIENTRY eglTerminate (EGLDisplay dpy);
 GLAPI const char * APIENTRY eglQueryString (EGLDisplay dpy, EGLint name);
-GLAPI void (* APIENTRY eglGetProcAddress (const char *procname))();
+GLAPI void (* APIENTRY eglGetProcAddress (const char *procname))(void);
 
 GLAPI EGLBoolean APIENTRY eglGetConfigs (EGLDisplay dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config);
 GLAPI EGLBoolean APIENTRY eglChooseConfig (EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config);
