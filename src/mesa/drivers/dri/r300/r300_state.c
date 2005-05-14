@@ -608,7 +608,10 @@ static void r300ColorMask(GLcontext* ctx,
 			  GLboolean r, GLboolean g, GLboolean b, GLboolean a)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	int mask = (b << 0) | (g << 1) | (r << 2) | (a << 3);
+	int mask = (r ? R300_COLORMASK0_R : 0) |
+		   (g ? R300_COLORMASK0_G : 0) |
+		   (b ? R300_COLORMASK0_B : 0) |
+		   (a ? R300_COLORMASK0_A : 0);
 
 	if (mask != r300->hw.cmk.cmd[R300_CMK_COLORMASK]) {
 		R300_STATECHANGE(r300, cmk);
