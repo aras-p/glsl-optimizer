@@ -46,32 +46,28 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define LOCAL_VARS							\
    radeonContextPtr radeon = RADEON_CONTEXT(ctx);			\
-   radeonScreenPtr radeonScreen = radeon->radeonScreen;			\
+   driRenderbuffer* drb = (driRenderbuffer*)rb;				\
    __DRIscreenPrivate *sPriv = radeon->dri.screen;			\
    __DRIdrawablePrivate *dPriv = radeon->dri.drawable;			\
-   GLuint pitch = radeonScreen->frontPitch * radeonScreen->cpp;		\
+   GLuint pitch = drb->pitch * drb->cpp;				\
    GLuint height = dPriv->h;						\
    char *buf = (char *)(sPriv->pFB +					\
-			radeon->state.color.drawOffset +		\
-			(dPriv->x * radeonScreen->cpp) +		\
+			drb->offset +					\
+			(dPriv->x * drb->cpp) +				\
 			(dPriv->y * pitch));				\
-   char *read_buf = (char *)(sPriv->pFB +				\
-			     radeon->state.pixel.readOffset +		\
-			     (dPriv->x * radeonScreen->cpp) +		\
-			     (dPriv->y * pitch));			\
    GLuint p;								\
-   (void) read_buf; (void) buf; (void) p
+   (void) p
 
 #define LOCAL_DEPTH_VARS						\
    radeonContextPtr radeon = RADEON_CONTEXT(ctx);			\
-   radeonScreenPtr radeonScreen = radeon->radeonScreen;			\
+   driRenderbuffer* drb = (driRenderbuffer*)rb;				\
    __DRIscreenPrivate *sPriv = radeon->dri.screen;			\
    __DRIdrawablePrivate *dPriv = radeon->dri.drawable;			\
+   GLuint pitch = drb->pitch;						\
    GLuint height = dPriv->h;						\
    GLuint xo = dPriv->x;						\
    GLuint yo = dPriv->y;						\
-   char *buf = (char *)(sPriv->pFB + radeonScreen->depthOffset);	\
-   GLuint pitch = radeonScreen->depthPitch;				\
+   char *buf = (char *)(sPriv->pFB + drb->offset);			\
    (void) buf; (void) pitch
 
 #define LOCAL_STENCIL_VARS	LOCAL_DEPTH_VARS
@@ -85,8 +81,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    } else {								\
       _n1 = _n;								\
       _x1 = _x;								\
-      if ( _x1 < minx ) _i += (minx-_x1), n1 -= (minx-_x1), _x1 = minx; \
-      if ( _x1 + _n1 >= maxx ) n1 -= (_x1 + n1 - maxx);		        \
+      if ( _x1 < minx ) _i += (minx-_x1), _n1 -= (minx-_x1), _x1 = minx; \
+      if ( _x1 + _n1 >= maxx ) n1 -= (_x1 + _n1 - maxx);		\
    }
 
 #define Y_FLIP( _y )		(height - _y - 1)
@@ -95,7 +91,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define HW_CLIPLOOP()							\
    do {									\
-      __DRIdrawablePrivate *dPriv = radeon->dri.drawable;		\
       int _nc = dPriv->numClipRects;					\
 									\
       while ( _nc-- ) {							\
@@ -129,7 +124,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define READ_RGBA( rgba, _x, _y )					\
    do {									\
-      GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);		\
+      GLushort p = *(GLushort *)(buf + _x*2 + _y*pitch);		\
       rgba[0] = ((p >> 8) & 0xf8) * 255 / 0xf8;				\
       rgba[1] = ((p >> 3) & 0xfc) * 255 / 0xfc;				\
       rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;				\
@@ -160,7 +155,7 @@ do {							\
 
 #define READ_RGBA( rgba, _x, _y )				\
 do {								\
-   volatile GLuint *ptr = (volatile GLuint *)(read_buf + _x*4 + _y*pitch); \
+   volatile GLuint *ptr = (volatile GLuint *)(buf + _x*4 + _y*pitch); \
    GLuint p = *ptr;					\
    rgba[0] = (p >> 16) & 0xff;					\
    rgba[1] = (p >>  8) & 0xff;					\
@@ -174,76 +169,6 @@ do {								\
 /* ================================================================
  * Depth buffer
  */
-
-/* The Radeon family has depth tiling on all the time, so we have to convert
- * the x,y coordinates into the memory bus address (mba) in the same
- * manner as the engine.  In each case, the linear block address (ba)
- * is calculated, and then wired with x and y to produce the final
- * memory address.
- */
-
-#define BIT(x,b) ((x & (1<<b))>>b)
-static GLuint radeon_mba_z32(radeonContextPtr radeon, GLint x, GLint y)
-{
-	GLuint pitch = radeon->radeonScreen->depthPitch;
-	GLuint b =
-	    ((y & 0x3FF) >> 4) * ((pitch & 0xFFF) >> 5) + ((x & 0x3FF) >> 5);
-	GLuint a =
-	    (BIT(x, 0) << 2) | (BIT(y, 0) << 3) | (BIT(x, 1) << 4) | (BIT(y, 1)
-								      << 5) |
-	    (BIT(x, 3) << 6) | (BIT(x, 4) << 7) | (BIT(x, 2) << 8) | (BIT(y, 2)
-								      << 9) |
-	    (BIT(y, 3) << 10) |
-	    (((pitch & 0x20) ? (b & 0x01) : ((b & 0x01) ^ (BIT(y, 4)))) << 11) |
-	    ((b >> 1) << 12);
-	return a;
-}
-
-static GLuint radeon_mba_z16(radeonContextPtr radeon, GLint x, GLint y)
-{
-	GLuint pitch = radeon->radeonScreen->depthPitch;
-	GLuint b =
-	    ((y & 0x3FF) >> 4) * ((pitch & 0xFFF) >> 6) + ((x & 0x3FF) >> 6);
-	GLuint a =
-	    (BIT(x, 0) << 1) | (BIT(y, 0) << 2) | (BIT(x, 1) << 3) | (BIT(y, 1)
-								      << 4) |
-	    (BIT(x, 2) << 5) | (BIT(x, 4) << 6) | (BIT(x, 5) << 7) | (BIT(x, 3)
-								      << 8) |
-	    (BIT(y, 2) << 9) | (BIT(y, 3) << 10) |
-	    (((pitch & 0x40) ? (b & 0x01) : ((b & 0x01) ^ (BIT(y, 4)))) << 11) |
-	    ((b >> 1) << 12);
-	return a;
-}
-
-
-/* 16-bit depth buffer functions
- */
-#define WRITE_DEPTH( _x, _y, d )					\
-   *(GLushort *)(buf + radeon_mba_z16( radeon, _x + xo, _y + yo )) = d;
-
-#define READ_DEPTH( d, _x, _y )						\
-   d = *(GLushort *)(buf + radeon_mba_z16( radeon, _x + xo, _y + yo ));
-
-#define TAG(x) radeon##x##_16_TILE
-#include "depthtmp.h"
-
-/* 24 bit depth, 8 bit stencil depthbuffer functions
- */
-#define WRITE_DEPTH( _x, _y, d )					\
-do {									\
-   GLuint offset = radeon_mba_z32( radeon, _x + xo, _y + yo );		\
-   GLuint tmp = *(GLuint *)(buf + offset);				\
-   tmp &= 0xff000000;							\
-   tmp |= ((d) & 0x00ffffff);						\
-   *(GLuint *)(buf + offset) = tmp;					\
-} while (0)
-
-#define READ_DEPTH( d, _x, _y )						\
-   d = *(GLuint *)(buf + radeon_mba_z32( radeon, _x + xo,		\
-					 _y + yo )) & 0x00ffffff;
-
-#define TAG(x) radeon##x##_24_8_TILE
-#include "depthtmp.h"
 
 /* 16-bit depth buffer functions
  */
@@ -263,7 +188,7 @@ do {									\
  */
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
-   GLuint offset = (_x + xo + (_y + yo)*pitch)*4;			\
+   GLuint offset = ((_x) + xo + ((_y) + yo)*pitch)*4;			\
    GLuint tmp = *(GLuint *)(buf + offset);				\
    tmp &= 0x000000ff;							\
    tmp |= ((d << 8) & 0xffffff00);					\
@@ -271,7 +196,9 @@ do {									\
 } while (0)
 
 #define READ_DEPTH( d, _x, _y )						\
-   d = (*(GLuint *)(buf + (_x + xo + (_y + yo)*pitch)*4) & 0xffffff00) >> 8;
+do { \
+   d = (*(GLuint *)(buf + ((_x) + xo + ((_y) + yo)*pitch)*4) & 0xffffff00) >> 8; \
+} while(0)
 
 #define TAG(x) radeon##x##_24_8_LINEAR
 #include "depthtmp.h"
@@ -279,27 +206,6 @@ do {									\
 /* ================================================================
  * Stencil buffer
  */
-
-/* 24 bit depth, 8 bit stencil depthbuffer functions
- */
-#define WRITE_STENCIL( _x, _y, d )					\
-do {									\
-   GLuint offset = radeon_mba_z32( radeon, _x + xo, _y + yo );		\
-   GLuint tmp = *(GLuint *)(buf + offset);				\
-   tmp &= 0xffffff00;							\
-   tmp |= (d) & 0xff;							\
-   *(GLuint *)(buf + offset) = tmp;					\
-} while (0)
-
-#define READ_STENCIL( d, _x, _y )					\
-do {									\
-   GLuint offset = radeon_mba_z32( radeon, _x + xo, _y + yo );		\
-   GLuint tmp = *(GLuint *)(buf + offset);				\
-   d = tmp & 0x000000ff;						\
-} while (0)
-
-#define TAG(x) radeon##x##_24_8_TILE
-#include "stenciltmp.h"
 
 /* 24 bit depth, 8 bit stencil depthbuffer functions
  */
@@ -428,107 +334,13 @@ void radeonInitSpanFuncs(GLcontext * ctx)
 
 	swdd->SetBuffer = radeonSetBuffer;
 
-	switch (radeon->radeonScreen->cpp) {
-	case 2:
-#if 0
-		swdd->WriteRGBASpan = radeonWriteRGBASpan_RGB565;
-		swdd->WriteRGBSpan = radeonWriteRGBSpan_RGB565;
-		swdd->WriteMonoRGBASpan = radeonWriteMonoRGBASpan_RGB565;
-		swdd->WriteRGBAPixels = radeonWriteRGBAPixels_RGB565;
-		swdd->WriteMonoRGBAPixels = radeonWriteMonoRGBAPixels_RGB565;
-		swdd->ReadRGBASpan = radeonReadRGBASpan_RGB565;
-		swdd->ReadRGBAPixels = radeonReadRGBAPixels_RGB565;
-#endif
-		break;
-
-	case 4:
-#if 0
-		swdd->WriteRGBASpan = radeonWriteRGBASpan_ARGB8888;
-		swdd->WriteRGBSpan = radeonWriteRGBSpan_ARGB8888;
-		swdd->WriteMonoRGBASpan = radeonWriteMonoRGBASpan_ARGB8888;
-		swdd->WriteRGBAPixels = radeonWriteRGBAPixels_ARGB8888;
-		swdd->WriteMonoRGBAPixels = radeonWriteMonoRGBAPixels_ARGB8888;
-		swdd->ReadRGBASpan = radeonReadRGBASpan_ARGB8888;
-		swdd->ReadRGBAPixels = radeonReadRGBAPixels_ARGB8888;
-#endif
-		break;
-
-	default:
-		break;
-	}
-
-	if (IS_FAMILY_R300(radeon))
-	{
-		switch (radeon->glCtx->Visual.depthBits) {
-		case 16:
-#if 0
-			swdd->ReadDepthSpan = radeonReadDepthSpan_16_LINEAR;
-			swdd->WriteDepthSpan = radeonWriteDepthSpan_16_LINEAR;
-			swdd->WriteMonoDepthSpan = radeonWriteMonoDepthSpan_16_LINEAR;
-			swdd->ReadDepthPixels = radeonReadDepthPixels_16_LINEAR;
-			swdd->WriteDepthPixels = radeonWriteDepthPixels_16_LINEAR;
-#endif
-			break;
-
-		case 24:
-#if 0
-			swdd->ReadDepthSpan = radeonReadDepthSpan_24_8_LINEAR;
-			swdd->WriteDepthSpan = radeonWriteDepthSpan_24_8_LINEAR;
-			swdd->WriteMonoDepthSpan = radeonWriteMonoDepthSpan_24_8_LINEAR;
-			swdd->ReadDepthPixels = radeonReadDepthPixels_24_8_LINEAR;
-			swdd->WriteDepthPixels = radeonWriteDepthPixels_24_8_LINEAR;
-
-			swdd->ReadStencilSpan = radeonReadStencilSpan_24_8_LINEAR;
-			swdd->WriteStencilSpan = radeonWriteStencilSpan_24_8_LINEAR;
-			swdd->ReadStencilPixels = radeonReadStencilPixels_24_8_LINEAR;
-			swdd->WriteStencilPixels = radeonWriteStencilPixels_24_8_LINEAR;
-#endif
-			break;
-
-		default:
-			break;
-		}
-	}
-	else
-	{
-		switch (radeon->glCtx->Visual.depthBits) {
-		case 16:
-#if 0
-			swdd->ReadDepthSpan = radeonReadDepthSpan_16_TILE;
-			swdd->WriteDepthSpan = radeonWriteDepthSpan_16_TILE;
-			swdd->WriteMonoDepthSpan = radeonWriteMonoDepthSpan_16_TILE;
-			swdd->ReadDepthPixels = radeonReadDepthPixels_16_TILE;
-			swdd->WriteDepthPixels = radeonWriteDepthPixels_16_TILE;
-#endif
-			break;
-
-		case 24:
-#if 0
-			swdd->ReadDepthSpan = radeonReadDepthSpan_24_8_TILE;
-			swdd->WriteDepthSpan = radeonWriteDepthSpan_24_8_TILE;
-			swdd->WriteMonoDepthSpan = radeonWriteMonoDepthSpan_24_8_TILE;
-			swdd->ReadDepthPixels = radeonReadDepthPixels_24_8_TILE;
-			swdd->WriteDepthPixels = radeonWriteDepthPixels_24_8_TILE;
-
-			swdd->ReadStencilSpan = radeonReadStencilSpan_24_8_TILE;
-			swdd->WriteStencilSpan = radeonWriteStencilSpan_24_8_TILE;
-			swdd->ReadStencilPixels = radeonReadStencilPixels_24_8_TILE;
-			swdd->WriteStencilPixels = radeonWriteStencilPixels_24_8_TILE;
-#endif
-			break;
-
-		default:
-			break;
-		}
-	}
-
 	swdd->SpanRenderStart = radeonSpanRenderStart;
 	swdd->SpanRenderFinish = radeonSpanRenderFinish;
 }
 
 /**
-  	  * Plug in the Get/Put routines for the given driRenderbuffer.
-  	  */
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
 void radeonSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
 	if (drb->Base.InternalFormat == GL_RGBA) {
