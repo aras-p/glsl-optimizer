@@ -373,8 +373,10 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 	r300ContextPtr r300 = (r300ContextPtr) driContextPriv->driverPrivate;
 	radeonContextPtr current = ctx ? RADEON_CONTEXT(ctx) : NULL;
 
-	fprintf(stderr, "Destroying context !\n");
-	sleep(1);
+	if (RADEON_DEBUG & DEBUG_DRI) {
+		fprintf(stderr, "Destroying context !\n");
+	}
+
 	/* check if we're deleting the currently bound context */
 	if (&r300->radeon == current) {
 		radeonFlush(r300->radeon.glCtx);

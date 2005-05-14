@@ -286,11 +286,13 @@ CHECK( vpu, vpucount(atom->cmd) ? (1 + vpucount(atom->cmd)*4) : 0 )
 void r300InitCmdBuf(r300ContextPtr r300)
 {
 	int size, i, mtu;
-	
+
 	r300->hw.max_state_size = 0;
 
 	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
-	fprintf(stderr, "Using %d maximum texture units..\n", mtu);
+	if (RADEON_DEBUG & DEBUG_TEXTURE) {
+		fprintf(stderr, "Using %d maximum texture units..\n", mtu);
+	}
 
 	/* Initialize state atoms */
 	ALLOC_STATE( vpt, always, R300_VPT_CMDSIZE, "vpt", 0 );
@@ -545,7 +547,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		size = 2*r300->hw.max_state_size+65535;
 		}
 
-	if (1 || RADEON_DEBUG & DEBUG_IOCTL){
+	if (RADEON_DEBUG & (DEBUG_IOCTL|DEBUG_DMA)) {
 		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%d\n",
 			sizeof(drm_r300_cmd_header_t));
 		fprintf(stderr, "sizeof(drm_radeon_cmd_buffer_t)=%d\n",
@@ -553,7 +555,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		fprintf(stderr,
 			"Allocating %d bytes command buffer (max state is %d bytes)\n",
 			size*4, r300->hw.max_state_size*4);
-		}
+	}
 
 	r300->cmdbuf.size = size;
 	r300->cmdbuf.cmd_buf = (uint32_t*)CALLOC(size*4);
