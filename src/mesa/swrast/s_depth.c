@@ -1234,7 +1234,7 @@ _swrast_read_depth_span( GLcontext *ctx, struct gl_renderbuffer *rb,
       _mesa_bzero(depth, n * sizeof(GLuint));
    }
    else if (rb->DataType == GL_UNSIGNED_INT) {
-      rb->GetRow(ctx, rb, x, y, n, depth);
+      rb->GetRow(ctx, rb, n, x, y, depth);
    }
    else {
       GLushort temp[MAX_WIDTH];
