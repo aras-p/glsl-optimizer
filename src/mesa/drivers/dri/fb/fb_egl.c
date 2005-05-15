@@ -254,8 +254,10 @@ fbInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
    *minor = 0;
    
    dir = opendir(sysfs);
-   if (!dir)
+   if (!dir) {
+      printf("EGL - %s framebuffer device not found.", sysfs);
       return EGL_FALSE;
+   }
    
    while (dirent = readdir(dir)) {
       

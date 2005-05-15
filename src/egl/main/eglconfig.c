@@ -28,7 +28,8 @@ _eglInitConfig(_EGLConfig *config, EGLint id)
    _eglSetConfigAtrib(config, EGL_NATIVE_VISUAL_TYPE,      EGL_DONT_CARE);
    _eglSetConfigAtrib(config, EGL_MIN_SWAP_INTERVAL,       EGL_DONT_CARE);
    _eglSetConfigAtrib(config, EGL_MAX_SWAP_INTERVAL,       EGL_DONT_CARE);
-   _eglSetConfigAtrib(config, EGL_SURFACE_TYPE,            EGL_WINDOW_BIT);
+   _eglSetConfigAtrib(config, EGL_SURFACE_TYPE,            
+          EGL_SCREEN_BIT_MESA | EGL_PBUFFER_BIT | EGL_PIXMAP_BIT | EGL_WINDOW_BIT);
    _eglSetConfigAtrib(config, EGL_TRANSPARENT_TYPE,        EGL_NONE);
    _eglSetConfigAtrib(config, EGL_TRANSPARENT_RED_VALUE,   EGL_DONT_CARE);
    _eglSetConfigAtrib(config, EGL_TRANSPARENT_GREEN_VALUE, EGL_DONT_CARE);
@@ -128,6 +129,7 @@ _eglSetConfigAtrib(_EGLConfig *config, EGLint attr, EGLint val)
    case EGL_SAMPLE_BUFFERS:
       break;
    case EGL_SURFACE_TYPE:
+      config->glmode.drawableType = val;
       break;
    case EGL_TRANSPARENT_TYPE:
       break;
@@ -375,13 +377,15 @@ _eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs, EGLint confi
       return EGL_FALSE;
    }
 
-   *num_config = MIN2(disp->NumConfigs, config_size);
    if (configs) {
       EGLint i;
+      *num_config = MIN2(disp->NumConfigs, config_size);
       for (i = 0; i < *num_config; i++) {
          configs[i] = disp->Configs[i].Handle;
       }
-   }
+   } else
+      *num_config = disp->NumConfigs;
+      
    return EGL_TRUE;
 }
 
@@ -592,7 +596,9 @@ _eglFillInConfigs(_EGLConfig * configs,
 
             config->glmode.visualType = visType;
             config->glmode.renderType = GLX_RGBA_BIT;
-            config->glmode.drawableType = GLX_WINDOW_BIT;
+            _eglSetConfigAtrib(config, EGL_SURFACE_TYPE, EGL_SCREEN_BIT_MESA |
+                                EGL_PBUFFER_BIT | EGL_PIXMAP_BIT | EGL_WINDOW_BIT);
+
             config->glmode.rgbMode = GL_TRUE;
 
             if (db_modes[i] == GLX_NONE) {
