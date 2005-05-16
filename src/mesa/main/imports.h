@@ -224,6 +224,11 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #define M_PI (3.1415926536)
 #endif
 
+#ifndef M_E
+#define M_E (2.7182818284590452354)
+#endif
+
+
 /* XXX this is a bit of a hack needed for compilation within XFree86 */
 #ifndef FLT_MIN
 #define FLT_MIN (1.0e-37)
