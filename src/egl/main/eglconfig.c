@@ -16,8 +16,41 @@
 #define MIN2(A, B)  (((A) < (B)) ? (A) : (B))
 
 
-static void
-SetConfigAttrib(_EGLConfig *config, EGLint attr, EGLint val)
+/**
+ * Convert an _EGLConfig to a __GLcontextModes object.
+ */
+void
+_eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode)
+{
+   memset(mode, 0, sizeof(*mode));
+
+   mode->rgbMode = GL_TRUE; /* no color index */
+   mode->colorIndexMode = GL_FALSE;
+   mode->doubleBufferMode = GL_TRUE;
+   mode->stereoMode = GL_FALSE;
+
+   mode->redBits = GET_CONFIG_ATTRIB(config, EGL_RED_SIZE);
+   mode->greenBits = GET_CONFIG_ATTRIB(config, EGL_GREEN_SIZE);
+   mode->blueBits = GET_CONFIG_ATTRIB(config, EGL_BLUE_SIZE);
+   mode->alphaBits = GET_CONFIG_ATTRIB(config, EGL_ALPHA_SIZE);
+   mode->rgbBits = mode->redBits + mode->greenBits
+      + mode->blueBits + mode->alphaBits;
+
+   mode->depthBits = GET_CONFIG_ATTRIB(config, EGL_DEPTH_SIZE);
+   mode->haveDepthBuffer = mode->depthBits > 0;
+
+   mode->stencilBits = GET_CONFIG_ATTRIB(config, EGL_STENCIL_SIZE);
+   mode->haveStencilBuffer = mode->stencilBits > 0;
+
+   mode->level = GET_CONFIG_ATTRIB(config, EGL_LEVEL);
+   mode->samples = GET_CONFIG_ATTRIB(config, EGL_SAMPLES);
+   mode->sampleBuffers = GET_CONFIG_ATTRIB(config, EGL_SAMPLE_BUFFERS);
+}
+
+
+
+void
+_eglSetConfigAttrib(_EGLConfig *config, EGLint attr, EGLint val)
 {
    config->Attrib[attr - FIRST_ATTRIB] = val;
    
@@ -101,21 +134,21 @@ _eglInitConfig(_EGLConfig *config, EGLint id)
 {
    memset(config, 0, sizeof(*config));
    config->Handle = id;
-   SetConfigAttrib(config, EGL_CONFIG_ID,               id);
-   SetConfigAttrib(config, EGL_BIND_TO_TEXTURE_RGB,     EGL_DONT_CARE);
-   SetConfigAttrib(config, EGL_BIND_TO_TEXTURE_RGBA,    EGL_DONT_CARE);
-   SetConfigAttrib(config, EGL_CONFIG_CAVEAT,           EGL_DONT_CARE);
-   SetConfigAttrib(config, EGL_NATIVE_RENDERABLE,       EGL_DONT_CARE);
-   SetConfigAttrib(config, EGL_NATIVE_VISUAL_TYPE,      EGL_DONT_CARE);
-   SetConfigAttrib(config, EGL_MIN_SWAP_INTERVAL,       EGL_DONT_CARE);
-   SetConfigAttrib(config, EGL_MAX_SWAP_INTERVAL,       EGL_DONT_CARE);
-   SetConfigAttrib(config, EGL_SURFACE_TYPE,            
+   _eglSetConfigAttrib(config, EGL_CONFIG_ID,               id);
+   _eglSetConfigAttrib(config, EGL_BIND_TO_TEXTURE_RGB,     EGL_DONT_CARE);
+   _eglSetConfigAttrib(config, EGL_BIND_TO_TEXTURE_RGBA,    EGL_DONT_CARE);
+   _eglSetConfigAttrib(config, EGL_CONFIG_CAVEAT,           EGL_DONT_CARE);
+   _eglSetConfigAttrib(config, EGL_NATIVE_RENDERABLE,       EGL_DONT_CARE);
+   _eglSetConfigAttrib(config, EGL_NATIVE_VISUAL_TYPE,      EGL_DONT_CARE);
+   _eglSetConfigAttrib(config, EGL_MIN_SWAP_INTERVAL,       EGL_DONT_CARE);
+   _eglSetConfigAttrib(config, EGL_MAX_SWAP_INTERVAL,       EGL_DONT_CARE);
+   _eglSetConfigAttrib(config, EGL_SURFACE_TYPE,            
                    EGL_SCREEN_BIT_MESA | EGL_PBUFFER_BIT |
                    EGL_PIXMAP_BIT | EGL_WINDOW_BIT);
-   SetConfigAttrib(config, EGL_TRANSPARENT_TYPE,        EGL_NONE);
-   SetConfigAttrib(config, EGL_TRANSPARENT_RED_VALUE,   EGL_DONT_CARE);
-   SetConfigAttrib(config, EGL_TRANSPARENT_GREEN_VALUE, EGL_DONT_CARE);
-   SetConfigAttrib(config, EGL_TRANSPARENT_BLUE_VALUE,  EGL_DONT_CARE);
+   _eglSetConfigAttrib(config, EGL_TRANSPARENT_TYPE,        EGL_NONE);
+   _eglSetConfigAttrib(config, EGL_TRANSPARENT_RED_VALUE,   EGL_DONT_CARE);
+   _eglSetConfigAttrib(config, EGL_TRANSPARENT_GREEN_VALUE, EGL_DONT_CARE);
+   _eglSetConfigAttrib(config, EGL_TRANSPARENT_BLUE_VALUE,  EGL_DONT_CARE);
 }
 
 
@@ -581,15 +614,15 @@ _eglFillInConfigs(_EGLConfig * configs,
       for (i = 0; i < num_db_modes; i++)  {
          for (j = 0; j < 2; j++) {
 
-            SetConfigAttrib(config, EGL_RED_SIZE, bits[0]);
-            SetConfigAttrib(config, EGL_GREEN_SIZE, bits[1]);
-            SetConfigAttrib(config, EGL_BLUE_SIZE, bits[2]);
-            SetConfigAttrib(config, EGL_ALPHA_SIZE, bits[3]);
+            _eglSetConfigAttrib(config, EGL_RED_SIZE, bits[0]);
+            _eglSetConfigAttrib(config, EGL_GREEN_SIZE, bits[1]);
+            _eglSetConfigAttrib(config, EGL_BLUE_SIZE, bits[2]);
+            _eglSetConfigAttrib(config, EGL_ALPHA_SIZE, bits[3]);
             config->glmode.redMask = masks[0];
             config->glmode.greenMask = masks[1];
             config->glmode.blueMask = masks[2];
             config->glmode.alphaMask = masks[3];
-            SetConfigAttrib(config, EGL_BUFFER_SIZE,
+            _eglSetConfigAttrib(config, EGL_BUFFER_SIZE,
                            config->glmode.redBits + config->glmode.greenBits +
                            config->glmode.blueBits + config->glmode.alphaBits);
 
@@ -599,12 +632,12 @@ _eglFillInConfigs(_EGLConfig * configs,
             config->glmode.accumAlphaBits = (masks[3] != 0) ? 16 * j : 0;
             config->glmode.visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
 
-            SetConfigAttrib(config, EGL_STENCIL_SIZE, stencil_bits[k]);
-            SetConfigAttrib(config, EGL_DEPTH_SIZE, depth_bits[k]);
+            _eglSetConfigAttrib(config, EGL_STENCIL_SIZE, stencil_bits[k]);
+            _eglSetConfigAttrib(config, EGL_DEPTH_SIZE, depth_bits[k]);
 
             config->glmode.visualType = visType;
             config->glmode.renderType = GLX_RGBA_BIT;
-            SetConfigAttrib(config, EGL_SURFACE_TYPE, EGL_SCREEN_BIT_MESA |
+            _eglSetConfigAttrib(config, EGL_SURFACE_TYPE, EGL_SCREEN_BIT_MESA |
                                 EGL_PBUFFER_BIT | EGL_PIXMAP_BIT | EGL_WINDOW_BIT);
 
             config->glmode.rgbMode = GL_TRUE;

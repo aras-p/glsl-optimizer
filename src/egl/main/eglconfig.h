@@ -58,6 +58,9 @@ extern EGLBoolean
 _eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config);
 
 
+extern void
+_eglSetConfigAttrib(_EGLConfig *config, EGLint attr, EGLint val);
+
 extern GLboolean
 _eglFillInConfigs( _EGLConfig *configs,
 		GLenum fb_format, GLenum fb_type,
