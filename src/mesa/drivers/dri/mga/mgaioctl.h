@@ -78,14 +78,22 @@ GLuint *mgaAllocDmaLow( mgaContextPtr mmesa, int bytes )
 {
    GLuint *head;
 
-   if (!mmesa->vertex_dma_buffer) {
+   /* If there is no DMA buffer currently allocated or the currently
+    * allocated DMA buffer doesn't have enough room left for this request,
+    * a new buffer will need to be allocated.
+    */
+   if ( (mmesa->vertex_dma_buffer == NULL)
+	|| ((mmesa->vertex_dma_buffer->used + bytes) 
+	    > mmesa->vertex_dma_buffer->total) ) {
       LOCK_HARDWARE( mmesa );
-      mmesa->vertex_dma_buffer = mga_get_buffer_ioctl( mmesa );
-      UNLOCK_HARDWARE( mmesa );
-   } else if (mmesa->vertex_dma_buffer->used + bytes >
-	      mmesa->vertex_dma_buffer->total) {
-      LOCK_HARDWARE( mmesa );
-      mgaFlushVerticesLocked( mmesa );
+
+      /* In the case where the existing buffer does not have enough room,
+       * we need to flush it out to the hardware.
+       */
+      if ( mmesa->vertex_dma_buffer != NULL ) {
+	 mgaFlushVerticesLocked( mmesa );
+      }
+	   
       mmesa->vertex_dma_buffer = mga_get_buffer_ioctl( mmesa );
       UNLOCK_HARDWARE( mmesa );
    }
