@@ -13,7 +13,7 @@ struct _egl_mode
    EGLint Width, Height;   /* size in pixels */
    EGLint RefreshRate;     /* rate * 1000.0 */
    EGLBoolean Stereo;
-   char *Name;
+   const char *Name;
 
    /* Other possible attributes */
    /* interlaced */
@@ -27,7 +27,7 @@ _eglLookupMode(EGLDisplay dpy, EGLModeMESA mode);
 
 extern _EGLMode *
 _eglAddMode(_EGLScreen *screen, EGLint width, EGLint height,
-            EGLint refreshRate, char *name);
+            EGLint refreshRate, const char *name);
 
 
 extern EGLBoolean

@@ -24,7 +24,7 @@
 
 
 /**
- * Return a new _EGLScreen object.
+ * Initialize an _EGLScreen object to default values.
  */
 void
 _eglInitScreen(_EGLScreen *screen)
@@ -105,9 +105,13 @@ _eglGetScreensMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA *screens,
 }
 
 
+/**
+ * Initialize the given _EGLSurface object.  Assign it an EGLSurface handle.
+ * Return the EGLSurface handle or EGL_BAD_SURFACE if error.
+ */
 EGLSurface
-_eglInitScreenSurfaceMESA(_EGLSurface *surf, _EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
-                            const EGLint *attrib_list)
+_eglInitScreenSurface(_EGLSurface *surf, _EGLDriver *drv, EGLDisplay dpy,
+                      EGLConfig config, const EGLint *attrib_list)
 {
    EGLint width = 0, height = 0;
    EGLint i;
@@ -157,7 +161,7 @@ _eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    EGLSurface surface;
    
    surf = (_EGLSurface *) malloc(sizeof(_EGLSurface));
-   surface = _eglInitScreenSurfaceMESA(surf, drv, dpy, config, attrib_list);
+   surface = _eglInitScreenSurface(surf, drv, dpy, config, attrib_list);
    if (surface == EGL_NO_SURFACE)
       free(surf);
 

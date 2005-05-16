@@ -36,8 +36,8 @@ _eglGetScreensMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA *screens, EGLi
 
 
 extern EGLSurface
-_eglInitScreenSurfaceMESA(_EGLSurface *surf, _EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
-                            const EGLint *attrib_list);
+_eglInitScreenSurface(_EGLSurface *surf, _EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
+
                             
 extern EGLSurface
 _eglCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);

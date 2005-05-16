@@ -56,7 +56,7 @@ _eglLookupMode(EGLDisplay dpy, EGLModeMESA mode)
  */
 _EGLMode *
 _eglAddMode(_EGLScreen *screen, EGLint width, EGLint height,
-            EGLint refreshRate, char *name)
+            EGLint refreshRate, const char *name)
 {
    EGLint n;
    _EGLMode *newModes;
