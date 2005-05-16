@@ -293,6 +293,7 @@ static GLboolean radeon_run_tcl_render( GLcontext *ctx,
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
+   GLuint inputs = VERT_BIT_POS | VERT_BIT_COLOR0;
    GLuint i;
 
    /* TODO: separate this from the swtnl pipeline 
@@ -303,8 +304,31 @@ static GLboolean radeon_run_tcl_render( GLcontext *ctx,
    if (VB->Count == 0)
       return GL_FALSE;
 
+   /* NOTE: inputs != tnl->render_inputs - these are the untransformed
+    * inputs.
+    */
+   if (ctx->Light.Enabled) {
+      inputs |= VERT_BIT_NORMAL;
+      if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
+	 inputs |= VERT_BIT_COLOR1;
+      }
+   }
+
+   if ( ctx->Fog.FogCoordinateSource == GL_FOG_COORD ) {
+      inputs |= VERT_BIT_FOG;
+   }
+
+   for (i = 0 ; i < ctx->Const.MaxTextureUnits; i++) {
+      if (ctx->Texture.Unit[i]._ReallyEnabled) {
+	 if (rmesa->TexGenNeedNormals[i]) {
+	    inputs |= VERT_BIT_NORMAL;
+	 }
+	 inputs |= VERT_BIT_TEX(i);
+      }
+   }
+
    radeonReleaseArrays( ctx, ~0 );
-   radeonEmitArrays( ctx, tnl->render_inputs );
+   radeonEmitArrays( ctx, inputs );
 
    rmesa->tcl.Elts = VB->Elts;
 
