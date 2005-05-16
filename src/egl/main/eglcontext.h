@@ -62,6 +62,6 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface rea
 
 
 extern EGLBoolean
-_eglCopyContextMESA(_EGLDriver *drv, EGLDisplay dpy, EGLContext source, EGLContext dest, unsigned long mask);
+_eglCopyContextMESA(_EGLDriver *drv, EGLDisplay dpy, EGLContext source, EGLContext dest, EGLint mask);
 
 #endif /* EGLCONTEXT_INCLUDED */

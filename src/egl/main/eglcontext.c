@@ -226,9 +226,15 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d, EGLSurface r, EGL
 }
 
 
+/**
+ * This is defined by the EGL_MESA_copy_context extension.
+ */
 EGLBoolean
-_eglCopyContextMESA(_EGLDriver *drv, EGLDisplay dpy, EGLContext source, EGLContext dest, unsigned long mask)
+_eglCopyContextMESA(_EGLDriver *drv, EGLDisplay dpy, EGLContext source,
+                    EGLContext dest, EGLint mask)
 {
+   /* This function will always have to be overridden/implemented in the
+    * device driver.  If the driver is based on Mesa, use _mesa_copy_context().
+    */
    return EGL_FALSE;
 }
-

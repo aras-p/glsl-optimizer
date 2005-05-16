@@ -416,7 +416,7 @@ eglGetModeAttribMESA(EGLDisplay dpy, EGLModeMESA mode, EGLint attribute, EGLint 
 
 
 EGLBoolean APIENTRY
-eglCopyContextMESA(EGLDisplay dpy, EGLContext source, EGLContext dest, unsigned long mask)
+eglCopyContextMESA(EGLDisplay dpy, EGLContext source, EGLContext dest, EGLint mask)
 {
    _EGLDriver *drv = _eglLookupDriver(dpy);
    if (drv)
