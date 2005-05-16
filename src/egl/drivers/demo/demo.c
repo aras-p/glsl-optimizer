@@ -69,18 +69,18 @@ demoInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
    for (i = 0; i < 4; i++) {
       _EGLConfig config;
       _eglInitConfig(&config, i + 1);
-      _eglSetConfigAtrib(&config, EGL_RED_SIZE, 8);
-      _eglSetConfigAtrib(&config, EGL_GREEN_SIZE, 8);
-      _eglSetConfigAtrib(&config, EGL_BLUE_SIZE, 8);
-      _eglSetConfigAtrib(&config, EGL_ALPHA_SIZE, 8);
-      _eglSetConfigAtrib(&config, EGL_BUFFER_SIZE, 32);
+      _eglSetConfigAttrib(&config, EGL_RED_SIZE, 8);
+      _eglSetConfigAttrib(&config, EGL_GREEN_SIZE, 8);
+      _eglSetConfigAttrib(&config, EGL_BLUE_SIZE, 8);
+      _eglSetConfigAttrib(&config, EGL_ALPHA_SIZE, 8);
+      _eglSetConfigAttrib(&config, EGL_BUFFER_SIZE, 32);
       if (i & 1) {
-         _eglSetConfigAtrib(&config, EGL_DEPTH_SIZE, 32);
+         _eglSetConfigAttrib(&config, EGL_DEPTH_SIZE, 32);
       }
       if (i & 2) {
-         _eglSetConfigAtrib(&config, EGL_STENCIL_SIZE, 8);
+         _eglSetConfigAttrib(&config, EGL_STENCIL_SIZE, 8);
       }
-      _eglSetConfigAtrib(&config, EGL_SURFACE_TYPE,
+      _eglSetConfigAttrib(&config, EGL_SURFACE_TYPE,
                         (EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT));
       _eglAddConfig(disp, &config);
    }
@@ -334,20 +334,6 @@ demoMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface rea
 }
 
 
-static const char *
-demoQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
-{
-   if (name == EGL_EXTENSIONS) {
-      return "EGL_MESA_screen_surface";
-   }
-   else {
-      return _eglQueryString(drv, dpy, name);
-   }
-}
-
-
-
-
 /*
  * Just to silence warning
  */
@@ -381,6 +367,10 @@ _eglMain(NativeDisplayType dpy)
    demo->Base.CreatePbufferSurface = demoCreatePbufferSurface;
    demo->Base.DestroySurface = demoDestroySurface;
    demo->Base.DestroyContext = demoDestroyContext;
-   demo->Base.QueryString = demoQueryString;
+
+   /* enable supported extensions */
+   demo->Base.MESA_screen_surface = EGL_TRUE;
+   demo->Base.MESA_copy_context = EGL_TRUE;
+
    return &demo->Base;
 }
