@@ -744,12 +744,19 @@ fbShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
    snprintf(buffer, sizeof(buffer), "%s/%s/mode", sysfs, scrn->fb);
    
    file = fopen(buffer, "r+");
+   if (!file) {
+err:
+      printf("chown all fb sysfs attrib to allow write - %s\n", buffer);
+      return EGL_FALSE;
+   }
    fputs(mode->Name, file);
    fclose(file);
    
    snprintf(buffer, sizeof(buffer), "%s/%s/bits_per_pixel", sysfs, scrn->fb);
    
    file = fopen(buffer, "r+");
+   if (!file)
+      goto err;
    snprintf(buffer, sizeof(buffer), "%d", surf->Base.Config->glmode.rgbBits);
    fputs(buffer, file);
    fclose(file);
