@@ -207,9 +207,9 @@ UpdateExtensionsString(_EGLDriver *drv)
    drv->Extensions[0] = 0;
 
    if (drv->MESA_screen_surface)
-      strcat(drv->Extensions, "EGL_MESA_screen_surface");
+      strcat(drv->Extensions, "EGL_MESA_screen_surface ");
    if (drv->MESA_copy_context)
-      strcat(drv->Extensions, "EGL_MESA_copy_context");
+      strcat(drv->Extensions, "EGL_MESA_copy_context ");
    assert(strlen(drv->Extensions) < MAX_EXTENSIONS_LEN);
 }
 
