@@ -681,7 +681,7 @@ fbCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
    int width, height, stride;
    
    surface = (fbSurface *)malloc(sizeof(*surface));
-   surf = _eglInitScreenSurfaceMESA(&surface->Base, drv, dpy, cfg, attrib_list);
+   surf = _eglInitScreenSurface(&surface->Base, drv, dpy, cfg, attrib_list);
    if (surf == EGL_NO_SURFACE) {
       free(surface);
       return EGL_NO_SURFACE;
@@ -717,7 +717,7 @@ fbCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
                                 swDepth,
                                 swStencil,
                                 swAccum,
-                                0,
+                                swAlpha,
                                 GL_FALSE /* aux */);
    
    return surf;
