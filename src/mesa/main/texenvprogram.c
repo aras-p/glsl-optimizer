@@ -82,9 +82,8 @@ struct texenv_fragment_program {
    struct fragment_program *program;
    GLcontext *ctx;
 
-   GLuint temp_used_for_txp;	/* Temps which have been the result of a texture
-				 * operation.
-				 */
+   GLuint alu_temps;		/* Track texture indirections, see spec. */
+   GLuint temps_output;		/* Track texture indirections, see spec. */
 
    GLuint temp_in_use;		/* Tracks temporary regs which are in
 				 * use.
@@ -144,10 +143,9 @@ static struct ureg get_temp( struct texenv_fragment_program *p )
 {
    int bit;
    
-   /* First try and reuse temps which have been used for texture
-    * results:
+   /* First try and reuse temps which have been used already:
     */
-   bit = ffs( ~p->temp_in_use & p->temp_used_for_txp );
+   bit = ffs( ~p->temp_in_use & p->alu_temps );
 
    /* Then any unused temporary:
     */
@@ -167,17 +165,17 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
 {
    int bit;
    
-   /* First try to find availble temp not previously used as a texture
-    * result:
+   /* First try to find availble temp not previously used (to avoid
+    * starting a new texture indirection).  According to the spec, the
+    * ~p->temps_output isn't necessary, but will keep it there for
+    * now:
     */
-   bit = ffs( ~p->temp_in_use & ~p->temp_used_for_txp );
+   bit = ffs( ~p->temp_in_use & ~p->alu_temps & ~p->temps_output );
 
    /* Then any unused temporary:
     */
-   if (!bit) {
+   if (!bit) 
       bit = ffs( ~p->temp_in_use );
-      p->program->NumTexIndirections++;
-   }
 
    if (!bit) {
       fprintf(stderr, "%s: out of temporaries\n", __FILE__);
@@ -185,7 +183,6 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
    }
 
    p->temp_in_use |= 1<<(bit-1);
-   p->temp_used_for_txp |= 1<<(bit-1);
    return make_ureg(PROGRAM_TEMPORARY, (bit-1));
 }
 
@@ -280,6 +277,11 @@ emit_op(struct texenv_fragment_program *p,
 
    emit_dst( &inst->DstReg, dest, mask );
 
+   /* Accounting for indirection tracking:
+    */
+   if (dest.file == PROGRAM_TEMPORARY)
+      p->temps_output |= 1 << dest.idx;
+
    return inst;
 }
    
@@ -295,6 +297,20 @@ static struct ureg emit_arith( struct texenv_fragment_program *p,
 {
    emit_op(p, op, dest, mask, saturate, src0, src1, src2);
    
+   /* Accounting for indirection tracking:
+    */
+   if (src0.file == PROGRAM_TEMPORARY)
+      p->alu_temps |= 1 << src0.idx;
+
+   if (!is_undef(src1) && src1.file == PROGRAM_TEMPORARY)
+      p->alu_temps |= 1 << src1.idx;
+
+   if (!is_undef(src2) && src2.file == PROGRAM_TEMPORARY)
+      p->alu_temps |= 1 << src2.idx;
+
+   if (dest.file == PROGRAM_TEMPORARY)
+      p->alu_temps |= 1 << dest.idx;
+       
    p->program->NumAluInstructions++;
    return dest;
 }
@@ -319,10 +335,15 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
 
    p->program->NumTexInstructions++;
 
-   if (coord.file != PROGRAM_INPUT &&
-       (coord.idx < FRAG_ATTRIB_TEX0 ||
-	coord.idx > FRAG_ATTRIB_TEX7)) {
+   /* Is this a texture indirection?
+    */
+   if ((coord.file == PROGRAM_TEMPORARY &&
+	(p->temps_output & (1<<coord.idx))) ||
+       (dest.file == PROGRAM_TEMPORARY &&
+	(p->alu_temps & (1<<dest.idx)))) {
       p->program->NumTexIndirections++;
+      p->temps_output = 0;
+      p->alu_temps = 0;
    }
 
    return dest;
@@ -529,7 +550,7 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
 {
    int nr = nr_args(mode);
    struct ureg src[3];
-   struct ureg tmp;
+   struct ureg tmp, half;
    int i;
 
    for (i = 0; i < nr; i++)
@@ -549,11 +570,11 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
 			     src[0], src[1], undef );
    case GL_ADD_SIGNED:
       /* tmp = arg0 + arg1
-       * result = tmp + -.5
+       * result = tmp - .5
        */
-      tmp = register_scalar_const(p, .5);
-      emit_arith( p, FP_OPCODE_ADD, dest, mask, 0, src[0], src[1], undef );
-      emit_arith( p, FP_OPCODE_SUB, dest, mask, saturate, dest, tmp, undef );
+      half = register_scalar_const(p, .5);
+      emit_arith( p, FP_OPCODE_ADD, tmp, mask, 0, src[0], src[1], undef );
+      emit_arith( p, FP_OPCODE_SUB, dest, mask, saturate, tmp, half, undef );
       return dest;
    case GL_INTERPOLATE: 
       /* Arg0 * (Arg2) + Arg1 * (1-Arg2) -- note arguments are reordered:
@@ -594,16 +615,6 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
    }
 }
 
-static struct ureg get_dest( struct texenv_fragment_program *p, int unit )
-{
-   if (p->ctx->_TriangleCaps & DD_SEPARATE_SPECULAR)
-      return get_temp( p );
-   else if (unit != p->last_tex_stage)
-      return get_temp( p );
-   else
-      return make_ureg(PROGRAM_OUTPUT, FRAG_OUTPUT_COLR);
-}
-      
 
 
 static struct ureg emit_texenv( struct texenv_fragment_program *p, int unit )
@@ -612,7 +623,7 @@ static struct ureg emit_texenv( struct texenv_fragment_program *p, int unit )
    GLuint saturate = (unit < p->last_tex_stage);
    GLuint rgb_shift, alpha_shift;
    struct ureg out, shift;
-   struct ureg dest = get_dest(p, unit);
+   struct ureg dest;
 
    if (!texUnit->_ReallyEnabled) {
       return get_source(p, GL_PREVIOUS, 0);
@@ -635,6 +646,15 @@ static struct ureg emit_texenv( struct texenv_fragment_program *p, int unit )
       break;
    }
 
+   /* If this is the very last calculation, emit direct to output reg:
+    */
+   if ((p->ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) ||
+       unit != p->last_tex_stage ||
+       alpha_shift ||
+       rgb_shift)
+      dest = get_temp( p );
+   else
+      dest = make_ureg(PROGRAM_OUTPUT, FRAG_OUTPUT_COLR);
 
    /* Emit the RGB and A combine ops
     */
@@ -734,7 +754,7 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
       p.program->Parameters = _mesa_new_parameter_list();
 
    p.program->InputsRead = 0;
-   p.program->OutputsWritten = 0;
+   p.program->OutputsWritten = 1 << FRAG_OUTPUT_COLR;
 
    p.src_texture = undef;
    p.src_previous = undef;
