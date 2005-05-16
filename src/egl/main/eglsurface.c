@@ -126,6 +126,9 @@ _eglQuerySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surf, EGLint attrib
       if (surface->Type == EGL_PBUFFER_BIT)
          *value = surface->MipmapLevel;
       return EGL_TRUE;
+   case EGL_SURFACE_TYPE:
+      *value = surface->Type;
+      return EGL_TRUE;
    default:
       _eglError(EGL_BAD_ATTRIBUTE, "eglQuerySurface");
       return EGL_FALSE;
