@@ -1079,6 +1079,12 @@ _mesa_texstore_rgba8888(STORE_PARAMS)
 	    srcType == GL_UNSIGNED_BYTE && 
 	    dstFormat == &_mesa_texformat_rgba8888 &&
 	    littleEndian &&
+	    /* Three texture formats involved: srcFormat,
+	     * baseInternalFormat and destFormat (GL_RGBA). Only two
+	     * may differ. _mesa_swizzle_ubyte_image can't handle two
+	     * propagations at once correctly. */
+	    (srcFormat == baseInternalFormat ||
+	     baseInternalFormat == GL_RGBA) &&
 	    can_swizzle(srcFormat)) {
       GLubyte dstmap[4];
 
@@ -1252,6 +1258,12 @@ _mesa_texstore_argb8888(STORE_PARAMS)
 	    dstFormat == &_mesa_texformat_argb8888 &&
 	    srcType == GL_UNSIGNED_BYTE && 
 	    littleEndian &&
+	    /* Three texture formats involved: srcFormat,
+	     * baseInternalFormat and destFormat (GL_RGBA). Only two
+	     * may differ. _mesa_swizzle_ubyte_image can't handle two
+	     * propagations at once correctly. */
+	    (srcFormat == baseInternalFormat ||
+	     baseInternalFormat == GL_RGBA) &&
 	    can_swizzle(srcFormat)) {
 
       GLubyte dstmap[4];
