@@ -420,7 +420,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 		
 		if self.debug:
 			print '        printf( "Enter %%s...\\n", "gl%s" );' % (f.name)
-		if f.glx_vendorpriv == 0 and f.opcode_name()[-3:] != "ARB" and f.opcode_name()[-2:] != "NV":
+		if f.glx_vendorpriv == 0:
 
 			# XCB specific:
 			print '#ifdef USE_XCB'
@@ -428,7 +428,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 				print '        printf("\\tUsing XCB.\\n");'
 			print '        XCBConnection *c = XCBConnectionOfDisplay(dpy);'
 			print '        (void) __glXFlushRenderBuffer(gc, gc->pc);'
-			xcb_name = 'XCBGlx%s' % (f.opcode_name().rsplit("_", 1)[1]);
+			xcb_name = 'XCBGlx%s' % f.name
 			iparams=[]
 			for p in f.fn_parameters:
 				if p.is_output == 0:
@@ -451,7 +451,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 				if f.output and f.reply_always_array:
 					print '        %s = (%s *)%sData(reply);' % (f.output.name, f.output.p_type.name, xcb_name)
 				elif f.output and not f.reply_always_array:
-					if not f.image:
+					if not f.image and not f.name == "GenQueriesARB":
 						print '        if (%sDataLength(reply) == 0)' % (xcb_name)
 						print '            %s = (%s *) &reply->datum;' % (f.output.name, f.output.p_type.name)
 						print '        else'
@@ -527,7 +527,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 
 		print '        UnlockDisplay(dpy); SyncHandle();'
 		
-		if f.glx_vendorpriv == 0 and f.opcode_name()[-3:] != "ARB" and f.opcode_name()[-2:] != "NV":
+		if f.glx_vendorpriv == 0:
 			print '#endif /* USE_XCB */'
 			
 		if self.debug:
