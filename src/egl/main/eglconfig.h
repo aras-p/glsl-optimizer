@@ -34,10 +34,6 @@ extern _EGLConfig *
 _eglAddConfig(_EGLDisplay *display, const _EGLConfig *config);
 
 
-extern void
-_eglSetConfigAtrib(_EGLConfig *config, EGLint attr, EGLint val);
-
-
 extern EGLBoolean
 _eglParseConfigAttribs(_EGLConfig *config, const EGLint *attrib_list);
 

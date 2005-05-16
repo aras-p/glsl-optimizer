@@ -1,3 +1,8 @@
+/**
+ * EGL Configuration (pixel format) functions.
+ */
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,76 +16,8 @@
 #define MIN2(A, B)  (((A) < (B)) ? (A) : (B))
 
 
-/**
- * Init the given _EGLconfig to default values.
- * \param id  the configuration's ID.
- */
-void
-_eglInitConfig(_EGLConfig *config, EGLint id)
-{
-   memset(config, 0, sizeof(*config));
-   config->Handle = id;
-   _eglSetConfigAtrib(config, EGL_CONFIG_ID,               id);
-   _eglSetConfigAtrib(config, EGL_BIND_TO_TEXTURE_RGB,     EGL_DONT_CARE);
-   _eglSetConfigAtrib(config, EGL_BIND_TO_TEXTURE_RGBA,    EGL_DONT_CARE);
-   _eglSetConfigAtrib(config, EGL_CONFIG_CAVEAT,           EGL_DONT_CARE);
-   _eglSetConfigAtrib(config, EGL_NATIVE_RENDERABLE,       EGL_DONT_CARE);
-   _eglSetConfigAtrib(config, EGL_NATIVE_VISUAL_TYPE,      EGL_DONT_CARE);
-   _eglSetConfigAtrib(config, EGL_MIN_SWAP_INTERVAL,       EGL_DONT_CARE);
-   _eglSetConfigAtrib(config, EGL_MAX_SWAP_INTERVAL,       EGL_DONT_CARE);
-   _eglSetConfigAtrib(config, EGL_SURFACE_TYPE,            
-          EGL_SCREEN_BIT_MESA | EGL_PBUFFER_BIT | EGL_PIXMAP_BIT | EGL_WINDOW_BIT);
-   _eglSetConfigAtrib(config, EGL_TRANSPARENT_TYPE,        EGL_NONE);
-   _eglSetConfigAtrib(config, EGL_TRANSPARENT_RED_VALUE,   EGL_DONT_CARE);
-   _eglSetConfigAtrib(config, EGL_TRANSPARENT_GREEN_VALUE, EGL_DONT_CARE);
-   _eglSetConfigAtrib(config, EGL_TRANSPARENT_BLUE_VALUE,  EGL_DONT_CARE);
-}
-
-
-/**
- * Given an EGLConfig handle, return the corresponding _EGLConfig object.
- */
-_EGLConfig *
-_eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config)
-{
-   EGLint i;
-   _EGLDisplay *disp = _eglLookupDisplay(dpy);
-   for (i = 0; i < disp->NumConfigs; i++) {
-      if (disp->Configs[i].Handle == config) {
-          return disp->Configs + i;
-      }
-   }
-   return NULL;
-}
-
-
-/**
- * Add the given _EGLConifg to the given display.
- */
-_EGLConfig *
-_eglAddConfig(_EGLDisplay *display, const _EGLConfig *config)
-{
-   _EGLConfig *newConfigs;
-   EGLint n;
-
-   n = display->NumConfigs;
-
-   newConfigs = (_EGLConfig *) realloc(display->Configs,
-                                       (n + 1) * sizeof(_EGLConfig));
-   if (newConfigs) {
-      display->Configs = newConfigs;
-      display->Configs[n] = *config; /* copy struct */
-      display->NumConfigs++;
-      return display->Configs + n;
-   }
-   else {
-      return NULL;
-   }
-}
-
-
-extern void
-_eglSetConfigAtrib(_EGLConfig *config, EGLint attr, EGLint val)
+static void
+SetConfigAttrib(_EGLConfig *config, EGLint attr, EGLint val)
 {
    config->Attrib[attr - FIRST_ATTRIB] = val;
    
@@ -153,6 +90,76 @@ _eglSetConfigAtrib(_EGLConfig *config, EGLint attr, EGLint val)
       break;
    }
 }
+
+
+/**
+ * Init the given _EGLconfig to default values.
+ * \param id  the configuration's ID.
+ */
+void
+_eglInitConfig(_EGLConfig *config, EGLint id)
+{
+   memset(config, 0, sizeof(*config));
+   config->Handle = id;
+   SetConfigAttrib(config, EGL_CONFIG_ID,               id);
+   SetConfigAttrib(config, EGL_BIND_TO_TEXTURE_RGB,     EGL_DONT_CARE);
+   SetConfigAttrib(config, EGL_BIND_TO_TEXTURE_RGBA,    EGL_DONT_CARE);
+   SetConfigAttrib(config, EGL_CONFIG_CAVEAT,           EGL_DONT_CARE);
+   SetConfigAttrib(config, EGL_NATIVE_RENDERABLE,       EGL_DONT_CARE);
+   SetConfigAttrib(config, EGL_NATIVE_VISUAL_TYPE,      EGL_DONT_CARE);
+   SetConfigAttrib(config, EGL_MIN_SWAP_INTERVAL,       EGL_DONT_CARE);
+   SetConfigAttrib(config, EGL_MAX_SWAP_INTERVAL,       EGL_DONT_CARE);
+   SetConfigAttrib(config, EGL_SURFACE_TYPE,            
+                   EGL_SCREEN_BIT_MESA | EGL_PBUFFER_BIT |
+                   EGL_PIXMAP_BIT | EGL_WINDOW_BIT);
+   SetConfigAttrib(config, EGL_TRANSPARENT_TYPE,        EGL_NONE);
+   SetConfigAttrib(config, EGL_TRANSPARENT_RED_VALUE,   EGL_DONT_CARE);
+   SetConfigAttrib(config, EGL_TRANSPARENT_GREEN_VALUE, EGL_DONT_CARE);
+   SetConfigAttrib(config, EGL_TRANSPARENT_BLUE_VALUE,  EGL_DONT_CARE);
+}
+
+
+/**
+ * Given an EGLConfig handle, return the corresponding _EGLConfig object.
+ */
+_EGLConfig *
+_eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config)
+{
+   EGLint i;
+   _EGLDisplay *disp = _eglLookupDisplay(dpy);
+   for (i = 0; i < disp->NumConfigs; i++) {
+      if (disp->Configs[i].Handle == config) {
+          return disp->Configs + i;
+      }
+   }
+   return NULL;
+}
+
+
+/**
+ * Add the given _EGLConifg to the given display.
+ */
+_EGLConfig *
+_eglAddConfig(_EGLDisplay *display, const _EGLConfig *config)
+{
+   _EGLConfig *newConfigs;
+   EGLint n;
+
+   n = display->NumConfigs;
+
+   newConfigs = (_EGLConfig *) realloc(display->Configs,
+                                       (n + 1) * sizeof(_EGLConfig));
+   if (newConfigs) {
+      display->Configs = newConfigs;
+      display->Configs[n] = *config; /* copy struct */
+      display->NumConfigs++;
+      return display->Configs + n;
+   }
+   else {
+      return NULL;
+   }
+}
+
 
 /**
  * Parse the attrib_list to fill in the fields of the given _egl_config
@@ -574,16 +581,17 @@ _eglFillInConfigs(_EGLConfig * configs,
       for (i = 0; i < num_db_modes; i++)  {
          for (j = 0; j < 2; j++) {
 
-            _eglSetConfigAtrib(config, EGL_RED_SIZE, bits[0]);
-            _eglSetConfigAtrib(config, EGL_GREEN_SIZE, bits[1]);
-            _eglSetConfigAtrib(config, EGL_BLUE_SIZE, bits[2]);
-            _eglSetConfigAtrib(config, EGL_ALPHA_SIZE, bits[3]);
+            SetConfigAttrib(config, EGL_RED_SIZE, bits[0]);
+            SetConfigAttrib(config, EGL_GREEN_SIZE, bits[1]);
+            SetConfigAttrib(config, EGL_BLUE_SIZE, bits[2]);
+            SetConfigAttrib(config, EGL_ALPHA_SIZE, bits[3]);
             config->glmode.redMask = masks[0];
             config->glmode.greenMask = masks[1];
             config->glmode.blueMask = masks[2];
             config->glmode.alphaMask = masks[3];
-            _eglSetConfigAtrib(config, EGL_BUFFER_SIZE, config->glmode.redBits + config->glmode.greenBits
-                                + config->glmode.blueBits + config->glmode.alphaBits);
+            SetConfigAttrib(config, EGL_BUFFER_SIZE,
+                           config->glmode.redBits + config->glmode.greenBits +
+                           config->glmode.blueBits + config->glmode.alphaBits);
 
             config->glmode.accumRedBits = 16 * j;
             config->glmode.accumGreenBits = 16 * j;
@@ -591,12 +599,12 @@ _eglFillInConfigs(_EGLConfig * configs,
             config->glmode.accumAlphaBits = (masks[3] != 0) ? 16 * j : 0;
             config->glmode.visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
 
-            _eglSetConfigAtrib(config, EGL_STENCIL_SIZE, stencil_bits[k]);
-            _eglSetConfigAtrib(config, EGL_DEPTH_SIZE, depth_bits[k]);
+            SetConfigAttrib(config, EGL_STENCIL_SIZE, stencil_bits[k]);
+            SetConfigAttrib(config, EGL_DEPTH_SIZE, depth_bits[k]);
 
             config->glmode.visualType = visType;
             config->glmode.renderType = GLX_RGBA_BIT;
-            _eglSetConfigAtrib(config, EGL_SURFACE_TYPE, EGL_SCREEN_BIT_MESA |
+            SetConfigAttrib(config, EGL_SURFACE_TYPE, EGL_SCREEN_BIT_MESA |
                                 EGL_PBUFFER_BIT | EGL_PIXMAP_BIT | EGL_WINDOW_BIT);
 
             config->glmode.rgbMode = GL_TRUE;
@@ -609,12 +617,11 @@ _eglFillInConfigs(_EGLConfig * configs,
             }
 
             config->glmode.haveAccumBuffer = ((config->glmode.accumRedBits +
-                                                 config->glmode.accumGreenBits +
-                                                 config->glmode.accumBlueBits +
-                                                 config->glmode.accumAlphaBits) > 0);
+                                               config->glmode.accumGreenBits +
+                                               config->glmode.accumBlueBits +
+                                               config->glmode.accumAlphaBits) > 0);
             config->glmode.haveDepthBuffer = (config->glmode.depthBits > 0);
             config->glmode.haveStencilBuffer = (config->glmode.stencilBits > 0);
-
             config++;
          }
       }
