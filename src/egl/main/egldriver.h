@@ -4,6 +4,9 @@
 
 #include "egltypedefs.h"
 
+/* should probably use a dynamic-lengh string, but this will do */
+#define MAX_EXTENSIONS_LEN 1000
+
 
 /* driver funcs */
 typedef EGLBoolean (*Initialize_t)(_EGLDriver *, EGLDisplay dpy, EGLint *major, EGLint *minor);
@@ -114,6 +117,13 @@ struct _egl_driver
    QueryScreenSurfaceMESA_t QueryScreenSurfaceMESA;
    QueryScreenModeMESA_t QueryScreenModeMESA;
    QueryModeStringMESA_t QueryModeStringMESA;
+
+   /* Extension enable flags */
+   EGLBoolean MESA_screen_surface;
+   EGLBoolean MESA_copy_context;
+
+   /* Extensions string */
+   char Extensions[MAX_EXTENSIONS_LEN];
 };
 
 

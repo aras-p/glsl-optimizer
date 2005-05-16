@@ -197,6 +197,24 @@ _eglInitDriverFallbacks(_EGLDriver *drv)
 }
 
 
+/**
+ * Examine the individual extension enable/disable flags and recompute
+ * the driver's Extensions string.
+ */
+static void
+UpdateExtensionsString(_EGLDriver *drv)
+{
+   drv->Extensions[0] = 0;
+
+   if (drv->MESA_screen_surface)
+      strcat(drv->Extensions, "EGL_MESA_screen_surface");
+   if (drv->MESA_copy_context)
+      strcat(drv->Extensions, "EGL_MESA_copy_context");
+   assert(strlen(drv->Extensions) < MAX_EXTENSIONS_LEN);
+}
+
+
+
 const char *
 _eglQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
 {
@@ -208,7 +226,8 @@ _eglQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
    case EGL_VERSION:
       return "1.0";
    case EGL_EXTENSIONS:
-      return "";
+      UpdateExtensionsString(drv);
+      return drv->Extensions;
    default:
       _eglError(EGL_BAD_PARAMETER, "eglQueryString");
       return NULL;
