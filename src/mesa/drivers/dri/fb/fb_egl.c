@@ -654,9 +654,9 @@ fbCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
    }
 
    width = surface->Base.Width;
-   stride = width * bytesPerPixel;
    height = surface->Base.Height;
    bytesPerPixel = vis.rgbBits / 8;
+   stride = width * bytesPerPixel;
    origin = 0;
 
    /* front color renderbuffer */
