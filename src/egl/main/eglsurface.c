@@ -247,3 +247,77 @@ _eglSwapInterval(_EGLDriver *drv, EGLDisplay dpy, EGLint interval)
 }
 
 
+
+/**
+ ** EGL Surface Utility Functions.  This could be handy for device drivers.
+ **/
+
+
+/**
+ * Initialize the fields of the given _EGLSurface object from the other
+ * parameters.  Do error checking too.  Allocate EGLSurface handle and
+ * insert into hash table.
+ * \return EGLSurface handle or EGL_NO_SURFACE if any error
+ */
+EGLSurface
+_eglInitPbufferSurface(_EGLSurface *surface, _EGLDriver *drv, EGLDisplay dpy,
+                       EGLConfig config, const EGLint *attrib_list)
+{
+   _EGLConfig *conf;
+   EGLint width = 0, height = 0, largest = 0;
+   EGLint texFormat = 0, texTarget = 0, mipmapTex = 0;
+   EGLint i;
+
+   conf = _eglLookupConfig(drv, dpy, config);
+   if (!conf) {
+      _eglError(EGL_BAD_CONFIG, "eglCreatePbufferSurface");
+      return EGL_NO_SURFACE;
+   }
+
+   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
+      switch (attrib_list[i]) {
+      case EGL_WIDTH:
+         width = attrib_list[++i];
+         break;
+      case EGL_HEIGHT:
+         height = attrib_list[++i];
+         break;
+      case EGL_LARGEST_PBUFFER:
+         largest = attrib_list[++i];
+         break;
+      case EGL_TEXTURE_FORMAT:
+         texFormat = attrib_list[++i];
+         break;
+      case EGL_TEXTURE_TARGET:
+         texTarget = attrib_list[++i];
+         break;
+      case EGL_MIPMAP_TEXTURE:
+         mipmapTex = attrib_list[++i];
+         break;
+      default:
+         _eglError(EGL_BAD_ATTRIBUTE, "eglCreatePbufferSurface");
+         return EGL_NO_SURFACE;
+      }
+   }
+
+   if (width <= 0 || height <= 0) {
+      _eglError(EGL_BAD_ATTRIBUTE, "eglCreatePbufferSurface(width or height)");
+      return EGL_NO_SURFACE;
+   }
+
+   surface->Config = conf;
+   surface->Type = EGL_PBUFFER_BIT;
+   surface->Width = width;
+   surface->Height = height;
+   surface->TextureFormat = texFormat;
+   surface->TextureTarget = texTarget;
+   surface->MipmapTexture = mipmapTex;
+   surface->MipmapLevel = 0;
+   surface->SwapInterval = 0;
+
+   /* insert into hash table */
+   _eglSaveSurface(surface);
+   assert(surface->Handle);
+
+   return surface->Handle;
+}

@@ -93,4 +93,8 @@ _eglSwapInterval(_EGLDriver *drv, EGLDisplay dpy, EGLint interval);
 
 
 
+extern EGLSurface
+_eglInitPbufferSurface(_EGLSurface *surface, _EGLDriver *drv, EGLDisplay dpy,
+                       EGLConfig config, const EGLint *attrib_list);
+
 #endif /* EGLSURFACE_INCLUDED */
