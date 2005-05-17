@@ -19,7 +19,7 @@
 /**
  * Convert an _EGLConfig to a __GLcontextModes object.
  */
-void
+static void
 _eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode)
 {
    memset(mode, 0, sizeof(*mode));
@@ -185,6 +185,7 @@ _eglAddConfig(_EGLDisplay *display, const _EGLConfig *config)
    if (newConfigs) {
       display->Configs = newConfigs;
       display->Configs[n] = *config; /* copy struct */
+      display->Configs[n].Handle = n;
       display->NumConfigs++;
       return display->Configs + n;
    }
@@ -633,7 +634,7 @@ _eglFillInConfigs(_EGLConfig * configs,
             config->glmode.visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
 
             _eglSetConfigAttrib(config, EGL_STENCIL_SIZE, stencil_bits[k]);
-            _eglSetConfigAttrib(config, EGL_DEPTH_SIZE, depth_bits[k]);
+            _eglSetConfigAttrib(config, EGL_DEPTH_SIZE, depth_bits[i]);
 
             config->glmode.visualType = visType;
             config->glmode.renderType = GLX_RGBA_BIT;

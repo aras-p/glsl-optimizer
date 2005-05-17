@@ -109,7 +109,7 @@ fbFillInConfigs(_EGLDisplay *disp, unsigned pixel_bits, unsigned depth_bits,
    u_int8_t depth_bits_array[2];
    u_int8_t stencil_bits_array[2];
 
-   depth_bits_array[0] = depth_bits;
+   depth_bits_array[0] = 0;
    depth_bits_array[1] = depth_bits;
 
    /* Just like with the accumulation buffer, always provide some modes
@@ -122,7 +122,7 @@ fbFillInConfigs(_EGLDisplay *disp, unsigned pixel_bits, unsigned depth_bits,
    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
    back_buffer_factor = (have_back_buffer) ? 2 : 1;
 
-   num_configs = depth_buffer_factor * back_buffer_factor * 4;
+   num_configs = depth_buffer_factor * back_buffer_factor * 2;
 
    if (pixel_bits == 16) {
       fb_format = GL_RGB;
@@ -138,16 +138,6 @@ fbFillInConfigs(_EGLDisplay *disp, unsigned pixel_bits, unsigned depth_bits,
                           depth_bits_array, stencil_bits_array, depth_buffer_factor,
                           back_buffer_modes, back_buffer_factor,
                           GLX_TRUE_COLOR)) {
-      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n",
-               __func__, __LINE__);
-      return EGL_FALSE;
-   }
-
-   c = &configs[depth_buffer_factor * back_buffer_factor * 2];
-   if (!_eglFillInConfigs(c, fb_format, fb_type,
-                          depth_bits_array, stencil_bits_array, depth_buffer_factor,
-                          back_buffer_modes, back_buffer_factor,
-                          GLX_DIRECT_COLOR)) {
       fprintf(stderr, "[%s:%u] Error creating FBConfig!\n",
                __func__, __LINE__);
       return EGL_FALSE;

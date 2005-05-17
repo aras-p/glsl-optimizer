@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 /**
@@ -24,6 +25,62 @@ TestScreens(EGLDisplay dpy)
    for (i = 0; i < numScreens; i++) {
       printf(" Screen %d handle: %d\n", i, (int) screens[i]);
    }
+}
+
+/**
+ * Print table of all available configurations.
+ */
+static void
+PrintConfigs(EGLDisplay d)
+{
+   EGLConfig *configs;
+   EGLint numConfigs, i;
+
+   eglGetConfigs(d, NULL, 0, &numConfigs);
+   configs = malloc(sizeof(*configs) *numConfigs);
+   eglGetConfigs(d, configs, numConfigs, &numConfigs);
+
+   printf("Configurations:\n");
+   printf("     bf lv d st colorbuffer dp st   supported \n");
+   printf("  id sz  l b ro  r  g  b  a th cl   surfaces  \n");
+   printf("----------------------------------------------\n");
+   for (i = 0; i < numConfigs; i++) {
+      EGLint id, size, level;
+      EGLint red, green, blue, alpha;
+      EGLint depth, stencil;
+      EGLint surfaces;
+      EGLint doubleBuf = 1, stereo = 0;
+      char surfString[100] = "";
+
+      eglGetConfigAttrib(d, configs[i], EGL_CONFIG_ID, &id);
+      eglGetConfigAttrib(d, configs[i], EGL_BUFFER_SIZE, &size);
+      eglGetConfigAttrib(d, configs[i], EGL_LEVEL, &level);
+
+      eglGetConfigAttrib(d, configs[i], EGL_RED_SIZE, &red);
+      eglGetConfigAttrib(d, configs[i], EGL_GREEN_SIZE, &green);
+      eglGetConfigAttrib(d, configs[i], EGL_BLUE_SIZE, &blue);
+      eglGetConfigAttrib(d, configs[i], EGL_ALPHA_SIZE, &alpha);
+      eglGetConfigAttrib(d, configs[i], EGL_DEPTH_SIZE, &depth);
+      eglGetConfigAttrib(d, configs[i], EGL_STENCIL_SIZE, &stencil);
+      eglGetConfigAttrib(d, configs[i], EGL_SURFACE_TYPE, &surfaces);
+
+      if (surfaces & EGL_WINDOW_BIT)
+         strcat(surfString, "win,");
+      if (surfaces & EGL_PBUFFER_BIT)
+         strcat(surfString, "pb,");
+      if (surfaces & EGL_PIXMAP_BIT)
+         strcat(surfString, "pix,");
+      if (strlen(surfString) > 0)
+         surfString[strlen(surfString) - 1] = 0;
+
+      printf("0x%02x %2d %2d %c  %c %2d %2d %2d %2d %2d %2d   %-12s\n",
+             id, size, level,
+             doubleBuf ? 'y' : '.',
+             stereo ? 'y' : '.',
+             red, green, blue, alpha,
+             depth, stencil, surfString);
+   }
+   free(configs);
 }
 
 
@@ -57,15 +114,7 @@ main(int argc, char *argv[])
    printf("EGL version = %d.%d\n", maj, min);
    printf("EGL_VENDOR = %s\n", eglQueryString(d, EGL_VENDOR));
 
-   eglGetConfigs(d, configs, 10, &numConfigs);
-   printf("Got %d EGL configs:\n", numConfigs);
-   for (i = 0; i < numConfigs; i++) {
-      EGLint id, red, depth;
-      eglGetConfigAttrib(d, configs[i], EGL_CONFIG_ID, &id);
-      eglGetConfigAttrib(d, configs[i], EGL_RED_SIZE, &red);
-      eglGetConfigAttrib(d, configs[i], EGL_DEPTH_SIZE, &depth);
-      printf("%2d:  Red Size = %d  Depth Size = %d\n", id, red, depth);
-   }
+   PrintConfigs(d);
 
    ctx = eglCreateContext(d, configs[0], EGL_NO_CONTEXT, NULL);
    if (ctx == EGL_NO_CONTEXT) {
