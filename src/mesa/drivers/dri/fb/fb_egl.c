@@ -146,8 +146,9 @@ fbFillInConfigs(_EGLDisplay *disp, unsigned pixel_bits, unsigned depth_bits,
    /* Mark the visual as slow if there are "fake" stencil bits.
    */
    for (i = 0, c = configs; i < num_configs; i++, c++) {
-      if ((c->glmode.stencilBits != 0)  && (c->glmode.stencilBits != stencil_bits)) {
-         c->glmode.visualRating = GLX_SLOW_CONFIG;
+      int stencil = GET_CONFIG_ATTRIB(c, EGL_STENCIL_SIZE);
+      if ((stencil != 0)  && (stencil != stencil_bits)) {
+         SET_CONFIG_ATTRIB(c, EGL_CONFIG_CAVEAT, EGL_SLOW_CONFIG);
       }
    }
 
@@ -228,7 +229,7 @@ fbInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
    fbScreen *s;
    _EGLScreen *scrn;
    char c;
-   unsigned int i, x, y, r;
+   unsigned int x, y, r;
    DIR *dir;
    FILE *file;
    struct dirent *dirent;
@@ -249,7 +250,7 @@ fbInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
       return EGL_FALSE;
    }
    
-   while (dirent = readdir(dir)) {
+   while ((dirent = readdir(dir))) {  /* assignment! */
       
       if (dirent->d_name[0] != 'f')
          continue;
@@ -394,6 +395,7 @@ fbCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext sh
    fbContext *c;
    _EGLDisplay *disp = _eglLookupDisplay(dpy);
    struct dd_function_table functions;
+   GLvisual vis;
    int i;
 
    conf = _eglLookupConfig(drv, dpy, config);
@@ -431,7 +433,9 @@ fbCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext sh
    _mesa_init_driver_functions(&functions);
    init_core_functions(&functions);
 
-   ctx = c->glCtx = _mesa_create_context(&conf->glmode, NULL, &functions, (void *)c);
+   _eglConfigToContextModesRec(conf, &vis);
+
+   ctx = c->glCtx = _mesa_create_context(&vis, NULL, &functions, (void *)c);
    if (!c->glCtx) {
       _mesa_free(c);
       return GL_FALSE;
@@ -518,66 +522,39 @@ fbCreatePixmapSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, NativeP
 static EGLSurface
 fbCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list)
 {
-   _EGLConfig *conf;
-   EGLint i, width = 0, height = 0, largest, texFormat, texTarget, mipmapTex;
    fbSurface *surf;
 
-   conf = _eglLookupConfig(drv, dpy, config);
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreatePbufferSurface");
-      return EGL_NO_SURFACE;
-   }
-
-   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
-      switch (attrib_list[i]) {
-      case EGL_WIDTH:
-         width = attrib_list[++i];
-         break;
-      case EGL_HEIGHT:
-         height = attrib_list[++i];
-         break;
-      case EGL_LARGEST_PBUFFER:
-         largest = attrib_list[++i];
-         break;
-      case EGL_TEXTURE_FORMAT:
-         texFormat = attrib_list[++i];
-         break;
-      case EGL_TEXTURE_TARGET:
-         texTarget = attrib_list[++i];
-         break;
-      case EGL_MIPMAP_TEXTURE:
-         mipmapTex = attrib_list[++i];
-         break;
-      default:
-         _eglError(EGL_BAD_ATTRIBUTE, "eglCreatePbufferSurface");
-         return EGL_NO_SURFACE;
-      }
-   }
-
-   if (width <= 0 || height <= 0) {
-      _eglError(EGL_BAD_ATTRIBUTE, "eglCreatePbufferSurface(width or height)");
-      return EGL_NO_SURFACE;
-   }
-
    surf = (fbSurface *) calloc(1, sizeof(fbSurface));
-   if (!surf)
+   if (!surf) {
       return EGL_NO_SURFACE;
+   }
 
-   surf->Base.Config = conf;
-   surf->Base.Type = EGL_PBUFFER_BIT;
-   surf->Base.Width = width;
-   surf->Base.Height = height;
-   surf->Base.TextureFormat = texFormat;
-   surf->Base.TextureTarget = texTarget;
-   surf->Base.MipmapTexture = mipmapTex;
-   surf->Base.MipmapLevel = 0;
-   surf->Base.SwapInterval = 0;
+   if (_eglInitPbufferSurface(&surf->Base, drv, dpy, config, attrib_list)) {
+      free(surf);
+      return EGL_NO_SURFACE;
+   }
 
-   printf("eglCreatePbufferSurface()\n");
+   /* create software-based pbuffer */
+   {
+      GLcontext *ctx = NULL; /* this _should_ be OK */
+      GLvisual vis;
+      _EGLConfig *conf = _eglLookupConfig(drv, dpy, config);
+      assert(conf); /* bad config should be caught earlier */
+      _eglConfigToContextModesRec(conf, &vis);
 
-   /* insert into hash table */
-   _eglSaveSurface(&surf->Base);
-   assert(surf->Base.Handle);
+      surf->mesa_framebuffer = _mesa_create_framebuffer(&vis);
+      _mesa_add_soft_renderbuffers(surf->mesa_framebuffer,
+                                   GL_TRUE, /* color bufs */
+                                   vis.haveDepthBuffer,
+                                   vis.haveStencilBuffer,
+                                   vis.haveAccumBuffer,
+                                   GL_FALSE, /* alpha */
+                                   GL_FALSE /* aux */ );
+
+      /* set pbuffer/framebuffer size */
+      _mesa_resize_framebuffer(ctx, surf->mesa_framebuffer,
+                               surf->Base.Width, surf->Base.Height);
+   }
 
    return surf->Base.Handle;
 }
@@ -637,79 +614,82 @@ fbMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface read,
 }
 
 
-static const char *
-fbQueryString(_EGLDriver *drv, EGLDisplay dpy, EGLint name)
-{
-   if (name == EGL_EXTENSIONS) {
-      return "EGL_MESA_screen_surface";
-   }
-   else {
-      return _eglQueryString(drv, dpy, name);
-   }
-}
-
-
 /**
  * Create a drawing surface which can be directly displayed on a screen.
  */
 static EGLSurface
 fbCreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
-                            const EGLint *attrib_list)
+                          const EGLint *attrib_list)
 {
    _EGLConfig *config = _eglLookupConfig(drv, dpy, cfg);
    fbDisplay *display = Lookup_fbDisplay(dpy);
    fbSurface *surface;
    EGLSurface surf;
-   
-   const GLboolean swDepth = config->glmode.depthBits > 0;
-   const GLboolean swAlpha = config->glmode.alphaBits > 0;
-   const GLboolean swAccum = config->glmode.accumRedBits > 0;
-   const GLboolean swStencil = config->glmode.stencilBits > 0;
-   
-   int bytesPerPixel = config->glmode.rgbBits / 8;
-   int origin = 0;
+   GLvisual vis;
+   GLcontext *ctx = NULL; /* this should be OK */
+   int origin, bytesPerPixel;
    int width, height, stride;
    
-   surface = (fbSurface *)malloc(sizeof(*surface));
+   surface = (fbSurface *) malloc(sizeof(*surface));
+   if (!surface) {
+      return EGL_NO_SURFACE;
+   }
+
+   /* init base class, error check, etc. */
    surf = _eglInitScreenSurface(&surface->Base, drv, dpy, cfg, attrib_list);
    if (surf == EGL_NO_SURFACE) {
       free(surface);
       return EGL_NO_SURFACE;
    }
+
+   /* convert EGLConfig to GLvisual */
+   _eglConfigToContextModesRec(config, &vis);
+
+   /* create Mesa framebuffer */
+   surface->mesa_framebuffer = _mesa_create_framebuffer(&vis);
+   if (!surface->mesa_framebuffer) {
+      free(surface);
+      _eglRemoveSurface(&surface->Base);
+      return EGL_NO_SURFACE;
+   }
+
    width = surface->Base.Width;
    stride = width * bytesPerPixel;
    height = surface->Base.Height;
+   bytesPerPixel = vis.rgbBits / 8;
+   origin = 0;
 
-   surface->mesa_framebuffer = _mesa_create_framebuffer(&config->glmode);
-   if (!surface->mesa_framebuffer) {
-      free(surface);
-      return EGL_NO_SURFACE;
-   }
-   surface->mesa_framebuffer->Width = width;
-   surface->mesa_framebuffer->Height = height;
+   /* front color renderbuffer */
    {
-      driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, bytesPerPixel, origin, stride);
-      fbSetSpanFunctions(drb, &config->glmode);
+      driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, bytesPerPixel,
+                                                origin, stride);
+      fbSetSpanFunctions(drb, &vis);
       drb->Base.Data = display->pFB;
       _mesa_add_renderbuffer(surface->mesa_framebuffer,
                              BUFFER_FRONT_LEFT, &drb->Base);
    }
-   if (config->glmode.doubleBufferMode) {
-      driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, bytesPerPixel, origin, stride);
-      fbSetSpanFunctions(drb, &config->glmode);
+
+   /* back color renderbuffer */
+   if (vis.doubleBufferMode) {
+      driRenderbuffer *drb = driNewRenderbuffer(GL_RGBA, bytesPerPixel,
+                                                origin, stride);
+      fbSetSpanFunctions(drb, &vis);
       drb->Base.Data =  _mesa_malloc(stride * height);
       _mesa_add_renderbuffer(surface->mesa_framebuffer,
                              BUFFER_BACK_LEFT, &drb->Base);
    }
 
+   /* other renderbuffers- software based */
    _mesa_add_soft_renderbuffers(surface->mesa_framebuffer,
                                 GL_FALSE, /* color */
-                                swDepth,
-                                swStencil,
-                                swAccum,
-                                swAlpha,
+                                vis.haveDepthBuffer,
+                                vis.haveStencilBuffer,
+                                vis.haveAccumBuffer,
+                                GL_FALSE, /* alpha */
                                 GL_FALSE /* aux */);
    
+   _mesa_resize_framebuffer(ctx, surface->mesa_framebuffer, width, height);
+
    return surf;
 }
 
@@ -727,6 +707,7 @@ fbShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
    fbScreen *scrn = Lookup_fbScreen(dpy, screen);
    fbSurface *surf = Lookup_fbSurface(surface);
    _EGLMode *mode = _eglLookupMode(dpy, m);
+   int bits;
    
    if (!_eglShowSurfaceMESA(drv, dpy, screen, surface, m))
       return EGL_FALSE;
@@ -759,7 +740,8 @@ err:
    file = fopen(buffer, "r+");
    if (!file)
       goto err;
-   snprintf(buffer, sizeof(buffer), "%d", surf->Base.Config->glmode.rgbBits);
+   bits = GET_CONFIG_ATTRIB(surf->Base.Config, EGL_BUFFER_SIZE);
+   snprintf(buffer, sizeof(buffer), "%d", bits);
    fputs(buffer, file);
    fclose(file);
 
@@ -809,9 +791,12 @@ _eglMain(NativeDisplayType dpy)
    fb->Base.CreatePbufferSurface = fbCreatePbufferSurface;
    fb->Base.DestroySurface = fbDestroySurface;
    fb->Base.DestroyContext = fbDestroyContext;
-   fb->Base.QueryString = fbQueryString;
    fb->Base.CreateScreenSurfaceMESA = fbCreateScreenSurfaceMESA;
    fb->Base.ShowSurfaceMESA = fbShowSurfaceMESA;
    
+   /* enable supported extensions */
+   fb->Base.MESA_screen_surface = EGL_TRUE;
+   fb->Base.MESA_copy_context = EGL_TRUE;
+
    return &fb->Base;
 }
