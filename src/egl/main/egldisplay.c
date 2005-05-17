@@ -69,10 +69,3 @@ _eglCleanupDisplay(_EGLDisplay *disp)
    free(disp->Name);
    /* driver deletes _EGLDisplay */
 }
-
-
-EGLBoolean 
-_eglQueryDisplayMESA(_EGLDriver *drv, EGLDisplay dpy, EGLint attrib, EGLint *value)
-{
-   return EGL_FALSE;
-}

@@ -354,7 +354,6 @@ void (* APIENTRY eglGetProcAddress(const char *procname))()
       { "eglCreateScreenSurfaceMESA", (_EGLProc) eglCreateScreenSurfaceMESA },
       { "eglShowSurfaceMESA", (_EGLProc) eglShowSurfaceMESA },
       { "eglScreenPositionMESA", (_EGLProc) eglScreenPositionMESA },
-      { "eglQueryDisplayMESA", (_EGLProc) eglQueryDisplayMESA },
       { "eglQueryScreenMESA", (_EGLProc) eglQueryScreenMESA },
       { "eglQueryScreenSurfaceMESA", (_EGLProc) eglQueryScreenSurfaceMESA },
       { "eglQueryScreenModeMESA", (_EGLProc) eglQueryScreenModeMESA },
@@ -458,14 +457,6 @@ eglScreenPositionMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLint x, EGLint y)
 {
    _EGLDriver *drv = _eglLookupDriver(dpy);
    return drv->ScreenPositionMESA(drv, dpy, screen, x, y);
-}
-
-
-EGLBoolean 
-eglQueryDisplayMESA(EGLDisplay dpy, EGLint attrib, EGLint *value)
-{
-   _EGLDriver *drv = _eglLookupDriver(dpy);
-   return drv->QueryDisplayMESA(drv, dpy, attrib, value);
 }
 
 
