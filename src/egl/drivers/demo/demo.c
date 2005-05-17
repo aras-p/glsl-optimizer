@@ -81,7 +81,7 @@ demoInitialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
          _eglSetConfigAttrib(&config, EGL_STENCIL_SIZE, 8);
       }
       _eglSetConfigAttrib(&config, EGL_SURFACE_TYPE,
-                        (EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT));
+                          (EGL_WINDOW_BIT | EGL_PIXMAP_BIT | EGL_PBUFFER_BIT));
       _eglAddConfig(disp, &config);
    }
 
@@ -221,16 +221,13 @@ demoCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    if (!surf)
       return EGL_NO_SURFACE;
 
-   if (_eglInitPbufferSurface(drv, dpy, config, attrib_list, &surf->Base)) {
+   if (_eglInitPbufferSurface(&surf->Base, drv, dpy, config, attrib_list)
+       == EGL_NO_SURFACE) {
       free(surf);
       return EGL_NO_SURFACE;
    }
 
    /* a real driver would allocate the pbuffer memory here */
-
-   /* insert into hash table */
-   _eglSaveSurface(&surf->Base);
-   assert(surf->Base.Handle);
 
    return surf->Base.Handle;
 }
