@@ -30,8 +30,6 @@
  */
 
 
-#include <strings.h>
-
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
