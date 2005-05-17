@@ -187,7 +187,7 @@ _eglShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
       _eglError(EGL_BAD_SCREEN_MESA, "eglShowSurfaceMESA");
       return EGL_FALSE;
    }
-   if (!mode) {
+   if (!mode && (m != EGL_NO_MODE_MESA )) {
       _eglError(EGL_BAD_MODE_MESA, "eglShowSurfaceMESA");
       return EGL_FALSE;
    }

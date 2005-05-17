@@ -731,7 +731,7 @@ fbShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
    if (!_eglShowSurfaceMESA(drv, dpy, screen, surface, m))
       return EGL_FALSE;
       
-   snprintf(buffer, sizeof(buffer), "%s/%s/mode", sysfs, scrn->fb);
+   snprintf(buffer, sizeof(buffer), "%s/%s/blank", sysfs, scrn->fb);
    
    file = fopen(buffer, "r+");
    if (!file) {
@@ -739,6 +739,18 @@ err:
       printf("chown all fb sysfs attrib to allow write - %s\n", buffer);
       return EGL_FALSE;
    }
+   snprintf(buffer, sizeof(buffer), "%d", (m == EGL_NO_MODE_MESA ? VESA_POWERDOWN : VESA_HSYNC_SUSPEND));
+   fputs(buffer, file);
+   fclose(file);
+   
+   if (m == EGL_NO_MODE_MESA)
+      return EGL_TRUE;
+   
+   snprintf(buffer, sizeof(buffer), "%s/%s/mode", sysfs, scrn->fb);
+   
+   file = fopen(buffer, "r+");
+   if (!file)
+      goto err;
    fputs(mode->Name, file);
    fclose(file);
    
@@ -751,6 +763,14 @@ err:
    fputs(buffer, file);
    fclose(file);
 
+   file = fopen(buffer, "r+");
+   if (!file)
+      goto err;
+      
+   snprintf(buffer, sizeof(buffer), "%d", VESA_NO_BLANKING);
+   fputs(buffer, file);
+   fclose(file);
+   
    return EGL_TRUE;
 }
 
