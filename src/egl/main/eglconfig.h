@@ -18,7 +18,7 @@ struct _egl_config
 };
 
 
-
+#define SET_CONFIG_ATTRIB(CONF, ATTR, VAL) ((CONF)->Attrib[(ATTR) - FIRST_ATTRIB] = VAL)
 #define GET_CONFIG_ATTRIB(CONF, ATTR) ((CONF)->Attrib[(ATTR) - FIRST_ATTRIB])
 
 
@@ -69,4 +69,8 @@ _eglFillInConfigs( _EGLConfig *configs,
 		const GLenum * db_modes, unsigned num_db_modes,
 		int visType );
                 
+extern void
+_eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode);
+
+
 #endif /* EGLCONFIG_INCLUDED */

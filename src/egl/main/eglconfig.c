@@ -19,7 +19,7 @@
 /**
  * Convert an _EGLConfig to a __GLcontextModes object.
  */
-static void
+void
 _eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode)
 {
    memset(mode, 0, sizeof(*mode));
@@ -33,14 +33,15 @@ _eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode)
    mode->greenBits = GET_CONFIG_ATTRIB(config, EGL_GREEN_SIZE);
    mode->blueBits = GET_CONFIG_ATTRIB(config, EGL_BLUE_SIZE);
    mode->alphaBits = GET_CONFIG_ATTRIB(config, EGL_ALPHA_SIZE);
-   mode->rgbBits = mode->redBits + mode->greenBits
-      + mode->blueBits + mode->alphaBits;
+   mode->rgbBits = GET_CONFIG_ATTRIB(config, EGL_BUFFER_SIZE);
 
    mode->depthBits = GET_CONFIG_ATTRIB(config, EGL_DEPTH_SIZE);
    mode->haveDepthBuffer = mode->depthBits > 0;
 
    mode->stencilBits = GET_CONFIG_ATTRIB(config, EGL_STENCIL_SIZE);
    mode->haveStencilBuffer = mode->stencilBits > 0;
+
+   /* no accum */
 
    mode->level = GET_CONFIG_ATTRIB(config, EGL_LEVEL);
    mode->samples = GET_CONFIG_ATTRIB(config, EGL_SAMPLES);
