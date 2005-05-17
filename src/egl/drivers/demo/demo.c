@@ -214,64 +214,19 @@ demoCreatePixmapSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, Nativ
 
 
 static EGLSurface
-demoCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list)
+demoCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
+                         const EGLint *attrib_list)
 {
-   _EGLConfig *conf;
-   EGLint i, width = 0, height = 0, largest, texFormat, texTarget, mipmapTex;
-   DemoSurface *surf;
-
-   conf = _eglLookupConfig(drv, dpy, config);
-   if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreatePbufferSurface");
-      return EGL_NO_SURFACE;
-   }
-
-   for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
-      switch (attrib_list[i]) {
-      case EGL_WIDTH:
-         width = attrib_list[++i];
-         break;
-      case EGL_HEIGHT:
-         height = attrib_list[++i];
-         break;
-      case EGL_LARGEST_PBUFFER:
-         largest = attrib_list[++i];
-         break;
-      case EGL_TEXTURE_FORMAT:
-         texFormat = attrib_list[++i];
-         break;
-      case EGL_TEXTURE_TARGET:
-         texTarget = attrib_list[++i];
-         break;
-      case EGL_MIPMAP_TEXTURE:
-         mipmapTex = attrib_list[++i];
-         break;
-      default:
-         _eglError(EGL_BAD_ATTRIBUTE, "eglCreatePbufferSurface");
-         return EGL_NO_SURFACE;
-      }
-   }
-
-   if (width <= 0 || height <= 0) {
-      _eglError(EGL_BAD_ATTRIBUTE, "eglCreatePbufferSurface(width or height)");
-      return EGL_NO_SURFACE;
-   }
-
-   surf = (DemoSurface *) calloc(1, sizeof(DemoSurface));
+   DemoSurface *surf = (DemoSurface *) calloc(1, sizeof(DemoSurface));
    if (!surf)
       return EGL_NO_SURFACE;
 
-   surf->Base.Config = conf;
-   surf->Base.Type = EGL_PBUFFER_BIT;
-   surf->Base.Width = width;
-   surf->Base.Height = height;
-   surf->Base.TextureFormat = texFormat;
-   surf->Base.TextureTarget = texTarget;
-   surf->Base.MipmapTexture = mipmapTex;
-   surf->Base.MipmapLevel = 0;
-   surf->Base.SwapInterval = 0;
+   if (_eglInitPbufferSurface(drv, dpy, config, attrib_list, &surf->Base)) {
+      free(surf);
+      return EGL_NO_SURFACE;
+   }
 
-   printf("eglCreatePbufferSurface()\n");
+   /* a real driver would allocate the pbuffer memory here */
 
    /* insert into hash table */
    _eglSaveSurface(&surf->Base);
