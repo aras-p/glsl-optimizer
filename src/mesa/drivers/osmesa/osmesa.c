@@ -187,7 +187,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[RCOMP] = SRC[0];  \
    DST[GCOMP] = SRC[1];  \
    DST[BCOMP] = SRC[2];  \
-   DST[BCOMP] = SRC[3]
+   DST[ACOMP] = SRC[3]
 #include "swrast/s_spantemp.h"
 
 /* BGRA */
@@ -212,7 +212,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[RCOMP] = SRC[2];  \
    DST[GCOMP] = SRC[1];  \
    DST[BCOMP] = SRC[0];  \
-   DST[BCOMP] = SRC[3]
+   DST[ACOMP] = SRC[3]
 #include "swrast/s_spantemp.h"
 
 /* ARGB */
@@ -237,7 +237,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[RCOMP] = SRC[1];  \
    DST[GCOMP] = SRC[2];  \
    DST[BCOMP] = SRC[3];  \
-   DST[BCOMP] = SRC[0]
+   DST[ACOMP] = SRC[0]
 #include "swrast/s_spantemp.h"
 
 /* RGB */
@@ -256,7 +256,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[RCOMP] = SRC[0];  \
    DST[GCOMP] = SRC[1];  \
    DST[BCOMP] = SRC[2];  \
-   DST[BCOMP] = CHAN_MAX
+   DST[ACOMP] = CHAN_MAX
 #include "swrast/s_spantemp.h"
 
 /* BGR */
@@ -275,7 +275,7 @@ get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
    DST[RCOMP] = SRC[2];  \
    DST[GCOMP] = SRC[1];  \
    DST[BCOMP] = SRC[0];  \
-   DST[BCOMP] = CHAN_MAX
+   DST[ACOMP] = CHAN_MAX
 #include "swrast/s_spantemp.h"
 
 /* 16-bit BGR */
