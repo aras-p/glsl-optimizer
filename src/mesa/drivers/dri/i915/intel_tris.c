@@ -63,9 +63,9 @@ do {								\
 #else
 #define COPY_DWORDS( j, vb, vertsize, v )	\
 do {						\
-   if (1) fprintf(stderr, "\n");	\
+   if (0) fprintf(stderr, "\n");	\
    for ( j = 0 ; j < vertsize ; j++ ) {		\
-      if (1) fprintf(stderr, "   -- v(%d): %x/%f\n",j,	\
+      if (0) fprintf(stderr, "   -- v(%d): %x/%f\n",j,	\
 	      ((GLuint *)v)[j],			\
 	      ((GLfloat *)v)[j]);		\
       vb[j] = ((GLuint *)v)[j];			\
