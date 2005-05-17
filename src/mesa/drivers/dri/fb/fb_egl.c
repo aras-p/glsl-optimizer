@@ -529,7 +529,7 @@ fbCreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, const 
       return EGL_NO_SURFACE;
    }
 
-   if (_eglInitPbufferSurface(&surf->Base, drv, dpy, config, attrib_list)) {
+   if (_eglInitPbufferSurface(&surf->Base, drv, dpy, config, attrib_list) == EGL_NO_SURFACE) {
       free(surf);
       return EGL_NO_SURFACE;
    }
