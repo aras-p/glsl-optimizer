@@ -106,8 +106,9 @@ _eglGetScreensMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA *screens,
 
 
 /**
- * Initialize the given _EGLSurface object.  Assign it an EGLSurface handle.
- * Return the EGLSurface handle or EGL_BAD_SURFACE if error.
+ * Initialize the given _EGLSurface object.  Do error checking.
+ * Assign it an EGLSurface handle and insert into hash table.
+ * \return EGLSurface handle or EGL_NO_SURFACE if error.
  */
 EGLSurface
 _eglInitScreenSurface(_EGLSurface *surf, _EGLDriver *drv, EGLDisplay dpy,
