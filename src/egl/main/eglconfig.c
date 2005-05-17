@@ -18,6 +18,9 @@
 
 /**
  * Convert an _EGLConfig to a __GLcontextModes object.
+ * NOTE: This routine may be incomplete - we're only making sure that
+ * the fields needed by Mesa (for _mesa_create_context/framebuffer) are
+ * set correctly.
  */
 void
 _eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode)
@@ -26,7 +29,7 @@ _eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode)
 
    mode->rgbMode = GL_TRUE; /* no color index */
    mode->colorIndexMode = GL_FALSE;
-   mode->doubleBufferMode = GL_TRUE;
+   mode->doubleBufferMode = GL_TRUE;  /* always DB for now */
    mode->stereoMode = GL_FALSE;
 
    mode->redBits = GET_CONFIG_ATTRIB(config, EGL_RED_SIZE);
@@ -34,6 +37,8 @@ _eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode)
    mode->blueBits = GET_CONFIG_ATTRIB(config, EGL_BLUE_SIZE);
    mode->alphaBits = GET_CONFIG_ATTRIB(config, EGL_ALPHA_SIZE);
    mode->rgbBits = GET_CONFIG_ATTRIB(config, EGL_BUFFER_SIZE);
+
+   /* no rgba masks - fix? */
 
    mode->depthBits = GET_CONFIG_ATTRIB(config, EGL_DEPTH_SIZE);
    mode->haveDepthBuffer = mode->depthBits > 0;
@@ -46,83 +51,19 @@ _eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode)
    mode->level = GET_CONFIG_ATTRIB(config, EGL_LEVEL);
    mode->samples = GET_CONFIG_ATTRIB(config, EGL_SAMPLES);
    mode->sampleBuffers = GET_CONFIG_ATTRIB(config, EGL_SAMPLE_BUFFERS);
-}
 
+   /* surface type - not really needed */
+   mode->visualType = GLX_TRUE_COLOR;
+   mode->renderType = GLX_RGBA_BIT;
+}
 
 
 void
 _eglSetConfigAttrib(_EGLConfig *config, EGLint attr, EGLint val)
 {
+   assert(attr >= FIRST_ATTRIB);
+   assert(attr < FIRST_ATTRIB + MAX_ATTRIBS);
    config->Attrib[attr - FIRST_ATTRIB] = val;
-   
-   switch (attr) {
-   case EGL_BUFFER_SIZE:
-      config->glmode.rgbBits = val;
-      break;
-   case EGL_ALPHA_SIZE:
-      config->glmode.alphaBits = val;
-      break;
-   case EGL_BLUE_SIZE:
-      config->glmode.blueBits = val;
-      break;
-   case EGL_GREEN_SIZE:
-      config->glmode.greenBits = val;
-      break;
-   case EGL_RED_SIZE:
-      config->glmode.redBits = val;
-      break;
-   case EGL_DEPTH_SIZE:
-      config->glmode.depthBits = val;
-      break;
-   case EGL_STENCIL_SIZE:
-      config->glmode.stencilBits = val;
-      break;
-   case EGL_CONFIG_CAVEAT:
-      break;
-   case EGL_CONFIG_ID:
-      break;
-   case EGL_LEVEL:
-      break;
-   case EGL_MAX_PBUFFER_HEIGHT:
-      break;
-   case EGL_MAX_PBUFFER_PIXELS:
-      break;
-   case EGL_MAX_PBUFFER_WIDTH:
-      break;
-   case EGL_NATIVE_RENDERABLE:
-      break;
-   case EGL_NATIVE_VISUAL_ID:
-      break;
-   case EGL_NATIVE_VISUAL_TYPE:
-      break;
-   case EGL_SAMPLES:
-      break;
-   case EGL_SAMPLE_BUFFERS:
-      break;
-   case EGL_SURFACE_TYPE:
-      config->glmode.drawableType = val;
-      break;
-   case EGL_TRANSPARENT_TYPE:
-      break;
-   case EGL_TRANSPARENT_BLUE_VALUE:
-      break;
-   case EGL_TRANSPARENT_GREEN_VALUE:
-      break;
-   case EGL_TRANSPARENT_RED_VALUE:
-      break;
-   case EGL_NONE:
-      break;
-   case EGL_BIND_TO_TEXTURE_RGB:
-      break;
-   case EGL_BIND_TO_TEXTURE_RGBA:
-      break;
-   case EGL_MIN_SWAP_INTERVAL:
-      break;
-   case EGL_MAX_SWAP_INTERVAL:
-      break;
-   default:
-      break;
-   }
 }
 
 
@@ -615,48 +556,19 @@ _eglFillInConfigs(_EGLConfig * configs,
    for (k = 0; k < num_depth_stencil_bits; k++) {
       for (i = 0; i < num_db_modes; i++)  {
          for (j = 0; j < 2; j++) {
-
             _eglSetConfigAttrib(config, EGL_RED_SIZE, bits[0]);
             _eglSetConfigAttrib(config, EGL_GREEN_SIZE, bits[1]);
             _eglSetConfigAttrib(config, EGL_BLUE_SIZE, bits[2]);
             _eglSetConfigAttrib(config, EGL_ALPHA_SIZE, bits[3]);
-            config->glmode.redMask = masks[0];
-            config->glmode.greenMask = masks[1];
-            config->glmode.blueMask = masks[2];
-            config->glmode.alphaMask = masks[3];
             _eglSetConfigAttrib(config, EGL_BUFFER_SIZE,
-                           config->glmode.redBits + config->glmode.greenBits +
-                           config->glmode.blueBits + config->glmode.alphaBits);
-
-            config->glmode.accumRedBits = 16 * j;
-            config->glmode.accumGreenBits = 16 * j;
-            config->glmode.accumBlueBits = 16 * j;
-            config->glmode.accumAlphaBits = (masks[3] != 0) ? 16 * j : 0;
-            config->glmode.visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
+                                bits[0] + bits[1] + bits[2] + bits[3]);
 
             _eglSetConfigAttrib(config, EGL_STENCIL_SIZE, stencil_bits[k]);
             _eglSetConfigAttrib(config, EGL_DEPTH_SIZE, depth_bits[i]);
 
-            config->glmode.visualType = visType;
-            config->glmode.renderType = GLX_RGBA_BIT;
             _eglSetConfigAttrib(config, EGL_SURFACE_TYPE, EGL_SCREEN_BIT_MESA |
-                                EGL_PBUFFER_BIT | EGL_PIXMAP_BIT | EGL_WINDOW_BIT);
+                         EGL_PBUFFER_BIT | EGL_PIXMAP_BIT | EGL_WINDOW_BIT);
 
-            config->glmode.rgbMode = GL_TRUE;
-
-            if (db_modes[i] == GLX_NONE) {
-               config->glmode.doubleBufferMode = GL_FALSE;
-            } else {
-               config->glmode.doubleBufferMode = GL_TRUE;
-               config->glmode.swapMethod = db_modes[i];
-            }
-
-            config->glmode.haveAccumBuffer = ((config->glmode.accumRedBits +
-                                               config->glmode.accumGreenBits +
-                                               config->glmode.accumBlueBits +
-                                               config->glmode.accumAlphaBits) > 0);
-            config->glmode.haveDepthBuffer = (config->glmode.depthBits > 0);
-            config->glmode.haveStencilBuffer = (config->glmode.stencilBits > 0);
             config++;
          }
       }

@@ -14,7 +14,6 @@ struct _egl_config
 {
    EGLConfig Handle;   /* the public/opaque handle which names this config */
    EGLint Attrib[MAX_ATTRIBS];
-   __GLcontextModes glmode;
 };
 
 
