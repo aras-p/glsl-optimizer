@@ -720,7 +720,7 @@ err:
       printf("chown all fb sysfs attrib to allow write - %s\n", buffer);
       return EGL_FALSE;
    }
-   snprintf(buffer, sizeof(buffer), "%d", (m == EGL_NO_MODE_MESA ? VESA_POWERDOWN : VESA_HSYNC_SUSPEND));
+   snprintf(buffer, sizeof(buffer), "%d", (m == EGL_NO_MODE_MESA ? VESA_POWERDOWN : VESA_VSYNC_SUSPEND));
    fputs(buffer, file);
    fclose(file);
    
@@ -745,6 +745,8 @@ err:
    fputs(buffer, file);
    fclose(file);
 
+   snprintf(buffer, sizeof(buffer), "%s/%s/blank", sysfs, scrn->fb);
+   
    file = fopen(buffer, "r+");
    if (!file)
       goto err;
