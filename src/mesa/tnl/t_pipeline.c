@@ -38,6 +38,7 @@
 #include "t_context.h"
 #include "t_pipeline.h"
 #include "t_vp_build.h"
+#include "t_vertex.h"
 
 void _tnl_install_pipeline( GLcontext *ctx,
 			    const struct tnl_pipeline_stage **stages )
@@ -93,7 +94,7 @@ static GLuint check_input_changes( GLcontext *ctx )
 }
 
 
-static void check_output_changes( GLcontext *ctx )
+static GLuint check_output_changes( GLcontext *ctx )
 {
 #if 0
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -109,6 +110,10 @@ static void check_output_changes( GLcontext *ctx )
 
    if (tnl->pipeline.output_changes) 
       tnl->Driver.NotifyOutputChanges( ctx, tnl->pipeline.output_changes );
+   
+   return tnl->pipeline.output_changes;
+#else
+   return ~0;
 #endif
 }
 
@@ -138,9 +143,14 @@ void _tnl_run_pipeline( GLcontext *ctx )
       
       tnl->pipeline.new_state = 0;
       tnl->pipeline.input_changes = 0;
-      check_output_changes( ctx );
+      
+      /* Pipeline can only change its output in response to either a
+       * statechange or an input size/stride change.  No other changes
+       * are allowed.
+       */
+      if (check_output_changes( ctx ))
+	 _tnl_notify_pipeline_output_change( ctx );
    }
-
 
    START_FAST_MATH(__tmp);
 

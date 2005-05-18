@@ -603,10 +603,8 @@ static void emit_load3f_3( struct x86_program *p,
 			   struct x86_reg dest,
 			   struct x86_reg arg0 )
 {
-   /* Over-reads by 1 dword - potential SEGV...  Deal with in
-    * array_cache by treating size-3 arrays specially, copying to
-    * temporary storage if last element (how can you tell?) falls on a
-    * 4k boundary.
+   /* Over-reads by 1 dword - potential SEGV if input is a vertex
+    * array.
     */
    if (p->inputs_safe) {
       emit_movups(p, dest, arg0);
@@ -1003,6 +1001,9 @@ void _tnl_generate_sse_emit( GLcontext *ctx )
 	 _mesa_printf("disassemble 0x%x 0x%x\n", p.store, p.csr);
    }
    else {
+      /* Note the failure:
+       */
+      _tnl_register_fastpath( vtx, GL_FALSE );
       FREE(p.store);
    }
 

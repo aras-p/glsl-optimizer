@@ -536,45 +536,13 @@ struct tnl_clipspace_attr
    GLuint vertattrsize;    /* size of the attribute in bytes */
    GLubyte *inputptr;
    GLuint inputstride;
+   GLuint inputsize;
    const tnl_insert_func *insert;
    tnl_insert_func emit;
    tnl_extract_func extract;
    const GLfloat *vp;   /* NDC->Viewport mapping matrix */
 };
 
-
-struct tnl_clipspace_codegen {
-   GLboolean (*emit_header)( struct tnl_clipspace_codegen *,
-			     struct tnl_clipspace *);
-   GLboolean (*emit_footer)( struct tnl_clipspace_codegen * );
-   GLboolean (*emit_attr_header)( struct tnl_clipspace_codegen *,
-				  struct tnl_clipspace_attr *,
-				  GLint j, GLenum out_type, 
-				  GLboolean need_vp );
-   GLboolean (*emit_attr_footer)( struct tnl_clipspace_codegen * );
-   GLboolean (*emit_mov)( struct tnl_clipspace_codegen *, 
-			  GLint, GLint );
-   GLboolean (*emit_const)( struct tnl_clipspace_codegen *, 
-			    GLint, GLfloat );
-   GLboolean (*emit_mad)( struct tnl_clipspace_codegen *,
-			  GLint, GLint, GLint, GLint );
-   GLboolean (*emit_float_to_chan)( struct tnl_clipspace_codegen *, 
-				    GLint, GLint );
-   GLboolean (*emit_const_chan)( struct tnl_clipspace_codegen *, 
-				 GLint, GLchan );
-   GLboolean (*emit_float_to_ubyte)( struct tnl_clipspace_codegen *, 
-				     GLint, GLint );
-   GLboolean (*emit_const_ubyte)( struct tnl_clipspace_codegen *, 
-				  GLint, GLubyte );
-   tnl_emit_func (*emit_store_func)( struct tnl_clipspace_codegen * );
-   
-   struct _tnl_dynfn codegen_list;
-   
-   char *buf;
-   int buf_size;
-   int buf_used;
-   int out_offset;
-};
 
 
 
@@ -594,6 +562,20 @@ typedef void (*tnl_setup_func)( GLcontext *ctx,
 				GLuint start, GLuint end,
 				GLuint new_inputs);
 
+
+struct tnl_clipspace_fastpath {
+   GLuint vertex_size;
+   GLuint attr_count;
+   GLboolean match_strides;
+
+   struct {
+      GLuint format;
+      GLuint stride;
+   } *attr;
+
+   tnl_emit_func func;
+   struct tnl_clipspace_fastpath *next;
+};
 
 /**
  * Used to describe conversion of vertex arrays to vertex structures.
@@ -616,7 +598,17 @@ struct tnl_clipspace
    tnl_interp_func interp;
    tnl_copy_pv_func copy_pv;
 
-   struct tnl_clipspace_codegen codegen;
+   /* Parameters and constants for codegen:
+    */
+   GLboolean need_viewport;
+   GLfloat vp_scale[4];		
+   GLfloat vp_xlate[4];
+   GLfloat chan_scale[4];
+   GLfloat identity[4];
+
+   struct tnl_clipspace_fastpath *fastpath;
+   
+   void (*codegen_emit)( GLcontext *ctx );
 };
 
 
