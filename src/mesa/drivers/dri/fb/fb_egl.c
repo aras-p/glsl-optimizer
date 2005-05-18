@@ -757,6 +757,52 @@ err:
 }
 
 
+/* If the backbuffer is on a videocard, this is extraordinarily slow!
+ */
+static EGLBoolean
+fbSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
+{
+   fbContext *context = (fbContext *)_eglGetCurrentContext();
+   fbSurface *fs =  Lookup_fbSurface(draw);
+   struct gl_renderbuffer * front_renderbuffer = fs->mesa_framebuffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
+   void *frontBuffer = front_renderbuffer->Data;
+   int currentPitch = ((driRenderbuffer *)front_renderbuffer)->pitch;
+   void *backBuffer = fs->mesa_framebuffer->Attachment[BUFFER_BACK_LEFT].Renderbuffer->Data;
+
+   if (!_eglSwapBuffers(drv, dpy, draw))
+      return EGL_FALSE;
+
+   if (context) {
+      GLcontext *ctx = context->glCtx;
+      
+      if (ctx->Visual.doubleBufferMode) {
+	 int i;
+	 int offset = 0;
+         char *tmp = _mesa_malloc(currentPitch);
+
+         _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
+
+         ASSERT(frontBuffer);
+         ASSERT(backBuffer);
+
+	 for (i = 0; i < fs->Base.Height; i++) {
+            _mesa_memcpy(tmp, (char *) backBuffer + offset,
+                         currentPitch);
+            _mesa_memcpy((char *) frontBuffer + offset, tmp,
+                          currentPitch);
+            offset += currentPitch;
+	 }
+	    
+	 _mesa_free(tmp);
+      }
+   }
+   else {
+      /* XXX this shouldn't be an error but we can't handle it for now */
+      _mesa_problem(NULL, "fbSwapBuffers: drawable has no context!\n");
+   }
+}
+
+
 /*
  * Just to silence warning
  */
@@ -793,6 +839,7 @@ _eglMain(NativeDisplayType dpy)
    fb->Base.DestroyContext = fbDestroyContext;
    fb->Base.CreateScreenSurfaceMESA = fbCreateScreenSurfaceMESA;
    fb->Base.ShowSurfaceMESA = fbShowSurfaceMESA;
+   fb->Base.SwapBuffers = fbSwapBuffers;
    
    /* enable supported extensions */
    fb->Base.MESA_screen_surface = EGL_TRUE;

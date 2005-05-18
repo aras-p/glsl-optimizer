@@ -9,7 +9,7 @@
 
 #include <GLES/egl.h>
 
-#define FRONTBUFFER
+//#define FRONTBUFFER
 
 static void _subset_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 {
@@ -22,7 +22,7 @@ static void _subset_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 }
 
 
-static void redraw(EGLDisplay dpy, int rot)
+static void redraw(EGLDisplay dpy, EGLSurface surf, int rot)
 {
    printf("Redraw event\n");
 
@@ -51,7 +51,7 @@ static void redraw(EGLDisplay dpy, int rot)
 #ifdef FRONTBUFFER
    glFlush();
 #else
-   EGLSwapBuffers( dpy, w ); 
+   eglSwapBuffers( dpy, surf ); 
 #endif
    glFinish();
 }
@@ -167,7 +167,7 @@ main(int argc, char *argv[])
    glShadeModel( GL_FLAT );
    
    for (i = 0; i < 6; i++) {
-      redraw(d, i*10 );
+      redraw(d, screen_surf, i*10 );
 
       printf("sleep(1)\n");   
       sleep(1);  
