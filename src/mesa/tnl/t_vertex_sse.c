@@ -253,7 +253,7 @@ static void emit_jcc( struct x86_program *p,
       emit_1b(p, (GLbyte) offset);
    }
    else {
-      offset = label - (get_label(p) + 5);
+      offset = label - (get_label(p) + 6);
       emit_2ub(p, 0x0f, 0x80 + cc);
       emit_1i(p, offset);
    }
@@ -593,7 +593,7 @@ static void emit_load4f_1( struct x86_program *p,
    /* Initialized with [0,0,0,1] from id, then pull in the single low
     * word.
     */
-   emit_movaps(p, dest, get_identity(p));
+   emit_movups(p, dest, get_identity(p));
    emit_movss(p, dest, arg0);
 }
 
@@ -609,7 +609,7 @@ static void emit_load3f_3( struct x86_program *p,
     * 4k boundary.
     */
    if (p->inputs_safe) {
-      emit_movaps(p, dest, arg0);
+      emit_movups(p, dest, arg0);
    } 
    else {
       /* c . . .
@@ -687,6 +687,7 @@ static void emit_load( struct x86_program *p,
 		       struct x86_reg src,
 		       GLuint src_sz)
 {
+   _mesa_printf("load %d/%d\n", sz, src_sz);
    load[sz-1][src_sz-1](p, dest, src);
 }
 
@@ -824,6 +825,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
    /* always load, needed or not:
     */
    emit_movups(p, chan0, make_disp(vtxESI, get_offset(vtx, &vtx->chan_scale[0])));
+   emit_movups(p, p->identity, make_disp(vtxESI, get_offset(vtx, &vtx->identity[0])));
 
    /* Note address for loop jump */
    label = get_label(p);
@@ -849,14 +851,17 @@ static GLboolean build_vertex_emit( struct x86_program *p )
       case EMIT_1F:
 	 emit_load(p, tmp, 1, deref(srcEDI), vtx->attr[j].inputsize);
 	 emit_store(p, dest, 1, tmp);
+	 break;
       case EMIT_2F:
 	 emit_load(p, tmp, 2, deref(srcEDI), vtx->attr[j].inputsize);
 	 emit_store(p, dest, 2, tmp);
+	 break;
       case EMIT_3F:
 	 /* Potentially the worst case - hardcode 2+1 copying:
 	  */
 	 emit_load(p, tmp, 3, deref(srcEDI), vtx->attr[j].inputsize);
 	 emit_store(p, dest, 3, tmp);
+	 break;
       case EMIT_4F:
 	 emit_load(p, tmp, 4, deref(srcEDI), vtx->attr[j].inputsize);
 	 emit_store(p, dest, 4, tmp);
@@ -990,6 +995,7 @@ void _tnl_generate_sse_emit( GLcontext *ctx )
 
    p.inputs_safe = 1;		/* for now */
    p.outputs_safe = 1;		/* for now */
+   p.identity = make_reg(file_XMM, 6);
    
    if (build_vertex_emit(&p)) {
       _tnl_register_fastpath( vtx, GL_TRUE );
