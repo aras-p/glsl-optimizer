@@ -209,6 +209,7 @@ static struct ureg register_const4f( struct tnl_program *p,
 }
 
 #define register_const1f(p, s0)         register_const4f(p, s0, 0, 0, 1)
+#define register_scalar_const(p, s0)    register_const4f(p, s0, s0, s0, s0)
 #define register_const2f(p, s0, s1)     register_const4f(p, s0, s1, 0, 1)
 #define register_const3f(p, s0, s1, s2) register_const4f(p, s0, s1, s2, 1)
 
@@ -981,7 +982,7 @@ static void build_sphere_texgen( struct tnl_program *p,
    struct ureg normal = get_eye_normal(p);
    struct ureg eye_hat = get_eye_position_normalized(p);
    struct ureg tmp = get_temp(p);
-   struct ureg half = register_const1f(p, .5);
+   struct ureg half = register_scalar_const(p, .5);
    struct ureg r = get_temp(p);
    struct ureg inv_m = get_temp(p);
    struct ureg id = get_identity_param(p);
@@ -1007,9 +1008,9 @@ static void build_sphere_texgen( struct tnl_program *p,
    /* 2/m */
    emit_op1(p, VP_OPCODE_RSQ, tmp, 0, tmp); 
    /* 1/m */
-   emit_op2(p, VP_OPCODE_MUL, inv_m, 0, tmp, swizzle1(half,X)); 
+   emit_op2(p, VP_OPCODE_MUL, inv_m, 0, tmp, half); 
    /* r/m + 1/2 */
-   emit_op3(p, VP_OPCODE_MAD, dest, writemask, r, inv_m, swizzle1(half,X)); 
+   emit_op3(p, VP_OPCODE_MAD, dest, writemask, r, inv_m, half); 
 	       
    release_temp(p, tmp);
    release_temp(p, r);
