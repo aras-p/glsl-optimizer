@@ -39,6 +39,10 @@ static GLenum ReadType = GL_UNSIGNED_BYTE;
 #endif
 #if 0
 static GLenum ReadFormat = GL_RGB;
+static GLenum ReadType = GL_UNSIGNED_BYTE;
+#endif
+#if 0
+static GLenum ReadFormat = GL_RGB;
 static GLenum ReadType = GL_UNSIGNED_SHORT_5_6_5;
 #endif
 #if 0
@@ -96,6 +100,45 @@ SetupPixelTransfer(GLboolean invert)
 }
 
 
+/**
+ * Exercise Pixel Pack parameters by reading the image in four pieces.
+ */
+static void
+ComplexReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+                  GLenum format, GLenum type, GLvoid *pixels)
+{
+   const GLsizei width0 = width / 2;
+   const GLsizei width1 = width - width0;
+   const GLsizei height0 = height / 2;
+   const GLsizei height1 = height - height0;
+
+   glPixelStorei(GL_PACK_ROW_LENGTH, width);
+
+   /* lower-left quadrant */
+   glReadPixels(x, y, width0, height0, format, type, pixels);
+
+   /* lower-right quadrant */
+   glPixelStorei(GL_PACK_SKIP_PIXELS, width0);
+   glReadPixels(x + width0, y, width1, height0, format, type, pixels);
+
+   /* upper-left quadrant */
+   glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
+   glPixelStorei(GL_PACK_SKIP_ROWS, height0);
+   glReadPixels(x, y + height0, width0, height1, format, type, pixels);
+
+   /* upper-right quadrant */
+   glPixelStorei(GL_PACK_SKIP_PIXELS, width0);
+   glPixelStorei(GL_PACK_SKIP_ROWS, height0);
+   glReadPixels(x + width0, y + height0, width1, height1, format, type, pixels);
+
+   /* restore defaults */
+   glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
+   glPixelStorei(GL_PACK_SKIP_ROWS, 0);
+   glPixelStorei(GL_PACK_ROW_LENGTH, ImgWidth);
+}
+
+
+
 static void
 Display( void )
 {
@@ -111,7 +154,12 @@ Display( void )
    glRasterPos2i(APosX, APosY);
    glEnable(GL_DITHER);
    SetupPixelTransfer(GL_FALSE);
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    glDrawPixels(ImgWidth, ImgHeight, ImgFormat, GL_UNSIGNED_BYTE, Image);
+
+   /* might try alignment=4 here for testing */
+   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+   glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
    /* do readpixels, drawpixels */
    glRasterPos2i(BPosX, 5);
@@ -138,8 +186,14 @@ Display( void )
    else {
       /* clear the temporary image to white (helpful for debugging */
       memset(TempImage, 255, ImgWidth * ImgHeight * 4);
+#if 0
+      /* you might use this when debugging */
       glReadPixels(APosX, APosY, ImgWidth, ImgHeight,
                    ReadFormat, ReadType, TempImage);
+#else
+      ComplexReadPixels(APosX, APosY, ImgWidth, ImgHeight,
+                        ReadFormat, ReadType, TempImage);
+#endif
    }
    glRasterPos2i(BPosX, BPosY);
    glDisable(GL_DITHER);
@@ -253,14 +307,14 @@ Init( GLboolean ciMode )
 
    printf("Loaded %d by %d image\n", ImgWidth, ImgHeight );
 
-   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    glPixelStorei(GL_UNPACK_ROW_LENGTH, ImgWidth);
-   glPixelStorei(GL_PACK_ALIGNMENT, 1);
    glPixelStorei(GL_PACK_ROW_LENGTH, ImgWidth);
 
    Reset();
 
-   TempImage = (GLubyte *) malloc(ImgWidth * ImgHeight * 4 * sizeof(GLubyte));
+   /* allocate an extra 1KB in case we're tinkering with pack alignment */
+   TempImage = (GLubyte *) malloc(ImgWidth * ImgHeight * 4 * sizeof(GLubyte)
+                                  + 1000);
    assert(TempImage);
 }
 
