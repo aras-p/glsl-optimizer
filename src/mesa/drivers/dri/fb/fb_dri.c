@@ -146,7 +146,7 @@ init_core_functions( struct dd_function_table *functions )
 #define SPAN_VARS \
    driRenderbuffer *drb = (driRenderbuffer *) rb;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)drb->Base.Data + (Y) * drb->pitch + (X) * 3;
+   GLubyte *P = (GLubyte *)drb->Base.Data + (drb->Base.Height - (Y)) * drb->pitch + (X) * 3;
 #define INC_PIXEL_PTR(P) P += 3
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    DST[0] = VALUE[BCOMP]; \
@@ -167,7 +167,7 @@ init_core_functions( struct dd_function_table *functions )
 #define SPAN_VARS \
    driRenderbuffer *drb = (driRenderbuffer *) rb;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)drb->Base.Data + (Y) * drb->pitch + (X) * 4;
+   GLubyte *P = (GLubyte *)drb->Base.Data + (drb->Base.Height - (Y)) * drb->pitch + (X) * 4;
 #define INC_PIXEL_PTR(P) P += 4
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    DST[0] = VALUE[BCOMP]; \
@@ -194,7 +194,7 @@ init_core_functions( struct dd_function_table *functions )
 #define SPAN_VARS \
    driRenderbuffer *drb = (driRenderbuffer *) rb;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLushort *P = (GLushort *)drb->Base.Data + (Y) * drb->pitch + (X) * 2;
+   GLushort *P = (GLushort *)drb->Base.Data + (drb->Base.Height - (Y)) * drb->pitch + (X) * 2;
 #define INC_PIXEL_PTR(P) P += 1
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    DST[0] = ( (((VALUE[RCOMP]) & 0xf8) << 8) | (((VALUE[GCOMP]) & 0xfc) << 3) | ((VALUE[BCOMP]) >> 3) )
@@ -213,7 +213,7 @@ init_core_functions( struct dd_function_table *functions )
 #define SPAN_VARS \
    driRenderbuffer *drb = (driRenderbuffer *) rb;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLushort *P = (GLushort *)drb->Base.Data + (Y) * drb->pitch + (X) * 2;
+   GLushort *P = (GLushort *)drb->Base.Data + (drb->Base.Height - (Y)) * drb->pitch + (X) * 2;
 #define INC_PIXEL_PTR(P) P += 1
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    DST[0] = ( (((VALUE[RCOMP]) & 0xf8) << 7) | (((VALUE[GCOMP]) & 0xf8) << 2) | ((VALUE[BCOMP]) >> 3) )
@@ -232,7 +232,7 @@ init_core_functions( struct dd_function_table *functions )
 #define SPAN_VARS \
    driRenderbuffer *drb = (driRenderbuffer *) rb;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = (GLubyte *)drb->Base.Data + (Y) * drb->pitch + (X);
+   GLubyte *P = (GLubyte *)drb->Base.Data + (drb->Base.Height - (Y)) * drb->pitch + (X);
 #define INC_PIXEL_PTR(P) P += 1
 #define STORE_PIXEL(DST, X, Y, VALUE) \
    *DST = VALUE[0]

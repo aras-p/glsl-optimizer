@@ -161,7 +161,16 @@ main(int argc, char *argv[])
    }
 
    glViewport(0, 0, 1024, 768);
+   glDrawBuffer( GL_FRONT ); 
+
+   glClearColor( 0, 
+		 1.0, 
+		 0,
+		 1);
+
+   glClear( GL_COLOR_BUFFER_BIT ); 
    
+      
    TestScreens(d);
 
    glShadeModel( GL_FLAT );

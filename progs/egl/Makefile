@@ -11,6 +11,7 @@ HEADERS = $(TOP)/include/GLES/egl.h
 PROGRAMS = \
 	demo1 \
 	demo2 \
+	demo3 \
 	eglinfo
 
 
@@ -34,6 +35,13 @@ demo2: demo2.o $(LIB_DIR)/libEGL.so
 
 demo2.o: demo2.c $(HEADERS)
 	$(CC) -c $(CFLAGS) -I$(TOP)/include demo2.c
+
+
+demo3: demo3.o $(LIB_DIR)/libEGL.so
+	$(CC) demo3.o -L$(LIB_DIR) -lEGL $(APP_LIB_DEPS) -o $@
+
+demo3.o: demo3.c $(HEADERS)
+	$(CC) -c $(CFLAGS) -I$(TOP)/include demo3.c
 
 
 eglinfo: eglinfo.o $(LIB_DIR)/libEGL.so
