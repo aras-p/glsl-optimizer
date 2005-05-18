@@ -215,9 +215,6 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 	    return GL_FALSE;
       }
    }
-   
-   mgaScreen->linecomp_sane = (sPriv->ddxMajor > 1) || (sPriv->ddxMinor > 1)
-       || ((sPriv->ddxMinor == 1) && (sPriv->ddxPatch > 0));
 
    if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
       PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
@@ -225,14 +222,11 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
       void * const psc = sPriv->psc->screenConfigs;
 
       if ( glx_enable_extension != NULL ) {
-	 if ( mgaScreen->linecomp_sane ) {
-	    (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-	    (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
-	    (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
-	 }
-
-	 (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
+	 (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
 	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+	 (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
+	 (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+	 (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
 
 	 if ( driCompareGLXAPIVersion( 20030915 ) >= 0 ) {
 	    (*glx_enable_extension)( psc, "GLX_SGIX_fbconfig" );
@@ -251,9 +245,6 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 
 
    mgaScreen->chipset = serverInfo->chipset;
-   mgaScreen->width = serverInfo->width;
-   mgaScreen->height = serverInfo->height;
-   mgaScreen->mem = serverInfo->mem;
    mgaScreen->cpp = serverInfo->cpp;
 
    mgaScreen->agpMode = serverInfo->agpMode;
@@ -264,6 +255,13 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
    mgaScreen->backPitch  =  serverInfo->backPitch;
    mgaScreen->depthOffset = serverInfo->depthOffset;
    mgaScreen->depthPitch  =  serverInfo->depthPitch;
+
+
+   /* The only reason that the MMIO region needs to be accessable and the
+    * primary DMA region base address needs to be known is so that the driver
+    * can busy wait for certain DMA operations to complete (see
+    * mgaWaitForFrameCompletion in mgaioctl.c).
+    */
 
    mgaScreen->mmio.handle = serverInfo->registers.handle;
    mgaScreen->mmio.size = serverInfo->registers.size;
@@ -279,21 +277,6 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
    mgaScreen->primary.handle = serverInfo->primary.handle;
    mgaScreen->primary.size = serverInfo->primary.size;
 
-#if 0
-   mgaScreen->agp.handle = serverInfo->agp;
-   mgaScreen->agp.size = serverInfo->agpSize;
-
-   if (drmMap(sPriv->fd,
-	      mgaScreen->agp.handle,
-	      mgaScreen->agp.size,
-	      (drmAddress *)&mgaScreen->agp.map) != 0)
-   {
-      Xfree(mgaScreen);
-      sPriv->private = NULL;
-      __driUtilMessage("Couldn't map agp region");
-      return GL_FALSE;
-   }
-#endif
 
    mgaScreen->textureOffset[MGA_CARD_HEAP] = serverInfo->textureOffset;
    mgaScreen->textureOffset[MGA_AGP_HEAP] = (serverInfo->agpTextureOffset |
@@ -302,37 +285,34 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
    mgaScreen->textureSize[MGA_CARD_HEAP] = serverInfo->textureSize;
    mgaScreen->textureSize[MGA_AGP_HEAP] = serverInfo->agpTextureSize;
 
-   mgaScreen->logTextureGranularity[MGA_CARD_HEAP] =
-      serverInfo->logTextureGranularity;
-   mgaScreen->logTextureGranularity[MGA_AGP_HEAP] =
-      serverInfo->logAgpTextureGranularity;
+   
+   /* The texVirtual array stores the base addresses in the CPU's address
+    * space of the texture memory pools.  The base address of the on-card
+    * memory pool is calculated as an offset of the base of video memory.  The
+    * AGP texture pool has to be mapped into the processes address space by
+    * the DRM. 
+    */
 
    mgaScreen->texVirtual[MGA_CARD_HEAP] = (char *)(mgaScreen->sPriv->pFB +
 					   serverInfo->textureOffset);
-   if (drmMap(sPriv->fd,
-              serverInfo->agpTextureOffset,
-              serverInfo->agpTextureSize,
-              (drmAddress *)&mgaScreen->texVirtual[MGA_AGP_HEAP]) != 0)
-   {
-      FREE(mgaScreen);
-      sPriv->private = NULL;
-      __driUtilMessage("Couldn't map agptexture region");
-      return GL_FALSE;
+
+   if ( serverInfo->agpTextureSize > 0 ) {
+      if (drmMap(sPriv->fd, serverInfo->agpTextureOffset,
+		 serverInfo->agpTextureSize,
+		 (drmAddress *)&mgaScreen->texVirtual[MGA_AGP_HEAP]) != 0) {
+	 FREE(mgaScreen);
+	 sPriv->private = NULL;
+	 __driUtilMessage("Couldn't map agptexture region");
+	 return GL_FALSE;
+      }
    }
 
-#if 0
-   mgaScreen->texVirtual[MGA_AGP_HEAP] = (mgaScreen->agp.map +
-					  serverInfo->agpTextureOffset);
-#endif
-
-   mgaScreen->mAccess = serverInfo->mAccess;
 
    /* For calculating setupdma addresses.
     */
 
    mgaScreen->bufs = drmMapBufs(sPriv->fd);
    if (!mgaScreen->bufs) {
-      /*drmUnmap(mgaScreen->agp_tex.map, mgaScreen->agp_tex.size);*/
       FREE(mgaScreen);
       sPriv->private = NULL;
       __driUtilMessage("Couldn't map dma buffers");
@@ -358,7 +338,6 @@ mgaDestroyScreen(__DRIscreenPrivate *sPriv)
 
    drmUnmapBufs(mgaScreen->bufs);
 
-   /*drmUnmap(mgaScreen->agp_tex.map, mgaScreen->agp_tex.size);*/
 
    /* free all option information */
    driDestroyOptionInfo (&mgaScreen->optionCache);
@@ -651,8 +630,7 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
 				    debug_control );
 #endif
 
-   mmesa->vblank_flags = ((mmesa->mgaScreen->irq == 0) 
-			  || !mmesa->mgaScreen->linecomp_sane)
+   mmesa->vblank_flags = (mmesa->mgaScreen->irq == 0)
        ? VBLANK_FLAG_NO_IRQ : driGetDefaultVBlankFlags(&mmesa->optionCache);
 
    mmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
@@ -974,7 +952,7 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 			     
 {
    __DRIscreenPrivate *psp;
-   static const __DRIversion ddx_expected = { 1, 0, 0 };
+   static const __DRIversion ddx_expected = { 1, 1, 1 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 3, 0, 0 };
 

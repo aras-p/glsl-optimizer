@@ -43,42 +43,60 @@
  */
 #define MGA_BUFFER_ALIGN	0x00000fff
 
+#ifdef __GNUC__
+# define DEPRECATED  __attribute__ ((deprecated))
+#else
+# define DEPRECATED
+#endif
+
 typedef struct {
    int chipset;
-   int width;
-   int height;
-   int mem;
+   int width DEPRECATED;
+   int height DEPRECATED;
+   int mem DEPRECATED;
    int cpp;
 
    int agpMode;
 
-   int frontOffset;
-   int frontPitch;
+   unsigned int frontOffset;
+   unsigned int frontPitch;
 
-   int backOffset;
-   int backPitch;
+   unsigned int backOffset;
+   unsigned int backPitch;
 
-   int depthOffset;
-   int depthPitch;
+   unsigned int depthOffset;
+   unsigned int depthPitch;
 
-   int textureOffset;
-   int textureSize;
-   int logTextureGranularity;
+   unsigned int textureOffset;
+   unsigned int textureSize;
+   int logTextureGranularity DEPRECATED;
 
    /* Allow calculation of setup dma addresses.
     */
-   unsigned int agpBufferOffset;
+   unsigned int agpBufferOffset DEPRECATED;
 
    unsigned int agpTextureOffset;
    unsigned int agpTextureSize;
-   int logAgpTextureGranularity;
+   int logAgpTextureGranularity DEPRECATED;
 
-   unsigned int mAccess;
+   unsigned int mAccess DEPRECATED;
 
-   drmRegion registers;
-   drmRegion status;
-   drmRegion primary;
-   drmRegion buffers;
+   /**
+    * \name DRM memory regions.
+    *
+    * \todo
+    * Several of these fields are no longer used (and will never be used
+    * again) on the client-side.  None of them, except \c registers, are used
+    * on the server-side.  At some point when it is safe to do so (probably
+    * for the X.org 6.9 / 7.0 release), these fields should be removed.
+    */
+   /*@{*/
+   drmRegion registers;            /**< MMIO registers. */
+   drmRegion status DEPRECATED;    /**< No longer used on the client-side. */
+   drmRegion primary;              /**< Primary DMA region. */
+   drmRegion buffers DEPRECATED;   /**< No longer used on the client-side. */
+   /*@}*/
+
    unsigned int sarea_priv_offset;
 } MGADRIRec, *MGADRIPtr;
 

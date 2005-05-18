@@ -37,20 +37,23 @@
 #include "xmlconfig.h"
 
 typedef struct mga_screen_private_s {
-
+   /**
+    * Chipset "family" of this card.  Currently only \c MGA_CARD_TYPE_G200 and
+    * \c MGA_CARD_TYPE_G400 are possible.
+    */
    int chipset;
-   int width;
-   int height;
-   int mem;
 
-   int cpp;			/* for front and back buffers */
+
+   /**
+    * Characters (bytes) per-pixel for both the front and back buffers.
+    * 
+    * \note
+    * This is also implicitly the bytes per-pixel for the depth-buffer.
+    */
+   int cpp;
+
    GLint agpMode;
-   unsigned int irq;		/* IRQ number (0 means none) */
-   GLboolean  linecomp_sane;    /* GL_TRUE if line comp. programmed correctly
-				 * by the DDX driver.
-				 */
-
-   unsigned int mAccess;
+   unsigned int irq;		/**< IRQ number (0 means none) */
 
    unsigned int frontOffset;
    unsigned int frontPitch;
@@ -59,11 +62,9 @@ typedef struct mga_screen_private_s {
 
    unsigned int depthOffset;
    unsigned int depthPitch;
-   int depthCpp;
 
    unsigned int textureOffset[MGA_NR_TEX_HEAPS];
    unsigned int textureSize[MGA_NR_TEX_HEAPS];
-   int logTextureGranularity[MGA_NR_TEX_HEAPS];
    char *texVirtual[MGA_NR_TEX_HEAPS];
 
 
@@ -74,7 +75,7 @@ typedef struct mga_screen_private_s {
    drmRegion primary;
    unsigned int sarea_priv_offset;
 
-   /* Configuration cache with default values for all contexts */
+   /** Configuration cache with default values for all contexts */
    driOptionCache optionCache;
 } mgaScreenPrivate;
 
@@ -150,6 +151,5 @@ do {						\
 
 #define MGA_DEREF( reg )	*(volatile u_int32_t *)MGA_ADDR( reg )
 #define MGA_READ( reg )		MGA_DEREF( reg )
-#define MGA_WRITE( reg, val )	do { MGA_DEREF( reg ) = val; } while (0)
 
 #endif
