@@ -21,9 +21,13 @@
  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * \file mga_xmesa.c
+ * MGA screen and context initialization / creation code.
  *
- * Authors:
- *    Keith Whitwell <keith@tungstengraphics.com>
+ * \author Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #include <stdlib.h>
@@ -909,8 +913,6 @@ void mgaGetLock( mgaContextPtr mmesa, GLuint flags )
    for ( i = 0 ; i < mmesa->nr_heaps ; i++ ) {
       DRI_AGE_TEXTURES( mmesa->texture_heaps[ i ] );
    }
-
-   sarea->last_quiescent = -1;	/* just kill it for now */
 }
 
 

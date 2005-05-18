@@ -97,7 +97,6 @@ extern void mgaEmitHwStateLocked( mgaContextPtr mmesa );
 extern void mgaEmitScissorValues( mgaContextPtr mmesa, int box_nr, int emit );
 
 #define GET_DISPATCH_AGE( mmesa ) mmesa->sarea->last_dispatch
-#define GET_ENQUEUE_AGE( mmesa ) mmesa->sarea->last_enqueue
 
 
 

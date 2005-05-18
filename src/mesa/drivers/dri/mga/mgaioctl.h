@@ -36,26 +36,15 @@
 void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv );
 void mgaWaitForVBlank( mgaContextPtr mmesa );
 
-GLuint *mgaAllocVertexDwords( mgaContextPtr mmesa, int dwords );
-
-
 void mgaGetILoadBufferLocked( mgaContextPtr mmesa );
-drmBufPtr mgaGetBufferLocked( mgaContextPtr mmesa );
-
-
 void mgaFireILoadLocked( mgaContextPtr mmesa,
 			 GLuint offset, GLuint length );
 
 void mgaWaitAgeLocked( mgaContextPtr mmesa, int age );
-void mgaWaitAge( mgaContextPtr mmesa, int age );
 
 void mgaFlushVertices( mgaContextPtr mmesa );
 void mgaFlushVerticesLocked( mgaContextPtr mmesa );
-void mgaReleaseBufLocked( mgaContextPtr mmesa, drmBufPtr buffer );
 int mgaFlushDMA( int fd, drmLockFlags flags );
-
-void mgaDDFlush( GLcontext *ctx );
-void mgaDDFinish( GLcontext *ctx );
 
 void mgaInitIoctlFuncs( struct dd_function_table *functions );
 
