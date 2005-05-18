@@ -1324,7 +1324,7 @@ void r300_setup_textures(GLcontext *ctx)
 			r300->hw.txe.cmd[R300_TXE_ENABLE]|=(1<<i);
 			
 			r300->hw.tex.filter.cmd[R300_TEX_VALUE_0+i]=gen_fixed_filter(t->filter) | (i << 28); 
-			r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=0x0;
+			//r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=0x0; /* move lod bias here? */
 			
 			/* No idea why linear filtered textures shake when puting random data */
 			/*r300->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+i]=(rand()%0xffffffff) & (~0x1fff);*/
