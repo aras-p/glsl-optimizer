@@ -765,6 +765,13 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 	vp = CURRENT_VERTEX_SHADER(ctx);
 	if(vp->translated == GL_FALSE)
 		translate_vertex_shader(vp);
+	if(vp->translated == GL_FALSE){
+		fprintf(stderr, "Failing back to sw-tcl\n");
+		debug_vp(ctx, vp);
+		hw_tcl_on=future_hw_tcl_on=0;
+		r300ResetHwState(rmesa);
+		return GL_TRUE;
+	}
 		
 	r300_setup_textures(ctx);
 	r300_setup_rs_unit(ctx);

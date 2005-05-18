@@ -430,12 +430,17 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_POINTSIZE_MAX             (R300_POINTSIZE_Y_MASK / 6)
 
 /* The line width is given in multiples of 6.
-   R300_LINE_CNT_UNK1 must be on to obtain expected results. */
+   In default mode lines are classified as vertical lines.
+   HO: horizontal
+   VE: vertical or horizontal
+   HO & VE: no classification
+*/
 #define R300_RE_LINE_CNT                      0x4234
 #       define R300_LINESIZE_SHIFT            0
 #       define R300_LINESIZE_MASK             (0xFFFF << 0) /* GUESS */
 #       define R300_LINESIZE_MAX             (R300_LINESIZE_MASK / 6)
-#       define R300_LINE_CNT_UNK1           (1 << 17)
+#       define R300_LINE_CNT_HO               (1 << 16)
+#       define R300_LINE_CNT_VE               (1 << 17)
 
 /* Linestipple factor. 3a088889 == 1.0, 3baaaaa9 == 10.0 */
 #define R300_RE_LINE_STIPPLE_FACTOR           0x4238
@@ -444,8 +449,15 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #	define R300_RE_SHADE_MODEL_SMOOTH     0x3aaaa
 #	define R300_RE_SHADE_MODEL_FLAT       0x39595
 
-
+/* Dangerous */
 #define R300_RE_POLYGON_MODE                  0x4288
+#	define R300_PM_ENABLED                (1 << 0)
+#	define R300_PM_FRONT_POINT            (0 << 0)
+#	define R300_PM_BACK_POINT             (0 << 0)
+#	define R300_PM_FRONT_LINE             (1 << 4)
+#	define R300_PM_FRONT_FILL             (1 << 5)
+#	define R300_PM_BACK_LINE              (1 << 7)
+#	define R300_PM_BACK_FILL              (1 << 8)
 
 /* Not sure why there are duplicate of factor and constant values. 
    My best guess so far is that there are seperate zbiases for test and write. 
@@ -649,6 +661,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_TX_WIDTHMASK_MASK            (2047 << 0)
 #       define R300_TX_HEIGHTMASK_SHIFT          11
 #       define R300_TX_HEIGHTMASK_MASK           (2047 << 11)
+#       define R300_TX_UNK23                     (1 << 23)
 #       define R300_TX_SIZE_SHIFT                26 /* largest of width, height */
 #       define R300_TX_SIZE_MASK                 (15 << 26)
 #define R300_TX_FORMAT_0                    0x44C0
@@ -679,6 +692,8 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #	define R300_TX_FORMAT_B8G8_B8G8	    	    0x14     /* no swizzle */
 #	define R300_TX_FORMAT_G8R8_G8B8	    	    0x15     /* no swizzle */
 						  /* 0x16 - some 16 bit green format.. ?? */
+#	define R300_TX_FORMAT_UNK25		   (1 << 25) /* no swizzle */
+
 	/* gap */
 	/* Floating point formats */
 	/* Note - hardware supports both 16 and 32 bit floating point */
