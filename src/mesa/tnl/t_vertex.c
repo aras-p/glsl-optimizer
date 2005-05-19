@@ -46,7 +46,9 @@ static GLboolean match_fastpath( struct tnl_clipspace *vtx,
       return GL_FALSE;
 
    for (j = 0; j < vtx->attr_count; j++) 
-      if (vtx->attr[j].format != fp->attr[j].format) 
+      if (vtx->attr[j].format != fp->attr[j].format ||
+	  vtx->attr[j].inputsize != fp->attr[j].size ||
+	  vtx->attr[j].vertoffset != fp->attr[j].offset) 
 	 return GL_FALSE;
       
    if (fp->match_strides) {
@@ -90,6 +92,8 @@ void _tnl_register_fastpath( struct tnl_clipspace *vtx,
    for (i = 0; i < vtx->attr_count; i++) {
       fastpath->attr[i].format = vtx->attr[i].format;
       fastpath->attr[i].stride = vtx->attr[i].inputstride;
+      fastpath->attr[i].size = vtx->attr[i].inputsize;
+      fastpath->attr[i].offset = vtx->attr[i].vertoffset;
    }
 
    fastpath->next = vtx->fastpath;
@@ -470,8 +474,8 @@ void _tnl_init_vertices( GLcontext *ctx,
 
    vtx->codegen_emit = NULL;
 
-#ifdef __i386__
-   if (getenv("MESA_EXPERIMENTAL"))
+#ifdef USE_SSE_ASM
+   if (!_mesa_getenv("MESA_NO_CODEGEN"))
       vtx->codegen_emit = _tnl_generate_sse_emit;
 #endif
 }

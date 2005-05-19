@@ -570,7 +570,9 @@ struct tnl_clipspace_fastpath {
 
    struct {
       GLuint format;
+      GLuint size;
       GLuint stride;
+      GLuint offset;
    } *attr;
 
    tnl_emit_func func;

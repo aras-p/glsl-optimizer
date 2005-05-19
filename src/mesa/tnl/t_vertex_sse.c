@@ -33,12 +33,14 @@
 #include "simple_list.h"
 #include "enums.h"
 
+#if defined(USE_X86_ASM)
+
 #define X    0
 #define Y    1
 #define Z    2
 #define W    3
 
-#define DISASSEM 1
+#define DISASSEM 0
 
 struct x86_reg {
    GLuint file:3;
@@ -1208,18 +1210,26 @@ static GLboolean build_vertex_emit( struct x86_program *p )
    return GL_TRUE;
 }
 
+#include "x86/common_x86_asm.h"
+
+
 void _tnl_generate_sse_emit( GLcontext *ctx )
 {
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   struct x86_program p;
+   struct x86_program p;   
+
+   if (!cpu_has_xmm) {
+      vtx->codegen_emit = NULL;
+      return;
+   }
 
    memset(&p, 0, sizeof(p));
    p.ctx = ctx;
    p.store = MALLOC(1024);
 
-   p.inputs_safe = 1;		/* for now */
+   p.inputs_safe = 0;		/* for now */
    p.outputs_safe = 1;		/* for now */
-   p.have_sse2 = 1;		/* testing */
+   p.have_sse2 = cpu_has_xmm2;
    p.identity = make_reg(file_XMM, 6);
    p.chan0 = make_reg(file_XMM, 7);
 
@@ -1246,3 +1256,12 @@ void _tnl_generate_sse_emit( GLcontext *ctx )
    (void)sse2_packsswb;
    (void)sse2_pshufd;
 }
+
+#else
+
+void _tnl_generate_sse_emit( GLcontext *ctx )
+{
+   /* Dummy version for when USE_SSE_ASM not defined */
+}
+
+#endif
