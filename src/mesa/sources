@@ -187,8 +187,14 @@ SLANG_CPP_SOURCES = \
 	shader/slang/OSDependent/Linux/ossource.cpp
 	
 SLANG_SOURCES =	\
+	shader/slang/slang_assemble.c	\
+	shader/slang/slang_assemble_conditional.c	\
+	shader/slang/slang_assemble_constructor.c	\
+	shader/slang/slang_assemble_typeinfo.c	\
 	shader/slang/slang_compile.c	\
+	shader/slang/slang_execute.c	\
 	shader/slang/slang_preprocess.c	\
+	shader/slang/slang_storage.c	\
 	shader/slang/slang_utility.c
 
 ASM_C_SOURCES =	\

@@ -70,12 +70,19 @@ typedef enum slang_type_specifier_type_
 	slang_spec_array
 } slang_type_specifier_type;
 
+slang_type_specifier_type slang_type_specifier_type_from_string (const char *);
+
 typedef struct slang_type_specifier_
 {
 	slang_type_specifier_type type;
 	struct slang_struct_ *_struct;		/* spec_struct */
 	struct slang_type_specifier_ *_array;	/* spec_array */
 } slang_type_specifier;
+
+void slang_type_specifier_construct (slang_type_specifier *);
+void slang_type_specifier_destruct (slang_type_specifier *);
+int slang_type_specifier_copy (slang_type_specifier *, const slang_type_specifier *);
+int slang_type_specifier_equal (const slang_type_specifier *, const slang_type_specifier *);
 
 typedef struct slang_fully_specified_type_
 {
@@ -166,13 +173,19 @@ typedef struct slang_operation_
 	slang_variable_scope *locals;
 } slang_operation;
 
+int slang_operation_construct_a (slang_operation *);
+void slang_operation_destruct (slang_operation *);
+
 typedef struct slang_variable_
 {
 	slang_fully_specified_type type;
 	char *name;
 	slang_operation *array_size;	/* spec_array */
 	slang_operation *initializer;
+	unsigned int address;
 } slang_variable;
+
+slang_variable *_slang_locate_variable (slang_variable_scope *scope, const char *name, int all);
 
 typedef struct slang_struct_scope_
 {
@@ -181,12 +194,17 @@ typedef struct slang_struct_scope_
 	struct slang_struct_scope_ *outer_scope;
 } slang_struct_scope;
 
+struct slang_struct_ *slang_struct_scope_find (slang_struct_scope *, const char *, int);
+
 typedef struct slang_struct_
 {
 	char *name;
 	slang_variable_scope *fields;
 	slang_struct_scope *structs;
 } slang_struct;
+
+int slang_struct_construct_a (slang_struct *);
+int slang_struct_copy (slang_struct *, const slang_struct *);
 
 typedef enum slang_function_kind_
 {
@@ -202,6 +220,7 @@ typedef struct slang_function_
 	slang_variable_scope *parameters;
 	unsigned int param_count;
 	slang_operation *body;
+	unsigned int address;
 } slang_function;
 
 typedef struct slang_function_scope_
