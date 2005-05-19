@@ -32,11 +32,6 @@
 #include "t_vertex.h"
 #include "simple_list.h"
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
 #define X    0
 #define Y    1
 #define Z    2
@@ -61,6 +56,8 @@ struct x86_program {
 
    GLboolean inputs_safe;
    GLboolean outputs_safe;
+   GLboolean have_sse2;
+   GLboolean need_emms;
    
    struct x86_reg identity;
    struct x86_reg vp0;
@@ -74,6 +71,7 @@ struct x86_program {
  */
 enum x86_reg_file {
    file_REG32,
+   file_MMX,
    file_XMM
 };
 
@@ -167,23 +165,11 @@ static struct x86_reg make_fn_arg( struct x86_program *p,
 		    p->stack_offset + arg * 4);	/* ??? */
 }
 
-
 static struct x86_reg get_identity( struct x86_program *p )
 {
    return p->identity;
 }
 
-static struct x86_reg get_sse_temp( struct x86_program *p )
-{
-   return make_reg(file_XMM, 7); /* hardwired */
-}
-
-static void release_temp( struct x86_program *p,
-			  struct x86_reg reg )
-{
-   assert(reg.file == file_XMM &&
-	  reg.idx == 7);
-}
 
 /* Emit bytes to the instruction stream:
  */
@@ -242,7 +228,7 @@ static GLubyte *get_label( struct x86_program *p )
    return p->csr;
 }
 
-static void emit_jcc( struct x86_program *p,
+static void x86_jcc( struct x86_program *p,
 		      GLuint cc,
 		      GLubyte *label )
 {
@@ -261,8 +247,8 @@ static void emit_jcc( struct x86_program *p,
 
 /* Always use a 32bit offset for forward jumps:
  */
-static GLubyte *emit_jcc_forward( struct x86_program *p,
-			       GLuint cc )
+static GLubyte *x86_jcc_forward( struct x86_program *p,
+				 GLuint cc )
 {
    emit_2ub(p, 0x0f, 0x80 + cc);
    emit_1i(p, 0);
@@ -277,7 +263,7 @@ static void do_fixup( struct x86_program *p,
    *(int *)(fixup - 4) = get_label(p) - fixup;
 }
 
-static void emit_push( struct x86_program *p,
+static void x86_push( struct x86_program *p,
 		       struct x86_reg reg )
 {
    assert(reg.mod == mod_REG);
@@ -285,7 +271,7 @@ static void emit_push( struct x86_program *p,
    p->stack_offset += 4;
 }
 
-static void emit_pop( struct x86_program *p,
+static void x86_pop( struct x86_program *p,
 		       struct x86_reg reg )
 {
    assert(reg.mod == mod_REG);
@@ -293,23 +279,30 @@ static void emit_pop( struct x86_program *p,
    p->stack_offset -= 4;
 }
 
-static void emit_inc( struct x86_program *p,
+static void x86_inc( struct x86_program *p,
 		       struct x86_reg reg )
 {
    assert(reg.mod == mod_REG);
    emit_1ub(p, 0x40 + reg.idx);
 }
 
-static void emit_dec( struct x86_program *p,
+static void x86_dec( struct x86_program *p,
 		       struct x86_reg reg )
 {
    assert(reg.mod == mod_REG);
    emit_1ub(p, 0x48 + reg.idx);
 }
 
-static void emit_ret( struct x86_program *p )
+static void x86_ret( struct x86_program *p )
 {
    emit_1ub(p, 0xc3);
+}
+
+static void mmx_emms( struct x86_program *p )
+{
+   assert(p->need_emms);
+   emit_2ub(p, 0x0f, 0x0e);
+   p->need_emms = 0;
 }
 
 
@@ -377,52 +370,56 @@ static void emit_op_modrm( struct x86_program *p,
    }
 }
 
-static void emit_mov( struct x86_program *p,
+static void x86_mov( struct x86_program *p,
 		      struct x86_reg dst,
 		      struct x86_reg src )
 {
    emit_op_modrm( p, 0x8b, 0x89, dst, src );
 }
 
-static void emit_xor( struct x86_program *p,
+static void x86_xor( struct x86_program *p,
 		      struct x86_reg dst,
 		      struct x86_reg src )
 {
    emit_op_modrm( p, 0x33, 0x31, dst, src );
 }
 
-static void emit_cmp( struct x86_program *p,
+static void x86_cmp( struct x86_program *p,
 		      struct x86_reg dst,
 		      struct x86_reg src )
 {
    emit_op_modrm( p, 0x3b, 0x39, dst, src );
 }
 
-static void emit_movlps( struct x86_program *p,
-			 struct x86_reg dst,
-			 struct x86_reg src )
-{
-   emit_1ub(p, X86_TWOB);
-   emit_op_modrm( p, 0x12, 0x13, dst, src );
-}
-
-static void emit_movhps( struct x86_program *p,
-			 struct x86_reg dst,
-			 struct x86_reg src )
-{
-   emit_1ub(p, X86_TWOB);
-   emit_op_modrm( p, 0x16, 0x17, dst, src );
-}
-
-static void emit_movd( struct x86_program *p,
+static void sse2_movd( struct x86_program *p,
 		       struct x86_reg dst,
 		       struct x86_reg src )
 {
+   assert(p->have_sse2);
    emit_2ub(p, 0x66, X86_TWOB);
    emit_op_modrm( p, 0x6e, 0x7e, dst, src );
 }
 
-static void emit_movss( struct x86_program *p,
+static void mmx_movd( struct x86_program *p,
+		       struct x86_reg dst,
+		       struct x86_reg src )
+{
+   p->need_emms = 1;
+   emit_1ub(p, X86_TWOB);
+   emit_op_modrm( p, 0x6e, 0x7e, dst, src );
+}
+
+static void mmx_movq( struct x86_program *p,
+		       struct x86_reg dst,
+		       struct x86_reg src )
+{
+   p->need_emms = 1;
+   emit_1ub(p, X86_TWOB);
+   emit_op_modrm( p, 0x6f, 0x7f, dst, src );
+}
+
+
+static void sse_movss( struct x86_program *p,
 		       struct x86_reg dst,
 		       struct x86_reg src )
 {
@@ -430,7 +427,7 @@ static void emit_movss( struct x86_program *p,
    emit_op_modrm( p, 0x10, 0x11, dst, src );
 }
 
-static void emit_movaps( struct x86_program *p,
+static void sse_movaps( struct x86_program *p,
 			 struct x86_reg dst,
 			 struct x86_reg src )
 {
@@ -438,7 +435,7 @@ static void emit_movaps( struct x86_program *p,
    emit_op_modrm( p, 0x28, 0x29, dst, src );
 }
 
-static void emit_movups( struct x86_program *p,
+static void sse_movups( struct x86_program *p,
 			 struct x86_reg dst,
 			 struct x86_reg src )
 {
@@ -446,10 +443,28 @@ static void emit_movups( struct x86_program *p,
    emit_op_modrm( p, 0x10, 0x11, dst, src );
 }
 
+static void sse_movhps( struct x86_program *p,
+			struct x86_reg dst,
+			struct x86_reg src )
+{
+   assert(dst.mod != mod_REG || src.mod != mod_REG);
+   emit_1ub(p, X86_TWOB);
+   emit_op_modrm( p, 0x16, 0x17, dst, src ); /* cf movlhps */
+}
+
+static void sse_movlps( struct x86_program *p,
+			struct x86_reg dst,
+			struct x86_reg src )
+{
+   assert(dst.mod != mod_REG || src.mod != mod_REG);
+   emit_1ub(p, X86_TWOB);
+   emit_op_modrm( p, 0x12, 0x13, dst, src ); /* cf movhlps */
+}
+
 /* SSE operations often only have one format, with dest constrained to
  * be a register:
  */
-static void emit_mulps( struct x86_program *p,
+static void sse_mulps( struct x86_program *p,
 			struct x86_reg dst,
 			struct x86_reg src )
 {
@@ -457,7 +472,7 @@ static void emit_mulps( struct x86_program *p,
    emit_modrm( p, dst, src );
 }
 
-static void emit_addps( struct x86_program *p,
+static void sse_addps( struct x86_program *p,
 			struct x86_reg dst,
 			struct x86_reg src )
 {
@@ -465,59 +480,113 @@ static void emit_addps( struct x86_program *p,
    emit_modrm( p, dst, src );
 }
 
-static void emit_cvtps2dq( struct x86_program *p,
+static void sse_movhlps( struct x86_program *p,
+			 struct x86_reg dst,
+			 struct x86_reg src )
+{
+   assert(dst.mod == mod_REG && src.mod == mod_REG);
+   emit_2ub(p, X86_TWOB, 0x12);
+   emit_modrm( p, dst, src );
+}
+
+static void sse_movlhps( struct x86_program *p,
+			 struct x86_reg dst,
+			 struct x86_reg src )
+{
+   assert(dst.mod == mod_REG && src.mod == mod_REG);
+   emit_2ub(p, X86_TWOB, 0x16);
+   emit_modrm( p, dst, src );
+}
+
+static void sse2_cvtps2dq( struct x86_program *p,
 			struct x86_reg dst,
 			struct x86_reg src )
 {
+   assert(p->have_sse2);
    emit_3ub(p, 0x66, X86_TWOB, 0x5B);
    emit_modrm( p, dst, src );
 }
 
-static void emit_packssdw( struct x86_program *p,
+static void sse2_packssdw( struct x86_program *p,
 			struct x86_reg dst,
 			struct x86_reg src )
 {
+   assert(p->have_sse2);
    emit_3ub(p, 0x66, X86_TWOB, 0x6B);
    emit_modrm( p, dst, src );
 }
 
-static void emit_packsswb( struct x86_program *p,
+static void sse2_packsswb( struct x86_program *p,
 			struct x86_reg dst,
 			struct x86_reg src )
 {
+   assert(p->have_sse2);
    emit_3ub(p, 0x66, X86_TWOB, 0x63);
    emit_modrm( p, dst, src );
 }
 
-static void emit_packuswb( struct x86_program *p,
-			struct x86_reg dst,
-			struct x86_reg src )
+static void sse2_packuswb( struct x86_program *p,
+			   struct x86_reg dst,
+			   struct x86_reg src )
 {
+   assert(p->have_sse2);
    emit_3ub(p, 0x66, X86_TWOB, 0x67);
    emit_modrm( p, dst, src );
 }
 
+static void sse_cvtps2pi( struct x86_program *p,
+			  struct x86_reg dst,
+			  struct x86_reg src )
+{
+   assert(dst.file == file_MMX && 
+	  (src.file == file_XMM || src.mod != mod_REG));
+
+   p->need_emms = 1;
+
+   emit_2ub(p, X86_TWOB, 0x2d);
+   emit_modrm( p, dst, src );
+}
+
+static void mmx_packssdw( struct x86_program *p,
+			  struct x86_reg dst,
+			  struct x86_reg src )
+{
+   assert(dst.file == file_MMX && 
+	  (src.file == file_MMX || src.mod != mod_REG));
+
+   p->need_emms = 1;
+
+   emit_2ub(p, X86_TWOB, 0x6b);
+   emit_modrm( p, dst, src );
+}
+
+static void mmx_packuswb( struct x86_program *p,
+			  struct x86_reg dst,
+			  struct x86_reg src )
+{
+   assert(dst.file == file_MMX && 
+	  (src.file == file_MMX || src.mod != mod_REG));
+
+   p->need_emms = 1;
+
+   emit_2ub(p, X86_TWOB, 0x67);
+   emit_modrm( p, dst, src );
+}
+
+
 /* Load effective address:
  */
-static void emit_lea( struct x86_program *p,
-		      struct x86_reg dst,
-		      struct x86_reg src )
+static void x86_lea( struct x86_program *p,
+		     struct x86_reg dst,
+		     struct x86_reg src )
 {
    emit_1ub(p, 0x8d);
    emit_modrm( p, dst, src );
 }
 
-static void emit_add_imm( struct x86_program *p,
-			  struct x86_reg dst,
-			  struct x86_reg src,
-			  GLint value )
-{
-   emit_lea(p, dst, make_disp(src, value));
-}
-
-static void emit_test( struct x86_program *p,
-		       struct x86_reg dst,
-		       struct x86_reg src )
+static void x86_test( struct x86_program *p,
+		      struct x86_reg dst,
+		      struct x86_reg src )
 {
    emit_1ub(p, 0x85);
    emit_modrm( p, dst, src );
@@ -529,7 +598,7 @@ static void emit_test( struct x86_program *p,
 /**
  * Perform a reduced swizzle:
  */
-static void emit_pshufd( struct x86_program *p,
+static void sse2_pshufd( struct x86_program *p,
 			 struct x86_reg dest,
 			 struct x86_reg arg0,
 			 GLubyte x,
@@ -537,26 +606,35 @@ static void emit_pshufd( struct x86_program *p,
 			 GLubyte z,
 			 GLubyte w) 
 {
+   assert(p->have_sse2);
    emit_3ub(p, 0x66, X86_TWOB, 0x70);
    emit_modrm(p, dest, arg0);
    emit_1ub(p, (x|(y<<2)|(z<<4)|w<<6)); 
 }
 
 
-static void emit_pk4ub( struct x86_program *p, 
-			struct x86_reg dest,
-			struct x86_reg arg0 )
+/* Shufps can also be used to implement a reduced swizzle when dest ==
+ * arg0.
+ */
+static void sse_shufps( struct x86_program *p,
+			 struct x86_reg dest,
+			 struct x86_reg arg0,
+			 GLubyte x,
+			 GLubyte y,
+			 GLubyte z,
+			 GLubyte w) 
 {
-   emit_cvtps2dq(p, dest, arg0);
-   emit_packssdw(p, dest, dest);
-   emit_packuswb(p, dest, dest);
+   emit_2ub(p, X86_TWOB, 0xC6);
+   emit_modrm(p, dest, arg0);
+   emit_1ub(p, (x|(y<<2)|(z<<4)|w<<6)); 
 }
+
 
 static void emit_load4f_4( struct x86_program *p, 			   
 			   struct x86_reg dest,
 			   struct x86_reg arg0 )
 {
-   emit_movups(p, dest, arg0);
+   sse_movups(p, dest, arg0);
 }
 
 static void emit_load4f_3( struct x86_program *p, 
@@ -570,10 +648,10 @@ static void emit_load4f_3( struct x86_program *p,
     * 0 0 c 1
     * a b c 1 
     */
-   emit_movups(p, dest, get_identity(p));
-   emit_movss(p, dest, make_disp(arg0, 8));
-   emit_pshufd(p, dest, dest, Y,Z,X,W );
-   emit_movlps(p, dest, arg0);
+   sse_movaps(p, dest, get_identity(p));
+   sse_movss(p, dest, make_disp(arg0, 8));
+   sse_shufps(p, dest, dest, Y,Z,X,W );
+   sse_movlps(p, dest, arg0);
 }
 
 static void emit_load4f_2( struct x86_program *p, 
@@ -582,8 +660,8 @@ static void emit_load4f_2( struct x86_program *p,
 {
    /* Pull in 2 dwords, then copy the top 2 dwords with 0,1 from id.
     */
-   emit_movlps(p, dest, arg0);
-   emit_movhps(p, dest, get_identity(p));
+   sse_movlps(p, dest, arg0);
+   sse_movhps(p, dest, get_identity(p));
 }
 
 static void emit_load4f_1( struct x86_program *p, 
@@ -593,8 +671,8 @@ static void emit_load4f_1( struct x86_program *p,
    /* Initialized with [0,0,0,1] from id, then pull in the single low
     * word.
     */
-   emit_movups(p, dest, get_identity(p));
-   emit_movss(p, dest, arg0);
+   sse_movaps(p, dest, get_identity(p));
+   sse_movss(p, dest, arg0);
 }
 
 
@@ -607,16 +685,16 @@ static void emit_load3f_3( struct x86_program *p,
     * array.
     */
    if (p->inputs_safe) {
-      emit_movups(p, dest, arg0);
+      sse_movups(p, dest, arg0);
    } 
    else {
       /* c . . .
        * c c c c
        * a b c c 
        */
-      emit_movss(p, dest, make_disp(arg0, 8));
-      emit_pshufd(p, dest, dest, X,X,X,X);
-      emit_movlps(p, dest, arg0);
+      sse_movss(p, dest, make_disp(arg0, 8));
+      sse_shufps(p, dest, dest, X,X,X,X);
+      sse_movlps(p, dest, arg0);
    }
 }
 
@@ -638,7 +716,7 @@ static void emit_load2f_2( struct x86_program *p,
 			   struct x86_reg dest,
 			   struct x86_reg arg0 )
 {
-   emit_movlps(p, dest, arg0);
+   sse_movlps(p, dest, arg0);
 }
 
 static void emit_load2f_1( struct x86_program *p, 
@@ -652,7 +730,7 @@ static void emit_load1f_1( struct x86_program *p,
 			   struct x86_reg dest,
 			   struct x86_reg arg0 )
 {
-   emit_movss(p, dest, arg0);
+   sse_movss(p, dest, arg0);
 }
 
 static void (*load[4][4])( struct x86_program *p, 
@@ -685,7 +763,8 @@ static void emit_load( struct x86_program *p,
 		       struct x86_reg src,
 		       GLuint src_sz)
 {
-   _mesa_printf("load %d/%d\n", sz, src_sz);
+   if (DISASSEM)
+      _mesa_printf("load %d/%d\n", sz, src_sz);
    load[sz-1][src_sz-1](p, dest, src);
 }
 
@@ -694,7 +773,7 @@ static void emit_store4f( struct x86_program *p,
 			  struct x86_reg dest,
 			  struct x86_reg arg0 )
 {
-   emit_movups(p, dest, arg0);
+   sse_movups(p, dest, arg0);
 }
 
 static void emit_store3f( struct x86_program *p, 
@@ -705,17 +784,14 @@ static void emit_store3f( struct x86_program *p,
       /* Emit the extra dword anyway.  This may hurt writecombining,
        * may cause other problems.
        */
-      emit_movups(p, dest, arg0);
+      sse_movups(p, dest, arg0);
    }
    else {
       /* Alternate strategy - emit two, shuffle, emit one.
        */
-      struct x86_reg tmp = get_sse_temp(p);
-      emit_movlps(p, dest, arg0);
-
-      emit_pshufd(p, tmp, arg0, Z, Z, Z, Z );
-      emit_movss(p, make_disp(dest,8), tmp);
-      release_temp(p, tmp);
+      sse_movlps(p, dest, arg0);
+      sse_shufps(p, arg0, arg0, Z, Z, Z, Z ); /* NOTE! destructive */
+      sse_movss(p, make_disp(dest,8), arg0);
    }
 }
 
@@ -723,14 +799,14 @@ static void emit_store2f( struct x86_program *p,
 			   struct x86_reg dest,
 			   struct x86_reg arg0 )
 {
-   emit_movlps(p, dest, arg0);
+   sse_movlps(p, dest, arg0);
 }
 
 static void emit_store1f( struct x86_program *p, 
 			  struct x86_reg dest,
 			  struct x86_reg arg0 )
 {
-   emit_movss(p, dest, arg0);
+   sse_movss(p, dest, arg0);
 }
 
 
@@ -750,9 +826,32 @@ static void emit_store( struct x86_program *p,
 			struct x86_reg temp )
 
 {
+   if (DISASSEM)
+      _mesa_printf("store %d\n", sz);
    store[sz-1](p, dest, temp);
 }
 
+static void emit_pack_store_4ub( struct x86_program *p,
+				 struct x86_reg dest,
+				 struct x86_reg temp )
+{
+   if (p->have_sse2) {
+      sse2_cvtps2dq(p, temp, temp);
+      sse2_packssdw(p, temp, temp);
+      sse2_packuswb(p, temp, temp);
+      sse_movss(p, dest, temp);
+   }
+   else {
+      struct x86_reg mmx0 = make_reg(file_MMX, 0);
+      struct x86_reg mmx1 = make_reg(file_MMX, 1);
+      sse_cvtps2pi(p, mmx0, temp);
+      sse_movhlps(p, temp, temp);
+      sse_cvtps2pi(p, mmx1, temp);
+      mmx_packssdw(p, mmx0, mmx1);
+      mmx_packuswb(p, mmx0, mmx0);
+      mmx_movd(p, dest, mmx0);
+   }
+}
 
 static GLint get_offset( const void *a, const void *b )
 {
@@ -779,7 +878,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
    struct x86_reg srcEDI = make_reg(file_REG32, reg_CX);
    struct x86_reg countEBP = make_reg(file_REG32, reg_BP);
    struct x86_reg vtxESI = make_reg(file_REG32, reg_SI);
-   struct x86_reg tmp = make_reg(file_XMM, 0);
+   struct x86_reg temp = make_reg(file_XMM, 0);
    struct x86_reg vp0 = make_reg(file_XMM, 1);
    struct x86_reg vp1 = make_reg(file_XMM, 2);
    struct x86_reg chan0 = make_reg(file_XMM, 3);
@@ -789,41 +888,40 @@ static GLboolean build_vertex_emit( struct x86_program *p )
    
    /* Push a few regs?
     */
-   emit_push(p, srcEDI);
-   emit_push(p, countEBP);
-   emit_push(p, vtxESI);
+   x86_push(p, srcEDI);
+   x86_push(p, countEBP);
+   x86_push(p, vtxESI);
 
 
    /* Get vertex count, compare to zero
     */
-   emit_xor(p, srcEDI, srcEDI);
-   emit_mov(p, countEBP, make_fn_arg(p, 2));
-   emit_cmp(p, countEBP, srcEDI);
-   fixup = emit_jcc_forward(p, cc_E);
-
+   x86_xor(p, srcEDI, srcEDI);
+   x86_mov(p, countEBP, make_fn_arg(p, 2));
+   x86_cmp(p, countEBP, srcEDI);
+   fixup = x86_jcc_forward(p, cc_E);
 
    /* Initialize destination register. 
     */
-   emit_mov(p, vertexEAX, make_fn_arg(p, 3));
+   x86_mov(p, vertexEAX, make_fn_arg(p, 3));
 
    /* Dereference ctx to get tnl, then vtx:
     */
-   emit_mov(p, vtxESI, make_fn_arg(p, 1));
-   emit_mov(p, vtxESI, make_disp(vtxESI, get_offset(ctx, &ctx->swtnl_context)));
+   x86_mov(p, vtxESI, make_fn_arg(p, 1));
+   x86_mov(p, vtxESI, make_disp(vtxESI, get_offset(ctx, &ctx->swtnl_context)));
    vtxESI = make_disp(vtxESI, get_offset(tnl, &tnl->clipspace));
 
    
    /* Possibly load vp0, vp1 for viewport calcs:
     */
    if (vtx->need_viewport) {
-      emit_movups(p, vp0, make_disp(vtxESI, get_offset(vtx, &vtx->vp_scale[0])));
-      emit_movups(p, vp1, make_disp(vtxESI, get_offset(vtx, &vtx->vp_xlate[0])));
+      sse_movups(p, vp0, make_disp(vtxESI, get_offset(vtx, &vtx->vp_scale[0])));
+      sse_movups(p, vp1, make_disp(vtxESI, get_offset(vtx, &vtx->vp_xlate[0])));
    }
 
    /* always load, needed or not:
     */
-   emit_movups(p, chan0, make_disp(vtxESI, get_offset(vtx, &vtx->chan_scale[0])));
-   emit_movups(p, p->identity, make_disp(vtxESI, get_offset(vtx, &vtx->identity[0])));
+   sse_movups(p, chan0, make_disp(vtxESI, get_offset(vtx, &vtx->chan_scale[0])));
+   sse_movups(p, p->identity, make_disp(vtxESI, get_offset(vtx, &vtx->identity[0])));
 
    /* Note address for loop jump */
    label = get_label(p);
@@ -840,52 +938,52 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 
       /* Load current a[j].inputptr
        */
-      emit_mov(p, srcEDI, ptr_to_src);
+      x86_mov(p, srcEDI, ptr_to_src);
 
       /* Now, load an XMM reg from src, perhaps transform, then save.
        * Could be shortcircuited in specific cases:
        */
       switch (a[j].format) {
       case EMIT_1F:
-	 emit_load(p, tmp, 1, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_store(p, dest, 1, tmp);
+	 emit_load(p, temp, 1, deref(srcEDI), vtx->attr[j].inputsize);
+	 emit_store(p, dest, 1, temp);
 	 break;
       case EMIT_2F:
-	 emit_load(p, tmp, 2, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_store(p, dest, 2, tmp);
+	 emit_load(p, temp, 2, deref(srcEDI), vtx->attr[j].inputsize);
+	 emit_store(p, dest, 2, temp);
 	 break;
       case EMIT_3F:
 	 /* Potentially the worst case - hardcode 2+1 copying:
 	  */
-	 emit_load(p, tmp, 3, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_store(p, dest, 3, tmp);
+	 emit_load(p, temp, 3, deref(srcEDI), vtx->attr[j].inputsize);
+	 emit_store(p, dest, 3, temp);
 	 break;
       case EMIT_4F:
-	 emit_load(p, tmp, 4, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_store(p, dest, 4, tmp);
+	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 emit_store(p, dest, 4, temp);
 	 break;
       case EMIT_2F_VIEWPORT: 
-	 emit_load(p, tmp, 2, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_mulps(p, tmp, vp0);
-	 emit_addps(p, tmp, vp1);
-	 emit_store(p, dest, 2, tmp);
+	 emit_load(p, temp, 2, deref(srcEDI), vtx->attr[j].inputsize);
+	 sse_mulps(p, temp, vp0);
+	 sse_addps(p, temp, vp1);
+	 emit_store(p, dest, 2, temp);
 	 break;
       case EMIT_3F_VIEWPORT: 
-	 emit_load(p, tmp, 3, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_mulps(p, tmp, vp0);
-	 emit_addps(p, tmp, vp1);
-	 emit_store(p, dest, 3, tmp);
+	 emit_load(p, temp, 3, deref(srcEDI), vtx->attr[j].inputsize);
+	 sse_mulps(p, temp, vp0);
+	 sse_addps(p, temp, vp1);
+	 emit_store(p, dest, 3, temp);
 	 break;
       case EMIT_4F_VIEWPORT: 
-	 emit_load(p, tmp, 4, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_mulps(p, tmp, vp0);
-	 emit_addps(p, tmp, vp1);
-	 emit_store(p, dest, 4, tmp);
+	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 sse_mulps(p, temp, vp0);
+	 sse_addps(p, temp, vp1);
+	 emit_store(p, dest, 4, temp);
 	 break;
       case EMIT_3F_XYW:
-	 emit_load(p, tmp, 4, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_pshufd(p, tmp, tmp, X, Y, W, Z);
-	 emit_store(p, dest, 3, tmp);
+	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 sse_shufps(p, temp, temp, X, Y, W, Z);
+	 emit_store(p, dest, 3, temp);
 	 break;
 
 	 /* Try and bond 3ub + 1ub pairs into a single 4ub operation?
@@ -897,43 +995,38 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 	 return GL_FALSE;	/* add this later */
 
       case EMIT_4UB_4F_RGBA:
-	 emit_load(p, tmp, 4, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_mulps(p, tmp, chan0);
-	 emit_pk4ub(p, tmp, tmp);
-	 emit_store(p, dest, 1, tmp);
+	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 sse_mulps(p, temp, chan0);
+	 emit_pack_store_4ub(p, dest, temp);
 	 break;
       case EMIT_4UB_4F_BGRA:
-	 emit_load(p, tmp, 4, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_pshufd(p, tmp, tmp, Z, Y, X, W);
-	 emit_mulps(p, tmp, chan0);
-	 emit_pk4ub(p, tmp, tmp);
-	 emit_store(p, dest, 1, tmp);
+	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 sse_shufps(p, temp, temp, Z, Y, X, W);
+	 sse_mulps(p, temp, chan0);
+	 emit_pack_store_4ub(p, dest, temp);
 	 break;
       case EMIT_4UB_4F_ARGB:
-	 emit_load(p, tmp, 4, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_pshufd(p, tmp, tmp, W, X, Y, Z);
-	 emit_mulps(p, tmp, chan0);
-	 emit_pk4ub(p, tmp, tmp);
-	 emit_store(p, dest, 1, tmp);
+	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 sse_shufps(p, temp, temp, W, X, Y, Z);
+	 sse_mulps(p, temp, chan0);
+	 emit_pack_store_4ub(p, dest, temp);
 	 break;
       case EMIT_4UB_4F_ABGR:
-	 emit_load(p, tmp, 4, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_pshufd(p, tmp, tmp, W, Z, Y, X);
-	 emit_mulps(p, tmp, chan0);
-	 emit_pk4ub(p, tmp, tmp);
-	 emit_store(p, dest, 1, tmp);
+	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 sse_shufps(p, temp, temp, W, Z, Y, X);
+	 sse_mulps(p, temp, chan0);
+	 emit_pack_store_4ub(p, dest, temp);
 	 break;
       case EMIT_4CHAN_4F_RGBA:
 	 switch (CHAN_TYPE) {
 	 case GL_UNSIGNED_BYTE:
-	    emit_load(p, tmp, 4, deref(srcEDI), vtx->attr[j].inputsize);
-	    emit_mulps(p, tmp, chan0);
-	    emit_pk4ub(p, tmp, tmp);
-	    emit_store(p, dest, 1, tmp);
+	    emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	    sse_mulps(p, temp, chan0);
+	    emit_pack_store_4ub(p, dest, temp);
 	    break;
 	 case GL_FLOAT:
-	    emit_load(p, tmp, 4, deref(srcEDI), vtx->attr[j].inputsize);
-	    emit_store(p, dest, 4, tmp);
+	    emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	    emit_store(p, dest, 4, temp);
 	    break;
 	 case GL_UNSIGNED_SHORT:
 	 default:
@@ -949,23 +1042,28 @@ static GLboolean build_vertex_emit( struct x86_program *p )
       /* add a[j].inputstride (hardcoded value - could just as easily
        * pull the stride value from memory each time).
        */
-      emit_add_imm(p, srcEDI, srcEDI, a[j].inputstride);
+      x86_lea(p, srcEDI, make_disp(srcEDI, a[j].inputstride));
       
       /* save new value of a[j].inputptr 
        */
-      emit_mov(p, ptr_to_src, srcEDI);
+      x86_mov(p, ptr_to_src, srcEDI);
 
    }
 
    /* Next vertex:
     */
-   emit_add_imm(p, vertexEAX, vertexEAX, vtx->vertex_size);
+   x86_lea(p, vertexEAX, make_disp(vertexEAX, vtx->vertex_size));
 
    /* decr count, loop if not zero
     */
-   emit_dec(p, countEBP);
-   emit_test(p, countEBP, countEBP); 
-   emit_jcc(p, cc_NZ, label);
+   x86_dec(p, countEBP);
+   x86_test(p, countEBP, countEBP); 
+   x86_jcc(p, cc_NZ, label);
+
+   /* Exit mmx state?
+    */
+   if (p->need_emms)
+      mmx_emms(p);
 
    /* Land forward jump here:
     */
@@ -973,10 +1071,10 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 
    /* Pop regs and return
     */
-   emit_pop(p, get_base_reg(vtxESI));
-   emit_pop(p, countEBP);
-   emit_pop(p, srcEDI);
-   emit_ret(p);
+   x86_pop(p, get_base_reg(vtxESI));
+   x86_pop(p, countEBP);
+   x86_pop(p, srcEDI);
+   x86_ret(p);
 
    vtx->emit = (tnl_emit_func)p->store;
    return GL_TRUE;
@@ -993,6 +1091,7 @@ void _tnl_generate_sse_emit( GLcontext *ctx )
 
    p.inputs_safe = 1;		/* for now */
    p.outputs_safe = 1;		/* for now */
+   p.have_sse2 = 0;		/* testing */
    p.identity = make_reg(file_XMM, 6);
    
    if (build_vertex_emit(&p)) {
@@ -1007,7 +1106,7 @@ void _tnl_generate_sse_emit( GLcontext *ctx )
       FREE(p.store);
    }
 
-   (void)emit_movd;
-   (void)emit_inc;
-   (void)emit_xor;
+   (void)sse2_movd;
+   (void)x86_inc;
+   (void)x86_xor;
 }
