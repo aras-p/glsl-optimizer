@@ -202,9 +202,40 @@ fbSetupFramebuffer(fbDisplay *disp, char *fbdev)
                strerror(errno));
       return EGL_FALSE;
    }
+   
+   if (fixedInfo.visual == FB_VISUAL_DIRECTCOLOR) {
+      struct fb_cmap cmap;
+      unsigned short red[256], green[256], blue[256];
+      int rcols = 1 << varInfo.red.length;
+      int gcols = 1 << varInfo.green.length;
+      int bcols = 1 << varInfo.blue.length;
+      int i;
+
+      cmap.start = 0;      
+      cmap.len = gcols;
+      cmap.red   = red;
+      cmap.green = green;
+      cmap.blue  = blue;
+      cmap.transp = NULL;
+
+      for (i = 0; i < rcols ; i++) 
+         red[i] = (65536/(rcols-1)) * i;
+
+      for (i = 0; i < gcols ; i++) 
+         green[i] = (65536/(gcols-1)) * i;
+
+      for (i = 0; i < bcols ; i++) 
+         blue[i] = (65536/(bcols-1)) * i;
+      
+      if (ioctl(fd, FBIOPUTCMAP, (void *) &cmap) < 0) {
+         fprintf(stderr, "ioctl(FBIOPUTCMAP) failed [%d]\n", i);
+         exit(1);
+      }
+   }
 
    /* mmap the framebuffer into our address space */
-   disp->pFB = (caddr_t)mmap(0,  /* start */
+   if (!disp->pFB)
+      disp->pFB = (caddr_t)mmap(0,  /* start */
                       fixedInfo.smem_len,  /* bytes */
                       PROT_READ | PROT_WRITE,  /* prot */
                       MAP_SHARED,  /* flags */
@@ -702,10 +733,11 @@ static EGLBoolean
 fbShowSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLScreenMESA screen,
                     EGLSurface surface, EGLModeMESA m)
 {
-   FILE *file;
-   char buffer[NAME_MAX];
+   fbDisplay *display = Lookup_fbDisplay(dpy);
    fbScreen *scrn = Lookup_fbScreen(dpy, screen);
    fbSurface *surf = Lookup_fbSurface(surface);
+   FILE *file;
+   char buffer[NAME_MAX];
    _EGLMode *mode = _eglLookupMode(dpy, m);
    int bits;
    
@@ -745,6 +777,8 @@ err:
    fputs(buffer, file);
    fclose(file);
 
+   fbSetupFramebuffer(display, scrn->fb);
+   
    snprintf(buffer, sizeof(buffer), "%s/%s/blank", sysfs, scrn->fb);
    
    file = fopen(buffer, "r+");

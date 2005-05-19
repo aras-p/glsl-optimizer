@@ -500,6 +500,58 @@ static void Draw(EGLDisplay dpy, EGLSurface surf)
     }
 }
 
+static void
+write_ppm(const char *filename, const GLubyte *buffer, int width, int height)
+{
+   const int binary = 0;
+   FILE *f = fopen( filename, "w" );
+   if (f) {
+      int i, x, y;
+      const GLubyte *ptr = buffer;
+      if (binary) {
+         fprintf(f,"P6\n");
+         fprintf(f,"# ppm-file created by osdemo.c\n");
+         fprintf(f,"%i %i\n", width,height);
+         fprintf(f,"255\n");
+         fclose(f);
+         f = fopen( filename, "ab" );  /* reopen in binary append mode */
+         for (y=height-1; y>=0; y--) {
+            for (x=0; x<width; x++) {
+               i = (y*width + x) * 4;
+               fputc(ptr[i], f);   /* write red */
+               fputc(ptr[i+1], f); /* write green */
+               fputc(ptr[i+2], f); /* write blue */
+            }
+         }
+      }
+      else {
+         /*ASCII*/
+         int counter = 0;
+         fprintf(f,"P3\n");
+         fprintf(f,"# ascii ppm file created by osdemo.c\n");
+         fprintf(f,"%i %i\n", width, height);
+         fprintf(f,"255\n");
+         for (y=height-1; y>=0; y--) {
+            for (x=0; x<width; x++) {
+               i = (y*width + x) * 4;
+               fprintf(f, " %3d %3d %3d", ptr[i], ptr[i+1], ptr[i+2]);
+               counter++;
+               if (counter % 5 == 0)
+                  fprintf(f, "\n");
+            }
+         }
+      }
+      fclose(f);
+   }
+}
+
+#include "../src/egl/main/egldisplay.h"
+
+typedef struct fb_display
+{
+   _EGLDisplay Base;  /* base class/object */
+   void *pFB;
+} fbDisplay;
 
 
 int
@@ -561,9 +613,20 @@ main(int argc, char *argv[])
    Reshape(1024, 768);
 
    glDrawBuffer( GL_FRONT ); 
+   glClearColor( 0, 
+		 1.0, 
+		 0,
+		 1);
+
+   glClear( GL_COLOR_BUFFER_BIT ); 
+
+   doubleBuffer = 1;   
+   glDrawBuffer( GL_BACK ); 
 
    Draw(d, screen_surf);
-
+   
+   write_ppm("dump.ppm", ((struct fb_display *)_eglLookupDisplay(d))->pFB, 1024, 768);
+   
    eglDestroySurface(d, screen_surf);
    eglDestroyContext(d, ctx);
    eglTerminate(d);
