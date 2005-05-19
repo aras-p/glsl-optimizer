@@ -29,6 +29,8 @@
 extern "C" {
 #endif
 
+#define static_assert(expr) do { int _array[(expr) ? 1 : 0]; _array[0]; } while (0)
+
 void slang_alloc_free (void *);
 void *slang_alloc_malloc (unsigned int);
 void *slang_alloc_realloc (void *, unsigned int, unsigned int);
