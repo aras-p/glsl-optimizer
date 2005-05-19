@@ -631,10 +631,10 @@ _shader_Compile (struct gl2_shader_intf **intf)
 	{
 		impl->_obj.compile_status = GL_TRUE;
 	}
-	else
-	{
+	if (info_log.text != NULL)
 		impl->_obj._generic.info_log = _mesa_strdup (info_log.text);
-	}
+	else
+		impl->_obj._generic.info_log = _mesa_strdup ("");
 	slang_info_log_destruct (&info_log);
 #endif
 }
