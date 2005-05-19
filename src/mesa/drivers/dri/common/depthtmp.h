@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/common/depthtmp.h,v 1.5 2001/03/21 16:14:20 dawes Exp $ */
 
 /*
  * Notes:
