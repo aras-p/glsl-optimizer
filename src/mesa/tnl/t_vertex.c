@@ -288,14 +288,6 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
 
    if (vp) {
       vtx->need_viewport = GL_TRUE;
-      vtx->vp_scale[0] = vp[MAT_SX];
-      vtx->vp_scale[1] = vp[MAT_SY];
-      vtx->vp_scale[2] = vp[MAT_SZ];
-      vtx->vp_scale[3] = 1.0;
-      vtx->vp_xlate[0] = vp[MAT_TX];
-      vtx->vp_xlate[1] = vp[MAT_TY];
-      vtx->vp_xlate[2] = vp[MAT_TZ];
-      vtx->vp_xlate[3] = 0.0;
    }
 
    for (j = 0, i = 0; i < nr; i++) {
@@ -388,6 +380,17 @@ static void update_input_ptrs( GLcontext *ctx, GLuint start )
       }
 
       a[j].inputptr = ((GLubyte *)vptr->data) + start * vptr->stride;
+   }
+   
+   if (a->vp) {
+      vtx->vp_scale[0] = a->vp[MAT_SX];
+      vtx->vp_scale[1] = a->vp[MAT_SY];
+      vtx->vp_scale[2] = a->vp[MAT_SZ];
+      vtx->vp_scale[3] = 1.0;
+      vtx->vp_xlate[0] = a->vp[MAT_TX];
+      vtx->vp_xlate[1] = a->vp[MAT_TY];
+      vtx->vp_xlate[2] = a->vp[MAT_TZ];
+      vtx->vp_xlate[3] = 0.0;
    }
 }
 
