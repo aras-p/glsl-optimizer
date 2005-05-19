@@ -195,39 +195,6 @@ static int r300_get_num_verts(r300ContextPtr rmesa,
 	return num_verts - verts_off;
 }
 
-void dump_inputs(GLcontext *ctx, int render_inputs)
-{
-	int k;
-	fprintf(stderr, "inputs:");
-	fprintf(stderr, "%08x ", render_inputs);
-
-	if(render_inputs & _TNL_BIT_POS)
-		fprintf(stderr, "_TNL_BIT_POS ");
-	if(render_inputs & _TNL_BIT_NORMAL)
-		fprintf(stderr, "_TNL_BIT_NORMAL ");
-
-		/* color components */
-	if(render_inputs & _TNL_BIT_COLOR0)
-		fprintf(stderr, "_TNL_BIT_COLOR0 ");
-	if(render_inputs & _TNL_BIT_COLOR1)
-		fprintf(stderr, "_TNL_BIT_COLOR1 ");
-
-	if(render_inputs & _TNL_BIT_FOG)
-		fprintf(stderr, "_TNL_BIT_FOG ");
-
-		/* texture coordinates */
-	for(k=0;k < ctx->Const.MaxTextureUnits;k++)
-		if(render_inputs & (_TNL_BIT_TEX0<<k))
-			fprintf(stderr, "_TNL_BIT_TEX%d ", k);
-
-	if(render_inputs & _TNL_BIT_INDEX)
-		fprintf(stderr, "_TNL_BIT_INDEX ");
-	if(render_inputs & _TNL_BIT_POINTSIZE)
-		fprintf(stderr, "_TNL_BIT_POINTSIZE ");
-
-	fprintf(stderr, "\n");
-}
-
 /* This function compiles GL context into state registers that
    describe data routing inside of R300 pipeline.
 
@@ -307,7 +274,6 @@ static void r300_render_immediate_primitive(r300ContextPtr rmesa,
 	return;
    	}
 
-	//dump_inputs(ctx, render_inputs); return ;
 
    start_immediate_packet(num_verts, type, 4*rmesa->state.aos_count);
 
@@ -415,23 +381,6 @@ static GLboolean r300_run_immediate_render(GLcontext *ctx,
 	}
 
    r300EmitState(rmesa);
-
-#if 0
-   reg_start(R300_RB3D_COLORMASK, 0);
-   	e32(0xf);
-
-   vsf_start_fragment(0x406, 4);
-   efloat(0.0);
-   efloat(0.0);
-   efloat(0.0);
-   efloat(1.0);
-
-   vsf_start_fragment(0x400, 4);
-   efloat(0.0);
-   efloat(0.0);
-   efloat(0.0);
-   efloat(1.0);
-#endif
 
 /* Setup INPUT_ROUTE and INPUT_CNTL */
 	r300EmitArrays(ctx, GL_TRUE);
@@ -547,7 +496,6 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 
    	r300ReleaseArrays(ctx);
 	r300EmitArrays(ctx, GL_FALSE);
-	//dump_inputs(ctx, rmesa->state.render_inputs);
 
 //	LOCK_HARDWARE(&(rmesa->radeon));
 
@@ -614,40 +562,6 @@ static GLboolean r300_run_render(GLcontext *ctx,
 #endif
 #else
 	return GL_TRUE;
-#endif
-
-#if 0
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint i;
-
-   /* Don't handle clipping or indexed vertices or vertex manipulations.
-    */
-   if (mmesa->RenderIndex != 0 ||
-       !mga_validate_render( ctx, VB )) {
-      return GL_TRUE;
-   }
-
-   tnl->Driver.Render.Start( ctx );
-   mmesa->SetupNewInputs = ~0;
-
-   for (i = 0 ; i < VB->PrimitiveCount ; i++)
-   {
-      GLuint prim = VB->Primitive[i].mode;
-      GLuint start = VB->Primitive[i].start;
-      GLuint length = VB->Primitive[i].count;
-
-      if (!length)
-	 continue;
-
-      mga_render_tab_verts[prim & PRIM_MODE_MASK]( ctx, start, start + length,
-						   prim);
-   }
-
-   tnl->Driver.Render.Finish( ctx );
-
-   return GL_FALSE;		/* finished the pipe */
 #endif
 }
 

@@ -442,8 +442,8 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_LINE_CNT_HO               (1 << 16)
 #       define R300_LINE_CNT_VE               (1 << 17)
 
-/* Linestipple factor. 3a088889 == 1.0, 3baaaaa9 == 10.0 */
-#define R300_RE_LINE_STIPPLE_FACTOR           0x4238
+/* Some sort of scale or clamp value for texcoordless textures. */
+#define R300_RE_UNK4238                       0x4238
 
 #define R300_RE_SHADE_MODEL                   0x4278
 #	define R300_RE_SHADE_MODEL_SMOOTH     0x3aaaa

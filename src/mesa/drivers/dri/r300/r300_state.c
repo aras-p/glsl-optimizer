@@ -121,17 +121,6 @@ static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 	CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
 
 	rmesa->hw.unk4E10.cmd[1]=r300PackColor(4, color[0], color[1], color[2], color[3]);
-	//fprintf(stderr, "%s:%s is not implemented yet. Fixme !\n", __FILE__, __FUNCTION__);
-#if 0
-	R200_STATECHANGE(rmesa, ctx);
-	CLAMPED_FLOAT_TO_UBYTE(color[0], cf[0]);
-	CLAMPED_FLOAT_TO_UBYTE(color[1], cf[1]);
-	CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
-	CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
-	if (rmesa->radeon.radeonScreen->drmSupportsBlendColor)
-		rmesa->hw.ctx.cmd[CTX_RB3D_BLENDCOLOR] =
-		    radeonPackColor(4, color[0], color[1], color[2], color[3]);
-#endif
 }
 
 /**
@@ -483,15 +472,6 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 
 	case GL_POLYGON_OFFSET_POINT:
 	case GL_POLYGON_OFFSET_LINE:
-		WARN_ONCE("Don't know how to enable polygon offset point/line. Help me !\n");
-
-		/* Something is apparently blocking these from working */
-		R300_STATECHANGE(r300, unk42B4);
-		if(state){
-			r300->hw.unk42B4.cmd[1] |= ~(3<<0);
-		} else {
-			r300->hw.unk42B4.cmd[1] &= (3<<0);
-		}
 		break;
 
 	case GL_POLYGON_OFFSET_FILL:
@@ -502,11 +482,6 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 			r300->hw.unk42B4.cmd[1] &= ~(3<<0);
 		}
 		break;
-
-	case GL_VERTEX_PROGRAM_ARB:
-		//TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, state);
-	break;
-
 	default:
 		radeonEnable(ctx, cap, state);
 		return;
@@ -683,12 +658,6 @@ static void r300PointSize(GLcontext * ctx, GLfloat size)
 	r300->hw.ps.cmd[R300_PS_POINTSIZE] = 
 		((int)(size * 6) << R300_POINTSIZE_X_SHIFT) |
 		((int)(size * 6) << R300_POINTSIZE_Y_SHIFT);
-
-#if 0 /* r200 reg? */
-	/* This might need fixing later */
-	R300_STATECHANGE(r300, vps);
-	r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);
-#endif
 }
 
 /* =============================================================
@@ -717,60 +686,53 @@ static void r300PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
  * Stencil
  */
 
- static int translate_stencil_func(int func)
- {
+static int translate_stencil_func(int func)
+{
 	switch (func) {
 	case GL_NEVER:
-		    return R300_ZS_NEVER;
-		break;
+		return R300_ZS_NEVER;
 	case GL_LESS:
-		    return R300_ZS_LESS;
-		break;
+		return R300_ZS_LESS;
 	case GL_EQUAL:
-		    return R300_ZS_EQUAL;
-		break;
+		return R300_ZS_EQUAL;
 	case GL_LEQUAL:
-		    return R300_ZS_LEQUAL;
-		break;
+		return R300_ZS_LEQUAL;
 	case GL_GREATER:
-		    return R300_ZS_GREATER;
-		break;
+		return R300_ZS_GREATER;
 	case GL_NOTEQUAL:
-		    return R300_ZS_NOTEQUAL;
-		break;
+		return R300_ZS_NOTEQUAL;
 	case GL_GEQUAL:
-		    return R300_ZS_GEQUAL;
-		break;
+		return R300_ZS_GEQUAL;
 	case GL_ALWAYS:
-		    return R300_ZS_ALWAYS;
-		break;
+		return R300_ZS_ALWAYS;
 	}
- return 0;
- }
+	return 0;
+}
 
- static int translate_stencil_op(int op)
+static int translate_stencil_op(int op)
 {
 	switch (op) {
 	case GL_KEEP:
-		    return R300_ZS_KEEP;
+		return R300_ZS_KEEP;
 	case GL_ZERO:
-		    return R300_ZS_ZERO;
+		return R300_ZS_ZERO;
 	case GL_REPLACE:
-		    return R300_ZS_REPLACE;
+		return R300_ZS_REPLACE;
 	case GL_INCR:
-		    return R300_ZS_INCR;
+		return R300_ZS_INCR;
 	case GL_DECR:
-		    return R300_ZS_DECR;
+		return R300_ZS_DECR;
 	case GL_INCR_WRAP_EXT:
-		    return R300_ZS_INCR_WRAP;
+		return R300_ZS_INCR_WRAP;
 	case GL_DECR_WRAP_EXT:
-		    return R300_ZS_DECR_WRAP;
+		return R300_ZS_DECR_WRAP;
 	case GL_INVERT:
-		    return R300_ZS_INVERT;
+		return R300_ZS_INVERT;
 	default:
 		WARN_ONCE("Do not know how to translate stencil op");
 		return R300_ZS_KEEP;
 	}
+	return 0;
 }
 
 static void r300ShadeModel(GLcontext * ctx, GLenum mode)
@@ -937,224 +899,7 @@ static void r300PolygonOffset(GLcontext * ctx, GLfloat factor, GLfloat units)
 }
 
 /* Routing and texture-related */
-#if 0
-void r300_setup_routing(GLcontext *ctx, GLboolean immediate)
-{
-	int i, count=0,reg=0;
-	GLuint dw, mask;
-	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *VB = &tnl->vb;
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
-
-	/* Stage 1 - input to VAP */
-
-	/* Assign register number automatically, retaining it in rmesa->state.reg */
-
-	/* Note: immediate vertex data includes all coordinates.
-	To save bandwidth use either VBUF or state-based vertex generation */
-
-#define CONFIGURE_AOS(v, o, r, f) \
-		{\
-		if (RADEON_DEBUG & DEBUG_STATE)fprintf(stderr, "Enabling "#r "\n"); \
-		r300->state.aos[count].aos_size=4; \
-		r300->state.aos[count].aos_stride=4; \
-		r300->state.aos[count].aos_offset=o; \
-		r300->state.aos[count].aos_reg=reg; \
-		r300->state.aos[count].aos_format=(f); \
-		r300->state.vap_reg.r=reg; \
-		count++; \
-		reg++; \
-		}
-
-		/* All offsets are 0 - for use by immediate mode.
-		Should change later to handle vertex buffers */
-	if(r300->current_vp!=NULL){
-
-	/* VERT_ATTRIB_WEIGHT, VERT_ATTRIB_SIX, VERT_ATTRIB_SEVEN, VERT_ATTRIB_GENERIC0,
-	   VERT_ATTRIB_GENERIC1, VERT_ATTRIB_GENERIC2, VERT_ATTRIB_GENERIC3 */
-	r300->state.render_inputs = 0;
-
-	if(r300->current_vp->inputs[VERT_ATTRIB_POS] != -1){
-		reg=r300->current_vp->inputs[VERT_ATTRIB_POS];
-		CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
-		r300->state.render_inputs |= _TNL_BIT_POS;
-	}
-	if(r300->current_vp->inputs[VERT_ATTRIB_NORMAL] != -1){
-		reg=r300->current_vp->inputs[VERT_ATTRIB_NORMAL];
-		CONFIGURE_AOS(VB->NormalPtr, 0, i_normal, AOS_FORMAT_FLOAT);
-		r300->state.render_inputs |= _TNL_BIT_NORMAL;
-	}
-	if(r300->current_vp->inputs[VERT_ATTRIB_COLOR0] != -1){
-		reg=r300->current_vp->inputs[VERT_ATTRIB_COLOR0];
-		CONFIGURE_AOS(VB->ColorPtr[0], 0, i_color[0], AOS_FORMAT_FLOAT_COLOR);
-		r300->state.render_inputs |= _TNL_BIT_COLOR0;
-	}
-	if(r300->current_vp->inputs[VERT_ATTRIB_COLOR1] != -1){
-		reg=r300->current_vp->inputs[VERT_ATTRIB_COLOR1];
-		CONFIGURE_AOS(VB->SecondaryColorPtr[0], 0, i_color[1], AOS_FORMAT_FLOAT_COLOR);
-		r300->state.render_inputs |= _TNL_BIT_COLOR1;
-	}
-	if(r300->current_vp->inputs[VERT_ATTRIB_FOG] != -1){
-		reg=r300->current_vp->inputs[VERT_ATTRIB_FOG];
-		CONFIGURE_AOS(VB->FogCoordPtr, 0, i_fog, AOS_FORMAT_FLOAT);
-		r300->state.render_inputs |= _TNL_BIT_FOG;
-	}
-	for(i=0;i < ctx->Const.MaxTextureUnits;i++) // tex 7 is last
-		if(r300->current_vp->inputs[VERT_ATTRIB_TEX0+i] != -1){
-			reg=r300->current_vp->inputs[VERT_ATTRIB_TEX0+i];
-			CONFIGURE_AOS(VB->TexCoordPtr[i], 0, i_tex[i], AOS_FORMAT_FLOAT);
-			r300->state.render_inputs |= _TNL_BIT_TEX0<<i;
-		}
-#if 0
-	if((tnl->render_inputs & _TNL_BIT_INDEX))
-		CONFIGURE_AOS(VB->IndexPtr[0], 0, i_index, AOS_FORMAT_FLOAT);
-
-	if((tnl->render_inputs & _TNL_BIT_POINTSIZE))
-		CONFIGURE_AOS(VB->PointSizePtr, 0, i_pointsize, AOS_FORMAT_FLOAT);
-#endif
-	}else{
-
-	r300->state.render_inputs = tnl->render_inputs;
-
-	if(tnl->render_inputs & _TNL_BIT_POS)
-		CONFIGURE_AOS(VB->ObjPtr, 0, i_coords, AOS_FORMAT_FLOAT);
-	if(tnl->render_inputs & _TNL_BIT_NORMAL)
-		CONFIGURE_AOS(VB->NormalPtr, 0, i_normal, AOS_FORMAT_FLOAT);
-
-	if(tnl->render_inputs & _TNL_BIT_COLOR0)
-		CONFIGURE_AOS(VB->ColorPtr[0], 0, i_color[0], AOS_FORMAT_FLOAT_COLOR);
-	if(tnl->render_inputs & _TNL_BIT_COLOR1)
-		CONFIGURE_AOS(VB->SecondaryColorPtr[0], 0, i_color[1], AOS_FORMAT_FLOAT_COLOR);
-
-	/*if(tnl->render_inputs & _TNL_BIT_FOG) // Causes lock ups when immediate mode is on
-		CONFIGURE_AOS(VB->FogCoordPtr, 0, i_fog, AOS_FORMAT_FLOAT);*/
-
-	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-		if(tnl->render_inputs & (_TNL_BIT_TEX0<<i))
-			CONFIGURE_AOS(VB->TexCoordPtr[i], 0, i_tex[i], AOS_FORMAT_FLOAT);
-
-	if(tnl->render_inputs & _TNL_BIT_INDEX)
-		CONFIGURE_AOS(VB->IndexPtr[0], 0, i_index, AOS_FORMAT_FLOAT);
-	if(tnl->render_inputs & _TNL_BIT_POINTSIZE)
-		CONFIGURE_AOS(VB->PointSizePtr, 0, i_pointsize, AOS_FORMAT_FLOAT);
-	}
-
-	r300->state.aos_count=count;
-
-	if (RADEON_DEBUG & DEBUG_STATE)
-		fprintf(stderr, "aos_count=%d render_inputs=%08x\n", count, r300->state.render_inputs);
-
-
-	if(count>R300_MAX_AOS_ARRAYS){
-		fprintf(stderr, "Aieee ! AOS array count exceeded !\n");
-		exit(-1);
-		}
-
-	/* Implement AOS */
-
-	/* setup INPUT_ROUTE */
-	R300_STATECHANGE(r300, vir[0]);
-	for(i=0;i+1<count;i+=2){
-		dw=(r300->state.aos[i].aos_size-1)
-		| ((r300->state.aos[i].aos_reg)<<8)
-		| (r300->state.aos[i].aos_format<<14)
-		| (((r300->state.aos[i+1].aos_size-1)
-		| ((r300->state.aos[i+1].aos_reg)<<8)
-		| (r300->state.aos[i+1].aos_format<<14))<<16);
-
-		if(i+2==count){
-			dw|=(1<<(13+16));
-			}
-		r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
-		}
-	if(count & 1){
-		dw=(r300->state.aos[count-1].aos_size-1)
-		| (r300->state.aos[count-1].aos_format<<14)
-		| ((r300->state.aos[count-1].aos_reg)<<8)
-		| (1<<13);
-		r300->hw.vir[0].cmd[R300_VIR_CNTL_0+(count>>1)]=dw;
-		//fprintf(stderr, "vir0 dw=%08x\n", dw);
-		}
-	/* Set the rest of INPUT_ROUTE_0 to 0 */
-	//for(i=((count+1)>>1); i<8; i++)r300->hw.vir[0].cmd[R300_VIR_CNTL_0+i]=(0x0);
-	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->unchecked_state.count = (count+1)>>1;
-
-
-	/* Mesa assumes that all missing components are from (0, 0, 0, 1) */
-#define ALL_COMPONENTS ((R300_INPUT_ROUTE_SELECT_X<<R300_INPUT_ROUTE_X_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_Y<<R300_INPUT_ROUTE_Y_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_Z<<R300_INPUT_ROUTE_Z_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_W<<R300_INPUT_ROUTE_W_SHIFT))
-
-#define ALL_DEFAULT ((R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_X_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Y_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_ZERO<<R300_INPUT_ROUTE_Z_SHIFT) \
-		| (R300_INPUT_ROUTE_SELECT_ONE<<R300_INPUT_ROUTE_W_SHIFT))
-
-	R300_STATECHANGE(r300, vir[1]);
-
-	for(i=0;i+1<count;i+=2){
-		/* do i first.. */
-		mask=(1<<(r300->state.aos[i].aos_size*3))-1;
-		dw=(ALL_COMPONENTS & mask)
-		| (ALL_DEFAULT & ~mask)
-		| R300_INPUT_ROUTE_ENABLE;
-
-		/* i+1 */
-		mask=(1<<(r300->state.aos[i+1].aos_size*3))-1;
-		dw|=(
-		(ALL_COMPONENTS & mask)
-		| (ALL_DEFAULT & ~mask)
-		| R300_INPUT_ROUTE_ENABLE
-		)<<16;
-
-		r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(i>>1)]=dw;
-		}
-	if(count & 1){
-		mask=(1<<(r300->state.aos[count-1].aos_size*3))-1;
-		dw=(ALL_COMPONENTS & mask)
-		| (ALL_DEFAULT & ~mask)
-		| R300_INPUT_ROUTE_ENABLE;
-		r300->hw.vir[1].cmd[R300_VIR_CNTL_0+(count>>1)]=dw;
-		//fprintf(stderr, "vir1 dw=%08x\n", dw);
-		}
-	/* Set the rest of INPUT_ROUTE_1 to 0 */
-	//for(i=((count+1)>>1); i<8; i++)r300->hw.vir[1].cmd[R300_VIR_CNTL_0+i]=0x0;
-	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->unchecked_state.count = (count+1)>>1;
-
-	/* Set up input_cntl */
-
-	R300_STATECHANGE(r300, vic);
-	r300->hw.vic.cmd[R300_VIC_CNTL_0]=0x5555;  /* Hard coded value, no idea what it means */
-
-	r300->hw.vic.cmd[R300_VIC_CNTL_1]=0;
-
-	if(r300->state.render_inputs & _TNL_BIT_POS)
-		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_POS;
-
-	if(r300->state.render_inputs & _TNL_BIT_NORMAL)
-		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_NORMAL;
-
-	if(r300->state.render_inputs & _TNL_BIT_COLOR0)
-		r300->hw.vic.cmd[R300_VIC_CNTL_1]|=R300_INPUT_CNTL_COLOR;
-
-	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i))
-			r300->hw.vic.cmd[R300_VIC_CNTL_1]|=(R300_INPUT_CNTL_TC0<<i);
-
-	/* Stage 3: VAP output */
-	R300_STATECHANGE(r300, vof);
-	r300->hw.vof.cmd[R300_VOF_CNTL_0]=R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT
-					| R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
-
-	r300->hw.vof.cmd[R300_VOF_CNTL_1]=0;
-	for(i=0;i < ctx->Const.MaxTextureUnits;i++)
-		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i))
-			r300->hw.vof.cmd[R300_VOF_CNTL_1]|=(4<<(3*i));
-
-}
-#endif
 static r300TexObj default_tex_obj={
 	filter:R300_TX_MAG_FILTER_LINEAR | R300_TX_MIN_FILTER_LINEAR,
 	pitch: 0x8000,
@@ -2142,10 +1887,6 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300LineWidth(ctx, 0.0);
 
-#ifdef EXP_C
-	static int foobar=0;
-	r300->hw.lsf.cmd[1] = foobar++; //0x3a088889;
-#endif
 	r300->hw.unk4260.cmd[1] = 0;
 	r300->hw.unk4260.cmd[2] = r300PackFloat32(0.0);
 	r300->hw.unk4260.cmd[3] = r300PackFloat32(1.0);
@@ -2165,8 +1906,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk42A0.cmd[1] = 0x00000000;
 
 	r300PolygonOffset(ctx, ctx->Polygon.OffsetFactor, ctx->Polygon.OffsetUnits);
-	r300Enable(ctx, GL_POLYGON_OFFSET_POINT, ctx->Polygon.OffsetPoint);
-	r300Enable(ctx, GL_POLYGON_OFFSET_LINE, ctx->Polygon.OffsetLine);
 	r300Enable(ctx, GL_POLYGON_OFFSET_FILL, ctx->Polygon.OffsetFill);
 	
 	r300->hw.unk42C0.cmd[1] = 0x4B7FFFFF;

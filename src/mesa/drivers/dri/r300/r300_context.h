@@ -415,9 +415,6 @@ struct r300_hw_state {
 	struct r300_state_atom ps;	/* pointsize (421C) */
 	struct r300_state_atom unk4230; /* (4230) */
 	struct r300_state_atom lcntl;	/* line control */
-#ifdef EXP_C
-	struct r300_state_atom lsf;	/* line stipple factor */
-#endif
 	struct r300_state_atom unk4260; /* (4260) */
 	struct r300_state_atom unk4274; /* (4274) */
 	struct r300_state_atom unk4288; /* (4288) */

@@ -318,12 +318,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	_tnl_allow_pixel_fog(ctx, GL_FALSE);
 	_tnl_allow_vertex_fog(ctx, GL_TRUE);
 
-#if 0
-	//if(driQueryOptionb(&rmesa->optionCache, "arb_vertex_program"))
-		_mesa_enable_extension( ctx, "GL_ARB_vertex_program");
-	//if(driQueryOptionb(&rmesa->optionCache, "nv_vertex_program"))
-		_mesa_enable_extension( ctx, "GL_NV_vertex_program");
-#endif
 	/* currently bogus data */
 	ctx->Const.MaxVertexProgramInstructions=VSF_MAX_FRAGMENT_LENGTH;
 	ctx->Const.MaxVertexProgramAttribs=16; // r420

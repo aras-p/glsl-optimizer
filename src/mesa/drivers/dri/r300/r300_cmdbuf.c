@@ -339,10 +339,6 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.unk4230.cmd[0] = cmducs(0x4230, 3);
 	ALLOC_STATE( lcntl, always, 2, "lcntl", 0 );
 		r300->hw.lcntl.cmd[0] = cmducs(R300_RE_LINE_CNT, 1);
-#ifdef EXP_C
-	ALLOC_STATE( lsf, always, 2, "lsf", 0 );
-		r300->hw.lsf.cmd[0] = cmducs(R300_RE_LINE_STIPPLE_FACTOR, 1);
-#endif
 	ALLOC_STATE( unk4260, always, 4, "unk4260", 0 );
 		r300->hw.unk4260.cmd[0] = cmducs(0x4260, 3);
 	ALLOC_STATE( unk4274, always, 5, "unk4274", 0 );
@@ -482,9 +478,6 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.ps);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4230);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.lcntl);
-#ifdef EXP_C
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.lsf);
-#endif
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4260);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4274);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4288);
