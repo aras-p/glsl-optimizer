@@ -31,6 +31,7 @@
 #include "t_context.h"
 #include "t_vertex.h"
 #include "simple_list.h"
+#include "enums.h"
 
 #define X    0
 #define Y    1
@@ -60,8 +61,8 @@ struct x86_program {
    GLboolean need_emms;
    
    struct x86_reg identity;
-   struct x86_reg vp0;
-   struct x86_reg vp1;
+   struct x86_reg chan0;
+
 };
 
 
@@ -301,7 +302,7 @@ static void x86_ret( struct x86_program *p )
 static void mmx_emms( struct x86_program *p )
 {
    assert(p->need_emms);
-   emit_2ub(p, 0x0f, 0x0e);
+   emit_2ub(p, 0x0f, 0x77);
    p->need_emms = 0;
 }
 
@@ -341,6 +342,10 @@ static void emit_modrm( struct x86_program *p,
    case mod_DISP32:
       emit_1i(p, regmem.disp);
       break;
+   default:
+      _mesa_printf("unknown regmem.mod %d\n", regmem.mod);
+      abort();
+      break;
    }
 }
 
@@ -366,6 +371,10 @@ static void emit_op_modrm( struct x86_program *p,
       assert(src.mod == mod_REG);
       emit_1ub_fn(p, op_dst_is_mem, 0);
       emit_modrm(p, src, dst);
+      break;
+   default:
+      _mesa_printf("unknown dst.mod %d\n", dst.mod);
+      abort();
       break;
    }
 }
@@ -643,13 +652,13 @@ static void emit_load4f_3( struct x86_program *p,
 {
    /* Have to jump through some hoops:
     *
-    * 0 0 0 1 -- skip if reg[3] preserved over loop iterations
+    * c 0 0 0
     * c 0 0 1
     * 0 0 c 1
-    * a b c 1 
+    * a b c 1
     */
-   sse_movaps(p, dest, get_identity(p));
    sse_movss(p, dest, make_disp(arg0, 8));
+   sse_shufps(p, dest, get_identity(p), X,Y,Z,W );
    sse_shufps(p, dest, dest, Y,Z,X,W );
    sse_movlps(p, dest, arg0);
 }
@@ -658,21 +667,19 @@ static void emit_load4f_2( struct x86_program *p,
 			   struct x86_reg dest,
 			   struct x86_reg arg0 )
 {
-   /* Pull in 2 dwords, then copy the top 2 dwords with 0,1 from id.
+   /* Initialize from identity, then pull in low two words:
     */
+   sse_movups(p, dest, get_identity(p));
    sse_movlps(p, dest, arg0);
-   sse_movhps(p, dest, get_identity(p));
 }
 
 static void emit_load4f_1( struct x86_program *p, 
 			   struct x86_reg dest,
 			   struct x86_reg arg0 )
 {
-   /* Initialized with [0,0,0,1] from id, then pull in the single low
-    * word.
-    */
-   sse_movaps(p, dest, get_identity(p));
+   /* Pull in low word, then swizzle in identity */
    sse_movss(p, dest, arg0);
+   sse_shufps(p, dest, get_identity(p), X,Y,Z,W );
 }
 
 
@@ -688,7 +695,7 @@ static void emit_load3f_3( struct x86_program *p,
       sse_movups(p, dest, arg0);
    } 
    else {
-      /* c . . .
+      /* c 0 0 0
        * c c c c
        * a b c c 
        */
@@ -765,9 +772,9 @@ static void emit_load( struct x86_program *p,
 {
    if (DISASSEM)
       _mesa_printf("load %d/%d\n", sz, src_sz);
+
    load[sz-1][src_sz-1](p, dest, src);
 }
-
 
 static void emit_store4f( struct x86_program *p, 			   
 			  struct x86_reg dest,
@@ -835,6 +842,10 @@ static void emit_pack_store_4ub( struct x86_program *p,
 				 struct x86_reg dest,
 				 struct x86_reg temp )
 {
+   /* Scale by 255.0
+    */
+   sse_mulps(p, temp, p->chan0);
+
    if (p->have_sse2) {
       sse2_cvtps2dq(p, temp, temp);
       sse2_packssdw(p, temp, temp);
@@ -858,6 +869,42 @@ static GLint get_offset( const void *a, const void *b )
    return (const char *)b - (const char *)a;
 }
 
+/* Not much happens here.  Eventually use this function to try and
+ * avoid saving/reloading the source pointers each vertex (if some of
+ * them can fit in registers).
+ */
+static void get_src_ptr( struct x86_program *p,
+			 struct x86_reg srcREG,
+			 struct x86_reg vtxREG,
+			 struct tnl_clipspace_attr *a )
+{
+   struct tnl_clipspace *vtx = GET_VERTEX_STATE(p->ctx);
+   struct x86_reg ptr_to_src = make_disp(vtxREG, get_offset(vtx, &a->inputptr));
+
+   /* Load current a[j].inputptr
+    */
+   x86_mov(p, srcREG, ptr_to_src);
+}
+
+static void update_src_ptr( struct x86_program *p,
+			 struct x86_reg srcREG,
+			 struct x86_reg vtxREG,
+			 struct tnl_clipspace_attr *a )
+{
+   if (a->inputstride) {
+      struct tnl_clipspace *vtx = GET_VERTEX_STATE(p->ctx);
+      struct x86_reg ptr_to_src = make_disp(vtxREG, get_offset(vtx, &a->inputptr));
+
+      /* add a[j].inputstride (hardcoded value - could just as easily
+       * pull the stride value from memory each time).
+       */
+      x86_lea(p, srcREG, make_disp(srcREG, a->inputstride));
+      
+      /* save new value of a[j].inputptr 
+       */
+      x86_mov(p, ptr_to_src, srcREG);
+   }
+}
 
 
 /* Lots of hardcoding
@@ -871,33 +918,31 @@ static GLboolean build_vertex_emit( struct x86_program *p )
    GLcontext *ctx = p->ctx;
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
-   struct tnl_clipspace_attr *a = vtx->attr;
-   GLuint j;
+   GLuint j = 0;
 
    struct x86_reg vertexEAX = make_reg(file_REG32, reg_AX);
-   struct x86_reg srcEDI = make_reg(file_REG32, reg_CX);
+   struct x86_reg srcECX = make_reg(file_REG32, reg_CX);
    struct x86_reg countEBP = make_reg(file_REG32, reg_BP);
    struct x86_reg vtxESI = make_reg(file_REG32, reg_SI);
    struct x86_reg temp = make_reg(file_XMM, 0);
    struct x86_reg vp0 = make_reg(file_XMM, 1);
    struct x86_reg vp1 = make_reg(file_XMM, 2);
-   struct x86_reg chan0 = make_reg(file_XMM, 3);
    GLubyte *fixup, *label;
 
    p->csr = p->store;
    
    /* Push a few regs?
     */
-   x86_push(p, srcEDI);
+/*    x86_push(p, srcECX); */
    x86_push(p, countEBP);
    x86_push(p, vtxESI);
 
 
    /* Get vertex count, compare to zero
     */
-   x86_xor(p, srcEDI, srcEDI);
+   x86_xor(p, srcECX, srcECX);
    x86_mov(p, countEBP, make_fn_arg(p, 2));
-   x86_cmp(p, countEBP, srcEDI);
+   x86_cmp(p, countEBP, srcECX);
    fixup = x86_jcc_forward(p, cc_E);
 
    /* Initialize destination register. 
@@ -920,7 +965,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 
    /* always load, needed or not:
     */
-   sse_movups(p, chan0, make_disp(vtxESI, get_offset(vtx, &vtx->chan_scale[0])));
+   sse_movups(p, p->chan0, make_disp(vtxESI, get_offset(vtx, &vtx->chan_scale[0])));
    sse_movups(p, p->identity, make_disp(vtxESI, get_offset(vtx, &vtx->identity[0])));
 
    /* Note address for loop jump */
@@ -932,101 +977,190 @@ static GLboolean build_vertex_emit( struct x86_program *p )
     * other tricks - enough new ground to cover here just getting
     * things working.
     */
-   for (j = 0; j < vtx->attr_count; j++) {
-      struct x86_reg dest = make_disp(vertexEAX, vtx->attr[j].vertoffset);
-      struct x86_reg ptr_to_src = make_disp(vtxESI, get_offset(vtx, &vtx->attr[j].inputptr));
-
-      /* Load current a[j].inputptr
-       */
-      x86_mov(p, srcEDI, ptr_to_src);
+   while (j < vtx->attr_count) {
+      struct tnl_clipspace_attr *a = &vtx->attr[j];
+      struct x86_reg dest = make_disp(vertexEAX, a->vertoffset);
 
       /* Now, load an XMM reg from src, perhaps transform, then save.
        * Could be shortcircuited in specific cases:
        */
-      switch (a[j].format) {
+      switch (a->format) {
       case EMIT_1F:
-	 emit_load(p, temp, 1, deref(srcEDI), vtx->attr[j].inputsize);
+	 get_src_ptr(p, srcECX, vtxESI, a);
+	 emit_load(p, temp, 1, deref(srcECX), a->inputsize);
 	 emit_store(p, dest, 1, temp);
+	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
       case EMIT_2F:
-	 emit_load(p, temp, 2, deref(srcEDI), vtx->attr[j].inputsize);
+	 get_src_ptr(p, srcECX, vtxESI, a);
+	 emit_load(p, temp, 2, deref(srcECX), a->inputsize);
 	 emit_store(p, dest, 2, temp);
+	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
       case EMIT_3F:
 	 /* Potentially the worst case - hardcode 2+1 copying:
 	  */
-	 emit_load(p, temp, 3, deref(srcEDI), vtx->attr[j].inputsize);
-	 emit_store(p, dest, 3, temp);
+	 if (0) {
+	    get_src_ptr(p, srcECX, vtxESI, a);
+	    emit_load(p, temp, 3, deref(srcECX), a->inputsize);
+	    emit_store(p, dest, 3, temp);
+	    update_src_ptr(p, srcECX, vtxESI, a);
+	 }
+	 else {
+	    get_src_ptr(p, srcECX, vtxESI, a);
+	    emit_load(p, temp, 2, deref(srcECX), a->inputsize);
+	    emit_store(p, dest, 2, temp);
+	    if (a->inputsize > 2) {
+	       emit_load(p, temp, 1, make_disp(srcECX, 8), 1);
+	       emit_store(p, make_disp(dest,8), 1, temp);
+	    }
+	    else {
+	       sse_movss(p, make_disp(dest,8), get_identity(p));
+	    }
+	    update_src_ptr(p, srcECX, vtxESI, a);
+	 }
 	 break;
       case EMIT_4F:
-	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 get_src_ptr(p, srcECX, vtxESI, a);
+	 emit_load(p, temp, 4, deref(srcECX), a->inputsize);
 	 emit_store(p, dest, 4, temp);
+	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
       case EMIT_2F_VIEWPORT: 
-	 emit_load(p, temp, 2, deref(srcEDI), vtx->attr[j].inputsize);
+	 get_src_ptr(p, srcECX, vtxESI, a);
+	 emit_load(p, temp, 2, deref(srcECX), a->inputsize);
 	 sse_mulps(p, temp, vp0);
 	 sse_addps(p, temp, vp1);
 	 emit_store(p, dest, 2, temp);
+	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
       case EMIT_3F_VIEWPORT: 
-	 emit_load(p, temp, 3, deref(srcEDI), vtx->attr[j].inputsize);
+	 get_src_ptr(p, srcECX, vtxESI, a);
+	 emit_load(p, temp, 3, deref(srcECX), a->inputsize);
 	 sse_mulps(p, temp, vp0);
 	 sse_addps(p, temp, vp1);
 	 emit_store(p, dest, 3, temp);
+	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
       case EMIT_4F_VIEWPORT: 
-	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 get_src_ptr(p, srcECX, vtxESI, a);
+	 emit_load(p, temp, 4, deref(srcECX), a->inputsize);
 	 sse_mulps(p, temp, vp0);
 	 sse_addps(p, temp, vp1);
 	 emit_store(p, dest, 4, temp);
+	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
       case EMIT_3F_XYW:
-	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 get_src_ptr(p, srcECX, vtxESI, a);
+	 emit_load(p, temp, 4, deref(srcECX), a->inputsize);
 	 sse_shufps(p, temp, temp, X, Y, W, Z);
 	 emit_store(p, dest, 3, temp);
+	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
 
-	 /* Try and bond 3ub + 1ub pairs into a single 4ub operation?
-	  */	 
       case EMIT_1UB_1F:	 
+	 /* Test for PAD3 + 1UB:
+	  */
+	 if (j > 0 &&
+	     a[-1].vertoffset + a[-1].vertattrsize <= a->vertoffset - 3)
+	 {
+	    get_src_ptr(p, srcECX, vtxESI, a);
+	    emit_load(p, temp, 1, deref(srcECX), a->inputsize);
+	    sse_shufps(p, temp, temp, X, X, X, X);
+	    emit_pack_store_4ub(p, make_disp(dest, -3), temp); /* overkill! */
+	    update_src_ptr(p, srcECX, vtxESI, a);
+	 }
+	 else {
+	    _mesa_printf("Can't emit 1ub %x %x %d\n", a->vertoffset, a[-1].vertoffset, a[-1].vertattrsize );
+	    return GL_FALSE;
+	 }
+	 break;
       case EMIT_3UB_3F_RGB:
       case EMIT_3UB_3F_BGR:
-	 _mesa_printf("non-implemneted format %d\n", a[j].format);
+	 /* Test for 3UB + PAD1:
+	  */
+	 if (j == vtx->attr_count - 1 ||
+	     a[1].vertoffset >= a->vertoffset + 4) {
+	    get_src_ptr(p, srcECX, vtxESI, a);
+	    emit_load(p, temp, 3, deref(srcECX), a->inputsize);
+	    if (a->format == EMIT_3UB_3F_BGR)
+	       sse_shufps(p, temp, temp, Z, Y, X, W);
+	    emit_pack_store_4ub(p, dest, temp);
+	    update_src_ptr(p, srcECX, vtxESI, a);
+	 }
+	 /* Test for 3UB + 1UB:
+	  */
+	 else if (j < vtx->attr_count - 1 &&
+		  a[1].format == EMIT_1UB_1F &&
+		  a[1].vertoffset == a->vertoffset + 3) {
+	    get_src_ptr(p, srcECX, vtxESI, a);
+	    emit_load(p, temp, 3, deref(srcECX), a->inputsize);
+	    update_src_ptr(p, srcECX, vtxESI, a);
+
+	    /* Make room for incoming value:
+	     */
+	    sse_shufps(p, temp, temp, W, X, Y, Z);
+
+	    get_src_ptr(p, srcECX, vtxESI, &a[1]);
+	    emit_load(p, temp, 1, deref(srcECX), a[1].inputsize);
+	    update_src_ptr(p, srcECX, vtxESI, &a[1]);
+
+	    /* Rearrange and possibly do BGR conversion:
+	     */
+	    if (a->format == EMIT_3UB_3F_BGR)
+	       sse_shufps(p, temp, temp, W, Z, Y, X);
+	    else
+	       sse_shufps(p, temp, temp, Y, Z, W, X);
+
+	    emit_pack_store_4ub(p, dest, temp);
+	    j++;		/* NOTE: two attrs consumed */
+	 }
+	 else {
+	    _mesa_printf("Can't emit 3ub\n");
+	 }
 	 return GL_FALSE;	/* add this later */
+	 break;
 
       case EMIT_4UB_4F_RGBA:
-	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
-	 sse_mulps(p, temp, chan0);
+	 get_src_ptr(p, srcECX, vtxESI, a);
+	 emit_load(p, temp, 4, deref(srcECX), a->inputsize);
 	 emit_pack_store_4ub(p, dest, temp);
+	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
       case EMIT_4UB_4F_BGRA:
-	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 get_src_ptr(p, srcECX, vtxESI, a);
+	 emit_load(p, temp, 4, deref(srcECX), a->inputsize);
 	 sse_shufps(p, temp, temp, Z, Y, X, W);
-	 sse_mulps(p, temp, chan0);
 	 emit_pack_store_4ub(p, dest, temp);
+	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
       case EMIT_4UB_4F_ARGB:
-	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 get_src_ptr(p, srcECX, vtxESI, a);
+	 emit_load(p, temp, 4, deref(srcECX), a->inputsize);
 	 sse_shufps(p, temp, temp, W, X, Y, Z);
-	 sse_mulps(p, temp, chan0);
 	 emit_pack_store_4ub(p, dest, temp);
+	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
       case EMIT_4UB_4F_ABGR:
-	 emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	 get_src_ptr(p, srcECX, vtxESI, a);
+	 emit_load(p, temp, 4, deref(srcECX), a->inputsize);
 	 sse_shufps(p, temp, temp, W, Z, Y, X);
-	 sse_mulps(p, temp, chan0);
 	 emit_pack_store_4ub(p, dest, temp);
+	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
       case EMIT_4CHAN_4F_RGBA:
 	 switch (CHAN_TYPE) {
 	 case GL_UNSIGNED_BYTE:
-	    emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
-	    sse_mulps(p, temp, chan0);
+	    get_src_ptr(p, srcECX, vtxESI, a);
+	    emit_load(p, temp, 4, deref(srcECX), a->inputsize);
 	    emit_pack_store_4ub(p, dest, temp);
+	    update_src_ptr(p, srcECX, vtxESI, a);
 	    break;
 	 case GL_FLOAT:
-	    emit_load(p, temp, 4, deref(srcEDI), vtx->attr[j].inputsize);
+	    get_src_ptr(p, srcECX, vtxESI, a);
+	    emit_load(p, temp, 4, deref(srcECX), a->inputsize);
 	    emit_store(p, dest, 4, temp);
+	    update_src_ptr(p, srcECX, vtxESI, a);
 	    break;
 	 case GL_UNSIGNED_SHORT:
 	 default:
@@ -1035,19 +1169,13 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 	 }
 	 break;
       default:
-	 _mesa_printf("unknown a[%d].format %d\n", j, a[j].format);
+	 _mesa_printf("unknown a[%d].format %d\n", j, a->format);
 	 return GL_FALSE;	/* catch any new opcodes */
       }
       
-      /* add a[j].inputstride (hardcoded value - could just as easily
-       * pull the stride value from memory each time).
+      /* Increment j by at least 1 - may have been incremented above also:
        */
-      x86_lea(p, srcEDI, make_disp(srcEDI, a[j].inputstride));
-      
-      /* save new value of a[j].inputptr 
-       */
-      x86_mov(p, ptr_to_src, srcEDI);
-
+      j++;
    }
 
    /* Next vertex:
@@ -1073,7 +1201,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
     */
    x86_pop(p, get_base_reg(vtxESI));
    x86_pop(p, countEBP);
-   x86_pop(p, srcEDI);
+/*    x86_pop(p, srcECX); */
    x86_ret(p);
 
    vtx->emit = (tnl_emit_func)p->store;
@@ -1091,16 +1219,18 @@ void _tnl_generate_sse_emit( GLcontext *ctx )
 
    p.inputs_safe = 1;		/* for now */
    p.outputs_safe = 1;		/* for now */
-   p.have_sse2 = 0;		/* testing */
+   p.have_sse2 = 1;		/* testing */
    p.identity = make_reg(file_XMM, 6);
-   
+   p.chan0 = make_reg(file_XMM, 7);
+
    if (build_vertex_emit(&p)) {
       _tnl_register_fastpath( vtx, GL_TRUE );
       if (DISASSEM)
 	 _mesa_printf("disassemble 0x%x 0x%x\n", p.store, p.csr);
    }
    else {
-      /* Note the failure:
+      /* Note the failure so that we don't keep trying to codegen an
+       * impossible state:
        */
       _tnl_register_fastpath( vtx, GL_FALSE );
       FREE(p.store);
@@ -1109,4 +1239,10 @@ void _tnl_generate_sse_emit( GLcontext *ctx )
    (void)sse2_movd;
    (void)x86_inc;
    (void)x86_xor;
+   (void)mmx_movq;
+   (void)sse_movlhps;
+   (void)sse_movhps;
+   (void)sse_movaps;
+   (void)sse2_packsswb;
+   (void)sse2_pshufd;
 }
