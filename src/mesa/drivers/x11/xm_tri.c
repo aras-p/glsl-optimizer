@@ -1435,7 +1435,6 @@ static swrast_tri_func get_triangle_func( GLcontext *ctx )
    struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *)
       ctx->DrawBuffer->_ColorDrawBuffers[0][0];
 
-   return NULL;
 #ifdef DEBUG
    triFuncName = NULL;
 #endif
