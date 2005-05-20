@@ -83,8 +83,8 @@ static void Display( void )
    DO_FUNC( glTexCoord3fv, (v) );
    DO_FUNC( glMultiTexCoord2fv, (GL_TEXTURE0, v) );
    DO_FUNC( glMultiTexCoord2f, (GL_TEXTURE0, 0.0, 0.0) );
-   DO_FUNC( glFogCoordfv, (v) );
-   DO_FUNC( glFogCoordf, (0.5) );
+   DO_FUNC( glFogCoordfvEXT, (v) );
+   DO_FUNC( glFogCoordfEXT, (0.5) );
 
    glEnd();
 
