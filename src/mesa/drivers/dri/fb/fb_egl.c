@@ -453,7 +453,6 @@ fbCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config, EGLContext sh
    c->Base.Config = conf;
    c->Base.DrawSurface = EGL_NO_SURFACE;
    c->Base.ReadSurface = EGL_NO_SURFACE;
-   printf("fbCreateContext\n");
 
    /* generate handle and insert into hash table */
    _eglSaveContext(&c->Base);
@@ -640,7 +639,6 @@ fbMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw, EGLSurface read,
    } else
       _mesa_make_current( NULL, NULL, NULL );
 
-   printf("eglMakeCurrent()\n");
    return EGL_TRUE;
 }
 

@@ -1192,8 +1192,10 @@ execute_program( GLcontext *ctx,
                fetch_texel( ctx, texcoord, 
 			    span->array->lambda[inst->TexSrcUnit][column],
 			    inst->TexSrcUnit, color );
+#if DEBUG_FRAG
                if (color[3])
                   printf("color[3] = %f\n", color[3]);
+#endif
                store_vector4( inst, machine, color );
             }
             break;
