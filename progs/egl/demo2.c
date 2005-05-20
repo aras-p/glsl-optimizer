@@ -9,7 +9,7 @@
 
 #include <GLES/egl.h>
 
-//#define FRONTBUFFER
+/*#define FRONTBUFFER*/
 
 static void _subset_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 {
