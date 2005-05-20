@@ -531,9 +531,7 @@
       if (z < zRow[i]) {			\
 	 pRow[i] = (PIXEL_TYPE) p;		\
          zRow[i] = z;				\
-         if (span.y == 100) printf("pass\n");\
       }						\
-      else   if (span.y == 100) printf("fail\n");\
       span.z += span.zStep;			\
    }
 
