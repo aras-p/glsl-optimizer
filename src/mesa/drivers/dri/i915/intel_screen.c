@@ -405,28 +405,30 @@ intelFillInModes( unsigned pixel_bits, unsigned depth_bits,
    GLenum fb_format;
    GLenum fb_type;
 
-   /* GLX_SWAP_COPY_OML is only supported because the MGA driver doesn't
+   /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
     * support pageflipping at all.
     */
    static const GLenum back_buffer_modes[] = {
       GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
    };
 
-   u_int8_t depth_bits_array[2];
-   u_int8_t stencil_bits_array[2];
+   u_int8_t depth_bits_array[3];
+   u_int8_t stencil_bits_array[3];
 
 
    depth_bits_array[0] = 0;
    depth_bits_array[1] = depth_bits;
+   depth_bits_array[2] = depth_bits;
 
    /* Just like with the accumulation buffer, always provide some modes
     * with a stencil buffer.  It will be a sw fallback, but some apps won't
     * care about that.
     */
    stencil_bits_array[0] = 0;
-   stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
+   stencil_bits_array[1] = 0;
+   stencil_bits_array[2] = (stencil_bits == 0) ? 8 : stencil_bits;
 
-   depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
+   depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
    back_buffer_factor  = (have_back_buffer) ? 3 : 1;
 
    num_modes = depth_buffer_factor * back_buffer_factor * 4;
