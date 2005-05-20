@@ -33,6 +33,7 @@
 
 #define MAX_CONFIGS 1000
 #define MAX_MODES 1000
+#define MAX_SCREENS 10
 
 
 /**
@@ -98,11 +99,11 @@ PrintModes(EGLDisplay d)
 #ifdef EGL_MESA_screen_surface
    const char *extensions = eglQueryString(d, EGL_EXTENSIONS);
    if (strstr(extensions, "EGL_MESA_screen_surface")) {
-      EGLScreenMESA screens[20];
+      EGLScreenMESA screens[MAX_SCREENS];
       EGLint numScreens = 1, scrn;
       EGLModeMESA modes[MAX_MODES];
 
-      eglGetScreensMESA(d, screens, 20, &numScreens);
+      eglGetScreensMESA(d, screens, MAX_SCREENS, &numScreens);
       printf("Number of Screens: %d\n\n", numScreens);
 
       for (scrn = 0; scrn < numScreens; scrn++) {
