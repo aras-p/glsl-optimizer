@@ -97,7 +97,8 @@
 
 struct r300_fragment_program_swizzle r300_swizzle [512] = {
 	/* XXX */
-	{0,{0,0,0,0},{0,0,0,0,0,0,0,0}},
+	{1,{0,0,0,0},{ I0_XXX, I1_XYZ,
+		       0, 0, 0, 0, 0, 0 } },
 	/* YXX */
 	{2,{0,0,0,0},{ I0_YYY, I1_X__,
 		       I0_XXX, I1__YZ,
@@ -157,7 +158,8 @@ struct r300_fragment_program_swizzle r300_swizzle [512] = {
 		       I0_XXX, I1_X__,
 		       0,0,0,0}},
 	/* YZX */
-	{0,{0,0,0,0},{0,0,0,0,0,0,0,0}},
+	{1,{0,0,0,0},{ I0_YZX, I1_XYZ,
+		       0, 0, 0, 0, 0, 0 } },
 	/* ZZX */
 	{2,{0,0,0,0},{ I0_YZX, I1__YZ,
 		       I0_ZZZ, I1_X__,0,0,0,0}},
@@ -270,7 +272,8 @@ struct r300_fragment_program_swizzle r300_swizzle [512] = {
 		       I0_XXX, I1__Y_,
 		       0,0,0,0}},
 	/* ZXY */
-	{0,{0,0,0,0},{0,0,0,0,0,0,0,0}},
+	{1,{0,0,0,0},{ I0_ZXY, I1_XYZ,
+		       0, 0, 0, 0, 0, 0 } },
 	/* WXY */
 	{2,{0,0,0,0},{ I0_WZY, I1_X__,
 		       I0_ZXY, I1__YZ,
@@ -289,7 +292,8 @@ struct r300_fragment_program_swizzle r300_swizzle [512] = {
 		       I0_XXX, I1_X__,
 		       0,0,0,0}},
 	/* YYY */
-	{0,{0,0,0,0},{0,0,0,0,0,0,0,0}},
+	{1,{0,0,0,0},{ I0_YYY, I1_XYZ,
+		       0, 0, 0, 0, 0, 0 } },
 	/* ZYY */
 	{2,{0,0,0,0},{ I0_YYY, I1__YZ,
 		       I0_ZZZ, I1_X__,
@@ -320,7 +324,8 @@ struct r300_fragment_program_swizzle r300_swizzle [512] = {
 		       I0_ZZZ, I1_X__,
 		       0,0,0,0}},
 	/* WZY */
-	{0,{0,0,0,0},{0,0,0,0,0,0,0,0}},
+	{1,{0,0,0,0},{ I0_WZY, I1_XYZ,
+		       0, 0, 0, 0, 0, 0 } },
 	/* 0ZY */
 	{2,{0,0,0,0},{ I0_WZY, I1__YZ,
 		       I0_000, I1_X__ | I1_CST,
@@ -478,7 +483,8 @@ struct r300_fragment_program_swizzle r300_swizzle [512] = {
 		       I0_YYY, I1_X__,
 		       0,0,0,0}},
 	/* ZZZ */
-	{0,{0,0,0,0},{0,0,0,0,0,0,0,0}},
+	{1,{0,0,0,0},{ I0_ZZZ, I1_XYZ,
+		       0, 0, 0, 0, 0, 0 } },
 	/* WZZ */
 	{2,{0,0,0,0},{ I0_ZZZ, I1__YZ,
 		       I0_WZY, I1_X__,
