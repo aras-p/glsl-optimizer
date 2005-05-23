@@ -823,6 +823,13 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_FPITX_DST_MASK               (31 << 6)
 #       define R300_FPITX_IMAGE_SHIFT            11
 #       define R300_FPITX_IMAGE_MASK             (15 << 11) /* GUESS based on layout and native limits */
+/* Unsure if these are opcodes, or some kind of bitfield, but this is how
+ * they were set when I checked
+ */
+#		define R300_FPITX_OPCODE_SHIFT			15
+#			define R300_FPITX_OP_TEX			1
+#			define R300_FPITX_OP_TXP			3
+#			define R300_FPITX_OP_TXB			4
 
 /* ALU
 // The ALU instructions register blocks are enumerated according to the order
@@ -997,13 +1004,13 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_FPI2_ARG1A_MASK              (31 << 7)
 #       define R300_FPI2_ARG1A_NEG               (1 << 12)
 #       define R300_FPI2_ARG2A_SHIFT             14
-#       define R300_FPI2_AEG2A_MASK              (31 << 14)
+#       define R300_FPI2_ARG2A_MASK              (31 << 14)
 #       define R300_FPI2_ARG2A_NEG               (1 << 19)
 #       define R300_FPI2_SPECIAL_LRP             (1 << 21)
 #       define R300_FPI2_OUTA_MAD                (0 << 23)
 #       define R300_FPI2_OUTA_DP4                (1 << 23)
-#       define R300_RPI2_OUTA_MIN                (2 << 23)
-#       define R300_RPI2_OUTA_MAX                (3 << 23)
+#       define R300_FPI2_OUTA_MIN                (2 << 23)
+#       define R300_FPI2_OUTA_MAX                (3 << 23)
 #       define R300_FPI2_OUTA_CMP                (6 << 23)
 #       define R300_FPI2_OUTA_FRC                (7 << 23)
 #       define R300_FPI2_OUTA_EX2                (8 << 23)

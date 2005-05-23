@@ -5,6 +5,9 @@
 #include "program.h"
 #include "r300_context.h"
 #include "nvvertprog.h"
+#if USE_ARB_F_P == 1
+#include "r300_fragprog.h"
+#endif
 
 static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
 {
@@ -13,6 +16,9 @@ static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
 	
 	switch(target){
 		case GL_VERTEX_PROGRAM_ARB:
+#if USE_ARB_F_P == 1
+		case GL_FRAGMENT_PROGRAM_ARB:
+#endif
 			//rmesa->current_vp = vp;
 		break;
 		default:
@@ -24,7 +30,11 @@ static void r300BindProgram(GLcontext *ctx, GLenum target, struct program *prog)
 static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 {
 	struct r300_vertex_program *vp;
+#if USE_ARB_F_P == 1
+	struct r300_fragment_program *fp;
+#else
 	struct fragment_program *fp;
+#endif
 	struct ati_fragment_shader *afs;
 	
 	switch(target){
@@ -33,9 +43,14 @@ static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 		return _mesa_init_vertex_program(ctx, &vp->mesa_program, target, id);
 		
 		case GL_FRAGMENT_PROGRAM_ARB:
+#if USE_ARB_F_P == 1
+			fp=CALLOC_STRUCT(r300_fragment_program);
+			fp->ctx = ctx;
+		return _mesa_init_fragment_program(ctx, &fp->mesa_program, target, id);
+#else
 			fp=CALLOC_STRUCT(fragment_program);
 		return _mesa_init_fragment_program(ctx, fp, target, id);
-		
+#endif	
 		case GL_FRAGMENT_PROGRAM_NV:
 			fp=CALLOC_STRUCT(fragment_program);
 		return _mesa_init_fragment_program(ctx, fp, target, id);
@@ -64,15 +79,20 @@ void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 				struct program *prog)
 {
 	struct r300_vertex_program *vp=(void *)prog;
-		
+#if USE_ARB_F_P == 1
+	struct r300_fragment_program *fp=(void *)prog;
+#endif
+	
 	switch(target) {
 	case GL_VERTEX_PROGRAM_ARB:
 		/*vp->translated=GL_FALSE;
 		translate_vertex_shader(vp);*/
 		//debug_vp(ctx, vp);
 	break;
-	
 	case GL_FRAGMENT_PROGRAM_ARB:
+#if USE_ARB_F_P == 1
+		fp->translated = GL_FALSE;
+#endif
 	break;
 	}
 }

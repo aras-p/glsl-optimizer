@@ -58,10 +58,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_reg.h"
 #include "r300_program.h"
 #include "r300_emit.h"
+#if USE_ARB_F_P == 1
+#include "r300_fragprog.h"
+#else
 #include "r300_fixed_pipelines.h"
+#include "r300_texprog.h"
+#endif
 #include "r300_tex.h"
 #include "r300_maos.h"
-#include "r300_texprog.h"
 
 static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
 {
@@ -1094,6 +1098,99 @@ void r300_setup_textures(GLcontext *ctx)
 		fprintf(stderr, "TX_ENABLE: %08x  max_texture_unit=%d\n", r300->hw.txe.cmd[R300_TXE_ENABLE], max_texture_unit);
 }
 
+#if USE_ARB_F_P == 1
+void r300_setup_rs_unit(GLcontext *ctx)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	int i, vp_reg, fp_reg, in_texcoords;
+	/* I'm still unsure if these are needed */
+	GLuint interp_magic[8] = {
+		0x00,
+		0x40,
+		0x80,
+		0xC0,
+		0x00,
+		0x00,
+		0x00,
+		0x00
+	};
+	GLuint OutputsWritten;
+	GLuint InputsRead;
+	
+	if(hw_tcl_on)
+		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
+	else
+		OutputsWritten = r300->state.render_inputs;
+
+	if (ctx->FragmentProgram._Current)
+		InputsRead = ctx->FragmentProgram._Current->InputsRead;
+	else {
+		fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
+		return; /* This should only ever happen once.. */
+	}
+	/* This needs to be rewritten - it is a hack at best */
+	R300_STATECHANGE(r300, ri);
+	R300_STATECHANGE(r300, rc);
+	R300_STATECHANGE(r300, rr);
+	
+	vp_reg = fp_reg = in_texcoords = 0;
+	r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0;
+
+	for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
+		if (OutputsWritten & (hw_tcl_on ? (1 << (VERT_RESULT_TEX0+i)) : (_TNL_BIT_TEX0<<i)))
+			in_texcoords++;
+		
+		r300->hw.ri.cmd[R300_RI_INTERP_0+i] = 0
+				| R300_RS_INTERP_USED
+				| (vp_reg << R300_RS_INTERP_SRC_SHIFT)
+				| interp_magic[i];
+
+		if (InputsRead & (FRAG_BIT_TEX0<<i)) {
+			assert(r300->state.texture.tc_count != 0);
+			r300->hw.rr.cmd[R300_RR_ROUTE_0 + fp_reg] = 0
+					| R300_RS_ROUTE_ENABLE
+					| i /* source INTERP */
+					| (fp_reg << R300_RS_ROUTE_DEST_SHIFT);
+			
+			if (OutputsWritten & (hw_tcl_on ? (1 << (VERT_RESULT_TEX0+i)) : (_TNL_BIT_TEX0<<i))) {
+				vp_reg++;
+			} else {
+				/* Unsure of how to handle this situation, for now print errors and
+				 * the program will just recieve bogus data
+				 */
+				fprintf(stderr, "fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
+			}
+			InputsRead &= ~(FRAG_BIT_TEX0<<i);
+			fp_reg++;
+		} 
+	}
+
+	if (InputsRead & FRAG_BIT_COL0) {
+		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL0) : _TNL_BIT_COLOR0)))
+			fprintf(stderr, "fragprog wants col0, vp doesn't provide it\n");
+		r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0
+				| R300_RS_ROUTE_0_COLOR
+				| (fp_reg << R300_RS_ROUTE_0_COLOR_DEST_SHIFT);
+		InputsRead &= ~FRAG_BIT_COL0;
+	}
+
+	r300->hw.rc.cmd[1] = 0
+			| (in_texcoords << R300_RS_CNTL_TC_CNT_SHIFT)
+			| R300_RS_CNTL_0_UNKNOWN_7
+			| R300_RS_CNTL_0_UNKNOWN_18;
+
+	if (r300->state.texture.tc_count > 0) {
+			r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, fp_reg);
+			r300->hw.rc.cmd[2] = 0xC0 | (fp_reg-1); /* index of highest RS_ROUTE used*/
+	} else {
+			r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, 1);
+			r300->hw.rc.cmd[2] = 0x0;
+	}
+
+	if (InputsRead)
+		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
+}
+#else
 void r300_setup_rs_unit(GLcontext *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
@@ -1120,7 +1217,6 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	R300_STATECHANGE(r300, rc);
 	R300_STATECHANGE(r300, rr);
 	
-#if 1
 	cur_reg = 0;
 	r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0;
 
@@ -1163,48 +1259,8 @@ void r300_setup_rs_unit(GLcontext *ctx)
 
 
 //	fprintf(stderr, "rendering with %d texture co-ordinate sets\n", cur_reg);
-	
-#else
-	for(i = 1; i <= 8; ++i)
-		r300->hw.ri.cmd[i] = 0x00d10000;
-	r300->hw.ri.cmd[R300_RI_INTERP_1] |= R300_RS_INTERP_1_UNKNOWN;
-	r300->hw.ri.cmd[R300_RI_INTERP_2] |= R300_RS_INTERP_2_UNKNOWN;
-	r300->hw.ri.cmd[R300_RI_INTERP_3] |= R300_RS_INTERP_3_UNKNOWN;
-
-#if 1
-	for(i = 2; i <= 8; ++i)
-		r300->hw.ri.cmd[i] |= 4;
-#endif
-
-	for(i = 1; i <= 8; ++i)
-		r300->hw.rr.cmd[i] = 0;
-	/* textures enabled ? */
-	if(r300->state.texture.tc_count>0){
-
-		/* This code only really works with one set of texture coordinates */
-
-		/* The second constant is needed to get glxgears display anything .. */
-		r300->hw.rc.cmd[1] = R300_RS_CNTL_0_UNKNOWN_7
-				| R300_RS_CNTL_0_UNKNOWN_18
-				| (r300->state.texture.tc_count<<R300_RS_CNTL_TC_CNT_SHIFT);
-		r300->hw.rc.cmd[2] = 0xc0;
-
-
-		((drm_r300_cmd_header_t*)r300->hw.rr.cmd)->unchecked_state.count = 1;
-		r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0x24008;
-
-		} else {
-
-		/* The second constant is needed to get glxgears display anything .. */
-		r300->hw.rc.cmd[1] = R300_RS_CNTL_0_UNKNOWN_7 | R300_RS_CNTL_0_UNKNOWN_18;
-		r300->hw.rc.cmd[2] = 0;
-
-		((drm_r300_cmd_header_t*)r300->hw.rr.cmd)->unchecked_state.count = 1;
-		r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0x4000;
-
-		}
-#endif
 }
+#endif // USE_ARB_F_P
 
 #define vpucount(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
 
@@ -1477,7 +1533,109 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
 #endif
 }
 
+/* This is probably wrong for some values, I need to test this
+ * some more.  Range checking would be a good idea also..
+ * 
+ * But it works for most things.  I'll fix it later if someone
+ * else with a better clue doesn't
+ */
+unsigned int r300PackFloat24(float f)
+{
+	float mantissa;
+	int exponent;
+	unsigned int float24 = 0;
 
+	if (f == 0.0) return 0;
+
+	mantissa = frexpf(f, &exponent);
+
+	/* Handle -ve */
+	if (mantissa < 0) {
+		float24 |= (1<<23);
+		mantissa = mantissa * -1.0;
+	}
+	/* Handle exponent, bias of 63 */
+	exponent += 62;
+	float24 |= (exponent << 16);
+	/* Kill 7 LSB of mantissa */
+	float24 |= (r300PackFloat32(mantissa) & 0x7FFFFF)  >> 7;
+
+	return float24;
+}
+
+#if USE_ARB_F_P == 1
+void r300SetupPixelShader(r300ContextPtr rmesa)
+{
+	GLcontext *ctx = rmesa->radeon.glCtx;
+	struct r300_fragment_program *rp = ctx->FragmentProgram._Current;
+	int i,k;
+
+	if (!rp)	/* should only happenen once, just after context is created */
+		return;
+	
+	if (!rp->translated) {
+		translate_fragment_shader(ctx->FragmentProgram._Current);
+		if (!rp->translated) {
+			fprintf(stderr, "%s: No valid fragment shader, exiting\n", __func__);
+			exit(-1);
+		}
+	}
+	
+	R300_STATECHANGE(rmesa, fpt);
+	for(i=0;i<rp->tex.length;i++)
+		rmesa->hw.fpt.cmd[R300_FPT_INSTR_0+i]=rp->tex.inst[i];
+	rmesa->hw.fpt.cmd[R300_FPT_CMD_0]=cmducs(R300_PFS_TEXI_0, rp->tex.length);
+
+#define OUTPUT_FIELD(st, reg, field)  \
+		R300_STATECHANGE(rmesa, st); \
+		for(i=0;i<=rp->alu_end;i++) \
+			rmesa->hw.st.cmd[R300_FPI_INSTR_0+i]=rp->alu.inst[i].field;\
+		rmesa->hw.st.cmd[R300_FPI_CMD_0]=cmducs(reg, rp->alu_end+1);
+
+	OUTPUT_FIELD(fpi[0], R300_PFS_INSTR0_0, inst0);
+	OUTPUT_FIELD(fpi[1], R300_PFS_INSTR1_0, inst1);
+	OUTPUT_FIELD(fpi[2], R300_PFS_INSTR2_0, inst2);
+	OUTPUT_FIELD(fpi[3], R300_PFS_INSTR3_0, inst3);
+#undef OUTPUT_FIELD
+
+	R300_STATECHANGE(rmesa, fp);
+	/* I just want to say, the way these nodes are stored.. weird.. */
+	for (i=0,k=(4-(rp->cur_node+1));i<4;i++,k++) {
+		if (i<(rp->cur_node+1)) {
+			rmesa->hw.fp.cmd[R300_FP_NODE0+k]=
+				(rp->node[i].alu_offset << R300_PFS_NODE_ALU_OFFSET_SHIFT)
+				| (rp->node[i].alu_end  << R300_PFS_NODE_ALU_END_SHIFT)
+				| (rp->node[i].tex_offset << R300_PFS_NODE_TEX_OFFSET_SHIFT)
+				| (rp->node[i].tex_end  << R300_PFS_NODE_TEX_END_SHIFT)
+				| ( (k==3) ? R300_PFS_NODE_LAST_NODE : 0);
+		} else {
+			rmesa->hw.fp.cmd[R300_FP_NODE0+(3-i)] = 0;
+		}
+	}
+
+		/*  PFS_CNTL_0 */
+	rmesa->hw.fp.cmd[R300_FP_CNTL0]=
+		rp->cur_node
+		| (rp->first_node_has_tex<<3);
+		/* PFS_CNTL_1 */
+	rmesa->hw.fp.cmd[R300_FP_CNTL1]=rp->max_temp_idx;
+		/* PFS_CNTL_2 */
+	rmesa->hw.fp.cmd[R300_FP_CNTL2]=
+		(rp->alu_offset << R300_PFS_CNTL_ALU_OFFSET_SHIFT)
+		| (rp->alu_end << R300_PFS_CNTL_ALU_END_SHIFT)
+		| (rp->tex_offset << R300_PFS_CNTL_TEX_OFFSET_SHIFT)
+		| (rp->tex_end << R300_PFS_CNTL_TEX_END_SHIFT);
+
+	R300_STATECHANGE(rmesa, fpp);
+	for(i=0;i<rp->param_length;i++){
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+0]=r300PackFloat24(rp->param[i].x);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+1]=r300PackFloat24(rp->param[i].y);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+2]=r300PackFloat24(rp->param[i].z);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+3]=r300PackFloat24(rp->param[i].w);
+	}
+	rmesa->hw.fpp.cmd[R300_FPP_CMD_0]=cmducs(R300_PFS_PARAM_0_X, rp->param_length*4);
+}
+#else
 /* just a skeleton for now.. */
 void r300GenerateTexturePixelShader(r300ContextPtr r300)
 {
@@ -1652,6 +1810,7 @@ int i,k;
 	rmesa->hw.fpp.cmd[R300_FPP_CMD_0]=cmducs(R300_PFS_PARAM_0_X, rmesa->state.pixel_shader.param_length);
 
 }
+#endif
 
 /**
  * Called by Mesa after an internal state update.
@@ -2118,3 +2277,4 @@ void r300InitStateFuncs(struct dd_function_table* functions)
 	functions->PolygonOffset = r300PolygonOffset;
 	functions->PolygonMode = r300PolygonMode;
 }
+

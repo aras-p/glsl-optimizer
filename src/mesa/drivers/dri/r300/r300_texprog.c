@@ -17,6 +17,7 @@
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 #include "r300_context.h"
+#if USE_ARB_F_P == 0
 #include "r300_ioctl.h"
 #include "r300_state.h"
 #include "r300_reg.h"
@@ -265,4 +266,5 @@ void r300GenerateTextureFragmentShader(r300ContextPtr r300)
 	p->alu_end		= ps->program.alu.length - 1;
 	p->alu_offset	= 0;
 }
+#endif // USE_ARB_F_P == 0
 

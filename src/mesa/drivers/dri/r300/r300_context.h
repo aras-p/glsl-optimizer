@@ -47,6 +47,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "colormac.h"
 #include "radeon_context.h"
 
+#define USE_ARB_F_P 1
+
 struct r300_context;
 typedef struct r300_context r300ContextRec;
 typedef struct r300_context *r300ContextPtr;
@@ -83,7 +85,11 @@ typedef GLubyte uint8_t;
       and pixel_shader structure later on */
 #define CARD32 GLuint
 #include "vertex_shader.h"
+#if USE_ARB_F_P == 1
+#include "r300_fragprog.h"
+#else
 #include "pixel_shader.h"
+#endif
 #undef CARD32
 
 static __inline__ uint32_t r300PackFloat32(float fl)
@@ -588,6 +594,67 @@ struct r300_vertex_program {
 	int tex_regs[8];
 };
 
+#if USE_ARB_F_P == 1
+#define PFS_MAX_ALU_INST	64
+#define PFS_MAX_TEX_INST	64
+#define PFS_MAX_TEX_INDIRECT 4
+#define PFS_NUM_TEMP_REGS	32
+#define PFS_NUM_CONST_REGS	32
+struct r300_fragment_program {
+	struct fragment_program mesa_program;
+
+	GLcontext *ctx;
+	GLboolean translated;
+	GLboolean error;
+
+	struct {
+		int length;
+		GLuint inst[PFS_MAX_TEX_INST];
+	} tex;
+
+	struct {
+		struct {
+			GLuint inst0;
+			GLuint inst1;
+			GLuint inst2;
+			GLuint inst3;
+		} inst[PFS_MAX_ALU_INST];
+	} alu;
+	int v_pos;
+	int s_pos;
+
+	struct {
+		int tex_offset;
+		int tex_end;
+		int alu_offset;
+		int alu_end;
+	} node[4];
+	int cur_node;
+	int first_node_has_tex;
+
+	int alu_offset;
+	int alu_end;
+	int tex_offset;
+	int tex_end;
+
+	struct {
+		float x;
+		float y;
+		float z;
+		float w;
+	} param[32];
+	int param_length;
+	
+	GLuint temps[PFS_NUM_TEMP_REGS];
+	int temp_in_use;
+	GLuint used_in_node;
+	GLuint dest_in_node;
+	GLuint inputs[32]; /* don't actually need 32... */
+
+	int hwreg_in_use;
+	int max_temp_idx;
+};
+#else
 /* 64 appears to be the maximum */
 #define PSF_MAX_PROGRAM_LENGTH 64
 
@@ -652,6 +719,7 @@ struct r300_pixel_shader_state {
 		float w;
 		} param[MAX_PIXEL_SHADER_PARAMS];
 	};
+#endif // USE_ARB_F_P
 
 /* 8 is somewhat bogus... it is probably something like 24 */
 #define R300_MAX_AOS_ARRAYS		8
@@ -682,8 +750,9 @@ struct r300_state {
 	struct r300_texture_state texture;
 	struct r300_vap_reg_state vap_reg;
 	struct r300_vertex_shader_state vertex_shader;
+#if USE_ARB_F_P == 0
 	struct r300_pixel_shader_state pixel_shader;
-
+#endif
 	struct r300_dma_region aos[R300_MAX_AOS_ARRAYS];
 	int aos_count;
 

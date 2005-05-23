@@ -73,14 +73,17 @@ static const char *const card_extensions[] = {
 	"GL_ARB_multitexture",
 	"GL_ARB_texture_border_clamp",
 	"GL_ARB_texture_compression",
-	"GL_ARB_texture_cube_map",
+/* disable until we support it, fixes a few things in ut2004 */
+//	"GL_ARB_texture_cube_map", 
 	"GL_ARB_texture_env_add",
 	"GL_ARB_texture_env_combine",
 	"GL_ARB_texture_env_dot3",
 	"GL_ARB_texture_mirrored_repeat",
 	"GL_ARB_vertex_buffer_object",
 	"GL_ARB_vertex_program",
-	//"GL_ARB_fragment_program",
+#if USE_ARB_F_P == 1
+	"GL_ARB_fragment_program",
+#endif
 	"GL_EXT_blend_equation_separate",
 	"GL_EXT_blend_func_separate",
 	"GL_EXT_blend_minmax",
@@ -101,6 +104,7 @@ static const char *const card_extensions[] = {
 	"GL_NV_blend_square",
 	"GL_NV_vertex_program",
 	"GL_SGIS_generate_mipmap",
+	"GL_ARB_texture_env_crossbar",
 	NULL
 };
 
@@ -325,7 +329,20 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.MaxVertexProgramLocalParams=256; // r420
 	ctx->Const.MaxVertexProgramEnvParams=256; // r420
 	ctx->Const.MaxVertexProgramAddressRegs=1;
-		
+
+#if USE_ARB_F_P
+	ctx->Const.MaxFragmentProgramTemps = PFS_NUM_TEMP_REGS;
+	ctx->Const.MaxFragmentProgramAttribs = 11; /* copy i915... */
+	ctx->Const.MaxFragmentProgramLocalParams = PFS_NUM_CONST_REGS;
+	ctx->Const.MaxFragmentProgramEnvParams = PFS_NUM_CONST_REGS;
+	ctx->Const.MaxFragmentProgramAluInstructions = PFS_MAX_ALU_INST;
+	ctx->Const.MaxFragmentProgramTexInstructions = PFS_MAX_TEX_INST;
+	ctx->Const.MaxFragmentProgramInstructions = PFS_MAX_ALU_INST+PFS_MAX_TEX_INST;
+	ctx->Const.MaxFragmentProgramTexIndirections = PFS_MAX_TEX_INDIRECT;
+	ctx->Const.MaxFragmentProgramAddressRegs = 0; /* and these are?? */
+	ctx->_MaintainTexEnvProgram = GL_TRUE;
+#endif
+
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
 	
 	radeonInitSpanFuncs(ctx);
