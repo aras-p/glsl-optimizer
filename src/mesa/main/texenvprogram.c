@@ -90,15 +90,20 @@ struct texenv_fragment_program {
 
    GLboolean error;
 
-   struct ureg src_texture;   /* Reg containing sampled texture color,
-			       * else undef.
-			       */
+   struct ureg src_texture[MAX_TEXTURE_UNITS];   
+				/* Reg containing each texture unit's sampled texture color,
+				 * else undef.
+				 */
 
    struct ureg src_previous;	/* Reg containing color from previous 
 				 * stage.  May need to be decl'd.
 				 */
 
    GLuint last_tex_stage;	/* Number of last enabled texture unit */
+
+   struct ureg half;
+   struct ureg one;
+   struct ureg zero;
 };
 
 
@@ -195,10 +200,13 @@ static void release_temps( struct texenv_fragment_program *p )
 {
    GLuint max_temp = p->ctx->Const.MaxFragmentProgramTemps;
 
+   /* KW: To support tex_env_crossbar, don't release the registers in
+    * temps_output.
+    */
    if (max_temp >= sizeof(int) * 8)
-      p->temp_in_use = 0;
+      p->temp_in_use = p->temps_output;
    else
-      p->temp_in_use = ~((1<<max_temp)-1);
+      p->temp_in_use = ~((1<<max_temp)-1) | p->temps_output;
 }
 
 
@@ -346,8 +354,9 @@ static struct ureg emit_texld( struct texenv_fragment_program *p,
        (dest.file == PROGRAM_TEMPORARY &&
 	(p->alu_temps & (1<<dest.idx)))) {
       p->program->NumTexIndirections++;
-      p->temps_output = 0;
+      p->temps_output = 1<<coord.idx;
       p->alu_temps = 0;
+      assert(0);		/* KW: texture env crossbar */
    }
 
    return dest;
@@ -377,6 +386,27 @@ static struct ureg register_const4f( struct texenv_fragment_program *p,
 
 
 
+
+static struct ureg get_one( struct texenv_fragment_program *p )
+{
+   if (is_undef(p->one)) 
+      p->one = register_scalar_const(p, 1.0);
+   return p->one;
+}
+
+static struct ureg get_half( struct texenv_fragment_program *p )
+{
+   if (is_undef(p->half)) 
+      p->one = register_scalar_const(p, 0.5);
+   return p->half;
+}
+
+static struct ureg get_zero( struct texenv_fragment_program *p )
+{
+   if (is_undef(p->zero)) 
+      p->one = register_scalar_const(p, 0.0);
+   return p->zero;
+}
 
 
 
@@ -408,22 +438,9 @@ static struct ureg get_source( struct texenv_fragment_program *p,
 {
    switch (src) {
    case GL_TEXTURE: 
-      if (is_undef(p->src_texture)) {
+      assert(!is_undef(p->src_texture[unit]));
+      return p->src_texture[unit];
 
-	 GLuint dim = translate_tex_src_bit( p, p->ctx->Texture.Unit[unit]._ReallyEnabled);
-	 struct ureg texcoord = register_input(p, FRAG_ATTRIB_TEX0+unit);
-	 struct ureg tmp = get_tex_temp( p );
-
-	 /* TODO: Use D0_MASK_XY where possible.
-	  */
-	 p->src_texture = emit_texld( p, FP_OPCODE_TXP,
-				      tmp, WRITEMASK_XYZW, 
-				      unit, dim, texcoord );
-      }
-
-      return p->src_texture;
-
-      /* Crossbar: */
    case GL_TEXTURE0:
    case GL_TEXTURE1:
    case GL_TEXTURE2:
@@ -431,14 +448,16 @@ static struct ureg get_source( struct texenv_fragment_program *p,
    case GL_TEXTURE4:
    case GL_TEXTURE5:
    case GL_TEXTURE6:
-   case GL_TEXTURE7: {
-      return undef;
-   }
+   case GL_TEXTURE7: 
+      assert(!is_undef(p->src_texture[src - GL_TEXTURE0]));
+      return p->src_texture[src - GL_TEXTURE0];
 
    case GL_CONSTANT:
       return register_param2(p, STATE_TEXENV_COLOR, unit);
+
    case GL_PRIMARY_COLOR:
       return register_input(p, FRAG_ATTRIB_COL0);
+
    case GL_PREVIOUS:
    default: 
       if (is_undef(p->src_previous))
@@ -447,7 +466,7 @@ static struct ureg get_source( struct texenv_fragment_program *p,
 	 return p->src_previous;
    }
 }
-			
+
 
 static struct ureg emit_combine_source( struct texenv_fragment_program *p, 
 				   GLuint mask,
@@ -465,7 +484,7 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
        * Emit tmp = 1.0 - arg.xyzw
        */
       arg = get_temp( p );
-      one = register_scalar_const(p, 1.0);
+      one = get_one( p );
       return emit_arith( p, FP_OPCODE_SUB, arg, mask, 0, one, src, undef);
 
    case GL_SRC_ALPHA: 
@@ -477,14 +496,14 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
       /* Get unused tmp,
        * Emit tmp = 1.0 - arg.wwww
        */
-      arg = get_temp( p );
-      one = register_scalar_const(p, 1.0);
-      return emit_arith( p, FP_OPCODE_SUB, arg, mask, 0,
-			 one, swizzle1(src, W), undef);
+      arg = get_temp(p);
+      one = get_one(p);
+      return emit_arith(p, FP_OPCODE_SUB, arg, mask, 0,
+			one, swizzle1(src, W), undef);
    case GL_ZERO:
-	  return register_scalar_const(p, 0.0);
+      return get_zero(p);
    case GL_ONE:
-	  return register_scalar_const(p, 1.0);
+      return get_one(p);
    case GL_SRC_COLOR: 
    default:
       return src;
@@ -583,7 +602,7 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
       /* tmp = arg0 + arg1
        * result = tmp - .5
        */
-      half = register_scalar_const(p, .5);
+      half = get_half(p);
       emit_arith( p, FP_OPCODE_ADD, tmp, mask, 0, src[0], src[1], undef );
       emit_arith( p, FP_OPCODE_SUB, dest, mask, saturate, tmp, half, undef );
       return dest;
@@ -627,7 +646,7 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
    case GL_MODULATE_SIGNED_ADD_ATI: {
       /* Arg0 * Arg2 + Arg1 - 0.5 */
       struct ureg tmp0 = get_temp(p);
-      half = register_scalar_const(p, .5);
+      half = get_half(p);
       emit_arith( p, FP_OPCODE_MAD, tmp0, mask, 0, src[0], src[2], src[1] );
       emit_arith( p, FP_OPCODE_SUB, dest, mask, saturate, tmp0, half, undef );
       return dest;
@@ -640,7 +659,6 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
       return src[0];
    }
 }
-
 
 
 static struct ureg emit_texenv( struct texenv_fragment_program *p, int unit )
@@ -724,14 +742,68 @@ static struct ureg emit_texenv( struct texenv_fragment_program *p, int unit )
 	 shift = register_scalar_const(p, 1<<rgb_shift);
       }
       else {
-	 shift = register_const2f(p, 1<<rgb_shift, 1<<alpha_shift);
-	 shift = swizzle(shift,X,X,X,Y);
+	 shift = register_const4f(p, 
+				  1<<rgb_shift,
+				  1<<rgb_shift,
+				  1<<rgb_shift,
+				  1<<alpha_shift);
       }
       return emit_arith( p, FP_OPCODE_MUL, dest, WRITEMASK_XYZW, 
 			 saturate, out, shift, undef );
    }
    else
       return out;
+}
+
+
+
+static void load_texture( struct texenv_fragment_program *p, GLuint unit )
+{
+   if (is_undef(p->src_texture[unit])) {
+      GLuint dim = translate_tex_src_bit( p, p->ctx->Texture.Unit[unit]._ReallyEnabled);
+      struct ureg texcoord = register_input(p, FRAG_ATTRIB_TEX0+unit);
+      struct ureg tmp = get_tex_temp( p );
+
+      /* TODO: Use D0_MASK_XY where possible.
+       */
+      p->src_texture[unit] = emit_texld( p, FP_OPCODE_TXP,
+					 tmp, WRITEMASK_XYZW, 
+					 unit, dim, texcoord );
+   }
+}
+
+static void load_texenv_source( struct texenv_fragment_program *p, 
+				GLenum src, GLuint unit )
+{
+   switch (src) {
+   case GL_TEXTURE: 
+      load_texture(p, unit);
+      break;
+
+   case GL_TEXTURE0:
+   case GL_TEXTURE1:
+   case GL_TEXTURE2:
+   case GL_TEXTURE3:
+   case GL_TEXTURE4:
+   case GL_TEXTURE5:
+   case GL_TEXTURE6:
+   case GL_TEXTURE7: 
+      load_texture(p, src - GL_TEXTURE0);
+      break;
+      
+   default:
+      break;
+   }
+}
+
+static void load_texunit_sources( struct texenv_fragment_program *p, int unit )
+{
+   struct gl_texture_unit *texUnit = &p->ctx->Texture.Unit[unit];
+   int i, nr = nr_args(texUnit->_CurrentCombine->ModeRGB);
+   for (i = 0; i < nr; i++) {
+      load_texenv_source( p, texUnit->_CurrentCombine->SourceRGB[i], unit);
+      load_texenv_source( p, texUnit->_CurrentCombine->SourceA[i], unit );
+   }
 }
 
 void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
@@ -782,24 +854,30 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    p.program->InputsRead = 0;
    p.program->OutputsWritten = 1 << FRAG_OUTPUT_COLR;
 
-   p.src_texture = undef;
+   for (unit = 0; unit < MAX_TEXTURE_UNITS; unit++)
+      p.src_texture[unit] = undef;
+
    p.src_previous = undef;
    p.last_tex_stage = 0;
    release_temps(&p);
 
    if (ctx->Texture._EnabledUnits) {
+      /* First pass - to support texture_env_crossbar, first identify
+       * all referenced texture sources and emit texld instructions
+       * for each:
+       */
       for (unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++)
 	 if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+	    load_texunit_sources( &p, unit );
 	    p.last_tex_stage = unit;
 	 }
 
+      /* Second pass - emit combine instructions to build final color:
+       */
       for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++)
 	 if (ctx->Texture.Unit[unit]._ReallyEnabled) {
 	    p.src_previous = emit_texenv( &p, unit );
-	    p.src_texture = undef;
 	    release_temps(&p);	/* release all temps */
-	    if (p.src_previous.file == PROGRAM_TEMPORARY)
-	       p.temp_in_use |= 1 << p.src_previous.idx; /* except for this one */
 	 }
    }
 
