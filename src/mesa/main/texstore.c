@@ -671,7 +671,8 @@ _mesa_swizzle_ubyte_image(GLcontext *ctx,
  * 1D, 2D and 3D images supported.
  */
 static void
-memcpy_texture(GLuint dimensions,
+memcpy_texture(GLcontext *ctx,
+	       GLuint dimensions,
                const struct gl_texture_format *dstFormat,
                GLvoid *dstAddr,
                GLint dstXoffset, GLint dstYoffset, GLint dstZoffset,
@@ -701,7 +702,7 @@ memcpy_texture(GLuint dimensions,
          dstImageStride == bytesPerImage) ||
         (srcDepth == 1))) {
       /* one big memcpy */
-      _mesa_memcpy(dstImage, srcImage, bytesPerTexture);
+      ctx->Driver.TextureMemCpy(dstImage, srcImage, bytesPerTexture);
    }
    else {
       GLint img, row;
@@ -709,7 +710,7 @@ memcpy_texture(GLuint dimensions,
          const GLubyte *srcRow = srcImage;
          GLubyte *dstRow = dstImage;
          for (row = 0; row < srcHeight; row++) {
-            _mesa_memcpy(dstRow, srcRow, bytesPerRow);
+            ctx->Driver.TextureMemCpy(dstRow, srcRow, bytesPerRow);
             dstRow += dstRowStride;
             srcRow += srcRowStride;
          }
@@ -776,7 +777,7 @@ _mesa_texstore_rgba(GLcontext *ctx, GLuint dims,
        baseInternalFormat == srcFormat &&
        srcType == CHAN_TYPE) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -862,7 +863,7 @@ _mesa_texstore_depth_component_float32(STORE_PARAMS)
        srcFormat == GL_DEPTH_COMPONENT &&
        srcType == GL_FLOAT) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -907,7 +908,7 @@ _mesa_texstore_depth_component16(STORE_PARAMS)
        srcFormat == GL_DEPTH_COMPONENT &&
        srcType == GL_UNSIGNED_SHORT) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -958,7 +959,7 @@ _mesa_texstore_rgb565(STORE_PARAMS)
        srcFormat == GL_RGB &&
        srcType == GL_UNSIGNED_SHORT_5_6_5) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1067,7 +1068,7 @@ _mesa_texstore_rgba8888(STORE_PARAMS)
       ((srcFormat == GL_RGBA && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
        (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_INT_8_8_8_8_REV))) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1173,7 +1174,7 @@ _mesa_texstore_argb8888(STORE_PARAMS)
        ((srcType == GL_UNSIGNED_BYTE && littleEndian) ||
         srcType == GL_UNSIGNED_INT_8_8_8_8_REV)) {
       /* simple memcpy path (little endian) */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1187,7 +1188,7 @@ _mesa_texstore_argb8888(STORE_PARAMS)
        ((srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
         srcType == GL_UNSIGNED_INT_8_8_8_8)) {
       /* simple memcpy path (big endian) */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1348,7 +1349,7 @@ _mesa_texstore_rgb888(STORE_PARAMS)
        srcType == GL_UNSIGNED_BYTE &&
        littleEndian) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1453,7 +1454,7 @@ _mesa_texstore_bgr888(STORE_PARAMS)
        srcType == GL_UNSIGNED_BYTE &&
        littleEndian) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1537,7 +1538,7 @@ _mesa_texstore_argb4444(STORE_PARAMS)
        srcFormat == GL_BGRA &&
        srcType == GL_UNSIGNED_SHORT_4_4_4_4_REV) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1607,7 +1608,7 @@ _mesa_texstore_argb1555(STORE_PARAMS)
        srcFormat == GL_BGRA &&
        srcType == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1680,7 +1681,7 @@ _mesa_texstore_al88(STORE_PARAMS)
        srcType == GL_UNSIGNED_BYTE &&
        littleEndian) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1744,7 +1745,7 @@ _mesa_texstore_rgb332(STORE_PARAMS)
        baseInternalFormat == GL_RGB &&
        srcFormat == GL_RGB && srcType == GL_UNSIGNED_BYTE_3_3_2) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1802,7 +1803,7 @@ _mesa_texstore_a8(STORE_PARAMS)
        baseInternalFormat == srcFormat &&
        srcType == GL_UNSIGNED_BYTE) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1856,7 +1857,7 @@ _mesa_texstore_ci8(STORE_PARAMS)
        srcFormat == GL_COLOR_INDEX &&
        srcType == GL_UNSIGNED_BYTE) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1906,7 +1907,7 @@ _mesa_texstore_ycbcr(STORE_PARAMS)
    ASSERT(baseInternalFormat == GL_YCBCR_MESA);
 
    /* always just memcpy since no pixel transfer ops apply */
-   memcpy_texture(dims,
+   memcpy_texture(ctx, dims,
                   dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                   dstRowStride, dstImageStride,
                   srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -1971,7 +1972,7 @@ _mesa_texstore_rgba_float32(STORE_PARAMS)
        baseInternalFormat == srcFormat &&
        srcType == GL_FLOAT) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
@@ -2039,7 +2040,7 @@ _mesa_texstore_rgba_float16(STORE_PARAMS)
        baseInternalFormat == srcFormat &&
        srcType == GL_HALF_FLOAT_ARB) {
       /* simple memcpy path */
-      memcpy_texture(dims,
+      memcpy_texture(ctx, dims,
                      dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
                      dstRowStride, dstImageStride,
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,

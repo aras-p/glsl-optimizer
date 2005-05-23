@@ -12,6 +12,7 @@ DRIVER_SOURCES = \
 	via_fb.c \
 	via_tex.c \
 	via_ioctl.c \
+	via_memcpy.c \
 	via_render.c \
 	via_screen.c \
 	via_span.c \
