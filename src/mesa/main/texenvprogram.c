@@ -772,7 +772,7 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
    }
 }
 
-static void load_texenv_source( struct texenv_fragment_program *p, 
+static GLboolean load_texenv_source( struct texenv_fragment_program *p, 
 				GLenum src, GLuint unit )
 {
    switch (src) {
@@ -787,23 +787,29 @@ static void load_texenv_source( struct texenv_fragment_program *p,
    case GL_TEXTURE4:
    case GL_TEXTURE5:
    case GL_TEXTURE6:
-   case GL_TEXTURE7: 
+   case GL_TEXTURE7:       
+      if (!p->ctx->Texture.Unit[src - GL_TEXTURE0]._ReallyEnabled) 
+	 return GL_FALSE;
       load_texture(p, src - GL_TEXTURE0);
       break;
       
    default:
       break;
    }
+ 
+   return GL_TRUE;
 }
 
-static void load_texunit_sources( struct texenv_fragment_program *p, int unit )
+static GLboolean load_texunit_sources( struct texenv_fragment_program *p, int unit )
 {
    struct gl_texture_unit *texUnit = &p->ctx->Texture.Unit[unit];
    int i, nr = nr_args(texUnit->_CurrentCombine->ModeRGB);
    for (i = 0; i < nr; i++) {
-      load_texenv_source( p, texUnit->_CurrentCombine->SourceRGB[i], unit);
-      load_texenv_source( p, texUnit->_CurrentCombine->SourceA[i], unit );
+      if (!load_texenv_source( p, texUnit->_CurrentCombine->SourceRGB[i], unit) ||
+	  !load_texenv_source( p, texUnit->_CurrentCombine->SourceA[i], unit ))
+	 return GL_FALSE;
    }
+   return GL_TRUE;
 }
 
 void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
@@ -862,20 +868,24 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    release_temps(&p);
 
    if (ctx->Texture._EnabledUnits) {
+      GLuint tex_env_enabled = 0;
+
       /* First pass - to support texture_env_crossbar, first identify
        * all referenced texture sources and emit texld instructions
        * for each:
        */
       for (unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++)
 	 if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-	    load_texunit_sources( &p, unit );
-	    p.last_tex_stage = unit;
+	    if (load_texunit_sources( &p, unit )) {
+	       tex_env_enabled |= 1<<unit;
+	       p.last_tex_stage = unit;
+	    }
 	 }
 
       /* Second pass - emit combine instructions to build final color:
        */
       for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++)
-	 if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+	 if (tex_env_enabled & (1<<unit)) {
 	    p.src_previous = emit_texenv( &p, unit );
 	    release_temps(&p);	/* release all temps */
 	 }
