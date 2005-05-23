@@ -49,7 +49,8 @@
  *                    Emit primitives as inline vertices               *
  ***********************************************************************/
 
-#if 1
+
+#if 0
 #define COPY_DWORDS(vb, vertsize, v) 		\
 do {						\
    via_sse_memcpy(vb, v, vertsize * 4);		\
