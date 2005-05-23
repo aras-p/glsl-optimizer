@@ -31,8 +31,6 @@
 #  Available options:
 #
 #    Environment variables:
-#	CPU		optimize for the given processor.
-#			default = pentium
 #	GLU=[mesa|sgi]	specify GLU directory; can be `sgi' (requires GNU/C++)
 #			or `mesa'.
 #			default = mesa
@@ -59,12 +57,10 @@
 
 .PHONY : all libgl libglu libglut clean realclean
 
-CPU ?= pentium
-
 GLU ?= mesa
 
 CFLAGS = -Wall -W -pedantic
-CFLAGS += -O2 -ffast-math -mtune=$(CPU)
+CFLAGS += -O2 -ffast-math
 
 export CFLAGS
 

@@ -31,8 +31,6 @@
 #  Available options:
 #
 #    Environment variables:
-#	CPU		optimize for the given processor.
-#			default = pentium
 #	GLIDE		path to Glide3 SDK; used with FX.
 #			default = $(TOP)/glide3
 #	FX=1		build for 3dfx Glide3. Note that this disables
@@ -57,8 +55,6 @@
 
 .PHONY : all libgl clean realclean
 
-CPU ?= pentium
-
 ifeq ($(ICD),1)
   # when -std=c99 mingw will not define WIN32
   CFLAGS = -Wall -W -Werror
@@ -66,7 +62,7 @@ else
   # I love c89
   CFLAGS = -Wall -W -pedantic
 endif
-CFLAGS += -O2 -ffast-math -mtune=$(CPU)
+CFLAGS += -O2 -ffast-math
 
 export CFLAGS
 

@@ -31,8 +31,6 @@
 #  Available options:
 #
 #    Environment variables:
-#	CPU		optimize for the given processor.
-#			default = pentium
 #
 #    Targets:
 #	<file.exe>	build a specific file
@@ -45,11 +43,10 @@
 .SECONDARY: ../util/readtex.o ../util/showbuffer.o
 
 TOP = ../..
-CPU ?= pentium
 
 CC = mingw32-gcc
 CFLAGS = -Wall -W -pedantic
-CFLAGS += -O2 -ffast-math -mtune=$(CPU)
+CFLAGS += -O2 -ffast-math
 CFLAGS += -I$(TOP)/include -I../util
 ifeq ($(FX),1)
 CFLAGS += -DFX
