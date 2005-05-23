@@ -43,11 +43,19 @@
 #include "via_span.h"
 #include "via_ioctl.h"
 #include "via_3d_reg.h"
+#include "via_tex.h"
 
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
  ***********************************************************************/
 
+#if 1
+#define COPY_DWORDS(vb, vertsize, v) 		\
+do {						\
+   via_sse_memcpy(vb, v, vertsize * 4);		\
+   vb += vertsize;				\
+} while (0)
+#else
 #if 1
 #define COPY_DWORDS(vb, vertsize, v)					\
     do {								\
@@ -67,6 +75,7 @@
             vb[j] = ((GLuint *)v)[j];		\
         vb += vertsize;				\
     } while (0)
+#endif
 #endif
 
 static void via_draw_triangle(struct via_context *vmesa,
