@@ -292,15 +292,13 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
       }
 
-      /* no h/w stencil?
       if (mesaVis->stencilBits > 0 && !swStencil) {
          driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, screen->cpp,
-                                 screen->depthOffset, screen->depthPitch);
+            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, screen->bytesPerPixel,
+                                 0, screen->width);
          viaSetSpanFunctions(stencilRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
       }
-      */
 
       _mesa_add_soft_renderbuffers(fb,
                                    GL_FALSE, /* color */
