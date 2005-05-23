@@ -131,6 +131,12 @@ static struct ureg swizzle1( struct ureg reg, int x )
    return swizzle(reg, x, x, x, x);
 }
 
+static struct ureg negate( struct ureg reg )
+{
+   reg.negatebase ^= 1;
+   return reg;
+}
+
 static GLboolean is_undef( struct ureg reg )
 {
    return reg.file == 0xf;
@@ -475,6 +481,10 @@ static struct ureg emit_combine_source( struct texenv_fragment_program *p,
       one = register_scalar_const(p, 1.0);
       return emit_arith( p, FP_OPCODE_SUB, arg, mask, 0,
 			 one, swizzle1(src, W), undef);
+   case GL_ZERO:
+	  return register_scalar_const(p, 0.0);
+   case GL_ONE:
+	  return register_scalar_const(p, 1.0);
    case GL_SRC_COLOR: 
    default:
       return src;
@@ -496,6 +506,9 @@ static int nr_args( GLenum mode )
    case GL_DOT3_RGBA_EXT: return 2;
    case GL_DOT3_RGB: return 2;
    case GL_DOT3_RGBA: return 2;
+   case GL_MODULATE_ADD_ATI: return 3;
+   case GL_MODULATE_SUBTRACT_ATI: return 3;
+   case GL_MODULATE_SIGNED_ADD_ATI: return 3;
    default: return 0;
    }
 }
@@ -562,10 +575,10 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
 	 return emit_arith( p, FP_OPCODE_MOV, dest, mask, saturate, src[0], undef, undef );
    case GL_MODULATE: 
       return emit_arith( p, FP_OPCODE_MUL, dest, mask, saturate,
-			     src[0], src[1], undef );
+			 src[0], src[1], undef );
    case GL_ADD: 
       return emit_arith( p, FP_OPCODE_ADD, dest, mask, saturate, 
-			     src[0], src[1], undef );
+			 src[0], src[1], undef );
    case GL_ADD_SIGNED:
       /* tmp = arg0 + arg1
        * result = tmp - .5
@@ -597,17 +610,32 @@ static struct ureg emit_combine( struct texenv_fragment_program *p,
        * dst = tmp0 dot3 tmp1 
        */
       emit_arith( p, FP_OPCODE_MAD, tmp0, WRITEMASK_XYZW, 0, 
-		      two, src[0], neg1);
+		  two, src[0], neg1);
 
       if (memcmp(&src[0], &src[1], sizeof(struct ureg)) == 0)
 	 tmp1 = tmp0;
       else
 	 emit_arith( p, FP_OPCODE_MAD, tmp1, WRITEMASK_XYZW, 0, 
-			 two, src[1], neg1);
+		     two, src[1], neg1);
       emit_arith( p, FP_OPCODE_DP3, dest, mask, saturate, tmp0, tmp1, undef);
       return dest;
    }
-
+   case GL_MODULATE_ADD_ATI:
+      /* Arg0 * Arg2 + Arg1 */
+      return emit_arith( p, FP_OPCODE_MAD, dest, mask, saturate,
+			 src[0], src[2], src[1] );
+   case GL_MODULATE_SIGNED_ADD_ATI: {
+      /* Arg0 * Arg2 + Arg1 - 0.5 */
+      struct ureg tmp0 = get_temp(p);
+      half = register_scalar_const(p, .5);
+      emit_arith( p, FP_OPCODE_MAD, tmp0, mask, 0, src[0], src[2], src[1] );
+      emit_arith( p, FP_OPCODE_SUB, dest, mask, saturate, tmp0, half, undef );
+      return dest;
+   }
+   case GL_MODULATE_SUBTRACT_ATI:
+      /* Arg0 * Arg2 - Arg1 */
+      emit_arith( p, FP_OPCODE_MAD, dest, mask, 0, src[0], src[2], negate(src[1]) );
+      return dest;
    default: 
       return src[0];
    }
