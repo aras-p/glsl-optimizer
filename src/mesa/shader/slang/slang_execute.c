@@ -154,6 +154,8 @@ static void dump_instruction (FILE *f, slang_assembly *a, unsigned int i)
 	case slang_asm_exit:
 		fprintf (f, "exit");
 		break;
+	default:
+	   break;
 	}
 
 	fprintf (f, "\n");

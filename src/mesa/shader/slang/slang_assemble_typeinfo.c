@@ -395,6 +395,8 @@ int _slang_typeof_operation (slang_operation *op, slang_assembly_name_space *spa
 						break;
 					}
 					break;
+				default:
+				   break;
 				}
 			}
 			slang_assembly_typeinfo_destruct (&_ti);

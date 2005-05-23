@@ -261,6 +261,8 @@ int _slang_assemble_constructor_from_swizzle (slang_assembly_file *file, const s
 	case slang_spec_vec4:
 		master_rows = 4;
 		break;
+	default:
+	   break;
 	}
 	for (i = 0; i < master_rows; i++)
 	{
@@ -290,6 +292,8 @@ int _slang_assemble_constructor_from_swizzle (slang_assembly_file *file, const s
 				(master_rows - i) * 4, i * 4))
 				return 0;
 			break;
+		default:
+		      break;
 		}
 	}
 	if (!slang_assembly_file_push_label (file, slang_asm_local_free, 4))
@@ -326,6 +330,8 @@ int _slang_assemble_constructor_from_swizzle (slang_assembly_file *file, const s
 			if (!slang_assembly_file_push (file, slang_asm_float_deref))
 				return 0;
 			break;
+		default:
+		   break;
 		}
 	}
 	return 1;
