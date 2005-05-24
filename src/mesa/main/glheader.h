@@ -75,10 +75,12 @@
 #include "conf.h"
 #endif
 
-
 /* Get typedefs for uintptr_t and friends */
-#if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
+#if defined(_WIN32)
 #include <BaseTsd.h>
+#if _MSC_VER == 1200
+typedef UINT_PTR uintptr_t;
+#endif 
 #else
 #include <inttypes.h>
 #endif
@@ -119,16 +121,6 @@
 
 
 #ifndef __MINGW32__
-/* XXX why is this here?
- * It should probaby be somewhere in src/mesa/drivers/windows/
- */
-/* compatibility guard so we don't need to change client code */
-#if defined(_WIN32) && !defined(_WINDEF_) && !defined(_WINDEF_H) && !defined(_GNU_H_WINDOWS32_BASE) && !defined(OPENSTEP) && !defined(__CYGWIN__) && !defined(BUILD_FOR_SNAP)
-typedef INT_PTR (GLAPIENTRY *PROC)();
-typedef unsigned long COLORREF;
-#endif
-
-
 /* XXX why is this here?
  * It should probaby be somewhere in src/mesa/drivers/windows/
  */
@@ -277,6 +269,18 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #  define __builtin_expect(x, y) x
 #endif
 
+/* Windows does not have the ffs() function */
+#if defined(_WIN32) && !defined(__MINGW32__)
+int INLINE ffs(int value)
+{
+    int bit;
+    if (value == 0)
+	return 0;
+    for (bit=1; !(value & 1); bit++)
+	value >>= 1;
+    return bit;
+}
+#endif
 
 #include "config.h"
 
