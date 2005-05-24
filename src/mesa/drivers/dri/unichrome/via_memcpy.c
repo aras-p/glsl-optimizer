@@ -26,6 +26,7 @@
 
 #include "via_tex.h"
 
+#if defined( USE_SSE_ASM )
 
 #define SSE_PREFETCH "  prefetchnta "
 #define FENCE __asm__ __volatile__ ("sfence":::"memory");
@@ -134,5 +135,4 @@ void via_sse_memcpy(void *to,
    FENCE;
 }
 
-
-
+#endif /* defined( USE_SSE_ASM ) */

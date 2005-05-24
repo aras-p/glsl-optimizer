@@ -57,7 +57,7 @@ do {						\
    vb += vertsize;				\
 } while (0)
 #else
-#if 1
+#if defined( USE_X86_ASM )
 #define COPY_DWORDS(vb, vertsize, v)					\
     do {								\
         int j;								\

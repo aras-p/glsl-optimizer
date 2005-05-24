@@ -34,6 +34,8 @@ GLboolean viaUpdateTextureState(GLcontext *ctx);
 void viaInitTextureFuncs(struct dd_function_table * functions);
 GLboolean viaSwapOutWork( struct via_context *vmesa );
 
+#if defined( USE_SSE_ASM )
 void via_sse_memcpy( void *to, const void *from, size_t sz );
+#endif /* defined( USE_SSE_ASM ) */
 
 #endif
