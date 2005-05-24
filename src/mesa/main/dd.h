@@ -525,7 +525,7 @@ struct dd_function_table {
     * from -- a pointer into client memory or a mesa temporary.
     * sz -- nr bytes to copy.
     */
-   void (*TextureMemCpy)( void *to, const void *from, size_t sz );
+   void* (*TextureMemCpy)( void *to, const void *from, size_t sz );
 
    /**
     * Called by glAreTextureResident().
