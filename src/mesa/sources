@@ -319,6 +319,7 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/math \
 	-I$(TOP)/src/mesa/tnl \
 	-I$(TOP)/src/mesa/shader \
+	-I$(TOP)/src/mesa/shader/grammar \
 	-I$(TOP)/src/mesa/shader/slang \
 	-I$(TOP)/src/mesa/shader/slang/OSDependent/Linux \
 	-I$(TOP)/src/mesa/shader/slang/OGLCompilersDLL \
