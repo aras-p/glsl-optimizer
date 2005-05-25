@@ -29,7 +29,7 @@
     <enum name="COLOR_ATTACHMENT6_EXT"                    value="0x8CE6"/>
     <enum name="COLOR_ATTACHMENT7_EXT"                    value="0x8CE7"/>
     <enum name="COLOR_ATTACHMENT8_EXT"                    value="0x8CE8"/>
-    <enum name="COLOR_ATTACHMENT8_EXT"                    value="0x8CE9"/>
+    <enum name="COLOR_ATTACHMENT9_EXT"                    value="0x8CE9"/>
     <enum name="COLOR_ATTACHMENT10_EXT"                   value="0x8CEA"/>
     <enum name="COLOR_ATTACHMENT11_EXT"                   value="0x8CEB"/>
     <enum name="COLOR_ATTACHMENT12_EXT"                   value="0x8CEC"/>
@@ -52,7 +52,7 @@
 
     <enum name="FRAMEBUFFER_BINDING_EXT"                  value="0x8CA6"/>
     <enum name="RENDERBUFFER_BINDING_EXT"                 value="0x8CA7"/>
-    <enum name="MAX_COLOR_ATTACHMENT_EXT"                 value="0x8CDF"/>
+    <enum name="MAX_COLOR_ATTACHMENTS_EXT"                value="0x8CDF"/>
     <enum name="MAX_RENDERBUFFER_SIZE_EXT"                value="0x84E8"/>
 
     <enum name="INVALID_FRAMEBUFFER_OPERATION_EXT"        value="0x0506"/>
