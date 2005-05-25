@@ -135,7 +135,7 @@ int _slang_assemble_operation (slang_assembly_file *, struct slang_operation_ *,
 	slang_assembly_stack_info *);
 
 void xxx_first (slang_assembly_file *);
-void xxx_prolog (slang_assembly_file *);
+void xxx_prolog (slang_assembly_file *, unsigned int);
 
 #ifdef __cplusplus
 }

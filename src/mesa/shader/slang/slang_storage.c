@@ -95,19 +95,19 @@ static int aggregate_vector (slang_storage_aggregate *agg, slang_storage_type ba
 }
 
 static int aggregate_matrix (slang_storage_aggregate *agg, slang_storage_type basic_type,
-	unsigned int order)
+	unsigned int dimension)
 {
 	slang_storage_array *arr = slang_storage_aggregate_push_new (agg);
 	if (arr == NULL)
 		return 0;
 	arr->type = slang_stor_aggregate;
-	arr->length = order;
+	arr->length = dimension;
 	arr->aggregate = (slang_storage_aggregate *) slang_alloc_malloc (sizeof (
 		slang_storage_aggregate));
 	if (arr->aggregate == NULL)
 		return 0;
 	slang_storage_aggregate_construct (arr->aggregate);
-	if (!aggregate_vector (arr->aggregate, basic_type, order))
+	if (!aggregate_vector (arr->aggregate, basic_type, dimension))
 		return 0;
 	return 1;
 }

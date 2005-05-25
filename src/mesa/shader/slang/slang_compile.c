@@ -2093,7 +2093,6 @@ static int parse_function (slang_parse_ctx *C, int definition, slang_struct_scop
 	if (definition)
 	{
 static int x = 0;
-const int y = 61;	/* core 437 */
 static
 		slang_assembly_file file;
 		slang_assembly_name_space space;
@@ -2104,16 +2103,16 @@ if (x == 1)
 		space.structs = structs;
 		space.vars = scope;
 if (x == 1)
-	xxx_first (&file);
-if (x == y)
-	xxx_prolog (&file);
+xxx_first (&file);
+		(**parsed_func_ret).address = file.count;
 		if (!_slang_assemble_function (&file, *parsed_func_ret, &space))
 		{
 			slang_assembly_file_destruct (&file);
 			return 0;
 		}
-if (x == y)
+if (slang_string_compare ("main", (**parsed_func_ret).header.name) == 0)
 {
+xxx_prolog (&file, (**parsed_func_ret).address);
 _slang_execute (&file);
 slang_assembly_file_destruct (&file);
 exit (0);
@@ -2251,9 +2250,12 @@ static int compile_with_grammar (grammar id, const char *source, slang_translati
 static const char *slang_shader_syn =
 #include "library/slang_shader_syn.h"
 ;
-
+/*
 static const byte slang_core_gc_bin[] = {
 #include "library/slang_core_gc_bin.h"
+};*/
+static const byte slang_core_gc[] = {
+#include "library/slang_core_gc.h"
 };
 
 static const byte slang_common_builtin_gc_bin[] = {
@@ -2298,8 +2300,10 @@ int _slang_compile (const char *source, slang_translation_unit *unit, slang_unit
 	/* if parsing user-specified shader, load built-in library */
 	if (type == slang_unit_fragment_shader || type == slang_unit_vertex_shader)
 	{
-		if (!compile_binary (slang_core_gc_bin, builtin_units,
-			slang_unit_fragment_builtin, log, NULL))
+		/*if (!compile_binary (slang_core_gc_bin, builtin_units,
+			slang_unit_fragment_builtin, log, NULL))*/
+		if (!compile_with_grammar (id, slang_core_gc, builtin_units, slang_unit_fragment_builtin,
+			log, NULL))
 		{
 			grammar_destroy (id);
 			return 0;

@@ -36,6 +36,7 @@
 #include "slang_assemble_constructor.h"
 #include "slang_assemble_typeinfo.h"
 #include "slang_assemble_conditional.h"
+#include "slang_assemble_assignment.h"
 
 /* slang_assembly */
 
@@ -117,8 +118,8 @@ int slang_assembly_file_push_literal (slang_assembly_file *file, slang_assembly_
 
 /* utility functions */
 
-static int sizeof_variable (slang_type_specifier *spec, slang_operation *array_size,
-	slang_assembly_name_space *space, unsigned int *size)
+static int sizeof_variable (slang_type_specifier *spec, slang_type_qualifier qual,
+	slang_operation *array_size, slang_assembly_name_space *space, unsigned int *size)
 {
 	slang_storage_aggregate agg;
 
@@ -129,6 +130,8 @@ static int sizeof_variable (slang_type_specifier *spec, slang_operation *array_s
 		return 0;
 	}
 	*size += _slang_sizeof_aggregate (&agg);
+	if (qual == slang_qual_out || qual == slang_qual_inout)
+		*size += 4;
 	slang_storage_aggregate_destruct (&agg);
 	return 1;
 }
@@ -137,7 +140,10 @@ static int sizeof_variable2 (slang_variable *var, slang_assembly_name_space *spa
 	unsigned int *size)
 {
 	var->address = *size;
-	return sizeof_variable (&var->type.specifier, var->array_size, space, size);
+	if (var->type.qualifier == slang_qual_out || var->type.qualifier == slang_qual_inout)
+		var->address += 4;
+	return sizeof_variable (&var->type.specifier, var->type.qualifier, var->array_size, space,
+		size);
 }
 
 static int sizeof_variables (slang_variable_scope *vars, unsigned int start, unsigned int stop,
@@ -197,8 +203,8 @@ slang_function *_slang_locate_function (const char *name, slang_operation *param
 			slang_assembly_typeinfo_destruct (&ti);
 			/* "out" and "inout" formal parameter requires the actual parameter to be l-value */
 			if (!ti.can_be_referenced &&
-				f->parameters->variables[j].type.qualifier != slang_qual_out &&
-				f->parameters->variables[j].type.qualifier != slang_qual_inout)
+				(f->parameters->variables[j].type.qualifier == slang_qual_out ||
+				f->parameters->variables[j].type.qualifier == slang_qual_inout))
 				break;
 		}
 		if (j == num_params)
@@ -235,7 +241,8 @@ int _slang_assemble_function (slang_assembly_file *file, slang_function *fun,
 	/* calculate return value and parameters size */
 	param_size = 0;
 	if (fun->header.type.specifier.type != slang_spec_void)
-		if (!sizeof_variable (&fun->header.type.specifier, NULL, space, &param_size))
+		if (!sizeof_variable (&fun->header.type.specifier, slang_qual_none, NULL, space,
+			&param_size))
 			return 0;
 	info.ret_size = param_size;
 	if (!sizeof_variables (fun->parameters, 0, fun->param_count, space, &param_size))
@@ -312,7 +319,7 @@ int _slang_cleanup_stack (slang_assembly_file *file, slang_operation *op, int re
 	else
 	{
 		size = 0;
-		if (!sizeof_variable (&ti.spec, NULL, space, &size))
+		if (!sizeof_variable (&ti.spec, slang_qual_none, NULL, space, &size))
 		{
 			slang_assembly_typeinfo_destruct (&ti);
 			return 0;
@@ -381,7 +388,7 @@ static int dereference_aggregate (slang_assembly_file *file, const slang_storage
 	return 1;
 }
 /* XXX: general swizzle! */
-static int dereference (slang_assembly_file *file, slang_operation *op,
+int dereference (slang_assembly_file *file, slang_operation *op,
 	slang_assembly_name_space *space, slang_assembly_local_info *info)
 {
 	slang_assembly_typeinfo ti;
@@ -416,15 +423,15 @@ static int call_function (slang_assembly_file *file, slang_function *fun, slang_
 	unsigned int param_count, int assignment, slang_assembly_name_space *space,
 	slang_assembly_local_info *info)
 {
-	unsigned int ret_size, i;
+	unsigned int i;
 	slang_assembly_stack_info stk;
 
 	/* make room for the return value, if any */
-	ret_size = 0;
-	if (!sizeof_variable (&fun->header.type.specifier, NULL, space, &ret_size))
-		return 0;
-	if (ret_size > 0)
+	if (fun->header.type.specifier.type != slang_spec_void)
 	{
+		unsigned int ret_size = 0;
+		if (!sizeof_variable (&fun->header.type.specifier, slang_qual_none, NULL, space, &ret_size))
+			return 0;
 		if (!slang_assembly_file_push_label (file, slang_asm_local_alloc, ret_size))
 			return 0;
 	}
@@ -434,22 +441,27 @@ static int call_function (slang_assembly_file *file, slang_function *fun, slang_
 	{
 		slang_assembly_flow_control flow;
 
-		if (i == 0 && assignment)
+		if (fun->parameters->variables[i].type.qualifier == slang_qual_inout ||
+			fun->parameters->variables[i].type.qualifier == slang_qual_out)
 		{
 			if (!slang_assembly_file_push_label2 (file, slang_asm_local_addr, info->addr_tmp, 4))
 				return 0;
 			/* TODO: optimize the "out" parameter case */
 			/* TODO: inspect stk */
-			if (!_slang_assemble_operation (file, params, 1, &flow, space, info, &stk))
+			if (!_slang_assemble_operation (file, params + i, 1, &flow, space, info, &stk))
 				return 0;
 			if (!slang_assembly_file_push (file, slang_asm_addr_copy))
 				return 0;
 			if (!slang_assembly_file_push (file, slang_asm_addr_deref))
 				return 0;
-			if (!slang_assembly_file_push_label2 (file, slang_asm_local_addr, info->addr_tmp, 4))
-				return 0;
-			if (!slang_assembly_file_push (file, slang_asm_addr_deref))
-				return 0;
+			if (i == 0 && assignment)
+			{
+				if (!slang_assembly_file_push_label2 (file, slang_asm_local_addr, info->addr_tmp,
+					4))
+					return 0;
+				if (!slang_assembly_file_push (file, slang_asm_addr_deref))
+					return 0;
+			}
 			if (!dereference (file, params, space, info))
 				return 0;
 		}
@@ -470,15 +482,26 @@ static int call_function (slang_assembly_file *file, slang_function *fun, slang_
 	/* pop the parameters from the stack */
 	for (i = param_count; i > 0; i--)
 	{
-		/* XXX: copy inout/out params back to the actual variables */
-		if (!_slang_cleanup_stack (file, params + i - 1, 0, space))
-			return 0;
+		unsigned int j = i - 1;
+		if (fun->parameters->variables[j].type.qualifier == slang_qual_inout ||
+			fun->parameters->variables[j].type.qualifier == slang_qual_out)
+		{
+			if (!_slang_assemble_assignment (file, params + j, space, info))
+				return 0;
+			if (!slang_assembly_file_push_label (file, slang_asm_local_free, 4))
+				return 0;
+		}
+		else
+		{
+			if (!_slang_cleanup_stack (file, params + j, 0, space))
+				return 0;
+		}
 	}
 
 	return 1;
 }
 
-static int call_function_name (slang_assembly_file *file, const char *name, slang_operation *params,
+int call_function_name (slang_assembly_file *file, const char *name, slang_operation *params,
 	unsigned int param_count, int assignment, slang_assembly_name_space *space,
 	slang_assembly_local_info *info)
 {
@@ -543,82 +566,7 @@ static int call_asm_instruction (slang_assembly_file *file, const char *name)
 
 	return 1;
 }
-/* XXX: general swizzle! */
-static int assign_aggregate (slang_assembly_file *file, const slang_storage_aggregate *agg,
-	unsigned int *index, unsigned int size, slang_assembly_local_info *info)
-{
-	unsigned int i;
 
-	for (i = 0; i < agg->count; i++)
-	{
-		const slang_storage_array *arr = agg->arrays + i;
-		unsigned int j;
-
-		for (j = 0; j < arr->length; j++)
-		{
-			if (arr->type == slang_stor_aggregate)
-			{
-				if (!assign_aggregate (file, arr->aggregate, index, size, info))
-					return 0;
-			}
-			else
-			{
-				switch (arr->type)
-				{
-				case slang_stor_bool:
-					if (!slang_assembly_file_push_label2 (file, slang_asm_bool_copy,
-						size - *index, *index))
-						return 0;
-					break;
-				case slang_stor_int:
-					if (!slang_assembly_file_push_label2 (file, slang_asm_int_copy,
-						size - *index, *index))
-						return 0;
-					break;
-				case slang_stor_float:
-					if (!slang_assembly_file_push_label2 (file, slang_asm_float_copy,
-						size - *index, *index))
-						return 0;
-					break;
-				}
-				*index += 4;
-			}
-		}
-	}
-	return 1;
-}
-/* XXX: general swizzle! */
-static int assignment (slang_assembly_file *file, slang_operation *op,
-	slang_assembly_name_space *space, slang_assembly_local_info *info)
-{
-	slang_assembly_typeinfo ti;
-	int result;
-	slang_storage_aggregate agg;
-	unsigned int index, size;
-
-	slang_assembly_typeinfo_construct (&ti);
-	if (!_slang_typeof_operation (op, space, &ti))
-	{
-		slang_assembly_typeinfo_destruct (&ti);
-		return 0;
-	}
-
-	slang_storage_aggregate_construct (&agg);
-	if (!_slang_aggregate_variable (&agg, &ti.spec, NULL, space->funcs, space->structs))
-	{
-		slang_storage_aggregate_destruct (&agg);
-		slang_assembly_typeinfo_destruct (&ti);
-		return 0;
-	}
-
-	index = 0;
-	size = _slang_sizeof_aggregate (&agg);
-	result = assign_aggregate (file, &agg, &index, size, info);
-
-	slang_storage_aggregate_destruct (&agg);
-	slang_assembly_typeinfo_destruct (&ti);
-	return result;
-}
 /* XXX: general swizzle! */
 static int equality_aggregate (slang_assembly_file *file, const slang_storage_aggregate *agg,
 	unsigned int *index, unsigned int size, slang_assembly_local_info *info, unsigned int z_label)
@@ -798,7 +746,7 @@ int _slang_assemble_operation (slang_assembly_file *file, slang_operation *op, i
 			if (!_slang_assemble_operation (file, op->children, 0, flow, space, info, &stk))
 				return 0;
 			/* TODO: inspect stk */
-			if (!assignment (file, op->children, space, info))
+			if (!_slang_assemble_assignment (file, op->children, space, info))
 				return 0;
 			if (!slang_assembly_file_push_label (file, slang_asm_local_free, 4))
 				return 0;
@@ -852,7 +800,8 @@ int _slang_assemble_operation (slang_assembly_file *file, slang_operation *op, i
 			if (var == NULL)
 				return 0;
 			size = 0;
-			if (!sizeof_variable (&var->type.specifier, var->array_size, space, &size))
+			if (!sizeof_variable (&var->type.specifier, slang_qual_none, var->array_size, space,
+				&size))
 				return 0;
 			if (var->initializer != NULL)
 			{
@@ -897,75 +846,20 @@ int _slang_assemble_operation (slang_assembly_file *file, slang_operation *op, i
 		}
 		break;
 	case slang_oper_assign:
-		{
-			slang_assembly_stack_info stk;
-			if (!reference)
-				if (!slang_assembly_file_push_label2 (file, slang_asm_local_addr, info->addr_tmp,
-					4))
-					return 0;
-			if (!_slang_assemble_operation (file, op->children, 1, flow, space, info, &stk))
-				return 0;
-			/* TODO: inspect stk */
-			if (!_slang_assemble_operation (file, op->children + 1, 0, flow, space, info, &stk))
-				return 0;
-			/* TODO: inspect stk */
-			if (!assignment (file, op->children, space, info))
-				return 0;
-			if (!reference)
-			{
-				if (!slang_assembly_file_push (file, slang_asm_addr_copy))
-					return 0;
-				if (!slang_assembly_file_push_label (file, slang_asm_local_free, 4))
-					return 0;
-				if (!dereference (file, op->children, space, info))
-					return 0;
-			}
-		}
+		if (!_slang_assemble_assign (file, op, "=", reference, space, info))
+			return 0;
 		break;
 	case slang_oper_addassign:
-		/* TODO: posprawdzaj czy zadzia³a dereferencja */
-		if (!call_function_name (file, "+=", op->children, 2, 1, space, info))
+		if (!_slang_assemble_assign (file, op, "+=", reference, space, info))
 			return 0;
-		if (reference)
-		{
-			/* TODO: stack is address */
-		}
-		else
-		{
-			if (!dereference (file, op->children, space, info))
-				return 0;
-			/* TODO: stack is operation type */
-		}
 		break;
 	case slang_oper_subassign:
-		/* TODO: posprawdzaj czy zadzia³a dereferencja */
-		if (!call_function_name (file, "-=", op->children, 2, 1, space, info))
+		if (!_slang_assemble_assign (file, op, "-=", reference, space, info))
 			return 0;
-		if (reference)
-		{
-			/* TODO: stack is address */
-		}
-		else
-		{
-			if (!dereference (file, op->children, space, info))
-				return 0;
-			/* TODO: stack is operation type */
-		}
 		break;
 	case slang_oper_mulassign:
-		/* TODO: posprawdzaj czy zadzia³a dereferencja */
-		if (!call_function_name (file, "*=", op->children, 2, 1, space, info))
+		if (!_slang_assemble_assign (file, op, "*=", reference, space, info))
 			return 0;
-		if (reference)
-		{
-			/* TODO: stack is address */
-		}
-		else
-		{
-			if (!dereference (file, op->children, space, info))
-				return 0;
-			/* TODO: stack is operation type */
-		}
 		break;
 	/*case slang_oper_modassign:*/
 	/*case slang_oper_lshassign:*/
@@ -974,19 +868,8 @@ int _slang_assemble_operation (slang_assembly_file *file, slang_operation *op, i
 	/*case slang_oper_xorassign:*/
 	/*case slang_oper_andassign:*/
 	case slang_oper_divassign:
-		/* TODO: posprawdzaj czy zadzia³a dereferencja */
-		if (!call_function_name (file, "/=", op->children, 2, 1, space, info))
+		if (!_slang_assemble_assign (file, op, "/=", reference, space, info))
 			return 0;
-		if (reference)
-		{
-			/* TODO: stack is address */
-		}
-		else
-		{
-			if (!dereference (file, op->children, space, info))
-				return 0;
-			/* TODO: stack is operation type */
-		}
 		break;
 	case slang_oper_select:
 		if (!_slang_assemble_select (file, op, flow, space, info))
@@ -1069,32 +952,12 @@ int _slang_assemble_operation (slang_assembly_file *file, slang_operation *op, i
 		}
 		break;
 	case slang_oper_preincrement:
-		/* TODO: posprawdzaj czy zadzia³a dereferencja */
-		if (!call_function_name (file, "++", op->children, 1, 1, space, info))
+		if (!_slang_assemble_assign (file, op, "++", reference, space, info))
 			return 0;
-		if (reference)
-		{
-			/* TODO: stack is address */
-		}
-		else
-		{
-			/* TODO: dereference */
-			/* TODO: stack is operation type */
-		}
 		break;
 	case slang_oper_predecrement:
-		/* TODO: posprawdzaj czy zadzia³a dereferencja */
-		if (!call_function_name (file, "--", op->children, 1, 1, space, info))
+		if (!_slang_assemble_assign (file, op, "--", reference, space, info))
 			return 0;
-		if (reference)
-		{
-			/* TODO: stack is address */
-		}
-		else
-		{
-			/* TODO: dereference */
-			/* TODO: stack is operation type */
-		}
 		break;
 	case slang_oper_plus:
 		if (!call_function_name (file, "+", op->children, 1, 0, space, info))
@@ -1125,7 +988,7 @@ int _slang_assemble_operation (slang_assembly_file *file, slang_operation *op, i
 				slang_assembly_typeinfo_destruct (&ti_arr);
 				return 0;
 			}
-			if (!sizeof_variable (&ti_arr.spec, NULL, space, &arr_size))
+			if (!sizeof_variable (&ti_arr.spec, slang_qual_none, NULL, space, &arr_size))
 			{
 				slang_assembly_typeinfo_destruct (&ti_arr);
 				return 0;
@@ -1137,7 +1000,7 @@ int _slang_assemble_operation (slang_assembly_file *file, slang_operation *op, i
 				slang_assembly_typeinfo_destruct (&ti_elem);
 				return 0;
 			}
-			if (!sizeof_variable (&ti_elem.spec, NULL, space, &elem_size))
+			if (!sizeof_variable (&ti_elem.spec, slang_qual_none, NULL, space, &elem_size))
 			{
 				slang_assembly_typeinfo_destruct (&ti_arr);
 				slang_assembly_typeinfo_destruct (&ti_elem);
@@ -1336,50 +1199,10 @@ void xxx_first (slang_assembly_file *file)
 	slang_assembly_file_push (file, slang_asm_jump);
 }
 
-void xxx_prolog (slang_assembly_file *file)
+void xxx_prolog (slang_assembly_file *file, unsigned int addr)
 {
 	file->code[0].param[0] = file->count;
-
-	/* allocate local storage for inout/out params */
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_label (file, slang_asm_enter, 4);
-
-/*	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);*/
-	slang_assembly_file_push_literal (file, slang_asm_int_push, 777.777f);
-/*	slang_assembly_file_push_literal (file, slang_asm_float_push, 16.16f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 15.15f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 14.14f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 13.13f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 12.12f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 11.11f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 10.10f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 9.9f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 8.8f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 7.7f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 6.6f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 5.5f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 4.4f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 3.3f);
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 2.2f);*/
-	slang_assembly_file_push_literal (file, slang_asm_float_push, 1.1f);
-
-	slang_assembly_file_push_label (file, slang_asm_call, file->count + 3);
-	slang_assembly_file_push_label (file, slang_asm_local_free, 4);
-
+	slang_assembly_file_push_label (file, slang_asm_call, addr);
 	slang_assembly_file_push (file, slang_asm_exit);
 }
 
