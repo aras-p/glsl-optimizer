@@ -39,8 +39,12 @@ typedef struct _pfs_reg_t {
 #define PFS_OP_LG2 8
 #define PFS_OP_RCP 9
 #define PFS_OP_RSQ 10
-#define MAX_PFS_OP 10
+#define PFS_OP_REPL_ALPHA 11
+#define MAX_PFS_OP 11
 #define OP(n) PFS_OP_##n
+
+#define PFS_FLAG_SAT	(1 << 0)
+#define PFS_FLAG_ABS	(1 << 1)
 
 #endif
 

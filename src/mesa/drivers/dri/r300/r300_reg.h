@@ -1000,12 +1000,15 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_FPI2_ARG0A_SHIFT             0
 #       define R300_FPI2_ARG0A_MASK              (31 << 0)
 #       define R300_FPI2_ARG0A_NEG               (1 << 5)
+#		define R300_FPI2_ARG0A_ABS				 (1 << 6) /* GUESS */
 #       define R300_FPI2_ARG1A_SHIFT             7
 #       define R300_FPI2_ARG1A_MASK              (31 << 7)
 #       define R300_FPI2_ARG1A_NEG               (1 << 12)
+#		define R300_FPI2_ARG1A_ABS				 (1 << 13) /* GUESS */
 #       define R300_FPI2_ARG2A_SHIFT             14
 #       define R300_FPI2_ARG2A_MASK              (31 << 14)
 #       define R300_FPI2_ARG2A_NEG               (1 << 19)
+#		define R300_FPI2_ARG2A_ABS				 (1 << 20) /* GUESS */
 #       define R300_FPI2_SPECIAL_LRP             (1 << 21)
 #       define R300_FPI2_OUTA_MAD                (0 << 23)
 #       define R300_FPI2_OUTA_DP4                (1 << 23)
