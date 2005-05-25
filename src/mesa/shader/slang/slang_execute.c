@@ -116,10 +116,10 @@ static void dump_instruction (FILE *f, slang_assembly *a, unsigned int i)
 		fprintf (f, "addr_deref");
 		break;
 	case slang_asm_addr_add:
-		fprintf (f, "address_add");
+		fprintf (f, "addr_add");
 		break;
 	case slang_asm_addr_multiply:
-		fprintf (f, "address_multiply");
+		fprintf (f, "addr_multiply");
 		break;
 	case slang_asm_jump:
 		fprintf (f, "jump\t%u", a->param[0]);
@@ -155,7 +155,7 @@ static void dump_instruction (FILE *f, slang_assembly *a, unsigned int i)
 		fprintf (f, "exit");
 		break;
 	default:
-	   break;
+		break;
 	}
 
 	fprintf (f, "\n");
@@ -306,7 +306,7 @@ fflush (f);
 		case slang_asm_enter:
 			mach.sp--;
 			mach.stack._addr[mach.sp] = mach.bp;
-			mach.bp = mach.sp + a->param[0] / 4 + 1;
+			mach.bp = mach.sp + a->param[0] / 4;
 			break;
 		case slang_asm_leave:
 			mach.bp = mach.stack._addr[mach.sp];
@@ -321,7 +321,7 @@ fflush (f);
 		case slang_asm_local_addr:
 			mach.sp--;
 			mach.stack._addr[mach.sp] = (GLuint) mach.stack._addr + mach.bp * 4 -
-				(a->param[0] + a->param[1]);
+				(a->param[0] + a->param[1]) + 4;
 			break;
 		case slang_asm_call:
 			mach.sp--;
