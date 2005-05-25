@@ -463,7 +463,6 @@ void viaEmitState(struct via_context *vmesa)
 	    for (j = 0; j < table->Size; j++) {
 	       OUT_RING( tableF[j] );
 	    }
-
 	    ADVANCE_RING();
 	 }
 

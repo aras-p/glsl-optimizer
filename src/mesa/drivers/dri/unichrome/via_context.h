@@ -184,6 +184,7 @@ struct via_context {
    GLmatrix ViewportMatrix;
    GLenum renderPrimitive;
    GLenum hwPrimitive;
+   GLenum hwShadeModel;
    unsigned char *verts;
 
    /* drmBufPtr dma_buffer;

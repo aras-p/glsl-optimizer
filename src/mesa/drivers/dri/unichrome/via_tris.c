@@ -48,6 +48,11 @@
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
  ***********************************************************************/
+#define LINE_FALLBACK (0)
+#define POINT_FALLBACK (0)
+#define TRI_FALLBACK (0)
+#define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK)
+#define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
 
 
 #if 0
@@ -238,7 +243,7 @@ static struct {
     tnl_line_func            line;
     tnl_triangle_func        triangle;
     tnl_quad_func            quad;
-} rast_tab[VIA_MAX_TRIFUNC];
+} rast_tab[VIA_MAX_TRIFUNC + 1];
 
 
 #define DO_FALLBACK (IND & VIA_FALLBACK_BIT)
@@ -298,20 +303,21 @@ do {								\
 
 #define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
 
-#define VERT_SET_SPEC( v0, c )					\
+#define VERT_SET_SPEC( v, c )					\
 do {								\
    if (specoffset) {						\
-      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.red, (c)[0]);	\
-      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.green, (c)[1]);	\
-      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.blue, (c)[2]);	\
+     via_color_t *color = (via_color_t *)&((v)->ui[specoffset]);	\
+     UNCLAMPED_FLOAT_TO_UBYTE(color->red, (c)[0]);		\
+     UNCLAMPED_FLOAT_TO_UBYTE(color->green, (c)[1]);		\
+     UNCLAMPED_FLOAT_TO_UBYTE(color->blue, (c)[2]);		\
    }								\
 } while (0)
 #define VERT_COPY_SPEC( v0, v1 )			\
 do {							\
    if (specoffset) {					\
-      v0->v.specular.red   = v1->v.specular.red;	\
-      v0->v.specular.green = v1->v.specular.green;	\
-      v0->v.specular.blue  = v1->v.specular.blue; 	\
+      v0->ub4[specoffset][0] = v1->ub4[specoffset][0];	\
+      v0->ub4[specoffset][1] = v1->ub4[specoffset][1];	\
+      v0->ub4[specoffset][2] = v1->ub4[specoffset][2];	\
    }							\
 } while (0)
 
@@ -428,6 +434,24 @@ static const GLenum hwPrim[GL_POLYGON + 2] = {
 #include "tnl_dd/t_dd_tritmp.h"
 
 
+/* Catchall case for flat, separate specular triangles (via has flat
+ * diffuse shading, but always does specular color with gouraud).
+ */
+#undef  DO_FALLBACK
+#undef  DO_OFFSET
+#undef  DO_UNFILLED
+#undef  DO_TWOSIDE
+#undef  DO_FLAT
+#define DO_FALLBACK (0)
+#define DO_OFFSET   (ctx->_TriangleCaps & DD_TRI_OFFSET)
+#define DO_UNFILLED (ctx->_TriangleCaps & DD_TRI_UNFILLED)
+#define DO_TWOSIDE  (ctx->_TriangleCaps & DD_TRI_LIGHT_TWOSIDE)
+#define DO_FLAT     1
+#define TAG(x) x##_flat_specular
+#define IND VIA_MAX_TRIFUNC
+#include "tnl_dd/t_dd_tritmp.h"
+
+
 static void init_rast_tab(void)
 {
     init();
@@ -446,6 +470,8 @@ static void init_rast_tab(void)
     init_offset_unfilled_fallback();
     init_twoside_unfilled_fallback();
     init_twoside_offset_unfilled_fallback();
+
+    init_flat_specular();	/* special! */
 }
 
 
@@ -619,11 +645,6 @@ static void viaFastRenderClippedPoly(GLcontext *ctx, const GLuint *elts,
                               _DD_NEW_TRI_STIPPLE |             \
                               _NEW_POLYGONSTIPPLE)
 
-#define LINE_FALLBACK (0)
-#define POINT_FALLBACK (0)
-#define TRI_FALLBACK (0)
-#define ANY_FALLBACK_FLAGS (POINT_FALLBACK|LINE_FALLBACK|TRI_FALLBACK)
-#define ANY_RASTER_FLAGS (DD_TRI_LIGHT_TWOSIDE|DD_TRI_OFFSET|DD_TRI_UNFILLED)
 
 static void viaChooseRenderState(GLcontext *ctx)
 {
@@ -660,6 +681,12 @@ static void viaChooseRenderState(GLcontext *ctx)
 
       if (flags & TRI_FALLBACK)
 	 vmesa->drawTri = via_fallback_tri;
+   }
+
+
+   if ((flags & DD_SEPARATE_SPECULAR) &&
+       ctx->Light.ShadeModel == GL_FLAT) {
+      index = VIA_MAX_TRIFUNC;	/* flat specular */
    }
 
    if (vmesa->renderIndex != index) {
@@ -875,13 +902,18 @@ void viaRasterPrimitive(GLcontext *ctx,
    RING_VARS;
 
    if (VIA_DEBUG & DEBUG_PRIMS) 
-      fprintf(stderr, "%s: %s/%s\n", 
+      fprintf(stderr, "%s: %s/%s/%s\n", 
 	      __FUNCTION__, _mesa_lookup_enum_by_nr(glprim),
-	      _mesa_lookup_enum_by_nr(hwprim));
+	      _mesa_lookup_enum_by_nr(hwprim),
+	      _mesa_lookup_enum_by_nr(ctx->Light.ShadeModel));
+
+   assert (!vmesa->newState);
 
    vmesa->renderPrimitive = glprim;
 
-   if (hwprim != vmesa->hwPrimitive) {
+   if (hwprim != vmesa->hwPrimitive ||
+       ctx->Light.ShadeModel != vmesa->hwShadeModel) {
+
       VIA_FINISH_PRIM(vmesa);
 
       /* Ensure no wrapping inside this function  */    
@@ -896,7 +928,8 @@ void viaRasterPrimitive(GLcontext *ctx,
       if (ctx->Light.ShadeModel == GL_SMOOTH) {
 	 vmesa->regCmdA_End |= HC_HShading_Gouraud;
       }
-
+      
+      vmesa->hwShadeModel = ctx->Light.ShadeModel;
       regCmdB = vmesa->regCmdB;
 
       switch (hwprim) {
