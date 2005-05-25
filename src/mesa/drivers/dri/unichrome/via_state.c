@@ -463,6 +463,7 @@ void viaEmitState(struct via_context *vmesa)
 	    for (j = 0; j < table->Size; j++) {
 	       OUT_RING( tableF[j] );
 	    }
+
 	    ADVANCE_RING();
 	 }
 
@@ -470,52 +471,42 @@ void viaEmitState(struct via_context *vmesa)
       }
    }
     
+#if 0
+   /* Polygon stipple is broken - for certain stipple values,
+    * eg. 0xf0f0f0f0, the hardware will refuse to accept the stipple.
+    * Coincidentally, conform generates just such a stipple.
+    */
    if (ctx->Polygon.StippleFlag) {
       GLuint *stipple = &ctx->PolygonStipple[0];
+      GLint i;
         
       BEGIN_RING(38);
       OUT_RING( HC_HEADER2 );             
+
       OUT_RING( ((HC_ParaType_Palette << 16) | (HC_SubType_Stipple << 24)) );
-      OUT_RING( stipple[31] );            
-      OUT_RING( stipple[30] );            
-      OUT_RING( stipple[29] );            
-      OUT_RING( stipple[28] );            
-      OUT_RING( stipple[27] );            
-      OUT_RING( stipple[26] );            
-      OUT_RING( stipple[25] );            
-      OUT_RING( stipple[24] );            
-      OUT_RING( stipple[23] );            
-      OUT_RING( stipple[22] );            
-      OUT_RING( stipple[21] );            
-      OUT_RING( stipple[20] );            
-      OUT_RING( stipple[19] );            
-      OUT_RING( stipple[18] );            
-      OUT_RING( stipple[17] );            
-      OUT_RING( stipple[16] );            
-      OUT_RING( stipple[15] );            
-      OUT_RING( stipple[14] );            
-      OUT_RING( stipple[13] );            
-      OUT_RING( stipple[12] );            
-      OUT_RING( stipple[11] );            
-      OUT_RING( stipple[10] );            
-      OUT_RING( stipple[9] );             
-      OUT_RING( stipple[8] );             
-      OUT_RING( stipple[7] );             
-      OUT_RING( stipple[6] );             
-      OUT_RING( stipple[5] );             
-      OUT_RING( stipple[4] );             
-      OUT_RING( stipple[3] );             
-      OUT_RING( stipple[2] );             
-      OUT_RING( stipple[1] );             
-      OUT_RING( stipple[0] );             
+      for (i = 31; i >= 0; i--) {
+	 GLint j;
+	 GLuint k = 0;
+
+	 /* Need to flip bits left to right:
+	  */
+	 for (j = 0 ; j < 32; j++)
+	    if (stipple[i] & (1<<j))
+	       k |= 1 << (31-j);
+
+	 OUT_RING( k );     
+      }
+
       OUT_RING( HC_HEADER2 );                     
       OUT_RING( (HC_ParaType_NotTex << 16) );
       OUT_RING( (HC_SubA_HSPXYOS << 24) | 
-		(((31 - vmesa->drawX) & 0x1f) << HC_HSPXOS_SHIFT));
+		(((32- vmesa->drawXoff) & 0x1f) << HC_HSPXOS_SHIFT));
       OUT_RING( (HC_SubA_HSPXYOS << 24) | 
-		(((31 - vmesa->drawX) & 0x1f) << HC_HSPXOS_SHIFT));
+		(((32 - vmesa->drawXoff) & 0x1f) << HC_HSPXOS_SHIFT));
+
       ADVANCE_RING();
    }
+#endif
    
    vmesa->newEmitState = 0;
 }
@@ -658,29 +649,32 @@ static void viaRenderMode(GLcontext *ctx, GLenum mode)
 
 static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
 {
-    struct via_context *vmesa = VIA_CONTEXT(ctx);
+   struct via_context *vmesa = VIA_CONTEXT(ctx);
 
-    if (VIA_DEBUG & (DEBUG_DRI|DEBUG_STATE)) 
-       fprintf(stderr, "%s in\n", __FUNCTION__);
+   if (VIA_DEBUG & (DEBUG_DRI|DEBUG_STATE)) 
+      fprintf(stderr, "%s in\n", __FUNCTION__);
 
-    if (mode == GL_FRONT) {
-        VIA_FLUSH_DMA(vmesa);
-	vmesa->drawBuffer = vmesa->readBuffer = &vmesa->front;
-        FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_FALSE);
-        return;
-    }
-    else if (mode == GL_BACK) {
-        VIA_FLUSH_DMA(vmesa);
-	vmesa->drawBuffer = vmesa->readBuffer = &vmesa->back;
-        FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_FALSE);
-        return;
-    }
-    else {
-        FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_TRUE);
-        return;
-    }
+   if (!ctx->DrawBuffer)
+      return;
 
-    viaXMesaWindowMoved(vmesa);
+   switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
+   case BUFFER_BIT_FRONT_LEFT:
+      VIA_FLUSH_DMA(vmesa);
+      vmesa->drawBuffer = vmesa->readBuffer = &vmesa->front;
+      FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_FALSE);
+      break;
+   case BUFFER_BIT_BACK_LEFT:
+      VIA_FLUSH_DMA(vmesa);
+      vmesa->drawBuffer = vmesa->readBuffer = &vmesa->back;
+      FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_FALSE);
+      break;
+   default:
+      FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_TRUE);
+      return;
+   }
+
+
+   viaXMesaWindowMoved(vmesa);
 
    /* We want to update the s/w rast state too so that viaSetBuffer()
     * gets called.
@@ -1328,12 +1322,19 @@ static void viaChoosePolygonState(GLcontext *ctx)
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
 
+#if 0
+    /* Polygon stipple is broken - see via_state.c
+     */
     if (ctx->Polygon.StippleFlag) {
         vmesa->regEnable |= HC_HenSP_MASK;
     }
     else {
         vmesa->regEnable &= ~HC_HenSP_MASK;
     }
+#else
+    FALLBACK(vmesa, VIA_FALLBACK_POLY_STIPPLE, 
+	     ctx->Polygon.StippleFlag);
+#endif
 
     if (ctx->Polygon.CullFlag) {
         vmesa->regEnable |= HC_HenFBCull_MASK;
