@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#define SLANG_MACHINE_STACK_SIZE 64
+#define SLANG_MACHINE_STACK_SIZE 1024
 
 typedef struct slang_machine_
 {

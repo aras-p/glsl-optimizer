@@ -58,6 +58,7 @@ int _slang_assemble_while (slang_assembly_file *file, slang_operation *op,
 int _slang_assemble_if (slang_assembly_file *file, slang_operation *op,
 	slang_assembly_flow_control *flow, slang_assembly_name_space *space,
 	slang_assembly_local_info *info);
+
 #ifdef __cplusplus
 }
 #endif
