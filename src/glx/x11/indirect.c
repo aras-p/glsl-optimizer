@@ -31,6 +31,11 @@
 #include "glxclient.h"
 #include "indirect_size.h"
 #include <GL/glxproto.h>
+#ifdef USE_XCB
+#include <X11/xcl.h>
+#include <X11/XCB/xcb.h>
+#include <X11/XCB/glx.h>
+#endif /* USE_XCB */
 
 #define __GLX_PAD(n) (((n) + 3) & ~3)
 
@@ -274,10 +279,16 @@ __indirect_glNewList(GLuint list, GLenum mode)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxNewList(c, gc->currentContextTag, list, mode);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_NewList, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&list), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&mode), 4);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -290,8 +301,14 @@ __indirect_glEndList(void)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 0;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxEndList(c, gc->currentContextTag);
+#else
         (void) __glXSetupSingleRequest(gc, X_GLsop_EndList, cmdlen);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -348,10 +365,16 @@ __indirect_glDeleteLists(GLuint list, GLsizei range)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxDeleteLists(c, gc->currentContextTag, list, range);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_DeleteLists, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&list), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&range), 4);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -365,10 +388,18 @@ __indirect_glGenLists(GLsizei range)
     GLuint retval = (GLuint) 0;
     const GLuint cmdlen = 4;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGenListsRep *reply = XCBGlxGenListsReply(c, XCBGlxGenLists(c, gc->currentContextTag, range), NULL);
+        retval = reply->ret_val;
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GenLists, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&range), 4);
         retval = (GLuint) __glXReadReply(dpy, 0, NULL, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return retval;
 }
@@ -3280,6 +3311,13 @@ __indirect_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum 
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 28;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxReadPixelsRep *reply = XCBGlxReadPixelsReply(c, XCBGlxReadPixels(c, gc->currentContextTag, x, y, width, height, format, type, state->storePack.swapEndian, 0), NULL);
+        pixels = (GLvoid *)XCBGlxReadPixelsData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_ReadPixels, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&x), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&y), 4);
@@ -3291,6 +3329,7 @@ __indirect_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum 
         * (int8_t *)(pc + 24) = state->storePack.swapEndian;
         __glXReadPixelReply(dpy, gc, 2, width, height, 1, format, type, pixels, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3344,10 +3383,18 @@ __indirect_glGetClipPlane(GLenum plane, GLdouble * equation)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 4;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetClipPlaneRep *reply = XCBGlxGetClipPlaneReply(c, XCBGlxGetClipPlane(c, gc->currentContextTag, plane), NULL);
+        equation = (GLdouble *)XCBGlxGetClipPlaneData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetClipPlane, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&plane), 4);
         (void) __glXReadReply(dpy, 8, equation, GL_TRUE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3360,11 +3407,22 @@ __indirect_glGetLightfv(GLenum light, GLenum pname, GLfloat * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetLightfvRep *reply = XCBGlxGetLightfvReply(c, XCBGlxGetLightfv(c, gc->currentContextTag, light, pname), NULL);
+        if (XCBGlxGetLightfvDataLength(reply) == 0)
+            params = (GLfloat *) &reply->datum;
+        else
+            params = (GLfloat *)XCBGlxGetLightfvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetLightfv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&light), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3377,11 +3435,22 @@ __indirect_glGetLightiv(GLenum light, GLenum pname, GLint * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetLightivRep *reply = XCBGlxGetLightivReply(c, XCBGlxGetLightiv(c, gc->currentContextTag, light, pname), NULL);
+        if (XCBGlxGetLightivDataLength(reply) == 0)
+            params = (GLint *) &reply->datum;
+        else
+            params = (GLint *)XCBGlxGetLightivData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetLightiv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&light), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3394,11 +3463,22 @@ __indirect_glGetMapdv(GLenum target, GLenum query, GLdouble * v)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetMapdvRep *reply = XCBGlxGetMapdvReply(c, XCBGlxGetMapdv(c, gc->currentContextTag, target, query), NULL);
+        if (XCBGlxGetMapdvDataLength(reply) == 0)
+            v = (GLdouble *) &reply->datum;
+        else
+            v = (GLdouble *)XCBGlxGetMapdvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMapdv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&query), 4);
         (void) __glXReadReply(dpy, 8, v, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3411,11 +3491,22 @@ __indirect_glGetMapfv(GLenum target, GLenum query, GLfloat * v)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetMapfvRep *reply = XCBGlxGetMapfvReply(c, XCBGlxGetMapfv(c, gc->currentContextTag, target, query), NULL);
+        if (XCBGlxGetMapfvDataLength(reply) == 0)
+            v = (GLfloat *) &reply->datum;
+        else
+            v = (GLfloat *)XCBGlxGetMapfvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMapfv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&query), 4);
         (void) __glXReadReply(dpy, 4, v, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3428,11 +3519,22 @@ __indirect_glGetMapiv(GLenum target, GLenum query, GLint * v)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetMapivRep *reply = XCBGlxGetMapivReply(c, XCBGlxGetMapiv(c, gc->currentContextTag, target, query), NULL);
+        if (XCBGlxGetMapivDataLength(reply) == 0)
+            v = (GLint *) &reply->datum;
+        else
+            v = (GLint *)XCBGlxGetMapivData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMapiv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&query), 4);
         (void) __glXReadReply(dpy, 4, v, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3445,11 +3547,22 @@ __indirect_glGetMaterialfv(GLenum face, GLenum pname, GLfloat * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetMaterialfvRep *reply = XCBGlxGetMaterialfvReply(c, XCBGlxGetMaterialfv(c, gc->currentContextTag, face, pname), NULL);
+        if (XCBGlxGetMaterialfvDataLength(reply) == 0)
+            params = (GLfloat *) &reply->datum;
+        else
+            params = (GLfloat *)XCBGlxGetMaterialfvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMaterialfv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&face), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3462,11 +3575,22 @@ __indirect_glGetMaterialiv(GLenum face, GLenum pname, GLint * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetMaterialivRep *reply = XCBGlxGetMaterialivReply(c, XCBGlxGetMaterialiv(c, gc->currentContextTag, face, pname), NULL);
+        if (XCBGlxGetMaterialivDataLength(reply) == 0)
+            params = (GLint *) &reply->datum;
+        else
+            params = (GLint *)XCBGlxGetMaterialivData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMaterialiv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&face), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3479,10 +3603,21 @@ __indirect_glGetPixelMapfv(GLenum map, GLfloat * values)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 4;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetPixelMapfvRep *reply = XCBGlxGetPixelMapfvReply(c, XCBGlxGetPixelMapfv(c, gc->currentContextTag, map), NULL);
+        if (XCBGlxGetPixelMapfvDataLength(reply) == 0)
+            values = (GLfloat *) &reply->datum;
+        else
+            values = (GLfloat *)XCBGlxGetPixelMapfvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetPixelMapfv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&map), 4);
         (void) __glXReadReply(dpy, 4, values, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3495,10 +3630,21 @@ __indirect_glGetPixelMapuiv(GLenum map, GLuint * values)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 4;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetPixelMapuivRep *reply = XCBGlxGetPixelMapuivReply(c, XCBGlxGetPixelMapuiv(c, gc->currentContextTag, map), NULL);
+        if (XCBGlxGetPixelMapuivDataLength(reply) == 0)
+            values = (GLuint *) &reply->datum;
+        else
+            values = (GLuint *)XCBGlxGetPixelMapuivData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetPixelMapuiv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&map), 4);
         (void) __glXReadReply(dpy, 4, values, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3511,10 +3657,21 @@ __indirect_glGetPixelMapusv(GLenum map, GLushort * values)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 4;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetPixelMapusvRep *reply = XCBGlxGetPixelMapusvReply(c, XCBGlxGetPixelMapusv(c, gc->currentContextTag, map), NULL);
+        if (XCBGlxGetPixelMapusvDataLength(reply) == 0)
+            values = (GLushort *) &reply->datum;
+        else
+            values = (GLushort *)XCBGlxGetPixelMapusvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetPixelMapusv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&map), 4);
         (void) __glXReadReply(dpy, 2, values, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3528,10 +3685,18 @@ __indirect_glGetPolygonStipple(GLubyte * mask)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 4;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetPolygonStippleRep *reply = XCBGlxGetPolygonStippleReply(c, XCBGlxGetPolygonStipple(c, gc->currentContextTag, 0), NULL);
+        mask = (GLubyte *)XCBGlxGetPolygonStippleData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetPolygonStipple, cmdlen);
         *(int32_t *)(pc + 0) = 0;
         __glXReadPixelReply(dpy, gc, 2, 32, 32, 1, GL_COLOR_INDEX, GL_BITMAP, mask, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3544,11 +3709,22 @@ __indirect_glGetTexEnvfv(GLenum target, GLenum pname, GLfloat * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetTexEnvfvRep *reply = XCBGlxGetTexEnvfvReply(c, XCBGlxGetTexEnvfv(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetTexEnvfvDataLength(reply) == 0)
+            params = (GLfloat *) &reply->datum;
+        else
+            params = (GLfloat *)XCBGlxGetTexEnvfvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexEnvfv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3561,11 +3737,22 @@ __indirect_glGetTexEnviv(GLenum target, GLenum pname, GLint * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetTexEnvivRep *reply = XCBGlxGetTexEnvivReply(c, XCBGlxGetTexEnviv(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetTexEnvivDataLength(reply) == 0)
+            params = (GLint *) &reply->datum;
+        else
+            params = (GLint *)XCBGlxGetTexEnvivData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexEnviv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3578,11 +3765,22 @@ __indirect_glGetTexGendv(GLenum coord, GLenum pname, GLdouble * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetTexGendvRep *reply = XCBGlxGetTexGendvReply(c, XCBGlxGetTexGendv(c, gc->currentContextTag, coord, pname), NULL);
+        if (XCBGlxGetTexGendvDataLength(reply) == 0)
+            params = (GLdouble *) &reply->datum;
+        else
+            params = (GLdouble *)XCBGlxGetTexGendvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexGendv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&coord), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 8, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3595,11 +3793,22 @@ __indirect_glGetTexGenfv(GLenum coord, GLenum pname, GLfloat * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetTexGenfvRep *reply = XCBGlxGetTexGenfvReply(c, XCBGlxGetTexGenfv(c, gc->currentContextTag, coord, pname), NULL);
+        if (XCBGlxGetTexGenfvDataLength(reply) == 0)
+            params = (GLfloat *) &reply->datum;
+        else
+            params = (GLfloat *)XCBGlxGetTexGenfvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexGenfv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&coord), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3612,11 +3821,22 @@ __indirect_glGetTexGeniv(GLenum coord, GLenum pname, GLint * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetTexGenivRep *reply = XCBGlxGetTexGenivReply(c, XCBGlxGetTexGeniv(c, gc->currentContextTag, coord, pname), NULL);
+        if (XCBGlxGetTexGenivDataLength(reply) == 0)
+            params = (GLint *) &reply->datum;
+        else
+            params = (GLint *)XCBGlxGetTexGenivData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexGeniv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&coord), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3630,6 +3850,13 @@ __indirect_glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type,
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 20;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetTexImageRep *reply = XCBGlxGetTexImageReply(c, XCBGlxGetTexImage(c, gc->currentContextTag, target, level, format, type, state->storePack.swapEndian), NULL);
+        pixels = (GLvoid *)XCBGlxGetTexImageData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexImage, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&level), 4);
@@ -3639,6 +3866,7 @@ __indirect_glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type,
         * (int8_t *)(pc + 16) = state->storePack.swapEndian;
         __glXReadPixelReply(dpy, gc, 3, 0, 0, 0, format, type, pixels, GL_TRUE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3651,11 +3879,22 @@ __indirect_glGetTexParameterfv(GLenum target, GLenum pname, GLfloat * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetTexParameterfvRep *reply = XCBGlxGetTexParameterfvReply(c, XCBGlxGetTexParameterfv(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetTexParameterfvDataLength(reply) == 0)
+            params = (GLfloat *) &reply->datum;
+        else
+            params = (GLfloat *)XCBGlxGetTexParameterfvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexParameterfv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3668,11 +3907,22 @@ __indirect_glGetTexParameteriv(GLenum target, GLenum pname, GLint * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetTexParameterivRep *reply = XCBGlxGetTexParameterivReply(c, XCBGlxGetTexParameteriv(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetTexParameterivDataLength(reply) == 0)
+            params = (GLint *) &reply->datum;
+        else
+            params = (GLint *)XCBGlxGetTexParameterivData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexParameteriv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3685,12 +3935,23 @@ __indirect_glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname, GL
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 12;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetTexLevelParameterfvRep *reply = XCBGlxGetTexLevelParameterfvReply(c, XCBGlxGetTexLevelParameterfv(c, gc->currentContextTag, target, level, pname), NULL);
+        if (XCBGlxGetTexLevelParameterfvDataLength(reply) == 0)
+            params = (GLfloat *) &reply->datum;
+        else
+            params = (GLfloat *)XCBGlxGetTexLevelParameterfvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexLevelParameterfv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&level), 4);
         (void) memcpy((void *)(pc + 8), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3703,12 +3964,23 @@ __indirect_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GL
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 12;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetTexLevelParameterivRep *reply = XCBGlxGetTexLevelParameterivReply(c, XCBGlxGetTexLevelParameteriv(c, gc->currentContextTag, target, level, pname), NULL);
+        if (XCBGlxGetTexLevelParameterivDataLength(reply) == 0)
+            params = (GLint *) &reply->datum;
+        else
+            params = (GLint *)XCBGlxGetTexLevelParameterivData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexLevelParameteriv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&level), 4);
         (void) memcpy((void *)(pc + 8), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -3722,10 +3994,18 @@ __indirect_glIsList(GLuint list)
     GLboolean retval = (GLboolean) 0;
     const GLuint cmdlen = 4;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxIsListRep *reply = XCBGlxIsListReply(c, XCBGlxIsList(c, gc->currentContextTag, list), NULL);
+        retval = reply->ret_val;
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_IsList, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&list), 4);
         retval = (GLboolean) __glXReadReply(dpy, 0, NULL, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return retval;
 }
@@ -4030,11 +4310,20 @@ __indirect_glAreTexturesResident(GLsizei n, const GLuint * textures, GLboolean *
     GLboolean retval = (GLboolean) 0;
     const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
     if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxAreTexturesResidentRep *reply = XCBGlxAreTexturesResidentReply(c, XCBGlxAreTexturesResident(c, gc->currentContextTag, n, textures), NULL);
+        residences = (GLboolean *)XCBGlxAreTexturesResidentData(reply);
+        retval = reply->ret_val;
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_AreTexturesResident, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&n), 4);
         (void) memcpy((void *)(pc + 4), (void *)(textures), (n * 4));
         retval = (GLboolean) __glXReadReply(dpy, 1, residences, GL_TRUE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return retval;
 }
@@ -4120,10 +4409,16 @@ __indirect_glDeleteTextures(GLsizei n, const GLuint * textures)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
     if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxDeleteTextures(c, gc->currentContextTag, n, textures);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_DeleteTextures, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&n), 4);
         (void) memcpy((void *)(pc + 4), (void *)(textures), (n * 4));
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4136,10 +4431,18 @@ __indirect_glGenTextures(GLsizei n, GLuint * textures)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 4;
     if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGenTexturesRep *reply = XCBGlxGenTexturesReply(c, XCBGlxGenTextures(c, gc->currentContextTag, n), NULL);
+        textures = (GLuint *)XCBGlxGenTexturesData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GenTextures, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&n), 4);
         (void) __glXReadReply(dpy, 4, textures, GL_TRUE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4153,10 +4456,18 @@ __indirect_glIsTexture(GLuint texture)
     GLboolean retval = (GLboolean) 0;
     const GLuint cmdlen = 4;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxIsTextureRep *reply = XCBGlxIsTextureReply(c, XCBGlxIsTexture(c, gc->currentContextTag, texture), NULL);
+        retval = reply->ret_val;
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_IsTexture, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&texture), 4);
         retval = (GLboolean) __glXReadReply(dpy, 0, NULL, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return retval;
 }
@@ -4366,6 +4677,13 @@ __indirect_glGetColorTable(GLenum target, GLenum format, GLenum type, GLvoid * t
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 16;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetColorTableRep *reply = XCBGlxGetColorTableReply(c, XCBGlxGetColorTable(c, gc->currentContextTag, target, format, type, state->storePack.swapEndian), NULL);
+        table = (GLvoid *)XCBGlxGetColorTableData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetColorTable, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&format), 4);
@@ -4374,6 +4692,7 @@ __indirect_glGetColorTable(GLenum target, GLenum format, GLenum type, GLvoid * t
         * (int8_t *)(pc + 12) = state->storePack.swapEndian;
         __glXReadPixelReply(dpy, gc, 1, 0, 0, 0, format, type, table, GL_TRUE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4386,11 +4705,22 @@ __indirect_glGetColorTableParameterfv(GLenum target, GLenum pname, GLfloat * par
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetColorTableParameterfvRep *reply = XCBGlxGetColorTableParameterfvReply(c, XCBGlxGetColorTableParameterfv(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetColorTableParameterfvDataLength(reply) == 0)
+            params = (GLfloat *) &reply->datum;
+        else
+            params = (GLfloat *)XCBGlxGetColorTableParameterfvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetColorTableParameterfv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4403,11 +4733,22 @@ __indirect_glGetColorTableParameteriv(GLenum target, GLenum pname, GLint * param
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetColorTableParameterivRep *reply = XCBGlxGetColorTableParameterivReply(c, XCBGlxGetColorTableParameteriv(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetColorTableParameterivDataLength(reply) == 0)
+            params = (GLint *) &reply->datum;
+        else
+            params = (GLint *)XCBGlxGetColorTableParameterivData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetColorTableParameteriv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4629,6 +4970,13 @@ __indirect_glGetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLv
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 16;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetConvolutionFilterRep *reply = XCBGlxGetConvolutionFilterReply(c, XCBGlxGetConvolutionFilter(c, gc->currentContextTag, target, format, type, state->storePack.swapEndian), NULL);
+        image = (GLvoid *)XCBGlxGetConvolutionFilterData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetConvolutionFilter, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&format), 4);
@@ -4637,6 +4985,7 @@ __indirect_glGetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLv
         * (int8_t *)(pc + 12) = state->storePack.swapEndian;
         __glXReadPixelReply(dpy, gc, 2, 0, 0, 0, format, type, image, GL_TRUE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4649,11 +4998,22 @@ __indirect_glGetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat * pa
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetConvolutionParameterfvRep *reply = XCBGlxGetConvolutionParameterfvReply(c, XCBGlxGetConvolutionParameterfv(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetConvolutionParameterfvDataLength(reply) == 0)
+            params = (GLfloat *) &reply->datum;
+        else
+            params = (GLfloat *)XCBGlxGetConvolutionParameterfvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetConvolutionParameterfv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4666,11 +5026,22 @@ __indirect_glGetConvolutionParameteriv(GLenum target, GLenum pname, GLint * para
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetConvolutionParameterivRep *reply = XCBGlxGetConvolutionParameterivReply(c, XCBGlxGetConvolutionParameteriv(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetConvolutionParameterivDataLength(reply) == 0)
+            params = (GLint *) &reply->datum;
+        else
+            params = (GLint *)XCBGlxGetConvolutionParameterivData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetConvolutionParameteriv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4684,6 +5055,13 @@ __indirect_glGetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum 
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 16;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetHistogramRep *reply = XCBGlxGetHistogramReply(c, XCBGlxGetHistogram(c, gc->currentContextTag, target, reset, format, type, state->storePack.swapEndian), NULL);
+        values = (GLvoid *)XCBGlxGetHistogramData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetHistogram, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&format), 4);
@@ -4693,6 +5071,7 @@ __indirect_glGetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum 
         * (int8_t *)(pc + 13) = reset;
         __glXReadPixelReply(dpy, gc, 1, 0, 0, 0, format, type, values, GL_TRUE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4705,11 +5084,22 @@ __indirect_glGetHistogramParameterfv(GLenum target, GLenum pname, GLfloat * para
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetHistogramParameterfvRep *reply = XCBGlxGetHistogramParameterfvReply(c, XCBGlxGetHistogramParameterfv(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetHistogramParameterfvDataLength(reply) == 0)
+            params = (GLfloat *) &reply->datum;
+        else
+            params = (GLfloat *)XCBGlxGetHistogramParameterfvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetHistogramParameterfv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4722,11 +5112,22 @@ __indirect_glGetHistogramParameteriv(GLenum target, GLenum pname, GLint * params
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetHistogramParameterivRep *reply = XCBGlxGetHistogramParameterivReply(c, XCBGlxGetHistogramParameteriv(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetHistogramParameterivDataLength(reply) == 0)
+            params = (GLint *) &reply->datum;
+        else
+            params = (GLint *)XCBGlxGetHistogramParameterivData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetHistogramParameteriv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4740,6 +5141,13 @@ __indirect_glGetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum typ
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 16;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetMinmaxRep *reply = XCBGlxGetMinmaxReply(c, XCBGlxGetMinmax(c, gc->currentContextTag, target, reset, format, type, state->storePack.swapEndian), NULL);
+        values = (GLvoid *)XCBGlxGetMinmaxData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMinmax, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&format), 4);
@@ -4749,6 +5157,7 @@ __indirect_glGetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum typ
         * (int8_t *)(pc + 13) = reset;
         __glXReadPixelReply(dpy, gc, 1, 2, 1, 1, format, type, values, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4761,11 +5170,22 @@ __indirect_glGetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetMinmaxParameterfvRep *reply = XCBGlxGetMinmaxParameterfvReply(c, XCBGlxGetMinmaxParameterfv(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetMinmaxParameterfvDataLength(reply) == 0)
+            params = (GLfloat *) &reply->datum;
+        else
+            params = (GLfloat *)XCBGlxGetMinmaxParameterfvData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMinmaxParameterfv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -4778,11 +5198,22 @@ __indirect_glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetMinmaxParameterivRep *reply = XCBGlxGetMinmaxParameterivReply(c, XCBGlxGetMinmaxParameteriv(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetMinmaxParameterivDataLength(reply) == 0)
+            params = (GLint *) &reply->datum;
+        else
+            params = (GLint *)XCBGlxGetMinmaxParameterivData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMinmaxParameteriv, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -7195,10 +7626,18 @@ __indirect_glGenQueriesARB(GLsizei n, GLuint * ids)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 4;
     if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGenQueriesARBRep *reply = XCBGlxGenQueriesARBReply(c, XCBGlxGenQueriesARB(c, gc->currentContextTag, n), NULL);
+        ids = (GLuint *)XCBGlxGenQueriesARBData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GenQueriesARB, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&n), 4);
         (void) __glXReadReply(dpy, 4, ids, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -7211,10 +7650,16 @@ __indirect_glDeleteQueriesARB(GLsizei n, const GLuint * ids)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
     if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxDeleteQueriesARB(c, gc->currentContextTag, n, ids);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_DeleteQueriesARB, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&n), 4);
         (void) memcpy((void *)(pc + 4), (void *)(ids), (n * 4));
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -7228,10 +7673,18 @@ __indirect_glIsQueryARB(GLuint id)
     GLboolean retval = (GLboolean) 0;
     const GLuint cmdlen = 4;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxIsQueryARBRep *reply = XCBGlxIsQueryARBReply(c, XCBGlxIsQueryARB(c, gc->currentContextTag, id), NULL);
+        retval = reply->ret_val;
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_IsQueryARB, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&id), 4);
         retval = (GLboolean) __glXReadReply(dpy, 0, NULL, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return retval;
 }
@@ -7269,11 +7722,22 @@ __indirect_glGetQueryivARB(GLenum target, GLenum pname, GLint * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetQueryivARBRep *reply = XCBGlxGetQueryivARBReply(c, XCBGlxGetQueryivARB(c, gc->currentContextTag, target, pname), NULL);
+        if (XCBGlxGetQueryivARBDataLength(reply) == 0)
+            params = (GLint *) &reply->datum;
+        else
+            params = (GLint *)XCBGlxGetQueryivARBData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetQueryivARB, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&target), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -7286,11 +7750,22 @@ __indirect_glGetQueryObjectivARB(GLuint id, GLenum pname, GLint * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetQueryObjectivARBRep *reply = XCBGlxGetQueryObjectivARBReply(c, XCBGlxGetQueryObjectivARB(c, gc->currentContextTag, id, pname), NULL);
+        if (XCBGlxGetQueryObjectivARBDataLength(reply) == 0)
+            params = (GLint *) &reply->datum;
+        else
+            params = (GLint *)XCBGlxGetQueryObjectivARBData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetQueryObjectivARB, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&id), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
@@ -7303,11 +7778,22 @@ __indirect_glGetQueryObjectuivARB(GLuint id, GLenum pname, GLuint * params)
     Display * const dpy = gc->currentDpy;
     const GLuint cmdlen = 8;
     if (__builtin_expect(dpy != NULL, 1)) {
+#ifdef USE_XCB
+        XCBConnection *c = XCBConnectionOfDisplay(dpy);
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+        XCBGlxGetQueryObjectuivARBRep *reply = XCBGlxGetQueryObjectuivARBReply(c, XCBGlxGetQueryObjectuivARB(c, gc->currentContextTag, id, pname), NULL);
+        if (XCBGlxGetQueryObjectuivARBDataLength(reply) == 0)
+            params = (GLuint *) &reply->datum;
+        else
+            params = (GLuint *)XCBGlxGetQueryObjectuivARBData(reply);
+        free(reply);
+#else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetQueryObjectuivARB, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&id), 4);
         (void) memcpy((void *)(pc + 4), (void *)(&pname), 4);
         (void) __glXReadReply(dpy, 4, params, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
+#endif /* USE_XCB */
     }
     return;
 }
