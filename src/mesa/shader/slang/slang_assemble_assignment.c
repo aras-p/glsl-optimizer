@@ -87,6 +87,8 @@ static int assign_aggregate (slang_assembly_file *file, const slang_storage_aggr
 				case slang_stor_float:
 					ty = slang_asm_float_copy;
 					break;
+				default:
+					break;
 				}
 				if (!slang_assembly_file_push_label2 (file, ty, size - *index, *index))
 					return 0;
