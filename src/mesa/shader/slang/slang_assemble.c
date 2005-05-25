@@ -40,12 +40,12 @@
 
 /* slang_assembly */
 
-static void slang_assembly_construct (slang_assembly *asm)
+static void slang_assembly_construct (slang_assembly *assem)
 {
-	asm->type = slang_asm_none;
+	assem->type = slang_asm_none;
 }
 
-static void slang_assembly_destruct (slang_assembly *asm)
+static void slang_assembly_destruct (slang_assembly *assem)
 {
 }
 
@@ -82,14 +82,14 @@ static int slang_assembly_file_push_new (slang_assembly_file *file)
 static int slang_assembly_file_push_general (slang_assembly_file *file, slang_assembly_type type,
 	GLfloat literal, GLuint label, GLuint size)
 {
-	slang_assembly *asm;
+	slang_assembly *assem;
 	if (!slang_assembly_file_push_new (file))
 		return 0;
-	asm = file->code + file->count - 1;
-	asm->type = type;
-	asm->literal = literal;
-	asm->param[0] = label;
-	asm->param[1] = size;
+	assem = file->code + file->count - 1;
+	assem->type = type;
+	assem->literal = literal;
+	assem->param[0] = label;
+	assem->param[1] = size;
 	return 1;
 }
 
@@ -673,11 +673,11 @@ int _slang_assemble_operation (slang_assembly_file *file, slang_operation *op, i
 	slang_assembly_flow_control *flow, slang_assembly_name_space *space,
 	slang_assembly_local_info *info, slang_assembly_stack_info *stk)
 {
-	unsigned int asm;
+	unsigned int assem;
 
 	stk->swizzle_mask = 0;
 
-	asm = file->count;
+	assem = file->count;
 	if (!slang_assembly_file_push_new (file))
 		return 0;
 
@@ -725,15 +725,15 @@ int _slang_assemble_operation (slang_assembly_file *file, slang_operation *op, i
 		}
 		break;
 	case slang_oper_break:
-		file->code[asm].type = slang_asm_jump;
-		file->code[asm].param[0] = flow->loop_end;
+		file->code[assem].type = slang_asm_jump;
+		file->code[assem].param[0] = flow->loop_end;
 		break;
 	case slang_oper_continue:
-		file->code[asm].type = slang_asm_jump;
-		file->code[asm].param[0] = flow->loop_start;
+		file->code[assem].type = slang_asm_jump;
+		file->code[assem].param[0] = flow->loop_start;
 		break;
 	case slang_oper_discard:
-		file->code[asm].type = slang_asm_discard;
+		file->code[assem].type = slang_asm_discard;
 		if (!slang_assembly_file_push (file, slang_asm_exit))
 			return 0;
 		break;
@@ -781,16 +781,16 @@ int _slang_assemble_operation (slang_assembly_file *file, slang_operation *op, i
 	case slang_oper_void:
 		break;
 	case slang_oper_literal_bool:
-		file->code[asm].type = slang_asm_bool_push;
-		file->code[asm].literal = op->literal;
+		file->code[assem].type = slang_asm_bool_push;
+		file->code[assem].literal = op->literal;
 		break;
 	case slang_oper_literal_int:
-		file->code[asm].type = slang_asm_int_push;
-		file->code[asm].literal = op->literal;
+		file->code[assem].type = slang_asm_int_push;
+		file->code[assem].literal = op->literal;
 		break;
 	case slang_oper_literal_float:
-		file->code[asm].type = slang_asm_float_push;
-		file->code[asm].literal = op->literal;
+		file->code[assem].type = slang_asm_float_push;
+		file->code[assem].literal = op->literal;
 		break;
 	case slang_oper_identifier:
 		{
