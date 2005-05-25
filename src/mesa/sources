@@ -149,7 +149,7 @@ SHADER_SOURCES = \
 	shader/arbprogram.c \
 	shader/arbvertparse.c \
 	shader/atifragshader.c \
-	shader/grammar_mesa.c \
+	shader/grammar/grammar_mesa.c \
 	shader/nvfragparse.c \
 	shader/nvprogram.c \
 	shader/nvvertexec.c \
