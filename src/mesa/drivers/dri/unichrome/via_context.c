@@ -627,9 +627,9 @@ void viaXMesaWindowMoved(struct via_context *vmesa)
 
    if (!dPriv)
       return;
-
+   
    switch (vmesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0]) {
-   case BUFFER_BIT_FRONT_LEFT: 
+   case BUFFER_BIT_BACK_LEFT: 
       if (dPriv->numBackClipRects == 0) {
 	 vmesa->numClipRects = dPriv->numClipRects;
 	 vmesa->pClipRects = dPriv->pClipRects;
@@ -639,7 +639,7 @@ void viaXMesaWindowMoved(struct via_context *vmesa)
 	 vmesa->pClipRects = dPriv->pBackClipRects;
       }
       break;
-   case BUFFER_BIT_BACK_LEFT:
+   case BUFFER_BIT_FRONT_LEFT:
       vmesa->numClipRects = dPriv->numClipRects;
       vmesa->pClipRects = dPriv->pClipRects;
       break;
@@ -703,13 +703,15 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	   if ( ! calculate_buffer_parameters( vmesa ) ) {
 	      return GL_FALSE;
 	   }
-	   ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer[0] );
 	}
 
         _mesa_make_current(vmesa->glCtx,
                            (GLframebuffer *)driDrawPriv->driverPrivate,
                            (GLframebuffer *)driReadPriv->driverPrivate);
 	
+
+	ctx->Driver.DrawBuffer( ctx, ctx->Color.DrawBuffer[0] );
+	   
         viaXMesaWindowMoved(vmesa);
 	ctx->Driver.Scissor(vmesa->glCtx,
 			    vmesa->glCtx->Scissor.X,
@@ -740,6 +742,7 @@ void viaGetLock(struct via_context *vmesa, GLuint flags)
 
     if (vmesa->lastStamp != dPriv->lastStamp) {
        viaXMesaWindowMoved(vmesa);
+       vmesa->newEmitState = ~0;
        vmesa->lastStamp = dPriv->lastStamp;
     }
 
@@ -763,8 +766,9 @@ viaSwapBuffers(__DRIdrawablePrivate *drawablePrivate)
 	   (struct via_context *)dPriv->driContextPriv->driverPrivate;
         GLcontext *ctx = vmesa->glCtx;
 
+	_mesa_notifySwapBuffers(ctx);
+
         if (ctx->Visual.doubleBufferMode) {
-            _mesa_notifySwapBuffers(ctx);
             if (vmesa->doPageFlip) {
                 viaPageFlip(dPriv);
             }
