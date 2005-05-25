@@ -188,6 +188,7 @@ SLANG_CPP_SOURCES = \
 	
 SLANG_SOURCES =	\
 	shader/slang/slang_assemble.c	\
+	shader/slang/slang_assemble_assignment.c	\
 	shader/slang/slang_assemble_conditional.c	\
 	shader/slang/slang_assemble_constructor.c	\
 	shader/slang/slang_assemble_typeinfo.c	\
