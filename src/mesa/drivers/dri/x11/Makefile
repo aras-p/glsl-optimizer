@@ -28,7 +28,7 @@ INCLUDE_DIRS = \
 	-I../dri_client/imports \
 	-Iserver \
 	-I$(TOP)/include \
-	-I$(DRM_SOURCE_PATH)/shared \
+	-I$(DRM_SOURCE_PATH)/shared-core \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \
