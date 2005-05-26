@@ -31,10 +31,11 @@ import gl_XML
 import sys, getopt
 
 class PrintGlEnums(gl_XML.FilterGLAPISpecBase):
-	name = "gl_enums.py (from Mesa)"
 
 	def __init__(self):
 		gl_XML.FilterGLAPISpecBase.__init__(self)
+
+		self.name = "gl_enums.py (from Mesa)"
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2005 Brian Paul All Rights Reserved.""", "BRIAN PAUL")
 		self.enum_table = {}
@@ -186,7 +187,13 @@ int _mesa_lookup_enum_by_name( const char *symbol )
 
 			# Prevent duplicate names in the enum table.
 
-			if obj.name not in self.enum_table[ obj.value ]:
+			found_it = 0
+			for [n, junk] in self.enum_table[ obj.value ]:
+				if n == obj.name:
+					found_it = 1
+					break
+
+			if not found_it:
 
 				# Calculate a "priority" for this enum name.
 				# When we lookup an enum by number, there may
