@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include "macros.h"
 
-#define DRIVER_DATE	"20041215"
+#define DRIVER_DATE	"20050526"
 
 #include "vblank.h"
 #include "utils.h"
