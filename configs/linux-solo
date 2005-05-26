@@ -8,11 +8,23 @@ CONFIG_NAME = linux-solo
 CC = gcc
 CXX = g++
 
-DEFINES = -DDRI_NEW_INTERFACE_ONLY -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=199309L -D_GNU_SOURCE -DUSE_EXTERNAL_DXTN_LIB=1 -DDRM_USE_MALLOC
+WARN_FLAGS = -Wall -Wundef
+OPT_FLAGS  = -O3 -g
+PIC_FLAGS  = -fPIC
+                                                                                
+# Add '-DGLX_USE_TLS' to ARCH_FLAGS to enable TLS support.
+ARCH_FLAGS ?=
 
-CFLAGS = $(DEFINES) -Wmissing-prototypes -g -std=c99 -Wundef -fPIC -ffast-math
+DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \
+	-D_BSD_SOURCE -D_GNU_SOURCE \
+	-DDRI_NEW_INTERFACE_ONLY -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1 -DDRM_USE_MALLOC
 
-CXXFLAGS = $(DEFINES) -Wall -O3 -ansi -pedantic -fPIC
+CFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
+	 $(ASM_FLAGS) -std=c99 -ffast-math
+
+CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
+
+ASM_SOURCES =
 
 # Library/program dependencies
 DRI_LIB_DEPS = -lm -lpthread -lexpat -ldl -L$(LIB_DIR) -lEGL -l$(GL_LIB) 

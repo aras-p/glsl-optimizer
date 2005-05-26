@@ -1,32 +1,12 @@
-# Configuration for linux-solo: Linux DRI hardware drivers for fbdev
+# -*-makefile-*-
+# Configuration for linux-solo-x86: Linux hardware drivers for fbdev for x86
 
-include $(TOP)/configs/default
+include $(TOP)/configs/linux-solo
 
 CONFIG_NAME = linux-solo-x86
 
-# Compiler and flags
-CC = gcc
-CXX = g++
+# Unnecessary on x86, generally.
+PIC_FLAGS = 
 
-DEFINES = -DDRI_NEW_INTERFACE_ONLY -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=199309L -D_GNU_SOURCE -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1 -DDRM_USE_MALLOC
-
-CFLAGS = $(DEFINES) -Wmissing-prototypes -O3 -g -std=c99 -Wundef -fPIC -ffast-math
-
-CXXFLAGS = $(DEFINES) -Wall -O3 -ansi -pedantic -fPIC
-
-
+ASM_FLAGS = -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM
 ASM_SOURCES = $(X86_SOURCES)
-
-# Library/program dependencies
-DRI_LIB_DEPS = -lm -lpthread -lexpat -ldl
-GL_LIB_DEPS = -lm -lpthread -ldl
-GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lm
-APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm -lpthread
-
-# Directories
-SRC_DIRS = mesa glx/mini glu glut/mini
-DRIVER_DIRS = dri
-PROGRAM_DIRS = miniglx
-
-#DRI_DIRS = fb ffb gamma sis savage
-DRI_DIRS = i810 i830 i915 mach64 mga r128 r200 radeon tdfx unichrome
