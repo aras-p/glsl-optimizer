@@ -637,13 +637,17 @@ struct r300_fragment_program {
 	int tex_offset;
 	int tex_end;
 
+	/* Hardware constants */
+	GLfloat constant[PFS_NUM_CONST_REGS][4];
+	int const_nr;
+
+	/* Tracked parameters */
 	struct {
-		float x;
-		float y;
-		float z;
-		float w;
-	} param[32];
-	int param_length;
+		int idx;			/* hardware index */
+		GLfloat *values;	/* pointer to values */
+	} param[PFS_NUM_CONST_REGS];
+	int param_nr;
+	GLboolean params_uptodate;
 	
 	GLuint temps[PFS_NUM_TEMP_REGS];
 	int temp_in_use;
@@ -654,6 +658,7 @@ struct r300_fragment_program {
 	int hwreg_in_use;
 	int max_temp_idx;
 };
+
 #else
 /* 64 appears to be the maximum */
 #define PSF_MAX_PROGRAM_LENGTH 64

@@ -1573,12 +1573,10 @@ void r300SetupPixelShader(r300ContextPtr rmesa)
 	if (!rp)	/* should only happenen once, just after context is created */
 		return;
 	
+	translate_fragment_shader(ctx->FragmentProgram._Current);
 	if (!rp->translated) {
-		translate_fragment_shader(ctx->FragmentProgram._Current);
-		if (!rp->translated) {
-			fprintf(stderr, "%s: No valid fragment shader, exiting\n", __func__);
-			exit(-1);
-		}
+		fprintf(stderr, "%s: No valid fragment shader, exiting\n", __func__);
+		exit(-1);
 	}
 	
 	R300_STATECHANGE(rmesa, fpt);
@@ -1627,13 +1625,13 @@ void r300SetupPixelShader(r300ContextPtr rmesa)
 		| (rp->tex_end << R300_PFS_CNTL_TEX_END_SHIFT);
 
 	R300_STATECHANGE(rmesa, fpp);
-	for(i=0;i<rp->param_length;i++){
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+0]=r300PackFloat24(rp->param[i].x);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+1]=r300PackFloat24(rp->param[i].y);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+2]=r300PackFloat24(rp->param[i].z);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+3]=r300PackFloat24(rp->param[i].w);
+	for(i=0;i<rp->const_nr;i++){
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+0]=r300PackFloat24(rp->constant[i][0]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+1]=r300PackFloat24(rp->constant[i][1]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+2]=r300PackFloat24(rp->constant[i][2]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+3]=r300PackFloat24(rp->constant[i][3]);
 	}
-	rmesa->hw.fpp.cmd[R300_FPP_CMD_0]=cmducs(R300_PFS_PARAM_0_X, rp->param_length*4);
+	rmesa->hw.fpp.cmd[R300_FPP_CMD_0]=cmducs(R300_PFS_PARAM_0_X, rp->const_nr*4);
 }
 #else
 /* just a skeleton for now.. */
@@ -1818,7 +1816,7 @@ int i,k;
 static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
+	
 	_swrast_InvalidateState(ctx, new_state);
 	_swsetup_InvalidateState(ctx, new_state);
 	_ac_InvalidateState(ctx, new_state);

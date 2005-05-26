@@ -248,33 +248,41 @@ static void free_temp(struct r300_fragment_program *rp, pfs_reg_t r)
 	rp->temp_in_use &= ~(1<<r.index);
 }
 
+static pfs_reg_t emit_param4fv(struct r300_fragment_program *rp, GLfloat *values)
+{
+	pfs_reg_t r = pfs_default_reg;
+		r.type = REG_TYPE_CONST;
+	int pidx;
+
+	pidx = rp->param_nr++;
+	r.index = rp->const_nr++;
+	if (pidx >= PFS_NUM_CONST_REGS || r.index >= PFS_NUM_CONST_REGS) {
+		ERROR("Out of const/param slots!\n");
+		return r;
+	}
+	
+	rp->param[pidx].idx = r.index;
+	rp->param[pidx].values = values;
+	rp->params_uptodate = GL_FALSE;
+
+	r.valid = GL_TRUE;
+	return r;
+}
+
 static pfs_reg_t emit_const4fv(struct r300_fragment_program *rp, GLfloat *cp)
 { 
 	pfs_reg_t r = pfs_default_reg;
-	
-	r.type = REG_TYPE_CONST;
-	r.valid = GL_TRUE;
+		r.type = REG_TYPE_CONST;
 
-	if (cp[0] == 1.0 && cp[1] == 1.0 && cp[2] == 1.0 && cp[3] == 1.0) {
-		r.v_swz = SWIZZLE_111;
-		r.s_swz = SWIZZLE_ONE;
-		r.index = 0;
-	} else if (cp[0] == 0.0 && cp[1] == 0.0 && cp[2] == 0.0 && cp[3] == 0.0) {
-		r.v_swz = SWIZZLE_000;
-		r.s_swz = SWIZZLE_ZERO;
-		r.index = 0;
-	} else if (cp[0] == 0.5 && cp[1] == 0.5 && cp[2] == 0.5 && cp[3] == 0.5) {
-		r.v_swz = SWIZZLE_HHH;
-		r.s_swz = SWIZZLE_HALF;
-		r.index = 0;
-	} else {
-		r.index = rp->param_length++;
-		rp->param[r.index].x = cp[0];
-		rp->param[r.index].y = cp[1];
-		rp->param[r.index].z = cp[2];
-		rp->param[r.index].w = cp[3];
+	r.index = rp->const_nr++;
+	if (r.index >= PFS_NUM_CONST_REGS) {
+		ERROR("Out of hw constants!\n");
+		return r;
 	}
+	
+	COPY_4V(rp->constant[r.index], cp);
 
+	r.valid = GL_TRUE;
 	return r;
 }
 
@@ -404,14 +412,14 @@ static pfs_reg_t t_src(struct r300_fragment_program *rp,
 		r.valid = GL_TRUE;
 		break;
 	case PROGRAM_LOCAL_PARAM:
-		r = emit_const4fv(rp, rp->mesa_program.Base.LocalParams[fpsrc.Index]);
+		r = emit_param4fv(rp, rp->mesa_program.Base.LocalParams[fpsrc.Index]);
 		break;
 	case PROGRAM_ENV_PARAM:
-		r = emit_const4fv(rp, rp->ctx->FragmentProgram.Parameters[fpsrc.Index]);
+		r = emit_param4fv(rp, rp->ctx->FragmentProgram.Parameters[fpsrc.Index]);
 		break;
 	case PROGRAM_STATE_VAR:
 	case PROGRAM_NAMED_PARAM:
-		r = emit_const4fv(rp, rp->mesa_program.Parameters->ParameterValues[fpsrc.Index]);
+		r = emit_param4fv(rp, rp->mesa_program.Parameters->ParameterValues[fpsrc.Index]);
 		break;
 	default:
 		ERROR("unknown SrcReg->File %x\n", fpsrc.File);
@@ -873,7 +881,10 @@ void init_program(struct r300_fragment_program *rp)
 	rp->used_in_node = 0;
 	rp->dest_in_node = 0;
 
-	rp->param_length = 0;
+	rp->const_nr = 0;
+	rp->param_nr = 0;
+	rp->params_uptodate = GL_FALSE;
+
 	rp->temp_in_use = 0;
 	rp->hwreg_in_use = 0;
 	rp->max_temp_idx = 0;
@@ -936,32 +947,47 @@ void init_program(struct r300_fragment_program *rp)
 		}
 	}
 	rp->temp_in_use = temps_used;
+}
+
+void update_params(struct r300_fragment_program *rp) {
+	struct fragment_program *mp = &rp->mesa_program;
+	int i;
 
 	/* Ask Mesa nicely to fill in ParameterValues for us */
-	_mesa_load_state_parameters(rp->ctx, rp->mesa_program.Parameters);
+	if (rp->param_nr)
+		_mesa_load_state_parameters(rp->ctx, mp->Parameters);
+
+	for (i=0;i<rp->param_nr;i++)
+		COPY_4V(rp->constant[rp->param[i].idx], rp->param[i].values);
+
+	rp->params_uptodate = GL_TRUE;
 }
 
 void translate_fragment_shader(struct r300_fragment_program *rp)
 {
 	int i;
 
-	init_program(rp);
+	if (!rp->translated) {
+		init_program(rp);
 	
-	if (parse_program(rp) == GL_FALSE) {
-		dump_program(rp);
-		return;
+		if (parse_program(rp) == GL_FALSE) {
+			dump_program(rp);
+			return;
+		}
+
+		/* Finish off */
+		sync_streams(rp);
+		rp->node[rp->cur_node].alu_end	= rp->v_pos - 1;
+		rp->alu_offset					= 0;
+		rp->alu_end						= rp->v_pos - 1;
+		rp->tex_offset					= 0;
+		rp->tex_end						= rp->tex.length - 1;
+	
+		rp->translated = GL_TRUE;
+		if (0) dump_program(rp);
 	}
 
-	/* Finish off */
-	sync_streams(rp);
-	rp->node[rp->cur_node].alu_end	= rp->v_pos - 1;
-	rp->alu_offset					= 0;
-	rp->alu_end						= rp->v_pos - 1;
-	rp->tex_offset					= 0;
-	rp->tex_end						= rp->tex.length - 1;
-
-	rp->translated = GL_TRUE;
-	if (0) dump_program(rp);
+	update_params(rp);
 }
 
 /* just some random things... */
