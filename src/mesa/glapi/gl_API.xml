@@ -4919,15 +4919,15 @@
 
     <function name="BufferData" alias="BufferDataARB">
         <param name="target" type="GLenum"/>
-        <param name="size" type="GLsizeiptrARB"/>
+        <param name="size" type="GLsizeiptr"/>
         <param name="data" type="const GLvoid *"/>
         <param name="usage" type="GLenum"/>
     </function>
 
     <function name="BufferSubData" alias="BufferSubDataARB">
         <param name="target" type="GLenum"/>
-        <param name="offset" type="GLintptrARB"/>
-        <param name="size" type="GLsizeiptrARB"/>
+        <param name="offset" type="GLintptr"/>
+        <param name="size" type="GLsizeiptr"/>
         <param name="data" type="const GLvoid *"/>
     </function>
 
@@ -4955,8 +4955,8 @@
 
     <function name="GetBufferSubData" alias="GetBufferSubDataARB">
         <param name="target" type="GLenum"/>
-        <param name="offset" type="GLintptrARB"/>
-        <param name="size" type="GLsizeiptrARB"/>
+        <param name="offset" type="GLintptr"/>
+        <param name="size" type="GLsizeiptr"/>
         <param name="data" type="GLvoid *" output="true"/>
     </function>
 
@@ -11110,7 +11110,7 @@
     <!-- No new functions, types, enums. -->
 </category>
 
-<category name="EXT_stencil_two_side" number="268">
+<category name="GL_EXT_stencil_two_side" number="268">
     <enum name="STENCIL_TEST_TWO_SIDE_EXT"     count="1"  value="0x8910">
         <size name="Get" mode="get"/>
     </enum>

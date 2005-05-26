@@ -22,12 +22,12 @@
                    vectorequiv         NMTOKEN #IMPLIED>
 <!ATTLIST size     name                NMTOKEN #REQUIRED
                    count               NMTOKEN #IMPLIED
-                   mode                NMTOKEN #IMPLIED>
+                   mode                (get | set) "set">
 <!ATTLIST param    name                NMTOKEN #REQUIRED
                    type                CDATA   #REQUIRED
                    count               NMTOKEN #IMPLIED
                    counter             (true | false) "false"
-                   count_scale         NMTOKEN #IMPLIED
+                   count_scale         NMTOKEN "1"
                    output              (true | false) "false"
                    img_width           NMTOKEN #IMPLIED
                    img_height          NMTOKEN #IMPLIED

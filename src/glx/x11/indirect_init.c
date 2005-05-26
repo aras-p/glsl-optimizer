@@ -682,7 +682,7 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->MultiDrawArraysEXT = __indirect_glMultiDrawArraysEXT;
     glAPI->MultiDrawElementsEXT = __indirect_glMultiDrawElementsEXT;
 
-    /* EXT_stencil_two_side */
+    /* GL_EXT_stencil_two_side */
 
     glAPI->ActiveStencilFaceEXT = __indirect_glActiveStencilFaceEXT;
 
