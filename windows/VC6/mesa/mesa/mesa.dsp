@@ -41,7 +41,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /I "../../../../include" /I "../../../../src/mesa" /I "../../../../src/mesa/glapi" /I "../../../../src/mesa/main" /I "../../../../src/mesa/shader" /I "../../../../src/mesa/shader/slang" /D "NDEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "_DLL" /D "BUILD_GL32" /D "MESA_MINWARN" /YX /FD /Zm1000 /c
+# ADD CPP /nologo /W3 /GX /O2 /I "../../../../include" /I "../../../../src/mesa" /I "../../../../src/mesa/glapi" /I "../../../../src/mesa/main" /I "../../../../src/mesa/shader" /I "../../../../src/mesa/shader/slang" /I "../../../../src/mesa/shader/grammar" /D "NDEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "_DLL" /D "BUILD_GL32" /D "MESA_MINWARN" /YX /FD /Zm1000 /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -64,7 +64,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /Zi /Od /I "../../../../include" /I "../../../../src/mesa" /I "../../../../src/mesa/glapi" /I "../../../../src/mesa/main" /I "../../../../src/mesa/shader" /I "../../../../src/mesa/shader/slang" /D "_DEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "_DLL" /D "BUILD_GL32" /D "MESA_MINWARN" /Fr /FD /GZ /Zm1000 /c
+# ADD CPP /nologo /W3 /Gm /GX /Zi /Od /I "../../../../include" /I "../../../../src/mesa" /I "../../../../src/mesa/glapi" /I "../../../../src/mesa/main" /I "../../../../src/mesa/shader" /I "../../../../src/mesa/shader/slang" /I "../../../../src/mesa/shader/grammar" /D "_DEBUG" /D "WIN32" /D "_MBCS" /D "_LIB" /D "_DLL" /D "BUILD_GL32" /D "MESA_MINWARN" /Fr /FD /GZ /Zm1000 /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -233,12 +233,12 @@ SOURCE=..\..\..\..\src\mesa\glapi\glthread.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\shader\grammar.c
+SOURCE=..\..\..\..\src\mesa\shader\grammar\grammar.c
 # PROP Exclude_From_Build 1
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\shader\grammar_mesa.c
+SOURCE=..\..\..\..\src\mesa\shader\grammar\grammar_mesa.c
 # End Source File
 # Begin Source File
 
@@ -474,7 +474,7 @@ SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble.h
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble_assignment.c
 # End Source File
 # Begin Source File
 
@@ -482,23 +482,11 @@ SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble_conditional.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble_conditional.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble_constructor.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble_constructor.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble_typeinfo.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble_typeinfo.h
 # End Source File
 # Begin Source File
 
@@ -510,19 +498,11 @@ SOURCE=..\..\..\..\src\mesa\shader\slang\slang_execute.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\shader\slang\slang_execute.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_preprocess.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_storage.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\..\src\mesa\shader\slang\slang_storage.h
 # End Source File
 # Begin Source File
 
@@ -875,15 +855,15 @@ SOURCE=..\..\..\..\src\mesa\glapi\glthread.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\shader\grammar.h
+SOURCE=..\..\..\..\src\mesa\shader\grammar\grammar.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\shader\grammar_mesa.h
+SOURCE=..\..\..\..\src\mesa\shader\grammar\grammar_mesa.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\shader\grammar_syn.h
+SOURCE=..\..\..\..\src\mesa\shader\grammar\grammar_syn.h
 # End Source File
 # Begin Source File
 
@@ -1163,7 +1143,31 @@ SOURCE=..\..\..\..\src\mesa\main\simple_list.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble_assignment.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble_conditional.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble_constructor.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_assemble_typeinfo.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_compile.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_execute.h
 # End Source File
 # Begin Source File
 
@@ -1172,6 +1176,10 @@ SOURCE=..\..\..\..\src\mesa\shader\slang\slang_mesa.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\shader\slang\slang_preprocess.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\shader\slang\slang_storage.h
 # End Source File
 # Begin Source File
 
