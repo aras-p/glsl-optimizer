@@ -19,7 +19,7 @@ OBJECTS = $(C_SOURCES:.c=.o)
 
 INCLUDES = \
 	-I$(TOP)/include \
-	-I$(DRM_SOURCE_PATH)/shared \
+	-I$(DRM_SOURCE_PATH)/shared-core \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
