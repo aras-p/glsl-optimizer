@@ -34,7 +34,7 @@ GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lm
 APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm -lpthread
 
 # Directories
-SRC_DIRS = mesa egl glx/mini glu glut/mini
+SRC_DIRS = egl mesa glx/mini glu glut/mini
 DRIVER_DIRS = dri
 PROGRAM_DIRS = miniglx egl
 
