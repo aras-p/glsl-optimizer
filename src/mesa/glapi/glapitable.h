@@ -1,4 +1,4 @@
-/* DO NOT EDIT - This file generated automatically by a script */
+/* DO NOT EDIT - This file generated automatically by gl_table.py (from Mesa) script */
 
 /*
  * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
@@ -844,7 +844,7 @@ struct _glapi_table
    GLenum (GLAPIENTRYP CheckFramebufferStatusEXT)(GLenum target); /* 806 */
    void (GLAPIENTRYP FramebufferTexture1DEXT)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level); /* 807 */
    void (GLAPIENTRYP FramebufferTexture2DEXT)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level); /* 808 */
-   void (GLAPIENTRYP FramebufferTexture3DEXT)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffsetl); /* 809 */
+   void (GLAPIENTRYP FramebufferTexture3DEXT)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset); /* 809 */
    void (GLAPIENTRYP FramebufferRenderbufferEXT)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer); /* 810 */
    void (GLAPIENTRYP GetFramebufferAttachmentParameterivEXT)(GLenum target, GLenum attachment, GLenum pname, GLint * params); /* 811 */
    void (GLAPIENTRYP GenerateMipmapEXT)(GLenum target); /* 812 */

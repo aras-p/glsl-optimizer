@@ -30,11 +30,11 @@ import license
 import sys, getopt
 
 class PrintGlTable(gl_XML.FilterGLAPISpecBase):
-	file_name = "gl_gen_table.xml (from Mesa)"
-
 	def __init__(self):
 		gl_XML.FilterGLAPISpecBase.__init__(self)
+
 		self.header_tag = '_GLAPI_TABLE_H_'
+		self.name = "gl_table.py (from Mesa)"
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")

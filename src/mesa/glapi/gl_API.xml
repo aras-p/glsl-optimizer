@@ -11508,7 +11508,7 @@
       <param name="textarget" type="GLenum"/>
       <param name="texture" type="GLuint"/>
       <param name="level" type="GLint"/>
-      <param name="zoffsetl" type="GLint"/>
+      <param name="zoffset" type="GLint"/>
     </function>
 
     <function name="FramebufferRenderbufferEXT" offset="810">
