@@ -649,6 +649,14 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
       _mesa_TexGenfv(GL_T, GL_EYE_PLANE, unit->EyePlaneT);
       _mesa_TexGenfv(GL_R, GL_EYE_PLANE, unit->EyePlaneR);
       _mesa_TexGenfv(GL_Q, GL_EYE_PLANE, unit->EyePlaneQ);
+      _mesa_set_enable(ctx, GL_TEXTURE_GEN_S,
+                       ((unit->TexGenEnabled & S_BIT) ? GL_TRUE : GL_FALSE));
+      _mesa_set_enable(ctx, GL_TEXTURE_GEN_T,
+                       ((unit->TexGenEnabled & T_BIT) ? GL_TRUE : GL_FALSE));
+      _mesa_set_enable(ctx, GL_TEXTURE_GEN_R,
+                       ((unit->TexGenEnabled & R_BIT) ? GL_TRUE : GL_FALSE));
+      _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q,
+                       ((unit->TexGenEnabled & Q_BIT) ? GL_TRUE : GL_FALSE));
       if (ctx->Extensions.EXT_texture_lod_bias) {
          _mesa_TexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
                        GL_TEXTURE_LOD_BIAS_EXT, unit->LodBias);
