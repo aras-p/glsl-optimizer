@@ -55,21 +55,24 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "vblank.h"
 
+#define CB_DPATH
 
 #define CLEARBUFFER_COLOR	0x1
 #define CLEARBUFFER_DEPTH	0x2
 #define CLEARBUFFER_STENCIL	0x4
 
-/* TODO: Fix this so that white vertical lines no longer appear. */
 static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 {
 	GLcontext* ctx = r300->radeon.glCtx;
-	r300ContextPtr rmesa=r300;
 	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
-	int i;
 	GLuint cboffset, cbpitch;
 	drm_r300_cmd_header_t* cmd2;
+#ifdef CB_DPATH
+	r300ContextPtr rmesa=r300;
 	LOCAL_VARS;
+#else
+	int i;
+#endif
 	
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s: %s buffer (%i,%i %ix%i)\n",
@@ -86,6 +89,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 
 	cboffset += r300->radeon.radeonScreen->fbLocation;
 
+#ifndef CB_DPATH
 	R300_STATECHANGE(r300, vir[0]);
 	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->unchecked_state.count = 1;
 	r300->hw.vir[0].cmd[1] = 0x21030003;
@@ -248,6 +252,80 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	r300EnsureCmdBufSpace(r300, r300->hw.max_state_size + 9+8, __FUNCTION__);
 
 	r300EmitState(r300);
+#else
+	R300_STATECHANGE(r300, cb);
+	reg_start(R300_RB3D_COLOROFFSET0, 0);
+	e32(cboffset);
+	
+	reg_start(R300_RB3D_COLORPITCH0, 0);
+	e32(cbpitch | R300_COLOR_UNKNOWN_22_23);
+
+	R300_STATECHANGE(r300, cmk);
+	reg_start(R300_RB3D_COLORMASK, 0);
+	
+	if (flags & CLEARBUFFER_COLOR) {
+		e32((ctx->Color.ColorMask[BCOMP] ? R300_COLORMASK0_B : 0) |
+			(ctx->Color.ColorMask[GCOMP] ? R300_COLORMASK0_G : 0) |
+			(ctx->Color.ColorMask[RCOMP] ? R300_COLORMASK0_R : 0) |
+			(ctx->Color.ColorMask[ACOMP] ? R300_COLORMASK0_A : 0));
+	} else {
+		e32(0);
+	}
+	
+	R300_STATECHANGE(r300, zs);
+	reg_start(R300_RB3D_ZSTENCIL_CNTL_0, 2);
+	
+	{
+	uint32_t t1, t2;
+	
+	t1 = r300->hw.zs.cmd[R300_ZS_CNTL_0];
+	t2 = r300->hw.zs.cmd[R300_ZS_CNTL_1];
+	
+	if (flags & CLEARBUFFER_DEPTH) {
+		t1 &= R300_RB3D_STENCIL_ENABLE;
+		t1 |= 0x6; // test and write
+		
+		t2 &= ~(R300_ZS_MASK << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
+		t2 |= (R300_ZS_ALWAYS<<R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
+/*
+		R300_STATECHANGE(r300, zb);
+		r300->hw.zb.cmd[R300_ZB_OFFSET] =
+			1024*4*300 +
+			r300->radeon.radeonScreen->frontOffset +
+			r300->radeon.radeonScreen->fbLocation;
+		r300->hw.zb.cmd[R300_ZB_PITCH] =
+			r300->radeon.radeonScreen->depthPitch;
+*/
+	} else {
+		t1 &= R300_RB3D_STENCIL_ENABLE;
+		t1 |= R300_RB3D_Z_DISABLED_1; // disable
+		
+		t2 &= ~(R300_ZS_MASK << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
+	}
+	
+	if (flags & CLEARBUFFER_STENCIL) {
+		t1 &= ~R300_RB3D_STENCIL_ENABLE;
+		t1 |= R300_RB3D_STENCIL_ENABLE;
+		
+		t2 &= 
+		    ~((R300_ZS_MASK << R300_RB3D_ZS1_FRONT_FUNC_SHIFT) | (R300_ZS_MASK << R300_RB3D_ZS1_BACK_FUNC_SHIFT));
+		t2 |= 
+		    (R300_ZS_ALWAYS<<R300_RB3D_ZS1_FRONT_FUNC_SHIFT) | 
+		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT) |
+		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT) |
+		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT) |
+		    (R300_ZS_ALWAYS<<R300_RB3D_ZS1_BACK_FUNC_SHIFT) |
+		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT) |
+		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT) |
+		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT) ;
+	}
+	
+	e32(t1);
+	e32(t2);
+	e32(r300->state.stencil.clear);
+	}
+	
+#endif
 
 	cmd2 = (drm_r300_cmd_header_t*)r300AllocCmdBuf(r300, 9, __FUNCTION__);
 	cmd2[0].packet3.cmd_type = R300_CMD_PACKET3;
@@ -262,6 +340,131 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	cmd2[8].u = r300PackFloat32(ctx->Color.ClearColor[3]);
 }
 
+#ifdef CB_DPATH
+static void r300EmitClearState(GLcontext * ctx)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	r300ContextPtr rmesa=r300;
+	__DRIdrawablePrivate *dPriv = r300->radeon.dri.drawable;
+	int i;
+	LOCAL_VARS;
+	
+	R300_STATECHANGE(r300, vir[0]);
+	reg_start(R300_VAP_INPUT_ROUTE_0_0, 0);
+	e32(0x21030003);
+	
+	R300_STATECHANGE(r300, vir[1]);
+	reg_start(R300_VAP_INPUT_ROUTE_1_0, 0);
+	e32(0xF688F688);
+
+	R300_STATECHANGE(r300, vic);
+	reg_start(R300_VAP_INPUT_CNTL_0, 1);
+	e32(0x00000001);
+	e32(0x00000405);
+	
+	R300_STATECHANGE(r300, vof);
+	reg_start(R300_VAP_OUTPUT_VTX_FMT_0, 1);
+	e32(R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT | R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT);
+	e32(0); /* no textures */
+		
+	
+	R300_STATECHANGE(r300, txe);
+	reg_start(R300_TX_ENABLE, 0);
+	e32(0);
+	
+	R300_STATECHANGE(r300, vpt);
+	reg_start(R300_SE_VPORT_XSCALE, 5);
+	efloat(1.0);
+	efloat(dPriv->x);
+	efloat(1.0);
+	efloat(dPriv->y);
+	efloat(1.0);
+	efloat(0.0);
+	
+	R300_STATECHANGE(r300, at);
+	reg_start(R300_PP_ALPHA_TEST, 0);
+	e32(0);
+	
+	R300_STATECHANGE(r300, bld);
+	reg_start(R300_RB3D_CBLEND, 1);
+	e32(0);
+	e32(0);
+	
+	R300_STATECHANGE(r300, unk221C);
+	reg_start(0x221C, 0);
+	e32(R300_221C_CLEAR);
+	
+	R300_STATECHANGE(r300, ps);
+	reg_start(R300_RE_POINTSIZE, 0);
+	e32(((dPriv->w * 6) << R300_POINTSIZE_X_SHIFT) |
+		((dPriv->h * 6) << R300_POINTSIZE_Y_SHIFT));
+	
+	R300_STATECHANGE(r300, ri);
+	reg_start(R300_RS_INTERP_0, 8);
+	for(i = 0; i < 8; ++i){
+		e32(R300_RS_INTERP_USED);
+	}
+
+	R300_STATECHANGE(r300, rc);
+	/* The second constant is needed to get glxgears display anything .. */
+	reg_start(R300_RS_CNTL_0, 1);
+	e32(R300_RS_CNTL_0_UNKNOWN_7 | R300_RS_CNTL_0_UNKNOWN_18);
+	e32(0);
+	
+	R300_STATECHANGE(r300, rr);
+	reg_start(R300_RS_ROUTE_0, 0);
+	e32(0x00004000);
+	
+	R300_STATECHANGE(r300, fp);
+	reg_start(R300_PFS_CNTL_0, 2);
+	e32(0);
+	e32(0);
+	e32(0);
+	reg_start(R300_PFS_NODE_0, 3);
+	e32(0);
+	e32(0);
+	e32(0);
+	e32(R300_PFS_NODE_LAST_NODE);
+	
+	R300_STATECHANGE(r300, fpi[0]);
+	R300_STATECHANGE(r300, fpi[1]);
+	R300_STATECHANGE(r300, fpi[2]);
+	R300_STATECHANGE(r300, fpi[3]);
+	
+	reg_start(R300_PFS_INSTR0_0, 0);
+	e32(FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO)));
+	
+	reg_start(R300_PFS_INSTR1_0, 0);
+	e32(FP_SELC(0,NO,XYZ,FP_TMP(0),0,0));
+	
+	reg_start(R300_PFS_INSTR2_0, 0);
+	e32(FP_INSTRA(MAD, FP_ARGA(SRC0A), FP_ARGA(ONE), FP_ARGA(ZERO)));
+	
+	reg_start(R300_PFS_INSTR3_0, 0);
+	e32(FP_SELA(0,NO,W,FP_TMP(0),0,0));
+	
+	R300_STATECHANGE(r300, pvs);
+	reg_start(R300_VAP_PVS_CNTL_1, 2);
+	e32((0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
+		(0 << R300_PVS_CNTL_1_POS_END_SHIFT) |
+		(1 << R300_PVS_CNTL_1_PROGRAM_END_SHIFT));
+	e32(0);
+	e32(1 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT);
+	
+	R300_STATECHANGE(r300, vpi);
+	vsf_start_fragment(0x0, 8);
+	e32(VP_OUT(ADD,OUT,0,XYZW));
+	e32(VP_IN(IN,0));
+	e32(VP_ZERO());
+	e32(0);
+	
+	e32(VP_OUT(ADD,OUT,1,XYZW));
+	e32(VP_IN(IN,1));
+	e32(VP_ZERO());
+	e32(0);
+	
+}
+#endif
 
 /**
  * Buffer clear
@@ -274,8 +477,6 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	int flags = 0;
 	int bits = 0;
 	int swapped;
-	uint32_t unk42B4;
-	uint32_t zbs[4];
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s:  all=%d cx=%d cy=%d cw=%d ch=%d\n",
@@ -317,6 +518,11 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 
 	swapped = r300->radeon.doPageFlip && (r300->radeon.sarea->pfCurrentPage == 1);
 
+#ifdef CB_DPATH
+	if(flags || bits)
+		r300EmitClearState(ctx);
+#endif
+
 	if (flags & BUFFER_BIT_FRONT_LEFT) {
 		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, swapped);
 		bits = 0;
@@ -330,6 +536,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	if (bits)
 		r300ClearBuffer(r300, bits, 0);
 
+#ifndef CB_DPATH
 	/* Recalculate the hardware state. This could be done more efficiently,
 	 * but do keep it like this for now.
 	 */
@@ -337,6 +544,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask, GLboolean all,
 	
 	/* r300ClearBuffer has trampled all over the hardware state.. */
 	r300->hw.all_dirty=GL_TRUE;
+#endif
 }
 
 void r300Flush(GLcontext * ctx)
