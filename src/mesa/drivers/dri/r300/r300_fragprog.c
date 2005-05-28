@@ -40,6 +40,8 @@
  *   fglrx does (see r300_reg.h).
  * - Verify results of opcodes for accuracy, I've only checked them
  *   in specific cases.
+ * - Learn more about interaction between xyz/w units.. A few bugs are
+ *   caused by something I'm missing..
  * - and more...
  */
 
@@ -170,10 +172,7 @@ const pfs_reg_t pfs_default_reg = {
 	index: 0,
 	v_swz: 0 /* matches XYZ in table */,
 	s_swz: SWIZZLE_W,
-	vcross: 0,
-	scross: 0,
 	negate: 0,
-	has_w: GL_FALSE,
 	valid: GL_FALSE
 };
 
@@ -297,25 +296,26 @@ static int swz_native(struct r300_fragment_program *rp,
 {
 	/* Native swizzle, nothing to see here */
 	*r = src;
-	r->has_w = GL_TRUE;
 	return 3;
 }
 
 static int swz_emit_partial(struct r300_fragment_program *rp,
-				pfs_reg_t src, pfs_reg_t *r, int mask)
+				pfs_reg_t src, pfs_reg_t *r, int mask, int mc)
 {
 	if (!r->valid)
 		*r = get_temp_reg(rp);
 
 	/* A partial match, src.v_swz/mask define what parts of the
 	 * desired swizzle we match */
-	emit_arith(rp, PFS_OP_MAD, *r, s_mask[mask].mask, src, pfs_one, pfs_zero, 0);
-	
+	if (mc + s_mask[mask].count == 3)
+		emit_arith(rp, PFS_OP_MAD, *r, s_mask[mask].mask|WRITEMASK_W, src, pfs_one, pfs_zero, 0);
+	else
+		emit_arith(rp, PFS_OP_MAD, *r, s_mask[mask].mask, src, pfs_one, pfs_zero, 0);
 	return s_mask[mask].count;
 }
 
 static int swz_special_case(struct r300_fragment_program *rp,
-				pfs_reg_t src, pfs_reg_t *r, int mask)
+				pfs_reg_t src, pfs_reg_t *r, int mask, int mc)
 {
 	pfs_reg_t ssrc = pfs_default_reg;
 
@@ -323,13 +323,18 @@ static int swz_special_case(struct r300_fragment_program *rp,
 	case SWIZZLE_W:
 		ssrc = get_temp_reg(rp);
 		src.v_swz = SWIZZLE_WZY;
-		src.vcross = GL_TRUE;
 		if (s_mask[mask].count == 3) {
 			emit_arith(rp, PFS_OP_MAD, ssrc, WRITEMASK_XW, src, pfs_one, pfs_zero, 0);
 			*r = ssrc;
 			r->v_swz = SWIZZLE_XXX;
 			r->s_swz = SWIZZLE_W;
-			r->has_w = GL_TRUE;
+		} else if (mc + s_mask[mask].count == 3) {
+			if (!r->valid)
+				*r = get_temp_reg(rp);
+			emit_arith(rp, PFS_OP_MAD, ssrc, WRITEMASK_XW, src, pfs_one, pfs_zero, 0);
+			ssrc.v_swz = SWIZZLE_XXX;
+			emit_arith(rp, PFS_OP_MAD, *r, s_mask[mask].mask|WRITEMASK_W, ssrc, pfs_one, pfs_zero, 0);
+			free_temp(rp, ssrc);
 		} else {
 			if (!r->valid)
 				*r = get_temp_reg(rp);
@@ -341,6 +346,13 @@ static int swz_special_case(struct r300_fragment_program *rp,
 		break;
 	case SWIZZLE_ONE:
 	case SWIZZLE_ZERO:
+		if (!r->valid)
+			*r = get_temp_reg(rp);
+		if (mc + s_mask[mask].count == 3)
+			emit_arith(rp, PFS_OP_MAD, *r, s_mask[mask].mask|WRITEMASK_W, src, pfs_one, pfs_zero, 0);
+		else
+			emit_arith(rp, PFS_OP_MAD, *r, s_mask[mask].mask, src, pfs_one, pfs_zero, 0);
+		break;
 	default:
 		ERROR("Unknown special-case swizzle! %d\n", src.v_swz);
 		return 0;
@@ -359,38 +371,27 @@ static pfs_reg_t swizzle(struct r300_fragment_program *rp,
 	int v_matched = 0;
 	src.v_swz = SWIZZLE_XYZ;
 	src.s_swz = GET_SWZ(arbswz, 3);
-	if (src.s_swz >= SWIZZLE_X && src.s_swz <= SWIZZLE_Z)
-		src.scross = GL_TRUE;
 
 	do {
 		do {
 #define CUR_HASH (v_swiz[src.v_swz].hash & s_mask[c_mask].hash)
 			if (CUR_HASH == (arbswz & s_mask[c_mask].hash)) {
 				if (v_swiz[src.v_swz].native == GL_FALSE)
-					v_matched += swz_special_case(rp, src, &r, c_mask);
+					v_matched += swz_special_case(rp, src, &r, c_mask, v_matched);
 				else if (s_mask[c_mask].count == 3)
 					v_matched += swz_native(rp, src, &r);
 				else
-					v_matched += swz_emit_partial(rp, src, &r, c_mask);
+					v_matched += swz_emit_partial(rp, src, &r, c_mask, v_matched);
 
-				if (v_matched == 3) {
-					if (!r.has_w) {
-						emit_arith(rp, PFS_OP_MAD, r, WRITEMASK_W, src, pfs_one, pfs_zero, 0);
-						r.s_swz = SWIZZLE_W;
-					}
-					
-					if (r.type != REG_TYPE_CONST) {
-						if (r.v_swz == SWIZZLE_WZY)
-							r.vcross = GL_TRUE;
-						if (r.s_swz >= SWIZZLE_X && r.s_swz <= SWIZZLE_Z)
-							r.scross = GL_TRUE;
-					}
+				if (v_matched == 3)
 					return r;
-				}
-				
-				arbswz &= ~s_mask[c_mask].hash;
+
+				/* Fill with something invalid.. all 0's was wrong before, matched
+				 * SWIZZLE_X.  So all 1's will be okay for now */
+				arbswz |= (PFS_INVAL & s_mask[c_mask].hash);
 			}
 		} while(v_swiz[++src.v_swz].hash != PFS_INVAL);
+		src.v_swz = SWIZZLE_XYZ;
 	} while (s_mask[++c_mask].hash != PFS_INVAL);
 
 	ERROR("should NEVER get here\n");
@@ -612,8 +613,8 @@ static void emit_arith(struct r300_fragment_program *rp, int op,
 				break;
 			case REG_TYPE_TEMP:
 				/* make sure insn ordering is right... */
-				if ((src[i].vcross && v_idx < s_idx) ||
-					(src[i].scross && s_idx < v_idx)) {
+				if ((v_swiz[src[i].v_swz].dep_sca && v_idx < s_idx) ||
+					(s_swiz[src[i].s_swz].dep_vec && s_idx < v_idx)) {
 					sync_streams(rp);
 					v_idx = s_idx = rp->v_pos;
 				}
@@ -685,7 +686,8 @@ static void emit_arith(struct r300_fragment_program *rp, int op,
 		rp->s_pos = s_idx + 1;
 	}
 
-//	sync_streams(rp);
+/* Force this for now */
+	sync_streams(rp);
 	return;
 };
 	
@@ -776,6 +778,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			ERROR("unknown fpi->Opcode %d\n", fpi->Opcode);
 			break;
 		case FP_OPCODE_MOV:
+		case FP_OPCODE_SWZ:
 			emit_arith(rp, PFS_OP_MAD, t_dst(rp, fpi->DstReg), fpi->DstReg.WriteMask,
 							t_src(rp, fpi->SrcReg[0]), pfs_one, pfs_zero, 
 							flags);
@@ -825,9 +828,6 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 							pfs_one,
 							negate(t_src(rp, fpi->SrcReg[1])),
 							flags);
-			break;
-		case FP_OPCODE_SWZ:
-			ERROR("unknown fpi->Opcode %d\n", fpi->Opcode);
 			break;
 		case FP_OPCODE_TEX:
 			emit_tex(rp, fpi, R300_FPITX_OP_TEX);
