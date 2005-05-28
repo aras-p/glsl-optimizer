@@ -11,16 +11,18 @@ CXX = g++
 WARN_FLAGS = -Wall
 OPT_FLAGS = -O
 
+EXPAT_INCLUDES = -I/usr/local/include
 X11_INCLUDES = -I/usr/X11R6/include -I/usr/X11R6/include/X11/extensions
 DEFINES = -DDRI_NEW_INTERFACE_ONLY 
-CFLAGS = $(DEFINES) -Wmissing-prototypes -g -std=c99  -Wundef -fPIC -ffast-math -I/usr/local/include $(X11_INCLUDES)
+CFLAGS = $(DEFINES) -Wmissing-prototypes -g -std=c99  -Wundef -fPIC \
+	-ffast-math $(X11_INCLUDES)
 CXXFLAGS = $(DEFINES) -Wall -g -ansi -pedantic -fPIC
 
 ASM_SOURCES = 
 
 # Library/program dependencies
 DRI_LIB_DEPS = -L/usr/local/lib -lm -lpthread -lexpat
-GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -pthread
+GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
 
 GLUT_LIB_DEPS = -L$(LIB_DIR) -L/usr/X11R6/lib -lGLU -lGL -lX11 -lXmu -lXt -lXi -lm
 GLW_LIB_DEPS = -L$(LIB_DIR) -L/usr/X11R6/lib -lGL -lXt -lXm -lX11

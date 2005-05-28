@@ -16,7 +16,7 @@ COMMON_SOURCES = \
 ifeq ($(WINDOW_SYSTEM),dri)
 WINOBJ=../dri_client/dri.a
 WINLIB=
-INCLUDES = $(SHARED_INCLUDES) \
+INCLUDES = $(SHARED_INCLUDES) $(EXPAT_INCLUDES) \
 	-I../dri_client \
 	-I../dri_client/imports
 

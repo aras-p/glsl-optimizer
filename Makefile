@@ -61,6 +61,7 @@ darwin \
 darwin-static \
 freebsd \
 freebsd-dri \
+freebsd-dri-amd64 \
 freebsd-dri-x86 \
 hpux10 \
 hpux10-gcc \
