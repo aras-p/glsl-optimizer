@@ -396,11 +396,6 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 		}
 	}
 	
-
-int cmd_reserved=0;
-int cmd_written=0;
-drm_radeon_cmd_header_t *cmd = NULL;
-
 #define SHOW_INFO(n) do { \
 	if (RADEON_DEBUG & DEBUG_ALL) { \
 	fprintf(stderr, "RR[%d] - sz=%d, reg=%d, fmt=%d -- st=%d, of=0x%08x\n", \
@@ -529,7 +524,9 @@ drm_radeon_cmd_header_t *cmd = NULL;
 		if(OutputsWritten & (1<<VERT_RESULT_BFC1))
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;*/
 		//if(OutputsWritten & (1<<VERT_RESULT_FOGC))
-		//if(OutputsWritten & (1<<VERT_RESULT_PSIZ))
+
+		if(OutputsWritten & (1<<VERT_RESULT_PSIZ))
+			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
 
 		for(i=0;i < ctx->Const.MaxTextureUnits;i++)
 			if(OutputsWritten & (1<<(VERT_RESULT_TEX0+i)))

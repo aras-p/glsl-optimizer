@@ -313,42 +313,14 @@ static unsigned long t_dst_class(enum register_file file)
 
 static unsigned long t_dst_index(struct r300_vertex_program *vp, struct vp_dst_register *dst)
 {
-	int i, high=0;
-	if(dst->File == PROGRAM_OUTPUT)
-		switch(dst->Index){
-			case VERT_RESULT_HPOS:
-				return 0;
-			case VERT_RESULT_COL0:
-				return 1;
-			case VERT_RESULT_TEX0:
-			case VERT_RESULT_TEX1:
-			case VERT_RESULT_TEX2:
-			case VERT_RESULT_TEX3:
-			case VERT_RESULT_TEX4:
-			case VERT_RESULT_TEX5:
-			case VERT_RESULT_TEX6:
-			case VERT_RESULT_TEX7:
-				/* Awful hack to get tex coord results regs correctly packed. 
-				   Wount work if tex coords arent written in logical order! */
-				if(vp->tex_regs[dst->Index - VERT_RESULT_TEX0] != 1){
-					return vp->tex_regs[dst->Index - VERT_RESULT_TEX0];
-				}
-				
-				for(i=0; i < 8; i++)
-					if(vp->tex_regs[i] > high)
-						high = vp->tex_regs[i];
-				
-				high++;
-				vp->tex_regs[dst->Index - VERT_RESULT_TEX0] = high;
-				
-				return high;
-			case VERT_RESULT_COL1:
-			case VERT_RESULT_BFC0:
-			case VERT_RESULT_BFC1:
-			case VERT_RESULT_FOGC:
-			case VERT_RESULT_PSIZ:
-			default: WARN_ONCE("Unknown output\n"); return 10;
+	if(dst->File == PROGRAM_OUTPUT) {
+		if (vp->outputs[dst->Index] != -1)
+			return vp->outputs[dst->Index];
+		else {
+			WARN_ONCE("Unknown output %d\n", dst->Index);
+			return 10;
 		}
+	}
 	return dst->Index;
 }
 
@@ -509,8 +481,7 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 {
 	struct vertex_program *mesa_vp=(void *)vp;
 	struct vp_instruction *vpi;
-	int operand_index, i;
-	VERTEX_SHADER_INSTRUCTION t2rs[1024];
+	int i, cur_reg=0;
 	VERTEX_SHADER_INSTRUCTION *o_inst;
 	unsigned long operands;
 	int are_srcs_scalar;
@@ -527,11 +498,43 @@ void translate_vertex_shader(struct r300_vertex_program *vp)
 	vp->pos_end=0; /* Not supported yet */
 	vp->program.length=0;
 	vp->num_temporaries=mesa_vp->Base.NumTemporaries;
-	for(i=0; i < 8; i++)
-		vp->tex_regs[i]=1;
 	
 	for(i=0; i < VERT_ATTRIB_MAX; i++)
-		vp->inputs[i]=-1;
+		vp->inputs[i] = -1;
+
+	for(i=0; i < VERT_RESULT_MAX; i++)
+		vp->outputs[i] = -1;
+	
+	assert(mesa_vp->OutputsWritten & (1 << VERT_RESULT_HPOS));
+	assert(mesa_vp->OutputsWritten & (1 << VERT_RESULT_COL0));
+	
+	/* Assign outputs */
+	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_HPOS))
+		vp->outputs[VERT_RESULT_HPOS] = cur_reg++;
+	
+	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_PSIZ))
+		vp->outputs[VERT_RESULT_PSIZ] = cur_reg++;
+	
+	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_COL0))
+		vp->outputs[VERT_RESULT_COL0] = cur_reg++;
+	
+#if 0 /* Not supported yet */
+	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_BFC0))
+		vp->outputs[VERT_RESULT_BFC0] = cur_reg++;
+	
+	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_COL1))
+		vp->outputs[VERT_RESULT_COL1] = cur_reg++;
+	
+	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_BFC1))
+		vp->outputs[VERT_RESULT_BFC1] = cur_reg++;
+	
+	if(mesa_vp->OutputsWritten & (1 << VERT_RESULT_FOGC))
+		vp->outputs[VERT_RESULT_FOGC] = cur_reg++;
+#endif
+	
+	for(i=VERT_RESULT_TEX0; i <= VERT_RESULT_TEX7; i++)
+		if(mesa_vp->OutputsWritten & (1 << i))
+			vp->outputs[i] = cur_reg++;
 	
 	o_inst=vp->program.body.i;
 	for(vpi=mesa_vp->Instructions; vpi->Opcode != VP_OPCODE_END; vpi++, o_inst++){

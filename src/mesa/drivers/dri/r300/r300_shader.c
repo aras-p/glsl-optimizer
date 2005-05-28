@@ -66,11 +66,8 @@ static struct program *r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 
 static void r300DeleteProgram(GLcontext *ctx, struct program *prog)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_vertex_program *vp=(void *)prog;
-	
-	/*if(rmesa->current_vp == vp)
-		rmesa->current_vp = NULL;*/
+	//r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	//struct r300_vertex_program *vp=(void *)prog;
 	
 	_mesa_delete_program(ctx, prog);
 }
@@ -99,8 +96,8 @@ void r300ProgramStringNotify(GLcontext *ctx, GLenum target,
 
 static GLboolean r300IsProgramNative(GLcontext *ctx, GLenum target, struct program *prog)
 {
-	struct r300_vertex_program *vp=(void *)prog;
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	//struct r300_vertex_program *vp=(void *)prog;
+	//r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
 	return 1;
 }

@@ -1178,6 +1178,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 			| (in_texcoords << R300_RS_CNTL_TC_CNT_SHIFT)
 			| R300_RS_CNTL_0_UNKNOWN_7
 			| R300_RS_CNTL_0_UNKNOWN_18;
+	
 
 	if (r300->state.texture.tc_count > 0) {
 			r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, fp_reg);
