@@ -437,7 +437,7 @@ struct r300_fragment_program_swizzle r300_swizzle [512] = {
 	/* WXZ */
 	{3,{0,0,0,0},{ I0_XXX, I1__Y_,
 		       I0_ZZZ, I1___Z,
-		       I0_WZY, I1___Z,
+		       I0_WZY, I1_X__,
 		       0,0}},
 	/* 0XZ */
 	{3,{0,0,2,0},{ I0_XXX, I1__Y_,
