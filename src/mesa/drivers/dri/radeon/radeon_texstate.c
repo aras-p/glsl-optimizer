@@ -881,14 +881,16 @@ static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
       /* Very easy to do this, in fact would remove a fallback case
        * elsewhere, but I haven't done it yet...  Fallback: 
        */
-      fprintf(stderr, "fallback Q_BIT\n");
+      if (RADEON_DEBUG & DEBUG_FALLBACKS) 
+	fprintf(stderr, "fallback Q_BIT\n");
       return GL_FALSE;
    }
    else if ((texUnit->TexGenEnabled & (S_BIT|T_BIT)) != (S_BIT|T_BIT) ||
 	    texUnit->GenModeS != texUnit->GenModeT) {
       /* Mixed modes, fallback:
        */
-      /* fprintf(stderr, "fallback mixed texgen\n"); */
+      if (RADEON_DEBUG & DEBUG_FALLBACKS) 
+        fprintf(stderr, "fallback mixed texgen\n");
       return GL_FALSE;
    }
    else
