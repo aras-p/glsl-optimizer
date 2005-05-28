@@ -727,7 +727,7 @@ struct r300_pixel_shader_state {
 #endif // USE_ARB_F_P
 
 /* 8 is somewhat bogus... it is probably something like 24 */
-#define R300_MAX_AOS_ARRAYS		8
+#define R300_MAX_AOS_ARRAYS		16
 
 #define AOS_FORMAT_FLOAT	1
 #define AOS_FORMAT_UBYTE	2

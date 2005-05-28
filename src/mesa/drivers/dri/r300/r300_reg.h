@@ -124,6 +124,10 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_VAP_INPUT_ROUTE_0_1            0x2154
 #define R300_VAP_INPUT_ROUTE_0_2            0x2158
 #define R300_VAP_INPUT_ROUTE_0_3            0x215C
+#define R300_VAP_INPUT_ROUTE_0_4            0x2160
+#define R300_VAP_INPUT_ROUTE_0_5            0x2164
+#define R300_VAP_INPUT_ROUTE_0_6            0x2168
+#define R300_VAP_INPUT_ROUTE_0_7            0x216C
 
 /* gap */
 /* Notes:
@@ -168,6 +172,10 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_VAP_INPUT_ROUTE_1_1            0x21E4
 #define R300_VAP_INPUT_ROUTE_1_2            0x21E8
 #define R300_VAP_INPUT_ROUTE_1_3            0x21EC
+#define R300_VAP_INPUT_ROUTE_1_4            0x21F0
+#define R300_VAP_INPUT_ROUTE_1_5            0x21F4
+#define R300_VAP_INPUT_ROUTE_1_6            0x21F8
+#define R300_VAP_INPUT_ROUTE_1_7            0x21FC
 
 /* END */
 
