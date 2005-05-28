@@ -67,7 +67,7 @@ INCLUDES = -I. \
 	-I$(TOP)/src/mesa/swrast_setup \
 	-I$(TOP)/src/mesa/drivers/dri/common \
 	-I$(DRM_SOURCE_PATH)/libdrm \
-	-I$(DRM_SOURCE_PATH)/shared \
+	-I$(DRM_SOURCE_PATH)/shared-core \
 	$(X11_INCLUDES)
 
 
