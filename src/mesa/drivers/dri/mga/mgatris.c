@@ -839,7 +839,8 @@ static const char * const fallbackStrings[] = {
    "glRenderMode(selection or feedback)",
    "No hardware stencil",
    "glDepthFunc( GL_NEVER )",
-   "Mixing GL_CLAMP_TO_EDGE and GL_CLAMP"
+   "Mixing GL_CLAMP_TO_EDGE and GL_CLAMP",
+   "rasterization fallback option"
 };
 
 static const char *getFallbackString(GLuint bit)
