@@ -36,6 +36,7 @@
 #define DBG 0
 
 #define LOCAL_VARS					\
+   mgaContextPtr mmesa = MGA_CONTEXT(ctx);				\
    __DRIdrawablePrivate *dPriv = mmesa->mesa_drawable;	\
    mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;	\
    __DRIscreenPrivate *sPriv = mmesa->driScreen;	\
@@ -55,6 +56,7 @@
 
 
 #define LOCAL_DEPTH_VARS						\
+   mgaContextPtr mmesa = MGA_CONTEXT(ctx);				\
    __DRIdrawablePrivate *dPriv = mmesa->mesa_drawable;			\
    mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;			\
    __DRIscreenPrivate *sPriv = mmesa->driScreen;			\
@@ -81,11 +83,7 @@
    }
 
 
-#define HW_LOCK()				\
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);	\
-   FLUSH_BATCH(mmesa);				\
-   LOCK_HARDWARE_QUIESCENT(mmesa);
-
+#define HW_LOCK()
 
 #define HW_CLIPLOOP()						\
   do {								\
@@ -100,10 +98,7 @@
     }						\
   } while (0)
 
-#define HW_UNLOCK()				\
-    UNLOCK_HARDWARE(mmesa);
-
-
+#define HW_UNLOCK()
 
 
 
@@ -220,6 +215,20 @@ static void mgaDDSetBuffer(GLcontext *ctx, GLframebuffer *buffer,
        ? mmesa->driDrawable : mmesa->driReadable;
 }
 
+void mgaSpanRenderStart( GLcontext *ctx )
+{
+   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
+   FLUSH_BATCH( mmesa );
+   LOCK_HARDWARE_QUIESCENT( mmesa );
+}
+
+void mgaSpanRenderFinish( GLcontext *ctx )
+{
+   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
+   _swrast_flush( ctx );
+   UNLOCK_HARDWARE( mmesa );
+}
+
 /**
  * Initialize the driver callbacks for the read / write span functions.
  *
@@ -269,8 +278,9 @@ void mgaDDInitSpanFuncs( GLcontext *ctx )
 #endif
       break;
    }
+   swdd->SpanRenderStart = mgaSpanRenderStart;
+   swdd->SpanRenderFinish = mgaSpanRenderFinish;
 }
-
 
 
 /**
