@@ -85,8 +85,11 @@ DRI_CONF_BEGIN
         DRI_CONF_ARB_VERTEX_PROGRAM(true)
         DRI_CONF_NV_VERTEX_PROGRAM(true)
     DRI_CONF_SECTION_END
+    DRI_CONF_SECTION_DEBUG
+        DRI_CONF_NO_RAST(false)
+    DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 5;
+static const GLuint __driNConfigOptions = 6;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -639,6 +642,11 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    }
 
    (*mmesa->get_ust)( & mmesa->swap_ust );
+
+   if (driQueryOptionb(&mmesa->optionCache, "no_rast")) {
+      fprintf(stderr, "disabling 3D acceleration\n");
+      FALLBACK(mmesa->glCtx, MGA_FALLBACK_DISABLE, 1);
+   }
 
    return GL_TRUE;
 }
