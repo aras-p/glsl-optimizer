@@ -117,59 +117,26 @@
 
 /* 16 bit, RGB565 color spanline and pixel functions
  */
-#undef INIT_MONO_PIXEL
-#define INIT_MONO_PIXEL(p, color) \
-  p = MACH64PACKCOLOR565( color[0], color[1], color[2] )
+#define GET_SRC_PTR(_x, _y) (read_buf + _x * 2 + _y * pitch)
+#define GET_DST_PTR(_x, _y) (     buf + _x * 2 + _y * pitch)
+#define SPANTMP_PIXEL_FMT GL_RGB
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
 
-#define WRITE_RGBA( _x, _y, r, g, b, a )				\
-   *(GLushort *)(buf + _x*2 + _y*pitch) = ((((int)r & 0xf8) << 8) |	\
-					   (((int)g & 0xfc) << 3) |	\
-					   (((int)b & 0xf8) >> 3))
-
-#define WRITE_PIXEL( _x, _y, p )					\
-    *(GLushort *)(buf + _x*2 + _y*pitch) = p
-
-#define READ_RGBA( rgba, _x, _y )					\
-    do {								\
-	GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);		\
-	rgba[0] = ((p >> 8) & 0xf8) * 255 / 0xf8;			\
-	rgba[1] = ((p >> 3) & 0xfc) * 255 / 0xfc;			\
-	rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;			\
-	rgba[3] = 0xff;							\
-    } while (0)
-
-#define TAG(x) mach64##x##_RGB565
-#include "spantmp.h"
-
+#define TAG(x)    mach64##x##_RGB565
+#define TAG2(x,y) mach64##x##_RGB565##y
+#include "spantmp2.h"
 
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
-#undef INIT_MONO_PIXEL
-#define INIT_MONO_PIXEL(p, color) \
-  p = MACH64PACKCOLOR8888( color[0], color[1], color[2], color[3] )
+#define GET_SRC_PTR(_x, _y) (read_buf + _x * 4 + _y * pitch)
+#define GET_DST_PTR(_x, _y) (     buf + _x * 4 + _y * pitch)
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 
-#define WRITE_RGBA( _x, _y, r, g, b, a )				\
-   *(GLuint *)(buf + _x*4 + _y*pitch) = ((b <<  0) |			\
-					 (g <<  8) |			\
-					 (r << 16) |			\
-					 (a << 24) )
-
-#define WRITE_PIXEL( _x, _y, p )					\
-   *(GLuint *)(buf + _x*4 + _y*pitch) = p
-
-#define READ_RGBA( rgba, _x, _y )					\
-do {									\
-   GLuint p = *(GLuint *)(read_buf + _x*4 + _y*pitch);			\
-   rgba[0] = (p >> 16) & 0xff;						\
-   rgba[1] = (p >>  8) & 0xff;						\
-   rgba[2] = (p >>  0) & 0xff;						\
-   rgba[3] = 0xff; /*(p >> 24) & 0xff;*/				\
-} while (0)
-
-#define TAG(x) mach64##x##_ARGB8888
-#include "spantmp.h"
-
+#define TAG(x)    mach64##x##_ARGB8888
+#define TAG2(x,y) mach64##x##_ARGB8888##y
+#include "spantmp2.h"
 
 
 /* ================================================================
@@ -179,10 +146,10 @@ do {									\
 /* 16 bit depthbuffer functions.
  */
 #define WRITE_DEPTH( _x, _y, d )					\
-   *(GLushort *)(buf + _x*2 + _y*pitch) = d;
+   *(GLushort *)(buf + (_x)*2 + (_y)*pitch) = d;
 
 #define READ_DEPTH( d, _x, _y )						\
-   d = *(GLushort *)(buf + _x*2 + _y*pitch);
+   d = *(GLushort *)(buf + (_x)*2 + (_y)*pitch);
 
 #define TAG(x) mach64##x##_16
 #include "depthtmp.h"
@@ -286,22 +253,10 @@ mach64SetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
    if (drb->Base.InternalFormat == GL_RGBA) {
       if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         drb->Base.GetRow        = mach64ReadRGBASpan_RGB565;
-         drb->Base.GetValues     = mach64ReadRGBAPixels_RGB565;
-         drb->Base.PutRow        = mach64WriteRGBASpan_RGB565;
-         drb->Base.PutRowRGB     = mach64WriteRGBSpan_RGB565;
-         drb->Base.PutMonoRow    = mach64WriteMonoRGBASpan_RGB565;
-         drb->Base.PutValues     = mach64WriteRGBAPixels_RGB565;
-         drb->Base.PutMonoValues = mach64WriteMonoRGBAPixels_RGB565;
+         mach64InitPointers_RGB565(&drb->Base);
       }
       else {
-         drb->Base.GetRow        = mach64ReadRGBASpan_ARGB8888;
-         drb->Base.GetValues     = mach64ReadRGBAPixels_ARGB8888;
-         drb->Base.PutRow        = mach64WriteRGBASpan_ARGB8888;
-         drb->Base.PutRowRGB     = mach64WriteRGBSpan_ARGB8888;
-         drb->Base.PutMonoRow    = mach64WriteMonoRGBASpan_ARGB8888;
-         drb->Base.PutValues     = mach64WriteRGBAPixels_ARGB8888;
-         drb->Base.PutMonoValues = mach64WriteMonoRGBAPixels_ARGB8888;
+         mach64InitPointers_ARGB8888(&drb->Base);
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
