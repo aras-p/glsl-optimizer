@@ -58,6 +58,7 @@
    (void) read_buf; (void) buf; (void) p
 
 #define LOCAL_DEPTH_VARS						\
+   mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);			\
    mach64ScreenRec *mach64Screen = mmesa->mach64Screen;			\
    __DRIdrawablePrivate *dPriv = mmesa->driDrawable;			\
    __DRIscreenPrivate *driScreen = mmesa->driScreen;			\
@@ -87,10 +88,7 @@
 #define Y_FLIP( _y )	(height - _y - 1)
 
 
-#define HW_LOCK()							\
-   mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);			\
-   LOCK_HARDWARE( mmesa );						\
-   FINISH_DMA_LOCKED( mmesa );						\
+#define HW_LOCK()
 
 #define HW_CLIPLOOP()							\
    do {									\
@@ -106,8 +104,7 @@
       }									\
    } while (0)
 
-#define HW_UNLOCK()							\
-   UNLOCK_HARDWARE( mmesa )						\
+#define HW_UNLOCK()
 
 
 
@@ -184,6 +181,19 @@ static void mach64DDSetBuffer( GLcontext *ctx,
    }
 }
 
+static void mach64SpanRenderStart( GLcontext *ctx )
+{
+   mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
+   LOCK_HARDWARE( mmesa );
+   FINISH_DMA_LOCKED( mmesa );
+}
+
+static void mach64SpanRenderFinish( GLcontext *ctx )
+{
+   mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
+   _swrast_flush( ctx );
+   UNLOCK_HARDWARE( mmesa );
+}
 
 void mach64DDInitSpanFuncs( GLcontext *ctx )
 {
@@ -242,6 +252,8 @@ void mach64DDInitSpanFuncs( GLcontext *ctx )
    swdd->WriteMonoCIPixels	= NULL;
    swdd->ReadCI32Span		= NULL;
    swdd->ReadCI32Pixels		= NULL;
+   swdd->SpanRenderStart	= mach64SpanRenderStart;
+   swdd->SpanRenderFinish	= mach64SpanRenderFinish;
 }
 
 
