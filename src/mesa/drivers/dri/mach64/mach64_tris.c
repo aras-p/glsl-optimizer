@@ -1890,6 +1890,4 @@ void mach64InitTriFuncs( GLcontext *ctx )
    tnl->Driver.Render.PrimitiveNotify = mach64RenderPrimitive;
    tnl->Driver.Render.ResetLineStipple = _swrast_ResetLineStipple;
    tnl->Driver.Render.BuildVertices = mach64BuildVertices;
-
-/*     mach64Fallback( ctx, 0x100000, 1 ); */
 }

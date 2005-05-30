@@ -230,6 +230,11 @@ GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
 
    driContextPriv->driverPrivate = (void *)mmesa;
 
+   if (driQueryOptionb(&mmesa->optionCache, "no_rast")) {
+      fprintf(stderr, "disabling 3D acceleration\n");
+      FALLBACK(mmesa, MACH64_FALLBACK_DISABLE, 1);
+   }
+
    return GL_TRUE;
 }
 

@@ -54,16 +54,17 @@ DRI_CONF_BEGIN
     DRI_CONF_SECTION_PERFORMANCE
         DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
     DRI_CONF_SECTION_END
-#if ENABLE_PERF_BOXES
     DRI_CONF_SECTION_DEBUG
+        DRI_CONF_NO_RAST(false)
+#if ENABLE_PERF_BOXES
         DRI_CONF_PERFORMANCE_BOXES(false)
-    DRI_CONF_SECTION_END
 #endif
+    DRI_CONF_SECTION_END
 DRI_CONF_END;
 #if ENABLE_PERF_BOXES
-static const GLuint __driNConfigOptions = 2;
+static const GLuint __driNConfigOptions = 3;
 #else
-static const GLuint __driNConfigOptions = 1;
+static const GLuint __driNConfigOptions = 2;
 #endif
 
 #ifdef USE_NEW_INTERFACE

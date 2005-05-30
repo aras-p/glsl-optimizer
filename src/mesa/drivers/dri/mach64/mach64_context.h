@@ -84,6 +84,7 @@ typedef struct mach64_context *mach64ContextPtr;
 #define MACH64_FALLBACK_SEP_SPECULAR	0x0080
 #define MACH64_FALLBACK_BLEND_EQ	0x0100
 #define MACH64_FALLBACK_BLEND_FUNC	0x0200
+#define MACH64_FALLBACK_DISABLE		0x0400
 
 #define CARD32 GLuint		/* KW: For building in mesa tree */
 
