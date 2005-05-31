@@ -73,7 +73,7 @@ int prevLockLine;
  * Mesa's Driver Functions
  ***************************************/
 
-#define DRIVER_DATE                     "20041217"
+#define DRIVER_DATE                     "20050225"
 
 const GLubyte *intelGetString( GLcontext *ctx, GLenum name )
 {
@@ -99,6 +99,8 @@ const GLubyte *intelGetString( GLcontext *ctx, GLenum name )
 	 chipset = "Intel(R) 915G"; break;
       case PCI_CHIP_I915_GM:
 	 chipset = "Intel(R) 915GM"; break;
+      case PCI_CHIP_I945_G:
+	 chipset = "Intel(R) 945G"; break;
       default:
 	 chipset = "Unknown Intel Chipset"; break;
       }
