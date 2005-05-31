@@ -1016,8 +1016,7 @@ static GLboolean r200_validate_texgen( GLcontext *ctx, GLuint unit )
    case GL_SPHERE_MAP:
       rmesa->TexGenNeedNormals[unit] = GL_TRUE;
       tgi |= R200_TEXGEN_INPUT_SPHERE<<inputshift;
-      /* GL_SPHERE_MAP doesn't appear to work. */
-      return GL_FALSE;
+      break;
 
    case 0:
       /* All texgen units were disabled, so just pass coords through. */
