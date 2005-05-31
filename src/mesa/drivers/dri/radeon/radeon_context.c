@@ -63,7 +63,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_vtxfmt.h"
 #include "radeon_maos.h"
 
-#define DRIVER_DATE	"20041207"
+#define DRIVER_DATE	"20050528"
 
 #include "vblank.h"
 #include "utils.h"

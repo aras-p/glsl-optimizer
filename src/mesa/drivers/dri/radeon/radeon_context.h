@@ -38,6 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_CONTEXT_H__
 #define __RADEON_CONTEXT_H__
 
+#include "tnl/t_vertex.h"
 #include "dri_util.h"
 #include "drm.h"
 #include "radeon_drm.h"
@@ -530,12 +531,13 @@ struct radeon_tcl_info {
 /* radeon_swtcl.c
  */
 struct radeon_swtcl_info {
-   GLuint SetupIndex;
-   GLuint SetupNewInputs;
    GLuint RenderIndex;
    GLuint vertex_size;
-   GLuint vertex_stride_shift;
    GLuint vertex_format;
+
+   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
+   GLuint vertex_attr_count;
+
    GLubyte *verts;
 
    /* Fallback rasterization functions
@@ -547,6 +549,18 @@ struct radeon_swtcl_info {
    GLuint hw_primitive;
    GLenum render_primitive;
    GLuint numverts;
+
+   /**
+    * Offset of the 4UB color data within a hardware (swtcl) vertex.
+    */
+   GLuint coloroffset;
+
+   /**
+    * Offset of the 3UB specular color data within a hardware (swtcl) vertex.
+    */
+   GLuint specoffset;
+
+   GLboolean needproj;
 
    struct radeon_dma_region indexed_verts;
 };
@@ -707,6 +721,7 @@ struct radeon_context {
    GLuint TclFallback;
    GLuint Fallback;
    GLuint NewGLState;
+   GLuint tnl_index;	/* index of bits for last tnl_install_attrs */
 
    /* Vertex buffers
     */

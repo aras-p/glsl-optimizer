@@ -53,224 +53,175 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_swtcl.h"
 #include "radeon_tcl.h"
 
-/***********************************************************************
- *              Build render functions from dd templates               *
- ***********************************************************************/
-
-
-#define RADEON_XYZW_BIT		0x01
-#define RADEON_RGBA_BIT		0x02
-#define RADEON_SPEC_BIT		0x04
-#define RADEON_TEX0_BIT		0x08
-#define RADEON_TEX1_BIT		0x10
-#define RADEON_PTEX_BIT		0x20
-#define RADEON_MAX_SETUP	0x40
 
 static void flush_last_swtcl_prim( radeonContextPtr rmesa  );
 
-static struct {
-   void                (*emit)( GLcontext *, GLuint, GLuint, void *, GLuint );
-   tnl_interp_func		interp;
-   tnl_copy_pv_func	        copy_pv;
-   GLboolean           (*check_tex_sizes)( GLcontext *ctx );
-   GLuint               vertex_size;
-   GLuint               vertex_format;
-} setup_tab[RADEON_MAX_SETUP];
-
-
-#define TINY_VERTEX_FORMAT	        (RADEON_CP_VC_FRMT_XY |		\
-					 RADEON_CP_VC_FRMT_Z |		\
-					 RADEON_CP_VC_FRMT_PKCOLOR)
-
-#define NOTEX_VERTEX_FORMAT	        (RADEON_CP_VC_FRMT_XY |		\
-					 RADEON_CP_VC_FRMT_Z |		\
-					 RADEON_CP_VC_FRMT_W0 |		\
-					 RADEON_CP_VC_FRMT_PKCOLOR |	\
-					 RADEON_CP_VC_FRMT_PKSPEC)
-
-#define TEX0_VERTEX_FORMAT	        (RADEON_CP_VC_FRMT_XY |		\
-					 RADEON_CP_VC_FRMT_Z |		\
-					 RADEON_CP_VC_FRMT_W0 |		\
-					 RADEON_CP_VC_FRMT_PKCOLOR |	\
-					 RADEON_CP_VC_FRMT_PKSPEC |	\
-					 RADEON_CP_VC_FRMT_ST0)
-
-#define TEX1_VERTEX_FORMAT	        (RADEON_CP_VC_FRMT_XY |		\
-					 RADEON_CP_VC_FRMT_Z |		\
-					 RADEON_CP_VC_FRMT_W0 |		\
-					 RADEON_CP_VC_FRMT_PKCOLOR |	\
-					 RADEON_CP_VC_FRMT_PKSPEC |	\
-					 RADEON_CP_VC_FRMT_ST0 |	\
-					 RADEON_CP_VC_FRMT_ST1)
-
-#define PROJ_TEX1_VERTEX_FORMAT	        (RADEON_CP_VC_FRMT_XY |		\
-					 RADEON_CP_VC_FRMT_Z |		\
-					 RADEON_CP_VC_FRMT_W0 |		\
-					 RADEON_CP_VC_FRMT_PKCOLOR |	\
-					 RADEON_CP_VC_FRMT_PKSPEC |	\
-					 RADEON_CP_VC_FRMT_ST0 |	\
-					 RADEON_CP_VC_FRMT_Q0 |         \
-					 RADEON_CP_VC_FRMT_ST1 |	\
-					 RADEON_CP_VC_FRMT_Q1)
-
-#define TEX2_VERTEX_FORMAT 0
-#define TEX3_VERTEX_FORMAT 0
-#define PROJ_TEX3_VERTEX_FORMAT 0
-
-#define DO_XYZW (IND & RADEON_XYZW_BIT)
-#define DO_RGBA (IND & RADEON_RGBA_BIT)
-#define DO_SPEC (IND & RADEON_SPEC_BIT)
-#define DO_FOG  (IND & RADEON_SPEC_BIT)
-#define DO_TEX0 (IND & RADEON_TEX0_BIT)
-#define DO_TEX1 (IND & RADEON_TEX1_BIT)
-#define DO_TEX2 0
-#define DO_TEX3 0
-#define DO_PTEX (IND & RADEON_PTEX_BIT)
-
-#define VERTEX radeonVertex
-#define VERTEX_COLOR radeon_color_t
-#define GET_VIEWPORT_MAT() 0
-#define GET_TEXSOURCE(n)  n
-#define GET_VERTEX_FORMAT() RADEON_CONTEXT(ctx)->swtcl.vertex_format
-#define GET_VERTEX_STORE() RADEON_CONTEXT(ctx)->swtcl.verts
-#define GET_VERTEX_SIZE() RADEON_CONTEXT(ctx)->swtcl.vertex_size * sizeof(GLuint)
-
-#define HAVE_HW_VIEWPORT    1
-/* Tiny vertices don't seem to work atm - haven't looked into why.
- */
-#define HAVE_HW_DIVIDE      (IND & ~(RADEON_XYZW_BIT|RADEON_RGBA_BIT))
-#define HAVE_TINY_VERTICES  1
-#define HAVE_RGBA_COLOR     1
-#define HAVE_NOTEX_VERTICES 1
-#define HAVE_TEX0_VERTICES  1
-#define HAVE_TEX1_VERTICES  1
-#define HAVE_TEX2_VERTICES  0
-#define HAVE_TEX3_VERTICES  0
-#define HAVE_PTEX_VERTICES  1
-
-#define CHECK_HW_DIVIDE    (!(ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE| \
-                                                    DD_TRI_UNFILLED)))
-
-#define INTERP_VERTEX setup_tab[RADEON_CONTEXT(ctx)->swtcl.SetupIndex].interp
-#define COPY_PV_VERTEX setup_tab[RADEON_CONTEXT(ctx)->swtcl.SetupIndex].copy_pv
-
-
-/***********************************************************************
- *         Generate  pv-copying and translation functions              *
- ***********************************************************************/
-
-#define TAG(x) radeon_##x
-#define IND ~0
-#include "tnl_dd/t_dd_vb.c"
-#undef IND
-
-
-/***********************************************************************
- *             Generate vertex emit and interp functions               *
- ***********************************************************************/
-
-#define IND (RADEON_XYZW_BIT|RADEON_RGBA_BIT)
-#define TAG(x) x##_wg
-#include "tnl_dd/t_dd_vbtmp.h"
-
-#define IND (RADEON_XYZW_BIT|RADEON_RGBA_BIT|RADEON_TEX0_BIT)
-#define TAG(x) x##_wgt0
-#include "tnl_dd/t_dd_vbtmp.h"
-
-#define IND (RADEON_XYZW_BIT|RADEON_RGBA_BIT|RADEON_TEX0_BIT|RADEON_PTEX_BIT)
-#define TAG(x) x##_wgpt0
-#include "tnl_dd/t_dd_vbtmp.h"
-
-#define IND (RADEON_XYZW_BIT|RADEON_RGBA_BIT|RADEON_TEX0_BIT|RADEON_TEX1_BIT)
-#define TAG(x) x##_wgt0t1
-#include "tnl_dd/t_dd_vbtmp.h"
-
-#define IND (RADEON_XYZW_BIT|RADEON_RGBA_BIT|RADEON_TEX0_BIT|RADEON_TEX1_BIT|\
-             RADEON_PTEX_BIT)
-#define TAG(x) x##_wgpt0t1
-#include "tnl_dd/t_dd_vbtmp.h"
-
-#define IND (RADEON_XYZW_BIT|RADEON_RGBA_BIT|RADEON_SPEC_BIT)
-#define TAG(x) x##_wgfs
-#include "tnl_dd/t_dd_vbtmp.h"
-
-#define IND (RADEON_XYZW_BIT|RADEON_RGBA_BIT|RADEON_SPEC_BIT|\
-	     RADEON_TEX0_BIT)
-#define TAG(x) x##_wgfst0
-#include "tnl_dd/t_dd_vbtmp.h"
-
-#define IND (RADEON_XYZW_BIT|RADEON_RGBA_BIT|RADEON_SPEC_BIT|\
-	     RADEON_TEX0_BIT|RADEON_PTEX_BIT)
-#define TAG(x) x##_wgfspt0
-#include "tnl_dd/t_dd_vbtmp.h"
-
-#define IND (RADEON_XYZW_BIT|RADEON_RGBA_BIT|RADEON_SPEC_BIT|\
-	     RADEON_TEX0_BIT|RADEON_TEX1_BIT)
-#define TAG(x) x##_wgfst0t1
-#include "tnl_dd/t_dd_vbtmp.h"
-
-#define IND (RADEON_XYZW_BIT|RADEON_RGBA_BIT|RADEON_SPEC_BIT|\
-	     RADEON_TEX0_BIT|RADEON_TEX1_BIT|RADEON_PTEX_BIT)
-#define TAG(x) x##_wgfspt0t1
-#include "tnl_dd/t_dd_vbtmp.h"
-
+/* R100: xyzw, c0, c1/fog, stq[0..2]  = 4+1+1+3*3 = 15  right? */
+/* R200: xyzw, c0, c1/fog, strq[0..5] = 4+1+1+4*6 = 30 */
+#define RADEON_MAX_TNL_VERTEX_SIZE (15 * sizeof(GLfloat))	/* for mesa _tnl stage */
 
 /***********************************************************************
  *                         Initialization 
  ***********************************************************************/
 
-static void init_setup_tab( void )
+#define EMIT_ATTR( ATTR, STYLE, F0 )					\
+do {									\
+   rmesa->swtcl.vertex_attrs[rmesa->swtcl.vertex_attr_count].attrib = (ATTR);	\
+   rmesa->swtcl.vertex_attrs[rmesa->swtcl.vertex_attr_count].format = (STYLE);	\
+   rmesa->swtcl.vertex_attr_count++;					\
+   fmt_0 |= F0;								\
+} while (0)
+
+#define EMIT_PAD( N )							\
+do {									\
+   rmesa->swtcl.vertex_attrs[rmesa->swtcl.vertex_attr_count].attrib = 0;		\
+   rmesa->swtcl.vertex_attrs[rmesa->swtcl.vertex_attr_count].format = EMIT_PAD;	\
+   rmesa->swtcl.vertex_attrs[rmesa->swtcl.vertex_attr_count].offset = (N);		\
+   rmesa->swtcl.vertex_attr_count++;					\
+} while (0)
+
+static GLuint radeon_cp_vc_frmts[3][2] =
 {
-   init_wg();
-   init_wgt0();
-   init_wgpt0();
-   init_wgt0t1();
-   init_wgpt0t1();
-   init_wgfs();
-   init_wgfst0();
-   init_wgfspt0();
-   init_wgfst0t1();
-   init_wgfspt0t1();
-}
+   { RADEON_CP_VC_FRMT_ST0, RADEON_CP_VC_FRMT_ST0 | RADEON_CP_VC_FRMT_Q0 },
+   { RADEON_CP_VC_FRMT_ST1, RADEON_CP_VC_FRMT_ST1 | RADEON_CP_VC_FRMT_Q1 },
+   { RADEON_CP_VC_FRMT_ST2, RADEON_CP_VC_FRMT_ST2 | RADEON_CP_VC_FRMT_Q2 },
+};
 
-
-
-void radeonPrintSetupFlags(char *msg, GLuint flags )
+static void radeonSetVertexFormat( GLcontext *ctx )
 {
-   fprintf(stderr, "%s(%x): %s%s%s%s%s%s\n",
-	   msg,
-	   (int)flags,
-	   (flags & RADEON_XYZW_BIT)      ? " xyzw," : "",
-	   (flags & RADEON_RGBA_BIT)     ? " rgba," : "",
-	   (flags & RADEON_SPEC_BIT)     ? " spec/fog," : "",
-	   (flags & RADEON_TEX0_BIT)     ? " tex-0," : "",
-	   (flags & RADEON_TEX1_BIT)     ? " tex-1," : "",
-	   (flags & RADEON_PTEX_BIT)     ? " proj-tex," : "");
+   radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   GLuint index = tnl->render_inputs;
+   int fmt_0 = 0;
+   int offset = 0;
+
+
+   /* Important:
+    */
+   if ( VB->NdcPtr != NULL ) {
+      VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
+   }
+   else {
+      VB->AttribPtr[VERT_ATTRIB_POS] = VB->ClipPtr;
+   }
+
+   assert( VB->AttribPtr[VERT_ATTRIB_POS] != NULL );
+   rmesa->swtcl.vertex_attr_count = 0;
+
+   /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
+    * build up a hardware vertex.
+    */
+   if ( !rmesa->swtcl.needproj ||
+        (index & _TNL_BITS_TEX_ANY)) {	/* for projtex */
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F, 
+		 RADEON_CP_VC_FRMT_XY |	RADEON_CP_VC_FRMT_Z | RADEON_CP_VC_FRMT_W0 );
+      offset = 4;
+   }
+   else {
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F, 
+		 RADEON_CP_VC_FRMT_XY |	RADEON_CP_VC_FRMT_Z );
+      offset = 3;
+   }
+
+   rmesa->swtcl.coloroffset = offset;
+#if MESA_LITTLE_ENDIAN 
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, 
+	      RADEON_CP_VC_FRMT_PKCOLOR );
+#else
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_ABGR,
+	      RADEON_CP_VC_FRMT_PKCOLOR );
+#endif
+   offset += 1;
+
+   rmesa->swtcl.specoffset = 0;
+   if (index & (_TNL_BIT_COLOR1|_TNL_BIT_FOG)) {
+
+#if MESA_LITTLE_ENDIAN 
+      if (index & _TNL_BIT_COLOR1) {
+	 rmesa->swtcl.specoffset = offset;
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB,
+	 	    RADEON_CP_VC_FRMT_PKSPEC );
+      }
+      else {
+	 EMIT_PAD( 3 );
+      }
+
+      if (index & _TNL_BIT_FOG) {
+	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F,
+	 	    RADEON_CP_VC_FRMT_PKSPEC );
+      }
+      else {
+	 EMIT_PAD( 1 );
+      }
+#else
+      if (index & _TNL_BIT_FOG) {
+	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F,
+	 	    RADEON_CP_VC_FRMT_PKSPEC );
+      }
+      else {
+	 EMIT_PAD( 1 );
+      }
+
+      if (index & _TNL_BIT_COLOR1) {
+	 rmesa->swtcl.specoffset = offset;
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR,
+	 	    RADEON_CP_VC_FRMT_PKSPEC );
+      }
+      else {
+	 EMIT_PAD( 3 );
+      }
+#endif
+   }
+
+   if (index & _TNL_BITS_TEX_ANY) {
+      int i;
+
+      for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+	 if (index & _TNL_BIT_TEX(i)) {
+	    GLuint sz = VB->TexCoordPtr[i]->size;
+
+	    switch (sz) {
+	    case 1:
+	    case 2:
+	    case 3:
+	       EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_2F,
+			  radeon_cp_vc_frmts[i][0] );
+	       break;
+	    case 4:
+	       EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_3F_XYW,
+			  radeon_cp_vc_frmts[i][1] );
+	       break;
+	    default:
+	       continue;
+	    };
+	 }
+      }
+   }
+
+   if ( rmesa->tnl_index != index ||
+	fmt_0 != rmesa->swtcl.vertex_format) {
+      RADEON_NEWPRIM(rmesa);
+      rmesa->swtcl.vertex_format = fmt_0;
+      rmesa->swtcl.vertex_size =
+	  _tnl_install_attrs( ctx,
+			      rmesa->swtcl.vertex_attrs, 
+			      rmesa->swtcl.vertex_attr_count,
+			      NULL, 0 );
+      rmesa->swtcl.vertex_size /= 4;
+      rmesa->tnl_index = index;
+      if (RADEON_DEBUG & DEBUG_VERTS)
+	 fprintf( stderr, "%s: vertex_size= %d floats\n",
+		  __FUNCTION__, rmesa->swtcl.vertex_size);
+   }
 }
 
 
 static void radeonRenderStart( GLcontext *ctx )
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
 
-   if (!setup_tab[rmesa->swtcl.SetupIndex].check_tex_sizes(ctx)) {
-      GLuint ind = rmesa->swtcl.SetupIndex |= (RADEON_PTEX_BIT|RADEON_RGBA_BIT);
-
-      /* Projective textures are handled nicely; just have to change
-       * up to the new vertex format.
-       */
-      if (setup_tab[ind].vertex_format != rmesa->swtcl.vertex_format) {
-	 RADEON_NEWPRIM(rmesa);
-	 rmesa->swtcl.vertex_format = setup_tab[ind].vertex_format;
-	 rmesa->swtcl.vertex_size = setup_tab[ind].vertex_size;
-      }
-
-      if (!(ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED))) {
-	 tnl->Driver.Render.Interp = setup_tab[rmesa->swtcl.SetupIndex].interp;
-	 tnl->Driver.Render.CopyPV = setup_tab[rmesa->swtcl.SetupIndex].copy_pv;
-      }
-   }
+   radeonSetVertexFormat( ctx );
    
    if (rmesa->dma.flush != 0 && 
        rmesa->dma.flush != flush_last_swtcl_prim)
@@ -278,82 +229,40 @@ static void radeonRenderStart( GLcontext *ctx )
 }
 
 
-void radeonBuildVertices( GLcontext *ctx, GLuint start, GLuint count,
-			   GLuint newinputs )
-{
-   radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
-   GLuint stride = rmesa->swtcl.vertex_size * sizeof(int);
-   GLubyte *v = ((GLubyte *)rmesa->swtcl.verts + (start * stride));
-
-   newinputs |= rmesa->swtcl.SetupNewInputs;
-   rmesa->swtcl.SetupNewInputs = 0;
-
-   if (!newinputs)
-      return;
-
-   setup_tab[rmesa->swtcl.SetupIndex].emit( ctx, start, count, v, stride );
-}
-
+/**
+ * Set vertex state for SW TCL.  The primary purpose of this function is to
+ * determine in advance whether or not the hardware can / should do the
+ * projection divide or Mesa should do it.
+ */
 void radeonChooseVertexState( GLcontext *ctx )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   GLuint ind = (RADEON_XYZW_BIT | RADEON_RGBA_BIT);
 
-   if (!rmesa->TclFallback || rmesa->Fallback)
-      return;
+   GLuint se_coord_fmt;
 
-   if (ctx->Fog.Enabled || (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR))
-      ind |= RADEON_SPEC_BIT;
+   /* HW perspective divide is a win, but tiny vertex formats are a
+    * bigger one.
+    */
 
-   if (ctx->Texture._EnabledUnits & 0x2)
-      /* unit 1 enabled */
-      ind |= RADEON_TEX0_BIT|RADEON_TEX1_BIT;
-   else if (ctx->Texture._EnabledUnits & 0x1)
-      /* unit 0 enabled */
-      ind |= RADEON_TEX0_BIT;
-
-   rmesa->swtcl.SetupIndex = ind;
-
-   if (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED)) {
-      tnl->Driver.Render.Interp = radeon_interp_extras;
-      tnl->Driver.Render.CopyPV = radeon_copy_pv_extras;
+   if ( ((tnl->render_inputs & (_TNL_BITS_TEX_ANY|_TNL_BIT_COLOR1) ) == 0)
+	|| (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED))) {
+      rmesa->swtcl.needproj = GL_TRUE;
+      se_coord_fmt = (RADEON_VTX_XY_PRE_MULT_1_OVER_W0 |
+		      RADEON_VTX_Z_PRE_MULT_1_OVER_W0 |
+		      RADEON_TEX1_W_ROUTING_USE_Q1);
    }
    else {
-      tnl->Driver.Render.Interp = setup_tab[ind].interp;
-      tnl->Driver.Render.CopyPV = setup_tab[ind].copy_pv;
+      rmesa->swtcl.needproj = GL_FALSE;
+      se_coord_fmt = (RADEON_VTX_W0_IS_NOT_1_OVER_W0 |
+		      RADEON_TEX1_W_ROUTING_USE_Q1);
    }
 
-   if (setup_tab[ind].vertex_format != rmesa->swtcl.vertex_format) {
-      RADEON_NEWPRIM(rmesa);
-      rmesa->swtcl.vertex_format = setup_tab[ind].vertex_format;
-      rmesa->swtcl.vertex_size = setup_tab[ind].vertex_size;
-   }
+   _tnl_need_projected_coords( ctx, rmesa->swtcl.needproj );
 
-   {
-      GLuint se_coord_fmt, needproj;
-
-      /* HW perspective divide is a win, but tiny vertex formats are a
-       * bigger one.
-       */
-      if (setup_tab[ind].vertex_format == TINY_VERTEX_FORMAT ||
-	  (ctx->_TriangleCaps & (DD_TRI_LIGHT_TWOSIDE|DD_TRI_UNFILLED))) {
-	 needproj = GL_TRUE;
-	 se_coord_fmt = (RADEON_VTX_XY_PRE_MULT_1_OVER_W0 |
-			 RADEON_VTX_Z_PRE_MULT_1_OVER_W0 |
-			 RADEON_TEX1_W_ROUTING_USE_Q1);
-      }
-      else {
-	 needproj = GL_FALSE;
-	 se_coord_fmt = (RADEON_VTX_W0_IS_NOT_1_OVER_W0 |
-			 RADEON_TEX1_W_ROUTING_USE_Q1);
-      }
-
-      if ( se_coord_fmt != rmesa->hw.set.cmd[SET_SE_COORDFMT] ) {
-	 RADEON_STATECHANGE( rmesa, set );
-	 rmesa->hw.set.cmd[SET_SE_COORDFMT] = se_coord_fmt;
-      }
-      _tnl_need_projected_coords( ctx, needproj );
+   if ( se_coord_fmt != rmesa->hw.set.cmd[SET_SE_COORDFMT] ) {
+      RADEON_STATECHANGE( rmesa, set );
+      rmesa->hw.set.cmd[SET_SE_COORDFMT] = se_coord_fmt;
    }
 }
 
@@ -431,38 +340,6 @@ static __inline void *radeonAllocDmaLowVerts( radeonContextPtr rmesa,
 }
 
 
-
-
-static void *radeon_emit_contiguous_verts( GLcontext *ctx, 
-					   GLuint start, 
-					   GLuint count,
-					   void *dest)
-{
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLuint stride = rmesa->swtcl.vertex_size * 4;
-   setup_tab[rmesa->swtcl.SetupIndex].emit( ctx, start, count, dest, stride );
-   return (void *)((char *)dest + stride * (count - start));
-}
-
-
-
-void radeon_emit_indexed_verts( GLcontext *ctx, GLuint start, GLuint count )
-{
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-
-   radeonAllocDmaRegionVerts( rmesa, 
-			      &rmesa->swtcl.indexed_verts, 
-			      count - start,
-			      rmesa->swtcl.vertex_size * 4, 
-			      64);
-
-   setup_tab[rmesa->swtcl.SetupIndex].emit( 
-      ctx, start, count, 
-      rmesa->swtcl.indexed_verts.address + rmesa->swtcl.indexed_verts.start, 
-      rmesa->swtcl.vertex_size * 4 );
-}
-
-
 /*
  * Render unclipped vertex buffers by emitting vertices directly to
  * dma buffers.  Use strip/fan hardware primitives where possible.
@@ -478,7 +355,8 @@ void radeon_emit_indexed_verts( GLcontext *ctx, GLuint start, GLuint count )
 #define HAVE_QUADS       0
 #define HAVE_QUAD_STRIPS 0
 #define HAVE_POLYGONS    0
-#define HAVE_ELTS        1
+/* \todo: is it possible to make "ELTS" work with t_vertex code ? */
+#define HAVE_ELTS        0
 
 static const GLuint hw_prim[GL_POLYGON+1] = {
    RADEON_CP_VC_CNTL_PRIM_TYPE_POINT,
@@ -500,94 +378,17 @@ static __inline void radeonDmaPrimitive( radeonContextPtr rmesa, GLenum prim )
    assert(rmesa->dma.current.ptr == rmesa->dma.current.start);
 }
 
-static __inline void radeonEltPrimitive( radeonContextPtr rmesa, GLenum prim )
-{
-   RADEON_NEWPRIM( rmesa );
-   rmesa->swtcl.hw_primitive = hw_prim[prim] | RADEON_CP_VC_CNTL_PRIM_WALK_IND;
-}
-
-
-
-
-#define LOCAL_VARS radeonContextPtr rmesa = RADEON_CONTEXT(ctx)
-#define ELTS_VARS( buf )  GLushort *dest = buf; (void)rmesa;
+#define LOCAL_VARS radeonContextPtr rmesa = RADEON_CONTEXT(ctx); (void)rmesa
 #define INIT( prim ) radeonDmaPrimitive( rmesa, prim )
-#define ELT_INIT(prim) radeonEltPrimitive( rmesa, prim )
 #define FLUSH()  RADEON_NEWPRIM( rmesa )
 #define GET_CURRENT_VB_MAX_VERTS() \
   (((int)rmesa->dma.current.end - (int)rmesa->dma.current.ptr) / (rmesa->swtcl.vertex_size*4))
 #define GET_SUBSEQUENT_VB_MAX_VERTS() \
   ((RADEON_BUFFER_SIZE) / (rmesa->swtcl.vertex_size*4))
-
-#if RADEON_OLD_PACKETS
-# define GET_CURRENT_VB_MAX_ELTS() \
-  ((RADEON_CMD_BUF_SZ - (rmesa->store.cmd_used + 24)) / 2)
-#else
-# define GET_CURRENT_VB_MAX_ELTS() \
-  ((RADEON_CMD_BUF_SZ - (rmesa->store.cmd_used + 16)) / 2)
-#endif
-#define GET_SUBSEQUENT_VB_MAX_ELTS() \
-  ((RADEON_CMD_BUF_SZ - 1024) / 2)
-
-
-static void *radeon_alloc_elts( radeonContextPtr rmesa, int nr )
-{
-   if (rmesa->dma.flush == radeonFlushElts &&
-       rmesa->store.cmd_used + nr*2 < RADEON_CMD_BUF_SZ) {
-
-      rmesa->store.cmd_used += nr*2;
-
-      return (void *)(rmesa->store.cmd_buf + rmesa->store.cmd_used);
-   }
-   else {
-      if (rmesa->dma.flush) {
-	 rmesa->dma.flush( rmesa );
-      }
-
-      radeonEnsureCmdBufSpace( rmesa, VERT_AOS_BUFSZ +
-			       rmesa->hw.max_state_size + ELTS_BUFSZ(nr) );
-
-      radeonEmitVertexAOS( rmesa,
-			   rmesa->swtcl.vertex_size,
-			   (rmesa->radeonScreen->gart_buffer_offset +
-			    rmesa->swtcl.indexed_verts.buf->buf->idx *
-			    RADEON_BUFFER_SIZE +
-			    rmesa->swtcl.indexed_verts.start));
-
-      return (void *) radeonAllocEltsOpenEnded( rmesa,
-						rmesa->swtcl.vertex_format,
-						rmesa->swtcl.hw_primitive,
-						nr );
-   }
-}
-
-#define ALLOC_ELTS(nr) radeon_alloc_elts(rmesa, nr)
-
-#ifdef MESA_BIG_ENDIAN
-/* We could do without (most of) this ugliness if dest was always 32 bit word aligned... */
-#define EMIT_ELT(offset, x) do {				\
-	int off = offset + ( ( (GLuint)dest & 0x2 ) >> 1 );	\
-	GLushort *des = (GLushort *)( (GLuint)dest & ~0x2 );	\
-	(des)[ off + 1 - 2 * ( off & 1 ) ] = (GLushort)(x); 	\
-	(void)rmesa; } while (0)
-#else
-#define EMIT_ELT(offset, x) do {				\
-	(dest)[offset] = (GLushort) (x);			\
-	(void)rmesa; } while (0)
-#endif
-#define EMIT_TWO_ELTS(offset, x, y)  *(GLuint *)(dest+offset) = ((y)<<16)|(x);
-#define INCR_ELTS( nr ) dest += nr
-#define ELTPTR dest
-#define RELEASE_ELT_VERTS() \
-  radeonReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, __FUNCTION__ )
-#define EMIT_INDEXED_VERTS( ctx, start, count ) \
-  radeon_emit_indexed_verts( ctx, start, count )
-
-
 #define ALLOC_VERTS( nr ) \
   radeonAllocDmaLowVerts( rmesa, nr, rmesa->swtcl.vertex_size * 4 )
 #define EMIT_VERTS( ctx, j, nr, buf ) \
-  radeon_emit_contiguous_verts(ctx, j, (j)+(nr), buf)
+  _tnl_emit_vertices_to_buffer(ctx, j, (j)+(nr), buf)
 
 #define TAG(x) radeon_dma_##x
 #include "tnl_dd/t_dd_dmatmp.h"
@@ -615,15 +416,6 @@ static GLboolean radeon_run_render( GLcontext *ctx,
       return GL_TRUE;		
 
    tnl->Driver.Render.Start( ctx );
-
-   if (VB->Elts) {
-      tab = TAG(render_tab_elts);
-      if (!rmesa->swtcl.indexed_verts.buf) {
-	 if (VB->Count > GET_SUBSEQUENT_VB_MAX_VERTS())
-	    return GL_TRUE;
-	 EMIT_INDEXED_VERTS(ctx, 0, VB->Count);
-      }
-   }
 
    for (i = 0 ; i < VB->PrimitiveCount ; i++)
    {
@@ -706,7 +498,7 @@ static GLboolean run_texrect_stage( GLcontext *ctx,
 	    in = (GLfloat *)((GLubyte *)in + instride);
 	 }
 
-	 VB->TexCoordPtr[i] = &store->texcoord[i];
+	 VB->AttribPtr[VERT_ATTRIB_TEX0+i] = VB->TexCoordPtr[i] = &store->texcoord[i];
       }
    }
 
@@ -789,12 +581,12 @@ static void radeonResetLineStipple( GLcontext *ctx );
 #define CTX_ARG radeonContextPtr rmesa
 #define CTX_ARG2 rmesa
 #define GET_VERTEX_DWORDS() rmesa->swtcl.vertex_size
-#define ALLOC_VERTS( n, size ) radeonAllocDmaLowVerts( rmesa, n, size * 4 )
+#define ALLOC_VERTS( n, size ) radeonAllocDmaLowVerts( rmesa, n, (size) * 4 )
 #undef LOCAL_VARS
 #define LOCAL_VARS						\
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);		\
    const char *radeonverts = (char *)rmesa->swtcl.verts;
-#define VERT(x) (radeonVertex *)(radeonverts + (x * vertsize * sizeof(int)))
+#define VERT(x) (radeonVertex *)(radeonverts + ((x) * (vertsize) * sizeof(int)))
 #define VERTEX radeonVertex 
 #undef TAG
 #define TAG(x) radeon_##x
@@ -851,7 +643,7 @@ static struct {
 #define VERT_Y(_v) _v->v.y
 #define VERT_Z(_v) _v->v.z
 #define AREA_IS_CCW( a ) (a < 0)
-#define GET_VERTEX(e) (rmesa->swtcl.verts + (e * rmesa->swtcl.vertex_size * sizeof(int)))
+#define GET_VERTEX(e) (rmesa->swtcl.verts + ((e) * rmesa->swtcl.vertex_size * sizeof(int)))
 
 #define VERT_SET_RGBA( v, c )  					\
 do {								\
@@ -864,20 +656,23 @@ do {								\
 
 #define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
 
-#define VERT_SET_SPEC( v0, c )					\
+#define VERT_SET_SPEC( v, c )					\
 do {								\
-   if (havespec) {						\
-      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.red, (c)[0]);	\
-      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.green, (c)[1]);	\
-      UNCLAMPED_FLOAT_TO_UBYTE(v0->v.specular.blue, (c)[2]);	\
+   if (specoffset) {						\
+      radeon_color_t *spec = (radeon_color_t *)&((v)->ui[specoffset]);	\
+      UNCLAMPED_FLOAT_TO_UBYTE(spec->red, (c)[0]);	\
+      UNCLAMPED_FLOAT_TO_UBYTE(spec->green, (c)[1]);	\
+      UNCLAMPED_FLOAT_TO_UBYTE(spec->blue, (c)[2]);	\
    }								\
 } while (0)
 #define VERT_COPY_SPEC( v0, v1 )			\
 do {							\
-   if (havespec) {					\
-      v0->v.specular.red   = v1->v.specular.red;	\
-      v0->v.specular.green = v1->v.specular.green;	\
-      v0->v.specular.blue  = v1->v.specular.blue; 	\
+   if (specoffset) {					\
+      radeon_color_t *spec0 = (radeon_color_t *)&((v0)->ui[specoffset]);	\
+      radeon_color_t *spec1 = (radeon_color_t *)&((v1)->ui[specoffset]);	\
+      spec0->red   = spec1->red;	\
+      spec0->green = spec1->green;	\
+      spec0->blue  = spec1->blue; 	\
    }							\
 } while (0)
 
@@ -886,8 +681,8 @@ do {							\
  */
 #define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
 #define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = color[idx]
-#define VERT_SAVE_SPEC( idx )    if (havespec) spec[idx] = v[idx]->ui[5]
-#define VERT_RESTORE_SPEC( idx ) if (havespec) v[idx]->ui[5] = spec[idx]
+#define VERT_SAVE_SPEC( idx )    if (specoffset) spec[idx] = v[idx]->ui[specoffset]
+#define VERT_RESTORE_SPEC( idx ) if (specoffset) v[idx]->ui[specoffset] = spec[idx]
 
 #undef LOCAL_VARS
 #undef TAG
@@ -896,9 +691,9 @@ do {							\
 #define LOCAL_VARS(n)							\
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);			\
    GLuint color[n], spec[n];						\
-   GLuint coloroffset = (rmesa->swtcl.vertex_size == 4 ? 3 : 4);	\
-   GLboolean havespec = (rmesa->swtcl.vertex_size > 4);			\
-   (void) color; (void) spec; (void) coloroffset; (void) havespec;
+   GLuint coloroffset = rmesa->swtcl.coloroffset;	\
+   GLuint specoffset = rmesa->swtcl.specoffset;			\
+   (void) color; (void) spec; (void) coloroffset; (void) specoffset;
 
 /***********************************************************************
  *                Helpers for rendering unfilled primitives            *
@@ -946,7 +741,6 @@ static void init_rast_tab( void )
 /*               Render unclipped begin/end objects                   */
 /**********************************************************************/
 
-#define VERT(x) (radeonVertex *)(radeonverts + (x * vertsize * sizeof(int)))
 #define RENDER_POINTS( start, count )		\
    for ( ; start < count ; start++)		\
       radeon_point( rmesa, VERT(start) )
@@ -1109,7 +903,11 @@ void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 tnl->Driver.Render.Start = radeonRenderStart;
 	 tnl->Driver.Render.PrimitiveNotify = radeonRenderPrimitive;
 	 tnl->Driver.Render.Finish = radeonRenderFinish;
-	 tnl->Driver.Render.BuildVertices = radeonBuildVertices;
+
+	 tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
+	 tnl->Driver.Render.CopyPV = _tnl_copy_pv;
+	 tnl->Driver.Render.Interp = _tnl_interp;
+
 	 tnl->Driver.Render.ResetLineStipple = radeonResetLineStipple;
 	 TCL_FALLBACK( ctx, RADEON_TCL_FALLBACK_RASTER, GL_FALSE );
 	 if (rmesa->TclFallback) {
@@ -1145,12 +943,10 @@ void radeonInitSwtcl( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-   GLuint size = TNL_CONTEXT(ctx)->vb.Size;
    static int firsttime = 1;
 
    if (firsttime) {
       init_rast_tab();
-      init_setup_tab();
       firsttime = 0;
    }
 
@@ -1158,9 +954,14 @@ void radeonInitSwtcl( GLcontext *ctx )
    tnl->Driver.Render.Finish = radeonRenderFinish;
    tnl->Driver.Render.PrimitiveNotify = radeonRenderPrimitive;
    tnl->Driver.Render.ResetLineStipple = radeonResetLineStipple;
-   tnl->Driver.Render.BuildVertices = radeonBuildVertices;
+   tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
+   tnl->Driver.Render.CopyPV = _tnl_copy_pv;
+   tnl->Driver.Render.Interp = _tnl_interp;
 
-   rmesa->swtcl.verts = (GLubyte *)ALIGN_MALLOC( size * 16 * 4, 32 );
+   _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
+		       RADEON_MAX_TNL_VERTEX_SIZE);
+   
+   rmesa->swtcl.verts = (GLubyte *)tnl->clipspace.vertex_buf;
    rmesa->swtcl.RenderIndex = ~0;
    rmesa->swtcl.render_primitive = GL_TRIANGLES;
    rmesa->swtcl.hw_primitive = 0;
@@ -1174,10 +975,4 @@ void radeonDestroySwtcl( GLcontext *ctx )
    if (rmesa->swtcl.indexed_verts.buf) 
       radeonReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, 
 			      __FUNCTION__ );
-
-   if (rmesa->swtcl.verts) {
-      ALIGN_FREE(rmesa->swtcl.verts);
-      rmesa->swtcl.verts = NULL;
-   }
-
 }
