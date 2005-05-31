@@ -647,8 +647,6 @@ static const char * const fallbackStrings[] = {
    "glDrawBuffer(GL_FRONT_AND_BACK)",
    "glEnable(GL_STENCIL) without hw stencil buffer",
    "glRenderMode(selection or feedback)",
-   "glBlendEquation",
-   "glBlendFunc(mode != ADD)",
    "R200_NO_RAST",
    "Mixing GL_CLAMP_TO_BORDER and GL_CLAMP (or GL_MIRROR_CLAMP_ATI)"
 };

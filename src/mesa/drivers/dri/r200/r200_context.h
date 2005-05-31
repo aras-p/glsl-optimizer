@@ -59,14 +59,12 @@ typedef struct r200_context *r200ContextPtr;
 
 /* Flags for software fallback cases */
 /* See correponding strings in r200_swtcl.c */
-#define R200_FALLBACK_TEXTURE           0x1
-#define R200_FALLBACK_DRAW_BUFFER       0x2
-#define R200_FALLBACK_STENCIL           0x4
-#define R200_FALLBACK_RENDER_MODE       0x8
-#define R200_FALLBACK_BLEND_EQ          0x10
-#define R200_FALLBACK_BLEND_FUNC        0x20
-#define R200_FALLBACK_DISABLE           0x40
-#define R200_FALLBACK_BORDER_MODE       0x80
+#define R200_FALLBACK_TEXTURE           0x01
+#define R200_FALLBACK_DRAW_BUFFER       0x02
+#define R200_FALLBACK_STENCIL           0x04
+#define R200_FALLBACK_RENDER_MODE       0x08
+#define R200_FALLBACK_DISABLE           0x10
+#define R200_FALLBACK_BORDER_MODE       0x20
 
 /* The blit width for texture uploads
  */

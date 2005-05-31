@@ -673,8 +673,8 @@ static const char * const fallbackStrings[] = {
    "glRenderMode(selection or feedback)",
    "glLogicOp (mode != GL_COPY)",
    "GL_SEPARATE_SPECULAR_COLOR",
-   "glBlendEquation",
-   "glBlendFunc(mode != ADD)",
+   "glBlendEquation(mode != ADD)",
+   "glBlendFunc",
    "Projective texture",
    "Rasterization disable",
 };
