@@ -349,7 +349,6 @@ r128_fallback_tri( r128ContextPtr rmesa,
    _swsetup_Translate( ctx, v0, &v[0] );
    _swsetup_Translate( ctx, v1, &v[1] );
    _swsetup_Translate( ctx, v2, &v[2] );
-   /* XXX: SpanRenderStart */
    _swrast_Triangle( ctx, &v[0], &v[1], &v[2] );
 }
 

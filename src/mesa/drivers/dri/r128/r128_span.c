@@ -93,11 +93,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define Y_FLIP( _y )		(height - _y - 1)
 
 
-#define HW_LOCK()							\
-   r128ContextPtr rmesa = R128_CONTEXT(ctx);				\
-   FLUSH_BATCH( rmesa );						\
-   LOCK_HARDWARE( rmesa );						\
-   r128WaitForIdleLocked( rmesa );
+#define HW_LOCK()
 
 #define HW_CLIPLOOP()							\
    do {									\
@@ -114,8 +110,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
       }									\
    } while (0)
 
-#define HW_UNLOCK()							\
-   UNLOCK_HARDWARE( rmesa )
+#define HW_UNLOCK()
 
 
 
@@ -153,8 +148,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* 16-bit depth buffer functions
  */
-#define READ_DEPTH(d, _x, _y)                                           \
-    d = *(GLushort *)(buf + (_x)*2 + (_y)*pitch)
 
 #define WRITE_DEPTH_SPAN()						\
    r128WriteDepthSpanLocked( rmesa, n,					\
@@ -168,8 +161,6 @@ do {									\
    GLint oy[MAX_WIDTH];							\
    for ( i = 0 ; i < n ; i++ ) {					\
       ox[i] = x[i] + dPriv->x;						\
-   }									\
-   for ( i = 0 ; i < n ; i++ ) {					\
       oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
    }									\
    r128WriteDepthPixelsLocked( rmesa, n, ox, oy, depth, mask );		\
@@ -198,8 +189,8 @@ do {									\
    GLint i, remaining = n;						\
 									\
    while ( remaining > 0 ) {						\
-      GLint ox[MAX_WIDTH];						\
-      GLint oy[MAX_WIDTH];						\
+      GLint ox[128];							\
+      GLint oy[128];							\
       GLint count;							\
 									\
       if ( remaining <= 128 ) {						\
@@ -209,8 +200,6 @@ do {									\
       }									\
       for ( i = 0 ; i < count ; i++ ) {					\
 	 ox[i] = x[i] + dPriv->x;					\
-      }									\
-      for ( i = 0 ; i < count ; i++ ) {					\
 	 oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
       }									\
 									\
@@ -245,8 +234,6 @@ do {									\
    GLint oy[MAX_WIDTH];							\
    for ( i = 0 ; i < n ; i++ ) {					\
       ox[i] = x[i] + dPriv->x;						\
-   }									\
-   for ( i = 0 ; i < n ; i++ ) {					\
       oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
    }									\
    r128WriteDepthPixelsLocked( rmesa, n, ox, oy, depth, mask );		\
@@ -275,8 +262,8 @@ do {									\
    GLint i, remaining = n;						\
 									\
    while ( remaining > 0 ) {						\
-      GLint ox[MAX_WIDTH];						\
-      GLint oy[MAX_WIDTH];						\
+      GLint ox[128];							\
+      GLint oy[128];							\
       GLint count;							\
 									\
       if ( remaining <= 128 ) {						\
@@ -286,8 +273,6 @@ do {									\
       }									\
       for ( i = 0 ; i < count ; i++ ) {					\
 	 ox[i] = x[i] + dPriv->x;					\
-      }									\
-      for ( i = 0 ; i < count ; i++ ) {					\
 	 oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
       }									\
 									\
@@ -315,13 +300,6 @@ do {									\
 
 /* FIXME: Add support for hardware stencil buffers.
  */
-
-
-/* 32 bit depthbuffer functions */
-#define WRITE_DEPTH(_x, _y, d)                                                \
-    *(GLuint *)(buf + _x*4 + _y*pitch) = d
-
-
 
 /*
  * This function is called to specify which buffer to read and write
@@ -358,6 +336,20 @@ static void r128DDSetBuffer( GLcontext *ctx,
    }
 }
 
+void r128SpanRenderStart( GLcontext *ctx )
+{
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   FLUSH_BATCH(rmesa);
+   LOCK_HARDWARE(rmesa);
+   r128WaitForIdleLocked( rmesa );
+}
+
+void r128SpanRenderFinish( GLcontext *ctx )
+{
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   _swrast_flush( ctx );
+   UNLOCK_HARDWARE( rmesa );
+}
 
 void r128DDInitSpanFuncs( GLcontext *ctx )
 {
@@ -413,6 +405,8 @@ void r128DDInitSpanFuncs( GLcontext *ctx )
    swdd->WriteMonoCIPixels	= NULL;
    swdd->ReadCI32Span		= NULL;
    swdd->ReadCI32Pixels		= NULL;
+   swdd->SpanRenderStart	= r128SpanRenderStart;
+   swdd->SpanRenderFinish	= r128SpanRenderFinish;
 }
 
 
