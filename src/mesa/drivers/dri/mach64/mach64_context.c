@@ -72,6 +72,7 @@ static const struct dri_debug_control debug_control[] =
     { "prims",  DEBUG_VERBOSE_PRIMS },
     { "count",  DEBUG_VERBOSE_COUNT },
     { "nowait", DEBUG_NOWAIT },
+    { "fall",   DEBUG_VERBOSE_FALLBACK },
     { NULL,    0 }
 };
 

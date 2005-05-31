@@ -1838,6 +1838,30 @@ static void mach64RenderFinish( GLcontext *ctx )
 /*           Transition to/from hardware rasterization.               */
 /**********************************************************************/
 
+static const char * const fallbackStrings[] = {
+   "Texture mode",
+   "glDrawBuffer(GL_FRONT_AND_BACK)",
+   "glReadBuffer",
+   "glEnable(GL_STENCIL) without hw stencil buffer",
+   "glRenderMode(selection or feedback)",
+   "glLogicOp (mode != GL_COPY)",
+   "GL_SEPARATE_SPECULAR_COLOR",
+   "glBlendEquation (mode != ADD)",
+   "glBlendFunc",
+   "Rasterization disable",
+};
+
+
+static const char *getFallbackString(GLuint bit)
+{
+   int i = 0;
+   while (bit > 1) {
+      i++;
+      bit >>= 1;
+   }
+   return fallbackStrings[i];
+}
+
 void mach64Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -1845,18 +1869,18 @@ void mach64Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
    GLuint oldfallback = mmesa->Fallback;
 
    if (mode) {
-      if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
-	 fprintf(stderr,"Set Fallback: %d\n", bit);
       mmesa->Fallback |= bit;
       if (oldfallback == 0) {
 	 FLUSH_BATCH( mmesa );
 	 _swsetup_Wakeup( ctx );
 	 mmesa->RenderIndex = ~0;
+	 if (MACH64_DEBUG & DEBUG_VERBOSE_FALLBACK) {
+	    fprintf(stderr, "Mach64 begin rasterization fallback: 0x%x %s\n",
+		    bit, getFallbackString(bit));
+	 }
       }
    }
    else {
-      if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
-	 fprintf(stderr,"Clear Fallback: %d\n", bit);
       mmesa->Fallback &= ~bit;
       if (oldfallback == bit) {
 	 _swrast_flush( ctx );
@@ -1866,6 +1890,10 @@ void mach64Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 tnl->Driver.Render.BuildVertices = mach64BuildVertices;
 	 mmesa->NewGLState |= (_MACH64_NEW_RENDER_STATE|
 			       _MACH64_NEW_VERTEX_STATE);
+	 if (MACH64_DEBUG & DEBUG_VERBOSE_FALLBACK) {
+	    fprintf(stderr, "Mach64 end rasterization fallback: 0x%x %s\n",
+		    bit, getFallbackString(bit));
+	 }
       }
    }
 }
