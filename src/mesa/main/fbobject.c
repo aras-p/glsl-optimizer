@@ -339,6 +339,9 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
  * Status field with the results.
  * Also update the framebuffer's Width and Height fields if the
  * framebuffer is complete.
+ *
+ * XXX Need to check for FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT_EXT!
+ *
  */
 void
 _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
@@ -722,6 +725,59 @@ _mesa_GetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params)
    case GL_RENDERBUFFER_INTERNAL_FORMAT_EXT:
       *params = ctx->CurrentRenderbuffer->InternalFormat;
       return;
+   case GL_RENDERBUFFER_RED_SIZE_EXT:
+      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_RGB ||
+          ctx->CurrentRenderbuffer->_BaseFormat == GL_RGBA) {
+         *params = ctx->CurrentRenderbuffer->ComponentSizes[0];
+      }
+      else {
+         *params = 0;
+      }
+      break;
+   case GL_RENDERBUFFER_GREEN_SIZE_EXT:
+      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_RGB ||
+          ctx->CurrentRenderbuffer->_BaseFormat == GL_RGBA) {
+         *params = ctx->CurrentRenderbuffer->ComponentSizes[1];
+      }
+      else {
+         *params = 0;
+      }
+      break;
+   case GL_RENDERBUFFER_BLUE_SIZE_EXT:
+      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_RGB ||
+          ctx->CurrentRenderbuffer->_BaseFormat == GL_RGBA) {
+         *params = ctx->CurrentRenderbuffer->ComponentSizes[2];
+      }
+      else {
+         *params = 0;
+      }
+      break;
+   case GL_RENDERBUFFER_ALPHA_SIZE_EXT:
+      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_RGB ||
+          ctx->CurrentRenderbuffer->_BaseFormat == GL_RGBA) {
+         *params = ctx->CurrentRenderbuffer->ComponentSizes[3];
+      }
+      else {
+         *params = 0;
+      }
+      break;
+   case GL_RENDERBUFFER_DEPTH_SIZE_EXT:
+      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_DEPTH_COMPONENT) {
+         *params = ctx->CurrentRenderbuffer->ComponentSizes[0];
+      }
+      else {
+         *params = 0;
+      }
+      break;
+   case GL_RENDERBUFFER_STENCIL_SIZE_EXT:
+      if (ctx->CurrentRenderbuffer->_BaseFormat == GL_STENCIL_INDEX) {
+         *params = ctx->CurrentRenderbuffer->ComponentSizes[0];
+      }
+      else {
+         *params = 0;
+      }
+      break;
+
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glGetRenderbufferParameterivEXT(target)");
@@ -1234,6 +1290,7 @@ _mesa_GenerateMipmapEXT(GLenum target)
    case GL_TEXTURE_2D:
    case GL_TEXTURE_3D:
    case GL_TEXTURE_CUBE_MAP:
+      /* OK, legal value */
       break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glGenerateMipmapEXT(target)");
