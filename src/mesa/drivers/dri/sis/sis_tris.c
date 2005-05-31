@@ -98,7 +98,6 @@ static void sisRenderPrimitive( GLcontext *ctx, GLenum prim );
 #define HAVE_LINES 1
 #define HAVE_POINTS 1
 #define CTX_ARG sisContextPtr smesa
-#define CTX_ARG2 smesa
 #define GET_VERTEX_DWORDS() smesa->vertex_size
 #define ALLOC_VERTS( n, size ) sisAllocDmaLow( smesa, n * size * sizeof(int) )
 #undef LOCAL_VARS

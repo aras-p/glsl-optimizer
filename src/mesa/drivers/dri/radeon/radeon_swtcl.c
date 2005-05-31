@@ -579,7 +579,6 @@ static void radeonResetLineStipple( GLcontext *ctx );
 #undef LOCAL_VARS
 #undef ALLOC_VERTS
 #define CTX_ARG radeonContextPtr rmesa
-#define CTX_ARG2 rmesa
 #define GET_VERTEX_DWORDS() rmesa->swtcl.vertex_size
 #define ALLOC_VERTS( n, size ) radeonAllocDmaLowVerts( rmesa, n, (size) * 4 )
 #undef LOCAL_VARS

@@ -369,7 +369,6 @@ static void r200ResetLineStipple( GLcontext *ctx );
 #undef LOCAL_VARS
 #undef ALLOC_VERTS
 #define CTX_ARG r200ContextPtr rmesa
-#define CTX_ARG2 rmesa
 #define GET_VERTEX_DWORDS() rmesa->swtcl.vertex_size
 #define ALLOC_VERTS( n, size ) r200AllocDmaLowVerts( rmesa, n, size * 4 )
 #define LOCAL_VARS						\
