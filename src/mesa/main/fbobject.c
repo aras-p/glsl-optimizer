@@ -339,9 +339,6 @@ test_attachment_completeness(const GLcontext *ctx, GLenum format,
  * Status field with the results.
  * Also update the framebuffer's Width and Height fields if the
  * framebuffer is complete.
- *
- * XXX Need to check for FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT_EXT!
- *
  */
 void
 _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
@@ -350,6 +347,8 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
    GLenum intFormat = GL_NONE;
    GLuint w = 0, h = 0;
    GLint i;
+
+   assert(fb->Name != 0);
 
    numImages = 0;
    fb->Width = 0;
@@ -445,6 +444,22 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          return;
       }
    }
+
+   /* Check if any renderbuffer is attached more than once */
+   for (i = 0; i < BUFFER_COUNT - 1; i++) {
+      struct gl_renderbuffer *rb_i = fb->Attachment[i].Renderbuffer;
+      if (rb_i) {
+         GLint j;
+         for (j = i + 1; j < BUFFER_COUNT; j++) {
+            struct gl_renderbuffer *rb_j = fb->Attachment[j].Renderbuffer;
+            if (rb_i == rb_j) {
+               fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT_EXT;
+               return;
+            }
+         }
+      }
+   }
+
 
    if (numImages == 0) {
       fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT;
