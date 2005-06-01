@@ -1,6 +1,6 @@
 # Makefile for core library for VMS
 # contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
-# Last revision : 15 April 2005
+# Last revision : 1 June 2005
 
 .first
 	define gl [---.include.gl]
@@ -14,7 +14,7 @@
 
 VPATH = RCS
 
-INCDIR = [---.include],[-.main],[-.glapi],[.slang]
+INCDIR = [---.include],[.grammar],[-.main],[-.glapi],[.slang]
 LIBDIR = [---.lib]
 CFLAGS = /include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)
 
@@ -24,7 +24,6 @@ SOURCES = \
 	arbprogparse.c \
 	arbprogram.c \
 	arbvertparse.c \
-	grammar_mesa.c \
 	nvfragparse.c \
 	nvprogram.c \
 	nvvertexec.c \
@@ -39,7 +38,6 @@ OBJECTS = \
 	arbprogparse.obj,\
 	arbprogram.obj,\
 	arbvertparse.obj,\
-	grammar_mesa.obj,\
 	nvfragparse.obj,\
 	nvprogram.obj,\
 	nvvertexec.obj,\
@@ -58,6 +56,8 @@ all :
 	$(MMS)$(MMSQUALIFIERS) $(LIBDIR)$(GL_LIB)
 	set def [.slang]
 	$(MMS)$(MMSQUALIFIERS)
+	set def [-.grammar]
+	$(MMS)$(MMSQUALIFIERS)
 	set def [-]
 
 # Make the library
@@ -73,7 +73,6 @@ arbfragparse.obj : arbfragparse.c
 arbprogparse.obj : arbprogparse.c
 arbprogram.obj : arbprogram.c
 arbvertparse.obj : arbvertparse.c
-grammar_mesa.obj : grammar_mesa.c
 nvfragparse.obj : nvfragparse.c
 nvprogram.obj : nvprogram.c
 nvvertexec.obj : nvvertexec.c

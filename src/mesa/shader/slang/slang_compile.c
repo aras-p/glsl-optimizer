@@ -2302,7 +2302,7 @@ int _slang_compile (const char *source, slang_translation_unit *unit, slang_unit
 	{
 		/*if (!compile_binary (slang_core_gc_bin, builtin_units,
 			slang_unit_fragment_builtin, log, NULL))*/
-		if (!compile_with_grammar (id, slang_core_gc, builtin_units, slang_unit_fragment_builtin,
+		if (!compile_with_grammar (id, (const char*) slang_core_gc, builtin_units, slang_unit_fragment_builtin,
 			log, NULL))
 		{
 			grammar_destroy (id);
