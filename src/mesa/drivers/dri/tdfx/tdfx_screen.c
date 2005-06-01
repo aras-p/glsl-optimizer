@@ -165,7 +165,7 @@ tdfxCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA8, screen->cpp,
+            = driNewRenderbuffer(GL_RGBA, screen->cpp,
                                  screen->backOffset, screen->width);
          tdfxSetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
