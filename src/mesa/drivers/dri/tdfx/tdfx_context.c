@@ -62,9 +62,6 @@
 
 #include "utils.h"
 
-PUBLIC const char __driConfigOptions[] = { 0 };
-const GLuint __driNConfigOptions = 0;
-
 /**
  * Common extension strings exported by all cards
  */
@@ -155,7 +152,6 @@ static const struct tnl_pipeline_stage *tdfx_pipeline[] = {
    0,
 };
 
-
 GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
 			     __DRIcontextPrivate *driContextPriv,
                              void *sharedContextPrivate )
@@ -220,6 +216,10 @@ GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
    fxMesa->new_gl_state = ~0;
    fxMesa->new_state = ~0;
    fxMesa->dirty = ~0;
+
+   /* Parse configuration files */
+   driParseConfigFiles (&fxMesa->optionCache, &fxScreen->optionCache,
+                        fxMesa->driScreen->myNum, "tdfx");
 
    /* NOTE: This must be here before any Glide calls! */
    if (!tdfxInitGlide( fxMesa )) {
@@ -319,6 +319,11 @@ GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
    tdfxDDInitTriFuncs( ctx );
    tdfxInitVB( ctx );
    tdfxInitState( fxMesa );
+
+   if (driQueryOptionb(&fxMesa->optionCache, "no_rast")) {
+      fprintf(stderr, "disabling 3D acceleration\n");
+      FALLBACK(fxMesa, TDFX_FALLBACK_DISABLE, 1);
+   }
 
    return GL_TRUE;
 }

@@ -64,6 +64,9 @@ typedef struct {
 
    __DRIscreenPrivate *driScrnPriv;
    unsigned int sarea_priv_offset;
+
+   /* Configuration cache with default values for all contexts */
+   driOptionCache optionCache;
 } tdfxScreenPrivate;
 
 

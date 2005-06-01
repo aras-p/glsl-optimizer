@@ -54,6 +54,7 @@
 #include "drm.h"
 #include "drm_sarea.h"
 #include "tdfx_glide.h"
+#include "xmlconfig.h"
 
 #include "clip.h"
 #include "context.h"
@@ -141,6 +142,7 @@
 #define TDFX_FALLBACK_COLORMASK		0x0100
 #define TDFX_FALLBACK_BLEND		0x0200
 #define TDFX_FALLBACK_LINE_STIPPLE	0x0400
+#define TDFX_FALLBACK_DISABLE		0x0800
 
 /* Different Glide vertex layouts
  */
@@ -918,6 +920,10 @@ struct tdfx_context {
    tdfxStats stats;
 
    GLboolean debugFallbacks;
+
+   /* Configuration cache
+    */
+   driOptionCache optionCache;
 };
 
 #define TDFX_CONTEXT(ctx)	((tdfxContextPtr)((ctx)->DriverCtx))

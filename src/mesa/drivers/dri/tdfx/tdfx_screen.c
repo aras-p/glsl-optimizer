@@ -40,9 +40,12 @@
 #include "tdfx_vb.h"
 #include "tdfx_span.h"
 #include "tdfx_tris.h"
-#include "utils.h"
+
 #include "framebuffer.h"
 #include "renderbuffer.h"
+#include "xmlpool.h"
+
+#include "utils.h"
 
 #ifdef DEBUG_LOCKING
 char *prevLockFile = 0;
@@ -61,7 +64,14 @@ int TDFX_DEBUG = (0
    );
 #endif
 
+PUBLIC const char __driConfigOptions[] =
+DRI_CONF_BEGIN
+    DRI_CONF_SECTION_DEBUG
+        DRI_CONF_NO_RAST(false)
+    DRI_CONF_SECTION_END
+DRI_CONF_END;
 
+static const GLuint __driNConfigOptions = 1;
 
 static GLboolean
 tdfxCreateScreen( __DRIscreenPrivate *sPriv )
@@ -73,6 +83,10 @@ tdfxCreateScreen( __DRIscreenPrivate *sPriv )
    fxScreen = (tdfxScreenPrivate *) CALLOC( sizeof(tdfxScreenPrivate) );
    if ( !fxScreen )
       return GL_FALSE;
+
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo (&fxScreen->optionCache,
+		       __driConfigOptions, __driNConfigOptions);
 
    fxScreen->driScrnPriv = sPriv;
    sPriv->private = (void *) fxScreen;
@@ -108,12 +122,16 @@ tdfxDestroyScreen( __DRIscreenPrivate *sPriv )
 {
    tdfxScreenPrivate *fxScreen = (tdfxScreenPrivate *) sPriv->private;
 
-   if ( fxScreen ) {
-      drmUnmap( fxScreen->regs.map, fxScreen->regs.size );
+   if (!fxScreen)
+      return;
 
-      FREE( fxScreen );
-      sPriv->private = NULL;
-   }
+   drmUnmap( fxScreen->regs.map, fxScreen->regs.size );
+
+   /* free all option information */
+   driDestroyOptionInfo (&fxScreen->optionCache);
+
+   FREE( fxScreen );
+   sPriv->private = NULL;
 }
 
 

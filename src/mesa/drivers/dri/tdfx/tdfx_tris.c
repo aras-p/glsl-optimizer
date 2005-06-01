@@ -1214,6 +1214,7 @@ static char *fallbackStrings[] = {
    "glColorMask",
    "blend mode",
    "line stipple"
+   "Rasterization disable"
 };
 
 
