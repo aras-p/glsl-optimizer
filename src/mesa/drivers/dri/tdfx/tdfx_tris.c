@@ -1213,7 +1213,7 @@ static char *fallbackStrings[] = {
    "Texture border",
    "glColorMask",
    "blend mode",
-   "line stipple"
+   "line stipple",
    "Rasterization disable"
 };
 
@@ -1242,7 +1242,7 @@ void tdfxFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 FLUSH_BATCH(fxMesa);
 	 _swsetup_Wakeup( ctx );
 	 fxMesa->RenderIndex = ~0;
-         if (fxMesa->debugFallbacks) {
+         if (TDFX_DEBUG & DEBUG_VERBOSE_FALL) {
             fprintf(stderr, "Tdfx begin software fallback: 0x%x %s\n",
                     bit, getFallbackString(bit));
          }
@@ -1259,7 +1259,7 @@ void tdfxFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 tnl->Driver.Render.BuildVertices = tdfxBuildVertices;
 	 fxMesa->new_gl_state |= (_TDFX_NEW_RENDERSTATE|
 				  _TDFX_NEW_RASTERSETUP);
-         if (fxMesa->debugFallbacks) {
+         if (TDFX_DEBUG & DEBUG_VERBOSE_FALL) {
             fprintf(stderr, "Tdfx end software fallback: 0x%x %s\n",
                     bit, getFallbackString(bit));
          }

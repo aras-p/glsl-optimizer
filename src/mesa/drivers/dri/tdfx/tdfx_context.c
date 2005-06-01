@@ -152,6 +152,15 @@ static const struct tnl_pipeline_stage *tdfx_pipeline[] = {
    0,
 };
 
+static const struct dri_debug_control debug_control[] =
+{
+    { "dri",   DEBUG_VERBOSE_DRI },
+    { "sync",  DEBUG_ALWAYS_SYNC },
+    { "api",   DEBUG_VERBOSE_API },
+    { "fall",  DEBUG_VERBOSE_FALL },
+    { NULL,    0 }
+};
+
 GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
 			     __DRIcontextPrivate *driContextPriv,
                              void *sharedContextPrivate )
@@ -319,6 +328,10 @@ GLboolean tdfxCreateContext( const __GLcontextModes *mesaVis,
    tdfxDDInitTriFuncs( ctx );
    tdfxInitVB( ctx );
    tdfxInitState( fxMesa );
+
+#if DO_DEBUG
+   TDFX_DEBUG = driParseDebugString( getenv( "TDFX_DEBUG" ), debug_control );
+#endif
 
    if (driQueryOptionb(&fxMesa->optionCache, "no_rast")) {
       fprintf(stderr, "disabling 3D acceleration\n");
@@ -533,14 +546,6 @@ tdfxInitContext( __DRIdrawablePrivate *driDrawPriv, tdfxContextPtr fxMesa )
    }
 
    UNLOCK_HARDWARE( fxMesa );
-
-   {
-      const char *debug = getenv("LIBGL_DEBUG");
-      if (debug && strstr(debug, "fallbacks")) {
-         fxMesa->debugFallbacks = GL_TRUE;
-      }
-   }
-
 
    fxMesa->numClipRects = 0;
    fxMesa->pClipRects = NULL;

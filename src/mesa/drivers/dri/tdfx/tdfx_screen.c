@@ -53,15 +53,7 @@ int prevLockLine = 0;
 #endif
 
 #ifndef TDFX_DEBUG
-int TDFX_DEBUG = (0
-/*  		  | DEBUG_ALWAYS_SYNC */
-/*		  | DEBUG_VERBOSE_API */
-/*		  | DEBUG_VERBOSE_MSG */
-/*		  | DEBUG_VERBOSE_LRU */
-/*  		  | DEBUG_VERBOSE_DRI */
-/*  		  | DEBUG_VERBOSE_IOCTL */
-/*   		  | DEBUG_VERBOSE_2D */
-   );
+int TDFX_DEBUG = 0;
 #endif
 
 PUBLIC const char __driConfigOptions[] =
