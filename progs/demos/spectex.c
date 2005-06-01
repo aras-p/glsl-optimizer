@@ -33,6 +33,7 @@ static GLint Mode = 4;
 static GLfloat Black[4] = {0.0, 0.0, 0.0, 1.0};
 static GLfloat White[4] = {1.0, 1.0, 1.0, 1.0};
 
+static GLboolean smooth = 1;
 
 static void
 Idle(void)
@@ -143,9 +144,16 @@ static void Key( unsigned char key, int x, int y )
    (void) x;
    (void) y;
    switch (key) {
-      case 27:
-         exit(0);
-         break;
+   case 27:
+      exit(0);
+      break;
+   case 's':
+      smooth = !smooth;
+      if (smooth)
+         glShadeModel(GL_SMOOTH);
+      else
+         glShadeModel(GL_FLAT);
+      break;
    }
    glutPostRedisplay();
 }
@@ -174,6 +182,8 @@ static void Init( void )
    glEnable(GL_LIGHT0);
    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, Black);
+
+   glShadeModel(GL_SMOOTH);
 
    glMaterialfv(GL_FRONT, GL_DIFFUSE, White);
    glMaterialfv(GL_FRONT, GL_SPECULAR, White);
