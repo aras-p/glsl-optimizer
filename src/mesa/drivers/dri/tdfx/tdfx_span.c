@@ -1372,74 +1372,8 @@ static void tdfxDDSetBuffer( GLcontext *ctx,
 
 void tdfxDDInitSpanFuncs( GLcontext *ctx )
 {
-   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
-
    swdd->SetBuffer = tdfxDDSetBuffer;
-
-#if 0
-   if ( VISUAL_EQUALS_RGBA(ctx->Visual, 5, 6, 5, 0) )
-   {
-      /* 16bpp mode */
-      swdd->WriteRGBASpan	= tdfxWriteRGBASpan_RGB565;
-      swdd->WriteRGBSpan	= tdfxWriteRGBSpan_RGB565;
-      swdd->WriteMonoRGBASpan	= tdfxWriteMonoRGBASpan_RGB565;
-      swdd->WriteRGBAPixels	= tdfxWriteRGBAPixels_RGB565;
-      swdd->WriteMonoRGBAPixels	= tdfxWriteMonoRGBAPixels_RGB565;
-      swdd->ReadRGBASpan	= tdfxReadRGBASpan_RGB565;
-      swdd->ReadRGBAPixels	= tdfxReadRGBAPixels_RGB565;
-   }
-   else if ( VISUAL_EQUALS_RGBA(ctx->Visual, 8, 8, 8, 0) )
-   {
-      /* 24bpp mode */
-      swdd->WriteRGBASpan	= tdfxWriteRGBASpan_RGB888;
-      swdd->WriteRGBSpan	= tdfxWriteRGBSpan_RGB888;
-      swdd->WriteMonoRGBASpan	= tdfxWriteMonoRGBASpan_RGB888;
-      swdd->WriteRGBAPixels	= tdfxWriteRGBAPixels_RGB888;
-      swdd->WriteMonoRGBAPixels	= tdfxWriteMonoRGBAPixels_RGB888;
-      swdd->ReadRGBASpan	= tdfxReadRGBASpan_RGB888;
-      swdd->ReadRGBAPixels	= tdfxReadRGBAPixels_RGB888;
-   }
-   else if ( VISUAL_EQUALS_RGBA(ctx->Visual, 8, 8, 8, 8) )
-   {
-      /* 32bpp mode */
-      swdd->WriteRGBASpan	= tdfxWriteRGBASpan_ARGB8888;
-      swdd->WriteRGBSpan	= tdfxWriteRGBSpan_ARGB8888;
-      swdd->WriteMonoRGBASpan	= tdfxWriteMonoRGBASpan_ARGB8888;
-      swdd->WriteRGBAPixels	= tdfxWriteRGBAPixels_ARGB8888;
-      swdd->WriteMonoRGBAPixels	= tdfxWriteMonoRGBAPixels_ARGB8888;
-      swdd->ReadRGBAPixels      = tdfxReadRGBAPixels_ARGB8888;
-      swdd->ReadRGBASpan	= tdfxReadRGBASpan_ARGB8888;
-   }
-   else
-   {
-      abort();
-   }
-#endif
-
-   if ( fxMesa->haveHwStencil ) {
-#if 0
-      swdd->WriteStencilSpan	= write_stencil_span;
-      swdd->ReadStencilSpan	= read_stencil_span;
-      swdd->WriteStencilPixels	= write_stencil_pixels;
-      swdd->ReadStencilPixels	= read_stencil_pixels;
-#endif
-   }
-
-#if 0
-   swdd->WriteDepthSpan		= tdfxDDWriteDepthSpan;
-   swdd->WriteDepthPixels	= tdfxDDWriteDepthPixels;
-   swdd->ReadDepthSpan		= tdfxDDReadDepthSpan;
-   swdd->ReadDepthPixels	= tdfxDDReadDepthPixels;
-#endif
-   swdd->WriteCI8Span		= NULL;
-   swdd->WriteCI32Span		= NULL;
-   swdd->WriteMonoCISpan	= NULL;
-   swdd->WriteCI32Pixels	= NULL;
-   swdd->WriteMonoCIPixels	= NULL;
-   swdd->ReadCI32Span		= NULL;
-   swdd->ReadCI32Pixels		= NULL;
-
    swdd->SpanRenderStart          = tdfxSpanRenderStart;
    swdd->SpanRenderFinish         = tdfxSpanRenderFinish; 
 }

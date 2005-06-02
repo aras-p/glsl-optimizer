@@ -239,6 +239,7 @@ void mach64DDInitSpanFuncs( GLcontext *ctx )
    swdd->ReadDepthPixels	= mach64ReadDepthPixels_16;
    swdd->WriteDepthPixels	= mach64WriteDepthPixels_16;
 #endif
+#if 0
    /* No hardware stencil buffer */
    swdd->ReadStencilSpan	= NULL;
    swdd->WriteStencilSpan	= NULL;
@@ -252,6 +253,7 @@ void mach64DDInitSpanFuncs( GLcontext *ctx )
    swdd->WriteMonoCIPixels	= NULL;
    swdd->ReadCI32Span		= NULL;
    swdd->ReadCI32Pixels		= NULL;
+#endif
    swdd->SpanRenderStart	= mach64SpanRenderStart;
    swdd->SpanRenderFinish	= mach64SpanRenderFinish;
 }

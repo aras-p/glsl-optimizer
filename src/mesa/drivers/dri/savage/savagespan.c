@@ -305,65 +305,6 @@ void savageDDInitSpanFuncs( GLcontext *ctx )
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
 
    swdd->SetBuffer = savageDDSetBuffer;
-   
-#if 0
-   switch (imesa->savageScreen->cpp) 
-   {
-   case 2: savageInitPointers_565( swdd ); break;
-   case 4: savageInitPointers_8888( swdd );
-   }
-#endif
-
-   switch (imesa->savageScreen->zpp)
-   {
-   case 2:
-#if 0
-       if (imesa->float_depth) {
-	   swdd->ReadDepthSpan = savageReadDepthSpan_16f;
-	   swdd->WriteDepthSpan = savageWriteDepthSpan_16f;
-	   swdd->WriteMonoDepthSpan = savageWriteMonoDepthSpan_16f;
-	   swdd->ReadDepthPixels = savageReadDepthPixels_16f;
-	   swdd->WriteDepthPixels = savageWriteDepthPixels_16f;
-       } else {
-	   swdd->ReadDepthSpan = savageReadDepthSpan_16;
-	   swdd->WriteDepthSpan = savageWriteDepthSpan_16;
-	   swdd->WriteMonoDepthSpan = savageWriteMonoDepthSpan_16;
-	   swdd->ReadDepthPixels = savageReadDepthPixels_16;
-	   swdd->WriteDepthPixels = savageWriteDepthPixels_16;
-       }
-#endif
-       break;
-   case 4:
-#if 0
-       if (imesa->float_depth) {
-	   swdd->ReadDepthSpan = savageReadDepthSpan_8_24f;
-	   swdd->WriteDepthSpan = savageWriteDepthSpan_8_24f;
-	   swdd->WriteMonoDepthSpan = savageWriteMonoDepthSpan_8_24f;
-	   swdd->ReadDepthPixels = savageReadDepthPixels_8_24f;
-	   swdd->WriteDepthPixels = savageWriteDepthPixels_8_24f;    
-       } else {
-	   swdd->ReadDepthSpan = savageReadDepthSpan_8_24;
-	   swdd->WriteDepthSpan = savageWriteDepthSpan_8_24;
-	   swdd->WriteMonoDepthSpan = savageWriteMonoDepthSpan_8_24;
-	   swdd->ReadDepthPixels = savageReadDepthPixels_8_24;
-	   swdd->WriteDepthPixels = savageWriteDepthPixels_8_24;    
-       }
-       swdd->ReadStencilSpan = savageReadStencilSpan_8_24;
-       swdd->WriteStencilSpan = savageWriteStencilSpan_8_24;
-       swdd->ReadStencilPixels = savageReadStencilPixels_8_24;
-       swdd->WriteStencilPixels = savageWriteStencilPixels_8_24;
-#endif
-       break;   
-   
-   }
-   swdd->WriteCI8Span        =NULL;
-   swdd->WriteCI32Span       =NULL;
-   swdd->WriteMonoCISpan     =NULL;
-   swdd->WriteCI32Pixels     =NULL;
-   swdd->WriteMonoCIPixels   =NULL;
-   swdd->ReadCI32Span        =NULL;
-   swdd->ReadCI32Pixels      =NULL;
-
    swdd->SpanRenderStart = savageSpanRenderStart;
 
    /* Pixel path fallbacks.

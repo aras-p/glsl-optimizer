@@ -357,54 +357,6 @@ void r128DDInitSpanFuncs( GLcontext *ctx )
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
 
    swdd->SetBuffer = r128DDSetBuffer;
-
-   switch ( rmesa->r128Screen->cpp ) {
-   case 2:
-#if 0
-      r128InitPointers_RGB565( swdd );
-#endif
-      break;
-
-   case 4:
-#if 0
-      r128InitPointers_ARGB8888( swdd );
-#endif
-      break;
-
-   default:
-      break;
-   }
-
-   switch ( rmesa->glCtx->Visual.depthBits ) {
-   case 16:
-#if 0
-      swdd->ReadDepthSpan	= r128ReadDepthSpan_16;
-      swdd->WriteDepthSpan	= r128WriteDepthSpan_16;
-      swdd->ReadDepthPixels	= r128ReadDepthPixels_16;
-      swdd->WriteDepthPixels	= r128WriteDepthPixels_16;
-#endif
-      break;
-
-   case 24:
-#if 0
-      swdd->ReadDepthSpan	= r128ReadDepthSpan_24_8;
-      swdd->WriteDepthSpan	= r128WriteDepthSpan_24_8;
-      swdd->ReadDepthPixels	= r128ReadDepthPixels_24_8;
-      swdd->WriteDepthPixels	= r128WriteDepthPixels_24_8;
-#endif
-      break;
-
-   default:
-      break;
-   }
-
-   swdd->WriteCI8Span		= NULL;
-   swdd->WriteCI32Span		= NULL;
-   swdd->WriteMonoCISpan	= NULL;
-   swdd->WriteCI32Pixels	= NULL;
-   swdd->WriteMonoCIPixels	= NULL;
-   swdd->ReadCI32Span		= NULL;
-   swdd->ReadCI32Pixels		= NULL;
    swdd->SpanRenderStart	= r128SpanRenderStart;
    swdd->SpanRenderFinish	= r128SpanRenderFinish;
 }
