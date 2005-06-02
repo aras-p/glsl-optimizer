@@ -1648,8 +1648,7 @@ float
 driCalculateSwapUsage( __DRIdrawablePrivate *dPriv, int64_t last_swap_ust,
 		       int64_t current_ust )
 {
-#if 0
-   static glXGetMscRateOML_t get_msc_rate = NULL;
+   static PFNGLXGETMSCRATEOMLPROC get_msc_rate = NULL;
    int32_t   n;
    int32_t   d;
    int       interval;
@@ -1657,7 +1656,7 @@ driCalculateSwapUsage( __DRIdrawablePrivate *dPriv, int64_t last_swap_ust,
 
 
    if ( get_msc_rate == NULL ) {
-      get_msc_rate = (glXGetMscRateOML_t)
+      get_msc_rate = (PFNGLXGETMSCRATEOMLPROC)
 	  glXGetProcAddress( (const GLubyte *) "glXGetMscRateOML" );
    }
    
@@ -1686,9 +1685,6 @@ driCalculateSwapUsage( __DRIdrawablePrivate *dPriv, int64_t last_swap_ust,
    }
    
    return usage;
-#else
-   return 0;
-#endif
 }
 
 /*@}*/

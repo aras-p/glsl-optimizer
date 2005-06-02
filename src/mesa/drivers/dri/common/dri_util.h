@@ -568,11 +568,9 @@ driCalculateSwapUsage( __DRIdrawablePrivate *dPriv,
 		       int64_t last_swap_ust, int64_t current_ust );
 
 /* Test for the GLX header glx.h */
-#if 0
 #ifndef GLX
 extern void 
 (*glXGetProcAddress(const GLubyte *procname))( void );
-#endif
 #endif
 
 #endif /* _DRI_UTIL_H_ */
