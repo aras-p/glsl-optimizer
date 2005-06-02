@@ -1,108 +1,136 @@
 File: docs/README.WIN32
 
-Last updated: Oct 01, 2004 - Karl Schultz - kschultz@users.sourceforge.net
+Last updated: Jun 02, 2005 - Karl Schultz - kschultz@users.sourceforge.net
 
 Quick Start
+----- -----
 
 Unzip both ZIP files (MesaLib and MesaDemos) into the same directory.
 The libs and demos build separately, so if you do not care about the
 demos, you do not have to unzip that zip file.  But if you do, it does
-need to be unzipped into the same directory as the lib zip file because
-the demos depend on the libs.
+need to be unzipped into the same directory as the lib zip file
+because the demos depend on the libs.
 
-The build system has been changed to use Microsoft Visual Studio project
-workspaces and projects.  Makefiles are no longer shipped or supported, but
-can be generated from the projects using Visual Studio.
+The Windows build system uses Microsoft Visual Studio.  Project files
+for a specific version of Visual Studio are in their own directory in
+the top-level "windows" directory.  For example, Visual Studio 6 files
+are in windows/VC6.  If a directory does not exist for your version of
+Visual Studio, you can try importing the project files from an earlier
+version of Visual Studio.  At this time, project files exist for
+Version 6.
 
-The workspace and project files were created with Visual Studio 6, so that
-they can be used with VS6 and so that they can also be imported into VS 7.
+The project files to build the core Mesa library, Windows Mesa
+drivers, OSMesa, and GLU are in the mesa directory.  The project files
+to build GLUT and some demo programs are in the progs directory.
 
-Details and Notes
+Makefiles are no longer shipped or supported, but can be generated
+from the projects using Visual Studio.
 
-- To build the Mesa libraries, open the Mesa.dsw workspace file
-  in the top directory.  You will need to build at least one
-  driver.  Currently, only the gdi and osmesa drivers are available.
-  Select one or the other as the active project and build it.
-  If you want glu, select the glu project as active and build that as well.
 
-- Glut is no longer in the Mesa.dsw workspace.  It is now built in
-  the demo workspace (see below).
-  
-- The build process will create a lib directory in the top directory 
-  and will put the following files there as you build them:
+Windows Drivers
+------- -------
+
+At this time, only the GDI driver is known to work, as it has been
+ported and rewritten to the latest Mesa DD interfaces.  Source code
+also exists in the tree for other drivers in src/mesa/drivers/windows,
+but the status of this code is unknown.
+
+The GDI driver operates basically by writing pixel spans into a DIB
+section and then blitting the DIB to the window.  The driver was
+recently cleaned up and rewitten and so may have bugs or may be
+missing some functionality.  The older versions of the CVS source may
+be useful in figuring out any problems, or report them to me.
+
+To build Mesa with the GDI driver, build the mesa, gdi, and glu
+projects in the Visual Studio workspace found at
+windows/VC?/mesa/mesa.dsw.  The osmesa DLL can also be built with the
+osmesa project.
+
+The build system creates a lib top-level directory and copies
+resulting LIB and DLL files to this lib directory.  The files are:
+
 	OPENGL32.LIB, GLU32.LIB, OSMESA32.LIB
 	OPENGL32.DLL, GLU32.DLL, OSMESA32.DLL
 
-- Some users have reported problems building glu with VS7 after importing
-  and converting the VS6 project files.  The problem is caused by a custom
-  build step that was put in place to work around a problem with VS6 not
-  recognizing .cc files as C++ source files.  It appears that VS7 can be
-  configured to recognize .cc files as C++ files and so it compiles these
-  glu files with the default settings, and does not use settings that are
-  required to compile the files correctly.  The easiest way to solve the
-  problem is to remove the .cc files from the glu project.  This does not
-  delete the files, but removes them from the project so that VS does not
-  try to compile them at all.  This allows the custom build step to compile 
-  the files with the proper settings.
+If the MesaDemos ZIP file was extracted, the DLL files are also copied
+to the demos directory.
 
-- After building, you can copy the above DLL files to a place in your PATH
-  such as $SystemRoot/SYSTEM32.  If you don't like putting things in a
-  system directory, place them in the same directory as the executable(s).
-  Be careful about accidentially overwriting files of the same name in
-  the SYSTEM32 directory.
 
-- Build the demos by opening the appropriate *.dsw file in the
-  progs directory tree.  For example, to build the demos, use
-  progs/demos/Windows/demos.dsw.  The Windows directory contains
-  the workspace and all the projects for each demo program.  Each
-  project places the executable in the same directory as its source
-  code, which is required for some demos.
+GLUT and Demos
+---- --- -----
 
-- The demo projects also copy the Mesa library DLL files from the lib
-  directory into the same directory as the demo executables, so that
-  the demos use the Mesa libs you just built.
+A Visual Studio workspace can be found at windows/VC?/progs/progs.dsw.
+It can be used to build GLUT and a few demos.  The GLUT lib and DLL
+are copied to the top-level lib directory, along with the Mesa libs.
 
-- The DLL files are built so that the external entry points use the
-  stdcall calling convention.
+The demo build system expects to find the LIB files in the top level
+lib directory, so you must build the Mesa libs first.  The demo
+executables are placed in the demos directory, because some of them
+rely on data files found there.  Also, the Mesa lib DLL's were copied
+there by the Mesa lib build process.  Therefore, you should be able to
+simply run the demo executables from the demo directory.
 
-- Static LIB files are not built.  The LIB files that are built with
-  are the linker import files associated with the DLL files.  
 
-- The si-glu sources are used to build the GLU libs.  This was done
-  mainly to get the better tessellator code.
 
-- The Windows driver (in src/Windows) builds and runs at least at
-  a minimal level.  I modified this driver to work with the new
-  Mesa 4.0 code and driver architecture, but I did not do a great
-  deal of optimization and testing.  There are many opportunities
-  for optimization, many of which can be done by coding more specific
-  paths for the rasterizers.  See src/osmesa/osmesa.c for some good
-  examples.
+Build System Notes
+----- ------ -----
 
-- There is DirectDraw support in the Windows driver, updated by
-  Daniel Slater.  You'll need to uncomment the #define DDRAW line
-  in src/Windows/wmesadef.h and add ddraw.lib to the list of libraries.
-  On some systems, you will acheive significantly higher framerates 
-  with DirectDraw.
+VC6
+---
 
-- Some of the more specialized code like FX drivers, stereo, and
-  parallel support isn't compiled or tested.  I left much of this
-  code alone, but it may need some work to get it 'turned on' again.
+Visual Studio 6 does not recognize files with the .cc extension as C++
+language files, without a lot of unnatural tweaking.  So, the VC6
+build process uses custom build steps to compile these files in the
+GLU library.
 
-- No assembly code is compiled or assembled.  Again, this may need
-  some work to turn it back on or use it again.
 
-- To build "mangled" Mesa, add the preprocessor define USE_MGL_NAMESPACE
-  to the project settings.  You will also need to edit src/mesa.def to change
-  all the gl* symbols to mgl*.  Because this is easy to do with a global
-  replace operation in a text editor, no additional mangled version of mesa.def
-  is maintained or shipped.
+VC7
+---
+
+Some users have reported problems building glu with VC7 after
+importing and converting the VC6 project files.  The problem is caused
+by a custom build step that was put in place to work around a problem
+with VC6 not recognizing .cc files as C++ source files.  It appears
+that VC7 can be configured to recognize .cc files as C++ files and so
+it compiles these glu files with the default settings, and does not
+use settings that are required to compile the files correctly.  The
+easiest way to solve the problem is to remove the .cc files from the
+glu project.  This does not delete the files, but removes them from
+the project so that VS does not try to compile them at all.  This
+allows the custom build step to compile the files with the proper
+settings.  Another approach is to remove the custom build step and fix
+the project up to compile the files normally.
+
+
+General
+-------
+
+After building, you can copy the above DLL files to a place in your
+PATH such as $SystemRoot/SYSTEM32.  If you don't like putting things
+in a system directory, place them in the same directory as the
+executable(s).  Be careful about accidentially overwriting files of
+the same name in the SYSTEM32 directory.
+
+The DLL files are built so that the external entry points use the
+stdcall calling convention.
+
+Static LIB files are not built.  The LIB files that are built with are
+the linker import files associated with the DLL files.
+
+The si-glu sources are used to build the GLU libs.  This was done
+mainly to get the better tessellator code.
+
+To build "mangled" Mesa, add the preprocessor define USE_MGL_NAMESPACE
+to the project settings.  You will also need to edit src/mesa.def to
+change all the gl* symbols to mgl*.  Because this is easy to do with a
+global replace operation in a text editor, no additional mangled
+version of mesa.def is maintained or shipped.
 
 If you have a Windows-related build problem or question, it is
 probably better to direct it to me (kschultz@users.sourceforge.net),
-rather than directly to the other Mesa developers.  I will help you
-as much as I can.  I also monitor the Mesa mailing lists and will
-answer questions in this area there as well.
+rather than directly to the other Mesa developers.  I will help you as
+much as I can.  I also monitor the Mesa mailing lists and will answer
+questions in this area there as well.
 
 
 Karl Schultz
