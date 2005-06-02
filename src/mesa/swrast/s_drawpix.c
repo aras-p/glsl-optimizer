@@ -792,7 +792,6 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                   const struct gl_pixelstore_attrib *unpack,
                   const GLvoid *pixels )
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_renderbuffer *rb = NULL; /* only used for quickDraw path */
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
    const GLint desty = y;
@@ -926,13 +925,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 
             /* draw the span */
             if (quickDraw) {
-#if OLD_RENDERBUFFER
-               if (swrast->Driver.WriteRGBASpan)
-                  swrast->Driver.WriteRGBASpan(ctx, rb, span.end, span.x, span.y,
-                                               (CONST GLchan (*)[4]) span.array->rgba, NULL);
-               else
-#endif
-                  rb->PutRow(ctx, rb, span.end, span.x, span.y,
+               rb->PutRow(ctx, rb, span.end, span.x, span.y,
                           span.array->rgba, NULL);
             }
             else if (zoom) {

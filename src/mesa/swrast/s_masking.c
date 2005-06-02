@@ -42,7 +42,6 @@ void
 _swrast_mask_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
                        const struct sw_span *span, GLchan rgba[][4])
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLchan dest[MAX_WIDTH][4];
 #if CHAN_BITS == 8
    GLuint srcMask = *((GLuint*)ctx->Color.ColorMask);
@@ -62,13 +61,7 @@ _swrast_mask_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
    ASSERT(span->arrayMask & SPAN_RGBA);
 
    if (span->arrayMask & SPAN_XY) {
-#if OLD_RENDERBUFFER
-      if (swrast->Driver.ReadRGBAPixels)
-         swrast->Driver.ReadRGBAPixels(ctx, rb, n, span->array->x, span->array->y,
-                                       dest, span->array->mask);
-      else
-#endif
-         rb->GetValues(ctx, rb, n, span->array->x, span->array->y, dest);
+      rb->GetValues(ctx, rb, n, span->array->x, span->array->y, dest);
    }
    else {
       _swrast_read_rgba_span(ctx, rb, n, span->x, span->y, dest);

@@ -521,13 +521,7 @@ accum_return(GLcontext *ctx, GLfloat value,
             if (masking) {
                _swrast_mask_rgba_array(ctx, rb, width, xpos, ypos + i, rgba);
             }
-#if OLD_RENDERBUFFER
-            if (swrast->Driver.WriteRGBASpan)
-               swrast->Driver.WriteRGBASpan(ctx, rb, width, xpos, ypos + i,
-                                            (const GLchan (*)[4]) rgba, NULL);
-            else
-#endif
-               rb->PutRow(ctx, rb, width, xpos, ypos + i, rgba, NULL);
+            rb->PutRow(ctx, rb, width, xpos, ypos + i, rgba, NULL);
          }
       }
    }

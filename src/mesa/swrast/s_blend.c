@@ -849,7 +849,6 @@ void
 _swrast_blend_span(GLcontext *ctx, struct gl_renderbuffer *rb,
                    const struct sw_span *span, GLchan rgba[][4])
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLchan framebuffer[MAX_WIDTH][4];
 
    ASSERT(span->end <= MAX_WIDTH);
@@ -859,15 +858,8 @@ _swrast_blend_span(GLcontext *ctx, struct gl_renderbuffer *rb,
    /* Read span of current frame buffer pixels */
    if (span->arrayMask & SPAN_XY) {
       /* array of x/y pixel coords */
-#if OLD_RENDERBUFFER
-      if (swrast->Driver.ReadRGBAPixels)
-         (*swrast->Driver.ReadRGBAPixels)( ctx, rb, span->end,
-                                        span->array->x, span->array->y,
-                                        framebuffer, span->array->mask );
-      else
-#endif
-         rb->GetValues(ctx, rb, span->end, span->array->x, span->array->y,
-                       framebuffer);
+      rb->GetValues(ctx, rb, span->end, span->array->x, span->array->y,
+                    framebuffer);
    }
    else {
       /* horizontal run of pixels */

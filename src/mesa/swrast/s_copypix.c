@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -130,7 +130,6 @@ static void
 copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                       GLint width, GLint height, GLint destx, GLint desty)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_renderbuffer *drawRb = NULL;
    GLboolean quick_draw;
    GLint row;
@@ -242,14 +241,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       dy = desty + row;
       if (quick_draw && dy >= 0 && dy < (GLint) ctx->DrawBuffer->Height) {
-#if OLD_RENDERBUFFER
-         if (swrast->Driver.WriteRGBASpan)
-            swrast->Driver.WriteRGBASpan(ctx, drawRb, width, destx, dy,
-		       (const GLchan (*)[4]) span.array->rgba, NULL);
-         else
-#endif
-            drawRb->PutRow(ctx, drawRb, width, destx, dy,
-                           span.array->rgba, NULL);
+         drawRb->PutRow(ctx, drawRb, width, destx, dy, span.array->rgba, NULL);
       }
       else if (zoom) {
          span.x = destx;
@@ -278,7 +270,6 @@ static void
 copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                  GLint width, GLint height, GLint destx, GLint desty)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct gl_renderbuffer *drawRb;
    GLchan *tmpImage,*p;
    GLboolean quick_draw;
@@ -413,14 +404,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
       /* Write color span */
       if (quick_draw && dy >= 0 && dy < (GLint) ctx->DrawBuffer->Height) {
-#if OLD_RENDERBUFFER
-         if (swrast->Driver.WriteRGBASpan)
-            swrast->Driver.WriteRGBASpan(ctx, drawRb, width, destx, dy,
-                                 (const GLchan (*)[4])span.array->rgba, NULL);
-         else
-#endif
-            drawRb->PutRow(ctx, drawRb, width, destx, dy, span.array->rgba, NULL);
-
+         drawRb->PutRow(ctx, drawRb, width, destx, dy, span.array->rgba, NULL);
       }
       else if (zoom) {
          span.x = destx;

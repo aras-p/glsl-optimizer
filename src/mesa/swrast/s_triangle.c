@@ -148,7 +148,6 @@ _swrast_culltriangle( GLcontext *ctx,
 #define T_SCALE theight
 
 #define SETUP_CODE							\
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);                             \
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];\
    struct gl_texture_object *obj = ctx->Texture.Unit[0].Current2D;	\
    const GLint b = obj->BaseLevel;					\
@@ -178,12 +177,7 @@ _swrast_culltriangle( GLcontext *ctx,
       span.intTex[0] += span.intTexStep[0];				\
       span.intTex[1] += span.intTexStep[1];				\
    }									\
-   if (swrast->Driver.WriteRGBSpan)					\
-      swrast->Driver.WriteRGBSpan(ctx, rb, span.end, span.x, span.y,	\
-                                  (CONST GLchan (*)[3]) span.array->rgb,\
-                                  NULL );				\
-   else 								\
-      rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, span.array->rgb, NULL);
+   rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, span.array->rgb, NULL);
 
 #include "s_tritemp.h"
 
@@ -205,7 +199,6 @@ _swrast_culltriangle( GLcontext *ctx,
 #define T_SCALE theight
 
 #define SETUP_CODE							\
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);                             \
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];\
    struct gl_texture_object *obj = ctx->Texture.Unit[0].Current2D;	\
    const GLint b = obj->BaseLevel;					\
@@ -244,12 +237,7 @@ _swrast_culltriangle( GLcontext *ctx,
       span.intTex[1] += span.intTexStep[1];				\
       span.z += span.zStep;						\
    }									\
-   if (swrast->Driver.WriteRGBSpan)					\
-      swrast->Driver.WriteRGBSpan(ctx, rb, span.end, span.x, span.y,	\
-                                  (CONST GLchan (*)[3]) span.array->rgb,\
-                                  span.array->mask );			\
-   else 								\
-      rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, span.array->rgb, NULL);
+   rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, span.array->rgb, NULL);
 
 #include "s_tritemp.h"
 

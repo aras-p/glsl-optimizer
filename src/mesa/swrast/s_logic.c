@@ -188,14 +188,13 @@ _swrast_logicop_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
    GLuint dest[MAX_WIDTH];
 
    ASSERT(span->end < MAX_WIDTH);
+   ASSERT(rb->DataType == GL_UNSIGNED_INT);
 
    /* Read dest values from frame buffer */
    if (span->arrayMask & SPAN_XY) {
-      ASSERT(rb->DataType == GL_UNSIGNED_INT);
       rb->GetValues(ctx, rb, span->end, span->array->x, span->array->y, dest);
    }
    else {
-      ASSERT(rb->DataType == GL_UNSIGNED_INT);
       rb->GetRow(ctx, rb, span->end, span->x, span->y, dest);
    }
 
@@ -212,16 +211,14 @@ void
 _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
                           const struct sw_span *span, GLchan rgba[][4])
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLchan dest[MAX_WIDTH][4];
 
    ASSERT(span->end < MAX_WIDTH);
    ASSERT(span->arrayMask & SPAN_RGBA);
+   ASSERT(rb->DataType == GL_UNSIGNED_INT);
 
    if (span->arrayMask & SPAN_XY) {
-      swrast->Driver.ReadRGBAPixels(ctx, rb, span->end,
-                                    span->array->x, span->array->y,
-                                    dest, span->array->mask);
+      rb->GetValues(ctx, rb, span->end, span->array->x, span->array->y, dest);
    }
    else {
       _swrast_read_rgba_span(ctx, rb, span->end, span->x, span->y, dest);
