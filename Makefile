@@ -140,7 +140,6 @@ LIB_FILES =	\
 	$(DIRECTORY)/Makefile*						\
 	$(DIRECTORY)/descrip.mms					\
 	$(DIRECTORY)/mms-config.					\
-	$(DIRECTORY)/Mesa.dsw						\
 	$(DIRECTORY)/bin/mklib						\
 	$(DIRECTORY)/bin/installmesa					\
 	$(DIRECTORY)/configs/[a-z]*					\
@@ -180,28 +179,25 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/descrip.mms				\
 	$(DIRECTORY)/src/mesa/depend					\
 	$(DIRECTORY)/src/mesa/main/*.[chS]				\
-	$(DIRECTORY)/src/mesa/main/main.dsp				\
 	$(DIRECTORY)/src/mesa/main/descrip.mms				\
 	$(DIRECTORY)/src/mesa/glapi/*.[chS]				\
-	$(DIRECTORY)/src/mesa/glapi/glapi.dsp				\
 	$(DIRECTORY)/src/mesa/glapi/descrip.mms				\
 	$(DIRECTORY)/src/mesa/array_cache/*.[ch]			\
-	$(DIRECTORY)/src/mesa/array_cache/array_cache.dsp		\
 	$(DIRECTORY)/src/mesa/array_cache/descrip.mms			\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
-	$(DIRECTORY)/src/mesa/math/math.dsp				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
 	$(DIRECTORY)/src/mesa/shader/*.[ch]				\
-	$(DIRECTORY)/src/mesa/shader/shader.dsp				\
 	$(DIRECTORY)/src/mesa/shader/descrip.mms			\
+	$(DIRECTORY)/src/mesa/shader/grammar/*.[ch]			\
+	$(DIRECTORY)/src/mesa/shader/grammar/descrip.mms		\
+	$(DIRECTORY)/src/mesa/shader/slang/*.[ch]			\
+	$(DIRECTORY)/src/mesa/shader/slang/descrip.mms			\
+	$(DIRECTORY)/src/mesa/shader/slang/library/*.[ch]		\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
-	$(DIRECTORY)/src/mesa/swrast/swrast.dsp				\
 	$(DIRECTORY)/src/mesa/swrast/descrip.mms			\
 	$(DIRECTORY)/src/mesa/swrast_setup/*.[ch]			\
-	$(DIRECTORY)/src/mesa/swrast_setup/swrast_setup.dsp		\
 	$(DIRECTORY)/src/mesa/swrast_setup/descrip.mms			\
 	$(DIRECTORY)/src/mesa/tnl/*.[chS]				\
-	$(DIRECTORY)/src/mesa/tnl/tnl.dsp				\
 	$(DIRECTORY)/src/mesa/tnl/descrip.mms				\
 	$(DIRECTORY)/src/mesa/tnl_dd/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/*.[ch]				\
@@ -210,8 +206,8 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/drivers/beos/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/common/descrip.mms		\
-	$(DIRECTORY)/src/mesa/drivers/directfb/*.[ch]		\
-	$(DIRECTORY)/src/mesa/drivers/directfb/Makefile		\
+	$(DIRECTORY)/src/mesa/drivers/directfb/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/directfb/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\
@@ -227,12 +223,10 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/Makefile.win		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/descrip.mms		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.def			\
-	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.dsp			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/svga/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.def			\
-	$(DIRECTORY)/src/mesa/drivers/windows/*/*.dsp			\
 	$(DIRECTORY)/src/mesa/drivers/x11/descrip.mms			\
 	$(DIRECTORY)/src/mesa/drivers/x11/*.[ch]			\
 	$(DIRECTORY)/src/mesa/sparc/*.[chS]				\
@@ -244,9 +238,7 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/glu/sgi/Makefile				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.win				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.DJ				\
-	$(DIRECTORY)/src/glu/sgi/cc*.txt				\
 	$(DIRECTORY)/src/glu/sgi/glu.def				\
-	$(DIRECTORY)/src/glu/sgi/glu.dsp				\
 	$(DIRECTORY)/src/glu/sgi/dummy.cc				\
 	$(DIRECTORY)/src/glu/sgi/descrip.mms				\
 	$(DIRECTORY)/src/glu/sgi/mesaglu.opt				\
@@ -278,7 +270,13 @@ LIB_FILES =	\
 	$(DIRECTORY)/progs/util/sampleMakefile				\
 	$(DIRECTORY)/vms/analyze_map.com				\
 	$(DIRECTORY)/vms/xlib.opt					\
-	$(DIRECTORY)/vms/xlib_share.opt
+	$(DIRECTORY)/vms/xlib_share.opt					\
+	$(DIRECTORY)/windows/VC?/mesa/gdi/gdi.dsp			\
+	$(DIRECTORY)/windows/VC?/mesa/glu/*.txt				\
+	$(DIRECTORY)/windows/VC?/mesa/glu/glu.dsp			\
+	$(DIRECTORY)/windows/VC?/mesa/mesa.dsw				\
+	$(DIRECTORY)/windows/VC?/mesa/mesa/mesa.dsp			\
+	$(DIRECTORY)/windows/VC?/mesa/osmesa/osmesa.dsp
 
 
 GLUT_FILES = \
@@ -289,7 +287,6 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/glx/*def			\
 	$(DIRECTORY)/src/glut/glx/descrip.mms		\
 	$(DIRECTORY)/src/glut/glx/mms_depend		\
-	$(DIRECTORY)/src/glut/glx/glut.dsp		\
 	$(DIRECTORY)/src/glut/glx/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.[ch]		\
 	$(DIRECTORY)/src/glut/beos/*.cpp		\
@@ -312,8 +309,6 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/demos/*.cxx			\
 	$(DIRECTORY)/progs/demos/*.dat			\
 	$(DIRECTORY)/progs/demos/README			\
-	$(DIRECTORY)/progs/demos/Windows/*.dsp		\
-	$(DIRECTORY)/progs/demos/Windows/*.dsw		\
 	$(DIRECTORY)/progs/xdemos/Makefile*		\
 	$(DIRECTORY)/progs/xdemos/descrip.mms		\
 	$(DIRECTORY)/progs/xdemos/*.[chf]		\
@@ -326,7 +321,10 @@ DEMO_FILES = \
 	$(DIRECTORY)/progs/windml/Makefile.ugl		\
 	$(DIRECTORY)/progs/windml/*.c			\
 	$(DIRECTORY)/progs/windml/*.bmp			\
-	$(DIRECTORY)/progs/ggi/*.c
+	$(DIRECTORY)/progs/ggi/*.c			\
+	$(DIRECTORY)/windows/VC?/progs/demos/*.dsp	\
+	$(DIRECTORY)/windows/VC?/progs/glut/glut.dsp	\
+	$(DIRECTORY)/windows/VC?/progs/progs.dsw
 
 
 DRI_FILES = \
