@@ -1033,7 +1033,9 @@ add_colors(GLuint n, GLchan rgba[][4], GLchan specular[][4] )
 static void
 multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
 {
+#if OLD_RENDERBUFFER || NEW_RENDERBUFFER
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+#endif
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    const GLuint output = 0;
@@ -1046,7 +1048,8 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
       struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[output][i];
       GLchan rgbaTmp[MAX_WIDTH][4];
 
-#if OLD_RENDERBUFFER /* obsolete code */
+#if OLD_RENDERBUFFER || NEW_RENDERBUFFER
+      /* obsolete code */
       GLuint bufferBit = fb->_ColorDrawBit[output][i];
       /* Set the current read/draw buffer */
       swrast->CurrentBufferBit = bufferBit;
@@ -1069,36 +1072,19 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
 
       if (span->arrayMask & SPAN_XY) {
          /* array of pixel coords */
-         if (rb->PutValues) {
-            rb->PutValues(ctx, rb, span->end, span->array->x,
-                          span->array->y, rgbaTmp, span->array->mask);
-         }
-#if OLD_RENDERBUFFER
-         else {
-            swrast->Driver.WriteRGBAPixels(ctx, rb, span->end,
-                                           span->array->x, span->array->y,
-                                           (const GLchan (*)[4]) rgbaTmp,
-                                           span->array->mask);
-         }
-#endif
+         ASSERT(rb->PutValues);
+         rb->PutValues(ctx, rb, span->end, span->array->x,
+                       span->array->y, rgbaTmp, span->array->mask);
       }
       else {
          /* horizontal run of pixels */
-         if (rb->PutRow) {
-            rb->PutRow(ctx, rb, span->end, span->x, span->y, rgbaTmp,
-                       span->array->mask);
-         }
-#if OLD_RENDERBUFFER
-         else {
-            swrast->Driver.WriteRGBASpan(ctx, rb, span->end, span->x, span->y,
-                                         (const GLchan (*)[4]) rgbaTmp,
-                                         span->array->mask);
-         }
-#endif
+         ASSERT(rb->PutRow);
+         rb->PutRow(ctx, rb, span->end, span->x, span->y, rgbaTmp,
+                    span->array->mask);
       }
    }
 
-#if OLD_RENDERBUFFER
+#if OLD_RENDERBUFFER || NEW_RENDERBUFFER
    /* restore default dest buffer */
    _swrast_use_draw_buffer(ctx);
 #endif
@@ -1337,37 +1323,19 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
       /* Finally, write the pixels to a color buffer */
       if (span->arrayMask & SPAN_XY) {
          /* array of pixel coords */
-         if (rb->PutValues) {
-            ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA);
-            /* XXX check datatype */
-            rb->PutValues(ctx, rb, span->end, span->array->x, span->array->y,
-                          span->array->rgba, span->array->mask);
-         }
-#ifdef OLD_RENDERBUFFER
-         else
-         {
-            swrast->Driver.WriteRGBAPixels(ctx, rb, span->end, span->array->x,
-                       span->array->y, (const GLchan (*)[4]) span->array->rgba,
-                       span->array->mask);
-         }
-#endif
+         ASSERT(rb->PutValues);
+         ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA);
+         /* XXX check datatype */
+         rb->PutValues(ctx, rb, span->end, span->array->x, span->array->y,
+                       span->array->rgba, span->array->mask);
       }
       else {
          /* horizontal run of pixels */
-         if (rb->PutRow) {
-            ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA);
-            /* XXX check datatype */
-            rb->PutRow(ctx, rb, span->end, span->x, span->y, span->array->rgba,
-                       span->writeAll ? NULL : span->array->mask);
-         }
-#ifdef OLD_RENDERBUFFER
-         else
-         {
-            swrast->Driver.WriteRGBASpan(ctx, rb, span->end, span->x, span->y,
-                                    (const GLchan (*)[4]) span->array->rgba,
-                                    span->writeAll ? NULL : span->array->mask);
-         }
-#endif
+         ASSERT(rb->PutRow);
+         ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA);
+         /* XXX check datatype */
+         rb->PutRow(ctx, rb, span->end, span->x, span->y, span->array->rgba,
+                    span->writeAll ? NULL : span->array->mask);
       }
    }
 
@@ -1385,7 +1353,6 @@ void
 _swrast_read_rgba_span( GLcontext *ctx, struct gl_renderbuffer *rb,
                         GLuint n, GLint x, GLint y, GLchan rgba[][4] )
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLint bufWidth = (GLint) rb->Width;
    const GLint bufHeight = (GLint) rb->Height;
 
@@ -1423,22 +1390,11 @@ _swrast_read_rgba_span( GLcontext *ctx, struct gl_renderbuffer *rb,
          length = (GLint) n;
       }
 
-      if (rb && rb->GetRow) {
-         assert(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA);
-         assert(rb->DataType == GL_UNSIGNED_BYTE);
-         rb->GetRow(ctx, rb, length, x + skip, y, rgba + skip);
-      }
-#if OLD_RENDERBUFFER
-      else {
-         swrast->Driver.ReadRGBASpan(ctx, rb, length, x + skip, y,
-                                     rgba + skip);
-         /*
-         if (buffer->UseSoftwareAlphaBuffers) {
-            _swrast_read_alpha_span(ctx, length, x + skip, y, rgba + skip);
-         }
-         */
-      }
-#endif
+      ASSERT(rb);
+      ASSERT(rb->GetRow);
+      ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA);
+      ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
+      rb->GetRow(ctx, rb, length, x + skip, y, rgba + skip);
    }
 }
 
