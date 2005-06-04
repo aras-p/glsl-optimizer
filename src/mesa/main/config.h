@@ -324,7 +324,7 @@
 
 /* XXX these are temporary */
 #define NEW_RENDERBUFFER 1
-#define OLD_RENDERBUFFER 1
+#define OLD_RENDERBUFFER 0
 
 
 #endif /* CONFIG_H */

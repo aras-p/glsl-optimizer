@@ -987,7 +987,7 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
       }
    }
 
-#if OLD_RENDERBUFFER
+#if OLD_RENDERBUFFER || NEW_RENDERBUFFER
    /* restore default dest buffer */
    _swrast_use_draw_buffer(ctx);
 #endif
