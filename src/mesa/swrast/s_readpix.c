@@ -300,17 +300,9 @@ read_fast_rgba_pixels( GLcontext *ctx,
             rowLength = -rowLength;
          }
 
+         ASSERT(rb->GetRow);
          for (row=0; row<readHeight; row++) {
-#if OLD_RENDERBUFFER && 0
-            (*swrast->Driver.ReadRGBASpan)(ctx, rb, readWidth, srcX, srcY,
-                                        (GLchan (*)[4]) dest);
-            if (ctx->DrawBuffer->UseSoftwareAlphaBuffers) {
-               _swrast_read_alpha_span(ctx, readWidth, srcX, srcY,
-                                     (GLchan (*)[4]) dest);
-            }
-#else
             rb->GetRow(ctx, rb, readWidth, srcX, srcY, dest);
-#endif
             dest += rowLength * 4;
             srcY++;
          }
