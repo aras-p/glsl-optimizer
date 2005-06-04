@@ -8,6 +8,8 @@
 /**
  * This will get called when a window is resized.
  * Just update width, height and internal format fields for now.
+ * There's usually no memory allocation above because the present
+ * DRI drivers use statically-allocated full-screen buffers.
  */
 static GLboolean
 driRenderbufferStorage(GLcontext *ctx, struct gl_renderbuffer *rb,
