@@ -53,8 +53,10 @@ set -v
 
 mkdir ${INCLUDE_DIR}
 mkdir ${INCLUDE_DIR}/GL
+mkdir ${INCLUDE_DIR}/GLES
 mkdir ${LIB_DIR}
 cp -f ${TOP}/include/GL/*.h ${INCLUDE_DIR}/GL
+cp -f ${TOP}/include/GLES/*.h ${INCLUDE_DIR}/GLES
 cp -fd ${TOP}/lib*/lib* ${LIB_DIR}
 
 echo "Done."
