@@ -40,8 +40,6 @@
  *   fglrx does (see r300_reg.h).
  * - Verify results of opcodes for accuracy, I've only checked them
  *   in specific cases.
- * - Learn more about interaction between xyz/w units.. A few bugs are
- *   caused by something I'm missing..
  * - and more...
  */
 
@@ -112,11 +110,13 @@ static const struct r300_pfv_swizzle {
 	{ "xxx", MAKE_SWZ3(X, X, X), GL_TRUE, R300_FPI0_ARGC_SRC0C_XXX, 4, GL_FALSE },
 	{ "yyy", MAKE_SWZ3(Y, Y, Y), GL_TRUE, R300_FPI0_ARGC_SRC0C_YYY, 4, GL_FALSE },
 	{ "zzz", MAKE_SWZ3(Z, Z, Z), GL_TRUE, R300_FPI0_ARGC_SRC0C_ZZZ, 4, GL_FALSE },
+	{ "www", MAKE_SWZ3(W, W, W), GL_TRUE, R300_FPI0_ARGC_SRC0A, 1, GL_TRUE },
 	{ "yzx", MAKE_SWZ3(Y, Z, X), GL_TRUE, R300_FPI0_ARGC_SRC0C_YZX, 1, GL_FALSE },
 	{ "zxy", MAKE_SWZ3(Z, X, Y), GL_TRUE, R300_FPI0_ARGC_SRC0C_ZXY, 1, GL_FALSE },
-	{ "wzy", MAKE_SWZ3(W, Z, Y), GL_TRUE, R300_FPI0_ARGC_SRC0CA_WZY, 1, GL_TRUE },
+/* disable this for now, until I find a clean way of making sure xyz/w streams
+ * have a source in the same register slot.. */
+//	{ "wzy", MAKE_SWZ3(W, Z, Y), GL_TRUE, R300_FPI0_ARGC_SRC0CA_WZY, 1, GL_TRUE },
 /* special cases */
-	{ NULL, MAKE_SWZ3(W, W, W), GL_FALSE, 0, 0, GL_FALSE},
 	{ NULL, MAKE_SWZ3(ONE, ONE, ONE), GL_FALSE, R300_FPI0_ARGC_ONE, 0, GL_FALSE},
 	{ NULL, MAKE_SWZ3(ZERO, ZERO, ZERO), GL_FALSE, R300_FPI0_ARGC_ZERO, 0, GL_FALSE},
 	{ NULL, PFS_INVAL, GL_FALSE, R300_FPI0_ARGC_HALF, 0, GL_FALSE},
@@ -124,10 +124,10 @@ static const struct r300_pfv_swizzle {
 };
 #define SWIZZLE_XYZ		0
 #define SWIZZLE_XXX		1
-#define SWIZZLE_WZY		6
-#define SWIZZLE_111		8
-#define SWIZZLE_000		9
-#define SWIZZLE_HHH		10
+#define SWIZZLE_WWW		4
+#define SWIZZLE_111		7
+#define SWIZZLE_000		8
+#define SWIZZLE_HHH		9
 
 #define SWZ_X_MASK (7 << 0)
 #define SWZ_Y_MASK (7 << 3)
@@ -320,30 +320,6 @@ static int swz_special_case(struct r300_fragment_program *rp,
 	pfs_reg_t ssrc = pfs_default_reg;
 
 	switch(GET_SWZ(v_swiz[src.v_swz].hash, 0)) {
-	case SWIZZLE_W:
-		ssrc = get_temp_reg(rp);
-		src.v_swz = SWIZZLE_WZY;
-		if (s_mask[mask].count == 3) {
-			emit_arith(rp, PFS_OP_MAD, ssrc, WRITEMASK_XW, src, pfs_one, pfs_zero, 0);
-			*r = ssrc;
-			r->v_swz = SWIZZLE_XXX;
-			r->s_swz = SWIZZLE_W;
-		} else if (mc + s_mask[mask].count == 3) {
-			if (!r->valid)
-				*r = get_temp_reg(rp);
-			emit_arith(rp, PFS_OP_MAD, ssrc, WRITEMASK_XW, src, pfs_one, pfs_zero, 0);
-			ssrc.v_swz = SWIZZLE_XXX;
-			emit_arith(rp, PFS_OP_MAD, *r, s_mask[mask].mask|WRITEMASK_W, ssrc, pfs_one, pfs_zero, 0);
-			free_temp(rp, ssrc);
-		} else {
-			if (!r->valid)
-				*r = get_temp_reg(rp);
-			emit_arith(rp, PFS_OP_MAD, ssrc, WRITEMASK_X, src, pfs_one, pfs_zero, 0);
-			ssrc.v_swz = SWIZZLE_XXX;
-			emit_arith(rp, PFS_OP_MAD, *r, s_mask[mask].mask, ssrc, pfs_one, pfs_zero, 0);
-			free_temp(rp, ssrc);
-		}
-		break;
 	case SWIZZLE_ONE:
 	case SWIZZLE_ZERO:
 		if (!r->valid)
@@ -472,16 +448,16 @@ static void sync_streams(struct r300_fragment_program *rp) {
 	/* Bring vector/scalar streams into sync, inserting nops into
 	 * whatever stream is lagging behind
 	 *
-	 * I'm using "MAD t0, t0, 1.0, 0.0" as a NOP
+	 * Using NOP == MAD out.none, 0, 0, 0
 	 */
 	while (rp->v_pos != rp->s_pos) {
 		if (rp->s_pos > rp->v_pos) {
-			rp->alu.inst[rp->v_pos].inst0 = 0x00050A80;
-			rp->alu.inst[rp->v_pos].inst1 = 0x03820800;
+			rp->alu.inst[rp->v_pos].inst0 = 0x00050A14;
+			rp->alu.inst[rp->v_pos].inst1 = 0x00020820;
 			rp->v_pos++;
 		} else {
-			rp->alu.inst[rp->s_pos].inst2 = 0x00040889;
-			rp->alu.inst[rp->s_pos].inst3 = 0x00820800;
+			rp->alu.inst[rp->s_pos].inst2 = 0x00040810;
+			rp->alu.inst[rp->s_pos].inst3 = 0x00020820;
 			rp->s_pos++;
 		}
 	}	
@@ -550,25 +526,68 @@ static void emit_tex(struct r300_fragment_program *rp,
 	rp->node[rp->cur_node].tex_end++;
 }
 
+#define ARG_NEG	(1<<5)
+#define ARG_ABS (1<<6)
+#define SRC_CONST (1<<5)
+#define SRC_STRIDE 6
+
+static int t_hw_src(struct r300_fragment_program *rp, pfs_reg_t src)
+{
+	int idx;
+
+	switch (src.type) {
+	case REG_TYPE_TEMP:
+		idx = rp->temps[src.index];
+		break;
+	case REG_TYPE_INPUT:
+		idx = rp->inputs[src.index];
+		break;
+	case REG_TYPE_CONST:
+		return (src.index | SRC_CONST);
+	default:
+		ERROR("Invalid type for source reg\n");
+		return (0 | SRC_CONST);
+	}
+
+	rp->used_in_node |= (1 << idx);
+	return idx;
+}
+
+/* Add sources to FPI1/FPI3 lists.  If source is already on list,
+ * reuse the index instead of wasting a source.
+ */
+static inline int add_src(int src[3], int *cnt, int reg) {
+	int i;
+
+	for (i=0;i<*cnt;i++)
+		if (src[i] == reg) return i;
+	
+	if (*cnt == 3) assert(0); /* I don't *think* this can happen */
+
+	src[*cnt] = reg;
+	return (*cnt)++;
+}
+
 static void emit_arith(struct r300_fragment_program *rp, int op,
 				pfs_reg_t dest, int mask,
 				pfs_reg_t src0, pfs_reg_t src1, pfs_reg_t src2,
 				int flags)
 {
 	pfs_reg_t src[3] = { src0, src1, src2 };
+	/* XYZ/W emit control */
+	int v_idx = rp->v_pos, s_idx = rp->s_pos;
+	GLboolean emit_v = GL_FALSE, emit_s = GL_FALSE;
+	/* INST1/INST3 sources */
+	int vsrc[3], ssrc[3];
+	int nvs = 0, nss = 0;
+	/* INST0/INST2 sources */
+	int vswz[3], sswz[3];
+	/* temp stuff */
 	int hwdest, hwsrc;
 	int argc;
-	int v_idx = rp->v_pos, s_idx = rp->s_pos;
-	GLuint inst[4] = { 0, 0, 0, 0 }; 
 	int vop, sop;
 	int i;
-
-#define ARG_NEG	(1<<5)
-#define ARG_ABS (1<<6)
-#define ARG_STRIDE 7
-#define SRC_CONST (1<<5)
-#define SRC_STRIDE 6
-
+	
 	if (!dest.valid || !src0.valid || !src1.valid || !src2.valid) {
 		ERROR("invalid register.  dest/src0/src1/src2 valid = %d/%d/%d/%d\n",
 						dest.valid, src0.valid, src1.valid, src2.valid);
@@ -598,96 +617,91 @@ static void emit_arith(struct r300_fragment_program *rp, int op,
 		ERROR("invalid dest reg type %d\n", dest.type);
 		return;
 	}
-
-	/* grab hwregs of sources */
+	
+	int str;
 	for (i=0;i<3;i++) {
 		if (i<argc) {
-			/* Decide on hardware source index */
-			switch (src[i].type) {
-			case REG_TYPE_INPUT:
-				hwsrc = rp->inputs[src[i].index];
-				rp->used_in_node |= (1 << hwsrc);
-
-				inst[1] |= hwsrc << (i * SRC_STRIDE);
-				inst[3] |= hwsrc << (i * SRC_STRIDE);
-				break;
-			case REG_TYPE_TEMP:
-				/* make sure insn ordering is right... */
-				if ((v_swiz[src[i].v_swz].dep_sca && v_idx < s_idx) ||
-					(s_swiz[src[i].s_swz].dep_vec && s_idx < v_idx)) {
+			hwsrc = t_hw_src(rp, src[i]);
+			if (mask & WRITEMASK_XYZ && vop != R300_FPI0_OUTC_REPL_ALPHA) {
+				if (v_swiz[src[i].v_swz].dep_sca) {
 					sync_streams(rp);
 					v_idx = s_idx = rp->v_pos;
-				}
+					emit_s = GL_TRUE;
+					str = add_src(ssrc, &nss, hwsrc);
+				} else
+					str = add_src(vsrc, &nvs, hwsrc);
+				vswz[i] = v_swiz[src[i].v_swz].base + (str * v_swiz[src[i].v_swz].stride);
+			} else
+				vswz[i] = R300_FPI0_ARGC_ZERO;
+
+			if (mask & WRITEMASK_W || vop == R300_FPI0_OUTC_REPL_ALPHA) {
+				if (s_swiz[src[i].s_swz].dep_vec) {
+					sync_streams(rp);
+					v_idx = s_idx = rp->v_pos;
+					emit_v = GL_TRUE;
+					str = add_src(vsrc, &nvs, hwsrc);
+				} else
+					str = add_src(ssrc, &nss, hwsrc);
+				sswz[i] = s_swiz[src[i].s_swz].base + (str * s_swiz[src[i].s_swz].stride);
+			} else
+				sswz[i] = R300_FPI2_ARGA_ZERO;
 		
-				hwsrc = rp->temps[src[i].index];
-				rp->used_in_node |= (1 << hwsrc);
-
-				inst[1] |= hwsrc << (i * SRC_STRIDE);
-				inst[3] |= hwsrc << (i * SRC_STRIDE);
-				break;
-			case REG_TYPE_CONST:
-				hwsrc = src[i].index;
-
-				inst[1] |= ((hwsrc | SRC_CONST) << (i * SRC_STRIDE));
-				inst[3] |= ((hwsrc | SRC_CONST) << (i * SRC_STRIDE));
-				break;
-			default:
-				ERROR("invalid source reg\n");
-				return;
-			}
-
-			/* Swizzling/Negation */
-			if (vop == R300_FPI0_OUTC_REPL_ALPHA)
-				inst[0] |= R300_FPI0_ARGC_ZERO << (i * ARG_STRIDE);
-			else
-				inst[0] |= (v_swiz[src[i].v_swz].base + (i * v_swiz[src[i].v_swz].stride)) << (i*ARG_STRIDE);
-			inst[2] |= (s_swiz[src[i].s_swz].base + (i * s_swiz[src[i].s_swz].stride)) << (i*ARG_STRIDE);
-
 			if (src[i].negate) {
-				inst[0] |= ARG_NEG << (i * ARG_STRIDE);
-				inst[2] |= ARG_NEG << (i * ARG_STRIDE);
+				vswz[i] |= ARG_NEG;
+				sswz[i] |= ARG_NEG;
 			}
-			
+
 			if (flags & PFS_FLAG_ABS) {
-				inst[0] |= ARG_ABS << (i * ARG_STRIDE);
-				inst[2] |= ARG_ABS << (i * ARG_STRIDE);	
+				vswz[i] |= ARG_ABS;
+				sswz[i] |= ARG_ABS;
 			}
 		} else {
-			/* read constant 0, use zero swizzle aswell */
-			inst[0] |= R300_FPI0_ARGC_ZERO << (i*ARG_STRIDE);
-			inst[1] |= SRC_CONST << (i*SRC_STRIDE);
-			inst[2] |= R300_FPI2_ARGA_ZERO << (i*ARG_STRIDE);
-			inst[3] |= SRC_CONST << (i*SRC_STRIDE);
+			vswz[i] = R300_FPI0_ARGC_ZERO;
+			sswz[i] = R300_FPI2_ARGA_ZERO;
 		}
 	}
+	/* Unused sources, read constant reg 0 */
+	for (i=nvs;i<3;i++)
+		vsrc[i] = 0 | SRC_CONST;
+	for (i=nss;i<3;i++)
+		ssrc[i] = 0 | SRC_CONST;
 
 	if (flags & PFS_FLAG_SAT) {
 		vop |= R300_FPI0_OUTC_SAT;
 		sop |= R300_FPI2_OUTA_SAT;
 	}
-		
-	if (mask & WRITEMASK_XYZ) {
+
+	if (mask & WRITEMASK_XYZ || emit_v) {
 		if (r300_fpop[op].v_op == R300_FPI0_OUTC_REPL_ALPHA) {
 			sync_streams(rp);
 			s_idx = v_idx = rp->v_pos;
 		}
-		rp->alu.inst[v_idx].inst0 = inst[0] | vop;
-		rp->alu.inst[v_idx].inst1 = inst[1] |
-				(hwdest << R300_FPI1_DSTC_SHIFT) |
+		rp->alu.inst[v_idx].inst0 = vop |
+				vswz[0] << R300_FPI0_ARG0C_SHIFT |
+				vswz[1] << R300_FPI0_ARG1C_SHIFT |
+				vswz[2] << R300_FPI0_ARG2C_SHIFT;
+		rp->alu.inst[v_idx].inst1 = hwdest << R300_FPI1_DSTC_SHIFT |
+				vsrc[0] << R300_FPI1_SRC0C_SHIFT |
+				vsrc[1] << R300_FPI1_SRC1C_SHIFT |
+				vsrc[2] << R300_FPI1_SRC2C_SHIFT |
 				((mask & WRITEMASK_XYZ) << (dest.type == REG_TYPE_OUTPUT ? 26 : 23));
 		rp->v_pos = v_idx + 1;
 	}
-	
-	if ((mask & WRITEMASK_W) || r300_fpop[op].v_op == R300_FPI0_OUTC_REPL_ALPHA) {
-		rp->alu.inst[s_idx].inst2 = inst[2] | sop;
-		rp->alu.inst[s_idx].inst3 = inst[3] |
-				(hwdest << R300_FPI3_DSTA_SHIFT) |
+
+	if (mask & WRITEMASK_W || emit_s || vop == R300_FPI0_OUTC_REPL_ALPHA) {
+		rp->alu.inst[s_idx].inst2 = sop |
+				sswz[0] << R300_FPI2_ARG0A_SHIFT |
+				sswz[1] << R300_FPI2_ARG1A_SHIFT |
+				sswz[2] << R300_FPI2_ARG2A_SHIFT;
+		rp->alu.inst[s_idx].inst3 = hwdest << R300_FPI3_DSTA_SHIFT |
+				ssrc[0] << R300_FPI3_SRC0A_SHIFT |
+				ssrc[1] << R300_FPI3_SRC1A_SHIFT |
+				ssrc[2] << R300_FPI3_SRC2A_SHIFT |
 				(((mask & WRITEMASK_W)?1:0) << (dest.type == REG_TYPE_OUTPUT ? 24 : 23));
 		rp->s_pos = s_idx + 1;
 	}
 
-/* Force this for now */
-	sync_streams(rp);
+/*	sync_streams(rp); */
 	return;
 };
 	
@@ -791,17 +805,14 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 							flags);
 			break;
 		case FP_OPCODE_POW:
-			/* I don't like this, and it's probably wrong in some
-			 * circumstances... Needs checking */
 			src0 = t_src(rp, fpi->SrcReg[0]);
 			src1 = t_src(rp, fpi->SrcReg[1]);
 			dest = t_dst(rp, fpi->DstReg);
 			temp = get_temp_reg(rp);
-			temp.s_swz = SWIZZLE_X; /* cheat, bypass swizzle code */
 
-			emit_arith(rp, PFS_OP_LG2, temp, WRITEMASK_X,
+			emit_arith(rp, PFS_OP_LG2, temp, WRITEMASK_W,
 							src0, pfs_zero, pfs_zero, 0);
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W,
 							temp, src1, pfs_zero, 0);
 			emit_arith(rp, PFS_OP_EX2, dest, fpi->DstReg.WriteMask,
 							temp, pfs_zero, pfs_zero, 0);
@@ -969,12 +980,12 @@ void translate_fragment_shader(struct r300_fragment_program *rp)
 
 	if (!rp->translated) {
 		init_program(rp);
-	
+
 		if (parse_program(rp) == GL_FALSE) {
 			dump_program(rp);
 			return;
 		}
-
+		
 		/* Finish off */
 		sync_streams(rp);
 		rp->node[rp->cur_node].alu_end	= rp->v_pos - 1;

@@ -74,9 +74,10 @@ static const char *const card_extensions[] = {
 	"GL_ARB_texture_border_clamp",
 	"GL_ARB_texture_compression",
 /* disable until we support it, fixes a few things in ut2004 */
-//	"GL_ARB_texture_cube_map", 
+/*	"GL_ARB_texture_cube_map", */
 	"GL_ARB_texture_env_add",
 	"GL_ARB_texture_env_combine",
+	"GL_ARB_texture_env_crossbar",
 	"GL_ARB_texture_env_dot3",
 	"GL_ARB_texture_mirrored_repeat",
 	"GL_ARB_vertex_buffer_object",
@@ -104,7 +105,6 @@ static const char *const card_extensions[] = {
 	"GL_NV_blend_square",
 	"GL_NV_vertex_program",
 	"GL_SGIS_generate_mipmap",
-	"GL_ARB_texture_env_crossbar",
 	NULL
 };
 
