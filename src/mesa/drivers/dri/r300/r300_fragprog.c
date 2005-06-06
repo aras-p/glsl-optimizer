@@ -239,6 +239,32 @@ static pfs_reg_t get_temp_reg(struct r300_fragment_program *rp)
 	return r;
 }
 
+static pfs_reg_t get_temp_reg_tex(struct r300_fragment_program *rp)
+{
+	pfs_reg_t r = pfs_default_reg;
+	int hwreg;
+
+	hwreg = ffs(~(rp->hwreg_in_use | rp->used_in_node));
+	if (!hwreg) {
+		/* Try and grab an already used temp, will
+		 * cause an indirection, but better than failing */
+		return get_temp_reg(rp);
+	}
+	if (hwreg > rp->max_temp_idx)
+		rp->max_temp_idx = hwreg;
+
+	r.index = ffs(~rp->temp_in_use);
+	if (!r.index) {
+		ERROR("Out of program temps\n");
+		return r;
+	}
+	rp->temp_in_use |= (1 << --r.index);
+	rp->temps[r.index] = --hwreg;
+	
+	r.valid = GL_TRUE;
+	return r;
+}
+
 static void free_temp(struct r300_fragment_program *rp, pfs_reg_t r)
 {
 	if (!rp || !(rp->temp_in_use & (1<<r.index))) return;
@@ -317,8 +343,6 @@ static int swz_emit_partial(struct r300_fragment_program *rp,
 static int swz_special_case(struct r300_fragment_program *rp,
 				pfs_reg_t src, pfs_reg_t *r, int mask, int mc)
 {
-	pfs_reg_t ssrc = pfs_default_reg;
-
 	switch(GET_SWZ(v_swiz[src.v_swz].hash, 0)) {
 	case SWIZZLE_ONE:
 	case SWIZZLE_ZERO:
@@ -468,10 +492,15 @@ static void emit_tex(struct r300_fragment_program *rp,
 				int opcode)
 {
 	pfs_reg_t coord = t_src(rp, fpi->SrcReg[0]);
-	pfs_reg_t dest = t_dst(rp, fpi->DstReg);
+	pfs_reg_t dest = t_dst(rp, fpi->DstReg), rdest = pfs_default_reg;
 	int unit = fpi->TexSrcUnit;
 	int hwsrc, hwdest, flags = 0;
 
+	if (dest.type == REG_TYPE_OUTPUT) {
+		rdest = dest;
+		dest = get_temp_reg_tex(rp);
+	}
+	
 	switch (coord.type) {
 	case REG_TYPE_TEMP:
 		hwsrc = rp->temps[coord.index];
@@ -499,6 +528,7 @@ static void emit_tex(struct r300_fragment_program *rp,
 			ERROR("too many levels of texture indirection\n");
 			return;
 		}
+
 		/* Finish off current node */
 		sync_streams(rp);
 		rp->node[rp->cur_node].alu_end = rp->v_pos - 1;
@@ -521,9 +551,17 @@ static void emit_tex(struct r300_fragment_program *rp,
         | (unit << R300_FPITX_IMAGE_SHIFT)
         | (opcode << R300_FPITX_OPCODE_SHIFT) /* not entirely sure about this */
 		| flags;
-	rp->dest_in_node |= (1 << hwdest);
-	
+	rp->dest_in_node |= (1 << hwdest); 
+	if (coord.type != REG_TYPE_CONST)
+		rp->used_in_node |= (1 << hwsrc);
+
 	rp->node[rp->cur_node].tex_end++;
+
+	/* Copy from temp to output if needed */
+	if (rdest.valid) {
+		emit_arith(rp, PFS_OP_MAD, rdest, WRITEMASK_XYZW, dest, pfs_one, pfs_zero, 0);
+		free_temp(rp, dest);
+	}
 }
 
 #define ARG_NEG	(1<<5)
@@ -977,7 +1015,7 @@ void update_params(struct r300_fragment_program *rp) {
 void translate_fragment_shader(struct r300_fragment_program *rp)
 {
 	int i;
-
+	
 	if (!rp->translated) {
 		init_program(rp);
 
@@ -998,6 +1036,7 @@ void translate_fragment_shader(struct r300_fragment_program *rp)
 		if (0) dump_program(rp);
 	}
 
+	
 	update_params(rp);
 }
 
