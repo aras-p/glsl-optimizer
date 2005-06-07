@@ -316,7 +316,7 @@ fbDestroyScreen( __DRIscreenPrivate *sPriv )
 {
 }
 
-static void fbSetBuffer( GLcontext *ctx,
+void fbSetBuffer( GLcontext *ctx,
                              GLframebuffer *colorBuffer,
                              GLuint bufferBit )
 {
