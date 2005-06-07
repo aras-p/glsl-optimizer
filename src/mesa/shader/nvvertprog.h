@@ -66,7 +66,9 @@ enum vp_opcode
    VP_OPCODE_SLT,
    VP_OPCODE_SUB,
    VP_OPCODE_SWZ,		/* ARB only */
-   VP_OPCODE_XPD		/* ARB only */
+   VP_OPCODE_XPD,		/* ARB only */
+
+   VP_MAX_OPCODE
 };
 
 
