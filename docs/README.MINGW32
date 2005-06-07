@@ -78,8 +78,9 @@ Running the Build:
 
 	Launch Mingw.
 	From the Windows Command Prompt:
+	Set Environment Variables (as needed).
 	"cd" to your Mesa3D 'root' directory.
-	Enter "mingw32-make -f makefile.mgw <target> <Graphics Env>
+	Enter "mingw32-make -f makefile.mgw <target>
 
 	That's all there is to it.
 
