@@ -203,6 +203,7 @@ ASM_C_SOURCES =	\
 	x86/x86.c \
 	x86/3dnow.c \
 	x86/sse.c \
+	x86/rtasm/x86sse.c \
 	sparc/sparc.c \
 	ppc/common_ppc.c \
 	x86-64/x86-64.c
