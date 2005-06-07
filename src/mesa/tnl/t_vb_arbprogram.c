@@ -134,6 +134,8 @@ union instruction {
    GLuint dword;
 };
 
+#define RSW_NOOP ((0<<0) | (1<<2) | (2<<4) | (3<<6))
+
 
 
 struct compilation {
@@ -894,7 +896,7 @@ static struct reg cvp_emit_arg( struct compilation *cp,
    /* Emit any necessary swizzling.  
     */
    rsw.dword = 0;
-   rsw.rsw.neg = src->Negate ? 1 : 0;
+   rsw.rsw.neg = src->Negate ? WRITEMASK_XYZW : 0;
    rsw.rsw.swz = ((GET_SWZ(src->Swizzle, 0) << 0) |
 		  (GET_SWZ(src->Swizzle, 1) << 2) |
 		  (GET_SWZ(src->Swizzle, 2) << 4) |
@@ -902,10 +904,7 @@ static struct reg cvp_emit_arg( struct compilation *cp,
 
    noop.dword = 0;
    noop.rsw.neg = 0;
-   noop.rsw.swz = ((0<<0) |
-		   (1<<2) |
-		   (2<<4) |
-		   (3<<6));
+   noop.rsw.swz = RSW_NOOP;
 
    if (rsw.dword != noop.dword) {
       union instruction *op = cvp_next_instruction(cp);
@@ -960,8 +959,6 @@ static GLuint cvp_choose_result( struct compilation *cp,
    }
 }
 
-#define RSW_NOOP ((0<<0) | (1<<2) | (2<<4) | (3<<6))
-
 static struct reg cvp_emit_rsw( struct compilation *cp, 
 				GLuint dst,
 				struct reg src,
@@ -1012,6 +1009,8 @@ static void cvp_emit_inst( struct compilation *cp,
    struct reg reg[3];
    GLuint result, i;
 
+   assert(sizeof(*op) == sizeof(GLuint));
+
    /* Need to handle SWZ, ARL specially.
     */
    switch (inst->Opcode) {
@@ -1050,8 +1049,8 @@ static void cvp_emit_inst( struct compilation *cp,
       break;
 
    case VP_OPCODE_SWZ: {
-      GLuint swz0, swz1;
-      GLuint neg0, neg1;
+      GLuint swz0 = 0, swz1 = 0;
+      GLuint neg0 = 0, neg1 = 0;
       GLuint mask = 0;
 
       /* Translate 3-bit-per-element swizzle into two 2-bit swizzles,
