@@ -39,7 +39,7 @@ GL_LIB_NAME = lib$(GL_LIB).so
 GLU_LIB_NAME = lib$(GLU_LIB).so
 GLUT_LIB_NAME = lib$(GLUT_LIB).so
 GLW_LIB_NAME = lib$(GLW_LIB).so
-OSMESA_LIB_NAME = lib$(OSMesa).so
+OSMESA_LIB_NAME = lib$(OSMESA_LIB).so
 
 
 # Optional assembly language optimization files for libGL
