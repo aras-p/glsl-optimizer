@@ -389,6 +389,10 @@ _mesa_test_framebuffer_completeness(GLcontext *ctx, struct gl_framebuffer *fb)
          h = att->Texture->Image[att->CubeMapFace][att->TextureLevel]->Height;
          f = att->Texture->Image[att->CubeMapFace][att->TextureLevel]->Format;
          numImages++;
+         if (f != GL_RGB && f != GL_RGBA && f != GL_DEPTH_COMPONENT) {
+            fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
+            return;
+         }
       }
       else if (att->Type == GL_RENDERBUFFER_EXT) {
          w = att->Renderbuffer->Width;

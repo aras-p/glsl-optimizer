@@ -151,9 +151,12 @@ wrap_texture(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
    trb->Base.Height = trb->TexImage->Height;
    trb->Base.InternalFormat = trb->TexImage->IntFormat; /* XXX fix? */
    trb->Base._BaseFormat = trb->TexImage->TexFormat->BaseFormat;
+#if 0
+   /* fix/avoid this assertion someday */
    assert(trb->Base._BaseFormat == GL_RGB ||
           trb->Base._BaseFormat == GL_RGBA ||
           trb->Base._BaseFormat == GL_DEPTH_COMPONENT);
+#endif
    trb->Base.DataType = GL_UNSIGNED_BYTE;  /* XXX fix! */
    trb->Base.Data = trb->TexImage->Data;
 
