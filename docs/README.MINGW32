@@ -14,68 +14,76 @@ Quick & dirty start:
 
 
 
-Contact:
---------
-
-Daniel Borca <dborca@users.sourceforge.net>
-
-
-
-WARNING! The info below this line is outdated (yet some of it useful). WARNING!
 *******************************************************************************
+The Mingw port for Mesa 3-D Graphics Library was created August 30, 1998 by Paul Garceau.
 
-
-
-August 30, 1998 -- Paul Garceau
-Updated January 13, 2000 -- Paul Garceau (pgarceau@teleport.com)
+Updated January 13, 2000; June 3, 2005 -- Paul Garceau <pgarceau@users.sourceforge.net>
 
 DISCLAIMER:  I make this port of the Mesa 3-D Graphics Library as a service
 to the general public.  I can, in no way support or make any guarantee that the
 build will work for your system.
 
-	The associated packages and batch files I have included as part of the GCC-2.95.2/Mingw32 extension are provided "As-is" with out any guarantee of support or functionality from this author.
+Acknowledgements:
 
-	Feel free to modify or change things as you see fit, just remember that
-I can't support any modifications you might want to make to the files which I
-have included OR the lgpl protected Mesa 3-D Graphics Library.
+	Daniel Borca, whose work and commitment to maintaining the Mingw port of the Mesa 3-D Graphics Library has been, and will continue to be greatly appreciated by an overworked and underpaid developer such as myself.
+	Without the creative inspiration and personal commitment provided by Mumit Khan, Jan-Jaap Vanderhagen and Colin Peters, Mingw would never have existed.  	Acknowledgements also need to be given to all of the developers who have worked on Mingw, Mesa and Msys over the years.
+	Last, but certainly far from the least, Brian Paul, who has dedicated at least the last seven or eight years of his life to making Mesa 3-D Graphics Library what it is today and managing the development for all of those years.
+*********************************************************************************
 
-	I recommend using GCC-2.95.2/Mingw32 which is available at Mumit Khans' ftp site:
+Greetings,
 
-		(ftp://ftp.xraylith.wisc.edu/pub/khan/gnu-win32/mingw32/)
+	Feel free to modify or change things related to the Mingw build as you see fit, just remember that, the author of the current build may not be able to support any modifications you might want to make to the files which have been included for the build.
+
+Mesa core components are licensed under XFree-86 (for more on licensing of Mesa 3-D Graphics Library, check out the Mesa homepage (http://www.mesa3d.org).
+
+The Mingw generated libraries themselves are licensed under the GNU-LGPL license.  Source code for Mingw can be found at http://www.mingw.org.  For licensing terms on Mingw, please visit http://www.mingw.org.
+
+	It is recommended that you use the latest "stable" release of Mingw.  "Candidates" are beta testing distributions for Mingw.  Mingw is available at http://www.mingw.org.
 
 	This build has been tested under WinNT4/SP6.  Win9x and WinNT5 remain untested by me.  I have not tested any of the demos included with Mesa3d.
 
-	I recommend using the GCC-2.95.2/Mingw32.
+Installation:
 
-	ftp://ftp.xraylith.wisc.edu/pub/khan/gnu-win32/mingw32/gcc-2.95.2
+	This readme assumes that you already have extracted the necessary files to a working directory/folder that Mingw can use to build the Mesa3D libraries and that you know where that directory/folder is located on your Windows system.  If you have any questions about how to set things up properly which is specific to Mesa3D, the folks on the Mesa3D mailing lists (http://www.mesa3d.org) would probably be happy to assist you.  Also you can probably ask anyone on the Mingw mailing lists for any questions specific to Mingw (http://www.mingw.org)
 
-	Much thanks to the combined efforts of Mumit Khan, Jan-Jaap Vanderhagen
-and Colin Peters for making it possible for the Mingw32 toolchain to exist.  Also, thanks go out to Stephane Rehel for the work that was completed on the Cygwin build.
+Targets and Environment variables used for Mingw build:
 
-Installing GCC-2.95.2/Mingw32 Build:
+	Before going into the actual build of the libraries, here is a list of available targets for the make process:
 
-	a) Open the file archive (either tar.gz or .zip extensions)
+	"all" or "libgl"  -- this target will build libopengl.a, a static library.  It will not build the demos, etc.
 
-	b) Decide the directory you want to move the archived files to.
+	clean -- this target will clean up most of the Mesa 3-D Graphics Library/object code from your hard drive.
 
-	d) Extract the files from the archive.
+	realclean -- this target will clean up all of the Mesa 3D Graphics Library and the Mesa object code that it can find.
+
+	Environment Variables:
+
+	The environment variables are used to determine what sort of graphics driver support needs to be included in the finished Mesa 3-D Graphics Library.
+
+	GLIDE		path to Glide3 SDK; used with FX.
+			default = $(TOP)/glide3
+	FX=1		build for 3dfx Glide3. Note that this disables
+			compilation of most WMesa code and requires fxMesa.
+			As a consequence, you'll need the Win32 Glide3
+			library to build any application.
+			default = no
+	ICD=1		build the installable client driver interface
+			(windows opengl driver interface)
+			default = no
+	X86=1		optimize for x86 (if possible, use MMX, SSE, 3DNow).
+			default = no
+
 	
-	e) Edit the mingw32.bat file to accomodate your choice of directory structure.
-
-		%mesaroot%:	This is your root directory (Mesa-3.3)
-		%mesasrc%:	This is the Mesa-3.3 src directory (Mesa-3.3\src)
-		%mesalib%:	This is where the build will put libGL.a and libGLU.a
-
 Running the Build:
 
-	Open your Command Prompt or MS-DOS prompt.
-	Go to your Mesa-3.3 'root' directory
-	At the command line type: mingw32
+	Launch Mingw.
+	From the Windows Command Prompt:
+	"cd" to your Mesa3D 'root' directory.
+	Enter "mingw32-make -f makefile.mgw <target> <Graphics Env>
 
 	That's all there is to it.
 
 	Enjoy!
 
-	Peace,
-
-		Paul G. (pgarceau@teleport.com)
+		Paul G. <pgarceau@users.sourceforge.net>
+		Daniel Borca <dborca@users.sourceforge.net>
