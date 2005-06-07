@@ -9,7 +9,7 @@ CC = cc
 CFLAGS = -Xa -xO3 -xpentium -KPIC -I/usr/openwin/include -DUSE_XSHM
 MKLIB_OPTIONS = -static
 
-APP_LIB_DEPS = -L$(LIB_DIR) -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm
+APP_LIB_DEPS = -L$(LIB_DIR) -L/usr/openwin/lib -R/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm -lglut -lGLU -lGL
 
 GL_LIB_NAME = libGL.a
 GLU_LIB_NAME = libGLU.a
