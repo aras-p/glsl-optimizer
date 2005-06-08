@@ -2,7 +2,7 @@
 
 #include "x86sse.h"
 
-#define DISASSEM 1
+#define DISASSEM 0
 #define X86_TWOB 0x0f
 
 /* Emit bytes to the instruction stream:
