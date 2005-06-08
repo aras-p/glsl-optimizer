@@ -41,152 +41,9 @@
 #include "t_context.h"
 #include "t_pipeline.h"
 #include "t_vp_build.h"
+#include "t_vb_arbprogram.h"
 
-/* Define to see the compiled program on stderr:
- */
 #define DISASSEM 0
-
-
-/* New, internal instructions:
- */
-#define RSW        (VP_MAX_OPCODE)
-#define SEL        (VP_MAX_OPCODE+1)
-#define REL        (VP_MAX_OPCODE+2)
-
-
-/* Layout of register file:
-
-  0 -- Scratch (Arg0)
-  1 -- Scratch (Arg1)
-  2 -- Scratch (Result)
-  4 -- Program Temporary 0
-  16 -- Program Temporary 12 (max for NV_VERTEX_PROGRAM)
-  17 -- Output 0
-  31 -- Output 15 (max for NV_VERTEX_PROGRAM) (Last writeable register)
-  32 -- Parameter 0
-  ..
-  127 -- Parameter 63 (max for NV_VERTEX_PROGRAM)
-
-*/
-
-#define FILE_REG         0
-#define FILE_LOCAL_PARAM 1
-#define FILE_ENV_PARAM   2
-#define FILE_STATE_PARAM 3
-
-
-#define REG_ARG0   0
-#define REG_ARG1   1
-#define REG_ARG2   2
-#define REG_RES    3
-#define REG_ADDR   4
-#define REG_TMP0   5
-#define REG_TMP11  16
-#define REG_OUT0   17
-#define REG_OUT14  31
-#define REG_IN0    32
-#define REG_IN15   47
-#define REG_ID     48		/* 0,0,0,1 */
-#define REG_MAX    128
-#define REG_INVALID ~0
-
-/* ARB_vp instructions are broken down into one or more of the
- * following micro-instructions, each representable in a 32 bit packed
- * structure.
- */
-
-struct reg {
-   GLuint file:2;
-   GLuint idx:7;
-};
-
-
-union instruction {
-   struct {
-      GLuint opcode:6;
-      GLuint dst:5;
-      GLuint file0:2;
-      GLuint idx0:7;
-      GLuint file1:2;
-      GLuint idx1:7;
-      GLuint pad:3;
-   } alu;
-
-   struct {
-      GLuint opcode:6;
-      GLuint dst:5;
-      GLuint file0:2;
-      GLuint idx0:7;
-      GLuint neg:4;
-      GLuint swz:8;		/* xyzw only */
-   } rsw;
-
-   struct {
-      GLuint opcode:6;
-      GLuint dst:5;
-      GLuint idx0:7;		/* note! */
-      GLuint file1:2;
-      GLuint idx1:7;
-      GLuint mask:4;
-      GLuint pad:1;
-   } sel;
-
-   GLuint dword;
-};
-
-#define RSW_NOOP ((0<<0) | (1<<2) | (2<<4) | (3<<6))
-
-
-
-struct compilation {
-   GLuint reg_active;
-   union instruction *csr;
-   struct vertex_buffer *VB;	/* for input sizes! */
-};
-
-struct input {
-   GLuint idx;
-   GLfloat *data;
-   GLuint stride;
-   GLuint size;
-};
-
-struct output {
-   GLuint idx;
-   GLfloat *data;
-};
-
-/*--------------------------------------------------------------------------- */
-
-/*!
- * Private storage for the vertex program pipeline stage.
- */
-struct arb_vp_machine {
-   GLfloat reg[REG_MAX][4];	/* Program temporaries, inputs and outputs */
-   GLfloat (*File[4])[4];	/* All values reference-able from the program. */
-   GLint AddressReg;
-
-   struct input input[16];
-   GLuint nr_inputs;
-
-   struct output output[15];
-   GLuint nr_outputs;
-
-   union instruction store[1024];
-   union instruction *instructions;
-   GLint nr_instructions;
-
-   GLvector4f attribs[VERT_RESULT_MAX]; /**< result vectors. */
-   GLvector4f ndcCoords;              /**< normalized device coords */
-   GLubyte *clipmask;                 /**< clip flags */
-   GLubyte ormask, andmask;           /**< for clipping */
-
-   GLuint vtx_nr;		/**< loop counter */
-
-   struct vertex_buffer *VB;
-   GLcontext *ctx;
-};
-
 
 /*--------------------------------------------------------------------------- */
 
@@ -252,11 +109,7 @@ static GLfloat RoughApproxPower(GLfloat x, GLfloat y)
 }
 
 
-static const GLfloat ZeroVec[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
 
-
-
-#define GET_RSW(swz, idx)      (((swz) >> ((idx)*2)) & 0x3)
 
 
 /**
@@ -282,18 +135,25 @@ static void do_RSW( struct arb_vp_machine *m, union instruction op )
    }
 }
 
-/* Used to implement write masking
+/* Used to implement write masking.  To make things easier for the sse
+ * generator I've gone back to a 1 argument version of this function
+ * (dst.msk = arg), rather than the semantically cleaner (dst = SEL
+ * arg0, arg1, msk)
+ *
+ * That means this is the only instruction which doesn't write a full
+ * 4 dwords out.  This would make such a program harder to analyse,
+ * but it looks like analysis is going to take place on a higher level
+ * anyway.
  */
-static void do_SEL( struct arb_vp_machine *m, union instruction op )
+static void do_MSK( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *dst = m->reg[op.sel.dst];
-   const GLfloat *arg0 = m->reg[op.sel.idx0];
-   const GLfloat *arg1 = m->File[op.sel.file1][op.sel.idx1];
+   GLfloat *dst = m->reg[op.msk.dst];
+   const GLfloat *arg = m->File[op.msk.file][op.msk.idx];
  
-   dst[0] = (op.sel.mask & 0x1) ? arg0[0] : arg1[0];
-   dst[1] = (op.sel.mask & 0x2) ? arg0[1] : arg1[1];
-   dst[2] = (op.sel.mask & 0x4) ? arg0[2] : arg1[2];
-   dst[3] = (op.sel.mask & 0x8) ? arg0[3] : arg1[3];
+   if (op.msk.mask & 0x1) dst[0] = arg[0];
+   if (op.msk.mask & 0x2) dst[1] = arg[1];
+   if (op.msk.mask & 0x4) dst[2] = arg[2];
+   if (op.msk.mask & 0x8) dst[3] = arg[3];
 }
 
 
@@ -332,13 +192,6 @@ static void do_ADD( struct arb_vp_machine *m, union instruction op )
    result[1] = arg0[1] + arg1[1];
    result[2] = arg0[2] + arg1[2];
    result[3] = arg0[3] + arg1[3];
-}
-
-
-static void do_ARL( struct arb_vp_machine *m, union instruction op )
-{
-   const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
-   m->reg[REG_ADDR][0] = FLOORF(arg0[0]);
 }
 
 
@@ -709,16 +562,13 @@ static void print_ALU( union instruction op, const struct opcode_info *info )
    _mesa_printf("\n");
 }
 
-static void print_SEL( union instruction op, const struct opcode_info *info )
+static void print_MSK( union instruction op, const struct opcode_info *info )
 {
    _mesa_printf("%s ", info->string);
-   print_reg(0, op.sel.dst);
+   print_reg(0, op.msk.dst);
+   print_mask(op.msk.mask);
    _mesa_printf(", ");
-   print_reg(0, op.sel.idx0);
-   print_mask(op.sel.mask);
-   _mesa_printf(", ");
-   print_reg(op.sel.file1, op.sel.idx1);
-   print_mask(~op.sel.mask);
+   print_reg(op.msk.file, op.msk.idx);
    _mesa_printf("\n");
 }
 
@@ -735,7 +585,7 @@ static const struct opcode_info opcode_info[] =
 {
    { 1, "ABS", print_ALU },
    { 2, "ADD", print_ALU },
-   { 1, "ARL", print_ALU },
+   { 1, "ARL", print_NOP },
    { 2, "DP3", print_ALU },
    { 2, "DP4", print_ALU },
    { 2, "DPH", print_ALU },
@@ -764,7 +614,7 @@ static const struct opcode_info opcode_info[] =
    { 1, "SWZ", print_NOP },
    { 2, "XPD", print_ALU },
    { 1, "RSW", print_RSW },
-   { 2, "SEL", print_SEL },
+   { 2, "MSK", print_MSK },
    { 1, "REL", print_ALU },
 };
 
@@ -773,7 +623,7 @@ static void (* const opcode_func[])(struct arb_vp_machine *, union instruction) 
 {
    do_ABS,
    do_ADD,
-   do_ARL,
+   do_NOP,
    do_DP3,
    do_DP4,
    do_DPH,
@@ -802,7 +652,7 @@ static void (* const opcode_func[])(struct arb_vp_machine *, union instruction) 
    do_RSW,
    do_XPD,
    do_RSW,
-   do_SEL,
+   do_MSK,
    do_REL,
 };
 
@@ -943,12 +793,11 @@ static GLuint cvp_choose_result( struct compilation *cp,
     * value for the first time, the writemask may be ignored. 
     */
    if (mask != WRITEMASK_XYZW && (cp->reg_active & (1 << idx))) {
-      fixup->sel.opcode = SEL;
-      fixup->sel.idx0 = REG_RES;
-      fixup->sel.file1 = FILE_REG;
-      fixup->sel.idx1 = idx;
-      fixup->sel.dst = idx;
-      fixup->sel.mask = mask;
+      fixup->msk.opcode = MSK;
+      fixup->msk.dst = idx;
+      fixup->msk.file = FILE_REG;
+      fixup->msk.idx = REG_RES;
+      fixup->msk.mask = mask;
       cp->reg_active |= 1 << idx;
       return REG_RES;
    }
@@ -1042,7 +891,7 @@ static void cvp_emit_inst( struct compilation *cp,
       reg[0] = cvp_emit_arg( cp, &inst->SrcReg[0], REG_ARG0 );
 
       op = cvp_next_instruction(cp);
-      op->alu.opcode = inst->Opcode;
+      op->alu.opcode = VP_OPCODE_FLR;
       op->alu.dst = REG_ADDR;
       op->alu.file0 = reg[0].file;
       op->alu.idx0 = reg[0].idx;
@@ -1086,18 +935,15 @@ static void cvp_emit_inst( struct compilation *cp,
 	 cvp_emit_rsw(cp, result, reg[1], neg1, swz1, GL_TRUE);
       }
       else {
-	 reg[0] = cvp_emit_rsw(cp, REG_ARG0, reg[0], neg0, swz0, GL_FALSE);
-	 reg[1] = cvp_emit_rsw(cp, REG_ARG1, reg[1], neg1, swz1, GL_FALSE);
-
-	 assert(reg[0].file == FILE_REG);
+	 cvp_emit_rsw(cp, result, reg[0], neg0, swz0, GL_TRUE);
+	 reg[1] = cvp_emit_rsw(cp, REG_ARG0, reg[1], neg1, swz1, GL_FALSE);
 
 	 op = cvp_next_instruction(cp);
-	 op->sel.opcode = SEL;
-	 op->sel.dst = result;
-	 op->sel.idx0 = reg[0].idx;
-	 op->sel.file1 = reg[1].file;
-	 op->sel.idx1 = reg[1].idx;
-	 op->sel.mask = mask;
+	 op->msk.opcode = MSK;
+	 op->msk.dst = result;
+	 op->msk.file = reg[1].file;
+	 op->msk.idx = reg[1].idx;
+	 op->msk.mask = mask;
       }
 
       if (result == REG_RES) {
