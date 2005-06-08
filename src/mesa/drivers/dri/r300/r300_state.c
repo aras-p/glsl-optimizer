@@ -1030,8 +1030,6 @@ void r300_setup_textures(GLcontext *ctx)
 	R300_STATECHANGE(r300, tex.unknown4);
 	R300_STATECHANGE(r300, tex.border_color);
 	
-	r300->state.texture.tc_count=0;
-
 	r300->hw.txe.cmd[R300_TXE_ENABLE]=0x0;
 
 	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
@@ -1053,7 +1051,6 @@ void r300_setup_textures(GLcontext *ctx)
 		if(TMU_ENABLED(ctx, i)) {
 			t=r300->state.texture.unit[i].texobj;
 			//fprintf(stderr, "format=%08x\n", r300->state.texture.unit[i].format);
-			r300->state.texture.tc_count++;
 			
 			if(t == NULL){
 				fprintf(stderr, "Texture unit %d enabled, but corresponding texobj is NULL, using default object.\n", i);
@@ -1102,7 +1099,6 @@ void r300_setup_textures(GLcontext *ctx)
 void r300_setup_rs_unit(GLcontext *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	int i, vp_reg, fp_reg, in_texcoords;
 	/* I'm still unsure if these are needed */
 	GLuint interp_magic[8] = {
 		0x00,
@@ -1116,7 +1112,10 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	};
 	GLuint OutputsWritten;
 	GLuint InputsRead;
-	
+	int vp_reg, fp_reg, high_rr;
+	int in_texcoords, col_interp_nr;
+	int i;
+
 	if(hw_tcl_on)
 		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->OutputsWritten;
 	else
@@ -1128,13 +1127,14 @@ void r300_setup_rs_unit(GLcontext *ctx)
 		fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
 		return; /* This should only ever happen once.. */
 	}
-	/* This needs to be rewritten - it is a hack at best */
+
 	R300_STATECHANGE(r300, ri);
 	R300_STATECHANGE(r300, rc);
 	R300_STATECHANGE(r300, rr);
 	
-	vp_reg = fp_reg = in_texcoords = 0;
+	vp_reg = fp_reg = in_texcoords = col_interp_nr = high_rr = 0;
 	r300->hw.rr.cmd[R300_RR_ROUTE_0] = 0;
+	r300->hw.rr.cmd[R300_RR_ROUTE_1] = 0;
 
 	for (i=0;i<ctx->Const.MaxTextureUnits;i++) {
 		if (OutputsWritten & (hw_tcl_on ? (1 << (VERT_RESULT_TEX0+i)) : (_TNL_BIT_TEX0<<i)))
@@ -1151,7 +1151,8 @@ void r300_setup_rs_unit(GLcontext *ctx)
 					| R300_RS_ROUTE_ENABLE
 					| i /* source INTERP */
 					| (fp_reg << R300_RS_ROUTE_DEST_SHIFT);
-			
+			high_rr = fp_reg;
+
 			if (OutputsWritten & (hw_tcl_on ? (1 << (VERT_RESULT_TEX0+i)) : (_TNL_BIT_TEX0<<i))) {
 				vp_reg++;
 			} else {
@@ -1168,25 +1169,34 @@ void r300_setup_rs_unit(GLcontext *ctx)
 	if (InputsRead & FRAG_BIT_COL0) {
 		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL0) : _TNL_BIT_COLOR0)))
 			fprintf(stderr, "fragprog wants col0, vp doesn't provide it\n");
+
 		r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0
 				| R300_RS_ROUTE_0_COLOR
-				| (fp_reg << R300_RS_ROUTE_0_COLOR_DEST_SHIFT);
+				| (fp_reg++ << R300_RS_ROUTE_0_COLOR_DEST_SHIFT);
 		InputsRead &= ~FRAG_BIT_COL0;
+		col_interp_nr++;
 	}
+	
+	if (InputsRead & FRAG_BIT_COL1) {
+		if (!(OutputsWritten & (hw_tcl_on ? (1<<VERT_RESULT_COL1) : _TNL_BIT_COLOR1)))
+			fprintf(stderr, "fragprog wants col1, vp doesn't provide it\n");
 
+		r300->hw.rr.cmd[R300_RR_ROUTE_1] |= R300_RS_ROUTE_1_UNKNOWN11
+				| R300_RS_ROUTE_1_COLOR1
+				| (fp_reg++ << R300_RS_ROUTE_1_COLOR1_DEST_SHIFT);
+		InputsRead &= ~FRAG_BIT_COL1;
+		if (high_rr < 1) high_rr = 1;
+		col_interp_nr++;
+	}
+	
 	r300->hw.rc.cmd[1] = 0
 			| (in_texcoords << R300_RS_CNTL_TC_CNT_SHIFT)
-			| R300_RS_CNTL_0_UNKNOWN_7
+			| (col_interp_nr << R300_RS_CNTL_CI_CNT_SHIFT)
 			| R300_RS_CNTL_0_UNKNOWN_18;
-	
 
-	if (r300->state.texture.tc_count > 0) {
-			r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, fp_reg);
-			r300->hw.rc.cmd[2] = 0xC0 | (fp_reg-1); /* index of highest RS_ROUTE used*/
-	} else {
-			r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, 1);
-			r300->hw.rc.cmd[2] = 0x0;
-	}
+	assert(high_rr >= 0);
+	r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, high_rr+1);
+	r300->hw.rc.cmd[2] = 0xC0 | high_rr;
 
 	if (InputsRead)
 		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
@@ -1388,7 +1398,16 @@ void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 		VSF_TMP(0)
 		)
 	o_reg += 2;
-
+	
+	if (r300->state.render_inputs & _TNL_BIT_COLOR1) {
+		WRITE_OP(
+			EASY_VSF_OP(MUL, o_reg++, ALL, RESULT),
+			VSF_REG(r300->state.vap_reg.i_color[1]),
+			VSF_ATTR_UNITY(r300->state.vap_reg.i_color[1]),
+			VSF_UNITY(r300->state.vap_reg.i_color[1])
+		)
+	}
+	
 	/* Pass through texture coordinates, if any */
 	for(i=0;i < r300->radeon.glCtx->Const.MaxTextureUnits;i++)
 		if(r300->state.render_inputs & (_TNL_BIT_TEX0<<i)){

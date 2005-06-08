@@ -941,24 +941,29 @@ void init_program(struct r300_fragment_program *rp)
 	/* Work out what temps the Mesa inputs correspond to, this must match
 	 * what setup_rs_unit does, which shouldn't be a problem as rs_unit
 	 * configures itself based on the fragprog's InputsRead
+	 *
+	 * I'm using get_hw_temp() here now rather than doing this manually.
+	 * This depends on get_hw_temp() allocating registers in order, starting
+	 * at 0 (which it currently does).
 	 */
 
 	/* Texcoords come first */
 	for (i=0;i<rp->ctx->Const.MaxTextureUnits;i++) {
-		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
-			rp->hwreg_in_use |= (1<<fp_reg);
-			rp->inputs[FRAG_ATTRIB_TEX0+i] = fp_reg++;
-		}
+		if (InputsRead & (FRAG_BIT_TEX0 << i))
+			rp->inputs[FRAG_ATTRIB_TEX0+i] = get_hw_temp(rp);
 	}
 	InputsRead &= ~FRAG_BITS_TEX_ANY;
 
 	/* Then primary colour */
-	if (InputsRead & FRAG_BIT_COL0) {
-		rp->hwreg_in_use |= (1<<fp_reg);
-		rp->inputs[FRAG_ATTRIB_COL0] = fp_reg++;
-	}
+	if (InputsRead & FRAG_BIT_COL0)
+		rp->inputs[FRAG_ATTRIB_COL0] = get_hw_temp(rp);
 	InputsRead &= ~FRAG_BIT_COL0;
-	
+
+	/* Secondary color */
+	if (InputsRead & FRAG_BIT_COL1)
+		rp->inputs[FRAG_ATTRIB_COL1] = get_hw_temp(rp);
+	InputsRead &= ~FRAG_BIT_COL1;
+
 	/* Anything else */
 	if (InputsRead) {
 		WARN_ONCE("Don't know how to handle inputs 0x%x\n", InputsRead);

@@ -385,6 +385,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 	}
 #endif
 
+	r300->state.texture.tc_count = 0;
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		if (inputs & (_TNL_BIT_TEX0 << i)) {
 			CONFIGURE_AOS(i_tex[i], AOS_FORMAT_FLOAT,
@@ -393,6 +394,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 							count);
 
 			vic_1 |= R300_INPUT_CNTL_TC0 << i;
+			r300->state.texture.tc_count++;
 		}
 	}
 	
@@ -536,6 +538,8 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
 		if(inputs & _TNL_BIT_COLOR0)
 			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
+		if(inputs & _TNL_BIT_COLOR1)
+			r300->hw.vof.cmd[R300_VOF_CNTL_0] |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
 
 		for(i=0;i < ctx->Const.MaxTextureUnits;i++)
 			if(inputs & (_TNL_BIT_TEX0<<i))

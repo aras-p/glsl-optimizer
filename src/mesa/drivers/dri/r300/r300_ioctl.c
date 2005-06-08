@@ -143,7 +143,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 
 	R300_STATECHANGE(r300, rc);
 	/* The second constant is needed to get glxgears display anything .. */
-	r300->hw.rc.cmd[1] = R300_RS_CNTL_0_UNKNOWN_7 | R300_RS_CNTL_0_UNKNOWN_18;
+	r300->hw.rc.cmd[1] = (1 << R300_RS_CNTL_CI_CNT_SHIFT) | R300_RS_CNTL_0_UNKNOWN_18;
 	r300->hw.rc.cmd[2] = 0;
 	
 	R300_STATECHANGE(r300, rr);

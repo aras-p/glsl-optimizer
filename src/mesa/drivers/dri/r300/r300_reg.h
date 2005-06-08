@@ -502,7 +502,7 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #define R300_RS_CNTL_0                      0x4300
 #       define R300_RS_CNTL_TC_CNT_SHIFT         2
 #       define R300_RS_CNTL_TC_CNT_MASK          (7 << 2)
-#       define R300_RS_CNTL_0_UNKNOWN_7          (1 << 7) /* Number of color interpolators used (shifted by 7) */
+#		define R300_RS_CNTL_CI_CNT_SHIFT         7 /* number of color interpolators used */
 #       define R300_RS_CNTL_0_UNKNOWN_18         (1 << 18)
 /* Guess: RS_CNTL_1 holds the index of the highest used RS_ROUTE_n register. */
 #define R300_RS_CNTL_1                      0x4304
@@ -562,6 +562,11 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_RS_ROUTE_0_COLOR             (1 << 14)
 #       define R300_RS_ROUTE_0_COLOR_DEST_SHIFT  17
 #       define R300_RS_ROUTE_0_COLOR_DEST_MASK   (31 << 17) /* GUESS */
+/* As above, but for secondary color */
+#		define R300_RS_ROUTE_1_COLOR1            (1 << 14)
+#		define R300_RS_ROUTE_1_COLOR1_DEST_SHIFT 17
+#		define R300_RS_ROUTE_1_COLOR1_DEST_MASK  (31 << 17)
+#		define R300_RS_ROUTE_1_UNKNOWN11         (1 << 11)
 /* END */
 
 /* BEGIN: Scissors and cliprects
