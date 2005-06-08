@@ -82,8 +82,8 @@ static void emit_load4f_3( struct x86_program *p,
     * a b c 1
     */
    sse_movss(&p->func, dest, x86_make_disp(arg0, 8));
-   sse_shufps(&p->func, dest, get_identity(p), X,Y,Z,W );
-   sse_shufps(&p->func, dest, dest, Y,Z,X,W );
+   sse_shufps(&p->func, dest, get_identity(p), SHUF(X,Y,Z,W) );
+   sse_shufps(&p->func, dest, dest, SHUF(Y,Z,X,W) );
    sse_movlps(&p->func, dest, arg0);
 }
 
@@ -103,7 +103,7 @@ static void emit_load4f_1( struct x86_program *p,
 {
    /* Pull in low word, then swizzle in identity */
    sse_movss(&p->func, dest, arg0);
-   sse_shufps(&p->func, dest, get_identity(p), X,Y,Z,W );
+   sse_shufps(&p->func, dest, get_identity(p), SHUF(X,Y,Z,W) );
 }
 
 
@@ -124,7 +124,7 @@ static void emit_load3f_3( struct x86_program *p,
        * a b c c 
        */
       sse_movss(&p->func, dest, x86_make_disp(arg0, 8));
-      sse_shufps(&p->func, dest, dest, X,X,X,X);
+      sse_shufps(&p->func, dest, dest, SHUF(X,X,X,X));
       sse_movlps(&p->func, dest, arg0);
    }
 }
@@ -218,7 +218,7 @@ static void emit_store3f( struct x86_program *p,
       /* Alternate strategy - emit two, shuffle, emit one.
        */
       sse_movlps(&p->func, dest, arg0);
-      sse_shufps(&p->func, arg0, arg0, Z, Z, Z, Z ); /* NOTE! destructive */
+      sse_shufps(&p->func, arg0, arg0, SHUF(Z,Z,Z,Z) ); /* NOTE! destructive */
       sse_movss(&p->func, x86_make_disp(dest,8), arg0);
    }
 }
@@ -471,7 +471,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
       case EMIT_3F_XYW:
 	 get_src_ptr(p, srcECX, vtxESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
-	 sse_shufps(&p->func, temp, temp, X, Y, W, Z);
+	 sse_shufps(&p->func, temp, temp, SHUF(X,Y,W,Z));
 	 emit_store(p, dest, 3, temp);
 	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
@@ -484,7 +484,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 	 {
 	    get_src_ptr(p, srcECX, vtxESI, a);
 	    emit_load(p, temp, 1, x86_deref(srcECX), a->inputsize);
-	    sse_shufps(&p->func, temp, temp, X, X, X, X);
+	    sse_shufps(&p->func, temp, temp, SHUF(X,X,X,X));
 	    emit_pack_store_4ub(p, x86_make_disp(dest, -3), temp); /* overkill! */
 	    update_src_ptr(p, srcECX, vtxESI, a);
 	 }
@@ -502,7 +502,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 	    get_src_ptr(p, srcECX, vtxESI, a);
 	    emit_load(p, temp, 3, x86_deref(srcECX), a->inputsize);
 	    if (a->format == EMIT_3UB_3F_BGR)
-	       sse_shufps(&p->func, temp, temp, Z, Y, X, W);
+	       sse_shufps(&p->func, temp, temp, SHUF(Z,Y,X,W));
 	    emit_pack_store_4ub(p, dest, temp);
 	    update_src_ptr(p, srcECX, vtxESI, a);
 	 }
@@ -517,7 +517,7 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 
 	    /* Make room for incoming value:
 	     */
-	    sse_shufps(&p->func, temp, temp, W, X, Y, Z);
+	    sse_shufps(&p->func, temp, temp, SHUF(W,X,Y,Z));
 
 	    get_src_ptr(p, srcECX, vtxESI, &a[1]);
 	    emit_load(p, temp, 1, x86_deref(srcECX), a[1].inputsize);
@@ -526,9 +526,9 @@ static GLboolean build_vertex_emit( struct x86_program *p )
 	    /* Rearrange and possibly do BGR conversion:
 	     */
 	    if (a->format == EMIT_3UB_3F_BGR)
-	       sse_shufps(&p->func, temp, temp, W, Z, Y, X);
+	       sse_shufps(&p->func, temp, temp, SHUF(W,Z,Y,X));
 	    else
-	       sse_shufps(&p->func, temp, temp, Y, Z, W, X);
+	       sse_shufps(&p->func, temp, temp, SHUF(Y,Z,W,X));
 
 	    emit_pack_store_4ub(p, dest, temp);
 	    j++;		/* NOTE: two attrs consumed */
@@ -548,21 +548,21 @@ static GLboolean build_vertex_emit( struct x86_program *p )
       case EMIT_4UB_4F_BGRA:
 	 get_src_ptr(p, srcECX, vtxESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
-	 sse_shufps(&p->func, temp, temp, Z, Y, X, W);
+	 sse_shufps(&p->func, temp, temp, SHUF(Z,Y,X,W));
 	 emit_pack_store_4ub(p, dest, temp);
 	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
       case EMIT_4UB_4F_ARGB:
 	 get_src_ptr(p, srcECX, vtxESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
-	 sse_shufps(&p->func, temp, temp, W, X, Y, Z);
+	 sse_shufps(&p->func, temp, temp, SHUF(W,X,Y,Z));
 	 emit_pack_store_4ub(p, dest, temp);
 	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
       case EMIT_4UB_4F_ABGR:
 	 get_src_ptr(p, srcECX, vtxESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
-	 sse_shufps(&p->func, temp, temp, W, Z, Y, X);
+	 sse_shufps(&p->func, temp, temp, SHUF(W,Z,Y,X));
 	 emit_pack_store_4ub(p, dest, temp);
 	 update_src_ptr(p, srcECX, vtxESI, a);
 	 break;
