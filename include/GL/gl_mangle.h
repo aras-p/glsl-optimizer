@@ -1466,6 +1466,5 @@
 #define glWindowPos4sMESA		MANGLE(WindowPos4sMESA)
 #define glWindowPos4svMESA		MANGLE(WindowPos4svMESA)
 #define glWriteMaskEXT		MANGLE(WriteMaskEXT)
-gl.h:GLAPI void GLAPIENTRY
 
 #endif /* GL_MANGLE_H */
