@@ -26,7 +26,7 @@
  * \file t_arb_program.c
  * Compile vertex programs to an intermediate representation.
  * Execute vertex programs over a buffer of vertices.
- * \author Keith Whitwell, Brian Paul
+ * \author Keith Whitwell
  */
 
 #include "glheader.h"
@@ -51,6 +51,12 @@ struct opcode_info {
    GLuint nr_args;
    const char *string;
    void (*print)( union instruction , const struct opcode_info * );
+};
+
+struct compilation {
+   GLuint reg_active;
+   union instruction *csr;
+   struct vertex_buffer *VB;	/* for input sizes! */
 };
 
 
@@ -117,7 +123,7 @@ static GLfloat RoughApproxPower(GLfloat x, GLfloat y)
  */
 static void do_RSW( struct arb_vp_machine *m, union instruction op ) 
 {
-   GLfloat *result = m->reg[op.rsw.dst];
+   GLfloat *result = m->File[0][op.rsw.dst];
    const GLfloat *arg0 = m->File[op.rsw.file0][op.rsw.idx0];
    GLuint swz = op.rsw.swz;
    GLuint neg = op.rsw.neg;
@@ -147,7 +153,7 @@ static void do_RSW( struct arb_vp_machine *m, union instruction op )
  */
 static void do_MSK( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *dst = m->reg[op.msk.dst];
+   GLfloat *dst = m->File[0][op.msk.dst];
    const GLfloat *arg = m->File[op.msk.file][op.msk.idx];
  
    if (op.msk.mask & 0x1) dst[0] = arg[0];
@@ -173,7 +179,7 @@ static void do_PRT( struct arb_vp_machine *m, union instruction op )
 
 static void do_ABS( struct arb_vp_machine *m, union instruction op ) 
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
 
    result[0] = (arg0[0] < 0.0) ? -arg0[0] : arg0[0];
@@ -184,7 +190,7 @@ static void do_ABS( struct arb_vp_machine *m, union instruction op )
 
 static void do_ADD( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -197,7 +203,7 @@ static void do_ADD( struct arb_vp_machine *m, union instruction op )
 
 static void do_DP3( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -212,7 +218,7 @@ static void do_DP3( struct arb_vp_machine *m, union instruction op )
 
 static void do_DP4( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -226,7 +232,7 @@ static void do_DP4( struct arb_vp_machine *m, union instruction op )
 
 static void do_DPH( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -240,7 +246,7 @@ static void do_DPH( struct arb_vp_machine *m, union instruction op )
 
 static void do_DST( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -253,7 +259,7 @@ static void do_DST( struct arb_vp_machine *m, union instruction op )
 
 static void do_EX2( struct arb_vp_machine *m, union instruction op ) 
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
 
    result[0] = (GLfloat)RoughApproxPow2(arg0[0]);
@@ -262,7 +268,7 @@ static void do_EX2( struct arb_vp_machine *m, union instruction op )
 
 static void do_EXP( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    GLfloat tmp = arg0[0];
    GLfloat flr_tmp = FLOORF(tmp);
@@ -278,7 +284,7 @@ static void do_EXP( struct arb_vp_machine *m, union instruction op )
 
 static void do_FLR( struct arb_vp_machine *m, union instruction op ) 
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
 
    result[0] = FLOORF(arg0[0]);
@@ -289,7 +295,7 @@ static void do_FLR( struct arb_vp_machine *m, union instruction op )
 
 static void do_FRC( struct arb_vp_machine *m, union instruction op ) 
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
 
    result[0] = arg0[0] - FLOORF(arg0[0]);
@@ -300,7 +306,7 @@ static void do_FRC( struct arb_vp_machine *m, union instruction op )
 
 static void do_LG2( struct arb_vp_machine *m, union instruction op ) 
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
 
    result[0] = RoughApproxLog2(arg0[0]);
@@ -311,7 +317,7 @@ static void do_LG2( struct arb_vp_machine *m, union instruction op )
 
 static void do_LIT( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
 
    const GLfloat epsilon = 1.0F / 256.0F; /* per NV spec */
@@ -330,7 +336,7 @@ static void do_LIT( struct arb_vp_machine *m, union instruction op )
 
 static void do_LOG( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    GLfloat tmp = FABSF(arg0[0]);
    int exponent;
@@ -344,7 +350,7 @@ static void do_LOG( struct arb_vp_machine *m, union instruction op )
 
 static void do_MAX( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -357,7 +363,7 @@ static void do_MAX( struct arb_vp_machine *m, union instruction op )
 
 static void do_MIN( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -369,7 +375,7 @@ static void do_MIN( struct arb_vp_machine *m, union instruction op )
 
 static void do_MOV( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
 
    result[0] = arg0[0];
@@ -380,7 +386,7 @@ static void do_MOV( struct arb_vp_machine *m, union instruction op )
 
 static void do_MUL( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -393,7 +399,7 @@ static void do_MUL( struct arb_vp_machine *m, union instruction op )
 
 static void do_POW( struct arb_vp_machine *m, union instruction op ) 
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -403,8 +409,8 @@ static void do_POW( struct arb_vp_machine *m, union instruction op )
 
 static void do_REL( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
-   GLuint idx = (op.alu.idx0 + (GLint)m->reg[REG_ADDR][0]) & (MAX_NV_VERTEX_PROGRAM_PARAMS-1);
+   GLfloat *result = m->File[0][op.alu.dst];
+   GLuint idx = (op.alu.idx0 + (GLint)m->File[0][REG_ADDR][0]) & (MAX_NV_VERTEX_PROGRAM_PARAMS-1);
    const GLfloat *arg0 = m->File[op.alu.file0][idx];
 
    result[0] = arg0[0];
@@ -415,7 +421,7 @@ static void do_REL( struct arb_vp_machine *m, union instruction op )
 
 static void do_RCP( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
 
    result[0] = 1.0F / arg0[0];  
@@ -424,7 +430,7 @@ static void do_RCP( struct arb_vp_machine *m, union instruction op )
 
 static void do_RSQ( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
 
    result[0] = INV_SQRTF(FABSF(arg0[0]));
@@ -434,7 +440,7 @@ static void do_RSQ( struct arb_vp_machine *m, union instruction op )
 
 static void do_SGE( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -447,7 +453,7 @@ static void do_SGE( struct arb_vp_machine *m, union instruction op )
 
 static void do_SLT( struct arb_vp_machine *m, union instruction op )
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -459,7 +465,7 @@ static void do_SLT( struct arb_vp_machine *m, union instruction op )
 
 static void do_SUB( struct arb_vp_machine *m, union instruction op ) 
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -472,7 +478,7 @@ static void do_SUB( struct arb_vp_machine *m, union instruction op )
 
 static void do_XPD( struct arb_vp_machine *m, union instruction op ) 
 {
-   GLfloat *result = m->reg[op.alu.dst];
+   GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
@@ -617,6 +623,12 @@ static const struct opcode_info opcode_info[] =
    { 2, "MSK", print_MSK },
    { 1, "REL", print_ALU },
 };
+
+void _tnl_disassem_vba_insn( union instruction op )
+{
+   const struct opcode_info *info = &opcode_info[op.alu.opcode];
+   info->print( op, info );
+}
 
 
 static void (* const opcode_func[])(struct arb_vp_machine *, union instruction) = 
@@ -1006,12 +1018,18 @@ static void compile_vertex_program( struct arb_vp_machine *m,
     */
    if (DISASSEM) {
       for (i = 0; i < m->nr_instructions; i++) {
-	 union instruction insn = m->instructions[i];
-	 const struct opcode_info *info = &opcode_info[insn.alu.opcode];
-	 info->print( insn, info );
+	 _tnl_disassem_vba_insn(m->instructions[i]);
       }
       _mesa_printf("\n\n");
    }
+   
+#ifdef USE_SSE_ASM
+   /* TODO: check if anything changed...
+    */
+   if (m->try_codegen)
+      _tnl_sse_codegen_vertex_program(m);
+#endif
+
 }
 
 
@@ -1120,7 +1138,10 @@ static GLboolean do_ndc_cliptest( struct arb_vp_machine *m )
 }
 
 
-
+static void call_func( struct arb_vp_machine *m )
+{
+   m->func(m);
+}
 
 /**
  * Execute the given vertex program.  
@@ -1148,7 +1169,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 
    /* Initialize regs where necessary:
     */
-   ASSIGN_4V(m->reg[REG_ID], 0, 0, 0, 1);
+   ASSIGN_4V(m->File[0][REG_ID], 0, 0, 0, 1);
 
    m->nr_inputs = m->nr_outputs = 0;
 
@@ -1159,7 +1180,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 m->input[j].data = m->VB->AttribPtr[i]->data;
 	 m->input[j].stride = m->VB->AttribPtr[i]->stride;
 	 m->input[j].size = m->VB->AttribPtr[i]->size;
-	 ASSIGN_4V(m->reg[REG_IN0 + i], 0, 0, 0, 1);
+	 ASSIGN_4V(m->File[0][REG_IN0 + i], 0, 0, 0, 1);
       }
    }     
 
@@ -1178,26 +1199,31 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
       for (j = 0; j < m->nr_inputs; j++) {
 	 GLuint idx = REG_IN0 + m->input[j].idx;
 	 switch (m->input[j].size) {
-	 case 4: m->reg[idx][3] = m->input[j].data[3];
-	 case 3: m->reg[idx][2] = m->input[j].data[2];
-	 case 2: m->reg[idx][1] = m->input[j].data[1];
-	 case 1: m->reg[idx][0] = m->input[j].data[0];
+	 case 4: m->File[0][idx][3] = m->input[j].data[3];
+	 case 3: m->File[0][idx][2] = m->input[j].data[2];
+	 case 2: m->File[0][idx][1] = m->input[j].data[1];
+	 case 1: m->File[0][idx][0] = m->input[j].data[0];
 	 }
 
 	 STRIDE_F(m->input[j].data, m->input[j].stride);
       }
 
-      for (j = 0; j < m->nr_instructions; j++) {
-	 union instruction inst = m->instructions[j];	 
-	 opcode_func[inst.alu.opcode]( m, inst );
+      if (m->func) {
+	 call_func( m );
+      }
+      else {
+	 for (j = 0; j < m->nr_instructions; j++) {
+	    union instruction inst = m->instructions[j];	 
+	    opcode_func[inst.alu.opcode]( m, inst );
+	 }
       }
 
       for (j = 0; j < m->nr_outputs; j++) {
 	 GLuint idx = REG_OUT0 + m->output[j].idx;
-	 m->output[j].data[0] = m->reg[idx][0];
-	 m->output[j].data[1] = m->reg[idx][1];
-	 m->output[j].data[2] = m->reg[idx][2];
-	 m->output[j].data[3] = m->reg[idx][3];
+	 m->output[j].data[0] = m->File[0][idx][0];
+	 m->output[j].data[1] = m->File[0][idx][1];
+	 m->output[j].data[2] = m->File[0][idx][2];
+	 m->output[j].data[3] = m->File[0][idx][3];
 	 m->output[j].data += 4;
       }
    }
@@ -1250,17 +1276,17 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
       }
    }
 
-#if 0
+#if 1
    for (i = 0; i < VB->Count; i++) {
       printf("Out %d: %f %f %f %f %f %f %f %f\n", i,
 	     VEC_ELT(VB->ClipPtr, GLfloat, i)[0],
 	     VEC_ELT(VB->ClipPtr, GLfloat, i)[1],
 	     VEC_ELT(VB->ClipPtr, GLfloat, i)[2],
 	     VEC_ELT(VB->ClipPtr, GLfloat, i)[3],
-	     VEC_ELT(VB->ColorPtr[0], GLfloat, i)[0],
-	     VEC_ELT(VB->ColorPtr[0], GLfloat, i)[1],
-	     VEC_ELT(VB->ColorPtr[0], GLfloat, i)[2],
-	     VEC_ELT(VB->ColorPtr[0], GLfloat, i)[3]);
+	     VEC_ELT(VB->TexCoordPtr[0], GLfloat, i)[0],
+	     VEC_ELT(VB->TexCoordPtr[0], GLfloat, i)[1],
+	     VEC_ELT(VB->TexCoordPtr[0], GLfloat, i)[2],
+	     VEC_ELT(VB->TexCoordPtr[0], GLfloat, i)[3]);
    }
 #endif
 
@@ -1288,7 +1314,6 @@ validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       
       /* Grab the state GL state and put into registers:
        */
-      m->File[FILE_REG] = m->reg;
       m->File[FILE_LOCAL_PARAM] = program->Base.LocalParams;
       m->File[FILE_ENV_PARAM] = ctx->VertexProgram.Parameters;
       m->File[FILE_STATE_PARAM] = program->Parameters->ParameterValues;
@@ -1323,6 +1348,13 @@ static GLboolean init_vertex_program( GLcontext *ctx,
     */
    m->VB = VB;
    m->ctx = ctx;
+
+   m->File[0] = ALIGN_MALLOC(REG_MAX * sizeof(GLfloat) * 4, 16);
+
+   if (_mesa_getenv("MESA_EXPERIMENTAL"))
+      m->try_codegen = 1;
+
+   _mesa_printf("try_codegen %d\n", m->try_codegen);
 
    /* Allocate arrays of vertex output values */
    for (i = 0; i < VERT_RESULT_MAX; i++) {
@@ -1363,6 +1395,7 @@ static void dtr( struct tnl_pipeline_stage *stage )
       /* free misc arrays */
       _mesa_vector4f_free( &m->ndcCoords );
       ALIGN_FREE( m->clipmask );
+      ALIGN_FREE( m->File[0] );
 
       FREE( m );
       stage->privatePtr = NULL;

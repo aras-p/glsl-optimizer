@@ -40,27 +40,10 @@
 #define MSK        (VP_MAX_OPCODE+1)
 #define REL        (VP_MAX_OPCODE+2)
 
-
-/* Layout of register file:
-
-  0 -- Scratch (Arg0)
-  1 -- Scratch (Arg1)
-  2 -- Scratch (Result)
-  4 -- Program Temporary 0
-  16 -- Program Temporary 12 (max for NV_VERTEX_PROGRAM)
-  17 -- Output 0
-  31 -- Output 15 (max for NV_VERTEX_PROGRAM) (Last writeable register)
-  32 -- Parameter 0
-  ..
-  127 -- Parameter 63 (max for NV_VERTEX_PROGRAM)
-
-*/
-
 #define FILE_REG         0
 #define FILE_LOCAL_PARAM 1
 #define FILE_ENV_PARAM   2
 #define FILE_STATE_PARAM 3
-
 
 #define REG_ARG0   0
 #define REG_ARG1   1
@@ -74,6 +57,10 @@
 #define REG_IN0    32
 #define REG_IN15   47
 #define REG_ID     48		/* 0,0,0,1 */
+#define REG_ONES   49		/* 1,1,1,1 */
+#define REG_SWZ    50		/* -1,1,0,0 */
+#define REG_NEG    51		/* -1,-1,-1,-1 */
+#define REG_UNDEF  127		/* special case - never used */
 #define REG_MAX    128
 #define REG_INVALID ~0
 
@@ -81,7 +68,6 @@
  * following micro-instructions, each representable in a 32 bit packed
  * structure.
  */
-
 struct reg {
    GLuint file:2;
    GLuint idx:7;
@@ -124,13 +110,6 @@ union instruction {
 #define GET_RSW(swz, idx)      (((swz) >> ((idx)*2)) & 0x3)
 
 
-
-struct compilation {
-   GLuint reg_active;
-   union instruction *csr;
-   struct vertex_buffer *VB;	/* for input sizes! */
-};
-
 struct input {
    GLuint idx;
    GLfloat *data;
@@ -149,8 +128,7 @@ struct output {
  * Private storage for the vertex program pipeline stage.
  */
 struct arb_vp_machine {
-   GLfloat reg[REG_MAX][4];	/* Program temporaries, inputs and outputs */
-   GLfloat (*File[4])[4];	/* All values reference-able from the program. */
+   GLfloat (*File[4])[4];	/* All values referencable from the program. */
    GLint AddressReg;
 
    struct input input[16];
@@ -170,9 +148,14 @@ struct arb_vp_machine {
 
    GLuint vtx_nr;		/**< loop counter */
 
+   void (*func)( struct arb_vp_machine * ); /**< codegen'd program? */
+
    struct vertex_buffer *VB;
    GLcontext *ctx;
+
+   GLboolean try_codegen;
 };
 
+void _tnl_disassem_vba_insn( union instruction op );
 
 #endif
