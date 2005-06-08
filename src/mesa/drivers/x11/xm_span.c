@@ -3832,7 +3832,7 @@ get_row_ci(GLcontext *ctx, struct gl_renderbuffer *rb,
 	 XMesaDestroyImage( span );
       }
 #else
-      (*xmesa->display->GetImage)(source->buffer,
+      (*xmesa->display->GetImage)(xrb->pixmap,
 				  x, y, n, 1, ZPixmap,
 				  ~0L, (pointer)index);
 #endif
@@ -3867,7 +3867,7 @@ get_row_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
       span = XMesaCreateImage(xmesa->xm_visual->BitsPerPixel, n, 1, NULL);
       span->data = (char *)MALLOC(span->height * span->bytes_per_line);
       error = (!span->data);
-      (*xmesa->display->GetImage)(source->buffer,
+      (*xmesa->display->GetImage)(xrb->pixmap,
 				  x, YFLIP(xrb, y), n, 1, ZPixmap,
 				  ~0L, (pointer)span->data);
 #else
