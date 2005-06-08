@@ -22,6 +22,7 @@ struct x86_function {
    GLubyte *csr;
    GLuint stack_offset;
    GLint need_emms;
+   const char *fn;
 };
 
 enum x86_reg_file {
@@ -60,6 +61,17 @@ enum x86_cc {
    cc_NE			/* not equal / not zero */
 };
 
+enum sse_cc {
+   cc_Equal,
+   cc_LessThan,
+   cc_LessThanEqual,
+   cc_Unordered,
+   cc_NotEqual,
+   cc_NotLessThan,
+   cc_NotLessThanEqual,
+   cc_Ordered
+};
+
 #define cc_Z  cc_E
 #define cc_NZ cc_NE
 
@@ -86,8 +98,6 @@ struct x86_reg x86_deref( struct x86_reg reg );
 struct x86_reg x86_get_base_reg( struct x86_reg reg );
 
 
-
-
 /* Labels, jumps and fixup:
  */
 GLubyte *x86_get_label( struct x86_function *p );
@@ -96,162 +106,70 @@ void x86_jcc( struct x86_function *p,
 	      enum x86_cc cc,
 	      GLubyte *label );
 
-/* Always use a 32bit offset for forward jumps:
- */
 GLubyte *x86_jcc_forward( struct x86_function *p,
 			  enum x86_cc cc );
 
-/* Fixup offset from forward jump:
- */
 void x86_fixup_fwd_jump( struct x86_function *p,
 			 GLubyte *fixup );
 
-void x86_push( struct x86_function *p,
-	       struct x86_reg reg );
 
-void x86_pop( struct x86_function *p,
-	      struct x86_reg reg );
-
-void x86_inc( struct x86_function *p,
-	      struct x86_reg reg );
-
-void x86_dec( struct x86_function *p,
-	      struct x86_reg reg );
-
-void x86_ret( struct x86_function *p );
+/* Macro for sse_shufps() and sse2_pshufd():
+ */
+#define SHUF(_x,_y,_z,_w)       (((_x)<<0) | ((_y)<<2) | ((_z)<<4) | ((_w)<<6))
+#define SHUF_NOOP               RSW(0,1,2,3)
+#define GET_SHUF(swz, idx)      (((swz) >> ((idx)*2)) & 0x3)
 
 void mmx_emms( struct x86_function *p );
+void mmx_movd( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void mmx_movq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void mmx_packssdw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void mmx_packuswb( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 
-void x86_mov( struct x86_function *p,
-	      struct x86_reg dst,
-	      struct x86_reg src );
+void sse2_cvtps2dq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_movd( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_packssdw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_packsswb( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_packuswb( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_pshufd( struct x86_function *p, struct x86_reg dest, struct x86_reg arg0, GLubyte shuf );
+void sse2_rcpss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 
-void x86_xor( struct x86_function *p,
-	      struct x86_reg dst,
-	      struct x86_reg src );
+void sse_addps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_addss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_cvtps2pi( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_divss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_andps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_cmpps( struct x86_function *p, struct x86_reg dst, struct x86_reg src, GLubyte cc );
+void sse_maxps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_minps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_movaps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_movhlps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_movhps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_movlhps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_movlps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_movss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_movups( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_mulps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_subps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_rsqrtss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_shufps( struct x86_function *p, struct x86_reg dest, struct x86_reg arg0, GLubyte shuf );
 
-void x86_cmp( struct x86_function *p,
-	      struct x86_reg dst,
-	      struct x86_reg src );
-
-void sse2_movd( struct x86_function *p,
-		struct x86_reg dst,
-		struct x86_reg src );
-
-void mmx_movd( struct x86_function *p,
-	       struct x86_reg dst,
-	       struct x86_reg src );
-
-void mmx_movq( struct x86_function *p,
-	       struct x86_reg dst,
-	       struct x86_reg src );
-
-void sse_movss( struct x86_function *p,
-		struct x86_reg dst,
-		struct x86_reg src );
-
-void sse_movaps( struct x86_function *p,
-		 struct x86_reg dst,
-		 struct x86_reg src );
-
-void sse_movups( struct x86_function *p,
-		 struct x86_reg dst,
-		 struct x86_reg src );
-
-void sse_movhps( struct x86_function *p,
-		 struct x86_reg dst,
-		 struct x86_reg src );
-
-void sse_movlps( struct x86_function *p,
-		 struct x86_reg dst,
-		 struct x86_reg src );
-
-/* SSE operations often only have one format, with dest constrained to
- * be a register:
- */
-void sse_mulps( struct x86_function *p,
-		struct x86_reg dst,
-		struct x86_reg src );
-
-void sse_addps( struct x86_function *p,
-		struct x86_reg dst,
-		struct x86_reg src );
-
-void sse_movhlps( struct x86_function *p,
-		  struct x86_reg dst,
-		  struct x86_reg src );
-
-void sse_movlhps( struct x86_function *p,
-		  struct x86_reg dst,
-		  struct x86_reg src );
-
-void sse2_cvtps2dq( struct x86_function *p,
-		    struct x86_reg dst,
-		    struct x86_reg src );
-
-void sse2_packssdw( struct x86_function *p,
-		    struct x86_reg dst,
-		    struct x86_reg src );
-
-void sse2_packsswb( struct x86_function *p,
-		    struct x86_reg dst,
-		    struct x86_reg src );
-
-void sse2_packuswb( struct x86_function *p,
-		    struct x86_reg dst,
-		    struct x86_reg src );
-
-void sse_cvtps2pi( struct x86_function *p,
-		   struct x86_reg dst,
-		   struct x86_reg src );
-
-void mmx_packssdw( struct x86_function *p,
-		   struct x86_reg dst,
-		   struct x86_reg src );
-
-void mmx_packuswb( struct x86_function *p,
-		   struct x86_reg dst,
-		   struct x86_reg src );
-
-
-/* Load effective address:
- */
-void x86_lea( struct x86_function *p,
-	      struct x86_reg dst,
-	      struct x86_reg src );
-
-void x86_test( struct x86_function *p,
-	       struct x86_reg dst,
-	       struct x86_reg src );
-
-/* Perform a reduced swizzle in a single sse instruction:
- */
-void sse2_pshufd( struct x86_function *p,
-		  struct x86_reg dest,
-		  struct x86_reg arg0,
-		  GLubyte x,
-		  GLubyte y,
-		  GLubyte z,
-		  GLubyte w );
-
-
-/* Shufps can also be used to implement a reduced swizzle when dest ==
- * arg0.
- */
-void sse_shufps( struct x86_function *p,
-		 struct x86_reg dest,
-		 struct x86_reg arg0,
-		 GLubyte x,
-		 GLubyte y,
-		 GLubyte z,
-		 GLubyte w );
+void x86_cmp( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_dec( struct x86_function *p, struct x86_reg reg );
+void x86_inc( struct x86_function *p, struct x86_reg reg );
+void x86_lea( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_mov( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_pop( struct x86_function *p, struct x86_reg reg );
+void x86_push( struct x86_function *p, struct x86_reg reg );
+void x86_ret( struct x86_function *p );
+void x86_test( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_xor( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 
 
 /* Retreive a reference to one of the function arguments, taking into
- * account any push/pop activity:
+ * account any push/pop activity.  Note - doesn't track explict
+ * manipulation of ESP by other instructions.
  */
-struct x86_reg x86_fn_arg( struct x86_function *p,
-			   GLuint arg );
+struct x86_reg x86_fn_arg( struct x86_function *p, GLuint arg );
 
 #endif
 #endif

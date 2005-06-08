@@ -2,7 +2,7 @@
 
 #include "x86sse.h"
 
-#define DISASSEM 0
+#define DISASSEM 1
 #define X86_TWOB 0x0f
 
 /* Emit bytes to the instruction stream:
@@ -21,10 +21,9 @@ static void emit_1i( struct x86_function *p, GLint i0 )
 static void disassem( struct x86_function *p, const char *fn )
 {
 #if DISASSEM
-   static const char *last_fn;
-   if (fn && fn != last_fn) {
+   if (fn && fn != p->fn) {
       _mesa_printf("0x%x: %s\n", p->csr, fn);
-      last_fn = fn;
+      p->fn = fn;
    }
 #endif
 }
@@ -75,7 +74,8 @@ static void emit_modrm( struct x86_function *p,
 
    /* Oh-oh we've stumbled into the SIB thing.
     */
-   if (regmem.idx == reg_SP) {
+   if (regmem.file == file_REG32 &&
+       regmem.idx == reg_SP) {
       emit_1ub_fn(p, 0x24, 0);		/* simplistic! */
    }
 
@@ -357,6 +357,38 @@ void sse_movlps( struct x86_function *p,
 /* SSE operations often only have one format, with dest constrained to
  * be a register:
  */
+void sse_maxps( struct x86_function *p,
+		struct x86_reg dst,
+		struct x86_reg src )
+{
+   emit_2ub(p, X86_TWOB, 0x5F);
+   emit_modrm( p, dst, src );
+}
+
+void sse_divss( struct x86_function *p,
+		struct x86_reg dst,
+		struct x86_reg src )
+{
+   emit_3ub(p, 0xF3, X86_TWOB, 0x5E);
+   emit_modrm( p, dst, src );
+}
+
+void sse_minps( struct x86_function *p,
+		struct x86_reg dst,
+		struct x86_reg src )
+{
+   emit_2ub(p, X86_TWOB, 0x5D);
+   emit_modrm( p, dst, src );
+}
+
+void sse_subps( struct x86_function *p,
+		struct x86_reg dst,
+		struct x86_reg src )
+{
+   emit_2ub(p, X86_TWOB, 0x5C);
+   emit_modrm( p, dst, src );
+}
+
 void sse_mulps( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
@@ -371,6 +403,39 @@ void sse_addps( struct x86_function *p,
 {
    emit_2ub(p, X86_TWOB, 0x58);
    emit_modrm( p, dst, src );
+}
+
+void sse_addss( struct x86_function *p,
+		struct x86_reg dst,
+		struct x86_reg src )
+{
+   emit_3ub(p, 0xF3, X86_TWOB, 0x58);
+   emit_modrm( p, dst, src );
+}
+
+void sse_andps( struct x86_function *p,
+		struct x86_reg dst,
+		struct x86_reg src )
+{
+   emit_2ub(p, X86_TWOB, 0x54);
+   emit_modrm( p, dst, src );
+}
+
+void sse2_rcpss( struct x86_function *p,
+		struct x86_reg dst,
+		struct x86_reg src )
+{
+   emit_3ub(p, 0xF3, X86_TWOB, 0x53);
+   emit_modrm( p, dst, src );
+}
+
+void sse_rsqrtss( struct x86_function *p,
+		  struct x86_reg dst,
+		  struct x86_reg src )
+{
+   emit_3ub(p, 0xF3, X86_TWOB, 0x52);
+   emit_modrm( p, dst, src );
+
 }
 
 void sse_movhlps( struct x86_function *p,
@@ -488,14 +553,11 @@ void x86_test( struct x86_function *p,
 void sse2_pshufd( struct x86_function *p,
 		  struct x86_reg dest,
 		  struct x86_reg arg0,
-		  GLubyte x,
-		  GLubyte y,
-		  GLubyte z,
-		  GLubyte w) 
+		  GLubyte shuf) 
 {
    emit_3ub(p, 0x66, X86_TWOB, 0x70);
    emit_modrm(p, dest, arg0);
-   emit_1ub(p, (x|(y<<2)|(z<<4)|w<<6)); 
+   emit_1ub(p, shuf); 
 }
 
 
@@ -505,14 +567,21 @@ void sse2_pshufd( struct x86_function *p,
 void sse_shufps( struct x86_function *p,
 		 struct x86_reg dest,
 		 struct x86_reg arg0,
-		 GLubyte x,
-		 GLubyte y,
-		 GLubyte z,
-		 GLubyte w) 
+		 GLubyte shuf) 
 {
    emit_2ub(p, X86_TWOB, 0xC6);
    emit_modrm(p, dest, arg0);
-   emit_1ub(p, (x|(y<<2)|(z<<4)|w<<6)); 
+   emit_1ub(p, shuf); 
+}
+
+void sse_cmpps( struct x86_function *p,
+		struct x86_reg dest,
+		struct x86_reg arg0,
+		GLubyte cc) 
+{
+   emit_2ub(p, X86_TWOB, 0xC2);
+   emit_modrm(p, dest, arg0);
+   emit_1ub(p, cc); 
 }
 
 
@@ -541,6 +610,8 @@ void x86_release_func( struct x86_function *p )
 
 void (*x86_get_func( struct x86_function *p ))(void)
 {
+   if (DISASSEM)
+      _mesa_printf("disassemble %p %p\n", p->store, p->csr);
    return (void (*)())p->store;
 }
 
