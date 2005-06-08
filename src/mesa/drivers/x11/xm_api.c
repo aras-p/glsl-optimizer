@@ -1999,24 +1999,27 @@ void XMesaDestroyBuffer( XMesaBuffer b )
    if (b->cleargc)  XMesaFreeGC( b->xm_visual->display, b->cleargc );
    if (b->swapgc)  XMesaFreeGC( b->xm_visual->display, b->swapgc );
 
-   if (b->backxrb->ximage) {
+   if (b->xm_visual->mesa_visual.doubleBufferMode)
+   {
+       if (b->backxrb->ximage) {
 #if defined(USE_XSHM) && !defined(XFree86Server)
-       if (b->shm) {
-	   XShmDetach( b->xm_visual->display, &b->shminfo );
-	   XDestroyImage( b->backxrb->ximage );
-	   shmdt( b->shminfo.shmaddr );
-       }
-       else
+	   if (b->shm) {
+	       XShmDetach( b->xm_visual->display, &b->shminfo );
+	       XDestroyImage( b->backxrb->ximage );
+	       shmdt( b->shminfo.shmaddr );
+	   }
+	   else
 #endif
-	   XMesaDestroyImage( b->backxrb->ximage );
-   }
-   if (b->backxrb->pixmap) {
-      XMesaFreePixmap( b->xm_visual->display, b->backxrb->pixmap );
-      if (b->xm_visual->hpcr_clear_flag) {
-	XMesaFreePixmap( b->xm_visual->display,
-			 b->xm_visual->hpcr_clear_pixmap );
-	XMesaDestroyImage( b->xm_visual->hpcr_clear_ximage );
-      }
+	       XMesaDestroyImage( b->backxrb->ximage );
+       }
+       if (b->backxrb->pixmap) {
+	   XMesaFreePixmap( b->xm_visual->display, b->backxrb->pixmap );
+	   if (b->xm_visual->hpcr_clear_flag) {
+	       XMesaFreePixmap( b->xm_visual->display,
+				b->xm_visual->hpcr_clear_pixmap );
+	       XMesaDestroyImage( b->xm_visual->hpcr_clear_ximage );
+	   }
+       }
    }
    if (b->rowimage) {
       _mesa_free( b->rowimage->data );
@@ -2634,7 +2637,7 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
  */
 void XMesaResizeBuffers( XMesaBuffer b )
 {
-#if OLD_RENDERBUFFER && 0
+#if OLD_RENDERBUFFER
    xmesa_resize_buffers(ctx, &(b->mesa_buffer), 0, 0 );
 #endif
 }
