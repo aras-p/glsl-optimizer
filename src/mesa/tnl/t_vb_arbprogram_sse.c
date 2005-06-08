@@ -66,7 +66,7 @@
  * EDI
  */
 
-
+#define DISASSEM 0
 
 #define FAIL								\
 do {									\
@@ -803,8 +803,10 @@ static GLboolean build_vertex_program( struct compilation *cp )
       union instruction inst = cp->m->instructions[j];	 
       cp->insn_counter = j+1;	/* avoid zero */
       
-      _mesa_printf("%p: ", cp->func.csr); 
-      _tnl_disassem_vba_insn( inst );
+      if (DISASSEM) {
+	 _mesa_printf("%p: ", cp->func.csr); 
+	 _tnl_disassem_vba_insn( inst );
+      }
       cp->func.fn = NULL;
 
       if (!emit_func[inst.alu.opcode]( cp, inst )) {

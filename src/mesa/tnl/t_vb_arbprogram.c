@@ -26,7 +26,7 @@
  * \file t_arb_program.c
  * Compile vertex programs to an intermediate representation.
  * Execute vertex programs over a buffer of vertices.
- * \author Keith Whitwell
+ * \author Keith Whitwell, Brian Paul
  */
 
 #include "glheader.h"
@@ -1276,7 +1276,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
       }
    }
 
-#if 1
+#if 0
    for (i = 0; i < VB->Count; i++) {
       printf("Out %d: %f %f %f %f %f %f %f %f\n", i,
 	     VEC_ELT(VB->ClipPtr, GLfloat, i)[0],
