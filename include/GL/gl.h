@@ -2213,13 +2213,9 @@ GLAPI void GLAPIENTRY glTracePointerRangeMESA( const GLvoid* first, const GLvoid
 
 typedef void (*GLprogramcallbackMESA)(GLenum target, GLvoid *data);
 
-GLAPI void GLAPIENTRY
-glProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback,
-                      GLvoid *data);
+GLAPI void GLAPIENTRY glProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback, GLvoid *data);
 
-GLAPI void GLAPIENTRY
-glGetProgramRegisterfvMESA(GLenum target, GLsizei len, const GLubyte *name,
-                           GLfloat *v);
+GLAPI void GLAPIENTRY glGetProgramRegisterfvMESA(GLenum target, GLsizei len, const GLubyte *name, GLfloat *v);
 
 #endif /* GL_MESA_program_debug */
 
