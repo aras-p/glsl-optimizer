@@ -353,7 +353,8 @@ _mesa_free_parameter_list(struct program_parameter_list *paramList)
 {
    _mesa_free_parameters(paramList);
    _mesa_free(paramList->Parameters);
-   _mesa_free(paramList->ParameterValues);
+   if (paramList->ParameterValues)
+      ALIGN_FREE(paramList->ParameterValues);
    _mesa_free(paramList);
 }
 
@@ -385,18 +386,24 @@ add_parameter(struct program_parameter_list *paramList,
    const GLuint n = paramList->NumParameters;
 
    if (n == paramList->Size) {
+      GLfloat (*tmp)[4];
+
       paramList->Size *= 2;
       if (!paramList->Size)
-	 paramList->Size = 4;
+	 paramList->Size = 8;
 
       paramList->Parameters = (struct program_parameter *)
 	 _mesa_realloc(paramList->Parameters,
 		       n * sizeof(struct program_parameter),
 		       paramList->Size * sizeof(struct program_parameter));
-      paramList->ParameterValues = (GLfloat (*)[4])
-	 _mesa_realloc(paramList->ParameterValues,
-		       n * 4 * sizeof(GLfloat),
-		       paramList->Size * 4 * sizeof(GLfloat));
+
+      tmp = paramList->ParameterValues;
+      paramList->ParameterValues = ALIGN_MALLOC(paramList->Size * 4 * sizeof(GLfloat), 16);
+      if (tmp) {
+	 _mesa_memcpy(paramList->ParameterValues, tmp, 
+		      n * 4 * sizeof(GLfloat));
+	 ALIGN_FREE(tmp);
+      }
    }
 
    if (!paramList->Parameters ||
