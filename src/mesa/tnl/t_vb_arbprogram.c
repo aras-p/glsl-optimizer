@@ -96,16 +96,17 @@ static GLfloat RoughApproxLog2(GLfloat t)
 
 static GLfloat RoughApproxPow2(GLfloat t)
 {   
-   GLfloat q;
-#ifdef USE_IEEE
-   GLint ii = (GLint) t;
-   ii = (ii << 23) + 0x3f800000;
-   SET_FLOAT_BITS(q, ii);
-   q = *((GLfloat *) (void *)&ii);
+#if 0
+   /* This isn't nearly accurate enough - it discards all of t's
+    * fractional bits!
+    */
+   fi_type fi;
+   fi.i = (GLint) t;
+   fi.i = (fi.i << 23) + 0x3f800000;
+   return fi.f;
 #else
-   q = (GLfloat) pow(2.0, floor_t0);
+   return (GLfloat) _mesa_pow(2.0, floor_t0);
 #endif
-   return q;
 }
 
 static GLfloat RoughApproxPower(GLfloat x, GLfloat y)
