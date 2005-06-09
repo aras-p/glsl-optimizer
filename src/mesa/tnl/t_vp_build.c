@@ -56,8 +56,7 @@ struct state_key {
    unsigned fog_enabled:1;
    unsigned fog_mode:2;
    unsigned point_attenuated:1;
-   unsigned nr_tex:4;
-   unsigned texgen_enabled_global:1;
+   unsigned texture_enabled_global:1;
 
    struct {
       unsigned light_enabled:1;
@@ -184,9 +183,11 @@ static struct state_key *make_state_key( GLcontext *ctx )
    if (ctx->Point._Attenuated)
       key->point_attenuated = 1;
 
-   if (ctx->Texture._TexGenEnabled)
-      key->texgen_enabled_global = 1;
-   
+   if (ctx->Texture._TexGenEnabled ||
+       ctx->Texture._TexMatEnabled ||
+       ctx->Texture._EnabledUnits)
+      key->texture_enabled_global = 1;
+      
    for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 
@@ -1276,7 +1277,7 @@ static void build_texture_transform( struct tnl_program *p )
 	    else {
 	       register_matrix_param6( p, STATE_MATRIX, STATE_TEXTURE, i, 
 				       0, 3, STATE_MATRIX_TRANSPOSE, texmat );
-	       emit_matrix_transform_vec4( p, out, texmat, in );
+	       emit_transpose_matrix_transform_vec4( p, out, texmat, in );
 	    }
 	 }
 
@@ -1335,7 +1336,7 @@ static void build_tnl_program( struct tnl_program *p )
    if (p->state->fog_enabled)
       build_fog(p);
 
-   if (p->state->nr_tex)
+   if (p->state->texture_enabled_global)
       build_texture_transform(p);
 
    if (p->state->point_attenuated)
@@ -1444,7 +1445,7 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    /* Look for an already-prepared program for this state:
     */
    ctx->_TnlProgram = (struct vertex_program *)
-      search_cache( tnl->vp_cache, hash, key, sizeof(key) );
+      search_cache( tnl->vp_cache, hash, key, sizeof(*key) );
    
    /* OK, we'll have to build a new one:
     */
