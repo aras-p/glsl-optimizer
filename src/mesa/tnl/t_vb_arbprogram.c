@@ -105,7 +105,7 @@ static GLfloat RoughApproxPow2(GLfloat t)
    fi.i = (fi.i << 23) + 0x3f800000;
    return fi.f;
 #else
-   return (GLfloat) _mesa_pow(2.0, floor_t0);
+   return (GLfloat) _mesa_pow(2.0, t);
 #endif
 }
 
