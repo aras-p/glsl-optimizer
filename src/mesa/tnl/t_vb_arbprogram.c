@@ -99,7 +99,7 @@ static GLfloat RoughApproxPow2(GLfloat t)
    GLfloat q;
 #ifdef USE_IEEE
    GLint ii = (GLint) t;
-   ii = (ii < 23) + 0x3f800000;
+   ii = (ii << 23) + 0x3f800000;
    SET_FLOAT_BITS(q, ii);
    q = *((GLfloat *) (void *)&ii);
 #else
@@ -110,7 +110,11 @@ static GLfloat RoughApproxPow2(GLfloat t)
 
 static GLfloat RoughApproxPower(GLfloat x, GLfloat y)
 {
+#if 0
+   return RoughApproxPow2(y * RoughApproxLog2(x));
+#else
    return (GLfloat) _mesa_pow(x, y);
+#endif
 }
 
 
