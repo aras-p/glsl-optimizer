@@ -59,6 +59,7 @@ extern const struct tnl_pipeline_stage _tnl_render_stage;
 /* Shorthand to plug in the default pipeline:
  */
 extern const struct tnl_pipeline_stage *_tnl_default_pipeline[];
+extern const struct tnl_pipeline_stage *_tnl_vp_pipeline[];
 
 
 /* Convenience routines provided by t_vb_render.c:

@@ -1770,6 +1770,7 @@ struct vertex_program
    GLuint InputsRead;     /* Bitmask of which input regs are read */
    GLuint OutputsWritten; /* Bitmask of which output regs are written to */
    struct program_parameter_list *Parameters; /**< array [NumParameters] */
+   void *TnlData;		/* should probably use Base.DriverData */
 };
 
 

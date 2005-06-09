@@ -614,6 +614,15 @@ struct tnl_clipspace
 };
 
 
+
+struct tnl_cache {
+   GLuint hash;
+   void *key;
+   void *data;
+   struct tnl_cache *next;
+};
+
+
 struct tnl_device_driver
 {
    /***
@@ -768,6 +777,8 @@ typedef struct
 
    GLvertexformat exec_vtxfmt;
    GLvertexformat save_vtxfmt;
+
+   struct tnl_cache *vp_cache;
 
 } TNLcontext;
 

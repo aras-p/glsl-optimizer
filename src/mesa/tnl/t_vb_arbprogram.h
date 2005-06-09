@@ -55,11 +55,11 @@
 #define REG_OUT0   17
 #define REG_OUT14  31
 #define REG_IN0    32
-#define REG_IN15   47
-#define REG_ID     48		/* 0,0,0,1 */
-#define REG_ONES   49		/* 1,1,1,1 */
-#define REG_SWZ    50		/* -1,1,0,0 */
-#define REG_NEG    51		/* -1,-1,-1,-1 */
+#define REG_IN31   63
+#define REG_ID     64		/* 0,0,0,1 */
+#define REG_ONES   65		/* 1,1,1,1 */
+#define REG_SWZ    66		/* -1,1,0,0 */
+#define REG_NEG    67		/* -1,-1,-1,-1 */
 #define REG_UNDEF  127		/* special case - never used */
 #define REG_MAX    128
 #define REG_INVALID ~0
@@ -122,6 +122,8 @@ struct output {
    GLfloat *data;
 };
 
+
+
 /*--------------------------------------------------------------------------- */
 
 /*!
@@ -129,17 +131,12 @@ struct output {
  */
 struct arb_vp_machine {
    GLfloat (*File[4])[4];	/* All values referencable from the program. */
-   GLint AddressReg;
 
-   struct input input[16];
+   struct input input[_TNL_ATTRIB_MAX];
    GLuint nr_inputs;
 
    struct output output[15];
    GLuint nr_outputs;
-
-   union instruction store[1024];
-   union instruction *instructions;
-   GLint nr_instructions;
 
    GLvector4f attribs[VERT_RESULT_MAX]; /**< result vectors. */
    GLvector4f ndcCoords;              /**< normalized device coords */
@@ -148,14 +145,23 @@ struct arb_vp_machine {
 
    GLuint vtx_nr;		/**< loop counter */
 
-   void (*func)( struct arb_vp_machine * ); /**< codegen'd program? */
-
    struct vertex_buffer *VB;
    GLcontext *ctx;
 
    GLboolean try_codegen;
 };
 
+struct tnl_compiled_program {
+   union instruction instructions[1024];
+   GLint nr_instructions;
+   void (*compiled_func)( struct arb_vp_machine * ); /**< codegen'd program */   
+};
+
+void _tnl_program_string_change( struct vertex_program * );
+void _tnl_program_destroy( struct vertex_program * );
+
 void _tnl_disassem_vba_insn( union instruction op );
+
+GLboolean _tnl_sse_codegen_vertex_program(struct tnl_compiled_program *p);
 
 #endif

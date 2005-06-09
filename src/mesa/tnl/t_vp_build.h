@@ -28,10 +28,6 @@
 
 #include "mtypes.h"
 
-/* Define to 1 to test fixed-function execution via vertex programs:
- */
-#define TNL_FIXED_FUNCTION_PROGRAM 0
-
 extern void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx );
 
 #endif

@@ -80,7 +80,8 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    struct vertex_program *program = ctx->VertexProgram.Current;
    GLuint i;
 
-   if (!ctx->VertexProgram._Enabled)
+   if (!ctx->VertexProgram._Enabled ||
+       !program->IsNVProgram)
       return GL_TRUE;
 
    /* load program parameter registers (they're read-only) */

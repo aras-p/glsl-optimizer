@@ -76,8 +76,7 @@ do {									\
 
 struct compilation {
    struct x86_function func;
-   struct arb_vp_machine *m;
-
+   struct tnl_compiled_program *p;   
    GLuint insn_counter;
 
    struct {
@@ -788,6 +787,7 @@ static GLint get_offset( const void *a, const void *b )
 
 static GLboolean build_vertex_program( struct compilation *cp )
 {
+   struct arb_vp_machine *m = NULL;
    GLuint j;
 
    struct x86_reg regEAX = x86_make_reg(file_REG32, reg_AX);
@@ -796,11 +796,11 @@ static GLboolean build_vertex_program( struct compilation *cp )
    x86_mov(&cp->func, regEAX, x86_fn_arg(&cp->func, 1));
    x86_mov(&cp->func, parmECX, regEAX);
    
-   x86_mov(&cp->func, regEAX, x86_make_disp(regEAX, get_offset(cp->m, cp->m->File + FILE_REG)));
-   x86_mov(&cp->func, parmECX, x86_make_disp(parmECX, get_offset(cp->m, cp->m->File + FILE_STATE_PARAM)));
+   x86_mov(&cp->func, regEAX, x86_make_disp(regEAX, get_offset(m, m->File + FILE_REG)));
+   x86_mov(&cp->func, parmECX, x86_make_disp(parmECX, get_offset(m, m->File + FILE_STATE_PARAM)));
 
-   for (j = 0; j < cp->m->nr_instructions; j++) {
-      union instruction inst = cp->m->instructions[j];	 
+   for (j = 0; j < cp->p->nr_instructions; j++) {
+      union instruction inst = cp->p->instructions[j];	 
       cp->insn_counter = j+1;	/* avoid zero */
       
       if (DISASSEM) {
@@ -842,27 +842,30 @@ static GLboolean build_vertex_program( struct compilation *cp )
  * struct arb_vertex_machine.
  */
 GLboolean
-_tnl_sse_codegen_vertex_program(struct arb_vp_machine *m)
+_tnl_sse_codegen_vertex_program(struct tnl_compiled_program *p)
 {
    struct compilation cp;
    
    memset(&cp, 0, sizeof(cp));
-   cp.m = m;
+   cp.p = p;
    cp.have_sse2 = 1;
 
-   if (m->func) {
-      free((void *)m->func);
-      m->func = NULL;
+   if (p->compiled_func) {
+      free((void *)p->compiled_func);
+      p->compiled_func = NULL;
    }
 
    x86_init_func(&cp.func);
 
+   /* Note ctx state is not referenced in building the function, so it
+    * depends only on the list of instructions:
+    */
    if (!build_vertex_program(&cp)) {
       x86_release_func( &cp.func );
       return GL_FALSE;
    }
 
-   m->func = (void (*)(struct arb_vp_machine *))x86_get_func( &cp.func );
+   p->compiled_func = (void (*)(struct arb_vp_machine *))x86_get_func( &cp.func );
    return GL_TRUE;
 }
 
@@ -871,7 +874,7 @@ _tnl_sse_codegen_vertex_program(struct arb_vp_machine *m)
 #else
 
 GLboolean
-_tnl_sse_codegen_vertex_program( GLcontext *ctx )
+_tnl_sse_codegen_vertex_program(struct tnl_compiled_program *p)
 {
    /* Dummy version for when USE_SSE_ASM not defined */
    return GL_FALSE;

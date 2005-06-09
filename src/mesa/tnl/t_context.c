@@ -95,7 +95,11 @@ _tnl_CreateContext( GLcontext *ctx )
    _tnl_save_init( ctx );
    _tnl_array_init( ctx );
    _tnl_vtx_init( ctx );
-   _tnl_install_pipeline( ctx, _tnl_default_pipeline );
+
+   if (ctx->_MaintainTnlProgram) 
+      _tnl_install_pipeline( ctx, _tnl_vp_pipeline );
+   else 
+      _tnl_install_pipeline( ctx, _tnl_default_pipeline );
 
    /* Initialize the arrayelt helper
     */
@@ -139,6 +143,8 @@ _tnl_DestroyContext( GLcontext *ctx )
    _tnl_save_destroy( ctx );
    _tnl_destroy_pipeline( ctx );
    _ae_destroy_context( ctx );
+
+   _tnl_ProgramCacheDestroy( ctx );
 
    FREE(tnl);
    ctx->swtnl_context = NULL;

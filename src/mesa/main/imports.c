@@ -842,7 +842,7 @@ _mesa_printf( const char *fmtString, ... )
 #if defined(XFree86LOADER) && defined(IN_MODULE)
    xf86printf("%s", s);
 #else
-   printf("%s", s);
+   fprintf(stderr,"%s", s);
 #endif
 }
 

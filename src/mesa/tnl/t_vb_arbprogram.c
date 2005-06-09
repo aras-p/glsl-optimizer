@@ -56,7 +56,6 @@ struct opcode_info {
 struct compilation {
    GLuint reg_active;
    union instruction *csr;
-   struct vertex_buffer *VB;	/* for input sizes! */
 };
 
 
@@ -518,7 +517,7 @@ static void print_reg( GLuint file, GLuint reg )
 	 _mesa_printf("ARG%d", reg - REG_ARG0);
       else if (reg >= REG_TMP0 && reg <= REG_TMP11)
 	 _mesa_printf("TMP%d", reg - REG_TMP0);
-      else if (reg >= REG_IN0 && reg <= REG_IN15)
+      else if (reg >= REG_IN0 && reg <= REG_IN31)
 	 _mesa_printf("IN%d", reg - REG_IN0);
       else if (reg >= REG_OUT0 && reg <= REG_OUT14)
 	 _mesa_printf("OUT%d", reg - REG_OUT0);
@@ -989,18 +988,33 @@ static void cvp_emit_inst( struct compilation *cp,
    }
 }
 
+static void free_tnl_data( struct vertex_program *program  )
+{
+   struct tnl_compiled_program *p = program->TnlData;
+   if (p->compiled_func) free((void *)p->compiled_func);
+   free(p);
+   program->TnlData = NULL;
+}
 
-static void compile_vertex_program( struct arb_vp_machine *m,
-				    const struct vertex_program *program )
+static void compile_vertex_program( struct vertex_program *program,
+				    GLboolean try_codegen )
 { 
    struct compilation cp;
+   struct tnl_compiled_program *p = CALLOC_STRUCT(tnl_compiled_program);
    GLuint i;
 
-   /* Initialize cp:
+   _mesa_printf("%s\n", __FUNCTION__);
+
+   if (program->TnlData) 
+      free_tnl_data( program );
+   
+   program->TnlData = p;
+
+   /* Initialize cp.  Note that ctx and VB aren't used in compilation
+    * so we don't have to worry about statechanges:
     */
    memset(&cp, 0, sizeof(cp));
-   cp.VB = m->VB;
-   cp.csr = m->store;
+   cp.csr = p->instructions;
 
    /* Compile instructions:
     */
@@ -1010,24 +1024,20 @@ static void compile_vertex_program( struct arb_vp_machine *m,
 
    /* Finish up:
     */
-   m->instructions = m->store;
-   m->nr_instructions = cp.csr - m->store;
-
+   p->nr_instructions = cp.csr - p->instructions;
 
    /* Print/disassemble:
     */
    if (DISASSEM) {
-      for (i = 0; i < m->nr_instructions; i++) {
-	 _tnl_disassem_vba_insn(m->instructions[i]);
+      for (i = 0; i < p->nr_instructions; i++) {
+	 _tnl_disassem_vba_insn(p->instructions[i]);
       }
       _mesa_printf("\n\n");
    }
    
 #ifdef USE_SSE_ASM
-   /* TODO: check if anything changed...
-    */
-   if (m->try_codegen)
-      _tnl_sse_codegen_vertex_program(m);
+   if (try_codegen)
+      _tnl_sse_codegen_vertex_program(p);
 #endif
 
 }
@@ -1046,7 +1056,7 @@ static void userclip( GLcontext *ctx,
 {
    GLuint p;
 
-   for (p = 0; p < ctx->Const.MaxClipPlanes; p++)
+   for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
       if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
 	 GLuint nr, i;
 	 const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
@@ -1079,6 +1089,7 @@ static void userclip( GLcontext *ctx,
 	    }
 	 }
       }
+   }
 }
 
 
@@ -1138,9 +1149,10 @@ static GLboolean do_ndc_cliptest( struct arb_vp_machine *m )
 }
 
 
-static void call_func( struct arb_vp_machine *m )
+static INLINE void call_func( struct tnl_compiled_program *p,
+			      struct arb_vp_machine *m )
 {
-   m->func(m);
+   p->compiled_func(m);
 }
 
 /**
@@ -1160,12 +1172,18 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 				     ctx->_TnlProgram);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
    struct arb_vp_machine *m = ARB_VP_MACHINE(stage);
-   GLuint i, j, outputs = program->OutputsWritten;
+   struct tnl_compiled_program *p;
+   GLuint i, j, outputs;
+
+   if (!program || program->IsNVProgram)
+      return GL_TRUE;   
 
    if (program->Parameters) {
       _mesa_load_state_parameters(ctx, program->Parameters);
    }   
    
+   p = (struct tnl_compiled_program *)program->TnlData;
+   assert(p);
 
    /* Initialize regs where necessary:
     */
@@ -1173,11 +1191,11 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 
    m->nr_inputs = m->nr_outputs = 0;
 
-   for (i = 0; i < 16; i++) {
+   for (i = 0; i < _TNL_ATTRIB_MAX; i++) {
       if (program->InputsRead & (1<<i)) {
 	 GLuint j = m->nr_inputs++;
 	 m->input[j].idx = i;
-	 m->input[j].data = m->VB->AttribPtr[i]->data;
+	 m->input[j].data = (GLfloat *)m->VB->AttribPtr[i]->data;
 	 m->input[j].stride = m->VB->AttribPtr[i]->stride;
 	 m->input[j].size = m->VB->AttribPtr[i]->size;
 	 ASSIGN_4V(m->File[0][REG_IN0 + i], 0, 0, 0, 1);
@@ -1188,7 +1206,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
       if (program->OutputsWritten & (1<<i)) {
 	 GLuint j = m->nr_outputs++;
 	 m->output[j].idx = i;
-	 m->output[j].data = m->attribs[i].data;
+	 m->output[j].data = (GLfloat *)m->attribs[i].data;
       }
    }     
 
@@ -1208,12 +1226,12 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 STRIDE_F(m->input[j].data, m->input[j].stride);
       }
 
-      if (m->func) {
-	 call_func( m );
+      if (p->compiled_func) {
+	 call_func( p, m );
       }
       else {
-	 for (j = 0; j < m->nr_instructions; j++) {
-	    union instruction inst = m->instructions[j];	 
+	 for (j = 0; j < p->nr_instructions; j++) {
+	    union instruction inst = p->instructions[j];	 
 	    opcode_func[inst.alu.opcode]( m, inst );
 	 }
       }
@@ -1240,6 +1258,8 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
     */
    VB->ClipPtr = &m->attribs[VERT_RESULT_HPOS];
    VB->ClipPtr->count = VB->Count;
+
+   outputs = program->OutputsWritten;
 
    if (outputs & (1<<VERT_RESULT_COL0)) {
       VB->ColorPtr[0] = &m->attribs[VERT_RESULT_COL0];
@@ -1303,14 +1323,13 @@ validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    struct vertex_program *program = 
       (ctx->VertexProgram._Enabled ? ctx->VertexProgram.Current : 0);
 
-#if TNL_FIXED_FUNCTION_PROGRAM
-   if (!program) {
+   if (!program && ctx->_MaintainTnlProgram) {
       program = ctx->_TnlProgram;
    }
-#endif
 
    if (program) {
-      compile_vertex_program( m, program );
+      if (!program->TnlData)
+	 compile_vertex_program( program, m->try_codegen );
       
       /* Grab the state GL state and put into registers:
        */
@@ -1354,8 +1373,6 @@ static GLboolean init_vertex_program( GLcontext *ctx,
    if (_mesa_getenv("MESA_EXPERIMENTAL"))
       m->try_codegen = 1;
 
-   _mesa_printf("try_codegen %d\n", m->try_codegen);
-
    /* Allocate arrays of vertex output values */
    for (i = 0; i < VERT_RESULT_MAX; i++) {
       _mesa_vector4f_alloc( &m->attribs[i], 0, size, 32 );
@@ -1366,11 +1383,8 @@ static GLboolean init_vertex_program( GLcontext *ctx,
    _mesa_vector4f_alloc( &m->ndcCoords, 0, size, 32 );
    m->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
 
-
-#if TNL_FIXED_FUNCTION_PROGRAM
-   _mesa_allow_light_in_model( ctx, GL_FALSE );
-#endif
-
+   if (ctx->_MaintainTnlProgram)
+      _mesa_allow_light_in_model( ctx, GL_FALSE );
 
    return GL_TRUE;
 }

@@ -131,9 +131,8 @@ void _tnl_run_pipeline( GLcontext *ctx )
     * (ie const or non-const).
     */
    if (check_input_changes( ctx ) || tnl->pipeline.new_state) {
-#if TNL_FIXED_FUNCTION_PROGRAM
-      _tnl_UpdateFixedFunctionProgram( ctx );
-#endif
+      if (ctx->_MaintainTnlProgram)
+	 _tnl_UpdateFixedFunctionProgram( ctx );
 
       for (i = 0; i < tnl->pipeline.nr_stages ; i++) {
 	 struct tnl_pipeline_stage *s = &tnl->pipeline.stages[i];
@@ -197,9 +196,6 @@ void _tnl_run_pipeline( GLcontext *ctx )
  * case, if it becomes necessary to do so.
  */
 const struct tnl_pipeline_stage *_tnl_default_pipeline[] = {
-#if TNL_FIXED_FUNCTION_PROGRAM
-   &_tnl_arb_vertex_program_stage,
-#else
    &_tnl_vertex_transform_stage,
    &_tnl_normal_transform_stage,
    &_tnl_lighting_stage,
@@ -208,9 +204,15 @@ const struct tnl_pipeline_stage *_tnl_default_pipeline[] = {
    &_tnl_texture_transform_stage,
    &_tnl_point_attenuation_stage,
 #if defined(FEATURE_NV_vertex_program) || defined(FEATURE_ARB_vertex_program)
-   &_tnl_vertex_program_stage,
-#endif
+   &_tnl_arb_vertex_program_stage,
+   &_tnl_vertex_program_stage, 
 #endif
    &_tnl_render_stage,
    NULL 
+};
+
+const struct tnl_pipeline_stage *_tnl_vp_pipeline[] = {
+   &_tnl_arb_vertex_program_stage,
+   &_tnl_render_stage,
+   NULL
 };
