@@ -40,7 +40,185 @@
 #include "shader/nvvertprog.h"
 #include "shader/arbvertparse.h"
 
+struct state_key {
+   unsigned light_global_enabled:1;
+   unsigned light_local_viewer:1;
+   unsigned light_twoside:1;
+   unsigned light_color_material:1;
+   unsigned light_color_material_mask:12;
+   unsigned light_material_mask:12;
 
+   unsigned normalize:1;
+   unsigned rescale_normals:1;
+   unsigned fog_source_is_depth:1;
+   unsigned tnl_do_vertex_fog:1;
+   unsigned separate_specular:1;
+   unsigned fog_enabled:1;
+   unsigned fog_mode:2;
+   unsigned point_attenuated:1;
+   unsigned nr_tex:4;
+   unsigned texgen_enabled_global:1;
+
+   struct {
+      unsigned light_enabled:1;
+      unsigned light_eyepos3_is_zero:1;
+      unsigned light_spotcutoff_is_180:1;
+      unsigned light_attenuated:1;      
+      unsigned texunit_really_enabled:1;
+      unsigned texmat_enabled:1;
+      unsigned texgen_enabled:4;
+      unsigned texgen_mode0:4;
+      unsigned texgen_mode1:4;
+      unsigned texgen_mode2:4;
+      unsigned texgen_mode3:4;
+   } unit[8];
+};
+
+
+
+#define FOG_LINEAR   0
+#define FOG_EXP      1
+#define FOG_EXP2     2
+#define FOG_UNKNOWN  3
+
+static GLuint translate_fog_mode( GLenum mode )
+{
+   switch (mode) {
+   case GL_LINEAR: return FOG_LINEAR;
+   case GL_EXP: return FOG_EXP;
+   case GL_EXP2: return FOG_EXP2;
+   default: return FOG_UNKNOWN;
+   }
+}
+
+#define TXG_NONE           0
+#define TXG_OBJ_LINEAR     1
+#define TXG_EYE_LINEAR     2
+#define TXG_SPHERE_MAP     3
+#define TXG_REFLECTION_MAP 4
+#define TXG_NORMAL_MAP     5
+
+static GLuint translate_texgen( GLboolean enabled, GLenum mode )
+{
+   if (!enabled)
+      return TXG_NONE;
+
+   switch (mode) {
+   case GL_OBJECT_LINEAR: return TXG_OBJ_LINEAR;
+   case GL_EYE_LINEAR: return TXG_EYE_LINEAR;
+   case GL_SPHERE_MAP: return TXG_SPHERE_MAP;
+   case GL_REFLECTION_MAP_NV: return TXG_REFLECTION_MAP;
+   case GL_NORMAL_MAP_NV: return TXG_NORMAL_MAP;
+   default: return TXG_NONE;
+   }
+}
+
+static struct state_key *make_state_key( GLcontext *ctx )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   struct state_key *key = CALLOC_STRUCT(state_key);
+   GLuint i;
+
+   key->separate_specular = (ctx->Light.Model.ColorControl ==
+			     GL_SEPARATE_SPECULAR_COLOR);
+
+   if (ctx->Light.Enabled) {
+      key->light_global_enabled = 1;
+
+      if (ctx->Light.Model.LocalViewer)
+	 key->light_local_viewer = 1;
+
+      if (ctx->Light.Model.TwoSide)
+	 key->light_twoside = 1;
+
+      if (ctx->Light.ColorMaterialEnabled)
+	 key->light_color_material = 1;
+
+      if (ctx->Light.ColorMaterialBitmask)
+	 key->light_color_material_mask = 1;
+
+      for (i = _TNL_ATTRIB_MAT_FRONT_AMBIENT ; i < _TNL_ATTRIB_INDEX ; i++) 
+	 if (VB->AttribPtr[i]->stride) 
+	    key->light_material_mask |= 1<<i;
+
+      for (i = 0; i < MAX_LIGHTS; i++) {
+	 struct gl_light *light = &ctx->Light.Light[i];
+
+	 if (light->Enabled) {
+	    key->unit[i].light_enabled = 1;
+
+	    if (light->EyePosition[3] == 0.0)
+	       key->unit[i].light_eyepos3_is_zero = 1;
+	    
+	    if (light->SpotCutoff == 180.0)
+	       key->unit[i].light_spotcutoff_is_180 = 1;
+
+	    if (light->ConstantAttenuation != 1.0 ||
+		light->LinearAttenuation != 1.0 ||
+		light->QuadraticAttenuation != 1.0)
+	       key->unit[i].light_attenuated = 1;
+	 }
+      }
+   }
+
+   if (ctx->Transform.Normalize)
+      key->normalize = 1;
+
+   if (ctx->Transform.RescaleNormals)
+      key->rescale_normals = 1;
+
+   if (ctx->Fog.Enabled)
+      key->fog_enabled = 1;
+
+   if (key->fog_enabled) {
+      if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT)
+	 key->fog_source_is_depth = 1;
+
+      if (tnl->_DoVertexFog)
+	 key->tnl_do_vertex_fog = 1;
+
+      key->fog_mode = translate_fog_mode(ctx->Fog.Mode);
+   }
+
+   if (ctx->Point._Attenuated)
+      key->point_attenuated = 1;
+
+   if (ctx->Texture._TexGenEnabled)
+      key->texgen_enabled_global = 1;
+   
+   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+
+      if (texUnit->_ReallyEnabled)
+	 key->unit[i].texunit_really_enabled = 1;
+
+      if (ctx->Texture._TexMatEnabled & ENABLE_TEXMAT(i))      
+	 key->unit[i].texmat_enabled = 1;
+      
+      if (texUnit->TexGenEnabled) {
+	 key->unit[i].texgen_enabled = 1;
+      
+	 key->unit[i].texgen_mode0 = 
+	    translate_texgen( texUnit->TexGenEnabled & (1<<0),
+			      texUnit->GenModeS );
+	 key->unit[i].texgen_mode1 = 
+	    translate_texgen( texUnit->TexGenEnabled & (1<<1),
+			      texUnit->GenModeT );
+	 key->unit[i].texgen_mode2 = 
+	    translate_texgen( texUnit->TexGenEnabled & (1<<2),
+			      texUnit->GenModeR );
+	 key->unit[i].texgen_mode3 = 
+	    translate_texgen( texUnit->TexGenEnabled & (1<<3),
+			      texUnit->GenModeQ );
+      }
+   }
+   
+   return key;
+}
+
+
+   
 /* Very useful debugging tool - produces annotated listing of
  * generated program with line/function references for each
  * instruction back into this file:
@@ -51,7 +229,7 @@
  * multiplications with DP4's or with MUL/MAD's?  SSE works better
  * with the latter, drivers may differ.
  */
-#define PREFER_DP4 1
+#define PREFER_DP4 0
 
 #define MAX_INSN 200
 
@@ -77,7 +255,7 @@ struct ureg {
 
 
 struct tnl_program {
-   GLcontext *ctx;
+   const struct state_key *state;
    struct vertex_program *program;
    
    GLuint temp_in_use;
@@ -324,7 +502,7 @@ static void emit_op3fn(struct tnl_program *p,
    struct vp_instruction *inst = &p->program->Instructions[nr];
       
    if (p->program->Base.NumInstructions > MAX_INSN) {
-      _mesa_problem(p->ctx, "Out of instructions in emit_op3fn\n");
+      _mesa_problem(0, "Out of instructions in emit_op3fn\n");
       return;
    }
       
@@ -491,10 +669,10 @@ static struct ureg get_eye_normal( struct tnl_program *p )
 
       /* Normalize/Rescale:
        */
-      if (p->ctx->Transform.Normalize) {
+      if (p->state->normalize) {
 	 emit_normalize_vec3( p, p->eye_normal, p->eye_normal );
       }
-      else if (p->ctx->Transform.RescaleNormals) {
+      else if (p->state->rescale_normals) {
 	 struct ureg rescale = register_param2(p, STATE_INTERNAL,
 					       STATE_NORMAL_SCALE);
 
@@ -536,22 +714,15 @@ static GLuint material_attrib( GLuint side, GLuint property )
 
 static void set_material_flags( struct tnl_program *p )
 {
-   GLcontext *ctx = p->ctx;
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   GLuint i;
-
    p->color_materials = 0;
    p->materials = 0;
 
-   if (ctx->Light.ColorMaterialEnabled) {
+   if (p->state->light_color_material) {
       p->materials = 
-	 p->color_materials = 
-	 ctx->Light.ColorMaterialBitmask << _TNL_ATTRIB_MAT_FRONT_AMBIENT;
+	 p->color_materials = p->state->light_color_material_mask;
    }
 
-   for (i = _TNL_ATTRIB_MAT_FRONT_AMBIENT ; i < _TNL_ATTRIB_INDEX ; i++) 
-      if (tnl->vb.AttribPtr[i]->stride) 
-	 p->materials |= 1<<i;
+   p->materials |= p->state->light_material_mask;
 }
 
 
@@ -617,7 +788,6 @@ static struct ureg get_lightprod( struct tnl_program *p, GLuint light,
 
 static struct ureg calculate_light_attenuation( struct tnl_program *p,
 						GLuint i, 
-						struct gl_light *light,
 						struct ureg VPpli,
 						struct ureg dist )
 {
@@ -627,7 +797,7 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
 
    /* Calculate spot attenuation:
     */
-   if (light->SpotCutoff != 180.0F) {
+   if (!p->state->unit[i].light_spotcutoff_is_180) {
       struct ureg spot_dir = register_param3(p, STATE_LIGHT, i,
 					     STATE_SPOT_DIRECTION);
       struct ureg spot = get_temp(p);
@@ -645,9 +815,7 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
 
    /* Calculate distance attenuation:
     */
-   if (light->ConstantAttenuation != 1.0 ||
-       light->LinearAttenuation != 1.0 ||
-       light->QuadraticAttenuation != 1.0) {
+   if (p->state->unit[i].light_attenuated) {
 
       /* 1/d,d,d,1/d */
       emit_op1(p, VP_OPCODE_RCP, dist, WRITEMASK_YZ, dist); 
@@ -656,7 +824,7 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
       /* 1/dist-atten */
       emit_op2(p, VP_OPCODE_DP3, dist, 0, attenuation, dist); 
 
-      if (light->SpotCutoff != 180.0F) {
+      if (!p->state->unit[i].light_spotcutoff_is_180) {
 	 /* dist-atten */
 	 emit_op1(p, VP_OPCODE_RCP, dist, 0, dist); 
 	 /* spot-atten * dist-atten */
@@ -680,10 +848,8 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
  */
 static void build_lighting( struct tnl_program *p )
 {
-   GLcontext *ctx = p->ctx;
-   const GLboolean twoside = ctx->Light.Model.TwoSide;
-   const GLboolean separate = (ctx->Light.Model.ColorControl ==
-			       GL_SEPARATE_SPECULAR_COLOR);
+   const GLboolean twoside = p->state->light_twoside;
+   const GLboolean separate = p->state->separate_specular;
    GLuint nr_lights = 0, count = 0;
    struct ureg normal = get_eye_normal(p);
    struct ureg lit = get_temp(p);
@@ -693,7 +859,7 @@ static void build_lighting( struct tnl_program *p )
    GLuint i;
 
    for (i = 0; i < MAX_LIGHTS; i++) 
-      if (ctx->Light.Light[i].Enabled)
+      if (p->state->unit[i].light_enabled)
 	 nr_lights++;
    
    set_material_flags(p);
@@ -754,15 +920,13 @@ static void build_lighting( struct tnl_program *p )
 
 
    for (i = 0; i < MAX_LIGHTS; i++) {
-      struct gl_light *light = &ctx->Light.Light[i];
-
-      if (light->Enabled) {
+      if (p->state->unit[i].light_enabled) {
 	 struct ureg half = undef;
 	 struct ureg att = undef, VPpli = undef;
 	  
 	 count++;
 
-	 if (light->EyePosition[3] == 0) {
+	 if (p->state->unit[i].light_eyepos3_is_zero) {
 	    /* Can used precomputed constants in this case.
 	     * Attenuation never applies to infinite lights.
 	     */
@@ -793,17 +957,15 @@ static void build_lighting( struct tnl_program *p )
 
 	    /* Calculate  attenuation:
 	     */ 
-	    if (light->SpotCutoff != 180.0 ||
-		light->ConstantAttenuation != 1.0 ||
-		light->LinearAttenuation != 1.0 ||
-		light->QuadraticAttenuation != 1.0) {
-	       att = calculate_light_attenuation(p, i, light, VPpli, dist);
+	    if (!p->state->unit[i].light_spotcutoff_is_180 ||
+		p->state->unit[i].light_attenuated) {
+	       att = calculate_light_attenuation(p, i, VPpli, dist);
 	    }
 	 
       
 	    /* Calculate viewer direction, or use infinite viewer:
 	     */
-	    if (ctx->Light.Model.LocalViewer) {
+	    if (p->state->light_local_viewer) {
 	       struct ureg eye_hat = get_eye_position_normalized(p);
 	       emit_op2(p, VP_OPCODE_SUB, half, 0, VPpli, eye_hat);
 	    }
@@ -909,24 +1071,22 @@ static void build_lighting( struct tnl_program *p )
 
 static void build_fog( struct tnl_program *p )
 {
-   GLcontext *ctx = p->ctx;
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct ureg fog = register_output(p, VERT_RESULT_FOGC);
    struct ureg input;
    
-   if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT) {
+   if (p->state->fog_source_is_depth) {
       input = swizzle1(get_eye_position(p), Z);
    }
    else {
       input = swizzle1(register_input(p, VERT_ATTRIB_FOG), X);
    }
 
-   if (tnl->_DoVertexFog) {
+   if (p->state->tnl_do_vertex_fog) {
       struct ureg params = register_param1(p, STATE_FOG_PARAMS);
       struct ureg tmp = get_temp(p);
 
-      switch (ctx->Fog.Mode) {
-      case GL_LINEAR: {
+      switch (p->state->fog_mode) {
+      case FOG_LINEAR: {
 	 struct ureg id = get_identity_param(p);
 	 emit_op2(p, VP_OPCODE_SUB, tmp, 0, swizzle1(params,Z), input); 
 	 emit_op2(p, VP_OPCODE_MUL, tmp, 0, tmp, swizzle1(params,W)); 
@@ -934,13 +1094,13 @@ static void build_fog( struct tnl_program *p )
 	 emit_op2(p, VP_OPCODE_MIN, fog, WRITEMASK_X, tmp, swizzle1(id,W));
 	 break;
       }
-      case GL_EXP:
+      case FOG_EXP:
 	 emit_op1(p, VP_OPCODE_ABS, tmp, 0, input); 
 	 emit_op2(p, VP_OPCODE_MUL, tmp, 0, tmp, swizzle1(params,X)); 
 	 emit_op2(p, VP_OPCODE_POW, fog, WRITEMASK_X, 
 		  register_const1f(p, M_E), negate(tmp)); 
 	 break;
-      case GL_EXP2:
+      case FOG_EXP2:
 	 emit_op2(p, VP_OPCODE_MUL, tmp, 0, input, swizzle1(params,X)); 
 	 emit_op2(p, VP_OPCODE_MUL, tmp, 0, tmp, tmp); 
 	 emit_op2(p, VP_OPCODE_POW, fog, WRITEMASK_X, 
@@ -1020,18 +1180,16 @@ static void build_sphere_texgen( struct tnl_program *p,
 
 static void build_texture_transform( struct tnl_program *p )
 {
-   GLcontext *ctx = p->ctx;
    GLuint i, j;
 
-   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
-      GLuint texmat_enabled = ctx->Texture._TexMatEnabled & ENABLE_TEXMAT(i);
+   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+      GLuint texmat_enabled = p->state->unit[i].texmat_enabled;
 
-      if (texUnit->TexGenEnabled || texmat_enabled) {
+      if (p->state->unit[i].texgen_enabled || texmat_enabled) {
 	 struct ureg out = register_output(p, VERT_RESULT_TEX0 + i);
 	 struct ureg out_texgen = undef;
 
-	 if (texUnit->TexGenEnabled) {
+	 if (p->state->unit[i].texgen_enabled) {
 	    GLuint copy_mask = 0;
 	    GLuint sphere_mask = 0;
 	    GLuint reflect_mask = 0;
@@ -1043,47 +1201,46 @@ static void build_texture_transform( struct tnl_program *p )
 	    else
 	       out_texgen = out;
 
-	    modes[0] = texUnit->GenModeS;
-	    modes[1] = texUnit->GenModeT;
-	    modes[2] = texUnit->GenModeR;
-	    modes[3] = texUnit->GenModeQ;
+	    modes[0] = p->state->unit[i].texgen_mode0;
+	    modes[1] = p->state->unit[i].texgen_mode1;
+	    modes[2] = p->state->unit[i].texgen_mode2;
+	    modes[3] = p->state->unit[i].texgen_mode3;
 
 	    for (j = 0; j < 4; j++) {
-	       if (texUnit->TexGenEnabled & (1<<j)) {
-		  switch (modes[j]) {
-		  case GL_OBJECT_LINEAR: {
-		     struct ureg obj = register_input(p, VERT_ATTRIB_POS);
-		     struct ureg plane = 
-			register_param3(p, STATE_TEXGEN, i,
-					STATE_TEXGEN_OBJECT_S + j);
+	       switch (modes[j]) {
+	       case TXG_OBJ_LINEAR: {
+		  struct ureg obj = register_input(p, VERT_ATTRIB_POS);
+		  struct ureg plane = 
+		     register_param3(p, STATE_TEXGEN, i,
+				     STATE_TEXGEN_OBJECT_S + j);
 
-		     emit_op2(p, VP_OPCODE_DP4, out_texgen, WRITEMASK_X << j, 
-			      obj, plane );
-		     break;
-		  }
-		  case GL_EYE_LINEAR: {
-		     struct ureg eye = get_eye_position(p);
-		     struct ureg plane = 
-			register_param3(p, STATE_TEXGEN, i, 
-					STATE_TEXGEN_EYE_S + j);
-
-		     emit_op2(p, VP_OPCODE_DP4, out_texgen, WRITEMASK_X << j, 
-			      eye, plane );
-		     break;
-		  }
-		  case GL_SPHERE_MAP: 
-		     sphere_mask |= WRITEMASK_X << j;
-		     break;
-		  case GL_REFLECTION_MAP_NV:
-		     reflect_mask |= WRITEMASK_X << j;
-		     break;
-		  case GL_NORMAL_MAP_NV: 
-		     normal_mask |= WRITEMASK_X << j;
-		     break;
-		  }
+		  emit_op2(p, VP_OPCODE_DP4, out_texgen, WRITEMASK_X << j, 
+			   obj, plane );
+		  break;
 	       }
-	       else 
+	       case TXG_EYE_LINEAR: {
+		  struct ureg eye = get_eye_position(p);
+		  struct ureg plane = 
+		     register_param3(p, STATE_TEXGEN, i, 
+				     STATE_TEXGEN_EYE_S + j);
+
+		  emit_op2(p, VP_OPCODE_DP4, out_texgen, WRITEMASK_X << j, 
+			   eye, plane );
+		  break;
+	       }
+	       case TXG_SPHERE_MAP: 
+		  sphere_mask |= WRITEMASK_X << j;
+		  break;
+	       case TXG_REFLECTION_MAP:
+		  reflect_mask |= WRITEMASK_X << j;
+		  break;
+	       case TXG_NORMAL_MAP: 
+		  normal_mask |= WRITEMASK_X << j;
+		  break;
+	       case TXG_NONE:
 		  copy_mask |= WRITEMASK_X << j;
+	       }
+
 	    }
 
 	 
@@ -1125,7 +1282,7 @@ static void build_texture_transform( struct tnl_program *p )
 
 	 release_temps(p);
       } 
-      else if (texUnit->_ReallyEnabled) {
+      else if (p->state->unit[i].texunit_really_enabled) {
 	 /* KW: _ReallyEnabled isn't sufficient?  Need to know whether
 	  * this texture unit is referenced by the fragment shader.  
 	  */
@@ -1163,111 +1320,165 @@ static void build_pointsize( struct tnl_program *p )
    release_temp(p, ut);
 }
 
-
-static GLboolean programs_eq( struct vertex_program *a,
-			      struct vertex_program *b )
-{
-   if (!a || !b)
-      return GL_FALSE;
-
-   if (a->Base.NumInstructions != b->Base.NumInstructions ||
-       a->Parameters->NumParameters != b->Parameters->NumParameters)
-      return GL_FALSE;
-
-   if (memcmp(a->Instructions, b->Instructions, 
-	      a->Base.NumInstructions * sizeof(struct vp_instruction)) != 0)
-      return GL_FALSE;
-
-   if (memcmp(a->Parameters->Parameters, b->Parameters->Parameters,
-	      a->Parameters->NumParameters * 
-	      sizeof(struct program_parameter)) != 0)
-      return GL_FALSE;
-
-   return GL_TRUE;
-}
-
-
-void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
-{
-   struct tnl_program p;
-
-   if (ctx->VertexProgram._Enabled)
-      return;
-   
-
-   _mesa_memset(&p, 0, sizeof(p));
-   p.ctx = ctx;
-   p.program = (struct vertex_program *)ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
-   p.eye_position = undef;
-   p.eye_position_normalized = undef;
-   p.eye_normal = undef;
-   p.identity = undef;
-
-   p.temp_in_use = 0;
-
-   if (ctx->Const.MaxVertexProgramTemps >= sizeof(int) * 8)
-      p.temp_reserved = 0;
-   else
-      p.temp_reserved = ~((1<<ctx->Const.MaxVertexProgramTemps)-1);
-
-   p.program->Instructions = MALLOC(sizeof(struct vp_instruction) * MAX_INSN);
-
-   /* Initialize the arb_program struct */
-   p.program->Base.String = 0;
-   p.program->Base.NumInstructions =
-   p.program->Base.NumTemporaries =
-   p.program->Base.NumParameters =
-   p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
- 
-   if (p.program->Parameters)
-      _mesa_free_parameters(p.program->Parameters);
-   else
-      p.program->Parameters = _mesa_new_parameter_list();
-
-   p.program->InputsRead = 0;
-   p.program->OutputsWritten = 0;
-
-   /* Emit the program, starting with modelviewproject:
+static void build_tnl_program( struct tnl_program *p )
+{   /* Emit the program, starting with modelviewproject:
     */
-   build_hpos(&p);
+   build_hpos(p);
 
    /* Lighting calculations:
     */
-   if (ctx->Light.Enabled)
-      build_lighting(&p);
+   if (p->state->light_global_enabled)
+      build_lighting(p);
    else
-      emit_passthrough(&p, VERT_ATTRIB_COLOR0, VERT_RESULT_COL0);
+      emit_passthrough(p, VERT_ATTRIB_COLOR0, VERT_RESULT_COL0);
 
-   if (ctx->Fog.Enabled)
-      build_fog(&p);
+   if (p->state->fog_enabled)
+      build_fog(p);
 
-   if (ctx->Texture._TexGenEnabled || ctx->Texture._TexMatEnabled)
-      build_texture_transform(&p);
+   if (p->state->nr_tex)
+      build_texture_transform(p);
 
-   if (ctx->Point._Attenuated)
-      build_pointsize(&p);
+   if (p->state->point_attenuated)
+      build_pointsize(p);
 
    /* Finish up:
     */
-   emit_op1(&p, VP_OPCODE_END, undef, 0, undef);
+   emit_op1(p, VP_OPCODE_END, undef, 0, undef);
 
    /* Disassemble:
     */
    if (DISASSEM) {
       _mesa_printf ("\n");
    }
+}
 
 
-   /* Notify driver the fragment program has (actually) changed.
-    */
-   if (!programs_eq(ctx->_TnlProgram, p.program) != 0) {
-      if (ctx->_TnlProgram)
-	 ctx->Driver.DeleteProgram( ctx, &ctx->_TnlProgram->Base );
-      ctx->_TnlProgram = p.program;
+void create_new_program( const struct state_key *key,
+			 struct vertex_program *program,
+			 GLuint max_temps)
+{
+   struct tnl_program p;
+
+   _mesa_memset(&p, 0, sizeof(p));
+   p.state = key;
+   p.program = program;
+   p.eye_position = undef;
+   p.eye_position_normalized = undef;
+   p.eye_normal = undef;
+   p.identity = undef;
+   p.temp_in_use = 0;
+   
+   if (max_temps >= sizeof(int) * 8)
+      p.temp_reserved = 0;
+   else
+      p.temp_reserved = ~((1<<max_temps)-1);
+
+   p.program->Instructions = MALLOC(sizeof(struct vp_instruction) * MAX_INSN);
+   p.program->Base.String = 0;
+   p.program->Base.NumInstructions =
+   p.program->Base.NumTemporaries =
+   p.program->Base.NumParameters =
+   p.program->Base.NumAttributes = p.program->Base.NumAddressRegs = 0;
+   p.program->Parameters = _mesa_new_parameter_list();
+   p.program->InputsRead = 0;
+   p.program->OutputsWritten = 0;
+
+   build_tnl_program( &p );
+}
+
+static void *search_cache( struct tnl_cache *cache,
+			   GLuint hash,
+			   const void *key,
+			   GLuint keysize)
+{
+   struct tnl_cache *c;
+
+   for (c = cache; c; c = c->next) {
+      if (c->hash == hash && memcmp(c->key, key, keysize) == 0)
+	 return c->data;
    }
-   else if (p.program) {
-      /* Nothing changed...
-       */
-      ctx->Driver.DeleteProgram( ctx, &p.program->Base );
+
+   return NULL;
+}
+
+static void cache_item( struct tnl_cache **cache,
+			GLuint hash,
+			void *key,
+			void *data )
+{
+   struct tnl_cache *c = MALLOC(sizeof(*c));
+   c->hash = hash;
+   c->key = key;
+   c->data = data;
+   c->next = *cache;
+   *cache = c;
+}
+
+static GLuint hash_key( struct state_key *key )
+{
+   GLuint *ikey = (GLuint *)key;
+   GLuint hash = 0, i;
+
+   /* I'm sure this can be improved on, but speed is important:
+    */
+   for (i = 0; i < sizeof(*key)/sizeof(GLuint); i++)
+      hash ^= ikey[i];
+
+   return hash;
+}
+
+void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct state_key *key;
+   GLuint hash;
+
+   if (ctx->VertexProgram._Enabled)
+      return;
+
+   /* Grab all the relevent state and put it in a single structure:
+    */
+   key = make_state_key(ctx);
+   hash = hash_key(key);
+
+   /* Look for an already-prepared program for this state:
+    */
+   ctx->_TnlProgram = (struct vertex_program *)
+      search_cache( tnl->vp_cache, hash, key, sizeof(key) );
+   
+   /* OK, we'll have to build a new one:
+    */
+   if (!ctx->_TnlProgram) {
+      if (0)
+	 _mesa_printf("Build new TNL program\n");
+
+      ctx->_TnlProgram = (struct vertex_program *)
+	 ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0); 
+
+      create_new_program( key, ctx->_TnlProgram, 
+			  ctx->Const.MaxVertexProgramTemps );
+
+      cache_item(&tnl->vp_cache, hash, key, ctx->_TnlProgram );
+   }
+   else {
+      if (0) 
+	 _mesa_printf("Found existing TNL program for key %x\n", hash);
+   }
+
+   /* Need a BindProgram callback for the driver?
+    */
+}
+
+
+void _tnl_ProgramCacheDestroy( GLcontext *ctx )
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct tnl_cache *a, *tmp;
+
+   for (a = tnl->vp_cache ; a; a = tmp) {
+      tmp = a->next;
+      FREE(a->key);
+      FREE(a->data);
+      FREE(a);
    }
 }
