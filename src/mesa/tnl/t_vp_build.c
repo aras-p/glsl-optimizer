@@ -131,15 +131,16 @@ static struct state_key *make_state_key( GLcontext *ctx )
       if (ctx->Light.Model.TwoSide)
 	 key->light_twoside = 1;
 
-      if (ctx->Light.ColorMaterialEnabled)
+      if (ctx->Light.ColorMaterialEnabled) {
 	 key->light_color_material = 1;
-
-      if (ctx->Light.ColorMaterialBitmask)
-	 key->light_color_material_mask = 1;
+	 key->light_color_material_mask = ctx->Light.ColorMaterialBitmask;
+	 _mesa_printf("ColorMaterialBitmask %x / %x\n", ctx->Light.ColorMaterialBitmask,
+		      key->light_color_material_mask);
+      }
 
       for (i = _TNL_ATTRIB_MAT_FRONT_AMBIENT ; i < _TNL_ATTRIB_INDEX ; i++) 
 	 if (VB->AttribPtr[i]->stride) 
-	    key->light_material_mask |= 1<<i;
+	    key->light_material_mask |= 1<<(i-_TNL_ATTRIB_MAT_FRONT_AMBIENT);
 
       for (i = 0; i < MAX_LIGHTS; i++) {
 	 struct gl_light *light = &ctx->Light.Light[i];
@@ -708,8 +709,7 @@ static void build_hpos( struct tnl_program *p )
 
 static GLuint material_attrib( GLuint side, GLuint property )
 {
-   return (_TNL_ATTRIB_MAT_FRONT_AMBIENT + 
-	   (property - STATE_AMBIENT) * 2 + 
+   return ((property - STATE_AMBIENT) * 2 + 
 	   side);
 }
 
@@ -735,14 +735,14 @@ static struct ureg get_material( struct tnl_program *p, GLuint side,
    if (p->color_materials & (1<<attrib))
       return register_input(p, VERT_ATTRIB_COLOR0);
    else if (p->materials & (1<<attrib)) 
-      return register_input( p, attrib );
+      return register_input( p, attrib + _TNL_ATTRIB_MAT_FRONT_AMBIENT );
    else
       return register_param3( p, STATE_MATERIAL, side, property );
 }
 
-#define SCENE_COLOR_BITS(side) (( _TNL_BIT_MAT_FRONT_EMISSION | \
-				   _TNL_BIT_MAT_FRONT_AMBIENT | \
-				   _TNL_BIT_MAT_FRONT_DIFFUSE) << (side))
+#define SCENE_COLOR_BITS(side) (( MAT_BIT_FRONT_EMISSION | \
+				   MAT_BIT_FRONT_AMBIENT | \
+				   MAT_BIT_FRONT_DIFFUSE) << (side))
 
 /* Either return a precalculated constant value or emit code to
  * calculate these values dynamically in the case where material calls
@@ -894,7 +894,6 @@ static void build_lighting( struct tnl_program *p )
 
    /* If no lights, still need to emit the scenecolor.
     */
-   if (nr_lights == 0) {
       {
 	 struct ureg res0 = register_output( p, VERT_RESULT_COL0 );
 	 emit_op1(p, VP_OPCODE_MOV, res0, 0, _col0);
@@ -915,6 +914,7 @@ static void build_lighting( struct tnl_program *p )
 	 emit_op1(p, VP_OPCODE_MOV, res1, 0, _bfc1);
       }
       
+   if (nr_lights == 0) {
       release_temps(p);
       return;
    }
@@ -993,6 +993,7 @@ static void build_lighting( struct tnl_program *p )
 	    struct ureg diffuse = get_lightprod(p, i, 0, STATE_DIFFUSE);
 	    struct ureg specular = get_lightprod(p, i, 0, STATE_SPECULAR);
 	    struct ureg res0, res1;
+	    GLuint mask0, mask1;
 
 	    emit_op1(p, VP_OPCODE_LIT, lit, 0, dots);
    
@@ -1002,21 +1003,27 @@ static void build_lighting( struct tnl_program *p )
 	    
 	    if (count == nr_lights) {
 	       if (separate) {
+		  mask0 = WRITEMASK_XYZ;
+		  mask1 = WRITEMASK_XYZ;
 		  res0 = register_output( p, VERT_RESULT_COL0 );
 		  res1 = register_output( p, VERT_RESULT_COL1 );
 	       }
 	       else {
+		  mask0 = 0;
+		  mask1 = WRITEMASK_XYZ;
 		  res0 = _col0;
 		  res1 = register_output( p, VERT_RESULT_COL0 );
 	       }
 	    } else {
+	       mask0 = 0;
+	       mask1 = 0;
 	       res0 = _col0;
 	       res1 = _col1;
 	    }
 
 	    emit_op3(p, VP_OPCODE_MAD, _col0, 0, swizzle1(lit,X), ambient, _col0);
-	    emit_op3(p, VP_OPCODE_MAD, res0, 0, swizzle1(lit,Y), diffuse, _col0);
-	    emit_op3(p, VP_OPCODE_MAD, res1, 0, swizzle1(lit,Z), specular, _col1);
+	    emit_op3(p, VP_OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _col0);
+	    emit_op3(p, VP_OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _col1);
       
 	    release_temp(p, ambient);
 	    release_temp(p, diffuse);
@@ -1030,6 +1037,7 @@ static void build_lighting( struct tnl_program *p )
 	    struct ureg diffuse = get_lightprod(p, i, 1, STATE_DIFFUSE);
 	    struct ureg specular = get_lightprod(p, i, 1, STATE_SPECULAR);
 	    struct ureg res0, res1;
+	    GLuint mask0, mask1;
 	       
 	    emit_op1(p, VP_OPCODE_LIT, lit, 0, negate(swizzle(dots,X,Y,W,Z)));
 
@@ -1038,22 +1046,27 @@ static void build_lighting( struct tnl_program *p )
 
 	    if (count == nr_lights) {
 	       if (separate) {
+		  mask0 = WRITEMASK_XYZ;
+		  mask1 = WRITEMASK_XYZ;
 		  res0 = register_output( p, VERT_RESULT_BFC0 );
 		  res1 = register_output( p, VERT_RESULT_BFC1 );
 	       }
 	       else {
+		  mask0 = 0;
+		  mask1 = WRITEMASK_XYZ;
 		  res0 = _bfc0;
 		  res1 = register_output( p, VERT_RESULT_BFC0 );
 	       }
 	    } else {
 	       res0 = _bfc0;
 	       res1 = _bfc1;
+	       mask0 = 0;
+	       mask1 = 0;
 	    }
 
-
 	    emit_op3(p, VP_OPCODE_MAD, _bfc0, 0, swizzle1(lit,X), ambient, _bfc0);
-	    emit_op3(p, VP_OPCODE_MAD, res0, 0, swizzle1(lit,Y), diffuse, _bfc0);
-	    emit_op3(p, VP_OPCODE_MAD, res1, 0, swizzle1(lit,Z), specular, _bfc1);
+	    emit_op3(p, VP_OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _bfc0);
+	    emit_op3(p, VP_OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _bfc1);
 
 	    release_temp(p, ambient);
 	    release_temp(p, diffuse);
