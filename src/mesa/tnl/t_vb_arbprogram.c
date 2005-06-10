@@ -1015,8 +1015,6 @@ static void compile_vertex_program( struct vertex_program *program,
    struct tnl_compiled_program *p = CALLOC_STRUCT(tnl_compiled_program);
    GLuint i;
 
-   _mesa_printf("%s\n", __FUNCTION__);
-
    if (program->TnlData) 
       free_tnl_data( program );
    

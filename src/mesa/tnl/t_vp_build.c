@@ -134,8 +134,6 @@ static struct state_key *make_state_key( GLcontext *ctx )
       if (ctx->Light.ColorMaterialEnabled) {
 	 key->light_color_material = 1;
 	 key->light_color_material_mask = ctx->Light.ColorMaterialBitmask;
-	 _mesa_printf("ColorMaterialBitmask %x / %x\n", ctx->Light.ColorMaterialBitmask,
-		      key->light_color_material_mask);
       }
 
       for (i = _TNL_ATTRIB_MAT_FRONT_AMBIENT ; i < _TNL_ATTRIB_INDEX ; i++) 
