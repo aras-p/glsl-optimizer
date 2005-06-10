@@ -61,45 +61,23 @@ struct compilation {
 
 #define ARB_VP_MACHINE(stage) ((struct arb_vp_machine *)(stage->privatePtr))
 
-
-
-/**
- * Set x to positive or negative infinity.
- *
- * XXX: FIXME - type punning.
- */
-#if defined(USE_IEEE) || defined(_WIN32)
-#define SET_POS_INFINITY(x)  ( *((GLuint *) (void *)&x) = 0x7F800000 )
-#define SET_NEG_INFINITY(x)  ( *((GLuint *) (void *)&x) = 0xFF800000 )
-#elif defined(VMS)
-#define SET_POS_INFINITY(x)  x = __MAXFLOAT
-#define SET_NEG_INFINITY(x)  x = -__MAXFLOAT
-#define IS_INF_OR_NAN(t)   ((t) == __MAXFLOAT)
-#else
-#define SET_POS_INFINITY(x)  x = (GLfloat) HUGE_VAL
-#define SET_NEG_INFINITY(x)  x = (GLfloat) -HUGE_VAL
-#endif
-
-#define FREXPF(a,b) frexpf(a,b)
-
 #define PUFF(x) ((x)[1] = (x)[2] = (x)[3] = (x)[0])
 
-/* FIXME: more type punning (despite use of fi_type...)
+
+
+/* Lower precision functions for the EXP, LOG and LIT opcodes.  The
+ * LOG2() implementation is probably not accurate enough, and the
+ * attempted optimization for Exp2 is definitely not accurate
+ * enough - it discards all of t's fractional bits!
  */
-#define SET_FLOAT_BITS(x, bits) ((fi_type *) (void *) &(x))->i = bits
-
-
 static GLfloat RoughApproxLog2(GLfloat t)
 {
    return LOG2(t);
 }
 
-static GLfloat RoughApproxPow2(GLfloat t)
+static GLfloat RoughApproxExp2(GLfloat t)
 {   
 #if 0
-   /* This isn't nearly accurate enough - it discards all of t's
-    * fractional bits!
-    */
    fi_type fi;
    fi.i = (GLint) t;
    fi.i = (fi.i << 23) + 0x3f800000;
@@ -111,11 +89,25 @@ static GLfloat RoughApproxPow2(GLfloat t)
 
 static GLfloat RoughApproxPower(GLfloat x, GLfloat y)
 {
-#if 0
-   return RoughApproxPow2(y * RoughApproxLog2(x));
-#else
+   return RoughApproxExp2(y * RoughApproxLog2(x));
+}
+
+
+/* Higher precision functions for the EX2, LG2 and POW opcodes:
+ */
+static GLfloat ApproxLog2(GLfloat t)
+{
+   return (GLfloat) (log(t) * 1.442695F);
+}
+
+static GLfloat ApproxExp2(GLfloat t)
+{   
+   return (GLfloat) _mesa_pow(2.0, t);
+}
+
+static GLfloat ApproxPower(GLfloat x, GLfloat y)
+{
    return (GLfloat) _mesa_pow(x, y);
-#endif
 }
 
 
@@ -261,15 +253,20 @@ static void do_DST( struct arb_vp_machine *m, union instruction op )
 }
 
 
+/* Intended to be high precision:
+ */
 static void do_EX2( struct arb_vp_machine *m, union instruction op ) 
 {
    GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
 
-   result[0] = (GLfloat)RoughApproxPow2(arg0[0]);
+   result[0] = (GLfloat)ApproxExp2(arg0[0]);
    PUFF(result);
 }
 
+
+/* Allowed to be lower precision:
+ */
 static void do_EXP( struct arb_vp_machine *m, union instruction op )
 {
    GLfloat *result = m->File[0][op.alu.dst];
@@ -278,11 +275,11 @@ static void do_EXP( struct arb_vp_machine *m, union instruction op )
    GLfloat flr_tmp = FLOORF(tmp);
 
    /* KW: nvvertexec has an optimized version of this which is pretty
-    * hard to understand/validate, but avoids the RoughApproxPow2.
+    * hard to understand/validate, but avoids the RoughApproxExp2.
     */
    result[0] = (GLfloat) (1 << (int)flr_tmp);
    result[1] = tmp - flr_tmp;
-   result[2] = RoughApproxPow2(tmp);
+   result[2] = RoughApproxExp2(tmp);
    result[3] = 1.0F;
 }
 
@@ -308,12 +305,14 @@ static void do_FRC( struct arb_vp_machine *m, union instruction op )
    result[3] = arg0[3] - FLOORF(arg0[3]);
 }
 
+/* High precision log base 2:
+ */
 static void do_LG2( struct arb_vp_machine *m, union instruction op ) 
 {
    GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
 
-   result[0] = RoughApproxLog2(arg0[0]);
+   result[0] = ApproxLog2(arg0[0]);
    PUFF(result);
 }
 
@@ -338,13 +337,15 @@ static void do_LIT( struct arb_vp_machine *m, union instruction op )
 }
 
 
+/* Intended to allow a lower precision than required for LG2 above.
+ */
 static void do_LOG( struct arb_vp_machine *m, union instruction op )
 {
    GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    GLfloat tmp = FABSF(arg0[0]);
    int exponent;
-   GLfloat mantissa = FREXPF(tmp, &exponent);
+   GLfloat mantissa = frexpf(tmp, &exponent);
 
    result[0] = (GLfloat) (exponent - 1);
    result[1] = 2.0 * mantissa; /* map [.5, 1) -> [1, 2) */
@@ -401,13 +402,15 @@ static void do_MUL( struct arb_vp_machine *m, union instruction op )
 }
 
 
+/* Intended to be "high" precision
+ */
 static void do_POW( struct arb_vp_machine *m, union instruction op ) 
 {
    GLfloat *result = m->File[0][op.alu.dst];
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    const GLfloat *arg1 = m->File[op.alu.file1][op.alu.idx1];
 
-   result[0] = (GLfloat)RoughApproxPower(arg0[0], arg1[0]);
+   result[0] = (GLfloat)ApproxPower(arg0[0], arg1[0]);
    PUFF(result);
 }
 
@@ -901,6 +904,11 @@ static void cvp_emit_inst( struct compilation *cp,
       op->alu.file1 = reg[2].file;
       op->alu.idx1 = reg[2].idx;
       op->alu.dst = result;
+
+      if (result == REG_RES) {
+	 op = cvp_next_instruction(cp);
+	 op->dword = fixup.dword;
+      }
       break;
 
    case VP_OPCODE_ARL:
