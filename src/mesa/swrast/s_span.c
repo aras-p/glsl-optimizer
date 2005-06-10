@@ -1183,7 +1183,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          _swrast_exec_fragment_program( ctx, span );
       else if (ctx->ATIFragmentShader._Enabled)
          _swrast_exec_fragment_shader( ctx, span );
-      else if (ctx->Texture._EnabledUnits)
+      else if (ctx->Texture._EnabledUnits && (span->arrayMask & SPAN_TEXTURE))
          _swrast_texture_span( ctx, span );
 
       /* Do the alpha test */
@@ -1260,7 +1260,7 @@ _swrast_write_rgba_span( GLcontext *ctx, struct sw_span *span)
          _swrast_exec_fragment_program( ctx, span );
       else if (ctx->ATIFragmentShader._Enabled)
          _swrast_exec_fragment_shader( ctx, span );
-      else if (ctx->Texture._EnabledUnits)
+      else if (ctx->Texture._EnabledUnits && (span->arrayMask & SPAN_TEXTURE))
          _swrast_texture_span( ctx, span );
    }
 
