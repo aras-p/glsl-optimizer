@@ -40,7 +40,6 @@
 #include "math/m_translate.h"
 #include "t_context.h"
 #include "t_pipeline.h"
-#include "t_vp_build.h"
 #include "t_vb_arbprogram.h"
 
 #define DISASSEM 0
@@ -976,7 +975,7 @@ static void cvp_emit_inst( struct compilation *cp,
       }
       break;
    }
-   case VP_OPCODE_PRINT:
+
    case VP_OPCODE_END:
       break;
 
