@@ -237,7 +237,8 @@ _swrast_culltriangle( GLcontext *ctx,
       span.intTex[1] += span.intTexStep[1];				\
       span.z += span.zStep;						\
    }									\
-   rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, span.array->rgb, NULL);
+   rb->PutRowRGB(ctx, rb, span.end, span.x, span.y,			\
+                 span.array->rgb, span.array->mask);
 
 #include "s_tritemp.h"
 
