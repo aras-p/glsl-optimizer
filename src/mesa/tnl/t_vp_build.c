@@ -805,7 +805,7 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
       struct ureg slt = get_temp(p);
 	       
       emit_normalize_vec3( p, spot, spot_dir ); /* XXX: precompute! */
-      emit_op2(p, VP_OPCODE_DP3, spot, 0, negate(VPpli), spot_dir);
+      emit_op2(p, VP_OPCODE_DP3, spot, 0, negate(VPpli), spot);
       emit_op2(p, VP_OPCODE_SLT, slt, 0, swizzle1(spot_dir,W), spot);
       emit_op2(p, VP_OPCODE_POW, spot, 0, spot, swizzle1(attenuation, W));
       emit_op2(p, VP_OPCODE_MUL, att, 0, slt, spot);
