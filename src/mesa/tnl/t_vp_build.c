@@ -155,8 +155,8 @@ static struct state_key *make_state_key( GLcontext *ctx )
 	       key->unit[i].light_spotcutoff_is_180 = 1;
 
 	    if (light->ConstantAttenuation != 1.0 ||
-		light->LinearAttenuation != 1.0 ||
-		light->QuadraticAttenuation != 1.0)
+		light->LinearAttenuation != 0.0 ||
+		light->QuadraticAttenuation != 0.0)
 	       key->unit[i].light_attenuated = 1;
 	 }
       }
@@ -225,7 +225,7 @@ static struct state_key *make_state_key( GLcontext *ctx )
  * generated program with line/function references for each
  * instruction back into this file:
  */
-#define DISASSEM 0
+#define DISASSEM (MESA_VERBOSE&VERBOSE_DISASSEM)
 
 /* Should be tunable by the driver - do we want to do matrix
  * multiplications with DP4's or with MUL/MAD's?  SSE works better
@@ -476,17 +476,17 @@ static void emit_dst( struct vp_dst_register *dst,
 static void debug_insn( struct vp_instruction *inst, const char *fn,
 			GLuint line )
 {
-#if DISASSEM
-   static const char *last_fn;
+   if (DISASSEM) {
+      static const char *last_fn;
    
-   if (fn != last_fn) {
-      last_fn = fn;
-      _mesa_printf("%s:\n", fn);
-   }
+      if (fn != last_fn) {
+	 last_fn = fn;
+	 _mesa_printf("%s:\n", fn);
+      }
 	 
-   _mesa_printf("%d:\t", line);
-   _mesa_debug_vp_inst(1, inst);
-#endif
+      _mesa_printf("%d:\t", line);
+      _mesa_debug_vp_inst(1, inst);
+   }
 }
 
 
