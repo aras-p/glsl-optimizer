@@ -28,6 +28,7 @@ realclean:
 	-rm -f `find . -name \*.o`
 	-rm -f `find . -name \*.a`
 	-rm -f `find . -name \*.so`
+	-rm -f `find . -name depend`
 
 
 
