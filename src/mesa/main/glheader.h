@@ -81,6 +81,9 @@
 #if _MSC_VER == 1200
 typedef UINT_PTR uintptr_t;
 #endif 
+#if defined(__MINGW32__)
+#include <stdint.h>
+#endif
 #else
 #include <inttypes.h>
 #endif

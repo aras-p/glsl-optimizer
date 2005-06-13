@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.7 2005/05/24 21:12:43 kschultz Exp $ */
+/* $Id: wgl.c,v 1.8 2005/06/13 14:07:15 brianp Exp $ */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -35,8 +35,9 @@
 #define _GDI32_
 #include <windows.h>
 
-#include "wmesadef.h"   /* headers for Mesa Windows driver source code */
 #include "GL/wmesa.h"   /* protos for wmesa* functions */
+
+typedef struct wmesa_context *PWMC;
 
 /*
  * Pixel Format Descriptors
