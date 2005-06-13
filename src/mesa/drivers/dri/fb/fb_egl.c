@@ -836,7 +836,9 @@ fbSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
    else {
       /* XXX this shouldn't be an error but we can't handle it for now */
       _mesa_problem(NULL, "fbSwapBuffers: drawable has no context!\n");
+      return EGL_FALSE;
    }
+   return EGL_TRUE;
 }
 
 
