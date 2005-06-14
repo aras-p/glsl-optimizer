@@ -520,6 +520,9 @@ static void emit_op3fn(struct tnl_program *p,
 }
 
    
+#ifdef __VMS
+#define __FUNCTION__ "VMS$NL:"
+#endif
 
 #define emit_op3(p, op, dst, mask, src0, src1, src2) \
    emit_op3fn(p, op, dst, mask, src0, src1, src2, __FUNCTION__, __LINE__)
