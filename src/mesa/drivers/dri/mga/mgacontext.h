@@ -29,6 +29,7 @@
 #ifndef MGALIB_INC
 #define MGALIB_INC
 
+#include <stdint.h>
 #include "drm.h"
 #include "mga_drm.h"
 #include "dri_util.h"
@@ -267,6 +268,8 @@ struct mga_context_t {
 
    GLuint swap_count;
    GLuint swap_missed_count;
+
+   uint32_t last_frame_fence;
 
    PFNGLXGETUSTPROC get_ust;
 

@@ -31,6 +31,7 @@
  */
 
 #include <stdlib.h>
+#include <stdint.h>
 #include "drm.h"
 #include "mga_drm.h"
 #include "mga_xmesa.h"
@@ -264,22 +265,30 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
     * primary DMA region base address needs to be known is so that the driver
     * can busy wait for certain DMA operations to complete (see
     * mgaWaitForFrameCompletion in mgaioctl.c).
+    *
+    * Starting with MGA DRM version 3.2, these are completely unneeded as
+    * there is a new, in-kernel mechanism for handling the wait.
     */
 
-   mgaScreen->mmio.handle = serverInfo->registers.handle;
-   mgaScreen->mmio.size = serverInfo->registers.size;
-   if ( drmMap( sPriv->fd,
-		mgaScreen->mmio.handle, mgaScreen->mmio.size,
-		&mgaScreen->mmio.map ) < 0 ) {
-      FREE( mgaScreen );
-      sPriv->private = NULL;
-      __driUtilMessage( "Couldn't map MMIO registers" );
-      return GL_FALSE;
+   if (mgaScreen->sPriv->drmMinor < 2) {
+      mgaScreen->mmio.handle = serverInfo->registers.handle;
+      mgaScreen->mmio.size = serverInfo->registers.size;
+      if ( drmMap( sPriv->fd,
+		   mgaScreen->mmio.handle, mgaScreen->mmio.size,
+		   &mgaScreen->mmio.map ) < 0 ) {
+	 FREE( mgaScreen );
+	 sPriv->private = NULL;
+	 __driUtilMessage( "Couldn't map MMIO registers" );
+	 return GL_FALSE;
+      }
+
+      mgaScreen->primary.handle = serverInfo->primary.handle;
+      mgaScreen->primary.size = serverInfo->primary.size;
    }
-
-   mgaScreen->primary.handle = serverInfo->primary.handle;
-   mgaScreen->primary.size = serverInfo->primary.size;
-
+   else {
+      (void) memset( & mgaScreen->primary, 0, sizeof( mgaScreen->primary ) );
+      (void) memset( & mgaScreen->mmio, 0, sizeof( mgaScreen->mmio ) );
+   }
 
    mgaScreen->textureOffset[MGA_CARD_HEAP] = serverInfo->textureOffset;
    mgaScreen->textureOffset[MGA_AGP_HEAP] = (serverInfo->agpTextureOffset |
