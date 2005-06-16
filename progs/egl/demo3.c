@@ -56,6 +56,7 @@ static void Reshape(int width, int height)
     windH = (GLint)height;
 }
 
+#if 0
 static void RotateColorMask(void)
 {
     static GLint rotation = 0;
@@ -80,6 +81,7 @@ static void RotateColorMask(void)
 	break;
     }
 }
+#endif
 
 static void Viewport(GLint row, GLint column)
 {

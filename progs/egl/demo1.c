@@ -92,7 +92,6 @@ main(int argc, char *argv[])
    EGLContext ctx;
    EGLSurface pbuffer;
    EGLConfig configs[10];
-   EGLint numConfigs, i;
    EGLBoolean b;
    const EGLint pbufAttribs[] = {
       EGL_WIDTH, 500,
