@@ -125,9 +125,14 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	r300->hw.bld.cmd[R300_BLD_CBLEND] = 0;
 	r300->hw.bld.cmd[R300_BLD_ABLEND] = 0;
 	
+	if (r300->radeon.radeonScreen->cpp == 4)
+		cbpitch |= R300_COLOR_FORMAT_ARGB8888;
+	else
+		cbpitch |= R300_COLOR_FORMAT_RGB565;
+	
 	R300_STATECHANGE(r300, cb);
 	r300->hw.cb.cmd[R300_CB_OFFSET] = cboffset;
-	r300->hw.cb.cmd[R300_CB_PITCH] = cbpitch | R300_COLOR_UNKNOWN_22_23;
+	r300->hw.cb.cmd[R300_CB_PITCH] = cbpitch;
 
 	R300_STATECHANGE(r300, unk221C);
 	r300->hw.unk221C.cmd[1] = R300_221C_CLEAR;
@@ -257,8 +262,13 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	reg_start(R300_RB3D_COLOROFFSET0, 0);
 	e32(cboffset);
 	
+	if (r300->radeon.radeonScreen->cpp == 4)
+		cbpitch |= R300_COLOR_FORMAT_ARGB8888;
+	else
+		cbpitch |= R300_COLOR_FORMAT_RGB565;
+	
 	reg_start(R300_RB3D_COLORPITCH0, 0);
-	e32(cbpitch | R300_COLOR_UNKNOWN_22_23);
+	e32(cbpitch);
 
 	R300_STATECHANGE(r300, cmk);
 	reg_start(R300_RB3D_COLORMASK, 0);

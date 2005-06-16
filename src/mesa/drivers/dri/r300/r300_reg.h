@@ -1147,7 +1147,8 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #       define R300_COLOR_ENDIAN_NO_SWAP         (0 << 18) /* GUESS */
 #       define R300_COLOR_ENDIAN_WORD_SWAP       (1 << 18) /* GUESS */
 #       define R300_COLOR_ENDIAN_DWORD_SWAP      (2 << 18) /* GUESS */
-#       define R300_COLOR_UNKNOWN_22_23          (3 << 22) /* GUESS: Format? - (6<<21) for RGBA? */
+#       define R300_COLOR_FORMAT_RGB565          (2 << 22)
+#       define R300_COLOR_FORMAT_ARGB8888        (3 << 22)
 #define R300_RB3D_COLORPITCH1               0x4E3C /* GUESS */
 #define R300_RB3D_COLORPITCH2               0x4E40 /* GUESS */
 #define R300_RB3D_COLORPITCH3               0x4E44 /* GUESS */

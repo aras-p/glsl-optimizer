@@ -2146,16 +2146,19 @@ void r300ResetHwState(r300ContextPtr r300)
 		r300->hw.cb.cmd[R300_CB_OFFSET] =
 			r300->radeon.radeonScreen->backOffset +
 			r300->radeon.radeonScreen->fbLocation;
-		r300->hw.cb.cmd[R300_CB_PITCH] = r300->radeon.radeonScreen->backPitch
-			| R300_COLOR_UNKNOWN_22_23;
+		r300->hw.cb.cmd[R300_CB_PITCH] = r300->radeon.radeonScreen->backPitch;
 	} else {
 		r300->hw.cb.cmd[R300_CB_OFFSET] =
 			r300->radeon.radeonScreen->frontOffset +
 			r300->radeon.radeonScreen->fbLocation;
-		r300->hw.cb.cmd[R300_CB_PITCH] = r300->radeon.radeonScreen->frontPitch
-			| R300_COLOR_UNKNOWN_22_23;
+		r300->hw.cb.cmd[R300_CB_PITCH] = r300->radeon.radeonScreen->frontPitch;
 		
 	}
+	
+	if (r300->radeon.radeonScreen->cpp == 4)
+		r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_FORMAT_ARGB8888;
+	else
+		r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_FORMAT_RGB565;
 	
 	r300->hw.unk4E50.cmd[1] = 0;
 	r300->hw.unk4E50.cmd[2] = 0;
