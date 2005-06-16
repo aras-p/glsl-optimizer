@@ -211,16 +211,19 @@ static int r300_get_num_verts(r300ContextPtr rmesa,
 
 static GLfloat default_vector[4]={0.0, 0.0, 0.0, 1.0};
 
-#define output_vector(v, i) \
-	{ \
+#define output_vector(v, i) { \
 	int _i; \
 	for(_i=0;_i<v->size;_i++){ \
-		efloat(VEC_ELT(v, GLfloat, i)[_i]); \
+		if(VB->Elts){ \
+			efloat(VEC_ELT(v, GLfloat, VB->Elts[i])[_i]); \
+		}else{ \
+			efloat(VEC_ELT(v, GLfloat, i)[_i]); \
 		} \
+	} \
 	for(_i=v->size;_i<4;_i++){ \
-			efloat(default_vector[_i]); \
-			} \
-	}
+		efloat(default_vector[_i]); \
+	} \
+}
 
 /* Immediate implementation - vertex data is sent via command stream */
 
@@ -506,9 +509,6 @@ static GLboolean r300_run_vb_render(GLcontext *ctx,
 	e32(0x00000003);
 	r300EmitState(rmesa);
 	
-	if(hw_tcl_on) /* FIXME */
-		r300FlushCmdBuf(rmesa, __FUNCTION__);
-
 	rmesa->state.Elts = VB->Elts;
 
 	for(i=0; i < VB->PrimitiveCount; i++){
