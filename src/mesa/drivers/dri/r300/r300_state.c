@@ -1146,7 +1146,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 				| interp_magic[i];
 
 		if (InputsRead & (FRAG_BIT_TEX0<<i)) {
-			assert(r300->state.texture.tc_count != 0);
+			//assert(r300->state.texture.tc_count != 0);
 			r300->hw.rr.cmd[R300_RR_ROUTE_0 + fp_reg] = 0
 					| R300_RS_ROUTE_ENABLE
 					| i /* source INTERP */
