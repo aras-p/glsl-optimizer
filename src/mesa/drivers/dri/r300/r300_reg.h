@@ -1217,6 +1217,12 @@ I am fairly certain that they are correct unless stated otherwise in comments.
 #	define R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT	16
 
 /* gap */
+
+#define R300_RB3D_ZSTENCIL_FORMAT                   0x4F10
+#	define R300_DEPTH_FORMAT_16BIT_INT_Z     (0 << 0)
+#	define R300_DEPTH_FORMAT_24BIT_INT_Z     (2 << 0)
+
+/* gap */
 #define R300_RB3D_DEPTHOFFSET               0x4F20
 #define R300_RB3D_DEPTHPITCH                0x4F24
 #       define R300_DEPTHPITCH_MASK              0x00001FF8 /* GUESS */
