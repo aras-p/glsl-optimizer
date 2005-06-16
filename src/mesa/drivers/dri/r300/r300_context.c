@@ -151,21 +151,42 @@ void r300BufferData(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 	drm_radeon_mem_alloc_t alloc;
 	int offset, ret;
 
+	/* Free previous buffer */
+	if (obj->OnCard) {
+		drm_radeon_mem_free_t memfree;
+		
+		memfree.region = RADEON_MEM_REGION_GART;
+		memfree.region_offset = (char *)obj->Data - (char *)rmesa->radeon.radeonScreen->gartTextures.map;
+
+		ret = drmCommandWrite(rmesa->radeon.radeonScreen->driScreen->fd,
+				      DRM_RADEON_FREE, &memfree, sizeof(memfree));
+
+		if (ret) {
+			WARN_ONCE("Failed to free GART memroy!\n");
+		}
+		obj->OnCard = GL_FALSE;
+	}
+	
 	alloc.region = RADEON_MEM_REGION_GART;
 	alloc.alignment = 4;
 	alloc.size = size;
 	alloc.region_offset = &offset;
 
 	ret = drmCommandWriteRead( rmesa->radeon.dri.fd, DRM_RADEON_ALLOC, &alloc, sizeof(alloc));
-   	if(ret){
+   	if (ret) {
 		WARN_ONCE("Ran out of GART memory!\n");
+		obj->Data = NULL;
 		_mesa_buffer_data(ctx, target, size, data, usage, obj);
 		return ;
 	}
 	obj->Data = ((char *)rmesa->radeon.radeonScreen->gartTextures.map) + offset;
-	memcpy(obj->Data, data, size);
+	
+	if (data)
+		memcpy(obj->Data, data, size);
+	
 	obj->Size = size;
 	obj->Usage = usage;
+	obj->OnCard = GL_TRUE;
 #if 0
 	fprintf(stderr, "allocated %d bytes at %p, offset=%d\n", size, obj->Data, offset);
 #endif
@@ -230,10 +251,13 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitStateFuncs(&functions);
 	r300InitTextureFuncs(&functions);
 	r300InitShaderFuncs(&functions);
-	if(hw_tcl_on){
+	
+#if 0 /* Needs various Mesa changes... */
+	if (hw_tcl_on) {
 		functions.BufferData = r300BufferData;
 		functions.DeleteBuffer = r300DeleteBuffer;
 	}
+#endif
 	
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv, sharedContextPrivate)) {
