@@ -66,9 +66,10 @@ int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller)
 	drm_radeon_cmd_buffer_t cmd;
 	int start;
 
-	if (r300->radeon.lost_context)
+	if (r300->radeon.lost_context) {
 		start = 0;
-	else
+		r300->radeon.lost_context = GL_FALSE;
+	} else
 		start = r300->cmdbuf.count_reemit;
 
 	if (RADEON_DEBUG & DEBUG_IOCTL) {
