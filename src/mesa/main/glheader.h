@@ -285,6 +285,17 @@ int INLINE ffs(int value)
 }
 #endif
 
+
+/* The __FUNCTION__ gcc variable is generally only used for debugging.
+ * If we're not using gcc, define __FUNCTION__ as a cpp symbol here.
+ */
+#if defined(__VMS)
+#define __FUNCTION__ "VMS$NL:"
+#elif !(defined(__GNUC__) && __GNUC__ >= 2)
+#define __FUNCTION__ "unknown"
+#endif
+
+
 #include "config.h"
 
 #endif /* GLHEADER_H */
