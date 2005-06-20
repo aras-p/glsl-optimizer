@@ -45,7 +45,8 @@ install:
 		echo "*** Installation aborted."; \
 		exit 1; \
 	fi;
-	install -m 0755 $(DIRECTFBGL_MESA) $(DFB_MODULEDIR)/interfaces/IDirectFBGL/
+	test -d $(DFB_MODULEDIR)/interfaces/IDirectFBGL/ || mkdir $(DFB_MODULEDIR)/interfaces/IDirectFBGL/
+	install -m 755 $(DIRECTFBGL_MESA) $(DFB_MODULEDIR)/interfaces/IDirectFBGL/
 
 
 clean:

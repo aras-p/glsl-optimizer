@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004 Claudio Ciccani <klan@users.sf.net>
+ * Copyright (C) 2004-2005 Claudio Ciccani <klan@users.sf.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -38,6 +38,8 @@
 #include "buffers.h"
 #include "context.h"
 #include "extensions.h"
+#include "framebuffer.h"
+#include "renderbuffer.h"
 #include "imports.h"
 #include "texformat.h"
 #include "teximage.h"
@@ -84,6 +86,7 @@ typedef struct {
      GLvisual                visual;
      GLframebuffer           framebuffer;
      GLcontext               context;
+     struct gl_renderbuffer  render;
 } IDirectFBGL_data;
 
 
@@ -93,7 +96,7 @@ static bool  dfb_mesa_create_context ( GLcontext             *context,
                                        GLframebuffer         *framebuffer,
                                        GLvisual              *visual,
                                        DFBSurfacePixelFormat  format,
-                                       void                  *data );
+                                       IDirectFBGL_data      *data );
 static void  dfb_mesa_destroy_context( GLcontext             *context,
                                        GLframebuffer         *framebuffer );
 
@@ -155,6 +158,8 @@ IDirectFBGL_Lock( IDirectFBGL *thiz )
           return err;
      }
      data->video.end = data->video.start + (height-1) * data->video.pitch;
+
+     data->render.Data = data->video.start;
      
      if (data->width != width || data->height != height) {
           data->width  = width;
@@ -248,7 +253,7 @@ Construct( IDirectFBGL      *thiz,
      
      /* Create context. */
      if (!dfb_mesa_create_context( &data->context, &data->framebuffer,
-                                   &data->visual, data->format, (void*) data )) {
+                                   &data->visual, data->format, data )) {
           D_ERROR( "DirectFBGL/Mesa: failed to create context.\n" );
           surface->Release( surface );
           return DFB_UNSUPPORTED;
@@ -312,134 +317,144 @@ set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
      return;
 }
 
+static void
+delete_renderbuffer( struct gl_renderbuffer *render )
+{
+     return;
+}
+
+static GLboolean
+renderbuffer_storage( GLcontext *ctx, struct gl_renderbuffer *render,
+                      GLenum internalFormat, GLuint width, GLuint height )
+{
+     return GL_TRUE;
+}
+
 
 /* RGB332 */
 #define NAME(PREFIX) PREFIX##_RGB332
+#define FORMAT GL_RGBA8
 #define SPAN_VARS \
    IDirectFBGL_data *data = (IDirectFBGL_data*) ctx->DriverCtx;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = data->video.end - (Y) * data->video.pitch + (X)
+   GLubyte *P = data->video.end - (Y) * data->video.pitch + (X);
 #define INC_PIXEL_PTR(P) P += 1
-#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
-   *P = ( (((R) & 0xe0)) | (((G) & 0xe0) >> 3) | ((B) >> 6) )
-#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
-   *P = ( (((R) & 0xe0)) | (((G) & 0xe0) >> 3) | ((B) >> 6) )
-#define FETCH_RGBA_PIXEL(R, G, B, A, P) \
-   R = ((*P & 0xe0)     ); \
-   G = ((*P & 0x1c) << 3); \
-   B = ((*P & 0x03) << 6); \
-   A = CHAN_MAX
+#define STORE_PIXEL(P, X, Y, S) \
+   *P = ( (((S[RCOMP]) & 0xe0)) | (((S[GCOMP]) & 0xe0) >> 3) | ((S[BCOMP]) >> 6) )
+#define FETCH_PIXEL(D, P) \
+   D[RCOMP] = ((*P & 0xe0)     ); \
+   D[GCOMP] = ((*P & 0x1c) << 3); \
+   D[BCOMP] = ((*P & 0x03) << 6); \
+   D[ACOMP] = 0xff
 
 #include "swrast/s_spantemp.h"
 
 /* ARGB1555 */
 #define NAME(PREFIX) PREFIX##_ARGB1555
+#define FORMAT GL_RGBA8
 #define SPAN_VARS \
    IDirectFBGL_data *data = (IDirectFBGL_data*) ctx->DriverCtx;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLushort *P = (GLushort *) (data->video.end - (Y) * data->video.pitch + (X) * 2)
+   GLushort *P = (GLushort *) (data->video.end - (Y) * data->video.pitch + (X) * 2);
 #define INC_PIXEL_PTR(P) P += 1
-#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
-   *P = ( (((R) & 0xf8) << 7) | (((G) & 0xf8) << 2) | ((B) >> 3) )
-#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
-   *P = ( (((A) & 0x80) << 8) | (((R) & 0xf8) << 7) | (((G) & 0xf8) << 2) | ((B) >> 3) )
-#define FETCH_RGBA_PIXEL(R, G, B, A, P) \
-   R = ((*P & 0x7c00) >> 7); \
-   G = ((*P & 0x03e0) >> 2); \
-   B = ((*P & 0x001f) << 3); \
-   A = ((*P & 0x8000) ? 0xff : 0)
+#define STORE_PIXEL(P, X, Y, S) \
+   *P = ( (((S[RCOMP]) & 0xf8) << 7) | (((S[GCOMP]) & 0xf8) << 2) | ((S[BCOMP]) >> 3) )
+#define FETCH_PIXEL(D, P) \
+   D[RCOMP] = ((*P & 0x7c00) >> 7); \
+   D[GCOMP] = ((*P & 0x03e0) >> 2); \
+   D[BCOMP] = ((*P & 0x001f) << 3); \
+   D[ACOMP] = ((*P & 0x8000) ? 0xff : 0)
 
 #include "swrast/s_spantemp.h"
 
 /* RGB16 */
 #define NAME(PREFIX) PREFIX##_RGB16
+#define FORMAT GL_RGBA8
 #define SPAN_VARS \
    IDirectFBGL_data *data = (IDirectFBGL_data*) ctx->DriverCtx;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLushort *P = (GLushort *) (data->video.end - (Y) * data->video.pitch + (X) * 2)
+   GLushort *P = (GLushort *) (data->video.end - (Y) * data->video.pitch + (X) * 2);
 #define INC_PIXEL_PTR(P) P += 1
-#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
-   *P = ( (((R) & 0xf8) << 8) | (((G) & 0xfc) << 3) | ((B) >> 3) )
-#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
-   *P = ( (((R) & 0xf8) << 8) | (((G) & 0xfc) << 3) | ((B) >> 3) )
-#define FETCH_RGBA_PIXEL(R, G, B, A, P) \
-   R = ((*P & 0xf800) >> 8); \
-   G = ((*P & 0x07e0) >> 3); \
-   B = ((*P & 0x001f) << 3); \
-   A = CHAN_MAX
+#define STORE_PIXEL(P, X, Y, S) \
+   *P = ( (((S[RCOMP]) & 0xf8) << 8) | (((S[GCOMP]) & 0xfc) << 3) | ((S[BCOMP]) >> 3) )
+#define FETCH_PIXEL(D, P) \
+   D[RCOMP] = ((*P & 0xf800) >> 8); \
+   D[GCOMP] = ((*P & 0x07e0) >> 3); \
+   D[BCOMP] = ((*P & 0x001f) << 3); \
+   D[ACOMP] = 0xff
 
 #include "swrast/s_spantemp.h"
 
 /* RGB24 */
 #define NAME(PREFIX) PREFIX##_RGB24
+#define FORMAT GL_RGBA8
 #define SPAN_VARS \
    IDirectFBGL_data *data = ctx->DriverCtx;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLubyte *P = data->video.end - (Y) * data->video.pitch + (X) * 3
+   GLubyte *P = data->video.end - (Y) * data->video.pitch + (X) * 3;
 #define INC_PIXEL_PTR(P) P += 3
-#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
-   P[0] = B;  P[1] = G;  P[2] = R
-#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
-   P[0] = B;  P[1] = G;  P[2] = R
-#define FETCH_RGBA_PIXEL(R, G, B, A, P) \
-   R = P[2];  G = P[1];  B = P[0];  A = CHAN_MAX
+#define STORE_PIXEL(P, X, Y, S) \
+   P[0] = S[BCOMP];  P[1] = S[GCOMP];  P[2] = S[BCOMP]
+#define FETCH_PIXEL(D, P) \
+   D[RCOMP] = P[2];  D[GCOMP] = P[1];  D[BCOMP] = P[0]; D[ACOMP] = 0xff
 
 #include "swrast/s_spantemp.h"
 
 /* RGB32 */
 #define NAME(PREFIX) PREFIX##_RGB32
+#define FORMAT GL_RGBA8
 #define SPAN_VARS \
    IDirectFBGL_data *data = (IDirectFBGL_data*) ctx->DriverCtx;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLuint *P = (GLuint*) (data->video.end - (Y) * data->video.pitch + (X) * 4)
+   GLuint *P = (GLuint*) (data->video.end - (Y) * data->video.pitch + (X) * 4);
 #define INC_PIXEL_PTR(P) P += 1
-#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
-   *P = ( ((R) << 16) | ((G) << 8) | (B) )
-#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
-   *P = ( ((R) << 16) | ((G) << 8) | (B) )
-#define FETCH_RGBA_PIXEL(R, G, B, A, P) \
-   R = ((*P & 0x00ff0000) >> 16); \
-   G = ((*P & 0x0000ff00) >>  8); \
-   B = ((*P & 0x000000ff)      ); \
-   A = CHAN_MAX
+#define STORE_PIXEL(P, X, Y, S) \
+   *P = ( ((S[RCOMP]) << 16) | ((S[GCOMP]) << 8) | (S[BCOMP]) )
+#define FETCH_PIXEL(D, P) \
+   D[RCOMP] = ((*P & 0x00ff0000) >> 16); \
+   D[GCOMP] = ((*P & 0x0000ff00) >>  8); \
+   D[BCOMP] = ((*P & 0x000000ff)      ); \
+   D[ACOMP] = 0xff
 
 #include "swrast/s_spantemp.h"
    
 /* ARGB */
 #define NAME(PREFIX) PREFIX##_ARGB
+#define FORMAT GL_RGBA8
 #define SPAN_VARS \
    IDirectFBGL_data *data = (IDirectFBGL_data*) ctx->DriverCtx;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLuint *P = (GLuint*) (data->video.end - (Y) * data->video.pitch + (X) * 4)
+   GLuint *P = (GLuint*) (data->video.end - (Y) * data->video.pitch + (X) * 4);
 #define INC_PIXEL_PTR(P) P += 1
-#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
-   *P = ( 0xff000000  | ((R) << 16) | ((G) << 8) | (B) )
-#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
-   *P = ( ((A) << 24) | ((R) << 16) | ((G) << 8) | (B) )
-#define FETCH_RGBA_PIXEL(R, G, B, A, P) \
-   R = ((*P & 0x00ff0000) >> 16); \
-   G = ((*P & 0x0000ff00) >>  8); \
-   B = ((*P & 0x000000ff)      ); \
-   A = ((*P & 0xff000000) >> 24)
+#define STORE_PIXEL_RGB(P, X, Y, S) \
+   *P = ( 0xff000000  | ((S[RCOMP]) << 16) | ((S[GCOMP]) << 8) | (S[BCOMP]) )
+#define STORE_PIXEL(P, X, Y, S) \
+   *P = ( ((S[ACOMP]) << 24) | ((S[RCOMP]) << 16) | ((S[GCOMP]) << 8) | (S[BCOMP]) )
+#define FETCH_PIXEL(D, P) \
+   D[RCOMP] = ((*P & 0x00ff0000) >> 16); \
+   D[GCOMP] = ((*P & 0x0000ff00) >>  8); \
+   D[BCOMP] = ((*P & 0x000000ff)      ); \
+   D[ACOMP] = ((*P & 0xff000000) >> 24)
 
 #include "swrast/s_spantemp.h"
 
 /* AiRGB */
 #define NAME(PREFIX) PREFIX##_AiRGB
+#define FORMAT GL_RGBA8
 #define SPAN_VARS \
    IDirectFBGL_data *data = (IDirectFBGL_data*) ctx->DriverCtx;
 #define INIT_PIXEL_PTR(P, X, Y) \
-   GLuint *P = (GLuint*) (data->video.end - (Y) * data->video.pitch + (X) * 4)
+   GLuint *P = (GLuint*) (data->video.end - (Y) * data->video.pitch + (X) * 4);
 #define INC_PIXEL_PTR(P) P += 1
-#define STORE_RGB_PIXEL(P, X, Y, R, G, B) \
-   *P = ( ((R) << 16) | ((G) << 8) | (B) )
-#define STORE_RGBA_PIXEL(P, X, Y, R, G, B, A) \
-   *P = ( ((0xff - (A)) << 24) | ((R) << 16) | ((G) << 8) | (B) )
-#define FETCH_RGBA_PIXEL(R, G, B, A, P) \
-   R =         ((*P & 0x00ff0000) >> 16); \
-   G =         ((*P & 0x0000ff00) >>  8); \
-   B =         ((*P & 0x000000ff)      ); \
-   A = (0xff - ((*P & 0xff000000) >> 24))
+#define STORE_PIXEL_RGB(P, X, Y, S) \
+   *P = ( ((S[RCOMP]) << 16) | ((S[GCOMP]) << 8) | (S[BCOMP]) )
+#define STORE_PIXEL(P, X, Y, S) \
+   *P = ( ((0xff - (S[ACOMP])) << 24) | ((S[RCOMP]) << 16) | ((S[GCOMP]) << 8) | (S[BCOMP]) )
+#define FETCH_PIXEL(D, P) \
+   D[RCOMP] =         ((*P & 0x00ff0000) >> 16); \
+   D[GCOMP] =         ((*P & 0x0000ff00) >>  8); \
+   D[BCOMP] =         ((*P & 0x000000ff)      ); \
+   D[ACOMP] = (0xff - ((*P & 0xff000000) >> 24))
 
 #include "swrast/s_spantemp.h"
 
@@ -520,16 +535,12 @@ dfb_mesa_create_context( GLcontext             *context,
                          GLframebuffer         *framebuffer,
                          GLvisual              *visual,
                          DFBSurfacePixelFormat  format,
-                         void                  *data )
+                         IDirectFBGL_data      *data )
 {
      struct dd_function_table     functions;
      struct swrast_device_driver *swdd;
      
-     _mesa_initialize_framebuffer( framebuffer, visual, 
-                                   visual->haveDepthBuffer,
-                                   visual->haveStencilBuffer,
-                                   visual->haveAccumBuffer,
-                                   visual->accumAlphaBits > 0 );
+     _mesa_initialize_framebuffer( framebuffer, visual ); 
      
      _mesa_init_driver_functions( &functions );
      functions.GetString     = get_string;
@@ -538,7 +549,7 @@ dfb_mesa_create_context( GLcontext             *context,
      functions.Viewport      = set_viewport;
      
      if (!_mesa_initialize_context( context, visual, NULL,
-                                    &functions, data )) {
+                                    &functions, (void*) data )) {
           D_DEBUG( "DirectFBGL/Mesa: _mesa_initialize_context() failed.\n" );
           _mesa_free_framebuffer_data( framebuffer );
           return false;
@@ -552,80 +563,92 @@ dfb_mesa_create_context( GLcontext             *context,
      
      swdd = _swrast_GetDeviceDriverReference( context );
      swdd->SetBuffer = set_buffer;
+
+     _mesa_init_renderbuffer( &data->render, 0 );
+     data->render.InternalFormat = GL_RGBA;
+     data->render._BaseFormat    = GL_RGBA;
+     data->render.DataType       = GL_UNSIGNED_BYTE;
+     data->render.Data           = data->video.start;
+     data->render.Delete         = delete_renderbuffer;
+     data->render.AllocStorage   = renderbuffer_storage;
+     
      switch (format) {
-          case DSPF_RGB332: 
-               swdd->WriteRGBASpan       = write_rgba_span_RGB332;
-               swdd->WriteRGBSpan        = write_rgb_span_RGB332;
-               swdd->WriteMonoRGBASpan   = write_monorgba_span_RGB332;
-               swdd->WriteRGBAPixels     = write_rgba_pixels_RGB332;
-               swdd->WriteMonoRGBAPixels = write_monorgba_pixels_RGB332;
-               swdd->ReadRGBASpan        = read_rgba_span_RGB332;
-               swdd->ReadRGBAPixels      = read_rgba_pixels_RGB332;
+          case DSPF_RGB332:
+               data->render.GetRow        = get_row_RGB332;
+               data->render.GetValues     = get_values_RGB332;
+               data->render.PutRow        = put_row_RGB332;
+               data->render.PutMonoRow    = put_mono_row_RGB332;
+               data->render.PutValues     = put_values_RGB332;
+               data->render.PutMonoValues = put_mono_values_RGB332;
                break;
           case DSPF_ARGB1555:
-               swdd->WriteRGBASpan       = write_rgba_span_ARGB1555;
-               swdd->WriteRGBSpan        = write_rgb_span_ARGB1555;
-               swdd->WriteMonoRGBASpan   = write_monorgba_span_ARGB1555;
-               swdd->WriteRGBAPixels     = write_rgba_pixels_ARGB1555;
-               swdd->WriteMonoRGBAPixels = write_monorgba_pixels_ARGB1555;
-               swdd->ReadRGBASpan        = read_rgba_span_ARGB1555;
-               swdd->ReadRGBAPixels      = read_rgba_pixels_ARGB1555;
+               data->render.GetRow        = get_row_ARGB1555;
+               data->render.GetValues     = get_values_ARGB1555;
+               data->render.PutRow        = put_row_ARGB1555;
+               data->render.PutMonoRow    = put_mono_row_ARGB1555;
+               data->render.PutValues     = put_values_ARGB1555;
+               data->render.PutMonoValues = put_mono_values_ARGB1555;
                break;
           case DSPF_RGB16:
-               swdd->WriteRGBASpan       = write_rgba_span_RGB16;
-               swdd->WriteRGBSpan        = write_rgb_span_RGB16;
-               swdd->WriteMonoRGBASpan   = write_monorgba_span_RGB16;
-               swdd->WriteRGBAPixels     = write_rgba_pixels_RGB16;
-               swdd->WriteMonoRGBAPixels = write_monorgba_pixels_RGB16;
-               swdd->ReadRGBASpan        = read_rgba_span_RGB16;
-               swdd->ReadRGBAPixels      = read_rgba_pixels_RGB16;
+               data->render.GetRow        = get_row_RGB16;
+               data->render.GetValues     = get_values_RGB16;
+               data->render.PutRow        = put_row_RGB16;
+               data->render.PutMonoRow    = put_mono_row_RGB16;
+               data->render.PutValues     = put_values_RGB16;
+               data->render.PutMonoValues = put_mono_values_RGB16;
                break;
-          case DSPF_RGB24:   
-               swdd->WriteRGBASpan       = write_rgba_span_RGB24;
-               swdd->WriteRGBSpan        = write_rgb_span_RGB24;
-               swdd->WriteMonoRGBASpan   = write_monorgba_span_RGB24;
-               swdd->WriteRGBAPixels     = write_rgba_pixels_RGB24;
-               swdd->WriteMonoRGBAPixels = write_monorgba_pixels_RGB24;
-               swdd->ReadRGBASpan        = read_rgba_span_RGB24;
-               swdd->ReadRGBAPixels      = read_rgba_pixels_RGB24;
+          case DSPF_RGB24:
+               data->render.GetRow        = get_row_RGB24;
+               data->render.GetValues     = get_values_RGB24;
+               data->render.PutRow        = put_row_RGB24;
+               data->render.PutMonoRow    = put_mono_row_RGB24;
+               data->render.PutValues     = put_values_RGB24;
+               data->render.PutMonoValues = put_mono_values_RGB24;
                break;
           case DSPF_RGB32:
-               swdd->WriteRGBASpan       = write_rgba_span_RGB32;
-               swdd->WriteRGBSpan        = write_rgb_span_RGB32;
-               swdd->WriteMonoRGBASpan   = write_monorgba_span_RGB32;
-               swdd->WriteRGBAPixels     = write_rgba_pixels_RGB32;
-               swdd->WriteMonoRGBAPixels = write_monorgba_pixels_RGB32;
-               swdd->ReadRGBASpan        = read_rgba_span_RGB32;
-               swdd->ReadRGBAPixels      = read_rgba_pixels_RGB32;
+               data->render.GetRow        = get_row_RGB32;
+               data->render.GetValues     = get_values_RGB32;
+               data->render.PutRow        = put_row_RGB32;
+               data->render.PutMonoRow    = put_mono_row_RGB32;
+               data->render.PutValues     = put_values_RGB32;
+               data->render.PutMonoValues = put_mono_values_RGB32;
                break;
           case DSPF_ARGB:
-               swdd->WriteRGBASpan       = write_rgba_span_ARGB;
-               swdd->WriteRGBSpan        = write_rgb_span_ARGB;
-               swdd->WriteMonoRGBASpan   = write_monorgba_span_ARGB;
-               swdd->WriteRGBAPixels     = write_rgba_pixels_ARGB;
-               swdd->WriteMonoRGBAPixels = write_monorgba_pixels_ARGB;
-               swdd->ReadRGBASpan        = read_rgba_span_ARGB;
-               swdd->ReadRGBAPixels      = read_rgba_pixels_ARGB;
+               data->render.GetRow        = get_row_ARGB;
+               data->render.GetValues     = get_values_ARGB;
+               data->render.PutRow        = put_row_ARGB;
+               data->render.PutMonoRow    = put_mono_row_ARGB;
+               data->render.PutValues     = put_values_ARGB;
+               data->render.PutMonoValues = put_mono_values_ARGB;
                break;
           case DSPF_AiRGB:
-               swdd->WriteRGBASpan       = write_rgba_span_AiRGB;
-               swdd->WriteRGBSpan        = write_rgb_span_AiRGB;
-               swdd->WriteMonoRGBASpan   = write_monorgba_span_AiRGB;
-               swdd->WriteRGBAPixels     = write_rgba_pixels_AiRGB;
-               swdd->WriteMonoRGBAPixels = write_monorgba_pixels_AiRGB;
-               swdd->ReadRGBASpan        = read_rgba_span_AiRGB;
-               swdd->ReadRGBAPixels      = read_rgba_pixels_AiRGB;
+               data->render.GetRow        = get_row_AiRGB;
+               data->render.GetValues     = get_values_AiRGB;
+               data->render.PutRow        = put_row_AiRGB;
+               data->render.PutMonoRow    = put_mono_row_AiRGB;
+               data->render.PutValues     = put_values_AiRGB;
+               data->render.PutMonoValues = put_mono_values_AiRGB;
                break;
           default:
                D_BUG( "unexpected pixelformat" );
                return false;
      }
 
+     _mesa_add_renderbuffer( framebuffer, BUFFER_FRONT_LEFT, &data->render );
+     
+     _mesa_add_soft_renderbuffers( framebuffer,
+                                   GL_FALSE,
+                                   visual->haveDepthBuffer,
+                                   visual->haveStencilBuffer,
+                                   visual->haveAccumBuffer,
+                                   GL_FALSE,
+                                   GL_FALSE );
+
      TNL_CONTEXT( context )->Driver.RunPipeline = _tnl_run_pipeline;
 
      _mesa_enable_sw_extensions( context );
 
-     _mesa_make_current( context, framebuffer );
+     _mesa_make_current( context, framebuffer, framebuffer );
      
      return true;
 }
@@ -634,7 +657,7 @@ static void
 dfb_mesa_destroy_context( GLcontext     *context,
                           GLframebuffer *framebuffer )
 {
-     _mesa_make_current( NULL, NULL );
+     _mesa_make_current( NULL, NULL, NULL );
      _mesa_free_framebuffer_data( framebuffer );
      _mesa_notifyDestroy( context );
      _mesa_free_context_data( context );
