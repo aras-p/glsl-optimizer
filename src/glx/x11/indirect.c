@@ -3315,7 +3315,7 @@ __indirect_glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum 
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxReadPixelsRep *reply = XCBGlxReadPixelsReply(c, XCBGlxReadPixels(c, gc->currentContextTag, x, y, width, height, format, type, state->storePack.swapEndian, 0), NULL);
-        pixels = (GLvoid *)XCBGlxReadPixelsData(reply);
+        (void)memcpy(pixels, XCBGlxReadPixelsData(reply), XCBGlxReadPixelsDataLength(reply) * sizeof(GLvoid));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_ReadPixels, cmdlen);
@@ -3412,9 +3412,9 @@ __indirect_glGetLightfv(GLenum light, GLenum pname, GLfloat * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetLightfvRep *reply = XCBGlxGetLightfvReply(c, XCBGlxGetLightfv(c, gc->currentContextTag, light, pname), NULL);
         if (XCBGlxGetLightfvDataLength(reply) == 0)
-            params = (GLfloat *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLfloat *)XCBGlxGetLightfvData(reply);
+        (void)memcpy(params, XCBGlxGetLightfvData(reply), XCBGlxGetLightfvDataLength(reply) * sizeof(GLfloat));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetLightfv, cmdlen);
@@ -3440,9 +3440,9 @@ __indirect_glGetLightiv(GLenum light, GLenum pname, GLint * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetLightivRep *reply = XCBGlxGetLightivReply(c, XCBGlxGetLightiv(c, gc->currentContextTag, light, pname), NULL);
         if (XCBGlxGetLightivDataLength(reply) == 0)
-            params = (GLint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLint *)XCBGlxGetLightivData(reply);
+        (void)memcpy(params, XCBGlxGetLightivData(reply), XCBGlxGetLightivDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetLightiv, cmdlen);
@@ -3468,9 +3468,9 @@ __indirect_glGetMapdv(GLenum target, GLenum query, GLdouble * v)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetMapdvRep *reply = XCBGlxGetMapdvReply(c, XCBGlxGetMapdv(c, gc->currentContextTag, target, query), NULL);
         if (XCBGlxGetMapdvDataLength(reply) == 0)
-            v = (GLdouble *) &reply->datum;
+            (void)memcpy(v, &reply->datum, sizeof(reply->datum));
         else
-            v = (GLdouble *)XCBGlxGetMapdvData(reply);
+        (void)memcpy(v, XCBGlxGetMapdvData(reply), XCBGlxGetMapdvDataLength(reply) * sizeof(GLdouble));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMapdv, cmdlen);
@@ -3496,9 +3496,9 @@ __indirect_glGetMapfv(GLenum target, GLenum query, GLfloat * v)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetMapfvRep *reply = XCBGlxGetMapfvReply(c, XCBGlxGetMapfv(c, gc->currentContextTag, target, query), NULL);
         if (XCBGlxGetMapfvDataLength(reply) == 0)
-            v = (GLfloat *) &reply->datum;
+            (void)memcpy(v, &reply->datum, sizeof(reply->datum));
         else
-            v = (GLfloat *)XCBGlxGetMapfvData(reply);
+        (void)memcpy(v, XCBGlxGetMapfvData(reply), XCBGlxGetMapfvDataLength(reply) * sizeof(GLfloat));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMapfv, cmdlen);
@@ -3524,9 +3524,9 @@ __indirect_glGetMapiv(GLenum target, GLenum query, GLint * v)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetMapivRep *reply = XCBGlxGetMapivReply(c, XCBGlxGetMapiv(c, gc->currentContextTag, target, query), NULL);
         if (XCBGlxGetMapivDataLength(reply) == 0)
-            v = (GLint *) &reply->datum;
+            (void)memcpy(v, &reply->datum, sizeof(reply->datum));
         else
-            v = (GLint *)XCBGlxGetMapivData(reply);
+        (void)memcpy(v, XCBGlxGetMapivData(reply), XCBGlxGetMapivDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMapiv, cmdlen);
@@ -3552,9 +3552,9 @@ __indirect_glGetMaterialfv(GLenum face, GLenum pname, GLfloat * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetMaterialfvRep *reply = XCBGlxGetMaterialfvReply(c, XCBGlxGetMaterialfv(c, gc->currentContextTag, face, pname), NULL);
         if (XCBGlxGetMaterialfvDataLength(reply) == 0)
-            params = (GLfloat *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLfloat *)XCBGlxGetMaterialfvData(reply);
+        (void)memcpy(params, XCBGlxGetMaterialfvData(reply), XCBGlxGetMaterialfvDataLength(reply) * sizeof(GLfloat));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMaterialfv, cmdlen);
@@ -3580,9 +3580,9 @@ __indirect_glGetMaterialiv(GLenum face, GLenum pname, GLint * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetMaterialivRep *reply = XCBGlxGetMaterialivReply(c, XCBGlxGetMaterialiv(c, gc->currentContextTag, face, pname), NULL);
         if (XCBGlxGetMaterialivDataLength(reply) == 0)
-            params = (GLint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLint *)XCBGlxGetMaterialivData(reply);
+        (void)memcpy(params, XCBGlxGetMaterialivData(reply), XCBGlxGetMaterialivDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMaterialiv, cmdlen);
@@ -3608,9 +3608,9 @@ __indirect_glGetPixelMapfv(GLenum map, GLfloat * values)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetPixelMapfvRep *reply = XCBGlxGetPixelMapfvReply(c, XCBGlxGetPixelMapfv(c, gc->currentContextTag, map), NULL);
         if (XCBGlxGetPixelMapfvDataLength(reply) == 0)
-            values = (GLfloat *) &reply->datum;
+            (void)memcpy(values, &reply->datum, sizeof(reply->datum));
         else
-            values = (GLfloat *)XCBGlxGetPixelMapfvData(reply);
+        (void)memcpy(values, XCBGlxGetPixelMapfvData(reply), XCBGlxGetPixelMapfvDataLength(reply) * sizeof(GLfloat));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetPixelMapfv, cmdlen);
@@ -3635,9 +3635,9 @@ __indirect_glGetPixelMapuiv(GLenum map, GLuint * values)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetPixelMapuivRep *reply = XCBGlxGetPixelMapuivReply(c, XCBGlxGetPixelMapuiv(c, gc->currentContextTag, map), NULL);
         if (XCBGlxGetPixelMapuivDataLength(reply) == 0)
-            values = (GLuint *) &reply->datum;
+            (void)memcpy(values, &reply->datum, sizeof(reply->datum));
         else
-            values = (GLuint *)XCBGlxGetPixelMapuivData(reply);
+        (void)memcpy(values, XCBGlxGetPixelMapuivData(reply), XCBGlxGetPixelMapuivDataLength(reply) * sizeof(GLuint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetPixelMapuiv, cmdlen);
@@ -3662,9 +3662,9 @@ __indirect_glGetPixelMapusv(GLenum map, GLushort * values)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetPixelMapusvRep *reply = XCBGlxGetPixelMapusvReply(c, XCBGlxGetPixelMapusv(c, gc->currentContextTag, map), NULL);
         if (XCBGlxGetPixelMapusvDataLength(reply) == 0)
-            values = (GLushort *) &reply->datum;
+            (void)memcpy(values, &reply->datum, sizeof(reply->datum));
         else
-            values = (GLushort *)XCBGlxGetPixelMapusvData(reply);
+        (void)memcpy(values, XCBGlxGetPixelMapusvData(reply), XCBGlxGetPixelMapusvDataLength(reply) * sizeof(GLushort));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetPixelMapusv, cmdlen);
@@ -3689,7 +3689,7 @@ __indirect_glGetPolygonStipple(GLubyte * mask)
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetPolygonStippleRep *reply = XCBGlxGetPolygonStippleReply(c, XCBGlxGetPolygonStipple(c, gc->currentContextTag, 0), NULL);
-        mask = (GLubyte *)XCBGlxGetPolygonStippleData(reply);
+        (void)memcpy(mask, XCBGlxGetPolygonStippleData(reply), XCBGlxGetPolygonStippleDataLength(reply) * sizeof(GLubyte));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetPolygonStipple, cmdlen);
@@ -3714,9 +3714,9 @@ __indirect_glGetTexEnvfv(GLenum target, GLenum pname, GLfloat * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetTexEnvfvRep *reply = XCBGlxGetTexEnvfvReply(c, XCBGlxGetTexEnvfv(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetTexEnvfvDataLength(reply) == 0)
-            params = (GLfloat *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLfloat *)XCBGlxGetTexEnvfvData(reply);
+        (void)memcpy(params, XCBGlxGetTexEnvfvData(reply), XCBGlxGetTexEnvfvDataLength(reply) * sizeof(GLfloat));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexEnvfv, cmdlen);
@@ -3742,9 +3742,9 @@ __indirect_glGetTexEnviv(GLenum target, GLenum pname, GLint * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetTexEnvivRep *reply = XCBGlxGetTexEnvivReply(c, XCBGlxGetTexEnviv(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetTexEnvivDataLength(reply) == 0)
-            params = (GLint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLint *)XCBGlxGetTexEnvivData(reply);
+        (void)memcpy(params, XCBGlxGetTexEnvivData(reply), XCBGlxGetTexEnvivDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexEnviv, cmdlen);
@@ -3770,9 +3770,9 @@ __indirect_glGetTexGendv(GLenum coord, GLenum pname, GLdouble * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetTexGendvRep *reply = XCBGlxGetTexGendvReply(c, XCBGlxGetTexGendv(c, gc->currentContextTag, coord, pname), NULL);
         if (XCBGlxGetTexGendvDataLength(reply) == 0)
-            params = (GLdouble *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLdouble *)XCBGlxGetTexGendvData(reply);
+        (void)memcpy(params, XCBGlxGetTexGendvData(reply), XCBGlxGetTexGendvDataLength(reply) * sizeof(GLdouble));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexGendv, cmdlen);
@@ -3798,9 +3798,9 @@ __indirect_glGetTexGenfv(GLenum coord, GLenum pname, GLfloat * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetTexGenfvRep *reply = XCBGlxGetTexGenfvReply(c, XCBGlxGetTexGenfv(c, gc->currentContextTag, coord, pname), NULL);
         if (XCBGlxGetTexGenfvDataLength(reply) == 0)
-            params = (GLfloat *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLfloat *)XCBGlxGetTexGenfvData(reply);
+        (void)memcpy(params, XCBGlxGetTexGenfvData(reply), XCBGlxGetTexGenfvDataLength(reply) * sizeof(GLfloat));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexGenfv, cmdlen);
@@ -3826,9 +3826,9 @@ __indirect_glGetTexGeniv(GLenum coord, GLenum pname, GLint * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetTexGenivRep *reply = XCBGlxGetTexGenivReply(c, XCBGlxGetTexGeniv(c, gc->currentContextTag, coord, pname), NULL);
         if (XCBGlxGetTexGenivDataLength(reply) == 0)
-            params = (GLint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLint *)XCBGlxGetTexGenivData(reply);
+        (void)memcpy(params, XCBGlxGetTexGenivData(reply), XCBGlxGetTexGenivDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexGeniv, cmdlen);
@@ -3854,7 +3854,7 @@ __indirect_glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type,
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetTexImageRep *reply = XCBGlxGetTexImageReply(c, XCBGlxGetTexImage(c, gc->currentContextTag, target, level, format, type, state->storePack.swapEndian), NULL);
-        pixels = (GLvoid *)XCBGlxGetTexImageData(reply);
+        (void)memcpy(pixels, XCBGlxGetTexImageData(reply), XCBGlxGetTexImageDataLength(reply) * sizeof(GLvoid));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexImage, cmdlen);
@@ -3884,9 +3884,9 @@ __indirect_glGetTexParameterfv(GLenum target, GLenum pname, GLfloat * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetTexParameterfvRep *reply = XCBGlxGetTexParameterfvReply(c, XCBGlxGetTexParameterfv(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetTexParameterfvDataLength(reply) == 0)
-            params = (GLfloat *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLfloat *)XCBGlxGetTexParameterfvData(reply);
+        (void)memcpy(params, XCBGlxGetTexParameterfvData(reply), XCBGlxGetTexParameterfvDataLength(reply) * sizeof(GLfloat));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexParameterfv, cmdlen);
@@ -3912,9 +3912,9 @@ __indirect_glGetTexParameteriv(GLenum target, GLenum pname, GLint * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetTexParameterivRep *reply = XCBGlxGetTexParameterivReply(c, XCBGlxGetTexParameteriv(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetTexParameterivDataLength(reply) == 0)
-            params = (GLint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLint *)XCBGlxGetTexParameterivData(reply);
+        (void)memcpy(params, XCBGlxGetTexParameterivData(reply), XCBGlxGetTexParameterivDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexParameteriv, cmdlen);
@@ -3940,9 +3940,9 @@ __indirect_glGetTexLevelParameterfv(GLenum target, GLint level, GLenum pname, GL
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetTexLevelParameterfvRep *reply = XCBGlxGetTexLevelParameterfvReply(c, XCBGlxGetTexLevelParameterfv(c, gc->currentContextTag, target, level, pname), NULL);
         if (XCBGlxGetTexLevelParameterfvDataLength(reply) == 0)
-            params = (GLfloat *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLfloat *)XCBGlxGetTexLevelParameterfvData(reply);
+        (void)memcpy(params, XCBGlxGetTexLevelParameterfvData(reply), XCBGlxGetTexLevelParameterfvDataLength(reply) * sizeof(GLfloat));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexLevelParameterfv, cmdlen);
@@ -3969,9 +3969,9 @@ __indirect_glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GL
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetTexLevelParameterivRep *reply = XCBGlxGetTexLevelParameterivReply(c, XCBGlxGetTexLevelParameteriv(c, gc->currentContextTag, target, level, pname), NULL);
         if (XCBGlxGetTexLevelParameterivDataLength(reply) == 0)
-            params = (GLint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLint *)XCBGlxGetTexLevelParameterivData(reply);
+        (void)memcpy(params, XCBGlxGetTexLevelParameterivData(reply), XCBGlxGetTexLevelParameterivDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetTexLevelParameteriv, cmdlen);
@@ -4681,7 +4681,7 @@ __indirect_glGetColorTable(GLenum target, GLenum format, GLenum type, GLvoid * t
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetColorTableRep *reply = XCBGlxGetColorTableReply(c, XCBGlxGetColorTable(c, gc->currentContextTag, target, format, type, state->storePack.swapEndian), NULL);
-        table = (GLvoid *)XCBGlxGetColorTableData(reply);
+        (void)memcpy(table, XCBGlxGetColorTableData(reply), XCBGlxGetColorTableDataLength(reply) * sizeof(GLvoid));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetColorTable, cmdlen);
@@ -4710,9 +4710,9 @@ __indirect_glGetColorTableParameterfv(GLenum target, GLenum pname, GLfloat * par
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetColorTableParameterfvRep *reply = XCBGlxGetColorTableParameterfvReply(c, XCBGlxGetColorTableParameterfv(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetColorTableParameterfvDataLength(reply) == 0)
-            params = (GLfloat *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLfloat *)XCBGlxGetColorTableParameterfvData(reply);
+        (void)memcpy(params, XCBGlxGetColorTableParameterfvData(reply), XCBGlxGetColorTableParameterfvDataLength(reply) * sizeof(GLfloat));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetColorTableParameterfv, cmdlen);
@@ -4738,9 +4738,9 @@ __indirect_glGetColorTableParameteriv(GLenum target, GLenum pname, GLint * param
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetColorTableParameterivRep *reply = XCBGlxGetColorTableParameterivReply(c, XCBGlxGetColorTableParameteriv(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetColorTableParameterivDataLength(reply) == 0)
-            params = (GLint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLint *)XCBGlxGetColorTableParameterivData(reply);
+        (void)memcpy(params, XCBGlxGetColorTableParameterivData(reply), XCBGlxGetColorTableParameterivDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetColorTableParameteriv, cmdlen);
@@ -4974,7 +4974,7 @@ __indirect_glGetConvolutionFilter(GLenum target, GLenum format, GLenum type, GLv
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetConvolutionFilterRep *reply = XCBGlxGetConvolutionFilterReply(c, XCBGlxGetConvolutionFilter(c, gc->currentContextTag, target, format, type, state->storePack.swapEndian), NULL);
-        image = (GLvoid *)XCBGlxGetConvolutionFilterData(reply);
+        (void)memcpy(image, XCBGlxGetConvolutionFilterData(reply), XCBGlxGetConvolutionFilterDataLength(reply) * sizeof(GLvoid));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetConvolutionFilter, cmdlen);
@@ -5003,9 +5003,9 @@ __indirect_glGetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat * pa
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetConvolutionParameterfvRep *reply = XCBGlxGetConvolutionParameterfvReply(c, XCBGlxGetConvolutionParameterfv(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetConvolutionParameterfvDataLength(reply) == 0)
-            params = (GLfloat *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLfloat *)XCBGlxGetConvolutionParameterfvData(reply);
+        (void)memcpy(params, XCBGlxGetConvolutionParameterfvData(reply), XCBGlxGetConvolutionParameterfvDataLength(reply) * sizeof(GLfloat));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetConvolutionParameterfv, cmdlen);
@@ -5031,9 +5031,9 @@ __indirect_glGetConvolutionParameteriv(GLenum target, GLenum pname, GLint * para
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetConvolutionParameterivRep *reply = XCBGlxGetConvolutionParameterivReply(c, XCBGlxGetConvolutionParameteriv(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetConvolutionParameterivDataLength(reply) == 0)
-            params = (GLint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLint *)XCBGlxGetConvolutionParameterivData(reply);
+        (void)memcpy(params, XCBGlxGetConvolutionParameterivData(reply), XCBGlxGetConvolutionParameterivDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetConvolutionParameteriv, cmdlen);
@@ -5059,7 +5059,7 @@ __indirect_glGetHistogram(GLenum target, GLboolean reset, GLenum format, GLenum 
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetHistogramRep *reply = XCBGlxGetHistogramReply(c, XCBGlxGetHistogram(c, gc->currentContextTag, target, reset, format, type, state->storePack.swapEndian), NULL);
-        values = (GLvoid *)XCBGlxGetHistogramData(reply);
+        (void)memcpy(values, XCBGlxGetHistogramData(reply), XCBGlxGetHistogramDataLength(reply) * sizeof(GLvoid));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetHistogram, cmdlen);
@@ -5089,9 +5089,9 @@ __indirect_glGetHistogramParameterfv(GLenum target, GLenum pname, GLfloat * para
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetHistogramParameterfvRep *reply = XCBGlxGetHistogramParameterfvReply(c, XCBGlxGetHistogramParameterfv(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetHistogramParameterfvDataLength(reply) == 0)
-            params = (GLfloat *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLfloat *)XCBGlxGetHistogramParameterfvData(reply);
+        (void)memcpy(params, XCBGlxGetHistogramParameterfvData(reply), XCBGlxGetHistogramParameterfvDataLength(reply) * sizeof(GLfloat));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetHistogramParameterfv, cmdlen);
@@ -5117,9 +5117,9 @@ __indirect_glGetHistogramParameteriv(GLenum target, GLenum pname, GLint * params
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetHistogramParameterivRep *reply = XCBGlxGetHistogramParameterivReply(c, XCBGlxGetHistogramParameteriv(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetHistogramParameterivDataLength(reply) == 0)
-            params = (GLint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLint *)XCBGlxGetHistogramParameterivData(reply);
+        (void)memcpy(params, XCBGlxGetHistogramParameterivData(reply), XCBGlxGetHistogramParameterivDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetHistogramParameteriv, cmdlen);
@@ -5145,7 +5145,7 @@ __indirect_glGetMinmax(GLenum target, GLboolean reset, GLenum format, GLenum typ
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetMinmaxRep *reply = XCBGlxGetMinmaxReply(c, XCBGlxGetMinmax(c, gc->currentContextTag, target, reset, format, type, state->storePack.swapEndian), NULL);
-        values = (GLvoid *)XCBGlxGetMinmaxData(reply);
+        (void)memcpy(values, XCBGlxGetMinmaxData(reply), XCBGlxGetMinmaxDataLength(reply) * sizeof(GLvoid));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMinmax, cmdlen);
@@ -5175,9 +5175,9 @@ __indirect_glGetMinmaxParameterfv(GLenum target, GLenum pname, GLfloat * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetMinmaxParameterfvRep *reply = XCBGlxGetMinmaxParameterfvReply(c, XCBGlxGetMinmaxParameterfv(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetMinmaxParameterfvDataLength(reply) == 0)
-            params = (GLfloat *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLfloat *)XCBGlxGetMinmaxParameterfvData(reply);
+        (void)memcpy(params, XCBGlxGetMinmaxParameterfvData(reply), XCBGlxGetMinmaxParameterfvDataLength(reply) * sizeof(GLfloat));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMinmaxParameterfv, cmdlen);
@@ -5203,9 +5203,9 @@ __indirect_glGetMinmaxParameteriv(GLenum target, GLenum pname, GLint * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetMinmaxParameterivRep *reply = XCBGlxGetMinmaxParameterivReply(c, XCBGlxGetMinmaxParameteriv(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetMinmaxParameterivDataLength(reply) == 0)
-            params = (GLint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLint *)XCBGlxGetMinmaxParameterivData(reply);
+        (void)memcpy(params, XCBGlxGetMinmaxParameterivData(reply), XCBGlxGetMinmaxParameterivDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetMinmaxParameteriv, cmdlen);
@@ -7630,7 +7630,7 @@ __indirect_glGenQueriesARB(GLsizei n, GLuint * ids)
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGenQueriesARBRep *reply = XCBGlxGenQueriesARBReply(c, XCBGlxGenQueriesARB(c, gc->currentContextTag, n), NULL);
-        ids = (GLuint *)XCBGlxGenQueriesARBData(reply);
+        (void)memcpy(ids, XCBGlxGenQueriesARBData(reply), XCBGlxGenQueriesARBDataLength(reply) * sizeof(GLuint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GenQueriesARB, cmdlen);
@@ -7727,9 +7727,9 @@ __indirect_glGetQueryivARB(GLenum target, GLenum pname, GLint * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetQueryivARBRep *reply = XCBGlxGetQueryivARBReply(c, XCBGlxGetQueryivARB(c, gc->currentContextTag, target, pname), NULL);
         if (XCBGlxGetQueryivARBDataLength(reply) == 0)
-            params = (GLint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLint *)XCBGlxGetQueryivARBData(reply);
+        (void)memcpy(params, XCBGlxGetQueryivARBData(reply), XCBGlxGetQueryivARBDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetQueryivARB, cmdlen);
@@ -7755,9 +7755,9 @@ __indirect_glGetQueryObjectivARB(GLuint id, GLenum pname, GLint * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetQueryObjectivARBRep *reply = XCBGlxGetQueryObjectivARBReply(c, XCBGlxGetQueryObjectivARB(c, gc->currentContextTag, id, pname), NULL);
         if (XCBGlxGetQueryObjectivARBDataLength(reply) == 0)
-            params = (GLint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLint *)XCBGlxGetQueryObjectivARBData(reply);
+        (void)memcpy(params, XCBGlxGetQueryObjectivARBData(reply), XCBGlxGetQueryObjectivARBDataLength(reply) * sizeof(GLint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetQueryObjectivARB, cmdlen);
@@ -7783,9 +7783,9 @@ __indirect_glGetQueryObjectuivARB(GLuint id, GLenum pname, GLuint * params)
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetQueryObjectuivARBRep *reply = XCBGlxGetQueryObjectuivARBReply(c, XCBGlxGetQueryObjectuivARB(c, gc->currentContextTag, id, pname), NULL);
         if (XCBGlxGetQueryObjectuivARBDataLength(reply) == 0)
-            params = (GLuint *) &reply->datum;
+            (void)memcpy(params, &reply->datum, sizeof(reply->datum));
         else
-            params = (GLuint *)XCBGlxGetQueryObjectuivARBData(reply);
+        (void)memcpy(params, XCBGlxGetQueryObjectuivARBData(reply), XCBGlxGetQueryObjectuivARBDataLength(reply) * sizeof(GLuint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetQueryObjectuivARB, cmdlen);
