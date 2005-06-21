@@ -52,9 +52,9 @@ extern "C" {
 /*************************************************************/
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glext.h last updated 2005/05/31 */
+/* glext.h last updated 2005/06/20 */
 /* Current version at http://oss.sgi.com/projects/ogl-sample/registry/ */
-#define GL_GLEXT_VERSION 28
+#define GL_GLEXT_VERSION 29
 
 #ifndef GL_VERSION_1_2
 #define GL_UNSIGNED_BYTE_3_3_2            0x8032
@@ -3023,7 +3023,6 @@ extern "C" {
 #define GL_RENDERBUFFER_WIDTH_EXT         0x8D42
 #define GL_RENDERBUFFER_HEIGHT_EXT        0x8D43
 #define GL_RENDERBUFFER_INTERNAL_FORMAT_EXT 0x8D44
-#define GL_STENCIL_INDEX_EXT              0x8D45
 #define GL_STENCIL_INDEX1_EXT             0x8D46
 #define GL_STENCIL_INDEX4_EXT             0x8D47
 #define GL_STENCIL_INDEX8_EXT             0x8D48
