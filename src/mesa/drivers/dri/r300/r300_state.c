@@ -2160,6 +2160,9 @@ void r300ResetHwState(r300ContextPtr r300)
 	else
 		r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_FORMAT_RGB565;
 	
+	if (r300->radeon.sarea->tiling_enabled)
+		r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_TILE_ENABLE;
+	
 	r300->hw.unk4E50.cmd[1] = 0;
 	r300->hw.unk4E50.cmd[2] = 0;
 	r300->hw.unk4E50.cmd[3] = 0;

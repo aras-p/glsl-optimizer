@@ -130,6 +130,9 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	else
 		cbpitch |= R300_COLOR_FORMAT_RGB565;
 	
+	if (r300->radeon.sarea->tiling_enabled)
+		cbpitch |= R300_COLOR_TILE_ENABLE;
+	
 	R300_STATECHANGE(r300, cb);
 	r300->hw.cb.cmd[R300_CB_OFFSET] = cboffset;
 	r300->hw.cb.cmd[R300_CB_PITCH] = cbpitch;
