@@ -35,6 +35,7 @@
 #include "macros.h"
 #include "mtypes.h"
 #include "arbprogparse.h"
+#include "light.h"
 #include "program.h"
 #include "math/m_matrix.h"
 #include "math/m_translate.h"
