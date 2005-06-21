@@ -2198,13 +2198,6 @@ void r300ResetHwState(r300ContextPtr r300)
 		r300->radeon.radeonScreen->depthOffset +
 		r300->radeon.radeonScreen->fbLocation;
 	r300->hw.zb.cmd[R300_ZB_PITCH] = r300->radeon.radeonScreen->depthPitch;
-	/* Turn off when clearing buffers ? */
-	r300->hw.zb.cmd[R300_ZB_PITCH] |= R300_DEPTH_TILE_ENABLE;
-	
-	if (ctx->Visual.depthBits == 24)
-		r300->hw.zb.cmd[R300_ZB_PITCH] |= R300_DEPTH_MICROTILE_ENABLE;
-	else if (ctx->Visual.depthBits == 16)
-		r300->hw.zb.cmd[R300_ZB_PITCH] |= R300_DEPTH_ENDIAN_WORD_SWAP;
 		
 	r300->hw.unk4F28.cmd[1] = 0;
 
