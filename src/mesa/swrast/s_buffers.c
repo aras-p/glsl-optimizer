@@ -236,8 +236,9 @@ clear_color_buffers(GLcontext *ctx)
       struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][i];
 #if OLD_RENDERBUFFER || NEW_RENDERBUFFER
       /* SetBuffer will go away */
-      swrast->Driver.SetBuffer(ctx, ctx->DrawBuffer,
-                               ctx->DrawBuffer->_ColorDrawBit[0][i]);
+      if (swrast->Driver.SetBuffer)
+         swrast->Driver.SetBuffer(ctx, ctx->DrawBuffer,
+                                  ctx->DrawBuffer->_ColorDrawBit[0][i]);
 #endif
 
       if (ctx->Visual.rgbMode) {
@@ -357,7 +358,8 @@ _swrast_use_read_buffer( GLcontext *ctx )
    /* Do this so the software-emulated alpha plane span functions work! */
    swrast->CurrentBufferBit = ctx->ReadBuffer->_ColorReadBufferMask;
    /* Tell the device driver where to read/write spans */
-   swrast->Driver.SetBuffer(ctx, ctx->ReadBuffer, swrast->CurrentBufferBit);
+   if (swrast->Driver.SetBuffer)
+      swrast->Driver.SetBuffer(ctx, ctx->ReadBuffer, swrast->CurrentBufferBit);
 }
 
 

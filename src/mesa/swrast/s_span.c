@@ -1053,7 +1053,8 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
       GLuint bufferBit = fb->_ColorDrawBit[output][i];
       /* Set the current read/draw buffer */
       swrast->CurrentBufferBit = bufferBit;
-      (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, bufferBit);
+      if (swrast->Driver.SetBuffer)
+         (*swrast->Driver.SetBuffer)(ctx, ctx->DrawBuffer, bufferBit);
 #endif
 
       /* make copy of incoming colors */
