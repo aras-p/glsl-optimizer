@@ -211,6 +211,7 @@ static const struct dri_debug_control debug_control[] = {
 #define PCI_CHIP_R300_NF		0x4E46
 #define PCI_CHIP_R300_NG		0x4E47
 #define PCI_CHIP_R350_NH                0x4E48
+#define PCI_CHIP_R420_JI		0x4A49
 #define PCI_CHIP_R420_JK                0x4a4b
 #endif
 
@@ -393,6 +394,7 @@ static radeonScreenPtr radeonCreateScreen(__DRIscreenPrivate * sPriv)
 		screen->chipset = RADEON_CHIP_R300;
 		break;
 
+	case PCI_CHIP_R420_JI:
 	case PCI_CHIP_R420_JK:
 		screen->chipset = RADEON_CHIP_R420;
 		break;
