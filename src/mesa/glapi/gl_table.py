@@ -29,23 +29,23 @@ import gl_XML
 import license
 import sys, getopt
 
-class PrintGlTable(gl_XML.FilterGLAPISpecBase):
+class PrintGlTable(gl_XML.gl_print_base):
 	def __init__(self):
-		gl_XML.FilterGLAPISpecBase.__init__(self)
+		gl_XML.gl_print_base.__init__(self)
 
 		self.header_tag = '_GLAPI_TABLE_H_'
 		self.name = "gl_table.py (from Mesa)"
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
+		return
 
 
-	def printFunction(self, f):
-		if f.fn_offset < 0: return
+	def printBody(self, api):
+		for f in api.functionIterateByOffset():
+			arg_string = f.get_parameter_string()
+			print '   %s (GLAPIENTRYP %s)(%s); /* %d */' % (f.return_type, f.name, arg_string, f.offset)
 
-		arg_string = f.get_parameter_string()
-		print '   %s (GLAPIENTRYP %s)(%s); /* %d */' % \
-			(f.fn_return_type, f.name, arg_string, f.fn_offset)
 
 	def printRealHeader(self):
 		print '#ifndef GLAPIENTRYP'
@@ -55,6 +55,7 @@ class PrintGlTable(gl_XML.FilterGLAPISpecBase):
 		print 'struct _glapi_table'
 		print '{'
 		return
+
 
 	def printRealFooter(self):
 		print '};'
@@ -77,5 +78,7 @@ if __name__ == '__main__':
 		if arg == "-f":
 			file_name = val
 
-	dh = PrintGlTable()
-	gl_XML.parse_GL_API( dh, file_name )
+	api = gl_XML.parse_GL_API( file_name )
+
+	printer = PrintGlTable()
+	printer.Print( api )

@@ -682,6 +682,23 @@ extern HIDDEN void __indirect_glVertexAttrib4sNV(GLuint index, GLshort x, GLshor
 extern HIDDEN void __indirect_glVertexAttrib4svNV(GLuint index, const GLshort * v);
 extern HIDDEN void __indirect_glVertexAttrib4ubNV(GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w);
 extern HIDDEN void __indirect_glVertexAttrib4ubvNV(GLuint index, const GLubyte * v);
+extern HIDDEN GLboolean __indirect_glIsRenderbufferEXT(GLuint renderbuffer);
+extern HIDDEN void __indirect_glBindRenderbufferEXT(GLenum target, GLuint renderbuffer);
+extern HIDDEN void __indirect_glDeleteRenderbuffersEXT(GLsizei n, const GLuint * renderbuffers);
+extern HIDDEN void __indirect_glGenRenderbuffersEXT(GLsizei n, GLuint * renderbuffers);
+extern HIDDEN void __indirect_glRenderbufferStorageEXT(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+extern HIDDEN void __indirect_glGetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint * params);
+extern HIDDEN GLboolean __indirect_glIsFramebufferEXT(GLuint framebuffer);
+extern HIDDEN void __indirect_glBindFramebufferEXT(GLenum target, GLuint framebuffer);
+extern HIDDEN void __indirect_glDeleteFramebuffersEXT(GLsizei n, const GLuint * framebuffers);
+extern HIDDEN void __indirect_glGenFramebuffersEXT(GLsizei n, GLuint * framebuffers);
+extern HIDDEN GLenum __indirect_glCheckFramebufferStatusEXT(GLenum target);
+extern HIDDEN void __indirect_glFramebufferTexture1DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+extern HIDDEN void __indirect_glFramebufferTexture2DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+extern HIDDEN void __indirect_glFramebufferTexture3DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
+extern HIDDEN void __indirect_glFramebufferRenderbufferEXT(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+extern HIDDEN void __indirect_glGetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment, GLenum pname, GLint * params);
+extern HIDDEN void __indirect_glGenerateMipmapEXT(GLenum target);
 
 #  undef HIDDEN
 #  undef FASTCALL

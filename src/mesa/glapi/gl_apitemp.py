@@ -1,6 +1,6 @@
-#!/usr/bin/python2
+#!/usr/bin/env python
 
-# (C) Copyright IBM Corporation 2004
+# (C) Copyright IBM Corporation 2004, 2005
 # All Rights Reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,54 +29,57 @@ import gl_XML
 import license
 import sys, getopt
 
-class PrintGlOffsets(gl_XML.FilterGLAPISpecBase):
-	name = "gl_apitemp.py (from Mesa)"
-
+class PrintGlOffsets(gl_XML.gl_print_base):
 	def __init__(self):
-		gl_XML.FilterGLAPISpecBase.__init__(self)
+		gl_XML.gl_print_base.__init__(self)
+
+		self.name = "gl_apitemp.py (from Mesa)"
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
 
-	def printFunction(self, f):
+		self.undef_list.append( "KEYWORD1" )
+		self.undef_list.append( "KEYWORD2" )
+		self.undef_list.append( "NAME" )
+		self.undef_list.append( "DISPATCH" )
+		self.undef_list.append( "RETURN_DISPATCH" )
+		self.undef_list.append( "DISPATCH_TABLE_NAME" )
+		self.undef_list.append( "UNUSED_TABLE_NAME" )
+		self.undef_list.append( "TABLE_ENTRY" )
+
+
+	def printFunction(self, f, name):
 		p_string = ""
 		o_string = ""
 		t_string = ""
 		comma = ""
 
 		for p in f.parameterIterator():
-			cast = ""
-
-			if p.is_pointer:
-				t = "%p"
+			if p.is_pointer():
 				cast = "(const void *) "
-			elif p.p_type_string == 'GLenum':
-				t = "0x%x"
-			elif p.p_type_string in ['GLfloat', 'GLdouble', 'GLclampf', 'GLclampd']:
-				t = "%f"
 			else:
-				t = "%d"
+				cast = ""
 
-			t_string = t_string + comma + t
+			t_string = t_string + comma + p.format_string()
 			p_string = p_string + comma + p.name
 			o_string = o_string + comma + cast + p.name
 			comma = ", "
 
 
-		if f.fn_return_type != 'void':
+		if f.return_type != 'void':
 			dispatch = "RETURN_DISPATCH"
 		else:
 			dispatch = "DISPATCH"
 
 		print 'KEYWORD1 %s KEYWORD2 NAME(%s)(%s)' \
-			% (f.fn_return_type, f.name, f.get_parameter_string())
+			% (f.return_type, name, f.get_parameter_string())
 		print '{'
 		if p_string == "":
 			print '   %s(%s, (), (F, "gl%s();\\n"));' \
-				% (dispatch, f.real_name, f.name)
+				% (dispatch, f.name, name)
 		else:
 			print '   %s(%s, (%s), (F, "gl%s(%s);\\n", %s));' \
-				% (dispatch, f.real_name, p_string, f.name, t_string, o_string)
+				% (dispatch, f.name, p_string, name, t_string, o_string)
 		print '}'
 		print ''
 		return
@@ -130,7 +133,7 @@ class PrintGlOffsets(gl_XML.FilterGLAPISpecBase):
 
     
 
-	def printInitDispatch(self):
+	def printInitDispatch(self, api):
 		print """
 #endif /* defined( NAME ) */
 
@@ -145,9 +148,7 @@ class PrintGlOffsets(gl_XML.FilterGLAPISpecBase):
 #endif
 
 static _glapi_proc DISPATCH_TABLE_NAME[] = {"""
-		for f in self.functionIterator():
-			if f.fn_offset < 0: continue
-
+		for f in api.functionIterateByOffset():
 			print '   TABLE_ENTRY(%s),' % (f.name)
 
 		print '   /* A whole bunch of no-op functions.  These might be called'
@@ -162,7 +163,8 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {"""
 		print ''
 		return
 
-	def printAliasedTable(self):
+
+	def printAliasedTable(self, api):
 		print """
 /*
  * This is just used to silence compiler warnings.
@@ -171,29 +173,26 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {"""
 #ifdef UNUSED_TABLE_NAME
 static _glapi_proc UNUSED_TABLE_NAME[] = {"""
 
-		for f in self.functionIterator():
-			if f.fn_offset < 0:
-				print '   TABLE_ENTRY(%s),' % (f.name)
+		for f in api.functionIterateByOffset():
+			for n in f.entry_points:
+				if n != f.name:
+					print '   TABLE_ENTRY(%s),' % (n)
 
 		print '};'
 		print '#endif /*UNUSED_TABLE_NAME*/'
 		print ''
 		return
 
-	def printRealFooter(self):
-		self.printInitDispatch()
-		self.printAliasedTable()
-		print"""
-#undef KEYWORD1
-#undef KEYWORD2
-#undef NAME
-#undef DISPATCH
-#undef RETURN_DISPATCH
-#undef DISPATCH_TABLE_NAME
-#undef UNUSED_TABLE_NAME
-#undef TABLE_ENTRY
-"""
+
+	def printBody(self, api):
+		for func in api.functionIterateByOffset():
+			for n in func.entry_points:
+				self.printFunction( func, n )
+
+		self.printInitDispatch(api)
+		self.printAliasedTable(api)
 		return
+
 
 def show_usage():
 	print "Usage: %s [-f input_file_name]" % sys.argv[0]
@@ -211,5 +210,7 @@ if __name__ == '__main__':
 		if arg == "-f":
 			file_name = val
 
-	dh = PrintGlOffsets()
-	gl_XML.parse_GL_API( dh, file_name )
+	api = gl_XML.parse_GL_API( file_name )
+
+	printer = PrintGlOffsets()
+	printer.Print(api)

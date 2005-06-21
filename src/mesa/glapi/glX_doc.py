@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python
 
 # (C) Copyright IBM Corporation 2004, 2005
 # All Rights Reserved.
@@ -25,28 +25,22 @@
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
 
-import gl_XML
-import glX_XML
-import license
+import gl_XML, glX_XML, glX_proto_common, license
 import sys, getopt
 
 
-class glXDocItemFactory(glX_XML.glXItemFactory):
+class glx_doc_item_factory(glX_proto_common.glx_proto_item_factory):
 	"""Factory to create GLX protocol documentation oriented objects derived from glItem."""
     
-	def create(self, context, name, attrs):
-		if name == "param":
-			return glXDocParameter(context, name, attrs)
+	def create_item(self, name, element, context):
+		if name == "parameter":
+			return glx_doc_parameter(element, context)
 		else:
-			return glX_XML.glXItemFactory.create(self, context, name, attrs)
-
-class glXDocParameter(gl_XML.glParameter):
-	def __init__(self, context, name, attrs):
-		self.order = 1;
-		gl_XML.glParameter.__init__(self, context, name, attrs);
+			return glX_proto_common.glx_proto_item_factory.create_item(self, name, element, context)
 
 
-	def packet_type(self):
+class glx_doc_parameter(gl_XML.gl_parameter):
+	def packet_type(self, type_dict):
 		"""Get the type string for the packet header
 		
 		GLX protocol documentation uses type names like CARD32,
@@ -57,12 +51,14 @@ class glXDocParameter(gl_XML.glParameter):
 		if self.is_array():
 			list_of = "LISTof"
 
-		if self.p_type.glx_name == "":
+		t_name = self.get_base_type_string()
+		if not type_dict.has_key( t_name ):
 			type_name = "CARD8"
 		else:
-			type_name = self.p_type.glx_name
+			type_name = type_dict[ t_name ]
 
 		return "%s%s" % (list_of, type_name)
+
 
 	def packet_size(self):
 		p = None
@@ -89,15 +85,15 @@ class glXDocParameter(gl_XML.glParameter):
 
 			return [str(s), p]
 
-class PrintGlxProtoText(glX_XML.GlxProto):
+class PrintGlxProtoText(gl_XML.gl_print_base):
 	def __init__(self):
-		glX_XML.GlxProto.__init__(self)
-		self.factory = glXDocItemFactory()
-		self.last_category = ""
+		gl_XML.gl_print_base.__init__(self)
 		self.license = ""
+
 
 	def printHeader(self):
 		return
+
 
 	def body_size(self, f):
 		# At some point, refactor this function and
@@ -107,7 +103,7 @@ class PrintGlxProtoText(glX_XML.GlxProto):
 		size_str = ""
 		pad_str = ""
 		plus = ""
-		for p in f.parameterIterator(1, 2):
+		for p in f.parameterIterateGlxSend():
 			[s, pad] = p.packet_size()
 			try: 
 				size += int(s)
@@ -119,6 +115,7 @@ class PrintGlxProtoText(glX_XML.GlxProto):
 				pad_str = pad
 
 		return [size, size_str, pad_str]
+
 
 	def print_render_header(self, f):
 		[size, size_str, pad_str] = self.body_size(f)
@@ -162,6 +159,7 @@ class PrintGlxProtoText(glX_XML.GlxProto):
 
 		return
 		
+
 	def print_reply(self, f):
 		print '          =>'
 		print '            1        1               reply'
@@ -176,33 +174,39 @@ class PrintGlxProtoText(glX_XML.GlxProto):
 			print '            4        m               reply length, m = (n == 1 ? 0 : n)'
 
 
+		output = None
+		for x in f.parameterIterateOutputs():
+			output = x
+			break
+
+
 		unused = 24
-		if f.fn_return_type != 'void':
-			print '            4        %-15s return value' % (f.fn_return_type)
+		if f.return_type != 'void':
+			print '            4        %-15s return value' % (f.return_type)
 			unused -= 4
-		elif f.output != None:
+		elif output != None:
 			print '            4                        unused'
 			unused -= 4
 
-		if f.output != None:
+		if output != None:
 			print '            4        CARD32          n'
 			unused -= 4
 
-		if f.output != None:
+		if output != None:
 			if not f.reply_always_array:
 				print ''
 				print '            if (n = 1) this follows:'
 				print ''
-				print '            4        CARD32          %s' % (f.output.name)
+				print '            4        CARD32          %s' % (output.name)
 				print '            %-2u                       unused' % (unused - 4)
 				print ''
 				print '            otherwise this follows:'
 				print ''
 
 			print '            %-2u                       unused' % (unused)
-			p = f.output
-			[s, pad] = p.packet_size()
-			print '            %-8s %-15s %s' % (s, p.packet_type(), p.name)
+
+			[s, pad] = output.packet_size()
+			print '            %-8s %-15s %s' % (s, output.packet_type( self.type_map ), output.name)
 			if pad != None:
 				try:
 					bytes = int(s)
@@ -215,9 +219,9 @@ class PrintGlxProtoText(glX_XML.GlxProto):
 
 
 	def print_body(self, f):
-		for p in f.parameterIterator(1, 2):
+		for p in f.parameterIterateGlxSend():
 			[s, pad] = p.packet_size()
-			print '            %-8s %-15s %s' % (s, p.packet_type(), p.name)
+			print '            %-8s %-15s %s' % (s, p.packet_type( self.type_map ), p.name)
 			if pad != None:
 				try:
 					bytes = int(s)
@@ -226,26 +230,35 @@ class PrintGlxProtoText(glX_XML.GlxProto):
 				except Exception,e:
 					print '            %-8s %-15s unused, %s=pad(%s)' % (pad, "", pad, s)
 
-	def printFunction(self, f):
+	def printBody(self, api):
+		self.type_map = {}
+		for t in api.typeIterate():
+			self.type_map[ "GL" + t.name ] = t.glx_name
+
+
 		# At some point this should be expanded to support pixel
 		# functions, but I'm not going to lose any sleep over it now.
 
-		if f.client_handcode or f.server_handcode or f.vectorequiv or f.image:
-			return
+		for f in api.functionIterateByOffset():
+			if f.client_handcode or f.server_handcode or f.vectorequiv or len(f.get_images()):
+				continue
 
-		print '        %s' % (f.name)
 
-		if f.glx_rop != 0:
-			self.print_render_header(f)
-		else:
-			self.print_single_header(f)
-		
-		self.print_body(f)
+			if f.glx_rop:
+				print '        %s' % (f.name)
+				self.print_render_header(f)
+			elif f.glx_sop or f.glx_vendorpriv:
+				print '        %s' % (f.name)
+				self.print_single_header(f)
+			else:
+				continue
 
-		if f.needs_reply():
-			self.print_reply(f)
+			self.print_body(f)
 
-		print ''
+			if f.needs_reply():
+				self.print_reply(f)
+
+			print ''
 		return
 
 
@@ -261,5 +274,7 @@ if __name__ == '__main__':
 		if arg == "-f":
 			file_name = val
 
-	dh = PrintGlxProtoText()
-	gl_XML.parse_GL_API( dh, file_name )
+	api = gl_XML.parse_GL_API( file_name, glx_doc_item_factory() )
+
+	printer = PrintGlxProtoText()
+	printer.Print( api )

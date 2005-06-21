@@ -334,22 +334,18 @@ __glPointParameterfvEXT_size( GLenum e )
     switch( e ) {
         case GL_POINT_SIZE_MIN:
 /*      case GL_POINT_SIZE_MIN_ARB:*/
-/*      case GL_POINT_SIZE_MIN_EXT:*/
 /*      case GL_POINT_SIZE_MIN_SGIS:*/
         case GL_POINT_SIZE_MAX:
 /*      case GL_POINT_SIZE_MAX_ARB:*/
-/*      case GL_POINT_SIZE_MAX_EXT:*/
 /*      case GL_POINT_SIZE_MAX_SGIS:*/
         case GL_POINT_FADE_THRESHOLD_SIZE:
 /*      case GL_POINT_FADE_THRESHOLD_SIZE_ARB:*/
-/*      case GL_POINT_FADE_THRESHOLD_SIZE_EXT:*/
 /*      case GL_POINT_FADE_THRESHOLD_SIZE_SGIS:*/
         case GL_POINT_SPRITE_R_MODE_NV:
         case GL_POINT_SPRITE_COORD_ORIGIN:
             return 1;
         case GL_POINT_DISTANCE_ATTENUATION:
 /*      case GL_POINT_DISTANCE_ATTENUATION_ARB:*/
-/*      case GL_POINT_DISTANCE_ATTENUATION_EXT:*/
 /*      case GL_POINT_DISTANCE_ATTENUATION_SGIS:*/
             return 3;
         default: return 0;
@@ -369,3 +365,8 @@ ALIAS( Map2f, Map2d )
 ALIAS( ColorTableParameteriv, ColorTableParameterfv )
 ALIAS( ConvolutionParameteriv, ConvolutionParameterfv )
 ALIAS( PointParameterivNV, PointParameterfvEXT )
+
+#  undef HAVE_ALIAS
+#  undef PURE
+#  undef FASTCALL
+#  undef INTERNAL

@@ -1,6 +1,6 @@
-#!/usr/bin/python2
+#!/usr/bin/env python
 
-# (C) Copyright IBM Corporation 2004
+# (C) Copyright IBM Corporation 2004, 2005
 # All Rights Reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,19 +29,20 @@ import gl_XML
 import license
 import sys, getopt
 
-class PrintGlOffsets(gl_XML.FilterGLAPISpecBase):
-	name = "gl_offsets.py (from Mesa)"
-
+class PrintGlOffsets(gl_XML.gl_print_base):
 	def __init__(self):
-		gl_XML.FilterGLAPISpecBase.__init__(self)
+		gl_XML.gl_print_base.__init__(self)
+
+		self.name = "gl_offsets.py (from Mesa)"
 		self.header_tag = '_GLAPI_OFFSETS_H_'
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
+		return
 
-	def printFunction(self, f):
-		if f.fn_offset < 0: return
-		print '#define _gloffset_%s %d' % (f.name, f.fn_offset)
+	def printBody(self, api):
+		for f in api.functionIterateByOffset():
+			print '#define _gloffset_%s %d' % (f.name, f.offset)
 
 
 def show_usage():
@@ -60,5 +61,7 @@ if __name__ == '__main__':
 		if arg == "-f":
 			file_name = val
 
-	dh = PrintGlOffsets()
-	gl_XML.parse_GL_API( dh, file_name )
+	api = gl_XML.parse_GL_API( file_name )
+
+	printer = PrintGlOffsets()
+	printer.Print( api )

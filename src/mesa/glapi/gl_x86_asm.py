@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python
 
 # (C) Copyright IBM Corporation 2004, 2005
 # All Rights Reserved.
@@ -25,31 +25,28 @@
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
 
-import gl_XML
-import license
+import gl_XML, license
 import sys, getopt
 
-class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
-	name = "gl_x86_asm.py (from Mesa)"
+class PrintGenericStubs(gl_XML.gl_print_base):
 
 	def __init__(self):
-		gl_XML.FilterGLAPISpecBase.__init__(self)
+		gl_XML.gl_print_base.__init__(self)
+
+		self.name = "gl_x86_asm.py (from Mesa)"
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004, 2005""", "BRIAN PAUL, IBM")
+		return
 
 
 	def get_stack_size(self, f):
 		size = 0
 		for p in f.parameterIterator():
-			t = p.p_type
-
-			if p.is_array() or t.size != 8:
-				size += 4
-			else:
-				size += 8
+			size += p.get_stack_size()
 
 		return size
+
 
 	def printRealHeader(self):
 		print '#include "assyntax.h"'
@@ -183,6 +180,7 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print ''
 		return
 
+
 	def printRealFooter(self):
 		print ''
 		print '\t\tGLOBL\tGLNAME(gl_dispatch_functions_end)'
@@ -206,16 +204,24 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print '#endif  /* __WIN32__ */'
 		return
 
-	def printFunction(self, f):
-		stack = self.get_stack_size(f)
 
-		alt = "%s@%u" % (f.name, stack)
-		if f.fn_alias == None:
-			print '\tGL_STUB(%s, _gloffset_%s, %s)' % (f.name, f.real_name, alt)
-		else:
-			alias_alt = "%s@%u" % (f.real_name, stack)
-			print '\tGL_STUB_ALIAS(%s, _gloffset_%s, %s, %s, %s)' % \
-			    (f.name, f.real_name, alt, f.real_name, alias_alt)
+	def printBody(self, api):
+		for f in api.functionIterateByOffset():
+			stack = self.get_stack_size(f)
+
+			alt = "%s@%u" % (f.name, stack)
+			print '\tGL_STUB(%s, _gloffset_%s, %s)' % (f.name, f.name, alt)
+
+		for f in api.functionIterateByOffset():
+			stack = self.get_stack_size(f)
+
+			alt = "%s@%u" % (f.name, stack)
+
+			for n in f.entry_points:
+				if n != f.name:
+					alt2 = "%s@%u" % (n, stack)
+					print '\tGL_STUB_ALIAS(%s, _gloffset_%s, %s, %s, %s)' % (n, f.name, alt2, f.name, alt)
+
 		return
 
 def show_usage():
@@ -238,9 +244,11 @@ if __name__ == '__main__':
 			file_name = val
 
 	if mode == "generic":
-		dh = PrintGenericStubs()
+		printer = PrintGenericStubs()
 	else:
 		print "ERROR: Invalid mode \"%s\" specified." % mode
 		show_usage()
 
-	gl_XML.parse_GL_API( dh, file_name )
+	api = gl_XML.parse_GL_API( file_name )
+
+	printer.Print( api )

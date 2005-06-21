@@ -30,10 +30,10 @@ import license
 import gl_XML
 import sys, getopt
 
-class PrintGlEnums(gl_XML.FilterGLAPISpecBase):
+class PrintGlEnums(gl_XML.gl_print_base):
 
 	def __init__(self):
-		gl_XML.FilterGLAPISpecBase.__init__(self)
+		gl_XML.gl_print_base.__init__(self)
 
 		self.name = "gl_enums.py (from Mesa)"
 		self.license = license.bsd_license_template % ( \
@@ -53,7 +53,7 @@ class PrintGlEnums(gl_XML.FilterGLAPISpecBase):
 		print ''
 		return
 
-	def printBody(self):
+	def print_code(self):
 		print """
 #define Elements(x) sizeof(x)/sizeof(*x)
 
@@ -124,7 +124,10 @@ int _mesa_lookup_enum_by_name( const char *symbol )
 """
 		return
 
-	def printFunctions(self):
+
+	def printBody(self, api):
+		self.process_enums( api )
+
 		keys = self.enum_table.keys()
 		keys.sort()
 
@@ -175,50 +178,21 @@ int _mesa_lookup_enum_by_name( const char *symbol )
 		print '};'
 
 
-		self.printBody();
+		self.print_code()
 		return
 
 
-	def append(self, object_type, obj):
-		if object_type == "enum":
+	def process_enums(self, api):
+		self.enum_table = {}
+		
+		for obj in api.enumIterateByName():
 			if obj.value not in self.enum_table:
 				self.enum_table[ obj.value ] = []
 
 
-			# Prevent duplicate names in the enum table.
-
-			found_it = 0
-			for [n, junk] in self.enum_table[ obj.value ]:
-				if n == obj.name:
-					found_it = 1
-					break
-
-			if not found_it:
-
-				# Calculate a "priority" for this enum name.
-				# When we lookup an enum by number, there may
-				# be many possible names, but only one can be
-				# returned.  The priority is used by this
-				# script to select which name is the "best".
-				#
-				# Highest precedence is given to "core" name.
-				# ARB extension names have the next highest,
-				# followed by EXT extension names.  Vendor
-				# extension names are the lowest.
-
-				if obj.category.startswith( "GL_VERSION_" ):
-					priority = 0
-				elif obj.category.startswith( "GL_ARB_" ):
-					priority = 1
-				elif obj.category.startswith( "GL_EXT_" ):
-					priority = 2
-				else:
-					priority = 3
-
-				self.enum_table[ obj.value ].append( [obj.name, priority] )
-
-		else:
-			gl_XML.FilterGLAPISpecBase.append(self, object_type, obj)
+			name = "GL_" + obj.name
+			priority = obj.priority()
+			self.enum_table[ obj.value ].append( [name, priority] )
 
 
 def show_usage():
@@ -237,5 +211,7 @@ if __name__ == '__main__':
 		if arg == "-f":
 			file_name = val
 
-	dh = PrintGlEnums()
-	gl_XML.parse_GL_API( dh, file_name )
+	api = gl_XML.parse_GL_API( file_name )
+
+	printer = PrintGlEnums()
+	printer.Print( api )

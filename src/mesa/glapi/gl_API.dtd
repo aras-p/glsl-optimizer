@@ -1,4 +1,4 @@
-<!ELEMENT OpenGLAPI (category+)>
+<!ELEMENT OpenGLAPI (category?, xi:include?, OpenGLAPI?)+>
 <!ELEMENT category (type*, enum*, function*)*>
 <!ELEMENT type EMPTY>
 <!ELEMENT enum (size*)>
@@ -8,10 +8,24 @@
 <!ELEMENT return EMPTY>
 <!ELEMENT glx EMPTY>
 
+<!ELEMENT xi:include (xi:fallback)?>
+<!ATTLIST xi:include
+          xmlns:xi  CDATA #FIXED "http://www.w3.org/2001/XInclude"
+          href       CDATA #REQUIRED
+          parse      (xml|text) "xml"
+          encoding   CDATA #IMPLIED>
+<!ELEMENT xi:fallback ANY>
+<!ATTLIST xi:fallback
+          xmlns:xi   CDATA #FIXED "http://www.w3.org/2001/XInclude">
+
+
 <!ATTLIST category name                NMTOKEN #REQUIRED
-                   number              NMTOKEN #IMPLIED>
+                   number              NMTOKEN #IMPLIED
+		   window_system       NMTOKEN #IMPLIED>
 <!ATTLIST type     name                NMTOKEN #REQUIRED
                    size                NMTOKEN #REQUIRED
+		   float               (true | false) "false"
+		   unsigned            (true | false) "false"
                    glx_name            NMTOKEN #IMPLIED>
 <!ATTLIST enum     name                NMTOKEN #REQUIRED
                    count               CDATA   #IMPLIED

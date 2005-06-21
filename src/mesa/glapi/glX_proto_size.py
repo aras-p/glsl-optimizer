@@ -25,104 +25,262 @@
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
 
-import gl_XML
-import glX_XML
+import gl_XML, glX_XML
 import license
-import sys, getopt, copy
+import sys, getopt, copy, string
 
 
-class SizeStubFunctionIterator(glX_XML.glXFunctionIterator):
-	"""Iterate over functions that need "size" information.
+class glx_enum_function:
+	def __init__(self, func_name, enum_dict):
+		self.name = func_name
+		self.mode = 1
+		self.sig = None
 
-	Iterate over the functions that have variable sized data.  First the
-	"set"-type functions are iterated followed by the "get"-type
-	functions.
-	"""
+		# "enums" is a set of lists.  The element in the set is the
+		# value of the enum.  The list is the list of names for that
+		# value.  For example, [0x8126] = {"POINT_SIZE_MIN",
+		# "POINT_SIZE_MIN_ARB", "POINT_SIZE_MIN_EXT",
+		# "POINT_SIZE_MIN_SGIS"}.
 
-	def __init__(self, context):
-		self.data = []
-		self.index = 0
+		self.enums = {}
 
-		set_functions = []
-		get_functions = []
-		extra_data = []
+		# "count" is indexed by count values.  Each element of count
+		# is a list of index to "enums" that have that number of
+		# associated data elements.  For example, [4] = 
+		# {GL_AMBIENT, GL_DIFFUSE, GL_SPECULAR, GL_EMISSION,
+		# GL_AMBIENT_AND_DIFFUSE} (the enum names are used here,
+		# but the actual hexadecimal values would be in the array).
 
-		for f in gl_XML.glFunctionIterator(context):
-			if context.glx_enum_functions.has_key(f.name):
-				ef = context.glx_enum_functions[f.name]
-				if ef.is_set():
-					set_functions.append(f)
+		self.count = {}
+
+
+		# Fill self.count and self.enums using the dictionary of enums
+		# that was passed in.
+
+		mode_set = 0
+		for enum_name in enum_dict:
+			e = enum_dict[ enum_name ]
+		
+			if e.functions.has_key( func_name ):
+				[count, mode] = e.functions[ func_name ]
+
+				if mode_set and mode != self.mode:
+					raise RuntimeError("Not all enums for %s have the same mode." % (func_name))
+
+				self.mode = mode
+
+				if self.enums.has_key( e.value ):
+					if e.name not in self.enums[ e.value ]:
+						self.enums[ e.value ].append( e )
 				else:
-					get_functions.append(f)
+					if not self.count.has_key( count ):
+						self.count[ count ] = []
 
+					self.enums[ e.value ] = [ e ]
+					self.count[ count ].append( e.value )
 
-		if (context.which_functions & PrintGlxSizeStubs_c.do_set) != 0:
-			self.data += set_functions
-		elif context.get_alias_set:
-			extra_data = set_functions
-
-		if (context.which_functions & PrintGlxSizeStubs_c.do_get) != 0:
-			self.data += get_functions
-
-
-		for f in extra_data + self.data:
-			sig = context.glx_enum_functions[f.name].signature()
-
-			if not context.glx_enum_sigs.has_key(sig):
-				context.glx_enum_sigs[sig] = f.name;
 
 		return
 
 
-	def next(self):
-		if self.index == len(self.data):
-			raise StopIteration
-
-		f = self.data[ self.index ]
-		self.index += 1
-
-		return f
-
-
-class glXServerEnumFunction(glX_XML.glXEnumFunction):
 	def signature( self ):
 		if self.sig == None:
-			sig = glX_XML.glXEnumFunction.signature(self)
+			self.sig = ""
+			for i in self.count:
+				if i == None:
+					raise RuntimeError("i is None.  WTF?")
 
-			f = self.context.find_function( self.name )
-			p = f.variable_length_parameter()
+				self.count[i].sort()
+				for e in self.count[i]:
+					self.sig += "%04x,%u," % (e, i)
+	
+		return self.sig
 
-			try:
-				sig += "%u" % (p.p_type.size)
-			except Exception,e:
-				print '%s' % (self.name)
-				raise e
+
+	def is_set( self ):
+		return self.mode
+
+
+	def PrintUsingTable(self):
+		"""Emit the body of the __gl*_size function using a pair
+		of look-up tables and a mask.  The mask is calculated such
+		that (e & mask) is unique for all the valid values of e for
+		this function.  The result of (e & mask) is used as an index
+		into the first look-up table.  If it matches e, then the
+		same entry of the second table is returned.  Otherwise zero
+		is returned.
+		
+		It seems like this should cause better code to be generated.
+		However, on x86 at least, the resulting .o file is about 20%
+		larger then the switch-statment version.  I am leaving this
+		code in because the results may be different on other
+		platforms (e.g., PowerPC or x86-64)."""
+
+		return 0
+		count = 0
+		for a in self.enums:
+			count += 1
+
+		if self.count.has_key(-1):
+			return 0
+
+		# Determine if there is some mask M, such that M = (2^N) - 1,
+		# that will generate unique values for all of the enums.
+
+		mask = 0
+		for i in [1, 2, 3, 4, 5, 6, 7, 8]:
+			mask = (1 << i) - 1
+
+			fail = 0;
+			for a in self.enums:
+				for b in self.enums:
+					if a != b:
+						if (a & mask) == (b & mask):
+							fail = 1;
+
+			if not fail:
+				break;
+			else:
+				mask = 0
+
+		if (mask != 0) and (mask < (2 * count)):
+			masked_enums = {}
+			masked_count = {}
+
+			for i in range(0, mask + 1):
+				masked_enums[i] = "0";
+				masked_count[i] = 0;
+
+			for c in self.count:
+				for e in self.count[c]:
+					i = e & mask
+					enum_obj = self.enums[e][0]
+					masked_enums[i] = '0x%04x /* %s */' % (e, enum_obj.name )
+					masked_count[i] = c
+
+
+			print '    static const GLushort a[%u] = {' % (mask + 1)
+			for e in masked_enums:
+				print '        %s, ' % (masked_enums[e])
+			print '    };'
+
+			print '    static const GLubyte b[%u] = {' % (mask + 1)
+			for c in masked_count:
+				print '        %u, ' % (masked_count[c])
+			print '    };'
+
+			print '    const unsigned idx = (e & 0x%02xU);' % (mask)
+			print ''
+			print '    return (e == a[idx]) ? (GLint) b[idx] : 0;'
+			return 1;
+		else:
+			return 0;
+
+
+	def PrintUsingSwitch(self, name):
+		"""Emit the body of the __gl*_size function using a 
+		switch-statement."""
+
+		print '    switch( e ) {'
+
+		for c in self.count:
+			for e in self.count[c]:
+				first = 1
+
+				# There may be multiple enums with the same
+				# value.  This happens has extensions are
+				# promoted from vendor-specific or EXT to
+				# ARB and to the core.  Emit the first one as
+				# a case label, and emit the others as
+				# commented-out case labels.
+
+				list = {}
+				for enum_obj in self.enums[e]:
+					list[ enum_obj.priority() ] = enum_obj.name
+
+				keys = list.keys()
+				keys.sort()
+				for k in keys:
+					j = list[k]
+					if first:
+						print '        case GL_%s:' % (j)
+						first = 0
+					else:
+						print '/*      case GL_%s:*/' % (j)
+					
+			if c == -1:
+				print '            return __gl%s_variable_size( e );' % (name)
+			else:
+				print '            return %u;' % (c)
+					
+		print '        default: return 0;'
+		print '    }'
+
+
+	def Print(self, name):
+		print 'INTERNAL PURE FASTCALL GLint'
+		print '__gl%s_size( GLenum e )' % (name)
+		print '{'
+
+		if not self.PrintUsingTable():
+			self.PrintUsingSwitch(name)
+
+		print '}'
+		print ''
+
+
+class glx_server_enum_function(glx_enum_function):
+	def __init__(self, func, enum_dict):
+		glx_enum_function.__init__(self, func.name, enum_dict)
+		
+		self.function = func
+		return
+
+
+	def signature( self ):
+		if self.sig == None:
+			sig = glx_enum_function.signature(self)
+
+			p = self.function.variable_length_parameter()
+			if p:
+				sig += "%u" % (p.size())
 
 			self.sig = sig
 
 		return self.sig;
 
 
-	def Print(self, name):
-		f = self.context.find_function( self.name )
-		self.context.common_func_print_just_header( f )
+	def Print(self, name, printer):
+		f = self.function
+		printer.common_func_print_just_header( f )
 
 		fixup = []
-		o = 0
-		for p in f.parameterIterator(1, 1):
-			if f.count_parameter_list.count(p.name) or p.name == f.counter:
-				self.context.common_emit_one_arg(p, o, "pc", "    ", 0)
-				fixup.append(p.name)
+		
+		foo = {}
+		for param_name in f.count_parameter_list:
+			o = f.offset_of( param_name )
+			foo[o] = param_name
 
-			o += p.size()
+		for param_name in f.counter_list:
+			o = f.offset_of( param_name )
+			foo[o] = param_name
+
+		keys = foo.keys()
+		keys.sort()
+		for o in keys:
+			p = f.parameters_by_name[ foo[o] ]
+
+			printer.common_emit_one_arg(p, "pc", "    ", 0)
+			fixup.append( p.name )
+
 
 		print '    GLsizei compsize;'
 		print ''
 
-		self.context.common_emit_fixups(fixup)
+		printer.common_emit_fixups(fixup)
 
 		print ''
-		print '    compsize = %s;' % (context.size_call(context, f))
+		print '    compsize = __gl%s_size(%s);' % (f.name, string.join(f.count_parameter_list, ","))
 		p = f.variable_length_parameter()
 		print '    return __GLX_PAD(%s);' % (p.size_string())
 
@@ -130,34 +288,26 @@ class glXServerEnumFunction(glX_XML.glXEnumFunction):
 		print ''
 
 
-class PrintGlxSizeStubs_common(glX_XML.GlxProto):
+class PrintGlxSizeStubs_common(gl_XML.gl_print_base):
 	do_get = (1 << 0)
 	do_set = (1 << 1)
-	do_get_alias_set = (1 << 2)
 
 	def __init__(self, which_functions):
-		glX_XML.GlxProto.__init__(self)
-		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2004", "IBM")
-		self.aliases = []
-		self.glx_enum_sigs = {}
+		gl_XML.gl_print_base.__init__(self)
+
 		self.name = "glX_proto_size.py (from Mesa)"
-		self.which_functions = which_functions
+		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2004", "IBM")
 
-		if (((which_functions & PrintGlxSizeStubs_common.do_set) != 0) and ((which_functions & PrintGlxSizeStubs_common.do_get) != 0)) or ((which_functions & PrintGlxSizeStubs_common.do_get_alias_set) != 0):
-			self.get_alias_set = 1
-		else:
-			self.get_alias_set = 0
-
-
-	def functionIterator(self):
-		return SizeStubFunctionIterator(self)
+		self.emit_set = ((which_functions & PrintGlxSizeStubs_common.do_set) != 0)
+		self.emit_get = ((which_functions & PrintGlxSizeStubs_common.do_get) != 0)
+		return
 
 
 class PrintGlxSizeStubs_c(PrintGlxSizeStubs_common):
 	def printRealHeader(self):
 		print ''
 		print '#include <GL/gl.h>'
-		if self.which_functions & self.do_get:
+		if self.emit_get:
 			print '#include "indirect_size_get.h"'
 		
 		print '#include "indirect_size.h"'
@@ -186,20 +336,26 @@ class PrintGlxSizeStubs_c(PrintGlxSizeStubs_common):
 		print ''
 
 
-	def printRealFooter(self):
-		for a in self.aliases:
-			print a
+	def printBody(self, api):
+		enum_sigs = {}
+		aliases = []
+
+		for func in api.functionIterateGlx():
+			ef = glx_enum_function( func.name, api.enums_by_name )
+			if len(ef.enums) == 0:
+				continue
+
+			if (ef.is_set() and self.emit_set) or (not ef.is_set() and self.emit_get):
+				sig = ef.signature()
+				if enum_sigs.has_key( sig ):
+					aliases.append( [func.name, enum_sigs[ sig ]] )
+				else:
+					enum_sigs[ sig ] = func.name
+					ef.Print( func.name )
 
 
-	def printFunction(self, f):
-		ef = self.glx_enum_functions[f.name]
-		n = self.glx_enum_sigs[ ef.signature() ];
-
-		if n != f.name:
-			a = 'ALIAS( %s, %s )' % (f.name, n)
-			self.aliases.append(a)
-		else:
-			ef.Print( f.name )
+		for [alias_name, real_name] in aliases:
+			print 'ALIAS( %s, %s )' % (alias_name, real_name)
 
 
 				
@@ -221,12 +377,17 @@ class PrintGlxSizeStubs_h(PrintGlxSizeStubs_common):
 		print ''
 
 
-	def printFunction(self, f):
-		ef = self.glx_enum_functions[f.name]
-		print 'extern INTERNAL PURE FASTCALL GLint __gl%s_size(GLenum);' % (f.name)
+	def printBody(self, api):
+		for func in api.functionIterateGlx():
+			ef = glx_enum_function( func.name, api.enums_by_name )
+			if len(ef.enums) == 0:
+				continue
+
+			if (ef.is_set() and self.emit_set) or (not ef.is_set() and self.emit_get):
+				print 'extern INTERNAL PURE FASTCALL GLint __gl%s_size(GLenum);' % (func.name)
 
 
-class PrintGlxReqSize_common(glX_XML.GlxProto):
+class PrintGlxReqSize_common(gl_XML.gl_print_base):
 	"""Common base class for PrintGlxSizeReq_h and PrintGlxSizeReq_h.
 
 	The main purpose of this common base class is to provide the infrastructure
@@ -234,33 +395,10 @@ class PrintGlxReqSize_common(glX_XML.GlxProto):
 	"""
 
 	def __init__(self):
-		glX_XML.GlxProto.__init__(self)
+		gl_XML.gl_print_base.__init__(self)
+
 		self.name = "glX_proto_size.py (from Mesa)"
 		self.license = license.bsd_license_template % ( "(C) Copyright IBM Corporation 2005", "IBM")
-		self.aliases = []
-		self.glx_enum_sigs = {}
-		self.size_functions = []
-
-
-	def endElementNS(self, name, qname):
-		[uri, true_name] = name
-		if true_name == "function":
-			f = self.current_object
-			if f.glx_rop and not f.ignore and f.fn_alias == None and f.vectorequiv == None:
-
-				if self.glx_enum_functions.has_key(f.name) or f.image or f.server_handcode:
-					self.size_functions.append( f )
-				else:
-					for p in f.parameterIterator(1,2):
-						if p.counter and not p.is_output:
-							self.size_functions.append( f )
-							break
-
-		glX_XML.GlxProto.endElementNS(self, name, qname)
-
-
-	def functionIterator(self):
-		return self.size_functions
 
 
 class PrintGlxReqSize_h(PrintGlxReqSize_common):
@@ -276,18 +414,16 @@ class PrintGlxReqSize_h(PrintGlxReqSize_common):
 		print ''
 
 
-	def printFunction(self, f):
-		print 'extern PURE HIDDEN int __glX%sReqSize(const GLbyte *pc, Bool swap);' % (f.name)
+	def printBody(self, api):
+		for func in api.functionIterateGlx():
+			if not func.ignore and func.has_variable_size_request():
+				print 'extern PURE HIDDEN int __glX%sReqSize(const GLbyte *pc, Bool swap);' % (func.name)
 
 
 class PrintGlxReqSize_c(PrintGlxReqSize_common):
 	def __init__(self):
 		PrintGlxReqSize_common.__init__(self)
 		self.counter_sigs = {}
-
-
-	def createEnumFunction(self, n):
-		return glXServerEnumFunction(n, self)
 
 
 	def printRealHeader(self):
@@ -317,38 +453,58 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 		print ''
 
 
-	def printRealFooter(self):
-		for a in self.aliases:
-			print a
+	def printBody(self, api):
+		aliases = []
+		enum_functions = {}
+		enum_sigs = {}
+
+		for func in api.functionIterateGlx():
+			if not func.has_variable_size_request(): continue
+
+			ef = glx_server_enum_function( func, api.enums_by_name )
+			if len(ef.enums) == 0: continue
+
+			sig = ef.signature()
+
+			if not enum_functions.has_key(func.name):
+				enum_functions[ func.name ] = sig
+
+			if not enum_sigs.has_key( sig ):
+				enum_sigs[ sig ] = ef
+			
 
 
-	def printFunction(self, f):
-		# Even though server-handcode fuctions are on "the list",
-		# and prototypes are generated for them, there isn't enough
-		# information to generate a size function.  If there was
-		# enough information, they probably wouldn't need to be
-		# handcoded in the first place!
+		for func in api.functionIterateGlx():
+			# Even though server-handcode fuctions are on "the
+			# list", and prototypes are generated for them, there
+			# isn't enough information to generate a size
+			# function.  If there was enough information, they
+			# probably wouldn't need to be handcoded in the first
+			# place!
 
-		if f.server_handcode: return
+			if func.server_handcode: continue
+			if not func.has_variable_size_request(): continue
 
-		if self.glx_enum_functions.has_key(f.name):
-			ef = self.glx_enum_functions[f.name]
+			if enum_functions.has_key(func.name):
+				sig = enum_functions[func.name]
+				ef = enum_sigs[ sig ]
 
-			sig = ef.signature();
-			if self.glx_enum_sigs.has_key(sig):
-				n = self.glx_enum_sigs[sig];
-				a = 'ALIAS( %s, %s )' % (f.name, n)
-				self.aliases.append(a)
-			else:
-				ef.Print( f.name )
-				self.glx_enum_sigs[sig] = f.name;
-		elif f.image:
-			self.printPixelFunction(f)
-		else:
-			for p in f.parameterIterator(1,2):
-				if p.counter and not p.is_output:
-					self.printCountedFunction(f)
-					break
+				if ef.name != func.name:
+					aliases.append( [func.name, ef.name] )
+				else:
+					ef.Print( func.name, self )
+
+			elif func.images:
+				self.printPixelFunction(func)
+			elif func.has_variable_size_request():
+				a = self.printCountedFunction(func)
+				if a: aliases.append(a)
+
+
+		for [alias_name, real_name] in aliases:
+			print 'ALIAS( %s, %s )' % (alias_name, real_name)
+
+		return
 
 
 	def common_emit_fixups(self, fixup):
@@ -363,9 +519,10 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 		return
 
 
-	def common_emit_one_arg(self, p, offset, pc, indent, adjust):
-		dst = '%s %s' % (p.p_type_string, p.name)
-		src = '(%s *)' % (p.p_type_string)
+	def common_emit_one_arg(self, p, pc, indent, adjust):
+		offset = p.offset
+		dst = p.string()
+		src = '(%s *)' % (p.type_string())
 		print '%s%-18s = *%11s(%s + %u);' % (indent, dst, src, pc, offset + adjust);
 		return
 
@@ -379,9 +536,8 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 	def printPixelFunction(self, f):
 		self.common_func_print_just_header(f)
 		
+		f.offset_of( f.parameters[0].name )
 		[dim, w, h, d, junk] = f.dimensions()
-
-		offset = f.offset_of_first_parameter()
 
 		print '    GLint row_length   = *  (GLint *)(pc +  4);'
 
@@ -398,19 +554,18 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 			print '    GLint skip_images  = *  (GLint *)(pc + 20);'
 			print '    GLint alignment    = *  (GLint *)(pc + 32);'
 
-		for p in f.parameterIterator(1, 2):
-			if p.name in [w, h, d, f.image.img_format, f.image.img_type, f.image.img_target]:
-				self.common_emit_one_arg(p, offset, "pc", "    ", 0 )
+		img = f.images[0]
+		for p in f.parameterIterateGlxSend():
+			if p.name in [w, h, d, img.img_format, img.img_type, img.img_target]:
+				self.common_emit_one_arg( p, "pc", "    ", 0 )
 				fixup.append( p.name )
-
-			offset += p.size()
 
 		print ''
 
 		self.common_emit_fixups(fixup)
 
 		print ''
-		print '    return __glXImageSize(%s, %s, %s, %s, %s, %s,' % (f.image.img_format, f.image.img_type, f.image.img_target, w, h, d )
+		print '    return __glXImageSize(%s, %s, %s, %s, %s, %s,' % (img.img_format, img.img_type, img.img_target, w, h, d )
 		print '                          image_height, row_length, skip_images,'
 		print '                          skip_rows, alignment);'
 		print '}'
@@ -433,21 +588,17 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 		# that is being done, calculate a unique signature for this
 		# function.
 
-		for p in f.parameterIterator(1,2):
+		for p in f.parameterIterateGlxSend():
 			if p.is_counter:
-				param_offsets[ p.name ] = offset
 				fixup.append( p.name )
-				params.append( [p, offset] )
+				params.append( p )
 			elif p.counter:
-				s = p.p_type.size
+				s = p.size()
 				if s == 0: s = 1
 
-				sig += "(%u,%u)" % (param_offsets[p.counter], s)
+				sig += "(%u,%u)" % (f.offset_of(p.counter), s)
 				size += '%s%s' % (plus, p.size_string())
 				plus = ' + '
-
-
-			offset += p.size()
 
 
 		# If the calculated signature matches a function that has
@@ -456,15 +607,15 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 
 		if self.counter_sigs.has_key(sig):
 			n = self.counter_sigs[sig];
-			a = 'ALIAS( %s, %s )' % (f.name, n)
-			self.aliases.append(a)
+			alias = [f.name, n]
 		else:
+			alias = None
 			self.counter_sigs[sig] = f.name
 
 			self.common_func_print_just_header(f)
 
-			for [p, offset] in params:
-				self.common_emit_one_arg(p, offset, "pc", "    ", 0 )
+			for p in params:
+				self.common_emit_one_arg(p, "pc", "    ", 0 )
 
 
 			print ''
@@ -475,7 +626,7 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 			print '}'
 			print ''
 
-		return
+		return alias
 
 
 def show_usage():
@@ -494,7 +645,7 @@ if __name__ == '__main__':
 	file_name = "gl_API.xml"
 
 	try:
-		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:h:", ["only-get", "only-set", "get-alias-set", "header-tag"])
+		(args, trail) = getopt.getopt(sys.argv[1:], "f:m:h:", ["only-get", "only-set", "header-tag"])
 	except Exception,e:
 		show_usage()
 
@@ -511,22 +662,23 @@ if __name__ == '__main__':
 			which_functions = PrintGlxSizeStubs_common.do_get
 		elif arg == "--only-set":
 			which_functions = PrintGlxSizeStubs_common.do_set
-		elif arg == "--get-alias-set":
-			which_functions |= PrintGlxSizeStubs_common.do_get_alias_set
 		elif (arg == '-h') or (arg == "--header-tag"):
 			header_tag = val
 
 	if mode == "size_c":
-		dh = PrintGlxSizeStubs_c( which_functions )
+		printer = PrintGlxSizeStubs_c( which_functions )
 	elif mode == "size_h":
-		dh = PrintGlxSizeStubs_h( which_functions )
+		printer = PrintGlxSizeStubs_h( which_functions )
 		if header_tag:
-			dh.header_tag = header_tag
+			printer.header_tag = header_tag
 	elif mode == "reqsize_c":
-		dh = PrintGlxReqSize_c()
+		printer = PrintGlxReqSize_c()
 	elif mode == "reqsize_h":
-		dh = PrintGlxReqSize_h()
+		printer = PrintGlxReqSize_h()
 	else:
 		show_usage()
 
-	gl_XML.parse_GL_API( dh, file_name )
+	api = gl_XML.parse_GL_API( file_name, glX_XML.glx_item_factory() )
+
+
+	printer.Print( api )

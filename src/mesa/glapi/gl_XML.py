@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python
 
 # (C) Copyright IBM Corporation 2004, 2005
 # All Rights Reserved.
@@ -25,14 +25,27 @@
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
 
-from xml.sax import saxutils
-from xml.sax import make_parser
-from xml.sax.handler import feature_namespaces
+import libxml2
+import re, sys, string
+import typeexpr
 
-import re
-import sys
 
-def is_attr_true( attrs, name ):
+def parse_GL_API( file_name, factory = None ):
+	doc = libxml2.readFile( file_name, None, libxml2.XML_PARSE_XINCLUDE + libxml2.XML_PARSE_NOBLANKS + libxml2.XML_PARSE_DTDVALID + libxml2.XML_PARSE_DTDATTR + libxml2.XML_PARSE_DTDLOAD + libxml2.XML_PARSE_NOENT )
+	ret = doc.xincludeProcess()
+
+	if not factory:
+		factory = gl_item_factory()
+
+	api = factory.create_item( "api", None, None )
+	api.process_element( doc )
+
+	doc.freeDoc()
+
+	return api
+
+
+def is_attr_true( element, name ):
 	"""Read a name value from an element's attributes.
 	
 	The value read from the attribute list must be either 'true' or
@@ -40,7 +53,7 @@ def is_attr_true( attrs, name ):
 	value is 'true', non-zero will be returned.  An exception will be
 	raised for any other value."""
 
-	value = attrs.get((None, name), "false")
+	value = element.nsProp( name, None )
 	if value == "true":
 		return 1
 	elif value == "false":
@@ -49,539 +62,55 @@ def is_attr_true( attrs, name ):
 		raise RuntimeError('Invalid value "%s" for boolean "%s".' % (value, name))
 
 
-def parse_GL_API( handler, file_name ):
-	"""Boiler-plate code to create an XML parser and use it.
+class gl_print_base:
+	"""Base class of all API pretty-printers.
 
-	Creates an XML parser and uses that parser with the application
-	supplied SAX callback, which should be derived from
-	FilterGLAPISpecBase.
+	In the model-view-controller pattern, this is the view.  Any derived
+	class will want to over-ride the printBody, printRealHader, and
+	printRealFooter methods.  Some derived classes may want to over-ride
+	printHeader and printFooter, or even Print (though this is unlikely).
 	"""
 
-	parser = make_parser()
-	parser.setFeature(feature_namespaces, 1)
-	parser.setContentHandler( handler )
-
-	handler.printHeader()
-
-	if not file_name or file_name == "-":
-		parser.parse( sys.stdin )
-	else:
-		parser.parse( file_name )
-
-	handler.printFooter()
-	return
-	
-
-class glItem:
-	"""Generic class on which all other API entity types are based."""
-
-	def __init__(self, tag_name, name, context):
-		self.name = name
-		self.category = context.get_category_define()
-		self.context = context
-		self.tag_name = tag_name
-		
-		context.append(tag_name, self)
-		return
-	
-	def startElementNS(self, name, qname, attrs):
-		"""Generic startElement handler.
-		
-		The startElement handler is called for all elements except
-		the one that starts the object.  For a foo element, the
-		XML "<foo><bar/></foo>" would cause the startElement handler
-		to be called once, but the endElement handler would be called
-		twice."""
-		return
-
-	def endElementNS(self, name, qname):
-		"""Generic endElement handler.
-
-		Generic endElement handler.    Returns 1 if the tag containing
-		the object is complete.  Otherwise 0 is returned.  All
-		derived class endElement handlers should call this method.  If
-		the name of the ending tag is the same as the tag that
-		started this object, the object is assumed to be complete.
-		
-		This fails if a tag can contain another tag with the same
-		name.  The XML "<foo><foo/><bar/></foo>" would fail.  The
-		object would end before the bar tag was processed.
-		
-		The endElement handler is called for every end element
-		associated with an object, even the element that started the
-		object.  See the description of startElement an example."""
-
-		if name == (None, self.tag_name):
-			return 1
-		else:
-			return 0
-
-	def get_category_define(self):
-		return self.category
-
-
-class glEnum( glItem ):
-	"""Subclass of glItem for representing GL enumerants.
-	
-	This class is not complete, and is not really used yet."""
-
-	def __init__(self, context, name, attrs):
-		self.value = int(attrs.get((None, 'value'), "0x0000"), 0)
-
-		enum_name = "GL_" + attrs.get((None, 'name'), None)
-		glItem.__init__(self, name, enum_name, context)
-
-		temp = attrs.get((None, 'count'), None)
-		self.default_count = 0
-		if temp == "?":
-			self.default_count = -1
-		elif temp:
-			try:
-				c = int(temp)
-			except Exception,e:
-				raise RuntimeError('Invalid count value "%s" for enum "%s" in function "%s" when an integer was expected.' % (temp, self.name, n))
-
-			self.default_count = c
-		return
-
-
-	def process_attributes(self, attrs):
-		name = attrs.get((None, 'name'), None)
-
-		temp = attrs.get((None, 'count'), None)
-		if temp == None:
-			c = self.default_count
-		else:
-			try:
-				c = int(temp)
-			except Exception,e:
-				raise RuntimeError('Invalid count value "%s" for enum "%s" in function "%s" when an integer was expected.' % (temp, self.name, n))
-
-		mode_str = attrs.get((None, 'mode'), "set")
-		if mode_str == "set":
-			mode = 1
-		elif mode_str == "get":
-			mode = 0
-		else:
-			raise RuntimeError("Invalid mode '%s' for function '%s' in enum '%s'." % (mode_str, self.context.name, self.name))
-
-		return [name, c, mode]
-
-
-class glType( glItem ):
-	"""Subclass of glItem for representing GL types."""
-
-	def __init__(self, context, name, attrs):
-		self.size = int(attrs.get((None, 'size'), "0"))
-		self.glx_name = attrs.get((None, 'glx_name'), "")
-
-		type_name = "GL" + attrs.get((None, 'name'), None)
-		glItem.__init__(self, name, type_name, context)
-
-
-class glParameter( glItem ):
-	"""Parameter of a glFunction."""
-	p_type = None
-	p_type_string = ""
-	p_count = 0
-	counter = None
-	is_output = 0
-	is_counter = 0
-	is_pointer = 0
-
-	def __init__(self, context, name, attrs):
-		p_name = attrs.get((None, 'name'), None)
-		self.p_type_string = attrs.get((None, 'type'), None)
-
-		temp = attrs.get((None, 'variable_param'), None)
-		if temp:
-			self.count_parameter_list = temp.split( ' ' )
-		else:
-			self.count_parameter_list = []
-
-		self.p_type = context.context.find_type(self.p_type_string)
-		if self.p_type == None:
-			raise RuntimeError("Unknown type '%s' in function '%s'." % (self.p_type_string, context.name))
-
-
-		# The count tag can be either a numeric string or the name of
-		# a variable.  If it is the name of a variable, the int(c)
-		# statement will throw an exception, and the except block will
-		# take over.
-
-		c = attrs.get((None, 'count'), "0")
-		try: 
-			self.p_count = int(c)
-			self.counter = None
-		except Exception,e:
-			self.p_count = 0
-			self.counter = c
-
-		self.count_scale = int(attrs.get((None, 'count_scale'), "1"))
-
-		self.is_counter = is_attr_true( attrs, 'counter' )
-		self.is_output  = is_attr_true( attrs, 'output' )
-
-
-		# Pixel data has special parameters.
-
-		self.width      = attrs.get((None, 'img_width'),  None)
-		self.height     = attrs.get((None, 'img_height'), None)
-		self.depth      = attrs.get((None, 'img_depth'),  None)
-		self.extent     = attrs.get((None, 'img_extent'), None)
-
-		self.img_xoff   = attrs.get((None, 'img_xoff'),   None)
-		self.img_yoff   = attrs.get((None, 'img_yoff'),   None)
-		self.img_zoff   = attrs.get((None, 'img_zoff'),   None)
-		self.img_woff   = attrs.get((None, 'img_woff'),   None)
-
-		self.img_format = attrs.get((None, 'img_format'), None)
-		self.img_type   = attrs.get((None, 'img_type'),   None)
-		self.img_target = attrs.get((None, 'img_target'), None)
-
-		self.img_pad_dimensions = is_attr_true( attrs, 'img_pad_dimensions' )
-		self.img_null_flag      = is_attr_true( attrs, 'img_null_flag' )
-		self.img_send_null      = is_attr_true( attrs, 'img_send_null' )
-
-		if self.p_count > 0 or self.counter or self.count_parameter_list:
-			has_count = 1
-		else:
-			has_count = 0
-
-
-		# If there is a * anywhere in the parameter's type, then it
-		# is a pointer.
-
-		if re.compile("[*]").search(self.p_type_string):
-			# We could do some other validation here.  For
-			# example, an output parameter should not be const,
-			# but every non-output parameter should.
-
-			self.is_pointer = 1;
-		else:
-			# If a parameter is not a pointer, then there cannot
-			# be an associated count (either fixed size or
-			# variable) and the parameter cannot be an output.
-
-			if has_count or self.is_output:
-				raise RuntimeError("Non-pointer type has count or is output.")
-			self.is_pointer = 0;
-
-		glItem.__init__(self, name, p_name, context)
-		return
-
-
-	def is_variable_length_array(self):
-		"""Determine if a parameter is a variable length array.
-		
-		A parameter is considered to be a variable length array if
-		its size depends on the value of another parameter that is
-		an enumerant.  The params parameter to glTexEnviv is an
-		example of a variable length array parameter.  Arrays whose
-		size depends on a count variable, such as the lists parameter
-		to glCallLists, are not variable length arrays in this
-		sense."""
-
-		return self.count_parameter_list or self.counter or self.width
-
-
-	def is_array(self):
-		return self.is_pointer
-
-
-	def count_string(self):
-		"""Return a string representing the number of items
-		
-		Returns a string representing the number of items in a
-		parameter.  For scalar types this will always be "1".  For
-		vector types, it will depend on whether or not it is a
-		fixed length vector (like the parameter of glVertex3fv),
-		a counted length (like the vector parameter of
-		glDeleteTextures), or a general variable length vector."""
-
-		if self.is_array():
-			if self.count_parameter_list:
-				return "compsize"
-			elif self.counter != None:
-				return self.counter
-			else:
-				return str(self.p_count)
-		else:
-			return "1"
-
-
-	def size(self):
-		if self.count_parameter_list or self.counter or self.width or self.is_output:
-			return 0
-		elif self.p_count == 0:
-			return self.p_type.size
-		else:
-			return self.p_type.size * self.p_count * self.count_scale
-
-	def size_string(self):
-		s = self.size()
-		if s == 0:
-			a_prod = "compsize"
-			b_prod = self.p_type.size
-
-			# Handle functions like glCompressedTexImage2D that
-			# have a counted 'void *' parameter.
-
-			if b_prod == 0:	b_prod = 1
-
-			if not self.count_parameter_list and self.counter != None:
-				if self.count_scale > 1:
-					a_prod = '(%s * %u)' % (self.counter, self.count_scale)
-				else:
-					a_prod = self.counter
-			elif self.count_parameter_list and self.counter == None:
-				pass
-			elif self.count_parameter_list and self.counter != None:
-				if self.count_scale > 1:
-					b_prod = '(%s * %u)' % (self.counter, self.count_scale)
-				else:
-					b_prod = self.counter
-			elif self.width:
-				return "compsize"
-			else:
-				raise RuntimeError("Parameter '%s' to function '%s' has size 0." % (self.name, self.context.name))
-
-			return "(%s * %s)" % (a_prod, b_prod)
-		else:
-			return str(s)
-
-
-class glParameterIterator:
-	"""Class to iterate over a list of glParameters.
-	
-	Objects of this class are returned by the parameterIterator method of
-	the glFunction class.  They are used to iterate over the list of
-	parameters to the function."""
-
-	def __init__(self, data):
-		self.data = data
-		self.index = 0
-
-	def __iter__(self):
-		return self
-
-	def next(self):
-		if self.index == len( self.data ):
-			raise StopIteration
-		i = self.index
-		self.index += 1
-		return self.data[i]
-
-
-class glFunction( glItem ):
-	def __init__(self, context, name, attrs):
-		self.fn_alias = attrs.get((None, 'alias'), None)
-		self.fn_parameters = []
-		self.image = None
-		self.count_parameter_list = []
-		self.fn_return_type = "void"
-
-		temp = attrs.get((None, 'offset'), None)
-		if temp == None or temp == "?":
-			self.fn_offset = -1
-		else:
-			self.fn_offset = int(temp)
-
-		fn_name = attrs.get((None, 'name'), None)
-		if self.fn_alias != None:
-			self.real_name = self.fn_alias
-		else:
-			self.real_name = fn_name
-
-		self.parameters_by_name = {}
-		self.variable_length_parameters = []
-
-		glItem.__init__(self, name, fn_name, context)
-		return
-
-
-	def parameterIterator(self):
-		return glParameterIterator(self.fn_parameters)
-
-
-	def startElementNS(self, name, qname, attrs):
-		[uri, true_name] = name
-		if true_name == "param":
-			try:
-				self.context.factory.create(self, true_name, attrs)
-			except RuntimeError:
-				print "Error with parameter '%s' in function '%s'." \
-					% (attrs.get((None, 'name'),'(unknown)'), self.name)
-				raise
-		elif true_name == "return":
-			self.set_return_type(attrs.get((None, 'type'), None))
-
-
-	def endElementNS(self, name, qname):
-		"""Handle the end of a <function> element.
-
-		At the end of a <function> element, there is some semantic
-		checking that can be done.  This prevents some possible
-		exceptions from being thrown elsewhere in the code.
-		"""
-
-		[uri, true_name] = name
-		if true_name == "function":
-			for p in self.variable_length_parameters:
-				if p.counter:
-					counter = self.parameters_by_name[ p.counter ]
-					if not self.parameters_by_name.has_key( p.counter ):
-						raise RuntimeError("Parameter '%s' of function '%s' has counter '%s', but function has no such parameter." % (p.name, self.name, p.counter))
-					elif not self.parameters_by_name[ p.counter ].is_counter:
-						raise RuntimeError("Parameter '%s' of function '%s' has counter '%s', but '%s' is not marked as a counter." % (p.name, self.name, p.counter, p.counter))
-
-					for n in p.count_parameter_list:
-						if not self.parameters_by_name.has_key( n ):
-							raise RuntimeError("Parameter '%s' of function '%s' has size parameter '%s', but function has no such parameter." % (p.name, self.name, n))
-
-			return 1
-		else:
-			return 0
-
-
-	def append(self, tag_name, p):
-		if tag_name != "param":
-			raise RuntimeError("Trying to append '%s' to parameter list of function '%s'." % (tag_name, self.name))
-
-		if p.width:
-			self.image = p
-
-		self.fn_parameters.append(p)
-		if p.count_parameter_list != []:
-			self.count_parameter_list.extend( p.count_parameter_list )
-
-		if p.is_variable_length_array():
-			self.variable_length_parameters.append(p)
-
-		self.parameters_by_name[ p.name ] = p
-
-
-	def set_return_type(self, t):
-		self.fn_return_type = t
-
-
-	def get_parameter_string(self):
-		arg_string = ""
-		comma = ""
-		for p in glFunction.parameterIterator(self):
-			arg_string = arg_string + comma + p.p_type_string + " " + p.name
-			comma = ", "
-
-		if arg_string == "":
-			arg_string = "void"
-
-		return arg_string
-
-
-class glItemFactory:
-	"""Factory to create objects derived from glItem."""
-    
-	def create(self, context, name, attrs):
-		if name == "function":
-			return glFunction(context, name, attrs)
-		elif name == "type":
-			return glType(context, name, attrs)
-		elif name == "enum":
-			return glEnum(context, name, attrs)
-		elif name == "param":
-			return glParameter(context, name, attrs)
-		else:
-			return None
-
-
-class glFunctionIterator:
-	"""Class to iterate over a list of glFunctions
-
-	Objects of this classare returned by
-	FilterGLAPISpecBase::functionIterator.  This default version
-	iterates over the functions in order of dispatch table offset.  All
-	of the "true" functions are iterated first, followed by the alias
-	functions."""
-
-	def __init__(self, context):
-		self.context = context
-		self.keys = context.functions.keys()
-		self.keys.sort()
-
-		self.prevk = -1
-		self.direction = 1
-
-		for self.index in range(0, len(self.keys)):
-			if self.keys[ self.index ] >= 0: break
-
-		if self.index == len(self.keys):
-			self.direction = -1
-			self.index -= 1
-
-		self.split = self.index - 1
-		return
-
-
-	def __iter__(self):
-		return self
-
-
-	def next(self):
-		if self.index < 0:
-			raise StopIteration
-
-		k = self.keys[ self.index ]
-
-		#if self.context.functions[k].fn_alias == None:
-		#	if k != self.prevk + 1:
-		#		print 'Missing offset %d' % (prevk)
-		#	self.prevk = int(k)
-
-		self.index += self.direction
-
-		if self.index == len(self.keys):
-			self.index = self.split
-			self.direction = -1
-
-		return self.context.functions[k]
-
-
-class FilterGLAPISpecBase(saxutils.XMLFilterBase):
-	name = "a"
-	license = "The license for this file is unspecified."
-	next_alias = -2
-	current_object = None
-
 	def __init__(self):
-		saxutils.XMLFilterBase.__init__(self)
-		self.functions = {}
-		self.types = {}
-		self.functions_by_name = {}
-		self.factory = glItemFactory()
+		# Name of the script that is generating the output file.
+		# Every derived class should set this to the name of its
+		# source file.
+
+		self.name = "a"
+
+
+		# License on the *generated* source file.  This may differ
+		# from the license on the script that is generating the file.
+		# Every derived class should set this to some reasonable
+		# value.
+		#
+		# See license.py for an example of a reasonable value.
+
+		self.license = "The license for this file is unspecified."
+
+		
+		# The header_tag is the name of the C preprocessor define
+		# used to prevent multiple inclusion.  Typically only
+		# generated C header files need this to be set.  Setting it
+		# causes code to be generated automatically in printHeader
+		# and printFooter.
+
 		self.header_tag = None
+
+		
+		# List of file-private defines that must be undefined at the
+		# end of the file.  This can be used in header files to define
+		# names for use in the file, then undefine them at the end of
+		# the header file.
+
 		self.undef_list = []
-		self.current_category = ""
+		return
 
 
-	def find_type(self,type_name):
-		for t in self.types:
-			if re.compile(t).search(type_name):
-				return self.types[t]
-		print "Unable to find base type matching \"%s\"." % (type_name)
-		return None
-
-
-	def find_function(self,function_name):
-		return self.functions_by_name[function_name]
-
-
-	def functionIterator(self):
-		return glFunctionIterator(self)
-
-
-	def printFunctions(self):
-		for f in self.functionIterator():
-			self.printFunction(f)
+	def Print(self, api):
+		self.printHeader()
+		self.printBody(api)
+		self.printFooter()
 		return
 
 
@@ -606,144 +135,17 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 	def printFooter(self):
 		"""Print the header associated with all files and call the printRealFooter method."""
 
-		self.printFunctions()
 		self.printRealFooter()
+
+		if self.undef_list:
+			print ''
+			for u in self.undef_list:
+				print "#  undef %s" % (u)
+
 		if self.header_tag:
-			if self.undef_list:
-				print ''
-				for u in self.undef_list:
-					print "#  undef %s" % (u)
 			print ''
 			print '#endif /* !defined( %s ) */' % (self.header_tag)
 
-
-	def get_category_define(self):
-		"""Convert the category name to the #define that would be found in glext.h"""
-
-		if re.compile("[1-9][0-9]*[.][0-9]+").match(self.current_category):
-			s = self.current_category
-			return "GL_VERSION_" + s.replace(".", "_")
-		else:
-			return self.current_category
-
-
-	def append(self, object_type, obj):
-		if object_type == "function":
-			# If the function is not an alias and has a negative
-			# offset, then we do not need to track it.  These are
-			# functions that don't have an assigned offset
-
-			if not self.functions_by_name.has_key(obj.name):
-				self.functions_by_name[obj.name] = obj
-
-				if obj.fn_offset >= 0 or obj.fn_alias != None:
-					if obj.fn_offset >= 0:
-						index = obj.fn_offset
-					else:
-						index = self.next_alias
-						self.next_alias -= 1
-
-					self.functions[index] = obj
-			else:
-				# We should do some checking here to make
-				# sure the functions are an identical match.
-				pass
-
-		elif object_type == "type":
-			self.types[obj.name] = obj
-
-		return
-
-
-	def startElementNS(self, name, qname, attrs):
-		"""Start a new element in the XML stream.
-		
-		Starts a new element.  There are three types of elements that
-		are specially handled by this function.  When a "category"
-		element is encountered, the name of the category is saved.
-		If an element is encountered and no API object is
-		in-progress, a new object is created using the API factory.
-		Any future elements, until that API object is closed, are
-		passed to the current objects startElement method.
-	
-		This paradigm was chosen becuase it allows subclasses of the
-		basic API types (i.e., glFunction, glEnum, etc.) to handle
-		additional XML data, GLX protocol information,  that the base
-		classes do not know about."""
-
-		[uri, true_name] = name
-		if uri is None:
-			if self.current_object != None:
-				self.current_object.startElementNS(name, qname, attrs)
-			elif true_name == "category":
-				self.current_category = attrs.get((None, 'name'), "")
-			elif true_name == "include":
-				self.next_include = attrs.get((None, 'name'), "")
-			else:
-				self.current_object = self.factory.create(self, true_name, attrs)
-		return
-
-
-	def endElementNS(self, name, qname):
-		if self.current_object != None:
-			if self.current_object.endElementNS(name, qname):
-				self.current_object = None
-		elif name == "include":
-			parser = make_parser()
-			parser.setFeature(feature_namespaces, 1)
-			parser.setContentHandler(self)
-
-			f = open(self.next_include)
-			parser.parse(f)
-
-		return
-
-
-	def printPure(self):
-		self.undef_list.append("PURE")
-		print """#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96)
-#    define PURE __attribute__((pure))
-#  else
-#    define PURE
-#  endif"""
-
-	def printFastcall(self):
-		self.undef_list.append("FASTCALL")
-		print """#  if defined(__i386__) && defined(__GNUC__)
-#    define FASTCALL __attribute__((fastcall))
-#  else
-#    define FASTCALL
-#  endif"""
-
-	def printVisibility(self, S, s):
-		self.undef_list.append(S)
-		print """#  if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)
-#    define %s  __attribute__((visibility("%s")))
-#  else
-#    define %s
-#  endif""" % (S, s, S)
-
-	def printNoinline(self):
-		self.undef_list.append("NOINLINE")
-		print """#  if defined(__GNUC__)
-#    define NOINLINE __attribute__((noinline))
-#  else
-#    define NOINLINE
-#  endif"""
-
-	def printHaveAlias(self):
-		self.undef_list.append("HAVE_ALIAS")
-		print """#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
-#    define HAVE_ALIAS
-#  endif"""
-
-	def printFunction(self,offset):
-		"""Print a single function.
-
-		In the base class, this function is empty.  All derived
-		classes should over-ride this function."""
-		return
-    
 
 	def printRealHeader(self):
 		"""Print the "real" header for the created file.
@@ -759,3 +161,659 @@ class FilterGLAPISpecBase(saxutils.XMLFilterBase):
 		In the base class, this function is empty.  All derived
 		classes should over-ride this function."""
 		return
+
+
+	def printPure(self):
+		"""Conditionally define `PURE' function attribute.
+
+		Conditionally defines a preprocessor macro `PURE' that wraps
+		GCC's `pure' function attribute.  The conditional code can be
+		easilly adapted to other compilers that support a similar
+		feature.
+
+		The name is also added to the file's undef_list.
+		"""
+		self.undef_list.append("PURE")
+		print """#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96)
+#    define PURE __attribute__((pure))
+#  else
+#    define PURE
+#  endif"""
+		return
+
+
+	def printFastcall(self):
+		"""Conditionally define `FASTCALL' function attribute.
+
+		Conditionally defines a preprocessor macro `FASTCALL' that
+		wraps GCC's `fastcall' function attribute.  The conditional
+		code can be easilly adapted to other compilers that support a
+		similar feature.
+
+		The name is also added to the file's undef_list.
+		"""
+
+		self.undef_list.append("FASTCALL")
+		print """#  if defined(__i386__) && defined(__GNUC__)
+#    define FASTCALL __attribute__((fastcall))
+#  else
+#    define FASTCALL
+#  endif"""
+		return
+
+
+	def printVisibility(self, S, s):
+		"""Conditionally define visibility function attribute.
+
+		Conditionally defines a preprocessor macro name S that wraps
+		GCC's visibility function attribute.  The visibility used is
+		the parameter s.  The conditional code can be easilly adapted
+		to other compilers that support a similar feature.
+
+		The name is also added to the file's undef_list.
+		"""
+
+		self.undef_list.append(S)
+		print """#  if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)
+#    define %s  __attribute__((visibility("%s")))
+#  else
+#    define %s
+#  endif""" % (S, s, S)
+		return
+
+
+	def printNoinline(self):
+		"""Conditionally define `NOINLINE' function attribute.
+
+		Conditionally defines a preprocessor macro `NOINLINE' that
+		wraps GCC's `noinline' function attribute.  The conditional
+		code can be easilly adapted to other compilers that support a
+		similar feature.
+
+		The name is also added to the file's undef_list.
+		"""
+
+		self.undef_list.append("NOINLINE")
+		print """#  if defined(__GNUC__)
+#    define NOINLINE __attribute__((noinline))
+#  else
+#    define NOINLINE
+#  endif"""
+		return
+
+
+	def printHaveAlias(self):
+		"""Conditionally define `HAVE_ALIAS'.
+
+		Conditionally defines a preprocessor macro `HAVE_ALIAS'.  The
+		existance of this macro can be used to determine whether or
+		not GCC's alias function attribute can be used.
+
+		The name is also added to the file's undef_list.
+		"""
+
+		self.undef_list.append("HAVE_ALIAS")
+		print """#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
+#    define HAVE_ALIAS
+#  endif"""
+		return
+
+
+def real_function_name(element):
+	name = element.nsProp( "name", None )
+	alias = element.nsProp( "alias", None )
+	
+	if alias:
+		return alias
+	else:
+		return name
+
+
+class gl_item:
+	def __init__(self, element, context):
+		self.context = context
+
+		self.name = element.nsProp( "name", None )
+
+		c = element.parent.nsProp( "name", None )
+		if re.compile("[1-9][0-9]*[.][0-9]+").match(c):
+			self.category = "GL_VERSION_" + c.replace(".", "_")
+		else:
+			self.category = c
+
+		return
+
+
+class gl_type( gl_item ):
+	def __init__(self, element, context):
+		gl_item.__init__(self, element, context)
+		self.size = int( element.nsProp( "size", None ), 0 )
+
+		te = typeexpr.type_expression( None )
+		tn = typeexpr.type_node()
+		tn.size = int( element.nsProp( "size", None ), 0 )
+		tn.integer = not is_attr_true( element, "float" )
+		tn.unsigned = is_attr_true( element, "unsigned" )
+		tn.name = "GL" + self.name
+		te.set_base_type_node( tn )
+
+		self.type_expr = te
+		return
+	
+
+	def get_type_expression(self):
+		return self.type_expr
+
+
+class gl_enum( gl_item ):
+	def __init__(self, element, context):
+		gl_item.__init__(self, element, context)
+		self.value = int( element.nsProp( "value", None ), 0 )
+
+		temp = element.nsProp( "count", None )
+		if not temp or temp == "?":
+			self.default_count = -1
+		else:
+			try:
+				c = int(temp)
+			except Exception,e:
+				raise RuntimeError('Invalid count value "%s" for enum "%s" in function "%s" when an integer was expected.' % (temp, self.name, n))
+
+			self.default_count = c
+
+		return
+
+
+	def priority(self):
+		"""Calculate a 'priority' for this enum name.
+		
+		When an enum is looked up by number, there may be many
+		possible names, but only one is the 'prefered' name.  The
+		priority is used to select which name is the 'best'.
+
+		Highest precedence is given to core GL name.  ARB extension
+		names have the next highest, followed by EXT extension names.
+		Vendor extension names are the lowest.
+		"""
+
+		if self.name.endswith( "_BIT" ):
+			bias = 1
+		else:
+			bias = 0
+
+		if self.category.startswith( "GL_VERSION_" ):
+			priority = 0
+		elif self.category.startswith( "GL_ARB_" ):
+			priority = 2
+		elif self.category.startswith( "GL_EXT_" ):
+			priority = 4
+		else:
+			priority = 6
+
+		return priority + bias
+
+
+
+class gl_parameter:
+	def __init__(self, element, context):
+		self.name = element.nsProp( "name", None )
+
+		ts = element.nsProp( "type", None )
+		self.type_expr = typeexpr.type_expression( ts, context )
+
+		temp = element.nsProp( "variable_param", None )
+		if temp:
+			self.count_parameter_list = temp.split( ' ' )
+		else:
+			self.count_parameter_list = []
+
+		# The count tag can be either a numeric string or the name of
+		# a variable.  If it is the name of a variable, the int(c)
+		# statement will throw an exception, and the except block will
+		# take over.
+
+		c = element.nsProp( "count", None )
+		try: 
+			count = int(c)
+			self.count = count
+			self.counter = None
+		except Exception,e:
+			count = 1
+			self.count = 0
+			self.counter = c
+		
+		self.count_scale = int(element.nsProp( "count_scale", None ))
+
+		elements = (count * self.count_scale)
+		if elements == 1:
+			elements = 0
+
+		#if ts == "GLdouble":
+		#	print '/* stack size -> %s = %u (before)*/' % (self.name, self.type_expr.get_stack_size())
+		#	print '/* # elements = %u */' % (elements)
+		self.type_expr.set_elements( elements )
+		#if ts == "GLdouble":
+		#	print '/* stack size -> %s = %u (after) */' % (self.name, self.type_expr.get_stack_size())
+
+		self.is_counter = is_attr_true( element, 'counter' )
+		self.is_output  = is_attr_true( element, 'output' )
+
+
+		# Pixel data has special parameters.
+
+		self.width      = element.nsProp('img_width',  None)
+		self.height     = element.nsProp('img_height', None)
+		self.depth      = element.nsProp('img_depth',  None)
+		self.extent     = element.nsProp('img_extent', None)
+
+		self.img_xoff   = element.nsProp('img_xoff',   None)
+		self.img_yoff   = element.nsProp('img_yoff',   None)
+		self.img_zoff   = element.nsProp('img_zoff',   None)
+		self.img_woff   = element.nsProp('img_woff',   None)
+
+		self.img_format = element.nsProp('img_format', None)
+		self.img_type   = element.nsProp('img_type',   None)
+		self.img_target = element.nsProp('img_target', None)
+
+		self.img_pad_dimensions = is_attr_true( element, 'img_pad_dimensions' )
+		self.img_null_flag      = is_attr_true( element, 'img_null_flag' )
+		self.img_send_null      = is_attr_true( element, 'img_send_null' )
+
+		return
+
+
+	def compatible(self, other):
+		return 1
+
+
+	def is_array(self):
+		return self.is_pointer()
+
+
+	def is_pointer(self):
+		return self.type_expr.is_pointer()
+
+
+	def is_image(self):
+		if self.width:
+			return 1
+		else:
+			return 0
+
+
+	def is_variable_length(self):
+		return len(self.count_parameter_list) or self.counter
+
+
+	def is_64_bit(self):
+		count = self.type_expr.get_element_count()
+		if count:
+			if (self.size() / count) == 8:
+				return 1
+		else:
+			if self.size() == 8:
+				return 1
+
+		return 0
+
+
+	def string(self):
+		return self.type_expr.original_string + " " + self.name
+
+
+	def type_string(self):
+		return self.type_expr.original_string
+
+
+	def get_base_type_string(self):
+		return self.type_expr.get_base_name()
+
+
+	def get_dimensions(self):
+		if not self.width:
+			return [ 0, "0", "0", "0", "0" ]
+
+		dim = 1
+		w = self.width
+		h = "1"
+		d = "1"
+		e = "1"
+
+		if self.height:
+			dim = 2
+			h = self.height
+
+		if self.depth:
+			dim = 3
+			d = self.depth
+
+		if self.extent:
+			dim = 4
+			e = self.extent
+
+		return [ dim, w, h, d, e ]
+
+
+	def get_stack_size(self):
+		return self.type_expr.get_stack_size()
+
+
+	def size(self):
+		if self.is_image():
+			return 0
+		else:
+			return self.type_expr.get_element_size()
+
+
+	def get_element_count(self):
+		c = self.type_expr.get_element_count()
+		if c == 0:
+			return 1
+
+		return c
+
+
+	def size_string(self, use_parens = 1):
+		s = self.size()
+		if self.counter or self.count_parameter_list:
+			list = [ "compsize" ]
+
+			if self.counter and self.count_parameter_list:
+				list.append( self.counter )
+			elif self.counter:
+				list = [ self.counter ]
+
+			if s > 1:
+				list.append( str(s) )
+
+			if len(list) > 1 and use_parens :
+				return "(%s)" % (string.join(list, " * "))
+			else:
+				return string.join(list, " * ")
+
+		elif self.is_image():
+			return "compsize"
+		else:
+			return str(s)
+
+
+	def format_string(self):
+		if self.type_expr.original_string == "GLenum":
+			return "0x%x"
+		else:
+			return self.type_expr.format_string()
+
+
+
+class gl_function( gl_item ):
+	def __init__(self, element, context):
+		self.context = context
+		self.name = None
+
+		self.entry_points = []
+		self.return_type = "void"
+		self.parameters = []
+		self.offset = -1
+		self.uninitialized = 1
+		self.images = []
+
+		self.process_element( element )
+
+		return
+
+	
+	def process_element(self, element):
+		name = element.nsProp( "name", None )
+		alias = element.nsProp( "alias", None )
+
+		self.entry_points.append( name )
+		if alias:
+			true_name = alias
+		else:
+			true_name = name
+
+			# Only try to set the offset when a non-alias
+			# entry-point is being processes.
+
+			offset = element.nsProp( "offset", None )
+			if offset:
+				try:
+					o = int( offset )
+					self.offset = o
+				except Exception, e:
+					self.offset = -1
+
+
+		if not self.name:
+			self.name = true_name
+		elif self.name != true_name:
+			raise RuntimeError("Function true name redefined.  Was %s, now %s." % (self.name, true_name))
+
+
+		# There are two possible cases.  The first time an entry-point
+		# with data is seen, self.uninitialzied will be 1.  On that
+		# pass, we just fill in the data.  The next time an
+		# entry-point with data is seen, self.uninitialized will be 0.
+		# On that pass we have to make that the new values match the
+		# valuse from the previous entry-point.
+
+		child = element.children
+		if self.uninitialized:
+			while child:
+				if child.type == "element":
+					if child.name == "return":
+						self.return_type = child.nsProp( "type", None )
+					elif child.name == "param":
+						param = self.context.factory.create_item( "parameter", child, self.context)
+						self.parameters.append( param )
+
+				child = child.next
+		else:
+			parameters = []
+			while child:
+				if child.type == "element":
+					if child.name == "return":
+						return_type = child.nsProp( "type", None )
+						if self.return_type != return_type:
+							raise RuntimeError( "Return type changed in %s.  Was %s, now %s." % (name, self.return_type, return_type))
+					elif child.name == "param":
+						param = self.context.factory.create_item( "parameter", child, self.context)
+						parameters.append( param )
+
+				child = child.next
+
+			if len(parameters) != len(self.parameters):
+				raise RuntimeError( "Parameter count mismatch in %s.  Was %d, now %d." % (name, len(self.parameters), len(parameters)))
+
+			for j in range(0, len(parameters)):
+				p1 = parameters[j]
+				p2 = self.parameters[j]
+				if not p1.compatible( p2 ):
+					raise RuntimeError( 'Parameter type mismatch in %s.  "%s" was "%s", now "%s".' % (name, p2.name, p2.type_expr.original_string, p1.type_expr.original_string))
+
+
+			# This is done becuase we may hit an alias before we
+			# hit the "real" entry.  The aliases may not have all
+			# of the parameter information (e.g., counter,
+			# variable_param, etc. fields) required to generate
+			# GLX code.
+
+			if true_name == name:
+				self.parameters = parameters
+
+				for param in self.parameters:
+					if param.is_image():
+						self.images.append( param )
+
+		if true_name == name:
+			for param in self.parameters:
+				if param.is_image():
+					self.images.append( param )
+
+		if element.children:
+			self.uninitialized = 0
+
+		return
+
+
+	def get_images(self):
+		"""Return potentially empty list of input images."""
+		return self.images
+
+
+	def parameterIterator(self):
+		return self.parameters.__iter__();
+
+
+	def get_parameter_string(self):
+		list = []
+		for p in self.parameters:
+			list.append( p.string() )
+
+		if len(list) == 0:
+			return "void"
+		else:
+			return string.join(list, ", ")
+
+
+class gl_item_factory:
+	"""Factory to create objects derived from gl_item."""
+
+	def create_item(self, item_name, element, context):
+		if item_name == "function":
+			return gl_function(element, context)
+		if item_name == "type":
+			return gl_type(element, context)
+		elif item_name == "enum":
+			return gl_enum(element, context)
+		elif item_name == "parameter":
+			return gl_parameter(element, context)
+		elif item_name == "api":
+			return gl_api(self)
+		else:
+			return None
+
+
+class gl_api:
+	def __init__(self, factory):
+		self.functions_by_name = {}
+		self.enums_by_name = {}
+		self.types_by_name = {}
+		self.category_dict = {}
+
+		self.factory = factory
+
+		typeexpr.create_initial_types()
+		return
+
+
+	def process_element(self, doc):
+		element = doc.children
+		while element.type != "element" or element.name != "OpenGLAPI":
+			element = element.next
+
+		if element:
+			self.process_OpenGLAPI(element)
+		return
+
+
+	def process_OpenGLAPI(self, element):
+		child = element.children
+		while child:
+			if child.type == "element":
+				if child.name == "category":
+					self.process_category( child )
+				elif child.name == "OpenGLAPI":
+					self.process_OpenGLAPI( child )
+
+			child = child.next
+
+		return
+
+
+	def process_category(self, cat):
+		cat_name = cat.nsProp( "name", None )
+		cat_number = cat.nsProp( "number", None )
+
+		child = cat.children
+		while child:
+			if child.type == "element":
+				if child.name == "function":
+					func_name = real_function_name( child )
+
+					if self.functions_by_name.has_key( func_name ):
+						func = self.functions_by_name[ func_name ]
+						func.process_element( child )
+					else:
+						func = self.factory.create_item( "function", child, self )
+						self.functions_by_name[ func_name ] = func
+
+					if func_name == child.nsProp("name", None):
+						self.category_dict[ func.name ] = [cat_name, cat_number]
+
+				elif child.name == "enum":
+					enum = self.factory.create_item( "enum", child, self )
+					self.enums_by_name[ enum.name ] = enum
+				elif child.name == "type":
+					t = self.factory.create_item( "type", child, self )
+					self.types_by_name[ "GL" + t.name ] = t
+
+
+			child = child.next
+
+		return
+
+
+	def functionIterateByOffset(self):
+		max_offset = -1
+		for func in self.functions_by_name.itervalues():
+			if func.offset > max_offset:
+				max_offset = func.offset
+
+
+		temp = [None for i in range(0, max_offset + 1)]
+		for func in self.functions_by_name.itervalues():
+			if func.offset != -1:
+				temp[ func.offset ] = func
+
+
+		list = []
+		for i in range(0, max_offset + 1):
+			if temp[i]:
+				list.append(temp[i])
+
+		return list.__iter__();
+
+
+	def functionIterateAll(self):
+		return self.functions_by_name.itervalues()
+
+
+	def enumIterateByName(self):
+		keys = self.enums_by_name.keys()
+		keys.sort()
+		
+		list = []
+		for enum in keys:
+			list.append( self.enums_by_name[ enum ] )
+
+		return list.__iter__()
+
+
+	def get_category_for_name( self, name ):
+		if self.category_dict.has_key(name):
+			return self.category_dict[name]
+		else:
+			return ["<unknown category>", None]
+
+
+	def typeIterate(self):
+		return self.types_by_name.itervalues()
+
+
+	def find_type( self, type_name ):
+		if type_name in self.types_by_name:
+			return self.types_by_name[ type_name ].type_expr
+		else:
+			print "Unable to find base type matching \"%s\"." % (type_name)
+			return None

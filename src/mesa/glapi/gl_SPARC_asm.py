@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python
 
 # (C) Copyright IBM Corporation 2004
 # All Rights Reserved.
@@ -25,15 +25,13 @@
 # Authors:
 #    Ian Romanick <idr@us.ibm.com>
 
-import gl_XML
-import license
+import gl_XML, license
 import sys, getopt
 
-class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
-	name = "gl_SPARC_asm.py (from Mesa)"
-
+class PrintGenericStubs(gl_XML.gl_print_base):
 	def __init__(self):
-		gl_XML.FilterGLAPISpecBase.__init__(self)
+		gl_XML.gl_print_base.__init__(self)
+		self.name = "gl_SPARC_asm.py (from Mesa)"
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
@@ -68,6 +66,8 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print '\tnop'
 		print '#endif'
 		print ''
+		print '#define GL_STUB_ALIAS(fn,alias) GLOBL_FN(fn) ; fn = alias'
+		print ''
 		print '.text'
 		print '.align 32'
 		print 'GLOBL_FN(__glapi_sparc_icache_flush)'
@@ -79,20 +79,30 @@ class PrintGenericStubs(gl_XML.FilterGLAPISpecBase):
 		print '.data'
 		print '.align 64'
 		print ''
+		return
+
+
+	def printBody(self, api):
 		print 'GLOBL_FN(_mesa_sparc_glapi_begin)'
 		print '_mesa_sparc_glapi_begin:'
 		print ''
-		return
 
-	def printRealFooter(self):
+		for f in api.functionIterateByOffset():
+			print '\tGL_STUB(gl%s, _gloffset_%s)' % (f.name, f.name)
+
 		print ''
 		print 'GLOBL_FN(_mesa_sparc_glapi_end)'
 		print '_mesa_sparc_glapi_end:'
+		print ''
+
+
+		for f in api.functionIterateByOffset():
+			for n in f.entry_points:
+				if n != f.name:
+					print '\tGL_STUB_ALIAS(gl%s, gl%s)' % (n, f.name)
+
 		return
 
-	def printFunction(self, f):
-		print '\tGL_STUB(gl%s, _gloffset_%s)' % (f.name, f.real_name)
-		return
 
 def show_usage():
 	print "Usage: %s [-f input_file_name] [-m output_mode]" % sys.argv[0]
@@ -114,9 +124,11 @@ if __name__ == '__main__':
 			file_name = val
 
 	if mode == "generic":
-		dh = PrintGenericStubs()
+		printer = PrintGenericStubs()
 	else:
 		print "ERROR: Invalid mode \"%s\" specified." % mode
 		show_usage()
 
-	gl_XML.parse_GL_API( dh, file_name )
+	api = gl_XML.parse_GL_API( file_name )
+
+	printer.Print( api )

@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 
-# $Id: getprocaddress.py,v 1.6 2004/11/27 19:57:46 brianp Exp $
+# $Id: getprocaddress.py,v 1.7 2005/06/21 23:42:43 idr Exp $
 
 # Helper for the getprocaddress.c test.
-
-from xml.sax import saxutils
-from xml.sax import make_parser
-from xml.sax.handler import feature_namespaces
 
 import sys, getopt, re
 sys.path.append("../../src/mesa/glapi/" )
@@ -30,16 +26,19 @@ def FindTestFunctions():
 	return functions
 
 
-class PrintExports(gl_XML.FilterGLAPISpecBase):
-	name = "gl_exports.py (from Mesa)"
-
+class PrintExports(gl_XML.gl_print_base):
 	def __init__(self):
-		gl_XML.FilterGLAPISpecBase.__init__(self)
+		gl_XML.gl_print_base.__init__(self)
+
+		self.name = "getprocaddress.py (from Mesa)"
 		self.license = license.bsd_license_template % ( \
 """Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
 (C) Copyright IBM Corporation 2004""", "BRIAN PAUL, IBM")
+
 		self.tests = FindTestFunctions()
 		self.prevCategory = ""
+		return
+
 
 	def printRealHeader(self):
 		print """
@@ -50,22 +49,28 @@ struct name_test_pair {
    
 static struct name_test_pair functions[] = {"""
 
-	def printRealFooter(self):
-		print"""
-   { NULL, NULL }
-};
-"""
+	def printBody(self, api):
+		prev_category = None
+		
 
-	def printFunction(self, f):
-		if f.category != self.prevCategory:
-			print '   { "-%s", NULL},' % f.category
-			self.prevCategory = f.category
+		for f in api.functionIterateByOffset():
+			[category, num] = api.get_category_for_name( f.name )
+			if category != prev_category:
+				print '   { "-%s", NULL},' % category
+				prev_category = category
 			
-		if f.name in self.tests:
-			test = "test_%s" % f.name
-		else:
 			test = "NULL"
-		print '   { "gl%s", %s },' % (f.name, test)
+			for name in f.entry_points:
+				if name in self.tests:
+					test = "test_%s" % name
+					break
+
+			print '   { "gl%s", %s },' % (f.name, test)
+
+		print ''
+		print '   { NULL, NULL }'
+		print '};'
+		print ''
 		return
 
 
@@ -81,15 +86,8 @@ if __name__ == '__main__':
 		if arg == "-f":
 			file_name = val
 
-	dh = PrintExports()
+	printer = PrintExports()
 
-	parser = make_parser()
-	parser.setFeature(feature_namespaces, 0)
-	parser.setContentHandler(dh)
+	api = gl_XML.parse_GL_API( file_name, gl_XML.gl_item_factory() )
 
-	f = open(file_name)
-
-	parser.parse(f)
-	dh.printHeader()
-	dh.printFunctions()
-	dh.printFooter()
+	printer.Print( api )
