@@ -1077,7 +1077,7 @@ void r300_setup_textures(GLcontext *ctx)
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0+i]=t->size;
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0+i]=t->format;
 			//fprintf(stderr, "t->format=%08x\n", t->format);
-			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=r300->radeon.radeonScreen->fbLocation+t->offset;
+			r300->hw.tex.offset.cmd[R300_TEX_VALUE_0+i]=t->offset;
 			r300->hw.tex.unknown4.cmd[R300_TEX_VALUE_0+i]=0x0;
 			r300->hw.tex.border_color.cmd[R300_TEX_VALUE_0+i]=t->pp_border_color;
 		}

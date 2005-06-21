@@ -174,7 +174,7 @@ struct r300_tex_obj {
 	GLuint pitch; /* one of the unknown registers.. unknown 1 ?*/
 	GLuint size;	/* npot only */
 	GLuint format;
-	GLuint offset;	/* Image location in texmem.
+	GLuint offset;	/* Image location in the card's address space.
 				   All cube faces follow. */
 	GLuint unknown4;
 	GLuint unknown5;
