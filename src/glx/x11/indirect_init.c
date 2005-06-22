@@ -613,7 +613,7 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->PointParameterfEXT = __indirect_glPointParameterfEXT;
     glAPI->PointParameterfvEXT = __indirect_glPointParameterfvEXT;
 
-    /* 145. GL_EXT_secondary_color */
+    /*  145. GL_EXT_secondary_color */
 
     glAPI->SecondaryColor3usvEXT = __indirect_glSecondaryColor3usvEXT;
     glAPI->SecondaryColorPointerEXT = __indirect_glSecondaryColorPointerEXT;
@@ -633,12 +633,12 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->SecondaryColor3uivEXT = __indirect_glSecondaryColor3uivEXT;
     glAPI->SecondaryColor3usEXT = __indirect_glSecondaryColor3usEXT;
 
-    /* 148. GL_EXT_multi_draw_arrays */
+    /*  148. GL_EXT_multi_draw_arrays */
 
     glAPI->MultiDrawArraysEXT = __indirect_glMultiDrawArraysEXT;
     glAPI->MultiDrawElementsEXT = __indirect_glMultiDrawElementsEXT;
 
-    /* 149. GL_EXT_fog_coord */
+    /*  149. GL_EXT_fog_coord */
 
     glAPI->FogCoordfEXT = __indirect_glFogCoordfEXT;
     glAPI->FogCoordfvEXT = __indirect_glFogCoordfvEXT;
@@ -646,11 +646,11 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->FogCoorddvEXT = __indirect_glFogCoorddvEXT;
     glAPI->FogCoordPointerEXT = __indirect_glFogCoordPointerEXT;
 
-    /* 173. GL_EXT_blend_func_separate */
+    /*  173. GL_EXT_blend_func_separate */
 
     glAPI->BlendFuncSeparateEXT = __indirect_glBlendFuncSeparateEXT;
 
-    /* 197. GL_MESA_window_pos */
+    /*  197. GL_MESA_window_pos */
 
     glAPI->WindowPos2dMESA = __indirect_glWindowPos2dMESA;
     glAPI->WindowPos2dvMESA = __indirect_glWindowPos2dvMESA;
@@ -669,7 +669,7 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->WindowPos3sMESA = __indirect_glWindowPos3sMESA;
     glAPI->WindowPos3svMESA = __indirect_glWindowPos3svMESA;
 
-    /* 233. GL_NV_vertex_program */
+    /*  233. GL_NV_vertex_program */
 
     glAPI->VertexAttribs4svNV = __indirect_glVertexAttribs4svNV;
     glAPI->VertexAttribs4ubvNV = __indirect_glVertexAttribs4ubvNV;
@@ -736,16 +736,16 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->VertexAttribs4dvNV = __indirect_glVertexAttribs4dvNV;
     glAPI->VertexAttribs4fvNV = __indirect_glVertexAttribs4fvNV;
 
-    /* 262. GL_NV_point_sprite */
+    /*  262. GL_NV_point_sprite */
 
     glAPI->PointParameteriNV = __indirect_glPointParameteriNV;
     glAPI->PointParameterivNV = __indirect_glPointParameterivNV;
 
-    /* 268. GL_EXT_stencil_two_side */
+    /*  268. GL_EXT_stencil_two_side */
 
     glAPI->ActiveStencilFaceEXT = __indirect_glActiveStencilFaceEXT;
 
-    /* 282. GL_NV_fragment_program */
+    /*  282. GL_NV_fragment_program */
 
     glAPI->ProgramNamedParameter4fNV = __indirect_glProgramNamedParameter4fNV;
     glAPI->ProgramNamedParameter4dNV = __indirect_glProgramNamedParameter4dNV;
@@ -754,7 +754,7 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->GetProgramNamedParameterfvNV = __indirect_glGetProgramNamedParameterfvNV;
     glAPI->GetProgramNamedParameterdvNV = __indirect_glGetProgramNamedParameterdvNV;
 
-    /* 310. GL_EXT_framebuffer_object */
+    /*  310. GL_EXT_framebuffer_object */
 
     glAPI->RenderbufferStorageEXT = __indirect_glRenderbufferStorageEXT;
     glAPI->GetRenderbufferParameterivEXT = __indirect_glGetRenderbufferParameterivEXT;

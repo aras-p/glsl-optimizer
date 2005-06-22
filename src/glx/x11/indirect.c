@@ -7624,9 +7624,6 @@ __indirect_glGenQueriesARB(GLsizei n, GLuint * ids)
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGenQueriesARBRep *reply = XCBGlxGenQueriesARBReply(c, XCBGlxGenQueriesARB(c, gc->currentContextTag, n), NULL);
-        if (XCBGlxGenQueriesARBDataLength(reply) == 0)
-            (void)memcpy(ids, &reply->datum, sizeof(reply->datum));
-        else
         (void)memcpy(ids, XCBGlxGenQueriesARBData(reply), XCBGlxGenQueriesARBDataLength(reply) * sizeof(GLuint));
         free(reply);
 #else
