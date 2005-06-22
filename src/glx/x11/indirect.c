@@ -7624,12 +7624,12 @@ __indirect_glGenQueriesARB(GLsizei n, GLuint * ids)
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGenQueriesARBRep *reply = XCBGlxGenQueriesARBReply(c, XCBGlxGenQueriesARB(c, gc->currentContextTag, n), NULL);
-        (void)memcpy(ids, XCBGlxGenQueriesARBData(reply), XCBGlxGenQueriesARBDataLength(reply) * sizeof(GLuint));
+        ids = (GLuint *)XCBGlxGenQueriesARBData(reply);
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GenQueriesARB, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&n), 4);
-        (void) __glXReadReply(dpy, 4, ids, GL_FALSE);
+        (void) __glXReadReply(dpy, 4, ids, GL_TRUE);
         UnlockDisplay(dpy); SyncHandle();
 #endif /* USE_XCB */
     }

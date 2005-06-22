@@ -6721,7 +6721,7 @@
     <function name="GenQueriesARB" offset="700">
         <param name="n" type="GLsizei" counter="true"/>
         <param name="ids" type="GLuint *" output="true" count="n"/>
-        <glx sop="162"/>
+        <glx sop="162" always_array="true"/>
     </function>
 
     <function name="DeleteQueriesARB" offset="701">

@@ -576,7 +576,7 @@ generic_%u_byte( GLint rop, const void * ptr )
 				if output and f.reply_always_array:
 					print '        %s = (%s)%sData(reply);' % (output.name, output.type_string(), xcb_name)
 				elif output and not f.reply_always_array:
-					if not output.is_image() and not f.name == "GenQueriesARB":
+					if not output.is_image():
 						print '        if (%sDataLength(reply) == 0)' % (xcb_name)
 						print '            (void)memcpy(%s, &reply->datum, sizeof(reply->datum));' % (output.name)
 						print '        else'
