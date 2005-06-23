@@ -140,71 +140,6 @@ finish_or_flush( GLcontext *ctx )
 }
 
 
-
-/**
- * This chooses the color buffer for reading and writing spans, points,
- * lines, and triangles.
- * Remember that a GLframebuffer has several distinct color buffers:
- * front/left, front/right, back/left, back/right and aux buffers.
- * The bufferBit specifies which one to use.
- */
-void
-xmesa_set_buffer( GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit )
-{
-#if 000
-   /* We can make this cast since the XMesaBuffer wraps GLframebuffer.
-    * GLframebuffer is the first member in a XMesaBuffer struct.
-    */
-   XMesaBuffer target = (XMesaBuffer) buffer;
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-
-#if NEW_RENDERBUFFER
-   if (buffer->Name != 0)
-      return;
-#endif
-
-   /* This assignment tells the span/point/line/triangle functions
-    * which XMesaBuffer to use.
-    */
-   /*   xmesa->xm_buffer = target;*/
-
-   /*
-    * Now determine front vs back color buffer.
-    */
-   if (bufferBit == BUFFER_BIT_FRONT_LEFT) {
-      target->buffer = target->frontxrb->pixmap;
-      printf("set get/put!\n");
-      xmesa_update_span_funcs(ctx);
-   }
-   else if (bufferBit == BUFFER_BIT_BACK_LEFT) {
-      ASSERT(target->db_state);
-      if (target->backxrb->pixmap) {
-         /* back buffer is a pixmap */
-         target->buffer = (XMesaDrawable) target->backxrb->pixmap;
-      }
-      else if (target->backimage) {
-         /* back buffer is an XImage */
-         target->buffer = None;
-      }
-      else {
-         /* No back buffer!!!!  Must be out of memory, use front buffer */
-         target->buffer = target->frontxrb->pixmap;
-      }
-      printf("set get/put!\n");
-      xmesa_update_span_funcs(ctx);
-   }
-   else if (bufferBit & (BUFFER_BIT_AUX0 | BUFFER_BIT_AUX1 | BUFFER_BIT_AUX2 | BUFFER_BIT_AUX3)) {
-      /*_swrast_use_aux_buffer(ctx, buffer, bufferBit);*/
-   } 
-   else {
-      _mesa_problem(ctx, "invalid buffer 0x%x in set_buffer() in xm_dd.c");
-      return;
-   }
-#endif
-}
-
-
-
 static void
 clear_index( GLcontext *ctx, GLuint index )
 {
@@ -1268,9 +1203,6 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
 void xmesa_register_swrast_functions( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT( ctx );
-   struct swrast_device_driver *dd = _swrast_GetDeviceDriverReference(ctx);
-
-   dd->SetBuffer = xmesa_set_buffer;
 
    swrast->choose_point = xmesa_choose_point;
    swrast->choose_line = xmesa_choose_line;

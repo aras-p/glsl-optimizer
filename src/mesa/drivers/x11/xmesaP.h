@@ -512,10 +512,6 @@ xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
                              enum pixel_format pixelformat, GLint depth);
 
 
-extern void xmesa_set_buffer( GLcontext *ctx, GLframebuffer *buffer,
-                              GLuint bufferBit );
-
-
 /* Plugged into the software rasterizer.  Try to use internal
  * swrast-style point, line and triangle functions.
  */
