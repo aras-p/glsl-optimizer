@@ -6270,20 +6270,20 @@ __indirect_glAreProgramsResidentNV(GLsizei n, const GLuint * ids, GLboolean * re
 
 #define X_GLrop_BindProgramNV 4180
 void
-__indirect_glBindProgramNV(GLenum target, GLuint id)
+__indirect_glBindProgramNV(GLenum target, GLuint program)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_BindProgramNV, cmdlen);
     (void) memcpy((void *)(gc->pc + 4), (void *)(&target), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&id), 4);
+    (void) memcpy((void *)(gc->pc + 8), (void *)(&program), 4);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }
 
 #define X_GLvop_DeleteProgramsNV 1294
 void
-__indirect_glDeleteProgramsNV(GLsizei n, const GLuint * ids)
+__indirect_glDeleteProgramsNV(GLsizei n, const GLuint * programs)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     Display * const dpy = gc->currentDpy;
@@ -6291,7 +6291,7 @@ __indirect_glDeleteProgramsNV(GLsizei n, const GLuint * ids)
     if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
         GLubyte const * pc = __glXSetupVendorRequest(gc, X_GLXVendorPrivate, X_GLvop_DeleteProgramsNV, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&n), 4);
-        (void) memcpy((void *)(pc + 4), (void *)(ids), (n * 4));
+        (void) memcpy((void *)(pc + 4), (void *)(programs), (n * 4));
         UnlockDisplay(dpy); SyncHandle();
     }
     return;
@@ -6313,7 +6313,7 @@ __indirect_glExecuteProgramNV(GLenum target, GLuint id, const GLfloat * params)
 
 #define X_GLvop_GenProgramsNV 1295
 void
-__indirect_glGenProgramsNV(GLsizei n, GLuint * ids)
+__indirect_glGenProgramsNV(GLsizei n, GLuint * programs)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     Display * const dpy = gc->currentDpy;
@@ -6321,7 +6321,7 @@ __indirect_glGenProgramsNV(GLsizei n, GLuint * ids)
     if (__builtin_expect((n >= 0) && (dpy != NULL), 1)) {
         GLubyte const * pc = __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply, X_GLvop_GenProgramsNV, cmdlen);
         (void) memcpy((void *)(pc + 0), (void *)(&n), 4);
-        (void) __glXReadReply(dpy, 4, ids, GL_FALSE);
+        (void) __glXReadReply(dpy, 4, programs, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
     }
     return;
@@ -6417,7 +6417,7 @@ __indirect_glGetTrackMatrixivNV(GLenum target, GLuint address, GLenum pname, GLi
 
 #define X_GLvop_IsProgramNV 1304
 GLboolean
-__indirect_glIsProgramNV(GLuint id)
+__indirect_glIsProgramNV(GLuint program)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     Display * const dpy = gc->currentDpy;
@@ -6425,7 +6425,7 @@ __indirect_glIsProgramNV(GLuint id)
     const GLuint cmdlen = 4;
     if (__builtin_expect(dpy != NULL, 1)) {
         GLubyte const * pc = __glXSetupVendorRequest(gc, X_GLXVendorPrivateWithReply, X_GLvop_IsProgramNV, cmdlen);
-        (void) memcpy((void *)(pc + 0), (void *)(&id), 4);
+        (void) memcpy((void *)(pc + 0), (void *)(&program), 4);
         retval = (GLboolean) __glXReadReply(dpy, 0, NULL, GL_FALSE);
         UnlockDisplay(dpy); SyncHandle();
     }
@@ -7144,13 +7144,13 @@ __indirect_glVertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte * v)
 
 #define X_GLrop_PointParameteriNV 4221
 void
-__indirect_glPointParameteriNV(GLenum pname, GLint params)
+__indirect_glPointParameteriNV(GLenum pname, GLint param)
 {
     __GLXcontext * const gc = __glXGetCurrentContext();
     const GLuint cmdlen = 12;
     emit_header(gc->pc, X_GLrop_PointParameteriNV, cmdlen);
     (void) memcpy((void *)(gc->pc + 4), (void *)(&pname), 4);
-    (void) memcpy((void *)(gc->pc + 8), (void *)(&params), 4);
+    (void) memcpy((void *)(gc->pc + 8), (void *)(&param), 4);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) { (void) __glXFlushRenderBuffer(gc, gc->pc); }
 }

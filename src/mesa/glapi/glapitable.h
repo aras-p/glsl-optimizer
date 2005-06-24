@@ -614,10 +614,10 @@ struct _glapi_table
    void (GLAPIENTRYP SecondaryColor3usvEXT)(const GLushort * v); /* 576 */
    void (GLAPIENTRYP SecondaryColorPointerEXT)(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer); /* 577 */
    GLboolean (GLAPIENTRYP AreProgramsResidentNV)(GLsizei n, const GLuint * ids, GLboolean * residences); /* 578 */
-   void (GLAPIENTRYP BindProgramNV)(GLenum target, GLuint id); /* 579 */
-   void (GLAPIENTRYP DeleteProgramsNV)(GLsizei n, const GLuint * ids); /* 580 */
+   void (GLAPIENTRYP BindProgramNV)(GLenum target, GLuint program); /* 579 */
+   void (GLAPIENTRYP DeleteProgramsNV)(GLsizei n, const GLuint * programs); /* 580 */
    void (GLAPIENTRYP ExecuteProgramNV)(GLenum target, GLuint id, const GLfloat * params); /* 581 */
-   void (GLAPIENTRYP GenProgramsNV)(GLsizei n, GLuint * ids); /* 582 */
+   void (GLAPIENTRYP GenProgramsNV)(GLsizei n, GLuint * programs); /* 582 */
    void (GLAPIENTRYP GetProgramParameterdvNV)(GLenum target, GLuint index, GLenum pname, GLdouble * params); /* 583 */
    void (GLAPIENTRYP GetProgramParameterfvNV)(GLenum target, GLuint index, GLenum pname, GLfloat * params); /* 584 */
    void (GLAPIENTRYP GetProgramivNV)(GLuint id, GLenum pname, GLint * params); /* 585 */
@@ -626,8 +626,8 @@ struct _glapi_table
    void (GLAPIENTRYP GetVertexAttribdvARB)(GLuint index, GLenum pname, GLdouble * params); /* 588 */
    void (GLAPIENTRYP GetVertexAttribfvARB)(GLuint index, GLenum pname, GLfloat * params); /* 589 */
    void (GLAPIENTRYP GetVertexAttribivARB)(GLuint index, GLenum pname, GLint * params); /* 590 */
-   void (GLAPIENTRYP GetVertexAttribPointervNV)(GLuint index, GLenum pname, GLvoid ** pointer); /* 591 */
-   GLboolean (GLAPIENTRYP IsProgramNV)(GLuint id); /* 592 */
+   void (GLAPIENTRYP GetVertexAttribPointervNV)(GLuint index, GLenum pname, GLvoid ** params); /* 591 */
+   GLboolean (GLAPIENTRYP IsProgramNV)(GLuint program); /* 592 */
    void (GLAPIENTRYP LoadProgramNV)(GLenum target, GLuint id, GLsizei len, const GLubyte * program); /* 593 */
    void (GLAPIENTRYP ProgramParameter4dNV)(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w); /* 594 */
    void (GLAPIENTRYP ProgramParameter4dvNV)(GLenum target, GLuint index, const GLdouble * params); /* 595 */
@@ -677,7 +677,7 @@ struct _glapi_table
    void (GLAPIENTRYP VertexAttribs4fvNV)(GLuint index, GLsizei n, const GLfloat * v); /* 639 */
    void (GLAPIENTRYP VertexAttribs4svNV)(GLuint index, GLsizei n, const GLshort * v); /* 640 */
    void (GLAPIENTRYP VertexAttribs4ubvNV)(GLuint index, GLsizei n, const GLubyte * v); /* 641 */
-   void (GLAPIENTRYP PointParameteriNV)(GLenum pname, GLint params); /* 642 */
+   void (GLAPIENTRYP PointParameteriNV)(GLenum pname, GLint param); /* 642 */
    void (GLAPIENTRYP PointParameterivNV)(GLenum pname, const GLint * params); /* 643 */
    void (GLAPIENTRYP MultiDrawArraysEXT)(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount); /* 644 */
    void (GLAPIENTRYP MultiDrawElementsEXT)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid ** indices, GLsizei primcount); /* 645 */

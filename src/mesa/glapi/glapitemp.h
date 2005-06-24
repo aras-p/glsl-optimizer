@@ -2105,7 +2105,7 @@ KEYWORD1 void KEYWORD2 NAME(TexImage3D)(GLenum target, GLint level, GLint intern
    DISPATCH(TexImage3D, (target, level, internalformat, width, height, depth, border, format, type, pixels), (F, "glTexImage3D(0x%x, %d, %d, %d, %d, %d, %d, 0x%x, 0x%x, %p);\n", target, level, internalformat, width, height, depth, border, format, type, (const void *) pixels));
 }
 
-KEYWORD1 void KEYWORD2 NAME(TexImage3DEXT)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * pixels)
+KEYWORD1 void KEYWORD2 NAME(TexImage3DEXT)(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * pixels)
 {
    DISPATCH(TexImage3D, (target, level, internalformat, width, height, depth, border, format, type, pixels), (F, "glTexImage3DEXT(0x%x, %d, %d, %d, %d, %d, %d, 0x%x, 0x%x, %p);\n", target, level, internalformat, width, height, depth, border, format, type, (const void *) pixels));
 }
@@ -3710,24 +3710,24 @@ KEYWORD1 GLboolean KEYWORD2 NAME(AreProgramsResidentNV)(GLsizei n, const GLuint 
    RETURN_DISPATCH(AreProgramsResidentNV, (n, ids, residences), (F, "glAreProgramsResidentNV(%d, %p, %p);\n", n, (const void *) ids, (const void *) residences));
 }
 
-KEYWORD1 void KEYWORD2 NAME(BindProgramARB)(GLenum target, GLuint id)
+KEYWORD1 void KEYWORD2 NAME(BindProgramARB)(GLenum target, GLuint program)
 {
-   DISPATCH(BindProgramNV, (target, id), (F, "glBindProgramARB(0x%x, %d);\n", target, id));
+   DISPATCH(BindProgramNV, (target, program), (F, "glBindProgramARB(0x%x, %d);\n", target, program));
 }
 
-KEYWORD1 void KEYWORD2 NAME(BindProgramNV)(GLenum target, GLuint id)
+KEYWORD1 void KEYWORD2 NAME(BindProgramNV)(GLenum target, GLuint program)
 {
-   DISPATCH(BindProgramNV, (target, id), (F, "glBindProgramNV(0x%x, %d);\n", target, id));
+   DISPATCH(BindProgramNV, (target, program), (F, "glBindProgramNV(0x%x, %d);\n", target, program));
 }
 
-KEYWORD1 void KEYWORD2 NAME(DeleteProgramsARB)(GLsizei n, const GLuint * ids)
+KEYWORD1 void KEYWORD2 NAME(DeleteProgramsARB)(GLsizei n, const GLuint * programs)
 {
-   DISPATCH(DeleteProgramsNV, (n, ids), (F, "glDeleteProgramsARB(%d, %p);\n", n, (const void *) ids));
+   DISPATCH(DeleteProgramsNV, (n, programs), (F, "glDeleteProgramsARB(%d, %p);\n", n, (const void *) programs));
 }
 
-KEYWORD1 void KEYWORD2 NAME(DeleteProgramsNV)(GLsizei n, const GLuint * ids)
+KEYWORD1 void KEYWORD2 NAME(DeleteProgramsNV)(GLsizei n, const GLuint * programs)
 {
-   DISPATCH(DeleteProgramsNV, (n, ids), (F, "glDeleteProgramsNV(%d, %p);\n", n, (const void *) ids));
+   DISPATCH(DeleteProgramsNV, (n, programs), (F, "glDeleteProgramsNV(%d, %p);\n", n, (const void *) programs));
 }
 
 KEYWORD1 void KEYWORD2 NAME(ExecuteProgramNV)(GLenum target, GLuint id, const GLfloat * params)
@@ -3735,14 +3735,14 @@ KEYWORD1 void KEYWORD2 NAME(ExecuteProgramNV)(GLenum target, GLuint id, const GL
    DISPATCH(ExecuteProgramNV, (target, id, params), (F, "glExecuteProgramNV(0x%x, %d, %p);\n", target, id, (const void *) params));
 }
 
-KEYWORD1 void KEYWORD2 NAME(GenProgramsARB)(GLsizei n, GLuint * ids)
+KEYWORD1 void KEYWORD2 NAME(GenProgramsARB)(GLsizei n, GLuint * programs)
 {
-   DISPATCH(GenProgramsNV, (n, ids), (F, "glGenProgramsARB(%d, %p);\n", n, (const void *) ids));
+   DISPATCH(GenProgramsNV, (n, programs), (F, "glGenProgramsARB(%d, %p);\n", n, (const void *) programs));
 }
 
-KEYWORD1 void KEYWORD2 NAME(GenProgramsNV)(GLsizei n, GLuint * ids)
+KEYWORD1 void KEYWORD2 NAME(GenProgramsNV)(GLsizei n, GLuint * programs)
 {
-   DISPATCH(GenProgramsNV, (n, ids), (F, "glGenProgramsNV(%d, %p);\n", n, (const void *) ids));
+   DISPATCH(GenProgramsNV, (n, programs), (F, "glGenProgramsNV(%d, %p);\n", n, (const void *) programs));
 }
 
 KEYWORD1 void KEYWORD2 NAME(GetProgramParameterdvNV)(GLenum target, GLuint index, GLenum pname, GLdouble * params)
@@ -3785,24 +3785,24 @@ KEYWORD1 void KEYWORD2 NAME(GetVertexAttribivARB)(GLuint index, GLenum pname, GL
    DISPATCH(GetVertexAttribivARB, (index, pname, params), (F, "glGetVertexAttribivARB(%d, 0x%x, %p);\n", index, pname, (const void *) params));
 }
 
-KEYWORD1 void KEYWORD2 NAME(GetVertexAttribPointervARB)(GLuint index, GLenum pname, GLvoid ** pointer)
+KEYWORD1 void KEYWORD2 NAME(GetVertexAttribPointervARB)(GLuint index, GLenum pname, GLvoid ** params)
 {
-   DISPATCH(GetVertexAttribPointervNV, (index, pname, pointer), (F, "glGetVertexAttribPointervARB(%d, 0x%x, %p);\n", index, pname, (const void *) pointer));
+   DISPATCH(GetVertexAttribPointervNV, (index, pname, params), (F, "glGetVertexAttribPointervARB(%d, 0x%x, %p);\n", index, pname, (const void *) params));
 }
 
-KEYWORD1 void KEYWORD2 NAME(GetVertexAttribPointervNV)(GLuint index, GLenum pname, GLvoid ** pointer)
+KEYWORD1 void KEYWORD2 NAME(GetVertexAttribPointervNV)(GLuint index, GLenum pname, GLvoid ** params)
 {
-   DISPATCH(GetVertexAttribPointervNV, (index, pname, pointer), (F, "glGetVertexAttribPointervNV(%d, 0x%x, %p);\n", index, pname, (const void *) pointer));
+   DISPATCH(GetVertexAttribPointervNV, (index, pname, params), (F, "glGetVertexAttribPointervNV(%d, 0x%x, %p);\n", index, pname, (const void *) params));
 }
 
-KEYWORD1 GLboolean KEYWORD2 NAME(IsProgramARB)(GLuint id)
+KEYWORD1 GLboolean KEYWORD2 NAME(IsProgramARB)(GLuint program)
 {
-   RETURN_DISPATCH(IsProgramNV, (id), (F, "glIsProgramARB(%d);\n", id));
+   RETURN_DISPATCH(IsProgramNV, (program), (F, "glIsProgramARB(%d);\n", program));
 }
 
-KEYWORD1 GLboolean KEYWORD2 NAME(IsProgramNV)(GLuint id)
+KEYWORD1 GLboolean KEYWORD2 NAME(IsProgramNV)(GLuint program)
 {
-   RETURN_DISPATCH(IsProgramNV, (id), (F, "glIsProgramNV(%d);\n", id));
+   RETURN_DISPATCH(IsProgramNV, (program), (F, "glIsProgramNV(%d);\n", program));
 }
 
 KEYWORD1 void KEYWORD2 NAME(LoadProgramNV)(GLenum target, GLuint id, GLsizei len, const GLubyte * program)
@@ -4050,14 +4050,14 @@ KEYWORD1 void KEYWORD2 NAME(VertexAttribs4ubvNV)(GLuint index, GLsizei n, const 
    DISPATCH(VertexAttribs4ubvNV, (index, n, v), (F, "glVertexAttribs4ubvNV(%d, %d, %p);\n", index, n, (const void *) v));
 }
 
-KEYWORD1 void KEYWORD2 NAME(PointParameteri)(GLenum pname, GLint params)
+KEYWORD1 void KEYWORD2 NAME(PointParameteri)(GLenum pname, GLint param)
 {
-   DISPATCH(PointParameteriNV, (pname, params), (F, "glPointParameteri(0x%x, %d);\n", pname, params));
+   DISPATCH(PointParameteriNV, (pname, param), (F, "glPointParameteri(0x%x, %d);\n", pname, param));
 }
 
-KEYWORD1 void KEYWORD2 NAME(PointParameteriNV)(GLenum pname, GLint params)
+KEYWORD1 void KEYWORD2 NAME(PointParameteriNV)(GLenum pname, GLint param)
 {
-   DISPATCH(PointParameteriNV, (pname, params), (F, "glPointParameteriNV(0x%x, %d);\n", pname, params));
+   DISPATCH(PointParameteriNV, (pname, param), (F, "glPointParameteriNV(0x%x, %d);\n", pname, param));
 }
 
 KEYWORD1 void KEYWORD2 NAME(PointParameteriv)(GLenum pname, const GLint * params)
@@ -4310,7 +4310,7 @@ KEYWORD1 void KEYWORD2 NAME(BindBufferARB)(GLenum target, GLuint buffer)
    DISPATCH(BindBufferARB, (target, buffer), (F, "glBindBufferARB(0x%x, %d);\n", target, buffer));
 }
 
-KEYWORD1 void KEYWORD2 NAME(BufferData)(GLenum target, GLsizeiptrARB size, const GLvoid * data, GLenum usage)
+KEYWORD1 void KEYWORD2 NAME(BufferData)(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage)
 {
    DISPATCH(BufferDataARB, (target, size, data, usage), (F, "glBufferData(0x%x, %d, %p, 0x%x);\n", target, size, (const void *) data, usage));
 }
@@ -4320,7 +4320,7 @@ KEYWORD1 void KEYWORD2 NAME(BufferDataARB)(GLenum target, GLsizeiptrARB size, co
    DISPATCH(BufferDataARB, (target, size, data, usage), (F, "glBufferDataARB(0x%x, %d, %p, 0x%x);\n", target, size, (const void *) data, usage));
 }
 
-KEYWORD1 void KEYWORD2 NAME(BufferSubData)(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data)
+KEYWORD1 void KEYWORD2 NAME(BufferSubData)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid * data)
 {
    DISPATCH(BufferSubDataARB, (target, offset, size, data), (F, "glBufferSubData(0x%x, %d, %d, %p);\n", target, offset, size, (const void *) data));
 }
@@ -4370,7 +4370,7 @@ KEYWORD1 void KEYWORD2 NAME(GetBufferPointervARB)(GLenum target, GLenum pname, G
    DISPATCH(GetBufferPointervARB, (target, pname, params), (F, "glGetBufferPointervARB(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
-KEYWORD1 void KEYWORD2 NAME(GetBufferSubData)(GLenum target, GLintptrARB offset, GLsizeiptrARB size, GLvoid * data)
+KEYWORD1 void KEYWORD2 NAME(GetBufferSubData)(GLenum target, GLintptr offset, GLsizeiptr size, GLvoid * data)
 {
    DISPATCH(GetBufferSubDataARB, (target, offset, size, data), (F, "glGetBufferSubData(0x%x, %d, %d, %p);\n", target, offset, size, (const void *) data));
 }

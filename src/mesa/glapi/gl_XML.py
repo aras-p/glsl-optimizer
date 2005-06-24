@@ -269,18 +269,30 @@ def real_function_name(element):
 		return name
 
 
+def real_category_name(c):
+	if re.compile("[1-9][0-9]*[.][0-9]+").match(c):
+		return "GL_VERSION_" + c.replace(".", "_")
+	else:
+		return c
+
+
+def create_parameter_string(parameters):
+	"""Create a parameter string from a list of gl_parameters."""
+
+	list = []
+	for p in parameters:
+		list.append( p.string() )
+
+	if len(list) == 0: list = ["void"]
+
+	return string.join(list, ", ")
+
+
 class gl_item:
 	def __init__(self, element, context):
 		self.context = context
-
 		self.name = element.nsProp( "name", None )
-
-		c = element.parent.nsProp( "name", None )
-		if re.compile("[1-9][0-9]*[.][0-9]+").match(c):
-			self.category = "GL_VERSION_" + c.replace(".", "_")
-		else:
-			self.category = c
-
+		self.category = real_category_name( element.parent.nsProp( "name", None ) )
 		return
 
 
@@ -554,8 +566,19 @@ class gl_function( gl_item ):
 		self.return_type = "void"
 		self.parameters = []
 		self.offset = -1
-		self.uninitialized = 1
+		self.initialized = 0
 		self.images = []
+
+		# Track the parameter string (for the function prototype)
+		# for each entry-point.  This is done because some functions
+		# change their prototype slightly when promoted from extension
+		# to ARB extension to core.  glTexImage3DEXT and glTexImage3D
+		# are good examples of this.  Scripts that need to generate
+		# code for these differing aliases need to real prototype
+		# for each entry-point.  Otherwise, they may generate code
+		# that won't compile.
+
+		self.parameter_strings = {}
 
 		self.process_element( element )
 
@@ -591,36 +614,29 @@ class gl_function( gl_item ):
 
 
 		# There are two possible cases.  The first time an entry-point
-		# with data is seen, self.uninitialzied will be 1.  On that
+		# with data is seen, self.initialized will be 0.  On that
 		# pass, we just fill in the data.  The next time an
-		# entry-point with data is seen, self.uninitialized will be 0.
+		# entry-point with data is seen, self.initialized will be 1.
 		# On that pass we have to make that the new values match the
 		# valuse from the previous entry-point.
 
+		parameters = []
+		return_type = "void"
 		child = element.children
-		if self.uninitialized:
-			while child:
-				if child.type == "element":
-					if child.name == "return":
-						self.return_type = child.nsProp( "type", None )
-					elif child.name == "param":
-						param = self.context.factory.create_item( "parameter", child, self.context)
-						self.parameters.append( param )
+		while child:
+			if child.type == "element":
+				if child.name == "return":
+					return_type = child.nsProp( "type", None )
+				elif child.name == "param":
+					param = self.context.factory.create_item( "parameter", child, self.context)
+					parameters.append( param )
 
-				child = child.next
-		else:
-			parameters = []
-			while child:
-				if child.type == "element":
-					if child.name == "return":
-						return_type = child.nsProp( "type", None )
-						if self.return_type != return_type:
-							raise RuntimeError( "Return type changed in %s.  Was %s, now %s." % (name, self.return_type, return_type))
-					elif child.name == "param":
-						param = self.context.factory.create_item( "parameter", child, self.context)
-						parameters.append( param )
+			child = child.next
 
-				child = child.next
+
+		if self.initialized:
+			if self.return_type != return_type:
+				raise RuntimeError( "Return type changed in %s.  Was %s, now %s." % (name, self.return_type, return_type))
 
 			if len(parameters) != len(self.parameters):
 				raise RuntimeError( "Parameter count mismatch in %s.  Was %d, now %d." % (name, len(self.parameters), len(parameters)))
@@ -632,26 +648,19 @@ class gl_function( gl_item ):
 					raise RuntimeError( 'Parameter type mismatch in %s.  "%s" was "%s", now "%s".' % (name, p2.name, p2.type_expr.original_string, p1.type_expr.original_string))
 
 
-			# This is done becuase we may hit an alias before we
-			# hit the "real" entry.  The aliases may not have all
-			# of the parameter information (e.g., counter,
-			# variable_param, etc. fields) required to generate
-			# GLX code.
+		if true_name == name or not self.initialized:
+			self.return_type = return_type
+			self.parameters = parameters
 
-			if true_name == name:
-				self.parameters = parameters
-
-				for param in self.parameters:
-					if param.is_image():
-						self.images.append( param )
-
-		if true_name == name:
 			for param in self.parameters:
 				if param.is_image():
 					self.images.append( param )
 
 		if element.children:
-			self.uninitialized = 0
+			self.initialized = 1
+			self.parameter_strings[name] = create_parameter_string(parameters)
+		else:
+			self.parameter_strings[name] = None
 
 		return
 
@@ -665,15 +674,13 @@ class gl_function( gl_item ):
 		return self.parameters.__iter__();
 
 
-	def get_parameter_string(self):
-		list = []
-		for p in self.parameters:
-			list.append( p.string() )
-
-		if len(list) == 0:
-			return "void"
-		else:
-			return string.join(list, ", ")
+	def get_parameter_string(self, entrypoint = None):
+		if entrypoint:
+			s = self.parameter_strings[ entrypoint ]
+			if s:
+				return s
+		
+		return create_parameter_string( self.parameters )
 
 
 class gl_item_factory:
@@ -741,6 +748,9 @@ class gl_api:
 				if child.name == "function":
 					func_name = real_function_name( child )
 
+					temp_name = child.nsProp( "name", None )
+					self.category_dict[ temp_name ] = [cat_name, cat_number]
+
 					if self.functions_by_name.has_key( func_name ):
 						func = self.functions_by_name[ func_name ]
 						func.process_element( child )
@@ -748,8 +758,6 @@ class gl_api:
 						func = self.factory.create_item( "function", child, self )
 						self.functions_by_name[ func_name ] = func
 
-					if func_name == child.nsProp("name", None):
-						self.category_dict[ func.name ] = [cat_name, cat_number]
 
 				elif child.name == "enum":
 					enum = self.factory.create_item( "enum", child, self )

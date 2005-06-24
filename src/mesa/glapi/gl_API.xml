@@ -5888,19 +5888,19 @@
     </function>
 
     <function name="WindowPos2dvARB" alias="WindowPos2dvMESA">
-        <param name="p" type="const GLdouble *"/>
+        <param name="v" type="const GLdouble *"/>
     </function>
 
     <function name="WindowPos2fvARB" alias="WindowPos2fvMESA">
-        <param name="p" type="const GLfloat *"/>
+        <param name="v" type="const GLfloat *"/>
     </function>
 
     <function name="WindowPos2ivARB" alias="WindowPos2ivMESA">
-        <param name="p" type="const GLint *"/>
+        <param name="v" type="const GLint *"/>
     </function>
 
     <function name="WindowPos2svARB" alias="WindowPos2svMESA">
-        <param name="p" type="const GLshort *"/>
+        <param name="v" type="const GLshort *"/>
     </function>
 
     <function name="WindowPos3dARB" alias="WindowPos3dMESA">
@@ -5928,19 +5928,19 @@
     </function>
 
     <function name="WindowPos3dvARB" alias="WindowPos3dvMESA">
-        <param name="p" type="const GLdouble *"/>
+        <param name="v" type="const GLdouble *"/>
     </function>
 
     <function name="WindowPos3fvARB" alias="WindowPos3fvMESA">
-        <param name="p" type="const GLfloat *"/>
+        <param name="v" type="const GLfloat *"/>
     </function>
 
     <function name="WindowPos3ivARB" alias="WindowPos3ivMESA">
-        <param name="p" type="const GLint *"/>
+        <param name="v" type="const GLint *"/>
     </function>
 
     <function name="WindowPos3svARB" alias="WindowPos3svMESA">
-        <param name="p" type="const GLshort *"/>
+        <param name="v" type="const GLshort *"/>
     </function>
 </category>
 
@@ -8412,7 +8412,7 @@
 
     <function name="ColorTableEXT" alias="ColorTable">
         <param name="target" type="GLenum"/>
-        <param name="internalFormat" type="GLenum"/>
+        <param name="internalformat" type="GLenum"/>
         <param name="width" type="GLsizei"/>
         <param name="format" type="GLenum"/>
         <param name="type" type="GLenum"/>
@@ -10427,13 +10427,13 @@
 
     <function name="BindProgramNV" offset="579">
         <param name="target" type="GLenum"/>
-        <param name="id" type="GLuint"/>
+        <param name="program" type="GLuint"/>
         <glx rop="4180"/>
     </function>
 
     <function name="DeleteProgramsNV" offset="580">
         <param name="n" type="GLsizei" counter="true"/>
-        <param name="ids" type="const GLuint *" count="n"/>
+        <param name="programs" type="const GLuint *" count="n"/>
         <glx vendorpriv="1294"/>
     </function>
 
@@ -10446,7 +10446,7 @@
 
     <function name="GenProgramsNV" offset="582">
         <param name="n" type="GLsizei" counter="true"/>
-        <param name="ids" type="GLuint *" output="true" count="n"/>
+        <param name="programs" type="GLuint *" output="true" count="n"/>
         <glx vendorpriv="1295"/>
     </function>
 
@@ -10518,12 +10518,12 @@
     <function name="GetVertexAttribPointervNV" offset="591">
         <param name="index" type="GLuint"/>
         <param name="pname" type="GLenum"/>
-        <param name="pointer" type="GLvoid **" output="true"/>
+        <param name="params" type="GLvoid **" output="true"/>
         <glx handcode="true"/>
     </function>
 
     <function name="IsProgramNV" offset="592">
-        <param name="id" type="GLuint"/>
+        <param name="program" type="GLuint"/>
         <return type="GLboolean"/>
         <glx vendorpriv="1304"/>
     </function>
@@ -11092,7 +11092,7 @@
 
     <function name="PointParameteriNV" offset="642">
         <param name="pname" type="GLenum"/>
-        <param name="params" type="GLint"/>
+        <param name="param" type="GLint"/>
         <glx rop="4221"/>
     </function>
 

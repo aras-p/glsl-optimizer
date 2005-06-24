@@ -543,10 +543,10 @@ extern HIDDEN void __indirect_glSecondaryColor3usEXT(GLushort red, GLushort gree
 extern HIDDEN void __indirect_glSecondaryColor3usvEXT(const GLushort * v);
 extern HIDDEN void __indirect_glSecondaryColorPointerEXT(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
 extern HIDDEN GLboolean __indirect_glAreProgramsResidentNV(GLsizei n, const GLuint * ids, GLboolean * residences);
-extern HIDDEN void __indirect_glBindProgramNV(GLenum target, GLuint id);
-extern HIDDEN void __indirect_glDeleteProgramsNV(GLsizei n, const GLuint * ids);
+extern HIDDEN void __indirect_glBindProgramNV(GLenum target, GLuint program);
+extern HIDDEN void __indirect_glDeleteProgramsNV(GLsizei n, const GLuint * programs);
 extern HIDDEN void __indirect_glExecuteProgramNV(GLenum target, GLuint id, const GLfloat * params);
-extern HIDDEN void __indirect_glGenProgramsNV(GLsizei n, GLuint * ids);
+extern HIDDEN void __indirect_glGenProgramsNV(GLsizei n, GLuint * programs);
 extern HIDDEN void __indirect_glGetProgramParameterdvNV(GLenum target, GLuint index, GLenum pname, GLdouble * params);
 extern HIDDEN void __indirect_glGetProgramParameterfvNV(GLenum target, GLuint index, GLenum pname, GLfloat * params);
 extern HIDDEN void __indirect_glGetProgramivNV(GLuint id, GLenum pname, GLint * params);
@@ -555,8 +555,8 @@ extern HIDDEN void __indirect_glGetTrackMatrixivNV(GLenum target, GLuint address
 extern HIDDEN void __indirect_glGetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble * params);
 extern HIDDEN void __indirect_glGetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat * params);
 extern HIDDEN void __indirect_glGetVertexAttribivARB(GLuint index, GLenum pname, GLint * params);
-extern HIDDEN void __indirect_glGetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid ** pointer);
-extern HIDDEN GLboolean __indirect_glIsProgramNV(GLuint id);
+extern HIDDEN void __indirect_glGetVertexAttribPointervNV(GLuint index, GLenum pname, GLvoid ** params);
+extern HIDDEN GLboolean __indirect_glIsProgramNV(GLuint program);
 extern HIDDEN void __indirect_glLoadProgramNV(GLenum target, GLuint id, GLsizei len, const GLubyte * program);
 extern HIDDEN void __indirect_glProgramParameter4dNV(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 extern HIDDEN void __indirect_glProgramParameter4dvNV(GLenum target, GLuint index, const GLdouble * params);
@@ -606,7 +606,7 @@ extern HIDDEN void __indirect_glVertexAttribs4dvNV(GLuint index, GLsizei n, cons
 extern HIDDEN void __indirect_glVertexAttribs4fvNV(GLuint index, GLsizei n, const GLfloat * v);
 extern HIDDEN void __indirect_glVertexAttribs4svNV(GLuint index, GLsizei n, const GLshort * v);
 extern HIDDEN void __indirect_glVertexAttribs4ubvNV(GLuint index, GLsizei n, const GLubyte * v);
-extern HIDDEN void __indirect_glPointParameteriNV(GLenum pname, GLint params);
+extern HIDDEN void __indirect_glPointParameteriNV(GLenum pname, GLint param);
 extern HIDDEN void __indirect_glPointParameterivNV(GLenum pname, const GLint * params);
 extern HIDDEN void __indirect_glMultiDrawArraysEXT(GLenum mode, GLint * first, GLsizei * count, GLsizei primcount);
 extern HIDDEN void __indirect_glMultiDrawElementsEXT(GLenum mode, const GLsizei * count, GLenum type, const GLvoid ** indices, GLsizei primcount);

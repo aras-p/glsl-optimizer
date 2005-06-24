@@ -72,7 +72,7 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 			dispatch = "DISPATCH"
 
 		print 'KEYWORD1 %s KEYWORD2 NAME(%s)(%s)' \
-			% (f.return_type, name, f.get_parameter_string())
+			% (f.return_type, name, f.get_parameter_string(name))
 		print '{'
 		if p_string == "":
 			print '   %s(%s, (), (F, "gl%s();\\n"));' \
