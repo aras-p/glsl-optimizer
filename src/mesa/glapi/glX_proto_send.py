@@ -574,7 +574,8 @@ generic_%u_byte( GLint rop, const void * ptr )
 			if f.needs_reply():
 				print '        %sRep *reply = %sReply(c, %s, NULL);' % (xcb_name, xcb_name, xcb_request)
 				if output and f.reply_always_array:
-					print '        %s = (%s)%sData(reply);' % (output.name, output.type_string(), xcb_name)
+					print '        (void)memcpy(%s, %sData(reply), %sDataLength(reply) * sizeof(%s));' % (output.name, xcb_name, xcb_name, output.get_base_type_string())
+
 				elif output and not f.reply_always_array:
 					if not output.is_image():
 						print '        if (%sDataLength(reply) == 0)' % (xcb_name)

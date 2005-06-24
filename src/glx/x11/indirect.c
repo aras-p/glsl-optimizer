@@ -3387,7 +3387,7 @@ __indirect_glGetClipPlane(GLenum plane, GLdouble * equation)
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGetClipPlaneRep *reply = XCBGlxGetClipPlaneReply(c, XCBGlxGetClipPlane(c, gc->currentContextTag, plane), NULL);
-        equation = (GLdouble *)XCBGlxGetClipPlaneData(reply);
+        (void)memcpy(equation, XCBGlxGetClipPlaneData(reply), XCBGlxGetClipPlaneDataLength(reply) * sizeof(GLdouble));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GetClipPlane, cmdlen);
@@ -4314,7 +4314,7 @@ __indirect_glAreTexturesResident(GLsizei n, const GLuint * textures, GLboolean *
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxAreTexturesResidentRep *reply = XCBGlxAreTexturesResidentReply(c, XCBGlxAreTexturesResident(c, gc->currentContextTag, n, textures), NULL);
-        residences = (GLboolean *)XCBGlxAreTexturesResidentData(reply);
+        (void)memcpy(residences, XCBGlxAreTexturesResidentData(reply), XCBGlxAreTexturesResidentDataLength(reply) * sizeof(GLboolean));
         retval = reply->ret_val;
         free(reply);
 #else
@@ -4429,7 +4429,7 @@ __indirect_glGenTextures(GLsizei n, GLuint * textures)
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGenTexturesRep *reply = XCBGlxGenTexturesReply(c, XCBGlxGenTextures(c, gc->currentContextTag, n), NULL);
-        textures = (GLuint *)XCBGlxGenTexturesData(reply);
+        (void)memcpy(textures, XCBGlxGenTexturesData(reply), XCBGlxGenTexturesDataLength(reply) * sizeof(GLuint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GenTextures, cmdlen);
@@ -7624,7 +7624,7 @@ __indirect_glGenQueriesARB(GLsizei n, GLuint * ids)
         XCBConnection *c = XCBConnectionOfDisplay(dpy);
         (void) __glXFlushRenderBuffer(gc, gc->pc);
         XCBGlxGenQueriesARBRep *reply = XCBGlxGenQueriesARBReply(c, XCBGlxGenQueriesARB(c, gc->currentContextTag, n), NULL);
-        ids = (GLuint *)XCBGlxGenQueriesARBData(reply);
+        (void)memcpy(ids, XCBGlxGenQueriesARBData(reply), XCBGlxGenQueriesARBDataLength(reply) * sizeof(GLuint));
         free(reply);
 #else
         GLubyte const * pc = __glXSetupSingleRequest(gc, X_GLsop_GenQueriesARB, cmdlen);
