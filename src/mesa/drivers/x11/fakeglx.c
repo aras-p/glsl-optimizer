@@ -344,7 +344,7 @@ save_glx_visual( Display *dpy, XVisualInfo *vinfo,
       /* Allocate more space for additional visual */
       VisualTable = _mesa_realloc( VisualTable, 
                                    sizeof(XMesaVisual) * NumVisuals, 
-                                   sizeof(XMesaVisual) * NumVisuals + 1);
+                                   sizeof(XMesaVisual) * (NumVisuals + 1));
       /* add xmvis to the list */
       VisualTable[NumVisuals] = xmvis;
       NumVisuals++;
