@@ -316,6 +316,8 @@ static void sisCopyBuffer( __DRIdrawablePrivate *dPriv )
    int i;
    ENGPACKET stEngPacket;
   
+   memset(&stEngPacket, 0, sizeof(ENGPACKET));
+
    while ((*smesa->FrameCountPtr) - MMIO_READ(0x8a2c) > SIS_MAX_FRAME_LENGTH)
       ;
 
