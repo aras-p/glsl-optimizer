@@ -358,51 +358,6 @@ void r200InitSpanFuncs( GLcontext *ctx )
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
 
    swdd->SetBuffer = r200SetBuffer;
-
-   switch ( rmesa->r200Screen->cpp ) {
-   case 2:
-#if 0
-      r200InitPointers_RGB565( swdd );
-#endif
-      break;
-
-   case 4:
-#if 0
-      r200InitPointers_ARGB8888( swdd );
-#endif
-      break;
-
-   default:
-      break;
-   }
-
-   switch ( rmesa->glCtx->Visual.depthBits ) {
-   case 16:
-#if 0
-      swdd->ReadDepthSpan	= r200ReadDepthSpan_16;
-      swdd->WriteDepthSpan	= r200WriteDepthSpan_16;
-      swdd->ReadDepthPixels	= r200ReadDepthPixels_16;
-      swdd->WriteDepthPixels	= r200WriteDepthPixels_16;
-#endif
-      break;
-
-   case 24:
-#if 0
-      swdd->ReadDepthSpan	= r200ReadDepthSpan_24_8;
-      swdd->WriteDepthSpan	= r200WriteDepthSpan_24_8;
-      swdd->ReadDepthPixels	= r200ReadDepthPixels_24_8;
-      swdd->WriteDepthPixels	= r200WriteDepthPixels_24_8;
-      swdd->ReadStencilSpan	= r200ReadStencilSpan_24_8;
-      swdd->WriteStencilSpan	= r200WriteStencilSpan_24_8;
-      swdd->ReadStencilPixels	= r200ReadStencilPixels_24_8;
-      swdd->WriteStencilPixels	= r200WriteStencilPixels_24_8;
-#endif
-      break;
-
-   default:
-      break;
-   }
-
    swdd->SpanRenderStart          = r200SpanRenderStart;
    swdd->SpanRenderFinish         = r200SpanRenderFinish; 
 }
