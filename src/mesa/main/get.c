@@ -5627,7 +5627,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
    _mesa_GetFloatv(pname, values);
    
-   for (i = 0; values[i] != magic && i < 16; i++)
+   for (i = 0; i < 16 && values[i] != magic; i++)
       params[i] = (GLdouble) values[i];
 }
 
