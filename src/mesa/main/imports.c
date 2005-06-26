@@ -34,7 +34,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -146,8 +146,10 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
    return (void *) buf;
 }
 
-/** Same as _mesa_align_malloc(), but using _mesa_calloc() instead of
- * _mesa_malloc() */
+/**
+ * Same as _mesa_align_malloc(), but using _mesa_calloc() instead of
+ * _mesa_malloc()
+ */
 void *
 _mesa_align_calloc(size_t bytes, unsigned long alignment)
 {
@@ -174,10 +176,9 @@ _mesa_align_calloc(size_t bytes, unsigned long alignment)
 }
 
 /**
- * Free memory allocated with _mesa_align_malloc() or _mesa_align_calloc().
- *
+ * Free memory which was allocated with either _mesa_align_malloc()
+ * or _mesa_align_calloc().
  * \param ptr pointer to the memory to be freed.
- * 
  * The actual address to free is stored in the word immediately before the
  * address the client sees.
  */
@@ -193,20 +194,20 @@ _mesa_align_free(void *ptr)
 #endif
 }
 
-/** Wrapper around either memcpy() or xf86memcpy() */
+/** Reallocate memory */
 void *
 _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
 {
    const size_t copySize = (oldSize < newSize) ? oldSize : newSize;
    void *newBuffer = _mesa_malloc(newSize);
-   if (newBuffer && copySize > 0)
+   if (newBuffer && oldBuffer && copySize > 0)
       _mesa_memcpy(newBuffer, oldBuffer, copySize);
    if (oldBuffer)
       _mesa_free(oldBuffer);
    return newBuffer;
 }
 
-
+/** memcpy wrapper */
 void *
 _mesa_memcpy(void *dest, const void *src, size_t n)
 {
@@ -232,8 +233,8 @@ _mesa_memset( void *dst, int val, size_t n )
 #endif
 }
 
-/** Fill memory with a constant 16bit word.
- *
+/**
+ * Fill memory with a constant 16bit word.
  * \param dst destination pointer.
  * \param val value.
  * \param n number of words.
