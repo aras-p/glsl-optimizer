@@ -220,6 +220,13 @@ void r200ChooseVertexState( GLcontext *ctx )
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
+   /* We must ensure that we don't do _tnl_need_projected_coords while in a
+    * rasterization fallback.  As this function will be called again when we
+    * leave a rasterization fallback, we can just skip it for now.
+    */
+   if (rmesa->Fallback != 0)
+      return;
+
    GLuint vte = rmesa->hw.vte.cmd[VTE_SE_VTE_CNTL];
    GLuint vap = rmesa->hw.vap.cmd[VAP_SE_VAP_CNTL];
 
@@ -675,7 +682,6 @@ void r200Fallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 R200_FIREVERTICES( rmesa );
 	 TCL_FALLBACK( ctx, R200_TCL_FALLBACK_RASTER, GL_TRUE );
 	 _swsetup_Wakeup( ctx );
-	 _tnl_need_projected_coords( ctx, GL_TRUE );
 	 rmesa->swtcl.RenderIndex = ~0;
          if (R200_DEBUG & DEBUG_FALLBACKS) {
             fprintf(stderr, "R200 begin rasterization fallback: 0x%x %s\n",

@@ -241,6 +241,13 @@ void radeonChooseVertexState( GLcontext *ctx )
 
    GLuint se_coord_fmt;
 
+   /* We must ensure that we don't do _tnl_need_projected_coords while in a
+    * rasterization fallback.  As this function will be called again when we
+    * leave a rasterization fallback, we can just skip it for now.
+    */
+   if (rmesa->Fallback != 0)
+      return;
+
    /* HW perspective divide is a win, but tiny vertex formats are a
     * bigger one.
     */
@@ -887,7 +894,6 @@ void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
 	 RADEON_FIREVERTICES( rmesa );
 	 TCL_FALLBACK( ctx, RADEON_TCL_FALLBACK_RASTER, GL_TRUE );
 	 _swsetup_Wakeup( ctx );
-	 _tnl_need_projected_coords( ctx, GL_TRUE );
 	 rmesa->swtcl.RenderIndex = ~0;
          if (RADEON_DEBUG & DEBUG_FALLBACKS) {
             fprintf(stderr, "Radeon begin rasterization fallback: 0x%x %s\n",
