@@ -925,7 +925,8 @@ static GLboolean radeon_validate_texgen( GLcontext *ctx, GLuint unit )
    default:
       /* Unsupported mode, fallback:
        */
-      /*  fprintf(stderr, "fallback unsupported texgen\n"); */
+      if (RADEON_DEBUG & DEBUG_FALLBACKS) 
+	 fprintf(stderr, "fallback GL_SPHERE_MAP\n");
       return GL_FALSE;
    }
 
