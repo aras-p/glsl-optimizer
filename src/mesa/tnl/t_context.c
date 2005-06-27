@@ -37,12 +37,13 @@
 #include "vtxfmt.h"
 #include "nvfragprog.h"
 
-#include "t_context.h"
-#include "t_array_api.h"
-#include "t_vtx_api.h"
-#include "t_save_api.h"
-#include "t_pipeline.h"
 #include "tnl.h"
+#include "t_array_api.h"
+#include "t_context.h"
+#include "t_pipeline.h"
+#include "t_save_api.h"
+#include "t_vp_build.h"
+#include "t_vtx_api.h"
 
 
 
