@@ -30,4 +30,6 @@
 
 extern void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx );
 
+extern void _tnl_ProgramCacheDestroy( GLcontext *ctx );
+
 #endif
