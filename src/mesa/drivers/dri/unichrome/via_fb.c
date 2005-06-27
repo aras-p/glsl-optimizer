@@ -156,7 +156,7 @@ via_alloc_texture(struct via_context *vmesa,
    }
    else if (t->memType == VIA_MEM_SYSTEM) {
       
-      t->bufAddr = MESA_PBUFFER_ALLOC(t->size);      
+      t->bufAddr = _mesa_malloc(t->size);      
       if (!t->bufAddr)
 	 goto cleanup;
 
@@ -226,8 +226,8 @@ via_free_texture(struct via_context *vmesa, struct via_tex_buffer *t)
    else if (t->memType == VIA_MEM_SYSTEM) {
       remove_from_list(t);
       vmesa->total_alloc[t->memType] -= t->size;
-      MESA_PBUFFER_FREE(t->bufAddr);
-      FREE(t);
+      _mesa_free(t->bufAddr);
+      _mesa_free(t);
    }
    else if (t->index && viaCheckBreadcrumb(vmesa, t->lastUsed)) {
       via_do_free_texture( vmesa, t );

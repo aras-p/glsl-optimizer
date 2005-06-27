@@ -582,7 +582,7 @@ _mesa_free_texture_image_data( GLcontext *ctx, struct gl_texture_image *texImage
 {
    if (texImage->Data && !texImage->IsClientData) {
       /* free the old texture data */
-      MESA_PBUFFER_FREE(texImage->Data);
+      _mesa_free(texImage->Data);
    }
 
    texImage->Data = NULL;

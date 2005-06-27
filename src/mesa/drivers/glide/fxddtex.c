@@ -1399,10 +1399,10 @@ fxDDTexImage2D(GLcontext * ctx, GLenum target, GLint level,
                                                                1,
                                                                internalFormat);
       dstRowStride = _mesa_compressed_row_stride(internalFormat, mml->width);
-      texImage->Data = MESA_PBUFFER_ALLOC(texImage->CompressedSize);
+      texImage->Data = _mesa_malloc(texImage->CompressedSize);
    } else {
       dstRowStride = mml->width * texelBytes;
-      texImage->Data = MESA_PBUFFER_ALLOC(mml->width * mml->height * texelBytes);
+      texImage->Data = _mesa_malloc(mml->width * mml->height * texelBytes);
    }
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
@@ -1665,7 +1665,7 @@ fxDDCompressedTexImage2D (GLcontext *ctx, GLenum target,
                                                                mml->height,
                                                                1,
                                                                internalFormat);
-      texImage->Data = MESA_PBUFFER_ALLOC(texImage->CompressedSize);
+      texImage->Data = _mesa_malloc(texImage->CompressedSize);
       if (!texImage->Data) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
          return;

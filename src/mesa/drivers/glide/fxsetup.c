@@ -106,14 +106,14 @@ fxTexValidate(GLcontext * ctx, struct gl_texture_object *tObj)
                       &(mml->wScale), &(mml->hScale));
          _w *= mml->wScale;
          _h *= mml->hScale;
-         texImage->Data = MESA_PBUFFER_ALLOC(_w * _h * texelBytes);
+         texImage->Data = _mesa_malloc(_w * _h * texelBytes);
          _mesa_rescale_teximage2d(texelBytes,
                                   mml->width,
                                   _w * texelBytes, /* dst stride */
                                   mml->width, mml->height, /* src */
                                   _w, _h, /* dst */
                                   texImage_Data /*src*/, texImage->Data /*dst*/ );
-         MESA_PBUFFER_FREE(texImage_Data);
+         _mesa_free(texImage_Data);
          mml->width = _w;
          mml->height = _h;
          /* (!) ... and set mml->wScale = _w / texImage->Width */

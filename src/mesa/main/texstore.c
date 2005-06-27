@@ -516,7 +516,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
       ASSERT(texComponents >= logComponents);
 
       newImage = (GLchan *) _mesa_malloc(srcWidth * srcHeight * srcDepth
-                                          * texComponents * sizeof(GLchan));
+                                         * texComponents * sizeof(GLchan));
       if (!newImage) {
          _mesa_free(tempImage);
          return NULL;
@@ -2207,7 +2207,7 @@ _mesa_store_teximage1d(GLcontext *ctx, GLenum target, GLint level,
       sizeInBytes = texImage->CompressedSize;
    else
       sizeInBytes = postConvWidth * texImage->TexFormat->TexelBytes;
-   texImage->Data = MESA_PBUFFER_ALLOC(sizeInBytes);
+   texImage->Data = _mesa_malloc(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
       return;
@@ -2295,7 +2295,7 @@ _mesa_store_teximage2d(GLcontext *ctx, GLenum target, GLint level,
       sizeInBytes = texImage->CompressedSize;
    else
       sizeInBytes = postConvWidth * postConvHeight * texelBytes;
-   texImage->Data = MESA_PBUFFER_ALLOC(sizeInBytes);
+   texImage->Data = _mesa_malloc(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
       return;
@@ -2375,7 +2375,7 @@ _mesa_store_teximage3d(GLcontext *ctx, GLenum target, GLint level,
       sizeInBytes = texImage->CompressedSize;
    else
       sizeInBytes = width * height * depth * texelBytes;
-   texImage->Data = MESA_PBUFFER_ALLOC(sizeInBytes);
+   texImage->Data = _mesa_malloc(sizeInBytes);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
       return;
@@ -2633,7 +2633,7 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
    texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
 
    /* allocate storage */
-   texImage->Data = MESA_PBUFFER_ALLOC(imageSize);
+   texImage->Data = _mesa_malloc(imageSize);
    if (!texImage->Data) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2DARB");
       return;
@@ -3383,12 +3383,12 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
    (void) srcDepthNB; /* silence warnings */
 
    /* Need two temporary row buffers */
-   tmpRowA = MALLOC(srcWidth * bpt);
+   tmpRowA = _mesa_malloc(srcWidth * bpt);
    if (!tmpRowA)
       return;
-   tmpRowB = MALLOC(srcWidth * bpt);
+   tmpRowB = _mesa_malloc(srcWidth * bpt);
    if (!tmpRowB) {
-      FREE(tmpRowA);
+      _mesa_free(tmpRowA);
       return;
    }
 
@@ -3455,8 +3455,8 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
       }
    }
 
-   FREE(tmpRowA);
-   FREE(tmpRowB);
+   _mesa_free(tmpRowA);
+   _mesa_free(tmpRowB);
 
    /* Luckily we can leverage the make_2d_mipmap() function here! */
    if (border > 0) {
@@ -3590,15 +3590,15 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       size = _mesa_bytes_per_pixel(srcImage->Format, CHAN_TYPE)
          * srcImage->Width * srcImage->Height * srcImage->Depth + 20;
       /* 20 extra bytes, just be safe when calling last FetchTexel */
-      srcData = (GLubyte *) MALLOC(size);
+      srcData = (GLubyte *) _mesa_malloc(size);
       if (!srcData) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
          return;
       }
-      dstData = (GLubyte *) MALLOC(size / 2);  /* 1/4 would probably be OK */
+      dstData = (GLubyte *) _mesa_malloc(size / 2);  /* 1/4 would probably be OK */
       if (!dstData) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
-         FREE((void *) srcData);
+         _mesa_free((void *) srcData);
          return;
       }
 
@@ -3659,8 +3659,8 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
           dstDepth == srcDepth) {
          /* all done */
          if (srcImage->IsCompressed) {
-            FREE((void *) srcData);
-            FREE(dstData);
+            _mesa_free((void *) srcData);
+            _mesa_free(dstData);
          }
          return;
       }
@@ -3674,7 +3674,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 
       /* Free old image data */
       if (dstImage->Data)
-         MESA_PBUFFER_FREE(dstImage->Data);
+         _mesa_free(dstImage->Data);
 
       /* initialize new image */
       _mesa_init_teximage_fields(ctx, target, dstImage, dstWidth, dstHeight,
@@ -3692,7 +3692,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
        */
       if (dstImage->IsCompressed) {
          ASSERT(dstImage->CompressedSize > 0); /* set by init_teximage_fields*/
-         dstImage->Data = MESA_PBUFFER_ALLOC(dstImage->CompressedSize);
+         dstImage->Data = _mesa_malloc(dstImage->CompressedSize);
          if (!dstImage->Data) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
             return;
@@ -3704,8 +3704,8 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       else {
          bytesPerTexel = srcImage->TexFormat->TexelBytes;
          ASSERT(dstWidth * dstHeight * dstDepth * bytesPerTexel > 0);
-         dstImage->Data = MESA_PBUFFER_ALLOC(dstWidth * dstHeight * dstDepth
-                                             * bytesPerTexel);
+         dstImage->Data = _mesa_malloc(dstWidth * dstHeight * dstDepth
+                                       * bytesPerTexel);
          if (!dstImage->Data) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
             return;
