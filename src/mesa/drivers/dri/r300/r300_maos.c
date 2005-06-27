@@ -438,7 +438,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 		}
 	/* Set the rest of INPUT_ROUTE_0 to 0 */
 	//for(i=((count+1)>>1); i<8; i++)r300->hw.vir[0].cmd[R300_VIR_CNTL_0+i]=(0x0);
-	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->unchecked_state.count = (nr+1)>>1;
+	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->packet0.count = (nr+1)>>1;
 
 
 	/* Mesa assumes that all missing components are from (0, 0, 0, 1) */
@@ -481,7 +481,7 @@ void r300EmitArrays(GLcontext * ctx, GLboolean immd)
 		}
 	/* Set the rest of INPUT_ROUTE_1 to 0 */
 	//for(i=((count+1)>>1); i<8; i++)r300->hw.vir[1].cmd[R300_VIR_CNTL_0+i]=0x0;
-	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->unchecked_state.count = (nr+1)>>1;
+	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->packet0.count = (nr+1)>>1;
 
 	/* Set up input_cntl */
 	/* I don't think this is needed for vertex buffers, but it doesn't hurt anything */

@@ -170,6 +170,19 @@ static __inline__ void r300DoEmitState(r300ContextPtr r300, GLboolean dirty)
 		}
 	}
 
+
+	/* Emit WAIT */
+	*dest = cmdwait(R300_WAIT_3D | R300_WAIT_3D_CLEAN);
+	dest ++;
+	r300->cmdbuf.count_used ++;
+
+	/* Emit END3D */
+	*dest = cmdpacify();
+	dest ++;
+	r300->cmdbuf.count_used ++;
+
+	/* Emit actual atoms */
+
 	foreach(atom, &r300->hw.atomlist) {
 		if ((atom->dirty || r300->hw.all_dirty) == dirty) {
 			int dwords = (*atom->check)(r300, atom);
@@ -223,33 +236,6 @@ void r300EmitState(r300ContextPtr r300)
 	r300->hw.all_dirty = GL_FALSE;
 }
 
-#if 0
-
-static __inline__ uint32_t cmducs(int reg, int count)
-{
-	drm_r300_cmd_header_t cmd;
-
-	cmd.unchecked_state.cmd_type = R300_CMD_UNCHECKED_STATE;
-	cmd.unchecked_state.count = count;
-	cmd.unchecked_state.reghi = ((unsigned int)reg & 0xFF00) >> 8;
-	cmd.unchecked_state.reglo = ((unsigned int)reg & 0x00FF);
-
-	return cmd.u;
-}
-
-static __inline__ uint32_t cmdvpu(int addr, int count)
-{
-	drm_r300_cmd_header_t cmd;
-
-	cmd.vpu.cmd_type = R300_CMD_VPU;
-	cmd.vpu.count = count;
-	cmd.vpu.adrhi = ((unsigned int)addr & 0xFF00) >> 8;
-	cmd.vpu.adrlo = ((unsigned int)addr & 0x00FF);
-
-	return cmd.u;
-}
-#endif
-
 #define CHECK( NM, COUNT )				\
 static int check_##NM( r300ContextPtr r300, 		\
 			struct r300_state_atom* atom )	\
@@ -258,15 +244,16 @@ static int check_##NM( r300ContextPtr r300, 		\
    return (COUNT);					\
 }
 
-#define ucscount(ptr) (((drm_r300_cmd_header_t*)(ptr))->unchecked_state.count)
-#define vpucount(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
+#define packet0_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->packet0.count)
+#define vpu_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
 
 CHECK( always, atom->cmd_size )
 CHECK( never, 0 )
-CHECK( variable, ucscount(atom->cmd) ? (1 + ucscount(atom->cmd)) : 0 )
-CHECK( vpu, vpucount(atom->cmd) ? (1 + vpucount(atom->cmd)*4) : 0 )
+CHECK( variable, packet0_count(atom->cmd) ? (1 + packet0_count(atom->cmd)) : 0 )
+CHECK( vpu, vpu_count(atom->cmd) ? (1 + vpu_count(atom->cmd)*4) : 0 )
 
-#undef ucscount
+#undef packet0_count
+#undef vpu_count
 
 #define ALLOC_STATE( ATOM, CHK, SZ, NM, IDX )				\
    do {									\
@@ -287,8 +274,8 @@ CHECK( vpu, vpucount(atom->cmd) ? (1 + vpucount(atom->cmd)*4) : 0 )
 void r300InitCmdBuf(r300ContextPtr r300)
 {
 	int size, i, mtu;
-
-	r300->hw.max_state_size = 0;
+	
+	r300->hw.max_state_size = 2; /* reserve extra space for WAIT_IDLE */
 
 	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
 	if (RADEON_DEBUG & DEBUG_TEXTURE) {
@@ -297,131 +284,131 @@ void r300InitCmdBuf(r300ContextPtr r300)
 
 	/* Initialize state atoms */
 	ALLOC_STATE( vpt, always, R300_VPT_CMDSIZE, "vpt", 0 );
-		r300->hw.vpt.cmd[R300_VPT_CMD_0] = cmducs(R300_SE_VPORT_XSCALE, 6);
+		r300->hw.vpt.cmd[R300_VPT_CMD_0] = cmdpacket0(R300_SE_VPORT_XSCALE, 6);
 	ALLOC_STATE( unk2080, always, 2, "unk2080", 0 );
-		r300->hw.unk2080.cmd[0] = cmducs(0x2080, 1);
+		r300->hw.unk2080.cmd[0] = cmdpacket0(0x2080, 1);
 	ALLOC_STATE( vte, always, 3, "vte", 0 );
-		r300->hw.vte.cmd[0] = cmducs(R300_SE_VTE_CNTL, 2);
+		r300->hw.vte.cmd[0] = cmdpacket0(R300_SE_VTE_CNTL, 2);
 	ALLOC_STATE( unk2134, always, 3, "unk2134", 0 );
-		r300->hw.unk2134.cmd[0] = cmducs(0x2134, 2);
+		r300->hw.unk2134.cmd[0] = cmdpacket0(0x2134, 2);
 	ALLOC_STATE( unk2140, always, 2, "unk2140", 0 );
-		r300->hw.unk2140.cmd[0] = cmducs(0x2140, 1);
+		r300->hw.unk2140.cmd[0] = cmdpacket0(0x2140, 1);
 	ALLOC_STATE( vir[0], variable, R300_VIR_CMDSIZE, "vir/0", 0 );
-		r300->hw.vir[0].cmd[R300_VIR_CMD_0] = cmducs(R300_VAP_INPUT_ROUTE_0_0, 1);
+		r300->hw.vir[0].cmd[R300_VIR_CMD_0] = cmdpacket0(R300_VAP_INPUT_ROUTE_0_0, 1);
 	ALLOC_STATE( vir[1], variable, R300_VIR_CMDSIZE, "vir/1", 1 );
-		r300->hw.vir[1].cmd[R300_VIR_CMD_0] = cmducs(R300_VAP_INPUT_ROUTE_1_0, 1);
+		r300->hw.vir[1].cmd[R300_VIR_CMD_0] = cmdpacket0(R300_VAP_INPUT_ROUTE_1_0, 1);
 	ALLOC_STATE( vic, always, R300_VIC_CMDSIZE, "vic", 0 );
-		r300->hw.vic.cmd[R300_VIC_CMD_0] = cmducs(R300_VAP_INPUT_CNTL_0, 2);
+		r300->hw.vic.cmd[R300_VIC_CMD_0] = cmdpacket0(R300_VAP_INPUT_CNTL_0, 2);
 	ALLOC_STATE( unk21DC, always, 2, "unk21DC", 0 );
-		r300->hw.unk21DC.cmd[0] = cmducs(0x21DC, 1);
+		r300->hw.unk21DC.cmd[0] = cmdpacket0(0x21DC, 1);
 	ALLOC_STATE( unk221C, always, 2, "unk221C", 0 );
-		r300->hw.unk221C.cmd[0] = cmducs(0x221C, 1);
+		r300->hw.unk221C.cmd[0] = cmdpacket0(0x221C, 1);
 	ALLOC_STATE( unk2220, always, 5, "unk2220", 0 );
-		r300->hw.unk2220.cmd[0] = cmducs(0x2220, 4);
+		r300->hw.unk2220.cmd[0] = cmdpacket0(0x2220, 4);
 	ALLOC_STATE( unk2288, always, 2, "unk2288", 0 );
-		r300->hw.unk2288.cmd[0] = cmducs(0x2288, 1);
+		r300->hw.unk2288.cmd[0] = cmdpacket0(0x2288, 1);
 	ALLOC_STATE( vof, always, R300_VOF_CMDSIZE, "vof", 0 );
-		r300->hw.vof.cmd[R300_VOF_CMD_0] = cmducs(R300_VAP_OUTPUT_VTX_FMT_0, 2);
+		r300->hw.vof.cmd[R300_VOF_CMD_0] = cmdpacket0(R300_VAP_OUTPUT_VTX_FMT_0, 2);
 	ALLOC_STATE( pvs, always, R300_PVS_CMDSIZE, "pvs", 0 );
-		r300->hw.pvs.cmd[R300_PVS_CMD_0] = cmducs(R300_VAP_PVS_CNTL_1, 3);
+		r300->hw.pvs.cmd[R300_PVS_CMD_0] = cmdpacket0(R300_VAP_PVS_CNTL_1, 3);
 	ALLOC_STATE( gb_enable, always, 2, "gb_enable", 0 );
-		r300->hw.gb_enable.cmd[0] = cmducs(R300_GB_ENABLE, 1);
+		r300->hw.gb_enable.cmd[0] = cmdpacket0(R300_GB_ENABLE, 1);
 	ALLOC_STATE( gb_misc, always, R300_GB_MISC_CMDSIZE, "gb_misc", 0 );
-		r300->hw.gb_misc.cmd[0] = cmducs(R300_GB_MSPOS0, 5);
+		r300->hw.gb_misc.cmd[0] = cmdpacket0(R300_GB_MSPOS0, 5);
 	ALLOC_STATE( txe, always, R300_TXE_CMDSIZE, "txe", 0 );
-		r300->hw.txe.cmd[R300_TXE_CMD_0] = cmducs(R300_TX_ENABLE, 1);
+		r300->hw.txe.cmd[R300_TXE_CMD_0] = cmdpacket0(R300_TX_ENABLE, 1);
 	ALLOC_STATE( unk4200, always, 5, "unk4200", 0 );
-		r300->hw.unk4200.cmd[0] = cmducs(0x4200, 4);
+		r300->hw.unk4200.cmd[0] = cmdpacket0(0x4200, 4);
 	ALLOC_STATE( unk4214, always, 2, "unk4214", 0 );
-		r300->hw.unk4214.cmd[0] = cmducs(0x4214, 1);
+		r300->hw.unk4214.cmd[0] = cmdpacket0(0x4214, 1);
 	ALLOC_STATE( ps, always, R300_PS_CMDSIZE, "ps", 0 );
-		r300->hw.ps.cmd[0] = cmducs(R300_RE_POINTSIZE, 1);
+		r300->hw.ps.cmd[0] = cmdpacket0(R300_RE_POINTSIZE, 1);
 	ALLOC_STATE( unk4230, always, 4, "unk4230", 0 );
-		r300->hw.unk4230.cmd[0] = cmducs(0x4230, 3);
+		r300->hw.unk4230.cmd[0] = cmdpacket0(0x4230, 3);
 	ALLOC_STATE( lcntl, always, 2, "lcntl", 0 );
-		r300->hw.lcntl.cmd[0] = cmducs(R300_RE_LINE_CNT, 1);
+		r300->hw.lcntl.cmd[0] = cmdpacket0(R300_RE_LINE_CNT, 1);
 	ALLOC_STATE( unk4260, always, 4, "unk4260", 0 );
-		r300->hw.unk4260.cmd[0] = cmducs(0x4260, 3);
+		r300->hw.unk4260.cmd[0] = cmdpacket0(0x4260, 3);
 	ALLOC_STATE( unk4274, always, 5, "unk4274", 0 );
-		r300->hw.unk4274.cmd[0] = cmducs(0x4274, 4);
+		r300->hw.unk4274.cmd[0] = cmdpacket0(0x4274, 4);
 	ALLOC_STATE( unk4288, always, 6, "unk4288", 0 );
-		r300->hw.unk4288.cmd[0] = cmducs(0x4288, 5);
+		r300->hw.unk4288.cmd[0] = cmdpacket0(0x4288, 5);
 	ALLOC_STATE( unk42A0, always, 2, "unk42A0", 0 );
-		r300->hw.unk42A0.cmd[0] = cmducs(0x42A0, 1);
+		r300->hw.unk42A0.cmd[0] = cmdpacket0(0x42A0, 1);
 	ALLOC_STATE( zbs, always, R300_ZBS_CMDSIZE, "zbs", 0 );
-		r300->hw.zbs.cmd[R300_ZBS_CMD_0] = cmducs(R300_RE_ZBIAS_T_FACTOR, 4);
+		r300->hw.zbs.cmd[R300_ZBS_CMD_0] = cmdpacket0(R300_RE_ZBIAS_T_FACTOR, 4);
 	ALLOC_STATE( unk42B4, always, 2, "unk42B4", 0 );
-		r300->hw.unk42B4.cmd[0] = cmducs(0x42B4, 1);
+		r300->hw.unk42B4.cmd[0] = cmdpacket0(0x42B4, 1);
 	ALLOC_STATE( cul, always, R300_CUL_CMDSIZE, "cul", 0 );
-		r300->hw.cul.cmd[R300_CUL_CMD_0] = cmducs(R300_RE_CULL_CNTL, 1);
+		r300->hw.cul.cmd[R300_CUL_CMD_0] = cmdpacket0(R300_RE_CULL_CNTL, 1);
 	ALLOC_STATE( unk42C0, always, 3, "unk42C0", 0 );
-		r300->hw.unk42C0.cmd[0] = cmducs(0x42C0, 2);
+		r300->hw.unk42C0.cmd[0] = cmdpacket0(0x42C0, 2);
 	ALLOC_STATE( rc, always, R300_RC_CMDSIZE, "rc", 0 );
-		r300->hw.rc.cmd[R300_RC_CMD_0] = cmducs(R300_RS_CNTL_0, 2);
+		r300->hw.rc.cmd[R300_RC_CMD_0] = cmdpacket0(R300_RS_CNTL_0, 2);
 	ALLOC_STATE( ri, always, R300_RI_CMDSIZE, "ri", 0 );
-		r300->hw.ri.cmd[R300_RI_CMD_0] = cmducs(R300_RS_INTERP_0, 8);
+		r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(R300_RS_INTERP_0, 8);
 	ALLOC_STATE( rr, variable, R300_RR_CMDSIZE, "rr", 0 );
-		r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, 1);
+		r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_ROUTE_0, 1);
 	ALLOC_STATE( unk43A4, always, 3, "unk43A4", 0 );
-		r300->hw.unk43A4.cmd[0] = cmducs(0x43A4, 2);
+		r300->hw.unk43A4.cmd[0] = cmdpacket0(0x43A4, 2);
 	ALLOC_STATE( unk43E8, always, 2, "unk43E8", 0 );
-		r300->hw.unk43E8.cmd[0] = cmducs(0x43E8, 1);
+		r300->hw.unk43E8.cmd[0] = cmdpacket0(0x43E8, 1);
 	ALLOC_STATE( fp, always, R300_FP_CMDSIZE, "fp", 0 );
-		r300->hw.fp.cmd[R300_FP_CMD_0] = cmducs(R300_PFS_CNTL_0, 3);
-		r300->hw.fp.cmd[R300_FP_CMD_1] = cmducs(R300_PFS_NODE_0, 4);
+		r300->hw.fp.cmd[R300_FP_CMD_0] = cmdpacket0(R300_PFS_CNTL_0, 3);
+		r300->hw.fp.cmd[R300_FP_CMD_1] = cmdpacket0(R300_PFS_NODE_0, 4);
 	ALLOC_STATE( fpt, variable, R300_FPT_CMDSIZE, "fpt", 0 );
-		r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmducs(R300_PFS_TEXI_0, 0);
+		r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_PFS_TEXI_0, 0);
 	ALLOC_STATE( unk46A4, always, 6, "unk46A4", 0 );
-		r300->hw.unk46A4.cmd[0] = cmducs(0x46A4, 5);
+		r300->hw.unk46A4.cmd[0] = cmdpacket0(0x46A4, 5);
 	ALLOC_STATE( fpi[0], variable, R300_FPI_CMDSIZE, "fpi/0", 0 );
-		r300->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmducs(R300_PFS_INSTR0_0, 1);
+		r300->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR0_0, 1);
 	ALLOC_STATE( fpi[1], variable, R300_FPI_CMDSIZE, "fpi/1", 1 );
-		r300->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmducs(R300_PFS_INSTR1_0, 1);
+		r300->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR1_0, 1);
 	ALLOC_STATE( fpi[2], variable, R300_FPI_CMDSIZE, "fpi/2", 2 );
-		r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmducs(R300_PFS_INSTR2_0, 1);
+		r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR2_0, 1);
 	ALLOC_STATE( fpi[3], variable, R300_FPI_CMDSIZE, "fpi/3", 3 );
-		r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmducs(R300_PFS_INSTR3_0, 1);
+		r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, 1);
 	ALLOC_STATE( unk4BC0, always, 2, "unk4BC0", 0 );
-		r300->hw.unk4BC0.cmd[0] = cmducs(0x4BC0, 1);
+		r300->hw.unk4BC0.cmd[0] = cmdpacket0(0x4BC0, 1);
 	ALLOC_STATE( unk4BC8, always, 4, "unk4BC8", 0 );
-		r300->hw.unk4BC8.cmd[0] = cmducs(0x4BC8, 3);
+		r300->hw.unk4BC8.cmd[0] = cmdpacket0(0x4BC8, 3);
 	ALLOC_STATE( at, always, R300_AT_CMDSIZE, "at", 0 );
-		r300->hw.at.cmd[R300_AT_CMD_0] = cmducs(R300_PP_ALPHA_TEST, 2);
+		r300->hw.at.cmd[R300_AT_CMD_0] = cmdpacket0(R300_PP_ALPHA_TEST, 2);
 	ALLOC_STATE( unk4BD8, always, 2, "unk4BD8", 0 );
-		r300->hw.unk4BD8.cmd[0] = cmducs(0x4BD8, 1);
+		r300->hw.unk4BD8.cmd[0] = cmdpacket0(0x4BD8, 1);
 	ALLOC_STATE( fpp, variable, R300_FPP_CMDSIZE, "fpp", 0 );
-		r300->hw.fpp.cmd[R300_FPP_CMD_0] = cmducs(R300_PFS_PARAM_0_X, 0);
+		r300->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, 0);
 	ALLOC_STATE( unk4E00, always, 2, "unk4E00", 0 );
-		r300->hw.unk4E00.cmd[0] = cmducs(0x4E00, 1);
+		r300->hw.unk4E00.cmd[0] = cmdpacket0(0x4E00, 1);
 	ALLOC_STATE( bld, always, R300_BLD_CMDSIZE, "bld", 0 );
-		r300->hw.bld.cmd[R300_BLD_CMD_0] = cmducs(R300_RB3D_CBLEND, 2);
+		r300->hw.bld.cmd[R300_BLD_CMD_0] = cmdpacket0(R300_RB3D_CBLEND, 2);
 	ALLOC_STATE( cmk, always, R300_CMK_CMDSIZE, "cmk", 0 );
-		r300->hw.cmk.cmd[R300_CMK_CMD_0] = cmducs(R300_RB3D_COLORMASK, 1);
+		r300->hw.cmk.cmd[R300_CMK_CMD_0] = cmdpacket0(R300_RB3D_COLORMASK, 1);
 	ALLOC_STATE( unk4E10, always, 4, "unk4E10", 0 );
-		r300->hw.unk4E10.cmd[0] = cmducs(0x4E10, 3);
+		r300->hw.unk4E10.cmd[0] = cmdpacket0(0x4E10, 3);
 	ALLOC_STATE( cb, always, R300_CB_CMDSIZE, "cb", 0 );
-		r300->hw.cb.cmd[R300_CB_CMD_0] = cmducs(R300_RB3D_COLOROFFSET0, 1);
-		r300->hw.cb.cmd[R300_CB_CMD_1] = cmducs(R300_RB3D_COLORPITCH0, 1);
+		r300->hw.cb.cmd[R300_CB_CMD_0] = cmdpacket0(R300_RB3D_COLOROFFSET0, 1);
+		r300->hw.cb.cmd[R300_CB_CMD_1] = cmdpacket0(R300_RB3D_COLORPITCH0, 1);
 	ALLOC_STATE( unk4E50, always, 10, "unk4E50", 0 );
-		r300->hw.unk4E50.cmd[0] = cmducs(0x4E50, 9);
+		r300->hw.unk4E50.cmd[0] = cmdpacket0(0x4E50, 9);
 	ALLOC_STATE( unk4E88, always, 2, "unk4E88", 0 );
-		r300->hw.unk4E88.cmd[0] = cmducs(0x4E88, 1);
+		r300->hw.unk4E88.cmd[0] = cmdpacket0(0x4E88, 1);
 	ALLOC_STATE( unk4EA0, always, 3, "unk4EA0 R350 only", 0 );
-		r300->hw.unk4EA0.cmd[0] = cmducs(0x4EA0, 2);
+		r300->hw.unk4EA0.cmd[0] = cmdpacket0(0x4EA0, 2);
 	ALLOC_STATE( zs, always, R300_ZS_CMDSIZE, "zstencil", 0 );
-		r300->hw.zs.cmd[R300_ZS_CMD_0] = cmducs(R300_RB3D_ZSTENCIL_CNTL_0, 3);
+		r300->hw.zs.cmd[R300_ZS_CMD_0] = cmdpacket0(R300_RB3D_ZSTENCIL_CNTL_0, 3);
 	ALLOC_STATE( unk4F10, always, 5, "unk4F10", 0 );
-		r300->hw.unk4F10.cmd[0] = cmducs(0x4F10, 4);
+		r300->hw.unk4F10.cmd[0] = cmdpacket0(0x4F10, 4);
 	ALLOC_STATE( zb, always, R300_ZB_CMDSIZE, "zb", 0 );
-		r300->hw.zb.cmd[R300_ZB_CMD_0] = cmducs(R300_RB3D_DEPTHOFFSET, 2);
+		r300->hw.zb.cmd[R300_ZB_CMD_0] = cmdpacket0(R300_RB3D_DEPTHOFFSET, 2);
 	ALLOC_STATE( unk4F28, always, 2, "unk4F28", 0 );
-		r300->hw.unk4F28.cmd[0] = cmducs(0x4F28, 1);
+		r300->hw.unk4F28.cmd[0] = cmdpacket0(0x4F28, 1);
 	ALLOC_STATE( unk4F30, always, 3, "unk4F30", 0 );
-		r300->hw.unk4F30.cmd[0] = cmducs(0x4F30, 2);
+		r300->hw.unk4F30.cmd[0] = cmdpacket0(0x4F30, 2);
 	ALLOC_STATE( unk4F44, always, 2, "unk4F44", 0 );
-		r300->hw.unk4F44.cmd[0] = cmducs(0x4F44, 1);
+		r300->hw.unk4F44.cmd[0] = cmdpacket0(0x4F44, 1);
 	ALLOC_STATE( unk4F54, always, 2, "unk4F54", 0 );
-		r300->hw.unk4F54.cmd[0] = cmducs(0x4F54, 1);
+		r300->hw.unk4F54.cmd[0] = cmdpacket0(0x4F54, 1);
 
 	ALLOC_STATE( vpi, vpu, R300_VPI_CMDSIZE, "vpi", 0 );
 		r300->hw.vpi.cmd[R300_VPI_CMD_0] = cmdvpu(R300_PVS_UPLOAD_PROGRAM, 0);
@@ -432,25 +419,25 @@ void r300InitCmdBuf(r300ContextPtr r300)
 
 	/* Textures */
 	ALLOC_STATE( tex.filter, variable, mtu+1, "tex_filter", 0 );
-		r300->hw.tex.filter.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_FILTER_0, 0);
+		r300->hw.tex.filter.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FILTER_0, 0);
 
 	ALLOC_STATE( tex.unknown1, variable, mtu+1, "tex_unknown1", 0 );
-		r300->hw.tex.unknown1.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK1_0, 0);
+		r300->hw.tex.unknown1.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_UNK1_0, 0);
 
 	ALLOC_STATE( tex.size, variable, mtu+1, "tex_size", 0 );
-		r300->hw.tex.size.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_SIZE_0, 0);
+		r300->hw.tex.size.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_SIZE_0, 0);
 
 	ALLOC_STATE( tex.format, variable, mtu+1, "tex_format", 0 );
-		r300->hw.tex.format.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_FORMAT_0, 0);
+		r300->hw.tex.format.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FORMAT_0, 0);
 
 	ALLOC_STATE( tex.offset, variable, mtu+1, "tex_offset", 0 );
-		r300->hw.tex.offset.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_OFFSET_0, 0);
+		r300->hw.tex.offset.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_OFFSET_0, 0);
 
 	ALLOC_STATE( tex.unknown4, variable, mtu+1, "tex_unknown4", 0 );
-		r300->hw.tex.unknown4.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_UNK4_0, 0);
+		r300->hw.tex.unknown4.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_UNK4_0, 0);
 
 	ALLOC_STATE( tex.border_color, variable, mtu+1, "tex_border_color", 0 );
-		r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] = cmducs(R300_TX_BORDER_COLOR_0, 0);
+		r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_BORDER_COLOR_0, 0);
 
 
 	/* Setup the atom linked list */

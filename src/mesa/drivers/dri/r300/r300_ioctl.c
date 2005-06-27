@@ -91,11 +91,11 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 
 #ifndef CB_DPATH
 	R300_STATECHANGE(r300, vir[0]);
-	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->unchecked_state.count = 1;
+	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->packet0.count = 1;
 	r300->hw.vir[0].cmd[1] = 0x21030003;
 
 	R300_STATECHANGE(r300, vir[1]);
-	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->unchecked_state.count = 1;
+	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->packet0.count = 1;
 	r300->hw.vir[1].cmd[1] = 0xF688F688;
 
 	R300_STATECHANGE(r300, vic);
@@ -155,7 +155,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	r300->hw.rc.cmd[2] = 0;
 	
 	R300_STATECHANGE(r300, rr);
-	((drm_r300_cmd_header_t*)r300->hw.rr.cmd)->unchecked_state.count = 1;
+	((drm_r300_cmd_header_t*)r300->hw.rr.cmd)->packet0.count = 1;
 	r300->hw.rr.cmd[1] = 0x00004000;
 
 	R300_STATECHANGE(r300, cmk);
@@ -182,10 +182,10 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	R300_STATECHANGE(r300, fpi[1]);
 	R300_STATECHANGE(r300, fpi[2]);
 	R300_STATECHANGE(r300, fpi[3]);
-	((drm_r300_cmd_header_t*)r300->hw.fpi[0].cmd)->unchecked_state.count = 1;
-	((drm_r300_cmd_header_t*)r300->hw.fpi[1].cmd)->unchecked_state.count = 1;
-	((drm_r300_cmd_header_t*)r300->hw.fpi[2].cmd)->unchecked_state.count = 1;
-	((drm_r300_cmd_header_t*)r300->hw.fpi[3].cmd)->unchecked_state.count = 1;
+	((drm_r300_cmd_header_t*)r300->hw.fpi[0].cmd)->packet0.count = 1;
+	((drm_r300_cmd_header_t*)r300->hw.fpi[1].cmd)->packet0.count = 1;
+	((drm_r300_cmd_header_t*)r300->hw.fpi[2].cmd)->packet0.count = 1;
+	((drm_r300_cmd_header_t*)r300->hw.fpi[3].cmd)->packet0.count = 1;
 
 	/* MOV o0, t0 */
 	r300->hw.fpi[0].cmd[1] = FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO));
@@ -203,7 +203,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 		(1 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT);
 
 	R300_STATECHANGE(r300, vpi);
-	((drm_r300_cmd_header_t*)r300->hw.vpi.cmd)->unchecked_state.count = 8;
+	((drm_r300_cmd_header_t*)r300->hw.vpi.cmd)->packet0.count = 8;
 
 	/* MOV o0, i0; */
 	r300->hw.vpi.cmd[1] = VP_OUT(ADD,OUT,0,XYZW);
@@ -351,6 +351,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	cmd2[6].u = r300PackFloat32(ctx->Color.ClearColor[1]);
 	cmd2[7].u = r300PackFloat32(ctx->Color.ClearColor[2]);
 	cmd2[8].u = r300PackFloat32(ctx->Color.ClearColor[3]);
+
 }
 
 #ifdef CB_DPATH

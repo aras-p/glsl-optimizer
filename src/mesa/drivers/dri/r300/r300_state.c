@@ -1083,13 +1083,13 @@ void r300_setup_textures(GLcontext *ctx)
 		}
 	}
 	
-	((drm_r300_cmd_header_t*)r300->hw.tex.filter.cmd)->unchecked_state.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.unknown1.cmd)->unchecked_state.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.size.cmd)->unchecked_state.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.format.cmd)->unchecked_state.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.offset.cmd)->unchecked_state.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.unknown4.cmd)->unchecked_state.count = max_texture_unit+1;
-	((drm_r300_cmd_header_t*)r300->hw.tex.border_color.cmd)->unchecked_state.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.filter.cmd)->packet0.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.unknown1.cmd)->packet0.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.size.cmd)->packet0.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.format.cmd)->packet0.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.offset.cmd)->packet0.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.unknown4.cmd)->packet0.count = max_texture_unit+1;
+	((drm_r300_cmd_header_t*)r300->hw.tex.border_color.cmd)->packet0.count = max_texture_unit+1;
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "TX_ENABLE: %08x  max_texture_unit=%d\n", r300->hw.txe.cmd[R300_TXE_ENABLE], max_texture_unit);
@@ -1195,7 +1195,7 @@ void r300_setup_rs_unit(GLcontext *ctx)
 			| R300_RS_CNTL_0_UNKNOWN_18;
 
 	assert(high_rr >= 0);
-	r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, high_rr+1);
+	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_ROUTE_0, high_rr+1);
 	r300->hw.rc.cmd[2] = 0xC0 | high_rr;
 
 	if (InputsRead)
@@ -1261,10 +1261,10 @@ void r300_setup_rs_unit(GLcontext *ctx)
 			| R300_RS_CNTL_0_UNKNOWN_18;
 
 	if (r300->state.texture.tc_count > 0) {
-			r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, cur_reg);
+			r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_ROUTE_0, cur_reg);
 			r300->hw.rc.cmd[2] = 0xC0 | (cur_reg-1); /* index of highest */
 	} else {
-			r300->hw.rr.cmd[R300_RR_CMD_0] = cmducs(R300_RS_ROUTE_0, 1);
+			r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_ROUTE_0, 1);
 			r300->hw.rc.cmd[2] = 0x0;
 	}
 
@@ -1602,13 +1602,13 @@ void r300SetupPixelShader(r300ContextPtr rmesa)
 	R300_STATECHANGE(rmesa, fpt);
 	for(i=0;i<rp->tex.length;i++)
 		rmesa->hw.fpt.cmd[R300_FPT_INSTR_0+i]=rp->tex.inst[i];
-	rmesa->hw.fpt.cmd[R300_FPT_CMD_0]=cmducs(R300_PFS_TEXI_0, rp->tex.length);
+	rmesa->hw.fpt.cmd[R300_FPT_CMD_0]=cmdpacket0(R300_PFS_TEXI_0, rp->tex.length);
 
 #define OUTPUT_FIELD(st, reg, field)  \
 		R300_STATECHANGE(rmesa, st); \
 		for(i=0;i<=rp->alu_end;i++) \
 			rmesa->hw.st.cmd[R300_FPI_INSTR_0+i]=rp->alu.inst[i].field;\
-		rmesa->hw.st.cmd[R300_FPI_CMD_0]=cmducs(reg, rp->alu_end+1);
+		rmesa->hw.st.cmd[R300_FPI_CMD_0]=cmdpacket0(reg, rp->alu_end+1);
 
 	OUTPUT_FIELD(fpi[0], R300_PFS_INSTR0_0, inst0);
 	OUTPUT_FIELD(fpi[1], R300_PFS_INSTR1_0, inst1);
@@ -1651,7 +1651,7 @@ void r300SetupPixelShader(r300ContextPtr rmesa)
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+2]=r300PackFloat24(rp->constant[i][2]);
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+3]=r300PackFloat24(rp->constant[i][3]);
 	}
-	rmesa->hw.fpp.cmd[R300_FPP_CMD_0]=cmducs(R300_PFS_PARAM_0_X, rp->const_nr*4);
+	rmesa->hw.fpp.cmd[R300_FPP_CMD_0]=cmdpacket0(R300_PFS_PARAM_0_X, rp->const_nr*4);
 }
 #else
 /* just a skeleton for now.. */
@@ -1781,13 +1781,13 @@ int i,k;
 	R300_STATECHANGE(rmesa, fpt);
 	for(i=0;i<rmesa->state.pixel_shader.program.tex.length;i++)
 		rmesa->hw.fpt.cmd[R300_FPT_INSTR_0+i]=rmesa->state.pixel_shader.program.tex.inst[i];
-	rmesa->hw.fpt.cmd[R300_FPT_CMD_0]=cmducs(R300_PFS_TEXI_0, rmesa->state.pixel_shader.program.tex.length);
+	rmesa->hw.fpt.cmd[R300_FPT_CMD_0]=cmdpacket0(R300_PFS_TEXI_0, rmesa->state.pixel_shader.program.tex.length);
 
 #define OUTPUT_FIELD(st, reg, field)  \
 		R300_STATECHANGE(rmesa, st); \
 		for(i=0;i<rmesa->state.pixel_shader.program.alu.length;i++) \
 			rmesa->hw.st.cmd[R300_FPI_INSTR_0+i]=rmesa->state.pixel_shader.program.alu.inst[i].field;\
-		rmesa->hw.st.cmd[R300_FPI_CMD_0]=cmducs(reg, rmesa->state.pixel_shader.program.alu.length);
+		rmesa->hw.st.cmd[R300_FPI_CMD_0]=cmdpacket0(reg, rmesa->state.pixel_shader.program.alu.length);
 
 	OUTPUT_FIELD(fpi[0], R300_PFS_INSTR0_0, inst0);
 	OUTPUT_FIELD(fpi[1], R300_PFS_INSTR1_0, inst1);
@@ -1825,7 +1825,7 @@ int i,k;
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+2]=r300PackFloat32(rmesa->state.pixel_shader.param[i].z);
 		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0+4*i+3]=r300PackFloat32(rmesa->state.pixel_shader.param[i].w);
 		}
-	rmesa->hw.fpp.cmd[R300_FPP_CMD_0]=cmducs(R300_PFS_PARAM_0_X, rmesa->state.pixel_shader.param_length);
+	rmesa->hw.fpp.cmd[R300_FPP_CMD_0]=cmdpacket0(R300_PFS_PARAM_0_X, rmesa->state.pixel_shader.param_length);
 
 }
 #endif
@@ -1873,7 +1873,7 @@ void verify_r300ResetHwState(r300ContextPtr r300, int stage)
 		foreach(atom, &r300->hw.atomlist) {
 			cmd.u=atom->cmd[0];
 			switch(cmd.header.cmd_type){
-			case R300_CMD_UNCHECKED_STATE:
+			case R300_CMD_PACKET0:
 			case R300_CMD_VPU:
 			case R300_CMD_PACKET3:
 			case R300_CMD_END3D:
@@ -1987,10 +1987,10 @@ void r300ResetHwState(r300ContextPtr r300)
 #endif
 
 #if 0 /* Done in setup routing */
-	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->unchecked_state.count = 1;
+	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->packet0.count = 1;
 	r300->hw.vir[0].cmd[1] = 0x21030003;
 
-	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->unchecked_state.count = 1;
+	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->packet0.count = 1;
 	r300->hw.vir[1].cmd[1] = 0xF688F688;
 
 	r300->hw.vic.cmd[R300_VIR_CNTL_0] = 0x00000001;

@@ -64,14 +64,14 @@ void static inline check_space(int dwords)
 {
 }
 
-static __inline__ uint32_t cmducs(int reg, int count)
+static __inline__ uint32_t cmdpacket0(int reg, int count)
 {
 	drm_r300_cmd_header_t cmd;
 
-	cmd.unchecked_state.cmd_type = R300_CMD_UNCHECKED_STATE;
-	cmd.unchecked_state.count = count;
-	cmd.unchecked_state.reghi = ((unsigned int)reg & 0xFF00) >> 8;
-	cmd.unchecked_state.reglo = ((unsigned int)reg & 0x00FF);
+	cmd.packet0.cmd_type = R300_CMD_PACKET0;
+	cmd.packet0.count = count;
+	cmd.packet0.reghi = ((unsigned int)reg & 0xFF00) >> 8;
+	cmd.packet0.reglo = ((unsigned int)reg & 0x00FF);
 
 	return cmd.u;
 }
@@ -139,7 +139,7 @@ static __inline__ uint32_t cmdpacify(void)
 					__FUNCTION__); \
 	cmd_reserved=_n+2; \
 	cmd_written=1; \
-	cmd[0].i=cmducs((reg), _n+1); \
+	cmd[0].i=cmdpacket0((reg), _n+1); \
 	}
 
 /* Prepare to write a register value to register at address reg.
@@ -208,7 +208,11 @@ LOCAL_VARS
 (void)cmd_reserved; (void)cmd_written;
 
 cmd=(drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, \
+<<<<<<< r300_emit.h
+					1, \
+=======
 					0, \ // ??!
+>>>>>>> 1.10
 					__FUNCTION__); \
 
 cmd[0].header.cmd_type=R300_CMD_END3D;
@@ -220,12 +224,28 @@ LOCAL_VARS
 (void)cmd_reserved; (void)cmd_written;
 
 cmd=(drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, \
+<<<<<<< r300_emit.h
+					1, \
+=======
 					0, \ // ??!
+>>>>>>> 1.10
 					__FUNCTION__); \
 
 cmd[0].i=cmdcpdelay(count);
 }
 */
+
+void static inline cp_wait(PREFIX unsigned char flags)
+{
+LOCAL_VARS
+(void)cmd_reserved; (void)cmd_written;
+
+cmd=(drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, \
+					1, \
+					__FUNCTION__); \
+
+cmd[0].i=cmdwait(flags);
+}
 
 /* fire vertex buffer */
 static void inline fire_AOS(PREFIX int vertex_count, int type)
