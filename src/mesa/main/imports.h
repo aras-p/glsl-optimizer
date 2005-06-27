@@ -88,8 +88,6 @@ extern "C" {
 /** Set \p N bytes in \p DST to \p VAL */
 #define MEMSET( DST, VAL, N )      _mesa_memset(DST, VAL, N)
 
-#define MEMSET16( DST, VAL, N )   _mesa_memset16( (DST), (VAL), (size_t) (N) )
-
 /*@}*/
 
 
