@@ -1364,9 +1364,10 @@ static void build_tnl_program( struct tnl_program *p )
 }
 
 
-void create_new_program( const struct state_key *key,
-			 struct vertex_program *program,
-			 GLuint max_temps)
+static void
+create_new_program( const struct state_key *key,
+                    struct vertex_program *program,
+                    GLuint max_temps)
 {
    struct tnl_program p;
 
