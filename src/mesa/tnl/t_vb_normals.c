@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,7 +39,6 @@
 #include "t_pipeline.h"
 
 
-
 struct normal_stage_data {
    normal_func NormalTransform;
    GLvector4f normal;
@@ -48,10 +47,8 @@ struct normal_stage_data {
 #define NORMAL_STAGE_DATA(stage) ((struct normal_stage_data *)stage->privatePtr)
 
 
-
-
-static GLboolean run_normal_stage( GLcontext *ctx,
-				   struct tnl_pipeline_stage *stage )
+static GLboolean
+run_normal_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
@@ -75,7 +72,7 @@ static GLboolean run_normal_stage( GLcontext *ctx,
 			   &store->normal ); /* resulting normals */
 
    if (VB->NormalPtr->count > 1) {
-      store->normal.stride = 16;
+      store->normal.stride = 4 * sizeof(GLfloat);
    }
    else {
       store->normal.stride = 0;
@@ -89,8 +86,12 @@ static GLboolean run_normal_stage( GLcontext *ctx,
 }
 
 
-static void validate_normal_stage( GLcontext *ctx,
-					    struct tnl_pipeline_stage *stage )
+/**
+ * Examine current GL state and set the store->NormalTransform pointer
+ * to point to the appropriate normal transformation routine.
+ */
+static void
+validate_normal_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
 
@@ -100,23 +101,26 @@ static void validate_normal_stage( GLcontext *ctx,
       store->NormalTransform = NULL;
       return;
    }
-      
-   
+
    if (ctx->_NeedEyeCoords) {
+      /* Eye coordinates are needed, for whatever reasons.
+       * Do lighting in eye coordinates, as the GL spec says.
+       */
       GLuint transform = NORM_TRANSFORM_NO_ROT;
 
       if (ctx->ModelviewMatrixStack.Top->flags & (MAT_FLAG_GENERAL |
-				  MAT_FLAG_ROTATION |
-				  MAT_FLAG_GENERAL_3D |
-				  MAT_FLAG_PERSPECTIVE))
+                                                  MAT_FLAG_ROTATION |
+                                                  MAT_FLAG_GENERAL_3D |
+                                                  MAT_FLAG_PERSPECTIVE)) {
+         /* need to do full (3x3) matrix transform */
 	 transform = NORM_TRANSFORM;
-
+      }
 
       if (ctx->Transform.Normalize) {
 	 store->NormalTransform = _mesa_normal_tab[transform | NORM_NORMALIZE];
       }
       else if (ctx->Transform.RescaleNormals &&
-	       ctx->_ModelViewInvScale != 1.0) {
+               ctx->_ModelViewInvScale != 1.0) {
 	 store->NormalTransform = _mesa_normal_tab[transform | NORM_RESCALE];
       }
       else {
@@ -124,6 +128,11 @@ static void validate_normal_stage( GLcontext *ctx,
       }
    }
    else {
+      /* We don't need eye coordinates.
+       * Do lighting in object coordinates.  Thus, we don't need to fully
+       * transform normal vectors (just leave them in object coordinates)
+       * but we still need to do normalization/rescaling if enabled.
+       */
       if (ctx->Transform.Normalize) {
 	 store->NormalTransform = _mesa_normal_tab[NORM_NORMALIZE];
       }
@@ -138,13 +147,16 @@ static void validate_normal_stage( GLcontext *ctx,
 }
 
 
-
-static GLboolean alloc_normal_data( GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage )
+/**
+ * Allocate stage's private data (storage for transformed normals).
+ */
+static GLboolean
+alloc_normal_data(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct normal_stage_data *store;
-   stage->privatePtr = MALLOC(sizeof(*store));
+
+   stage->privatePtr = _mesa_malloc(sizeof(*store));
    store = NORMAL_STAGE_DATA(stage);
    if (!store)
       return GL_FALSE;
@@ -154,13 +166,16 @@ static GLboolean alloc_normal_data( GLcontext *ctx,
 }
 
 
-
-static void free_normal_data( struct tnl_pipeline_stage *stage )
+/**
+ * Free stage's private data.
+ */
+static void
+free_normal_data(struct tnl_pipeline_stage *stage)
 {
    struct normal_stage_data *store = NORMAL_STAGE_DATA(stage);
    if (store) {
       _mesa_vector4f_free( &store->normal );
-      FREE( store );
+      _mesa_free( store );
       stage->privatePtr = NULL;
    }
 }
@@ -169,9 +184,9 @@ static void free_normal_data( struct tnl_pipeline_stage *stage )
 const struct tnl_pipeline_stage _tnl_normal_transform_stage =
 {
    "normal transform",		/* name */
-   NULL,			/* private data */
-   alloc_normal_data,
-   free_normal_data,		/* destructor */
-   validate_normal_stage,	/* check */
-   run_normal_stage
+   NULL,			/* privatePtr */
+   alloc_normal_data,		/* create */
+   free_normal_data,		/* destroy */
+   validate_normal_stage,	/* validate */
+   run_normal_stage             /* run */
 };
