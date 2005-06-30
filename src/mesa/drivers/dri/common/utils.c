@@ -180,9 +180,18 @@ driGetRendererString( char * buffer, const char * hardware_name,
 
 
 
+/**
+ * Enable extensions supported by the driver.
+ * 
+ * \bug
+ * ARB_imaging isn't handled properly.  In Mesa, enabling ARB_imaging also
+ * enables all the sub-extensions that are folded into it.  This means that
+ * we need to add entry-points (via \c driInitSingleExtension) for those
+ * new functions here.
+ */
 void driInitExtensions( GLcontext * ctx,
-			const char * const extensions_to_enable[],
-			GLboolean  enable_imaging )
+			const struct dri_extension * extensions_to_enable,
+			GLboolean enable_imaging )
 {
    unsigned   i;
 
@@ -190,9 +199,79 @@ void driInitExtensions( GLcontext * ctx,
       _mesa_enable_imaging_extensions( ctx );
    }
 
-   for ( i = 0 ; extensions_to_enable[i] != NULL ; i++ ) {
-      _mesa_enable_extension( ctx, extensions_to_enable[i] );
+   for ( i = 0 ; extensions_to_enable[i].name != NULL ; i++ ) {
+       driInitSingleExtension( ctx, & extensions_to_enable[i] );
    }
+}
+
+
+
+
+/**
+ * Enable and add dispatch functions for a single extension
+ * 
+ * \param ctx  Context where extension is to be enabled.
+ * \param ext  Extension that is to be enabled.
+ * 
+ * \sa driInitExtensions, _mesa_enable_extension, _glapi_add_entrypoint
+ *
+ * \todo
+ * Determine if it would be better to use \c strlen instead of the hardcoded
+ * for-loops.
+ */
+void driInitSingleExtension( GLcontext * ctx,
+			     const struct dri_extension * ext )
+{
+    unsigned i;
+
+    if ( ext->functions != NULL ) {
+	for ( i = 0 ; ext->functions[i].strings != NULL ; i++ ) {
+	    const char * functions[16];
+	    const char * parameter_signature;
+	    const char * str = ext->functions[i].strings;
+	    unsigned j;
+
+
+	    /* Separate the parameter signature from the rest of the string.
+	     * If the parameter signature is empty (i.e., the string starts
+	     * with a NUL character), then the function has a void parameter
+	     * list.
+	     */
+	    parameter_signature = str;
+	    while ( str[0] != '\0' ) {
+		str++;
+	    }
+	    str++;
+
+
+	    /* Divide the string into the substrings that name each
+	     * entry-point for the function.
+	     */
+	    for ( j = 0 ; j < 16 ; j++ ) {
+		if ( str[0] == '\0' ) {
+		    functions[j] = NULL;
+		    break;
+		}
+
+		functions[j] = str;
+
+		while ( str[0] != '\0' ) {
+		    str++;
+		}
+		str++;
+	    }
+
+
+	    /* Add each entry-point to the dispatch table.
+	     */
+	    for ( j = 0 ; functions[j] != NULL ; j++ ) {
+		_glapi_add_entrypoint( functions[j], 
+				       ext->functions[i].offset );
+	    }
+	}
+    }
+
+    _mesa_enable_extension( ctx, ext->name );
 }
 
 

@@ -62,55 +62,80 @@
 
 #include "utils.h"
 
+#define need_GL_ARB_multisample
+/* #define need_GL_ARB_point_parameters */
+#define need_GL_ARB_texture_compression
+#define need_GL_ARB_vertex_buffer_object
+/* #define need_GL_ARB_vertex_program */
+#define need_GL_EXT_blend_equation_separate
+#define need_GL_EXT_blend_func_separate
+#define need_GL_EXT_blend_minmax
+#define need_GL_EXT_fog_coord
+#define need_GL_EXT_multi_draw_arrays
+#define need_GL_EXT_paletted_texture
+/* #define need_GL_EXT_secondary_color */
+#define need_GL_IBM_multimode_draw_arrays
+/* #define need_GL_MESA_program_debug */
+/* #define need_GL_NV_vertex_program */
+#include "extension_helper.h"
+
+
 /**
  * Common extension strings exported by all cards
  */
-static const char * const card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
-   "GL_ARB_texture_mirrored_repeat",
-   "GL_ARB_vertex_buffer_object",
-   "GL_EXT_blend_func_separate",
-   "GL_EXT_fog_coord",
-   "GL_EXT_multi_draw_arrays",
-   "GL_EXT_paletted_texture",
-   "GL_EXT_shared_texture_palette",
-   "GL_EXT_stencil_wrap",
-   "GL_EXT_texture_env_add",
-   "GL_EXT_texture_lod_bias",
-   "GL_HP_occlusion_test",
-   "GL_IBM_multimode_draw_arrays",
+    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
+    { "GL_ARB_texture_mirrored_repeat",    NULL },
+    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
 
-#if 0
-   "GL_ARB_point_sprite",
-   "GL_EXT_point_parameters",
-   "GL_EXT_secondary_color",
+    { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
+    { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
+    { "GL_EXT_multi_draw_arrays",          GL_EXT_multi_draw_arrays_functions },
+    { "GL_EXT_paletted_texture",           GL_EXT_paletted_texture_functions },
+    { "GL_EXT_shared_texture_palette",     NULL },
+    { "GL_EXT_stencil_wrap",               NULL },
+    { "GL_EXT_texture_env_add",            NULL },
+    { "GL_EXT_texture_lod_bias",           NULL },
+    { "GL_HP_occlusion_test",              NULL },
+    { "GL_IBM_multimode_draw_arrays",      GL_IBM_multimode_draw_arrays_functions },
+
+#ifdef need_GL_ARB_point_parameters
+    { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
+    { "GL_ARB_point_sprite",               NULL },
 #endif
-#if 0
-   /* not just yet */
-   "GL_ARB_vertex_program",
-   "GL_NV_vertex_program",
-   "GL_NV_vertex_program1_1",
-   "GL_MESA_program_debug",
+#ifdef need_GL_EXT_secondary_color
+    { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
 #endif
-   NULL
+#ifdef need_GL_ARB_vertex_program
+    { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions }
+#endif
+#ifdef need_GL_NV_vertex_program
+    { "GL_NV_vertex_program",              GL_NV_vertex_program_functions }
+    { "GL_NV_vertex_program1_1",           NULL },
+#endif
+#ifdef need_GL_MESA_program_debug
+    { "GL_MESA_program_debug",             GL_MESA_program_debug_functions },
+#endif
+    { NULL,                                NULL }
 };
 
 /**
  * Extension strings exported only by Naplam (e.g., Voodoo4 & Voodoo5) cards.
  */
-static const char * const napalm_extensions[] =
+static const struct dri_extension napalm_extensions[] =
 {
-   "GL_ARB_texture_compression",
-   "GL_ARB_texture_env_combine",
-   "GL_EXT_blend_equation_separate",
-   "GL_EXT_blend_subtract",
-   "GL_EXT_texture_compression_s3tc",
-   "GL_EXT_texture_env_combine",
+    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
+    { "GL_ARB_texture_env_combine",        NULL },
+    { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
+    { "GL_EXT_blend_subtract",             GL_EXT_blend_minmax_functions },
+    { "GL_EXT_texture_compression_s3tc",   NULL },
+    { "GL_EXT_texture_env_combine",        NULL },
 
-   "GL_3DFX_texture_compression_FXT1",
-   "GL_NV_blend_square",
-   "GL_S3_s3tc",
-   NULL
+    { "GL_3DFX_texture_compression_FXT1",  NULL },
+    { "GL_NV_blend_square",                NULL },
+    { "GL_S3_s3tc",                        NULL },
+    { NULL,                                NULL }
 };
 
 /*

@@ -60,6 +60,12 @@
 #include <stdio.h>
 #include "macros.h"
 
+#define need_GL_ARB_multisample
+#define need_GL_ARB_point_parameters
+#define need_GL_EXT_fog_coord
+#define need_GL_EXT_secondary_color
+#include "extension_helper.h"
+
 #define DRIVER_DATE	"20050526"
 
 #include "vblank.h"
@@ -245,22 +251,23 @@ static void viaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 
 /* Extension strings exported by the Unichrome driver.
  */
-static const char * const card_extensions[] = 
+static const struct dri_extension card_extensions[] =
 {
-   "GL_ARB_multitexture",
-   "GL_ARB_point_parameters",
-   "GL_ARB_texture_env_add",
-   "GL_ARB_texture_env_combine",
-/*    "GL_ARB_texture_env_dot3", */
-   "GL_ARB_texture_mirrored_repeat",
-   "GL_EXT_stencil_wrap",
-   "GL_EXT_texture_env_combine",
-/*    "GL_EXT_texture_env_dot3", */
-   "GL_EXT_texture_lod_bias",
-   "GL_EXT_secondary_color",
-   "GL_EXT_fog_coord",
-   "GL_NV_blend_square",
-   NULL
+    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
+    { "GL_ARB_multitexture",               NULL },
+    { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
+    { "GL_ARB_texture_env_add",            NULL },
+    { "GL_ARB_texture_env_combine",        NULL },
+/*    { "GL_ARB_texture_env_dot3",           NULL }, */
+    { "GL_ARB_texture_mirrored_repeat",    NULL },
+    { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
+    { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
+    { "GL_EXT_stencil_wrap",               NULL },
+    { "GL_EXT_texture_env_combine",        NULL },
+/*    { "GL_EXT_texture_env_dot3",           NULL }, */
+    { "GL_EXT_texture_lod_bias",           NULL },
+    { "GL_NV_blend_square",                NULL },
+    { NULL,                                NULL }
 };
 
 extern const struct tnl_pipeline_stage _via_fastrender_stage;

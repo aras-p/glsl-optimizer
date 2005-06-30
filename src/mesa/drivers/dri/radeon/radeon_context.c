@@ -63,6 +63,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_vtxfmt.h"
 #include "radeon_maos.h"
 
+#define need_GL_ARB_multisample
+#define need_GL_ARB_texture_compression
+#define need_GL_EXT_blend_minmax
+#define need_GL_EXT_secondary_color
+#include "extension_helper.h"
+
 #define DRIVER_DATE	"20050528"
 
 #include "vblank.h"
@@ -119,33 +125,33 @@ static const GLubyte *radeonGetString( GLcontext *ctx, GLenum name )
 
 /* Extension strings exported by the R100 driver.
  */
-static const char * const card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
-    "GL_ARB_multisample",
-    "GL_ARB_multitexture",
-    "GL_ARB_texture_border_clamp",
-    "GL_ARB_texture_compression",
-    "GL_ARB_texture_env_add",
-    "GL_ARB_texture_env_combine",
-    "GL_ARB_texture_env_crossbar",
-    "GL_ARB_texture_env_dot3",
-    "GL_ARB_texture_mirrored_repeat",
-    "GL_EXT_blend_logic_op",
-    "GL_EXT_blend_subtract",
-    "GL_EXT_secondary_color",
-    "GL_EXT_stencil_wrap",
-    "GL_EXT_texture_edge_clamp",
-    "GL_EXT_texture_env_combine",
-    "GL_EXT_texture_env_dot3",
-    "GL_EXT_texture_filter_anisotropic",
-    "GL_EXT_texture_lod_bias",
-    "GL_EXT_texture_mirror_clamp",
-    "GL_ATI_texture_env_combine3",
-    "GL_ATI_texture_mirror_once",
-    "GL_MESA_ycbcr_texture",
-    "GL_NV_blend_square",
-    "GL_SGIS_generate_mipmap",
-    NULL
+    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
+    { "GL_ARB_multitexture",               NULL },
+    { "GL_ARB_texture_border_clamp",       NULL },
+    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
+    { "GL_ARB_texture_env_add",            NULL },
+    { "GL_ARB_texture_env_combine",        NULL },
+    { "GL_ARB_texture_env_crossbar",       NULL },
+    { "GL_ARB_texture_env_dot3",           NULL },
+    { "GL_ARB_texture_mirrored_repeat",    NULL },
+    { "GL_EXT_blend_logic_op",             NULL },
+    { "GL_EXT_blend_subtract",             GL_EXT_blend_minmax_functions },
+    { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
+    { "GL_EXT_stencil_wrap",               NULL },
+    { "GL_EXT_texture_edge_clamp",         NULL },
+    { "GL_EXT_texture_env_combine",        NULL },
+    { "GL_EXT_texture_env_dot3",           NULL },
+    { "GL_EXT_texture_filter_anisotropic", NULL },
+    { "GL_EXT_texture_lod_bias",           NULL },
+    { "GL_EXT_texture_mirror_clamp",       NULL },
+    { "GL_ATI_texture_env_combine3",       NULL },
+    { "GL_ATI_texture_mirror_once",        NULL },
+    { "GL_MESA_ycbcr_texture",             NULL },
+    { "GL_NV_blend_square",                NULL },
+    { "GL_SGIS_generate_mipmap",           NULL },
+    { NULL,                                NULL }
 };
 
 extern const struct tnl_pipeline_stage _radeon_texrect_stage;

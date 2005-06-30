@@ -7,6 +7,7 @@
 OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h \
 	../main/enums.c \
 	../x86/glapi_x86.S \
+	../drivers/dri/common/extension_helper.h \
 	../../glx/x11/indirect.c \
 	../../glx/x11/indirect.h \
 	../../glx/x11/indirect_init.c \
@@ -38,6 +39,9 @@ glapitable.h: $(COMMON) gl_table.py
 
 ../x86/glapi_x86.S: $(COMMON) gl_x86_asm.py
 	$(PYTHON2) $(PYTHON_FLAGS) gl_x86_asm.py > ../x86/glapi_x86.S
+
+../drivers/dri/common/extension_helper.h: $(COMMON) extension_helper.py
+	$(PYTHON2) $(PYTHON_FLAGS) extension_helper.py > ../drivers/dri/common/extension_helper.h
 
 ../../glx/x11/indirect.c: $(COMMON_GLX) glX_proto_send.py
 	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_send.py -m proto > ../../glx/x11/indirect.c

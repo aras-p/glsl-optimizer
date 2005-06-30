@@ -57,6 +57,9 @@
 #include "utils.h"
 #include "vblank.h"
 
+#define need_GL_ARB_multisample
+#include "extension_helper.h"
+
 #ifndef MACH64_DEBUG
 int MACH64_DEBUG = (0);
 #endif
@@ -76,14 +79,14 @@ static const struct dri_debug_control debug_control[] =
     { NULL,    0 }
 };
 
-static const char * const card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
-   "GL_ARB_multitexture",
-   "GL_EXT_texture_edge_clamp",
-   "GL_MESA_ycbcr_texture",
-   "GL_SGIS_generate_mipmap",
-   "GL_SGIS_texture_edge_clamp",
-   NULL
+    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
+    { "GL_ARB_multitexture",               NULL },
+    { "GL_EXT_texture_edge_clamp",         NULL },
+    { "GL_MESA_ycbcr_texture",             NULL },
+    { "GL_SGIS_generate_mipmap",           NULL },
+    { NULL,                                NULL }
 };
 
 

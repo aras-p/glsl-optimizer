@@ -61,6 +61,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "i810ioctl.h"
 
 #include "utils.h"
+
+#define need_GL_ARB_multisample
+#include "extension_helper.h"
+
 #ifndef I810_DEBUG
 int I810_DEBUG = (0);
 #endif
@@ -97,17 +101,18 @@ static void i810BufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 
 /* Extension strings exported by the i810 driver.
  */
-static const char * const card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
-   "GL_ARB_multitexture",
-   "GL_ARB_texture_env_add",
-   "GL_ARB_texture_mirrored_repeat",
-   "GL_EXT_stencil_wrap",
-   "GL_EXT_texture_edge_clamp",
-   "GL_EXT_texture_lod_bias",
-   "GL_MESA_ycbcr_texture",
-   "GL_SGIS_generate_mipmap",
-   NULL
+    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
+    { "GL_ARB_multitexture",               NULL },
+    { "GL_ARB_texture_env_add",            NULL },
+    { "GL_ARB_texture_mirrored_repeat",    NULL },
+    { "GL_EXT_stencil_wrap",               NULL },
+    { "GL_EXT_texture_edge_clamp",         NULL },
+    { "GL_EXT_texture_lod_bias",           NULL },
+    { "GL_MESA_ycbcr_texture",             NULL },
+    { "GL_SGIS_generate_mipmap",           NULL },
+    { NULL,                                NULL }
 };
 
 extern const struct tnl_pipeline_stage _i810_render_stage;

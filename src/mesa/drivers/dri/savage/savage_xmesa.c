@@ -58,6 +58,10 @@
 
 #include "texmem.h"
 
+#define need_GL_ARB_multisample
+#define need_GL_ARB_texture_compression
+#include "extension_helper.h"
+
 #include "xmlpool.h"
 
 /* Driver-specific options
@@ -127,17 +131,19 @@ unsigned long time_sum=0;
 struct timeval tv_s1,tv_f1;
 #endif
 
-static const char *const common_extensions[] =
+static const struct dri_extension common_extensions[] =
 {
-    "GL_ARB_multitexture",
-    "GL_EXT_texture_lod_bias",
-    "GL_ARB_texture_compression",
-    NULL
+    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
+    { "GL_ARB_multitexture",               NULL },
+    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
+    { "GL_EXT_texture_lod_bias",           NULL },
+    { NULL,                                NULL }
 };
-static const char *const s4_extensions[] =
+
+static const struct dri_extension s4_extensions[] =
 {
-    "GL_EXT_texture_env_add",
-    NULL
+    { "GL_ARB_texture_env_add",            NULL },
+    { NULL,                                NULL }
 };
 
 extern struct tnl_pipeline_stage _savage_texnorm_stage;

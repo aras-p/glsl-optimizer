@@ -69,6 +69,18 @@
 
 #include "GL/internal/dri_interface.h"
 
+#define need_GL_ARB_multisample
+#define need_GL_ARB_texture_compression
+#define need_GL_ARB_vertex_program
+#define need_GL_EXT_fog_coord
+#define need_GL_EXT_multi_draw_arrays
+#define need_GL_EXT_secondary_color
+#if 0
+#define need_GL_EXT_paletted_texture
+#endif
+#define need_GL_NV_vertex_program
+#include "extension_helper.h"
+
 /* MGA configuration
  */
 #include "xmlpool.h"
@@ -380,39 +392,47 @@ static const struct tnl_pipeline_stage *mga_pipeline[] = {
 };
 
 
-static const char * const g400_extensions[] =
+static const struct dri_extension g400_extensions[] =
 {
-   "GL_ARB_multitexture",
-   "GL_ARB_texture_env_add",
-   "GL_ARB_texture_env_combine",
-   "GL_ARB_texture_env_crossbar",
-   "GL_EXT_texture_env_combine",
-   "GL_EXT_texture_edge_clamp",
-   "GL_ATI_texture_env_combine3",
-#if defined (MESA_packed_depth_stencil)
-   "GL_MESA_packed_depth_stencil",
-#endif
-   NULL
+   { "GL_ARB_multitexture",           NULL },
+   { "GL_ARB_texture_env_add",        NULL },
+   { "GL_ARB_texture_env_combine",    NULL },
+   { "GL_ARB_texture_env_crossbar",   NULL },
+   { "GL_EXT_texture_env_combine",    NULL },
+   { "GL_EXT_texture_edge_clamp",     NULL },
+   { "GL_ATI_texture_env_combine3",   NULL },
+   { NULL,                            NULL }
 };
 
-static const char * const card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
-   "GL_ARB_multisample",
-   "GL_ARB_texture_compression",
-   "GL_ARB_texture_rectangle",
-   "GL_EXT_blend_logic_op",
-   "GL_EXT_fog_coord",
-   "GL_EXT_multi_draw_arrays",
+   { "GL_ARB_multisample",            GL_ARB_multisample_functions },
+   { "GL_ARB_texture_compression",    GL_ARB_texture_compression_functions },
+   { "GL_ARB_texture_rectangle",      NULL },
+   { "GL_EXT_blend_logic_op",         NULL },
+   { "GL_EXT_fog_coord",              GL_EXT_fog_coord_functions },
+   { "GL_EXT_multi_draw_arrays",      GL_EXT_multi_draw_arrays_functions },
    /* paletted_textures currently doesn't work, but we could fix them later */
-#if 0
-   "GL_EXT_shared_texture_palette",
-   "GL_EXT_paletted_texture",
+#if defined( need_GL_EXT_paletted_texture )
+   { "GL_EXT_shared_texture_palette", NULL },
+   { "GL_EXT_paletted_texture",       GL_EXT_paletted_texture_functions },
 #endif
-   "GL_EXT_secondary_color",
-   "GL_EXT_stencil_wrap",
-   "GL_MESA_ycbcr_texture",
-   "GL_SGIS_generate_mipmap",
-   NULL
+   { "GL_EXT_secondary_color",        GL_EXT_secondary_color_functions },
+   { "GL_EXT_stencil_wrap",           NULL },
+   { "GL_MESA_ycbcr_texture",         NULL },
+   { "GL_SGIS_generate_mipmap",       NULL },
+   { NULL,                            NULL }
+};
+
+static const struct dri_extension ARB_vp_extension[] = {
+   { "GL_ARB_vertex_program",         GL_ARB_vertex_program_functions },
+   { NULL,                            NULL }
+};
+
+static const struct dri_extension NV_vp_extensions[] = {
+   { "GL_NV_vertex_program",          GL_NV_vertex_program_functions },
+   { "GL_NV_vertex_program1_1",       NULL },
+   { NULL,                            NULL }
 };
 
 static const struct dri_debug_control debug_control[] =
@@ -617,12 +637,11 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    }
 
    if ( driQueryOptionb( &mmesa->optionCache, "arb_vertex_program" ) ) {
-      _mesa_enable_extension( ctx, "GL_ARB_vertex_program" );
+      driInitSingleExtension( ctx, ARB_vp_extension );
    }
    
    if ( driQueryOptionb( &mmesa->optionCache, "nv_vertex_program" ) ) {
-      _mesa_enable_extension( ctx, "GL_NV_vertex_program" );
-      _mesa_enable_extension( ctx, "GL_NV_vertex_program1_1" );
+      driInitExtensions( ctx, NV_vp_extensions, GL_FALSE );
    }
 
 	

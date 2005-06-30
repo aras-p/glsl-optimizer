@@ -63,6 +63,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_vtxfmt.h"
 #include "r200_maos.h"
 
+#define need_GL_ARB_multisample
+#define need_GL_ARB_texture_compression
+#define need_GL_ARB_vertex_buffer_object
+#define need_GL_ARB_vertex_program
+#define need_GL_EXT_blend_minmax
+#define need_GL_EXT_fog_coord
+#define need_GL_EXT_secondary_color
+#define need_GL_EXT_blend_equation_separate
+#define need_GL_EXT_blend_func_separate
+#define need_GL_NV_vertex_program
+#include "extension_helper.h"
+
 #define DRIVER_DATE	"20041207"
 
 #include "vblank.h"
@@ -119,35 +131,49 @@ static const GLubyte *r200GetString( GLcontext *ctx, GLenum name )
 
 /* Extension strings exported by the R200 driver.
  */
-static const char * const card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
-    "GL_ARB_multisample",
-    "GL_ARB_multitexture",
-    "GL_ARB_texture_border_clamp",
-    "GL_ARB_texture_compression",
-    "GL_ARB_texture_env_add",
-    "GL_ARB_texture_env_combine",
-    "GL_ARB_texture_env_dot3",
-    "GL_ARB_texture_mirrored_repeat",
-    "GL_ARB_vertex_buffer_object",
-    "GL_EXT_blend_minmax",
-    "GL_EXT_blend_subtract",
-    "GL_EXT_fog_coord",
-    "GL_EXT_secondary_color",
-    "GL_EXT_stencil_wrap",
-    "GL_EXT_texture_edge_clamp",
-    "GL_EXT_texture_env_combine",
-    "GL_EXT_texture_env_dot3",
-    "GL_EXT_texture_filter_anisotropic",
-    "GL_EXT_texture_lod_bias",
-    "GL_EXT_texture_mirror_clamp",
-    "GL_EXT_texture_rectangle",
-    "GL_ATI_texture_env_combine3",
-    "GL_ATI_texture_mirror_once",
-    "GL_MESA_pack_invert",
-    "GL_NV_blend_square",
-    "GL_SGIS_generate_mipmap",
-    NULL
+    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
+    { "GL_ARB_multitexture",               NULL },
+    { "GL_ARB_texture_border_clamp",       NULL },
+    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
+    { "GL_ARB_texture_env_add",            NULL },
+    { "GL_ARB_texture_env_combine",        NULL },
+    { "GL_ARB_texture_env_dot3",           NULL },
+    { "GL_ARB_texture_mirrored_repeat",    NULL },
+    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
+    { "GL_EXT_blend_minmax",               GL_EXT_blend_minmax_functions },
+    { "GL_EXT_blend_subtract",             NULL },
+    { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
+    { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
+    { "GL_EXT_stencil_wrap",               NULL },
+    { "GL_EXT_texture_edge_clamp",         NULL },
+    { "GL_EXT_texture_env_combine",        NULL },
+    { "GL_EXT_texture_env_dot3",           NULL },
+    { "GL_EXT_texture_filter_anisotropic", NULL },
+    { "GL_EXT_texture_lod_bias",           NULL },
+    { "GL_EXT_texture_mirror_clamp",       NULL },
+    { "GL_EXT_texture_rectangle",          NULL },
+    { "GL_ATI_texture_env_combine3",       NULL },
+    { "GL_ATI_texture_mirror_once",        NULL },
+    { "GL_MESA_pack_invert",               NULL },
+    { "GL_NV_blend_square",                NULL },
+    { "GL_SGIS_generate_mipmap",           NULL },
+    { NULL,                                NULL }
+};
+
+static const struct dri_extension blend_extensions[] = {
+    { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
+    { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
+    { NULL,                                NULL }
+};
+							 
+static const struct dri_extension ARB_vp_extension[] = {
+    { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions }
+};
+
+static const struct dri_extension NV_vp_extension[] = {
+    { "GL_NV_vertex_program",              GL_NV_vertex_program_functions }
 };
 
 extern const struct tnl_pipeline_stage _r200_render_stage;
@@ -439,13 +465,12 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    if (rmesa->r200Screen->drmSupportsCubeMaps)
       _mesa_enable_extension( ctx, "GL_ARB_texture_cube_map" );
    if (rmesa->r200Screen->drmSupportsBlendColor) {
-      _mesa_enable_extension( ctx, "GL_EXT_blend_equation_separate" );
-      _mesa_enable_extension( ctx, "GL_EXT_blend_func_separate" );
+       driInitExtensions( ctx, blend_extensions, GL_FALSE );
    }
    if(driQueryOptionb(&rmesa->optionCache, "arb_vertex_program"))
-      _mesa_enable_extension( ctx, "GL_ARB_vertex_program");
+      driInitSingleExtension( ctx, ARB_vp_extension );
    if(driQueryOptionb(&rmesa->optionCache, "nv_vertex_program"))
-      _mesa_enable_extension( ctx, "GL_NV_vertex_program");
+      driInitSingleExtension( ctx, NV_vp_extension );
 
 #if 0
    r200InitDriverFuncs( ctx );

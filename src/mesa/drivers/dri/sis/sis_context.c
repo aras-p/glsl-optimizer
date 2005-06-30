@@ -57,16 +57,20 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 
+#define need_GL_ARB_multisample
+#include "extension_helper.h"
+
 int GlobalCurrentHwcx = -1;
 int GlobalHwcxCountBase = 1;
 int GlobalCmdQueueLen = 0;
 
-static const char * const card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
-   "GL_ARB_multitexture",
-   "GL_EXT_texture_lod_bias",
-   "GL_NV_blend_square",
-   NULL
+    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
+    { "GL_ARB_multitexture",               NULL },
+    { "GL_EXT_texture_lod_bias",           NULL },
+    { "GL_NV_blend_square",                NULL },
+    { NULL,                                NULL }
 };
 
 void

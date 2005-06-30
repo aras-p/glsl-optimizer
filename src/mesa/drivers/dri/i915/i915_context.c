@@ -45,14 +45,15 @@
  * Mesa's Driver Functions
  ***************************************/
 
-static const char * const card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
-   "GL_ARB_depth_texture",           /* New: alanh 06-Jan-2005 */
-   "GL_ARB_fragment_program",
-   "GL_ARB_shadow",                  /* New: alanh 06-Jan-2005 */
-   "GL_EXT_shadow_funcs",            /* New: alanh 06-Jan-2005 */
-   "GL_SGIX_depth_texture",	/* ARB extn won't work if not enabled */
-   NULL
+    { "GL_ARB_depth_texture",              NULL },
+    { "GL_ARB_fragment_program",           NULL },
+    { "GL_ARB_shadow",                     NULL },
+    { "GL_EXT_shadow_funcs",               NULL },
+    /* ARB extn won't work if not enabled */
+    { "GL_SGIX_depth_texture",             NULL },
+    { NULL,                                NULL }
 };
 
 /* Override intel default.

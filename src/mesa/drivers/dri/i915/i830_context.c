@@ -38,10 +38,10 @@
  * Mesa's Driver Functions
  ***************************************/
 
-static const char * const card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
-   "GL_ARB_texture_env_crossbar",
-   NULL
+    { "GL_ARB_texture_env_crossbar",       NULL },
+    { NULL,                                NULL }
 };
 
 

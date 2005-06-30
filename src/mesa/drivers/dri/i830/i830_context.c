@@ -65,6 +65,17 @@
 
 
 #include "utils.h"
+
+#define need_GL_ARB_multisample
+#define need_GL_ARB_texture_compression
+#define need_GL_EXT_blend_color
+#define need_GL_EXT_blend_equation_separate
+#define need_GL_EXT_blend_func_separate
+#define need_GL_EXT_blend_minmax
+#define need_GL_EXT_fog_coord
+#define need_GL_EXT_secondary_color
+#include "extension_helper.h"
+
 #include "xmlpool.h" /* for symbolic values of enum-type options */
 #ifndef I830_DEBUG
 int I830_DEBUG = (0);
@@ -138,35 +149,35 @@ static void i830BufferSize(GLframebuffer *buffer,
 
 /* Extension strings exported by the i830 driver.
  */
-static const char * const card_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
-   "GL_ARB_multisample",
-   "GL_ARB_multitexture",
-   "GL_ARB_texture_border_clamp",
-   "GL_ARB_texture_compression",
-   "GL_ARB_texture_env_add",
-   "GL_ARB_texture_env_combine",
-   "GL_ARB_texture_env_crossbar",
-   "GL_ARB_texture_env_dot3",
-   "GL_ARB_texture_mirrored_repeat",
-   "GL_EXT_blend_color",
-   "GL_EXT_blend_equation_separate",
-   "GL_EXT_blend_func_separate",
-   "GL_EXT_blend_minmax",
-   "GL_EXT_blend_subtract",
-   "GL_EXT_fog_coord",
-   "GL_EXT_secondary_color",
-   "GL_EXT_stencil_wrap",
-   "GL_EXT_texture_edge_clamp",
-   "GL_EXT_texture_env_combine",
-   "GL_EXT_texture_env_dot3",
-   "GL_EXT_texture_filter_anisotropic",
-   "GL_EXT_texture_lod_bias",
-   "GL_EXT_texture_rectangle",
-   "GL_NV_blend_square",
-   "GL_MESA_ycbcr_texture",
-   "GL_SGIS_generate_mipmap",
-   NULL
+    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
+    { "GL_ARB_multitexture",               NULL },
+    { "GL_ARB_texture_border_clamp",       NULL },
+    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
+    { "GL_ARB_texture_env_add",            NULL },
+    { "GL_ARB_texture_env_combine",        NULL },
+    { "GL_ARB_texture_env_crossbar",       NULL },
+    { "GL_ARB_texture_env_dot3",           NULL },
+    { "GL_ARB_texture_mirrored_repeat",    NULL },
+    { "GL_EXT_blend_color",                GL_EXT_blend_color_functions },
+    { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
+    { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
+    { "GL_EXT_blend_minmax",               GL_EXT_blend_minmax_functions },
+    { "GL_EXT_blend_subtract",             NULL },
+    { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
+    { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
+    { "GL_EXT_stencil_wrap",               NULL },
+    { "GL_EXT_texture_edge_clamp",         NULL },
+    { "GL_EXT_texture_env_combine",        NULL },
+    { "GL_EXT_texture_env_dot3",           NULL },
+    { "GL_EXT_texture_filter_anisotropic", NULL },
+    { "GL_EXT_texture_lod_bias",           NULL },
+    { "GL_EXT_texture_rectangle",          NULL },
+    { "GL_MESA_ycbcr_texture",             NULL },
+    { "GL_NV_blend_square",                NULL },
+    { "GL_SGIS_generate_mipmap",           NULL },
+    { NULL,                                NULL }
 };
 
 
