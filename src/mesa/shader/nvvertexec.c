@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -145,7 +145,7 @@ _mesa_init_vp_per_primitive_registers(GLcontext *ctx)
          }
          else if (ctx->VertexProgram.TrackMatrixTransform[i] == GL_INVERSE_NV) {
             _math_matrix_analyse(mat); /* update the inverse */
-            assert((mat->flags & MAT_DIRTY_INVERSE) == 0);
+            ASSERT(!math_matrix_is_dirty(mat));
             load_matrix(ctx->VertexProgram.Parameters, i*4, mat->inv);
          }
          else if (ctx->VertexProgram.TrackMatrixTransform[i] == GL_TRANSPOSE_NV) {
@@ -155,7 +155,7 @@ _mesa_init_vp_per_primitive_registers(GLcontext *ctx)
             assert(ctx->VertexProgram.TrackMatrixTransform[i]
                    == GL_INVERSE_TRANSPOSE_NV);
             _math_matrix_analyse(mat); /* update the inverse */
-            assert((mat->flags & MAT_DIRTY_INVERSE) == 0);
+            ASSERT(!math_matrix_is_dirty(mat));
             load_transpose_matrix(ctx->VertexProgram.Parameters, i*4, mat->inv);
          }
       }

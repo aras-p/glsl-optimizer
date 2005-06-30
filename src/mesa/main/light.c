@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -114,7 +114,7 @@ _mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params )
    case GL_SPOT_DIRECTION: {
       GLfloat tmp[4];
       /* transform direction by inverse modelview */
-      if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) {
+      if (_math_matrix_is_dirty(ctx->ModelviewMatrixStack.Top)) {
 	 _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
       }
       TRANSFORM_NORMAL( tmp, params, ctx->ModelviewMatrixStack.Top->inv );
@@ -1107,10 +1107,7 @@ static void
 update_modelview_scale( GLcontext *ctx )
 {
    ctx->_ModelViewInvScale = 1.0F;
-   if (ctx->ModelviewMatrixStack.Top->flags & (MAT_FLAG_UNIFORM_SCALE |
-			       MAT_FLAG_GENERAL_SCALE |
-			       MAT_FLAG_GENERAL_3D |
-			       MAT_FLAG_GENERAL) ) {
+   if (!_math_matrix_is_length_preserving(ctx->ModelviewMatrixStack.Top)) {
       const GLfloat *m = ctx->ModelviewMatrixStack.Top->inv;
       GLfloat f = m[2] * m[2] + m[6] * m[6] + m[10] * m[10];
       if (f < 1e-12) f = 1.0;
@@ -1139,8 +1136,7 @@ _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state )
       ctx->_NeedEyeCoords = 1;
 
    if (ctx->Light.Enabled &&
-       !TEST_MAT_FLAGS( ctx->ModelviewMatrixStack.Top, 
-			MAT_FLAGS_LENGTH_PRESERVING))
+       !_math_matrix_is_length_preserving(ctx->ModelviewMatrixStack.Top))
       ctx->_NeedEyeCoords = 1;
 
 

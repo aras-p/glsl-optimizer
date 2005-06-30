@@ -60,7 +60,7 @@ run_normal_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    /* We can only use the display list's saved normal lengths if we've
     * got a transformation matrix with uniform scaling.
     */
-   if (ctx->ModelviewMatrixStack.Top->flags & MAT_FLAG_GENERAL_SCALE)
+   if (_math_matrix_is_general_scale(ctx->ModelviewMatrixStack.Top))
       lengths = NULL;
    else
       lengths = VB->NormalLengthPtr;
@@ -108,10 +108,7 @@ validate_normal_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
        */
       GLuint transform = NORM_TRANSFORM_NO_ROT;
 
-      if (ctx->ModelviewMatrixStack.Top->flags & (MAT_FLAG_GENERAL |
-                                                  MAT_FLAG_ROTATION |
-                                                  MAT_FLAG_GENERAL_3D |
-                                                  MAT_FLAG_PERSPECTIVE)) {
+      if (_math_matrix_has_rotation(ctx->ModelviewMatrixStack.Top)) {
          /* need to do full (3x3) matrix transform */
 	 transform = NORM_TRANSFORM;
       }

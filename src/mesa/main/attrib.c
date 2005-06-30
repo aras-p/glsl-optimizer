@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -945,7 +945,7 @@ _mesa_PopAttrib(void)
                /* lighting enable */
                _mesa_set_enable(ctx, GL_LIGHTING, light->Enabled);
                /* per-light state */
-               if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) 
+               if (_math_matrix_is_dirty(ctx->ModelviewMatrixStack.Top))
                   _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
 	       
                for (i = 0; i < MAX_LIGHTS; i++) {
@@ -1106,7 +1106,7 @@ _mesa_PopAttrib(void)
                const struct gl_transform_attrib *xform;
                xform = (const struct gl_transform_attrib *) attr->data;
                _mesa_MatrixMode(xform->MatrixMode);
-               if (ctx->ProjectionMatrixStack.Top->flags & MAT_DIRTY)
+               if (_math_matrix_is_dirty(ctx->ProjectionMatrixStack.Top))
                   _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
 
                /* restore clip planes */

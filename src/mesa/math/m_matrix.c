@@ -43,6 +43,79 @@
 
 
 /**
+ * \defgroup MatFlags MAT_FLAG_XXX-flags
+ *
+ * Bitmasks to indicate different kinds of 4x4 matrices in GLmatrix::flags
+ * It would be nice to make all these flags private to m_matrix.c
+ */
+/*@{*/
+#define MAT_FLAG_IDENTITY       0     /**< is an identity matrix flag.
+                                       *   (Not actually used - the identity
+                                       *   matrix is identified by the absense
+                                       *   of all other flags.)
+                                       */
+#define MAT_FLAG_GENERAL        0x1   /**< is a general matrix flag */
+#define MAT_FLAG_ROTATION       0x2   /**< is a rotation matrix flag */
+#define MAT_FLAG_TRANSLATION    0x4   /**< is a translation matrix flag */
+#define MAT_FLAG_UNIFORM_SCALE  0x8   /**< is an uniform scaling matrix flag */
+#define MAT_FLAG_GENERAL_SCALE  0x10  /**< is a general scaling matrix flag */
+#define MAT_FLAG_GENERAL_3D     0x20  /**< general 3D matrix flag */
+#define MAT_FLAG_PERSPECTIVE    0x40  /**< is a perspective proj matrix flag */
+#define MAT_FLAG_SINGULAR       0x80  /**< is a singular matrix flag */
+#define MAT_DIRTY_TYPE          0x100  /**< matrix type is dirty */
+#define MAT_DIRTY_FLAGS         0x200  /**< matrix flags are dirty */
+#define MAT_DIRTY_INVERSE       0x400  /**< matrix inverse is dirty */
+
+/** angle preserving matrix flags mask */
+#define MAT_FLAGS_ANGLE_PRESERVING (MAT_FLAG_ROTATION | \
+				    MAT_FLAG_TRANSLATION | \
+				    MAT_FLAG_UNIFORM_SCALE)
+
+/** geometry related matrix flags mask */
+#define MAT_FLAGS_GEOMETRY (MAT_FLAG_GENERAL | \
+			    MAT_FLAG_ROTATION | \
+			    MAT_FLAG_TRANSLATION | \
+			    MAT_FLAG_UNIFORM_SCALE | \
+			    MAT_FLAG_GENERAL_SCALE | \
+			    MAT_FLAG_GENERAL_3D | \
+			    MAT_FLAG_PERSPECTIVE | \
+	                    MAT_FLAG_SINGULAR)
+
+/** length preserving matrix flags mask */
+#define MAT_FLAGS_LENGTH_PRESERVING (MAT_FLAG_ROTATION | \
+				     MAT_FLAG_TRANSLATION)
+
+
+/** 3D (non-perspective) matrix flags mask */
+#define MAT_FLAGS_3D (MAT_FLAG_ROTATION | \
+		      MAT_FLAG_TRANSLATION | \
+		      MAT_FLAG_UNIFORM_SCALE | \
+		      MAT_FLAG_GENERAL_SCALE | \
+		      MAT_FLAG_GENERAL_3D)
+
+/** dirty matrix flags mask */
+#define MAT_DIRTY          (MAT_DIRTY_TYPE | \
+			    MAT_DIRTY_FLAGS | \
+			    MAT_DIRTY_INVERSE)
+
+/*@}*/
+
+
+/** 
+ * Test geometry related matrix flags.
+ * 
+ * \param mat a pointer to a GLmatrix structure.
+ * \param a flags mask.
+ *
+ * \returns non-zero if all geometry related matrix flags are contained within
+ * the mask, or zero otherwise.
+ */ 
+#define TEST_MAT_FLAGS(mat, a)  \
+    ((MAT_FLAGS_GEOMETRY & (~(a)) & ((mat)->flags) ) == 0)
+
+
+
+/**
  * Names of the corresponding GLmatrixtype values.
  */
 static const char *types[] = {
@@ -1037,6 +1110,26 @@ _math_matrix_translate( GLmatrix *mat, GLfloat x, GLfloat y, GLfloat z )
 		  MAT_DIRTY_INVERSE);
 }
 
+
+/**
+ * Set matrix to do viewport and depthrange mapping.
+ * Transforms Normalized Device Coords to window/Z values.
+ */
+void
+_math_matrix_viewport(GLmatrix *m, GLint x, GLint y, GLint width, GLint height,
+                      GLfloat zNear, GLfloat zFar, GLfloat depthMax)
+{
+   m->m[MAT_SX] = (GLfloat) width / 2.0F;
+   m->m[MAT_TX] = m->m[MAT_SX] + x;
+   m->m[MAT_SY] = (GLfloat) height / 2.0F;
+   m->m[MAT_TY] = m->m[MAT_SY] + y;
+   m->m[MAT_SZ] = depthMax * ((zFar - zNear) / 2.0F);
+   m->m[MAT_TZ] = depthMax * ((zFar - zNear) / 2.0F + zNear);
+   m->flags = MAT_FLAG_GENERAL_SCALE | MAT_FLAG_TRANSLATION;
+   m->type = MATRIX_3D_NO_ROT;
+}
+
+
 /**
  * Set a matrix to the identity matrix.
  *
@@ -1294,6 +1387,47 @@ _math_matrix_analyse( GLmatrix *mat )
 }
 
 /*@}*/
+
+
+/**
+ * Test if the given matrix preserves vector lengths.
+ */
+GLboolean
+_math_matrix_is_length_preserving( const GLmatrix *m )
+{
+   return TEST_MAT_FLAGS( m, MAT_FLAGS_LENGTH_PRESERVING);
+}
+
+
+/**
+ * Test if the given matrix does any rotation.
+ * (or perhaps if the upper-left 3x3 is non-identity)
+ */
+GLboolean
+_math_matrix_has_rotation( const GLmatrix *m )
+{
+   if (m->flags & (MAT_FLAG_GENERAL |
+                   MAT_FLAG_ROTATION |
+                   MAT_FLAG_GENERAL_3D |
+                   MAT_FLAG_PERSPECTIVE))
+      return GL_TRUE;
+   else
+      return GL_FALSE;
+}
+
+
+GLboolean
+_math_matrix_is_general_scale( const GLmatrix *m )
+{
+   return (m->flags & MAT_FLAG_GENERAL_SCALE) ? GL_TRUE : GL_FALSE;
+}
+
+
+GLboolean
+_math_matrix_is_dirty( const GLmatrix *m )
+{
+   return (m->flags & MAT_DIRTY) ? GL_TRUE : GL_FALSE;
+}
 
 
 /**********************************************************************/

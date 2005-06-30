@@ -2176,7 +2176,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	    GLfloat tmp[4];
 
             /* Transform plane equation by the inverse modelview matrix */
-            if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) {
+            if (_math_matrix_is_dirty(ctx->ModelviewMatrixStack.Top)) {
                _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
             }
             _mesa_transform_vector( tmp, params, ctx->ModelviewMatrixStack.Top->inv );
@@ -2232,7 +2232,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
 	    GLfloat tmp[4];
             /* Transform plane equation by the inverse modelview matrix */
-	    if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) {
+	    if (_math_matrix_is_dirty(ctx->ModelviewMatrixStack.Top)) {
                _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
             }
             _mesa_transform_vector( tmp, params, ctx->ModelviewMatrixStack.Top->inv );
@@ -2285,7 +2285,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
 	    GLfloat tmp[4];
             /* Transform plane equation by the inverse modelview matrix */
-            if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) {
+            if (_math_matrix_is_dirty(ctx->ModelviewMatrixStack.Top)) {
                _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
             }
             _mesa_transform_vector( tmp, params, ctx->ModelviewMatrixStack.Top->inv );
@@ -2332,7 +2332,7 @@ _mesa_TexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
 	 else if (pname==GL_EYE_PLANE) {
 	    GLfloat tmp[4];
             /* Transform plane equation by the inverse modelview matrix */
-            if (ctx->ModelviewMatrixStack.Top->flags & MAT_DIRTY_INVERSE) {
+            if (_math_matrix_is_dirty(ctx->ModelviewMatrixStack.Top)) {
                _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
             }
             _mesa_transform_vector( tmp, params, ctx->ModelviewMatrixStack.Top->inv );
@@ -2874,7 +2874,7 @@ update_texture_matrices( GLcontext *ctx )
    ctx->Texture._TexMatEnabled = 0;
 
    for (i=0; i < ctx->Const.MaxTextureUnits; i++) {
-      if (ctx->TextureMatrixStack[i].Top->flags & MAT_DIRTY) {
+      if (_math_matrix_is_dirty(ctx->TextureMatrixStack[i].Top)) {
 	 _math_matrix_analyse( ctx->TextureMatrixStack[i].Top );
 
 	 if (ctx->Texture.Unit[i]._ReallyEnabled &&

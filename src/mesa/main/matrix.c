@@ -1,13 +1,3 @@
-/**
- * \file matrix.c
- * Matrix operations.
- *
- * \note
- * -# 4x4 transformation matrices are stored in memory in column major order.
- * -# Points/vertices are to be thought of as column vectors.
- * -# Transformation of a point p by a matrix M is: p' = M * p
- */
-
 /*
  * Mesa 3-D graphics library
  * Version:  6.3
@@ -30,6 +20,17 @@
  * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+
+/**
+ * \file matrix.c
+ * Matrix operations.
+ *
+ * \note
+ * -# 4x4 transformation matrices are stored in memory in column major order.
+ * -# Points/vertices are to be thought of as column vectors.
+ * -# Transformation of a point p by a matrix M is: p' = M * p
  */
 
 
@@ -601,18 +602,13 @@ _mesa_set_viewport( GLcontext *ctx, GLint x, GLint y,
       tmps = width; width = height; height = tmps;
    }
 
-   /* compute scale and bias values :: This is really driver-specific
-    * and should be maintained elsewhere if at all.  NOTE: RasterPos
-    * uses this.
+   /* Compute scale and bias values. This is really driver-specific
+    * and should be maintained elsewhere if at all.
+    * NOTE: RasterPos uses this.
     */
-   ctx->Viewport._WindowMap.m[MAT_SX] = (GLfloat) width / 2.0F;
-   ctx->Viewport._WindowMap.m[MAT_TX] = ctx->Viewport._WindowMap.m[MAT_SX] + x;
-   ctx->Viewport._WindowMap.m[MAT_SY] = (GLfloat) height / 2.0F;
-   ctx->Viewport._WindowMap.m[MAT_TY] = ctx->Viewport._WindowMap.m[MAT_SY] + y;
-   ctx->Viewport._WindowMap.m[MAT_SZ] = depthMax * ((f - n) / 2.0F);
-   ctx->Viewport._WindowMap.m[MAT_TZ] = depthMax * ((f - n) / 2.0F + n);
-   ctx->Viewport._WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
-   ctx->Viewport._WindowMap.type = MATRIX_3D_NO_ROT;
+   _math_matrix_viewport(&ctx->Viewport._WindowMap, x, y, width, height,
+                         n, f, depthMax);
+
    ctx->NewState |= _NEW_VIEWPORT;
 
    if (ctx->Driver.Viewport) {
@@ -916,6 +912,8 @@ void _mesa_init_transform( GLcontext *ctx )
  */
 void _mesa_init_viewport( GLcontext *ctx )
 {
+   GLfloat depthMax = 65535.0F; /* sorf of arbitrary */
+
    /* Viewport group */
    ctx->Viewport.X = 0;
    ctx->Viewport.Y = 0;
@@ -925,17 +923,8 @@ void _mesa_init_viewport( GLcontext *ctx )
    ctx->Viewport.Far = 1.0;
    _math_matrix_ctr(&ctx->Viewport._WindowMap);
 
-#if 0000
-#define Sz 10
-#define Tz 14
-   ctx->Viewport._WindowMap.m[Sz] = 0.5F * ctx->DepthMaxF;
-   ctx->Viewport._WindowMap.m[Tz] = 0.5F * ctx->DepthMaxF;
-#undef Sz
-#undef Tz
-#endif
-
-   ctx->Viewport._WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
-   ctx->Viewport._WindowMap.type = MATRIX_3D_NO_ROT;
+   _math_matrix_viewport(&ctx->Viewport._WindowMap, 0, 0, 0, 0,
+                         0.0F, 1.0F, depthMax);
 }
 
 
