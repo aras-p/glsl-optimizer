@@ -881,9 +881,9 @@ _mesa_warning( GLcontext *ctx, const char *fmtString, ... )
 #endif
    if (debug) {
 #if defined(XFree86LOADER) && defined(IN_MODULE)
-      xf86fprintf(stderr, "Mesa warning: %s\n", str);
+      xf86fprintf(stderr, "Mesa warning: %s", str);
 #else
-      fprintf(stderr, "Mesa warning: %s\n", str);
+      fprintf(stderr, "Mesa warning: %s", str);
 #endif
    }
 }
