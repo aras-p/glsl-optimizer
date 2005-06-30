@@ -48,6 +48,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_ioctl.h"
 #include "r200_tcl.h"
 #include "r200_sanity.h"
+#include "r300_state.h"
 #include "radeon_reg.h"
 
 #include "vblank.h"
@@ -237,6 +238,8 @@ void radeonPageFlip(const __DRIdrawablePrivate * dPriv)
 
 	if (IS_FAMILY_R200(radeon))
 		R200_FIREVERTICES((r200ContextPtr)radeon);
+	else
+		r300Flush(radeon->glCtx);
 	LOCK_HARDWARE(radeon);
 
 	if (!dPriv->numClipRects) {
@@ -294,6 +297,21 @@ void radeonPageFlip(const __DRIdrawablePrivate * dPriv)
 		r200->hw.ctx.cmd[CTX_RB3D_COLOROFFSET] = radeon->state.color.drawOffset
 			+ radeon->radeonScreen->fbLocation;
 		r200->hw.ctx.cmd[CTX_RB3D_COLORPITCH] = radeon->state.color.drawPitch;
+	}
+	if (IS_FAMILY_R300(radeon)) {
+		r300ContextPtr r300 = (r300ContextPtr)radeon;
+		R300_STATECHANGE(r300, cb);
+		r300->hw.cb.cmd[R300_CB_OFFSET] = r300->radeon.state.color.drawOffset + 
+						r300->radeon.radeonScreen->fbLocation;
+		r300->hw.cb.cmd[R300_CB_PITCH] = r300->radeon.state.color.drawPitch;
+		
+		if (r300->radeon.radeonScreen->cpp == 4)
+			r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_FORMAT_ARGB8888;
+		else
+			r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_FORMAT_RGB565;
+	
+		if (r300->radeon.sarea->tiling_enabled)
+			r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_TILE_ENABLE;
 	}
 }
 
