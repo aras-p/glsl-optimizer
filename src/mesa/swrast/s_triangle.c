@@ -259,6 +259,21 @@ struct affine_info
 };
 
 
+static INLINE GLint
+ilerp(GLint t, GLint a, GLint b)
+{
+   return a + ((t * (b - a)) >> FIXED_SHIFT);
+}
+
+static INLINE GLint
+ilerp_2d(GLint ia, GLint ib, GLint v00, GLint v10, GLint v01, GLint v11)
+{
+   const GLint temp0 = ilerp(ia, v00, v10);
+   const GLint temp1 = ilerp(ia, v01, v11);
+   return ilerp(ib, temp0, temp1);
+}
+
+
 /* This function can handle GL_NEAREST or GL_LINEAR sampling of 2D RGB or RGBA
  * textures with GL_REPLACE, GL_MODULATE, GL_BLEND, GL_DECAL or GL_ADD
  * texture env modes.
@@ -282,25 +297,18 @@ affine_span(GLcontext *ctx, struct sw_span *span,
    sample[ACOMP] = CHAN_MAX
 
 #define LINEAR_RGB							\
-   sample[RCOMP] = (ti * (si * tex00[0] + sf * tex01[0]) +		\
-             tf * (si * tex10[0] + sf * tex11[0])) >> 2 * FIXED_SHIFT;	\
-   sample[GCOMP] = (ti * (si * tex00[1] + sf * tex01[1]) +		\
-             tf * (si * tex10[1] + sf * tex11[1])) >> 2 * FIXED_SHIFT;	\
-   sample[BCOMP] = (ti * (si * tex00[2] + sf * tex01[2]) +		\
-             tf * (si * tex10[2] + sf * tex11[2])) >> 2 * FIXED_SHIFT;	\
-   sample[ACOMP] = CHAN_MAX
+   sample[RCOMP] = ilerp_2d(sf, tf, tex00[0], tex01[0], tex10[0], tex11[0]);\
+   sample[GCOMP] = ilerp_2d(sf, tf, tex00[1], tex01[1], tex10[1], tex11[1]);\
+   sample[BCOMP] = ilerp_2d(sf, tf, tex00[2], tex01[2], tex10[2], tex11[2]);\
+   sample[ACOMP] = CHAN_MAX;
 
 #define NEAREST_RGBA  COPY_CHAN4(sample, tex00)
 
 #define LINEAR_RGBA							\
-   sample[RCOMP] = (ti * (si * tex00[0] + sf * tex01[0]) +		\
-               tf * (si * tex10[0] + sf * tex11[0])) >> 2 * FIXED_SHIFT;\
-   sample[GCOMP] = (ti * (si * tex00[1] + sf * tex01[1]) +		\
-               tf * (si * tex10[1] + sf * tex11[1])) >> 2 * FIXED_SHIFT;\
-   sample[BCOMP] = (ti * (si * tex00[2] + sf * tex01[2]) +		\
-               tf * (si * tex10[2] + sf * tex11[2])) >> 2 * FIXED_SHIFT;\
-   sample[ACOMP] = (ti * (si * tex00[3] + sf * tex01[3]) +		\
-               tf * (si * tex10[3] + sf * tex11[3])) >> 2 * FIXED_SHIFT
+   sample[RCOMP] = ilerp_2d(sf, tf, tex00[0], tex01[0], tex10[0], tex11[0]);\
+   sample[GCOMP] = ilerp_2d(sf, tf, tex00[1], tex01[1], tex10[1], tex11[1]);\
+   sample[BCOMP] = ilerp_2d(sf, tf, tex00[2], tex01[2], tex10[2], tex11[2]);\
+   sample[ACOMP] = ilerp_2d(sf, tf, tex00[3], tex01[3], tex10[3], tex11[3])
 
 #define MODULATE							  \
    dest[RCOMP] = span->red   * (sample[RCOMP] + 1u) >> (FIXED_SHIFT + 8); \
@@ -353,13 +361,13 @@ affine_span(GLcontext *ctx, struct sw_span *span,
 
 #define NEAREST_RGBA_REPLACE  COPY_CHAN4(dest, tex00)
 
-#define SPAN_NEAREST(DO_TEX,COMP)					\
+#define SPAN_NEAREST(DO_TEX, COMPS)					\
 	for (i = 0; i < span->end; i++) {				\
            /* Isn't it necessary to use FixedFloor below?? */		\
            GLint s = FixedToInt(span->intTex[0]) & info->smask;		\
            GLint t = FixedToInt(span->intTex[1]) & info->tmask;		\
            GLint pos = (t << info->twidth_log2) + s;			\
-           const GLchan *tex00 = info->texture + COMP * pos;		\
+           const GLchan *tex00 = info->texture + COMPS * pos;		\
            DO_TEX;							\
            span->red += span->redStep;					\
 	   span->green += span->greenStep;				\
@@ -370,22 +378,18 @@ affine_span(GLcontext *ctx, struct sw_span *span,
            dest += 4;							\
 	}
 
-#define SPAN_LINEAR(DO_TEX,COMP)					\
+#define SPAN_LINEAR(DO_TEX, COMPS)					\
 	for (i = 0; i < span->end; i++) {				\
            /* Isn't it necessary to use FixedFloor below?? */		\
-           GLint s = FixedToInt(span->intTex[0]) & info->smask;		\
-           GLint t = FixedToInt(span->intTex[1]) & info->tmask;		\
-           GLfixed sf = span->intTex[0] & FIXED_FRAC_MASK;		\
-           GLfixed tf = span->intTex[1] & FIXED_FRAC_MASK;		\
-           GLfixed si = FIXED_FRAC_MASK - sf;				\
-           GLfixed ti = FIXED_FRAC_MASK - tf;				\
-           GLint pos = (t << info->twidth_log2) + s;			\
-           const GLchan *tex00 = info->texture + COMP * pos;		\
+           const GLint s = FixedToInt(span->intTex[0]) & info->smask;	\
+           const GLint t = FixedToInt(span->intTex[1]) & info->tmask;	\
+           const GLfixed sf = span->intTex[0] & FIXED_FRAC_MASK;	\
+           const GLfixed tf = span->intTex[1] & FIXED_FRAC_MASK;	\
+           const GLint pos = (t << info->twidth_log2) + s;		\
+           const GLchan *tex00 = info->texture + COMPS * pos;		\
            const GLchan *tex10 = tex00 + info->tbytesline;		\
-           const GLchan *tex01 = tex00 + COMP;				\
-           const GLchan *tex11 = tex10 + COMP;				\
-           (void) ti;							\
-           (void) si;							\
+           const GLchan *tex01 = tex00 + COMPS;				\
+           const GLchan *tex11 = tex10 + COMPS;				\
            if (t == info->tmask) {					\
               tex10 -= info->tsize;					\
               tex11 -= info->tsize;					\
@@ -633,23 +637,19 @@ fast_persp_span(GLcontext *ctx, struct sw_span *span,
 	for (i = 0; i < span->end; i++) {				\
            GLdouble invQ = tex_coord[2] ?				\
                                  (1.0 / tex_coord[2]) : 1.0;            \
-           GLfloat s_tmp = (GLfloat) (tex_coord[0] * invQ);		\
-           GLfloat t_tmp = (GLfloat) (tex_coord[1] * invQ);		\
-           GLfixed s_fix = FloatToFixed(s_tmp) - FIXED_HALF;		\
-           GLfixed t_fix = FloatToFixed(t_tmp) - FIXED_HALF;        	\
-           GLint s = FixedToInt(FixedFloor(s_fix)) & info->smask;	\
-           GLint t = FixedToInt(FixedFloor(t_fix)) & info->tmask;	\
-           GLfixed sf = s_fix & FIXED_FRAC_MASK;			\
-           GLfixed tf = t_fix & FIXED_FRAC_MASK;			\
-           GLfixed si = FIXED_FRAC_MASK - sf;				\
-           GLfixed ti = FIXED_FRAC_MASK - tf;				\
-           GLint pos = (t << info->twidth_log2) + s;			\
+           const GLfloat s_tmp = (GLfloat) (tex_coord[0] * invQ);	\
+           const GLfloat t_tmp = (GLfloat) (tex_coord[1] * invQ);	\
+           const GLfixed s_fix = FloatToFixed(s_tmp) - FIXED_HALF;	\
+           const GLfixed t_fix = FloatToFixed(t_tmp) - FIXED_HALF;      \
+           const GLint s = FixedToInt(FixedFloor(s_fix)) & info->smask;	\
+           const GLint t = FixedToInt(FixedFloor(t_fix)) & info->tmask;	\
+           const GLfixed sf = s_fix & FIXED_FRAC_MASK;			\
+           const GLfixed tf = t_fix & FIXED_FRAC_MASK;			\
+           const GLint pos = (t << info->twidth_log2) + s;		\
            const GLchan *tex00 = info->texture + COMP * pos;		\
            const GLchan *tex10 = tex00 + info->tbytesline;		\
            const GLchan *tex01 = tex00 + COMP;				\
            const GLchan *tex11 = tex10 + COMP;				\
-           (void) ti;							\
-           (void) si;							\
            if (t == info->tmask) {					\
               tex10 -= info->tsize;					\
               tex11 -= info->tsize;					\
