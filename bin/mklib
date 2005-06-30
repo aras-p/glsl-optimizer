@@ -446,7 +446,7 @@ case $ARCH in
             ${LINK} ${OPTS} ${LIBNAME} ${OBJECTS}
             FINAL_LIBS=${LIBNAME}
         else
-            LIBNAME="${LIBNAME}.dylib"
+            LIBNAME="lib${LIBNAME}.dylib"
             echo "mklib: Making Darwin shared library: " ${LIBNAME}
             FLAGS="-dynamiclib -multiply_defined suppress"
 	    if [ $CPLUSPLUS = 1 ] ; then
