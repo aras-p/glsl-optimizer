@@ -202,6 +202,7 @@ static const struct dri_debug_control debug_control[] = {
 #define PCI_CHIP_RV350_AP               0x4150
 #define PCI_CHIP_RV350_AR               0x4152
 #define PCI_CHIP_RV350_AS               0x4153
+#define PCI_CHIP_RV350_NJ		0x4E4A
 #define PCI_CHIP_RV350_NP               0x4E50
 #define PCI_CHIP_RV350_NQ               0x4E51			/* Saphire 9600 256MB card */
 #define PCI_CHIP_RV350_NT               0x4E54
@@ -379,6 +380,7 @@ static radeonScreenPtr radeonCreateScreen(__DRIscreenPrivate * sPriv)
 	case PCI_CHIP_RV350_AP:
 	case PCI_CHIP_RV350_AR:
 	case PCI_CHIP_RV350_AS:
+	case PCI_CHIP_RV350_NJ:
 	case PCI_CHIP_RV350_NP:
 	case PCI_CHIP_RV350_NT:
 	case PCI_CHIP_RV350_NQ:
