@@ -145,6 +145,19 @@ Init( void )
 
    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGB, Width, Height);
 
+   {
+      GLint r, g, b, a;
+      glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
+                                      GL_RENDERBUFFER_RED_SIZE_EXT, &r);
+      glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
+                                      GL_RENDERBUFFER_GREEN_SIZE_EXT, &g);
+      glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
+                                      GL_RENDERBUFFER_BLUE_SIZE_EXT, &b);
+      glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
+                                      GL_RENDERBUFFER_ALPHA_SIZE_EXT, &a);
+      printf("renderbuffer RGBA sizes = %d %d %d %d\n", r, g, b, a);
+   }
+
    CheckError(__LINE__);
 
    /* restore to default */

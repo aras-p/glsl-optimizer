@@ -223,6 +223,10 @@ Init(void)
    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, DepthRB);
    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT,
                             TexWidth, TexHeight);
+   glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
+                                   GL_RENDERBUFFER_DEPTH_SIZE_EXT, &i);
+   printf("Depth renderbuffer size = %d bits\n", i);
+   assert(i > 0);
 
    /* make stencil renderbuffer */
    glGenRenderbuffersEXT(1, &StencilRB);
@@ -231,6 +235,10 @@ Init(void)
    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, StencilRB);
    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_STENCIL_INDEX,
                             TexWidth, TexHeight);
+   glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT,
+                                   GL_RENDERBUFFER_STENCIL_SIZE_EXT, &i);
+   printf("Stencil renderbuffer size = %d bits\n", i);
+   assert(i > 0);
 
    /* attach DepthRB to MyFB */
    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
