@@ -554,6 +554,10 @@ SOURCE=..\..\..\..\src\mesa\tnl\t_save_playback.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\..\src\mesa\tnl\t_vb_arbprogram.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\..\src\mesa\tnl\t_vb_cull.c
 # End Source File
 # Begin Source File
@@ -599,6 +603,10 @@ SOURCE=..\..\..\..\src\mesa\tnl\t_vertex.c
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\tnl\t_vertex_generic.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\tnl\t_vp_build.c
 # End Source File
 # Begin Source File
 
@@ -1236,6 +1244,10 @@ SOURCE=..\..\..\..\src\mesa\tnl\t_pipeline.h
 # Begin Source File
 
 SOURCE=..\..\..\..\src\mesa\tnl\t_save_api.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\..\src\mesa\tnl\t_vb_arbprogram.h
 # End Source File
 # Begin Source File
 
