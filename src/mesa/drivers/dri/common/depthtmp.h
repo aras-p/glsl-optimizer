@@ -7,23 +7,18 @@
  */
 
 
+#include "spantmp_common.h"
+
 #ifndef DBG
 #define DBG 0
 #endif
 
-
 #ifndef HAVE_HW_DEPTH_SPANS
 #define HAVE_HW_DEPTH_SPANS 0
 #endif
+
 #ifndef HAVE_HW_DEPTH_PIXELS
 #define HAVE_HW_DEPTH_PIXELS 0
-#endif
-
-#ifndef HW_READ_LOCK
-#define HW_READ_LOCK()		HW_LOCK()
-#endif
-#ifndef HW_READ_UNLOCK
-#define HW_READ_UNLOCK()	HW_UNLOCK()
 #endif
 
 static void TAG(WriteDepthSpan)( GLcontext *ctx,

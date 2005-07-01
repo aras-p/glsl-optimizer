@@ -33,38 +33,9 @@
 
 #define DBG 0
 
-#define CLIPPIXEL(_x,_y) (_x >= minx && _x < maxx &&    \
-                          _y >= miny && _y < maxy)
-
-
-#define CLIPSPAN(_x, _y, _n, _x1, _n1, _i)                                  \
-    if (_y < miny || _y >= maxy) {                                          \
-        _n1 = 0, _x1 = x;                                                   \
-    }                                                                       \
-    else {                                                                  \
-        _n1 = _n;                                                           \
-        _x1 = _x;                                                           \
-        if (_x1 < minx) _i += (minx -_x1), n1 -= (minx -_x1), _x1 = minx;   \
-        if (_x1 + _n1 >= maxx) n1 -= (_x1 + n1 - maxx);                     \
-   }
-
 #define Y_FLIP(_y) (height - _y - 1)
 
 #define HW_LOCK() 
-#define HW_CLIPLOOP()							\
-    do {								\
-        __DRIdrawablePrivate *dPriv = vmesa->driDrawable;		\
-        int _nc = dPriv->numClipRects;					\
-        while (_nc--) {							\
-		int minx = dPriv->pClipRects[_nc].x1 - dPriv->x;	\
-        	int miny = dPriv->pClipRects[_nc].y1 - dPriv->y;	\
-        	int maxx = dPriv->pClipRects[_nc].x2 - dPriv->x;	\
-        	int maxy = dPriv->pClipRects[_nc].y2 - dPriv->y;
-
-
-#define HW_ENDCLIPLOOP()                                            \
-        }                                                           \
-    } while (0)
 
 #define HW_UNLOCK()
 
@@ -86,8 +57,8 @@
 
 /* 16 bit, RGB565 color spanline and pixel functions
  */
-#define GET_SRC_PTR(_x, _y) (read_buf + _x * 2 + _y * read_pitch)
-#define GET_DST_PTR(_x, _y) (     buf + _x * 2 + _y * draw_pitch)
+#define GET_SRC_PTR(_x, _y) (read_buf + (_x) * 2 + (_y) * read_pitch)
+#define GET_DST_PTR(_x, _y) (     buf + (_x) * 2 + (_y) * draw_pitch)
 #define SPANTMP_PIXEL_FMT GL_RGB
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
 
@@ -98,8 +69,8 @@
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
-#define GET_SRC_PTR(_x, _y) (read_buf + _x * 4 + _y * read_pitch)
-#define GET_DST_PTR(_x, _y) (     buf + _x * 4 + _y * draw_pitch)
+#define GET_SRC_PTR(_x, _y) (read_buf + (_x) * 4 + (_y) * read_pitch)
+#define GET_DST_PTR(_x, _y) (     buf + (_x) * 4 + (_y) * draw_pitch)
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 
@@ -226,12 +197,12 @@ void viaInitSpanFuncs(GLcontext *ctx)
 #endif
 #if 0
     if (vmesa->glCtx->Visual.depthBits == 16) {
-    	swdd->ReadDepthSpan = viaReadDepthSpan_16;
+	swdd->ReadDepthSpan = viaReadDepthSpan_16;
 	swdd->WriteDepthSpan = viaWriteDepthSpan_16;
 	swdd->WriteMonoDepthSpan = viaWriteMonoDepthSpan_16;
 	swdd->ReadDepthPixels = viaReadDepthPixels_16;
 	swdd->WriteDepthPixels = viaWriteDepthPixels_16;
-    }	
+    }
     else if (vmesa->glCtx->Visual.depthBits == 24) {
         swdd->ReadDepthSpan = viaReadDepthSpan_24_8;
 	swdd->WriteDepthSpan = viaWriteDepthSpan_24_8;
@@ -245,7 +216,7 @@ void viaInitSpanFuncs(GLcontext *ctx)
 	swdd->ReadStencilPixels = viaReadStencilPixels_24_8;
     }
     else if (vmesa->glCtx->Visual.depthBits == 32) {
-    	swdd->ReadDepthSpan = viaReadDepthSpan_32;
+	swdd->ReadDepthSpan = viaReadDepthSpan_32;
 	swdd->WriteDepthSpan = viaWriteDepthSpan_32;
 	swdd->WriteMonoDepthSpan = viaWriteMonoDepthSpan_32;
 	swdd->ReadDepthPixels = viaReadDepthPixels_32;
@@ -256,7 +227,7 @@ void viaInitSpanFuncs(GLcontext *ctx)
     swdd->SpanRenderStart = viaSpanRenderStart;
     swdd->SpanRenderFinish = viaSpanRenderFinish; 
 
-#if 0    
+#if 0
     swdd->WriteCI8Span = NULL;
     swdd->WriteCI32Span = NULL;
     swdd->WriteMonoCISpan = NULL;

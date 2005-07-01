@@ -34,25 +34,10 @@
  */
 
 #include "colormac.h"
+#include "spantmp_common.h"
 
 #ifndef DBG
 #define DBG 0
-#endif
-
-#ifndef HW_WRITE_LOCK
-#define HW_WRITE_LOCK()		HW_LOCK()
-#endif
-
-#ifndef HW_WRITE_UNLOCK
-#define HW_WRITE_UNLOCK()	HW_UNLOCK()
-#endif
-
-#ifndef HW_READ_LOCK
-#define HW_READ_LOCK()		HW_LOCK()
-#endif
-
-#ifndef HW_READ_UNLOCK
-#define HW_READ_UNLOCK()	HW_UNLOCK()
 #endif
 
 #ifndef HW_READ_CLIPLOOP
@@ -64,6 +49,14 @@
 #endif
 
 #if (SPANTMP_PIXEL_FMT == GL_RGB)  && (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_SHORT_5_6_5)
+
+#ifndef GET_SRC_PTR
+#define GET_SRC_PTR(_x, _y) (read_buf + (_x) * 2 + (_y) * pitch)
+#endif
+
+#ifndef GET_DST_PTR
+#define GET_DST_PTR(_x, _y) (     buf + (_x) * 2 + (_y) * pitch)
+#endif
 
 #define INIT_MONO_PIXEL(p, color) \
   p = PACK_COLOR_565( color[0], color[1], color[2] )
@@ -92,9 +85,17 @@
 
 #elif (SPANTMP_PIXEL_FMT == GL_BGRA) && (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_INT_8_8_8_8_REV)
 
+#ifndef GET_SRC_PTR
+#define GET_SRC_PTR(_x, _y) (read_buf + (_x) * 4 + (_y) * pitch)
+#endif
+
+#ifndef GET_DST_PTR
+#define GET_DST_PTR(_x, _y) (     buf + (_x) * 4 + (_y) * pitch)
+#endif
+
 # define INIT_MONO_PIXEL(p, color)                       \
      p = PACK_COLOR_8888(color[3], color[0], color[1], color[2]) 
-    
+
 # define WRITE_RGBA(_x, _y, r, g, b, a)                                 \
     do {                                                                \
        GLuint * _p = (GLuint *) GET_DST_PTR(_x, _y);                    \

@@ -42,6 +42,7 @@
    GLubyte *buf = map +					\
 		  dPriv->x * cpp +			\
 		  dPriv->y * pitch;			\
+   char *read_buf = buf;					\
    GLuint p;						\
    (void) p
 
@@ -58,20 +59,6 @@
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 
-#define CLIPPIXEL(_x,_y) (_x >= minx && _x < maxx && \
-			  _y >= miny && _y < maxy)
-
-
-#define CLIPSPAN( _x, _y, _n, _x1, _n1, _i )				\
-   if ( _y < miny || _y >= maxy ) {					\
-      _n1 = 0, _x1 = x;							\
-   } else {								\
-      _n1 = _n;								\
-      _x1 = _x;								\
-      if ( _x1 < minx ) _i += (minx-_x1), n1 -= (minx-_x1), _x1 = minx; \
-      if ( _x1 + _n1 >= maxx ) n1 -= (_x1 + n1 - maxx);		        \
-   }
-
 #define Y_FLIP(_y) (height - _y - 1)
 
 #define HW_LOCK()
@@ -86,26 +73,9 @@
 	savageContextPtr imesa = SAVAGE_CONTEXT(ctx);	\
 	GLubyte *map = imesa->readMap;
 
-#define HW_CLIPLOOP()						\
-  do {								\
-    __DRIdrawablePrivate *dPriv = imesa->driDrawable;		\
-    int _nc = dPriv->numClipRects;				\
-    while (_nc--) {						\
-       int minx = dPriv->pClipRects[_nc].x1 - dPriv->x;		\
-       int miny = dPriv->pClipRects[_nc].y1 - dPriv->y; 	\
-       int maxx = dPriv->pClipRects[_nc].x2 - dPriv->x;		\
-       int maxy = dPriv->pClipRects[_nc].y2 - dPriv->y;
-
-
-#define HW_ENDCLIPLOOP()			\
-    }						\
-  } while (0)
-
 
 /* 16 bit, 565 rgb color spanline and pixel functions
  */
-#define GET_SRC_PTR(_x, _y) (buf + (_x<<1) + _y*pitch)
-#define GET_DST_PTR(_x, _y) GET_SRC_PTR(_x, _y)
 #define SPANTMP_PIXEL_FMT GL_RGB
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
 
@@ -116,8 +86,6 @@
 
 /* 32 bit, 8888 ARGB color spanline and pixel functions
  */
-#define GET_SRC_PTR(_x, _y) (buf + (_x<<2) + _y*pitch)
-#define GET_DST_PTR(_x, _y) GET_SRC_PTR(_x, _y)
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 
@@ -148,7 +116,6 @@
 
 
 
-
 /* 16 bit float depthbuffer functions
  */
 #define WRITE_DEPTH( _x, _y, d ) \
@@ -162,7 +129,6 @@
 
 #define TAG(x) savage##x##_16f
 #include "depthtmp.h"
-
 
 
 
@@ -182,7 +148,6 @@
 
 #define TAG(x) savage##x##_8_24
 #include "depthtmp.h"
-
 
 
 

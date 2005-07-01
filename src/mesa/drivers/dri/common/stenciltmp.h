@@ -1,21 +1,9 @@
 /* $XFree86: xc/lib/GL/mesa/src/drv/common/stenciltmp.h,v 1.3 2001/03/21 16:14:20 dawes Exp $ */
 
+#include "spantmp_common.h"
+
 #ifndef DBG
 #define DBG 0
-#endif
-
-#ifndef HW_WRITE_LOCK
-#define HW_WRITE_LOCK()		HW_LOCK()
-#endif
-#ifndef HW_WRITE_UNLOCK
-#define HW_WRITE_UNLOCK()	HW_UNLOCK()
-#endif
-
-#ifndef HW_READ_LOCK
-#define HW_READ_LOCK()		HW_LOCK()
-#endif
-#ifndef HW_READ_UNLOCK
-#define HW_READ_UNLOCK()	HW_UNLOCK()
 #endif
 
 static void TAG(WriteStencilSpan)( GLcontext *ctx,

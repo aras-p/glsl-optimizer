@@ -52,7 +52,7 @@
 			dPriv->y * pitch);		\
    GLuint p;						\
    (void) read_buf; (void) buf; (void) p
-   
+
 
 
 #define LOCAL_DEPTH_VARS						\
@@ -69,22 +69,9 @@
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
 
-#define CLIPPIXEL(_x,_y) (_x >= minx && _x < maxx && \
-			  _y >= miny && _y < maxy)
-
-#define CLIPSPAN( _x, _y, _n, _x1, _n1, _i )				\
-   if ( _y < miny || _y >= maxy ) {					\
-      _n1 = 0, _x1 = x;							\
-   } else {								\
-      _n1 = _n;								\
-      _x1 = _x;								\
-      if ( _x1 < minx ) _i += (minx-_x1), n1 -= (minx-_x1), _x1 = minx; \
-      if ( _x1 + _n1 >= maxx ) n1 -= (_x1 + n1 - maxx);		        \
-   }
-
-
 #define HW_LOCK()
 
+/* FIXME could/should we use dPriv->numClipRects like the other drivers? */
 #define HW_CLIPLOOP()						\
   do {								\
     int _nc = mmesa->numClipRects;				\
@@ -102,14 +89,10 @@
 
 
 
-
 #define Y_FLIP(_y) (height - _y - 1)
 
 /* 16 bit, RGB565 color spanline and pixel functions
  */
-
-#define GET_SRC_PTR(_x, _y) (read_buf + _x * 2 + _y * pitch)
-#define GET_DST_PTR(_x, _y) (     buf + _x * 2 + _y * pitch)
 #define SPANTMP_PIXEL_FMT GL_RGB
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
 
@@ -119,9 +102,6 @@
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
-
-#define GET_SRC_PTR(_x, _y) (read_buf + _x * 4 + _y * pitch)
-#define GET_DST_PTR(_x, _y) (     buf + _x * 4 + _y * pitch)
 #define SPANTMP_PIXEL_FMT GL_BGRA
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 
@@ -258,7 +238,7 @@ void mgaDDInitSpanFuncs( GLcontext *ctx )
    case 4:
 #if 0
       mgaInitPointers_8888( swdd );
-      
+
       if (!mmesa->hw_stencil) {
 	 swdd->ReadDepthSpan = mgaReadDepthSpan_32;
 	 swdd->WriteDepthSpan = mgaWriteDepthSpan_32;

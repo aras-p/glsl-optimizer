@@ -27,24 +27,10 @@
  *    Gareth Hughes <gareth@nvidia.com>
  */
 
+#include "spantmp_common.h"
+
 #ifndef DBG
 #define DBG 0
-#endif
-
-#ifndef HW_WRITE_LOCK
-#define HW_WRITE_LOCK()		HW_LOCK()
-#endif
-
-#ifndef HW_WRITE_UNLOCK
-#define HW_WRITE_UNLOCK()	HW_UNLOCK()
-#endif
-
-#ifndef HW_READ_LOCK
-#define HW_READ_LOCK()		HW_LOCK()
-#endif
-
-#ifndef HW_READ_UNLOCK
-#define HW_READ_UNLOCK()	HW_UNLOCK()
 #endif
 
 #ifndef HW_READ_CLIPLOOP

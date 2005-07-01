@@ -60,19 +60,6 @@
    (void) buf; (void) p;
 
 
-#define CLIPPIXEL( _x, _y )	( _x >= minx && _x < maxx &&		\
-				  _y >= miny && _y < maxy )
-
-#define CLIPSPAN( _x, _y, _n, _x1, _n1, _i )				\
-   if ( _y < miny || _y >= maxy ) {					\
-      _n1 = 0, _x1 = x;							\
-   } else {								\
-      _n1 = _n;								\
-      _x1 = _x;								\
-      if ( _x1 < minx ) _i += (minx-_x1), n1 -= (minx-_x1), _x1 = minx; \
-      if ( _x1 + _n1 >= maxx ) n1 -= (_x1 + n1 - maxx);		        \
-   }
-
 #define Y_FLIP(_y)		(height - _y - 1)
 
 
