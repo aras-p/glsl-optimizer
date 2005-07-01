@@ -145,7 +145,7 @@ _mesa_init_vp_per_primitive_registers(GLcontext *ctx)
          }
          else if (ctx->VertexProgram.TrackMatrixTransform[i] == GL_INVERSE_NV) {
             _math_matrix_analyse(mat); /* update the inverse */
-            ASSERT(!math_matrix_is_dirty(mat));
+            ASSERT(!_math_matrix_is_dirty(mat));
             load_matrix(ctx->VertexProgram.Parameters, i*4, mat->inv);
          }
          else if (ctx->VertexProgram.TrackMatrixTransform[i] == GL_TRANSPOSE_NV) {
@@ -155,7 +155,7 @@ _mesa_init_vp_per_primitive_registers(GLcontext *ctx)
             assert(ctx->VertexProgram.TrackMatrixTransform[i]
                    == GL_INVERSE_TRANSPOSE_NV);
             _math_matrix_analyse(mat); /* update the inverse */
-            ASSERT(!math_matrix_is_dirty(mat));
+            ASSERT(!_math_matrix_is_dirty(mat));
             load_transpose_matrix(ctx->VertexProgram.Parameters, i*4, mat->inv);
          }
       }
