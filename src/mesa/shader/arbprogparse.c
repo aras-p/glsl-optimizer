@@ -2361,6 +2361,7 @@ parse_address_reg (GLcontext * ctx, GLubyte ** inst,
    return 0;
 }
 
+#if 0 /* unused */
 /**
  * Handle the parsing out of a masked address register
  *
@@ -2387,7 +2388,7 @@ parse_masked_address_reg (GLcontext * ctx, GLubyte ** inst,
 
    return 0;
 }
-
+#endif
 
 /**
  * Parse out a swizzle mask.

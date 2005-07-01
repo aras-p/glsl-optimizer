@@ -269,7 +269,7 @@ static const byte *OUT_OF_MEMORY =          (byte *) "internal error 1001: out o
 static const byte *UNRESOLVED_REFERENCE =   (byte *) "internal error 1002: unresolved reference '$'";
 static const byte *INVALID_GRAMMAR_ID =     (byte *) "internal error 1003: invalid grammar object";
 static const byte *INVALID_REGISTER_NAME =  (byte *) "internal error 1004: invalid register name: '$'";
-static const byte *DUPLICATE_IDENTIFIER =   (byte *) "internal error 1005: identifier '$' already defined";
+/*static const byte *DUPLICATE_IDENTIFIER =   (byte *) "internal error 1005: identifier '$' already defined";*/
 static const byte *UNREFERENCED_IDENTIFIER =(byte *) "internal error 1006: unreferenced identifier '$'";
 
 static const byte *error_message = NULL;    /* points to one of the error messages above */
