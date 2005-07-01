@@ -574,11 +574,6 @@ _mesa_ReadBuffer(GLenum buffer)
  * \note This function may be called from within Mesa or called by the
  * user directly (see the GL_MESA_resize_buffers extension).
  */
-#if OLD_RENDERBUFFER
-/* THIS FUNCTION IS OBSOLETE!!!
- * See _mesa_resize_framebuffer
- */
-#endif
 void GLAPIENTRY
 _mesa_ResizeBuffersMESA( void )
 {
@@ -641,7 +636,8 @@ _mesa_SampleCoverageARB(GLclampf value, GLboolean invert)
    ctx->NewState |= _NEW_MULTISAMPLE;
 }
 
-#endif
+#endif /* _HAVE_FULL_GL */
+
 
 
 /**
