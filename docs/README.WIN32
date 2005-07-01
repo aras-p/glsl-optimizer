@@ -1,6 +1,6 @@
 File: docs/README.WIN32
 
-Last updated: Jun 02, 2005 - Karl Schultz - kschultz@users.sourceforge.net
+Last updated: Jul 01, 2005 - Karl Schultz - kschultz@users.sourceforge.net
 
 Quick Start
 ----- -----
@@ -17,7 +17,10 @@ the top-level "windows" directory.  For example, Visual Studio 6 files
 are in windows/VC6.  If a directory does not exist for your version of
 Visual Studio, you can try importing the project files from an earlier
 version of Visual Studio.  At this time, project files exist for
-Version 6.
+Version 6 and Version 7.  The code has been built with a beta version
+of Version 8 and it runs on 64-bit Windows.  If you want to try this,
+start by importing the VC7 files and create the 64-bit targets in the
+configuration manager.
 
 The project files to build the core Mesa library, Windows Mesa
 drivers, OSMesa, and GLU are in the mesa directory.  The project files
@@ -43,8 +46,12 @@ be useful in figuring out any problems, or report them to me.
 
 To build Mesa with the GDI driver, build the mesa, gdi, and glu
 projects in the Visual Studio workspace found at
-windows/VC?/mesa/mesa.dsw.  The osmesa DLL can also be built with the
-osmesa project.
+
+	windows/VC6/mesa/mesa.dsw
+or
+	windows/VC7/mesa/mesa.sln
+
+The osmesa DLL can also be built with the osmesa project.
 
 The build system creates a lib top-level directory and copies
 resulting LIB and DLL files to this lib directory.  The files are:
@@ -53,13 +60,19 @@ resulting LIB and DLL files to this lib directory.  The files are:
 	OPENGL32.DLL, GLU32.DLL, OSMESA32.DLL
 
 If the MesaDemos ZIP file was extracted, the DLL files are also copied
-to the demos directory.
+to the demos directory.  This facilitates running the demos as described
+below.
 
 
 GLUT and Demos
 ---- --- -----
 
-A Visual Studio workspace can be found at windows/VC?/progs/progs.dsw.
+A Visual Studio workspace can be found at 
+
+	windows/VC6/progs/progs.dsw
+or
+	windows/VC7/progs/progs.sln
+
 It can be used to build GLUT and a few demos.  The GLUT lib and DLL
 are copied to the top-level lib directory, along with the Mesa libs.
 
@@ -70,6 +83,8 @@ rely on data files found there.  Also, the Mesa lib DLL's were copied
 there by the Mesa lib build process.  Therefore, you should be able to
 simply run the demo executables from the demo directory.
 
+If you want to run the demos from the Visual Studio, you may have to
+change the startup directory and explicitly state where the executables are.
 
 
 Build System Notes
@@ -87,19 +102,7 @@ GLU library.
 VC7
 ---
 
-Some users have reported problems building glu with VC7 after
-importing and converting the VC6 project files.  The problem is caused
-by a custom build step that was put in place to work around a problem
-with VC6 not recognizing .cc files as C++ source files.  It appears
-that VC7 can be configured to recognize .cc files as C++ files and so
-it compiles these glu files with the default settings, and does not
-use settings that are required to compile the files correctly.  The
-easiest way to solve the problem is to remove the .cc files from the
-glu project.  This does not delete the files, but removes them from
-the project so that VS does not try to compile them at all.  This
-allows the custom build step to compile the files with the proper
-settings.  Another approach is to remove the custom build step and fix
-the project up to compile the files normally.
+The above-mentioned .cc problem does not exist in this version.
 
 
 General
