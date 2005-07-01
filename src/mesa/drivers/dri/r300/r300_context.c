@@ -66,6 +66,53 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int future_hw_tcl_on=0;
 int hw_tcl_on=0;
 
+#if 1
+#define need_GL_ARB_multisample
+#define need_GL_ARB_texture_compression
+#define need_GL_EXT_blend_minmax
+#include "extension_helper.h"
+
+static const struct dri_extension card_extensions[] = {
+  {"GL_ARB_multisample",		GL_ARB_multisample_functions},
+  {"GL_ARB_multitexture",		NULL},
+  {"GL_ARB_texture_border_clamp",	NULL},
+  {"GL_ARB_texture_compression",	GL_ARB_texture_compression_functions},
+/* disable until we support it, fixes a few things in ut2004 */
+/*	{"GL_ARB_texture_cube_map",	NULL}, */
+  {"GL_ARB_texture_env_add",		NULL},
+  {"GL_ARB_texture_env_combine",	NULL},
+  {"GL_ARB_texture_env_crossbar",	NULL},
+  {"GL_ARB_texture_env_dot3",		NULL},
+  {"GL_ARB_texture_mirrored_repeat",	NULL},
+  {"GL_ARB_vertex_buffer_object",	NULL},
+  {"GL_ARB_vertex_program",		NULL},
+#if USE_ARB_F_P == 1
+  {"GL_ARB_fragment_program",		NULL},
+#endif
+  {"GL_EXT_blend_equation_separate",	NULL},
+  {"GL_EXT_blend_func_separate",	NULL},
+  {"GL_EXT_blend_minmax",		GL_EXT_blend_minmax_functions},
+  {"GL_EXT_blend_subtract",		NULL},
+  {"GL_EXT_secondary_color", 		NULL},
+  {"GL_EXT_stencil_wrap",		NULL},
+  {"GL_EXT_texture_edge_clamp",		NULL},
+  {"GL_EXT_texture_env_combine", 	NULL},
+  {"GL_EXT_texture_env_dot3", 		NULL},
+  {"GL_EXT_texture_filter_anisotropic",	NULL},
+  {"GL_EXT_texture_lod_bias",		NULL},
+  {"GL_EXT_texture_mirror_clamp",	NULL},
+  {"GL_EXT_texture_rectangle",		NULL},
+  {"GL_ATI_texture_env_combine3",	NULL},
+  {"GL_ATI_texture_mirror_once",	NULL},
+  {"GL_MESA_pack_invert",		NULL},
+  {"GL_MESA_ycbcr_texture",		NULL},
+  {"GL_NV_blend_square",		NULL},
+  {"GL_NV_vertex_program",		NULL},
+  {"GL_SGIS_generate_mipmap",		NULL},
+  {NULL,				NULL}
+};
+
+#else
 /* Extension strings exported by the R300 driver.
  */
 static const char *const card_extensions[] = {
@@ -107,7 +154,7 @@ static const char *const card_extensions[] = {
 	"GL_SGIS_generate_mipmap",
 	NULL
 };
-
+#endif
 extern struct tnl_pipeline_stage _r300_render_stage;
 extern struct tnl_pipeline_stage _r300_tcl_stage;
 
