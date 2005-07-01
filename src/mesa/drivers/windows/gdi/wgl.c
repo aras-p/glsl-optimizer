@@ -1,4 +1,4 @@
-/* $Id: wgl.c,v 1.8 2005/06/13 14:07:15 brianp Exp $ */
+/* $Id: wgl.c,v 1.9 2005/07/01 15:56:14 kschultz Exp $ */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -301,10 +301,10 @@ WINGDIAPI int GLAPIENTRY wglChoosePixelFormat(HDC hdc,
     return(best);
 }
 
-WGLAPI int GLAPIENTRY wglDescribePixelFormat(HDC hdc,
-					     int iPixelFormat,
-					     UINT nBytes,
-					     LPPIXELFORMATDESCRIPTOR ppfd)
+WINGDIAPI int GLAPIENTRY wglDescribePixelFormat(HDC hdc,
+					        int iPixelFormat,
+					        UINT nBytes,
+					        LPPIXELFORMATDESCRIPTOR ppfd)
 {
     (void) hdc;
     
