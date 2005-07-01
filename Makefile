@@ -213,7 +213,6 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\
 	$(DIRECTORY)/src/mesa/drivers/glide/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/glide/*.def			\
 	$(DIRECTORY)/src/mesa/drivers/ggi/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/ggi/ggimesa.conf.in		\
 	$(DIRECTORY)/src/mesa/drivers/ggi/default/*.c			\
@@ -230,10 +229,14 @@ LIB_FILES =	\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.def			\
 	$(DIRECTORY)/src/mesa/drivers/x11/descrip.mms			\
 	$(DIRECTORY)/src/mesa/drivers/x11/*.[ch]			\
+	$(DIRECTORY)/src/mesa/ppc/*.[ch]				\
 	$(DIRECTORY)/src/mesa/sparc/*.[chS]				\
 	$(DIRECTORY)/src/mesa/x86/Makefile				\
 	$(DIRECTORY)/src/mesa/x86/*.[ch]				\
 	$(DIRECTORY)/src/mesa/x86/*.S					\
+	$(DIRECTORY)/src/mesa/x86/rtasm/*.[ch]				\
+	$(DIRECTORY)/src/mesa/x86-64/*.[chS]				\
+	$(DIRECTORY)/src/mesa/x86-64/Makefile				\
 	$(DIRECTORY)/src/glu/Makefile					\
 	$(DIRECTORY)/src/glu/descrip.mms				\
 	$(DIRECTORY)/src/glu/sgi/Makefile				\
