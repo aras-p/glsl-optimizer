@@ -3115,6 +3115,7 @@ parse_fp_instruction (GLcontext * ctx, GLubyte ** inst,
       case OP_TEX_KIL:
 	 if (parse_fp_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[0]))
             return 1;
+         fp->Opcode = FP_OPCODE_KIL;
          break;
    }
 
