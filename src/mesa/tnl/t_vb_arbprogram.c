@@ -345,7 +345,11 @@ static void do_LOG( struct arb_vp_machine *m, union instruction op )
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    GLfloat tmp = FABSF(arg0[0]);
    int exponent;
+#ifdef _WIN32
+   GLfloat mantissa = (GLfloat) frexp((double)tmp, &exponent);
+#else
    GLfloat mantissa = frexpf(tmp, &exponent);
+#endif
 
    result[0] = (GLfloat) (exponent - 1);
    result[1] = 2.0 * mantissa; /* map [.5, 1) -> [1, 2) */
