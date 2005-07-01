@@ -851,7 +851,7 @@ _tnl_sse_codegen_vertex_program(struct tnl_compiled_program *p)
    cp.have_sse2 = 1;
 
    if (p->compiled_func) {
-      free((void *)p->compiled_func);
+      _mesa_free((void *)p->compiled_func);
       p->compiled_func = NULL;
    }
 

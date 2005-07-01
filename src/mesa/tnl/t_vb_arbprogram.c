@@ -1004,8 +1004,9 @@ static void cvp_emit_inst( struct compilation *cp,
 static void free_tnl_data( struct vertex_program *program  )
 {
    struct tnl_compiled_program *p = program->TnlData;
-   if (p->compiled_func) free((void *)p->compiled_func);
-   free(p);
+   if (p->compiled_func)
+      _mesa_free((void *)p->compiled_func);
+   _mesa_free(p);
    program->TnlData = NULL;
 }
 
@@ -1369,7 +1370,7 @@ static GLboolean init_vertex_program( GLcontext *ctx,
    const GLuint size = VB->Size;
    GLuint i;
 
-   stage->privatePtr = MALLOC(sizeof(*m));
+   stage->privatePtr = _mesa_malloc(sizeof(*m));
    m = ARB_VP_MACHINE(stage);
    if (!m)
       return GL_FALSE;
@@ -1422,7 +1423,7 @@ static void dtr( struct tnl_pipeline_stage *stage )
       ALIGN_FREE( m->clipmask );
       ALIGN_FREE( m->File[0] );
 
-      FREE( m );
+      _mesa_free( m );
       stage->privatePtr = NULL;
    }
 }
