@@ -234,7 +234,7 @@ clear_color_buffers(GLcontext *ctx)
 
    for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers[0]; i++) {
       struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][i];
-#if OLD_RENDERBUFFER || NEW_RENDERBUFFER
+#if OLD_RENDERBUFFER
       /* SetBuffer will go away */
       if (swrast->Driver.SetBuffer)
          swrast->Driver.SetBuffer(ctx, ctx->DrawBuffer,

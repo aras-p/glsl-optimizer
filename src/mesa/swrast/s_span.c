@@ -987,7 +987,7 @@ _swrast_write_index_span( GLcontext *ctx, struct sw_span *span)
       }
    }
 
-#if OLD_RENDERBUFFER || NEW_RENDERBUFFER
+#if OLD_RENDERBUFFER
    /* restore default dest buffer */
    _swrast_use_draw_buffer(ctx);
 #endif
@@ -1033,7 +1033,7 @@ add_colors(GLuint n, GLchan rgba[][4], GLchan specular[][4] )
 static void
 multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
 {
-#if OLD_RENDERBUFFER || NEW_RENDERBUFFER
+#if OLD_RENDERBUFFER
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 #endif
    const GLuint colorMask = *((GLuint *) ctx->Color.ColorMask);
@@ -1048,7 +1048,7 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
       struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[output][i];
       GLchan rgbaTmp[MAX_WIDTH][4];
 
-#if OLD_RENDERBUFFER || NEW_RENDERBUFFER
+#if OLD_RENDERBUFFER
       /* obsolete code */
       GLuint bufferBit = fb->_ColorDrawBit[output][i];
       /* Set the current read/draw buffer */
@@ -1085,7 +1085,7 @@ multi_write_rgba_span( GLcontext *ctx, struct sw_span *span )
       }
    }
 
-#if OLD_RENDERBUFFER || NEW_RENDERBUFFER
+#if OLD_RENDERBUFFER
    /* restore default dest buffer */
    _swrast_use_draw_buffer(ctx);
 #endif

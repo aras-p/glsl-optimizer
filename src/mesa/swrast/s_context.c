@@ -88,9 +88,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
     * MULTI_DRAW_BIT flag.  Also set it if we're drawing to no
     * buffers or the RGBA or CI mask disables all writes.
     */
-#if NEW_RENDERBUFFER
    if (ctx->DrawBuffer->_NumColorDrawBuffers[0] != 1) {
-#endif
       /* more than one color buffer designated for writing (or zero buffers) */
       rasterMask |= MULTI_DRAW_BIT;
    }

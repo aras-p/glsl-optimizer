@@ -224,7 +224,7 @@ _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
       _swrast_read_rgba_span(ctx, rb, span->end, span->x, span->y, dest);
    }
 
-   /* NEW_RENDERBUFFER: XXX make this a runtime test */
+   /* XXX make this a runtime test */
 #if CHAN_TYPE == GL_UNSIGNED_BYTE
    /* treat 4*GLubyte as GLuint */
    logicop_uint(ctx, span->end, (GLuint *) rgba,

@@ -51,9 +51,7 @@ fast_draw_pixels(GLcontext *ctx, GLint x, GLint y,
                  const struct gl_pixelstore_attrib *unpack,
                  const GLvoid *pixels)
 {
-#if NEW_RENDERBUFFER
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
-#endif
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    struct sw_span span;
 

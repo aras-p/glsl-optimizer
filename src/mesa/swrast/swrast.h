@@ -257,7 +257,7 @@ _swrast_copy_texsubimage3d(GLcontext *ctx,
  * Unless otherwise noted, all functions are mandatory.  
  */
 struct swrast_device_driver {
-#if OLD_RENDERBUFFER || NEW_RENDERBUFFER
+#if OLD_RENDERBUFFER
    void (*SetBuffer)(GLcontext *ctx, GLframebuffer *buffer, GLuint bufferBit);
    /*
     * Specifies the current color buffer for span/pixel writing/reading.

@@ -1555,7 +1555,6 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
       if (drawBuffer && readBuffer) {
 	 /* TODO: check if newCtx and buffer's visual match??? */
 
-#if NEW_RENDERBUFFER
          ASSERT(drawBuffer->Name == 0);
          ASSERT(readBuffer->Name == 0);
          newCtx->WinSysDrawBuffer = drawBuffer;
@@ -1565,10 +1564,7 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
             newCtx->DrawBuffer = drawBuffer;
             newCtx->ReadBuffer = readBuffer;
          }
-#else
-	 newCtx->DrawBuffer = drawBuffer;
-	 newCtx->ReadBuffer = readBuffer;
-#endif
+
 	 newCtx->NewState |= _NEW_BUFFERS;
 
 #if _HAVE_FULL_GL

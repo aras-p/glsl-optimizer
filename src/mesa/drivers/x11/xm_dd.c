@@ -563,9 +563,7 @@ xmesa_resize_buffers(GLcontext *ctx, GLframebuffer *buffer,
 
    xmesa_alloc_back_buffer(xmBuffer, width, height);
 
-#if NEW_RENDERBUFFER
    _mesa_resize_framebuffer(ctx, buffer, width, height);
-#endif
 }
 
 
@@ -1021,12 +1019,6 @@ xmesa_update_state( GLcontext *ctx, GLuint new_state )
          }
       }
    }
-
-#if OLD_RENDERBUFFER && 0
-   if (ctx->DrawBuffer->_ColorDrawBufferMask[0] & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) {
-      xmesa_update_span_funcs(ctx);
-   }
-#endif
 
    if (xmesa->xm_visual->hpcr_clear_flag) {
       /* this depends on whether we're drawing to the front or back buffer */

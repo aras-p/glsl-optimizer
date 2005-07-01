@@ -1204,9 +1204,7 @@ static GLboolean initialize_visual_and_buffer( int client,
                                                XMesaDrawable window,
                                                XMesaColormap cmap )
 {
-#if NEW_RENDERBUFFER
    struct xmesa_renderbuffer *front_xrb, *back_xrb;
-#endif
 #ifndef XFree86Server
    XGCValues gcvalues;
 #endif
@@ -1215,7 +1213,6 @@ static GLboolean initialize_visual_and_buffer( int client,
       assert(b->xm_visual == v);
    }
 
-#if NEW_RENDERBUFFER
    if (b) {
       front_xrb = b->frontxrb;
       back_xrb = b->backxrb;
@@ -1223,7 +1220,6 @@ static GLboolean initialize_visual_and_buffer( int client,
    else {
       front_xrb = back_xrb = NULL;
    }
-#endif
 
    /* Save true bits/pixel */
    v->BitsPerPixel = bits_per_pixel(v);
@@ -2637,8 +2633,12 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
  */
 void XMesaResizeBuffers( XMesaBuffer b )
 {
-#if OLD_RENDERBUFFER
-   xmesa_resize_buffers(ctx, &(b->mesa_buffer), 0, 0 );
-#endif
+   Window root;
+   int xpos, ypos;
+   unsigned int width, height, bw, depth;
+   GET_CURRENT_CONTEXT(ctx);
+   XGetGeometry( b->xm_visual->display, b->frontxrb->pixmap,
+                 &root, &xpos, &ypos, &width, &height, &bw, &depth);
+   xmesa_resize_buffers(ctx, &(b->mesa_buffer), width, height);
 }
 
