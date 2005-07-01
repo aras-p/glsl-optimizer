@@ -11,7 +11,8 @@ MESA_MINOR=3
 MESA_TINY=0
 
 # external projects
-DRM_SOURCE_PATH=$(TOP)/../drm
+#DRM_SOURCE_PATH=$(TOP)/../drm
+DRM_SOURCE_PATH=/home/projects/DRI-freedesktop/drm
 
 # Compiler and flags
 CC = cc
@@ -25,6 +26,10 @@ MKLIB_OPTIONS =
 MKDEP = makedepend
 MKDEP_OPTIONS = -fdepend
 MAKE = make
+
+# Python and flags (generally only needed by the developers)
+PYTHON2 = python
+PYTHON_FLAGS = -t -O -O
 
 # Library names (base name)
 GL_LIB = GL

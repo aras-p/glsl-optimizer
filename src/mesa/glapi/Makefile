@@ -4,6 +4,9 @@
 # up to him/her to re-run this makefile and check in the newly generated files.
 
 
+TOP = ../../..
+include $(TOP)/configs/current
+
 OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h \
 	../main/enums.c \
 	../x86/glapi_x86.S \
@@ -16,9 +19,6 @@ OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h \
 
 COMMON = gl_XML.py license.py gl_API.xml typeexpr.py
 COMMON_GLX = $(COMMON) glX_XML.py glX_proto_common.py
-
-PYTHON2 = python
-PYTHON_FLAGS = -t -O -O
 
 all: $(OUTPUTS)
 
