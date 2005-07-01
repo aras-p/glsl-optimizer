@@ -180,63 +180,9 @@ static void mach64SpanRenderFinish( GLcontext *ctx )
 
 void mach64DDInitSpanFuncs( GLcontext *ctx )
 {
-#if 0
-   mach64ContextPtr mmesa = MACH64_CONTEXT(ctx);
-#endif
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
 
    swdd->SetBuffer = mach64DDSetBuffer;
-
-#if 0
-   switch ( mmesa->mach64Screen->cpp ) {
-   case 2:
-      swdd->WriteRGBASpan	= mach64WriteRGBASpan_RGB565;
-      swdd->WriteRGBSpan	= mach64WriteRGBSpan_RGB565;
-      swdd->WriteMonoRGBASpan	= mach64WriteMonoRGBASpan_RGB565;
-      swdd->WriteRGBAPixels	= mach64WriteRGBAPixels_RGB565;
-      swdd->WriteMonoRGBAPixels	= mach64WriteMonoRGBAPixels_RGB565;
-      swdd->ReadRGBASpan	= mach64ReadRGBASpan_RGB565;
-      swdd->ReadRGBAPixels	= mach64ReadRGBAPixels_RGB565;
-      break;
-
-   case 4:
-      swdd->WriteRGBASpan	= mach64WriteRGBASpan_ARGB8888;
-      swdd->WriteRGBSpan	= mach64WriteRGBSpan_ARGB8888;
-      swdd->WriteMonoRGBASpan	= mach64WriteMonoRGBASpan_ARGB8888;
-      swdd->WriteRGBAPixels	= mach64WriteRGBAPixels_ARGB8888;
-      swdd->WriteMonoRGBAPixels	= mach64WriteMonoRGBAPixels_ARGB8888;
-      swdd->ReadRGBASpan	= mach64ReadRGBASpan_ARGB8888;
-      swdd->ReadRGBAPixels	= mach64ReadRGBAPixels_ARGB8888;
-
-      break;
-
-   default:
-      break;
-   }
-#endif
-
-   /* Depth buffer is always 16 bit */
-#if 0
-   swdd->ReadDepthSpan		= mach64ReadDepthSpan_16;
-   swdd->WriteDepthSpan		= mach64WriteDepthSpan_16;
-   swdd->ReadDepthPixels	= mach64ReadDepthPixels_16;
-   swdd->WriteDepthPixels	= mach64WriteDepthPixels_16;
-#endif
-#if 0
-   /* No hardware stencil buffer */
-   swdd->ReadStencilSpan	= NULL;
-   swdd->WriteStencilSpan	= NULL;
-   swdd->ReadStencilPixels	= NULL;
-   swdd->WriteStencilPixels	= NULL;
-
-   swdd->WriteCI8Span		= NULL;
-   swdd->WriteCI32Span		= NULL;
-   swdd->WriteMonoCISpan	= NULL;
-   swdd->WriteCI32Pixels	= NULL;
-   swdd->WriteMonoCIPixels	= NULL;
-   swdd->ReadCI32Span		= NULL;
-   swdd->ReadCI32Pixels		= NULL;
-#endif
    swdd->SpanRenderStart	= mach64SpanRenderStart;
    swdd->SpanRenderFinish	= mach64SpanRenderFinish;
 }

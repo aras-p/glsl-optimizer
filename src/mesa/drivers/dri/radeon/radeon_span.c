@@ -92,61 +92,21 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* 16 bit, RGB565 color spanline and pixel functions
  */
-#define INIT_MONO_PIXEL(p, color) \
-  p = PACK_COLOR_565( color[0], color[1], color[2] )
+#define SPANTMP_PIXEL_FMT GL_RGB
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
 
-#define WRITE_RGBA( _x, _y, r, g, b, a )				\
-   *(GLushort *)(buf + _x*2 + _y*pitch) = ((((int)r & 0xf8) << 8) |	\
-					   (((int)g & 0xfc) << 3) |	\
-					   (((int)b & 0xf8) >> 3))
-
-#define WRITE_PIXEL( _x, _y, p )					\
-   *(GLushort *)(buf + _x*2 + _y*pitch) = p
-
-#define READ_RGBA( rgba, _x, _y )					\
-   do {									\
-      GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);		\
-      rgba[0] = ((p >> 8) & 0xf8) * 255 / 0xf8;				\
-      rgba[1] = ((p >> 3) & 0xfc) * 255 / 0xfc;				\
-      rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;				\
-      rgba[3] = 0xff;							\
-   } while (0)
-
-#define TAG(x) radeon##x##_RGB565
-#include "spantmp.h"
+#define TAG(x)    radeon##x##_RGB565
+#define TAG2(x,y) radeon##x##_RGB565##y
+#include "spantmp2.h"
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
-#undef INIT_MONO_PIXEL
-#define INIT_MONO_PIXEL(p, color) \
-  p = PACK_COLOR_8888( color[3], color[0], color[1], color[2] )
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
 
-#define WRITE_RGBA( _x, _y, r, g, b, a )			\
-do {								\
-   *(GLuint *)(buf + _x*4 + _y*pitch) = ((b <<  0) |		\
-					 (g <<  8) |		\
-					 (r << 16) |		\
-					 (a << 24) );		\
-} while (0)
-
-#define WRITE_PIXEL( _x, _y, p ) 			\
-do {							\
-   *(GLuint *)(buf + _x*4 + _y*pitch) = p;		\
-} while (0)
-
-#define READ_RGBA( rgba, _x, _y )				\
-do {								\
-   volatile GLuint *ptr = (volatile GLuint *)(read_buf + _x*4 + _y*pitch); \
-   GLuint p = *ptr;					\
-   rgba[0] = (p >> 16) & 0xff;					\
-   rgba[1] = (p >>  8) & 0xff;					\
-   rgba[2] = (p >>  0) & 0xff;					\
-   rgba[3] = (p >> 24) & 0xff;					\
-} while (0)
-
-#define TAG(x) radeon##x##_ARGB8888
-#include "spantmp.h"
-
+#define TAG(x)    radeon##x##_ARGB8888
+#define TAG2(x,y) radeon##x##_ARGB8888##y
+#include "spantmp2.h"
 
 
 /* ================================================================
@@ -337,68 +297,9 @@ static void radeonSpanRenderFinish( GLcontext *ctx )
 
 void radeonInitSpanFuncs( GLcontext *ctx )
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
    struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
 
    swdd->SetBuffer = radeonSetBuffer;
-
-   switch ( rmesa->radeonScreen->cpp ) {
-   case 2:
-#if 0
-      swdd->WriteRGBASpan	= radeonWriteRGBASpan_RGB565;
-      swdd->WriteRGBSpan	= radeonWriteRGBSpan_RGB565;
-      swdd->WriteMonoRGBASpan	= radeonWriteMonoRGBASpan_RGB565;
-      swdd->WriteRGBAPixels	= radeonWriteRGBAPixels_RGB565;
-      swdd->WriteMonoRGBAPixels	= radeonWriteMonoRGBAPixels_RGB565;
-      swdd->ReadRGBASpan	= radeonReadRGBASpan_RGB565;
-      swdd->ReadRGBAPixels      = radeonReadRGBAPixels_RGB565;
-#endif
-      break;
-
-   case 4:
-#if 0
-      swdd->WriteRGBASpan	= radeonWriteRGBASpan_ARGB8888;
-      swdd->WriteRGBSpan	= radeonWriteRGBSpan_ARGB8888;
-      swdd->WriteMonoRGBASpan   = radeonWriteMonoRGBASpan_ARGB8888;
-      swdd->WriteRGBAPixels     = radeonWriteRGBAPixels_ARGB8888;
-      swdd->WriteMonoRGBAPixels = radeonWriteMonoRGBAPixels_ARGB8888;
-      swdd->ReadRGBASpan	= radeonReadRGBASpan_ARGB8888;
-      swdd->ReadRGBAPixels      = radeonReadRGBAPixels_ARGB8888;
-#endif
-      break;
-
-   default:
-      break;
-   }
-
-   switch ( rmesa->glCtx->Visual.depthBits ) {
-   case 16:
-#if 0
-      swdd->ReadDepthSpan	= radeonReadDepthSpan_16;
-      swdd->WriteDepthSpan	= radeonWriteDepthSpan_16;
-      swdd->ReadDepthPixels	= radeonReadDepthPixels_16;
-      swdd->WriteDepthPixels	= radeonWriteDepthPixels_16;
-#endif
-      break;
-
-   case 24:
-#if 0
-      swdd->ReadDepthSpan	= radeonReadDepthSpan_24_8;
-      swdd->WriteDepthSpan	= radeonWriteDepthSpan_24_8;
-      swdd->ReadDepthPixels	= radeonReadDepthPixels_24_8;
-      swdd->WriteDepthPixels	= radeonWriteDepthPixels_24_8;
-
-      swdd->ReadStencilSpan	= radeonReadStencilSpan_24_8;
-      swdd->WriteStencilSpan	= radeonWriteStencilSpan_24_8;
-      swdd->ReadStencilPixels	= radeonReadStencilPixels_24_8;
-      swdd->WriteStencilPixels	= radeonWriteStencilPixels_24_8;
-#endif
-      break;
-
-   default:
-      break;
-   }
-
    swdd->SpanRenderStart          = radeonSpanRenderStart;
    swdd->SpanRenderFinish         = radeonSpanRenderFinish; 
 }
@@ -412,22 +313,10 @@ radeonSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
    if (drb->Base.InternalFormat == GL_RGBA) {
       if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         drb->Base.GetRow        = radeonReadRGBASpan_RGB565;
-         drb->Base.GetValues     = radeonReadRGBAPixels_RGB565;
-         drb->Base.PutRow        = radeonWriteRGBASpan_RGB565;
-         drb->Base.PutRowRGB     = radeonWriteRGBSpan_RGB565;
-         drb->Base.PutMonoRow    = radeonWriteMonoRGBASpan_RGB565;
-         drb->Base.PutValues     = radeonWriteRGBAPixels_RGB565;
-         drb->Base.PutMonoValues = radeonWriteMonoRGBAPixels_RGB565;
+         radeonInitPointers_RGB565(&drb->Base);
       }
       else {
-         drb->Base.GetRow        = radeonReadRGBASpan_ARGB8888;
-         drb->Base.GetValues     = radeonReadRGBAPixels_ARGB8888;
-         drb->Base.PutRow        = radeonWriteRGBASpan_ARGB8888;
-         drb->Base.PutRowRGB     = radeonWriteRGBSpan_ARGB8888;
-         drb->Base.PutMonoRow    = radeonWriteMonoRGBASpan_ARGB8888;
-         drb->Base.PutValues     = radeonWriteRGBAPixels_ARGB8888;
-         drb->Base.PutMonoValues = radeonWriteMonoRGBAPixels_ARGB8888;
+         radeonInitPointers_ARGB8888(&drb->Base);
       }
    }
    else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
