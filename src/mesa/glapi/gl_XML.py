@@ -276,12 +276,15 @@ def real_category_name(c):
 		return c
 
 
-def create_parameter_string(parameters):
+def create_parameter_string(parameters, include_names):
 	"""Create a parameter string from a list of gl_parameters."""
 
 	list = []
 	for p in parameters:
-		list.append( p.string() )
+		if include_names:
+			list.append( p.string() )
+		else:
+			list.append( p.type_string() )
 
 	if len(list) == 0: list = ["void"]
 
@@ -658,7 +661,7 @@ class gl_function( gl_item ):
 
 		if element.children:
 			self.initialized = 1
-			self.parameter_strings[name] = create_parameter_string(parameters)
+			self.parameter_strings[name] = create_parameter_string(parameters, 1)
 		else:
 			self.parameter_strings[name] = None
 
@@ -680,7 +683,7 @@ class gl_function( gl_item ):
 			if s:
 				return s
 		
-		return create_parameter_string( self.parameters )
+		return create_parameter_string( self.parameters, 1 )
 
 
 class gl_item_factory:

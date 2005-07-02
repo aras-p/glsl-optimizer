@@ -235,6 +235,9 @@ X86_API =			\
 X86-64_SOURCES =		\
 	x86-64/xform4.S
 
+X86-64_API =			\
+	x86-64/glapi_x86-64.S
+
 SPARC_SOURCES =			\
 	sparc/clip.S		\
 	sparc/norm.S		\

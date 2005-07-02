@@ -49,6 +49,7 @@ C_SOURCES = \
 	  XF86dri.c \
 
 X86_SOURCES = $(TOP)/src/mesa/x86/glapi_x86.S
+X86-64_SOURCES = $(TOP)/src/mesa/x86-64/glapi_x86-64.S
 
 # ASM_SOURCES = $(X86_SOURCES)
 
