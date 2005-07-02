@@ -1,16 +1,8 @@
 # Configuration for generic Linux, making static libs
 
-include $(TOP)/configs/default
+include $(TOP)/configs/linux
 
 CONFIG_NAME = linux-static
-
-# Compiler and flags
-CC = gcc
-CXX = g++
-
-CFLAGS = -O3 -ansi -pedantic -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include
-CXXFLAGS = -O3 -ansi -pedantic -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
-GLUT_CFLAGS = -fexceptions
 
 MKLIB_OPTIONS = -static
 
@@ -27,4 +19,3 @@ OSMESA_LIB_DEPS =
 GLU_LIB_DEPS = 
 GLUT_LIB_DEPS = 
 GLW_LIB_DEPS = 
-APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lpthread -lm -lstdc++

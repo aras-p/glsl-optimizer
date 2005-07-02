@@ -1,21 +1,10 @@
 # Configuration for Linux with x86 optimizations, static libs
 
-include $(TOP)/configs/default
+include $(TOP)/configs/linux-x86
 
 CONFIG_NAME = linux-x86-static
 
-# Compiler and flags
-CC = gcc
-CXX = g++
-
-CFLAGS = -Wall -O3 -ansi -pedantic -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include
-
-CXXFLAGS = -Wall -O3 -ansi -pedantic -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
-
-GLUT_CFLAGS = -fexceptions
-
 MKLIB_OPTIONS = -static
-
 
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a
@@ -24,14 +13,9 @@ GLUT_LIB_NAME = libglut.a
 GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
-
-ASM_SOURCES = $(X86_SOURCES) $(X86_API)
-
-
 # Library/program dependencies (static libs don't have dependencies)
 GL_LIB_DEPS = 
 OSMESA_LIB_DEPS = 
 GLU_LIB_DEPS = 
 GLUT_LIB_DEPS = 
 GLW_LIB_DEPS = 
-APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXext -lXmu -lXt -lXi -lpthread -lm -lstdc++

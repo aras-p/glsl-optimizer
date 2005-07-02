@@ -39,8 +39,6 @@ EXTRA_LIB_PATH=-L/usr/X11R6/lib
 
 DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lm -lpthread -ldl
-GLUT_LIB_DEPS = $(EXTRA_LIB_PATH) -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB)  -lX11 -lXmu -lXt -lXi -lm
-GLW_LIB_DEPS  = $(EXTRA_LIB_PATH) -L$(LIB_DIR) -l$(GL_LIB) -lXt -lX11
 
 
 # Directories

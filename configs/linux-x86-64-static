@@ -1,21 +1,10 @@
 # Configuration for Linux for 64-bit X86 (Opteron), static libs
 
-include $(TOP)/configs/default
+include $(TOP)/configs/linux-x86-64
 
 CONFIG_NAME = linux-x86-64-static
 
-# Compiler and flags
-CC = gcc
-CXX = g++
-
-CFLAGS = -m64 -Wall -O3 -ansi -pedantic -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include
-
-CXXFLAGS = -m64 -Wall -O3 -D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE
-
-GLUT_CFLAGS = -fexceptions
-
 MKLIB_OPTIONS = -static
-
 
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a
@@ -24,17 +13,9 @@ GLUT_LIB_NAME = libglut.a
 GLW_LIB_NAME = libGLw.a
 OSMESA_LIB_NAME = libOSMesa.a
 
-
-#ASM_SOURCES = $(X86_SOURCES)
-
-
-LIB_DIR = $(TOP)/lib64
-
-
 # Library/program dependencies (static libs don't have dependencies)
 GL_LIB_DEPS = 
 OSMESA_LIB_DEPS = 
 GLU_LIB_DEPS = 
 GLUT_LIB_DEPS = 
 GLW_LIB_DEPS = 
-APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib64 -lX11 -lXext -lXmu -lXt -lXi -lpthread -lm -lstdc++

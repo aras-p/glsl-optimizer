@@ -66,9 +66,10 @@ PROGRAM_DIRS = demos redbook samples xdemos
 
 
 # Library/program dependencies
-GL_LIB_DEPS = -lX11 -lXext -lm -lpthread
+EXTRA_LIB_PATH ?=
+GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
 OSMESA_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB)
 GLU_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lm
-GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lX11 -lXmu -lXt -lXi -lm
-GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lXt -lX11
+GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lX11 -lXmu -lXt -lXi -lm
+GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lXt -lX11
 APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm

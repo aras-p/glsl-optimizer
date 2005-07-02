@@ -8,13 +8,26 @@ CONFIG_NAME = linux
 CC = gcc
 CXX = g++
 
-CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DPTHREADS -I/usr/X11R6/include
-CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
+WARN_FLAGS = -Wall
+OPT_FLAGS  = -O3 -g
+PIC_FLAGS  = -fPIC
+
+# Add '-DGLX_USE_TLS' to ARCH_FLAGS to enable TLS support.  Add -m32
+# to build properly on 64-bit platforms.
+
+ARCH_FLAGS ?=
+
+DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \
+	-D_BSD_SOURCE -DPTHREADS -DUSE_XSHM
+
+X11_INCLUDES = -I/usr/X11R6/include
+
+CFLAGS   = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
+	$(ASM_FLAGS) $(X11_INCLUDES) -std=c99 -ffast-math 
+
+CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
+	$(X11_INCLUDES) 
+
 GLUT_CFLAGS = -fexceptions
 
-
-# Library/program dependencies
-# Need to have -L/usr/X11R6/lib in these:
-GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
-GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
-GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -L/usr/X11R6/lib -lXt -lX11
+EXTRA_LIB_PATH = -L/usr/X11R6/lib
