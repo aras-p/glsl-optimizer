@@ -8,17 +8,35 @@ CONFIG_NAME = linux-x86
 CC = gcc
 CXX = g++
 
-CFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE -DUSE_XSHM -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM -DPTHREADS -I/usr/X11R6/include
+WARN_FLAGS = -Wall
+OPT_FLAGS  = -O3 -g
+PIC_FLAGS  = -fPIC
 
-CXXFLAGS = -Wall -O3 -ansi -pedantic -fPIC -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
+# Add '-DGLX_USE_TLS' to ARCH_FLAGS to enable TLS support.  Add -m32
+# to build properly on 64-bit platforms.
+
+ARCH_FLAGS ?=
+
+DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \
+	-D_BSD_SOURCE -D_GNU_SOURCE -DPTHREADS -DUSE_XSHM
+
+X11_INCLUDES = -I/usr/X11R6/include
+
+CFLAGS   = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
+	$(ASM_FLAGS) $(X11_INCLUDES) -std=c99 -ffast-math 
+
+CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
+	$(X11_INCLUDES) 
 
 GLUT_CFLAGS = -fexceptions
 
-
+ASM_FLAGS = -DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM
 ASM_SOURCES = $(X86_SOURCES) $(X86_API)
 
 # Library/program dependencies
-GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
-GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
-GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -L/usr/X11R6/lib -lXt -lX11
+EXTRA_LIB_PATH=-L/usr/X11R6/lib
+
+GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
+GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lX11 -lXmu -lXt -lXi -lm
+GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lXt -lX11
 APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
