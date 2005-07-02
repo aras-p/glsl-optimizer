@@ -51,10 +51,10 @@ clean:
 
 # special cases
 pbinfo: pbinfo.o pbutil.o
-	$(CC) pbinfo.o pbutil.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(CFLAGS) pbinfo.o pbutil.o $(APP_LIB_DEPS) -o $@
 
 pbdemo: pbdemo.o pbutil.o
-	$(CC) pbdemo.o pbutil.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(CFLAGS) pbdemo.o pbutil.o $(APP_LIB_DEPS) -o $@
 
 pbinfo.o: pbinfo.c pbutil.h
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) pbinfo.c
@@ -66,13 +66,13 @@ pbutil.o: pbutil.c pbutil.h
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) pbutil.c
 
 glxgears_fbconfig: glxgears_fbconfig.o pbutil.o
-	$(CC) glxgears_fbconfig.o pbutil.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(CFLAGS) glxgears_fbconfig.o pbutil.o $(APP_LIB_DEPS) -o $@
 
 glxgears_fbconfig.o: glxgears_fbconfig.c pbutil.h
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) glxgears_fbconfig.c
+	$(CC) $(CFLAGS) -c -I. -I$(INCDIR) $(CFLAGS) glxgears_fbconfig.c
 
 xrotfontdemo: xrotfontdemo.o xuserotfont.o
-	$(CC) xrotfontdemo.o xuserotfont.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(CFLAGS) xrotfontdemo.o xuserotfont.o $(APP_LIB_DEPS) -o $@
 
 xuserotfont.o: xuserotfont.c xuserotfont.h
 	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) xuserotfont.c
