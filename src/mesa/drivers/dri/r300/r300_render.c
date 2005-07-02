@@ -613,6 +613,8 @@ static void r300_check_render(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	//FALLBACK_IF(ctx->Polygon.SmoothFlag); // GL_POLYGON_SMOOTH disabling to get blender going
 	FALLBACK_IF(ctx->Polygon.StippleFlag); // GL_POLYGON_STIPPLE
 	FALLBACK_IF(ctx->Multisample.Enabled); // GL_MULTISAMPLE_ARB
+	
+	FALLBACK_IF(ctx->RenderMode != GL_RENDER);  // We do not do SELECT or FEEDBACK (yet ?)
 
 #if 0 /* ut2k3 fails to start if this is on */
 	/* One step at a time - let one texture pass.. */
