@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,13 @@
 
 
 #include "mtypes.h"
+
+
+extern void *
+_mesa_alloc_texmemory(GLsizei bytes);
+
+extern void
+_mesa_free_texmemory(void *m);
 
 
 /** \name Internal functions */
