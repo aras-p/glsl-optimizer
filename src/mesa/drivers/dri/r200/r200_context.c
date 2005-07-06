@@ -481,9 +481,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    /* plug in a few more device driver functions */
    /* XXX these should really go right after _mesa_init_driver_functions() */
    r200InitPixelFuncs( ctx );
-#if 0
    r200InitSpanFuncs( ctx );
-#endif
    r200InitTnlFuncs( ctx );
    r200InitState( rmesa );
    r200InitSwtcl( ctx );
