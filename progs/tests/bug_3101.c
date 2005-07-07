@@ -63,6 +63,8 @@ static void Display( void )
    glVertex2f(-1,  1);
    glEnd();
 
+   glPopMatrix();
+
    glutSwapBuffers();
 }
 
