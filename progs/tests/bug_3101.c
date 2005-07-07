@@ -1,5 +1,5 @@
 /*
- * (C) Copyright IBM Corporation 2004
+ * (C) Copyright IBM Corporation 2005
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -23,11 +23,11 @@
  */
 
 /**
- * \file blendminmax.c
- * 
- * Simple test of GL_EXT_blend_minmax functionality.  Four squares are drawn
- * with different blending modes, but all should be rendered with the same
- * final color.
+ * \file bug_3101.c
+ *
+ * Simple regression test for bug #3101.  Attempt to draw a single square.
+ * After emiting the first vertex, call \c glEdgeFlag to change the vertex
+ * format.  If the bug still exists, this will cause a segfault.
  *
  * \author Ian Romanick <idr@us.ibm.com>
  */
