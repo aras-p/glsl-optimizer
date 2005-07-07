@@ -22,6 +22,7 @@ SOURCES = antialias.c \
 	blendminmax.c \
 	blendsquare.c \
 	bufferobj.c \
+	bug_3101.c \
 	crossbar.c \
 	cva.c \
 	dinoshade.c \
