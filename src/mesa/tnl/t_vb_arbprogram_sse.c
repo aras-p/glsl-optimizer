@@ -25,8 +25,13 @@
 /**
  * \file t_vb_arb_program_sse.c
  *
- * Translate simplified vertex_program representation to x86/SSE/SSE2
- * machine code using mesa's rtasm runtime assembler.
+ * Translate simplified vertex_program representation to
+ * x86/x87/SSE/SSE2 machine code using mesa's rtasm runtime assembler.
+ *
+ * This is very much a first attempt - build something that works.
+ * There are probably better approaches for applying SSE to vertex
+ * programs, and the whole thing is crying out for static analysis of
+ * the programs to avoid redundant operations.
  *
  * \author Keith Whitwell
  */
@@ -48,7 +53,6 @@
 #include "x86/rtasm/x86sse.h"
 #include "x86/common_x86_asm.h"
 
-
 #define X    0
 #define Y    1
 #define Z    2
@@ -56,11 +60,10 @@
 
 /* Reg usage:
  *
- * EAX - point to 'm->File[0]'
+ * EAX - temp
+ * EBX - point to 'm->File[0]'
  * ECX - point to 'm->File[3]'
- * EDX,
- * EBX,
- * ESP,
+ * EDX - holds 'm'
  * EBP,
  * ESI,
  * EDI
@@ -91,6 +94,7 @@ struct compilation {
    } file[4];
 
    GLboolean have_sse2;
+   GLshort fpucntl;
 };
 
 static INLINE GLboolean eq( struct x86_reg a,
@@ -102,6 +106,10 @@ static INLINE GLboolean eq( struct x86_reg a,
 	   a.disp == b.disp);
 }
       
+static GLint get_offset( const void *a, const void *b )
+{
+   return (const char *)b - (const char *)a;
+}
 
 
 static struct x86_reg get_reg_ptr(GLuint file,
@@ -111,7 +119,7 @@ static struct x86_reg get_reg_ptr(GLuint file,
 
    switch (file) {
    case FILE_REG:
-      reg = x86_make_reg(file_REG32, reg_AX);
+      reg = x86_make_reg(file_REG32, reg_BX);
       assert(idx != REG_UNDEF);
       break;
    case FILE_STATE_PARAM:
@@ -157,17 +165,12 @@ static struct x86_reg get_xmm_reg( struct compilation *cp )
    return x86_make_reg(file_XMM, oldest);
 }
 
-      
-
-
-static struct x86_reg get_dst_reg( struct compilation *cp, 
-				   GLuint file, GLuint idx )
+static void invalidate_xmm( struct compilation *cp, 
+			    GLuint file, GLuint idx )
 {
-   struct x86_reg reg;
    GLuint i;
 
-   /* Invalidate any old copy of this register in XMM0-7.  Don't reuse
-    * as this may be one of the arguments.
+   /* Invalidate any old copy of this register in XMM0-7.  
     */
    for (i = 0; i < 8; i++) {
       if (cp->xmm[i].file == file && cp->xmm[i].idx == idx) {
@@ -177,6 +180,20 @@ static struct x86_reg get_dst_reg( struct compilation *cp,
 	 break;
       }
    }
+}
+      
+
+/* Return an XMM reg to receive the results of an operation.
+ */
+static struct x86_reg get_dst_xmm_reg( struct compilation *cp, 
+				       GLuint file, GLuint idx )
+{
+   struct x86_reg reg;
+
+   /* Invalidate any old copy of this register in XMM0-7.  Don't reuse
+    * as this may be one of the arguments.
+    */
+   invalidate_xmm( cp, file, idx );
 
    reg = get_xmm_reg( cp );
    cp->xmm[reg.idx].file = file;
@@ -184,6 +201,21 @@ static struct x86_reg get_dst_reg( struct compilation *cp,
    cp->xmm[reg.idx].dirty = 1;
    return reg;   
 }
+
+/* As above, but return a pointer.  Note - this pointer may alias
+ * those returned by get_arg_ptr().
+ */
+static struct x86_reg get_dst_ptr( struct compilation *cp, 
+				   GLuint file, GLuint idx )
+{
+   /* Invalidate any old copy of this register in XMM0-7.  Don't reuse
+    * as this may be one of the arguments.
+    */
+   invalidate_xmm( cp, file, idx );
+
+   return get_reg_ptr(file, idx);
+}
+
 
 
 /* Return an XMM reg if the argument is resident, otherwise return a
@@ -204,6 +236,27 @@ static struct x86_reg get_arg( struct compilation *cp, GLuint file, GLuint idx )
    return get_reg_ptr(file, idx);
 }
 
+/* As above, but always return a pointer:
+ */
+static struct x86_reg get_arg_ptr( struct compilation *cp, GLuint file, GLuint idx )
+{
+   GLuint i;
+
+   /* If there is a modified version of this register in one of the
+    * XMM regs, write it out to memory.
+    */
+   for (i = 0; i < 8; i++) {
+      if (cp->xmm[i].file == file && 
+	  cp->xmm[i].idx == idx &&
+	  cp->xmm[i].dirty) 
+	 spill(cp, i);
+   }
+
+   return get_reg_ptr(file, idx);
+}
+
+/* Emulate pshufd insn in regular SSE, if necessary:
+ */
 static void emit_pshufd( struct compilation *cp,
 			 struct x86_reg dst,
 			 struct x86_reg arg0,
@@ -220,7 +273,18 @@ static void emit_pshufd( struct compilation *cp,
       sse_shufps(&cp->func, dst, dst, shuf);
    }
 }
-			 
+
+static void set_fpu_round_neg_inf( struct compilation *cp )
+{
+   if (cp->fpucntl != RND_NEG_FPU) {
+      struct x86_reg regEDX = x86_make_reg(file_REG32, reg_DX);
+      struct arb_vp_machine *m = NULL;
+
+      cp->fpucntl = RND_NEG_FPU;
+      x87_fnclex(&cp->func);
+      x87_fldcw(&cp->func, x86_make_disp(regEDX, get_offset(m, &m->fpucntl_rnd_neg)));
+   }
+}
 
 
 /* Perform a reduced swizzle.  
@@ -228,7 +292,7 @@ static void emit_pshufd( struct compilation *cp,
 static GLboolean emit_RSW( struct compilation *cp, union instruction op ) 
 {
    struct x86_reg arg0 = get_arg(cp, op.rsw.file0, op.rsw.idx0);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.rsw.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.rsw.dst);
    GLuint swz = op.rsw.swz;
    GLuint neg = op.rsw.neg;
 
@@ -252,114 +316,196 @@ static GLboolean emit_RSW( struct compilation *cp, union instruction op )
    return GL_TRUE;
 }
 
-/* Used to implement write masking.  This and most of the other instructions
- * here would be easier to implement if there had been a translation
- * to a 2 argument format (dst/arg0, arg1) at the shader level before
- * attempting to translate to x86/sse code.
+/* Helper for writemask:
  */
-/* Hmm.  I went back to MSK from SEL to make things easier -- was that just BS?
- */
-static GLboolean emit_MSK( struct compilation *cp, union instruction op )
+static GLboolean emit_shuf_copy1( struct compilation *cp,
+				  struct x86_reg dst,
+				  struct x86_reg arg0,
+				  struct x86_reg arg1,
+				  GLubyte shuf )
 {
-   struct x86_reg arg = get_arg(cp, op.msk.file, op.msk.idx);
-   struct x86_reg dst0 = get_arg(cp, FILE_REG, op.msk.dst);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.msk.dst);
-   
-   sse_movups(&cp->func, dst, dst0);
+   struct x86_reg tmp = get_xmm_reg(cp);
+   sse_movups(&cp->func, dst, arg1);
+   emit_pshufd(cp, dst, dst, shuf);
+   emit_pshufd(cp, tmp, arg0, shuf);
 
-   switch (op.msk.mask) {
-   case 0:
-      return GL_TRUE;
+   sse_movss(&cp->func, dst, tmp);
 
-   case WRITEMASK_X:
-      if (arg.file == file_XMM) {
-	 sse_movss(&cp->func, dst, arg);
-      }
-      else {
-	 struct x86_reg tmp = get_xmm_reg(cp);
-	 sse_movss(&cp->func, tmp, arg);
-	 sse_movss(&cp->func, dst, tmp);
-      }
-      return GL_TRUE;
+   emit_pshufd(cp, dst, dst, shuf);
+   return GL_TRUE;
+}
 
-   case WRITEMASK_Y: {
-      struct x86_reg tmp = get_xmm_reg(cp);
-      emit_pshufd(cp, dst, dst, SHUF(Y, X, Z, W));
-      emit_pshufd(cp, tmp, arg, SHUF(Y, X, Z, W));
-      sse_movss(&cp->func, dst, tmp);
-      emit_pshufd(cp, dst, dst, SHUF(Y, X, Z, W));
-      return GL_TRUE;
-   }
 
-   case WRITEMASK_Z: {
-      struct x86_reg tmp = get_xmm_reg(cp);
-      emit_pshufd(cp, dst, dst, SHUF(Z, Y, X, W));
-      emit_pshufd(cp, tmp, arg, SHUF(Z, Y, X, W));
-      sse_movss(&cp->func, dst, tmp);
-      emit_pshufd(cp, dst, dst, SHUF(Z, Y, X, W));
-      return GL_TRUE;
-   }
+/* Helper for writemask:
+ */
+static GLboolean emit_shuf_copy2( struct compilation *cp,
+				  struct x86_reg dst,
+				  struct x86_reg arg0,
+				  struct x86_reg arg1,
+				  GLubyte shuf )
+{
+   struct x86_reg tmp = get_xmm_reg(cp);
+   emit_pshufd(cp, dst, arg1, shuf);
+   emit_pshufd(cp, tmp, arg0, shuf);
 
-   case WRITEMASK_W: {
-      struct x86_reg tmp = get_xmm_reg(cp);
-      emit_pshufd(cp, dst, dst, SHUF(W, Y, Z, X));
-      emit_pshufd(cp, tmp, arg, SHUF(W, Y, Z, X));
-      sse_movss(&cp->func, dst, tmp);
-      emit_pshufd(cp, dst, dst, SHUF(W, Y, Z, X));
-      return GL_TRUE;
-   }
+   sse_shufps(&cp->func, dst, tmp, SHUF(X, Y, Z, W));
 
-   case WRITEMASK_XY:
-      sse_shufps(&cp->func, dst, arg, SHUF(X, Y, Z, W));
-      return GL_TRUE;
+   emit_pshufd(cp, dst, dst, shuf);
+   return GL_TRUE;
+}
 
-   case WRITEMASK_ZW: {
-      struct x86_reg tmp = get_xmm_reg(cp);      
-      sse_movups(&cp->func, tmp, dst);
-      sse_movups(&cp->func, dst, arg);
-      sse_shufps(&cp->func, dst, tmp, SHUF(X, Y, Z, W));
-      return GL_TRUE;
-   }
 
-   case WRITEMASK_YZW: {
-      struct x86_reg tmp = get_xmm_reg(cp);      
-      sse_movss(&cp->func, tmp, dst);
-      sse_movups(&cp->func, dst, arg);
-      sse_movss(&cp->func, dst, tmp);
-      return GL_TRUE;
-   }
+static void emit_x87_ex2( struct compilation *cp )
+{
+   struct x86_reg st0 = x86_make_reg(file_x87, 0);
+   struct x86_reg st1 = x86_make_reg(file_x87, 1);
+   struct x86_reg st3 = x86_make_reg(file_x87, 3);
 
-   case WRITEMASK_XYZW:
-      sse_movups(&cp->func, dst, arg);
-      return GL_TRUE;      
+   set_fpu_round_neg_inf( cp );
 
-   default:
-      FAIL;
-   }
+   x87_fld(&cp->func, st0); /* a a */
+   x87_fprndint( &cp->func );	/* int(a) a */
+   x87_fld(&cp->func, st0); /* int(a) int(a) a */
+   x87_fstp(&cp->func, st3); /* int(a) a int(a)*/
+   x87_fsubp(&cp->func, st1); /* frac(a) int(a) */
+   x87_f2xm1(&cp->func);    /* (2^frac(a))-1 int(a)*/
+   x87_fld1(&cp->func);    /* 1 (2^frac(a))-1 int(a)*/
+   x87_faddp(&cp->func, st1);	/* 2^frac(a) int(a) */
+   x87_fscale(&cp->func);	/* 2^a */
+}
 
 #if 0
-   /* The catchall implementation:
-    */
-
+static GLboolean emit_MSK2( struct compilation *cp, union instruction op )
+{
+   struct x86_reg arg0 = get_arg(cp, op.msk.file, op.msk.arg);
+   struct x86_reg arg1 = get_arg(cp, FILE_REG, op.msk.dst); /* NOTE! */
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.msk.dst);
+   
    /* make full width bitmask in tmp 
     * dst = ~tmp
     * tmp &= arg0
     * dst &= arg1
     * dst |= tmp
     */
-   {
-      struct x86_reg negs = get_arg(cp, FILE_REG, REG_NEGS);
-      emit_pshufd(cp, tmp, negs, 
-		  SHUF((op.msk.mask & 1) ? 2 : 0,
-		       (op.msk.mask & 2) ? 2 : 0,
-		       (op.msk.mask & 4) ? 2 : 0,
-		       (op.msk.mask & 8) ? 2 : 0));
-      sse_mulps(&cp->func, dst, tmp);
-   }
-
+   emit_pshufd(cp, tmp, get_arg(cp, FILE_REG, REG_NEGS), 
+	       SHUF((op.msk.mask & 1) ? 2 : 0,
+		    (op.msk.mask & 2) ? 2 : 0,
+		    (op.msk.mask & 4) ? 2 : 0,
+		    (op.msk.mask & 8) ? 2 : 0));
+   sse2_pnot(&cp->func, dst, tmp);
+   sse2_pand(&cp->func, arg0, tmp);
+   sse2_pand(&cp->func, arg1, dst);
+   sse2_por(&cp->func, tmp, dst);
    return GL_TRUE;
+}
 #endif
-   FAIL;
+
+
+/* Used to implement write masking.  This and most of the other instructions
+ * here would be easier to implement if there had been a translation
+ * to a 2 argument format (dst/arg0, arg1) at the shader level before
+ * attempting to translate to x86/sse code.
+ */
+static GLboolean emit_MSK( struct compilation *cp, union instruction op )
+{
+   struct x86_reg arg = get_arg(cp, op.msk.file, op.msk.idx);
+   struct x86_reg dst0 = get_arg(cp, FILE_REG, op.msk.dst); /* NOTE! */
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.msk.dst);
+   
+   /* Note that dst and dst0 refer to the same program variable, but
+    * will definitely be different XMM registers.  We're effectively
+    * treating this as a 2 argument SEL now, just one of which happens
+    * always to be the same register as the destination.
+    */
+
+   switch (op.msk.mask) {
+   case 0:
+      sse_movups(&cp->func, dst, dst0);
+      return GL_TRUE;
+
+   case WRITEMASK_X:
+      if (arg.file == file_XMM) {
+	 sse_movups(&cp->func, dst, dst0);
+	 sse_movss(&cp->func, dst, arg);
+      }
+      else {
+	 struct x86_reg tmp = get_xmm_reg(cp);
+	 sse_movups(&cp->func, dst, dst0);
+	 sse_movss(&cp->func, tmp, arg);
+	 sse_movss(&cp->func, dst, tmp);
+      }
+      return GL_TRUE;
+
+   case WRITEMASK_XY:
+      sse_movups(&cp->func, dst, dst0);
+      sse_shufps(&cp->func, dst, arg, SHUF(X, Y, Z, W));
+      return GL_TRUE;
+
+   case WRITEMASK_ZW: 
+      sse_movups(&cp->func, dst, arg);
+      sse_shufps(&cp->func, dst, dst0, SHUF(X, Y, Z, W));
+      return GL_TRUE;
+
+   case WRITEMASK_YZW: 
+      if (dst0.file == file_XMM) {
+	 sse_movups(&cp->func, dst, arg);
+	 sse_movss(&cp->func, dst, dst0);
+      }
+      else {
+	 struct x86_reg tmp = get_xmm_reg(cp);      
+	 sse_movups(&cp->func, dst, arg);
+	 sse_movss(&cp->func, tmp, dst0);
+	 sse_movss(&cp->func, dst, tmp);
+      }
+      return GL_TRUE;
+
+   case WRITEMASK_Y:
+      emit_shuf_copy1(cp, dst, arg, dst0, SHUF(Y,X,Z,W));
+      return GL_TRUE;
+
+   case WRITEMASK_Z: 
+      emit_shuf_copy1(cp, dst, arg, dst0, SHUF(Z,Y,X,W));
+      return GL_TRUE;
+
+   case WRITEMASK_W: 
+      emit_shuf_copy1(cp, dst, arg, dst0, SHUF(W,Y,Z,X));
+      return GL_TRUE;
+
+   case WRITEMASK_XZ:
+      emit_shuf_copy2(cp, dst, arg, dst0, SHUF(X,Z,Y,W));
+      return GL_TRUE;
+
+   case WRITEMASK_XW: 
+      emit_shuf_copy2(cp, dst, arg, dst0, SHUF(X,W,Z,Y));
+
+   case WRITEMASK_YZ:      
+      emit_shuf_copy2(cp, dst, arg, dst0, SHUF(Z,Y,X,W));
+      return GL_TRUE;
+
+   case WRITEMASK_YW:
+      emit_shuf_copy2(cp, dst, arg, dst0, SHUF(W,Y,Z,X));
+      return GL_TRUE;
+
+   case WRITEMASK_XZW:
+      emit_shuf_copy1(cp, dst, dst0, arg, SHUF(Y,X,Z,W));
+      return GL_TRUE;
+
+   case WRITEMASK_XYW: 
+      emit_shuf_copy1(cp, dst, dst0, arg, SHUF(Z,Y,X,W));
+      return GL_TRUE;
+
+   case WRITEMASK_XYZ: 
+      emit_shuf_copy1(cp, dst, dst0, arg, SHUF(W,Y,Z,X));
+      return GL_TRUE;
+
+   case WRITEMASK_XYZW:
+      sse_movups(&cp->func, dst, arg);
+      return GL_TRUE;      
+
+   default:
+      assert(0);
+      break;
+   }
 }
 
 
@@ -378,7 +524,7 @@ static GLboolean emit_PRT( struct compilation *cp, union instruction op )
 static GLboolean emit_ABS( struct compilation *cp, union instruction op ) 
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
    struct x86_reg neg = get_reg_ptr(FILE_REG, REG_NEG);
 
    sse_movups(&cp->func, dst, arg0);
@@ -391,7 +537,7 @@ static GLboolean emit_ADD( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
 
    sse_movups(&cp->func, dst, arg0);
    sse_addps(&cp->func, dst, arg1);
@@ -405,7 +551,7 @@ static GLboolean emit_DP3( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
    struct x86_reg tmp = get_xmm_reg(cp); 
 
    sse_movups(&cp->func, dst, arg0);
@@ -427,7 +573,7 @@ static GLboolean emit_DP4( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
    struct x86_reg tmp = get_xmm_reg(cp);      
 
    sse_movups(&cp->func, dst, arg0);
@@ -445,135 +591,303 @@ static GLboolean emit_DP4( struct compilation *cp, union instruction op )
 
 static GLboolean emit_DPH( struct compilation *cp, union instruction op )
 {
-/*    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); */
-/*    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1); */
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); 
+   struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1); 
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg ones = get_reg_ptr(FILE_REG, REG_ONES);
+   struct x86_reg tmp = get_xmm_reg(cp);      
 
-/*    dst[0] = (arg0[0] * arg1[0] +  */
-/* 	     arg0[1] * arg1[1] +  */
-/* 	     arg0[2] * arg1[2] +  */
-/* 	     1.0     * arg1[3]); */
+   emit_pshufd(cp, dst, arg0, SHUF(W,X,Y,Z));
+   sse_movss(&cp->func, dst, ones);
+   emit_pshufd(cp, dst, dst, SHUF(W,X,Y,Z));
+   sse_mulps(&cp->func, dst, arg1);
    
+   /* Now the hard bit: sum the values (from DP4):
+    */ 
+   sse_movhlps(&cp->func, tmp, dst);
+   sse_addps(&cp->func, dst, tmp); /* a*x+c*z, b*y+d*w, a*x+c*z, b*y+d*w */
+   emit_pshufd(cp, tmp, dst, SHUF(Y,X,W,Z));
+   sse_addss(&cp->func, dst, tmp);
    sse_shufps(&cp->func, dst, dst, SHUF(X, X, X, X));
-   FAIL;
+   return GL_TRUE;
 }
 
+#if 0
 static GLboolean emit_DST( struct compilation *cp, union instruction op )
 {
-/*    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); */
-/*    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1); */
-/*    struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst); */
+    struct x86_reg arg0 = get_arg_ptr(cp, op.alu.file0, op.alu.idx0); 
+    struct x86_reg arg1 = get_arg_ptr(cp, op.alu.file1, op.alu.idx1); 
+    struct x86_reg dst = get_dst_ptr(cp, FILE_REG, op.alu.dst); 
 
 /*    dst[0] = 1.0     * 1.0F; */
 /*    dst[1] = arg0[1] * arg1[1]; */
 /*    dst[2] = arg0[2] * 1.0; */
 /*    dst[3] = 1.0     * arg1[3]; */
 
-   FAIL;
+    /* Would rather do some of this with integer regs, but:
+     *  1) No proper support for immediate values yet
+     *  2) I'd need to push/pop somewhere to get a free reg.
+     */ 
+    x87_fld1(&cp->func);
+    x87_fstp(&cp->func, dst); /* would rather do an immediate store... */
+    x87_fld(&cp->func, x86_make_disp(arg0, 4));
+    x87_fmul(&cp->func, x86_make_disp(arg1, 4));
+    x87_fstp(&cp->func, x86_make_disp(dst, 4));
+    
+    if (!eq(arg0, dst)) {
+       x86_fld(&cp->func, x86_make_disp(arg0, 8));
+       x86_stp(&cp->func, x86_make_disp(dst, 8));
+    }
+
+    if (!eq(arg1, dst)) {
+       x86_fld(&cp->func, x86_make_disp(arg0, 12));
+       x86_stp(&cp->func, x86_make_disp(dst, 12));
+    } 
+
+    return GL_TRUE;
+}
+#else
+static GLboolean emit_DST( struct compilation *cp, union instruction op )
+{
+    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); 
+    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1); 
+    struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst); 
+    struct x86_reg tmp = get_xmm_reg(cp);
+    struct x86_reg ones = get_reg_ptr(FILE_REG, REG_ONES);
+
+    emit_shuf_copy2(cp, dst, arg0, ones, SHUF(X,W,Z,Y));
+    emit_shuf_copy2(cp, tmp, arg1, ones, SHUF(X,Z,Y,W));
+    sse_mulps(&cp->func, dst, tmp);
+
+/*    dst[0] = 1.0     * 1.0F; */
+/*    dst[1] = arg0[1] * arg1[1]; */
+/*    dst[2] = arg0[2] * 1.0; */
+/*    dst[3] = 1.0     * arg1[3]; */
+
+    return GL_TRUE;
+}
+#endif
+
+static GLboolean emit_LG2( struct compilation *cp, union instruction op ) 
+{
+   struct x86_reg arg0 = get_arg_ptr(cp, op.alu.file0, op.alu.idx0); 
+   struct x86_reg dst = get_dst_ptr(cp, FILE_REG, op.alu.dst); 
+
+   x87_fld1(&cp->func);		/* 1 */
+   x87_fld(&cp->func, arg0);	/* a0 1 */
+   x87_fyl2x(&cp->func);	/* log2(a0) */
+   x87_fst(&cp->func, x86_make_disp(dst, 0));
+   x87_fst(&cp->func, x86_make_disp(dst, 4));
+   x87_fst(&cp->func, x86_make_disp(dst, 8));
+   x87_fstp(&cp->func, x86_make_disp(dst, 12));
+   
+   return GL_TRUE;
 }
 
 
 static GLboolean emit_EX2( struct compilation *cp, union instruction op ) 
 {
-/*    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); */
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg arg0 = get_arg_ptr(cp, op.alu.file0, op.alu.idx0); 
+   struct x86_reg dst = get_dst_ptr(cp, FILE_REG, op.alu.dst);
 
-/*    dst[0] = (GLfloat)RoughApproxPow2(arg0[0]); */
-   sse_shufps(&cp->func, dst, dst, SHUF(X, X, X, X));
-   FAIL;
+   /* CAUTION: dst may alias arg0!
+    */
+   x87_fld(&cp->func, arg0);	
+
+   emit_x87_ex2(cp);
+
+   x87_fst(&cp->func, x86_make_disp(dst, 0));    
+   x87_fst(&cp->func, x86_make_disp(dst, 4));    
+   x87_fst(&cp->func, x86_make_disp(dst, 8));    
+   x87_fst(&cp->func, x86_make_disp(dst, 12));    
+   return GL_TRUE;
 }
 
 static GLboolean emit_EXP( struct compilation *cp, union instruction op )
 {
-/*    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); */
-/*    struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst); */
+    struct x86_reg arg0 = get_arg_ptr(cp, op.alu.file0, op.alu.idx0); 
+    struct x86_reg dst = get_dst_ptr(cp, FILE_REG, op.alu.dst); 
+    struct x86_reg st0 = x86_make_reg(file_x87, 0);
+    struct x86_reg st1 = x86_make_reg(file_x87, 1);
+    struct x86_reg st3 = x86_make_reg(file_x87, 3);
 
-/*    GLfloat tmp = arg0[0]; */
-/*    GLfloat flr_tmp = FLOORF(tmp); */
-/*    dst[0] = (GLfloat) (1 << (int)flr_tmp); */
-/*    dst[1] = tmp - flr_tmp; */
-/*    dst[2] = RoughApproxPow2(tmp); */
+    /* CAUTION: dst may alias arg0!
+     */
+    x87_fld(&cp->func, arg0);	/* arg0.x */
+    x87_fld(&cp->func, st0); /* arg arg */
+
+    /* by default, fpu is setup to round-to-nearest.  We want to
+     * change this now, and track the state through to the end of the
+     * generated function so that it isn't repeated unnecessarily.
+     * Alternately, could subtract .5 to get round to -inf behaviour.
+     */
+    set_fpu_round_neg_inf( cp );
+    x87_fprndint( &cp->func );	/* flr(a) a */
+    x87_fld(&cp->func, st0); /* flr(a) flr(a) a */
+    x87_fld1(&cp->func);    /* 1 floor(a) floor(a) a */
+    x87_fst(&cp->func, x86_make_disp(dst, 12));  /* stack unchanged */
+    x87_fscale(&cp->func);  /* 2^floor(a) floor(a) a */
+    x87_fst(&cp->func, st3); /* 2^floor(a) floor(a) a 2^floor(a)*/
+    x87_fstp(&cp->func, x86_make_disp(dst, 0)); /* flr(a) a 2^flr(a) */
+    x87_fsubrp(&cp->func, st1); /* frac(a) 2^flr(a) */
+    x87_fst(&cp->func, x86_make_disp(dst, 4));    /* frac(a) 2^flr(a) */
+    x87_f2xm1(&cp->func);    /* (2^frac(a))-1 2^flr(a)*/
+    x87_fld1(&cp->func);    /* 1 (2^frac(a))-1 2^flr(a)*/
+    x87_faddp(&cp->func, st1);	/* 2^frac(a) 2^flr(a) */
+    x87_fmulp(&cp->func, st1);	/* 2^a */
+    x87_fst(&cp->func, x86_make_disp(dst, 8));    
+    
+
+
+/*    dst[0] = 2^floor(tmp); */
+/*    dst[1] = frac(tmp); */
+/*    dst[2] = 2^floor(tmp) * 2^frac(tmp); */
 /*    dst[3] = 1.0F; */
-   FAIL;
+    return GL_TRUE;
+}
+
+static GLboolean emit_LOG( struct compilation *cp, union instruction op )
+{
+    struct x86_reg arg0 = get_arg_ptr(cp, op.alu.file0, op.alu.idx0); 
+    struct x86_reg dst = get_dst_ptr(cp, FILE_REG, op.alu.dst); 
+    struct x86_reg st0 = x86_make_reg(file_x87, 0);
+    struct x86_reg st1 = x86_make_reg(file_x87, 1);
+    struct x86_reg st2 = x86_make_reg(file_x87, 2);
+ 
+    /* CAUTION: dst may alias arg0!
+     */
+    x87_fld(&cp->func, arg0);	/* arg0.x */
+    x87_fabs(&cp->func);	/* |arg0.x| */
+    x87_fxtract(&cp->func);	/* mantissa(arg0.x), exponent(arg0.x) */
+    x87_fst(&cp->func, st2);	/* mantissa, exponent, mantissa */
+    x87_fld1(&cp->func);	/* 1, mantissa, exponent, mantissa */
+    x87_fyl2x(&cp->func); 	/* log2(mantissa), exponent, mantissa */
+    x87_fadd(&cp->func, st0, st1);	/* e+l2(m), e, m  */
+    x87_fstp(&cp->func, x86_make_disp(dst, 8)); /* e, m */
+
+    x87_fld1(&cp->func);	/* 1, e, m */
+    x87_fsub(&cp->func, st1, st0);	/* 1, e-1, m */
+    x87_fstp(&cp->func, x86_make_disp(dst, 12)); /* e-1,m */
+    x87_fstp(&cp->func, dst);	/* m */
+
+    x87_fadd(&cp->func, st0, st0);	/* 2m */
+    x87_fstp(&cp->func, x86_make_disp(dst, 4));	
+
+    return GL_TRUE;
 }
 
 static GLboolean emit_FLR( struct compilation *cp, union instruction op ) 
 {
-/*    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); */
-/*    struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst); */
+   struct x86_reg arg0 = get_arg_ptr(cp, op.alu.file0, op.alu.idx0); 
+   struct x86_reg dst = get_dst_ptr(cp, FILE_REG, op.alu.dst); 
+   int i;
 
-/*    dst[0] = FLOORF(arg0[0]); */
-/*    dst[1] = FLOORF(arg0[1]); */
-/*    dst[2] = FLOORF(arg0[2]); */
-/*    dst[3] = FLOORF(arg0[3]); */
-   FAIL;
+   set_fpu_round_neg_inf( cp );
+
+   for (i = 0; i < 4; i++) {
+      x87_fld(&cp->func, x86_make_disp(arg0, i*4));   
+      x87_fprndint( &cp->func );   
+      x87_fstp(&cp->func, x86_make_disp(dst, i*4));
+   }
+
+
+   return GL_TRUE;
 }
 
 static GLboolean emit_FRC( struct compilation *cp, union instruction op ) 
 {
-/*    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); */
-/*    struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst); */
+   struct x86_reg arg0 = get_arg_ptr(cp, op.alu.file0, op.alu.idx0); 
+   struct x86_reg dst = get_dst_ptr(cp, FILE_REG, op.alu.dst); 
+   struct x86_reg st0 = x86_make_reg(file_x87, 0);
+   struct x86_reg st1 = x86_make_reg(file_x87, 1);
+   int i;
 
-/*    dst[0] = arg0[0] - FLOORF(arg0[0]); */
-/*    dst[1] = arg0[1] - FLOORF(arg0[1]); */
-/*    dst[2] = arg0[2] - FLOORF(arg0[2]); */
-/*    dst[3] = arg0[3] - FLOORF(arg0[3]); */
-   FAIL;
-}
+   set_fpu_round_neg_inf( cp );
 
-static GLboolean emit_LG2( struct compilation *cp, union instruction op ) 
-{
-/*    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); */
-/*    struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst); */
+   /* Knowing liveness info or even just writemask would be useful
+    * here:
+    */
+   for (i = 0; i < 4; i++) {
+      x87_fld(&cp->func, x86_make_disp(arg0, i*4));   
+      x87_fld(&cp->func, st0);	/* a a */
+      x87_fprndint( &cp->func );   /* flr(a) a */
+      x87_fsubrp(&cp->func, st1); /* frc(a) */
+      x87_fstp(&cp->func, x86_make_disp(dst, i*4));
+   }
 
-/*    dst[0] = RoughApproxLog2(arg0[0]); */
-
-/*    sse_shufps(&cp->func, dst, dst, SHUF(X, X, X, X)); */
-   FAIL;
+   return GL_TRUE;
 }
 
 
 
 static GLboolean emit_LIT( struct compilation *cp, union instruction op )
 {
-/*    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); */
-/*    struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst); */
+#if 1
+   struct x86_reg arg0 = get_arg_ptr(cp, op.alu.file0, op.alu.idx0); 
+   struct x86_reg dst = get_dst_ptr(cp, FILE_REG, op.alu.dst); 
+   struct x86_reg lit = get_arg(cp, FILE_REG, REG_LIT);
+   struct x86_reg tmp = get_xmm_reg(cp);
+   struct x86_reg st1 = x86_make_reg(file_x87, 1);
+   struct x86_reg regEAX = x86_make_reg(file_REG32, reg_AX);
+   GLubyte *fixup1, *fixup2;
 
-/*    const GLfloat epsilon = 1.0F / 256.0F; */
-/*    GLfloat tmp[4]; */
 
-/*    tmp[0] = MAX2(arg0[0], 0.0F); */
-/*    tmp[1] = MAX2(arg0[1], 0.0F); */
-/*    tmp[3] = CLAMP(arg0[3], -(128.0F - epsilon), (128.0F - epsilon)); */
+   /* Load the interesting parts of arg0:
+    */
+   x87_fld(&cp->func, x86_make_disp(arg0, 12));	/* a3 */
+   x87_fld(&cp->func, x86_make_disp(arg0, 4)); /* a1 a3 */
+   x87_fld(&cp->func, x86_make_disp(arg0, 0)); /* a0 a1 a3 */
+   
+   /* Intialize dst:
+    */
+   sse_movaps(&cp->func, tmp, lit);
+   sse_movaps(&cp->func, dst, tmp);
+   
+   /* Check arg0[0]:
+    */
+   x87_fldz(&cp->func);		/* 0 a0 a1 a3 */
+   x87_fucomp(&cp->func, st1);	/* a0 a1 a3 */
+   x87_fnstsw(&cp->func, regEAX);
+   x86_sahf(&cp->func);
+   fixup1 = x86_jcc_forward(&cp->func, cc_AE); 
+   
+   x87_fstp(&cp->func, x86_make_disp(dst, 4));	/* a1 a3 */
 
-/*    dst[0] = 1.0; */
-/*    dst[1] = tmp[0]; */
-/*    dst[2] = (tmp[0] > 0.0) ? RoughApproxPower(tmp[1], tmp[3]) : 0.0F; */
-/*    dst[3] = 1.0; */
-   FAIL;
+   /* Check arg0[1]:
+    */ 
+   x87_fldz(&cp->func);		/* 0 a1 a3 */
+   x87_fucomp(&cp->func, st1);	/* a1 a3 */
+   x87_fnstsw(&cp->func, regEAX);
+   x86_sahf(&cp->func);
+   fixup2 = x86_jcc_forward(&cp->func, cc_AE); 
+
+   /* Compute pow(a1, a3)
+    */
+   x87_fyl2x(&cp->func);	/* a3*log2(a1) */
+
+   emit_x87_ex2( cp );		/* 2^(a3*log2(a1)) */
+
+   x87_fstp(&cp->func, x86_make_disp(dst, 8));
+   
+   /* Land jumps:
+    */
+   x86_fixup_fwd_jump(&cp->func, fixup1);
+   x86_fixup_fwd_jump(&cp->func, fixup2);
+#else
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst); 
+   struct x86_reg ones = get_reg_ptr(FILE_REG, REG_LIT);
+   sse_movups(&cp->func, dst, ones);
+#endif   
+   return GL_TRUE;
 }
 
 
-static GLboolean emit_LOG( struct compilation *cp, union instruction op )
-{
-/*    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); */
-/*    struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst); */
-
-/*    GLfloat tmp = FABSF(arg0[0]); */
-/*    int exponent; */
-/*    GLfloat mantissa = FREXPF(tmp, &exponent); */
-/*    dst[0] = (GLfloat) (exponent - 1); */
-/*    dst[1] = 2.0 * mantissa; // map [.5, 1) -> [1, 2)  */
-/*    dst[2] = dst[0] + LOG2(dst[1]); */
-/*    dst[3] = 1.0; */
-   FAIL;
-}
 
 static GLboolean emit_MAX( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
 
    sse_movups(&cp->func, dst, arg0);
    sse_maxps(&cp->func, dst, arg1);
@@ -585,7 +899,7 @@ static GLboolean emit_MIN( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
 
    sse_movups(&cp->func, dst, arg0);
    sse_minps(&cp->func, dst, arg1);
@@ -595,7 +909,7 @@ static GLboolean emit_MIN( struct compilation *cp, union instruction op )
 static GLboolean emit_MOV( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
 
    sse_movups(&cp->func, dst, arg0);
    return GL_TRUE;
@@ -605,7 +919,7 @@ static GLboolean emit_MUL( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
 
    sse_movups(&cp->func, dst, arg0);
    sse_mulps(&cp->func, dst, arg1);
@@ -615,14 +929,22 @@ static GLboolean emit_MUL( struct compilation *cp, union instruction op )
 
 static GLboolean emit_POW( struct compilation *cp, union instruction op ) 
 {
-/*    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0); */
-/*    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1); */
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg arg0 = get_arg_ptr(cp, op.alu.file0, op.alu.idx0); 
+   struct x86_reg arg1 = get_arg_ptr(cp, op.alu.file1, op.alu.idx1); 
+   struct x86_reg dst = get_dst_ptr(cp, FILE_REG, op.alu.dst);
 
-/*    dst[0] = (GLfloat)RoughApproxPower(arg0[0], arg1[0]); */
+   x87_fld(&cp->func, arg1);   	/* a1 */
+   x87_fld(&cp->func, arg0);	/* a0 a1 */
+   x87_fyl2x(&cp->func);	/* a1*log2(a0) */
 
-   sse_shufps(&cp->func, dst, dst, SHUF(X, X, X, X));
-   FAIL;
+   emit_x87_ex2( cp );		/* 2^(a1*log2(a0)) */
+
+   x87_fst(&cp->func, x86_make_disp(dst, 0));    
+   x87_fst(&cp->func, x86_make_disp(dst, 4));    
+   x87_fst(&cp->func, x86_make_disp(dst, 8));    
+   x87_fstp(&cp->func, x86_make_disp(dst, 12));    
+    
+   return GL_TRUE;
 }
 
 static GLboolean emit_REL( struct compilation *cp, union instruction op )
@@ -630,7 +952,7 @@ static GLboolean emit_REL( struct compilation *cp, union instruction op )
 /*    GLuint idx = (op.alu.idx0 + (GLint)cp->File[0][REG_ADDR][0]) & (MAX_NV_VERTEX_PROGRAM_PARAMS-1); */
 /*    GLuint idx = 0; */
 /*    struct x86_reg arg0 = get_arg(cp, op.alu.file0, idx); */
-/*    struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst); */
+/*    struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst); */
 
 /*    dst[0] = arg0[0]; */
 /*    dst[1] = arg0[1]; */
@@ -643,7 +965,7 @@ static GLboolean emit_REL( struct compilation *cp, union instruction op )
 static GLboolean emit_RCP( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
 
    if (cp->have_sse2) {
       sse2_rcpss(&cp->func, dst, arg0);
@@ -661,7 +983,15 @@ static GLboolean emit_RCP( struct compilation *cp, union instruction op )
 static GLboolean emit_RSQ( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
+
+   /* TODO: Calculate absolute value
+    */
+#if 0
+   sse_movss(&cp->func, dst, arg0);
+   sse_mulss(&cp->func, dst, neg);
+   sse_maxss(&cp->func, dst, arg0);
+#endif
 
    sse_rsqrtss(&cp->func, dst, arg0);
    sse_shufps(&cp->func, dst, dst, SHUF(X, X, X, X));
@@ -673,7 +1003,7 @@ static GLboolean emit_SGE( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
    struct x86_reg ones = get_reg_ptr(FILE_REG, REG_ONES);
 
    sse_movups(&cp->func, dst, arg0);
@@ -687,7 +1017,7 @@ static GLboolean emit_SLT( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
    struct x86_reg ones = get_reg_ptr(FILE_REG, REG_ONES);
    
    sse_movups(&cp->func, dst, arg0);
@@ -700,7 +1030,7 @@ static GLboolean emit_SUB( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
 
    sse_movups(&cp->func, dst, arg0);
    sse_subps(&cp->func, dst, arg1);
@@ -712,7 +1042,7 @@ static GLboolean emit_XPD( struct compilation *cp, union instruction op )
 {
    struct x86_reg arg0 = get_arg(cp, op.alu.file0, op.alu.idx0);
    struct x86_reg arg1 = get_arg(cp, op.alu.file1, op.alu.idx1);
-   struct x86_reg dst = get_dst_reg(cp, FILE_REG, op.alu.dst);
+   struct x86_reg dst = get_dst_xmm_reg(cp, FILE_REG, op.alu.dst);
    struct x86_reg tmp0 = get_xmm_reg(cp);
    struct x86_reg tmp1 = get_xmm_reg(cp);
 
@@ -779,10 +1109,6 @@ static GLboolean (* const emit_func[])(struct compilation *, union instruction) 
    emit_REL,
 };
 
-static GLint get_offset( const void *a, const void *b )
-{
-   return (const char *)b - (const char *)a;
-}
 
 
 static GLboolean build_vertex_program( struct compilation *cp )
@@ -790,14 +1116,15 @@ static GLboolean build_vertex_program( struct compilation *cp )
    struct arb_vp_machine *m = NULL;
    GLuint j;
 
-   struct x86_reg regEAX = x86_make_reg(file_REG32, reg_AX);
-   struct x86_reg parmECX = x86_make_reg(file_REG32, reg_CX);
+   struct x86_reg regEBX = x86_make_reg(file_REG32, reg_BX);
+   struct x86_reg regECX = x86_make_reg(file_REG32, reg_CX);
+   struct x86_reg regEDX = x86_make_reg(file_REG32, reg_DX);
 
-   x86_mov(&cp->func, regEAX, x86_fn_arg(&cp->func, 1));
-   x86_mov(&cp->func, parmECX, regEAX);
-   
-   x86_mov(&cp->func, regEAX, x86_make_disp(regEAX, get_offset(m, m->File + FILE_REG)));
-   x86_mov(&cp->func, parmECX, x86_make_disp(parmECX, get_offset(m, m->File + FILE_STATE_PARAM)));
+   x86_push(&cp->func, regEBX);
+
+   x86_mov(&cp->func, regEDX, x86_fn_arg(&cp->func, 1));   
+   x86_mov(&cp->func, regEBX, x86_make_disp(regEDX, get_offset(m, m->File + FILE_REG)));
+   x86_mov(&cp->func, regECX, x86_make_disp(regEDX, get_offset(m, m->File + FILE_STATE_PARAM)));
 
    for (j = 0; j < cp->p->nr_instructions; j++) {
       union instruction inst = cp->p->instructions[j];	 
@@ -827,6 +1154,14 @@ static GLboolean build_vertex_program( struct compilation *cp )
    if (cp->func.need_emms)
       mmx_emms(&cp->func);
 
+   /* Restore FPU control word?
+    */
+   if (cp->fpucntl != RESTORE_FPU) {
+      x87_fnclex(&cp->func);
+      x87_fldcw(&cp->func, x86_make_disp(regEDX, get_offset(m, &m->fpucntl_restore)));
+   }
+
+   x86_pop(&cp->func, regEBX);
    x86_ret(&cp->func);
 
    return GL_TRUE;
@@ -857,6 +1192,9 @@ _tnl_sse_codegen_vertex_program(struct tnl_compiled_program *p)
 
    x86_init_func(&cp.func);
 
+   cp.fpucntl = RESTORE_FPU;
+
+
    /* Note ctx state is not referenced in building the function, so it
     * depends only on the list of instructions:
     */
@@ -864,6 +1202,7 @@ _tnl_sse_codegen_vertex_program(struct tnl_compiled_program *p)
       x86_release_func( &cp.func );
       return GL_FALSE;
    }
+
 
    p->compiled_func = (void (*)(struct arb_vp_machine *))x86_get_func( &cp.func );
    return GL_TRUE;

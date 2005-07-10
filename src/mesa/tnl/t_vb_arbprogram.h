@@ -60,6 +60,9 @@
 #define REG_ONES   65		/* 1,1,1,1 */
 #define REG_SWZ    66		/* -1,1,0,0 */
 #define REG_NEG    67		/* -1,-1,-1,-1 */
+#define REG_LIT    68           /* 1,0,0,1 */
+#define REG_LIT2    69           /* 1,0,0,1 */
+#define REG_SCRATCH 70		/* internal temporary */
 #define REG_UNDEF  127		/* special case - never used */
 #define REG_MAX    128
 #define REG_INVALID ~0
@@ -125,6 +128,13 @@ struct output {
 
 
 /*--------------------------------------------------------------------------- */
+#ifdef NO_FAST_MATH
+#define RESTORE_FPU (DEFAULT_X86_FPU)
+#define RND_NEG_FPU (DEFAULT_X86_FPU | 0x400)
+#else
+#define RESTORE_FPU (FAST_X86_FPU)
+#define RND_NEG_FPU (FAST_X86_FPU | 0x400)
+#endif
 
 /*!
  * Private storage for the vertex program pipeline stage.
@@ -147,6 +157,9 @@ struct arb_vp_machine {
 
    struct vertex_buffer *VB;
    GLcontext *ctx;
+
+   GLshort fpucntl_rnd_neg;	/* constant value */
+   GLshort fpucntl_restore;	/* constant value */
 
    GLboolean try_codegen;
 };
