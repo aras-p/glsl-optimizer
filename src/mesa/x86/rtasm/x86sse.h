@@ -28,7 +28,8 @@ struct x86_function {
 enum x86_reg_file {
    file_REG32,
    file_MMX,
-   file_XMM
+   file_XMM,
+   file_x87
 };
 
 /* Values for mod field of modr/m byte
@@ -163,6 +164,53 @@ void x86_push( struct x86_function *p, struct x86_reg reg );
 void x86_ret( struct x86_function *p );
 void x86_test( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_xor( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_sahf( struct x86_function *p );
+
+void x87_f2xm1( struct x86_function *p );
+void x87_fabs( struct x86_function *p );
+void x87_fadd( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
+void x87_faddp( struct x86_function *p, struct x86_reg dst );
+void x87_fchs( struct x86_function *p );
+void x87_fclex( struct x86_function *p );
+void x87_fcom( struct x86_function *p, struct x86_reg dst );
+void x87_fcomp( struct x86_function *p, struct x86_reg dst );
+void x87_fcos( struct x86_function *p );
+void x87_fdiv( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
+void x87_fdivp( struct x86_function *p, struct x86_reg dst );
+void x87_fdivr( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
+void x87_fdivrp( struct x86_function *p, struct x86_reg dst );
+void x87_fist( struct x86_function *p, struct x86_reg dst );
+void x87_fistp( struct x86_function *p, struct x86_reg dst );
+void x87_fld( struct x86_function *p, struct x86_reg arg );
+void x87_fld1( struct x86_function *p );
+void x87_fldcw( struct x86_function *p, struct x86_reg arg );
+void x87_fldl2e( struct x86_function *p );
+void x87_fldln2( struct x86_function *p );
+void x87_fldz( struct x86_function *p );
+void x87_fmul( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
+void x87_fmulp( struct x86_function *p, struct x86_reg dst );
+void x87_fnclex( struct x86_function *p );
+void x87_fprndint( struct x86_function *p );
+void x87_fscale( struct x86_function *p );
+void x87_fsin( struct x86_function *p );
+void x87_fsincos( struct x86_function *p );
+void x87_fsqrt( struct x86_function *p );
+void x87_fst( struct x86_function *p, struct x86_reg dst );
+void x87_fstp( struct x86_function *p, struct x86_reg dst );
+void x87_fsub( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
+void x87_fsubp( struct x86_function *p, struct x86_reg dst );
+void x87_fsubr( struct x86_function *p, struct x86_reg dst, struct x86_reg arg );
+void x87_fsubrp( struct x86_function *p, struct x86_reg dst );
+void x87_fxch( struct x86_function *p, struct x86_reg dst );
+void x87_fxtract( struct x86_function *p );
+void x87_fyl2x( struct x86_function *p );
+void x87_fyl2xp1( struct x86_function *p );
+void x87_fwait( struct x86_function *p );
+void x87_fnstsw( struct x86_function *p, struct x86_reg dst );
+void x87_fucompp( struct x86_function *p );
+void x87_fucomp( struct x86_function *p, struct x86_reg arg );
+void x87_fucom( struct x86_function *p, struct x86_reg arg );
+
 
 
 /* Retreive a reference to one of the function arguments, taking into

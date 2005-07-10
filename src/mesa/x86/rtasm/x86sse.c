@@ -20,7 +20,7 @@ static void emit_1i( struct x86_function *p, GLint i0 )
 
 static void disassem( struct x86_function *p, const char *fn )
 {
-#if DISASSEM
+#if DISASSEM && 0
    if (fn && fn != p->fn) {
       _mesa_printf("0x%x: %s\n", p->csr, fn);
       p->fn = fn;
@@ -95,6 +95,15 @@ static void emit_modrm( struct x86_function *p,
    }
 }
 
+
+static void emit_modrm_noreg( struct x86_function *p,
+			      GLuint op,
+			      struct x86_reg regmem )
+{
+   struct x86_reg dummy = x86_make_reg(file_REG32, op);
+   emit_modrm(p, dummy, regmem);
+}
+
 /* Many x86 instructions have two opcodes to cope with the situations
  * where the destination is a register or memory reference
  * respectively.  This function selects the correct opcode based on
@@ -105,7 +114,7 @@ static void emit_op_modrm( struct x86_function *p,
 			   GLubyte op_dst_is_mem,
 			   struct x86_reg dst,
 			   struct x86_reg src )
-{
+{  
    switch (dst.mod) {
    case mod_REG:
       emit_1ub_fn(p, op_dst_is_reg, 0);
@@ -175,14 +184,17 @@ struct x86_reg x86_get_base_reg( struct x86_reg reg )
    return x86_make_reg( reg.file, reg.idx );
 }
 
-
-
-/* Labels, jumps and fixup:
- */
 GLubyte *x86_get_label( struct x86_function *p )
 {
    return p->csr;
 }
+
+
+
+/***********************************************************************
+ * x86 instructions
+ */
+
 
 void x86_jcc( struct x86_function *p,
 	      GLuint cc,
@@ -254,15 +266,10 @@ void x86_ret( struct x86_function *p )
    emit_1ub(p, 0xc3);
 }
 
-void mmx_emms( struct x86_function *p )
+void x86_sahf( struct x86_function *p )
 {
-   assert(p->need_emms);
-   emit_2ub(p, 0x0f, 0x77);
-   p->need_emms = 0;
+   emit_1ub(p, 0x9e);
 }
-
-
-
 
 void x86_mov( struct x86_function *p,
 	      struct x86_reg dst,
@@ -285,31 +292,27 @@ void x86_cmp( struct x86_function *p,
    emit_op_modrm( p, 0x3b, 0x39, dst, src );
 }
 
-void sse2_movd( struct x86_function *p,
-		struct x86_reg dst,
-		struct x86_reg src )
+void x86_lea( struct x86_function *p,
+	      struct x86_reg dst,
+	      struct x86_reg src )
 {
-   emit_2ub(p, 0x66, X86_TWOB);
-   emit_op_modrm( p, 0x6e, 0x7e, dst, src );
+   emit_1ub(p, 0x8d);
+   emit_modrm( p, dst, src );
 }
 
-void mmx_movd( struct x86_function *p,
+void x86_test( struct x86_function *p,
 	       struct x86_reg dst,
 	       struct x86_reg src )
 {
-   p->need_emms = 1;
-   emit_1ub(p, X86_TWOB);
-   emit_op_modrm( p, 0x6e, 0x7e, dst, src );
+   emit_1ub(p, 0x85);
+   emit_modrm( p, dst, src );
 }
 
-void mmx_movq( struct x86_function *p,
-	       struct x86_reg dst,
-	       struct x86_reg src )
-{
-   p->need_emms = 1;
-   emit_1ub(p, X86_TWOB);
-   emit_op_modrm( p, 0x6f, 0x7f, dst, src );
-}
+
+
+/***********************************************************************
+ * SSE instructions
+ */
 
 
 void sse_movss( struct x86_function *p,
@@ -354,9 +357,6 @@ void sse_movlps( struct x86_function *p,
    emit_op_modrm( p, 0x12, 0x13, dst, src ); /* cf movhlps */
 }
 
-/* SSE operations often only have one format, with dest constrained to
- * be a register:
- */
 void sse_maxps( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
@@ -421,13 +421,6 @@ void sse_andps( struct x86_function *p,
    emit_modrm( p, dst, src );
 }
 
-void sse2_rcpss( struct x86_function *p,
-		struct x86_reg dst,
-		struct x86_reg src )
-{
-   emit_3ub(p, 0xF3, X86_TWOB, 0x53);
-   emit_modrm( p, dst, src );
-}
 
 void sse_rsqrtss( struct x86_function *p,
 		  struct x86_reg dst,
@@ -454,6 +447,61 @@ void sse_movlhps( struct x86_function *p,
    assert(dst.mod == mod_REG && src.mod == mod_REG);
    emit_2ub(p, X86_TWOB, 0x16);
    emit_modrm( p, dst, src );
+}
+
+
+void sse_cvtps2pi( struct x86_function *p,
+		   struct x86_reg dst,
+		   struct x86_reg src )
+{
+   assert(dst.file == file_MMX && 
+	  (src.file == file_XMM || src.mod != mod_REG));
+
+   p->need_emms = 1;
+
+   emit_2ub(p, X86_TWOB, 0x2d);
+   emit_modrm( p, dst, src );
+}
+
+
+/* Shufps can also be used to implement a reduced swizzle when dest ==
+ * arg0.
+ */
+void sse_shufps( struct x86_function *p,
+		 struct x86_reg dest,
+		 struct x86_reg arg0,
+		 GLubyte shuf) 
+{
+   emit_2ub(p, X86_TWOB, 0xC6);
+   emit_modrm(p, dest, arg0);
+   emit_1ub(p, shuf); 
+}
+
+void sse_cmpps( struct x86_function *p,
+		struct x86_reg dest,
+		struct x86_reg arg0,
+		GLubyte cc) 
+{
+   emit_2ub(p, X86_TWOB, 0xC2);
+   emit_modrm(p, dest, arg0);
+   emit_1ub(p, cc); 
+}
+
+/***********************************************************************
+ * SSE2 instructions
+ */
+
+/**
+ * Perform a reduced swizzle:
+ */
+void sse2_pshufd( struct x86_function *p,
+		  struct x86_reg dest,
+		  struct x86_reg arg0,
+		  GLubyte shuf) 
+{
+   emit_3ub(p, 0x66, X86_TWOB, 0x70);
+   emit_modrm(p, dest, arg0);
+   emit_1ub(p, shuf); 
 }
 
 void sse2_cvtps2dq( struct x86_function *p,
@@ -488,17 +536,375 @@ void sse2_packuswb( struct x86_function *p,
    emit_modrm( p, dst, src );
 }
 
-void sse_cvtps2pi( struct x86_function *p,
-		   struct x86_reg dst,
-		   struct x86_reg src )
+void sse2_rcpss( struct x86_function *p,
+		struct x86_reg dst,
+		struct x86_reg src )
 {
-   assert(dst.file == file_MMX && 
-	  (src.file == file_XMM || src.mod != mod_REG));
-
-   p->need_emms = 1;
-
-   emit_2ub(p, X86_TWOB, 0x2d);
+   emit_3ub(p, 0xF3, X86_TWOB, 0x53);
    emit_modrm( p, dst, src );
+}
+
+void sse2_movd( struct x86_function *p,
+		struct x86_reg dst,
+		struct x86_reg src )
+{
+   emit_2ub(p, 0x66, X86_TWOB);
+   emit_op_modrm( p, 0x6e, 0x7e, dst, src );
+}
+
+
+
+
+/***********************************************************************
+ * x87 instructions
+ */
+void x87_fist( struct x86_function *p, struct x86_reg dst )
+{
+   emit_1ub(p, 0xdb);
+   emit_modrm_noreg(p, 2, dst);
+}
+
+void x87_fistp( struct x86_function *p, struct x86_reg dst )
+{
+   emit_1ub(p, 0xdb);
+   emit_modrm_noreg(p, 3, dst);
+}
+
+void x87_fldz( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xee);
+}
+
+
+void x87_fldcw( struct x86_function *p, struct x86_reg arg )
+{
+   assert(arg.file == file_REG32);
+   assert(arg.mod != mod_REG);
+   emit_1ub(p, 0xd9);
+   emit_modrm_noreg(p, 5, arg);
+}
+
+void x87_fld1( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xe8);
+}
+
+void x87_fldl2e( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xea);
+}
+
+void x87_fldln2( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xed);
+}
+
+void x87_fwait( struct x86_function *p )
+{
+   emit_1ub(p, 0x9b);
+}
+
+void x87_fnclex( struct x86_function *p )
+{
+   emit_2ub(p, 0xdb, 0xe2);
+}
+
+void x87_fclex( struct x86_function *p )
+{
+   x87_fwait(p);
+   x87_fnclex(p);
+}
+
+
+static void x87_arith_op( struct x86_function *p, struct x86_reg dst, struct x86_reg arg,
+			  GLubyte dst0ub0,
+			  GLubyte dst0ub1,
+			  GLubyte arg0ub0,
+			  GLubyte arg0ub1,
+			  GLubyte argmem_noreg)
+{
+   assert(dst.file == file_x87);
+
+   if (arg.file == file_x87) {
+      if (dst.idx == 0) 
+	 emit_2ub(p, dst0ub0, dst0ub1+arg.idx);
+      else if (arg.idx == 0) 
+	 emit_2ub(p, arg0ub0, arg0ub1+arg.idx);
+      else
+	 assert(0);
+   }
+   else if (dst.idx == 0) {
+      assert(arg.file = file_REG32);
+      emit_1ub(p, 0xd8);
+      emit_modrm_noreg(p, argmem_noreg, arg);
+   }
+   else
+      assert(0);
+}
+
+void x87_fmul( struct x86_function *p, struct x86_reg dst, struct x86_reg arg )
+{
+   x87_arith_op(p, dst, arg, 
+		0xd8, 0xc8,
+		0xdc, 0xc8,
+		4);
+}
+
+void x87_fsub( struct x86_function *p, struct x86_reg dst, struct x86_reg arg )
+{
+   x87_arith_op(p, dst, arg, 
+		0xd8, 0xe0,
+		0xdc, 0xe8,
+		4);
+}
+
+void x87_fsubr( struct x86_function *p, struct x86_reg dst, struct x86_reg arg )
+{
+   x87_arith_op(p, dst, arg, 
+		0xd8, 0xe8,
+		0xdc, 0xe0,
+		5);
+}
+
+void x87_fadd( struct x86_function *p, struct x86_reg dst, struct x86_reg arg )
+{
+   x87_arith_op(p, dst, arg, 
+		0xd8, 0xc0,
+		0xdc, 0xc0,
+		0);
+}
+
+void x87_fdiv( struct x86_function *p, struct x86_reg dst, struct x86_reg arg )
+{
+   x87_arith_op(p, dst, arg, 
+		0xd8, 0xf0,
+		0xdc, 0xf8,
+		6);
+}
+
+void x87_fdivr( struct x86_function *p, struct x86_reg dst, struct x86_reg arg )
+{
+   x87_arith_op(p, dst, arg, 
+		0xd8, 0xf8,
+		0xdc, 0xf0,
+		7);
+}
+
+void x87_fmulp( struct x86_function *p, struct x86_reg dst )
+{
+   assert(dst.file == file_x87);
+   assert(dst.idx >= 1);
+   emit_2ub(p, 0xde, 0xc8+dst.idx);
+}
+
+void x87_fsubp( struct x86_function *p, struct x86_reg dst )
+{
+   assert(dst.file == file_x87);
+   assert(dst.idx >= 1);
+   emit_2ub(p, 0xde, 0xe8+dst.idx);
+}
+
+void x87_fsubrp( struct x86_function *p, struct x86_reg dst )
+{
+   assert(dst.file == file_x87);
+   assert(dst.idx >= 1);
+   emit_2ub(p, 0xde, 0xe0+dst.idx);
+}
+
+void x87_faddp( struct x86_function *p, struct x86_reg dst )
+{
+   assert(dst.file == file_x87);
+   assert(dst.idx >= 1);
+   emit_2ub(p, 0xde, 0xc0+dst.idx);
+}
+
+void x87_fdivp( struct x86_function *p, struct x86_reg dst )
+{
+   assert(dst.file == file_x87);
+   assert(dst.idx >= 1);
+   emit_2ub(p, 0xde, 0xf8+dst.idx);
+}
+
+void x87_fdivrp( struct x86_function *p, struct x86_reg dst )
+{
+   assert(dst.file == file_x87);
+   assert(dst.idx >= 1);
+   emit_2ub(p, 0xde, 0xf0+dst.idx);
+}
+
+void x87_fucom( struct x86_function *p, struct x86_reg arg )
+{
+   assert(arg.file == file_x87);
+   emit_2ub(p, 0xdd, 0xe0+arg.idx);
+}
+
+void x87_fucomp( struct x86_function *p, struct x86_reg arg )
+{
+   assert(arg.file == file_x87);
+   emit_2ub(p, 0xdd, 0xe8+arg.idx);
+}
+
+void x87_fucompp( struct x86_function *p )
+{
+   emit_2ub(p, 0xda, 0xe9);
+}
+
+void x87_fxch( struct x86_function *p, struct x86_reg arg )
+{
+   assert(arg.file == file_x87);
+   emit_2ub(p, 0xd9, 0xc8+arg.idx);
+}
+
+void x87_fabs( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xe1);
+}
+
+void x87_fchs( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xe0);
+}
+
+void x87_fcos( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xff);
+}
+
+
+void x87_fprndint( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xfc);
+}
+
+void x87_fscale( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xfd);
+}
+
+void x87_fsin( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xfe);
+}
+
+void x87_fsincos( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xfb);
+}
+
+void x87_fsqrt( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xfa);
+}
+
+void x87_fxtract( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xf4);
+}
+
+/* st0 = (2^st0)-1
+ *
+ * Restrictions: -1.0 <= st0 <= 1.0
+ */
+void x87_f2xm1( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xf0);
+}
+
+/* st1 = st1 * log2(st0);
+ * pop_stack;
+ */
+void x87_fyl2x( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xf1);
+}
+
+/* st1 = st1 * log2(st0 + 1.0);
+ * pop_stack;
+ *
+ * A fast operation, with restrictions: -.29 < st0 < .29 
+ */
+void x87_fyl2xp1( struct x86_function *p )
+{
+   emit_2ub(p, 0xd9, 0xf9);
+}
+
+
+void x87_fld( struct x86_function *p, struct x86_reg arg )
+{
+   if (arg.file == file_x87) 
+      emit_2ub(p, 0xd9, 0xc0 + arg.idx);
+   else {
+      emit_1ub(p, 0xd9);
+      emit_modrm_noreg(p, 0, arg);
+   }
+}
+
+void x87_fst( struct x86_function *p, struct x86_reg dst )
+{
+   if (dst.file == file_x87) 
+      emit_2ub(p, 0xdd, 0xd0 + dst.idx);
+   else {
+      emit_1ub(p, 0xd9);
+      emit_modrm_noreg(p, 2, dst);
+   }
+}
+
+void x87_fstp( struct x86_function *p, struct x86_reg dst )
+{
+   if (dst.file == file_x87) 
+      emit_2ub(p, 0xdd, 0xd8 + dst.idx);
+   else {
+      emit_1ub(p, 0xd9);
+      emit_modrm_noreg(p, 3, dst);
+   }
+}
+
+void x87_fcom( struct x86_function *p, struct x86_reg dst )
+{
+   if (dst.file == file_x87) 
+      emit_2ub(p, 0xd8, 0xd0 + dst.idx);
+   else {
+      emit_1ub(p, 0xd8);
+      emit_modrm_noreg(p, 2, dst);
+   }
+}
+
+void x87_fcomp( struct x86_function *p, struct x86_reg dst )
+{
+   if (dst.file == file_x87) 
+      emit_2ub(p, 0xd8, 0xd8 + dst.idx);
+   else {
+      emit_1ub(p, 0xd8);
+      emit_modrm_noreg(p, 3, dst);
+   }
+}
+
+
+void x87_fnstsw( struct x86_function *p, struct x86_reg dst )
+{
+   assert(dst.file == file_REG32);
+
+   if (dst.idx == reg_AX &&
+       dst.mod == mod_REG) 
+      emit_2ub(p, 0xdf, 0xe0);
+   else {
+      emit_1ub(p, 0xdd);
+      emit_modrm_noreg(p, 7, dst);
+   }
+}
+
+
+
+
+/***********************************************************************
+ * MMX instructions
+ */
+
+void mmx_emms( struct x86_function *p )
+{
+   assert(p->need_emms);
+   emit_2ub(p, 0x0f, 0x77);
+   p->need_emms = 0;
 }
 
 void mmx_packssdw( struct x86_function *p,
@@ -527,62 +933,28 @@ void mmx_packuswb( struct x86_function *p,
    emit_modrm( p, dst, src );
 }
 
-
-/* Load effective address:
- */
-void x86_lea( struct x86_function *p,
-	      struct x86_reg dst,
-	      struct x86_reg src )
-{
-   emit_1ub(p, 0x8d);
-   emit_modrm( p, dst, src );
-}
-
-void x86_test( struct x86_function *p,
+void mmx_movd( struct x86_function *p,
 	       struct x86_reg dst,
 	       struct x86_reg src )
 {
-   emit_1ub(p, 0x85);
-   emit_modrm( p, dst, src );
+   p->need_emms = 1;
+   emit_1ub(p, X86_TWOB);
+   emit_op_modrm( p, 0x6e, 0x7e, dst, src );
+}
+
+void mmx_movq( struct x86_function *p,
+	       struct x86_reg dst,
+	       struct x86_reg src )
+{
+   p->need_emms = 1;
+   emit_1ub(p, X86_TWOB);
+   emit_op_modrm( p, 0x6f, 0x7f, dst, src );
 }
 
 
-/**
- * Perform a reduced swizzle:
+/***********************************************************************
+ * Helper functions
  */
-void sse2_pshufd( struct x86_function *p,
-		  struct x86_reg dest,
-		  struct x86_reg arg0,
-		  GLubyte shuf) 
-{
-   emit_3ub(p, 0x66, X86_TWOB, 0x70);
-   emit_modrm(p, dest, arg0);
-   emit_1ub(p, shuf); 
-}
-
-
-/* Shufps can also be used to implement a reduced swizzle when dest ==
- * arg0.
- */
-void sse_shufps( struct x86_function *p,
-		 struct x86_reg dest,
-		 struct x86_reg arg0,
-		 GLubyte shuf) 
-{
-   emit_2ub(p, X86_TWOB, 0xC6);
-   emit_modrm(p, dest, arg0);
-   emit_1ub(p, shuf); 
-}
-
-void sse_cmpps( struct x86_function *p,
-		struct x86_reg dest,
-		struct x86_reg arg0,
-		GLubyte cc) 
-{
-   emit_2ub(p, X86_TWOB, 0xC2);
-   emit_modrm(p, dest, arg0);
-   emit_1ub(p, cc); 
-}
 
 
 /* Retreive a reference to one of the function arguments, taking into
