@@ -35,5 +35,6 @@
 #include "mtypes.h"
 
 extern void _mesa_UpdateTexEnvProgram( GLcontext *ctx );
+extern void _mesa_TexEnvProgramCacheDestroy( GLcontext *ctx );
 
 #endif

@@ -39,6 +39,7 @@
 #include "texobj.h"
 #include "teximage.h"
 #include "texstate.h"
+#include "texenvprogram.h"
 #include "mtypes.h"
 #include "math/m_xform.h"
 #include "math/m_matrix.h"
@@ -3247,4 +3248,6 @@ void _mesa_free_texture_data( GLcontext *ctx )
 
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
       _mesa_free_colortable_data( &ctx->Texture.Unit[i].ColorTable );
+
+   _mesa_TexEnvProgramCacheDestroy( ctx );
 }
