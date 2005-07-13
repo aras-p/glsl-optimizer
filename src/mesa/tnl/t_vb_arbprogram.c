@@ -279,9 +279,9 @@ static void do_EXP( struct arb_vp_machine *m, union instruction op )
    GLfloat flr_tmp = FLOORF(tmp);
    GLfloat frac_tmp = tmp - flr_tmp;
 
-   result[0] = ldexpf(1.0, (int)flr_tmp);
+   result[0] = LDEXPF(1.0, (int)flr_tmp);
    result[1] = frac_tmp;
-   result[2] = ldexpf(rough_approx_log2_0_1(frac_tmp), (int)flr_tmp);
+   result[2] = LDEXPF(rough_approx_log2_0_1(frac_tmp), (int)flr_tmp);
    result[3] = 1.0F;
 }
 
