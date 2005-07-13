@@ -128,6 +128,7 @@ struct output {
 
 
 /*--------------------------------------------------------------------------- */
+#if defined(USE_SSE_ASM)
 #ifdef NO_FAST_MATH
 #define RESTORE_FPU (DEFAULT_X86_FPU)
 #define RND_NEG_FPU (DEFAULT_X86_FPU | 0x400)
@@ -135,6 +136,11 @@ struct output {
 #define RESTORE_FPU (FAST_X86_FPU)
 #define RND_NEG_FPU (FAST_X86_FPU | 0x400)
 #endif
+#else
+#define RESTORE_FPU 0
+#define RND_NEG_FPU 0
+#endif
+
 
 /*!
  * Private storage for the vertex program pipeline stage.
