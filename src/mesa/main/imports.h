@@ -336,15 +336,18 @@ static INLINE int GET_FLOAT_BITS( float x )
 #define CEILF(x)   ((GLfloat) xf86ceil(x))
 #define FLOORF(x)  ((GLfloat) xf86floor(x))
 #define FABSF(x)   ((GLfloat) xf86fabs(x))
+#define LDEXPF(x,y)   ((GLfloat) xf86ldexp(x,y))
 #elif defined(__gnu_linux__)
 /* C99 functions */
 #define CEILF(x)   ceilf(x)
 #define FLOORF(x)  floorf(x)
 #define FABSF(x)   fabsf(x)
+#define LDEXPF(x,y)  ldexpf(x,y)
 #else
 #define CEILF(x)   ((GLfloat) ceil(x))
 #define FLOORF(x)  ((GLfloat) floor(x))
 #define FABSF(x)   ((GLfloat) fabs(x))
+#define LDEXPF(x,y)  ((GLfloat) ldexp(x,y))
 #endif
 
 
