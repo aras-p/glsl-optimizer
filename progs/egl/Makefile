@@ -12,7 +12,8 @@ PROGRAMS = \
 	demo1 \
 	demo2 \
 	demo3 \
-	eglinfo
+	eglinfo \
+	eglgears
 
 
 .c.o:
@@ -50,6 +51,12 @@ eglinfo: eglinfo.o $(LIB_DIR)/libEGL.so
 eglinfo.o: eglinfo.c $(HEADERS)
 	$(CC) -c $(CFLAGS) -I$(TOP)/include eglinfo.c
 
+
+eglgears: eglgears.o $(LIB_DIR)/libEGL.so
+	$(CC) eglgears.o -L$(LIB_DIR) -lEGL $(APP_LIB_DEPS) -o $@
+
+eglgears.o: eglgears.c $(HEADERS)
+	$(CC) -c $(CFLAGS) -I$(TOP)/include eglgears.c
 
 
 clean:
