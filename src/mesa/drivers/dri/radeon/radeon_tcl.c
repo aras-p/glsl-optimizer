@@ -444,7 +444,11 @@ static char *fallbackStrings[] = {
    "Texgen unit 0",
    "Texgen unit 1",
    "Texgen unit 2",
-   "User disable"
+   "User disable",
+   "User disable",
+   "texture rectangle unit 0",
+   "texture rectangle unit 1",
+   "texture rectangle unit 2"
 };
 
 
