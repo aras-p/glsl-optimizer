@@ -1354,7 +1354,11 @@ validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
        */
       m->File[FILE_LOCAL_PARAM] = program->Base.LocalParams;
       m->File[FILE_ENV_PARAM] = ctx->VertexProgram.Parameters;
-      m->File[FILE_STATE_PARAM] = program->Parameters->ParameterValues;
+      /* GL_NV_vertex_programs can't reference GL state */
+      if (program->Parameters)
+         m->File[FILE_STATE_PARAM] = program->Parameters->ParameterValues;
+      else
+         m->File[FILE_STATE_PARAM] = NULL;
    }
 }
 
