@@ -1186,6 +1186,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_OCCLUSION_TEST_RESULT_HP:
          CHECK_EXTENSION_B(HP_occlusion_test, pname);
          {
+         FLUSH_VERTICES(ctx, _NEW_DEPTH);
          if (ctx->Depth.OcclusionTest)
             params[0] = ctx->OcclusionResult;
          else
@@ -3030,6 +3031,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_OCCLUSION_TEST_RESULT_HP:
          CHECK_EXTENSION_F(HP_occlusion_test, pname);
          {
+         FLUSH_VERTICES(ctx, _NEW_DEPTH);
          if (ctx->Depth.OcclusionTest)
             params[0] = ctx->OcclusionResult;
          else
@@ -4874,6 +4876,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_OCCLUSION_TEST_RESULT_HP:
          CHECK_EXTENSION_I(HP_occlusion_test, pname);
          {
+         FLUSH_VERTICES(ctx, _NEW_DEPTH);
          if (ctx->Depth.OcclusionTest)
             params[0] = ctx->OcclusionResult;
          else

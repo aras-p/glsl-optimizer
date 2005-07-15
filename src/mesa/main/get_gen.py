@@ -562,7 +562,8 @@ StateVars = [
 	( "GL_OCCLUSION_TEST_HP", GLboolean, ["ctx->Depth.OcclusionTest"], "",
 	  "HP_occlusion_test" ),
 	( "GL_OCCLUSION_TEST_RESULT_HP", GLboolean, [],
-	  """if (ctx->Depth.OcclusionTest)
+	  """FLUSH_VERTICES(ctx, _NEW_DEPTH);
+         if (ctx->Depth.OcclusionTest)
             params[0] = ctx->OcclusionResult;
          else
             params[0] = ctx->OcclusionResultSaved;
