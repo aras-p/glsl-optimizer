@@ -40,10 +40,13 @@
 #define MSK        (VP_MAX_OPCODE+1)
 #define REL        (VP_MAX_OPCODE+2)
 
-#define FILE_REG         0
-#define FILE_LOCAL_PARAM 1
-#define FILE_ENV_PARAM   2
-#define FILE_STATE_PARAM 3
+/**
+ * Register files for vertex programs
+ */
+#define FILE_REG         0  /* temporaries */
+#define FILE_LOCAL_PARAM 1  /* local parameters */
+#define FILE_ENV_PARAM   2  /* global parameters */
+#define FILE_STATE_PARAM 3  /* GL state references */
 
 #define REG_ARG0   0
 #define REG_ARG1   1
