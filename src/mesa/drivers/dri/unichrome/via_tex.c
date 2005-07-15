@@ -948,7 +948,13 @@ void viaInitTextureFuncs(struct dd_function_table * functions)
    functions->DeleteTexture = _mesa_delete_texture_object;
    functions->FreeTexImageData = viaFreeTextureImageData;
 
-#if defined( USE_SSE_ASM )
+#if 0 && defined( USE_SSE_ASM )
+   /*
+    * XXX this code is disabled for now because the via_sse_memcpy()
+    * routine causes segfaults with flightgear.
+    * See Mesa3d-dev mail list messages from 7/15/2005 for details.
+    * Note that this function is currently disabled in via_tris.c too.
+    */
    if (getenv("VIA_NO_SSE"))
       functions->TextureMemCpy = _mesa_memcpy;
    else
