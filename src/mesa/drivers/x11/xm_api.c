@@ -81,7 +81,9 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
+#if 0
 #include "drivers/common/driverfuncs.h"
+#endif
 
 #ifdef XFree86Server
 #include <GL/glxtokens.h>
@@ -2633,6 +2635,10 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
  */
 void XMesaResizeBuffers( XMesaBuffer b )
 {
+#ifdef XFree86Server
+   GET_CURRENT_CONTEXT(ctx);
+   xmesa_resize_buffers(ctx, &(b->mesa_buffer), 0, 0);
+#else
    Window root;
    int xpos, ypos;
    unsigned int width, height, bw, depth;
@@ -2640,5 +2646,6 @@ void XMesaResizeBuffers( XMesaBuffer b )
    XGetGeometry( b->xm_visual->display, b->frontxrb->pixmap,
                  &root, &xpos, &ypos, &width, &height, &bw, &depth);
    xmesa_resize_buffers(ctx, &(b->mesa_buffer), width, height);
+#endif
 }
 
