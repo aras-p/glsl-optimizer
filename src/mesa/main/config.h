@@ -31,11 +31,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#ifdef HAVE_CONFIG_H
-#include "conf.h"
-#endif
-
-
 /**
  * \name OpenGL implementation limits
  */

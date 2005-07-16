@@ -70,11 +70,6 @@
 #include <stdarg.h>
 
 
-/* This is no longer uses since we dumped autoconf/automake! */
-#ifdef HAVE_CONFIG_H
-#include "conf.h"
-#endif
-
 /* Get typedefs for uintptr_t and friends */
 #if defined(_WIN32)
 #include <BaseTsd.h>

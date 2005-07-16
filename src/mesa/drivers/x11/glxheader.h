@@ -31,13 +31,7 @@
 #include <GL/vms_x_fix.h>
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "conf.h"
-#endif
-
-
 #include "glheader.h"
-
 
 #ifdef XFree86Server
 
