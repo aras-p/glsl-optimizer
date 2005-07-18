@@ -111,7 +111,7 @@ _swrast_mask_rgba_array(GLcontext *ctx, struct gl_renderbuffer *rb,
    const GLint bMask = ctx->Color.ColorMask[BCOMP];
    const GLint aMask = ctx->Color.ColorMask[ACOMP];
 
-   _swrast_read_rgba_span( ctx, ctx->DrawBuffer, n, x, y, dest );
+   _swrast_read_rgba_span( ctx, rb, n, x, y, dest );
    for (i = 0; i < n; i++) {
       if (!rMask)  rgba[i][RCOMP] = dest[i][RCOMP];
       if (!gMask)  rgba[i][GCOMP] = dest[i][GCOMP];
