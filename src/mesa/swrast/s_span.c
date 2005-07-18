@@ -1365,7 +1365,7 @@ _swrast_read_rgba_span( GLcontext *ctx, struct gl_renderbuffer *rb,
    else {
       GLint skip, length;
       if (x < 0) {
-         /* left edge clippping */
+         /* left edge clipping */
          skip = -x;
          length = (GLint) n - skip;
          if (length < 0) {
@@ -1418,7 +1418,7 @@ _swrast_read_index_span( GLcontext *ctx, struct gl_renderbuffer *rb,
    else {
       GLint skip, length;
       if (x < 0) {
-         /* left edge clippping */
+         /* left edge clipping */
          skip = -x;
          length = (GLint) n - skip;
          if (length < 0) {
