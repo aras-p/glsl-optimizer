@@ -592,6 +592,8 @@ static void ffbDDColorMask(GLcontext *ctx,
 		new_pmask |= 0x0000ff00;
 	if (b)
 		new_pmask |= 0x00ff0000;
+	if (a)
+		new_pmask |= 0xff000000;
 
 	if (fmesa->pmask != new_pmask) {
 		fmesa->pmask = new_pmask;

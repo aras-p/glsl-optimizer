@@ -27,9 +27,12 @@
 
 #include "ffb_xmesa.h"
 #include "context.h"
+#include "framebuffer.h"
 #include "matrix.h"
+#include "renderbuffer.h"
 #include "simple_list.h"
 #include "imports.h"
+#include "utils.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -276,9 +279,6 @@ ffbCreateContext(const __GLcontextModes *mesaVis,
 	ffbDDExtensionsInit(ctx);
 	ffbDDInitDriverFuncs(ctx);
 	ffbDDInitStateFuncs(ctx);
-	ffbDDInitSpanFuncs(ctx);
-	ffbDDInitDepthFuncs(ctx);
-	ffbDDInitStencilFuncs(ctx);
 	ffbDDInitRenderFuncs(ctx);
 	/*ffbDDInitTexFuncs(ctx); not needed */
 	ffbDDInitBitmapFuncs(ctx);
@@ -322,16 +322,63 @@ ffbCreateBuffer(__DRIscreenPrivate *driScrnPriv,
                 const __GLcontextModes *mesaVis,
                 GLboolean isPixmap )
 {
+   /* Mesa checks for pitch > 0, but ffb doesn't use pitches */
+   int bogusPitch = 1;
+   int bpp = 4; /* we've always got a 32bpp framebuffer */
+   int offset = 0; /* always at 0 for offset */
+
    if (isPixmap) {
       return GL_FALSE; /* not implemented */
-   }
-   else {
+   } else {
+      GLboolean swStencil = (mesaVis->stencilBits > 0 && 
+			     mesaVis->depthBits != 24);
+#if 0
       driDrawPriv->driverPrivate = (void *) 
-         _mesa_create_framebuffer(mesaVis,
-                                  GL_FALSE,  /* software depth buffer? */
+	 _mesa_create_framebuffer(mesaVis,
+				  GL_FALSE,  /* software depth buffer? */
                                   mesaVis->stencilBits > 0,
                                   mesaVis->accumRedBits > 0,
                                   mesaVis->alphaBits > 0);
+#else
+      struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
+
+      {
+         driRenderbuffer *frontRb
+            = driNewRenderbuffer(GL_RGBA, bpp, offset, bogusPitch);
+         ffbSetSpanFunctions(frontRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
+      }
+
+      if (mesaVis->doubleBufferMode) {
+         driRenderbuffer *backRb
+            = driNewRenderbuffer(GL_RGBA, bpp, offset, bogusPitch);
+         ffbSetSpanFunctions(backRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
+      }
+
+      if (mesaVis->depthBits == 16) {
+         driRenderbuffer *depthRb
+            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, bpp, offset, bogusPitch);
+         ffbSetDepthFunctions(depthRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+      }
+
+      if (mesaVis->stencilBits > 0 && !swStencil) {
+         driRenderbuffer *stencilRb
+            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, bpp, offset,bogusPitch);
+         ffbSetStencilFunctions(stencilRb, mesaVis);
+         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
+      }
+
+      _mesa_add_soft_renderbuffers(fb,
+                                   GL_FALSE, /* color */
+                                   GL_FALSE, /* depth */
+                                   swStencil,
+                                   mesaVis->accumRedBits > 0,
+                                   GL_FALSE, /* alpha */
+                                   GL_FALSE /* aux */);
+      driDrawPriv->driverPrivate = (void *) fb;
+#endif
       return (driDrawPriv->driverPrivate != NULL);
    }
 }
@@ -488,7 +535,7 @@ ffbMakeCurrent(__DRIcontextPrivate *driContextPriv,
 
 		fmesa->driDrawable = driDrawPriv;
 
-		_mesa_make_current2(fmesa->glCtx, 
+		_mesa_make_current(fmesa->glCtx, 
 			    (GLframebuffer *) driDrawPriv->driverPrivate, 
 			    (GLframebuffer *) driReadPriv->driverPrivate);
 
@@ -520,7 +567,7 @@ ffbMakeCurrent(__DRIcontextPrivate *driContextPriv,
 				   1, 0, 0, 0, 0);
 		}
 	} else {
-		_mesa_make_current(NULL, NULL);
+		_mesa_make_current(NULL, NULL, NULL);
 	}
 
 	return GL_TRUE;
@@ -551,19 +598,22 @@ void ffbXMesaUpdateState(ffbContextPtr fmesa)
 	}
 }
 
-
-static struct __DriverAPIRec ffbAPI = {
-   ffbInitDriver,
-   ffbDestroyScreen,
-   ffbCreateContext,
-   ffbDestroyContext,
-   ffbCreateBuffer,
-   ffbDestroyBuffer,
-   ffbSwapBuffers,
-   ffbMakeCurrent,
-   ffbUnbindContext
+static const struct __DriverAPIRec ffbAPI = {
+   .InitDriver      = ffbInitDriver,
+   .DestroyScreen   = ffbDestroyScreen,
+   .CreateContext   = ffbCreateContext,
+   .DestroyContext  = ffbDestroyContext,
+   .CreateBuffer    = ffbCreateBuffer,
+   .DestroyBuffer   = ffbDestroyBuffer,
+   .SwapBuffers     = ffbSwapBuffers,
+   .MakeCurrent     = ffbMakeCurrent,
+   .UnbindContext   = ffbUnbindContext,
+   .GetSwapInfo     = NULL,
+   .GetMSC          = NULL,
+   .WaitForMSC      = NULL,
+   .WaitForSBC      = NULL,
+   .SwapBuffersMSC  = NULL
 };
-
 
 
 /*
@@ -571,10 +621,149 @@ static struct __DriverAPIRec ffbAPI = {
  * The __driCreateScreen name is the symbol that libGL.so fetches.
  * Return:  pointer to a __DRIscreenPrivate.
  */
+#if !defined(DRI_NEW_INTERFACE_ONLY)
 void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                        int numConfigs, __GLXvisualConfig *config)
+			int numConfigs, __GLXvisualConfig *config)
 {
    __DRIscreenPrivate *psp;
    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &ffbAPI);
    return (void *) psp;
 }
+#endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
+	     
+
+#ifdef USE_NEW_INTERFACE
+static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
+
+static __GLcontextModes *
+ffbFillInModes( unsigned pixel_bits, unsigned depth_bits,
+		 unsigned stencil_bits, GLboolean have_back_buffer )
+{
+   __GLcontextModes * modes;
+   __GLcontextModes * m;
+   unsigned num_modes;
+   unsigned depth_buffer_factor;
+   unsigned back_buffer_factor;
+   GLenum fb_format;
+   GLenum fb_type;
+
+   /* GLX_SWAP_COPY_OML is only supported because the FFB driver doesn't
+    * support pageflipping at all.
+    */
+   static const GLenum back_buffer_modes[] = {
+      GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
+   };
+
+   u_int8_t depth_bits_array[3];
+   u_int8_t stencil_bits_array[3];
+
+
+   depth_bits_array[0] = 0;
+   depth_bits_array[1] = depth_bits;
+   depth_bits_array[2] = depth_bits;
+
+   /* Just like with the accumulation buffer, always provide some modes
+    * with a stencil buffer.  It will be a sw fallback, but some apps won't
+    * care about that.
+    */
+   stencil_bits_array[0] = 0;
+   stencil_bits_array[1] = 0;
+   stencil_bits_array[2] = (stencil_bits == 0) ? 8 : stencil_bits;
+
+   depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
+   back_buffer_factor  = (have_back_buffer) ? 3 : 1;
+
+   num_modes = depth_buffer_factor * back_buffer_factor * 4;
+
+    if ( pixel_bits == 16 ) {
+        fb_format = GL_RGB;
+        fb_type = GL_UNSIGNED_SHORT_5_6_5;
+    }
+    else {
+        fb_format = GL_BGRA;
+        fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+    }
+
+   modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
+   m = modes;
+   if ( ! driFillInModes( & m, fb_format, fb_type,
+			  depth_bits_array, stencil_bits_array, depth_buffer_factor,
+			  back_buffer_modes, back_buffer_factor,
+			  GLX_TRUE_COLOR ) ) {
+	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
+		 __func__, __LINE__ );
+	return NULL;
+   }
+   if ( ! driFillInModes( & m, fb_format, fb_type,
+			  depth_bits_array, stencil_bits_array, depth_buffer_factor,
+			  back_buffer_modes, back_buffer_factor,
+			  GLX_DIRECT_COLOR ) ) {
+	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
+		 __func__, __LINE__ );
+	return NULL;
+   }
+
+
+   /* Mark the visual as slow if there are "fake" stencil bits.
+    */
+   for ( m = modes ; m != NULL ; m = m->next ) {
+      if ( (m->stencilBits != 0) && (m->stencilBits != stencil_bits) ) {
+	 m->visualRating = GLX_SLOW_CONFIG;
+      }
+   }
+
+   return modes;
+}
+#endif /* USE_NEW_INTERFACE */
+
+
+/**
+ * This is the bootstrap function for the driver.  libGL supplies all of the
+ * requisite information about the system, and the driver initializes itself.
+ * This routine also fills in the linked list pointed to by \c driver_modes
+ * with the \c __GLcontextModes that the driver can support for windows or
+ * pbuffers.
+ * 
+ * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
+ *         failure.
+ */
+#ifdef USE_NEW_INTERFACE
+PUBLIC
+void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+			     const __GLcontextModes * modes,
+			     const __DRIversion * ddx_version,
+			     const __DRIversion * dri_version,
+			     const __DRIversion * drm_version,
+			     const __DRIframebuffer * frame_buffer,
+			     drmAddress pSAREA, int fd, 
+			     int internal_api_version,
+			     __GLcontextModes ** driver_modes )
+			     
+{
+   __DRIscreenPrivate *psp;
+   static const __DRIversion ddx_expected = { 0, 0, 1 };
+   static const __DRIversion dri_expected = { 4, 0, 0 };
+   static const __DRIversion drm_expected = { 0, 0, 1 };
+
+   if ( ! driCheckDriDdxDrmVersions2( "ffb",
+				      dri_version, & dri_expected,
+				      ddx_version, & ddx_expected,
+				      drm_version, & drm_expected ) ) {
+      return NULL;
+   }
+
+   psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
+				  ddx_version, dri_version, drm_version,
+				  frame_buffer, pSAREA, fd,
+				  internal_api_version, &ffbAPI);
+   if ( psp != NULL ) {
+      create_context_modes = (PFNGLXCREATECONTEXTMODES)
+	  glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
+      if ( create_context_modes != NULL ) {
+	 *driver_modes = ffbFillInModes( 32, 16, 0, GL_TRUE );
+      }
+   }
+
+   return (void *) psp;
+}
+#endif /* USE_NEW_INTERFACE */

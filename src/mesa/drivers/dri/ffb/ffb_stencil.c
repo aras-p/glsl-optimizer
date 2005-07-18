@@ -36,10 +36,12 @@
 
 #undef STENCIL_TRACE
 
-static void 
-FFBWriteStencilSpan(GLcontext *ctx, GLuint n, GLint x, GLint y,
-		    const GLstencil stencil[], const GLubyte mask[])
+static void FFBWriteStencilSpan( GLcontext *ctx,
+                                   struct gl_renderbuffer *rb,
+				   GLuint n, GLint x, GLint y,
+				   const void *values, const GLubyte mask[] )
 {
+        const GLubyte *stencil = (const GLubyte *) values;
 #ifdef STENCIL_TRACE
 	fprintf(stderr, "FFBWriteStencilSpan: n(%d) x(%d) y(%d)\n",
 		(int) n, x, y);
@@ -79,10 +81,13 @@ FFBWriteStencilSpan(GLcontext *ctx, GLuint n, GLint x, GLint y,
 	}
 }
 
-static void 
-FFBWriteStencilPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[],
-		      const GLstencil stencil[], const GLubyte mask[])
+static void FFBWriteStencilPixels( GLcontext *ctx,
+                                     struct gl_renderbuffer *rb,
+				     GLuint n,
+				     const GLint x[], const GLint y[],
+				     const void *values, const GLubyte mask[] )
 {
+        const GLubyte *stencil = (const GLubyte *) values;
 #ifdef STENCIL_TRACE
 	fprintf(stderr, "FFBWriteStencilPixels: n(%d)\n", (int) n);
 #endif
@@ -124,9 +129,12 @@ FFBWriteStencilPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[]
 	}
 }
 
-static void 
-FFBReadStencilSpan(GLcontext *ctx, GLuint n, GLint x, GLint y, GLstencil stencil[])
+static void FFBReadStencilSpan( GLcontext *ctx,
+                                  struct gl_renderbuffer *rb,
+				  GLuint n, GLint x, GLint y,
+				  void *values)
 {
+        GLubyte *stencil = (GLubyte *) values;
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
 	GLuint *zptr;
@@ -161,10 +169,12 @@ FFBReadStencilSpan(GLcontext *ctx, GLuint n, GLint x, GLint y, GLstencil stencil
 		UNLOCK_HARDWARE(fmesa);
 }
 
-static void 
-FFBReadStencilPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[],
-		     GLstencil stencil[])
+static void FFBReadStencilPixels( GLcontext *ctx,
+                                    struct gl_renderbuffer *rb,
+                                    GLuint n, const GLint x[], const GLint y[],
+				    void *values )
 {
+        GLubyte *stencil = (GLubyte *) values;
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
 	char *zbase;
@@ -200,22 +210,17 @@ FFBReadStencilPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[],
 		UNLOCK_HARDWARE(fmesa);
 }
 
-void ffbDDInitStencilFuncs(GLcontext *ctx)
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+ffbSetStencilFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
-	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-
-	struct swrast_device_driver *swdd = 
-		_swrast_GetDeviceDriverReference(ctx);
-
-	if (fmesa->ffb_sarea->flags & FFB_DRI_FFB2PLUS) {
-		swdd->WriteStencilSpan	 = FFBWriteStencilSpan;
-		swdd->ReadStencilSpan	 = FFBReadStencilSpan;
-		swdd->WriteStencilPixels = FFBWriteStencilPixels;
-		swdd->ReadStencilPixels	 = FFBReadStencilPixels;
-	} else {
-		swdd->WriteStencilSpan	 = NULL;
-		swdd->ReadStencilSpan	 = NULL;
-		swdd->WriteStencilPixels = NULL;
-		swdd->ReadStencilPixels	 = NULL;
-	}
+	assert(drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT);
+      	drb->Base.GetRow        = FFBReadStencilSpan;
+      	drb->Base.GetValues     = FFBReadStencilPixels;
+      	drb->Base.PutRow        = FFBWriteStencilSpan;
+      	/*drb->Base.PutMonoRow    = FFBWriteMonoStencilSpan;*/
+      	drb->Base.PutValues     = FFBWriteStencilPixels;
+      	drb->Base.PutMonoValues = NULL;
 }

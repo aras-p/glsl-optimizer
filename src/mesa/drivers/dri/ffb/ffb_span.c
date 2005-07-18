@@ -116,27 +116,20 @@ do {	GLuint p = *(GLuint *)(buf + ((__x)<<2) + ((__y)<<13));	\
 
 #include <spantmp.h>
 
-void ffbDDInitSpanFuncs(GLcontext *ctx)
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+ffbSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
-	struct swrast_device_driver *swdd = 
-		_swrast_GetDeviceDriverReference(ctx);
-   
-	swdd->WriteRGBASpan	= ffbWriteRGBASpan_888;
-	swdd->WriteRGBSpan	= ffbWriteRGBSpan_888;
-	swdd->WriteRGBAPixels	= ffbWriteRGBAPixels_888;
-	swdd->WriteMonoRGBASpan	= ffbWriteMonoRGBASpan_888;
-	swdd->WriteMonoRGBAPixels	= ffbWriteMonoRGBAPixels_888;
-	swdd->ReadRGBASpan	= ffbReadRGBASpan_888;
-	swdd->ReadRGBAPixels	= ffbReadRGBAPixels_888;
-
-	/* We don't support color index mode yet, but it will be
-	 * very easy to do. -DaveM
-	 */
-	swdd->WriteCI8Span        = NULL;
-	swdd->WriteCI32Span       = NULL;
-	swdd->WriteMonoCISpan     = NULL;
-	swdd->WriteCI32Pixels     = NULL;
-	swdd->WriteMonoCIPixels   = NULL;
-	swdd->ReadCI32Span        = NULL;
-	swdd->ReadCI32Pixels      = NULL;
+	assert(vis->redBits == 8);
+        assert(vis->greenBits == 8);
+        assert(vis->blueBits == 8);
+        drb->Base.GetRow        = ffbReadRGBASpan_888;
+        drb->Base.GetValues     = ffbReadRGBAPixels_888;
+        drb->Base.PutRow        = ffbWriteRGBASpan_888;
+        drb->Base.PutRowRGB     = ffbWriteRGBSpan_888;
+        drb->Base.PutMonoRow    = ffbWriteMonoRGBASpan_888;
+        drb->Base.PutValues     = ffbWriteRGBAPixels_888;
+        drb->Base.PutMonoValues = ffbWriteMonoRGBAPixels_888;
 }

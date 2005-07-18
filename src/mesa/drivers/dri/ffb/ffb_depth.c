@@ -37,10 +37,13 @@
 
 #undef DEPTH_TRACE
 
-static void 
-FFBWriteDepthSpan(GLcontext *ctx, GLuint n, GLint x, GLint y,
-		  const GLdepth depth[], const GLubyte mask[])
+static void FFBWriteDepthSpan( GLcontext *ctx,
+                                 struct gl_renderbuffer *rb,
+                                 GLuint n, GLint x, GLint y,
+				 const void *values,
+				 const GLubyte mask[] )
 {
+        const GLuint *depth = (const GLuint *) values;
 #ifdef DEPTH_TRACE
 	fprintf(stderr, "FFBWriteDepthSpan: n(%d) x(%d) y(%d)\n",
 		(int) n, x, y);
@@ -81,10 +84,28 @@ FFBWriteDepthSpan(GLcontext *ctx, GLuint n, GLint x, GLint y,
 	}
 }
 
-static void 
-FFBWriteDepthPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[],
-		    const GLdepth depth[], const GLubyte mask[])
+static void FFBWriteMonoDepthSpan( GLcontext *ctx, 
+				     struct gl_renderbuffer *rb,
+                         	     GLuint n, GLint x, GLint y,
+                         	     const void *value, const GLubyte mask[] )
 {
+	const GLuint depthVal = *((GLuint *) value);
+	GLuint depths[MAX_WIDTH];
+	GLuint i;
+	for (i = 0; i < n; i++)
+		depths[i] = depthVal;
+	FFBWriteDepthSpan(ctx, rb, n, x, y, depths, mask);
+}
+
+static void FFBWriteDepthPixels( GLcontext *ctx,
+                                   struct gl_renderbuffer *rb,
+				   GLuint n,
+				   const GLint x[],
+				   const GLint y[],
+				   const void *values,
+				   const GLubyte mask[] )
+{
+        const GLuint *depth = (const GLuint *) values;
 #ifdef DEPTH_TRACE
 	fprintf(stderr, "FFBWriteDepthPixels: n(%d)\n", (int) n);
 #endif
@@ -126,9 +147,12 @@ FFBWriteDepthPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[],
 	}
 }
 
-static void 
-FFBReadDepthSpan(GLcontext *ctx, GLuint n, GLint x, GLint y, GLdepth depth[])
+static void FFBReadDepthSpan( GLcontext *ctx,
+                                struct gl_renderbuffer *rb,
+				GLuint n, GLint x, GLint y,
+				void *values )
 {
+        GLuint *depth = (GLuint *) values;
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
 	GLuint *zptr;
@@ -163,10 +187,13 @@ FFBReadDepthSpan(GLcontext *ctx, GLuint n, GLint x, GLint y, GLdepth depth[])
 		UNLOCK_HARDWARE(fmesa);
 }
 
-static void 
-FFBReadDepthPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[],
-		   GLdepth depth[])
+static void FFBReadDepthPixels( GLcontext *ctx,
+                                  struct gl_renderbuffer *rb,
+                                  GLuint n,
+				  const GLint x[], const GLint y[],
+				  void *values )
 {
+        GLuint *depth = (GLuint *) values;
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
 	char *zbase;
@@ -202,13 +229,17 @@ FFBReadDepthPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[],
 		UNLOCK_HARDWARE(fmesa);
 }
 
-void ffbDDInitDepthFuncs(GLcontext *ctx)
+/**
+ * Plug in the Get/Put routines for the given driRenderbuffer.
+ */
+void
+ffbSetDepthFunctions(driRenderbuffer *drb, const GLvisual *vis)
 {
-	struct swrast_device_driver *swdd = 
-		_swrast_GetDeviceDriverReference(ctx);
-   
-	swdd->WriteDepthSpan	= FFBWriteDepthSpan;
-	swdd->ReadDepthSpan	= FFBReadDepthSpan;
-	swdd->WriteDepthPixels	= FFBWriteDepthPixels;
-	swdd->ReadDepthPixels	= FFBReadDepthPixels;
+	assert(drb->Base.InternalFormat == GL_DEPTH_COMPONENT16);
+      	drb->Base.GetRow        = FFBReadDepthSpan;
+      	drb->Base.GetValues     = FFBReadDepthPixels;
+      	drb->Base.PutRow        = FFBWriteDepthSpan;
+      	drb->Base.PutMonoRow    = FFBWriteMonoDepthSpan;
+      	drb->Base.PutValues     = FFBWriteDepthPixels;
+      	drb->Base.PutMonoValues = NULL;
 }

@@ -3,6 +3,6 @@
 #ifndef _FFB_DEPTH_H
 #define _FFB_DEPTH_H
 
-extern void ffbDDInitDepthFuncs(GLcontext *ctx);
+void ffbSetDepthFunctions(driRenderbuffer *drb, const GLvisual *vis);
 
 #endif /* !(_FFB_DEPTH_H) */
