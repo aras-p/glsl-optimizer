@@ -43,6 +43,7 @@
 #include "t_save_api.h"
 #include "t_context.h"
 #include "t_pipeline.h"
+#include "dispatch.h"
 
 static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
 				 GLsizei count )
@@ -52,10 +53,10 @@ static void fallback_drawarrays( GLcontext *ctx, GLenum mode, GLint start,
    assert(!ctx->CompileFlag);
    assert(ctx->Driver.CurrentExecPrimitive == GL_POLYGON+1);
 
-   GL_CALL(Begin)(mode);
+   CALL_Begin(GET_DISPATCH(), (mode));
    for (i = 0; i < count; i++) 
-       GL_CALL(ArrayElement)( start + i );
-   GL_CALL(End)();
+       CALL_ArrayElement(GET_DISPATCH(), ( start + i ));
+   CALL_End(GET_DISPATCH(), ());
 }
 
 
@@ -69,11 +70,11 @@ static void fallback_drawelements( GLcontext *ctx, GLenum mode, GLsizei count,
 
    /* Here, indices will already reflect the buffer object if active */
 
-   GL_CALL(Begin)(mode);
+   CALL_Begin(GET_DISPATCH(), (mode));
    for (i = 0 ; i < count ; i++) {
-      GL_CALL(ArrayElement)( indices[i] );
+      CALL_ArrayElement(GET_DISPATCH(), ( indices[i] ));
    }
-   GL_CALL(End)();
+   CALL_End(GET_DISPATCH(), ());
 }
 
 

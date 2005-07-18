@@ -146,28 +146,28 @@ static void choose_normals(void)
 		}
 
 		if (ctx->Light.EnabledList.next == ctx->Light.EnabledList.prev) {
-			ctx->Exec->Normal3f  = norm_tab[index].normal3f_single;
-			ctx->Exec->Normal3fv = norm_tab[index].normal3fv_single;
+			SET_Normal3f(ctx->Exec, norm_tab[index].normal3f_single);
+			SET_Normal3fv(ctx->Exec, norm_tab[index].normal3fv_single);
 		} else {
-			ctx->Exec->Normal3f  = norm_tab[index].normal3f_multi;
-			ctx->Exec->Normal3fv = norm_tab[index].normal3fv_multi;
+			SET_Normal3f(ctx->Exec, norm_tab[index].normal3f_multi);
+			SET_Normal3fv(ctx->Exec, norm_tab[index].normal3fv_multi);
 		}
 	} else {
-		ctx->Exec->Normal3f = _mesa_noop_Normal3f;
-		ctx->Exec->Normal3fv = _mesa_noop_Normal3fv;
+		SET_Normal3f(ctx->Exec, _mesa_noop_Normal3f);
+		SET_Normal3fv(ctx->Exec, _mesa_noop_Normal3fv);
 	}
 }
 
 static void ffb_choose_Normal3f(GLfloat x, GLfloat y, GLfloat z)
 {
 	choose_normals();
-	GL_CALL(Normal3f)(x, y, z);
+	CALL_Normal3f(GET_DISPATCH(), (x, y, z));
 }
 
 static void ffb_choose_Normal3fv(const GLfloat *v)
 {
 	choose_normals();
-	GL_CALL(Normal3fv)(v);
+	CALL_Normal3fv(GET_DISPATCH(), (v));
 }
 
 /* Vertex functions: */
@@ -267,13 +267,14 @@ static void ffb_do_fallback(GLcontext *ctx)
 	 * correctly:
 	 */
 	if (fmesa->imm.prim != PRIM_OUTSIDE_BEGIN_END )
-		GL_CALL(Begin)(fmesa->imm.prim);
+		CALL_Begin(GET_DISPATCH(), (fmesa->imm.prim));
 
 	if (ctx->Light.Enabled) {
-		GL_CALL(Color4fv)(ctx->Current.Color);	/* Catch ColorMaterial */
-		GL_CALL(Normal3fv)(current->normal);
+		/* Catch ColorMaterial */
+		CALL_Color4fv(GET_DISPATCH(), (ctx->Current.Color));
+		CALL_Normal3fv(GET_DISPATCH(), (current->normal));
 	} else {
-		GL_CALL(Color4fv)(current->color);
+		CALL_Color4fv(GET_DISPATCH(), (current->color));
 	}
 }
 

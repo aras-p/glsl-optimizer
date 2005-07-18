@@ -119,9 +119,9 @@ typedef pthread_mutex_t _glthread_Mutex;
 extern struct _glapi_table * _glapi_DispatchTSD;
 extern _glthread_TSD _gl_DispatchTSD;
 
-#define GL_CALL(name) \
-   (((__builtin_expect( _glapi_DispatchTSD != NULL, 1 )) \
-	? _glapi_DispatchTSD : (struct _glapi_table *) pthread_getspecific(_gl_DispatchTSD.key))-> name)
+#define GET_DISPATCH() \
+   ((__builtin_expect( _glapi_DispatchTSD != NULL, 1 )) \
+       ? _glapi_DispatchTSD : (struct _glapi_table *) pthread_getspecific(_gl_DispatchTSD.key))
 #endif
 
 #endif /* PTHREADS */
@@ -312,16 +312,16 @@ _glthread_SetTSD(_glthread_TSD *, void *);
 extern __thread struct _glapi_table * _glapi_tls_Dispatch
     __attribute__((tls_model("initial-exec")));
 
-# define GL_CALL(name) (*(_glapi_tls_Dispatch-> name))
+#define GET_DISPATCH() _glapi_tls_Dispatch
 
 #elif !defined(GL_CALL)
 # if defined(THREADS)
 extern struct _glapi_table * _glapi_DispatchTSD;
-#  define GL_CALL(name) \
-   (((__builtin_expect( _glapi_DispatchTSD != NULL, 1 )) \
-	? _glapi_DispatchTSD : _glapi_get_dispatch())-> name)
+#  define GET_DISPATCH() \
+   ((__builtin_expect( _glapi_DispatchTSD != NULL, 1 )) \
+       ? _glapi_DispatchTSD : _glapi_get_dispatch())
 # else
-#  define GL_CALL(name) (*(_glapi_Dispatch-> name))
+#  define GET_DISPATCH() _glapi_Dispatch
 # endif /* defined(THREADS) */
 #endif  /* ndef GL_CALL */
 

@@ -57,6 +57,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_swtcl.h"
 #include "radeon_vtxfmt.h"
 
+#include "dispatch.h"
+
 static void radeonVtxfmtFlushVertices( GLcontext *, GLuint );
 
 static void count_func( const char *name,  struct dynfn *l )
@@ -387,7 +389,7 @@ static void VFMT_FALLBACK( const char *caller )
    assert(rmesa->dma.flush == 0);
    rmesa->vb.fell_back = GL_TRUE;
    rmesa->vb.installed = GL_FALSE;
-   GL_CALL(Begin)( prim );
+   CALL_Begin(GET_DISPATCH(), (prim));
    
    if (rmesa->vb.installed_color_3f_sz == 4)
       alpha = ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3];
@@ -397,69 +399,69 @@ static void VFMT_FALLBACK( const char *caller )
    for (i = 0 ; i < nrverts; i++) {
       GLuint offset = 3;
       if (ind & RADEON_CP_VC_FRMT_N0) {
-	 GL_CALL(Normal3fv)( &tmp[i][offset] ); 
+	 CALL_Normal3fv(GET_DISPATCH(), (&tmp[i][offset]));
 	 offset += 3;
       }
 
       if (ind & RADEON_CP_VC_FRMT_PKCOLOR) {
 	 radeon_color_t *col = (radeon_color_t *)&tmp[i][offset];
-	 GL_CALL(Color4ub)( col->red, col->green, col->blue, col->alpha );
+	 CALL_Color4ub(GET_DISPATCH(), (col->red, col->green, col->blue, col->alpha));
 	 offset++;
       }
       else if (ind & RADEON_CP_VC_FRMT_FPALPHA) {
-	 GL_CALL(Color4fv)( &tmp[i][offset] ); 
+	 CALL_Color4fv(GET_DISPATCH(), (&tmp[i][offset]));
 	 offset+=4;
       } 
       else if (ind & RADEON_CP_VC_FRMT_FPCOLOR) {
-	 GL_CALL(Color3fv)( &tmp[i][offset] ); 
+	 CALL_Color3fv(GET_DISPATCH(), (&tmp[i][offset]));
 	 offset+=3;
       }
 
       if (ind & RADEON_CP_VC_FRMT_PKSPEC) {
 	 radeon_color_t *spec = (radeon_color_t *)&tmp[i][offset];
-	 GL_CALL(SecondaryColor3ubEXT)( spec->red, spec->green, spec->blue );
+	 CALL_SecondaryColor3ubEXT(GET_DISPATCH(), (spec->red, spec->green, spec->blue));
 	 offset++;
       }
 
       if (ind & RADEON_CP_VC_FRMT_ST0) {
-	 GL_CALL(TexCoord2fv)( &tmp[i][offset] ); 
+	 CALL_TexCoord2fv(GET_DISPATCH(), (&tmp[i][offset]));
 	 offset += 2;
       }
 
       if (ind & RADEON_CP_VC_FRMT_ST1) {
-	 GL_CALL(MultiTexCoord2fvARB)( GL_TEXTURE1_ARB, &tmp[i][offset] );
+	 CALL_MultiTexCoord2fvARB(GET_DISPATCH(), (GL_TEXTURE1_ARB, &tmp[i][offset]));
 	 offset += 2;
       }
-      GL_CALL(Vertex3fv)( &tmp[i][0] );
+      CALL_Vertex3fv(GET_DISPATCH(), (&tmp[i][0]));
    }
 
    /* Replay current vertex
     */
    if (ind & RADEON_CP_VC_FRMT_N0) 
-      GL_CALL(Normal3fv)( rmesa->vb.normalptr );
+      CALL_Normal3fv(GET_DISPATCH(), (rmesa->vb.normalptr));
 
    if (ind & RADEON_CP_VC_FRMT_PKCOLOR)
-      GL_CALL(Color4ub)( rmesa->vb.colorptr->red, rmesa->vb.colorptr->green, rmesa->vb.colorptr->blue, rmesa->vb.colorptr->alpha );
+      CALL_Color4ub(GET_DISPATCH(), (rmesa->vb.colorptr->red, rmesa->vb.colorptr->green, rmesa->vb.colorptr->blue, rmesa->vb.colorptr->alpha));
    else if (ind & RADEON_CP_VC_FRMT_FPALPHA)
-      GL_CALL(Color4fv)( rmesa->vb.floatcolorptr );
+      CALL_Color4fv(GET_DISPATCH(), (rmesa->vb.floatcolorptr));
    else if (ind & RADEON_CP_VC_FRMT_FPCOLOR) {
       if (rmesa->vb.installed_color_3f_sz == 4 && alpha != 1.0)
-	 GL_CALL(Color4f)( rmesa->vb.floatcolorptr[0],
-			   rmesa->vb.floatcolorptr[1],
-			   rmesa->vb.floatcolorptr[2],
-			   alpha );
+	 CALL_Color4f(GET_DISPATCH(), (rmesa->vb.floatcolorptr[0],
+				       rmesa->vb.floatcolorptr[1],
+				       rmesa->vb.floatcolorptr[2],
+				       alpha));
       else
-	 GL_CALL(Color3fv)( rmesa->vb.floatcolorptr );
+	 CALL_Color3fv(GET_DISPATCH(), (rmesa->vb.floatcolorptr));
    }
 
    if (ind & RADEON_CP_VC_FRMT_PKSPEC) 
-       GL_CALL(SecondaryColor3ubEXT)( rmesa->vb.specptr->red, rmesa->vb.specptr->green, rmesa->vb.specptr->blue ); 
+       CALL_SecondaryColor3ubEXT(GET_DISPATCH(), (rmesa->vb.specptr->red, rmesa->vb.specptr->green, rmesa->vb.specptr->blue));
 
    if (ind & RADEON_CP_VC_FRMT_ST0) 
-      GL_CALL(TexCoord2fv)( rmesa->vb.texcoordptr[0] );
+      CALL_TexCoord2fv(GET_DISPATCH(), (rmesa->vb.texcoordptr[0]));
 
    if (ind & RADEON_CP_VC_FRMT_ST1) 
-      GL_CALL(MultiTexCoord2fvARB)( GL_TEXTURE1_ARB, rmesa->vb.texcoordptr[1] );
+      CALL_MultiTexCoord2fvARB(GET_DISPATCH(), (GL_TEXTURE1_ARB, rmesa->vb.texcoordptr[1]));
 }
 
 
@@ -758,7 +760,7 @@ static void radeon_Materialfv( GLenum face, GLenum pname,
 
    if (rmesa->vb.prim[0] != GL_POLYGON+1) {
       VFMT_FALLBACK( __FUNCTION__ );
-      GL_CALL(Materialfv)( face, pname, params );
+      CALL_Materialfv(GET_DISPATCH(), (face, pname, params));
       return;
    }
    _mesa_noop_Materialfv( face, pname, params );
@@ -797,7 +799,7 @@ static void radeon_Begin( GLenum mode )
       radeonVtxfmtValidate( ctx );
 
    if (!rmesa->vb.installed) {
-      GL_CALL(Begin)( mode );
+      CALL_Begin(GET_DISPATCH(), (mode));
       return;
    }
 

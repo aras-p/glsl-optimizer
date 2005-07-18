@@ -44,6 +44,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_vtxfmt.h"
 #include "r200_tcl.h"
 
+#include "dispatch.h"
+
 /* Fallback versions of all the entrypoints for situations where
  * codegen isn't available.  This is still a lot faster than the
  * vb/pipeline implementation in Mesa.
@@ -578,7 +580,7 @@ static void r200_MultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t)
       break;
    default:
       VFMT_FALLBACK(__FUNCTION__);
-      GL_CALL(MultiTexCoord2fARB)(target, s, t);
+      CALL_MultiTexCoord2fARB(GET_DISPATCH(), (target, s, t));
       return;	
    }
 }
@@ -599,7 +601,7 @@ static void r200_MultiTexCoord3fARB(GLenum target, GLfloat s, GLfloat t, GLfloat
       break;
    default:
       VFMT_FALLBACK(__FUNCTION__);
-      GL_CALL(MultiTexCoord3fARB)(target, s, t, r);
+      CALL_MultiTexCoord3fARB(GET_DISPATCH(), (target, s, t, r));
       return;	
    }
 }
@@ -683,15 +685,15 @@ static void choose_##FN ARGS1						\
       fprintf(stderr, "%s -- cached codegen\n", __FUNCTION__ );		\
 									\
    if (dfn)								\
-      ctx->Exec->FN = (FNTYPE)(dfn->code);				\
+      SET_ ## FN (ctx->Exec, (FNTYPE)(dfn->code));			\
    else {								\
       if (R200_DEBUG & DEBUG_CODEGEN)					\
 	 fprintf(stderr, "%s -- generic version\n", __FUNCTION__ );	\
-      ctx->Exec->FN = r200_##FN;					\
+      SET_ ## FN (ctx->Exec, r200_##FN);				\
    }									\
 									\
    ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;			\
-   ctx->Exec->FN ARGS2;							\
+   CALL_ ## FN (ctx->Exec, ARGS2);					\
 }
 
 
@@ -715,7 +717,7 @@ static void choose_##FN ARGS1						\
    key[1] = rmesa->vb.vtxfmt_1 & MASK1;					\
 									\
    if (VTX_COLOR(rmesa->vb.vtxfmt_0,0) == R200_VTX_PK_RGBA) {		\
-      ctx->Exec->FN = r200_##FN##_ub;					\
+      SET_ ## FN (ctx->Exec, r200_##FN##_ub);				\
    }									\
    else if (VTX_COLOR(rmesa->vb.vtxfmt_0,0) == R200_VTX_FP_RGB) {	\
 									\
@@ -725,15 +727,15 @@ static void choose_##FN ARGS1						\
          if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) {		\
             r200_copy_to_current( ctx );				\
             _mesa_install_exec_vtxfmt( ctx, &rmesa->vb.vtxfmt );	\
-            ctx->Exec->FN ARGS2;					\
+            CALL_ ## FN (ctx->Exec, ARGS2);				\
             return;							\
          }								\
       }									\
 									\
-      ctx->Exec->FN = r200_##FN##_3f;					\
+      SET_ ## FN (ctx->Exec, r200_##FN##_3f);				\
    }									\
    else {								\
-      ctx->Exec->FN = r200_##FN##_4f;					\
+      SET_ ## FN (ctx->Exec, r200_##FN##_4f);				\
    }									\
 									\
 									\
@@ -743,13 +745,13 @@ static void choose_##FN ARGS1						\
    if (dfn) {								\
       if (R200_DEBUG & DEBUG_CODEGEN)					\
          fprintf(stderr, "%s -- codegen version\n", __FUNCTION__ );	\
-      ctx->Exec->FN = (FNTYPE)dfn->code;				\
+      SET_ ## FN (ctx->Exec, (FNTYPE)dfn->code);			\
    }									\
    else if (R200_DEBUG & DEBUG_CODEGEN)					\
          fprintf(stderr, "%s -- 'c' version\n", __FUNCTION__ );		\
 									\
    ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;			\
-   ctx->Exec->FN ARGS2;							\
+   CALL_ ## FN (ctx->Exec, ARGS2);					\
 }
 
 
@@ -778,16 +780,16 @@ static void choose_##FN ARGS1						\
       fprintf(stderr, "%s -- cached version\n", __FUNCTION__ );		\
 									\
    if (dfn)								\
-      ctx->Exec->FN = (FNTYPE)(dfn->code);			\
+      SET_ ## FN (ctx->Exec, (FNTYPE)(dfn->code));			\
    else {								\
       if (R200_DEBUG & DEBUG_CODEGEN)					\
          fprintf(stderr, "%s -- generic version\n", __FUNCTION__ );	\
-      ctx->Exec->FN = (VTX_COLOR(rmesa->vb.vtxfmt_0,1) == R200_VTX_PK_RGBA) \
-	  ? r200_##FN##_ub : r200_##FN##_3f;				\
+      SET_ ## FN (ctx->Exec, (VTX_COLOR(rmesa->vb.vtxfmt_0,1) == R200_VTX_PK_RGBA) \
+	  ? r200_##FN##_ub : r200_##FN##_3f);				\
    }									\
 									\
    ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;		\
-   ctx->Exec->FN ARGS2;						\
+   CALL_ ## FN (ctx->Exec, ARGS2);					\
 }
 
 

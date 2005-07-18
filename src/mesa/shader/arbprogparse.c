@@ -42,6 +42,8 @@
 #include "arbprogparse.h"
 #include "grammar_mesa.h"
 
+#include "dispatch.h"
+
 #ifndef __extension__
 #if !defined(__GNUC__) || (__GNUC__ < 2) || \
     ((__GNUC__ == 2) && (__GNUC_MINOR__ <= 7))
@@ -3884,7 +3886,8 @@ static int set_reg8 (GLcontext *ctx, grammar id, const byte *name, byte value)
 
 static int extension_is_supported (const GLubyte *ext)
 {
-   const GLubyte *extensions = GL_CALL(GetString)(GL_EXTENSIONS);
+   GET_CURRENT_CONTEXT(ctx);
+   const GLubyte *extensions = CALL_GetString(GET_DISPATCH(), (GL_EXTENSIONS));
    const GLubyte *end = extensions + _mesa_strlen ((const char *) extensions);
    const GLint ext_len = (GLint)_mesa_strlen ((const char *) ext);
 

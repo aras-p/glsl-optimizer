@@ -31,6 +31,7 @@
 #include "macros.h"
 #include "math/m_eval.h"
 #include "t_vtx_api.h"
+#include "dispatch.h"
 
 
 static void clear_active_eval1( TNLcontext *tnl, GLuint attr ) 
@@ -165,9 +166,9 @@ void _tnl_do_EvalCoord1f(GLcontext* ctx, GLfloat u)
 				map->Order);
 
       if (tnl->vtx.eval.map1[0].sz == 4) 
-	 GL_CALL(Vertex4fv)( vertex );
+	 CALL_Vertex4fv(GET_DISPATCH(), ( vertex ));
       else
-	 GL_CALL(Vertex3fv)( vertex ); 
+	 CALL_Vertex3fv(GET_DISPATCH(), ( vertex )); 
    }
 }
 
@@ -244,9 +245,9 @@ void _tnl_do_EvalCoord2f( GLcontext* ctx, GLfloat u, GLfloat v )
       }
 
       if (tnl->vtx.attrsz[0] == 4) 
-	 GL_CALL(Vertex4fv)( vertex );
+	 CALL_Vertex4fv(GET_DISPATCH(), ( vertex ));
       else
-	 GL_CALL(Vertex3fv)( vertex ); 
+	 CALL_Vertex3fv(GET_DISPATCH(), ( vertex )); 
    }
 }
 

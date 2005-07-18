@@ -33,6 +33,7 @@
 #include "macros.h"
 #include "mtypes.h"
 #include "dlist.h"
+#include "dispatch.h"
 
 
 /* In states where certain vertex components are required for t&l or
@@ -685,12 +686,12 @@ void GLAPIENTRY _mesa_noop_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2
       ASSERT_OUTSIDE_BEGIN_END(ctx);
    }
 
-   GL_CALL(Begin)( GL_QUADS );
-   GL_CALL(Vertex2f)( x1, y1 );
-   GL_CALL(Vertex2f)( x2, y1 );
-   GL_CALL(Vertex2f)( x2, y2 );
-   GL_CALL(Vertex2f)( x1, y2 );
-   GL_CALL(End)();
+   CALL_Begin(GET_DISPATCH(), (GL_QUADS));
+   CALL_Vertex2f(GET_DISPATCH(), (x1, y1));
+   CALL_Vertex2f(GET_DISPATCH(), (x2, y1));
+   CALL_Vertex2f(GET_DISPATCH(), (x2, y2));
+   CALL_Vertex2f(GET_DISPATCH(), (x1, y2));
+   CALL_End(GET_DISPATCH(), ());
 }
 
 
@@ -706,10 +707,10 @@ void GLAPIENTRY _mesa_noop_DrawArrays(GLenum mode, GLint start, GLsizei count)
    if (!_mesa_validate_DrawArrays( ctx, mode, start, count ))
       return;
 
-   GL_CALL(Begin)(mode);
+   CALL_Begin(GET_DISPATCH(), (mode));
    for (i = 0; i < count; i++)
-       GL_CALL(ArrayElement)(start + i);
-   GL_CALL(End)();
+       CALL_ArrayElement(GET_DISPATCH(), (start + i));
+   CALL_End(GET_DISPATCH(), ());
 }
 
 
@@ -722,27 +723,27 @@ void GLAPIENTRY _mesa_noop_DrawElements(GLenum mode, GLsizei count, GLenum type,
    if (!_mesa_validate_DrawElements( ctx, mode, count, type, indices ))
       return;
 
-   GL_CALL(Begin)(mode);
+   CALL_Begin(GET_DISPATCH(), (mode));
 
    switch (type) {
    case GL_UNSIGNED_BYTE:
       for (i = 0 ; i < count ; i++)
-	  GL_CALL(ArrayElement)( ((GLubyte *)indices)[i] );
+	  CALL_ArrayElement(GET_DISPATCH(), ( ((GLubyte *)indices)[i] ));
       break;
    case GL_UNSIGNED_SHORT:
       for (i = 0 ; i < count ; i++)
-	  GL_CALL(ArrayElement)( ((GLushort *)indices)[i] );
+	  CALL_ArrayElement(GET_DISPATCH(), ( ((GLushort *)indices)[i] ));
       break;
    case GL_UNSIGNED_INT:
       for (i = 0 ; i < count ; i++)
-	  GL_CALL(ArrayElement)( ((GLuint *)indices)[i] );
+	  CALL_ArrayElement(GET_DISPATCH(), ( ((GLuint *)indices)[i] ));
       break;
    default:
       _mesa_error( ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
       break;
    }
 
-   GL_CALL(End)();
+   CALL_End(GET_DISPATCH(), ());
 }
 
 void GLAPIENTRY _mesa_noop_DrawRangeElements(GLenum mode,
@@ -755,7 +756,7 @@ void GLAPIENTRY _mesa_noop_DrawRangeElements(GLenum mode,
    if (_mesa_validate_DrawRangeElements( ctx, mode,
 					 start, end,
 					 count, type, indices ))
-       GL_CALL(DrawElements)( mode, count, type, indices );
+       CALL_DrawElements(GET_DISPATCH(), (mode, count, type, indices));
 }
 
 /*
@@ -800,11 +801,11 @@ void GLAPIENTRY _mesa_noop_EvalMesh1( GLenum mode, GLint i1, GLint i2 )
    du = ctx->Eval.MapGrid1du;
    u = ctx->Eval.MapGrid1u1 + i1 * du;
 
-   GL_CALL(Begin)( prim );
+   CALL_Begin(GET_DISPATCH(), (prim));
    for (i=i1;i<=i2;i++,u+=du) {
-      GL_CALL(EvalCoord1f)( u );
+      CALL_EvalCoord1f(GET_DISPATCH(), (u));
    }
-   GL_CALL(End)();
+   CALL_End(GET_DISPATCH(), ());
 }
 
 
@@ -839,38 +840,38 @@ void GLAPIENTRY _mesa_noop_EvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1,
 
    switch (mode) {
    case GL_POINT:
-      GL_CALL(Begin)( GL_POINTS );
+      CALL_Begin(GET_DISPATCH(), (GL_POINTS));
       for (v=v1,j=j1;j<=j2;j++,v+=dv) {
 	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	    GL_CALL(EvalCoord2f)(u, v );
+	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v));
 	 }
       }
-      GL_CALL(End)();
+      CALL_End(GET_DISPATCH(), ());
       break;
    case GL_LINE:
       for (v=v1,j=j1;j<=j2;j++,v+=dv) {
-	 GL_CALL(Begin)( GL_LINE_STRIP );
+	 CALL_Begin(GET_DISPATCH(), (GL_LINE_STRIP));
 	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	    GL_CALL(EvalCoord2f)(u, v );
+	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v));
 	 }
-	 GL_CALL(End)();
+	 CALL_End(GET_DISPATCH(), ());
       }
       for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	 GL_CALL(Begin)( GL_LINE_STRIP );
+	 CALL_Begin(GET_DISPATCH(), (GL_LINE_STRIP));
 	 for (v=v1,j=j1;j<=j2;j++,v+=dv) {
-	    GL_CALL(EvalCoord2f)(u, v );
+	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v));
 	 }
-	 GL_CALL(End)();
+	 CALL_End(GET_DISPATCH(), ());
       }
       break;
    case GL_FILL:
       for (v=v1,j=j1;j<j2;j++,v+=dv) {
-	 GL_CALL(Begin)( GL_TRIANGLE_STRIP );
+	 CALL_Begin(GET_DISPATCH(), (GL_TRIANGLE_STRIP));
 	 for (u=u1,i=i1;i<=i2;i++,u+=du) {
-	    GL_CALL(EvalCoord2f)(u, v );
-	    GL_CALL(EvalCoord2f)(u, v+dv );
+	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v));
+	    CALL_EvalCoord2f(GET_DISPATCH(), (u, v+dv));
 	 }
-	 GL_CALL(End)();
+	 CALL_End(GET_DISPATCH(), ());
       }
       break;
    default:

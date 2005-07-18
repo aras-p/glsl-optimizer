@@ -43,6 +43,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "t_vtx_api.h"
 #include "simple_list.h"
 
+#include "dispatch.h"
+
 static void reset_attrfv( TNLcontext *tnl );
 
 static tnl_attrfv_func choose[_TNL_MAX_ATTR_CODEGEN+1][4]; /* +1 for ERROR_ATTRIB */
@@ -749,7 +751,7 @@ static void GLAPIENTRY _tnl_Begin( GLenum mode )
 
 	 if (!(tnl->Driver.NotifyBegin && 
 	       tnl->Driver.NotifyBegin( ctx, mode )))
-	     ctx->Exec->Begin(mode);
+	     CALL_Begin(ctx->Exec, (mode));
 	 return;
       }
 

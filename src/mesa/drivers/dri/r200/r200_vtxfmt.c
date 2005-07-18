@@ -58,6 +58,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/t_context.h"
 #include "tnl/t_array_api.h"
 
+#include "dispatch.h"
+
 static void r200VtxFmtFlushVertices( GLcontext *, GLuint );
 
 static void count_func( const char *name,  struct dynfn *l )
@@ -411,13 +413,13 @@ static void dispatch_multitexcoord( GLuint count, GLuint unit, GLfloat * f )
 {
    switch( count ) {
    case 3:
-      GL_CALL(MultiTexCoord3fvARB)( GL_TEXTURE0+unit, f );
+      CALL_MultiTexCoord3fvARB(GET_DISPATCH(), (GL_TEXTURE0+unit, f));
       break;
    case 2:
-      GL_CALL(MultiTexCoord2fvARB)( GL_TEXTURE0+unit, f );
+      CALL_MultiTexCoord2fvARB(GET_DISPATCH(), (GL_TEXTURE0+unit, f));
       break;
    case 1:
-      GL_CALL(MultiTexCoord1fvARB)( GL_TEXTURE0+unit, f );
+      CALL_MultiTexCoord1fvARB(GET_DISPATCH(), (GL_TEXTURE0+unit, f));
       break;
    default:
       assert( count == 0 );
@@ -465,7 +467,7 @@ void VFMT_FALLBACK( const char *caller )
    assert(rmesa->dma.flush == 0);
    rmesa->vb.fell_back = GL_TRUE;
    rmesa->vb.installed = GL_FALSE;
-   GL_CALL(Begin)( prim );
+   CALL_Begin(GET_DISPATCH(), (prim));
 
    if (rmesa->vb.installed_color_3f_sz == 4)
       alpha = ctx->Current.Attrib[VERT_ATTRIB_COLOR0][3];
@@ -476,30 +478,30 @@ void VFMT_FALLBACK( const char *caller )
       GLuint offset = 3;
 
       if (ind0 & R200_VTX_N0) {
-	 GL_CALL(Normal3fv)( &tmp[i][offset] ); 
+	 CALL_Normal3fv(GET_DISPATCH(), (&tmp[i][offset]));
 	 offset += 3;
       }
 
       if (ind0 & R200_VTX_DISCRETE_FOG) {
-	 GL_CALL(FogCoordfvEXT)( &tmp[i][offset] ); 
+	 CALL_FogCoordfvEXT(GET_DISPATCH(), (&tmp[i][offset]));
 	 offset++;
       }
 
       if (VTX_COLOR(ind0, 0) == R200_VTX_PK_RGBA) {
-	 GL_CALL(Color4ubv)( (GLubyte *)&tmp[i][offset] ); 
+	 CALL_Color4ubv(GET_DISPATCH(), ((GLubyte *)&tmp[i][offset]));
 	 offset++;
       }
       else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGBA) {
-	 GL_CALL(Color4fv)( &tmp[i][offset] ); 
+	 CALL_Color4fv(GET_DISPATCH(), (&tmp[i][offset]));
 	 offset+=4;
       } 
       else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGB) {
-	 GL_CALL(Color3fv)( &tmp[i][offset] ); 
+	 CALL_Color3fv(GET_DISPATCH(), (&tmp[i][offset]));
 	 offset+=3;
       }
 
       if (VTX_COLOR(ind0, 1) == R200_VTX_PK_RGBA) {
-	 GL_CALL(SecondaryColor3ubvEXT)( (GLubyte *)&tmp[i][offset] ); 
+	 CALL_SecondaryColor3ubvEXT(GET_DISPATCH(), ((GLubyte *)&tmp[i][offset]));
 	 offset++;
       }
 
@@ -509,42 +511,42 @@ void VFMT_FALLBACK( const char *caller )
 	 offset += count;
       }
 
-      GL_CALL(Vertex3fv)( &tmp[i][0] );
+      CALL_Vertex3fv(GET_DISPATCH(), (&tmp[i][0]));
    }
 
    /* Replay current vertex
     */
    if (ind0 & R200_VTX_N0) 
-      GL_CALL(Normal3fv)( rmesa->vb.normalptr );
+      CALL_Normal3fv(GET_DISPATCH(), (rmesa->vb.normalptr));
    if (ind0 & R200_VTX_DISCRETE_FOG) {
-      GL_CALL(FogCoordfvEXT)( rmesa->vb.fogptr ); 
+      CALL_FogCoordfvEXT(GET_DISPATCH(), (rmesa->vb.fogptr));
    }
 
    if (VTX_COLOR(ind0, 0) == R200_VTX_PK_RGBA) {
-      GL_CALL(Color4ub)( rmesa->vb.colorptr->red,
-			 rmesa->vb.colorptr->green,
-			 rmesa->vb.colorptr->blue,
-			 rmesa->vb.colorptr->alpha );
+      CALL_Color4ub(GET_DISPATCH(), (rmesa->vb.colorptr->red,
+				     rmesa->vb.colorptr->green,
+				     rmesa->vb.colorptr->blue,
+				     rmesa->vb.colorptr->alpha));
    }
    else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGBA) {
-      GL_CALL(Color4fv)( rmesa->vb.floatcolorptr );
+      CALL_Color4fv(GET_DISPATCH(), (rmesa->vb.floatcolorptr));
    }
    else if (VTX_COLOR(ind0, 0) == R200_VTX_FP_RGB) {
       if (rmesa->vb.installed_color_3f_sz == 4 && alpha != 1.0) {
-	 GL_CALL(Color4f)( rmesa->vb.floatcolorptr[0],
-			   rmesa->vb.floatcolorptr[1],
-			   rmesa->vb.floatcolorptr[2],
-			   alpha );
+	 CALL_Color4f(GET_DISPATCH(), (rmesa->vb.floatcolorptr[0],
+				       rmesa->vb.floatcolorptr[1],
+				       rmesa->vb.floatcolorptr[2],
+				       alpha));
       }
       else {
-	 GL_CALL(Color3fv)( rmesa->vb.floatcolorptr );
+	 CALL_Color3fv(GET_DISPATCH(), (rmesa->vb.floatcolorptr));
       }
    }
 
    if (VTX_COLOR(ind0, 1) == R200_VTX_PK_RGBA) 
-       GL_CALL(SecondaryColor3ubEXT)( rmesa->vb.specptr->red, 
-				      rmesa->vb.specptr->green,
-				      rmesa->vb.specptr->blue ); 
+       CALL_SecondaryColor3ubEXT(GET_DISPATCH(), (rmesa->vb.specptr->red, 
+						  rmesa->vb.specptr->green,
+						  rmesa->vb.specptr->blue));
 
    for ( unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++ ) {
       count = VTX_TEXn_COUNT( ind1, unit );
@@ -882,7 +884,7 @@ static void r200_Materialfv( GLenum face, GLenum pname,
 
    if (rmesa->vb.prim[0] != GL_POLYGON+1) {
       VFMT_FALLBACK( __FUNCTION__ );
-      GL_CALL(Materialfv)( face, pname, params );
+      CALL_Materialfv(GET_DISPATCH(), (face, pname, params));
       return;
    }
    _mesa_noop_Materialfv( face, pname, params );
@@ -921,7 +923,7 @@ static void r200_Begin( GLenum mode )
       r200VtxfmtValidate( ctx );
 
    if (!rmesa->vb.installed) {
-      GL_CALL(Begin)( mode );
+      CALL_Begin(GET_DISPATCH(), (mode));
       return;
    }
 

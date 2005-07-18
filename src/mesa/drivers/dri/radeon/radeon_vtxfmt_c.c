@@ -41,6 +41,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_vtxfmt.h"
 
+#include "dispatch.h"
+
 /* Fallback versions of all the entrypoints for situations where
  * codegen isn't available.  This is still a lot faster than the
  * vb/pipeline implementation in Mesa.
@@ -623,15 +625,15 @@ static void choose_##FN ARGS1						\
       fprintf(stderr, "%s -- cached codegen\n", __FUNCTION__ );		\
 									\
    if (dfn)								\
-      ctx->Exec->FN = (FNTYPE)(dfn->code);				\
+      SET_ ## FN (ctx->Exec, (FNTYPE)(dfn->code));			\
    else {								\
       if (RADEON_DEBUG & DEBUG_CODEGEN)					\
 	 fprintf(stderr, "%s -- generic version\n", __FUNCTION__ );	\
-      ctx->Exec->FN = radeon_##FN;					\
+      SET_ ## FN (ctx->Exec, radeon_##FN);				\
    }									\
 									\
    ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;			\
-   ctx->Exec->FN ARGS2;							\
+   CALL_ ## FN (ctx->Exec, ARGS2);					\
 }
 
 
@@ -652,7 +654,7 @@ static void choose_##FN ARGS1						\
    struct dynfn *dfn;							\
 									\
    if (rmesa->vb.vertex_format & ACTIVE_PKCOLOR) {			\
-      ctx->Exec->FN = radeon_##FN##_ub;					\
+      SET_ ## FN (ctx->Exec, radeon_##FN##_ub);				\
    }									\
    else if ((rmesa->vb.vertex_format &					\
             (ACTIVE_FPCOLOR|ACTIVE_FPALPHA)) == ACTIVE_FPCOLOR) {	\
@@ -663,15 +665,15 @@ static void choose_##FN ARGS1						\
          if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) {		\
             radeon_copy_to_current( ctx );				\
             _mesa_install_exec_vtxfmt( ctx, &rmesa->vb.vtxfmt );	\
-            ctx->Exec->FN ARGS2;					\
+            CALL_ ## FN (ctx->Exec, ARGS2);				\
             return;							\
          }								\
       }									\
 									\
-      ctx->Exec->FN = radeon_##FN##_3f;					\
+      SET_ ## FN (ctx->Exec, radeon_##FN##_3f);				\
    }									\
    else {								\
-      ctx->Exec->FN = radeon_##FN##_4f;					\
+      SET_ ## FN (ctx->Exec, radeon_##FN##_4f);				\
    }									\
 									\
 									\
@@ -681,13 +683,13 @@ static void choose_##FN ARGS1						\
    if (dfn) {								\
       if (RADEON_DEBUG & DEBUG_CODEGEN)					\
          fprintf(stderr, "%s -- codegen version\n", __FUNCTION__ );	\
-      ctx->Exec->FN = (FNTYPE)dfn->code;				\
+      SET_ ## FN (ctx->Exec, (FNTYPE)dfn->code);			\
    }									\
    else if (RADEON_DEBUG & DEBUG_CODEGEN)				\
          fprintf(stderr, "%s -- 'c' version\n", __FUNCTION__ );		\
 									\
    ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;			\
-   ctx->Exec->FN ARGS2;							\
+   CALL_ ## FN (ctx->Exec, ARGS2);					\
 }
 
 
@@ -712,16 +714,16 @@ static void choose_##FN ARGS1						\
       fprintf(stderr, "%s -- cached version\n", __FUNCTION__ );		\
 									\
    if (dfn)								\
-      ctx->Exec->FN = (FNTYPE)(dfn->code);				\
+      SET_ ## FN (ctx->Exec, (FNTYPE)(dfn->code));			\
    else {								\
       if (RADEON_DEBUG & DEBUG_CODEGEN)					\
          fprintf(stderr, "%s -- generic version\n", __FUNCTION__ );	\
-      ctx->Exec->FN = ((rmesa->vb.vertex_format & ACTIVE_PKSPEC) != 0)	\
-	  ? radeon_##FN##_ub : radeon_##FN##_3f;			\
+      SET_ ## FN (ctx->Exec, ((rmesa->vb.vertex_format & ACTIVE_PKSPEC) != 0)	\
+	  ? radeon_##FN##_ub : radeon_##FN##_3f);			\
    }									\
 									\
    ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;			\
-   ctx->Exec->FN ARGS2;							\
+   CALL_ ## FN (ctx->Exec, ARGS2);					\
 }
 
 

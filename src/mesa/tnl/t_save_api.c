@@ -77,6 +77,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "api_arrayelt.h"
 #include "vtxfmt.h"
 #include "t_save_api.h"
+#include "dispatch.h"
 
 /*
  * NOTE: Old 'parity' issue is gone, but copying can still be
@@ -1212,56 +1213,56 @@ static void GLAPIENTRY _save_EvalCoord1f( GLfloat u )
 {
    GET_CURRENT_CONTEXT(ctx);
    FALLBACK(ctx);
-   ctx->Save->EvalCoord1f( u );
+   CALL_EvalCoord1f(ctx->Save, ( u ));
 }
 
 static void GLAPIENTRY _save_EvalCoord1fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    FALLBACK(ctx);
-   ctx->Save->EvalCoord1fv( v );
+   CALL_EvalCoord1fv(ctx->Save, ( v ));
 }
 
 static void GLAPIENTRY _save_EvalCoord2f( GLfloat u, GLfloat v )
 {
    GET_CURRENT_CONTEXT(ctx);
    FALLBACK(ctx);
-   ctx->Save->EvalCoord2f( u, v );
+   CALL_EvalCoord2f(ctx->Save, ( u, v ));
 }
 
 static void GLAPIENTRY _save_EvalCoord2fv( const GLfloat *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    FALLBACK(ctx);
-   ctx->Save->EvalCoord2fv( v );
+   CALL_EvalCoord2fv(ctx->Save, ( v ));
 }
 
 static void GLAPIENTRY _save_EvalPoint1( GLint i )
 {
    GET_CURRENT_CONTEXT(ctx);
    FALLBACK(ctx);
-   ctx->Save->EvalPoint1( i );
+   CALL_EvalPoint1(ctx->Save, ( i ));
 }
 
 static void GLAPIENTRY _save_EvalPoint2( GLint i, GLint j )
 {
    GET_CURRENT_CONTEXT(ctx);
    FALLBACK(ctx);
-   ctx->Save->EvalPoint2( i, j );
+   CALL_EvalPoint2(ctx->Save, ( i, j ));
 }
 
 static void GLAPIENTRY _save_CallList( GLuint l )
 {
    GET_CURRENT_CONTEXT(ctx);
    FALLBACK(ctx);
-   ctx->Save->CallList( l );
+   CALL_CallList(ctx->Save, ( l ));
 }
 
 static void GLAPIENTRY _save_CallLists( GLsizei n, GLenum type, const GLvoid *v )
 {
    GET_CURRENT_CONTEXT(ctx);
    FALLBACK(ctx);
-   ctx->Save->CallLists( n, type, v );
+   CALL_CallLists(ctx->Save, ( n, type, v ));
 }
 
 
@@ -1383,11 +1384,11 @@ static void GLAPIENTRY _save_OBE_Rectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfl
 {
    GET_CURRENT_CONTEXT(ctx);
    _save_NotifyBegin( ctx, GL_QUADS | PRIM_WEAK );
-   GL_CALL(Vertex2f)( x1, y1 );
-   GL_CALL(Vertex2f)( x2, y1 );
-   GL_CALL(Vertex2f)( x2, y2 );
-   GL_CALL(Vertex2f)( x1, y2 );
-   GL_CALL(End)();
+   CALL_Vertex2f(GET_DISPATCH(), ( x1, y1 ));
+   CALL_Vertex2f(GET_DISPATCH(), ( x2, y1 ));
+   CALL_Vertex2f(GET_DISPATCH(), ( x2, y2 ));
+   CALL_Vertex2f(GET_DISPATCH(), ( x1, y2 ));
+   CALL_End(GET_DISPATCH(), ());
 }
 
 
@@ -1401,8 +1402,8 @@ static void GLAPIENTRY _save_OBE_DrawArrays(GLenum mode, GLint start, GLsizei co
 
    _save_NotifyBegin( ctx, mode | PRIM_WEAK );
    for (i = 0; i < count; i++)
-       GL_CALL(ArrayElement)(start + i);
-   GL_CALL(End)();
+       CALL_ArrayElement(GET_DISPATCH(), (start + i));
+   CALL_End(GET_DISPATCH(), ());
 }
 
 
@@ -1420,22 +1421,22 @@ static void GLAPIENTRY _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum
    switch (type) {
    case GL_UNSIGNED_BYTE:
       for (i = 0 ; i < count ; i++)
-	  GL_CALL(ArrayElement)( ((GLubyte *)indices)[i] );
+	  CALL_ArrayElement(GET_DISPATCH(), ( ((GLubyte *)indices)[i] ));
       break;
    case GL_UNSIGNED_SHORT:
       for (i = 0 ; i < count ; i++)
-	  GL_CALL(ArrayElement)( ((GLushort *)indices)[i] );
+	  CALL_ArrayElement(GET_DISPATCH(), ( ((GLushort *)indices)[i] ));
       break;
    case GL_UNSIGNED_INT:
       for (i = 0 ; i < count ; i++)
-	  GL_CALL(ArrayElement)( ((GLuint *)indices)[i] );
+	  CALL_ArrayElement(GET_DISPATCH(), ( ((GLuint *)indices)[i] ));
       break;
    default:
       _mesa_error( ctx, GL_INVALID_ENUM, "glDrawElements(type)" );
       break;
    }
 
-   GL_CALL(End)();
+   CALL_End(GET_DISPATCH(), ());
 }
 
 static void GLAPIENTRY _save_OBE_DrawRangeElements(GLenum mode,
