@@ -756,8 +756,6 @@ void GLAPIENTRY _ae_loopback_array_elt( GLint elt )
       const GLubyte *src = aa->array->BufferObj->Data
                          + (uintptr_t) aa->array->Ptr
                          + elt * aa->array->StrideB;
-      fprintf( stderr, "[%s,%u] aa->offset = %d\n", __func__, __LINE__,
-	       aa->offset );
       CALL_by_offset( disp, (array_func), aa->offset, 
 		      ((const void *) src) );
    }
