@@ -1314,8 +1314,9 @@ Mesa Version History
 	- bug reports should to go bugzilla.freedesktop.org
 
 
-6.3  Month day, 2004
+6.3  July 20, 2004
     New:
+	- GL_EXT_framebuffer_object extension
 	- GL_ARB_draw_buffers extension
 	- GL_ARB_pixel_buffer_object extension
 	- GL_OES_read_format extension (Ian Romanick)
@@ -1327,6 +1328,7 @@ Mesa Version History
 	- glDeleteTextures/Programs/Buffers() now makes the object ID
 	  available for immediate re-use
 	- assorted 64-bit clean-ups fixes (x86_64 and Win64)
+	- lots of internal changes for GL_EXT_framebuffer_object
     Bug fixes:
 	- some functions didn't support PBO functionality
 	- glGetTexImage didn't convert color index images to RGBA as required
