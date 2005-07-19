@@ -81,9 +81,7 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
-#if 0
 #include "drivers/common/driverfuncs.h"
-#endif
 
 #ifdef XFree86Server
 #include <GL/glxtokens.h>
