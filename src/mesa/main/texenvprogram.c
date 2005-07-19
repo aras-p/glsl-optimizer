@@ -358,7 +358,7 @@ static struct ureg get_temp( struct texenv_fragment_program *p )
       bit = ffs( ~p->temp_in_use );
 
    if (!bit) {
-      fprintf(stderr, "%s: out of temporaries\n", __FILE__);
+      _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
       exit(1);
    }
 
@@ -383,7 +383,7 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
       bit = ffs( ~p->temp_in_use );
 
    if (!bit) {
-      fprintf(stderr, "%s: out of temporaries\n", __FILE__);
+      _mesa_problem(NULL, "%s: out of temporaries\n", __FILE__);
       exit(1);
    }
 
@@ -610,7 +610,7 @@ static struct ureg get_zero( struct texenv_fragment_program *p )
 
 static void program_error( struct texenv_fragment_program *p, const char *msg )
 {
-   fprintf(stderr, "%s\n", msg);
+   _mesa_problem(NULL, msg);
    p->error = 1;
 }
 
@@ -917,7 +917,8 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
       struct ureg texcoord = register_input(p, FRAG_ATTRIB_TEX0+unit);
       struct ureg tmp = get_tex_temp( p );
 
-      if (dim == TEXTURE_UNKNOWN_INDEX) program_error(p, "TexSrcBit");
+      if (dim == TEXTURE_UNKNOWN_INDEX)
+         program_error(p, "TexSrcBit");
 			  
       /* TODO: Use D0_MASK_XY where possible.
        */
