@@ -20,6 +20,7 @@ PROGS = glthreads \
 	glxswapcontrol \
 	manywin \
 	offset \
+	overlay \
 	pbinfo \
 	pbdemo \
 	wincopy \
