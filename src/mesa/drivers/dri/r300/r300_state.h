@@ -60,5 +60,10 @@ extern void r300ResetHwState(r300ContextPtr r300);
 
 extern void r300InitState(r300ContextPtr r300);
 extern void r300InitStateFuncs(struct dd_function_table* functions);
+extern void r300SetupVertexShader(r300ContextPtr rmesa);
+extern void r300SetupPixelShader(r300ContextPtr rmesa);
+
+extern void r300_setup_textures(GLcontext *ctx);
+extern void r300_setup_rs_unit(GLcontext *ctx);
 
 #endif /* __R300_STATE_H__ */

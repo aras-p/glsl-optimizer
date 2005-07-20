@@ -71,8 +71,8 @@ static void r300DeleteProgram(GLcontext *ctx, struct program *prog)
 	
 	_mesa_delete_program(ctx, prog);
 }
-     
-void r300ProgramStringNotify(GLcontext *ctx, GLenum target, 
+
+static void r300ProgramStringNotify(GLcontext *ctx, GLenum target, 
 				struct program *prog)
 {
 	struct r300_vertex_program *vp=(void *)prog;

@@ -832,7 +832,7 @@ static void r300ClearStencil(GLcontext * ctx, GLint s)
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 
-void r300UpdateWindow(GLcontext * ctx)
+static void r300UpdateWindow(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
@@ -1326,7 +1326,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa);
    while leaving colors intact. Nothing fancy (like lights) 
    
    If implementing lights make a copy first, so it is easy to switch between the two versions */
-void r300GenerateSimpleVertexShader(r300ContextPtr r300)
+static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 {
 	int i;
 	GLuint o_reg = 0;
@@ -1559,7 +1559,7 @@ void r300SetupVertexProgram(r300ContextPtr rmesa)
  * But it works for most things.  I'll fix it later if someone
  * else with a better clue doesn't
  */
-unsigned int r300PackFloat24(float f)
+static unsigned int r300PackFloat24(float f)
 {
 	float mantissa;
 	int exponent;
@@ -1587,13 +1587,14 @@ unsigned int r300PackFloat24(float f)
 void r300SetupPixelShader(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
-	struct r300_fragment_program *rp = ctx->FragmentProgram._Current;
+	struct r300_fragment_program *rp =
+	    (struct r300_fragment_program *)ctx->FragmentProgram._Current;
 	int i,k;
 
 	if (!rp)	/* should only happenen once, just after context is created */
 		return;
 	
-	translate_fragment_shader(ctx->FragmentProgram._Current);
+	translate_fragment_shader(rp);
 	if (!rp->translated) {
 		fprintf(stderr, "%s: No valid fragment shader, exiting\n", __func__);
 		exit(-1);
@@ -1849,7 +1850,7 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 
 /* Checks that r300ResetHwState actually modifies all states.
    Should probably be burried in somewhere else as this file is getting longish. */
-void verify_r300ResetHwState(r300ContextPtr r300, int stage)
+static void verify_r300ResetHwState(r300ContextPtr r300, int stage)
 {
 	struct r300_state_atom* atom;
 	int i;

@@ -46,6 +46,7 @@
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
+#include "arbfragparse.h"
 
 #include "program.h"
 #include "nvfragprog.h"
@@ -905,7 +906,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 /* - Init structures
  * - Determine what hwregs each input corresponds to
  */
-void init_program(struct r300_fragment_program *rp)
+static void init_program(struct r300_fragment_program *rp)
 {
 	struct fragment_program *mp = &rp->mesa_program;	
 	struct fp_instruction *fpi;
@@ -1003,7 +1004,7 @@ void init_program(struct r300_fragment_program *rp)
 	rp->temp_in_use = temps_used;
 }
 
-void update_params(struct r300_fragment_program *rp) {
+static void update_params(struct r300_fragment_program *rp) {
 	struct fragment_program *mp = &rp->mesa_program;
 	int i;
 

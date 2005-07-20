@@ -43,5 +43,7 @@ typedef struct _pfs_reg_t {
 #define PFS_FLAG_SAT	(1 << 0)
 #define PFS_FLAG_ABS	(1 << 1)
 
-#endif
+extern void translate_fragment_shader(struct r300_fragment_program *rp);
+
+#endif /* __R300_FRAGPROG_H_ */
 

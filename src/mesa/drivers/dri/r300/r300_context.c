@@ -40,6 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "matrix.h"
 #include "extensions.h"
 #include "state.h"
+#include "bufferobj.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -191,7 +192,7 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 	0,
 };
 
-void r300BufferData(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
+static void r300BufferData(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 		const GLvoid *data, GLenum usage, struct gl_buffer_object *obj)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -239,7 +240,7 @@ void r300BufferData(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 #endif
 }
 
-void r300DeleteBuffer(GLcontext *ctx, struct gl_buffer_object *obj)
+static void r300DeleteBuffer(GLcontext *ctx, struct gl_buffer_object *obj)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	

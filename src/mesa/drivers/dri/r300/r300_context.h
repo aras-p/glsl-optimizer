@@ -80,6 +80,7 @@ typedef struct r300_context *r300ContextPtr;
 
 typedef GLuint uint32_t;
 typedef GLubyte uint8_t;
+struct r300_fragment_program;
 
   /* We should probably change types within vertex_shader
       and pixel_shader structure later on */

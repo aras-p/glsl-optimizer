@@ -35,6 +35,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "program.h"
 #include "r300_context.h"
+#include "r300_program.h"
 #include "nvvertprog.h"
 
 #define SCALAR_FLAG (1<<31)
@@ -365,7 +366,7 @@ static unsigned long t_swizzle(GLubyte swizzle)
 	}
 }
 
-void vp_dump_inputs(struct r300_vertex_program *vp, char *caller)
+static void vp_dump_inputs(struct r300_vertex_program *vp, char *caller)
 {
 	int i;
 	
