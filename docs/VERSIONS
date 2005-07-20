@@ -1322,6 +1322,7 @@ Mesa Version History
 	- GL_OES_read_format extension (Ian Romanick)
 	- DirectFB driver (Claudio Ciccani)
 	- x86_64 vertex transformation code (Mikko T.)
+	- Updated GL/glext.h to version 29
     Changes:
 	- added -stereo option for glxgears demo (Jacek Rosik)
 	- updated the PBuffer demo code in xdemos/ directory
@@ -1332,4 +1333,20 @@ Mesa Version History
     Bug fixes:
 	- some functions didn't support PBO functionality
 	- glGetTexImage didn't convert color index images to RGBA as required
-
+	- fragment program texcoords were sometimes wrong for points and lines
+	- fixed problem with negative dot product in arbfplight, fplight demos
+	- fixed bug in perspective correction of antialiased, textured lines
+	- querying GL_POST_CONVOLUTION_ALPHA_BIAS_EXT returned wrong value
+	- fixed a couple per-pixel fog bugs (Soju Matsumoto)
+	- glGetBooleanv(GL_FRAGMENT_PROGRAM_BINDING_NV) was broken
+	- fixed float parsing bug in ARB frag/vert programs (bug 2520)
+	- XMesaGetDepthBuffer() returned incorrect value for bytesPerValue
+	- GL_COLOR_MATERIAL with glColor3 didn't properly set diffuse alpha
+	- glXChooseFBConfig() crashed if attribList pointer was NULL
+	- program state.light[n].spot.direction.w was wrong value (bug 3083)
+	- fragment program fog option required glEnable(GL_FOG) - wrong.
+	- glColorTable() could produce a Mesa implementation error (bug 3135)
+	- RasterPos could get corrupted by color index rendering path
+	- Removed bad XTranslateCoordinates call when rendering to Pixmaps
+	- glPopAttrib() didn't properly restore GL_TEXTURE_GEN enable state
+	- fixed a few Darwin compilation problems

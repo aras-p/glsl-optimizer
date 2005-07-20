@@ -28,7 +28,7 @@ GL_OES_read_format - allows one to query the fastest glReadPixels format
 GL_ARB_pixel_buffer_object - buffer objects for pixel read/write functions.
 
 GL_EXT_framebuffer_object - allows render-to-texture and provides a
-  window-system indepedent Pbuffer facility
+  window-system indepedent Pbuffer facility.
   The Mesa CVS tree contains a couple tests of this extension.
 
 DirectFB driver, contributed by Claudio Ciccani.  See docs/README.directfb
@@ -63,11 +63,21 @@ Note that textures, programs and buffers can be shared by several rendering
 contexts so they can't be deleted until they're unbound in _all_ contexts.
 
 
+
 GL_EXT_framebuffer_object changes
 ---------------------------------
 
-XXX describe all the changes made for this extension.
+Implementing this extension involved changing a lot of code (for the better).
 
+The gl_framebuffer object now a collection of gl_renderbuffer objects.
+Renderbuffers may store colors, stencil indices, or depth values.  The
+gl_framebuffer and gl_renderbuffer types are object-oriented in design.
+
+All the old RGB, color index, stencil and depth-related span functions for
+reading/writing pixels from/to buffers has changed.  Now, all pixels are
+read/written through a set of common renderbuffer functions (methods).
+
+Most device drivers have been updated for these changes, but some haven't.
 
 
 
@@ -102,4 +112,4 @@ D3D			needs updating
 
 
 ----------------------------------------------------------------------
-$Id: RELNOTES-6.3,v 3.11 2005/07/19 21:01:46 brianp Exp $
+$Id: RELNOTES-6.3,v 3.12 2005/07/20 18:07:11 brianp Exp $
