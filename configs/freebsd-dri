@@ -13,7 +13,7 @@ OPT_FLAGS = -O
 
 EXPAT_INCLUDES = -I/usr/local/include
 X11_INCLUDES = -I/usr/X11R6/include -I/usr/X11R6/include/X11/extensions
-DEFINES = -DDRI_NEW_INTERFACE_ONLY 
+DEFINES = -DDRI_NEW_INTERFACE_ONLY -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1
 CFLAGS = $(DEFINES) -Wmissing-prototypes -g -std=c99  -Wundef -fPIC \
 	-ffast-math $(X11_INCLUDES)
 CXXFLAGS = $(DEFINES) -Wall -g -ansi -pedantic -fPIC
