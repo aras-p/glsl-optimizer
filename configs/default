@@ -8,7 +8,7 @@ CONFIG_NAME = default
 # Version info
 MESA_MAJOR=6
 MESA_MINOR=3
-MESA_TINY=0
+MESA_TINY=1
 
 # external projects
 DRM_SOURCE_PATH=$(TOP)/../drm
