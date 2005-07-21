@@ -227,7 +227,9 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.EXT_convolution = GL_TRUE;
    ctx->Extensions.EXT_depth_bounds_test = GL_TRUE;
    ctx->Extensions.EXT_fog_coord = GL_TRUE;
-   ctx->Extensions.EXT_framebuffer_object = GL_TRUE; /*FALSE;*/
+#if FEATURE_EXT_framebuffer_object
+   ctx->Extensions.EXT_framebuffer_object = GL_TRUE;
+#endif
    ctx->Extensions.EXT_histogram = GL_TRUE;
    ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;
    ctx->Extensions.EXT_paletted_texture = GL_TRUE;
