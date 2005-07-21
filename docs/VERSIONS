@@ -1314,7 +1314,7 @@ Mesa Version History
 	- bug reports should to go bugzilla.freedesktop.org
 
 
-6.3  July 20, 2004
+6.3  July 20, 2005
     New:
 	- GL_EXT_framebuffer_object extension
 	- GL_ARB_draw_buffers extension
@@ -1350,3 +1350,10 @@ Mesa Version History
 	- Removed bad XTranslateCoordinates call when rendering to Pixmaps
 	- glPopAttrib() didn't properly restore GL_TEXTURE_GEN enable state
 	- fixed a few Darwin compilation problems
+
+
+6.3.1  Month date, 2005
+    Bug fixes:
+	- GL_ARB_vertex/fragment_shader were mistakenly listed in the
+	  extensions string
+
