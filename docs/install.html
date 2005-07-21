@@ -21,53 +21,77 @@
 <a name="unix-x11">
 <H2>1. Unix/X11 Compilation and Installation</H1>
 
-<p>
-Mesa uses a rather conventional Makefile system.
-A GNU autoconf/automake system used to be included, but was discarded
-in Mesa 5.1 because:
-</p>
-<ul>
-<li>It seldom worked on IRIX, Solaris, AIX, etc.
-<li>It was very compilicated
-<li>Nobody maintained it
-<li>libtool was just too weird
-</ul>
-<p>
-If someone strongly feels that Mesa should have a autoconf/automake
-system and wants to contribute one and maintain it, we'll consider
-adding it again.
-</p>
-
-<p>
-In Mesa 6.1 we modified the conventional Makefile system.
-Instead of specifying all the various system configurations in the
-Make-config file, there's a directory named <code>configs/</code> which
-has an individual file for each configuration.
-One of the configs gets copied to <code>configs/current</code>, which
-is then included by all Makefiles.
-</p>
-
-
 <h3>1.1 Compilation</h3>
 
 <p>
-Note: if you've obtained Mesa through CVS, do this first:
+Mesa may be compiled in several different ways:
 </p>
-<pre>
-    cd Mesa
-    chmod a+x bin/mklib
-</pre>
-
+<ul>
+<li><b><em>Stand-alone/Xlib mode</em></b> - Mesa is compiled as
+a software renderer using Xlib to do all rendering.
+libGL.so is a self-contained rendering library.
 <p>
-Just type <b>make</b> in the top-level directory.
+To compile stand-alone Mesa type <b>make</b> in the top-level directory.
 You'll see a list of supported system configurations.
 Choose one from the list (such as linux-x86), and type:
 </p>
 <pre>
     make linux-x86
 </pre>
+<p>This will produce libGL.so and several other libraries</p>
+</li>
+
+<li><b><em>DRI/accelerated</em></b> - The DRI hardware drivers (for ATI,
+Intel, Matrox, etc) are built.
+libGL.so implements the GLX extension and dynamically loads the DRI drivers.
 <p>
-If you want to rebuild for a different configuration run
+To build the DRI drivers you'll first need to have the DRM (Direct
+Rendering Manager) kernel drivers and header files.
+They're available from the <a href="http://dri.sf.net/" target="_parent">DRI</a> project.
+</p>
+<p>
+You can get them from CVS by doing:
+<pre>
+cvs -d:pserver:anonymous@pds.freedesktop.org:/cvs/dri login
+(hit enter when prompted for a password)
+cvs -z3 -d:pserver:anonymous@pdx.freedesktop.org:/cvs/dri co drm
+</pre>
+<p>
+Make note of the directory in which the drm files are placed.
+</p>
+<p>
+See the <a href="http://dri.freedesktop.org/wiki/Building" target="_parent">
+DRI Building Instructions</a> for the steps to build the DRM modules.
+</p>
+<p>
+Next, in the <code>Mesa-x.y.z/configs/default</code> file, set the
+<code>DRM_SOURCE_PATH</code> variable to indicate where the DRM files
+are located.
+</p>
+<p>
+Now build Mesa and the DRI drivers by running
+</p>
+<pre>
+make linux-dri
+</pre>
+<p>
+There are also <code>linux-dri-x86</code>, <code>linux-dri-x86-64</code>, 
+and <code>linux-ppc</code> configurations, optimized for those architectures.
+</p>
+
+<p>
+Finally, you'll need a DRI-enabled X server from
+<a href="http://freedesktop.org/wiki/Software_2fXserver" target="_parent">
+X.org</a> or <a href="http://www.xfree86.org" target="_parent">XFree86</a>.
+Visit those projects' home pages for more information.
+</p>
+
+</li>
+</ul>
+
+
+<p>
+Later, if you want to rebuild for a different configuration run
 <code>make realclean</code> before rebuilding.
 </p>
 
@@ -75,7 +99,8 @@ If you want to rebuild for a different configuration run
 <h3>1.2 The libraries</h3>
 
 <p>
-When compilation has finished, look in the top-level <b>lib/</b> directory.
+When compilation has finished, look in the top-level <code>lib/</code>
+directory.
 You'll see a set of library files similar to this:
 </p>
 <pre>
@@ -107,6 +132,23 @@ lrwxrwxrwx    1 brian    users          23 Mar 26 07:53 libOSMesa.so.6 -> libOSM
 <br>
 <b>libOSMesa</b> is the OSMesa (Off-Screen) interface library.
 </p>
+
+<p>
+If you built the DRI hardware drivers, you'll also see the DRI drivers:
+</p>
+<pre>
+-rwxr-xr-x   1 brian users 11320803 Jul 21 12:11 mach64_dri.so
+-rwxr-xr-x   1 brian users 11418014 Jul 21 12:12 mga_dri.so
+-rwxr-xr-x   1 brian users 11064426 Jul 21 12:12 r128_dri.so
+-rwxr-xr-x   1 brian users 11849858 Jul 21 12:12 r200_dri.so
+-rwxr-xr-x   1 brian users 11757388 Jul 21 12:12 radeon_dri.so
+-rwxr-xr-x   1 brian users 11232304 Jul 21 12:13 s3v_dri.so
+-rwxr-xr-x   1 brian users 11062970 Jul 21 12:13 savage_dri.so
+-rwxr-xr-x   1 brian users 11214212 Jul 21 12:13 sis_dri.so
+-rwxr-xr-x   1 brian users 11368736 Jul 21 12:13 tdfx_dri.so
+-rwxr-xr-x   1 brian users 10598868 Jul 21 12:13 trident_dri.so
+-rwxr-xr-x   1 brian users 10997120 Jul 21 12:13 unichrome_dri.so
+</pre>
 
 
 <h3>1.3 Running the demos</h3>
