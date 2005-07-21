@@ -1352,7 +1352,9 @@ Mesa Version History
 	- fixed a few Darwin compilation problems
 
 
-6.3.1  Month date, 2005
+6.3.1  July XX, 2005
+    New:
+	- The distribution now includes the DRI drivers and GLX code
     Bug fixes:
 	- GL_ARB_vertex/fragment_shader were mistakenly listed in the
 	  extensions string
