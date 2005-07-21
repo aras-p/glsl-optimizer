@@ -323,7 +323,7 @@ static void init_setup_tab( void )
 
 
 
-void i810PrintSetupFlags(char *msg, GLuint flags )
+static void i810PrintSetupFlags(const char *msg, GLuint flags )
 {
    fprintf(stderr, "%s(%x): %s%s%s%s%s%s\n",
 	   msg,

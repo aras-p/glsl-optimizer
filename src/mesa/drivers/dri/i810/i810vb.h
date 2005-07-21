@@ -57,7 +57,4 @@ extern void i810_translate_vertex( GLcontext *ctx,
 extern void i810InitVB( GLcontext *ctx );
 extern void i810FreeVB( GLcontext *ctx );
 
-extern void i810_print_vertex( GLcontext *ctx, const i810Vertex *v );
-extern void i810PrintSetupFlags(char *msg, GLuint flags );
-
 #endif
