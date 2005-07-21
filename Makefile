@@ -133,11 +133,11 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-DIRECTORY = Mesa-6.3
-LIB_NAME = MesaLib-6.3
-DEMO_NAME = MesaDemos-6.3
+DIRECTORY = Mesa-6.3.1
+LIB_NAME = MesaLib-6.3.1
+DEMO_NAME = MesaDemos-6.3.1
 
-LIB_FILES =	\
+MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
 	$(DIRECTORY)/descrip.mms					\
 	$(DIRECTORY)/mms-config.					\
@@ -340,19 +340,24 @@ DEMO_FILES = \
 
 
 DRI_FILES = \
+	$(DIRECTORY)/include/GL/internal/*.h				\
 	$(DIRECTORY)/src/glx/Makefile					\
-	$(DIRECTORY)/src/glx/mini/*.[ch]				\
-	$(DIRECTORY)/src/glx/mini/example.miniglx.conf			\
-	$(DIRECTORY)/src/glx/mini/NOTES					\
+	$(DIRECTORY)/src/glx/x11/Makefile				\
+	$(DIRECTORY)/src/glx/x11/*.[ch]					\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile.template		\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.[ch]		\
+	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.po		\
 	$(DIRECTORY)/src/mesa/drivers/dri/dri_client/imports/*.h	\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/depend			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/Doxyfile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/server/*.[ch]
+
+
+LIB_FILES = $(MAIN_FILES) $(DRI_FILES)
 
 
 # Everything for new a Mesa release:
@@ -362,26 +367,26 @@ tarballs: lib_gz demo_gz lib_bz2 demo_bz2 lib_zip demo_zip md5
 lib_gz:
 	rm -f configs/current ; \
 	cd .. ; \
-	tar -cvf $(LIB_NAME).tar $(LIB_FILES) ; \
+	tar -cf $(LIB_NAME).tar $(LIB_FILES) ; \
 	gzip $(LIB_NAME).tar ; \
 	mv $(LIB_NAME).tar.gz $(DIRECTORY)
 
 demo_gz:
 	cd .. ; \
-	tar -cvf $(DEMO_NAME).tar $(DEMO_FILES) $(GLUT_FILES) ; \
+	tar -cf $(DEMO_NAME).tar $(DEMO_FILES) $(GLUT_FILES) ; \
 	gzip $(DEMO_NAME).tar ; \
 	mv $(DEMO_NAME).tar.gz $(DIRECTORY)
 
 lib_bz2:
 	rm -f configs/current ; \
 	cd .. ; \
-	tar -cvf $(LIB_NAME).tar $(LIB_FILES) ; \
+	tar -cf $(LIB_NAME).tar $(LIB_FILES) ; \
 	bzip2 $(LIB_NAME).tar ; \
 	mv $(LIB_NAME).tar.bz2 $(DIRECTORY)
 
 demo_bz2:
 	cd .. ; \
-	tar -cvf $(DEMO_NAME).tar $(DEMO_FILES) $(GLUT_FILES) ; \
+	tar -cf $(DEMO_NAME).tar $(DEMO_FILES) $(GLUT_FILES) ; \
 	bzip2 $(DEMO_NAME).tar ; \
 	mv $(DEMO_NAME).tar.bz2 $(DIRECTORY)
 
@@ -389,13 +394,13 @@ lib_zip:
 	rm -f configs/current ; \
 	-rm $(LIB_NAME).zip ; \
 	cd .. ; \
-	zip -r $(LIB_NAME).zip $(LIB_FILES) ; \
+	zip -qr $(LIB_NAME).zip $(LIB_FILES) ; \
 	mv $(LIB_NAME).zip $(DIRECTORY)
 
 demo_zip:
 	-rm $(DEMO_NAME).zip ; \
 	cd .. ; \
-	zip -r $(DEMO_NAME).zip $(DEMO_FILES) $(GLUT_FILES) ; \
+	zip -qr $(DEMO_NAME).zip $(DEMO_FILES) $(GLUT_FILES) ; \
 	mv $(DEMO_NAME).zip $(DIRECTORY)
 
 md5:
