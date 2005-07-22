@@ -1738,7 +1738,8 @@ enum register_file
    PROGRAM_NAMED_PARAM,
    PROGRAM_STATE_VAR,
    PROGRAM_WRITE_ONLY,
-   PROGRAM_ADDRESS
+   PROGRAM_ADDRESS,
+   PROGRAM_UNDEFINED   /* invalid value */
 };
 
 

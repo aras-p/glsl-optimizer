@@ -247,7 +247,7 @@ static struct state_key *make_state_key( GLcontext *ctx )
  */
 struct ureg {
    GLuint file:4;
-   GLuint idx:8;
+   GLint idx:8;      /* relative addressing may be negative */
    GLuint negate:1;
    GLuint swz:12;
    GLuint pad:7;

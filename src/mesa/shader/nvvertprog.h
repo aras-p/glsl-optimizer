@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.3.1
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -76,19 +76,19 @@ enum vp_opcode
 /* Instruction source register */
 struct vp_src_register
 {
-   GLuint File:4;
-   GLuint Index:8;
+   GLuint File:4;		/* one of the PROGRAM_* register file values */
+   GLint Index:9;		/* may be negative for relative addressing */
    GLuint Swizzle:12;
    GLuint Negate:4;		/* ARB requires component-wise negation. */
    GLuint RelAddr:1;
-   GLuint pad:3;
+   GLuint pad:2;
 };
 
 
 /* Instruction destination register */
 struct vp_dst_register
 {
-   GLuint File:4;
+   GLuint File:4;		/* one of the PROGRAM_* register file values */
    GLuint Index:8;
    GLuint WriteMask:4;
    GLuint pad:16;

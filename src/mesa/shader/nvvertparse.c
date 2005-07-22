@@ -1142,10 +1142,10 @@ Parse_InstructionSequence(struct parse_state *parseState,
       struct vp_instruction *inst = program + parseState->numInst;
 
       /* Initialize the instruction */
-      inst->SrcReg[0].File = (enum register_file) -1;
-      inst->SrcReg[1].File = (enum register_file) -1;
-      inst->SrcReg[2].File = (enum register_file) -1;
-      inst->DstReg.File = (enum register_file) -1;
+      inst->SrcReg[0].File = PROGRAM_UNDEFINED;
+      inst->SrcReg[1].File = PROGRAM_UNDEFINED;
+      inst->SrcReg[2].File = PROGRAM_UNDEFINED;
+      inst->DstReg.File = PROGRAM_UNDEFINED;
       inst->Data = NULL;
 
       if (Parse_String(parseState, "MOV")) {
