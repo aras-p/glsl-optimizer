@@ -1358,4 +1358,4 @@ Mesa Version History
     Bug fixes:
 	- GL_ARB_vertex/fragment_shader were mistakenly listed in the
 	  extensions string
-
+	- negative relative addressing in vertex programs was broken
