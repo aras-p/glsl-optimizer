@@ -52,6 +52,9 @@
 #include "xfonts.h"
 #include "xmesaP.h"
 
+#ifdef __VMS
+#define _mesa_sprintf sprintf
+#endif
 
 /* This indicates the client-side GLX API and GLX encoder version. */
 #define CLIENT_MAJOR_VERSION 1
