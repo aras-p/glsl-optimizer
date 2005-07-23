@@ -365,6 +365,8 @@ ALIAS( Map2f, Map2d )
 ALIAS( ColorTableParameteriv, ColorTableParameterfv )
 ALIAS( ConvolutionParameteriv, ConvolutionParameterfv )
 ALIAS( PointParameterivNV, PointParameterfvEXT )
+ALIAS( PointParameterfvARB, PointParameterfvEXT )
+ALIAS( PointParameteriv, PointParameterfvEXT )
 
 #  undef HAVE_ALIAS
 #  undef PURE
