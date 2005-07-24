@@ -688,7 +688,7 @@ filter_modes( __GLcontextModes ** server_modes,
 static void *
 CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
 		    __DRIdisplay * driDpy,
-		    CreateNewScreenFunc createNewScreen)
+		    PFNCREATENEWSCREENFUNC createNewScreen)
 {
     __DRIscreenPrivate *psp = NULL;
 #ifndef GLX_USE_APPLEGL

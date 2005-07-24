@@ -237,7 +237,7 @@ static __DRIdriver *OpenDriver(const char *driverName)
             return NULL; /* out of memory! */
          }
 
-         driver->createNewScreenFunc = (CreateNewScreenFunc)
+         driver->createNewScreenFunc = (PFNCREATENEWSCREENFUNC)
             dlsym(handle, createNewScreenName);
 
          if ( driver->createNewScreenFunc == NULL ) {
@@ -424,7 +424,8 @@ void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
     pdisp->destroyDisplay = driDestroyDisplay;
 
     /* allocate array of pointers to createNewScreen funcs */
-    pdisp->createNewScreen = (CreateNewScreenFunc *) Xmalloc(numScreens * sizeof(void *));
+    pdisp->createNewScreen = (PFNCREATENEWSCREENFUNC *)
+      Xmalloc(numScreens * sizeof(void *));
     if (!pdisp->createNewScreen) {
        Xfree(pdpyp);
        return NULL;

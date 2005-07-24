@@ -84,15 +84,6 @@ typedef struct _glapi_table __GLapi;
 
 #include <GL/internal/dri_interface.h>
 
-typedef void *(*CreateScreenFunc)(Display *dpy, int scrn, __DRIscreen *psc,
-                                  int numConfigs, __GLXvisualConfig *config);
-
-typedef void *(*CreateNewScreenFunc)(Display *dpy, int scrn, __DRIscreen *psc,
-    const __GLcontextModes * modes, const __DRIversion * ddx_version,
-    const __DRIversion * dri_version, const __DRIversion * drm_version,
-    const __DRIframebuffer * frame_buffer, void * pSAREA,
-    int fd, int internal_api_version, __GLcontextModes ** driver_modes);
-
 
 /**
  * Display dependent methods.  This structure is initialized during the
@@ -114,7 +105,7 @@ struct __DRIdisplayRec {
      * Array of pointers to methods to create and initialize the private DRI
      * screen data.
      */
-    CreateNewScreenFunc * createNewScreen;
+    PFNCREATENEWSCREENFUNC * createNewScreen;
 };
 
 
@@ -124,7 +115,7 @@ struct __DRIdisplayRec {
 struct __DRIdriverRec {
    const char *name;
    void *handle;
-   CreateNewScreenFunc createNewScreenFunc;
+   PFNCREATENEWSCREENFUNC createNewScreenFunc;
    struct __DRIdriverRec *next;
 };
 

@@ -175,14 +175,7 @@ typedef void *(CREATENEWSCREENFUNC)(__DRInativeDisplay *dpy, int scrn,
     void * pSAREA, int fd, int internal_api_version,
     __GLcontextModes ** driver_modes);
 typedef CREATENEWSCREENFUNC* PFNCREATENEWSCREENFUNC;
-extern CREATENEWSCREENFUNC __driCreateNewScreen;
-
-#ifndef DRI_NEW_INTERFACE_ONLY
-
-extern void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-    int numConfigs, __GLXvisualConfig *config);
-
-#endif /* DRI_NEW_INTERFACE_ONLY */
+extern CREATENEWSCREENFUNC __driCreateNewScreen_20050722;
 
 
 /**
