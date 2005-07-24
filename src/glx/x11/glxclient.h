@@ -105,17 +105,6 @@ struct __DRIdisplayRec {
     void (*destroyDisplay)(Display *dpy, void *displayPrivate);
 
     /**
-     * Methods to create the private DRI screen data and initialize the
-     * screen dependent methods.
-     * This is an array [indexed by screen number] of function pointers.
-     * 
-     * \deprecated  This array of function pointers has been replaced by
-     *              \c __DRIdisplayRec::createNewScreen.
-     * \sa __DRIdisplayRec::createNewScreen
-     */
-    CreateScreenFunc * createScreen;
-
-    /**
      * Opaque pointer to private per display direct rendering data.
      * \c NULL if direct rendering is not supported on this display.
      */
@@ -124,8 +113,6 @@ struct __DRIdisplayRec {
     /**
      * Array of pointers to methods to create and initialize the private DRI
      * screen data.
-     *
-     * \sa __DRIdisplayRec::createScreen
      */
     CreateNewScreenFunc * createNewScreen;
 };
@@ -137,7 +124,6 @@ struct __DRIdisplayRec {
 struct __DRIdriverRec {
    const char *name;
    void *handle;
-   CreateScreenFunc createScreenFunc;
    CreateNewScreenFunc createNewScreenFunc;
    struct __DRIdriverRec *next;
 };
@@ -513,14 +499,6 @@ extern void __glFreeAttributeState(__GLXcontext *);
  */
 typedef struct __GLXscreenConfigsRec {
     /**
-     * GLX visuals formated as \c __GLXvisualConfig structures.
-     */
-    /*@{*/
-    __GLXvisualConfig * old_configs;
-    int numOldConfigs;
-    /*@}*/
-
-    /**
      * GLX extension string reported by the X-server.
      */
     const char *serverGLXexts;
@@ -539,10 +517,10 @@ typedef struct __GLXscreenConfigsRec {
 #endif
 
     /**
-     * Linked list of configurations for this screen.  This is intended to
-     * be a superset of \c old_configs.
+     * Linked list of configurations for this screen.
      */
     __GLcontextModes *configs;
+
     /**
      * Per-screen dynamic GLX extension tracking.  The \c direct_support
      * field only contains enough bits for 64 extensions.  Should libGL

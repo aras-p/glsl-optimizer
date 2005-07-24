@@ -89,7 +89,7 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(NV_render_depth_texture),     VER(0,0), N, N, N, N },
    { GLX(NV_render_texture_rectangle), VER(0,0), N, N, N, N },
    { GLX(NV_vertex_array_range),       VER(0,0), N, N, N, Y }, /* Deprecated */
-   { GLX(OML_swap_method),             VER(0,0), Y, N, N, N },
+   { GLX(OML_swap_method),             VER(0,0), Y, Y, N, N },
    { GLX(OML_sync_control),            VER(0,0), Y, N, N, Y },
    { GLX(SGI_cushion),                 VER(0,0), N, N, N, N },
    { GLX(SGI_make_current_read),       VER(1,3), Y, N, N, N },
@@ -99,7 +99,7 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(SGIS_color_range),            VER(0,0), N, N, N, N },
    { GLX(SGIS_multisample),            VER(0,0), Y, Y, N, N },
    { GLX(SGIX_dm_buffer),              VER(0,0), N, N, N, N },
-   { GLX(SGIX_fbconfig),               VER(1,3), Y, N, N, N },
+   { GLX(SGIX_fbconfig),               VER(1,3), Y, Y, N, N },
    { GLX(SGIX_pbuffer),                VER(1,3), Y, N, N, N },
    { GLX(SGIX_swap_barrier),           VER(0,0), N, N, N, N },
    { GLX(SGIX_swap_group),             VER(0,0), N, N, N, N },

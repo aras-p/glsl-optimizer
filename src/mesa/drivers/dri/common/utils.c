@@ -35,10 +35,6 @@
 #include "extensions.h"
 #include "utils.h"
 
-#if !defined( DRI_NEW_INTERFACE_ONLY )
-#include "xf86dri.h"        /* For XF86DRIQueryVersion prototype. */
-#endif
-
 #if defined(USE_X86_ASM)
 #include "x86/common_x86_asm.h"
 #endif
@@ -275,57 +271,6 @@ void driInitSingleExtension( GLcontext * ctx,
 }
 
 
-
-
-#ifndef DRI_NEW_INTERFACE_ONLY
-/**
- * Utility function used by drivers to test the verions of other components.
- * 
- * \deprecated
- * All drivers using the new interface should use \c driCheckDriDdxVersions2
- * instead.  This function is implemented using a call that is not available
- * to drivers using the new interface.  Furthermore, the information gained
- * by this call (the DRI and DDX version information) is already provided to
- * the driver via the new interface.
- */
-GLboolean
-driCheckDriDdxDrmVersions(__DRIscreenPrivate *sPriv,
-			  const char * driver_name,
-			  int dri_major, int dri_minor,
-			  int ddx_major, int ddx_minor,
-			  int drm_major, int drm_minor)
-{
-   static const char format[] = "%s DRI driver expected %s version %d.%d.x "
-       "but got version %d.%d.%d";
-   int major, minor, patch;
-
-   /* Check the DRI version */
-   if (XF86DRIQueryVersion(sPriv->display, &major, &minor, &patch)) {
-      if (major != dri_major || minor < dri_minor) {
-	 __driUtilMessage(format, driver_name, "DRI", dri_major, dri_minor,
-			  major, minor, patch);
-	 return GL_FALSE;
-      }
-   }
-
-   /* Check that the DDX driver version is compatible */
-   if (sPriv->ddxMajor != ddx_major || sPriv->ddxMinor < ddx_minor) {
-      __driUtilMessage(format, driver_name, "DDX", ddx_major, ddx_minor,
-		       sPriv->ddxMajor, sPriv->ddxMinor, sPriv->ddxPatch);
-      return GL_FALSE;
-   }
-   
-   /* Check that the DRM driver version is compatible */
-   if (sPriv->drmMajor != drm_major || sPriv->drmMinor < drm_minor) {
-      __driUtilMessage(format, driver_name, "DRM", drm_major, drm_minor,
-		       sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch);
-      return GL_FALSE;
-   }
-
-   return GL_TRUE;
-}
-#endif /* DRI_NEW_INTERFACE_ONLY */
-
 /**
  * Utility function used by drivers to test the verions of other components.
  *
@@ -343,7 +288,11 @@ driCheckDriDdxDrmVersions(__DRIscreenPrivate *sPriv,
  * \returns \c GL_TRUE if all version requirements are met.  Otherwise,
  *          \c GL_FALSE is returned.
  * 
- * \sa __driCreateNewScreen, driCheckDriDdxDrmVersions, __driUtilMessage
+ * \sa __driCreateNewScreen, driCheckDriDdxDrmVersions2, __driUtilMessage
+ *
+ * \todo
+ * Now that the old \c driCheckDriDdxDrmVersions function is gone, this
+ * function and \c driCheckDriDdxDrmVersions2 should be renamed.
  */
 GLboolean
 driCheckDriDdxDrmVersions3(const char * driver_name,

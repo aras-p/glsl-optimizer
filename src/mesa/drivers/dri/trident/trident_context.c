@@ -453,13 +453,9 @@ static struct __DriverAPIRec tridentAPI = {
    tridentUnbindContext,
 };
 
-#ifndef USE_NEW_INTERFACE
-#error trident_dri.so is new-interface only.
-#else
-
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 
-PUBLIC void *__driCreateNewScreen( __DRInativeDisplay *dpy, int scrn,
+PUBLIC void *__driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
                                    __DRIscreen *psc,
                                    const __GLcontextModes * modes,
                                    const __DRIversion * ddx_version,
@@ -490,11 +486,4 @@ PUBLIC void *__driCreateNewScreen( __DRInativeDisplay *dpy, int scrn,
 #endif
     }
     return (void *) psp;
-}
-
-#endif
-
-void __driRegisterExtensions(void)
-{
-   /* No extensions */
 }

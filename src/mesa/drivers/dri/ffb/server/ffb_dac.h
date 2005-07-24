@@ -26,9 +26,7 @@
 #ifndef _FFB_DAC_H
 #define _FFB_DAC_H
 
-#if defined( DRI_NEW_INTERFACE_ONLY )
 #define Bool int
-#endif
 
 /* FFB utilizes two different ramdac chips:
  *

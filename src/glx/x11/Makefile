@@ -1,16 +1,12 @@
 TOP = ../../..
 include $(TOP)/configs/current
 
-# This is a bit messy.  We want this libGL to be capable of loading old
-# interface drivers, so we have to turn off DRI_NEW_INTERFACE_ONLY.  However,
-# glcontextmodes.c is built elsewhere with DNIO on, so we symlink it across.
-# 
-# Furthermore, context creation has evolved over the years, such that this
+# Context creation has evolved over the years, such that this
 # code will not build with DNIO defined.  When we finally drop old interface
 # support in libGL, we need to clean up both glxcmds.c and dri_interface.h.
 
 DEFINES += -DGLX_DIRECT_RENDERING -DGLXEXT -DXF86DRI -DGLX_USE_DLOPEN \
-	-DGLX_USE_MESA -DXF86VIDMODE -D_REENTRANT -UDRI_NEW_INTERFACE_ONLY
+	-DGLX_USE_MESA -DXF86VIDMODE -D_REENTRANT -UIN_DRI_DRIVER
 
 C_SOURCES = \
 	  $(TOP)/src/mesa/glapi/glapi.c \

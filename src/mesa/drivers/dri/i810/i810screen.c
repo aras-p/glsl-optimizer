@@ -54,11 +54,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "GL/internal/dri_interface.h"
 
-#ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-#endif /* USE_NEW_INTERFACE */
 
-#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *fill_in_modes( __GLcontextModes *modes,
 				       unsigned pixel_bits,
 				       unsigned depth_bits,
@@ -122,9 +119,8 @@ static __GLcontextModes *fill_in_modes( __GLcontextModes *modes,
     return modes;
 
 }
-#endif /* USE_NEW_INTERFACE */
 
-#ifdef USE_NEW_INTERFACE
+
 static __GLcontextModes *
 i810FillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
@@ -189,8 +185,6 @@ i810FillInModes( unsigned pixel_bits, unsigned depth_bits,
     return modes;
 
 }
-#endif /* USE_NEW_INTERFACE */
-
 
      
 /*  static int i810_malloc_proxy_buf(drmBufMapPtr buffers) */
@@ -421,21 +415,6 @@ static const struct __DriverAPIRec i810API = {
 };
 
 
-/*
- * This is the bootstrap function for the driver.
- * The __driCreateScreen name is the symbol that libGL.so fetches.
- * Return:  pointer to a __DRIscreenPrivate.
- */
-#if !defined(DRI_NEW_INTERFACE_ONLY)
-void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                        int numConfigs, __GLXvisualConfig *config)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &i810API);
-   return (void *) psp;
-}
-#endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
-
 /**
  * This is the bootstrap function for the driver.  libGL supplies all of the
  * requisite information about the system, and the driver initializes itself.
@@ -446,9 +425,8 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
  *         failure.
  */
-#ifdef USE_NEW_INTERFACE
 PUBLIC
-void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -487,4 +465,3 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 
    return (void *) psp;
 }
-#endif /* USE_NEW_INTERFACE */

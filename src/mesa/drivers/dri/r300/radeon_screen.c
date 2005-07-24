@@ -216,15 +216,12 @@ static const struct dri_debug_control debug_control[] = {
 #define PCI_CHIP_R420_JK                0x4a4b
 #endif
 
-#ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-#endif				/* USE_NEW_INTERFACE */
 
 static radeonScreenPtr __radeonScreen;
 
 static int getSwapInfo(__DRIdrawablePrivate * dPriv, __DRIswapInfo * sInfo);
 
-#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *radeonFillInModes(unsigned pixel_bits,
 					 unsigned depth_bits,
 					 unsigned stencil_bits,
@@ -304,7 +301,7 @@ static __GLcontextModes *radeonFillInModes(unsigned pixel_bits,
 
 	return modes;
 }
-#endif				/* USE_NEW_INTERFACE */
+
 
 /* Create the device specific screen private data struct.
  */
@@ -313,6 +310,15 @@ static radeonScreenPtr radeonCreateScreen(__DRIscreenPrivate * sPriv)
 	radeonScreenPtr screen;
 	RADEONDRIPtr dri_priv = (RADEONDRIPtr) sPriv->pDevPriv;
 	unsigned char *RADEONMMIO;
+	PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+	  (PFNGLXSCRENABLEEXTENSIONPROC)
+	      glXGetProcAddress((const GLubyte *) "__glXScrEnableExtension");
+	void *const psc = sPriv->psc->screenConfigs;
+
+
+	if (glx_enable_extension == NULL) {
+		return NULL;
+	}
 
 	/* Allocate the private area */
 	screen = (radeonScreenPtr) CALLOC(sizeof(*screen));
@@ -580,48 +586,22 @@ static radeonScreenPtr radeonCreateScreen(__DRIscreenPrivate * sPriv)
 	screen->driScreen = sPriv;
 	screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
 
-	if (driCompareGLXAPIVersion(20030813) >= 0) {
-		PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-		    (PFNGLXSCRENABLEEXTENSIONPROC)
-		    glXGetProcAddress((const GLubyte *)
-				      "__glXScrEnableExtension");
-		void *const psc = sPriv->psc->screenConfigs;
+	if (screen->irq != 0) {
+		(*glx_enable_extension) (psc, "GLX_SGI_swap_control");
+		(*glx_enable_extension) (psc, "GLX_SGI_video_sync");
+		(*glx_enable_extension) (psc, "GLX_MESA_swap_control");
+	}
 
-		if (glx_enable_extension != NULL) {
-			if (screen->irq != 0) {
-				(*glx_enable_extension) (psc,
-							 "GLX_SGI_swap_control");
-				(*glx_enable_extension) (psc,
-							 "GLX_SGI_video_sync");
-				(*glx_enable_extension) (psc,
-							 "GLX_MESA_swap_control");
-			}
-
-			(*glx_enable_extension) (psc,
-						 "GLX_MESA_swap_frame_usage");
+	(*glx_enable_extension) (psc, "GLX_MESA_swap_frame_usage");
 
 #if R200_MERGED
-			if (driCompareGLXAPIVersion(20030818) >= 0) {
-				sPriv->psc->allocateMemory =
-				    (void *)r200AllocateMemoryMESA;
-				sPriv->psc->freeMemory =
-				    (void *)r200FreeMemoryMESA;
-				sPriv->psc->memoryOffset =
-				    (void *)r200GetMemoryOffsetMESA;
+	sPriv->psc->allocateMemory = (void *)r200AllocateMemoryMESA;
+	sPriv->psc->freeMemory = (void *)r200FreeMemoryMESA;
+	sPriv->psc->memoryOffset = (void *)r200GetMemoryOffsetMESA;
 
-				(*glx_enable_extension) (psc,
-							 "GLX_MESA_allocate_memory");
-			}
+	(*glx_enable_extension) (psc, "GLX_MESA_allocate_memory");
 #endif
 
-			if (driCompareGLXAPIVersion(20030915) >= 0) {
-				(*glx_enable_extension) (psc,
-							 "GLX_SGIX_fbconfig");
-				(*glx_enable_extension) (psc,
-							 "GLX_OML_swap_method");
-			}
-		}
-	}
 	return screen;
 }
 
@@ -799,22 +779,6 @@ static const struct __DriverAPIRec radeonAPI = {
 	.SwapBuffersMSC = NULL
 };
 
-/*
- * This is the bootstrap function for the driver.
- * The __driCreateScreen name is the symbol that libGL.so fetches.
- * Return:  pointer to a __DRIscreenPrivate.
- *
- */
-#if !defined(DRI_NEW_INTERFACE_ONLY)
-void *__driCreateScreen(Display * dpy, int scrn, __DRIscreen * psc,
-			int numConfigs, __GLXvisualConfig * config)
-{
-	__DRIscreenPrivate *psp;
-	psp =
-	    __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &radeonAPI);
-	return (void *)psp;
-}
-#endif				/* !defined(DRI_NEW_INTERFACE_ONLY) */
 
 /**
  * This is the bootstrap function for the driver.  libGL supplies all of the
@@ -826,8 +790,7 @@ void *__driCreateScreen(Display * dpy, int scrn, __DRIscreen * psc,
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on
  *         failure.
  */
-#ifdef USE_NEW_INTERFACE
-void *__driCreateNewScreen(__DRInativeDisplay * dpy, int scrn,
+void *__driCreateNewScreen_20050722(__DRInativeDisplay * dpy, int scrn,
 			   __DRIscreen * psc, const __GLcontextModes * modes,
 			   const __DRIversion * ddx_version,
 			   const __DRIversion * dri_version,
@@ -871,7 +834,7 @@ void *__driCreateNewScreen(__DRInativeDisplay * dpy, int scrn,
 
 	return (void *)psp;
 }
-#endif				/* USE_NEW_INTERFACE */
+
 
 /**
  * Get information about previous buffer swaps.

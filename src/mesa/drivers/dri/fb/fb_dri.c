@@ -73,9 +73,7 @@ typedef struct {
 
 #define FB_CONTEXT(ctx)		((fbContextPtr)(ctx->DriverCtx))
 
-#ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-#endif /* USE_NEW_INTERFACE */
 
 static const GLubyte *
 get_string(GLcontext *ctx, GLenum pname)
@@ -659,7 +657,6 @@ struct DRIDriverRec __driDriver = {
    __driHaltFBDev
 };
 
-#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *
 fbFillInModes( unsigned pixel_bits, unsigned depth_bits,
                  unsigned stencil_bits, GLboolean have_back_buffer )
@@ -793,4 +790,3 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 
           return (void *) psp;
 }
-#endif /* USE_NEW_INTERFACE */

@@ -51,24 +51,13 @@
 
 #define CAPI  /* XXX this should be globally defined somewhere */
 
-#ifdef DRI_NEW_INTERFACE_ONLY
-# include <GL/gl.h>
-#else
-# include "glxclient.h"
-#endif /* DRI_NEW_INTERFACE_ONLY */
+#include <GL/gl.h>
 #include "drm.h"
 #include "drm_sarea.h"
 #include "GL/internal/glcore.h"
 #include "GL/internal/dri_interface.h"
 
 #define GLX_BAD_CONTEXT                    5
-
-/* This is a temporary relic.  Once all drivers are converted to support
- * the new interface, it can go away.
- */
-#ifdef DRI_NEW_INTERFACE_ONLY
-#define USE_NEW_INTERFACE
-#endif
 
 typedef struct __DRIdisplayPrivateRec  __DRIdisplayPrivate;
 typedef struct __DRIscreenPrivateRec   __DRIscreenPrivate;
@@ -551,13 +540,6 @@ extern __DRIscreenPrivate * __driUtilCreateNewScreen( __DRInativeDisplay *dpy,
     const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
     drm_sarea_t *pSAREA, int fd, int internal_api_version,
     const struct __DriverAPIRec *driverAPI );
-
-#ifndef DRI_NEW_INTERFACE_ONLY
-extern __DRIscreenPrivate *
-__driUtilCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                      int numConfigs, __GLXvisualConfig *config,
-                      const struct __DriverAPIRec *driverAPI);
-#endif /* DRI_NEW_INTERFACE_ONLY */
 
 /* Test the version of the internal GLX API.  Returns a value like strcmp. */
 extern int

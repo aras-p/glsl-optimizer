@@ -360,8 +360,3 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
    return (void *) psp;
 }
 #endif
-
-void __driRegisterExtensions(void)
-{
-   /* No extensions */
-}

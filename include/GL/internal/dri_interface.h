@@ -248,25 +248,6 @@ struct __DRIscreenRec {
     void (*destroyScreen)(__DRInativeDisplay *dpy, int scrn, void *screenPrivate);
 
     /**
-     * Method to create the private DRI context data and initialize the
-     * context dependent methods.
-     *
-     * \sa __DRIscreenRec::createNewContext driCreateContext 
-     *     driCreateNewContext
-     *
-     * \deprecated
-     * This function has been replaced by \c __DRIscreenRec::createNewContext.
-     * New drivers will continue to export this method, but it will eventually
-     * (in the next XFree86 major relearse) go away.
-     */
-#ifndef DRI_NEW_INTERFACE_ONLY
-    void *(*createContext)(Display *dpy, XVisualInfo *vis, void *sharedPrivate,
-			   __DRIcontext *pctx);
-#else
-    void * createContext;
-#endif /* DRI_NEW_INTERFACE_ONLY */
-
-    /**
      * Method to create the private DRI drawable data and initialize the
      * drawable dependent methods.
      */
@@ -342,61 +323,11 @@ struct __DRIcontextRec {
     void (*destroyContext)(__DRInativeDisplay *dpy, int scrn, void *contextPrivate);
 
     /**
-     * Method to bind a DRI drawable to a DRI graphics context.
-     *
-     * \deprecated Replaced by bindContext3.
-     */
-#ifndef DRI_NEW_INTERFACE_ONLY
-    Bool (*bindContext)(Display *dpy, int scrn, GLXDrawable draw,
-			GLXContext gc);
-#else
-    void *bindContext;
-#endif /* DRI_NEW_INTERFACE_ONLY */
-
-    /**
-     * Method to unbind a DRI drawable to a DRI graphics context.
-     *
-     * \deprecated Replaced by unbindContext3.
-     */
-#ifndef DRI_NEW_INTERFACE_ONLY
-    Bool (*unbindContext)(Display *dpy, int scrn, GLXDrawable draw,
-			  GLXContext gc, int will_rebind);
-#else
-    void *unbindContext;
-#endif /* DRI_NEW_INTERFACE_ONLY */
-
-    /**
      * Opaque pointer to private per context direct rendering data.
      * \c NULL if direct rendering is not supported on the display or
      * screen used to create this context.  Never dereferenced in libGL.
      */
     void *private;
-
-    /**
-     * Method to bind a DRI drawable to a DRI graphics context.
-     *
-     * \since Internal API version 20030606.
-     * \deprecated Replaced by bindContext3.
-     */
-#ifndef DRI_NEW_INTERFACE_ONLY
-    Bool (*bindContext2)(Display *dpy, int scrn, GLXDrawable draw,
-			 GLXDrawable read, GLXContext gc);
-#else
-    void *bindContext2;
-#endif /* DRI_NEW_INTERFACE_ONLY */
-
-    /**
-     * Method to unbind a DRI drawable from a DRI graphics context.
-     *
-     * \since Internal API version 20030606.
-     * \deprecated Replaced by unbindContext3.
-     */
-#ifndef DRI_NEW_INTERFACE_ONLY
-    Bool (*unbindContext2)(Display *dpy, int scrn, GLXDrawable draw,
-			   GLXDrawable read, GLXContext gc);
-#else
-    void *unbindContext2;
-#endif /* DRI_NEW_INTERFACE_ONLY */
 
     /**
      * Pointer to the mode used to create this context.
@@ -408,17 +339,17 @@ struct __DRIcontextRec {
     /**
      * Method to bind a DRI drawable to a DRI graphics context.
      *
-     * \since Internal API version 20040415.
+     * \since Internal API version 20050722.
      */
-    GLboolean (*bindContext3)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
+    GLboolean (*bindContext)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
 			 __DRIid read, __DRIcontext *ctx);
 
     /**
      * Method to unbind a DRI drawable from a DRI graphics context.
      *
-     * \since Internal API version 20040415.
+     * \since Internal API version 20050722.
      */
-    GLboolean (*unbindContext3)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
+    GLboolean (*unbindContext)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
 			   __DRIid read, __DRIcontext *ctx);
 };
 

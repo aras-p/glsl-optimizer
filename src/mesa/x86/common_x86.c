@@ -102,7 +102,7 @@ extern void _mesa_test_os_sse_support( void );
 extern void _mesa_test_os_sse_exception_support( void );
 
 #if defined(__linux__) && defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC) \
-   && !defined(DRI_NEW_INTERFACE_ONLY)
+   && !defined(IN_DRI_DRIVER)
 static void sigill_handler( int signal, struct sigcontext sc )
 {
    message( "SIGILL, " );
@@ -183,7 +183,7 @@ static LONG WINAPI ExceptionFilter(LPEXCEPTION_POINTERS exp)
  */
 static void check_os_sse_support( void )
 {
-#if defined(__linux__) && !defined(DRI_NEW_INTERFACE_ONLY)
+#if defined(__linux__) && !defined(IN_DRI_DRIVER)
 #if defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)
    struct sigaction saved_sigill;
    struct sigaction saved_sigfpe;

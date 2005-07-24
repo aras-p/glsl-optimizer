@@ -67,9 +67,7 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 const GLuint __driNConfigOptions = 2;
 
-#ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-#endif /*USE_NEW_INTERFACE*/
 
 static int i830_malloc_proxy_buf(drmBufMapPtr buffers)
 {
@@ -144,7 +142,14 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
 {
    i830ScreenPrivate *i830Screen;
    I830DRIPtr         gDRIPriv = (I830DRIPtr)sPriv->pDevPriv;
+   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+     (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+   void * const psc = sPriv->psc->screenConfigs;
 
+
+   if ( glx_enable_extension == NULL ) {
+      return GL_FALSE;
+   }
 
    /* Allocate the private area */
    i830Screen = (i830ScreenPrivate *)CALLOC(sizeof(i830ScreenPrivate));
@@ -281,20 +286,7 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
    }
 #endif
 
-   if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
-      PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-          (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
-      void * const psc = sPriv->psc->screenConfigs;
-
-      if ( glx_enable_extension != NULL ) {
-	 (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
-
-	 if ( driCompareGLXAPIVersion( 20030915 ) >= 0 ) {
-	    (*glx_enable_extension)( psc, "GLX_SGIX_fbconfig" );
-	    (*glx_enable_extension)( psc, "GLX_OML_swap_method" );
-	 }
-      }
-   }
+   (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
 
    return GL_TRUE;
 }
@@ -428,23 +420,6 @@ static const struct __DriverAPIRec i830API = {
 };
 
 
-/*
- * This is the bootstrap function for the driver.
- * The __driCreateScreen name is the symbol that libGL.so fetches.
- * Return:  pointer to a __DRIscreenPrivate.
- */
-#if !defined(DRI_NEW_INTERFACE_ONLY)
-void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-			int numConfigs, __GLXvisualConfig *config)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &i830API);
-   return (void *) psp;
-}
-#endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
-
-
-#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *
 i830FillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
@@ -515,7 +490,6 @@ i830FillInModes( unsigned pixel_bits, unsigned depth_bits,
 
    return modes;
 }
-#endif /* USE_NEW_INTERFACE */
 
 
 /**
@@ -528,9 +502,8 @@ i830FillInModes( unsigned pixel_bits, unsigned depth_bits,
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
  *         failure.
  */
-#ifdef USE_NEW_INTERFACE
 PUBLIC
-void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -571,4 +544,3 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 
    return (void *) psp;
 }
-#endif /* USE_NEW_INTERFACE */

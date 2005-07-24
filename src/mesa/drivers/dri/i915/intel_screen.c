@@ -54,9 +54,7 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 const GLuint __driNConfigOptions = 1;
 
-#ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-#endif /*USE_NEW_INTERFACE*/
 
 
 static void intelPrintDRIInfo(intelScreenPrivate *intelScreen,
@@ -78,7 +76,14 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 {
    intelScreenPrivate *intelScreen;
    I830DRIPtr         gDRIPriv = (I830DRIPtr)sPriv->pDevPriv;
+   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+     (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+   void * const psc = sPriv->psc->screenConfigs;
 
+
+   if (glx_enable_extension == NULL) {
+      return GL_FALSE;
+   }
 
    /* Allocate the private area */
    intelScreen = (intelScreenPrivate *)CALLOC(sizeof(intelScreenPrivate));
@@ -195,28 +200,13 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       }
    }
 
-   if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
-      PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-          (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
-      void * const psc = sPriv->psc->screenConfigs;
+   (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
+   
+   sPriv->psc->allocateMemory = (void *) intelAllocateMemoryMESA;
+   sPriv->psc->freeMemory     = (void *) intelFreeMemoryMESA;
+   sPriv->psc->memoryOffset   = (void *) intelGetMemoryOffsetMESA;
 
-      if (glx_enable_extension != NULL) {
-	 (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
-
-	 if ( driCompareGLXAPIVersion( 20030915 ) >= 0 ) {
-	    (*glx_enable_extension)( psc, "GLX_SGIX_fbconfig" );
-	    (*glx_enable_extension)( psc, "GLX_OML_swap_method" );
-	 }
-
-	 if ( driCompareGLXAPIVersion( 20030818 ) >= 0 ) {
-	    sPriv->psc->allocateMemory = (void *) intelAllocateMemoryMESA;
-	    sPriv->psc->freeMemory     = (void *) intelFreeMemoryMESA;
-	    sPriv->psc->memoryOffset   = (void *) intelGetMemoryOffsetMESA;
-
-	    (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
-	 }
-      }
-   }
+   (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
 
    return GL_TRUE;
 }
@@ -377,23 +367,7 @@ static const struct __DriverAPIRec intelAPI = {
    .SwapBuffersMSC  = NULL
 };
 
-/*
- * This is the bootstrap function for the driver.
- * The __driCreateScreen name is the symbol that libGL.so fetches.
- * Return:  pointer to a __DRIscreenPrivate.
- */
-#if !defined(DRI_NEW_INTERFACE_ONLY)
-void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-			int numConfigs, __GLXvisualConfig *config)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &intelAPI);
-   return (void *) psp;
-}
-#endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
-	     
 
-#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *
 intelFillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
@@ -466,7 +440,6 @@ intelFillInModes( unsigned pixel_bits, unsigned depth_bits,
 
    return modes;
 }
-#endif /* USE_NEW_INTERFACE */
 
 
 /**
@@ -479,9 +452,8 @@ intelFillInModes( unsigned pixel_bits, unsigned depth_bits,
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
  *         failure.
  */
-#ifdef USE_NEW_INTERFACE
 PUBLIC
-void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -522,4 +494,3 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 
    return (void *) psp;
 }
-#endif /* USE_NEW_INTERFACE */

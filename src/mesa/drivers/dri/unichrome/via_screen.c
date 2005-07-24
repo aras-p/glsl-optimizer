@@ -62,9 +62,7 @@ DRI_CONF_END;
 static const GLuint __driNConfigOptions = 3;
 
 
-#ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-#endif /* USE_NEW_INTERFACE */
 
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
@@ -100,6 +98,15 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 {
     viaScreenPrivate *viaScreen;
     VIADRIPtr gDRIPriv = (VIADRIPtr)sPriv->pDevPriv;
+    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+      (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( 
+	(const GLubyte *) "__glXScrEnableExtension" );
+    void * const psc = sPriv->psc->screenConfigs;
+
+
+    if ( glx_enable_extension == NULL ) {
+	return GL_FALSE;
+    }
 
 
     /* Allocate the private area */
@@ -170,30 +177,13 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 
     viaScreen->sareaPrivOffset = gDRIPriv->sarea_priv_offset;
 
+    if ( viaScreen->irqEnabled ) {
+	(*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+	(*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+	(*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+    }
 
-
-   if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
-      PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-          (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( 
-	     (const GLubyte *) "__glXScrEnableExtension" );
-      void * const psc = sPriv->psc->screenConfigs;
-
-      if ( glx_enable_extension != NULL ) {
-	 if ( viaScreen->irqEnabled ) {
-	    (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-	    (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
-	    (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
-	 }
-
-	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
-
-         if ( driCompareGLXAPIVersion( 20030915 ) >= 0 ) {
-	    (*glx_enable_extension)( psc, "GLX_SGIX_fbconfig" );
-	    (*glx_enable_extension)( psc, "GLX_OML_swap_method" );
-	 }
-
-      }
-   }
+    (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
 
     return GL_TRUE;
 }
@@ -340,23 +330,6 @@ static struct __DriverAPIRec viaAPI = {
 };
 
 
-/*
- * This is the bootstrap function for the driver.
- * The __driCreateScreen name is the symbol that libGL.so fetches.
- * Return:  pointer to a __DRIscreenPrivate.
- */
-#if !defined(DRI_NEW_INTERFACE_ONLY)
-void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                        int numConfigs, __GLXvisualConfig *config)
-{
-    __DRIscreenPrivate *psp;
-    psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &viaAPI);
-    return (void *)psp;
-}
-#endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
-
-
-#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *
 viaFillInModes( unsigned pixel_bits, GLboolean have_back_buffer )
 {
@@ -419,7 +392,6 @@ viaFillInModes( unsigned pixel_bits, GLboolean have_back_buffer )
 
     return modes;
 }
-#endif /* USE_NEW_INTERFACE */
 
 
 /**
@@ -432,9 +404,8 @@ viaFillInModes( unsigned pixel_bits, GLboolean have_back_buffer )
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
  *         failure.
  */
-#ifdef USE_NEW_INTERFACE
 PUBLIC
-void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn,
+void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
 			     __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
@@ -475,7 +446,6 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn,
    fprintf(stderr, "%s - succeeded\n", __FUNCTION__);
    return (void *) psp;
 }
-#endif /* USE_NEW_INTERFACE */
 
 
 /**

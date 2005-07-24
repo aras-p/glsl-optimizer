@@ -90,12 +90,6 @@ extern void driInitExtensions( GLcontext * ctx,
 extern void driInitSingleExtension( GLcontext * ctx,
     const struct dri_extension * ext );
 
-#ifndef DRI_NEW_INTERFACE_ONLY
-extern GLboolean driCheckDriDdxDrmVersions( __DRIscreenPrivate *sPriv,
-    const char * driver_name, int dri_major, int dri_minor,
-    int ddx_major, int ddx_minor, int drm_major, int drm_minor );
-#endif
-
 extern GLboolean driCheckDriDdxDrmVersions2(const char * driver_name,
     const __DRIversion * driActual, const __DRIversion * driExpected,
     const __DRIversion * ddxActual, const __DRIversion * ddxExpected,

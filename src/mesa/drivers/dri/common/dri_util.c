@@ -13,15 +13,6 @@
  *
  * These functions are compiled into each DRI driver so libGL.so knows nothing
  * about them.
- *
- * \note
- * When \c DRI_NEW_INTERFACE_ONLY is defined, code is built / not built so
- * that only the "new" libGL-to-driver interfaces are supported.  This breaks
- * backwards compatability.  However, this may be necessary when DRI drivers
- * are built to be used in non-XFree86 environments.
- *
- * \todo There are still some places in the code that need to be wrapped with
- *       \c DRI_NEW_INTERFACE_ONLY.
  */
 
 
@@ -35,17 +26,8 @@
 #define MAP_FAILED ((void *)-1)
 #endif
 
-#ifndef DRI_NEW_INTERFACE_ONLY
-# include <X11/Xlibint.h>
-# include <Xext.h>
-# include <extutil.h>
-# include "xf86dri.h"
-# define _mesa_malloc(b) Xmalloc(b)
-# define _mesa_free(m) Xfree(m)
-#else
-# include "imports.h"
-# define None 0
-#endif /* DRI_NEW_INTERFACE_ONLY */
+#include "imports.h"
+#define None 0
 
 #include "dri_util.h"
 #include "drm_sarea.h"
@@ -99,27 +81,6 @@ static void *driCreateNewDrawable(__DRInativeDisplay *dpy, const __GLcontextMode
 static void driDestroyDrawable(__DRInativeDisplay *dpy, void *drawablePrivate);
 
 
-
-
-#ifdef not_defined
-static GLboolean driFeatureOn(const char *name)
-{
-    char *env = getenv(name);
-
-    if (!env) return GL_FALSE;
-    if (!strcasecmp(env, "enable")) return GL_TRUE;
-    if (!strcasecmp(env, "1"))      return GL_TRUE;
-    if (!strcasecmp(env, "on"))     return GL_TRUE;
-    if (!strcasecmp(env, "true"))   return GL_TRUE;
-    if (!strcasecmp(env, "t"))      return GL_TRUE;
-    if (!strcasecmp(env, "yes"))    return GL_TRUE;
-    if (!strcasecmp(env, "y"))      return GL_TRUE;
-
-    return GL_FALSE;
-}
-#endif /* not_defined */
-
-
 /**
  * Print message to \c stderr if the \c LIBGL_DEBUG environment variable
  * is set. 
@@ -142,77 +103,8 @@ __driUtilMessage(const char *f, ...)
     }
 }
 
-/*
- * fd.o bug #1713: Some rare libGL's have __glXFindDRIScreen defined but do not
- * export it via glXGetProcAddress.  These are not supported anymore, so print
- * an error message to that effect.  - ajax 2004-10-26
- */
 typedef __DRIscreen *(*PFNGLXFINDDRISCREEN)(__DRInativeDisplay *, int);
-
-static __DRIscreen *glx_find_dri_screen(__DRInativeDisplay *d, int i)
-{
-    PFNGLXFINDDRISCREEN findscreen = 
-        (PFNGLXFINDDRISCREEN)glXGetProcAddress("__glXFindDRIScreen");
-
-    if (!findscreen)
-    {
-        __driUtilMessage("glXGetProcAddress(\"__glXFindDRIScreen\") failed!");
-        __driUtilMessage("Your libGL is too old, please upgrade.");
-        return NULL;
-    }
-    else return findscreen(d, i);
-}
-
-/*****************************************************************/
-/** \name Visual utility functions                               */
-/*****************************************************************/
-/*@{*/
-
-#ifndef DRI_NEW_INTERFACE_ONLY
-/**
- * Find a \c __GLcontextModes structure matching the given visual ID.
- * 
- * \param dpy   Display to search for a matching configuration.
- * \param scrn  Screen number on \c dpy to be searched.
- * \param vid   Desired \c VisualID to find.
- *
- * \returns A pointer to a \c __GLcontextModes structure that matches \c vid,
- *          if found, or \c NULL if no match is found.
- */
-static const __GLcontextModes *
-findConfigMode(__DRInativeDisplay *dpy, int scrn, VisualID vid, 
-	       const __DRIscreen * pDRIScreen)
-{
-    if ( (pDRIScreen != NULL) && (pDRIScreen->private != NULL) ) {
-	const __DRIscreenPrivate * const psp =
-	    (const __DRIscreenPrivate *) pDRIScreen->private;
-
-	return _gl_context_modes_find_visual( psp->modes, vid );
-    }
-
-    return NULL;
-}
-
-
-/**
- * This function is a hack to work-around old versions of libGL.so that
- * do not export \c XF86DRICreateContextWithConfig.  I would modify the
- * code to just use this function, but the stand-alone driver (i.e., DRI
- * drivers that are built to work without XFree86) shouldn't have to know
- * about X structures like a \c Visual.
- */
-static GLboolean
-fake_XF86DRICreateContextWithConfig( __DRInativeDisplay* dpy, int screen, int configID,
-				     XID* context, drm_context_t * hHWContext )
-{
-    Visual  vis;
-    
-    vis.visualid = configID;
-    return XF86DRICreateContext( dpy, screen, & vis, context, hHWContext );
-}
-#endif /* DRI_NEW_INTERFACE_ONLY */
-
-/*@}*/
+static PFNGLXFINDDRISCREEN glx_find_dri_screen = NULL;
 
 
 /*****************************************************************/
@@ -242,50 +134,6 @@ static __DRIdrawable *__driFindDrawable(void *drawHash, __DRIid draw)
     return pdraw;
 }
 
-#ifndef DRI_NEW_INTERFACE_ONLY
-static GLboolean __driWindowExistsFlag;
-
-static int __driWindowExistsErrorHandler(Display *dpy, XErrorEvent *xerr)
-{
-    if (xerr->error_code == BadWindow) {
-	__driWindowExistsFlag = GL_FALSE;
-    }
-    return 0;
-}
-
-/**
- * Determine if a window associated with a \c GLXDrawable exists on the
- * X-server.
- *
- * \param dpy  Display associated with the drawable to be queried.
- * \param draw \c GLXDrawable to test.
- * 
- * \returns \c GL_TRUE if a window exists that is associated with \c draw,
- *          otherwise \c GL_FALSE is returned.
- * 
- * \warning This function is not currently thread-safe.
- *
- * \deprecated
- * \c __glXWindowExists (from libGL) is prefered over this function.  Starting
- * with the next major release of XFree86, this function will be removed.
- * Even now this function is no longer directly called.  Instead it is called
- * via a function pointer if and only if \c __glXWindowExists does not exist.
- * 
- * \sa __glXWindowExists glXGetProcAddress window_exists
- */
-static GLboolean __driWindowExists(Display *dpy, GLXDrawable draw)
-{
-    XWindowAttributes xwa;
-    int (*oldXErrorHandler)(Display *, XErrorEvent *);
-
-    XSync(dpy, GL_FALSE);
-    __driWindowExistsFlag = GL_TRUE;
-    oldXErrorHandler = XSetErrorHandler(__driWindowExistsErrorHandler);
-    XGetWindowAttributes(dpy, draw, &xwa); /* dummy request */
-    XSetErrorHandler(oldXErrorHandler);
-    return __driWindowExistsFlag;
-}
-#endif /* DRI_NEW_INTERFACE_ONLY */
 
 /**
  * Find drawables in the local hash that have been destroyed on the
@@ -341,7 +189,7 @@ static void __driGarbageCollectDrawables(void *drawHash)
  * While casting the opaque private pointers associated with the parameters
  * into their respective real types it also assures they are not \c NULL. 
  */
-static GLboolean driUnbindContext3(__DRInativeDisplay *dpy, int scrn,
+static GLboolean driUnbindContext(__DRInativeDisplay *dpy, int scrn,
 			      __DRIid draw, __DRIid read,
 			      __DRIcontext *ctx)
 {
@@ -355,7 +203,7 @@ static GLboolean driUnbindContext3(__DRInativeDisplay *dpy, int scrn,
 
     /*
     ** Assume error checking is done properly in glXMakeCurrent before
-    ** calling driUnbindContext3.
+    ** calling driUnbindContext.
     */
 
     if (ctx == NULL || draw == None || read == None) {
@@ -363,7 +211,7 @@ static GLboolean driUnbindContext3(__DRInativeDisplay *dpy, int scrn,
 	return GL_FALSE;
     }
 
-    pDRIScreen = glx_find_dri_screen(dpy, scrn);
+    pDRIScreen = (*glx_find_dri_screen)(dpy, scrn);
     if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
 	/* ERROR!!! */
 	return GL_FALSE;
@@ -523,7 +371,7 @@ static GLboolean DoBindContext(__DRInativeDisplay *dpy,
  * for \c glXMakeCurrentReadSGI or GLX 1.3's \c glXMakeContextCurrent
  * function.
  */
-static GLboolean driBindContext3(__DRInativeDisplay *dpy, int scrn,
+static GLboolean driBindContext(__DRInativeDisplay *dpy, int scrn,
                             __DRIid draw, __DRIid read,
                             __DRIcontext * ctx)
 {
@@ -539,7 +387,7 @@ static GLboolean driBindContext3(__DRInativeDisplay *dpy, int scrn,
 	return GL_FALSE;
     }
 
-    pDRIScreen = glx_find_dri_screen(dpy, scrn);
+    pDRIScreen = (*glx_find_dri_screen)(dpy, scrn);
     if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
 	/* ERROR!!! */
 	return GL_FALSE;
@@ -548,79 +396,6 @@ static GLboolean driBindContext3(__DRInativeDisplay *dpy, int scrn,
     return DoBindContext( dpy, draw, read, ctx, ctx->mode,
 			  (__DRIscreenPrivate *)pDRIScreen->private );
 }
-
-
-#ifndef DRI_NEW_INTERFACE_ONLY
-/**
- * This function takes both a read buffer and a draw buffer.  This is needed
- * for \c glXMakeCurrentReadSGI or GLX 1.3's \c glXMakeContextCurrent
- * function.
- */
-static GLboolean driBindContext2(Display *dpy, int scrn,
-                            GLXDrawable draw, GLXDrawable read,
-                            GLXContext gc)
-{
-    __DRIscreen *pDRIScreen;
-    const __GLcontextModes *modes;
-
-    /*
-    ** Assume error checking is done properly in glXMakeCurrent before
-    ** calling driBindContext.
-    */
-
-    if (gc == NULL || draw == None || read == None) {
-	/* ERROR!!! */
-	return GL_FALSE;
-    }
-
-    pDRIScreen = glx_find_dri_screen(dpy, scrn);
-    modes = (driCompareGLXAPIVersion( 20040317 ) >= 0)
-	? gc->driContext.mode
-	: findConfigMode( dpy, scrn, gc->vid, pDRIScreen );
-
-    if ( modes == NULL ) {
-	/* ERROR!!! */
-	return GL_FALSE;
-    }
-
-    /* findConfigMode will return NULL if the DRI screen or screen private
-     * are NULL.
-     */
-    assert( (pDRIScreen != NULL) && (pDRIScreen->private != NULL) );
-
-    return DoBindContext( dpy, draw, read, & gc->driContext, modes,
-			  (__DRIscreenPrivate *)pDRIScreen->private );
-}
-
-static GLboolean driUnbindContext2(Display *dpy, int scrn,
-			      GLXDrawable draw, GLXDrawable read,
-			      GLXContext gc)
-{
-    return driUnbindContext3(dpy, scrn, draw, read, & gc->driContext);
-}
-
-/*
- * Simply call bind with the same GLXDrawable for the read and draw buffers.
- */
-static GLboolean driBindContext(Display *dpy, int scrn,
-                           GLXDrawable draw, GLXContext gc)
-{
-    return driBindContext2(dpy, scrn, draw, draw, gc);
-}
-
-
-/*
- * Simply call bind with the same GLXDrawable for the read and draw buffers.
- */
-static GLboolean driUnbindContext(Display *dpy, int scrn,
-                             GLXDrawable draw, GLXContext gc,
-                             int will_rebind)
-{
-   (void) will_rebind;
-   return driUnbindContext2( dpy, scrn, draw, draw, gc );
-}
-#endif /* DRI_NEW_INTERFACE_ONLY */
-
 /*@}*/
 
 
@@ -803,7 +578,7 @@ static void *driCreateNewDrawable(__DRInativeDisplay *dpy,
 				  int renderType,
 				  const int *attrs)
 {
-    __DRIscreen * const pDRIScreen = glx_find_dri_screen(dpy, modes->screen);
+    __DRIscreen * const pDRIScreen = (*glx_find_dri_screen)(dpy, modes->screen);
     __DRIscreenPrivate *psp;
     __DRIdrawablePrivate *pdp;
 
@@ -853,13 +628,9 @@ static void *driCreateNewDrawable(__DRInativeDisplay *dpy,
     pdp->getInfo = (PFNGLXGETDRAWABLEINFOPROC)
 	glXGetProcAddress( (const GLubyte *) "__glXGetDrawableInfo" );
     if ( pdp->getInfo == NULL ) {
-#ifdef DRI_NEW_INTERFACE_ONLY
         (void)XF86DRIDestroyDrawable(dpy, modes->screen, pdp->draw);
 	_mesa_free(pdp);
 	return NULL;
-#else
-	pdp->getInfo = (PFNGLXGETDRAWABLEINFOPROC) XF86DRIGetDrawableInfo;
-#endif /* DRI_NEW_INTERFACE_ONLY */
     }
 
     if (!(*psp->DriverAPI.CreateBuffer)(psp, pdp, modes,
@@ -873,19 +644,18 @@ static void *driCreateNewDrawable(__DRInativeDisplay *dpy,
     pdraw->destroyDrawable = driDestroyDrawable;
     pdraw->swapBuffers = driSwapBuffers;  /* called by glXSwapBuffers() */
 
-    if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
-        pdraw->getSBC = driGetSBC;
-        pdraw->waitForSBC = driWaitForSBC;
-        pdraw->waitForMSC = driWaitForMSC;
-        pdraw->swapBuffersMSC = driSwapBuffersMSC;
-        pdraw->frameTracking = NULL;
-        pdraw->queryFrameTracking = driQueryFrameTracking;
+    pdraw->getSBC = driGetSBC;
+    pdraw->waitForSBC = driWaitForSBC;
+    pdraw->waitForMSC = driWaitForMSC;
+    pdraw->swapBuffersMSC = driSwapBuffersMSC;
+    pdraw->frameTracking = NULL;
+    pdraw->queryFrameTracking = driQueryFrameTracking;
 
-        /* This special default value is replaced with the configured
-	 * default value when the drawable is first bound to a direct
-	 * rendering context. */
-        pdraw->swap_interval = (unsigned)-1;
-    }
+    /* This special default value is replaced with the configured
+     * default value when the drawable is first bound to a direct
+     * rendering context. 
+     */
+    pdraw->swap_interval = (unsigned)-1;
 
     pdp->swapBuffers = psp->DriverAPI.SwapBuffers;
 
@@ -998,7 +768,7 @@ driCreateNewContext(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
     __DRIscreenPrivate *psp;
     void * const shareCtx = (pshare != NULL) ? pshare->driverPrivate : NULL;
 
-    pDRIScreen = glx_find_dri_screen(dpy, modes->screen);
+    pDRIScreen = (*glx_find_dri_screen)(dpy, modes->screen);
     if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
 	/* ERROR!!! */
 	return NULL;
@@ -1035,26 +805,8 @@ driCreateNewContext(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
     }
 
     pctx->destroyContext = driDestroyContext;
-#ifdef DRI_NEW_INTERFACE_ONLY
-    pctx->bindContext    = NULL;
-    pctx->unbindContext  = NULL;
-    pctx->bindContext2   = NULL;
-    pctx->unbindContext2 = NULL;
-    pctx->bindContext3   = driBindContext3;
-    pctx->unbindContext3 = driUnbindContext3;
-#else
-    pctx->bindContext    = (void *)driBindContext;
-    pctx->unbindContext  = (void *)driUnbindContext;
-    if ( driCompareGLXAPIVersion( 20030606 ) >= 0 ) {
-        pctx->bindContext2   = (void *)driBindContext2;
-        pctx->unbindContext2 = (void *)driUnbindContext2;
-    }
-
-    if ( driCompareGLXAPIVersion( 20040415 ) >= 0 ) {
-        pctx->bindContext3   = (void *)driBindContext3;
-        pctx->unbindContext3 = (void *)driUnbindContext3;
-    }
-#endif
+    pctx->bindContext    = driBindContext;
+    pctx->unbindContext  = driUnbindContext;
 
     if ( !(*psp->DriverAPI.CreateContext)(modes, pcp, shareCtx) ) {
         (void)XF86DRIDestroyContext(dpy, modes->screen, pcp->contextID);
@@ -1066,57 +818,6 @@ driCreateNewContext(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
 
     return pcp;
 }
-
-
-#ifndef DRI_NEW_INTERFACE_ONLY
-/**
- * Create the per-drawable private driver information.
- * 
- * \param dpy the display handle.
- * \param vis the visual information.
- * \param sharedPrivate the shared context dependent methods or \c NULL if
- *                      non-existent.
- * \param pctx will receive the context dependent methods.
- *
- * \returns a opaque pointer to the per-context private information on success, or \c NULL
- * on failure.
- * 
- * \deprecated
- * This function has been replaced by \c driCreateNewContext.  In drivers
- * built to work with XFree86, this function will continue to exist to support
- * older versions of libGL.  Starting with the next major relelase of XFree86,
- * this function will be removed.
- * 
- * \internal
- * This function allocates and fills a __DRIcontextPrivateRec structure.  It
- * gets the visual, converts it into a __GLcontextModesRec and passes it
- * to __DriverAPIRec::CreateContext to create the context.
- */
-static void *driCreateContext(Display *dpy, XVisualInfo *vis,
-                              void *sharedPrivate, __DRIcontext *pctx)
-{
-    __DRIscreen *pDRIScreen;
-    const __GLcontextModes *modes;
-
-    pDRIScreen = glx_find_dri_screen(dpy, vis->screen);
-    if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
-	/* ERROR!!! */
-	return NULL;
-    } 
-
-
-    /* Setup a __GLcontextModes struct corresponding to vis->visualid
-     * and create the rendering context.
-     */
-
-    modes = findConfigMode(dpy, vis->screen, vis->visualid, pDRIScreen);
-    return (modes == NULL) 
-	? NULL
-	: driCreateNewContext( dpy, modes, GLX_RGBA_TYPE,
-			       sharedPrivate, pctx );
-}
-#endif /* DRI_NEW_INTERFACE_ONLY */
-
 /*@}*/
 
 
@@ -1184,6 +885,11 @@ static void driDestroyScreen(__DRInativeDisplay *dpy, int scrn, void *screenPriv
  * \param internal_api_version  Version of the internal interface between the
  *                              driver and libGL.
  * \param driverAPI Driver API functions used by other routines in dri_util.c.
+ * 
+ * \note
+ * There is no need to check the minimum API version in this function.  Since
+ * the \c __driCreateNewScreen function is versioned, it is impossible for a
+ * loader that is too old to even load this driver.
  */
 __DRIscreenPrivate *
 __driUtilCreateNewScreen(__DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
@@ -1200,46 +906,23 @@ __driUtilCreateNewScreen(__DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
     __DRIscreenPrivate *psp;
 
 
-#ifdef DRI_NEW_INTERFACE_ONLY
-    if ( internal_api_version < 20040602 ) {
-	fprintf( stderr, "libGL error: libGL.so version (%08u) is too old.  "
-		 "20040602 or later is required.\n", internal_api_version );
-	return NULL;
-    }
-#else
-    if ( internal_api_version == 20031201 ) {
-	fprintf( stderr, "libGL error: libGL version 20031201 has critical "
-		 "binary compatilibity bugs.\nlibGL error: You must upgrade "
-		 "to use direct-rendering!\n" );
-	return NULL;
-    }
-#endif /* DRI_NEW_INTERFACE_ONLY */
-
-
     window_exists = (PFNGLXWINDOWEXISTSPROC)
 	glXGetProcAddress( (const GLubyte *) "__glXWindowExists" );
 
     if ( window_exists == NULL ) {
-#ifdef DRI_NEW_INTERFACE_ONLY
-	fprintf( stderr, "libGL error: libGL.so version (%08u) is too old.  "
-		 "20021128 or later is required.\n", internal_api_version );
 	return NULL;
-#else
-	window_exists = (PFNGLXWINDOWEXISTSPROC) __driWindowExists;
-#endif /* DRI_NEW_INTERFACE_ONLY */
+    }
+
+    glx_find_dri_screen =
+        (PFNGLXFINDDRISCREEN)glXGetProcAddress("__glXFindDRIScreen");
+    if ( glx_find_dri_screen == NULL ) {
+        return NULL;
     }
 
     create_context_with_config = (PFNGLXCREATECONTEXTWITHCONFIGPROC)
 	glXGetProcAddress( (const GLubyte *) "__glXCreateContextWithConfig" );
     if ( create_context_with_config == NULL ) {
-#ifdef DRI_NEW_INTERFACE_ONLY
-	fprintf( stderr, "libGL error: libGL.so version (%08u) is too old.  "
-		 "20031201 or later is required.\n", internal_api_version );
 	return NULL;
-#else
-	create_context_with_config = (PFNGLXCREATECONTEXTWITHCONFIGPROC)
-	    fake_XF86DRICreateContextWithConfig;
-#endif /* DRI_NEW_INTERFACE_ONLY */
     }
 	
     api_ver = internal_api_version;
@@ -1302,25 +985,10 @@ __driUtilCreateNewScreen(__DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
     psp->dummyContextPriv.driScreenPriv = NULL;
 
     psc->destroyScreen     = driDestroyScreen;
-#ifndef DRI_NEW_INTERFACE_ONLY
-    psc->createContext     = driCreateContext;
-#else
-    psc->createContext     = NULL;
-#endif
     psc->createNewDrawable = driCreateNewDrawable;
     psc->getDrawable       = driGetDrawable;
-#ifdef DRI_NEW_INTERFACE_ONLY
     psc->getMSC            = driGetMSC;
     psc->createNewContext  = driCreateNewContext;
-#else
-    if ( driCompareGLXAPIVersion( 20030317 ) >= 0 ) {
-        psc->getMSC        = driGetMSC;
-
-	if ( driCompareGLXAPIVersion( 20030824 ) >= 0 ) {
-	    psc->createNewContext = driCreateNewContext;
-	}
-    }
-#endif
 
     if ( (psp->DriverAPI.InitDriver != NULL)
 	 && !(*psp->DriverAPI.InitDriver)(psp) ) {
@@ -1331,233 +999,6 @@ __driUtilCreateNewScreen(__DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 
     return psp;
 }
-
-
-#ifndef DRI_NEW_INTERFACE_ONLY
-/**
- * Utility function used to create a new driver-private screen structure.
- * 
- * \param dpy        Display pointer.
- * \param scrn       Index of the screen.
- * \param psc        DRI screen data (not driver private)
- * \param numConfigs Number of visual configs pointed to by \c configs.
- * \param configs    Array of GLXvisualConfigs exported by the 2D driver.
- * \param driverAPI Driver API functions used by other routines in dri_util.c.
- * 
- * \deprecated
- * This function has been replaced by \c __driUtilCreateNewScreen.  In drivers
- * built to work with XFree86, this function will continue to exist to support
- * older versions of libGL.  Starting with the next major relelase of XFree86,
- * this function will be removed.
- */
-__DRIscreenPrivate *
-__driUtilCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                      int numConfigs, __GLXvisualConfig *configs,
-                      const struct __DriverAPIRec *driverAPI)
-{
-    int directCapable;
-    __DRIscreenPrivate *psp = NULL;
-    drm_handle_t hSAREA;
-    drmAddress pSAREA;
-    char *BusID;
-    __GLcontextModes *modes;
-    __GLcontextModes *temp;
-    int   i;
-    __DRIversion   ddx_version;
-    __DRIversion   dri_version;
-    __DRIversion   drm_version;
-    __DRIframebuffer  framebuffer;
-    int   fd = -1;
-    int   status;
-    const char * err_msg;
-    const char * err_extra;
-
-
-    if (!XF86DRIQueryDirectRenderingCapable(dpy, scrn, &directCapable)
-	|| !directCapable) {
-	return NULL;
-    }
-
-
-    /* Create the linked list of context modes, and populate it with the
-     * GLX visual information passed in by libGL.
-     */
-
-    modes = _gl_context_modes_create( numConfigs, sizeof(__GLcontextModes) );
-    if ( modes == NULL ) {
-	return NULL;
-    }
-
-    temp = modes;
-    for ( i = 0 ; i < numConfigs ; i++ ) {
-	assert( temp != NULL );
-	_gl_copy_visual_to_context_mode( temp, & configs[i] );
-	temp->screen = scrn;
-
-	temp = temp->next;
-    }
-
-    err_msg = "XF86DRIOpenConnection";
-    err_extra = NULL;
-
-    if (XF86DRIOpenConnection(dpy, scrn, &hSAREA, &BusID)) {
-	fd = drmOpen(NULL,BusID);
-	_mesa_free(BusID); /* No longer needed */
-
-	err_msg = "open DRM";
-	err_extra = strerror( -fd );
-
-	if (fd >= 0) {
-	    drm_magic_t magic;
-
-	    err_msg = "drmGetMagic";
-	    err_extra = NULL;
-
-	    if (!drmGetMagic(fd, &magic)) {
-		drmVersionPtr version = drmGetVersion(fd);
-		if (version) {
-		    drm_version.major = version->version_major;
-		    drm_version.minor = version->version_minor;
-		    drm_version.patch = version->version_patchlevel;
-		    drmFreeVersion(version);
-		}
-		else {
-		    drm_version.major = -1;
-		    drm_version.minor = -1;
-		    drm_version.patch = -1;
-		}
-
-		err_msg = "XF86DRIAuthConnection";
-		if (XF86DRIAuthConnection(dpy, scrn, magic)) {
-		    char *driverName;
-
-		    /*
-		     * Get device name (like "tdfx") and the ddx version numbers.
-		     * We'll check the version in each DRI driver's "createScreen"
-		     * function.
-		     */
-		    err_msg = "XF86DRIGetClientDriverName";
-		    if (XF86DRIGetClientDriverName(dpy, scrn,
-						   &ddx_version.major,
-						   &ddx_version.minor,
-						   &ddx_version.patch,
-						   &driverName)) {
-
-			/* No longer needed. */
-			_mesa_free( driverName );
-
-			/*
-			 * Get the DRI X extension version.
-			 */
-			err_msg = "XF86DRIQueryVersion";
-			if (XF86DRIQueryVersion(dpy,
-						&dri_version.major,
-						&dri_version.minor,
-						&dri_version.patch)) {
-			    drm_handle_t  hFB;
-			    int        junk;
-
-			    /*
-			     * Get device-specific info.  pDevPriv will point to a struct
-			     * (such as DRIRADEONRec in xfree86/driver/ati/radeon_dri.h)
-			     * that has information about the screen size, depth, pitch,
-			     * ancilliary buffers, DRM mmap handles, etc.
-			     */
-			    err_msg = "XF86DRIGetDeviceInfo";
-			    if (XF86DRIGetDeviceInfo(dpy, scrn,
-						     &hFB,
-						     &junk,
-						     &framebuffer.size,
-						     &framebuffer.stride,
-						     &framebuffer.dev_priv_size,
-						     &framebuffer.dev_priv)) {
-				framebuffer.width = DisplayWidth(dpy, scrn);
-				framebuffer.height = DisplayHeight(dpy, scrn);
-
-				/*
-				 * Map the framebuffer region.
-				 */
-				status = drmMap(fd, hFB, framebuffer.size, 
-						(drmAddressPtr)&framebuffer.base);
-				
-				err_msg = "drmMap of framebuffer";
-				err_extra = strerror( -status );
-
-				if ( status == 0 ) {
-				    /*
-				     * Map the SAREA region.  Further mmap regions may be setup in
-				     * each DRI driver's "createScreen" function.
-				     */
-				    status = drmMap(fd, hSAREA, SAREA_MAX, 
-						    &pSAREA);
-
-				    err_msg = "drmMap of sarea";
-				    err_extra = strerror( -status );
-
-				    if ( status == 0 ) {
-					PFNGLXGETINTERNALVERSIONPROC get_ver;
-
-					get_ver = (PFNGLXGETINTERNALVERSIONPROC)
-					    glXGetProcAddress( (const GLubyte *) "__glXGetInternalVersion" );
-
-					err_msg = "InitDriver";
-					err_extra = NULL;
-					psp = __driUtilCreateNewScreen( dpy, scrn, psc, modes,
-									& ddx_version,
-									& dri_version,
-									& drm_version,
-									& framebuffer,
-									pSAREA,
-									fd,
-									(get_ver != NULL) ? (*get_ver)() : 1,
-									driverAPI );
-				    }
-				}
-			    }
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-    if ( psp == NULL ) {
-	if ( pSAREA != MAP_FAILED ) {
-	    (void)drmUnmap(pSAREA, SAREA_MAX);
-	}
-
-	if ( framebuffer.base != MAP_FAILED ) {
-	    (void)drmUnmap((drmAddress)framebuffer.base, framebuffer.size);
-	}
-
-	if ( framebuffer.dev_priv != NULL ) {
-	    _mesa_free(framebuffer.dev_priv);
-	}
-
-	if ( fd >= 0 ) {
-	    (void)drmClose(fd);
-	}
-
-	if ( modes != NULL ) {
-	    _gl_context_modes_destroy( modes );
-	}
-
-	(void)XF86DRICloseConnection(dpy, scrn);
-
-	if ( err_extra != NULL ) {
-	    fprintf(stderr, "libGL error: %s failed (%s)\n", err_msg,
-		    err_extra);
-	}
-	else {
-	    fprintf(stderr, "libGL error: %s failed\n", err_msg );
-	}
-
-        fprintf(stderr, "libGL error: reverting to (slow) indirect rendering\n");
-    }
-
-    return psp;
-}
-#endif /* DRI_NEW_INTERFACE_ONLY */
 
 
 /**

@@ -59,11 +59,8 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 static const GLuint __driNConfigOptions = 2;
 
-#ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-#endif /* USE_NEW_INTERFACE */
 
-#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *
 sisFillInModes(int bpp)
 {
@@ -123,7 +120,7 @@ sisFillInModes(int bpp)
 
    return modes;
 }
-#endif /* USE_NEW_INTERFACE */
+
 
 /* Create the device specific screen private data struct.
  */
@@ -133,11 +130,6 @@ sisCreateScreen( __DRIscreenPrivate *sPriv )
    sisScreenPtr sisScreen;
    SISDRIPtr sisDRIPriv = (SISDRIPtr)sPriv->pDevPriv;
 
-#ifndef USE_NEW_INTERFACE
-   /* XXX Should this still be around for the old interface? */
-   if ( !driCheckDriDdxDrmVersions( sPriv, "SiS", 4, 0, 0, 1, 1, 0 ) )
-      return NULL;
-#endif
 
    /* Allocate the private area */
    sisScreen = (sisScreenPtr)CALLOC( sizeof(*sisScreen) );
@@ -410,20 +402,6 @@ static struct __DriverAPIRec sisAPI = {
 
 };
 
-/*
- * This is the bootstrap function for the driver.
- * The __driCreateScreen name is the symbol that libGL.so fetches.
- * Return:  pointer to a __DRIscreenPrivate.
- */
-#if !defined(DRI_NEW_INTERFACE_ONLY)
-void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                        int numConfigs, __GLXvisualConfig *config)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &sisAPI);
-   return (void *)psp;
-}
-#endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
 
 /**
  * This is the bootstrap function for the driver.  libGL supplies all of the
@@ -435,9 +413,8 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
  *         failure.
  */
-#ifdef USE_NEW_INTERFACE
 PUBLIC
-void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn,
+void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
 			     __DRIscreen *psc,
 			     const __GLcontextModes *modes,
 			     const __DRIversion *ddx_version,
@@ -475,4 +452,3 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn,
 
    return (void *)psp;
 }
-#endif /* USE_NEW_INTERFACE */

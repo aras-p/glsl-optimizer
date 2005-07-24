@@ -136,15 +136,12 @@ static const GLuint __driNConfigOptions = 17;
 
 #endif
 
-#ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-#endif /* USE_NEW_INTERFACE */
 
 static r200ScreenPtr __r200Screen;
 
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
-#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *
 r200FillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
@@ -224,7 +221,6 @@ r200FillInModes( unsigned pixel_bits, unsigned depth_bits,
 
     return modes;
 }
-#endif /* USE_NEW_INTERFACE */
 
 
 /* Create the device specific screen private data struct.
@@ -235,7 +231,14 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
    r200ScreenPtr screen;
    RADEONDRIPtr dri_priv = (RADEONDRIPtr)sPriv->pDevPriv;
    unsigned char *RADEONMMIO;
+   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+     (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+   void * const psc = sPriv->psc->screenConfigs;
 
+
+   if ( glx_enable_extension == NULL ) {
+      return NULL;
+   }
 
    /* Allocate the private area */
    screen = (r200ScreenPtr) CALLOC( sizeof(*screen) );
@@ -460,34 +463,20 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
    screen->driScreen = sPriv;
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
 
-   if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
-      PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-          (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
-      void * const psc = sPriv->psc->screenConfigs;
-
-      if ( glx_enable_extension != NULL ) {
-	 if ( screen->irq != 0 ) {
-	    (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-	    (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
-	    (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
-	 }
-
-	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
-
-	 if ( driCompareGLXAPIVersion( 20030818 ) >= 0 ) {
-	    sPriv->psc->allocateMemory = (void *) r200AllocateMemoryMESA;
-	    sPriv->psc->freeMemory     = (void *) r200FreeMemoryMESA;
-	    sPriv->psc->memoryOffset   = (void *) r200GetMemoryOffsetMESA;
-
-	    (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
-	 }
-	  
-	 if ( driCompareGLXAPIVersion( 20030915 ) >= 0 ) {
-	    (*glx_enable_extension)( psc, "GLX_SGIX_fbconfig" );
-	    (*glx_enable_extension)( psc, "GLX_OML_swap_method" );
-	 }
-      }
+   if ( screen->irq != 0 ) {
+      (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+      (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+      (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
    }
+
+   (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+
+   sPriv->psc->allocateMemory = (void *) r200AllocateMemoryMESA;
+   sPriv->psc->freeMemory     = (void *) r200FreeMemoryMESA;
+   sPriv->psc->memoryOffset   = (void *) r200GetMemoryOffsetMESA;
+
+   (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
+
    return screen;
 }
 
@@ -643,23 +632,6 @@ static const struct __DriverAPIRec r200API = {
 };
 
 
-/*
- * This is the bootstrap function for the driver.
- * The __driCreateScreen name is the symbol that libGL.so fetches.
- * Return:  pointer to a __DRIscreenPrivate.
- *
- */
-#if !defined(DRI_NEW_INTERFACE_ONLY)
-void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                        int numConfigs, __GLXvisualConfig *config)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &r200API);
-   return (void *) psp;
-}
-#endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
-
-
 /**
  * This is the bootstrap function for the driver.  libGL supplies all of the
  * requisite information about the system, and the driver initializes itself.
@@ -670,9 +642,8 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
  *         failure.
  */
-#ifdef USE_NEW_INTERFACE
 PUBLIC
-void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -713,7 +684,6 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 
    return (void *) psp;
 }
-#endif /* USE_NEW_INTERFACE */
 
 
 /**

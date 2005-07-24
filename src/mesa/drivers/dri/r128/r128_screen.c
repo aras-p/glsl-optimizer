@@ -88,9 +88,7 @@ static const GLuint __driNConfigOptions = 3;
 #define PCI_CHIP_RAGE128RL	0x524C
 #endif
 
-#ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-#endif /* USE_NEW_INTERFACE */
 
 /* Create the device specific screen private data struct.
  */
@@ -99,7 +97,14 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
 {
    r128ScreenPtr r128Screen;
    R128DRIPtr r128DRIPriv = (R128DRIPtr)sPriv->pDevPriv;
+   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+     (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+   void * const psc = sPriv->psc->screenConfigs;
 
+
+   if ( glx_enable_extension == NULL ) {
+      return NULL;
+   }
 
    /* Allocate the private area */
    r128Screen = (r128ScreenPtr) CALLOC( sizeof(*r128Screen) );
@@ -211,21 +216,15 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    }
 
    r128Screen->driScreen = sPriv;
-   if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
-      PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-          (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
-      void * const psc = sPriv->psc->screenConfigs;
 
-      if ( glx_enable_extension != NULL ) {
-	 if ( r128Screen->irq != 0 ) {
-	    (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-	    (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
-	    (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
-	 }
-
-	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
-      }
+   if ( r128Screen->irq != 0 ) {
+      (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+      (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+      (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
    }
+
+   (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+
    return r128Screen;
 }
 
@@ -392,23 +391,6 @@ static struct __DriverAPIRec r128API = {
 };
 
 
-#ifndef DRI_NEW_INTERFACE_ONLY
-/*
- * This is the bootstrap function for the driver.
- * The __driCreateScreen name is the symbol that libGL.so fetches.
- * Return:  pointer to a __DRIscreenPrivate.
- */
-void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                        int numConfigs, __GLXvisualConfig *config)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &r128API);
-   return (void *) psp;
-}
-#endif /* DRI_NEW_INTERFACE_ONLY */
-
-
-#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *
 r128FillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
@@ -501,7 +483,7 @@ r128FillInModes( unsigned pixel_bits, unsigned depth_bits,
  *         failure.
  */
 PUBLIC
-void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -543,4 +525,3 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 
    return (void *) psp;
 }
-#endif /* USE_NEW_INTERFACE */

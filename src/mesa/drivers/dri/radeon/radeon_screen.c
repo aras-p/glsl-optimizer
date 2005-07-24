@@ -115,13 +115,10 @@ static const GLuint __driNConfigOptions = 13;
 #define PCI_CHIP_RS250_4437     0x4437
 #endif
 
-#ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-#endif /* USE_NEW_INTERFACE */
 
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
-#ifdef USE_NEW_INTERFACE
 static __GLcontextModes *
 radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
@@ -201,7 +198,7 @@ radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
 
     return modes;
 }
-#endif /* USE_NEW_INTERFACE */
+
 
 /* Create the device specific screen private data struct.
  */
@@ -210,7 +207,14 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
    radeonScreenPtr screen;
    RADEONDRIPtr dri_priv = (RADEONDRIPtr)sPriv->pDevPriv;
    unsigned char *RADEONMMIO;
+   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
+     (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+   void * const psc = sPriv->psc->screenConfigs;
 
+
+   if ( glx_enable_extension == NULL ) {
+      return NULL;
+   }
 
    /* Allocate the private area */
    screen = (radeonScreenPtr) CALLOC( sizeof(*screen) );
@@ -390,27 +394,13 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 dri_priv->log2GARTTexGran;
    }
 
-   if ( driCompareGLXAPIVersion( 20030813 ) >= 0 ) {
-      PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-          (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
-      void * const psc = sPriv->psc->screenConfigs;
-
-      if ( glx_enable_extension != NULL ) {
-	 if ( screen->irq != 0 ) {
-	    (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-	    (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
-	    (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
-	 }
-
-	 (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
-
-         if ( driCompareGLXAPIVersion( 20030915 ) >= 0 ) {
-	    (*glx_enable_extension)( psc, "GLX_SGIX_fbconfig" );
-	    (*glx_enable_extension)( psc, "GLX_OML_swap_method" );
-	 }
-
-      }
+   if ( screen->irq != 0 ) {
+      (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+      (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+      (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
    }
+
+   (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
 
    screen->driScreen = sPriv;
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
@@ -566,21 +556,6 @@ static struct __DriverAPIRec radeonAPI = {
 };
 
 
-/*
- * This is the bootstrap function for the driver.
- * The __driCreateScreen name is the symbol that libGL.so fetches.
- * Return:  pointer to a __DRIscreenPrivate.
- */
-#if !defined(DRI_NEW_INTERFACE_ONLY)
-void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                        int numConfigs, __GLXvisualConfig *config)
-{
-   __DRIscreenPrivate *psp;
-   psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &radeonAPI);
-   return (void *) psp;
-}
-#endif /* !defined(DRI_NEW_INTERFACE_ONLY) */
-
 /**
  * This is the bootstrap function for the driver.  libGL supplies all of the
  * requisite information about the system, and the driver initializes itself.
@@ -591,9 +566,8 @@ void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
  *         failure.
  */
-#ifdef USE_NEW_INTERFACE
 PUBLIC
-void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -634,7 +608,7 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
 
    return (void *) psp;
 }
-#endif /* USE_NEW_INTERFACE */
+
 
 /**
  * Get information about previous buffer swaps.

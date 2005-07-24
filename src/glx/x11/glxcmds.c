@@ -67,115 +67,6 @@ static const char __glXGLXClientVersion[] = "1.4";
 #include "xf86dri.h"
 
 static Bool __glXWindowExists(Display *dpy, GLXDrawable draw);
-
-static void * DriverCreateContextWrapper( const __GLXscreenConfigs *psc,
-    Display *dpy, XVisualInfo *vis, void *shared, __DRIcontext *ctx,
-    const __GLcontextModes *fbconfig, int render_type );
-
-#ifndef DRI_NEW_INTERFACE_ONLY
-static Bool dummyBindContext2( Display *dpy, int scrn,
-    GLXDrawable draw, GLXDrawable read, GLXContext gc );
-
-static Bool dummyUnbindContext2( Display *dpy, int scrn,
-    GLXDrawable draw, GLXDrawable read, GLXContext gc );
-
-/****************************************************************************/
-
-/**
- * Used as glue when a driver does not support
- * \c __DRIcontextRec::bindContext2.
- * 
- * XXX .bindContext is only defined as a function pointer if
- * !DRI_NEW_INTERFACE_ONLY.
- *
- * \sa DriverCreateContextWrapper, __DRIcontextRec::bindContext2
- */
-static Bool dummyBindContext2( Display *dpy, int scrn,
-			       GLXDrawable draw, GLXDrawable read,
-			       GLXContext gc )
-{
-    assert( draw == read );
-    return (*gc->driContext.bindContext)( dpy, scrn, draw, gc );
-}
-
-/**
- * Used as glue when a driver does not support
- * \c __DRIcontextRec::unbindContext2.
- * 
- * XXX .unbindContext is only defined as a function pointer if
- * !DRI_NEW_INTERFACE_ONLY.
- *
- * \sa DriverCreateContextWrapper, __DRIcontextRec::unbindContext2
- */
-static Bool dummyUnbindContext2( Display *dpy, int scrn,
-				 GLXDrawable draw, GLXDrawable read,
-				 GLXContext gc )
-{
-    assert( draw == read );
-    return (*gc->driContext.unbindContext)( dpy, scrn, draw, gc, GL_FALSE );
-}
-#endif /* DRI_NEW_INTERFACE_ONLY */
-
-
-/****************************************************************************/
-/**
- * Wrap the call to the driver's \c createContext function.
- *
- * The \c createContext function is wrapped because not all drivers support
- * the "new" \c unbindContext2 and \c bindContext2 interfaces.  libGL should
- * not have to check to see which functions the driver supports.  Instead,
- * if either function is not supported it is wrapped.  The wrappers test to
- * make sure that both drawables are the same and pass control to the old
- * interface.
- *
- * \sa dummyBindContext2, dummyUnbindContext2,
- *      __DRIcontextRec::bindContext2, __DRIcontextRec::unbindContext2
- */
-
-static void * DriverCreateContextWrapper( const __GLXscreenConfigs *psc,
-					  Display *dpy, XVisualInfo *vis,
-					  void *shared,
-					  __DRIcontext *ctx,
-					  const __GLcontextModes *modes,
-					  int render_type )
-{
-    void * ctx_priv = NULL;
-
-    if ( psc->driScreen.createNewContext != NULL ) {
-	assert( modes != NULL );
-	ctx_priv = (*psc->driScreen.createNewContext)(dpy, modes, render_type,
-						      shared, ctx);
-
-	/* If the driver supports the createNewContext interface, then 
-	 * it MUST also support either the bindContext2 / unbindContext2
-	 * interface or the bindContext3 / unbindContext3 interface.
-	 */
-
-	assert( (ctx_priv == NULL) || (ctx->unbindContext2 != NULL)
-		|| (ctx->unbindContext3 != NULL) );
-	assert( (ctx_priv == NULL) || (ctx->bindContext2 != NULL)
-		|| (ctx->bindContext3 != NULL) );
-    }
-#ifndef DRI_NEW_INTERFACE_ONLY
-    else {
-	if ( vis != NULL ) {
-	    ctx_priv = (*psc->driScreen.createContext)(dpy, vis, shared, ctx);
-
-	    if ( ctx_priv != NULL ) {
-		if ( ctx->unbindContext2 == NULL ) {
-		    ctx->unbindContext2 = dummyUnbindContext2;
-		}
-
-		if ( ctx->bindContext2 == NULL ) {
-		    ctx->bindContext2 = dummyBindContext2;
-		}
-	    }
-	}
-    }
-#endif
-
-    return ctx_priv;
-}
 #endif
 
 
@@ -469,10 +360,10 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 	    if (psc && psc->driScreen.private) {
 		void * const shared = (shareList != NULL)
 		    ? shareList->driContext.private : NULL;
-		gc->driContext.private =
-		    DriverCreateContextWrapper( psc, dpy, vis, shared,
-						&gc->driContext, mode,
-						renderType );
+		gc->driContext.private = 
+		  (*psc->driScreen.createNewContext)( dpy, mode, renderType,
+						      shared,
+						      &gc->driContext );
 		if (gc->driContext.private) {
 		    gc->isDirect = GL_TRUE;
 		    gc->screen = mode->screen;
@@ -842,6 +733,12 @@ static Bool __glXIsDirect(Display *dpy, GLXContextID contextID)
     return reply.isDirect;
 }
 
+/**
+ * \todo
+ * Shouldn't this function \b always return \c GL_FALSE when
+ * \c GLX_DIRECT_RENDERING is not defined?  Do we really need to bother with
+ * the GLX protocol here at all?
+ */
 PUBLIC Bool GLX_PREFIX(glXIsDirect)(Display *dpy, GLXContext gc)
 {
     if (!gc) {
@@ -3052,8 +2949,10 @@ int __glXGetInternalVersion(void)
      * 20040415 - Added support for bindContext3 and unbindContext3.
      * 20040602 - Add __glXGetDrawableInfo.  I though that was there
      *            months ago. :(
+     * 20050722 - Gut all the old interfaces.  This breaks compatability with
+     *            any DRI driver built to any previous version.
      */
-    return 20040602;
+    return 20050722;
 }
 
 

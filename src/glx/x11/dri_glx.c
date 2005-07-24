@@ -55,14 +55,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define RTLD_GLOBAL 0
 #endif
 
-#ifdef BUILT_IN_DRI_DRIVER
-
-extern void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                               int numConfigs, __GLXvisualConfig *config);
-
-
-#else /* BUILT_IN_DRI_DRIVER */
-
 
 #ifndef DEFAULT_DRIVER_DIR
 /* this is normally defined in the Imakefile */
@@ -100,23 +92,6 @@ static void ErrorMessageF(const char *f, ...)
 	va_end(args);
     }
 }
-
-
-/*
- * We'll save a pointer to this function when we couldn't find a
- * direct rendering driver for a given screen.
- */
-static void *DummyCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                               int numConfigs, __GLXvisualConfig *config)
-{
-    (void) dpy;
-    (void) scrn;
-    (void) psc;
-    (void) numConfigs;
-    (void) config;
-    return NULL;
-}
-
 
 
 /**
@@ -179,6 +154,19 @@ ExtractDir(int index, const char *paths, int dirLen, char *dir)
 
    return( end - start );
 }
+
+
+/**
+ * Versioned name of the expected \c __driCreateNewScreen function.
+ * 
+ * The version of the last incompatible loader/driver inteface change is
+ * appended to the name of the \c __driCreateNewScreen function.  This
+ * prevents loaders from trying to load drivers that are too old.
+ * 
+ * \todo
+ * Create a macro or something so that this is automatically updated.
+ */
+static const char createNewScreenName[] = "__driCreateNewScreen_20050722";
 
 
 /**
@@ -249,18 +237,16 @@ static __DRIdriver *OpenDriver(const char *driverName)
             return NULL; /* out of memory! */
          }
 
-         driver->createScreenFunc = (CreateScreenFunc)
-            dlsym(handle, "__driCreateScreen");
          driver->createNewScreenFunc = (CreateNewScreenFunc)
-            dlsym(handle, "__driCreateNewScreen");
+            dlsym(handle, createNewScreenName);
 
-         if ( (driver->createScreenFunc == NULL) 
-	      && (driver->createNewScreenFunc == NULL) ) {
+         if ( driver->createNewScreenFunc == NULL ) {
             /* If the driver doesn't have this symbol then something's
              * really, really wrong.
              */
-            ErrorMessageF("Neither __driCreateScreen or __driCreateNewScreen "
-			  "are defined in %s_dri.so!\n", driverName);
+            ErrorMessageF("%s not defined in %s_dri.so!\n"
+			  "Your driver may be too old for this libGL.\n",
+			  createNewScreenName, driverName);
             Xfree(driver);
             dlclose(handle);
             continue;
@@ -379,9 +365,6 @@ const char *glXGetDriverConfig (const char *driverName) {
 }
 
 
-#endif /* BUILT_IN_DRI_DRIVER */
-
-
 /* This function isn't currently used.
  */
 static void driDestroyDisplay(Display *dpy, void *private)
@@ -420,7 +403,6 @@ void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
      */
     pdisp->private = NULL;
     pdisp->destroyDisplay = NULL;
-    pdisp->createScreen = NULL;
 
     if (!XF86DRIQueryExtension(dpy, &eventBase, &errorBase)) {
 	return NULL;
@@ -441,17 +423,9 @@ void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
 
     pdisp->destroyDisplay = driDestroyDisplay;
 
-    /* allocate array of pointers to createScreen funcs */
-    pdisp->createScreen = (CreateScreenFunc *) Xmalloc(numScreens * sizeof(void *));
-    if (!pdisp->createScreen) {
-       Xfree(pdpyp);
-       return NULL;
-    }
-
-    /* allocate array of pointers to createScreen funcs */
+    /* allocate array of pointers to createNewScreen funcs */
     pdisp->createNewScreen = (CreateNewScreenFunc *) Xmalloc(numScreens * sizeof(void *));
     if (!pdisp->createNewScreen) {
-       Xfree(pdisp->createScreen);
        Xfree(pdpyp);
        return NULL;
     }
@@ -460,20 +434,10 @@ void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
     pdpyp->libraryHandles = (void **) Xmalloc(numScreens * sizeof(void*));
     if (!pdpyp->libraryHandles) {
        Xfree(pdisp->createNewScreen);
-       Xfree(pdisp->createScreen);
        Xfree(pdpyp);
        return NULL;
     }
 
-#ifdef BUILT_IN_DRI_DRIVER
-    /* we'll statically bind to the built-in __driCreateScreen function */
-    for (scrn = 0; scrn < numScreens; scrn++) {
-       pdisp->createScreen[scrn] = __driCreateScreen;
-       pdisp->createNewScreen[scrn] = NULL;
-       pdpyp->libraryHandles[scrn] = NULL;
-    }
-
-#else
     /* dynamically discover DRI drivers for all screens, saving each
      * driver's "__driCreateScreen" function pointer.  That's the bootstrap
      * entrypoint for all DRI drivers.
@@ -481,17 +445,14 @@ void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
     for (scrn = 0; scrn < numScreens; scrn++) {
         __DRIdriver *driver = driGetDriver(dpy, scrn);
         if (driver) {
-           pdisp->createScreen[scrn] = driver->createScreenFunc;
            pdisp->createNewScreen[scrn] = driver->createNewScreenFunc;
            pdpyp->libraryHandles[scrn] = driver->handle;
         }
         else {
-           pdisp->createScreen[scrn] = DummyCreateScreen;
            pdisp->createNewScreen[scrn] = NULL;
            pdpyp->libraryHandles[scrn] = NULL;
         }
     }
-#endif
 
     return (void *)pdpyp;
 }
