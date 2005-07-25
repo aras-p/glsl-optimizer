@@ -15,12 +15,14 @@
 #   -patch N      specifies patch version number (default is 0)
 #   -lLIBRARY     specifies a dependency on LIBRARY
 #   -LDIR         search in DIR for library dependencies
+#   -linker L     explicity specify the linker program to use (ex: gcc, g++)
+#                 Not observed on all systems at this time.
 #   -cplusplus    link with C++ runtime
 #   -static       make a static library (default is dynamic/shared)
-#   -install DIR  move resulting library file(s) to DIR
+#   -install DIR  pu resulting library file(s) in DIR
 #   -arch ARCH    override using `uname` to determine architecture
 #   -archopt OPT  specify an extra achitecture-specific option OPT
-#   -noprefix     don't prefix library name with "lib" or any suffix
+#   -noprefix     don't prefix library name with "lib" nor add any suffix
 #   -exports FILE only export the symbols listed in FILE
 #
 # The library name should just be "GL" or "GLU", etc.  The 'lib' prefix
@@ -28,10 +30,6 @@
 # etc (unless the -noprefix option is used).
 #
 # objects should be:  foo.o bar.o etc.o
-#
-# Environment variables recognized:
-#   CC   C compiler command
-#   CXX  C++ compiler command
 #
 
 
@@ -43,6 +41,7 @@ MAJOR=1
 MINOR=0
 PATCH=""
 DEPS=""
+LINK=""
 CPLUSPLUS=0
 STATIC=0
 INSTALLDIR="."
@@ -62,6 +61,7 @@ do
 	'-major')     shift 1; MAJOR=$1;;
 	'-minor')     shift 1; MINOR=$1;;
 	'-patch')     shift 1; PATCH=$1;;
+	'-linker')    shift 1; LINK=$1;;
 	-l*)          DEPS="$DEPS $1";;
 	-L*)          DEPS="$DEPS $1";;
 	'-cplusplus') CPLUSPLUS=1;;
@@ -120,12 +120,13 @@ case $ARCH in
     'Linux' | 'OpenBSD')
 	# we assume gcc
 
-	# Set default compilers if env vars not set
-	if [ "x$CXX" = "x" ] ; then
-	    CXX=g++
-	fi
-	if [ "x$CC" = "x" ] ; then
-	    CC=gcc
+	if [ "x$LINK" = "x" ] ; then
+	    # -linker was not specified so set default link command now
+            if [ $CPLUSPLUS = 1 ] ; then
+                LINK=g++
+            else
+                LINK=gcc
+            fi
 	fi
 
 	if [ $NOPREFIX = 1 ] ; then
@@ -133,13 +134,7 @@ case $ARCH in
 	    echo "mklib: Making" $ARCH "shared library: " ${LIBNAME}
 	    #OPTS="-shared -Wl,-soname,${LIBNAME}"  # soname???
 	    OPTS="-shared"
-            if [ $CPLUSPLUS = 1 ] ; then
-                LINK=$CXX
-            else
-                LINK=$CC
-            fi
             rm -f ${LIBNAME}
-
             # make lib
             ${LINK} ${OPTS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
             # finish up
@@ -190,12 +185,6 @@ case $ARCH in
 
             echo "mklib: Making" $ARCH "shared library: " ${LIBNAME}.so.${VERSION}
 
-            if [ $CPLUSPLUS = 1 ] ; then
-                LINK=$CXX
-            else
-                LINK=$CC
-            fi
-
             # rm any old libs
             rm -f ${LIBNAME}.so.${VERSION}
             rm -f ${LIBNAME}.so.${MAJOR}
@@ -224,41 +213,25 @@ case $ARCH in
 	    echo "mklib: Making SunOS shared library: " ${LIBNAME}
 	    # XXX OPTS for gcc should be -shared, but that doesn't work.
 	    # Using -G does work though.
-	    if [ $CPLUSPLUS = 1 ] ; then
-		# determine linker and options for C++ code
-		if [ "x${CXX}" = "xg++" ] ; then
-		    # use g++
-		    LINK="g++"
-		    OPTS="-G"
-		elif [ "x${CXX}" = "xCC" ] ; then
-		    # use Sun CC
-		    LINK="CC"
-		    OPTS="-G"
-		elif [ "x${CXX}" = "xc++" ] ; then
-		    # use Sun c++
-		    LINK="c++"
-		    OPTS="-G"
-		elif [ `which c++` ] ; then
-		    # use Sun c++
-		    LINK="c++"
-		    OPTS="-G"
-		elif [ `type g++` ] ; then
-		    # use g++
-		    LINK="g++"
-		    OPTS="-G"
+	    OPTS="-G"
+	    if [ "x$LINK" = "x" ] ; then
+		# -linker was not specified, choose default linker now
+		if [ $CPLUSPLUS = 1 ] ; then
+		    # determine linker and options for C++ code
+		    if [ `which c++` ] ; then
+			# use Sun c++
+			LINK="c++"
+		    elif [ `type g++` ] ; then
+			# use g++
+			LINK="g++"
+		    else
+			echo "mklib: warning: can't find C++ comiler, trying CC."
+			LINK="CC"
+		    fi
 		else
-		    echo "mklib: warning: can't find C++ comiler, trying CC."
-		    LINK="CC"
-		    OPTS="-G"
+		    # use native Sun linker for C code
+		    LINK="ld"
 		fi
-	    elif [ "x${CC}" = "xgcc" ] ; then
-		# use gcc for linking
-		LINK="gcc"
-		OPTS="-G"
-	    else
-		# use native Sun linker
-		LINK="ld"
-		OPTS="-G"
 	    fi
 	    echo "mklib: linker is" ${LINK} ${OPTS}
 	    rm -f ${LIBNAME}.${MAJOR} ${LIBNAME}
@@ -317,6 +290,8 @@ case $ARCH in
 	    FINAL_LIBS=${LIBNAME}
 	else
 	    LIBNAME="lib${LIBNAME}.so"  # prefix with "lib", suffix with ".so"
+	    # XXX we should run 'file' on the first object file to determine
+	    # if it's o32, n32 or 64 format, as we do for Linux above.
 	    if [ $ARCHOPT = "64" ] ; then
 		# 64-bit ABI
 		OPTS="-64 -shared -all"
@@ -425,10 +400,12 @@ case $ARCH in
 	    VERSION="${MAJOR}.${MINOR}"
 	    LIBNAME="lib${LIBNAME}.so"
 	    echo "mklib: Making OSF/1 shared library: " ${LIBNAME}
-	    if [ $CPLUSPLUS = 1 ] ; then
-		LINK=$CXX
-	    else
-		LINK=$CC
+	    if [ "x$LINK" = "x" ] ; then
+		if [ $CPLUSPLUS = 1 ] ; then
+		    LINK=cxx
+		else
+		    LINK=cc
+		fi
 	    fi
 	    rm -f ${LIBNAME}.${VERSION}
 	    ${LINK} -o ${LIBNAME}.${VERSION} -shared -set_version ${VERSION} -soname ${LIBNAME}.${VERSION} -expect_unresolved \* -all ${OBJECTS} ${DEPS}
@@ -477,6 +454,7 @@ case $ARCH in
 	    echo "mklib: Making BeOS shared library: " ${LIBNAME}
 	    gcc -nostart -Xlinker "-soname=${LIBNAME}" -L/Be/develop/lib/x86 -lbe ${DEPS} ${OBJECTS} -o "${LIBNAME}"
 	    mimeset -f "${LIBNAME}"
+	    # XXX remove the Mesa3D stuff here since mklib isn't mesa-specific.
 	    setversion "${LIBNAME}" -app ${MAJOR} ${MINOR} ${PATCH} -short "Powered by Mesa3D!" -long "Powered by Mesa3D!"
 	fi
 	FINAL_LIBS=${LIBNAME}

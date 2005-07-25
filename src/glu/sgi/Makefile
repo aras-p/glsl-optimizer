@@ -136,8 +136,8 @@ $(LIB_DIR):
 
 # Make the library:
 $(LIB_DIR)/$(GLU_LIB_NAME): $(OBJECTS)
-	CC="$(CC)" CXX="$(CXX)" $(TOP)/bin/mklib -o $(GLU_LIB) -major $(GLU_MAJOR) \
-		-minor $(GLU_MINOR) -patch $(GLU_TINY) \
+	$(TOP)/bin/mklib -o $(GLU_LIB) -linker $(CXX) \
+		-major $(GLU_MAJOR) -minor $(GLU_MINOR) -patch $(GLU_TINY) \
 		-cplusplus $(MKLIB_OPTIONS) -install $(LIB_DIR) \
 		$(GLU_LIB_DEPS) $(OBJECTS)
 

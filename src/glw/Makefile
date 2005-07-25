@@ -33,8 +33,9 @@ clean:
 
 # Make the library
 $(LIB_DIR)/$(GLW_LIB_NAME): $(OBJECTS)
-	CC="$(CC)" CXX="$(CXX)" $(TOP)/bin/mklib -o $(GLW_LIB) -major $(MAJOR) -minor $(MINOR) \
-		-patch $(TINY) $(MKLIB_OPTIONS) -install $(LIB_DIR) \
+	$(TOP)/bin/mklib -o $(GLW_LIB) -linker $(CC) \
+		-major $(MAJOR) -minor $(MINOR) -patch $(TINY) \
+		$(MKLIB_OPTIONS) -install $(LIB_DIR) \
 		$(GLW_LIB_DEPS) $(OBJECTS)
 
 

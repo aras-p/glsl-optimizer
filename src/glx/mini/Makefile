@@ -55,7 +55,8 @@ default: depend $(LIB_DIR)/$(GL_LIB_NAME)
 
 # Make libGL
 $(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
-	CC="$(CC)" CXX="$(CXX)" $(TOP)/bin/mklib -o $(GL_LIB) -major 1 -minor 2 $(MKLIB_OPTIONS) \
+	$(TOP)/bin/mklib -o $(GL_LIB) -linker $(CC) \
+		-major 1 -minor 2 $(MKLIB_OPTIONS) \
 		-install $(LIB_DIR) $(GL_LIB_DEPS) $(OBJECTS)
 	rm -f $(LIB_DIR)/miniglx.conf
 	install example.miniglx.conf $(LIB_DIR)/miniglx.conf

@@ -90,9 +90,9 @@ default: $(LIB_DIR)/$(GLUT_LIB_NAME)
 
 # Make the library
 $(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
-	CC="$(CC)" CXX="$(CXX)" $(TOP)/bin/mklib -o $(GLUT_LIB) \
-		-major $(GLUT_MAJOR) -minor $(GLUT_MINOR) \
-		-patch $(GLUT_TINY) $(MKLIB_OPTIONS) -install $(LIB_DIR) \
+	$(TOP)/bin/mklib -o $(GLUT_LIB) -linker $(CC) \
+		-major $(GLUT_MAJOR) -minor $(GLUT_MINOR) -patch $(GLUT_TINY) \
+		$(MKLIB_OPTIONS) -install $(LIB_DIR) \
 		$(GLUT_LIB_DEPS) $(OBJECTS)
 
 
