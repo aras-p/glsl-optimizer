@@ -40,10 +40,6 @@
 #include "glcontextmodes.h"
 #include "glheader.h"
 
-#ifdef IN_DOXYGEN
-#define GLX_PREFIX(x) x
-#endif /* IN_DOXYGEN */
-
 static void ChangeDrawableAttribute( Display * dpy, GLXDrawable drawable,
     const CARD32 * attribs, size_t num_attribs );
 
@@ -422,9 +418,9 @@ CreatePbuffer( Display *dpy, const __GLcontextModes * fbconfig,
  * Create a new pbuffer.
  */
 PUBLIC GLXPbufferSGIX
-GLX_PREFIX(glXCreateGLXPbufferSGIX)(Display *dpy, GLXFBConfigSGIX config,
-				    unsigned int width, unsigned int height,
-				    int *attrib_list)
+glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
+			unsigned int width, unsigned int height,
+			int *attrib_list)
 {
    return (GLXPbufferSGIX) CreatePbuffer( dpy, (__GLcontextModes *) config,
 					  width, height,
@@ -436,8 +432,7 @@ GLX_PREFIX(glXCreateGLXPbufferSGIX)(Display *dpy, GLXFBConfigSGIX config,
  * Create a new pbuffer.
  */
 PUBLIC GLXPbuffer
-GLX_PREFIX(glXCreatePbuffer)(Display *dpy, GLXFBConfig config,
-			     const int *attrib_list)
+glXCreatePbuffer(Display *dpy, GLXFBConfig config, const int *attrib_list)
 {
    return (GLXPbuffer) CreatePbuffer( dpy, (__GLcontextModes *) config,
 				      0, 0,
@@ -449,7 +444,7 @@ GLX_PREFIX(glXCreatePbuffer)(Display *dpy, GLXFBConfig config,
  * Destroy an existing pbuffer.
  */
 PUBLIC void
-GLX_PREFIX(glXDestroyPbuffer)(Display *dpy, GLXPbuffer pbuf)
+glXDestroyPbuffer(Display *dpy, GLXPbuffer pbuf)
 {
    DestroyPbuffer( dpy, pbuf );
 }
@@ -459,8 +454,8 @@ GLX_PREFIX(glXDestroyPbuffer)(Display *dpy, GLXPbuffer pbuf)
  * Query an attribute of a drawable.
  */
 PUBLIC void
-GLX_PREFIX(glXQueryDrawable)(Display *dpy, GLXDrawable drawable,
-				   int attribute, unsigned int *value)
+glXQueryDrawable(Display *dpy, GLXDrawable drawable,
+		 int attribute, unsigned int *value)
 {
    GetDrawableAttribute( dpy, drawable, attribute, value );
 }
@@ -470,8 +465,8 @@ GLX_PREFIX(glXQueryDrawable)(Display *dpy, GLXDrawable drawable,
  * Query an attribute of a pbuffer.
  */
 PUBLIC int
-GLX_PREFIX(glXQueryGLXPbufferSGIX)(Display *dpy, GLXPbufferSGIX drawable,
-				   int attribute, unsigned int *value)
+glXQueryGLXPbufferSGIX(Display *dpy, GLXPbufferSGIX drawable,
+		       int attribute, unsigned int *value)
 {
    return GetDrawableAttribute( dpy, drawable, attribute, value );
 }
@@ -481,8 +476,7 @@ GLX_PREFIX(glXQueryGLXPbufferSGIX)(Display *dpy, GLXPbufferSGIX drawable,
  * Select the event mask for a drawable.
  */
 PUBLIC void
-GLX_PREFIX(glXSelectEvent)(Display *dpy, GLXDrawable drawable,
-			   unsigned long mask)
+glXSelectEvent(Display *dpy, GLXDrawable drawable, unsigned long mask)
 {
    CARD32 attribs[2];
 
@@ -497,8 +491,7 @@ GLX_PREFIX(glXSelectEvent)(Display *dpy, GLXDrawable drawable,
  * Get the selected event mask for a drawable.
  */
 PUBLIC void
-GLX_PREFIX(glXGetSelectedEvent)(Display *dpy, GLXDrawable drawable,
-				unsigned long *mask)
+glXGetSelectedEvent(Display *dpy, GLXDrawable drawable, unsigned long *mask)
 {
    unsigned int value;
 
@@ -514,8 +507,8 @@ GLX_PREFIX(glXGetSelectedEvent)(Display *dpy, GLXDrawable drawable,
 
 
 PUBLIC GLXPixmap
-GLX_PREFIX(glXCreatePixmap)( Display *dpy, GLXFBConfig config, Pixmap pixmap,
-			     const int *attrib_list )
+glXCreatePixmap( Display *dpy, GLXFBConfig config, Pixmap pixmap,
+		 const int *attrib_list )
 {
    return CreateDrawable( dpy, (__GLcontextModes *) config,
 			  (Drawable) pixmap, attrib_list,
@@ -524,8 +517,8 @@ GLX_PREFIX(glXCreatePixmap)( Display *dpy, GLXFBConfig config, Pixmap pixmap,
 
 
 PUBLIC GLXWindow
-GLX_PREFIX(glXCreateWindow)( Display *dpy, GLXFBConfig config, Window win,
-			     const int *attrib_list )
+glXCreateWindow( Display *dpy, GLXFBConfig config, Window win,
+		 const int *attrib_list )
 {
    return CreateDrawable( dpy, (__GLcontextModes *) config,
 			  (Drawable) win, attrib_list,
@@ -534,14 +527,14 @@ GLX_PREFIX(glXCreateWindow)( Display *dpy, GLXFBConfig config, Window win,
 
 
 PUBLIC void
-GLX_PREFIX(glXDestroyPixmap)(Display *dpy, GLXPixmap pixmap)
+glXDestroyPixmap(Display *dpy, GLXPixmap pixmap)
 {
    DestroyDrawable( dpy, (GLXDrawable) pixmap, X_GLXDestroyPixmap );
 }
 
 
 PUBLIC void
-GLX_PREFIX(glXDestroyWindow)(Display *dpy, GLXWindow win)
+glXDestroyWindow(Display *dpy, GLXWindow win)
 {
    DestroyDrawable( dpy, (GLXDrawable) win, X_GLXDestroyWindow );
 }

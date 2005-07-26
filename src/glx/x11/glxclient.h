@@ -65,9 +65,6 @@
 #elif defined( PTHREADS )
 # include <pthread.h>
 #endif
-#ifdef GLX_BUILT_IN_XMESA
-#include "realglx.h"  /* just silences prototype warnings */
-#endif
 
 #define GLX_MAJOR_VERSION	1	/* current version numbers */
 #define GLX_MINOR_VERSION	4
@@ -717,17 +714,6 @@ extern void _XFlush(Display*);
 extern Status _XReply(Display*, xReply*, int, Bool);
 extern void _XRead(Display*, void*, long);
 extern void _XSend(Display*, const void*, long);
-#endif
-
-
-/*
-** GLX_BUILT_IN_XMESA controls whether libGL has a built-in verions of
-** Mesa that can render to non-GLX displays.
-*/
-#ifdef GLX_BUILT_IN_XMESA
-#define GLX_PREFIX(function)  _real_##function
-#else
-#define GLX_PREFIX(function)  function
 #endif
 
 

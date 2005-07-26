@@ -31,12 +31,6 @@
 #include "GL/glx.h"
 
 
-#ifdef GLX_BUILT_IN_XMESA
-/* The GLX API dispatcher (i.e. this code) is being built into XFree86's
- * libGL so we'll use the __GLXContextRec defined in xc/lib/GL/glx/glxclient.h
-*/
-#include "glxclient.h"
-#else
 /* The GLX API dispatcher (i.e. this code) is being built into stand-alone
  * Mesa.  We don't know anything about XFree86 or real GLX so we define a
  * minimal __GLXContextRec here so some of the functions in this file can
@@ -49,7 +43,6 @@ typedef struct __GLXcontextRec {
    GLXDrawable currentReadable;
    XID xid;
 } __GLXcontext;
-#endif
 
 
 /*

@@ -262,16 +262,16 @@ typedef void (* PFNGLXDISABLEEXTENSIONPROC) ( const char * name );
 #else
 # if defined(__GNUC__) && !defined(GLX_ALIAS_UNSUPPORTED)
 #  define GLX_ALIAS(return_type, real_func, proto_args, args, aliased_func) \
-	return_type GLX_PREFIX( real_func ) proto_args \
+	return_type  real_func  proto_args \
 	__attribute__ ((alias( # aliased_func ) ));
 #  define GLX_ALIAS_VOID(real_func, proto_args, args, aliased_func) \
 	GLX_ALIAS(void, real_func, proto_args, args, aliased_func)
 # else
 #  define GLX_ALIAS(return_type, real_func, proto_args, args, aliased_func) \
-	return_type GLX_PREFIX( real_func ) proto_args \
+	return_type  real_func  proto_args \
 	{ return aliased_func args ; }
 #  define GLX_ALIAS_VOID(real_func, proto_args, args, aliased_func) \
-	void GLX_PREFIX( real_func ) proto_args \
+	void  real_func  proto_args \
 	{ aliased_func args ; }
 # endif /* __GNUC__ */
 #endif /* GLX_NO_STATIC_EXTENSION_FUNCTIONS */

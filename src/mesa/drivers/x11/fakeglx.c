@@ -1357,11 +1357,7 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       if (XMesaMakeCurrent2(xmctx, drawBuffer, readBuffer)) {
          ((__GLXcontext *) ctx)->currentDpy = dpy;
          ((__GLXcontext *) ctx)->currentDrawable = draw;
-#ifndef GLX_BUILT_IN_XMESA
          ((__GLXcontext *) ctx)->currentReadable = read;
-#else
-         __glXSetCurrentContext(ctx);
-#endif
          return True;
       }
       else {
@@ -1376,9 +1372,6 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       MakeCurrent_PrevReadable = 0;
       MakeCurrent_PrevDrawBuffer = 0;
       MakeCurrent_PrevReadBuffer = 0;
-#ifdef GLX_BUILT_IN_XMESA
-      /* XXX bind dummy context with __glXSetCurrentContext(ctx); */
-#endif
       return True;
    }
    else {

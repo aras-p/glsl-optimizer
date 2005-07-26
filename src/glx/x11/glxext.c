@@ -1770,8 +1770,7 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 }
 
 
-PUBLIC Bool GLX_PREFIX(glXMakeCurrent)(Display *dpy, GLXDrawable draw,
-                                       GLXContext gc)
+PUBLIC Bool glXMakeCurrent(Display *dpy, GLXDrawable draw, GLXContext gc)
 {
     return MakeContextCurrent( dpy, draw, draw, gc );
 }

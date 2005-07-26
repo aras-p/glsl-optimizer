@@ -80,31 +80,7 @@ get_dispatch(Display *dpy)
     * or Mesa's pseudo-GLX.
     */
    {
-      struct _glxapi_table *t = NULL;
-
-#ifdef GLX_BUILT_IN_XMESA
-      if (!getenv("LIBGL_FORCE_XMESA")) {
-         int ignore;
-         if (XQueryExtension( dpy, "GLX", &ignore, &ignore, &ignore )) {
-            /* the X server has the GLX extension */
-            t = _real_GetGLXDispatchTable();
-         }
-      }
-#endif
-
-      if (!t) {
-         /* Fallback to Mesa with Xlib driver */
-#ifdef GLX_BUILT_IN_XMESA
-         if (getenv("LIBGL_DEBUG")) {
-            fprintf(stderr,
-                    "libGL: server %s lacks the GLX extension.",
-                    dpy->display_name);
-            fprintf(stderr, " Using Mesa Xlib renderer.\n");
-         }
-#endif
-         t = _mesa_GetGLXDispatchTable();
-         assert(t);  /* this has to work */
-      }
+      struct _glxapi_table *t = _mesa_GetGLXDispatchTable();
 
       if (t) {
          struct display_dispatch *d;
@@ -146,10 +122,8 @@ get_dispatch(Display *dpy)
 
 
 /* Set by glXMakeCurrent() and glXMakeContextCurrent() only */
-#ifndef GLX_BUILT_IN_XMESA
 static GLXContext CurrentContext = 0;
 #define __glXGetCurrentContext() CurrentContext;
-#endif
 
 
 /*
@@ -235,29 +209,19 @@ glXGetConfig(Display *dpy, XVisualInfo *visinfo, int attrib, int *value)
 }
 
 
-#ifdef GLX_BUILT_IN_XMESA
-/* Use real libGL's glXGetCurrentContext() function */
-#else
-/* stand-alone Mesa */
 GLXContext PUBLIC
 glXGetCurrentContext(void)
 {
    return CurrentContext;
 }
-#endif
 
 
-#ifdef GLX_BUILT_IN_XMESA
-/* Use real libGL's glXGetCurrentContext() function */
-#else
-/* stand-alone Mesa */
 GLXDrawable PUBLIC
 glXGetCurrentDrawable(void)
 {
    __GLXcontext *gc = (__GLXcontext *) glXGetCurrentContext();
    return gc ? gc->currentDrawable : 0;
 }
-#endif
 
 
 Bool PUBLIC
@@ -281,11 +245,9 @@ glXMakeCurrent(Display *dpy, GLXDrawable drawable, GLXContext ctx)
       return False;
    }
    b = (*t->MakeCurrent)(dpy, drawable, ctx);
-#ifndef  GLX_BUILT_IN_XMESA
    if (b) {
       CurrentContext = ctx;
    }
-#endif
    return b;
 }
 
@@ -397,7 +359,6 @@ glXQueryServerString(Display *dpy, int screen, int name)
 
 /*** GLX_VERSION_1_2 ***/
 
-#if !defined(GLX_BUILT_IN_XMESA)
 Display PUBLIC *
 glXGetCurrentDisplay(void)
 {
@@ -406,7 +367,6 @@ glXGetCurrentDisplay(void)
    if (NULL == gc) return NULL;
    return gc->currentDpy;
 }
-#endif
 
 
 
@@ -500,16 +460,12 @@ glXDestroyWindow(Display *dpy, GLXWindow window)
 }
 
 
-#ifdef GLX_BUILT_IN_XMESA
-/* Use the glXGetCurrentReadDrawable() function from libGL */
-#else
 GLXDrawable PUBLIC
 glXGetCurrentReadDrawable(void)
 {
    __GLXcontext *gc = (__GLXcontext *) glXGetCurrentContext();
    return gc ? gc->currentReadable : 0;
 }
-#endif
 
 
 int PUBLIC
@@ -564,11 +520,9 @@ glXMakeContextCurrent(Display *dpy, GLXDrawable draw, GLXDrawable read, GLXConte
    if (!t)
       return False;
    b = (t->MakeContextCurrent)(dpy, draw, read, ctx);
-#ifndef GLX_BUILT_IN_XMESA
    if (b) {
       CurrentContext = ctx;
    }
-#endif
    return b;
 }
 
@@ -661,16 +615,11 @@ glXMakeCurrentReadSGI(Display *dpy, GLXDrawable draw, GLXDrawable read, GLXConte
    return (t->MakeCurrentReadSGI)(dpy, draw, read, ctx);
 }
 
-#ifdef GLX_BUILT_IN_XMESA
-/* Use glXGetCurrentReadDrawableSGI() from libGL */
-#else
-/* stand-alone Mesa */
 GLXDrawable PUBLIC
 glXGetCurrentReadDrawableSGI(void)
 {
    return glXGetCurrentReadDrawable();
 }
-#endif
 
 
 #if defined(_VL_H)
@@ -710,27 +659,17 @@ glXFreeContextEXT(Display *dpy, GLXContext context)
    (t->FreeContextEXT)(dpy, context);
 }
 
-#ifdef GLX_BUILT_IN_XMESA
-/* Use real libGL's glXGetContextIDEXT() function */
-#else
-/* stand-alone Mesa */
 GLXContextID PUBLIC
 glXGetContextIDEXT(const GLXContext context)
 {
    return ((__GLXcontext *) context)->xid;
 }
-#endif
 
-#ifdef GLX_BUILT_IN_XMESA
-/* Use real libGL's glXGetCurrentDisplayEXT() function */
-#else
-/* stand-alone Mesa */
 Display PUBLIC *
 glXGetCurrentDisplayEXT(void)
 {
    return glXGetCurrentDisplay();
 }
-#endif
 
 GLXContext PUBLIC
 glXImportContextEXT(Display *dpy, GLXContextID contextID)
