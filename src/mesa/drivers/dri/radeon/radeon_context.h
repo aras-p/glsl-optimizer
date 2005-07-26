@@ -775,7 +775,6 @@ struct radeon_context {
    GLuint swap_count;
    GLuint swap_missed_count;
 
-   PFNGLXGETUSTPROC get_ust;
 
    /* radeon_tcl.c
     */

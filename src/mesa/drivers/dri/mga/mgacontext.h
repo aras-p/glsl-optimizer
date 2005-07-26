@@ -271,8 +271,6 @@ struct mga_context_t {
 
    uint32_t last_frame_fence;
 
-   PFNGLXGETUSTPROC get_ust;
-
    /* Drawable, cliprect and scissor information
     */
    int dirty_cliprects;		/* which sets of cliprects are uptodate? */

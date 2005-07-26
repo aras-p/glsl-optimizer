@@ -667,6 +667,42 @@ filter_modes( __GLcontextModes ** server_modes,
 }
 
 
+/**
+ * Implement \c __DRIinterfaceMethods::getProcAddress.
+ */
+static __DRIfuncPtr get_proc_address( const char * proc_name )
+{
+    if (strcmp( proc_name, "glxEnableExtension" ) == 0) {
+	return (__DRIfuncPtr) __glXScrEnableExtension;
+    }
+    
+    return NULL;
+}
+
+
+/**
+ * Table of functions exported by the loader to the driver.
+ */
+static const __DRIinterfaceMethods interface_methods = {
+    get_proc_address,
+
+    _gl_context_modes_create,
+    _gl_context_modes_destroy,
+      
+    __glXFindDRIScreen,
+    __glXWindowExists,
+      
+    XF86DRICreateContextWithConfig,
+    XF86DRIDestroyContext,
+
+    XF86DRICreateDrawable,
+    XF86DRIDestroyDrawable,
+    XF86DRIGetDrawableInfo,
+
+    __glXGetUST,
+    glXGetMscRateOML,
+};
+
 
 /**
  * Perform the required libGL-side initialization and call the client-side
@@ -819,6 +855,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
 							     pSAREA,
 							     fd,
 							     api_ver,
+							     & interface_methods,
 							     & driver_modes );
 
 				    filter_modes( & configs->configs,

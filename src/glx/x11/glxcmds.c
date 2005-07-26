@@ -49,6 +49,7 @@
 #ifdef GLX_DIRECT_RENDERING
 #include "indirect_init.h"
 #include "xf86vmode.h"
+#include "xf86dri.h"
 #endif
 #include "glxextensions.h"
 #include "glcontextmodes.h"
@@ -61,13 +62,6 @@
 
 static const char __glXGLXClientVendorName[] = "SGI";
 static const char __glXGLXClientVersion[] = "1.4";
-
-
-#if defined(GLX_DIRECT_RENDERING)
-#include "xf86dri.h"
-
-static Bool __glXWindowExists(Display *dpy, GLXDrawable draw);
-#endif
 
 
 /****************************************************************************/
@@ -2814,28 +2808,9 @@ static const struct name_address_pair GLX_functions[] = {
    GLX_FUNCTION( glXGetSyncValuesOML ),
 
 #ifdef GLX_DIRECT_RENDERING
-   /***
-    *** Internal functions useful to DRI drivers
-    *** With this, the DRI drivers shouldn't need dlopen()/dlsym() to
-    *** access internal libGL functions which may or may not exist.
-    ***/
-   GLX_FUNCTION( __glXInitialize ),
-   GLX_FUNCTION( __glXFindDRIScreen ),
-   GLX_FUNCTION( __glXGetInternalVersion ),
-   GLX_FUNCTION( __glXWindowExists ),
-   GLX_FUNCTION2( __glXCreateContextWithConfig, XF86DRICreateContextWithConfig ),
-   GLX_FUNCTION2( __glXGetDrawableInfo, XF86DRIGetDrawableInfo ),
-
    /*** DRI configuration ***/
    GLX_FUNCTION( glXGetScreenDriver ),
    GLX_FUNCTION( glXGetDriverConfig ),
-
-   GLX_FUNCTION( __glXScrEnableExtension ),
-
-   GLX_FUNCTION( __glXGetUST ),
-    
-   GLX_FUNCTION2( __glXCreateContextModes, _gl_context_modes_create ),
-   GLX_FUNCTION2( __glXDestroyContextModes, _gl_context_modes_destroy ),
 #endif
 
    { NULL, NULL }   /* end of list */
@@ -2949,10 +2924,10 @@ int __glXGetInternalVersion(void)
      * 20040415 - Added support for bindContext3 and unbindContext3.
      * 20040602 - Add __glXGetDrawableInfo.  I though that was there
      *            months ago. :(
-     * 20050722 - Gut all the old interfaces.  This breaks compatability with
+     * 20050725 - Gut all the old interfaces.  This breaks compatability with
      *            any DRI driver built to any previous version.
      */
-    return 20050722;
+    return 20050725;
 }
 
 
@@ -2986,7 +2961,7 @@ static int windowExistsErrorHandler(Display *dpy, XErrorEvent *xerr)
  *
  * \since Internal API version 20021128.
  */
-static Bool __glXWindowExists(Display *dpy, GLXDrawable draw)
+Bool __glXWindowExists(Display *dpy, GLXDrawable draw)
 {
     XWindowAttributes xwa;
     int (*oldXErrorHandler)(Display *, XErrorEvent *);

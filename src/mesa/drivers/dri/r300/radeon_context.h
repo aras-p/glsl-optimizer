@@ -196,7 +196,6 @@ struct radeon_context {
 	GLuint swap_count;
 	GLuint swap_missed_count;
 
-	PFNGLXGETUSTPROC get_ust;
 
 	/* Derived state */
 	struct radeon_state state;

@@ -912,7 +912,6 @@ struct r200_context {
    GLuint swap_count;
    GLuint swap_missed_count;
 
-   PFNGLXGETUSTPROC get_ust;
 
    /* r200_tcl.c
     */

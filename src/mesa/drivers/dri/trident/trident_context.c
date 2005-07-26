@@ -358,34 +358,6 @@ tridentScreenPtr tridentCreateScreen( __DRIscreenPrivate *sPriv )
    TRIDENTDRIPtr tDRIPriv = (TRIDENTDRIPtr)sPriv->pDevPriv;
    tridentScreenPtr tridentScreen;
 
-#if 0
-   /* Check the DRI version */
-   {
-      int major, minor, patch;
-      if ( XF86DRIQueryVersion( sPriv->display, &major, &minor, &patch ) ) {
-         if ( major != 3 || minor != 1 || patch < 0 ) {
-	    __driUtilMessage( "r128 DRI driver expected DRI version 3.1.x but got version %d.%d.%d", major, minor, patch );
-            return GL_FALSE;
-         }
-      }
-   }
-
-   /* Check that the DDX driver version is compatible */
-   if ( sPriv->ddxMajor != 4 ||
-	sPriv->ddxMinor != 0 ||
-	sPriv->ddxPatch < 0 ) {
-      __driUtilMessage( "r128 DRI driver expected DDX driver version 4.0.x but got version %d.%d.%d", sPriv->ddxMajor, sPriv->ddxMinor, sPriv->ddxPatch );
-      return GL_FALSE;
-   }
-
-   /* Check that the DRM driver version is compatible */
-   if ( sPriv->drmMajor != 2 ||
-	sPriv->drmMinor != 1 ||
-	sPriv->drmPatch < 0 ) {
-      __driUtilMessage( "r128 DRI driver expected DRM driver version 2.1.x but got version %d.%d.%d", sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch );
-      return GL_FALSE;
-   }
-#endif
 
     /* Allocate the private area */
     tridentScreen = (tridentScreenPtr) CALLOC( sizeof(*tridentScreen) );
@@ -453,9 +425,8 @@ static struct __DriverAPIRec tridentAPI = {
    tridentUnbindContext,
 };
 
-static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 
-PUBLIC void *__driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
+PUBLIC void *__driCreateNewScreen_20050725( __DRInativeDisplay *dpy, int scrn,
                                    __DRIscreen *psc,
                                    const __GLcontextModes * modes,
                                    const __DRIversion * ddx_version,
@@ -464,10 +435,22 @@ PUBLIC void *__driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
                                    const __DRIframebuffer * frame_buffer,
                                    drmAddress pSAREA, int fd,
                                    int internal_api_version,
+				   const __DRIinterfaceMethods * interface,
                                    __GLcontextModes ** driver_modes )
 {
     __DRIscreenPrivate *psp;
-    /* XXX version checks */
+   static const __DRIversion ddx_expected = { 4, 0, 0 };
+   static const __DRIversion dri_expected = { 3, 1, 0 };
+   static const __DRIversion drm_expected = { 1, 0, 0 };
+
+   dri_interface = interface;
+
+   if ( ! driCheckDriDdxDrmVersions2( "Trident",
+				      dri_version, & dri_expected,
+				      ddx_version, & ddx_expected,
+				      drm_version, & drm_expected ) ) {
+      return NULL;
+   }
 
     psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
                                    ddx_version, dri_version, drm_version,
@@ -475,14 +458,10 @@ PUBLIC void *__driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
                                    internal_api_version, &tridentAPI);
 
     if ( psp != NULL ) {
-        create_context_modes = (PFNGLXCREATECONTEXTMODES)
-            glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
 #if 0
-        if ( create_context_modes != NULL ) {
-            TRIDENTDRIPtr dri_priv = (TRIDENTDRIPtr) psp->pDevPriv;
-            *driver_modes = tridentFillInModes( dri_priv->bytesPerPixel * 8,
-                                                GL_TRUE );
-        }
+       TRIDENTDRIPtr dri_priv = (TRIDENTDRIPtr) psp->pDevPriv;
+       *driver_modes = tridentFillInModes( dri_priv->bytesPerPixel * 8,
+					   GL_TRUE );
 #endif
     }
     return (void *) psp;

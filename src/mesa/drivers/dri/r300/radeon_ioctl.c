@@ -208,7 +208,7 @@ void radeonCopyBuffer(const __DRIdrawablePrivate * dPriv)
 		((r300ContextPtr)radeon)->hw.all_dirty = GL_TRUE;
 
 	radeon->swap_count++;
-	(*radeon->get_ust) (&ust);
+	(*dri_interface->getUST) (&ust);
 	if (missed_target) {
 		radeon->swap_missed_count++;
 		radeon->swap_missed_ust = ust - radeon->swap_ust;
@@ -266,7 +266,7 @@ void radeonPageFlip(const __DRIdrawablePrivate * dPriv)
 			 &missed_target);
 	if (missed_target) {
 		radeon->swap_missed_count++;
-		(void)(*radeon->get_ust) (&radeon->swap_missed_ust);
+		(void)(*dri_interface->getUST) (&radeon->swap_missed_ust);
 	}
 	LOCK_HARDWARE(radeon);
 
@@ -280,7 +280,7 @@ void radeonPageFlip(const __DRIdrawablePrivate * dPriv)
 	}
 
 	radeon->swap_count++;
-	(void)(*radeon->get_ust) (&radeon->swap_ust);
+	(void)(*dri_interface->getUST) (&radeon->swap_ust);
 
 	if (radeon->sarea->pfCurrentPage == 1) {
 		radeon->state.color.drawOffset = radeon->radeonScreen->frontOffset;

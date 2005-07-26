@@ -62,6 +62,7 @@ typedef struct __DRIdrawableRec __DRIdrawable;
 typedef struct __DRIdriverRec   __DRIdriver;
 typedef struct __DRIframebufferRec __DRIframebuffer;
 typedef struct __DRIversionRec     __DRIversion;
+typedef struct __DRIinterfaceMethodsRec  __DRIinterfaceMethods;
 typedef unsigned long __DRIid;
 typedef void __DRInativeDisplay;
 /*@}*/
@@ -74,38 +75,6 @@ typedef void __DRInativeDisplay;
 extern __DRIscreen *__glXFindDRIScreen(__DRInativeDisplay *dpy, int scrn);
 
 
-/**
- * Type of a pointer to \c __glXGetInternalVersion, as returned by
- * \c glXGetProcAddress.
- *
- * \sa __glXGetInternalVersion, glXGetProcAddress
- */
-typedef int (* PFNGLXGETINTERNALVERSIONPROC) ( void );
-
-/**
- * Type of a pointer to \c __glXWindowExists, as returned by
- * \c glXGetProcAddress.
- *
- * \sa __glXWindowExists, glXGetProcAddress
- */
-typedef GLboolean (* PFNGLXWINDOWEXISTSPROC) (__DRInativeDisplay *dpy, __DRIid draw);
-
-/**
- * Type of a pointer to \c __glXGetUST, as returned by \c glXGetProcAddress.
- * 
- * \sa __glXGetUST, glXGetProcAddress
- */
-typedef int (* PFNGLXGETUSTPROC) ( int64_t * ust );
-
-/**
- * Type of pointer to \c __glXCreateContextModes, as returned by
- * \c glXGetProcAddress.
- * 
- * \sa _gl_context_modes_create, glXGetProcAddress
- */
-
-typedef __GLcontextModes * (* PFNGLXCREATECONTEXTMODES) ( unsigned count,
-    size_t minimum_bytes_per_struct );
 
 /**
  * Type of a pointer to \c glXGetScreenDriver, as returned by
@@ -135,19 +104,6 @@ typedef const char * (* PFNGLXGETDRIVERCONFIGPROC) (const char *driverName);
  */
 typedef void (* PFNGLXSCRENABLEEXTENSIONPROC) ( void *psc, const char * name );
 
-/**
- * Type of a pointer to \c __glXGetDrawableInfo, as returned by
- * \c glXGetProcAddress.  This function is used to get information about the
- * position, size, and clip rects of a drawable.
- * 
- * \sa __glXGetDrawableInfo, glXGetProcAddress
- */
-typedef GLboolean (* PFNGLXGETDRAWABLEINFOPROC) ( __DRInativeDisplay *dpy, int scrn,
-    __DRIid draw, unsigned int * index, unsigned int * stamp,
-    int * x, int * y, int * width, int * height,
-    int * numClipRects, drm_clip_rect_t ** pClipRects,
-    int * backX, int * backY,
-    int * numBackClipRects, drm_clip_rect_t ** pBackClipRects );
 
 /* Test for the xf86dri.h header file */
 #ifndef _XF86DRI_H_
@@ -173,9 +129,10 @@ typedef void *(CREATENEWSCREENFUNC)(__DRInativeDisplay *dpy, int scrn,
     const __DRIversion * ddx_version, const __DRIversion * dri_version,
     const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
     void * pSAREA, int fd, int internal_api_version,
+    const __DRIinterfaceMethods * interface,
     __GLcontextModes ** driver_modes);
 typedef CREATENEWSCREENFUNC* PFNCREATENEWSCREENFUNC;
-extern CREATENEWSCREENFUNC __driCreateNewScreen_20050722;
+extern CREATENEWSCREENFUNC __driCreateNewScreen_20050725;
 
 
 /**
@@ -202,6 +159,113 @@ struct __DRIversionRec {
     int    patch;        /**< Patch-level. */
 };
 
+
+typedef void (*__DRIfuncPtr)(void);
+
+struct __DRIinterfaceMethodsRec {
+    /**
+     * Get pointer to named function.
+     */
+    __DRIfuncPtr (*getProcAddress)( const char * proc_name );
+
+    /**
+     * Create a list of \c __GLcontextModes structures.
+     */
+    __GLcontextModes * (*createContextModes)(unsigned count,
+        size_t minimum_bytes_per_struct);
+
+    /**
+     * Destroy a list of \c __GLcontextModes structures.
+     *
+     * \todo
+     * Determine if the drivers actually need to call this.
+     */
+    void (*destroyContextModes)( __GLcontextModes * modes );
+
+    /**
+     * Get the \c __DRIscreen for a given display and screen number.
+     */
+    __DRIscreen *(*getScreen)(__DRInativeDisplay *dpy, int screenNum);
+
+
+    /**
+     * \name Client/server protocol functions.
+     *
+     * These functions implement the DRI client/server protocol for
+     * context and drawable operations.  Platforms that do not implement
+     * the wire protocol (e.g., EGL) will implement glorified no-op functions.
+     */
+    /*@{*/
+    /**
+     * Determine if the specified window ID still exists.
+     * 
+     * \note
+     * Implementations may assume that the driver will only pass an ID into
+     * this function that actually corresponds to a window.  On
+     * implementations where windows can only be destroyed by the DRI driver
+     * (e.g., EGL), this function is allowed to always return \c GL_TRUE.
+     */
+    GLboolean (*windowExists)(__DRInativeDisplay *dpy, __DRIid draw);
+
+    /**
+     * Create the server-side portion of the GL context.
+     */
+    GLboolean (* createContext)( __DRInativeDisplay *dpy, int screenNum,
+        int configID, void * contextID, drm_context_t * hw_context );
+
+    /**
+     * Destroy the server-side portion of the GL context.
+     */
+    GLboolean (* destroyContext)( __DRInativeDisplay *dpy, int screenNum,
+        __DRIid context );
+
+    /**
+     * Create the server-side portion of the drawable.
+     */
+    GLboolean (*createDrawable)( __DRInativeDisplay * ndpy, int screen,
+        __DRIid drawable, drm_drawable_t * hHWDrawable );
+
+    /**
+     * Destroy the server-side portion of the drawable.
+     */
+    GLboolean (*destroyDrawable)( __DRInativeDisplay * ndpy, int screen,
+        __DRIid drawable );
+
+    /**
+     * This function is used to get information about the position, size, and
+     * clip rects of a drawable.
+     */
+    GLboolean (* getDrawableInfo) ( __DRInativeDisplay *dpy, int scrn,
+        __DRIid draw, unsigned int * index, unsigned int * stamp,
+        int * x, int * y, int * width, int * height,
+        int * numClipRects, drm_clip_rect_t ** pClipRects,
+        int * backX, int * backY,
+        int * numBackClipRects, drm_clip_rect_t ** pBackClipRects );
+    /*@}*/
+
+
+    /**
+     * \name Timing related functions.
+     */
+    /*@{*/
+    /**
+     * Get the 64-bit unadjusted system time (UST).
+     */
+    int (*getUST)(int64_t * ust);
+
+    /**
+     * Get the media stream counter (MSC) rate.
+     * 
+     * Matching the definition in GLX_OML_sync_control, this function returns
+     * the rate of the "media stream counter".  In practical terms, this is
+     * the frame refresh rate of the display.
+     */
+    GLboolean (*getMSCRate)(__DRInativeDisplay * dpy, __DRIid drawable,
+        int32_t * numerator, int32_t * denominator);
+    /*@}*/
+};
+
+   
 /**
  * Framebuffer information record.  Used by libGL to communicate information
  * about the framebuffer to the driver's \c __driCreateNewScreen function.
@@ -332,7 +396,7 @@ struct __DRIcontextRec {
     /**
      * Method to bind a DRI drawable to a DRI graphics context.
      *
-     * \since Internal API version 20050722.
+     * \since Internal API version 20050725.
      */
     GLboolean (*bindContext)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
 			 __DRIid read, __DRIcontext *ctx);
@@ -340,7 +404,7 @@ struct __DRIcontextRec {
     /**
      * Method to unbind a DRI drawable from a DRI graphics context.
      *
-     * \since Internal API version 20050722.
+     * \since Internal API version 20050725.
      */
     GLboolean (*unbindContext)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
 			   __DRIid read, __DRIcontext *ctx);

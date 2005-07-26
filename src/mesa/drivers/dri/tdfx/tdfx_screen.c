@@ -346,7 +346,6 @@ static const struct __DriverAPIRec tdfxAPI = {
    .SwapBuffersMSC  = NULL
 };
 
-static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 
 static __GLcontextModes *tdfxFillInModes(unsigned pixel_bits,
 					 unsigned depth_bits,
@@ -368,7 +367,7 @@ static __GLcontextModes *tdfxFillInModes(unsigned pixel_bits,
 
 	num_modes = (depth_bits == 16) ? 32 : 16;
 
-	modes = (*create_context_modes)(num_modes, sizeof(__GLcontextModes));
+	modes = (*dri_interface->createContextModes)(num_modes, sizeof(__GLcontextModes));
 	m = modes;
 
 	for (i = 0; i <= 1; i++) {
@@ -427,7 +426,7 @@ static __GLcontextModes *tdfxFillInModes(unsigned pixel_bits,
  *         failure.
  */
 PUBLIC
-void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20050725( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -435,12 +434,15 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
 			     const __DRIframebuffer * frame_buffer,
 			     drmAddress pSAREA, int fd,
 			     int internal_api_version,
+			     const __DRIinterfaceMethods * interface,
 			     __GLcontextModes ** driver_modes )
 {
    __DRIscreenPrivate *psp;
    static const __DRIversion ddx_expected = { 1, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 0, 0 };
+
+   dri_interface = interface;
 
    if ( ! driCheckDriDdxDrmVersions2( "tdfx",
 				      dri_version, & dri_expected,
@@ -454,10 +456,7 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
 				  frame_buffer, pSAREA, fd,
 				  internal_api_version, &tdfxAPI);
 
-   create_context_modes = (PFNGLXCREATECONTEXTMODES)
-      glXGetProcAddress((const GLubyte *)"__glXCreateContextModes");
-      
-   if (create_context_modes != NULL) {
+   if (psp != NULL) {
       /* divined from tdfx_dri.c, sketchy */
       TDFXDRIPtr dri_priv = (TDFXDRIPtr) psp->pDevPriv;
       int bpp = (dri_priv->cpp > 2) ? 24 : 16;

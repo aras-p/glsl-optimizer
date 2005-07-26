@@ -424,7 +424,7 @@ void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv )
 		     & missed_target );
    if ( missed_target ) {
       mmesa->swap_missed_count++;
-      (void) (*mmesa->get_ust)( & mmesa->swap_missed_ust );
+      (void) (*dri_interface->getUST)( & mmesa->swap_missed_ust );
    }
    LOCK_HARDWARE( mmesa );
 
@@ -462,7 +462,7 @@ void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv )
 
    mmesa->dirty |= MGA_UPLOAD_CLIPRECTS;
    mmesa->swap_count++;
-   (void) (*mmesa->get_ust)( & mmesa->swap_ust );
+   (void) (*dri_interface->getUST)( & mmesa->swap_ust );
 }
 
 

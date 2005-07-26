@@ -124,12 +124,6 @@ static void radeonInitDriverFuncs(struct dd_function_table *functions)
 }
 
 
-static int get_ust_nop(int64_t * ust)
-{
-	*ust = 1;
-	return 0;
-}
-
 /**
  * Create and initialize all common fields of the context,
  * including the Mesa context itself.
@@ -195,13 +189,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	radeon->vblank_flags = (radeon->radeonScreen->irq != 0)
 	    ? driGetDefaultVBlankFlags(&radeon->optionCache) : VBLANK_FLAG_NO_IRQ;
 
-	radeon->get_ust =
-	    (PFNGLXGETUSTPROC) glXGetProcAddress((const GLubyte *)
-						 "__glXGetUST");
-	if (radeon->get_ust == NULL) {
-		radeon->get_ust = get_ust_nop;
-	}
-	(*radeon->get_ust) (&radeon->swap_ust);
+	(*dri_interface->getUST) (&radeon->swap_ust);
 
 	return GL_TRUE;
 }

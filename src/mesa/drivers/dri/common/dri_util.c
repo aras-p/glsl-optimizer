@@ -37,6 +37,10 @@
 typedef GLboolean ( * PFNGLXGETMSCRATEOMLPROC) (__DRInativeDisplay *dpy, __DRIid drawable, int32_t *numerator, int32_t *denominator);
 #endif
 
+/* This pointer *must* be set by the driver's __driCreateNewScreen funciton!
+ */
+const __DRIinterfaceMethods * dri_interface = NULL;
+
 /**
  * Weak thread-safety dispatch pointer.  Older versions of libGL will not have
  * this symbol, so a "weak" version is included here so that the driver will
@@ -50,19 +54,6 @@ struct _glapi_table *_glapi_DispatchTSD __attribute__((weak)) = NULL;
  */
 static const int empty_attribute_list[1] = { None };
 
-/**
- * Function used to determine if a drawable (window) still exists.  Ideally
- * this function comes from libGL.  With older versions of libGL from XFree86
- * we can fall-back to an internal version.
- * 
- * \sa __driWindowExists __glXWindowExists
- */
-static PFNGLXWINDOWEXISTSPROC window_exists;
-
-typedef GLboolean (*PFNGLXCREATECONTEXTWITHCONFIGPROC)( __DRInativeDisplay*, int, int, void *,
-    drm_context_t * );
-
-static PFNGLXCREATECONTEXTWITHCONFIGPROC create_context_with_config;
 
 /**
  * Cached copy of the internal API version used by libGL and the client-side
@@ -102,9 +93,6 @@ __driUtilMessage(const char *f, ...)
         fprintf(stderr, "\n");
     }
 }
-
-typedef __DRIscreen *(*PFNGLXFINDDRISCREEN)(__DRInativeDisplay *, int);
-static PFNGLXFINDDRISCREEN glx_find_dri_screen = NULL;
 
 
 /*****************************************************************/
@@ -151,7 +139,7 @@ static void __driGarbageCollectDrawables(void *drawHash)
 	do {
 	    __DRIdrawablePrivate *pdp = (__DRIdrawablePrivate *)pdraw->private;
 	    dpy = pdp->driScreenPriv->display;
-	    if (! (*window_exists)(dpy, draw)) {
+	    if (! (*dri_interface->windowExists)(dpy, draw)) {
 		/* Destroy the local drawable data in the hash table, if the
 		   drawable no longer exists in the Xserver */
 	        drmHashDelete(drawHash, draw);
@@ -211,7 +199,7 @@ static GLboolean driUnbindContext(__DRInativeDisplay *dpy, int scrn,
 	return GL_FALSE;
     }
 
-    pDRIScreen = (*glx_find_dri_screen)(dpy, scrn);
+    pDRIScreen = (*dri_interface->getScreen)(dpy, scrn);
     if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
 	/* ERROR!!! */
 	return GL_FALSE;
@@ -387,7 +375,7 @@ static GLboolean driBindContext(__DRInativeDisplay *dpy, int scrn,
 	return GL_FALSE;
     }
 
-    pDRIScreen = (*glx_find_dri_screen)(dpy, scrn);
+    pDRIScreen = (*dri_interface->getScreen)(dpy, scrn);
     if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
 	/* ERROR!!! */
 	return GL_FALSE;
@@ -410,8 +398,8 @@ static GLboolean driBindContext(__DRInativeDisplay *dpy, int scrn,
  * \param pdp pointer to the private drawable information to update.
  * 
  * This function basically updates the __DRIdrawablePrivate struct's
- * cliprect information by calling \c __DRIDrawablePrivate::getInfo.  This is
- * usually called by the DRI_VALIDATE_DRAWABLE_INFO macro which
+ * cliprect information by calling \c __DRIinterfaceMethods::getDrawableInfo.
+ * This is usually called by the DRI_VALIDATE_DRAWABLE_INFO macro which
  * compares the __DRIdrwablePrivate pStamp and lastStamp values.  If
  * the values are different that means we have to update the clipping
  * info.
@@ -444,7 +432,7 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
     DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 
     if (!__driFindDrawable(psp->drawHash, pdp->draw) ||
-	! (*pdp->getInfo)(pdp->display, pdp->screen, pdp->draw,
+	! (*dri_interface->getDrawableInfo)(pdp->display, pdp->screen, pdp->draw,
 			  &pdp->index, &pdp->lastStamp,
 			  &pdp->x, &pdp->y, &pdp->w, &pdp->h,
 			  &pdp->numClipRects, &pdp->pClipRects,
@@ -578,7 +566,7 @@ static void *driCreateNewDrawable(__DRInativeDisplay *dpy,
 				  int renderType,
 				  const int *attrs)
 {
-    __DRIscreen * const pDRIScreen = (*glx_find_dri_screen)(dpy, modes->screen);
+    __DRIscreen * const pDRIScreen = (*dri_interface->getScreen)(dpy, modes->screen);
     __DRIscreenPrivate *psp;
     __DRIdrawablePrivate *pdp;
 
@@ -599,7 +587,7 @@ static void *driCreateNewDrawable(__DRInativeDisplay *dpy,
 	return NULL;
     }
 
-    if (!XF86DRICreateDrawable(dpy, modes->screen, draw, &pdp->hHWDrawable)) {
+    if (!(*dri_interface->createDrawable)(dpy, modes->screen, draw, &pdp->hHWDrawable)) {
 	_mesa_free(pdp);
 	return NULL;
     }
@@ -625,17 +613,9 @@ static void *driCreateNewDrawable(__DRInativeDisplay *dpy,
     pdp->driScreenPriv = psp;
     pdp->driContextPriv = &psp->dummyContextPriv;
 
-    pdp->getInfo = (PFNGLXGETDRAWABLEINFOPROC)
-	glXGetProcAddress( (const GLubyte *) "__glXGetDrawableInfo" );
-    if ( pdp->getInfo == NULL ) {
-        (void)XF86DRIDestroyDrawable(dpy, modes->screen, pdp->draw);
-	_mesa_free(pdp);
-	return NULL;
-    }
-
     if (!(*psp->DriverAPI.CreateBuffer)(psp, pdp, modes,
 					renderType == GLX_PIXMAP_BIT)) {
-       (void)XF86DRIDestroyDrawable(dpy, modes->screen, pdp->draw);
+       (void)(*dri_interface->destroyDrawable)(dpy, modes->screen, pdp->draw);
        _mesa_free(pdp);
        return NULL;
     }
@@ -691,8 +671,8 @@ static void driDestroyDrawable(__DRInativeDisplay *dpy, void *drawablePrivate)
 
     if (pdp) {
         (*psp->DriverAPI.DestroyBuffer)(pdp);
-	if ((*window_exists)(dpy, pdp->draw))
-	    (void)XF86DRIDestroyDrawable(dpy, scrn, pdp->draw);
+	if ((*dri_interface->windowExists)(dpy, pdp->draw))
+	    (void)(*dri_interface->destroyDrawable)(dpy, scrn, pdp->draw);
 	if (pdp->pClipRects) {
 	    _mesa_free(pdp->pClipRects);
 	    pdp->pClipRects = NULL;
@@ -731,7 +711,7 @@ static void driDestroyContext(__DRInativeDisplay *dpy, int scrn, void *contextPr
     if (pcp) {
 	(*pcp->driScreenPriv->DriverAPI.DestroyContext)(pcp);
 	__driGarbageCollectDrawables(pcp->driScreenPriv->drawHash);
-	(void)XF86DRIDestroyContext(dpy, scrn, pcp->contextID);
+	(void) (*dri_interface->destroyContext)(dpy, scrn, pcp->contextID);
 	_mesa_free(pcp);
     }
 }
@@ -768,7 +748,7 @@ driCreateNewContext(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
     __DRIscreenPrivate *psp;
     void * const shareCtx = (pshare != NULL) ? pshare->driverPrivate : NULL;
 
-    pDRIScreen = (*glx_find_dri_screen)(dpy, modes->screen);
+    pDRIScreen = (*dri_interface->getScreen)(dpy, modes->screen);
     if ( (pDRIScreen == NULL) || (pDRIScreen->private == NULL) ) {
 	/* ERROR!!! */
 	return NULL;
@@ -781,7 +761,7 @@ driCreateNewContext(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
 	return NULL;
     }
 
-    if (! (*create_context_with_config)(dpy, modes->screen, modes->fbconfigID,
+    if (! (*dri_interface->createContext)(dpy, modes->screen, modes->fbconfigID,
 					&pcp->contextID, &pcp->hHWContext)) {
 	_mesa_free(pcp);
 	return NULL;
@@ -809,7 +789,8 @@ driCreateNewContext(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
     pctx->unbindContext  = driUnbindContext;
 
     if ( !(*psp->DriverAPI.CreateContext)(modes, pcp, shareCtx) ) {
-        (void)XF86DRIDestroyContext(dpy, modes->screen, pcp->contextID);
+        (void) (*dri_interface->destroyContext)(dpy, modes->screen,
+						pcp->contextID);
         _mesa_free(pcp);
         return NULL;
     }
@@ -906,25 +887,6 @@ __driUtilCreateNewScreen(__DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
     __DRIscreenPrivate *psp;
 
 
-    window_exists = (PFNGLXWINDOWEXISTSPROC)
-	glXGetProcAddress( (const GLubyte *) "__glXWindowExists" );
-
-    if ( window_exists == NULL ) {
-	return NULL;
-    }
-
-    glx_find_dri_screen =
-        (PFNGLXFINDDRISCREEN)glXGetProcAddress("__glXFindDRIScreen");
-    if ( glx_find_dri_screen == NULL ) {
-        return NULL;
-    }
-
-    create_context_with_config = (PFNGLXCREATECONTEXTWITHCONFIGPROC)
-	glXGetProcAddress( (const GLubyte *) "__glXCreateContextWithConfig" );
-    if ( create_context_with_config == NULL ) {
-	return NULL;
-    }
-	
     api_ver = internal_api_version;
 
     psp = (__DRIscreenPrivate *)_mesa_malloc(sizeof(__DRIscreenPrivate));
@@ -1033,15 +995,11 @@ driQueryFrameTracking( __DRInativeDisplay * dpy, void * priv,
 		       int64_t * sbc, int64_t * missedFrames,
 		       float * lastMissedUsage, float * usage )
 {
-   static PFNGLXGETUSTPROC   get_ust;
    __DRIswapInfo   sInfo;
    int             status;
    int64_t         ust;
    __DRIdrawablePrivate * dpriv = (__DRIdrawablePrivate *) priv;
 
-   if ( get_ust == NULL ) {
-      get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
-   }
 
    status = dpriv->driScreenPriv->DriverAPI.GetSwapInfo( dpriv, & sInfo );
    if ( status == 0 ) {
@@ -1049,7 +1007,7 @@ driQueryFrameTracking( __DRInativeDisplay * dpy, void * priv,
       *missedFrames = sInfo.swap_missed_count;
       *lastMissedUsage = sInfo.swap_missed_usage;
 
-      (*get_ust)( & ust );
+      (*dri_interface->getUST)( & ust );
       *usage = driCalculateSwapUsage( dpriv, sInfo.swap_ust, ust );
    }
 
@@ -1089,20 +1047,13 @@ float
 driCalculateSwapUsage( __DRIdrawablePrivate *dPriv, int64_t last_swap_ust,
 		       int64_t current_ust )
 {
-   static PFNGLXGETMSCRATEOMLPROC get_msc_rate = NULL;
    int32_t   n;
    int32_t   d;
    int       interval;
    float     usage = 1.0;
 
 
-   if ( get_msc_rate == NULL ) {
-      get_msc_rate = (PFNGLXGETMSCRATEOMLPROC)
-	  glXGetProcAddress( (const GLubyte *) "glXGetMscRateOML" );
-   }
-   
-   if ( (get_msc_rate != NULL)
-	&& get_msc_rate( dPriv->display, dPriv->draw, &n, &d ) ) {
+   if ( (*dri_interface->getMSCRate)( dPriv->display, dPriv->draw, &n, &d ) ) {
       interval = (dPriv->pdraw->swap_interval != 0)
 	  ? dPriv->pdraw->swap_interval : 1;
 

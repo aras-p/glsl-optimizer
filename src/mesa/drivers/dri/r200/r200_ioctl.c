@@ -486,7 +486,7 @@ void r200CopyBuffer( const __DRIdrawablePrivate *dPriv )
    rmesa->hw.all_dirty = GL_TRUE;
 
    rmesa->swap_count++;
-   (*rmesa->get_ust)( & ust );
+   (*dri_interface->getUST)( & ust );
    if ( missed_target ) {
       rmesa->swap_missed_count++;
       rmesa->swap_missed_ust = ust - rmesa->swap_ust;
@@ -540,7 +540,7 @@ void r200PageFlip( const __DRIdrawablePrivate *dPriv )
    driWaitForVBlank( dPriv, & rmesa->vbl_seq, rmesa->vblank_flags, & missed_target );
    if ( missed_target ) {
       rmesa->swap_missed_count++;
-      (void) (*rmesa->get_ust)( & rmesa->swap_missed_ust );
+      (void) (*dri_interface->getUST)( & rmesa->swap_missed_ust );
    }
    LOCK_HARDWARE( rmesa );
 
@@ -554,7 +554,7 @@ void r200PageFlip( const __DRIdrawablePrivate *dPriv )
    }
 
    rmesa->swap_count++;
-   (void) (*rmesa->get_ust)( & rmesa->swap_ust );
+   (void) (*dri_interface->getUST)( & rmesa->swap_ust );
 
    if ( rmesa->sarea->pfCurrentPage == 1 ) {
 	 rmesa->state.color.drawOffset = rmesa->r200Screen->frontOffset;

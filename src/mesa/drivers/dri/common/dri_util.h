@@ -314,7 +314,7 @@ struct __DRIdrawablePrivateRec {
      * \name Display and screen information.
      * 
      * Basically just need these for when the locking code needs to call
-     * __driUtilUpdateDrawableInfo() which calls XF86DRIGetDrawableInfo().
+     * \c __driUtilUpdateDrawableInfo.
      */
     /*@{*/
     __DRInativeDisplay *display;
@@ -325,12 +325,6 @@ struct __DRIdrawablePrivateRec {
      * Called via glXSwapBuffers().
      */
     void (*swapBuffers)( __DRIdrawablePrivate *dPriv );
-
-    /**
-     * Get information about the location, size, and clip rects of the
-     * drawable within the display.
-     */
-    PFNGLXGETDRAWABLEINFOPROC getInfo;
 };
 
 /**
@@ -549,10 +543,12 @@ extern float
 driCalculateSwapUsage( __DRIdrawablePrivate *dPriv,
 		       int64_t last_swap_ust, int64_t current_ust );
 
-/* Test for the GLX header glx.h */
-#ifndef GLX
-extern void 
-(*glXGetProcAddress(const GLubyte *procname))( void );
-#endif
+/**
+ * Pointer to the \c __DRIinterfaceMethods passed to the driver by the loader.
+ * 
+ * This pointer is set in the driver's \c __driCreateNewScreen function and
+ * is defined in dri_util.c.
+ */
+extern const __DRIinterfaceMethods * dri_interface;
 
 #endif /* _DRI_UTIL_H_ */

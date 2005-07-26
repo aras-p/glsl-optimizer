@@ -249,14 +249,6 @@ static const struct dri_debug_control debug_control[] =
 };
 
 
-static int
-get_ust_nop( int64_t * ust )
-{
-   *ust = 1;
-   return 0;
-}
-
-
 /* Create the device specific rendering context.
  */
 GLboolean r200CreateContext( const __GLcontextModes *glVisual,
@@ -509,11 +501,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    rmesa->prefer_gart_client_texturing = 
       (getenv("R200_GART_CLIENT_TEXTURES") != 0);
 
-   rmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
-   if ( rmesa->get_ust == NULL ) {
-      rmesa->get_ust = get_ust_nop;
-   }
-   (*rmesa->get_ust)( & rmesa->swap_ust );
+   (*dri_interface->getUST)( & rmesa->swap_ust );
 
 
 #if DO_DEBUG

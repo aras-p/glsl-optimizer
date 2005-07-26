@@ -62,8 +62,6 @@ DRI_CONF_END;
 static const GLuint __driNConfigOptions = 3;
 
 
-static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
 static drmBufMapPtr via_create_empty_buffers(void)
@@ -99,8 +97,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
     viaScreenPrivate *viaScreen;
     VIADRIPtr gDRIPriv = (VIADRIPtr)sPriv->pDevPriv;
     PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-      (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( 
-	(const GLubyte *) "__glXScrEnableExtension" );
+      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
     void * const psc = sPriv->psc->screenConfigs;
 
 
@@ -368,7 +365,7 @@ viaFillInModes( unsigned pixel_bits, GLboolean have_back_buffer )
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-    modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
+    modes = (*dri_interface->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
     m = modes;
     if ( ! driFillInModes( & m, fb_format, fb_type,
 			   depth_bits_array, stencil_bits_array, 
@@ -405,7 +402,7 @@ viaFillInModes( unsigned pixel_bits, GLboolean have_back_buffer )
  *         failure.
  */
 PUBLIC
-void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
+void * __driCreateNewScreen_20050725( __DRInativeDisplay *dpy, int scrn,
 			     __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
@@ -414,6 +411,7 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
 			     const __DRIframebuffer * frame_buffer,
 			     drmAddress pSAREA, int fd, 
 			     int internal_api_version,
+			     const __DRIinterfaceMethods * interface,
 			     __GLcontextModes ** driver_modes )
 			     
 {
@@ -421,6 +419,8 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
    static const __DRIversion ddx_expected = { 4, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 2, 3, 0 };
+
+   dri_interface = interface;
 
    if ( ! driCheckDriDdxDrmVersions2( "Unichrome",
 				      dri_version, & dri_expected,
@@ -434,13 +434,9 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
 				  frame_buffer, pSAREA, fd,
 				  internal_api_version, &viaAPI);
    if ( psp != NULL ) {
-      create_context_modes = (PFNGLXCREATECONTEXTMODES)
-	  glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
-      if ( create_context_modes != NULL ) {
-	 VIADRIPtr dri_priv = (VIADRIPtr) psp->pDevPriv;
-	 *driver_modes = viaFillInModes( dri_priv->bytesPerPixel * 8,
-					 GL_TRUE );
-      }
+      VIADRIPtr dri_priv = (VIADRIPtr) psp->pDevPriv;
+      *driver_modes = viaFillInModes( dri_priv->bytesPerPixel * 8,
+				      GL_TRUE );
    }
 
    fprintf(stderr, "%s - succeeded\n", __FUNCTION__);

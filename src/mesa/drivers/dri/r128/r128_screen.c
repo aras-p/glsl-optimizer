@@ -88,7 +88,6 @@ static const GLuint __driNConfigOptions = 3;
 #define PCI_CHIP_RAGE128RL	0x524C
 #endif
 
-static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 
 /* Create the device specific screen private data struct.
  */
@@ -98,7 +97,7 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    r128ScreenPtr r128Screen;
    R128DRIPtr r128DRIPriv = (R128DRIPtr)sPriv->pDevPriv;
    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-     (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+     (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
    void * const psc = sPriv->psc->screenConfigs;
 
 
@@ -440,7 +439,7 @@ r128FillInModes( unsigned pixel_bits, unsigned depth_bits,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-    modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
+    modes = (*dri_interface->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
     m = modes;
     if ( ! driFillInModes( & m, fb_format, fb_type,
 			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
@@ -483,7 +482,7 @@ r128FillInModes( unsigned pixel_bits, unsigned depth_bits,
  *         failure.
  */
 PUBLIC
-void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20050725( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -491,6 +490,7 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
 			     const __DRIframebuffer * frame_buffer,
 			     drmAddress pSAREA, int fd, 
 			     int internal_api_version,
+			     const __DRIinterfaceMethods * interface,
 			     __GLcontextModes ** driver_modes )
 			     
 {
@@ -499,6 +499,8 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 2, 2, 0 };
 
+
+   dri_interface = interface;
 
    if ( ! driCheckDriDdxDrmVersions2( "Rage128",
 				      dri_version, & dri_expected,
@@ -512,15 +514,11 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
 				  frame_buffer, pSAREA, fd,
 				  internal_api_version, &r128API);
    if ( psp != NULL ) {
-      create_context_modes = (PFNGLXCREATECONTEXTMODES)
-	  glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
-      if ( create_context_modes != NULL ) {
-	 R128DRIPtr dri_priv = (R128DRIPtr) psp->pDevPriv;
-	 *driver_modes = r128FillInModes( dri_priv->bpp,
-					  (dri_priv->bpp == 16) ? 16 : 24,
-					  (dri_priv->bpp == 16) ? 0  : 8,
-					  (dri_priv->backOffset != dri_priv->depthOffset) );
-      }
+      R128DRIPtr dri_priv = (R128DRIPtr) psp->pDevPriv;
+      *driver_modes = r128FillInModes( dri_priv->bpp,
+				       (dri_priv->bpp == 16) ? 16 : 24,
+				       (dri_priv->bpp == 16) ? 0  : 8,
+				       (dri_priv->backOffset != dri_priv->depthOffset) );
    }
 
    return (void *) psp;

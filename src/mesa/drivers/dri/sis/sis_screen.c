@@ -59,7 +59,6 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 static const GLuint __driNConfigOptions = 2;
 
-static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 
 static __GLcontextModes *
 sisFillInModes(int bpp)
@@ -100,7 +99,7 @@ sisFillInModes(int bpp)
       fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
    }
 
-   modes = (*create_context_modes)(num_modes, sizeof(__GLcontextModes));
+   modes = (*dri_interface->createContextModes)(num_modes, sizeof(__GLcontextModes));
    m = modes;
    if (!driFillInModes(&m, fb_format, fb_type, depth_bits_array,
 		       stencil_bits_array, depth_buffer_factor,
@@ -414,7 +413,7 @@ static struct __DriverAPIRec sisAPI = {
  *         failure.
  */
 PUBLIC
-void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
+void * __driCreateNewScreen_20050725( __DRInativeDisplay *dpy, int scrn,
 			     __DRIscreen *psc,
 			     const __GLcontextModes *modes,
 			     const __DRIversion *ddx_version,
@@ -423,6 +422,7 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
 			     const __DRIframebuffer *frame_buffer,
 			     drmAddress pSAREA, int fd,
 			     int internal_api_version,
+			     const __DRIinterfaceMethods * interface,
 			     __GLcontextModes **driver_modes )
 
 {
@@ -430,6 +430,8 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
    static const __DRIversion ddx_expected = {0, 1, 0};
    static const __DRIversion dri_expected = {4, 0, 0};
    static const __DRIversion drm_expected = {1, 0, 0};
+
+   dri_interface = interface;
 
    if (!driCheckDriDdxDrmVersions2("SiS", dri_version, &dri_expected,
 				   ddx_version, &ddx_expected,
@@ -442,12 +444,8 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn,
 				  frame_buffer, pSAREA, fd,
 				  internal_api_version, &sisAPI);
    if (psp != NULL) {
-      create_context_modes = (PFNGLXCREATECONTEXTMODES)
-	 glXGetProcAddress((const GLubyte *)"__glXCreateContextModes");
-      if (create_context_modes != NULL) {
-	 SISDRIPtr dri_priv = (SISDRIPtr)psp->pDevPriv;
-	 *driver_modes = sisFillInModes(dri_priv->bytesPerPixel * 8);
-      }
+      SISDRIPtr dri_priv = (SISDRIPtr)psp->pDevPriv;
+      *driver_modes = sisFillInModes(dri_priv->bytesPerPixel * 8);
    }
 
    return (void *)psp;

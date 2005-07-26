@@ -166,7 +166,7 @@ ExtractDir(int index, const char *paths, int dirLen, char *dir)
  * \todo
  * Create a macro or something so that this is automatically updated.
  */
-static const char createNewScreenName[] = "__driCreateNewScreen_20050722";
+static const char createNewScreenName[] = "__driCreateNewScreen_20050725";
 
 
 /**

@@ -320,7 +320,6 @@ struct via_context {
    GLuint swap_count;
    GLuint swap_missed_count;
 
-   PFNGLXGETUSTPROC get_ust;
 
    GLuint pfCurrentOffset;
    GLboolean allowPageFlip;

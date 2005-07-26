@@ -342,12 +342,6 @@ FreeBuffer(struct via_context *vmesa)
         via_free_dma_buffer(vmesa);
 }
 
-static int
-get_ust_nop( int64_t * ust )
-{
-   *ust = 1;
-   return 0;
-}
 
 GLboolean
 viaCreateContext(const __GLcontextModes *visual,
@@ -563,13 +557,8 @@ viaCreateContext(const __GLcontextModes *visual,
 
     if (getenv("VIA_PAGEFLIP"))
        vmesa->allowPageFlip = 1;
-   
-    vmesa->get_ust = 
-       (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
-    if ( vmesa->get_ust == NULL ) {
-       vmesa->get_ust = get_ust_nop;
-    }
-    vmesa->get_ust( &vmesa->swap_ust );
+
+    (*dri_interface->getUST)( &vmesa->swap_ust );
 
 
     vmesa->regMMIOBase = (GLuint *)((GLuint)viaScreen->reg);

@@ -616,8 +616,6 @@ static const struct __DriverAPIRec ffbAPI = {
 };
 
 
-static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-
 static __GLcontextModes *
 ffbFillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
@@ -667,7 +665,7 @@ ffbFillInModes( unsigned pixel_bits, unsigned depth_bits,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-   modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
+   modes = (*dri_interface->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
    m = modes;
    if ( ! driFillInModes( & m, fb_format, fb_type,
 			  depth_bits_array, stencil_bits_array, depth_buffer_factor,
@@ -710,7 +708,7 @@ ffbFillInModes( unsigned pixel_bits, unsigned depth_bits,
  *         failure.
  */
 PUBLIC
-void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20050725( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -718,6 +716,7 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
 			     const __DRIframebuffer * frame_buffer,
 			     drmAddress pSAREA, int fd, 
 			     int internal_api_version,
+			     const __DRIinterfaceMethods * interface,
 			     __GLcontextModes ** driver_modes )
 			     
 {
@@ -725,6 +724,8 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
    static const __DRIversion ddx_expected = { 0, 0, 1 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 0, 0, 1 };
+
+   dri_interface = interface;
 
    if ( ! driCheckDriDdxDrmVersions2( "ffb",
 				      dri_version, & dri_expected,
@@ -738,11 +739,7 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
 				  frame_buffer, pSAREA, fd,
 				  internal_api_version, &ffbAPI);
    if ( psp != NULL ) {
-      create_context_modes = (PFNGLXCREATECONTEXTMODES)
-	  glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
-      if ( create_context_modes != NULL ) {
-	 *driver_modes = ffbFillInModes( 32, 16, 0, GL_TRUE );
-      }
+      *driver_modes = ffbFillInModes( 32, 16, 0, GL_TRUE );
    }
 
    return (void *) psp;

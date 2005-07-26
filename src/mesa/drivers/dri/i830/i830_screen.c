@@ -67,7 +67,6 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 const GLuint __driNConfigOptions = 2;
 
-static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 
 static int i830_malloc_proxy_buf(drmBufMapPtr buffers)
 {
@@ -143,7 +142,7 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
    i830ScreenPrivate *i830Screen;
    I830DRIPtr         gDRIPriv = (I830DRIPtr)sPriv->pDevPriv;
    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-     (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+     (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
    void * const psc = sPriv->psc->screenConfigs;
 
 
@@ -467,7 +466,7 @@ i830FillInModes( unsigned pixel_bits, unsigned depth_bits,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-   modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
+   modes = (*dri_interface->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
    m = modes;
    if ( ! driFillInModes( & m, fb_format, fb_type,
 			  depth_bits_array, stencil_bits_array, depth_buffer_factor,
@@ -503,7 +502,7 @@ i830FillInModes( unsigned pixel_bits, unsigned depth_bits,
  *         failure.
  */
 PUBLIC
-void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20050725( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -511,6 +510,7 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
 			     const __DRIframebuffer * frame_buffer,
 			     drmAddress pSAREA, int fd, 
 			     int internal_api_version,
+			     const __DRIinterfaceMethods * interface,
 			     __GLcontextModes ** driver_modes )
 			     
 {
@@ -518,6 +518,8 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
    static const __DRIversion ddx_expected = { 1, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 3, 0 };
+
+   dri_interface = interface;
 
    if ( ! driCheckDriDdxDrmVersions2( "i830",
 				      dri_version, & dri_expected,
@@ -531,15 +533,11 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
 				  frame_buffer, pSAREA, fd,
 				  internal_api_version, &i830API);
    if ( psp != NULL ) {
-      create_context_modes = (PFNGLXCREATECONTEXTMODES)
-	  glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
-      if ( create_context_modes != NULL ) {
-	 I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;
-	 *driver_modes = i830FillInModes( dri_priv->cpp * 8,
-					  (dri_priv->cpp == 2) ? 16 : 24,
-					  (dri_priv->cpp == 2) ? 0  : 8,
-					  (dri_priv->backOffset != dri_priv->depthOffset) );
-      }
+      I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;
+      *driver_modes = i830FillInModes( dri_priv->cpp * 8,
+				       (dri_priv->cpp == 2) ? 16 : 24,
+				       (dri_priv->cpp == 2) ? 0  : 8,
+				       (dri_priv->backOffset != dri_priv->depthOffset) );
    }
 
    return (void *) psp;

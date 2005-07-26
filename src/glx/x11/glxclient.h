@@ -137,6 +137,8 @@ extern const char *glXGetScreenDriver (Display *dpy, int scrNum);
 
 extern const char *glXGetDriverConfig (const char *driverName);
 
+extern Bool __glXWindowExists(Display *dpy, GLXDrawable draw);
+
 #endif
 
 /************************************************************************/

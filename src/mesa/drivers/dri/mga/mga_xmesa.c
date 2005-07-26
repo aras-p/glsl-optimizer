@@ -104,8 +104,6 @@ DRI_CONF_BEGIN
 DRI_CONF_END;
 static const GLuint __driNConfigOptions = 6;
 
-static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-
 #ifndef MGA_DEBUG
 int MGA_DEBUG = 0;
 #endif
@@ -161,7 +159,7 @@ mgaFillInModes( unsigned pixel_bits, unsigned depth_bits,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-    modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
+    modes = (*dri_interface->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
     m = modes;
     if ( ! driFillInModes( & m, fb_format, fb_type,
 			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
@@ -199,7 +197,7 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
    mgaScreenPrivate *mgaScreen;
    MGADRIPtr         serverInfo = (MGADRIPtr)sPriv->pDevPriv;
    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-       (PFNGLXSCRENABLEEXTENSIONPROC) glXGetProcAddress( (const GLubyte *) "__glXScrEnableExtension" );
+       (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
    void * const psc = sPriv->psc->screenConfigs;
 
 
@@ -436,14 +434,6 @@ static const struct dri_debug_control debug_control[] =
 };
 
 
-static int
-get_ust_nop( int64_t * ust )
-{
-   *ust = 1;
-   return 0;
-}
-
-
 static GLboolean
 mgaCreateContext( const __GLcontextModes *mesaVis,
                   __DRIcontextPrivate *driContextPriv,
@@ -654,12 +644,7 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    mmesa->vblank_flags = (mmesa->mgaScreen->irq == 0)
        ? VBLANK_FLAG_NO_IRQ : driGetDefaultVBlankFlags(&mmesa->optionCache);
 
-   mmesa->get_ust = (PFNGLXGETUSTPROC) glXGetProcAddress( (const GLubyte *) "__glXGetUST" );
-   if ( mmesa->get_ust == NULL ) {
-      mmesa->get_ust = get_ust_nop;
-   }
-
-   (*mmesa->get_ust)( & mmesa->swap_ust );
+   (*dri_interface->getUST)( & mmesa->swap_ust );
 
    if (driQueryOptionb(&mmesa->optionCache, "no_rast")) {
       fprintf(stderr, "disabling 3D acceleration\n");
@@ -949,7 +934,7 @@ static const struct __DriverAPIRec mgaAPI = {
  *         failure.
  */
 PUBLIC
-void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20050725( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -957,6 +942,7 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
 			     const __DRIframebuffer * frame_buffer,
 			     drmAddress pSAREA, int fd, 
 			     int internal_api_version,
+			     const __DRIinterfaceMethods * interface,
 			     __GLcontextModes ** driver_modes )
 			     
 {
@@ -964,6 +950,8 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
    static const __DRIversion ddx_expected = { 1, 1, 1 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 3, 0, 0 };
+
+   dri_interface = interface;
 
    if ( ! driCheckDriDdxDrmVersions2( "MGA",
 				      dri_version, & dri_expected,
@@ -977,15 +965,11 @@ void * __driCreateNewScreen_20050722( __DRInativeDisplay *dpy, int scrn, __DRIsc
 				  frame_buffer, pSAREA, fd,
 				  internal_api_version, &mgaAPI);
    if ( psp != NULL ) {
-      create_context_modes = (PFNGLXCREATECONTEXTMODES)
-	  glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
-      if ( create_context_modes != NULL ) {
-	 MGADRIPtr dri_priv = (MGADRIPtr) psp->pDevPriv;
-	 *driver_modes = mgaFillInModes( dri_priv->cpp * 8,
-					 (dri_priv->cpp == 2) ? 16 : 24,
-					 (dri_priv->cpp == 2) ? 0  : 8,
-					 (dri_priv->backOffset != dri_priv->depthOffset) );
-      }
+      MGADRIPtr dri_priv = (MGADRIPtr) psp->pDevPriv;
+      *driver_modes = mgaFillInModes( dri_priv->cpp * 8,
+				      (dri_priv->cpp == 2) ? 16 : 24,
+				      (dri_priv->cpp == 2) ? 0  : 8,
+				      (dri_priv->backOffset != dri_priv->depthOffset) );
    }
 
    return (void *) psp;

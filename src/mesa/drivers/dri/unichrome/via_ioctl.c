@@ -512,7 +512,7 @@ static void viaWaitIdleVBlank( const __DRIdrawablePrivate *dPriv,
 			vmesa->vblank_flags, & missed_target );
       if ( missed_target ) {
 	 vmesa->swap_missed_count++;
-	 vmesa->get_ust( &vmesa->swap_missed_ust );
+	 (*dri_interface->getUST)( &vmesa->swap_missed_ust );
       }
    } 
    while (!viaCheckBreadcrumb(vmesa, value));	 
@@ -615,7 +615,7 @@ void viaCopyBuffer(const __DRIdrawablePrivate *dPriv)
    viaEmitBreadcrumbLocked(vmesa);
    UNLOCK_HARDWARE(vmesa);
 
-   vmesa->get_ust( &vmesa->swap_ust );
+   (*dri_interface->getUST)( &vmesa->swap_ust );
 }
 
 
@@ -639,7 +639,7 @@ void viaPageFlip(const __DRIdrawablePrivate *dPriv)
     viaEmitBreadcrumbLocked(vmesa);
     UNLOCK_HARDWARE(vmesa);
 
-    vmesa->get_ust( &vmesa->swap_ust );
+    (*dri_interface->getUST)( &vmesa->swap_ust );
 
 
     /* KW: FIXME: When buffers are freed, could free frontbuffer by

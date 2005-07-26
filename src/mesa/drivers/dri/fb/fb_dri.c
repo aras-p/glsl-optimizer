@@ -73,7 +73,6 @@ typedef struct {
 
 #define FB_CONTEXT(ctx)		((fbContextPtr)(ctx->DriverCtx))
 
-static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 
 static const GLubyte *
 get_string(GLcontext *ctx, GLenum pname)
@@ -706,7 +705,7 @@ fbFillInModes( unsigned pixel_bits, unsigned depth_bits,
       fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
    }
 
-   modes = (*create_context_modes)( num_modes, sizeof( __GLcontextModes ) );
+   modes = (*dri_interface->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
    m = modes;
    if ( ! driFillInModes( & m, fb_format, fb_type,
           depth_bits_array, stencil_bits_array, depth_buffer_factor,
@@ -777,15 +776,10 @@ void * __driCreateNewScreen( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc
                                          frame_buffer, pSAREA, fd,
                                          internal_api_version, &fbAPI);
           if ( psp != NULL ) {
-             create_context_modes = (PFNGLXCREATECONTEXTMODES)
-                   glXGetProcAddress( (const GLubyte *) "__glXCreateContextModes" );
-             if ( create_context_modes != NULL ) {
-                
-                *driver_modes = fbFillInModes( psp->fbBPP,
-                      (psp->fbBPP == 16) ? 16 : 24,
-                      (psp->fbBPP == 16) ? 0  : 8,
-                      1);
-             }
+	     *driver_modes = fbFillInModes( psp->fbBPP,
+					    (psp->fbBPP == 16) ? 16 : 24,
+					    (psp->fbBPP == 16) ? 0  : 8,
+					    1);
           }
 
           return (void *) psp;
