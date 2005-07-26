@@ -61,8 +61,11 @@
  *     primitives unaccelerated), hook in swrast_setup instead.
  */
 typedef struct {
-   /** win[0], win[1] are the screen-coords of SWvertex. win[2] is the
-    * z-coord. what is win[3]? */
+   /** win[0], win[1] are the screen-coords of SWvertex.
+    * win[2] is the z-buffer coord (if 16-bit Z buffer, in range [0,65535]).
+    * win[3] is 1/w where w is the clip-space W coord.  This is the value
+    * that clip{XYZ} were multiplied by to get ndc{XYZ}.
+    */
    GLfloat win[4];
    GLfloat texcoord[MAX_TEXTURE_COORD_UNITS][4];
    GLchan color[4];
