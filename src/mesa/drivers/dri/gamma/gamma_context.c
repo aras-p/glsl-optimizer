@@ -115,7 +115,7 @@ GLboolean gammaCreateContext( const __GLcontextModes *glVisual,
 
    ctx = gmesa->glCtx;
 
-   ctx->Const.MaxTextureLevels = 13;  /* 4K by 4K?  Is that right? */
+   ctx->Const.MaxTextureLevels = GAMMA_TEX_MAXLEVELS;
    ctx->Const.MaxTextureUnits = 1; /* Permedia 3 */
    ctx->Const.MaxTextureImageUnits = 1;
    ctx->Const.MaxTextureCoordUnits = 1;

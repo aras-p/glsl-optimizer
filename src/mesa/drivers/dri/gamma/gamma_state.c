@@ -1593,7 +1593,6 @@ void gammaEmitHwState( gammaContextPtr gmesa )
 	WRITE(gmesa->buf, TxBaseAddr9, curTex->TextureBaseAddr[9]);
 	WRITE(gmesa->buf, TxBaseAddr10, curTex->TextureBaseAddr[10]);
 	WRITE(gmesa->buf, TxBaseAddr11, curTex->TextureBaseAddr[11]);
-	WRITE(gmesa->buf, TxBaseAddr12, curTex->TextureBaseAddr[12]);
 	WRITE(gmesa->buf, TextureCacheControl, (TCC_Enable | TCC_Invalidate));
 	} else {
 	CHECK_DMA_BUFFER(gmesa, 6);

@@ -118,7 +118,7 @@ typedef struct gamma_texture_object_t *gammaTextureObjectPtr;
 
 #define VALID_GAMMA_TEXTURE_OBJECT(tobj)  (tobj) 
 
-#define GAMMA_TEX_MAXLEVELS 12
+#define GAMMA_TEX_MAXLEVELS 12  /* 2K x 2K */
 
 /* For shared texture space managment, these texture objects may also
  * be used as proxies for regions of texture memory containing other
