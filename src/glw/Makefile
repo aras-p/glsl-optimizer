@@ -33,7 +33,7 @@ clean:
 
 # Make the library
 $(LIB_DIR)/$(GLW_LIB_NAME): $(OBJECTS)
-	$(TOP)/bin/mklib -o $(GLW_LIB) -linker $(CC) \
+	$(TOP)/bin/mklib -o $(GLW_LIB) -linker '$(CC)' \
 		-major $(MAJOR) -minor $(MINOR) -patch $(TINY) \
 		$(MKLIB_OPTIONS) -install $(LIB_DIR) \
 		$(GLW_LIB_DEPS) $(OBJECTS)

@@ -88,7 +88,7 @@ dispatch.c:
 
 # Make libGL
 $(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
-	$(TOP)/bin/mklib -o $(GL_LIB) -linker $(CC) \
+	$(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
 		-major 1 -minor 2 $(MKLIB_OPTIONS) \
 		-install $(LIB_DIR) $(GL_LIB_DEPS) $(OBJECTS)
 
