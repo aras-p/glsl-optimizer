@@ -11,20 +11,21 @@ CXX = g++
 WARN_FLAGS = -Wall -Wundef
 OPT_FLAGS  = -O3 -g
 PIC_FLAGS  = -fPIC
-                                                                                
+
 # Add '-DGLX_USE_TLS' to ARCH_FLAGS to enable TLS support.
 ARCH_FLAGS ?=
 
 DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \
 	-D_BSD_SOURCE -D_GNU_SOURCE \
-	-DDRI_NEW_INTERFACE_ONLY -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1 -DDRM_USE_MALLOC
+	-DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1 -DDRM_USE_MALLOC -DIN_DRI_DRIVER
 
-CFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
-	 $(ASM_FLAGS) -std=c99 -ffast-math
+CFLAGS   = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
+	$(ASM_FLAGS) -std=c99 -ffast-math 
 
 CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
 
-ASM_SOURCES =
+
+ASM_SOURCES = 
 
 # Library/program dependencies
 DRI_LIB_DEPS = -lm -lpthread -lexpat -ldl -L$(LIB_DIR) -lEGL -l$(GL_LIB) 

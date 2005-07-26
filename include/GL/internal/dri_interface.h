@@ -38,7 +38,7 @@
 #ifndef DRI_INTERFACE_H
 #define DRI_INTERFACE_H
 
-#ifndef DRI_NEW_INTERFACE_ONLY
+#if 0 /*ndef DRI_NEW_INTERFACE_ONLY*/
 # include <X11/X.h>
 # include <GL/glx.h>
 # include "GL/glxint.h"
@@ -72,10 +72,6 @@ typedef void __DRInativeDisplay;
  * \name Functions provided by the driver loader.
  */
 /*@{*/
-extern __DRIscreen *__glXFindDRIScreen(__DRInativeDisplay *dpy, int scrn);
-
-
-
 /**
  * Type of a pointer to \c glXGetScreenDriver, as returned by
  * \c glXGetProcAddress.  This function is used to get the name of the DRI
@@ -96,26 +92,11 @@ typedef const char * (* PFNGLXGETSCREENDRIVERPROC) (__DRInativeDisplay *dpy, int
 typedef const char * (* PFNGLXGETDRIVERCONFIGPROC) (const char *driverName);
 
 /**
- * Type of a pointer to \c __glXScrEnableExtension, as returned by
- * \c glXGetProcAddress.  This function is used to enable a GLX extension
- * on the specified screen.
- *
- * \sa __glXScrEnableExtension, glXGetProcAddress
+ * Type of a pointer to \c glxEnableExtension, as returned by
+ * \c __DRIinterfaceMethods::getProcAddress.  This function is used to enable
+ * a GLX extension on the specified screen.
  */
 typedef void (* PFNGLXSCRENABLEEXTENSIONPROC) ( void *psc, const char * name );
-
-
-/* Test for the xf86dri.h header file */
-#ifndef _XF86DRI_H_
-extern GLboolean XF86DRIDestroyContext( __DRInativeDisplay *dpy, int screen,
-    __DRIid context_id );
-
-extern GLboolean XF86DRICreateDrawable( __DRInativeDisplay *dpy, int screen,
-    __DRIid drawable, drm_drawable_t *hHWDrawable );
-
-extern GLboolean XF86DRIDestroyDrawable( __DRInativeDisplay *dpy, int screen, 
-    __DRIid drawable);
-#endif
 /*@}*/
 
 

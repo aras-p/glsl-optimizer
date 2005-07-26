@@ -111,6 +111,10 @@ static int _mesa_sparc_needs_init = 1;
 #define INIT_MESA_SPARC
 #endif
 
+#ifdef GLX_DIRECT_RENDERING
+static __DRIscreen *__glXFindDRIScreen(__DRInativeDisplay *dpy, int scrn);
+#endif /* GLX_DIRECT_RENDERING */
+
 static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
     GLXDrawable read, GLXContext gc);
 
