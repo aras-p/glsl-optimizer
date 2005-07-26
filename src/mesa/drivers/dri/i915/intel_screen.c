@@ -425,7 +425,6 @@ intelFillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 __func__, __LINE__ );
 	return NULL;
    }
-#if 0
    if ( ! driFillInModes( & m, fb_format, fb_type,
 			  depth_bits_array, stencil_bits_array, depth_buffer_factor,
 			  back_buffer_modes, back_buffer_factor,
@@ -434,7 +433,6 @@ intelFillInModes( unsigned pixel_bits, unsigned depth_bits,
 		 __func__, __LINE__ );
 	return NULL;
    }
-#endif
 
    /* Mark the visual as slow if there are "fake" stencil bits.
     */
@@ -472,7 +470,7 @@ void * __driCreateNewScreen_20050725( __DRInativeDisplay *dpy, int scrn, __DRIsc
 			     
 {
    __DRIscreenPrivate *psp;
-   static const __DRIversion ddx_expected = { 1, 4, 0 };
+   static const __DRIversion ddx_expected = { 1, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 1, 0 };
 
