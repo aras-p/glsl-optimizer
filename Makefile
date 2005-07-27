@@ -173,6 +173,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/xmesa.h					\
 	$(DIRECTORY)/include/GL/xmesa_x.h				\
 	$(DIRECTORY)/include/GL/xmesa_xf86.h				\
+	$(DIRECTORY)/include/GLView.h					\
 	$(DIRECTORY)/src/Makefile					\
 	$(DIRECTORY)/src/descrip.mms					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
