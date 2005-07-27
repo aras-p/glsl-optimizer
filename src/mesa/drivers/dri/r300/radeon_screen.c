@@ -802,7 +802,7 @@ void *__driCreateNewScreen_20050725(__DRInativeDisplay * dpy, int scrn,
 	__DRIscreenPrivate *psp;
 	static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
 	static const __DRIversion dri_expected = { 4, 0, 0 };
-	static const __DRIversion drm_expected = { 1, 11, 1 };
+	static const __DRIversion drm_expected = { 1, 17, 0 };
 
 	dri_interface = interface;
 
