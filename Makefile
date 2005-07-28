@@ -269,7 +269,6 @@ DRI_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.po		\
 	$(DIRECTORY)/src/mesa/drivers/dri/dri_client/imports/*.h	\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/*.[ch]			\
-	$(DIRECTORY)/src/mesa/drivers/dri/*/depend			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/Doxyfile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/server/*.[ch]
