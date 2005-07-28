@@ -38,12 +38,6 @@
 #ifndef DRI_INTERFACE_H
 #define DRI_INTERFACE_H
 
-#if 0 /*ndef DRI_NEW_INTERFACE_ONLY*/
-# include <X11/X.h>
-# include <GL/glx.h>
-# include "GL/glxint.h"
-#endif
-
 #include <GL/internal/glcore.h>
 #include <xf86drm.h>
 #include <drm.h>
