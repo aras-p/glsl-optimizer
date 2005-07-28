@@ -1355,7 +1355,11 @@ Mesa Version History
 6.3.1  July XX, 2005
     New:
 	- The distribution now includes the DRI drivers and GLX code
+    Changes:
+	- Made the DRI "new" driver interface standard, remove old code
     Bug fixes:
 	- GL_ARB_vertex/fragment_shader were mistakenly listed in the
 	  extensions string
 	- negative relative addressing in vertex programs was broken
+	- update/fix SPARC assembly code for vertex transformation
+
