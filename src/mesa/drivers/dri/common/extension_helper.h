@@ -26,6 +26,7 @@
  */
 
 #include "utils.h"
+#include "dispatch.h"
 
 #ifndef NULL
 # define NULL 0
@@ -4579,1308 +4580,1308 @@ static const char WindowPos2fMESA_names[] =
 
 #if defined(need_GL_3DFX_tbuffer)
 static const struct dri_extension_function GL_3DFX_tbuffer_functions[] = {
-    { TbufferMask3DFX_names, 553 },
-    { NULL, 0 }
+    { TbufferMask3DFX_names, TbufferMask3DFX_remap_index, 553 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_draw_buffers)
 static const struct dri_extension_function GL_ARB_draw_buffers_functions[] = {
-    { DrawBuffersARB_names, 413 },
-    { NULL, 0 }
+    { DrawBuffersARB_names, DrawBuffersARB_remap_index, 413 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_matrix_palette)
 static const struct dri_extension_function GL_ARB_matrix_palette_functions[] = {
-    { MatrixIndexusvARB_names, -1 },
-    { MatrixIndexuivARB_names, -1 },
-    { CurrentPaletteMatrixARB_names, -1 },
-    { MatrixIndexubvARB_names, -1 },
-    { MatrixIndexPointerARB_names, -1 },
-    { NULL, 0 }
+    { MatrixIndexusvARB_names, MatrixIndexusvARB_remap_index, -1 },
+    { MatrixIndexuivARB_names, MatrixIndexuivARB_remap_index, -1 },
+    { CurrentPaletteMatrixARB_names, CurrentPaletteMatrixARB_remap_index, -1 },
+    { MatrixIndexubvARB_names, MatrixIndexubvARB_remap_index, -1 },
+    { MatrixIndexPointerARB_names, MatrixIndexPointerARB_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_multisample)
 static const struct dri_extension_function GL_ARB_multisample_functions[] = {
-    { SampleCoverageARB_names, 412 },
-    { NULL, 0 }
+    { SampleCoverageARB_names, SampleCoverageARB_remap_index, 412 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_occlusion_query)
 static const struct dri_extension_function GL_ARB_occlusion_query_functions[] = {
-    { BeginQueryARB_names, 703 },
-    { GetQueryivARB_names, 705 },
-    { GetQueryObjectivARB_names, 706 },
-    { EndQueryARB_names, 704 },
-    { GetQueryObjectuivARB_names, 707 },
-    { DeleteQueriesARB_names, 701 },
-    { IsQueryARB_names, 702 },
-    { GenQueriesARB_names, 700 },
-    { NULL, 0 }
+    { BeginQueryARB_names, BeginQueryARB_remap_index, 703 },
+    { GetQueryivARB_names, GetQueryivARB_remap_index, 705 },
+    { GetQueryObjectivARB_names, GetQueryObjectivARB_remap_index, 706 },
+    { EndQueryARB_names, EndQueryARB_remap_index, 704 },
+    { GetQueryObjectuivARB_names, GetQueryObjectuivARB_remap_index, 707 },
+    { DeleteQueriesARB_names, DeleteQueriesARB_remap_index, 701 },
+    { IsQueryARB_names, IsQueryARB_remap_index, 702 },
+    { GenQueriesARB_names, GenQueriesARB_remap_index, 700 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_point_parameters)
 static const struct dri_extension_function GL_ARB_point_parameters_functions[] = {
-    { PointParameterfEXT_names, 458 },
-    { PointParameterfvEXT_names, 459 },
-    { NULL, 0 }
+    { PointParameterfEXT_names, PointParameterfEXT_remap_index, 458 },
+    { PointParameterfvEXT_names, PointParameterfvEXT_remap_index, 459 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_shader_objects)
 static const struct dri_extension_function GL_ARB_shader_objects_functions[] = {
-    { UniformMatrix3fvARB_names, 739 },
-    { Uniform2fARB_names, 723 },
-    { Uniform2ivARB_names, 735 },
-    { UniformMatrix4fvARB_names, 740 },
-    { CreateProgramObjectARB_names, 717 },
-    { Uniform3iARB_names, 728 },
-    { CreateShaderObjectARB_names, 714 },
-    { AttachObjectARB_names, 718 },
-    { UniformMatrix2fvARB_names, 738 },
-    { GetAttachedObjectsARB_names, 744 },
-    { Uniform3fvARB_names, 732 },
-    { GetHandleARB_names, 712 },
-    { GetActiveUniformARB_names, 746 },
-    { GetUniformivARB_names, 748 },
-    { Uniform2fvARB_names, 731 },
-    { DeleteObjectARB_names, 711 },
-    { UseProgramObjectARB_names, 720 },
-    { Uniform3ivARB_names, 736 },
-    { CompileShaderARB_names, 716 },
-    { Uniform4fARB_names, 725 },
-    { LinkProgramARB_names, 719 },
-    { ShaderSourceARB_names, 715 },
-    { Uniform4ivARB_names, 737 },
-    { Uniform1ivARB_names, 734 },
-    { ValidateProgramARB_names, 721 },
-    { Uniform1iARB_names, 726 },
-    { Uniform4fvARB_names, 733 },
-    { GetUniformfvARB_names, 747 },
-    { DetachObjectARB_names, 713 },
-    { Uniform4iARB_names, 729 },
-    { Uniform2iARB_names, 727 },
-    { GetObjectParameterivARB_names, 742 },
-    { GetUniformLocationARB_names, 745 },
-    { GetShaderSourceARB_names, 749 },
-    { Uniform1fARB_names, 722 },
-    { Uniform1fvARB_names, 730 },
-    { Uniform3fARB_names, 724 },
-    { GetObjectParameterfvARB_names, 741 },
-    { GetInfoLogARB_names, 743 },
-    { NULL, 0 }
+    { UniformMatrix3fvARB_names, UniformMatrix3fvARB_remap_index, 739 },
+    { Uniform2fARB_names, Uniform2fARB_remap_index, 723 },
+    { Uniform2ivARB_names, Uniform2ivARB_remap_index, 735 },
+    { UniformMatrix4fvARB_names, UniformMatrix4fvARB_remap_index, 740 },
+    { CreateProgramObjectARB_names, CreateProgramObjectARB_remap_index, 717 },
+    { Uniform3iARB_names, Uniform3iARB_remap_index, 728 },
+    { CreateShaderObjectARB_names, CreateShaderObjectARB_remap_index, 714 },
+    { AttachObjectARB_names, AttachObjectARB_remap_index, 718 },
+    { UniformMatrix2fvARB_names, UniformMatrix2fvARB_remap_index, 738 },
+    { GetAttachedObjectsARB_names, GetAttachedObjectsARB_remap_index, 744 },
+    { Uniform3fvARB_names, Uniform3fvARB_remap_index, 732 },
+    { GetHandleARB_names, GetHandleARB_remap_index, 712 },
+    { GetActiveUniformARB_names, GetActiveUniformARB_remap_index, 746 },
+    { GetUniformivARB_names, GetUniformivARB_remap_index, 748 },
+    { Uniform2fvARB_names, Uniform2fvARB_remap_index, 731 },
+    { DeleteObjectARB_names, DeleteObjectARB_remap_index, 711 },
+    { UseProgramObjectARB_names, UseProgramObjectARB_remap_index, 720 },
+    { Uniform3ivARB_names, Uniform3ivARB_remap_index, 736 },
+    { CompileShaderARB_names, CompileShaderARB_remap_index, 716 },
+    { Uniform4fARB_names, Uniform4fARB_remap_index, 725 },
+    { LinkProgramARB_names, LinkProgramARB_remap_index, 719 },
+    { ShaderSourceARB_names, ShaderSourceARB_remap_index, 715 },
+    { Uniform4ivARB_names, Uniform4ivARB_remap_index, 737 },
+    { Uniform1ivARB_names, Uniform1ivARB_remap_index, 734 },
+    { ValidateProgramARB_names, ValidateProgramARB_remap_index, 721 },
+    { Uniform1iARB_names, Uniform1iARB_remap_index, 726 },
+    { Uniform4fvARB_names, Uniform4fvARB_remap_index, 733 },
+    { GetUniformfvARB_names, GetUniformfvARB_remap_index, 747 },
+    { DetachObjectARB_names, DetachObjectARB_remap_index, 713 },
+    { Uniform4iARB_names, Uniform4iARB_remap_index, 729 },
+    { Uniform2iARB_names, Uniform2iARB_remap_index, 727 },
+    { GetObjectParameterivARB_names, GetObjectParameterivARB_remap_index, 742 },
+    { GetUniformLocationARB_names, GetUniformLocationARB_remap_index, 745 },
+    { GetShaderSourceARB_names, GetShaderSourceARB_remap_index, 749 },
+    { Uniform1fARB_names, Uniform1fARB_remap_index, 722 },
+    { Uniform1fvARB_names, Uniform1fvARB_remap_index, 730 },
+    { Uniform3fARB_names, Uniform3fARB_remap_index, 724 },
+    { GetObjectParameterfvARB_names, GetObjectParameterfvARB_remap_index, 741 },
+    { GetInfoLogARB_names, GetInfoLogARB_remap_index, 743 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_texture_compression)
 static const struct dri_extension_function GL_ARB_texture_compression_functions[] = {
-    { CompressedTexSubImage2DARB_names, 558 },
-    { CompressedTexImage3DARB_names, 554 },
-    { CompressedTexImage1DARB_names, 556 },
-    { CompressedTexSubImage1DARB_names, 559 },
-    { CompressedTexSubImage3DARB_names, 557 },
-    { CompressedTexImage2DARB_names, 555 },
-    { GetCompressedTexImageARB_names, 560 },
-    { NULL, 0 }
+    { CompressedTexSubImage2DARB_names, CompressedTexSubImage2DARB_remap_index, 558 },
+    { CompressedTexImage3DARB_names, CompressedTexImage3DARB_remap_index, 554 },
+    { CompressedTexImage1DARB_names, CompressedTexImage1DARB_remap_index, 556 },
+    { CompressedTexSubImage1DARB_names, CompressedTexSubImage1DARB_remap_index, 559 },
+    { CompressedTexSubImage3DARB_names, CompressedTexSubImage3DARB_remap_index, 557 },
+    { CompressedTexImage2DARB_names, CompressedTexImage2DARB_remap_index, 555 },
+    { GetCompressedTexImageARB_names, GetCompressedTexImageARB_remap_index, 560 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_transpose_matrix)
 static const struct dri_extension_function GL_ARB_transpose_matrix_functions[] = {
-    { MultTransposeMatrixdARB_names, 411 },
-    { LoadTransposeMatrixdARB_names, 409 },
-    { MultTransposeMatrixfARB_names, 410 },
-    { LoadTransposeMatrixfARB_names, 408 },
-    { NULL, 0 }
+    { MultTransposeMatrixdARB_names, MultTransposeMatrixdARB_remap_index, 411 },
+    { LoadTransposeMatrixdARB_names, LoadTransposeMatrixdARB_remap_index, 409 },
+    { MultTransposeMatrixfARB_names, MultTransposeMatrixfARB_remap_index, 410 },
+    { LoadTransposeMatrixfARB_names, LoadTransposeMatrixfARB_remap_index, 408 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_vertex_blend)
 static const struct dri_extension_function GL_ARB_vertex_blend_functions[] = {
-    { WeightubvARB_names, -1 },
-    { WeightivARB_names, -1 },
-    { WeightPointerARB_names, -1 },
-    { WeightfvARB_names, -1 },
-    { WeightbvARB_names, -1 },
-    { WeightusvARB_names, -1 },
-    { VertexBlendARB_names, -1 },
-    { WeightsvARB_names, -1 },
-    { WeightdvARB_names, -1 },
-    { WeightuivARB_names, -1 },
-    { NULL, 0 }
+    { WeightubvARB_names, WeightubvARB_remap_index, -1 },
+    { WeightivARB_names, WeightivARB_remap_index, -1 },
+    { WeightPointerARB_names, WeightPointerARB_remap_index, -1 },
+    { WeightfvARB_names, WeightfvARB_remap_index, -1 },
+    { WeightbvARB_names, WeightbvARB_remap_index, -1 },
+    { WeightusvARB_names, WeightusvARB_remap_index, -1 },
+    { VertexBlendARB_names, VertexBlendARB_remap_index, -1 },
+    { WeightsvARB_names, WeightsvARB_remap_index, -1 },
+    { WeightdvARB_names, WeightdvARB_remap_index, -1 },
+    { WeightuivARB_names, WeightuivARB_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_vertex_buffer_object)
 static const struct dri_extension_function GL_ARB_vertex_buffer_object_functions[] = {
-    { GetBufferSubDataARB_names, 695 },
-    { BufferSubDataARB_names, 690 },
-    { BufferDataARB_names, 689 },
-    { GetBufferPointervARB_names, 694 },
-    { GetBufferParameterivARB_names, 693 },
-    { MapBufferARB_names, 697 },
-    { IsBufferARB_names, 696 },
-    { DeleteBuffersARB_names, 691 },
-    { UnmapBufferARB_names, 698 },
-    { BindBufferARB_names, 688 },
-    { GenBuffersARB_names, 692 },
-    { NULL, 0 }
+    { GetBufferSubDataARB_names, GetBufferSubDataARB_remap_index, 695 },
+    { BufferSubDataARB_names, BufferSubDataARB_remap_index, 690 },
+    { BufferDataARB_names, BufferDataARB_remap_index, 689 },
+    { GetBufferPointervARB_names, GetBufferPointervARB_remap_index, 694 },
+    { GetBufferParameterivARB_names, GetBufferParameterivARB_remap_index, 693 },
+    { MapBufferARB_names, MapBufferARB_remap_index, 697 },
+    { IsBufferARB_names, IsBufferARB_remap_index, 696 },
+    { DeleteBuffersARB_names, DeleteBuffersARB_remap_index, 691 },
+    { UnmapBufferARB_names, UnmapBufferARB_remap_index, 698 },
+    { BindBufferARB_names, BindBufferARB_remap_index, 688 },
+    { GenBuffersARB_names, GenBuffersARB_remap_index, 692 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_vertex_program)
 static const struct dri_extension_function GL_ARB_vertex_program_functions[] = {
-    { ProgramEnvParameter4dvARB_names, 669 },
-    { VertexAttrib2fARB_names, 611 },
-    { VertexAttrib3fARB_names, 617 },
-    { VertexAttrib1svARB_names, 608 },
-    { VertexAttrib4NusvARB_names, 662 },
-    { DisableVertexAttribArrayARB_names, 666 },
-    { ProgramLocalParameter4dARB_names, 672 },
-    { VertexAttrib1fARB_names, 605 },
-    { VertexAttrib4NbvARB_names, 659 },
-    { VertexAttrib1sARB_names, 607 },
-    { GetProgramLocalParameterfvARB_names, 679 },
-    { VertexAttrib3dvARB_names, 616 },
-    { ProgramEnvParameter4fvARB_names, 671 },
-    { GetVertexAttribivARB_names, 590 },
-    { VertexAttrib4ivARB_names, 655 },
-    { VertexAttrib4bvARB_names, 654 },
-    { VertexAttrib3dARB_names, 615 },
-    { VertexAttrib4fARB_names, 623 },
-    { VertexAttrib4fvARB_names, 624 },
-    { ProgramLocalParameter4dvARB_names, 673 },
-    { VertexAttrib4usvARB_names, 657 },
-    { VertexAttrib2dARB_names, 609 },
-    { VertexAttrib1dvARB_names, 604 },
-    { GetVertexAttribfvARB_names, 589 },
-    { VertexAttrib4ubvARB_names, 656 },
-    { ProgramEnvParameter4fARB_names, 670 },
-    { VertexAttrib4sARB_names, 625 },
-    { VertexAttrib2dvARB_names, 610 },
-    { VertexAttrib2fvARB_names, 612 },
-    { VertexAttrib4NivARB_names, 661 },
-    { GetProgramStringARB_names, 681 },
-    { VertexAttrib4NuivARB_names, 663 },
-    { IsProgramNV_names, 592 },
-    { ProgramEnvParameter4dARB_names, 668 },
-    { VertexAttrib1dARB_names, 603 },
-    { VertexAttrib3svARB_names, 620 },
-    { GetVertexAttribdvARB_names, 588 },
-    { VertexAttrib4dvARB_names, 622 },
-    { VertexAttribPointerARB_names, 664 },
-    { VertexAttrib4NsvARB_names, 660 },
-    { VertexAttrib3fvARB_names, 618 },
-    { VertexAttrib4NubARB_names, 627 },
-    { GetProgramEnvParameterfvARB_names, 677 },
-    { ProgramLocalParameter4fvARB_names, 675 },
-    { DeleteProgramsNV_names, 580 },
-    { GetVertexAttribPointervNV_names, 591 },
-    { VertexAttrib4dARB_names, 621 },
-    { GetProgramLocalParameterdvARB_names, 678 },
-    { GetProgramivARB_names, 680 },
-    { VertexAttrib3sARB_names, 619 },
-    { ProgramStringARB_names, 667 },
-    { ProgramLocalParameter4fARB_names, 674 },
-    { EnableVertexAttribArrayARB_names, 665 },
-    { VertexAttrib4uivARB_names, 658 },
-    { BindProgramNV_names, 579 },
-    { VertexAttrib4svARB_names, 626 },
-    { VertexAttrib2svARB_names, 614 },
-    { VertexAttrib4NubvARB_names, 628 },
-    { GetProgramEnvParameterdvARB_names, 676 },
-    { VertexAttrib2sARB_names, 613 },
-    { VertexAttrib1fvARB_names, 606 },
-    { GenProgramsNV_names, 582 },
-    { NULL, 0 }
+    { ProgramEnvParameter4dvARB_names, ProgramEnvParameter4dvARB_remap_index, 669 },
+    { VertexAttrib2fARB_names, VertexAttrib2fARB_remap_index, 611 },
+    { VertexAttrib3fARB_names, VertexAttrib3fARB_remap_index, 617 },
+    { VertexAttrib1svARB_names, VertexAttrib1svARB_remap_index, 608 },
+    { VertexAttrib4NusvARB_names, VertexAttrib4NusvARB_remap_index, 662 },
+    { DisableVertexAttribArrayARB_names, DisableVertexAttribArrayARB_remap_index, 666 },
+    { ProgramLocalParameter4dARB_names, ProgramLocalParameter4dARB_remap_index, 672 },
+    { VertexAttrib1fARB_names, VertexAttrib1fARB_remap_index, 605 },
+    { VertexAttrib4NbvARB_names, VertexAttrib4NbvARB_remap_index, 659 },
+    { VertexAttrib1sARB_names, VertexAttrib1sARB_remap_index, 607 },
+    { GetProgramLocalParameterfvARB_names, GetProgramLocalParameterfvARB_remap_index, 679 },
+    { VertexAttrib3dvARB_names, VertexAttrib3dvARB_remap_index, 616 },
+    { ProgramEnvParameter4fvARB_names, ProgramEnvParameter4fvARB_remap_index, 671 },
+    { GetVertexAttribivARB_names, GetVertexAttribivARB_remap_index, 590 },
+    { VertexAttrib4ivARB_names, VertexAttrib4ivARB_remap_index, 655 },
+    { VertexAttrib4bvARB_names, VertexAttrib4bvARB_remap_index, 654 },
+    { VertexAttrib3dARB_names, VertexAttrib3dARB_remap_index, 615 },
+    { VertexAttrib4fARB_names, VertexAttrib4fARB_remap_index, 623 },
+    { VertexAttrib4fvARB_names, VertexAttrib4fvARB_remap_index, 624 },
+    { ProgramLocalParameter4dvARB_names, ProgramLocalParameter4dvARB_remap_index, 673 },
+    { VertexAttrib4usvARB_names, VertexAttrib4usvARB_remap_index, 657 },
+    { VertexAttrib2dARB_names, VertexAttrib2dARB_remap_index, 609 },
+    { VertexAttrib1dvARB_names, VertexAttrib1dvARB_remap_index, 604 },
+    { GetVertexAttribfvARB_names, GetVertexAttribfvARB_remap_index, 589 },
+    { VertexAttrib4ubvARB_names, VertexAttrib4ubvARB_remap_index, 656 },
+    { ProgramEnvParameter4fARB_names, ProgramEnvParameter4fARB_remap_index, 670 },
+    { VertexAttrib4sARB_names, VertexAttrib4sARB_remap_index, 625 },
+    { VertexAttrib2dvARB_names, VertexAttrib2dvARB_remap_index, 610 },
+    { VertexAttrib2fvARB_names, VertexAttrib2fvARB_remap_index, 612 },
+    { VertexAttrib4NivARB_names, VertexAttrib4NivARB_remap_index, 661 },
+    { GetProgramStringARB_names, GetProgramStringARB_remap_index, 681 },
+    { VertexAttrib4NuivARB_names, VertexAttrib4NuivARB_remap_index, 663 },
+    { IsProgramNV_names, IsProgramNV_remap_index, 592 },
+    { ProgramEnvParameter4dARB_names, ProgramEnvParameter4dARB_remap_index, 668 },
+    { VertexAttrib1dARB_names, VertexAttrib1dARB_remap_index, 603 },
+    { VertexAttrib3svARB_names, VertexAttrib3svARB_remap_index, 620 },
+    { GetVertexAttribdvARB_names, GetVertexAttribdvARB_remap_index, 588 },
+    { VertexAttrib4dvARB_names, VertexAttrib4dvARB_remap_index, 622 },
+    { VertexAttribPointerARB_names, VertexAttribPointerARB_remap_index, 664 },
+    { VertexAttrib4NsvARB_names, VertexAttrib4NsvARB_remap_index, 660 },
+    { VertexAttrib3fvARB_names, VertexAttrib3fvARB_remap_index, 618 },
+    { VertexAttrib4NubARB_names, VertexAttrib4NubARB_remap_index, 627 },
+    { GetProgramEnvParameterfvARB_names, GetProgramEnvParameterfvARB_remap_index, 677 },
+    { ProgramLocalParameter4fvARB_names, ProgramLocalParameter4fvARB_remap_index, 675 },
+    { DeleteProgramsNV_names, DeleteProgramsNV_remap_index, 580 },
+    { GetVertexAttribPointervNV_names, GetVertexAttribPointervNV_remap_index, 591 },
+    { VertexAttrib4dARB_names, VertexAttrib4dARB_remap_index, 621 },
+    { GetProgramLocalParameterdvARB_names, GetProgramLocalParameterdvARB_remap_index, 678 },
+    { GetProgramivARB_names, GetProgramivARB_remap_index, 680 },
+    { VertexAttrib3sARB_names, VertexAttrib3sARB_remap_index, 619 },
+    { ProgramStringARB_names, ProgramStringARB_remap_index, 667 },
+    { ProgramLocalParameter4fARB_names, ProgramLocalParameter4fARB_remap_index, 674 },
+    { EnableVertexAttribArrayARB_names, EnableVertexAttribArrayARB_remap_index, 665 },
+    { VertexAttrib4uivARB_names, VertexAttrib4uivARB_remap_index, 658 },
+    { BindProgramNV_names, BindProgramNV_remap_index, 579 },
+    { VertexAttrib4svARB_names, VertexAttrib4svARB_remap_index, 626 },
+    { VertexAttrib2svARB_names, VertexAttrib2svARB_remap_index, 614 },
+    { VertexAttrib4NubvARB_names, VertexAttrib4NubvARB_remap_index, 628 },
+    { GetProgramEnvParameterdvARB_names, GetProgramEnvParameterdvARB_remap_index, 676 },
+    { VertexAttrib2sARB_names, VertexAttrib2sARB_remap_index, 613 },
+    { VertexAttrib1fvARB_names, VertexAttrib1fvARB_remap_index, 606 },
+    { GenProgramsNV_names, GenProgramsNV_remap_index, 582 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_vertex_shader)
 static const struct dri_extension_function GL_ARB_vertex_shader_functions[] = {
-    { GetActiveAttribARB_names, 751 },
-    { GetAttribLocationARB_names, 752 },
-    { BindAttribLocationARB_names, 750 },
-    { NULL, 0 }
+    { GetActiveAttribARB_names, GetActiveAttribARB_remap_index, 751 },
+    { GetAttribLocationARB_names, GetAttribLocationARB_remap_index, 752 },
+    { BindAttribLocationARB_names, BindAttribLocationARB_remap_index, 750 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ARB_window_pos)
 static const struct dri_extension_function GL_ARB_window_pos_functions[] = {
-    { WindowPos3fMESA_names, 523 },
-    { WindowPos2dvMESA_names, 514 },
-    { WindowPos2svMESA_names, 520 },
-    { WindowPos3dMESA_names, 521 },
-    { WindowPos2fvMESA_names, 516 },
-    { WindowPos2dMESA_names, 513 },
-    { WindowPos3dvMESA_names, 522 },
-    { WindowPos3fvMESA_names, 524 },
-    { WindowPos2iMESA_names, 517 },
-    { WindowPos3sMESA_names, 527 },
-    { WindowPos2ivMESA_names, 518 },
-    { WindowPos2sMESA_names, 519 },
-    { WindowPos3iMESA_names, 525 },
-    { WindowPos3ivMESA_names, 526 },
-    { WindowPos3svMESA_names, 528 },
-    { WindowPos2fMESA_names, 515 },
-    { NULL, 0 }
+    { WindowPos3fMESA_names, WindowPos3fMESA_remap_index, 523 },
+    { WindowPos2dvMESA_names, WindowPos2dvMESA_remap_index, 514 },
+    { WindowPos2svMESA_names, WindowPos2svMESA_remap_index, 520 },
+    { WindowPos3dMESA_names, WindowPos3dMESA_remap_index, 521 },
+    { WindowPos2fvMESA_names, WindowPos2fvMESA_remap_index, 516 },
+    { WindowPos2dMESA_names, WindowPos2dMESA_remap_index, 513 },
+    { WindowPos3dvMESA_names, WindowPos3dvMESA_remap_index, 522 },
+    { WindowPos3fvMESA_names, WindowPos3fvMESA_remap_index, 524 },
+    { WindowPos2iMESA_names, WindowPos2iMESA_remap_index, 517 },
+    { WindowPos3sMESA_names, WindowPos3sMESA_remap_index, 527 },
+    { WindowPos2ivMESA_names, WindowPos2ivMESA_remap_index, 518 },
+    { WindowPos2sMESA_names, WindowPos2sMESA_remap_index, 519 },
+    { WindowPos3iMESA_names, WindowPos3iMESA_remap_index, 525 },
+    { WindowPos3ivMESA_names, WindowPos3ivMESA_remap_index, 526 },
+    { WindowPos3svMESA_names, WindowPos3svMESA_remap_index, 528 },
+    { WindowPos2fMESA_names, WindowPos2fMESA_remap_index, 515 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ATI_blend_equation_separate)
 static const struct dri_extension_function GL_ATI_blend_equation_separate_functions[] = {
-    { BlendEquationSeparateEXT_names, 710 },
-    { NULL, 0 }
+    { BlendEquationSeparateEXT_names, BlendEquationSeparateEXT_remap_index, 710 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ATI_draw_buffers)
 static const struct dri_extension_function GL_ATI_draw_buffers_functions[] = {
-    { DrawBuffersARB_names, 413 },
-    { NULL, 0 }
+    { DrawBuffersARB_names, DrawBuffersARB_remap_index, 413 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_ATI_fragment_shader)
 static const struct dri_extension_function GL_ATI_fragment_shader_functions[] = {
-    { ColorFragmentOp3ATI_names, 791 },
-    { ColorFragmentOp2ATI_names, 790 },
-    { DeleteFragmentShaderATI_names, 784 },
-    { SetFragmentShaderConstantATI_names, 795 },
-    { SampleMapATI_names, 788 },
-    { AlphaFragmentOp2ATI_names, 793 },
-    { AlphaFragmentOp1ATI_names, 792 },
-    { ColorFragmentOp1ATI_names, 789 },
-    { AlphaFragmentOp3ATI_names, 794 },
-    { PassTexCoordATI_names, 787 },
-    { BeginFragmentShaderATI_names, 785 },
-    { BindFragmentShaderATI_names, 783 },
-    { GenFragmentShadersATI_names, 782 },
-    { EndFragmentShaderATI_names, 786 },
-    { NULL, 0 }
+    { ColorFragmentOp3ATI_names, ColorFragmentOp3ATI_remap_index, 791 },
+    { ColorFragmentOp2ATI_names, ColorFragmentOp2ATI_remap_index, 790 },
+    { DeleteFragmentShaderATI_names, DeleteFragmentShaderATI_remap_index, 784 },
+    { SetFragmentShaderConstantATI_names, SetFragmentShaderConstantATI_remap_index, 795 },
+    { SampleMapATI_names, SampleMapATI_remap_index, 788 },
+    { AlphaFragmentOp2ATI_names, AlphaFragmentOp2ATI_remap_index, 793 },
+    { AlphaFragmentOp1ATI_names, AlphaFragmentOp1ATI_remap_index, 792 },
+    { ColorFragmentOp1ATI_names, ColorFragmentOp1ATI_remap_index, 789 },
+    { AlphaFragmentOp3ATI_names, AlphaFragmentOp3ATI_remap_index, 794 },
+    { PassTexCoordATI_names, PassTexCoordATI_remap_index, 787 },
+    { BeginFragmentShaderATI_names, BeginFragmentShaderATI_remap_index, 785 },
+    { BindFragmentShaderATI_names, BindFragmentShaderATI_remap_index, 783 },
+    { GenFragmentShadersATI_names, GenFragmentShadersATI_remap_index, 782 },
+    { EndFragmentShaderATI_names, EndFragmentShaderATI_remap_index, 786 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_blend_color)
 static const struct dri_extension_function GL_EXT_blend_color_functions[] = {
-    { BlendColor_names, 336 },
-    { NULL, 0 }
+    { BlendColor_names, -1, 336 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_blend_equation_separate)
 static const struct dri_extension_function GL_EXT_blend_equation_separate_functions[] = {
-    { BlendEquationSeparateEXT_names, 710 },
-    { NULL, 0 }
+    { BlendEquationSeparateEXT_names, BlendEquationSeparateEXT_remap_index, 710 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_blend_func_separate)
 static const struct dri_extension_function GL_EXT_blend_func_separate_functions[] = {
-    { BlendFuncSeparateEXT_names, 537 },
-    { NULL, 0 }
+    { BlendFuncSeparateEXT_names, BlendFuncSeparateEXT_remap_index, 537 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_blend_minmax)
 static const struct dri_extension_function GL_EXT_blend_minmax_functions[] = {
-    { BlendEquation_names, 337 },
-    { NULL, 0 }
+    { BlendEquation_names, -1, 337 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_color_subtable)
 static const struct dri_extension_function GL_EXT_color_subtable_functions[] = {
-    { ColorSubTable_names, 346 },
-    { CopyColorSubTable_names, 347 },
-    { NULL, 0 }
+    { ColorSubTable_names, -1, 346 },
+    { CopyColorSubTable_names, -1, 347 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_compiled_vertex_array)
 static const struct dri_extension_function GL_EXT_compiled_vertex_array_functions[] = {
-    { UnlockArraysEXT_names, 541 },
-    { LockArraysEXT_names, 540 },
-    { NULL, 0 }
+    { UnlockArraysEXT_names, UnlockArraysEXT_remap_index, 541 },
+    { LockArraysEXT_names, LockArraysEXT_remap_index, 540 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_convolution)
 static const struct dri_extension_function GL_EXT_convolution_functions[] = {
-    { ConvolutionFilter1D_names, 348 },
-    { CopyConvolutionFilter1D_names, 354 },
-    { ConvolutionFilter2D_names, 349 },
-    { ConvolutionParameteriv_names, 353 },
-    { ConvolutionParameterfv_names, 351 },
-    { GetSeparableFilterEXT_names, 426 },
-    { GetConvolutionFilterEXT_names, 423 },
-    { GetConvolutionParameterfvEXT_names, 424 },
-    { SeparableFilter2D_names, 360 },
-    { ConvolutionParameteri_names, 352 },
-    { ConvolutionParameterf_names, 350 },
-    { GetConvolutionParameterivEXT_names, 425 },
-    { CopyConvolutionFilter2D_names, 355 },
-    { NULL, 0 }
+    { ConvolutionFilter1D_names, -1, 348 },
+    { CopyConvolutionFilter1D_names, -1, 354 },
+    { ConvolutionFilter2D_names, -1, 349 },
+    { ConvolutionParameteriv_names, -1, 353 },
+    { ConvolutionParameterfv_names, -1, 351 },
+    { GetSeparableFilterEXT_names, GetSeparableFilterEXT_remap_index, 426 },
+    { GetConvolutionFilterEXT_names, GetConvolutionFilterEXT_remap_index, 423 },
+    { GetConvolutionParameterfvEXT_names, GetConvolutionParameterfvEXT_remap_index, 424 },
+    { SeparableFilter2D_names, -1, 360 },
+    { ConvolutionParameteri_names, -1, 352 },
+    { ConvolutionParameterf_names, -1, 350 },
+    { GetConvolutionParameterivEXT_names, GetConvolutionParameterivEXT_remap_index, 425 },
+    { CopyConvolutionFilter2D_names, -1, 355 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_coordinate_frame)
 static const struct dri_extension_function GL_EXT_coordinate_frame_functions[] = {
-    { Binormal3fEXT_names, -1 },
-    { TangentPointerEXT_names, -1 },
-    { Binormal3ivEXT_names, -1 },
-    { Tangent3sEXT_names, -1 },
-    { Tangent3fvEXT_names, -1 },
-    { Tangent3dvEXT_names, -1 },
-    { Binormal3bvEXT_names, -1 },
-    { Binormal3dEXT_names, -1 },
-    { Tangent3fEXT_names, -1 },
-    { Binormal3sEXT_names, -1 },
-    { Tangent3ivEXT_names, -1 },
-    { Tangent3dEXT_names, -1 },
-    { Binormal3svEXT_names, -1 },
-    { Binormal3dvEXT_names, -1 },
-    { Tangent3iEXT_names, -1 },
-    { Tangent3bvEXT_names, -1 },
-    { Binormal3fvEXT_names, -1 },
-    { Tangent3bEXT_names, -1 },
-    { BinormalPointerEXT_names, -1 },
-    { Tangent3svEXT_names, -1 },
-    { Binormal3bEXT_names, -1 },
-    { Binormal3iEXT_names, -1 },
-    { NULL, 0 }
+    { Binormal3fEXT_names, Binormal3fEXT_remap_index, -1 },
+    { TangentPointerEXT_names, TangentPointerEXT_remap_index, -1 },
+    { Binormal3ivEXT_names, Binormal3ivEXT_remap_index, -1 },
+    { Tangent3sEXT_names, Tangent3sEXT_remap_index, -1 },
+    { Tangent3fvEXT_names, Tangent3fvEXT_remap_index, -1 },
+    { Tangent3dvEXT_names, Tangent3dvEXT_remap_index, -1 },
+    { Binormal3bvEXT_names, Binormal3bvEXT_remap_index, -1 },
+    { Binormal3dEXT_names, Binormal3dEXT_remap_index, -1 },
+    { Tangent3fEXT_names, Tangent3fEXT_remap_index, -1 },
+    { Binormal3sEXT_names, Binormal3sEXT_remap_index, -1 },
+    { Tangent3ivEXT_names, Tangent3ivEXT_remap_index, -1 },
+    { Tangent3dEXT_names, Tangent3dEXT_remap_index, -1 },
+    { Binormal3svEXT_names, Binormal3svEXT_remap_index, -1 },
+    { Binormal3dvEXT_names, Binormal3dvEXT_remap_index, -1 },
+    { Tangent3iEXT_names, Tangent3iEXT_remap_index, -1 },
+    { Tangent3bvEXT_names, Tangent3bvEXT_remap_index, -1 },
+    { Binormal3fvEXT_names, Binormal3fvEXT_remap_index, -1 },
+    { Tangent3bEXT_names, Tangent3bEXT_remap_index, -1 },
+    { BinormalPointerEXT_names, BinormalPointerEXT_remap_index, -1 },
+    { Tangent3svEXT_names, Tangent3svEXT_remap_index, -1 },
+    { Binormal3bEXT_names, Binormal3bEXT_remap_index, -1 },
+    { Binormal3iEXT_names, Binormal3iEXT_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_copy_texture)
 static const struct dri_extension_function GL_EXT_copy_texture_functions[] = {
-    { CopyTexSubImage3D_names, 373 },
-    { CopyTexImage2D_names, 324 },
-    { CopyTexImage1D_names, 323 },
-    { CopyTexSubImage2D_names, 326 },
-    { CopyTexSubImage1D_names, 325 },
-    { NULL, 0 }
+    { CopyTexSubImage3D_names, -1, 373 },
+    { CopyTexImage2D_names, -1, 324 },
+    { CopyTexImage1D_names, -1, 323 },
+    { CopyTexSubImage2D_names, -1, 326 },
+    { CopyTexSubImage1D_names, -1, 325 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_cull_vertex)
 static const struct dri_extension_function GL_EXT_cull_vertex_functions[] = {
-    { CullParameterdvEXT_names, 542 },
-    { CullParameterfvEXT_names, 543 },
-    { NULL, 0 }
+    { CullParameterdvEXT_names, CullParameterdvEXT_remap_index, 542 },
+    { CullParameterfvEXT_names, CullParameterfvEXT_remap_index, 543 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_depth_bounds_test)
 static const struct dri_extension_function GL_EXT_depth_bounds_test_functions[] = {
-    { DepthBoundsEXT_names, 699 },
-    { NULL, 0 }
+    { DepthBoundsEXT_names, DepthBoundsEXT_remap_index, 699 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_draw_range_elements)
 static const struct dri_extension_function GL_EXT_draw_range_elements_functions[] = {
-    { DrawRangeElements_names, 338 },
-    { NULL, 0 }
+    { DrawRangeElements_names, -1, 338 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_fog_coord)
 static const struct dri_extension_function GL_EXT_fog_coord_functions[] = {
-    { FogCoorddEXT_names, 547 },
-    { FogCoordfEXT_names, 545 },
-    { FogCoordPointerEXT_names, 549 },
-    { FogCoordfvEXT_names, 546 },
-    { FogCoorddvEXT_names, 548 },
-    { NULL, 0 }
+    { FogCoorddEXT_names, FogCoorddEXT_remap_index, 547 },
+    { FogCoordfEXT_names, FogCoordfEXT_remap_index, 545 },
+    { FogCoordPointerEXT_names, FogCoordPointerEXT_remap_index, 549 },
+    { FogCoordfvEXT_names, FogCoordfvEXT_remap_index, 546 },
+    { FogCoorddvEXT_names, FogCoorddvEXT_remap_index, 548 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_framebuffer_object)
 static const struct dri_extension_function GL_EXT_framebuffer_object_functions[] = {
-    { GenerateMipmapEXT_names, 812 },
-    { IsRenderbufferEXT_names, 796 },
-    { RenderbufferStorageEXT_names, 800 },
-    { CheckFramebufferStatusEXT_names, 806 },
-    { DeleteRenderbuffersEXT_names, 798 },
-    { FramebufferTexture3DEXT_names, 809 },
-    { FramebufferRenderbufferEXT_names, 810 },
-    { FramebufferTexture1DEXT_names, 807 },
-    { BindFramebufferEXT_names, 803 },
-    { GenRenderbuffersEXT_names, 799 },
-    { IsFramebufferEXT_names, 802 },
-    { FramebufferTexture2DEXT_names, 808 },
-    { GetFramebufferAttachmentParameterivEXT_names, 811 },
-    { DeleteFramebuffersEXT_names, 804 },
-    { GenFramebuffersEXT_names, 805 },
-    { BindRenderbufferEXT_names, 797 },
-    { GetRenderbufferParameterivEXT_names, 801 },
-    { NULL, 0 }
+    { GenerateMipmapEXT_names, GenerateMipmapEXT_remap_index, 812 },
+    { IsRenderbufferEXT_names, IsRenderbufferEXT_remap_index, 796 },
+    { RenderbufferStorageEXT_names, RenderbufferStorageEXT_remap_index, 800 },
+    { CheckFramebufferStatusEXT_names, CheckFramebufferStatusEXT_remap_index, 806 },
+    { DeleteRenderbuffersEXT_names, DeleteRenderbuffersEXT_remap_index, 798 },
+    { FramebufferTexture3DEXT_names, FramebufferTexture3DEXT_remap_index, 809 },
+    { FramebufferRenderbufferEXT_names, FramebufferRenderbufferEXT_remap_index, 810 },
+    { FramebufferTexture1DEXT_names, FramebufferTexture1DEXT_remap_index, 807 },
+    { BindFramebufferEXT_names, BindFramebufferEXT_remap_index, 803 },
+    { GenRenderbuffersEXT_names, GenRenderbuffersEXT_remap_index, 799 },
+    { IsFramebufferEXT_names, IsFramebufferEXT_remap_index, 802 },
+    { FramebufferTexture2DEXT_names, FramebufferTexture2DEXT_remap_index, 808 },
+    { GetFramebufferAttachmentParameterivEXT_names, GetFramebufferAttachmentParameterivEXT_remap_index, 811 },
+    { DeleteFramebuffersEXT_names, DeleteFramebuffersEXT_remap_index, 804 },
+    { GenFramebuffersEXT_names, GenFramebuffersEXT_remap_index, 805 },
+    { BindRenderbufferEXT_names, BindRenderbufferEXT_remap_index, 797 },
+    { GetRenderbufferParameterivEXT_names, GetRenderbufferParameterivEXT_remap_index, 801 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_histogram)
 static const struct dri_extension_function GL_EXT_histogram_functions[] = {
-    { Histogram_names, 367 },
-    { GetHistogramParameterivEXT_names, 419 },
-    { ResetHistogram_names, 369 },
-    { GetMinmaxEXT_names, 420 },
-    { GetHistogramParameterfvEXT_names, 418 },
-    { GetHistogramEXT_names, 417 },
-    { GetMinmaxParameterfvEXT_names, 421 },
-    { ResetMinmax_names, 370 },
-    { GetMinmaxParameterivEXT_names, 422 },
-    { Minmax_names, 368 },
-    { NULL, 0 }
+    { Histogram_names, -1, 367 },
+    { GetHistogramParameterivEXT_names, GetHistogramParameterivEXT_remap_index, 419 },
+    { ResetHistogram_names, -1, 369 },
+    { GetMinmaxEXT_names, GetMinmaxEXT_remap_index, 420 },
+    { GetHistogramParameterfvEXT_names, GetHistogramParameterfvEXT_remap_index, 418 },
+    { GetHistogramEXT_names, GetHistogramEXT_remap_index, 417 },
+    { GetMinmaxParameterfvEXT_names, GetMinmaxParameterfvEXT_remap_index, 421 },
+    { ResetMinmax_names, -1, 370 },
+    { GetMinmaxParameterivEXT_names, GetMinmaxParameterivEXT_remap_index, 422 },
+    { Minmax_names, -1, 368 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_index_func)
 static const struct dri_extension_function GL_EXT_index_func_functions[] = {
-    { IndexFuncEXT_names, 539 },
-    { NULL, 0 }
+    { IndexFuncEXT_names, IndexFuncEXT_remap_index, 539 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_index_material)
 static const struct dri_extension_function GL_EXT_index_material_functions[] = {
-    { IndexMaterialEXT_names, 538 },
-    { NULL, 0 }
+    { IndexMaterialEXT_names, IndexMaterialEXT_remap_index, 538 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_light_texture)
 static const struct dri_extension_function GL_EXT_light_texture_functions[] = {
-    { ApplyTextureEXT_names, -1 },
-    { TextureMaterialEXT_names, -1 },
-    { TextureLightEXT_names, -1 },
-    { NULL, 0 }
+    { ApplyTextureEXT_names, ApplyTextureEXT_remap_index, -1 },
+    { TextureMaterialEXT_names, TextureMaterialEXT_remap_index, -1 },
+    { TextureLightEXT_names, TextureLightEXT_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_multi_draw_arrays)
 static const struct dri_extension_function GL_EXT_multi_draw_arrays_functions[] = {
-    { MultiDrawElementsEXT_names, 645 },
-    { MultiDrawArraysEXT_names, 644 },
-    { NULL, 0 }
+    { MultiDrawElementsEXT_names, MultiDrawElementsEXT_remap_index, 645 },
+    { MultiDrawArraysEXT_names, MultiDrawArraysEXT_remap_index, 644 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_multisample)
 static const struct dri_extension_function GL_EXT_multisample_functions[] = {
-    { SampleMaskSGIS_names, 446 },
-    { SamplePatternSGIS_names, 447 },
-    { NULL, 0 }
+    { SampleMaskSGIS_names, SampleMaskSGIS_remap_index, 446 },
+    { SamplePatternSGIS_names, SamplePatternSGIS_remap_index, 447 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_paletted_texture)
 static const struct dri_extension_function GL_EXT_paletted_texture_functions[] = {
-    { GetColorTableParameterivEXT_names, 551 },
-    { GetColorTableEXT_names, 550 },
-    { ColorTable_names, 339 },
-    { GetColorTableParameterfvEXT_names, 552 },
-    { NULL, 0 }
+    { GetColorTableParameterivEXT_names, GetColorTableParameterivEXT_remap_index, 551 },
+    { GetColorTableEXT_names, GetColorTableEXT_remap_index, 550 },
+    { ColorTable_names, -1, 339 },
+    { GetColorTableParameterfvEXT_names, GetColorTableParameterfvEXT_remap_index, 552 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_pixel_transform)
 static const struct dri_extension_function GL_EXT_pixel_transform_functions[] = {
-    { PixelTransformParameterfvEXT_names, -1 },
-    { PixelTransformParameteriEXT_names, -1 },
-    { PixelTransformParameterfEXT_names, -1 },
-    { PixelTransformParameterivEXT_names, -1 },
-    { NULL, 0 }
+    { PixelTransformParameterfvEXT_names, PixelTransformParameterfvEXT_remap_index, -1 },
+    { PixelTransformParameteriEXT_names, PixelTransformParameteriEXT_remap_index, -1 },
+    { PixelTransformParameterfEXT_names, PixelTransformParameterfEXT_remap_index, -1 },
+    { PixelTransformParameterivEXT_names, PixelTransformParameterivEXT_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_point_parameters)
 static const struct dri_extension_function GL_EXT_point_parameters_functions[] = {
-    { PointParameterfEXT_names, 458 },
-    { PointParameterfvEXT_names, 459 },
-    { NULL, 0 }
+    { PointParameterfEXT_names, PointParameterfEXT_remap_index, 458 },
+    { PointParameterfvEXT_names, PointParameterfvEXT_remap_index, 459 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_polygon_offset)
 static const struct dri_extension_function GL_EXT_polygon_offset_functions[] = {
-    { PolygonOffsetEXT_names, 414 },
-    { NULL, 0 }
+    { PolygonOffsetEXT_names, PolygonOffsetEXT_remap_index, 414 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_secondary_color)
 static const struct dri_extension_function GL_EXT_secondary_color_functions[] = {
-    { SecondaryColor3iEXT_names, 567 },
-    { SecondaryColor3bEXT_names, 561 },
-    { SecondaryColor3bvEXT_names, 562 },
-    { SecondaryColor3sEXT_names, 569 },
-    { SecondaryColor3dEXT_names, 563 },
-    { SecondaryColorPointerEXT_names, 577 },
-    { SecondaryColor3uiEXT_names, 573 },
-    { SecondaryColor3usvEXT_names, 576 },
-    { SecondaryColor3ivEXT_names, 568 },
-    { SecondaryColor3fvEXT_names, 566 },
-    { SecondaryColor3ubvEXT_names, 572 },
-    { SecondaryColor3uivEXT_names, 574 },
-    { SecondaryColor3dvEXT_names, 564 },
-    { SecondaryColor3usEXT_names, 575 },
-    { SecondaryColor3ubEXT_names, 571 },
-    { SecondaryColor3fEXT_names, 565 },
-    { SecondaryColor3svEXT_names, 570 },
-    { NULL, 0 }
+    { SecondaryColor3iEXT_names, SecondaryColor3iEXT_remap_index, 567 },
+    { SecondaryColor3bEXT_names, SecondaryColor3bEXT_remap_index, 561 },
+    { SecondaryColor3bvEXT_names, SecondaryColor3bvEXT_remap_index, 562 },
+    { SecondaryColor3sEXT_names, SecondaryColor3sEXT_remap_index, 569 },
+    { SecondaryColor3dEXT_names, SecondaryColor3dEXT_remap_index, 563 },
+    { SecondaryColorPointerEXT_names, SecondaryColorPointerEXT_remap_index, 577 },
+    { SecondaryColor3uiEXT_names, SecondaryColor3uiEXT_remap_index, 573 },
+    { SecondaryColor3usvEXT_names, SecondaryColor3usvEXT_remap_index, 576 },
+    { SecondaryColor3ivEXT_names, SecondaryColor3ivEXT_remap_index, 568 },
+    { SecondaryColor3fvEXT_names, SecondaryColor3fvEXT_remap_index, 566 },
+    { SecondaryColor3ubvEXT_names, SecondaryColor3ubvEXT_remap_index, 572 },
+    { SecondaryColor3uivEXT_names, SecondaryColor3uivEXT_remap_index, 574 },
+    { SecondaryColor3dvEXT_names, SecondaryColor3dvEXT_remap_index, 564 },
+    { SecondaryColor3usEXT_names, SecondaryColor3usEXT_remap_index, 575 },
+    { SecondaryColor3ubEXT_names, SecondaryColor3ubEXT_remap_index, 571 },
+    { SecondaryColor3fEXT_names, SecondaryColor3fEXT_remap_index, 565 },
+    { SecondaryColor3svEXT_names, SecondaryColor3svEXT_remap_index, 570 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_stencil_two_side)
 static const struct dri_extension_function GL_EXT_stencil_two_side_functions[] = {
-    { ActiveStencilFaceEXT_names, 646 },
-    { NULL, 0 }
+    { ActiveStencilFaceEXT_names, ActiveStencilFaceEXT_remap_index, 646 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_subtexture)
 static const struct dri_extension_function GL_EXT_subtexture_functions[] = {
-    { TexSubImage1D_names, 332 },
-    { TexSubImage2D_names, 333 },
-    { NULL, 0 }
+    { TexSubImage1D_names, -1, 332 },
+    { TexSubImage2D_names, -1, 333 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_texture3D)
 static const struct dri_extension_function GL_EXT_texture3D_functions[] = {
-    { TexImage3D_names, 371 },
-    { TexSubImage3D_names, 372 },
-    { NULL, 0 }
+    { TexImage3D_names, -1, 371 },
+    { TexSubImage3D_names, -1, 372 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_texture_object)
 static const struct dri_extension_function GL_EXT_texture_object_functions[] = {
-    { PrioritizeTextures_names, 331 },
-    { DeleteTextures_names, 327 },
-    { GenTexturesEXT_names, 440 },
-    { AreTexturesResidentEXT_names, 439 },
-    { BindTexture_names, 307 },
-    { IsTextureEXT_names, 441 },
-    { NULL, 0 }
+    { PrioritizeTextures_names, -1, 331 },
+    { DeleteTextures_names, -1, 327 },
+    { GenTexturesEXT_names, GenTexturesEXT_remap_index, 440 },
+    { AreTexturesResidentEXT_names, AreTexturesResidentEXT_remap_index, 439 },
+    { BindTexture_names, -1, 307 },
+    { IsTextureEXT_names, IsTextureEXT_remap_index, 441 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_texture_perturb_normal)
 static const struct dri_extension_function GL_EXT_texture_perturb_normal_functions[] = {
-    { TextureNormalEXT_names, -1 },
-    { NULL, 0 }
+    { TextureNormalEXT_names, TextureNormalEXT_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_vertex_array)
 static const struct dri_extension_function GL_EXT_vertex_array_functions[] = {
-    { IndexPointerEXT_names, 450 },
-    { NormalPointerEXT_names, 451 },
-    { VertexPointerEXT_names, 453 },
-    { TexCoordPointerEXT_names, 452 },
-    { EdgeFlagPointerEXT_names, 449 },
-    { ArrayElement_names, 306 },
-    { ColorPointerEXT_names, 448 },
-    { GetPointerv_names, 329 },
-    { DrawArrays_names, 310 },
-    { NULL, 0 }
+    { IndexPointerEXT_names, IndexPointerEXT_remap_index, 450 },
+    { NormalPointerEXT_names, NormalPointerEXT_remap_index, 451 },
+    { VertexPointerEXT_names, VertexPointerEXT_remap_index, 453 },
+    { TexCoordPointerEXT_names, TexCoordPointerEXT_remap_index, 452 },
+    { EdgeFlagPointerEXT_names, EdgeFlagPointerEXT_remap_index, 449 },
+    { ArrayElement_names, -1, 306 },
+    { ColorPointerEXT_names, ColorPointerEXT_remap_index, 448 },
+    { GetPointerv_names, -1, 329 },
+    { DrawArrays_names, -1, 310 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_EXT_vertex_weighting)
 static const struct dri_extension_function GL_EXT_vertex_weighting_functions[] = {
-    { VertexWeightfvEXT_names, 495 },
-    { VertexWeightfEXT_names, 494 },
-    { VertexWeightPointerEXT_names, 496 },
-    { NULL, 0 }
+    { VertexWeightfvEXT_names, VertexWeightfvEXT_remap_index, 495 },
+    { VertexWeightfEXT_names, VertexWeightfEXT_remap_index, 494 },
+    { VertexWeightPointerEXT_names, VertexWeightPointerEXT_remap_index, 496 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_HP_image_transform)
 static const struct dri_extension_function GL_HP_image_transform_functions[] = {
-    { GetImageTransformParameterfvHP_names, -1 },
-    { ImageTransformParameterfHP_names, -1 },
-    { ImageTransformParameterfvHP_names, -1 },
-    { ImageTransformParameteriHP_names, -1 },
-    { GetImageTransformParameterivHP_names, -1 },
-    { ImageTransformParameterivHP_names, -1 },
-    { NULL, 0 }
+    { GetImageTransformParameterfvHP_names, GetImageTransformParameterfvHP_remap_index, -1 },
+    { ImageTransformParameterfHP_names, ImageTransformParameterfHP_remap_index, -1 },
+    { ImageTransformParameterfvHP_names, ImageTransformParameterfvHP_remap_index, -1 },
+    { ImageTransformParameteriHP_names, ImageTransformParameteriHP_remap_index, -1 },
+    { GetImageTransformParameterivHP_names, GetImageTransformParameterivHP_remap_index, -1 },
+    { ImageTransformParameterivHP_names, ImageTransformParameterivHP_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_IBM_multimode_draw_arrays)
 static const struct dri_extension_function GL_IBM_multimode_draw_arrays_functions[] = {
-    { MultiModeDrawArraysIBM_names, 708 },
-    { MultiModeDrawElementsIBM_names, 709 },
-    { NULL, 0 }
+    { MultiModeDrawArraysIBM_names, MultiModeDrawArraysIBM_remap_index, 708 },
+    { MultiModeDrawElementsIBM_names, MultiModeDrawElementsIBM_remap_index, 709 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_IBM_vertex_array_lists)
 static const struct dri_extension_function GL_IBM_vertex_array_lists_functions[] = {
-    { SecondaryColorPointerListIBM_names, -1 },
-    { NormalPointerListIBM_names, -1 },
-    { FogCoordPointerListIBM_names, -1 },
-    { VertexPointerListIBM_names, -1 },
-    { ColorPointerListIBM_names, -1 },
-    { TexCoordPointerListIBM_names, -1 },
-    { IndexPointerListIBM_names, -1 },
-    { EdgeFlagPointerListIBM_names, -1 },
-    { NULL, 0 }
+    { SecondaryColorPointerListIBM_names, SecondaryColorPointerListIBM_remap_index, -1 },
+    { NormalPointerListIBM_names, NormalPointerListIBM_remap_index, -1 },
+    { FogCoordPointerListIBM_names, FogCoordPointerListIBM_remap_index, -1 },
+    { VertexPointerListIBM_names, VertexPointerListIBM_remap_index, -1 },
+    { ColorPointerListIBM_names, ColorPointerListIBM_remap_index, -1 },
+    { TexCoordPointerListIBM_names, TexCoordPointerListIBM_remap_index, -1 },
+    { IndexPointerListIBM_names, IndexPointerListIBM_remap_index, -1 },
+    { EdgeFlagPointerListIBM_names, EdgeFlagPointerListIBM_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_INGR_blend_func_separate)
 static const struct dri_extension_function GL_INGR_blend_func_separate_functions[] = {
-    { BlendFuncSeparateEXT_names, 537 },
-    { NULL, 0 }
+    { BlendFuncSeparateEXT_names, BlendFuncSeparateEXT_remap_index, 537 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_INTEL_parallel_arrays)
 static const struct dri_extension_function GL_INTEL_parallel_arrays_functions[] = {
-    { VertexPointervINTEL_names, -1 },
-    { ColorPointervINTEL_names, -1 },
-    { NormalPointervINTEL_names, -1 },
-    { TexCoordPointervINTEL_names, -1 },
-    { NULL, 0 }
+    { VertexPointervINTEL_names, VertexPointervINTEL_remap_index, -1 },
+    { ColorPointervINTEL_names, ColorPointervINTEL_remap_index, -1 },
+    { NormalPointervINTEL_names, NormalPointervINTEL_remap_index, -1 },
+    { TexCoordPointervINTEL_names, TexCoordPointervINTEL_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_MESA_resize_buffers)
 static const struct dri_extension_function GL_MESA_resize_buffers_functions[] = {
-    { ResizeBuffersMESA_names, 512 },
-    { NULL, 0 }
+    { ResizeBuffersMESA_names, ResizeBuffersMESA_remap_index, 512 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_MESA_window_pos)
 static const struct dri_extension_function GL_MESA_window_pos_functions[] = {
-    { WindowPos3fMESA_names, 523 },
-    { WindowPos2dvMESA_names, 514 },
-    { WindowPos4svMESA_names, 536 },
-    { WindowPos2svMESA_names, 520 },
-    { WindowPos3dMESA_names, 521 },
-    { WindowPos2fvMESA_names, 516 },
-    { WindowPos4dMESA_names, 529 },
-    { WindowPos2dMESA_names, 513 },
-    { WindowPos4ivMESA_names, 534 },
-    { WindowPos4fMESA_names, 531 },
-    { WindowPos3dvMESA_names, 522 },
-    { WindowPos3fvMESA_names, 524 },
-    { WindowPos4dvMESA_names, 530 },
-    { WindowPos2iMESA_names, 517 },
-    { WindowPos3sMESA_names, 527 },
-    { WindowPos4sMESA_names, 535 },
-    { WindowPos2ivMESA_names, 518 },
-    { WindowPos2sMESA_names, 519 },
-    { WindowPos3iMESA_names, 525 },
-    { WindowPos3ivMESA_names, 526 },
-    { WindowPos4iMESA_names, 533 },
-    { WindowPos4fvMESA_names, 532 },
-    { WindowPos3svMESA_names, 528 },
-    { WindowPos2fMESA_names, 515 },
-    { NULL, 0 }
+    { WindowPos3fMESA_names, WindowPos3fMESA_remap_index, 523 },
+    { WindowPos2dvMESA_names, WindowPos2dvMESA_remap_index, 514 },
+    { WindowPos4svMESA_names, WindowPos4svMESA_remap_index, 536 },
+    { WindowPos2svMESA_names, WindowPos2svMESA_remap_index, 520 },
+    { WindowPos3dMESA_names, WindowPos3dMESA_remap_index, 521 },
+    { WindowPos2fvMESA_names, WindowPos2fvMESA_remap_index, 516 },
+    { WindowPos4dMESA_names, WindowPos4dMESA_remap_index, 529 },
+    { WindowPos2dMESA_names, WindowPos2dMESA_remap_index, 513 },
+    { WindowPos4ivMESA_names, WindowPos4ivMESA_remap_index, 534 },
+    { WindowPos4fMESA_names, WindowPos4fMESA_remap_index, 531 },
+    { WindowPos3dvMESA_names, WindowPos3dvMESA_remap_index, 522 },
+    { WindowPos3fvMESA_names, WindowPos3fvMESA_remap_index, 524 },
+    { WindowPos4dvMESA_names, WindowPos4dvMESA_remap_index, 530 },
+    { WindowPos2iMESA_names, WindowPos2iMESA_remap_index, 517 },
+    { WindowPos3sMESA_names, WindowPos3sMESA_remap_index, 527 },
+    { WindowPos4sMESA_names, WindowPos4sMESA_remap_index, 535 },
+    { WindowPos2ivMESA_names, WindowPos2ivMESA_remap_index, 518 },
+    { WindowPos2sMESA_names, WindowPos2sMESA_remap_index, 519 },
+    { WindowPos3iMESA_names, WindowPos3iMESA_remap_index, 525 },
+    { WindowPos3ivMESA_names, WindowPos3ivMESA_remap_index, 526 },
+    { WindowPos4iMESA_names, WindowPos4iMESA_remap_index, 533 },
+    { WindowPos4fvMESA_names, WindowPos4fvMESA_remap_index, 532 },
+    { WindowPos3svMESA_names, WindowPos3svMESA_remap_index, 528 },
+    { WindowPos2fMESA_names, WindowPos2fMESA_remap_index, 515 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_NV_evaluators)
 static const struct dri_extension_function GL_NV_evaluators_functions[] = {
-    { GetMapAttribParameterivNV_names, -1 },
-    { MapControlPointsNV_names, -1 },
-    { MapParameterfvNV_names, -1 },
-    { EvalMapsNV_names, -1 },
-    { GetMapAttribParameterfvNV_names, -1 },
-    { MapParameterivNV_names, -1 },
-    { GetMapParameterivNV_names, -1 },
-    { GetMapParameterfvNV_names, -1 },
-    { GetMapControlPointsNV_names, -1 },
-    { NULL, 0 }
+    { GetMapAttribParameterivNV_names, GetMapAttribParameterivNV_remap_index, -1 },
+    { MapControlPointsNV_names, MapControlPointsNV_remap_index, -1 },
+    { MapParameterfvNV_names, MapParameterfvNV_remap_index, -1 },
+    { EvalMapsNV_names, EvalMapsNV_remap_index, -1 },
+    { GetMapAttribParameterfvNV_names, GetMapAttribParameterfvNV_remap_index, -1 },
+    { MapParameterivNV_names, MapParameterivNV_remap_index, -1 },
+    { GetMapParameterivNV_names, GetMapParameterivNV_remap_index, -1 },
+    { GetMapParameterfvNV_names, GetMapParameterfvNV_remap_index, -1 },
+    { GetMapControlPointsNV_names, GetMapControlPointsNV_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_NV_fence)
 static const struct dri_extension_function GL_NV_fence_functions[] = {
-    { GenFencesNV_names, 648 },
-    { TestFenceNV_names, 650 },
-    { IsFenceNV_names, 649 },
-    { DeleteFencesNV_names, 647 },
-    { SetFenceNV_names, 653 },
-    { GetFenceivNV_names, 651 },
-    { FinishFenceNV_names, 652 },
-    { NULL, 0 }
+    { GenFencesNV_names, GenFencesNV_remap_index, 648 },
+    { TestFenceNV_names, TestFenceNV_remap_index, 650 },
+    { IsFenceNV_names, IsFenceNV_remap_index, 649 },
+    { DeleteFencesNV_names, DeleteFencesNV_remap_index, 647 },
+    { SetFenceNV_names, SetFenceNV_remap_index, 653 },
+    { GetFenceivNV_names, GetFenceivNV_remap_index, 651 },
+    { FinishFenceNV_names, FinishFenceNV_remap_index, 652 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_NV_fragment_program)
 static const struct dri_extension_function GL_NV_fragment_program_functions[] = {
-    { GetProgramNamedParameterdvNV_names, 687 },
-    { GetProgramNamedParameterfvNV_names, 686 },
-    { ProgramNamedParameter4fNV_names, 682 },
-    { ProgramNamedParameter4fvNV_names, 684 },
-    { ProgramNamedParameter4dvNV_names, 685 },
-    { ProgramNamedParameter4dNV_names, 683 },
-    { NULL, 0 }
+    { GetProgramNamedParameterdvNV_names, GetProgramNamedParameterdvNV_remap_index, 687 },
+    { GetProgramNamedParameterfvNV_names, GetProgramNamedParameterfvNV_remap_index, 686 },
+    { ProgramNamedParameter4fNV_names, ProgramNamedParameter4fNV_remap_index, 682 },
+    { ProgramNamedParameter4fvNV_names, ProgramNamedParameter4fvNV_remap_index, 684 },
+    { ProgramNamedParameter4dvNV_names, ProgramNamedParameter4dvNV_remap_index, 685 },
+    { ProgramNamedParameter4dNV_names, ProgramNamedParameter4dNV_remap_index, 683 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_NV_point_sprite)
 static const struct dri_extension_function GL_NV_point_sprite_functions[] = {
-    { PointParameteriNV_names, 642 },
-    { PointParameterivNV_names, 643 },
-    { NULL, 0 }
+    { PointParameteriNV_names, PointParameteriNV_remap_index, 642 },
+    { PointParameterivNV_names, PointParameterivNV_remap_index, 643 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_NV_register_combiners)
 static const struct dri_extension_function GL_NV_register_combiners_functions[] = {
-    { CombinerParameterfvNV_names, 499 },
-    { GetCombinerOutputParameterfvNV_names, 508 },
-    { FinalCombinerInputNV_names, 505 },
-    { GetCombinerInputParameterfvNV_names, 506 },
-    { GetCombinerOutputParameterivNV_names, 509 },
-    { CombinerOutputNV_names, 504 },
-    { CombinerParameteriNV_names, 502 },
-    { GetFinalCombinerInputParameterivNV_names, 511 },
-    { CombinerInputNV_names, 503 },
-    { CombinerParameterfNV_names, 500 },
-    { GetFinalCombinerInputParameterfvNV_names, 510 },
-    { GetCombinerInputParameterivNV_names, 507 },
-    { CombinerParameterivNV_names, 501 },
-    { NULL, 0 }
+    { CombinerParameterfvNV_names, CombinerParameterfvNV_remap_index, 499 },
+    { GetCombinerOutputParameterfvNV_names, GetCombinerOutputParameterfvNV_remap_index, 508 },
+    { FinalCombinerInputNV_names, FinalCombinerInputNV_remap_index, 505 },
+    { GetCombinerInputParameterfvNV_names, GetCombinerInputParameterfvNV_remap_index, 506 },
+    { GetCombinerOutputParameterivNV_names, GetCombinerOutputParameterivNV_remap_index, 509 },
+    { CombinerOutputNV_names, CombinerOutputNV_remap_index, 504 },
+    { CombinerParameteriNV_names, CombinerParameteriNV_remap_index, 502 },
+    { GetFinalCombinerInputParameterivNV_names, GetFinalCombinerInputParameterivNV_remap_index, 511 },
+    { CombinerInputNV_names, CombinerInputNV_remap_index, 503 },
+    { CombinerParameterfNV_names, CombinerParameterfNV_remap_index, 500 },
+    { GetFinalCombinerInputParameterfvNV_names, GetFinalCombinerInputParameterfvNV_remap_index, 510 },
+    { GetCombinerInputParameterivNV_names, GetCombinerInputParameterivNV_remap_index, 507 },
+    { CombinerParameterivNV_names, CombinerParameterivNV_remap_index, 501 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_NV_register_combiners2)
 static const struct dri_extension_function GL_NV_register_combiners2_functions[] = {
-    { CombinerStageParameterfvNV_names, -1 },
-    { GetCombinerStageParameterfvNV_names, -1 },
-    { NULL, 0 }
+    { CombinerStageParameterfvNV_names, CombinerStageParameterfvNV_remap_index, -1 },
+    { GetCombinerStageParameterfvNV_names, GetCombinerStageParameterfvNV_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_NV_vertex_array_range)
 static const struct dri_extension_function GL_NV_vertex_array_range_functions[] = {
-    { FlushVertexArrayRangeNV_names, 497 },
-    { VertexArrayRangeNV_names, 498 },
-    { NULL, 0 }
+    { FlushVertexArrayRangeNV_names, FlushVertexArrayRangeNV_remap_index, 497 },
+    { VertexArrayRangeNV_names, VertexArrayRangeNV_remap_index, 498 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_NV_vertex_program)
 static const struct dri_extension_function GL_NV_vertex_program_functions[] = {
-    { ProgramParameter4fNV_names, 596 },
-    { VertexAttrib4ubvNV_names, 781 },
-    { VertexAttrib4svNV_names, 779 },
-    { VertexAttribs1dvNV_names, 629 },
-    { ProgramParameter4dvNV_names, 595 },
-    { VertexAttrib4fNV_names, 776 },
-    { VertexAttrib2dNV_names, 762 },
-    { VertexAttrib4ubNV_names, 780 },
-    { VertexAttribs3dvNV_names, 635 },
-    { VertexAttribs4fvNV_names, 639 },
-    { VertexAttrib2sNV_names, 766 },
-    { VertexAttribs3fvNV_names, 636 },
-    { ProgramParameter4dNV_names, 594 },
-    { LoadProgramNV_names, 593 },
-    { VertexAttrib4fvNV_names, 777 },
-    { VertexAttrib3fNV_names, 770 },
-    { VertexAttribs2dvNV_names, 632 },
-    { GetProgramParameterfvNV_names, 584 },
-    { VertexAttrib3dNV_names, 768 },
-    { VertexAttrib2fvNV_names, 765 },
-    { VertexAttrib2dvNV_names, 763 },
-    { VertexAttrib1dvNV_names, 757 },
-    { ProgramParameter4fvNV_names, 597 },
-    { VertexAttrib1svNV_names, 761 },
-    { VertexAttribs2svNV_names, 634 },
-    { GetVertexAttribivNV_names, 755 },
-    { GetVertexAttribfvNV_names, 754 },
-    { VertexAttrib2svNV_names, 767 },
-    { VertexAttribs1fvNV_names, 630 },
-    { IsProgramNV_names, 592 },
-    { VertexAttrib4sNV_names, 778 },
-    { VertexAttrib2fNV_names, 764 },
-    { RequestResidentProgramsNV_names, 600 },
-    { ExecuteProgramNV_names, 581 },
-    { VertexAttribPointerNV_names, 602 },
-    { TrackMatrixNV_names, 601 },
-    { GetProgramParameterdvNV_names, 583 },
-    { VertexAttrib3sNV_names, 772 },
-    { GetTrackMatrixivNV_names, 587 },
-    { VertexAttrib3svNV_names, 773 },
-    { ProgramParameters4fvNV_names, 599 },
-    { GetProgramivNV_names, 585 },
-    { GetVertexAttribdvNV_names, 753 },
-    { VertexAttrib3fvNV_names, 771 },
-    { VertexAttribs2fvNV_names, 633 },
-    { VertexAttrib1fvNV_names, 759 },
-    { DeleteProgramsNV_names, 580 },
-    { GetVertexAttribPointervNV_names, 591 },
-    { GetProgramStringNV_names, 586 },
-    { VertexAttribs4dvNV_names, 638 },
-    { ProgramParameters4dvNV_names, 598 },
-    { VertexAttrib1fNV_names, 758 },
-    { VertexAttrib4dNV_names, 774 },
-    { VertexAttribs4ubvNV_names, 641 },
-    { VertexAttribs3svNV_names, 637 },
-    { VertexAttrib1sNV_names, 760 },
-    { BindProgramNV_names, 579 },
-    { AreProgramsResidentNV_names, 578 },
-    { VertexAttrib3dvNV_names, 769 },
-    { VertexAttrib1dNV_names, 756 },
-    { VertexAttribs4svNV_names, 640 },
-    { VertexAttribs1svNV_names, 631 },
-    { GenProgramsNV_names, 582 },
-    { VertexAttrib4dvNV_names, 775 },
-    { NULL, 0 }
+    { ProgramParameter4fNV_names, ProgramParameter4fNV_remap_index, 596 },
+    { VertexAttrib4ubvNV_names, VertexAttrib4ubvNV_remap_index, 781 },
+    { VertexAttrib4svNV_names, VertexAttrib4svNV_remap_index, 779 },
+    { VertexAttribs1dvNV_names, VertexAttribs1dvNV_remap_index, 629 },
+    { ProgramParameter4dvNV_names, ProgramParameter4dvNV_remap_index, 595 },
+    { VertexAttrib4fNV_names, VertexAttrib4fNV_remap_index, 776 },
+    { VertexAttrib2dNV_names, VertexAttrib2dNV_remap_index, 762 },
+    { VertexAttrib4ubNV_names, VertexAttrib4ubNV_remap_index, 780 },
+    { VertexAttribs3dvNV_names, VertexAttribs3dvNV_remap_index, 635 },
+    { VertexAttribs4fvNV_names, VertexAttribs4fvNV_remap_index, 639 },
+    { VertexAttrib2sNV_names, VertexAttrib2sNV_remap_index, 766 },
+    { VertexAttribs3fvNV_names, VertexAttribs3fvNV_remap_index, 636 },
+    { ProgramParameter4dNV_names, ProgramParameter4dNV_remap_index, 594 },
+    { LoadProgramNV_names, LoadProgramNV_remap_index, 593 },
+    { VertexAttrib4fvNV_names, VertexAttrib4fvNV_remap_index, 777 },
+    { VertexAttrib3fNV_names, VertexAttrib3fNV_remap_index, 770 },
+    { VertexAttribs2dvNV_names, VertexAttribs2dvNV_remap_index, 632 },
+    { GetProgramParameterfvNV_names, GetProgramParameterfvNV_remap_index, 584 },
+    { VertexAttrib3dNV_names, VertexAttrib3dNV_remap_index, 768 },
+    { VertexAttrib2fvNV_names, VertexAttrib2fvNV_remap_index, 765 },
+    { VertexAttrib2dvNV_names, VertexAttrib2dvNV_remap_index, 763 },
+    { VertexAttrib1dvNV_names, VertexAttrib1dvNV_remap_index, 757 },
+    { ProgramParameter4fvNV_names, ProgramParameter4fvNV_remap_index, 597 },
+    { VertexAttrib1svNV_names, VertexAttrib1svNV_remap_index, 761 },
+    { VertexAttribs2svNV_names, VertexAttribs2svNV_remap_index, 634 },
+    { GetVertexAttribivNV_names, GetVertexAttribivNV_remap_index, 755 },
+    { GetVertexAttribfvNV_names, GetVertexAttribfvNV_remap_index, 754 },
+    { VertexAttrib2svNV_names, VertexAttrib2svNV_remap_index, 767 },
+    { VertexAttribs1fvNV_names, VertexAttribs1fvNV_remap_index, 630 },
+    { IsProgramNV_names, IsProgramNV_remap_index, 592 },
+    { VertexAttrib4sNV_names, VertexAttrib4sNV_remap_index, 778 },
+    { VertexAttrib2fNV_names, VertexAttrib2fNV_remap_index, 764 },
+    { RequestResidentProgramsNV_names, RequestResidentProgramsNV_remap_index, 600 },
+    { ExecuteProgramNV_names, ExecuteProgramNV_remap_index, 581 },
+    { VertexAttribPointerNV_names, VertexAttribPointerNV_remap_index, 602 },
+    { TrackMatrixNV_names, TrackMatrixNV_remap_index, 601 },
+    { GetProgramParameterdvNV_names, GetProgramParameterdvNV_remap_index, 583 },
+    { VertexAttrib3sNV_names, VertexAttrib3sNV_remap_index, 772 },
+    { GetTrackMatrixivNV_names, GetTrackMatrixivNV_remap_index, 587 },
+    { VertexAttrib3svNV_names, VertexAttrib3svNV_remap_index, 773 },
+    { ProgramParameters4fvNV_names, ProgramParameters4fvNV_remap_index, 599 },
+    { GetProgramivNV_names, GetProgramivNV_remap_index, 585 },
+    { GetVertexAttribdvNV_names, GetVertexAttribdvNV_remap_index, 753 },
+    { VertexAttrib3fvNV_names, VertexAttrib3fvNV_remap_index, 771 },
+    { VertexAttribs2fvNV_names, VertexAttribs2fvNV_remap_index, 633 },
+    { VertexAttrib1fvNV_names, VertexAttrib1fvNV_remap_index, 759 },
+    { DeleteProgramsNV_names, DeleteProgramsNV_remap_index, 580 },
+    { GetVertexAttribPointervNV_names, GetVertexAttribPointervNV_remap_index, 591 },
+    { GetProgramStringNV_names, GetProgramStringNV_remap_index, 586 },
+    { VertexAttribs4dvNV_names, VertexAttribs4dvNV_remap_index, 638 },
+    { ProgramParameters4dvNV_names, ProgramParameters4dvNV_remap_index, 598 },
+    { VertexAttrib1fNV_names, VertexAttrib1fNV_remap_index, 758 },
+    { VertexAttrib4dNV_names, VertexAttrib4dNV_remap_index, 774 },
+    { VertexAttribs4ubvNV_names, VertexAttribs4ubvNV_remap_index, 641 },
+    { VertexAttribs3svNV_names, VertexAttribs3svNV_remap_index, 637 },
+    { VertexAttrib1sNV_names, VertexAttrib1sNV_remap_index, 760 },
+    { BindProgramNV_names, BindProgramNV_remap_index, 579 },
+    { AreProgramsResidentNV_names, AreProgramsResidentNV_remap_index, 578 },
+    { VertexAttrib3dvNV_names, VertexAttrib3dvNV_remap_index, 769 },
+    { VertexAttrib1dNV_names, VertexAttrib1dNV_remap_index, 756 },
+    { VertexAttribs4svNV_names, VertexAttribs4svNV_remap_index, 640 },
+    { VertexAttribs1svNV_names, VertexAttribs1svNV_remap_index, 631 },
+    { GenProgramsNV_names, GenProgramsNV_remap_index, 582 },
+    { VertexAttrib4dvNV_names, VertexAttrib4dvNV_remap_index, 775 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_PGI_misc_hints)
 static const struct dri_extension_function GL_PGI_misc_hints_functions[] = {
-    { HintPGI_names, 544 },
-    { NULL, 0 }
+    { HintPGI_names, HintPGI_remap_index, 544 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIS_detail_texture)
 static const struct dri_extension_function GL_SGIS_detail_texture_functions[] = {
-    { GetDetailTexFuncSGIS_names, 443 },
-    { DetailTexFuncSGIS_names, 442 },
-    { NULL, 0 }
+    { GetDetailTexFuncSGIS_names, GetDetailTexFuncSGIS_remap_index, 443 },
+    { DetailTexFuncSGIS_names, DetailTexFuncSGIS_remap_index, 442 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIS_fog_function)
 static const struct dri_extension_function GL_SGIS_fog_function_functions[] = {
-    { FogFuncSGIS_names, -1 },
-    { GetFogFuncSGIS_names, -1 },
-    { NULL, 0 }
+    { FogFuncSGIS_names, FogFuncSGIS_remap_index, -1 },
+    { GetFogFuncSGIS_names, GetFogFuncSGIS_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIS_multisample)
 static const struct dri_extension_function GL_SGIS_multisample_functions[] = {
-    { SampleMaskSGIS_names, 446 },
-    { SamplePatternSGIS_names, 447 },
-    { NULL, 0 }
+    { SampleMaskSGIS_names, SampleMaskSGIS_remap_index, 446 },
+    { SamplePatternSGIS_names, SamplePatternSGIS_remap_index, 447 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIS_pixel_texture)
 static const struct dri_extension_function GL_SGIS_pixel_texture_functions[] = {
-    { PixelTexGenParameterfvSGIS_names, 434 },
-    { GetPixelTexGenParameterivSGIS_names, 435 },
-    { PixelTexGenParameteriSGIS_names, 431 },
-    { PixelTexGenParameterivSGIS_names, 432 },
-    { PixelTexGenParameterfSGIS_names, 433 },
-    { GetPixelTexGenParameterfvSGIS_names, 436 },
-    { NULL, 0 }
+    { PixelTexGenParameterfvSGIS_names, PixelTexGenParameterfvSGIS_remap_index, 434 },
+    { GetPixelTexGenParameterivSGIS_names, GetPixelTexGenParameterivSGIS_remap_index, 435 },
+    { PixelTexGenParameteriSGIS_names, PixelTexGenParameteriSGIS_remap_index, 431 },
+    { PixelTexGenParameterivSGIS_names, PixelTexGenParameterivSGIS_remap_index, 432 },
+    { PixelTexGenParameterfSGIS_names, PixelTexGenParameterfSGIS_remap_index, 433 },
+    { GetPixelTexGenParameterfvSGIS_names, GetPixelTexGenParameterfvSGIS_remap_index, 436 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIS_point_parameters)
 static const struct dri_extension_function GL_SGIS_point_parameters_functions[] = {
-    { PointParameterfEXT_names, 458 },
-    { PointParameterfvEXT_names, 459 },
-    { NULL, 0 }
+    { PointParameterfEXT_names, PointParameterfEXT_remap_index, 458 },
+    { PointParameterfvEXT_names, PointParameterfvEXT_remap_index, 459 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIS_sharpen_texture)
 static const struct dri_extension_function GL_SGIS_sharpen_texture_functions[] = {
-    { GetSharpenTexFuncSGIS_names, 445 },
-    { SharpenTexFuncSGIS_names, 444 },
-    { NULL, 0 }
+    { GetSharpenTexFuncSGIS_names, GetSharpenTexFuncSGIS_remap_index, 445 },
+    { SharpenTexFuncSGIS_names, SharpenTexFuncSGIS_remap_index, 444 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIS_texture4D)
 static const struct dri_extension_function GL_SGIS_texture4D_functions[] = {
-    { TexImage4DSGIS_names, 437 },
-    { TexSubImage4DSGIS_names, 438 },
-    { NULL, 0 }
+    { TexImage4DSGIS_names, TexImage4DSGIS_remap_index, 437 },
+    { TexSubImage4DSGIS_names, TexSubImage4DSGIS_remap_index, 438 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIS_texture_color_mask)
 static const struct dri_extension_function GL_SGIS_texture_color_mask_functions[] = {
-    { TextureColorMaskSGIS_names, -1 },
-    { NULL, 0 }
+    { TextureColorMaskSGIS_names, TextureColorMaskSGIS_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIS_texture_filter4)
 static const struct dri_extension_function GL_SGIS_texture_filter4_functions[] = {
-    { GetTexFilterFuncSGIS_names, 415 },
-    { TexFilterFuncSGIS_names, 416 },
-    { NULL, 0 }
+    { GetTexFilterFuncSGIS_names, GetTexFilterFuncSGIS_remap_index, 415 },
+    { TexFilterFuncSGIS_names, TexFilterFuncSGIS_remap_index, 416 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIX_async)
 static const struct dri_extension_function GL_SGIX_async_functions[] = {
-    { AsyncMarkerSGIX_names, -1 },
-    { FinishAsyncSGIX_names, -1 },
-    { PollAsyncSGIX_names, -1 },
-    { DeleteAsyncMarkersSGIX_names, -1 },
-    { IsAsyncMarkerSGIX_names, -1 },
-    { GenAsyncMarkersSGIX_names, -1 },
-    { NULL, 0 }
+    { AsyncMarkerSGIX_names, AsyncMarkerSGIX_remap_index, -1 },
+    { FinishAsyncSGIX_names, FinishAsyncSGIX_remap_index, -1 },
+    { PollAsyncSGIX_names, PollAsyncSGIX_remap_index, -1 },
+    { DeleteAsyncMarkersSGIX_names, DeleteAsyncMarkersSGIX_remap_index, -1 },
+    { IsAsyncMarkerSGIX_names, IsAsyncMarkerSGIX_remap_index, -1 },
+    { GenAsyncMarkersSGIX_names, GenAsyncMarkersSGIX_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIX_flush_raster)
 static const struct dri_extension_function GL_SGIX_flush_raster_functions[] = {
-    { FlushRasterSGIX_names, 469 },
-    { NULL, 0 }
+    { FlushRasterSGIX_names, FlushRasterSGIX_remap_index, 469 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIX_fragment_lighting)
 static const struct dri_extension_function GL_SGIX_fragment_lighting_functions[] = {
-    { FragmentMaterialfvSGIX_names, 486 },
-    { FragmentLightModelivSGIX_names, 484 },
-    { FragmentLightiSGIX_names, 479 },
-    { GetFragmentMaterialfvSGIX_names, 491 },
-    { FragmentMaterialfSGIX_names, 485 },
-    { GetFragmentLightivSGIX_names, 490 },
-    { FragmentLightModeliSGIX_names, 483 },
-    { FragmentLightivSGIX_names, 480 },
-    { GetFragmentMaterialivSGIX_names, 492 },
-    { FragmentLightModelfSGIX_names, 481 },
-    { FragmentColorMaterialSGIX_names, 476 },
-    { FragmentMaterialiSGIX_names, 487 },
-    { LightEnviSGIX_names, 493 },
-    { FragmentLightModelfvSGIX_names, 482 },
-    { FragmentLightfvSGIX_names, 478 },
-    { FragmentLightfSGIX_names, 477 },
-    { GetFragmentLightfvSGIX_names, 489 },
-    { FragmentMaterialivSGIX_names, 488 },
-    { NULL, 0 }
+    { FragmentMaterialfvSGIX_names, FragmentMaterialfvSGIX_remap_index, 486 },
+    { FragmentLightModelivSGIX_names, FragmentLightModelivSGIX_remap_index, 484 },
+    { FragmentLightiSGIX_names, FragmentLightiSGIX_remap_index, 479 },
+    { GetFragmentMaterialfvSGIX_names, GetFragmentMaterialfvSGIX_remap_index, 491 },
+    { FragmentMaterialfSGIX_names, FragmentMaterialfSGIX_remap_index, 485 },
+    { GetFragmentLightivSGIX_names, GetFragmentLightivSGIX_remap_index, 490 },
+    { FragmentLightModeliSGIX_names, FragmentLightModeliSGIX_remap_index, 483 },
+    { FragmentLightivSGIX_names, FragmentLightivSGIX_remap_index, 480 },
+    { GetFragmentMaterialivSGIX_names, GetFragmentMaterialivSGIX_remap_index, 492 },
+    { FragmentLightModelfSGIX_names, FragmentLightModelfSGIX_remap_index, 481 },
+    { FragmentColorMaterialSGIX_names, FragmentColorMaterialSGIX_remap_index, 476 },
+    { FragmentMaterialiSGIX_names, FragmentMaterialiSGIX_remap_index, 487 },
+    { LightEnviSGIX_names, LightEnviSGIX_remap_index, 493 },
+    { FragmentLightModelfvSGIX_names, FragmentLightModelfvSGIX_remap_index, 482 },
+    { FragmentLightfvSGIX_names, FragmentLightfvSGIX_remap_index, 478 },
+    { FragmentLightfSGIX_names, FragmentLightfSGIX_remap_index, 477 },
+    { GetFragmentLightfvSGIX_names, GetFragmentLightfvSGIX_remap_index, 489 },
+    { FragmentMaterialivSGIX_names, FragmentMaterialivSGIX_remap_index, 488 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIX_framezoom)
 static const struct dri_extension_function GL_SGIX_framezoom_functions[] = {
-    { FrameZoomSGIX_names, 466 },
-    { NULL, 0 }
+    { FrameZoomSGIX_names, FrameZoomSGIX_remap_index, 466 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIX_igloo_interface)
 static const struct dri_extension_function GL_SGIX_igloo_interface_functions[] = {
-    { IglooInterfaceSGIX_names, -1 },
-    { NULL, 0 }
+    { IglooInterfaceSGIX_names, IglooInterfaceSGIX_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIX_instruments)
 static const struct dri_extension_function GL_SGIX_instruments_functions[] = {
-    { ReadInstrumentsSGIX_names, 463 },
-    { GetInstrumentsSGIX_names, 460 },
-    { StartInstrumentsSGIX_names, 464 },
-    { StopInstrumentsSGIX_names, 465 },
-    { InstrumentsBufferSGIX_names, 461 },
-    { PollInstrumentsSGIX_names, 462 },
-    { NULL, 0 }
+    { ReadInstrumentsSGIX_names, ReadInstrumentsSGIX_remap_index, 463 },
+    { GetInstrumentsSGIX_names, GetInstrumentsSGIX_remap_index, 460 },
+    { StartInstrumentsSGIX_names, StartInstrumentsSGIX_remap_index, 464 },
+    { StopInstrumentsSGIX_names, StopInstrumentsSGIX_remap_index, 465 },
+    { InstrumentsBufferSGIX_names, InstrumentsBufferSGIX_remap_index, 461 },
+    { PollInstrumentsSGIX_names, PollInstrumentsSGIX_remap_index, 462 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIX_list_priority)
 static const struct dri_extension_function GL_SGIX_list_priority_functions[] = {
-    { ListParameterfSGIX_names, 472 },
-    { GetListParameterivSGIX_names, 471 },
-    { GetListParameterfvSGIX_names, 470 },
-    { ListParameteriSGIX_names, 474 },
-    { ListParameterfvSGIX_names, 473 },
-    { ListParameterivSGIX_names, 475 },
-    { NULL, 0 }
+    { ListParameterfSGIX_names, ListParameterfSGIX_remap_index, 472 },
+    { GetListParameterivSGIX_names, GetListParameterivSGIX_remap_index, 471 },
+    { GetListParameterfvSGIX_names, GetListParameterfvSGIX_remap_index, 470 },
+    { ListParameteriSGIX_names, ListParameteriSGIX_remap_index, 474 },
+    { ListParameterfvSGIX_names, ListParameterfvSGIX_remap_index, 473 },
+    { ListParameterivSGIX_names, ListParameterivSGIX_remap_index, 475 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIX_pixel_texture)
 static const struct dri_extension_function GL_SGIX_pixel_texture_functions[] = {
-    { PixelTexGenSGIX_names, 430 },
-    { NULL, 0 }
+    { PixelTexGenSGIX_names, PixelTexGenSGIX_remap_index, 430 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIX_polynomial_ffd)
 static const struct dri_extension_function GL_SGIX_polynomial_ffd_functions[] = {
-    { LoadIdentityDeformationMapSGIX_names, -1 },
-    { DeformationMap3dSGIX_names, -1 },
-    { DeformSGIX_names, -1 },
-    { DeformationMap3fSGIX_names, -1 },
-    { NULL, 0 }
+    { LoadIdentityDeformationMapSGIX_names, LoadIdentityDeformationMapSGIX_remap_index, -1 },
+    { DeformationMap3dSGIX_names, DeformationMap3dSGIX_remap_index, -1 },
+    { DeformSGIX_names, DeformSGIX_remap_index, -1 },
+    { DeformationMap3fSGIX_names, DeformationMap3fSGIX_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIX_reference_plane)
 static const struct dri_extension_function GL_SGIX_reference_plane_functions[] = {
-    { ReferencePlaneSGIX_names, 468 },
-    { NULL, 0 }
+    { ReferencePlaneSGIX_names, ReferencePlaneSGIX_remap_index, 468 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIX_sprite)
 static const struct dri_extension_function GL_SGIX_sprite_functions[] = {
-    { SpriteParameterfvSGIX_names, 455 },
-    { SpriteParameteriSGIX_names, 456 },
-    { SpriteParameterfSGIX_names, 454 },
-    { SpriteParameterivSGIX_names, 457 },
-    { NULL, 0 }
+    { SpriteParameterfvSGIX_names, SpriteParameterfvSGIX_remap_index, 455 },
+    { SpriteParameteriSGIX_names, SpriteParameteriSGIX_remap_index, 456 },
+    { SpriteParameterfSGIX_names, SpriteParameterfSGIX_remap_index, 454 },
+    { SpriteParameterivSGIX_names, SpriteParameterivSGIX_remap_index, 457 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGIX_tag_sample_buffer)
 static const struct dri_extension_function GL_SGIX_tag_sample_buffer_functions[] = {
-    { TagSampleBufferSGIX_names, 467 },
-    { NULL, 0 }
+    { TagSampleBufferSGIX_names, TagSampleBufferSGIX_remap_index, 467 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SGI_color_table)
 static const struct dri_extension_function GL_SGI_color_table_functions[] = {
-    { GetColorTableParameterfvSGI_names, 428 },
-    { ColorTableParameteriv_names, 341 },
-    { ColorTable_names, 339 },
-    { CopyColorTable_names, 342 },
-    { ColorTableParameterfv_names, 340 },
-    { GetColorTableParameterivSGI_names, 429 },
-    { GetColorTableSGI_names, 427 },
-    { NULL, 0 }
+    { GetColorTableParameterfvSGI_names, GetColorTableParameterfvSGI_remap_index, 428 },
+    { ColorTableParameteriv_names, -1, 341 },
+    { ColorTable_names, -1, 339 },
+    { CopyColorTable_names, -1, 342 },
+    { ColorTableParameterfv_names, -1, 340 },
+    { GetColorTableParameterivSGI_names, GetColorTableParameterivSGI_remap_index, 429 },
+    { GetColorTableSGI_names, GetColorTableSGI_remap_index, 427 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SUNX_constant_data)
 static const struct dri_extension_function GL_SUNX_constant_data_functions[] = {
-    { FinishTextureSUNX_names, -1 },
-    { NULL, 0 }
+    { FinishTextureSUNX_names, FinishTextureSUNX_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SUN_global_alpha)
 static const struct dri_extension_function GL_SUN_global_alpha_functions[] = {
-    { GlobalAlphaFactorubSUN_names, -1 },
-    { GlobalAlphaFactoriSUN_names, -1 },
-    { GlobalAlphaFactordSUN_names, -1 },
-    { GlobalAlphaFactoruiSUN_names, -1 },
-    { GlobalAlphaFactorbSUN_names, -1 },
-    { GlobalAlphaFactorfSUN_names, -1 },
-    { GlobalAlphaFactorusSUN_names, -1 },
-    { GlobalAlphaFactorsSUN_names, -1 },
-    { NULL, 0 }
+    { GlobalAlphaFactorubSUN_names, GlobalAlphaFactorubSUN_remap_index, -1 },
+    { GlobalAlphaFactoriSUN_names, GlobalAlphaFactoriSUN_remap_index, -1 },
+    { GlobalAlphaFactordSUN_names, GlobalAlphaFactordSUN_remap_index, -1 },
+    { GlobalAlphaFactoruiSUN_names, GlobalAlphaFactoruiSUN_remap_index, -1 },
+    { GlobalAlphaFactorbSUN_names, GlobalAlphaFactorbSUN_remap_index, -1 },
+    { GlobalAlphaFactorfSUN_names, GlobalAlphaFactorfSUN_remap_index, -1 },
+    { GlobalAlphaFactorusSUN_names, GlobalAlphaFactorusSUN_remap_index, -1 },
+    { GlobalAlphaFactorsSUN_names, GlobalAlphaFactorsSUN_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SUN_mesh_array)
 static const struct dri_extension_function GL_SUN_mesh_array_functions[] = {
-    { DrawMeshArraysSUN_names, -1 },
-    { NULL, 0 }
+    { DrawMeshArraysSUN_names, DrawMeshArraysSUN_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SUN_triangle_list)
 static const struct dri_extension_function GL_SUN_triangle_list_functions[] = {
-    { ReplacementCodeubSUN_names, -1 },
-    { ReplacementCodeubvSUN_names, -1 },
-    { ReplacementCodeuivSUN_names, -1 },
-    { ReplacementCodeusvSUN_names, -1 },
-    { ReplacementCodePointerSUN_names, -1 },
-    { ReplacementCodeusSUN_names, -1 },
-    { ReplacementCodeuiSUN_names, -1 },
-    { NULL, 0 }
+    { ReplacementCodeubSUN_names, ReplacementCodeubSUN_remap_index, -1 },
+    { ReplacementCodeubvSUN_names, ReplacementCodeubvSUN_remap_index, -1 },
+    { ReplacementCodeuivSUN_names, ReplacementCodeuivSUN_remap_index, -1 },
+    { ReplacementCodeusvSUN_names, ReplacementCodeusvSUN_remap_index, -1 },
+    { ReplacementCodePointerSUN_names, ReplacementCodePointerSUN_remap_index, -1 },
+    { ReplacementCodeusSUN_names, ReplacementCodeusSUN_remap_index, -1 },
+    { ReplacementCodeuiSUN_names, ReplacementCodeuiSUN_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_SUN_vertex)
 static const struct dri_extension_function GL_SUN_vertex_functions[] = {
-    { ReplacementCodeuiColor3fVertex3fvSUN_names, -1 },
-    { TexCoord4fColor4fNormal3fVertex4fvSUN_names, -1 },
-    { TexCoord2fColor4ubVertex3fvSUN_names, -1 },
-    { ReplacementCodeuiVertex3fvSUN_names, -1 },
-    { ReplacementCodeuiTexCoord2fVertex3fvSUN_names, -1 },
-    { ReplacementCodeuiNormal3fVertex3fSUN_names, -1 },
-    { Color4ubVertex3fvSUN_names, -1 },
-    { Color4ubVertex3fSUN_names, -1 },
-    { TexCoord2fVertex3fSUN_names, -1 },
-    { TexCoord2fColor4fNormal3fVertex3fSUN_names, -1 },
-    { TexCoord2fNormal3fVertex3fvSUN_names, -1 },
-    { ReplacementCodeuiTexCoord2fNormal3fVertex3fSUN_names, -1 },
-    { ReplacementCodeuiTexCoord2fVertex3fSUN_names, -1 },
-    { Color3fVertex3fSUN_names, -1 },
-    { ReplacementCodeuiNormal3fVertex3fvSUN_names, -1 },
-    { Color3fVertex3fvSUN_names, -1 },
-    { Color4fNormal3fVertex3fvSUN_names, -1 },
-    { ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN_names, -1 },
-    { ReplacementCodeuiColor4fNormal3fVertex3fvSUN_names, -1 },
-    { ReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN_names, -1 },
-    { TexCoord2fColor3fVertex3fSUN_names, -1 },
-    { TexCoord4fColor4fNormal3fVertex4fSUN_names, -1 },
-    { Color4ubVertex2fvSUN_names, -1 },
-    { Normal3fVertex3fSUN_names, -1 },
-    { ReplacementCodeuiColor4fNormal3fVertex3fSUN_names, -1 },
-    { TexCoord2fNormal3fVertex3fSUN_names, -1 },
-    { TexCoord2fVertex3fvSUN_names, -1 },
-    { Color4ubVertex2fSUN_names, -1 },
-    { ReplacementCodeuiColor4ubVertex3fSUN_names, -1 },
-    { TexCoord2fColor4ubVertex3fSUN_names, -1 },
-    { Normal3fVertex3fvSUN_names, -1 },
-    { Color4fNormal3fVertex3fSUN_names, -1 },
-    { TexCoord2fColor4fNormal3fVertex3fvSUN_names, -1 },
-    { ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN_names, -1 },
-    { ReplacementCodeuiColor4ubVertex3fvSUN_names, -1 },
-    { ReplacementCodeuiColor3fVertex3fSUN_names, -1 },
-    { TexCoord4fVertex4fSUN_names, -1 },
-    { TexCoord2fColor3fVertex3fvSUN_names, -1 },
-    { TexCoord4fVertex4fvSUN_names, -1 },
-    { ReplacementCodeuiVertex3fSUN_names, -1 },
-    { NULL, 0 }
+    { ReplacementCodeuiColor3fVertex3fvSUN_names, ReplacementCodeuiColor3fVertex3fvSUN_remap_index, -1 },
+    { TexCoord4fColor4fNormal3fVertex4fvSUN_names, TexCoord4fColor4fNormal3fVertex4fvSUN_remap_index, -1 },
+    { TexCoord2fColor4ubVertex3fvSUN_names, TexCoord2fColor4ubVertex3fvSUN_remap_index, -1 },
+    { ReplacementCodeuiVertex3fvSUN_names, ReplacementCodeuiVertex3fvSUN_remap_index, -1 },
+    { ReplacementCodeuiTexCoord2fVertex3fvSUN_names, ReplacementCodeuiTexCoord2fVertex3fvSUN_remap_index, -1 },
+    { ReplacementCodeuiNormal3fVertex3fSUN_names, ReplacementCodeuiNormal3fVertex3fSUN_remap_index, -1 },
+    { Color4ubVertex3fvSUN_names, Color4ubVertex3fvSUN_remap_index, -1 },
+    { Color4ubVertex3fSUN_names, Color4ubVertex3fSUN_remap_index, -1 },
+    { TexCoord2fVertex3fSUN_names, TexCoord2fVertex3fSUN_remap_index, -1 },
+    { TexCoord2fColor4fNormal3fVertex3fSUN_names, TexCoord2fColor4fNormal3fVertex3fSUN_remap_index, -1 },
+    { TexCoord2fNormal3fVertex3fvSUN_names, TexCoord2fNormal3fVertex3fvSUN_remap_index, -1 },
+    { ReplacementCodeuiTexCoord2fNormal3fVertex3fSUN_names, ReplacementCodeuiTexCoord2fNormal3fVertex3fSUN_remap_index, -1 },
+    { ReplacementCodeuiTexCoord2fVertex3fSUN_names, ReplacementCodeuiTexCoord2fVertex3fSUN_remap_index, -1 },
+    { Color3fVertex3fSUN_names, Color3fVertex3fSUN_remap_index, -1 },
+    { ReplacementCodeuiNormal3fVertex3fvSUN_names, ReplacementCodeuiNormal3fVertex3fvSUN_remap_index, -1 },
+    { Color3fVertex3fvSUN_names, Color3fVertex3fvSUN_remap_index, -1 },
+    { Color4fNormal3fVertex3fvSUN_names, Color4fNormal3fVertex3fvSUN_remap_index, -1 },
+    { ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN_names, ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN_remap_index, -1 },
+    { ReplacementCodeuiColor4fNormal3fVertex3fvSUN_names, ReplacementCodeuiColor4fNormal3fVertex3fvSUN_remap_index, -1 },
+    { ReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN_names, ReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN_remap_index, -1 },
+    { TexCoord2fColor3fVertex3fSUN_names, TexCoord2fColor3fVertex3fSUN_remap_index, -1 },
+    { TexCoord4fColor4fNormal3fVertex4fSUN_names, TexCoord4fColor4fNormal3fVertex4fSUN_remap_index, -1 },
+    { Color4ubVertex2fvSUN_names, Color4ubVertex2fvSUN_remap_index, -1 },
+    { Normal3fVertex3fSUN_names, Normal3fVertex3fSUN_remap_index, -1 },
+    { ReplacementCodeuiColor4fNormal3fVertex3fSUN_names, ReplacementCodeuiColor4fNormal3fVertex3fSUN_remap_index, -1 },
+    { TexCoord2fNormal3fVertex3fSUN_names, TexCoord2fNormal3fVertex3fSUN_remap_index, -1 },
+    { TexCoord2fVertex3fvSUN_names, TexCoord2fVertex3fvSUN_remap_index, -1 },
+    { Color4ubVertex2fSUN_names, Color4ubVertex2fSUN_remap_index, -1 },
+    { ReplacementCodeuiColor4ubVertex3fSUN_names, ReplacementCodeuiColor4ubVertex3fSUN_remap_index, -1 },
+    { TexCoord2fColor4ubVertex3fSUN_names, TexCoord2fColor4ubVertex3fSUN_remap_index, -1 },
+    { Normal3fVertex3fvSUN_names, Normal3fVertex3fvSUN_remap_index, -1 },
+    { Color4fNormal3fVertex3fSUN_names, Color4fNormal3fVertex3fSUN_remap_index, -1 },
+    { TexCoord2fColor4fNormal3fVertex3fvSUN_names, TexCoord2fColor4fNormal3fVertex3fvSUN_remap_index, -1 },
+    { ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN_names, ReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN_remap_index, -1 },
+    { ReplacementCodeuiColor4ubVertex3fvSUN_names, ReplacementCodeuiColor4ubVertex3fvSUN_remap_index, -1 },
+    { ReplacementCodeuiColor3fVertex3fSUN_names, ReplacementCodeuiColor3fVertex3fSUN_remap_index, -1 },
+    { TexCoord4fVertex4fSUN_names, TexCoord4fVertex4fSUN_remap_index, -1 },
+    { TexCoord2fColor3fVertex3fvSUN_names, TexCoord2fColor3fVertex3fvSUN_remap_index, -1 },
+    { TexCoord4fVertex4fvSUN_names, TexCoord4fVertex4fvSUN_remap_index, -1 },
+    { ReplacementCodeuiVertex3fSUN_names, ReplacementCodeuiVertex3fSUN_remap_index, -1 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_VERSION_1_3)
 static const struct dri_extension_function GL_VERSION_1_3_functions[] = {
-    { SampleCoverageARB_names, 412 },
-    { MultiTexCoord3sARB_names, 398 },
-    { ActiveTextureARB_names, 374 },
-    { CompressedTexSubImage2DARB_names, 558 },
-    { CompressedTexImage3DARB_names, 554 },
-    { MultiTexCoord1fvARB_names, 379 },
-    { MultTransposeMatrixdARB_names, 411 },
-    { CompressedTexImage1DARB_names, 556 },
-    { MultiTexCoord3dARB_names, 392 },
-    { MultiTexCoord2iARB_names, 388 },
-    { MultiTexCoord2svARB_names, 391 },
-    { MultiTexCoord2fARB_names, 386 },
-    { LoadTransposeMatrixdARB_names, 409 },
-    { MultiTexCoord3fvARB_names, 395 },
-    { MultiTexCoord4sARB_names, 406 },
-    { MultiTexCoord2dvARB_names, 385 },
-    { MultiTexCoord1svARB_names, 383 },
-    { MultiTexCoord3svARB_names, 399 },
-    { MultiTexCoord4iARB_names, 404 },
-    { MultiTexCoord3iARB_names, 396 },
-    { MultiTexCoord1dARB_names, 376 },
-    { MultiTexCoord3dvARB_names, 393 },
-    { MultiTexCoord3ivARB_names, 397 },
-    { MultiTexCoord2sARB_names, 390 },
-    { MultiTexCoord4ivARB_names, 405 },
-    { CompressedTexSubImage1DARB_names, 559 },
-    { ClientActiveTextureARB_names, 375 },
-    { CompressedTexSubImage3DARB_names, 557 },
-    { MultiTexCoord2dARB_names, 384 },
-    { MultiTexCoord4dvARB_names, 401 },
-    { MultiTexCoord4fvARB_names, 403 },
-    { MultiTexCoord3fARB_names, 394 },
-    { MultTransposeMatrixfARB_names, 410 },
-    { CompressedTexImage2DARB_names, 555 },
-    { MultiTexCoord4dARB_names, 400 },
-    { MultiTexCoord1sARB_names, 382 },
-    { MultiTexCoord1dvARB_names, 377 },
-    { MultiTexCoord1ivARB_names, 381 },
-    { MultiTexCoord2ivARB_names, 389 },
-    { MultiTexCoord1iARB_names, 380 },
-    { GetCompressedTexImageARB_names, 560 },
-    { MultiTexCoord4svARB_names, 407 },
-    { MultiTexCoord1fARB_names, 378 },
-    { MultiTexCoord4fARB_names, 402 },
-    { LoadTransposeMatrixfARB_names, 408 },
-    { MultiTexCoord2fvARB_names, 387 },
-    { NULL, 0 }
+    { SampleCoverageARB_names, SampleCoverageARB_remap_index, 412 },
+    { MultiTexCoord3sARB_names, -1, 398 },
+    { ActiveTextureARB_names, -1, 374 },
+    { CompressedTexSubImage2DARB_names, CompressedTexSubImage2DARB_remap_index, 558 },
+    { CompressedTexImage3DARB_names, CompressedTexImage3DARB_remap_index, 554 },
+    { MultiTexCoord1fvARB_names, -1, 379 },
+    { MultTransposeMatrixdARB_names, MultTransposeMatrixdARB_remap_index, 411 },
+    { CompressedTexImage1DARB_names, CompressedTexImage1DARB_remap_index, 556 },
+    { MultiTexCoord3dARB_names, -1, 392 },
+    { MultiTexCoord2iARB_names, -1, 388 },
+    { MultiTexCoord2svARB_names, -1, 391 },
+    { MultiTexCoord2fARB_names, -1, 386 },
+    { LoadTransposeMatrixdARB_names, LoadTransposeMatrixdARB_remap_index, 409 },
+    { MultiTexCoord3fvARB_names, -1, 395 },
+    { MultiTexCoord4sARB_names, -1, 406 },
+    { MultiTexCoord2dvARB_names, -1, 385 },
+    { MultiTexCoord1svARB_names, -1, 383 },
+    { MultiTexCoord3svARB_names, -1, 399 },
+    { MultiTexCoord4iARB_names, -1, 404 },
+    { MultiTexCoord3iARB_names, -1, 396 },
+    { MultiTexCoord1dARB_names, -1, 376 },
+    { MultiTexCoord3dvARB_names, -1, 393 },
+    { MultiTexCoord3ivARB_names, -1, 397 },
+    { MultiTexCoord2sARB_names, -1, 390 },
+    { MultiTexCoord4ivARB_names, -1, 405 },
+    { CompressedTexSubImage1DARB_names, CompressedTexSubImage1DARB_remap_index, 559 },
+    { ClientActiveTextureARB_names, -1, 375 },
+    { CompressedTexSubImage3DARB_names, CompressedTexSubImage3DARB_remap_index, 557 },
+    { MultiTexCoord2dARB_names, -1, 384 },
+    { MultiTexCoord4dvARB_names, -1, 401 },
+    { MultiTexCoord4fvARB_names, -1, 403 },
+    { MultiTexCoord3fARB_names, -1, 394 },
+    { MultTransposeMatrixfARB_names, MultTransposeMatrixfARB_remap_index, 410 },
+    { CompressedTexImage2DARB_names, CompressedTexImage2DARB_remap_index, 555 },
+    { MultiTexCoord4dARB_names, -1, 400 },
+    { MultiTexCoord1sARB_names, -1, 382 },
+    { MultiTexCoord1dvARB_names, -1, 377 },
+    { MultiTexCoord1ivARB_names, -1, 381 },
+    { MultiTexCoord2ivARB_names, -1, 389 },
+    { MultiTexCoord1iARB_names, -1, 380 },
+    { GetCompressedTexImageARB_names, GetCompressedTexImageARB_remap_index, 560 },
+    { MultiTexCoord4svARB_names, -1, 407 },
+    { MultiTexCoord1fARB_names, -1, 378 },
+    { MultiTexCoord4fARB_names, -1, 402 },
+    { LoadTransposeMatrixfARB_names, LoadTransposeMatrixfARB_remap_index, 408 },
+    { MultiTexCoord2fvARB_names, -1, 387 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_VERSION_1_4)
 static const struct dri_extension_function GL_VERSION_1_4_functions[] = {
-    { PointParameteriNV_names, 642 },
-    { SecondaryColor3iEXT_names, 567 },
-    { WindowPos3fMESA_names, 523 },
-    { WindowPos2dvMESA_names, 514 },
-    { SecondaryColor3bEXT_names, 561 },
-    { PointParameterfEXT_names, 458 },
-    { FogCoorddEXT_names, 547 },
-    { FogCoordfEXT_names, 545 },
-    { WindowPos2svMESA_names, 520 },
-    { WindowPos3dMESA_names, 521 },
-    { PointParameterfvEXT_names, 459 },
-    { WindowPos2fvMESA_names, 516 },
-    { SecondaryColor3bvEXT_names, 562 },
-    { SecondaryColor3sEXT_names, 569 },
-    { SecondaryColor3dEXT_names, 563 },
-    { WindowPos2dMESA_names, 513 },
-    { SecondaryColorPointerEXT_names, 577 },
-    { SecondaryColor3uiEXT_names, 573 },
-    { SecondaryColor3usvEXT_names, 576 },
-    { WindowPos3dvMESA_names, 522 },
-    { PointParameterivNV_names, 643 },
-    { WindowPos3fvMESA_names, 524 },
-    { SecondaryColor3ivEXT_names, 568 },
-    { WindowPos2iMESA_names, 517 },
-    { SecondaryColor3fvEXT_names, 566 },
-    { WindowPos3sMESA_names, 527 },
-    { WindowPos2ivMESA_names, 518 },
-    { MultiDrawElementsEXT_names, 645 },
-    { WindowPos2sMESA_names, 519 },
-    { FogCoordPointerEXT_names, 549 },
-    { SecondaryColor3ubvEXT_names, 572 },
-    { SecondaryColor3uivEXT_names, 574 },
-    { WindowPos3iMESA_names, 525 },
-    { SecondaryColor3dvEXT_names, 564 },
-    { MultiDrawArraysEXT_names, 644 },
-    { SecondaryColor3usEXT_names, 575 },
-    { FogCoordfvEXT_names, 546 },
-    { SecondaryColor3ubEXT_names, 571 },
-    { BlendFuncSeparateEXT_names, 537 },
-    { SecondaryColor3fEXT_names, 565 },
-    { WindowPos3ivMESA_names, 526 },
-    { SecondaryColor3svEXT_names, 570 },
-    { FogCoorddvEXT_names, 548 },
-    { WindowPos3svMESA_names, 528 },
-    { WindowPos2fMESA_names, 515 },
-    { NULL, 0 }
+    { PointParameteriNV_names, PointParameteriNV_remap_index, 642 },
+    { SecondaryColor3iEXT_names, SecondaryColor3iEXT_remap_index, 567 },
+    { WindowPos3fMESA_names, WindowPos3fMESA_remap_index, 523 },
+    { WindowPos2dvMESA_names, WindowPos2dvMESA_remap_index, 514 },
+    { SecondaryColor3bEXT_names, SecondaryColor3bEXT_remap_index, 561 },
+    { PointParameterfEXT_names, PointParameterfEXT_remap_index, 458 },
+    { FogCoorddEXT_names, FogCoorddEXT_remap_index, 547 },
+    { FogCoordfEXT_names, FogCoordfEXT_remap_index, 545 },
+    { WindowPos2svMESA_names, WindowPos2svMESA_remap_index, 520 },
+    { WindowPos3dMESA_names, WindowPos3dMESA_remap_index, 521 },
+    { PointParameterfvEXT_names, PointParameterfvEXT_remap_index, 459 },
+    { WindowPos2fvMESA_names, WindowPos2fvMESA_remap_index, 516 },
+    { SecondaryColor3bvEXT_names, SecondaryColor3bvEXT_remap_index, 562 },
+    { SecondaryColor3sEXT_names, SecondaryColor3sEXT_remap_index, 569 },
+    { SecondaryColor3dEXT_names, SecondaryColor3dEXT_remap_index, 563 },
+    { WindowPos2dMESA_names, WindowPos2dMESA_remap_index, 513 },
+    { SecondaryColorPointerEXT_names, SecondaryColorPointerEXT_remap_index, 577 },
+    { SecondaryColor3uiEXT_names, SecondaryColor3uiEXT_remap_index, 573 },
+    { SecondaryColor3usvEXT_names, SecondaryColor3usvEXT_remap_index, 576 },
+    { WindowPos3dvMESA_names, WindowPos3dvMESA_remap_index, 522 },
+    { PointParameterivNV_names, PointParameterivNV_remap_index, 643 },
+    { WindowPos3fvMESA_names, WindowPos3fvMESA_remap_index, 524 },
+    { SecondaryColor3ivEXT_names, SecondaryColor3ivEXT_remap_index, 568 },
+    { WindowPos2iMESA_names, WindowPos2iMESA_remap_index, 517 },
+    { SecondaryColor3fvEXT_names, SecondaryColor3fvEXT_remap_index, 566 },
+    { WindowPos3sMESA_names, WindowPos3sMESA_remap_index, 527 },
+    { WindowPos2ivMESA_names, WindowPos2ivMESA_remap_index, 518 },
+    { MultiDrawElementsEXT_names, MultiDrawElementsEXT_remap_index, 645 },
+    { WindowPos2sMESA_names, WindowPos2sMESA_remap_index, 519 },
+    { FogCoordPointerEXT_names, FogCoordPointerEXT_remap_index, 549 },
+    { SecondaryColor3ubvEXT_names, SecondaryColor3ubvEXT_remap_index, 572 },
+    { SecondaryColor3uivEXT_names, SecondaryColor3uivEXT_remap_index, 574 },
+    { WindowPos3iMESA_names, WindowPos3iMESA_remap_index, 525 },
+    { SecondaryColor3dvEXT_names, SecondaryColor3dvEXT_remap_index, 564 },
+    { MultiDrawArraysEXT_names, MultiDrawArraysEXT_remap_index, 644 },
+    { SecondaryColor3usEXT_names, SecondaryColor3usEXT_remap_index, 575 },
+    { FogCoordfvEXT_names, FogCoordfvEXT_remap_index, 546 },
+    { SecondaryColor3ubEXT_names, SecondaryColor3ubEXT_remap_index, 571 },
+    { BlendFuncSeparateEXT_names, BlendFuncSeparateEXT_remap_index, 537 },
+    { SecondaryColor3fEXT_names, SecondaryColor3fEXT_remap_index, 565 },
+    { WindowPos3ivMESA_names, WindowPos3ivMESA_remap_index, 526 },
+    { SecondaryColor3svEXT_names, SecondaryColor3svEXT_remap_index, 570 },
+    { FogCoorddvEXT_names, FogCoorddvEXT_remap_index, 548 },
+    { WindowPos3svMESA_names, WindowPos3svMESA_remap_index, 528 },
+    { WindowPos2fMESA_names, WindowPos2fMESA_remap_index, 515 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_VERSION_1_5)
 static const struct dri_extension_function GL_VERSION_1_5_functions[] = {
-    { BeginQueryARB_names, 703 },
-    { GetBufferSubDataARB_names, 695 },
-    { BufferSubDataARB_names, 690 },
-    { GetQueryivARB_names, 705 },
-    { GetQueryObjectivARB_names, 706 },
-    { BufferDataARB_names, 689 },
-    { EndQueryARB_names, 704 },
-    { GetBufferPointervARB_names, 694 },
-    { GetQueryObjectuivARB_names, 707 },
-    { GetBufferParameterivARB_names, 693 },
-    { DeleteQueriesARB_names, 701 },
-    { IsQueryARB_names, 702 },
-    { MapBufferARB_names, 697 },
-    { GenQueriesARB_names, 700 },
-    { IsBufferARB_names, 696 },
-    { DeleteBuffersARB_names, 691 },
-    { UnmapBufferARB_names, 698 },
-    { BindBufferARB_names, 688 },
-    { GenBuffersARB_names, 692 },
-    { NULL, 0 }
+    { BeginQueryARB_names, BeginQueryARB_remap_index, 703 },
+    { GetBufferSubDataARB_names, GetBufferSubDataARB_remap_index, 695 },
+    { BufferSubDataARB_names, BufferSubDataARB_remap_index, 690 },
+    { GetQueryivARB_names, GetQueryivARB_remap_index, 705 },
+    { GetQueryObjectivARB_names, GetQueryObjectivARB_remap_index, 706 },
+    { BufferDataARB_names, BufferDataARB_remap_index, 689 },
+    { EndQueryARB_names, EndQueryARB_remap_index, 704 },
+    { GetBufferPointervARB_names, GetBufferPointervARB_remap_index, 694 },
+    { GetQueryObjectuivARB_names, GetQueryObjectuivARB_remap_index, 707 },
+    { GetBufferParameterivARB_names, GetBufferParameterivARB_remap_index, 693 },
+    { DeleteQueriesARB_names, DeleteQueriesARB_remap_index, 701 },
+    { IsQueryARB_names, IsQueryARB_remap_index, 702 },
+    { MapBufferARB_names, MapBufferARB_remap_index, 697 },
+    { GenQueriesARB_names, GenQueriesARB_remap_index, 700 },
+    { IsBufferARB_names, IsBufferARB_remap_index, 696 },
+    { DeleteBuffersARB_names, DeleteBuffersARB_remap_index, 691 },
+    { UnmapBufferARB_names, UnmapBufferARB_remap_index, 698 },
+    { BindBufferARB_names, BindBufferARB_remap_index, 688 },
+    { GenBuffersARB_names, GenBuffersARB_remap_index, 692 },
+    { NULL, 0, 0 }
 };
 #endif
 
 #if defined(need_GL_VERSION_2_0)
 static const struct dri_extension_function GL_VERSION_2_0_functions[] = {
-    { StencilMaskSeparate_names, 815 },
-    { StencilOpSeparate_names, 814 },
-    { StencilFuncSeparate_names, 813 },
-    { NULL, 0 }
+    { StencilMaskSeparate_names, StencilMaskSeparate_remap_index, 815 },
+    { StencilOpSeparate_names, StencilOpSeparate_remap_index, 814 },
+    { StencilFuncSeparate_names, StencilFuncSeparate_remap_index, 813 },
+    { NULL, 0, 0 }
 };
 #endif
 

@@ -149,7 +149,7 @@ static void i830BufferSize(GLframebuffer *buffer,
 
 /* Extension strings exported by the i830 driver.
  */
-static const struct dri_extension card_extensions[] =
+const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },

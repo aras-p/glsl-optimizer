@@ -131,7 +131,7 @@ static const GLubyte *r200GetString( GLcontext *ctx, GLenum name )
 
 /* Extension strings exported by the R200 driver.
  */
-static const struct dri_extension card_extensions[] =
+const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
@@ -162,17 +162,17 @@ static const struct dri_extension card_extensions[] =
     { NULL,                                NULL }
 };
 
-static const struct dri_extension blend_extensions[] = {
+const struct dri_extension blend_extensions[] = {
     { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
     { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
     { NULL,                                NULL }
 };
 							 
-static const struct dri_extension ARB_vp_extension[] = {
+const struct dri_extension ARB_vp_extension[] = {
     { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions }
 };
 
-static const struct dri_extension NV_vp_extension[] = {
+const struct dri_extension NV_vp_extension[] = {
     { "GL_NV_vertex_program",              GL_NV_vertex_program_functions }
 };
 

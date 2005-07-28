@@ -45,7 +45,7 @@
  * Mesa's Driver Functions
  ***************************************/
 
-static const struct dri_extension card_extensions[] =
+static const struct dri_extension i915_extensions[] =
 {
     { "GL_ARB_depth_texture",              NULL },
     { "GL_ARB_fragment_program",           NULL },
@@ -166,7 +166,7 @@ GLboolean i915CreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxFragmentProgramAddressRegs = 0; /* I don't think we have one */
 
 
-   driInitExtensions( ctx, card_extensions, GL_FALSE );
+   driInitExtensions( ctx, i915_extensions, GL_FALSE );
 
 
    _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 

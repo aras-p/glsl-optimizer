@@ -46,12 +46,9 @@
 
 
 #include "GL/gl.h"
-
-struct _glapi_table;
+#include "glapitable.h"
 
 typedef void (*_glapi_warning_func)(void *ctx, const char *str, ...);
-
-typedef void (*_glapi_proc)(void); /* generic function pointer */
 
 
 #if defined (GLX_USE_TLS)
@@ -140,9 +137,9 @@ extern void
 _glapi_check_table(const struct _glapi_table *table);
 
 
-extern GLboolean
-_glapi_add_entrypoint(const char *funcName, GLuint offset);
-
+extern int
+_glapi_add_dispatch( const char * const * function_names,
+		     const char * parameter_signature );
 
 extern GLint
 _glapi_get_proc_offset(const char *funcName);

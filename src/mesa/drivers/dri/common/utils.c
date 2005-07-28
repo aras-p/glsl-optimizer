@@ -34,6 +34,9 @@
 #include "mtypes.h"
 #include "extensions.h"
 #include "utils.h"
+#include "dispatch.h"
+
+unsigned driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #if defined(USE_X86_ASM)
 #include "x86/common_x86_asm.h"
@@ -176,6 +179,30 @@ driGetRendererString( char * buffer, const char * hardware_name,
 
 
 
+#define need_GL_ARB_multisample
+#define need_GL_ARB_transpose_matrix
+#define need_GL_ARB_window_pos
+#define need_GL_EXT_compiled_vertex_array
+#define need_GL_EXT_polygon_offset
+#define need_GL_EXT_texture_object
+#define need_GL_EXT_vertex_array
+#define need_GL_MESA_window_pos
+
+#include "extension_helper.h"
+
+static const struct dri_extension all_mesa_extensions[] = {
+   { "GL_ARB_multisample",           GL_ARB_multisample_functions },
+   { "GL_ARB_transpose_matrix",      GL_ARB_transpose_matrix_functions },
+   { "GL_ARB_window_pos",            GL_ARB_window_pos_functions },
+   { "GL_EXT_compiled_vertex_array", GL_EXT_compiled_vertex_array_functions },
+   { "GL_EXT_polygon_offset",        GL_EXT_polygon_offset_functions },
+   { "GL_EXT_texture_object",        GL_EXT_texture_object_functions },
+   { "GL_EXT_vertex_array",          GL_EXT_vertex_array_functions },
+   { "GL_MESA_window_pos",           GL_MESA_window_pos_functions },
+   { NULL,                           NULL }
+};
+
+
 /**
  * Enable extensions supported by the driver.
  * 
@@ -189,9 +216,15 @@ void driInitExtensions( GLcontext * ctx,
 			const struct dri_extension * extensions_to_enable,
 			GLboolean enable_imaging )
 {
+   static int first_time = 1;
    unsigned   i;
 
-   if ( enable_imaging ) {
+   if ( first_time ) {
+      first_time = 0;
+      driInitExtensions( ctx, all_mesa_extensions, GL_FALSE );
+   }
+
+   if ( (ctx != NULL) && enable_imaging ) {
       _mesa_enable_imaging_extensions( ctx );
    }
 
@@ -220,12 +253,14 @@ void driInitSingleExtension( GLcontext * ctx,
 {
     unsigned i;
 
+
     if ( ext->functions != NULL ) {
 	for ( i = 0 ; ext->functions[i].strings != NULL ; i++ ) {
 	    const char * functions[16];
 	    const char * parameter_signature;
 	    const char * str = ext->functions[i].strings;
 	    unsigned j;
+	    unsigned offset;
 
 
 	    /* Separate the parameter signature from the rest of the string.
@@ -260,14 +295,23 @@ void driInitSingleExtension( GLcontext * ctx,
 
 	    /* Add each entry-point to the dispatch table.
 	     */
-	    for ( j = 0 ; functions[j] != NULL ; j++ ) {
-		_glapi_add_entrypoint( functions[j], 
-				       ext->functions[i].offset );
+	    offset = _glapi_add_dispatch( functions, parameter_signature );
+	    if ( ext->functions[i].remap_index != -1 ) {
+		driDispatchRemapTable[ ext->functions[i].remap_index ] = offset;
+	    }
+
+	    if ( (ext->functions[i].offset != -1)
+		 && (ext->functions[i].offset != offset) ) {
+		fprintf(stderr, "DISPATCH ERROR! %s -> %u != %u\n", functions[0],
+			driDispatchRemapTable[ ext->functions[i].remap_index ],
+			ext->functions[i].offset);
 	    }
 	}
     }
 
-    _mesa_enable_extension( ctx, ext->name );
+    if ( ctx != NULL ) {
+	_mesa_enable_extension( ctx, ext->name );
+    }
 }
 
 

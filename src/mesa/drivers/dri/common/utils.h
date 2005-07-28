@@ -55,9 +55,15 @@ struct dri_extension_function {
 
 
     /**
+     * Location in the remap table where the dispatch offset should be
+     * stored.
+     */
+    int remap_index;
+
+    /**
      * Offset of the function in the dispatch table.
      */
-    unsigned     offset;
+    int offset;
 };
 
 /**

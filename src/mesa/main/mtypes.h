@@ -2598,7 +2598,10 @@ struct gl_tnl_module
     * On restore, only need to swap these functions back in.
     */
    /*@{*/
-   void *Swapped[NUM_VERTEX_FORMAT_ENTRIES][2];
+   struct {
+       _glapi_proc * location;
+       _glapi_proc function;
+   } Swapped[NUM_VERTEX_FORMAT_ENTRIES];
    GLuint SwapCount;
    /*@}*/
 };

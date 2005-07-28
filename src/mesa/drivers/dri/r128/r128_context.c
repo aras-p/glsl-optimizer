@@ -71,7 +71,7 @@ int R128_DEBUG = 0;
 #define need_GL_EXT_blend_minmax
 #include "extension_helper.h"
 
-static const struct dri_extension card_extensions[] =
+const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },

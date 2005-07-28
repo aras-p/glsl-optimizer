@@ -49,15 +49,14 @@
 {									\
    GET_CURRENT_CONTEXT(ctx);						\
    struct gl_tnl_module *tnl = &(ctx->TnlModule);			\
-   typedef void (*func_ptr_t)(void);					\
 									\
    ASSERT( tnl->Current );						\
    ASSERT( tnl->SwapCount < NUM_VERTEX_FORMAT_ENTRIES );		\
 									\
    /* Save the swapped function's dispatch entry so it can be */	\
    /* restored later. */						\
-   tnl->Swapped[tnl->SwapCount][0] = (void *)&(GET_ ## FUNC (ctx->Exec)); \
-   *(func_ptr_t *)(tnl->Swapped[tnl->SwapCount]+1) = (func_ptr_t)TAG(FUNC);	\
+   tnl->Swapped[tnl->SwapCount].location = (_glapi_proc *) & (GET_ ## FUNC (ctx->Exec)); \
+   tnl->Swapped[tnl->SwapCount].function = (_glapi_proc)TAG(FUNC);	\
    tnl->SwapCount++;							\
 									\
    if ( 0 )								\
@@ -177,7 +176,7 @@ void _mesa_restore_exec_vtxfmt( GLcontext *ctx )
    /* Restore the neutral tnl module wrapper.
     */
    for ( i = 0 ; i < tnl->SwapCount ; i++ ) {
-      *(void **)tnl->Swapped[i][0] = tnl->Swapped[i][1];
+      *(tnl->Swapped[i].location) = tnl->Swapped[i].function;
    }
 
    tnl->SwapCount = 0;

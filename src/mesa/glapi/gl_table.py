@@ -52,6 +52,8 @@ class PrintGlTable(gl_XML.gl_print_base):
 		print '#define GLAPIENTRYP'
 		print '#endif'
 		print ''
+		print 'typedef void (*_glapi_proc)(void); /* generic function pointer */'
+		print ''
 		print 'struct _glapi_table'
 		print '{'
 		return
@@ -93,14 +95,8 @@ class PrintRemapTable(gl_XML.gl_print_base):
 		print '#define GET_by_offset(disp, offset) \\'
 		print '    (((_glapi_proc *)(disp))[offset])'
 		print '#define SET_by_offset(disp, offset, fn) \\'
-		print '    ((((_glapi_proc *)(disp))[offset]) = fn)'
+		print '    ((((_glapi_proc *)(disp))[offset]) = (_glapi_proc) fn)'
 		print ''
-
-		for f in api.functionIterateByOffset():
-			print '#define CALL_%s(disp, parameters) (*((disp)->%s)) parameters' % (f.name, f.name)
-			print '#define GET_%s(disp) ((disp)->%s)' % (f.name, f.name)
-			print '#define SET_%s(disp, fn) ((disp)->%s = fn)' % (f.name, f.name)
-		return
 
 		abi = [ "1.0", "1.1", "1.2", "GL_ARB_multitexture" ]
 
@@ -116,26 +112,44 @@ class PrintRemapTable(gl_XML.gl_print_base):
 				abi_functions.append( f )
 
 
-		print 'struct _mesa_dispatch_remap_table {'
+		for f in abi_functions:
+			print '#define CALL_%s(disp, parameters) (*((disp)->%s)) parameters' % (f.name, f.name)
+			print '#define GET_%s(disp) ((disp)->%s)' % (f.name, f.name)
+			print '#define SET_%s(disp, fn) ((disp)->%s = fn)' % (f.name, f.name)
+
+
+		print ''
+		print '#if !defined(IN_DRI_DRIVER)'
+		print ''
 
 		for [f, index] in functions:
-			print '   unsigned %s;' % (f.name)
+			print '#define CALL_%s(disp, parameters) (*((disp)->%s)) parameters' % (f.name, f.name)
+			print '#define GET_%s(disp) ((disp)->%s)' % (f.name, f.name)
+			print '#define SET_%s(disp, fn) ((disp)->%s = fn)' % (f.name, f.name)
 
-		print '};'
 		print ''
-		print '/* %u functions need remapping. */' % (count)
+		print '#else'
+		print ''
+		print '#define driDispatchRemapTable_size %u' % (count)
+		print 'extern unsigned driDispatchRemapTable[ driDispatchRemapTable_size ];'
 		print ''
 
-		for f in abi_functions:
-			print '#define CALL_%s(disp, parameters) (*disp->%s) parameters' % (f.name, f.name)
+		for [f, index] in functions:
+			print '#define %s_remap_index %u' % (f.name, index)
 
+		print ''
 
 		for [f, index] in functions:
 			arg_string = gl_XML.create_parameter_string( f.parameters, 0 )
 			cast = '%s (GLAPIENTRYP)(%s)' % (f.return_type, arg_string)
 
-			print '#define CALL_%s(disp, parameters) (* (%s) (((_glapi_proc *)disp)[dispatch_remap.%s])) parameters' % (f.name, cast, f.name)
+			print '#define CALL_%s(disp, parameters) CALL_by_offset(disp, (%s), driDispatchRemapTable[%s_remap_index], parameters)' % (f.name, cast, f.name)
+			print '#define GET_%s(disp) GET_by_offset(disp, driDispatchRemapTable[%s_remap_index])' % (f.name, f.name)
+			print '#define SET_%s(disp, fn) SET_by_offset(disp, driDispatchRemapTable[%s_remap_index], fn)' % (f.name, f.name)
 
+
+		print ''
+		print '#endif /* !defined(IN_DRI_DRIVER) */'
 		return
 
 

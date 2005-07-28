@@ -125,7 +125,7 @@ static const GLubyte *radeonGetString( GLcontext *ctx, GLenum name )
 
 /* Extension strings exported by the R100 driver.
  */
-static const struct dri_extension card_extensions[] =
+const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },

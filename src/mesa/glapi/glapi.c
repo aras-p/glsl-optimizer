@@ -671,14 +671,52 @@ get_static_proc_name( GLuint offset )
 #define DISPATCH_TABLE_SIZE (sizeof(struct _glapi_table) / sizeof(void *) + MAX_EXTENSION_FUNCS)
 
 
-struct name_address_offset {
-   const char *Name;
-   _glapi_proc Address;
-   GLuint Offset;
+/**
+ * Track information about a function added to the GL API.
+ */
+struct _glapi_function {
+   /**
+    * Name of the function.
+    */
+   const char * name;
+
+
+   /**
+    * Text string that describes the types of the parameters passed to the
+    * named function.   Parameter types are converted to characters using the
+    * following rules:
+    *   - 'i' for \c GLint, \c GLuint, and \c GLenum
+    *   - 'p' for any pointer type
+    *   - 'f' for \c GLfloat and \c GLclampf
+    *   - 'd' for \c GLdouble and \c GLclampd
+    */
+   const char * parameter_signature;
+
+
+   /**
+    * Offset in the dispatch table where the pointer to the real function is
+    * located.  If the driver has not requested that the named function be
+    * added to the dispatch table, this will have the value ~0.
+    */
+   unsigned dispatch_offset;
+
+
+   /**
+    * Pointer to the dispatch stub for the named function.
+    * 
+    * \todo
+    * The semantic of this field should be changed slightly.  Currently, it
+    * is always expected to be non-\c NULL.  However, it would be better to
+    * only allocate the entry-point stub when the application requests the
+    * function via \c glXGetProcAddress.  This would save memory for all the
+    * functions that the driver exports but that the application never wants
+    * to call.
+    */
+   _glapi_proc dispatch_stub;
 };
 
 
-static struct name_address_offset ExtEntryTable[MAX_EXTENSION_FUNCS];
+static struct _glapi_function ExtEntryTable[MAX_EXTENSION_FUNCS];
 static GLuint NumExtEntryPoints = 0;
 
 #ifdef USE_SPARC_ASM
@@ -814,76 +852,189 @@ fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
 
 
 /**
- * Add a new extension function entrypoint.
- * Return: GL_TRUE = success or GL_FALSE = failure
+ * Generate new entrypoint
+ *
+ * Use a temporary dispatch offset of ~0 (i.e. -1).  Later, when the driver
+ * calls \c _glapi_add_dispatch we'll put in the proper offset.  If that
+ * never happens, and the user calls this function, he'll segfault.  That's
+ * what you get when you try calling a GL function that doesn't really exist.
+ * 
+ * \param funcName  Name of the function to create an entry-point for.
+ * 
+ * \sa _glapi_add_entrypoint
  */
-PUBLIC GLboolean
-_glapi_add_entrypoint(const char *funcName, GLuint offset)
+
+static struct _glapi_function *
+add_function_name( const char * funcName )
 {
-   /* trivial rejection test */
+   struct _glapi_function * entry = NULL;
+   
+   if (NumExtEntryPoints < MAX_EXTENSION_FUNCS) {
+      _glapi_proc entrypoint = generate_entrypoint(~0);
+      if (entrypoint != NULL) {
+	 entry = & ExtEntryTable[NumExtEntryPoints];
+
+	 ExtEntryTable[NumExtEntryPoints].name = str_dup(funcName);
+	 ExtEntryTable[NumExtEntryPoints].parameter_signature = NULL;
+	 ExtEntryTable[NumExtEntryPoints].dispatch_offset = ~0;
+	 ExtEntryTable[NumExtEntryPoints].dispatch_stub = entrypoint;
+	 NumExtEntryPoints++;
+      }
+   }
+
+   return entry;
+}
+
+
+/**
+ * Fill-in the dispatch stub for the named function.
+ * 
+ * This function is intended to be called by a hardware driver.  When called,
+ * a dispatch stub may be created created for the function.  A pointer to this
+ * dispatch function will be returned by glXGetProcAddress.
+ *
+ * \param function_names       Array of pointers to function names that should
+ *                             share a common dispatch offset.
+ * \param parameter_signature  String representing the types of the parameters
+ *                             passed to the named function.  Parameter types
+ *                             are converted to characters using the following
+ *                             rules:
+ *                               - 'i' for \c GLint, \c GLuint, and \c GLenum
+ *                               - 'p' for any pointer type
+ *                               - 'f' for \c GLfloat and \c GLclampf
+ *                               - 'd' for \c GLdouble and \c GLclampd
+ *
+ * \returns
+ * The offset in the dispatch table of the named function.  A pointer to the
+ * driver's implementation of the named function should be stored at
+ * \c dispatch_table[\c offset].
+ *
+ * \sa glXGetProcAddress
+ *
+ * \warning
+ * This function can only handle up to 8 names at a time.  As far as I know,
+ * the maximum number of names ever associated with an existing GL function is
+ * 4 (\c glPointParameterfSGIS, \c glPointParameterfEXT,
+ * \c glPointParameterfARB, and \c glPointParameterf), so this should not be
+ * too painful of a limitation.
+ *
+ * \todo
+ * Determine whether or not \c parameter_signature should be allowed to be
+ * \c NULL.  It doesn't seem like much of a hardship for drivers to have to
+ * pass in an empty string.
+ *
+ * \todo
+ * Determine if code should be added to reject function names that start with
+ * 'glX'.
+ * 
+ * \bug
+ * Add code to compare \c parameter_signature with the parameter signature of
+ * a static function.  In order to do that, we need to find a way to \b get
+ * the parameter signature of a static function.
+ */
+
+PUBLIC int
+_glapi_add_dispatch( const char * const * function_names,
+		     const char * parameter_signature )
+{
+   static int next_dynamic_offset = _gloffset_FIRST_DYNAMIC;
+   const char * const real_sig = (parameter_signature != NULL)
+     ? parameter_signature : "";
+   struct _glapi_function * entry[8];
+   GLboolean is_static[8];
+   unsigned i;
+   unsigned j;
+   int offset = ~0;
+   int new_offset;
+
+
+   (void) memset( is_static, 0, sizeof( is_static ) );
+   (void) memset( entry, 0, sizeof( entry ) );
+
+   for ( i = 0 ; function_names[i] != NULL ; i++ ) {
+      /* Do some trivial validation on the name of the function.
+       */
+
 #ifdef MANGLE
-   if (!funcName || funcName[0] != 'm' || funcName[1] != 'g' || funcName[2] != 'l')
-      return GL_FALSE;
+      if (!function_names[i] || function_names[i][0] != 'm' || function_names[i][1] != 'g' || function_names[i][2] != 'l')
+	return GL_FALSE;
 #else
-   if (!funcName || funcName[0] != 'g' || funcName[1] != 'l')
-      return GL_FALSE;
+      if (!function_names[i] || function_names[i][0] != 'g' || function_names[i][1] != 'l')
+	return GL_FALSE;
 #endif
+   
+   
+      /* Determine if the named function already exists.  If the function does
+       * exist, it must have the same parameter signature as the function
+       * being added.
+       */
 
-   /* first check if the named function is already statically present */
-   {
-      GLint index = get_static_proc_offset(funcName);
-      if (index >= 0) {
-         return (GLboolean) ((GLuint) index == offset);  /* bad offset! */
+      new_offset = get_static_proc_offset(function_names[i]);
+      if (new_offset >= 0) {
+	 /* FIXME: Make sure the parameter signatures match!  How do we get
+	  * FIXME: the parameter signature for static functions?
+	  */
+
+	 if ( (offset != ~0) && (new_offset != offset) ) {
+	    return -1;
+	 }
+
+	 is_static[i] = GL_TRUE;
+	 offset = new_offset;
+      }
+   
+   
+      for ( j = 0 ; j < NumExtEntryPoints ; j++ ) {
+	 if (strcmp(ExtEntryTable[j].name, function_names[i]) == 0) {
+	    /* The offset may be ~0 if the function name was added by
+	     * glXGetProcAddress but never filled in by the driver.
+	     */
+
+	    if (ExtEntryTable[j].dispatch_offset != ~0) {
+	       if (strcmp(real_sig, ExtEntryTable[j].parameter_signature) 
+		   != 0) {
+		  return -1;
+	       }
+
+	       if ( (offset != ~0) && (ExtEntryTable[j].dispatch_offset != offset) ) {
+		  return -1;
+	       }
+
+	       offset = ExtEntryTable[j].dispatch_offset;
+	    }
+	    
+	    entry[i] = & ExtEntryTable[j];
+	    break;
+	 }
       }
    }
 
-   /* See if this function has already been dynamically added */
-   {
-      GLuint i;
-      for (i = 0; i < NumExtEntryPoints; i++) {
-         if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
-            /* function already registered */
-            if (ExtEntryTable[i].Offset == offset) {
-               return GL_TRUE;  /* offsets match */
-            }
-            else if (ExtEntryTable[i].Offset == (GLuint) ~0
-                     && offset < DISPATCH_TABLE_SIZE) {
-               /* need to patch-up the dispatch code */
-               if (offset != (GLuint) ~0) {
-                  fill_in_entrypoint_offset(ExtEntryTable[i].Address, offset);
-                  ExtEntryTable[i].Offset = offset;
-               }
-               return GL_TRUE;
-            }
-            else {
-               return GL_FALSE;  /* bad offset! */
-            }
-         }
+
+   if (offset == ~0) {
+      offset = next_dynamic_offset;
+      next_dynamic_offset++;
+   }
+
+
+   for ( i = 0 ; function_names[i] != NULL ; i++ ) {
+      if (! is_static[i] ) {
+	 if (entry[i] == NULL) {
+	    entry[i] = add_function_name( function_names[i] );
+	    if (entry[i] == NULL) {
+	       /* FIXME: Possible memory leak here.
+		*/
+	       return -1;
+	    }
+	 }
+
+
+	 entry[i]->parameter_signature = str_dup(real_sig);
+	 fill_in_entrypoint_offset(entry[i]->dispatch_stub, offset);
+	 entry[i]->dispatch_offset = offset;
       }
    }
-
-   /* This is a new function, try to add it.  */
-   if (NumExtEntryPoints >= MAX_EXTENSION_FUNCS ||
-       offset >= DISPATCH_TABLE_SIZE) {
-      /* No space left */
-      return GL_FALSE;
-   }
-   else {
-      _glapi_proc entrypoint = generate_entrypoint(offset);
-      if (!entrypoint)
-         return GL_FALSE; /* couldn't generate assembly */
-
-      /* OK! */
-      ExtEntryTable[NumExtEntryPoints].Name = str_dup(funcName);
-      ExtEntryTable[NumExtEntryPoints].Offset = offset;
-      ExtEntryTable[NumExtEntryPoints].Address = entrypoint;
-      NumExtEntryPoints++;
-
-      return GL_TRUE;  /* success */
-   }
-
-   /* should never get here, silence compiler warnings */
-   return GL_FALSE;
+   
+   return offset;
 }
 
 
@@ -896,8 +1047,8 @@ _glapi_get_proc_offset(const char *funcName)
    /* search extension functions first */
    GLuint i;
    for (i = 0; i < NumExtEntryPoints; i++) {
-      if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
-         return ExtEntryTable[i].Offset;
+      if (strcmp(ExtEntryTable[i].name, funcName) == 0) {
+         return ExtEntryTable[i].dispatch_offset;
       }
    }
 
@@ -915,6 +1066,7 @@ _glapi_get_proc_offset(const char *funcName)
 PUBLIC _glapi_proc
 _glapi_get_proc_address(const char *funcName)
 {
+   struct _glapi_function * entry;
    GLuint i;
 
 #ifdef MANGLE
@@ -927,8 +1079,8 @@ _glapi_get_proc_address(const char *funcName)
 
    /* search extension functions first */
    for (i = 0; i < NumExtEntryPoints; i++) {
-      if (strcmp(ExtEntryTable[i].Name, funcName) == 0) {
-         return ExtEntryTable[i].Address;
+      if (strcmp(ExtEntryTable[i].name, funcName) == 0) {
+         return ExtEntryTable[i].dispatch_stub;
       }
    }
 
@@ -939,28 +1091,8 @@ _glapi_get_proc_address(const char *funcName)
          return func;
    }
 
-   /* generate new entrypoint - use a temporary dispatch offset of
-    * ~0 (i.e. -1).  Later, when the driver calls _glapi_add_entrypoint()
-    * we'll put in the proper offset.  If that never happens, and the
-    * user calls this function, he'll segfault.  That's what you get
-    * when you try calling a GL function that doesn't really exist.
-    */
-   if (NumExtEntryPoints < MAX_EXTENSION_FUNCS) {
-      _glapi_proc entrypoint = generate_entrypoint(~0);
-      if (!entrypoint)
-         return GL_FALSE;
-
-      ExtEntryTable[NumExtEntryPoints].Name = str_dup(funcName);
-      ExtEntryTable[NumExtEntryPoints].Offset = ~0;
-      ExtEntryTable[NumExtEntryPoints].Address = entrypoint;
-      NumExtEntryPoints++;
-
-      return entrypoint;
-   }
-   else {
-      /* no space for new functions! */
-      return NULL;
-   }
+   entry = add_function_name(funcName);
+   return (entry == NULL) ? NULL : entry->dispatch_stub;
 }
 
 
@@ -983,8 +1115,8 @@ _glapi_get_proc_name(GLuint offset)
 
    /* search added extension functions */
    for (i = 0; i < NumExtEntryPoints; i++) {
-      if (ExtEntryTable[i].Offset == offset) {
-         return ExtEntryTable[i].Name;
+      if (ExtEntryTable[i].dispatch_offset == offset) {
+         return ExtEntryTable[i].name;
       }
    }
    return NULL;

@@ -128,7 +128,7 @@ unsigned long time_sum=0;
 struct timeval tv_s1,tv_f1;
 #endif
 
-static const struct dri_extension common_extensions[] =
+static const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
@@ -534,7 +534,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 				       debug_control );
 #endif
 
-   driInitExtensions( ctx, common_extensions, GL_TRUE );
+   driInitExtensions( ctx, card_extensions, GL_TRUE );
    if (savageScreen->chipset >= S3_SAVAGE4)
        driInitExtensions( ctx, s4_extensions, GL_FALSE );
    if (ctx->Mesa_DXTn ||
@@ -997,7 +997,7 @@ savageFillInModes( unsigned pixel_bits, unsigned depth_bits,
  *         failure.
  */
 PUBLIC
-void * __driCreateNewScreen_20050725( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
+void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
 			     const __GLcontextModes * modes,
 			     const __DRIversion * ddx_version,
 			     const __DRIversion * dri_version,
@@ -1033,6 +1033,16 @@ void * __driCreateNewScreen_20050725( __DRInativeDisplay *dpy, int scrn, __DRIsc
 					 (dri_priv->cpp == 2) ? 16 : 24,
 					 (dri_priv->cpp == 2) ? 0  : 8,
 					 (dri_priv->backOffset != dri_priv->depthOffset) );
+
+      /* Calling driInitExtensions here, with a NULL context pointer, does not actually
+       * enable the extensions.  It just makes sure that all the dispatch offsets for all
+       * the extensions that *might* be enables are known.  This is needed because the
+       * dispatch offsets need to be known when _mesa_context_create is called, but we can't
+       * enable the extensions until we have a context pointer.
+       *
+       * Hello chicken.  Hello egg.  How are you two today?
+       */
+      driInitExtensions( NULL, card_extensions, GL_FALSE );
    }
 
    return (void *) psp;

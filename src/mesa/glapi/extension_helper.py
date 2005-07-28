@@ -102,6 +102,24 @@ vtxfmt = [
     "EvalMesh2", \
 ]
 
+def all_entrypoints_in_abi(f, abi, api):
+	for n in f.entry_points:
+		[category, num] = api.get_category_for_name( n )
+		if category not in abi:
+			return 0
+
+	return 1
+
+
+def any_entrypoints_in_abi(f, abi, api):
+	for n in f.entry_points:
+		[category, num] = api.get_category_for_name( n )
+		if category in abi:
+			return 1
+
+	return 0
+
+
 def condition_for_function(f, abi, all_not_in_ABI):
 	"""Create a C-preprocessor condition for the function.
 	
@@ -133,6 +151,7 @@ class PrintGlExtensionGlue(gl_XML.gl_print_base):
 
 	def printRealHeader(self):
 		print '#include "utils.h"'
+		print '#include "dispatch.h"'
 		print ''
 		return
 
@@ -178,7 +197,7 @@ class PrintGlExtensionGlue(gl_XML.gl_print_base):
 						if not category_list.has_key(c):
 							category_list[ c ] = []
 
-						category_list[ c ].append( [f.name, f.offset] )
+						category_list[ c ].append( f )
 
 				print '    "";'
 				print '#endif'
@@ -190,9 +209,17 @@ class PrintGlExtensionGlue(gl_XML.gl_print_base):
 		for category in keys:
 			print '#if defined(need_%s)' % (category)
 			print 'static const struct dri_extension_function %s_functions[] = {' % (category)
-			for [function, offset] in category_list[ category ]:
-				print '    { %s_names, %d },' % (function, offset)
-			print '    { NULL, 0 }'
+			
+			for f in category_list[ category ]:
+				if any_entrypoints_in_abi(f, abi, api):
+					index_name = "-1"
+				else:
+					index_name = "%s_remap_index" % (f.name)
+
+				print '    { %s_names, %s, %d },' % (f.name, index_name, f.offset)
+
+
+			print '    { NULL, 0, 0 }'
 			print '};'
 			print '#endif'
 			print ''

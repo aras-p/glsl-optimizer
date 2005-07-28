@@ -426,7 +426,7 @@ static struct __DriverAPIRec tridentAPI = {
 };
 
 
-PUBLIC void *__driCreateNewScreen_20050725( __DRInativeDisplay *dpy, int scrn,
+PUBLIC void *__driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn,
                                    __DRIscreen *psc,
                                    const __GLcontextModes * modes,
                                    const __DRIversion * ddx_version,

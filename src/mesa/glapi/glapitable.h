@@ -33,6 +33,8 @@
 #define GLAPIENTRYP
 #endif
 
+typedef void (*_glapi_proc)(void); /* generic function pointer */
+
 struct _glapi_table
 {
    void (GLAPIENTRYP NewList)(GLuint list, GLenum mode); /* 0 */

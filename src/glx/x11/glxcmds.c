@@ -2886,10 +2886,10 @@ int __glXGetInternalVersion(void)
      * 20040415 - Added support for bindContext3 and unbindContext3.
      * 20040602 - Add __glXGetDrawableInfo.  I though that was there
      *            months ago. :(
-     * 20050725 - Gut all the old interfaces.  This breaks compatability with
+     * 20050727 - Gut all the old interfaces.  This breaks compatability with
      *            any DRI driver built to any previous version.
      */
-    return 20050725;
+    return 20050727;
 }
 
 

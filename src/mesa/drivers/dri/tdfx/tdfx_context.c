@@ -83,7 +83,7 @@
 /**
  * Common extension strings exported by all cards
  */
-static const struct dri_extension card_extensions[] =
+const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
@@ -123,7 +123,7 @@ static const struct dri_extension card_extensions[] =
 /**
  * Extension strings exported only by Naplam (e.g., Voodoo4 & Voodoo5) cards.
  */
-static const struct dri_extension napalm_extensions[] =
+const struct dri_extension napalm_extensions[] =
 {
     { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
     { "GL_ARB_texture_env_combine",        NULL },

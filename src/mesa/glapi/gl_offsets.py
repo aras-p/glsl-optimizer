@@ -41,8 +41,14 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		return
 
 	def printBody(self, api):
+		last_static = 0
 		for f in api.functionIterateByOffset():
 			print '#define _gloffset_%s %d' % (f.name, f.offset)
+			if f.offset > last_static:
+				last_static = f.offset
+
+		print '#define _gloffset_FIRST_DYNAMIC %d' % (last_static + 1)
+		return
 
 
 def show_usage():

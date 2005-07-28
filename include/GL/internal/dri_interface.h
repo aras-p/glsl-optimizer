@@ -113,7 +113,7 @@ typedef void *(CREATENEWSCREENFUNC)(__DRInativeDisplay *dpy, int scrn,
     const __DRIinterfaceMethods * interface,
     __GLcontextModes ** driver_modes);
 typedef CREATENEWSCREENFUNC* PFNCREATENEWSCREENFUNC;
-extern CREATENEWSCREENFUNC __driCreateNewScreen_20050725;
+extern CREATENEWSCREENFUNC __driCreateNewScreen_20050727;
 
 
 /**
@@ -377,7 +377,7 @@ struct __DRIcontextRec {
     /**
      * Method to bind a DRI drawable to a DRI graphics context.
      *
-     * \since Internal API version 20050725.
+     * \since Internal API version 20050727.
      */
     GLboolean (*bindContext)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
 			 __DRIid read, __DRIcontext *ctx);
@@ -385,7 +385,7 @@ struct __DRIcontextRec {
     /**
      * Method to unbind a DRI drawable from a DRI graphics context.
      *
-     * \since Internal API version 20050725.
+     * \since Internal API version 20050727.
      */
     GLboolean (*unbindContext)(__DRInativeDisplay *dpy, int scrn, __DRIid draw,
 			   __DRIid read, __DRIcontext *ctx);

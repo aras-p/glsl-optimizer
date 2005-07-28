@@ -38,7 +38,7 @@
  * Mesa's Driver Functions
  ***************************************/
 
-static const struct dri_extension card_extensions[] =
+static const struct dri_extension i830_extensions[] =
 {
     { "GL_ARB_texture_env_crossbar",       NULL },
     { NULL,                                NULL }
@@ -109,7 +109,7 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
 
    intel->verts = TNL_CONTEXT(ctx)->clipspace.vertex_buf;
 
-   driInitExtensions( ctx, card_extensions, GL_FALSE );
+   driInitExtensions( ctx, i830_extensions, GL_FALSE );
 
    i830InitState( i830 );
 

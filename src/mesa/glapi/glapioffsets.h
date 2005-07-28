@@ -845,5 +845,6 @@
 #define _gloffset_StencilFuncSeparate 813
 #define _gloffset_StencilOpSeparate 814
 #define _gloffset_StencilMaskSeparate 815
+#define _gloffset_FIRST_DYNAMIC 816
 
 #endif /* !defined( _GLAPI_OFFSETS_H_ ) */
