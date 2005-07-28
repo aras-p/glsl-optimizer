@@ -31,7 +31,6 @@
 
 #include "dri_util.h"
 #include "drm_sarea.h"
-#include "glcontextmodes.h"
 
 #ifndef GLX_OML_sync_control
 typedef GLboolean ( * PFNGLXGETMSCRATEOMLPROC) (__DRInativeDisplay *dpy, __DRIid drawable, int32_t *numerator, int32_t *denominator);
@@ -836,7 +835,7 @@ static void driDestroyScreen(__DRInativeDisplay *dpy, int scrn, void *screenPriv
 	_mesa_free(psp->pDevPriv);
 	(void)drmClose(psp->fd);
 	if ( psp->modes != NULL ) {
-	    _gl_context_modes_destroy( psp->modes );
+	    (*dri_interface->destroyContextModes)( psp->modes );
 	}
 	_mesa_free(psp);
     }
