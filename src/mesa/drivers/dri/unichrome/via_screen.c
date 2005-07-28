@@ -102,11 +102,6 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
     void * const psc = sPriv->psc->screenConfigs;
 
 
-    if ( glx_enable_extension == NULL ) {
-	return GL_FALSE;
-    }
-
-
     /* Allocate the private area */
     viaScreen = (viaScreenPrivate *) CALLOC(sizeof(viaScreenPrivate));
     if (!viaScreen) {
@@ -175,13 +170,15 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 
     viaScreen->sareaPrivOffset = gDRIPriv->sarea_priv_offset;
 
-    if ( viaScreen->irqEnabled ) {
-	(*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-	(*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
-	(*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
-    }
+    if ( glx_enable_extension == NULL ) {
+       if ( viaScreen->irqEnabled ) {
+	  (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+	  (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+	  (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+       }
 
-    (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+       (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+    }
 
     return GL_TRUE;
 }

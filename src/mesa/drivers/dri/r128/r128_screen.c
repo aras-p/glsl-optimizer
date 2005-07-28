@@ -103,10 +103,6 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    void * const psc = sPriv->psc->screenConfigs;
 
 
-   if ( glx_enable_extension == NULL ) {
-      return NULL;
-   }
-
    /* Allocate the private area */
    r128Screen = (r128ScreenPtr) CALLOC( sizeof(*r128Screen) );
    if ( !r128Screen ) return NULL;
@@ -218,13 +214,15 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
 
    r128Screen->driScreen = sPriv;
 
-   if ( r128Screen->irq != 0 ) {
-      (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-      (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
-      (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
-   }
+   if ( glx_enable_extension == NULL ) {
+      if ( r128Screen->irq != 0 ) {
+	 (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+	 (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+	 (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+      }
 
-   (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+      (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+   }
 
    return r128Screen;
 }

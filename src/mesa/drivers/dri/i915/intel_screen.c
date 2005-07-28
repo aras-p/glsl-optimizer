@@ -80,10 +80,6 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    void * const psc = sPriv->psc->screenConfigs;
 
 
-   if (glx_enable_extension == NULL) {
-      return GL_FALSE;
-   }
-
    /* Allocate the private area */
    intelScreen = (intelScreenPrivate *)CALLOC(sizeof(intelScreenPrivate));
    if (!intelScreen) {
@@ -199,13 +195,14 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       }
    }
 
-   (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
+   if (glx_enable_extension == NULL) {
+      (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
+      (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
+   }
    
    sPriv->psc->allocateMemory = (void *) intelAllocateMemoryMESA;
    sPriv->psc->freeMemory     = (void *) intelFreeMemoryMESA;
    sPriv->psc->memoryOffset   = (void *) intelGetMemoryOffsetMESA;
-
-   (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
 
    return GL_TRUE;
 }

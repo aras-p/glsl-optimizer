@@ -201,10 +201,6 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
    void * const psc = sPriv->psc->screenConfigs;
 
 
-   if ( glx_enable_extension == NULL ) {
-      return GL_FALSE;
-   }
-
    /* Allocate the private area */
    mgaScreen = (mgaScreenPrivate *)MALLOC(sizeof(mgaScreenPrivate));
    if (!mgaScreen) {
@@ -233,11 +229,13 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
       }
    }
 
-   (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
-   (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
-   (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
-   (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-   (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+   if ( glx_enable_extension == NULL ) {
+      (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+      (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+      (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
+      (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+      (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+   }
 
    if (serverInfo->chipset != MGA_CARD_TYPE_G200 &&
        serverInfo->chipset != MGA_CARD_TYPE_G400) {

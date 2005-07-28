@@ -316,10 +316,6 @@ static radeonScreenPtr radeonCreateScreen(__DRIscreenPrivate * sPriv)
 	void *const psc = sPriv->psc->screenConfigs;
 
 
-	if (glx_enable_extension == NULL) {
-		return NULL;
-	}
-
 	/* Allocate the private area */
 	screen = (radeonScreenPtr) CALLOC(sizeof(*screen));
 	if (!screen) {
@@ -586,20 +582,24 @@ static radeonScreenPtr radeonCreateScreen(__DRIscreenPrivate * sPriv)
 	screen->driScreen = sPriv;
 	screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
 
-	if (screen->irq != 0) {
-		(*glx_enable_extension) (psc, "GLX_SGI_swap_control");
-		(*glx_enable_extension) (psc, "GLX_SGI_video_sync");
-		(*glx_enable_extension) (psc, "GLX_MESA_swap_control");
-	}
+	if (glx_enable_extension == NULL) {
+		if (screen->irq != 0) {
+			(*glx_enable_extension) (psc, "GLX_SGI_swap_control");
+			(*glx_enable_extension) (psc, "GLX_SGI_video_sync");
+			(*glx_enable_extension) (psc, "GLX_MESA_swap_control");
+		}
 
-	(*glx_enable_extension) (psc, "GLX_MESA_swap_frame_usage");
+		(*glx_enable_extension) (psc, "GLX_MESA_swap_frame_usage");
+	}
 
 #if R200_MERGED
 	sPriv->psc->allocateMemory = (void *)r200AllocateMemoryMESA;
 	sPriv->psc->freeMemory = (void *)r200FreeMemoryMESA;
 	sPriv->psc->memoryOffset = (void *)r200GetMemoryOffsetMESA;
 
-	(*glx_enable_extension) (psc, "GLX_MESA_allocate_memory");
+	if (glx_enable_extension == NULL) {
+		(*glx_enable_extension) (psc, "GLX_MESA_allocate_memory");
+	}
 #endif
 
 	return screen;

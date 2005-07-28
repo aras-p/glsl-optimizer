@@ -215,10 +215,6 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
    if ( MACH64_DEBUG & DEBUG_VERBOSE_DRI ) 
       fprintf( stderr, "%s\n", __FUNCTION__ );
 
-   if ( glx_enable_extension == NULL ) {
-      return NULL;
-   }
-
    /* Allocate the private area */
    mach64Screen = (mach64ScreenPtr) CALLOC( sizeof(*mach64Screen) );
    if ( !mach64Screen ) return NULL;
@@ -318,13 +314,15 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
 
    mach64Screen->driScreen = sPriv;
 
-   if ( mach64Screen->irq != 0 ) {
-      (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-      (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
-      (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
-   }
+   if ( glx_enable_extension == NULL ) {
+      if ( mach64Screen->irq != 0 ) {
+	 (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
+	 (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
+	 (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+      }
 
-   (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+      (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+   }
 
    return mach64Screen;
 }

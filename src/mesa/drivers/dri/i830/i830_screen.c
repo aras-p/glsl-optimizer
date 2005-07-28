@@ -147,10 +147,6 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
    void * const psc = sPriv->psc->screenConfigs;
 
 
-   if ( glx_enable_extension == NULL ) {
-      return GL_FALSE;
-   }
-
    /* Allocate the private area */
    i830Screen = (i830ScreenPrivate *)CALLOC(sizeof(i830ScreenPrivate));
    if (!i830Screen) {
@@ -286,7 +282,9 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
    }
 #endif
 
-   (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
+   if ( glx_enable_extension == NULL ) {
+      (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
+   }
 
    return GL_TRUE;
 }
