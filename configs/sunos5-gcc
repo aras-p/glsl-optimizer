@@ -4,18 +4,32 @@ include $(TOP)/configs/default
 
 CONFIG_NAME = sunos5-gcc
 
-ASM_SOURCES = $(SPARC_SOURCES) $(SPARC_API)
-
 # Compiler and flags
 CC = gcc
 CXX = g++
-CFLAGS = -O3 -I/usr/openwin/include -fPIC -fomit-frame-pointer -D_REENTRANT -DUSE_XSHM -DUSE_SPARC_ASM
-CXXFLAGS = -O3 -I/usr/openwin/include -fPIC -fomit-frame-pointer -D_REENTRANT -DUSE_SPARC_ASM
+
+WARN_FLAGS = -Wall
+OPT_FLAGS  = -O3 -g -fomit-frame-pointer -pipe
+PIC_FLAGS  = -fPIC
+
+ARCH_FLAGS ?=
+
+DEFINES = -D_REENTRANT -DUSE_XSHM
+
+ASM_SOURCES = $(SPARC_SOURCES) $(SPARC_API)
+ASM_FLAGS = -DUSE_SPARC_ASM
+
+CFLAGS   = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
+	$(ASM_FLAGS) -std=c99 -ffast-math -I/usr/openwin/include
+
+CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
+	-I/usr/openwin/include
+
 GLUT_CFLAGS = -fexceptions -DSOLARIS_2_4_BUG
 
-GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm
-GLU_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lm
-GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lm
-GLW_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -L/usr/openwin/lib -lXt -lX11
-APP_LIB_DEPS = -L$(LIB_DIR) -lX11 -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm
+# Library/program dependencies
+EXTRA_LIB_PATH=-L/usr/openwin/lib
 
+GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lXmu -lXi -lm
+GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lm
+APP_LIB_DEPS = -L$(LIB_DIR) -lX11 -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm

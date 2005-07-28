@@ -331,7 +331,16 @@ typedef struct {
 } GLXBufferClobberEventSGIX;
 #endif
 
-#if defined(__UNIXOS2__) || defined(__SOL64__)
+#if defined(__sun__)
+#include <inttypes.h>
+#if defined(__STDC__)
+#if defined(__arch64__)
+typedef long int int64_t;
+#else
+typedef long long int int64_t;   
+#endif /* __arch64__ */
+#endif /* __STDC__ */
+#elif defined(__UNIXOS2__) || defined(__SOL64__)
 typedef long int int32_t;
 typedef long long int int64_t;
 #elif defined( __VMS )

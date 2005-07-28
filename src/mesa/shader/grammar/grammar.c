@@ -565,24 +565,24 @@ static void emit_destroy (emit **em)
 
 static unsigned int emit_size (emit *_E)
 {
-    unsigned int _N = 0;
+    unsigned int n = 0;
 
     while (_E != NULL)
     {
         if (_E->m_emit_dest == ed_output)
         {
             if (_E->m_emit_type == et_position)
-                _N += 4;     /* position is a 32-bit unsigned integer */
+                n += 4;     /* position is a 32-bit unsigned integer */
             else
-                _N++;
+                n++;
         }
         _E = _E->m_next;
     }
 
-    return _N;
+    return n;
 }
 
-static int emit_push (emit *_E, byte *_P, byte _C, unsigned int _Pos, regbyte_ctx **_Ctx)
+static int emit_push (emit *_E, byte *_P, byte c, unsigned int _Pos, regbyte_ctx **_Ctx)
 {
     while (_E != NULL)
     {
@@ -591,7 +591,7 @@ static int emit_push (emit *_E, byte *_P, byte _C, unsigned int _Pos, regbyte_ct
             if (_E->m_emit_type == et_byte)
                 *_P++ = _E->m_byte;
             else if (_E->m_emit_type == et_stream)
-                *_P++ = _C;
+                *_P++ = c;
             else /* _Em->type == et_position */
             {
                 *_P++ = (byte) (_Pos);
@@ -614,7 +614,7 @@ static int emit_push (emit *_E, byte *_P, byte _C, unsigned int _Pos, regbyte_ct
             if (_E->m_emit_type == et_byte)
                 new_rbc->m_current_value = _E->m_byte;
             else if (_E->m_emit_type == et_stream)
-                new_rbc->m_current_value = _C;
+                new_rbc->m_current_value = c;
         }
 
         _E = _E->m_next;
@@ -1013,22 +1013,22 @@ static void bytepool_create (bytepool **by, int len)
     }
 }
 
-static int bytepool_reserve (bytepool *by, unsigned int _N)
+static int bytepool_reserve (bytepool *by, unsigned int n)
 {
     byte *_P;
 
-    if (_N <= by->_Siz)
+    if (n <= by->_Siz)
         return 0;
 
     /* byte pool can only grow and at least by doubling its size */
-    _N = _N >= by->_Siz * 2 ? _N : by->_Siz * 2;
+    n = n >= by->_Siz * 2 ? n : by->_Siz * 2;
 
     /* reallocate the memory and adjust pointers to the new memory location */
-    _P = (byte *) (mem_realloc (by->_F, sizeof (byte) * by->_Siz, sizeof (byte) * _N));
+    _P = (byte *) (mem_realloc (by->_F, sizeof (byte) * by->_Siz, sizeof (byte) * n));
     if (_P != NULL)
     {
         by->_F = _P;
-        by->_Siz = _N;
+        by->_Siz = n;
         return 0;
     }
 
