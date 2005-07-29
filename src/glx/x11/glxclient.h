@@ -154,51 +154,6 @@ typedef struct __GLXpixelStoreModeRec {
     GLuint alignment;
 } __GLXpixelStoreMode;
 
-/* The next 3 structures are deprecated.  Client state is no longer tracked
- * using them.  They only remain to maintain the layout / structure offset of
- * __GLXcontextRec.  In XFree86 5.0 they will be removed altogether.
- */
-
-typedef struct __GLXvertexArrayPointerStateRecDEPRECATED {
-    GLboolean enable;
-    void (*proc)(const void *);
-    const GLubyte *ptr;
-    GLsizei skip;
-    GLint size;
-    GLenum type;
-    GLsizei stride;
-} __GLXvertexArrayPointerStateDEPRECATED;
-
-typedef struct __GLXvertArrayStateRecDEPRECATED {
-    __GLXvertexArrayPointerStateDEPRECATED vertex;
-    __GLXvertexArrayPointerStateDEPRECATED normal;
-    __GLXvertexArrayPointerStateDEPRECATED color;
-    __GLXvertexArrayPointerStateDEPRECATED index;
-    __GLXvertexArrayPointerStateDEPRECATED texCoord[__GLX_MAX_TEXTURE_UNITS];
-    __GLXvertexArrayPointerStateDEPRECATED edgeFlag;
-    GLint maxElementsVertices;
-    GLint maxElementsIndices;
-    GLint activeTexture;
-} __GLXvertArrayStateDEPRECATED;
-
-typedef struct __GLXattributeRecDEPRECATED {
-	GLuint mask;
-
-	/*
-	** Pixel storage state.  Most of the pixel store mode state is kept
-	** here and used by the client code to manage the packing and
-	** unpacking of data sent to/received from the server.
-	*/
-	__GLXpixelStoreMode storePack, storeUnpack;
-
-	/*
-	** Vertex Array storage state.  The vertex array component
-	** state is stored here and is used to manage the packing of
-	** DrawArrays data sent to the server.
-	*/
-	__GLXvertArrayStateDEPRECATED vertArray;
-} __GLXattributeDEPRECATED;
-
 
 typedef struct __GLXattributeRec {
     GLuint mask;
@@ -330,12 +285,9 @@ struct __GLXcontextRec {
 		      GLenum, const GLvoid*, GLubyte*, GLubyte*);
 
     /**
-     * \name Client side attribs.
+     * Client side attribs.
      */
-    /*@{*/
-    __GLXattributeDEPRECATED stateDEPRECATED;
     __GLXattributeMachine attributes;
-    /*@}*/
 
     /**
      * Client side error code.  This is set when client side gl API
