@@ -415,6 +415,10 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
 	   "[gart] AGP texture map handle = 0x%08lx\n",
 	   info->gartTexHandle);
 
+   /* Initialize Radeon's AGP registers */
+   /* Ring buffer is at AGP offset 0 */
+   OUTREG(RADEON_AGP_BASE, info->ringHandle);
+
    return 1;
 }
 
