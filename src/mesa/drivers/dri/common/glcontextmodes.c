@@ -31,11 +31,11 @@
  * \author Ian Romanick <idr@us.ibm.com>
  */
 
-#ifdef IN_DRI_DRIVER
+#if defined(IN_DRI_DRIVER) || defined(IN_MINI_GLX)
 # include <stdlib.h>
 # include <string.h>
 # include <GL/gl.h>
-# include "dri_interface.h"
+# include "GL/internal/dri_interface.h"
 # include "imports.h"
 # define __glXMemset  memset
 #else
@@ -59,7 +59,7 @@ extern void __glXFree( void * ptr );
 
 #include "glcontextmodes.h"
 
-#if !defined(IN_DRI_DRIVER)
+#if !defined(IN_DRI_DRIVER) && !defined(IN_MINI_GLX)
 #define NUM_VISUAL_TYPES   6
 
 /**

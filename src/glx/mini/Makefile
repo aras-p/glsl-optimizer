@@ -5,7 +5,7 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 
-DEFINES += -DGLX_DIRECT_RENDERING
+DEFINES += -DGLX_DIRECT_RENDERING -DIN_MINI_GLX -UIN_DRI_DRIVER
 
 C_SOURCES = \
 	  $(TOP)/src/mesa/main/dispatch.c \

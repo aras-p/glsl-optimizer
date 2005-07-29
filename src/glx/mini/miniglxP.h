@@ -199,9 +199,6 @@ extern int send_char_msg( Display *dpy, int i, char msg );
 extern int blocking_read( Display *dpy, int connection, char *msg, size_t msg_size );
 extern int handle_fd_events( Display *dpy, int nonblock );
 
-
-extern Bool __glXWindowExists(__DRInativeDisplay *dpy, GLXDrawable draw);
-
 extern int __miniglx_open_connections( Display *dpy );
 extern void __miniglx_close_connections( Display *dpy );
 

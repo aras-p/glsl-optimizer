@@ -104,6 +104,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/types.h>
+#include <sys/time.h>    /* for gettimeofday */
 #include <linux/kd.h>
 #include <linux/vt.h>
 
@@ -115,16 +116,34 @@
 #include "glapi.h"
 
 
-extern GLboolean __glXCreateContextWithConfig(__DRInativeDisplay *dpy,
+static GLboolean __glXCreateContextWithConfig(__DRInativeDisplay *dpy,
         int screen, int fbconfigID, void *contextID,
         drm_context_t *hHWContext);
 
-extern GLboolean __glXGetDrawableInfo(__DRInativeDisplay *dpy, int scrn,
+static GLboolean __glXGetDrawableInfo(__DRInativeDisplay *dpy, int scrn,
         __DRIid draw, unsigned int * index, unsigned int * stamp,
         int * x, int * y, int * width, int * height,
         int * numClipRects, drm_clip_rect_t ** pClipRects,
         int * backX, int * backY,
         int * numBackClipRects, drm_clip_rect_t ** pBackClipRects);
+
+static __DRIscreen * __glXFindDRIScreen(__DRInativeDisplay *dpy, int scrn);
+
+static GLboolean __glXWindowExists(__DRInativeDisplay *dpy, __DRIid draw);
+
+static int __glXGetUST( int64_t * ust );
+
+static GLboolean __glXGetMscRate(__DRInativeDisplay * dpy, __DRIid drawable,
+    int32_t * numerator, int32_t * denominator);
+
+static GLboolean xf86DRI_DestroyContext(__DRInativeDisplay *dpy, int screen,
+    __DRIid context_id );
+
+static GLboolean xf86DRI_CreateDrawable(__DRInativeDisplay *dpy, int screen,
+    __DRIid drawable, drm_drawable_t *hHWDrawable );
+
+static GLboolean xf86DRI_DestroyDrawable(__DRInativeDisplay *dpy, int screen,
+    __DRIid drawable);
 
 
 /** Wrapper around either malloc() */
@@ -726,7 +745,7 @@ CloseFBDev( Display *dpy )
  * \internal
  * Returns the MiniGLXDisplayRec::driScreen attribute.
  */
-__DRIscreen *
+static __DRIscreen *
 __glXFindDRIScreen(__DRInativeDisplay *dpy, int scrn)
 {
    (void) scrn;
@@ -743,11 +762,11 @@ __glXFindDRIScreen(__DRInativeDisplay *dpy, int scrn)
  * Since Mini GLX only supports one window, compares the specified drawable with
  * the MiniGLXDisplayRec::TheWindow attribute.
  */
-Bool
-__glXWindowExists(__DRInativeDisplay *dpy, GLXDrawable draw)
+static GLboolean
+__glXWindowExists(__DRInativeDisplay *dpy, __DRIid draw)
 {
-  Display* display = (Display*)dpy;
-   if (display->TheWindow == draw)
+   const Display * const display = (Display*)dpy;
+   if (display->TheWindow == (Window) draw)
       return True;
    else
       return False;
@@ -941,6 +960,19 @@ static int __read_config_file( Display *dpy )
    return 1;
 }
 
+/**
+ * Versioned name of the expected \c __driCreateNewScreen function.
+ * 
+ * The version of the last incompatible loader/driver inteface change is
+ * appended to the name of the \c __driCreateNewScreen function.  This
+ * prevents loaders from trying to load drivers that are too old.
+ * 
+ * \todo
+ * Create a macro or something so that this is automatically updated.
+ */
+static const char createNewScreenName[] = "__driCreateNewScreen_20050727";
+
+
 static int InitDriver( Display *dpy )
 {
    /*
@@ -968,9 +1000,9 @@ static int InitDriver( Display *dpy )
    /* Pull in standard DRI client-side driver hooks:
     */
    dpy->createNewScreen = (PFNCREATENEWSCREENFUNC)
-           dlsym(dpy->dlHandle, "__driCreateNewScreen");
+           dlsym(dpy->dlHandle, createNewScreenName);
    if (!dpy->createNewScreen) {
-      fprintf(stderr, "Couldn't find __driCreateScreen in %s\n",
+      fprintf(stderr, "Couldn't find %s in %s\n", createNewScreenName,
               dpy->clientDriverName);
       goto failed;
    }
@@ -1083,10 +1115,43 @@ __miniglx_StartServer( const char *display_name )
 }
 
 
+/**
+ * Implement \c __DRIinterfaceMethods::getProcAddress.
+ */
+static __DRIfuncPtr get_proc_address( const char * proc_name )
+{
+    (void) proc_name;
+    return NULL;
+}
+
+
+/**
+ * Table of functions exported by the loader to the driver.
+ */
+static const __DRIinterfaceMethods interface_methods = {
+    get_proc_address,
+
+    _gl_context_modes_create,
+    _gl_context_modes_destroy,
+      
+    __glXFindDRIScreen,
+    __glXWindowExists,
+      
+    __glXCreateContextWithConfig,
+    xf86DRI_DestroyContext,
+
+    xf86DRI_CreateDrawable,
+    xf86DRI_DestroyDrawable,
+    __glXGetDrawableInfo,
+
+    __glXGetUST,
+    __glXGetMscRate,
+};
+
+
 static void *
 CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
 {
-    int directCapable;
     void *psp = NULL;
     drm_handle_t hSAREA;
     drmAddress pSAREA;
@@ -1102,11 +1167,8 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
     const char * err_extra;
     drmVersionPtr version;
     drm_handle_t  hFB;
-    int        junk;
     drm_magic_t magic;
 
-    err_msg = "XF86DRIOpenConnection";
-    err_extra = NULL;
 
     hSAREA = dpy->driverContext.shared.hSAREA;
     BusID = dpy->driverContext.pciBusID;
@@ -1149,7 +1211,6 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
      * We'll check the version in each DRI driver's "createScreen"
      * function.
      */
-    err_msg = "XF86DRIGetClientDriverName";
     ddx_version.major = 4;
     ddx_version.minor = 0;
     ddx_version.patch = 0;
@@ -1157,7 +1218,6 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
     /*
      * Get the DRI X extension version.
      */
-    err_msg = "XF86DRIQueryVersion";
     dri_version.major = 4;
     dri_version.minor = 0;
     dri_version.patch = 0;
@@ -1168,7 +1228,6 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
      * that has information about the screen size, depth, pitch,
      * ancilliary buffers, DRM mmap handles, etc.
      */
-    err_msg = "XF86DRIGetDeviceInfo";
     hFB = dpy->driverContext.shared.hFrameBuffer;
     framebuffer.size = dpy->driverContext.shared.fbSize;
     framebuffer.stride = dpy->driverContext.shared.fbStride;
@@ -1198,11 +1257,6 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
     err_extra = strerror( -status );
 
     if ( status == 0 ) {
-        PFNGLXGETINTERNALVERSIONPROC get_ver;
-
-        get_ver = (PFNGLXGETINTERNALVERSIONPROC)
-                glXGetProcAddress( (const GLubyte *) "__glXGetInternalVersion" );
-
         err_msg = "InitDriver";
         err_extra = NULL;
         psp = dpy->createNewScreen(dpy, scrn, psc, NULL,
@@ -1212,7 +1266,8 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc)
                 & framebuffer,
                 pSAREA,
                 fd,
-                (get_ver != NULL) ? (*get_ver)() : 20040602,
+                20050727,
+		& interface_methods,
                 (__GLcontextModes **) &dpy->driver_modes);
 
 	/* fill in dummy visual ids */
@@ -2083,7 +2138,7 @@ glXDestroyContext( Display *dpy, GLXContext ctx )
    if (ctx) {
       if (glxctx == ctx) {
          /* destroying current context */
-         ctx->driContext.bindContext3(dpy, 0, 0, 0, 0);
+         ctx->driContext.bindContext(dpy, 0, 0, 0, 0);
 	 CurrentContext = 0;
       }
       ctx->driContext.destroyContext(dpy, 0, ctx->driContext.private);
@@ -2126,20 +2181,20 @@ glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx)
       GLXDrawable oldDrawable = glXGetCurrentDrawable();
       /* unbind old */
       if (oldContext) {
-         oldContext->driContext.unbindContext3(dpy, 0,
+         oldContext->driContext.unbindContext(dpy, 0,
                  (__DRIid) oldDrawable, (__DRIid) oldDrawable,
                  &oldContext->driContext);
       }
       /* bind new */
       CurrentContext = ctx;
-      ctx->driContext.bindContext3(dpy, 0, (__DRIid) drawable,
+      ctx->driContext.bindContext(dpy, 0, (__DRIid) drawable,
               (__DRIid) drawable, &ctx->driContext);
       ctx->drawBuffer = drawable;
       ctx->curBuffer = drawable;
    }
    else if (ctx && dpy) {
       /* unbind */
-      ctx->driContext.bindContext3(dpy, 0, 0, 0, 0);
+      ctx->driContext.bindContext(dpy, 0, 0, 0, 0);
    }
    else if (dpy) {
       CurrentContext = 0;	/* kw:  this seems to be intended??? */
@@ -2210,7 +2265,7 @@ glXGetCurrentDrawable( void )
 }
 
 
-GLboolean
+static GLboolean
 __glXCreateContextWithConfig(__DRInativeDisplay *dpy, int screen,
         int fbconfigID, void *contextID, drm_context_t *hHWContext)
 {
@@ -2236,7 +2291,7 @@ __glXCreateContextWithConfig(__DRInativeDisplay *dpy, int screen,
 }
 
 
-GLboolean
+static GLboolean
 __glXGetDrawableInfo(__DRInativeDisplay *dpy, int scrn,
         __DRIid draw, unsigned int * index, unsigned int * stamp,
         int * x, int * y, int * width, int * height,
@@ -2278,23 +2333,23 @@ __glXGetDrawableInfo(__DRInativeDisplay *dpy, int scrn,
 }
 
 
-GLboolean
-XF86DRIDestroyContext(__DRInativeDisplay *dpy, int screen, __DRIid context_id )
+static GLboolean
+xf86DRI_DestroyContext(__DRInativeDisplay *dpy, int screen, __DRIid context_id )
 {
     return GL_TRUE;
 }
 
 
-GLboolean
-XF86DRICreateDrawable(__DRInativeDisplay *dpy, int screen, __DRIid drawable,
+static GLboolean
+xf86DRI_CreateDrawable(__DRInativeDisplay *dpy, int screen, __DRIid drawable,
         drm_drawable_t *hHWDrawable )
 {
     return GL_TRUE;
 }
 
 
-GLboolean
-XF86DRIDestroyDrawable(__DRInativeDisplay *dpy, int screen, __DRIid drawable)
+static GLboolean
+xf86DRI_DestroyDrawable(__DRInativeDisplay *dpy, int screen, __DRIid drawable)
 {
     return GL_TRUE;
 }
@@ -2348,12 +2403,6 @@ void (*glXGetProcAddress(const GLubyte *procname))( void )
       { "glXDestroyPbuffer", (void *) glXDestroyPbuffer },
       { "glXChooseFBConfig", (void *) glXChooseFBConfig },
       { "glXGetVisualFromFBConfig", (void *) glXGetVisualFromFBConfig },
-      { "__glXCreateContextWithConfig", (void *) __glXCreateContextWithConfig },
-      { "__glXGetDrawableInfo", (void *) __glXGetDrawableInfo },
-      { "__glXWindowExists", (void *) __glXWindowExists },
-      { "__glXCreateContextModes", (void *) _gl_context_modes_create },
-      { "__glXFindDRIScreen", (void *)__glXFindDRIScreen },
-      { "__glXScrEnableExtension", (void *)__glXScrEnableExtension },
       { NULL, NULL }
    };
    const struct name_address *entry;
@@ -2438,32 +2487,73 @@ void *glXAllocateMemoryMESA(Display *dpy, int scrn,
                             size_t size, float readFreq,
                             float writeFreq, float priority)
 {
-        if (dpy->driScreen.private && dpy->driScreen.allocateMemory) {
-         return (*dpy->driScreen.allocateMemory)( dpy, scrn, size,
-                                                  readFreq, writeFreq,
-                                                  priority );
-      }
+    if (dpy->driScreen.private && dpy->driScreen.allocateMemory) {
+	return (*dpy->driScreen.allocateMemory)( dpy, scrn, size,
+						 readFreq, writeFreq,
+						 priority );
+    }
+
+    return NULL;
 }
 
-void glXFreeMemoryMESA(Display *dpy, int scrn, void *pointer){
-      if (dpy->driScreen.private && dpy->driScreen.freeMemory) {
-         (*dpy->driScreen.freeMemory)( dpy, scrn, pointer );
-      }
+void glXFreeMemoryMESA(Display *dpy, int scrn, void *pointer)
+{
+    if (dpy->driScreen.private && dpy->driScreen.freeMemory) {
+	(*dpy->driScreen.freeMemory)( dpy, scrn, pointer );
+    }
 }
 
 GLuint glXGetMemoryOffsetMESA( Display *dpy, int scrn,
                                const void *pointer )
 {
-   if (dpy->driScreen.private && dpy->driScreen.memoryOffset) {
-         return (*dpy->driScreen.memoryOffset)( dpy, scrn, pointer );
-   }
+    if (dpy->driScreen.private && dpy->driScreen.memoryOffset) {
+	return (*dpy->driScreen.memoryOffset)( dpy, scrn, pointer );
+    }
+
+    return 0;
 }
 
-void
-__glXScrEnableExtension( void *psc, const char * name )
+
+/**
+ * Get the unadjusted system time (UST).  Currently, the UST is measured in
+ * microseconds since Epoc.  The actual resolution of the UST may vary from
+ * system to system, and the units may vary from release to release.
+ * Drivers should not call this function directly.  They should instead use
+ * \c glXGetProcAddress to obtain a pointer to the function.
+ *
+ * \param ust Location to store the 64-bit UST
+ * \returns Zero on success or a negative errno value on failure.
+ *
+ * \note
+ * This function was copied directly from src/glx/x11/glxcmds.c.
+ */
+static int __glXGetUST( int64_t * ust )
 {
+    struct timeval  tv;
+    
+    if ( ust == NULL ) {
+	return -EFAULT;
+    }
 
+    if ( gettimeofday( & tv, NULL ) == 0 ) {
+	ust[0] = (tv.tv_sec * 1000000) + tv.tv_usec;
+	return 0;
+    } else {
+	return -errno;
+    }
 }
 
 
+/**
+ * 
+ * \bug
+ * This needs to be implemented for miniGlx.
+ */
+static GLboolean __glXGetMscRate(__DRInativeDisplay * dpy, __DRIid drawable,
+				 int32_t * numerator, int32_t * denominator)
+{
+    *numerator = 0;
+    *denominator = 0;
+    return False;
+}
 /*@}*/
