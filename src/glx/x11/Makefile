@@ -5,8 +5,7 @@ include $(TOP)/configs/current
 # code will not build with DNIO defined.  When we finally drop old interface
 # support in libGL, we need to clean up both glxcmds.c and dri_interface.h.
 
-DEFINES += -DGLX_DIRECT_RENDERING -DGLXEXT -DXF86DRI -DGLX_USE_DLOPEN \
-	-DGLX_USE_MESA -DXF86VIDMODE -D_REENTRANT -UIN_DRI_DRIVER
+DEFINES += -DXF86VIDMODE -D_REENTRANT -UIN_DRI_DRIVER
 
 C_SOURCES = \
 	  $(TOP)/src/mesa/glapi/glapi.c \
