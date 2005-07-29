@@ -582,7 +582,7 @@ static radeonScreenPtr radeonCreateScreen(__DRIscreenPrivate * sPriv)
 	screen->driScreen = sPriv;
 	screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
 
-	if (glx_enable_extension == NULL) {
+	if (glx_enable_extension != NULL) {
 		if (screen->irq != 0) {
 			(*glx_enable_extension) (psc, "GLX_SGI_swap_control");
 			(*glx_enable_extension) (psc, "GLX_SGI_video_sync");
@@ -597,7 +597,7 @@ static radeonScreenPtr radeonCreateScreen(__DRIscreenPrivate * sPriv)
 	sPriv->psc->freeMemory = (void *)r200FreeMemoryMESA;
 	sPriv->psc->memoryOffset = (void *)r200GetMemoryOffsetMESA;
 
-	if (glx_enable_extension == NULL) {
+	if (glx_enable_extension != NULL) {
 		(*glx_enable_extension) (psc, "GLX_MESA_allocate_memory");
 	}
 #endif

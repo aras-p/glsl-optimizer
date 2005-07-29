@@ -229,7 +229,7 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
       }
    }
 
-   if ( glx_enable_extension == NULL ) {
+   if ( glx_enable_extension != NULL ) {
       (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
       (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
       (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );

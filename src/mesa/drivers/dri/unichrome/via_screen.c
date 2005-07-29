@@ -170,7 +170,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 
     viaScreen->sareaPrivOffset = gDRIPriv->sarea_priv_offset;
 
-    if ( glx_enable_extension == NULL ) {
+    if ( glx_enable_extension != NULL ) {
        if ( viaScreen->irqEnabled ) {
 	  (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
 	  (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );

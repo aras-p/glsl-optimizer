@@ -195,7 +195,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       }
    }
 
-   if (glx_enable_extension == NULL) {
+   if (glx_enable_extension != NULL) {
       (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
       (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
    }

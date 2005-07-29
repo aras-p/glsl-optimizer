@@ -214,7 +214,7 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
 
    r128Screen->driScreen = sPriv;
 
-   if ( glx_enable_extension == NULL ) {
+   if ( glx_enable_extension != NULL ) {
       if ( r128Screen->irq != 0 ) {
 	 (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
 	 (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );

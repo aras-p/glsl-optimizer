@@ -463,7 +463,7 @@ r200CreateScreen( __DRIscreenPrivate *sPriv )
    screen->driScreen = sPriv;
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;
 
-   if ( glx_enable_extension == NULL ) {
+   if ( glx_enable_extension != NULL ) {
       if ( screen->irq != 0 ) {
 	 (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
 	 (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );

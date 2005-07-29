@@ -314,7 +314,7 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
 
    mach64Screen->driScreen = sPriv;
 
-   if ( glx_enable_extension == NULL ) {
+   if ( glx_enable_extension != NULL ) {
       if ( mach64Screen->irq != 0 ) {
 	 (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
 	 (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );

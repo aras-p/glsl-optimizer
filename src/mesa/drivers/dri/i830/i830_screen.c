@@ -282,7 +282,7 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
    }
 #endif
 
-   if ( glx_enable_extension == NULL ) {
+   if ( glx_enable_extension != NULL ) {
       (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
    }
 
