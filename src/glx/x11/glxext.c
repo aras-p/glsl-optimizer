@@ -51,11 +51,6 @@
 #include <assert.h>
 #include "indirect_init.h"
 #include "glapi.h"
-#ifdef XTHREADS
-# include "Xthreads.h"
-#elif defined(PTHREADS)
-# include <pthread.h>
-#endif
 #include "glxextensions.h"
 #include "glcontextmodes.h"
 #include "glheader.h"

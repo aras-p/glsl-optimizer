@@ -61,7 +61,7 @@
 #include "glapitable.h"
 #include "glxextensions.h"
 #if defined( XTHREADS )
-# include "Xthreads.h"
+# include <X11/Xthreads.h>
 #elif defined( PTHREADS )
 # include <pthread.h>
 #endif
