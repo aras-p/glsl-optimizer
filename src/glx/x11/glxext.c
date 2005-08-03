@@ -145,7 +145,7 @@ static __GLapi *IndirectAPI = NULL;
  * Current context management and locking
  */
 
-#if defined( XTHREADS )
+#if defined( USE_XTHREADS )
 
 /* thread safe */
 static GLboolean TSDinitialized = GL_FALSE;
@@ -1106,7 +1106,7 @@ __GLXdisplayPrivate *__glXInitialize(Display* dpy)
     XEDataObject dataObj;
     int major, minor;
 
-#if defined(XTHREADS)
+#if defined(USE_XTHREADS)
     {
         static int firstCall = 1;
         if (firstCall) {

@@ -35,7 +35,7 @@
 #  define HIDDEN(x)
 #endif
 
-#if defined(PTHREADS) || defined(XTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)
+#if defined(PTHREADS) || defined(USE_XTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)
 #  define THREADS
 #endif
 

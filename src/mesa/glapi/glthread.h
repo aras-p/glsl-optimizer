@@ -65,7 +65,7 @@
 
 
 #if (defined(PTHREADS) || defined(SOLARIS_THREADS) ||\
-     defined(WIN32_THREADS) || defined(XTHREADS) || defined(BEOS_THREADS)) \
+     defined(WIN32_THREADS) || defined(USE_XTHREADS) || defined(BEOS_THREADS)) \
     && !defined(THREADS)
 # define THREADS
 #endif
@@ -193,7 +193,7 @@ typedef CRITICAL_SECTION _glthread_Mutex;
  * XFree86 has its own thread wrapper, Xthreads.h
  * We wrap it again for GL.
  */
-#ifdef XTHREADS
+#ifdef USE_XTHREADS
 #include <X11/Xthreads.h>
 
 typedef struct {
@@ -225,7 +225,7 @@ typedef xmutex_rec _glthread_Mutex;
 #define _glthread_UNLOCK_MUTEX(name) \
    (void) xmutex_unlock(&(name))
 
-#endif /* XTHREADS */
+#endif /* USE_XTHREADS */
 
 
 

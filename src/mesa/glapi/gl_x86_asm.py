@@ -86,7 +86,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		print '#define GLOBL_FN(x) GLOBL x'
 		print '#endif'
 		print ''
-		print '#if defined(PTHREADS) || defined(XTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)'
+		print '#if defined(PTHREADS) || defined(USE_XTHREADS) || defined(SOLARIS_THREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)'
 		print '#  define THREADS'
 		print '#endif'
 		print ''

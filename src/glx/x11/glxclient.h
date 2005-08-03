@@ -60,7 +60,7 @@
 #include "GL/internal/glcore.h"
 #include "glapitable.h"
 #include "glxextensions.h"
-#if defined( XTHREADS )
+#if defined( USE_XTHREADS )
 # include <X11/Xthreads.h>
 #elif defined( PTHREADS )
 # include <pthread.h>
@@ -547,7 +547,7 @@ extern __GLXdisplayPrivate *__glXInitialize(Display*);
 extern int __glXDebug;
 
 /* This is per-thread storage in an MT environment */
-#if defined( XTHREADS ) || defined( PTHREADS )
+#if defined( USE_XTHREADS ) || defined( PTHREADS )
 
 extern void __glXSetCurrentContext(__GLXcontext *c);
 
@@ -570,14 +570,14 @@ extern __GLXcontext *__glXcurrentContext;
 #define __glXGetCurrentContext()	__glXcurrentContext
 #define __glXSetCurrentContext(gc)	__glXcurrentContext = gc
 
-#endif /* defined( XTHREADS ) || defined( PTHREADS ) */
+#endif /* defined( USE_XTHREADS ) || defined( PTHREADS ) */
 
 
 /*
 ** Global lock for all threads in this address space using the GLX
 ** extension
 */
-#if defined( XTHREADS )
+#if defined( USE_XTHREADS )
 extern xmutex_rec __glXmutex;
 #define __glXLock()    xmutex_lock(&__glXmutex)
 #define __glXUnlock()  xmutex_unlock(&__glXmutex)
