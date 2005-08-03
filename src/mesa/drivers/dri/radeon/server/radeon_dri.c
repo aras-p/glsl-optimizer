@@ -26,6 +26,21 @@
 
 static size_t radeon_drm_page_size;
 
+static int RadeonSetParam(const DRIDriverContext *ctx, int param, int value)
+{
+   drm_radeon_setparam_t sp;
+
+   memset(&sp, 0, sizeof(sp));
+   sp.param = param;
+   sp.value = value;
+
+   if (drmCommandWrite(ctx->drmFD, DRM_RADEON_SETPARAM, &sp, sizeof(sp))) {
+     return -1;
+   }
+
+   return 0;
+}
+
 /**
  * \brief Wait for free FIFO entries.
  *
@@ -210,6 +225,8 @@ static int RADEONEngineRestore( const DRIDriverContext *ctx )
 
 
    OUTREG(RADEON_GEN_INT_CNTL, info->gen_int_cntl);
+   if (info->colorTiling)
+	   info->crtc_offset_cntl |= RADEON_CRTC_TILE_EN;
    OUTREG(RADEON_CRTC_OFFSET_CNTL, info->crtc_offset_cntl);
 
    /* Initialize and start the CP if required */
@@ -786,6 +803,44 @@ static int RADEONMemoryInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
 			     (info->depthOffset >> 10));
 
    return 1;
+}
+
+static int RADEONColorTilingInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
+{
+   int        width_bytes = ctx->shared.virtualWidth * ctx->cpp;
+   int        bufferSize  = ((ctx->shared.virtualHeight * width_bytes
+			      + RADEON_BUFFER_ALIGN)
+			     & ~RADEON_BUFFER_ALIGN);
+   /* Setup color tiling */
+   if (info->drmMinor<14)
+      info->colorTiling=0;
+
+   if (info->colorTiling)
+   {
+
+      int colorTilingFlag;
+      drm_radeon_surface_alloc_t front,back;
+
+      RadeonSetParam(ctx, RADEON_SETPARAM_SWITCH_TILING, info->colorTiling ? 1 : 0);
+      
+      /* Setup the surfaces */
+      if (info->ChipFamily < CHIP_FAMILY_R200)
+         colorTilingFlag=RADEON_SURF_TILE_COLOR_MACRO;
+      else
+         colorTilingFlag=R200_SURF_TILE_COLOR_MACRO;
+
+      front.address = info->frontOffset;
+      front.size = bufferSize;
+      front.flags = (width_bytes) | colorTilingFlag;
+      drmCommandWrite(ctx->drmFD, DRM_RADEON_SURF_ALLOC, &front,sizeof(front)); 
+ 
+      back.address = info->backOffset;
+      back.size = bufferSize;
+      back.flags = (width_bytes) | colorTilingFlag;
+      drmCommandWrite(ctx->drmFD, DRM_RADEON_SURF_ALLOC, &back,sizeof(back)); 
+
+   }
+   return 1;
 } 
 
 
@@ -961,12 +1016,15 @@ static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
       return 0;
    }
 
+   RADEONColorTilingInit(ctx, info);
+
    /* Initialize IRQ */
    RADEONDRIIrqInit(ctx, info);
 
    /* Initialize kernel gart memory manager */
    RADEONDRIAgpHeapInit(ctx, info);
 
+   fprintf(stderr,"color tiling %sabled\n", info->colorTiling?"en":"dis");
    fprintf(stderr,"page flipping %sabled\n", info->page_flip_enable?"en":"dis");
    /* Initialize the SAREA private data structure */
    {
@@ -989,7 +1047,6 @@ static int RADEONScreenInit( DRIDriverContext *ctx, RADEONInfoPtr info )
    drimemsetio((char *)ctx->FBAddress + info->backOffset,
 	  0,
 	  info->backPitch * ctx->cpp * ctx->shared.virtualHeight );
-
 
    /* This is the struct passed to radeon_dri.so for its initialization */
    ctx->driverClientMsg = malloc(sizeof(RADEONDRIRec));
@@ -1126,6 +1183,8 @@ static int radeonValidateMode( const DRIDriverContext *ctx )
    info->gen_int_cntl = INREG(RADEON_GEN_INT_CNTL);
    info->crtc_offset_cntl = INREG(RADEON_CRTC_OFFSET_CNTL);
 
+   if (info->colorTiling)
+	   info->crtc_offset_cntl |= RADEON_CRTC_TILE_EN;
    return 1;
 }
 
@@ -1146,9 +1205,12 @@ static int radeonPostValidateMode( const DRIDriverContext *ctx )
    unsigned char *RADEONMMIO = ctx->MMIOAddress;
    RADEONInfoPtr info = ctx->driverPrivate;
 
+   RADEONColorTilingInit( ctx, info);
    OUTREG(RADEON_GEN_INT_CNTL, info->gen_int_cntl);
+   if (info->colorTiling)
+	   info->crtc_offset_cntl |= RADEON_CRTC_TILE_EN;
    OUTREG(RADEON_CRTC_OFFSET_CNTL, info->crtc_offset_cntl);
-
+   
    return 1;
 }
 
@@ -1190,6 +1252,7 @@ static int radeonInitFBDev( DRIDriverContext *ctx )
    info->bufSize       = RADEON_DEFAULT_BUFFER_SIZE;
    info->ringSize      = RADEON_DEFAULT_RING_SIZE;
    info->page_flip_enable = RADEON_DEFAULT_PAGE_FLIP;
+   info->colorTiling = ctx->colorTiling;
   
    info->Chipset = ctx->chipset;
 

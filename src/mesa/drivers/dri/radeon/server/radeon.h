@@ -173,6 +173,8 @@ typedef struct {
    unsigned int      frontPitchOffset;
    unsigned int      backPitchOffset;
    unsigned int      depthPitchOffset;
+   
+   int               colorTiling;      /**< \brief Enable color tiling */
 
    int               irq;              /**< \brief IRQ number */
    int               page_flip_enable; /**< \brief Page Flip enable */

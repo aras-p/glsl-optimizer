@@ -68,6 +68,8 @@ typedef struct DRIDriverContextRec {
    int cpp;  
    int agpmode;
    int isPCI;
+   
+   int colorTiling;	    /**< \brief color tiling is enabled */
 
    unsigned long FBStart;   /**< \brief physical address of the framebuffer */
    unsigned long MMIOStart; /**< \brief physical address of the MMIO region */
