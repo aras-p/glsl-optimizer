@@ -45,7 +45,7 @@ _eglChooseDriver(EGLDisplay display)
    else if (name[0] == ':' && (name[1] >= '0' && name[1] <= '9') && !name[2]) {
       printf("EGL: Use driver for screen: %s\n", name);
       /* XXX probe hardware here to determine which driver to open */
-      /* driverName = "something"; */
+      driverName = "libEGLdri";
    }
    else if (name[0] == '!') {
       /* use specified driver name */
@@ -71,44 +71,40 @@ _eglChooseDriver(EGLDisplay display)
 _EGLDriver *
 _eglOpenDriver(_EGLDisplay *dpy, const char *driverName)
 {
+   _EGLDriver *drv;
+   _EGLMain_t mainFunc;
    void *lib;
    char driverFilename[1000];
 
    /* XXX also prepend a directory path??? */
    sprintf(driverFilename, "%s.so", driverName);
 
-#if 1
    lib = dlopen(driverFilename, RTLD_NOW);
-   if (lib) {
-      _EGLDriver *drv;
-      _EGLMain_t mainFunc;
-
-      mainFunc = (_EGLMain_t) dlsym(lib, "_eglMain");
-      if (!mainFunc) {
-         fprintf(stderr, "_eglMain not found in %s", (char *) driverFilename);
-         dlclose(lib);
-         return NULL;
-      }
-
-      drv = mainFunc(dpy);
-      if (!drv) {
-         dlclose(lib);
-         return NULL;
-      }
-
-      drv->LibHandle = lib;
-      drv->Display = dpy;
-      return drv;
-   }
-   else {
-      fprintf(stderr, "EGLdebug: Error opening %s: %s\n",
-              driverFilename, dlerror());
+   if (!lib) {
+      fprintf(stderr, "EGLdebug: Error opening %s: %s\n", driverFilename, dlerror());
       return NULL;
    }
-#else
-   /* use built-in driver */
-   return _eglDefaultMain(d);
-#endif
+
+   mainFunc = (_EGLMain_t) dlsym(lib, "_eglMain");
+   if (!mainFunc) {
+      fprintf(stderr, "_eglMain not found in %s", (char *) driverFilename);
+      dlclose(lib);
+      return NULL;
+   }
+
+   drv = mainFunc(dpy);
+   if (!drv) {
+      dlclose(lib);
+      return NULL;
+   }
+   /* with a recurvise open you want the inner most handle */
+   if (!drv->LibHandle)
+      drv->LibHandle = lib;
+   else
+      dlclose(lib);
+
+   drv->Display = dpy;
+   return drv;
 }
 
 

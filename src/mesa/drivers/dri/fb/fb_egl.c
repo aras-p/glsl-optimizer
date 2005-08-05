@@ -842,19 +842,12 @@ fbSwapBuffers(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw)
 }
 
 
-/*
- * Just to silence warning
- */
-extern _EGLDriver *
-_eglMain(NativeDisplayType dpy);
-
-
 /**
  * The bootstrap function.  Return a new fbDriver object and
  * plug in API functions.
  */
 _EGLDriver *
-_eglMain(NativeDisplayType dpy)
+_eglMain(_EGLDisplay *dpy)
 {
    fbDriver *fb;
 

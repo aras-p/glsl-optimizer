@@ -53,7 +53,8 @@ SHARED_INCLUDES = \
 	-I$(TOP)/src/mesa/shader \
 	-I$(TOP)/src/mesa/swrast \
 	-I$(TOP)/src/mesa/swrast_setup \
-	-I$(TOP)/src/egl/main
+	-I$(TOP)/src/egl/main \
+	-I$(TOP)/src/egl/drivers/dri
 
 ##### RULES #####
 

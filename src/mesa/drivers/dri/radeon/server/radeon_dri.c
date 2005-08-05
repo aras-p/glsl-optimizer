@@ -455,7 +455,7 @@ static int RADEONDRIPciInit(const DRIDriverContext *ctx, RADEONInfoPtr info)
 	return 0;
     }
     fprintf(stderr,
-	       "[pci] %d kB allocated with handle 0x%08x\n",
+	       "[pci] %d kB allocated with handle 0x%08lx\n",
 	       info->gartSize*1024, info->gartMemHandle);
 
    info->gartOffset = 0;

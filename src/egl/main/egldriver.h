@@ -125,10 +125,7 @@ struct _egl_driver
 };
 
 
-
-
-extern _EGLDriver *
-_eglDefaultMain(NativeDisplayType d);
+extern _EGLDriver *_eglMain(_EGLDisplay *dpy);
 
 
 extern _EGLDriver *
