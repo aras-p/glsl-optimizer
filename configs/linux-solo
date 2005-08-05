@@ -28,16 +28,16 @@ CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
 ASM_SOURCES = 
 
 # Library/program dependencies
-DRI_LIB_DEPS = -lm -lpthread -lexpat -ldl -L$(LIB_DIR) -lEGL -l$(GL_LIB) 
+DRI_LIB_DEPS = -lm -lpthread -lexpat -ldl -L$(LIB_DIR) 
 GL_LIB_DEPS = -lm -lpthread -ldl
 GLU_LIB_DEPS = -L$(LIB_DIR) -l$(GL_LIB) -lm
 GLUT_LIB_DEPS = -L$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -lm
 APP_LIB_DEPS = -L$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -lm -lpthread
 
 # Directories
-SRC_DIRS = egl glx/mini mesa glu glut/mini
+SRC_DIRS = glx/mini mesa glu glut/mini
 DRIVER_DIRS = dri
-PROGRAM_DIRS = miniglx egl
+PROGRAM_DIRS = miniglx
 
 #DRI_DIRS = ffb gamma sis savage
 DRI_DIRS = i810 i830 i915 mach64 mga r128 r200 radeon tdfx unichrome fb
