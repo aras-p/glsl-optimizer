@@ -41,14 +41,6 @@ typedef GLboolean ( * PFNGLXGETMSCRATEOMLPROC) (__DRInativeDisplay *dpy, __DRIid
 const __DRIinterfaceMethods * dri_interface = NULL;
 
 /**
- * Weak thread-safety dispatch pointer.  Older versions of libGL will not have
- * this symbol, so a "weak" version is included here so that the driver will
- * dynamically link properly.  The value is set to \c NULL.  This forces the
- * driver to fall back to the old dispatch interface.
- */
-struct _glapi_table *_glapi_DispatchTSD __attribute__((weak)) = NULL;
-
-/**
  * This is used in a couple of places that call \c driCreateNewDrawable.
  */
 static const int empty_attribute_list[1] = { None };
