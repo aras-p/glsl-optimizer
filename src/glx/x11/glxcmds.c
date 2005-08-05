@@ -1269,7 +1269,7 @@ PUBLIC const char *glXQueryExtensionsString( Display *dpy, int screen )
 
 	__glXCalculateUsableExtensions(psc,
 #ifdef GLX_DIRECT_RENDERING
-				       (priv->driDisplay.private != NULL),
+				       (psc->driScreen.private != NULL),
 #else
 				       GL_FALSE,
 #endif
