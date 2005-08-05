@@ -91,11 +91,20 @@ class PrintRemapTable(gl_XML.gl_print_base):
 
 	def printBody(self, api):
 		print '#define CALL_by_offset(disp, cast, offset, parameters) \\'
-		print '    (*(cast (((_glapi_proc *)(disp))[offset]))) parameters'
+		print '    (*(cast (GET_by_offset(disp, offset)))) parameters'
 		print '#define GET_by_offset(disp, offset) \\'
-		print '    (((_glapi_proc *)(disp))[offset])'
+		print '    (offset >= 0) ? (((_glapi_proc *)(disp))[offset]) : NULL'
 		print '#define SET_by_offset(disp, offset, fn) \\'
-		print '    ((((_glapi_proc *)(disp))[offset]) = (_glapi_proc) fn)'
+		print '    do { \\'
+		print '        if ( (offset) < 0 ) { \\'
+		print '            /* fprintf( stderr, "[%s:%u] SET_by_offset(%p, %d, %s)!\\n", */ \\'
+		print '            /*         __func__, __LINE__, disp, offset, # fn); */ \\'
+		print '            /* abort(); */ \\'
+		print '        } \\'
+		print '        else { \\'
+		print '            ( (_glapi_proc *) (disp) )[offset] = (_glapi_proc) fn; \\'
+		print '        } \\'
+		print '    } while(0)'
 		print ''
 
 		abi = [ "1.0", "1.1", "1.2", "GL_ARB_multitexture" ]
@@ -131,7 +140,7 @@ class PrintRemapTable(gl_XML.gl_print_base):
 		print '#else'
 		print ''
 		print '#define driDispatchRemapTable_size %u' % (count)
-		print 'extern unsigned driDispatchRemapTable[ driDispatchRemapTable_size ];'
+		print 'extern int driDispatchRemapTable[ driDispatchRemapTable_size ];'
 		print ''
 
 		for [f, index] in functions:

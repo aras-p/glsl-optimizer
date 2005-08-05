@@ -40,11 +40,20 @@
  */
 
 #define CALL_by_offset(disp, cast, offset, parameters) \
-    (*(cast (((_glapi_proc *)(disp))[offset]))) parameters
+    (*(cast (GET_by_offset(disp, offset)))) parameters
 #define GET_by_offset(disp, offset) \
-    (((_glapi_proc *)(disp))[offset])
+    (offset >= 0) ? (((_glapi_proc *)(disp))[offset]) : NULL
 #define SET_by_offset(disp, offset, fn) \
-    ((((_glapi_proc *)(disp))[offset]) = (_glapi_proc) fn)
+    do { \
+        if ( (offset) < 0 ) { \
+            /* fprintf( stderr, "[%s:%u] SET_by_offset(%p, %d, %s)!\n", */ \
+            /*         __func__, __LINE__, disp, offset, # fn); */ \
+            /* abort(); */ \
+        } \
+        else { \
+            ( (_glapi_proc *) (disp) )[offset] = (_glapi_proc) fn; \
+        } \
+    } while(0)
 
 #define CALL_NewList(disp, parameters) (*((disp)->NewList)) parameters
 #define GET_NewList(disp) ((disp)->NewList)
@@ -2501,7 +2510,7 @@
 #else
 
 #define driDispatchRemapTable_size 408
-extern unsigned driDispatchRemapTable[ driDispatchRemapTable_size ];
+extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define LoadTransposeMatrixfARB_remap_index 0
 #define LoadTransposeMatrixdARB_remap_index 1

@@ -41,13 +41,45 @@ class PrintGlOffsets(gl_XML.gl_print_base):
 		return
 
 	def printBody(self, api):
-		last_static = 0
+		abi = [ "1.0", "1.1", "1.2", "GL_ARB_multitexture" ]
+
+		functions = []
+		abi_functions = []
+		count = 0
 		for f in api.functionIterateByOffset():
+			[category, num] = api.get_category_for_name( f.name )
+			if category not in abi:
+				functions.append( [f, count] )
+				count += 1
+			else:
+				abi_functions.append( f )
+
+
+		for f in abi_functions:
+			print '#define _gloffset_%s %d' % (f.name, f.offset)
+			last_static = f.offset
+
+		print ''
+		print '#if !defined(IN_DRI_DRIVER)'
+		print ''
+
+		for [f, index] in functions:
 			print '#define _gloffset_%s %d' % (f.name, f.offset)
 			if f.offset > last_static:
 				last_static = f.offset
 
 		print '#define _gloffset_FIRST_DYNAMIC %d' % (last_static + 1)
+
+		print ''
+		print '#else'
+		print ''
+
+		for [f, index] in functions:
+			print '#define _gloffset_%s driDispatchRemapTable[%s_remap_index]' % (f.name, f.name)
+
+		print ''
+		print '#endif /* !defined(IN_DRI_DRIVER) */'
+
 		return
 
 

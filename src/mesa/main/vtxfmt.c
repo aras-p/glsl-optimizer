@@ -48,14 +48,16 @@
 #define PRE_LOOPBACK( FUNC )						\
 {									\
    GET_CURRENT_CONTEXT(ctx);						\
-   struct gl_tnl_module *tnl = &(ctx->TnlModule);			\
+   struct gl_tnl_module * const tnl = &(ctx->TnlModule);		\
+   const int tmp_offset = _gloffset_ ## FUNC ;				\
 									\
    ASSERT( tnl->Current );						\
    ASSERT( tnl->SwapCount < NUM_VERTEX_FORMAT_ENTRIES );		\
+   ASSERT( tmp_offset >= 0 );						\
 									\
    /* Save the swapped function's dispatch entry so it can be */	\
    /* restored later. */						\
-   tnl->Swapped[tnl->SwapCount].location = (_glapi_proc *) & (GET_ ## FUNC (ctx->Exec)); \
+   tnl->Swapped[tnl->SwapCount].location = & (((_glapi_proc *)ctx->Exec)[tmp_offset]); \
    tnl->Swapped[tnl->SwapCount].function = (_glapi_proc)TAG(FUNC);	\
    tnl->SwapCount++;							\
 									\
