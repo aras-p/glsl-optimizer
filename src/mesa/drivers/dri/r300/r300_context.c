@@ -67,10 +67,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int future_hw_tcl_on=0;
 int hw_tcl_on=0;
 
-#if 1
 #define need_GL_ARB_multisample
 #define need_GL_ARB_texture_compression
+#define need_GL_ARB_vertex_buffer_object
+#define need_GL_ARB_vertex_program
 #define need_GL_EXT_blend_minmax
+#define need_GL_EXT_secondary_color
+#define need_GL_EXT_blend_equation_separate
+#define need_GL_EXT_blend_func_separate
+#define need_GL_NV_vertex_program
 #include "extension_helper.h"
 
 const struct dri_extension card_extensions[] = {
@@ -85,16 +90,16 @@ const struct dri_extension card_extensions[] = {
   {"GL_ARB_texture_env_crossbar",	NULL},
   {"GL_ARB_texture_env_dot3",		NULL},
   {"GL_ARB_texture_mirrored_repeat",	NULL},
-  {"GL_ARB_vertex_buffer_object",	NULL},
-  {"GL_ARB_vertex_program",		NULL},
+  {"GL_ARB_vertex_buffer_object",	GL_ARB_vertex_buffer_object_functions},
+  {"GL_ARB_vertex_program",		GL_ARB_vertex_program_functions},
 #if USE_ARB_F_P == 1
   {"GL_ARB_fragment_program",		NULL},
 #endif
-  {"GL_EXT_blend_equation_separate",	NULL},
-  {"GL_EXT_blend_func_separate",	NULL},
+  {"GL_EXT_blend_equation_separate",	GL_EXT_blend_equation_separate_functions},
+  {"GL_EXT_blend_func_separate",	GL_EXT_blend_func_separate_functions},
   {"GL_EXT_blend_minmax",		GL_EXT_blend_minmax_functions},
   {"GL_EXT_blend_subtract",		NULL},
-  {"GL_EXT_secondary_color", 		NULL},
+  {"GL_EXT_secondary_color", 		GL_EXT_secondary_color_functions},
   {"GL_EXT_stencil_wrap",		NULL},
   {"GL_EXT_texture_edge_clamp",		NULL},
   {"GL_EXT_texture_env_combine", 	NULL},
@@ -108,54 +113,11 @@ const struct dri_extension card_extensions[] = {
   {"GL_MESA_pack_invert",		NULL},
   {"GL_MESA_ycbcr_texture",		NULL},
   {"GL_NV_blend_square",		NULL},
-  {"GL_NV_vertex_program",		NULL},
+  {"GL_NV_vertex_program",		GL_NV_vertex_program_functions},
   {"GL_SGIS_generate_mipmap",		NULL},
   {NULL,				NULL}
 };
 
-#else
-/* Extension strings exported by the R300 driver.
- */
-static const char *const card_extensions[] = {
-	"GL_ARB_multisample",
-	"GL_ARB_multitexture",
-	"GL_ARB_texture_border_clamp",
-	"GL_ARB_texture_compression",
-/* disable until we support it, fixes a few things in ut2004 */
-/*	"GL_ARB_texture_cube_map", */
-	"GL_ARB_texture_env_add",
-	"GL_ARB_texture_env_combine",
-	"GL_ARB_texture_env_crossbar",
-	"GL_ARB_texture_env_dot3",
-	"GL_ARB_texture_mirrored_repeat",
-	"GL_ARB_vertex_buffer_object",
-	"GL_ARB_vertex_program",
-#if USE_ARB_F_P == 1
-	"GL_ARB_fragment_program",
-#endif
-	"GL_EXT_blend_equation_separate",
-	"GL_EXT_blend_func_separate",
-	"GL_EXT_blend_minmax",
-	"GL_EXT_blend_subtract",
-	"GL_EXT_secondary_color",
-	"GL_EXT_stencil_wrap",
-	"GL_EXT_texture_edge_clamp",
-	"GL_EXT_texture_env_combine",
-	"GL_EXT_texture_env_dot3",
-	"GL_EXT_texture_filter_anisotropic",
-	"GL_EXT_texture_lod_bias",
-	"GL_EXT_texture_mirror_clamp",
-	"GL_EXT_texture_rectangle",
-	"GL_ATI_texture_env_combine3",
-	"GL_ATI_texture_mirror_once",
-	"GL_MESA_pack_invert",
-	"GL_MESA_ycbcr_texture",
-	"GL_NV_blend_square",
-	"GL_NV_vertex_program",
-	"GL_SGIS_generate_mipmap",
-	NULL
-};
-#endif
 extern struct tnl_pipeline_stage _r300_render_stage;
 extern struct tnl_pipeline_stage _r300_tcl_stage;
 
