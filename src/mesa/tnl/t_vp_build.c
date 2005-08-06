@@ -1473,6 +1473,7 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
       cache_item(&tnl->vp_cache, hash, key, ctx->_TnlProgram );
    }
    else {
+      FREE(key);
       if (0) 
 	 _mesa_printf("Found existing TNL program for key %x\n", hash);
    }

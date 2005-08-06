@@ -1145,6 +1145,7 @@ void _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 
       cache_item(&ctx->Texture.env_fp_cache, hash, key, ctx->_TexEnvProgram);
    } else {
+      FREE(key);
       if (0) _mesa_printf("Found existing texenv program for key %x\n", hash);
    }
 	
