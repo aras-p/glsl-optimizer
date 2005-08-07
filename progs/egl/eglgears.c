@@ -87,9 +87,9 @@ static GLfloat view_rotx = 20.0, view_roty = 30.0, view_rotz = 0.0;
 static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
 
-static GLfloat eyesep = 5.0;		/* Eye separation. */
-static GLfloat fix_point = 40.0;	/* Fixation point distance.  */
-static GLfloat left, right, asp;	/* Stereo frustum params.  */
+//static GLfloat eyesep = 5.0;		/* Eye separation. */
+//static GLfloat fix_point = 40.0;	/* Fixation point distance.  */
+//static GLfloat left, right, asp;	/* Stereo frustum params.  */
 
 
 /*
@@ -385,7 +385,7 @@ main(int argc, char *argv[])
 	}
 	
 	// DBR : Create EGL context/surface etc
-	EGLDisplay d = eglGetDisplay("!fb_dri");
+	EGLDisplay d = eglGetDisplay(":0");
 	assert(d);
 
 	if (!eglInitialize(d, &maj, &min)) {
@@ -431,7 +431,9 @@ main(int argc, char *argv[])
 	
 	init();			// Initialise the GL visual
 	reshape(1024,768);
-	
+
+   glDrawBuffer( GL_BACK );
+
 	// DBR : Run the simulation
 	run_gears(d, screen_surf, 5.0);
 	

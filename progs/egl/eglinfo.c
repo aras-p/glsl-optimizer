@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 {
    int maj, min;
    /*EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);*/
-   EGLDisplay d = eglGetDisplay("!fb_dri");
+   EGLDisplay d = eglGetDisplay("!r200_dri");
 
    if (!eglInitialize(d, &maj, &min)) {
       printf("eglinfo: eglInitialize failed\n");

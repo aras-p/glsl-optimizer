@@ -576,7 +576,7 @@ main(int argc, char *argv[])
    /*
    EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
    */
-   EGLDisplay d = eglGetDisplay("!fb_dri");
+   EGLDisplay d = eglGetDisplay(":0");
    assert(d);
 
    if (!eglInitialize(d, &maj, &min)) {
@@ -602,7 +602,7 @@ main(int argc, char *argv[])
       printf("failed to create screen surface\n");
       return 0;
    }
-   
+
    eglShowSurfaceMESA(d, screen, screen_surf, mode);
 
    b = eglMakeCurrent(d, screen_surf, screen_surf, ctx);
@@ -610,25 +610,24 @@ main(int argc, char *argv[])
       printf("make current failed\n");
       return 0;
    }
+   glViewport(0, 0, 1024, 768);
 
-   Init();   
+
+   Init();
    Reshape(1024, 768);
 
-   glDrawBuffer( GL_FRONT ); 
-   glClearColor( 0, 
-		 1.0, 
-		 0,
-		 1);
+   glDrawBuffer( GL_FRONT );
+   glClearColor( 0, 1.0, 0, 1);
 
-   glClear( GL_COLOR_BUFFER_BIT ); 
+   glClear( GL_COLOR_BUFFER_BIT );
 
-   doubleBuffer = 1;   
-   glDrawBuffer( GL_BACK ); 
+   doubleBuffer = 1;
+   glDrawBuffer( GL_BACK );
 
    Draw(d, screen_surf);
-   
+
    write_ppm("dump.ppm", ((struct fb_display *)_eglLookupDisplay(d))->pFB, 1024, 768);
-   
+
    eglDestroySurface(d, screen_surf);
    eglDestroyContext(d, ctx);
    eglTerminate(d);
