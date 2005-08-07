@@ -38,14 +38,14 @@ ASM_SOURCES =
 # Library/program dependencies
 EXTRA_LIB_PATH=-L/usr/X11R6/lib
 
-DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl
+DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl -L$(LIB_DIR) -lEGL -lEGLdri
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lm -lpthread -ldl
 
 
 # Directories
-SRC_DIRS = glx/x11 mesa glu glut/glx glw
+SRC_DIRS = egl glx/x11 mesa glu glut/glx glw
 DRIVER_DIRS = dri
-PROGRAM_DIRS = 
+PROGRAM_DIRS = egl
 WINDOW_SYSTEM=dri
 
 # gamma are missing because they have not been converted to use the new

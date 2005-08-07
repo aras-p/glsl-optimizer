@@ -26,18 +26,20 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_vtxfmt.c \
 		 r200_vtxfmt_c.c \
 		 r200_vtxfmt_sse.c \
-		 r200_vtxfmt_x86.c 
+		 r200_vtxfmt_x86.c \
+		 server/radeon_egl.c
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
 X86_SOURCES = r200_vtxtmp_x86.S
 
 SYMLINKS = \
+	server/radeon_egl.c  \
 	server/radeon_dri.c  \
-		  server/radeon_dri.h \
-		  server/radeon.h \
-		  server/radeon_macros.h \
-		  server/radeon_reg.h
+	server/radeon_dri.h \
+	server/radeon.h \
+	server/radeon_macros.h \
+	server/radeon_reg.h
 
 ##### TARGETS #####
 

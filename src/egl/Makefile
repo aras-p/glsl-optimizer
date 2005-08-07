@@ -2,7 +2,7 @@
 
 TOP = ../..
 
-SUBDIRS = main drivers/demo
+SUBDIRS = main drivers/demo drivers/dri
 
 
 default: subdirs
