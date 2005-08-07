@@ -13,5 +13,5 @@ ASM_SOURCES = $(PPC_SOURCES)
 
 # Build only the drivers for cards that exist on PowerPC.  At some point MGA
 # will be added, but not yet.
-DRI_DIRS = dri_client mach64 r128 r200 radeon tdfx
+DRI_DIRS = dri_client mach64 r128 r200 r300 radeon tdfx
 

@@ -19,5 +19,5 @@ EXTRA_LIB_PATH=-L/usr/X11R6/lib64
 # the new interface.  i810 and i830 are missing because there is no x86-64
 # system where they could *ever* be used.
 #
-DRI_DIRS = dri_client i915 mach64 mga r128 r200 radeon tdfx unichrome savage
+DRI_DIRS = dri_client i915 mach64 mga r128 r200 radeon tdfx unichrome savage r300
 
