@@ -719,12 +719,9 @@ static int RADEONMemoryInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
 {
    int        width_bytes = ctx->shared.virtualWidth * ctx->cpp;
    int        cpp         = ctx->cpp;
-   int        bufferSize  = ((ctx->shared.virtualHeight * width_bytes
-			      + RADEON_BUFFER_ALIGN)
-			     & ~RADEON_BUFFER_ALIGN);
+   int        bufferSize  = ((((ctx->shared.virtualHeight+15) & ~15) * width_bytes			     + RADEON_BUFFER_ALIGN) & ~RADEON_BUFFER_ALIGN);
    int        depthSize   = ((((ctx->shared.virtualHeight+15) & ~15) * width_bytes
-			      + RADEON_BUFFER_ALIGN)
-			     & ~RADEON_BUFFER_ALIGN);
+			     + RADEON_BUFFER_ALIGN) & ~RADEON_BUFFER_ALIGN);
    int        l;
 
    info->frontOffset = 0;
@@ -742,6 +739,11 @@ static int RADEONMemoryInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
    /* Front, back and depth buffers - everything else texture??
     */
    info->textureSize = ctx->shared.fbSize - 2 * bufferSize - depthSize;
+
+   if (ctx->colorTiling==1)
+   {
+	info->textureSize = ctx->shared.fbSize - ((ctx->shared.fbSize - info->textureSize + width_bytes * 16 - 1) / (width_bytes * 16)) * (width_bytes*16);
+   }
 
    if (info->textureSize < 0) 
       return 0;
@@ -765,10 +767,17 @@ static int RADEONMemoryInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
    }
 
    /* Reserve space for textures */
-   info->textureOffset = ((ctx->shared.fbSize - info->textureSize +
-			   RADEON_BUFFER_ALIGN) &
+   if (ctx->colorTiling==1)
+   {
+      info->textureOffset = ((ctx->shared.fbSize - info->textureSize) / 
+			(width_bytes * 16)) * (width_bytes*16);
+   }
+   else
+   {
+      info->textureOffset = ((ctx->shared.fbSize - info->textureSize +
+   	 		   RADEON_BUFFER_ALIGN) &
 			  ~RADEON_BUFFER_ALIGN);
-
+   }
    /* Reserve space for the shared depth
     * buffer.
     */
@@ -808,8 +817,7 @@ static int RADEONMemoryInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
 static int RADEONColorTilingInit( const DRIDriverContext *ctx, RADEONInfoPtr info )
 {
    int        width_bytes = ctx->shared.virtualWidth * ctx->cpp;
-   int        bufferSize  = ((ctx->shared.virtualHeight * width_bytes
-			      + RADEON_BUFFER_ALIGN)
+   int        bufferSize  = ((((ctx->shared.virtualHeight+15) & ~15) * width_bytes			     + RADEON_BUFFER_ALIGN)
 			     & ~RADEON_BUFFER_ALIGN);
    /* Setup color tiling */
    if (info->drmMinor<14)
@@ -1234,16 +1242,27 @@ static int radeonInitFBDev( DRIDriverContext *ctx )
    {
       int  dummy = ctx->shared.virtualWidth;
 
-      switch (ctx->bpp / 8) {
-      case 1: dummy = (ctx->shared.virtualWidth + 127) & ~127; break;
-      case 2: dummy = (ctx->shared.virtualWidth +  31) &  ~31; break;
-      case 3:
-      case 4: dummy = (ctx->shared.virtualWidth +  15) &  ~15; break;
+      if (ctx->colorTiling==1)
+      {
+         switch (ctx->bpp / 8) {
+         case 1: dummy = (ctx->shared.virtualWidth + 255) & ~255; break;
+         case 2: dummy = (ctx->shared.virtualWidth + 127) & ~127; break;
+         case 3:
+         case 4: dummy = (ctx->shared.virtualWidth +  63) &  ~63; break;
+         }
+      } else {
+	 switch (ctx->bpp / 8) {
+         case 1: dummy = (ctx->shared.virtualWidth + 127) & ~127; break;
+         case 2: dummy = (ctx->shared.virtualWidth +  31) &  ~31; break;
+         case 3:
+         case 4: dummy = (ctx->shared.virtualWidth +  15) &  ~15; break;
+         }
       }
 
       ctx->shared.virtualWidth = dummy;
    }
 
+   fprintf(stderr,"shared virtual width is %d\n", ctx->shared.virtualWidth);
    ctx->driverPrivate = (void *)info;
    
    info->gartFastWrite  = RADEON_DEFAULT_AGP_FAST_WRITE;
