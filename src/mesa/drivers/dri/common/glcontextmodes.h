@@ -32,14 +32,14 @@
 
 #include "GL/internal/glcore.h"
 
-#if !defined(IN_DRI_DRIVER) && !defined(IN_MINI_GLX)
+#if !defined(IN_MINI_GLX)
 extern GLint _gl_convert_from_x_visual_type( int visualType );
 extern GLint _gl_convert_to_x_visual_type( int visualType );
 extern void _gl_copy_visual_to_context_mode( __GLcontextModes * mode,
     const __GLXvisualConfig * config );
 extern int _gl_get_context_mode_data( const __GLcontextModes *mode,
     int attribute, int *value_return );
-#endif /* !defined(IN_DRI_DRIVER) */
+#endif /* !defined(IN_MINI_GLX) */
 
 extern __GLcontextModes * _gl_context_modes_create( unsigned count,
     size_t minimum_size );

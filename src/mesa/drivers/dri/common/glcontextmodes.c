@@ -31,7 +31,7 @@
  * \author Ian Romanick <idr@us.ibm.com>
  */
 
-#if defined(IN_DRI_DRIVER) || defined(IN_MINI_GLX)
+#if defined(IN_MINI_GLX)
 # include <stdlib.h>
 # include <string.h>
 # include <GL/gl.h>
@@ -55,11 +55,11 @@ extern void __glXFree( void * ptr );
 #  define _mesa_malloc(b) Xmalloc(b)
 #  define _mesa_free(m) Xfree(m)
 # endif /* XFree86Server */
-#endif /* !defined(IN_DRI_DRIVER) */
+#endif /* !defined(IN_MINI_GLX) */
 
 #include "glcontextmodes.h"
 
-#if !defined(IN_DRI_DRIVER) && !defined(IN_MINI_GLX)
+#if !defined(IN_MINI_GLX)
 #define NUM_VISUAL_TYPES   6
 
 /**
@@ -320,7 +320,7 @@ _gl_get_context_mode_data(const __GLcontextModes *mode, int attribute,
 	return GLX_BAD_ATTRIBUTE;
     }
 }
-#endif /* !defined(IN_DRI_DRIVER) */
+#endif /* !defined(IN_MINI_GLX) */
 
 
 /**
