@@ -25,31 +25,6 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-function usage()
-{
-    echo 'Usage: mklib [options] objects'
-    echo 'Create a shared library from object files.'
-    echo '  -o LIBRARY    specifies the name of the resulting library, without'
-    echo '                the leading "lib" or any suffix.'
-    echo '                (eg: "-o GL" might result in "libGL.so" being made)'
-    echo '  -major N      specifies major version number (default is 1)'
-    echo '  -minor N      specifies minor version number (default is 0)'
-    echo '  -patch N      specifies patch version number (default is 0)'
-    echo '  -lLIBRARY     specifies a dependency on LIBRARY'
-    echo '  -LDIR         search in DIR for library dependencies'
-    echo '  -linker L     explicity specify the linker program to use (eg: gcc, g++)'
-    echo '                Not observed on all systems at this time.'
-    echo '  -cplusplus    link with C++ runtime'
-    echo '  -static       make a static library (default is dynamic/shared)'
-    echo '  -install DIR  put resulting library file(s) in DIR'
-    echo '  -arch ARCH    override using `uname` to determine host system'
-    echo '  -archopt OPT  specify an extra achitecture-specific option OPT'
-    echo "  -noprefix     don't prefix library name with 'lib' nor add any suffix"
-    echo '  -exports FILE only export the symbols listed in FILE'
-    echo '  -h, --help    display this information and exit'
-}
-
-
 #
 # Option defaults
 #
@@ -75,7 +50,26 @@ while true
 do
     case $1 in
 	'-h' | '--help')
-	    usage;
+	    echo 'Usage: mklib [options] objects'
+	    echo 'Create a shared library from object files.'
+	    echo '  -o LIBRARY    specifies the name of the resulting library, without'
+	    echo '                the leading "lib" or any suffix.'
+	    echo '                (eg: "-o GL" might result in "libGL.so" being made)'
+	    echo '  -major N      specifies major version number (default is 1)'
+	    echo '  -minor N      specifies minor version number (default is 0)'
+	    echo '  -patch N      specifies patch version number (default is 0)'
+	    echo '  -lLIBRARY     specifies a dependency on LIBRARY'
+	    echo '  -LDIR         search in DIR for library dependencies'
+	    echo '  -linker L     explicity specify the linker program to use (eg: gcc, g++)'
+	    echo '                Not observed on all systems at this time.'
+	    echo '  -cplusplus    link with C++ runtime'
+	    echo '  -static       make a static library (default is dynamic/shared)'
+	    echo '  -install DIR  put resulting library file(s) in DIR'
+	    echo '  -arch ARCH    override using `uname` to determine host system'
+	    echo '  -archopt OPT  specify an extra achitecture-specific option OPT'
+	    echo "  -noprefix     don't prefix library name with 'lib' nor add any suffix"
+	    echo '  -exports FILE only export the symbols listed in FILE'
+	    echo '  -h, --help    display this information and exit'
 	    exit 1
 	    ;;
 	'-o')
