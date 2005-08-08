@@ -47,6 +47,7 @@ SRC_DIRS = egl glx/x11 mesa glu glut/glx glw
 DRIVER_DIRS = dri
 PROGRAM_DIRS = egl
 WINDOW_SYSTEM=dri
+USING_EGL=1
 
 # gamma are missing because they have not been converted to use the new
 # interface.

@@ -7,6 +7,10 @@ LIBNAME = r200_dri.so
 
 MINIGLX_SOURCES = server/radeon_dri.c 
 
+ifeq ($(USING_EGL), 1)
+EGL_SOURCES = server/radeon_egl.c
+endif
+
 DRIVER_SOURCES = r200_context.c \
 		 r200_ioctl.c \
 		 r200_lock.c \
@@ -27,7 +31,7 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_vtxfmt_c.c \
 		 r200_vtxfmt_sse.c \
 		 r200_vtxfmt_x86.c \
-		 server/radeon_egl.c
+		 $(EGL_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
