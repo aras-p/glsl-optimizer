@@ -152,8 +152,9 @@ MAIN_FILES = \
 	$(DIRECTORY)/docs/VERSIONS					\
 	$(DIRECTORY)/docs/*.spec					\
 	$(DIRECTORY)/include/GL/internal/glcore.h			\
-	$(DIRECTORY)/include/GL/dmesa.h					\
 	$(DIRECTORY)/include/GL/amesa.h					\
+	$(DIRECTORY)/include/GL/dmesa.h					\
+	$(DIRECTORY)/include/GL/directfbgl.h				\
 	$(DIRECTORY)/include/GL/fxmesa.h				\
 	$(DIRECTORY)/include/GL/ggimesa.h				\
 	$(DIRECTORY)/include/GL/gl.h					\
