@@ -437,6 +437,8 @@ SetupFBDev( Display *dpy )
    width = dpy->driverContext.shared.virtualWidth;
    height = dpy->driverContext.shared.virtualHeight;
    
+   if (width==832)
+	width=800;
    /* Bump size up to next supported mode.
     */
    if (width <= 720 && height <= 480) { 
@@ -459,8 +461,6 @@ SetupFBDev( Display *dpy )
    } 
 
 
-   dpy->driverContext.shared.virtualHeight = height;
-   dpy->driverContext.shared.virtualWidth = width;
    dpy->driverContext.shared.fbStride = width * (dpy->driverContext.bpp / 8);
    
    /* set the depth, resolution, etc */
