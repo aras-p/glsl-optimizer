@@ -11,7 +11,6 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <linux/fb.h>
 
 #include "eglconfig.h"
 #include "eglcontext.h"
@@ -32,7 +31,6 @@
 #include "radeon.h"
 
 static size_t radeon_drm_page_size;
-const char *sysfs = "/sys/class/graphics";
 
 /**
  * radeon driver-specific driver class derived from _EGLDriver
