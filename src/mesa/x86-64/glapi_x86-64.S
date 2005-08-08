@@ -50,7 +50,7 @@ _x86_64_get_get_dispatch:
 
 	.p2align	4,,15
 _x86_64_get_dispatch:
-	movq	_glapi_tls_Disaptch@GOTTPOFF(%rip), %rax
+	movq	_glapi_tls_Dispatch@GOTTPOFF(%rip), %rax
 	movq	%fs:(%rax), %rax
 	ret
 	.size	_x86_64_get_dispatch, .-_x86_64_get_dispatch

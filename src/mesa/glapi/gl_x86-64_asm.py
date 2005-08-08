@@ -142,7 +142,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		print ''
 		print '\t.p2align\t4,,15'
 		print '_x86_64_get_dispatch:'
-		print '\tmovq\t_glapi_tls_Disaptch@GOTTPOFF(%rip), %rax'
+		print '\tmovq\t_glapi_tls_Dispatch@GOTTPOFF(%rip), %rax'
 		print '\tmovq\t%fs:(%rax), %rax'
 		print '\tret'
 		print '\t.size\t_x86_64_get_dispatch, .-_x86_64_get_dispatch'
