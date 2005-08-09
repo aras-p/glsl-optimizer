@@ -1708,5 +1708,15 @@ void _tnl_save_init( GLcontext *ctx )
  */
 void _tnl_save_destroy( GLcontext *ctx )
 {
-   (void) ctx;
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+
+   /* Decrement the refcounts.  References may still be held by
+    * display lists yet to be destroyed, so it may not yet be time to
+    * free these items.
+    */
+   if ( --tnl->save.prim_store->refcount == 0 )
+      FREE( tnl->save.prim_store );
+
+   if ( --tnl->save.vertex_store->refcount == 0 )
+      FREE( tnl->save.vertex_store );
 }
