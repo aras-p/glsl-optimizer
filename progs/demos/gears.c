@@ -26,6 +26,7 @@
 static GLint T0 = 0;
 static GLint Frames = 0;
 static GLint autoexit = 0;
+static GLint win = 0;
 
 
 /**
@@ -164,6 +165,15 @@ static GLint gear1, gear2, gear3;
 static GLfloat angle = 0.0;
 
 static void
+cleanup(void)
+{
+   glDeleteLists(gear1, 1);
+   glDeleteLists(gear2, 1);
+   glDeleteLists(gear3, 1);
+   glutDestroyWindow(win);
+}
+
+static void
 draw(void)
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -198,16 +208,18 @@ draw(void)
   Frames++;
 
   {
-     GLint t = glutGet(GLUT_ELAPSED_TIME);
-     if (t - T0 >= 5000) {
-        GLfloat seconds = (t - T0) / 1000.0;
-        GLfloat fps = Frames / seconds;
-        printf("%d frames in %6.3f seconds = %6.3f FPS\n", Frames, seconds, fps);
-        T0 = t;
-        Frames = 0;
-        if ((t >= 999.0 * autoexit) && (autoexit))
-           exit(0);
-     }
+    GLint t = glutGet(GLUT_ELAPSED_TIME);
+    if (t - T0 >= 5000) {
+      GLfloat seconds = (t - T0) / 1000.0;
+      GLfloat fps = Frames / seconds;
+      printf("%d frames in %6.3f seconds = %6.3f FPS\n", Frames, seconds, fps);
+      T0 = t;
+      Frames = 0;
+      if ((t >= 999.0 * autoexit) && (autoexit)) {
+        cleanup();
+        exit(0);
+      }
+    }
   }
 }
 
@@ -239,6 +251,7 @@ key(unsigned char k, int x, int y)
     view_rotz -= 5.0;
     break;
   case 27:  /* Escape */
+    cleanup();
     exit(0);
     break;
   default:
@@ -352,7 +365,7 @@ int main(int argc, char *argv[])
 
   glutInitWindowPosition(0, 0);
   glutInitWindowSize(300, 300);
-  glutCreateWindow("Gears");
+  win = glutCreateWindow("Gears");
   init(argc, argv);
 
   glutDisplayFunc(draw);
