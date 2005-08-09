@@ -33,7 +33,11 @@
 static void
 xmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
-   /* XXX this routine should really delete the attached ximage, etc. */
+   /* XXX Note: the ximage or Pixmap attached to this renderbuffer
+    * should probably get freed here, but that's currently done in
+    * XMesaDestroyBuffer().
+    */
+   _mesa_free(rb);
 }
 
 
