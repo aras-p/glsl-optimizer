@@ -590,6 +590,9 @@ main(int argc, char *argv[])
 
    event_loop(dpy, win);
 
+   glDeleteLists(gear1, 1);
+   glDeleteLists(gear2, 1);
+   glDeleteLists(gear3, 1);
    glXDestroyContext(dpy, ctx);
    XDestroyWindow(dpy, win);
    XCloseDisplay(dpy);
