@@ -1004,7 +1004,7 @@ WMesaContext WMesaCreateContext(HWND hWnd,
 				       1);
     
     if (!c->gl_visual) {
-	free(c);
+	_mesa_free(c);
 	return NULL;
     }
 
@@ -1028,7 +1028,7 @@ WMesaContext WMesaCreateContext(HWND hWnd,
 				     &functions, (void *)c);
     if (!c->gl_ctx) {
 	_mesa_destroy_visual( c->gl_visual );
-	free(c);
+	_mesa_free(c);
 	return NULL;
     }
     
@@ -1042,7 +1042,7 @@ WMesaContext WMesaCreateContext(HWND hWnd,
     if (!c->gl_buffer) {
 	_mesa_destroy_visual(c->gl_visual);
 	_mesa_free_context_data(c->gl_ctx);
-	free(c);
+	_mesa_free(c);
 	return NULL;
     }
     
@@ -1052,7 +1052,7 @@ WMesaContext WMesaCreateContext(HWND hWnd,
 	_mesa_destroy_visual(c->gl_visual);
 	_mesa_destroy_framebuffer(c->gl_buffer);
 	_mesa_free_context_data(c->gl_ctx);
-	free(c);
+	_mesa_free(c);
 	return NULL;
     }
 
@@ -1116,7 +1116,7 @@ WMesaContext WMesaCreateContext(HWND hWnd,
 	_mesa_destroy_visual(c->gl_visual);
 	_mesa_destroy_framebuffer(c->gl_buffer);
 	_mesa_free_context_data(c->gl_ctx);
-	free(c);
+	_mesa_free(c);
 	return NULL;
     }
     
@@ -1148,7 +1148,8 @@ void WMesaDestroyContext( void )
     _mesa_destroy_visual(c->gl_visual);
     _mesa_destroy_framebuffer(c->gl_buffer);
     _mesa_free_context_data(c->gl_ctx);
-    free(c);
+    _mesa_free(c->gl_ctx);
+    _mesa_free(c);
 }
 
 
