@@ -441,10 +441,6 @@ static void free_xmesa_buffer(int client, XMesaBuffer buffer)
          }
 
          _mesa_free_framebuffer_data(&buffer->mesa_buffer);
-         /* delete front/back renderbuffers */
-         buffer->frontxrb->Base.Delete(&(buffer->frontxrb->Base));
-         if (buffer->backxrb)
-            buffer->backxrb->Base.Delete(&(buffer->backxrb->Base));
          _mesa_free(buffer);
 
          return;
