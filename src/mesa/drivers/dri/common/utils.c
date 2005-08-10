@@ -188,10 +188,12 @@ driGetRendererString( char * buffer, const char * hardware_name,
 #define need_GL_EXT_vertex_array
 #define need_GL_MESA_window_pos
 
-/* This is needed in *all* drivers because Mesa internally implements
- * glBlendFunc by calling glBlendFuncSeparateEXT.
+/* These are needed in *all* drivers because Mesa internally implements
+ * certain functionality in terms of functions provided by these extensions.
+ * For example, glBlendFunc is implemented by calling glBlendFuncSeparateEXT.
  */
 #define need_GL_EXT_blend_func_separate
+#define need_GL_NV_vertex_program
 
 #include "extension_helper.h"
 
@@ -205,6 +207,7 @@ static const struct dri_extension all_mesa_extensions[] = {
    { "GL_EXT_texture_object",        GL_EXT_texture_object_functions },
    { "GL_EXT_vertex_array",          GL_EXT_vertex_array_functions },
    { "GL_MESA_window_pos",           GL_MESA_window_pos_functions },
+   { "GL_NV_vertex_program",         GL_NV_vertex_program_functions },
    { NULL,                           NULL }
 };
 
