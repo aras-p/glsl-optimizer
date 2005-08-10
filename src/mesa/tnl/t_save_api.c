@@ -1714,9 +1714,11 @@ void _tnl_save_destroy( GLcontext *ctx )
     * display lists yet to be destroyed, so it may not yet be time to
     * free these items.
     */
-   if ( --tnl->save.prim_store->refcount == 0 )
+   if (tnl->save.prim_store &&
+       --tnl->save.prim_store->refcount == 0 )
       FREE( tnl->save.prim_store );
 
-   if ( --tnl->save.vertex_store->refcount == 0 )
+   if (tnl->save.vertex_store &&
+       --tnl->save.vertex_store->refcount == 0 )
       FREE( tnl->save.vertex_store );
 }
