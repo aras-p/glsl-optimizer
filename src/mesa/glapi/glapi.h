@@ -129,10 +129,6 @@ extern GLuint
 _glapi_get_dispatch_table_size(void);
 
 
-extern const char *
-_glapi_get_version(void);
-
-
 extern void
 _glapi_check_table(const struct _glapi_table *table);
 

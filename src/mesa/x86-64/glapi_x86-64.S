@@ -91,7 +91,7 @@ glNewList:
 	movq	(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	0(%rax), %r11
@@ -124,7 +124,7 @@ glEndList:
 	movq	8(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	8(%rax), %r11
@@ -153,7 +153,7 @@ glCallList:
 	movq	16(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	16(%rax), %r11
@@ -186,7 +186,7 @@ glCallLists:
 	movq	24(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	24(%rax), %r11
@@ -223,7 +223,7 @@ glDeleteLists:
 	movq	32(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	32(%rax), %r11
@@ -256,7 +256,7 @@ glGenLists:
 	movq	40(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	40(%rax), %r11
@@ -285,7 +285,7 @@ glListBase:
 	movq	48(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	48(%rax), %r11
@@ -314,7 +314,7 @@ glBegin:
 	movq	56(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	56(%rax), %r11
@@ -357,7 +357,7 @@ glBitmap:
 	movq	64(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	64(%rax), %r11
@@ -404,7 +404,7 @@ glColor3b:
 	movq	72(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	72(%rax), %r11
@@ -437,7 +437,7 @@ glColor3bv:
 	movq	80(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	80(%rax), %r11
@@ -472,7 +472,7 @@ glColor3d:
 	movq	88(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	88(%rax), %r11
@@ -507,7 +507,7 @@ glColor3dv:
 	movq	96(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	96(%rax), %r11
@@ -542,7 +542,7 @@ glColor3f:
 	movq	104(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	104(%rax), %r11
@@ -577,7 +577,7 @@ glColor3fv:
 	movq	112(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	112(%rax), %r11
@@ -610,7 +610,7 @@ glColor3i:
 	movq	120(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	120(%rax), %r11
@@ -643,7 +643,7 @@ glColor3iv:
 	movq	128(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	128(%rax), %r11
@@ -676,7 +676,7 @@ glColor3s:
 	movq	136(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	136(%rax), %r11
@@ -709,7 +709,7 @@ glColor3sv:
 	movq	144(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	144(%rax), %r11
@@ -742,7 +742,7 @@ glColor3ub:
 	movq	152(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	152(%rax), %r11
@@ -775,7 +775,7 @@ glColor3ubv:
 	movq	160(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	160(%rax), %r11
@@ -808,7 +808,7 @@ glColor3ui:
 	movq	168(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	168(%rax), %r11
@@ -841,7 +841,7 @@ glColor3uiv:
 	movq	176(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	176(%rax), %r11
@@ -874,7 +874,7 @@ glColor3us:
 	movq	184(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	184(%rax), %r11
@@ -907,7 +907,7 @@ glColor3usv:
 	movq	192(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	192(%rax), %r11
@@ -944,7 +944,7 @@ glColor4b:
 	movq	200(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	200(%rax), %r11
@@ -981,7 +981,7 @@ glColor4bv:
 	movq	208(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	208(%rax), %r11
@@ -1018,7 +1018,7 @@ glColor4d:
 	movq	216(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	216(%rax), %r11
@@ -1055,7 +1055,7 @@ glColor4dv:
 	movq	224(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	224(%rax), %r11
@@ -1092,7 +1092,7 @@ glColor4f:
 	movq	232(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	232(%rax), %r11
@@ -1129,7 +1129,7 @@ glColor4fv:
 	movq	240(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	240(%rax), %r11
@@ -1166,7 +1166,7 @@ glColor4i:
 	movq	248(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	248(%rax), %r11
@@ -1203,7 +1203,7 @@ glColor4iv:
 	movq	256(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	256(%rax), %r11
@@ -1240,7 +1240,7 @@ glColor4s:
 	movq	264(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	264(%rax), %r11
@@ -1277,7 +1277,7 @@ glColor4sv:
 	movq	272(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	272(%rax), %r11
@@ -1314,7 +1314,7 @@ glColor4ub:
 	movq	280(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	280(%rax), %r11
@@ -1351,7 +1351,7 @@ glColor4ubv:
 	movq	288(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	288(%rax), %r11
@@ -1388,7 +1388,7 @@ glColor4ui:
 	movq	296(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	296(%rax), %r11
@@ -1425,7 +1425,7 @@ glColor4uiv:
 	movq	304(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	304(%rax), %r11
@@ -1462,7 +1462,7 @@ glColor4us:
 	movq	312(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	312(%rax), %r11
@@ -1499,7 +1499,7 @@ glColor4usv:
 	movq	320(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	320(%rax), %r11
@@ -1528,7 +1528,7 @@ glEdgeFlag:
 	movq	328(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	328(%rax), %r11
@@ -1557,7 +1557,7 @@ glEdgeFlagv:
 	movq	336(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	336(%rax), %r11
@@ -1586,7 +1586,7 @@ glEnd:
 	movq	344(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	344(%rax), %r11
@@ -1617,7 +1617,7 @@ glIndexd:
 	movq	352(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	352(%rax), %r11
@@ -1648,7 +1648,7 @@ glIndexdv:
 	movq	360(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	360(%rax), %r11
@@ -1679,7 +1679,7 @@ glIndexf:
 	movq	368(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	368(%rax), %r11
@@ -1710,7 +1710,7 @@ glIndexfv:
 	movq	376(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	376(%rax), %r11
@@ -1739,7 +1739,7 @@ glIndexi:
 	movq	384(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	384(%rax), %r11
@@ -1768,7 +1768,7 @@ glIndexiv:
 	movq	392(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	392(%rax), %r11
@@ -1797,7 +1797,7 @@ glIndexs:
 	movq	400(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	400(%rax), %r11
@@ -1826,7 +1826,7 @@ glIndexsv:
 	movq	408(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	408(%rax), %r11
@@ -1859,7 +1859,7 @@ glNormal3b:
 	movq	416(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	416(%rax), %r11
@@ -1892,7 +1892,7 @@ glNormal3bv:
 	movq	424(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	424(%rax), %r11
@@ -1927,7 +1927,7 @@ glNormal3d:
 	movq	432(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	432(%rax), %r11
@@ -1962,7 +1962,7 @@ glNormal3dv:
 	movq	440(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	440(%rax), %r11
@@ -1997,7 +1997,7 @@ glNormal3f:
 	movq	448(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	448(%rax), %r11
@@ -2032,7 +2032,7 @@ glNormal3fv:
 	movq	456(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	456(%rax), %r11
@@ -2065,7 +2065,7 @@ glNormal3i:
 	movq	464(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	464(%rax), %r11
@@ -2098,7 +2098,7 @@ glNormal3iv:
 	movq	472(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	472(%rax), %r11
@@ -2131,7 +2131,7 @@ glNormal3s:
 	movq	480(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	480(%rax), %r11
@@ -2164,7 +2164,7 @@ glNormal3sv:
 	movq	488(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	488(%rax), %r11
@@ -2197,7 +2197,7 @@ glRasterPos2d:
 	movq	496(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	496(%rax), %r11
@@ -2230,7 +2230,7 @@ glRasterPos2dv:
 	movq	504(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	504(%rax), %r11
@@ -2263,7 +2263,7 @@ glRasterPos2f:
 	movq	512(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	512(%rax), %r11
@@ -2296,7 +2296,7 @@ glRasterPos2fv:
 	movq	520(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	520(%rax), %r11
@@ -2329,7 +2329,7 @@ glRasterPos2i:
 	movq	528(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	528(%rax), %r11
@@ -2362,7 +2362,7 @@ glRasterPos2iv:
 	movq	536(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	536(%rax), %r11
@@ -2395,7 +2395,7 @@ glRasterPos2s:
 	movq	544(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	544(%rax), %r11
@@ -2428,7 +2428,7 @@ glRasterPos2sv:
 	movq	552(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	552(%rax), %r11
@@ -2463,7 +2463,7 @@ glRasterPos3d:
 	movq	560(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	560(%rax), %r11
@@ -2498,7 +2498,7 @@ glRasterPos3dv:
 	movq	568(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	568(%rax), %r11
@@ -2533,7 +2533,7 @@ glRasterPos3f:
 	movq	576(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	576(%rax), %r11
@@ -2568,7 +2568,7 @@ glRasterPos3fv:
 	movq	584(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	584(%rax), %r11
@@ -2601,7 +2601,7 @@ glRasterPos3i:
 	movq	592(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	592(%rax), %r11
@@ -2634,7 +2634,7 @@ glRasterPos3iv:
 	movq	600(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	600(%rax), %r11
@@ -2667,7 +2667,7 @@ glRasterPos3s:
 	movq	608(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	608(%rax), %r11
@@ -2700,7 +2700,7 @@ glRasterPos3sv:
 	movq	616(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	616(%rax), %r11
@@ -2737,7 +2737,7 @@ glRasterPos4d:
 	movq	624(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	624(%rax), %r11
@@ -2774,7 +2774,7 @@ glRasterPos4dv:
 	movq	632(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	632(%rax), %r11
@@ -2811,7 +2811,7 @@ glRasterPos4f:
 	movq	640(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	640(%rax), %r11
@@ -2848,7 +2848,7 @@ glRasterPos4fv:
 	movq	648(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	648(%rax), %r11
@@ -2885,7 +2885,7 @@ glRasterPos4i:
 	movq	656(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	656(%rax), %r11
@@ -2922,7 +2922,7 @@ glRasterPos4iv:
 	movq	664(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	664(%rax), %r11
@@ -2959,7 +2959,7 @@ glRasterPos4s:
 	movq	672(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	672(%rax), %r11
@@ -2996,7 +2996,7 @@ glRasterPos4sv:
 	movq	680(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	680(%rax), %r11
@@ -3033,7 +3033,7 @@ glRectd:
 	movq	688(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	688(%rax), %r11
@@ -3074,7 +3074,7 @@ glRectdv:
 	movq	696(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	696(%rax), %r11
@@ -3115,7 +3115,7 @@ glRectf:
 	movq	704(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	704(%rax), %r11
@@ -3156,7 +3156,7 @@ glRectfv:
 	movq	712(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	712(%rax), %r11
@@ -3197,7 +3197,7 @@ glRecti:
 	movq	720(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	720(%rax), %r11
@@ -3238,7 +3238,7 @@ glRectiv:
 	movq	728(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	728(%rax), %r11
@@ -3279,7 +3279,7 @@ glRects:
 	movq	736(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	736(%rax), %r11
@@ -3320,7 +3320,7 @@ glRectsv:
 	movq	744(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	744(%rax), %r11
@@ -3355,7 +3355,7 @@ glTexCoord1d:
 	movq	752(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	752(%rax), %r11
@@ -3386,7 +3386,7 @@ glTexCoord1dv:
 	movq	760(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	760(%rax), %r11
@@ -3417,7 +3417,7 @@ glTexCoord1f:
 	movq	768(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	768(%rax), %r11
@@ -3448,7 +3448,7 @@ glTexCoord1fv:
 	movq	776(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	776(%rax), %r11
@@ -3477,7 +3477,7 @@ glTexCoord1i:
 	movq	784(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	784(%rax), %r11
@@ -3506,7 +3506,7 @@ glTexCoord1iv:
 	movq	792(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	792(%rax), %r11
@@ -3535,7 +3535,7 @@ glTexCoord1s:
 	movq	800(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	800(%rax), %r11
@@ -3564,7 +3564,7 @@ glTexCoord1sv:
 	movq	808(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	808(%rax), %r11
@@ -3597,7 +3597,7 @@ glTexCoord2d:
 	movq	816(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	816(%rax), %r11
@@ -3630,7 +3630,7 @@ glTexCoord2dv:
 	movq	824(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	824(%rax), %r11
@@ -3663,7 +3663,7 @@ glTexCoord2f:
 	movq	832(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	832(%rax), %r11
@@ -3696,7 +3696,7 @@ glTexCoord2fv:
 	movq	840(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	840(%rax), %r11
@@ -3729,7 +3729,7 @@ glTexCoord2i:
 	movq	848(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	848(%rax), %r11
@@ -3762,7 +3762,7 @@ glTexCoord2iv:
 	movq	856(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	856(%rax), %r11
@@ -3795,7 +3795,7 @@ glTexCoord2s:
 	movq	864(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	864(%rax), %r11
@@ -3828,7 +3828,7 @@ glTexCoord2sv:
 	movq	872(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	872(%rax), %r11
@@ -3863,7 +3863,7 @@ glTexCoord3d:
 	movq	880(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	880(%rax), %r11
@@ -3898,7 +3898,7 @@ glTexCoord3dv:
 	movq	888(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	888(%rax), %r11
@@ -3933,7 +3933,7 @@ glTexCoord3f:
 	movq	896(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	896(%rax), %r11
@@ -3968,7 +3968,7 @@ glTexCoord3fv:
 	movq	904(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	904(%rax), %r11
@@ -4001,7 +4001,7 @@ glTexCoord3i:
 	movq	912(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	912(%rax), %r11
@@ -4034,7 +4034,7 @@ glTexCoord3iv:
 	movq	920(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	920(%rax), %r11
@@ -4067,7 +4067,7 @@ glTexCoord3s:
 	movq	928(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	928(%rax), %r11
@@ -4100,7 +4100,7 @@ glTexCoord3sv:
 	movq	936(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	936(%rax), %r11
@@ -4137,7 +4137,7 @@ glTexCoord4d:
 	movq	944(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	944(%rax), %r11
@@ -4174,7 +4174,7 @@ glTexCoord4dv:
 	movq	952(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	952(%rax), %r11
@@ -4211,7 +4211,7 @@ glTexCoord4f:
 	movq	960(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	960(%rax), %r11
@@ -4248,7 +4248,7 @@ glTexCoord4fv:
 	movq	968(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	968(%rax), %r11
@@ -4285,7 +4285,7 @@ glTexCoord4i:
 	movq	976(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	976(%rax), %r11
@@ -4322,7 +4322,7 @@ glTexCoord4iv:
 	movq	984(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	984(%rax), %r11
@@ -4359,7 +4359,7 @@ glTexCoord4s:
 	movq	992(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	992(%rax), %r11
@@ -4396,7 +4396,7 @@ glTexCoord4sv:
 	movq	1000(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1000(%rax), %r11
@@ -4429,7 +4429,7 @@ glVertex2d:
 	movq	1008(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1008(%rax), %r11
@@ -4462,7 +4462,7 @@ glVertex2dv:
 	movq	1016(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1016(%rax), %r11
@@ -4495,7 +4495,7 @@ glVertex2f:
 	movq	1024(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1024(%rax), %r11
@@ -4528,7 +4528,7 @@ glVertex2fv:
 	movq	1032(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1032(%rax), %r11
@@ -4561,7 +4561,7 @@ glVertex2i:
 	movq	1040(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1040(%rax), %r11
@@ -4594,7 +4594,7 @@ glVertex2iv:
 	movq	1048(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1048(%rax), %r11
@@ -4627,7 +4627,7 @@ glVertex2s:
 	movq	1056(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1056(%rax), %r11
@@ -4660,7 +4660,7 @@ glVertex2sv:
 	movq	1064(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1064(%rax), %r11
@@ -4695,7 +4695,7 @@ glVertex3d:
 	movq	1072(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1072(%rax), %r11
@@ -4730,7 +4730,7 @@ glVertex3dv:
 	movq	1080(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1080(%rax), %r11
@@ -4765,7 +4765,7 @@ glVertex3f:
 	movq	1088(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1088(%rax), %r11
@@ -4800,7 +4800,7 @@ glVertex3fv:
 	movq	1096(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1096(%rax), %r11
@@ -4833,7 +4833,7 @@ glVertex3i:
 	movq	1104(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1104(%rax), %r11
@@ -4866,7 +4866,7 @@ glVertex3iv:
 	movq	1112(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1112(%rax), %r11
@@ -4899,7 +4899,7 @@ glVertex3s:
 	movq	1120(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1120(%rax), %r11
@@ -4932,7 +4932,7 @@ glVertex3sv:
 	movq	1128(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1128(%rax), %r11
@@ -4969,7 +4969,7 @@ glVertex4d:
 	movq	1136(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1136(%rax), %r11
@@ -5006,7 +5006,7 @@ glVertex4dv:
 	movq	1144(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1144(%rax), %r11
@@ -5043,7 +5043,7 @@ glVertex4f:
 	movq	1152(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1152(%rax), %r11
@@ -5080,7 +5080,7 @@ glVertex4fv:
 	movq	1160(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1160(%rax), %r11
@@ -5117,7 +5117,7 @@ glVertex4i:
 	movq	1168(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1168(%rax), %r11
@@ -5154,7 +5154,7 @@ glVertex4iv:
 	movq	1176(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1176(%rax), %r11
@@ -5191,7 +5191,7 @@ glVertex4s:
 	movq	1184(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1184(%rax), %r11
@@ -5228,7 +5228,7 @@ glVertex4sv:
 	movq	1192(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1192(%rax), %r11
@@ -5261,7 +5261,7 @@ glClipPlane:
 	movq	1200(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1200(%rax), %r11
@@ -5298,7 +5298,7 @@ glColorMaterial:
 	movq	1208(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1208(%rax), %r11
@@ -5331,7 +5331,7 @@ glCullFace:
 	movq	1216(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1216(%rax), %r11
@@ -5364,7 +5364,7 @@ glFogf:
 	movq	1224(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1224(%rax), %r11
@@ -5401,7 +5401,7 @@ glFogfv:
 	movq	1232(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1232(%rax), %r11
@@ -5438,7 +5438,7 @@ glFogi:
 	movq	1240(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1240(%rax), %r11
@@ -5475,7 +5475,7 @@ glFogiv:
 	movq	1248(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1248(%rax), %r11
@@ -5508,7 +5508,7 @@ glFrontFace:
 	movq	1256(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1256(%rax), %r11
@@ -5541,7 +5541,7 @@ glHint:
 	movq	1264(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1264(%rax), %r11
@@ -5580,7 +5580,7 @@ glLightf:
 	movq	1272(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1272(%rax), %r11
@@ -5619,7 +5619,7 @@ glLightfv:
 	movq	1280(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1280(%rax), %r11
@@ -5656,7 +5656,7 @@ glLighti:
 	movq	1288(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1288(%rax), %r11
@@ -5693,7 +5693,7 @@ glLightiv:
 	movq	1296(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1296(%rax), %r11
@@ -5730,7 +5730,7 @@ glLightModelf:
 	movq	1304(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1304(%rax), %r11
@@ -5767,7 +5767,7 @@ glLightModelfv:
 	movq	1312(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1312(%rax), %r11
@@ -5804,7 +5804,7 @@ glLightModeli:
 	movq	1320(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1320(%rax), %r11
@@ -5841,7 +5841,7 @@ glLightModeliv:
 	movq	1328(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1328(%rax), %r11
@@ -5878,7 +5878,7 @@ glLineStipple:
 	movq	1336(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1336(%rax), %r11
@@ -5913,7 +5913,7 @@ glLineWidth:
 	movq	1344(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1344(%rax), %r11
@@ -5950,7 +5950,7 @@ glMaterialf:
 	movq	1352(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1352(%rax), %r11
@@ -5989,7 +5989,7 @@ glMaterialfv:
 	movq	1360(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1360(%rax), %r11
@@ -6026,7 +6026,7 @@ glMateriali:
 	movq	1368(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1368(%rax), %r11
@@ -6063,7 +6063,7 @@ glMaterialiv:
 	movq	1376(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1376(%rax), %r11
@@ -6098,7 +6098,7 @@ glPointSize:
 	movq	1384(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1384(%rax), %r11
@@ -6133,7 +6133,7 @@ glPolygonMode:
 	movq	1392(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1392(%rax), %r11
@@ -6166,7 +6166,7 @@ glPolygonStipple:
 	movq	1400(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1400(%rax), %r11
@@ -6203,7 +6203,7 @@ glScissor:
 	movq	1408(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1408(%rax), %r11
@@ -6240,7 +6240,7 @@ glShadeModel:
 	movq	1416(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1416(%rax), %r11
@@ -6275,7 +6275,7 @@ glTexParameterf:
 	movq	1424(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1424(%rax), %r11
@@ -6314,7 +6314,7 @@ glTexParameterfv:
 	movq	1432(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1432(%rax), %r11
@@ -6351,7 +6351,7 @@ glTexParameteri:
 	movq	1440(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1440(%rax), %r11
@@ -6388,7 +6388,7 @@ glTexParameteriv:
 	movq	1448(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1448(%rax), %r11
@@ -6433,7 +6433,7 @@ glTexImage1D:
 	movq	1456(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1456(%rax), %r11
@@ -6486,7 +6486,7 @@ glTexImage2D:
 	movq	1464(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1464(%rax), %r11
@@ -6533,7 +6533,7 @@ glTexEnvf:
 	movq	1472(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1472(%rax), %r11
@@ -6572,7 +6572,7 @@ glTexEnvfv:
 	movq	1480(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1480(%rax), %r11
@@ -6609,7 +6609,7 @@ glTexEnvi:
 	movq	1488(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1488(%rax), %r11
@@ -6646,7 +6646,7 @@ glTexEnviv:
 	movq	1496(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1496(%rax), %r11
@@ -6685,7 +6685,7 @@ glTexGend:
 	movq	1504(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1504(%rax), %r11
@@ -6724,7 +6724,7 @@ glTexGendv:
 	movq	1512(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1512(%rax), %r11
@@ -6763,7 +6763,7 @@ glTexGenf:
 	movq	1520(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1520(%rax), %r11
@@ -6802,7 +6802,7 @@ glTexGenfv:
 	movq	1528(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1528(%rax), %r11
@@ -6839,7 +6839,7 @@ glTexGeni:
 	movq	1536(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1536(%rax), %r11
@@ -6876,7 +6876,7 @@ glTexGeniv:
 	movq	1544(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1544(%rax), %r11
@@ -6913,7 +6913,7 @@ glFeedbackBuffer:
 	movq	1552(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1552(%rax), %r11
@@ -6950,7 +6950,7 @@ glSelectBuffer:
 	movq	1560(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1560(%rax), %r11
@@ -6983,7 +6983,7 @@ glRenderMode:
 	movq	1568(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1568(%rax), %r11
@@ -7012,7 +7012,7 @@ glInitNames:
 	movq	1576(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1576(%rax), %r11
@@ -7041,7 +7041,7 @@ glLoadName:
 	movq	1584(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1584(%rax), %r11
@@ -7072,7 +7072,7 @@ glPassThrough:
 	movq	1592(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1592(%rax), %r11
@@ -7103,7 +7103,7 @@ glPopName:
 	movq	1600(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1600(%rax), %r11
@@ -7132,7 +7132,7 @@ glPushName:
 	movq	1608(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1608(%rax), %r11
@@ -7161,7 +7161,7 @@ glDrawBuffer:
 	movq	1616(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1616(%rax), %r11
@@ -7190,7 +7190,7 @@ glClear:
 	movq	1624(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1624(%rax), %r11
@@ -7227,7 +7227,7 @@ glClearAccum:
 	movq	1632(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1632(%rax), %r11
@@ -7266,7 +7266,7 @@ glClearIndex:
 	movq	1640(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1640(%rax), %r11
@@ -7305,7 +7305,7 @@ glClearColor:
 	movq	1648(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1648(%rax), %r11
@@ -7342,7 +7342,7 @@ glClearStencil:
 	movq	1656(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1656(%rax), %r11
@@ -7371,7 +7371,7 @@ glClearDepth:
 	movq	1664(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1664(%rax), %r11
@@ -7400,7 +7400,7 @@ glStencilMask:
 	movq	1672(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1672(%rax), %r11
@@ -7437,7 +7437,7 @@ glColorMask:
 	movq	1680(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1680(%rax), %r11
@@ -7474,7 +7474,7 @@ glDepthMask:
 	movq	1688(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1688(%rax), %r11
@@ -7503,7 +7503,7 @@ glIndexMask:
 	movq	1696(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1696(%rax), %r11
@@ -7536,7 +7536,7 @@ glAccum:
 	movq	1704(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1704(%rax), %r11
@@ -7569,7 +7569,7 @@ glDisable:
 	movq	1712(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1712(%rax), %r11
@@ -7598,7 +7598,7 @@ glEnable:
 	movq	1720(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1720(%rax), %r11
@@ -7627,7 +7627,7 @@ glFinish:
 	movq	1728(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1728(%rax), %r11
@@ -7656,7 +7656,7 @@ glFlush:
 	movq	1736(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1736(%rax), %r11
@@ -7685,7 +7685,7 @@ glPopAttrib:
 	movq	1744(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1744(%rax), %r11
@@ -7714,7 +7714,7 @@ glPushAttrib:
 	movq	1752(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1752(%rax), %r11
@@ -7755,7 +7755,7 @@ glMap1d:
 	movq	1760(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1760(%rax), %r11
@@ -7808,7 +7808,7 @@ glMap1f:
 	movq	1768(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1768(%rax), %r11
@@ -7869,7 +7869,7 @@ glMap2d:
 	movq	1776(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1776(%rax), %r11
@@ -7938,7 +7938,7 @@ glMap2f:
 	movq	1784(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1784(%rax), %r11
@@ -7993,7 +7993,7 @@ glMapGrid1d:
 	movq	1792(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1792(%rax), %r11
@@ -8034,7 +8034,7 @@ glMapGrid1f:
 	movq	1800(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1800(%rax), %r11
@@ -8081,7 +8081,7 @@ glMapGrid2d:
 	movq	1808(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1808(%rax), %r11
@@ -8134,7 +8134,7 @@ glMapGrid2f:
 	movq	1816(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1816(%rax), %r11
@@ -8177,7 +8177,7 @@ glEvalCoord1d:
 	movq	1824(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1824(%rax), %r11
@@ -8208,7 +8208,7 @@ glEvalCoord1dv:
 	movq	1832(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1832(%rax), %r11
@@ -8239,7 +8239,7 @@ glEvalCoord1f:
 	movq	1840(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1840(%rax), %r11
@@ -8270,7 +8270,7 @@ glEvalCoord1fv:
 	movq	1848(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1848(%rax), %r11
@@ -8303,7 +8303,7 @@ glEvalCoord2d:
 	movq	1856(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1856(%rax), %r11
@@ -8336,7 +8336,7 @@ glEvalCoord2dv:
 	movq	1864(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1864(%rax), %r11
@@ -8369,7 +8369,7 @@ glEvalCoord2f:
 	movq	1872(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1872(%rax), %r11
@@ -8402,7 +8402,7 @@ glEvalCoord2fv:
 	movq	1880(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1880(%rax), %r11
@@ -8435,7 +8435,7 @@ glEvalMesh1:
 	movq	1888(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1888(%rax), %r11
@@ -8468,7 +8468,7 @@ glEvalPoint1:
 	movq	1896(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1896(%rax), %r11
@@ -8505,7 +8505,7 @@ glEvalMesh2:
 	movq	1904(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1904(%rax), %r11
@@ -8546,7 +8546,7 @@ glEvalPoint2:
 	movq	1912(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1912(%rax), %r11
@@ -8583,7 +8583,7 @@ glAlphaFunc:
 	movq	1920(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1920(%rax), %r11
@@ -8620,7 +8620,7 @@ glBlendFunc:
 	movq	1928(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1928(%rax), %r11
@@ -8653,7 +8653,7 @@ glLogicOp:
 	movq	1936(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1936(%rax), %r11
@@ -8686,7 +8686,7 @@ glStencilFunc:
 	movq	1944(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1944(%rax), %r11
@@ -8723,7 +8723,7 @@ glStencilOp:
 	movq	1952(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1952(%rax), %r11
@@ -8756,7 +8756,7 @@ glDepthFunc:
 	movq	1960(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1960(%rax), %r11
@@ -8789,7 +8789,7 @@ glPixelZoom:
 	movq	1968(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1968(%rax), %r11
@@ -8826,7 +8826,7 @@ glPixelTransferf:
 	movq	1976(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1976(%rax), %r11
@@ -8863,7 +8863,7 @@ glPixelTransferi:
 	movq	1984(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1984(%rax), %r11
@@ -8900,7 +8900,7 @@ glPixelStoref:
 	movq	1992(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	1992(%rax), %r11
@@ -8937,7 +8937,7 @@ glPixelStorei:
 	movq	2000(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2000(%rax), %r11
@@ -8974,7 +8974,7 @@ glPixelMapfv:
 	movq	2008(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2008(%rax), %r11
@@ -9011,7 +9011,7 @@ glPixelMapuiv:
 	movq	2016(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2016(%rax), %r11
@@ -9048,7 +9048,7 @@ glPixelMapusv:
 	movq	2024(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2024(%rax), %r11
@@ -9081,7 +9081,7 @@ glReadBuffer:
 	movq	2032(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2032(%rax), %r11
@@ -9118,7 +9118,7 @@ glCopyPixels:
 	movq	2040(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2040(%rax), %r11
@@ -9167,7 +9167,7 @@ glReadPixels:
 	movq	2048(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2048(%rax), %r11
@@ -9216,7 +9216,7 @@ glDrawPixels:
 	movq	2056(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2056(%rax), %r11
@@ -9257,7 +9257,7 @@ glGetBooleanv:
 	movq	2064(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2064(%rax), %r11
@@ -9294,7 +9294,7 @@ glGetClipPlane:
 	movq	2072(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2072(%rax), %r11
@@ -9331,7 +9331,7 @@ glGetDoublev:
 	movq	2080(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2080(%rax), %r11
@@ -9364,7 +9364,7 @@ glGetError:
 	movq	2088(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2088(%rax), %r11
@@ -9397,7 +9397,7 @@ glGetFloatv:
 	movq	2096(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2096(%rax), %r11
@@ -9434,7 +9434,7 @@ glGetIntegerv:
 	movq	2104(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2104(%rax), %r11
@@ -9471,7 +9471,7 @@ glGetLightfv:
 	movq	2112(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2112(%rax), %r11
@@ -9508,7 +9508,7 @@ glGetLightiv:
 	movq	2120(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2120(%rax), %r11
@@ -9545,7 +9545,7 @@ glGetMapdv:
 	movq	2128(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2128(%rax), %r11
@@ -9582,7 +9582,7 @@ glGetMapfv:
 	movq	2136(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2136(%rax), %r11
@@ -9619,7 +9619,7 @@ glGetMapiv:
 	movq	2144(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2144(%rax), %r11
@@ -9656,7 +9656,7 @@ glGetMaterialfv:
 	movq	2152(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2152(%rax), %r11
@@ -9693,7 +9693,7 @@ glGetMaterialiv:
 	movq	2160(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2160(%rax), %r11
@@ -9730,7 +9730,7 @@ glGetPixelMapfv:
 	movq	2168(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2168(%rax), %r11
@@ -9767,7 +9767,7 @@ glGetPixelMapuiv:
 	movq	2176(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2176(%rax), %r11
@@ -9804,7 +9804,7 @@ glGetPixelMapusv:
 	movq	2184(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2184(%rax), %r11
@@ -9837,7 +9837,7 @@ glGetPolygonStipple:
 	movq	2192(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2192(%rax), %r11
@@ -9866,7 +9866,7 @@ glGetString:
 	movq	2200(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2200(%rax), %r11
@@ -9899,7 +9899,7 @@ glGetTexEnvfv:
 	movq	2208(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2208(%rax), %r11
@@ -9936,7 +9936,7 @@ glGetTexEnviv:
 	movq	2216(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2216(%rax), %r11
@@ -9973,7 +9973,7 @@ glGetTexGendv:
 	movq	2224(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2224(%rax), %r11
@@ -10010,7 +10010,7 @@ glGetTexGenfv:
 	movq	2232(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2232(%rax), %r11
@@ -10047,7 +10047,7 @@ glGetTexGeniv:
 	movq	2240(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2240(%rax), %r11
@@ -10088,7 +10088,7 @@ glGetTexImage:
 	movq	2248(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2248(%rax), %r11
@@ -10129,7 +10129,7 @@ glGetTexParameterfv:
 	movq	2256(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2256(%rax), %r11
@@ -10166,7 +10166,7 @@ glGetTexParameteriv:
 	movq	2264(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2264(%rax), %r11
@@ -10207,7 +10207,7 @@ glGetTexLevelParameterfv:
 	movq	2272(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2272(%rax), %r11
@@ -10252,7 +10252,7 @@ glGetTexLevelParameteriv:
 	movq	2280(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2280(%rax), %r11
@@ -10289,7 +10289,7 @@ glIsEnabled:
 	movq	2288(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2288(%rax), %r11
@@ -10318,7 +10318,7 @@ glIsList:
 	movq	2296(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2296(%rax), %r11
@@ -10351,7 +10351,7 @@ glDepthRange:
 	movq	2304(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2304(%rax), %r11
@@ -10396,7 +10396,7 @@ glFrustum:
 	movq	2312(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2312(%rax), %r11
@@ -10437,7 +10437,7 @@ glLoadIdentity:
 	movq	2320(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2320(%rax), %r11
@@ -10466,7 +10466,7 @@ glLoadMatrixf:
 	movq	2328(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2328(%rax), %r11
@@ -10495,7 +10495,7 @@ glLoadMatrixd:
 	movq	2336(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2336(%rax), %r11
@@ -10524,7 +10524,7 @@ glMatrixMode:
 	movq	2344(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2344(%rax), %r11
@@ -10553,7 +10553,7 @@ glMultMatrixf:
 	movq	2352(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2352(%rax), %r11
@@ -10582,7 +10582,7 @@ glMultMatrixd:
 	movq	2360(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2360(%rax), %r11
@@ -10623,7 +10623,7 @@ glOrtho:
 	movq	2368(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2368(%rax), %r11
@@ -10664,7 +10664,7 @@ glPopMatrix:
 	movq	2376(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2376(%rax), %r11
@@ -10693,7 +10693,7 @@ glPushMatrix:
 	movq	2384(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2384(%rax), %r11
@@ -10730,7 +10730,7 @@ glRotated:
 	movq	2392(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2392(%rax), %r11
@@ -10775,7 +10775,7 @@ glRotatef:
 	movq	2400(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2400(%rax), %r11
@@ -10818,7 +10818,7 @@ glScaled:
 	movq	2408(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2408(%rax), %r11
@@ -10859,7 +10859,7 @@ glScalef:
 	movq	2416(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2416(%rax), %r11
@@ -10900,7 +10900,7 @@ glTranslated:
 	movq	2424(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2424(%rax), %r11
@@ -10941,7 +10941,7 @@ glTranslatef:
 	movq	2432(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2432(%rax), %r11
@@ -10984,7 +10984,7 @@ glViewport:
 	movq	2440(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2440(%rax), %r11
@@ -11021,7 +11021,7 @@ glArrayElement:
 	movq	2448(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2448(%rax), %r11
@@ -11054,7 +11054,7 @@ glBindTexture:
 	movq	2456(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2456(%rax), %r11
@@ -11095,7 +11095,7 @@ glColorPointer:
 	movq	2464(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2464(%rax), %r11
@@ -11132,7 +11132,7 @@ glDisableClientState:
 	movq	2472(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2472(%rax), %r11
@@ -11165,7 +11165,7 @@ glDrawArrays:
 	movq	2480(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2480(%rax), %r11
@@ -11206,7 +11206,7 @@ glDrawElements:
 	movq	2488(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2488(%rax), %r11
@@ -11247,7 +11247,7 @@ glEdgeFlagPointer:
 	movq	2496(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2496(%rax), %r11
@@ -11280,7 +11280,7 @@ glEnableClientState:
 	movq	2504(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2504(%rax), %r11
@@ -11313,7 +11313,7 @@ glIndexPointer:
 	movq	2512(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2512(%rax), %r11
@@ -11346,7 +11346,7 @@ glIndexub:
 	movq	2520(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2520(%rax), %r11
@@ -11375,7 +11375,7 @@ glIndexubv:
 	movq	2528(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2528(%rax), %r11
@@ -11408,7 +11408,7 @@ glInterleavedArrays:
 	movq	2536(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2536(%rax), %r11
@@ -11445,7 +11445,7 @@ glNormalPointer:
 	movq	2544(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2544(%rax), %r11
@@ -11482,7 +11482,7 @@ glPolygonOffset:
 	movq	2552(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2552(%rax), %r11
@@ -11523,7 +11523,7 @@ glTexCoordPointer:
 	movq	2560(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2560(%rax), %r11
@@ -11568,7 +11568,7 @@ glVertexPointer:
 	movq	2568(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2568(%rax), %r11
@@ -11609,7 +11609,7 @@ glAreTexturesResident:
 	movq	2576(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2576(%rax), %r11
@@ -11654,7 +11654,7 @@ glCopyTexImage1D:
 	movq	2584(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2584(%rax), %r11
@@ -11707,7 +11707,7 @@ glCopyTexImage2D:
 	movq	2592(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2592(%rax), %r11
@@ -11760,7 +11760,7 @@ glCopyTexSubImage1D:
 	movq	2600(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2600(%rax), %r11
@@ -11813,7 +11813,7 @@ glCopyTexSubImage2D:
 	movq	2608(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2608(%rax), %r11
@@ -11858,7 +11858,7 @@ glDeleteTextures:
 	movq	2616(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2616(%rax), %r11
@@ -11895,7 +11895,7 @@ glGenTextures:
 	movq	2624(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2624(%rax), %r11
@@ -11932,7 +11932,7 @@ glGetPointerv:
 	movq	2632(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2632(%rax), %r11
@@ -11965,7 +11965,7 @@ glIsTexture:
 	movq	2640(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2640(%rax), %r11
@@ -11998,7 +11998,7 @@ glPrioritizeTextures:
 	movq	2648(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2648(%rax), %r11
@@ -12043,7 +12043,7 @@ glTexSubImage1D:
 	movq	2656(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2656(%rax), %r11
@@ -12096,7 +12096,7 @@ glTexSubImage2D:
 	movq	2664(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2664(%rax), %r11
@@ -12137,7 +12137,7 @@ glPopClientAttrib:
 	movq	2672(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2672(%rax), %r11
@@ -12166,7 +12166,7 @@ glPushClientAttrib:
 	movq	2680(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2680(%rax), %r11
@@ -12203,7 +12203,7 @@ glBlendColor:
 	movq	2688(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2688(%rax), %r11
@@ -12240,7 +12240,7 @@ glBlendEquation:
 	movq	2696(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2696(%rax), %r11
@@ -12281,7 +12281,7 @@ glDrawRangeElements:
 	movq	2704(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2704(%rax), %r11
@@ -12334,7 +12334,7 @@ glColorTable:
 	movq	2712(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2712(%rax), %r11
@@ -12379,7 +12379,7 @@ glColorTableParameterfv:
 	movq	2720(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2720(%rax), %r11
@@ -12416,7 +12416,7 @@ glColorTableParameteriv:
 	movq	2728(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2728(%rax), %r11
@@ -12457,7 +12457,7 @@ glCopyColorTable:
 	movq	2736(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2736(%rax), %r11
@@ -12502,7 +12502,7 @@ glGetColorTable:
 	movq	2744(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2744(%rax), %r11
@@ -12543,7 +12543,7 @@ glGetColorTableParameterfv:
 	movq	2752(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2752(%rax), %r11
@@ -12580,7 +12580,7 @@ glGetColorTableParameteriv:
 	movq	2760(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2760(%rax), %r11
@@ -12625,7 +12625,7 @@ glColorSubTable:
 	movq	2768(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2768(%rax), %r11
@@ -12674,7 +12674,7 @@ glCopyColorSubTable:
 	movq	2776(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2776(%rax), %r11
@@ -12723,7 +12723,7 @@ glConvolutionFilter1D:
 	movq	2784(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2784(%rax), %r11
@@ -12776,7 +12776,7 @@ glConvolutionFilter2D:
 	movq	2792(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2792(%rax), %r11
@@ -12823,7 +12823,7 @@ glConvolutionParameterf:
 	movq	2800(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2800(%rax), %r11
@@ -12862,7 +12862,7 @@ glConvolutionParameterfv:
 	movq	2808(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2808(%rax), %r11
@@ -12899,7 +12899,7 @@ glConvolutionParameteri:
 	movq	2816(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2816(%rax), %r11
@@ -12936,7 +12936,7 @@ glConvolutionParameteriv:
 	movq	2824(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2824(%rax), %r11
@@ -12977,7 +12977,7 @@ glCopyConvolutionFilter1D:
 	movq	2832(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2832(%rax), %r11
@@ -13026,7 +13026,7 @@ glCopyConvolutionFilter2D:
 	movq	2840(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2840(%rax), %r11
@@ -13075,7 +13075,7 @@ glGetConvolutionFilter:
 	movq	2848(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2848(%rax), %r11
@@ -13116,7 +13116,7 @@ glGetConvolutionParameterfv:
 	movq	2856(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2856(%rax), %r11
@@ -13153,7 +13153,7 @@ glGetConvolutionParameteriv:
 	movq	2864(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2864(%rax), %r11
@@ -13198,7 +13198,7 @@ glGetSeparableFilter:
 	movq	2872(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2872(%rax), %r11
@@ -13251,7 +13251,7 @@ glSeparableFilter2D:
 	movq	2880(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2880(%rax), %r11
@@ -13300,7 +13300,7 @@ glGetHistogram:
 	movq	2888(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2888(%rax), %r11
@@ -13341,7 +13341,7 @@ glGetHistogramParameterfv:
 	movq	2896(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2896(%rax), %r11
@@ -13378,7 +13378,7 @@ glGetHistogramParameteriv:
 	movq	2904(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2904(%rax), %r11
@@ -13419,7 +13419,7 @@ glGetMinmax:
 	movq	2912(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2912(%rax), %r11
@@ -13460,7 +13460,7 @@ glGetMinmaxParameterfv:
 	movq	2920(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2920(%rax), %r11
@@ -13497,7 +13497,7 @@ glGetMinmaxParameteriv:
 	movq	2928(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2928(%rax), %r11
@@ -13538,7 +13538,7 @@ glHistogram:
 	movq	2936(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2936(%rax), %r11
@@ -13579,7 +13579,7 @@ glMinmax:
 	movq	2944(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2944(%rax), %r11
@@ -13612,7 +13612,7 @@ glResetHistogram:
 	movq	2952(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2952(%rax), %r11
@@ -13641,7 +13641,7 @@ glResetMinmax:
 	movq	2960(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2960(%rax), %r11
@@ -13682,7 +13682,7 @@ glTexImage3D:
 	movq	2968(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2968(%rax), %r11
@@ -13735,7 +13735,7 @@ glTexSubImage3D:
 	movq	2976(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2976(%rax), %r11
@@ -13788,7 +13788,7 @@ glCopyTexSubImage3D:
 	movq	2984(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2984(%rax), %r11
@@ -13829,7 +13829,7 @@ glActiveTextureARB:
 	movq	2992(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	2992(%rax), %r11
@@ -13858,7 +13858,7 @@ glClientActiveTextureARB:
 	movq	3000(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3000(%rax), %r11
@@ -13891,7 +13891,7 @@ glMultiTexCoord1dARB:
 	movq	3008(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3008(%rax), %r11
@@ -13928,7 +13928,7 @@ glMultiTexCoord1dvARB:
 	movq	3016(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3016(%rax), %r11
@@ -13965,7 +13965,7 @@ glMultiTexCoord1fARB:
 	movq	3024(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3024(%rax), %r11
@@ -14002,7 +14002,7 @@ glMultiTexCoord1fvARB:
 	movq	3032(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3032(%rax), %r11
@@ -14039,7 +14039,7 @@ glMultiTexCoord1iARB:
 	movq	3040(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3040(%rax), %r11
@@ -14076,7 +14076,7 @@ glMultiTexCoord1ivARB:
 	movq	3048(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3048(%rax), %r11
@@ -14113,7 +14113,7 @@ glMultiTexCoord1sARB:
 	movq	3056(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3056(%rax), %r11
@@ -14150,7 +14150,7 @@ glMultiTexCoord1svARB:
 	movq	3064(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3064(%rax), %r11
@@ -14189,7 +14189,7 @@ glMultiTexCoord2dARB:
 	movq	3072(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3072(%rax), %r11
@@ -14228,7 +14228,7 @@ glMultiTexCoord2dvARB:
 	movq	3080(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3080(%rax), %r11
@@ -14267,7 +14267,7 @@ glMultiTexCoord2fARB:
 	movq	3088(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3088(%rax), %r11
@@ -14306,7 +14306,7 @@ glMultiTexCoord2fvARB:
 	movq	3096(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3096(%rax), %r11
@@ -14343,7 +14343,7 @@ glMultiTexCoord2iARB:
 	movq	3104(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3104(%rax), %r11
@@ -14380,7 +14380,7 @@ glMultiTexCoord2ivARB:
 	movq	3112(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3112(%rax), %r11
@@ -14417,7 +14417,7 @@ glMultiTexCoord2sARB:
 	movq	3120(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3120(%rax), %r11
@@ -14454,7 +14454,7 @@ glMultiTexCoord2svARB:
 	movq	3128(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3128(%rax), %r11
@@ -14495,7 +14495,7 @@ glMultiTexCoord3dARB:
 	movq	3136(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3136(%rax), %r11
@@ -14536,7 +14536,7 @@ glMultiTexCoord3dvARB:
 	movq	3144(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3144(%rax), %r11
@@ -14577,7 +14577,7 @@ glMultiTexCoord3fARB:
 	movq	3152(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3152(%rax), %r11
@@ -14618,7 +14618,7 @@ glMultiTexCoord3fvARB:
 	movq	3160(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3160(%rax), %r11
@@ -14659,7 +14659,7 @@ glMultiTexCoord3iARB:
 	movq	3168(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3168(%rax), %r11
@@ -14700,7 +14700,7 @@ glMultiTexCoord3ivARB:
 	movq	3176(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3176(%rax), %r11
@@ -14741,7 +14741,7 @@ glMultiTexCoord3sARB:
 	movq	3184(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3184(%rax), %r11
@@ -14782,7 +14782,7 @@ glMultiTexCoord3svARB:
 	movq	3192(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3192(%rax), %r11
@@ -14825,7 +14825,7 @@ glMultiTexCoord4dARB:
 	movq	3200(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3200(%rax), %r11
@@ -14868,7 +14868,7 @@ glMultiTexCoord4dvARB:
 	movq	3208(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3208(%rax), %r11
@@ -14911,7 +14911,7 @@ glMultiTexCoord4fARB:
 	movq	3216(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3216(%rax), %r11
@@ -14954,7 +14954,7 @@ glMultiTexCoord4fvARB:
 	movq	3224(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3224(%rax), %r11
@@ -14995,7 +14995,7 @@ glMultiTexCoord4iARB:
 	movq	3232(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3232(%rax), %r11
@@ -15036,7 +15036,7 @@ glMultiTexCoord4ivARB:
 	movq	3240(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3240(%rax), %r11
@@ -15077,7 +15077,7 @@ glMultiTexCoord4sARB:
 	movq	3248(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3248(%rax), %r11
@@ -15118,7 +15118,7 @@ glMultiTexCoord4svARB:
 	movq	3256(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3256(%rax), %r11
@@ -15151,7 +15151,7 @@ glLoadTransposeMatrixfARB:
 	movq	3264(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3264(%rax), %r11
@@ -15180,7 +15180,7 @@ glLoadTransposeMatrixdARB:
 	movq	3272(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3272(%rax), %r11
@@ -15209,7 +15209,7 @@ glMultTransposeMatrixfARB:
 	movq	3280(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3280(%rax), %r11
@@ -15238,7 +15238,7 @@ glMultTransposeMatrixdARB:
 	movq	3288(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3288(%rax), %r11
@@ -15271,7 +15271,7 @@ glSampleCoverageARB:
 	movq	3296(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3296(%rax), %r11
@@ -15308,7 +15308,7 @@ glDrawBuffersARB:
 	movq	3304(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3304(%rax), %r11
@@ -15345,7 +15345,7 @@ glPolygonOffsetEXT:
 	movq	3312(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3312(%rax), %r11
@@ -15382,7 +15382,7 @@ glGetTexFilterFuncSGIS:
 	movq	3320(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3320(%rax), %r11
@@ -15423,7 +15423,7 @@ glTexFilterFuncSGIS:
 	movq	3328(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3328(%rax), %r11
@@ -15468,7 +15468,7 @@ glGetHistogramEXT:
 	movq	3336(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3336(%rax), %r11
@@ -15509,7 +15509,7 @@ glGetHistogramParameterfvEXT:
 	movq	3344(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3344(%rax), %r11
@@ -15546,7 +15546,7 @@ glGetHistogramParameterivEXT:
 	movq	3352(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3352(%rax), %r11
@@ -15587,7 +15587,7 @@ glGetMinmaxEXT:
 	movq	3360(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3360(%rax), %r11
@@ -15628,7 +15628,7 @@ glGetMinmaxParameterfvEXT:
 	movq	3368(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3368(%rax), %r11
@@ -15665,7 +15665,7 @@ glGetMinmaxParameterivEXT:
 	movq	3376(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3376(%rax), %r11
@@ -15706,7 +15706,7 @@ glGetConvolutionFilterEXT:
 	movq	3384(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3384(%rax), %r11
@@ -15747,7 +15747,7 @@ glGetConvolutionParameterfvEXT:
 	movq	3392(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3392(%rax), %r11
@@ -15784,7 +15784,7 @@ glGetConvolutionParameterivEXT:
 	movq	3400(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3400(%rax), %r11
@@ -15829,7 +15829,7 @@ glGetSeparableFilterEXT:
 	movq	3408(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3408(%rax), %r11
@@ -15878,7 +15878,7 @@ glGetColorTableSGI:
 	movq	3416(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3416(%rax), %r11
@@ -15919,7 +15919,7 @@ glGetColorTableParameterfvSGI:
 	movq	3424(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3424(%rax), %r11
@@ -15956,7 +15956,7 @@ glGetColorTableParameterivSGI:
 	movq	3432(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3432(%rax), %r11
@@ -15989,7 +15989,7 @@ glPixelTexGenSGIX:
 	movq	3440(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3440(%rax), %r11
@@ -16022,7 +16022,7 @@ glPixelTexGenParameteriSGIS:
 	movq	3448(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3448(%rax), %r11
@@ -16059,7 +16059,7 @@ glPixelTexGenParameterivSGIS:
 	movq	3456(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3456(%rax), %r11
@@ -16096,7 +16096,7 @@ glPixelTexGenParameterfSGIS:
 	movq	3464(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3464(%rax), %r11
@@ -16133,7 +16133,7 @@ glPixelTexGenParameterfvSGIS:
 	movq	3472(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3472(%rax), %r11
@@ -16170,7 +16170,7 @@ glGetPixelTexGenParameterivSGIS:
 	movq	3480(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3480(%rax), %r11
@@ -16207,7 +16207,7 @@ glGetPixelTexGenParameterfvSGIS:
 	movq	3488(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3488(%rax), %r11
@@ -16252,7 +16252,7 @@ glTexImage4DSGIS:
 	movq	3496(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3496(%rax), %r11
@@ -16305,7 +16305,7 @@ glTexSubImage4DSGIS:
 	movq	3504(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3504(%rax), %r11
@@ -16350,7 +16350,7 @@ glAreTexturesResidentEXT:
 	movq	3512(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3512(%rax), %r11
@@ -16387,7 +16387,7 @@ glGenTexturesEXT:
 	movq	3520(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3520(%rax), %r11
@@ -16420,7 +16420,7 @@ glIsTextureEXT:
 	movq	3528(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3528(%rax), %r11
@@ -16453,7 +16453,7 @@ glDetailTexFuncSGIS:
 	movq	3536(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3536(%rax), %r11
@@ -16490,7 +16490,7 @@ glGetDetailTexFuncSGIS:
 	movq	3544(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3544(%rax), %r11
@@ -16527,7 +16527,7 @@ glSharpenTexFuncSGIS:
 	movq	3552(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3552(%rax), %r11
@@ -16564,7 +16564,7 @@ glGetSharpenTexFuncSGIS:
 	movq	3560(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3560(%rax), %r11
@@ -16601,7 +16601,7 @@ glSampleMaskSGIS:
 	movq	3568(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3568(%rax), %r11
@@ -16634,7 +16634,7 @@ glSamplePatternSGIS:
 	movq	3576(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3576(%rax), %r11
@@ -16671,7 +16671,7 @@ glColorPointerEXT:
 	movq	3584(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3584(%rax), %r11
@@ -16712,7 +16712,7 @@ glEdgeFlagPointerEXT:
 	movq	3592(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3592(%rax), %r11
@@ -16753,7 +16753,7 @@ glIndexPointerEXT:
 	movq	3600(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3600(%rax), %r11
@@ -16798,7 +16798,7 @@ glNormalPointerEXT:
 	movq	3608(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3608(%rax), %r11
@@ -16843,7 +16843,7 @@ glTexCoordPointerEXT:
 	movq	3616(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3616(%rax), %r11
@@ -16888,7 +16888,7 @@ glVertexPointerEXT:
 	movq	3624(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3624(%rax), %r11
@@ -16929,7 +16929,7 @@ glSpriteParameterfSGIX:
 	movq	3632(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3632(%rax), %r11
@@ -16966,7 +16966,7 @@ glSpriteParameterfvSGIX:
 	movq	3640(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3640(%rax), %r11
@@ -17003,7 +17003,7 @@ glSpriteParameteriSGIX:
 	movq	3648(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3648(%rax), %r11
@@ -17040,7 +17040,7 @@ glSpriteParameterivSGIX:
 	movq	3656(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3656(%rax), %r11
@@ -17077,7 +17077,7 @@ glPointParameterfEXT:
 	movq	3664(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3664(%rax), %r11
@@ -17114,7 +17114,7 @@ glPointParameterfvEXT:
 	movq	3672(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3672(%rax), %r11
@@ -17147,7 +17147,7 @@ glGetInstrumentsSGIX:
 	movq	3680(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3680(%rax), %r11
@@ -17180,7 +17180,7 @@ glInstrumentsBufferSGIX:
 	movq	3688(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3688(%rax), %r11
@@ -17213,7 +17213,7 @@ glPollInstrumentsSGIX:
 	movq	3696(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3696(%rax), %r11
@@ -17242,7 +17242,7 @@ glReadInstrumentsSGIX:
 	movq	3704(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3704(%rax), %r11
@@ -17271,7 +17271,7 @@ glStartInstrumentsSGIX:
 	movq	3712(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3712(%rax), %r11
@@ -17300,7 +17300,7 @@ glStopInstrumentsSGIX:
 	movq	3720(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3720(%rax), %r11
@@ -17329,7 +17329,7 @@ glFrameZoomSGIX:
 	movq	3728(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3728(%rax), %r11
@@ -17358,7 +17358,7 @@ glTagSampleBufferSGIX:
 	movq	3736(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3736(%rax), %r11
@@ -17387,7 +17387,7 @@ glReferencePlaneSGIX:
 	movq	3744(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3744(%rax), %r11
@@ -17416,7 +17416,7 @@ glFlushRasterSGIX:
 	movq	3752(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3752(%rax), %r11
@@ -17449,7 +17449,7 @@ glGetListParameterfvSGIX:
 	movq	3760(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3760(%rax), %r11
@@ -17486,7 +17486,7 @@ glGetListParameterivSGIX:
 	movq	3768(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3768(%rax), %r11
@@ -17525,7 +17525,7 @@ glListParameterfSGIX:
 	movq	3776(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3776(%rax), %r11
@@ -17564,7 +17564,7 @@ glListParameterfvSGIX:
 	movq	3784(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3784(%rax), %r11
@@ -17601,7 +17601,7 @@ glListParameteriSGIX:
 	movq	3792(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3792(%rax), %r11
@@ -17638,7 +17638,7 @@ glListParameterivSGIX:
 	movq	3800(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3800(%rax), %r11
@@ -17675,7 +17675,7 @@ glFragmentColorMaterialSGIX:
 	movq	3808(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3808(%rax), %r11
@@ -17714,7 +17714,7 @@ glFragmentLightfSGIX:
 	movq	3816(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3816(%rax), %r11
@@ -17753,7 +17753,7 @@ glFragmentLightfvSGIX:
 	movq	3824(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3824(%rax), %r11
@@ -17790,7 +17790,7 @@ glFragmentLightiSGIX:
 	movq	3832(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3832(%rax), %r11
@@ -17827,7 +17827,7 @@ glFragmentLightivSGIX:
 	movq	3840(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3840(%rax), %r11
@@ -17864,7 +17864,7 @@ glFragmentLightModelfSGIX:
 	movq	3848(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3848(%rax), %r11
@@ -17901,7 +17901,7 @@ glFragmentLightModelfvSGIX:
 	movq	3856(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3856(%rax), %r11
@@ -17938,7 +17938,7 @@ glFragmentLightModeliSGIX:
 	movq	3864(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3864(%rax), %r11
@@ -17975,7 +17975,7 @@ glFragmentLightModelivSGIX:
 	movq	3872(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3872(%rax), %r11
@@ -18014,7 +18014,7 @@ glFragmentMaterialfSGIX:
 	movq	3880(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3880(%rax), %r11
@@ -18053,7 +18053,7 @@ glFragmentMaterialfvSGIX:
 	movq	3888(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3888(%rax), %r11
@@ -18090,7 +18090,7 @@ glFragmentMaterialiSGIX:
 	movq	3896(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3896(%rax), %r11
@@ -18127,7 +18127,7 @@ glFragmentMaterialivSGIX:
 	movq	3904(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3904(%rax), %r11
@@ -18164,7 +18164,7 @@ glGetFragmentLightfvSGIX:
 	movq	3912(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3912(%rax), %r11
@@ -18201,7 +18201,7 @@ glGetFragmentLightivSGIX:
 	movq	3920(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3920(%rax), %r11
@@ -18238,7 +18238,7 @@ glGetFragmentMaterialfvSGIX:
 	movq	3928(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3928(%rax), %r11
@@ -18275,7 +18275,7 @@ glGetFragmentMaterialivSGIX:
 	movq	3936(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3936(%rax), %r11
@@ -18312,7 +18312,7 @@ glLightEnviSGIX:
 	movq	3944(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3944(%rax), %r11
@@ -18347,7 +18347,7 @@ glVertexWeightfEXT:
 	movq	3952(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3952(%rax), %r11
@@ -18378,7 +18378,7 @@ glVertexWeightfvEXT:
 	movq	3960(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3960(%rax), %r11
@@ -18415,7 +18415,7 @@ glVertexWeightPointerEXT:
 	movq	3968(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3968(%rax), %r11
@@ -18452,7 +18452,7 @@ glFlushVertexArrayRangeNV:
 	movq	3976(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3976(%rax), %r11
@@ -18485,7 +18485,7 @@ glVertexArrayRangeNV:
 	movq	3984(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3984(%rax), %r11
@@ -18522,7 +18522,7 @@ glCombinerParameterfvNV:
 	movq	3992(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	3992(%rax), %r11
@@ -18559,7 +18559,7 @@ glCombinerParameterfNV:
 	movq	4000(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4000(%rax), %r11
@@ -18596,7 +18596,7 @@ glCombinerParameterivNV:
 	movq	4008(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4008(%rax), %r11
@@ -18633,7 +18633,7 @@ glCombinerParameteriNV:
 	movq	4016(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4016(%rax), %r11
@@ -18678,7 +18678,7 @@ glCombinerInputNV:
 	movq	4024(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4024(%rax), %r11
@@ -18731,7 +18731,7 @@ glCombinerOutputNV:
 	movq	4032(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4032(%rax), %r11
@@ -18780,7 +18780,7 @@ glFinalCombinerInputNV:
 	movq	4040(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4040(%rax), %r11
@@ -18825,7 +18825,7 @@ glGetCombinerInputParameterfvNV:
 	movq	4048(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4048(%rax), %r11
@@ -18870,7 +18870,7 @@ glGetCombinerInputParameterivNV:
 	movq	4056(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4056(%rax), %r11
@@ -18915,7 +18915,7 @@ glGetCombinerOutputParameterfvNV:
 	movq	4064(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4064(%rax), %r11
@@ -18960,7 +18960,7 @@ glGetCombinerOutputParameterivNV:
 	movq	4072(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4072(%rax), %r11
@@ -19001,7 +19001,7 @@ glGetFinalCombinerInputParameterfvNV:
 	movq	4080(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4080(%rax), %r11
@@ -19038,7 +19038,7 @@ glGetFinalCombinerInputParameterivNV:
 	movq	4088(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4088(%rax), %r11
@@ -19071,7 +19071,7 @@ glResizeBuffersMESA:
 	movq	4096(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4096(%rax), %r11
@@ -19104,7 +19104,7 @@ glWindowPos2dMESA:
 	movq	4104(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4104(%rax), %r11
@@ -19137,7 +19137,7 @@ glWindowPos2dvMESA:
 	movq	4112(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4112(%rax), %r11
@@ -19170,7 +19170,7 @@ glWindowPos2fMESA:
 	movq	4120(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4120(%rax), %r11
@@ -19203,7 +19203,7 @@ glWindowPos2fvMESA:
 	movq	4128(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4128(%rax), %r11
@@ -19236,7 +19236,7 @@ glWindowPos2iMESA:
 	movq	4136(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4136(%rax), %r11
@@ -19269,7 +19269,7 @@ glWindowPos2ivMESA:
 	movq	4144(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4144(%rax), %r11
@@ -19302,7 +19302,7 @@ glWindowPos2sMESA:
 	movq	4152(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4152(%rax), %r11
@@ -19335,7 +19335,7 @@ glWindowPos2svMESA:
 	movq	4160(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4160(%rax), %r11
@@ -19370,7 +19370,7 @@ glWindowPos3dMESA:
 	movq	4168(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4168(%rax), %r11
@@ -19405,7 +19405,7 @@ glWindowPos3dvMESA:
 	movq	4176(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4176(%rax), %r11
@@ -19440,7 +19440,7 @@ glWindowPos3fMESA:
 	movq	4184(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4184(%rax), %r11
@@ -19475,7 +19475,7 @@ glWindowPos3fvMESA:
 	movq	4192(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4192(%rax), %r11
@@ -19508,7 +19508,7 @@ glWindowPos3iMESA:
 	movq	4200(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4200(%rax), %r11
@@ -19541,7 +19541,7 @@ glWindowPos3ivMESA:
 	movq	4208(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4208(%rax), %r11
@@ -19574,7 +19574,7 @@ glWindowPos3sMESA:
 	movq	4216(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4216(%rax), %r11
@@ -19607,7 +19607,7 @@ glWindowPos3svMESA:
 	movq	4224(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4224(%rax), %r11
@@ -19644,7 +19644,7 @@ glWindowPos4dMESA:
 	movq	4232(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4232(%rax), %r11
@@ -19681,7 +19681,7 @@ glWindowPos4dvMESA:
 	movq	4240(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4240(%rax), %r11
@@ -19718,7 +19718,7 @@ glWindowPos4fMESA:
 	movq	4248(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4248(%rax), %r11
@@ -19755,7 +19755,7 @@ glWindowPos4fvMESA:
 	movq	4256(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4256(%rax), %r11
@@ -19792,7 +19792,7 @@ glWindowPos4iMESA:
 	movq	4264(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4264(%rax), %r11
@@ -19829,7 +19829,7 @@ glWindowPos4ivMESA:
 	movq	4272(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4272(%rax), %r11
@@ -19866,7 +19866,7 @@ glWindowPos4sMESA:
 	movq	4280(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4280(%rax), %r11
@@ -19903,7 +19903,7 @@ glWindowPos4svMESA:
 	movq	4288(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4288(%rax), %r11
@@ -19940,7 +19940,7 @@ glBlendFuncSeparateEXT:
 	movq	4296(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4296(%rax), %r11
@@ -19981,7 +19981,7 @@ glIndexMaterialEXT:
 	movq	4304(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4304(%rax), %r11
@@ -20018,7 +20018,7 @@ glIndexFuncEXT:
 	movq	4312(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4312(%rax), %r11
@@ -20055,7 +20055,7 @@ glLockArraysEXT:
 	movq	4320(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4320(%rax), %r11
@@ -20088,7 +20088,7 @@ glUnlockArraysEXT:
 	movq	4328(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4328(%rax), %r11
@@ -20121,7 +20121,7 @@ glCullParameterdvEXT:
 	movq	4336(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4336(%rax), %r11
@@ -20158,7 +20158,7 @@ glCullParameterfvEXT:
 	movq	4344(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4344(%rax), %r11
@@ -20195,7 +20195,7 @@ glHintPGI:
 	movq	4352(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4352(%rax), %r11
@@ -20230,7 +20230,7 @@ glFogCoordfEXT:
 	movq	4360(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4360(%rax), %r11
@@ -20261,7 +20261,7 @@ glFogCoordfvEXT:
 	movq	4368(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4368(%rax), %r11
@@ -20292,7 +20292,7 @@ glFogCoorddEXT:
 	movq	4376(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4376(%rax), %r11
@@ -20323,7 +20323,7 @@ glFogCoorddvEXT:
 	movq	4384(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4384(%rax), %r11
@@ -20356,7 +20356,7 @@ glFogCoordPointerEXT:
 	movq	4392(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4392(%rax), %r11
@@ -20397,7 +20397,7 @@ glGetColorTableEXT:
 	movq	4400(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4400(%rax), %r11
@@ -20438,7 +20438,7 @@ glGetColorTableParameterivEXT:
 	movq	4408(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4408(%rax), %r11
@@ -20475,7 +20475,7 @@ glGetColorTableParameterfvEXT:
 	movq	4416(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4416(%rax), %r11
@@ -20508,7 +20508,7 @@ glTbufferMask3DFX:
 	movq	4424(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4424(%rax), %r11
@@ -20549,7 +20549,7 @@ glCompressedTexImage3DARB:
 	movq	4432(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4432(%rax), %r11
@@ -20602,7 +20602,7 @@ glCompressedTexImage2DARB:
 	movq	4440(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4440(%rax), %r11
@@ -20655,7 +20655,7 @@ glCompressedTexImage1DARB:
 	movq	4448(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4448(%rax), %r11
@@ -20708,7 +20708,7 @@ glCompressedTexSubImage3DARB:
 	movq	4456(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4456(%rax), %r11
@@ -20761,7 +20761,7 @@ glCompressedTexSubImage2DARB:
 	movq	4464(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4464(%rax), %r11
@@ -20814,7 +20814,7 @@ glCompressedTexSubImage1DARB:
 	movq	4472(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4472(%rax), %r11
@@ -20859,7 +20859,7 @@ glGetCompressedTexImageARB:
 	movq	4480(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4480(%rax), %r11
@@ -20896,7 +20896,7 @@ glSecondaryColor3bEXT:
 	movq	4488(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4488(%rax), %r11
@@ -20929,7 +20929,7 @@ glSecondaryColor3bvEXT:
 	movq	4496(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4496(%rax), %r11
@@ -20964,7 +20964,7 @@ glSecondaryColor3dEXT:
 	movq	4504(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4504(%rax), %r11
@@ -20999,7 +20999,7 @@ glSecondaryColor3dvEXT:
 	movq	4512(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4512(%rax), %r11
@@ -21034,7 +21034,7 @@ glSecondaryColor3fEXT:
 	movq	4520(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4520(%rax), %r11
@@ -21069,7 +21069,7 @@ glSecondaryColor3fvEXT:
 	movq	4528(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4528(%rax), %r11
@@ -21102,7 +21102,7 @@ glSecondaryColor3iEXT:
 	movq	4536(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4536(%rax), %r11
@@ -21135,7 +21135,7 @@ glSecondaryColor3ivEXT:
 	movq	4544(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4544(%rax), %r11
@@ -21168,7 +21168,7 @@ glSecondaryColor3sEXT:
 	movq	4552(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4552(%rax), %r11
@@ -21201,7 +21201,7 @@ glSecondaryColor3svEXT:
 	movq	4560(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4560(%rax), %r11
@@ -21234,7 +21234,7 @@ glSecondaryColor3ubEXT:
 	movq	4568(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4568(%rax), %r11
@@ -21267,7 +21267,7 @@ glSecondaryColor3ubvEXT:
 	movq	4576(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4576(%rax), %r11
@@ -21300,7 +21300,7 @@ glSecondaryColor3uiEXT:
 	movq	4584(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4584(%rax), %r11
@@ -21333,7 +21333,7 @@ glSecondaryColor3uivEXT:
 	movq	4592(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4592(%rax), %r11
@@ -21366,7 +21366,7 @@ glSecondaryColor3usEXT:
 	movq	4600(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4600(%rax), %r11
@@ -21399,7 +21399,7 @@ glSecondaryColor3usvEXT:
 	movq	4608(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4608(%rax), %r11
@@ -21436,7 +21436,7 @@ glSecondaryColorPointerEXT:
 	movq	4616(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4616(%rax), %r11
@@ -21477,7 +21477,7 @@ glAreProgramsResidentNV:
 	movq	4624(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4624(%rax), %r11
@@ -21514,7 +21514,7 @@ glBindProgramNV:
 	movq	4632(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4632(%rax), %r11
@@ -21551,7 +21551,7 @@ glDeleteProgramsNV:
 	movq	4640(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4640(%rax), %r11
@@ -21588,7 +21588,7 @@ glExecuteProgramNV:
 	movq	4648(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4648(%rax), %r11
@@ -21625,7 +21625,7 @@ glGenProgramsNV:
 	movq	4656(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4656(%rax), %r11
@@ -21666,7 +21666,7 @@ glGetProgramParameterdvNV:
 	movq	4664(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4664(%rax), %r11
@@ -21711,7 +21711,7 @@ glGetProgramParameterfvNV:
 	movq	4672(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4672(%rax), %r11
@@ -21752,7 +21752,7 @@ glGetProgramivNV:
 	movq	4680(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4680(%rax), %r11
@@ -21789,7 +21789,7 @@ glGetProgramStringNV:
 	movq	4688(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4688(%rax), %r11
@@ -21830,7 +21830,7 @@ glGetTrackMatrixivNV:
 	movq	4696(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4696(%rax), %r11
@@ -21871,7 +21871,7 @@ glGetVertexAttribdvARB:
 	movq	4704(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4704(%rax), %r11
@@ -21908,7 +21908,7 @@ glGetVertexAttribfvARB:
 	movq	4712(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4712(%rax), %r11
@@ -21945,7 +21945,7 @@ glGetVertexAttribivARB:
 	movq	4720(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4720(%rax), %r11
@@ -21982,7 +21982,7 @@ glGetVertexAttribPointervNV:
 	movq	4728(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4728(%rax), %r11
@@ -22015,7 +22015,7 @@ glIsProgramNV:
 	movq	4736(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4736(%rax), %r11
@@ -22052,7 +22052,7 @@ glLoadProgramNV:
 	movq	4744(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4744(%rax), %r11
@@ -22101,7 +22101,7 @@ glProgramParameter4dNV:
 	movq	4752(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4752(%rax), %r11
@@ -22146,7 +22146,7 @@ glProgramParameter4dvNV:
 	movq	4760(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4760(%rax), %r11
@@ -22191,7 +22191,7 @@ glProgramParameter4fNV:
 	movq	4768(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4768(%rax), %r11
@@ -22236,7 +22236,7 @@ glProgramParameter4fvNV:
 	movq	4776(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4776(%rax), %r11
@@ -22277,7 +22277,7 @@ glProgramParameters4dvNV:
 	movq	4784(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4784(%rax), %r11
@@ -22322,7 +22322,7 @@ glProgramParameters4fvNV:
 	movq	4792(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4792(%rax), %r11
@@ -22363,7 +22363,7 @@ glRequestResidentProgramsNV:
 	movq	4800(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4800(%rax), %r11
@@ -22404,7 +22404,7 @@ glTrackMatrixNV:
 	movq	4808(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4808(%rax), %r11
@@ -22449,7 +22449,7 @@ glVertexAttribPointerNV:
 	movq	4816(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4816(%rax), %r11
@@ -22490,7 +22490,7 @@ glVertexAttrib1dARB:
 	movq	4824(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4824(%rax), %r11
@@ -22527,7 +22527,7 @@ glVertexAttrib1dvARB:
 	movq	4832(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4832(%rax), %r11
@@ -22564,7 +22564,7 @@ glVertexAttrib1fARB:
 	movq	4840(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4840(%rax), %r11
@@ -22601,7 +22601,7 @@ glVertexAttrib1fvARB:
 	movq	4848(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4848(%rax), %r11
@@ -22638,7 +22638,7 @@ glVertexAttrib1sARB:
 	movq	4856(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4856(%rax), %r11
@@ -22675,7 +22675,7 @@ glVertexAttrib1svARB:
 	movq	4864(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4864(%rax), %r11
@@ -22714,7 +22714,7 @@ glVertexAttrib2dARB:
 	movq	4872(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4872(%rax), %r11
@@ -22753,7 +22753,7 @@ glVertexAttrib2dvARB:
 	movq	4880(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4880(%rax), %r11
@@ -22792,7 +22792,7 @@ glVertexAttrib2fARB:
 	movq	4888(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4888(%rax), %r11
@@ -22831,7 +22831,7 @@ glVertexAttrib2fvARB:
 	movq	4896(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4896(%rax), %r11
@@ -22868,7 +22868,7 @@ glVertexAttrib2sARB:
 	movq	4904(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4904(%rax), %r11
@@ -22905,7 +22905,7 @@ glVertexAttrib2svARB:
 	movq	4912(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4912(%rax), %r11
@@ -22946,7 +22946,7 @@ glVertexAttrib3dARB:
 	movq	4920(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4920(%rax), %r11
@@ -22987,7 +22987,7 @@ glVertexAttrib3dvARB:
 	movq	4928(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4928(%rax), %r11
@@ -23028,7 +23028,7 @@ glVertexAttrib3fARB:
 	movq	4936(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4936(%rax), %r11
@@ -23069,7 +23069,7 @@ glVertexAttrib3fvARB:
 	movq	4944(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4944(%rax), %r11
@@ -23110,7 +23110,7 @@ glVertexAttrib3sARB:
 	movq	4952(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4952(%rax), %r11
@@ -23151,7 +23151,7 @@ glVertexAttrib3svARB:
 	movq	4960(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4960(%rax), %r11
@@ -23194,7 +23194,7 @@ glVertexAttrib4dARB:
 	movq	4968(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4968(%rax), %r11
@@ -23237,7 +23237,7 @@ glVertexAttrib4dvARB:
 	movq	4976(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4976(%rax), %r11
@@ -23280,7 +23280,7 @@ glVertexAttrib4fARB:
 	movq	4984(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4984(%rax), %r11
@@ -23323,7 +23323,7 @@ glVertexAttrib4fvARB:
 	movq	4992(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	4992(%rax), %r11
@@ -23364,7 +23364,7 @@ glVertexAttrib4sARB:
 	movq	5000(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5000(%rax), %r11
@@ -23405,7 +23405,7 @@ glVertexAttrib4svARB:
 	movq	5008(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5008(%rax), %r11
@@ -23446,7 +23446,7 @@ glVertexAttrib4NubARB:
 	movq	5016(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5016(%rax), %r11
@@ -23487,7 +23487,7 @@ glVertexAttrib4NubvARB:
 	movq	5024(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5024(%rax), %r11
@@ -23524,7 +23524,7 @@ glVertexAttribs1dvNV:
 	movq	5032(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5032(%rax), %r11
@@ -23561,7 +23561,7 @@ glVertexAttribs1fvNV:
 	movq	5040(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5040(%rax), %r11
@@ -23598,7 +23598,7 @@ glVertexAttribs1svNV:
 	movq	5048(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5048(%rax), %r11
@@ -23635,7 +23635,7 @@ glVertexAttribs2dvNV:
 	movq	5056(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5056(%rax), %r11
@@ -23672,7 +23672,7 @@ glVertexAttribs2fvNV:
 	movq	5064(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5064(%rax), %r11
@@ -23709,7 +23709,7 @@ glVertexAttribs2svNV:
 	movq	5072(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5072(%rax), %r11
@@ -23746,7 +23746,7 @@ glVertexAttribs3dvNV:
 	movq	5080(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5080(%rax), %r11
@@ -23783,7 +23783,7 @@ glVertexAttribs3fvNV:
 	movq	5088(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5088(%rax), %r11
@@ -23820,7 +23820,7 @@ glVertexAttribs3svNV:
 	movq	5096(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5096(%rax), %r11
@@ -23857,7 +23857,7 @@ glVertexAttribs4dvNV:
 	movq	5104(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5104(%rax), %r11
@@ -23894,7 +23894,7 @@ glVertexAttribs4fvNV:
 	movq	5112(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5112(%rax), %r11
@@ -23931,7 +23931,7 @@ glVertexAttribs4svNV:
 	movq	5120(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5120(%rax), %r11
@@ -23968,7 +23968,7 @@ glVertexAttribs4ubvNV:
 	movq	5128(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5128(%rax), %r11
@@ -24005,7 +24005,7 @@ glPointParameteriNV:
 	movq	5136(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5136(%rax), %r11
@@ -24042,7 +24042,7 @@ glPointParameterivNV:
 	movq	5144(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5144(%rax), %r11
@@ -24083,7 +24083,7 @@ glMultiDrawArraysEXT:
 	movq	5152(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5152(%rax), %r11
@@ -24128,7 +24128,7 @@ glMultiDrawElementsEXT:
 	movq	5160(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5160(%rax), %r11
@@ -24165,7 +24165,7 @@ glActiveStencilFaceEXT:
 	movq	5168(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5168(%rax), %r11
@@ -24198,7 +24198,7 @@ glDeleteFencesNV:
 	movq	5176(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5176(%rax), %r11
@@ -24235,7 +24235,7 @@ glGenFencesNV:
 	movq	5184(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5184(%rax), %r11
@@ -24268,7 +24268,7 @@ glIsFenceNV:
 	movq	5192(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5192(%rax), %r11
@@ -24297,7 +24297,7 @@ glTestFenceNV:
 	movq	5200(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5200(%rax), %r11
@@ -24330,7 +24330,7 @@ glGetFenceivNV:
 	movq	5208(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5208(%rax), %r11
@@ -24363,7 +24363,7 @@ glFinishFenceNV:
 	movq	5216(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5216(%rax), %r11
@@ -24396,7 +24396,7 @@ glSetFenceNV:
 	movq	5224(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5224(%rax), %r11
@@ -24433,7 +24433,7 @@ glVertexAttrib4bvARB:
 	movq	5232(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5232(%rax), %r11
@@ -24470,7 +24470,7 @@ glVertexAttrib4ivARB:
 	movq	5240(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5240(%rax), %r11
@@ -24507,7 +24507,7 @@ glVertexAttrib4ubvARB:
 	movq	5248(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5248(%rax), %r11
@@ -24544,7 +24544,7 @@ glVertexAttrib4usvARB:
 	movq	5256(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5256(%rax), %r11
@@ -24581,7 +24581,7 @@ glVertexAttrib4uivARB:
 	movq	5264(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5264(%rax), %r11
@@ -24618,7 +24618,7 @@ glVertexAttrib4NbvARB:
 	movq	5272(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5272(%rax), %r11
@@ -24655,7 +24655,7 @@ glVertexAttrib4NsvARB:
 	movq	5280(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5280(%rax), %r11
@@ -24692,7 +24692,7 @@ glVertexAttrib4NivARB:
 	movq	5288(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5288(%rax), %r11
@@ -24729,7 +24729,7 @@ glVertexAttrib4NusvARB:
 	movq	5296(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5296(%rax), %r11
@@ -24766,7 +24766,7 @@ glVertexAttrib4NuivARB:
 	movq	5304(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5304(%rax), %r11
@@ -24811,7 +24811,7 @@ glVertexAttribPointerARB:
 	movq	5312(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5312(%rax), %r11
@@ -24852,7 +24852,7 @@ glEnableVertexAttribArrayARB:
 	movq	5320(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5320(%rax), %r11
@@ -24881,7 +24881,7 @@ glDisableVertexAttribArrayARB:
 	movq	5328(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5328(%rax), %r11
@@ -24918,7 +24918,7 @@ glProgramStringARB:
 	movq	5336(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5336(%rax), %r11
@@ -24967,7 +24967,7 @@ glProgramEnvParameter4dARB:
 	movq	5344(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5344(%rax), %r11
@@ -25012,7 +25012,7 @@ glProgramEnvParameter4dvARB:
 	movq	5352(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5352(%rax), %r11
@@ -25057,7 +25057,7 @@ glProgramEnvParameter4fARB:
 	movq	5360(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5360(%rax), %r11
@@ -25102,7 +25102,7 @@ glProgramEnvParameter4fvARB:
 	movq	5368(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5368(%rax), %r11
@@ -25147,7 +25147,7 @@ glProgramLocalParameter4dARB:
 	movq	5376(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5376(%rax), %r11
@@ -25192,7 +25192,7 @@ glProgramLocalParameter4dvARB:
 	movq	5384(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5384(%rax), %r11
@@ -25237,7 +25237,7 @@ glProgramLocalParameter4fARB:
 	movq	5392(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5392(%rax), %r11
@@ -25282,7 +25282,7 @@ glProgramLocalParameter4fvARB:
 	movq	5400(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5400(%rax), %r11
@@ -25319,7 +25319,7 @@ glGetProgramEnvParameterdvARB:
 	movq	5408(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5408(%rax), %r11
@@ -25356,7 +25356,7 @@ glGetProgramEnvParameterfvARB:
 	movq	5416(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5416(%rax), %r11
@@ -25393,7 +25393,7 @@ glGetProgramLocalParameterdvARB:
 	movq	5424(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5424(%rax), %r11
@@ -25430,7 +25430,7 @@ glGetProgramLocalParameterfvARB:
 	movq	5432(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5432(%rax), %r11
@@ -25467,7 +25467,7 @@ glGetProgramivARB:
 	movq	5440(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5440(%rax), %r11
@@ -25504,7 +25504,7 @@ glGetProgramStringARB:
 	movq	5448(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5448(%rax), %r11
@@ -25551,7 +25551,7 @@ glProgramNamedParameter4fNV:
 	movq	5456(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5456(%rax), %r11
@@ -25608,7 +25608,7 @@ glProgramNamedParameter4dNV:
 	movq	5464(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5464(%rax), %r11
@@ -25659,7 +25659,7 @@ glProgramNamedParameter4fvNV:
 	movq	5472(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5472(%rax), %r11
@@ -25704,7 +25704,7 @@ glProgramNamedParameter4dvNV:
 	movq	5480(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5480(%rax), %r11
@@ -25749,7 +25749,7 @@ glGetProgramNamedParameterfvNV:
 	movq	5488(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5488(%rax), %r11
@@ -25794,7 +25794,7 @@ glGetProgramNamedParameterdvNV:
 	movq	5496(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5496(%rax), %r11
@@ -25835,7 +25835,7 @@ glBindBufferARB:
 	movq	5504(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5504(%rax), %r11
@@ -25876,7 +25876,7 @@ glBufferDataARB:
 	movq	5512(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5512(%rax), %r11
@@ -25921,7 +25921,7 @@ glBufferSubDataARB:
 	movq	5520(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5520(%rax), %r11
@@ -25962,7 +25962,7 @@ glDeleteBuffersARB:
 	movq	5528(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5528(%rax), %r11
@@ -25999,7 +25999,7 @@ glGenBuffersARB:
 	movq	5536(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5536(%rax), %r11
@@ -26036,7 +26036,7 @@ glGetBufferParameterivARB:
 	movq	5544(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5544(%rax), %r11
@@ -26073,7 +26073,7 @@ glGetBufferPointervARB:
 	movq	5552(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5552(%rax), %r11
@@ -26114,7 +26114,7 @@ glGetBufferSubDataARB:
 	movq	5560(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5560(%rax), %r11
@@ -26151,7 +26151,7 @@ glIsBufferARB:
 	movq	5568(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5568(%rax), %r11
@@ -26184,7 +26184,7 @@ glMapBufferARB:
 	movq	5576(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5576(%rax), %r11
@@ -26217,7 +26217,7 @@ glUnmapBufferARB:
 	movq	5584(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5584(%rax), %r11
@@ -26250,7 +26250,7 @@ glDepthBoundsEXT:
 	movq	5592(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5592(%rax), %r11
@@ -26287,7 +26287,7 @@ glGenQueriesARB:
 	movq	5600(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5600(%rax), %r11
@@ -26324,7 +26324,7 @@ glDeleteQueriesARB:
 	movq	5608(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5608(%rax), %r11
@@ -26357,7 +26357,7 @@ glIsQueryARB:
 	movq	5616(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5616(%rax), %r11
@@ -26390,7 +26390,7 @@ glBeginQueryARB:
 	movq	5624(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5624(%rax), %r11
@@ -26423,7 +26423,7 @@ glEndQueryARB:
 	movq	5632(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5632(%rax), %r11
@@ -26456,7 +26456,7 @@ glGetQueryivARB:
 	movq	5640(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5640(%rax), %r11
@@ -26493,7 +26493,7 @@ glGetQueryObjectivARB:
 	movq	5648(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5648(%rax), %r11
@@ -26530,7 +26530,7 @@ glGetQueryObjectuivARB:
 	movq	5656(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5656(%rax), %r11
@@ -26571,7 +26571,7 @@ glMultiModeDrawArraysIBM:
 	movq	5664(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5664(%rax), %r11
@@ -26620,7 +26620,7 @@ glMultiModeDrawElementsIBM:
 	movq	5672(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5672(%rax), %r11
@@ -26665,7 +26665,7 @@ glBlendEquationSeparateEXT:
 	movq	5680(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5680(%rax), %r11
@@ -26698,7 +26698,7 @@ glDeleteObjectARB:
 	movq	5688(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5688(%rax), %r11
@@ -26727,7 +26727,7 @@ glGetHandleARB:
 	movq	5696(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5696(%rax), %r11
@@ -26760,7 +26760,7 @@ glDetachObjectARB:
 	movq	5704(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5704(%rax), %r11
@@ -26793,7 +26793,7 @@ glCreateShaderObjectARB:
 	movq	5712(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5712(%rax), %r11
@@ -26830,7 +26830,7 @@ glShaderSourceARB:
 	movq	5720(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5720(%rax), %r11
@@ -26867,7 +26867,7 @@ glCompileShaderARB:
 	movq	5728(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5728(%rax), %r11
@@ -26896,7 +26896,7 @@ glCreateProgramObjectARB:
 	movq	5736(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5736(%rax), %r11
@@ -26929,7 +26929,7 @@ glAttachObjectARB:
 	movq	5744(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5744(%rax), %r11
@@ -26962,7 +26962,7 @@ glLinkProgramARB:
 	movq	5752(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5752(%rax), %r11
@@ -26991,7 +26991,7 @@ glUseProgramObjectARB:
 	movq	5760(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5760(%rax), %r11
@@ -27020,7 +27020,7 @@ glValidateProgramARB:
 	movq	5768(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5768(%rax), %r11
@@ -27053,7 +27053,7 @@ glUniform1fARB:
 	movq	5776(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5776(%rax), %r11
@@ -27092,7 +27092,7 @@ glUniform2fARB:
 	movq	5784(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5784(%rax), %r11
@@ -27135,7 +27135,7 @@ glUniform3fARB:
 	movq	5792(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5792(%rax), %r11
@@ -27182,7 +27182,7 @@ glUniform4fARB:
 	movq	5800(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5800(%rax), %r11
@@ -27225,7 +27225,7 @@ glUniform1iARB:
 	movq	5808(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5808(%rax), %r11
@@ -27262,7 +27262,7 @@ glUniform2iARB:
 	movq	5816(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5816(%rax), %r11
@@ -27303,7 +27303,7 @@ glUniform3iARB:
 	movq	5824(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5824(%rax), %r11
@@ -27348,7 +27348,7 @@ glUniform4iARB:
 	movq	5832(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5832(%rax), %r11
@@ -27389,7 +27389,7 @@ glUniform1fvARB:
 	movq	5840(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5840(%rax), %r11
@@ -27426,7 +27426,7 @@ glUniform2fvARB:
 	movq	5848(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5848(%rax), %r11
@@ -27463,7 +27463,7 @@ glUniform3fvARB:
 	movq	5856(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5856(%rax), %r11
@@ -27500,7 +27500,7 @@ glUniform4fvARB:
 	movq	5864(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5864(%rax), %r11
@@ -27537,7 +27537,7 @@ glUniform1ivARB:
 	movq	5872(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5872(%rax), %r11
@@ -27574,7 +27574,7 @@ glUniform2ivARB:
 	movq	5880(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5880(%rax), %r11
@@ -27611,7 +27611,7 @@ glUniform3ivARB:
 	movq	5888(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5888(%rax), %r11
@@ -27648,7 +27648,7 @@ glUniform4ivARB:
 	movq	5896(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5896(%rax), %r11
@@ -27689,7 +27689,7 @@ glUniformMatrix2fvARB:
 	movq	5904(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5904(%rax), %r11
@@ -27734,7 +27734,7 @@ glUniformMatrix3fvARB:
 	movq	5912(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5912(%rax), %r11
@@ -27779,7 +27779,7 @@ glUniformMatrix4fvARB:
 	movq	5920(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5920(%rax), %r11
@@ -27820,7 +27820,7 @@ glGetObjectParameterfvARB:
 	movq	5928(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5928(%rax), %r11
@@ -27857,7 +27857,7 @@ glGetObjectParameterivARB:
 	movq	5936(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5936(%rax), %r11
@@ -27898,7 +27898,7 @@ glGetInfoLogARB:
 	movq	5944(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5944(%rax), %r11
@@ -27943,7 +27943,7 @@ glGetAttachedObjectsARB:
 	movq	5952(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5952(%rax), %r11
@@ -27984,7 +27984,7 @@ glGetUniformLocationARB:
 	movq	5960(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5960(%rax), %r11
@@ -28029,7 +28029,7 @@ glGetActiveUniformARB:
 	movq	5968(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5968(%rax), %r11
@@ -28074,7 +28074,7 @@ glGetUniformfvARB:
 	movq	5976(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5976(%rax), %r11
@@ -28111,7 +28111,7 @@ glGetUniformivARB:
 	movq	5984(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5984(%rax), %r11
@@ -28152,7 +28152,7 @@ glGetShaderSourceARB:
 	movq	5992(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	5992(%rax), %r11
@@ -28193,7 +28193,7 @@ glBindAttribLocationARB:
 	movq	6000(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6000(%rax), %r11
@@ -28238,7 +28238,7 @@ glGetActiveAttribARB:
 	movq	6008(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6008(%rax), %r11
@@ -28283,7 +28283,7 @@ glGetAttribLocationARB:
 	movq	6016(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6016(%rax), %r11
@@ -28320,7 +28320,7 @@ glGetVertexAttribdvNV:
 	movq	6024(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6024(%rax), %r11
@@ -28357,7 +28357,7 @@ glGetVertexAttribfvNV:
 	movq	6032(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6032(%rax), %r11
@@ -28394,7 +28394,7 @@ glGetVertexAttribivNV:
 	movq	6040(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6040(%rax), %r11
@@ -28431,7 +28431,7 @@ glVertexAttrib1dNV:
 	movq	6048(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6048(%rax), %r11
@@ -28468,7 +28468,7 @@ glVertexAttrib1dvNV:
 	movq	6056(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6056(%rax), %r11
@@ -28505,7 +28505,7 @@ glVertexAttrib1fNV:
 	movq	6064(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6064(%rax), %r11
@@ -28542,7 +28542,7 @@ glVertexAttrib1fvNV:
 	movq	6072(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6072(%rax), %r11
@@ -28579,7 +28579,7 @@ glVertexAttrib1sNV:
 	movq	6080(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6080(%rax), %r11
@@ -28616,7 +28616,7 @@ glVertexAttrib1svNV:
 	movq	6088(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6088(%rax), %r11
@@ -28655,7 +28655,7 @@ glVertexAttrib2dNV:
 	movq	6096(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6096(%rax), %r11
@@ -28694,7 +28694,7 @@ glVertexAttrib2dvNV:
 	movq	6104(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6104(%rax), %r11
@@ -28733,7 +28733,7 @@ glVertexAttrib2fNV:
 	movq	6112(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6112(%rax), %r11
@@ -28772,7 +28772,7 @@ glVertexAttrib2fvNV:
 	movq	6120(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6120(%rax), %r11
@@ -28809,7 +28809,7 @@ glVertexAttrib2sNV:
 	movq	6128(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6128(%rax), %r11
@@ -28846,7 +28846,7 @@ glVertexAttrib2svNV:
 	movq	6136(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6136(%rax), %r11
@@ -28887,7 +28887,7 @@ glVertexAttrib3dNV:
 	movq	6144(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6144(%rax), %r11
@@ -28928,7 +28928,7 @@ glVertexAttrib3dvNV:
 	movq	6152(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6152(%rax), %r11
@@ -28969,7 +28969,7 @@ glVertexAttrib3fNV:
 	movq	6160(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6160(%rax), %r11
@@ -29010,7 +29010,7 @@ glVertexAttrib3fvNV:
 	movq	6168(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6168(%rax), %r11
@@ -29051,7 +29051,7 @@ glVertexAttrib3sNV:
 	movq	6176(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6176(%rax), %r11
@@ -29092,7 +29092,7 @@ glVertexAttrib3svNV:
 	movq	6184(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6184(%rax), %r11
@@ -29135,7 +29135,7 @@ glVertexAttrib4dNV:
 	movq	6192(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6192(%rax), %r11
@@ -29178,7 +29178,7 @@ glVertexAttrib4dvNV:
 	movq	6200(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6200(%rax), %r11
@@ -29221,7 +29221,7 @@ glVertexAttrib4fNV:
 	movq	6208(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6208(%rax), %r11
@@ -29264,7 +29264,7 @@ glVertexAttrib4fvNV:
 	movq	6216(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6216(%rax), %r11
@@ -29305,7 +29305,7 @@ glVertexAttrib4sNV:
 	movq	6224(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6224(%rax), %r11
@@ -29346,7 +29346,7 @@ glVertexAttrib4svNV:
 	movq	6232(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6232(%rax), %r11
@@ -29387,7 +29387,7 @@ glVertexAttrib4ubNV:
 	movq	6240(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6240(%rax), %r11
@@ -29428,7 +29428,7 @@ glVertexAttrib4ubvNV:
 	movq	6248(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6248(%rax), %r11
@@ -29461,7 +29461,7 @@ glGenFragmentShadersATI:
 	movq	6256(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6256(%rax), %r11
@@ -29490,7 +29490,7 @@ glBindFragmentShaderATI:
 	movq	6264(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6264(%rax), %r11
@@ -29519,7 +29519,7 @@ glDeleteFragmentShaderATI:
 	movq	6272(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6272(%rax), %r11
@@ -29548,7 +29548,7 @@ glBeginFragmentShaderATI:
 	movq	6280(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6280(%rax), %r11
@@ -29577,7 +29577,7 @@ glEndFragmentShaderATI:
 	movq	6288(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6288(%rax), %r11
@@ -29610,7 +29610,7 @@ glPassTexCoordATI:
 	movq	6296(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6296(%rax), %r11
@@ -29647,7 +29647,7 @@ glSampleMapATI:
 	movq	6304(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6304(%rax), %r11
@@ -29692,7 +29692,7 @@ glColorFragmentOp1ATI:
 	movq	6312(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6312(%rax), %r11
@@ -29745,7 +29745,7 @@ glColorFragmentOp2ATI:
 	movq	6320(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6320(%rax), %r11
@@ -29798,7 +29798,7 @@ glColorFragmentOp3ATI:
 	movq	6328(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6328(%rax), %r11
@@ -29851,7 +29851,7 @@ glAlphaFragmentOp1ATI:
 	movq	6336(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6336(%rax), %r11
@@ -29904,7 +29904,7 @@ glAlphaFragmentOp2ATI:
 	movq	6344(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6344(%rax), %r11
@@ -29957,7 +29957,7 @@ glAlphaFragmentOp3ATI:
 	movq	6352(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6352(%rax), %r11
@@ -30002,7 +30002,7 @@ glSetFragmentShaderConstantATI:
 	movq	6360(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6360(%rax), %r11
@@ -30035,7 +30035,7 @@ glIsRenderbufferEXT:
 	movq	6368(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6368(%rax), %r11
@@ -30068,7 +30068,7 @@ glBindRenderbufferEXT:
 	movq	6376(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6376(%rax), %r11
@@ -30105,7 +30105,7 @@ glDeleteRenderbuffersEXT:
 	movq	6384(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6384(%rax), %r11
@@ -30142,7 +30142,7 @@ glGenRenderbuffersEXT:
 	movq	6392(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6392(%rax), %r11
@@ -30183,7 +30183,7 @@ glRenderbufferStorageEXT:
 	movq	6400(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6400(%rax), %r11
@@ -30224,7 +30224,7 @@ glGetRenderbufferParameterivEXT:
 	movq	6408(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6408(%rax), %r11
@@ -30257,7 +30257,7 @@ glIsFramebufferEXT:
 	movq	6416(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6416(%rax), %r11
@@ -30290,7 +30290,7 @@ glBindFramebufferEXT:
 	movq	6424(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6424(%rax), %r11
@@ -30327,7 +30327,7 @@ glDeleteFramebuffersEXT:
 	movq	6432(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6432(%rax), %r11
@@ -30364,7 +30364,7 @@ glGenFramebuffersEXT:
 	movq	6440(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6440(%rax), %r11
@@ -30397,7 +30397,7 @@ glCheckFramebufferStatusEXT:
 	movq	6448(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6448(%rax), %r11
@@ -30434,7 +30434,7 @@ glFramebufferTexture1DEXT:
 	movq	6456(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6456(%rax), %r11
@@ -30479,7 +30479,7 @@ glFramebufferTexture2DEXT:
 	movq	6464(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6464(%rax), %r11
@@ -30528,7 +30528,7 @@ glFramebufferTexture3DEXT:
 	movq	6472(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6472(%rax), %r11
@@ -30577,7 +30577,7 @@ glFramebufferRenderbufferEXT:
 	movq	6480(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6480(%rax), %r11
@@ -30622,7 +30622,7 @@ glGetFramebufferAttachmentParameterivEXT:
 	movq	6488(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6488(%rax), %r11
@@ -30659,7 +30659,7 @@ glGenerateMipmapEXT:
 	movq	6496(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6496(%rax), %r11
@@ -30696,7 +30696,7 @@ glStencilFuncSeparate:
 	movq	6504(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6504(%rax), %r11
@@ -30741,7 +30741,7 @@ glStencilOpSeparate:
 	movq	6512(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6512(%rax), %r11
@@ -30782,7 +30782,7 @@ glStencilMaskSeparate:
 	movq	6520(%rax), %r11
 	jmp	*%r11
 #else
-	movq	_glapi_DispatchTSD(%rip), %rax
+	movq	_glapi_Dispatch(%rip), %rax
 	testq	%rax, %rax
 	je	1f
 	movq	6520(%rax), %r11

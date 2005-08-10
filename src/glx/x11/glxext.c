@@ -1589,7 +1589,9 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 
 	oldGC->currentContextTag = 0;
     }
-    
+
+    _glapi_check_multithread();
+
 #ifdef GLX_DIRECT_RENDERING
     /* Unbind the old direct rendering context */
     if (oldGC->isDirect) {
@@ -1609,7 +1611,6 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 	}
     } else {
 #endif
-        _glapi_check_multithread();
 	/* Send a glXMakeCurrent request to bind the new context. */
 	LockDisplay(dpy);
 

@@ -133,122 +133,65 @@ static GLint NoOpUnused(void)
 
 
 
-/***** BEGIN THREAD-SAFE DISPATCH *****/
+/**
+ * \name Current dispatch and current context control variables
+ *
+ * Depending on whether or not multithreading is support, and the type of
+ * support available, several variables are used to store the current context
+ * pointer and the current dispatch table pointer.  In the non-threaded case,
+ * the variables \c _glapi_Dispatch and \c _glapi_Context are used for this
+ * purpose.
+ *
+ * In the "normal" threaded case, the variables \c _glapi_Dispatch and
+ * \c _glapi_Context will be \c NULL if an application is detected as being
+ * multithreaded.  Single-threaded applications will use \c _glapi_Dispatch
+ * and \c _glapi_Context just like the case without any threading support.
+ * When \c _glapi_Dispatch and \c _glapi_Context are \c NULL, the thread state
+ * data \c _gl_DispatchTSD and \c ContextTSD are used.  Drivers and the
+ * static dispatch functions access these variables via \c _glapi_get_dispatch
+ * and \c _glapi_get_context.
+ *
+ * There is a race condition in setting \c _glapi_Dispatch to \c NULL.  It is
+ * possible for the original thread to be setting it at the same instant a new
+ * thread, perhaps running on a different processor, is clearing it.  Because
+ * of that, \c ThreadSafe, which can only ever be changed to \c GL_TRUE, is
+ * used to determine whether or not the application is multithreaded.
+ * 
+ * In the TLS case, the variables \c _glapi_Dispatch and \c _glapi_Context are
+ * hardcoded to \c NULL.  Instead the TLS variables \c _glapi_tls_Dispatch and
+ * \c _glapi_tls_Context are used.  Having \c _glapi_Dispatch and
+ * \c _glapi_Context be hardcoded to \c NULL maintains binary compatability
+ * between TLS enabled loaders and non-TLS DRI drivers.
+ */
+/*@{*/
+#if defined(GLX_USE_TLS)
+
+PUBLIC __thread struct _glapi_table * _glapi_tls_Dispatch
+    __attribute__((tls_model("initial-exec")))
+    = (struct _glapi_table *) __glapi_noop_table;
+
+PUBLIC __thread void * _glapi_tls_Context
+    __attribute__((tls_model("initial-exec")));
+
+PUBLIC const struct _glapi_table *_glapi_Dispatch = NULL;
+PUBLIC const void *_glapi_Context = NULL;
+
+#else
 
 #if defined(THREADS)
 
-#if defined(GLX_USE_TLS)
-
-__thread struct _glapi_table * _glapi_tls_Dispatch
-    __attribute__((tls_model("initial-exec")))
-    = (struct _glapi_table *) __glapi_noop_table;
-
-static __thread struct _glapi_table * _glapi_tls_RealDispatch
-    __attribute__((tls_model("initial-exec")))
-    = (struct _glapi_table *) __glapi_noop_table;
-
-__thread void * _glapi_tls_Context
-    __attribute__((tls_model("initial-exec")));
-
-/**
- * Legacy per-thread dispatch pointer.  This is only needed to support
- * non-TLS DRI drivers.
- */
-
-_glthread_TSD _gl_DispatchTSD;
-
-#else
-
-/**
- * \name Multi-threaded control support variables
- *
- * If thread-safety is supported, there are two potential mechanisms that can
- * be used.  The old-style mechanism would set \c _glapi_Dispatch to a special
- * thread-safe dispatch table.  These dispatch routines would call
- * \c _glapi_get_dispatch to get the actual dispatch pointer.  In this
- * setup \c _glapi_Dispatch could never be \c NULL.  This dual layered
- * dispatch setup performed great for single-threaded apps, but didn't
- * perform well for multithreaded apps.
- *
- * In the new mechansim, there are two variables.  The first is
- * \c _glapi_DispatchTSD.  In the single-threaded case, this variable points
- * to the dispatch table.  In the multi-threaded case, this variable is
- * \c NULL, and thread-specific variable \c _gl_DispatchTSD points to the
- * actual dispatch table.  \c _glapi_DispatchTSD is used to signal to the
- * static dispatch functions to call \c _glapi_get_dispatch to get the real
- * dispatch table.
- * 
- * There is a race condition in setting \c _glapi_DispatchTSD to \c NULL.
- * It is possible for the original thread to be setting it at the same instant
- * a new thread, perhaps running on a different processor, is clearing it.
- * Because of that, \c ThreadSafe, which can only ever be changed to
- * \c GL_TRUE, is used to determine whether or not the application is
- * multithreaded.
- */
-/*@{*/
 static GLboolean ThreadSafe = GL_FALSE;  /**< In thread-safe mode? */
 _glthread_TSD _gl_DispatchTSD;           /**< Per-thread dispatch pointer */
-static _glthread_TSD RealDispatchTSD;    /**< only when using override */
 static _glthread_TSD ContextTSD;         /**< Per-thread context pointer */
-/*@}*/
 
-#endif /* defined(GLX_USE_TLS) */
+#endif /* defined(THREADS) */
 
-#define DISPATCH_TABLE_NAME __glapi_threadsafe_table
-#define UNUSED_TABLE_NAME __unused_threadsafe_functions
-
-#define TABLE_ENTRY(name) (_glapi_proc) gl##name
-
-static GLint glUnused(void)
-{
-   return 0;
-}
-
-#include "glapitemp.h"
-
-#endif
-
-/***** END THREAD-SAFE DISPATCH *****/
-
-
-#if defined(GLX_USE_TLS)
-
-/**
- * \name Old dispatch pointers
- *
- * Very old DRI based drivers assume that \c _glapi_Dispatch will never be
- * \c NULL.  Becuase of that, special "thread-safe" dispatch functions are
- * needed here.  Slightly more recent drivers detect the multi-threaded case
- * by \c _glapi_DispatchTSD being \c NULL.
- *
- * \deprecated
- * 
- * \warning
- * \c _glapi_RealDispatch does not exist in TLS builds.  I don't think it was
- * ever used outside libGL.so, so this should be safe.
- */
-/*@{*/
-PUBLIC const struct _glapi_table *_glapi_Dispatch = (struct _glapi_table *) __glapi_threadsafe_table;
-PUBLIC const struct _glapi_table *_glapi_DispatchTSD = NULL;
-PUBLIC const void *_glapi_Context = NULL;
-/*@}*/
-
-#else
-
-PUBLIC struct _glapi_table *_glapi_Dispatch = (struct _glapi_table *) __glapi_noop_table;
-#if defined( THREADS )
-PUBLIC struct _glapi_table *_glapi_DispatchTSD = (struct _glapi_table *) __glapi_noop_table;
-#endif
-PUBLIC struct _glapi_table *_glapi_RealDispatch = (struct _glapi_table *) __glapi_noop_table;
-
-/* Used when thread safety disabled */
+PUBLIC struct _glapi_table *_glapi_Dispatch = 
+  (struct _glapi_table *) __glapi_noop_table;
 PUBLIC void *_glapi_Context = NULL;
 
 #endif /* defined(GLX_USE_TLS) */
-
-
-static GLboolean DispatchOverride = GL_FALSE;
-
+/*@}*/
 
 
 /**
@@ -272,7 +215,7 @@ str_dup(const char *str)
  * We should call this periodically from a function such as glXMakeCurrent
  * in order to test if multiple threads are being used.
  */
-PUBLIC void
+void
 _glapi_check_multithread(void)
 {
 #if defined(THREADS) && !defined(GLX_USE_TLS)
@@ -309,7 +252,6 @@ _glapi_set_context(void *context)
 #if defined(GLX_USE_TLS)
    _glapi_tls_Context = context;
 #elif defined(THREADS)
-   (void) __unused_threadsafe_functions; /* silence a warning */
    _glthread_SetTSD(&ContextTSD, context);
    _glapi_Context = (ThreadSafe) ? NULL : context;
 #else
@@ -367,40 +309,12 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 #endif
 
 #if defined(GLX_USE_TLS)
-   if (DispatchOverride) {
-      _glapi_tls_RealDispatch = dispatch;
-   }
-   else {
-      _glthread_SetTSD(&_gl_DispatchTSD, (void *) dispatch);
-      _glapi_tls_Dispatch = dispatch;
-   }	
+   _glapi_tls_Dispatch = dispatch;
 #elif defined(THREADS)
-   if (DispatchOverride) {
-      _glthread_SetTSD(&RealDispatchTSD, (void *) dispatch);
-      if (ThreadSafe)
-         _glapi_RealDispatch = (struct _glapi_table*) __glapi_threadsafe_table;
-      else
-         _glapi_RealDispatch = dispatch;
-   }
-   else {
-      /* normal operation */
-      _glthread_SetTSD(&_gl_DispatchTSD, (void *) dispatch);
-      if (ThreadSafe) {
-	 _glapi_Dispatch = (struct _glapi_table *) __glapi_threadsafe_table;
-	 _glapi_DispatchTSD = NULL;
-      }
-      else {
-	 _glapi_Dispatch = dispatch;
-	 _glapi_DispatchTSD = dispatch;
-      }
-   }
+   _glthread_SetTSD(&_gl_DispatchTSD, (void *) dispatch);
+   _glapi_Dispatch = (ThreadSafe) ? NULL : dispatch;
 #else /*THREADS*/
-   if (DispatchOverride) {
-      _glapi_RealDispatch = dispatch;
-   }
-   else {
-      _glapi_Dispatch = dispatch;
-   }
+   _glapi_Dispatch = dispatch;
 #endif /*THREADS*/
 }
 
@@ -412,128 +326,20 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 PUBLIC struct _glapi_table *
 _glapi_get_dispatch(void)
 {
+   struct _glapi_table * api;
+
 #if defined(GLX_USE_TLS)
-   struct _glapi_table * api = (DispatchOverride)
-     ? _glapi_tls_RealDispatch : _glapi_tls_Dispatch;
+   api = _glapi_tls_Dispatch;
+#elif defined(THREADS)
+   api = (ThreadSafe)
+     ? (struct _glapi_table *) _glthread_GetTSD(&_gl_DispatchTSD)
+     : _glapi_Dispatch;
+#else
+   api = _glapi_Dispatch;
+#endif
 
    assert( api != NULL );
    return api;
-#elif defined(THREADS)
-   if (ThreadSafe) {
-      if (DispatchOverride) {
-         return (struct _glapi_table *) _glthread_GetTSD(&RealDispatchTSD);
-      }
-      else {
-         return (struct _glapi_table *) _glthread_GetTSD(&_gl_DispatchTSD);
-      }
-   }
-   else {
-      if (DispatchOverride) {
-         assert(_glapi_RealDispatch);
-         return _glapi_RealDispatch;
-      }
-      else {
-         assert(_glapi_DispatchTSD);
-         return _glapi_DispatchTSD;
-      }
-   }
-#else
-   return _glapi_Dispatch;
-#endif
-}
-
-
-/*
- * Notes on dispatch overrride:
- *
- * Dispatch override allows an external agent to hook into the GL dispatch
- * mechanism before execution goes into the core rendering library.  For
- * example, a trace mechanism would insert itself as an overrider, print
- * logging info for each GL function, then dispatch to the real GL function.
- *
- * libGLS (GL Stream library) is another agent that might use override.
- *
- * We don't allow more than one layer of overriding at this time.
- * In the future we may allow nested/layered override.  In that case
- * _glapi_begin_dispatch_override() will return an override layer,
- * _glapi_end_dispatch_override(layer) will remove an override layer
- * and _glapi_get_override_dispatch(layer) will return the dispatch
- * table for a given override layer.  layer = 0 will be the "real"
- * dispatch table.
- */
-
-/*
- * Return: dispatch override layer number.
- */
-PUBLIC int
-_glapi_begin_dispatch_override(struct _glapi_table *override)
-{
-   struct _glapi_table *real = _glapi_get_dispatch();
-
-   assert(!DispatchOverride);  /* can't nest at this time */
-   DispatchOverride = GL_TRUE;
-
-   _glapi_set_dispatch(real);
-
-#if defined(GLX_USE_TLS)
-   _glthread_SetTSD(&_gl_DispatchTSD, (void *) override);
-   _glapi_tls_Dispatch = override;
-#elif defined(THREADS)
-   _glthread_SetTSD(&_gl_DispatchTSD, (void *) override);
-   if ( ThreadSafe ) {
-      _glapi_Dispatch = (struct _glapi_table *) __glapi_threadsafe_table;
-      _glapi_DispatchTSD = NULL;
-   }
-   else {
-      _glapi_Dispatch = override;
-      _glapi_DispatchTSD = override;
-   }
-#else
-   _glapi_Dispatch = override;
-#endif
-   return 1;
-}
-
-
-PUBLIC void
-_glapi_end_dispatch_override(int layer)
-{
-   struct _glapi_table *real = _glapi_get_dispatch();
-   (void) layer;
-   DispatchOverride = GL_FALSE;
-   _glapi_set_dispatch(real);
-   /* the rest of this isn't needed, just play it safe */
-#if defined(GLX_USE_TLS)
-   _glapi_tls_RealDispatch = NULL;
-#else
-# if defined(THREADS)
-   _glthread_SetTSD(&RealDispatchTSD, NULL);
-# endif
-   _glapi_RealDispatch = NULL;
-#endif
-}
-
-
-PUBLIC struct _glapi_table *
-_glapi_get_override_dispatch(int layer)
-{
-   if (layer == 0) {
-      return _glapi_get_dispatch();
-   }
-   else {
-      if (DispatchOverride) {
-#if defined(GLX_USE_TLS)
-	 return (struct _glapi_table *) _glapi_tls_Dispatch;
-#elif defined(THREADS)
-         return (struct _glapi_table *) _glthread_GetTSD(&_gl_DispatchTSD);
-#else
-         return _glapi_Dispatch;
-#endif
-      }
-      else {
-         return NULL;
-      }
-   }
 }
 
 
@@ -1063,7 +869,7 @@ _glapi_get_proc_offset(const char *funcName)
  * in the name of static functions, try generating a new API entrypoint on
  * the fly with assembly language.
  */
-PUBLIC _glapi_proc
+_glapi_proc
 _glapi_get_proc_address(const char *funcName)
 {
    struct _glapi_function * entry;
@@ -1101,7 +907,7 @@ _glapi_get_proc_address(const char *funcName)
  * Return the name of the function at the given dispatch offset.
  * This is only intended for debugging.
  */
-PUBLIC const char *
+const char *
 _glapi_get_proc_name(GLuint offset)
 {
    GLuint i;
@@ -1137,21 +943,10 @@ _glapi_get_dispatch_table_size(void)
 
 
 /**
- * Get API dispatcher version string.
- */
-PUBLIC const char *
-_glapi_get_version(void)
-{
-   return "20021001";  /* YYYYMMDD */
-}
-
-
-
-/**
  * Make sure there are no NULL pointers in the given dispatch table.
  * Intended for debugging purposes.
  */
-PUBLIC void
+void
 _glapi_check_table(const struct _glapi_table *table)
 {
 #ifdef DEBUG

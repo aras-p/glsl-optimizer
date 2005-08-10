@@ -645,13 +645,7 @@ one_time_init( GLcontext *ctx )
 #endif
       if (_mesa_getenv("MESA_DEBUG")) {
          _glapi_noop_enable_warnings(GL_TRUE);
-#ifndef GLX_DIRECT_RENDERING
-         /* libGL from before 2002/06/28 don't have this function.  Someday,
-          * when newer libGL libs are common, remove the #ifdef test.  This
-          * only serves to print warnings when calling undefined GL functions.
-          */
          _glapi_set_warning_func( (_glapi_warning_func) _mesa_warning );
-#endif
       }
       else {
          _glapi_noop_enable_warnings(GL_FALSE);
@@ -1538,10 +1532,13 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
          return;
    }
 
+#if !defined(IN_DRI_DRIVER)
    /* We call this function periodically (just here for now) in
-    * order to detect when multithreading has begun.
+    * order to detect when multithreading has begun.  In a DRI driver, this
+    * step is done by the driver loader (e.g., libGL).
     */
    _glapi_check_multithread();
+#endif /* !defined(IN_DRI_DRIVER) */
 
    _glapi_set_context((void *) newCtx);
    ASSERT(_mesa_get_current_context() == newCtx);

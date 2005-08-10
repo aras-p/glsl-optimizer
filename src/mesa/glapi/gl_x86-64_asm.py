@@ -245,7 +245,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 		print '\tjmp\t*%r11'
 
 		print '#else'
-		print '\tmovq\t_glapi_DispatchTSD(%rip), %rax'
+		print '\tmovq\t_glapi_Dispatch(%rip), %rax'
 		print '\ttestq\t%rax, %rax'
 		print '\tje\t1f'
 		print '\tmovq\t%u(%%rax), %%r11' % (f.offset * 8)
