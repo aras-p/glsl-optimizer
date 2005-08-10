@@ -926,7 +926,7 @@ struct gl_pixel_attrib
    GLint MapBtoBsize;
    GLint MapAtoAsize;
    GLint MapStoS[MAX_PIXEL_MAP_TABLE];	/**< Pixel map tables */
-   GLint MapItoI[MAX_PIXEL_MAP_TABLE];
+   GLfloat MapItoI[MAX_PIXEL_MAP_TABLE];
    GLfloat MapItoR[MAX_PIXEL_MAP_TABLE];
    GLfloat MapItoG[MAX_PIXEL_MAP_TABLE];
    GLfloat MapItoB[MAX_PIXEL_MAP_TABLE];

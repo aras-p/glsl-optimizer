@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -264,13 +264,13 @@ pixelmap(GLcontext *ctx, GLenum map, GLsizei mapsize, const GLfloat *values)
       case GL_PIXEL_MAP_S_TO_S:
          ctx->Pixel.MapStoSsize = mapsize;
          for (i = 0; i < mapsize; i++) {
-	    ctx->Pixel.MapStoS[i] = (GLint) values[i];
+	    ctx->Pixel.MapStoS[i] = IROUND(values[i]);
 	 }
 	 break;
       case GL_PIXEL_MAP_I_TO_I:
          ctx->Pixel.MapItoIsize = mapsize;
          for (i = 0; i < mapsize; i++) {
-	    ctx->Pixel.MapItoI[i] = (GLint) values[i];
+	    ctx->Pixel.MapItoI[i] = values[i];
 	 }
 	 break;
       case GL_PIXEL_MAP_I_TO_R:
@@ -615,9 +615,7 @@ _mesa_GetPixelMapfv( GLenum map, GLfloat *values )
 
    switch (map) {
       case GL_PIXEL_MAP_I_TO_I:
-         for (i = 0; i < mapsize; i++) {
-	    values[i] = (GLfloat) ctx->Pixel.MapItoI[i];
-	 }
+         MEMCPY(values, ctx->Pixel.MapItoI, mapsize * sizeof(GLfloat));
 	 break;
       case GL_PIXEL_MAP_S_TO_S:
          for (i = 0; i < mapsize; i++) {
@@ -698,7 +696,9 @@ _mesa_GetPixelMapuiv( GLenum map, GLuint *values )
 
    switch (map) {
       case GL_PIXEL_MAP_I_TO_I:
-         MEMCPY(values, ctx->Pixel.MapItoI, mapsize * sizeof(GLint));
+	 for (i = 0; i < mapsize; i++) {
+	    values[i] = FLOAT_TO_UINT( ctx->Pixel.MapItoI[i] );
+	 }
 	 break;
       case GL_PIXEL_MAP_S_TO_S:
          MEMCPY(values, ctx->Pixel.MapStoS, mapsize * sizeof(GLint));
@@ -795,7 +795,7 @@ _mesa_GetPixelMapusv( GLenum map, GLushort *values )
    switch (map) {
       case GL_PIXEL_MAP_I_TO_I:
 	 for (i = 0; i < mapsize; i++) {
-	    values[i] = (GLushort) ctx->Pixel.MapItoI[i];
+	    values[i] = FLOAT_TO_USHORT(ctx->Pixel.MapItoI[i]);
 	 }
 	 break;
       case GL_PIXEL_MAP_S_TO_S:
@@ -1680,10 +1680,11 @@ _mesa_shift_and_offset_ci( const GLcontext *ctx, GLuint n, GLuint indexes[] )
 void
 _mesa_map_ci( const GLcontext *ctx, GLuint n, GLuint index[] )
 {
-   GLuint mask = ctx->Pixel.MapItoIsize - 1;
+   const GLuint mask = ctx->Pixel.MapItoIsize - 1;
    GLuint i;
-   for (i=0;i<n;i++) {
-      index[i] = ctx->Pixel.MapItoI[ index[i] & mask ];
+   for (i = 0; i < n; i++) {
+      const GLuint j = index[i] & mask;
+      index[i] = IROUND(ctx->Pixel.MapItoI[j]);
    }
 }
 
@@ -2009,7 +2010,7 @@ _mesa_init_pixel( GLcontext *ctx )
    ctx->Pixel.MapBtoBsize = 1;
    ctx->Pixel.MapAtoAsize = 1;
    ctx->Pixel.MapStoS[0] = 0;
-   ctx->Pixel.MapItoI[0] = 0;
+   ctx->Pixel.MapItoI[0] = 0.0;
    ctx->Pixel.MapItoR[0] = 0.0;
    ctx->Pixel.MapItoG[0] = 0.0;
    ctx->Pixel.MapItoB[0] = 0.0;
