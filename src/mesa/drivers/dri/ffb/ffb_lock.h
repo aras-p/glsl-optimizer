@@ -8,14 +8,18 @@
 extern void ffbXMesaUpdateState(ffbContextPtr fmesa);
 #define FFB_UPDATE_STATE(fmesa)	ffbXMesaUpdateState(fmesa)
 
-/* Lock the hardware and validate our state. */
-#if defined(__i386__) 
+/* Lock the hardware and validate our state.  This hardware can only ever
+ * exist on SPARC platforms.  Don't bother building the real LOCK_HARDWARE and
+ * UNLOCK_HARDWARE code on non-SPARC platforms.  The only reason the driver
+ * gets built on non-SPARC is to catch build breakages earlier.
+ */
+#if !defined(__sparc__)
 #define LOCK_HARDWARE(fmesa)			
 #define UNLOCK_HARDWARE(fmesa)			
 #else
 #define LOCK_HARDWARE(fmesa)				\
   do {							\
-    int __ret=0;					\
+    DRM_CAS_RESULT(__ret);				\
     DRM_CAS(fmesa->driHwLock, fmesa->hHWContext,	\
 	    (DRM_LOCK_HELD | fmesa->hHWContext), __ret);\
     if (__ret) {					\
