@@ -40,7 +40,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NEED_REPLIES
 #include <X11/Xlibint.h>
 #include <X11/extensions/Xext.h>
-#include "extutil.h"
+#include <X11/extensions/extutil.h>
 #include "glheader.h"
 #include "xf86dristr.h"
 

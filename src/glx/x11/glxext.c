@@ -46,8 +46,8 @@
 
 #include "glxclient.h"
 #include <stdio.h>
-#include <Xext.h>
-#include <extutil.h>
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
 #include <assert.h>
 #include "indirect_init.h"
 #include "glapi.h"

@@ -41,14 +41,14 @@
 
 #include <inttypes.h>
 #include "glxclient.h"
-#include <extutil.h>
-#include <Xext.h>
+#include <X11/extensions/extutil.h>
+#include <X11/extensions/Xext.h>
 #include <assert.h>
 #include <string.h>
 #include "glapi.h"
 #ifdef GLX_DIRECT_RENDERING
 #include "indirect_init.h"
-#include "xf86vmode.h"
+#include <X11/extensions/xf86vmode.h>
 #include "xf86dri.h"
 #endif
 #include "glxextensions.h"

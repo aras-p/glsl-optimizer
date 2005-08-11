@@ -38,7 +38,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <unistd.h>
 #include <X11/Xlibint.h>
 #include <X11/extensions/Xext.h>
-#include "extutil.h"
+#include <X11/extensions/extutil.h>
 #include "glxclient.h"
 #include "xf86dri.h"
 #include "sarea.h"

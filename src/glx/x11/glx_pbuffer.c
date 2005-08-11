@@ -31,8 +31,8 @@
 
 #include <inttypes.h>
 #include "glxclient.h"
-#include <extutil.h>
-#include <Xext.h>
+#include <X11/extensions/extutil.h>
+#include <X11/extensions/Xext.h>
 #include <assert.h>
 #include <string.h>
 #include "glapi.h"
