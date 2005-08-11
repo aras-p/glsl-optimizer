@@ -12,7 +12,7 @@ WARN_FLAGS = -Wall
 OPT_FLAGS = -O
 
 EXPAT_INCLUDES = -I/usr/local/include
-X11_INCLUDES = -I/usr/X11R6/include -I/usr/X11R6/include/X11/extensions
+X11_INCLUDES = -I/usr/X11R6/include
 DEFINES = -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER \
 	-DGLX_DIRECT_RENDERING
 CFLAGS = $(DEFINES) -Wmissing-prototypes -g -std=c99  -Wundef -fPIC \
