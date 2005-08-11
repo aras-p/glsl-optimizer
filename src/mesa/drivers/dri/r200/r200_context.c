@@ -524,10 +524,11 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
       }
       TCL_FALLBACK(rmesa->glCtx, R200_TCL_FALLBACK_TCL_DISABLE, 1);
    }
+
    if (rmesa->r200Screen->chipset & R200_CHIPSET_TCL) {
-      if (tcl_mode >= DRI_CONF_TCL_VTXFMT && !getenv("R200_NO_VTXFMT")) {
+      if (tcl_mode >= DRI_CONF_TCL_VTXFMT)
 	 r200VtxfmtInit( ctx, tcl_mode >= DRI_CONF_TCL_CODEGEN );
-      }
+
       _tnl_need_dlist_norm_lengths( ctx, GL_FALSE );
    }
    return GL_TRUE;
