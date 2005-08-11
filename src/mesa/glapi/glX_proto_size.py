@@ -313,8 +313,6 @@ class PrintGlxSizeStubs_c(PrintGlxSizeStubs_common):
 		print '#include "indirect_size.h"'
 
 		print ''
-		self.printHaveAlias()
-		print ''
 		self.printPure()
 		print ''
 		self.printFastcall()
@@ -436,8 +434,6 @@ class PrintGlxReqSize_c(PrintGlxReqSize_common):
 		
 		print ''
 		print '#define __GLX_PAD(x)  (((x) + 3) & ~3)'
-		print ''
-		self.printHaveAlias()
 		print ''
 		print '#ifdef HAVE_ALIAS'
 		print '#  define ALIAS2(from,to) \\'

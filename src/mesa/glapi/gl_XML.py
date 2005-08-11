@@ -242,23 +242,6 @@ class gl_print_base:
 		return
 
 
-	def printHaveAlias(self):
-		"""Conditionally define `HAVE_ALIAS'.
-
-		Conditionally defines a preprocessor macro `HAVE_ALIAS'.  The
-		existance of this macro can be used to determine whether or
-		not GCC's alias function attribute can be used.
-
-		The name is also added to the file's undef_list.
-		"""
-
-		self.undef_list.append("HAVE_ALIAS")
-		print """#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
-#    define HAVE_ALIAS
-#  endif"""
-		return
-
-
 def real_function_name(element):
 	name = element.nsProp( "name", None )
 	alias = element.nsProp( "alias", None )

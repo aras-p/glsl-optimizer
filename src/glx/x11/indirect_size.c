@@ -29,10 +29,6 @@
 #include <GL/gl.h>
 #include "indirect_size.h"
 
-#  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)
-#    define HAVE_ALIAS
-#  endif
-
 #  if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96)
 #    define PURE __attribute__((pure))
 #  else
@@ -365,10 +361,7 @@ ALIAS( Map2f, Map2d )
 ALIAS( ColorTableParameteriv, ColorTableParameterfv )
 ALIAS( ConvolutionParameteriv, ConvolutionParameterfv )
 ALIAS( PointParameterivNV, PointParameterfvEXT )
-ALIAS( PointParameterfvARB, PointParameterfvEXT )
-ALIAS( PointParameteriv, PointParameterfvEXT )
 
-#  undef HAVE_ALIAS
 #  undef PURE
 #  undef FASTCALL
 #  undef INTERNAL

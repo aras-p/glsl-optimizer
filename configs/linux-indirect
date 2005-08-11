@@ -1,5 +1,6 @@
 # -*-makefile-*-
-# Configuration for linux-dri: Linux DRI hardware drivers for XFree86 & others
+# Configuration for linux-indirect: Builds a libGL capable of indirect
+# rendering, but *NOT* capable of direct rendering.
 
 include $(TOP)/configs/default
 
@@ -22,7 +23,7 @@ ARCH_FLAGS ?=
 
 DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \
 	-D_BSD_SOURCE -D_GNU_SOURCE \
-	-DPTHREADS
+	-DPTHREADS -DHAVE_ALIAS
 
 CFLAGS   = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
 	$(ASM_FLAGS) -std=c99 -ffast-math 
