@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.3
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -351,11 +351,7 @@ static void do_LOG( struct arb_vp_machine *m, union instruction op )
    const GLfloat *arg0 = m->File[op.alu.file0][op.alu.idx0];
    GLfloat tmp = FABSF(arg0[0]);
    int exponent;
-#ifdef _WIN32
-   GLfloat mantissa = (GLfloat) frexp((double)tmp, &exponent);
-#else
-   GLfloat mantissa = frexpf(tmp, &exponent);
-#endif
+   GLfloat mantissa = FREXPF(tmp, &exponent);
 
    result[0] = (GLfloat) (exponent - 1);
    result[1] = 2.0 * mantissa; /* map [.5, 1) -> [1, 2) */

@@ -331,23 +331,28 @@ static INLINE int GET_FLOAT_BITS( float x )
  *** CEILF: ceiling of float
  *** FLOORF: floor of float
  *** FABSF: absolute value of float
+ *** LDEXPF: multiply value by an integral power of two
+ *** FREXPF: extract mantissa and exponent from value
  ***/
 #if defined(XFree86LOADER) && defined(IN_MODULE)
 #define CEILF(x)   ((GLfloat) xf86ceil(x))
 #define FLOORF(x)  ((GLfloat) xf86floor(x))
 #define FABSF(x)   ((GLfloat) xf86fabs(x))
 #define LDEXPF(x,y)   ((GLfloat) xf86ldexp(x,y))
+#define FREXPF(x,y)   ((GLfloat) xf86frexp(x,y))
 #elif defined(__gnu_linux__)
 /* C99 functions */
 #define CEILF(x)   ceilf(x)
 #define FLOORF(x)  floorf(x)
 #define FABSF(x)   fabsf(x)
 #define LDEXPF(x,y)  ldexpf(x,y)
+#define FREXPF(x,y)  frexpf(x,y)
 #else
 #define CEILF(x)   ((GLfloat) ceil(x))
 #define FLOORF(x)  ((GLfloat) floor(x))
 #define FABSF(x)   ((GLfloat) fabs(x))
 #define LDEXPF(x,y)  ((GLfloat) ldexp(x,y))
+#define FREXPF(x,y)  ((GLfloat) frexp(x,y))
 #endif
 
 

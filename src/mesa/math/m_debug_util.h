@@ -286,9 +286,9 @@ static int significand_match( GLfloat a, GLfloat b )
       return 0;
    }
 
-   frexp( a, &a_ex );
-   frexp( b, &b_ex );
-   frexp( d, &d_ex );
+   FREXPF( a, &a_ex );
+   FREXPF( b, &b_ex );
+   FREXPF( d, &d_ex );
 
    if ( a_ex < b_ex ) {
       return a_ex - d_ex;
