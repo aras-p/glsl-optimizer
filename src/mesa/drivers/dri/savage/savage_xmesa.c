@@ -133,6 +133,7 @@ static const struct dri_extension card_extensions[] =
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
+    { "GL_EXT_stencil_wrap",               NULL },
     { "GL_EXT_texture_lod_bias",           NULL },
     { NULL,                                NULL }
 };

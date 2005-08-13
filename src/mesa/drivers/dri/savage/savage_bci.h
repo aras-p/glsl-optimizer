@@ -431,43 +431,17 @@ typedef enum
  * stencil control
  */
 
-typedef ZCmpFunc SCmpFunc;
-
 typedef enum
 {
-    STC_FAIL_Keep,
-    STC_FAIL_Zero,
-    STC_FAIL_Equal,
-    STC_FAIL_IncClamp,
-    STC_FAIL_DecClamp,
-    STC_FAIL_Invert,
-    STC_FAIL_Inc,
-    STC_FAIL_Dec
-} StencilFailOp;
-
-typedef enum
-{
-    STC_ZPASS_Keep,
-    STC_ZPASS_Zero,
-    STC_ZPASS_Equal,
-    STC_ZPASS_IncClamp,
-    STC_ZPASS_DecClamp,
-    STC_ZPASS_Invert,
-    STC_ZPASS_Inc,
-    STC_ZPASS_Dec
-} StencilZPassOp;
-
-typedef enum
-{
-    STC_ZFAIL_Keep,
-    STC_ZFAIL_Zero,
-    STC_ZFAIL_Equal,
-    STC_ZFAIL_IncClamp,
-    STC_ZFAIL_DecClamp,
-    STC_ZFAIL_Invert,
-    STC_ZFAIL_Inc,
-    STC_ZFAIL_Dec
-} StencilZFailOp;
+    STENCIL_Keep,
+    STENCIL_Zero,
+    STENCIL_Equal,
+    STENCIL_IncClamp,
+    STENCIL_DecClamp,
+    STENCIL_Invert,
+    STENCIL_Inc,
+    STENCIL_Dec
+} StencilOp;
 
 /***************************************************************
 *** Bitfield Structures for Programming Interface **************

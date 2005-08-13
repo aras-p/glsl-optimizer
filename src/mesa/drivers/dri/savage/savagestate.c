@@ -1001,9 +1001,9 @@ static void savageDDStencilFunc(GLcontext *ctx, GLenum func, GLint ref,
                                 GLuint mask)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    SCmpFunc a=0;
-    u_int32_t zBufCtrl = imesa->regs.s4.zBufCtrl.ui;
-    u_int32_t stencilCtrl = imesa->regs.s4.stencilCtrl.ui;
+    unsigned a=0;
+    const u_int32_t zBufCtrl = imesa->regs.s4.zBufCtrl.ui;
+    const u_int32_t stencilCtrl = imesa->regs.s4.stencilCtrl.ui;
 
     imesa->regs.s4.zBufCtrl.ni.stencilRefVal = ctx->Stencil.Ref[0];
     imesa->regs.s4.stencilCtrl.ni.readMask  = ctx->Stencil.ValueMask[0];
@@ -1039,96 +1039,33 @@ static void savageDDStencilMask(GLcontext *ctx, GLuint mask)
     }
 }
 
+static unsigned get_stencil_op_value( GLenum op )
+{
+    switch (op)
+    {
+    case GL_KEEP:      return STENCIL_Keep;
+    case GL_ZERO:      return STENCIL_Zero;
+    case GL_REPLACE:   return STENCIL_Equal;
+    case GL_INCR:      return STENCIL_IncClamp;
+    case GL_DECR:      return STENCIL_DecClamp;
+    case GL_INVERT:    return STENCIL_Invert;
+    case GL_INCR_WRAP: return STENCIL_Inc;
+    case GL_DECR_WRAP: return STENCIL_Dec;
+    }
+
+    /* Should *never* get here. */
+    return STENCIL_Keep;
+}
+
 static void savageDDStencilOp(GLcontext *ctx, GLenum fail, GLenum zfail,
                               GLenum zpass)
 {
     savageContextPtr imesa = SAVAGE_CONTEXT(ctx);
-    u_int32_t stencilCtrl = imesa->regs.s4.stencilCtrl.ui;
+    const u_int32_t stencilCtrl = imesa->regs.s4.stencilCtrl.ui;
 
-    switch (ctx->Stencil.FailFunc[0])
-    {
-    case GL_KEEP:
-	imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_Keep;
-	break;
-    case GL_ZERO:
-	imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_Zero;
-	break;
-    case GL_REPLACE:
-	imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_Equal;
-	break;
-    case GL_INCR:
-	imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_IncClamp;
-	break;
-    case GL_DECR:
-	imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_DecClamp;
-	break;
-    case GL_INVERT:
-	imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_Invert;
-	break;
-    case GL_INCR_WRAP_EXT:
-	imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_Inc;
-	break;
-    case GL_DECR_WRAP_EXT:
-	imesa->regs.s4.stencilCtrl.ni.failOp = STC_FAIL_Dec;
-	break;
-    }
-
-
-    switch (ctx->Stencil.ZFailFunc[0])
-    {
-    case GL_KEEP:
-	imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_Keep;
-	break;
-    case GL_ZERO:
-	imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_Zero;
-	break;
-    case GL_REPLACE:
-	imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_Equal;
-	break;
-    case GL_INCR:
-	imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_IncClamp;
-	break;
-    case GL_DECR:
-	imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_DecClamp;
-	break;
-    case GL_INVERT:
-	imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_Invert;
-	break;
-    case GL_INCR_WRAP_EXT:
-	imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_Inc;
-	break;
-    case GL_DECR_WRAP_EXT:
-	imesa->regs.s4.stencilCtrl.ni.passZfailOp = STC_FAIL_Dec;
-	break;
-    }
-
-    switch (ctx->Stencil.ZPassFunc[0])
-    {
-    case GL_KEEP:
-	imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_Keep;
-	break;
-    case GL_ZERO:
-	imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_Zero;
-	break;
-    case GL_REPLACE:
-	imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_Equal;
-	break;
-    case GL_INCR:
-	imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_IncClamp;
-	break;
-    case GL_DECR:
-	imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_DecClamp;
-	break;
-    case GL_INVERT:
-	imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_Invert;
-	break;
-    case GL_INCR_WRAP_EXT:
-	imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_Inc;
-	break;
-    case GL_DECR_WRAP_EXT:
-	imesa->regs.s4.stencilCtrl.ni.passZpassOp = STC_FAIL_Dec;
-	break;
-    }
+    imesa->regs.s4.stencilCtrl.ni.failOp = get_stencil_op_value( ctx->Stencil.FailFunc[0] );
+    imesa->regs.s4.stencilCtrl.ni.passZfailOp = get_stencil_op_value( ctx->Stencil.ZFailFunc[0] );
+    imesa->regs.s4.stencilCtrl.ni.passZpassOp = get_stencil_op_value( ctx->Stencil.ZPassFunc[0] );
 
     if (stencilCtrl != imesa->regs.s4.stencilCtrl.ui)
 	imesa->dirty |= SAVAGE_UPLOAD_GLOBAL;
@@ -1586,9 +1523,9 @@ static void savageDDInitState_s4( savageContextPtr imesa )
 
     imesa->regs.s4.stencilCtrl.ni.stencilEn       = GL_FALSE;
     imesa->regs.s4.stencilCtrl.ni.cmpFunc         = CF_Always;
-    imesa->regs.s4.stencilCtrl.ni.failOp          = STC_FAIL_Keep;
-    imesa->regs.s4.stencilCtrl.ni.passZfailOp     = STC_FAIL_Keep;
-    imesa->regs.s4.stencilCtrl.ni.passZpassOp     = STC_FAIL_Keep;
+    imesa->regs.s4.stencilCtrl.ni.failOp          = STENCIL_Keep;
+    imesa->regs.s4.stencilCtrl.ni.passZfailOp     = STENCIL_Keep;
+    imesa->regs.s4.stencilCtrl.ni.passZpassOp     = STENCIL_Keep;
     imesa->regs.s4.stencilCtrl.ni.writeMask       = 0xff;
     imesa->regs.s4.stencilCtrl.ni.readMask        = 0xff;
 
