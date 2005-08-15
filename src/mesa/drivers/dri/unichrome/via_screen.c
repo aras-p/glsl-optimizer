@@ -101,6 +101,10 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
       (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
     void * const psc = sPriv->psc->screenConfigs;
 
+    if (sPriv->devPrivSize != sizeof(VIADRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(VIADRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+    }
 
     /* Allocate the private area */
     viaScreen = (viaScreenPrivate *) CALLOC(sizeof(viaScreenPrivate));

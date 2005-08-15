@@ -9,7 +9,6 @@
 typedef struct {
   drm_handle_t regs;
   drmSize regsSize;
-  drmAddress regsMap;
   int deviceID;
   int width;
   int height;

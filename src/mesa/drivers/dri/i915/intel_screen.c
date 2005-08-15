@@ -80,7 +80,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    void * const psc = sPriv->psc->screenConfigs;
 
    if (sPriv->devPrivSize != sizeof(I830DRIRec)) {
-      fprintf(stderr,"\nERROR!  sizeof(I830DRIRec) does not match passed size from 2D driver\n");
+      fprintf(stderr,"\nERROR!  sizeof(I830DRIRec) does not match passed size from device driver\n");
       return GL_FALSE;
    }
 

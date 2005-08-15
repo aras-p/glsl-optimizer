@@ -170,6 +170,11 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
   savageScreenPrivate *savageScreen;
   SAVAGEDRIPtr         gDRIPriv = (SAVAGEDRIPtr)sPriv->pDevPriv;
 
+   if (sPriv->devPrivSize != sizeof(SAVAGEDRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(SAVAGEDRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
+
    /* Allocate the private area */
    savageScreen = (savageScreenPrivate *)Xmalloc(sizeof(savageScreenPrivate));
    if (!savageScreen)

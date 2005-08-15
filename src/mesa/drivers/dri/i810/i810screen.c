@@ -223,6 +223,10 @@ i810InitDriver(__DRIscreenPrivate *sPriv)
    i810ScreenPrivate *i810Screen;
    I810DRIPtr         gDRIPriv = (I810DRIPtr)sPriv->pDevPriv;
 
+   if (sPriv->devPrivSize != sizeof(I810DRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(I810DRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
 
    /* Allocate the private area */
    i810Screen = (i810ScreenPrivate *)CALLOC(sizeof(i810ScreenPrivate));

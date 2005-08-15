@@ -212,6 +212,10 @@ radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv )
      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
    void * const psc = sPriv->psc->screenConfigs;
 
+   if (sPriv->devPrivSize != sizeof(RADEONDRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(RADEONDRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
 
    /* Allocate the private area */
    screen = (radeonScreenPtr) CALLOC( sizeof(*screen) );

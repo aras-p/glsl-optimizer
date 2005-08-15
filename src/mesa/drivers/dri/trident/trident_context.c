@@ -358,6 +358,10 @@ tridentScreenPtr tridentCreateScreen( __DRIscreenPrivate *sPriv )
    TRIDENTDRIPtr tDRIPriv = (TRIDENTDRIPtr)sPriv->pDevPriv;
    tridentScreenPtr tridentScreen;
 
+   if (sPriv->devPrivSize != sizeof(TRIDENTDRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(TRIDENTDRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
 
     /* Allocate the private area */
     tridentScreen = (tridentScreenPtr) CALLOC( sizeof(*tridentScreen) );

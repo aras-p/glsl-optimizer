@@ -35,6 +35,11 @@ gammaScreenPtr gammaCreateScreen( __DRIscreenPrivate *sPriv )
    GLINTDRIPtr gDRIPriv = (GLINTDRIPtr)sPriv->pDevPriv;
    int i;
 
+   if (sPriv->devPrivSize != sizeof(GLINTDRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(GLINTDRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
+
 #if 0
    /* Check the DRI externsion version */
    if ( sPriv->driMajor != 3 || sPriv->driMinor != 1 ) {

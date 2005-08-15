@@ -102,6 +102,10 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
    void * const psc = sPriv->psc->screenConfigs;
 
+   if (sPriv->devPrivSize != sizeof(R128DRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(R128DRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
 
    /* Allocate the private area */
    r128Screen = (r128ScreenPtr) CALLOC( sizeof(*r128Screen) );

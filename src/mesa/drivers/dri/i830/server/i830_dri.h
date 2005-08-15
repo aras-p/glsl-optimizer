@@ -18,7 +18,6 @@
 typedef struct _I830DRIRec {
    drm_handle_t regs;
    drmSize regsSize;
-   drmAddress regsMap;
 
    drmSize backbufferSize;
    drm_handle_t backbuffer;

@@ -146,6 +146,10 @@ static GLboolean i830InitDriver(__DRIscreenPrivate *sPriv)
      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
    void * const psc = sPriv->psc->screenConfigs;
 
+   if (sPriv->devPrivSize != sizeof(I830DRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(I830DRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
 
    /* Allocate the private area */
    i830Screen = (i830ScreenPrivate *)CALLOC(sizeof(i830ScreenPrivate));

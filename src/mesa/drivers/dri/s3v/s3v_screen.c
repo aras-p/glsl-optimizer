@@ -17,6 +17,11 @@ s3vScreenPtr s3vCreateScreen( __DRIscreenPrivate *sPriv )
    DEBUG(("sPriv->pDevPriv at %p\n", sPriv->pDevPriv));
    DEBUG(("size = %i\n", sizeof(*vDRIPriv)));
 
+   if (sPriv->devPrivSize != sizeof(S3VDRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(S3VDRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
+
    /* Allocate the private area */
    s3vScreen = (s3vScreenPtr) CALLOC( sizeof(*s3vScreen) );
    if ( !s3vScreen ) return NULL;

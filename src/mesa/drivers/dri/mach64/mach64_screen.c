@@ -211,6 +211,10 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
    void * const psc = sPriv->psc->screenConfigs;
 
+   if (sPriv->devPrivSize != sizeof(ATIDRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(ATIDRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
 
    if ( MACH64_DEBUG & DEBUG_VERBOSE_DRI ) 
       fprintf( stderr, "%s\n", __FUNCTION__ );

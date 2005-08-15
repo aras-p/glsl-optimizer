@@ -206,7 +206,7 @@ static int MGADRIAgpInit(struct DRIDriverContextRec *ctx, MGAPtr pMga)
       return 0;
    }
    fprintf( stderr,
-	       "[agp] WARP microcode handle = 0x%08lx\n",
+ 	       "[agp] WARP microcode handle = 0x%08x\n",
 	       pMga->warp.handle );
 
    if ( drmMap( ctx->drmFD,
@@ -233,7 +233,7 @@ static int MGADRIAgpInit(struct DRIDriverContextRec *ctx, MGAPtr pMga)
       return 0;
    }
    fprintf( stderr,
-	       "[agp] Primary DMA handle = 0x%08lx\n",
+ 	       "[agp] Primary DMA handle = 0x%08x\n",
 	       pMga->primary.handle );
 
    if ( drmMap( ctx->drmFD,
@@ -260,7 +260,7 @@ static int MGADRIAgpInit(struct DRIDriverContextRec *ctx, MGAPtr pMga)
       return 0;
    }
    fprintf( stderr,
-	       "[agp] DMA buffers handle = 0x%08lx\n",
+ 	       "[agp] DMA buffers handle = 0x%08x\n",
 	       pMga->buffers.handle );
 
    if ( drmMap( ctx->drmFD,
@@ -304,7 +304,7 @@ static int MGADRIAgpInit(struct DRIDriverContextRec *ctx, MGAPtr pMga)
    }
 /* should i map it ? */
    fprintf( stderr,
-               "[agp] agpTexture handle = 0x%08lx\n",
+               "[agp] agpTexture handle = 0x%08x\n",
                pMga->agpTextures.handle );
    fprintf( stderr,
                "[agp] agpTexture size: %d kb\n", pMga->agpTextures.size/1024 );
@@ -339,7 +339,7 @@ static int MGADRIMapInit( struct DRIDriverContextRec *ctx, MGAPtr pMga )
       return 0;
    }
    fprintf( stderr,
-	       "[drm] Status handle = 0x%08lx\n",
+ 	       "[drm] Status handle = 0x%08x\n",
 	       pMga->status.handle );
 
    if ( drmMap( ctx->drmFD,

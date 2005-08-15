@@ -129,6 +129,10 @@ sisCreateScreen( __DRIscreenPrivate *sPriv )
    sisScreenPtr sisScreen;
    SISDRIPtr sisDRIPriv = (SISDRIPtr)sPriv->pDevPriv;
 
+   if (sPriv->devPrivSize != sizeof(SISDRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(SISDRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
 
    /* Allocate the private area */
    sisScreen = (sisScreenPtr)CALLOC( sizeof(*sisScreen) );
@@ -427,7 +431,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn,
 
 {
    __DRIscreenPrivate *psp;
-   static const __DRIversion ddx_expected = {0, 1, 0};
+   static const __DRIversion ddx_expected = {0, 8, 0};
    static const __DRIversion dri_expected = {4, 0, 0};
    static const __DRIversion drm_expected = {1, 0, 0};
 

@@ -74,6 +74,11 @@ tdfxCreateScreen( __DRIscreenPrivate *sPriv )
    tdfxScreenPrivate *fxScreen;
    TDFXDRIPtr fxDRIPriv = (TDFXDRIPtr) sPriv->pDevPriv;
 
+   if (sPriv->devPrivSize != sizeof(TDFXDRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(TDFXDRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
+
    /* Allocate the private area */
    fxScreen = (tdfxScreenPrivate *) CALLOC( sizeof(tdfxScreenPrivate) );
    if ( !fxScreen )
@@ -441,7 +446,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
 			     __GLcontextModes ** driver_modes )
 {
    __DRIscreenPrivate *psp;
-   static const __DRIversion ddx_expected = { 1, 0, 0 };
+   static const __DRIversion ddx_expected = { 1, 1, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 0, 0 };
 

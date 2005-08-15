@@ -200,6 +200,10 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
        (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
    void * const psc = sPriv->psc->screenConfigs;
 
+   if (sPriv->devPrivSize != sizeof(MGADRIRec)) {
+      fprintf(stderr,"\nERROR!  sizeof(MGADRIRec) does not match passed size from device driver\n");
+      return GL_FALSE;
+   }
 
    /* Allocate the private area */
    mgaScreen = (mgaScreenPrivate *)MALLOC(sizeof(mgaScreenPrivate));
@@ -945,7 +949,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
 			     
 {
    __DRIscreenPrivate *psp;
-   static const __DRIversion ddx_expected = { 1, 1, 1 };
+   static const __DRIversion ddx_expected = { 1, 2, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 3, 0, 0 };
 

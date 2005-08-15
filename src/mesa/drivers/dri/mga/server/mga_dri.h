@@ -49,6 +49,16 @@
 # define DEPRECATED
 #endif
 
+#if 1
+typedef struct _mgaDrmRegion {
+    drm_handle_t     handle;
+    unsigned int  offset;
+    drmSize       size;
+} mgaDrmRegion, *mgaDrmRegionPtr;
+#else
+#define mgaDrmRegion drmRegion
+#endif
+
 typedef struct {
    int chipset;
    int width DEPRECATED;
@@ -91,10 +101,10 @@ typedef struct {
     * for the X.org 6.9 / 7.0 release), these fields should be removed.
     */
    /*@{*/
-   drmRegion registers;            /**< MMIO registers. */
-   drmRegion status DEPRECATED;    /**< No longer used on the client-side. */
-   drmRegion primary;              /**< Primary DMA region. */
-   drmRegion buffers DEPRECATED;   /**< No longer used on the client-side. */
+   mgaDrmRegion registers;            /**< MMIO registers. */
+   mgaDrmRegion status DEPRECATED;    /**< No longer used on the client-side. */
+   mgaDrmRegion primary;              /**< Primary DMA region. */
+   mgaDrmRegion buffers DEPRECATED;   /**< No longer used on the client-side. */
    /*@}*/
 
    unsigned int sarea_priv_offset;

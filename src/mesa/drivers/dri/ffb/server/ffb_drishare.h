@@ -21,23 +21,18 @@ typedef struct ffb_dri_state {
 typedef struct {
 	drm_handle_t	hFbcRegs;
 	drmSize		sFbcRegs;
-	drmAddress	mFbcRegs;
 
 	drm_handle_t	hDacRegs;
 	drmSize		sDacRegs;
-	drmAddress	mDacRegs;
 
 	drm_handle_t	hSfb8r;
 	drmSize		sSfb8r;
-	drmAddress	mSfb8r;
 
 	drm_handle_t	hSfb32;
 	drmSize		sSfb32;
-	drmAddress	mSfb32;
 
 	drm_handle_t	hSfb64;
 	drmSize		sSfb64;
-	drmAddress	mSfb64;
 
 	/* Fastfill/Pagefill parameters. */
 	unsigned char	disable_pagefill;

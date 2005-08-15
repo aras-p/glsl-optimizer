@@ -212,7 +212,7 @@ static int I810DRIAgpInit( const DRIDriverContext *ctx, I810Ptr info)
    drmAgpAlloc(ctx->drmFD, 4096 * 1024, 1, NULL, &dcacheHandle);
    info->dcacheHandle = dcacheHandle;
    
-   fprintf(stderr, "[agp] dcacheHandle : %p\n", dcacheHandle);
+   fprintf(stderr, "[agp] dcacheHandle : 0x%x\n", dcacheHandle);
 
 #define Elements(x) sizeof(x)/sizeof(*x)
    for (pitch_idx = 0; pitch_idx < Elements(i810_pitches); pitch_idx++)
@@ -710,7 +710,7 @@ static int I810ScreenInit( DRIDriverContext *ctx, I810Ptr info )
       return 0;
    }
    fprintf(stderr,
-	   "[drm] register handle = 0x%08lx\n", info->regs);
+	   "[drm] register handle = 0x%08x\n", info->regs);
 
    I810DRIAgpPreInit(ctx, info);
    /* Need to AddMap the framebuffer and mmio regions here:

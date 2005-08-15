@@ -398,7 +398,7 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
       fprintf(stderr, "[gart] Could not add ring mapping\n");
       return 0;
    }
-   fprintf(stderr, "[gart] ring handle = 0x%08lx\n", info->ringHandle);
+   fprintf(stderr, "[gart] ring handle = 0x%08x\n", info->ringHandle);
     
 
    if (drmAddMap(ctx->drmFD, info->ringReadOffset, info->ringReadMapSize,
@@ -409,7 +409,7 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
    }
     
    fprintf(stderr,
-	   "[gart] ring read ptr handle = 0x%08lx\n",
+ 	   "[gart] ring read ptr handle = 0x%08lx\n",
 	   info->ringReadPtrHandle);
     
    if (drmAddMap(ctx->drmFD, info->bufStart, info->bufMapSize,
@@ -419,7 +419,7 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
       return 0;
    }
    fprintf(stderr,
-	   "[gart] vertex/indirect buffers handle = 0x%08lx\n",
+ 	   "[gart] vertex/indirect buffers handle = 0x%08x\n",
 	   info->bufHandle);
 
    if (drmAddMap(ctx->drmFD, info->gartTexStart, info->gartTexMapSize,
@@ -429,7 +429,7 @@ static int RADEONDRIAgpInit( const DRIDriverContext *ctx, RADEONInfoPtr info)
       return 0;
    }
    fprintf(stderr,
-	   "[gart] AGP texture map handle = 0x%08lx\n",
+ 	   "[gart] AGP texture map handle = 0x%08lx\n",
 	   info->gartTexHandle);
 
    /* Initialize Radeon's AGP registers */
@@ -486,7 +486,7 @@ static int RADEONDRIPciInit(const DRIDriverContext *ctx, RADEONInfoPtr info)
 	return 0;
     }
     fprintf(stderr,
-	       "[pci] ring handle = 0x%08lx\n", info->ringHandle);
+	       "[pci] ring handle = 0x%08x\n", info->ringHandle);
 
     if (drmAddMap(ctx->drmFD, info->ringReadOffset, info->ringReadMapSize,
 		  DRM_SCATTER_GATHER, flags, &info->ringReadPtrHandle) < 0) {
@@ -495,7 +495,7 @@ static int RADEONDRIPciInit(const DRIDriverContext *ctx, RADEONInfoPtr info)
 	return 0;
     }
     fprintf(stderr,
-	       "[pci] ring read ptr handle = 0x%08lx\n",
+ 	       "[pci] ring read ptr handle = 0x%08lx\n",
 	       info->ringReadPtrHandle);
 
     if (drmAddMap(ctx->drmFD, info->bufStart, info->bufMapSize,
@@ -505,7 +505,7 @@ static int RADEONDRIPciInit(const DRIDriverContext *ctx, RADEONInfoPtr info)
 	return 0;
     }
     fprintf(stderr,
-	       "[pci] vertex/indirect buffers handle = 0x%08lx\n",
+ 	       "[pci] vertex/indirect buffers handle = 0x%08lx\n",
 	       info->bufHandle);
 
     if (drmAddMap(ctx->drmFD, info->gartTexStart, info->gartTexMapSize,
@@ -515,7 +515,7 @@ static int RADEONDRIPciInit(const DRIDriverContext *ctx, RADEONInfoPtr info)
 	return 0;
     }
     fprintf(stderr,
-	       "[pci] GART texture map handle = 0x%08lx\n",
+ 	       "[pci] GART texture map handle = 0x%08x\n",
 	       info->gartTexHandle);
 
     return 1;

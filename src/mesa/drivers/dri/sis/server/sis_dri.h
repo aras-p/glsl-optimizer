@@ -38,7 +38,6 @@ typedef struct {
 typedef struct {
   drm_handle_t handle;
   drmSize size;
-  drmAddress map;
 } sisRegion, *sisRegionPtr;
 
 typedef struct {
