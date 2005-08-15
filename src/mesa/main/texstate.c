@@ -544,8 +544,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 }
 	 break;
       case GL_OPERAND2_RGB:
-	 if (ctx->Extensions.EXT_texture_env_combine ||
-             ctx->Extensions.ARB_texture_env_combine) {
+	 if (ctx->Extensions.ARB_texture_env_combine) {
 	    const GLenum operand = (GLenum) (GLint) *param;
 	    if (texUnit->Combine.OperandRGB[2] == operand)
 	       return;
@@ -562,14 +561,24 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	       return;
 	    }
 	 }
+	 else if (ctx->Extensions.EXT_texture_env_combine) {
+	    const GLenum operand = (GLenum) (GLint) *param;
+	    if (texUnit->Combine.OperandRGB[2] == operand)
+	       return;
+	    /* operand must be GL_SRC_ALPHA which is the initial value - thus
+	       don't need to actually compare the operand to the possible value */
+	    else {
+               TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", operand);
+	       return;
+	    }
+	 }
 	 else {
             TE_ERROR(GL_INVALID_ENUM, "glTexEnv(pname=%s)", pname);
 	    return;
 	 }
 	 break;
       case GL_OPERAND2_ALPHA:
-	 if (ctx->Extensions.EXT_texture_env_combine ||
-             ctx->Extensions.ARB_texture_env_combine) {
+	 if (ctx->Extensions.ARB_texture_env_combine) {
 	    const GLenum operand = (GLenum) (GLint) *param;
 	    if (texUnit->Combine.OperandA[2] == operand)
 	       return;
@@ -580,6 +589,17 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	       texUnit->Combine.OperandA[2] = operand;
 	       break;
 	    default:
+               TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", operand);
+	       return;
+	    }
+	 }
+	 else if (ctx->Extensions.EXT_texture_env_combine) {
+	    const GLenum operand = (GLenum) (GLint) *param;
+	    if (texUnit->Combine.OperandA[2] == operand)
+	       return;
+	    /* operand must be GL_SRC_ALPHA which is the initial value - thus
+	       don't need to actually compare the operand to the possible value */
+	    else {
                TE_ERROR(GL_INVALID_ENUM, "glTexEnv(param=%s)", operand);
 	       return;
 	    }
