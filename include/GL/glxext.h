@@ -347,6 +347,8 @@ typedef long long int int64_t;
 #include <inttypes.h>
 #elif defined(__SCO__) || defined(__USLC__)
 #include <stdint.h>
+#elif defined(WIN32) && defined(__GNUC__)
+#include <stdint.h>
 #endif
 
 #ifndef GLX_VERSION_1_3
