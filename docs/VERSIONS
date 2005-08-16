@@ -1352,7 +1352,11 @@ Mesa Version History
 	- fixed a few Darwin compilation problems
 
 
-6.3.1  July XX, 2005
+6.3.1
+    This was an intermediate release for X.org which wasn't otherwise released.
+
+
+6.3.2  August 19, 2005
     New:
 	- The distribution now includes the DRI drivers and GLX code
     Changes:
@@ -1362,4 +1366,8 @@ Mesa Version History
 	  extensions string
 	- negative relative addressing in vertex programs was broken
 	- update/fix SPARC assembly code for vertex transformation
-
+	- fixed memory leak when freeing GLX drawables/renderbuffers
+	- fixed display list memory leak
+	- the GL_PIXEL_MAP_I_TO_I table is now floating point, not integer
+	- wglGetProcAddress() didn't handle wgl-functions
+	- fixed glxext.h cross-compile issue (Colin Harrison)
