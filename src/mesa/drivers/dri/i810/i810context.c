@@ -118,7 +118,7 @@ static void i810BufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 
 /* Extension strings exported by the i810 driver.
  */
-static const struct dri_extension card_extensions[] =
+const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },

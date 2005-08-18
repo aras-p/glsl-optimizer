@@ -54,6 +54,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "GL/internal/dri_interface.h"
 
+extern const struct dri_extension card_extensions[];
+
 static __GLcontextModes *fill_in_modes( __GLcontextModes *modes,
 				       unsigned pixel_bits,
 				       unsigned depth_bits,
@@ -462,6 +464,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
       *driver_modes = i810FillInModes( 16,
 				       16, 0,
 				       1);
+      driInitExtensions( NULL, card_extensions, GL_TRUE );
    }
 
    return (void *) psp;
