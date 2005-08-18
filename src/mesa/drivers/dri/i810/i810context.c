@@ -72,13 +72,30 @@ int I810_DEBUG = (0);
 PUBLIC const char __driConfigOptions[] = { 0 };
 const GLuint __driNConfigOptions = 0;
 
+#define DRIVER_DATE                     "20021125"
+
 static const GLubyte *i810GetString( GLcontext *ctx, GLenum name )
 {
+   static char buffer[128];
+
    switch (name) {
    case GL_VENDOR:
       return (GLubyte *)"Keith Whitwell";
-   case GL_RENDERER:
-      return (GLubyte *)"Mesa DRI I810 20021125";
+   case GL_RENDERER: {
+      i810ContextPtr imesa = I810_CONTEXT(ctx);
+      const char * chipset;
+      
+      switch (imesa->i810Screen->deviceID) {
+      case PCI_CHIP_I810:       chipset = "i810"; break;
+      case PCI_CHIP_I810_DC100: chipset = "i810 DC-100"; break;
+      case PCI_CHIP_I810_E:     chipset = "i810E"; break;
+      case PCI_CHIP_I815:       chipset = "i815"; break;
+      default:                  chipset = "Unknown i810-class Chipset"; break;
+      }
+
+      (void) driGetRendererString( buffer, chipset, DRIVER_DATE, 0 );
+      return (GLubyte *) buffer;
+   }
    default:
       return 0;
    }
