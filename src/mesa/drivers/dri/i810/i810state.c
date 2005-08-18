@@ -103,14 +103,23 @@ static void i810BlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB,
 
    switch (ctx->Color.BlendSrcRGB) {
    case GL_ZERO:                a |= SDM_SRC_ZERO; break;
-   case GL_SRC_ALPHA:           a |= SDM_SRC_SRC_ALPHA; break;
    case GL_ONE:                 a |= SDM_SRC_ONE; break;
-   case GL_DST_COLOR:           a |= SDM_SRC_DST_COLOR; break;
-   case GL_ONE_MINUS_DST_COLOR: a |= SDM_SRC_INV_DST_COLOR; break;
+   case GL_SRC_COLOR:           a |= SDM_SRC_SRC_COLOR; break;
+   case GL_ONE_MINUS_SRC_COLOR: a |= SDM_SRC_INV_SRC_COLOR; break;
+   case GL_SRC_ALPHA:           a |= SDM_SRC_SRC_ALPHA; break;
    case GL_ONE_MINUS_SRC_ALPHA: a |= SDM_SRC_INV_SRC_ALPHA; break;
    case GL_DST_ALPHA:           a |= SDM_SRC_ONE; break;
    case GL_ONE_MINUS_DST_ALPHA: a |= SDM_SRC_ZERO; break;
-   case GL_SRC_ALPHA_SATURATE:  /*a |= SDM_SRC_SRC_ALPHA; break;*/
+   case GL_DST_COLOR:           a |= SDM_SRC_DST_COLOR; break;
+   case GL_ONE_MINUS_DST_COLOR: a |= SDM_SRC_INV_DST_COLOR; break;
+
+   /* (f, f, f, 1), f = min(As, 1 - Ad) = min(As, 1 - 1) = 0
+    * So (f, f, f, 1) = (0, 0, 0, 1).  Since there is no destination alpha and
+    * the only supported alpha operation is GL_FUNC_ADD, the result modulating
+    * the source alpha with the alpha factor is largely irrelevant.
+    */
+   case GL_SRC_ALPHA_SATURATE:  a |= SDM_SRC_ZERO; break;
+
    case GL_CONSTANT_COLOR:
    case GL_ONE_MINUS_CONSTANT_COLOR:
    case GL_CONSTANT_ALPHA:
@@ -122,14 +131,17 @@ static void i810BlendFuncSeparate( GLcontext *ctx, GLenum sfactorRGB,
    }
 
    switch (ctx->Color.BlendDstRGB) {
-   case GL_SRC_ALPHA:           a |= SDM_DST_SRC_ALPHA; break;
-   case GL_ONE_MINUS_SRC_ALPHA: a |= SDM_DST_INV_SRC_ALPHA; break;
    case GL_ZERO:                a |= SDM_DST_ZERO; break;
    case GL_ONE:                 a |= SDM_DST_ONE; break;
    case GL_SRC_COLOR:           a |= SDM_DST_SRC_COLOR; break;
    case GL_ONE_MINUS_SRC_COLOR: a |= SDM_DST_INV_SRC_COLOR; break;
+   case GL_SRC_ALPHA:           a |= SDM_DST_SRC_ALPHA; break;
+   case GL_ONE_MINUS_SRC_ALPHA: a |= SDM_DST_INV_SRC_ALPHA; break;
    case GL_DST_ALPHA:           a |= SDM_DST_ONE; break;
    case GL_ONE_MINUS_DST_ALPHA: a |= SDM_DST_ZERO; break;
+   case GL_DST_COLOR:           a |= SDM_DST_DST_COLOR; break;
+   case GL_ONE_MINUS_DST_COLOR: a |= SDM_DST_INV_DST_COLOR; break;
+
    case GL_CONSTANT_COLOR:
    case GL_ONE_MINUS_CONSTANT_COLOR:
    case GL_CONSTANT_ALPHA:
