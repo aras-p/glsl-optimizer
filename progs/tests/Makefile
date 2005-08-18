@@ -23,6 +23,7 @@ SOURCES = antialias.c \
 	blendsquare.c \
 	bufferobj.c \
 	bug_3101.c \
+	bug_3195.c \
 	crossbar.c \
 	cva.c \
 	dinoshade.c \
@@ -102,6 +103,12 @@ texrect: texrect.o readtex.o
 	$(CC) texrect.o readtex.o $(LIBS) -o $@
 
 texrect.o: texrect.c readtex.h
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+bug_3195: bug_3195.o readtex.o
+	$(CC) $(CFLAGS) bug_3195.o readtex.o $(LIBS) -o $@
+
+bug_3195.o: bug_3195.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 invert: invert.o readtex.o
