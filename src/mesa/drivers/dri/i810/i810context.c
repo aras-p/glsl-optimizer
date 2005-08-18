@@ -72,7 +72,7 @@ int I810_DEBUG = (0);
 PUBLIC const char __driConfigOptions[] = { 0 };
 const GLuint __driNConfigOptions = 0;
 
-#define DRIVER_DATE                     "20021125"
+#define DRIVER_DATE                     "20050818"
 
 static const GLubyte *i810GetString( GLcontext *ctx, GLenum name )
 {
