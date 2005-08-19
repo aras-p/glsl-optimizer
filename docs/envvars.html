@@ -16,7 +16,9 @@ Mesa supports the following environment variables:
 <li>MESA_NO_MMX - if set, disables Intel MMX optimizations
 <li>MESA_NO_3DNOW - if set, disables AMD 3DNow! optimizations
 <li>MESA_NO_SSE - if set, disables Intel SSE optimizations
-<li>MESA_DEBUG - if set, error messages are printed to stderr
+<li>MESA_DEBUG - if set, error messages are printed to stderr.
+If the value of MESA_DEBUG is "FP" floating point arithmetic errors will
+generate exceptions.
 <li>MESA_NO_DITHER - if set, disables dithering, overriding glEnable(GL_DITHER)
 </ul>
 
