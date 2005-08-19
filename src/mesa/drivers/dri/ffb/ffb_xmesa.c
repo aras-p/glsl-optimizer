@@ -64,6 +64,7 @@ ffbInitDriver(__DRIscreenPrivate *sPriv)
 {
 	ffbScreenPrivate *ffbScreen;
 	FFBDRIPtr gDRIPriv = (FFBDRIPtr) sPriv->pDevPriv;
+	drmAddress map;
 
 	if (getenv("LIBGL_FORCE_XSERVER"))
 		return GL_FALSE;
@@ -83,59 +84,59 @@ ffbInitDriver(__DRIscreenPrivate *sPriv)
 	if (drmMap(sPriv->fd,
 		   gDRIPriv->hFbcRegs,
 		   gDRIPriv->sFbcRegs,
-		   &gDRIPriv->mFbcRegs)) {
+		   &map)) {
 	        FREE(ffbScreen);
 		return GL_FALSE;
 	}
-	ffbScreen->regs = (ffb_fbcPtr) gDRIPriv->mFbcRegs;
+	ffbScreen->regs = (ffb_fbcPtr) map;
 
 	/* Map ramdac registers. */
 	if (drmMap(sPriv->fd,
 		   gDRIPriv->hDacRegs,
 		   gDRIPriv->sDacRegs,
-		   &gDRIPriv->mDacRegs)) {
-		drmUnmap(gDRIPriv->mFbcRegs, gDRIPriv->sFbcRegs);
+		   &map)) {
+		drmUnmap((drmAddress)ffbScreen->regs, gDRIPriv->sFbcRegs);
 		FREE(ffbScreen);
 		return GL_FALSE;
 	}
-	ffbScreen->dac = (ffb_dacPtr) gDRIPriv->mDacRegs;
+	ffbScreen->dac = (ffb_dacPtr) map;
 
 	/* Map "Smart" framebuffer views. */
 	if (drmMap(sPriv->fd,
 		   gDRIPriv->hSfb8r,
 		   gDRIPriv->sSfb8r,
-		   &gDRIPriv->mSfb8r)) {
-		drmUnmap(gDRIPriv->mFbcRegs, gDRIPriv->sFbcRegs);
-		drmUnmap(gDRIPriv->mDacRegs, gDRIPriv->sDacRegs);
+		   &map)) {
+		drmUnmap((drmAddress)ffbScreen->regs, gDRIPriv->sFbcRegs);
+		drmUnmap((drmAddress)ffbScreen->dac, gDRIPriv->sDacRegs);
 		FREE(ffbScreen);
 		return GL_FALSE;
 	}
-	ffbScreen->sfb8r = (volatile char *) gDRIPriv->mSfb8r;
+	ffbScreen->sfb8r = (volatile char *) map;
 
 	if (drmMap(sPriv->fd,
 		   gDRIPriv->hSfb32,
 		   gDRIPriv->sSfb32,
-		   &gDRIPriv->mSfb32)) {
-		drmUnmap(gDRIPriv->mFbcRegs, gDRIPriv->sFbcRegs);
-		drmUnmap(gDRIPriv->mDacRegs, gDRIPriv->sDacRegs);
-		drmUnmap(gDRIPriv->mSfb8r, gDRIPriv->sSfb8r);
+		   &map)) {
+		drmUnmap((drmAddress)ffbScreen->regs, gDRIPriv->sFbcRegs);
+		drmUnmap((drmAddress)ffbScreen->dac, gDRIPriv->sDacRegs);
+		drmUnmap((drmAddress)ffbScreen->sfb8r, gDRIPriv->sSfb8r);
 		FREE(ffbScreen);
 		return GL_FALSE;
 	}
-	ffbScreen->sfb32 = (volatile char *) gDRIPriv->mSfb32;
+	ffbScreen->sfb32 = (volatile char *) map;
 
 	if (drmMap(sPriv->fd,
 		   gDRIPriv->hSfb64,
 		   gDRIPriv->sSfb64,
-		   &gDRIPriv->mSfb64)) {
-		drmUnmap(gDRIPriv->mFbcRegs, gDRIPriv->sFbcRegs);
-		drmUnmap(gDRIPriv->mDacRegs, gDRIPriv->sDacRegs);
-		drmUnmap(gDRIPriv->mSfb8r, gDRIPriv->sSfb8r);
-		drmUnmap(gDRIPriv->mSfb32, gDRIPriv->sSfb32);
+		   &map)) {
+		drmUnmap((drmAddress)ffbScreen->regs, gDRIPriv->sFbcRegs);
+		drmUnmap((drmAddress)ffbScreen->dac, gDRIPriv->sDacRegs);
+		drmUnmap((drmAddress)ffbScreen->sfb8r, gDRIPriv->sSfb8r);
+		drmUnmap((drmAddress)ffbScreen->sfb32, gDRIPriv->sSfb32);
 		FREE(ffbScreen);
 		return GL_FALSE;
 	}
-	ffbScreen->sfb64 = (volatile char *) gDRIPriv->mSfb64;
+	ffbScreen->sfb64 = (volatile char *) map;
 
 	ffbScreen->fifo_cache = 0;
 	ffbScreen->rp_active = 0;
@@ -156,11 +157,11 @@ ffbDestroyScreen(__DRIscreenPrivate *sPriv)
 	ffbScreenPrivate *ffbScreen = sPriv->private;
 	FFBDRIPtr gDRIPriv = (FFBDRIPtr) sPriv->pDevPriv;
 
-	drmUnmap(gDRIPriv->mFbcRegs, gDRIPriv->sFbcRegs);
-	drmUnmap(gDRIPriv->mDacRegs, gDRIPriv->sDacRegs);
-	drmUnmap(gDRIPriv->mSfb8r, gDRIPriv->sSfb8r);
-	drmUnmap(gDRIPriv->mSfb32, gDRIPriv->sSfb32);
-	drmUnmap(gDRIPriv->mSfb64, gDRIPriv->sSfb64);
+	drmUnmap((drmAddress)ffbScreen->regs, gDRIPriv->sFbcRegs);
+	drmUnmap((drmAddress)ffbScreen->dac, gDRIPriv->sDacRegs);
+	drmUnmap((drmAddress)ffbScreen->sfb8r, gDRIPriv->sSfb8r);
+	drmUnmap((drmAddress)ffbScreen->sfb32, gDRIPriv->sSfb32);
+	drmUnmap((drmAddress)ffbScreen->sfb64, gDRIPriv->sSfb64);
 
 	FREE(ffbScreen);
 }
