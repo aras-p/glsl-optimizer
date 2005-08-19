@@ -211,12 +211,14 @@ struct array_state_vector {
      * There are some bytes of extra data before \c array_info_cache that is
      * used to hold the header for RenderLarge commands.  This is
      * \b not included in \c array_info_cache_size or
-     * \c array_info_cache_buffer_size.
+     * \c array_info_cache_buffer_size.  \c array_info_cache_base stores a
+     * pointer to the true start of the buffer (i.e., what malloc returned).
      */
     /*@{*/
     size_t array_info_cache_size;
     size_t array_info_cache_buffer_size;
     void * array_info_cache;
+    void * array_info_cache_base;
     /*@}*/
 
 

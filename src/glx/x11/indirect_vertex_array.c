@@ -382,13 +382,14 @@ allocate_array_info_cache( struct array_state_vector * arrays,
 {
 #define MAX_HEADER_SIZE 20
     if ( arrays->array_info_cache_buffer_size < required_size ) {
-	GLubyte * temp = realloc( arrays->array_info_cache, required_size 
-				  + MAX_HEADER_SIZE );
+	GLubyte * temp = realloc( arrays->array_info_cache_base,
+				  required_size + MAX_HEADER_SIZE );
 
 	if ( temp == NULL ) {
 	    return GL_FALSE;
 	}
 
+	arrays->array_info_cache_base = temp;
 	arrays->array_info_cache = temp + MAX_HEADER_SIZE;
 	arrays->array_info_cache_buffer_size = required_size;
     }
