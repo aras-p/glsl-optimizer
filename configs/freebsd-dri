@@ -22,8 +22,9 @@ CXXFLAGS = $(DEFINES) -Wall -g -ansi -pedantic -fPIC
 ASM_SOURCES = 
 
 # Library/program dependencies
-DRI_LIB_DEPS = -L/usr/local/lib -lm -lpthread -lexpat
-GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
+LIBDRM_LIB = `pkg-config --libs libdrm` -ldrm
+DRI_LIB_DEPS = -L/usr/local/lib -lm -lpthread -lexpat $(LIBDRM_LIB)
+GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread $(LIBDRM_LIB)
 
 GLUT_LIB_DEPS = -L$(LIB_DIR) -L/usr/X11R6/lib -lGLU -lGL -lX11 -lXmu -lXt -lXi -lm
 GLW_LIB_DEPS = -L$(LIB_DIR) -L/usr/X11R6/lib -lGL -lXt -lXm -lX11
@@ -39,6 +40,6 @@ DRM_SOURCE_PATH=$(TOP)/../drm
 
 # ffb and gamma are missing because they have not been converted to use the new
 # interface.
-DRI_DIRS = dri_client i810 i830 i915 mach64 mga r128 r200 r300 radeon tdfx \
+DRI_DIRS = i810 i830 i915 mach64 mga r128 r200 r300 radeon tdfx \
 	   unichrome savage sis
 

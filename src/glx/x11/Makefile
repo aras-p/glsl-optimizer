@@ -8,10 +8,6 @@ C_SOURCES = \
 	  $(TOP)/src/mesa/glapi/glthread.c \
 	  $(TOP)/src/mesa/main/dispatch.c \
 	  glcontextmodes.c \
-	  $(DRM_SOURCE_PATH)/libdrm/xf86drm.c \
-	  $(DRM_SOURCE_PATH)/libdrm/xf86drmHash.c \
-	  $(DRM_SOURCE_PATH)/libdrm/xf86drmRandom.c \
-	  $(DRM_SOURCE_PATH)/libdrm/xf86drmSL.c \
 	  clientattrib.c \
 	  compsize.c \
 	  eval.c \
@@ -53,8 +49,7 @@ INCLUDES = -I. \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \
 	-I$(TOP)/src/mesa/drivers/dri/common \
-	-I$(DRM_SOURCE_PATH)/libdrm \
-	-I$(DRM_SOURCE_PATH)/shared-core \
+        `pkg-config --cflags libdrm` \
 	$(X11_INCLUDES)
 
 
