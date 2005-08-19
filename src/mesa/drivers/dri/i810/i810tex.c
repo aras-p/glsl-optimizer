@@ -434,6 +434,14 @@ static void i810DeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
    _mesa_delete_texture_object(ctx, tObj);
 }
 
+/**
+ * Choose a Mesa texture format to match the requested format.
+ * 
+ * \todo
+ * Determine why \c _mesa_texformat_al88 doesn't work right for
+ * \c GL_LUMINANCE_ALPHA textures.  It seems to work fine for \c GL_INTENSITY,
+ * but \c GL_LUMINANCE_ALPHA gets some red bands in progs/demos/texenv.
+ */
 static const struct gl_texture_format *
 i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 			 GLenum format, GLenum type )
@@ -504,7 +512,11 @@ i810ChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_INTENSITY12:
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
+#if 0
+      return &_mesa_texformat_al88;
+#else
       return &_mesa_texformat_argb4444;
+#endif
 
    case GL_YCBCR_MESA:
       if (type == GL_UNSIGNED_SHORT_8_8_MESA ||
