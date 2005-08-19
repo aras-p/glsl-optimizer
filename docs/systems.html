@@ -14,98 +14,43 @@ supported on those systems. All you need is an ANSI C compiler and the
 X development environment to use Mesa.
 </p>
 
-<p>Others have contributed drivers
-for the Amiga, Apple Macintosh, BeOS, NeXT, OS/2, MS-DOS, VMS, Windows
+<p>
+The DRI hardware drivers for the X.org server and XFree86 provide
+hardware accelerated rendering for chips from ATI, Intel, Matrox, 3dfx
+and others on Linux and FreeBSD.
+</p>
+
+<p>
+Drivers for other assorted platforms include:
+the Amiga, Apple Macintosh, BeOS, NeXT, OS/2, MS-DOS, VMS, Windows
 9x/NT, and Direct3D.
 </p>
 
 <p>
-The following files describe the details for various platforms.
-Be warned, some of these files (and drivers) may be very out of date.
+Details about particular drivers follows.
+Be warned that some drivers may be out of date and no longer function.
 </p>
 
 <UL>
-<LI><A HREF="README.X11">README.X11</A> - X Window System / Unix / Linux
-<LI><A HREF="README.WIN32">README.WIN32</A> - Microsoft Windows
-<LI><A HREF="README.VMS">README.VMS</A> - DEC VMS
-<LI><A HREF="README.GGI">README.GGI</A> - GGI
-<LI><A HREF="README.3DFX">README.3DFX</A> - 3Dfx/Glide driver
-<LI><A HREF="README.AMIWIN">README.AMIWIN</A> - Amiga Amiwin
-<LI><A HREF="README.BEOS">README.BEOS</A> - BeOS
-<LI><A HREF="README.D3D">README.D3D</A> - Direct3D driver
-<LI><A HREF="README.DJ">README.DJ</A> - DJGPP
-<LI><A HREF="README.LYNXOS">README.LYNXOS</A> - LynxOS
-<LI><A HREF="README.MINGW32">README.MINGW32</A> - Mingw32
-<LI><A HREF="README.NeXT">README.NeXT</A> - NeXT
-<LI><A HREF="README.OpenStep">README.OpenStep</A> - OpenStep
-<LI><A HREF="README.OS2">README.OS2</A> - OS/2
-<LI><A HREF="README.WINDML">README.WINDML</A> - WindML
+<LI>Xlib driver for the X Window System <A HREF="README.X11">(README.X11)</A>
+<li><a href="http://dri.sourceforge.net/" target="_parent">
+DRI hardware drivers</a> for the X window system
+<LI>Microsoft Windows <A HREF="README.WIN32">(README.WIN32)</A>
+<LI>DEC VMS <A HREF="README.VMS">(README.VMS)</A>
+<LI>3dfx/Glide <A HREF="README.3DFX">(README.3DFX)</A>
+<LI>GGI <A HREF="README.GGI">(README.GGI)</A>
+<LI>Amiga Amiwin <A HREF="README.AMIWIN">(README.AMIWIN)</A>
+<LI>BeOS <A HREF="README.BEOS">(README.BEOS)</A>
+<LI>Direct3D driver <A HREF="README.D3D">(README.D3D)</A>
+<LI>DJGPP <A HREF="README.DJ">(README.DJ)</A>
+<LI>LynxOS <A HREF="README.LYNXOS">(README.LYNXOS)</A>
+<LI>Mingw32 <A HREF="README.MINGW32">(README.MINGW32)</A>
+<LI>NeXT <A HREF="README.NeXT">(README.NeXT)</A>
+<LI>OpenStep <A HREF="README.OpenStep">(README.OpenStep)</A>
+<LI>OS/2 <A HREF="README.OS2">(README.OS2)</A>
+<LI>WindML <A HREF="README.WINDML">(README.WINDML)</A>
+<LI><a href="http://utah-glx.sourceforge.net/" target="_parent">Utah GLX drivers</a>
 </UL>
-
-
-<p>
-The standard Mesa distribution only supports software-based rendering, with
-the exception of the 3Dfx Glide driver.
-Information about other hardware support follows.
-</p>
-
-<ul>
-<li>DRI-based hardware support for 3dfx, Intel, Matrox, ATI with XFree86
-<blockquote>
-	<p>The <a href="http://dri.sourceforge.net/" target="_parent">DRI architecture</a>,
-	originally developed by Precision Insight, Inc. uses Mesa and
-        provides hardware acceleration for a number of popular chipsets.<br>
-	<br>
-	The DRI is part of XFree86 4.0 and later.
-        <br><br>
-        If you download and install XFree86 4.x you do not need to
-        install Mesa separately.  All the important parts of Mesa
-        will be installed with the rest of XFree86.
-</blockquote>
-
-
-<li>3dfx Voodoo1, Voodoo2, Voodoo Rush, Voodoo Banshee, Voodoo3
-<blockquote>
-<p>All cards based on these chipsets should work with Linux and
-Windows 95 via 3dfx's Glide library.
-The Mesa/Glide driver is included with the Mesa distribution.
-You'll need to install the Glide header files and runtime library.
-</p>
-<p>
-David Bucciarelli wrote the original 3dfx driver for Mesa.<br>
-Daryll Strauss ported Glide to Linux.
-</p>
-</blockquote>
-
-
-<li>Matrox G200/G400, nVidia RIVA, ATI Rage Pro, Intel i810 on Linux
-<blockquote>
-<p>The <a href="http://utah-glx.sourceforge.net/" target="_parent">
-Utah GLX project</a>
-(no longer active) developed drivers for these chipsets and others.
-</blockquote>
-
-<li>Amiga Warp3D
-<blockquote>
-<p>Amiga systems can support 3D hardware with the Warp3D API.
-See <a href="http://www.haage-partner.com/3dworld" target="_parent">here</a>.
-</blockquote>
-
-<li>Also see
-<blockquote>
-<p><a href="http://www.linux3d.org/" target="_parent">www.linux3d.org</a> for
-other 3D hardware info for Linux.
-</blockquote>
-
-</ul>
-
-<p>
-<b><em>Note:</em></b>
-If you have NVIDIA hardware in your computer,
-you should download and install NVIDIA's OpenGL library.  You may
-however, want to download Mesa in order to use its GLU and GLUT
-libraries, or assorted demo programs.</p>
-
 
 </body>
 </html>

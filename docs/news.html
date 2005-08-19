@@ -11,6 +11,36 @@
 <H1>News</H1>
 
 
+<h2>August 19, 2005</h2>
+<p>
+Mesa 6.3.2 has been released.
+Note: there was no public release of version 6.3.1.
+</p>
+<pre>
+    New:
+	- The distribution now includes the DRI drivers and GLX code
+    Changes:
+	- Made the DRI "new" driver interface standard, remove old code
+    Bug fixes:
+	- GL_ARB_vertex/fragment_shader were mistakenly listed in the
+	  extensions string
+	- negative relative addressing in vertex programs was broken
+	- update/fix SPARC assembly code for vertex transformation
+	- fixed memory leak when freeing GLX drawables/renderbuffers
+	- fixed display list memory leak
+	- the GL_PIXEL_MAP_I_TO_I table is now floating point, not integer
+	- wglGetProcAddress() didn't handle wgl-functions
+	- fixed glxext.h cross-compile issue (Colin Harrison)
+	- assorted DRI driver fixes
+</pre>
+<p>
+The MD5 checksums are:
+</p>
+<pre>
+(tbd)
+</pre>
+
+
 <h2>July 20, 2005</h2>
 <p>
 Mesa 6.3 has been released.
@@ -1016,6 +1046,6 @@ source code</a>.</p>
 
 
 <hr>
-$Id: news.html,v 3.22 2005/07/20 18:20:45 brianp Exp $
+$Id: news.html,v 3.23 2005/08/19 16:57:50 brianp Exp $
 </body>
 </html>

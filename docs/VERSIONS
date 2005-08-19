@@ -1371,3 +1371,4 @@ Mesa Version History
 	- the GL_PIXEL_MAP_I_TO_I table is now floating point, not integer
 	- wglGetProcAddress() didn't handle wgl-functions
 	- fixed glxext.h cross-compile issue (Colin Harrison)
+	- assorted DRI driver fixes
