@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  6.4
  *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  *
@@ -1092,6 +1092,8 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
           * FBConfig attribs.
           */
          case GLX_RENDER_TYPE:
+            if (!fbConfig)
+               return NULL;
             parselist++;
             if (*parselist == GLX_RGBA_BIT) {
                rgb_flag = GL_TRUE;
@@ -1105,6 +1107,8 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
             parselist++;
             break;
          case GLX_DRAWABLE_TYPE:
+            if (!fbConfig)
+               return NULL;
             parselist++;
             if (*parselist & ~(GLX_WINDOW_BIT | GLX_PIXMAP_BIT | GLX_PBUFFER_BIT)) {
                return NULL; /* bad bit */
@@ -1112,8 +1116,16 @@ choose_visual( Display *dpy, int screen, const int *list, GLboolean fbConfig )
             parselist++;
             break;
          case GLX_FBCONFIG_ID:
+            if (!fbConfig)
+               return NULL;
             parselist++;
-            desiredVisualID = *parselist;
+            desiredVisualID = *parselist++;
+            break;
+         case GLX_X_RENDERABLE:
+            if (!fbConfig)
+               return NULL;
+            parselist += 2;
+            /* ignore */
             break;
 
 	 case None:
