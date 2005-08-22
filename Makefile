@@ -134,9 +134,9 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-DIRECTORY = Mesa-6.3.2
-LIB_NAME = MesaLib-6.3.2
-DEMO_NAME = MesaDemos-6.3.2
+DIRECTORY = Mesa-6.5
+LIB_NAME = MesaLib-6.5
+DEMO_NAME = MesaDemos-6.5
 
 MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
@@ -270,7 +270,7 @@ DRI_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.[ch]		\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.po		\
 	$(DIRECTORY)/src/mesa/drivers/dri/dri_client/imports/*.h	\
-	$(DIRECTORY)/src/mesa/drivers/dri/*/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/dri/*/*.[chS]			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/Doxyfile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/*/server/*.[ch]
