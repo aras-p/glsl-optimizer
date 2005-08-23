@@ -213,7 +213,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/directfb/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/directfb/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dos/*.[chS]			\
-	$(DIRECTORY)/src/mesa/drivers/dri/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/fbdev/glfbdev.c			\
 	$(DIRECTORY)/src/mesa/drivers/glide/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/ggi/*.[ch]			\
@@ -260,13 +259,11 @@ MAIN_FILES = \
 	$(DIRECTORY)/windows/VC7/mesa/osmesa/osmesa.vcproj
 
 DRI_FILES = \
-	$(DIRECTORY)/include/GL/internal/*.h				\
 	$(DIRECTORY)/src/glx/Makefile					\
 	$(DIRECTORY)/src/glx/x11/Makefile				\
 	$(DIRECTORY)/src/glx/x11/*.[ch]					\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile			\
 	$(DIRECTORY)/src/mesa/drivers/dri/Makefile.template		\
-	$(DIRECTORY)/src/mesa/drivers/dri/common/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.[ch]		\
 	$(DIRECTORY)/src/mesa/drivers/dri/common/xmlpool/*.po		\
 	$(DIRECTORY)/src/mesa/drivers/dri/dri_client/imports/*.h	\
