@@ -1,4 +1,3 @@
-
 /*
  * Demo of a reflective, texture-mapped surface with OpenGL.
  * Brian Paul   August 14, 1995   This file is in the public domain.
@@ -24,9 +23,11 @@
  *   Dirk Reiners (reiners@igd.fhg.de) made some modifications to this code.
  *   Mark Kilgard (April 1997)
  *   Brian Paul (April 2000 - added keyboard d/s options)
+ *   Brian Paul (August 2005 - added multi window feature)
  */
 
 
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,40 +37,101 @@
 
 
 #define DEG2RAD (3.14159/180.0)
-
 #define TABLE_TEXTURE "../images/tile.rgb"
-
-static GLint ImgWidth, ImgHeight;
-static GLenum ImgFormat;
-static GLubyte *Image = NULL;
-
 #define MAX_OBJECTS 2
-static GLint table_list;
-static GLint objects_list[MAX_OBJECTS];
-
-static GLfloat xrot, yrot;
-static GLfloat spin;
-
-static GLint Width = 400, Height = 300;
-static GLenum ShowBuffer = GL_NONE;
-static GLboolean Anim = GL_TRUE;
-
-/* performance info */
-static GLint T0 = 0;
-static GLint Frames = 0;
+#define INIT_WIDTH 400
+#define INIT_HEIGHT 300
 
 
-static void make_table( void )
+struct window {
+   int id;               /* returned by glutCreateWindow() */
+   int width, height;
+   GLboolean anim;
+   GLfloat xrot, yrot;
+   GLfloat spin;
+   GLenum showBuffer;
+   GLuint table_list;
+   GLuint objects_list[MAX_OBJECTS];
+   double t0;
+   struct window *next;
+};
+
+
+static struct window *FirstWindow = NULL;
+
+
+static void
+CreateWindow(void);
+
+
+static struct window *
+CurrentWindow(void)
+{
+   int id = glutGetWindow();
+   struct window *w;
+   for (w = FirstWindow; w; w = w->next) {
+      if (w->id == id)
+         return w;
+   }
+   return NULL;
+}
+
+
+static GLboolean
+AnyAnimating(void)
+{
+   struct window *w;
+   for (w = FirstWindow; w; w = w->next) {
+      if (w->anim)
+         return 1;
+   }
+   return 0;
+}
+
+
+static void
+KillWindow(struct window *w)
+{
+   struct window *win, *prev = NULL;
+   for (win = FirstWindow; win; win = win->next) {
+      if (win == w) {
+         if (prev) {
+            prev->next = win->next;
+         }
+         else {
+            FirstWindow = win->next;
+         }
+         glutDestroyWindow(win->id);
+         win->next = NULL;
+         free(win);
+         return;
+      }
+      prev = win;
+   }
+}
+
+
+static void
+KillAllWindows(void)
+{
+   while (FirstWindow)
+      KillWindow(FirstWindow);
+}
+
+
+static GLuint
+MakeTable(void)
 {
    static GLfloat table_mat[] = { 1.0, 1.0, 1.0, 0.6 };
    static GLfloat gray[] = { 0.4, 0.4, 0.4, 1.0 };
+   GLuint table_list;
 
    table_list = glGenLists(1);
    glNewList( table_list, GL_COMPILE );
 
    /* load table's texture */
    glMaterialfv( GL_FRONT, GL_AMBIENT_AND_DIFFUSE, table_mat );
-/*   glMaterialfv( GL_FRONT, GL_EMISSION, gray );*/
+   /*glMaterialfv( GL_FRONT, GL_EMISSION, gray );*/
    glMaterialfv( GL_FRONT, GL_DIFFUSE, table_mat );
    glMaterialfv( GL_FRONT, GL_AMBIENT, gray );
    
@@ -88,10 +150,12 @@ static void make_table( void )
    glDisable( GL_TEXTURE_2D );
 
    glEndList();
+   return table_list;
 }
 
 
-static void make_objects( void )
+static void
+MakeObjects(GLuint *objects_list)
 {
    GLUquadricObj *q;
 
@@ -119,28 +183,30 @@ static void make_objects( void )
 }
 
 
-static void init( void )
+static void
+InitWindow(struct window *w)
 {
-   make_table();
-   make_objects();
+   GLint imgWidth, imgHeight;
+   GLenum imgFormat;
+   GLubyte *image = NULL;
 
-   Image = LoadRGBImage( TABLE_TEXTURE, &ImgWidth, &ImgHeight, &ImgFormat );
-   if (!Image) {
+   w->table_list = MakeTable();
+   MakeObjects(w->objects_list);
+
+   image = LoadRGBImage( TABLE_TEXTURE, &imgWidth, &imgHeight, &imgFormat );
+   if (!image) {
       printf("Couldn't read %s\n", TABLE_TEXTURE);
       exit(0);
    }
 
-   gluBuild2DMipmaps(GL_TEXTURE_2D, 3, ImgWidth, ImgHeight,
-                     ImgFormat, GL_UNSIGNED_BYTE, Image);
+   gluBuild2DMipmaps(GL_TEXTURE_2D, 3, imgWidth, imgHeight,
+                     imgFormat, GL_UNSIGNED_BYTE, image);
+   free(image);
 
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-
-   xrot = 30.0;
-   yrot = 50.0;
-   spin = 0.0;
 
    glShadeModel( GL_FLAT );
    
@@ -153,14 +219,15 @@ static void init( void )
 }
 
 
-
-static void reshape(int w, int h)
+static void
+Reshape(int width, int height)
 {
+   struct window *w = CurrentWindow();
    GLfloat yAspect = 2.5;
-   GLfloat xAspect = yAspect * (float) w / (float) h;
-   Width = w;
-   Height = h;
-   glViewport(0, 0, w, h);
+   GLfloat xAspect = yAspect * (float) width / (float) height;
+   w->width = width;
+   w->height = height;
+   glViewport(0, 0, width, height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
    glFrustum( -xAspect, xAspect, -yAspect, yAspect, 10.0, 30.0 );
@@ -169,8 +236,8 @@ static void reshape(int w, int h)
 }
 
 
-
-static void draw_objects( GLfloat eyex, GLfloat eyey, GLfloat eyez )
+static void
+DrawObjects(struct window *w, GLfloat eyex, GLfloat eyey, GLfloat eyez)
 {
    (void) eyex;
    (void) eyey;
@@ -178,52 +245,53 @@ static void draw_objects( GLfloat eyex, GLfloat eyey, GLfloat eyez )
 #ifndef USE_ZBUFFER
    if (eyex<0.5) {
 #endif
-	   glPushMatrix();
-	   glTranslatef( 1.0, 1.5, 0.0 );
-	   glRotatef( spin, 1.0, 0.5, 0.0 );
-	   glRotatef( 0.5*spin, 0.0, 0.5, 1.0 );
-	   glCallList( objects_list[0] );
-	   glPopMatrix();
-	
-	   glPushMatrix();
-	   glTranslatef( -1.0, 0.85+3.0*fabs( cos(0.01*spin) ), 0.0 );
-	   glRotatef( 0.5*spin, 0.0, 0.5, 1.0 );
-	   glRotatef( spin, 1.0, 0.5, 0.0 );
-	   glScalef( 0.5, 0.5, 0.5 );
-	   glCallList( objects_list[1] );
-	   glPopMatrix();
+      glPushMatrix();
+      glTranslatef( 1.0, 1.5, 0.0 );
+      glRotatef( w->spin, 1.0, 0.5, 0.0 );
+      glRotatef( 0.5*w->spin, 0.0, 0.5, 1.0 );
+      glCallList( w->objects_list[0] );
+      glPopMatrix();
+      
+      glPushMatrix();
+      glTranslatef( -1.0, 0.85+3.0*fabs( cos(0.01*w->spin) ), 0.0 );
+      glRotatef( 0.5*w->spin, 0.0, 0.5, 1.0 );
+      glRotatef( w->spin, 1.0, 0.5, 0.0 );
+      glScalef( 0.5, 0.5, 0.5 );
+      glCallList( w->objects_list[1] );
+      glPopMatrix();
 #ifndef USE_ZBUFFER
    }
    else {	
-	   glPushMatrix();
-	   glTranslatef( -1.0, 0.85+3.0*fabs( cos(0.01*spin) ), 0.0 );
-	   glRotatef( 0.5*spin, 0.0, 0.5, 1.0 );
-	   glRotatef( spin, 1.0, 0.5, 0.0 );
-	   glScalef( 0.5, 0.5, 0.5 );
-	   glCallList( objects_list[1] );
-	   glPopMatrix();
+      glPushMatrix();
+      glTranslatef( -1.0, 0.85+3.0*fabs( cos(0.01*w->spin) ), 0.0 );
+      glRotatef( 0.5*w->spin, 0.0, 0.5, 1.0 );
+      glRotatef( w->spin, 1.0, 0.5, 0.0 );
+      glScalef( 0.5, 0.5, 0.5 );
+      glCallList( w->objects_list[1] );
+      glPopMatrix();
 
-	   glPushMatrix();
-	   glTranslatef( 1.0, 1.5, 0.0 );
-	   glRotatef( spin, 1.0, 0.5, 0.0 );
-	   glRotatef( 0.5*spin, 0.0, 0.5, 1.0 );
-	   glCallList( objects_list[0] );
-	   glPopMatrix();
+      glPushMatrix();
+      glTranslatef( 1.0, 1.5, 0.0 );
+      glRotatef( w->spin, 1.0, 0.5, 0.0 );
+      glRotatef( 0.5*w->spin, 0.0, 0.5, 1.0 );
+      glCallList( w->objects_list[0] );
+      glPopMatrix();
    }
 #endif
 }
 
 
-
-static void draw_table( void )
+static void
+DrawTable(struct window *w)
 {
-   glCallList( table_list );
+   glCallList(w->table_list);
 }
 
 
-
-static void draw_scene( void )
+static void
+DrawWindow(void)
 {
+   struct window *w = CurrentWindow();
    static GLfloat light_pos[] = { 0.0, 20.0, 0.0, 1.0 };
    GLfloat dist = 20.0;
    GLfloat eyex, eyey, eyez;
@@ -231,9 +299,9 @@ static void draw_scene( void )
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 
-   eyex = dist * cos(yrot*DEG2RAD) * cos(xrot*DEG2RAD);
-   eyez = dist * sin(yrot*DEG2RAD) * cos(xrot*DEG2RAD);
-   eyey = dist * sin(xrot*DEG2RAD);
+   eyex = dist  *  cos(w->yrot * DEG2RAD)  *  cos(w->xrot * DEG2RAD);
+   eyez = dist  *  sin(w->yrot * DEG2RAD)  *  cos(w->xrot * DEG2RAD);
+   eyey = dist  *  sin(w->xrot * DEG2RAD);
 
    /* view from top */
    glPushMatrix();
@@ -247,7 +315,7 @@ static void draw_scene( void )
    glStencilFunc( GL_ALWAYS, 1, 0xffffffff );
    glStencilOp( GL_REPLACE, GL_REPLACE, GL_REPLACE );
    glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-   draw_table();
+   DrawTable(w);
    glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 
    glEnable( GL_DEPTH_TEST );
@@ -264,7 +332,7 @@ static void draw_scene( void )
       /* Reposition light in reflected space. */
       glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
 
-      draw_objects(eyex, eyey, eyez);
+      DrawObjects(w, eyex, eyey, eyez);
       glPopMatrix();
 
       /* Restore light's original unreflected position. */
@@ -277,128 +345,205 @@ static void draw_scene( void )
    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
    glEnable( GL_TEXTURE_2D );
-   draw_table();
+   DrawTable(w);
    glDisable( GL_TEXTURE_2D );
    glDisable( GL_BLEND );
 
    /* view from top */
    glPushMatrix();
 
-   draw_objects(eyex, eyey, eyez);
+   DrawObjects(w, eyex, eyey, eyez);
 
    glPopMatrix();
 
    glPopMatrix();
 
-   if (ShowBuffer == GL_DEPTH) {
-      ShowDepthBuffer(Width, Height, 1.0, 0.0);
+   if (w->showBuffer == GL_DEPTH) {
+      ShowDepthBuffer(w->width, w->height, 1.0, 0.0);
    }
-   else if (ShowBuffer == GL_STENCIL) {
-      ShowStencilBuffer(Width, Height, 255.0, 0.0);
+   else if (w->showBuffer == GL_STENCIL) {
+      ShowStencilBuffer(w->width, w->height, 255.0, 0.0);
    }
-   else if (ShowBuffer == GL_ALPHA) {
-      ShowAlphaBuffer(Width, Height);
+   else if (w->showBuffer == GL_ALPHA) {
+      ShowAlphaBuffer(w->width, w->height);
    }
 
    glutSwapBuffers();
 
+   /* calc/show frame rate */
    {
+      static GLint t0 = 0;
+      static GLint frames = 0;
       GLint t = glutGet(GLUT_ELAPSED_TIME);
-      Frames++;
-      if (t - T0 >= 5000) {
-         GLfloat seconds = (t - T0) / 1000.0;
-         GLfloat fps = Frames / seconds;
-         printf("%d frames in %g seconds = %g FPS\n", Frames, seconds, fps);
-         T0 = t;
-         Frames = 0;
+      frames++;
+      if (t - t0 >= 5000) {
+         GLfloat seconds = (t - t0) / 1000.0;
+         GLfloat fps = frames / seconds;
+         printf("%d frames in %g seconds = %g FPS\n", frames, seconds, fps);
+         t0 = t;
+         frames = 0;
       }
    }
 }
 
 
-static void idle( void )
+static void
+Idle(void)
 {
-   static double t0 = -1.;
-   double dt, t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-   if (t0 < 0.0)
-      t0 = t;
-   dt = t - t0;
-   t0 = t;
-   spin += 60.0 * dt;
-   yrot += 90.0 * dt;
-   glutPostRedisplay();
+   double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+   struct window *w;
+   for (w = FirstWindow; w; w = w->next) {
+      if (w->anim) {
+         double dt;
+         if (w->t0 < 0.0)
+            w->t0 = t;
+         dt = t - w->t0;
+         w->t0 = t;
+         w->spin += 60.0 * dt;
+         w->yrot += 90.0 * dt;
+         assert(w->id);
+         glutSetWindow(w->id);
+         glutPostRedisplay();
+      }
+   }
 }
 
 
-static void Key( unsigned char key, int x, int y )
+static void
+Key(unsigned char key, int x, int y)
 {
+   struct window *w = CurrentWindow();
    (void) x;
    (void) y;
-   if (key == 'd') {
-      ShowBuffer = GL_DEPTH;
-   }
-   else if (key == 's') {
-      ShowBuffer = GL_STENCIL;
-   }
-   else if (key == 'a') {
-      ShowBuffer = GL_ALPHA;
-   }
-   else if (key == ' ') {
-      Anim = !Anim;
-      if (Anim)
-         glutIdleFunc(idle);
+
+   switch (key) {
+   case 'd':
+      w->showBuffer = GL_DEPTH;
+      glutPostRedisplay();
+      break;
+   case 's':
+      w->showBuffer = GL_STENCIL;
+      glutPostRedisplay();
+      break;
+   case 'a':
+      w->showBuffer = GL_ALPHA;
+      glutPostRedisplay();
+      break;
+   case 'c':
+      w->showBuffer = GL_NONE;
+      glutPostRedisplay();
+      break;
+   case ' ':
+      w->anim = !w->anim;
+      w->t0 = -1;
+      if (AnyAnimating())
+         glutIdleFunc(Idle);
       else
          glutIdleFunc(NULL);
-   }
-   else if (key==27) {
+      glutPostRedisplay();
+      break;
+   case 'n':
+      CreateWindow();
+      break;
+   case 'k':
+      KillWindow(w);
+      if (FirstWindow == NULL)
+         exit(0);
+      break;
+   case 27:
+      KillAllWindows();
       exit(0);
+      break;
+   default:
+      ;
    }
-   else {
-      ShowBuffer = GL_NONE;
-   }
-   glutPostRedisplay();
 }
 
 
-static void SpecialKey( int key, int x, int y )
+static void
+SpecialKey(int key, int x, int y)
 {
+   struct window *w = CurrentWindow();
    (void) x;
    (void) y;
    switch (key) {
       case GLUT_KEY_UP:
-         xrot += 3.0;
-         if ( xrot > 85 )
-            xrot = 85;
+         w->xrot += 3.0;
+         if (w->xrot > 85)
+            w->xrot = 85;
          break;
       case GLUT_KEY_DOWN:
-         xrot -= 3.0;
-         if ( xrot < 5 )
-            xrot = 5;
+         w->xrot -= 3.0;
+         if (w->xrot < 5)
+            w->xrot = 5;
          break;
       case GLUT_KEY_LEFT:
-         yrot += 3.0;
+         w->yrot += 3.0;
          break;
       case GLUT_KEY_RIGHT:
-         yrot -= 3.0;
+         w->yrot -= 3.0;
          break;
    }
    glutPostRedisplay();
 }
 
 
-int main( int argc, char *argv[] )
+static void
+CreateWindow(void)
 {
-   glutInit(&argc, argv);
-   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL | GLUT_ALPHA);
-   glutInitWindowPosition( 0, 0 );
-   glutInitWindowSize( Width, Height );
-   glutCreateWindow(argv[0]);
-   glutReshapeFunc(reshape);
-   glutDisplayFunc(draw_scene);
+   char title[1000];
+   struct window *w = (struct window *) calloc(1, sizeof(struct window));
+   
+   glutInitWindowSize(INIT_WIDTH, INIT_HEIGHT);
+   w->id = glutCreateWindow("foo");
+   sprintf(title, "reflect window %d", w->id);
+   glutSetWindowTitle(title);
+   assert(w->id);
+   w->width = INIT_WIDTH;
+   w->height = INIT_HEIGHT;
+   w->anim = GL_TRUE;
+   w->xrot = 30.0;
+   w->yrot = 50.0;
+   w->spin = 0.0;
+   w->showBuffer = GL_NONE;
+
+   InitWindow(w);
+
+   glutReshapeFunc(Reshape);
+   glutDisplayFunc(DrawWindow);
    glutKeyboardFunc(Key);
    glutSpecialFunc(SpecialKey);
-   glutIdleFunc(idle);
-   init();
+
+   /* insert at head of list */
+   w->next = FirstWindow;
+   FirstWindow = w;
+}
+
+
+static void
+Usage(void)
+{
+   printf("Keys:\n");
+   printf("  a      - show alpha buffer\n");
+   printf("  d      - show depth buffer\n");
+   printf("  s      - show stencil buffer\n");
+   printf("  c      - show color buffer\n");
+   printf("  n      - create new window\n");
+   printf("  k      - kill window\n");
+   printf("  SPACE  - toggle animation\n");
+   printf("  ARROWS - rotate scene\n");
+}
+
+
+int
+main(int argc, char *argv[])
+{
+   glutInit(&argc, argv);
+   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH |
+                       GLUT_STENCIL | GLUT_ALPHA);
+   CreateWindow();
+   glutIdleFunc(Idle);
+   Usage();
    glutMainLoop();
    return 0;
 }
