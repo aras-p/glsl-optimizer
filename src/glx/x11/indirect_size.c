@@ -47,7 +47,6 @@
 #    define INTERNAL
 #  endif
 
-
 #ifdef HAVE_ALIAS
 #  define ALIAS2(from,to) \
     INTERNAL PURE FASTCALL GLint __gl ## from ## _size( GLenum e ) \
@@ -59,6 +58,13 @@
     { return __gl ## to ## _size( e ); }
 #endif
 
+#  if defined(__CYGWIN__) || defined(WIN32)
+#    undef FASTCALL
+#    define FASTCALL
+#    undef HAVE_ALIAS
+#    undef INTERNAL
+#    define INTERNAL
+#  endif
 
 INTERNAL PURE FASTCALL GLint
 __glCallLists_size( GLenum e )
