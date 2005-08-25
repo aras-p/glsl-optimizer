@@ -186,11 +186,12 @@ Display( void )
    else {
       /* clear the temporary image to white (helpful for debugging */
       memset(TempImage, 255, ImgWidth * ImgHeight * 4);
-#if 0
-      /* you might use this when debugging */
+#if 1
       glReadPixels(APosX, APosY, ImgWidth, ImgHeight,
                    ReadFormat, ReadType, TempImage);
+      (void) ComplexReadPixels;
 #else
+      /* you might use this when debugging */
       ComplexReadPixels(APosX, APosY, ImgWidth, ImgHeight,
                         ReadFormat, ReadType, TempImage);
 #endif
