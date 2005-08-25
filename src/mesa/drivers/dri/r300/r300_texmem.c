@@ -417,7 +417,7 @@ static void uploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 					"DRM_RADEON_TEXTURE:  again!\n");
 			usleep(1);
 		}
-	} while (ret && errno == EAGAIN);
+	} while (ret == -EAGAIN);
 
 	UNLOCK_HARDWARE(&rmesa->radeon);
 

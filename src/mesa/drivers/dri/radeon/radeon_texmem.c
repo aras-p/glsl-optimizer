@@ -304,7 +304,7 @@ static void uploadSubImage( radeonContextPtr rmesa, radeonTexObjPtr t,
    do {
       ret = drmCommandWriteRead( rmesa->dri.fd, DRM_RADEON_TEXTURE,
                                  &tex, sizeof(drm_radeon_texture_t) );
-   } while ( ret && errno == EAGAIN );
+   } while ( ret == -EAGAIN );
 
    UNLOCK_HARDWARE( rmesa );
 
